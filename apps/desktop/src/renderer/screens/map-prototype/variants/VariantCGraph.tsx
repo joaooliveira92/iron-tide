@@ -65,8 +65,11 @@ export function VariantCGraph({
   const coastlineState = useCoastline();
   const coastline = useMemo(
     () =>
-      (coastlineState.status === "ready" ? coastlineState.polygons : []).map((rings) =>
-        rings
+      (coastlineState.status === "ready" ? coastlineState.polygons : []).map((rings) => ({
+        // Stable id from the raw geometry (independent of projection/centre), so a
+        // pan or zoom reconciles the same path instead of remounting it.
+        id: rings.map((flat) => `${flat.length}:${flat[0] ?? ""}:${flat[1] ?? ""}`).join("|"),
+        d: rings
           .map((flat) => {
             const ring: Point[] = [];
             for (let i = 0; i < flat.length; i += 2) {
@@ -75,7 +78,7 @@ export function VariantCGraph({
             return ringToPath(ring, projection);
           })
           .join(""),
-      ),
+      })),
     [coastlineState, projection, state.centre],
   );
 
@@ -191,9 +194,8 @@ export function VariantCGraph({
             {WORLD_WRAP_TURNS.map((turn) => (
               <g key={turn} transform={`translate(${turn * projection.width} 0)`}>
                 {/* Geography demoted to a wash. It orients; it does not inform. */}
-                {coastline.map((d, index) => (
-                  // eslint-disable-next-line react/no-array-index-key
-                  <path key={index} d={d} fill="var(--muted)" fillRule="evenodd" />
+                {coastline.map(({ id, d }) => (
+                  <path key={id} d={d} fill="var(--muted)" fillRule="evenodd" />
                 ))}
 
                 {/* Edges are the primary object here. */}
