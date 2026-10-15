@@ -78,15 +78,10 @@ export interface PipelineContext {
   terminalTransition: string | null;
   /** Terminal result (set by TERMINAL_SEAM). */
   terminalResult: TerminalResult | null;
-  /** Battle minute. */
   battleMinute: number;
-  /** Substep. */
   substep: number;
-  /** Source id. */
   sourceId: string;
-  /** Target ship id. */
   targetShipId: string;
-  /** Weapon id. */
   causalWeaponId: string;
   /** Hit input for HIT_LOCATION stage (optional — falls back to no-op if absent). */
   hitInput?: HitInput;
