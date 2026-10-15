@@ -1,4 +1,3 @@
-//packages/combat/test/damage/protection-interaction.test.ts
 // INC-3 — Protection interaction (Stage 2). Proves AC-5 integration.
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
@@ -11,7 +10,6 @@ import {
   ARMOR_QUALITY_MULTIPLIER_MISSING,
 } from "../../src/damage/reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // Fixtures
 
 /**
@@ -137,7 +135,6 @@ const PASS_THROUGH: ProtectionInput = {
   isCriticalZone: false,
 };
 
-// ---------------------------------------------------------------------------
 // Tests
 
 describe("INC-3: Protection interaction (AC-5)", () => {

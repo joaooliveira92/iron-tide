@@ -1,4 +1,3 @@
-//packages/combat/src/gunnery/rangeCurve.ts
 // P-1 ticket 06 — auto-resolution gunnery fidelity (range + gun count), ADR-0048
 // follow-up to ADR-0046. This module supplies the two inputs the resolver was
 // missing:

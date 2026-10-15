@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/damage-integration.test.ts
 // AC-13 (INC-5): Bomb and torpedo damage integration with GunneryImpact shape.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";

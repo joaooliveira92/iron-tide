@@ -1,4 +1,3 @@
-//packages/combat/test/damage/advance.test.ts
 // INC-4 — resolveDamage integration + strict no-op path.
 // Tests the engineWiring entry point end-to-end.
 import { describe, it, expect } from "vite-plus/test";
@@ -10,7 +9,6 @@ import {
   type ShipDamageState,
 } from "../../src/damage/index.js";
 
-// ---------------------------------------------------------------------------
 // Helpers
 
 function baseState(overrides: Partial<ShipDamageState> = {}): ShipDamageState {
@@ -60,7 +58,6 @@ function sampleImpact(overrides: Partial<GunneryImpact> = {}): GunneryImpact {
   };
 }
 
-// ---------------------------------------------------------------------------
 // resolveDamage integration
 
 describe("AC-4: resolveDamage integration", () => {
@@ -169,7 +166,6 @@ describe("AC-4: resolveDamage integration", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Strict no-op path
 
 describe("AC-4: Strict no-op path", () => {

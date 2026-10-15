@@ -1,4 +1,3 @@
-//packages/combat/src/damage/protectionInteraction.ts
 // DESIGN-41 §5 — Stage 2: Protection interaction.
 // Wires the armor model (armorModel.ts from INC-2) to determine the outcome
 // of a hit against armor. Pure deterministic function: no ambient I/O/clock/random.
@@ -17,7 +16,6 @@ import {
   validateArmorThickness,
 } from "./armorModel.js";
 
-// ---------------------------------------------------------------------------
 // ProtectionInput — parameters describing the projectile and struck armor.
 export interface ProtectionInput {
   /** Projectile caliber in micrometres. */
@@ -40,7 +38,6 @@ export interface ProtectionInput {
   isCriticalZone: boolean;
 }
 
-// ---------------------------------------------------------------------------
 // ProtectionResult — computed protection outcome.
 export interface ProtectionResult {
   /** Effective resistance after manufacturing + quality + obliquity (µm). */
@@ -57,7 +54,6 @@ export interface ProtectionResult {
   obliquityFactorBp: number;
 }
 
-// ---------------------------------------------------------------------------
 // Penetration capability formula (simplified — §armor_v1 preliminary)
 //
 // The penetration capability is derived from projectile parameters using a
@@ -77,7 +73,6 @@ function computePenetrationCapabilityUm(
   return Math.floor((caliberUm * velocityMs) / 1000);
 }
 
-// ---------------------------------------------------------------------------
 // Public API
 
 /**

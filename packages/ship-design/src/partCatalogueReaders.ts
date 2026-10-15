@@ -34,9 +34,7 @@ import type {
 import { machineryPlanFromEntry, type MachineryTranslation } from "./plantPartAdapter.js";
 import type { HullSpec } from "./hull.js";
 
-// ---------------------------------------------------------------------------
 // Failures
-// ---------------------------------------------------------------------------
 
 /** One typed, path-specific reason a part could not rebuild a legacy runtime shape. */
 export type InverseReaderCode =
@@ -82,9 +80,7 @@ const fail = (reader: Reader, code: InverseReaderCode, path: string, message: st
   reader.issues.push({ code, path: `${reader.designId}.${path}`, message });
 };
 
-// ---------------------------------------------------------------------------
 // Placements
-// ---------------------------------------------------------------------------
 
 /** The families the placement reader rebuilds; plant and armour entries are read separately. */
 const SKIPPED_FAMILIES: ReadonlySet<string> = new Set(["propulsion_plant", "armour_material"]);
@@ -307,9 +303,7 @@ export function readPlacements(input: ReadPlacementsInput): ReadPlacementsResult
   };
 }
 
-// ---------------------------------------------------------------------------
 // The design header: forward and inverse
-// ---------------------------------------------------------------------------
 
 /** The header facts a design draft carries into the parts representation. */
 export function headerFromDraft(draft: DesignDraft): DesignHeaderData {

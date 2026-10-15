@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/project.ts
 // B-6 INC-2 (AC-4): project the battle manifest + committed campaign ships
 // (B-1 promotions) + divisions into a deterministic `TacticalBattleState` with
 // realism-independent stats (DESIGN-38 §9, §33), the main-battery gunnery

@@ -1,4 +1,3 @@
-//packages/combat/test/damage/flooding-resolution.test.ts
 // INC-6 — Per-minute flooding resolution functions (DESIGN-41 §§14-18).
 // Proves: severity classification, speed/stability multipliers, speed-pressure bands,
 // net delta computation, high-speed loss checks, and full progression resolution.
@@ -15,7 +14,6 @@ import {
 } from "../../src/damage/index.js";
 import type { FloodingSourceRecord } from "../../src/damage/state.js";
 
-// ---------------------------------------------------------------------------
 // Helpers
 
 /** Deterministic RNG returning a fixed value for any stream. */
@@ -38,7 +36,6 @@ function trackingRng(): {
   };
 }
 
-// ---------------------------------------------------------------------------
 // getFloodingSeverity
 
 describe("INC-6: getFloodingSeverity (§14)", () => {
@@ -82,7 +79,6 @@ describe("INC-6: getFloodingSeverity (§14)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // getFloodingSpeedMultiplierBp
 
 describe("INC-6: getFloodingSpeedMultiplierBp (§15)", () => {
@@ -103,7 +99,6 @@ describe("INC-6: getFloodingSpeedMultiplierBp (§15)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // getFloodingStabilityMultiplierBp
 
 describe("INC-6: getFloodingStabilityMultiplierBp (§15)", () => {
@@ -124,7 +119,6 @@ describe("INC-6: getFloodingStabilityMultiplierBp (§15)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // getSpeedPressureMultiplierBp
 
 describe("INC-6: getSpeedPressureMultiplierBp (§16)", () => {
@@ -156,7 +150,6 @@ describe("INC-6: getSpeedPressureMultiplierBp (§16)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // computeNetFloodingDelta
 
 describe("INC-6: computeNetFloodingDelta (§18)", () => {
@@ -242,7 +235,6 @@ describe("INC-6: computeNetFloodingDelta (§18)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // checkHighSpeedLoss
 
 describe("INC-6: checkHighSpeedLoss (§17)", () => {
@@ -299,7 +291,6 @@ describe("INC-6: checkHighSpeedLoss (§17)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // floodedWaterBpFromKg — kg -> bp of displacement (ADR-0047 decision 4)
 
 describe("INC-6: floodedWaterBpFromKg (§14/§48 v12; ADR-0047 d4)", () => {
@@ -341,7 +332,6 @@ describe("INC-6: floodedWaterBpFromKg (§14/§48 v12; ADR-0047 d4)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // resolveFloodingProgression
 
 describe("INC-6: resolveFloodingProgression (§18)", () => {

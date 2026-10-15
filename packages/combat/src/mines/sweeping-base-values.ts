@@ -1,4 +1,3 @@
-//packages/combat/src/mines/sweeping-base-values.ts
 // DESIGN-35 §7 sweeping base values (INC-3): the shipped base sweeping values
 //   dedicated fleet minesweeper   150
 //   dedicated coastal minesweeper 100

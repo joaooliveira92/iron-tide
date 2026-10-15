@@ -1,4 +1,3 @@
-//apps/compiler-cli/src/index.ts
 //
 export {
   runValidate,

@@ -1,5 +1,3 @@
-//packages/combat/src/gunnery/index.ts
-
 export * from "./constants.js";
 export * from "./rangeCurve.js";
 export * from "./salvoBatch.js";

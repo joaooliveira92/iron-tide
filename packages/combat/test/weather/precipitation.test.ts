@@ -1,4 +1,3 @@
-//packages/combat/test/weather/precipitation.test.ts
 // AC-9: Precipitation — §26 visibility multiplier bands by intensity.
 import { describe, it, expect } from "vite-plus/test";
 import { computePrecipitationVisibilityMultiplierBp } from "../../src/weather/precipitation.js";

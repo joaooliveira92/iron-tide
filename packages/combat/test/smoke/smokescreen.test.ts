@@ -21,9 +21,7 @@ import {
   SMOKE_FORMULA_VERSION,
 } from "../../src/smoke/constants.js";
 
-// ---------------------------------------------------------------------------
 // Helper: build a default eligible DD params object
-// ---------------------------------------------------------------------------
 
 function eligibleDDParams(
   overrides?: Partial<SmokescreenEligibilityParams>,
@@ -50,9 +48,7 @@ function eligibleCLParams(
   return eligibleDDParams({ shipClass: "CL", ...overrides });
 }
 
-// ---------------------------------------------------------------------------
 // §12 isShipEligibleForSmokescreen
-// ---------------------------------------------------------------------------
 
 describe("isShipEligibleForSmokescreen", () => {
   it("eligible DD at 10kt, no cooldown", () => {
@@ -203,9 +199,7 @@ describe("isShipEligibleForSmokescreen", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §13 computeSmokescreenSegment
-// ---------------------------------------------------------------------------
 
 describe("computeSmokescreenSegment", () => {
   it("creates cloud with correct density 9_000", () => {
@@ -314,9 +308,7 @@ describe("computeSmokescreenSegment", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §14 checkSmokescreenCooldown
-// ---------------------------------------------------------------------------
 
 describe("checkSmokescreenCooldown", () => {
   it("available after 20 minutes", () => {
@@ -367,9 +359,7 @@ describe("checkSmokescreenCooldown", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §13 generateSmokescreenMinute
-// ---------------------------------------------------------------------------
 
 describe("generateSmokescreenMinute", () => {
   function defaultGenParams(
@@ -465,9 +455,7 @@ describe("generateSmokescreenMinute", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // SmokescreenState transitions
-// ---------------------------------------------------------------------------
 
 describe("SmokescreenState", () => {
   it("createInitialSmokescreenState sets default values", () => {
@@ -536,9 +524,7 @@ describe("SmokescreenState", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §16 smokescreenConcealmentBonusBp
-// ---------------------------------------------------------------------------
 
 describe("smokescreenConcealmentBonusBp", () => {
   it("returns density bp for active cloud", () => {

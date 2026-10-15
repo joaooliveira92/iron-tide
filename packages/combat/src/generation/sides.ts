@@ -1,4 +1,3 @@
-//packages/combat/src/generation/sides.ts
 import { BluewaveError } from "@bluewave/contracts";
 import { BATTLE_SIDE_INVALID } from "./reasonCodes.js";
 import type { TacticalSideRecord } from "../tactical/state.js";

@@ -151,9 +151,7 @@ export function armourBalanceFromParts(
   return { ...base, materialEffBp, materialAvailability };
 }
 
-// ---------------------------------------------------------------------------
 // Armour regions → loadout entries
-// ---------------------------------------------------------------------------
 
 export interface ArmourRegionTranslation {
   readonly designId: string;

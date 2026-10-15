@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/constants.ts
 // D-4 M4 Aviation: Air Defense — constants per DESIGN-45 §2-3.
 // Parallel to air-combat/constants.ts pattern.
 

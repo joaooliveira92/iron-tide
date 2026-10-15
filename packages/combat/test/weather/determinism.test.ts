@@ -1,4 +1,3 @@
-//packages/combat/test/weather/determinism.test.ts
 // AC-14: Two-process determinism — identical state+inputs produce identical
 // per-minute hashes + weather events across two separate child processes
 // (node-spawn ×2, byte-compared). The child script is executed from `dist/`

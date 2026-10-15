@@ -1,4 +1,3 @@
-//packages/combat/src/spotting/detection.ts
 // DESIGN-38 §3 step 8: deterministic detection model over fixed-point positions.
 // Baseline clear daylight only; random scatter (if any) is via domain-separated
 // keyed streams. No ambient I/O, clock, or Math.random().

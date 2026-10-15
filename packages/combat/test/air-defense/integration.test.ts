@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/integration.test.ts
 // D-4 / INC-6 — AC-18: resolveAirDefense stage at step 7.8, strict no-op.
 // AC-20: BattleResolver/StrengthCalculator unmodified.
 import { describe, it, expect } from "vite-plus/test";

@@ -1,4 +1,3 @@
-//packages/combat/src/weather/climate.ts
 // DESIGN-42 §1/§4 strategic weather generation (AC-2): per-area monthly
 // StrategicWeatherState generated from a canonical ClimateProfile, calendar
 // month, prior persistent state, and the versioned keyed RNG stream

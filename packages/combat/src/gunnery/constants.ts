@@ -1,4 +1,3 @@
-//packages/combat/src/gunnery/constants.ts
 // Versioned authoritative gunnery base constants (DESIGN-39 §§1-2) shipped as a
 // `gunnery_v1` policy + `SHIPPED_GUNNERY_CONTRACT` + `validateGunneryContract`,
 // mirroring packages/combat/src/movement/constants.ts. Fail-closed on mismatch.
@@ -48,7 +47,6 @@ export type FireMode = (typeof FIRE_MODES)[number];
 export const GUNNERY_RULESET_VERSION = "gunnery_ruleset_v1" as const;
 export const GUNNERY_FORMULA_VERSION = "gunnery_formula_v1" as const;
 
-// ---------------------------------------------------------------------------
 // DESIGN-39 §3 Accuracy factor manifest (INC-2). The 16 multiplier factors form
 // the exact basis-point product below baseAccuracyBp, divided once by 10_000^16
 // and floored once (not truncated) at the final accuracy check. Every factor
@@ -239,7 +237,6 @@ export function validateGunneryAccuracyContract(
     throwAccuracyMismatch(c, "gunnery_accuracy_v1 ruleset/formula versions");
 }
 
-// ---------------------------------------------------------------------------
 // DESIGN-39 §4 Rate-of-fire factor manifest (INC-3). The 11 multiplier factors
 // apply in the §4 order 1-11 (gun-quality → mount → autoloader → crew →
 // technology → turn-state → sea-state → smoke → damage → range/fire-control-cycle
@@ -342,7 +339,6 @@ export function validateGunneryRateContract(
     throwRateMismatch(c, "gunnery_rate_v1 ruleset/formula versions");
 }
 
-// ---------------------------------------------------------------------------
 // DESIGN-39 §5 Gun quality (INC-3). Integer -3..+2 inclusive, each with shipped
 // range/penetration/rate multipliers in basis points (§5): -3 → 8_500, -2 →
 // 9_000, -1 → 9_500, 0 → 10_000, +1 → 10_500, +2 → 11_000. Out-of-range quality
@@ -431,7 +427,6 @@ export function validateGunQualityContract(
     throwGunQualityMismatch(c, "gun_quality_v1 ruleset/formula versions");
 }
 
-// ---------------------------------------------------------------------------
 // Naval gun ballistics constant set (INC-5 content deliverable). baseReloadMs
 // by broad caliber, research-grounded in docs/research/b3-m2-gunnery.md §1
 // (NavWeaps-compiled per-gun cyclic-rate figures). Six calibers are directly

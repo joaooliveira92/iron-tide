@@ -1,4 +1,3 @@
-// packages/phase-engine/src/month.ts
 // MonthExecutor: the strategic month pipeline orchestrator. It owns the phase
 // registry guard, the shared run context, and the canonical phase order; each
 // phase body lives in its own focused module.

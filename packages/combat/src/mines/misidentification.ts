@@ -1,4 +1,3 @@
-//packages/combat/src/mines/misidentification.ts
 // DESIGN-35 §20 Mine and Torpedo Misidentification (INC-6). When a damaging
 // underwater explosion is not directly identified, the report classifier MUST
 // use `underwater_explosion_identification_v1` (policy id ==
@@ -235,8 +234,6 @@ export function validateUnderwaterExplosionIdentificationContract(
   if (c.certainThresholdBp !== MINE_REPORT_CAUSE_CERTAIN_CONFIDENCE_BP)
     throwMismatch(c, "underwater_explosion_identification_v1 authored certain-threshold");
 }
-
-// ---------------------------------------------------------------------------
 
 function invariant(field: string, value: unknown, reason: string): never {
   throw new BluewaveError(INVALID_MINE_PRESSURE_STATE, {

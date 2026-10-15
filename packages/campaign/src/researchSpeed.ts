@@ -1,4 +1,3 @@
-// packages/campaign/src/researchSpeed.ts
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 export const RESEARCH_IDS = ["slow", "standard", "fast", "very_fast"] as const;
 export type ResearchId = (typeof RESEARCH_IDS)[number];

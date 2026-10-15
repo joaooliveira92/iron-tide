@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/torpedoProjection.ts
 // P-1 ticket 03 (AC-4): project compiled design torpedo armament into the
 // auto-resolver's TorpedoContext — one launcher wiring per authored mount and one
 // torpedo target context per promoted unit. Returns undefined when no promoted

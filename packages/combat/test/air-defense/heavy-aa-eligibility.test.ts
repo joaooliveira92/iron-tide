@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/heavy-aa-eligibility.test.ts
 // AC-4: Heavy AA protects own ship + 5nm protected radius (DESIGN-45 §7).
 
 import { describe, it, expect } from "vite-plus/test";

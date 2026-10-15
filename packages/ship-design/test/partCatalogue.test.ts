@@ -206,9 +206,7 @@ describe("derive-input homes map through the whole-catalogue builder (17a-2)", (
   });
 });
 
-// ---------------------------------------------------------------------------
 // Inverse readers: source → parts → inverse preserves every represented value
-// ---------------------------------------------------------------------------
 const partLookup = (parts: readonly FlattenedPart[]) => {
   const map = new Map(parts.map((p) => [p.id, p]));
   return (id: string) => map.get(id);

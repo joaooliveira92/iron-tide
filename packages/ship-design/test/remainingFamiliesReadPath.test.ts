@@ -63,9 +63,7 @@ import {
 } from "./helpers/gunReadPath.js";
 import { torpedoDiameterUm } from "./helpers/torpedoModels.js";
 
-// ---------------------------------------------------------------------------
 // Fixture
-// ---------------------------------------------------------------------------
 
 const WEAPON = new Set([
   "MAIN_GUN",
@@ -208,9 +206,7 @@ function designLoadout(design: Design): { platform: string; entries: LoadoutEntr
   return { platform: design.draft.hull.hullFormId, entries };
 }
 
-// ---------------------------------------------------------------------------
 // Fittings and sensors
-// ---------------------------------------------------------------------------
 
 describe("fittings and sensors through the read path (ship-part-model 05)", () => {
   it("covers the 566 non-gun, non-tube placements; with 230 guns and 29 tubes that is all 825", () => {
@@ -649,9 +645,7 @@ describe("fittings and sensors through the read path (ship-part-model 05)", () =
   });
 });
 
-// ---------------------------------------------------------------------------
 // Crew, volume and footprint of guns and launchers (regression over tickets 03–04)
-// ---------------------------------------------------------------------------
 
 describe("gun and launcher crew, volume and footprint (ship-part-model 05 over 03–04)", () => {
   it("every gun placement's crew, volume and footprint equal the legacy resolved placement", () => {
@@ -792,9 +786,7 @@ describe("gun and launcher crew, volume and footprint (ship-part-model 05 over 0
   });
 });
 
-// ---------------------------------------------------------------------------
 // Propulsion plants
-// ---------------------------------------------------------------------------
 
 describe("propulsion plants as parametric parts (ship-part-model 05)", () => {
   it("reads the five plants with installed power as their one parameter and no quantity components", () => {
@@ -885,9 +877,7 @@ describe("propulsion plants as parametric parts (ship-part-model 05)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Armour materials
-// ---------------------------------------------------------------------------
 
 describe("armour materials out of the balance tables (ship-part-model 05)", () => {
   it("reads the eight materials with efficiency, dates and technology from the balance", () => {
@@ -1043,9 +1033,7 @@ describe("armour materials out of the balance tables (ship-part-model 05)", () =
   });
 });
 
-// ---------------------------------------------------------------------------
 // Ammunition
-// ---------------------------------------------------------------------------
 
 describe("ammunition patterns as parts (ship-part-model 05)", () => {
   it("reads the six patterns as national ammunition parts", () => {
@@ -1112,9 +1100,7 @@ describe("ammunition patterns as parts (ship-part-model 05)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Whole designs
-// ---------------------------------------------------------------------------
 
 describe("whole designs through the read path (ship-part-model 05)", () => {
   it("every design's full loadout decodes on its platform, one entry per placement, region and plant", () => {

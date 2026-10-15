@@ -1,4 +1,3 @@
-//packages/combat/src/generation/repair.ts
 import { BluewaveError } from "@bluewave/contracts";
 import { BATTLE_COMPOSITION_IRREPARABLE } from "./reasonCodes.js";
 

@@ -47,9 +47,7 @@ function cancelled() {
   };
 }
 
-// ---------------------------------------------------------------------------
 // loadCampaign
-// ---------------------------------------------------------------------------
 
 /**
  * `loadCampaign(undefined) -> LoadCampaignResponse` (ticket 08/16). Prompts
@@ -144,9 +142,7 @@ export const loadCampaignProgram = payloadless(() =>
   }),
 );
 
-// ---------------------------------------------------------------------------
 // listCampaigns
-// ---------------------------------------------------------------------------
 
 /**
  * `listCampaigns(undefined) -> BridgeResult<SaveMetadata[]>` — the
@@ -170,9 +166,7 @@ export const listCampaignsProgram = payloadless(() =>
   }),
 );
 
-// ---------------------------------------------------------------------------
 // verifyCampaign
-// ---------------------------------------------------------------------------
 
 /**
  * `verifyCampaign(undefined) -> VerifyCampaignResponse` (ticket 08/16).
@@ -222,9 +216,7 @@ export const verifyCampaignProgram = payloadless(() =>
   }),
 );
 
-// ---------------------------------------------------------------------------
 // replayCampaign
-// ---------------------------------------------------------------------------
 
 /**
  * `replayCampaign(undefined) -> ReplayCampaignResponse` (ticket 08/16): full
@@ -438,9 +430,7 @@ function loadSaveForTurn(
   return projects.loadById(saveDir, meta.saveId, new DiagnosticCollector());
 }
 
-// ---------------------------------------------------------------------------
 // recoverCampaign
-// ---------------------------------------------------------------------------
 
 /**
  * `recoverCampaign(undefined) -> RecoverCampaignResponse` (ticket 08/16):

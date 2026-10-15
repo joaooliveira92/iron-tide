@@ -1,4 +1,3 @@
-// packages/phase-engine/src/foreignWarEffects.ts
 // DESIGN-16 sections 13.6-13.7 and 14 (spec SB3-R23; INC-10): the foreign-contract war policy, impoundment, and the
 // delivery guarantee. Pure and deterministic: the only randomness is the tension-scaled discretionary-impoundment
 // draw on the keyed stream family `foreign_contract/war/impoundment`, each draw recorded. No wall clock, no ambient
@@ -28,9 +27,7 @@ export const FOREIGN_WAR_OUTCOMES = [
 ] as const;
 export type ForeignContractWarOutcome = (typeof FOREIGN_WAR_OUTCOMES)[number];
 
-// ---------------------------------------------------------------------------------------------------------------
 // DESIGN-16 section 18: the foreign war/impoundment reason codes.
-// ---------------------------------------------------------------------------------------------------------------
 
 /** DESIGN-16 sections 13.6-13.7: discretionary impoundment without a policy result. */
 export const FOREIGN_CONTRACT_IMPOUNDMENT_NOT_AUTHORIZED =
@@ -43,13 +40,11 @@ export const FOREIGN_CONTRACT_PHYSICALLY_IMPOSSIBLE =
 /** DESIGN-16 section 13.6: delivery is delayed (an explicit delayed outcome). */
 export const FOREIGN_CONTRACT_DELIVERY_DELAYED = "FOREIGN_CONTRACT_DELIVERY_DELAYED" as const;
 
-// ---------------------------------------------------------------------------------------------------------------
 // The tension-scaled discretionary-impoundment predicate (DESIGN-16 section 13.6).
 //
 // BALANCE TARGET: the manual states a tension-scaled impoundment *risk* but gives no formula. These are versioned
 // PLACEHOLDER constants, not derived values: each tension point (0..10) contributes `1_000` bp of risk, capped at
 // `9_000` bp, and no discretionary impoundment is drawn below `MIN_TENSION`. The draw is keyed and recorded.
-// ---------------------------------------------------------------------------------------------------------------
 
 /** The keyed stream family the discretionary-impoundment draw uses (stable; hashed). */
 export const FOREIGN_IMPOUNDMENT_STREAM_FAMILY = "foreign_contract/war/impoundment" as const;
@@ -73,9 +68,7 @@ export function impoundmentProbabilityBp(tension: number): number {
   );
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Outcome effects (DESIGN-16 section 13.6: every outcome MUST define these).
-// ---------------------------------------------------------------------------------------------------------------
 
 export interface ForeignWarOutcomeEffects {
   readonly payment: "SCHEDULED" | "SUSPENDED" | "SETTLED" | "FORFEITED";
@@ -150,9 +143,7 @@ export const FOREIGN_WAR_OUTCOME_EFFECTS: Readonly<
   },
 };
 
-// ---------------------------------------------------------------------------------------------------------------
 // DESIGN-16 section 13.6/13.7: the settlement money an outcome moves
-// ---------------------------------------------------------------------------------------------------------------
 
 /** The versioned settlement policy the refund/compensation postings follow (no manual formula; DECISION 2026-10-12). */
 export const FOREIGN_SETTLEMENT_POLICY_ID = "foreign_contract_settlement_v1" as const;
@@ -210,9 +201,7 @@ export function isDeliveryGuaranteeActive(contract: ForeignConstructionContract)
   );
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // The war-policy resolution (DESIGN-16 section 13.6)
-// ---------------------------------------------------------------------------------------------------------------
 
 export interface ForeignWarPolicyInput {
   readonly contract: ForeignConstructionContract;
@@ -321,9 +310,7 @@ export function resolveForeignWarPolicy(input: ForeignWarPolicyInput): ForeignWa
   return base("CONTINUE", "FOREIGN_CONTRACT_WAR_UNINVOLVED");
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Impoundment application (DESIGN-16 section 13.7)
-// ---------------------------------------------------------------------------------------------------------------
 
 export type ForeignImpoundmentResult =
   | {

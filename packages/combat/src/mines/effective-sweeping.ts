@@ -1,4 +1,3 @@
-//packages/combat/src/mines/effective-sweeping.ts
 // DESIGN-35 §9 effective sweeping value (INC-3):
 //
 //   effectiveSweepingValue = floor(baseSweepingValue * equipmentModeMultiplierBp *

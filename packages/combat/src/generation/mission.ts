@@ -1,4 +1,3 @@
-//packages/combat/src/generation/mission.ts
 import { BluewaveError } from "@bluewave/contracts";
 import {
   BATTLE_MISSION_TYPE_UNREGISTERED,

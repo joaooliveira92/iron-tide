@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/index.ts
 export * from "./reasonCodes.js";
 export * from "./constants.js";
 export * from "./daylight.js";

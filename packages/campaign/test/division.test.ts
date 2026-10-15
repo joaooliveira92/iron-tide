@@ -1,5 +1,3 @@
-//packages/campaign/test/division.test.ts
-
 import { BluewaveError, SafeInt, isBluewaveError } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import {

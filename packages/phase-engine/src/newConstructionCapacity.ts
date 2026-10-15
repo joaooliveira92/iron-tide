@@ -1,4 +1,3 @@
-// packages/phase-engine/src/newConstructionCapacity.ts
 // SB3-R18/R19: the order-time displacement reservation against the national concurrency cap. This is the application
 // layer over the pure `@bluewave/ship-design` primitives: it reads campaign state and the content balance, but owns no
 // arithmetic of its own. The cap governs how much tonnage may be under construction at once; the DESIGN-16 section 7
@@ -136,9 +135,7 @@ export function committedNewConstructionMassKg(
   return total;
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // DESIGN-16 section 13.3: the builder's declared contract-priority policy (SB3-R21)
-// ---------------------------------------------------------------------------------------------------------------
 
 /** The versioned builder contract-priority policy (DESIGN-16 section 13.3). */
 export const FOREIGN_CONTRACT_PRIORITY_POLICY_ID = "foreign_contract_priority_v1" as const;

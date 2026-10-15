@@ -1,4 +1,3 @@
-//packages/combat/test/generation/mission.test.ts
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {

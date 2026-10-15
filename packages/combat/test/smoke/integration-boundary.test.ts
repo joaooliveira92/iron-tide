@@ -1,4 +1,3 @@
-//packages/combat/test/smoke/integration-boundary.test.ts
 // INC-9 — Smoke module integration-boundary proof.
 // Proves that the smoke module is self-contained:
 //   - Does not modify BattleResolver or StrengthCalculator

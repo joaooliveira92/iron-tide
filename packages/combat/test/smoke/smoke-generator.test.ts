@@ -1,4 +1,3 @@
-//packages/combat/test/smoke/smoke-generator.test.ts
 import { describe, expect, it } from "vite-plus/test";
 import {
   canActivateSmokeGenerator,

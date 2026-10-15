@@ -1,4 +1,3 @@
-//packages/combat/test/weather/integration-boundary.test.ts
 // AC-13/AC-17 (L1): the B-5 `resolveWeather` stage must not disturb the B-2/B-3/
 // B-4 baseline — `BattleResolver`/`StrengthCalculator` are verifiably
 // unmodified, and the no-weather-context path appends zero events with minute

@@ -1,4 +1,3 @@
-// packages/ship-design/src/dockExpansion.ts
 // DESIGN-16 section 5 (spec SB3-R16): the versioned `dock_expansion_v1` policy. A completed expansion raises every
 // dock mass limit by the era's exact step; the era is resolved from the campaign month in which the project is
 // authorized and then frozen on the project. Pure, platform-independent, integer-only.

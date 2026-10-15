@@ -1,5 +1,3 @@
-//packages/content-compiler/src/stages/compile.ts
-
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import type {

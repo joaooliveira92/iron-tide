@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/disruption.test.ts
 // AC-12: Disruption severity levels + stacking rules (§6).
 // Verifies the exact shipped severity multipliers, the LIGHT < MODERATE < SEVERE <
 // MISSION_ABORT ordering, per-layer highest-severity selection, and cross-layer

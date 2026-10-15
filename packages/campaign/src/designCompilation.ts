@@ -1,4 +1,3 @@
-// packages/campaign/src/designCompilation.ts
 // Campaign-compile stage: materialize authored design templates into canonical
 // CompiledDesignVersion records and their design families. Design YAML authors
 // human-friendly units (knots, mm); this stage normalizes to canonical engine

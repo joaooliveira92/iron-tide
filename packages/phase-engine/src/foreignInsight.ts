@@ -1,4 +1,3 @@
-// packages/phase-engine/src/foreignInsight.ts
 // DESIGN-16 section 13.5 (spec SB3-R24): the technology insight a foreign construction contract transfers to the
 // ordering nation. Three milestones post research micro-points into the EXISTING research model — never a
 // technology: design-study `500` at acceptance, construction-observation `1_000` at 50% paid work and delivery

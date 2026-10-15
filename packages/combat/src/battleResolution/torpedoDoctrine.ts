@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/torpedoDoctrine.ts
 // P-1 ticket 04 (AC-5): the deterministic auto-resolution torpedo doctrine.
 //
 // Each minute, every launcher with a loaded tube on a viable ship fires ONE tube at

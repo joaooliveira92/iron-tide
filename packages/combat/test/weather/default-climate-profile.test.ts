@@ -1,4 +1,3 @@
-//packages/combat/test/weather/default-climate-profile.test.ts
 // B-6/ADR-0025: the shipped canonical default climate profile
 // `defaultClimateProfile_v1` validates against the generation guard, maps all
 // 12 calendar months (over the whole canonical simulation span), declares only

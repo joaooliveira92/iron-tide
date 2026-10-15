@@ -1,4 +1,3 @@
-//packages/combat/src/smoke/engineWiring.ts
 // Step 5.5 resolveSmoke — called after movement_intent but before propulsion.
 // Takes current smoke clouds + weather context + battle state.
 // Returns updated clouds + event records.
@@ -10,7 +9,6 @@ import type { SmokeCloud } from "./model.js";
 import { resolveSmokeDriftDecay } from "./driftDecay.js";
 import { createSmokeEventRecord, type SmokeEventRecord } from "./smokeRecords.js";
 
-// ---------------------------------------------------------------------------
 // Context and result types
 
 export interface SmokeContext {
@@ -25,7 +23,6 @@ export interface SmokeStageResult {
   events: SmokeEventRecord[];
 }
 
-// ---------------------------------------------------------------------------
 // resolveSmoke — per-minute smoke lifecycle stage
 
 export function resolveSmoke(

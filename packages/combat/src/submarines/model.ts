@@ -1,4 +1,3 @@
-//packages/combat/src/submarines/model.ts
 // DESIGN-34 §1 strategic asset, §4 type definitions, §5 policies + §1
 // representation mapping. Mirrors packages/combat/src/mines/model.ts
 // (BluewaveError + invariant helper + createEnvelope content/aggregate hash).
@@ -49,9 +48,7 @@ import {
   SUBMARINE_STATE_INVARIANT_FAILED,
 } from "./reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // shared validators
-// ---------------------------------------------------------------------------
 
 function representationInvariant(value: unknown, field: string, reason: string): never {
   throw new BluewaveError(INVALID_SUBMARINE_REPRESENTATION, {
@@ -85,9 +82,7 @@ function isBp(v: unknown): v is number {
   );
 }
 
-// ---------------------------------------------------------------------------
 // §1 Strategic representation mapping + asset
-// ---------------------------------------------------------------------------
 
 // DESIGN-34 §1: MISSILE -> PERSISTENT_UNIT; coastal/medium/long/minelaying ->
 // TYPED_FLOTILLA_POOL. Pure, deterministic, exhaustive over the five types.
@@ -284,9 +279,7 @@ export function verifySubmarineStrategicAssetAggregateHash(a: SubmarineStrategic
   return computeSubmarineStrategicAssetAggregateHash(a) === a.aggregateHash;
 }
 
-// ---------------------------------------------------------------------------
 // §4 type definitions
-// ---------------------------------------------------------------------------
 
 // DESIGN-34 §9 exact remote-efficiency table (LOCAL/REGIONAL/REMOTE/EXTREME_REMOTE).
 export const SUBMARINE_REMOTE_EFFICIENCY_BP: Readonly<
@@ -550,9 +543,7 @@ export function submarineTypeDefinitionById(submarineTypeId: string): SubmarineT
   return def;
 }
 
-// ---------------------------------------------------------------------------
 // §5 policies
-// ---------------------------------------------------------------------------
 
 export interface SubmarinePolicyDefinition {
   policyId: SubmarinePolicy;
@@ -680,9 +671,7 @@ export function submarinePolicyById(policyId: string): SubmarinePolicyDefinition
   return def;
 }
 
-// ---------------------------------------------------------------------------
 // §5 policy-change surface (command layer DEFERRED per spec §3 / ticket 03)
-// ---------------------------------------------------------------------------
 
 // DESIGN-34 §5: "Policy changes require an accepted command and become effective
 // at the next trade-warfare resolution." The command/IPC (accepted-command)

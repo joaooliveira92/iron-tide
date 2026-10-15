@@ -1,4 +1,3 @@
-//packages/combat/test/tactical/division-effects.test.ts
 import { describe, it, expect } from "vite-plus/test";
 import {
   divisionEffectsV1,

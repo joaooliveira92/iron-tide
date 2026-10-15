@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/exchange-formula.test.ts
 // AC-5 (INC-2): 6-factor air-to-air exchange formula.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";

@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/recovery.test.ts
 // AC-15 (INC-6): Strike recovery and return-to-base.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";

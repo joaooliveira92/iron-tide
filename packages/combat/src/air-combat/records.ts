@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/records.ts
 // D-3 M4 Aviation: CAP & Strikes — AC-17 AirCombatRecord per DESIGN-43 §38.
 // Parallel to aircraft/records.ts pattern.
 import { SafeInt } from "@bluewave/contracts";

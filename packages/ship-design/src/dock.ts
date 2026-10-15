@@ -1,4 +1,3 @@
-// packages/ship-design/src/dock.ts
 // DESIGN-16 section 4: the national dock — its mass ceilings and dimension predicate — and the new-construction
 // eligibility it governs. Pure and dependency-free; composes with (never replaces) the per-yard fit in `yards.ts`.
 // The manual gives no numbers, so a nation's dock is authored content (`NationNavalProfile.dock`) with provenance;

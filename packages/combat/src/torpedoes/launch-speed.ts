@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/launch-speed.ts
 // DESIGN-40 §7 (underwater-tube speed limit) + §8 (above-water launcher limits)
 // as pure, fail-closed launch-speed legality functions. Speed inputs are integer
 // micrometres-per-second (µm/s) — the engine's fixed-point speed model surface

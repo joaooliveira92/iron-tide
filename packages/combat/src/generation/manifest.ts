@@ -1,4 +1,3 @@
-//packages/combat/src/generation/manifest.ts
 import { BluewaveError } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { BATTLE_MANIFEST_INVALID } from "./reasonCodes.js";

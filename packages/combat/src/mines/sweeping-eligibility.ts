@@ -1,4 +1,3 @@
-//packages/combat/src/mines/sweeping-eligibility.ts
 // DESIGN-35 §6 minesweeping eligibility (INC-3). A ship generates sweeping
 // value ONLY when all predicates pass:
 //   - ship type is DD, KE, CL, AMC, TR converted as a minesweeper, or another

@@ -1,4 +1,3 @@
-// packages/combat/src/torpedoes/eligibilityInputs.ts
 // Fail-closed input validation for the DESIGN-40 §6 launch eligibility gate,
 // split out of ./eligibility.js (which consumes it before any predicate runs).
 import { BluewaveError } from "@bluewave/contracts";

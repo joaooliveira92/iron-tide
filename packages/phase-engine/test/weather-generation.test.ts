@@ -1,4 +1,3 @@
-//packages/phase-engine/test/weather-generation.test.ts
 // B-6/ADR-0025 (DESIGN-42 §1): the weather_generation phase (registry order
 // 0.5) runs RIGHT AFTER opening_validation — per-area current-month
 // StrategicWeatherState from the canonical default climate profile

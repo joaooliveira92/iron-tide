@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/resolve.ts
 // DESIGN-40 §12–§22 torpedo fire-resolution engine stage (INC-7, AC-22) —
 // `resolveTorpedoes`, the pure stage the DESIGN-38 minute-advance engine calls
 // AFTER the damage stage. It orchestrates the INC-1..INC-6 modules into one
@@ -58,9 +57,7 @@ export {
   TORPEDO_RESOLVE_IMPACT_SUBSTEP,
 } from "./torpedoSupport.js";
 
-// ---------------------------------------------------------------------------
 // the per-minute stage surfaces
-// ---------------------------------------------------------------------------
 
 export interface TorpedoLauncherWiring {
   /** authoritative §2 launcher state (threaded across minutes). */

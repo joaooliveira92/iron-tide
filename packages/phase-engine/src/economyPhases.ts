@@ -1,4 +1,3 @@
-// packages/phase-engine/src/economyPhases.ts
 // Economy phases: monthly_revenue, appropriation, maintenance, obligation.
 import type { CampaignSnapshot, ConstructionProject, NationState, Ship } from "@bluewave/campaign";
 import { transitionConstructionProject } from "@bluewave/campaign";

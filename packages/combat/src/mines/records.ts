@@ -1,4 +1,3 @@
-//packages/combat/src/mines/records.ts
 // DESIGN-35 §28 — immutable Monthly Resolution Record (INC-8, AC-20).
 //
 // Every monthly mine-warfare resolution creates ONE immutable
@@ -110,11 +109,9 @@ export function validateMineWarfareResolutionContract(
   }
 }
 
-// ---------------------------------------------------------------------------
 // §28 sub-record shapes (explicitly typed; the deferred ones are only ever
 // constructed as empty arrays this slice — but the TYPE exists so the
 // continuation populates them without a breaking change).
-// ---------------------------------------------------------------------------
 
 export interface AreaAndWarContext {
   areaId: string;
@@ -215,9 +212,7 @@ export interface MineWarfareEffect {
   description: string;
 }
 
-// ---------------------------------------------------------------------------
 // the §28 record surface
-// ---------------------------------------------------------------------------
 
 export interface MineWarfareResolutionRecord {
   month: SafeInt;
@@ -251,9 +246,7 @@ export interface MineWarfareResolutionRecord {
 
 export type MineWarfareResolutionRecordBody = Omit<MineWarfareResolutionRecord, "recordHash">;
 
-// ---------------------------------------------------------------------------
 // fail-closed validation of every group
-// ---------------------------------------------------------------------------
 
 function isSafeMonth(v: unknown): v is SafeInt {
   return SafeInt.isSafeInt(v as number) && (v as SafeInt) >= 0;
@@ -474,9 +467,7 @@ export function assertMineWarfareResolutionRecordSurface(r: MineWarfareResolutio
     raiseInvariant("versions", r, "must be the shipped mine ruleset/formula versions");
 }
 
-// ---------------------------------------------------------------------------
 // assembler (consumes the INC-1..INC-7 surface in §29 canonical order)
-// ---------------------------------------------------------------------------
 
 export interface MineWarfareResolutionAssemblerInput {
   month: SafeInt;

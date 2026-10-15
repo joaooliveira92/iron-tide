@@ -1,4 +1,3 @@
-// packages/ship-design/src/classificationRules.ts
 // DESIGN-22 classification data and mandatory rules: the thresholds, the facts they read and every type's failures as
 // structured results. Pure; no design or finding construction (that is classification.ts).
 import { UM_PER_INCH, UM_PER_KNOT } from "./units.js";

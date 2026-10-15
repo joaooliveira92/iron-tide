@@ -30,7 +30,6 @@ import { PhaseEngineError } from "./errors.js";
 import { makeLedgerEntry } from "./events.js";
 import type { FinancialLedger } from "./financial-ledger.js";
 
-// ---------------------------------------------------------------------------
 // Full CommandRecord lifecycle (ticket 06).
 //
 // The month pipeline's default path consumes only the success/reject outcome of
@@ -53,7 +52,6 @@ import type { FinancialLedger } from "./financial-ledger.js";
 //
 // The default month pipeline is deliberately UNCHANGED (goldens byte-identical);
 // this is an opt-in full-lifecycle path proven against the actual snapshot.
-// ---------------------------------------------------------------------------
 
 export const BUDGET_PROJECT_COMMAND_TYPE_ID = "budget_project";
 export const BUDGET_PROJECT_COMMAND_SCHEMA_VERSION = "1.0.0";

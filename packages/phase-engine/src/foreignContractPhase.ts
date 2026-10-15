@@ -1,4 +1,3 @@
-// packages/phase-engine/src/foreignContractPhase.ts
 // The monthly foreign-contract step (DESIGN-16 section 13.2/13.4; spec SB3-R20/R22). It is called from the appropriation
 // phase, which already holds the treasury/constructions/nations read-write permissions it needs. For every project that
 // carries a `foreignContractId` it:

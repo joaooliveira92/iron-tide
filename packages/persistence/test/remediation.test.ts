@@ -1,4 +1,3 @@
-//packages/persistence/test/remediation.test.ts
 // Boundary tests for the code-review remediation (TODO.md): directory-traversal
 // rejection, signature-file validation, snapshotHash correctness, atomic
 // publication, cancellation invariants, the list() signature fallback, and

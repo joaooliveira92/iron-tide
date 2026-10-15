@@ -1,4 +1,3 @@
-// packages/combat/src/torpedoes/torpedoStages.ts
 // STAGES 1-3 of the per-minute DESIGN-40 torpedo resolution (launch → advance →
 // hit resolution + detonation). Run state lives in ./torpedoRun.js; STAGE 4
 // (damage) and the assembly live there too.

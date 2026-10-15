@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/reason-codes-rollup.test.ts
 // AC-19 (INC-7): Reason-code set-equality — 16 shipped + 3 deferred markers.
 import { describe, expect, it } from "vite-plus/test";
 import {

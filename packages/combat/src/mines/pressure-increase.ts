@@ -1,4 +1,3 @@
-//packages/combat/src/mines/pressure-increase.ts
 // DESIGN-35 §5 mine-pressure increase / reinforcement (INC-2):
 //
 //   addedPressure = min(1_000_000 - currentPressure, effectiveLayingValue)

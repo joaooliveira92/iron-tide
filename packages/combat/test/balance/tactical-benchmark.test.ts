@@ -51,7 +51,6 @@ const DEFENDER = "n-fr";
 
 type Side = "attacker" | "defender";
 
-// ---------------------------------------------------------------------------
 // Scenario design parameters (production national guns/armor).
 
 interface HullSpec {
@@ -198,7 +197,6 @@ const SCENARIOS: Scenario[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
 // Analytic penetration-outcome distribution (range-invariant model; a pure
 // function of the design caliber and belt, weighted by the hit-zone weights).
 
@@ -224,7 +222,6 @@ function penetrationDistribution(
   return dist;
 }
 
-// ---------------------------------------------------------------------------
 // Battle run + aggregation.
 
 interface BattleSample {

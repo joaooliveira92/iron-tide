@@ -1,4 +1,3 @@
-//packages/combat/test/tactical/unit.test.ts
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { promoteTacticalUnit, TACTICAL_UNIT_PROMOTION_INVALID } from "../../src/tactical/unit.js";

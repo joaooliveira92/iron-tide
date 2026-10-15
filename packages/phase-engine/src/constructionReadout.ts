@@ -1,4 +1,3 @@
-// packages/phase-engine/src/constructionReadout.ts
 // Compiled display readouts for a dockyard project (SB3-R31): the monthly instalment, remaining months, total cost and
 // launch month. Pure derivations over the project, its compiled design and the campaign month — never authored in the
 // engine state and never in the renderer, which consumes these values as display only.

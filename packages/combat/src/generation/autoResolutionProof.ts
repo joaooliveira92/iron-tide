@@ -1,4 +1,3 @@
-//packages/combat/src/generation/autoResolutionProof.ts
 import { BluewaveError } from "@bluewave/contracts";
 import { AUTO_RESOLUTION_UNAVAILABLE } from "./reasonCodes.js";
 import type { BattleManifest } from "./manifest.js";

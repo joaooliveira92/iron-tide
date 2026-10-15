@@ -64,8 +64,6 @@ import {
 } from "../friendlyIdentification.js";
 import { arrayEquals } from "./shared.js";
 
-// ---------------------------------------------------------------------------
-
 export interface SubmarineEffectivenessContract {
   policyId: string;
   rulesetVersion: string;
@@ -127,9 +125,7 @@ export function validateSubmarineEffectivenessContract(
   void c;
 }
 
-// ---------------------------------------------------------------------------
 // submarine_sea_state_v1 (§13–17)
-// ---------------------------------------------------------------------------
 
 export interface SubmarineSeaStateContract {
   policyId: string;
@@ -232,9 +228,7 @@ export function validateSubmarineSeaStateContract(
   void c;
 }
 
-// ---------------------------------------------------------------------------
 // submarine_screening_balance_v1 (§18)
-// ---------------------------------------------------------------------------
 
 export interface SubmarineScreeningBalanceContract {
   policyId: string;
@@ -295,9 +289,7 @@ export function validateSubmarineScreeningBalanceContract(
   void c;
 }
 
-// ---------------------------------------------------------------------------
 // submarine_mine_laying_v1 (§20)
-// ---------------------------------------------------------------------------
 
 export interface SubmarineMineLayingContract {
   policyId: string;
@@ -348,9 +340,7 @@ export function validateSubmarineMineLayingContract(
   void c;
 }
 
-// ---------------------------------------------------------------------------
 // submarine_friendly_identification_v1 (§23)
-// ---------------------------------------------------------------------------
 
 export interface SubmarineFriendlyIdentificationContract {
   policyId: string;

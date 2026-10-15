@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/capabilities.ts
 // B-6 reachability: project the optional per-battle capability declarations on
 // the immutable `BattleManifest` into the tactical stage contexts the
 // auto-resolver supplies to `advanceMinute`:
@@ -45,7 +44,6 @@ function compareIds(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-// ---------------------------------------------------------------------------
 // Smoke (DESIGN-42 / C-5)
 
 /** Project a `SmokeContext` from the manifest's committed smoke sources and the
@@ -84,7 +82,6 @@ function toSmokeCloud(s: SmokeSourceDeclaration): ReturnType<typeof createSmokeC
   });
 }
 
-// ---------------------------------------------------------------------------
 // Air combat (DESIGN-43/44 / D-3)
 
 /** Project an `AirCombatContext` from the manifest's committed air groups.
@@ -140,7 +137,6 @@ function toStrikeMission(g: StrikeDeclaration): StrikeMissionState {
   return { ...base, ...(g.phase !== undefined ? { phase: g.phase } : {}) };
 }
 
-// ---------------------------------------------------------------------------
 // Air defense (DESIGN-45 / D-4)
 
 /** Project an `AirDefenseContext` from the manifest's committed air-defense

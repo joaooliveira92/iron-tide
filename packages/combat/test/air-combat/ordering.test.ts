@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/ordering.test.ts
 // AC-18 (INC-7): canonical ordering per DESIGN-43 §39 + DESIGN-38 §29.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";

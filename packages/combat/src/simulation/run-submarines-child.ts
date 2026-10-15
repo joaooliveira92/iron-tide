@@ -1,4 +1,3 @@
-//packages/combat/src/simulation/run-submarines-child.ts
 // Deterministic child-process script for C-3 submarines (AC-20, INC-8).
 // Spawned TWICE and byte-compared. Exercises all INC-4..INC-7 functions.
 import { canonicalSerialize } from "@bluewave/deterministic";

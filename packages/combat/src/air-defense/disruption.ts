@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/disruption.ts
 // D-4 M4 Aviation: Air Defense — AC-12 disruption severity + stacking per DESIGN-45 §6.
 // Shipped levels (§6 lines 118-123): LIGHT 9_000/9_500, MODERATE 7_500/8_500,
 // SEVERE 5_000/6_500, MISSION_ABORT → attack does not proceed (0/0). Severity ordering:

@@ -1,4 +1,3 @@
-//packages/combat/src/smoke/smokeGenerator.ts
 // DESIGN-42 §§20-22: smoke generator activation logic.
 
 import { createEnvelope } from "@bluewave/deterministic";

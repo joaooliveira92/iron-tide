@@ -1,4 +1,3 @@
-//packages/combat/src/tactical/division.ts
 import type {
   CommanderRef,
   DivisionFormation,

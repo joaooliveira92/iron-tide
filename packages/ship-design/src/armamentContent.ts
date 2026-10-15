@@ -40,9 +40,7 @@ import {
 import type { ComponentDef } from "./component.js";
 import type { GunModelDef, NationNavalProfile, Provenance } from "./nationProfile.js";
 
-// -------------------------------------------------------------------------------------------------
 // Authored content (the parsed shape of ship-building/armament/*.yaml)
-// -------------------------------------------------------------------------------------------------
 
 export interface AuthoredGunFamily {
   readonly id: string;
@@ -126,9 +124,7 @@ export interface AuthoredArmamentContent {
   readonly ammunition: readonly AuthoredAmmunition[];
 }
 
-// -------------------------------------------------------------------------------------------------
 // Building the authoritative catalogue
-// -------------------------------------------------------------------------------------------------
 
 const toArmamentProvenance = (p: Provenance): ArmamentProvenance => ({
   sourceStatus: p.sourceStatus,
@@ -255,9 +251,7 @@ export function buildArmamentCatalogue(content: AuthoredArmamentContent): Armame
   };
 }
 
-// -------------------------------------------------------------------------------------------------
 // Starter armament usage (the 18 opening reference designs)
-// -------------------------------------------------------------------------------------------------
 
 export interface ArmamentWeapon {
   readonly instanceId: string;
@@ -501,9 +495,7 @@ export function buildArmamentUsageManifest(input: ArmamentCoverageInput): readon
   return usages;
 }
 
-// -------------------------------------------------------------------------------------------------
 // Runtime weapon resolution (ADR-0093 Step 3: the ship-design cut-over)
-// -------------------------------------------------------------------------------------------------
 
 /** One installed weapon resolved through the authoritative armament domain. */
 export interface InstalledWeaponResolution {
@@ -641,9 +633,7 @@ export function nationHasArmamentContent(
   );
 }
 
-// -------------------------------------------------------------------------------------------------
 // The release gate
-// -------------------------------------------------------------------------------------------------
 
 function entityIdOf(finding: ArmamentResolutionFinding): string {
   return `${finding.entity.kind}:${finding.entity.id}`;

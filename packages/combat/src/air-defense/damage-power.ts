@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/damage-power.ts
 // D-4 M4 Aviation: Air Defense — AC-14 simplified system-level damage/power per DESIGN-45 §21.
 // The full independent damage model (weapon/director/radar/power/feed/stabilization, §21
 // lines 350-359) is deferred (spec §1.3). This slice ships the simplified system-level

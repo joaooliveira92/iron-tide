@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/director-scaling.ts
 // D-4 M4 Aviation: Air Defense — AC-8 AA director assignment + scaling per DESIGN-45 §11/§12.
 //
 // §11 "AA Director Assignment": directors MUST be assigned before firing by

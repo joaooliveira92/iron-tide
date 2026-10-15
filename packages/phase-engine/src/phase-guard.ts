@@ -1,4 +1,3 @@
-//packages/phase-engine/src/phase-guard.ts
 import { RandomEngine } from "@bluewave/random";
 import { PhaseRegistry, type PhaseDefinition } from "./registry.js";
 

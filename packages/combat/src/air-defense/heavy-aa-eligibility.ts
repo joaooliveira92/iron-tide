@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/heavy-aa-eligibility.ts
 // D-4 M4 Aviation: Air Defense — AC-4 heavy-AA eligibility per DESIGN-45 §7.
 // Heavy AA may engage an aircraft formation attacking the defended ship or a nearby
 // protected ship within exactly 5 nautical miles (9_260 m) of the heavy-AA ship, when the

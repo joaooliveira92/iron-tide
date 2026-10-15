@@ -1,4 +1,3 @@
-// packages/campaign/src/campaignSession.ts
 // DESIGN-03 §2, §3, §8 - campaign session state + preconditions (Normative)
 // Validates before RNG, enforces Scenario §1, Timeline §2, Configuration §3, Immutability §8.
 // Kept separate from state.ts (compiled world snapshot) - a session tracks configuration +
@@ -33,9 +32,7 @@ export function hashConfiguration(cfg: CampaignConfiguration): string {
   return sha256Hex(canonicalSerialize(cfg));
 }
 
-// ---------------------------------------------------------------------------
 // Campaign Session State
-// ---------------------------------------------------------------------------
 
 export interface CampaignSessionState {
   readonly configuration: CampaignConfiguration;

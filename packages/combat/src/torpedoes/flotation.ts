@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/flotation.ts
 // DESIGN-40 §17 flotation damage (INC-6, AC-16). The exact shipped formula:
 //   immediateFlotationLoss = floor(baseWarheadFlotationDamage *
 //     protectionLeakMultiplierBp * impactZoneMultiplierBp *

@@ -1,4 +1,3 @@
-// packages/ship-design/src/constructionCapacity.ts
 // DESIGN-16 sections 7-9 (spec SB3-R18/R19): the national concurrency cap and the AMC/small-corvette construction
 // capacity exemption. The cap is a *displacement reservation layered on top of* the work-micro-unit pools: it governs
 // how much tonnage may be under construction at once, never how fast work is applied. The two are deliberately kept
@@ -60,9 +59,7 @@ export function maxConcurrentConstructionMassKg(dockMaxMassKg: number, multipleB
   );
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // ConstructionCapacityExemptionDefinition (DESIGN-16 section 9)
-// ---------------------------------------------------------------------------------------------------------------
 
 /** The canonical ship types an exemption may name (the keys of the engine hull-type map). */
 export type ExemptibleShipType = keyof typeof HULL_TYPE_FOR_SHIP_TYPE;
@@ -166,9 +163,7 @@ export function reservedNewConstructionMassKg(
   return normalPoolConsumption(ship.displacementKg, effectiveExemptCapacityBp(definitions, ship));
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Shipped exemption definitions (built from versioned balance constants)
-// ---------------------------------------------------------------------------------------------------------------
 
 export const AMC_CAPACITY_EXEMPTION_DEFINITION_ID = "amc_new_construction_capacity_exemption_v1";
 export const SMALL_CORVETTE_CAPACITY_EXEMPTION_DEFINITION_ID =
@@ -230,9 +225,7 @@ export function shippedConstructionCapacityExemptions(
   ];
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Deterministic reservation ordering (DESIGN-16 section 17)
-// ---------------------------------------------------------------------------------------------------------------
 
 export interface CapacityReservation {
   readonly pool: ConstructionCapacityPool;

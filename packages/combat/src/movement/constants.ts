@@ -1,4 +1,3 @@
-//packages/combat/src/movement/constants.ts
 // Versioned authoritative movement-kinematics constants (DESIGN-38 §20 +
 // DESIGN-07 fixed-point). Grounded in docs/research/b2-m2-movement-spotting.md
 // and recorded in the B-2 ADR. All values shipped as *_v1 with a validate guard.

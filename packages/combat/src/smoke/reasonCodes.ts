@@ -1,4 +1,3 @@
-//packages/combat/src/smoke/reasonCodes.ts
 // DESIGN-42 §30 subset relevant to the smoke module, kept separate from the
 // top-level combat catalog (src/reasonCodes.ts) so the C-5 set-equality guard
 // (reason-codes-smoke.test.ts, later INC deliverable) is not grown without

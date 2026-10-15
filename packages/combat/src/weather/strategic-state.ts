@@ -1,4 +1,3 @@
-//packages/combat/src/weather/strategic-state.ts
 // DESIGN-42 §1 authoritative StrategicWeatherState: one per strategic area per
 // campaign month. Every numeric field is canonical integer fixed-point
 // (DESIGN-07); non-integers and malformed types are rejected at the construction

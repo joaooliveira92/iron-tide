@@ -385,9 +385,7 @@ export const reviseProjectCommandProgram = withSchema(
     }),
 );
 
-// ---------------------------------------------------------------------------
 // Rebuild (ADR-0078): list the ships that can be rebuilt, load one's draft, check a change, start the rebuild.
-// ---------------------------------------------------------------------------
 
 /** The player's own ship, if it is commissioned, free (no battle) and its design kept a source draft; else why not. */
 function rebuildableShip(record: CampaignSessionRecord, shipId: string) {

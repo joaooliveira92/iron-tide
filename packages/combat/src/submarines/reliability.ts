@@ -1,4 +1,3 @@
-//packages/combat/src/submarines/reliability.ts
 // DESIGN-34 §7 reliability (AC-5, INC-2). Integer range 0..100 and the shipped
 // operational multiplier table (0..19:4_000 … 95..100:12_000 basis points).
 // A reliability score below 20 prohibits OFFENSIVE deployment and permits only

@@ -1,4 +1,3 @@
-//packages/combat/test/weather/night-twilight.test.ts
 // AC-10: Night/twilight — five canonical states (§27) derived from battle
 // date/location/tactical time/daylight profile; each state supplies explicit
 // optical visibility, identification, gunnery, air-op, and illumination policies.

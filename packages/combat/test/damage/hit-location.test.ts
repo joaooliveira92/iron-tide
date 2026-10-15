@@ -1,4 +1,3 @@
-//packages/combat/test/damage/hit-location.test.ts
 // INC-3 — Hit location resolution (Stage 1). Proves AC-4.
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
@@ -6,7 +5,6 @@ import { resolveHitLocation, type HitInput } from "../../src/damage/hitLocation.
 import { DAMAGE_HIT_LOCATION_INVALID } from "../../src/damage/reasonCodes.js";
 import { type CompartmentDef, type ArmorZoneDef } from "../../src/damage/shipLayout.js";
 
-// ---------------------------------------------------------------------------
 // Fixtures
 
 /**
@@ -71,7 +69,6 @@ const ZONES: readonly ArmorZoneDef[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
 // Tests
 
 describe("INC-3: Hit location resolution (AC-4)", () => {

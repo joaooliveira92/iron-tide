@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/director-scaling.test.ts
 // AC-8: Director assignment order + scaling table values (DESIGN-45 §11, §12).
 // §11 total order: (1) defense layer priority; (2) threat score DESCENDING — realized from
 // the §17 Simultaneous Threats ordering (released first, closer-to-impact first, defended

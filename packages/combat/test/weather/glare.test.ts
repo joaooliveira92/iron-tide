@@ -1,4 +1,3 @@
-//packages/combat/test/weather/glare.test.ts
 // AC-7: Glare — directional, angular separation bands §24; disabled by cloud
 // cover > 7_500 bp; observer looking toward sun receives penalty only.
 import { describe, it, expect } from "vite-plus/test";

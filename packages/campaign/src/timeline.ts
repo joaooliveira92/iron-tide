@@ -1,4 +1,3 @@
-// packages/campaign/src/timeline.ts
 // DESIGN-03 §2 Simulation Timeline - Normative
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 export const SIMULATION_END_YEAR = 1970 as const;

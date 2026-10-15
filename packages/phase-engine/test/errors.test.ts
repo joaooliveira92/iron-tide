@@ -1,4 +1,3 @@
-// packages/phase-engine/test/errors.test.ts
 // Ticket 30 (audit rescope) — the eight foundation `throw`s in snapshotClone,
 // financial-ledger and commandLifecycle are `PhaseEngineError` (a runtime-free
 // `Data.TaggedError`) instead of plain `Error` / `Object.assign(Error, {code})`.

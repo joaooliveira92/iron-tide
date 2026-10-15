@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/ciws-redundancy.ts
 // D-4 M4 Aviation: Air Defense — AC-10 CIWS redundancy per DESIGN-45 §15/§16.
 //
 // §15 "CIWS System Definition": one CIWS system is one independent terminal-defense mount

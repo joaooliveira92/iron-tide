@@ -1,4 +1,3 @@
-//packages/campaign/src/division.ts
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { sha256Hex, canonicalSerialize } from "@bluewave/deterministic";
 

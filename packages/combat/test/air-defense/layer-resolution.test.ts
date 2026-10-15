@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/layer-resolution.test.ts
 // AC-3: Layers resolve in HEAVY_AA → MEDIUM_AA → LIGHT_AA → CIWS order (§1).
 // Plus per-layer candidate determinism, empty-layer empty results, and §18 matrix fidelity.
 

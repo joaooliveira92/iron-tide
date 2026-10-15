@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/ordering.ts
 // D-4 M4 Aviation: Air Defense — AC-15 canonical ordering per DESIGN-45 §27.
 // Parallel to air-combat/ordering.ts pattern.
 //

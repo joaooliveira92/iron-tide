@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/reasonCodes.ts
 // B-6 INC-2 in-slice reason codes for the battle auto-resolution orchestrator
 // (DESIGN-38 §33/§36/§37). Kept separate from the top-level combat catalog
 // (src/reasonCodes.ts) so the shared catalog's set-equality guard is not grown

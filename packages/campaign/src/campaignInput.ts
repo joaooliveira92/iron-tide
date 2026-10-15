@@ -1,4 +1,3 @@
-// packages/campaign/src/campaignInput.ts
 // Primitive coercions every campaign data builder uses when reading compiled
 // content records. The raw-file/parse boundary moved to the content compiler
 // (CAH-LEG-1): the campaign compiler now consumes only a verified, decoded

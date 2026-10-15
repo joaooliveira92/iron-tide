@@ -1,4 +1,3 @@
-//packages/combat/src/damage/damageControl.ts
 // DESIGN-41 §§27-28 — Damage-control resource allocation and priority scheduling.
 //
 // Pure/deterministic: no ambient I/O/clock/random. Integer fixed-point arithmetic only.
@@ -22,7 +21,6 @@ import {
   FIREFIGHTING_PER_TEAM_BP,
 } from "./damageControlConstants.js";
 
-// ---------------------------------------------------------------------------
 // Exported types
 
 export interface DamageControlAllocation {
@@ -39,7 +37,6 @@ export interface AllocationResult {
   remainingResources: DamageControlResource;
 }
 
-// ---------------------------------------------------------------------------
 // Internal helper types
 
 interface AllocationTask {
@@ -51,7 +48,6 @@ interface AllocationTask {
   kind: "fire" | "flood";
 }
 
-// ---------------------------------------------------------------------------
 // Priority helpers
 
 /**
@@ -104,7 +100,6 @@ function floodingSeverityRank(severity: FloodingSeverity): number {
   }
 }
 
-// ---------------------------------------------------------------------------
 // Default resource factory
 
 /**
@@ -123,7 +118,6 @@ export function createDefaultDamageControlResource(): DamageControlResource {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Effective capacity helpers
 
 /**
@@ -162,7 +156,6 @@ export function getEffectiveRepairReduction(allocations: DamageControlAllocation
   return totalTeams * 50; // 50 kg/min per allocated team
 }
 
-// ---------------------------------------------------------------------------
 // Allocation engine
 
 /**

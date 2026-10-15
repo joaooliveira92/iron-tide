@@ -1,4 +1,3 @@
-// packages/campaign/src/politicalCompilation.ts
 // Campaign-compile stage: materialize political state (diplomatic relations) and
 // the empty war-state shell. Enforces the canonical pairwise relation registry.
 import type { DiagnosticCollector } from "@bluewave/diagnostics";

@@ -1,5 +1,3 @@
-//packages/persistence/test/battle-generation-persistence.test.ts
-
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

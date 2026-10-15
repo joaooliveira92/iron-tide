@@ -1,4 +1,3 @@
-//packages/combat/src/gunnery/rateOfFire.ts
 // DESIGN-39 §4 rate-of-fire / reload resolution (INC-3). Reload is integer tactical
 // milliseconds of work:
 //
@@ -142,12 +141,10 @@ export function gunQualityMultipliers(quality: number): GunQualityMultipliers {
   return GUN_QUALITY_TABLE[String(quality) as keyof typeof GUN_QUALITY_TABLE];
 }
 
-// ---------------------------------------------------------------------------
 // Reload progress in exact tactical milliseconds (§4). A battery fires only when
 // progress >= effectiveReloadMs (isReloadComplete) AND all firing predicates pass;
 // after firing, progress resets. The non-reload firing predicates are deferred to
 // INC-4; this module exposes the reload-seam only.
-// ---------------------------------------------------------------------------
 
 // AC-5: advance reload progress by an exact non-negative number of tactical ms.
 export function advanceReloadProgress(progressMs: number, deltaMs: number): number {

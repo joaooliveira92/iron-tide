@@ -1,4 +1,3 @@
-//packages/combat/src/smoke/funnelSmoke.ts
 // DESIGN-42 §11: funnel smoke density formula.
 import { BluewaveError } from "@bluewave/contracts";
 import {

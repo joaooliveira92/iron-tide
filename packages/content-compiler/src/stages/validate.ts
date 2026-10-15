@@ -1,5 +1,3 @@
-//packages/content-compiler/src/stages/validate.ts
-
 import {
   AmmunitionPatternSchema,
   AreaSchema,

@@ -1,4 +1,3 @@
-//packages/combat/src/simulation/run-torpedo-child.ts
 // Deterministic child-process script for the C-1 torpedo minute-advance stage
 // (AC-23). Spawned TWICE by test/torpedo/determinism.test.ts and byte-compared —
 // two clean Node processes must emit identical per-minute hashes + torpedo

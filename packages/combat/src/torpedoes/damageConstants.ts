@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/damageConstants.ts
 // DESIGN-40 §16–§23 torpedo-damage shipped constants (INC-6, AC-15..AC-18).
 // Every DESIGN-40-pinned integer lives here VERBATIM (protection-leak §17,
 // impact-zone §17, flooding-isolation §18, machinery weights §19, shock-radius
@@ -195,7 +194,6 @@ export type TorpedoChainReactionModifierKey = (typeof TORPEDO_CHAIN_REACTION_MOD
 export const TORPEDO_CHAIN_REACTION_NEUTRAL_MODIFIER_BP = 10_000 as const;
 export const TORPEDO_CHAIN_REACTION_SCALE_EXPONENT = 5 as const; // 10_000^5
 
-// ---------------------------------------------------------------------------
 // TorpedoDamageContract — ships the INC-6 authored §16–§23 damage-constant
 // surface (INC-24 "every new torpedo constant ships *_v1 + contract +
 // validate guard"; the §21 surface ships under its own name-branded contract

@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/ammunition.ts
 // DESIGN-40 §3 local ammunition mechanics: every launch consumes exactly one
 // loaded torpedo per fired tube; a reload reserves + consumes one compatible
 // reserve torpedo and the required reload time. The module NEVER creates

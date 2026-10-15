@@ -1,4 +1,3 @@
-//packages/combat/test/weather/strategic-state.test.ts
 // AC-1: StrategicWeatherState invariant — authoritative integer
 // StrategicWeatherState with correct fields and bounds; non-integers and
 // out-of-range values rejected with INVALID_STRATEGIC_WEATHER_STATE or
@@ -12,7 +11,6 @@ import {
 } from "../../src/weather/strategic-state.js";
 import { INVALID_STRATEGIC_WEATHER_STATE } from "../../src/weather/reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // Helper — minimal valid state seed (all fields canonical-integer)
 function seed(overrides: Partial<StrategicWeatherState> = {}): StrategicWeatherState {
   return {

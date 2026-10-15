@@ -1,4 +1,3 @@
-//packages/combat/src/weather/engine.ts
 // DESIGN-42 §4/§5/§27/§28 — `resolveWeather` engine stage that runs each
 // tactical minute before spotting (step between B-2 step 7 and step 8).
 // Pure/deterministic: computes time-of-day, visibility distance, and every 30

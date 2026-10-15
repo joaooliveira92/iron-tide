@@ -1,4 +1,3 @@
-//packages/combat/src/gunnery/accuracy.ts
 // DESIGN-39 §3 accuracy resolution (INC-2): the exact basis-point rational value
 // is retained through ALL 16 multiplier factors and rounded ONCE with FLOOR at
 // the final accuracy check (never truncated mid-product). A missing/undefined

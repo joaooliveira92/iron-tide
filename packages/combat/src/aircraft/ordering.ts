@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/ordering.ts
 // DESIGN-43 §39 canonical ordering for aircraft resolution.
 import type {
   AircraftDevelopmentProject,

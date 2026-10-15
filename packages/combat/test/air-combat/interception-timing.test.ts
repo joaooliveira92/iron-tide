@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/interception-timing.test.ts
 // AC-3 (INC-1): Interception timing formula.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";

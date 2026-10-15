@@ -1,4 +1,3 @@
-// packages/campaign/src/technologyMaterialization.ts
 // DESIGN-03 §6 technology-variation materialization: turn canonical technology
 // definitions plus a validated variation profile into a deterministic
 // CampaignTechnologyManifest. The profile/manifest contracts and their

@@ -1,4 +1,3 @@
-//packages/phase-engine/test/command-lifecycle.test.ts
 // Ticket 06 — full CommandRecord lifecycle exercised against the running
 // snapshot for a real command type (budget_project). Proves the modeled
 // lifecycle machine in @bluewave/commands actually executes against the

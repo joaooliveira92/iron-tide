@@ -1,4 +1,3 @@
-//packages/combat/src/damage/magazineHazard.ts
 // DESIGN-41 §10 item 1 — Magazine/ammunition secondary hazard. This stage
 // evaluates whether a hit that reaches a magazine compartment triggers a
 // detonation. Other secondary hazards (fuel, torpedo warheads) are deferred
@@ -12,7 +11,6 @@
 //
 // Pure/deterministic: uses keyed RNG function, no ambient I/O/clock/random.
 
-// ---------------------------------------------------------------------------
 // Constants
 
 // Base detonation probability for a magazine hit meeting all conditions.
@@ -34,7 +32,6 @@ const MAGAZINE_ZONE_TYPES = new Set([
   "AMMUNITION_HOLD",
 ]);
 
-// ---------------------------------------------------------------------------
 // Input/Output types
 
 export interface MagazineHazardInput {
@@ -57,7 +54,6 @@ export interface MagazineHazardResult {
   hazardType: string;
 }
 
-// ---------------------------------------------------------------------------
 // Evaluator
 
 /**

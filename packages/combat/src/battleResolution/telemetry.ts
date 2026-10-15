@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/telemetry.ts
 // ADR-0098: observational battle telemetry for the tactical balance benchmark.
 // Accumulated from the already-resolved minute surfaces (gunnery salvo records);
 // no RNG, no extra draws, integer-only. OBSERVATIONAL: excluded from

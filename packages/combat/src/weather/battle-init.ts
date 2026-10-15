@@ -1,4 +1,3 @@
-//packages/combat/src/weather/battle-init.ts
 // DESIGN-42 §2 BattleWeatherInitialization (INC-2/AC-3): every battle creates
 // exactly one immutable BattleWeatherInitialization from the area's committed
 // strategic weather state, battle date/start time, battle location within the

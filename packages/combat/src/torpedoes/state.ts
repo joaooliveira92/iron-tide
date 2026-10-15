@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/state.ts
 // DESIGN-40 §2 authoritative TorpedoLauncherState: one per installed launcher.
 // The numeric surface is integer fixed-point (DESIGN-07): tube count, integer
 // ammunition counts, integer milli-degree train limits, integer reload

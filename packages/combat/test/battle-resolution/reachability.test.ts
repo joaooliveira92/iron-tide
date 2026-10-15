@@ -1,4 +1,3 @@
-// packages/combat/test/battle-resolution/reachability.test.ts
 // Ticket 03 (playable-loop reachability): the smoke (C-5), air-combat (D-3) and
 // air-defense (D-4) tactical stages are reachable through the production
 // `resolveBattleAuto` path from optional, authoritative manifest capability

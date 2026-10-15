@@ -1,4 +1,3 @@
-//packages/combat/test/weather/event-record.test.ts
 // AC-11: WeatherEventRecord completeness — every weather transition/visibility
 // result produces §28 fields: minute/substep, source/affected participants,
 // canonical inputs, formulas/multipliers, RNG decisions, pre/post state hashes,

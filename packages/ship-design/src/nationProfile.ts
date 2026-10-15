@@ -10,9 +10,7 @@
  */
 import type { ShipTypeId } from "./shipTypes.js";
 
-// ---------------------------------------------------------------------------------------------------------------
 // Provenance (the merchant-liner discipline, applied to national content)
-// ---------------------------------------------------------------------------------------------------------------
 
 /** How a value came to be: sourced, derived, an estimate, a pure balance choice, or an unreplaced placeholder. */
 export const SOURCE_STATUSES = [
@@ -72,9 +70,7 @@ export interface Provenance {
   readonly note?: string;
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Doctrine / capability vocabularies
-// ---------------------------------------------------------------------------------------------------------------
 
 /** DESIGN-22-style strategic postures. */
 export const NAVAL_POSTURES = [
@@ -157,9 +153,7 @@ export interface ComponentVariantDef {
   readonly provenance: Provenance;
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Hard capability (restrictive only) and soft preference (guiding only)
-// ---------------------------------------------------------------------------------------------------------------
 
 /**
  * Hard capabilities. Each field is a *ceiling* or *allow-list*: the effective capability is the intersection of
@@ -205,9 +199,7 @@ export interface SoftPreferences {
   readonly accommodationStandard: "SPARTAN" | "STANDARD" | "GENEROUS";
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Industrial / construction
-// ---------------------------------------------------------------------------------------------------------------
 
 /** A date-banded ceiling (e.g. max practical displacement per era). */
 export interface DatedValue {
@@ -297,9 +289,7 @@ export interface NamingPolicy {
   readonly convention: Readonly<Partial<Record<ShipTypeId, string>>>;
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // The profile
-// ---------------------------------------------------------------------------------------------------------------
 
 export interface NationNavalProfile {
   readonly nationId: string;
@@ -390,9 +380,7 @@ export function resolveConstructionModifiers(
 export const MODIFIER_MIN_BP = 8500;
 export const MODIFIER_MAX_BP = 11500;
 
-// ---------------------------------------------------------------------------------------------------------------
 // Validation
-// ---------------------------------------------------------------------------------------------------------------
 
 export interface ProfileIssue {
   readonly nationId: string;
@@ -641,9 +629,7 @@ export function validateNavalProfiles(
   return out;
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Comparative differentiation
-// ---------------------------------------------------------------------------------------------------------------
 
 /**
  * A short, stable fingerprint of the axes that should make two nations recognisably different. Used by the
@@ -694,9 +680,7 @@ export function fingerprintDistance(a: ProfileFingerprint, b: ProfileFingerprint
   return d;
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Player-facing explanation (docs/ships-nation-orientation.md §10)
-// ---------------------------------------------------------------------------------------------------------------
 
 /** A plain-language brief a screen can render; every string is derived from the profile, never hard-coded per nation. */
 export interface NationProfileBrief {

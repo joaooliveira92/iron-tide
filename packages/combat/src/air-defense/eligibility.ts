@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/eligibility.ts
 // D-4 M4 Aviation: Air Defense — shared eligibility machinery.
 // Layer-agnostic predicates used by the per-layer eligibility modules and by
 // layer resolution (AC-3..AC-6; DESIGN-45 §1, §7, §8, §9, §15-16, §18).

@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/contracts.ts
 // DESIGN-43 §2 AircraftModelDefinition_v1 contract + fail-closed guard.
 // INC-1 ships the model-definition contract that the §2 boundary exercises.
 // Mirrors packages/combat/src/submarines/contracts.ts pattern.

@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/systemShock.ts
 // DESIGN-40 §20 turret/system loss via underwater shock (INC-6, AC-17).
 // Underwater shock may damage a turret, magazine-handling system, fire-control
 // connection, radar, sonar, pumps, electrical system, steering, or another

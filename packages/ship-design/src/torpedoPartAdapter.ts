@@ -257,9 +257,7 @@ export function buildLauncherPartModel(input: {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Tube placements → loadout entries (§9.3)
-// ---------------------------------------------------------------------------
 
 /** One tube placement rendered in the new model. */
 export interface TubePlacementTranslation {

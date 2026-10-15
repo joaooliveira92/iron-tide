@@ -421,9 +421,7 @@ describe("foreign insight milestone gates (SB3-R24, DESIGN-16 section 13.5)", ()
   });
 });
 
-// ---------------------------------------------------------------------------------------------------------------
 // Acceptance + monthly integration
-// ---------------------------------------------------------------------------------------------------------------
 
 describe("foreign insight integration (SB3-R24, DESIGN-16 section 13.5)", () => {
   // NOTE: every integration fixture below injects its `activeCandidates` entry directly. A real compiled campaign

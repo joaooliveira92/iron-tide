@@ -1,4 +1,3 @@
-//packages/combat/test/tactical/projection.test.ts
 import { describe, it, expect } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import type { PermanentDivision } from "@bluewave/campaign";

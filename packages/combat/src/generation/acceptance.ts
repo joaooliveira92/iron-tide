@@ -1,4 +1,3 @@
-//packages/combat/src/generation/acceptance.ts
 import { BluewaveError } from "@bluewave/contracts";
 import type { BattleMissionType } from "./mission.js";
 import { getMission } from "./mission.js";

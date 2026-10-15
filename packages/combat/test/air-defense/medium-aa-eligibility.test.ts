@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/medium-aa-eligibility.test.ts
 // AC-5: Medium AA pre-release window with 4_000bp fire-control solution (DESIGN-45 §8).
 
 import { describe, it, expect } from "vite-plus/test";

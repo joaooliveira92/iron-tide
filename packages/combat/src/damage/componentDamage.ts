@@ -1,4 +1,3 @@
-//packages/combat/src/damage/componentDamage.ts
 // DESIGN-41 §6 — Local component damage resolution.
 // Pure function that selects components by spatial eligibility (hit zone),
 // orders them by stable component id, then assigns an outcome per component
@@ -7,7 +6,6 @@
 import { type ArmorZoneType } from "./armorModel.js";
 import { type PenetrationOutcome } from "./armorModel.js";
 
-// ---------------------------------------------------------------------------
 // Component types
 
 export interface ComponentState {
@@ -33,13 +31,11 @@ export interface ComponentDamageResult {
   locationId: string;
 }
 
-// ---------------------------------------------------------------------------
 // Splinter intensity levels
 
 export const SPLINTER_INTENSITIES = ["NONE", "LIGHT", "MEDIUM", "HEAVY", "EXTREME"] as const;
 export type SplinterIntensity = (typeof SPLINTER_INTENSITIES)[number];
 
-// ---------------------------------------------------------------------------
 // Mapping from penetration outcome + splinter intensity → component outcome
 // table for in-zone components (full penetration hits everything; non-penetrating
 // hits only affect exposed components per §6).

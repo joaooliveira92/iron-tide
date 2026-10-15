@@ -1,4 +1,3 @@
-//packages/combat/src/smoke/sourcePrecedence.ts
 // DESIGN-42 §23: smoke source precedence validation.
 
 import { SMOKE_EQUIPMENT_MODE_CONFLICT } from "./reasonCodes.js";

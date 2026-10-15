@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/fire-solution.ts
 // DESIGN-40 §10 fire-solution quality (INC-3): the exact basis-point rational
 // value is retained through ALL TEN multiplier factors and rounded ONCE with
 // FLOOR at the final quality (never truncated mid-product). A missing/undefined

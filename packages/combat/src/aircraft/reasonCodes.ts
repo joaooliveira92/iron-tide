@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/reasonCodes.ts
 // DESIGN-43 §40 subset: INC-1 + INC-3 codes ship now. INC-3 adds the
 // development-pipeline and proposal codes (AC-5..AC-11). Codes for INC-4..INC-8
 // ship in INC-8 (reason codes rollup + set-equality guard).

@@ -1,4 +1,3 @@
-//packages/phase-engine/test/battle-consequences.test.ts
 // B-6 INC-3 (AC-9): battle outcome consequences on the campaign side —
 // per-ship damage (clamped >= 0), terminal-ship removal (sunk list OR hp == 0),
 // survivor damage retention, reservation clearing, and deterministic ordering.

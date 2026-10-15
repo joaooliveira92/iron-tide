@@ -38,8 +38,6 @@ import {
 import { SUBMARINE_STATE_INVARIANT_FAILED } from "../reasonCodes.js";
 import { arrayEquals, throwStrategicMismatch } from "./shared.js";
 
-// ---------------------------------------------------------------------------
-
 export interface SubmarineStrategicAssetContract {
   policyId: string;
   rulesetVersion: string;
@@ -75,9 +73,7 @@ export function validateSubmarineStrategicAssetContract(
   void c;
 }
 
-// ---------------------------------------------------------------------------
 // submarine_types_v1 (§4 + §6 vocab + §9/§10 tables)
-// ---------------------------------------------------------------------------
 
 export interface SubmarineTypesContract {
   policyId: string;
@@ -150,9 +146,7 @@ export function validateSubmarineTypesContract(
   void c;
 }
 
-// ---------------------------------------------------------------------------
 // submarine_policies_v1 (§5)
-// ---------------------------------------------------------------------------
 
 export interface SubmarinePoliciesContract {
   policyId: string;
@@ -231,5 +225,4 @@ export function validateSubmarinePoliciesContract(
   void c;
 }
 
-// ---------------------------------------------------------------------------
 // submarine_missions_v1 (§6 + §26.4)

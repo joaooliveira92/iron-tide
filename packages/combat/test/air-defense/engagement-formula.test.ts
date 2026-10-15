@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/engagement-formula.test.ts
 // AC-11: Engagement formula: effectiveDefenseBp = 9-factor product, floor-once (§19).
 // Plus the §5 mutually exclusive outcome table, the keyed-draw reproducibility, and the
 // resolveEngagement entry point (§19/§20/§21).

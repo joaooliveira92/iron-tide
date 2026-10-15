@@ -1,4 +1,3 @@
-//packages/combat/src/submarines/constants.ts
 // DESIGN-34 versioned authoritative constant surface for the strategic
 // submarine-operations lifecycle slice (C-3). Mirrors packages/combat/src/mines/
 // constants.ts (ADR-0033 precedent). Every constant below is DESIGN-34's own

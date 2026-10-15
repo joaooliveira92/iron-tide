@@ -1,4 +1,3 @@
-//packages/combat/src/submarines/submarineRecords.ts
 // DESIGN-34 §25 SubmarineOperationsRecord + §26 canonical ordering (AC-17, INC-8).
 // Mirrors the C-2 records.ts pattern.
 import { SafeInt } from "@bluewave/contracts";

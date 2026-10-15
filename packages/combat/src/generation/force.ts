@@ -1,4 +1,3 @@
-//packages/combat/src/generation/force.ts
 import { BluewaveError } from "@bluewave/contracts";
 import { BATTLE_FORCE_REQUIREMENT_MISSING, BATTLE_MANDATORY_ROLE_UNFILLED } from "./reasonCodes.js";
 import type { BattleMissionType } from "./mission.js";

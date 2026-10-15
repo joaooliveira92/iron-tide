@@ -1,4 +1,3 @@
-//packages/combat/src/tactical/index.ts
 export * from "./shipType.js";
 export * from "./unit.js";
 export * from "./division.js";

@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/constants.test.ts
 // Verifies canonical constants against DESIGN-45 §12/§14/§16/§9 exact values.
 // Also verifies the purity of the effective light-AA window formula.
 

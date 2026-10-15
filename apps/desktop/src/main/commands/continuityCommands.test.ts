@@ -231,9 +231,7 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     writeFileSync(campaignPath, JSON.stringify(parsed));
   }
 
-  // -------------------------------------------------------------------------
   // Acceptance 1: load restores real state after closing and reopening
-  // -------------------------------------------------------------------------
 
   it("closing and reopening the app, then loading the saved package, restores real state (not a fresh/empty campaign)", async () => {
     const saveDir = resolve(saveRoot, "save-a");
@@ -325,9 +323,7 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     ).toBe(true);
   });
 
-  // -------------------------------------------------------------------------
   // Acceptance 2: verify reports a real pass/fail against hash/envelope
-  // -------------------------------------------------------------------------
 
   it("verify reports a real pass on a good package and a real fail on a corrupted one", async () => {
     const saveDir = resolve(saveRoot, "save-b");
@@ -355,9 +351,7 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(bad.value.campaignIdentity.length).toBeGreaterThan(0);
   });
 
-  // -------------------------------------------------------------------------
   // Acceptance 3: replay reconstructs the command history deterministically
-  // -------------------------------------------------------------------------
 
   it("replay reconstructs the executed months and confirms a matching deterministic hash", async () => {
     const saveDir = resolve(saveRoot, "save-c");
@@ -617,9 +611,7 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(replay.value.revisions[0]!.matched).toBe(true);
   });
 
-  // -------------------------------------------------------------------------
   // Acceptance 4: recover runs against a deliberately corrupted save
-  // -------------------------------------------------------------------------
 
   it("recover reverts a deliberately corrupted active save to its predecessor and reports the real outcome", async () => {
     const saveDir = resolve(saveRoot, "save-f");
@@ -678,9 +670,7 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(load.value.activeRevision).toBe(0);
   });
 
-  // -------------------------------------------------------------------------
   // Edge cases: cancellation and missing sidecar metadata
-  // -------------------------------------------------------------------------
 
   it("every command reports PACKAGE_SELECTION_CANCELLED when the dialog is cancelled", async () => {
     for (const run of [loadCampaign, verifyCampaign, replayCampaign, recoverCampaign]) {

@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/layer-resolution.ts
 // D-4 M4 Aviation: Air Defense — AC-3 layer resolution per DESIGN-45 §1.
 // Defense layers resolve in exact canonical order HEAVY_AA → MEDIUM_AA → LIGHT_AA →
 // CIWS_TERMINAL_DEFENSE (CAP + SAM deferred). A layer with no eligible system emits a

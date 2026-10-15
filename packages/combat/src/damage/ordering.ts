@@ -1,4 +1,3 @@
-//packages/combat/src/damage/ordering.ts
 // DESIGN-41 §46 — Canonical ordering for damage events.
 // Orders by (battleMinute, substep, sourceId, targetShipId, causalWeaponId,
 // hitLocation, recordHash). This mirrors the gunneryEventOrder pattern but

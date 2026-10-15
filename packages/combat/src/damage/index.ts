@@ -1,4 +1,3 @@
-//packages/combat/src/damage/index.ts
 export * from "./armorModel.js";
 export * from "./constants.js";
 export * from "./reasonCodes.js";

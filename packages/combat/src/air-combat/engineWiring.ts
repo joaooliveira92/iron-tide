@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/engineWiring.ts
 // D-3 M4 Aviation: CAP & Strikes — INC-8 (AC-16, AC-21).
 // resolveAirCombat stage (step 1, substep 1) in the minute-advance pipeline.
 // Runs after weather, before gunnery substep 2.
@@ -13,7 +12,6 @@ import { createAirCombatRecord, type AirCombatRecord } from "./records.js";
 import { canonicallySortedRecords } from "./ordering.js";
 import { AIR_COMBAT_RULESET_VERSION, AIR_COMBAT_ENGAGEMENT_SUBSTEP } from "./constants.js";
 
-// ---------------------------------------------------------------------------
 // Context and result types
 
 export interface AirCombatContext {
@@ -44,7 +42,6 @@ export interface AirCombatStageResult {
   summary?: { capEngagements: number; strikeAttacks: number; losses: number };
 }
 
-// ---------------------------------------------------------------------------
 // resolveAirCombat — per-minute air-combat stage
 
 /**

@@ -1,4 +1,3 @@
-//packages/combat/src/mines/knowledge.ts
 // DESIGN-35 §24 mine knowledge (INC-7). Every participant HAS a SEPARATE,
 // DISTINCT knowledge assertion about an area — a different object type from the
 // authoritative `AreaMinePressureRecord` (§24's truth/knowledge separation). A

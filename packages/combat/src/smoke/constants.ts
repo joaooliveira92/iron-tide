@@ -1,4 +1,3 @@
-//packages/combat/src/smoke/constants.ts
 // DESIGN-42 §8, §11 smoke constants per the C-5 spec.
 // Policy identifiers
 export const smokePolicyId = "smoke_v1" as const;

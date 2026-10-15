@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/flooding.ts
 // DESIGN-40 §18 progressive-flooding CREATION (INC-6, AC-16). A damaging
 // underwater hit creates zero or more FloodingSource records; each source
 // carries the computed torpedo rate:

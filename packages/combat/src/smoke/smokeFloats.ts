@@ -1,4 +1,3 @@
-//packages/combat/src/smoke/smokeFloats.ts
 // DESIGN-42 §§17-19: smoke float deployment logic.
 
 import { createEnvelope } from "@bluewave/deterministic";

@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/inventory-allocation.ts
 // DESIGN-43 §35 inventory allocation priority.
 import { SafeInt } from "@bluewave/contracts";
 

@@ -1,4 +1,3 @@
-//packages/combat/src/smoke/smokeRecords.ts
 // DESIGN-42 §30 — immutable SmokeEventRecord with deterministic hash.
 // Each record captures a single smoke lifecycle event: drift/decay, intersection,
 // funnel emission, smokescreen generation, float deployment, generator activation,
@@ -15,7 +14,6 @@ import {
 } from "./constants.js";
 import { SMOKE_RESOLUTION_DEFERRED } from "./reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // SmokeRecordKind — the canonical §30 record kinds
 
 export const SMOKE_RECORD_KINDS = [
@@ -34,7 +32,6 @@ export function isSmokeRecordKind(v: string): v is SmokeRecordKind {
   return (SMOKE_RECORD_KINDS as readonly string[]).includes(v);
 }
 
-// ---------------------------------------------------------------------------
 // SmokeEventRecord — the authoritative record surface
 
 export interface SmokeEventRecord {
@@ -59,7 +56,6 @@ export interface SmokeEventRecord {
 
 export type SmokeEventRecordBody = Omit<SmokeEventRecord, "recordHash">;
 
-// ---------------------------------------------------------------------------
 // Validation helpers
 
 function isNonEmptyString(v: unknown): v is string {
@@ -79,7 +75,6 @@ function invariant(recordId: string, field: string, value: unknown, reason: stri
   });
 }
 
-// ---------------------------------------------------------------------------
 // Surface guard
 
 export function assertSmokeEventRecordSurface(r: SmokeEventRecord): void {
@@ -132,7 +127,6 @@ export function assertSmokeEventRecordSurface(r: SmokeEventRecord): void {
     invariant(id, "rulesetVersion", r.rulesetVersion, "rulesetVersion must be a non-empty string");
 }
 
-// ---------------------------------------------------------------------------
 // Deterministic record ID
 
 export function smokeEventRecordId(o: {
@@ -147,14 +141,12 @@ export function smokeEventRecordId(o: {
   return o.discriminator ? `${base}:${o.discriminator}` : base;
 }
 
-// ---------------------------------------------------------------------------
 // Hash computation
 
 export function computeSmokeEventHash(body: SmokeEventRecordBody): string {
   return createEnvelope("smoke-event", smokePolicyId, body).bodyHash;
 }
 
-// ---------------------------------------------------------------------------
 // Deep freeze
 
 function deepFreeze<T>(value: T): T {
@@ -168,7 +160,6 @@ function deepFreeze<T>(value: T): T {
   return value;
 }
 
-// ---------------------------------------------------------------------------
 // Factory — build an immutable (deeply-frozen) SmokeEventRecord
 
 export function createSmokeEventRecord(params: {
@@ -215,7 +206,6 @@ export function createSmokeEventRecord(params: {
   return deepFreeze({ ...body, recordHash });
 }
 
-// ---------------------------------------------------------------------------
 // Verify record hash
 
 export function verifySmokeEventRecordHash(r: SmokeEventRecord): boolean {

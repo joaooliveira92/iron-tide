@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/integration.test.ts
 // D-3 / INC-8 — AC-16: new resolveAirCombat stage, strict no-op.
 // AC-22: BattleResolver/StrengthCalculator unmodified.
 import { describe, it, expect } from "vite-plus/test";

@@ -1,4 +1,3 @@
-//packages/combat/test/weather/progression.test.ts
 // AC-5: Tactical weather progression — progression at exactly 30-min intervals
 // via climate profile transition tables and keyed stream `battle/weather/interval`.
 // Sea state ±1 max per interval. Wind direction per climate band. Each transition
@@ -21,7 +20,6 @@ import {
 } from "../../src/weather/constants.js";
 import { WEATHER_PROFILE_INCOMPLETE } from "../../src/weather/reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // Helper — valid battle components (spring/summer baseline)
 function components(overrides: Partial<BattleWeatherComponents> = {}): BattleWeatherComponents {
   return withTacticalWeatherComponentsHash({

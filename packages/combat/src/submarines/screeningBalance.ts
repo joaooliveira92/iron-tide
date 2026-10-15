@@ -1,4 +1,3 @@
-//packages/combat/src/submarines/screeningBalance.ts
 // DESIGN-34 §18 heavy-ship-to-destroyer screening balance (AC-13, INC-6) + §19
 // attack-opportunity selection value-only (AC-14, INC-6).
 //
@@ -23,9 +22,7 @@ import {
   SUBMARINE_STATE_INVARIANT_FAILED,
 } from "./reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // §18 heavy-ship types and escort types
-// ---------------------------------------------------------------------------
 
 export const SUBMARINE_HEAVY_SHIP_TYPES = ["BB", "BC", "B", "CV", "CVL", "CA"] as const;
 export type SubmarineHeavyShipType = (typeof SUBMARINE_HEAVY_SHIP_TYPES)[number];
@@ -36,9 +33,7 @@ export const SUBMARINE_ELIGIBLE_ESCORT_TYPES = ["DD", "KE", "CL"] as const;
 // the type set ships the three canonical escort hull types, and the caller
 // supplies the ASW-qualified CL filter.
 
-// ---------------------------------------------------------------------------
 // §18 screen ratio formula
-// ---------------------------------------------------------------------------
 
 export function computeScreenRatioBp(
   eligibleEscortStrength: SafeInt,
@@ -97,9 +92,7 @@ export function screeningOpportunityMultiplierBp(screenRatioBp: SafeInt): SafeIn
   });
 }
 
-// ---------------------------------------------------------------------------
 // §19 attack-opportunity selection (value-only)
-// ---------------------------------------------------------------------------
 
 export interface AttackOpportunityInput {
   policyWeightBp: number;

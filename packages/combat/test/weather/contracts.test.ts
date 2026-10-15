@@ -1,4 +1,3 @@
-//packages/combat/test/weather/contracts.test.ts
 // AC-15: Contracts + validate guards — every new weather/visibility constant
 // ships *_v1 + SHIPPED_WEATHER_CONTRACT + validate guard + validateAllWeatherContracts;
 // pinning fails closed.

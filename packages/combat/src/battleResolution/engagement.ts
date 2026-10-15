@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/engagement.ts
 // P-1 ticket 11 / ADR-0072: speed advantage as range control.
 //
 // The pre-ticket-11 resolver let every ship steer straight at the nearest enemy

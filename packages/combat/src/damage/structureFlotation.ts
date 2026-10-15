@@ -1,4 +1,3 @@
-//packages/combat/src/damage/structureFlotation.ts
 // DESIGN-41 §8 — Structure & flotation damage resolution.
 // Pure formulas:
 //   structuralIntegrityAfter = max(0, before - structuralDamage)
@@ -6,7 +5,6 @@
 // Both inputs and outputs are integer fixed-point (µm-equivalent or kg).
 // Pure/deterministic: no ambient I/O/clock/random.
 
-// ---------------------------------------------------------------------------
 // Input/Output types
 
 export interface StructureFlotationInput {
@@ -31,7 +29,6 @@ export interface StructureFlotationResult {
   uncappedFlotationDamage: number;
 }
 
-// ---------------------------------------------------------------------------
 // Resolver
 
 /**

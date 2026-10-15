@@ -1,4 +1,3 @@
-// packages/phase-engine/src/rebuildClassification.ts
 // Re-runs DESIGN-22 intended/natural classification on a finished rebuild's new design before the
 // completion is committed (DESIGN-22 section 22, DESIGN-23 section 22).
 import type { CompiledDesignVersion } from "@bluewave/campaign";

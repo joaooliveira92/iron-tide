@@ -1,4 +1,3 @@
-//packages/combat/src/damage/pipeline.ts
 // DESIGN-41 §3 10-stage damage-resolution pipeline. Each stage is a pure function that
 // takes the current ShipDamageState + input packages and produces a DamageEventEffect
 // (the effect contributed by that stage). Stages run in exact order; a stage failure
@@ -46,7 +45,6 @@ import {
 } from "./magazineHazard.js";
 import { evaluateTerminalSeam, type TerminalInput, type TerminalResult } from "./terminalSeam.js";
 
-// ---------------------------------------------------------------------------
 // Pipeline context — the broader input needed by wired stages beyond state.
 
 /**
@@ -107,7 +105,6 @@ export interface PipelineContext {
   terminalInput?: TerminalInput;
 }
 
-// ---------------------------------------------------------------------------
 // Transaction result
 
 /**
@@ -126,7 +123,6 @@ export interface DamageResolutionTransaction {
   eventRecord?: DamageEventRecord;
 }
 
-// ---------------------------------------------------------------------------
 // Stage effects
 
 /**
@@ -143,7 +139,6 @@ export interface DamageEventEffect {
   record?: DamageEventRecord;
 }
 
-// ---------------------------------------------------------------------------
 // Stage-runner type — signature expanded to pass pipeline context
 
 /**
@@ -157,7 +152,6 @@ export type StageRunner = (
   context: PipelineContext,
 ) => DamageEventEffect;
 
-// ---------------------------------------------------------------------------
 // Default pipeline runner with wired stages 3, 4, 5, 6, 8, and 9.
 
 /**
@@ -417,7 +411,6 @@ export function runDamagePipeline(
   }
 }
 
-// ---------------------------------------------------------------------------
 // Orchestrator
 
 /**

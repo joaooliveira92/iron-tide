@@ -1,4 +1,3 @@
-//packages/combat/test/weather/ledger-order.test.ts
 // AC-12: Canonical ordering in the BattleLedger — weather events emitted by
 // resolveWeather sort correctly among all other event types (movement,
 // collisions, spotting, gunnery) per §29 / canonicalEventOrder.

@@ -1,4 +1,3 @@
-// packages/campaign/src/scenario.ts
 // DESIGN-03 §1 Supported Start Scenarios - Normative
 // Exactly 5 canonical scenarios, each January of identifier year, full 15-field contract.
 import type { DiagnosticCollector } from "@bluewave/diagnostics";

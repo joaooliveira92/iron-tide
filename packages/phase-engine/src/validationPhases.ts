@@ -1,4 +1,3 @@
-// packages/phase-engine/src/validationPhases.ts
 // Boundary validation phases: opening_validation (1) and closing_validation (11).
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";

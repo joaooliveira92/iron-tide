@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/causeOfLoss.ts
 // P-1 (ADR-0052): OBSERVATIONAL per-ship cause-of-loss for auto-resolved battles.
 // Derived purely from the already-resolved per-minute ship damage states (pre vs
 // post minute) plus the minute's torpedo hit records. No RNG, no clock, integer

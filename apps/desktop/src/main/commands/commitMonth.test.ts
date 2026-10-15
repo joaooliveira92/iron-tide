@@ -590,7 +590,6 @@ describe("commitMonth", () => {
   }
 });
 
-// ---------------------------------------------------------------------------
 // Focused unit tests for `mapBattleOutcome`'s PRE-battle-snapshot basis (the
 // HIGH finding). These hand-build a decided battle whose losing side, counted
 // OFF the pre-month snapshot (sunk ship still present, survivor at full HP),
@@ -600,7 +599,6 @@ describe("commitMonth", () => {
 // class off the pre-battle snapshot, so the correct bridge value is the
 // decisive ±10. A post-snapshot re-derivation would fabricate a lower ±5, and
 // these assertions FAIL against such a regression.
-// ---------------------------------------------------------------------------
 describe("mapBattleOutcome (pre-battle-snapshot war-score re-derivation, INC-2 finding 1)", () => {
   function makeNation(
     id: string,

@@ -1,4 +1,3 @@
-//packages/combat/test/generation/pipeline.test.ts
 import { describe, it, expect } from "vite-plus/test";
 import {
   generateBattles,

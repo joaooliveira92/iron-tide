@@ -1,4 +1,3 @@
-//packages/content-compiler/src/releaseGate.ts
 import { SOURCE_STATUSES } from "@bluewave/content-schema";
 
 import { collectProvenanceLocations } from "./confidence.js";

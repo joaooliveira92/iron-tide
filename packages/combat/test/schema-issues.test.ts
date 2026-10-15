@@ -1,4 +1,3 @@
-// packages/combat/test/schema-issues.test.ts
 // Characterization of `formatContractIssues`: the shared projector that maps an
 // Effect v4 `SchemaError` issue tree onto the `{ path, message }` entries the
 // combat contract validators put into their BluewaveError context. It must keep

@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/air-defense-system-definition.ts
 // D-4 M4 Aviation: Air Defense — AirDefenseSystemDefinition interface
 // per DESIGN-45 §3. Strict validation at construction boundaries, fail-closed guards.
 

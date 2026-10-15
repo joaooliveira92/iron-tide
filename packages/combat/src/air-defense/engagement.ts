@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/engagement.ts
 // D-4 M4 Aviation: Air Defense — AC-11 engagement resolution per DESIGN-45 §19/§20/§5.
 //
 // effectiveDefenseBp = floor(baseDefenseBp * director * radar * crew * damage * ammunition

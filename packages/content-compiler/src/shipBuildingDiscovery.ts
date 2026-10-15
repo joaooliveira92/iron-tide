@@ -1,4 +1,3 @@
-//packages/content-compiler/src/shipBuildingDiscovery.ts
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 

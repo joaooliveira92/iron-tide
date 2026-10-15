@@ -300,8 +300,6 @@ describe("launcher compatibility and waivers with first-class torpedo parts", ()
   });
 });
 
-// ---------------------------------------------------------------------------
-
 function launcherFit(
   launcherPart: FlattenedPart,
   torpedo: FlattenedPart,

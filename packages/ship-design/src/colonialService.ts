@@ -1,4 +1,3 @@
-// packages/ship-design/src/colonialService.ts
 // Colonial-service capability of a corvette / colonial gunboat (KE). A KE is a cheap hull, but a foreign-station
 // posting needs endurance and a crew that can live aboard for months: the capability exists only when the design
 // has both and the campaign allows it. Pure; the compile reports the result as an advisory.

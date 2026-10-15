@@ -1,4 +1,3 @@
-//packages/combat/src/mines/sweeping-aggregation.ts
 // DESIGN-35 §10 regional sweeping aggregation + allocation (INC-4).
 //
 // Regional sweeping value (§10): the SUM of effective eligible-ship values
@@ -85,9 +84,7 @@ import {
   type MinesweepingShip,
 } from "./sweeping-eligibility.js";
 
-// ---------------------------------------------------------------------------
 // §10 aggregation
-// ---------------------------------------------------------------------------
 
 // The complete input surface a single ship needs for regional aggregation: the
 // INC-3 eligibility surface + the §7 base-value key + the §8 dual-equipment
@@ -213,9 +210,7 @@ export function computeRegionalSweepingValue(
   return { regionalSweepingValue, over: sorted, ineligible };
 }
 
-// ---------------------------------------------------------------------------
 // §10 allocation
-// ---------------------------------------------------------------------------
 
 // A record plus the pre-computed keys the five-part §10 comparator needs. The
 // candidate materializes the sort keys EXACTLY once (never recomputed during the
@@ -374,9 +369,7 @@ export function allocateSweeping(
   return { allocations, leftoverUnusedValue: remainingBudget };
 }
 
-// ---------------------------------------------------------------------------
 // §10 swept-pressure update on the record
-// ---------------------------------------------------------------------------
 
 // AC-10: apply a swept pressure to an AreaMinePressureRecord: pressureAfter =
 // pressure - sweptPressure (>= 0, never below zero), lastSweptMonth set to

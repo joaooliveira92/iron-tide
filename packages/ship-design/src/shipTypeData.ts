@@ -1,4 +1,3 @@
-// packages/ship-design/src/shipTypeData.ts
 // The authored registry entries. Numeric boundaries are not repeated here (see classificationRules.ts).
 import type {
   EraBand,

@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/records.test.ts
 // AC-15 (INC-5): AirDefenseEngagementRecord per DESIGN-45 §26 — immutable, hashed, kind
 // coverage, and the AC-7 guaranteed light-AA disruption opportunity record factory.
 import { describe, expect, it } from "vite-plus/test";

@@ -1,4 +1,3 @@
-//apps/compiler-cli/src/options.ts
 // Pure CLI option parsing + exit-code mapping, split out of main.ts so unit
 // tests can import them WITHOUT pulling in the engine module graph that
 // `commands.js` (and therefore `main.js`) cold-loads. The only import here is a

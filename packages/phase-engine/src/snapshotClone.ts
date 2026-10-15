@@ -40,13 +40,11 @@ type AreaData = WorldState["areas"][number];
 type RouteData = WorldState["routes"][number];
 type PortData = WorldState["ports"][number];
 
-// ---------------------------------------------------------------------------
 // Field-exhaustive structural deep-clone of the campaign snapshot.
 // Every record type has an explicit copy entry in `F`. Compile-time
 // assertions below fail the build if a field is added/renamed without a
 // matching clone entry. Runtime clone is deterministic, pollution-safe,
 // and fail-closed.
-// ---------------------------------------------------------------------------
 
 const UNSAFE_KEYS = new Set<string>(["__proto__", "constructor", "prototype"]);
 

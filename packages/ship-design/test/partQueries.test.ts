@@ -18,9 +18,7 @@ import {
   type PartCatalogue,
 } from "../src/index.js";
 
-// ---------------------------------------------------------------------------
 // Hand-worked fixture catalogue (every record decoded through the strict schemas)
-// ---------------------------------------------------------------------------
 
 const PROVENANCE = {
   sourceStatus: "PLACEHOLDER",
@@ -197,8 +195,6 @@ const catalogue = (parts: readonly FlattenedPart[] = BASE_PARTS): PartCatalogue 
   slotTemplates: [TEMPLATE],
   platforms: [PLATFORM],
 });
-
-// ---------------------------------------------------------------------------
 
 describe("resolvePart", () => {
   it("applies the 1884 revision from its month and not before", () => {

@@ -1,4 +1,3 @@
-//packages/combat/src/smoke/smokescreen.ts
 // DESIGN-42 §§12-16: smokescreen eligibility, generation, cooldown, and
 // tactical effects. Pure/deterministic: no ambient I/O/clock/random.
 
@@ -12,9 +11,7 @@ import { SMOKESCREEN_GENERATION_INTERRUPTED } from "./reasonCodes.js";
 import { createSmokeCloud } from "./model.js";
 import type { SmokeCloud } from "./model.js";
 
-// ---------------------------------------------------------------------------
 // §12 ship-state input types for smokescreen eligibility
-// ---------------------------------------------------------------------------
 
 /** Canonical smokescreen-eligible ship classes per DESIGN-42 §12. */
 export const SMOKESCREEN_ELIGIBLE_CLASSES = ["DD", "CL"] as const;
@@ -62,9 +59,7 @@ export interface SmokescreenEligibilityParams {
   missionProhibitsSmoke: boolean;
 }
 
-// ---------------------------------------------------------------------------
 // §12 predicate names and stable reason strings
-// ---------------------------------------------------------------------------
 
 export type SmokescreenEligibilityPredicate =
   | "shipClassEligible"
@@ -94,18 +89,14 @@ export const SMOKESCREEN_INELIGIBILITY_REASONS: Readonly<
   missionAllowsSmoke: "tactical mission prohibits smoke (§12)",
 };
 
-// ---------------------------------------------------------------------------
 // §12 eligibility verdict
-// ---------------------------------------------------------------------------
 
 export interface SmokescreenEligibilityVerdict {
   eligible: boolean;
   reason?: string;
 }
 
-// ---------------------------------------------------------------------------
 // §13 smokescreen generation state
-// ---------------------------------------------------------------------------
 
 export interface SmokescreenState {
   /** Whether a smokescreen generation is currently in progress. */
@@ -130,9 +121,7 @@ export function createInitialSmokescreenState(charges: number = 3): SmokescreenS
   };
 }
 
-// ---------------------------------------------------------------------------
 // §12 isShipEligibleForSmokescreen
-// ---------------------------------------------------------------------------
 
 /**
  * Check all 10 smokescreen eligibility predicates per DESIGN-42 §12.
@@ -180,9 +169,7 @@ export function isShipEligibleForSmokescreen(
   return { eligible: true };
 }
 
-// ---------------------------------------------------------------------------
 // §13 computeSmokescreenSegment
-// ---------------------------------------------------------------------------
 
 /**
  * Create a smoke cloud segment at the ship's current position with the
@@ -218,9 +205,7 @@ export function computeSmokescreenSegment(params: {
   });
 }
 
-// ---------------------------------------------------------------------------
 // §14 checkSmokescreenCooldown
-// ---------------------------------------------------------------------------
 
 export interface SmokescreenCooldownResult {
   available: boolean;
@@ -248,9 +233,7 @@ export function checkSmokescreenCooldown(
   };
 }
 
-// ---------------------------------------------------------------------------
 // §13 generateSmokescreenMinute
-// ---------------------------------------------------------------------------
 
 export interface GenerateSmokescreenMinuteParams {
   shipState: SmokescreenEligibilityParams;
@@ -373,9 +356,7 @@ export function generateSmokescreenMinute(
   };
 }
 
-// ---------------------------------------------------------------------------
 // §16 smokescreen tactical effect helpers
-// ---------------------------------------------------------------------------
 
 /**
  * Returns the effective concealment bonus (in basis points) that a smokescreen

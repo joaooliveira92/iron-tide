@@ -1,4 +1,3 @@
-//packages/combat/src/tactical/unit.ts
 import type { CompiledDesignVersion, Ship } from "@bluewave/campaign";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { sha256Hex } from "@bluewave/deterministic";

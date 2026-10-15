@@ -48,11 +48,9 @@ const STATE_SOURCE = readFileSync(STATE_PATH, "utf8");
 const OFFICER_SOURCE = readFileSync(OFFICER_PATH, "utf8");
 const DIVISION_SOURCE = readFileSync(DIVISION_PATH, "utf8");
 
-// ---------------------------------------------------------------------------
 // Type-source enumeration (the audit's ground truth: the campaign interfaces).
 // The campaign state model's interfaces are flat; every field is one
 // `name: Type;`-style line inside the interface block.
-// ---------------------------------------------------------------------------
 
 function sourceForType(typeName: string): string {
   if (typeName === "PermanentDivision") return DIVISION_SOURCE;
@@ -82,9 +80,7 @@ function interfaceFields(name: string): string[] {
   return fields;
 }
 
-// ---------------------------------------------------------------------------
 //  Graph-isolation helpers (identity checks on reference values).
-// ---------------------------------------------------------------------------
 
 type RefNode = object;
 
@@ -117,10 +113,8 @@ function expectDisjointGraph(left: unknown, right: unknown, label = "object grap
   expect(l === undefined && r === undefined, `${label}: callers share a reference`).toBe(true);
 }
 
-// ---------------------------------------------------------------------------
 //  Rich snapshot fixture: exercises every audited type with nested mutable
 //  values so the identity tests genuinely probe deep isolation.
-// ---------------------------------------------------------------------------
 
 function makeRichSnapshot(): CampaignSnapshot {
   const ships: Ship[] = [

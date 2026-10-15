@@ -1,4 +1,3 @@
-//packages/combat/src/damage/armorModel.ts
 // DESIGN-39 §§16-24 armor model: pure functions + armor_v1 constants.
 // Zone maxima, thick-armor manufacturing, quality adjustment, impact geometry,
 // splinter protection, and 7 penetration outcomes. All arithmetic is integer
@@ -12,13 +11,11 @@ import {
   DAMAGE_STATE_INVARIANT_FAILED,
 } from "./reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // Version identifiers
 export const armorPolicyId = "armor_v1" as const;
 export const ARMOR_RULESET_VERSION = "armor_ruleset_v1" as const;
 export const ARMOR_FORMULA_VERSION = "armor_formula_v1" as const;
 
-// ---------------------------------------------------------------------------
 // §17 — Canonical armor zone types
 export const ARMOR_ZONE_TYPES = [
   "BELT",
@@ -88,7 +85,6 @@ export function validateArmorThickness(zoneType: string, thicknessUm: number): v
   }
 }
 
-// ---------------------------------------------------------------------------
 // §19 — Thick-armor manufacturing
 // Threshold: 304 800 µm (12 in). Below threshold: full thickness.
 // Above threshold: excess effectiveness discounted at 7 500 bp.
@@ -107,7 +103,6 @@ export function manufacturingEffectiveThickness(actualUm: number): number {
   return thinPortion + Math.floor((excess * THICK_ARMOR_EXCESS_BP) / 10_000);
 }
 
-// ---------------------------------------------------------------------------
 // §20 — Armor quality multiplier families
 // Five shipped families with basis-point multipliers.
 export const ARMOR_QUALITY_FAMILIES = [
@@ -158,7 +153,6 @@ export function qualityAdjustedThickness(
   return Math.floor((effectiveThicknessUm * qualityMultiplierBp) / 10_000);
 }
 
-// ---------------------------------------------------------------------------
 // §21 — Impact geometry / obliquity
 // Obliquity factor is the cosine ratio normalised by angle difference.
 // The factor is expressed in basis points.
@@ -179,7 +173,6 @@ export function obliquityFactorBp(impactAngleDeg: number, armorSlopeDeg: number)
   return Math.max(0, Math.min(10_000, raw));
 }
 
-// ---------------------------------------------------------------------------
 // §22 — Splinter threshold and protection classes
 
 /** Splinter protection threshold: 50 800 µm (2 inches). */
@@ -213,7 +206,6 @@ export function splinterProtectionLevel(armorThicknessUm: number): SplinterClass
   return null; // No splinter protection
 }
 
-// ---------------------------------------------------------------------------
 // §24 — Seven penetration outcomes
 export const PENETRATION_OUTCOMES = [
   "NO_EFFECT",
@@ -284,7 +276,6 @@ export function determinePenetrationOutcome(
   return "NO_EFFECT";
 }
 
-// ---------------------------------------------------------------------------
 // ArmorContract — ships all authored constant values.
 export interface ArmorContract {
   policyId: string;

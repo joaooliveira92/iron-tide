@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/attribute-allocation.ts
 // DESIGN-43 §9 attribute allocation formula.
 // INC-3: start from role baseline, +10 per emphasised trait, -10 total via
 // trade-off, no attribute below role min or above 100.

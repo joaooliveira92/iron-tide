@@ -1,4 +1,3 @@
-//packages/combat/src/gunnery/reasonCodes.ts
 // DESIGN-39 §32 subset relevant to the B-3 gunnery modules, kept separate from the
 // top-level combat catalog (src/reasonCodes.ts) so B-2's set-equality guard is not
 // grown without review. Per spec §1.4 these are the in-slice gunnery codes; the

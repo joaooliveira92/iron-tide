@@ -1,4 +1,3 @@
-//packages/campaign/src/designUnits.ts
 // DESIGN-22 §2 canonical design-unit conversions (ADR-0037).
 //
 // The compiled `CompiledDesignVersion` carries canonical engine units:

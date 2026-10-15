@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/pursuit.ts
 // P-1 / ADR-0046: minimal auto-resolution manoeuvre — every viable ship directs
 // its movement at the nearest viable enemy legal contact each minute (ties:
 // ascending asset id); with no contact it holds its course. Without this the

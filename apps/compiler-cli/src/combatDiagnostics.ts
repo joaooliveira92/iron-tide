@@ -1,4 +1,3 @@
-//apps/compiler-cli/src/combatDiagnostics.ts
 import { isBluewaveError, type BluewaveError } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 

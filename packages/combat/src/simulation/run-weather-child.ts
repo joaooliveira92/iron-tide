@@ -1,4 +1,3 @@
-//packages/combat/src/simulation/run-weather-child.ts
 // Deterministic child-process script for B-5 weather determinism (AC-14).
 // Spawned by determinism.test.ts; prints a single JSON line with per-minute
 // hashes including weather events. Canonical weather input is built in-process

@@ -1,4 +1,3 @@
-//packages/combat/src/mines/sources.ts
 // DESIGN-35 §3 mine sources (INC-2). A laying action references exactly one
 // source kind + source id + declared inventory (or generated canonical scenario
 // allocation) + ordered target belligerents + area + campaign month + laying

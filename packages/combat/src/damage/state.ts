@@ -1,4 +1,3 @@
-//packages/combat/src/damage/state.ts
 // DESIGN-41 §1 authoritative ShipDamageState: one per ship. The numeric surface is integer
 // fixed-point (DESIGN-07): structural-integrity score, flotation-reserve score, stability
 // score, progressive-flooding total. Non-integers are rejected at the construction boundary

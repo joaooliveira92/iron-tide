@@ -1,4 +1,3 @@
-// packages/ship-design/src/compileStages.ts
 // Focused stages of the design-compile pipeline. Each stage performs one part of
 // DESIGN-22 compilation and reports its findings through the shared list.
 import {

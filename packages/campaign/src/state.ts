@@ -1,4 +1,3 @@
-//packages/campaign/src/state.ts
 import type { SafeInt } from "@bluewave/contracts";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";

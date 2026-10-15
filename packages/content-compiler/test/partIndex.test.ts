@@ -24,9 +24,7 @@ const provenance = {
   sources: [{ title: "test" }],
 };
 
-// ---------------------------------------------------------------------------
 // The hand-worked fixture: a prototype in one file, a national variant in another
-// ---------------------------------------------------------------------------
 
 const PROTOTYPE_FILE = "ship-building/parts/torpedoes.yaml";
 const VARIANT_FILE = "ship-building/parts/austria-hungary.yaml";
@@ -282,9 +280,7 @@ describe("a prototype, a variant and two revisions flatten to hand-worked values
   });
 });
 
-// ---------------------------------------------------------------------------
 // The ship-type registry beside the part index (ticket 12a)
-// ---------------------------------------------------------------------------
 
 /** A minimal valid ship-type record, as a JSON record. */
 function shipType(id: string, overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -371,9 +367,7 @@ describe("the ship-type registry rides beside the part index, id-sorted", () => 
   });
 });
 
-// ---------------------------------------------------------------------------
 // Structured diagnostics
-// ---------------------------------------------------------------------------
 
 /** A standalone part of `family`, as a JSON record. */
 function part(id: string, overrides: Record<string, unknown> = {}): Record<string, unknown> {
@@ -613,9 +607,7 @@ describe("cross-references fail with the file and field path", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Determinism, hash and lock
-// ---------------------------------------------------------------------------
 
 function buildArtifact(input: CompilerInput) {
   const collector = new DiagnosticCollector();

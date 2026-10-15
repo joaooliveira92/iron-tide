@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/constants.ts
 // DESIGN-43 versioned authoritative constant surface for D-1.
 // Mirrors packages/combat/src/submarines/constants.ts (ADR-0033 precedent).
 

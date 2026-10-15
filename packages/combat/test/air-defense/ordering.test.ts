@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/ordering.test.ts
 // AC-15 (INC-5): canonical ordering per DESIGN-45 §27 — insertion/UI/rendering order never
 // affects results; only codepoint string comparisons (never localeCompare).
 import { describe, expect, it } from "vite-plus/test";

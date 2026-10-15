@@ -1,4 +1,3 @@
-//packages/combat/src/simulation/spawn.ts
 // Deterministic initial-position/ordering helper derived from manifest area
 // geometry (bounding box in micrometres). No ambient randomness.
 import type { MovementState } from "../movement.js";

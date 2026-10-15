@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/event-types.ts
 // DESIGN-43 §11 typed event definition for private aircraft ventures.
 // The private_aircraft_venture_v1 event carries the outcome of a monthly
 // private-venture resolution: whether a venture was granted, which role,

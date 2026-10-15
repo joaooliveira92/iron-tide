@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/reasonCodes.ts
 // DESIGN-40 §29 subset relevant to the torpedo module, kept separate from the
 // top-level combat catalog (src/reasonCodes.ts) so the C-1 set-equality guard
 // (reason-codes-torpedoes.test.ts, INC-8 deliverable) is not grown without

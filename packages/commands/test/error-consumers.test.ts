@@ -1,4 +1,3 @@
-// packages/commands/test/error-consumers.test.ts
 // Regression tests for the migrated CommandError throws: a real consumer that
 // catches the throw and reads `error.code` / `error.message` must observe
 // exactly what it did before the plain-`Error` → `Data.TaggedError` conversion

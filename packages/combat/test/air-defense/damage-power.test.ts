@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/damage-power.test.ts
 // AC-14: Simplified damage/power state + local control multiplier (§21).
 // Verifies the simplified system-level damage status thresholds, the damage/power
 // multipliers, the damage×power fold into the formula's single "damage" term, and the

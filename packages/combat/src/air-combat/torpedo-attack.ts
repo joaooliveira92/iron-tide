@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/torpedo-attack.ts
 // D-3 M4 Aviation: CAP & Strikes — INC-5 (AC-12): air-launched torpedo attack resolution.
 // Simplified hit resolution (does NOT call the C-1 geometric resolver).
 // Pure deterministic functions — no I/O, no Date.

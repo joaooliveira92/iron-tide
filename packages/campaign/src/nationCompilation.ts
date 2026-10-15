@@ -1,4 +1,3 @@
-// packages/campaign/src/nationCompilation.ts
 // Campaign-compile stage: materialize nation aggregates (identity, economy,
 // fleets/ships, research, construction projects, officer roster) plus the
 // playable/AI slot list, from the content pack + authored campaign files.

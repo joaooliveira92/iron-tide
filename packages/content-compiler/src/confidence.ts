@@ -1,4 +1,3 @@
-//packages/content-compiler/src/confidence.ts
 import { CONFIDENCE_LEVELS } from "@bluewave/content-schema";
 import { compareCodePoints } from "@bluewave/deterministic";
 

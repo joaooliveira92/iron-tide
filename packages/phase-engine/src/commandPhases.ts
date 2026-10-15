@@ -1,4 +1,3 @@
-// packages/phase-engine/src/commandPhases.ts
 // Player command + AI planning phases: command_collection (3) and ai_planning (3.5).
 import { AiPhaseExecutor } from "@bluewave/ai";
 import { researchPriorityAllocation } from "@bluewave/ship-design";

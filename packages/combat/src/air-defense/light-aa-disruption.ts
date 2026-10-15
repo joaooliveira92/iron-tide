@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/light-aa-disruption.ts
 // D-4 M4 Aviation: Air Defense — AC-7 guaranteed light-AA disruption opportunity (§29.8-9).
 //
 // §29.8: "every eligible light-AA system receives at least one disruption check of one

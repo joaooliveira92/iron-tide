@@ -1,4 +1,3 @@
-//packages/combat/src/smoke/lineIntersection.ts
 // DESIGN-42 §9: line-of-sight intersection with smoke clouds.
 
 import {

@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/authority.ts
 // DESIGN-40 §5 torpedo command authority — the shipped tactical policy
 // `torpedo_launch_authority_v1` as a versioned contract defining the three
 // modes ADMIRAL / REAR_ADMIRAL / CAPTAIN and their legality semantics, plus a

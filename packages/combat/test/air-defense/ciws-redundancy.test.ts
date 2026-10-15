@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/ciws-redundancy.test.ts
 // AC-10: CIWS redundancy (DESIGN-45 §15, §16).
 // §15 line 266: a damaged, unpowered, empty, jammed, or out-of-arc CIWS system contributes
 // ZERO — the caller filters the ship's CIWS systems through isCiwsContributingSystem before

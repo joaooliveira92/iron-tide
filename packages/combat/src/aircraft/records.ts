@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/records.ts
 // DESIGN-43 §38 aircraft operation records.
 import { createEnvelope } from "@bluewave/deterministic";
 

@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/transit-time.test.ts
 // AC-9 (INC-4): Transit time computation for strike formations.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";

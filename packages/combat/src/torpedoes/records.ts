@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/records.ts
 // DESIGN-40 §27 — immutable torpedo records (INC-7, AC-20). Every launch, track,
 // detection, detonation, hit, damage package, flooding source, machinery effect,
 // system shock, tube hazard, and chain reaction creates ONE immutable record

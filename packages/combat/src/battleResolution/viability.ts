@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/viability.ts
 // B-6 INC-2: side-viability predicate + §32 battle-end decision for the
 // auto-resolver (DESIGN-38 §32 precedence; AC-6/AC-7).
 //

@@ -1,4 +1,3 @@
-// packages/phase-engine/src/foreignTerms.ts
 // INC-17: the engine-side, content-grounded derivation of a foreign construction contract's terms and the builder's
 // capability predicates. The command/IPC boundary trusts the renderer only for the player's choices (design, builder,
 // quantity, optional delivery month); everything the manual leaves undefined here — the price, the instalment schedule,

@@ -1,4 +1,3 @@
-//packages/combat/src/mines/dual-equipment.ts
 // DESIGN-35 §8 dual ASW/mine equipment (INC-3). Equipment configured for
 // simultaneous ASW and mine sweeping MUST use `dual_asw_mine_equipment_v1`
 // (SHIPPED_DUAL_ASW_MINE_EQUIPMENT_CONTRACT + validate guard, fail-closed like

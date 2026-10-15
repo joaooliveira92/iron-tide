@@ -1,4 +1,3 @@
-//packages/combat/src/submarines/missionEligibility.ts
 // DESIGN-34 §6 mission eligibility (AC-4, INC-2) + §26.4 mission-priority field.
 //
 // §6 ships the seven canonical missions and requires mission eligibility to
@@ -55,9 +54,7 @@ import {
   SUBMARINE_RELIABILITY_LOW_OPERATIONS,
 } from "./reliability.js";
 
-// ---------------------------------------------------------------------------
 // §6 + §26.4 mission definitions
-// ---------------------------------------------------------------------------
 
 export interface SubmarineMissionDefinition {
   missionId: SubmarineMission;
@@ -189,9 +186,7 @@ export function submarineMissionById(missionId: string): SubmarineMissionDefinit
   return def;
 }
 
-// ---------------------------------------------------------------------------
 // §6 eligibility predicate
-// ---------------------------------------------------------------------------
 
 // Per-mission request: which mission + the thresholds §6's fuel/readiness guards
 // compare against. Thresholds are supplied by the caller (the campaign world
@@ -383,9 +378,7 @@ export function isSubmarineMissionEligible(
   return { accepted: true, missionId, reasonCode: null, guard: null };
 }
 
-// ---------------------------------------------------------------------------
 // Authored guard -> reason-code map (recorded decision; other-increment ownership)
-// ---------------------------------------------------------------------------
 // INC-2 fires exactly:
 //   SUBMARINE_MISSION_INELIGIBLE  (guards: mission, type, technology, range,
 //                                  baseSupport, readiness, damage, fuel, policy,

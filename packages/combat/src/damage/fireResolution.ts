@@ -1,4 +1,3 @@
-//packages/combat/src/damage/fireResolution.ts
 // DESIGN-41 §22-28 — Per-minute fire resolution functions.
 // These handle fire state progression between damage-resolution events:
 //   - Intensity decay (suppression/self-decay)
@@ -24,7 +23,6 @@ import {
 import { getFireRiskBp } from "./immediateFireFlooding.js";
 import { FIRE_SPREAD_CREATED } from "./reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // Internal helpers
 
 /**
@@ -65,7 +63,6 @@ function clampBp(value: number): number {
   return value;
 }
 
-// ---------------------------------------------------------------------------
 // Exported functions
 
 /**

@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/contracts.test.ts
 // AC-20 (INC-7): air_combat_v1 contract with 6-factor manifest + validateAirCombatContract.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";

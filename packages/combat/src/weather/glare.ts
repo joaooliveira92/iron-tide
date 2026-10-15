@@ -1,4 +1,3 @@
-//packages/combat/src/weather/glare.ts
 // DESIGN-42 §24 directional glare (INC-4/AC-7): angular separation bands.
 // Observer looking toward the sun receives the penalty; cloud cover above 7_500 bp
 // disables glare; glare-ineligible areas return neutral 10_000.

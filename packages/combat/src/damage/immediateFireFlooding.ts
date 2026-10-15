@@ -1,4 +1,3 @@
-//packages/combat/src/damage/immediateFireFlooding.ts
 // DESIGN-41 §9 — Immediate fire and flooding source creation. This stage creates
 // FireSourceRecord and FloodingSourceRecord entries from a qualified hit; it does
 // NOT resolve progressive fire/flooding effects (deferred to M3/C-5).
@@ -22,7 +21,6 @@
 import { FIRE_SOURCE_CREATED, FLOODING_SOURCE_CREATED } from "./reasonCodes.js";
 import type { FireSourceRecord, FloodingSourceRecord } from "./state.js";
 
-// ---------------------------------------------------------------------------
 // Ship-type fire-risk multipliers per DESIGN-41 §20 (in basis points).
 // These represent the base probability that a qualified hit starts a fire.
 // 10_000 bp = 100% probability.
@@ -57,7 +55,6 @@ const FLOODING_CHANCE_BP: Record<string, number> = {
   PARTIAL_PENETRATION: 3_000,
 };
 
-// ---------------------------------------------------------------------------
 // Input types
 
 export interface FireCreationInput {
@@ -86,12 +83,10 @@ export interface FloodingCreationInput {
   hasWaterRoute: boolean;
 }
 
-// ---------------------------------------------------------------------------
 // Output types — FireSourceRecord and FloodingSourceRecord are defined in state.ts.
 // Re-exported here for convenience.
 export type { FireSourceRecord, FloodingSourceRecord };
 
-// ---------------------------------------------------------------------------
 // Evaluators
 
 /**

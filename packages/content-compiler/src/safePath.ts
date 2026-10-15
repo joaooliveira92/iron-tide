@@ -1,4 +1,3 @@
-//packages/content-compiler/src/safePath.ts
 import { normalize } from "node:path";
 
 /**

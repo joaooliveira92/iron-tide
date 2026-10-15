@@ -1,4 +1,3 @@
-// packages/phase-engine/src/battlePhases.ts
 // Battle phases: battle_generation (order 7.5) and battle_resolution (order 8).
 import type { BattleInstance, CampaignWeatherState, NationState } from "@bluewave/campaign";
 import {

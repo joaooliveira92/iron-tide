@@ -1,4 +1,3 @@
-// packages/phase-engine/test/division-reorder.test.ts
 // DESIGN-26 §8/§12: the month commit applies ReorderDivisionShips through
 // applyDivisionCommandMonth — ship order permuted, flagship pinned, cohesion -3.
 

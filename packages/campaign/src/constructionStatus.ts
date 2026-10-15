@@ -1,4 +1,3 @@
-// packages/campaign/src/constructionStatus.ts
 // DESIGN-23 section 2: the one authoritative dockyard-project status vocabulary and its legal transition table.
 // Pure and dependency-free; every status change in the phase engine goes through `transitionConstructionProject`,
 // so halt, delay, acceleration, completion and impoundment cannot invent a state the model does not allow.

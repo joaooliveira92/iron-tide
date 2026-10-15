@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/light-aa-disruption.test.ts
 // AC-7 (INC-5): guaranteed light-AA disruption opportunity (DESIGN-45 §29.8-9) — every
 // eligible light-AA system receives at least one disruption check of one authoritative
 // substep; the opportunity does NOT guarantee ammunition, hit, damage, or abort.

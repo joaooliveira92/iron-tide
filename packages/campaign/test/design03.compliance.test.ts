@@ -57,9 +57,7 @@ import {
   toLinear,
 } from "../src/timeline.js";
 
-// ---------------------------------------------------------------------------
 // Helpers
-// ---------------------------------------------------------------------------
 function collector() {
   return new DiagnosticCollector();
 }
@@ -96,9 +94,7 @@ function tech(
   };
 }
 
-// ---------------------------------------------------------------------------
 // §9.1 - five canonical scenarios, January
-// ---------------------------------------------------------------------------
 describe("§9.1 canonical scenarios", () => {
   it("all five exist January of identifier year", () => {
     const c = collector();
@@ -131,9 +127,7 @@ describe("§9.1 canonical scenarios", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §9.2 - cannot advance beyond Dec 1970
-// ---------------------------------------------------------------------------
 describe("§9.2 timeline hard stop", () => {
   it("integer calendar arithmetic", () => {
     expect(toLinear(1970, 12)).toBe(1970 * 12 + 11);
@@ -159,9 +153,7 @@ describe("§9.2 timeline hard stop", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §9.3/4/5/6 fleet-size
-// ---------------------------------------------------------------------------
 describe("§9.3-9.8 fleet-size", () => {
   it("canonical 4 settings exist with 7500/10000/12500/15000", () => {
     expect(FLEET_SIZE_IDS).toEqual(["small", "standard", "large", "very_large"]);
@@ -235,9 +227,7 @@ describe("§9.3-9.8 fleet-size", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §9.9 research-speed
-// ---------------------------------------------------------------------------
 describe("§9.9 research-speed", () => {
   it("canonical 7500/10000/12500/15000 and range", () => {
     expect(RESEARCH_BPS).toEqual({ slow: 7500, standard: 10000, fast: 12500, very_fast: 15000 });
@@ -289,9 +279,7 @@ describe("§4.1/§5/§6.1 exact canonical set enforcement", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §9.10-9.15 technology variation
-// ---------------------------------------------------------------------------
 describe("§9.10-9.15 technology variation", () => {
   it("§9.10 none zero shift 10000", () => {
     const c = collector();
@@ -531,9 +519,7 @@ describe("§9.10-9.15 technology variation", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §9.17-9.20 continuity
-// ---------------------------------------------------------------------------
 describe("§9.17-9.20 continuity", () => {
   const identities = new Map<string, NationIdentityDefinition>([
     [
@@ -748,9 +734,7 @@ describe("§9.17-9.20 continuity", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §9.21 post-creation mutation rejected (state.ts)
-// ---------------------------------------------------------------------------
 describe("§9.21 configuration immutability", () => {
   it("mutation rejected", async () => {
     const { validateCampaignConfiguration, assertConfigurationImmutability } =
@@ -785,9 +769,7 @@ describe("§9.21 configuration immutability", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §3 campaignSeed & configuration explicitness
-// ---------------------------------------------------------------------------
 describe("§3 campaignSeed & explicit config", () => {
   it("valid 32 lower hex passes, uppercase/short/long fails INVALID_CAMPAIGN_SEED", async () => {
     const { validateCampaignSeed } = await import("../src/campaignConfiguration.js").catch(
@@ -853,9 +835,7 @@ describe("§3 campaignSeed & explicit config", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §9.3/9.4 - CampaignCompiler enforces DESIGN-03 configuration before RNG
-// ---------------------------------------------------------------------------
 describe("CampaignCompiler DESIGN-03 configuration gate", () => {
   function writeMinimalPack(dir: string): void {
     mkdirSync(dir, { recursive: true });

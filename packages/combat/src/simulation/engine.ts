@@ -1,4 +1,3 @@
-//packages/combat/src/simulation/engine.ts
 // DESIGN-38 §3 tactical minute-advance simulation over TacticalBattleState. This
 // module owns the public request/result contracts and the ordered minute
 // orchestrator; each deterministic stage lives in ./minuteStages.js.

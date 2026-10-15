@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/state.ts
 // DESIGN-43 §§3, 6, 10, 13, 14, 20/32 aircraft state model types.
 // INC-2: AircraftNationState, inventory, development project, proposal,
 // squadron, basing types.

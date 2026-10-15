@@ -1,4 +1,3 @@
-//packages/combat/src/mines/clearance.ts
 // DESIGN-35 §27 mine-clearance completion (INC-7). A mine-pressure record is
 // CLEARED when pressure reaches 0 after sweeping or decay (§27; zero pressure =
 // absence of an active record, §1). Clearance MUST:

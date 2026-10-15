@@ -127,9 +127,7 @@ describe("foreignWarSettlementPostings (SB3-R23 §13.6/13.7)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------------------------------------------
 // Monthly integration: a paid contract impounded at war returns the paid money
-// ---------------------------------------------------------------------------------------------------------------
 
 describe("the monthly war step posts the settlement (SB3-R23)", () => {
   function snapshot(builderTreasury = 10_000): CampaignSnapshot {

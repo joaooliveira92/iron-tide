@@ -1,4 +1,3 @@
-// packages/ship-design/src/naming.ts
 // DESIGN-23 section 4 / SB3-R13: the deterministic, pool-driven ship-name allocator. A class-order batch gets its names
 // from the ordering nation's authored name pool (the `NamingPolicy.stems` of the design's type, in authored order). The
 // allocator reads no clock, locale, environment or ambient randomness: the same pool, count and already-taken set

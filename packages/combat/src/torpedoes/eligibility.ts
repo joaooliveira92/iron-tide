@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/eligibility.ts
 // DESIGN-40 §6 launch eligibility — every predicate enforced, fail-closed,
 // consuming NO torpedo and producing exactly one explicit reason code through a
 // structured verdict (never throw-only, except the REUSED validateTargetOrder

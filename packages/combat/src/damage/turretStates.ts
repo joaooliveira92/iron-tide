@@ -1,4 +1,3 @@
-//packages/combat/src/damage/turretStates.ts
 // DESIGN-41 §7 — Turret state machine.
 // Five canonical turret states. `applyTurretDamage` moves a turret to a new
 // state based on a component damage outcome. No elapsed-time restoration
@@ -7,7 +6,6 @@
 
 import { type ComponentOutcome } from "./componentDamage.js";
 
-// ---------------------------------------------------------------------------
 // Five canonical turret states (§7)
 
 export type TurretState = "OPERATIONAL" | "JAMMED" | "DISABLED" | "DESTROYED" | "BURNED_OUT";
@@ -18,7 +16,6 @@ export interface TurretComponent {
   jamDurationMinutes?: number;
 }
 
-// ---------------------------------------------------------------------------
 // State transitions
 
 // The most severe outcome that maps to each turret state.

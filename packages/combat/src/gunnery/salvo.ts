@@ -1,4 +1,3 @@
-//packages/combat/src/gunnery/salvo.ts
 // DESIGN-39 §28 + AC-7: exact per-type ammunition accounting and ATOMIC reserve +
 // consume for a salvo. Reservations never partially consume: a salvo is committed
 // in full from a single permitted ammunition type, or fails entirely with

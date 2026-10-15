@@ -1,4 +1,3 @@
-//packages/combat/test/weather/strategic-generation.test.ts
 // AC-2: Strategic weather generation — monthly weather_generation phase
 // generates per-area StrategicWeatherState from canonical climate profile,
 // calendar month, prior persistent state, and keyed RNG stream
@@ -13,7 +12,6 @@ import {
 } from "../../src/weather/climate.js";
 import { WEATHER_GENERATION_PHASE, WEATHER_RULESET_VERSION } from "../../src/weather/constants.js";
 
-// ---------------------------------------------------------------------------
 // Fixture climate profile — authored test surface (not production YAML;
 // CONTENT-track deferred)
 function temperateClimate(): ClimateProfile {

@@ -1,4 +1,3 @@
-//packages/combat/test/weather/components.test.ts
 // AC-4: 12 tactical weather components — all DESIGN-42 §3 components use
 // canonical integer units; non-integers rejected with
 // INVALID_TACTICAL_WEATHER_STATE; BattleWeatherComponents carries a state hash.

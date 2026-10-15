@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/ordering.ts
 // DESIGN-40 §28 — canonical torpedo ordering (INC-7, AC-20). Torpedo resolution
 // orders:
 //

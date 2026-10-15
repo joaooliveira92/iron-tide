@@ -1,4 +1,3 @@
-//packages/content-compiler/src/artifact.ts
 import { mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 

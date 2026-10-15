@@ -1,4 +1,3 @@
-// packages/ship-design/src/shipTypeRegistry.ts
 // The domain adapter over the compiled ship-type content (ADR-0156, ship-part-model ticket 12b).
 //
 // Content authors one `ShipTypeRecord` per canonical type; the classification algorithm, the

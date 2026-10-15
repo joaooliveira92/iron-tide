@@ -299,9 +299,7 @@ export function buildFittingPartModel(input: {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Fitting placements → loadout entries
-// ---------------------------------------------------------------------------
 
 /** One fitting or sensor placement rendered in the new model. */
 export interface FittingPlacementTranslation {
@@ -401,9 +399,7 @@ export function translateFittingPlacement(input: {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Reading the entry back for the existing compile stages
-// ---------------------------------------------------------------------------
 
 /** The per-placement values the existing compile stages read (the legacy `Resolved` fields). */
 export interface FittingPlacementValues {

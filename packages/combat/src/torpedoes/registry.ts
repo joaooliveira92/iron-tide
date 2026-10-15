@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/registry.ts
 // The battle's compiled-torpedo registry (ship-part-model ticket 13b).
 //
 // Combat reads torpedo performance ONLY from the neutral `CompiledTorpedo` contract, keyed by the

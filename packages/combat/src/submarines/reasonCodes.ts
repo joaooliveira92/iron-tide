@@ -1,4 +1,3 @@
-//packages/combat/src/submarines/reasonCodes.ts
 // DESIGN-34 §27 subset relevant to the submarine module, kept separate from the
 // top-level combat catalog (src/reasonCodes.ts) so the C-3 set-equality guard
 // (reason-codes-submarines.test.ts, INC-8 deliverable, per ticket 05) is not

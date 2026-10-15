@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/machinery.ts
 // DESIGN-40 §19 machinery damage (INC-6, AC-17). A torpedo hit in a machinery
 // space evaluates propulsion-unit / shaft / boiler / electrical / steering /
 // fuel-system damage through a KEYED weighted selection over the shipped

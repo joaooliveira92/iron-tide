@@ -1,4 +1,3 @@
-// packages/ship-design/src/compileShared.ts
 // Public compile contracts plus the small shared helpers used by the compile
 // pipeline stages. Re-exported from ./compile.js so the package surface is
 // unchanged.

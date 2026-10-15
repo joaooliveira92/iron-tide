@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/bombing-accuracy.test.ts
 // AC-10 (INC-4): Bombing accuracy formula with disruption, altitude, visibility, target maneuver, payload.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";

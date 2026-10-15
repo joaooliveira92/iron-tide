@@ -1,4 +1,3 @@
-//packages/combat/test/generation/repair.test.ts
 import { describe, it, expect } from "vite-plus/test";
 import {
   battleCompositionRepairV1,

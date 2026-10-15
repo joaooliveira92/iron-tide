@@ -1,4 +1,3 @@
-//packages/combat/src/damage/reasonCodes.ts
 // DESIGN-41 §47 subset relevant to the damage module, kept separate from the top-level
 // combat catalog (src/reasonCodes.ts) so INC-6's set-equality guard is not grown without
 // review. Per spec §1.4 these are the in-slice damage codes; deferred §47 codes

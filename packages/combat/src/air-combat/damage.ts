@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/damage.ts
 // D-3 M4 Aviation: CAP & Strikes — INC-5 (AC-13): bomb damage resolution.
 // Simplified bomb damage package creation for the damage pipeline.
 // Pure deterministic functions — no I/O, no Date.

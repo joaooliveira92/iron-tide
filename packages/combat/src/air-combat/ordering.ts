@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/ordering.ts
 // D-3 M4 Aviation: CAP & Strikes — AC-18 canonical ordering per DESIGN-43 §39 + DESIGN-38 §29.
 // Parallel to aircraft/ordering.ts pattern.
 import type { AirCombatRecord } from "./records.js";

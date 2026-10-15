@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/exchange.ts
 // D-3 M4 Aviation: CAP & Strikes — INC-2 (AC-5): air-to-air exchange formula.
 // 6-factor squadron-quality exchange with integer bp arithmetic, floor-once,
 // bigint intermediate, keyed RNG draw.

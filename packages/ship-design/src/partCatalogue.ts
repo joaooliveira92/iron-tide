@@ -49,9 +49,7 @@ import { navalProfileFile, buildLauncherPartModel } from "./torpedoPartAdapter.j
 import { buildTorpedoPartModel, type TorpedoModelSource } from "./torpedoPartBuilder.js";
 import { num } from "./compileShared.js";
 
-// ---------------------------------------------------------------------------
 // Vocabulary
-// ---------------------------------------------------------------------------
 
 /** The gun categories whose components are gun families. */
 export const GUN_CATEGORIES = [
@@ -255,9 +253,7 @@ export const PART_SOURCE_FIELDS: readonly SourceFieldDestination[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------
 // Source and result
-// ---------------------------------------------------------------------------
 
 /** Every legacy source the builder reads. Passed in: the builder performs no I/O. */
 export interface SourceCatalogue {
@@ -308,9 +304,7 @@ export interface BuiltPartCatalogue {
   readonly inventory: PartCatalogueInventory;
 }
 
-// ---------------------------------------------------------------------------
 // Component blocks (engineering, capabilities, metadata, units, parameters)
-// ---------------------------------------------------------------------------
 
 /** The attribute names the migration reads, by what they become. */
 const SPEC_ATTRIBUTES = new Set([
@@ -446,7 +440,6 @@ function componentBlocks(
   }
 
   // Attributes: every name must have a destination.
-  const referenced = new Set<string>();
   for (const name of Object.keys(def.attributes ?? {})) {
     if (
       !(
@@ -707,9 +700,6 @@ function componentBlocks(
   }
   capabilities.sort((a, b) => compareCodePoints(a.kind, b.kind));
 
-  // Every constant must be read by a formula or an attribute, or its value would be dropped.
-  void referenced;
-
   return {
     failures,
     blocks: {
@@ -747,9 +737,7 @@ function withBlocks<T extends FlattenedPart>(
   };
 }
 
-// ---------------------------------------------------------------------------
 // The builder
-// ---------------------------------------------------------------------------
 
 const isGunCategory = (c: string): boolean => (GUN_CATEGORIES as readonly string[]).includes(c);
 

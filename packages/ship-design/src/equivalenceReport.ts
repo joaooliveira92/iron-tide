@@ -188,9 +188,7 @@ export interface EquivalenceReport {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Row classification
-// ---------------------------------------------------------------------------
 
 const IDENTITY_PATH =
   /^(?:entries\[(?<a>[^\]]+)\]|(?:components\[(?<b>[^\]]+)\]\.armament|engine\.armament\[(?<c>[^\]]+)\]))\.(?<field>mountType|mountId)$/;
@@ -274,9 +272,7 @@ export function compareMetrics(input: CompareInput): MetricRow[] {
   });
 }
 
-// ---------------------------------------------------------------------------
 // Entry-level metrics (SPM-R23 per-entry detail, compared against the legacy placement)
-// ---------------------------------------------------------------------------
 
 const legacyUnitsOf = (design: EquivalenceDesign, instanceId: string, kind: string) => {
   const placement = design.draft.placements.find((p) => p.instanceId === instanceId);
@@ -313,9 +309,7 @@ export function entryMetrics(
   return { baseline: sortMap(b), candidate: sortMap(c) };
 }
 
-// ---------------------------------------------------------------------------
 // Report assembly
-// ---------------------------------------------------------------------------
 
 export interface DesignComparison {
   readonly design: EquivalenceDesign;
@@ -462,9 +456,7 @@ export function buildEquivalenceReport(input: {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Gates (SPM-R24)
-// ---------------------------------------------------------------------------
 
 export interface GateFailure {
   readonly gate: "structural" | "semantic";

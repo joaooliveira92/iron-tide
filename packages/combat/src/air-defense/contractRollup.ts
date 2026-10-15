@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/contractRollup.ts
 // D-4 M4 Aviation: Air Defense — AC-17: every shipped air-defense contract in a single typed
 // registry, plus a fail-closed validation guard.
 // Parallel to air-combat/contractRollup.ts pattern.

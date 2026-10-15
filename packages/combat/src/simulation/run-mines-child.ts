@@ -1,4 +1,3 @@
-//packages/combat/src/simulation/run-mines-child.ts
 // Deterministic child-process script for the C-2 mine-warfare slice (AC-23).
 // Spawned TWICE by test/mines/determinism.test.ts and byte-compared — two clean
 // Node processes must emit IDENTICAL canonical-serialized lines. Builds a

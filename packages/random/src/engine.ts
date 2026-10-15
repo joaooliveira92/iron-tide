@@ -1,4 +1,3 @@
-//packages/random/src/engine.ts
 import type { Brand } from "@bluewave/contracts";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";

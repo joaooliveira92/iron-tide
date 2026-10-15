@@ -1,4 +1,3 @@
-//packages/combat/test/damage/damage-control.test.ts
 // INC-7 — Damage-control resource allocation and priority scheduling (DESIGN-41 §§27-28).
 // Proves: priority ordering, resource allocation, severity-based distribution,
 // effective capacity computations, and full allocation cycles.
@@ -16,7 +15,6 @@ import {
 } from "../../src/damage/index.js";
 import type { FireSourceRecord, FloodingSourceRecord } from "../../src/damage/state.js";
 
-// ---------------------------------------------------------------------------
 // Helpers
 
 function makeFire(
@@ -51,7 +49,6 @@ function createDefaultControlResource() {
   };
 }
 
-// ---------------------------------------------------------------------------
 // getFirePriorityCategory
 
 describe("INC-7: getFirePriorityCategory", () => {
@@ -68,7 +65,6 @@ describe("INC-7: getFirePriorityCategory", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // getFloodingPriorityCategory
 
 describe("INC-7: getFloodingPriorityCategory", () => {
@@ -89,7 +85,6 @@ describe("INC-7: getFloodingPriorityCategory", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // createDefaultDamageControlResource
 
 describe("INC-7: createDefaultDamageControlResource", () => {
@@ -106,7 +101,6 @@ describe("INC-7: createDefaultDamageControlResource", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // getEffectivePumping
 
 describe("INC-7: getEffectivePumping", () => {
@@ -137,7 +131,6 @@ describe("INC-7: getEffectivePumping", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // getEffectiveFirefighting
 
 describe("INC-7: getEffectiveFirefighting", () => {
@@ -168,7 +161,6 @@ describe("INC-7: getEffectiveFirefighting", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // getEffectiveRepairReduction
 
 describe("INC-7: getEffectiveRepairReduction", () => {
@@ -200,7 +192,6 @@ describe("INC-7: getEffectiveRepairReduction", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // allocateDamageControl — no sources
 
 describe("INC-7: allocateDamageControl — no sources", () => {
@@ -213,7 +204,6 @@ describe("INC-7: allocateDamageControl — no sources", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // allocateDamageControl — priority ordering
 
 describe("INC-7: allocateDamageControl — priority ordering", () => {
@@ -292,7 +282,6 @@ describe("INC-7: allocateDamageControl — priority ordering", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // allocateDamageControl — resource tracking
 
 describe("INC-7: allocateDamageControl — resource tracking", () => {
@@ -356,7 +345,6 @@ describe("INC-7: allocateDamageControl — resource tracking", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // allocateDamageControl — full cycles
 
 describe("INC-7: allocateDamageControl — full cycles", () => {

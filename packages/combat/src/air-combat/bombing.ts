@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/bombing.ts
 // D-3 M4 Aviation: CAP & Strikes — INC-4 (AC-9, AC-10, AC-11): transit time, bombing accuracy, dive/level bombing.
 // Pure deterministic functions — no I/O, no random, no Date.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";

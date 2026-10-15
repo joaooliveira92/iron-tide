@@ -1,4 +1,3 @@
-//packages/combat/test/damage/reason-codes-damage-control.test.ts
 // INC-9: Reason-code set-equality guard for the C-5 damage-control extension.
 // Verifies that the C-5 damage-control codes (fire spread/resolution, flooding
 // high-speed loss, damage-control allocation) are present in DAMAGE_REASON_CODES

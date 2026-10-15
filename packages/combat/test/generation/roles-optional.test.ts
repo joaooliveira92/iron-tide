@@ -1,4 +1,3 @@
-//packages/combat/test/generation/roles-optional.test.ts
 import { describe, it, expect } from "vite-plus/test";
 import { RandomEngine } from "@bluewave/random";
 import {

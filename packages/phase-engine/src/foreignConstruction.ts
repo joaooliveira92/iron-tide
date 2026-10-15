@@ -1,4 +1,3 @@
-// packages/phase-engine/src/foreignConstruction.ts
 // DESIGN-16 section 13 (spec SB3-R20..R24): the foreign construction contract, the builder-capability acceptance gate,
 // builder-capacity consumption, the payment schedule and its one-month grace, and the acceptance technology-insight
 // milestone. The immutable contract and its hash come from section 13.1; the capability predicates from section 13.2
@@ -107,9 +106,7 @@ export const FOREIGN_PAYMENT_DEFAULT_RESUME_BLOCKED =
  */
 export const FOREIGN_CONTRACT_FUNDED_BY_SCHEDULE = "FOREIGN_CONTRACT_FUNDED_BY_SCHEDULE" as const;
 
-// ---------------------------------------------------------------------------------------------------------------
 // Month arithmetic (integer-only; no wall clock/locale)
-// ---------------------------------------------------------------------------------------------------------------
 
 function monthLinear(month: string): number {
   const year = Number(month.slice(0, 4));
@@ -117,9 +114,7 @@ function monthLinear(month: string): number {
   return toLinear(year, m);
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // The contract (DESIGN-16 section 13.1)
-// ---------------------------------------------------------------------------------------------------------------
 
 /**
  * The builder terms a foreign order supplies. Everything the ordering nation and the engine can derive (ids, the
@@ -294,9 +289,7 @@ export function foreignBuilderCommittedMassKg(
   );
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Deterministic ordering (DESIGN-16 section 13.3)
-// ---------------------------------------------------------------------------------------------------------------
 
 const strCmp = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -316,9 +309,7 @@ export function compareForeignConstructionContracts(
   );
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Builder capability (DESIGN-16 section 13.2)
-// ---------------------------------------------------------------------------------------------------------------
 
 /** The caller-resolved boolean predicates for the builder (section 13.2), excluding the derived dock/capacity. */
 export interface ForeignBuilderCapabilityConditions {
@@ -360,9 +351,7 @@ export function foreignBuilderCapabilitySnapshotHash(input: ForeignBuilderCapabi
   );
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Ordering abroad (DESIGN-16 sections 13.1-13.3)
-// ---------------------------------------------------------------------------------------------------------------
 
 export interface ForeignConstructionOrderRequest {
   /** The ordering nation (it pays, and owns the project record). */
@@ -592,9 +581,7 @@ function applyAcceptanceInsight(
   };
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Payment schedule + grace (DESIGN-16 section 13.4)
-// ---------------------------------------------------------------------------------------------------------------
 
 export const FOREIGN_PAYMENT_CATEGORY_ID = "foreign_construction_payment" as const;
 
@@ -851,9 +838,7 @@ export function applyForeignPaymentOutcome(
   return cleared;
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Monthly revalidation seam (DESIGN-16 section 13.2)
-// ---------------------------------------------------------------------------------------------------------------
 
 export interface ForeignContractMonthInput {
   readonly contract: ForeignConstructionContract;

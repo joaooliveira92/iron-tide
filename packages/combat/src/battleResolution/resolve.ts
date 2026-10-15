@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/resolve.ts
 // B-6 INC-2 (AC-5/AC-6/AC-7/AC-10): `resolveBattleAuto` — the pure,
 // deterministic auto-resolution orchestrator.
 //
@@ -168,7 +167,6 @@ export interface BattleResolutionResult {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Targeting: nearest legal enemy contact per battery (tie-break by asset id).
 
 function squaredDistance(
@@ -226,7 +224,6 @@ function mergeTargetStates(
   return out;
 }
 
-// ---------------------------------------------------------------------------
 // Damage control (P-1 ticket 07): per-ship contexts derived from each ship's
 // CURRENT damage state. Wired in every battle (ticket 09 / ADR-0049). The keyedRng is scoped per (battleId, minute,
 // shipId, draw ordinal) so every ship resolves from its own deterministic
@@ -295,8 +292,6 @@ function buildDamageControlContexts(input: {
   }
   return contexts;
 }
-
-// ---------------------------------------------------------------------------
 
 export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResolutionResult {
   // ---- fail-closed validation ---------------------------------------------

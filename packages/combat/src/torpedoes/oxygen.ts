@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/oxygen.ts
 // DESIGN-40 §23 oxygen torpedoes (INC-6, AC-18). An OXYGEN model MUST declare
 // the exact shipped effects — range 15_000 bp / speed 11_000 bp /
 // wake-detection 7_500 bp / tube-hit severe-flooding 15_000 bp / chain-

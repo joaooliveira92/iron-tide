@@ -1,4 +1,3 @@
-//packages/combat/src/mines/mine-report.ts
 // DESIGN-35 §19 Mine Incident Report (INC-6). Every observed or suspected mine
 // event MUST create a MineIncidentReport carrying all §19 fields (recipient
 // participant; area or route; observed + received time; affected ship or force;

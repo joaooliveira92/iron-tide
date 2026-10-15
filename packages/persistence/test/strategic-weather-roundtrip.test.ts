@@ -1,4 +1,3 @@
-//packages/persistence/test/strategic-weather-roundtrip.test.ts
 // B-6/ADR-0025 (AC-1/AC-11): the new snapshot fields — startYear/startMonth and
 // the current-month per-area strategicWeather collection — survive SaveStore
 // save -> load -> replay round trips. strategicWeather is a plain canonically

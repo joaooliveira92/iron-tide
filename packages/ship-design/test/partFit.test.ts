@@ -21,9 +21,7 @@ import {
   type FitResult,
 } from "../src/index.js";
 
-// ---------------------------------------------------------------------------
 // Fixtures: every record is decoded through the real strict schema.
-// ---------------------------------------------------------------------------
 
 const PROVENANCE = {
   sourceStatus: "PLACEHOLDER",
@@ -272,9 +270,7 @@ const goodMount = (extra: Partial<LoadoutEntryData> = {}): LoadoutEntryData =>
     ...extra,
   });
 
-// ---------------------------------------------------------------------------
 // The fixtures themselves are strict
-// ---------------------------------------------------------------------------
 
 describe("ticket 06 fixtures", () => {
   it("are accepted by the strict schemas, and an undeclared field fails", () => {
@@ -285,9 +281,7 @@ describe("ticket 06 fixtures", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // General fit behaviour
-// ---------------------------------------------------------------------------
 
 describe("fit: a loadout that fits", () => {
   it("is ACCEPTED with no findings, data issues or waivers", () => {
@@ -893,9 +887,7 @@ describe("fit: nested ammunition", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Determinism, ordering, barrier
-// ---------------------------------------------------------------------------
 
 function shuffle<T>(items: readonly T[], seed: number): T[] {
   const out = [...items];

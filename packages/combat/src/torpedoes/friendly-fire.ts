@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/friendly-fire.ts
 // DESIGN-40 §24 friendly-fire danger sector (INC-3): pure, deterministic,
 // INTEGER-only geometry. The launch danger sector is centred on the target
 // bearing with half-angle = salvo spread half-angle + target-contact uncertainty

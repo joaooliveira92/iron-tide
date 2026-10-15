@@ -1,4 +1,3 @@
-//packages/combat/src/mines/decay.ts
 // DESIGN-35 §21 monthly mine decay (INC-7):
 //
 //   pressureAfterDecay = floor(pressureAfterSweeping * retentionMultiplierBp / 10_000)

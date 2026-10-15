@@ -1,4 +1,3 @@
-// packages/cross-process-test/src/run-acceleration-child.ts
 // INC-4 / SB3-R9: cross-process determinism child for engine-side acceleration. Builds a minimal campaign with one
 // accelerated project whose demand puts its construction pool far above the capacity-pressure threshold, runs one
 // month with a keyed acceleration-pressure decision, and prints the snapshot hash, the random-decision ledger hash

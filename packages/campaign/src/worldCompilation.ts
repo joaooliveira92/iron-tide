@@ -1,4 +1,3 @@
-// packages/campaign/src/worldCompilation.ts
 // Campaign-compile stage: materialize the world aggregate (areas, routes,
 // ports) from the validated content pack, deterministically ordered by id.
 import type { ContentPack } from "@bluewave/content-schema";

@@ -1,4 +1,3 @@
-//packages/combat/src/tactical/shipType.ts
 import type { CompiledDesignVersion } from "@bluewave/campaign";
 import { BluewaveError } from "@bluewave/contracts";
 
@@ -32,7 +31,6 @@ export const InvalidShipType = "INVALID_SHIP_TYPE" as const;
 const UMS_PER_KNOT = 514_444;
 const UM_PER_INCH = 25_400;
 
-// ---------------------------------------------------------------------------
 // ADR B-1-2 mapping. `CompiledDesignVersion` carries the compiled mechanical
 // fields (displacement, speed, armor, guns) plus an authored `hullType`. Full
 // numeric DESIGN-22 classification additionally requires turret count, aircraft
@@ -40,7 +38,6 @@ const UM_PER_INCH = 25_400;
 // The versioned classifier therefore maps the authored hull-type family into the
 // canonical registry, and applies the numeric boundaries that ARE available as a
 // secondary guard. Changing classification is a versioned ruleset change.
-// ---------------------------------------------------------------------------
 
 interface HullFamily {
   canonical: CanonicalShipType;

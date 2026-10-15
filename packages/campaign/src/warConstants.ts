@@ -1,4 +1,3 @@
-//packages/campaign/src/warConstants.ts
 export const WAR_SCORE_MINOR = 2;
 export const WAR_SCORE_MAJOR = 5;
 export const WAR_SCORE_DECISIVE = 10;

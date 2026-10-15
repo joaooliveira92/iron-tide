@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/basing.ts
 // DESIGN-43 §§20/32 basing model: capacities, slot allocation/deallocation, invariant.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { AIRCRAFT_BASING_CAPACITY_INSUFFICIENT } from "./reasonCodes.js";

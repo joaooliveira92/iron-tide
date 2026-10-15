@@ -41,8 +41,6 @@ import {
 } from "../reliability.js";
 import { arrayEquals } from "./shared.js";
 
-// ---------------------------------------------------------------------------
-
 export interface SubmarineMissionsContract {
   policyId: string;
   rulesetVersion: string;
@@ -131,9 +129,7 @@ export function validateSubmarineMissionsContract(
   void c;
 }
 
-// ---------------------------------------------------------------------------
 // submarine_reliability_v1 (§7)
-// ---------------------------------------------------------------------------
 
 export interface SubmarineReliabilityContract {
   policyId: string;
@@ -200,9 +196,7 @@ export function validateSubmarineReliabilityContract(
   void c;
 }
 
-// ---------------------------------------------------------------------------
 // submarine_proximity_v1 (§8)
-// ---------------------------------------------------------------------------
 
 export interface SubmarineProximityContract {
   policyId: string;
@@ -263,9 +257,7 @@ export function validateSubmarineProximityContract(
   void c;
 }
 
-// ---------------------------------------------------------------------------
 // submarine_remote_efficiency_v1 (§9)
-// ---------------------------------------------------------------------------
 
 export interface SubmarineRemoteEfficiencyContract {
   policyId: string;
@@ -345,9 +337,7 @@ export function validateSubmarineRemoteEfficiencyContract(
   void c;
 }
 
-// ---------------------------------------------------------------------------
 // submarine_long_range_asw_vulnerability_v1 (§10)
-// ---------------------------------------------------------------------------
 
 export interface SubmarineLongRangeAswVulnerabilityContract {
   policyId: string;
@@ -407,5 +397,4 @@ export function validateSubmarineLongRangeAswVulnerabilityContract(
   void c;
 }
 
-// ---------------------------------------------------------------------------
 // submarine_effectiveness_v1 (§11 + §12)

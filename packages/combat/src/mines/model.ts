@@ -1,4 +1,3 @@
-//packages/combat/src/mines/model.ts
 // DESIGN-35 §2 immutable MineTypeDefinition: every field required; a missing
 // or invalid field fails with INVALID_MINE_TYPE_DEFINITION. The definition
 // carries a deterministic content version + content hash (canonical serializer
@@ -310,7 +309,6 @@ export function verifyMineTypeDefinitionContentHash(m: MineTypeDefinition): bool
   return computeMineTypeDefinitionContentHash(m) === m.contentHash;
 }
 
-// ---------------------------------------------------------------------------
 // INC-1 shipped six canonical MineTypeDefinition instances (DESIGN-35 §2, with
 // §9/§15/§21 exact shipped constants wired in per ticket 04). There is no open
 // content catalog to roll up later (unlike torpedo models) — this is the full
@@ -327,7 +325,6 @@ export function verifyMineTypeDefinitionContentHash(m: MineTypeDefinition): bool
 // source/target matrix); SUBMARINE_LAID maps only to MINELAYING_SUBMARINE
 // (ticket 01: submarine-laid ships as a data type only) and CONTROLLED_DEFENSIVE/
 // SCENARIO_SPECIAL are scoped to their definitionally-tied sources.
-// ---------------------------------------------------------------------------
 
 function sharedStrikeProfile(): MineStrikeProfile {
   return { baseSeverityWeightsBp: MINE_STRIKE_BASE_SEVERITY_WEIGHTS_BP };

@@ -1,4 +1,3 @@
-//packages/combat/test/damage/determinism.test.ts
 // INC-5 — Determinism proof: same inputs → byte-identical output.
 // Runs the resolveDamage function twice in the same process with identical
 // inputs and compares the full state and event hashes.
@@ -11,7 +10,6 @@ import {
   type ShipDamageState,
 } from "../../src/damage/index.js";
 
-// ---------------------------------------------------------------------------
 // Deterministic RNG implementation for cross-run consistency.
 // This is a simple seeded RNG based on hash of the stream name.
 // Same stream name → same value every time.
@@ -38,7 +36,6 @@ function createDeterministicRng(): (stream: string) => number {
 // Shared deterministic RNG
 const detRng = createDeterministicRng();
 
-// ---------------------------------------------------------------------------
 // Helpers
 
 function baseState(overrides: Partial<ShipDamageState> = {}): ShipDamageState {
@@ -93,7 +90,6 @@ function jsonEqual(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-// ---------------------------------------------------------------------------
 // Determinism tests
 
 describe("AC-5: Determinism — same inputs → byte-identical outputs", () => {

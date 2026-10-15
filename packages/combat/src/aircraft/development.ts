@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/development.ts
 // DESIGN-43 §§4-10 development pipeline.
 // INC-3: request command, one-active-proposal slot, project lifecycle,
 // proposal generation (keyed RNG), attribute allocation, acceptance/rejection.

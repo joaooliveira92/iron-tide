@@ -1,4 +1,3 @@
-//packages/combat/src/mines/constants.ts
 // Versioned authoritative mine-type constants (DESIGN-35 §2/§9/§15/§21 surface
 // shipped by INC-1) shipped as a `mine_type_definitions_v1` policy +
 // `SHIPPED_MINE_TYPE_DEFINITIONS_CONTRACT` + `validateMineTypeDefinitionsContract`,

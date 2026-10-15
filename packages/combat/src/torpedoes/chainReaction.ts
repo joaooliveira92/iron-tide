@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/chainReaction.ts
 // DESIGN-40 §22 tube/magazine chain reaction (INC-6, AC-18). Each loaded
 // torpedo exposed to fire, explosion, or severe tube damage performs ONE
 // chain-reaction check. Shipped base probability by propellant class

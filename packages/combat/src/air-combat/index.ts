@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/index.ts
 // D-3 M4 Aviation: CAP & Strikes — barrel export.
 export * from "./constants.js";
 export * from "./reasonCodes.js";

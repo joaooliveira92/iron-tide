@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/reasonCodes.ts
 // D-4 M4 Aviation: Air Defense — INC-5 full reason-code rollup (DESIGN-45 §28).
 // Shipped codes: EXACTLY 20 (sets, not supersets). Deferred markers: 6 (SAM). Boundary: 1.
 //

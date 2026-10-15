@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/cap-vs-bomber.test.ts
 // AC-6 (INC-2): Remaining CAP (after escort) engages bombers.
 // Bombers do NOT return fire.
 import { describe, expect, it } from "vite-plus/test";

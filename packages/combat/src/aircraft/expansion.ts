@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/expansion.ts
 // DESIGN-43 §19 squadron expansion: ratio formula, penalty bands, same-month aggregation.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { SQUADRON_EXPANSION_INELIGIBLE } from "./reasonCodes.js";

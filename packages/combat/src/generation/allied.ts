@@ -1,4 +1,3 @@
-//packages/combat/src/generation/allied.ts
 import { ALLIED_SUPPORT_INELIGIBLE, ALLIED_OPERATIONAL_ACCESS_MISSING } from "./reasonCodes.js";
 import { BluewaveError } from "@bluewave/contracts";
 

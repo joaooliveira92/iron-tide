@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/proposal.ts
 // DESIGN-43 §§10-12 proposal model, acceptance/rejection, expiry.
 // INC-3: AircraftProposal creation (from RNG-generated attributes),
 // acceptance → model creation, rejection.

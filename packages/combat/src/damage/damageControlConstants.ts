@@ -1,4 +1,3 @@
-//packages/combat/src/damage/damageControlConstants.ts
 // DESIGN-41 §§27-28 — Damage-control resource pools and priority allocation constants.
 // Integer fixed-point arithmetic only; versioned policy identifiers for contract validation.
 

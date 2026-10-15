@@ -1,4 +1,3 @@
-//packages/combat/src/contact/lifecycle.ts
 // DESIGN-38 §19/§3-step-4: contact-track create/update/age/merge lifecycle,
 // deterministic by stable asset key. The authoritative contact shape (TacticalContact)
 // extends the DESIGN-38 ContactTrack fields (identity/position/course/speed/

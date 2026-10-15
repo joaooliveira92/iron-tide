@@ -1,4 +1,3 @@
-// packages/campaign/src/compiler.ts
 // Campaign-compile orchestrator (DESIGN-09). This module owns the public
 // compilation request/response contracts and the statically ordered pipeline;
 // each materialization stage lives in its own focused module.

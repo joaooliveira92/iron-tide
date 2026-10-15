@@ -1,4 +1,3 @@
-//packages/combat/src/mines/reasonCodes.ts
 // DESIGN-35 §30 subset relevant to the mine module, kept separate from the
 // top-level combat catalog (src/reasonCodes.ts) so the C-2 set-equality guard
 // (reason-codes-mines.test.ts, INC-8 deliverable, per ticket 05) is not grown

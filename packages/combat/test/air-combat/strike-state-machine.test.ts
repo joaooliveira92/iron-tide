@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/strike-state-machine.test.ts
 // AC-8 (INC-3): Strike mission state machine with valid transitions.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";

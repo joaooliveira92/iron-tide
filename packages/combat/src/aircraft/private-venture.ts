@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/private-venture.ts
 // DESIGN-43 §§11-12 private ventures.
 // INC-4: typed event private_aircraft_venture_v1, 12-month cooldown,
 // max 3 unexpired, PurchasePrivateAircraftProposalCommand, 12-month expiry.

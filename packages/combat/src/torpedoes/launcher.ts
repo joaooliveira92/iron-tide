@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/launcher.ts
 // DESIGN-40 §2/§4/§8 launcher surface. TorpedoLauncherDefinition is the static
 // launcher-family content the compatibility predicates (§4) and reload (§3)
 // consult; createTorpedoLauncherState is the construction boundary of the

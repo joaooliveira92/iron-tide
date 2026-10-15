@@ -1,4 +1,3 @@
-// packages/phase-engine/src/cancelConstructionProject.ts
 // DESIGN-23 section 23 (project cancellation) with the DESIGN-11 settlement contract. Stops a dockyard project,
 // releases future capacity, settles the work already done explicitly, resolves a rebuild target ship's availability
 // and custody, and leaves an explicit cancellation record (the `ConstructionProjectCancelled` event, emitted by the

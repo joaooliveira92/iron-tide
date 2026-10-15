@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/daylight.ts
 // B-6 INC-2: the canonical shipped daylight profile `default_daylight_v1` and
 // its id-based registry. The default climate profile (default-climate-profile.ts)
 // references `daylightProfileId "default_daylight_v1"`; the auto-resolver must

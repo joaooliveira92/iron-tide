@@ -1,4 +1,3 @@
-// packages/campaign/src/continuity.ts
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 export type ContinuityMode = "historical" | "alternate_continuity_v1";
 export type ParticipationStatus = "ACTIVE" | "INACTIVE" | "CONDITIONAL_ACTIVE";

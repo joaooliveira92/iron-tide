@@ -81,7 +81,6 @@ export interface CliOptions {
   outputMode: OutputMode;
 }
 
-// ---------------------------------------------------------------------------
 // Boundary schemas (RULES.md "Schema and boundaries").
 //
 // Every external file this entry point reads is decoded with an Effect Schema
@@ -92,7 +91,6 @@ export interface CliOptions {
 // `Schema.declare` trust class (the repo's established idiom for a shape whose
 // semantic validation lives elsewhere — see `safe-int-schema.ts` and
 // `campaignCommandSchemas.ts`), while the file's outer shape is still decoded.
-// ---------------------------------------------------------------------------
 
 const STRICT_DECODE_OPTIONS = { onExcessProperty: "error" } as const;
 
@@ -156,9 +154,7 @@ const CommandEnvelopeSchema = Schema.Struct({
 
 const CommandEnvelopeListSchema = Schema.Array(CommandEnvelopeSchema);
 
-// ---------------------------------------------------------------------------
 // Effects shared by every program (ports only — no raw I/O here).
-// ---------------------------------------------------------------------------
 
 const printDiagnostics = (
   collector: DiagnosticCollector,

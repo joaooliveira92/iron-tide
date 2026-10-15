@@ -1,5 +1,3 @@
-//packages/phase-engine/test/battle-generation-phase.test.ts
-
 import type { BattleInstance, CampaignSlot, CampaignSnapshot } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";

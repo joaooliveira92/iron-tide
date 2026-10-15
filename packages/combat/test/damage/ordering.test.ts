@@ -1,4 +1,3 @@
-//packages/combat/test/damage/ordering.test.ts
 // INC-4 — Canonical ordering (DESIGN-41 §46).
 // Proves: ordering comparator sorts by (minute, substep, sourceId, targetShipId,
 // causalWeaponId, hitLocation, recordHash).
@@ -9,7 +8,6 @@ import {
   type DamageEventRecord,
 } from "../../src/damage/index.js";
 
-// ---------------------------------------------------------------------------
 // Helpers
 
 function makeRecord(overrides: Partial<DamageEventRecord> = {}): DamageEventRecord {
@@ -39,7 +37,6 @@ function makeRecord(overrides: Partial<DamageEventRecord> = {}): DamageEventReco
   });
 }
 
-// ---------------------------------------------------------------------------
 // §46 — Canonical ordering
 
 describe("AC-4: Canonical ordering (§46)", () => {

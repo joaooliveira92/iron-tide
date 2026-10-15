@@ -1,4 +1,3 @@
-//packages/combat/src/mines/ordering.ts
 // DESIGN-35 §29 — canonical mine-warfare resolution ordering (INC-8, AC-20).
 // Mine-warfare resolution MUST order:
 //

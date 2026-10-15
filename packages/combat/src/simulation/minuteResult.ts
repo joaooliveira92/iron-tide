@@ -1,4 +1,3 @@
-// packages/combat/src/simulation/minuteResult.ts
 // Assemble the immutable DESIGN-38 minute result: snapshot, minute hash, and the
 // optional resolved surfaces (torpedo/smoke/air-combat/air-defense/gunnery/...).
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";

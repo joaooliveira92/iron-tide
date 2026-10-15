@@ -1,4 +1,3 @@
-// packages/phase-engine/src/constructionHaltResume.ts
 // Halting and resuming a dockyard project (DESIGN-23 section 7; RTW3 manual pp. 30-31). Pure helpers shared by the
 // player command path and the monthly appropriation resolution, so a halt/resume decision is made in exactly one place.
 

@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/salvo.ts
 // DESIGN-40 §11 salvo policy (INC-3): a DETERMINISTIC recommendation over the
 // nine §11 factors with authored constants — never random. The recommended
 // salvo SIZE is

@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/damagePackage.ts
 // DESIGN-40 §16 TorpedoDamagePackage (INC-6, AC-15) + the atomic application
 // through the tactical damage contract. A damaging detonation creates ONE
 // package carrying every §16 field (target + impact zone, warhead
@@ -112,7 +111,6 @@ function isInt(v: unknown): v is number {
 export type TorpedoImpactSide = "PORT" | "STARBOARD";
 export type TorpedoDamageControlAccessibility = "ACCESSIBLE" | "RESTRICTED" | "INACCESSIBLE";
 
-// ---------------------------------------------------------------------------
 // §16 TorpedoDamagePackage — every field of the §16 list + the package hash.
 export interface TorpedoDamagePackage {
   packageId: string; // deterministic: <battleId>:<minute>:<substep>:torpedo-damage:<trackId>
@@ -287,7 +285,6 @@ export function verifyTorpedoDamagePackageHash(p: TorpedoDamagePackage): boolean
   return computeTorpedoDamagePackageHash(body) === p.packageHash;
 }
 
-// ---------------------------------------------------------------------------
 // The authoritative factory (computes the §17/§18 budget + the package hash).
 export interface TorpedoDamagePackageInput {
   battleId: string;
@@ -391,7 +388,6 @@ export function battleIdFromPackage(packageId: string): string {
   return packageId.slice(0, separator);
 }
 
-// ---------------------------------------------------------------------------
 // Atomic application through the tactical damage contract (AC-15).
 
 export interface TorpedoDamageApplicationInput {
@@ -680,7 +676,6 @@ export function applyTorpedoDamagePackage(
   });
 }
 
-// ---------------------------------------------------------------------------
 // §22 SEPARATE explosion damage package (MEDIUM-4): the composition helper.
 // The §22 chain detonation creates its OWN damage package (never a silent
 // alteration of the original): it carries the CONSUMED torpedoes' summed warhead

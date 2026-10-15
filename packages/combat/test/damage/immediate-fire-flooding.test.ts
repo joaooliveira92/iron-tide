@@ -1,4 +1,3 @@
-//packages/combat/test/damage/immediate-fire-flooding.test.ts
 // INC-5 — Immediate fire & flooding creation (DESIGN-41 §9).
 // Proves: fire creation rules (ignition, combustible, oxygen, ship-type multiplier),
 // flooding creation rules (hull breach, water route), no-effect cases.
@@ -13,14 +12,12 @@ import {
 } from "../../src/damage/index.js";
 import { FIRE_SOURCE_CREATED, FLOODING_SOURCE_CREATED } from "../../src/damage/reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // Deterministic RNG for testing — returns predictable values.
 // The stream name is logged but ignored; the value is controlled by the caller.
 function rngThat(returnValues: Record<string, number>): (stream: string) => number {
   return (stream: string) => returnValues[stream] ?? 0.5;
 }
 
-// ---------------------------------------------------------------------------
 // Fire creation
 
 describe("AC-5: Fire creation (§9)", () => {
@@ -113,7 +110,6 @@ describe("AC-5: Fire creation (§9)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Ship-type fire risk multipliers
 
 describe("AC-5: Ship-type fire-risk multipliers (§20)", () => {
@@ -134,7 +130,6 @@ describe("AC-5: Ship-type fire-risk multipliers (§20)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Flooding creation
 
 describe("AC-5: Flooding creation (§9)", () => {
@@ -218,7 +213,6 @@ describe("AC-5: Flooding creation (§9)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Both effects
 
 describe("AC-5: A hit may create neither, one, or both effects (§9)", () => {

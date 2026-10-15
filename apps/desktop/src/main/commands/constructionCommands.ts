@@ -75,9 +75,7 @@ import { removeProjectForCommand } from "./construction/snapshot-mutations.js";
  * authoritative mutation (behind `ProjectStore.persistConstructionSnapshot`).
  */
 
-// ---------------------------------------------------------------------------
 // inspectConstructionScreen
-// ---------------------------------------------------------------------------
 
 export const inspectConstructionScreenProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
   Effect.gen(function* () {
@@ -107,9 +105,7 @@ export const inspectConstructionScreenProgram = withSchema(SessionIdPayloadSchem
   }),
 );
 
-// ---------------------------------------------------------------------------
 // previewConstructionBatchCommand
-// ---------------------------------------------------------------------------
 
 /**
  * The read-only preview for the build dialog (SB3-R30/R33): resolves the session's snapshot, the compiled
@@ -137,9 +133,7 @@ export const previewConstructionBatchCommandProgram = withSchema(
     }),
 );
 
-// ---------------------------------------------------------------------------
 // previewForeignConstructionCommand
-// ---------------------------------------------------------------------------
 
 /**
  * The read-only preview for the foreign-order dialog (SB3-R20/R23/R34; INC-9b): resolves the session's snapshot, the
@@ -176,9 +170,7 @@ export const previewForeignConstructionCommandProgram = withSchema(
     }),
 );
 
-// ---------------------------------------------------------------------------
 // submitConstructionCommand
-// ---------------------------------------------------------------------------
 
 export const submitConstructionCommandProgram = withSchema(
   ConstructionOrderPayloadSchema,
@@ -268,9 +260,7 @@ export const submitConstructionCommandProgram = withSchema(
     }),
 );
 
-// ---------------------------------------------------------------------------
 // replaceConstructionCommand
-// ---------------------------------------------------------------------------
 
 export const replaceConstructionCommandProgram = withSchema(
   ReplaceConstructionOrderPayloadSchema,
@@ -428,9 +418,7 @@ export const replaceConstructionCommandProgram = withSchema(
     }),
 );
 
-// ---------------------------------------------------------------------------
 // cancelConstructionCommand
-// ---------------------------------------------------------------------------
 
 export const cancelConstructionCommandProgram = withSchema(
   CancelConstructionOrderPayloadSchema,
@@ -507,9 +495,7 @@ export const cancelConstructionCommandProgram = withSchema(
     }),
 );
 
-// ---------------------------------------------------------------------------
 // flow helpers
-// ---------------------------------------------------------------------------
 
 /** The one success shape every mutating command returns. */
 function commandSuccess(

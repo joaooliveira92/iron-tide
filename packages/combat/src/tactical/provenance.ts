@@ -1,4 +1,3 @@
-//packages/combat/src/tactical/provenance.ts
 import { BluewaveError } from "@bluewave/contracts";
 
 export const TACTICAL_PROVENANCE_INVALID = "TACTICAL_PROVENANCE_INVALID" as const;

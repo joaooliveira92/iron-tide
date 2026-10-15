@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/contractRollup.ts
 // D-1 INC-9: every shipped aircraft contract in a single typed registry, plus
 // a fail-closed validation guard that runs every contract's validation function.
 // Mirrors packages/combat/src/mines/contracts.ts and

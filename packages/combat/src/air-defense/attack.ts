@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/attack.ts
 // D-4 M4 Aviation: Air Defense — AirDefenseAttack incoming attack model per DESIGN-45 §4.
 // Every attack declares release range, release altitude, speed profile, terminal profile,
 // formation size, cohesion, defensive susceptibility, and target identifier (§4 line 84).

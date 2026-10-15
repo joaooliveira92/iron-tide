@@ -1,4 +1,3 @@
-//packages/combat/src/generation/capabilities.ts
 // Optional per-battle capability declarations carried by the immutable
 // BattleManifest. These are the authoritative, authored battle inputs the
 // auto-resolver projects into the tactical stage contexts:

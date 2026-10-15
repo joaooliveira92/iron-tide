@@ -1,11 +1,9 @@
-//packages/combat/test/damage/ledger-order.test.ts
 // INC-4 — BattleLedger + canonicalEventOrder integration.
 // Tests that damage events integrate correctly with the BattleLedger.
 import { describe, it, expect } from "vite-plus/test";
 import { BattleLedger, canonicalEventOrder, type BattleEvent } from "../../src/battleLedger.js";
 import { damageEventOrder, createDamageEventRecord } from "../../src/damage/index.js";
 
-// ---------------------------------------------------------------------------
 // BattleLedger integration
 
 describe("AC-4: BattleLedger integration", () => {

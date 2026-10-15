@@ -1,4 +1,3 @@
-// packages/phase-engine/src/divisionCommands.ts
 // Canonical application of the DESIGN-26 division commands (create / add /
 // remove / change flagship / dissolve), used by the command_collection phase.
 import type {

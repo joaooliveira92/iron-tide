@@ -1,4 +1,3 @@
-//packages/combat/src/weather/night-twilight.ts
 // DESIGN-42 §27 night/twilight model (INC-4/AC-10): five canonical states
 // derived from battle date, location, tactical time, and canonical daylight
 // profile. Each state supplies explicit optical visibility, identification,

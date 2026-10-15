@@ -1,5 +1,3 @@
-// packages/campaign/src/fleetSize.ts
-
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 export const FLEET_SIZE_IDS = ["small", "standard", "large", "very_large"] as const;

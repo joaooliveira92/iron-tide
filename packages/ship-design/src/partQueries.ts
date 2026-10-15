@@ -60,9 +60,7 @@ export function revisionAt(part: FlattenedPart, month: string): string {
   return revision;
 }
 
-// ---------------------------------------------------------------------------
 // resolvePart
-// ---------------------------------------------------------------------------
 
 export interface ResolvedPart {
   readonly id: string;
@@ -105,9 +103,7 @@ function successorsOf(catalogue: PartCatalogue, id: string): string[] {
     .sort(compareCodePoints);
 }
 
-// ---------------------------------------------------------------------------
 // availableParts
-// ---------------------------------------------------------------------------
 
 export interface AvailablePartsInput {
   readonly catalogue: PartCatalogue;
@@ -204,9 +200,7 @@ export function availableParts(input: AvailablePartsInput): AvailableParts {
   };
 }
 
-// ---------------------------------------------------------------------------
 // partsForSlot
-// ---------------------------------------------------------------------------
 
 export type SlotOwner = { readonly platform: string } | { readonly part: string };
 
@@ -303,9 +297,7 @@ export function partsForSlot(input: PartsForSlotInput): PartsForSlot {
   return { status: "OK", slot: input.slot, parts, undecided };
 }
 
-// ---------------------------------------------------------------------------
 // lineage
-// ---------------------------------------------------------------------------
 
 export interface PartLineage {
   readonly part: string;
@@ -364,9 +356,7 @@ export function lineage(catalogue: PartCatalogue, id: string): PartLineage | nul
   };
 }
 
-// ---------------------------------------------------------------------------
 // validateLoadout
-// ---------------------------------------------------------------------------
 
 export interface ValidateLoadoutInput {
   readonly catalogue: PartCatalogue;
@@ -399,9 +389,7 @@ export function validateLoadout(input: ValidateLoadoutInput): FitResult {
   });
 }
 
-// ---------------------------------------------------------------------------
 // loadoutCost
-// ---------------------------------------------------------------------------
 
 export interface CostLine extends QuantityLine {
   /** `entries/<slot>/<part>#<n>[/entries/…]`, the same address fit findings use. */

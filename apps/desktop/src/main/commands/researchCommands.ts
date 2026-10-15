@@ -149,9 +149,7 @@ export const setResearchPriorityCommandProgram = withSchema(
     }),
 );
 
-// ---------------------------------------------------------------------------
 // envelope construction (deterministic, mirrors AiCommandGenerator's pattern)
-// ---------------------------------------------------------------------------
 
 const PLAYER_ENVELOPE_VERSION = "0.1.0" as const;
 
@@ -199,9 +197,7 @@ function buildResearchEnvelope(
   };
 }
 
-// ---------------------------------------------------------------------------
 // helpers
-// ---------------------------------------------------------------------------
 
 /** Engine-mirror validation (lifecycle `validateSetResearchPriority`):
  * every canonical field present, each weight in {1,2,4}, highCount 1..MAX,

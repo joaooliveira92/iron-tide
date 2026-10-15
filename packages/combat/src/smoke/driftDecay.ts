@@ -1,4 +1,3 @@
-//packages/combat/src/smoke/driftDecay.ts
 // DESIGN-42 §8: smoke drift and decay per minute.
 
 import {

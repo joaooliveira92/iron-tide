@@ -1,4 +1,3 @@
-//packages/combat/src/weather/index.ts
 export * from "./constants.js";
 export * from "./reasonCodes.js";
 export * from "./contractRollup.js";

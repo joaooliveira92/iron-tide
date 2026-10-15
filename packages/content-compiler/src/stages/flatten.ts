@@ -188,9 +188,7 @@ export function compilePartModel(
   };
 }
 
-// ---------------------------------------------------------------------------
 // Diagnostics
-// ---------------------------------------------------------------------------
 
 type RecordKind = "Part" | "Platform";
 
@@ -242,9 +240,7 @@ function reporter(sources: PartModelSources, collector: DiagnosticCollector): Re
   return Object.assign(report, { failed: () => failed });
 }
 
-// ---------------------------------------------------------------------------
 // Checks
-// ---------------------------------------------------------------------------
 
 function checkPlatformReferences(
   model: PartModelInput,
@@ -535,9 +531,7 @@ function checkSupersessionCycles(
   }
 }
 
-// ---------------------------------------------------------------------------
 // Flattening and the index
-// ---------------------------------------------------------------------------
 
 /**
  * The flattened record of one part: no `extends`, the prototype's values merged under

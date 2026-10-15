@@ -159,9 +159,7 @@ export function translateGunPlacement(input: {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Compiling the entry back through the existing armament resolver (SPM-R16)
-// ---------------------------------------------------------------------------
 
 function armamentGunModelFromPart(gun: GunPartRecord): ArmamentGunModel {
   const { part } = gun;

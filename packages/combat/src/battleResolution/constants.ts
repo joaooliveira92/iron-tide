@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/constants.ts
 // B-6 INC-2: versioned authoritative battle-auto-resolution base constants
 // (DESIGN-38 §33/§37, DESIGN-37 §32) shipped as a `battle_auto_resolution_v1`
 // policy + `SHIPPED_BATTLE_AUTO_RESOLUTION_V1` + `validateBattleAutoResolutionContract`,
@@ -20,7 +19,6 @@ export const BATTLE_AUTO_RESOLUTION_FORMULA_VERSION = "battle_auto_resolution_fo
 // DESIGN-38 §32: shipped default maximum battle duration (battle minutes).
 export const AUTO_RESOLUTION_MAX_MINUTES = DEFAULT_MAX_BATTLE_MINUTES;
 
-// ---------------------------------------------------------------------------
 // Canonical projection defaults (ADR-0026). Realism-independent constants the
 // auto-resolver uses to project committed campaign assets into the tactical
 // layer; all BALANCE TARGETs recorded in ADR-0026, never ambient.
@@ -47,7 +45,6 @@ export const AUTO_RESOLUTION_BATTLE_START_MINUTES = 360 as const; // 06:00 -> mi
 export const GUNNERY_BASE_RELOAD_MS = 60_000 as const;
 export const GUNNERY_ACCURACY_BASE_BP = 4_000 as const;
 
-// ---------------------------------------------------------------------------
 // ADR-0072: speed advantage as range control + engagement geometry (ticket 11).
 //
 // The auto-resolver's pursuit steers every ship straight at the nearest enemy at
@@ -93,7 +90,6 @@ export function designedSpeedBpKnots(designedSpeedUms: number): number {
   return Math.floor((designedSpeedUms * SPEED_BP_SCALE) / KNOTS_TO_UM_S);
 }
 
-// ---------------------------------------------------------------------------
 // Canonical shell/armor constants for impact synthesis (B-4 armor seam,
 // ADR-0021: `penetration = caliber * velocity / 1000`, linear first
 // approximation). All BALANCE TARGETs recorded in ADR-0026.
@@ -150,7 +146,6 @@ export function assertShippedArmorQualityFamily(family: string): void {
   }
 }
 
-// ---------------------------------------------------------------------------
 // Canonical ship layout (deterministic zone set + belt-proportional thickness;
 // ADR-0026). Every zone extends the ship's belt armor by the recorded ratio.
 export const AUTO_ZONES = ["BELT", "DECK", "SUPERSTRUCTURE", "MAGAZINE"] as const;
@@ -214,7 +209,6 @@ export const AUTO_RESOLUTION_COMPONENTS = [
   "AA-1",
 ] as const;
 
-// ---------------------------------------------------------------------------
 // ShipDamageState construction + hp mapping (ADR-0026, "damageReport mapping").
 // Initial reserves are canonical full-integrity score units (B-4 fixtures use
 // the same scale); a ship's battle hp derives from STRUCTURE + FLOAT equally.
@@ -222,7 +216,6 @@ export const STRUCTURE_UNIT = 100_000 as const;
 export const FLOAT_UNIT = 400_000 as const;
 export const STABILITY_INITIAL_BP = 8_000 as const;
 
-// ---------------------------------------------------------------------------
 // Contract
 
 export interface BattleAutoResolutionContract {

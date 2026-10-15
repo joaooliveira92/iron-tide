@@ -1,4 +1,3 @@
-//packages/combat/src/smoke/contracts.ts
 import { BluewaveError } from "@bluewave/contracts";
 import {
   smokePolicyId,

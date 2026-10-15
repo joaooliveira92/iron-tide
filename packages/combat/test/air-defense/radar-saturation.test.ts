@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/radar-saturation.test.ts
 // AC-9: radar-directed medium-AA group saturation (DESIGN-45 §13, §14).
 // §13: a group is radar-directed ONLY when it satisfies ALL SEVEN predicates (layer + six
 // booleans); missing any one → ordinary medium AA. §14: marginal multipliers 1..4→10_000,

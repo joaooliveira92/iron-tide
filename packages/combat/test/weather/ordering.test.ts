@@ -1,4 +1,3 @@
-//packages/combat/test/weather/ordering.test.ts
 // AC-12: Canonical ordering — weather events order by §29: weather transitions
 // by minute → component priority, then commands, then observation rays, then
 // fire rays. DB/UI/rendering/wall-clock order must not affect outcomes.

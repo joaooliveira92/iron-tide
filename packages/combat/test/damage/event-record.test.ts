@@ -1,4 +1,3 @@
-//packages/combat/test/damage/event-record.test.ts
 // INC-4 — Damage event record (DESIGN-41 §45).
 // Proves: record completeness, hash computation, immutability.
 import { describe, it, expect } from "vite-plus/test";
@@ -8,7 +7,6 @@ import {
   type DamageEventRecordBody,
 } from "../../src/damage/index.js";
 
-// ---------------------------------------------------------------------------
 // Helpers
 
 function sampleBody(overrides: Partial<DamageEventRecordBody> = {}): DamageEventRecordBody {
@@ -38,7 +36,6 @@ function sampleBody(overrides: Partial<DamageEventRecordBody> = {}): DamageEvent
   };
 }
 
-// ---------------------------------------------------------------------------
 // §45 — Record completeness
 
 describe("AC-4: Record completeness (§45)", () => {
@@ -109,7 +106,6 @@ describe("AC-4: Record completeness (§45)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §45 — Hash computation
 
 describe("AC-4: Hash computation (§45)", () => {
@@ -147,7 +143,6 @@ describe("AC-4: Hash computation (§45)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §45 — Immutability
 
 describe("AC-4: Immutability (§45)", () => {

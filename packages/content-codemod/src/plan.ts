@@ -156,9 +156,7 @@ function catalogueSource(source: LegacySource): SourceCatalogue {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Grouping and emission
-// ---------------------------------------------------------------------------
 
 const familyFile = (family: string): string => `parts/${family}.yaml`;
 const designFile = (nation: string): string => `designs/${nation}.yaml`;
@@ -230,9 +228,7 @@ function decodeGenerated(input: {
   }
 }
 
-// ---------------------------------------------------------------------------
 // Legacy → staged: one design
-// ---------------------------------------------------------------------------
 
 interface DesignLoadoutResult {
   readonly design: StagedDesign;
@@ -463,9 +459,7 @@ function designLoadout(input: {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Assemble a plan
-// ---------------------------------------------------------------------------
 
 /** Strictly decode every generated content file from its emitted bytes. */
 function decodeGeneratedFiles(
@@ -595,9 +589,7 @@ function assemblePlan(input: {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Public entry points
-// ---------------------------------------------------------------------------
 
 /** Plan the whole migration from the authoritative legacy content. Performs no I/O. */
 export function planFromLegacy(source: LegacySource): MigrationResult<MigrationPlan> {

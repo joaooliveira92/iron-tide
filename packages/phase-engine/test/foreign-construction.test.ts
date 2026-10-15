@@ -511,11 +511,9 @@ describe("monthly revalidation seam (SB3-R20, DESIGN-16 section 13.2)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------------------------------------------
 // INC-9 rework: the payment/grace path is wired into the running monthly pipeline (M1/M2), the contract hash is
 // enforced where a stored contract is consumed (M3), a payment default blocks ResumeConstruction (M4), and an
 // unresolved builder balance fails the order (Med1).
-// ---------------------------------------------------------------------------------------------------------------
 
 describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
   const INTEGRATION_MONTH = { year: 1880, month: 2 };

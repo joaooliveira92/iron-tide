@@ -1,4 +1,3 @@
-//packages/combat/test/weather/battle-init.test.ts
 // AC-3: BattleWeatherInitialization — every battle creates one immutable
 // BattleWeatherInitialization from the area's committed strategic weather
 // state, battle date/time, location, mission template, local-variation policy,
@@ -20,7 +19,6 @@ import {
 } from "../../src/weather/constants.js";
 import { INVALID_BATTLE_WEATHER_INITIALIZATION } from "../../src/weather/reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 function strategicState(overrides: Record<string, unknown> = {}) {
   return withStrategicWeatherStateHash({
     areaId: "area-eng-ch",

@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/air-defense-state.ts
 // D-4 M4 Aviation: Air Defense — AirDefenseState interface
 // per DESIGN-45 §2. Deterministic state hash computation.
 // Parallel to strike-state.ts pattern.

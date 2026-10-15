@@ -79,9 +79,7 @@ export function constructionProjectFor(
   };
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Shared order-path guards and cost resolution (single order, batch, foreign order)
-// ---------------------------------------------------------------------------------------------------------------
 
 /** The nation + design an order targets, or the stable refusal shared by every order path. */
 type OrderTargetResolution =
@@ -245,9 +243,7 @@ export function placeConstructionOrder(
   return { ok: true, snapshot: { ...snapshot, nations }, project, design, costs: costs.costs };
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Class-order batch (DESIGN-23 sections 3-5, SB3-R11..R14)
-// ---------------------------------------------------------------------------------------------------------------
 
 /** DESIGN-23 section 4: one command orders from `1` through exactly `12` ships of one approved compiled version. */
 export const CONSTRUCTION_BATCH_MIN_QUANTITY = 1;
@@ -445,9 +441,7 @@ export function placeConstructionBatch(
   };
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // Read-only preview for the build dialog (SB3-R30/R33): names, dock fit and ceiling, no mutation, no reservation
-// ---------------------------------------------------------------------------------------------------------------
 
 /**
  * What the build dialog shows before the player orders: the names the engine's naming policy would assign, whether

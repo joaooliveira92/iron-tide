@@ -1,4 +1,3 @@
-//packages/combat/src/mines/pressure-record.ts
 // DESIGN-35 §1 authoritative AreaMinePressureRecord (INC-2): one record per
 // area / laying participant / mine type / target-set identity when pressure is
 // positive. Zero pressure MUST be represented by absence of an active record

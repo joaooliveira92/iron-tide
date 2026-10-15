@@ -1,4 +1,3 @@
-// packages/ship-design/src/findingSubjects.ts
 // Per-rule subject metadata: where each rule's failing value is set, which way its limit points, and its unit.
 // Entity targets come from the producers (they hold the instance and zone ids); this table adds what a rule
 // means, keyed by rule code and formula id, never by wording.

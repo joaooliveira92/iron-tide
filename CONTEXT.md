@@ -8,9 +8,9 @@ inventing a synonym. (`GLOSSARY.md` is a symlink to this file.)
   engine and content-compiler that produce it. Runs as an Electron desktop app.
 - **Nation** (never "country") — a playable or AI power with a date-banded naval
   profile, dockyards, fleets, budget, and research.
-- **Naval profile** — a nation's authored capability and doctrine. *Hard
-  capability* (technology, industry, facilities, licences) only ever removes
-  options; *soft doctrine* is preference. See `content/`.
+- **Naval profile** — a nation's authored capability and doctrine. _Hard
+  capability_ (technology, industry, facilities, licences) only ever removes
+  options; _soft doctrine_ is preference. See `content/`.
 - **Campaign** — one loaded scenario instance: the compiled content, a starting
   snapshot, and a turn history.
 - **Snapshot** — the validated canonical authoritative state after a month.

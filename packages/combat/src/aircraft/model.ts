@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/model.ts
 // DESIGN-43 §§1-2 aircraft type enum and AircraftModelDefinition.
 // INC-1: model types, score guard, basic definition construction.
 // Pure/deterministic: no I/O/clock/random.

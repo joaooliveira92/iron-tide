@@ -1,4 +1,3 @@
-//packages/combat/src/weather/components.ts
 // DESIGN-42 §3 canonical tactical weather components (INC-2/AC-4): the twelve
 // component set every battle carries. Every numeric component uses canonical
 // integer units (DESIGN-07); non-integers and malformed types are rejected with

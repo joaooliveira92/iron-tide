@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/light-aa-eligibility.test.ts
 // AC-6: Light AA windows per attack profile + speed bands (DESIGN-45 §9).
 
 import { describe, it, expect } from "vite-plus/test";

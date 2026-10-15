@@ -2,9 +2,7 @@ import { Schema } from "effect";
 
 import { ProvenanceSchema } from "./provenance.js";
 
-// ══════════════════════════════════════════════════════════════════════
 // Nation IDs — 24 canonical nations, January 1880
-// ══════════════════════════════════════════════════════════════════════
 
 /** Canonical 24-nation id list (January 1880). Exported so consumers/tests have a stable tuple. */
 export const NATION_IDS = [
@@ -37,9 +35,7 @@ export const NATION_IDS = [
 export const NationIdSchema = Schema.Literals(NATION_IDS);
 export type NationId = typeof NationIdSchema.Type;
 
-// ══════════════════════════════════════════════════════════════════════
 // Regime enums — 1880-accurate
-// ══════════════════════════════════════════════════════════════════════
 
 export const RegimeTypeSchema = Schema.Literals(["monarchy", "republic"]);
 export type RegimeType = typeof RegimeTypeSchema.Type;
@@ -69,9 +65,7 @@ export const StabilityLevelSchema = Schema.Literals([
 ]);
 export type StabilityLevel = typeof StabilityLevelSchema.Type;
 
-// ══════════════════════════════════════════════════════════════════════
 // Canon sub-model enums
-// ══════════════════════════════════════════════════════════════════════
 
 export const NavalPurposeSchema = Schema.Literals([
   "sustain_global_empire",
@@ -250,17 +244,13 @@ export const ArmyNavyBalanceSchema = Schema.Literals([
 ]);
 export type ArmyNavyBalance = typeof ArmyNavyBalanceSchema.Type;
 
-// ══════════════════════════════════════════════════════════════════════
 // Primitives
-// ══════════════════════════════════════════════════════════════════════
 
 const HexColorSchema = Schema.String.check(Schema.isPattern(/^#[0-9A-Fa-f]{6}$/)).annotate({
   description: "CSS hex color, e.g. #C8102E",
 });
 
-// ══════════════════════════════════════════════════════════════════════
 // Sub-objects
-// ══════════════════════════════════════════════════════════════════════
 
 export const PresentationSchema = Schema.Struct({
   colorBg: HexColorSchema,
@@ -278,9 +268,7 @@ export const StabilityProfileSchema = Schema.Struct({
   factors: Schema.Array(Schema.String),
 }).annotate({ description: "Domestic stability level and contributing factors" });
 
-// ══════════════════════════════════════════════════════════════════════
 // Phase 1 additive fields — spec-driven
-// ══════════════════════════════════════════════════════════════════════
 
 export const StrategicObjectivesSchema = Schema.Struct({
   primary: Schema.String,
@@ -308,9 +296,7 @@ export const NavalAppropriationSchema = Schema.Struct({
   }),
 }).annotate({ description: "Naval budget appropriation for the scenario era" });
 
-// ══════════════════════════════════════════════════════════════════════
 // Regime — 1880-accurate political system
-// ══════════════════════════════════════════════════════════════════════
 
 export const NationRegimeSchema = Schema.Struct({
   type: RegimeTypeSchema,
@@ -338,9 +324,7 @@ export const NationRegimeSchema = Schema.Struct({
   description: Schema.String,
 }).annotate({ description: "Political regime, January 1880" });
 
-// ══════════════════════════════════════════════════════════════════════
 // Domain sub-models
-// ══════════════════════════════════════════════════════════════════════
 
 export const IdentitySchema = Schema.Struct({
   oneSentence: Schema.String.annotate({ description: "Phase 1 canonical one-sentence identity" }),
@@ -388,9 +372,7 @@ export const AiSchema = Schema.Struct({
   triggers: Schema.optional(Schema.Array(Schema.String)),
 });
 
-// ══════════════════════════════════════════════════════════════════════
 // Military — Phase 1 Nations
-// ══════════════════════════════════════════════════════════════════════
 
 export const MilitarySchema = Schema.Struct({
   description: Schema.String.annotate({ description: "Army/military profile overview" }),
@@ -401,9 +383,7 @@ export const MilitarySchema = Schema.Struct({
   armyNavyBalance: Schema.optional(ArmyNavyBalanceSchema),
 }).annotate({ description: "Army/military profile for the scenario era" });
 
-// ══════════════════════════════════════════════════════════════════════
 // Nation entity — single source of truth for the canon
-// ══════════════════════════════════════════════════════════════════════
 
 export const NationSchema = Schema.Struct({
   id: NationIdSchema,
@@ -433,9 +413,7 @@ export const NationSchema = Schema.Struct({
   provenance: Schema.optional(ProvenanceSchema),
 }).annotate({ description: "Canonical nation definition, January 1880" });
 
-// ══════════════════════════════════════════════════════════════════════
 // Inferred types
-// ══════════════════════════════════════════════════════════════════════
 
 export type NationRegime = typeof NationRegimeSchema.Type;
 export type Nation = typeof NationSchema.Type;

@@ -1,4 +1,3 @@
-//packages/combat/src/weather/fog.ts
 // DESIGN-42 §25 fog and mist visibility multipliers (INC-4/AC-8). Density →
 // visibility multiplier bands; affects optical observation and LOS signaling.
 // Radar uses its own explicit weather effects (deferred).

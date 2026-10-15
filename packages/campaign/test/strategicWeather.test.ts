@@ -1,4 +1,3 @@
-//packages/campaign/test/strategicWeather.test.ts
 // B-6/ADR-0025: the compiled campaign snapshot stamps the canonical start date
 // (startYear/startMonth) and the (empty) current-month per-area
 // strategicWeather collection; the campaign month id helper derives YYYY-MM

@@ -1,4 +1,3 @@
-// packages/phase-engine/src/dockExpansion.ts
 // DESIGN-16 sections 5-6 (spec SB3-R16/R17): the engine half of dock expansion. The `dock_expansion_v1` policy and its
 // pure integer arithmetic live in `@bluewave/ship-design`; this module owns the campaign-state project shape, the
 // both-conditions completion rule, and the seeded private opportunity event. Pure and deterministic: keyed random
@@ -158,9 +157,7 @@ export function applyDockExpansionStep(dock: DockMassLimits, stepKg: number): Do
   return raiseDockLimitsByStep(dock, stepKg);
 }
 
-// ---------------------------------------------------------------------------------------------------------------
 // DESIGN-16 section 6: the private industrial dock-expansion opportunity (SB3-R17)
-// ---------------------------------------------------------------------------------------------------------------
 
 /** The typed seeded event identifier (DESIGN-16 section 6). */
 export const PRIVATE_DOCK_EXPANSION_EVENT_ID = "private_dock_expansion_opportunity_v1" as const;

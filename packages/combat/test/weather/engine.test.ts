@@ -1,4 +1,3 @@
-//packages/combat/test/weather/engine.test.ts
 // H1 regression + record-level hash semantics for resolveWeather:
 // every returned components object must carry a stateHash equal to the
 // authoritative re-computation of ITS OWN surface, and every event record's

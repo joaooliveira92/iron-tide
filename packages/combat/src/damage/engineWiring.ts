@@ -1,4 +1,3 @@
-//packages/combat/src/damage/engineWiring.ts
 // DESIGN-41 entry point for damage resolution called from the minute-advance
 // simulation. `resolveDamage` takes the current ship damage state + a list of
 // gunnery impacts, runs the damage pipeline per impact, and returns the new
@@ -37,7 +36,6 @@ import {
 import { evaluateMagazineHazard, type MagazineHazardInput } from "./magazineHazard.js";
 import { evaluateTerminalSeam, type TerminalInput } from "./terminalSeam.js";
 
-// ---------------------------------------------------------------------------
 // GunneryImpact — the damage-relevant surface from a gunnery hit
 // This is what will eventually come from B-3's GunneryEventRecord; for now
 // we define it so the integration compiles and works.
@@ -88,7 +86,6 @@ export interface GunneryImpact {
   designStabilityScore: number;
 }
 
-// ---------------------------------------------------------------------------
 // ShipDamageState augmentation required by the pipeline
 
 /**
@@ -101,7 +98,6 @@ export interface ShipDamageStateExtended extends ShipDamageState {
   componentStates?: Record<string, string>;
 }
 
-// ---------------------------------------------------------------------------
 // resolveDamage — entry point
 
 /**

@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/records.ts
 // D-4 M4 Aviation: Air Defense — AC-15 AirDefenseEngagementRecord per DESIGN-45 §26/§27.
 // Parallel to air-combat/records.ts pattern.
 //

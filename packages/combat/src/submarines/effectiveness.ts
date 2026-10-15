@@ -1,4 +1,3 @@
-//packages/combat/src/submarines/effectiveness.ts
 // DESIGN-34 §11 strategic mission effectiveness (AC-9, INC-4) + §12 coastal range
 // restriction (AC-10, INC-4).
 //
@@ -40,9 +39,7 @@ import {
   SUBMARINE_STATE_INVARIANT_FAILED,
 } from "./reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // §11 authored multiplier defaults (all 10_000 = 1.0x, documented non-normative)
-// ---------------------------------------------------------------------------
 
 // base support availability multiplier. 10_000 bp = 1.0x neutral; refined when
 // the base-support model lands (deferred per spec §3).
@@ -70,9 +67,7 @@ export const SUBMARINE_BLOCKADE_MULTIPLIER_BP: 10000 = SUBMARINE_BASIS_POINTS_PE
 // §11 denominator: 10_000^7 for the seven basis-point multipliers.
 const EFFECTIVENESS_DENOMINATOR = 10_000 ** 7;
 
-// ---------------------------------------------------------------------------
 // §11 formula invariants
-// ---------------------------------------------------------------------------
 
 function invariant(value: unknown, field: string, reason: string): never {
   throw new BluewaveError(SUBMARINE_STATE_INVARIANT_FAILED, {
@@ -89,9 +84,7 @@ function isNonNegativeBp(v: unknown): v is number {
   );
 }
 
-// ---------------------------------------------------------------------------
 // §11: strategic mission effectiveness
-// ---------------------------------------------------------------------------
 
 export interface StrategicMissionEffectivenessInput {
   baseMissionStrength: SafeInt;
@@ -172,9 +165,7 @@ export function computeStrategicMissionEffectiveness(
   return SafeInt(result);
 }
 
-// ---------------------------------------------------------------------------
 // §12: coastal range restriction
-// ---------------------------------------------------------------------------
 
 export type CoastalMovementKind =
   | "NORMAL_MOVEMENT_WITHIN_HOME_AREA"
@@ -269,9 +260,7 @@ export function evaluateCoastalRestriction(
   };
 }
 
-// ---------------------------------------------------------------------------
 // §12: coastal full local efficiency check (used by §11 pre-multiplier gating)
-// ---------------------------------------------------------------------------
 
 export function coastalLocalEfficiencyOnly(
   submarineTypeId: SubmarineType,
@@ -281,9 +270,7 @@ export function coastalLocalEfficiencyOnly(
   return band === "LOCAL";
 }
 
-// ---------------------------------------------------------------------------
 // intelligenceMultiplierBp carries the SUBMARINE_RESOLUTION_DEFERRED marker
-// ---------------------------------------------------------------------------
 
 export const SUBMARINE_INTELLIGENCE_MULTIPLIER_DEFERRED_MARKER: typeof SUBMARINE_RESOLUTION_DEFERRED =
   SUBMARINE_RESOLUTION_DEFERRED;

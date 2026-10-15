@@ -1,4 +1,3 @@
-//packages/combat/src/gunnery/state.ts
 // DESIGN-39 §1 authoritative GunneryState: one per operational battery. The numeric
 // surface is integer fixed-point (DESIGN-07): acquisition/fire-control basis points,
 // range in integer micrometres, reload progress in integer tactical milliseconds,

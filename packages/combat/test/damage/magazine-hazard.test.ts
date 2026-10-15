@@ -1,4 +1,3 @@
-//packages/combat/test/damage/magazine-hazard.test.ts
 // INC-5 — Magazine/ammunition secondary hazard (DESIGN-41 §10 item 1).
 // Proves: detonation conditions, RNG behavior, no-magazine cases, deferred hazard types.
 import { describe, it, expect } from "vite-plus/test";
@@ -8,13 +7,11 @@ import {
   type MagazineHazardInput,
 } from "../../src/damage/index.js";
 
-// ---------------------------------------------------------------------------
 // Deterministic RNG for testing
 function rngThat(returnValues: Record<string, number>): (stream: string) => number {
   return (stream: string) => returnValues[stream] ?? 0.5;
 }
 
-// ---------------------------------------------------------------------------
 // Magazine zone type detection
 
 describe("AC-5: Magazine zone type detection", () => {
@@ -43,7 +40,6 @@ describe("AC-5: Magazine zone type detection", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Magazine hazard evaluation
 
 describe("AC-5: Magazine hazard evaluation (§10)", () => {
@@ -146,7 +142,6 @@ describe("AC-5: Magazine hazard evaluation (§10)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Deferred hazard types
 
 describe("AC-5: Deferred hazard types (M3/C-5)", () => {

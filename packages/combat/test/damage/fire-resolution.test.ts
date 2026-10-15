@@ -1,4 +1,3 @@
-//packages/combat/test/damage/fire-resolution.test.ts
 // INC-5 — Per-minute fire resolution (DESIGN-41 §22-28).
 // Proves: ROF penalty bands, night signature bands, smoke strength formula,
 // intensity decay, fire extinguishment, and fire spread.
@@ -11,13 +10,11 @@ import {
 } from "../../src/damage/fireResolution.js";
 import { FIRE_SPREAD_CREATED } from "../../src/damage/reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // Deterministic RNG for testing — returns predictable values.
 function rngThat(returnValues: Record<string, number>): (stream: string) => number {
   return (stream: string) => returnValues[stream] ?? 0.5;
 }
 
-// ---------------------------------------------------------------------------
 // getFireRofPenaltyBp
 
 describe("getFireRofPenaltyBp", () => {
@@ -58,7 +55,6 @@ describe("getFireRofPenaltyBp", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // getFireNightSignatureBp
 
 describe("getFireNightSignatureBp", () => {
@@ -96,7 +92,6 @@ describe("getFireNightSignatureBp", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // computeFireSmokeStrength
 
 describe("computeFireSmokeStrength", () => {
@@ -153,7 +148,6 @@ describe("computeFireSmokeStrength", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // resolveFireProgression
 
 describe("resolveFireProgression", () => {

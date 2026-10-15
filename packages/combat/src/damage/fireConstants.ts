@@ -1,4 +1,3 @@
-//packages/combat/src/damage/fireConstants.ts
 // DESIGN-41 §20-25 — Per-minute fire resolution constants.
 // Fire-risk multipliers extend those in immediateFireFlooding.ts (§20).
 // All numeric values are integer basis points unless otherwise noted.

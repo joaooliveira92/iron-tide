@@ -1,4 +1,3 @@
-//packages/combat/src/weather/reasonCodes.ts
 // DESIGN-42 §30 subset relevant to the B-5 weather/visibility modules, kept
 // separate from the top-level combat catalog (src/reasonCodes.ts) so the shared
 // catalog's set-equality guard is not grown without review. Per spec §1.4 the

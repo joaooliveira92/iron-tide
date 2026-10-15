@@ -1,4 +1,3 @@
-//packages/combat/src/mines/ownership-transitions.ts
 // DESIGN-35 §23 ownership and control changes (INC-7). Legal ownership or
 // military control change of an area / possession / base / coastal installation
 // MUST NOT delete or neutralize mine pressure automatically. A transition MUST

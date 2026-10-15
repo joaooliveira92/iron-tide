@@ -1,4 +1,3 @@
-//packages/combat/src/weather/progression.ts
 // DESIGN-42 §4 tactical weather progression (INC-3/AC-5): exactly every 30
 // tactical minutes the engine MAY transition precipitation, fog, cloud cover,
 // wind, and visibility through the climate profile's declared transition tables

@@ -1,4 +1,3 @@
-//packages/combat/test/weather/advance.test.ts
 // AC-13: Weather-in-minute-advance — resolveWeather runs as a pure engine stage
 // before spotting each minute (step after battle init, before B-2 step 5).
 // Strict no-op when no weather components change (B-2/B-3/B-4 hashes unchanged).

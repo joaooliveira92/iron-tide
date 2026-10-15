@@ -1,4 +1,3 @@
-// packages/combat/src/torpedoes/torpedoSupport.ts
 // Shared stage constants, the §27 record builder, and helper guards for the
 // torpedo resolution stage. Split out of ./resolve.js.
 import { BluewaveError } from "@bluewave/contracts";
@@ -91,9 +90,7 @@ export function commandSourceOf(
   return launcherById.get(track.launcherId)?.commandSource ?? "ENGINE_STAGE";
 }
 
-// ---------------------------------------------------------------------------
 // the §27 record builder (single factory for every record the stage emits)
-// ---------------------------------------------------------------------------
 
 export interface RecordSeed {
   kind: TorpedoRecordKind;
@@ -240,8 +237,6 @@ export function torpedoEventFor(
     eventHash: record.recordHash,
   };
 }
-
-// ---------------------------------------------------------------------------
 
 /** AC-20 (reviewer BLOCKER-1): fail-closed assertion that every §27 record id
  *  emitted this minute is unique — even on the §22 chain path (whose explosion

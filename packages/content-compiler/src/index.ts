@@ -1,5 +1,3 @@
-//packages/content-compiler/src/index.ts
-
 import type { CompiledPartModel, ContentPack, PresentationContent } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 

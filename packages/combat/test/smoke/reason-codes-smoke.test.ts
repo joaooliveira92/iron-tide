@@ -1,4 +1,3 @@
-//packages/combat/test/smoke/reason-codes-smoke.test.ts
 // AC-17: DESIGN-42 §30 reason-code set-equality for the C-5 smoke module.
 // The smoke module ships exactly the in-slice §30 codes (spec §1.4) plus the
 // documented in-slice marker SMOKE_RESOLUTION_DEFERRED; every §30 code owned by

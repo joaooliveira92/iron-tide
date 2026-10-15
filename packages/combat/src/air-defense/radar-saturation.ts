@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/radar-saturation.ts
 // D-4 M4 Aviation: Air Defense — AC-9 radar-directed medium-AA group saturation per §13/§14.
 //
 // §13 "Radar-Directed Medium-AA Groups": a radar-directed medium-AA group is one

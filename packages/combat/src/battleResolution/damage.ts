@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/damage.ts
 // B-6 INC-2: damage wiring for the auto-resolution orchestrator (DESIGN-38 step
 // 10 after gunnery step 8.5/9; DESIGN-41 §3 pipeline via `resolveDamage`).
 //
@@ -67,7 +66,6 @@ export const DAMAGE_SUBSTEP = 3 as const;
 export const DAMAGE_EVENT_PRIORITY = 10 as const;
 export const DAMAGE_EVENT_TYPE = "damage_impact" as const;
 
-// ---------------------------------------------------------------------------
 // Per-target context (design-dependent surface the engine needs per ship)
 
 export interface DamageTargetContext {
@@ -111,7 +109,6 @@ export interface DamageContext {
   randomLedger?: RandomLedger;
 }
 
-// ---------------------------------------------------------------------------
 // ShipDamageState construction + hp mapping (ADR-0026)
 
 /** Build the pristine battle-start ShipDamageState for one ship. */
@@ -162,7 +159,6 @@ export function battleLoss(
   return SafeInt(Math.max(0, battleStartHitPoints - (hpOfState(state, maxHitPoints) as number)));
 }
 
-// ---------------------------------------------------------------------------
 // Impact synthesis: GunneryEventRecord HIT -> GunneryImpact (B-4 seam)
 
 /** Canonical splinter intensity per penetration outcome (deterministic). */
@@ -184,7 +180,6 @@ export function effectiveResistanceUm(zone: { thicknessUm: number }): number {
   return Math.floor((armored * qualityBp) / 10_000);
 }
 
-// ---------------------------------------------------------------------------
 // Caliber unit contract (ADR-0094; corrects the ADR-0021 unit-scale defect).
 //
 // Source unit:    micrometres (µm). This is the single canonical caliber unit
@@ -312,7 +307,6 @@ export function synthesizeImpact(input: SynthesizeImpactInput): GunneryImpact {
   };
 }
 
-// ---------------------------------------------------------------------------
 // resolveMinuteDamage — the step-10 stage the engine calls after gunnery.
 
 function assetIdForContact(contactId: string, contacts: readonly TacticalContact[]): string {

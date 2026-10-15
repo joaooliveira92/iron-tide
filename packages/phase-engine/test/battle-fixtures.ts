@@ -1,4 +1,3 @@
-//packages/phase-engine/test/battle-fixtures.ts
 // B-6 INC-3 shared test fixture: a small 2-nation war campaign whose battles
 // run through MonthExecutor's battle_resolution phase — either
 // battle_generation-driven (armed ships + committed strategic weather) or

@@ -1,4 +1,3 @@
-//packages/combat/src/movement.ts
 import { BluewaveError } from "@bluewave/contracts";
 
 // DESIGN-38 §20 authoritative movement state. The numeric surface is integer

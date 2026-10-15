@@ -1,4 +1,3 @@
-//packages/combat/test/damage/armor-model.test.ts
 // INC-2 — Armor model (DESIGN-39 §§16–24). Proves AC-5.
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
@@ -51,7 +50,6 @@ import {
   DAMAGE_STATE_INVARIANT_FAILED,
 } from "../../src/damage/index.js";
 
-// ---------------------------------------------------------------------------
 // §17 — Zone maxima
 describe("AC-5: Zone maxima (§17)", () => {
   it("belt maximum is 508_000 µm (20 in)", () => {
@@ -125,7 +123,6 @@ describe("AC-5: Zone maxima (§17)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §19 — Thick-armor manufacturing
 describe("AC-5: Thick-armor manufacturing (§18-19)", () => {
   it("threshold is 304_800 µm (12 in)", () => {
@@ -170,7 +167,6 @@ describe("AC-5: Thick-armor manufacturing (§18-19)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §20 — Quality adjustment
 describe("AC-5: Armor quality adjustment (§20-21)", () => {
   it("ARMOR_QUALITY_FAMILIES has 5 families in order", () => {
@@ -233,7 +229,6 @@ describe("AC-5: Armor quality adjustment (§20-21)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §21 — Impact geometry / obliquity
 describe("AC-5: Impact geometry / obliquity (§21)", () => {
   it("normal impact (0°) on vertical armor (0° slope) → 10_000 bp", () => {
@@ -274,7 +269,6 @@ describe("AC-5: Impact geometry / obliquity (§21)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §22-23 — Splinter threshold
 describe("AC-5: Splinter threshold (§22-23)", () => {
   it("splinter threshold is 50_800 µm (2 in)", () => {
@@ -303,7 +297,6 @@ describe("AC-5: Splinter threshold (§22-23)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §24 — Penetration outcomes
 describe("AC-5: Seven penetration outcomes (§24)", () => {
   it("PENETRATION_OUTCOMES has exactly 7 outcomes", () => {
@@ -372,7 +365,6 @@ describe("AC-5: Seven penetration outcomes (§24)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Contract validation
 describe("AC-5: SHIPPED_ARMOR_CONTRACT + validate guard (fail closed)", () => {
   it("ships the armor_v1 policy id", () => {

@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/reasonCodes.ts
 // D-3 M4 Aviation: CAP & Strikes — INC-7 full reason code rollup.
 // 16 shipped codes + 3 deferred markers.
 // Parallel to aircraft/reasonCodes.ts, carrier-operations/reasonCodes.ts.

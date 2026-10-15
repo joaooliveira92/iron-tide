@@ -44,9 +44,7 @@ import {
 } from "./helpers/gunReadPath.js";
 import { torpedoDiameterUm, torpedoModels } from "./helpers/torpedoModels.js";
 
-// ---------------------------------------------------------------------------
 // Production fixture: every design's whole loadout through the read path
-// ---------------------------------------------------------------------------
 
 const WEAPON = new Set([
   "MAIN_GUN",
@@ -227,9 +225,7 @@ const fitOf = (id: string): DesignFit =>
     `design ${id}`,
   );
 
-// ---------------------------------------------------------------------------
 // A. Launchers: the 17 production variants, the five waivers, the nine entries
-// ---------------------------------------------------------------------------
 
 describe("fit over production launchers (ticket 04 hand-over)", () => {
   const launchers = launcherModel.parts;
@@ -369,9 +365,7 @@ describe("fit over production launchers (ticket 04 hand-over)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // B–D. Plants, armour regions and nested ammunition from the real adapters
-// ---------------------------------------------------------------------------
 
 /** The first platform and the first slot of it that accepts `iface`. */
 function slotFor(iface: PartInterface): { platform: string; slot: string } {
@@ -593,9 +587,7 @@ describe("fit over production ammunition nested in a gun mount (ticket 05 hand-o
   });
 });
 
-// ---------------------------------------------------------------------------
 // Production characterization: every design's loadout on its generated platform
-// ---------------------------------------------------------------------------
 
 describe("fit over every production design (characterization)", () => {
   const results = fits.map((d) => ({

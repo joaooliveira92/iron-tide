@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/egress.test.ts
 // AC-14 (INC-6): Strike egress and fuel check.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";

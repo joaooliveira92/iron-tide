@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/constants.ts
 // D-3 M4 Aviation: CAP & Strikes — INC-1, INC-2 & INC-4 versioned constants.
 // Parallel to aircraft/constants.ts, carrier-operations/constants.ts.
 

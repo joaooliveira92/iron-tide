@@ -1,4 +1,3 @@
-//packages/combat/test/generation/eligibility.test.ts
 import { describe, it, expect } from "vite-plus/test";
 import { gatherEligibleAssets } from "../../src/generation/eligibility.js";
 import {

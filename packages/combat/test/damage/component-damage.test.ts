@@ -1,4 +1,3 @@
-//packages/combat/test/damage/component-damage.test.ts
 // INC-4 — Local component damage (DESIGN-41 §6).
 // Proves: component eligibility, all 8 outcomes, spatial ordering.
 import { describe, it, expect } from "vite-plus/test";
@@ -9,7 +8,6 @@ import {
   type ComponentOutcome,
 } from "../../src/damage/index.js";
 
-// ---------------------------------------------------------------------------
 // Helpers
 
 function makeComponent(
@@ -28,7 +26,6 @@ function makeComponent(
 
 const EXPOSED_ZONES = ["SUPERSTRUCTURE", "DECK", "CASEMATE", "SPLINTER_DECK"];
 
-// ---------------------------------------------------------------------------
 // §6 — Component eligibility
 
 describe("AC-4: Component eligibility (§6)", () => {
@@ -87,7 +84,6 @@ describe("AC-4: Component eligibility (§6)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §6 — All 8 outcomes
 
 describe("AC-4: Component outcomes (§6)", () => {
@@ -185,7 +181,6 @@ describe("AC-4: Component outcomes (§6)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §6 — Spatial ordering by stable component id
 
 describe("AC-4: Spatial ordering by stable component id (§6)", () => {
@@ -215,7 +210,6 @@ describe("AC-4: Spatial ordering by stable component id (§6)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Edge cases
 
 describe("AC-4: Edge cases", () => {

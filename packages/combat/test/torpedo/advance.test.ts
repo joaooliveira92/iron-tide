@@ -32,9 +32,7 @@ import {
 } from "../../src/torpedoes/index.js";
 import { COMPILED_TORPEDOES } from "../fixtures/compiledTorpedoes.js";
 
-// ---------------------------------------------------------------------------
 // shared scene builders (exported for the other INC-7 test files)
-// ---------------------------------------------------------------------------
 
 export const TORPEDO_BATTLE_ID = "b1-torpedo-inc7";
 

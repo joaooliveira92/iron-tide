@@ -1,4 +1,3 @@
-//packages/combat/test/damage/damage-control-integration-boundary.test.ts
 // INC-9 — Damage-control extension integration-boundary proof.
 // Proves that the damage-control extension (fire resolution, flooding resolution,
 // damage-control allocation) does not modify existing core interfaces:

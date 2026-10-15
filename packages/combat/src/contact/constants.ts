@@ -1,4 +1,3 @@
-//packages/combat/src/contact/constants.ts
 // Versioned contact/knowledge constants (DESIGN-38 §19, §3 step 4).
 import { BluewaveError } from "@bluewave/contracts";
 

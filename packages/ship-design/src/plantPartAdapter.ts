@@ -155,9 +155,7 @@ export function propulsionPlantFromPart(part: FlattenedPlantPart): PropulsionPla
   };
 }
 
-// ---------------------------------------------------------------------------
 // The machinery plan → one loadout entry
-// ---------------------------------------------------------------------------
 
 /** The machinery facts that are not a part: fuel, fouling and the room split (adapter side). */
 export type MachineryResidue = Omit<

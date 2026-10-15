@@ -1,4 +1,3 @@
-// scripts/regenerate-golden-hashes.cjs
 // ADR-0007 golden-hash regeneration mechanism: runs the cross-process child
 // (packages/cross-process-test/dist/run-child.js — compile -> execute month ->
 // save/load -> replay) twice, asserts the two runs are byte-identical, and

@@ -1,4 +1,3 @@
-//packages/combat/src/movement/kinematics.ts
 // DESIGN-38 §20/§3-steps-5-6 pure movement kinematics over MovementState.
 // All arithmetic is integer (fixed-point) under DESIGN-07; heading direction is
 // resolved through a fixed-point direction table so results are reproducible

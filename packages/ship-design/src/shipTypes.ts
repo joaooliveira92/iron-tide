@@ -1,4 +1,3 @@
-// packages/ship-design/src/shipTypes.ts
 // The ship-type registry (DESIGN-22 section 1): one definition per canonical type, owned by the domain. Numeric
 // boundaries are NOT repeated here; they live in `ClassificationRules` (classification.ts) and the envelope shown to
 // players is derived from them (`shipTypeEnvelope`), so a ruleset change is one edit.

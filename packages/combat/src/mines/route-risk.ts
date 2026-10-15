@@ -1,4 +1,3 @@
-//packages/combat/src/mines/route-risk.ts
 // DESIGN-35 §13 strategic route risk (INC-5, value-only). For every route edge
 // covered by mine pressure:
 //   routeRiskBp = min(10_000, floor(currentPressure * freshnessBp *

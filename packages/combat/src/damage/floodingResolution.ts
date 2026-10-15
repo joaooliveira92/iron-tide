@@ -1,4 +1,3 @@
-//packages/combat/src/damage/floodingResolution.ts
 // DESIGN-41 §§14-18 — Per-minute flooding resolution.
 //
 // Pure/deterministic: no ambient I/O/clock/random.  Uses a keyed RNG function for

@@ -1,4 +1,3 @@
-// packages/phase-engine/src/constructionPhase.ts
 // Phase 7: construction_processing — advance construction projects, complete
 // finished projects into fleet ships, and emit construction-progressed events.
 import { KNOTS_TO_UMS, MM_TO_UM, transitionConstructionProject } from "@bluewave/campaign";

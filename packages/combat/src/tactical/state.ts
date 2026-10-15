@@ -1,4 +1,3 @@
-//packages/combat/src/tactical/state.ts
 import type { SafeInt } from "@bluewave/contracts";
 import type { TacticalShipUnit } from "./unit.js";
 import type { TacticalDivision } from "./division.js";

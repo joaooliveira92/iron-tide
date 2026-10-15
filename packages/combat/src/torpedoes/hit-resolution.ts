@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/hit-resolution.ts
 // DESIGN-40 §14 hit resolution (INC-5, AC-13 part 2): a torpedo HIT requires
 // ALL of the §14 predicates — (1) the track intersects the target's
 // authoritative collision geometry, (2) the torpedo has traveled at least its

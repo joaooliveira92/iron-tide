@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/attack.test.ts
 // AC-4 groundwork (§4): AirDefenseAttack construction, strict/fail-closed validation,
 // safe-int rejection, bearing 0..360, unknown-field rejection.
 

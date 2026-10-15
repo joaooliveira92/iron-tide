@@ -111,9 +111,7 @@ function debugOnly(): BridgeResult<never> | null {
       };
 }
 
-// ---------------------------------------------------------------------------
 // ephemeral co-location (pure)
-// ---------------------------------------------------------------------------
 
 function liveAreas(nation: NationState | undefined): Set<string> {
   const areas = new Set<string>();
@@ -253,9 +251,7 @@ export function scaleBelligerentFirepower(
   return changed ? { ...snapshot, nations } : snapshot;
 }
 
-// ---------------------------------------------------------------------------
 // mapping engine -> renderer shapes
-// ---------------------------------------------------------------------------
 function toRendererManifest(
   snapshot: CampaignSnapshot,
   manifest: CombatManifest,
@@ -320,9 +316,7 @@ function toRendererManifest(
   };
 }
 
-// ---------------------------------------------------------------------------
 // commands
-// ---------------------------------------------------------------------------
 
 /**
  * The player's first active war, for callers that do not name one (the

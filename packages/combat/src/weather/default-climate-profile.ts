@@ -1,4 +1,3 @@
-//packages/combat/src/weather/default-climate-profile.ts
 // B-6/ADR-0025 (DESIGN-42 §1): the SHIPPED canonical default climate profile
 // `defaultClimateProfile_v1` — the campaign layer's canonical climate source for
 // per-area monthly StrategicWeatherState generation until the CONTENT-track

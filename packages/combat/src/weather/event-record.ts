@@ -1,4 +1,3 @@
-//packages/combat/src/weather/event-record.ts
 // DESIGN-42 §28 WeatherEventRecord — immutable record produced by every weather
 // transition, time-of-day change, visibility computation, and progression step.
 // Mirrors the GunneryEventRecord / DamageEventRecord pattern.

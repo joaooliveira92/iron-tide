@@ -96,9 +96,7 @@ function provenanceOf(p: ArmamentProvenance): FlattenedGunPart["provenance"] {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Gun parts
-// ---------------------------------------------------------------------------
 
 /** One gun part with the adapter-side facts the translation needs (never in the part). */
 export interface GunPartRecord {
@@ -251,9 +249,7 @@ export function buildGunPartModel(input: {
   };
 }
 
-// ---------------------------------------------------------------------------
 // Gun-mount parts
-// ---------------------------------------------------------------------------
 
 function mountPartFromLegacy(
   content: AuthoredArmamentContent,

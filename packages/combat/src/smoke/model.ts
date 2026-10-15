@@ -1,4 +1,3 @@
-//packages/combat/src/smoke/model.ts
 import { BluewaveError } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import {

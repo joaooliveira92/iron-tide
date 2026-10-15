@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/ammunition.test.ts
 // AC-13: Ammunition consumption + empty system contributes zero (§20).
 // Verifies consume/decrement, the absent-entry → present assumption, the empty (0) → zero
 // multiplier, magazine seeding at state construction (Repair MEDIUM-1), fail-closed

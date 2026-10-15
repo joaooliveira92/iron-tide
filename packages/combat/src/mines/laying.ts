@@ -1,4 +1,3 @@
-//packages/combat/src/mines/laying.ts
 // DESIGN-35 §4 mine-laying value (INC-2):
 //
 //   effectiveLayingValue = floor(baseLayingValue * technologyMultiplierBp *

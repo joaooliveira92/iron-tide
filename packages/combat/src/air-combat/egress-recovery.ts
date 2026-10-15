@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/egress-recovery.ts
 // D-3 M4 Aviation: CAP & Strikes — INC-6 (AC-14, AC-15): strike egress, fuel check, and recovery.
 // Pure deterministic functions — no I/O, no Date.
 import { SafeInt } from "@bluewave/contracts";

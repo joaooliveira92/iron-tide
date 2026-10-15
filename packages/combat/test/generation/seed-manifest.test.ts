@@ -1,4 +1,3 @@
-//packages/combat/test/generation/seed-manifest.test.ts
 import { describe, it, expect } from "vite-plus/test";
 import {
   buildManifest,

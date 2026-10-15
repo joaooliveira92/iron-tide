@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/strike-state.ts
 // D-3 M4 Aviation: CAP & Strikes — INC-3 (AC-8): strike mission tactical state machine.
 // Pure deterministic functions — no I/O, no random, no Date.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";

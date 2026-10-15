@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/track.ts
 // DESIGN-40 §13 TorpedoTrack (INC-4, part 1): every launched torpedo creates
 // ONE authoritative track carrying ALL §13 fields. A torpedo remains an
 // authoritative tactical entity until a terminal result is set (the shipped

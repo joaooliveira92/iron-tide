@@ -1,4 +1,3 @@
-// packages/phase-engine/src/monthContext.ts
 // Shared types + runtime state for the month phase pipeline. The MonthExecutor
 // orchestrator and each phase module communicate through `MonthContext` so phase
 // bodies never need a reference to the executor.

@@ -19,9 +19,7 @@ import type {
 } from "./ids.js";
 import type { ArmamentProvenance } from "./provenance.js";
 
-// -------------------------------------------------------------------------------------------------
 // Vocabularies
-// -------------------------------------------------------------------------------------------------
 
 /** The gun categories the armament domain recognises (mirrors the ship-component gun categories). */
 export const ARMAMENT_GUN_CATEGORIES = [
@@ -59,9 +57,7 @@ export const ARMAMENT_ACCESS_STATUSES = [
 ] as const;
 export type ArmamentAccessStatus = (typeof ARMAMENT_ACCESS_STATUSES)[number];
 
-// -------------------------------------------------------------------------------------------------
 // Entities
-// -------------------------------------------------------------------------------------------------
 
 /** A shared gun family: the `components.yaml` entry a national model overlays. */
 export interface GunFamily {
@@ -189,9 +185,7 @@ export interface AmmunitionPattern {
   readonly provenance: ArmamentProvenance;
 }
 
-// -------------------------------------------------------------------------------------------------
 // Contexts
-// -------------------------------------------------------------------------------------------------
 
 /** The technology/date context a resolution is evaluated against. */
 export interface ArmamentTechnologyContext {
@@ -208,9 +202,7 @@ export interface ArmamentAccessContext {
   readonly componentAccess: Readonly<Record<string, ArmamentAccessStatus>>;
 }
 
-// -------------------------------------------------------------------------------------------------
 // Resolved output
-// -------------------------------------------------------------------------------------------------
 
 /** One applied modifier, for the "applied modifier breakdown" of a resolved armament. */
 export interface AppliedArmamentModifier {

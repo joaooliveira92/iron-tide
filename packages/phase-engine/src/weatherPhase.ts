@@ -1,4 +1,3 @@
-// packages/phase-engine/src/weatherPhase.ts
 // weather_generation phase (registry order 0.5; DESIGN-42 §1 / ADR-0025):
 // authoritative per-area current-month StrategicWeatherState from the canonical
 // climate profile over the keyed stream `campaign/weather/<areaId>/<month>`.

@@ -1,4 +1,3 @@
-//packages/cross-process-test/src/run-air-combat-child.ts
 // D-3 / INC-8: Air-combat cross-process determinism child (AC-21).
 // Creates a minimal TacticalBattleState with ships, CAP patrol states, and
 // strike mission states, then runs advanceMinutes with the air-combat context.

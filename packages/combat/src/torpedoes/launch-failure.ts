@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/launch-failure.ts
 // DESIGN-40 §12 launch timing/failure (INC-4): pure, deterministic per-tube
 // launch outcomes for an ACCEPTED salvo (post atomic reservation).
 //

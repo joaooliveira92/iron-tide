@@ -1,4 +1,3 @@
-//packages/combat/test/damage/terminal-seam.test.ts
 // INC-5 — Terminal seam SINKING / FOUNDERED detection (DESIGN-41 §29-32).
 // Proves: SINKING formula, FOUNDERED conditions, boundary values.
 import { describe, it, expect } from "vite-plus/test";
@@ -9,7 +8,6 @@ import {
 } from "../../src/damage/index.js";
 import { SHIP_SINKING, SHIP_FOUNDERED } from "../../src/damage/reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // Helpers
 
 function baseTerminalInput(overrides: Partial<TerminalInput> = {}): TerminalInput {
@@ -26,7 +24,6 @@ function baseTerminalInput(overrides: Partial<TerminalInput> = {}): TerminalInpu
   };
 }
 
-// ---------------------------------------------------------------------------
 // SINKING formula
 
 describe("AC-5: SINKING formula (§31)", () => {
@@ -75,7 +72,6 @@ describe("AC-5: SINKING formula (§31)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // SINKING transition
 
 describe("AC-5: SINKING transition", () => {
@@ -125,7 +121,6 @@ describe("AC-5: SINKING transition", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // FOUNDERED transition
 
 describe("AC-5: FOUNDERED conditions (§32)", () => {
@@ -183,7 +178,6 @@ describe("AC-5: FOUNDERED conditions (§32)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // No transition
 
 describe("AC-5: No transition cases", () => {
@@ -209,7 +203,6 @@ describe("AC-5: No transition cases", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Boundary values
 
 describe("AC-5: Boundary values", () => {

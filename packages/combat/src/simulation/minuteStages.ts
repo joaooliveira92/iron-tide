@@ -1,4 +1,3 @@
-// packages/combat/src/simulation/minuteStages.ts
 // The deterministic sub-stages of the DESIGN-38 tactical minute advance. Each
 // stage mutates the shared MinuteRun and appends to the minute ledger; the
 // MonthExecutor-equivalent orchestrator lives in ./engine.js.

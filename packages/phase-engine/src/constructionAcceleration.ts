@@ -1,4 +1,3 @@
-// packages/phase-engine/src/constructionAcceleration.ts
 // Engine-side construction acceleration (DESIGN-23 section 8; DESIGN-13 section 11.3 `construction_acceleration_v1`;
 // RTW3 manual p. 31). The one-time remaining-work premium, the paid-month work-rate increase and the deterministic
 // capacity-pressure delay all live here as pure, integer-only functions so the command path and the monthly

@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/contractRollup.ts
 // D-3 M4 Aviation: CAP & Strikes — INC-7: every shipped air-combat contract in a single typed
 // registry, plus a fail-closed validation guard.
 // Parallel to aircraft/contractRollup.ts pattern.

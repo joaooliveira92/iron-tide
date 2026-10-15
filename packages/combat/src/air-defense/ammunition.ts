@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/ammunition.ts
 // D-4 M4 Aviation: Air Defense — AC-13 ammunition consumption per DESIGN-45 §20.
 // Every engagement MUST reserve and consume exact ammunition (§20 line 334). The basic
 // model (spec §1.3 "full ammunition model ... deferred") tracks one rounds-remaining value

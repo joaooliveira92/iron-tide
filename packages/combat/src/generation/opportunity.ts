@@ -1,4 +1,3 @@
-//packages/combat/src/generation/opportunity.ts
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { BluewaveError } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";

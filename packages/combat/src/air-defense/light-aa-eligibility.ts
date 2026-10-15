@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/light-aa-eligibility.ts
 // D-4 M4 Aviation: Air Defense — AC-6 light-AA eligibility + windows per §9.
 // Light-AA engagement windows are based on incoming speed and attack profile. Shipped base
 // windows: level 2 min, dive 1 min, skip 1 min, torpedo 2 min, rocket 1 min, guided 1 min;

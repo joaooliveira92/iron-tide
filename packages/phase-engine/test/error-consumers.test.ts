@@ -1,4 +1,3 @@
-// packages/phase-engine/test/error-consumers.test.ts
 // Regression tests for the migrated PhaseEngineError throws: a real consumer
 // path must still observe the stable reason code / message it relied on before
 // the plain-`Error` → `Data.TaggedError` conversion (MIG-RUNTIME-1, MIG-DET-1).

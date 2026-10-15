@@ -1,4 +1,3 @@
-//packages/combat/src/generation/optional.ts
 import type { RandomStream } from "@bluewave/random";
 
 export const OPTIONAL_ASSET_SELECTION_V1 = "optional_asset_selection_v1" as const;

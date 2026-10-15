@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/records.test.ts
 // AC-17 (INC-7): AirCombatRecord per DESIGN-43 §38.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";

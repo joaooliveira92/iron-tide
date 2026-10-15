@@ -1,4 +1,3 @@
-//packages/combat/src/damage/constants.ts
 // Versioned authoritative damage base constants (DESIGN-41 §§1-9, §45-48) shipped as a
 // `damage_v1` policy + `SHIPPED_DAMAGE_CONTRACT` + `validateDamageContract`,
 // mirroring packages/combat/src/gunnery/constants.ts. Fail-closed on mismatch.
@@ -43,7 +42,6 @@ export type DamageCategory = (typeof DAMAGE_CATEGORIES)[number];
 export const TERMINAL_STATUSES = ["NORMAL", "SINKING", "FOUNDERED"] as const;
 export type TerminalStatus = (typeof TERMINAL_STATUSES)[number];
 
-// ---------------------------------------------------------------------------
 // DamagePolicyContract — ships all authored constant values.
 export interface DamagePolicyContract {
   policyId: string;

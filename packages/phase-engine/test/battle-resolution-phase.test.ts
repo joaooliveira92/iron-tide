@@ -1,4 +1,3 @@
-//packages/phase-engine/test/battle-resolution-phase.test.ts
 // B-6 INC-3 (AC-8): the battle_resolution phase (month.ts order 8) routes
 // manifest-carrying battles through @bluewave/combat's deterministic
 // `resolveBattleAuto` (INC-2) and applies the result to the campaign — the

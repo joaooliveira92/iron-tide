@@ -1,4 +1,3 @@
-//packages/combat/src/mines/defensive-standoff.ts
 // DESIGN-35 §16 defensive standoff (INC-5, value-only). Mine pressure creates
 // defensive standoff ONLY through `mine_defensive_standoff_v1` (SHIPPED contract +
 // validate guard, fail-closed like INC-1/INC-3). The shipped §16 levels:

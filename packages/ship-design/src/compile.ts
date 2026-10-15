@@ -1,4 +1,3 @@
-// packages/ship-design/src/compile.ts
 // Full design-compile pipeline (DESIGN-22). Never throws on design errors: they
 // become findings. Throws only on corrupt context.
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";

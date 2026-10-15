@@ -1,4 +1,3 @@
-//packages/combat/src/submarines/mineLaying.ts
 // DESIGN-34 §20 submarine mine laying (AC-15, INC-7).
 //
 // Only MINELAYING submarines or explicitly capable types may execute MINE_LAYING.

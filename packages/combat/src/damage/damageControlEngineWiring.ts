@@ -1,4 +1,3 @@
-//packages/combat/src/damage/damageControlEngineWiring.ts
 // Step 8.6 resolveDamageControl — called after resolveDamage (step 8.5/9-10).
 // Applies per-minute fire resolution, flooding resolution,
 // damage-control allocation, and terminal state re-evaluation.
@@ -33,7 +32,6 @@ import { INVALID_SHIP_DAMAGE_STATE } from "./reasonCodes.js";
 import type { SmokeSourceType } from "../smoke/constants.js";
 import { createSmokeEventRecord, type SmokeEventRecord } from "../smoke/smokeRecords.js";
 
-// ---------------------------------------------------------------------------
 // Context and result types
 
 export interface DamageControlContext {
@@ -82,7 +80,6 @@ export interface DamageControlStageResult {
   netDeltaKgMin: number;
 }
 
-// ---------------------------------------------------------------------------
 // resolveDamageControl — per-minute damage-control stage
 
 /** Design surface the terminal-seam write-back needs from the projected ship. */
@@ -206,7 +203,6 @@ export function resolveDamageControl(
   };
 }
 
-// ---------------------------------------------------------------------------
 // Per-ship write-back (P-1 ticket 07)
 
 export interface DamageControlWriteBackInput {

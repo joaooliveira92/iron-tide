@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/torpedo-attack.test.ts
 // AC-12 (INC-5): Air-launched torpedo attack resolution.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";

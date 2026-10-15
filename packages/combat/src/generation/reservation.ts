@@ -1,4 +1,3 @@
-//packages/combat/src/generation/reservation.ts
 import { BluewaveError } from "@bluewave/contracts";
 import { BATTLE_ASSET_RESERVATION_CONFLICT } from "./reasonCodes.js";
 

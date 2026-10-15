@@ -1,4 +1,3 @@
-//packages/combat/src/weather/precipitation.ts
 // DESIGN-42 §26 precipitation visibility multipliers (INC-4/AC-9). Intensity
 // level classification (none/light/moderate/heavy/extreme) maps to explicit
 // bp multipliers. When precipitation type is NONE, the multiplier is always

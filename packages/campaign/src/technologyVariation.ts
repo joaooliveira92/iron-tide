@@ -1,4 +1,3 @@
-// packages/campaign/src/technologyVariation.ts
 // DESIGN-03 §6 Technology Variation - Normative
 
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";

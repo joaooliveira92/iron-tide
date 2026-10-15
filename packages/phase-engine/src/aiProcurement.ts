@@ -1,4 +1,3 @@
-// packages/phase-engine/src/aiProcurement.ts
 // Phase 3.6: ai_procurement — the live AI naval procurement lifecycle (ADR-0091). For each AI nation with a
 // NationNavalProfile it plans a procurement decision, submits it as a design study through the same command/study
 // boundaries the player uses, and — once the study approves the design — places an order through the authoritative

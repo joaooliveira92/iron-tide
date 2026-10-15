@@ -1,4 +1,3 @@
-//packages/combat/src/gunnery/resolve.ts
 // INC-4: resolveGunnery — the pure minute-advance surface-gunnery stage (AC-11).
 // Given the observing ships' batteries (their GunneryState + per-battery definitions)
 // and the B-2 TacticalContact tracks, it decides which batteries fire this minute:

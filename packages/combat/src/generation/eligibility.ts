@@ -1,4 +1,3 @@
-//packages/combat/src/generation/eligibility.ts
 import type { Ship } from "@bluewave/campaign";
 import {
   SHIP_WORKING_UP_BATTLE_INELIGIBLE,

@@ -1,4 +1,4 @@
-import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
 import type { CommandRecord, CommandReservationRecord } from "./types.js";
 
 export interface ResourcePool {
@@ -29,9 +29,12 @@ export class ReservationManager {
   ):
     | { ok: true; records: CommandReservationRecord[] }
     | { ok: false; reasonCode: string; failedResource: string } {
-    // Check all first in canonical order
+    // Check all first in canonical (codepoint) order — never localeCompare.
     const sorted = [...requirements].sort((a, b) =>
-      `${a.resourceTypeId}:${a.resourceId}`.localeCompare(`${b.resourceTypeId}:${b.resourceId}`),
+      compareCodePoints(
+        `${a.resourceTypeId}:${a.resourceId}`,
+        `${b.resourceTypeId}:${b.resourceId}`,
+      ),
     );
     for (const req of sorted) {
       const key = `${req.resourceTypeId}:${req.resourceId}`;

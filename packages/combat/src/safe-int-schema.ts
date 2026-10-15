@@ -1,4 +1,3 @@
-// packages/combat/src/safe-int-schema.ts
 // A single Effect v4 schema for the repository's nominal `SafeInt` type.
 //
 // `Schema.Finite` decodes to a plain `number`, which would widen the exported

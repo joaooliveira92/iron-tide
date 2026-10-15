@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/compatibility.ts
 // DESIGN-40 §4 platform compatibility: a torpedo model may be installed only when
 // diameter fits, mass is within launcher + handling limits, propulsion/safety is
 // supported, fire control supports the model, platform technology/adoption

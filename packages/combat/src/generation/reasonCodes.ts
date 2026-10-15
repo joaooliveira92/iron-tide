@@ -1,4 +1,3 @@
-//packages/combat/src/generation/reasonCodes.ts
 // DESIGN-37 §44 (24 reason codes).
 export const BATTLE_MISSION_TYPE_UNREGISTERED = "BATTLE_MISSION_TYPE_UNREGISTERED" as const;
 export const BATTLE_MISSION_PRIORITY_INVALID = "BATTLE_MISSION_PRIORITY_INVALID" as const;

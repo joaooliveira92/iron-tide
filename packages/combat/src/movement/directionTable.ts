@@ -1,4 +1,3 @@
-// packages/combat/src/movement/directionTable.ts
 // Precomputed integer direction table: cos/sin in fixed-point (DIRECTION_FIXED =
 // 1e4) for every integer heading 0..359. Using an authored integer table (rather
 // than Math.cos/Math.sin at runtime) keeps displacement byte-identical across

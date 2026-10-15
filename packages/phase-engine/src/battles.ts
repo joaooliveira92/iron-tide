@@ -198,12 +198,10 @@ export function applyBattleResult(
   return next;
 }
 
-// ---------------------------------------------------------------------------
 // B-6 INC-3: battle_resolution phase helpers (AC-8/AC-9). The tactical
 // auto-resolution result (@bluewave/combat resolveBattleAuto, INC-2) is
 // applied to the campaign through these pure, deterministic helpers. Never
 // mutate a ship in place; every transition builds a new snapshot.
-// ---------------------------------------------------------------------------
 
 /**
  * Locate the accepted battle manifest for a battle instance. The canonical

@@ -1,4 +1,3 @@
-//packages/phase-engine/test/tactical-replay.test.ts
 // Ticket 07 — tactical replay verification (ADR-0034 decision 2).
 // For every battle the snapshot records as resolved, re-resolve
 // `resolveBattleAuto` from the stored manifest + seed (+ committed strategic

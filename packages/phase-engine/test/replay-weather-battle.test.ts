@@ -1,4 +1,3 @@
-//packages/phase-engine/test/replay-weather-battle.test.ts
 // B-6 INC-3 (AC-11): save -> load -> replay round-trips the new snapshot
 // surface — the resolved battle result (`BattleInstance.result` incl. the
 // damageReport and a null-winner tie), the current-month strategic weather,

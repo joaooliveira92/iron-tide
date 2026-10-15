@@ -1,4 +1,3 @@
-//packages/combat/src/mines/post-war-persistence.ts
 // DESIGN-35 §22 post-war persistence (INC-7). War termination MUST NOT remove
 // mine pressure automatically: target-belligerent sets are preserved historically,
 // minefields remain active hazards, decay continues monthly, clearance missions

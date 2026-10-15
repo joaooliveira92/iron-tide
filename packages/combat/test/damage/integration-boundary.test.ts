@@ -1,4 +1,3 @@
-//packages/combat/test/damage/integration-boundary.test.ts
 // INC-4 — BattleResolver/StrengthCalculator unmodified boundary.
 // Proves that the existing BattleResolver and StrengthCalculator classes are
 // unchanged by the INC-4 damage module additions. These classes are not

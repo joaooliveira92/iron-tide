@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/medium-aa-eligibility.ts
 // D-4 M4 Aviation: Air Defense — AC-5 medium-AA eligibility + pre-release timing per §8.
 // Medium AA may engage only an attack profile explicitly marked mediumAaEligible, and
 // receives ONE pre-release engagement window when the attacker enters range before weapon

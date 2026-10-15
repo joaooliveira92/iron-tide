@@ -1,11 +1,9 @@
-//packages/combat/test/damage/turret-states.test.ts
 // INC-4 — Turret states (DESIGN-41 §7).
 // Proves: 5 states, jam duration, no elapsed-time restoration.
 import { describe, it, expect } from "vite-plus/test";
 import { applyTurretDamage, type TurretComponent } from "../../src/damage/index.js";
 import { type ComponentOutcome } from "../../src/damage/index.js";
 
-// ---------------------------------------------------------------------------
 // Helpers
 
 function operational(id = "TURRET-1"): TurretComponent {
@@ -28,7 +26,6 @@ function burnedOut(id = "TURRET-1"): TurretComponent {
   return { id, state: "BURNED_OUT" };
 }
 
-// ---------------------------------------------------------------------------
 // §7 — Five turret states
 
 describe("AC-4: Five turret states (§7)", () => {
@@ -64,7 +61,6 @@ describe("AC-4: Five turret states (§7)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §7 — Jam duration
 
 describe("AC-4: Jam duration (§7)", () => {
@@ -91,7 +87,6 @@ describe("AC-4: Jam duration (§7)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §7 — No elapsed-time restoration (AC-6)
 
 describe("AC-4: No elapsed-time restoration (§7, AC-6)", () => {
@@ -148,7 +143,6 @@ describe("AC-4: No elapsed-time restoration (§7, AC-6)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Edge cases
 
 describe("AC-4: Edge cases", () => {

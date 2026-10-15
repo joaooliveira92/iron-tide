@@ -1,4 +1,3 @@
-//packages/combat/src/mines/contracts.ts
 // INC-8 AC-24 — the full `*_v1` contracts rollup for the mine subsystem.
 // DESIGN-35's content deliverable (spec §1.3) is the ENGINE-VERSIONED constant
 // set: every shipped `*_v1` policy id + `SHIPPED_*_CONTRACT` + a fail-closed

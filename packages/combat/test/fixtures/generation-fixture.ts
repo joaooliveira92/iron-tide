@@ -1,4 +1,3 @@
-//packages/combat/test/fixtures/generation-fixture.ts
 import type { CampaignSnapshot, NationState, Ship } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 

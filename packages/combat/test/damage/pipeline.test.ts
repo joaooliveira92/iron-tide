@@ -232,7 +232,6 @@ describe("AC-3: wrapSimpleRunner preserves backward compat", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // INC-3: Stages 1-2 produce real results when inputs are provided
 const PIPE_COMPARTMENTS: readonly CompartmentDef[] = [
   {

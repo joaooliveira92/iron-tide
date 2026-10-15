@@ -1,4 +1,3 @@
-// packages/combat/src/gunnery/modes.ts
 import { BluewaveError } from "@bluewave/contracts";
 import { FIRE_MODES, type FireMode, SURFACE_FIRE_CONTROL_MINIMUM_BP } from "./constants.js";
 import {

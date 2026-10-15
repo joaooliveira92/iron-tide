@@ -1,4 +1,3 @@
-// packages/ship-design/src/shipTypeEnvelope.ts
 // The player-facing numeric envelope of a ship type, read from the classification rules.
 import type { ClassificationRules } from "./classification.js";
 import type { ShipTypeId } from "./shipTypes.js";

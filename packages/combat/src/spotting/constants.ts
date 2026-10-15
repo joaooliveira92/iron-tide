@@ -1,4 +1,3 @@
-//packages/combat/src/spotting/constants.ts
 // Versioned spotting/sensor constants (DESIGN-38 §3 step 8) — baseline clear
 // daylight only. Weather/smoke/visibility modifiers defer to B-5; ECM/radar to M5.
 import { BluewaveError } from "@bluewave/contracts";

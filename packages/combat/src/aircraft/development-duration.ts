@@ -1,4 +1,3 @@
-//packages/combat/src/aircraft/development-duration.ts
 // DESIGN-43 §7 development duration formula.
 // INC-3: base 4 paid months, range 3-6, modifiers for complexity/technology/industry.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";

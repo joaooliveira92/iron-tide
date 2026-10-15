@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/cap-allocation.ts
 // D-3 M4 Aviation: CAP & Strikes — INC-2 (AC-4, AC-6): CAP allocation vs escort and bombers.
 // Pure deterministic functions — no I/O, no random, no Date.
 

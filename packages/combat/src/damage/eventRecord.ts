@@ -1,4 +1,3 @@
-//packages/combat/src/damage/eventRecord.ts
 // DESIGN-41 §45 — Immutable DamageEventRecord with deterministic hash.
 // The record captures every effect of a single hit resolution: location,
 // protection interaction, component damage, structure/flotation, fire
@@ -10,7 +9,6 @@ import { type ComponentDamageResult } from "./componentDamage.js";
 import { type StructureFlotationResult } from "./structureFlotation.js";
 import { type FireSourceRecord, type FloodingSourceRecord } from "./state.js";
 
-// ---------------------------------------------------------------------------
 // DamageEventRecord
 
 export interface ProtectionInteractionRecord {
@@ -51,7 +49,6 @@ export interface DamageEventRecord {
 // The body over which the hash is computed (everything except recordHash).
 export type DamageEventRecordBody = Omit<DamageEventRecord, "recordHash">;
 
-// ---------------------------------------------------------------------------
 // Hash computation
 
 /**
@@ -66,7 +63,6 @@ export function computeDamageEventHash(body: DamageEventRecordBody): string {
   return createEnvelope("damage-event", "damage_v1", body).bodyHash;
 }
 
-// ---------------------------------------------------------------------------
 // Factory
 
 /**

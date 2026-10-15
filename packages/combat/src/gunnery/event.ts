@@ -1,4 +1,3 @@
-//packages/combat/src/gunnery/event.ts
 // DESIGN-39 §30 + AC-8: the immutable GunneryEventRecord produced by every salvo /
 // AA burst. Carries all §30 fields (battle minute + substep; battery/shooter/target
 // contact ids; command source; fire mode; ammunition; accuracy + rate factors;

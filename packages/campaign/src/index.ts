@@ -1,5 +1,3 @@
-//packages/campaign/src/index.ts
-
 export * from "./campaignConfiguration.js";
 // DESIGN-03 session state + preconditions (renamed type to avoid clashing with
 // the compiled-world CampaignState from ./state.js)

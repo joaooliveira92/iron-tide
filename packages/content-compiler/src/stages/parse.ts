@@ -1,4 +1,3 @@
-//packages/content-compiler/src/stages/parse.ts
 import { parseYamlSafe } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 

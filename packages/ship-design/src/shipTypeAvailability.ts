@@ -1,4 +1,3 @@
-// packages/ship-design/src/shipTypeAvailability.ts
 // The one authoritative answer to "may this ship type be designed or built now, and if not, why". Pure: the same
 // context gives the same answer; the compile, the construction-order rule and the roster all call it.
 import type { ClassificationRules } from "./classification.js";

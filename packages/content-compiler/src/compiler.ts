@@ -1,4 +1,3 @@
-//packages/content-compiler/src/compiler.ts
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";

@@ -1,4 +1,3 @@
-// packages/phase-engine/src/foreignBuilderPreview.ts
 // SB3-R20/R23/R34 (INC-9b): the read-only foreign-order preview. It resolves, for a given compiled design and
 // quantity, every candidate builder nation — its dock ceiling, its free NEW_CONSTRUCTION capacity, the §13.2
 // capability verdict, the tension-scaled impoundment risk and the delivery-guarantee status — and, for a chosen

@@ -1,4 +1,3 @@
-//packages/combat/src/damage/terminalSeam.ts
 // DESIGN-41 §29-32 — Terminal seam: SINKING and FOUNDERED detection.
 // This stage runs after structure/flotation has been updated and determines
 // whether the ship transitions from NORMAL to SINKING or FOUNDERED.
@@ -14,7 +13,6 @@
 
 import { SHIP_SINKING, SHIP_FOUNDERED } from "./reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // Constants
 
 // Minimum sinking duration in minutes.
@@ -24,7 +22,6 @@ const MAX_SINKING_DURATION = 360;
 // Base survival minutes for the sinking duration formula.
 const BASE_SURVIVAL_MINUTES = 120;
 
-// ---------------------------------------------------------------------------
 // Input/Output types
 
 export interface TerminalInput {
@@ -57,7 +54,6 @@ export interface TerminalResult {
   reasonCode: string;
 }
 
-// ---------------------------------------------------------------------------
 // Helpers
 
 /**
@@ -86,7 +82,6 @@ export function computeSinkingDuration(flotationPct: number, stabilityPct: numbe
   return clamp(rawDuration, MIN_SINKING_DURATION, MAX_SINKING_DURATION);
 }
 
-// ---------------------------------------------------------------------------
 // Evaluator
 
 /**

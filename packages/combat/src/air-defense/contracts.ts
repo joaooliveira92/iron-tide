@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/contracts.ts
 // D-4 M4 Aviation: Air Defense — AC-17 versioned contracts (fail-closed literals).
 // Parallel to air-combat/contracts.ts pattern.
 //

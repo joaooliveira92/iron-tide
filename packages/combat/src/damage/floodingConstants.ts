@@ -1,4 +1,3 @@
-//packages/combat/src/damage/floodingConstants.ts
 // DESIGN-41 §§13-18 — Per-minute flooding resolution constants.
 // Integer fixed-point arithmetic only; no floating point for authoritative values.
 // Versioned policy and formula identifiers for contract validation.

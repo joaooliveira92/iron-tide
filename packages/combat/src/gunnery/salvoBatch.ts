@@ -1,4 +1,3 @@
-//packages/combat/src/gunnery/salvoBatch.ts
 // P-1 ticket 06 — salvo gun-count sensitivity, ADR-0048. `resolveOneBattery`
 // takes exactly ONE keyed hit draw per salvo per minute (§3), so a 10-gun
 // battery and a 1-gun battery were hit-equivalent. This module keeps the single

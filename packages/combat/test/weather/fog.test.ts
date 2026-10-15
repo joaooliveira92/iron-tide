@@ -1,4 +1,3 @@
-//packages/combat/test/weather/fog.test.ts
 // AC-8: Fog/mist — density→visibility multiplier bands (§25).
 import { describe, it, expect } from "vite-plus/test";
 import { computeFogVisibilityMultiplierBp } from "../../src/weather/fog.js";

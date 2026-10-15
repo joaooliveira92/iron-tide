@@ -1,4 +1,3 @@
-//packages/combat/test/damage/fire-constants.test.ts
 // Tests for fire resolution constants (DESIGN-41 §20-25).
 // Verifies policy IDs are stable, band arrays are complete, and constants are non-negative.
 import { describe, it, expect } from "vite-plus/test";

@@ -1,4 +1,3 @@
-//packages/combat/test/weather/visibility.test.ts
 // AC-6: Visibility distance formula — exact integer rational before FLOOR;
 // every multiplier explicit; missing factor → WEATHER_VISIBILITY_FORMULA_MISSING.
 import { describe, it, expect } from "vite-plus/test";

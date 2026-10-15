@@ -1,4 +1,3 @@
-// packages/ship-design/src/shipTypeRoster.ts
 // The ship-type selection screen's data: every registered type with its availability, its player-facing envelope
 // and, where a starter design exists, the forecast of that design, all from the same rules the compile uses.
 import { DESIGN_22_EARLY, type ClassificationRules } from "./classification.js";

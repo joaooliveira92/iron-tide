@@ -156,10 +156,8 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(function
   const rawId = useId();
   const filterId = useMemo(() => `liquid-glass-${rawId.replace(/:/g, "")}`, [rawId]);
 
-  // -------------------------------------------------------------------------
   // Ref merge — we need the DOM node to measure geometry while still
   // forwarding the ref to the consumer.
-  // -------------------------------------------------------------------------
 
   const localRef = useRef<HTMLDivElement | null>(null);
   const setRefs = useCallback(
@@ -171,9 +169,7 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(function
     [ref],
   );
 
-  // -------------------------------------------------------------------------
   // Geometry measurement via ResizeObserver
-  // -------------------------------------------------------------------------
 
   const [geometry, setGeometry] = useState<MapGeometry | null>(null);
 
@@ -209,12 +205,10 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(function
 
   const mapUrl = useMemo(() => (geometry ? createDisplacementMap(geometry) : ""), [geometry]);
 
-  // -------------------------------------------------------------------------
   // Browser capability gate
   //
   // Both SSR and the first client render take the fallback branch so hydration
   // never mismatches. The state is set in an effect (client-only).
-  // -------------------------------------------------------------------------
 
   const [supported, setSupported] = useState(false);
 

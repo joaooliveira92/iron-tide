@@ -1,4 +1,3 @@
-// packages/combat/src/torpedoes/torpedoRun.ts
 // The mutable per-minute torpedo resolution run: shared state, setup, the
 // exhaustion record, STAGE 4 (damage), and the §28-ordered assembly. The launch/
 // advance/hit stages live in ./torpedoStages.js.

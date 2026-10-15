@@ -1,4 +1,3 @@
-//packages/combat/src/air-combat/cap-patrol.ts
 // D-3 M4 Aviation: CAP & Strikes — INC-1 (AC-1, AC-2, AC-3).
 // CAP patrol state, detection of incoming strikes, interception timing.
 // Pure deterministic functions — no I/O, no random, no Date.

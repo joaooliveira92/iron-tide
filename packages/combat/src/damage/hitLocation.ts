@@ -1,4 +1,3 @@
-//packages/combat/src/damage/hitLocation.ts
 // DESIGN-41 §4 — Stage 1: Hit location resolution.
 // A pure function that maps impact parameters (coordinates + trajectory) to
 // the primary compartment and armor zone struck. All arithmetic is integer
@@ -9,7 +8,6 @@ import { type ArmorZoneType } from "./armorModel.js";
 import { DAMAGE_HIT_LOCATION_INVALID } from "./reasonCodes.js";
 import { type ArmorZoneDef, type CompartmentDef } from "./shipLayout.js";
 
-// ---------------------------------------------------------------------------
 // HitInput — all parameters needed to resolve the hit location.
 export interface HitInput {
   /** Vertical coordinate along ship height (mm). */
@@ -26,7 +24,6 @@ export interface HitInput {
   zones: readonly ArmorZoneDef[];
 }
 
-// ---------------------------------------------------------------------------
 // HitResult — resolved hit location.
 export interface HitResult {
   /** The compartment that contains the impact point. */
@@ -39,7 +36,6 @@ export interface HitResult {
   adjacentCompartmentIds: readonly string[];
 }
 
-// ---------------------------------------------------------------------------
 // Internal helpers
 
 /**
@@ -84,7 +80,6 @@ function compartmentsAreAdjacent(a: CompartmentDef, b: CompartmentDef): boolean 
   return true;
 }
 
-// ---------------------------------------------------------------------------
 // Public API
 
 /**

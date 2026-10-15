@@ -1,10 +1,8 @@
-//packages/combat/test/damage/structure-flotation.test.ts
 // INC-4 — Structure & flotation damage (DESIGN-41 §8).
 // Proves: formula exactness, cap preservation, uncapped amount in record.
 import { describe, it, expect } from "vite-plus/test";
 import { resolveStructureFlotation } from "../../src/damage/index.js";
 
-// ---------------------------------------------------------------------------
 // §8 — Formula exactness
 
 describe("AC-4: Structure/flotation formula (§8)", () => {
@@ -40,7 +38,6 @@ describe("AC-4: Structure/flotation formula (§8)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §8 — Cap preservation (floor at 0)
 
 describe("AC-4: Cap preservation (floor at 0)", () => {
@@ -87,7 +84,6 @@ describe("AC-4: Cap preservation (floor at 0)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // §8 — Uncapped amount in record
 
 describe("AC-4: Uncapped amount in record (§8)", () => {
@@ -127,7 +123,6 @@ describe("AC-4: Uncapped amount in record (§8)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
 // Edge cases
 
 describe("AC-4: Edge cases", () => {

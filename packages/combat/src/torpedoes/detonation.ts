@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/detonation.ts
 // DESIGN-40 §15 detonation outcomes (INC-5, AC-14): the canonical CLOSED
 // outcome set DUD / PARTIAL_DETONATION / FULL_DETONATION /
 // PREMATURE_DETONATION / MAGAZINE_OR_TUBE_CHAIN_REACTION / NO_CONTACT.
@@ -261,7 +260,6 @@ export const TORPEDO_DAMAGE_STATE_FUNCTION_MULTIPLIER_BP: Record<
 export const TORPEDO_FULL_FUNCTION_MIN_DEPTH_M = 3 as const;
 export const TORPEDO_FULL_FUNCTION_MAX_DEVIATION_MDEG = 60_000 as const;
 
-// ---------------------------------------------------------------------------
 // TorpedoDetonationContract — ships the INC-5 authored §15 detonation constant
 // surface (MEDIUM-3), mirroring the INC-1..INC-4 `SHIPPED_TORPEDO_CONTRACT` +
 // `validateTorpedoContract` idiom in constants.ts (fail-closed on tampering).

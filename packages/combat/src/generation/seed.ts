@@ -1,4 +1,3 @@
-//packages/combat/src/generation/seed.ts
 import { sha256Hex } from "@bluewave/deterministic";
 import { splitSeed } from "@bluewave/random";
 import type { BattleManifest } from "./manifest.js";

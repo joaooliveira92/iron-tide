@@ -1,4 +1,3 @@
-// packages/ship-design/src/foreignConstruction.ts
 // DESIGN-16 section 13.2 (spec SB3-R20): the BUILDER-side capability predicates a foreign construction order must
 // satisfy before acceptance and before keel laying. Pure and platform-independent: the caller resolves the builder's
 // dock, licence/technology state, yard capability, free `NEW_CONSTRUCTION` capacity and political permissions, and

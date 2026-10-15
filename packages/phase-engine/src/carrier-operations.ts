@@ -1,4 +1,3 @@
-//packages/phase-engine/src/carrier-operations.ts
 // D-2: resolveCarrierOperations — strategic-month carrier operations phase
 // resolver. Phase order 7.3 (after resolve_aircraft_development, before
 // battle_generation). Strict no-op when no nation has carrier-capable ships.

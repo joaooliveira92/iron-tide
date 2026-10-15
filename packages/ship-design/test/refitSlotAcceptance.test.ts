@@ -36,9 +36,7 @@ const PROVENANCE = {
   note: "ticket 14 fixture",
 } as const;
 
-// ---------------------------------------------------------------------------
 // Part 1: the fit seam — a successor gets no compatibility from supersession
-// ---------------------------------------------------------------------------
 
 const mountPart = (id: string, mountType: string, supersedes?: readonly string[]): FlattenedPart =>
   decodeStrict(FlattenedPartSchema, {
@@ -102,9 +100,7 @@ describe("refit compatibility is slot acceptance, never succession (SPM-R18, I-7
   });
 });
 
-// ---------------------------------------------------------------------------
 // Part 2: the refit seam — a part model drives interface and slot acceptance
-// ---------------------------------------------------------------------------
 
 const sensorPart = (id: string, massKg: number, supersedes?: readonly string[]): FlattenedPart =>
   decodeStrict(FlattenedPartSchema, {
@@ -282,9 +278,7 @@ describe("refit slot acceptance against the compiled part model (SPM-R18)", () =
   });
 });
 
-// ---------------------------------------------------------------------------
 // Part 3: the part-model path and the legacy-category fallback agree on a gun
-// ---------------------------------------------------------------------------
 
 const gunPlan = (kind: RefitPlan["kind"]): RefitPlan => ({
   kind,
@@ -318,9 +312,7 @@ describe("a gun's refit-kind decision is the same with and without a part model 
   });
 });
 
-// ---------------------------------------------------------------------------
 // Part 4: an interface with no part vocabulary is rejected, not silently allowed
-// ---------------------------------------------------------------------------
 
 describe("AVIATION_CONVERSION (deferred: no aircraft-facility interface yet)", () => {
   // Both contexts know the component; the rejection is because no interface exists for it.
@@ -350,7 +342,6 @@ describe("AVIATION_CONVERSION (deferred: no aircraft-facility interface yet)", (
   });
 });
 
-// ---------------------------------------------------------------------------
 // Part 5: slot acceptance and constraints apply to incoming additions only
 //
 // A removal empties a slot; the part being removed was accepted when the ship
@@ -360,7 +351,6 @@ describe("AVIATION_CONVERSION (deferred: no aircraft-facility interface yet)", (
 // exceeds the slot's `massKgMax`), so the removal-only case fails if the slot
 // check is run over removals. It is deliberately constrained content, not a
 // reliance on the production catalogue's absence of constraints.
-// ---------------------------------------------------------------------------
 
 describe("slot acceptance applies to incoming additions only (ticket 14 follow-up)", () => {
   // The ship's rangefinder slot is occupied by the given part, installed out-of-band as if

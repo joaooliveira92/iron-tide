@@ -1,4 +1,3 @@
-//packages/combat/test/air-combat/cap-patrol-state.test.ts
 // AC-1 (INC-1): CAP patrol state creation.
 // Tests createCapPatrolState validation and default values.
 import { describe, expect, it } from "vite-plus/test";

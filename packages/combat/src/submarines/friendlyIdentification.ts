@@ -1,4 +1,3 @@
-//packages/combat/src/submarines/friendlyIdentification.ts
 // DESIGN-34 §23 friendly-fire identification risk (AC-16, INC-7).
 //
 // §23 ships the base misidentification probability (500 bp) and the clamp

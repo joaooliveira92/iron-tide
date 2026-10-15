@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/reason-codes-rollup.test.ts
 // AC-16 (INC-5): §28 reason-code set-equality — exactly 20 shipped + 6 SAM deferred markers
 // + 1 boundary code. Verbatim names and order pinned to DESIGN-45 §28 lines 459-478.
 import { describe, expect, it } from "vite-plus/test";

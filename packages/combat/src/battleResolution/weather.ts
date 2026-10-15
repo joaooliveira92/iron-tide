@@ -1,4 +1,3 @@
-//packages/combat/src/battleResolution/weather.ts
 // B-6 INC-2 (AC-3): build the battle weather from the battle area's COMMITTED
 // `StrategicWeatherState` — one `BattleWeatherInitialization` (DESIGN-42 §2)
 // plus the `WeatherEngineContext` the minute-advance engine consumes.
@@ -40,7 +39,6 @@ import {
   INVALID_BATTLE_WEATHER_INITIALIZATION,
 } from "../weather/reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // Shipped profile registries (resolved by id; fail-closed on unknown).
 
 const CLIMATE_PROFILES: Readonly<Record<string, ClimateProfile>> = Object.freeze({
@@ -78,7 +76,6 @@ function resolveDaylightProfile(daylightProfileId: string): DaylightProfile {
   return profile;
 }
 
-// ---------------------------------------------------------------------------
 // Battle weather construction
 
 export interface BattleWeatherInput {

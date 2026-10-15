@@ -1,4 +1,3 @@
-//packages/combat/src/weather/visibility.ts
 // DESIGN-42 §5 visibility distance (INC-3/AC-6): exact integer formula
 //   effectiveVisibility = floor(baseVisibility * precipMultiplierBp * fogMultiplierBp *
 //     daylightMultiplierBp * glareMultiplierBp * smokeMultiplierBp / 10_000^5)

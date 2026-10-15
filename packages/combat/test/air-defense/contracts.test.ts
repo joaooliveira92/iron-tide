@@ -1,4 +1,3 @@
-// packages/combat/test/air-defense/contracts.test.ts
 // AC-17 (INC-5): air_defense_v1 + aa_director_scaling_v1 + radar_saturation_v1 +
 // ciws_redundancy_v1 — strict literal schemas, fail-closed validate*Contract guards,
 // the 4-entry registry in canonical order, and a pinned golden hash of the shipped values.

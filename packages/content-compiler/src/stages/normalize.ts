@@ -1,4 +1,3 @@
-//packages/content-compiler/src/stages/normalize.ts
 import type { CompiledPartModel } from "@bluewave/content-schema";
 import { compareCodePoints } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";

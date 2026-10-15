@@ -1,4 +1,3 @@
-//packages/combat/src/submarines/seaStateProfile.ts
 // DESIGN-34 §13–17 sea-state scale + detection/observation/attack/surface-snorkel
 // multipliers (AC-11, AC-12, INC-5).
 //
@@ -20,9 +19,7 @@ import {
   SUBMARINE_STATE_INVARIANT_FAILED,
 } from "./reasonCodes.js";
 
-// ---------------------------------------------------------------------------
 // §13: sea-state scale
-// ---------------------------------------------------------------------------
 
 export const SUBMARINE_SEA_STATE_MIN = 0 as const;
 export const SUBMARINE_SEA_STATE_MAX = 9 as const;
@@ -52,9 +49,7 @@ export function isOptimumSeaState(seaState: SafeInt): boolean {
   return seaState >= SUBMARINE_SEA_STATE_OPTIMUM_MIN && seaState <= SUBMARINE_SEA_STATE_OPTIMUM_MAX;
 }
 
-// ---------------------------------------------------------------------------
 // §14: detection multipliers
-// ---------------------------------------------------------------------------
 
 const SUBMARINE_DETECTION_MULTIPLIER_TABLE_BP: Readonly<Record<number, number>> = {
   0: 13_000,
@@ -92,9 +87,7 @@ export function submarineSurfacedDetectionBp(seaState: SafeInt): SafeInt {
   return base;
 }
 
-// ---------------------------------------------------------------------------
 // §15: observation multipliers
-// ---------------------------------------------------------------------------
 
 const SUBMARINE_OBSERVATION_MULTIPLIER_TABLE_BP: Readonly<Record<number, number>> = {
   0: 11_000,
@@ -121,9 +114,7 @@ export function submarineObservationMultiplierBp(seaState: SafeInt): SafeInt {
   return SafeInt(value);
 }
 
-// ---------------------------------------------------------------------------
 // §16: attack multipliers
-// ---------------------------------------------------------------------------
 
 const SUBMARINE_ATTACK_MULTIPLIER_TABLE_BP: Readonly<Record<number, number>> = {
   0: 10_000,
@@ -150,9 +141,7 @@ export function submarineAttackMultiplierBp(seaState: SafeInt): SafeInt {
   return SafeInt(value);
 }
 
-// ---------------------------------------------------------------------------
 // §17: surface/snorkel operations
-// ---------------------------------------------------------------------------
 
 export const SUBMARINE_SNORKEL_MACHINERY_MULTIPLIER_BP = 7_500 as const;
 export const SUBMARINE_SURFACED_TRANSIT_SPEED_BP = 7_500 as const;
@@ -178,9 +167,7 @@ export function assertSeaStateOperationPermitted(seaState: SafeInt): void {
   }
 }
 
-// ---------------------------------------------------------------------------
 // Full sea-state profile lookup
-// ---------------------------------------------------------------------------
 
 export interface SeaStateProfile {
   seaState: SafeInt;

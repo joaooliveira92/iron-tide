@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/tubeHazard.ts
 // DESIGN-40 §21 underwater-tube hit hazard (INC-6, AC-18). A hit on a
 // compartment containing loaded underwater torpedo tubes MUST evaluate
 // `underwater_tube_hit_hazard_v1`:
@@ -82,7 +81,6 @@ function isInt(v: unknown): v is number {
   return typeof v === "number" && Number.isInteger(v) && Number.isSafeInteger(v);
 }
 
-// ---------------------------------------------------------------------------
 // §21 shipped constant surface under the spec-named policy id.
 export const underwaterTubeHitHazardPolicyId = "underwater_tube_hit_hazard_v1" as const;
 export const TORPEDO_TUBE_HAZARD_BASE_BP = 5_000 as const;
@@ -119,7 +117,6 @@ export const TORPEDO_TUBE_PROTECTION_MULTIPLIER_BP: Record<TorpedoTubeProtection
   IMPROVED: 7_500,
 };
 
-// ---------------------------------------------------------------------------
 // UnderwaterTubeHitHazardContract — the §21 name-branded fail-closed surface.
 export interface UnderwaterTubeHitHazardContract {
   policyId: string;
@@ -183,7 +180,6 @@ export function validateUnderwaterTubeHitHazardContract(
     throwMismatch(c, "§21 protection multipliers");
 }
 
-// ---------------------------------------------------------------------------
 // Probability composition.
 
 // AC-18: the exact §21 severe-flooding probability composition. Propulsion may
@@ -264,7 +260,6 @@ export function computeUnderwaterTubeSevereFloodingBp(o: {
   return Math.min(TORPEDO_BASIS_POINTS_PER_UNIT, Math.max(0, raw));
 }
 
-// ---------------------------------------------------------------------------
 // The severe-branch budget: 5_000 bp of the remaining flotation reserve,
 // capped by the reserve — the exact §21 immediate additional flooding.
 export function computeSevereImmediateFloodingKg(remainingFlotationReserve: number): number {
@@ -281,7 +276,6 @@ export function computeSevereImmediateFloodingKg(remainingFlotationReserve: numb
   return Math.min(budget, remainingFlotationReserve); // capped by the reserve
 }
 
-// ---------------------------------------------------------------------------
 // The full §21 evaluation.
 
 export interface TubeHazardChainProbe {

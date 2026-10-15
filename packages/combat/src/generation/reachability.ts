@@ -1,4 +1,3 @@
-//packages/combat/src/generation/reachability.ts
 import { BluewaveError } from "@bluewave/contracts";
 import { BATTLE_REACHABILITY_FAILED } from "./reasonCodes.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";

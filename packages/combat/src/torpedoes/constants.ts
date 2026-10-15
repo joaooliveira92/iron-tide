@@ -1,4 +1,3 @@
-//packages/combat/src/torpedoes/constants.ts
 // Versioned authoritative torpedo base constants (DESIGN-40 §1-§4 surface shipped
 // by INC-1; §7/§8/§23 shipped integer values seeded for INC-2/INC-6 use) shipped
 // as a `torpedo_v1` policy + `SHIPPED_TORPEDO_CONTRACT` + `validateTorpedoContract`,
@@ -421,7 +420,6 @@ export const SEED_TORPEDO_MODEL_IDS = [
 ] as const;
 export type SeedTorpedoModelId = (typeof SEED_TORPEDO_MODEL_IDS)[number];
 
-// ---------------------------------------------------------------------------
 // TorpedoContract — ships the INC-1 authored constant surface. INC-8 rolls the
 // FULL research-grounded `torpedo_models_v1` set into SEED_TORPEDO_MODEL_IDS
 // (8 models, docs/research/c1-m3-torpedoes.md §4.1); INC-1 seeded the model

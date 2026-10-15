@@ -273,9 +273,7 @@ const ParameterRangeSchema = Schema.Struct({
   step: int.check(Schema.isGreaterThanOrEqualTo(1)),
 }).check(Schema.makeFilter((r) => (r.min <= r.max ? undefined : "min must be <= max")));
 
-// ---------------------------------------------------------------------------
 // Lifecycle, quantities, legacy exceptions, visual block
-// ---------------------------------------------------------------------------
 
 /** One way to write time and technology for every family (story 7, §5). */
 export const PartLifecycleSchema = Schema.Struct({
@@ -396,9 +394,7 @@ export const EngineeringSchema = Schema.Struct({
   flammability: Schema.optional(FlammabilityEngineeringSchema),
 });
 
-// ---------------------------------------------------------------------------
 // Capabilities and metadata (ticket 11b)
-// ---------------------------------------------------------------------------
 
 /** Fire-control classes a weapon needs and a director or rangefinder supports. */
 export const FIRE_CONTROL_CLASSES = ["heavy", "medium", "light"] as const;
@@ -516,9 +512,7 @@ export const PartVisualSchema = Schema.Struct({
   override: Schema.optional(stableId),
 });
 
-// ---------------------------------------------------------------------------
 // Slots, slot templates, platforms
-// ---------------------------------------------------------------------------
 
 /** The closed slot-constraint vocabulary (I-9). Calibre is whole inches. */
 export const SlotConstraintsSchema = Schema.Struct({
@@ -607,9 +601,7 @@ export const PlatformSchema = Schema.Struct({
   ),
 );
 
-// ---------------------------------------------------------------------------
 // Family specs
-// ---------------------------------------------------------------------------
 
 /** The legacy weapon categories a gun family is filed under (ticket 11b). */
 export const GUN_WEAPON_CATEGORIES = [
@@ -1011,9 +1003,7 @@ export const PartSchema = Schema.Union([
   message: `expected a part record whose family is one of ${PART_FAMILIES.join(", ")}`,
 });
 
-// ---------------------------------------------------------------------------
 // Flattened parts and the part index (SPM-R10, SPM-R11, SPM-R14)
-// ---------------------------------------------------------------------------
 
 /**
  * One family member of the flattened union: no `extends` (I-3), the full spec, the
@@ -1053,9 +1043,7 @@ export const PartLineageSchema = Schema.Struct({
   supersededBy: Schema.Array(stableId),
 });
 
-// ---------------------------------------------------------------------------
 // Ship types as content (ADR-0156, ship-part-model ticket 12a)
-// ---------------------------------------------------------------------------
 
 /**
  * One fit-requirement predicate a ship type may declare (ADR-0156 §3). Closed: a platform
@@ -1188,9 +1176,7 @@ export function resolvePartRevision(part: FlattenedPart, month: string): Resolve
   return { revision, spec };
 }
 
-// ---------------------------------------------------------------------------
 // Loadouts
-// ---------------------------------------------------------------------------
 
 /** Where one unit of a multi-unit entry sits, when units are placed individually. */
 const UnitPlacementSchema = Schema.Struct({
@@ -1295,9 +1281,7 @@ export const LoadoutSchema = Schema.Struct({
   entries: Schema.Array(LoadoutEntrySchema),
 });
 
-// ---------------------------------------------------------------------------
 // The design header (ticket 11b)
-// ---------------------------------------------------------------------------
 
 /**
  * The design facts a loadout does not carry: who builds it, what it is for, the hull's

@@ -9,7 +9,6 @@ import { computeManifestHash, resolveBattleAuto } from "@bluewave/combat";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { RandomLedger } from "@bluewave/random";
 
-// ---------------------------------------------------------------------------
 // Tactical replay verification (ADR-0034 decision 2, ticket 07).
 //
 // A battle's minute-by-minute tactical state is DERIVED_REBUILDABLE: it is
@@ -28,7 +27,6 @@ import { RandomLedger } from "@bluewave/random";
 // `BattleResolutionResult` and is NOT compared — only the persisted campaign
 // `BattleResult` surface (ADR-0034, ticket 07). Battle autosaves / minute
 // checkpoints are out of scope (deferred with the full save-package model).
-// ---------------------------------------------------------------------------
 
 type AutoResolutionManifest = Parameters<typeof resolveBattleAuto>[0]["manifest"];
 

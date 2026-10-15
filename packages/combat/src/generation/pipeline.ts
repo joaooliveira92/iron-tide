@@ -1,4 +1,3 @@
-//packages/combat/src/generation/pipeline.ts
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine } from "@bluewave/random";

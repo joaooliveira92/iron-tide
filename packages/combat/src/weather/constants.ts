@@ -1,4 +1,3 @@
-//packages/combat/src/weather/constants.ts
 // Versioned authoritative weather base constants (DESIGN-42 §§1–6, §24–30 subset)
 // shipped as a `weather_v1` policy + `SHIPPED_WEATHER_CONTRACT` +
 // `validateWeatherContract`, mirroring packages/combat/src/gunnery/constants.ts.
@@ -97,7 +96,6 @@ export const LOCAL_VARIATION_PRECIPITATION_INTENSITY_JITTER_BP = 500 as const;
 export const LOCAL_VARIATION_FOG_MIST_DENSITY_JITTER_BP = 500 as const;
 export const LOCAL_VARIATION_CLOUD_COVER_JITTER_BP = 500 as const;
 
-// ---------------------------------------------------------------------------
 // INC-4: Environment effect constants (weather_environment_v1 policy).
 // DESIGN-42 §24–27 glare, fog, precipitation, and night/twilight multipliers
 // in basis points. Every value is a shipped versioned constant.
@@ -268,7 +266,6 @@ export function validateWeatherContract(
     throwMismatch(c, "weather_v1 ruleset/formula/climate/rng versions");
 }
 
-// ---------------------------------------------------------------------------
 // DESIGN-42 §3 tactical weather component contract (INC-2). The twelve canonical
 // components all use integer canonical units under the bounds declared here;
 // shipped as `weather_components_v1` + SHIPPED_WEATHER_COMPONENTS_CONTRACT +
@@ -387,7 +384,6 @@ export function validateWeatherComponentsContract(
     throwComponentsMismatch(c, "weather_components_v1 ruleset/formula versions");
 }
 
-// ---------------------------------------------------------------------------
 // DESIGN-42 §5 visibility contract (INC-3). The shipped exponent is 5 (five 10_000
 // basis-point multipliers) with FLOOR rounding.
 export const weatherVisibilityPolicyId = "weather_visibility_v1" as const;
@@ -434,7 +430,6 @@ export function validateWeatherVisibilityContract(
     throwVisibilityMismatch(c, "weather_visibility_v1 ruleset/formula versions");
 }
 
-// ---------------------------------------------------------------------------
 // DESIGN-42 §24–27 environment effect contract (INC-4). Carries the shipped
 // glare, fog, precipitation, and night/twilight multiplier tables.
 export const weatherEnvironmentPolicyId = "weather_environment_v1" as const;

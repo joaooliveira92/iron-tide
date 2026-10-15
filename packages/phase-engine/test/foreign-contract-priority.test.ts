@@ -84,9 +84,7 @@ describe("allocateBuilderCapacity (SB3-R21 §13.3)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------------------------------------------
 // The committed foreign mass + the domestic order deferral
-// ---------------------------------------------------------------------------------------------------------------
 
 function contractWith(
   builderNationId: string,

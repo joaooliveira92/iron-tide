@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/engineWiring.ts
 // D-4 M4 Aviation: Air Defense — INC-6 (AC-18).
 // resolveAirDefense stage (step 7.8) in the minute-advance pipeline: after air combat
 // (7.7), before sensors/spotting (8). Strict no-op when no defender or no attack is present.
@@ -42,7 +41,6 @@ export const AIR_DEFENSE_ENGAGEMENT_SUBSTEP = 1 as const;
 
 const NEUTRAL_BP = SafeInt(10_000);
 
-// ---------------------------------------------------------------------------
 // Context and result types
 
 export interface AirDefenseDefenderContext {
@@ -78,7 +76,6 @@ export interface AirDefenseStageResult {
   summary: { engagements: number; kills: number; aborts: number; disruptions: number };
 }
 
-// ---------------------------------------------------------------------------
 // resolveAirDefense — per-minute air-defense stage
 
 function compareIds(a: string, b: string): number {
