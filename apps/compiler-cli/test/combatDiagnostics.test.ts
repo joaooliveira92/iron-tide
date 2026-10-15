@@ -88,6 +88,8 @@ describe("runCombatOperation", () => {
     const collector = new DiagnosticCollector();
     const result = runCombatOperation(
       () => {
+        // Deliberately throw a non-Error value to prove runCombatOperation reports
+        // it as an internal-error outcome.
         // eslint-disable-next-line @typescript-eslint/no-throw-literal
         throw "not an Error instance";
       },

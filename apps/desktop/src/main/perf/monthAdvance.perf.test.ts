@@ -52,6 +52,8 @@ describe.skipIf(process.env.BLUEWAVE_PERF !== "1")("month-advance performance tr
     }
     const elapsed = performance.now() - started;
 
+    // Tripwire diagnostic, not application logging: emit the measured timing so a
+    // perf regression is visible in CI output.
     // eslint-disable-next-line no-console
     console.log(
       `month-advance tripwire: ${elapsed.toFixed(1)}ms for ${MONTHS} months ` +

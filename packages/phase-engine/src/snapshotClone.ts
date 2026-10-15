@@ -93,6 +93,8 @@ function cloneValue(value: unknown, seen = new WeakMap<object, unknown>()): unkn
       return new DataView((value as DataView).buffer.slice(0), value.byteOffset, value.byteLength);
     }
     // TypedArray — copy via constructor
+    // Erasing to `any` is required to invoke the arbitrary TypedArray constructor
+    // for the value's runtime type.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return new (value as any).constructor(value as any);
   }
@@ -108,6 +110,8 @@ function cloneValue(value: unknown, seen = new WeakMap<object, unknown>()): unkn
   for (const sym of Object.getOwnPropertySymbols(value)) {
     const desc = Object.getOwnPropertyDescriptor(value, sym);
     if (desc?.enumerable) {
+      // The symbol key is not statically known, so erasure is required to assign
+      // through it on the generic clone output.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (out as any)[sym] = cloneValue((value as any)[sym], seen);
     }
