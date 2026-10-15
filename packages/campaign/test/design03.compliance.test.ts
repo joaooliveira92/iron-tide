@@ -1,4 +1,3 @@
-// packages/campaign/test/design03.test.ts
 // DESIGN-03 Campaign Configuration - Validation and Acceptance §9 1..21
 
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
@@ -57,7 +56,6 @@ import {
   toLinear,
 } from "../src/timeline.js";
 
-// Helpers
 function collector() {
   return new DiagnosticCollector();
 }

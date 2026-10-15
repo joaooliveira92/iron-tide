@@ -88,7 +88,6 @@ export class MonthExecutor {
       },
     };
 
-    // Phase 1: opening_validation
     if (!this.assertPhase(phaseGuard, "opening_validation", collector)) {
       return this.finish(ctx, false);
     }
@@ -96,67 +95,56 @@ export class MonthExecutor {
       return this.finish(ctx, false);
     }
 
-    // Phase 1.5: weather_generation
     if (!this.assertPhase(phaseGuard, "weather_generation", collector)) {
       return this.finish(ctx, false);
     }
     runWeatherGenerationPhase(ctx);
 
-    // Phase 2: monthly_revenue
     if (!this.assertPhase(phaseGuard, "monthly_revenue", collector)) {
       return this.finish(ctx, false);
     }
     runMonthlyRevenuePhase(ctx);
 
-    // Phase 3: command_collection
     if (!this.assertPhase(phaseGuard, "command_collection", collector)) {
       return this.finish(ctx, false);
     }
     runCommandCollectionPhase(ctx);
 
-    // Phase 3.5: ai_planning
     if (!this.assertPhase(phaseGuard, "ai_planning", collector)) {
       return this.finish(ctx, false);
     }
     runAiPlanningPhase(ctx);
 
-    // Phase 3.6: ai_procurement
     if (!this.assertPhase(phaseGuard, "ai_procurement", collector)) {
       return this.finish(ctx, false);
     }
     runAiProcurementPhase(ctx);
 
-    // Phase 4: appropriation
     if (!this.assertPhase(phaseGuard, "appropriation", collector)) {
       return this.finish(ctx, false);
     }
     runAppropriationPhase(ctx);
 
-    // Phase 5: maintenance
     if (!this.assertPhase(phaseGuard, "maintenance", collector)) {
       return this.finish(ctx, false);
     }
     runMaintenancePhase(ctx);
 
-    // Phase 6: obligation
     if (!this.assertPhase(phaseGuard, "obligation", collector)) {
       return this.finish(ctx, false);
     }
     runObligationPhase(ctx);
 
-    // Phase 7: construction_processing
     if (!this.assertPhase(phaseGuard, "construction_processing", collector)) {
       return this.finish(ctx, false);
     }
     runConstructionProcessingPhase(ctx);
 
-    // Phase 8: resolve_diplomacy
     if (!this.assertPhase(phaseGuard, "resolve_diplomacy", collector)) {
       return this.finish(ctx, false);
     }
     ctx.currentSnapshot = resolveDiplomacyPhase(ctx.currentSnapshot, ctx.campaignMonth);
 
-    // Phase 9: resolve_research
     if (!this.assertPhase(phaseGuard, "resolve_research", collector)) {
       return this.finish(ctx, false);
     }
@@ -204,19 +192,16 @@ export class MonthExecutor {
       ctx.currentSnapshot = result.snapshot;
     }
 
-    // Phase 9.5: battle_generation
     if (!this.assertPhase(phaseGuard, "battle_generation", collector)) {
       return this.finish(ctx, false);
     }
     runBattleGenerationPhase(ctx);
 
-    // Phase 10: battle_resolution
     if (!this.assertPhase(phaseGuard, "battle_resolution", collector)) {
       return this.finish(ctx, false);
     }
     runBattleResolutionPhase(ctx);
 
-    // Phase 11: closing_validation
     if (!this.assertPhase(phaseGuard, "closing_validation", collector)) {
       return this.finish(ctx, false);
     }

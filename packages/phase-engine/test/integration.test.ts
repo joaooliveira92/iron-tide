@@ -224,7 +224,7 @@ describe("Full-slice integration", () => {
     expect(state1.rawHash).toHaveLength(64);
   });
 
-  // 2. Deterministic month Ã¢â‚¬â€ same seed/commands yields identical 5 ledger hashes
+  // 2. Deterministic month — same seed/commands yields identical 5 ledger hashes
   it("2. Same opening snapshot and commands yield identical closing snapshot, command, event, financial, and random-decision ledger hashes", () => {
     const executor = new MonthExecutor();
     const cmd = makeBudgetCommand(snapshot, "uk", "con-gbr-ship-battleship2", SafeInt(100));

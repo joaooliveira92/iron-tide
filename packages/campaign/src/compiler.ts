@@ -134,10 +134,8 @@ export class CampaignCompiler {
 
     if (collector.hasErrors || signal.aborted) return undefined;
 
-    // Step 3: Build WorldState from content
     const world = buildWorldState(pack);
 
-    // Step 4: Build nation states
     const nations = buildNationStates(
       pack,
       data.fleets,
@@ -148,10 +146,8 @@ export class CampaignCompiler {
     );
     if (!nations || signal.aborted) return undefined;
 
-    // Step 5: Build war state
     const wars = buildWarState();
 
-    // Step 6: Build political state
     const politics = buildPoliticalState(data.diplomacy, nations, collector);
 
     // Step 6b: Build designs from design data. When the bundle carries the ship-building part
@@ -168,13 +164,10 @@ export class CampaignCompiler {
     if (!assertFleetDesignLinks(nations, designs, collector)) return undefined;
     if (signal.aborted) return undefined;
 
-    // Step 7: Determine slots - sorted for determinism
     const slots = buildSlots(nations);
 
-    // Step 8: Build intelligence shell
     const intelligence = { shells: {} };
 
-    // Step 9: Build snapshot
     const campaignStart = resolveCampaignStart(input, startInput.value);
     const snapshot: CampaignSnapshot = {
       version: "0.1.0",

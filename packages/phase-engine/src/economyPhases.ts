@@ -31,7 +31,6 @@ function computeConstructionCap(nation: NationState): SafeInt {
   return SafeInt.div(SafeInt.div(base, SafeInt(12)), SafeInt(100), "floor");
 }
 
-// Phase 2: monthly_revenue — naval appropriation into each active nation's treasury.
 export function runMonthlyRevenuePhase(ctx: MonthContext): void {
   const { campaignMonth, eventLedger, financialLedger, nextSeq } = ctx;
 
@@ -478,7 +477,6 @@ function applyLeftoverFunding(
   };
 }
 
-// Phase 5: maintenance — monthly ship maintenance, floored at zero treasury.
 export function runMaintenancePhase(ctx: MonthContext): void {
   const { campaignMonth, eventLedger, financialLedger, nextSeq } = ctx;
 
@@ -535,7 +533,6 @@ export function runMaintenancePhase(ctx: MonthContext): void {
   }
 }
 
-// Phase 6: obligation — mandatory fixed expenses, floored at zero treasury.
 export function runObligationPhase(ctx: MonthContext): void {
   const { campaignMonth, collector, eventLedger, financialLedger, nextSeq } = ctx;
 

@@ -384,7 +384,6 @@ function applyConstructionCommand(ctx: MonthContext, body: CommandBody, commandI
     );
 }
 
-// Phase 3.5: ai_planning — run each AI slot's planner and apply its commands.
 export function runAiPlanningPhase(ctx: MonthContext): void {
   const { campaignMonth, turnNumber, financialLedger, eventLedger, collector } = ctx;
 
