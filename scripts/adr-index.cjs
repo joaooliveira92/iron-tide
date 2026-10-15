@@ -145,10 +145,12 @@ function load() {
     }
   }
 
-  // The area map must be a partition of the ADR set.
+  // The area map must be a partition of the ADR set — but an empty corpus is
+  // valid (no sprint started, no ADRs written yet). The roster is only enforced
+  // once at least one ADR exists, so a fresh checkout with zero ADRs is green.
   const assigned = AREAS.flatMap((a) => a.nums);
   const missing = [...adrs.keys()].filter((n) => !assigned.includes(n));
-  const extra = assigned.filter((n) => !adrs.has(n));
+  const extra = adrs.size > 0 ? assigned.filter((n) => !adrs.has(n)) : [];
   if (missing.length || extra.length) {
     throw new Error(
       `scripts/adr-index.cjs AREAS map is not a partition of the ADRs ` +
@@ -164,7 +166,7 @@ function load() {
 function buildIndex() {
   const { adrs, records } = load();
   const archived = records.filter((r) => r.location === "archived");
-  const max = Math.max(...adrs.keys());
+  const max = adrs.size > 0 ? Math.max(...adrs.keys()) : 0;
   const out = [
     "# Architecture decision records",
     "",
@@ -193,7 +195,9 @@ function buildIndex() {
       "| --- | --- | --- | --- | --- |",
     );
     for (const n of rows) {
-      const { file, title, status, supersededBy } = adrs.get(n);
+      const rec = adrs.get(n);
+      if (!rec) continue;
+      const { file, title, status, supersededBy } = rec;
       out.push(
         `| ${pad(n)} | [${file}](${file}) | ${title} | ${status} | ${supersededBy ?? "—"} |`,
       );

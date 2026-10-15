@@ -2,7 +2,7 @@
 
 19 standalone TypeScript composite projects. **Authoritative sources:**
 
-- **Boundaries and dependency direction** — [ADR-0001](../docs/adr/ADR-0001-monorepo-structure.md). Read it before adding a package or a cross-package import.
+- **Boundaries and dependency direction** — see [`docs/adr`](../docs/adr). Read the ADR index before adding a package or a cross-package import.
 - **Domain vocabulary** — [CONTEXT.md](../CONTEXT.md) (glossary; e.g. `Nation` not "country").
 - **Non-negotiable rules** — [`DESIGN-57`](../docs/architecture/non-negotiable-rules.md).
 
