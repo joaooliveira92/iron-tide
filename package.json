@@ -18,6 +18,7 @@
     "check:authoritative-determinism": "node scripts/assert-authoritative-determinism.mjs",
     "check:dependencies": "node scripts/verify-package-dependencies.mjs",
     "change-scope": "node scripts/change-scope.mjs",
+    "sweep:comments": "node scripts/sweep-comments.mjs",
     "save:migrate": "node tools/migrate-dev-saves/main.mjs",
     "check:balance-reports": "node scripts/check-balance-reports.cjs",
     "check:golden": "node scripts/verify-golden-hashes.cjs",

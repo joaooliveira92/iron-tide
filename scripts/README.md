@@ -46,6 +46,7 @@ generate repository artefacts.
 | `install-hooks.mjs` | `pnpm hooks:install` | Point `core.hooksPath` at `.githooks` (also runs from `prepare`). |
 | `new-nation.mjs` | `node scripts/new-nation.mjs` | Scaffold a nation's content ([adding a nation](../docs/agents/adding-a-nation.md)). |
 | `optimize-artwork.mjs` | `node scripts/optimize-artwork.mjs` | Regenerate downscaled AVIF card artwork from the JPG sources (macOS `sips`). |
+| `sweep-comments.mjs` | `pnpm sweep:comments [--apply]` | Deterministic sweep of token-free banner rulers, self-path headers, and JSX narration; dry-run by default, idempotent. |
 | `vendor-effect-sync.mjs` | `node scripts/vendor-effect-sync.mjs [--verify]` | Regenerate/verify vendored Effect artifacts ([AGENTS.md](../AGENTS.md)). |
 | `regenerate-golden-hashes.cjs` | manual | Re-bake `golden/hashes.json` ([golden repinning](../docs/agents/golden-repinning.md)). |
 | `release-signing-wizard.sh` | manual | Guided release signing ([desktop signing](../docs/delivery/desktop-signing.md)). |
