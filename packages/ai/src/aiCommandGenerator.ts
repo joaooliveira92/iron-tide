@@ -27,26 +27,11 @@ function assertNonEmptyString(value: string, name: string): void {
 }
 
 function assertSafeInt(value: unknown, name: string): asserts value is SafeInt {
-  // SafeInt is branded number in contracts; also handle object-branded future-proof
-  const n =
-    typeof value === "number"
-      ? value
-      : typeof (value as { valueOf?: unknown })?.valueOf === "function"
-        ? Number((value as { valueOf(): unknown }).valueOf())
-        : NaN;
-  if (!SafeInt.isSafeInt(n)) {
+  if (typeof value !== "number" || !SafeInt.isSafeInt(value)) {
     throw new AiError({
       message: `${name} must be SafeInt (safe integer), got ${String(value)}`,
     });
   }
-}
-
-function toNumber(s: SafeInt): number {
-  if (typeof s === "number") return s;
-  // future-proof: SafeInt as object with valueOf
-  const v = (s as unknown as { valueOf(): number }).valueOf();
-  if (typeof v === "number" && SafeInt.isSafeInt(v)) return v;
-  throw new AiError({ message: `Invalid SafeInt: ${String(s)}` });
 }
 
 function encodePart(s: string): string {
@@ -91,7 +76,7 @@ export class AiCommandGenerator {
   private idempotencyKeyFor(nationId: string, commandType: string): string {
     assertNonEmptyString(nationId, "nationId");
     // turnNumber as decimal string via integer conversion (no [object Object])
-    const turnStr = String(toNumber(this.turnNumber));
+    const turnStr = String(this.turnNumber);
     return `${encodePart(this.campaignId)}/${turnStr}/${encodePart(nationId)}/${encodePart(commandType)}`;
   }
 
@@ -105,7 +90,7 @@ export class AiCommandGenerator {
     assertNonEmptyString(campaignId, "campaignId");
     assertSafeInt(turnNumber, "turnNumber");
     assertNonEmptyString(nationId, "nationId");
-    return `${encodePart(campaignId)}/${String(toNumber(turnNumber))}/${encodePart(nationId)}/${encodePart(commandType)}`;
+    return `${encodePart(campaignId)}/${String(turnNumber)}/${encodePart(nationId)}/${encodePart(commandType)}`;
   }
 
   private commandIdFromKey(key: string): string {
@@ -117,7 +102,7 @@ export class AiCommandGenerator {
   private deterministicTimestamp(): string {
     // Pure integer arithmetic, UTC, handles negative turnNumber deterministically.
     // Turn 0 => 1910-01-01T00:00:00.000Z, wraps every 365 days (no leap drift).
-    const daysOffset = ((toNumber(this.turnNumber) % 365) + 365) % 365;
+    const daysOffset = ((this.turnNumber % 365) + 365) % 365;
     const baseMs = Date.UTC(1910, 0, 1); // 1910-01-01 UTC
     const ms = baseMs + daysOffset * 24 * 60 * 60 * 1000;
     return new Date(ms).toISOString(); // toISOString is always UTC, deterministic
@@ -131,7 +116,7 @@ export class AiCommandGenerator {
     assertNonEmptyString(nationId, "nationId");
     assertNonEmptyString(projectId, "projectId");
     assertSafeInt(amount, "amount");
-    if (toNumber(amount) < 1) throw new AiError({ message: `budget amount must be >=1` });
+    if (amount < 1) throw new AiError({ message: `budget amount must be >=1` });
 
     const key = this.idempotencyKey(nationId, AI_COMMAND_TYPE_BUDGET);
     const envelope: CommandEnvelope<BudgetProjectCommand> = {

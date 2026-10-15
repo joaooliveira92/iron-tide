@@ -185,11 +185,8 @@
   "apps/desktop/src/renderer/shell/useNewGameFlow.test.ts": {
     "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 6
   },
-  "packages/ai/src/aiCommandGenerator.ts": {
-    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
-  },
   "packages/ai/src/aiPlanner.ts": {
-    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 6
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
   },
   "packages/campaign-engine/test/construction.test.ts": {
     "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1

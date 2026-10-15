@@ -30,29 +30,21 @@ export interface AiPlanningResult {
   readonly diagnostics: readonly Diagnostic[];
 }
 
-function toNumber(s: SafeInt): number {
-  if (typeof s === "number") return s;
-  const v = (s as unknown as { valueOf(): number }).valueOf();
-  if (typeof v === "number" && SafeInt.isSafeInt(v)) return v;
-  throw new AiError({ message: `Invalid SafeInt` });
-}
-
 function assertSafeInt(n: unknown): number {
-  const v = toNumber(n as SafeInt);
-  if (!SafeInt.isSafeInt(v)) throw new AiError({ message: `Not SafeInt` });
-  return v;
+  if (typeof n !== "number" || !SafeInt.isSafeInt(n)) {
+    throw new AiError({ message: "Not SafeInt" });
+  }
+  return n;
 }
 
 function safeSub(a: SafeInt, b: SafeInt): SafeInt {
-  const av = toNumber(a);
-  const bv = toNumber(b);
-  const r = av - bv;
+  const r = a - b;
   if (!SafeInt.isSafeInt(r)) throw new AiError({ message: `SafeInt overflow sub` });
-  return r as unknown as SafeInt;
+  return r;
 }
 
 function safeMin(a: SafeInt, b: SafeInt): SafeInt {
-  return toNumber(a) <= toNumber(b) ? a : b;
+  return a <= b ? a : b;
 }
 
 function encodeStreamPart(s: string): string {
@@ -227,7 +219,7 @@ export class AiPlanner {
     const treasury = (nation as { treasury: SafeInt }).treasury;
     let treasuryNum: number;
     try {
-      treasuryNum = toNumber(treasury);
+      treasuryNum = treasury;
     } catch {
       return undefined;
     }
@@ -250,9 +242,9 @@ export class AiPlanner {
         assertSafeInt(totalWork);
         assertSafeInt(completedWork);
         const remainingWork = safeSub(totalWork, completedWork);
-        if (toNumber(remainingWork) <= 0) continue;
+        if (remainingWork <= 0) continue;
         const maxAmount = safeMin(treasury, remainingWork);
-        if (toNumber(maxAmount) < 1) continue;
+        if (maxAmount < 1) continue;
         legal.push({ projectId: proj.id, maxAmount });
       } catch {
         continue; // skip malformed project fail-closed
@@ -273,8 +265,8 @@ export class AiPlanner {
       return undefined;
     }
 
-    const indexSafe = drawUniform(stream, SafeInt.ZERO, SafeInt(legal.length - 1) as SafeInt);
-    const index = toNumber(indexSafe);
+    const indexSafe = drawUniform(stream, SafeInt.ZERO, SafeInt(legal.length - 1));
+    const index = indexSafe;
     const chosen = legal[index];
     if (!chosen) return undefined;
 
@@ -300,18 +292,12 @@ export class AiPlanner {
           complete = false;
           break;
         }
-        priorities[field] = SafeInt(v) as SafeInt;
+        priorities[field] = SafeInt(v);
       }
       if (complete) return generator.buildResearchPriorityCommand(nationId, priorities);
     }
     const n = fields.length;
-    const maxHigh = Math.min(
-      toNumber(SafeInt(MAX_HIGH_PRIORITY_FIELDS) as unknown as SafeInt) ||
-        (MAX_HIGH_PRIORITY_FIELDS as unknown as number),
-      n,
-    );
-    // MAX_HIGH_PRIORITY_FIELDS is number constant; handle both SafeInt and number
-    const maxHighClamped = Math.max(1, Math.min(maxHigh, n));
+    const maxHighClamped = Math.max(1, Math.min(MAX_HIGH_PRIORITY_FIELDS, n));
 
     let stream: ReturnType<RandomEngine["stream"]>;
     try {
@@ -323,14 +309,14 @@ export class AiPlanner {
     }
 
     // highCount in [1, maxHighClamped] inclusive, integer
-    const highCountSafe = drawUniform(stream, SafeInt.ONE, SafeInt(maxHighClamped) as SafeInt);
-    const highCount = toNumber(highCountSafe);
+    const highCountSafe = drawUniform(stream, SafeInt.ONE, SafeInt(maxHighClamped));
+    const highCount = highCountSafe;
 
     // Partial Fisher-Yates using integer drawUniform (no floats)
     const shuffled: string[] = [...fields];
     for (let i = 0; i < highCount; i++) {
-      const jSafe = drawUniform(stream, SafeInt(i) as SafeInt, SafeInt(n - 1) as SafeInt);
-      const j = toNumber(jSafe);
+      const jSafe = drawUniform(stream, SafeInt(i), SafeInt(n - 1));
+      const j = jSafe;
       const tmp = shuffled[i]!;
       shuffled[i] = shuffled[j]!;
       shuffled[j] = tmp;
@@ -340,8 +326,8 @@ export class AiPlanner {
     const fieldPriorities: Record<string, SafeInt> = {};
     for (const field of fields) {
       fieldPriorities[field] = highSet.has(field)
-        ? (SafeInt(RESEARCH_FIELD_PRIORITY_WEIGHTS.HIGH) as SafeInt)
-        : (SafeInt(RESEARCH_FIELD_PRIORITY_WEIGHTS.MEDIUM) as SafeInt);
+        ? SafeInt(RESEARCH_FIELD_PRIORITY_WEIGHTS.HIGH)
+        : SafeInt(RESEARCH_FIELD_PRIORITY_WEIGHTS.MEDIUM);
     }
 
     return generator.buildResearchPriorityCommand(nationId, fieldPriorities);
