@@ -232,16 +232,18 @@ describe("commitMonth", () => {
       // the deterministic baseline for the production pack at turn 1 — adding
       // `battleOutcomes` changed only the bridge response, never these
       // authoritative hashes. Pinned so any accidental engine/snapshot change
-      // that should not happen here is caught as a hash drift.
+      // that should not happen here is caught as a hash drift. Re-pinned
+      // 2026-10-15 (G-3): the USA demotion to AI-only (DR-005 / ADR-0205)
+      // changes the compiled nation slots, so the snapshot hash moves.
       expect(updated.state.envelope).toEqual({
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-        bodyHash: "501472dccac73b5352a0b56b871c74ed6e89a237db45178e21c14bcbf5a57feb",
-        bodyLength: 87677,
+        bodyHash: "be70e057434482a0951ed6caa7e8de971b23f349c78bcf38debb5358bc328602",
+        bodyLength: 87671,
       });
       expect(updated.state.rawHash).toBe(
-        "f8018aab8f3e0ec111400cf19ed3fad0c916c48ae8dbedd79c958cb9223d94a7",
+        "50140cfdedfe821b87056105c33dc644df97badda0c9b6411616cb2e2d913a04",
       );
       const expectedActiveWars = updated.state.snapshot.wars.wars.filter(
         (w) => w.status !== "ENDED",

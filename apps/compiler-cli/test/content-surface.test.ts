@@ -157,6 +157,39 @@ designs:
   });
 });
 
+describe("production roster is the manual's nine playable nations (DR-005 / ADR-0205)", () => {
+  it("marks exactly nine nations playable and leaves the USA AI-only", async () => {
+    const out = tempDir();
+    expect(
+      await runCli(runContentBuild({ manifest, contentDir, outputDir: out, outputMode: "json" })),
+    ).toBe("success");
+
+    const artifact = JSON.parse(readFileSync(resolve(out, "content-artifact.json"), "utf8")) as {
+      nations: Array<{ id: string; isPlayable?: boolean }>;
+    };
+    const playable = artifact.nations
+      .filter((nation) => nation.isPlayable === true)
+      .map((nation) => nation.id)
+      .sort();
+
+    // Manual p.18: Great Britain, Germany, France, Austria-Hungary, Russia,
+    // Italy, Japan, China, Spain. The USA is an AI opponent and must not be
+    // playable (the roster gate for the other five is DR-005).
+    expect(playable).toEqual([
+      "austria_hungary",
+      "france",
+      "germany",
+      "italy",
+      "japan",
+      "qing",
+      "russia",
+      "spain",
+      "uk",
+    ]);
+    expect(playable).not.toContain("usa");
+  });
+});
+
 describe("content:verify over the production pack (CAH-LOCK)", () => {
   it("verifies the production pack against the committed content lock", async () => {
     expect(

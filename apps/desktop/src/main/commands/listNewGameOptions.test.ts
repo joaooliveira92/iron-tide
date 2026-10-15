@@ -12,9 +12,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-// Ticket 02/06's research: content/production/1880 has 14 nations, 10
-// playable, and 5 zero-design/zero-construction nations (spain plus 4
-// non-playable). See docs/research/content-4-desktop-mvp-pack-readiness.md.
+// content/production/1880 has 14 nations and, after DR-005 / ADR-0205, 9
+// playable. Five nations have zero designs *and* zero construction projects
+// (spain, which is playable, plus the 4 AI-only nations), so they offer no
+// player slot.
 const ZERO_CONTENT_NATIONS = ["spain", "ottoman_empire", "netherlands", "portugal", "brazil"];
 
 /** Runs the program through a per-test runtime and projects the wire envelope. */
@@ -45,6 +46,33 @@ describe("listNewGameOptions", () => {
     const uk = result.value.nations.find((n) => n.id === "uk");
     expect(uk?.regimeType).toBe("constitutional_monarchy");
     expect(uk?.regimeName).toBe("Constitutional Monarchy");
+  });
+
+  it("offers only the content-backed 1880 scenario and the nine-nation playable roster", async () => {
+    const result = await listNewGameOptions(GENERATED_ARTIFACT);
+    expect(result.outcome).toBe("success");
+    if (result.outcome !== "success") return;
+
+    // Only 1880 is selectable; the declared 1900/1920/1935/1960 ids are not
+    // offered anywhere (DR-004 / ADR-0204).
+    expect(result.value.scenarios.map((scenario) => scenario.id)).toEqual(["scen_1880"]);
+    expect(result.value.supportedValues.scenarioId).toEqual(["scen_1880"]);
+    for (const removed of ["scen_1900", "scen_1920", "scen_1935", "scen_1960"]) {
+      expect(result.value.supportedValues.scenarioId).not.toContain(removed);
+    }
+
+    // Nine playable nations per manual p.18; the USA is AI-only (DR-005 / ADR-0205).
+    expect(result.value.scenarios[0]?.playableNationIds).toEqual([
+      "austria_hungary",
+      "france",
+      "germany",
+      "italy",
+      "japan",
+      "qing",
+      "russia",
+      "spain",
+      "uk",
+    ]);
   });
 
   it("excludes Spain and the 4 other zero-design/zero-construction nations from playerSlotId", async () => {

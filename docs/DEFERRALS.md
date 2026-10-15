@@ -11,6 +11,6 @@ Rows are added when the deferral is recorded and removed when the work lands.
 | --- | --- | --- |
 | _none yet_ | No decisions are recorded as deferred. | — |
 
-The ledger is currently empty: no sprint has started, so no ADR records a
-deferral. When one does, add a row naming the ADR, the deferred item, and the
-milestone or gate that unblocks it.
+The ledger is currently empty: no recorded ADR defers any work. When one does,
+add a row naming the ADR, the deferred item, and the milestone or gate that
+unblocks it.
