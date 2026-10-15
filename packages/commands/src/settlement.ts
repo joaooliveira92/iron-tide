@@ -25,9 +25,7 @@ export function computeSettlement(
     throw new CommandError({ message: "amounts must be non-negative" });
   if (refundBasisPoints < 0 || refundBasisPoints > 10000)
     throw new CommandError({ message: "refundBasisPoints out of range" });
-  if (consumedAmount + fixedNonRefundableAmount > reservedAmount) {
-    // per spec, max(0, reserved - consumed - fixed) handles overage
-  }
+  // Spec: max(0, reserved - consumed - fixed) absorbs any overage.
   const base = Math.max(0, reservedAmount - consumedAmount - fixedNonRefundableAmount);
   const releasedAmount = Math.floor((base * refundBasisPoints) / 10000);
   const lostAmount = reservedAmount - consumedAmount - releasedAmount;

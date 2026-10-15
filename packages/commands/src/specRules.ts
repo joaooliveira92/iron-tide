@@ -110,7 +110,7 @@ export function checkCancellationWindow(
       return { allowed: false, reasonCode: "CANCELLATION_WINDOW_CLOSED" };
     return { allowed: true, reasonCode: "COMMAND_CANCELLED" };
   }
-  // CUSTOM_EXPLICIT - delegate to handler branch (here we allow but require explicit)
+  // CUSTOM_EXPLICIT: no handler branch is wired, so fail closed as not-allowed.
   return { allowed: false, reasonCode: "CANCELLATION_NOT_ALLOWED" };
 }
 
