@@ -24,7 +24,6 @@ export function authorize(
     role: ctx.rolePermissionsValid,
     domain: ctx.domainAuthorityValid,
   };
-  // issuer parity check
   if (definition.issuerRestrictionReasonCode && definition.issuerEligibilityPredicate) {
     const eligible = definition.issuerEligibilityPredicate(
       command.issuerClass,
@@ -35,7 +34,6 @@ export function authorize(
     }
   }
   const allPassed = Object.values(checks).every(Boolean);
-  // fog-of-war / parity violation detection
   if (!checks.issuerClassAllowed) {
     return {
       commandId: command.commandId,

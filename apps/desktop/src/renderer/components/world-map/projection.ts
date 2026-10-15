@@ -1,6 +1,4 @@
 /**
- * PROTOTYPE — throwaway. See ./README.md.
- *
  * Pure geometry. No React, no DOM. This is the part of the prototype most
  * likely to survive into real code, so it is kept honest.
  *

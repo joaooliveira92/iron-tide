@@ -54,7 +54,6 @@ describe("AC-3: Interception timing", () => {
     });
 
     it("handles negative speed gracefully", () => {
-      // speed -5 → mps=max(1, 20+(-5*2.5)) = max(1, 7) = 7 ... wait
       // speed -5 → -5*2.5+20 = 7.5 → floor(7.5) = 7
       // per minute = 7*60 = 420
       // 5000 / 420 = 11.9... ceil = 12

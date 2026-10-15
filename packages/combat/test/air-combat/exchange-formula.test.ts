@@ -77,9 +77,6 @@ describe("AC-5: Air-to-air exchange formula", () => {
         makeRng(),
       );
       // quality = 80*10000/30 = 26666 → clamped to 10000
-      // Actually, floor(80*10000/30) = floor(800000/30) = floor(26666.66) = 26666
-      // But quality max is 10000, so clamped to 10000
-      // So quality factor = 10000 (max)
       expect(Number(result.factorContributions.quality)).toBe(10_000);
     });
 

@@ -37,25 +37,6 @@ const BELT_BASELINE: ProtectionInput = {
   isCriticalZone: false,
 };
 
-// Penetration capability for baseline: floor(304_800 * 400 / 1000) = 121_920
-// Resistance: 320_040
-// Outcome: 121_920 < 320_040 * 0.25 = 80_010? No. 121_920 >= 80_010 → SPLINTER_EFFECT
-
-// Let's calibrate. For FULL_PENETRATION we need penCap >= resistance (320_040).
-// penCap = caliber * velocity / 1000, so need caliber * velocity / 1000 >= 320_040.
-// With caliber = 304_800 (12in): need velocity >= 320_040 * 1000 / 304_800 ≈ 1050 m/s.
-// That's very fast. Let me use a thinner armor or bigger caliber.
-
-// Better: use a thin armor for full penetration test.
-// armorThicknessUm = 100_000 (4in) Harvey (10_000 bp)
-// manufEffective = 100_000 (below threshold)
-// qualityAdjusted = floor(100_000 * 10_000 / 10_000) = 100_000
-// obliquityBp = 10_000 (normal impact)
-// effectiveResistance = 100_000
-// Need penCap >= 100_000: caliber * velocity / 1000 >= 100_000
-// With caliber = 304_800 (12in): velocity >= 328 m/s
-// At 400 m/s: penCap = floor(304_800 * 400 / 1000) = 121_920 ≥ 100_000 → FULL_PENETRATION
-
 const FULL_PEN: ProtectionInput = {
   projectileCaliberUm: 304_800,
   projectileVelocityMs: 400,

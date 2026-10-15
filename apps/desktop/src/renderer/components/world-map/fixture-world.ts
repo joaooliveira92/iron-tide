@@ -1,6 +1,4 @@
 /**
- * PROTOTYPE — throwaway. See ./README.md.
- *
  * A hand-authored 36-area world at ticket 01's fidelity, standing in for the
  * dataset that milestone 6 implementation will author. Nothing here is
  * canonical: the ids do not exist in any content pack, the ownerships are

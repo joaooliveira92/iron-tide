@@ -1,6 +1,4 @@
 /**
- * PROTOTYPE — throwaway. See ./README.md.
- *
  * The state the three variants share. Deliberately only *data* is shared —
  * selection, the ruler, layer toggles, the derived route. Layout, information
  * hierarchy, and every visual decision belong to the variants, because that is

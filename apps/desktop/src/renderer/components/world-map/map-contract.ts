@@ -1,6 +1,4 @@
 /**
- * PROTOTYPE — throwaway. See ./README.md.
- *
  * What the host hands every variant. Data only: no layout, no chrome, no
  * shared wrapper. A variant is free to throw out the whole page.
  */

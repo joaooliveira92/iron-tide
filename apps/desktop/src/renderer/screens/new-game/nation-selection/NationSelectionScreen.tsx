@@ -24,7 +24,7 @@ function formatCoord(decimal: number, posDir: string, negDir: string): string {
  * - TelemetryBar: coordinate display and keyboard hints
  * - FleetDispatchBoard: nation grid selector
  * - GlobePanel: clipped globe with dossier slide panel
- * - StatusBar: bottom shelf with status text
+ * - DossierSlidePanel: nation dossier drawer
  */
 export function NationSelectionScreen({
   slots,
