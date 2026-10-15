@@ -139,10 +139,10 @@ export function NationSelectionScreen({
       className="flex h-full min-h-[44rem] w-full flex-col bg-admiralty-surface font-sans text-admiralty-ink selection:bg-admiralty-accent selection:text-admiralty-accent-foreground overflow-hidden"
       aria-labelledby="nation-selection-heading"
     >
-      {/* ── Intelligence Telemetry Bar ── */}
+      {/* Intelligence Telemetry Bar */}
       <TelemetryBar coordinateLabel={coordinateLabel} />
 
-      {/* ── Main Command Surface ── */}
+      {/* Main Command Surface */}
       <main
         aria-labelledby="nation-selection-heading"
         className="relative flex min-h-0 flex-1 flex-col items-stretch bg-admiralty-surface lg:flex-row lg:overflow-hidden"
@@ -160,7 +160,7 @@ export function NationSelectionScreen({
           aria-hidden="true"
         />
 
-        {/* ── Left Panel: Fleet Dispatch Board ── */}
+        {/* Left Panel: Fleet Dispatch Board */}
         <FleetDispatchBoard
           slots={slots}
           focusedIndex={focusedIndex}
@@ -178,7 +178,7 @@ export function NationSelectionScreen({
           }
         />
 
-        {/* ── Right Panel: Globe ── */}
+        {/* Right Panel: Globe */}
         <GlobePanel focusedSlotId={focusedSlotId} onNationClick={handleNationClick} />
 
         {/* ── Failure Notice: surfaces a rejected campaign start (e.g. an
@@ -199,8 +199,7 @@ export function NationSelectionScreen({
         )}
       </main>
 
-      {/* ── Contextual Bottom Shelf ── */}
-      {/*<StatusBar />*/}
+      {/* Contextual Bottom Shelf */}
     </div>
   );
 }

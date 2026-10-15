@@ -75,8 +75,6 @@ import { removeProjectForCommand } from "./construction/snapshot-mutations.js";
  * authoritative mutation (behind `ProjectStore.persistConstructionSnapshot`).
  */
 
-// inspectConstructionScreen
-
 export const inspectConstructionScreenProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -105,8 +103,6 @@ export const inspectConstructionScreenProgram = withSchema(SessionIdPayloadSchem
   }),
 );
 
-// previewConstructionBatchCommand
-
 /**
  * The read-only preview for the build dialog (SB3-R30/R33): resolves the session's snapshot, the compiled
  * ship-building content and the campaign month, then asks the engine's `previewConstructionBatch` for the names, the
@@ -132,8 +128,6 @@ export const previewConstructionBatchCommandProgram = withSchema(
       return { outcome: "success" as const, value, diagnostics: [] };
     }),
 );
-
-// previewForeignConstructionCommand
 
 /**
  * The read-only preview for the foreign-order dialog (SB3-R20/R23/R34; INC-9b): resolves the session's snapshot, the
@@ -169,8 +163,6 @@ export const previewForeignConstructionCommandProgram = withSchema(
       return { outcome: "success" as const, value, diagnostics: [] };
     }),
 );
-
-// submitConstructionCommand
 
 export const submitConstructionCommandProgram = withSchema(
   ConstructionOrderPayloadSchema,
@@ -259,8 +251,6 @@ export const submitConstructionCommandProgram = withSchema(
       return commandSuccess(workspace, commandId, uiStatusFor(accepted));
     }),
 );
-
-// replaceConstructionCommand
 
 export const replaceConstructionCommandProgram = withSchema(
   ReplaceConstructionOrderPayloadSchema,
@@ -417,8 +407,6 @@ export const replaceConstructionCommandProgram = withSchema(
       return commandSuccess(workspace, newCommandId, uiStatusFor(accepted));
     }),
 );
-
-// cancelConstructionCommand
 
 export const cancelConstructionCommandProgram = withSchema(
   CancelConstructionOrderPayloadSchema,

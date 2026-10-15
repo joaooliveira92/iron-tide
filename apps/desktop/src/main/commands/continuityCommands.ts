@@ -47,8 +47,6 @@ function cancelled() {
   };
 }
 
-// loadCampaign
-
 /**
  * `loadCampaign(undefined) -> LoadCampaignResponse` (ticket 08/16). Prompts
  * for a package save directory, loads it through `ProjectStore.load` (rawHash +
@@ -142,8 +140,6 @@ export const loadCampaignProgram = payloadless(() =>
   }),
 );
 
-// listCampaigns
-
 /**
  * `listCampaigns(undefined) -> BridgeResult<SaveMetadata[]>` — the
  * campaign-list/load screen's backing query (§17.4). Prompts for the package
@@ -165,8 +161,6 @@ export const listCampaignsProgram = payloadless(() =>
     return { outcome: "success", value: [...value], diagnostics: [] };
   }),
 );
-
-// verifyCampaign
 
 /**
  * `verifyCampaign(undefined) -> VerifyCampaignResponse` (ticket 08/16).
@@ -215,8 +209,6 @@ export const verifyCampaignProgram = payloadless(() =>
     };
   }),
 );
-
-// replayCampaign
 
 /**
  * `replayCampaign(undefined) -> ReplayCampaignResponse` (ticket 08/16): full
@@ -429,8 +421,6 @@ function loadSaveForTurn(
   if (!meta) return Effect.succeed(null);
   return projects.loadById(saveDir, meta.saveId, new DiagnosticCollector());
 }
-
-// recoverCampaign
 
 /**
  * `recoverCampaign(undefined) -> RecoverCampaignResponse` (ticket 08/16):

@@ -197,8 +197,6 @@ function buildResearchEnvelope(
   };
 }
 
-// helpers
-
 /** Engine-mirror validation (lifecycle `validateSetResearchPriority`):
  * every canonical field present, each weight in {1,2,4}, highCount 1..MAX,
  * no unknown fields, no non-integer values. Returns diagnostics ([] = valid). */

@@ -316,8 +316,6 @@ function toRendererManifest(
   };
 }
 
-// commands
-
 /**
  * The player's first active war, for callers that do not name one (the
  * Simulation Battle Arena). Deterministic: filtered to wars the player is a
