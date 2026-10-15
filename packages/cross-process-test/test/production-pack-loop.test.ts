@@ -143,7 +143,6 @@ describe("production pack (content/production/1880) full loop", () => {
 
     expect(monthResult.success).toBe(true);
 
-    // Step 3: save the post-month state.
     const saveDir = resolve(
       tmpdir(),
       `bw-prod-pack-save-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -159,7 +158,6 @@ describe("production pack (content/production/1880) full loop", () => {
       };
       store.save(saveableState, saveDir);
 
-      // Step 4: load it back.
       const loadDiag = new DiagnosticCollector();
       const loaded = store.load(saveDir, loadDiag);
 

@@ -269,12 +269,10 @@ function run(): void {
   try {
     writeAllFixtureFiles(fixtureDir);
 
-    // Step 1: Compile campaign
     const { state: campaignState, contentHash: contentArtifactHash } = compileCampaign(fixtureDir);
     const snapshot = campaignState.snapshot;
     const initialSnapshotHash = campaignState.rawHash;
 
-    // Step 2: Execute a month
     const executor = new MonthExecutor();
     const cmd = makeBudgetCommand(snapshot, "uk", "con-gbr-ship-battleship2", SafeInt(100));
     const collector = new DiagnosticCollector();
@@ -286,7 +284,6 @@ function run(): void {
     const financialLedgerHash = monthResult.financialLedger.hash();
     const randomDecisionLedgerHash = monthResult.randomLedger.hash();
 
-    // Step 3: Save
     const store = new SaveStore();
     const { rawHash: _rh, ...stateForSave } = campaignState;
     const saveableState: CampaignState = {
@@ -295,14 +292,12 @@ function run(): void {
     };
     store.save(saveableState, saveDir);
 
-    // Step 4: Load
     const loadDiag = new DiagnosticCollector();
     const loaded = store.load(saveDir, loadDiag);
     if (!loaded || loadDiag.hasErrors) {
       throw new Error("Save/load failed");
     }
 
-    // Step 5: Replay
     const replayVerifier = new ReplayVerifier();
     const replayResult = replayVerifier.verify(
       snapshot,
