@@ -178,7 +178,6 @@ export function allocateDamageControl(
   floodingRecords: FloodingSourceRecord[],
   floodedWaterBp: number,
 ): AllocationResult {
-  // ---- Build task list ----
   const tasks: AllocationTask[] = [];
   const floodingSeverity = getFloodingSeverity(floodedWaterBp);
 
@@ -210,7 +209,6 @@ export function allocateDamageControl(
     });
   }
 
-  // ---- Sort tasks ----
   // Primary: priority index ascending (lower = higher priority)
   // Secondary: severity score descending (higher = more severe)
   // Tertiary: target id ascending (deterministic tiebreak)
@@ -220,7 +218,6 @@ export function allocateDamageControl(
     return a.targetId.localeCompare(b.targetId);
   });
 
-  // ---- Allocate ----
   const allocations: DamageControlAllocation[] = [];
   let remaining = {
     teamCount: resources.teamCount,

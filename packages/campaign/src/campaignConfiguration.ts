@@ -1,4 +1,4 @@
-// packages/campaign/src/campaignConfiguration.ts - DESIGN-03 §3 + §8
+// DESIGN-03 §3 + §8
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { FLEET_SIZE_IDS } from "./fleetSize.js";
 import { RESEARCH_IDS } from "./researchSpeed.js";

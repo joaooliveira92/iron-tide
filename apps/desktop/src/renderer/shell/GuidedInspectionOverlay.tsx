@@ -127,14 +127,12 @@ export function GuidedInspectionOverlay({
       aria-live="polite"
       className="fixed inset-0 z-40 pointer-events-none"
     >
-      {/* Scrim */}
       <div
         data-testid="guided-inspection-scrim"
         className="absolute inset-0 bg-black/40"
         style={{ opacity: hasRect ? 0.4 : 0.4 }}
         aria-hidden="true"
       />
-      {/* Highlight ring */}
       {hasRect && (
         <div
           data-testid="guided-inspection-highlight"

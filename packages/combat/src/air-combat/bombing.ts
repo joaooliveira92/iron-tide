@@ -14,11 +14,7 @@ import {
 } from "./constants.js";
 import { AIR_COMBAT_BOMBING_PARAMETERS_INVALID } from "./reasonCodes.js";
 
-// ---- BombingAltitude ----
-
 export type BombingAltitude = "HIGH" | "MEDIUM" | "LOW";
-
-// ---- computeTransitTimeMinutes ----
 
 /**
  * Computes the transit time in minutes for a strike formation to reach its target.
@@ -63,8 +59,6 @@ export function computeTransitTimeMinutes(distanceM: SafeInt, speedMps: SafeInt)
   // minutes = ceil(distanceM / denominator)
   return SafeInt.div(distanceM, denominator, "ceil");
 }
-
-// ---- computeBombingAccuracy ----
 
 export interface BombingAccuracyParams {
   /** Base accuracy in basis points: 10_000 for level, 22_500 for dive */
@@ -133,8 +127,6 @@ export function computeBombingAccuracy(params: BombingAccuracyParams): SafeInt {
   return SafeInt(Math.max(0, Math.min(AIR_COMBAT_BASIS_POINTS, accuracyBp)));
 }
 
-// ---- computeBombDamageMultiplier ----
-
 /**
  * Computes the bomb damage multiplier based on bombing type.
  * This is applied to the bomb's base damage for the armor penetration step.
@@ -150,8 +142,6 @@ export function computeBombDamageMultiplier(isDiveBomb: boolean): SafeInt {
   return SafeInt(AIR_COMBAT_LEVEL_BOMBING_PENETRATION_MULTIPLIER_BP);
 }
 
-// ---- computePenetrationMultiplier ----
-
 /**
  * Computes the penetration multiplier for armor interaction.
  * Dive bombing has improved penetration vs level bombing of the same bomb mass.
@@ -165,8 +155,6 @@ export function computePenetrationMultiplier(isDiveBomb: boolean): SafeInt {
   }
   return SafeInt(AIR_COMBAT_LEVEL_BOMBING_PENETRATION_MULTIPLIER_BP);
 }
-
-// ---- Private helpers ----
 
 /**
  * Gets the altitude penalty in basis points.

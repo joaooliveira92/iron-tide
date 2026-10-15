@@ -11,22 +11,16 @@ import {
   type StrikeMissionState,
 } from "./strike-state.js";
 
-// ---- FuelCheckResult ----
-
 export interface FuelCheckResult {
   sufficient: boolean;
   reasonCode: string | null;
 }
-
-// ---- RecoveryCheckResult ----
 
 export interface RecoveryCheckResult {
   available: boolean;
   reasonCode: string | null;
   lossRiskBp: SafeInt;
 }
-
-// ---- checkStrikeFuel ----
 
 /**
  * Checks whether a strike formation has sufficient fuel to continue.
@@ -52,8 +46,6 @@ export function checkStrikeFuel(state: StrikeMissionState): FuelCheckResult {
     reasonCode: null,
   };
 }
-
-// ---- computeEgressPosition ----
 
 /**
  * Computes the egress position moving toward the start position (base/carrier).
@@ -96,8 +88,6 @@ export function computeEgressPosition(state: StrikeMissionState): [number, numbe
   return [newX, newY];
 }
 
-// ---- createEgressState ----
-
 /**
  * Creates a new state transitioning the strike to egress.
  *
@@ -123,8 +113,6 @@ export function createEgressState(state: StrikeMissionState): StrikeMissionState
   updated.stateHash = computeStrikeStateHash(updated);
   return updated;
 }
-
-// ---- checkRecoveryAvailability ----
 
 /**
  * Checks whether a recovery deck (carrier or airfield) is available for landing.
@@ -171,8 +159,6 @@ export function checkRecoveryAvailability(
     lossRiskBp: SafeInt(lossRiskBp),
   };
 }
-
-// ---- computeReturnToBase ----
 
 /**
  * Moves a RETURNING aircraft toward its base (start position).

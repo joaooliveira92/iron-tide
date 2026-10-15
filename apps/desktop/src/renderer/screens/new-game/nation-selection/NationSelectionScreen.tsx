@@ -139,15 +139,12 @@ export function NationSelectionScreen({
       className="flex h-full min-h-[44rem] w-full flex-col bg-admiralty-surface font-sans text-admiralty-ink selection:bg-admiralty-accent selection:text-admiralty-accent-foreground overflow-hidden"
       aria-labelledby="nation-selection-heading"
     >
-      {/* Intelligence Telemetry Bar */}
       <TelemetryBar coordinateLabel={coordinateLabel} />
 
-      {/* Main Command Surface */}
       <main
         aria-labelledby="nation-selection-heading"
         className="relative flex min-h-0 flex-1 flex-col items-stretch bg-admiralty-surface lg:flex-row lg:overflow-hidden"
       >
-        {/* Background Admiralty Blueprint Grid */}
         <div
           className="pointer-events-none absolute inset-0 opacity-15"
           style={{
@@ -198,8 +195,6 @@ export function NationSelectionScreen({
           </div>
         )}
       </main>
-
-      {/* Contextual Bottom Shelf */}
     </div>
   );
 }

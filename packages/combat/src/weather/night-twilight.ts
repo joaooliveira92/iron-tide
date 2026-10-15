@@ -38,8 +38,6 @@ import {
   SOLAR_ELEVATION_MAX_DEG,
 } from "./constants.js";
 
-// ---- DaylightProfile ----
-
 /**
  * One entry in a canonical daylight profile. The profile MUST cover a full
  * 24-hour period (entries must start at minuteOfDay=0 and end at 1440, sorted
@@ -64,8 +62,6 @@ export interface DaylightProfile {
   daylightProfileId: string;
   entries: readonly DaylightProfileEntry[];
 }
-
-// ---- Time-of-day resolver ----
 
 export interface TimeOfDayResult {
   timeOfDay: TimeOfDayState;

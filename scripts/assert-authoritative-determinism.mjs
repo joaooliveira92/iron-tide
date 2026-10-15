@@ -316,7 +316,6 @@ export function verifyAmbientDeterminism(repoRoot, mode = "verify") {
   return findings.length;
 }
 
-// ---- embedded self-test fixtures ------------------------------------------
 const FIXTURES = [
   { name: "Date.now() fails", source: "const t = Date.now();", expect: 1 },
   { name: "new Date() with no args fails", source: "const t = new Date();", expect: 1 },

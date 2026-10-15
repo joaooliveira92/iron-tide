@@ -25,8 +25,6 @@ import {
 import { WEATHER_PROFILE_INCOMPLETE } from "./reasonCodes.js";
 import { type StrategicWeatherState, withStrategicWeatherStateHash } from "./strategic-state.js";
 
-// ---- Authored climate surface ----
-
 export interface IntegerRange {
   min: number;
   max: number;
@@ -327,8 +325,6 @@ function assertProfileComplete(input: StrategicWeatherGenerationInput, p: Climat
   // fails closed at generation time as well as at first use (M3).
   validateSeasonTransitionTables(season, p.climateProfileId, season.seasonId);
 }
-
-// ---- Generation ----
 
 export function generateStrategicWeather(
   input: StrategicWeatherGenerationInput,

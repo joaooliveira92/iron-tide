@@ -15,8 +15,6 @@ import {
 } from "./constants.js";
 import { AIR_COMBAT_INVALID_STATE } from "./reasonCodes.js";
 
-// ---- CapPatrolState ----
-
 export interface CapPatrolState {
   squadronId: string;
   stationPosition: [number, number];
@@ -27,8 +25,6 @@ export interface CapPatrolState {
   interceptEtaMinutes: SafeInt;
   rulesetVersion: string;
 }
-
-// ---- createCapPatrolState ----
 
 /**
  * Creates a CAP patrol state for a CAP-eligible squadron.
@@ -136,8 +132,6 @@ export function createCapPatrolState(
   };
 }
 
-// ---- computeDetection ----
-
 /**
  * Determines if a CAP patrol detects an incoming strike formation.
  * Uses the B-2 spotting model: detection range = capSensorValue * 1000m.
@@ -174,8 +168,6 @@ export function computeDetection(
   return "DETECTED";
 }
 
-// ---- Speed conversion ----
-
 /**
  * Converts an aircraft speed score to meters per second.
  * Formula: mps = speedScore * 2.5 + 20
@@ -197,8 +189,6 @@ export function convertSpeedToMps(speedScore: SafeInt): SafeInt {
   const mps = SafeInt.div(mpsBp, SafeInt(AIR_COMBAT_SPEED_SCORE_DENOMINATOR_BP), "floor");
   return mps;
 }
-
-// ---- computeInterceptionTime ----
 
 /**
  * Compute the time (in minutes) for a CAP patrol to intercept a strike formation,

@@ -850,7 +850,6 @@ export function lintArmamentContent(
     }
   }
 
-  // --- opening-design coverage ----------------------------------------------
   for (const usage of buildArmamentUsageManifest(input)) {
     findings.push(...usage.result.findings);
   }

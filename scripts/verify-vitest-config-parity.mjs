@@ -148,7 +148,6 @@ function readProjectConfig(root, dir) {
   return undefined;
 }
 
-// ---- embedded self-test fixtures ------------------------------------------
 // The gate proves its own boundary: an absent config and a config that dropped
 // the baseline both fail, naming the package; an inheriting config passes; and a
 // baseline missing either pinned key fails.

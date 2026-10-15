@@ -155,7 +155,6 @@ export function BloomMenu({
                     animate={{ opacity: 1 }}
                     transition={{ delay: reduce ? 0 : 0.12, duration: 0.2 }}
                   >
-                    {/* header */}
                     <div className="flex items-center justify-between border-b border-border px-4 py-3">
                       <span className="text-sm font-medium text-muted-foreground">{title}</span>
                       <button
@@ -168,7 +167,6 @@ export function BloomMenu({
                       </button>
                     </div>
 
-                    {/* grid */}
                     <motion.div
                       // Iris reveal: start as a small box at the grid center and open
                       // outward to all four corners, so the menu grows from the middle

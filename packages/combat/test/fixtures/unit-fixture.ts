@@ -1,4 +1,3 @@
-﻿//packages/combat/test/fixtures/unit-fixture.ts
 import type { CompiledDesignVersion, NationState, Ship } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 

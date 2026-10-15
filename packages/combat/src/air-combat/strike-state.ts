@@ -5,11 +5,7 @@ import { createEnvelope } from "@bluewave/deterministic";
 import { AIR_COMBAT_RULESET_VERSION } from "./constants.js";
 import { AIR_COMBAT_INVALID_STRIKE_TRANSITION } from "./reasonCodes.js";
 
-// ---- StrikeMissionPhase ----
-
 export type StrikeMissionPhase = "EN_ROUTE" | "ON_TARGET" | "ATTACKING" | "EGRESSING" | "RETURNING";
-
-// ---- StrikeMissionState ----
 
 export interface StrikeMissionState {
   missionId: string;
@@ -37,8 +33,6 @@ export const STRIKE_MISSION_TRANSITIONS: Record<StrikeMissionPhase, StrikeMissio
   EGRESSING: ["RETURNING"],
   RETURNING: [],
 };
-
-// ---- validateStrikeTransition ----
 
 /**
  * Validates that a strike mission state transition is allowed.
@@ -96,8 +90,6 @@ export function validateStrikeTransition(
   }
 }
 
-// ---- createStrikeMissionState ----
-
 /**
  * Creates a new strike mission state with initial defaults.
  *
@@ -140,8 +132,6 @@ export function createStrikeMissionState(
   return state;
 }
 
-// ---- computeStrikeStateHash ----
-
 /**
  * Computes a deterministic hash for a StrikeMissionState.
  * Excludes the stateHash field itself from the hash computation.
@@ -155,14 +145,10 @@ export function computeStrikeStateHash(state: StrikeMissionState): string {
   return envelope.bodyHash;
 }
 
-// ---- TransitionStateParams ----
-
 export interface TransitionStateParams {
   position?: [number, number];
   disruptionBp?: SafeInt;
 }
-
-// ---- transitionStrikeState ----
 
 /**
  * Transitions a strike mission state to a new phase, validating the transition.

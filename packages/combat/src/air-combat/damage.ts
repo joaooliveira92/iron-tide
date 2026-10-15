@@ -12,12 +12,9 @@ import {
 } from "./constants.js";
 import type { GunneryImpact } from "../damage/engineWiring.js";
 
-// ---- AirAttackDamagePackage ----
 // Reuses the GunneryImpact interface from damage pipeline.
 // This type alias makes the semantic intent clear.
 export type AirAttackDamagePackage = GunneryImpact;
-
-// ---- BombingAttackInput ----
 
 export interface BombingAttackInput {
   attackerSquadronId: string;
@@ -29,15 +26,11 @@ export interface BombingAttackInput {
   targetArmorZoneBp: SafeInt; // target armor effectiveness
 }
 
-// ---- BombingAttackResult ----
-
 export interface BombingAttackResult {
   hit: boolean;
   hitProbabilityBp: SafeInt;
   damagePackage: AirAttackDamagePackage | null;
 }
-
-// ---- resolveBombingAttack ----
 
 /**
  * Resolves a bombing attack against a surface target.
@@ -60,17 +53,14 @@ export function resolveBombingAttack(
   input: BombingAttackInput,
   rngEngine: RandomEngine,
 ): BombingAttackResult {
-  // ---- Hit probability ----
   const rawAccuracyBp = Number(input.accuracyBp);
   const hitProbabilityBp = SafeInt(Math.max(0, Math.min(AIR_COMBAT_BASIS_POINTS, rawAccuracyBp)));
 
-  // ---- RNG draw ----
   const stream = rngEngine.stream("air-combat/bombing-attack");
   const draw = drawUniform(stream, SafeInt.ZERO, SafeInt(AIR_COMBAT_BASIS_POINTS - 1));
 
   const isHit = Number(draw) < Number(hitProbabilityBp);
 
-  // ---- Damage package on hit ----
   let damagePackage: AirAttackDamagePackage | null = null;
 
   if (isHit) {

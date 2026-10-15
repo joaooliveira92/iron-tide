@@ -97,8 +97,6 @@ export function resolveComponentDamage(
   return results;
 }
 
-// ---- Internal helpers ----
-
 /**
  * Whether a penetration outcome is considered "full penetration" for
  * component eligibility purposes.

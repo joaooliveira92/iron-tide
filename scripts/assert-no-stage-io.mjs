@@ -130,7 +130,6 @@ export function scanStageIo(repoRoot) {
   );
 }
 
-// ---- embedded self-test fixtures ------------------------------------------
 const FIXTURES = [
   { name: "node:fs import fails", source: 'import { readFileSync } from "node:fs";', expect: 1 },
   {

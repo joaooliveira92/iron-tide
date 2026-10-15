@@ -42,8 +42,6 @@ export const ATTACK_TYPES: readonly AttackTypeId[] = [
   AttackType.SPECIAL_EXPLICIT_ATTACK,
 ];
 
-// ---- Attack-type literal ----
-
 const AttackTypeLiteral = Schema.Literals([
   "AIRCRAFT_LEVEL_BOMBING",
   "AIRCRAFT_DIVE_BOMBING",
@@ -210,8 +208,6 @@ export function validateAirDefenseAttack(value: unknown): AirDefenseAttack {
   return result.success;
 }
 
-// ---- createAirDefenseAttack ----
-
 /**
  * Only `undefined` selects a default. The pre-migration Zod `.partial()` pass
  * accepted `undefined` for an omitted field but rejected a supplied `null`;
@@ -268,8 +264,6 @@ export function createAirDefenseAttack(params: Partial<AirDefenseAttack>): AirDe
   // Validate the merged result with the strict schema.
   return validateAirDefenseAttack(merged);
 }
-
-// ---- isValidAttackType ----
 
 export function isValidAttackType(attackType: string): attackType is AttackTypeId {
   return ATTACK_TYPES.includes(attackType as AttackTypeId);

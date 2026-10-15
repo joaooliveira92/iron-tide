@@ -167,7 +167,6 @@ export function scanLibraryConsole(repoRoot, _allowlist = ALLOWLIST) {
     .filter((finding) => allowReason(finding.file) === undefined);
 }
 
-// ---- embedded self-test fixtures ------------------------------------------
 const FIXTURES = [
   { name: "console.error fails", source: "console.error(x);", expect: 1 },
   { name: "console.log fails", source: "console.log(x);", expect: 1 },

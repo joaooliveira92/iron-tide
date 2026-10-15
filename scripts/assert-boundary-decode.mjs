@@ -295,7 +295,6 @@ export function scanBoundaryDecodeCasts(repoRoot, roots, allowlist = ALLOWLIST, 
   return kept;
 }
 
-// ---- embedded self-test fixtures ------------------------------------------
 const FIXTURES = [
   { name: "boundary cast fails", source: "const x = JSON.parse(s) as Foo;", expect: 1 },
   {

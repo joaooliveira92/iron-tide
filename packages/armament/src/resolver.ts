@@ -239,13 +239,11 @@ export function resolveArmament(
   const mEntity = mountEntity(mount);
   const aEntity = ammunitionEntity(ammunition);
 
-  // --- canonical ids ---------------------------------------------------------
   checkId(findings, gmEntity, "id", String(gunModel.id));
   checkId(findings, gmEntity, "familyId", String(gunModel.familyId));
   checkId(findings, mEntity, "id", String(mount.id));
   checkId(findings, aEntity, "id", String(ammunition.id));
 
-  // --- month -----------------------------------------------------------------
   const monthValid = MONTH_RE.test(technologyContext.month);
   if (!monthValid) {
     findings.push(
@@ -261,7 +259,6 @@ export function resolveArmament(
   }
   const monthIdx = monthValid ? monthIndex(technologyContext.month) : null;
 
-  // --- mount type ------------------------------------------------------------
   if (!(ARMAMENT_MOUNT_TYPES as readonly string[]).includes(mount.mountType)) {
     findings.push(
       finding(
@@ -307,7 +304,6 @@ export function resolveArmament(
     );
   }
 
-  // --- ammunition compatibility ---------------------------------------------
   if (
     ammunition.compatibleGunFamilies !== undefined &&
     !ammunition.compatibleGunFamilies.includes(gunModel.familyId)
@@ -350,7 +346,6 @@ export function resolveArmament(
     monthIdx,
   );
 
-  // --- required technology ---------------------------------------------------
   const requiredTechs = [
     ...(gunModel.requiredTechnologyIds ?? []),
     ...(mount.requiredTechnologyIds ?? []),
@@ -370,7 +365,6 @@ export function resolveArmament(
     }
   }
 
-  // --- national component access --------------------------------------------
   const status = accessStatusOf(accessContext, gunModel.familyId);
   const effectiveStatus: ArmamentAccessStatus = status === undefined ? "DOMESTIC" : status;
   if (!(ARMAMENT_ACCESS_STATUSES as readonly string[]).includes(effectiveStatus)) {
@@ -408,7 +402,6 @@ export function resolveArmament(
     );
   }
 
-  // --- numeric ranges --------------------------------------------------------
   checkRange(findings, gmEntity, "caliberUm", gunModel.caliberUm, 1, Number.MAX_SAFE_INTEGER);
   checkRange(findings, gmEntity, "gunMassKg", gunModel.gunMassKg, 0, Number.MAX_SAFE_INTEGER);
   checkRange(findings, gmEntity, "shellMassG", gunModel.shellMassG, 0, Number.MAX_SAFE_INTEGER);
@@ -475,7 +468,6 @@ export function resolveArmament(
     1_000_000,
   );
 
-  // --- provenance advisories -------------------------------------------------
   for (const f of [
     placeholderFinding(gmEntity, "gunModel.provenance", gunModel.provenance),
     placeholderFinding(mEntity, "mount.provenance", mount.provenance),
@@ -489,7 +481,6 @@ export function resolveArmament(
     return { ok: false, resolved: null, findings: sorted };
   }
 
-  // --- compose the resolved armament ----------------------------------------
   const { appliedModifiers, resolvedRateOfFireModifierBp } = composeModifiers(mount, ammunition);
 
   const shellMassG = ammunition.shellMassG ?? gunModel.shellMassG;

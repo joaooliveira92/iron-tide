@@ -46,8 +46,6 @@ export interface WeatherTransitionRecord {
   reason: string;
 }
 
-// ---- Internal helpers ----
-
 function drawWeightedIndex(stream: RandomStream, weights: number[]): number {
   if (weights.length === 0) return -1;
   let total = 0;
@@ -150,8 +148,6 @@ function applyWindTransition(
     bandIndex: idx,
   };
 }
-
-// ---- Progression ----
 
 export interface ProgressWeatherInput {
   components: BattleWeatherComponents;

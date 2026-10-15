@@ -170,7 +170,6 @@ export function checkLockfile(text) {
   return { ok: findings.length === 0, findings, resolutions };
 }
 
-// ---- embedded self-test fixtures ------------------------------------------
 // Each fixture is a minimal lockfile snippet with the outcome the checker must
 // reproduce. `effect@4.0.2` in `packages:` must fail; two link targets must fail.
 const FIXTURES = [

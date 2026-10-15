@@ -46,7 +46,6 @@ export function FleetNationCard({
         ${active ? "shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-admiralty-accent)_20%,transparent)]" : ""}
       `}
     >
-      {/* Full-card naval cover */}
       {showImage ? (
         <img
           src={shipAsset.url}

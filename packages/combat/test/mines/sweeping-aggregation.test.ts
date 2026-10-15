@@ -33,8 +33,6 @@ import {
   withAreaMinePressureRecordHash,
 } from "../../src/mines/index.js";
 
-// ---- helpers ----
-
 function eligibleShip(overrides: Partial<MinesweepingShip> = {}): MinesweepingShip {
   return {
     shipId: "hms-victoria-001",

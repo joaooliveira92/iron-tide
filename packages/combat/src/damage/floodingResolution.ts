@@ -16,8 +16,6 @@ import {
   DEWATERING_RATE_KG_MIN,
 } from "./floodingConstants.js";
 
-// ---- Severity enum ----
-
 export type FloodingSeverity = "MINOR" | "SERIOUS" | "MAJOR" | "CRITICAL";
 
 // ---- kg -> bp-of-displacement conversion (DESIGN-41 §14/§48 v12; ADR-0047 d4) ----

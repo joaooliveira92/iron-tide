@@ -460,8 +460,6 @@ export function orchestrateDamagePipeline(
   };
 }
 
-// ---- Internal helpers ----
-
 /**
  * Build component state array from a list of component ids.
  */
