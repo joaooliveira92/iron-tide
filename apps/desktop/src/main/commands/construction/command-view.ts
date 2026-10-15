@@ -1,6 +1,8 @@
 import type { CommandRecord } from "@bluewave/commands";
 import {
   buildConstructionDesignCatalog,
+  designFamilyYear,
+  isDesignBuildableByYear,
   projectedConstructionOrderCosts,
   type CompiledDesignVersion,
   type ConstructionCommand,
@@ -25,16 +27,26 @@ export function resolveUiDesign(
   record: CampaignSessionRecord,
   designId: string,
 ): CompiledDesignVersion {
-  const catalog = buildConstructionDesignCatalog(record.state.snapshot, record.playerSlotId);
+  const catalog = buildConstructionDesignCatalog(
+    record.state.snapshot,
+    record.playerSlotId,
+    record.month.year,
+  );
   const found = catalog.find((candidate) => candidate.designId === designId);
   if (found) return found;
   const engine = record.state.snapshot.designs.get(designId);
+  const family =
+    engine !== undefined && engine.designFamilyId !== ""
+      ? record.state.snapshot.designFamilies.get(engine.designFamilyId)
+      : undefined;
+  const year = designFamilyYear(family?.familyCreationMonth);
   return {
     designId,
     className: engine?.className ?? designId,
     shipType: "unknown",
     nationId: record.playerSlotId,
-    year: 0,
+    year,
+    available: isDesignBuildableByYear(year, record.month.year),
     mass: 0,
     speed: 0,
     machineryType: engine?.machineryType ?? "",

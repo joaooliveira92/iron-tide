@@ -15,6 +15,7 @@ function design(designId: string, className: string): CompiledDesignVersion {
     shipType: "Battleship",
     nationId: "uk",
     year: 1880,
+    available: true,
     mass: 11_880,
     speed: 8,
     machineryType: "reciprocating_compound",

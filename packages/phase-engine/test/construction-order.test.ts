@@ -213,6 +213,42 @@ describe("placeConstructionOrder is the only way a new-ship project enters a sna
     expect(r).toMatchObject({ ok: false, reason: "DESIGN_REVALIDATION_UNAVAILABLE" });
   });
 
+  it("refuses a design whose era is after the campaign year, and admits it once the era is reached", () => {
+    const future = {
+      ...base.designs.get("des_dd_3")!,
+      designVersionId: "des_future",
+      designFamilyId: "fam_future",
+    };
+    const snapshot = {
+      ...base,
+      designs: new Map(base.designs).set("des_future", future),
+      designFamilies: new Map(base.designFamilies).set("fam_future", {
+        designFamilyId: "fam_future",
+        nationId: ATTACKER_NATION,
+        rootDesignVersionId: "des_future",
+        memberDesignVersionIds: ["des_future"],
+        familyCreationMonth: "1906-02",
+      }),
+    } as CampaignSnapshot;
+    // A 1906 design cannot be laid down in an 1880 month.
+    expect(order(snapshot, "des_future")).toMatchObject({
+      ok: false,
+      reason: "DESIGN_NOT_YET_AVAILABLE",
+    });
+    // The same design is orderable once the campaign reaches its service year.
+    const atEra = placeConstructionOrder(
+      snapshot,
+      {
+        nationId: ATTACKER_NATION,
+        commandId: "cmd-era",
+        designVersionId: "des_future",
+        month: { year: 1906, month: 2 },
+      },
+      content,
+    );
+    expect(atEra.ok).toBe(true);
+  });
+
   it("limits AMC orders to 20 % of operational cruisers, minimum two, counting queued AMC", () => {
     const amc = base.designs.get("des_amc_5")!;
     expect(amc.hullType).toBe("armed_merchant_cruiser");

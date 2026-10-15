@@ -1,5 +1,6 @@
 import { Check, Plane } from "lucide-react";
 import type { CompiledDesignVersion } from "@bluewave/campaign-engine";
+import { cn } from "../../../lib/utils.js";
 import { Badge } from "../../../components/ui/badge.js";
 import { CardContent } from "../../../components/ui/card.js";
 import { RadioGroupItem } from "../../../components/ui/radio-group.js";
@@ -18,7 +19,11 @@ export interface DesignCardProps {
 export function DesignCard({ design }: DesignCardProps) {
   const Icon = shipTypeIcon(design.shipType);
   return (
-    <RadioGroupItem value={design.designId} className="group relative overflow-hidden">
+    <RadioGroupItem
+      value={design.designId}
+      disabled={!design.available}
+      className={cn("group relative overflow-hidden", !design.available && "opacity-60")}
+    >
       <div
         className="pointer-events-none absolute right-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground opacity-0 transition-opacity group-data-checked:opacity-100"
         aria-hidden="true"
@@ -38,6 +43,11 @@ export function DesignCard({ design }: DesignCardProps) {
           </div>
         </div>
         <div className="flex flex-wrap gap-1">
+          {!design.available && (
+            <Badge variant="secondary" className="text-xs">
+              Not yet available
+            </Badge>
+          )}
           <Badge variant="outline" className="font-mono text-xs font-normal">
             {design.year}
           </Badge>

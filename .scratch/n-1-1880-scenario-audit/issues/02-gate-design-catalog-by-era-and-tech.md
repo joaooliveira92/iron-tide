@@ -11,11 +11,17 @@ accepting an anachronism.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] A design whose `familyCreationMonth` year is after the campaign year is not
+- [x] A design whose `familyCreationMonth` year is after the campaign year is not
       offered as buildable (or is clearly marked unavailable) at 1880.
-- [ ] Starting construction of an unavailable design fails with a stable reason code.
-- [ ] A deterministic test drives the compiled 1880 snapshot and asserts no
+- [x] Starting construction of an unavailable design fails with a stable reason code.
+- [x] A deterministic test drives the compiled 1880 snapshot and asserts no
       post-1880 design is buildable.
+
+Done by gating the catalog (`available`) and the order policy (reason code
+`DESIGN_NOT_YET_AVAILABLE`) on one shared rule, `isDesignBuildableByYear`
+(family year ≤ campaign year; no family year is never gated). The catalog still
+lists later-era designs for information; the picker disables and marks them
+"Not yet available".
 

@@ -228,6 +228,11 @@ describe("construction commands", () => {
     expect(inflexible).toBeDefined();
     expect(inflexible!.className).toBe("Inflexible");
     expect(inflexible!.year).toBe(1880); // familyCreatedMonth 1880-01
+    expect(inflexible!.available).toBe(true); // the 1880 campaign has reached its era
+    // Later-era designs are still listed for information, but not buildable in 1880.
+    const notBuildable = projection.designs.filter((d) => !d.available);
+    expect(notBuildable.length).toBeGreaterThan(0);
+    expect(notBuildable.every((d) => d.year > 1880)).toBe(true);
     expect(inflexible!.mass).toBe(11_880);
     expect(inflexible!.speed).toBe(8); // ADR-0037: compiled µm/s -> knots (8 kt)
     expect(inflexible!.machineryType).toBe("reciprocating_compound");
@@ -674,15 +679,15 @@ describe("construction commands", () => {
   it("F2: replace is failure-atomic — an unaffordable replacement is rejected and the original order survives intact", async () => {
     const saveDir = resolve(saveRoot, "save-atomic");
     registerProductionSession("session-atomic", saveDir);
-    // Treasury 150 covers the Inflexible's ~119 order but not the
-    // dreadnought's ~184 replacement. The dock is widened so the replacement is
-    // refused for funds, not dock size (the 1906 dreadnought exceeds the 1880 dock).
+    // Treasury 100 covers the Devastation's ~93 order but not the Inflexible's
+    // ~117 replacement. Both are 1880-legal, so the replacement is refused for
+    // funds — not for era or dock size (the 1880 campaign has reached both designs' era).
     const record = getCampaignSession("session-atomic")!;
     const snapshot = record.state.snapshot;
     const uk = snapshot.nations.get("uk")!;
     const poorNation = {
       ...uk,
-      treasury: SafeInt(150),
+      treasury: SafeInt(100),
       dock: {
         maximumNewConstructionMassKg: 20_000_000,
         maximumMajorRepairMassKg: 20_000_000,
@@ -706,7 +711,7 @@ describe("construction commands", () => {
 
     const submitted = await submitConstructionCommand({
       sessionId: "session-atomic",
-      designId: "des_gbr_inflexible",
+      designId: "des_gbr_devastation",
       expectedRevision: 0,
       transportRequestId: "req-atomic-1",
     });
@@ -722,7 +727,7 @@ describe("construction commands", () => {
     const rejected = await replaceConstructionCommand({
       sessionId: "session-atomic",
       commandId: originalCommandId,
-      designId: "des_pw_uk_dreadnought",
+      designId: "des_gbr_inflexible",
       expectedRevision: 0,
       transportRequestId: "req-atomic-replace",
     });
