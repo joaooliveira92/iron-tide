@@ -32,7 +32,7 @@ If two applicable instructions conflict, stop and create a decision request. Nev
 ## Recommended use
 
 1. Give the agent `.ai/AUTONOMOUS-AGENT.md` as its standing operating prompt.
-2. For a greenfield repository, run `.ai/BOOTSTRAP-PROMPT.md` with `.ai/briefs/B0-BOOTSTRAP.md`.
+2. For a greenfield repository, run `.ai/BOOTSTRAP-PROMPT.md`.
 3. For subsequent work, combine `.ai/IMPLEMENTATION-PROMPT.md` with one approved milestone brief.
 4. Before acceptance, run `.ai/REVIEW-PROMPT.md` in a fresh review context.
 5. Use `.ai/RELEASE-PROMPT.md` at release or compatibility gates.
@@ -49,7 +49,7 @@ orchestrator + subagent workflow described in `AGENTS.md` and
 - B9: done — Electron shell, packaged smoke test.
 - B10a–d: done — economy & construction, research & ship design, diplomacy & war,
   AI & scenario readiness.
-- M1 `M1_STRATEGIC_CAMPAIGN_KERNEL`: ACCEPTED (`.ai/reports/a5-m1-acceptance-gate.md`).
+- M1 `M1_STRATEGIC_CAMPAIGN_KERNEL`: ACCEPTED.
 - CONTENT track: CONTENT-0..3 done (production pack `content/production/1880/`, PRE_WAR
   and INTERWAR tech/design slices).
 - M2 Track B: B-1..B-5 done (tactical scaffolding, movement/spotting, gunnery, armor &
