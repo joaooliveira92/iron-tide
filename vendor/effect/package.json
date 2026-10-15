@@ -1,0 +1,51 @@
+{
+  "name": "effect",
+  "version": "4.0.2",
+  "type": "module",
+  "license": "MIT",
+  "description": "The missing standard library for TypeScript, for writing production-grade software.",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": "./dist/index.js",
+    "./testing": "./dist/testing/index.js",
+    "./ai": "./dist/ai/index.js",
+    "./cli": "./dist/cli/index.js",
+    "./cluster": "./dist/cluster/index.js",
+    "./devtools": "./dist/devtools/index.js",
+    "./encoding": "./dist/encoding/index.js",
+    "./eventlog": "./dist/eventlog/index.js",
+    "./http": "./dist/http/index.js",
+    "./http-api": "./dist/http-api/index.js",
+    "./net": "./dist/net/index.js",
+    "./observability": "./dist/observability/index.js",
+    "./persistence": "./dist/persistence/index.js",
+    "./process": "./dist/process/index.js",
+    "./reactivity": "./dist/reactivity/index.js",
+    "./rpc": "./dist/rpc/index.js",
+    "./schema": "./dist/schema/index.js",
+    "./socket": "./dist/socket/index.js",
+    "./sql": "./dist/sql/index.js",
+    "./workflow": "./dist/workflow/index.js",
+    "./workers": "./dist/workers/index.js",
+    "./*": "./dist/*.js",
+    "./internal/*": null,
+    "./cli/internal/*": null,
+    "./cluster/internal/*": null,
+    "./index": null,
+    "./*/index": null
+  },
+  "files": [
+    "src/**/*.ts",
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "ai-docs/**/*"
+  ],
+  "sideEffects": [
+    "./src/schema/SchemaJITCompiler/enable.ts",
+    "./dist/schema/SchemaJITCompiler/enable.js"
+  ]
+}

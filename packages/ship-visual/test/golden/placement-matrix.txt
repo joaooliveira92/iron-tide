@@ -1,0 +1,79 @@
+x-dreadnought-large-turret LARGE: guns 2 facing BOW (250,100)x4
+x-dreadnought-medium-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+x-dreadnought-small-turret SMALL: guns 2 facing BOW (250,100)x1.3333333333333333
+x-dreadnought-large-barbette LARGE: guns 2 facing BOW (250,100)x4
+x-dreadnought-medium-barbette MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+x-dreadnought-small-barbette SMALL: guns 2 facing BOW (250,100)x1.3333333333333333
+x-dreadnought-large-shielded LARGE: guns 1 facing BOW (238.5,100)x4 (261.5,100)x4
+x-dreadnought-medium-shielded MEDIUM: guns 1 facing BOW (243.25333333333333,100)x2.6666666666666665 (256.74666666666667,100)x2.6666666666666665
+x-dreadnought-small-shielded SMALL: guns 1 facing BOW (246.93333333333334,100)x1.3333333333333333 (253.06666666666666,100)x1.3333333333333333
+x-dreadnought-large-open LARGE: guns 1 facing BOW (242.64,100)x4 (257.36,100)x4
+x-dreadnought-medium-open MEDIUM: guns 1 facing BOW (245.4,100)x2.6666666666666665 (254.6,100)x2.6666666666666665
+x-dreadnought-small-open SMALL: guns 1 facing BOW (247.7,100)x1.4285714285714286 (252.3,100)x1.4285714285714286
+x-dreadnought-large-casemate LARGE: guns 1 facing BOW (238.04,100)x4 (261.96,100)x4
+x-dreadnought-medium-casemate MEDIUM: guns 1 facing BOW (242.64,100)x2.6666666666666665 (257.36,100)x2.6666666666666665
+x-dreadnought-small-casemate SMALL: guns 1 facing BOW (246.62666666666667,100)x1.3333333333333333 (253.37333333333333,100)x1.3333333333333333
+x-victorian-turret LARGE: guns 2 facing BOW (250,100)x4
+x-victorian-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+x-victorian-turret SMALL: guns 2 facing BOW (250,100)x1.3333333333333333
+x-victorian-barbette LARGE: guns 2 facing BOW (250,100)x4
+x-victorian-barbette MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+x-victorian-barbette SMALL: guns 2 facing BOW (250,100)x1.3333333333333333
+x-victorian-shielded LARGE: guns 1 facing BOW (242.64,100)x4 (257.36,100)x4
+x-victorian-shielded MEDIUM: guns 1 facing BOW (245.09333333333333,100)x2.6666666666666665 (254.90666666666667,100)x2.6666666666666665
+x-victorian-shielded SMALL: guns 1 facing BOW (247.54666666666668,100)x1.3333333333333333 (252.45333333333332,100)x1.3333333333333333
+x-victorian-open LARGE: guns 1 facing BOW (244.02,100)x4 (255.98,100)x4
+x-victorian-open MEDIUM: guns 1 facing BOW (246.01333333333332,100)x2.6666666666666665 (253.98666666666668,100)x2.6666666666666665
+x-victorian-open SMALL: guns 1 facing BOW (247.7,100)x1.5384615384615383 (252.3,100)x1.5384615384615383
+x-victorian-casemate LARGE: guns 1 facing BOW (241.72,100)x4 (258.28,100)x4
+x-victorian-casemate MEDIUM: guns 1 facing BOW (244.48,100)x2.6666666666666665 (255.52,100)x2.6666666666666665
+x-victorian-casemate SMALL: guns 1 facing BOW (247.24,100)x1.3333333333333333 (252.76,100)x1.3333333333333333
+x-pre-dreadnought-turret LARGE: guns 2 facing BOW (250,100)x4
+x-pre-dreadnought-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+x-pre-dreadnought-turret SMALL: guns 2 facing BOW (250,100)x1.3333333333333333
+x-pre-dreadnought-barbette LARGE: guns 2 facing BOW (250,100)x4
+x-pre-dreadnought-barbette MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+x-pre-dreadnought-barbette SMALL: guns 2 facing BOW (250,100)x1.3333333333333333
+x-pre-dreadnought-shielded LARGE: guns 1 facing BOW (240.34,100)x4 (259.66,100)x4
+x-pre-dreadnought-shielded MEDIUM: guns 1 facing BOW (243.56,100)x2.6666666666666665 (256.44,100)x2.6666666666666665
+x-pre-dreadnought-shielded SMALL: guns 1 facing BOW (246.78,100)x1.3333333333333333 (253.22,100)x1.3333333333333333
+x-pre-dreadnought-open LARGE: guns 1 facing BOW (243.56,100)x4 (256.44,100)x4
+x-pre-dreadnought-open MEDIUM: guns 1 facing BOW (245.70666666666668,100)x2.6666666666666665 (254.29333333333332,100)x2.6666666666666665
+x-pre-dreadnought-open SMALL: guns 1 facing BOW (247.7,100)x1.4285714285714286 (252.3,100)x1.4285714285714286
+x-pre-dreadnought-casemate LARGE: guns 1 facing BOW (239.88,100)x4 (260.12,100)x4
+x-pre-dreadnought-casemate MEDIUM: guns 1 facing BOW (243.25333333333333,100)x2.6666666666666665 (256.74666666666667,100)x2.6666666666666665
+x-pre-dreadnought-casemate SMALL: guns 1 facing BOW (246.62666666666667,100)x1.3333333333333333 (253.37333333333333,100)x1.3333333333333333
+b-victorian-barbette LARGE: guns 2 facing BOW (250,100)x4
+b-victorian-barbette MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+b-pre-dreadnought-turret LARGE: guns 2 facing BOW (250,100)x4
+b-pre-dreadnought-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+g-victorian-barbette LARGE: guns 2 facing BOW (250,100)x4
+g-victorian-barbette MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+g-pre-dreadnought-turret LARGE: guns 2 facing BOW (250,100)x4
+g-pre-dreadnought-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+q-victorian-barbette LARGE: guns 2 facing BOW (250,100)x4
+q-victorian-barbette MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+q-pre-dreadnought-turret LARGE: guns 2 facing BOW (250,100)x4
+q-pre-dreadnought-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+f-victorian-turret LARGE: guns 2 facing BOW (250,100)x4
+f-victorian-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+f-victorian-barbette LARGE: guns 2 facing BOW (250,100)x4
+f-victorian-barbette MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+f-pre-dreadnought-turret LARGE: guns 2 facing BOW (250,100)x4
+f-pre-dreadnought-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+r-victorian-turret LARGE: guns 2 facing BOW (250,100)x4
+r-victorian-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+r-pre-dreadnought-turret LARGE: guns 2 facing BOW (250,100)x4
+r-pre-dreadnought-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+s-victorian-turret LARGE: guns 2 facing BOW (250,100)x4
+s-victorian-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+s-pre-dreadnought-turret LARGE: guns 2 facing BOW (250,100)x4
+s-pre-dreadnought-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+u-pre-dreadnought-turret LARGE: guns 2 facing BOW (250,100)x4
+u-pre-dreadnought-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+j-pre-dreadnought-turret LARGE: guns 2 facing BOW (250,100)x4
+j-pre-dreadnought-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+a-pre-dreadnought-turret LARGE: guns 2 facing BOW (250,100)x4
+a-pre-dreadnought-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665
+i-pre-dreadnought-turret LARGE: guns 2 facing BOW (250,100)x4
+i-pre-dreadnought-turret MEDIUM: guns 2 facing BOW (250,100)x2.6666666666666665

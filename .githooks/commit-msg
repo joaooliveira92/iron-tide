@@ -1,0 +1,12 @@
+#!/bin/sh
+# Resolve node when git runs this hook from a GUI or non-login shell whose PATH
+# lacks it (nvm is wired in .zshrc). Read the login shell's PATH via a `PATH=`
+# marker so any shell-startup noise cannot corrupt it.
+if ! command -v node >/dev/null 2>&1; then
+  login_path=$("${SHELL:-/bin/sh}" -lc 'printf "PATH=%s" "$PATH"' 2>/dev/null)
+  case "$login_path" in
+    *PATH=*) PATH="${login_path##*PATH=}:$PATH"; export PATH;;
+  esac
+fi
+# Validate the Conventional-Commit subject (ADR-0099/0107).
+exec node scripts/check-commit-msgs.cjs --message-file "$1"

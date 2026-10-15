@@ -1,0 +1,114 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    env:
+      CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+      CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.18.0"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      # Fail fast with a precise message: an empty CSC_LINK makes electron-builder
+      # try to import a certificate from an empty path ("not a file") — a cryptic
+      # failure, not an unsigned build. See docs/delivery/desktop-signing.md.
+      - name: Require macOS signing credentials
+        run: |
+          missing=""
+          for v in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID; do
+            if [ -z "${!v:-}" ]; then missing="$missing $v"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing signing secrets:$missing. A signed macOS release cannot be built. See docs/delivery/desktop-signing.md."
+            exit 1
+          fi
+      - run: pnpm build
+      - run: pnpm --filter @bluewave/desktop run pack:mac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-artifacts
+          path: apps/desktop/dist-electron/*.{dmg,zip}
+
+  win:
+    runs-on: windows-latest
+    env:
+      CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+      CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.18.0"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      # Fail fast with a precise message rather than an electron-builder error.
+      - name: Require Windows signing credentials
+        shell: pwsh
+        run: |
+          $missing = @()
+          foreach ($v in 'CSC_LINK','CSC_KEY_PASSWORD') {
+            if (-not [Environment]::GetEnvironmentVariable($v)) { $missing += $v }
+          }
+          if ($missing.Count -gt 0) {
+            Write-Error "Missing signing secrets: $($missing -join ', '). A signed Windows release cannot be built. See docs/delivery/desktop-signing.md."
+            exit 1
+          }
+      - run: pnpm build
+      - run: pnpm --filter @bluewave/desktop run pack:win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: win-artifacts
+          path: apps/desktop/dist-electron/*.exe
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.18.0"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm --filter @bluewave/desktop run pack:linux
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: apps/desktop/dist-electron/*.AppImage
+
+  draft-release:
+    needs: [mac, win, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: artifacts/*

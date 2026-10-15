@@ -1,0 +1,21 @@
+<!doctype html>
+<!--
+  PROTOTYPE — throwaway. See ./README.md.
+
+  A standalone entry so the map can be opened in a plain browser without
+  starting a campaign first. The prototype touches no IPC and no engine state,
+  so the whole shell is unnecessary ceremony between the reviewer and the
+  question. Served by the existing dev server at
+  http://localhost:<port>/screens/map-prototype/
+-->
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bluewave — map prototype (throwaway)</title>
+  </head>
+  <body class="bg-background text-foreground">
+    <div id="root"></div>
+    <script type="module" src="./standalone.tsx"></script>
+  </body>
+</html>

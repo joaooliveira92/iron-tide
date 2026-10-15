@@ -1,0 +1,345 @@
+import { describe, it, expect } from "vite-plus/test";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { SafeInt } from "@bluewave/contracts";
+import { buildContentBundleArtifact, buildFullSurfaceInput } from "@bluewave/content-compiler";
+import { DiagnosticCollector } from "@bluewave/diagnostics";
+import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { CampaignCompiler } from "@bluewave/campaign/compiler";
+import type { CampaignState, CampaignSnapshot, NationState } from "@bluewave/campaign";
+import type { CommandEnvelope, BudgetProjectCommand } from "@bluewave/commands";
+import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
+import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
+import { mkdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+
+// Ticket 05 (.scratch/desktop-mvp/issues/05-verify-full-loop-against-production-pack.md):
+// no existing test compiled content/production/1880 and then advanced a
+// strategic month / saved / loaded it -- packages/cross-process-test/src/run-child.ts
+// exercises exactly that loop (compile -> MonthExecutor -> SaveStore ->
+// replay) but only against a synthetic inline 2-nation fixture. This test
+// runs the same loop directly against the canonical production pack.
+
+// Mirrors ReplayVerifier's internal `snapshotToHashable`/`hashSnapshot`
+// (packages/phase-engine/src/replay.ts, not exported) and run-child.ts's own
+// copy of the same shape: ReplayVerifier.verify() compares its replayed
+// snapshot hash against this exact subset-hash, not a full canonicalSerialize
+// of the raw snapshot.
+function snapshotToHashable(snapshot: CampaignSnapshot): unknown {
+  const nations: Record<string, NationState> = {};
+  for (const [id, nation] of snapshot.nations) {
+    nations[id] = nation;
+  }
+  return {
+    version: snapshot.version,
+    turnNumber: snapshot.turnNumber,
+    campaignId: snapshot.campaignId,
+    // B-6/ADR-0025: start date + current-month per-area weather are part of the
+    // authoritative snapshot surface (hash parity with ReplayVerifier).
+    startYear: snapshot.startYear,
+    startMonth: snapshot.startMonth,
+    strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),
+    slots: snapshot.slots.map((s) => ({ ...s })),
+    world: {
+      areas: snapshot.world.areas.map((a) => ({ ...a })),
+      routes: snapshot.world.routes.map((r) => ({ ...r })),
+      ports: snapshot.world.ports.map((p) => ({ ...p })),
+    },
+    nations,
+    wars: {
+      wars: snapshot.wars.wars.map((w) => ({ ...w })),
+      battles: snapshot.wars.battles.map((b) => ({ ...b })),
+      participantMemberships: snapshot.wars.participantMemberships.map((m) => ({ ...m })),
+      blockadeState: snapshot.wars.blockadeState.map((b) => ({ ...b })),
+      battleManifests: (snapshot.wars.battleManifests ?? []).map((m) => ({ ...m })),
+    },
+    politics: {
+      relations: snapshot.politics.relations.map((r) => ({ ...r })),
+      shells: { ...snapshot.politics.shells },
+    },
+    intelligence: {
+      shells: { ...snapshot.intelligence.shells },
+    },
+    rulesetVersion: snapshot.rulesetVersion,
+    compatibilityVersion: snapshot.compatibilityVersion,
+  };
+}
+
+function hashSnapshot(snapshot: CampaignSnapshot): string {
+  return sha256Hex(canonicalSerialize(snapshotToHashable(snapshot)));
+}
+
+const thisDir = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = resolve(thisDir, "..", "..", "..");
+const PRODUCTION_PACK = resolve(REPO_ROOT, "content", "production", "1880");
+
+function compileProductionPack(): { state: CampaignState; contentHash: string } {
+  const collector = new DiagnosticCollector();
+  const signal = new AbortController().signal;
+  const input = buildFullSurfaceInput(
+    resolve(PRODUCTION_PACK, "pack.json"),
+    PRODUCTION_PACK,
+    collector,
+  );
+  const artifact = input ? buildContentBundleArtifact(input, signal, collector) : undefined;
+  if (!artifact || collector.hasErrors) {
+    throw new Error(
+      `Production pack compilation failed: ${collector.all.map((d) => d.message).join("; ")}`,
+    );
+  }
+
+  const output = new CampaignCompiler().compile(
+    {
+      contentBundle: artifact.bundle,
+      contentHash: artifact.envelope.bodyHash,
+      rulesetVersion: "1.0",
+      compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
+    },
+    signal,
+    collector,
+  );
+
+  if (!output || collector.hasErrors) {
+    throw new Error(
+      `Production pack compilation failed: ${collector.all.map((d) => d.message).join("; ")}`,
+    );
+  }
+  return { state: output.state, contentHash: output.contentHash };
+}
+
+function makeBudgetCommand(
+  snapshotHash: string,
+  nationId: string,
+  projectId: string,
+  budget: SafeInt,
+): CommandEnvelope<BudgetProjectCommand> {
+  return {
+    commandId: `cmd-${projectId}-${String(budget)}`,
+    version: "0.1.0",
+    expectedSnapshotHash: snapshotHash,
+    idempotencyKey: `ik-${projectId}-${String(budget)}`,
+    timestamp: "production-pack-loop-test",
+    body: { type: "budget_project", nationId, projectId, budget },
+  };
+}
+
+describe("production pack (content/production/1880) full loop", () => {
+  it("compiles, advances a strategic month, saves, loads, and replays deterministically", () => {
+    // Step 1: compile the canonical production pack (not a synthetic fixture).
+    const { state: campaignState, contentHash: contentArtifactHash } = compileProductionPack();
+    const snapshot = campaignState.snapshot;
+
+    expect(contentArtifactHash).toBeDefined();
+    expect(snapshot.nations.size).toBe(14);
+
+    // Step 2: advance one strategic month, issuing a real command against a
+    // real in-progress construction project authored in the pack
+    // (con_gbr_inflexible, nationId uk; content/production/1880/constructions.yaml).
+    const executor = new MonthExecutor();
+    const snapshotHash = sha256Hex(canonicalSerialize(snapshot));
+    const cmd = makeBudgetCommand(snapshotHash, "uk", "con_gbr_inflexible", SafeInt(50));
+    const collector = new DiagnosticCollector();
+    const monthResult = executor.execute(snapshot, [cmd], "production-pack-loop-seed", collector);
+
+    expect(monthResult.success).toBe(true);
+
+    // Step 3: save the post-month state.
+    const saveDir = resolve(
+      tmpdir(),
+      `bw-prod-pack-save-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    mkdirSync(saveDir, { recursive: true });
+
+    try {
+      const store = new SaveStore();
+      const { rawHash: _rh, ...stateForSave } = campaignState;
+      const saveableState: CampaignState = {
+        ...campaignState,
+        rawHash: sha256Hex(canonicalSerialize(stateForSave)),
+      };
+      store.save(saveableState, saveDir);
+
+      // Step 4: load it back.
+      const loadDiag = new DiagnosticCollector();
+      const loaded = store.load(saveDir, loadDiag);
+
+      expect(loadDiag.hasErrors).toBe(false);
+      expect(loaded).not.toBeNull();
+      if (loaded) {
+        expect(loaded.snapshot.nations.size).toBe(snapshot.nations.size);
+        expect(loaded.snapshot.campaignId).toBe(snapshot.campaignId);
+      }
+
+      // Step 5: replay the same command against the pre-month snapshot and
+      // confirm it reproduces the same closing state deterministically.
+      const replayVerifier = new ReplayVerifier();
+      const closingSnapshotHash = hashSnapshot(monthResult.finalSnapshot);
+      const replayResult = replayVerifier.verify(
+        snapshot,
+        [cmd],
+        monthResult.commandLedger,
+        closingSnapshotHash,
+        "production-pack-loop-seed",
+        collector,
+      );
+
+      expect(replayResult.match).toBe(true);
+    } finally {
+      rmSync(saveDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("P-1 AC-3: 1880 roster torpedo armament (docs/research/p1-1880-torpedo-armament.md)", () => {
+  it("compiles the as-built tube counts and leaves unsourced/post-1880 fits unarmed", () => {
+    const { state } = compileProductionPack();
+    const tubes = (id: string): number =>
+      (state.snapshot.designs.get(id)?.torpedoArmament ?? []).reduce(
+        (n, m) => n + Number(m.tubeCount),
+        0,
+      );
+    expect({
+      des_gbr_inflexible: tubes("des_gbr_inflexible"),
+      des_gbr_devastation: tubes("des_gbr_devastation"),
+      des_fra_redoutable: tubes("des_fra_redoutable"),
+      des_fra_amiral_duperre: tubes("des_fra_amiral_duperre"),
+      des_rus_petrveliky: tubes("des_rus_petrveliky"),
+      des_rus_ekaterina2: tubes("des_rus_ekaterina2"),
+      des_ita_duilio: tubes("des_ita_duilio"),
+      des_ita_italia: tubes("des_ita_italia"),
+      des_chi_dingyuan: tubes("des_chi_dingyuan"),
+    }).toEqual({
+      des_gbr_inflexible: 4,
+      des_gbr_devastation: 2,
+      des_fra_redoutable: 4,
+      des_fra_amiral_duperre: 4,
+      des_rus_petrveliky: 2,
+      des_rus_ekaterina2: 7,
+      des_ita_duilio: 3,
+      des_ita_italia: 4,
+      des_chi_dingyuan: 3,
+    });
+    for (const unarmed of [
+      "des_gbr_dreadnought75",
+      "des_gbr_alexandra",
+      "des_ger_kaiser",
+      "des_ger_sachsen",
+      "des_aut_tegetthoff",
+      "des_usa_amphitrite",
+      "des_jpn_fuso",
+    ]) {
+      expect(state.snapshot.designs.get(unarmed)?.torpedoArmament).toBeUndefined();
+    }
+  });
+});
+
+describe("P-1 AC-7: torpedoes reachable from a compiled production-pack battle", () => {
+  it("an Italy vs Russia ironclad action built from compiled 1880 content fires torpedoes", async () => {
+    const { buildManifest, resolveBattleAuto, withStrategicWeatherStateHash } =
+      await import("@bluewave/combat");
+    const { state } = compileProductionPack();
+    const snap = state.snapshot;
+    const nation = (id: string) => {
+      const n = snap.nations.get(id)!;
+      const ships = n.fleets.flatMap((f) => f.ships).filter((s) => !s.isUnderConstruction);
+      return { nationId: id, ships, designs: snap.designs, divisions: [] };
+    };
+    const italy = nation("italy");
+    const russia = nation("russia");
+    expect(italy.ships.length).toBeGreaterThan(0);
+    expect(russia.ships.length).toBeGreaterThan(0);
+    const strip = (n: ReturnType<typeof nation>) => ({
+      ...n,
+      designs: new Map(
+        [...n.designs].map(([k, d]) => {
+          const { torpedoArmament: _t, ...rest } = d;
+          return [k, rest];
+        }),
+      ),
+    });
+    const run = (
+      attacker: ReturnType<typeof nation>,
+      defender: ReturnType<typeof nation>,
+      seed: string,
+    ) => {
+      const manifest = buildManifest({
+        battleId: `p1-ac7-${seed}`,
+        opportunityId: "opp-p1",
+        warId: "war-p1",
+        areaId: "med_central",
+        missionType: "open_fleet_engagement",
+        attackerId: "italy",
+        defenderId: "russia",
+        acceptanceClass: "accepted",
+        missionObjectives: [],
+        sides: [
+          { sideId: "ATTACKER", participantIds: ["italy"] },
+          { sideId: "DEFENDER", participantIds: ["russia"] },
+        ],
+        persistentAssets: [...attacker.ships, ...defender.ships].map((s) => s.id),
+        temporaryAssets: [],
+        permanentDivisionIds: [],
+        tacticalDivisions: [],
+        commanders: [],
+        weather: "clear",
+        seaState: "calm",
+        visibility: "good",
+        environment: "open_sea",
+        sourceStateHashes: {},
+        reservations: [],
+        autoResolutionProof: "auto-resolvable",
+        provenanceRecords: [],
+        rulesetVersion: "b6_ruleset_v1",
+        formulaVersion: "b6_formula_v1",
+        aiPolicyVersion: "ai_policy_v1",
+        rngVersion: "rng_v1",
+        contentVersion: "0.4.0",
+      });
+      return resolveBattleAuto({
+        battleId: manifest.battleId,
+        areaId: "med_central",
+        campaignMonth: "1880-06",
+        manifest,
+        attacker,
+        defender,
+        strategicWeather: withStrategicWeatherStateHash({
+          areaId: "med_central",
+          month: "1880-06",
+          climateProfileId: "default",
+          seasonId: "summer",
+          persistentWeatherStateId: "",
+          seaState: 2,
+          windDirectionDeg: 225,
+          windSpeedUmPerSec: 5_000_000,
+          precipitationType: "NONE",
+          precipitationIntensityBp: 0,
+          fogMistDensityBp: 500,
+          cloudCoverBp: 3_000,
+          daylightProfileId: "default_daylight_v1",
+          glareEligible: true,
+          baseVisibilityUm: 20_000_000_000,
+          generatedAtPhase: "weather_generation",
+          rulesetVersion: "weather_ruleset_v1",
+          climateVersion: "weather_climate_v1",
+          formulaVersion: "weather_formula_v1",
+          rngVersion: "weather_rng_v1",
+        }),
+        campaignSeed: seed,
+        rulesetVersion: "b6_ruleset_v1",
+        formulaVersion: "b6_formula_v1",
+        rngVersion: "rng_v1",
+      });
+    };
+    let fired = 0;
+    let changed = 0;
+    for (const seed of ["p1", "p2", "p3", "p4", "p5", "p6"]) {
+      const armed = run(italy, russia, seed);
+      const plain = run(strip(italy), strip(russia), seed);
+      expect(plain.torpedoSummary).toBeUndefined();
+      fired += armed.torpedoSummary!.tubesFired;
+      if (armed.resultHash !== plain.resultHash) changed++;
+    }
+    expect(fired).toBeGreaterThan(0);
+    expect(changed).toBeGreaterThan(0);
+  });
+});

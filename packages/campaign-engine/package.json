@@ -1,0 +1,31 @@
+{
+  "name": "@bluewave/campaign-engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@bluewave/campaign": "workspace:*",
+    "@bluewave/content-schema": "workspace:*",
+    "@bluewave/deterministic": "workspace:*",
+    "effect": "workspace:*"
+  },
+  "devDependencies": {
+    "@bluewave/contracts": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b --watch",
+    "clean": "rimraf --glob dist *.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "test": "vp test run",
+    "lint": "vp lint .",
+    "lint:fix": "echo 'ok'"
+  }
+}

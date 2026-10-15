@@ -1,0 +1,186 @@
+import type { PlayerProjection } from "@bluewave/campaign-engine";
+
+/**
+ * Pure view model for the bottom status strip (campaign-command-screen CC-3, ADR-0059 s1).
+ * Every value is real or derived from `inspectCampaign` / `inspectMap`; anything the engine does
+ * not model is a visible "Not yet modelled" row with its reason, never a number.
+ *
+ * Foreign-station rule (`FOREIGN_STATION_RULE_V1`): a player ship counts when it sits in an area
+ * controlled by another nation. Own areas and unclaimed seas do not count. The engine views carry
+ * no per-ship displacement, so this is a ship count, not RTW3's tonnage.
+ */
+export const FOREIGN_STATION_RULE_V1 = "controlled-by-another-nation";
+
+const groupDigits = new Intl.NumberFormat("en-GB", { useGrouping: true });
+
+/** Exact, grouped money ("-£1,200"): the strip is for reading figures, so it never abbreviates. */
+export function formatMoney(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  return `${value < 0 ? "-" : ""}£${groupDigits.format(Math.abs(value))}`;
+}
+
+export const NOT_YET_MODELLED = "Not yet modelled";
+
+export type StripTone = "normal" | "alert";
+
+export interface StripRow {
+  readonly id: string;
+  readonly label: string;
+  readonly value: string;
+  readonly deferred: boolean;
+  /** A reason (deferred rows) or a caveat (proxy rows); empty when there is nothing to add. */
+  readonly note: string;
+  readonly tone: StripTone;
+  /** A text status shown beside the value so tone is never the only signal. */
+  readonly status?: string;
+}
+
+export interface StatusStripSummary {
+  readonly balance: { readonly value: string; readonly status: string; readonly tone: StripTone };
+  readonly treasury: string;
+  readonly alerts: string;
+}
+
+export interface StatusStripModel {
+  readonly nation: readonly StripRow[];
+  readonly budget: readonly StripRow[];
+  /** Every deferred row from both groups, for the single "Not yet modelled" disclosure. */
+  readonly deferredRows: readonly StripRow[];
+  readonly summary: StatusStripSummary;
+}
+
+export type StatusStripAreas = readonly {
+  readonly id: string;
+  readonly controller: string | null;
+}[];
+
+export interface StatusStripInput {
+  readonly projection: PlayerProjection;
+  /** `inspectMap` areas, or null when the map could not be read. */
+  readonly areas: StatusStripAreas | null;
+  /** Engine alert count, or null when the priorities projection is unavailable. */
+  readonly alertsCount: number | null;
+}
+
+function real(id: string, label: string, value: string, note = "", tone: StripTone = "normal") {
+  return { id, label, value, deferred: false, note, tone } satisfies StripRow;
+}
+
+function deferred(id: string, label: string, reason: string): StripRow {
+  return { id, label, value: NOT_YET_MODELLED, deferred: true, note: reason, tone: "normal" };
+}
+
+function countForeignStationShips(projection: PlayerProjection, areas: StatusStripAreas): number {
+  const own = new Set(projection.strategicAreas.map((a) => a.id));
+  const foreign = new Set(
+    areas.filter((a) => a.controller !== null && !own.has(a.id)).map((a) => a.id),
+  );
+  return projection.fleet
+    .flatMap((f) => f.divisions)
+    .filter((d) => foreign.has(d.areaId))
+    .reduce((sum, d) => sum + d.ships.length, 0);
+}
+
+function alertsLabel(count: number | null): string {
+  if (count === null) return "Alerts unavailable";
+  return `${count} ${count === 1 ? "alert" : "alerts"}`;
+}
+
+export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
+  const { projection, areas, alertsCount } = input;
+  const economy = projection.economy;
+  const totalExpenses = economy.maintenanceCost + economy.constructionSpend + economy.researchSpend;
+  const balance = projection.projectedSurplusDeficit;
+  const inDeficit = balance < 0;
+  const balanceStatus = inDeficit ? "Deficit" : "Surplus";
+  const balanceTone: StripTone = inDeficit ? "alert" : "normal";
+
+  const foreignStations: StripRow =
+    areas === null
+      ? deferred("foreign-stations", "Ships on foreign stations", "The map could not be read.")
+      : real(
+          "foreign-stations",
+          "Ships on foreign stations",
+          (() => {
+            const n = countForeignStationShips(projection, areas);
+            return `${n} ${n === 1 ? "ship" : "ships"}`;
+          })(),
+          "A ship count in areas held by another nation, not tonnage: ship displacement is not in the campaign views.",
+        );
+
+  const nation: StripRow[] = [
+    deferred("prestige", "Prestige", "No prestige mechanic exists in the campaign yet."),
+    deferred(
+      "fleet-morale",
+      "Fleet morale",
+      "Only per-division cohesion exists, not a national figure.",
+    ),
+    foreignStations,
+    deferred(
+      "dock-size",
+      "Dock size",
+      "Yards are one reference environment until per-port facilities land.",
+    ),
+    real(
+      "shipyard-capacity",
+      "Shipyard capacity (port levels)",
+      String(economy.shipyardCapacity),
+      "Sum of your ports' levels, a stand-in for RTW3 shipyard capacity.",
+    ),
+    deferred("unrest", "Unrest level", "There is no domestic-politics model."),
+    deferred("build-requirement", "Build requirement", "No required building programme exists."),
+    deferred("treaty-limits", "Treaty limits", "Naval treaties are not wired into the campaign."),
+  ];
+  // Real rows first would reorder the RTW3 grouping; keep the order stable and let the UI group.
+
+  const budget: StripRow[] = [
+    real("treasury", "Treasury", formatMoney(economy.treasury)),
+    real(
+      "monthly-budget",
+      "Monthly budget (projected)",
+      formatMoney(economy.monthlyAppropriation),
+      "Projected from income and the appropriation rate; the revenue source is not yet confirmed.",
+    ),
+    real("maintenance", "Maintenance", formatMoney(economy.maintenanceCost)),
+    real(
+      "construction",
+      "Construction (committed)",
+      formatMoney(economy.constructionSpend),
+      "Cumulative committed work, not a monthly figure.",
+    ),
+    real("research", "Research", formatMoney(economy.researchSpend)),
+    deferred(
+      "naval-aircraft",
+      "Naval aircraft",
+      "Aircraft are tactical-only; no campaign budget line.",
+    ),
+    deferred("extra-training", "Extra training", "Training programmes are not modelled."),
+    deferred("intelligence", "Intelligence", "Intelligence spending is not modelled."),
+    real(
+      "total-expenses",
+      "Total expenses",
+      formatMoney(totalExpenses),
+      "Maintenance + construction + research; deferred lines are omitted, not zeroed.",
+    ),
+    {
+      id: "balance",
+      label: "Monthly balance (projected)",
+      value: formatMoney(balance),
+      deferred: false,
+      note: "",
+      tone: balanceTone,
+      status: balanceStatus,
+    },
+  ];
+
+  return {
+    nation,
+    budget,
+    deferredRows: [...nation, ...budget].filter((r) => r.deferred),
+    summary: {
+      balance: { value: formatMoney(balance), status: balanceStatus, tone: balanceTone },
+      treasury: formatMoney(economy.treasury),
+      alerts: alertsLabel(alertsCount),
+    },
+  };
+}

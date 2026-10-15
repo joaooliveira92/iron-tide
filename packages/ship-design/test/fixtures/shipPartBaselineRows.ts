@@ -1,0 +1,57 @@
+/**
+ * Pinned rows from the ship-part-model proposal (§9.2 D17, §9.3 tube table). A content change
+ * that moves them fails the baseline test until this fixture is deliberately updated.
+ */
+// design, placement, gun part, barrels, mountCount, gunsPerMount, legacyResolvedMountType
+export const D17_ROWS: readonly (readonly [
+  string,
+  string,
+  string,
+  number,
+  number,
+  number,
+  string,
+])[] = [
+  ["redoutable_1878", "main_fwd", "gun_bl_274mm_m1875", 4, 1, 4, "BARBETTE"],
+  ["redoutable_1878", "main_aft", "gun_bl_274mm_m1875", 4, 1, 4, "BARBETTE"],
+  ["kaiser_1875", "main_fwd", "gun_bl_263mm_rkl20", 4, 1, 4, "TURRET"],
+  ["kaiser_1875", "main_aft", "gun_bl_263mm_rkl20", 4, 1, 4, "TURRET"],
+  ["sachsen_1878", "main_fwd", "gun_bl_263mm_rkl20", 3, 1, 3, "TURRET"],
+  ["sachsen_1878", "main_aft", "gun_bl_263mm_rkl20", 3, 1, 3, "TURRET"],
+  ["mesudiye_1875", "main_fwd", "gun_rml_10in_18ton", 6, 1, 6, "BARBETTE"],
+  ["mesudiye_1875", "main_aft", "gun_rml_10in_18ton", 6, 1, 6, "BARBETTE"],
+  ["mesudiye_1875", "sec", "gun_rml_7in_7ton", 3, 1, 3, "BARBETTE"],
+];
+
+// design, placement, legacy component, tubes, mountCount
+export const TORPEDO_ROWS: readonly (readonly [string, string, string, number, number])[] = [
+  ["starter_dd_austria_hungary_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_dd_brazil_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_protected_cruiser_fr_1880", "tubes", "tube_14in_above_water", 2, 2],
+  ["starter_torpedo_gunboat_fr_1880", "tubes_p", "tube_14in_above_water", 2, 2],
+  ["starter_torpedo_gunboat_fr_1880", "tubes_s", "tube_14in_above_water", 2, 2],
+  ["starter_armed_liner_fr_1880", "tubes", "tube_14in_above_water", 2, 2],
+  ["redoutable_1878", "tubes", "tube_14in_above_water", 2, 2],
+  ["starter_protected_cruiser_de_1880", "tubes", "tube_14in_above_water", 2, 2],
+  ["starter_torpedoboat_de_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_armed_liner_de_1880", "tubes", "tube_14in_above_water", 2, 2],
+  ["starter_dd_italy_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_dd_japan_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_dd_netherlands_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_dd_ottoman_empire_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_dd_portugal_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_b_qing_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_dd_qing_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_dd_russia_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_dd_spain_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["torpedo_cruiser_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["devastator_1873", "tubes", "tube_14in_above_water", 2, 2],
+  ["dreadnought_1875", "tubes", "tube_14in_above_water", 2, 2],
+  ["havock_like", "tubes", "tube_14in_above_water", 2, 2],
+  ["majestic_like", "tubes_a", "tube_14in_submerged", 2, 2],
+  ["majestic_like", "tubes_b", "tube_14in_submerged", 3, 3],
+  ["starter_torpedo_gunboat_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["alexandra_1877", "tubes", "tube_14in_above_water", 4, 4],
+  ["starter_dd_usa_1880", "tubes", "tube_14in_above_water", 4, 4],
+  ["tb2_1879", "tubes", "tube_14in_above_water", 1, 1],
+];

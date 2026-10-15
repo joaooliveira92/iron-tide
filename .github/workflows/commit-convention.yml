@@ -1,0 +1,41 @@
+name: Commit Convention
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: commit-convention-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  commit-msgs:
+    runs-on: ubuntu-latest
+    steps:
+      # fetch-depth 0 so both ends of the range are present.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.18.0"
+      - name: Check commit subjects are Conventional Commits
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          PUSH_HEAD_SHA: ${{ github.sha }}
+        run: |
+          # A push whose `before` is the all-zero SHA (first push of a branch)
+          # has no meaningful range; leave COMMIT_RANGE unset so the check falls
+          # back to the pushed commit instead of failing closed on a bogus range.
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            echo "COMMIT_RANGE=${PR_BASE_SHA}..${PR_HEAD_SHA}" >> "$GITHUB_ENV"
+          elif [ -n "$PUSH_BEFORE_SHA" ] && [ "$PUSH_BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            echo "COMMIT_RANGE=${PUSH_BEFORE_SHA}..${PUSH_HEAD_SHA}" >> "$GITHUB_ENV"
+          fi
+          node scripts/check-commit-msgs.cjs

@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "references": [
+    { "path": "../contracts" },
+    { "path": "../diagnostics" },
+    { "path": "../deterministic" },
+    { "path": "../content-schema" },
+    { "path": "../content-compiler" },
+    { "path": "../campaign" },
+    { "path": "../commands" },
+    { "path": "../random" },
+    { "path": "../events" },
+    { "path": "../combat" },
+    { "path": "../persistence" },
+    { "path": "../phase-engine" }
+  ]
+}

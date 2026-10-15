@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      CSP is enforced via the main process's response-header injection
+      (src/main/csp.ts), not a meta tag here: a baked-in meta tag can't vary
+      between dev (Vite's React-refresh preamble needs 'unsafe-inline'
+      script-src) and production (strict default-src 'self'), and multiple
+      CSP sources combine as their intersection — a stray meta tag would
+      silently re-impose the strict policy even when the header relaxes it.
+    -->
+    <title>Bluewave Campaign Compiler</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./main.tsx"></script>
+  </body>
+</html>

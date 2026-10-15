@@ -1,0 +1,74 @@
+#!/usr/bin/env node
+// Enforce `wc -w`-style ceilings from `scripts/doc-budgets.manifest.json`.
+//
+// Standing process/standards docs rot into sprawling manuals if nothing pushes
+// back, so each budgeted file gets a word ceiling. Missing files and invalid
+// ceilings fail; `--list` reports current usage. Ceilings carry ~10% headroom
+// over the count they were seeded from and ratchet DOWN as a doc shrinks;
+// raising one is allowed only with a justification in the change that needs it.
+// Rolling logs (PROGRESS.md, the sprint plan) and ledgers that grow by design
+// are deliberately NOT budgeted.
+//
+// Adapted from deepseek-harness `scripts/verify-doc-budgets.ts`.
+//
+// Usage: `node scripts/verify-doc-budgets.mjs [--list]`
+// Wired into `pnpm preflight`.
+
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const root = resolve(import.meta.dirname, "..");
+const MANIFEST_PATH = resolve(root, "scripts/doc-budgets.manifest.json");
+
+/** `wc -w` equivalent: count whitespace-delimited tokens. */
+function countWords(text) {
+  return text.split(/\s+/u).filter(Boolean).length;
+}
+
+const manifest = JSON.parse(readFileSync(MANIFEST_PATH, "utf8"));
+const listOnly = process.argv.includes("--list");
+const failures = [];
+const rows = [];
+
+for (const [path, ceiling] of Object.entries(manifest)) {
+  if (!Number.isInteger(ceiling) || ceiling <= 0) {
+    rows.push(`BAD   ${"—".padStart(6)} / ${String(ceiling).padEnd(6)} ${path}`);
+    failures.push(`${path}: ceiling must be a positive integer, got ${ceiling}`);
+    continue;
+  }
+  const abs = resolve(root, path);
+  if (!existsSync(abs)) {
+    rows.push(`MISS  ${"—".padStart(6)} / ${String(ceiling).padEnd(6)} ${path}`);
+    failures.push(
+      `${path}: budgeted file does not exist (renamed or deleted? update ` +
+        "scripts/doc-budgets.manifest.json in the same change)",
+    );
+    continue;
+  }
+  const words = countWords(readFileSync(abs, "utf8"));
+  rows.push(
+    `${words <= ceiling ? "ok  " : "OVER"}  ${String(words).padStart(6)} / ${String(ceiling).padEnd(6)} ${path}`,
+  );
+  if (words > ceiling) {
+    failures.push(
+      `${path}: ${words} words exceeds the ${ceiling}-word ceiling — relocate or condense ` +
+        "(raising the ceiling requires a justification in the change that needs it)",
+    );
+  }
+}
+
+if (listOnly) {
+  console.log(rows.join("\n"));
+  process.exit(0);
+}
+
+if (failures.length > 0) {
+  console.error("verify-doc-budgets: FAILED\n");
+  for (const failure of failures) console.error(`  ${failure}`);
+  console.error(
+    "\nSee scripts/doc-budgets.manifest.json for the budgeted set and the ratchet rule.",
+  );
+  process.exit(1);
+}
+
+console.log(`verify-doc-budgets: ${Object.keys(manifest).length} budgeted docs within ceiling.`);

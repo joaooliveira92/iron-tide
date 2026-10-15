@@ -1,0 +1,319 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { parse } from "yaml";
+import { describe, expect, it } from "vite-plus/test";
+import { SafeInt } from "@bluewave/contracts";
+import {
+  decodeStrict,
+  PropulsionPlantCatalogueSchema,
+  ShipComponentCatalogueSchema,
+  ShipHullFormCatalogueSchema,
+} from "@bluewave/content-schema";
+import { canonicalSerialize } from "@bluewave/deterministic";
+import { CommandLifecycle } from "@bluewave/commands";
+import { DiagnosticCollector } from "@bluewave/diagnostics";
+import { RandomLedger } from "@bluewave/random";
+import {
+  buildShipBuildingContent,
+  type ComponentDef,
+  type HullFormRecord,
+  type PropulsionPlant,
+  type ShipBuildingContent,
+  type ShipBuildingData,
+} from "@bluewave/ship-design";
+import { runAiProcurementPhase } from "../src/aiProcurement.js";
+import { fundDesignStudies } from "../src/designStudies.js";
+import { PhaseGuard } from "../src/phase-guard.js";
+import type { MonthContext } from "../src/monthContext.js";
+import { readNavalProfileEntries, readReferenceDesignEntries } from "./helpers/contentFiles.js";
+
+const root = join(__dirname, "..", "..", "..", "content", "production", "1880");
+const load = (rel: string) =>
+  parse(readFileSync(join(root, rel), "utf8")) as Record<string, unknown>;
+
+const content: ShipBuildingContent = buildShipBuildingContent({
+  components: decodeStrict(ShipComponentCatalogueSchema, load("ship-building/components.yaml"))
+    .components as ComponentDef[],
+  plants: decodeStrict(PropulsionPlantCatalogueSchema, load("ship-building/plants.yaml"))
+    .plants as unknown as PropulsionPlant[],
+  hullForms: decodeStrict(ShipHullFormCatalogueSchema, load("ship-building/hull-forms.yaml"))
+    .hullForms as HullFormRecord[],
+  balance: load("ship-building/balance.yaml") as ShipBuildingData["balance"],
+  technologies: load("technologies.yaml") as unknown as { id: string; year: number }[],
+  navalProfiles: readNavalProfileEntries(),
+  referenceDesigns: readReferenceDesignEntries(),
+} satisfies ShipBuildingData);
+
+const ledgerStub = { append: () => {} };
+
+function makeContext(
+  month: string,
+  seed = "seed-1",
+  nationId = "france",
+  treasury = 2000,
+): MonthContext {
+  const nation = {
+    id: nationId,
+    name: nationId,
+    tag: nationId.slice(0, 3).toUpperCase(),
+    treasury: SafeInt(treasury),
+    income: SafeInt(100),
+    expenses: SafeInt(20),
+    baseResources: SafeInt(0),
+    navalAppropriationRateBp: SafeInt(2000),
+    maintenanceCost: SafeInt(0),
+    fleets: [],
+    divisions: [],
+    research: {
+      nationId,
+      technologies: [],
+      currentProjectTechId: undefined,
+      fieldPriorities: {},
+      researchBudget: SafeInt(0),
+      activeCandidates: new Map(),
+      discoveredTechs: [],
+    },
+    constructionProjects: [],
+    isPlayable: false,
+    isAI: true,
+  };
+  const snapshot = {
+    campaignId: "c1",
+    rulesetVersion: "1.0",
+    turnNumber: SafeInt(Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1),
+    nations: new Map([[nationId, nation]]),
+    designs: new Map(),
+    designFamilies: new Map(),
+  };
+  return {
+    currentSnapshot: snapshot,
+    sourceSnapshot: snapshot,
+    slots: [{ nationId, type: "ai" }],
+    commands: [],
+    campaignMonth: month,
+    turnNumber: snapshot.turnNumber,
+    randomSeed: seed,
+    commandLedger: ledgerStub,
+    eventLedger: ledgerStub,
+    randomLedger: new RandomLedger(),
+    financialLedger: ledgerStub,
+    phaseGuard: new PhaseGuard(),
+    lifecycle: new CommandLifecycle(),
+    collector: new DiagnosticCollector(),
+    nextSeq: () => SafeInt(1),
+    engineOptions: { shipBuilding: content },
+  } as unknown as MonthContext;
+}
+
+const france = (ctx: MonthContext) =>
+  ctx.currentSnapshot["nations"].get("france") as unknown as {
+    treasury: SafeInt;
+    designStudies?: { designStudyId: string; status: string }[];
+    constructionProjects: unknown[];
+    procurementIntents?: {
+      status: string;
+      role: string;
+      reason: string | null;
+      designStudyId: string | null;
+    }[];
+  };
+
+describe("AI procurement lifecycle", () => {
+  it("a fleet deficit produces a design study, and no order exists before approval", () => {
+    const ctx = makeContext("1880-01");
+    runAiProcurementPhase(ctx);
+    const n = france(ctx);
+    expect(n.procurementIntents?.length).toBe(1);
+    expect(n.procurementIntents![0]!.status).toBe("STUDY_SUBMITTED");
+    expect(n.designStudies?.length).toBe(1);
+    expect(n.constructionProjects.length).toBe(0); // no order before approval
+  });
+
+  it("repeated planning does not duplicate the study", () => {
+    const ctx = makeContext("1880-01");
+    runAiProcurementPhase(ctx);
+    const afterFirst = france(ctx).designStudies?.length;
+    runAiProcurementPhase(ctx);
+    expect(france(ctx).designStudies?.length).toBe(afterFirst);
+    expect(france(ctx).procurementIntents?.length).toBe(1);
+  });
+
+  it("approval after the established study duration leads to placeConstructionOrder", () => {
+    const ctx = makeContext("1880-01");
+    runAiProcurementPhase(ctx);
+    const study = france(ctx).designStudies![0]!;
+    // Fund the study month by month (the real appropriation path) until it completes.
+    let months = 0;
+    while (
+      france(ctx).designStudies!.find((s) => s.designStudyId === study.designStudyId)!.status !==
+      "COMPLETED"
+    ) {
+      fundDesignStudies(ctx);
+      months++;
+      expect(months).toBeLessThanOrEqual(10);
+    }
+    expect(months).toBeGreaterThanOrEqual(1);
+    // Next month's procurement sees the approved design and orders it.
+    (ctx as { campaignMonth: string }).campaignMonth = "1880-06";
+    runAiProcurementPhase(ctx);
+    const n = france(ctx);
+    expect(n.procurementIntents![0]!.status).toBe("ORDER_PLACED");
+    expect(n.constructionProjects.length).toBe(1);
+  });
+
+  it("is deterministic for the same snapshot and seed", () => {
+    const a = makeContext("1880-01");
+    const b = makeContext("1880-01");
+    runAiProcurementPhase(a);
+    runAiProcurementPhase(b);
+    expect(canonicalSerialize(france(a).procurementIntents)).toBe(
+      canonicalSerialize(france(b).procurementIntents),
+    );
+  });
+
+  it("another project satisfying the deficit cancels unnecessary procurement", () => {
+    const ctx = makeContext("1880-01");
+    runAiProcurementPhase(ctx);
+    // Force the study to approve, then satisfy the deficit with a completed project of the same role.
+    const study = france(ctx).designStudies![0]!;
+    while (
+      france(ctx).designStudies!.find((s) => s.designStudyId === study.designStudyId)!.status !==
+      "COMPLETED"
+    )
+      fundDesignStudies(ctx);
+    const n = france(ctx);
+    const role = n.procurementIntents![0]!.role;
+    // Add enough active ships of the role to erase the deficit.
+    const snapshot = ctx.currentSnapshot as unknown as {
+      designs: Map<string, unknown>;
+      nations: Map<string, { fleets: unknown[] }>;
+    };
+    const design = {
+      designVersionId: "des_satisfy",
+      nationId: "france",
+      hullType: role === "DD" ? "destroyer" : "protected_cruiser",
+    };
+    snapshot.designs.set("des_satisfy", design);
+    snapshot.nations.get("france")!.fleets = [
+      {
+        id: "f1",
+        nationId: "france",
+        name: "F",
+        locationAreaId: "a",
+        ships: Array.from({ length: 12 }, (_, i) => ({
+          id: `s${String(i)}`,
+          designVersionId: "des_satisfy",
+          isUnderConstruction: false,
+        })),
+      },
+    ];
+    (ctx as { campaignMonth: string }).campaignMonth = "1880-06";
+    runAiProcurementPhase(ctx);
+    const intent = france(ctx).procurementIntents!.find((i) => i.role === role)!;
+    expect(intent.status).toBe("CANCELLED");
+    expect(intent.reason).toBe("deficit_satisfied");
+  });
+
+  it("a nation too poor to build produces a structured decline rather than an exception", () => {
+    const ctx = makeContext("1880-01");
+    (france(ctx) as { treasury: SafeInt }).treasury = SafeInt(0);
+    expect(() => runAiProcurementPhase(ctx)).not.toThrow();
+    // No study and no order: the decision declined.
+    expect(france(ctx).designStudies ?? []).toHaveLength(0);
+    expect(france(ctx).procurementIntents ?? []).toHaveLength(0);
+  });
+});
+
+describe("live AI procurement simulation (2 nations x 3 seeds x 3 budgets x 36 months)", () => {
+  const NATIONS = ["uk", "france", "germany"] as const;
+  const SEEDS = ["alpha", "bravo", "charlie"] as const;
+  const BUDGETS = [200, 800, 2000] as const;
+  interface Result {
+    studies: number;
+    orders: number;
+    cancelled: number;
+    expired: number;
+    exceptions: number;
+    timeline: string;
+  }
+  function run(nationId: string, seed: string, treasury: number): Result {
+    const ctx = makeContext("1880-01", seed, nationId, treasury);
+    const counts: Result = {
+      studies: 0,
+      orders: 0,
+      cancelled: 0,
+      expired: 0,
+      exceptions: 0,
+      timeline: "",
+    };
+    for (let m = 0; m < 36; m++) {
+      const year = 1880 + Math.floor(m / 12);
+      const mon = (m % 12) + 1;
+      (ctx as { campaignMonth: string }).campaignMonth =
+        `${String(year)}-${String(mon).padStart(2, "0")}`;
+      (ctx as { turnNumber: ReturnType<typeof SafeInt> }).turnNumber = SafeInt(m);
+      try {
+        runAiProcurementPhase(ctx);
+        fundDesignStudies(ctx);
+      } catch {
+        counts.exceptions++;
+      }
+      const n = ctx.currentSnapshot["nations"].get(nationId) as unknown as {
+        designStudies?: { designStudyId: string }[];
+        constructionProjects: unknown[];
+        procurementIntents?: { status: string; role: string }[];
+      };
+      counts.studies = (n.designStudies ?? []).length;
+      counts.orders = n.constructionProjects.length;
+      counts.cancelled = (n.procurementIntents ?? []).filter(
+        (i) => i.status === "CANCELLED",
+      ).length;
+      counts.expired = (n.procurementIntents ?? []).filter((i) => i.status === "EXPIRED").length;
+      counts.timeline += `${String(n.constructionProjects.length)}:${String((n.designStudies ?? []).length)}|`;
+    }
+    return counts;
+  }
+
+  // The 27-combination sweep is expensive; compute each combination once and
+  // share it across the two assertions below (both previously re-ran it), so a
+  // 2-core CI runner does not have to fit two full sweeps in one 30s budget.
+  const cached = new Map<string, Result>();
+  function runCached(nationId: string, seed: string, treasury: number): Result {
+    const key = `${nationId}:${seed}:${String(treasury)}`;
+    let result = cached.get(key);
+    if (result === undefined) {
+      result = run(nationId, seed, treasury);
+      cached.set(key, result);
+    }
+    return result;
+  }
+
+  it(
+    "runs 36 months with zero unhandled exceptions for every nation/seed/budget",
+    { timeout: 120000 },
+    () => {
+      for (const nation of NATIONS)
+        for (const seed of SEEDS)
+          for (const b of BUDGETS) {
+            const r = runCached(nation, seed, b);
+            expect(r.exceptions, `${nation} ${seed} ${String(b)}`).toBe(0);
+          }
+    },
+  );
+
+  it("the sweep submits studies and places orders", { timeout: 120000 }, () => {
+    const results = NATIONS.flatMap((n) =>
+      SEEDS.flatMap((s) => BUDGETS.map((b) => runCached(n, s, b))),
+    );
+    expect(results.some((r) => r.studies > 0)).toBe(true);
+    expect(results.some((r) => r.orders > 0)).toBe(true);
+  });
+
+  it("replays identically for the same nation, seed and budget", () => {
+    const a = run("france", "alpha", 800);
+    const b = run("france", "alpha", 800);
+    expect(b.timeline).toBe(a.timeline);
+    expect(b.orders).toBe(a.orders);
+    expect(b.studies).toBe(a.studies);
+  });
+});

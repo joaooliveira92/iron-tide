@@ -1,0 +1,349 @@
+# National naval profiles (NationNavalProfile) for the EARLY band, one file per nation.
+# Every historical value carries a provenance block (sourceStatus / confidence / kind / sources); every balance
+# target is labelled `balance_adjustment`. Grounding: docs/research/<nation>-naval-profile.md.
+# Hard capability only ever restricts (UNAVAILABLE families, calibre ceilings); it never grants. Soft doctrine
+# steers templates, AI scoring and procurement, and never blocks a legal design (docs/ships-nation-orientation.md).
+navalProfiles:
+  # Brazil (canonical id "brazil"). The largest South American navy but a small river-and-coast force: Paraguayan-War
+  # river monitors and casemate ironclads, a few cruisers and torpedo boats, regional rivalry with Argentina and
+  # Chile, imported Whitworth/Armstrong/Krupp guns. Non-playable in 1880 but in the scenario.
+  # Grounding: docs/research/brazil-naval-profile.md.
+  - nationId: brazil
+    activeFrom: "1880-01"
+    activeUntil: null
+    strategicSituation: >-
+      Regional river-and-coast power: the largest navy in South America, built on Paraguayan-War monitors and a
+      casemate ironclad with a few cruisers and torpedo boats, focused on the Plate and Paraná and on regional
+      superiority over Argentina and Chile; heavy guns and armour are imported.
+    hardCapabilities:
+      maxGunCaliberUm: 305000
+      maxArmourThicknessUm: 305000
+      domesticTorpedoDiameterUm: 356000
+      hullForms:
+        [
+          torpedo_boat_form,
+          protected_cruiser_form,
+          coast_defence_form,
+          pre_dreadnought_form,
+          merchant_liner_form,
+        ]
+      domesticPlants: [compound_cylindrical, triple_expansion_cylindrical]
+      restrictedShipTypes: []
+      grants: []
+    softPreferences:
+      speedOverArmourBp: 5000
+      secondaryBatteryWeightBp: 10000
+      enduranceWeightBp: 9500
+      riskToleranceBp: 5000
+      colonialServiceWeightBp: 9000
+      torpedoOnCruisersBp: 10000
+      accommodationStandard: SPARTAN
+    industrialProfile:
+      buildTimeMultiplierBp: 10500
+      costMultiplierBp: 10500
+      machineryReliabilityBp: 8500
+      constructionQualityVarianceBp: 4400
+      maxPracticalDisplacementKg:
+        - { fromMonth: "1880-01", value: 2200000 }
+        - { fromMonth: "1885-01", value: 2500000 }
+        - { fromMonth: "1890-01", value: 4000000 }
+      heavyGunProduction: IMPORTED
+      armourPlateProduction: IMPORTED
+      provenance:
+        sourceStatus: ESTIMATE
+        confidence: MEDIUM
+        kind: balance_adjustment
+        note: "Arsenal de Marinha plus small private yards; capital ships imported. BALANCE TARGET within ±15%."
+        sources:
+          - {
+              sourceId: "brazil-note",
+              title: "National naval profile research note — Brazil",
+              page: "B",
+            }
+          - { sourceId: "navypedia-br", title: "navypedia.org Brazilian class pages" }
+        derivation:
+          {
+            sourceValue: "largest domestic hull 2,174 t; Riachuelo built in Britain",
+            sourceUnit: "estimate",
+            conversion: "within the ±15% band",
+            gameValue: "buildTimeMultiplierBp 10500, costMultiplierBp 10500",
+            roundingRule: "±15%",
+          }
+    dock:
+      maximumNewConstructionMassKg: 5000000
+      maximumMajorRepairMassKg: 5000000
+      maximumRebuildMassKg: 5000000
+      maximumConversionMassKg: 5000000
+      provenance:
+        sourceStatus: DERIVED
+        confidence: MEDIUM
+        kind: game_conversion
+        sources:
+          - { title: "1880 national dock capacity research note", page: "findings table" }
+        derivation:
+          {
+            sourceValue: "scenario CA starter 4,865 t (largest 1880 hull); Sete de Setembro 2,174 t",
+            sourceUnit: "t",
+            conversion: "largest 1880 hull the nation fields, rounded up to the next 1,000 t dock step",
+            gameValue: "maximumNewConstructionMassKg 5000000",
+            roundingRule: "ceiling to next 1,000 t",
+          }
+        note: "max(historical flagship 2,174 t, scenario largest hull 4,865 t) rounded up to the next 1,000 t"
+    doctrineProfile:
+      engagementRangeM: 1500
+      hePreferenceBp: 4000
+      postures: [regional_warfare, coastal_defence]
+      provenance:
+        sourceStatus: ESTIMATE
+        confidence: MEDIUM
+        kind: historical_fact
+        sources:
+          - {
+              sourceId: "brazil-note",
+              title: "National naval profile research note — Brazil",
+              page: "A, C",
+            }
+          - { sourceId: "navypedia-br", title: "navypedia.org Brazilian class pages" }
+    researchPreferences:
+      - { field: HULL_CONSTRUCTION, priority: 3 }
+      - { field: SHIP_DESIGN, priority: 3 }
+      - { field: INFRASTRUCTURE, priority: 3 }
+      - { field: MACHINERY, priority: 3 }
+      - { field: GUNNERY, priority: 2 }
+      - { field: TORPEDOES, priority: 2 }
+      - { field: MINES_AND_ASW, priority: 2 }
+      - { field: DAMAGE_CONTROL, priority: 1 }
+      - { field: FIRE_CONTROL, priority: 1 }
+      - { field: SUBMARINES, priority: 1 }
+    componentAccess:
+      gun_bl_274mm_m1875: { status: UNAVAILABLE }
+      gun_bl_263mm_rkl20: { status: UNAVAILABLE }
+      gun_bl_135in_30: { status: UNAVAILABLE }
+      gun_bl_12in_35: { status: UNAVAILABLE }
+      gun_bl_12in_25: { status: UNAVAILABLE }
+      gun_bl_10in_32: { status: UNAVAILABLE }
+      gun_rml_16in_80ton: { status: UNAVAILABLE }
+      gun_rml_125in_38ton: { status: UNAVAILABLE }
+      gun_rml_12in_35ton: { status: UNAVAILABLE }
+      gun_rml_12in_25ton: { status: UNAVAILABLE }
+      gun_rml_10in_18ton: { status: IMPORTED, producer: "Whitworth" }
+      gun_rml_10in_18ton_broadside: { status: IMPORTED, producer: "Whitworth" }
+      gun_rml_229mm_whitworth: { status: IMPORTED, producer: "Whitworth" }
+      gun_rml_11in_25ton: { status: IMPORTED, producer: "Armstrong" }
+      gun_rml_8in_9ton: { status: IMPORTED, producer: "Armstrong" }
+      gun_rml_64pdr_71cwt: { status: IMPORTED, producer: "Whitworth" }
+      gun_rml_7in_7ton: { status: IMPORTED, producer: "Whitworth" }
+      gun_bl_92in_315: { status: IMPORTED, producer: "Armstrong" }
+      gun_bl_6in_26: { status: IMPORTED, producer: "Armstrong" }
+      gun_qf_6in_40: { status: IMPORTED, producer: "Armstrong" }
+      gun_qf_47in: { status: IMPORTED, producer: "Armstrong" }
+      gun_qf_12pdr: { status: IMPORTED, producer: "Armstrong" }
+      gun_qf_6pdr: { status: IMPORTED, producer: "Hotchkiss" }
+      gun_hotchkiss_3pdr: { status: IMPORTED, producer: "Hotchkiss" }
+      gun_nordenfelt_1in: { status: IMPORTED, producer: "Nordenfelt" }
+      gun_maxim_303: { status: IMPORTED, producer: "Maxim" }
+      tube_14in_above_water: { status: IMPORTED, producer: "Whitehead" }
+      tube_14in_submerged: { status: IMPORTED, producer: "Whitehead" }
+    gunModels:
+      - id: br_whitworth_254
+        familyId: gun_rml_10in_18ton
+        designation: "254 mm Whitworth 10-in RML"
+        overrides:
+          displayName: "254 mm Whitworth 10-in RML in turret"
+          attributes.shellMassG: "181400"
+        mounts: [TURRET, BARBETTE, CASEMATE]
+        provenance: &br_prov
+          sourceStatus: ESTIMATE
+          confidence: LOW
+          kind: historical_fact
+          note: "Imported Whitworth/Armstrong guns; shell masses ESTIMATE."
+          sources:
+            - {
+                sourceId: "brazil-note",
+                title: "National naval profile research note — Brazil",
+                page: "F",
+              }
+      - id: br_whitworth_229
+        familyId: gun_rml_229mm_whitworth
+        designation: "229 mm Whitworth 300-pdr RML"
+        overrides:
+          displayName: "229 mm Whitworth 300-pdr RML in casemate"
+        mounts: [CASEMATE, BROADSIDE_BATTERY]
+        provenance: *br_prov
+      - id: br_whitworth_163
+        familyId: gun_rml_64pdr_71cwt
+        designation: "163 mm Whitworth 120-pdr RML"
+        overrides:
+          displayName: "163 mm Whitworth 120-pdr RML"
+        mounts: [CASEMATE, DECK_OPEN]
+        provenance: *br_prov
+      - id: br_armstrong_152
+        familyId: gun_qf_6in_40
+        designation: "152 mm Armstrong QF"
+        overrides:
+          displayName: "152 mm Armstrong quick-firing gun"
+        mounts: [DECK_SHIELDED, DECK_OPEN]
+        provenance: *br_prov
+      - id: br_armstrong_127
+        familyId: gun_qf_47in
+        designation: "127 mm Whitworth 70-pdr"
+        overrides:
+          displayName: "127 mm Whitworth 70-pdr"
+        mounts: [BROADSIDE_BATTERY, DECK_OPEN]
+        provenance: *br_prov
+    ammunitionPatterns:
+      - id: br_common_shell
+        pattern: AP
+        penetrationBiasBp: 5500
+        provenance:
+          sourceStatus: ESTIMATE
+          confidence: LOW
+          kind: balance_adjustment
+          sources:
+            - {
+                sourceId: "brazil-note",
+                title: "National naval profile research note — Brazil",
+                page: "C",
+              }
+    componentVariants:
+      - id: br_tube_356_aw
+        familyId: tube_14in_above_water
+        designation: "356 mm Whitehead, above-water (imported)"
+        overrides:
+          displayName: "356 mm Whitehead torpedo tube, above-water"
+        provenance:
+          sourceStatus: ESTIMATE
+          confidence: LOW
+          kind: historical_fact
+          sources:
+            - {
+                sourceId: "brazil-note",
+                title: "National naval profile research note — Brazil",
+                page: "F",
+              }
+    designWeights:
+      B:
+        {
+          firepowerBp: 11000,
+          protectionBp: 11500,
+          speedBp: 9000,
+          enduranceBp: 9500,
+          torpedoBp: 9000,
+          reliabilityBp: 9500,
+          colonialBp: 9000,
+          costBp: 11500,
+        }
+      CA:
+        {
+          firepowerBp: 11000,
+          protectionBp: 10000,
+          speedBp: 11000,
+          enduranceBp: 10500,
+          torpedoBp: 10000,
+          reliabilityBp: 9500,
+          colonialBp: 9500,
+          costBp: 11000,
+        }
+      CL:
+        {
+          firepowerBp: 9500,
+          protectionBp: 9000,
+          speedBp: 11000,
+          enduranceBp: 11000,
+          torpedoBp: 10000,
+          reliabilityBp: 9500,
+          colonialBp: 10500,
+          costBp: 11000,
+        }
+      DD:
+        {
+          firepowerBp: 8000,
+          protectionBp: 8000,
+          speedBp: 12500,
+          enduranceBp: 9000,
+          torpedoBp: 12500,
+          reliabilityBp: 9500,
+          colonialBp: 9000,
+          costBp: 11500,
+        }
+      KE:
+        {
+          firepowerBp: 9000,
+          protectionBp: 8500,
+          speedBp: 9000,
+          enduranceBp: 10500,
+          torpedoBp: 9000,
+          reliabilityBp: 10000,
+          colonialBp: 11500,
+          costBp: 11500,
+        }
+      AMC:
+        {
+          firepowerBp: 9000,
+          protectionBp: 8500,
+          speedBp: 9500,
+          enduranceBp: 12000,
+          torpedoBp: 9500,
+          reliabilityBp: 9500,
+          colonialBp: 11000,
+          costBp: 11500,
+        }
+    procurementPolicy:
+      battleLineShareBp: 2600
+      cruiserShareBp: 3200
+      torpedoCraftShareBp: 2000
+      colonialShareBp: 2200
+      foreignProcurementAppetiteBp: 7500
+      unprovenTechAppetiteBp: 4000
+      buildOrder: [CL, B, CA, KE, DD, AMC]
+    namingPolicy:
+      stems:
+        B: [Sete de Setembro, Independencia, Riachuelo, Aquidaba, Javary, Solimoes]
+        CA: [Riachuelo, Aquidaba, Independencia, Tamandare]
+        CL: [Guanabara, Parnaiba, Trajano, Niteroi, Primeiro de Marco, Almirante Barroso]
+        DD: [Num.1, Num.2, Num.3, Tamborim, Araguari, Moxoto]
+        KE: [Para, Rio Grande, Alagoas, Piaui, Ceara, Santa Catharina]
+        AMC: [Brasil, Rio de Janeiro, Santos]
+      convention:
+        B: "National dates, battles and rivers (Sete de Setembro, Riachuelo)."
+        CA: "Battles, provinces and admirals (Riachuelo, Tamandare)."
+        CL: "Provinces, rivers and heroes (Guanabara, Almirante Barroso)."
+        DD: "Numbered boats, then indigenous and river names (Num.1, Araguari)."
+        KE: "Provinces (Para, Ceara)."
+        AMC: "Liner names taken up from trade."
+    sourceReferences:
+      - { sourceId: "brazil-note", title: "National naval profile research note — Brazil" }
+      - {
+          sourceId: "navypedia-br",
+          title: "navypedia.org Brazilian class pages",
+          archiveOrUrl: "http://www.navypedia.org",
+        }
+      - {
+          sourceId: "ship-1880-ships",
+          title: "Ship-building 1880 ships by nation note",
+          page: "Brazil",
+        }
+    provenance:
+      sourceStatus: ESTIMATE
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: "Grounded shape (river/coast ironclads, regional rivalry, import dependence); weights and multipliers are BALANCE TARGET."
+      sources:
+        - {
+            sourceId: "brazil-note",
+            title: "National naval profile research note — Brazil",
+            page: "A, B, C, F",
+          }
+        - {
+            sourceId: "ship-1880-ships",
+            title: "Ship-building 1880 ships by nation note",
+            page: "Brazil",
+          }
+      derivation:
+        {
+          sourceValue: "grounded shape; no single sourced multiplier",
+          sourceUnit: "mixed",
+          conversion: "weights and shares are gameplay abstractions",
+          gameValue: "profile as authored",
+          roundingRule: "multipliers within ±15%",
+        }

@@ -1,0 +1,59 @@
+import { Button } from "../ui/button.js";
+import { CHART } from "./chart-theme.js";
+import type { RouteReading } from "./map-state.js";
+
+export interface RouteReadoutProps {
+  readonly className: string;
+  readonly route: RouteReading | null;
+  readonly respectClosedPassages: boolean;
+  readonly onToggleClosedPassages: () => void;
+}
+
+/** The ruler readout along the bottom edge. */
+export function RouteReadout({
+  className,
+  route,
+  respectClosedPassages,
+  onToggleClosedPassages,
+}: RouteReadoutProps) {
+  return (
+    <div
+      data-map-obstacle
+      className={className}
+      style={{
+        background: "oklch(0.16 0.025 245 / 0.9)",
+        borderColor: "oklch(0.4 0.02 245)",
+        color: CHART.ink,
+      }}
+    >
+      {route === null ? (
+        <span style={{ color: CHART.inkDim }}>Shift-click two areas for a route reading</span>
+      ) : (
+        <div className="flex items-center gap-4">
+          <span>
+            <strong className="tabular-nums">{route.hops}</strong> hops
+          </span>
+          <span className="tabular-nums" style={{ color: CHART.inkDim }}>
+            {route.nauticalMiles.toLocaleString()} nm
+          </span>
+          <span className="tabular-nums" style={{ color: CHART.inkDim }}>
+            {route.perHop.toLocaleString()} nm/hop
+          </span>
+          <span className="tabular-nums" style={{ color: CHART.inkDim }}>
+            ≈{route.months} months
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={onToggleClosedPassages}
+            className="h-6 border px-2 text-xs hover:bg-white/10"
+            style={{ borderColor: "oklch(0.4 0.02 245)", color: CHART.ink }}
+          >
+            {respectClosedPassages ? "avoiding closures" : "ignoring closures"}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}

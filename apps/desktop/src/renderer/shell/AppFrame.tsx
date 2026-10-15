@@ -1,0 +1,106 @@
+import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { Alert, AlertDescription } from "../components/ui/alert.js";
+import { SidebarInset, SidebarProvider } from "../components/ui/sidebar.js";
+import { BottomNav } from "./BottomNav.js";
+import type { Screen } from "./campaign-screen-registry.js";
+import { StatusStrip } from "./StatusStrip.js";
+
+export interface AppFrameProps {
+  readonly campaignSessionId: string | null;
+  readonly campaignRevision: number | null;
+  readonly activeAlertsCount: number | null;
+  readonly screen: Screen;
+  readonly saveMessage: string | null;
+  readonly header: ReactNode;
+  readonly children: ReactNode;
+  readonly onSelectScreen: (screen: Screen) => void;
+}
+
+/**
+ * The static chrome around every screen: sidebar shell, header slot, save
+ * notice, status strip and bottom navigation. Pure layout — it owns no
+ * campaign state and no routing decisions.
+ */
+export function AppFrame({
+  campaignSessionId,
+  campaignRevision,
+  activeAlertsCount,
+  screen,
+  saveMessage,
+  header,
+  children,
+  onSelectScreen,
+}: AppFrameProps) {
+  // On the Overview the map runs behind the translucent top and bottom bars; the bars' measured
+  // heights are exposed as --chrome-top / --chrome-bottom so floating panels can clear them.
+  const underlay = screen === "overview";
+  const frameRef = useRef<HTMLDivElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const frame = frameRef.current;
+    if (frame === null) return;
+    const measure = () => {
+      frame.style.setProperty("--chrome-top", `${topRef.current?.offsetHeight ?? 0}px`);
+      frame.style.setProperty("--chrome-bottom", `${bottomRef.current?.offsetHeight ?? 0}px`);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    if (topRef.current !== null) observer.observe(topRef.current);
+    if (bottomRef.current !== null) observer.observe(bottomRef.current);
+    return () => observer.disconnect();
+  }, [underlay, campaignSessionId]);
+
+  return (
+    <SidebarProvider
+      ref={frameRef}
+      className="relative h-svh flex-col overflow-hidden bg-transparent"
+    >
+      <div ref={topRef} data-underlay={underlay} className="group/chrome relative z-20 shrink-0">
+        {header}
+      </div>
+      <div
+        className={
+          underlay
+            ? "absolute inset-0 z-0 flex overflow-hidden"
+            : "flex min-h-0 flex-1 overflow-hidden"
+        }
+      >
+        <SidebarInset className="themed-scrollbar relative min-h-0 overflow-auto bg-transparent">
+          {saveMessage !== null && (
+            <Alert
+              variant="default"
+              className="absolute left-4 right-4 top-2 z-50 border backdrop-blur-sm"
+            >
+              <AlertDescription>{saveMessage}</AlertDescription>
+            </Alert>
+          )}
+          {children}
+        </SidebarInset>
+      </div>
+      {/* The bottom chrome sits above the guided-inspection spotlight (z-40) so the status
+          strip and navigation are never dimmed by its scrim; still below dialogs (z-50). */}
+      <div
+        ref={bottomRef}
+        data-underlay={underlay}
+        className="group/chrome relative z-[45] mt-auto shrink-0"
+      >
+        {campaignSessionId !== null && campaignRevision !== null && (
+          <StatusStrip
+            sessionId={campaignSessionId}
+            revision={campaignRevision}
+            alertsCount={activeAlertsCount}
+          />
+        )}
+        {campaignSessionId !== null && (
+          <BottomNav
+            screen={screen}
+            onSelect={onSelectScreen}
+            footer={campaignSessionId}
+            sessionId={campaignSessionId}
+          />
+        )}
+      </div>
+    </SidebarProvider>
+  );
+}

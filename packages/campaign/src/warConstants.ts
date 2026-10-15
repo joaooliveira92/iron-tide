@@ -1,0 +1,15 @@
+//packages/campaign/src/warConstants.ts
+export const WAR_SCORE_MINOR = 2;
+export const WAR_SCORE_MAJOR = 5;
+export const WAR_SCORE_DECISIVE = 10;
+export const VICTORY_MINOR_MAX_FRACTION = 0.25;
+export const VICTORY_MAJOR_MAX_FRACTION = 0.5;
+export const MAXIMUM_CONCURRENT_WARS = 3;
+export const NAP_VIOLATION_PENALTY = 50;
+export const PEACE_ADVANTAGE_THRESHOLD = 20;
+export const PEACE_MIN_DURATION_MONTHS = 24;
+export const SURRENDER_SCORE = 80;
+export const BLOCKADE_WAR_SCORE_PER_MONTH = 2;
+export const TENSION_WAR = 10;
+export const TENSION_PEACE = 5;
+export const TENSION_ALLIANCE = 2;

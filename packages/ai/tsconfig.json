@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "references": [
+    { "path": "../campaign" },
+    { "path": "../commands" },
+    { "path": "../contracts" },
+    { "path": "../random" },
+    { "path": "../deterministic" },
+    { "path": "../diagnostics" },
+    { "path": "../content-schema" }
+  ]
+}

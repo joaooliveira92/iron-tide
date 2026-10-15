@@ -1,0 +1,30 @@
+{
+  "name": "@effect/vitest",
+  "version": "4.0.2",
+  "type": "module",
+  "license": "MIT",
+  "description": "A set of helpers for testing Effects with vitest",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js",
+    "./internal/*": null,
+    "./index": null,
+    "./*/index": null
+  },
+  "files": [
+    "src/**/*.ts",
+    "dist/**/*.js",
+    "dist/**/*.js.map",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "ai-docs/**/*"
+  ],
+  "sideEffects": [],
+  "peerDependencies": {
+    "vitest": ">=5.0.0 <6.0.0",
+    "effect": "^4.0.2"
+  }
+}

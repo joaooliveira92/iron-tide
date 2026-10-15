@@ -1,0 +1,206 @@
+import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
+import { buildPrioritiesProjection } from "@bluewave/campaign-engine";
+import type { CommitMonthResponse } from "@bluewave/campaign-engine";
+import type { DomainEventEnvelope } from "@bluewave/events";
+import type { LedgerTransaction } from "@bluewave/phase-engine";
+import type {
+  MonthlyReportConstructionProgress,
+  MonthlyReportDiscovery,
+  MonthlyReportEntry,
+  MonthlyReportResearchProgress,
+  MonthlyReportShip,
+} from "../../../shared/campaign-command-contract.js";
+import { sumByCategory } from "./responseMappers.js";
+
+/**
+ * Pure derivations behind the stored monthly report (spec §16 "Report data
+ * model"). Each reads only the engine's own month output / pre-post snapshots
+ * and invents nothing, so a section can be unit-tested in isolation.
+ */
+
+/** The fleet fields the completed-ship derivation reads. */
+export interface FleetSnapshot {
+  readonly fleets: readonly {
+    readonly ships: readonly {
+      readonly id: string;
+      readonly name: string;
+      readonly isUnderConstruction: boolean;
+    }[];
+  }[];
+}
+
+/** The construction-project fields the newly-active derivation reads. */
+export interface ProjectSnapshot {
+  readonly constructionProjects: readonly { readonly id: string; readonly status: string }[];
+}
+
+/** Ships that left `isUnderConstruction` this month (pre→post fleet delta). */
+export function completedShips(
+  before: FleetSnapshot,
+  after: FleetSnapshot,
+): readonly MonthlyReportShip[] {
+  const preShipIds = new Set(before.fleets.flatMap((fleet) => fleet.ships).map((ship) => ship.id));
+  return after.fleets
+    .flatMap((fleet) => fleet.ships)
+    .filter((ship) => !ship.isUnderConstruction && !preShipIds.has(ship.id))
+    .map((ship) => ({ shipId: ship.id, name: ship.name }));
+}
+
+/** Projects whose status became `ACTIVE` this month (pre→post delta). */
+export function newlyActiveProjectIds(
+  before: ProjectSnapshot,
+  after: ProjectSnapshot,
+): readonly string[] {
+  const preStatus = new Map(
+    before.constructionProjects.map((project) => [project.id, project.status] as const),
+  );
+  return after.constructionProjects
+    .filter((project) => project.status === "ACTIVE" && preStatus.get(project.id) !== "ACTIVE")
+    .map((project) => project.id);
+}
+
+/** Per-project work progress from the real `ConstructionProgressed` events. */
+export function constructionProgressFromEvents(
+  events: readonly DomainEventEnvelope[],
+  nationId: string,
+): readonly MonthlyReportConstructionProgress[] {
+  return events.flatMap((envelope) => {
+    if (envelope.body.kind !== "ConstructionProgressed") return [];
+    const body = envelope.body;
+    if (body.nationId !== nationId) return [];
+    return [
+      {
+        projectId: body.projectId,
+        previousWork: Number(body.previousWork),
+        newWork: Number(body.newWork),
+      },
+    ];
+  });
+}
+
+/** Per-tech progress from the real `ResearchProgressed` events. */
+export function researchProgressFromEvents(
+  events: readonly DomainEventEnvelope[],
+  nationId: string,
+): readonly MonthlyReportResearchProgress[] {
+  return events.flatMap((envelope) => {
+    if (envelope.body.kind !== "ResearchProgressed") return [];
+    const body = envelope.body;
+    if (body.nationId !== nationId) return [];
+    return [
+      {
+        techId: body.techId,
+        previousPoints: Number(body.previousPoints),
+        newPoints: Number(body.newPoints),
+      },
+    ];
+  });
+}
+
+/** Discoveries from the real `TechnologyDiscovered` events. */
+export function discoveriesFromEvents(
+  events: readonly DomainEventEnvelope[],
+  nationId: string,
+): readonly MonthlyReportDiscovery[] {
+  return events.flatMap((envelope) => {
+    if (envelope.body.kind !== "TechnologyDiscovered") return [];
+    const body = envelope.body;
+    if (body.nationId !== nationId) return [];
+    return [{ techId: body.techId, researchFieldId: body.researchFieldId }];
+  });
+}
+
+/** The registered player's active (non-under-construction) ship total. */
+export function activeShipCount(nation: FleetSnapshot): number {
+  return nation.fleets.flatMap((fleet) => fleet.ships).filter((ship) => !ship.isUnderConstruction)
+    .length;
+}
+
+/**
+ * Builds the thin, real-fields-only derived view of one committed month (spec
+ * §16). Pure: it reads the engine's own month result and the pre/post
+ * snapshots, never mutates anything, and invents no field. The CUT sections
+ * are deliberately absent (see `MonthlyReportEntry`).
+ */
+export interface MonthlyReportEntryInput {
+  readonly response: CommitMonthResponse;
+  /** The resolved month (`record.month`). */
+  readonly month: { readonly year: number; readonly month: number };
+  /** The new month (`advanceMonth`). */
+  readonly nextMonth: { readonly year: number; readonly month: number };
+  /** The post-month snapshot revision (`nextTurnNumber`). */
+  readonly turn: number;
+  /** The month's save identity (`SaveMetadata.saveId`). */
+  readonly reportId: string;
+  /** Real persistence metadata (`SaveMetadata.timestamp`). */
+  readonly generatedAt: string;
+  readonly campaignId: string;
+  readonly playerNationId: string;
+  readonly playerNationBefore: NationState;
+  readonly playerNationAfter: NationState;
+  /** The post-month snapshot (`result.finalSnapshot`) — the priorities projection's basis. */
+  readonly postSnapshot: CampaignSnapshot;
+  /** The player's raw ledger transactions for the month. */
+  readonly ledgerEntries: readonly LedgerTransaction[];
+  /** The month's raw domain-event envelopes. */
+  readonly domainEvents: readonly DomainEventEnvelope[];
+}
+
+export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): MonthlyReportEntry {
+  const { response, playerNationId, playerNationBefore, playerNationAfter, postSnapshot } = input;
+
+  const researchExpense = sumByCategory(input.ledgerEntries, ["RESEARCH_EXPENDITURE"]);
+  const governmentAllocation = sumByCategory(input.ledgerEntries, ["NAVAL_APPROPRIATION"]);
+  const ships = completedShips(playerNationBefore, playerNationAfter);
+
+  return {
+    reportId: input.reportId,
+    campaignId: input.campaignId,
+    turn: input.turn,
+    period: { from: { ...input.month }, to: { ...input.nextMonth } },
+    generatedAt: input.generatedAt,
+    treasury: {
+      openingTreasury: response.report.openingTreasury,
+      closingTreasury: response.report.closingTreasury,
+      maintenanceCost: response.report.maintenanceCost,
+      constructionSpending: response.report.newConstructionSpending,
+      researchExpense,
+      governmentAllocation,
+      netChange: response.report.closingTreasury - response.report.openingTreasury,
+      ledgerRows: response.financialLedger.map((entry) => ({
+        id: entry.id,
+        description: entry.description,
+        phase: entry.phase,
+        amount: entry.amount,
+        runningBalance: entry.runningBalance,
+      })),
+    },
+    construction: {
+      projects: constructionProgressFromEvents(input.domainEvents, playerNationId),
+      completedShips: ships,
+      newlyActiveProjectIds: newlyActiveProjectIds(playerNationBefore, playerNationAfter),
+    },
+    research: {
+      progress: researchProgressFromEvents(input.domainEvents, playerNationId),
+      discoveries: discoveriesFromEvents(input.domainEvents, playerNationId),
+    },
+    fleet: {
+      additions: ships,
+      totalActiveShips: activeShipCount(playerNationAfter),
+    },
+    priorities: [...buildPrioritiesProjection(postSnapshot, playerNationId)],
+    // Plain copies so the stored sidecar never aliases an engine array.
+    battleOutcomes: response.closingSnapshot.battleOutcomes.map((outcome) => ({
+      battleId: outcome.battleId,
+      areaId: outcome.areaId,
+      attackerId: outcome.attackerId,
+      defenderId: outcome.defenderId,
+      winnerId: outcome.winnerId,
+      loserId: outcome.loserId,
+      warScoreDelta: outcome.warScoreDelta,
+      attackerLosses: [...outcome.attackerLosses],
+      defenderLosses: [...outcome.defenderLosses],
+      explanation: [...outcome.explanation],
+    })),
+  };
+}

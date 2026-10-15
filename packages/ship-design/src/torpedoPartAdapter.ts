@@ -1,0 +1,363 @@
+/**
+ * The P1 torpedo-launcher read path (ship-part-model SPM-R3, SPM-R7, SPM-R20; proposal
+ * §9.3–9.4). Additive and in memory only, like the gun slice (`gunPartAdapter.ts`).
+ *
+ * - Each `TORPEDO_TUBE` component becomes a **single-tube launcher** part that keeps the
+ *   legacy component id. Its bore is the structured diameter of the torpedo it loads
+ *   (`torpedoMount.torpedoModelId`), and its own `torpedo` slot requires
+ *   `diameterUmEqualsBore`.
+ * - Each national `componentVariants` entry over a launcher becomes a flattened **variant**
+ *   of that prototype: bore from the nation's structured `domesticTorpedoDiameterUm`,
+ *   quantities from the overlaid legacy component. A display label ("35 cm") is a name
+ *   only; no engineering value is read from it (I-25).
+ * - A variant whose bore differs from the torpedo it loads carries the `DQ-TORPEDO-001`
+ *   waiver on `diameterUmEqualsBore`, so the inherited relationship stays legal and is
+ *   reported, not fixed (§9.4).
+ * - A tube placement becomes one entry: `mountCount` = the legacy `tubes` (absent → 1;
+ *   zero, negative, fractional or non-finite fails, I-23), of the launcher the nation's
+ *   catalogue overlays today. Quantities are `PER_PART_UNIT` with no fixed term, and no
+ *   multi-tube launcher is ever inferred (T4). Crew, volume and deck footprint are read from
+ *   the component's per-tube formulas (`legacyComponentQuantities.ts`, ticket 05); a formula
+ *   with a count-independent term is reported, never turned into a fixed term.
+ *
+ * Component `obsoleteMonth` is exclusive, like `availableUntil`, so it copies unchanged.
+ */
+import type {
+  FlattenedPart,
+  LoadoutEntryData,
+  QuantityComponentData,
+} from "@bluewave/content-schema";
+import { compareCodePoints } from "@bluewave/deterministic";
+import type { ComponentDef } from "./component.js";
+import type { PlacementSpec } from "./compileShared.js";
+import { applyComponentOverrides } from "./componentVariants.js";
+import {
+  QUANTITY_STEM,
+  readComponentQuantities,
+  type QuantityReadIssue,
+} from "./legacyComponentQuantities.js";
+import type { NationNavalProfile } from "./nationProfile.js";
+import { compatibilitySlotId } from "./partCompatibility.js";
+import { quantityLines, type QuantityLine } from "./partQuantities.js";
+
+export type FlattenedLauncherPart = Extract<FlattenedPart, { readonly family: "torpedo_launcher" }>;
+export type LaunchType = FlattenedLauncherPart["spec"]["launchType"];
+
+const LAUNCH_TYPES: ReadonlySet<string> = new Set<LaunchType>([
+  "ABOVE_WATER_FIXED",
+  "ABOVE_WATER_TRAINABLE",
+  "UNDERWATER_FIXED",
+  "UNDERWATER_TRAINABLE",
+  "SUBMARINE_INTERNAL",
+]);
+
+function isLaunchType(value: string): value is LaunchType {
+  return LAUNCH_TYPES.has(value);
+}
+
+export const LAUNCHER_COMPONENT_FILE = "ship-building/components.yaml";
+
+export function navalProfileFile(nationId: string): string {
+  return `ship-building/naval-profiles/${nationId}.yaml`;
+}
+
+/** The one waiver code and constraint the read path writes (SPM-R7). */
+export const TORPEDO_WAIVER = { code: "DQ-TORPEDO-001", waives: "diameterUmEqualsBore" } as const;
+
+/** A launcher the adapter could not read, with the reason (never dropped silently). */
+export interface UnreadLauncher {
+  readonly id: string;
+  readonly code:
+    | "PART_READ_PATH_NO_TORPEDO_DIAMETER"
+    | "PART_READ_PATH_UNKNOWN_LAUNCH_TYPE"
+    /** A per-tube formula the part model cannot carry, or one with a fixed term (T2). */
+    | "PART_READ_PATH_UNREADABLE_QUANTITY";
+  readonly message: string;
+}
+
+/** The launcher index: base launchers, national variants and the read failures. */
+export interface LauncherPartModel {
+  /** Every launcher part (bases and variants), codepoint-ordered by id. */
+  readonly parts: readonly FlattenedLauncherPart[];
+  /** Variant id → its nation (variants only). */
+  readonly variantNation: ReadonlyMap<string, string>;
+  readonly unread: readonly UnreadLauncher[];
+}
+
+function launcherQuantities(def: ComponentDef): {
+  readonly quantities: QuantityComponentData[];
+  readonly issues: readonly string[];
+} {
+  const c = def.constants;
+  const out: QuantityComponentData[] = [];
+  const push = (id: string, kind: QuantityComponentData["kind"], value: number | undefined) => {
+    if (value !== undefined) out.push({ id, kind, value, basis: "PER_PART_UNIT" });
+  };
+  push("tube_mass", "massKg", c.tube_kg);
+  push(
+    "stowed_torpedo_mass",
+    "massKg",
+    c.torpedo_kg !== undefined && c.torpedoes_per_tube !== undefined
+      ? c.torpedo_kg * c.torpedoes_per_tube
+      : undefined,
+  );
+  push("tube_cost", "costMicro", c.cost_per_tube_micro);
+  const perTube = readComponentQuantities(def, {
+    fields: ["crew", "volumeLitre", "deckFootprintMm2"],
+    countParameter: "tubes",
+    perUnitBasis: "PER_PART_UNIT",
+    idFor: (field, term) =>
+      term === "fixed" ? `${QUANTITY_STEM[field]}_fixed` : `tube_${QUANTITY_STEM[field]}`,
+  });
+  const fixed = perTube.quantities.filter((q) => q.basis !== "PER_PART_UNIT");
+  return {
+    quantities: [...out, ...perTube.quantities.filter((q) => q.basis === "PER_PART_UNIT")],
+    issues: [
+      ...perTube.issues.map((i: QuantityReadIssue) => `${i.code}: ${i.message}`),
+      ...fixed.map((q) => `${q.id} = ${q.value} is a fixed term; launchers have none (T2).`),
+    ],
+  };
+}
+
+/**
+ * Build the launcher parts from today's content. `torpedoDiameterUm` reads the structured
+ * diameter of a loaded torpedo model (today the combat torpedo catalogue); a launcher whose
+ * torpedo has none is reported in `unread` instead of guessed.
+ */
+export function buildLauncherPartModel(input: {
+  readonly components: readonly ComponentDef[];
+  readonly profiles: readonly NationNavalProfile[];
+  readonly torpedoDiameterUm: (torpedoModelId: string) => number | undefined;
+}): LauncherPartModel {
+  const parts: FlattenedLauncherPart[] = [];
+  const unread: UnreadLauncher[] = [];
+  const bases = new Map<
+    string,
+    { def: ComponentDef; part: FlattenedLauncherPart; loads: string; loadsDiameterUm: number }
+  >();
+  for (const def of input.components) {
+    const mount = def.torpedoMount;
+    if (def.category !== "TORPEDO_TUBE" || mount === undefined) continue;
+    if (!isLaunchType(mount.mountType)) {
+      unread.push({
+        id: def.id,
+        code: "PART_READ_PATH_UNKNOWN_LAUNCH_TYPE",
+        message: `Launcher '${def.id}' has launch type '${mount.mountType}', outside the closed set.`,
+      });
+      continue;
+    }
+    const loadsDiameterUm = input.torpedoDiameterUm(mount.torpedoModelId);
+    if (loadsDiameterUm === undefined) {
+      unread.push({
+        id: def.id,
+        code: "PART_READ_PATH_NO_TORPEDO_DIAMETER",
+        message: `Launcher '${def.id}' loads '${mount.torpedoModelId}', which has no structured diameter.`,
+      });
+      continue;
+    }
+    const read = launcherQuantities(def);
+    if (read.issues.length > 0) {
+      unread.push({
+        id: def.id,
+        code: "PART_READ_PATH_UNREADABLE_QUANTITY",
+        message: `Launcher '${def.id}': ${read.issues.join(" ")}`,
+      });
+      continue;
+    }
+    const part: FlattenedLauncherPart = {
+      id: def.id,
+      family: "torpedo_launcher",
+      provides: "torpedo_launcher",
+      name: def.displayName,
+      lifecycle: {
+        availableFrom: def.introduction.fromMonth,
+        availableUntil: def.introduction.obsoleteMonth,
+        ...(def.requires.length > 0 ? { requires: [...def.requires] } : {}),
+      },
+      slots: [{ id: "torpedo", accepts: ["torpedo"], constraints: { diameterUmEqualsBore: true } }],
+      spec: { launchType: mount.mountType, boreDiameterUm: loadsDiameterUm },
+      quantities: read.quantities,
+      revisions: [],
+      origin: { sourceFile: LAUNCHER_COMPONENT_FILE },
+      // Components carry no structured provenance; P2's codemod must author it (ticket 11).
+      provenance: {
+        sourceStatus: "PLACEHOLDER",
+        confidence: "LOW",
+        kind: "game_conversion",
+        sources: [],
+        note: `Read from legacy component '${def.id}', which has no structured provenance.`,
+      },
+    };
+    bases.set(def.id, { def, part, loads: mount.torpedoModelId, loadsDiameterUm });
+    parts.push(part);
+  }
+
+  const variantNation = new Map<string, string>();
+  const profiles = [...input.profiles].sort((a, b) => compareCodePoints(a.nationId, b.nationId));
+  for (const profile of profiles) {
+    for (const variant of profile.componentVariants) {
+      const base = bases.get(variant.familyId);
+      if (base === undefined) continue;
+      const boreDiameterUm = profile.hardCapabilities.domesticTorpedoDiameterUm;
+      const read = launcherQuantities(applyComponentOverrides(base.def, variant.overrides));
+      if (read.issues.length > 0) {
+        unread.push({
+          id: variant.id,
+          code: "PART_READ_PATH_UNREADABLE_QUANTITY",
+          message: `Launcher variant '${variant.id}': ${read.issues.join(" ")}`,
+        });
+        continue;
+      }
+      const { quantities } = read;
+      const inherited = quantities
+        .filter((q) => base.part.quantities.some((b) => b.id === q.id && b.value === q.value))
+        .map((q) => q.id);
+      const waived = boreDiameterUm !== base.loadsDiameterUm;
+      parts.push({
+        ...base.part,
+        id: variant.id,
+        name: variant.designation,
+        nation: profile.nationId,
+        spec: { ...base.part.spec, boreDiameterUm },
+        quantities,
+        ...(waived
+          ? {
+              legacyExceptions: [
+                {
+                  ...TORPEDO_WAIVER,
+                  forPart: base.loads,
+                  note:
+                    `Structured national diameter ${boreDiameterUm} um differs from the ` +
+                    `${base.loadsDiameterUm} um '${base.loads}' it loads; preserved from legacy content.`,
+                },
+              ],
+            }
+          : {}),
+        origin: {
+          sourceFile: navalProfileFile(profile.nationId),
+          prototype: {
+            id: base.part.id,
+            sourceFile: LAUNCHER_COMPONENT_FILE,
+            inheritedSpec: ["launchType"],
+            inheritedQuantities: inherited,
+          },
+        },
+        provenance: {
+          ...variant.provenance,
+          sources: variant.provenance.sources.map((s) => ({ ...s })),
+        },
+      });
+      variantNation.set(variant.id, profile.nationId);
+    }
+  }
+  return {
+    parts: parts.sort((a, b) => compareCodePoints(a.id, b.id)),
+    variantNation,
+    unread: unread.sort((a, b) => compareCodePoints(a.id, b.id)),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Tube placements → loadout entries (§9.3)
+// ---------------------------------------------------------------------------
+
+/** One tube placement rendered in the new model. */
+export interface TubePlacementTranslation {
+  readonly designId: string;
+  readonly instanceId: string;
+  readonly nationId: string;
+  /** The legacy component (the base launcher's id). */
+  readonly componentId: string;
+  /** The legacy `tubes`, or `null` when the placement leaves it absent. */
+  readonly legacyTubes: number | null;
+  /** True when an absent `tubes` translated to the documented default of 1 (T1). */
+  readonly defaulted: boolean;
+  readonly mountCount: number;
+  readonly launcherPart: FlattenedLauncherPart;
+  /** The placement's one loadout entry (no fixed term, no inferred multi-tube launcher). */
+  readonly entry: LoadoutEntryData;
+  readonly quantities: readonly QuantityLine[];
+}
+
+/** A tube placement that cannot be translated, with its reason. */
+export interface UntranslatedTubePlacement {
+  readonly designId: string;
+  readonly instanceId: string;
+  readonly nationId: string;
+  readonly componentId: string;
+  readonly code: "PART_READ_PATH_INVALID_TUBE_COUNT" | "PART_READ_PATH_NO_LAUNCHER";
+  readonly message: string;
+}
+
+export type TubePlacementResult =
+  | { readonly translation: TubePlacementTranslation; readonly untranslated: null }
+  | { readonly translation: null; readonly untranslated: UntranslatedTubePlacement };
+
+/**
+ * Translate one tube placement (§9.3). The launcher is the one the nation's catalogue
+ * overlays today (`appliedModels`, from `catalogueForNation`), else the base launcher.
+ */
+export function translateTubePlacement(input: {
+  readonly designId: string;
+  readonly placement: PlacementSpec;
+  readonly nationId: string;
+  readonly model: LauncherPartModel;
+  readonly appliedModels: Readonly<Record<string, string>>;
+}): TubePlacementResult {
+  const { placement } = input;
+  const where = {
+    designId: input.designId,
+    instanceId: placement.instanceId,
+    nationId: input.nationId,
+    componentId: placement.componentId,
+  };
+  const fail = (code: UntranslatedTubePlacement["code"], message: string): TubePlacementResult => ({
+    translation: null,
+    untranslated: { ...where, code, message },
+  });
+
+  const tubes = placement.params?.tubes;
+  if (tubes !== undefined && !(Number.isInteger(tubes) && tubes > 0)) {
+    return fail(
+      "PART_READ_PATH_INVALID_TUBE_COUNT",
+      `tubes must be a positive integer; '${String(tubes)}' fails translation (I-23).`,
+    );
+  }
+  const applied = input.appliedModels[placement.componentId];
+  const variantId =
+    applied !== undefined && input.model.variantNation.get(applied) === input.nationId
+      ? applied
+      : undefined;
+  const partId = variantId ?? placement.componentId;
+  const launcherPart = input.model.parts.find((p) => p.id === partId);
+  if (launcherPart === undefined) {
+    return fail("PART_READ_PATH_NO_LAUNCHER", `No launcher part '${partId}' was read.`);
+  }
+  const mountCount = tubes ?? 1;
+  return {
+    untranslated: null,
+    translation: {
+      ...where,
+      legacyTubes: tubes ?? null,
+      defaulted: tubes === undefined,
+      mountCount,
+      launcherPart,
+      entry: {
+        id: placement.instanceId,
+        slot: compatibilitySlotId(placement.zoneId, "torpedo_launcher"),
+        part: launcherPart.id,
+        mountCount,
+        stationPermille: placement.stationPermille,
+        ...(placement.side !== undefined ? { side: placement.side } : {}),
+        ...(placement.magazineRef !== undefined ? { magazineEntry: placement.magazineRef } : {}),
+      },
+      quantities: quantityLines(
+        launcherPart.quantities,
+        "launcher",
+        launcherPart.id,
+        mountCount,
+        1,
+      ),
+    },
+  };
+}

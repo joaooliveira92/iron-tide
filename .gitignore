@@ -1,0 +1,50 @@
+node_modules/
+dist/
+out/
+coverage/
+scout/
+codefetch/
+.vite-hooks/
+release/
+test-results/
+playwright-report/
+*.sqlite
+*.sqlite.backup-*
+*.tgz
+.dev-data/
+
+# Generated content artifacts (rebuilt by `pnpm content:build`; never a source
+# of truth — DESIGN-05). See docs/adr for the artifact ADR.
+content/generated/
+
+.turbo
+apps/desktop/dist-electron/
+# tsc -b emits alongside the sources it compiles
+*.tsbuildinfo
+apps/*/src/**/*.js
+apps/*/src/**/*.js.map
+apps/*/src/**/*.d.ts
+apps/*/src/**/*.d.ts.map
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
+
+
+
+*.log
+.DS_Store
+.pnpm-store/
+.claude/
+.muse/
+
+# Vendored Effect artifacts are committed verbatim (V1 vendor model) — the
+# global `dist/` rule above must not swallow their published `dist/`.
+# See scripts/vendor-effect-sync.mjs and vendor/effect/UPSTREAM.md.
+!vendor/effect/dist/
+!vendor/effect/dist/**
+!vendor/effect-vitest/dist/
+!vendor/effect-vitest/dist/**
+
+# Session handoff prompts are working notes, not tracked specs/tickets.
+.scratch/handoff/

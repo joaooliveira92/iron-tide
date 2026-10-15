@@ -1,0 +1,1623 @@
+- id: uk
+  tag: GBR
+  name: United Kingdom
+  displayNameKey: nation.uk
+  isPlayable: true
+  slot:
+    id: uk
+    order: 1
+    participation: active
+  presentation:
+    colorBg: "#C8102E"
+    colorFg: "#FFFFFF"
+  identity:
+    oneSentence: "The United Kingdom in January 1880 is the mature maritime hegemon of the world: rich, experienced, globally based, politically navalist, logistically sophisticated, and strategically overextended, with its empire, economy, and prestige all dependent on the Royal Navy’s continued command of the sea."
+    fullIdentity: The world’s dominant maritime, imperial, commercial, and financial power. The 1889 Naval Defence Act formalized the two-power standard vs France and Russia.
+    strategicProblem: Must be strong everywhere, but decisive strength requires concentration. Must defend British Isles, Channel/North Sea, Atlantic commerce, Mediterranean, route to India via Gibraltar/Malta/Suez/Aden, Indian Ocean, East Asia, Caribbean, coaling stations. Powerful but overstretched.
+  regime:
+    type: monarchy
+    politicalSystem: constitutional_monarchy
+    headOfState: Queen Victoria
+    headOfGovernment: William E. Gladstone
+    leaderTitle: Prime Minister
+    navalPolicyActors:
+      - Parliament
+      - Admiralty
+      - Treasury
+      - Public Opinion
+      - Press
+      - Navalist Scares
+      - Colonial Lobbies
+    governmentModifiers:
+      - parliamentary_dominance
+    navyMinister:
+      name: W.H. Smith
+      title: First Lord of the Admiralty
+      traits: Competent administrator, not a naval specialist; political appointee
+    stabilityProfile:
+      level: high
+      factors:
+        - Parliamentary government
+        - Navalist pressure
+        - Emergency construction on perceived decline
+    description: Constitutional monarchy with parliamentary government. Royal Navy is politically central.
+  strategicObjectives:
+    primary: Trade Protection
+    secondary: Naval Parity
+  baseResources:
+    gdpTier: great_power
+    gdpDescription: "Largest in Europe, #1 globally"
+    population: ~35M (UK proper); ~300M (empire)
+    industrialization: world_leading
+    industrializationDescription: Most industrialized economy globally
+  navalAppropriation:
+    budgetLevel: moderate
+    justification: The Royal Navy is uncontested; peacetime economy has reduced pressure for naval expenditure. The Two-Power Standard is maintained without difficulty against current rivals (France and Russia are the nominal second and third navies).
+  economy:
+    description: Mature industrial and financial power.
+    character: mature industrial and financial power
+    strengths:
+      - World-class shipyards
+      - Advanced marine engineering
+      - High-quality naval coal
+      - Global finance
+      - Merchant shipping
+      - Naval dockyards
+    weaknesses:
+      - Cost of dominance
+      - Conservatism
+      - Global obligations
+    industrialBase: mature_global
+  navalInstitution:
+    description: The senior service. Globally experienced and logistically sophisticated.
+    character:
+      - professional
+      - globally_experienced
+      - logistically_sophisticated
+      - institutionally_conservative
+      - prestige_conscious
+    seniority: senior_service
+    cruiserRole: "Working ships of empire: trade protectors, scouts, colonial enforcers, station vessels."
+    formativeExperience: Two-power standard psychology
+  doctrine:
+    summary: Command of the sea, blockade, trade protection, decisive battle fleet superiority, cruiser coverage, colonial station presence, global logistics, deterrence through visible superiority.
+    schools:
+      - command_of_the_sea
+      - blockade
+      - trade_protection
+      - decisive_battle
+      - cruiser_coverage
+      - colonial_station_presence
+  shipDesign:
+    summary: Seaworthiness, endurance, reliability, maintainability, balanced armament and armor, operational range, standardized classes, large cruiser forces.
+    principles:
+      - seaworthiness
+      - endurance
+      - reliability
+      - balanced_armament_armor
+      - standardization
+    favoredTypes:
+      - battleship
+      - protected_cruiser
+      - armored_cruiser
+    exemplarClass: Royal Sovereign class
+  military:
+    description: Small army (Continental Abstention trait — avoids European land wars). Royal Navy is the primary service. Army focused on colonial garrisons and imperial policing.
+    size: peacetime ~150,000 regulars; ~70,000 in India
+    character:
+      - colonial_garrison
+      - imperial_policing
+    armyNavyBalance: navy_prestige
+  ai:
+    archetype: status_quo_maritime_hegemon
+    behavior:
+      - protect_home_waters
+      - maintain_capital_ship_superiority
+      - preserve_cruiser_coverage
+      - defend_routes_and_coaling_stations
+      - avoid_continental_entanglement
+    triggers:
+      - naval_scare
+      - threat_to_suez
+  navalPurpose: sustain_global_empire
+  coreAnxiety: loss_of_sea_control_overstretch
+  gameplayFeel: manage_supremacy
+  historicalAssumptions:
+    - Begins as naval benchmark
+    - Two-power standard is policy and psychology
+    - Coal logistics central
+- id: germany
+  tag: GER
+  name: German Empire
+  displayNameKey: nation.germany
+  isPlayable: true
+  slot:
+    id: germany
+    order: 2
+    participation: active
+  presentation:
+    colorBg: "#000000"
+    colorFg: "#FFCC00"
+  identity:
+    oneSentence: "The German Empire in January 1880 is a rising continental-industrial power at a strategic crossroads: still army-dominated and diplomatically shaped by Bismarckian restraint, but increasingly tempted by naval expansion, colonial prestige, and the pursuit of world-power status through a concentrated, technically sophisticated fleet."
+    fullIdentity: Young, powerful, rapidly industrializing continental empire. Not yet Britain’s inevitable naval rival. Army-dominated.
+    strategicProblem: Every mark spent on navy competes with army, but without navy cannot act as world power. Vulnerable North Sea/Baltic access, limited overseas infrastructure. Aspirational before existential.
+  regime:
+    type: monarchy
+    politicalSystem: federal_constitutional_monarchy
+    headOfState: Kaiser Wilhelm I
+    headOfGovernment: Otto von Bismarck
+    leaderTitle: Chancellor
+    navalPolicyActors:
+      - Kaiser
+      - Chancellor
+      - Reichstag
+      - Army Interests
+      - Industrial Lobbying
+      - Nationalist Pressure
+    governmentModifiers:
+      - federal_structure
+      - military_influence
+    navyMinister:
+      name: Albrecht von Stosch
+      title: Chief of the Imperial Admiralty
+      traits: Army general serving as navy chief; reflects navy's subordination to army; competent administrator
+    stabilityProfile:
+      level: high
+      factors:
+        - Prussian dominance
+        - Bismarckian restraint until 1890
+    description: Imperial federal monarchy dominated by Prussia.
+  strategicObjectives:
+    primary: Continental Army Focus
+    secondary: Colonial Empire
+  baseResources:
+    gdpTier: great_power
+    gdpDescription: Second in Europe after UK; growing rapidly
+    population: ~45M
+    industrialization: industrial
+    industrializationDescription: Rapidly approaching Great Power tier; world leader in chemicals and electrical
+  navalAppropriation:
+    budgetLevel: low
+    justification: "The army is the priority, with guaranteed funding through the septennial military budget (next renewal 1881). The navy is funded as a secondary concern. Bismarck sees no need for a large navy and is skeptical of navalist arguments. The 1880 navy budget reflects the prevailing view: Germany is a land power, and the navy exists for coastal defense."
+  economy:
+    description: Fast-rising industrial power, more dynamic and technically focused than Britain.
+    character: fast-rising industrial power
+    strengths:
+      - Steel
+      - Coal
+      - Chemicals
+      - Engineering
+      - Optics
+      - Electrical
+    weaknesses:
+      - Limited overseas infrastructure
+      - Army-navy competition
+    industrialBase: rising_dynamic
+  navalInstitution:
+    description: Young, ambitious, technically serious, junior to army.
+    character:
+      - ambitious
+      - technically_serious
+      - methodical
+      - prestige_conscious
+      - junior_to_army
+    seniority: junior_to_army
+    formativeExperience: Grew from Prussian and North German forces
+  doctrine:
+    summary: "Coastal and regional defense: North Sea, Baltic, commerce protection near Europe, deterrence. Future concentrated battle fleet (Tirpitz risk theory as evolution)."
+    schools:
+      - north_sea_defense
+      - baltic_security
+      - coastal_defense
+      - deterrence
+  shipDesign:
+    summary: Strong protection, internal subdivision, machinery quality, tactical cohesion, shorter radius than British, suitable for North Sea/Baltic.
+    principles:
+      - strong_protection
+      - internal_subdivision
+      - machinery_quality
+      - tactical_cohesion
+    favoredTypes:
+      - battleship
+      - coastal_defense_ship
+      - protected_cruiser
+  military:
+    description: Finest army in Europe; General Staff is the premier institution. Army dominates military spending and strategic culture. Navy is a secondary concern.
+    size: peacetime ~420,000; mobilized ~1.2M
+    character:
+      - continental_army
+      - general_staff
+      - army_dominant
+    armyNavyBalance: army_dominant
+  ai:
+    archetype: restless_industrial_challenger
+    behavior:
+      - avoid_encirclement
+      - modernize_rapidly
+      - seek_prestige
+      - build_concentrated_power_if_enabled
+  navalPurpose: gain_world_power_status
+  coreAnxiety: encirclement_insufficient_recognition
+  gameplayFeel: build_concentrated_relevance
+  historicalAssumptions:
+    - Not yet Britain’s scripted enemy
+    - Bismarckian restraint matters
+    - Naval power latent
+- id: usa
+  tag: USA
+  name: United States
+  displayNameKey: nation.usa
+  isPlayable: true
+  slot:
+    id: usa
+    order: 3
+    participation: active
+  presentation:
+    colorBg: "#002868"
+    colorFg: "#BF0A30"
+  identity:
+    oneSentence: The United States of America in January 1880 is a secure continental republic with enormous industrial potential and limited overseas commitments, beginning to transform its neglected navy into a modern instrument of hemispheric defense, commercial expansion, and eventual blue-water great-power status.
+    fullIdentity: Secure continental republic. Navy transforming from post-Civil War neglect toward New Navy. Congress supported modernization from 1881.
+    strategicProblem: Has resources to become naval giant, but must decide overseas power is compatible with republican identity. Two ocean frontiers, no canal, cannot easily concentrate.
+  regime:
+    type: republic
+    politicalSystem: presidential_republic
+    headOfState: President Rutherford B. Hayes
+    headOfGovernment: President Rutherford B. Hayes
+    leaderTitle: President
+    navalPolicyActors:
+      - Congress
+      - President
+      - Public Opinion
+      - Newspapers
+      - Naval Reformers
+      - Business Expansionists
+    governmentModifiers:
+      - federal_structure
+    navyMinister:
+      name: Richard W. Thompson
+      title: Secretary of the Navy
+      traits: Political appointee, no naval experience, former Congressman
+    stabilityProfile:
+      level: high
+      factors:
+        - Federal republic
+        - Can underfund in peace then mobilize dramatically
+    description: Federal republic. Mahan and Naval War College as intellectual catalyst.
+  strategicObjectives:
+    primary: Continental Consolidation
+    secondary: Economic Growth
+  baseResources:
+    gdpTier: great_power
+    gdpDescription: "#2 globally, fastest growth rate among great powers"
+    population: ~50 million
+    industrialization: world_leading
+    industrializationDescription: Second-largest industrial economy; will overtake Britain within 10-15 years
+  navalAppropriation:
+    budgetLevel: very_low
+    justification: The US faces no perceived naval threat. Congress sees no reason to spend on a modern navy. The navy's primary function (coastal defense) is theoretically met by the existing obsolete fleet and coastal fortifications. The first modern naval appropriations (the ABCD ships) are three years in the future.
+  economy:
+    description: Industrial giant in formation. Capacity ahead of doctrine.
+    character: industrial giant in formation
+    strengths:
+      - Steel
+      - Coal
+      - Railroads
+      - Finance
+      - Scalable production
+    weaknesses:
+      - Limited overseas bases
+      - Doctrine lag
+    industrialBase: latent_giant
+  navalInstitution:
+    description: Intellectually ambitious but materially incomplete. Britain has lived sea power, America is theorizing.
+    character:
+      - intellectually_ambitious
+      - materially_incomplete
+      - mahanian
+    seniority: junior_to_army
+    formativeExperience: Post-Civil War neglect to New Navy
+  doctrine:
+    summary: Transitioning from coastal defense toward Mahanian sea control, concentrated battle fleets, overseas bases, Caribbean security, canal strategy.
+    schools:
+      - coastal_defense
+      - mahanian_sea_control
+      - concentrated_battle_fleet
+      - caribbean_security
+    isFragmented: true
+  shipDesign:
+    summary: Evolve from coastal defense and protected cruisers toward blue-water battleships, larger cruisers, two-ocean endurance.
+    principles:
+      - industrial_scale
+      - evolving_endurance
+    favoredTypes:
+      - protected_cruiser
+      - armored_cruiser
+      - battleship
+      - auxiliary
+  military:
+    description: Tiny army focused on Indian Wars, no expeditionary capability. Navy is in post-Civil War neglect transitioning toward New Navy.
+    size: ~25,000 men
+    character:
+      - frontier_constabulary
+      - civil_war_legacy
+    armyNavyBalance: army_heavy
+  ai:
+    archetype: cautious_industrial_giant_awakening
+    behavior:
+      - slow_starting
+      - crisis_reactive
+      - hemispheric
+      - industrially_powerful
+      - prone_to_two_ocean_problems
+  navalPurpose: defend_hemisphere_expand
+  coreAnxiety: foreign_interference_americas
+  gameplayFeel: awaken_latent_power
+  historicalAssumptions:
+    - Not yet finished naval power
+    - Mahan is catalyst
+    - Hemispheric before global
+- id: japan
+  tag: JPN
+  name: Empire of Japan
+  displayNameKey: nation.japan
+  isPlayable: true
+  slot:
+    id: japan
+    order: 4
+    participation: active
+  presentation:
+    colorBg: "#FFFFFF"
+    colorFg: "#BC002D"
+  identity:
+    oneSentence: "The Empire of Japan in January 1880 is an urgent Meiji island modernizer: politically centralized, strategically insecure, resource-constrained, and determined to build a modern navy fast enough to secure Korea, resist Qing and Russian pressure, and force recognition as a sovereign great power in an imperial world."
+    fullIdentity: Rapidly modernizing island state in Meiji era. Modernized via foreign study, imported ships, officer training.
+    strategicProblem: Needs modern navy before it has industrial base. Island geography, urgent interest in Korea, fear of Qing/Russian/Western pressure.
+  regime:
+    type: monarchy
+    politicalSystem: meiji_constitutional_monarchy
+    headOfState: Emperor Meiji
+    headOfGovernment: Meiji Oligarchs
+    leaderTitle: Emperor
+    navalPolicyActors:
+      - Imperial Authority
+      - Meiji Oligarchs
+      - Ministries
+      - Army-Navy Rivalry
+      - Emerging Diet
+    governmentModifiers:
+      - autocratic_executive
+      - rapid_modernisation
+      - meiji_consensus
+      - samurai_discontent
+    navyMinister:
+      name: Kawamura Sumiyoshi (Jan–Apr) / Enomoto Takeaki (Apr onward)
+      title: Minister of the Navy
+      traits: Enomoto is Japan's most experienced naval officer; former Tokugawa retainer with political baggage
+    stabilityProfile:
+      level: high
+      factors:
+        - Politically centralized
+        - Elite commitment
+    description: Entering Meiji constitutional order. Diet created while preserving imperial/oligarchic authority.
+  strategicObjectives:
+    primary: Ensure national survival against European colonisation by building a modern navy and securing control of Korea
+    secondary: Revise unequal treaties and develop domestic heavy industry to reduce import dependence
+  baseResources:
+    gdpTier: minor_power
+    gdpDescription: ~GBP 1.8 billion (est. 1880, comparable to Italy or Austria-Hungary)
+    population: ~35 million
+    industrialization: pre_industrial
+    industrializationDescription: Pre-industrial transitioning to light industry; <1% heavy industry
+  navalAppropriation:
+    budgetLevel: very_low
+    justification: Severely constrained; <5% of national budget (est.). Competing with army, railways, and industrial subsidies for limited fiscal capacity. Inflation eroding real spending power. Most naval spending goes to foreign purchases (ships, guns, machinery).
+  economy:
+    description: Industrializing quickly but constrained. Advantage is learning speed, not mass.
+    character: industrializing quickly but constrained
+    strengths:
+      - Technical education
+      - State-directed modernization
+      - Learning speed
+    weaknesses:
+      - Limited heavy industry
+      - Resource-constrained
+      - Relies on imported ships
+    industrialBase: constrained_regional
+  navalInstitution:
+    description: Young but purposeful. Adapts British professionalism and French Jeune École to East Asia.
+    character:
+      - disciplined
+      - ambitious
+      - adaptive
+      - regionally_focused
+    seniority: prestige_service
+  doctrine:
+    summary: Concentrated regional superiority, Korea Strait security, Yellow Sea operations, troop transport protection, torpedo equalizers, decisive local campaigns.
+    schools:
+      - concentrated_regional_superiority
+      - korea_strait_security
+      - yellow_sea_operations
+      - torpedo_equalizer
+  shipDesign:
+    summary: Protected cruisers, torpedo craft, efficient combatants, imported advanced vessels, high crew training. Battleships aspirational in 1880.
+    principles:
+      - efficiency
+      - imported_advanced_vessels
+      - high_crew_training
+    favoredTypes:
+      - protected_cruiser
+      - torpedo_craft
+  military:
+    description: Prussian-model conscript army, modernizing rapidly. Navy is prestige service with British doctrine. Army-navy rivalry is structural.
+    size: peacetime ~40,000; mobilized ~120,000
+    character:
+      - prussian_model
+      - conscript
+      - modernizing
+    armyNavyBalance: balanced
+  ai:
+    archetype: urgent_regional_modernizer
+    behavior:
+      - prioritize_korea
+      - modernize_fast
+      - avoid_premature_war_with_west
+      - concentrate_limited_forces
+  navalPurpose: secure_sovereignty_ascent
+  coreAnxiety: domination_before_ready
+  gameplayFeel: modernize_under_pressure
+  historicalAssumptions:
+    - Not yet great naval power
+    - Korea central
+    - Learns faster than builds
+- id: france
+  tag: FRA
+  name: French Republic
+  displayNameKey: nation.france
+  isPlayable: true
+  slot:
+    id: france
+    order: 5
+    participation: active
+  presentation:
+    colorBg: "#002395"
+    colorFg: "#FFFFFF"
+  identity:
+    oneSentence: The French Republic in January 1880 is a politically unstable but resilient great power, wounded by defeat against Germany, active in colonial expansion, wary of British maritime supremacy, and unusually open to disruptive naval doctrines that promise to restore French influence without simply copying the Royal Navy.
+    fullIdentity: Major naval and colonial power wounded by Franco-Prussian War. Open to Jeune École (torpedo craft, commerce raiding).
+    strategicProblem: Needs army vs Germany, but needs navy to remain world power. Pulled between revanche, rivalry with Britain, colonial expansion, Jeune École vs battle fleet.
+  regime:
+    type: republic
+    politicalSystem: parliamentary_republic
+    headOfState: President Jules Grévy
+    headOfGovernment: President Jules Grévy
+    leaderTitle: President
+    navalPolicyActors:
+      - Cabinet Instability
+      - Parliamentary Budget Fights
+      - Nationalist Pressure
+      - Colonial Lobbies
+      - Jeune École Reformers
+    governmentModifiers:
+      - fragmented_legislature
+      - colonial_lobby_active
+      - ministerial_instability
+    navyMinister:
+      name: Jean-Marie Jauréguiberry
+      title: Minister of Marine
+      traits: Vice Admiral; reformer; sympathetic to Jeune Ecole while maintaining traditionalist commitments; serves third non-consecutive term
+    stabilityProfile:
+      level: unstable
+      factors:
+        - Frequent factional instability
+        - Boulangist pressures
+    description: Parliamentary republic with frequent instability.
+  strategicObjectives:
+    primary: Escalate Diplomatic Standing
+    secondary: Colonial Empire
+  baseResources:
+    gdpTier: great_power
+    gdpDescription: Fourth in Europe after Britain, Germany, Russia by total output; second by per capita wealth in some measures
+    population: ~37.5 million
+    industrialization: industrial
+    industrializationDescription: Diversified but behind Britain and Germany; strong in textiles, armaments, luxury goods; weak in coal
+  navalAppropriation:
+    budgetLevel: moderate
+    justification: France maintains the world's second-largest navy but has not committed to a major building program. The naval budget is caught between army demands for fortifications against Germany, Jeune Ecole arguments that battleships are obsolete, and traditionalist demands for a battle fleet competitive with Britain. The result is a moderate but unstable budget.
+  economy:
+    description: Industrially sophisticated, financially capable, technologically creative. Weakness is continuity.
+    character: industrially sophisticated but uneven
+    strengths:
+      - Sophisticated industry
+      - Financial capability
+      - Technological creativity
+    weaknesses:
+      - Uneven policy continuity
+    industrialBase: uneven
+  navalInstitution:
+    description: Great navy in search of doctrine. Divided among traditionalists, colonial advocates, torpedo enthusiasts.
+    character:
+      - divided
+      - experimental
+      - innovative
+      - unstable
+    seniority: prestige_service
+  doctrine:
+    summary: "Multiple competing: traditional battle fleet, Jeune École, guerre de course, torpedo coastal defense, colonial cruisers, Mediterranean strategy. Brilliant but unstable."
+    schools:
+      - traditional_battle_fleet
+      - jeune_ecole
+      - guerre_de_course
+      - torpedo_coastal_defense
+      - colonial_cruiser_operations
+    isFragmented: true
+  shipDesign:
+    summary: Experimentation, speed, unusual layouts, torpedoes, protected/armored cruisers, less standardization than Britain/Germany.
+    principles:
+      - experimentation
+      - speed
+      - unusual_layouts
+      - torpedo_emphasis
+    favoredTypes:
+      - protected_cruiser
+      - armored_cruiser
+      - torpedo_craft
+  military:
+    description: Continental army with revanchist focus after Franco-Prussian defeat. Primary service is the army; navy is a prestige service caught between doctrines.
+    size: peacetime ~500,000; mobilized ~1.5M
+    character:
+      - continental_army
+      - revanchist
+      - conscript
+    armyNavyBalance: army_heavy
+  ai:
+    archetype: restless_revanchist_innovator
+    behavior:
+      - anti_german
+      - wary_of_britain
+      - colonial
+      - experimental
+      - prone_to_doctrinal_swings
+  navalPurpose: restore_status_offset_rivals
+  coreAnxiety: germany_land_britain_sea
+  gameplayFeel: forge_coherence
+  historicalAssumptions:
+    - Major power not hegemon
+    - Franco-Prussian defeat defines strategy
+    - Jeune École influential not total
+- id: italy
+  tag: ITA
+  name: Kingdom of Italy
+  displayNameKey: nation.italy
+  isPlayable: true
+  slot:
+    id: italy
+    order: 6
+    participation: active
+  presentation:
+    colorBg: "#009246"
+    colorFg: "#FFFFFF"
+  identity:
+    oneSentence: "The Kingdom of Italy in January 1880 is a newly unified, prestige-hungry Mediterranean monarchy: exposed by geography, constrained by industry and finance, rivalrous with France, uneasy with Austria-Hungary, and determined to use bold naval design and selective colonial ambition to prove itself a true great power."
+    fullIdentity: Young unified monarchy. Regia Marina formed 1861 from pre-unification navies.
+    strategicProblem: Needs navy for great-power status, but economic base struggles to sustain fleet geography demands. Must protect long coastlines, islands, Adriatic, colonial footholds.
+  regime:
+    type: monarchy
+    politicalSystem: constitutional_monarchy
+    headOfState: King Umberto I
+    headOfGovernment: Benedetto Cairoli
+    leaderTitle: King
+    navalPolicyActors:
+      - Parliamentary Politics
+      - Regional Divisions
+      - Fiscal Limits
+      - Prestige Ambitions
+    governmentModifiers:
+      - parliamentary_dominance
+      - regional_divisions
+    navyMinister:
+      name: Ferdinand Acton
+      title: Minister of Marine
+      traits: Serving admiral; gives navy independent cabinet voice; competent administrator driving naval expansion
+    stabilityProfile:
+      level: brittle
+      factors:
+        - Regional divisions
+        - Fiscal limits
+    description: Constitutional monarchy. Navy symbolizes national unity.
+  strategicObjectives:
+    primary: Mediterranean Naval Challenge
+    secondary: Colonial Ambition
+  baseResources:
+    gdpTier: great_power
+    gdpDescription: Smallest among great powers; well below UK, France, Germany; comparable to Austria-Hungary
+    population: ~28M
+    industrialization: developing_industrial
+    industrializationDescription: North industrializing rapidly; South pre-industrial; overall far behind the major powers
+  navalAppropriation:
+    budgetLevel: moderate
+    justification: The Regia Marina is building some of the world's most advanced battleships (Duilio class completing 1880; Italia class under construction). This ambition strains the budget. The army also requires modernization (German model). Both services are underfunded relative to their tasks. The state carries heavy debt from the unification period.
+  economy:
+    description: Capable but uneven, north-concentrated. Ambitious ships strain state.
+    character: capable but uneven, north-concentrated
+    strengths:
+      - Northern industry
+      - Bold design capability
+    weaknesses:
+      - Uneven industry
+      - Fiscal constraints
+    industrialBase: uneven
+  navalInstitution:
+    description: Young, ambitious, haunted by Lissa.
+    character:
+      - young
+      - ambitious
+      - haunted_by_lissa
+    seniority: prestige_service
+    formativeExperience: Defeat by Austria at Lissa 1866
+  doctrine:
+    summary: Mediterranean operations, fleet-in-being, coastal defense, local superiority, torpedo craft, deterrence vs France.
+    schools:
+      - mediterranean_operations
+      - fleet_in_being
+      - coastal_defense
+      - local_superiority
+  shipDesign:
+    summary: Speed, heavy guns, bold concepts, selective armor trade-offs, Mediterranean optimization. Italia class discarded belt armor for speed.
+    principles:
+      - speed
+      - heavy_guns
+      - bold_concepts
+    favoredTypes:
+      - battleship
+      - armored_cruiser
+      - torpedo_craft
+    exemplarClass: Italia class by Benedetto Brin
+  military:
+    description: Medium-sized army with Prussian-model reforms underway. Navy is the more advanced and prestigious branch. Army-navy rivalry for budget.
+    size: peacetime ~200,000; mobilized ~500,000
+    character:
+      - prussian_model
+      - reforming
+    armyNavyBalance: navy_prestige
+  ai:
+    archetype: prestige_seeking_mediterranean_opportunist
+    behavior:
+      - anxious_about_france
+      - suspicious_of_austria_hungary
+      - attracted_to_bold_designs
+      - budget_constrained
+  navalPurpose: gain_mediterranean_credibility
+  coreAnxiety: french_pressure_austrian_ambiguity
+  gameplayFeel: gamble_intelligently
+  historicalAssumptions:
+    - Regional not global
+    - France immediate rival
+    - Innovation risky
+- id: russia
+  tag: RUS
+  name: Russian Empire
+  displayNameKey: nation.russia
+  isPlayable: true
+  slot:
+    id: russia
+    order: 7
+    participation: active
+  presentation:
+    colorBg: "#0039A6"
+    colorFg: "#FFFFFF"
+  identity:
+    oneSentence: The Russian Empire in January 1880 is a vast autocratic land empire with great-power naval ambitions, trapped by ice, distance, chokepoints, and disconnected fleets, seeking warm-water access and Far Eastern reach while struggling to turn immense resources into coherent maritime power.
+    fullIdentity: Vast autocratic land empire. Many seas, no easy way to connect fleets.
+    strategicProblem: Has many seas but no easy way to concentrate. Baltic, Black Sea, Pacific/Far East, Caspian, Arctic each different geography/enemies/logistics.
+  regime:
+    type: monarchy
+    politicalSystem: autocratic_monarchy
+    headOfState: Tsar Alexander II
+    headOfGovernment: Tsar Alexander II
+    leaderTitle: Tsar
+    navalPolicyActors:
+      - Imperial Court
+      - Bureaucracy
+      - Aristocratic Officer Culture
+      - Army Dominance
+    governmentModifiers:
+      - autocratic_executive
+      - reform_stalemate
+    navyMinister:
+      name: Ministry in transition (Grand Duke Konstantin removed 1880; Admiral Shestakov to be appointed 1882)
+      title: Navy Minister (interim)
+      traits: Navy Ministry in organizational uncertainty
+    stabilityProfile:
+      level: brittle
+      factors:
+        - Autocracy
+        - Bureaucracy
+        - Army dominance
+    description: Autocracy. Naval policy reflects court politics.
+  strategicObjectives:
+    primary: Break the straits constraint
+    secondary: Develop domestic naval industry and expand Pacific presence
+  baseResources:
+    gdpTier: great_power
+    gdpDescription: Major Great Power by aggregate GDP, due to large population and resources; per capita GDP is lowest among European great powers
+    population: ~100M
+    industrialization: developing_industrial
+    industrializationDescription: Early stage; 30-40 years behind Britain; Donbass coal/iron developing rapidly; Baku oil in first boom
+  navalAppropriation:
+    budgetLevel: moderate
+    justification: Russia maintains the largest army in Europe (peacetime ~900,000), which consumes the majority of the military budget. The navy is rebuilding after the Crimean War. The Baltic Fleet is the best-funded theater. The Pacific Squadron is the smallest and most recent. Naval construction programs are multi-year and affected by budget uncertainty.
+  economy:
+    description: Immense resources but weak integration. Railways are naval infrastructure.
+    character: immense resources but weak integration
+    strengths:
+      - Immense resources
+      - Growing industrialization
+    weaknesses:
+      - Weak transport
+      - Skilled labor shortage
+      - Administrative inefficiency
+    industrialBase: vast_unintegrated
+  navalInstitution:
+    description: Old and prestigious (Peter the Great 1696) but geographically fragmented, locally capable, globally clumsy.
+    character:
+      - geographically_fragmented
+      - locally_capable
+      - globally_clumsy
+      - ambitious
+    seniority: junior_to_army
+  doctrine:
+    summary: "Theater-specific: Baltic defense, Black Sea pressure vs Ottoman, Pacific expansion, fortresses, mining, torpedo craft, fleet-in-being."
+    schools:
+      - baltic_defense
+      - black_sea_pressure
+      - pacific_expansion
+      - mining
+      - fleet_in_being
+    isTheaterSpecific: true
+  shipDesign:
+    summary: Theater-specific, heterogeneous, often armored for prestige, difficult to transfer between fleets.
+    principles:
+      - theater_specific
+      - heterogeneous
+      - prestige_armor
+    favoredTypes:
+      - battleship
+      - armored_cruiser
+      - coastal_defense_ship
+  military:
+    description: Largest army in Europe but poorly equipped; slow to mobilize across vast distances. Army dominates the military budget and strategic culture.
+    size: peacetime ~900,000; mobilized ~2.5M
+    character:
+      - continental_giant
+      - poorly_equipped
+      - slow_mobilization
+    armyNavyBalance: army_dominant
+  ai:
+    archetype: fragmented_continental_giant
+    behavior:
+      - ambitious
+      - slow_to_coordinate
+      - prestige_sensitive
+      - prone_to_overextension
+  navalPurpose: escape_geographic_confinement
+  coreAnxiety: warm_water_failure_fragmentation
+  gameplayFeel: integrate_disconnected_theaters
+  historicalAssumptions:
+    - Fleet fragmentation core constraint
+    - Far East important but not mature
+    - Trans-Siberian (1891) is future infrastructure
+- id: austria_hungary
+  tag: AUT
+  name: Austro-Hungarian Empire
+  displayNameKey: nation.austria_hungary
+  isPlayable: true
+  slot:
+    id: austria_hungary
+    order: 8
+    participation: active
+  presentation:
+    colorBg: "#ED2939"
+    colorFg: "#FFFFFF"
+  identity:
+    oneSentence: The Austro-Hungarian Empire in January 1880 is a multi-national land empire with a narrow but vital Adriatic sea window, relying on a compact, professional, politically constrained navy based around Pola to deter Italy, defend imperial prestige, and turn geography, mines, torpedoes, and local concentration into strategic survival.
+    fullIdentity: Multi-national land empire with one narrow Adriatic window. Navy compact, professional, politically constrained.
+    strategicProblem: Needs navy strong enough to prevent Adriatic humiliation, but political system/finances/army priorities make large ambitions difficult.
+  regime:
+    type: monarchy
+    politicalSystem: dual_monarchy
+    headOfState: Emperor Franz Joseph I
+    headOfGovernment: Count Eduard Taaffe / Kálmán Tisza
+    leaderTitle: Emperor
+    navalPolicyActors:
+      - Austrian Interests
+      - Hungarian Interests
+      - Imperial Ministries
+      - Army Dominance
+      - Habsburg Patronage
+    governmentModifiers:
+      - dual_budget_bargaining
+      - nationality_tensions
+      - army_dominance
+    navyMinister:
+      name: Adm. Friedrich von Pock
+      title: Marinekommandant
+    stabilityProfile:
+      level: brittle
+      factors:
+        - Dual budget bargaining
+        - Army dominance
+        - Nationality tensions
+    description: Dual monarchy. Naval appropriations must navigate Austrian/Hungarian interests.
+  strategicObjectives:
+    primary: Deter Italy in the Adriatic
+    secondary: Preserve the Dual Monarchy through Balkan stability
+  baseResources:
+    gdpTier: great_power
+    gdpDescription: ~60% of UK level per capita, ~equal to Italy
+    population: ~38 million
+    industrialization: developing_industrial
+    industrializationDescription: Iron/steel (Bohemia, Moravia, Styria), arms (Steyr, Skoda), shipbuilding (Trieste, Fiume)
+  navalAppropriation:
+    budgetLevel: low
+    justification: The navy is the junior service. The common army and the separate Landwehr/Honved forces consume the majority of the military budget. Ten-year budget cycles and dual-monarchy politics constrain naval spending. The fleet is maintained at a modest level sufficient for Adriatic deterrence, not for power projection.
+  economy:
+    description: Useful industrial pockets, later warship potential, but uneven and fragmented.
+    character: uneven industrial pockets
+    strengths:
+      - Industrial pockets
+      - Warship potential
+    weaknesses:
+      - Uneven base
+      - Politically fragmented
+    industrialBase: uneven
+  navalInstitution:
+    description: Compact, disciplined, defensive, professional, multi-national, centered on Pola.
+    character:
+      - compact
+      - disciplined
+      - defensive
+      - professional
+      - pola_centered
+    seniority: junior_to_army
+    formativeExperience: Battle of Lissa 1866 - Tegetthoff defeated larger Italian fleet
+  doctrine:
+    summary: Adriatic sea denial, fleet-in-being, Pola defense, mines, torpedo craft, coastal fortifications, selective sorties.
+    schools:
+      - adriatic_sea_denial
+      - fleet_in_being
+      - pola_defense
+      - mines
+      - torpedo_craft
+  shipDesign:
+    summary: Compact, efficient, theater-optimized, moderate range, suitable for Adriatic combat.
+    principles:
+      - compact
+      - efficient
+      - theater_optimized
+    favoredTypes:
+      - battleship
+      - protected_cruiser
+      - torpedo_craft
+  military:
+    description: Large multi-national conscript army. Army dominates military spending; navy is junior service. Dual monarchy structure complicates defense budget.
+    size: peacetime ~300,000 (common army); mobilized ~800,000
+    character:
+      - multi_national
+      - conscript
+      - army_dominant
+    armyNavyBalance: army_dominant
+  ai:
+    archetype: defensive_adriatic_strategist
+    behavior:
+      - preserve_pola
+      - deter_italy
+      - avoid_global_commitments
+      - use_mines_and_torpedoes
+  navalPurpose: deny_adriatic_control
+  coreAnxiety: italian_hostility_adriatic_vulnerability
+  gameplayFeel: defend_narrow_sea
+  historicalAssumptions:
+    - Regional naval power
+    - Italy main rival
+    - Pola institutional core
+- id: spain
+  tag: ESP
+  name: Kingdom of Spain
+  displayNameKey: nation.spain
+  isPlayable: true
+  slot:
+    id: spain
+    order: 9
+    participation: active
+  presentation:
+    colorBg: "#AA151B"
+    colorFg: "#F1BF00"
+  identity:
+    oneSentence: The Kingdom of Spain in January 1880 is a restored but brittle monarchy guarding the last remnants of a once-global empire, with proud naval traditions, exposed colonies in the Caribbean and Pacific, limited industrial means, and a strategic future defined by whether it can reform quickly enough to avoid imperial humiliation at the hands of rising powers.
+    fullIdentity: Restored but brittle monarchy guarding remnants of once-global empire. Still owns Cuba, Puerto Rico, Philippines, Guam.
+    strategicProblem: Can preserve enough naval credibility to deter opportunistic powers without bankrupting Restoration state? Empire exposes weakness more than amplifies strength.
+  regime:
+    type: monarchy
+    politicalSystem: constitutional_monarchy
+    headOfState: King Alfonso XII
+    headOfGovernment: Antonio Cánovas del Castillo
+    leaderTitle: King
+    navalPolicyActors:
+      - Bourbon Restoration
+      - Conservatives/Liberals alternation
+      - Elite-managed system
+    governmentModifiers:
+      - turno_pacifico
+      - military_influence
+      - colonial_administration_stress
+    navyMinister:
+      name: Francisco de Paula y Pavía
+      title: Minister of Marine
+      traits: Rear Admiral; professional naval officer; faces constrained budget, aging fleet, colonial demands
+    stabilityProfile:
+      level: brittle
+      factors:
+        - Stable on surface, brittle underneath
+        - Colonial costs
+    description: Bourbon Restoration. Regency of María Cristina after 1885.
+  strategicObjectives:
+    primary: Preserve the Colonial Empire
+    secondary: Economic Modernization
+  baseResources:
+    gdpTier: minor_power
+    gdpDescription: Smaller than Italy; comparable to Belgium or the Netherlands in industrial output; larger in agricultural terms
+    population: ~16.5 million
+    industrialization: developing_industrial
+    industrializationDescription: Semi-industrialized; Catalonia textiles, Basque steel, mining; small heavy industry; technologically dependent
+  navalAppropriation:
+    budgetLevel: low
+    justification: Spain's military budget is heavily skewed toward the army, which must garrison Cuba (still over 50,000 troops in 1880), maintain internal order, and guard against Carlist resurgence. The navy's share is constrained by the army's larger political weight, the high cost of importing foreign-built ships, and competing demands from infrastructure investment and colonial administration.
+  economy:
+    description: Regional industrial capacity but weak national scaling. Fiscally constrained.
+    character: regional capacity, weak scaling
+    strengths:
+      - Regional industrial capacity
+    weaknesses:
+      - Weak national scaling
+      - Fiscally constrained
+      - Colonial costs
+    industrialBase: uneven
+  navalInstitution:
+    description: Proud tradition but modern weakness. Scattered, underfunded, honor-sensitive, logistically weak.
+    character:
+      - scattered
+      - underfunded
+      - honor_sensitive
+      - logistically_weak
+    seniority: prestige_service
+  doctrine:
+    summary: Colonial defense, port defense, cruiser patrol, gunboats, crisis deterrence, fleet preservation, avoidance of decisive battle.
+    schools:
+      - colonial_defense
+      - port_defense
+      - cruiser_patrol
+      - fleet_preservation
+  shipDesign:
+    summary: Cruisers, gunboats, colonial patrol vessels, port defenses, selective armored ships, refits, logistics improvement.
+    principles:
+      - colonial_patrol
+      - port_defense
+    favoredTypes:
+      - protected_cruiser
+      - gunboat
+      - colonial_patrol_vessel
+  military:
+    description: Army-focused with large colonial garrison in Cuba. Navy has proud tradition but modern weakness. Military budget heavily skewed toward army.
+    size: peacetime ~80,000–100,000; colonial garrison (Cuba) adds significant strength
+    character:
+      - colonial_garrison
+      - army_heavy
+    armyNavyBalance: army_heavy
+  ai:
+    archetype: defensive_declining_empire
+    behavior:
+      - preserve_cuba
+      - avoid_war_with_us_if_possible
+      - defend_colonies_for_honor
+      - modernize_slowly
+  navalPurpose: preserve_colonies_honor
+  coreAnxiety: colonial_collapse_humiliation
+  gameplayFeel: prevent_imperial_collapse
+  historicalAssumptions:
+    - Declining but not irrelevant
+    - Cuba central crisis
+    - Not scripted to collapse
+- id: qing
+  tag: CHI
+  name: Qing Dynasty
+  displayNameKey: nation.qing
+  isPlayable: true
+  slot:
+    id: qing
+    order: 10
+    participation: active
+  presentation:
+    colorBg: "#FFDE00"
+    colorFg: "#000000"
+  identity:
+    oneSentence: The Qing Dynasty in January 1880 is a vast imperial civilization under maritime siege, possessing impressive but regionally fragmented modernization — especially the Beiyang Fleet — while struggling to convert population, wealth, arsenals, and imported warships into a coherent national navy before Japan and Western powers exploit the gap between imperial scale and modern readiness.
+    fullIdentity: Vast imperial civilization attempting selective modernization. Self-Strengthening Movement introduced Western methods but preserved older order.
+    strategicProblem: Can acquire modern ships, but cannot easily convert into unified national navy because authority/finance/doctrine/command remain fragmented. Problem is institutional conversion, not scale.
+  regime:
+    type: monarchy
+    politicalSystem: absolute_monarchy
+    headOfState: Guangxu Emperor
+    headOfGovernment: Empress Dowager Cixi / Li Hongzhang
+    leaderTitle: Emperor
+    navalPolicyActors:
+      - Imperial Court
+      - Empress Dowager Cixi
+      - Regional Viceroys
+      - Li Hongzhang
+      - Conservative Officials
+    governmentModifiers:
+      - empress_dowager_regency
+      - self_strengthening
+      - confucian_bureaucracy
+      - unequal_treaties
+      - regional_fleet_fragmentation
+    stabilityProfile:
+      level: fragile
+      factors:
+        - Court politics
+        - Regional viceroy power
+        - Fiscal diversion
+    description: Ruled by imperial court, but modernization depends on regional viceroys. Li Hongzhang sponsors Beiyang Fleet.
+  strategicObjectives:
+    primary: Preserve territorial integrity and avoid partition by foreign powers
+    secondary: Develop the Beiyang Fleet and defend tributary states (Korea, Vietnam)
+  baseResources:
+    gdpTier: great_power
+    gdpDescription: ~GBP 7-8 billion (largest in world by absolute measure; low per capita)
+    population: ~380 million
+    industrialization: pre_industrial
+    industrializationDescription: Pre-industrial; modern industry <0.5% of economy; concentrated in 4-5 treaty port/arsenal enclaves
+  navalAppropriation:
+    budgetLevel: very_low
+    justification: Severely constrained. Central government revenue ~GBP 12 million/year total. Beiyang Fleet absorbs ~GBP 0.5-1 million/year (Li Hongzhang's provincial revenue, not central budget). Nanyang, Fujian, Guangdong fleets funded locally at lower levels. Corruption consumes an estimated 20-40% of naval procurement.
+  economy:
+    description: Immense potential but weak integration. Industrial islands, not integrated state.
+    character: immense potential but weak integration
+    strengths:
+      - Immense population
+      - Vast resources
+      - Arsenals
+      - Imported warships
+    weaknesses:
+      - Regionally uneven
+      - Institutionally limited
+      - After 1888 construction stopped
+    industrialBase: vast_unintegrated
+  navalInstitution:
+    description: Not one unified navy but regional fleets, Beiyang dominant. Included German/British-built warships.
+    character:
+      - regionally_fragmented
+      - beiyang_dominant
+      - import_dependent
+      - inconsistent_readiness
+    seniority: fragmented
+    formativeExperience: Self-Strengthening Movement; Beiyang Fleet
+  doctrine:
+    summary: Coastal defense, regional fleet deterrence, Bohai Gulf security, Yellow Sea operations, treaty-port defense. Lacks integrated doctrine unless reformed.
+    schools:
+      - coastal_defense
+      - regional_fleet_deterrence
+      - bohai_gulf_security
+      - treaty_port_defense
+    isFragmented: true
+  shipDesign:
+    summary: "Relies on imported modernity: German/British capital ships, foreign advisers, regional arsenals, limited standardization."
+    principles:
+      - imported_modernity
+      - foreign_advisers
+    favoredTypes:
+      - battleship
+      - armored_cruiser
+      - protected_cruiser
+      - gunboat
+    exemplarClass: Dingyuan class (German-built)
+  military:
+    description: "Vast but fragmented military: Eight Banners in decline, Green Standard as local police, Huai and Chu armies as modern forces. No general staff or unified command. Beiyang Army emerging."
+    size: Eight Banners ~60,000 (paper), Green Standard ~300,000, Huai Army ~25,000, Chu Army ~20,000
+    character:
+      - regionally_fragmented
+      - uneven_modernization
+      - banner_legacy
+    armyNavyBalance: army_dominant
+  ai:
+    archetype: vast_conservative_modernizer
+    behavior:
+      - cautious
+      - prestige_sensitive
+      - regionally_fragmented
+      - willing_to_buy_modern_ships
+      - reluctant_to_centralize
+  navalPurpose: defend_sovereignty_modernize
+  coreAnxiety: foreign_encroachment_failed_modernization
+  gameplayFeel: transform_vast_potential
+  historicalAssumptions:
+    - Not simply backward
+    - Beiyang Fleet central
+    - Regionalization core weakness
+- id: ottoman_empire
+  tag: OTT
+  name: Ottoman Empire
+  displayNameKey: nation.ottoman_empire
+  isPlayable: false
+  slot:
+    id: ottoman_empire
+    order: 11
+    participation: active
+  presentation:
+    colorBg: "#E30A17"
+    colorFg: "#FFFFFF"
+  identity:
+    oneSentence: "The Ottoman Empire in January 1880 is the besieged guardian of the Turkish Straits: vast but contracting, controlling the gate between the Black Sea and Mediterranean while struggling to modernize its fleet and administration under relentless pressure from Russia, Britain, and Balkan nationalism."
+    fullIdentity: Sick Man of Europe but still controls the most strategic chokepoint in the game - the Bosporus and Dardanelles. Nominal suzerain of Egypt, controls access for Russian Black Sea Fleet.
+    strategicProblem: Must defend the Straits and vast coastlines with limited industrial means, while balancing between Britain (who wants Straits closed to Russia) and Russia (who wants them open).
+  regime:
+    type: monarchy
+    politicalSystem: absolute_monarchy
+    headOfState: Sultan Abdul Hamid II
+    headOfGovernment: Sultan Abdul Hamid II
+    leaderTitle: Sultan
+    navalPolicyActors:
+      - Sultan
+      - Porte
+      - Military Reformers
+      - Foreign Advisers (British/French)
+      - Provincial Governors
+    governmentModifiers:
+      - autocratic_executive
+      - fragile_multicultural_empire
+      - financial_dependency
+    navyMinister:
+      name: Kapudan Pasha (occupant changes frequently under Abdul Hamid II)
+      title: Kapudan Pasha (Minister of the Navy)
+      traits: Deliberately weakened; Sultan distrusts naval officer corps for constitutionalist sympathies; underfunded and in decline
+    stabilityProfile:
+      level: fragile
+      factors:
+        - Balkan nationalism
+        - Debt crisis
+        - Russian pressure
+        - British influence
+    description: Absolute monarchy under Abdul Hamid II. Tanzimat reforms stalled, pan-Islamic autocracy.
+  strategicObjectives:
+    primary: Homeland Defense — preserve territorial integrity, defend the Straits against Russia
+    secondary: Regional Hegemony — recover influence in the Balkans, assert authority over Arab provinces
+  baseResources:
+    gdpTier: great_power
+    gdpDescription: Minor Great Power / Declining Empire — aggregate GDP modest relative to European great powers; per capita GDP low; heavily indebted
+    population: ~20M
+    industrialization: pre_industrial
+    industrializationDescription: No domestic steel, armor, or heavy gun production; all warships purchased abroad; Imperial Arsenal in decline; railway network minimal
+  navalAppropriation:
+    budgetLevel: low
+    justification: The Ottoman Empire is bankrupt (defaulted 1875). The OPDA will place ~1/3 of state revenues under European control. The military budget is overwhelmingly allocated to the army. The navy budget barely covers maintenance, crew pay, and limited coal purchases. The fleet's existing inventory is aging and deteriorating without replacement.
+  economy:
+    description: Agrarian empire with debt crisis, limited modern industry, dependent on foreign loans and customs.
+    character: agrarian with debt crisis
+    strengths:
+      - Straits tolls
+      - Anatolian resources
+      - Strategic location
+    weaknesses:
+      - Capitulations
+      - Foreign debt
+      - Weak industry
+      - Loss of Balkan provinces
+    industrialBase: agrarian_colonial
+  navalInstitution:
+    description: Once great, now decaying but attempting modernization with British and French-built ships. Coastal and straits defense focused.
+    character:
+      - strait_guardian
+      - decaying
+      - foreign_dependent
+      - coastal_defense
+    seniority: junior_to_army
+    formativeExperience: Loss of fleet at Sinop 1853, reliance on foreign-built ironclads
+  doctrine:
+    summary: Straits defense, coastal defense, fleet-in-being inside Black Sea and Sea of Marmara, mine and fortress reliance. Cannot contest open Mediterranean.
+    schools:
+      - straits_defense
+      - coastal_defense
+      - fortress_fleet
+      - mine_warfare
+  shipDesign:
+    summary: Foreign-built ironclads and coastal defense ships, limited endurance, fortress support. British-built central battery ships.
+    principles:
+      - foreign_built
+      - coastal_optimization
+      - fortress_support
+    favoredTypes:
+      - ironclad
+      - coastal_defense_ship
+      - gunboat
+  military:
+    description: Large conscript army, German-aligned continental priority. Poorly equipped by European standards. Army dominates budget, navy decaying.
+    size: peacetime ~200,000–300,000 (Muslim population)
+    character:
+      - conscript
+      - continental_priority
+      - poorly_equipped
+    armyNavyBalance: army_dominant
+  ai:
+    archetype: besieged_strait_guardian
+    behavior:
+      - close_straits_to_russia
+      - seek_british_protection
+      - fortify_dardanelles
+      - avoid_open_battle
+      - rely_on_fortresses_and_mines
+    aiRole: strait_guardian
+    triggers:
+      - russian_pressure_on_straits
+      - balkan_crisis
+  navalPurpose: guard_straits_survive
+  coreAnxiety: russian_breakthrough_and_partition
+  gameplayFeel: guard_the_gate
+  historicalAssumptions:
+    - Controls Turkish Straits - central to Russian warm-water obsession
+    - Nominal suzerain of Egypt
+    - Balkan losses define weakness
+    - Straits closure is strategic obsession for Russia
+- id: netherlands
+  tag: NLD
+  name: Netherlands
+  displayNameKey: nation.netherlands
+  isPlayable: false
+  slot:
+    id: netherlands
+    order: 13
+    participation: active
+  presentation:
+    colorBg: "#21468B"
+    colorFg: "#FFFFFF"
+  identity:
+    oneSentence: "The Netherlands in January 1880 is the small but wealthy colonial naval power: neutral, commercially sophisticated, guarding the vast Dutch East Indies and global trade routes with a modest but professional fleet optimized for colonial patrol and straits defense."
+    fullIdentity: Constitutional monarchy under William III. Wealthy from colonial trade, especially Dutch East Indies. Neutral but must defend global colonial network and home waters at Danish Straits approaches.
+    strategicProblem: Must defend far-flung colonial empire (East Indies is prize) and home waters with small industrial base, relying on neutrality, diplomacy, and colonial cruisers rather than battle fleet.
+  regime:
+    type: monarchy
+    politicalSystem: constitutional_monarchy
+    headOfState: King William III
+    headOfGovernment: Theo van Lynden van Sandenburg
+    leaderTitle: King
+    navalPolicyActors:
+      - King
+      - Parliament
+      - Colonial Ministry
+      - Merchant Interests
+      - East Indies Lobby
+    governmentModifiers:
+      - parliamentary_dominance
+      - colonial_administration_stress
+      - neutrality_tradition
+    navyMinister:
+      name: Frederik Hendrik Alexander Sabron
+      title: Minister of Marine
+      traits: Lieutenant-General (ret.); professional military administrator; oversees modernization
+    stabilityProfile:
+      level: high
+      factors:
+        - Constitutional monarchy
+        - Wealthy, stable
+        - Neutrality policy
+    description: Constitutional monarchy. Neutral, colonial-commercial focus.
+  strategicObjectives:
+    primary: Trade Protection
+    secondary: Colonial Empire
+  baseResources:
+    gdpTier: minor_power
+    gdpDescription: Disproportionately large relative to population due to trade, finance, and colonial wealth; comparable to Spain or Belgium in total output; per capita among highest in Europe
+    population: ~4 million (metropolitan); ~30 million (Dutch East Indies)
+    industrialization: industrial
+    industrializationDescription: Moderate by European standards; shipbuilding, food processing, textiles, chemicals; Limburg coal developing
+  navalAppropriation:
+    budgetLevel: moderate
+    justification: "Dutch military spending is shaped by two priorities: (1) the East Indies (naval squadron, KNIL, colonial administration, Aceh War) absorbs the bulk of the defense budget; (2) the home army receives the remainder, justified by neutrality enforcement and coastal defense. The navy's share is comparatively generous because it directly protects the national wealth (the Indies trade)."
+  economy:
+    description: Wealthy trading and colonial economy, strong finance, but small industrial base vs great powers. East Indies is economic core.
+    character: wealthy colonial trading power
+    strengths:
+      - Colonial trade (East Indies)
+      - Finance
+      - Merchant marine
+      - Agricultural exports
+    weaknesses:
+      - Small industrial base
+      - Dependent on neutral trade
+      - Vulnerable colonial concentration
+    industrialBase: uneven
+  navalInstitution:
+    description: Professional, colonial-focused, modest. Excellent at colonial patrol, river and archipelago operations, less for fleet battle.
+    character:
+      - professional
+      - colonial_focused
+      - neutral
+      - archipelago_specialist
+    seniority: prestige_service
+  doctrine:
+    summary: Colonial patrol, archipelago defense, trade protection, neutrality defense, coastal defense at home. No battle fleet ambition.
+    schools:
+      - colonial_patrol
+      - archipelago_defense
+      - trade_protection
+      - coastal_defense
+      - neutrality_defense
+  shipDesign:
+    summary: Colonial cruisers, gunboats, shallow-draft vessels for East Indies, coastal defense ships for home waters. Endurance for colonial stations.
+    principles:
+      - colonial_endurance
+      - shallow_draft
+      - tropical_optimization
+    favoredTypes:
+      - protected_cruiser
+      - gunboat
+      - colonial_cruiser
+      - coastal_defense_ship
+  military:
+    description: Small homeland army, larger East Indies Army (KNIL). Neutrality policy shapes defense. Navy protects the East Indies trade.
+    size: homeland ~25,000–30,000; KNIL ~35,000 (mostly indigenous)
+    character:
+      - colonial_military
+      - neutrality_defense
+    armyNavyBalance: balanced
+  ai:
+    archetype: wealthy_neutral_colonial
+    behavior:
+      - maintain_neutrality
+      - protect_east_indies
+      - protect_trade_routes
+      - avoid_great_power_war
+      - seek_british_guarantee
+    aiRole: colonial_power
+  navalPurpose: sustain_colonial_network
+  coreAnxiety: loss_of_east_indies
+  gameplayFeel: defend_far_flung_empire_as_small_power
+  historicalAssumptions:
+    - Neutral
+    - Dutch East Indies is core colonial prize at Malacca approaches
+    - Small but professional colonial navy
+- id: portugal
+  tag: POR
+  name: Kingdom of Portugal
+  displayNameKey: nation.portugal
+  isPlayable: false
+  slot:
+    id: portugal
+    order: 16
+    participation: active
+  presentation:
+    colorBg: "#006600"
+    colorFg: "#FF0000"
+  identity:
+    oneSentence: "Portugal in January 1880 is the old, small colonial survivor: poor but geographically privileged, clinging to Angola, Mozambique, Goa, and Atlantic islands with a tiny, scattered navy that relies on British alliance and neutrality to survive."
+    fullIdentity: Constitutional monarchy under Luís I. Oldest colonial empire, now small and poor. Controls Angola, Mozambique, Goa, Macau, Atlantic islands (Azores, Madeira, Cape Verde). Oldest ally of Britain (Treaty of Windsor).
+    strategicProblem: Must defend scattered, exposed colonies with tiny fleet and weak industry, relying on British alliance and colonial cruisers. Vulnerable to stronger colonial powers.
+  regime:
+    type: monarchy
+    politicalSystem: constitutional_monarchy
+    headOfState: King Luís I
+    headOfGovernment: Anselmo José Braamcamp
+    leaderTitle: King
+    navalPolicyActors:
+      - King
+      - Parliament
+      - Colonial Ministry
+      - British Alliance
+      - Colonial Lobbies
+    governmentModifiers:
+      - rotativismo
+      - colonial_empire
+      - anglo_portuguese_alliance
+      - economic_backwardness
+    navyMinister:
+      name: Jose Vicente Barbosa du Bocage
+      title: Minister of Marine and Colonies
+      traits: Zoologist and scientist; committed colonial expansionist; key architect of Pink Map policy
+    stabilityProfile:
+      level: moderate
+      factors:
+        - Constitutional monarchy
+        - Chronic debt
+        - Colonial overstretch
+    description: Constitutional monarchy. Oldest British ally.
+  strategicObjectives:
+    primary: Colonial Empire (Pink Map — link Angola and Mozambique)
+    secondary: Trade Protection and maintain the Anglo-Portuguese Alliance
+  baseResources:
+    gdpTier: minor_power
+    gdpDescription: Poorest in Western Europe after Spain; subsistence agriculture dominates; wine, cork, copper are main exports
+    population: ~4.5 million (metropolitan); ~5 million (colonies)
+    industrialization: pre_industrial
+    industrializationDescription: Very limited; cotton textiles, food processing, ship repair; no steel industry or heavy engineering; all capital goods imported
+  navalAppropriation:
+    budgetLevel: low
+    justification: Portugal allocates a significant share of its tight budget to the navy and colonial administration. However, the absolute sum is small by European standards. The navy competes with the army (colonial campaigns) and with Fontismo infrastructure spending. The 1880 naval construction program is funded by foreign loans from London banks.
+  economy:
+    description: Poor, agrarian, debt-ridden, dependent on colonial trade and remittances. Weak industry.
+    character: poor agrarian, colonial dependent
+    strengths:
+      - Colonial trade
+      - Atlantic islands as coaling stations
+      - British alliance
+    weaknesses:
+      - Weak industry
+      - Debt
+      - Scattered colonies
+      - Small fleet
+    industrialBase: agrarian_colonial
+  navalInstitution:
+    description: Small, scattered, colonial patrol focused. Gunboats, small cruisers, station vessels. Relies on British protection.
+    character:
+      - small
+      - scattered
+      - colonial_patrol
+      - british_dependent
+    seniority: prestige_service
+  doctrine:
+    summary: Colonial patrol, station presence, gunboat diplomacy, port defense, trade protection. No fleet battle capability.
+    schools:
+      - colonial_patrol
+      - station_presence
+      - gunboat_diplomacy
+      - port_defense
+  shipDesign:
+    summary: Small cruisers, gunboats, colonial station vessels. Limited range, tropical optimization.
+    principles:
+      - colonial_patrol
+      - small_size
+    favoredTypes:
+      - gunboat
+      - small_cruiser
+      - colonial_patrol_vessel
+  military:
+    description: Small, poorly equipped, underfunded army. Bulk deployed in African colonies with reliance on indigenous colonial troops. Navy is colonial patrol force.
+    size: ~25,000–30,000; colonial troops augment
+    character:
+      - underfunded
+      - colonial_garrison
+      - british_dependent
+    armyNavyBalance: army_heavy
+  ai:
+    archetype: small_colonial_survivor
+    behavior:
+      - rely_on_british_alliance
+      - patrol_colonies
+      - avoid_great_power_war
+      - seek_protection_for_angola_mozambique
+    aiRole: colonial_power
+  navalPurpose: defend_coast_colonies
+  coreAnxiety: loss_of_angola_mozambique
+  gameplayFeel: survive_as_small_colonial
+  historicalAssumptions:
+    - Oldest British ally
+    - Controls Angola, Mozambique, Goa, Macau, Atlantic islands
+    - Small scattered navy
+    - Poor and debt-ridden
+- id: brazil
+  tag: BRA
+  name: Empire of Brazil
+  displayNameKey: nation.brazil
+  isPlayable: false
+  slot:
+    id: brazil
+    order: 18
+    participation: active
+  presentation:
+    colorBg: "#009739"
+    colorFg: "#FEDF00"
+  identity:
+    oneSentence: "Brazil in January 1880 is the vast, stable South American empire: the largest navy in South America, wealthy from coffee and rubber, strategically located on the South Atlantic and Cape route, balancing between modernization and slavery while dominating its neighbors."
+    fullIdentity: Constitutional monarchy under Pedro II. Stable, vast, wealthy from coffee. Largest fleet in South America, with ocean-going ironclads. Controls Amazon and long Atlantic coast.
+    strategicProblem: Must defend vast coastline and river systems, maintain dominance over Argentina and Chile, and modernize while managing slavery and vast distances with limited industry.
+  regime:
+    type: monarchy
+    politicalSystem: constitutional_monarchy
+    headOfState: Emperor Pedro II
+    headOfGovernment: Viscount of Sinimbu
+    leaderTitle: Emperor
+    navalPolicyActors:
+      - Emperor
+      - Parliament
+      - Coffee Oligarchs
+      - Military
+      - Slavery Debate
+    governmentModifiers:
+      - parliamentary_system
+      - imperial_moderating_power
+    navyMinister:
+      name: Adm. Luiz Antonio de Sousa Neto
+      title: Minister of Marine
+      traits: Career naval officer; focused on modernizing the fleet with British-built ironclads
+    stabilityProfile:
+      level: high
+      factors:
+        - Stable monarchy under Pedro II
+        - Coffee wealth
+        - Slavery tensions
+    description: Constitutional monarchy. Stable under Pedro II, but slavery and military tensions growing.
+  strategicObjectives:
+    primary: Regional Hegemony
+    secondary: Trade Protection
+  baseResources:
+    gdpTier: regional_power
+    gdpDescription: Developing — largest economy in South America; commodity-export driven
+    population: ~11 million
+    industrialization: developing_industrial
+    industrializationDescription: Early industrial; textiles, food processing; no heavy industry; no domestic warship construction
+  navalAppropriation:
+    budgetLevel: moderate
+    justification: Brazil has secured regional dominance through the Paraguayan War (1864-1870) and is investing in a modern ironclad fleet to maintain that position. The Riachuelo and Aquidaba (under construction in British yards) are the centerpieces of the naval modernization program. Naval expenditure is politically supported as a matter of national prestige and security.
+  economy:
+    description: Coffee and rubber export boom, vast resources, growing but still agrarian, limited heavy industry.
+    character: coffee export boom
+    strengths:
+      - Coffee
+      - Rubber
+      - Vast resources
+      - Large population
+    weaknesses:
+      - Slavery
+      - Limited heavy industry
+      - Vast distances
+      - Regional inequality
+    industrialBase: resource_export
+  navalInstitution:
+    description: Largest in South America, with ocean-going ironclads and cruisers. River and coastal defense plus blue-water ambition. Professional, British-influenced.
+    character:
+      - largest_in_region
+      - professional
+      - british_influenced
+      - river_and_blue_water
+    seniority: prestige_service
+  doctrine:
+    summary: Coastal defense, river control (Amazon, Plate), South Atlantic dominance, fleet-in-being vs Argentina/Chile, trade protection.
+    schools:
+      - coastal_defense
+      - river_control
+      - south_atlantic_dominance
+      - fleet_in_being
+  shipDesign:
+    summary: Ironclads, cruisers, river monitors. Mix of British-built ocean-going and domestic river craft. Endurance for long coast.
+    principles:
+      - british_built
+      - river_and_ocean_mix
+    favoredTypes:
+      - ironclad
+      - cruiser
+      - river_monitor
+      - gunboat
+  military:
+    description: Post-Paraguayan War consolidation. Army politicizing ('Military Question'). Navy is prestige service with largest fleet in South America. Slavery tensions affect military cohesion.
+    size: army ~15,000; National Guard ~200,000 paper
+    character:
+      - post_war_consolidation
+      - politicizing
+      - prestige_navy
+    armyNavyBalance: balanced
+  ai:
+    archetype: south_american_giant
+    behavior:
+      - dominate_south_atlantic
+      - control_rivers
+      - balance_argentina_chile
+      - modernize_with_coffee_wealth
+    aiRole: southern_cone_rival
+  navalPurpose: contest_southern_cone
+  coreAnxiety: argentine_chilean_challenge
+  gameplayFeel: dominate_south_atlantic
+  historicalAssumptions:
+    - Largest navy in South America in 1880
+    - Coffee boom wealth
+    - Empire under Pedro II, republic in 1889
+    - River control vital

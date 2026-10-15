@@ -1,0 +1,46 @@
+name: Determinism Gate
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+jobs:
+  determinism:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.18.0"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      # build first (fresh), then typecheck: some desktop tests spawn a `tsc -b`
+      # child (researchDeterminismChild.js), and building before typechecking
+      # avoids the turbo cache-replay that bites when typecheck runs first.
+      - run: pnpm build
+      - run: pnpm typecheck
+      # The runners have few cores; the task runner's default concurrency
+      # oversubscribes them and tips heavy-but-legitimate suites past their
+      # timeouts. The `--concurrency-limit` flag must precede the task specifier
+      # so `vp run` consumes it; placed after `test` it is forwarded to each
+      # package's test script, where vitest rejects it (`--concurrencyLimit`).
+      - run: pnpm exec vp run -r --concurrency-limit=2 test
+      - name: Cross-process determinism
+        run: node packages/cross-process-test/dist/run-child.js
+      - name: Upload hash artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hashes-${{ matrix.os }}
+          path: golden/hashes.json
+      - name: Verify golden hashes
+        run: node scripts/verify-golden-hashes.cjs

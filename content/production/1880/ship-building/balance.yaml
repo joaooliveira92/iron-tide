@@ -1,0 +1,825 @@
+# Ship-building balance for the EARLY band. SOURCED/FITTED: hull.hullCoeffMilliKg and exponent (fit to White 1894 hull fractions), machinery.cFormX100
+# (admiralty coefficients from Royal Sovereign, Majestic, Edgar, Havock, Siegfried, Speedy trials), armour.materialEffBp (Britannica 1911, Brassey 1902).
+# EVERYTHING ELSE is a PLACEHOLDER gameplay constant pending calibration (ticket SB-12 follow-up).
+ship:
+  hull:
+    hullCoeffMilliKg: 9900
+    seawaterKgPerM3: 1025
+    materialBp:
+      iron: 12500
+      mild_steel: 10000
+      high_tensile: 9000
+    schemeBp:
+      transverse: 10500
+      mixed: 10000
+      longitudinal: 9500
+    subdivisionBp:
+      - 8000
+      - 9000
+      - 10000
+      - 11500
+      - 13000
+    buoyancyTolBp: 500
+    overTargetTolBp: 300
+    reserveBuoyancyWarnBp: 3000
+    reserveBuoyancyCriticalBp: 1500
+  machinery:
+    cFormX100:
+      torpedo_boat_form: 21700
+      protected_cruiser_form: 26000
+      coast_defence_form: 15500
+      pre_dreadnought_form: 26500
+      merchant_liner_form: 26000 # ESTIMATE/SINGLE-SOURCE: C2 x100 for Etruria (14,000 ihp/18.8 kn), Campania and City of Paris; range 25,000-29,000 (docs/research/ship-building-merchant-liner.md section 5)
+    slr0X1000: 1300
+    kSlBp: 600
+    cFloorBp: 5000
+    slrMaxX1000: 3200
+    minSpeedMilliKnots: 6000
+    maxSpeedMilliKnots: 40000
+    kwPerShpBp: 7457
+    auxWeightBp: 0 # White 1894 figures already cover the complete propelling machinery
+    fuelUnusableBp: 500
+    fuelReserveBp: 700
+    # Bunker stowage: Welsh steam coal about 40 ft3 per long ton (research 2, section 4: VERIFIED), i.e.
+    # 40 x 28.3168 L / 1016.05 kg = 1.1148 L/kg. In bp of a litre per kg so the figure is not rounded to an integer.
+    bunkerLitreBpPerKg: 11148
+  arrangement:
+    concentrationAdvisoryBp: 6000
+    concentrationWarningBp: 8000
+  weapons:
+    feedFactor:
+      points:
+        - - 0
+          - 10000
+        - - 200
+          - 9000
+        - - 600
+          - 5000
+    stowageBp: 12000
+    blastLoadBp: 3000
+    minBeamArcDeg: 30
+    arcWarnLossDeg: 20
+  armour:
+    steelKgPerM3: 7850
+    backingBp: 11000
+    fixingsBp: 10500
+    materialEffBp:
+      wrought_iron: 10000
+      iron: 10000
+      compound: 13000
+      steel: 13000
+      mild_steel: 13000
+      nickel_steel: 13500
+      harvey: 19500
+      krupp: 23000
+    # Armour material availability (ticket 25). Dates and technology ids come from the shipped tech tree
+    # (technologies.yaml; research: docs/research/content-1-research-tech-tree.md section 1.1, sourced to the Wikipedia
+    # "Harvey armor" article), so the Research screen and the Drawing Board agree. Maximum plate thickness is deliberately
+    # NOT set: no source gives a per-material limit (UNVERIFIED), and an invented cap would block legitimate designs.
+    # Iron and mild steel are open from the start: mild-steel deck and splinter plating predates the all-steel hull
+    # technology (it gates hulls, not plate), and the 1880 reference design carries it.
+    materialAvailability:
+      wrought_iron: { fromMonth: "1880-01" }
+      iron: { fromMonth: "1880-01" }
+      mild_steel: { fromMonth: "1880-01" }
+      steel: { fromMonth: "1880-01" }
+      # Tree: compound "appeared in the mid-1880s"; nickel-steel (1889) "rendered compound armor obsolete".
+      compound: { requires: [hc_compound_armor], fromMonth: "1886-01", obsoleteMonth: "1889-01" }
+      nickel_steel: { requires: [hc_nickel_steel_armor], fromMonth: "1889-01" }
+      harvey: { requires: [hc_harvey_armor], fromMonth: "1892-01" }
+      krupp: { requires: [hc_krupp_cemented_armor], fromMonth: "1900-01" }
+    deckPenetrationBp: 3500 # gameplay abstraction (plunging fire at reduced velocity): ESTIMATE
+    coverageWarnBp: 9000
+    coverageCriticalBp: 6000
+    magazineWarnBp: 0
+    magazineCriticalBp: -5000
+    underwaterRequiredDepth:
+      points:
+        - - 0
+          - 500
+        - - 100
+          - 2000
+        - - 400
+          - 4000
+    floodBaseBp:
+      - 1000
+      - 2500
+      - 4000
+      - 5500
+      - 7000
+    floodReserveWeightBp: 2000
+    floodDamageControlWeightBp: 3000
+    magVulnBaseBp: 3000
+    magVulnBoilerBp: 2000
+    magVulnTorpedoBp: 1500
+  stability:
+    kbBp: 5300
+    inertiaBp: 400
+    trimToleranceBp: 150
+    sectionModulusBp: 28000 # calibrated: Havock (a successful 1893 ship) = ~80% of the critical index; no sourced bending data
+    stressCriticalBp: 10000
+    stressBlockingBp: 13000
+    seakeepingFreeboard:
+      points:
+        - - 0
+          - 2000
+        - - 60
+          - 6000
+        - - 120
+          - 10000
+    seakeepingGm:
+      points:
+        - - 0
+          - 3000
+        - - 600
+          - 10000
+        - - 2500
+          - 6000
+    thinMarginBp: 1000
+  systems:
+    caseProfileBp:
+      DEFAULT:
+        HARBOUR: 1000
+        CRUISING: 6000
+        ACTION: 10000
+    generatorConcentrationDerateBp: 2500
+    coolingReliabilityPerPercentBp: 50
+    hullCrewPerTonneX1000: 15
+    litrePerHead:
+      SPARTAN: 2000
+      STANDARD: 3000
+      GENEROUS: 4500
+    baseAccuracyBp: 5000
+    localControlPenaltyBp: 1500
+    smokeInterferencePermille: 40
+    smokeInterferencePenaltyBp: 1000
+  ledgerCategoryOf:
+    HULL_FORM: hull
+    MATERIAL: hull
+    BOILER: machinery
+    ENGINE: machinery
+    SHAFT_PROPELLER: machinery
+    FUEL_BUNKER: fuel
+    GENERATOR: auxiliary
+    MAIN_GUN: armament
+    SECONDARY_GUN: armament
+    DUAL_PURPOSE_GUN: armament
+    AA_WEAPON: armament
+    TORPEDO_TUBE: armament
+    MINE_GEAR: mission
+    AIRCRAFT_FACILITY: mission
+    MISSILE_LAUNCHER: armament
+    MOUNT: armament
+    MAGAZINE: armament
+    AMMUNITION: ammunition
+    ARMOUR_SCHEME: armour
+    UNDERWATER_PROTECTION: armour
+    DIRECTOR: sensors
+    RANGEFINDER: sensors
+    RADAR: sensors
+    SONAR: sensors
+    COMMS: sensors
+    SPECIAL_EQUIPMENT: auxiliary
+    DAMAGE_CONTROL: auxiliary
+    ACCOMMODATION: auxiliary
+  lumpZFractionBp:
+    hull: 5500
+    margin: 5500
+    reserve: 5500
+    crew: 6500
+    machinery: 3500
+    fuel: 2500
+  armourZFractionBp:
+    DECK_MAIN: 7500
+    SPLINTER_PLATING: 8500
+    MAGAZINE_BOX: 4000
+    BELT_MAIN: 4500
+  crewKgPerHead: 250
+  stabilityWindowByCategory:
+    DD:
+      gmMinMm: 350
+      gmCapsizeMm: 100
+      gmMaxMm: 2000
+    CL:
+      gmMinMm: 450
+      gmCapsizeMm: 100
+      gmMaxMm: 2200
+    CA:
+      gmMinMm: 500
+      gmCapsizeMm: 150
+      gmMaxMm: 2500
+    B:
+      gmMinMm: 800
+      gmCapsizeMm: 150
+      gmMaxMm: 3000
+    BB:
+      gmMinMm: 900
+      gmCapsizeMm: 200
+      gmMaxMm: 3500
+    # ESTIMATE (no source): KE takes the CL window (a small cruiser-type hull). AMC gmMin is White 1894's laden-merchant
+    # lower bound 1.5 ft = 457 mm (VERIFIED, docs/research/ship-building-merchant-liner.md section 7); the AMC ceiling and
+    # the KE window are BALANCE TARGET.
+    KE:
+      gmMinMm: 450
+      gmCapsizeMm: 100
+      gmMaxMm: 2200
+    AMC:
+      gmMinMm: 457
+      gmCapsizeMm: 150
+      gmMaxMm: 2500
+  minReserveBpByExpectation:
+    NONE: 0
+    MINOR: 300
+    MAJOR: 800
+  # Per-scenario classification ruleset (ADR-0116). This is the DESIGN-22 EARLY band (version 1) with three
+  # boundaries adjusted for the 1880 opening so that slow, belted, heavy-gun coast-defence/casemate ironclads
+  # classify as capital (B) ships — the true unblocker for the ADR-0111/0114 candidates. It only ever ADMITS
+  # ships the canonical EARLY band rejected; the tightened speed bound keeps it from capturing cruisers:
+  #   bMinDisplacementKg 5,000 t -> 1,500 t   (monitors and casemate ironclads of ~1,500-4,000 t)
+  #   bBeltMinUm        152,400 -> 101,600 µm (6 in -> 4 in belt)
+  #   bMaxSpeedUms      20 kn   -> 18 kn      (the 1880 battle line is slower than 18 kn; a faster ship is a cruiser,
+  #                                            so the lower belt/floor cannot capture the 21-kn CA starters)
+  # Every other value is DESIGN_22_EARLY. `classificationRulesFromRecord` requires all keys to be present.
+  classification:
+    rulesetVersion: 2
+    ddMaxDisplacementKg: 2000000
+    ddMinSpeedUms: 9774436
+    ddMaxGunUm: 152400
+    qualifyingArmourUm: 50800
+    clMinDisplacementKg: 2000000
+    clMaxDisplacementKg: 8000000
+    clMinSpeedUms: 8231104
+    clMaxGunUm: 152400
+    clBeltMaxUm: 50800
+    protectedCruiserExceptionVersion: 1
+    clProtectedMaxGunUm: 203200
+    caMinDisplacementKg: 4000000
+    caMinSpeedUms: 9774436
+    caBeltMinUm: 50800
+    caBeltMaxUm: 304800
+    caGunMaxUm: 279400
+    bMinDisplacementKg: 1500000
+    bBeltMinUm: 101600
+    bMaxSpeedUms: 9259992
+    bMaxTurrets: 2
+    bbMinDisplacementKg: 8000000
+    bbMinTurrets: 3
+    bbBeltMinUm: 152400
+    bbGunMinUm: 254000
+    aircraftLimit: 4
+    keMaxDisplacementKg: 2500000
+    keBeltMaxUm: 50800
+    keGunMaxUm: 152400
+    amcMinDisplacementKg: 1700000
+    amcGunMaxUm: 152400
+    amcFleetShareBp: 2000
+    amcFleetMinAllowance: 2
+    amcFastShareBp: 2500
+    amcFastMinAllowance: 1
+    amcFastSpeedUms: 11317768
+cost:
+  hullCostPerTonneMicro:
+    iron: 55000000 # GBP per tonne of hull weight: 48 (1873) to 80 (1885), Brassey; mid-range 70 chosen for mild steel (research 2)
+    mild_steel: 70000000
+    high_tensile: 100000000 # ESTIMATE
+  formComplexityBp:
+    torpedo_boat_form: 11000
+    protected_cruiser_form: 10500
+    coast_defence_form: 10000
+    pre_dreadnought_form: 10000
+    merchant_liner_form: 10000 # ESTIMATE: neutral until a merchant-yard source exists
+  subdivisionComplexityBp:
+    - 9000
+    - 10000
+    - 11000
+    - 12500
+    - 14000
+  speedPremium:
+    points:
+      - - 0
+        - 10000
+      - - 1300
+        - 10000
+      - - 2000
+        - 12000
+      - - 3200
+        - 20000
+  armourCostPerKgMicro:
+    wrought_iron: 50000 # GBP 50/t iron, GBP 95/t compound (Colossus/Collingwood, VERIFIED); steel/Harvey/Krupp GBP 100-120/t (US-derived, ESTIMATE)
+    iron: 50000
+    compound: 95000
+    steel: 100000
+    mild_steel: 100000
+    nickel_steel: 110000
+    harvey: 115000
+    krupp: 120000
+  machineryCostPerKwMicro:
+    compound_cylindrical: 10700000 # GBP 8 per ihp (1888) = 10.7 per kW (Trafalgar), ESTIMATE
+    compound_locomotive_tb: 10700000 # ESTIMATE: a compound engine (as compound_cylindrical) with a locomotive boiler; no separate sourced price for the 1879 torpedo-boat plant (White 1894 gives mass, not cost)
+    triple_expansion_cylindrical: 8000000 # GBP 6 per ihp, between 8 (1888) and 4.5 (1893-95), ESTIMATE
+    triple_expansion_watertube: 9000000 # ESTIMATE
+    locomotive_boiler_tb: 7100000 # Havock machinery GBP 18,674 / 3,500 ihp = 5.3 per ihp (Brassey 1894, VERIFIED)
+  maturityCostBp:
+    points:
+      - - 0
+        - 15000
+      - - 5000
+        - 12000
+      - - 10000
+        - 10000
+  overheadBp: 1200
+  firstOfClassBp: 1500
+  # Accelerated construction: +5 % cost (RTW3 official manual p. 31, a game rule; time side is construction.accelerationTimeBp).
+  accelerationCostBp: 500
+  hullMonthlyMaintenanceBp: 8
+  plantMonthlyMaintenanceBp: 15
+construction:
+  hullWorkPerTonneMicro: 40000
+  armourWorkPerKgMicro: 70
+  machineryWorkPerKwMicro: 3000
+  componentCostPerWorkMicro: 3000
+  lineByCategory:
+    HULL_FORM: fit_out
+    MATERIAL: fit_out
+    BOILER: machinery
+    ENGINE: machinery
+    SHAFT_PROPELLER: machinery
+    FUEL_BUNKER: fit_out
+    GENERATOR: machinery
+    MAIN_GUN: heavy_gun
+    SECONDARY_GUN: heavy_gun
+    DUAL_PURPOSE_GUN: heavy_gun
+    AA_WEAPON: heavy_gun
+    TORPEDO_TUBE: heavy_gun
+    MINE_GEAR: fit_out
+    AIRCRAFT_FACILITY: fit_out
+    MISSILE_LAUNCHER: heavy_gun
+    MOUNT: heavy_gun
+    MAGAZINE: fit_out
+    AMMUNITION: fit_out
+    ARMOUR_SCHEME: armour_plate
+    UNDERWATER_PROTECTION: armour_plate
+    DIRECTOR: fit_out
+    RANGEFINDER: fit_out
+    RADAR: fit_out
+    SONAR: fit_out
+    COMMS: fit_out
+    SPECIAL_EQUIPMENT: fit_out
+    DAMAGE_CONTROL: fit_out
+    ACCOMMODATION: fit_out
+  fitOutHullShareBp: 2500
+  launchHullShareBp: 300
+  trialsShareBp: 400
+  acceptanceShareBp: 100
+  firstOfClassWorkBp: 2000
+  maxMonths: 120
+  # Build time (tickets 20 and 22, ADR-0067 section 5): months from keel to commissioning at a neutral yard, by displacement in
+  # tonnes. Linear interpolation, clamped at the ends. The RTW3 manual gives no table, so the points are derived from history.
+  # Each point carries machine-readable provenance in buildMonthsProvenance (same order): VERIFIED = months read in a primary
+  # contemporary source for a ship of about that displacement; SECONDARY = compilation, derived, or the displacement itself is
+  # unverified; ESTIMATE = no source. The Drawing Board shows the build time as provisional unless both points bracketing the
+  # displacement are VERIFIED. Full source notes: docs/research/ship-building-build-times.md.
+  #  Brassey's Naval Annual 1901 = archive.org id brassey-s-naval-annual-1901 (OCR text read in full for the pages cited);
+  #  1902 = brasseysnavala1902brasuoft; 1908 = navalannual1908; 1910 = navalannual1910; 1907 = brassey-s-naval-annual-1907.
+  #   Torpedo-boat destroyer ~330 t: Whiting completed in 14 months and Bat in 16 (Brassey 1901 p. 263); the same page-264 passage
+  #     sets 18 months as the most a destroyer should take. Whiting 330 t and Bat 326 t are from the torpedo-boat flotilla table,
+  #     pp. 373 and 372 (the earlier Wikipedia 390 t figure matches no 30-knotter in Brassey and is not used).
+  #   Second-class cruiser (Hermes/Highflyer, 5,600 t): "about two years and a half" from keel to Fleet Reserve (Brassey 1901
+  #     p. 262); commissioned Oct and 7 Dec 1899. The 5,600 t displacement is not stated in the volumes read: SECONDARY.
+  #   First-class protected cruiser (Diadem, 11,000 t per Brassey 1901 p. 10): laid 23 Jan 1896, pennant 19 Jul 1898, "two years
+  #     and six months" (p. 262); Niobe 36 months. Brassey's standard for a first-class cruiser is two years from laying down.
+  #   Majestic 14,900 t: 22 months (VERIFIED, Brassey 1901 p. 258: efficient record; Brassey 1896 First Lord's memorandum agrees).
+  #   Magnificent: 24 months (same page); Royal Sovereign 14,150 t: 32 months (same page).
+  #   Hannibal 14,900 t: laid 1 May 1894, ready 9 May 1898, just over 48 months (VERIFIED, p. 258; labour dispute and alterations).
+  #   Canopus class 12,950 t: Canopus 35, Ocean 36, Goliath 39 months (VERIFIED, p. 259 table); Glory 47 (VERIFIED, delayed).
+  #   Cressy 12,000 t: laid 12 Oct 1898 (Brassey 1901 p. 23 table); delivered by Fairfield to Portsmouth in October 1900
+  #     (Brassey 1901 p. 20, about 24 months, contractor's delivery, not commissioning); "commissioned in May last", i.e. May 1901
+  #     (Brassey 1902 p. 396), which matches Wikipedia's 28 May 1901. Keel to commissioning is 31 months. The two dates are
+  #     different events, so there is no conflict; the table uses commissioning like every other point.
+  #   Lord Nelson 16,500 t: 34 months; King Edward VII class (Africa, Hibernia, Britannia, 16,350 t) 32-36 months (Brassey 1908
+  #     p. 27). Dreadnought 17,900 t: about 16 months, "could only be attained in very special cases" (same page; Brassey 1907
+  #     p. 7), so it is excluded as an outlier.
+  #   Bellerophon class 18,600 t: "twenty-eight months or less from the date of laying down" (Brassey 1910 p. 1). Vanguard
+  #     19,250 t: laid Apr 1908, commissioned Mar 1910, about 23 months (same page, "well under the two years allowed").
+  #   The late points fall below the 1890s points because British yards were more efficient by 1906-10; a displacement-only
+  #     table cannot model that, so it is recorded here and left to the industry multiplier below.
+  #   Blake 9,150 t: about 43 months, laid Jul 1888, ready Feb 1892 (WIKIPEDIA, 1880s outlier, not used for the 1890s curve).
+  #   Hornet 275 t: 24 months, laid Jul 1892, completed Jul 1894 (WIKIPEDIA; new-boiler lead ship, outlier, not used).
+  # The efficient record (22-24 months) is reached through efficientIndustryBp (24/36 = 6,667 bp, rounded to 6,700).
+  buildMonthsByDisplacementT:
+    points:
+      - [330, 18]
+      - [5600, 30]
+      - [11000, 30]
+      - [12000, 31]
+      - [12950, 35]
+      - [14900, 36]
+  buildMonthsProvenance:
+    - status: VERIFIED
+      source: "Brassey's Naval Annual 1901 p. 264 (18 months the most a destroyer should take; Whiting 14 months, Bat 16, p. 263); Whiting 330 t and Bat 326 t from the torpedo-boat flotilla table, pp. 373 and 372"
+    - status: VERIFIED
+      source: "Brassey's Naval Annual 1901 p. 262 (Hermes and Highflyer about 2.5 years); 5,600 t from Brassey 1898 p. 12 (three new second-class cruisers of 5600 tons)"
+    - status: VERIFIED
+      source: "Brassey's Naval Annual 1901 p. 262 (Diadem, laid 23 Jan 1896, pennant 19 Jul 1898); 11,000 t from p. 10"
+    - status: VERIFIED
+      source: "Cressy: laid 12 Oct 1898 (Brassey 1901 p. 23), commissioned May 1901 (Brassey 1902 p. 396); delivered by contractor Oct 1900 (Brassey 1901 p. 20)"
+    - status: VERIFIED
+      source: "Brassey's Naval Annual 1901 p. 259 (Canopus laid 4 Jan 1897, completed 5 Dec 1899, 35 months)"
+    - status: VERIFIED
+      source: "Brassey's Naval Annual 1901 pp. 258-259 (Canopus class 35-39 months; Majestic class over three years each)"
+  # Era multiplier (ADR-0080): year the keel is laid -> bp on the table above, which is the 1894-1900 standard. Each factor is
+  # the class's keel-to-completion months over the table's months at its displacement. Clamped: before 1886 uses 1886.
+  #   1886 Trafalgar class 11,940 t: Nile 8 Apr 1886 - commissioned 30 Jun 1891 (62.7), Trafalgar 18 Jan 1886 - completed FY 1889-90 (~50); vs ~31 -> ~1.83 (18,000 bp).
+  #   1890 Royal Sovereign class 14,150 t, laid 1889-90: Royal Sovereign 30 Sep 1889 - 31 May 1892 (32, Brassey "not normal"); class completed 1892-94, mean ~43; vs 36 -> ~1.22.
+  #   1905 Lord Nelson 34, King Edward VII class 32-36, ~16,500 t; vs 36 (table end) -> 34/36.
+  #   1908 Bellerophon class 28 months or less, 18,600 t; vs 36 -> 28/36.
+  buildTimeEraBp:
+    points:
+      - [1886, 18000]
+      - [1890, 12200]
+      - [1895, 10000]
+      - [1900, 10000]
+      - [1905, 9400]
+      - [1908, 7800]
+  buildTimeEraProvenance:
+    - status: VERIFIED
+      source: "Brassey's Naval Annual 1886 p. 413 (Trafalgar laid 18 Jan 1886, Nile 8 Apr 1886) and p. 185 (displacement 11,940 t); Nile commissioned 30 Jun 1891 (Brassey 1892 p. 65); Trafalgar completed FY 1889-90 (Brassey 1891 p. 89)"
+    - status: SECONDARY
+      source: "Brassey's Naval Annual 1891 p. 414 (Royal Sovereign laid 30 Sep 1889) and p. 119 (14,150 t); Brassey 1892 p. 2 (Royal Sovereign commissioned 31 May 1892, 32 months, 'cannot be considered as normal'); the ~43-month class mean behind 12,200 bp is a derived representative figure, not a per-ship primary duration"
+    - status: VERIFIED
+      source: "Brassey's Naval Annual 1901 pp. 258-259 (Majestic class over three years each; Canopus 35 months): the table's own standard"
+    - status: VERIFIED
+      source: "Brassey's Naval Annual 1901 pp. 259-262 (Canopus, Diadem, Cressy laid 1896-98): the table's own standard"
+    - status: VERIFIED
+      source: "Brassey's Naval Annual 1908 p. 27 (Lord Nelson 34 months; King Edward VII class 32-36); 16,500 t from Brassey 1907 p. 47"
+    - status: VERIFIED
+      source: "Brassey's Naval Annual 1910 p. 1 (Bellerophon class 28 months or less from laying down); 18,600 t from Brassey 1907 p. 47"
+  # Efficient shipbuilding industry: Majestic 22 / typical 36 = 6,100; Magnificent 24 / 36 = 6,667 (VERIFIED, Brassey 1901 p. 258).
+  efficientIndustryBp: 6700
+  # Accelerated construction: 10 % faster (RTW3 official manual p. 31, a game rule).
+  accelerationTimeBp: 9000
+  # Mothballing and halting (DESIGN-23 section 7; RTW3 official manual pp. 30-31). The manual gives only the HALF
+  # rule: a halted hull pays "half its mothballed maintenance" (preservation cost) while stopped. It never gives the
+  # mothballing base, so `mothballedMaintenancePerMonthMicro` is a PLACEHOLDER BALANCE TARGET (currency micro-units per
+  # month for a capital hull; at treasuryUnitMicro below, 4 x 10^10 micro = 4 treasury units, so half = 2 units).
+  # `preservationCostBp` is the manual's rule (5_000 bp = one half), not a placeholder. Calibrate the base from play.
+  mothballedMaintenancePerMonthMicro: 40000000000
+  preservationCostBp: 5000
+  # National concurrency cap (SB3-R18). The RTW3 manual (p33) says the total tonnage under construction "cannot exceed
+  # a multiple of dock size" but gives no number, so this is a PLACEHOLDER BALANCE TARGET. 30000 bp = 3 x the nation's
+  # maximumNewConstructionMassKg: a nation can have roughly three dock-sized hulls under construction at once. It is a
+  # displacement reservation layered on top of the section 7 work-micro-unit pools (how fast work advances), never a
+  # replacement for them. Calibrate from play.
+  shipyardCapacityMultipleBp: 30000
+  # AMC / small-corvette construction-capacity exemption (SB3-R19; amends DESIGN-16 section 9). The RTW3 manual (p33)
+  # excludes AMC and small corvettes from the cap but gives no percentage, so this is a PLACEHOLDER BALANCE TARGET.
+  # 8000 bp = 80 % of the hull is charged to the declared external capacity source (merchant/civilian yards) and the
+  # remaining 20 % still competes for normal NEW_CONSTRUCTION capacity. Calibrate from play.
+  amcCapacityExemptionBp: 8000
+  # The displacement at or below which a corvette (KE) counts as a "small corvette" for the exemption above (SB3-R19).
+  # The manual and DESIGN-16 leave "small corvette" unstated, so this is a PLACEHOLDER BALANCE TARGET. 1,000,000 kg
+  # (1,000 t): the 1880 KE starter is 620 t and colonial corvettes of the era were at or under about 1,000 t, while a
+  # larger sloop or cruiser is not a "small corvette".
+  smallCorvetteMaxDisplacementKg: 1000000
+cve:
+  weightsByCategory:
+    DD: &a1
+      offence: 3000
+      protection: 1000
+      mobility: 2500
+      reliability: 1500
+      suitability: 2000
+    CL: *a1
+    CA: *a1
+    B: *a1
+    BB: *a1
+    KE: *a1
+    AMC: *a1
+  offence:
+    points:
+      - - 0
+        - 0
+      - - 20000
+        - 4000
+      - - 100000
+        - 8000
+      - - 400000
+        - 10000
+  torpedoOffence:
+    points:
+      - - 0
+        - 0
+      - - 1
+        - 1000
+      - - 3
+        - 2000
+  speed:
+    points:
+      - - 0
+        - 0
+      - - 10000
+        - 2000
+      - - 20000
+        - 6000
+      - - 30000
+        - 10000
+  range:
+    points:
+      - - 0
+        - 0
+      - - 1000
+        - 2000
+      - - 3000
+        - 7000
+      - - 6000
+        - 10000
+  warningPenaltyBp: 300
+  criticalPenaltyBp: 1000
+refit:
+  rules:
+    MAINTENANCE_REFIT:
+      projectType: REPAIR
+      allowedCategories: []
+      minRemainingLifeMonths: 0
+      maxHullFatigueBp: 10000
+      fatigueGainBp: 0
+      costMultiplierBp: 12000
+      minMonths: 2
+      lifeExtensionMonths: 36
+    SENSOR_FC_UPDATE:
+      projectType: EQUIPMENT_INSTALLATION
+      allowedCategories:
+        - DIRECTOR
+        - RANGEFINDER
+        - RADAR
+        - COMMS
+        - GENERATOR
+      minRemainingLifeMonths: 24
+      maxHullFatigueBp: 8000
+      fatigueGainBp: 300
+      costMultiplierBp: 12000
+      minMonths: 2
+      lifeExtensionMonths: 12
+    AA_UPGRADE:
+      projectType: EQUIPMENT_INSTALLATION
+      allowedCategories:
+        - AA_WEAPON
+        - DIRECTOR
+        - MAGAZINE
+      minRemainingLifeMonths: 24
+      maxHullFatigueBp: 8000
+      fatigueGainBp: 300
+      costMultiplierBp: 12000
+      minMonths: 2
+      lifeExtensionMonths: 12
+    MACHINERY_REFIT:
+      projectType: REBUILD
+      allowedCategories:
+        - ENGINE
+        - BOILER
+        - GENERATOR
+      minRemainingLifeMonths: 24
+      maxHullFatigueBp: 6000
+      fatigueGainBp: 800
+      costMultiplierBp: 12000
+      minMonths: 6
+      lifeExtensionMonths: 12
+    REARMAMENT:
+      projectType: REBUILD
+      allowedCategories:
+        - MAIN_GUN
+        - SECONDARY_GUN
+        - MAGAZINE
+        - MOUNT
+      minRemainingLifeMonths: 24
+      maxHullFatigueBp: 6000
+      fatigueGainBp: 800
+      costMultiplierBp: 12000
+      minMonths: 6
+      lifeExtensionMonths: 12
+    ARMOUR_MODIFICATION:
+      projectType: REBUILD
+      allowedCategories:
+        - ARMOUR_SCHEME
+      minRemainingLifeMonths: 24
+      maxHullFatigueBp: 5000
+      fatigueGainBp: 1000
+      costMultiplierBp: 12000
+      minMonths: 8
+      lifeExtensionMonths: 12
+    BULGE:
+      projectType: REBUILD
+      allowedCategories: []
+      minRemainingLifeMonths: 24
+      maxHullFatigueBp: 5000
+      fatigueGainBp: 1000
+      costMultiplierBp: 12000
+      minMonths: 8
+      lifeExtensionMonths: 12
+    AVIATION_CONVERSION:
+      projectType: CONVERSION
+      allowedCategories:
+        - AIRCRAFT_FACILITY
+      minRemainingLifeMonths: 24
+      maxHullFatigueBp: 5000
+      fatigueGainBp: 1000
+      costMultiplierBp: 12000
+      minMonths: 8
+      lifeExtensionMonths: 12
+    MAJOR_RECONSTRUCTION:
+      projectType: REBUILD
+      allowedCategories: []
+      minRemainingLifeMonths: 24
+      maxHullFatigueBp: 4000
+      fatigueGainBp: 2500
+      costMultiplierBp: 15000
+      minMonths: 12
+      lifeExtensionMonths: 12
+    ROLE_CONVERSION:
+      projectType: CONVERSION
+      allowedCategories: []
+      minRemainingLifeMonths: 24
+      maxHullFatigueBp: 7000
+      fatigueGainBp: 500
+      costMultiplierBp: 12000
+      minMonths: 6
+      lifeExtensionMonths: 12
+  removalCostBp: 2000
+  holeGrowthBp: 2000
+  uneconomicalBp: 6000
+  uneconomicalHardBp: 9000
+  costPerWorkMicro: 3000
+  # BALANCE TARGET (the manual gives directions, not numbers): torpedo protection credited to a bulged ship and the
+  # nominal speed penalty recorded for evidence. The realised speed penalty comes from the blister's hull mass.
+  bulgeProtectionGainBp: 2000
+  bulgeSpeedPenaltyBp: 500
+ai:
+  CONSERVATIVE:
+    weights:
+      offence: 1500
+      protection: 1500
+      mobility: 2000
+      reliability: 3000
+      suitability: 2000
+    warningPenaltyBp: 800
+    criticalPenaltyBp: 3000
+    costWeightBp: 500
+    reserveTargetBp: null
+    designMarginBp: 600
+  BALANCED:
+    weights:
+      offence: 2500
+      protection: 1500
+      mobility: 2500
+      reliability: 1500
+      suitability: 2000
+    warningPenaltyBp: 400
+    criticalPenaltyBp: 1500
+    costWeightBp: 500
+    reserveTargetBp: null
+    designMarginBp: 400
+  AGGRESSIVE:
+    weights:
+      offence: 4000
+      protection: 500
+      mobility: 3000
+      reliability: 500
+      suitability: 2000
+    warningPenaltyBp: 100
+    criticalPenaltyBp: 600
+    costWeightBp: 200
+    reserveTargetBp: null
+    designMarginBp: 200
+  LOW_COST:
+    weights:
+      offence: 2000
+      protection: 1000
+      mobility: 2000
+      reliability: 2000
+      suitability: 3000
+    warningPenaltyBp: 400
+    criticalPenaltyBp: 1500
+    costWeightBp: 5000
+    reserveTargetBp: null
+    designMarginBp: 400
+  LONG_RANGE:
+    weights:
+      offence: 1500
+      protection: 1000
+      mobility: 4500
+      reliability: 1500
+      suitability: 1500
+    warningPenaltyBp: 400
+    criticalPenaltyBp: 1500
+    costWeightBp: 500
+    reserveTargetBp: null
+    designMarginBp: 400
+  UPGRADE:
+    weights:
+      offence: 2000
+      protection: 1500
+      mobility: 2000
+      reliability: 2000
+      suitability: 2500
+    warningPenaltyBp: 400
+    criticalPenaltyBp: 1500
+    costWeightBp: 500
+    reserveTargetBp: 800
+    designMarginBp: 500
+
+# Reference environment for design validation until campaign facilities and threats are wired (SB-14b).
+# Threat penetrations: 12in/25 sourced (521 mm iron at 1,000 yd); QF values are ESTIMATE.
+environment:
+  threats:
+    - { id: bl_12in, penetrationUm: 521000 }
+    - { id: bl_92in, penetrationUm: 300000 }
+    - { id: qf_6in, penetrationUm: 150000 }
+    - { id: qf_47in, penetrationUm: 100000 }
+    - { id: qf_12pdr, penetrationUm: 50000 }
+    # Pre-1880 rifled muzzle-loaders (point-blank wrought-iron perforation, Brassey's Naval Annual 1886 French
+    # Commission table; docs/research/ship-building-1880-pre-era-armament.md). The expected adversary of the 1880 ships.
+    - { id: rml_16in, penetrationUm: 740000 }
+    - { id: rml_125in, penetrationUm: 460000 }
+    - { id: rml_12in, penetrationUm: 370000 }
+    - { id: rml_10in, penetrationUm: 300000 }
+    - { id: rml_9in, penetrationUm: 250000 }
+  # Yards (ADR-0067 section 6). Per-line capacity is maxDisplacement(t) x yardWorkPerTonneMonth, so a bigger yard works faster and
+  # the "limited by <line>" bottleneck is meaningful. Limits and rate are ESTIMATES: sized to the 1880-1900 hull classes
+  # (destroyer/torpedo boat, cruiser, battleship), not to named historical slips.
+  facilities:
+    - {
+        id: yard_small,
+        maxLengthMm: 110000,
+        maxBeamMm: 15000,
+        maxDisplacementKg: 3000000,
+        craneLiftKg: 80000,
+      }
+    - {
+        id: yard_medium,
+        maxLengthMm: 150000,
+        maxBeamMm: 22000,
+        maxDisplacementKg: 9000000,
+        craneLiftKg: 150000,
+      }
+    - {
+        id: yard_large,
+        maxLengthMm: 200000,
+        maxBeamMm: 40000,
+        maxDisplacementKg: 30000000,
+        craneLiftKg: 250000,
+      }
+  # Rate (SECONDARY, derived): work micro-units per tonne of maxDisplacement per month per line. Brassey 1901 pp. 18-19 launch
+  # weights give 250-364 t of hull per month on a battleship slip (Russell 5,950 t in 23 months, Montagu 4,987 t in 15.4, Albemarle
+  # 5,100 t in 14). At 40,000 work per hull tonne the record (364 t/month) on the 30,000 t yard is 364 x 40,000 / 30,000 = 485;
+  # 480 is used so the record yards stay reachable: a Majestic hull's capacity schedule is about 30 months, under its historical time.
+  yardWorkPerTonneMonth: 480
+  # Engine projection: displacement per hit point; the median of the 37 authored 1880-pack designs is ~214,000 kg.
+  kgPerHitPoint: 214000
+  # Micro-pounds per treasury unit: one unit of campaign treasury and project work is GBP 10,000. Calibrated so a Majestic-class battleship
+  # costs about as many units as the original displacement formula gave (about 125); designed ships are priced by the cost model.
+  treasuryUnitMicro: 10000000000
+# Revision tiers for changes during construction (spec section 15.4, ADR-0070). These are GAME-DESIGN CONSTANTS, not historical data, so
+# no source exists for them; they are decided here and checked by `checkRevisionBalance` (ranges, ascending thresholds, a redesign never
+# milder than a revision). Not yet play-tested: tune from play, never to fit a source.
+#   freeBelowBp / revisionBelowBp / redesignBelowBp: hull-progress thresholds, 5 / 25 / 50 percent (spec).
+#   reworkBp: a revision (T1) redoes 30 % of the work already done on what it changes.
+#   redesignKeptBp: a redesign (T2) keeps 50 % of the hull work (the structure is salvaged, the rest is scrapped).
+#   t1DelayMonths: 1 (spec: at least one month). t2DelayMonths: 4, a third of a year of redrawing and re-laying plates.
+#   redesignStudyCostBp: UNUSED until design studies exist (DESIGN-21 section 3); the multiplier is carried so the rule is complete.
+revision:
+  freeBelowBp: 500
+  revisionBelowBp: 2500
+  redesignBelowBp: 5000
+  reworkBp: 3000
+  t1DelayMonths: 1
+  redesignStudyCostBp: 6000
+  redesignKeptBp: 5000
+  t2DelayMonths: 4
+  # In-place design-revision limits (manual printed p27; ADR-0132): displacement +10 % or 1000 t (whichever is larger),
+  # speed +/-1 kn, vertical armour +/-1 in, horizontal armour +/-0.5 in, main guns above 6 in unchangeable.
+  inPlace:
+    displacementIncreaseBp: 1000
+    displacementMinAllowanceKg: 1000000
+    speedChangeMilliKnots: 1000
+    verticalArmourChangeUm: 25400
+    horizontalArmourChangeUm: 12700
+    mainGunMaxUm: 152400
+
+# Rebuild validation (ticket 28; DESIGN-23 section 21 "rebuild_validation_v1"). These are the rule's own shipped values, not
+# placeholders: displacement +20 %, designed speed +3 kn, hull length and beam +/-5 %. A change of hull form is always refused.
+rebuild:
+  maxDisplacementIncreaseBp: 2000
+  maxSpeedIncreaseMilliKnots: 3000
+  maxLengthChangeBp: 500
+  maxBeamChangeBp: 500
+
+# Design studies (DESIGN-21 sections 3 and 18, ADR-0085). The discount is the rule's own (2,500 bp, permitted 1,500-3,500; minimums
+# exactly 1). The base work and cost are not given by the rules, so they are decided game-design constants, not historical data:
+#   costBp: a study costs 3 % of the design's first ship (rounded up, at least 1 treasury unit).
+#   baseWorkMonths: 4 months of design-office work, so a new class is approved in the fifth month after it is submitted.
+study:
+  costBp: 300
+  baseWorkMonths: 4
+  derivedDiscountBp: 2500
+  minFinalWork: 1
+  minFinalCost: 1

@@ -1,0 +1,35 @@
+name: Gates (cross-OS)
+
+# Proves the static gates and their fixtures on the OSes Bluewave ships to.
+# Ubuntu is covered by quality.yml; this job adds the platforms a Linux-only
+# gate set would silently miss (ADR-0107).
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: gates-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.18.0"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm preflight
+      - run: pnpm test:scripts

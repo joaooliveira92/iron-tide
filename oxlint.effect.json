@@ -1,0 +1,34 @@
+{
+  "$schema": "./node_modules/@effect/tsgo/oxlint-schema.json",
+  "extends": ["./node_modules/@effect/tsgo/oxlint-presets/recommended.json"],
+  "plugins": ["effecttsgo"],
+  "options": {
+    "typeAware": true
+  },
+  "rules": {
+    "effecttsgo/duplicate-package": "error",
+    "effecttsgo/global-random": "warn",
+    "effecttsgo/global-random-in-effect": "warn",
+    "effecttsgo/global-date": "warn",
+    "effecttsgo/global-date-in-effect": "warn",
+    "effecttsgo/crypto-random-uuid": "warn",
+    "effecttsgo/crypto-random-uuid-in-effect": "warn",
+    "effecttsgo/process-env": "warn",
+    "effecttsgo/process-env-in-effect": "warn",
+    "effecttsgo/node-builtin-import": "warn"
+  },
+  "ignorePatterns": [
+    "vendor/**",
+    "repos/**",
+    "node_modules/**",
+    "**/dist/**",
+    "**/out/**",
+    "**/*.d.ts",
+    "apps/desktop/src/renderer/**",
+    "apps/desktop/src/preload/**",
+    "apps/desktop/scripts/**",
+    "scripts/**",
+    "packages/cross-process-test/**",
+    "packages/test-support/**"
+  ]
+}

@@ -1,0 +1,398 @@
+{
+  "apps/compiler-cli/src/commands.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 3
+  },
+  "apps/desktop/e2e/smoke.spec.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/main/commands/designCommands.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/main/commands/designCommands.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 7
+  },
+  "apps/desktop/src/main/commands/divisionCommands.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/main/construction/commandRecord.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "apps/desktop/src/main/construction/commandRecord.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/main/construction/view.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/main/construction/workspaceState.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "apps/desktop/src/main/monthInput.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/main/pendingCommands.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/main/shipBuildingContent.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 3
+  },
+  "apps/desktop/src/renderer/components/backgrounds/shader-program.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/components/design-workspace/panels/RebuildPanel.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "apps/desktop/src/renderer/components/design-workspace/panels/RevisionPanel.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/FittingTargets.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/HullTopsideLayer.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/PlanToolbar.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/arc-radius.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/autoPlace.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/fitting-layers.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/funnelPlacements.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/planModel.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/components/usePreTurnReviewData.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "apps/desktop/src/renderer/components/world-map/CoastlineCanvas.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/components/world-map/MapMinimap.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/components/world-map/bake-coastline.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/components/world-map/map-label-layout.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "apps/desktop/src/renderer/lib/use-bridge-query.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/construction/drawing-board/DraftAutosave.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "apps/desktop/src/renderer/screens/construction/drawing-board/RevisionApply.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/fleet/FleetScreen.render.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/fleet/components/FleetReportSections.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/new-game/NewGameCommissioningReviewScreen.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/new-game/NewGameFleetMethodScreen.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/new-game/NewGameIdentityScreen.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/new-game/RulesOfTheNavalAgeScreen.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/new-game/nation-selection/DossierSlidePanel/DossierSlidePanel.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/new-game/nation-selection/useSvgGlobe.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
+  },
+  "apps/desktop/src/renderer/screens/new-game/new-game-preferences-screen-state.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/new-game/useNavalAgePreferences.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "apps/desktop/src/renderer/screens/new-game/useOpeningBriefing.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/simulation/SimulationScreen.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/simulation/components/BattleArenaTab.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/simulation/components/BattleManifestView.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/simulation/components/BattleResolutionPanel.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "apps/desktop/src/renderer/screens/simulation/simulation-screen-state.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
+  },
+  "apps/desktop/src/renderer/screens/tactical-sandbox/event-groups.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/screens/tactical-sandbox/sandbox/SandboxProvider.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
+  },
+  "apps/desktop/src/renderer/screens/tactical-sandbox/sandbox/components/SandboxOutcomeCards.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 3
+  },
+  "apps/desktop/src/renderer/screens/tactical-sandbox/tactical-sandbox-screen-state.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/shell/App.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 3
+  },
+  "apps/desktop/src/renderer/shell/FontContext.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "apps/desktop/src/renderer/shell/GuidedInspectionOverlay.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
+  },
+  "apps/desktop/src/renderer/shell/StatusStrip.test.tsx": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/shell/new-game-compile.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
+  },
+  "apps/desktop/src/renderer/shell/useCampaignShell.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 11
+  },
+  "apps/desktop/src/renderer/shell/useGuidedInspection.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "apps/desktop/src/renderer/shell/useNewGameFlow.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 6
+  },
+  "packages/ai/src/aiCommandGenerator.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/ai/src/aiPlanner.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 6
+  },
+  "packages/campaign-engine/test/construction.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/campaign-engine/test/priorities.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/campaign/src/compiler.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/combat/src/commandRecord.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/combat/src/contact/lifecycle.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/combat/src/mines/mine-report.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/combat/src/mines/model.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "packages/combat/src/mines/pressure-record.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "packages/combat/test/air-combat/bombing-accuracy.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/combat/test/air-combat/cap-patrol-state.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 3
+  },
+  "packages/combat/test/air-combat/strike-state-machine.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
+  },
+  "packages/combat/test/air-defense/attack.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
+  },
+  "packages/combat/test/air-defense/system-definition.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 9
+  },
+  "packages/combat/test/combat.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "packages/combat/test/gunnery/accuracy.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 5
+  },
+  "packages/combat/test/gunnery/rate-of-fire.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "packages/combat/test/gunnery/state.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/combat/test/mines/contracts-rollup.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "packages/combat/test/mines/decay.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/combat/test/mines/ordering.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 3
+  },
+  "packages/combat/test/mines/pressure-record.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "packages/combat/test/mines/route-risk.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/combat/test/mines/sweeping-eligibility.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
+  },
+  "packages/combat/test/mines/type-definitions.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 5
+  },
+  "packages/combat/test/smoke/smoke-cloud.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/combat/test/smoke/smoke-records.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/combat/test/submarines/mine-laying.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/combat/test/submarines/mission-eligibility.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/combat/test/submarines/strategic-representation.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
+  },
+  "packages/combat/test/submarines/type-definitions.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 5
+  },
+  "packages/combat/test/torpedo/ammunition.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "packages/combat/test/torpedo/authority.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/combat/test/torpedo/launcher-state.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 8
+  },
+  "packages/combat/test/torpedo/records.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "packages/combat/test/torpedo/track.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 7
+  },
+  "packages/combat/test/weather/components.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 5
+  },
+  "packages/combat/test/weather/strategic-state.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
+  },
+  "packages/commands/src/definition.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/commands/test/commands.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/cross-process-test/src/run-carrier-operations-child.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/persistence/src/store.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "packages/persistence/test/persistence.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/persistence/test/schema-serialization.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/phase-engine/src/aircraft.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "packages/phase-engine/src/battles.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/phase-engine/src/carrier-operations.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 5
+  },
+  "packages/phase-engine/src/designStudies.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/phase-engine/src/designVersion.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/phase-engine/src/orderEligibility.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/phase-engine/src/tacticalReplay.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/phase-engine/test/ai-procurement.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 6
+  },
+  "packages/phase-engine/test/battle-resolution-phase.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/phase-engine/test/construction-engine.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/phase-engine/test/construction-order.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/phase-engine/test/construction-packages.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
+  },
+  "packages/phase-engine/test/national-construction.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/phase-engine/test/rebuild-projects.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
+  },
+  "packages/phase-engine/test/revise-project.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/phase-engine/test/snapshotClone.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/phase-engine/test/submit-design.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 3
+  },
+  "packages/ship-design/src/componentVariants.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/ship-design/src/persistence.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  },
+  "packages/ship-design/test/earlyBand.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/ship-design/test/fleetProcurement.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/ship-design/test/helpers/armamentContext.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/ship-design/test/helpers/earlyContext.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
+  },
+  "packages/ship-design/test/nationCompleteness.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
+  },
+  "packages/ship-design/test/nationProfile.test.ts": {
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+  }
+}

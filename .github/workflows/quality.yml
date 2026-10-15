@@ -1,0 +1,119 @@
+name: Quality Gate
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so the golden-repin ratchet can resolve its baseline
+          # commit and scan the range since it.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.18.0"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      # Reuse Vitest's on-disk transform cache (`fsModuleCache`) and Node's V8
+      # compile cache (`NODE_COMPILE_CACHE`, set in scripts/vitest-shared.mjs)
+      # across runs. Both are content-addressed, so a restored entry is always
+      # safe — changed modules simply miss and are recompiled. Without this the
+      # compile cache would only pay its one-time serialization cost per run.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.vitest-cache
+            node_modules/.cache/node-compile-cache
+          key: ${{ runner.os }}-node24-vitest-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-node24-vitest-
+      # Reuse Vite Task's content-addressed build/test cache across runs, so an
+      # unchanged package's build or suite replays instead of re-running. A
+      # restored entry is always safe (automatic data tracking invalidates on any
+      # input change).
+      - uses: actions/cache@v4
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ runner.os }}-node24-vp-task-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-node24-vp-task-
+      - run: pnpm audit --prod --audit-level=high
+      - run: pnpm check:licenses
+      - run: pnpm preflight
+      - run: pnpm format
+      - run: pnpm lint
+      # The Effect type-aware Oxlint gate (ADR-0100/0101, oxlint.effect.json):
+      # `duplicatePackage` as an error plus the determinism/outdatedApi rules.
+      # Part of `pnpm check`; this step is what makes it a CI gate too.
+      - run: pnpm lint:effect
+      - run: pnpm test:scripts
+      # Fails a commit that changes authoritative source without re-pinning
+      # `golden/hashes.json` in the same commit (or recording a
+      # `Golden-Repin: not-needed` trailer). Runs from the ratchet baseline in
+      # `scripts/golden-repin.baseline`, so pre-guard history is grandfathered.
+      - run: pnpm check:golden-repin
+      - run: pnpm typecheck
+      # --no-cache: the typecheck step's build populates the Vite Task cache
+      # first, and a replayed desktop build then reads a stale phase-engine
+      # `dist`. Build from source here so the gate is not at the mercy of cache
+      # replay.
+      - run: pnpm exec vp run -r build --no-cache
+      # The app hard-depends on the compiled content artifact; build it
+      # explicitly so a green run cannot mean the tests executed against a
+      # stale or missing artifact (it is otherwise only produced as a side
+      # effect of the desktop build and the desktop vitest global setup).
+      - name: Build the compiled content artifact
+        run: pnpm content:build
+      # Verify the rebuilt artifact against the committed content lock, so a
+      # stale or tampered artifact fails CI exactly as it does in `pnpm check`.
+      - name: Verify the committed content lock
+        run: pnpm content:verify
+      # A deterministic fixed-seed month-advance over the production pack. Gated
+      # behind BLUEWAVE_PERF so it is a dedicated step, not timing flake in the
+      # default suite; a 3x-baseline ceiling catches order-of-magnitude
+      # regressions (release-readiness ticket 01).
+      - name: Performance tripwire (month advance)
+        run: pnpm --filter @bluewave/desktop exec cross-env BLUEWAVE_PERF=1 vp test run src/main/perf/monthAdvance.perf.test.ts
+      # Fast tier: the per-package unit/package suites, run with a bounded
+      # concurrency (`--concurrency-limit 4`, pinned in the root `test:run`
+      # script) so a loaded box cannot starve them; the heavy simulation suites
+      # are a separate, separately-bounded step below (production-hardening
+      # ticket 02).
+      - run: pnpm test:run
+      # Ship-part equivalence report byte-identical across two fresh processes (SPM-R24).
+      - run: pnpm check:equivalence
+      # The long simulation suites (36-month regression, AI procurement) are
+      # excluded from the default per-package run and executed here in isolation
+      # with bounded vitest workers, so parallel turbo load cannot flake a
+      # required check (release-readiness WS4).
+      - name: Heavy simulation suites (bounded concurrency)
+        run: pnpm test:heavy
+      - name: Balance reports match the deterministic benchmark
+        run: pnpm check:balance-reports
+      # Informational only: publishes the change scope for change-based CI
+      # filtering (see docs/agents/change-scope.md). Never gates the job — a
+      # scope error must not be able to turn a required check green or red.
+      - name: Change scope (informational)
+        continue-on-error: true
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ]; then
+            echo "no base ref (workflow_dispatch or new branch); skipping change-scope"
+          else
+            pnpm change-scope --base "$BASE"
+          fi

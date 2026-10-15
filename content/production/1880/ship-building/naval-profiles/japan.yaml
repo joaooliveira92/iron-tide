@@ -1,0 +1,332 @@
+# National naval profiles (NationNavalProfile) for the EARLY band, one file per nation.
+# Every historical value carries a provenance block (sourceStatus / confidence / kind / sources); every balance
+# target is labelled `balance_adjustment`. Grounding: docs/research/<nation>-naval-profile.md.
+# Hard capability only ever restricts (UNAVAILABLE families, calibre ceilings); it never grants. Soft doctrine
+# steers templates, AI scoring and procurement, and never blocks a legal design (docs/ships-nation-orientation.md).
+navalProfiles:
+  # Japan (canonical id "japan"). A newly-modernising Meiji island state building its first IJN almost entirely from
+  # foreign (chiefly British) yards and designs: a small ironclad/corvette fleet, coastal and Yellow-Sea regional
+  # focus, no colonial empire yet, and high receptiveness to foreign technology. Grounding: docs/research/japan-naval-profile.md.
+  - nationId: japan
+    activeFrom: "1880-01"
+    activeUntil: null
+    strategicSituation: >-
+      Modernising island state building its first navy abroad: a handful of British-built ironclads and corvettes, a
+      regional coastal focus in the Yellow Sea and around Korea, no colonial empire, and an eager, uncritical adoption
+      of foreign guns, machinery and torpedoes.
+    hardCapabilities:
+      maxGunCaliberUm: 305000
+      maxArmourThicknessUm: 305000
+      domesticTorpedoDiameterUm: 356000
+      hullForms:
+        [
+          torpedo_boat_form,
+          protected_cruiser_form,
+          coast_defence_form,
+          pre_dreadnought_form,
+          merchant_liner_form,
+        ]
+      domesticPlants: [compound_cylindrical, triple_expansion_cylindrical]
+      restrictedShipTypes: []
+      grants: []
+    softPreferences:
+      speedOverArmourBp: 6000
+      secondaryBatteryWeightBp: 10000
+      enduranceWeightBp: 9500
+      riskToleranceBp: 7000
+      colonialServiceWeightBp: 9500
+      torpedoOnCruisersBp: 12000
+      accommodationStandard: SPARTAN
+    industrialProfile:
+      buildTimeMultiplierBp: 10800
+      costMultiplierBp: 11000
+      machineryReliabilityBp: 8600
+      constructionQualityVarianceBp: 3500
+      maxPracticalDisplacementKg:
+        - { fromMonth: "1880-01", value: 4000000 }
+        - { fromMonth: "1885-01", value: 4500000 }
+        - { fromMonth: "1890-01", value: 5000000 }
+      heavyGunProduction: IMPORTED
+      armourPlateProduction: IMPORTED
+      provenance:
+        sourceStatus: ESTIMATE
+        confidence: MEDIUM
+        kind: balance_adjustment
+        note: "Small domestic yards; capital ships bought abroad. Multipliers are BALANCE TARGET within ±15%."
+        sources:
+          - {
+              sourceId: "japan-note",
+              title: "National naval profile research note — Japan",
+              page: "B",
+            }
+          - { sourceId: "navypedia-jp", title: "navypedia.org Japanese class pages" }
+        derivation:
+          {
+            sourceValue: "import-dependent navy; small domestic yards",
+            sourceUnit: "estimate",
+            conversion: "within the ±15% band",
+            gameValue: "buildTimeMultiplierBp 10800, costMultiplierBp 11000",
+            roundingRule: "±15%",
+          }
+    dock:
+      maximumNewConstructionMassKg: 5000000
+      maximumMajorRepairMassKg: 5000000
+      maximumRebuildMassKg: 5000000
+      maximumConversionMassKg: 5000000
+      provenance:
+        sourceStatus: DERIVED
+        confidence: MEDIUM
+        kind: game_conversion
+        sources:
+          - { title: "1880 national dock capacity research note", page: "findings table" }
+        derivation:
+          {
+            sourceValue: "scenario CA starter 4,865 t (largest 1880 hull); Fuso 3,720 t",
+            sourceUnit: "t",
+            conversion: "largest 1880 hull the nation fields, rounded up to the next 1,000 t dock step",
+            gameValue: "maximumNewConstructionMassKg 5000000",
+            roundingRule: "ceiling to next 1,000 t",
+          }
+        note: "max(historical flagship 3,720 t, scenario largest hull 4,865 t) rounded up to the next 1,000 t"
+    doctrineProfile:
+      engagementRangeM: 1500
+      hePreferenceBp: 3500
+      postures: [regional_warfare, coastal_defence, torpedo_warfare]
+      provenance:
+        sourceStatus: ESTIMATE
+        confidence: MEDIUM
+        kind: historical_fact
+        sources:
+          - {
+              sourceId: "japan-note",
+              title: "National naval profile research note — Japan",
+              page: "A, C",
+            }
+          - { sourceId: "navypedia-jp", title: "navypedia.org Japanese class pages" }
+    researchPreferences:
+      - { field: GUNNERY, priority: 4 }
+      - { field: INFRASTRUCTURE, priority: 4 }
+      - { field: TORPEDOES, priority: 3 }
+      - { field: SHIP_DESIGN, priority: 3 }
+      - { field: MACHINERY, priority: 2 }
+      - { field: HULL_CONSTRUCTION, priority: 2 }
+      - { field: DAMAGE_CONTROL, priority: 2 }
+      - { field: FIRE_CONTROL, priority: 2 }
+      - { field: MINES_AND_ASW, priority: 2 }
+      - { field: SUBMARINES, priority: 1 }
+    componentAccess:
+      gun_bl_274mm_m1875: { status: UNAVAILABLE }
+      gun_bl_135in_30: { status: UNAVAILABLE }
+      gun_bl_12in_35: { status: UNAVAILABLE }
+      gun_bl_10in_32: { status: UNAVAILABLE }
+      gun_bl_92in_315: { status: UNAVAILABLE }
+      gun_bl_6in_26: { status: UNAVAILABLE }
+      gun_rml_16in_80ton: { status: UNAVAILABLE }
+      gun_rml_125in_38ton: { status: UNAVAILABLE }
+      gun_rml_12in_35ton: { status: UNAVAILABLE }
+      gun_rml_12in_25ton: { status: UNAVAILABLE }
+      gun_rml_7in_7ton: { status: UNAVAILABLE }
+      gun_bl_263mm_rkl20: { status: IMPORTED, producer: "Krupp" }
+      gun_bl_235mm_rkl22: { status: IMPORTED, producer: "Krupp" }
+      gun_bl_173mm_rkl25: { status: IMPORTED, producer: "Krupp" }
+      gun_bl_12in_25: { status: IMPORTED, producer: "Canet" }
+      gun_qf_6in_40: { status: IMPORTED, producer: "Armstrong" }
+      gun_qf_47in: { status: IMPORTED, producer: "Armstrong" }
+      gun_qf_12pdr: { status: IMPORTED, producer: "Armstrong" }
+      tube_14in_above_water: { status: IMPORTED, producer: "Whitehead" }
+    gunModels:
+      - id: jp_krupp_26cm
+        familyId: gun_bl_263mm_rkl20
+        designation: "26 cm Krupp RK L/35"
+        overrides:
+          displayName: "26 cm Krupp Ringkanone in barbette"
+          attributes.shellMassG: "275000"
+        mounts: [BARBETTE, TURRET]
+        provenance: &jp_prov
+          sourceStatus: ESTIMATE
+          confidence: LOW
+          kind: historical_fact
+          note: "Krupp guns imported; shell masses ESTIMATE pending a print source."
+          sources:
+            - {
+                sourceId: "japan-note",
+                title: "National naval profile research note — Japan",
+                page: "F",
+              }
+      - id: jp_krupp_235mm
+        familyId: gun_bl_235mm_rkl22
+        designation: "23.5 cm Krupp RKL/22 C/72"
+        overrides:
+          displayName: "23.5 cm Krupp Ringkanone in central battery"
+        mounts: [CASEMATE, BARBETTE]
+        provenance: *jp_prov
+      - id: jp_krupp_173mm
+        familyId: gun_bl_173mm_rkl25
+        designation: "17.3 cm Krupp RKL/25 C/72"
+        overrides:
+          displayName: "17.3 cm Krupp Ringkanone in casemate"
+        mounts: [CASEMATE, DECK_SHIELDED]
+        provenance: *jp_prov
+      - id: jp_armstrong_6in
+        familyId: gun_qf_6in_40
+        designation: "Armstrong 15.2 cm QF"
+        overrides:
+          displayName: "Armstrong 15.2 cm quick-firing gun in shielded mount"
+        mounts: [DECK_SHIELDED, CASEMATE]
+        provenance: *jp_prov
+    ammunitionPatterns:
+      - id: jp_common_shell
+        pattern: AP
+        penetrationBiasBp: 6500
+        provenance:
+          sourceStatus: ESTIMATE
+          confidence: LOW
+          kind: balance_adjustment
+          sources:
+            - {
+                sourceId: "japan-note",
+                title: "National naval profile research note — Japan",
+                page: "C",
+              }
+    componentVariants:
+      - id: jp_tube_350_aw
+        familyId: tube_14in_above_water
+        designation: "35 cm Whitehead, above-water (imported)"
+        overrides:
+          displayName: "35 cm Whitehead torpedo tube, above-water"
+        provenance:
+          sourceStatus: ESTIMATE
+          confidence: LOW
+          kind: historical_fact
+          sources:
+            - {
+                sourceId: "japan-note",
+                title: "National naval profile research note — Japan",
+                page: "F",
+              }
+    designWeights:
+      B:
+        {
+          firepowerBp: 11500,
+          protectionBp: 11000,
+          speedBp: 9500,
+          enduranceBp: 9500,
+          torpedoBp: 9500,
+          reliabilityBp: 10000,
+          colonialBp: 8500,
+          costBp: 11000,
+        }
+      CA:
+        {
+          firepowerBp: 11000,
+          protectionBp: 10000,
+          speedBp: 11000,
+          enduranceBp: 10500,
+          torpedoBp: 11000,
+          reliabilityBp: 10000,
+          colonialBp: 9000,
+          costBp: 11000,
+        }
+      CL:
+        {
+          firepowerBp: 10000,
+          protectionBp: 9500,
+          speedBp: 12000,
+          enduranceBp: 11000,
+          torpedoBp: 11500,
+          reliabilityBp: 10000,
+          colonialBp: 9500,
+          costBp: 11500,
+        }
+      DD:
+        {
+          firepowerBp: 8000,
+          protectionBp: 8000,
+          speedBp: 13000,
+          enduranceBp: 9000,
+          torpedoBp: 13500,
+          reliabilityBp: 10000,
+          colonialBp: 9000,
+          costBp: 12000,
+        }
+      KE:
+        {
+          firepowerBp: 8500,
+          protectionBp: 8500,
+          speedBp: 10000,
+          enduranceBp: 11000,
+          torpedoBp: 10000,
+          reliabilityBp: 10500,
+          colonialBp: 11000,
+          costBp: 12000,
+        }
+      AMC:
+        {
+          firepowerBp: 9500,
+          protectionBp: 8500,
+          speedBp: 10000,
+          enduranceBp: 12500,
+          torpedoBp: 10500,
+          reliabilityBp: 10000,
+          colonialBp: 11000,
+          costBp: 12000,
+        }
+    procurementPolicy:
+      battleLineShareBp: 2800
+      cruiserShareBp: 3200
+      torpedoCraftShareBp: 2800
+      colonialShareBp: 1200
+      foreignProcurementAppetiteBp: 8000
+      unprovenTechAppetiteBp: 6000
+      buildOrder: [CL, DD, B, CA, KE, AMC]
+    namingPolicy:
+      stems:
+        B: [Fusō, Kongō, Hiei, Chin'en, Fuji, Yashima]
+        CA: [Chiyoda, Asama, Izumo, Azuma, Tokiwa]
+        CL: [Naniwa, Yoshino, Suma, Matsushima, Itsukushima]
+        DD: [Murakumo, Ikazuchi, Harusame, Shirakumo, Akatsuki]
+        KE: [Banjo, Amagi, Kaimon, Yamato, Katsuragi, Musashi]
+        AMC: [Yawata, Kumano, Nikkō]
+      convention:
+        B: "Classical, poetic Chinese-derived names (Fusō, Kongō)."
+        CA: "Mountains and geographic names (Asama, Izumo)."
+        CL: "Poetic and geographic names (Naniwa, Yoshino)."
+        DD: "Natural phenomena and weather (Murakumo, Harusame)."
+        KE: "Old provinces, mountains and islands (Kaimon, Yamato)."
+        AMC: "Liner names taken up from trade."
+    sourceReferences:
+      - { sourceId: "japan-note", title: "National naval profile research note — Japan" }
+      - {
+          sourceId: "navypedia-jp",
+          title: "navypedia.org Japanese class pages",
+          archiveOrUrl: "http://www.navypedia.org",
+        }
+      - {
+          sourceId: "ship-1880-ships",
+          title: "Ship-building 1880 ships by nation note",
+          page: "Japan",
+        }
+    provenance:
+      sourceStatus: ESTIMATE
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: "Grounded shape (import-dependent, regional, torpedo-receptive); weights and multipliers are BALANCE TARGET."
+      sources:
+        - {
+            sourceId: "japan-note",
+            title: "National naval profile research note — Japan",
+            page: "A, B, C, F",
+          }
+        - {
+            sourceId: "ship-1880-ships",
+            title: "Ship-building 1880 ships by nation note",
+            page: "Japan",
+          }
+      derivation:
+        {
+          sourceValue: "grounded shape; no single sourced multiplier",
+          sourceUnit: "mixed",
+          conversion: "weights and shares are gameplay abstractions",
+          gameValue: "profile as authored",
+          roundingRule: "multipliers within ±15%",
+        }

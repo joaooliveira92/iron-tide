@@ -1,0 +1,94 @@
+# Golden re-pin ratchet baseline (ADR-0007, production-hardening WS2).
+# Commits at or before this SHA are grandfathered: either pre-guard history, or
+# reviewed post-guard commits advanced past by this file's documented procedure.
+#
+# The guard was introduced at dae32d79; bee03042 is the commit it landed on top of.
+# The guard is now precise (ADR-0136): it reads the reference run's inputs
+# (packages/cross-process-test/src/run-child.ts + verify-golden-hashes.cjs +
+# golden/hashes.json) and exempts authored content and the reference-inert
+# dock-record plumbing, so deff5d30's no-output changes need neither a trailer
+# nor a baseline move.
+#
+# The shipbuilding-process sprint (INC-1..INC-16; commits afacb248..d4f23d2f)
+# changed authoritative package source (phase-engine/commands/ship-design/
+# campaign/campaign-engine) with NO golden movement: `pnpm check:golden` verified
+# all 10 reference hashes unchanged and `pnpm check:determinism` two runs
+# byte-identical throughout. Those commits should each have carried a
+# `Golden-Repin: not-needed` trailer; the earlier ones were already pushed by a
+# concurrent writer (force-push prohibited) and the later local ones cannot be
+# reworded without an interactive rebase (prohibited), so the ratchet baseline is
+# advanced past the whole sprint instead, with the reason recorded. The guard
+# still applies to every later commit.
+#
+# The baseline is advanced again to 998556cc — the last flagged commit — during
+# SB-3 DoD verification (2026-10-13), leaving the three later (clean) commits and
+# every future commit gated (same procedure as 07d3cc7a). Ten commits after
+# d4f23d2f (across the SB-3, ship-visualization, content-authoring-hardening and
+# shipbuilding-ui efforts) changed authoritative package source and each left
+# golden/hashes.json identical to its parent, so none moved the reference hashes:
+# `pnpm check:golden` reports "All 10 hashes match golden reference" and
+# `pnpm check:determinism` proves two child runs byte-identical. (This is not a
+# claim of no golden change anywhere in the span: 37ca7384 legitimately re-pinned
+# contentArtifactHash 103c60d3…->a6f919a2… in-commit and is not flagged.) Each of
+# the ten should have carried a `Golden-Repin: not-needed` trailer; nine were
+# already pushed to origin/dev (force-push prohibited) and the tenth (998556cc)
+# is followed by non-authoritative commits, so rewording would need an interactive
+# rebase (prohibited). Flagged: 998556cc, 12fe1350, b097e2cf, 17905f05, a0b1c401,
+# 4e8f82c5, 66ff3e16, 0bdffaeb, 1c4eb771, 4b2ff513.
+#
+# The baseline is advanced again to 57771173 — the pre-11d tip (ship-part-model
+# ticket 11d activation) — with the reason recorded. Six commits across the
+# ship-part-model and effect-conformance slices changed authoritative package
+# source without re-pinning golden/hashes.json: 1c28b4ce (part-model schemas),
+# 2e6b570a (gun read path), 4220ea99 (gate fix), 0c1f378d (conformance residue),
+# f8c3ff24 (save-compat gate) and ca7c2349 (fit barrier seam). `pnpm check:golden`
+# was green on the pre-11d tip (all hashes matched the committed golden), so none
+# of them moved the reference run net; they should have carried a
+# `Golden-Repin: not-needed` trailer, but they are already pushed to origin/dev
+# (force-push prohibited) and rewording would need an interactive rebase
+# (prohibited), so the ratchet is advanced past them instead. Ticket 11d
+# legitimately re-pins (compatibility 2.0.0 is embedded in the save envelope) and
+# is gated.
+#
+# The baseline is advanced again to 7ccced3f — the last flagged commit — with the
+# reason recorded, during ship-part-model ticket 15. Two commits changed
+# authoritative package source without re-pinning golden/hashes.json: 3bd8edb8
+# (refit compatibility from slot acceptance) and 7ccced3f (validate refit slots
+# only for additions), both ticket 14. `pnpm check:golden` reports all 11 hashes
+# match the committed golden and `pnpm check:equivalence` is byte-identical, so
+# neither moved the reference run net. They should have carried a
+# `Golden-Repin: not-needed` trailer; they are committed (not yet on origin/dev),
+# but rewording a non-HEAD commit needs an interactive rebase, which AGENTS.md
+# prohibits, so the ratchet is advanced past them instead as the documented
+# fallback. Ticket 15's own commit carries a `Golden-Repin: not-needed` trailer.
+#
+# The baseline is advanced again to a9eae221 — the last flagged commit — during
+# ship-part-model ticket 17a (P5 production cut-over, desktop). One commit changed
+# authoritative package source without re-pinning golden/hashes.json: a9eae221
+# (the parts-barrier cut-over: `compileDraft.ts`, `shipBuildingContent.ts` and the
+# package barrel `index.ts`). The reference run
+# (`packages/cross-process-test/src/run-child.ts`) compiles an in-code synthetic
+# fixture that declares no ship-building/design collection, so none of these is
+# exercised: `pnpm check:golden` reports all 11 hashes match the committed golden
+# and `pnpm check:equivalence` is byte-identical, so no reference hash moved. It
+# should have carried a `Golden-Repin: not-needed` trailer; it was already pushed
+# to origin/dev (force-push prohibited), so the ratchet is advanced past it
+# instead as the documented fallback. Ticket 17b's own commit carries a
+# `Golden-Repin: not-needed` trailer.
+#
+# The baseline is advanced again to 1f34161b — the last flagged commit — during
+# production-hardening ticket 01 (landing the Effect runtime migration on `dev`).
+# One commit changed authoritative package source without re-pinning
+# golden/hashes.json: 1f34161b (ship-part-model ticket 16, visual traits and the
+# render adapter — `content-compiler/src/stages/flatten.ts`,
+# `content-schema/src/index.ts`, `ship-parts.ts`, `visual-traits.ts`). The
+# reference run (`packages/cross-process-test/src/run-child.ts`) compiles an
+# in-code synthetic fixture that declares no ship-building/design collection, so
+# the additive visual-traits schema and their flatten step are never exercised:
+# `pnpm check:golden` reports all 11 hashes match the committed golden and
+# `pnpm check:determinism`/`check:equivalence` are byte-identical, so no
+# reference hash moved. It should have carried a `Golden-Repin: not-needed`
+# trailer; it was already pushed to origin/dev (force-push prohibited) and
+# rewording a non-HEAD commit would need an interactive rebase (prohibited), so
+# the ratchet is advanced past it instead as the documented fallback.
+1f34161b332f77af9155f78b5d01046dd86a9ea1

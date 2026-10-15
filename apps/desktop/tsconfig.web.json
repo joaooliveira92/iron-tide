@@ -1,0 +1,36 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "preserve",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "paths": {
+      "@/*": ["./src/renderer/*"]
+    },
+    "resolveJsonModule": true
+  },
+  "include": [
+    "src/preload/**/*.ts",
+    "src/renderer/shell/**/*.ts",
+    "src/renderer/shell/**/*.tsx",
+    "src/renderer/screens/**/*.ts",
+    "src/renderer/screens/**/*.tsx",
+    "src/renderer/components/**/*.ts",
+    "src/renderer/components/**/*.tsx",
+    "src/renderer/content/**/*.ts",
+    "src/renderer/content/**/*.tsx",
+    "src/renderer/content/**/*.json",
+    "src/renderer/lib/**/*.ts",
+    "src/renderer/lib/**/*.tsx",
+    "src/shared/**/*.ts",
+    "src/renderer/main.tsx",
+    "src/renderer/index.html"
+  ]
+}

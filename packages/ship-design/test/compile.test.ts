@@ -1,0 +1,201 @@
+import { describe, it, expect } from "vite-plus/test";
+import {
+  compileDesign,
+  checkFindingShape,
+  LEDGER_CATEGORIES,
+  ledgerTotal,
+  kg,
+  type DesignDraft,
+  type ShipContext,
+} from "../src/index.js";
+import { ctx, draft, balance } from "./fixtures/gunboat.js";
+
+const ids = (r: ReturnType<typeof compileDesign>) => r.findings.map((f) => f.id);
+const withDraft = (o: Partial<DesignDraft>): DesignDraft => ({ ...draft, ...o });
+const withCtx = (o: Partial<ShipContext>): ShipContext => ({ ...ctx, ...o });
+
+describe("compileDesign: reference gunboat", () => {
+  const r = compileDesign(draft, ctx);
+  it("is valid, with only non-blocking findings that are well formed", () => {
+    expect(r.valid).toBe(true);
+    expect(r.findings.some((f) => f.severity === "BLOCKING")).toBe(false);
+    for (const f of r.findings) expect(checkFindingShape(f), f.id).toEqual([]);
+  });
+  it("ledger lines are non-negative and the weight lumps sum exactly to the ledger (I1, I2)", () => {
+    for (const c of LEDGER_CATEGORIES) expect(r.ledger[c]).toBeGreaterThanOrEqual(0);
+    expect(r.totalKg).toBe(ledgerTotal(r.ledger));
+    expect(r.stability!.displacementKg).toBe(r.totalKg);
+  });
+  it("meets the brief: speed, range, stability window, trim", () => {
+    expect(r.machinery!.maxSpeedMilliKnots).toBeGreaterThanOrEqual(20_000);
+    expect(r.machinery!.rangeNmAtCruise).toBeGreaterThanOrEqual(2_500);
+    expect(r.stability!.gmMm).toBeGreaterThan(500);
+    expect(r.stability!.gmMm).toBeLessThan(2_000);
+    expect(Math.abs(r.stability!.trimBp)).toBeLessThanOrEqual(150);
+  });
+  it("golden regression values", () => {
+    expect({
+      total: r.totalKg,
+      hull: r.ledger.hull,
+      machinery: r.ledger.machinery,
+      fuel: r.ledger.fuel,
+      vmax: r.machinery!.maxSpeedMilliKnots,
+      range: r.machinery!.rangeNmAtCruise,
+      gm: r.stability!.gmMm,
+      crew: r.systems!.crewRequired,
+      warnings: ids(r),
+    }).toMatchInlineSnapshot(`
+      {
+        "crew": 74,
+        "fuel": 150000,
+        "gm": 1365,
+        "hull": 243902,
+        "machinery": 151800,
+        "range": 3127,
+        "total": 673781,
+        "vmax": 21377,
+        "warnings": [
+          "ARMOUR_INEFFECTIVE_VS_ADVERSARY",
+          "MAGAZINE_UNPROTECTED",
+          "MAGAZINE_UNPROTECTED",
+        ],
+      }
+    `);
+  });
+  it("is deterministic and independent of placement order; hash changes with the design", () => {
+    expect(compileDesign(draft, ctx).hash).toBe(r.hash);
+    expect(
+      compileDesign(withDraft({ placements: [...draft.placements].reverse() }), ctx).hash,
+    ).toBe(r.hash);
+    expect(
+      compileDesign(withDraft({ machinery: { ...draft.machinery, installedKw: 3_400 } }), ctx).hash,
+    ).not.toBe(r.hash);
+    expect(r.hash).toMatch(/^[0-9a-f]{64}$/);
+  });
+});
+
+describe("compileDesign: invalid designs", () => {
+  it("overweight is BLOCKING and nothing is silently adjusted", () => {
+    const r = compileDesign(
+      withDraft({ machinery: { ...draft.machinery, fuelCapacityKg: 400_000 } }),
+      ctx,
+    );
+    expect(r.valid).toBe(false);
+    expect(ids(r)).toContain("OVERWEIGHT_UNRECOVERABLE");
+    expect(r.ledger.fuel).toBe(400_000);
+  });
+  it("unavailable technology cannot be used (I4)", () => {
+    const r = compileDesign(draft, withCtx({ unlockedTechs: new Set(["tech_whitehead"]) }));
+    expect(r.valid).toBe(false);
+    expect(ids(r)).toContain("TECH_UNAVAILABLE");
+    const future = compileDesign(draft, withCtx({ month: "1879-01" }));
+    expect(ids(future)).toContain("TECH_UNAVAILABLE");
+  });
+  it("unknown component and illegal parameters are BLOCKING", () => {
+    const bad = withDraft({
+      placements: [
+        ...draft.placements,
+        { instanceId: "zz", componentId: "ghost", zoneId: "FORECASTLE", stationPermille: 10 },
+      ],
+    });
+    expect(ids(compileDesign(bad, ctx))).toContain("COMPONENT_UNKNOWN");
+    const p = withDraft({
+      placements: draft.placements.map((x) =>
+        x.instanceId === "a_gun_fwd" ? { ...x, params: { barrels: 3, rounds: 105 } } : x,
+      ),
+    });
+    const r = compileDesign(p, ctx);
+    expect(ids(r).filter((i) => i === "PARAM_RANGE")).toHaveLength(2);
+    expect(r.valid).toBe(false);
+  });
+  it("treaty and dockyard limits block", () => {
+    expect(
+      ids(compileDesign(draft, withCtx({ treaty: { maxDisplacementKg: 500_000 } }))),
+    ).toContain("TREATY_LIMIT_DISPLACEMENT");
+    expect(
+      ids(compileDesign(draft, withCtx({ treaty: { maxMainGunCaliberUm: 100_000 } }))),
+    ).not.toContain("TREATY_LIMIT_CALIBRE"); // secondary guns only
+    expect(
+      ids(compileDesign(draft, withCtx({ treaty: { forbiddenCategories: ["DD"] } }))),
+    ).toContain("TREATY_LIMIT_CATEGORY");
+    const small = withCtx({
+      facilities: [
+        {
+          id: "tiny",
+          maxLengthMm: 30_000,
+          maxBeamMm: 5_000,
+          maxDisplacementKg: 100_000,
+          craneLiftKg: 1_000,
+        },
+      ],
+    });
+    expect(ids(compileDesign(draft, small))).toContain("NO_FACILITY_FITS");
+    expect(ids(compileDesign(draft, withCtx({ facilities: [] })))).toContain("NO_FACILITY_FITS");
+  });
+  it("missing magazine, cramped zone and no propulsion are BLOCKING", () => {
+    const nomag = withDraft({
+      placements: draft.placements.map((x) =>
+        x.instanceId === "a_gun_fwd" ? ({ ...x, magazineRef: undefined } as never) : x,
+      ),
+    });
+    expect(ids(compileDesign(nomag, ctx))).toContain("ARR-MAG-VOLUME");
+    const full = withDraft({
+      placements: [
+        ...draft.placements,
+        {
+          instanceId: "q2",
+          componentId: "quarters_basic",
+          zoneId: "FORECASTLE",
+          stationPermille: 40,
+        },
+      ],
+    });
+    expect(ids(compileDesign(full, ctx))).toContain("ARR-OVERLAP");
+    expect(
+      ids(compileDesign(withDraft({ machinery: { ...draft.machinery, installedKw: 0 } }), ctx)),
+    ).toContain("NO_PROPULSION");
+  });
+  it("modernization expectation raises an advisory when no growth reserve exists", () => {
+    const r = compileDesign(
+      withDraft({ requirement: { ...draft.requirement, modernizationExpectation: "MAJOR" } }),
+      ctx,
+    );
+    const f = r.findings.find((x) => x.id === "MODERNIZATION_MARGIN_LOW")!;
+    expect(f.severity).toBe("ADVISORY");
+    expect(r.valid).toBe(true);
+  });
+  it("trade-off: more speed costs weight, fuel range and trim", () => {
+    const fast = compileDesign(
+      withDraft({ machinery: { ...draft.machinery, installedKw: 5_500 } }),
+      ctx,
+    );
+    const base = compileDesign(draft, ctx);
+    expect(fast.machinery!.maxSpeedMilliKnots).toBeGreaterThan(base.machinery!.maxSpeedMilliKnots);
+    expect(fast.ledger.machinery).toBeGreaterThan(base.ledger.machinery);
+    expect(fast.machinery!.rangeNmAtCruise).toBeLessThanOrEqual(base.machinery!.rangeNmAtCruise);
+    expect(fast.totalKg).toBeGreaterThan(base.totalKg);
+  });
+  it("throws only on corrupt context", () => {
+    expect(() =>
+      compileDesign(withDraft({ hull: { ...draft.hull, hullFormId: "nope" } }), ctx),
+    ).toThrow();
+    expect(() =>
+      compileDesign(withDraft({ machinery: { ...draft.machinery, plantId: "nope" } }), ctx),
+    ).toThrow();
+    // An unregistered ship type is a design error, not corrupt context: it is a blocking finding (ADR-0088),
+    // so a crafted command cannot make the month executor throw.
+    const unknownType = compileDesign(
+      withDraft({ requirement: { ...draft.requirement, category: "nope" } }),
+      ctx,
+    );
+    expect(unknownType.valid).toBe(false);
+    expect(unknownType.findings.map((x) => x.id)).toContain("SHIP_TYPE_UNREGISTERED");
+    void balance;
+    void kg;
+  });
+  it("performance: one compile is fast enough for live preview", () => {
+    const t = performance.now();
+    for (let i = 0; i < 100; i++) compileDesign(draft, ctx);
+    expect((performance.now() - t) / 100).toBeLessThan(25);
+  });
+});

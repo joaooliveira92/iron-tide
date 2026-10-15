@@ -1,0 +1,523 @@
+# Ship-visual part catalog (ADR-0148). PRESENTATION ONLY: no content pack declares this file, so it never enters a
+# compiled artifact, a campaign snapshot or a golden hash. Decoded by `ShipVisualCatalogSchema`
+# (@bluewave/content-schema) and generated into `packages/ship-visual/src/catalog.generated.ts`:
+#
+#   pnpm --filter @bluewave/content-schema build && pnpm --filter @bluewave/ship-visual catalog:generate
+#
+# Drawing units: METRES AT THE 12-INCH REFERENCE (manual p142 "draw the gun to match the size of a 12-inch gun");
+# the renderer rescales by calibre. Origin at the seat centre, y DOWN, bow to the LEFT: barrels run toward -x. A
+# CASEMATE hangs from the deck edge, so its drawing lies below the origin (y > 0).
+# Keys: style (manual p140 letters; X universal), era (VICTORIAN / PRE_DREADNOUGHT / DREADNOUGHT / LATE_DREADNOUGHT),
+# sizes (the bands one drawing serves: SMALL <=5 in, MEDIUM 6-11 in, LARGE >=12 in), mountClass, optional guns (1-4).
+# Fallback: exact -> X same era -> own style DREADNOUGHT -> X DREADNOUGHT, so X x DREADNOUGHT must cover every
+# size x class (test-enforced). Keep alias use under the safe parser's cap of 100.
+
+mounts:
+  # ---------------------------------------------------------------- X x DREADNOUGHT (the universal default)
+  - id: x-dreadnought-large-turret
+    key: { style: X, era: DREADNOUGHT, sizes: [LARGE], mountClass: TURRET }
+    profile:
+      widthM: 11
+      shapes:
+        - { tone: structure, d: "M -4.6 0 L 4.6 0 L 4.6 -1 L -4.6 -1 Z" }
+        - { tone: structure, d: "M -5.5 -1 L 5.5 -1 L 5.5 -3.6 L -3.8 -3.6 L -5.5 -2.6 Z" }
+        - { tone: structure, d: "M 1 -3.6 L 2.6 -3.6 L 2.4 -4.1 L 1.2 -4.1 Z" }
+      barrel: { x: -5.2, y: -2.3, lengthM: 14, boreM: 0.55 }
+    plan: { body: ROUND, diameterM: 10, barrel: { lengthM: 14, boreM: 0.6, spacingM: 2.4 } }
+    # Shared by every drawing below (YAML anchor).
+    provenance: &drawing
+      sourceStatus: ESTIMATE
+      confidence: LOW
+      kind: game_conversion
+      sources:
+        - title: "Rule the Waves 3 manual, Appendix 5: creating turret files"
+          page: "139-142"
+      note: >-
+        Schematic drawing authored to the manual's turret-file key (nationality x era x size x type x guns) at the
+        12-inch reference; proportions are illustrative, not traced from a plan.
+  - id: x-dreadnought-medium-turret
+    key: { style: X, era: DREADNOUGHT, sizes: [MEDIUM], mountClass: TURRET }
+    profile:
+      widthM: 9
+      shapes:
+        - { tone: structure, d: "M -3.8 0 L 3.8 0 L 3.8 -0.8 L -3.8 -0.8 Z" }
+        - { tone: structure, d: "M -4.5 -0.8 L 4.5 -0.8 L 4.5 -3.4 L -3.2 -3.4 L -4.5 -2.4 Z" }
+      barrel: { x: -4.3, y: -2.1, lengthM: 13, boreM: 0.5 }
+    plan: { body: ROUND, diameterM: 8.5, barrel: { lengthM: 13, boreM: 0.55, spacingM: 2.2 } }
+    provenance: *drawing
+  - id: x-dreadnought-small-turret
+    key: { style: X, era: DREADNOUGHT, sizes: [SMALL], mountClass: TURRET }
+    profile:
+      widthM: 7
+      shapes:
+        - { tone: structure, d: "M -3.5 0 L 3.5 0 L 3.3 -3 L -2.4 -3 L -3.5 -2 Z" }
+      barrel: { x: -3.3, y: -1.8, lengthM: 12, boreM: 0.5 }
+    plan: { body: ROUND, diameterM: 6.5, barrel: { lengthM: 12, boreM: 0.5, spacingM: 2 } }
+    provenance: *drawing
+  - id: x-dreadnought-large-barbette
+    key: { style: X, era: DREADNOUGHT, sizes: [LARGE], mountClass: BARBETTE }
+    profile:
+      widthM: 10
+      shapes:
+        - { tone: structure, d: "M -5 0 L 5 0 L 5 -2.4 L -5 -2.4 Z" }
+        - { tone: structure, d: "M -3 -2.4 L 3 -2.4 L 2.2 -3.6 L -2.4 -3.6 Z" }
+      barrel: { x: -2.6, y: -3, lengthM: 14, boreM: 0.55 }
+    plan: { body: RING, diameterM: 10, barrel: { lengthM: 14, boreM: 0.6, spacingM: 2.4 } }
+    provenance: *drawing
+  - id: x-dreadnought-medium-barbette
+    key: { style: X, era: DREADNOUGHT, sizes: [MEDIUM], mountClass: BARBETTE }
+    profile:
+      widthM: 9
+      shapes:
+        - { tone: structure, d: "M -4.5 0 L 4.5 0 L 4.5 -2.2 L -4.5 -2.2 Z" }
+        - { tone: structure, d: "M -2.6 -2.2 L 2.6 -2.2 L 1.9 -3.3 L -2 -3.3 Z" }
+      barrel: { x: -2.3, y: -2.8, lengthM: 13, boreM: 0.5 }
+    plan: { body: RING, diameterM: 9, barrel: { lengthM: 13, boreM: 0.55, spacingM: 2.2 } }
+    provenance: *drawing
+  - id: x-dreadnought-small-barbette
+    key: { style: X, era: DREADNOUGHT, sizes: [SMALL], mountClass: BARBETTE }
+    profile:
+      widthM: 7
+      shapes:
+        - { tone: structure, d: "M -3.5 0 L 3.5 0 L 3.5 -2 L -3.5 -2 Z" }
+        - { tone: structure, d: "M -2 -2 L 2 -2 L 1.5 -3 L -1.6 -3 Z" }
+      barrel: { x: -1.8, y: -2.5, lengthM: 12, boreM: 0.5 }
+    plan: { body: RING, diameterM: 7, barrel: { lengthM: 12, boreM: 0.5, spacingM: 2 } }
+    provenance: *drawing
+  - id: x-dreadnought-large-shielded
+    key: { style: X, era: DREADNOUGHT, sizes: [LARGE], mountClass: SHIELDED }
+    profile:
+      widthM: 5
+      shapes:
+        - { tone: structure, d: "M -1 0 L 1 0 L 0.8 -1.6 L -0.8 -1.6 Z" }
+        - { tone: structure, d: "M -2.5 -1.4 L 2.2 -1.4 L 2.2 -3.6 L -1.6 -3.6 L -2.5 -2.7 Z" }
+      barrel: { x: -2.2, y: -2.5, lengthM: 13, boreM: 0.5 }
+    plan: { body: SHIELD, diameterM: 5, barrel: { lengthM: 13, boreM: 0.55, spacingM: 2 } }
+    provenance: *drawing
+  - id: x-dreadnought-medium-shielded
+    key: { style: X, era: DREADNOUGHT, sizes: [MEDIUM], mountClass: SHIELDED }
+    profile:
+      widthM: 4.4
+      shapes:
+        - { tone: structure, d: "M -0.9 0 L 0.9 0 L 0.7 -1.6 L -0.7 -1.6 Z" }
+        - { tone: structure, d: "M -2.2 -1.4 L 2 -1.4 L 2 -3.4 L -1.4 -3.4 L -2.2 -2.6 Z" }
+      barrel: { x: -1.9, y: -2.4, lengthM: 12.5, boreM: 0.5 }
+    plan: { body: SHIELD, diameterM: 4.4, barrel: { lengthM: 12.5, boreM: 0.5, spacingM: 2 } }
+    provenance: *drawing
+  - id: x-dreadnought-small-shielded
+    key: { style: X, era: DREADNOUGHT, sizes: [SMALL], mountClass: SHIELDED }
+    profile:
+      widthM: 4
+      shapes:
+        - { tone: structure, d: "M -0.8 0 L 0.8 0 L 0.6 -1.6 L -0.6 -1.6 Z" }
+        - { tone: structure, d: "M -2 -1.4 L 1.8 -1.4 L 1.8 -3.2 L -1.2 -3.2 L -2 -2.5 Z" }
+      barrel: { x: -1.7, y: -2.3, lengthM: 12, boreM: 0.5 }
+    plan: { body: SHIELD, diameterM: 4, barrel: { lengthM: 12, boreM: 0.5, spacingM: 2 } }
+    provenance: *drawing
+  - id: x-dreadnought-large-open
+    key: { style: X, era: DREADNOUGHT, sizes: [LARGE], mountClass: OPEN }
+    profile:
+      widthM: 3.2
+      shapes:
+        - { tone: structure, d: "M -1 0 L 1 0 L 0.6 -1.8 L -0.6 -1.8 Z" }
+        - { tone: gun, d: "M -1.6 -1.6 L 1.4 -1.6 L 1.4 -2.7 L -1.6 -2.7 Z" }
+      barrel: { x: -1.4, y: -2.15, lengthM: 13, boreM: 0.5 }
+    plan: { body: PEDESTAL, diameterM: 3.2, barrel: { lengthM: 13, boreM: 0.55, spacingM: 2 } }
+    provenance: *drawing
+  - id: x-dreadnought-medium-open
+    key: { style: X, era: DREADNOUGHT, sizes: [MEDIUM], mountClass: OPEN }
+    profile:
+      widthM: 3
+      shapes:
+        - { tone: structure, d: "M -0.9 0 L 0.9 0 L 0.55 -1.8 L -0.55 -1.8 Z" }
+        - { tone: gun, d: "M -1.5 -1.6 L 1.3 -1.6 L 1.3 -2.6 L -1.5 -2.6 Z" }
+      barrel: { x: -1.3, y: -2.1, lengthM: 12.5, boreM: 0.5 }
+    plan: { body: PEDESTAL, diameterM: 3, barrel: { lengthM: 12.5, boreM: 0.5, spacingM: 2 } }
+    provenance: *drawing
+  - id: x-dreadnought-small-open
+    key: { style: X, era: DREADNOUGHT, sizes: [SMALL], mountClass: OPEN }
+    profile:
+      widthM: 2.8
+      shapes:
+        - { tone: structure, d: "M -0.8 0 L 0.8 0 L 0.5 -1.8 L -0.5 -1.8 Z" }
+        - { tone: gun, d: "M -1.4 -1.6 L 1.2 -1.6 L 1.2 -2.6 L -1.4 -2.6 Z" }
+      barrel: { x: -1.2, y: -2.1, lengthM: 12, boreM: 0.5 }
+    plan: { body: PEDESTAL, diameterM: 2.8, barrel: { lengthM: 12, boreM: 0.5, spacingM: 2 } }
+    provenance: *drawing
+  - id: x-dreadnought-large-casemate
+    key: { style: X, era: DREADNOUGHT, sizes: [LARGE], mountClass: CASEMATE }
+    profile:
+      widthM: 5.2
+      shapes:
+        - { tone: structure, d: "M -2.6 0.2 L 2.6 0.2 L 2.6 3.6 L -2.6 3.6 Z" }
+        - { tone: void, d: "M -1 1.1 L 1 1.1 L 1 2.7 L -1 2.7 Z" }
+      barrel: { x: -0.4, y: 1.9, lengthM: 3.4, boreM: 0.5 }
+    plan: { body: CASEMATE, diameterM: 5.2, barrel: { lengthM: 13, boreM: 0.55, spacingM: 2 } }
+    provenance: *drawing
+  - id: x-dreadnought-medium-casemate
+    key: { style: X, era: DREADNOUGHT, sizes: [MEDIUM], mountClass: CASEMATE }
+    profile:
+      widthM: 4.8
+      shapes:
+        - { tone: structure, d: "M -2.4 0.2 L 2.4 0.2 L 2.4 3.4 L -2.4 3.4 Z" }
+        - { tone: void, d: "M -0.9 1.05 L 0.9 1.05 L 0.9 2.55 L -0.9 2.55 Z" }
+      barrel: { x: -0.4, y: 1.8, lengthM: 3.2, boreM: 0.5 }
+    plan: { body: CASEMATE, diameterM: 4.8, barrel: { lengthM: 12.5, boreM: 0.5, spacingM: 2 } }
+    provenance: *drawing
+  - id: x-dreadnought-small-casemate
+    key: { style: X, era: DREADNOUGHT, sizes: [SMALL], mountClass: CASEMATE }
+    profile:
+      widthM: 4.4
+      shapes:
+        - { tone: structure, d: "M -2.2 0.2 L 2.2 0.2 L 2.2 3.2 L -2.2 3.2 Z" }
+        - { tone: void, d: "M -0.8 1.0 L 0.8 1.0 L 0.8 2.4 L -0.8 2.4 Z" }
+      barrel: { x: -0.4, y: 1.7, lengthM: 3, boreM: 0.5 }
+    plan: { body: CASEMATE, diameterM: 4.4, barrel: { lengthM: 12, boreM: 0.5, spacingM: 2 } }
+    provenance: *drawing
+
+  # ---------------------------------------------------------------- X x VICTORIAN / PRE_DREADNOUGHT (EARLY band)
+  - id: x-victorian-turret
+    key: { style: X, era: VICTORIAN, sizes: [LARGE, MEDIUM, SMALL], mountClass: TURRET }
+    profile: &x_v_turret_profile
+      widthM: 8.4
+      shapes:
+        - { tone: structure, d: "M -4.2 0 L -4.2 -3 L 4.2 -3 L 4.2 0 Z" }
+        - { tone: void, d: "M -4.2 -2.5 L 4.2 -2.5 L 4.2 -2.3 L -4.2 -2.3 Z" }
+      barrel: { x: -4, y: -1.6, lengthM: 8, boreM: 0.6 }
+    plan:
+      &x_v_turret_plan {
+        body: ROUND,
+        diameterM: 8.4,
+        barrel: { lengthM: 8, boreM: 0.6, spacingM: 2.6 },
+      }
+    provenance: *drawing
+  - id: x-victorian-barbette
+    key: { style: X, era: VICTORIAN, sizes: [LARGE, MEDIUM, SMALL], mountClass: BARBETTE }
+    profile: &x_v_barbette_profile
+      widthM: 8.8
+      shapes:
+        - { tone: structure, d: "M -4.4 0 L -4.2 -2 L 4.2 -2 L 4.4 0 Z" }
+        - { tone: gun, d: "M -2.4 -2 L -2 -3 L 2 -3 L 2.4 -2 Z" }
+      barrel: { x: -2, y: -2.6, lengthM: 8, boreM: 0.6 }
+    plan:
+      &x_v_barbette_plan {
+        body: RING,
+        diameterM: 8.8,
+        barrel: { lengthM: 8, boreM: 0.6, spacingM: 2.6 },
+      }
+    provenance: *drawing
+  - id: x-victorian-shielded
+    key: { style: X, era: VICTORIAN, sizes: [LARGE, MEDIUM, SMALL], mountClass: SHIELDED }
+    profile: &x_v_shielded_profile
+      widthM: 3.2
+      shapes:
+        - { tone: structure, d: "M -0.6 0 L 0.6 0 L 0.5 -1.4 L -0.5 -1.4 Z" }
+        - { tone: structure, d: "M -1.6 -1.2 L 1 -1.2 L 1 -2.8 L -1.6 -2.8 Z" }
+      barrel: { x: -1.4, y: -2, lengthM: 7, boreM: 0.4 }
+    plan:
+      &x_v_shielded_plan {
+        body: SHIELD,
+        diameterM: 3.2,
+        barrel: { lengthM: 7, boreM: 0.4, spacingM: 1.8 },
+      }
+    provenance: *drawing
+  - id: x-victorian-open
+    key: { style: X, era: VICTORIAN, sizes: [LARGE, MEDIUM, SMALL], mountClass: OPEN }
+    profile: &x_v_open_profile
+      widthM: 2.6
+      shapes:
+        - { tone: structure, d: "M -1.2 0 L 1.2 0 L 0.9 -1.4 L -0.9 -1.4 Z" }
+        - { tone: gun, d: "M -1.4 -1.3 L 1.2 -1.3 L 1.2 -2.1 L -1.4 -2.1 Z" }
+      barrel: { x: -1.2, y: -1.7, lengthM: 7, boreM: 0.4 }
+    plan:
+      &x_v_open_plan {
+        body: PEDESTAL,
+        diameterM: 2.6,
+        barrel: { lengthM: 7, boreM: 0.4, spacingM: 1.8 },
+      }
+    provenance: *drawing
+  - id: x-victorian-casemate
+    key: { style: X, era: VICTORIAN, sizes: [LARGE, MEDIUM, SMALL], mountClass: CASEMATE }
+    profile: &x_v_casemate_profile
+      widthM: 3.6
+      shapes:
+        - { tone: structure, d: "M -1.8 0.2 L 1.8 0.2 L 1.8 3.2 L -1.8 3.2 Z" }
+        - { tone: void, d: "M -0.8 1.1 L 0.8 1.1 L 0.8 2.3 L -0.8 2.3 Z" }
+      barrel: { x: -0.4, y: 1.7, lengthM: 2.4, boreM: 0.5 }
+    plan:
+      &x_v_casemate_plan {
+        body: CASEMATE,
+        diameterM: 3.6,
+        barrel: { lengthM: 7, boreM: 0.5, spacingM: 1.8 },
+      }
+    provenance: *drawing
+  - id: x-pre-dreadnought-turret
+    key: { style: X, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM, SMALL], mountClass: TURRET }
+    profile: &x_p_turret_profile
+      widthM: 7.6
+      shapes:
+        - { tone: structure, d: "M -3.8 0 L -3.8 -1.2 L 3.8 -1.2 L 3.8 0 Z" }
+        - { tone: structure, d: "M -3.6 -1.2 Q -4 -3.4 -2 -3.6 L 3.2 -3.6 L 3.6 -1.2 Z" }
+      barrel: { x: -3.4, y: -2.3, lengthM: 11, boreM: 0.5 }
+    plan:
+      &x_p_turret_plan {
+        body: ROUND,
+        diameterM: 8,
+        barrel: { lengthM: 11, boreM: 0.55, spacingM: 2.2 },
+      }
+    provenance: *drawing
+  - id: x-pre-dreadnought-barbette
+    key: { style: X, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM, SMALL], mountClass: BARBETTE }
+    profile: &x_p_barbette_profile
+      widthM: 7.2
+      shapes:
+        - { tone: structure, d: "M -3.6 0 L -3.6 -2 L 3.6 -2 L 3.6 0 Z" }
+        - { tone: structure, d: "M -3.4 -2 L -3 -3.4 L 3.2 -3.4 L 3.4 -2 Z" }
+      barrel: { x: -3, y: -2.7, lengthM: 11, boreM: 0.5 }
+    plan:
+      &x_p_barbette_plan {
+        body: RING,
+        diameterM: 8.4,
+        barrel: { lengthM: 11, boreM: 0.55, spacingM: 2.2 },
+      }
+    provenance: *drawing
+  - id: x-pre-dreadnought-shielded
+    key: { style: X, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM, SMALL], mountClass: SHIELDED }
+    profile: &x_p_shielded_profile
+      widthM: 4.2
+      shapes:
+        - { tone: structure, d: "M -0.8 0 L 0.8 0 L 0.6 -1.5 L -0.6 -1.5 Z" }
+        - { tone: structure, d: "M -2.1 -1.3 Q -2.2 -3.3 -0.6 -3.3 L 1.8 -3.3 L 1.8 -1.3 Z" }
+      barrel: { x: -1.8, y: -2.3, lengthM: 11, boreM: 0.45 }
+    plan:
+      &x_p_shielded_plan {
+        body: SHIELD,
+        diameterM: 4.2,
+        barrel: { lengthM: 11, boreM: 0.45, spacingM: 1.9 },
+      }
+    provenance: *drawing
+  - id: x-pre-dreadnought-open
+    key: { style: X, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM, SMALL], mountClass: OPEN }
+    profile: &x_p_open_profile
+      widthM: 2.8
+      shapes:
+        - { tone: structure, d: "M -0.8 0 L 0.8 0 L 0.5 -1.7 L -0.5 -1.7 Z" }
+        - { tone: gun, d: "M -1.4 -1.5 L 1.2 -1.5 L 1.2 -2.5 L -1.4 -2.5 Z" }
+      barrel: { x: -1.2, y: -2, lengthM: 11, boreM: 0.45 }
+    plan:
+      &x_p_open_plan {
+        body: PEDESTAL,
+        diameterM: 2.8,
+        barrel: { lengthM: 11, boreM: 0.45, spacingM: 1.9 },
+      }
+    provenance: *drawing
+  - id: x-pre-dreadnought-casemate
+    key: { style: X, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM, SMALL], mountClass: CASEMATE }
+    profile: &x_p_casemate_profile
+      widthM: 4.4
+      shapes:
+        - { tone: structure, d: "M -2.2 0.2 L 2.2 0.2 L 2.2 3.6 L -2.2 3.6 Q -2.6 1.9 -2.2 0.2 Z" }
+        - { tone: void, d: "M -1.3 1.2 L 0.3 1.2 L 0.3 2.6 L -1.3 2.6 Z" }
+      barrel: { x: -0.8, y: 1.9, lengthM: 2.8, boreM: 0.5 }
+    plan:
+      &x_p_casemate_plan {
+        body: CASEMATE,
+        diameterM: 4.4,
+        barrel: { lengthM: 11, boreM: 0.5, spacingM: 2 },
+      }
+    provenance: *drawing
+  # ---------------------------------------------------------------- national variants (manual p139-140 styles)
+  - id: b-victorian-barbette
+    key: { style: B, era: VICTORIAN, sizes: [LARGE, MEDIUM], mountClass: BARBETTE }
+    profile: &hooded_v_barbette_profile
+      widthM: 8.8
+      shapes:
+        - { tone: structure, d: "M -4.4 0 L -4.2 -2 L 4.2 -2 L 4.4 0 Z" }
+        - { tone: structure, d: "M -3 -2 Q -3 -3.4 -1.4 -3.6 L 3 -3.6 L 3.2 -2 Z" }
+      barrel: { x: -2.8, y: -2.8, lengthM: 9, boreM: 0.6 }
+    plan:
+      &hooded_v_barbette_plan {
+        body: RING,
+        diameterM: 8.8,
+        barrel: { lengthM: 9, boreM: 0.6, spacingM: 2.6 },
+      }
+    # Shared by every national variant below (YAML anchor).
+    provenance: &national
+      sourceStatus: ESTIMATE
+      confidence: LOW
+      kind: game_conversion
+      sources:
+        - title: "Rule the Waves 3 manual, Appendix 5: creating turret files (national identifiers)"
+          page: "139-140"
+      note: >-
+        National silhouette after period practice (French tall drum turrets and barbettes; hooded barbettes of the
+        British Admirals, German and Chinese 1880s ships; pear, domed and round pre-dreadnought gunhouses). The
+        manual sanctions a national look per style but draws none; the shapes are illustrative, not traced.
+  - id: b-pre-dreadnought-turret
+    key: { style: B, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM], mountClass: TURRET }
+    profile: &pear_p_turret_profile
+      widthM: 8
+      shapes:
+        - { tone: structure, d: "M -3.8 0 L -3.8 -1.2 L 3.8 -1.2 L 3.8 0 Z" }
+        - { tone: structure, d: "M -3.6 -1.2 L -3 -3.2 L 3 -3.6 Q 4 -3.6 4 -2.4 L 4 -1.2 Z" }
+      barrel: { x: -3.3, y: -2.2, lengthM: 11, boreM: 0.5 }
+    plan:
+      &pear_p_turret_plan {
+        body: ROUND,
+        diameterM: 8,
+        barrel: { lengthM: 11, boreM: 0.55, spacingM: 2.2 },
+      }
+    provenance: *national
+  - id: g-victorian-barbette
+    key: { style: G, era: VICTORIAN, sizes: [LARGE, MEDIUM], mountClass: BARBETTE }
+    profile: *hooded_v_barbette_profile
+    plan: *hooded_v_barbette_plan
+    provenance: *national
+  - id: g-pre-dreadnought-turret
+    key: { style: G, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM], mountClass: TURRET }
+    profile: &dome_p_turret_profile
+      widthM: 7.6
+      shapes:
+        - { tone: structure, d: "M -3.8 0 L -3.8 -1 L 3.8 -1 L 3.8 0 Z" }
+        - {
+            tone: structure,
+            d: "M -3.8 -1 L -3.8 -2.6 Q -3.8 -3.8 -2.4 -3.8 L 2.4 -3.8 Q 3.8 -3.8 3.8 -2.6 L 3.8 -1 Z",
+          }
+      barrel: { x: -3.6, y: -2.3, lengthM: 11, boreM: 0.5 }
+    plan:
+      &dome_p_turret_plan {
+        body: ROUND,
+        diameterM: 7.6,
+        barrel: { lengthM: 11, boreM: 0.55, spacingM: 2.2 },
+      }
+    provenance: *national
+  - id: q-victorian-barbette
+    key: { style: Q, era: VICTORIAN, sizes: [LARGE, MEDIUM], mountClass: BARBETTE }
+    profile: *hooded_v_barbette_profile
+    plan: *hooded_v_barbette_plan
+    provenance: *national
+  - id: q-pre-dreadnought-turret
+    key: { style: Q, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM], mountClass: TURRET }
+    profile: *dome_p_turret_profile
+    plan: *dome_p_turret_plan
+    provenance: *national
+  - id: f-victorian-turret
+    key: { style: F, era: VICTORIAN, sizes: [LARGE, MEDIUM], mountClass: TURRET }
+    profile: &french_v_turret_profile
+      widthM: 8.8
+      shapes:
+        - { tone: structure, d: "M -3.6 0 L -3.6 -3 L 3.6 -3 L 3.6 0 Z" }
+        - { tone: structure, d: "M -4.4 -3 L -4 -3.8 L 4 -3.8 L 4.4 -3 Z" }
+      barrel: { x: -3.4, y: -1.9, lengthM: 8.5, boreM: 0.6 }
+    plan:
+      &french_v_turret_plan {
+        body: ROUND,
+        diameterM: 8.8,
+        barrel: { lengthM: 8.5, boreM: 0.6, spacingM: 2.6 },
+      }
+    provenance: *national
+  - id: f-victorian-barbette
+    key: { style: F, era: VICTORIAN, sizes: [LARGE, MEDIUM], mountClass: BARBETTE }
+    profile: &french_v_barbette_profile
+      widthM: 8
+      shapes:
+        - { tone: structure, d: "M -4 0 L -4 -2.8 L 4 -2.8 L 4 0 Z" }
+        - { tone: structure, d: "M -3.2 -2.8 L -2.8 -3.8 L 2.8 -3.8 L 3.2 -2.8 Z" }
+      barrel: { x: -2.8, y: -3.3, lengthM: 9, boreM: 0.6 }
+    plan:
+      &french_v_barbette_plan {
+        body: RING,
+        diameterM: 8.4,
+        barrel: { lengthM: 9, boreM: 0.6, spacingM: 2.6 },
+      }
+    provenance: *national
+  - id: f-pre-dreadnought-turret
+    key: { style: F, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM], mountClass: TURRET }
+    profile: &round_p_turret_profile
+      widthM: 7.6
+      shapes:
+        - { tone: structure, d: "M -3.8 0 L -3.8 -1 L 3.8 -1 L 3.8 0 Z" }
+        - { tone: structure, d: "M -3.8 -1 L -3.8 -3.4 L 3.4 -3.4 L 3.4 -1 Z" }
+      barrel: { x: -3.6, y: -2.2, lengthM: 11, boreM: 0.5 }
+    plan:
+      &round_p_turret_plan {
+        body: ROUND,
+        diameterM: 7.8,
+        barrel: { lengthM: 11, boreM: 0.55, spacingM: 2.2 },
+      }
+    provenance: *national
+  - id: r-victorian-turret
+    key: { style: R, era: VICTORIAN, sizes: [LARGE, MEDIUM], mountClass: TURRET }
+    profile: *french_v_turret_profile
+    plan: *french_v_turret_plan
+    provenance: *national
+  - id: r-pre-dreadnought-turret
+    key: { style: R, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM], mountClass: TURRET }
+    profile: *round_p_turret_profile
+    plan: *round_p_turret_plan
+    provenance: *national
+  - id: s-victorian-turret
+    key: { style: S, era: VICTORIAN, sizes: [LARGE, MEDIUM], mountClass: TURRET }
+    profile: *french_v_turret_profile
+    plan: *french_v_turret_plan
+    provenance: *national
+  - id: s-pre-dreadnought-turret
+    key: { style: S, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM], mountClass: TURRET }
+    profile: *round_p_turret_profile
+    plan: *round_p_turret_plan
+    provenance: *national
+  - id: u-pre-dreadnought-turret
+    key: { style: U, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM], mountClass: TURRET }
+    profile: *round_p_turret_profile
+    plan: *round_p_turret_plan
+    provenance: *national
+  - id: j-pre-dreadnought-turret
+    key: { style: J, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM], mountClass: TURRET }
+    profile: *pear_p_turret_profile
+    plan: *pear_p_turret_plan
+    provenance: *national
+  - id: a-pre-dreadnought-turret
+    key: { style: A, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM], mountClass: TURRET }
+    profile: *dome_p_turret_profile
+    plan: *dome_p_turret_plan
+    provenance: *national
+  - id: i-pre-dreadnought-turret
+    key: { style: I, era: PRE_DREADNOUGHT, sizes: [LARGE, MEDIUM], mountClass: TURRET }
+    profile: *dome_p_turret_profile
+    plan: *dome_p_turret_plan
+    provenance: *national
+
+masts:
+  # Masts stand on the house top (or deck) with the seat at y = 0; the renderer shrinks a mast as a whole to fit the
+  # drawing's headroom (a display clamp), and never rescales it by calibre.
+  - id: x-victorian-mast
+    key: { style: X, era: VICTORIAN }
+    profile:
+      heightM: 28
+      shapes:
+        - { tone: structure, d: "M -0.3 0 L -0.25 -28 L 0.25 -28 L 0.3 0 Z" }
+        - { tone: gun, d: "M -4.5 -24 L 4.5 -24 L 4.5 -23.6 L -4.5 -23.6 Z" }
+        - { tone: gun, d: "M -3.5 -14 L 3.5 -14 L 3.5 -13.6 L -3.5 -13.6 Z" }
+        - { tone: structure, d: "M -1.8 -20 L 1.8 -20 L 1.4 -18.6 L -1.4 -18.6 Z" }
+    provenance: *drawing
+  - id: x-pre-dreadnought-mast
+    key: { style: X, era: PRE_DREADNOUGHT }
+    profile:
+      heightM: 28
+      shapes:
+        - { tone: structure, d: "M -0.2 -18 L -0.15 -28 L 0.15 -28 L 0.2 -18 Z" }
+        - { tone: structure, d: "M -0.8 0 L -0.6 -18 L 0.6 -18 L 0.8 0 Z" }
+        - { tone: gun, d: "M -3 -22 L 3 -22 L 3 -21.6 L -3 -21.6 Z" }
+        - { tone: structure, d: "M -2 -12 L 2 -12 L 1.6 -10.4 L -1.6 -10.4 Z" }
+        - { tone: structure, d: "M -1.8 -18.4 L 1.8 -18.4 L 1.4 -16.8 L -1.4 -16.8 Z" }
+    provenance: *drawing
+  - id: x-dreadnought-mast
+    key: { style: X, era: DREADNOUGHT }
+    profile:
+      heightM: 28
+      shapes:
+        - { tone: structure, d: "M -4 0 L -3.6 0 L -0.1 -22 L -0.4 -22 Z" }
+        - { tone: structure, d: "M 4 0 L 3.6 0 L 0.1 -22 L 0.4 -22 Z" }
+        - { tone: structure, d: "M -0.3 0 L -0.2 -28 L 0.2 -28 L 0.3 0 Z" }
+        - { tone: structure, d: "M -2.2 -24 L 2.2 -24 L 2.2 -21.4 L -2.2 -21.4 Z" }
+    provenance: *drawing

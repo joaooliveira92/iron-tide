@@ -1,0 +1,18 @@
+#!/bin/sh
+# Resolve node and the package manager when git runs this hook from a GUI or
+# non-login shell whose PATH lacks them (nvm is wired in .zshrc). Read the login
+# shell's PATH via a `PATH=` marker so any shell-startup noise cannot corrupt it.
+if ! command -v node >/dev/null 2>&1 || ! command -v pnpm >/dev/null 2>&1; then
+  login_path=$("${SHELL:-/bin/sh}" -lc 'printf "PATH=%s" "$PATH"' 2>/dev/null)
+  case "$login_path" in
+    *PATH=*) PATH="${login_path##*PATH=}:$PATH"; export PATH;;
+  esac
+fi
+# Fast gates before a commit (ADR-0107). Refuse a direct commit on a protected
+# integration branch (`dev`/`main`) first (ADR-0165), then format-check the
+# staged files so unformatted code cannot enter history, then run the preflight
+# gate set. Bypass with `git commit --no-verify` only when justified; CI re-runs
+# everything.
+node scripts/check-branch-discipline.mjs || exit 1
+node scripts/precommit-staged.mjs || exit 1
+exec pnpm preflight

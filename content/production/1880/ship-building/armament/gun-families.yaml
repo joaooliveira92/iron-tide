@@ -1,0 +1,451 @@
+# Shared armament gun families (ADR-0093 Step 2). One record per shared physical/technical family;
+# national models reference these and never duplicate them. Units are in field names.
+# Source of record: docs/research/ship-building-1880-pre-era-armament.md and the components.yaml comments.
+gunFamilies:
+  - id: gun_rml_16in_80ton
+    designation: RML 16-inch 80-ton gun in turret
+    category: MAIN_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: mackinlay-1887
+          title: Mackinlay, Text Book of Gunnery 1887, Table XVI
+  - id: gun_rml_125in_38ton
+    designation: RML 12.5-inch 38-ton gun in turret
+    category: MAIN_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: mackinlay-1887
+          title: Mackinlay, Text Book of Gunnery 1887, Table XVI
+  - id: gun_rml_12in_35ton
+    designation: RML 12-inch 35-ton gun in turret
+    category: MAIN_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: mackinlay-1887
+          title: Mackinlay, Text Book of Gunnery 1887, Table XVI
+  - id: gun_rml_12in_25ton
+    designation: RML 12-inch 25-ton gun in turret
+    category: MAIN_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: mackinlay-1887
+          title: Mackinlay, Text Book of Gunnery 1887, Table XVI
+  - id: gun_rml_11in_25ton
+    designation: RML 11-inch 25-ton gun in mount
+    category: MAIN_GUN
+    defaultMountType: BARBETTE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: mackinlay-1887
+          title: Mackinlay, Text Book of Gunnery 1887, Table XVI
+  - id: gun_rml_10in_18ton
+    designation: RML 10-inch 18-ton gun in mount
+    category: MAIN_GUN
+    defaultMountType: BARBETTE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: mackinlay-1887
+          title: Mackinlay, Text Book of Gunnery 1887, Table XVI
+  - id: gun_rml_10in_18ton_broadside
+    designation: RML 10-inch 18-ton gun in broadside battery
+    category: SECONDARY_GUN
+    defaultMountType: BROADSIDE_BATTERY
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: mackinlay-1887
+          title: Mackinlay, Text Book of Gunnery 1887, Table XVI
+  - id: gun_rml_8in_9ton
+    designation: RML 8-inch 9-ton gun in mount
+    category: SECONDARY_GUN
+    defaultMountType: BARBETTE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: mackinlay-1887
+          title: Mackinlay, Text Book of Gunnery 1887, Table XVI
+  - id: gun_rml_7in_7ton
+    designation: RML 7-inch 7-ton gun in mount
+    category: SECONDARY_GUN
+    defaultMountType: BARBETTE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: mackinlay-1887
+          title: Mackinlay, Text Book of Gunnery 1887, Table XVI
+  - id: gun_rml_64pdr_71cwt
+    designation: RML 64-pounder 71-cwt gun
+    category: SECONDARY_GUN
+    defaultMountType: DECK_OPEN
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: mackinlay-1887
+          title: Mackinlay, Text Book of Gunnery 1887, Table XVI
+  - id: gun_bl_274mm_m1875
+    designation: Canon de 27 cm modèle 1875
+    category: MAIN_GUN
+    defaultMountType: BARBETTE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: brassey-1886
+          title: Brassey's Naval Annual 1886, French Commission table
+        - sourceId: mackinlay-1887
+          title: Mackinlay, Text Book of Gunnery 1887, Table XVI
+  - id: gun_bl_263mm_rkl20
+    designation: 26 cm Ringkanone L/20 C/74
+    category: MAIN_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: ESTIMATE
+      confidence: LOW
+      kind: historical_fact
+      sources:
+        - sourceId: brassey-1886
+          title: Brassey's Naval Annual 1886, French Commission table
+      note: Shell, charge and gun mass are estimates pending a print source.
+  - id: gun_bl_12in_25
+    designation: BL 12-inch/25 gun in barbette mount
+    category: MAIN_GUN
+    defaultMountType: BARBETTE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: navweaps-british
+          title: navweaps.com British gun pages (WNBR_*)
+        - sourceId: commons-1888
+          title: Commons 1888 gun-cost return
+  - id: gun_bl_135in_30
+    designation: BL 13.5-inch/30 gun in barbette mount
+    category: MAIN_GUN
+    defaultMountType: BARBETTE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: navweaps-british
+          title: navweaps.com British gun pages (WNBR_*)
+        - sourceId: commons-1888
+          title: Commons 1888 gun-cost return
+  - id: gun_bl_12in_35
+    designation: BL 12-inch/35 Mk VIII gun in turret
+    category: MAIN_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: navweaps-british
+          title: navweaps.com British gun pages (WNBR_*)
+        - sourceId: commons-1888
+          title: Commons 1888 gun-cost return
+  - id: gun_bl_10in_32
+    designation: BL 10-inch/32 gun in mount
+    category: MAIN_GUN
+    defaultMountType: BARBETTE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: navweaps-british
+          title: navweaps.com British gun pages (WNBR_*)
+        - sourceId: commons-1888
+          title: Commons 1888 gun-cost return
+  - id: gun_bl_92in_315
+    designation: BL 9.2-inch/31.5 gun in mount
+    category: SECONDARY_GUN
+    defaultMountType: BARBETTE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: navweaps-british
+          title: navweaps.com British gun pages (WNBR_*)
+        - sourceId: commons-1888
+          title: Commons 1888 gun-cost return
+  - id: gun_bl_6in_26
+    designation: BL 6-inch/26 gun in mount
+    category: SECONDARY_GUN
+    defaultMountType: CASEMATE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: navweaps-british
+          title: navweaps.com British gun pages (WNBR_*)
+        - sourceId: commons-1888
+          title: Commons 1888 gun-cost return
+  - id: gun_qf_6in_40
+    designation: QF 6-inch/40 gun in shielded mount
+    category: SECONDARY_GUN
+    defaultMountType: DECK_SHIELDED
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: navweaps-british
+          title: navweaps.com British gun pages (WNBR_*)
+        - sourceId: commons-1888
+          title: Commons 1888 gun-cost return
+  - id: gun_qf_47in
+    designation: QF 4.7-inch gun in shielded mount
+    category: SECONDARY_GUN
+    defaultMountType: DECK_SHIELDED
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: navweaps-british
+          title: navweaps.com British gun pages (WNBR_*)
+        - sourceId: commons-1888
+          title: Commons 1888 gun-cost return
+  - id: gun_qf_12pdr
+    designation: QF 12-pounder 12-cwt gun on pedestal
+    category: SECONDARY_GUN
+    defaultMountType: DECK_OPEN
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: navweaps-british
+          title: navweaps.com British gun pages (WNBR_*)
+        - sourceId: commons-1888
+          title: Commons 1888 gun-cost return
+  - id: gun_qf_6pdr
+    designation: QF 6-pounder 8-cwt gun on pedestal
+    category: SECONDARY_GUN
+    defaultMountType: DECK_OPEN
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: navweaps-british
+          title: navweaps.com British gun pages (WNBR_*)
+        - sourceId: commons-1888
+          title: Commons 1888 gun-cost return
+  - id: gun_hotchkiss_3pdr
+    designation: Hotchkiss 3-pounder 47 mm gun
+    category: SECONDARY_GUN
+    defaultMountType: DECK_OPEN
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      sources:
+        - sourceId: navweaps-british
+          title: navweaps.com British gun pages (WNBR_*)
+        - sourceId: commons-1888
+          title: Commons 1888 gun-cost return
+  - id: gun_nordenfelt_1in
+    designation: Nordenfelt 1-inch 4-barrel machine gun
+    category: SECONDARY_GUN
+    defaultMountType: DECK_OPEN
+    provenance:
+      sourceStatus: ESTIMATE
+      confidence: LOW
+      kind: historical_fact
+      sources:
+        - sourceId: navweaps-british
+          title: navweaps.com British gun pages (WNBR_*)
+      note: Rate of fire is an estimate; mass and bullet are single-source.
+  - id: gun_maxim_303
+    designation: Maxim .303 machine gun on mount
+    category: SECONDARY_GUN
+    defaultMountType: DECK_OPEN
+    provenance:
+      sourceStatus: ESTIMATE
+      confidence: LOW
+      kind: historical_fact
+      sources:
+        - sourceId: navweaps-british
+          title: navweaps.com British gun pages (WNBR_*)
+  # 15in Dahlgren smoothbore (US monitor / Canonicus class): a SMOOTH BORE, deliberately a distinct family so it never
+  # inherits rifled-RML ballistics (ADR-0117). Bore and gun mass from the 1866 US Ordnance Instructions (VERIFIED).
+  - id: gun_sb_15in_dahlgren
+    designation: XV-inch Dahlgren smoothbore in monitor turret
+    category: MAIN_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      note: "Smoothbore: 381 mm bore and 43,000 lb gun mass, plus the 330 lb shell and 50/35/60 lb black-powder charges, are read from the 1866 US Ordnance Instructions; muzzle velocity and rate of fire are ESTIMATE. Not an armour-piercing rifle."
+      sources:
+        - sourceId: oi66
+          title: US Navy, Ordnance Instructions 1866 (4th ed.), powder-proof and service-charge tables
+        - sourceId: navypedia-us
+          title: navypedia.org US monitor class pages
+  # Dutch 28 cm (283 mm) Krupp Ringkanone No.1, the monitor *Matador* main gun (ADR-0119). Bore and mount from
+  # navypedia; gun mass from Von Müller 1879 (28 cm RK L/22, a labelled analogy: the Dutch mark is 283/20);
+  # shell/charge/MV ESTIMATE. A breech-loading built-up steel rifle with black powder.
+  - id: gun_bl_283mm_krupp
+    designation: 28 cm Krupp Ringkanone No.1 in monitor turret
+    category: MAIN_GUN
+    defaultMountType: TURRET
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      note: "Bore 283 mm and turret mount from navypedia; gun mass approaches the Von Müller 28 cm RK L/22 (a labelled analogy, different mark); shell, charge and MV ESTIMATE."
+      sources:
+        - sourceId: navypedia-nl
+          title: navypedia.org Dutch class pages (nl_bb_matador)
+        - sourceId: coast-defence-armament-1880
+          title: docs/research/ship-building-1880-coast-defence-armament.md §2.1
+  # Portuguese Krupp 15 cm RK L/22 C/75 (149 mm), *Vasco da Gama* secondary (ADR-0119). Bore, gun mass, shell and
+  # charge from Von Müller 1879 (15 cm RK L/22). A breech-loading Krupp rifle in a casemate.
+  - id: gun_bl_149mm_rkl22
+    designation: 15 cm Krupp RK L/22 C/75 in casemate
+    category: SECONDARY_GUN
+    defaultMountType: CASEMATE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      note: "Bore, gun mass 3,500 kg, projectile 33.67 kg and charge 7.75 kg from Von Müller 1879 (15 cm RK L/22, SINGLE-SOURCE); the Portuguese C/75 is an export-year designation."
+      sources:
+        - sourceId: navypedia-pt
+          title: navypedia.org Portuguese class pages (pr_bb_vasco_da_gama)
+        - sourceId: von-muller-1879
+          title: H. von Müller, Die Entwickelung der preußischen Küsten- und Schiffs-Artillerie 1860-1878 (1879)
+  # Portuguese Krupp 6.7 cm (67 mm) gun, *Vasco da Gama* anti-torpedo battery (ADR-0119). No print source found:
+  # all ballistic values ESTIMATE.
+  - id: gun_bl_67mm_krupp
+    designation: 6.7 cm Krupp gun on deck
+    category: SECONDARY_GUN
+    defaultMountType: DECK_OPEN
+    provenance:
+      sourceStatus: ESTIMATE
+      confidence: LOW
+      kind: historical_fact
+      note: "Bore and mount from navypedia; shell, charge, gun mass and MV ESTIMATE (no print source found)."
+      sources:
+        - sourceId: navypedia-pt
+          title: navypedia.org Portuguese class pages (pr_bb_vasco_da_gama)
+        - sourceId: coast-defence-armament-1880
+          title: docs/research/ship-building-1880-coast-defence-armament.md §2.6
+  # Brazilian 9-inch (229 mm) Whitworth 300-pdr RML, the casemate ironclad *Sete de Setembro* main gun (ADR-0119).
+  # Bore, mount and gun mass from Conway's via navypedia/Wikipedia; charge and MV ESTIMATE. A muzzle-loading rifle.
+  - id: gun_rml_229mm_whitworth
+    designation: 9-inch Whitworth 300-pdr RML in casemate
+    category: MAIN_GUN
+    defaultMountType: CASEMATE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      note: "Bore 9 in / 229 mm, casemate mount and gun mass 18 long tons from Conway's 1860-1905 (Lyon) via navypedia; charge and MV ESTIMATE."
+      sources:
+        - sourceId: navypedia-br
+          title: navypedia.org Brazilian class pages (Sete de Setembro)
+        - sourceId: coast-defence-armament-1880
+          title: docs/research/ship-building-1880-coast-defence-armament.md §2.3
+  # Japanese 24 cm (235 mm) Krupp RKL/22 C/72, the central-battery ironclad *Fusō* main gun (ADR-0119). Gun mass from
+  # Von Müller 1879 (24 cm RK L/22); shell/charge/MV ESTIMATE.
+  - id: gun_bl_235mm_rkl22
+    designation: 24 cm Krupp RKL/22 C/72 in central battery
+    category: MAIN_GUN
+    defaultMountType: BARBETTE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      note: "Bore 235 mm and gun mass 15,500 kg from Von Müller 1879 (24 cm RK L/22, SINGLE-SOURCE); shell, charge and MV ESTIMATE."
+      sources:
+        - sourceId: navypedia-jp
+          title: navypedia.org Japanese class pages (jap_bb_fuso78)
+        - sourceId: von-muller-1879
+          title: H. von Müller, Die Entwickelung der preußischen Küsten- und Schiffs-Artillerie 1860-1878 (1879)
+  # Japanese 17 cm (173 mm) Krupp RKL/25 C/72, *Fusō* secondary (ADR-0119). Gun mass from Von Müller 1879
+  # (17 cm RK L/25); shell/charge/MV ESTIMATE.
+  - id: gun_bl_173mm_rkl25
+    designation: 17 cm Krupp RKL/25 C/72 in battery
+    category: SECONDARY_GUN
+    defaultMountType: CASEMATE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      note: "Bore 173 mm and gun mass 5,600 kg from Von Müller 1879 (17 cm RK L/25, SINGLE-SOURCE); shell, charge and MV ESTIMATE."
+      sources:
+        - sourceId: navypedia-jp
+          title: navypedia.org Japanese class pages (jap_bb_fuso78)
+        - sourceId: von-muller-1879
+          title: H. von Müller, Die Entwickelung der preußischen Küsten- und Schiffs-Artillerie 1860-1878 (1879)
+  # Spanish Armstrong 10-inch 12-ton 300-pdr RML, the broadside ironclads *Numancia* and *Vitoria* (ADR-0119). A
+  # DISTINCT gun from gun_rml_10in_18ton: 12 tons and a 300 lb shell, not 18 tons and 400 lb (research §1);
+  # charge and MV UNVERIFIED.
+  - id: gun_rml_10in_12ton_300pdr
+    designation: RML 10-inch 12-ton 300-pdr (Armstrong) in broadside
+    category: MAIN_GUN
+    defaultMountType: BROADSIDE_BATTERY
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      note: "Bore 254 mm, gun mass ~12 long tons and 300 lb (136.1 kg) projectile from Brassey's Naval Annual 1886 p.331 (10-in 12-ton 300-pdr) + Conway's via Wikipedia; charge and MV UNVERIFIED. Distinct from the Woolwich 10-inch 18-ton (gun_rml_10in_18ton)."
+      sources:
+        - sourceId: brassey-1886
+          title: Brassey's Naval Annual 1886, p.331 (Huáscar 10-in 12-ton 300-pdr)
+        - sourceId: coast-defence-followups-1880
+          title: docs/research/ship-building-1880-coast-defence-followups.md §1
+  # Austro-Hungarian 21 cm (209 mm) G. L/20 C.68 (Krupp-pattern), the central-casemate ironclad *Kaiser Max* main gun
+  # (ADR-0119). Gun mass 9,400 kg and charge 17 kg from a Pola/Mittheilungen source via Von Müller; shell ESTIMATE.
+  - id: gun_bl_209mm_gl20
+    designation: 21 cm G. L/20 C.68 in central casemate
+    category: MAIN_GUN
+    defaultMountType: CASEMATE
+    provenance:
+      sourceStatus: DERIVED
+      confidence: MEDIUM
+      kind: historical_fact
+      note: "Bore 209 mm and gun mass 9,400 kg (barrel 8,910 + breech 490) from a Pola 1875 source (Mittheilungen aus dem Gebiete des Seewesens); shell mass ESTIMATE; charge 17 kg SINGLE-SOURCE."
+      sources:
+        - sourceId: navypedia-ah
+          title: navypedia.org Austro-Hungarian class pages (ah_bb_kaiser_max)
+        - sourceId: von-muller-1879
+          title: H. von Müller, Die Entwickelung der preußischen Küsten- und Schiffs-Artillerie 1860-1878 (1879) / Mitteilungen aus dem Gebiete des Seewesens 1875

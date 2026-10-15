@@ -1,0 +1,148 @@
+{
+  "allow": [
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "compound",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "compound_cylindrical",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "compound_locomotive_tb",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "dynamo_small",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "funnel_single",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "harvey",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "iron",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "krupp",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "locomotive_boiler_tb",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "magazine_heavy",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "magazine_medium",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "magazine_small",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "mild_steel",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "nickel_steel",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "pumps_damage_control",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "quarters_crew",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "rangefinder_optical",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "steel",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "triple_expansion_cylindrical",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "triple_expansion_watertube",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "tube_14in_above_water",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "tube_14in_submerged",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "ventilation_plant",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    },
+    {
+      "collection": "shipBuilding.partModel.parts",
+      "recordId": "wrought_iron",
+      "field": "provenance",
+      "justification": "Inherited legacy catalogue record (plant, armour material, fitting or launcher) with no authored provenance; the ship-part-model parts migration surfaces the legacy PLACEHOLDER status so it is visible pending a sourcing pass. Not a migration difference: the record value is unchanged (ADR-0154 §15, ticket 11d)."
+    }
+  ]
+}

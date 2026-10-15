@@ -1,0 +1,385 @@
+# National naval profiles (NationNavalProfile) for the EARLY band, one file per nation.
+# Every historical value carries a provenance block (sourceStatus / confidence / kind / sources); every balance
+# target is labelled `balance_adjustment`. Grounding: docs/research/<nation>-naval-profile.md.
+# Hard capability only ever restricts (UNAVAILABLE families, calibre ceilings); it never grants. Soft doctrine
+# steers templates, AI scoring and procurement, and never blocks a legal design (docs/ships-nation-orientation.md).
+navalProfiles:
+  - nationId: uk
+    activeFrom: "1880-01"
+    activeUntil: null
+    strategicSituation: >-
+      Global battle-fleet power with the world's largest cruiser and coaling-station obligation: the two-Power
+      standard held the battle line while trade protection and overseas stations demanded long-range cruisers,
+      colonial gunboats and the world's largest shipbuilding industry.
+    hardCapabilities:
+      maxGunCaliberUm: 343000
+      maxArmourThicknessUm: 457000
+      domesticTorpedoDiameterUm: 356000
+      hullForms:
+        [
+          torpedo_boat_form,
+          protected_cruiser_form,
+          coast_defence_form,
+          pre_dreadnought_form,
+          merchant_liner_form,
+        ]
+      domesticPlants:
+        [
+          compound_cylindrical,
+          triple_expansion_cylindrical,
+          triple_expansion_watertube,
+          compound_locomotive_tb,
+          locomotive_boiler_tb,
+        ]
+      restrictedShipTypes: []
+      grants: []
+    softPreferences:
+      speedOverArmourBp: 5000
+      secondaryBatteryWeightBp: 10500
+      enduranceWeightBp: 14000
+      riskToleranceBp: 4000
+      colonialServiceWeightBp: 12500
+      torpedoOnCruisersBp: 9000
+      accommodationStandard: STANDARD
+    industrialProfile:
+      buildTimeMultiplierBp: 9300
+      costMultiplierBp: 9800
+      machineryReliabilityBp: 9000
+      constructionQualityVarianceBp: 2000
+      maxPracticalDisplacementKg:
+        - { fromMonth: "1880-01", value: 10000000 }
+        - { fromMonth: "1885-01", value: 12000000 }
+        - { fromMonth: "1890-01", value: 15000000 }
+      heavyGunProduction: DOMESTIC
+      armourPlateProduction: DOMESTIC
+      provenance:
+        sourceStatus: ESTIMATE
+        confidence: MEDIUM
+        kind: balance_adjustment
+        sources:
+          - {
+              title: "Brassey, The British Navy vol. II",
+              author: "T. A. Brassey",
+              year: 1882,
+              page: "95 (gun costs)",
+              archiveOrUrl: "britishnavyitss04brasgoog",
+            }
+          - { title: "National naval profiles research note", page: "A.1.2" }
+        derivation:
+          {
+            sourceValue: "250-360 t hull/month per slip (Duncan, 1899-1901)",
+            sourceUnit: "t/month",
+            conversion: "faster than the 1894 baseline",
+            gameValue: "buildTimeMultiplierBp 9300",
+            roundingRule: "within the ±15% band",
+          }
+    dock:
+      maximumNewConstructionMassKg: 13000000
+      maximumMajorRepairMassKg: 13000000
+      maximumRebuildMassKg: 13000000
+      maximumConversionMassKg: 13000000
+      provenance:
+        sourceStatus: DERIVED
+        confidence: MEDIUM
+        kind: game_conversion
+        sources:
+          - { title: "1880 national dock capacity research note", page: "findings table" }
+        derivation:
+          {
+            sourceValue: "scenario B starter 12,679 t (Majestic-like, largest 1880 hull); HMS Inflexible 11,880 t",
+            sourceUnit: "t",
+            conversion: "largest 1880 hull the nation fields, rounded up to the next 1,000 t dock step",
+            gameValue: "maximumNewConstructionMassKg 13000000",
+            roundingRule: "ceiling to next 1,000 t",
+          }
+        note: "max(historical flagship 11,880 t, scenario largest hull 12,679 t) rounded up to the next 1,000 t"
+    doctrineProfile:
+      engagementRangeM: 2000
+      hePreferenceBp: 2000
+      postures: [battle_fleet_concentration, colonial_presence, commerce_defence]
+      provenance:
+        sourceStatus: DERIVED
+        confidence: MEDIUM
+        kind: historical_fact
+        sources:
+          - { title: "National naval profiles research note", page: "A.1.1, A.1.3" }
+    researchPreferences:
+      - { field: MACHINERY, priority: 4 }
+      - { field: HULL_CONSTRUCTION, priority: 3 }
+      - { field: GUNNERY, priority: 3 }
+      - { field: INFRASTRUCTURE, priority: 3 }
+      - { field: DAMAGE_CONTROL, priority: 2 }
+      - { field: FIRE_CONTROL, priority: 2 }
+      - { field: TORPEDOES, priority: 2 }
+      - { field: SHIP_DESIGN, priority: 2 }
+      - { field: MINES_AND_ASW, priority: 1 }
+      - { field: SUBMARINES, priority: 1 }
+    componentAccess:
+      gun_bl_274mm_m1875: { status: UNAVAILABLE }
+      gun_bl_263mm_rkl20: { status: UNAVAILABLE }
+      gun_bl_135in_30: { status: DOMESTIC, producer: "Woolwich / Elswick" }
+      gun_bl_12in_25: { status: DOMESTIC, producer: "Woolwich / Elswick" }
+      gun_bl_12in_35: { status: DOMESTIC, producer: "Woolwich / Elswick" }
+      gun_bl_10in_32: { status: DOMESTIC, producer: "Woolwich" }
+      gun_bl_92in_315: { status: DOMESTIC, producer: "Woolwich" }
+      gun_bl_6in_26: { status: DOMESTIC, producer: "Woolwich" }
+      gun_qf_6in_40: { status: DOMESTIC, producer: "Elswick" }
+      gun_qf_47in: { status: DOMESTIC, producer: "Elswick" }
+      tube_14in_above_water: { status: DOMESTIC, producer: "Whitehead (Woolwich)" }
+      tube_14in_submerged: { status: DOMESTIC, producer: "Whitehead (Woolwich)" }
+    gunModels:
+      - id: uk_bl_12in_25_mk1
+        familyId: gun_bl_12in_25
+        designation: "BL 12-in/25 Mk I/II (Colossus, Collingwood)"
+        overrides:
+          displayName: "BL 12-inch/25 Mk I/II gun in barbette mount"
+          attributes.shellMassG: "324000"
+        mounts: [BARBETTE]
+        provenance: &uk_gun_prov
+          sourceStatus: DERIVED
+          confidence: MEDIUM
+          kind: historical_fact
+          sources:
+            - {
+                title: "navweaps WNBR_12-25_mk1",
+                archiveOrUrl: "http://www.navweaps.com/Weapons/WNBR_12-25_mk1.php",
+              }
+            - { title: "National naval profiles research note", page: "B.1" }
+      - id: uk_bl_135in_30_mk1
+        familyId: gun_bl_135in_30
+        designation: "BL 13.5-in/30 Mk I-IV (Royal Sovereign)"
+        overrides:
+          displayName: "BL 13.5-inch/30 Mk I-IV gun in barbette mount"
+          attributes.shellMassG: "567000"
+        mounts: [BARBETTE]
+        provenance: *uk_gun_prov
+      - id: uk_bl_12in_35_mk8
+        familyId: gun_bl_12in_35
+        designation: "BL 12-in/35 Mk VIII (Majestic, Canopus)"
+        overrides:
+          displayName: "BL 12-inch/35 Mk VIII gun in turret"
+          attributes.shellMassG: "386000"
+        mounts: [TURRET]
+        provenance: *uk_gun_prov
+      - id: uk_bl_10in_32_mk1
+        familyId: gun_bl_10in_32
+        designation: "BL 10-in/32 Mk I-IV (Victoria, Barfleur)"
+        overrides:
+          displayName: "BL 10-inch/32 Mk I-IV gun in barbette mount"
+          attributes.shellMassG: "227000"
+        mounts: [BARBETTE]
+        provenance: *uk_gun_prov
+      - id: uk_bl_92in_315_mk3
+        familyId: gun_bl_92in_315
+        designation: "BL 9.2-in/31.5 Mk III-VII"
+        overrides:
+          displayName: "BL 9.2-inch/31.5 gun in barbette mount"
+          attributes.shellMassG: "172000"
+        mounts: [BARBETTE, CASEMATE]
+        provenance: *uk_gun_prov
+      - id: uk_bl_6in_26_mk2
+        familyId: gun_bl_6in_26
+        designation: "BL 6-in/26 Mk I-VI"
+        overrides:
+          displayName: "BL 6-inch/26 gun in casemate"
+          attributes.shellMassG: "45300"
+        mounts: [CASEMATE, DECK_SHIELDED]
+        provenance: *uk_gun_prov
+      - id: uk_qf_6in_40_mk1
+        familyId: gun_qf_6in_40
+        designation: "QF 6-in/40 Mk I-III"
+        overrides:
+          displayName: "QF 6-inch/40 gun in shielded mount"
+          attributes.shellMassG: "45300"
+        mounts: [DECK_SHIELDED, CASEMATE]
+        provenance: *uk_gun_prov
+      - id: uk_qf_47in_mk1
+        familyId: gun_qf_47in
+        designation: "QF 4.7-in/40 Mk I-IV"
+        overrides:
+          displayName: "QF 4.7-inch/40 gun in shielded mount"
+          attributes.shellMassG: "20400"
+        mounts: [DECK_SHIELDED, DECK_OPEN]
+        provenance: *uk_gun_prov
+      - id: uk_qf_12pdr_12cwt
+        familyId: gun_qf_12pdr
+        designation: "QF 12-pdr 12-cwt"
+        overrides:
+          displayName: "QF 12-pounder 12-cwt gun"
+          attributes.shellMassG: "5670"
+        mounts: [DECK_OPEN, DECK_SHIELDED]
+        provenance: *uk_gun_prov
+    ammunitionPatterns:
+      - id: uk_ap_palliser
+        pattern: AP
+        penetrationBiasBp: 9000
+        provenance:
+          sourceStatus: DERIVED
+          confidence: MEDIUM
+          kind: historical_fact
+          sources:
+            - { title: "Mackinlay, Text Book of Gunnery 1887, Table XVI" }
+            - { title: "National naval profiles research note", page: "A.1.3" }
+      - id: uk_cpc
+        pattern: CPC
+        penetrationBiasBp: 6000
+        provenance:
+          sourceStatus: ESTIMATE
+          confidence: LOW
+          kind: balance_adjustment
+          sources:
+            - { title: "National naval profiles research note", page: "A.1.3" }
+    componentVariants:
+      - id: uk_tube_14in_aw_mk4
+        familyId: tube_14in_above_water
+        designation: "14-in Whitehead Mk IV, above-water carriage"
+        overrides:
+          displayName: "14-inch Whitehead Mk IV torpedo tube, above-water trainable carriage"
+        provenance:
+          sourceStatus: DERIVED
+          confidence: MEDIUM
+          kind: historical_fact
+          sources:
+            - { title: "National naval profiles research note", page: "B.1" }
+      - id: uk_tube_14in_sub_mk4
+        familyId: tube_14in_submerged
+        designation: "14-in Whitehead Mk IV, submerged bow tube"
+        overrides:
+          displayName: "14-inch Whitehead Mk IV torpedo tube, submerged bow tube"
+        provenance:
+          sourceStatus: DERIVED
+          confidence: MEDIUM
+          kind: historical_fact
+          sources:
+            - { title: "National naval profiles research note", page: "B.1" }
+    designWeights:
+      B:
+        {
+          firepowerBp: 12000,
+          protectionBp: 11500,
+          speedBp: 9500,
+          enduranceBp: 10500,
+          torpedoBp: 9000,
+          reliabilityBp: 11500,
+          colonialBp: 10000,
+          costBp: 10000,
+        }
+      CA:
+        {
+          firepowerBp: 11000,
+          protectionBp: 10500,
+          speedBp: 10500,
+          enduranceBp: 11500,
+          torpedoBp: 9500,
+          reliabilityBp: 11000,
+          colonialBp: 11000,
+          costBp: 10000,
+        }
+      CL:
+        {
+          firepowerBp: 9000,
+          protectionBp: 9500,
+          speedBp: 11000,
+          enduranceBp: 14000,
+          torpedoBp: 9500,
+          reliabilityBp: 12000,
+          colonialBp: 12500,
+          costBp: 10000,
+        }
+      DD:
+        {
+          firepowerBp: 8000,
+          protectionBp: 8500,
+          speedBp: 13000,
+          enduranceBp: 9000,
+          torpedoBp: 12000,
+          reliabilityBp: 11000,
+          colonialBp: 9500,
+          costBp: 11500,
+        }
+      KE:
+        {
+          firepowerBp: 8500,
+          protectionBp: 9000,
+          speedBp: 9000,
+          enduranceBp: 12000,
+          torpedoBp: 8500,
+          reliabilityBp: 11500,
+          colonialBp: 13500,
+          costBp: 11500,
+        }
+      AMC:
+        {
+          firepowerBp: 9000,
+          protectionBp: 8500,
+          speedBp: 9500,
+          enduranceBp: 13000,
+          torpedoBp: 9000,
+          reliabilityBp: 10500,
+          colonialBp: 12000,
+          costBp: 12000,
+        }
+    procurementPolicy:
+      battleLineShareBp: 3000
+      cruiserShareBp: 4000
+      torpedoCraftShareBp: 1800
+      colonialShareBp: 1200
+      foreignProcurementAppetiteBp: 1500
+      unprovenTechAppetiteBp: 2500
+      buildOrder: [CL, B, CA, DD, KE, AMC]
+    namingPolicy:
+      stems:
+        B:
+          [
+            Devastation,
+            Thunderer,
+            Dreadnought,
+            Alexandra,
+            Temeraire,
+            Colossus,
+            Collingwood,
+            Royal Sovereign,
+            Majestic,
+            Canopus,
+          ]
+        CA: [Shannon, Nelson, Northampton, Monmouth]
+        CL: [Iris, Mercury, Leander, Mersey, Edgar, Blake, Apollo, Diadem]
+        DD: [Havock, Hornet, Daring, Decoy, Ferret]
+        KE: [Condor, Curlew, Landrail, Bulldog, Osprey, Doterel]
+        AMC: [Alsatian, Andes, Arlanza]
+      convention:
+        B: "Classical, admiralty, royal and national names (Devastation, Dreadnought, Royal Sovereign)."
+        CA: "Historical naval names (Shannon, Nelson)."
+        CL: "Geographic, classical and abstract names (Iris, Leander, Edgar)."
+        DD: "Early torpedo boats numbered; destroyers named for weapons, speed and animals (Havock, Daring)."
+        KE: "Birds, animals and tribes (Condor, Curlew, Doterel)."
+        AMC: "Liner names taken up from trade."
+    sourceReferences:
+      - {
+          title: "W. H. White, A Manual of Naval Architecture",
+          author: "W. H. White",
+          year: 1894,
+          archiveOrUrl: "manualofnavalarc00whitrich",
+        }
+      - {
+          title: "The Naval Annual 1886",
+          author: "T. A. Brassey (ed.)",
+          year: 1886,
+          archiveOrUrl: "navalannual1886",
+        }
+      - { title: "navypedia.org UK class pages", archiveOrUrl: "http://www.navypedia.org" }
+      - { title: "National naval profiles research note (UK/France)", page: "full" }
+    provenance:
+      sourceStatus: ESTIMATE
+      confidence: MEDIUM
+      kind: balance_adjustment
+      sources:
+        - { title: "National naval profiles research note (UK/France)", page: "A.1, B.1, C.1, D" }
+      derivation:
+        {
+          sourceValue: "grounded shape (White/Brassey/navypedia/navweaps)",
+          sourceUnit: "mixed",
+          conversion: "weights and shares are gameplay abstractions",
+          gameValue: "profile as authored",
+          roundingRule: "multipliers within ±15%",
+        }

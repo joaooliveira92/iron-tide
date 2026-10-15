@@ -1,0 +1,32 @@
+{
+  "name": "@bluewave/ship-design",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@bluewave/armament": "workspace:*",
+    "@bluewave/content-schema": "workspace:*",
+    "@bluewave/contracts": "workspace:*",
+    "@bluewave/deterministic": "workspace:*",
+    "@bluewave/random": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b --watch",
+    "clean": "rimraf --glob dist *.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "test": "vp test run",
+    "lint": "vp lint .",
+    "lint:fix": "echo 'ok'",
+    "equivalence": "node ../../scripts/verify-equivalence-determinism.mjs"
+  },
+  "devDependencies": {
+    "yaml": "^2.9.1"
+  }
+}

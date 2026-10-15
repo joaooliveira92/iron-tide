@@ -1,0 +1,42 @@
+//packages/combat/src/index.ts
+export { BattleResolver } from "./resolver.js";
+export type { BattleManifest } from "./resolver.js";
+export { StrengthCalculator } from "./strength.js";
+export * from "./errors.js";
+
+export * from "./reasonCodes.js";
+export * from "./tacticalTime.js";
+export * from "./tacticalClock.js";
+export * from "./tacticalPipeline.js";
+export * from "./commandQuantization.js";
+export * from "./commandRecord.js";
+export * from "./realism.js";
+export * from "./commandReach.js";
+export * from "./targeting.js";
+export * from "./movement/index.js";
+export * from "./gunnery/index.js";
+export * from "./spotting/index.js";
+export * from "./damage/index.js";
+export * from "./weather/index.js";
+export * from "./contact/index.js";
+export * from "./torpedoes/index.js";
+export * from "./mines/index.js";
+export * from "./submarines/index.js";
+export * from "./air-combat/index.js";
+export * from "./air-defense/index.js";
+// air-defense re-declares these names; the root keeps the pre-D-4 owners.
+export { compareStrings } from "./air-combat/index.js";
+export { damageMultiplierBp } from "./mines/index.js";
+export * from "./aircraft/index.js";
+export * from "./carrier-operations/index.js";
+export * from "./simulation/engine.js";
+export * from "./simulation/spawn.js";
+export * from "./fullSpeedStress.js";
+export * from "./battleTurnAway.js";
+export * from "./withdrawal.js";
+export * from "./battleEnd.js";
+export * from "./battleLedger.js";
+export * from "./autoResolution.js";
+export * from "./tactical/index.js";
+export * from "./generation/index.js";
+export * from "./battleResolution/index.js";

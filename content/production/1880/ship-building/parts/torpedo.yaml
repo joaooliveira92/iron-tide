@@ -1,0 +1,411 @@
+parts:
+  - family: torpedo
+    id: ger_533mm_g7a_1934
+    lifecycle:
+      availableFrom: 1934-01
+    name: ger_533mm_g7a_1934
+    origin:
+      sourceFile: ship-building/parts/torpedo.yaml
+    provenance:
+      confidence: MEDIUM
+      kind: game_conversion
+      note: Mirrors the shipped combat torpedo_models_v1 constants; values grounded in the cited research.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: docs/research/ship-building-early-band-2.md
+          section: §2 14-inch Whitehead torpedo and its launching gear
+          title: Ship-building catalogue — EARLY band (1880–1899), second pass
+        - archiveOrUrl: docs/research/c1-m3-torpedoes.md
+          section: §3.1 Torpedo model table (1880–1945)
+          title: Torpedo model research (c1-m3)
+    provides: torpedo
+    quantities:
+      - basis: PER_PART_UNIT
+        id: torpedo_mass
+        kind: massKg
+        value: 1528
+    revisions: []
+    spec:
+      diameterUm: 533000
+      guidanceCapability: gyro
+      launchTypes:
+        - ABOVE_WATER_TRAINABLE
+        - UNDERWATER_TRAINABLE
+        - SUBMARINE_INTERNAL
+      massKg: 1528
+      minimumArmingDistanceM: 150
+      propulsionType: WET_HEATER
+      reliabilityBp: 96000
+      speedSettings:
+        - rangeM: 6000
+          settingId: 44kn
+          speedMilliKnots: 44000
+        - rangeM: 8000
+          settingId: 40kn
+          speedMilliKnots: 40000
+        - rangeM: 14000
+          settingId: 30kn
+          speedMilliKnots: 30000
+      technologyPrerequisiteIds:
+        - wet_heater_engine
+      tubeHitHazardPolicy: ORDINARY
+      warheadExplosiveEquivalentMassKg: 280
+      warheadExplosiveMassKg: 280
+      warheadType: HEXANITE
+  - family: torpedo
+    id: ger_533mm_g7e_1936
+    lifecycle:
+      availableFrom: 1936-01
+    name: ger_533mm_g7e_1936
+    origin:
+      sourceFile: ship-building/parts/torpedo.yaml
+    provenance:
+      confidence: MEDIUM
+      kind: game_conversion
+      note: Mirrors the shipped combat torpedo_models_v1 constants; values grounded in the cited research.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: docs/research/ship-building-early-band-2.md
+          section: §2 14-inch Whitehead torpedo and its launching gear
+          title: Ship-building catalogue — EARLY band (1880–1899), second pass
+        - archiveOrUrl: docs/research/c1-m3-torpedoes.md
+          section: §3.1 Torpedo model table (1880–1945)
+          title: Torpedo model research (c1-m3)
+    provides: torpedo
+    quantities:
+      - basis: PER_PART_UNIT
+        id: torpedo_mass
+        kind: massKg
+        value: 1603
+    revisions: []
+    spec:
+      diameterUm: 533000
+      guidanceCapability: gyro
+      launchTypes:
+        - ABOVE_WATER_TRAINABLE
+        - SUBMARINE_INTERNAL
+      massKg: 1603
+      minimumArmingDistanceM: 150
+      propulsionType: ELECTRIC
+      reliabilityBp: 93000
+      speedSettings:
+        - rangeM: 5000
+          settingId: t2_30kn
+          speedMilliKnots: 30000
+        - rangeM: 7500
+          settingId: t3_30kn
+          speedMilliKnots: 30000
+      technologyPrerequisiteIds:
+        - electric_propulsion
+      tubeHitHazardPolicy: ELECTRIC
+      warheadExplosiveEquivalentMassKg: 280
+      warheadExplosiveMassKg: 280
+      warheadType: HEXANITE
+  - family: torpedo
+    id: jpn_61cm_type93_1935
+    lifecycle:
+      availableFrom: 1935-01
+    name: jpn_61cm_type93_1935
+    origin:
+      sourceFile: ship-building/parts/torpedo.yaml
+    provenance:
+      confidence: MEDIUM
+      kind: game_conversion
+      note: Mirrors the shipped combat torpedo_models_v1 constants; values grounded in the cited research.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: docs/research/ship-building-early-band-2.md
+          section: §2 14-inch Whitehead torpedo and its launching gear
+          title: Ship-building catalogue — EARLY band (1880–1899), second pass
+        - archiveOrUrl: docs/research/c1-m3-torpedoes.md
+          section: §3.1 Torpedo model table (1880–1945)
+          title: Torpedo model research (c1-m3)
+    provides: torpedo
+    quantities:
+      - basis: PER_PART_UNIT
+        id: torpedo_mass
+        kind: massKg
+        value: 2700
+    revisions: []
+    spec:
+      diameterUm: 610000
+      guidanceCapability: gyro
+      launchTypes:
+        - ABOVE_WATER_TRAINABLE
+        - UNDERWATER_TRAINABLE
+        - SUBMARINE_INTERNAL
+      massKg: 2700
+      minimumArmingDistanceM: 300
+      oxygenWakeVisibilityModifierBp: 2500
+      propulsionType: OXYGEN
+      reliabilityBp: 92000
+      speedSettings:
+        - rangeM: 20000
+          settingId: 48kn
+          speedMilliKnots: 48000
+        - rangeM: 32000
+          settingId: 40kn
+          speedMilliKnots: 40000
+        - rangeM: 40000
+          settingId: 36kn
+          speedMilliKnots: 36000
+      technologyPrerequisiteIds:
+        - oxygen_propulsion
+      tubeHitHazardPolicy: OXYGEN
+      warheadExplosiveEquivalentMassKg: 490
+      warheadExplosiveMassKg: 490
+      warheadType: TYPE_97
+  - family: torpedo
+    id: rn_21in_mk_iv_1916
+    lifecycle:
+      availableFrom: 1916-01
+    name: rn_21in_mk_iv_1916
+    origin:
+      sourceFile: ship-building/parts/torpedo.yaml
+    provenance:
+      confidence: MEDIUM
+      kind: game_conversion
+      note: Mirrors the shipped combat torpedo_models_v1 constants; values grounded in the cited research.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: docs/research/ship-building-early-band-2.md
+          section: §2 14-inch Whitehead torpedo and its launching gear
+          title: Ship-building catalogue — EARLY band (1880–1899), second pass
+        - archiveOrUrl: docs/research/c1-m3-torpedoes.md
+          section: §3.1 Torpedo model table (1880–1945)
+          title: Torpedo model research (c1-m3)
+    provides: torpedo
+    quantities:
+      - basis: PER_PART_UNIT
+        id: torpedo_mass
+        kind: massKg
+        value: 1454
+    revisions: []
+    spec:
+      diameterUm: 533000
+      guidanceCapability: gyro
+      launchTypes:
+        - ABOVE_WATER_TRAINABLE
+        - UNDERWATER_FIXED
+        - UNDERWATER_TRAINABLE
+      massKg: 1454
+      minimumArmingDistanceM: 50
+      propulsionType: WET_HEATER
+      reliabilityBp: 93500
+      speedSettings:
+        - rangeM: 7315
+          settingId: 35kn
+          speedMilliKnots: 35000
+        - rangeM: 9144
+          settingId: 29kn
+          speedMilliKnots: 29000
+        - rangeM: 12344
+          settingId: 25kn
+          speedMilliKnots: 25000
+      technologyPrerequisiteIds:
+        - wet_heater_engine
+      tubeHitHazardPolicy: ORDINARY
+      warheadExplosiveEquivalentMassKg: 234
+      warheadExplosiveMassKg: 234
+      warheadType: TNT
+  - family: torpedo
+    id: rn_21in_mk_viii_1927
+    lifecycle:
+      availableFrom: 1927-01
+    name: rn_21in_mk_viii_1927
+    origin:
+      sourceFile: ship-building/parts/torpedo.yaml
+    provenance:
+      confidence: MEDIUM
+      kind: game_conversion
+      note: Mirrors the shipped combat torpedo_models_v1 constants; values grounded in the cited research.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: docs/research/ship-building-early-band-2.md
+          section: §2 14-inch Whitehead torpedo and its launching gear
+          title: Ship-building catalogue — EARLY band (1880–1899), second pass
+        - archiveOrUrl: docs/research/c1-m3-torpedoes.md
+          section: §3.1 Torpedo model table (1880–1945)
+          title: Torpedo model research (c1-m3)
+    provides: torpedo
+    quantities:
+      - basis: PER_PART_UNIT
+        id: torpedo_mass
+        kind: massKg
+        value: 1566
+    revisions: []
+    spec:
+      diameterUm: 533000
+      guidanceCapability: gyro
+      launchTypes:
+        - ABOVE_WATER_TRAINABLE
+        - UNDERWATER_FIXED
+        - UNDERWATER_TRAINABLE
+      massKg: 1566
+      minimumArmingDistanceM: 100
+      propulsionType: WET_HEATER
+      reliabilityBp: 95500
+      speedSettings:
+        - rangeM: 4572
+          settingId: 40kn
+          speedMilliKnots: 40000
+      technologyPrerequisiteIds:
+        - wet_heater_engine
+      tubeHitHazardPolicy: ORDINARY
+      warheadExplosiveEquivalentMassKg: 340
+      warheadExplosiveMassKg: 340
+      warheadType: TNT
+  - family: torpedo
+    id: usn_21in_mk14_1931
+    lifecycle:
+      availableFrom: 1931-01
+    name: usn_21in_mk14_1931
+    origin:
+      sourceFile: ship-building/parts/torpedo.yaml
+    provenance:
+      confidence: MEDIUM
+      kind: game_conversion
+      note: Mirrors the shipped combat torpedo_models_v1 constants; values grounded in the cited research.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: docs/research/ship-building-early-band-2.md
+          section: §2 14-inch Whitehead torpedo and its launching gear
+          title: Ship-building catalogue — EARLY band (1880–1899), second pass
+        - archiveOrUrl: docs/research/c1-m3-torpedoes.md
+          section: §3.1 Torpedo model table (1880–1945)
+          title: Torpedo model research (c1-m3)
+    provides: torpedo
+    quantities:
+      - basis: PER_PART_UNIT
+        id: torpedo_mass
+        kind: massKg
+        value: 1361
+    revisions: []
+    spec:
+      diameterUm: 533000
+      guidanceCapability: gyro
+      launchTypes:
+        - ABOVE_WATER_TRAINABLE
+        - UNDERWATER_FIXED
+        - UNDERWATER_TRAINABLE
+      massKg: 1361
+      minimumArmingDistanceM: 410
+      propulsionType: WET_HEATER
+      reliabilityBp: 94000
+      speedSettings:
+        - rangeM: 4115
+          settingId: 46kn
+          speedMilliKnots: 46000
+        - rangeM: 8230
+          settingId: 31kn
+          speedMilliKnots: 31000
+      technologyPrerequisiteIds:
+        - wet_heater_engine
+      tubeHitHazardPolicy: ORDINARY
+      warheadExplosiveEquivalentMassKg: 230
+      warheadExplosiveMassKg: 230
+      warheadType: TNT
+  - family: torpedo
+    id: whitehead_14in_1886
+    lifecycle:
+      availableFrom: 1880-01
+    name: whitehead_14in_1886
+    origin:
+      sourceFile: ship-building/parts/torpedo.yaml
+    provenance:
+      confidence: MEDIUM
+      kind: game_conversion
+      note: Mirrors the shipped combat torpedo_models_v1 constants; values grounded in the cited research.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: docs/research/ship-building-early-band-2.md
+          section: §2 14-inch Whitehead torpedo and its launching gear
+          title: Ship-building catalogue — EARLY band (1880–1899), second pass
+        - archiveOrUrl: docs/research/c1-m3-torpedoes.md
+          section: §3.1 Torpedo model table (1880–1945)
+          title: Torpedo model research (c1-m3)
+    provides: torpedo
+    quantities:
+      - basis: PER_PART_UNIT
+        id: torpedo_mass
+        kind: massKg
+        value: 300
+    revisions:
+      - from: 1884-01
+        provenance:
+          confidence: MEDIUM
+          kind: historical_fact
+          note: The 1877 14-inch Whitehead carried a 26 lb (12 kg) wet-guncotton charge; the 1884 Mk IV re-rated it to the 58–70 lb (26–27 kg) charge the shipped model carries.
+          sourceStatus: VERIFIED
+          sources:
+            - archiveOrUrl: docs/research/ship-building-early-band-2.md
+              section: §2 (1877 14-in 26 lb → 1884 Mk IV 58–70 lb)
+              title: Ship-building catalogue — EARLY band (1880–1899), second pass
+        spec:
+          warheadExplosiveEquivalentMassKg: 27
+          warheadExplosiveMassKg: 27
+    spec:
+      diameterUm: 356000
+      guidanceCapability: none
+      launchTypes:
+        - ABOVE_WATER_FIXED
+        - ABOVE_WATER_TRAINABLE
+        - UNDERWATER_FIXED
+      massKg: 300
+      minimumArmingDistanceM: 25
+      propulsionType: COMPRESSED_AIR
+      reliabilityBp: 88000
+      speedSettings:
+        - rangeM: 550
+          settingId: 25kn
+          speedMilliKnots: 25000
+      technologyPrerequisiteIds: []
+      tubeHitHazardPolicy: ORDINARY
+      warheadExplosiveEquivalentMassKg: 12
+      warheadExplosiveMassKg: 12
+      warheadType: WET_GUNCOTTON
+  - family: torpedo
+    id: whitehead_18in_1894
+    lifecycle:
+      availableFrom: 1894-01
+    name: whitehead_18in_1894
+    origin:
+      sourceFile: ship-building/parts/torpedo.yaml
+    provenance:
+      confidence: MEDIUM
+      kind: game_conversion
+      note: Mirrors the shipped combat torpedo_models_v1 constants; values grounded in the cited research.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: docs/research/ship-building-early-band-2.md
+          section: §2 14-inch Whitehead torpedo and its launching gear
+          title: Ship-building catalogue — EARLY band (1880–1899), second pass
+        - archiveOrUrl: docs/research/c1-m3-torpedoes.md
+          section: §3.1 Torpedo model table (1880–1945)
+          title: Torpedo model research (c1-m3)
+    provides: torpedo
+    quantities:
+      - basis: PER_PART_UNIT
+        id: torpedo_mass
+        kind: massKg
+        value: 383
+    revisions: []
+    spec:
+      diameterUm: 457000
+      guidanceCapability: none
+      launchTypes:
+        - ABOVE_WATER_FIXED
+        - ABOVE_WATER_TRAINABLE
+      massKg: 383
+      minimumArmingDistanceM: 25
+      propulsionType: COMPRESSED_AIR
+      reliabilityBp: 90000
+      speedSettings:
+        - rangeM: 730
+          settingId: 26_5kn
+          speedMilliKnots: 26500
+      technologyPrerequisiteIds: []
+      tubeHitHazardPolicy: ORDINARY
+      warheadExplosiveEquivalentMassKg: 54
+      warheadExplosiveMassKg: 54
+      warheadType: WET_GUNCOTTON

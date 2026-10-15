@@ -1,0 +1,52 @@
+import type { MonthlyReportConstruction } from "../../../../shared/campaign-command-contract.js";
+
+/**
+ * The report's Construction section (spec §16): per-project progress from the
+ * real `ConstructionProgressed` events, completed ships and newly active
+ * projects from the pre→post deltas. There is no "stalled projects" signal
+ * (CUT) and nothing is fabricated when a month is quiet.
+ */
+export function MonthReportConstructionSection({
+  construction,
+}: {
+  readonly construction: MonthlyReportConstruction;
+}) {
+  const quiet =
+    construction.projects.length === 0 &&
+    construction.completedShips.length === 0 &&
+    construction.newlyActiveProjectIds.length === 0;
+  if (quiet) {
+    return (
+      <section aria-label="Construction">
+        <p className="font-medium">Construction</p>
+        <p className="text-muted-foreground">No construction activity this month.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section aria-label="Construction" className="space-y-1">
+      <p className="font-medium">Construction</p>
+      {construction.projects.length > 0 && (
+        <ul className="text-muted-foreground" aria-label="Construction progress">
+          {construction.projects.map((project) => (
+            <li key={project.projectId}>
+              {project.projectId}: work {project.previousWork.toLocaleString()} →{" "}
+              {project.newWork.toLocaleString()}
+            </li>
+          ))}
+        </ul>
+      )}
+      {construction.newlyActiveProjectIds.length > 0 && (
+        <p className="text-muted-foreground">
+          Newly active: {construction.newlyActiveProjectIds.join(", ")}
+        </p>
+      )}
+      {construction.completedShips.length > 0 && (
+        <p className="text-muted-foreground">
+          Completed: {construction.completedShips.map((ship) => ship.name).join(", ")}
+        </p>
+      )}
+    </section>
+  );
+}

@@ -1,0 +1,70 @@
+name: Desktop E2E Gate
+
+on:
+  push:
+    branches: [dev, main]
+    paths:
+      - "apps/desktop/**"
+      - "content/production/1880/**"
+      - ".github/workflows/desktop-e2e.yml"
+  pull_request:
+    paths:
+      - "apps/desktop/**"
+      - "content/production/1880/**"
+      - ".github/workflows/desktop-e2e.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop-e2e:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.18.0"
+          cache: "pnpm"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      # The app hard-depends on the compiled content artifact; build it
+      # explicitly before the E2E suite and packaging so a green run cannot
+      # mean tests/packaging used a stale or missing artifact.
+      - name: Build the compiled content artifact
+        run: pnpm content:build
+      - run: pnpm --filter @bluewave/desktop test:e2e
+      - name: Package the app (unpacked)
+        run: CSC_IDENTITY_AUTO_DISCOVERY=false pnpm --filter @bluewave/desktop exec electron-builder --mac --dir --config electron-builder.yml
+      # The smoke starts a fresh game, which is the path that reads the shipped
+      # content artifact from app resources (ticket 05); no precompiled save.
+      - name: Smoke the packaged app
+        run: pnpm --filter @bluewave/desktop run smoke:packaged
+      # The reviewer's visible evidence: the drawing board as rendered from the
+      # shipped artifact, captured on every smoke run (CRI-PKG-3).
+      - name: Upload the packaged smoke screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: packaged-smoke-screenshot
+          path: apps/desktop/test-results/packaged-smoke.png
+          if-no-files-found: ignore
+      # Debug-build acceptance slice: the campaign battle drill spec needs the
+      # debug-gated main-process command + debug UI, so it runs against a
+      # `VITE_BLUEWAVE_DEBUG=true` build (excluded from the default run above via
+      # `testIgnore`). Rebuild AFTER packaging so the release artifacts stay on
+      # the normal build.
+      - name: Build the app in debug mode
+        run: pnpm --filter @bluewave/desktop run build:debug
+      - name: Run the debug-only E2E drill spec
+        run: pnpm --filter @bluewave/desktop run test:e2e:debug
+      - name: Upload test-results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-e2e-test-results
+          path: apps/desktop/test-results

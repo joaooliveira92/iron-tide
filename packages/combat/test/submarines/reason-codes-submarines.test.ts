@@ -1,0 +1,62 @@
+import { describe, expect, it } from "vite-plus/test";
+import {
+  SUBMARINE_REASON_CODES,
+  COASTAL_SUBMARINE_RANGE_RESTRICTED,
+  INVALID_SUBMARINE_REPRESENTATION,
+  LONG_RANGE_ASW_VULNERABILITY_MISSING,
+  SUBMARINE_ATTACK_OPPORTUNITY_CREATED,
+  SUBMARINE_FRIENDLY_FIRE_INCIDENT,
+  SUBMARINE_FUEL_INSUFFICIENT,
+  SUBMARINE_MINE_INVENTORY_INSUFFICIENT,
+  SUBMARINE_MISSION_INELIGIBLE,
+  SUBMARINE_RELIABILITY_INSUFFICIENT,
+  SUBMARINE_RESOLUTION_DEFERRED,
+  SUBMARINE_SEA_STATE_OPERATION_PROHIBITED,
+  SUBMARINE_ASW_CONTACT_RESOLVED,
+  SUBMARINE_ASSET_DOUBLE_ALLOCATED,
+  SUBMARINE_PROVENANCE_INVALID,
+  SUBMARINE_STATE_INVARIANT_FAILED,
+} from "../../src/submarines/index.js";
+
+describe("AC-18: reason-code set-equality vs DESIGN-34 §27", () => {
+  const shippedCodes = Object.values(SUBMARINE_REASON_CODES).filter(
+    (c) => c !== SUBMARINE_RESOLUTION_DEFERRED,
+  );
+
+  const design34Codes = [
+    INVALID_SUBMARINE_REPRESENTATION,
+    SUBMARINE_ASSET_DOUBLE_ALLOCATED,
+    SUBMARINE_PROVENANCE_INVALID,
+    SUBMARINE_MISSION_INELIGIBLE,
+    COASTAL_SUBMARINE_RANGE_RESTRICTED,
+    LONG_RANGE_ASW_VULNERABILITY_MISSING,
+    SUBMARINE_RELIABILITY_INSUFFICIENT,
+    SUBMARINE_FUEL_INSUFFICIENT,
+    SUBMARINE_ATTACK_OPPORTUNITY_CREATED,
+    SUBMARINE_MINE_INVENTORY_INSUFFICIENT,
+    SUBMARINE_ASW_CONTACT_RESOLVED,
+    SUBMARINE_FRIENDLY_FIRE_INCIDENT,
+    SUBMARINE_SEA_STATE_OPERATION_PROHIBITED,
+    SUBMARINE_STATE_INVARIANT_FAILED,
+  ];
+
+  it("shipped §27 codes match DESIGN-34 §27 exactly (14 codes)", () => {
+    expect(shippedCodes.length).toBe(14);
+    expect(new Set(shippedCodes)).toEqual(new Set(design34Codes));
+  });
+
+  it("SUBMARINE_RESOLUTION_DEFERRED is an in-slice marker, not a §27 code", () => {
+    expect(SUBMARINE_RESOLUTION_DEFERRED).toBe("SUBMARINE_RESOLUTION_DEFERRED");
+    expect(shippedCodes).not.toContain(SUBMARINE_RESOLUTION_DEFERRED);
+  });
+
+  it("total catalog has 15 entries (14 §27 + 1 marker)", () => {
+    const allCodes = Object.values(SUBMARINE_REASON_CODES);
+    expect(allCodes.length).toBe(15);
+  });
+
+  it("no code in the shipped catalog is a duplicate", () => {
+    const allCodes = Object.values(SUBMARINE_REASON_CODES);
+    expect(new Set(allCodes).size).toBe(allCodes.length);
+  });
+});

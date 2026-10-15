@@ -1,0 +1,327 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Self-hosted typography (ADR-0079). All faces are variable fonts served from
+ * the renderer bundle — no Google Fonts/CDN — so the packaged app stays offline
+ * and within the Electron CSP (`default-src 'self'`). Family names are stable
+ * and independent of Vite's emitted asset hashes.
+ *
+ * Roles (see @theme below): --font-sans is user-selectable (Inter | Plus Jakarta
+ * Sans), --font-mono is Geist Mono, --font-display is Space Grotesk.
+ */
+@font-face {
+  font-family: "Inter Variable";
+  src: url("../../assets/fonts/Inter/inter.ttf") format("truetype-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans Variable";
+  src: url("../../assets/fonts/JakartaSans/JakartaSans.ttf") format("truetype-variations");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("../../assets/fonts/Geist_Mono/geist-mono.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("../../assets/fonts/Space_Grotesk/space.ttf") format("truetype-variations");
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+ * Standard shadcn/ui "neutral" token set — restored from the
+ * desktop-ui-kit-migration map's styling foundation
+ * (.scratch/desktop-ui-kit-migration/issues/02-styling-foundation.md,
+ * originally scoped to 6 components) and extended with the tokens the
+ * full shell/screens tree actually references (sidebar, success/warning
+ * status colors) per the desktop-mvp map, ticket 11.
+ */
+@theme {
+  /*
+   * Semantic font roles (ADR-0079). `--font-inter`/`--font-jakarta` are the two
+   * user-selectable body faces; `--font-sans` points at whichever is active via
+   * the [data-font] mapping below. Components must consume the semantic
+   * utilities (font-sans, font-mono, font-display), never a family directly.
+   */
+  --font-inter: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-jakarta:
+    "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: var(--font-inter);
+  --font-mono:
+    "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --color-background: oklch(1 0 0);
+  --color-foreground: oklch(0.145 0 0);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.145 0 0);
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.145 0 0);
+  --color-primary: oklch(0.205 0 0);
+  --color-primary-foreground: oklch(0.985 0 0);
+  --color-secondary: oklch(0.97 0 0);
+  --color-secondary-foreground: oklch(0.205 0 0);
+  --color-muted: oklch(0.97 0 0);
+  --color-muted-foreground: oklch(0.556 0 0);
+  --color-accent: oklch(0.97 0 0);
+  --color-accent-foreground: oklch(0.205 0 0);
+  --color-destructive: oklch(0.577 0.245 27.325);
+  --color-destructive-foreground: oklch(0.985 0 0);
+  --color-success: oklch(0.6 0.15 145);
+  --color-success-foreground: oklch(0.985 0 0);
+  --color-warning: oklch(0.75 0.15 80);
+  --color-warning-foreground: oklch(0.145 0 0);
+  --color-info: oklch(0.6 0.13 240);
+  --color-info-foreground: oklch(0.985 0 0);
+  --color-invert: oklch(0.205 0 0);
+  --color-invert-foreground: oklch(0.985 0 0);
+  --color-border: oklch(0.922 0 0);
+  --color-input: oklch(0.922 0 0);
+  --color-ring: oklch(0.708 0 0);
+  --color-sidebar: oklch(0.985 0 0);
+  --color-sidebar-foreground: oklch(0.145 0 0);
+  --color-sidebar-accent: oklch(0.97 0 0);
+  --color-sidebar-accent-foreground: oklch(0.205 0 0);
+  --color-sidebar-border: oklch(0.922 0 0);
+  --color-sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.5rem;
+  /* Bottom-right toasts settle in from below (ReUI/sonner); reduced-motion opts out. */
+  --animate-toast-in: toast-in 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /*
+   * "Admiralty" surface family — the Fleet Dispatch / nation-selection command
+   * console. A named role set rather than raw hexes so the console can invert
+   * between light and dark while keeping its hierarchy (deep surface → raised
+   * panels → warm ink → gold accent → blueprint-signal cyan). Values live in
+   * both this light block and the `.dark` override below; components consume the
+   * `*-admiralty-*` utilities and never a literal colour.
+   */
+  --color-admiralty-surface: #eef3f8;
+  --color-admiralty-surface-raised: #ffffff;
+  --color-admiralty-ink: #0b1a2b;
+  --color-admiralty-ink-muted: #4c6076;
+  --color-admiralty-ink-faint: #5e7488;
+  --color-admiralty-border: #d3dfea;
+  /* Gold commission accent; darkened in light mode for contrast on the surface. */
+  --color-admiralty-accent: #9a6a1a;
+  /* Text/icon colour that sits *on* the accent (CTA buttons, active badge). */
+  --color-admiralty-accent-foreground: #ffffff;
+  /* Blueprint/signal cyan used on the bezel and registry grid. */
+  --color-admiralty-signal: #0284c7;
+}
+
+.dark {
+  --color-background: oklch(0.145 0 0);
+  --color-foreground: oklch(0.985 0 0);
+  --color-card: oklch(0.205 0 0);
+  --color-card-foreground: oklch(0.985 0 0);
+  --color-popover: oklch(0.205 0 0);
+  --color-popover-foreground: oklch(0.985 0 0);
+  --color-primary: oklch(0.922 0 0);
+  --color-primary-foreground: oklch(0.205 0 0);
+  --color-secondary: oklch(0.269 0 0);
+  --color-secondary-foreground: oklch(0.985 0 0);
+  --color-muted: oklch(0.269 0 0);
+  --color-muted-foreground: oklch(0.708 0 0);
+  --color-accent: oklch(0.269 0 0);
+  --color-accent-foreground: oklch(0.985 0 0);
+  --color-destructive: oklch(0.704 0.191 22.216);
+  --color-destructive-foreground: oklch(0.985 0 0);
+  --color-success: oklch(0.6 0.15 145);
+  --color-success-foreground: oklch(0.985 0 0);
+  --color-warning: oklch(0.75 0.15 80);
+  --color-warning-foreground: oklch(0.145 0 0);
+  --color-info: oklch(0.7 0.12 240);
+  --color-info-foreground: oklch(0.145 0 0);
+  --color-invert: oklch(0.922 0 0);
+  --color-invert-foreground: oklch(0.205 0 0);
+  --color-border: oklch(1 0 0 / 10%);
+  --color-input: oklch(1 0 0 / 15%);
+  --color-ring: oklch(0.556 0 0);
+  --color-sidebar: oklch(0.205 0 0);
+  --color-sidebar-foreground: oklch(0.985 0 0);
+  --color-sidebar-accent: oklch(0.269 0 0);
+  --color-sidebar-accent-foreground: oklch(0.985 0 0);
+  --color-sidebar-border: oklch(1 0 0 / 10%);
+  --color-sidebar-ring: oklch(0.556 0 0);
+
+  /* Admiralty surface family — dark console (see the light block in @theme). */
+  --color-admiralty-surface: #030509;
+  --color-admiralty-surface-raised: #070b12;
+  --color-admiralty-ink: #e6dcc8;
+  --color-admiralty-ink-muted: #9db0c4;
+  --color-admiralty-ink-faint: #6b7f95;
+  --color-admiralty-border: #1e2a3b;
+  --color-admiralty-accent: #d4a359;
+  --color-admiralty-accent-foreground: #05080e;
+  --color-admiralty-signal: #2ab8e6;
+}
+
+/*
+ * Spinning globe palette (launch backdrop + nation-selection "Fleet Dispatch").
+ * The sphere is drawn imperatively into SVG by useSvgGlobe, so these are plain
+ * custom properties rather than Tailwind utilities; the `.dark` overrides below
+ * let the globe follow the active theme without a React re-render (the browser
+ * repaints presentation attributes that reference these vars when `.dark` flips).
+ */
+:root {
+  --globe-ocean-inner: #eaf4fd;
+  --globe-ocean-outer: #cfe3f4;
+  --globe-accent: var(--color-admiralty-signal);
+  --globe-land-fill: #cbdcc4;
+  --globe-land-stroke: var(--color-admiralty-accent);
+  --globe-ring: var(--color-admiralty-accent);
+}
+
+.dark {
+  --globe-ocean-inner: #0e1622;
+  --globe-ocean-outer: #0a0f18;
+  --globe-land-fill: #1d2b20;
+}
+
+/*
+ * Fleet Dispatch selection emphasis. When a nation becomes active its card
+ * mounts an inner accent glow and its "Active" badge pops in; because React
+ * renders these nodes only while active, the animations replay on every
+ * selection change. They animate compositor-friendly properties (opacity /
+ * transform) inside the card's clipped box, so they never force a repaint of
+ * the (large) photographic cover during the stack's transition.
+ */
+.fleet-dispatch-activate-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-admiralty-accent) 62%, transparent),
+    inset 0 0 46px color-mix(in srgb, var(--color-admiralty-accent) 28%, transparent);
+  animation: fleet-dispatch-activate 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fleet-dispatch-activate {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  55% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+}
+
+.fleet-dispatch-badge-pop {
+  animation: fleet-dispatch-badge-pop 440ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fleet-dispatch-badge-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.78);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fleet-dispatch-activate-glow,
+  .fleet-dispatch-badge-pop {
+    animation: none;
+  }
+}
+
+/* Tailwind v4 defaults borders to currentColor; restore the themed color. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border);
+  }
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  /* Inter carries an optical-size axis; let the browser pick per size. */
+  font-optical-sizing: auto;
+  margin: 0;
+}
+
+/*
+ * User-selectable body font (ADR-0079). FontProvider sets <html data-font> from
+ * the persisted preference; absent/unknown values keep the Inter default from
+ * @theme. `--font-sans` is what the `font-sans` utility and `body` resolve to,
+ * so overriding it here re-fonts the whole renderer without touching components.
+ */
+:root[data-font="inter"] {
+  --font-sans: var(--font-inter);
+}
+
+:root[data-font="jakarta"] {
+  --font-sans: var(--font-jakarta);
+}
+
+/*
+ * Settings-UI previews: render each option label in its own face so the user
+ * sees the difference before committing. Kept in CSS so the family names live in
+ * one place alongside the @font-face declarations.
+ */
+[data-font-option="inter"] {
+  font-family: var(--font-inter);
+}
+
+[data-font-option="jakarta"] {
+  font-family: var(--font-jakarta);
+}
+
+/*
+ * Density (spec V-3). Tailwind v4 derives every spacing utility (padding, gap,
+ * space-y, sizes) from --spacing, so one override tightens the whole app.
+ * Set by DensityProvider via <html data-density>.
+ */
+:root[data-density="compact"] {
+  --spacing: 0.2rem;
+}
+
+/*
+ * Theme-aware scrollbar for panes that scroll on their own (the Drawing Board's
+ * ship view). The native scrollbar follows `color-scheme`, so a dark surface
+ * otherwise keeps a bright scrollbar; this ties the thumb and track to the active
+ * theme tokens instead, so it follows the light/dark switch with no re-render.
+ */
+.themed-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-muted-foreground) transparent;
+}

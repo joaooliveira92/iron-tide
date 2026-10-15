@@ -1,0 +1,29 @@
+packages:
+  - "packages/*"
+  - "apps/*"
+  - "vendor/effect"
+  - "vendor/effect-vitest"
+allowBuilds:
+  electron: true
+  esbuild: true
+  electron-winstaller: false
+catalog:
+  vite: npm:@voidzero-dev/vite-plus-core@1.1.0
+  vite-plus: 1.1.0
+overrides:
+  # Single-copy invariant (MIG-GRAPH-1/2): every transitive `effect`/`@effect/vitest`
+  # request resolves to the vendored workspace packages, never the npm registry.
+  # In pnpm 11 the override map lives here (top-level `overrides:`), not in
+  # package.json#pnpm.overrides.
+  effect: "workspace:*"
+  "@effect/vitest": "workspace:*"
+  vite: "catalog:"
+  # GHSA-68fv-2mgg-jv7q: source-map-js <1.2.2 (via postcss/vitest toolchain)
+  # allows an event-loop DoS. Pin the patched release; satisfies every ^1.x
+  # consumer. Remove once the tree resolves >=1.2.2 on its own.
+  "source-map-js": "1.2.2"
+peerDependencyRules:
+  allowAny:
+    - vite
+  allowedVersions:
+    vite: "*"

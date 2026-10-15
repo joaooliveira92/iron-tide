@@ -1,0 +1,37 @@
+import { CHART } from "./chart-theme.js";
+
+export interface MapLegendProps {
+  readonly showPossessions: boolean;
+  readonly showFleets: boolean;
+}
+
+/** The ports/fleets key that sits with the scale bar. */
+export function MapLegend({ showPossessions, showFleets }: MapLegendProps) {
+  if (!showPossessions && !showFleets) return null;
+  return (
+    <div
+      aria-hidden="true"
+      className="mb-1.5 flex items-center gap-3 text-xs"
+      style={{ color: CHART.inkDim }}
+    >
+      {showPossessions && (
+        <span className="flex items-center gap-1">
+          <span
+            className="inline-block size-2.5 rounded-full border"
+            style={{ background: CHART.inkDim, borderColor: CHART.ink }}
+          />
+          Ports
+        </span>
+      )}
+      {showFleets && (
+        <span className="flex items-center gap-1">
+          <span
+            className="inline-block h-2.5 w-3 rounded-[2px] border"
+            style={{ background: CHART.inkDim, borderColor: CHART.ink }}
+          />
+          Fleets
+        </span>
+      )}
+    </div>
+  );
+}

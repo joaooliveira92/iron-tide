@@ -1,0 +1,17 @@
+{
+  "//": "Read-only vendored reference material (see AGENTS.md 'Vendored repositories'): excluded from editor search, file watching and auto-import so our gates and navigation do not traverse upstream Effect.",
+  "search.exclude": {
+    "vendor/**": true,
+    "repos/**": true
+  },
+  "files.watcherExclude": {
+    "vendor/**": true,
+    "repos/**": true
+  },
+  "typescript.preferences.autoImportFileExcludePatterns": ["vendor/**", "repos/**"],
+  "javascript.preferences.autoImportFileExcludePatterns": ["vendor/**", "repos/**"],
+  "js/ts.tsdk.additionalLocations": ["./node_modules/typescript/bin"],
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+  "js/ts.tsdk.path": "./node_modules/typescript/bin",
+  "js/ts.experimental.useTsgo": true
+}

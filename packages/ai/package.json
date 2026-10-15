@@ -1,0 +1,31 @@
+{
+  "name": "@bluewave/ai",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@bluewave/campaign": "workspace:*",
+    "@bluewave/commands": "workspace:*",
+    "@bluewave/contracts": "workspace:*",
+    "@bluewave/random": "workspace:*",
+    "@bluewave/deterministic": "workspace:*",
+    "@bluewave/diagnostics": "workspace:*",
+    "@bluewave/content-schema": "workspace:*",
+    "effect": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b --watch",
+    "clean": "rimraf --glob dist *.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "test": "vp test run",
+    "lint": "vp lint .",
+    "lint:fix": "echo 'ok'"
+  }
+}

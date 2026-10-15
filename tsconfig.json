@@ -1,0 +1,23 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/contracts" },
+    { "path": "packages/diagnostics" },
+    { "path": "packages/deterministic" },
+    { "path": "packages/armament" },
+    { "path": "packages/ship-design" },
+    { "path": "packages/content-schema" },
+    { "path": "packages/content-compiler" },
+    { "path": "packages/content-codemod" },
+    { "path": "packages/campaign" },
+    { "path": "packages/campaign-engine" },
+    { "path": "packages/random" },
+    { "path": "packages/commands" },
+    { "path": "packages/events" },
+    { "path": "packages/persistence" },
+    { "path": "packages/test-support" },
+    { "path": "packages/cross-process-test" },
+    { "path": "apps/compiler-cli" },
+    { "path": "apps/desktop" }
+  ]
+}

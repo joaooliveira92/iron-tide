@@ -1,0 +1,16 @@
+#!/bin/sh
+# Resolve node and the package manager when git runs this hook from a GUI or
+# non-login shell whose PATH lacks them (nvm is wired in .zshrc). Read the login
+# shell's PATH via a `PATH=` marker so any shell-startup noise cannot corrupt it.
+if ! command -v node >/dev/null 2>&1 || ! command -v pnpm >/dev/null 2>&1; then
+  login_path=$("${SHELL:-/bin/sh}" -lc 'printf "PATH=%s" "$PATH"' 2>/dev/null)
+  case "$login_path" in
+    *PATH=*) PATH="${login_path##*PATH=}:$PATH"; export PATH;;
+  esac
+fi
+# Re-run the fast gates before pushing, in case a commit used --no-verify.
+# `preflight` first, then the Effect Oxlint gate (ADR-0139): it is part of
+# `pnpm check` and CI, and ~2s, so it belongs here too. Fail-fast at the first
+# red gate.
+pnpm preflight || exit 1
+exec pnpm lint:effect
