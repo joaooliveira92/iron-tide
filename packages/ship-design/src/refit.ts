@@ -410,7 +410,6 @@ export function evaluateRefit(
       ),
     );
 
-  // Build the modified design.
   const existing = new Map(ship.design.placements.map((p) => [p.instanceId, p]));
   for (const id of plan.removeInstanceIds) {
     if (!existing.has(id))

@@ -239,7 +239,7 @@ const mulBp = (v: bigint, p: number) => (v * BigInt(p) + BP / 2n) / BP;
 export function planConstruction(
   c: CompiledDesign,
   d: DesignDraft,
-  cost: CostBreakdown,
+  _cost: CostBreakdown,
   b: ConstructionBalance,
   firstOfClass: boolean,
 ): ConstructionPlan {
@@ -265,7 +265,6 @@ export function planConstruction(
   const sum = hullWork + armour + machinery + ordnance + launch + fitOut;
   const trials = mulBp(sum, b.trialsShareBp);
   const acceptance = mulBp(sum, b.acceptanceShareBp);
-  void cost;
   const w = (v: bigint) => Math.max(1, toSafe("work", v));
   const pk = (
     id: string,

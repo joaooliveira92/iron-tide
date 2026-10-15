@@ -283,10 +283,6 @@ export function buildPlacementsAndArrangement(args: {
   return { arrangement, rooms, roomPart };
 }
 
-// Stage 7 - stability: every ledger kilogram becomes a weight lump.
-
-// Stage 8 - dock, treaty and modernization findings.
-
 // Stage 2 - weapons: build gun mounts + arc obstacles and compile the battery.
 export function compileWeaponSet(args: {
   draft: DesignDraft;

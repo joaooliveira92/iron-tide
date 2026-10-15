@@ -139,8 +139,5 @@ export function suggestFixes(
       if (a.score[i] !== b.score[i]) return b.score[i]! - a.score[i]!;
     return a.description < b.description ? -1 : a.description > b.description ? 1 : 0;
   });
-  return results.slice(0, limit).map(({ score, ...fix }) => {
-    void score;
-    return fix;
-  });
+  return results.slice(0, limit).map(({ score: _score, ...fix }) => fix);
 }

@@ -4,11 +4,10 @@ import {
   checkFindingShape,
   LEDGER_CATEGORIES,
   ledgerTotal,
-  kg,
   type DesignDraft,
   type ShipContext,
 } from "../src/index.js";
-import { ctx, draft, balance } from "./fixtures/gunboat.js";
+import { ctx, draft } from "./fixtures/gunboat.js";
 
 const ids = (r: ReturnType<typeof compileDesign>) => r.findings.map((f) => f.id);
 const withDraft = (o: Partial<DesignDraft>): DesignDraft => ({ ...draft, ...o });
@@ -190,8 +189,6 @@ describe("compileDesign: invalid designs", () => {
     );
     expect(unknownType.valid).toBe(false);
     expect(unknownType.findings.map((x) => x.id)).toContain("SHIP_TYPE_UNREGISTERED");
-    void balance;
-    void kg;
   });
   it("performance: one compile is fast enough for live preview", () => {
     const t = performance.now();

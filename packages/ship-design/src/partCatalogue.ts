@@ -117,7 +117,6 @@ export interface SourceFieldDestination {
  * `partCatalogue.test.ts` asserts the table covers every key of the source schemas.
  */
 export const PART_SOURCE_FIELDS: readonly SourceFieldDestination[] = [
-  // components.yaml
   { record: "component", field: "id", destination: "part.id | spec.gunFamily" },
   { record: "component", field: "displayName", destination: "part.name | metadata.displayName" },
   {
@@ -171,7 +170,6 @@ export const PART_SOURCE_FIELDS: readonly SourceFieldDestination[] = [
   { record: "component", field: "buildWorkMicro", destination: "buildWorkMicro" },
   { record: "component", field: "productionLine", destination: "productionLine" },
   { record: "component", field: "provenance", destination: "provenance" },
-  // attributes by name
   { record: "attribute", field: "caliberUm", destination: "spec.calibreUm" },
   { record: "attribute", field: "shellMassG", destination: "spec.shellMassG" },
   { record: "attribute", field: "chargeBp", destination: "spec.propellantChargeBp" },
@@ -205,7 +203,6 @@ export const PART_SOURCE_FIELDS: readonly SourceFieldDestination[] = [
     field: "flammableBp",
     destination: "engineering.flammability.indexBp",
   },
-  // armament records
   { record: "gunFamily", field: "id", destination: "spec.gunFamily" },
   { record: "gunFamily", field: "designation", destination: "part.name (standard model)" },
   { record: "gunFamily", field: "category", destination: "spec.weaponCategory" },
@@ -232,7 +229,6 @@ export const PART_SOURCE_FIELDS: readonly SourceFieldDestination[] = [
   },
   { record: "ammunition", field: "compatibleGunModelIds", destination: "spec.compatibleGunModels" },
   { record: "ammunition", field: "ammunitionCostMicro", destination: "quantities[round_cost]" },
-  // naval profiles
   {
     record: "profileGunModel",
     field: "overrides.displayName",
@@ -518,7 +514,6 @@ function componentBlocks(
     );
   }
 
-  // Tags.
   const tags = [...new Set(def.tags)].sort(compareCodePoints);
   for (const tag of tags) {
     if (!knownTags.has(tag)) {
@@ -526,7 +521,6 @@ function componentBlocks(
     }
   }
 
-  // Engineering.
   const affine = (field: string, src: string) => {
     const terms = readAffine(def, field, src, countParameter);
     if (isAffineIssue(terms)) {
@@ -627,7 +621,6 @@ function componentBlocks(
     }
   }
 
-  // Capabilities.
   const capabilities: CapabilityData[] = [];
   const classes = ["heavy", "medium", "light"] as const;
   const asClass = (value: string, field: string) => {
@@ -821,7 +814,6 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
     },
   ): FlattenedGunPart => {
     const beam = constantAttribute(def, "beamArcDeg", () => undefined);
-    const family = families.find((f) => f.id === def.id);
     const types = extra.supportedMountTypes.filter((t): t is GunMountType =>
       isGunMountType(t as never),
     );
@@ -833,7 +825,6 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
       ...(types.length > 0 ? { supportedMountTypes: types } : {}),
       ...(extra.firstClass ? { firstClassArmament: true as const } : {}),
     };
-    void family;
     return withBlocks({ ...part, spec }, blocks, extra.displayName);
   };
 

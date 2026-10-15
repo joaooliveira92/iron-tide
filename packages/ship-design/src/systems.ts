@@ -147,7 +147,6 @@ export function compileSystems(i: SystemsInput, b: SystemsBalance): SystemsResul
     });
   }
 
-  // Cooling
   const coolingDemand = i.items.reduce((a, it) => a + it.coolingKw, 0);
   const coolingShortfallBp =
     coolingDemand <= i.coolingSupplyKw || coolingDemand === 0

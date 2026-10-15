@@ -71,7 +71,6 @@ export interface StabilityResult {
 }
 
 const BP = 10_000n;
-const fmt = (n: number) => n.toLocaleString("en-US");
 
 export function compileStability(
   i: StabilityInput,
@@ -287,7 +286,6 @@ export function compileStability(
     Math.min(10_000, toSafe("sea", (BigInt(sFb) * BigInt(sGm)) / BP)),
   );
 
-  void fmt;
   return {
     displacementKg: total,
     kgMm: kg,
