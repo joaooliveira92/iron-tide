@@ -11,8 +11,6 @@
 //
 // Pure/deterministic: uses keyed RNG function, no ambient I/O/clock/random.
 
-// Constants
-
 // Base detonation probability for a magazine hit meeting all conditions.
 // 8_000 bp = 80% base chance when full penetration + critical outcome.
 const BASE_DETONATION_BP = 8_000;
@@ -31,8 +29,6 @@ const MAGAZINE_ZONE_TYPES = new Set([
   "PROPELLANT_MAGAZINE",
   "AMMUNITION_HOLD",
 ]);
-
-// Input/Output types
 
 export interface MagazineHazardInput {
   /** Whether the hit zone contains a magazine/ammunition compartment. */
@@ -53,8 +49,6 @@ export interface MagazineHazardResult {
   /** Hazard type identifier: "MAGAZINE_DETONATION" or "NONE". */
   hazardType: string;
 }
-
-// Evaluator
 
 /**
  * Determine whether the hit zone contains a magazine/ammunition compartment.

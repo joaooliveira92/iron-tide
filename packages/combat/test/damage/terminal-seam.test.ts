@@ -8,8 +8,6 @@ import {
 } from "../../src/damage/index.js";
 import { SHIP_SINKING, SHIP_FOUNDERED } from "../../src/damage/reasonCodes.js";
 
-// Helpers
-
 function baseTerminalInput(overrides: Partial<TerminalInput> = {}): TerminalInput {
   return {
     flotationReserveAfter: 10_000,

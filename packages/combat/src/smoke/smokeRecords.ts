@@ -56,8 +56,6 @@ export interface SmokeEventRecord {
 
 export type SmokeEventRecordBody = Omit<SmokeEventRecord, "recordHash">;
 
-// Validation helpers
-
 function isNonEmptyString(v: unknown): v is string {
   return typeof v === "string" && v.length > 0;
 }
@@ -74,8 +72,6 @@ function invariant(recordId: string, field: string, value: unknown, reason: stri
     value,
   });
 }
-
-// Surface guard
 
 export function assertSmokeEventRecordSurface(r: SmokeEventRecord): void {
   const id = isNonEmptyString(r.recordId) ? r.recordId : "?";
@@ -141,13 +137,9 @@ export function smokeEventRecordId(o: {
   return o.discriminator ? `${base}:${o.discriminator}` : base;
 }
 
-// Hash computation
-
 export function computeSmokeEventHash(body: SmokeEventRecordBody): string {
   return createEnvelope("smoke-event", smokePolicyId, body).bodyHash;
 }
-
-// Deep freeze
 
 function deepFreeze<T>(value: T): T {
   if (value !== null && typeof value === "object") {
@@ -205,8 +197,6 @@ export function createSmokeEventRecord(params: {
   const recordHash = computeSmokeEventHash(body);
   return deepFreeze({ ...body, recordHash });
 }
-
-// Verify record hash
 
 export function verifySmokeEventRecordHash(r: SmokeEventRecord): boolean {
   const { recordHash: _ignored, ...body } = r;

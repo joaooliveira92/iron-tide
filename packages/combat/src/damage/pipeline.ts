@@ -411,8 +411,6 @@ export function runDamagePipeline(
   }
 }
 
-// Orchestrator
-
 /**
  * Run the full 10-stage pipeline in exact order.
  * - If any stage fails, the original state is returned unchanged (rollback) and the

@@ -264,10 +264,8 @@ export function resolveFloodingProgression(
   highSpeedLoss: boolean;
   netDeltaKgMin: number;
 } {
-  // Step 1: Compute total ingress rate from all flooding sources
   const totalIngressKgMin = floodingRecords.reduce((sum, record) => sum + record.rateKgMin, 0);
 
-  // Step 2: Compute net flooding delta
   const { netDeltaKgMin } = computeNetFloodingDelta(
     totalIngressKgMin,
     speedKt,

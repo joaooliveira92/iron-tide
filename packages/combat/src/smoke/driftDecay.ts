@@ -64,20 +64,16 @@ export function resolveSmokeDriftDecay(
       continue;
     }
 
-    // Step 1: translate by wind vector
     const newX = cloud.centroidPosition[0] + driftVector[0];
     const newY = cloud.centroidPosition[1] + driftVector[1];
     const newPosition: [number, number] = [newX, newY];
 
-    // Step 2: apply density retention
     let newDensity = Math.floor((cloud.densityBp * retentionMultiplier) / 10_000);
 
-    // Step 3: apply precipitation decay modifier
     if (precipitationIntensityBp !== undefined) {
       newDensity = Math.floor((newDensity * precipitationIntensityBp) / 10_000);
     }
 
-    // Step 5: check removal
     if (newDensity < 1) {
       removedCloudIds.push(cloud.smokeCloudId);
       continue;
@@ -93,7 +89,6 @@ export function resolveSmokeDriftDecay(
   // Step 4: merge clouds with same owner and position proximity
   const merged = mergeCloudsByProximity(survivors);
 
-  // Step 6: recompute cloudHash for each surviving cloud
   const nextClouds: SmokeCloud[] = [];
   for (const cloud of merged) {
     const newHash = smokeCloudHash({

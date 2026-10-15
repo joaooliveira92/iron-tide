@@ -135,12 +135,10 @@ export function resolveDamageControl(
     floodedWaterBp,
   );
 
-  // Step 2: Get effective pumping, firefighting, and repair capacities
   const effectivePumping = getEffectivePumping(allocations);
   const _effectiveFirefighting = getEffectiveFirefighting(allocations);
   const effectiveRepairReduction = getEffectiveRepairReduction(allocations);
 
-  // Step 3: Run fire progression — intensity decays, suppression, spread
   const { fireRecords, newFires } = resolveFireProgression(
     context.fireRecords,
     context.shipType,

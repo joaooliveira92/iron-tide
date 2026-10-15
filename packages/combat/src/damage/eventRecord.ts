@@ -49,8 +49,6 @@ export interface DamageEventRecord {
 // The body over which the hash is computed (everything except recordHash).
 export type DamageEventRecordBody = Omit<DamageEventRecord, "recordHash">;
 
-// Hash computation
-
 /**
  * Compute the deterministic hash for a damage event record body.
  * Uses `createEnvelope` from @bluewave/deterministic with domain "damage-event"
@@ -62,8 +60,6 @@ export type DamageEventRecordBody = Omit<DamageEventRecord, "recordHash">;
 export function computeDamageEventHash(body: DamageEventRecordBody): string {
   return createEnvelope("damage-event", "damage_v1", body).bodyHash;
 }
-
-// Factory
 
 /**
  * Create a fully-populated DamageEventRecord with its authoritative hash.

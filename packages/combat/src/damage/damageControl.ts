@@ -21,8 +21,6 @@ import {
   FIREFIGHTING_PER_TEAM_BP,
 } from "./damageControlConstants.js";
 
-// Exported types
-
 export interface DamageControlAllocation {
   priority: DamageControlPriority;
   allocatedTeams: number;
@@ -36,8 +34,6 @@ export interface AllocationResult {
   allocations: DamageControlAllocation[];
   remainingResources: DamageControlResource;
 }
-
-// Internal helper types
 
 interface AllocationTask {
   priority: DamageControlPriority;

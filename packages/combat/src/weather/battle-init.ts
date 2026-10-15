@@ -229,7 +229,7 @@ export function initializeBattleWeather(
       solarElevationDeg: seed.solarGeometry.solarElevationDeg,
       glareIntensityBp: 0, // no resolved directional geometry at initialization
       baseVisibilityUm: strategic.baseVisibilityUm,
-      localSmokeFields: [], // smoke deferred to M3
+      localSmokeFields: [],
       rulesetVersion: WEATHER_RULESET_VERSION,
       formulaVersion: WEATHER_FORMULA_VERSION,
     });

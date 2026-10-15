@@ -23,8 +23,6 @@ import {
 import { getFireRiskBp } from "./immediateFireFlooding.js";
 import { FIRE_SPREAD_CREATED } from "./reasonCodes.js";
 
-// Internal helpers
-
 /**
  * Look up the multiplier bp for a given intensity value from a band array.
  * Bands are assumed to be non-overlapping and sorted in ascending intensity order.
@@ -62,8 +60,6 @@ function clampBp(value: number): number {
   if (value > 10_000) return 10_000;
   return value;
 }
-
-// Exported functions
 
 /**
  * Get rate-of-fire penalty multiplier for a given fire intensity (DESIGN-41 §22).
@@ -136,7 +132,6 @@ export function resolveFireProgression(
   shipType: string,
   keyedRng: ((stream: string) => number) | null,
 ): { fireRecords: readonly FireRecord[]; newFires: readonly FireRecord[] } {
-  // Step 1: Apply intensity decay to all active fires
   const decayed: FireRecord[] = [];
 
   for (const fire of fireRecords) {
@@ -150,7 +145,6 @@ export function resolveFireProgression(
     // Fires with intensity < 1 are removed (extinguished)
   }
 
-  // Step 2: Check for fire spread
   const newFires: FireRecord[] = [];
 
   if (keyedRng !== null) {

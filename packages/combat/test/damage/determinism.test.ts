@@ -36,8 +36,6 @@ function createDeterministicRng(): (stream: string) => number {
 // Shared deterministic RNG
 const detRng = createDeterministicRng();
 
-// Helpers
-
 function baseState(overrides: Partial<ShipDamageState> = {}): ShipDamageState {
   return withDamageStateHash({
     shipId: "SHIP-DET",

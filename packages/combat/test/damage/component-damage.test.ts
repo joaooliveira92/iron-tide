@@ -8,8 +8,6 @@ import {
   type ComponentOutcome,
 } from "../../src/damage/index.js";
 
-// Helpers
-
 function makeComponent(
   id: string,
   componentType: string,

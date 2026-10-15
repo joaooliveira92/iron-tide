@@ -13,16 +13,12 @@
 
 import { SHIP_SINKING, SHIP_FOUNDERED } from "./reasonCodes.js";
 
-// Constants
-
 // Minimum sinking duration in minutes.
 const MIN_SINKING_DURATION = 10;
 // Maximum sinking duration in minutes.
 const MAX_SINKING_DURATION = 360;
 // Base survival minutes for the sinking duration formula.
 const BASE_SURVIVAL_MINUTES = 120;
-
-// Input/Output types
 
 export interface TerminalInput {
   /** Flotation reserve after structure/flotation stage (absolute). */
@@ -54,8 +50,6 @@ export interface TerminalResult {
   reasonCode: string;
 }
 
-// Helpers
-
 /**
  * Clamp a value between min and max (inclusive).
  */
@@ -81,8 +75,6 @@ export function computeSinkingDuration(flotationPct: number, stabilityPct: numbe
   const rawDuration = Math.floor((BASE_SURVIVAL_MINUTES * fPct * sPct) / (10_000 * 10_000));
   return clamp(rawDuration, MIN_SINKING_DURATION, MAX_SINKING_DURATION);
 }
-
-// Evaluator
 
 /**
  * Evaluate the terminal status transition (§29-32).

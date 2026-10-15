@@ -36,8 +36,6 @@ export interface HitResult {
   adjacentCompartmentIds: readonly string[];
 }
 
-// Internal helpers
-
 /**
  * Check whether a value falls within an inclusive interval [min, max].
  */
@@ -80,8 +78,6 @@ function compartmentsAreAdjacent(a: CompartmentDef, b: CompartmentDef): boolean 
   return true;
 }
 
-// Public API
-
 /**
  * Resolve the hit location: determine which compartment and armor zone the
  * impact point falls into. Pure function, deterministic.
@@ -95,7 +91,6 @@ function compartmentsAreAdjacent(a: CompartmentDef, b: CompartmentDef): boolean 
  * relocating to the nearest compartment.
  */
 export function resolveHitLocation(input: HitInput): HitResult {
-  // Step 1: Find the compartment that contains the impact point (3D AABB check).
   const hitCompartment = input.compartments.find(
     (c) =>
       withinInclusive(input.impactVerticalMm, c.zMinMm, c.zMaxMm) &&
@@ -128,7 +123,6 @@ export function resolveHitLocation(input: HitInput): HitResult {
     });
   }
 
-  // Step 3: Find adjacent compartments (those sharing a face with the hit compartment).
   const adjacentCompartmentIds = input.compartments
     .filter((c) => c.id !== hitCompartment.id && compartmentsAreAdjacent(hitCompartment, c))
     .map((c) => c.id);

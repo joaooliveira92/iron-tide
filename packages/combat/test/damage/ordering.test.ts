@@ -8,8 +8,6 @@ import {
   type DamageEventRecord,
 } from "../../src/damage/index.js";
 
-// Helpers
-
 function makeRecord(overrides: Partial<DamageEventRecord> = {}): DamageEventRecord {
   return createDamageEventRecord({
     battleMinute: 10,

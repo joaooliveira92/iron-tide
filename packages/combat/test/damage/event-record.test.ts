@@ -7,8 +7,6 @@ import {
   type DamageEventRecordBody,
 } from "../../src/damage/index.js";
 
-// Helpers
-
 function sampleBody(overrides: Partial<DamageEventRecordBody> = {}): DamageEventRecordBody {
   return {
     battleMinute: 10,

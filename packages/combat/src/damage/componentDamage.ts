@@ -72,14 +72,12 @@ export function resolveComponentDamage(
   penetrationOutcome: PenetrationOutcome,
   splinterIntensity: SplinterIntensity,
 ): ComponentDamageResult[] {
-  // Step 1: filter components in the hit zone
   const zoneComponents = components.filter((c) => c.locationId === hitZoneId);
 
   if (zoneComponents.length === 0) {
     return [];
   }
 
-  // Step 2: determine which components are eligible based on penetration
   const isPenetrating = isFullPenetration(penetrationOutcome);
   const eligible = zoneComponents.filter((c) => {
     if (isPenetrating) return true;
@@ -87,7 +85,6 @@ export function resolveComponentDamage(
     return isExposedComponent(c);
   });
 
-  // Step 3: assign outcomes
   const results: ComponentDamageResult[] = eligible.map((c) => ({
     componentId: c.id,
     outcome: resolveSingleComponentOutcome(c, penetrationOutcome, splinterIntensity),

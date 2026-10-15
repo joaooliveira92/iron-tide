@@ -73,8 +73,6 @@ function computePenetrationCapabilityUm(
   return Math.floor((caliberUm * velocityMs) / 1000);
 }
 
-// Public API
-
 /**
  * Resolve the protection interaction: determine the armor's effective resistance
  * and the penetration outcome for a given projectile striking a given armor zone.

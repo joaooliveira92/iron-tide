@@ -9,8 +9,6 @@ import {
   type ShipDamageState,
 } from "../../src/damage/index.js";
 
-// Helpers
-
 function baseState(overrides: Partial<ShipDamageState> = {}): ShipDamageState {
   return withDamageStateHash({
     shipId: "SHIP-001",

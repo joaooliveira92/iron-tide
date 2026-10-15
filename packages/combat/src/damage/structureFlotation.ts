@@ -5,8 +5,6 @@
 // Both inputs and outputs are integer fixed-point (µm-equivalent or kg).
 // Pure/deterministic: no ambient I/O/clock/random.
 
-// Input/Output types
-
 export interface StructureFlotationInput {
   /** Structural damage inflicted (integer, non-negative). */
   structuralDamage: number;
@@ -28,8 +26,6 @@ export interface StructureFlotationResult {
   /** The flotation damage applied before capping (for event records). */
   uncappedFlotationDamage: number;
 }
-
-// Resolver
 
 /**
  * Resolve structural and flotation damage.

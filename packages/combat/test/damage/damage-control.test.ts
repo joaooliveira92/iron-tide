@@ -15,8 +15,6 @@ import {
 } from "../../src/damage/index.js";
 import type { FireSourceRecord, FloodingSourceRecord } from "../../src/damage/state.js";
 
-// Helpers
-
 function makeFire(
   locationId: string,
   intensityBp: number,

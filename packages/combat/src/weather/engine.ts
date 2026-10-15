@@ -201,7 +201,7 @@ export function resolveWeather(input: ResolveWeatherInput): ResolveWeatherResult
   // and is never approximated with a component-level 1:1 multiplier here (L6).
   const glareMultiplierBp = GLARE_NEUTRAL_MULTIPLIER_BP;
 
-  // Smoke multiplier: neutral 10_000 (smoke deferred to M3).
+  // Smoke multiplier: neutral 10_000 (weather visibility does not consume smoke).
   const smokeMultiplierBp = 10_000;
 
   const visibilityResult = computeEffectiveVisibility({

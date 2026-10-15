@@ -128,7 +128,6 @@ export function cloneMovementState(m: MovementState): MovementState {
   return { ...m, ...(m.position ? { position: [m.position[0], m.position[1]] } : {}) };
 }
 
-// Step 4: update contact and knowledge state (age by 1 minute; drop dead).
 export function updateContactKnowledge(run: MinuteRun): void {
   run.contacts = (run.input.state.contacts ?? []).map((c) => ageContact(c, 1));
   run.before = run.contacts
@@ -139,7 +138,6 @@ export function updateContactKnowledge(run: MinuteRun): void {
   run.ledger.append(evt(run.minute, 0, "update_contact_knowledge", 4, "pipeline", run.battleId));
 }
 
-// Step 5: resolve movement intent — apply orders to each unit.
 export function resolveMovementIntent(run: MinuteRun): void {
   for (const u of run.run) {
     const ord = run.orders[u.assetId];
@@ -251,7 +249,6 @@ export function resolveAirDefenseStage(run: MinuteRun): void {
   }
 }
 
-// Step 8: resolve sensor and spotting updates.
 export function resolveSensorsStage(run: MinuteRun): void {
   const observers: SensorObserver[] = run.units.map((u) => ({
     observerId: `obs-${u.assetId}`,

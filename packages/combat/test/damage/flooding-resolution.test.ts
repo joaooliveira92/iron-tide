@@ -14,8 +14,6 @@ import {
 } from "../../src/damage/index.js";
 import type { FloodingSourceRecord } from "../../src/damage/state.js";
 
-// Helpers
-
 /** Deterministic RNG returning a fixed value for any stream. */
 function fixedRng(value: number): (stream: string) => number {
   return () => value;

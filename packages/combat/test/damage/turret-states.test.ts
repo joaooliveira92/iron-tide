@@ -4,8 +4,6 @@ import { describe, it, expect } from "vite-plus/test";
 import { applyTurretDamage, type TurretComponent } from "../../src/damage/index.js";
 import { type ComponentOutcome } from "../../src/damage/index.js";
 
-// Helpers
-
 function operational(id = "TURRET-1"): TurretComponent {
   return { id, state: "OPERATIONAL" };
 }

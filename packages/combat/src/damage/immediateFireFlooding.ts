@@ -1,6 +1,6 @@
 // DESIGN-41 §9 — Immediate fire and flooding source creation. This stage creates
 // FireSourceRecord and FloodingSourceRecord entries from a qualified hit; it does
-// NOT resolve progressive fire/flooding effects (deferred to M3/C-5).
+// NOT resolve progressive fire/flooding effects (handled by the resolution stages).
 //
 // Fire creation rules (§9):
 //   - Requires ignition source (full penetration or critical penetration outcome)
@@ -54,8 +54,6 @@ const FLOODING_CHANCE_BP: Record<string, number> = {
   FULL_PENETRATION: 8_000,
   PARTIAL_PENETRATION: 3_000,
 };
-
-// Input types
 
 export interface FireCreationInput {
   /** Id of the hit location zone/compartment where fire could start. */

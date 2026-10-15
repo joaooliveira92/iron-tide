@@ -3,10 +3,9 @@
 // gunnery impacts, runs the damage pipeline per impact, and returns the new
 // state + collected damage events.
 //
-// GunneryImpact is the surface from B-3 gunnery (GunneryEventRecord). Since B-3
-// is in-progress, we define the interface here as what damage resolution needs
-// from a hit. The actual B-3 GunneryEventRecord carries `outcome: "HIT" | "MISS"`
-// and impactInputs (reserved); this type is the damage-facing slice.
+// GunneryImpact is the damage-facing slice of the B-3 gunnery GunneryEventRecord —
+// what damage resolution needs from a hit. The record carries `outcome: "HIT" |
+// "MISS"` and impactInputs (reserved); this type is the slice damage consumes.
 //
 // Pure/deterministic: no ambient I/O/clock/random except the caller-provided
 // keyedRng function for deterministic randomness.
@@ -36,9 +35,8 @@ import {
 import { evaluateMagazineHazard, type MagazineHazardInput } from "./magazineHazard.js";
 import { evaluateTerminalSeam, type TerminalInput } from "./terminalSeam.js";
 
-// GunneryImpact — the damage-relevant surface from a gunnery hit
-// This is what will eventually come from B-3's GunneryEventRecord; for now
-// we define it so the integration compiles and works.
+// GunneryImpact — the damage-relevant surface from a gunnery hit (the
+// damage-facing slice of the B-3 GunneryEventRecord).
 
 export interface GunneryImpact {
   /** Id of the shooter/firing battery. */

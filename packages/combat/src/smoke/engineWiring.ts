@@ -32,7 +32,6 @@ export function resolveSmoke(
 ): SmokeStageResult {
   const events: SmokeEventRecord[] = [];
 
-  // Step 1: Run drift and decay on all active clouds
   const { nextClouds, removedCloudIds } = resolveSmokeDriftDecay(
     context.clouds,
     context.windSpeedKnots,
@@ -40,7 +39,6 @@ export function resolveSmoke(
     context.precipitationIntensityBp,
   );
 
-  // Step 2: Create SMOKE_SOURCE_REMOVAL records for removed clouds
   const removedCloudMap = new Map<string, SmokeCloud>();
   for (const cloud of context.clouds) {
     removedCloudMap.set(cloud.smokeCloudId, cloud);
@@ -69,7 +67,6 @@ export function resolveSmoke(
     }
   }
 
-  // Step 3: Create DRIFT_DECAY records for surviving clouds
   for (const cloud of nextClouds) {
     events.push(
       createSmokeEventRecord({
