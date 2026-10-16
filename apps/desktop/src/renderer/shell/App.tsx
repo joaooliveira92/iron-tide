@@ -28,6 +28,9 @@ import { useBackground } from "./BackgroundContext.js";
 import { CampaignUnavailableView } from "./CampaignUnavailableView.js";
 import { CampaignShellProvider, useCampaignShellContext } from "./CampaignShellContext.js";
 import { GuidedInspectionOverlay } from "./GuidedInspectionOverlay.js";
+import { BattleRequestDialog } from "./interruptions/BattleRequestDialog.js";
+import { DecisionDialog } from "./interruptions/DecisionDialog.js";
+import { PendingTurnRecoveryPrompt } from "./interruptions/PendingTurnRecoveryPrompt.js";
 import { MapSheet } from "./MapSheet.js";
 import { SiteHeader } from "./SiteHeader.js";
 import {
@@ -243,6 +246,35 @@ function CampaignShellApplication({
           }}
         />
       )}
+      {shell.state.campaign !== null &&
+        shell.state.interruption !== null &&
+        (shell.state.interruption.unavailable ? (
+          <PendingTurnRecoveryPrompt
+            pending={shell.state.interruption.pending}
+            unavailable
+            onResume={() => undefined}
+            onAbandon={shell.actions.abandonPendingTurn}
+          />
+        ) : shell.state.interruption.request === null ? (
+          <PendingTurnRecoveryPrompt
+            pending={shell.state.interruption.pending}
+            unavailable={false}
+            onResume={shell.actions.advanceMonth}
+            onAbandon={shell.actions.abandonPendingTurn}
+          />
+        ) : shell.state.interruption.request.kind === "decision" ? (
+          <DecisionDialog
+            request={shell.state.interruption.request}
+            onAnswer={shell.actions.answerDecision}
+            onAbandon={shell.actions.abandonPendingTurn}
+          />
+        ) : (
+          <BattleRequestDialog
+            request={shell.state.interruption.request}
+            onChoose={shell.actions.submitBattleResult}
+            onAbandon={shell.actions.abandonPendingTurn}
+          />
+        ))}
       {guided.visible && !guided.loading && (
         <GuidedInspectionOverlay
           stepIndex={guided.stepIndex}

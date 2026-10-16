@@ -477,6 +477,7 @@ export const CAMPAIGN_COMMAND_NAMES = [
   "answerDecision",
   "submitBattleResult",
   "abandonPendingTurn",
+  "readPendingTurn",
 ] as const;
 
 /**
@@ -727,6 +728,10 @@ export interface CampaignCommandClient {
     command: "abandonPendingTurn",
     payload: string,
   ): Promise<BridgeResult<AbandonPendingTurnResult>>;
+  execute(
+    command: "readPendingTurn",
+    payload: string,
+  ): Promise<BridgeResult<ReadPendingTurnResult>>;
 }
 
 /** A stable reference to a domain entity a message concerns (renderer-safe mirror). */
@@ -847,13 +852,26 @@ export interface PendingTurnDto {
 }
 
 export type ResolveTurnResult =
-  | { readonly status: "completed"; readonly summary: TurnSummaryEntry }
+  | {
+      readonly status: "completed";
+      readonly summary: TurnSummaryEntry;
+      /** The post-turn closing surface, so the header can update without a refresh round-trip. */
+      readonly closing: {
+        readonly revision: number;
+        readonly month: { readonly year: number; readonly month: number };
+        readonly closingTreasury: number;
+      };
+    }
   | {
       readonly status: "suspended";
       readonly request: InterruptionRequestDto | null;
       readonly pendingTurn: PendingTurnDto;
     }
   | { readonly status: "unavailable" };
+
+export interface ReadPendingTurnResult {
+  readonly pending: PendingTurnDto | null;
+}
 
 export interface AnswerDecisionPayload {
   readonly sessionId: string;

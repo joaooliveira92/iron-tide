@@ -41,6 +41,7 @@ const IMPLEMENTED_COMMANDS = new Set([
   "answerDecision",
   "submitBattleResult",
   "abandonPendingTurn",
+  "readPendingTurn",
   "commitMonth",
   "inspectConstructionScreen",
   "submitConstructionCommand",

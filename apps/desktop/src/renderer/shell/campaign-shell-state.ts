@@ -1,7 +1,19 @@
+import type {
+  InterruptionRequestDto,
+  PendingTurnDto,
+} from "../../shared/campaign-command-contract.js";
 import type { PrimaryAction } from "./primary-action.js";
 import type { NavigationHistory } from "./navigation-history.js";
 import { currentEntry, initialHistory, visit } from "./navigation-history.js";
 import type { Screen } from "./campaign-screen-registry.js";
+
+/** The active turn interruption the player must resolve before advancing. */
+export interface ShellInterruption {
+  readonly request: InterruptionRequestDto | null;
+  readonly pending: PendingTurnDto | null;
+  /** True when a stored pending turn could not be trusted (resumption declined). */
+  readonly unavailable: boolean;
+}
 
 export interface CampaignOverview {
   readonly month: { readonly year: number; readonly month: number };
@@ -41,6 +53,8 @@ export interface CampaignShellState {
   readonly saveMessage: string | null;
   readonly primaryAction: PrimaryAction | null;
   readonly committing: boolean;
+  /** The active interruption (decision/battle/recovery), or null when advancing is unblocked. */
+  readonly interruption: ShellInterruption | null;
 }
 
 export type CampaignShellMode =
@@ -106,7 +120,9 @@ export type CampaignShellEvent =
       readonly campaign: CampaignOverview;
     }
   | { readonly type: "campaign-refreshed"; readonly campaign: CampaignOverview }
-  | { readonly type: "month-commit-failed"; readonly message: string };
+  | { readonly type: "month-commit-failed"; readonly message: string }
+  | { readonly type: "interruption-set"; readonly interruption: ShellInterruption }
+  | { readonly type: "interruption-cleared" };
 
 export function initialCampaignShellState(): CampaignShellState {
   return {
@@ -118,6 +134,7 @@ export function initialCampaignShellState(): CampaignShellState {
     saveMessage: null,
     primaryAction: null,
     committing: false,
+    interruption: null,
   };
 }
 
@@ -185,6 +202,10 @@ export function reduceCampaignShell(
       return { ...state, campaign: event.campaign };
     case "month-commit-failed":
       return { ...state, committing: false, saveMessage: event.message };
+    case "interruption-set":
+      return { ...state, committing: false, interruption: event.interruption };
+    case "interruption-cleared":
+      return { ...state, interruption: null };
   }
 }
 

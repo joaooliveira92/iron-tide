@@ -90,6 +90,7 @@ import { readTurnSummariesProgram } from "./turnSummaries.js";
 import {
   abandonPendingTurnProgram,
   answerDecisionProgram,
+  readPendingTurnProgram,
   resolveTurnProgram,
   submitBattleResultProgram,
 } from "./commands/resolveTurn.js";
@@ -167,6 +168,7 @@ export const commandPrograms: Partial<Record<CampaignCommandName, CommandProgram
   answerDecision: answerDecisionProgram,
   submitBattleResult: submitBattleResultProgram,
   abandonPendingTurn: abandonPendingTurnProgram,
+  readPendingTurn: readPendingTurnProgram,
   loadCampaign: loadCampaignProgram,
   listCampaigns: listCampaignsProgram,
   verifyCampaign: verifyCampaignProgram,

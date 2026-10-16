@@ -12,6 +12,7 @@ import type {
   AbandonPendingTurnResult,
   InterruptionRequestDto,
   PendingTurnDto,
+  ReadPendingTurnResult,
   ResolveTurnResult,
 } from "../../shared/campaign-command-contract.js";
 import { CommandEnvelopePayloadSchema, SessionIdPayloadSchema } from "../campaignCommandSchemas.js";
@@ -173,7 +174,15 @@ const finishTransaction = (input: {
 
     switch (outcome.kind) {
       case "completed": {
-        const value: ResolveTurnResult = { status: "completed", summary: outcome.summary };
+        const value: ResolveTurnResult = {
+          status: "completed",
+          summary: outcome.summary,
+          closing: {
+            revision: outcome.response.closingSnapshot.revision,
+            month: outcome.response.closingSnapshot.month,
+            closingTreasury: outcome.response.report.closingTreasury,
+          },
+        };
         return { outcome: "success" as const, value, diagnostics: [...outcome.diagnostics] };
       }
       case "suspended": {
@@ -309,6 +318,23 @@ const recordInput = (
         diagnostics: [error instanceof Error ? error.message : String(error)],
       }),
   });
+
+/**
+ * `readPendingTurn(sessionId) -> { pending }` reports whether a suspended turn
+ * exists for the campaign, without touching it. The renderer uses it on load to
+ * prompt the player to resume.
+ */
+export const readPendingTurnProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+  Effect.gen(function* () {
+    const sessions = yield* CampaignSessionStore;
+    const record = yield* sessions.get(sessionId);
+    const pending = loadPendingTurn(record.saveDir);
+    const value: ReadPendingTurnResult = {
+      pending: pending === null ? null : toPendingTurnDto(pending),
+    };
+    return { outcome: "success" as const, value, diagnostics: [] };
+  }),
+);
 
 /**
  * `abandonPendingTurn(sessionId)` clears only the non-authoritative pending-turn

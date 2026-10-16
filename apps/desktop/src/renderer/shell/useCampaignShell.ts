@@ -1,18 +1,25 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
+import type { BridgeResult } from "../../shared/bridge-contract.js";
+import type {
+  InterruptionRequestDto,
+  ResolveTurnResult,
+} from "../../shared/campaign-command-contract.js";
 import { emitWideEvent } from "../lib/telemetry.js";
 import type { Screen } from "./campaign-screen-registry.js";
 import {
   loadActiveAlertsCount,
   overviewAfterCommit,
   overviewFromProjection,
+  type CommittedMonth,
 } from "./campaign-overview.js";
 import {
   campaignShellMode,
   currentShellScreen,
   initialCampaignShellState,
   reduceCampaignShell,
+  type ShellInterruption,
 } from "./campaign-shell-state.js";
 import { canGoBack, canGoForward, goBack, goForward } from "./navigation-history.js";
 import type { PrimaryAction } from "./primary-action.js";
@@ -63,6 +70,23 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
           type: "campaign-opened",
           campaign: overviewFromProjection(sessionId, result.value.projection, alerts),
         });
+        // A campaign holding a suspended turn prompts the player to resume it.
+        // Fire-and-forget: the pending read never delays or fails opening.
+        void bridge.campaign
+          .execute("readPendingTurn", sessionId)
+          .then((pending) => {
+            if (pending.outcome === "success" && pending.value.pending !== null) {
+              dispatch({
+                type: "interruption-set",
+                interruption: {
+                  request: null,
+                  pending: pending.value.pending,
+                  unavailable: false,
+                },
+              });
+            }
+          })
+          .catch(() => undefined);
       } catch (error) {
         dispatch({
           type: "campaign-open-failed",
@@ -150,35 +174,76 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     [bridge, state.campaign?.sessionId],
   );
 
+  const setInterruption = useCallback((interruption: ShellInterruption | null) => {
+    dispatch(
+      interruption === null
+        ? { type: "interruption-cleared" }
+        : { type: "interruption-set", interruption },
+    );
+  }, []);
+
+  /**
+   * Project a `resolveTurn` response into the shell: a completed turn updates the
+   * header; a suspended turn opens the blocking interruption; an untrustworthy
+   * pending turn opens the recovery prompt. Never mutates authoritative state
+   * here — the command boundary already validated and persisted it.
+   */
+  const applyResolveResult = useCallback(
+    (result: BridgeResult<ResolveTurnResult>, sessionId: string) => {
+      if (result.outcome !== "success") {
+        dispatch({
+          type: "month-commit-failed",
+          message: `Could not advance month: ${result.reason}.${diagnosticsSuffix(result.diagnostics)}`,
+        });
+        return;
+      }
+      const value = result.value;
+      if (value.status === "completed") {
+        const previous = state.campaign;
+        if (previous !== null) {
+          const committed: CommittedMonth = {
+            closingSnapshot: { month: value.closing.month, revision: value.closing.revision },
+            report: { closingTreasury: value.closing.closingTreasury },
+          };
+          dispatch({
+            type: "month-committed",
+            campaign: overviewAfterCommit(previous, committed, sessionId),
+          });
+        }
+        setInterruption(null);
+        void refreshCampaign(sessionId);
+        collectMessage(`Month advanced to ${formatCampaignMonth(value.closing.month)}.`);
+        return;
+      }
+      if (value.status === "suspended") {
+        setInterruption({ request: value.request, pending: value.pendingTurn, unavailable: false });
+        return;
+      }
+      setInterruption({ request: null, pending: null, unavailable: true });
+    },
+    [state.campaign, collectMessage, refreshCampaign, setInterruption],
+  );
+
   const advanceMonth = useCallback(async () => {
     if (bridge === undefined || state.campaign === null) return;
     dispatch({ type: "month-commit-started" });
     const sessionId = state.campaign.sessionId;
     const started = performance.now();
     try {
-      const result = await bridge.campaign.execute("commitMonth", {
+      const result = await bridge.campaign.execute("resolveTurn", {
         sessionId,
         expectedRevision: state.campaign.revision,
         transportRequestId: crypto.randomUUID(),
       });
       const duration = Math.round(performance.now() - started);
-      if (result.outcome === "success") {
-        emitWideEvent("campaign_month_advance", sessionId, duration, "success");
-        const { value } = result;
-        dispatch({
-          type: "month-committed",
-          campaign: overviewAfterCommit(state.campaign, value, sessionId),
-        });
-        // The commit response carries no projection surface; refresh the rest.
-        void refreshCampaign(sessionId);
-        collectMessage(`Month advanced to ${formatCampaignMonth(value.closingSnapshot.month)}.`);
-        return;
-      }
-      emitWideEvent("campaign_month_advance", sessionId, duration, "rejected", [result.reason]);
-      dispatch({
-        type: "month-commit-failed",
-        message: `Could not advance month: ${result.reason}.${result.diagnostics.length > 0 ? ` ${result.diagnostics.join("; ")}` : ""}`,
-      });
+      emitWideEvent(
+        "campaign_month_advance",
+        sessionId,
+        duration,
+        result.outcome === "success" ? "success" : "rejected",
+        result.outcome === "success" ? [] : [result.reason],
+      );
+      applyResolveResult(result, sessionId);
     } catch (error) {
       emitWideEvent("campaign_month_advance", sessionId, 0, "rejected", [
         error instanceof Error ? error.message : "Unknown error",
@@ -188,7 +253,79 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
         message: error instanceof Error ? error.message : "Could not advance month.",
       });
     }
-  }, [bridge, state.campaign, collectMessage, refreshCampaign]);
+  }, [bridge, state.campaign, applyResolveResult]);
+
+  const answerDecision = useCallback(
+    async (optionId: string) => {
+      const request = state.interruption?.request;
+      if (
+        bridge === undefined ||
+        state.campaign === null ||
+        request === null ||
+        request === undefined ||
+        request.kind !== "decision"
+      ) {
+        return;
+      }
+      const sessionId = state.campaign.sessionId;
+      dispatch({ type: "month-commit-started" });
+      const result = await bridge.campaign.execute("answerDecision", {
+        sessionId,
+        expectedRevision: state.campaign.revision,
+        transportRequestId: crypto.randomUUID(),
+        interruptionId: request.interruptionId,
+        decisionId: request.decisionId ?? "",
+        optionId,
+      });
+      applyResolveResult(result, sessionId);
+    },
+    [bridge, state.campaign, state.interruption, applyResolveResult],
+  );
+
+  /** Submit the player's answer to a battle request (T-1 owns the offer policy). */
+  const submitBattleResult = useCallback(
+    async (choice: "accept" | "decline" | "delegate") => {
+      const request = state.interruption?.request;
+      if (
+        bridge === undefined ||
+        state.campaign === null ||
+        request === null ||
+        request === undefined ||
+        request.kind !== "battle"
+      ) {
+        return;
+      }
+      const sessionId = state.campaign.sessionId;
+      dispatch({ type: "month-commit-started" });
+      const result = await bridge.campaign.execute("submitBattleResult", {
+        sessionId,
+        expectedRevision: state.campaign.revision,
+        transportRequestId: crypto.randomUUID(),
+        interruptionId: request.interruptionId,
+        battleId: request.battleId ?? "",
+        winnerId: null,
+        loserId: null,
+        attackerLosses: [],
+        defenderLosses: [],
+        damageReport: {},
+      });
+      applyResolveResult(result, sessionId);
+      collectMessage(`Battle ${choice} — delegated to staff.`);
+    },
+    [bridge, state.campaign, state.interruption, applyResolveResult, collectMessage],
+  );
+
+  const abandonPendingTurn = useCallback(async () => {
+    if (bridge === undefined || state.campaign === null) return;
+    const sessionId = state.campaign.sessionId;
+    const result = await bridge.campaign.execute("abandonPendingTurn", sessionId);
+    if (result.outcome === "success") {
+      setInterruption(null);
+      collectMessage("Outstanding turn discarded.");
+    } else {
+      collectMessage(`Could not discard the outstanding turn: ${result.reason}.`);
+    }
+  }, [bridge, state.campaign, setInterruption, collectMessage]);
 
   const setPrimaryAction = useCallback(
     (action: PrimaryAction | null) => dispatch({ type: "primary-action-changed", action }),
@@ -212,6 +349,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       saveMessage: state.saveMessage,
       primaryAction: state.primaryAction,
       committing: state.committing,
+      interruption: state.interruption,
       mode: campaignShellMode(state),
       screen: currentShellScreen(state),
       canGoBack: canGoBack(state.history),
@@ -221,6 +359,9 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       saveCampaign,
       copyCampaign,
       advanceMonth,
+      answerDecision,
+      submitBattleResult,
+      abandonPendingTurn,
       refreshCampaign,
       selectScreen,
       setPrimaryAction,
@@ -234,6 +375,9 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       saveCampaign,
       copyCampaign,
       advanceMonth,
+      answerDecision,
+      submitBattleResult,
+      abandonPendingTurn,
       refreshCampaign,
       selectScreen,
       setPrimaryAction,

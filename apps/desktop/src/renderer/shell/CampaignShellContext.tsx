@@ -15,6 +15,7 @@ export interface CampaignShellContextValue {
     | "saveMessage"
     | "primaryAction"
     | "committing"
+    | "interruption"
     | "mode"
     | "screen"
     | "canGoBack"
@@ -27,6 +28,9 @@ export interface CampaignShellContextValue {
     | "saveCampaign"
     | "copyCampaign"
     | "advanceMonth"
+    | "answerDecision"
+    | "submitBattleResult"
+    | "abandonPendingTurn"
     | "refreshCampaign"
     | "selectScreen"
     | "setPrimaryAction"
@@ -58,6 +62,7 @@ export function CampaignShellProvider({
         saveMessage: shell.saveMessage,
         primaryAction: shell.primaryAction,
         committing: shell.committing,
+        interruption: shell.interruption,
         mode: shell.mode,
         screen: shell.screen,
         canGoBack: shell.canGoBack,
@@ -69,6 +74,9 @@ export function CampaignShellProvider({
         saveCampaign: shell.saveCampaign,
         copyCampaign: shell.copyCampaign,
         advanceMonth: shell.advanceMonth,
+        answerDecision: shell.answerDecision,
+        submitBattleResult: shell.submitBattleResult,
+        abandonPendingTurn: shell.abandonPendingTurn,
         refreshCampaign: shell.refreshCampaign,
         selectScreen: shell.selectScreen,
         setPrimaryAction: shell.setPrimaryAction,

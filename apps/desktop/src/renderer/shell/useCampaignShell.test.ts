@@ -32,28 +32,19 @@ const projection: PlayerProjection = {
   commandWorkspace: { commands: [], movementCommands: [] },
 };
 
-const monthCommitSuccess = {
+const monthResolveSuccess = {
   outcome: "success" as const,
   value: {
-    report: {
-      month: { month: 2, year: 1900 },
-      openingTreasury: 24_500_000,
-      maintenanceCost: 1_100_000,
-      newConstructionSpending: 400_000,
-      closingTreasury: 22_900_000,
+    status: "completed" as const,
+    summary: {
+      turnId: "turn-1",
+      projectionVersion: "1.0.0",
+      occurredAt: "1900-01",
+      rulesetVersion: "0.1.0",
+      contentVersion: "0.5.0",
+      messages: [],
     },
-    domainEvents: [],
-    financialLedger: [],
-    randomDecisions: [],
-    closingSnapshot: {
-      revision: 4,
-      month: { month: 2, year: 1900 },
-      submarinePools: [],
-      minePressure: [],
-      landTargetDamage: [],
-      battleOutcomes: [],
-      activeWars: [],
-    },
+    closing: { revision: 4, month: { month: 2, year: 1900 }, closingTreasury: 22_900_000 },
   },
   diagnostics: [],
 };
@@ -110,7 +101,7 @@ describe("useCampaignShell", () => {
         };
       }
       committed = true;
-      return monthCommitSuccess;
+      return monthResolveSuccess;
     }) as unknown as CampaignExecute;
     const { result } = setup(execute);
 
@@ -119,7 +110,7 @@ describe("useCampaignShell", () => {
     await act(() => result.current.advanceMonth());
 
     expect(execute).toHaveBeenCalledWith(
-      "commitMonth",
+      "resolveTurn",
       expect.objectContaining({ sessionId: "ses-1", expectedRevision: 3 }),
     );
     // Commit response alone has no projection surface, so the shell re-reads it:
