@@ -7,13 +7,13 @@ sequence. Pure mechanical consolidation: every stored integer is unchanged.
 
 **Blocked by:** 01 (the canonical units module).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Exactly one definition of each unit brand and canonical constant remains
+- [x] Exactly one definition of each unit brand and canonical constant remains
       (in contracts); the ship-design and campaign duplicates are deleted.
-- [ ] The directed package graph is preserved: no internal cross-package source
+- [x] The directed package graph is preserved: no internal cross-package source
       import; public exports only.
-- [ ] Authoring conversion (knots, millimetres) stays at the content-compile
+- [x] Authoring conversion (knots, millimetres) stays at the content-compile
       boundary and does not move into authoritative state.
-- [ ] Value-preserving: the cross-process child run is byte-identical before and
+- [x] Value-preserving: the cross-process child run is byte-identical before and
       after; the codemod/equivalence determinism gates stay green.
