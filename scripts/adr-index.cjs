@@ -56,6 +56,11 @@ const AREAS = [
     nums: [210],
   },
   {
+    name: "Process & documentation",
+    blurb: "Concurrent-agent worktree coordination and repository process rules.",
+    nums: [220],
+  },
+  {
     name: "Scenario content & research",
     blurb:
       "Legality, consistency and authored posture of the 1880 scenario's starting content and research state.",

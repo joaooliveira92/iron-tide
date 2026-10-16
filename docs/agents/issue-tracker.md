@@ -44,7 +44,9 @@ refactor is the exception — sequence it as expand → migrate → contract.
 ## Working the frontier
 
 Any ticket whose blockers are all done is on the **frontier** and can start; for
-a linear chain that is top to bottom. Claim one ticket at a time.
+a linear chain that is top to bottom. Claim one ticket at a time. Each concurrent
+agent works one `.scratch/<slug>` effort in its own worktree (`.ai/WORKTREES.md`,
+ADR-0220).
 
 ## The consistency gate
 
