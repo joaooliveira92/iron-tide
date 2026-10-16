@@ -67,7 +67,7 @@ function MessageRow({
       <div className="flex items-start gap-2">
         <span
           data-testid="severity-badge"
-          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${
+          className={`shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold uppercase ${
             SEVERITY_CLASS[message.severity] ?? ""
           }`}
         >
@@ -87,7 +87,7 @@ function MessageRow({
                   key={`${ref.type}:${ref.id}`}
                   type="button"
                   data-testid="entity-link"
-                  className="rounded border border-border/60 px-1.5 py-0.5 text-[10px] hover:bg-accent"
+                  className="rounded border border-border/60 px-1.5 py-0.5 text-xs hover:bg-accent"
                   onClick={() => onOpenEntity?.(ref)}
                 >
                   {ref.type}: {ref.id}
@@ -98,7 +98,7 @@ function MessageRow({
           {expanded && (
             <div data-testid="message-detail" className="mt-1 space-y-1">
               {message.effectRefs.map((effect, index) => (
-                <p key={index} className="text-[10px] text-muted-foreground">
+                <p key={index} className="text-xs text-muted-foreground">
                   {effect.target.type}:{effect.target.id} {effect.attribute}:{" "}
                   {String(effect.previousValue ?? "—")} → {String(effect.newValue ?? "—")}
                   {effect.delta !== undefined
@@ -107,7 +107,7 @@ function MessageRow({
                 </p>
               ))}
               {message.debugMetadata && (
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Sources: {message.debugMetadata.sourceEventIds.join(", ")}
                 </p>
               )}
@@ -118,7 +118,7 @@ function MessageRow({
           <button
             type="button"
             data-testid="toggle-detail"
-            className="text-[10px] text-muted-foreground hover:text-foreground"
+            className="text-xs text-muted-foreground hover:text-foreground"
             onClick={() => setExpanded((value) => !value)}
           >
             {expanded ? "Less" : "Details"}
@@ -127,7 +127,7 @@ function MessageRow({
             type="button"
             data-testid="toggle-pin"
             aria-pressed={pinned}
-            className="text-[10px] text-muted-foreground hover:text-foreground"
+            className="text-xs text-muted-foreground hover:text-foreground"
             onClick={() => onTogglePinned(message.id)}
           >
             {pinned ? "Unpin" : "Pin"}
@@ -136,7 +136,7 @@ function MessageRow({
             type="button"
             data-testid="toggle-read"
             aria-pressed={read}
-            className="text-[10px] text-muted-foreground hover:text-foreground"
+            className="text-xs text-muted-foreground hover:text-foreground"
             onClick={() => onToggleRead(message.id)}
           >
             {read ? "Unread" : "Read"}
@@ -198,7 +198,7 @@ export function TurnSummaryPanel({
                 type="button"
                 data-testid="turn-history-item"
                 aria-pressed={entry.turnId === selected?.turnId}
-                className={`rounded border px-1.5 py-0.5 text-[10px] ${
+                className={`rounded border px-1.5 py-0.5 text-xs ${
                   entry.turnId === selected?.turnId ? "bg-accent" : ""
                 }`}
                 onClick={() => setSelectedTurnId(entry.turnId)}
@@ -216,7 +216,7 @@ export function TurnSummaryPanel({
               data-testid="turn-search"
               placeholder="Search"
               aria-label="Search the turn summary"
-              className="min-w-0 flex-1 rounded border border-border/60 bg-background px-1.5 py-0.5 text-[11px]"
+              className="min-w-0 flex-1 rounded border border-border/60 bg-background px-1.5 py-0.5 text-xs"
               value={filters.search}
               onChange={(event) =>
                 setFilters((current) => ({ ...current, search: event.target.value }))
@@ -225,7 +225,7 @@ export function TurnSummaryPanel({
             <select
               data-testid="category-filter"
               aria-label="Filter by category"
-              className="rounded border border-border/60 bg-background px-1 py-0.5 text-[11px]"
+              className="rounded border border-border/60 bg-background px-1 py-0.5 text-xs"
               value={filters.category}
               onChange={(event) =>
                 setFilters((current) => ({ ...current, category: event.target.value }))
@@ -241,7 +241,7 @@ export function TurnSummaryPanel({
             <select
               data-testid="severity-filter"
               aria-label="Filter by severity"
-              className="rounded border border-border/60 bg-background px-1 py-0.5 text-[11px]"
+              className="rounded border border-border/60 bg-background px-1 py-0.5 text-xs"
               value={filters.severity}
               onChange={(event) =>
                 setFilters((current) => ({ ...current, severity: event.target.value }))
@@ -257,7 +257,7 @@ export function TurnSummaryPanel({
               type="button"
               data-testid="actionable-toggle"
               aria-pressed={filters.actionableOnly}
-              className={`rounded border border-border/60 px-1.5 py-0.5 text-[10px] ${
+              className={`rounded border border-border/60 px-1.5 py-0.5 text-xs ${
                 filters.actionableOnly ? "bg-accent" : ""
               }`}
               onClick={() =>
@@ -275,7 +275,7 @@ export function TurnSummaryPanel({
             data-testid="turn-message-group"
             data-category={group.category}
           >
-            <h3 className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {group.label} ({group.messages.length})
             </h3>
             <ul className="space-y-1">

@@ -37,7 +37,7 @@ export function BattleRequestDialog({
           <button
             type="button"
             data-testid="battle-accept"
-            className="rounded border border-border px-2 py-1 text-[11px] hover:bg-accent"
+            className="rounded border border-border px-2 py-1 text-xs hover:bg-accent"
             onClick={() => onChoose("accept")}
           >
             Accept
@@ -45,7 +45,7 @@ export function BattleRequestDialog({
           <button
             type="button"
             data-testid="battle-decline"
-            className="rounded border border-border px-2 py-1 text-[11px] hover:bg-accent"
+            className="rounded border border-border px-2 py-1 text-xs hover:bg-accent"
             onClick={() => onChoose("decline")}
           >
             Decline
@@ -53,7 +53,7 @@ export function BattleRequestDialog({
           <button
             type="button"
             data-testid="battle-delegate"
-            className="rounded border border-border px-2 py-1 text-[11px] hover:bg-accent"
+            className="rounded border border-border px-2 py-1 text-xs hover:bg-accent"
             onClick={() => onChoose("delegate")}
           >
             Delegate
@@ -62,7 +62,7 @@ export function BattleRequestDialog({
         <button
           type="button"
           data-testid="battle-abandon"
-          className="mt-3 text-[11px] text-muted-foreground hover:text-foreground"
+          className="mt-3 text-xs text-muted-foreground hover:text-foreground"
           onClick={onAbandon}
         >
           Abandon this turn

@@ -39,13 +39,13 @@ export function DecisionDialog({
               <p className="text-xs font-medium">
                 {resolveMessage(option.titleKey, request.interpolation)}
               </p>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {resolveMessage(option.bodyKey, request.interpolation)}
               </p>
               {option.hints.length > 0 && (
                 <ul data-testid="decision-hints" className="mt-1 space-y-0.5">
                   {option.hints.map((hint, index) => (
-                    <li key={index} className="text-[10px] text-muted-foreground">
+                    <li key={index} className="text-xs text-muted-foreground">
                       {hint.target.id} {hint.attribute}: {hint.direction} ({hint.magnitude})
                     </li>
                   ))}
@@ -54,7 +54,7 @@ export function DecisionDialog({
               <button
                 type="button"
                 data-testid="decision-option"
-                className="mt-2 rounded border border-border px-2 py-1 text-[11px] hover:bg-accent"
+                className="mt-2 rounded border border-border px-2 py-1 text-xs hover:bg-accent"
                 onClick={() => onAnswer(option.optionId)}
               >
                 Choose
@@ -65,7 +65,7 @@ export function DecisionDialog({
         <button
           type="button"
           data-testid="decision-abandon"
-          className="mt-3 text-[11px] text-muted-foreground hover:text-foreground"
+          className="mt-3 text-xs text-muted-foreground hover:text-foreground"
           onClick={onAbandon}
         >
           Abandon this turn

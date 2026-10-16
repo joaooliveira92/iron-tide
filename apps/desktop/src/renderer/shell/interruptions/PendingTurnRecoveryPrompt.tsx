@@ -48,7 +48,7 @@ export function PendingTurnRecoveryPrompt({
             <button
               type="button"
               data-testid="pending-resume"
-              className="rounded border border-border px-2 py-1 text-[11px] hover:bg-accent"
+              className="rounded border border-border px-2 py-1 text-xs hover:bg-accent"
               onClick={onResume}
             >
               Resume turn
@@ -57,7 +57,7 @@ export function PendingTurnRecoveryPrompt({
           <button
             type="button"
             data-testid="pending-abandon"
-            className="rounded border border-border px-2 py-1 text-[11px] hover:bg-accent"
+            className="rounded border border-border px-2 py-1 text-xs hover:bg-accent"
             onClick={onAbandon}
           >
             Discard outstanding turn
