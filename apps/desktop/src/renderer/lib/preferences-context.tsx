@@ -11,7 +11,12 @@ import {
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import {
   DEFAULT_APP_PREFERENCES,
+  NO_ACTIVE_NATION_AVAILABILITY,
+  resolveEffectiveCurrencyDisplayMode,
   type AppPreferences,
+  type CurrencyDisplayMode,
+  type CurrencyFallbackReason,
+  type NationalCurrencyAvailability,
   type PreferencesSnapshot,
   type WriteAppPreferencesRequest,
 } from "../../shared/preferences-contract.js";
@@ -126,4 +131,40 @@ export function PreferencesProvider({ children }: { readonly children: ReactNode
 
 export function usePreferences(): PreferencesContextValue {
   return use(PreferencesContext);
+}
+
+export interface CurrencyDisplayModeSelection {
+  /** The stored request, never rewritten by a fallback (ADR-0211). */
+  readonly requested: CurrencyDisplayMode;
+  /** The derived effective mode (Naval Credits when the request cannot be honoured). */
+  readonly effective: CurrencyDisplayMode;
+  /** Present only when the effective mode differs from the request. */
+  readonly fallbackReason?: CurrencyFallbackReason;
+  /** Persist a new request through the capability. */
+  readonly setRequested: (mode: CurrencyDisplayMode) => void;
+}
+
+/**
+ * The currency-display request (stored app-scope, ADR-0211) and the derived
+ * effective mode, exposed separately so the UI can show the effective mode
+ * truthfully without rewriting the request. `availability` is produced by U-3
+ * from the active campaign; until that is wired it defaults to "no active
+ * nation", so National Historical resolves to Naval Credits.
+ */
+export function useCurrencyDisplayMode(
+  availability: NationalCurrencyAvailability = NO_ACTIVE_NATION_AVAILABILITY,
+): CurrencyDisplayModeSelection {
+  const { preferences, setApp } = usePreferences();
+  const requested = preferences.currencyDisplayMode;
+  const effective = resolveEffectiveCurrencyDisplayMode(requested, availability);
+  const setRequested = useCallback(
+    (mode: CurrencyDisplayMode) => setApp({ currencyDisplayMode: mode }),
+    [setApp],
+  );
+  return {
+    requested,
+    effective: effective.mode,
+    ...(effective.fallbackReason !== undefined ? { fallbackReason: effective.fallbackReason } : {}),
+    setRequested,
+  };
 }

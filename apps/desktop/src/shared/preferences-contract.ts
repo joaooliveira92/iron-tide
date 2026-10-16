@@ -61,6 +61,61 @@ export const CURRENCY_DISPLAY_MODES = [
 ] as const;
 export type CurrencyDisplayMode = (typeof CURRENCY_DISPLAY_MODES)[number];
 
+/**
+ * Why a National Historical request could not be honoured (ADR-0211). U-3 maps
+ * these to localized messages; U-2 only models the codes.
+ */
+export const CURRENCY_FALLBACK_REASONS = [
+  "noActiveNation",
+  "nationalCurrencyNotConfigured",
+  "nationalCurrencyInvalid",
+  "nationalCurrencyOutsideSupportedPeriod",
+] as const;
+export type CurrencyFallbackReason = (typeof CURRENCY_FALLBACK_REASONS)[number];
+
+/**
+ * The availability of the active nation's National Historical configuration. U-3
+ * computes this from the active campaign; U-2 models its shape. `configured` means
+ * a validated configuration applies to the active nation and period; every other
+ * kind is a fallback reason.
+ */
+export type NationalCurrencyAvailability =
+  | { readonly kind: "noActiveNation" }
+  | { readonly kind: "configured" }
+  | { readonly kind: "nationalCurrencyNotConfigured" }
+  | { readonly kind: "nationalCurrencyInvalid" }
+  | { readonly kind: "nationalCurrencyOutsideSupportedPeriod" };
+
+/** The default when no campaign is active: the effective mode is Naval Credits. */
+export const NO_ACTIVE_NATION_AVAILABILITY: NationalCurrencyAvailability = {
+  kind: "noActiveNation",
+};
+
+/** The derived effective mode, with a reason when it differs from the request. */
+export interface EffectiveCurrencyDisplayMode {
+  readonly mode: CurrencyDisplayMode;
+  readonly fallbackReason?: CurrencyFallbackReason;
+}
+
+/**
+ * Resolve the effective currency-display mode from the stored request and the
+ * active nation's availability (ADR-0211). Pure: it never mutates the request.
+ * Naval Credits and Budget Points are always honourable; National Historical
+ * falls back to Naval Credits when no validated configuration applies, recording
+ * the reason so the UI can state it.
+ */
+export function resolveEffectiveCurrencyDisplayMode(
+  request: CurrencyDisplayMode,
+  availability: NationalCurrencyAvailability,
+): EffectiveCurrencyDisplayMode {
+  if (request === "navalCredits" || request === "budgetPoints") {
+    return { mode: request };
+  }
+  return availability.kind === "configured"
+    ? { mode: "nationalHistorical" }
+    : { mode: "navalCredits", fallbackReason: availability.kind };
+}
+
 export const LANGUAGE_PREFERENCES = ["en"] as const;
 export type LanguagePreference = (typeof LANGUAGE_PREFERENCES)[number];
 
