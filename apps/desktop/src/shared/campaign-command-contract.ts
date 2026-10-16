@@ -463,6 +463,10 @@ export const CAMPAIGN_COMMAND_NAMES = [
   "writeUiState",
   "readMonthlyReports",
   "readTurnSummaries",
+  "resolveTurn",
+  "answerDecision",
+  "submitBattleResult",
+  "abandonPendingTurn",
 ] as const;
 
 /**
@@ -697,6 +701,22 @@ export interface CampaignCommandClient {
     command: "readTurnSummaries",
     payload: string,
   ): Promise<BridgeResult<ReadTurnSummariesResult>>;
+  execute(
+    command: "resolveTurn",
+    payload: CommitMonthPayload,
+  ): Promise<BridgeResult<ResolveTurnResult>>;
+  execute(
+    command: "answerDecision",
+    payload: AnswerDecisionPayload,
+  ): Promise<BridgeResult<ResolveTurnResult>>;
+  execute(
+    command: "submitBattleResult",
+    payload: SubmitBattleResultPayload,
+  ): Promise<BridgeResult<ResolveTurnResult>>;
+  execute(
+    command: "abandonPendingTurn",
+    payload: string,
+  ): Promise<BridgeResult<AbandonPendingTurnResult>>;
 }
 
 /** A stable reference to a domain entity a message concerns (renderer-safe mirror). */
@@ -766,4 +786,87 @@ export interface ReadTurnSummariesResult {
 /** The tolerant-read sidecar shape: the most recent summaries, newest first. */
 export interface TurnSummaries {
   readonly summaries: readonly TurnSummaryEntry[];
+}
+
+export interface EffectHintDto {
+  readonly target: EntityReferenceDto;
+  readonly attribute: string;
+  readonly direction: "increase" | "decrease" | "none";
+  readonly magnitude: "minor" | "moderate" | "major";
+}
+
+export interface DecisionOptionDto {
+  readonly optionId: string;
+  readonly titleKey: string;
+  readonly bodyKey: string;
+  readonly hints: readonly EffectHintDto[];
+  readonly effects: readonly {
+    readonly nationId: string;
+    readonly attribute: "treasury";
+    readonly delta: number;
+  }[];
+}
+
+/** An interruption the player must resolve before the turn can continue. */
+export interface InterruptionRequestDto {
+  readonly kind: "decision" | "battle";
+  readonly turnId: string;
+  readonly interruptionId: string;
+  readonly ordinal: number;
+  readonly phase: string;
+  readonly titleKey: string;
+  readonly bodyKey: string;
+  readonly interpolation: Readonly<Record<string, string | number | boolean>>;
+  readonly decisionId?: string;
+  readonly options?: readonly DecisionOptionDto[];
+  readonly battleId?: string;
+  readonly attackerId?: string;
+  readonly defenderId?: string;
+  readonly areaId?: string;
+}
+
+/** The non-authoritative pending-turn record summary the renderer may show. */
+export interface PendingTurnDto {
+  readonly turnId: string;
+  readonly campaignId: string;
+  readonly playerNationId: string;
+  readonly startingRevision: number;
+  readonly nextInterruptionOrdinal: number;
+  readonly recordedInputCount: number;
+  readonly createdAt: string;
+}
+
+export type ResolveTurnResult =
+  | { readonly status: "completed"; readonly summary: TurnSummaryEntry }
+  | {
+      readonly status: "suspended";
+      readonly request: InterruptionRequestDto | null;
+      readonly pendingTurn: PendingTurnDto;
+    }
+  | { readonly status: "unavailable" };
+
+export interface AnswerDecisionPayload {
+  readonly sessionId: string;
+  readonly expectedRevision: number;
+  readonly transportRequestId: string;
+  readonly interruptionId: string;
+  readonly decisionId: string;
+  readonly optionId: string;
+}
+
+export interface SubmitBattleResultPayload {
+  readonly sessionId: string;
+  readonly expectedRevision: number;
+  readonly transportRequestId: string;
+  readonly interruptionId: string;
+  readonly battleId: string;
+  readonly winnerId: string | null;
+  readonly loserId: string | null;
+  readonly attackerLosses: readonly string[];
+  readonly defenderLosses: readonly string[];
+  readonly damageReport: Readonly<Record<string, number>>;
+}
+
+export interface AbandonPendingTurnResult {
+  readonly abandoned: boolean;
 }

@@ -87,6 +87,12 @@ import {
 } from "./drawingBoardDraft.js";
 import { readMonthlyReportsProgram } from "./monthlyReports.js";
 import { readTurnSummariesProgram } from "./turnSummaries.js";
+import {
+  abandonPendingTurnProgram,
+  answerDecisionProgram,
+  resolveTurnProgram,
+  submitBattleResultProgram,
+} from "./commands/resolveTurn.js";
 import { readUiStateProgram, writeUiStateProgram } from "./uiState.js";
 import { payloadless, withSchema, type CommandProgram } from "./runtime/commandProgram.js";
 import { NotImplemented, UnknownCommand } from "./runtime/commandError.js";
@@ -157,6 +163,10 @@ export const commandPrograms: Partial<Record<CampaignCommandName, CommandProgram
   writeUiState: writeUiStateProgram,
   readMonthlyReports: readMonthlyReportsProgram,
   readTurnSummaries: readTurnSummariesProgram,
+  resolveTurn: resolveTurnProgram,
+  answerDecision: answerDecisionProgram,
+  submitBattleResult: submitBattleResultProgram,
+  abandonPendingTurn: abandonPendingTurnProgram,
   loadCampaign: loadCampaignProgram,
   listCampaigns: listCampaignsProgram,
   verifyCampaign: verifyCampaignProgram,
