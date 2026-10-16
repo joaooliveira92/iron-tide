@@ -12,7 +12,7 @@
   nationId: "france"
   type: "ship"
   targetId: "fra_devastation"
-  designVersionId: "des_fra_amiral_duperre"
+  designVersionId: "des_fra_devastation"
   totalWork: 100
   completedWork: 50
   paidWork: 0
@@ -22,7 +22,7 @@
   nationId: "france"
   type: "ship"
   targetId: "fra_courbet"
-  designVersionId: "des_fra_redoutable"
+  designVersionId: "des_fra_devastation"
   totalWork: 100
   completedWork: 60
   paidWork: 0

@@ -113,6 +113,25 @@
   torpedoArmament:
     - { mountType: "ABOVE_WATER_TRAINABLE", tubeCount: 4, torpedoModelId: "whitehead_14in_1886" }
   familyCreationMonth: "1880-01"
+- designId: "des_fra_devastation"
+  designVersionId: "des_fra_devastation"
+  designFamilyId: "fam_fra_devastation"
+  nationId: "france"
+  className: "Dévastation"
+  hullType: "central_battery_ship"
+  displacementKg: 10620000
+  speedUms: 8
+  armorBeltUm: 381
+  mainGuns:
+    caliber: 340
+    count: 4
+    mounts: 4
+  machineryType: "reciprocating_compound"
+  hitPoints: 42
+  crewComplement: 689
+  torpedoArmament:
+    - { mountType: "ABOVE_WATER_TRAINABLE", tubeCount: 5, torpedoModelId: "whitehead_14in_1886" }
+  familyCreationMonth: "1880-01"
 - designId: "des_ger_kaiser"
   designVersionId: "des_ger_kaiser"
   designFamilyId: "fam_ger_kaiser"

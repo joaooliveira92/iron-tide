@@ -91,6 +91,7 @@
         id: "fra_devastation",
         name: "Dévastation",
         classId: "Dévastation",
+        designVersionId: "des_fra_devastation",
         hitPoints: 42,
         maxHitPoints: 42,
         speed: 15,
@@ -108,7 +109,8 @@
     - {
         id: "fra_courbet",
         name: "Courbet",
-        classId: "Courbet",
+        classId: "Dévastation",
+        designVersionId: "des_fra_devastation",
         hitPoints: 40,
         maxHitPoints: 40,
         speed: 15,

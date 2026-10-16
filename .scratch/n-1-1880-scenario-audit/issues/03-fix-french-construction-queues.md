@@ -10,9 +10,16 @@ names so target and design agree.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Every construction project's `designVersionId` resolves to a design whose
-      class matches the project's `targetId` ship.
-- [ ] A deterministic test asserts target↔design consistency for all projects.
+- [x] Every construction project's `designVersionId` resolves to a design whose
+      class matches the project's `targetId` ship. Authored the missing
+      `des_fra_devastation` (Dévastation-class ironclad, 1875–1886) and pointed
+      both `con_fra_devastation` and `con_fra_courbet` at it; linked
+      `fra_devastation`/`fra_courbet` to that design and set both ships'
+      `classId` to "Dévastation" (the historical class, resolving the 1880
+      "Courbet" vs 1913 dreadnought collision of F8).
+- [x] A deterministic test asserts target↔design class consistency for all
+      projects (`packages/content-compiler/test/constructionDesignConsistency.test.ts`;
+      verified red on the wrong reference).
 

@@ -24,8 +24,8 @@ rule can be fixed.
 - [x] A deterministic test compiles the 1880 pack and fails when any starting ship
       is illegal under the chosen rule (verified red on a 1906 design link, green
       on the shipped content).
-- [x] The 6 design-less ships are exempted with a reason: `aut_custoza`,
-      `fra_courbet`, `fra_devastation`, `ott_mesudiye`, `esp_numancia`,
-      `gbr_malta_temp`. The two French hulls are authored by ticket 03, the UK
-      placeholder by ticket 08.
+- [x] The design-less starting ships are exempted with a reason: `aut_custoza`,
+      `gbr_malta_temp`, `ott_mesudiye`, `esp_numancia`. The two French hulls
+      (`fra_courbet`, `fra_devastation`) gained the `des_fra_devastation` design
+      in ticket 03; the UK placeholder is resolved in ticket 08.
 

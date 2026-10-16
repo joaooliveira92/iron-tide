@@ -24,21 +24,13 @@ const SCENARIO_YEAR = 1880;
 /**
  * Starting ships with no modelled 1880 design, grandfathered under ADR-0212.
  * Each entry is a shipped historical hull the scenario opens with; a matching
- * design is authored later (ticket 03 for France, ticket 08 for the UK
- * placeholder). The value is the required reason.
+ * design is authored later (ticket 08 for the UK placeholder). The value is the
+ * required reason.
  */
 const DESIGN_LESS_EXEMPTIONS: ReadonlyMap<string, string> = new Map([
   [
     "aut_custoza",
     "Austro-Hungarian Custoza-class ironclad; no 1880 design is authored in the pack.",
-  ],
-  [
-    "fra_courbet",
-    "French Courbet-class ironclad; no 1880 design is authored in the pack (N-1 ticket 03).",
-  ],
-  [
-    "fra_devastation",
-    "French Dévastation-class ironclad; no 1880 design is authored in the pack (N-1 ticket 03).",
   ],
   [
     "gbr_malta_temp",
