@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0212).
+highest existing number + 1 (the next number is ADR-0213).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -51,6 +51,14 @@ Unavailable-artifact policy and the project authority order.
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
 | 0210 | [ADR-0210-unavailable-artifacts-and-authority-order.md](ADR-0210-unavailable-artifacts-and-authority-order.md) | Unavailable artifacts are unverified legacy references; authority order | accepted | — |
+
+## Scenario content & research
+
+Legality and consistency of the 1880 scenario's starting content and research state.
+
+| # | File | Title | Status | Superseded by |
+| --- | --- | --- | --- | --- |
+| 0212 | [ADR-0212-initial-fleet-tech-legality.md](ADR-0212-initial-fleet-tech-legality.md) | Initial-fleet tech legality uses the global 1880 tech set | accepted | — |
 
 ## Archive
 

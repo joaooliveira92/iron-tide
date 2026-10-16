@@ -55,6 +55,11 @@ const AREAS = [
     blurb: "Unavailable-artifact policy and the project authority order.",
     nums: [210],
   },
+  {
+    name: "Scenario content & research",
+    blurb: "Legality and consistency of the 1880 scenario's starting content and research state.",
+    nums: [212],
+  },
 ];
 
 // Records kept as historical provenance only: moved to docs/adr/archive/ and

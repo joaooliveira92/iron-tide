@@ -2,7 +2,7 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved (2026-10-15) by the owner as Option B; recorded as ADR-0212 (DR-012).
 
 ## Trigger
 
