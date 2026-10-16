@@ -15,3 +15,14 @@ skills under `.agents/skills/` (mirrored into `.claude/skills` by
 | Sharpen a design | `grilling` |
 
 Keep one pattern per skill, one purpose per agent.
+
+## Effect usage patterns
+
+Example-rich references for writing Effect code in this repo, derived from the
+vendored source (`vendor/effect`). Read the relevant file before writing that
+kind of code.
+
+| Concern | File |
+| --- | --- |
+| Boundary validation | `effect-schema.md` |
+| Error taxonomy | `effect-errors.md` |

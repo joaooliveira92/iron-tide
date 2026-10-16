@@ -46,9 +46,9 @@ contract wins; fix this file in the same change.
 
 ## Effect source of truth
 
-- `effect@4.0.2` is vendored. Read `vendor/effect` and `repos/effect/LLMS.md`
-  plus the relevant `repos/effect/packages/*` source before relying on behavior;
-  installed source and declarations are the truth.
+- `effect@4.0.2` is vendored. Read `vendor/effect` — its `AGENTS.md` agent guide,
+  `ai-docs/`, and the relevant `vendor/effect/src/*` source — before relying on
+  behavior; installed source and declarations are the truth.
 - Import `effect` (or `effect/<Subpath>`), never the npm registry and never
   `repos/`. The single-copy guard is enforced.
 - Runtime-free subset: `Schema`, `SchemaIssue`, `Data`, `Equal`, `Hash`,

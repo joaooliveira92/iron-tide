@@ -64,6 +64,9 @@ produce identical authoritative hashes across OSes.
   `persistence`, `content-compiler`, `apps/desktop/src/main`, `apps/compiler-cli`.
   The renderer and preload import no `effect`. See
   [runtime-free gate](docs/agents/runtime-free-gate.md).
+- Worked examples of this repo's idioms, derived from `vendor/effect`, live in
+  [`agent-patterns/`](agent-patterns/README.md) (`effect-schema.md`,
+  `effect-errors.md`). Read the relevant file before writing that kind of code.
 
 ## Errors
 
