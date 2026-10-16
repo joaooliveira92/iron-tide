@@ -11,9 +11,17 @@ fields (per decision D1 in ticket 01).
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] No nation's `currentProjectTechId` has an unfinished prerequisite.
-- [ ] Technology seeds are consistent with starting fleets under the D1 rule.
-- [ ] A deterministic test asserts project prerequisites hold for every nation.
+- [x] No nation's `currentProjectTechId` has an unfinished prerequisite
+      (fixed Austria-Hungary, which researched `gun_qf_light` without
+      `gun_breech_rifled`; the technology is now seeded as completed, matching
+      Germany and Austria's historical breech-loading guns).
+- [x] Technology seeds are consistent with starting fleets under the D1 rule
+      (ADR-0212: research gates new build/modernization/design, not inherited
+      ships, so no fleet-driven completed set is required; every completed
+      technology's own prerequisites are completed).
+- [x] A deterministic test asserts project prerequisites hold for every nation
+      (`packages/content-compiler/test/initialResearchCoherence.test.ts`; verified
+      red on the unmet Austria prerequisite).
 

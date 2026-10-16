@@ -63,6 +63,7 @@
     MACHINERY: 2
   technologies:
     - { techId: "hc_wrought_iron_hull", investedPoints: 50, completed: true }
+    - { techId: "gun_breech_rifled", investedPoints: 60, completed: true }
 - nationId: "usa"
   researchBudget: 20
   currentProjectTechId: "hc_compound_armor"
