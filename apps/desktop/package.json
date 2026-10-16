@@ -64,7 +64,7 @@
     "electron-vite": "^5.0.0",
     "vite": "catalog:",
     "typescript": "7.0.2",
-    "@types/node": "^24.13.3",
+    "@types/node": "^26.6.5",
     "vite-plus": "catalog:",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
