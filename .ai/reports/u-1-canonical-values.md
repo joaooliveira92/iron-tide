@@ -2,10 +2,14 @@
 
 ## Outcome
 
-`PASS_WITH_LIMITATIONS` — the scoping deliverable (chart → research → spec →
-slice → brief → traceability) is complete and the standing documentation gates are
-green. No implementation was performed, so the acceptance evidence for U-1 itself
-is deferred to the ticket set.
+`IN_PROGRESS` — the scoping deliverable (chart → research → spec → slice → brief →
+traceability) is complete, and implementation tickets **01–07** are done and green
+on their focused validation. Only **ticket 08 (U-1 acceptance)** remains: the six
+criteria traced to named tests/gates, the implementation ADRs recorded and indexed
+(`pnpm adr:index`), and the full validation gate green on the exact commit. The
+"Requirements evidence" and "Commands and observed results" below cover the scoping
+deliverable; the ticket-07 evidence is in "Ticket 07 — combat strength and resolver
+to fixed-point" further down.
 
 ## Scope delivered
 
@@ -96,10 +100,10 @@ None collected. No performance-sensitive code changed.
 
 ## Known limitations and deferred requirements
 
-- U-1 is not accepted; only scoped. Tickets 01–08 carry the implementation.
-- Tickets 06–08 are blocked by decision request 0005 (absent golden baseline).
-- The combat/economy float→fixed conversion delta is unmeasured until
-  implementation; the brief records the D5 stop surface if the delta is material.
+- U-1 is not accepted; only tickets 01–07 are done. Ticket 08 carries acceptance.
+- The golden baseline now exists; tickets 06–08 are no longer gated by 0005.
+- The combat float→fixed conversion delta is measured and reported: exactly
+  value-preserving (see "Ticket 07" above).
 - National Historical currency configuration content needs an owner and primary
   historical sources; it is U-3 content, not U-1.
 
@@ -114,7 +118,63 @@ None collected. No performance-sensitive code changed.
   `decisions/D1`–`D7`, `issues/01`–`08`.
 - `docs/research/u-1-canonical-values.md` — new research note.
 
-## Git and remote status
+## Ticket 07 — combat strength and resolver to fixed-point (validation)
+
+Converted `packages/combat/src/strength.ts` and `packages/combat/src/resolver.ts`
+from float arithmetic to fixed-point integer/bigint arithmetic with one rounding
+point; no float remains on any battle-outcome or hashed-projection path. See the
+ticket's `## Resolution` (`.scratch/u-1-canonical-values/issues/07-combat-strength-fixed-point.md`).
+
+Changed files: `packages/combat/src/strength.ts`, `packages/combat/src/resolver.ts`,
+`packages/combat/test/combat.test.ts`,
+`packages/phase-engine/test/battle-resolution-phase.test.ts`.
+
+```text
+pnpm exec vp run --no-cache -r build
+exit 0 — 0/24 cache hit; renderer bundle clean
+
+pnpm exec tsc -b
+exit 0
+
+pnpm lint
+exit 0 — "Found 0 warnings and 0 errors." (2411 files)
+
+pnpm format
+exit 0 — "All matched files use the correct format." (2612 files)
+
+pnpm --filter @bluewave/combat test
+exit 0 — 287 files, 3774 tests passed
+
+pnpm --filter @bluewave/phase-engine test
+exit 0 — 52 files, 537 tests passed
+
+pnpm test:run
+exit 0 — desktop 2059 passed | 1 skipped (full recursive suite green)
+
+node packages/cross-process-test/dist/run-child.js   (twice)
+byte-identical (diff -q clean)
+
+pnpm check:golden
+exit 0 — "All 11 hashes match golden reference" (reference run unchanged)
+
+pnpm check:determinism
+exit 0 — two child runs byte-identical
+
+pnpm check:authoritative-determinism   (+ --self-test)
+exit 0 — 15 roots, no ambient determinism; self-test 21 fixtures ok
+
+pnpm preflight
+exit 0 — 40 tasks
+
+pnpm test:scripts
+exit 0 — tests 200, pass 200, fail 0
+```
+
+Reviewed delta: a 4000-matchup sweep plus the seven named fixture battles show the
+refactor is **exactly value-preserving** — 4000/4000 identical, 0 winner flips, 0
+loss flips, 0 damage-value diffs (max |Δ| = 0). No golden re-pin required
+(`Golden-Repin: not-needed`); no compatibility bump (joins the S-1 `3.0.0`
+release window).
 
 - Branch: `refactor/comment-prune-sweep-a` (the plan's documented baseline branch).
 - Commits: this sprint's Conventional Commit on the branch

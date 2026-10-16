@@ -6,7 +6,9 @@ indexed, and the full validation gate green on the exact commit.
 
 **Blocked by:** 02, 03, 04, 05, 06, 07.
 
-**Status:** blocked
+**Status:** ready-for-agent
+
+All blockers 02–07 are done.
 
 - [ ] All six U-1 acceptance criteria — canonical unit table; fixed-precision
       integer monetary representation; rounding and number-formatting boundaries;

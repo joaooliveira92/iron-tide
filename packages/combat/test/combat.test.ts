@@ -1,5 +1,5 @@
 ﻿import { describe, it, expect } from "vite-plus/test";
-import { SafeInt, BluewaveError } from "@bluewave/contracts";
+import { SafeInt, BluewaveError, BP_ONE } from "@bluewave/contracts";
 import { RandomEngine, RandomStream } from "@bluewave/random";
 import type { BattleInstance, FleetState, NationState, Ship } from "@bluewave/campaign";
 import { BattleResolver } from "../src/resolver.js";
@@ -126,6 +126,7 @@ describe("combat (narrow) - preserved", () => {
     for (const v of Object.values(result.damageReport)) {
       expect(v as number).toBeGreaterThanOrEqual(1);
       expect(v as number).toBeLessThanOrEqual(100);
+      expect(Number.isSafeInteger(v as number)).toBe(true);
     }
   });
 
@@ -405,10 +406,10 @@ describe("StrengthCalculator", () => {
     expect(dp).toBe(20); // 10 * (20/10) = 20
   });
 
-  it("survivability returns ratio of current to max HP", () => {
+  it("survivability returns current/max HP as basis points", () => {
     const ships = [makeShip({ id: "s1", hitPoints: SafeInt(50), maxHitPoints: SafeInt(100) })];
     const fleet = makeFleet({ id: "f", ships });
-    expect(StrengthCalculator.survivability(fleet)).toBe(0.5);
+    expect(StrengthCalculator.survivability(fleet)).toBe(BP_ONE / 2); // 50/100 = 0.5
   });
 
   it("empty fleet => 0 for all", () => {
@@ -417,6 +418,7 @@ describe("StrengthCalculator", () => {
     expect(StrengthCalculator.averageArmor(fleet)).toBe(0 as SafeInt);
     expect(StrengthCalculator.damagePotential(fleet)).toBe(0);
     expect(StrengthCalculator.survivability(fleet)).toBe(0);
+    expect(StrengthCalculator.strength(fleet)).toBe(0);
     expect(StrengthCalculator.totalHitPoints(fleet)).toBe(0 as SafeInt);
   });
 
@@ -440,23 +442,49 @@ describe("StrengthCalculator", () => {
     const fleet = makeFleet({ id: "f", ships: [active, building] });
     expect(StrengthCalculator.totalFirepower(fleet)).toBe(100 as SafeInt);
     expect(StrengthCalculator.damagePotential(fleet)).toBe(200); // 100 * (20/10)
-    expect(StrengthCalculator.survivability(fleet)).toBe(1);
+    expect(StrengthCalculator.survivability(fleet)).toBe(BP_ONE);
+    expect(StrengthCalculator.strength(fleet)).toBe(200);
   });
 
   it("averageArmor float not trunc - 10 and 15 avg 12.5", () => {
     const s1 = makeShip({ id: "s1", firepower: SafeInt(10), armor: SafeInt(10) });
     const s2 = makeShip({ id: "s2", firepower: SafeInt(10), armor: SafeInt(15) });
     const fleet = makeFleet({ id: "f", ships: [s1, s2] });
-    // averageArmor returns halfUp 13, but damagePotential uses float 12.5
+    // averageArmor rounds halfUp to 13, but damagePotential and strength compose
+    // the exact rational 20 * 25 / (10 * 2) = 25 — rounding the average first
+    // would give 26, the wrong kind of delta.
     expect(StrengthCalculator.averageArmor(fleet)).toBe(13 as SafeInt);
-    expect(StrengthCalculator.damagePotential(fleet)).toBe(25); // 20 * 12.5/10 =25
+    expect(StrengthCalculator.damagePotential(fleet)).toBe(25);
+    expect(StrengthCalculator.strength(fleet)).toBe(25);
   });
 
-  it("survivability capped at 1 and 0 when maxHp 0", () => {
+  it("strength composes damagePotential and survivability exactly, rounding once", () => {
+    // firepower 1, armor 12, hp 5 / maxHp 6: exact strength =
+    // 1 * 12 * 5 / (10 * 1 * 6) = 1. Multiplying the two rounded projections
+    // (floor(dp) = 1 times survivability 8333 bp) would give 0 — the
+    // double-round this combined form avoids.
+    const ships = [
+      makeShip({
+        id: "s1",
+        firepower: SafeInt(1),
+        armor: SafeInt(12),
+        hitPoints: SafeInt(5),
+        maxHitPoints: SafeInt(6),
+      }),
+    ];
+    const fleet = makeFleet({ id: "f", ships });
+    expect(StrengthCalculator.damagePotential(fleet)).toBe(1);
+    expect(StrengthCalculator.survivability(fleet)).toBe(8333);
+    expect(StrengthCalculator.strength(fleet)).toBe(1);
+  });
+
+  it("survivability capped at one whole and 0 when maxHp 0", () => {
     const over = makeShip({ id: "o", hitPoints: SafeInt(150), maxHitPoints: SafeInt(100) });
-    expect(StrengthCalculator.survivability(makeFleet({ id: "f", ships: [over] }))).toBe(1);
+    expect(StrengthCalculator.survivability(makeFleet({ id: "f", ships: [over] }))).toBe(BP_ONE);
+    expect(StrengthCalculator.strength(makeFleet({ id: "f", ships: [over] }))).toBe(10); // capped at full hp
     const zero = makeShip({ id: "z", hitPoints: SafeInt(0), maxHitPoints: SafeInt(0) });
     expect(StrengthCalculator.survivability(makeFleet({ id: "f2", ships: [zero] }))).toBe(0);
+    expect(StrengthCalculator.strength(makeFleet({ id: "f2", ships: [zero] }))).toBe(0);
   });
 
   it("1HP ship always sinks when overwhelming", () => {
