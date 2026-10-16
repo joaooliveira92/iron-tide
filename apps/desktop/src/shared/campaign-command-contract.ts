@@ -229,6 +229,12 @@ export interface UiStateInspectorLayout {
 export const INSPECTOR_MIN_WIDTH_PX = 360;
 export const INSPECTOR_MAX_WIDTH_PX = 560;
 
+/** Pin/read state for turn-summary messages — never deletes the underlying message. */
+export interface UiStateTurnMessages {
+  readonly pinnedIds: readonly string[];
+  readonly readIds: readonly string[];
+}
+
 export interface UiState {
   /** The turn the sidecar was last written at. */
   readonly turnNumber: number;
@@ -239,6 +245,8 @@ export interface UiState {
   readonly firstMonthInspection?: UiStateFirstMonthInspection;
   /** Shipbuilding inspector layout — persists per campaign, never authoritative. */
   readonly inspector?: UiStateInspectorLayout;
+  /** Turn-summary pin/read state — persists per campaign, never authoritative. */
+  readonly turnMessages?: UiStateTurnMessages;
 }
 
 export interface ReadUiStateResult {
@@ -260,6 +268,8 @@ export interface WriteUiStatePayload {
   readonly firstMonthInspection?: UiStateFirstMonthInspection;
   /** Shipbuilding inspector layout; absent means carried forward from the stored sidecar. */
   readonly inspector?: UiStateInspectorLayout;
+  /** Turn-summary pin/read state; absent means carried forward from the stored sidecar. */
+  readonly turnMessages?: UiStateTurnMessages;
 }
 
 export interface WriteUiStateResult {

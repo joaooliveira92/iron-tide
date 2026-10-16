@@ -45,6 +45,14 @@ export function resolveUiState(stored: UiState, currentTurnNumber: number): UiSt
     dismissedFingerprints: expired ? [] : [...stored.dismissedFingerprints],
     firstMonthInspection: stored.firstMonthInspection,
     inspector: stored.inspector,
+    ...(stored.turnMessages !== undefined
+      ? {
+          turnMessages: {
+            pinnedIds: [...stored.turnMessages.pinnedIds],
+            readIds: [...stored.turnMessages.readIds],
+          },
+        }
+      : {}),
   };
 }
 
@@ -136,6 +144,21 @@ export const writeUiStateProgram = withSchema(WriteUiStatePayloadSchema, (payloa
         ? { inspector: { ...payload.inspector } }
         : stored.inspector !== undefined
           ? { inspector: { ...stored.inspector } }
+          : {}),
+      ...(payload.turnMessages !== undefined
+        ? {
+            turnMessages: {
+              pinnedIds: [...payload.turnMessages.pinnedIds],
+              readIds: [...payload.turnMessages.readIds],
+            },
+          }
+        : stored.turnMessages !== undefined
+          ? {
+              turnMessages: {
+                pinnedIds: [...stored.turnMessages.pinnedIds],
+                readIds: [...stored.turnMessages.readIds],
+              },
+            }
           : {}),
     };
     yield* uiStates.save(record.saveDir, next);
