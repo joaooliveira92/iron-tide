@@ -2,7 +2,7 @@
 // ADR-0159): UI state, monthly-report history, and the drawing-board draft.
 // Each is a sibling of the save ids in the campaign save directory, outside the
 // envelope and hash. Raw `node:*` stays inside the service.
-import { renameSync, rmSync, writeFileSync } from "node:fs";
+import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 import { Context, Effect, Layer } from "effect";
@@ -18,6 +18,7 @@ import type {
   WriteDrawingBoardDraftPayload,
 } from "../../shared/design-contract.js";
 import { UI_STATE_FILENAME, loadUiState } from "../uiState.js";
+import { atomicWrite } from "./atomicWrite.js";
 import { CommandFailed } from "./commandError.js";
 
 function failure(reason: string, error: unknown): CommandFailed {
@@ -25,17 +26,6 @@ function failure(reason: string, error: unknown): CommandFailed {
     reason,
     diagnostics: [error instanceof Error ? error.message : String(error)],
   });
-}
-
-function atomicWrite(path: string, contents: string): void {
-  const tmp = `${path}.tmp`;
-  try {
-    writeFileSync(tmp, contents, "utf8");
-    renameSync(tmp, path);
-  } catch (error) {
-    rmSync(tmp, { force: true });
-    throw error;
-  }
 }
 
 export class UiStateStore extends Context.Service<

@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { applyContentSecurityPolicy } from "./csp.js";
 import { commandPrograms, createCampaignCommandDispatcher } from "./campaignBridge.js";
 import { ContentArtifactError, loadContentArtifact } from "./contentArtifact.js";
+import { createPreferencesBridge } from "./preferences/preferencesBridge.js";
 import { CrashReporter } from "./runtime/crashReporter.js";
 import { desktopMainLayer, type CommandEnv } from "./runtime/desktopMainLayer.js";
 import { isDebugModeEnabled } from "./debugGate.js";
@@ -160,6 +161,13 @@ function registerIpc(runtime: DesktopMainRuntime): void {
   ipcMain.handle("campaign:execute", (_event, command: string, payload: unknown) =>
     dispatchCampaignCommand(command, payload),
   );
+
+  // The dedicated app-scope preferences capability (D6): `read` returns the
+  // decoded snapshot (defaults when the file is missing/corrupt); `write`
+  // decodes the payload strictly at the boundary before persisting atomically.
+  const preferences = createPreferencesBridge(() => runtime);
+  ipcMain.handle("preferences:read", () => preferences.read());
+  ipcMain.handle("preferences:write", (_event, payload: unknown) => preferences.write(payload));
 
   // Renderer crash capture (ADR-0133): validate the renderer's payload at the
   // boundary, then write the local-only support bundle through the CrashReporter

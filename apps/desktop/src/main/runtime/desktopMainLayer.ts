@@ -3,6 +3,7 @@
 // Electron main process builds one `ManagedRuntime` from this and disposes it on
 // quit.
 import { Layer } from "effect";
+import { PreferencesStore, preferencesStoreLayer } from "../preferences/preferencesStore.js";
 import { CampaignSessionStore, campaignSessionStoreLayer } from "./campaignSessionStore.js";
 import { CommandQueueStore, commandQueueStoreLayer } from "./commandQueueStore.js";
 import { ContentArtifact, contentArtifactLayer } from "./contentArtifact.js";
@@ -32,6 +33,7 @@ export type CommandEnv =
   | UiStateStore
   | ReportsStore
   | DraftStore
+  | PreferencesStore
   | NativeDialog
   | AppPaths
   | Clock
@@ -53,6 +55,7 @@ export function desktopMainLayer(): Layer.Layer<CommandEnv> {
     nativeDialogLayer(),
     idGeneratorLayer(),
     replayServiceLayer(),
+    preferencesStoreLayer().pipe(Layer.provideMerge(platform)),
     crashReporterLayer().pipe(Layer.provideMerge(platform)),
   );
 }
