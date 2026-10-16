@@ -5,6 +5,7 @@ import { DEBUG_MODE } from "./debug-flag.js";
 import { cn } from "../lib/utils.js";
 import { CAMPAIGN_NAVIGATION_SECTIONS, showsCampaignNavigation } from "./campaign-navigation.js";
 import type { Screen } from "./campaign-screen-registry.js";
+import { tooltipTitle, useTooltipDetail } from "./tooltip-detail.js";
 
 export interface BottomNavProps {
   readonly screen: Screen;
@@ -21,6 +22,7 @@ export interface BottomNavProps {
  */
 export function BottomNav({ screen, onSelect, footer, sessionId }: BottomNavProps) {
   const [shipbuildingOpen, setShipbuildingOpen] = useState(false);
+  const tooltipDetail = useTooltipDetail();
   if (!showsCampaignNavigation(screen)) return null;
 
   return (
@@ -36,7 +38,7 @@ export function BottomNav({ screen, onSelect, footer, sessionId }: BottomNavProp
             <li key={item.id} className="min-w-16 flex-1">
               <button
                 type="button"
-                title={item.label}
+                title={tooltipTitle(tooltipDetail, item.label)}
                 aria-label={item.label}
                 aria-current={active ? "page" : undefined}
                 data-active={active}

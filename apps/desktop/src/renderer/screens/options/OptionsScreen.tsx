@@ -35,7 +35,12 @@ import { useBackground } from "../../shell/BackgroundContext.js";
 import { DENSITY_OPTIONS, useDensity } from "../../shell/DensityContext.js";
 import { SANS_FONT_OPTIONS, useFont } from "../../shell/FontContext.js";
 import { useTheme } from "../../shell/ThemeContext.js";
-import { formatMoney } from "../../lib/presentation-format/index.js";
+import {
+  MEASUREMENT_CATEGORIES,
+  defaultDisplayUnit,
+  displayUnitsForCategory,
+  formatMoney,
+} from "../../lib/presentation-format/index.js";
 import { useCurrencyDisplayMode, usePreferences } from "../../lib/preferences-context.js";
 import { translate, type MessageKey } from "../../lib/strings.js";
 import { GlassCard } from "@/components/ui/glass-card.jsx";
@@ -97,6 +102,42 @@ function Section({ titleKey, children }: { titleKey: MessageKey; children: React
       </CardHeader>
       <CardContent className="space-y-4">{children}</CardContent>
     </GlassCard>
+  );
+}
+
+function MeasurementCategorySelects({
+  preset,
+  selections,
+  onChange,
+}: {
+  preset: AppPreferences["measurementPreset"];
+  selections: AppPreferences["measurementSelections"];
+  onChange: (category: string, unitId: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      {MEASUREMENT_CATEGORIES.map((category) => {
+        const label = translate(`settings.measurement.category.${category}`);
+        const current = selections[category] ?? defaultDisplayUnit(category, preset).id;
+        return (
+          <label key={category} className="flex items-center justify-between gap-3 text-sm">
+            <span>{label}</span>
+            <select
+              aria-label={label}
+              className="rounded-md border border-input bg-background px-2 py-1"
+              value={current}
+              onChange={(event) => onChange(category, event.target.value)}
+            >
+              {displayUnitsForCategory(category).map((unit) => (
+                <option key={unit.id} value={unit.id}>
+                  {unit.symbol}
+                </option>
+              ))}
+            </select>
+          </label>
+        );
+      })}
+    </div>
   );
 }
 
@@ -265,6 +306,15 @@ export function OptionsScreen() {
             onChange={(value) => setApp({ measurementPreset: value })}
           />
         </div>
+        <MeasurementCategorySelects
+          preset={preferences.measurementPreset}
+          selections={preferences.measurementSelections}
+          onChange={(category, unitId) =>
+            setApp({
+              measurementSelections: { ...preferences.measurementSelections, [category]: unitId },
+            })
+          }
+        />
         <div className="space-y-2">
           <p className="text-sm font-medium">{translate("settings.numberScale.label")}</p>
           <OptionGroup
@@ -283,6 +333,7 @@ export function OptionsScreen() {
           onClick={() =>
             resetSection({
               measurementPreset: DEFAULTS.measurementPreset,
+              measurementSelections: DEFAULTS.measurementSelections,
               numberScale: DEFAULTS.numberScale,
             })
           }

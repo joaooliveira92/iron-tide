@@ -128,3 +128,61 @@ describe("OptionsScreen application font", () => {
     expect(localStorage.getItem("bluewave-font")).toBeNull();
   });
 });
+
+describe("OptionsScreen new sections (U-4)", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+  afterEach(cleanup);
+
+  it("offers the high-contrast theme and writes it to the domain", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    fireEvent.click(screen.getByRole("button", { name: "High contrast" }));
+    await waitFor(() => expect(stub.writes).toHaveLength(1));
+    expect(stub.writes[0]?.app.theme).toBe("highContrast");
+  });
+
+  it("changes text scale and clamps within range", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    fireEvent.click(screen.getByRole("button", { name: "Increase text size" }));
+    await waitFor(() => expect(stub.writes).toHaveLength(1));
+    expect(stub.writes[0]?.app.textScale).toBe(105);
+  });
+
+  it("states why National Historical is unavailable and preserves the request", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    fireEvent.click(screen.getByRole("button", { name: "National Historical" }));
+    await waitFor(() =>
+      expect(screen.getByRole("status").textContent).toContain("Available once a campaign is open"),
+    );
+    expect(stub.writes[0]?.app.currencyDisplayMode).toBe("nationalHistorical");
+  });
+
+  it("writes a per-category measurement selection", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    fireEvent.change(screen.getByRole("combobox", { name: "Calibre" }), {
+      target: { value: "millimetres" },
+    });
+    await waitFor(() => expect(stub.writes).toHaveLength(1));
+    expect(stub.writes[0]?.app.measurementSelections["calibre"]).toBe("millimetres");
+  });
+
+  it("resets all preferences to the central defaults", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    fireEvent.click(screen.getByRole("button", { name: "High contrast" }));
+    await waitFor(() => expect(stub.writes).toHaveLength(1));
+    fireEvent.click(screen.getAllByRole("button", { name: "Reset all to defaults" })[0]!);
+    await waitFor(() => expect(stub.writes).toHaveLength(2));
+    expect(stub.writes[1]?.app.theme).toBe("system");
+  });
+});
