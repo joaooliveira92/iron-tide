@@ -23,8 +23,7 @@ acceptance criteria and evidence live in `.ai/SPRINT-PLAN.md`.
 
 - Combat engine is deep but mostly unreachable from a campaign.
 - Ship building is the strongest vertical.
-- The strategic layer is thin: no prestige, unrest, events, treaties, readiness
-  states, trade war or invasions.
+- The strategic layer is thin: no prestige, unrest, events, treaties, readiness states, trade war or invasions.
 - AI is legal-random for budget and research.
 - An Options screen exists but is a single stub; there is no preferences domain.
 
