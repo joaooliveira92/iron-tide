@@ -170,3 +170,45 @@ export interface PreferencesSnapshot {
 export interface WriteAppPreferencesRequest {
   readonly app: AppPreferences;
 }
+
+/**
+ * Campaign-scope preferences (D3): display choices that are per-campaign and
+ * stored in a campaign sidecar beside the existing per-campaign files, never
+ * inside the hashed save snapshot. They resolve ahead of the app scope and behind
+ * a session override.
+ */
+export interface CampaignPreferences {
+  readonly showDetailedTooltips: boolean;
+  readonly confirmBeforeTurn: boolean;
+  readonly showUnitFatigue: boolean;
+  readonly showSupplyOverlay: boolean;
+}
+
+export const DEFAULT_CAMPAIGN_PREFERENCES: CampaignPreferences = Object.freeze({
+  showDetailedTooltips: true,
+  confirmBeforeTurn: true,
+  showUnitFatigue: true,
+  showSupplyOverlay: false,
+});
+
+/** The `preferences.writeCampaign` wire request (a full campaign-scope object). */
+export interface WriteCampaignPreferencesRequest {
+  readonly campaign: CampaignPreferences;
+}
+
+/** A decoded campaign-scope snapshot: the format version plus the values. */
+export interface CampaignPreferencesSnapshot {
+  readonly version: number;
+  readonly campaign: CampaignPreferences;
+}
+
+/**
+ * Resolve a scoped preference (D3): `session ?? campaign ?? default`. Pure; a
+ * session override never rewrites the campaign or app value.
+ */
+export function resolveCampaignPreferences(
+  campaign: CampaignPreferences | undefined,
+  session: Partial<CampaignPreferences> | undefined,
+): CampaignPreferences {
+  return { ...DEFAULT_CAMPAIGN_PREFERENCES, ...campaign, ...session };
+}

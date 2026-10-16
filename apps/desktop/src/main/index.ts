@@ -168,6 +168,14 @@ function registerIpc(runtime: DesktopMainRuntime): void {
   const preferences = createPreferencesBridge(() => runtime);
   ipcMain.handle("preferences:read", () => preferences.read());
   ipcMain.handle("preferences:write", (_event, payload: unknown) => preferences.write(payload));
+  // Campaign-scope preferences live in a per-campaign sidecar (D3); the active
+  // campaign is resolved from the session id.
+  ipcMain.handle("preferences:read-campaign", (_event, sessionId: string) =>
+    preferences.readCampaign(sessionId),
+  );
+  ipcMain.handle("preferences:write-campaign", (_event, sessionId: string, payload: unknown) =>
+    preferences.writeCampaign(sessionId, payload),
+  );
 
   // Renderer crash capture (ADR-0133): validate the renderer's payload at the
   // boundary, then write the local-only support bundle through the CrashReporter

@@ -51,6 +51,8 @@ describe("Electron boundary", () => {
       // pair, separate from the campaign command channel.
       'ipcMain.handle("preferences:read"',
       'ipcMain.handle("preferences:write"',
+      'ipcMain.handle("preferences:read-campaign"',
+      'ipcMain.handle("preferences:write-campaign"',
     ];
     const allowedOn = [
       'ipcMain.on("window:minimize"',
@@ -103,7 +105,7 @@ describe("Electron boundary", () => {
     const registered = mainSource.match(/ipcMain\.(handle|on)\("([^"]+)"/g) ?? [];
     expect(
       registered.every((r) =>
-        /"(campaign:execute|window:[a-z-]+|support:report-crash|preferences:[a-z]+)"/.test(r),
+        /"(campaign:execute|window:[a-z-]+|support:report-crash|preferences:[a-z-]+)"/.test(r),
       ),
     ).toBe(true);
   });

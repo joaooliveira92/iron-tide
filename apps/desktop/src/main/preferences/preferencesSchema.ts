@@ -51,4 +51,24 @@ export const WriteAppPreferencesRequestSchema = Schema.Struct({
   app: AppPreferencesSchema,
 });
 
+/** The campaign-scope preferences (D3): the four per-campaign display toggles. */
+export const CampaignPreferencesSchema = Schema.Struct({
+  showDetailedTooltips: Schema.Boolean,
+  confirmBeforeTurn: Schema.Boolean,
+  showUnitFatigue: Schema.Boolean,
+  showSupplyOverlay: Schema.Boolean,
+});
+
+/** The campaign-scope sidecar shape: the format version plus the values. */
+export const CampaignPreferencesFileSchema = Schema.Struct({
+  version: Schema.Literal(PREFERENCES_SCHEMA_VERSION),
+  campaign: CampaignPreferencesSchema,
+});
+
+/** The `preferences.writeCampaign` wire request: a full campaign-scope object. */
+export const WriteCampaignPreferencesRequestSchema = Schema.Struct({
+  campaign: CampaignPreferencesSchema,
+});
+
 export type AppPreferencesDecoded = typeof AppPreferencesSchema.Type;
+export type CampaignPreferencesDecoded = typeof CampaignPreferencesSchema.Type;
