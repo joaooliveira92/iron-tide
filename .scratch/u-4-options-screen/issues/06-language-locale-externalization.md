@@ -7,19 +7,19 @@ formatting are independent choices.
 
 **Blocked by:** 01.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] A stable-keyed string catalogue with a resolver exists; a missing key falls
+- [x] A stable-keyed string catalogue with a resolver exists; a missing key falls
       back to en-US with a development warning and **no raw key renders** in the
       production path.
-- [ ] The Options screen's strings are migrated onto the catalogue (no inline
+- [x] The Options screen's strings are migrated onto the catalogue (no inline
       literals remain on the screen).
-- [ ] The language control lists only fully supported languages (English only);
+- [x] The language control lists only fully supported languages (English only);
       the formatting-locale control lists only locales with automated formatting
       tests (`FORMATTING_LOCALES`, initially `en-US`).
-- [ ] Language and formatting locale are independent: changing one does not change
+- [x] Language and formatting locale are independent: changing one does not change
       the other.
-- [ ] A test asserts the fallback warning, the absence of raw keys, and the
+- [x] A test asserts the fallback warning, the absence of raw keys, and the
       independence of the two controls.
-- [ ] The remaining released screens' string migration is a recorded scope
+- [x] The remaining released screens' string migration is a recorded scope
       boundary (in U-4 if sized, else a bounded follow-on), not silently deferred.

@@ -1,6 +1,6 @@
 # Spec: U-4 Options screen
 
-**Status:** ready-for-agent (sliced into `issues/`) · **Map:** `map.md` ·
+**Status:** done (sliced into `issues/`) · **Map:** `map.md` ·
 **Decisions:** `decisions/D1`-`D7` · **Authority:** ADR-0203 (Options screen +
 preferences architecture), ADR-0202 (presentation-only), ADR-0209
 (language/locale, externalized strings), ADR-0206/0207/0208/0211 (currency modes)

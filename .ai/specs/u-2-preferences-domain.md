@@ -1,6 +1,6 @@
 # Spec pointer: U-2 Preferences domain
 
-Spec: `.scratch/u-2-preferences-domain/spec.md` (ready-for-agent; sliced).
+Spec: `.scratch/u-2-preferences-domain/spec.md` (done; sliced, accepted).
 Map: `.scratch/u-2-preferences-domain/map.md` (decisions `D1`-`D7`).
 Tickets: `.scratch/u-2-preferences-domain/issues/` — 01 versioned domain, app-scope
 persistence, capability and selectors; 02 currency display mode (requested vs

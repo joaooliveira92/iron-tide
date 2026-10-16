@@ -7,18 +7,18 @@ never rewriting the stored request.
 
 **Blocked by:** 02, 04.
 
-**Status:** blocked
+**Status:** done
 
-- [ ] Availability is computed from the active campaign (its nation and period)
+- [x] Availability is computed from the active campaign (its nation and period)
       and the validated national-currency configuration; with no campaign or no
       configuration, the effective mode is `navalCredits`.
-- [ ] Each `CurrencyFallbackReason` (`noActiveNation`, `nationalCurrencyNotConfigured`,
+- [x] Each `CurrencyFallbackReason` (`noActiveNation`, `nationalCurrencyNotConfigured`,
       `nationalCurrencyInvalid`, `nationalCurrencyOutsideSupportedPeriod`) maps to
       a localized message, and the UI can state the effective mode truthfully.
-- [ ] The stored request is never rewritten by a fallback and is restored when a
+- [x] The stored request is never rewritten by a fallback and is restored when a
       supported campaign is active.
-- [ ] Naval Credits is the render and malformed-content fallback and is never
+- [x] Naval Credits is the render and malformed-content fallback and is never
       described as historical.
-- [ ] A test drives a supported, an unsupported and a malformed configuration and
+- [x] A test drives a supported, an unsupported and a malformed configuration and
       observes the effective mode and reason code; the request is asserted
       unchanged afterward.

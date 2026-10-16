@@ -7,21 +7,21 @@ clean commit.
 
 **Blocked by:** 05, 06.
 
-**Status:** blocked
+**Status:** done
 
-- [ ] An invariance test changes every presentation preference (all three currency
+- [x] An invariance test changes every presentation preference (all three currency
       modes, both unit presets, number scale, language and locale) and observes the
       compiled campaign snapshot, the save, and the cross-process golden reference
       run unchanged.
-- [ ] Boundary tests prove: a display-unit input parses once and round-trips; a
+- [x] Boundary tests prove: a display-unit input parses once and round-trips; a
       malformed currency configuration falls back to Naval Credits with a reason;
       an unsupported locale is not selectable; no formatted text is persisted.
-- [ ] The ad-hoc-formatting gate is green on the clean tree and fails on its
+- [x] The ad-hoc-formatting gate is green on the clean tree and fails on its
       fixture; the domain formatting leak guard is green.
-- [ ] No save format, wire format, or compatibility version changed; no golden hash
+- [x] No save format, wire format, or compatibility version changed; no golden hash
       moved (record the before/after hashes as evidence).
-- [ ] The U-3 validation report is written with exact commands and observed
+- [x] The U-3 validation report is written with exact commands and observed
       results; the SPRINT-PLAN row and the `.ai/specs/` pointer are updated; the
       tree is clean with Conventional Commit subjects.
-- [ ] `pnpm preflight`, `pnpm test:scripts`, and `pnpm check` are green on the
+- [x] `pnpm preflight`, `pnpm test:scripts`, and `pnpm check` are green on the
       exact commit.

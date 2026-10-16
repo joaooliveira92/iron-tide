@@ -1,6 +1,6 @@
 # Spec pointer: U-4 Options screen
 
-Spec: `.scratch/u-4-options-screen/spec.md` (ready-for-agent; sliced).
+Spec: `.scratch/u-4-options-screen/spec.md` (done; sliced, accepted).
 Map: `.scratch/u-4-options-screen/map.md` (decisions `D1`-`D7`).
 Tickets: `.scratch/u-4-options-screen/issues/` — 01 screen shell, reachability,
 preview and reset; 02 Appearance (theme incl. high contrast, text size, density,

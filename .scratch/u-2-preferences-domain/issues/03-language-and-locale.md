@@ -7,15 +7,15 @@ offered.
 
 **Blocked by:** 01.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `language` accepts only fully supported languages (initially `en`); default
+- [x] `language` accepts only fully supported languages (initially `en`); default
       `en`; no placeholder language is storable.
-- [ ] `formattingLocale` accepts only locales on the validated allowlist
+- [x] `formattingLocale` accepts only locales on the validated allowlist
       (initially `en-US`); default `en-US`.
-- [ ] Selectors expose the two independently; a test proves changing language does
+- [x] Selectors expose the two independently; a test proves changing language does
       not change formatting locale and vice versa.
-- [ ] The values are stored as presentation preferences only; no canonical value
+- [x] The values are stored as presentation preferences only; no canonical value
       or authoritative state depends on them.
-- [ ] The formatters/parsers that consume these values, and the locale allowlist's
+- [x] The formatters/parsers that consume these values, and the locale allowlist's
       population, remain U-3's.
