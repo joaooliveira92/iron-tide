@@ -1,5 +1,7 @@
 export type Brand<Base, BrandTag extends string> = Base & { readonly __brand: BrandTag };
 
+export * from "./units.js";
+
 export type SafeInt = Brand<number, "SafeInt">;
 
 export function SafeInt(value: number): SafeInt {
