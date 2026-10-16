@@ -28,6 +28,7 @@ import {
   ShipTypeRecordSchema,
   SlotTemplateSchema,
   TechnologyPrerequisiteChainSchema,
+  UiCatalogueSchema,
   validateAgainstSchema,
   type ContentSchema,
 } from "@bluewave/content-schema";
@@ -69,6 +70,7 @@ export interface ValidateOutput {
   research?: unknown[];
   designs?: unknown[];
   presentation?: unknown;
+  ui?: unknown;
 }
 
 /** The source file of each part-model record, by id, for the flatten stage. */
@@ -272,6 +274,8 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
     const presentation = validatePresentation(input, collector);
     validatePresentationRegions(validated, presentation, input, collector);
 
+    const ui = validateUi(input, collector);
+
     if (collector.hasErrors) return undefined;
 
     return {
@@ -293,6 +297,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
       },
       ...campaign,
       ...(presentation !== undefined ? { presentation } : {}),
+      ...(ui !== undefined ? { ui } : {}),
     };
   }
 }
@@ -314,6 +319,18 @@ function validatePresentation(input: ParseOutput, collector: DiagnosticCollector
     sourcePath,
     collector,
   );
+}
+
+/**
+ * Structurally validates the UI-string catalogue (CAH-UI-1) through the strict
+ * validator. Absent from a pack keeps the artifact byte-compatible; a malformed
+ * catalogue (excess keys, non-string text) fails to compile.
+ */
+function validateUi(input: ParseOutput, collector: DiagnosticCollector): unknown {
+  const raw = input.objectDocs.get("ui");
+  if (raw === undefined) return undefined;
+  const sourcePath = input.objectSourcePaths.get("ui") ?? "ui/en-US.yaml";
+  return validateAgainstSchema(raw, UiCatalogueSchema, "UiCatalogue", sourcePath, collector);
 }
 
 /**

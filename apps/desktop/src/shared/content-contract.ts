@@ -86,3 +86,15 @@ export interface PresentationContentDto {
   readonly regions: RegionGroupingDto;
   readonly mapJoin: MapJoinDto;
 }
+
+/**
+ * The UI-string catalogue the main process decodes from the verified artifact and
+ * ships to the renderer over the narrow content-query IPC (`inspectUiCatalogue`,
+ * ADR-0209). Data-only: a locale plus its stable-key → text strings. The
+ * projection package emits keys; the renderer resolves them against this
+ * catalogue and never sees a raw document or parser.
+ */
+export interface UiCatalogueDto {
+  readonly locale: string;
+  readonly strings: Readonly<Record<string, string>>;
+}

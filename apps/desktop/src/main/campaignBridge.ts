@@ -13,6 +13,7 @@ import { compileCampaignProgram } from "./commands/compileCampaign.js";
 import {
   inspectDrawingBoardContentProgram,
   inspectPresentationContentProgram,
+  inspectUiCatalogueProgram,
 } from "./commands/contentCommands.js";
 import {
   inspectConstructionScreenProgram,
@@ -112,6 +113,7 @@ export const commandPrograms: Partial<Record<CampaignCommandName, CommandProgram
   inspectPriorities: inspectPrioritiesProgram,
   inspectDrawingBoardContent: payloadless(() => inspectDrawingBoardContentProgram),
   inspectPresentationContent: payloadless(() => inspectPresentationContentProgram),
+  inspectUiCatalogue: payloadless(() => inspectUiCatalogueProgram),
   commitMonth: commitMonthProgram,
   inspectConstructionScreen: inspectConstructionScreenProgram,
   submitConstructionCommand: submitConstructionCommandProgram,

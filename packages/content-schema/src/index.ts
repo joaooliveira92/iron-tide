@@ -137,6 +137,7 @@ export {
   RegionGroupingSchema,
   RegionSchema,
 } from "./presentation.js";
+export { UiCatalogueSchema, type UiCatalogue } from "./ui-catalogue.js";
 export type { Possession } from "./possession.js";
 export { PossessionSchema } from "./possession.js";
 export type { ResearchFieldId } from "./research-fields.js";

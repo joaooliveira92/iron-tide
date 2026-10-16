@@ -221,6 +221,9 @@ function toMutableBundle(decoded: CompiledContentBundle): ContentBundle {
   if (decoded.presentation !== undefined) {
     bundle.presentation = decoded.presentation;
   }
+  if (decoded.ui !== undefined) {
+    bundle.ui = decoded.ui;
+  }
   return bundle;
 }
 

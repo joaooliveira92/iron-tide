@@ -11,6 +11,7 @@ import type {
   RouteEdge,
   RulesetManifest,
   TechnologyPrerequisite,
+  UiCatalogue,
 } from "@bluewave/content-schema";
 
 import type {
@@ -122,6 +123,7 @@ export class CompileStage implements CompilerStage<NormalizeOutput, CompilerOutp
       ...(input.presentation !== undefined
         ? { presentation: input.presentation as PresentationContent }
         : {}),
+      ...(input.ui !== undefined ? { ui: input.ui as UiCatalogue } : {}),
     };
 
     const manifestVersion = (input.manifest as { version?: unknown } | undefined)?.version;

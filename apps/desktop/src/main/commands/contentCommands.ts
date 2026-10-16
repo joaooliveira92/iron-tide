@@ -3,6 +3,7 @@ import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type {
   DrawingBoardContentDto,
   PresentationContentDto,
+  UiCatalogueDto,
 } from "../../shared/content-contract.js";
 import type { CommandError } from "../runtime/commandError.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
@@ -35,5 +36,19 @@ export const inspectPresentationContentProgram: Effect.Effect<
 > = Effect.gen(function* () {
   const contentArtifact = yield* ContentArtifact;
   const value = yield* contentArtifact.loadPresentationContent();
+  return { outcome: "success", value, diagnostics: [] };
+});
+
+/**
+ * Serves the decoded UI-string catalogue over the narrow content-query IPC
+ * (ADR-0209). Same fail-closed behaviour as the presentation path.
+ */
+export const inspectUiCatalogueProgram: Effect.Effect<
+  BridgeResult<UiCatalogueDto>,
+  CommandError,
+  ContentArtifact
+> = Effect.gen(function* () {
+  const contentArtifact = yield* ContentArtifact;
+  const value = yield* contentArtifact.loadUiCatalogue();
   return { outcome: "success", value, diagnostics: [] };
 });

@@ -35,6 +35,7 @@ const IMPLEMENTED_COMMANDS = new Set([
   "inspectPriorities",
   "inspectDrawingBoardContent",
   "inspectPresentationContent",
+  "inspectUiCatalogue",
   "commitMonth",
   "inspectConstructionScreen",
   "submitConstructionCommand",
