@@ -20,7 +20,13 @@ import {
 } from "./platform.js";
 import { ProjectStore, projectStoreLayer } from "./projectStore.js";
 import { ReplayService, replayServiceLayer } from "./replayService.js";
-import { DraftStore, ReportsStore, UiStateStore, sidecarStoresLayer } from "./sidecarStores.js";
+import {
+  DraftStore,
+  ReportsStore,
+  TurnSummariesStore,
+  UiStateStore,
+  sidecarStoresLayer,
+} from "./sidecarStores.js";
 
 /** Every service the desktop command programs may require. */
 export type CommandEnv =
@@ -32,6 +38,7 @@ export type CommandEnv =
   | CrashReporter
   | UiStateStore
   | ReportsStore
+  | TurnSummariesStore
   | DraftStore
   | PreferencesStore
   | NativeDialog

@@ -5,6 +5,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { MonthExecutor } from "@bluewave/phase-engine";
+import { computeOrderedInputsHash, computeTurnId } from "@bluewave/messages";
 import { Effect } from "effect";
 import { CommandEnvelopePayloadSchema } from "../campaignCommandSchemas.js";
 import { monthInputOf } from "../monthInput.js";
@@ -13,7 +14,8 @@ import { CommandQueueStore } from "../runtime/commandQueueStore.js";
 import { withSchema } from "../runtime/commandProgram.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { ProjectStore } from "../runtime/projectStore.js";
-import { ReportsStore } from "../runtime/sidecarStores.js";
+import { ReportsStore, TurnSummariesStore } from "../runtime/sidecarStores.js";
+import { buildTurnSummary } from "../turnSummaries.js";
 import { toSaveableState } from "../saveHelpers.js";
 import { collectBattleOutcomes } from "./commitMonth/battleOutcomes.js";
 import { buildMonthlyReportEntry } from "./commitMonth/reportEntry.js";
@@ -275,6 +277,36 @@ export const commitMonthProgram = withSchema(CommandEnvelopePayloadSchema, (payl
       const existing = yield* reports.load(record.saveDir);
       const appended = yield* reports.append(existing, entry);
       yield* reports.save(record.saveDir, appended);
+    }).pipe(
+      Effect.catchTag("CommandFailed", (error) =>
+        Effect.sync(() => {
+          sidecarDiagnostics.push(...error.diagnostics);
+        }),
+      ),
+    );
+
+    // Project this month's authoritative domain events into the non-authoritative
+    // `turn-summaries.json` sidecar (tracer ticket 03): a pure post-turn step,
+    // after the save + session registration. A failed history write is surfaced
+    // as a diagnostic but never fails an already-persisted month.
+    yield* Effect.gen(function* () {
+      const turnId = computeTurnId({
+        campaignId: nextSnapshot.campaignId,
+        startingRevision: currentRevision,
+        committedOrderHash: result.commandLedger.hash(),
+        orderedInputsHash: computeOrderedInputsHash([]),
+      });
+      const summary = buildTurnSummary({
+        turnId,
+        events: result.eventLedger.all,
+        snapshot: record.state.snapshot,
+        rulesetVersion: nextSnapshot.rulesetVersion,
+        contentVersion: saveMetadata.contentArtifactHash,
+      });
+      const store = yield* TurnSummariesStore;
+      const existing = yield* store.load(record.saveDir);
+      const appended = yield* store.append(existing, summary);
+      yield* store.save(record.saveDir, appended);
     }).pipe(
       Effect.catchTag("CommandFailed", (error) =>
         Effect.sync(() => {

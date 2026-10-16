@@ -122,6 +122,9 @@ importers:
       '@bluewave/events':
         specifier: workspace:*
         version: link:../../packages/events
+      '@bluewave/messages':
+        specifier: workspace:*
+        version: link:../../packages/messages
       '@bluewave/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence

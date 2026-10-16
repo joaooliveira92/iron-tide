@@ -462,6 +462,7 @@ export const CAMPAIGN_COMMAND_NAMES = [
   "readUiState",
   "writeUiState",
   "readMonthlyReports",
+  "readTurnSummaries",
 ] as const;
 
 /**
@@ -692,4 +693,77 @@ export interface CampaignCommandClient {
     command: "readMonthlyReports",
     payload: string,
   ): Promise<BridgeResult<ReadMonthlyReportsResult>>;
+  execute(
+    command: "readTurnSummaries",
+    payload: string,
+  ): Promise<BridgeResult<ReadTurnSummariesResult>>;
+}
+
+/** A stable reference to a domain entity a message concerns (renderer-safe mirror). */
+export interface EntityReferenceDto {
+  readonly type:
+    | "ship"
+    | "shipClass"
+    | "nation"
+    | "region"
+    | "technology"
+    | "constructionProject"
+    | "battle"
+    | "formation";
+  readonly id: string;
+}
+
+export interface EffectReferenceDto {
+  readonly target: EntityReferenceDto;
+  readonly attribute: string;
+  readonly previousValue?: string | number | boolean;
+  readonly newValue?: string | number | boolean;
+  readonly delta?: number;
+  readonly visibility: "exact" | "qualitative" | "hidden";
+}
+
+export interface TurnMessageDto {
+  readonly id: string;
+  readonly turnId: string;
+  readonly occurredAt: string;
+  readonly phase: string;
+  readonly category: string;
+  readonly severity: "CRITICAL" | "HIGH" | "NORMAL" | "LOW" | "TRACE";
+  readonly titleKey: string;
+  readonly bodyKey: string;
+  readonly interpolation: Readonly<Record<string, string | number | boolean>>;
+  readonly subjectRefs: readonly EntityReferenceDto[];
+  readonly effectRefs: readonly EffectReferenceDto[];
+  readonly blocking: boolean;
+  readonly requiresAcknowledgement: boolean;
+  readonly decisionId?: string;
+  readonly battleId?: string;
+  readonly deduplicationKey?: string;
+  readonly aggregateKey?: string;
+  readonly playerVisible: boolean;
+  readonly debugMetadata?: {
+    readonly sourceEventIds: readonly string[];
+    readonly projectionVersion: string;
+    readonly rulesetVersion: string;
+    readonly contentVersion: string;
+  };
+}
+
+/** One resolved turn's projected, player-visible messages (non-authoritative). */
+export interface TurnSummaryEntry {
+  readonly turnId: string;
+  readonly projectionVersion: string;
+  readonly occurredAt: string;
+  readonly rulesetVersion: string;
+  readonly contentVersion: string;
+  readonly messages: readonly TurnMessageDto[];
+}
+
+export interface ReadTurnSummariesResult {
+  readonly summaries: readonly TurnSummaryEntry[];
+}
+
+/** The tolerant-read sidecar shape: the most recent summaries, newest first. */
+export interface TurnSummaries {
+  readonly summaries: readonly TurnSummaryEntry[];
 }
