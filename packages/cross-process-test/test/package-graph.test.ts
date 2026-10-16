@@ -28,6 +28,7 @@ const LAYER: Record<string, number> = {
   "@bluewave/persistence": 5,
   "@bluewave/ai": 6,
   "@bluewave/combat": 6,
+  "@bluewave/messages": 6,
   "@bluewave/phase-engine": 7,
   "@bluewave/cross-process-test": 8,
   "@bluewave/compiler-cli": 9,

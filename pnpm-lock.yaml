@@ -527,6 +527,31 @@ importers:
         specifier: workspace:*
         version: link:../../vendor/effect
 
+  packages/messages:
+    dependencies:
+      '@bluewave/campaign':
+        specifier: workspace:*
+        version: link:../campaign
+      '@bluewave/content-schema':
+        specifier: workspace:*
+        version: link:../content-schema
+      '@bluewave/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@bluewave/deterministic':
+        specifier: workspace:*
+        version: link:../deterministic
+      '@bluewave/events':
+        specifier: workspace:*
+        version: link:../events
+      effect:
+        specifier: workspace:*
+        version: link:../../vendor/effect
+    devDependencies:
+      '@bluewave/test-support':
+        specifier: workspace:*
+        version: link:../test-support
+
   packages/persistence:
     dependencies:
       '@bluewave/campaign':

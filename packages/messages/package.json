@@ -1,0 +1,32 @@
+{
+  "name": "@bluewave/messages",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@bluewave/campaign": "workspace:*",
+    "@bluewave/content-schema": "workspace:*",
+    "@bluewave/contracts": "workspace:*",
+    "@bluewave/deterministic": "workspace:*",
+    "@bluewave/events": "workspace:*",
+    "effect": "workspace:*"
+  },
+  "devDependencies": {
+    "@bluewave/test-support": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b --watch",
+    "clean": "rimraf --glob dist *.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "test": "vp test run",
+    "lint": "vp lint .",
+    "lint:fix": "echo 'ok'"
+  }
+}
