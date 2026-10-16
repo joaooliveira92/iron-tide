@@ -1,6 +1,7 @@
 import type { Metric, WorkshopView } from "@bluewave/ship-design";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
 import { cn } from "../../../lib/utils.js";
+import { formatExplanation } from "../../../lib/presentation-format/index.js";
 import { Panel } from "./Panel.js";
 
 const tone: Record<string, string> = {
@@ -39,7 +40,7 @@ function MetricRow({ m }: { readonly m: Metric }) {
   const row = (
     <>
       <dt className="text-muted-foreground">{m.label}</dt>
-      <dd className={cn("text-right tabular-nums", tone[m.tone])}>{m.value}</dd>
+      <dd className={cn("text-right tabular-nums", tone[m.tone])}>{formatExplanation(m.value)}</dd>
     </>
   );
   if (note === undefined) return <div className="flex justify-between gap-4">{row}</div>;
@@ -56,7 +57,7 @@ function MetricRow({ m }: { readonly m: Metric }) {
       <HoverCardContent side="left" className="w-72 space-y-1.5 text-sm">
         <div className="flex items-baseline justify-between gap-3">
           <span className="font-medium">{m.label}</span>
-          <span className={cn("tabular-nums", tone[m.tone])}>{m.value}</span>
+          <span className={cn("tabular-nums", tone[m.tone])}>{formatExplanation(m.value)}</span>
         </div>
         <p className="text-muted-foreground">{note}</p>
         {verdict[m.tone] !== null && (

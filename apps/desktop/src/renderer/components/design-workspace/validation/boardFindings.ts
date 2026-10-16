@@ -8,6 +8,7 @@ import {
   type WorkshopView,
 } from "@bluewave/ship-design";
 import type { BatteryCard } from "../batteryView.js";
+import { formatExplanation } from "../../../lib/presentation-format/index.js";
 import { SECTION_IDS, SECTIONS } from "../panels/hull-plan/sections.js";
 import { sameEntity, type ShipEntity } from "../selection/store.js";
 import { inferEntities } from "./legacyInference.js";
@@ -84,8 +85,8 @@ export function boardFindings(
       finding: f,
       severity: f.severity,
       rule: f.id,
-      title: f.what,
-      explanation: f.why,
+      title: formatExplanation(f.what),
+      explanation: formatExplanation(f.why),
       entities: targets.length > 0 ? structured : inferred,
       association: targets.length > 0 ? "structured" : inferred.length > 0 ? "inferred" : "none",
       settings: f.subject?.settings,

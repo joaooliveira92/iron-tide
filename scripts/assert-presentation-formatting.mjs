@@ -112,7 +112,14 @@ function main() {
     ? new Set(JSON.parse(readFileSync(baselineFile, "utf8")))
     : new Set();
   if (write) {
-    writeFileSync(baselineFile, `${JSON.stringify([...findings].sort(), null, 2)}\n`);
+    writeFileSync(
+      baselineFile,
+      `${JSON.stringify(
+        [...findings].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
+        null,
+        2,
+      )}\n`,
+    );
     console.log(`assert-presentation-formatting: seeded ${findings.length} baseline entries`);
     return;
   }

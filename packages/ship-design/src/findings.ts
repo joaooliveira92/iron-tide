@@ -1,10 +1,12 @@
+import { explanationIsEmpty, type ExplanationText } from "./explanation.js";
+
 export type Severity = "BLOCKING" | "CRITICAL" | "WARNING" | "ADVISORY";
 
 export const SEVERITY_ORDER: readonly Severity[] = ["BLOCKING", "CRITICAL", "WARNING", "ADVISORY"];
 
 export interface Remedy {
   readonly id: string;
-  readonly description: string;
+  readonly description: ExplanationText;
   /** Optional machine-readable edit the UI can apply; opaque to this package. */
   readonly edit?: Readonly<Record<string, unknown>>;
 }
@@ -40,11 +42,11 @@ export interface Finding {
   readonly id: string;
   readonly severity: Severity;
   /** What failed. */
-  readonly what: string;
+  readonly what: ExplanationText;
   /** Why: the computed values that caused it. */
-  readonly why: string;
+  readonly why: ExplanationText;
   /** Probable gameplay consequence. */
-  readonly consequence: string;
+  readonly consequence: ExplanationText;
   readonly remedies: readonly Remedy[];
   readonly evidence: {
     readonly formulaId: string;
@@ -124,9 +126,9 @@ const MIN_REMEDIES: Record<Severity, number> = {
 /** Returns problems with a finding's shape (spec §14.1). Empty = well-formed. */
 export function checkFindingShape(f: Finding): string[] {
   const problems: string[] = [];
-  if (f.what.trim() === "") problems.push("what is empty");
-  if (f.why.trim() === "") problems.push("why is empty");
-  if (f.consequence.trim() === "") problems.push("consequence is empty");
+  if (explanationIsEmpty(f.what)) problems.push("what is empty");
+  if (explanationIsEmpty(f.why)) problems.push("why is empty");
+  if (explanationIsEmpty(f.consequence)) problems.push("consequence is empty");
   if (f.remedies.length < MIN_REMEDIES[f.severity]) {
     problems.push(`${f.severity} requires >= ${MIN_REMEDIES[f.severity]} remedies`);
   }

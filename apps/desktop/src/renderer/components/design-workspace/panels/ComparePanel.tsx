@@ -1,4 +1,5 @@
 import type { WorkshopView } from "@bluewave/ship-design";
+import { formatExplanation } from "../../../lib/presentation-format/index.js";
 import { Panel } from "./Panel.js";
 
 interface Row {
@@ -25,9 +26,14 @@ function rowsOf(baseline: WorkshopView, view: WorkshopView): Row[] {
       after: view.naturalClass ?? "not classified",
     },
   ];
-  const before = new Map(baseline.metrics.map((m) => [m.id, m.value]));
+  const before = new Map(baseline.metrics.map((m) => [m.id, formatExplanation(m.value)]));
   for (const m of view.metrics)
-    rows.push({ id: m.id, label: m.label, before: before.get(m.id) ?? "-", after: m.value });
+    rows.push({
+      id: m.id,
+      label: m.label,
+      before: before.get(m.id) ?? "-",
+      after: formatExplanation(m.value),
+    });
   return rows;
 }
 

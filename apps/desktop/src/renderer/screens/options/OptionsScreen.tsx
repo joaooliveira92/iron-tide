@@ -15,7 +15,7 @@ import type { ReactNode } from "react";
 import { BloomMenu } from "../../components/motion/bloom-menu.js";
 import { PageHeader } from "../../components/shared/PageHeader.js";
 import { Button } from "../../components/ui/button.js";
-import { CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card.js";
+import { CardContent, CardHeader, CardTitle } from "../../components/ui/card.js";
 import {
   CURRENCY_DISPLAY_MODES,
   DEFAULT_APP_PREFERENCES,

@@ -1,5 +1,6 @@
 import { topsideLoad, type Finding, type Severity, type WorkshopView } from "@bluewave/ship-design";
 import { passesFilter } from "../../components/design-workspace/validation/severity.js";
+import { formatExplanation } from "../../lib/presentation-format/index.js";
 
 /** How a strip value is coloured: neutral when normal, amber near a constraint, red when invalid. */
 export type ReadoutTone = "neutral" | "warn" | "bad";
@@ -179,7 +180,9 @@ export function engineeringStatus(view: WorkshopView): readonly EngineeringReado
         causes: !stability
           ? ["Not calculated: resolve the blocking findings first."]
           : stabilityFindings.length > 0
-            ? stabilityFindings.map((f) => `${f.what} ${f.why}`)
+            ? stabilityFindings.map(
+                (f) => `${formatExplanation(f.what)} ${formatExplanation(f.why)}`,
+              )
             : ["Within safe limits."],
       },
     },

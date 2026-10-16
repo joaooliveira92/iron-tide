@@ -11,6 +11,7 @@ import {
   type LineId,
 } from "./construction.js";
 import { groupedInteger } from "./numberText.js";
+import { quantity, type ExplanationText } from "./explanation.js";
 import { classCode } from "./classification.js";
 import { computeCost, type CostBalance, type CostBreakdown, type CostContext } from "./cost.js";
 import { computeCve, CVE_LABEL, type CveBalance } from "./cve.js";
@@ -42,7 +43,7 @@ export interface LedgerRow {
 export interface Metric {
   readonly id: string;
   readonly label: string;
-  readonly value: string;
+  readonly value: ExplanationText;
   /** "ok" | "warn" | "bad" lets the view colour the cell without knowing thresholds. */
   readonly tone: "ok" | "warn" | "bad" | "neutral";
 }
@@ -95,7 +96,6 @@ export interface WorkshopView {
   readonly compiled: CompiledDesign;
 }
 
-const kn = (milli: number) => (milli / 1000).toFixed(1);
 const t = (kg: number) => groupedInteger(Math.round(kg / 1000));
 
 /**
@@ -136,19 +136,28 @@ export function buildWorkshopView(draft: DesignDraft, env: WorkshopEnvironment):
     {
       id: "speed",
       label: "Top speed",
-      value: `${kn(vmax)} kn (need ${kn(req.requiredSpeedMilliKnots)})`,
+      value: [
+        quantity(vmax, 1000, 1, "knots"),
+        " (need ",
+        quantity(req.requiredSpeedMilliKnots, 1000, 1),
+        ")",
+      ],
       tone: vmax >= req.requiredSpeedMilliKnots ? "ok" : "warn",
     },
     {
       id: "range",
       label: "Range",
-      value: `${groupedInteger(range)} nm at ${kn(req.cruiseSpeedMilliKnots)} kn (need ${groupedInteger(req.requiredRangeNm)})`,
+      value: [
+        `${groupedInteger(range)} nm at `,
+        quantity(req.cruiseSpeedMilliKnots, 1000, 1, "knots"),
+        ` (need ${groupedInteger(req.requiredRangeNm)})`,
+      ],
       tone: range >= req.requiredRangeNm ? "ok" : "warn",
     },
     {
       id: "stability",
       label: "Metacentric height",
-      value: c.stability ? `${(c.stability.gmMm / 1000).toFixed(2)} m` : "n/a",
+      value: c.stability ? [quantity(c.stability.gmMm, 1000, 2, "metres")] : "n/a",
       tone: c.stability
         ? c.findings.some((f) => f.id.startsWith("STABILITY_") && f.severity !== "ADVISORY")
           ? "bad"
@@ -158,13 +167,13 @@ export function buildWorkshopView(draft: DesignDraft, env: WorkshopEnvironment):
     {
       id: "trim",
       label: "Trim",
-      value: c.stability ? `${(c.stability.trimBp / 100).toFixed(1)} %L` : "n/a",
+      value: c.stability ? [quantity(c.stability.trimBp, 100, 1, "trimPercent")] : "n/a",
       tone: c.findings.some((f) => f.id.startsWith("TRIM_")) ? "warn" : "ok",
     },
     {
       id: "stress",
       label: "Hull girder stress",
-      value: c.stability ? `${(c.stability.stressBp / 100).toFixed(0)} % of limit` : "n/a",
+      value: c.stability ? [quantity(c.stability.stressBp, 100, 0, "percentOfLimit")] : "n/a",
       tone:
         c.stability && c.stability.stressBp > 10_000
           ? "bad"
@@ -181,7 +190,7 @@ export function buildWorkshopView(draft: DesignDraft, env: WorkshopEnvironment):
     {
       id: "reserve",
       label: "Reserve buoyancy",
-      value: `${(c.hull.reserveBuoyancyBp / 100).toFixed(0)} %`,
+      value: [quantity(c.hull.reserveBuoyancyBp, 100, 0, "percentSpaced")],
       tone: c.findings.some((f) => f.id === "LOW_RESERVE_BUOYANCY") ? "warn" : "ok",
     },
   ];

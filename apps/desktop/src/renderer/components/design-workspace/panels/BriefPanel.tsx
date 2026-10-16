@@ -1,5 +1,6 @@
 import type { DesignDraft, ShipContext, WorkshopView } from "@bluewave/ship-design";
 import { Badge } from "../../ui/badge.js";
+import { formatExplanation } from "../../../lib/presentation-format/index.js";
 import { shipTypeIcon } from "../ship-type-icon.js";
 import { NumberField, SelectField } from "../fields.js";
 import { shipTypeChoices } from "../shipTypes.js";
@@ -90,7 +91,7 @@ export function BriefPanel({
                   ? "Blocking: "
                   : `${f.severity[0]}${f.severity.slice(1).toLowerCase()}: `}
               </span>
-              {f.what} {f.why}
+              {formatExplanation(f.what)} {formatExplanation(f.why)}
             </li>
           ))}
         </ul>

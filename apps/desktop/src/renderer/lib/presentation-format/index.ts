@@ -62,3 +62,8 @@ export {
   type NationalCurrencySource,
 } from "./currency-availability.js";
 export { parseMeasurement, type ParseMeasurementOptions } from "./parse.js";
+export {
+  DEFAULT_EXPLANATION_LOCALE,
+  formatExplanation,
+  formatExplanationValue,
+} from "../../../shared/explanation-text.js";
