@@ -1,19 +1,30 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+/* @vitest-environment jsdom */
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
+import { BridgeProvider } from "../../lib/bridge-context.js";
+import { PreferencesProvider } from "../../lib/preferences-context.js";
+import {
+  createPreferencesBridgeStub,
+  type PreferencesBridgeStub,
+} from "../../lib/preferences-test-bridge.js";
 import { BackgroundProvider } from "../../shell/BackgroundContext.js";
 import { DensityProvider } from "../../shell/DensityContext.js";
 import { FontProvider } from "../../shell/FontContext.js";
 import { OptionsScreen } from "./OptionsScreen.js";
 
-function renderOptions() {
+function renderOptions(stub: PreferencesBridgeStub) {
   return render(
-    <BackgroundProvider>
-      <FontProvider>
-        <DensityProvider>
-          <OptionsScreen />
-        </DensityProvider>
-      </FontProvider>
-    </BackgroundProvider>,
+    <BridgeProvider bridge={stub.bridge}>
+      <PreferencesProvider>
+        <BackgroundProvider>
+          <FontProvider>
+            <DensityProvider>
+              <OptionsScreen />
+            </DensityProvider>
+          </FontProvider>
+        </BackgroundProvider>
+      </PreferencesProvider>
+    </BridgeProvider>,
   );
 }
 
@@ -25,8 +36,10 @@ describe("OptionsScreen display density", () => {
   });
   afterEach(cleanup);
 
-  it("offers Comfortable and Compact, starting on Comfortable", () => {
-    renderOptions();
+  it("offers Comfortable and Compact, starting on Comfortable", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
     const group = screen.getByRole("group", { name: "Display density" });
     expect(group.querySelectorAll("button")).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Comfortable" }).getAttribute("aria-pressed")).toBe(
@@ -37,18 +50,26 @@ describe("OptionsScreen display density", () => {
     );
   });
 
-  it("switches the whole app to compact and remembers it", () => {
-    renderOptions();
+  it("switches the whole app to compact and writes it to the domain, not localStorage", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
     fireEvent.click(screen.getByRole("button", { name: "Compact" }));
-    expect(screen.getByRole("button", { name: "Compact" }).getAttribute("aria-pressed")).toBe(
-      "true",
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Compact" }).getAttribute("aria-pressed")).toBe(
+        "true",
+      ),
     );
     expect(document.documentElement.dataset["density"]).toBe("compact");
-    expect(localStorage.getItem("bluewave-density")).toBe("compact");
+    await waitFor(() => expect(stub.writes).toHaveLength(1));
+    expect(stub.writes[0]?.app.interfaceDensity).toBe("compact");
+    expect(localStorage.getItem("bluewave-density")).toBeNull();
   });
 
-  it("no longer carries campaign file actions (they live in the header Campaign menu)", () => {
-    renderOptions();
+  it("no longer carries campaign file actions (they live in the header Campaign menu)", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
     expect(screen.queryByRole("button", { name: /^Save/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /Close Campaign/i })).toBeNull();
   });
@@ -62,8 +83,10 @@ describe("OptionsScreen application font", () => {
   });
   afterEach(cleanup);
 
-  it("offers Inter and Plus Jakarta Sans, starting on Inter", () => {
-    renderOptions();
+  it("offers Inter and Plus Jakarta Sans, starting on Inter", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
     const group = screen.getByRole("group", { name: "Application font" });
     expect(group.querySelectorAll("button")).toHaveLength(2);
     expect(screen.getByRole("button", { name: "Inter" }).getAttribute("aria-pressed")).toBe("true");
@@ -72,13 +95,19 @@ describe("OptionsScreen application font", () => {
     ).toBe("false");
   });
 
-  it("switches the whole app font and remembers it", () => {
-    renderOptions();
+  it("switches the whole app font and writes it to the domain, not localStorage", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
     fireEvent.click(screen.getByRole("button", { name: "Plus Jakarta Sans" }));
-    expect(
-      screen.getByRole("button", { name: "Plus Jakarta Sans" }).getAttribute("aria-pressed"),
-    ).toBe("true");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Plus Jakarta Sans" }).getAttribute("aria-pressed"),
+      ).toBe("true"),
+    );
     expect(document.documentElement.dataset["font"]).toBe("jakarta");
-    expect(localStorage.getItem("bluewave-font")).toBe("jakarta");
+    await waitFor(() => expect(stub.writes).toHaveLength(1));
+    expect(stub.writes[0]?.app.font).toBe("jakarta");
+    expect(localStorage.getItem("bluewave-font")).toBeNull();
   });
 });
