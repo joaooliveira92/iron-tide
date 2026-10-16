@@ -14,7 +14,7 @@
 //   --self-test run the embedded fixtures only
 
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const RENDERER = "apps/desktop/src/renderer";
@@ -58,7 +58,8 @@ export function scan(rootDir) {
   if (!existsSync(base)) return [];
   const findings = [];
   for (const file of walk(base)) {
-    const rel = relative(rootDir, file);
+    // POSIX-normalize so the committed baseline matches on every OS.
+    const rel = relative(rootDir, file).split(sep).join("/");
     if (isExempt(rel)) continue;
     const lines = readFileSync(file, "utf8").split("\n");
     lines.forEach((line, index) => {
