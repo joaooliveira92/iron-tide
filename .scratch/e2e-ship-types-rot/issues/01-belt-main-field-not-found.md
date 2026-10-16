@@ -18,8 +18,8 @@ TimeoutError: locator.inputValue: Timeout 30000ms exceeded.
     { name: 'Thickness of BELT_MAIN (mm)' })
 ```
 
-Reproduced at the untouched dev tip `ae05b90` (before DR-009 / ADR-0214), so this
-is pre-existing baseline rot, not a roster regression:
+Reproduced **locally on macOS (Electron) at the untouched dev tip `ae05b90`**
+(before DR-009 / ADR-0214), so it is not a roster regression:
 
 ```
 cd apps/desktop && pnpm build && pnpm exec playwright test e2e/ship-types.spec.ts
@@ -27,6 +27,13 @@ cd apps/desktop && pnpm build && pnpm exec playwright test e2e/ship-types.spec.t
 pnpm test:e2e
 # 27 passed, 1 failed, 2 did not run
 ```
+
+**CI passes the same gate**: on the USA-promotion PR, `desktop-e2e`
+(`ubuntu-latest` + xvfb) succeeded in 4m13s, while the same spec failed
+reproducibly twice locally. So this is environment-specific — a macOS/Electron
+issue or a local harness flake — not a universal failure. Confirm which before
+fixing; do not chase a green CI if the defect is local-only, but a reproducible
+local failure still deserves a cause.
 
 Pointers for the fix (verify, do not assume): the spec navigates the
 Protection section, then the `Armour` tab, then expects the `BELT_MAIN` thickness

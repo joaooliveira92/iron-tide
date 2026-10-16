@@ -12,8 +12,10 @@ design stops qualifying as a battleship ("Cannot be built"), then correct it and
 submit. Today it times out at the armour step, so the armour editing path — a core
 part of the designer — has no green end-to-end coverage.
 
-The failure reproduces on the untouched dev tip `ae05b90`, so it predates and is
-independent of the roster promotion.
+The failure reproduces locally on macOS (Electron) at the untouched dev tip
+`ae05b90`, so it predates and is independent of the roster promotion. CI
+`desktop-e2e` (ubuntu-latest + xvfb) passes the same spec, so the defect is
+environment-specific and needs a cause before any fix.
 
 ## Evidence
 
