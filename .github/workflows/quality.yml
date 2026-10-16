@@ -33,7 +33,7 @@ jobs:
       # across runs. Both are content-addressed, so a restored entry is always
       # safe — changed modules simply miss and are recompiled. Without this the
       # compile cache would only pay its one-time serialization cost per run.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: |
             node_modules/.vitest-cache
@@ -45,7 +45,7 @@ jobs:
       # unchanged package's build or suite replays instead of re-running. A
       # restored entry is always safe (automatic data tracking invalidates on any
       # input change).
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: node_modules/.vite/task-cache
           key: ${{ runner.os }}-node24-vp-task-${{ hashFiles('pnpm-lock.yaml') }}
