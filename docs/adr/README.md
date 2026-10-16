@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0215).
+highest existing number + 1 (the next number is ADR-0220).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -36,6 +36,11 @@ Canonical values and the presentation-only units, currency, and language modes o
 | 0208 | [ADR-0208-no-custom-display-currency.md](ADR-0208-no-custom-display-currency.md) | Custom display currency excluded from the initial release | accepted | — |
 | 0209 | [ADR-0209-ui-language-and-formatting-locale.md](ADR-0209-ui-language-and-formatting-locale.md) | UI language, formatting locale, and externalized strings | accepted | — |
 | 0211 | [ADR-0211-default-and-national-historical-currency.md](ADR-0211-default-and-national-historical-currency.md) | Default currency Naval Credits; National Historical is conditional | accepted | — |
+| 0215 | [ADR-0215-canonical-units-module.md](ADR-0215-canonical-units-module.md) | Canonical units module and its home in the contracts package | accepted | — |
+| 0216 | [ADR-0216-money-type-and-treasury-bridge.md](ADR-0216-money-type-and-treasury-bridge.md) | Fixed-precision money type, treasury-unit scale, and the micro→unit bridge | accepted | — |
+| 0217 | [ADR-0217-rounding-and-authoritative-float-gate.md](ADR-0217-rounding-and-authoritative-float-gate.md) | Rounding and fixed-point rules and the authoritative-float gate | accepted | — |
+| 0218 | [ADR-0218-conversion-and-locale-boundary.md](ADR-0218-conversion-and-locale-boundary.md) | Conversion and locale boundary — canonical↔display only at presentation, language distinct from locale | accepted | — |
+| 0219 | [ADR-0219-combat-and-capacity-fixed-point-repin.md](ADR-0219-combat-and-capacity-fixed-point-repin.md) | Combat and construction-capacity float→fixed conversion and its re-pin | accepted | — |
 
 ## Preferences & interfaces
 

@@ -5,10 +5,9 @@ Map: `.scratch/u-1-canonical-values/map.md` (decisions `D1`-`D7`).
 Tickets: `.scratch/u-1-canonical-values/issues/` — 01 canonical units module;
 02 consolidate unit brands; 03 one money type and branded money fields;
 04 rounding helpers and the authoritative-float gate; 05 conversion boundary and
-formatting-leak removal; 06 construction-capacity fixed-point (blocked);
-07 combat strength fixed-point (blocked); 08 U-1 acceptance (blocked).
+formatting-leak removal; 06 construction-capacity fixed-point; 07 combat strength
+fixed-point; 08 U-1 acceptance. **All eight are done; U-1 is complete.**
 Research: `docs/research/u-1-canonical-values.md`.
-Open decisions: `.ai/decision-requests/0005-officer-rosters-and-divisions-golden-repin.md`
-(golden baseline; gates tickets 06–08 and any stored-scale, formula-rounding or
-hashed-projection change; value-preserving tickets 01–05 are unblocked).
+ADRs: ADR-0215, ADR-0216, ADR-0217, ADR-0218, ADR-0219 (recorded and indexed).
+Report: `.ai/reports/u-1-canonical-values.md` (acceptance: `PASS`).
 Brief: `.ai/briefs/u-1-canonical-values.md`.

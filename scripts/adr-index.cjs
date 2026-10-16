@@ -43,7 +43,7 @@ const AREAS = [
     name: "Values, currency & language",
     blurb:
       "Canonical values and the presentation-only units, currency, and language modes over them.",
-    nums: [202, 206, 207, 208, 209, 211],
+    nums: [202, 206, 207, 208, 209, 211, 215, 216, 217, 218, 219],
   },
   {
     name: "Preferences & interfaces",
