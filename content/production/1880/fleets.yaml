@@ -32,7 +32,7 @@
         constructionTotalWork: 0,
       }
     - {
-        id: "gbr_alyxandra",
+        id: "gbr_alexandra",
         name: "HMS Alexandra",
         classId: "Alexandra",
         designVersionId: "des_gbr_alexandra",
@@ -51,8 +51,8 @@
   locationAreaId: "med_malta"
   ships:
     - {
-        id: "gbr_malta_temp",
-        name: "HMS Mediterranean (Temeraire)",
+        id: "gbr_temeraire",
+        name: "HMS Temeraire",
         classId: "Temeraire",
         hitPoints: 36,
         maxHitPoints: 36,
@@ -283,7 +283,7 @@
     - {
         id: "jpn_fuso",
         name: "Fusō",
-        classId: "Fusō",
+        classId: "Fusō (1878)",
         designVersionId: "des_jpn_fuso",
         hitPoints: 22,
         maxHitPoints: 22,

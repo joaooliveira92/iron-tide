@@ -33,8 +33,8 @@ const DESIGN_LESS_EXEMPTIONS: ReadonlyMap<string, string> = new Map([
     "Austro-Hungarian Custoza-class ironclad; no 1880 design is authored in the pack.",
   ],
   [
-    "gbr_malta_temp",
-    "Provisional UK Temeraire-class entry with a placeholder id; resolved by N-1 ticket 08.",
+    "gbr_temeraire",
+    "UK Temeraire-class central-battery ironclad; no 1880 design is authored in the pack.",
   ],
   ["ott_mesudiye", "Ottoman Mesudiye; the Ottoman Empire has no authored 1880 design in the pack."],
   ["esp_numancia", "Spanish Numancia; Spain has no authored 1880 design in the pack."],

@@ -285,7 +285,7 @@
   designVersionId: "des_jpn_fuso"
   designFamilyId: "fam_jpn_fuso"
   nationId: "japan"
-  className: "Fusō"
+  className: "Fusō (1878)"
   hullType: "central_battery_ship"
   displacementKg: 3720000
   speedUms: 7
@@ -322,7 +322,7 @@
   designVersionId: "des_pw_uk_dreadnought"
   designFamilyId: "fam_pw_uk_dreadnought"
   nationId: "uk"
-  className: "Dreadnought"
+  className: "Dreadnought (1906)"
   hullType: "dreadnought"
   displacementKg: 18409920
   speedUms: 11
@@ -458,7 +458,7 @@
   designVersionId: "des_pw_japan_fuso"
   designFamilyId: "fam_pw_japan_fuso"
   nationId: "japan"
-  className: "Fusō"
+  className: "Fusō (1915)"
   hullType: "super_dreadnought"
   displacementKg: 29799280
   speedUms: 12
