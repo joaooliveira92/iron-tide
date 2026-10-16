@@ -6,6 +6,7 @@ import { describe, expect, it } from "vite-plus/test";
 import type { ContentBundle } from "../src/index.js";
 import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
+import { researchOf, technologiesOf } from "./helpers/campaignRecords.js";
 
 /**
  * 1880 research activity (N-1 ticket 09): no funded nation starts idle. Every
@@ -29,12 +30,12 @@ function buildProductionBundle(): ContentBundle {
 describe("1880 research activity (N-1 ticket 09)", () => {
   const bundle = buildProductionBundle();
   const prerequisites = new Map(
-    bundle.technologies.map((tech) => [
+    technologiesOf(bundle).map((tech) => [
       tech.id,
       (tech.prerequisites ?? []).map((prerequisite) => prerequisite.techId),
     ]),
   );
-  const research = bundle.campaign?.research ?? [];
+  const research = researchOf(bundle);
 
   it("assigns every funded nation a legally-prerequisite'd opening project", () => {
     const funded = research.filter((entry) => entry.researchBudget > 0);

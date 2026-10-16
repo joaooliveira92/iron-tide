@@ -6,6 +6,7 @@ import { describe, expect, it } from "vite-plus/test";
 import type { ContentBundle } from "../src/index.js";
 import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
+import { researchOf, technologiesOf } from "./helpers/campaignRecords.js";
 
 /**
  * 1880 research seed coherence (N-1 ticket 04, under ADR-0212). Research gates
@@ -31,12 +32,12 @@ function buildProductionBundle(): ContentBundle {
 describe("1880 research seed coherence (N-1 ticket 04)", () => {
   const bundle = buildProductionBundle();
   const prerequisites = new Map(
-    bundle.technologies.map((tech) => [
+    technologiesOf(bundle).map((tech) => [
       tech.id,
       (tech.prerequisites ?? []).map((prerequisite) => prerequisite.techId),
     ]),
   );
-  const research = bundle.campaign?.research ?? [];
+  const research = researchOf(bundle);
 
   const completedBy = (nation: (typeof research)[number]): Set<string> =>
     new Set(nation.technologies.filter((tech) => tech.completed).map((tech) => tech.techId));

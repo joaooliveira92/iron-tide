@@ -6,6 +6,7 @@ import { describe, expect, it } from "vite-plus/test";
 import type { ContentBundle } from "../src/index.js";
 import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
+import { designsOf, fleetsOf } from "./helpers/campaignRecords.js";
 
 /**
  * Initial-fleet legality (N-1 ticket 01, resolved by ADR-0212). Every starting
@@ -56,8 +57,8 @@ function designYear(familyCreationMonth: string | undefined): number | undefined
 
 describe("initial fleet legality (ADR-0212)", () => {
   const bundle = buildProductionBundle();
-  const fleets = bundle.campaign?.fleets ?? [];
-  const designs = bundle.campaign?.designs ?? [];
+  const fleets = fleetsOf(bundle);
+  const designs = designsOf(bundle);
   const designById = new Map(designs.map((design) => [design.designVersionId, design]));
   const ships = fleets.flatMap((fleet) => fleet.ships);
   const designLess = ships.filter(

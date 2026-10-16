@@ -6,6 +6,7 @@ import { describe, expect, it } from "vite-plus/test";
 import type { ContentBundle } from "../src/index.js";
 import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
+import { designsOf, fleetsOf } from "./helpers/campaignRecords.js";
 
 /**
  * 1880 data hygiene (N-1 ticket 08): design class names are unambiguous across
@@ -29,8 +30,8 @@ function buildProductionBundle(): ContentBundle {
 
 describe("1880 data hygiene (N-1 ticket 08)", () => {
   const bundle = buildProductionBundle();
-  const fleets = bundle.campaign?.fleets ?? [];
-  const designs = bundle.campaign?.designs ?? [];
+  const fleets = fleetsOf(bundle);
+  const designs = designsOf(bundle);
 
   it("gives every design an unambiguous class name (no cross-era collision)", () => {
     for (const design of designs) {

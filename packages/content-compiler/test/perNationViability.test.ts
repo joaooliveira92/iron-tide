@@ -6,6 +6,7 @@ import { describe, expect, it } from "vite-plus/test";
 import type { ContentBundle } from "../src/index.js";
 import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
+import { designsOf, fleetsOf, nationsOf, researchOf } from "./helpers/campaignRecords.js";
 
 /**
  * 1880 per-nation viability (N-1 ticket 06): no nation opens as a placeholder.
@@ -29,9 +30,9 @@ function buildProductionBundle(): ContentBundle {
 
 describe("1880 per-nation viability (N-1 ticket 06)", () => {
   const bundle = buildProductionBundle();
-  const fleets = bundle.campaign?.fleets ?? [];
-  const designs = bundle.campaign?.designs ?? [];
-  const research = bundle.campaign?.research ?? [];
+  const fleets = fleetsOf(bundle);
+  const designs = designsOf(bundle);
+  const research = researchOf(bundle);
 
   const shipsByNation = new Map<string, number>();
   for (const fleet of fleets) {
@@ -49,7 +50,7 @@ describe("1880 per-nation viability (N-1 ticket 06)", () => {
 
   it("gives every nation ships, an own design, and a research programme", () => {
     expect(bundle.nations.length).toBe(14);
-    for (const nation of bundle.nations) {
+    for (const nation of nationsOf(bundle)) {
       expect(
         shipsByNation.get(nation.id) ?? 0,
         `nation '${nation.id}' starts with no ships`,

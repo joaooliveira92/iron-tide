@@ -6,6 +6,7 @@ import { describe, expect, it } from "vite-plus/test";
 import type { ContentBundle } from "../src/index.js";
 import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
+import { diplomacyOf, nationsOf } from "./helpers/campaignRecords.js";
 
 /**
  * 1880 diplomacy (N-1 ticket 05): the opening political posture is authored from
@@ -33,12 +34,12 @@ function pairKey(a: string, b: string): string {
 
 describe("1880 diplomacy (N-1 ticket 05)", () => {
   const bundle = buildProductionBundle();
-  const diplomacy = bundle.campaign?.diplomacy ?? [];
+  const diplomacy = diplomacyOf(bundle);
   const byPair = new Map(diplomacy.map((r) => [pairKey(r.nationA, r.nationB), r]));
 
   it("author(s) the major 1880 alignments and rivalries with correct directions", () => {
     expect(bundle.nations.length).toBe(14);
-    const totalPairs = (bundle.nations.length * (bundle.nations.length - 1)) / 2;
+    const totalPairs = (nationsOf(bundle).length * (bundle.nations.length - 1)) / 2;
 
     expect(diplomacy.length).toBeGreaterThan(0);
     expect(diplomacy.length).toBeLessThan(totalPairs);

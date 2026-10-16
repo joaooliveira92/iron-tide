@@ -6,6 +6,7 @@ import { describe, expect, it } from "vite-plus/test";
 import type { ContentBundle } from "../src/index.js";
 import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
+import { constructionsOf, designsOf, fleetsOf } from "./helpers/campaignRecords.js";
 
 /**
  * Construction target/design consistency (N-1 ticket 03). A ship-building
@@ -29,9 +30,9 @@ function buildProductionBundle(): ContentBundle {
 
 describe("construction target/design consistency (N-1 ticket 03)", () => {
   const bundle = buildProductionBundle();
-  const fleets = bundle.campaign?.fleets ?? [];
-  const designs = bundle.campaign?.designs ?? [];
-  const constructions = bundle.campaign?.constructions ?? [];
+  const fleets = fleetsOf(bundle);
+  const designs = designsOf(bundle);
+  const constructions = constructionsOf(bundle);
 
   const shipClassById = new Map(
     fleets.flatMap((fleet) => fleet.ships.map((ship) => [ship.id, ship.classId] as const)),
