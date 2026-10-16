@@ -11,7 +11,7 @@ of the same formula.
 `.ai/decision-requests/0005-officer-rosters-and-divisions-golden-repin.md`
 (the golden baseline).
 
-**Status:** blocked
+**Status:** blocked (stop surface raised: decision request 0009)
 
 Gated by 0005. **Stop surface (map D5):** if the reviewed difference between the
 old float-based and new fixed-point battle outcomes is materially large or not
@@ -25,3 +25,10 @@ rather than land it.
       per the stop surface).
 - [ ] A test drives a battle from a compiled month and asserts the integer result;
       the cross-process child run is byte-identical run twice.
+
+## Stop surface raised
+
+The D5 stop surface is met: the live resolver (`battlePhases.ts`) uses the float strength/ratio/
+probability pipeline, so a fixed-point conversion changes battle outcomes materially rather than
+rounding one formula. Raised as `.ai/decision-requests/0009-combat-resolver-float-to-fixed-delta.md`
+(recommended Option C now / Option B later). No combat change landed while blocked.
