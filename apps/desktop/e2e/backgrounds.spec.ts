@@ -14,7 +14,7 @@ const ANIMATED_BACKGROUNDS = ["auralis", "nebulore"] as const;
 async function openWithBackground(
   page: Page,
   userDataDir: string,
-  background: string,
+  background: (typeof ANIMATED_BACKGROUNDS)[number],
 ): Promise<void> {
   writeAppPreferences(userDataDir, { theme: "light", background });
   await page.reload();
