@@ -259,12 +259,12 @@ describe("battle sandbox commands (ADR-0057)", () => {
       const snapshot = output.state.snapshot;
       const before = structuredClone(snapshot);
       const result = excludeUndesignedShips(snapshot);
-      expect(result.excluded).toContain("gbr_malta_temp");
+      expect(result.excluded).toContain("gbr_temeraire");
       expect(snapshot).toEqual(before);
       const ship = result.snapshot.nations
         .get("uk")!
         .fleets.flatMap((f) => f.ships)
-        .find((s) => s.id === "gbr_malta_temp")!;
+        .find((s) => s.id === "gbr_temeraire")!;
       expect(ship.isUnderConstruction).toBe(true);
     });
   });

@@ -223,6 +223,14 @@ describe("per-package construction through the month executor (ADR-0077)", () =>
     const b = runUntilComplete(snapshotOf([project(true)], 30));
     expect(JSON.stringify(a.history)).toBe(JSON.stringify(b.history));
   });
+
+  it("launches a completed hull into working up with no worked-up crew (S-1 D2)", () => {
+    const { final } = runUntilComplete(snapshotOf([project(true)], 30));
+    const ship = final.nations.get("GBR")!.fleets[0]!.ships[0]!;
+    expect(ship.isUnderConstruction).toBe(false);
+    expect(ship.readiness).toBe("WORKING_UP");
+    expect(ship.crewQuality).toBe(0);
+  });
 });
 
 describe("budget_project on a project with work packages (ADR-0077)", () => {

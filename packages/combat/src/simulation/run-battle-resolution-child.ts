@@ -72,6 +72,8 @@ function ship(id: string, designVersionId: string, nationId: string): Ship {
     isUnderConstruction: false,
     constructionProgress: SafeInt(0),
     constructionTotalWork: SafeInt(0),
+    readiness: "ACTIVE",
+    crewQuality: SafeInt(100),
   };
 }
 

@@ -44,13 +44,17 @@ export interface SaveMigrationStep {
 }
 
 /**
- * The supported migrations. Only 1.2.0 is migratable: the snapshot's design data
- * is a permissive leaf, so the 2.0.0 change is a version re-stamp with no guessed
- * value; 1.0.0 and 1.1.0 predate fields that cannot be reconstructed without
- * inventing gameplay-affecting defaults, so they stay a documented rejection
- * (ADR-0113 §5, ADR-0129).
+ * The supported migrations. The 2.0.0 (part-model) and 3.0.0 (S-1 readiness)
+ * changes both re-stamp the version over permissive leaves with no guessed
+ * value, so a 1.2.0 or 2.0.0 development fixture is brought straight forward;
+ * 1.0.0 and 1.1.0 predate fields that cannot be reconstructed without inventing
+ * gameplay-affecting defaults, so they stay a documented rejection (ADR-0113 §5,
+ * ADR-0129).
  */
-export const SAVE_MIGRATIONS: readonly SaveMigrationStep[] = [{ from: "1.2.0", to: "2.0.0" }];
+export const SAVE_MIGRATIONS: readonly SaveMigrationStep[] = [
+  { from: "1.2.0", to: "3.0.0" },
+  { from: "2.0.0", to: "3.0.0" },
+];
 
 export type SaveMigrationKind = "current" | "migrated" | "future" | "unknown" | "malformed";
 

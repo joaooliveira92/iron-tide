@@ -48,6 +48,8 @@ function makeNation(
           isUnderConstruction: false,
           constructionProgress: SafeInt(100),
           constructionTotalWork: SafeInt(100),
+          readiness: "ACTIVE",
+          crewQuality: SafeInt(100),
         })),
       },
     ],

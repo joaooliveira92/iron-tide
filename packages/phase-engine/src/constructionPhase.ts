@@ -1,6 +1,11 @@
 // Phase 7: construction_processing — advance construction projects, complete
 // finished projects into fleet ships, and emit construction-progressed events.
-import { KNOTS_TO_UMS, MM_TO_UM, transitionConstructionProject } from "@bluewave/campaign";
+import {
+  KNOTS_TO_UMS,
+  LAID_UP_CREW_CEILING,
+  MM_TO_UM,
+  transitionConstructionProject,
+} from "@bluewave/campaign";
 import type {
   CompiledDesignVersion,
   FleetState,
@@ -291,6 +296,9 @@ function buildCompletedShip(
     isUnderConstruction: false,
     constructionProgress: project["totalWork"],
     constructionTotalWork: project["totalWork"],
+    // S-1: a hull leaving the slipway launches into working up (manual p.51).
+    readiness: "WORKING_UP",
+    crewQuality: LAID_UP_CREW_CEILING,
   };
 }
 

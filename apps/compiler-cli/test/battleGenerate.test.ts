@@ -35,6 +35,8 @@ function makeShip(id: string, nationId: string, firepower: number): Ship {
     isUnderConstruction: false,
     constructionProgress: SafeInt(0),
     constructionTotalWork: SafeInt(0),
+    readiness: "ACTIVE",
+    crewQuality: SafeInt(100),
   };
 }
 

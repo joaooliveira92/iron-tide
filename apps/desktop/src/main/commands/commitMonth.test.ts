@@ -233,17 +233,18 @@ describe("commitMonth", () => {
       // `battleOutcomes` changed only the bridge response, never these
       // authoritative hashes. Pinned so any accidental engine/snapshot change
       // that should not happen here is caught as a hash drift. Re-pinned
-      // 2026-10-15 (G-3): the USA demotion to AI-only (DR-005 / ADR-0205)
-      // changes the compiled nation slots, so the snapshot hash moves.
+      // 2026-10-16 (S-1): per-ship readiness/crew fields join the compiled
+      // snapshot and the compatibility version bumps 2.0.0 -> 3.0.0, so the
+      // body hash moves with an understood cause (S-1 ticket 01).
       expect(updated.state.envelope).toEqual({
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-        bodyHash: "be70e057434482a0951ed6caa7e8de971b23f349c78bcf38debb5358bc328602",
-        bodyLength: 87671,
+        bodyHash: "df0ff4744a0c44ad3c52a996093c865601460ed5f5d871dc677e29b555203d26",
+        bodyLength: 87666,
       });
       expect(updated.state.rawHash).toBe(
-        "50140cfdedfe821b87056105c33dc644df97badda0c9b6411616cb2e2d913a04",
+        "077c202dc449ae4e91cc869118906374a1666e20d5fb46fab366a6f4a4a14346",
       );
       const expectedActiveWars = updated.state.snapshot.wars.wars.filter(
         (w) => w.status !== "ENDED",
@@ -638,6 +639,8 @@ describe("mapBattleOutcome (pre-battle-snapshot war-score re-derivation, INC-2 f
             isUnderConstruction: false,
             constructionProgress: SafeInt(0),
             constructionTotalWork: SafeInt(0),
+            readiness: "ACTIVE",
+            crewQuality: SafeInt(100),
           })),
         },
       ],

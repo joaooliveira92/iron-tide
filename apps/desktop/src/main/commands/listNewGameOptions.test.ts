@@ -16,7 +16,7 @@ const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 // playable. Five nations have zero designs *and* zero construction projects
 // (spain, which is playable, plus the 4 AI-only nations), so they offer no
 // player slot.
-const ZERO_CONTENT_NATIONS = ["spain", "ottoman_empire", "netherlands", "portugal", "brazil"];
+const ZERO_CONTENT_NATIONS = ["ottoman_empire", "netherlands", "portugal", "brazil"];
 
 /** Runs the program through a per-test runtime and projects the wire envelope. */
 async function listNewGameOptions(artifactDir: string): Promise<BridgeResult<NewGameOptions>> {
@@ -75,7 +75,7 @@ describe("listNewGameOptions", () => {
     ]);
   });
 
-  it("excludes Spain and the 4 other zero-design/zero-construction nations from playerSlotId", async () => {
+  it("excludes the zero-design/zero-construction nations from playerSlotId", async () => {
     const result = await listNewGameOptions(GENERATED_ARTIFACT);
     expect(result.outcome).toBe("success");
     if (result.outcome !== "success") return;

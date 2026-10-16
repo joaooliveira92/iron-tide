@@ -23,8 +23,8 @@ const profiled = new Set(navalProfiles.map((p) => p.nationId));
 describe("production nation coverage (release gate)", () => {
   /**
    * Anti-vacuity floor: the coverage checks below would pass trivially over an empty parse, so first pin the
-   * size of the data they consume. The 1880 first release commits 14 nations (10 playable), each with an
-   * authored naval profile; a parse-to-zero or parse-to-few regression must fail loudly here rather than let
+   * size of the data they consume. The 1880 first release commits 14 nations (9 playable per DR-005), each with
+   * an authored naval profile; a parse-to-zero or parse-to-few regression must fail loudly here rather than let
    * the coverage assertions pass over nothing. These are floors, not the exact identity list (which would be
    * brittle duplication of countries.yaml).
    */
@@ -36,8 +36,8 @@ describe("production nation coverage (release gate)", () => {
     const playable = countries.filter((c) => c.isPlayable === true);
     expect(
       playable.length,
-      "the 1880 first release commits at least 10 playable nations",
-    ).toBeGreaterThanOrEqual(10);
+      "the 1880 first release commits at least 9 playable nations",
+    ).toBeGreaterThanOrEqual(9);
     expect(
       navalProfiles.length,
       "every release nation must have an authored naval profile (at least 14)",

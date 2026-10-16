@@ -4,6 +4,7 @@ import type { CanonicalEnvelope } from "@bluewave/deterministic";
 import type { PermanentDivision } from "./division.js";
 import type { Officer } from "./officers.js";
 import type { ConstructionProjectStatus } from "./constructionStatus.js";
+import type { ShipReadinessState } from "./readiness.js";
 
 /**
  * Operational availability of a ship while a project works on it (DESIGN-23 section 20). Absent means AVAILABLE. An
@@ -27,6 +28,10 @@ export interface Ship {
   isUnderConstruction: boolean;
   constructionProgress: SafeInt;
   constructionTotalWork: SafeInt;
+  /** Readiness state (S-1 D2): required on every ship, derived at compile, player-settable. */
+  readiness: ShipReadinessState;
+  /** Worked-up crew quality `0..100` (S-1 D2/D4); ramps toward the state's ceiling. */
+  crewQuality: SafeInt;
   inBattleId?: string;
   /** Operational availability while a rebuild or conversion works on the ship; absent = available (ADR-0078). */
   availability?: ShipAvailability;
