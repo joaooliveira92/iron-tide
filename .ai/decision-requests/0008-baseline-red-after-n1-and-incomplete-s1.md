@@ -1,0 +1,118 @@
+# Decision Request: The committed baseline is gate-red (N-1 test rot + an incomplete S-1 bump)
+
+## Status
+
+Blocked pending owner decision.
+
+## Trigger
+
+Bringing the orchestrator online at HEAD `0117adc` (`refactor/comment-prune-sweep-a`)
+found the repository **not in a startable state**: the mandated definition-of-done
+gate is red at HEAD on files committed by prior "completed" tickets, and the
+uncommitted, in-progress S-1 ticket 01 work in the tree does not restore it.
+Meeting DoD for any sprint now requires repairing failures that span prior tickets
+and release gates — a distinct baseline-restoration effort beyond the current
+ticket. Per `.opencode/command/sprint.md`, out-of-scope expansion forces a stop.
+
+## Evidence
+
+- **HEAD is lint-red.** `pnpm lint` at HEAD `0117adc` (clean rebuild) → `0 warnings
+  and 82 errors`, all in `packages/content-compiler/test/{dataHygiene,
+  initialDiplomacy, initialResearchActivity, initialResearchCoherence,
+  constructionDesignConsistency, perNationViability,initialFleetLegality}.test.ts`
+  — type-aware property access on `ContentBundle`'s `unknown[]` collections.
+- **HEAD is test-red on 6 files** (`vp run -r --no-cache test`):
+  - `apps/desktop/test/production-promotion.test.ts` — stale unlinked-ship set
+    (expects `gbr_malta_temp`, `esp_numancia`, `fra_courbet`, `fra_devastation`,
+    `ott_mesudiye`; actual `aut_custoza`, `gbr_temeraire`).
+  - `apps/desktop/src/main/commands/battleSandboxCommands.test.ts` — expects the
+    renamed `gbr_malta_temp`.
+  - `apps/desktop/src/main/commands/commitMonth.test.ts` — snapshot
+    `bodyHash`/`bodyLength` stale (`be70e057…`/87671; actual `df0ff474…`/87666).
+  - `apps/desktop/src/main/commands/compileCampaign.test.ts` and
+    `listNewGameOptions.test.ts` — treat Spain as zero-content and expect it
+    excluded from `playerSlotId`.
+  - `packages/ship-design/test/productionNationCoverage.test.ts` — anti-vacuity
+    floor asserts ≥10 playable nations; the pack has 9 (DR-005).
+- **Provenance.** These files were left stale by the N-1 content commits (tickets
+  01/03/05/06/08/09, e.g. `f966c06` filled fleets and renamed ships). N-1's audit
+  report and the sprint plan record those tickets as complete, and
+  `.ai/reports/comment-pruning.md:43` records `vp lint . -> 0 errors` before N-1:
+  the gate regressed without being re-run.
+- **In-progress S-1 ticket 01.** The working tree holds an apparently-complete,
+  uncommitted S-1 readiness/crew change (`campaign/src/readiness.ts`, schema/state/
+  compile wiring, `snapshotClone` field list, migration `2.0.0→3.0.0`,
+  `golden/hashes.json` re-pin, new tests). It is green on its own focused seam
+  (`@bluewave/campaign` test, `check:determinism`, `check:golden`) but it bumps
+  `CURRENT_COMPATIBILITY_VERSION` to `3.0.0`, which breaks the unmodified
+  `apps/desktop/src/main/drawingBoardDraft.test.ts` (hardcodes `"2.0.0"`/`"3.0.0"`)
+  — a ripple the in-progress work did not update (verified: this file passes at
+  HEAD, fails with the working tree).
+- **Traceability is stale/missing.** `SPRINT-PLAN.md`'s frontier still names
+  decision request 0005 as the root blocker though HEAD created `golden/hashes.json`
+  (`Golden-Repin: baseline-created`); `docs/PROGRESS.md` and `docs/OPEN-ISSUES.md`
+  named by the boot prompt do not exist.
+- **No remote.** `git remote -v` is empty; only `master` and the feature branch
+  exist, so the checks-green-PR delivery path (ADR-0165) is unavailable.
+
+## Why agent judgment is insufficient
+
+Repairing the pre-existing failures requires choosing the authoritative reading
+for release-gate tests: whether Spain's newly authored content (per **DR-005**,
+Spain is one of the nine playable nations) makes it a valid player slot and removes
+it from the zero-content exclusion list, and whether the N-1 content changes were
+intended at all. It also reverses the "completed" status of prior tickets. That is
+a governance call, not routine local repair; guessing risks masking a content
+defect behind a test edit.
+
+## Options
+
+### Option A: Baseline-restoration pass, then land S-1
+
+- Behavior: fix the stale tests to current content/behaviour (confirming DR-005
+  makes Spain player-supported), complete the S-1 compatibility-bump ripple, keep
+  the lint typing repair, run the full gate, then land S-1 ticket 01.
+- Advantages: restores a green baseline for every later sprint; honest traceability.
+- Risks: touches release-gate tests and reverses prior "completed" status.
+- Compatibility impact: none beyond S-1's declared `3.0.0` bump.
+- Migration impact: none.
+- Scope and effort: M.
+
+### Option B: Repair only the S-1 ripple; document the rest
+
+- Behavior: fix `drawingBoardDraft.test.ts` and commit S-1 ticket 01 with a
+  distinct, recorded statement that `pnpm check` is red on five pre-existing,
+  unrelated files.
+- Advantages: preserves the S-1 work; narrow.
+- Risks: violates DoD (`pnpm check` green); leaves later sprints blocked.
+- Compatibility impact: none beyond S-1.
+- Migration impact: none.
+- Scope and effort: S.
+
+### Option C: Reopen N-1 for re-verification
+
+- Behavior: treat the stale tests as evidence N-1 was not properly validated;
+  reopen N-1 tickets 01/05/06/08/09 and re-run their acceptance before any repair.
+- Advantages: least likely to mask a content defect.
+- Risks: large; delays the frontier.
+- Compatibility impact: none.
+- Migration impact: none.
+- Scope and effort: L.
+
+## Recommendation
+
+Option A, contingent on confirming the N-1 content changes are intended (Spain
+content-backed per DR-005). Do not weaken a gate; update expectations only after
+intent is confirmed.
+
+## Work safely completed while blocked
+
+- Diagnosed and classified every gate failure (pre-existing vs S-1-caused) with
+  reproducible commands; the in-progress S-1 work was preserved intact, not
+  overwritten, and no commit was made.
+- Restored `pnpm lint` to green by typing the N-1 audit tests' compiled-bundle
+  access (`packages/content-compiler/test/helpers/campaignRecords.ts` plus the
+  seven tests): 82 → 0 errors.
+- Corrected the stale anti-vacuity floor in
+  `packages/ship-design/test/productionNationCoverage.test.ts` (10 → 9, matching
+  DR-005).
