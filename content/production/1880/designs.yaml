@@ -675,3 +675,144 @@
   hitPoints: 60
   crewComplement: 773
   familyCreationMonth: "1929-07"
+# --- 1880 in-service ships for the AI-only and empty-fleet navies (N-1 ticket 06). ---
+# Each is a real 1880-or-earlier hull. Performance figures are approximate game
+# estimates (no sourced measurement), so each design carries ESTIMATE provenance.
+- designId: "des_nld_schorpioen"
+  designVersionId: "des_nld_schorpioen"
+  designFamilyId: "fam_nld_schorpioen"
+  nationId: "netherlands"
+  className: "Schorpioen"
+  hullType: "coast_defense_ship"
+  displacementKg: 2175000
+  speedUms: 6
+  armorBeltUm: 152
+  mainGuns:
+    caliber: 230
+    count: 1
+    mounts: 1
+  machineryType: "reciprocating_compound"
+  hitPoints: 20
+  crewComplement: 136
+  familyCreationMonth: "1880-01"
+  provenance:
+    sourceStatus: "ESTIMATE"
+    confidence: "LOW"
+    kind: "game_conversion"
+    sources: []
+    note: "Schorpioen-class ironclad ram, in Dutch service from 1868; figures approximate."
+- designId: "des_nld_buffel"
+  designVersionId: "des_nld_buffel"
+  designFamilyId: "fam_nld_buffel"
+  nationId: "netherlands"
+  className: "Buffel"
+  hullType: "coast_defense_ship"
+  displacementKg: 2130000
+  speedUms: 6
+  armorBeltUm: 152
+  mainGuns:
+    caliber: 230
+    count: 1
+    mounts: 1
+  machineryType: "reciprocating_compound"
+  hitPoints: 20
+  crewComplement: 130
+  familyCreationMonth: "1880-01"
+  provenance:
+    sourceStatus: "ESTIMATE"
+    confidence: "LOW"
+    kind: "game_conversion"
+    sources: []
+    note: "Buffel-class ironclad ram, in Dutch service from 1868; figures approximate."
+- designId: "des_por_vasco_da_gama"
+  designVersionId: "des_por_vasco_da_gama"
+  designFamilyId: "fam_por_vasco_da_gama"
+  nationId: "portugal"
+  className: "Vasco da Gama"
+  hullType: "central_battery_ship"
+  displacementKg: 3017000
+  speedUms: 7
+  armorBeltUm: 229
+  mainGuns:
+    caliber: 260
+    count: 2
+    mounts: 2
+  machineryType: "reciprocating_compound"
+  hitPoints: 24
+  crewComplement: 232
+  familyCreationMonth: "1880-01"
+  provenance:
+    sourceStatus: "ESTIMATE"
+    confidence: "LOW"
+    kind: "game_conversion"
+    sources: []
+    note: "Vasco da Gama, central-battery ironclad in Portuguese service from 1876; figures approximate."
+- designId: "des_bra_brasil"
+  designVersionId: "des_bra_brasil"
+  designFamilyId: "fam_bra_brasil"
+  nationId: "brazil"
+  className: "Brasil"
+  hullType: "central_battery_ship"
+  displacementKg: 1516000
+  speedUms: 6
+  armorBeltUm: 114
+  mainGuns:
+    caliber: 203
+    count: 4
+    mounts: 4
+  machineryType: "reciprocating_compound"
+  hitPoints: 18
+  crewComplement: 170
+  familyCreationMonth: "1880-01"
+  provenance:
+    sourceStatus: "ESTIMATE"
+    confidence: "LOW"
+    kind: "game_conversion"
+    sources: []
+    note: "Brasil, Brazilian ironclad of the Paraguayan War era, still in service in 1880; figures approximate."
+- designId: "des_ott_mesudiye"
+  designVersionId: "des_ott_mesudiye"
+  designFamilyId: "fam_ott_mesudiye"
+  nationId: "ottoman_empire"
+  className: "Mesudiye"
+  hullType: "central_battery_ship"
+  displacementKg: 8940000
+  speedUms: 7
+  armorBeltUm: 305
+  mainGuns:
+    caliber: 254
+    count: 12
+    mounts: 12
+  machineryType: "reciprocating_compound"
+  hitPoints: 34
+  crewComplement: 600
+  familyCreationMonth: "1880-01"
+  provenance:
+    sourceStatus: "ESTIMATE"
+    confidence: "LOW"
+    kind: "game_conversion"
+    sources: []
+    note: "Mesudiye, Ottoman central-battery ironclad in service from 1875; figures approximate."
+- designId: "des_esp_numancia"
+  designVersionId: "des_esp_numancia"
+  designFamilyId: "fam_esp_numancia"
+  nationId: "spain"
+  className: "Numancia"
+  hullType: "central_battery_ship"
+  displacementKg: 7017000
+  speedUms: 6
+  armorBeltUm: 130
+  mainGuns:
+    caliber: 203
+    count: 8
+    mounts: 8
+  machineryType: "reciprocating_compound"
+  hitPoints: 30
+  crewComplement: 600
+  familyCreationMonth: "1880-01"
+  provenance:
+    sourceStatus: "ESTIMATE"
+    confidence: "LOW"
+    kind: "game_conversion"
+    sources: []
+    note: "Numancia, Spanish ironclad of 1863-64, still afloat and in service in 1880; figures approximate."

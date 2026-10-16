@@ -36,8 +36,6 @@ const DESIGN_LESS_EXEMPTIONS: ReadonlyMap<string, string> = new Map([
     "gbr_temeraire",
     "UK Temeraire-class central-battery ironclad; no 1880 design is authored in the pack.",
   ],
-  ["ott_mesudiye", "Ottoman Mesudiye; the Ottoman Empire has no authored 1880 design in the pack."],
-  ["esp_numancia", "Spanish Numancia; Spain has no authored 1880 design in the pack."],
 ]);
 
 function buildProductionBundle(): ContentBundle {
