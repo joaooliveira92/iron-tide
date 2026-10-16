@@ -113,8 +113,3 @@ export function groupTurnMessages(
 export function turnLabel(entry: TurnSummaryEntry): string {
   return entry.occurredAt.length > 0 ? entry.occurredAt : entry.turnId.slice(0, 8);
 }
-
-/** The newest summary by occurrence, or null when there is no history. */
-export function newestSummary(summaries: readonly TurnSummaryEntry[]): TurnSummaryEntry | null {
-  return summaries[0] ?? null;
-}

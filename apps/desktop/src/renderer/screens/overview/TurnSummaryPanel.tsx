@@ -10,6 +10,7 @@ import { resolveMessage } from "../../content/uiCatalogue.js";
 import {
   CATEGORY_LABELS,
   DEFAULT_FILTERS,
+  SEVERITY_ORDER,
   filterTurnMessages,
   groupTurnMessages,
   isActionable,
@@ -25,7 +26,8 @@ const SEVERITY_CLASS: Readonly<Record<string, string>> = {
   TRACE: "bg-muted text-muted-foreground",
 };
 
-const SEVERITIES = ["ALL", "CRITICAL", "HIGH", "NORMAL", "LOW"] as const;
+/** Filter options: every severity except developer-only TRACE, plus "ALL". */
+const SEVERITIES = ["ALL", ...SEVERITY_ORDER.filter((severity) => severity !== "TRACE")] as const;
 
 export interface TurnSummaryPanelProps {
   readonly summaries: readonly TurnSummaryEntry[];

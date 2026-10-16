@@ -22,6 +22,7 @@ import {
   type ShellInterruption,
 } from "./campaign-shell-state.js";
 import { canGoBack, canGoForward, goBack, goForward } from "./navigation-history.js";
+import type { BattleChoice } from "./interruptions/BattleRequestDialog.js";
 import type { PrimaryAction } from "./primary-action.js";
 import { formatCampaignMonth } from "./site-header-state.js";
 
@@ -284,7 +285,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
 
   /** Submit the player's answer to a battle request (T-1 owns the offer policy). */
   const submitBattleResult = useCallback(
-    async (choice: "accept" | "decline" | "delegate") => {
+    async (choice: BattleChoice) => {
       const request = state.interruption?.request;
       if (
         bridge === undefined ||
