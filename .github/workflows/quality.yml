@@ -20,7 +20,7 @@ jobs:
           # Full history so the golden-repin ratchet can resolve its baseline
           # commit and scan the range since it.
           fetch-depth: 0
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11.21.0
       - uses: actions/setup-node@v4
