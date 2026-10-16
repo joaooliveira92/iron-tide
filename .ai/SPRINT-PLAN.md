@@ -157,21 +157,29 @@ from authoritative state, and the output is reviewed. It is a new baseline, not 
 
 Status (2026-10-15, autonomous run): **G-0 is resolved** (re-baselined by G-1 under
 ADR-0210/DR-010; 0001's file still reads "blocked" but its finite exit was taken).
-G-1 and G-3 are complete; N-1's audit is complete with ticket 07 blocked. The
-actionable frontier is currently empty:
+G-1 and G-3 are complete; N-1's audit is complete with ticket 07 blocked. S-1
+(readiness and maintenance) is now scoped and sliced
+(`.ai/specs/s-1-readiness-and-maintenance.md`). The actionable frontier is empty,
+and the root blocker is the **absent golden baseline**:
 
-1. **N-1 ticket 07** (divisions/officers) is blocked on decision request **0005**
-   (no golden baseline to re-pin against).
-2. **S-2 ticket 01** (prestige state) is blocked on decision request **0006**: a
-   required prestige field (map D2) and untouched production content (D6/0003)
-   cannot coexist while the gated production-pack loop compiles the pack through
-   `buildNationStates`. This blocks S-2 tickets 02-09 transitively.
-3. **mine-warfare (W-2)** tickets 01/02 are sliced but W-2's plan dependency
-   (W-1, itself on S-1/T-1) is unmet, so it is not a current lane.
-4. **U-1** (canonical values) is unstarted and has no brief (scoping sprint).
+1. **Golden baseline (decision request 0005).** `golden/hashes.json` does not exist,
+   so `pnpm check`'s `check:golden` cannot run and no authoritative commit can meet
+   the definition of done. Every sprint that adds or changes snapshot state is gated
+   on it: **N-1 ticket 07**, **S-1 ticket 01** (required per-ship readiness/crew
+   moves the reference run), **S-2 ticket 01** (required prestige), and the
+   **mine-warfare** state ticket. Creating the baseline (or approving the guard
+   procedure) is the highest-leverage unblock.
+2. **S-2 ticket 01** is additionally blocked on decision request **0006** (a required
+   prestige field cannot coexist with untouched production content), blocking S-2
+   02-09.
+3. **S-1 tickets 01-09** are blocked: 01 on 0005; 02-07 transitively (and by
+   decision request **0007**, the readiness/crew/maintenance values); 08 on 0007.
+4. **mine-warfare (W-2)** tickets 01/02 are sliced but W-2's plan dependency
+   (W-1, itself on S-1/T-1) is unmet.
+5. **U-1** (canonical values) is unstarted and has no brief (scoping sprint).
 
-Resolve 0003/0004/0005/0006, or explicitly authorize a lane (e.g. running W-2 out
-of dependency order), to reopen the frontier. U-1/U-2 remains an independent lane.
+Resolve 0005 first (golden baseline), then 0003/0004/0006/0007. U-1/U-2 remains an
+independent, unblocked lane.
 
 ## Decisions recorded
 
