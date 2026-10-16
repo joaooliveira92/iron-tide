@@ -8,7 +8,16 @@ with a stable diagnostic. Introduces the compatibility-version bump (map D2).
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** blocked
+
+Blocked on
+`.ai/decision-requests/0006-prestige-required-field-vs-untouched-production.md`:
+this ticket needs a **required** prestige field on every compiled nation (map D2,
+no default) while leaving production content untouched until ticket 08 (D6/0003),
+but the gated production-pack loop compiles `content/production/1880` through
+`buildNationStates` (`packages/cross-process-test/test/production-pack-loop.test.ts`).
+The two requirements are mutually exclusive without authoring production values or
+making the field optional/defaulted. Do not start until the owner decides.
 
 - [ ] A compiled fixture campaign exposes a bounded integer prestige for every
       nation, equal to the authored value.
