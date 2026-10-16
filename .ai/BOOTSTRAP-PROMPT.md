@@ -4,7 +4,7 @@
 > `AGENTS.md` + `.ai/ORCHESTRATION.md` and the backlog in `.ai/SPRINT-PLAN.md`. Kept for
 > historical reference only.
 
-Execute the approved bootstrap brief at `.ai/briefs/B0-BOOTSTRAP.md` under `.ai/ENGINEERING-CONTRACT.md` and `.ai/AUTONOMOUS-AGENT.md`.
+Execute the approved bootstrap brief under `.ai/ENGINEERING-CONTRACT.md` and `.ai/AUTONOMOUS-AGENT.md`.
 
 ## Objective
 

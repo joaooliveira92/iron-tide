@@ -78,3 +78,5 @@ export * from "./warConstants.js";
 export * from "./budgetConstants.js";
 export * from "./movement.js";
 export * from "./officers.js";
+// S-1: per-ship readiness vocabulary, crew band and compile-boundary seeding.
+export * from "./readiness.js";

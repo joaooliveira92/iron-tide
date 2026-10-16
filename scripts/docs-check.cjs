@@ -266,7 +266,6 @@ if (!fs.existsSync(amendPath)) {
   }
 }
 
-// ---- report ----
 if (warnings.length) {
   console.warn("docs-check: warnings");
   for (const w of warnings) console.warn(`  - ${w}`);

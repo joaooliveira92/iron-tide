@@ -42,6 +42,13 @@ const FleetShipSchema = Schema.Struct({
   isUnderConstruction: Schema.Boolean,
   constructionProgress: nonNegativeInt,
   constructionTotalWork: nonNegativeInt,
+  // S-1: optional authored readiness/crew seed. Absent, the campaign compiler
+  // derives them (`isUnderConstruction` -> WORKING_UP, else ACTIVE at ceiling);
+  // present, the campaign compile boundary validates the vocabulary and the
+  // 0..100 integer band (S-1 D2). Kept structurally open here so a malformed
+  // value reaches that boundary as a `_tag`-discriminated diagnostic.
+  readiness: Schema.optional(Schema.String),
+  crewQuality: Schema.optional(Schema.Finite),
   inBattleId: Schema.optional(Schema.NonEmptyString),
 });
 

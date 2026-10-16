@@ -232,16 +232,19 @@ describe("commitMonth", () => {
       // the deterministic baseline for the production pack at turn 1 — adding
       // `battleOutcomes` changed only the bridge response, never these
       // authoritative hashes. Pinned so any accidental engine/snapshot change
-      // that should not happen here is caught as a hash drift.
+      // that should not happen here is caught as a hash drift. Re-pinned
+      // 2026-10-16 (S-1 + ADR-0214): per-ship readiness/crew fields join the
+      // compiled snapshot and the USA slot flips ai -> playable, so both
+      // authoritative hashes move with understood causes; re-pinned below.
       expect(updated.state.envelope).toEqual({
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-        bodyHash: "501472dccac73b5352a0b56b871c74ed6e89a237db45178e21c14bcbf5a57feb",
-        bodyLength: 87677,
+        bodyHash: "017c3ab0912414c0c104c933ad12e41faf47783bc825bad65d03a29b6d50cffd",
+        bodyLength: 87672,
       });
       expect(updated.state.rawHash).toBe(
-        "f8018aab8f3e0ec111400cf19ed3fad0c916c48ae8dbedd79c958cb9223d94a7",
+        "3e72dfa7aa412f0f59e7c96ea89e8f83d67e90d2994191625dee58a45508ed10",
       );
       const expectedActiveWars = updated.state.snapshot.wars.wars.filter(
         (w) => w.status !== "ENDED",
@@ -636,6 +639,8 @@ describe("mapBattleOutcome (pre-battle-snapshot war-score re-derivation, INC-2 f
             isUnderConstruction: false,
             constructionProgress: SafeInt(0),
             constructionTotalWork: SafeInt(0),
+            readiness: "ACTIVE",
+            crewQuality: SafeInt(100),
           })),
         },
       ],

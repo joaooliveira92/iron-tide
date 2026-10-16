@@ -294,7 +294,6 @@ function buildDamageControlContexts(input: {
 }
 
 export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResolutionResult {
-  // ---- fail-closed validation ---------------------------------------------
   if (!input.manifest) {
     throw new BluewaveError(AUTO_RESOLUTION_UNAVAILABLE, {
       code: AUTO_RESOLUTION_UNAVAILABLE,
@@ -397,7 +396,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     randomLedger: input.randomLedger,
   });
 
-  // ---- minute loop ----------------------------------------------------------
   let battleState: TacticalBattleState = {
     ...projected.state,
     contacts: [...(projected.state.contacts ?? [])],
@@ -640,7 +638,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     });
   }
 
-  // ---- result assembly -----------------------------------------------------
   const attackerShips = unitsOf(projected, "ATTACKER");
   const defenderShips = unitsOf(projected, "DEFENDER");
   const sunkOf = (ships: readonly TacticalShipUnit[]): string[] =>
@@ -772,8 +769,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
 
   return result;
 }
-
-// ---- small helpers ----------------------------------------------------------
 
 function unitsOf(p: ProjectBattleOutput, sideId: string): TacticalShipUnit[] {
   return p.units.filter((u) => u.sideId === sideId);

@@ -1,8 +1,9 @@
 import type { CompiledDesign, DesignDraft } from "./compile.js";
+import type { RoundingMode } from "@bluewave/contracts";
 import { evaluate, type LookupTable } from "./formula/eval.js";
 import { parseFormula } from "./formula/parse.js";
 import { speedLengthRatioX1000 } from "./machinery.js";
-import { toSafe, type BudgetMicro } from "./units.js";
+import { toSafe, UnitError, money, type BudgetMicro, type Money } from "./units.js";
 
 export interface CostBalance {
   /** Micro-units per tonne of hull structure, by hull material. */
@@ -120,14 +121,28 @@ export function computeCost(
 }
 
 /**
- * Turns a cost in micro-pounds into whole treasury units (the engine counts campaign treasury and project work in
- * these). Rounds up so a ship is never priced below its cost, and never to zero. Integer maths only.
+ * The single micro→unit rounding point (map D3). Ceil, so a ship is never priced below its cost, and never to zero.
  */
-export function treasuryCostUnits(costMicro: number, unitMicro: number): number {
+export const TREASURY_UNITS_ROUNDING: RoundingMode = "ceil";
+
+/**
+ * The one micro→unit bridge: turns a cost in micro-pounds into canonical treasury units (map D3). Rounds once, at
+ * {@link TREASURY_UNITS_ROUNDING}, with an exact bigint intermediate. A negative/fractional/unsafe `costMicro` or a
+ * non-positive/non-integer `unitMicro` is rejected at construction with a typed `UnitError`.
+ */
+export function treasuryCostUnits(costMicro: number, unitMicro: number): Money {
   if (!Number.isSafeInteger(costMicro) || costMicro < 0)
-    throw new RangeError("costMicro must be a non-negative safe integer");
+    throw new UnitError(
+      "treasuryCostUnits",
+      costMicro,
+      "costMicro must be a non-negative safe integer",
+    );
   if (!Number.isSafeInteger(unitMicro) || unitMicro <= 0)
-    throw new RangeError("unitMicro must be a positive safe integer");
+    throw new UnitError(
+      "treasuryCostUnits",
+      unitMicro,
+      "unitMicro must be a positive safe integer",
+    );
   const units = (BigInt(costMicro) + BigInt(unitMicro) - 1n) / BigInt(unitMicro);
-  return Number(units < 1n ? 1n : units);
+  return money(Number(units < 1n ? 1n : units));
 }

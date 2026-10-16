@@ -34,7 +34,6 @@ export function GlobePanel({ focusedSlotId, onNationClick }: GlobePanelProps): J
         bg-admiralty-surface
       "
     >
-      {/* Globe viewport */}
       <div className="absolute inset-0 min-h-0 min-w-0 overflow-hidden">
         {TARGETING_BEZEL}
 

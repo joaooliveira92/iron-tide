@@ -262,8 +262,6 @@ export function resolveEngagementOutcome(params: EngagementOutcomeParams): Engag
   };
 }
 
-// ---- Keyed random draw ----
-
 /** Draw bounds for the engagement outcome draw (inclusive). */
 export const ENGAGEMENT_DRAW_MIN = 0 as const;
 export const ENGAGEMENT_DRAW_MAX = 9_999 as const;
@@ -287,8 +285,6 @@ export function drawAirDefenseOutcome(engine: RandomEngine, streamId: string): S
   const stream = engine.stream(streamId);
   return drawUniform(stream, SafeInt(ENGAGEMENT_DRAW_MIN), SafeInt(ENGAGEMENT_DRAW_MAX));
 }
-
-// ---- Per-engagement resolution entry point ----
 
 export interface EngagementResolutionInput {
   system: AirDefenseSystemDefinition;

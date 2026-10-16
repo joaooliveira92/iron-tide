@@ -74,8 +74,6 @@ export function createDamageEventRecord(params: DamageEventRecordBody): DamageEv
   return deepFreeze(record);
 }
 
-// ---- Internal helpers ----
-
 function deepFreeze<T>(value: T): T {
   if (value !== null && typeof value === "object") {
     Object.freeze(value);

@@ -374,7 +374,6 @@ export function torpedoDetonationReliabilityStreamId(o: {
   return `battle/torpedo/detonation/reliability:${o.battleId}:${o.impactMinute}:${o.impactSubstep}:${o.torpedoTrackId}`;
 }
 
-// ---- pure draw mapping --------------------------------------------------------
 // AC-14: map the keyed float draw to the reliability branch. Draws in
 // [0, probabilityBp) function; draws >= probabilityBp are duds (the dud region
 // width is 10_000 - probabilityBp). Explicit FLOOR conversion step.
@@ -398,7 +397,6 @@ export function evaluateDetonationReliabilityDraw(o: {
   return { drawBp, functions: drawBp < o.probabilityBp };
 }
 
-// ---- composed function probability --------------------------------------------
 // functionProbabilityBp = clamp(0, 10_000,
 //   floor(reliabilityBp * fuzeMultiplierBp * protectionMultiplierBp *
 //         damageStateMultiplierBp / 10_000^3)).

@@ -169,6 +169,8 @@ const F = {
     "isUnderConstruction",
     "constructionProgress",
     "constructionTotalWork",
+    "readiness",
+    "crewQuality",
     "inBattleId",
     "availability",
     "availabilityProjectId",

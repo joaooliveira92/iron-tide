@@ -1,5 +1,5 @@
 import type { CompiledDesignVersion } from "@bluewave/campaign";
-import { BluewaveError } from "@bluewave/contracts";
+import { BluewaveError, UM_PER_INCH } from "@bluewave/contracts";
 
 // DESIGN-22 §1 canonical ship-type registry (14 types, precedence order).
 export const CANONICAL_SHIP_TYPES = [
@@ -29,7 +29,6 @@ export const InvalidShipType = "INVALID_SHIP_TYPE" as const;
 
 // DESIGN-22 §2 canonical measurement constants.
 const UMS_PER_KNOT = 514_444;
-const UM_PER_INCH = 25_400;
 
 // ADR B-1-2 mapping. `CompiledDesignVersion` carries the compiled mechanical
 // fields (displacement, speed, armor, guns) plus an authored `hullType`. Full

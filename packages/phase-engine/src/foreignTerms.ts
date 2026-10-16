@@ -3,6 +3,7 @@
 // quantity, optional delivery month); everything the manual leaves undefined here — the price, the instalment schedule,
 // the capability booleans — is derived from authoritative content (`@bluewave/ship-design` naval profiles, the compiled
 // design's projected cost, the ordering↔builder relation). Pure, integer-only, no wall clock, no randomness.
+import { bp, money } from "@bluewave/contracts";
 import type {
   CampaignSnapshot,
   CompiledDesignVersion,
@@ -86,8 +87,8 @@ export function deriveForeignContractTerms(input: ForeignContractTermsInput): Fo
   const shares = splitLargestRemainder(10_000, FOREIGN_INSTALMENT_COUNT);
   const paymentSchedule = amounts.map((amountUnits, i) => ({
     dueMonth: addMonths(input.authorizationMonth, i),
-    amountUnits,
-    workShareBp: shares[i]!,
+    amountUnits: money(amountUnits),
+    workShareBp: bp(shares[i]!),
   }));
   const lastDueMonth = addMonths(input.authorizationMonth, FOREIGN_INSTALMENT_COUNT - 1);
   const requested = input.plannedDeliveryMonth;

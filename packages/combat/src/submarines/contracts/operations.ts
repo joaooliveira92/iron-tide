@@ -1,4 +1,3 @@
-//packages/combat/src/submarines/contracts.ts
 // DESIGN-34 engine-versioned constant-set contracts (C-3 spec §1.3) — the
 // "content deliverable" of this sprint: every shipped `*_v1` policy id +
 // `SHIPPED_*_CONTRACT` + a fail-closed `validate*Contract` guard. Mirrors

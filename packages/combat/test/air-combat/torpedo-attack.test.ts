@@ -139,9 +139,6 @@ describe("AC-12: Air-launched torpedo attack", () => {
       // step1 = 5000 * 12500 / 10000 = 6250
       // step2 = 6250 * 10000 / 10000 = 6250
       // step3 = 6250 * 10000 / 1 = 62500000... but clamped to 10000
-      // wait, let me re-calculate:
-      // step2 = 6250 * 10000 / 10000 = 6250
-      // step3 = 6250 * 10000 / 1 = 62500000, clamped to 10000
       const input: AirTorpedoAttackInput = {
         ...defaultInput(),
         targetSpeedBp: SafeInt(1), // minimum speed denominator

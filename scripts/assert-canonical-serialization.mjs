@@ -166,7 +166,6 @@ export function scanCanonicalSerialization(repoRoot, allowlist = ALLOWLIST) {
     .filter((finding) => !Object.hasOwn(allowlist, `${finding.file}#${finding.fingerprint}`));
 }
 
-// ---- embedded self-test fixtures ------------------------------------------
 const FIXTURES = [
   { name: "raw JSON.stringify fails", source: "const s = JSON.stringify(x);", expect: 1 },
   { name: "bracket stringify fails", source: 'const s = JSON["stringify"](x);', expect: 1 },

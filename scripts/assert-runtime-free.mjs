@@ -214,7 +214,6 @@ export function scanRuntimeImports(repoRoot) {
   );
 }
 
-// ---- embedded self-test fixtures ------------------------------------------
 // Each fixture asserts the exact number of findings the checker must report.
 const FIXTURES = [
   {

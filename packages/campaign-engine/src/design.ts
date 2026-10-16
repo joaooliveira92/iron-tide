@@ -14,6 +14,13 @@ export interface CompiledDesignVersion {
   readonly shipType: string;
   readonly nationId: string;
   readonly year: number;
+  /**
+   * Whether the campaign year has reached the design's era (`year`). A design
+   * with no authored family year (`year` 0) is always available. Computed from
+   * the same rule the construction-order policy enforces, so an unavailable
+   * design is listed for information but cannot be ordered.
+   */
+  readonly available: boolean;
   readonly mass: number; // metric tons
   readonly speed: number; // knots
   readonly machineryType: string;

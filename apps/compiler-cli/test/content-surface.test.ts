@@ -157,6 +157,40 @@ designs:
   });
 });
 
+describe("production roster is the manual's nine playable nations plus the promoted USA (DR-014 / ADR-0214)", () => {
+  it("marks exactly ten nations playable, with the USA promoted", async () => {
+    const out = tempDir();
+    expect(
+      await runCli(runContentBuild({ manifest, contentDir, outputDir: out, outputMode: "json" })),
+    ).toBe("success");
+
+    const artifact = JSON.parse(readFileSync(resolve(out, "content-artifact.json"), "utf8")) as {
+      nations: Array<{ id: string; isPlayable?: boolean }>;
+    };
+    const playable = artifact.nations
+      .filter((nation) => nation.isPlayable === true)
+      .map((nation) => nation.id)
+      .sort();
+
+    // Manual p.18 gives the base nine (Great Britain, Germany, France,
+    // Austria-Hungary, Russia, Italy, Japan, China, Spain) plus the USA, which
+    // DR-014 / ADR-0214 promotes from AI-only to playable.
+    expect(playable).toEqual([
+      "austria_hungary",
+      "france",
+      "germany",
+      "italy",
+      "japan",
+      "qing",
+      "russia",
+      "spain",
+      "uk",
+      "usa",
+    ]);
+    expect(playable).toContain("usa");
+  });
+});
+
 describe("content:verify over the production pack (CAH-LOCK)", () => {
   it("verifies the production pack against the committed content lock", async () => {
     expect(

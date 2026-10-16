@@ -1,32 +1,42 @@
-import type { Brand } from "@bluewave/contracts";
+import { UnitError, type Brand } from "@bluewave/contracts";
 
-/** Canonical integer units (ADR-0037, ADR-0063). Every constructor rejects non-integers and unsafe integers. */
+// Canonical units are declared **once** in `@bluewave/contracts` (ADR-0202, map
+// D2) and re-exported here so existing ship-design importers keep working (the
+// migrate+contract steps keep a single definition). Authoring (millimetres) and
+// sub-unit money (micro) brands are not canonical and stay local.
+export {
+  BP_ONE,
+  KNOTS_TO_UMS,
+  MM_TO_UM,
+  UM_PER_INCH,
+  UM_PER_KNOT,
+  UnitError,
+  bp,
+  ceilDiv,
+  kg,
+  knotsToUmPerSec,
+  kw,
+  litre,
+  mmToUm,
+  money,
+  mulBp,
+  toSafe,
+  um,
+  umPerSec,
+  type Bp,
+  type Kg,
+  type Kw,
+  type Litre,
+  type Money,
+  type Um,
+  type UmPerSec,
+} from "@bluewave/contracts";
+
+/** Authoring unit: millimetres (length/calibre/armour are canonical in µm). */
 export type Mm = Brand<number, "Mm">;
-export type Kg = Brand<number, "Kg">;
-export type Kw = Brand<number, "Kw">;
-export type Litre = Brand<number, "Litre">;
-export type Um = Brand<number, "Um">;
-export type UmPerSec = Brand<number, "UmPerSec">;
-export type Bp = Brand<number, "Bp">;
+/** Sub-unit money for the cost model; reaches campaign state only through the treasury bridge (map D3). */
 export type BudgetMicro = Brand<number, "BudgetMicro">;
 export type WorkMicro = Brand<number, "WorkMicro">;
-
-export const BP_ONE = 10_000;
-export const UM_PER_KNOT = 514_444;
-export const UM_PER_INCH = 25_400;
-
-export class UnitError extends Error {
-  /** Stable discriminator (RULES.md "Errors"): recover by `_tag`, not `instanceof`. */
-  readonly _tag = "UnitError";
-  constructor(
-    readonly unit: string,
-    readonly value: number,
-    reason: string,
-  ) {
-    super(`${unit}: ${reason} (${value})`);
-    this.name = "UnitError";
-  }
-}
 
 function checked<T extends number>(unit: string, value: number, min: number): T {
   if (!Number.isSafeInteger(value)) throw new UnitError(unit, value, "must be a safe integer");
@@ -35,36 +45,5 @@ function checked<T extends number>(unit: string, value: number, min: number): T 
 }
 
 export const mm = (v: number): Mm => checked<Mm>("Mm", v, 0);
-export const kg = (v: number): Kg => checked<Kg>("Kg", v, 0);
-export const kw = (v: number): Kw => checked<Kw>("Kw", v, 0);
-export const litre = (v: number): Litre => checked<Litre>("Litre", v, 0);
-export const um = (v: number): Um => checked<Um>("Um", v, 0);
-export const umPerSec = (v: number): UmPerSec => checked<UmPerSec>("UmPerSec", v, 0);
-/** Basis points may be negative (modifiers); 10_000 = 100 %. */
-export const bp = (v: number): Bp => checked<Bp>("Bp", v, Number.MIN_SAFE_INTEGER);
 export const budgetMicro = (v: number): BudgetMicro => checked<BudgetMicro>("BudgetMicro", v, 0);
 export const workMicro = (v: number): WorkMicro => checked<WorkMicro>("WorkMicro", v, 0);
-
-/** value * bp / 10_000, rounded half up (toward +inf on ties) for non-negative value. Bigint intermediate. */
-export function mulBp(value: number, factor: number): number {
-  const num = BigInt(value) * BigInt(factor);
-  const d = BigInt(BP_ONE);
-  const q = (2n * num + d) / (2n * d);
-  // floor division for negative products
-  const adj = num < 0n && (2n * num + d) % (2n * d) !== 0n ? q - 1n : q;
-  return toSafe("mulBp", adj);
-}
-
-export function ceilDiv(a: number, b: number): number {
-  if (b <= 0) throw new UnitError("ceilDiv", b, "divisor must be > 0");
-  return toSafe("ceilDiv", (BigInt(a) + BigInt(b) - 1n) / BigInt(b));
-}
-
-export function toSafe(label: string, v: bigint): number {
-  if (v > BigInt(Number.MAX_SAFE_INTEGER) || v < BigInt(Number.MIN_SAFE_INTEGER)) {
-    throw new UnitError(label, Number(v), "result outside safe integer range");
-  }
-  return Number(v);
-}
-
-export const knotsToUmPerSec = (knots: number): UmPerSec => umPerSec(knots * UM_PER_KNOT);

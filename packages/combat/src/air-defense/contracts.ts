@@ -56,14 +56,11 @@ import {
 // `.strict()` provided.
 const parseOptions = { onExcessProperty: "error" } as const;
 
-// ---- Policy ids ----
-
 export const AIR_DEFENSE_CONTRACT_POLICY_ID = "air_defense_v1" as const;
 export const AIR_DEFENSE_DIRECTOR_SCALING_POLICY_ID = "aa_director_scaling_v1" as const;
 export const AIR_DEFENSE_RADAR_SATURATION_POLICY_ID = "radar_saturation_v1" as const;
 export const AIR_DEFENSE_CIWS_REDUNDANCY_POLICY_ID = "ciws_redundancy_v1" as const;
 
-// ---- Tuple-of-literals schema builders ----
 // Build strict literal tuples straight from the `as const` shipped constants, so the schema
 // can never name a value the shipped sources do not contain (and vice versa). The mapped
 // tuple types preserve positional literal types across the dynamic `.map`, which TypeScript

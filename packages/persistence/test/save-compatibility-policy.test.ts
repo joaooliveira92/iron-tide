@@ -73,10 +73,10 @@ describe("save-compatibility policy (ADR-0113)", () => {
   it("locks CURRENT_COMPATIBILITY_VERSION to the current release constant", () => {
     // A deliberate bump (see ADR-0113) must update this test, add a per-version
     // fixture and register a migration or a documented rejection — never edit the
-    // constant silently. 1.2.0 -> 2.0.0 changes the ship-part design data model
-    // (ADR-0154 §11, ticket 11d): the part-model version is now current and 1.2.0
-    // is migrated only by the offline developer tool.
-    expect(CURRENT_COMPATIBILITY_VERSION).toBe("2.0.0");
+    // constant silently. 2.0.0 -> 3.0.0 adds required per-ship readiness and
+    // crew-quality state (S-1 map D2); like the part-model bump, 2.0.0 saves are
+    // refused before decoding (no released save exists to migrate).
+    expect(CURRENT_COMPATIBILITY_VERSION).toBe("3.0.0");
   });
 
   it("round-trips a snapshot saved at the current compatibility version", () => {
@@ -148,15 +148,14 @@ describe("save-compatibility policy (ADR-0113)", () => {
     },
   );
 
-  it("declares the part-model version as the current release constant (ticket 11d activates it)", () => {
+  it("keeps the named part-model version while the current release moves on", () => {
     expect(PART_MODEL_COMPATIBILITY_VERSION).toBe("2.0.0");
-    expect(CURRENT_COMPATIBILITY_VERSION).toBe(PART_MODEL_COMPATIBILITY_VERSION);
   });
 
-  it("refuses a 1.2.0 campaign at the current 2.0.0 version, leaving the file byte-identical", () => {
+  it("refuses a 2.0.0 campaign at the current 3.0.0 version, leaving the file byte-identical", () => {
     const legacy = createFixtureState();
-    const legacySnapshot = { ...legacy.snapshot, compatibilityVersion: "1.2.0" };
-    const legacyEnvelope = createEnvelope("campaign-snapshot", "1.2.0", legacySnapshot);
+    const legacySnapshot = { ...legacy.snapshot, compatibilityVersion: "2.0.0" };
+    const legacyEnvelope = createEnvelope("campaign-snapshot", "2.0.0", legacySnapshot);
     const legacyRawHash = sha256Hex(
       canonicalSerialize({ snapshot: legacySnapshot, envelope: legacyEnvelope }),
     );
@@ -172,7 +171,7 @@ describe("save-compatibility policy (ADR-0113)", () => {
 
     expect(loaded).toBeNull();
     expect(diagnostics.errors.map((d) => d.code)).toEqual([COMPATIBILITY_MISMATCH_CODE]);
-    expect(diagnostics.errors[0]!.message).toContain('"1.2.0"');
+    expect(diagnostics.errors[0]!.message).toContain('"2.0.0"');
     expect(diagnostics.errors[0]!.message).toContain(CURRENT_COMPATIBILITY_VERSION);
     expect(readFileSync(campaignPath).equals(before)).toBe(true);
   });

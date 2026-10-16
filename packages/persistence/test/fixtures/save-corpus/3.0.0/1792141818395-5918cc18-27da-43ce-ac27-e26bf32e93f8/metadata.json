@@ -1,0 +1,15 @@
+{
+  "saveId": "1792141818395-5918cc18-27da-43ce-ac27-e26bf32e93f8",
+  "timestamp": "2026-10-16T09:10:18.395Z",
+  "turnNumber": 1,
+  "campaignId": "save-compat-fixture",
+  "snapshotHash": "0be71538b20ecd726b79eb7fcd0f52bcd5c38942853ce765a8a3b8bba4a81a72",
+  "compatibilityVersion": "3.0.0",
+  "contentArtifactHash": "5932aa6cd30a8f9e5fb309538833f58f710e0aac5c94ec92a00eec48cccf6678",
+  "campaignName": "save-compat-fixture",
+  "nationId": "nation-a",
+  "campaignDate": {
+    "year": 1880,
+    "month": 2
+  }
+}

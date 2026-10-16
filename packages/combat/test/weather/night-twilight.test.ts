@@ -99,7 +99,6 @@ const testProfile: DaylightProfile = {
 };
 
 describe("AC-10: night/twilight model (§27)", () => {
-  // ---- Time-of-day resolution ----
   it("resolves DAY state at noon", () => {
     const result = resolveTimeAndSolarGeometry(
       0, // tactical minute
@@ -157,7 +156,6 @@ describe("AC-10: night/twilight model (§27)", () => {
     expect(result.solarElevationDeg).toBeLessThan(0);
   });
 
-  // ---- Per-state policy tables ----
   it("all five canonical time-of-day states have explicit policies", () => {
     for (const state of TIME_OF_DAY_STATES) {
       const policy = DAYLIGHT_POLICY_TABLE[state];

@@ -43,8 +43,6 @@ export const BASE_CREW_AVAILABLE = 200;
 export const BASE_SPECIALISTS = 8;
 export const BASE_REPAIR_MATERIALS = 1_000;
 
-// ---- Per-allocation resource budgets ----
-
 /** Pumping capacity allocated per team assigned to a flooding task (kg/min). */
 export const PUMPING_PER_TEAM_KG_MIN = 200;
 

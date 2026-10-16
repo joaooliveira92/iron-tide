@@ -28,6 +28,8 @@ export function buildShip(spec: GenShipSpec): Ship {
     isUnderConstruction: spec.underConstruction ?? false,
     constructionProgress: SafeInt(0),
     constructionTotalWork: SafeInt(0),
+    readiness: spec.underConstruction === true ? "WORKING_UP" : "ACTIVE",
+    crewQuality: SafeInt(spec.underConstruction === true ? 0 : 100),
     inBattleId: spec.inBattleId,
   };
 }

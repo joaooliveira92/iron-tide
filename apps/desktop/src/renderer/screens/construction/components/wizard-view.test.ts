@@ -7,6 +7,7 @@ const design = createCompiledDesignVersion("design_majestic", {
   shipType: "battleship",
   nationId: "nation_uk",
   year: 1894,
+  available: true,
   mass: 16000,
   speed: 16,
   machineryType: "coal_vte",

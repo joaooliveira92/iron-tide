@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/state.test.ts
 // AC-2: State model has all required fields + hash
 // Tests for AirDefenseState with all required fields and deterministic hash computation.
 

@@ -39,7 +39,6 @@ export const WEATHER_SMOKE_STATE_INVARIANT_FAILED = "WEATHER_SMOKE_STATE_INVARIA
 // ---- In-slice marker (NOT a §30 code) ----
 export const SMOKE_RESOLUTION_DEFERRED = "SMOKE_RESOLUTION_DEFERRED" as const;
 
-// ---- Collected catalog ----
 export const SMOKE_REASON_CODES = {
   INVALID_SMOKE_CLOUD,
   SMOKE_LINE_INTERSECTION_FAILED,

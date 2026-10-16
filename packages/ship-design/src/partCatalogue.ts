@@ -784,7 +784,6 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
   const profiles = [...source.profiles].sort((a, b) => compareCodePoints(a.nationId, b.nationId));
   const componentById = new Map(components.map((c) => [c.id, c]));
 
-  // ---- Guns -------------------------------------------------------------------------------
   const families = [...source.armament.gunFamilies].sort((a, b) => compareCodePoints(a.id, b.id));
   const familyBlocks = new Map<string, ComponentBlocks>();
   const familyDef = new Map<string, ComponentDef>();
@@ -1056,7 +1055,6 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
     );
   }
 
-  // ---- Mounts -----------------------------------------------------------------------------
   let authoredRecords = 0;
   let derivedRecords = 0;
   // A central battery is canonical by family and gun count (D17): one battery part per

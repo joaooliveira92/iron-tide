@@ -9,7 +9,7 @@ import type {
   ResearchState,
   TechnologyProgress,
 } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import { bp, money, SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import {
@@ -76,10 +76,10 @@ function terms(over: Partial<ForeignContractTerms> = {}): ForeignContractTerms {
     builderShipyardId: "yard-france-1",
     quantity: 1,
     totalWorkPerUnit: 1_000,
-    totalPriceUnits: 1_000,
+    totalPriceUnits: money(1_000),
     paymentSchedule: [
-      { dueMonth: "1880-01", amountUnits: 500, workShareBp: 5_000 },
-      { dueMonth: "1880-04", amountUnits: 500, workShareBp: 5_000 },
+      { dueMonth: "1880-01", amountUnits: money(500), workShareBp: bp(5_000) },
+      { dueMonth: "1880-04", amountUnits: money(500), workShareBp: bp(5_000) },
     ],
     authorizationMonth: "1880-01",
     plannedKeelMonth: "1880-02",
@@ -505,10 +505,10 @@ describe("foreign insight integration (SB3-R24, DESIGN-16 section 13.5)", () => 
       builderShipyardId: "yard-france-1",
       quantity: 1,
       totalWorkPerUnit: 1_000,
-      totalPriceUnits: 1_000,
+      totalPriceUnits: money(1_000),
       paymentSchedule: [
-        { dueMonth: "1880-02", amountUnits: 500, workShareBp: 5_000 },
-        { dueMonth: "1880-07", amountUnits: 500, workShareBp: 5_000 },
+        { dueMonth: "1880-02", amountUnits: money(500), workShareBp: bp(5_000) },
+        { dueMonth: "1880-07", amountUnits: money(500), workShareBp: bp(5_000) },
       ],
       authorizationMonth: "1880-02",
       plannedKeelMonth: "1880-03",

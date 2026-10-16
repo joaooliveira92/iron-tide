@@ -17,8 +17,8 @@ in the `DESIGN` documents.
 | --- | --- |
 | _no DESIGN documents exist yet_ | _none_ |
 
-Since no `DESIGN` documents exist and there are no ADRs yet, the table is
-intentionally empty.
+Since no `DESIGN` documents exist in this checkout and the new ADR corpus
+(ADR-0201..ADR-0211) references none, the table is intentionally empty.
 
 ## Scope/process
 

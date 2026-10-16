@@ -12,8 +12,6 @@ function byEntryKey(a: readonly [string, unknown], b: readonly [string, unknown]
   return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0;
 }
 
-// ---- Disruption severity levels ----
-
 export const DisruptionSeverity = {
   LIGHT: "LIGHT" as const,
   MODERATE: "MODERATE" as const,
@@ -22,8 +20,6 @@ export const DisruptionSeverity = {
 } as const;
 
 export type DisruptionSeverityType = (typeof DisruptionSeverity)[keyof typeof DisruptionSeverity];
-
-// ---- Disruption record ----
 
 export interface DisruptionRecord {
   severity: DisruptionSeverityType;
@@ -48,8 +44,6 @@ export interface RadarState {
   diminishingReturnsBp: SafeInt; // from RADAR_SATURATION_TABLE
 }
 
-// ---- AirDefenseState interface ----
-
 export interface AirDefenseState {
   defenderId: string;
   scope: "SHIP" | "FLEET" | "BASE";
@@ -65,8 +59,6 @@ export interface AirDefenseState {
   disruptionRecords: ReadonlyArray<DisruptionRecord>;
   stateHash: string;
 }
-
-// ---- Deterministic state hash computation ----
 
 /**
  * Computes a deterministic hash for an AirDefenseState.
@@ -149,8 +141,6 @@ export function computeAirDefenseStateHash(state: AirDefenseState): string {
   return envelope.bodyHash;
 }
 
-// ---- createAirDefenseState ----
-
 /**
  * Creates a new AirDefenseState with initial defaults.
  *
@@ -228,8 +218,6 @@ export function createAirDefenseState(
   return state;
 }
 
-// ---- addDisruptionRecord ----
-
 export function addDisruptionRecord(
   state: AirDefenseState,
   severity: DisruptionSeverityType,
@@ -253,8 +241,6 @@ export function addDisruptionRecord(
   newState.stateHash = computeAirDefenseStateHash(newState);
   return newState;
 }
-
-// ---- isValidDisruptionSeverity ----
 
 export function isValidDisruptionSeverity(severity: string): severity is DisruptionSeverityType {
   return ["LIGHT", "MODERATE", "SEVERE", "MISSION_ABORT"].includes(severity);

@@ -14,6 +14,7 @@ export default defineConfig({
       ".muse/**",
       ".scratch/**",
       ".turbo/**",
+      ".worktrees/**",
       "docs/**",
       "codefetch/**",
       "golden/**",
@@ -40,7 +41,7 @@ export default defineConfig({
     // `.scratch/**` is the local agent issue tracker (see docs/agents/issue-tracker.md):
     // not repository code, and already excluded from `fmt`. Linting it makes a local
     // scratch probe break `pnpm check` while CI, which also has the tree, disagrees.
-    ignorePatterns: ["vendor/**", "repos/**", ".scratch/**"],
+    ignorePatterns: ["vendor/**", "repos/**", ".scratch/**", ".worktrees/**"],
     plugins: ["typescript", "unicorn", "oxc"],
     categories: {
       correctness: "error",

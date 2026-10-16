@@ -291,7 +291,6 @@ export function lintArmament(
   const knownTech = options.knownTechnologyIds;
   const knownNations = options.knownNationIds;
 
-  // --- canonical and unique ids ---------------------------------------------
   const perCollection: [string, readonly { readonly id: unknown }[]][] = [
     ["gunFamily", families],
     ["gunModel", models],
@@ -335,13 +334,11 @@ export function lintArmament(
     }
   }
 
-  // --- shared families -------------------------------------------------------
   for (const family of families) {
     const entity = familyEntity(family);
     checkProvenance(findings, entity, "gunFamily.provenance", family.provenance, options.release);
   }
 
-  // --- national gun models ---------------------------------------------------
   const modelKey = new Map<string, string>();
   for (const model of models) {
     const entity = modelEntity(model);
@@ -461,7 +458,6 @@ export function lintArmament(
     }
   }
 
-  // --- mounts ----------------------------------------------------------------
   const mountKey = new Map<string, string>();
   for (const mount of mounts) {
     const entity = mountEntity(mount);
@@ -585,7 +581,6 @@ export function lintArmament(
     }
   }
 
-  // --- ammunition ------------------------------------------------------------
   for (const pattern of ammunition) {
     const entity = ammunitionEntity(pattern);
     checkReferences(

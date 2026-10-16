@@ -311,7 +311,6 @@ export function generateSmokescreenMinute(
     }
   }
 
-  // --- Duration check ---
   const generationElapsed = currentMinute - smokescreenState.generationStartMinute;
   if (generationElapsed >= SMOKESCREEN_GENERATION_DURATION_MINUTES) {
     // Generation complete — enter cooldown.

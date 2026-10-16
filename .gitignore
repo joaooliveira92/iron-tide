@@ -18,6 +18,8 @@ playwright-report/
 content/generated/
 
 .turbo
+# Local git worktrees (AGENTS.md "dedicated worktree") — never tracked.
+.worktrees/
 apps/desktop/dist-electron/
 # tsc -b emits alongside the sources it compiles
 *.tsbuildinfo

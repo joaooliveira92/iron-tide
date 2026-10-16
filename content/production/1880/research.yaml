@@ -63,6 +63,7 @@
     MACHINERY: 2
   technologies:
     - { techId: "hc_wrought_iron_hull", investedPoints: 50, completed: true }
+    - { techId: "gun_breech_rifled", investedPoints: 60, completed: true }
 - nationId: "usa"
   researchBudget: 20
   currentProjectTechId: "hc_compound_armor"
@@ -72,35 +73,42 @@
     - { techId: "hc_wrought_iron_hull", investedPoints: 50, completed: true }
 - nationId: "japan"
   researchBudget: 10
+  currentProjectTechId: "gun_breech_rifled"
   fieldPriorities:
     GUNNERY: 2
   technologies:
     - { techId: "hc_wrought_iron_hull", investedPoints: 50, completed: true }
 - nationId: "ottoman_empire"
   researchBudget: 12
+  currentProjectTechId: "gun_breech_rifled"
   fieldPriorities:
     GUNNERY: 2
   technologies: []
 - nationId: "spain"
   researchBudget: 12
+  currentProjectTechId: "gun_breech_rifled"
   fieldPriorities:
     GUNNERY: 2
   technologies: []
 - nationId: "netherlands"
   researchBudget: 6
+  currentProjectTechId: "mac_compound_engine"
   fieldPriorities: {}
   technologies: []
 - nationId: "portugal"
   researchBudget: 4
+  currentProjectTechId: "mac_compound_engine"
   fieldPriorities: {}
   technologies: []
 - nationId: "qing"
   researchBudget: 8
+  currentProjectTechId: "gun_breech_rifled"
   fieldPriorities:
     GUNNERY: 2
   technologies:
     - { techId: "hc_wrought_iron_hull", investedPoints: 50, completed: true }
 - nationId: "brazil"
   researchBudget: 4
+  currentProjectTechId: "mac_compound_engine"
   fieldPriorities: {}
   technologies: []

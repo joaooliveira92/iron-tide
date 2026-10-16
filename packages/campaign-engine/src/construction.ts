@@ -99,6 +99,27 @@ export function projectedConstructionOrderCosts(
 }
 
 /**
+ * The year a design family entered service, from its authored
+ * `familyCreationMonth` ("YYYY-MM"). `0` when no family is authored — a design
+ * with no vintage datum is never era-gated (its legality is the content's, not
+ * the calendar's), so callers treat `0` as "always available".
+ */
+export function designFamilyYear(familyCreationMonth: string | undefined): number {
+  const year = parseInt((familyCreationMonth ?? "").slice(0, 4), 10);
+  return Number.isNaN(year) ? 0 : year;
+}
+
+/**
+ * Whether a design is buildable at `campaignYear`: its family's service year has
+ * been reached. A design with no family year (`0`) is always buildable. The
+ * construction-order policy (`placeConstructionOrder`) and this catalog share
+ * this one rule, so what the catalog marks unavailable cannot be ordered.
+ */
+export function isDesignBuildableByYear(designYear: number, campaignYear: number): boolean {
+  return designYear === 0 || designYear <= campaignYear;
+}
+
+/**
  * The `CompiledDesignVersion[]` the Construction screen's `Design Catalog`
  * tab lists for `nationId` — the friendly-units shape
  * (`design.ts`, "ticket 14 (Construction Ordering) wires the real lookup").
@@ -107,6 +128,9 @@ export function projectedConstructionOrderCosts(
  * - `year`: the design family's authored `familyCreationMonth` year (the
  *   pack's closest real "vintage" datum; e.g. `des_gbr_inflexible` →
  *   `fam_gbr_inflexible` `1880-01` → 1880). 0 when no family is authored.
+ * - `available`: whether `campaignYear` has reached `year` (see
+ *   `isDesignBuildableByYear`). A post-`campaignYear` design is listed for
+ *   information but cannot be ordered — the order policy refuses it.
  * - `mass`: `normalizedDisplacementKg` in metric tons (rounded).
  * - `speed`: `normalizedSpeedUms` in knots (rounded; 1 kt = 0.514 444 m/s).
  * - `requiredTechnologyIds`: `[]` — nothing in the current content pack
@@ -120,19 +144,21 @@ export function projectedConstructionOrderCosts(
 export function buildConstructionDesignCatalog(
   snapshot: CampaignSnapshot,
   nationId: string,
+  campaignYear: number,
 ): CompiledDesignVersion[] {
   const families = snapshot.designFamilies;
   const designs: CompiledDesignVersion[] = [];
   for (const design of snapshot.designs.values()) {
     if (design.nationId !== nationId) continue;
     const family = design.designFamilyId !== "" ? families.get(design.designFamilyId) : undefined;
-    const familyMonth = family?.familyCreationMonth ?? "";
+    const year = designFamilyYear(family?.familyCreationMonth);
     designs.push({
       designId: design.designVersionId,
       className: design.className,
       shipType: constructionShipTypeLabel(design.hullType),
       nationId: design.nationId,
-      year: parseInt(familyMonth.slice(0, 4), 10) || 0,
+      year,
+      available: isDesignBuildableByYear(year, campaignYear),
       mass: Math.round(Number(design.normalizedDisplacementKg) / KILOGRAMS_PER_TON),
       speed: Math.round(umsToKnots(Number(design.normalizedSpeedUms))),
       machineryType: design.machineryType,
