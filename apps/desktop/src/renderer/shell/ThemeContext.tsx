@@ -1,8 +1,9 @@
 import { createContext, type ReactNode, use, useEffect, useState } from "react";
 
-export type Theme = "light" | "dark" | "system";
+import type { ThemePreference } from "../../shared/preferences-contract.js";
+import { usePreferences } from "../lib/preferences-context.js";
 
-export const THEME_STORAGE_KEY = "bluewave-theme";
+export type Theme = ThemePreference;
 
 interface ThemeContextValue {
   theme: Theme;
@@ -16,17 +17,13 @@ function systemPrefersDark(): boolean {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
-export function readStoredTheme(): Theme {
-  const stored = localStorage.getItem(THEME_STORAGE_KEY);
-  return stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
-}
-
 export function resolveTheme(theme: Theme): "light" | "dark" {
   return theme === "system" ? (systemPrefersDark() ? "dark" : "light") : theme;
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(readStoredTheme);
+  const { preferences, setApp } = usePreferences();
+  const theme = preferences.theme;
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(() => resolveTheme(theme));
 
   useEffect(() => {
@@ -43,10 +40,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
   }, [resolvedTheme]);
 
-  const setTheme = (next: Theme) => {
-    localStorage.setItem(THEME_STORAGE_KEY, next);
-    setThemeState(next);
-  };
+  const setTheme = (next: Theme) => setApp({ theme: next });
 
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme }}>

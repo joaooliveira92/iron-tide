@@ -1,4 +1,5 @@
 import { expect, test } from "./fixtures.js";
+import { writeAppPreferences } from "./preferences-fixture.js";
 import type { Page } from "@playwright/test";
 
 // Regression guard for "toggling the theme at runtime keeps the animated
@@ -10,11 +11,12 @@ import type { Page } from "@playwright/test";
 
 const ANIMATED_BACKGROUNDS = ["auralis", "nebulore"] as const;
 
-async function openWithBackground(page: Page, background: string): Promise<void> {
-  await page.evaluate((bg) => {
-    localStorage.setItem("bluewave-theme", "light");
-    localStorage.setItem("bluewave-background", bg);
-  }, background);
+async function openWithBackground(
+  page: Page,
+  userDataDir: string,
+  background: string,
+): Promise<void> {
+  writeAppPreferences(userDataDir, { theme: "light", background });
   await page.reload();
   await page.getByText("Bluewave Naval Staff").waitFor({ timeout: 15_000 });
 }
@@ -29,7 +31,7 @@ for (const background of ANIMATED_BACKGROUNDS) {
   test(`the ${background} backdrop survives a runtime theme change`, async ({ e2e }) => {
     const page = e2e.page;
 
-    await openWithBackground(page, background);
+    await openWithBackground(page, e2e.userDataDir, background);
     expect(await contextLost(page)).toBe(false);
 
     await page.getByRole("button", { name: /Theme:/ }).click();

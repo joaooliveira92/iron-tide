@@ -1,6 +1,10 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { CampaignCommandClient } from "../shared/campaign-command-contract.js";
-import type { WindowState } from "../shared/bridge-contract.js";
+import type { BridgeResult, WindowState } from "../shared/bridge-contract.js";
+import type {
+  PreferencesSnapshot,
+  WriteAppPreferencesRequest,
+} from "../shared/preferences-contract.js";
 
 /**
  * The desktop app's IPC bridge, exposed on `window.bluewave`. Grounded in
@@ -15,6 +19,15 @@ import type { WindowState } from "../shared/bridge-contract.js";
  */
 export interface BluewaveDesktopBridge {
   readonly campaign: CampaignCommandClient;
+  /**
+   * The dedicated app-scope preferences capability (D6). Separate from the
+   * campaign command channel because app-scope preferences exist with no open
+   * campaign; every payload is decoded strictly at the main boundary.
+   */
+  readonly preferences: {
+    read(): Promise<BridgeResult<PreferencesSnapshot>>;
+    write(request: WriteAppPreferencesRequest): Promise<BridgeResult<PreferencesSnapshot>>;
+  };
   readonly platform: NodeJS.Platform;
   getWindowState(): Promise<WindowState>;
   windowMinimize(): void;
@@ -50,6 +63,11 @@ contextBridge.exposeInMainWorld("bluewave", {
     execute: (command: string, payload: unknown) => {
       return ipcRenderer.invoke("campaign:execute", command, payload);
     },
+  },
+  preferences: {
+    read: () => ipcRenderer.invoke("preferences:read"),
+    write: (request: WriteAppPreferencesRequest) =>
+      ipcRenderer.invoke("preferences:write", request),
   },
   platform: process.platform,
   getWindowState: () => ipcRenderer.invoke("window:get-state"),

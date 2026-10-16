@@ -1,16 +1,9 @@
-import { createContext, type ReactNode, use, useState } from "react";
+import { createContext, type ReactNode, use } from "react";
 
-export type BackgroundStyle =
-  | "water"
-  | "stars"
-  | "mesh-citrus"
-  | "mesh-lagoon"
-  | "auralis"
-  | "nebulore"
-  | "pattern-waves"
-  | "none";
+import type { BackgroundPreference } from "../../shared/preferences-contract.js";
+import { usePreferences } from "../lib/preferences-context.js";
 
-export const BACKGROUND_STORAGE_KEY = "bluewave-background";
+export type BackgroundStyle = BackgroundPreference;
 
 interface BackgroundContextValue {
   background: BackgroundStyle;
@@ -19,27 +12,10 @@ interface BackgroundContextValue {
 
 const BackgroundContext = createContext<BackgroundContextValue | null>(null);
 
-export function readStoredBackground(): BackgroundStyle {
-  const stored = localStorage.getItem(BACKGROUND_STORAGE_KEY);
-  return stored === "water" ||
-    stored === "stars" ||
-    stored === "mesh-citrus" ||
-    stored === "mesh-lagoon" ||
-    stored === "auralis" ||
-    stored === "nebulore" ||
-    stored === "pattern-waves" ||
-    stored === "none"
-    ? stored
-    : "water";
-}
-
 export function BackgroundProvider({ children }: { children: ReactNode }) {
-  const [background, setBackgroundState] = useState<BackgroundStyle>(readStoredBackground);
-
-  const setBackground = (next: BackgroundStyle) => {
-    localStorage.setItem(BACKGROUND_STORAGE_KEY, next);
-    setBackgroundState(next);
-  };
+  const { preferences, setApp } = usePreferences();
+  const background = preferences.background;
+  const setBackground = (next: BackgroundStyle) => setApp({ background: next });
 
   return (
     <BackgroundContext.Provider value={{ background, setBackground }}>

@@ -4,6 +4,7 @@ import { App } from "./shell/App.js";
 import { Toaster } from "./components/ui/toast.js";
 import { installAppFlushListener } from "./lib/app-flush.js";
 import { installRendererCrashHandlers } from "./lib/crash-report.js";
+import { PreferencesProvider } from "./lib/preferences-context.js";
 import { BackgroundProvider } from "./shell/BackgroundContext.js";
 import { DensityProvider } from "./shell/DensityContext.js";
 import { FontProvider } from "./shell/FontContext.js";
@@ -22,14 +23,16 @@ installAppFlushListener();
 installRendererCrashHandlers();
 
 createRoot(container).render(
-  <ThemeProvider>
-    <BackgroundProvider>
-      <FontProvider>
-        <DensityProvider>
-          <App />
-          <Toaster />
-        </DensityProvider>
-      </FontProvider>
-    </BackgroundProvider>
-  </ThemeProvider>,
+  <PreferencesProvider>
+    <ThemeProvider>
+      <BackgroundProvider>
+        <FontProvider>
+          <DensityProvider>
+            <App />
+            <Toaster />
+          </DensityProvider>
+        </FontProvider>
+      </BackgroundProvider>
+    </ThemeProvider>
+  </PreferencesProvider>,
 );

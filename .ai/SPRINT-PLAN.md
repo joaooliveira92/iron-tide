@@ -169,13 +169,16 @@ available and the snapshot-changing tickets are unblocked.
    and **07** (combat strength/resolver fixed-point, exactly value-preserving), and
    **08** (U-1 acceptance: the six criteria traced to named tests/gates, ADR-0215–0219
    recorded and indexed, and the full `pnpm check` gate green).
-   **Immediate next action: U-2 ticket 01.**
-2. **U-2 (preferences domain)** is charted and sliced; tickets **01–05** are
-   `ready-for-agent` (01 versioned domain, app-scope persistence, capability and
-   selectors; 02 currency display mode requested-vs-effective; 03 UI language and
-   formatting locale; 04 measurement preset; 05 campaign scope and precedence).
-   Ticket **06** (migration/recovery) is blocked by 02–05 and ticket **07**
-   (acceptance) by 06. U-2 is golden-neutral and ungated (map D7).
+   **Immediate next action: U-2 ticket 02.**
+2. **U-2 (preferences domain)** is charted and sliced. Ticket **01** (versioned
+   domain, app-scope persistence, the `preferences.read`/`preferences.write`
+   capability, typed selectors, and the theme/background/font/density rewire off
+   `localStorage`) is **done**. Tickets **02–05** are `ready-for-agent` (02 currency
+   display mode requested-vs-effective; 03 UI language and formatting locale;
+   04 measurement preset; 05 campaign scope and precedence). Ticket **06**
+   (migration/recovery) is blocked by 02–05 and ticket **07** (acceptance) by 06.
+   U-2 is golden-neutral and ungated (map D7). **Immediate next action: U-2
+   tickets 02–05.**
 3. **N-1 ticket 07** (1880 divisions and officer rosters) remains blocked on decision
    request **0005** (owner decision: the behavioural reference-run change with a
    baseline now present). Its sibling N-1 tickets are done.
@@ -191,7 +194,7 @@ available and the snapshot-changing tickets are unblocked.
 
 Owner decisions outstanding: **0003** (prestige values), **0004** (mine inventory),
 **0006** (prestige field vs untouched production), **0007** (S-1 readiness/crew/
-maintenance values). The actionable frontier is **U-2 tickets 01–05**, then the S-1
+maintenance values). The actionable frontier is **U-2 tickets 02–05**, then the S-1
 structural lane (02–07, 09) and the S-2 structural lane (02–07, 09).
 
 ## Decisions recorded

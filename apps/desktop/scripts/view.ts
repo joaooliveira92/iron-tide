@@ -19,8 +19,8 @@
  * --save      copies a compiled campaign package to a temp dir, opens it via
  *             "Open Campaign", and starts from there (the source is never touched).
  * --size     resizes the window (CSS pixels, e.g. 900x700) before the first action.
- * --theme     "light" or "dark": starts the app in that theme (via its storage key).
- * --background starts the app with that animated backdrop, e.g. "auralis" (via its storage key).
+ * --theme     "light" or "dark": starts the app in that theme (via the app-scope preferences file).
+ * --background starts the app with that animated backdrop, e.g. "auralis" (via the app-scope preferences file).
  * --selector  screenshots only the first element matching the CSS selector.
  *
  * Actions run in the order given. Output (default `.dev-data/view`, git-ignored):
@@ -36,7 +36,9 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { advanceMonths, dismissTour, startNewCampaign } from "../e2e/flows.ts";
+import { writeAppPreferences } from "../e2e/preferences-fixture.ts";
 import { copyFixturePackage, launchHarness, teardownHarness } from "../e2e/fixtures.ts";
+import type { AppPreferences } from "../src/shared/preferences-contract.ts";
 
 // Idle structural DOM mutations per second above which a screen is reported as churning.
 const CHURN_THRESHOLD = 500;
@@ -92,16 +94,15 @@ h.page.on("pageerror", (e) => log.push(`[pageerror] ${e.message}`));
 
 try {
   if (values.theme || values.background) {
-    // Through the app's own storage keys, before anything is opened, so the theme
-    // provider (and everything keyed off it) starts in the requested theme
+    // Seed the app-scope preferences file, before anything is opened, so the
+    // theme provider (and everything keyed off it) starts in the requested theme
     // rather than having a class flipped under it.
-    await h.page.evaluate(
-      ({ theme, background }) => {
-        if (theme) localStorage.setItem("bluewave-theme", theme);
-        if (background) localStorage.setItem("bluewave-background", background);
-      },
-      { theme: values.theme, background: values.background },
-    );
+    writeAppPreferences(h.userDataDir, {
+      ...(values.theme ? { theme: values.theme as AppPreferences["theme"] } : {}),
+      ...(values.background
+        ? { background: values.background as AppPreferences["background"] }
+        : {}),
+    });
     await h.page.reload();
     await h.page.getByText("Bluewave Naval Staff").waitFor({ timeout: 15_000 });
   }

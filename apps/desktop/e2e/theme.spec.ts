@@ -1,19 +1,24 @@
 import { expect, test } from "./fixtures.js";
+import { writeAppPreferences } from "./preferences-fixture.js";
 import type { Page } from "@playwright/test";
 
 // Regression guard for "the Fleet Dispatch surface follows the active theme":
 // its command surface, the globe's panel frame, and the globe ocean must all
 // resolve to the `.dark` palette when the theme is dark, and the light palette
-// when it is light. The theme is set through the app's own storage key before
-// reload, exactly as the user's toggle would persist it.
+// when it is light. The theme is written to the app-scope preferences file
+// before reload, exactly as the preferences domain persists it.
 
 const LIGHT_SURFACE = "rgb(238, 243, 248)"; // --color-admiralty-surface (light)
 const DARK_SURFACE = "rgb(3, 5, 9)"; // --color-admiralty-surface (dark)
 const LIGHT_OCEAN = "rgb(234, 244, 253)"; // --globe-ocean-inner (light)
 const DARK_OCEAN = "rgb(14, 22, 34)"; // --globe-ocean-inner (dark)
 
-async function openFleetDispatchInTheme(page: Page, theme: "light" | "dark"): Promise<void> {
-  await page.evaluate((t) => localStorage.setItem("bluewave-theme", t), theme);
+async function openFleetDispatchInTheme(
+  page: Page,
+  userDataDir: string,
+  theme: "light" | "dark",
+): Promise<void> {
+  writeAppPreferences(userDataDir, { theme });
   await page.reload();
   await page.getByText("Bluewave Naval Staff").waitFor({ timeout: 15_000 });
   await page.getByRole("button", { name: "New Campaign" }).click();
@@ -34,7 +39,7 @@ test("Fleet Dispatch surface, globe frame, and globe ocean follow the active the
 }) => {
   const page = e2e.page;
 
-  await openFleetDispatchInTheme(page, "light");
+  await openFleetDispatchInTheme(page, e2e.userDataDir, "light");
   expect(await page.evaluate(() => document.documentElement.classList.contains("dark"))).toBe(
     false,
   );
@@ -42,7 +47,7 @@ test("Fleet Dispatch surface, globe frame, and globe ocean follow the active the
   const lightGlobePanel = await background(page, "globe-panel");
   const lightOcean = await oceanInner(page);
 
-  await openFleetDispatchInTheme(page, "dark");
+  await openFleetDispatchInTheme(page, e2e.userDataDir, "dark");
   expect(await page.evaluate(() => document.documentElement.classList.contains("dark"))).toBe(true);
   const darkSurface = await background(page, "fleet-dispatch-surface");
   const darkGlobePanel = await background(page, "globe-panel");

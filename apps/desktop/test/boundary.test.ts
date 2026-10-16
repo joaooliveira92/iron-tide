@@ -47,6 +47,10 @@ describe("Electron boundary", () => {
     const allowedHandle = [
       'ipcMain.handle("campaign:execute"',
       'ipcMain.handle("window:get-state"',
+      // The dedicated app-scope preferences capability (D6): a narrow read/write
+      // pair, separate from the campaign command channel.
+      'ipcMain.handle("preferences:read"',
+      'ipcMain.handle("preferences:write"',
     ];
     const allowedOn = [
       'ipcMain.on("window:minimize"',
@@ -71,6 +75,7 @@ describe("Electron boundary", () => {
     const exposed = preloadSource.match(/^\s{2}([a-zA-Z]+):/gm) ?? [];
     const allowed = [
       "campaign:",
+      "preferences:",
       "platform:",
       "getWindowState:",
       "windowMinimize:",
@@ -97,7 +102,9 @@ describe("Electron boundary", () => {
     expect(mainSource).toContain("dispatchCampaignCommand");
     const registered = mainSource.match(/ipcMain\.(handle|on)\("([^"]+)"/g) ?? [];
     expect(
-      registered.every((r) => /"(campaign:execute|window:[a-z-]+|support:report-crash)"/.test(r)),
+      registered.every((r) =>
+        /"(campaign:execute|window:[a-z-]+|support:report-crash|preferences:[a-z]+)"/.test(r),
+      ),
     ).toBe(true);
   });
 });
