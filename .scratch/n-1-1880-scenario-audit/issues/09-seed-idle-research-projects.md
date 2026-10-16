@@ -9,8 +9,12 @@ priorities.
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Every nation with a research budget above zero starts with an active project
-      whose prerequisites are met.
-- [ ] A deterministic test asserts no nation begins idle while funded.
+- [x] Every nation with a research budget above zero starts with an active project
+      whose prerequisites are met: seeded `gun_breech_rifled` (GUNNERY-matched) for
+      japan, qing, ottoman_empire and spain, and `mac_compound_engine` for
+      netherlands, portugal and brazil.
+- [x] A deterministic test asserts no nation begins idle while funded
+      (`packages/content-compiler/test/initialResearchActivity.test.ts`; verified
+      red with japan's project removed).
