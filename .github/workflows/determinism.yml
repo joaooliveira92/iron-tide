@@ -38,7 +38,7 @@ jobs:
       - name: Cross-process determinism
         run: node packages/cross-process-test/dist/run-child.js
       - name: Upload hash artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: hashes-${{ matrix.os }}
           path: golden/hashes.json
