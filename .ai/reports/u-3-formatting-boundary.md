@@ -7,15 +7,15 @@ sweep (ticket 06) is not.
 
 ## What landed
 
-| Ticket                                     | State       | Evidence                                                                                                                                    |
-| ------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01 presentation format core + measurements | done        | `apps/desktop/src/renderer/lib/presentation-format/{units,format}.ts` + tests                                                               |
-| 02 money modes (NC/BP/national-historical) | done        | `money.ts`, `national-currency.ts` shapes + tests                                                                                           |
-| 03 dates, localized numbers, number scale  | done        | `dates.ts` + tests                                                                                                                          |
-| 04 national-currency schema + validation   | done        | `packages/content-schema/src/national-currency.ts` + 4 tests                                                                                |
-| 05 availability + requested→effective      | done        | `currency-availability.ts` + tests                                                                                                          |
-| 06 parse-once + ad-hoc-formatting gate     | **partial** | `parse.ts` + `scripts/assert-presentation-formatting.mjs` (wired into preflight); the ship-design/phase-engine domain sweep is **not done** |
-| 07 acceptance                              | **partial** | boundary import test + full-suite green; no formal invariance report beyond this file                                                       |
+| Ticket                                     | State       | Evidence                                                                                                                                                                                                                      |
+| ------------------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 01 presentation format core + measurements | done        | `apps/desktop/src/renderer/lib/presentation-format/{units,format}.ts` + tests                                                                                                                                                 |
+| 02 money modes (NC/BP/national-historical) | done        | `money.ts`, `national-currency.ts` shapes + tests                                                                                                                                                                             |
+| 03 dates, localized numbers, number scale  | done        | `dates.ts` + tests                                                                                                                                                                                                            |
+| 04 national-currency schema + validation   | done        | `packages/content-schema/src/national-currency.ts` + 4 tests                                                                                                                                                                  |
+| 05 availability + requested→effective      | done        | `currency-availability.ts` + tests                                                                                                                                                                                            |
+| 06 parse-once + ad-hoc-formatting gate     | **partial** | `parse.ts` + `scripts/assert-presentation-formatting.mjs` (wired into preflight) and `packages/ship-design/test/presentation-leak.test.ts` (a ratchet freezing the domain inventory); the domain sweep itself is **not done** |
+| 07 acceptance                              | **partial** | boundary import test + full-suite green; no formal invariance report beyond this file                                                                                                                                         |
 
 The single conversion module (`presentation-format/`) imports only
 `@bluewave/contracts` (proved by `boundary.test.ts`); the renderer imports no
@@ -41,7 +41,10 @@ The single conversion module (`presentation-format/`) imports only
 
 - **Ticket 06 domain-leak sweep:** ten files in `packages/ship-design/src/` and
   `packages/phase-engine/src/reviseProject.ts` still build display strings
-  (`toLocaleString("en-US")`, `toFixed`, unit suffixes). Removing them means the
-  domain emits structured explanation data and the renderer formats it; it touches
-  authoritative packages and is not attempted here.
+  (`toLocaleString("en-US")`, `toFixed`, unit suffixes). A ratchet
+  (`packages/ship-design/test/presentation-leak.test.ts`) freezes the exact
+  inventory so it cannot grow; **removing** it means the domain emits structured
+  explanation data and the renderer formats it. That touches authoritative
+  packages and their exact-string tests, so it is a deliberate owner-visible
+  migration, not attempted by the ratchet.
 - **Ticket 07:** the renderer migration sweep is baselined, not exhausted.
