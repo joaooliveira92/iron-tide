@@ -157,7 +157,7 @@ designs:
   });
 });
 
-describe("production roster is the manual's nine playable nations plus the promoted USA (DR-013 / ADR-0214)", () => {
+describe("production roster is the manual's nine playable nations plus the promoted USA (DR-014 / ADR-0214)", () => {
   it("marks exactly ten nations playable, with the USA promoted", async () => {
     const out = tempDir();
     expect(
@@ -174,7 +174,7 @@ describe("production roster is the manual's nine playable nations plus the promo
 
     // Manual p.18 gives the base nine (Great Britain, Germany, France,
     // Austria-Hungary, Russia, Italy, Japan, China, Spain) plus the USA, which
-    // DR-013 / ADR-0214 promotes from AI-only to playable.
+    // DR-014 / ADR-0214 promotes from AI-only to playable.
     expect(playable).toEqual([
       "austria_hungary",
       "france",

@@ -55,7 +55,7 @@ describe("listNewGameOptions", () => {
       expect(result.value.supportedValues.scenarioId).not.toContain(removed);
     }
 
-    // Ten playable nations per DR-013 / ADR-0214; the USA is promoted from
+    // Ten playable nations per DR-014 / ADR-0214; the USA is promoted from
     // AI-only to playable.
     expect(result.value.scenarios[0]?.playableNationIds).toEqual([
       "austria_hungary",

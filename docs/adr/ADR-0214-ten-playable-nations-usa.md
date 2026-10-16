@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (2026-10-16). New record of decision DR-009.
+Accepted (2026-10-16). New record of decision DR-014.
 Supersedes: ADR-0205.
 
 ## Context

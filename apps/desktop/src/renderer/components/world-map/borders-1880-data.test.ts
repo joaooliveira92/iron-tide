@@ -28,7 +28,7 @@ describe("1880 borders (baked from historical-basemaps)", () => {
     for (const id of playable) expect(baked).toContain(id);
 
     // Any extra baked nation is a real, AI-only nation: the USA is promoted to
-    // playable by DR-013 / ADR-0214 but is also a power drawn on the strategic map.
+    // playable by DR-014 / ADR-0214 but is also a power drawn on the strategic map.
     for (const id of baked) {
       expect(playability.has(id), `${id} is not a production nation`).toBe(true);
       if (!playable.includes(id)) {

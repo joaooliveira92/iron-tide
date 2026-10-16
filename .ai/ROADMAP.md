@@ -33,13 +33,13 @@ acceptance criteria and evidence live in `.ai/SPRINT-PLAN.md`.
    gate has a finite exit; artifacts that never existed are registered as unavailable
    and replaced, not waited for.
 2. Record 1880 as sole start; strip language implying 1890.
-3. Validate and complete the 1880 scenario for the nine playable nations.
+3. Validate and complete the 1880 scenario for the ten playable nations.
 4. Define canonical units and money representation.
 5. Preferences architecture, then the Options screen.
 6. Manual-backed strategic systems (a game you can lose).
 7. Player-fought battles integrated into campaign progression.
 8. Goal-directed AI replacing random decisions.
-9. Validate nine nations; promote the other five one at a time.
+9. Validate ten nations; promote the other four one at a time.
 10. Release validation across themes, units, currencies, accessibility, packaged
     builds.
 
