@@ -27,7 +27,7 @@ import type { MonthContext } from "./monthContext.js";
  * sum to `total` — the single rounding point — with the remainder assigned to the largest fractional parts (ties broken
  * by index). Integer/bigint only, so no float reaches the funding split (map D4/D5).
  */
-function splitLargestRemainder(total: number, weights: readonly number[]): number[] {
+export function splitLargestRemainder(total: number, weights: readonly number[]): number[] {
   const weightSum = weights.reduce((sum, weight) => sum + weight, 0);
   if (weightSum <= 0) return weights.map(() => 0);
   const totalBig = BigInt(total);
