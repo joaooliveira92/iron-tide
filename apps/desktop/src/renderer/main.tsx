@@ -7,6 +7,7 @@ import { installRendererCrashHandlers } from "./lib/crash-report.js";
 import { PreferencesProvider } from "./lib/preferences-context.js";
 import { BackgroundProvider } from "./shell/BackgroundContext.js";
 import { DensityProvider } from "./shell/DensityContext.js";
+import { DisplayPreferencesProvider } from "./shell/display-preferences.js";
 import { FontProvider } from "./shell/FontContext.js";
 import { ThemeProvider } from "./shell/ThemeContext.js";
 import "./styles/globals.css";
@@ -25,14 +26,16 @@ installRendererCrashHandlers();
 createRoot(container).render(
   <PreferencesProvider>
     <ThemeProvider>
-      <BackgroundProvider>
-        <FontProvider>
-          <DensityProvider>
-            <App />
-            <Toaster />
-          </DensityProvider>
-        </FontProvider>
-      </BackgroundProvider>
+      <DisplayPreferencesProvider>
+        <BackgroundProvider>
+          <FontProvider>
+            <DensityProvider>
+              <App />
+              <Toaster />
+            </DensityProvider>
+          </FontProvider>
+        </BackgroundProvider>
+      </DisplayPreferencesProvider>
     </ThemeProvider>
   </PreferencesProvider>,
 );

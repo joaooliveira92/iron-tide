@@ -19,7 +19,7 @@ export const PREFERENCE_SCOPES = ["app", "campaign", "session"] as const;
 
 export type PreferenceScope = (typeof PREFERENCE_SCOPES)[number];
 
-export const THEME_PREFERENCES = ["system", "light", "dark"] as const;
+export const THEME_PREFERENCES = ["system", "light", "dark", "highContrast"] as const;
 export type ThemePreference = (typeof THEME_PREFERENCES)[number];
 
 /** The eight existing backdrop styles. */
@@ -126,7 +126,7 @@ export type FormattingLocale = (typeof FORMATTING_LOCALES)[number];
 export const TEXT_SCALE_MIN = 85;
 export const TEXT_SCALE_MAX = 130;
 
-/** The app-scope preferences (D4). `highContrast` is deliberately deferred to U-4. */
+/** The app-scope preferences (D4). */
 export interface AppPreferences {
   readonly theme: ThemePreference;
   readonly background: BackgroundPreference;

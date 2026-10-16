@@ -33,7 +33,9 @@ const RULES = [
   { id: "toLocaleString", re: /\.toLocaleString\s*\(/u },
   { id: "toLocaleDateString", re: /\.toLocaleDateString\s*\(/u },
   { id: "toFixed", re: /\.toFixed\s*\(/u },
-  { id: "currency-symbol", re: /["'`][^"'`]*[£$€¥][^"'`]*["'`]/u },
+  { id: "currency-symbol", re: /[£€¥]/u },
+  // A literal dollar amount inside a string (`"$1,200"`), never template `${…}`.
+  { id: "dollar-amount", re: /["'`][^"'`]*\$\d[^"'`]*["'`]/u },
 ];
 
 function walk(dir, out = []) {
@@ -78,6 +80,8 @@ function selfTest() {
     { line: "const x = new Intl.NumberFormat('en-US');", expect: true },
     { line: "const x = value.toFixed(2);", expect: true },
     { line: "const x = '£1,200';", expect: true },
+    { line: "const x = ' $1,200 ';", expect: true },
+    { line: "const x = `${count} items`;", expect: false },
     { line: "const x = formatMoney(value, options);", expect: false },
   ];
   let ok = true;

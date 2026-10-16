@@ -18,7 +18,11 @@ function systemPrefersDark(): boolean {
 }
 
 export function resolveTheme(theme: Theme): "light" | "dark" {
-  return theme === "system" ? (systemPrefersDark() ? "dark" : "light") : theme;
+  if (theme === "system") return systemPrefersDark() ? "dark" : "light";
+  // High contrast is a dark-based theme; the `.high-contrast` class strengthens
+  // the dark tokens (map D3).
+  if (theme === "highContrast") return "dark";
+  return theme;
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -38,7 +42,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
-  }, [resolvedTheme]);
+    document.documentElement.classList.toggle("high-contrast", theme === "highContrast");
+  }, [resolvedTheme, theme]);
 
   const setTheme = (next: Theme) => setApp({ theme: next });
 

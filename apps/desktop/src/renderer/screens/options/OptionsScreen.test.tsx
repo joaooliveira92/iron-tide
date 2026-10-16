@@ -10,19 +10,36 @@ import {
 import { BackgroundProvider } from "../../shell/BackgroundContext.js";
 import { DensityProvider } from "../../shell/DensityContext.js";
 import { FontProvider } from "../../shell/FontContext.js";
+import { ThemeProvider } from "../../shell/ThemeContext.js";
 import { OptionsScreen } from "./OptionsScreen.js";
+
+beforeEach(() => {
+  // jsdom has no matchMedia; ThemeContext and DisplayPreferencesProvider read it.
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  })) as typeof window.matchMedia;
+});
 
 function renderOptions(stub: PreferencesBridgeStub) {
   return render(
     <BridgeProvider bridge={stub.bridge}>
       <PreferencesProvider>
-        <BackgroundProvider>
-          <FontProvider>
-            <DensityProvider>
-              <OptionsScreen />
-            </DensityProvider>
-          </FontProvider>
-        </BackgroundProvider>
+        <ThemeProvider>
+          <BackgroundProvider>
+            <FontProvider>
+              <DensityProvider>
+                <OptionsScreen />
+              </DensityProvider>
+            </FontProvider>
+          </BackgroundProvider>
+        </ThemeProvider>
       </PreferencesProvider>
     </BridgeProvider>,
   );

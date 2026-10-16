@@ -96,8 +96,8 @@ describe("preferences schema", () => {
     ).toBe(true);
   });
 
-  it("rejects an unknown value and the deferred highContrast theme", () => {
-    expect(Result.isFailure(decodeApp({ ...DEFAULT_APP_PREFERENCES, theme: "highContrast" }))).toBe(
+  it("accepts highContrast and still rejects unknown values", () => {
+    expect(Result.isSuccess(decodeApp({ ...DEFAULT_APP_PREFERENCES, theme: "highContrast" }))).toBe(
       true,
     );
     expect(Result.isFailure(decodeApp({ ...DEFAULT_APP_PREFERENCES, font: "comic-sans" }))).toBe(
