@@ -1,3 +1,4 @@
+import { groupedInteger } from "./numberText.js";
 import { powRational } from "@bluewave/deterministic";
 import type { Finding, Remedy } from "./findings.js";
 import { sortFindings } from "./findings.js";
@@ -116,7 +117,7 @@ export function reserveBuoyancyBp(h: HullSpec, form: HullForm): number {
   return toSafe("reserveBuoyancyBp", v);
 }
 
-const fmt = (n: number) => n.toLocaleString("en-US");
+const fmt = (n: number) => groupedInteger(n);
 
 /**
  * Computes the hull line, margin and reserve, completes the ledger and validates displacement and hull geometry.

@@ -1,3 +1,4 @@
+import { groupedInteger } from "./numberText.js";
 import type { ZoneId } from "./arrangement.js";
 import type { ComponentCategory } from "./component.js";
 import type { Finding } from "./findings.js";
@@ -86,7 +87,7 @@ export interface SystemsResult {
 }
 
 const BP = 10_000n;
-const fmt = (n: number) => n.toLocaleString("en-US");
+const fmt = (n: number) => groupedInteger(n);
 const byId = <T extends { instanceId: string }>(a: T, b: T) =>
   a.instanceId < b.instanceId ? -1 : a.instanceId > b.instanceId ? 1 : 0;
 

@@ -1,3 +1,4 @@
+import { groupedInteger } from "./numberText.js";
 import type { FlattenedPart, PartInterface } from "@bluewave/content-schema";
 import { compareCodePoints } from "@bluewave/deterministic";
 import { armourAvailabilityFindings, type ArmourRegion, type ArmourRegionId } from "./armour.js";
@@ -288,7 +289,7 @@ const ARMOUR_GATE_IDS: ReadonlySet<string> = new Set([
   "ARMOUR_TECH_UNAVAILABLE",
   "ARMOUR_THICKNESS_UNAVAILABLE",
 ]);
-const fmt = (n: number) => n.toLocaleString("en-US");
+const fmt = (n: number) => groupedInteger(n);
 
 /**
  * The legacy component categories that stood in for part interfaces before SPM-R18. Used only

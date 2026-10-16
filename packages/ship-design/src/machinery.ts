@@ -1,3 +1,4 @@
+import { groupedInteger } from "./numberText.js";
 import { integerRoot } from "@bluewave/deterministic";
 import type { Finding } from "./findings.js";
 import { sortFindings } from "./findings.js";
@@ -153,7 +154,7 @@ function rangeNm(i: MachineryInput, b: MachineryBalance, speedMilliKnots: number
   return toSafe("range", (usableKg * BigInt(speedMilliKnots)) / (BigInt(kgph) * 1000n));
 }
 
-const fmt = (n: number) => n.toLocaleString("en-US");
+const fmt = (n: number) => groupedInteger(n);
 const kn = (mk: number) => (mk / 1000).toFixed(1);
 
 export function compileMachinery(i: MachineryInput, b: MachineryBalance): MachineryResult {

@@ -10,6 +10,7 @@ import {
   type ConstructionBalance,
   type LineId,
 } from "./construction.js";
+import { groupedInteger } from "./numberText.js";
 import { classCode } from "./classification.js";
 import { computeCost, type CostBalance, type CostBreakdown, type CostContext } from "./cost.js";
 import { computeCve, CVE_LABEL, type CveBalance } from "./cve.js";
@@ -95,7 +96,7 @@ export interface WorkshopView {
 }
 
 const kn = (milli: number) => (milli / 1000).toFixed(1);
-const t = (kg: number) => Math.round(kg / 1000).toLocaleString("en-US");
+const t = (kg: number) => groupedInteger(Math.round(kg / 1000));
 
 /**
  * The view model behind every Drawing Board panel. Pure: same inputs, same output. No formulas live in the UI; this is the
@@ -141,7 +142,7 @@ export function buildWorkshopView(draft: DesignDraft, env: WorkshopEnvironment):
     {
       id: "range",
       label: "Range",
-      value: `${range.toLocaleString("en-US")} nm at ${kn(req.cruiseSpeedMilliKnots)} kn (need ${req.requiredRangeNm.toLocaleString("en-US")})`,
+      value: `${groupedInteger(range)} nm at ${kn(req.cruiseSpeedMilliKnots)} kn (need ${groupedInteger(req.requiredRangeNm)})`,
       tone: range >= req.requiredRangeNm ? "ok" : "warn",
     },
     {

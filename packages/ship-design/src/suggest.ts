@@ -1,3 +1,4 @@
+import { groupedInteger } from "./numberText.js";
 import type { CompiledDesign, DesignDraft, ShipContext } from "./compile.js";
 import { compileDesign } from "./compile.js";
 import { previewEdit, type DraftEdit } from "./edits.js";
@@ -16,7 +17,7 @@ export interface SuggestedFix {
 }
 
 const pct = (v: number, p: number) => Math.max(1, Math.floor((v * (100 + p)) / 100));
-const t = (v: number) => `${Math.round(v / 1000).toLocaleString("en-US")} t`;
+const t = (v: number) => `${groupedInteger(Math.round(v / 1000))} t`;
 const m = (v: number) => `${(v / 1000).toFixed(2)} m`;
 
 /** The fixed neighbourhood of simple, explainable edits. Pure function of the draft and context: no randomness. */
@@ -36,7 +37,7 @@ export function candidateEdits(
   for (const p of [-40, -20, -10, 10]) {
     out.push({
       edit: { kind: "set_machinery", patch: { installedKw: pct(mach.installedKw, p) } },
-      description: `${p < 0 ? "Reduce" : "Increase"} installed power to ${pct(mach.installedKw, p).toLocaleString("en-US")} kW`,
+      description: `${p < 0 ? "Reduce" : "Increase"} installed power to ${groupedInteger(pct(mach.installedKw, p))} kW`,
     });
   }
   out.push({

@@ -3,40 +3,30 @@ import { join, relative } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 
 /**
- * The domain presentation-leak ratchet (U-3 map D6, ADR-0218: "no authoritative
+ * The domain presentation-leak guard (U-3 map D6, ADR-0218: "no authoritative
  * package owns presentation text"). The precedent is
- * `packages/campaign-engine/test/priorities.test.ts`, which asserts one module is
- * clean; here the sweep across ship-design/phase-engine is frozen rather than
- * exhausted, so the leak cannot grow while the remaining sites are migrated.
+ * `packages/campaign-engine/test/priorities.test.ts`.
  *
- * Removal is a deliberate, owner-visible migration: the domain emits structured
- * explanation data and the renderer formats it. That touches authoritative
- * packages and their exact-string tests, so it is not attempted by a ratchet.
+ * Two levels:
+ *  - **locale-formatting is banned outright.** `toLocaleString`/`Intl` is
+ *    locale-dependent, so a domain string built with it can differ across
+ *    OSes/locales; the domain now renders deterministic integer text through
+ *    `ship-design/src/numberText.ts`.
+ *  - **the deterministic residue is ratcheted.** `toFixed` and the surrounding
+ *    string templates are the owner-reviewed structured-explanation migration;
+ *    the exact inventory is frozen so it cannot grow.
  */
 const REPO = join(import.meta.dirname, "..", "..", "..");
 const SCAN_DIRS = ["packages/ship-design/src", "packages/phase-engine/src"];
-const PATTERNS: readonly { readonly kind: string; readonly re: RegExp }[] = [
-  { kind: "toLocaleString", re: /\.toLocaleString\s*\(/u },
-  { kind: "toFixed", re: /\.toFixed\s*\(/u },
-  { kind: "Intl", re: /\bIntl\./u },
-];
 
-/** Frozen inventory of `file::kind` presentation-format sites (the debt). */
+/** Frozen inventory of `file::kind` deterministic-formatting sites (the debt). */
 const BASELINE = new Set([
-  "packages/ship-design/src/arrangement.ts::toLocaleString",
-  "packages/ship-design/src/armour.ts::toLocaleString",
-  "packages/ship-design/src/hull.ts::toLocaleString",
   "packages/ship-design/src/hull.ts::toFixed",
-  "packages/ship-design/src/machinery.ts::toLocaleString",
   "packages/ship-design/src/machinery.ts::toFixed",
   "packages/ship-design/src/rebuild.ts::toFixed",
-  "packages/ship-design/src/refit.ts::toLocaleString",
   "packages/ship-design/src/refit.ts::toFixed",
   "packages/ship-design/src/report.ts::toFixed",
-  "packages/ship-design/src/suggest.ts::toLocaleString",
   "packages/ship-design/src/suggest.ts::toFixed",
-  "packages/ship-design/src/systems.ts::toLocaleString",
-  "packages/ship-design/src/workshop.ts::toLocaleString",
   "packages/ship-design/src/workshop.ts::toFixed",
   "packages/phase-engine/src/reviseProject.ts::toFixed",
 ]);
@@ -50,28 +40,29 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
-function currentInventory(): Set<string> {
+function scan(re: RegExp): Set<string> {
   const found = new Set<string>();
   for (const dir of SCAN_DIRS) {
     for (const file of walk(join(REPO, dir))) {
-      const rel = relative(REPO, file);
-      const text = readFileSync(file, "utf8");
-      for (const { kind, re } of PATTERNS) {
-        if (re.test(text)) found.add(`${rel}::${kind}`);
-      }
+      if (re.test(readFileSync(file, "utf8"))) found.add(relative(REPO, file));
     }
   }
   return found;
 }
 
-describe("domain presentation-leak ratchet (U-3 ticket 06)", () => {
-  it("introduces no new per-file formatting pattern", () => {
-    const found = currentInventory();
-    const introduced = [...found].filter((entry) => !BASELINE.has(entry)).sort();
-    expect(introduced).toEqual([]);
+describe("domain presentation-leak guard (U-3 ticket 06)", () => {
+  it("uses no locale-dependent formatting in an authoritative package", () => {
+    expect([...scan(/\.toLocaleString\s*\(|\bIntl\./u)].sort()).toEqual([]);
   });
 
-  it("sees the frozen debt (so a clean result means something)", () => {
-    expect(currentInventory().size).toBeGreaterThan(0);
+  it("introduces no new deterministic `toFixed` site", () => {
+    const files = [...scan(/\.toFixed\s*\(/u)].map((file) => `${file}::toFixed`);
+    expect(files.filter((entry) => !BASELINE.has(entry)).sort()).toEqual([]);
+  });
+
+  it("deterministic integer grouping matches the former locale output", async () => {
+    const { groupedInteger } = await import("../src/numberText.js");
+    expect(groupedInteger(1_234_567)).toBe("1,234,567");
+    expect(groupedInteger(-1_200)).toBe("-1,200");
   });
 });
