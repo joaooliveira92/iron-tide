@@ -15,11 +15,17 @@ add a test that drives the compiled 1880 snapshot and asserts legality.
 **Blocked by:** None (can start immediately). Requires decision D1 before the
 rule can be fixed.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] D1 recorded as an ADR (per-nation completed techs vs global 1880 tech set).
-- [ ] Every starting ship resolves to a design, or carries a documented exemption.
-- [ ] A deterministic test compiles the 1880 pack and fails when any starting ship
-      is illegal under the chosen rule.
-- [ ] The 6 design-less ships are linked or exempted with a reason.
+- [x] D1 recorded as an ADR: ADR-0212 (global 1880 tech set; research gates new
+      construction, modernization and design, not inherited service).
+- [x] Every starting ship resolves to a design, or carries a documented exemption
+      (`packages/content-compiler/test/initialFleetLegality.test.ts`).
+- [x] A deterministic test compiles the 1880 pack and fails when any starting ship
+      is illegal under the chosen rule (verified red on a 1906 design link, green
+      on the shipped content).
+- [x] The 6 design-less ships are exempted with a reason: `aut_custoza`,
+      `fra_courbet`, `fra_devastation`, `ott_mesudiye`, `esp_numancia`,
+      `gbr_malta_temp`. The two French hulls are authored by ticket 03, the UK
+      placeholder by ticket 08.
 
