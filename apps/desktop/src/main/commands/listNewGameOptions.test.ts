@@ -12,12 +12,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-// content/production/1880 has 14 nations and, after DR-013 / ADR-0214, 10
-// playable. Four nations have zero designs *and* zero construction projects
-// (spain is a playable nation with a zero-content roster entry, plus the 4
-// AI-only nations), so they offer no player slot.
-const ZERO_CONTENT_NATIONS = ["spain", "ottoman_empire", "netherlands", "portugal", "brazil"];
-
 /** Runs the program through a per-test runtime and projects the wire envelope. */
 async function listNewGameOptions(artifactDir: string): Promise<BridgeResult<NewGameOptions>> {
   const runtime = ManagedRuntime.make(contentArtifactLayer(artifactDir));
@@ -77,17 +71,28 @@ describe("listNewGameOptions", () => {
     ]);
   });
 
-  it("excludes the zero-design/zero-construction nations from playerSlotId", async () => {
+  it("offers every playable nation with its own content as a player slot", async () => {
     const result = await listNewGameOptions(GENERATED_ARTIFACT);
     expect(result.outcome).toBe("success");
     if (result.outcome !== "success") return;
 
+    // N-1 (f966c06) gave every 1880 nation a starting design, so the
+    // zero-content "empty-nation" gap that once excluded Spain no longer applies:
+    // every playable nation offers a player slot. The four AI-only nations
+    // remain excluded because they are not playable.
     const playerSlotId = result.value.supportedValues.playerSlotId;
-    for (const excluded of ZERO_CONTENT_NATIONS) {
-      expect(playerSlotId).not.toContain(excluded);
-    }
-    // uk has both designs and construction projects; still a valid slot.
-    expect(playerSlotId).toContain("uk");
+    expect([...playerSlotId].sort()).toEqual([
+      "austria_hungary",
+      "france",
+      "germany",
+      "italy",
+      "japan",
+      "qing",
+      "russia",
+      "spain",
+      "uk",
+      "usa",
+    ]);
   });
 
   it("only lists supportedValues.playerSlotId nations among the scenario's playable nations", async () => {

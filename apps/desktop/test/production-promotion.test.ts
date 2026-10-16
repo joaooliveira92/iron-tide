@@ -123,10 +123,10 @@ describe("production-pack ship promotion (AC-1/AC-14)", () => {
     }
 
     expect(totalShips).toBeGreaterThan(0);
-    // Documented (not silent): the unlinked ships are exactly those classes with
-    // no authored 1880-era design. Reporting this residual gap keeps AC-14's
-    // per-ship promotion honest rather than fabricating a design for classes that
-    // have none.
+    // Documented (not silent): the residual unlinked ships are exactly those
+    // classes with no authored 1880-era design. Reporting this residual gap keeps
+    // AC-14's per-ship promotion honest rather than fabricating a design for
+    // classes that have none.
     expect(linked).toBeGreaterThan(0);
     expect(unlinkedIds.sort()).toEqual(["aut_custoza", "gbr_temeraire"]);
   });

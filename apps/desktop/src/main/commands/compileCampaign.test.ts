@@ -130,7 +130,12 @@ describe("compileCampaign", () => {
     expect(chooseSaveDirectoryCalls).toBe(0);
   });
 
-  it("rejects a zero-design/zero-construction nation as a player slot", async () => {
+  it("accepts Spain — a playable nation with 1880 content — as a player slot", async () => {
+    const result = await compileCampaign(baseConfiguration({ playerSlotId: "spain" }));
+    expect(result.outcome).toBe("success");
+  });
+
+  it("rejects a non-playable nation as a player slot", async () => {
     const result = await compileCampaign(baseConfiguration({ playerSlotId: "ottoman_empire" }));
     expect(result.outcome).toBe("rejected");
     if (result.outcome !== "rejected") return;
