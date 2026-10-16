@@ -14,7 +14,7 @@ import type {
   NationState,
 } from "@bluewave/campaign";
 import { canTransitionConstructionProject, monthId, toLinear } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import { SafeInt, money } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import {
   dockRecordFor,
@@ -232,7 +232,7 @@ export function buildForeignConstructionContract(
     designVersionId: input.designVersionId,
     quantity: t.quantity,
     totalWorkPerUnit: t.totalWorkPerUnit,
-    totalPriceUnits: t.totalPriceUnits,
+    totalPriceUnits: money(t.totalPriceUnits),
     currencyUnit: t.currencyUnit ?? "treasury_unit",
     paymentSchedule: t.paymentSchedule.map((i) => ({ ...i })),
     capacityReservationSchedule: [

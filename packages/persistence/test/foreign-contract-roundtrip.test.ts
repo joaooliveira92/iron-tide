@@ -10,7 +10,7 @@ import type {
   ForeignConstructionContract,
   NationState,
 } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import { bp, money, SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
@@ -25,11 +25,11 @@ const contract: ForeignConstructionContract = {
   designVersionId: "dv-1",
   quantity: 2,
   totalWorkPerUnit: 500,
-  totalPriceUnits: 10_000,
+  totalPriceUnits: money(10_000),
   currencyUnit: "treasury_unit",
   paymentSchedule: [
-    { dueMonth: "1880-01", amountUnits: 5_000, workShareBp: 5_000 },
-    { dueMonth: "1880-04", amountUnits: 5_000, workShareBp: 5_000 },
+    { dueMonth: "1880-01", amountUnits: money(5_000), workShareBp: bp(5_000) },
+    { dueMonth: "1880-04", amountUnits: money(5_000), workShareBp: bp(5_000) },
   ],
   capacityReservationSchedule: [
     { month: "1880-01", reservedMassKg: 10_000_000, pool: "NEW_CONSTRUCTION" },

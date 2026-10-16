@@ -18,6 +18,7 @@ export {
   kw,
   litre,
   mmToUm,
+  money,
   mulBp,
   toSafe,
   um,
@@ -26,6 +27,7 @@ export {
   type Kg,
   type Kw,
   type Litre,
+  type Money,
   type Um,
   type UmPerSec,
 } from "@bluewave/contracts";

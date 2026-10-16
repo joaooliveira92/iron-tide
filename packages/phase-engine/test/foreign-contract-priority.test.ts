@@ -2,7 +2,7 @@
 // legally mandatory domestic work and before new discretionary domestic projects; allocation is deterministic and
 // never sells the same capacity twice.
 import type { CampaignSnapshot, ForeignConstructionContract } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import { bp, money, SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import { buildForeignConstructionContract } from "../src/foreignConstruction.js";
 import {
@@ -99,8 +99,8 @@ function contractWith(
       builderShipyardId: "yard-1",
       quantity: 1,
       totalWorkPerUnit: 100,
-      totalPriceUnits: 1000,
-      paymentSchedule: [{ dueMonth: MONTH_ID, amountUnits: 1000, workShareBp: 10_000 }],
+      totalPriceUnits: money(1000),
+      paymentSchedule: [{ dueMonth: MONTH_ID, amountUnits: money(1000), workShareBp: bp(10_000) }],
       authorizationMonth: MONTH_ID,
       plannedKeelMonth: MONTH_ID,
       plannedDeliveryMonth: MONTH_ID,
