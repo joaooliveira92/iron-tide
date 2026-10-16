@@ -56,9 +56,20 @@ export const um = (v: number): Um => checked<Um>("Um", v, 0);
 export const umPerSec = (v: number): UmPerSec => checked<UmPerSec>("UmPerSec", v, 0);
 export const litre = (v: number): Litre => checked<Litre>("Litre", v, 0);
 export const kw = (v: number): Kw => checked<Kw>("Kw", v, 0);
-export const money = (v: number): Money => checked<Money>("TreasuryUnit", v, 0);
+/** Canonical money is signed: the treasury and ledger model deficits (map D3). */
+export const money = (v: number): Money =>
+  checked<Money>("TreasuryUnit", v, Number.MIN_SAFE_INTEGER);
 /** Basis points may be negative (modifiers); `10_000 bp = 100 %`. */
 export const bp = (v: number): Bp => checked<Bp>("Bp", v, Number.MIN_SAFE_INTEGER);
+
+/** `_tag`-based narrowing for a thrown value (RULES.md "Errors": discriminate by `_tag`). */
+export function isUnitError(value: unknown): value is UnitError {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as { readonly _tag?: unknown })._tag === "UnitError"
+  );
+}
 
 /** Convert an authored design value in knots to canonical micrometres per second. */
 export const knotsToUmPerSec = (knots: number): UmPerSec => umPerSec(knots * KNOTS_TO_UMS);

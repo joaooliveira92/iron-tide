@@ -7,6 +7,7 @@ import {
   UnitError,
   bp,
   ceilDiv,
+  isUnitError,
   kg,
   kw,
   litre,
@@ -37,22 +38,22 @@ describe("canonical unit constructors", () => {
   });
 
   it("rejects a non-integer", () => {
-    expect(() => kg(1.5)).toThrow();
-    expect(() => um(NaN)).toThrow();
-    expect(() => umPerSec(Infinity)).toThrow();
+    expect(() => kg(1.5)).toThrow(UnitError);
+    expect(() => um(NaN)).toThrow(UnitError);
+    expect(() => umPerSec(Infinity)).toThrow(UnitError);
   });
 
   it("rejects an unsafe integer", () => {
-    expect(() => litre(Number.MAX_SAFE_INTEGER + 1)).toThrow();
-    expect(() => kw(Number.MIN_SAFE_INTEGER - 1)).toThrow();
+    expect(() => litre(Number.MAX_SAFE_INTEGER + 1)).toThrow(UnitError);
+    expect(() => kw(Number.MIN_SAFE_INTEGER - 1)).toThrow(UnitError);
   });
 
   it("rejects a negative magnitude", () => {
-    expect(() => kg(-1)).toThrow();
-    expect(() => money(-1)).toThrow();
+    expect(() => kg(-1)).toThrow(UnitError);
   });
 
-  it("allows a negative ratio (basis points are modifiers)", () => {
+  it("allows signed money and ratios (treasury models deficits)", () => {
+    expect(money(-1)).toBe(-1);
     expect(bp(-100)).toBe(-100);
   });
 
@@ -61,7 +62,7 @@ describe("canonical unit constructors", () => {
       kg(1.5);
       expect.unreachable("should have thrown");
     } catch (error) {
-      expect((error as UnitError)._tag).toBe("UnitError");
+      expect(isUnitError(error)).toBe(true);
     }
   });
 });

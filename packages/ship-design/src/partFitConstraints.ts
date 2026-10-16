@@ -9,10 +9,8 @@
  */
 import type { FlattenedPart, NestedLoadoutEntry, SlotData } from "@bluewave/content-schema";
 import { basisMultiplier } from "./partQuantities.js";
+import { UM_PER_INCH } from "./units.js";
 import type { FitAppliedWaiver, FitDetail } from "./partFitTypes.js";
-
-/** One inch in micrometres: the slot's whole-inch calibre bounds are compared exactly. */
-const UM_PER_INCH = 25_400;
 
 export type ResolvedSpec = Readonly<Record<string, unknown>>;
 
