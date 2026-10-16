@@ -535,12 +535,6 @@ importers:
       '@bluewave/campaign':
         specifier: workspace:*
         version: link:../campaign
-      '@bluewave/content-schema':
-        specifier: workspace:*
-        version: link:../content-schema
-      '@bluewave/contracts':
-        specifier: workspace:*
-        version: link:../contracts
       '@bluewave/deterministic':
         specifier: workspace:*
         version: link:../deterministic
@@ -551,6 +545,9 @@ importers:
         specifier: workspace:*
         version: link:../../vendor/effect
     devDependencies:
+      '@bluewave/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@bluewave/test-support':
         specifier: workspace:*
         version: link:../test-support

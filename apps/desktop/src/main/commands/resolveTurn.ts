@@ -99,6 +99,7 @@ function toRequestDto(request: InterruptionRequest): InterruptionRequestDto {
 function validatePending(
   pending: PendingTurnRecord,
   session: {
+    rawHash: string;
     snapshot: {
       campaignId: string;
       turnNumber: number;
@@ -115,6 +116,7 @@ function validatePending(
   });
   const valid =
     expectedTurnId === pending.turnId &&
+    pending.contentHashes.contentArtifact === session.rawHash &&
     isPendingTurnValid(pending, {
       campaignId: session.snapshot.campaignId,
       startingRevision: Number(session.snapshot.turnNumber),
@@ -318,8 +320,15 @@ export const abandonPendingTurnProgram = withSchema(SessionIdPayloadSchema, (ses
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
     const value: AbandonPendingTurnResult = { abandoned: true };
-    yield* Effect.sync(() => {
-      clearPendingTurn(record.saveDir);
+    yield* Effect.try({
+      try: () => {
+        clearPendingTurn(record.saveDir);
+      },
+      catch: (error) =>
+        new CommandFailed({
+          reason: "PENDING_TURN_CLEAR_FAILED",
+          diagnostics: [error instanceof Error ? error.message : String(error)],
+        }),
     });
     return { outcome: "success" as const, value, diagnostics: [] };
   }),

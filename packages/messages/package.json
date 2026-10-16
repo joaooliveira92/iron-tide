@@ -11,13 +11,12 @@
   },
   "dependencies": {
     "@bluewave/campaign": "workspace:*",
-    "@bluewave/content-schema": "workspace:*",
-    "@bluewave/contracts": "workspace:*",
     "@bluewave/deterministic": "workspace:*",
     "@bluewave/events": "workspace:*",
     "effect": "workspace:*"
   },
   "devDependencies": {
+    "@bluewave/contracts": "workspace:*",
     "@bluewave/test-support": "workspace:*"
   },
   "scripts": {

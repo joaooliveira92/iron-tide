@@ -22,9 +22,11 @@ const GENERIC_FALLBACK_TEXT = "Something happened this month.";
 
 let injected: UiCatalogueDto | null = null;
 
-/** Injectable warning sink; defaults to a development `console.warn`, else no-op. */
+/** Injectable warning sink; warns in development only (ADR-0209), else no-op. */
 let missingKeyWarned: (key: string) => void = (key) => {
-  console.warn(`[messages] missing UI catalogue key: ${key}`);
+  if (import.meta.env?.DEV) {
+    console.warn(`[messages] missing UI catalogue key: ${key}`);
+  }
 };
 
 /** Inject the decoded catalogue (from IPC in the app, from the artifact in tests). */

@@ -5,11 +5,5 @@
     "rootDir": "src"
   },
   "include": ["src"],
-  "references": [
-    { "path": "../contracts" },
-    { "path": "../deterministic" },
-    { "path": "../content-schema" },
-    { "path": "../campaign" },
-    { "path": "../events" }
-  ]
+  "references": [{ "path": "../deterministic" }, { "path": "../campaign" }, { "path": "../events" }]
 }

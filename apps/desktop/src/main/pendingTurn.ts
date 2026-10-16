@@ -49,9 +49,9 @@ export function loadPendingTurn(saveDir: string): PendingTurnRecord | null {
   const path = join(saveDir, PENDING_TURN_FILENAME);
   if (!existsSync(path)) return null;
   try {
-    const parsed = Schema.decodeUnknownResult(PendingTurnSchema)(
-      JSON.parse(readFileSync(path, "utf8")),
-    );
+    const parsed = Schema.decodeUnknownResult(PendingTurnSchema, {
+      onExcessProperty: "error",
+    })(JSON.parse(readFileSync(path, "utf8")));
     if (Result.isFailure(parsed)) return null;
     return parsed.success;
   } catch {

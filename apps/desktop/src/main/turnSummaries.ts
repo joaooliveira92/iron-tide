@@ -58,9 +58,9 @@ export function loadTurnSummaries(saveDir: string): TurnSummaries {
   const path = join(saveDir, TURN_SUMMARIES_FILENAME);
   if (!existsSync(path)) return emptyTurnSummaries();
   try {
-    const parsed = Schema.decodeUnknownResult(TurnSummariesSchema)(
-      JSON.parse(readFileSync(path, "utf8")),
-    );
+    const parsed = Schema.decodeUnknownResult(TurnSummariesSchema, {
+      onExcessProperty: "error",
+    })(JSON.parse(readFileSync(path, "utf8")));
     if (Result.isFailure(parsed)) return emptyTurnSummaries();
     return parsed.success;
   } catch {
