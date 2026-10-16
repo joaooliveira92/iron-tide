@@ -22,6 +22,37 @@ import { runForeignContractPhase } from "./foreignContractPhase.js";
 import { budgetChangedEvent, constructionDelayedEvent, makeLedgerEntry } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
 
+/**
+ * Largest-remainder (Hamilton) apportionment of `total` across integer `weights`, deterministic and exact: the parts
+ * sum to `total` — the single rounding point — with the remainder assigned to the largest fractional parts (ties broken
+ * by index). Integer/bigint only, so no float reaches the funding split (map D4/D5).
+ */
+export function splitLargestRemainder(total: number, weights: readonly number[]): number[] {
+  const weightSum = weights.reduce((sum, weight) => sum + weight, 0);
+  if (weightSum <= 0) return weights.map(() => 0);
+  const totalBig = BigInt(total);
+  const weightSumBig = BigInt(weightSum);
+  const base: number[] = [];
+  const remainders: { index: number; remainder: bigint }[] = [];
+  let assigned = 0n;
+  for (let index = 0; index < weights.length; index += 1) {
+    const numerator = totalBig * BigInt(weights[index]!);
+    const quotient = numerator / weightSumBig;
+    base.push(Number(quotient));
+    remainders.push({ index, remainder: numerator % weightSumBig });
+    assigned += quotient;
+  }
+  const leftover = Number(totalBig - assigned);
+  remainders.sort((a, b) =>
+    b.remainder === a.remainder ? a.index - b.index : b.remainder > a.remainder ? 1 : -1,
+  );
+  for (let i = 0; i < leftover; i += 1) {
+    const index = remainders[i]!.index;
+    base[index] = base[index]! + 1;
+  }
+  return base;
+}
+
 function computeMaintenanceCost(ship: Ship): SafeInt {
   return SafeInt.div(SafeInt.mul(ship["hitPoints"], SafeInt(10)), SafeInt(100), "floor");
 }
@@ -251,12 +282,17 @@ export function runAppropriationPhase(ctx: MonthContext): void {
         let remainingCap = constructionCap;
         updatedProjects = [...updatedProjects];
 
-        for (const project of fundable) {
+        const remainingWorks = fundable.map((p) =>
+          Number(SafeInt.sub(p["totalWork"], p["completedWork"])),
+        );
+        const allocations = splitLargestRemainder(available as number, remainingWorks);
+
+        for (let fi = 0; fi < fundable.length; fi += 1) {
+          const project = fundable[fi]!;
           if ((remainingCap as number) <= 0) break;
 
           const remainingWork = SafeInt.sub(project["totalWork"], project["completedWork"]);
-          const proportion = (remainingWork as number) / (totalRemainingWork as number);
-          const alloc = SafeInt(Math.floor(proportion * (available as number)));
+          const alloc = SafeInt(allocations[fi]!);
           const cappedAlloc =
             (remainingCap as number) > 0 && alloc > remainingCap ? remainingCap : alloc;
           const clampedAlloc = cappedAlloc > remainingWork ? remainingWork : cappedAlloc;
