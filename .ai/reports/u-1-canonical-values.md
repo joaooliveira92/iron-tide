@@ -1,197 +1,193 @@
-# Validation Report: U-1 Canonical values (scoping sprint)
+# Validation Report: U-1 Canonical values (acceptance)
 
 ## Outcome
 
-`IN_PROGRESS` — the scoping deliverable (chart → research → spec → slice → brief →
-traceability) is complete, and implementation tickets **01–07** are done and green
-on their focused validation. Only **ticket 08 (U-1 acceptance)** remains: the six
-criteria traced to named tests/gates, the implementation ADRs recorded and indexed
-(`pnpm adr:index`), and the full validation gate green on the exact commit. The
-"Requirements evidence" and "Commands and observed results" below cover the scoping
-deliverable; the ticket-07 evidence is in "Ticket 07 — combat strength and resolver
-to fixed-point" further down.
+`PASS`.
+
+Ticket 08 — the U-1 acceptance pass — is complete. All six `.ai/SPRINT-PLAN.md`
+U-1 acceptance criteria are traced to named tests/gates; the five implementation
+ADRs are recorded and indexed; and the full orchestrator validation gate is green
+on the exact commit. Tickets 01–07 (the implementation) were delivered earlier;
+this report supersedes the scoping-sprint report and carries the acceptance
+evidence.
 
 ## Scope delivered
 
-Delivered (documentation/planning only):
+Implemented across tickets 01–07 (commits `c93fa69`…`5e0bcb6` on the U-1 lane):
 
-- the wayfinder map and route decisions `.scratch/u-1-canonical-values/map.md` +
-  `decisions/D1`–`D7`;
-- the grounding research note `docs/research/u-1-canonical-values.md`;
-- the spec `.scratch/u-1-canonical-values/spec.md` (to-spec format; six U-1
-  acceptance criteria traced to requirement IDs and proving tests/gates);
-- eight tracer-bullet tickets `.scratch/u-1-canonical-values/issues/01`–`08`;
-- the milestone brief `.ai/briefs/u-1-canonical-values.md`;
-- traceability: `.ai/specs/u-1-canonical-values.md` pointer and the
-  `.ai/SPRINT-PLAN.md` Frontier update.
+- one canonical units module in `packages/contracts` (`packages/contracts/src/units.ts`);
+- consolidation of the ship-design/campaign unit brands onto it (one definition),
+  value-preserving;
+- one branded fixed-precision `Money` type in treasury units, every authoritative
+  money/ratio field branded, and the single declared-rounding micro→unit bridge;
+- checked rounding helpers and the authoritative-float gate;
+- the domain-package formatting-leak removal and the canonical↔display / language
+  vs locale boundary;
+- the combat strength/resolver and construction-capacity float→fixed conversions.
 
-Deferred (not started): every implementation ticket 01–08. Value-preserving
-tickets 01–05 are on the frontier; tickets 06–08 (combat/economy float→fixed
-conversions and U-1 acceptance) are gated by decision request 0005.
+Delivered in this acceptance pass (ticket 08):
+
+- ADR-0215–ADR-0219, recorded and indexed (`pnpm adr:index`);
+- this acceptance report;
+- the ticket-08 resolution and the `.ai/SPRINT-PLAN.md` Frontier update.
+
+Explicitly deferred (out of U-1 scope, per spec): the preferences domain/schema
+(U-2); the central formatters/parsers, currency rendering and Options screen
+(U-3/U-4); the presentation-invariance tests (U-5); the ship-design/phase-engine
+display-formatting sweep and the component-scoped `Intl`/`toLocaleString`/`toFixed`
+gate (U-3); and the final home of the presentation conversion module (U-2/U-3).
+Per-nation National Historical currency content is U-3.
 
 ## Requirements evidence
 
-No code symbols are claimed: this sprint changed documentation only. The spec's
-"Acceptance criteria traceability" table maps each `.ai/SPRINT-PLAN.md` U-1
-criterion to requirement IDs (BW-PRS-001/004, BW-DET-001/003, BW-ARC-001/002,
-BW-STA-001, BW-RUL-001) and to the tests/gates that must prove it at
-implementation. Brief: `.ai/briefs/u-1-canonical-values.md`.
+| #   | U-1 acceptance criterion                        | Requirement IDs                                            | Proving test / gate (observed)                                                                                                                                                                                                                                    |
+| --- | ----------------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Canonical unit table                            | BW-PRS-001, BW-DET-001; ADR-0202, ADR-0215                 | `packages/contracts/test/units.test.ts` ("declares the canonical unit table"; constructors reject non-integer/unsafe/negative); `packages/ship-design/test/units-consolidation.test.ts` (one definition re-exported); `assert-runtime-free` (15 roots)            |
+| 2   | Fixed-precision integer monetary representation | BW-PRS-001, BW-DET-001, BW-STA-001; ADR-0216               | `packages/ship-design/test/treasury-units.test.ts` (ceil, never zero, exact beyond double precision, single declared mode, typed reject); `packages/ship-design/test/persistence.test.ts` (`FLOAT_IN_STATE`); `packages/phase-engine/test/economy.test.ts` ledger |
+| 3   | Rounding and number-formatting boundaries       | BW-DET-001/003, BW-RUL-001; ADR-0217                       | `packages/contracts/test/units.test.ts` (`mulBp`/`ceilDiv`/`toSafe`); `node scripts/assert-authoritative-determinism.mjs --self-test` (21 fixtures, float fixture fails); the gate on the clean tree; `packages/phase-engine/test/economy.test.ts`                |
+| 4   | UI language and formatting locale separate      | BW-PRS-004; ADR-0209, ADR-0218                             | `packages/campaign-engine/test/priorities.test.ts` ("builds no locale-formatted strings (map D6)"); the boundary split is fixed in ADR-0218                                                                                                                       |
+| 5   | Audit of float or display-leaking values        | BW-DET-001, BW-ARC-001/002, BW-STA-001; ADR-0217, ADR-0219 | `assert-authoritative-determinism` `FLOAT_ROOTS` float gate; `packages/combat/test/combat.test.ts` (`damagePotential`/`survivability`/`strength` fixed-point); `packages/phase-engine/test/battle-resolution-phase.test.ts`; `new-construction-capacity.test.ts`  |
+| 6   | Conversion only at the application boundary     | BW-PRS-001, BW-ARC-001; ADR-0218                           | `packages/ship-design/test/persistence.test.ts` (save stores only integers, no formatted text); `packages/campaign-engine/test/priorities.test.ts` (no domain formatting); ADR-0218 boundary                                                                      |
+
+All six criteria are proved by a named deterministic test or a standing gate; no
+criterion rests on "code exists" alone.
 
 ## Commands and observed results
 
 ```text
 pnpm preflight
-exit 0 — 40 tasks; docs links/anchors, ADR index, deferrals, doc budgets,
-no-unknown-casts, boundary decode, tagged errors, runtime-free, single-effect,
-tracker consistency all green ("vp run: 0/40 cache hit")
+exit 0 — "vp run: 0/40 cache hit (0%)": git state, single-copy effect, dependency
+policy, docs links/anchors/ADR index/status/supersession/deferrals/DESIGN
+amendments/doc budgets, no-new-unknown-casts, boundary decode (cli/desktop/
+compiler), tagged errors (engine/surface), runtime-free (15 roots),
+authoritative-determinism (15 roots, no ambient determinism), single-effect,
+vitest-config parity (22 projects), stage-io, content-gate, content-lock,
+tracker-consistency all green.
 
 pnpm test:scripts
-exit 0 — tests 200, pass 200, fail 0, cancelled 0, skipped 0 (1328 ms)
+exit 0 — tests 200, pass 200, fail 0, cancelled 0, skipped 0.
 
-pnpm format
-exit 0 — "All matched files use the correct format." (2599 files)
+node scripts/assert-authoritative-determinism.mjs --self-test
+exit 0 — "self-test ok (21 fixtures)" (the fractional-float-literal and
+parseFloat fixtures fail as required; the integer/BigInt/string fixtures pass).
+
+node scripts/assert-authoritative-determinism.mjs
+exit 0 — "ok (15 roots, no ambient determinism)".
+
+pnpm check    (full end-to-end gate, run on the exact commit)
+exit 0 — pnpm preflight; pnpm format (all matched files correct); pnpm lint;
+pnpm lint:effect; pnpm test:scripts; pnpm check:licenses; pnpm typecheck
+(vp run -r build + typecheck); pnpm build; pnpm content:verify; pnpm test:run
+(full recursive suite); pnpm test:heavy; pnpm check:golden ("All 11 hashes match
+golden reference"); pnpm check:determinism ("cross-process determinism: two runs
+byte-identical"); pnpm check:equivalence ("two fresh processes byte-identical");
+pnpm check:golden-repin (skipped — the baseline range is unavailable in this
+clone); pnpm check:balance-reports ("ok (reports match the deterministic
+benchmark)"); pnpm test:e2e ("30 passed").
 ```
-
-Not run, and why:
-
-- `pnpm check` end-to-end and `node scripts/verify-golden-hashes.cjs` — `check:golden`
-  cannot run because `golden/hashes.json` does not exist (pre-existing root
-  blocker, decision request 0005). No code or authoritative artifact changed in
-  this sprint, so the code/test/build gates are unchanged from the 2026-10-15
-  baseline.
 
 ## Determinism evidence
 
-- Content artifact hash: unavailable — no content or authoritative artifact changed.
-- Initial/closing snapshot hash: unavailable — no code changed.
-- Command/event/financial/random-decision ledger hashes: unavailable — not run.
-- Replay result: unavailable — no code changed.
+- Content artifact hash: unchanged — no content file changed in U-1
+  (`content-lock` verified, version 0.5.0).
+- Cross-process reference run: two child runs **byte-identical** (`check:determinism`).
+- Golden hashes: **11/11 match** the committed reference (`check:golden`).
+- Equivalence/codemod determinism: two fresh processes byte-identical.
+- Combat reviewed delta (ticket 07): a 4000-matchup sweep + the 7 named fixture
+  battles are exactly value-preserving — 0 winner flips, 0 loss flips, 0
+  damage-value diffs (max |Δ| = 0).
+- Construction-capacity split (ticket 06): the reference run does not move; the
+  largest-remainder split differs from the old floor-per-project only when two or
+  more projects are funded.
+- Replay result: covered by `packages/phase-engine/test/*replay*` and the
+  `continuance` desktop E2E (Replay completes deterministically).
 - Processes and operating systems used: darwin (macOS), Node per the repo policy.
-
-Marked unavailable, not passed: a documentation-only sprint produces no new
-authoritative evidence.
 
 ## Canonical artifact changes
 
-None. No old/new hash pair; no version impact; no migration; no regeneration
-required.
+None. No old/new hash pair; no version impact; no migration; no regeneration. The
+float→fixed conversions are exactly value-preserving for the reference run, so
+`check:golden` and `check:determinism` are green without a re-pin
+(`Golden-Repin: not-needed`).
 
 ## Tests added
 
-None (scoping sprint). The spec/`issues` name the tests to add at implementation.
+Added across tickets 01–07 (not in this acceptance pass): the canonical-units
+module tests (`packages/contracts/test/units.test.ts`), units-consolidation,
+treasury-bridge, rounding/float-gate fixtures, the capacity largest-remainder
+test (`packages/phase-engine/test/construction-capacity.test.ts`), the
+priorities no-locale-formatting guard, and the combat fixed-point tests
+(`packages/combat/test/combat.test.ts`, `battle-resolution-phase.test.ts`). The
+acceptance pass adds no tests; it proves the existing ones plus the gate.
 
 ## Security and cancellation
 
-No change. No trust boundary, parser, path, temp-output, abort or cleanup code was
-touched.
+No change. No trust boundary, parser, path, temp-output, abort, or cleanup code
+was touched. The save boundary still rejects floats (`FLOAT_IN_STATE`).
 
 ## Performance observations
 
-None collected. No performance-sensitive code changed.
+None authoritative. The float→fixed conversions are integer/bigint arithmetic;
+the float gate runs inside the standing `preflight`/`check` gates with no
+material cost. The 4000-matchup review sweep is a test-harness measurement, not
+a budget.
 
 ## ADRs and dependencies
 
-- No ADR recorded in this sprint (scoping). The brief lists the implementation
-  ADRs U-1 must record: canonical unit table and its home; money type, scale and
-  the single bridge rounding mode; rounding/fixed-point rules and the
-  authoritative-float gate; the conversion/locale boundary; the float→fixed
-  conversion and its re-pin.
+- New ADRs (all indexed via `pnpm adr:index`):
+  - **ADR-0215** — canonical units module and its home in `packages/contracts`.
+  - **ADR-0216** — fixed-precision money type, treasury-unit scale, and the
+    micro→unit bridge.
+  - **ADR-0217** — rounding/fixed-point rules and the authoritative-float gate.
+  - **ADR-0218** — conversion and locale boundary.
+  - **ADR-0219** — combat and construction-capacity float→fixed conversion and
+    its re-pin.
 - No new dependencies.
 
 ## Known limitations and deferred requirements
 
-- U-1 is not accepted; only tickets 01–07 are done. Ticket 08 carries acceptance.
-- The golden baseline now exists; tickets 06–08 are no longer gated by 0005.
-- The combat float→fixed conversion delta is measured and reported: exactly
-  value-preserving (see "Ticket 07" above).
-- National Historical currency configuration content needs an owner and primary
-  historical sources; it is U-3 content, not U-1.
+- U-1 changes representation, not balance. The two converted float paths are
+  exactly value-preserving for the reference run.
+- Deferred to later sprints (unchanged from the spec's Out of Scope): the
+  preferences domain (U-2); formatters/parsers, currency rendering and the
+  Options screen (U-3/U-4); presentation-invariance tests (U-5); the remaining
+  display-formatting sweep and the component-scoped `Intl` gate (U-3); the
+  presentation conversion module's final home (U-2/U-3); and National Historical
+  currency content (U-3).
+- `check:golden-repin` skips because the branch-point revision is unavailable in
+  this clone — a pre-existing environmental condition, not a gate weakening.
 
 ## Changed files
 
-- `.ai/SPRINT-PLAN.md` — Frontier updated to record U-1 scoped and to point the
-  actionable frontier at U-1 tickets 01–05.
-- `.ai/briefs/u-1-canonical-values.md` — new milestone brief.
-- `.ai/specs/u-1-canonical-values.md` — new spec pointer.
-- `.ai/reports/u-1-canonical-values.md` — this report.
-- `.scratch/u-1-canonical-values/` — new: `map.md`, `spec.md`,
-  `decisions/D1`–`D7`, `issues/01`–`08`.
-- `docs/research/u-1-canonical-values.md` — new research note.
+- `docs/adr/ADR-0215-canonical-units-module.md` — new.
+- `docs/adr/ADR-0216-money-type-and-treasury-bridge.md` — new.
+- `docs/adr/ADR-0217-rounding-and-authoritative-float-gate.md` — new.
+- `docs/adr/ADR-0218-conversion-and-locale-boundary.md` — new.
+- `docs/adr/ADR-0219-combat-and-capacity-fixed-point-repin.md` — new.
+- `docs/adr/README.md` — regenerated index (next number ADR-0220).
+- `scripts/adr-index.cjs` — AREAS map partitioned to include ADR-0215–0219.
+- `.ai/reports/u-1-canonical-values.md` — this acceptance report.
+- `.scratch/u-1-canonical-values/issues/08-u-1-acceptance.md` — resolution.
+- `.ai/SPRINT-PLAN.md` — Frontier advanced past U-1.
 
-## Ticket 07 — combat strength and resolver to fixed-point (validation)
+## Git and remote status
 
-Converted `packages/combat/src/strength.ts` and `packages/combat/src/resolver.ts`
-from float arithmetic to fixed-point integer/bigint arithmetic with one rounding
-point; no float remains on any battle-outcome or hashed-projection path. See the
-ticket's `## Resolution` (`.scratch/u-1-canonical-values/issues/07-combat-strength-fixed-point.md`).
-
-Changed files: `packages/combat/src/strength.ts`, `packages/combat/src/resolver.ts`,
-`packages/combat/test/combat.test.ts`,
-`packages/phase-engine/test/battle-resolution-phase.test.ts`.
-
-```text
-pnpm exec vp run --no-cache -r build
-exit 0 — 0/24 cache hit; renderer bundle clean
-
-pnpm exec tsc -b
-exit 0
-
-pnpm lint
-exit 0 — "Found 0 warnings and 0 errors." (2411 files)
-
-pnpm format
-exit 0 — "All matched files use the correct format." (2612 files)
-
-pnpm --filter @bluewave/combat test
-exit 0 — 287 files, 3774 tests passed
-
-pnpm --filter @bluewave/phase-engine test
-exit 0 — 52 files, 537 tests passed
-
-pnpm test:run
-exit 0 — desktop 2059 passed | 1 skipped (full recursive suite green)
-
-node packages/cross-process-test/dist/run-child.js   (twice)
-byte-identical (diff -q clean)
-
-pnpm check:golden
-exit 0 — "All 11 hashes match golden reference" (reference run unchanged)
-
-pnpm check:determinism
-exit 0 — two child runs byte-identical
-
-pnpm check:authoritative-determinism   (+ --self-test)
-exit 0 — 15 roots, no ambient determinism; self-test 21 fixtures ok
-
-pnpm preflight
-exit 0 — 40 tasks
-
-pnpm test:scripts
-exit 0 — tests 200, pass 200, fail 0
-```
-
-Reviewed delta: a 4000-matchup sweep plus the seven named fixture battles show the
-refactor is **exactly value-preserving** — 4000/4000 identical, 0 winner flips, 0
-loss flips, 0 damage-value diffs (max |Δ| = 0). No golden re-pin required
-(`Golden-Repin: not-needed`); no compatibility bump (joins the S-1 `3.0.0`
-release window).
-
-- Branch: `refactor/comment-prune-sweep-a` (the plan's documented baseline branch).
-- Commits: this sprint's Conventional Commit on the branch
-  (`docs(campaigns): chart and slice the U-1 canonical-values sprint`).
+- Branch: `chore/u-1-acceptance` (never `dev`/`main`, per ADR-0165).
+- Commits: one Conventional Commit for the acceptance pass (recorded below).
 - Working tree: clean after the commit.
-- Push status: not pushed — no remote is configured in this checkout.
-- Pull request: none (no remote).
+- Push status: pushed to `origin` (remote configured in this checkout).
+- Pull request: opened against `dev`.
 - Merge performed: no.
 
 ## Secondary consistency check
 
-- `pnpm preflight` re-run green, including `verify-tracker-consistency` (the ticket
-  `Blocked by:` references resolve to siblings; the spec advertises `ready-for-agent`
-  with non-terminal tickets, so no false-done warning).
-- Re-read `map.md`, `spec.md` and the eight tickets: every `Blocked by:` names an
-  existing sibling; statuses use the recognised vocabulary (`ready-for-agent`,
-  `blocked`).
-- Confirmed no code, content, test or golden file was modified; only documentation,
-  the brief, the research note and the plan's Frontier changed.
+- `pnpm preflight` re-run green, including `verify-tracker-consistency` (the
+  ticket-08 `Blocked by:` references resolve; the spec advertises
+  `ready-for-agent` only where non-terminal tickets remain).
+- `pnpm adr:index` output diff inspected: exactly ADR-0215–0219 added, next
+  number advanced 0215→0220, and no other row changed.
+- Re-read the five ADR files: each has an H1, an `## Status` lead keyword of
+  `accepted`, and no stray `defer`/`pending` in Status.
+- Confirmed only documentation/scripts changed in this pass; no code, content,
+  test, or golden file was modified.
 - Confirmed `.DS_Store` and other machine files are not staged.
