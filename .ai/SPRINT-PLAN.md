@@ -157,36 +157,36 @@ from authoritative state, and the output is reviewed. It is a new baseline, not 
 
 Status (2026-10-16, autonomous run): **G-0 is resolved** (re-baselined by G-1 under
 ADR-0210/DR-010; 0001's file still reads "blocked" but its finite exit was taken).
-G-1 and G-3 are complete; N-1's audit is complete with ticket 07 blocked. S-1
-(readiness and maintenance), S-2 (prestige), mine-warfare and **U-1 (canonical
-values)** are now scoped and sliced; U-1 is also briefed
-(`.ai/specs/u-1-canonical-values.md`, `.ai/briefs/u-1-canonical-values.md`), and its
-**tickets 01–05 are on the actionable frontier**. The root blocker remains the
-**absent golden baseline**:
+G-1 and G-3 are complete; N-1's audit is complete with ticket 07 still blocked on
+**0005**. The **golden baseline now exists** (`golden/hashes.json`, commit
+`0117adc`, `Golden-Repin: baseline-created`), so the same-commit re-pin path is
+available and the snapshot-changing tickets are unblocked.
 
-1. **Golden baseline (decision request 0005).** `golden/hashes.json` does not exist,
-   so `pnpm check`'s `check:golden` cannot run and no authoritative commit can meet
-   the definition of done. Every sprint that adds or changes snapshot state is gated
-   on it: **N-1 ticket 07**, **S-1 ticket 01** (required per-ship readiness/crew
-   moves the reference run), **S-2 ticket 01** (required prestige), and the
-   **mine-warfare** state ticket. Creating the baseline (or approving the guard
-   procedure) is the highest-leverage unblock.
-2. **S-2 ticket 01** is additionally blocked on decision request **0006** (a required
-   prestige field cannot coexist with untouched production content), blocking S-2
-   02-09.
-3. **S-1 tickets 01-09** are blocked: 01 on 0005; 02-07 transitively (and by
-   decision request **0007**, the readiness/crew/maintenance values); 08 on 0007.
-4. **mine-warfare (W-2)** tickets 01/02 are sliced but W-2's plan dependency
+1. **U-1 (canonical values) is nearly complete.** Tickets **01–05** (canonical units
+   module; consolidate unit brands; one money type and branded money fields;
+   rounding helpers and the authoritative-float gate; conversion/locale boundary and
+   formatting-leak removal), **06** (construction-capacity fixed-point) and **07**
+   (combat strength/resolver fixed-point, value-preserving) are done. Only
+   **ticket 08 (U-1 acceptance)** remains: the six criteria traced to tests/gates,
+   the implementation ADRs recorded and indexed (`pnpm adr:index`), and the full gate
+   green on the exact commit. **Immediate next action: U-1 ticket 08.**
+2. **N-1 ticket 07** (1880 divisions and officer rosters) remains blocked on decision
+   request **0005** (owner decision: the behavioural reference-run change with a
+   baseline now present). Its sibling N-1 tickets are done.
+3. **S-1 (readiness and maintenance):** ticket **01** is done (per-ship readiness +
+   crew state; compatibility bumped 2.0.0 → 3.0.0). Tickets **02–07, 09** are
+   `ready-for-agent`; ticket **08** (author production values) is blocked on decision
+   request **0007**. Ticket 02–07 production constants also ride 0007.
+4. **S-2 (prestige and career)** tickets **02–07, 09** are `ready-for-agent`; ticket
+   **01** and, transitively, the sprint are blocked on decision request **0006**;
+   ticket **08** (production values) on **0003**.
+5. **mine-warfare (W-2)** tickets 01/02 are sliced but W-2's plan dependency
    (W-1, itself on S-1/T-1) is unmet.
-5. **U-1** (canonical values) is scoped, sliced and briefed. Its value-preserving
-   tickets **01–05** (canonical units module; consolidate unit brands; one money
-   type and branded money fields; rounding helpers and the authoritative-float
-   gate; conversion boundary and formatting-leak removal) can start now; tickets
-   **06–08** (the combat/economy float→fixed conversions and U-1 acceptance) are
-   gated by 0005 because they move the reference run.
 
-Resolve 0005 first (golden baseline), then 0003/0004/0006/0007. The actionable
-frontier is now **U-1 tickets 01–05**, plus the U-2 lane those tickets unblock.
+Owner decisions outstanding: **0003** (prestige values), **0004** (mine inventory),
+**0006** (prestige field vs untouched production), **0007** (S-1 readiness/crew/
+maintenance values). The actionable frontier is **U-1 ticket 08**, then the S-1
+structural lane (02–07, 09) and the S-2 structural lane (02–07, 09).
 
 ## Decisions recorded
 
