@@ -157,8 +157,8 @@ designs:
   });
 });
 
-describe("production roster is the manual's nine playable nations (DR-005 / ADR-0205)", () => {
-  it("marks exactly nine nations playable and leaves the USA AI-only", async () => {
+describe("production roster is the manual's nine playable nations plus the promoted USA (DR-014 / ADR-0214)", () => {
+  it("marks exactly ten nations playable, with the USA promoted", async () => {
     const out = tempDir();
     expect(
       await runCli(runContentBuild({ manifest, contentDir, outputDir: out, outputMode: "json" })),
@@ -172,9 +172,9 @@ describe("production roster is the manual's nine playable nations (DR-005 / ADR-
       .map((nation) => nation.id)
       .sort();
 
-    // Manual p.18: Great Britain, Germany, France, Austria-Hungary, Russia,
-    // Italy, Japan, China, Spain. The USA is an AI opponent and must not be
-    // playable (the roster gate for the other five is DR-005).
+    // Manual p.18 gives the base nine (Great Britain, Germany, France,
+    // Austria-Hungary, Russia, Italy, Japan, China, Spain) plus the USA, which
+    // DR-014 / ADR-0214 promotes from AI-only to playable.
     expect(playable).toEqual([
       "austria_hungary",
       "france",
@@ -185,8 +185,9 @@ describe("production roster is the manual's nine playable nations (DR-005 / ADR-
       "russia",
       "spain",
       "uk",
+      "usa",
     ]);
-    expect(playable).not.toContain("usa");
+    expect(playable).toContain("usa");
   });
 });
 

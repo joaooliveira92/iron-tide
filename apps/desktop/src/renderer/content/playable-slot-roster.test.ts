@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vite-plus/test";
 import { PLAYABLE_SLOT_COUNTRY_IDS } from "./nationAssetManifest.js";
 
-// Manual p.18: the nine playable nations are Great Britain, Germany, France,
-// Austria-Hungary, Russia, Italy, Japan, China, and Spain. The USA is an AI
-// opponent and must not be offered as a playable slot (DR-005 / ADR-0205).
-const MANUAL_NINE = ["gb", "de", "jp", "fr", "it", "ru", "ah", "es", "qing"] as const;
+// Manual p.18 gives the base nine (Great Britain, Germany, France,
+// Austria-Hungary, Russia, Italy, Japan, China, Spain); DR-014 / ADR-0214
+// promotes the USA from AI-only to a playable slot.
+const PLAYABLE_TEN = ["gb", "de", "us", "jp", "fr", "it", "ru", "ah", "es", "qing"] as const;
 
-describe("playable-slot roster (DR-005 / ADR-0205)", () => {
-  it("offers exactly the manual's nine playable nations", () => {
-    expect([...PLAYABLE_SLOT_COUNTRY_IDS]).toEqual([...MANUAL_NINE]);
+describe("playable-slot roster (DR-014 / ADR-0214)", () => {
+  it("offers exactly the ten playable nations", () => {
+    expect([...PLAYABLE_SLOT_COUNTRY_IDS]).toEqual([...PLAYABLE_TEN]);
   });
 
-  it("does not offer the USA as a playable slot", () => {
-    expect(MANUAL_NINE).toHaveLength(9);
-    expect(PLAYABLE_SLOT_COUNTRY_IDS as readonly string[]).not.toContain("us");
+  it("offers the USA as a playable slot", () => {
+    expect(PLAYABLE_TEN).toHaveLength(10);
+    expect(PLAYABLE_SLOT_COUNTRY_IDS as readonly string[]).toContain("us");
   });
 });

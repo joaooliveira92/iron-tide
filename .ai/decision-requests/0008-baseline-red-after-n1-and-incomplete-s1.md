@@ -114,5 +114,4 @@ intent is confirmed.
   access (`packages/content-compiler/test/helpers/campaignRecords.ts` plus the
   seven tests): 82 → 0 errors.
 - Corrected the stale anti-vacuity floor in
-  `packages/ship-design/test/productionNationCoverage.test.ts` (10 → 9, matching
-  DR-005).
+  `packages/ship-design/test/productionNationCoverage.test.ts` (10 → 9, matching DR-005). **Reversed by ADR-0214**: the nine-nation roster was a regression; the anti-vacuity floor is restored to ≥10.

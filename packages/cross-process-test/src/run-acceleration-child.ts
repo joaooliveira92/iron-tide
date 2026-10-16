@@ -111,6 +111,9 @@ function snapshot(): CampaignSnapshot {
     startYear: 1880,
     startMonth: 1,
     strategicWeather: [],
+    // GBR-only fixture: the cross-process golden hashes intentionally do NOT
+    // depend on production roster membership (ADR-0007), so promoting a nation
+    // to the production playable roster must leave `golden/hashes.json` unchanged.
     slots: [{ nationId: "GBR", type: "playable" }],
     world: { areas: [], routes: [], ports: [] },
     nations: new Map([["GBR", nation()]]),

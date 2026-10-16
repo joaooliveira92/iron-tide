@@ -45,6 +45,8 @@ Table of contents, verified against the extracted text.
 - Playable nations are **Great Britain, Germany, France, Austria-Hungary, Russia,
   Italy, Japan, China, and Spain** (nine), against eight opponents; no human-vs-human
   play (p.18). The manual's starts are **1890, 1900, 1920, or 1935** (p.21).
+  Bluewave's deliberately 1880-only release **adds the USA** as a tenth playable
+  nation (ADR-0214): the pack commits 14 nations, 10 playable.
 - Readiness states: active, reserve, mothballed, and working up (working-up ships do not
   fight); repair costs about **2x** active maintenance; wartime maintenance rises sharply
   (pp.51-52).
