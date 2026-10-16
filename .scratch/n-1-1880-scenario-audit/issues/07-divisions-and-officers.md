@@ -8,7 +8,13 @@ nations that had one and make officer rosters nation-appropriate and distinct.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** blocked
+
+Blocked on `.ai/decision-requests/0005-officer-rosters-and-divisions-golden-repin.md`:
+both parts change the reference-run `NationState` (officers/divisions), so the
+golden-repin guard requires a `golden/hashes.json` re-pin that is impossible while
+the baseline is Phase 1 and absent from this checkout. Recommended resolution:
+defer ticket 07 to Phase 1.
 
 - [ ] Initial divisions are seeded for nations that had them in 1880 (or a cited
       decision explains their absence).
