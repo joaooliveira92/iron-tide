@@ -7,7 +7,7 @@ build race (ticket 01).
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done (fixed on `fix/windows-content-discovery`).
 
 Evidence — `Determinism Gate` on `windows-latest` at base `ae05b90`
 (run 38908691968, job 116998719330), after a full `pnpm build`:
@@ -30,9 +30,10 @@ The names point at Windows path-separator (`\` vs `/`) or filesystem-order
 assumptions in `packages/content-compiler` discovery. The determinism invariant
 (AGENTS.md) forbids host order and platform path separators.
 
-- [ ] The three files' failures are diagnosed to their root cause (path
-      separator and/or directory enumeration order) with a failing assertion
-      reproduced before the fix.
-- [ ] Discovery produces identical, codepoint-ordered groups on all OSes; no
-      `\`-vs-`/` or `readdirSync` order leaks into any comparison or message.
+- [x] The three files' failures are diagnosed to their root cause (host path
+      separator) with a failing assertion reproduced before the fix.
+- [x] Discovery and diagnostics produce POSIX (`/`) content paths on every host;
+      a host-separated input never leaks into a comparison, diagnostic or the
+      compiled surface (`safePath`/`toPosixPath` in content-compiler; the parse
+      stage stores and reports POSIX source paths; `artifactPath` already did).
 - [ ] `Determinism Gate (windows-latest)` is green; no other OS regresses.

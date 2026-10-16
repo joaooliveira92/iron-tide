@@ -2,6 +2,7 @@ import { parseYamlSafe } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
 import type { CompilerInput, CompilerStage } from "../index.js";
+import { toPosixPath } from "../safePath.js";
 
 export interface ParseOutput {
   manifest: unknown;
@@ -94,20 +95,24 @@ export class ParseStage implements CompilerStage<CompilerInput, ParseOutput> {
       if (signal.aborted) return undefined;
       for (const file of files) {
         const content = input.fileContents?.[file];
+        // Canonical `/`-separated path: the compiler-input key stays the raw
+        // (host) path, but every stored source path and diagnostic is POSIX so
+        // the output never depends on the platform separator (determinism).
+        const sourcePath = toPosixPath(file);
         if (content === undefined) {
           collector.addError(
             "FILE-READ",
             `Failed to read file: ${file} is absent from the compiler input`,
             {
               stage: "parse",
-              sourceLocation: { path: file, line: 1 },
+              sourceLocation: { path: sourcePath, line: 1 },
             },
           );
           continue;
         }
-        const result = parseYamlSafe(content, file, collector);
+        const result = parseYamlSafe(content, sourcePath, collector);
         if (result.success && result.data !== undefined) {
-          this.collect(group, file, result.data, {
+          this.collect(group, sourcePath, result.data, {
             manifest: (value) => {
               manifest = value;
             },
