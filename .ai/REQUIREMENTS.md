@@ -69,8 +69,9 @@ Testing
 - **BW-SCP-001** — 1880 is the sole start year and is production content (ADR-0201).
 - **BW-SCP-002** — The authored horizon is 1939; 1960/1970 are out of scope, and no
   empty scenario ID is selectable (ADR-0204).
-- **BW-SCP-003** — Nine manual-backed nations are playable; the rest are AI-only behind
-  a per-nation readiness gate (ADR-0205).
+- **BW-SCP-003** — Ten manual-backed nations are playable for the deliberate
+  1880-only release: the manual's nine plus the USA; the other four are AI-only
+  behind a per-nation readiness gate (ADR-0214).
 - **BW-PRS-001** — Canonical internal values are unit-agnostic; units and currency are
   presentation-only and never alter authoritative state (ADR-0202).
 - **BW-PRS-002** — Preferences are a versioned, validated, migrated, atomically

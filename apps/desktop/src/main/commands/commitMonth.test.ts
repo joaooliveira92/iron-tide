@@ -233,9 +233,9 @@ describe("commitMonth", () => {
       // `battleOutcomes` changed only the bridge response, never these
       // authoritative hashes. Pinned so any accidental engine/snapshot change
       // that should not happen here is caught as a hash drift. Re-pinned
-      // 2026-10-16 (S-1): per-ship readiness/crew fields join the compiled
-      // snapshot and the compatibility version bumps 2.0.0 -> 3.0.0, so the
-      // body hash moves with an understood cause (S-1 ticket 01).
+      // 2026-10-16 (S-1 + ADR-0214): per-ship readiness/crew fields join the
+      // compiled snapshot and the USA slot flips ai -> playable, so both
+      // authoritative hashes move with understood causes; re-pinned below.
       expect(updated.state.envelope).toEqual({
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",

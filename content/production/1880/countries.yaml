@@ -248,7 +248,7 @@
   tag: USA
   name: United States
   displayNameKey: nation.usa
-  isPlayable: false
+  isPlayable: true
   slot:
     id: usa
     order: 3

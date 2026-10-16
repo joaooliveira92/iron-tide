@@ -46,6 +46,7 @@ import type { NationAssetManifest } from "./resolveNationAsset.js";
 export const PLAYABLE_SLOT_COUNTRY_IDS = [
   "gb",
   "de",
+  "us",
   "jp",
   "fr",
   "it",

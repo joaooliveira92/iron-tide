@@ -2,8 +2,9 @@
 
 ## Status
 
-Accepted (2026-10-15). New record of decision DR-005; no prior ADR file existed for
-it and none is restored (see ADR-0210).
+Superseded by: ADR-0214. Originally accepted 2026-10-15 as new record of decision
+DR-005. ADR-0214 restores the ten-playable release contract: the nine-nation
+roster recorded here was a regression, not intended product behaviour.
 
 ## Context
 

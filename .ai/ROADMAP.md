@@ -11,9 +11,9 @@ acceptance criteria and evidence live in `.ai/SPRINT-PLAN.md`.
   a new accepted decision.
 - **Horizon:** authored technology through 1939. 1960 and the 1970 end are out of
   scope; radar-centric, missile-era and postwar warfare await a separate expansion.
-- **Roster:** nine manual-backed nations are playable. Five others are AI-only until
-  each passes the readiness gate. USA is currently marked playable and must be
-  demoted.
+- **Roster:** ten manual-backed nations are playable for the deliberate 1880-only
+  release: the manual's nine plus the USA (ADR-0214). Four others are AI-only until
+  each passes the readiness gate.
 - **Presentation:** units, currency, theme and accessibility are display
   preferences over canonical values; they never change simulation. Currency modes:
   Naval Credits (NC, default), National Historical (only with a validated national
