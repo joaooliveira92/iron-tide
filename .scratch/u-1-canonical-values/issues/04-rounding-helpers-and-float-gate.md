@@ -7,17 +7,17 @@ changes.
 
 **Blocked by:** 01 (the canonical units module).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Checked helpers (add/sub/mul/div, `ceilDiv`, `toSafe`, reject-at-construction)
+- [x] Checked helpers (add/sub/mul/div, `ceilDiv`, `toSafe`, reject-at-construction)
       are exposed; they throw typed `_tag` errors and never produce
       `NaN`/`Infinity`.
-- [ ] One rounding vocabulary is used (`RoundingMode`); a second rounding enum is
+- [x] One rounding vocabulary is used (`RoundingMode`); a second rounding enum is
       rejected at review.
-- [ ] The float gate fails on a float fixture and passes on the clean tree
+- [x] The float gate fails on a float fixture and passes on the clean tree
       (self-test), and is wired into the standing gates (`preflight`/`check`). The
       exact mechanism — tightened `assert-authoritative-determinism` or a
       dedicated lint rule — is chosen here and stated.
-- [ ] The `assertNoFloats`/`FLOAT_IN_STATE` save guard still holds.
-- [ ] Adding the helpers and gate changes no authoritative value (cross-process
+- [x] The `assertNoFloats`/`FLOAT_IN_STATE` save guard still holds.
+- [x] Adding the helpers and gate changes no authoritative value (cross-process
       child run byte-identical before and after).

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { CampaignSnapshot, ForeignConstructionContract, Ship } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import { bp, money, SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
@@ -265,9 +265,9 @@ function makeRichSnapshot(): CampaignSnapshot {
     designVersionId: "dv-b",
     quantity: 1,
     totalWorkPerUnit: 200,
-    totalPriceUnits: 2_000,
+    totalPriceUnits: money(2_000),
     currencyUnit: "treasury_unit",
-    paymentSchedule: [{ dueMonth: "1880-01", amountUnits: 2_000, workShareBp: 10_000 }],
+    paymentSchedule: [{ dueMonth: "1880-01", amountUnits: money(2_000), workShareBp: bp(10_000) }],
     capacityReservationSchedule: [
       { month: "1880-01", reservedMassKg: 2_000_000, pool: "NEW_CONSTRUCTION" },
     ],
@@ -435,12 +435,12 @@ function makeRichSnapshot(): CampaignSnapshot {
       derived: true,
       failedCriteria: [],
       baseStudyWork: 4,
-      baseStudyCost: 8,
-      discountBp: 2500,
+      baseStudyCost: money(8),
+      discountBp: bp(2500),
       finalStudyWork: 3,
-      finalStudyCost: 6,
+      finalStudyCost: money(6),
       workDone: 1,
-      costPaid: 2,
+      costPaid: money(2),
       status: "IN_PROGRESS",
       startMonth: "1880-01",
       completionMonth: null,

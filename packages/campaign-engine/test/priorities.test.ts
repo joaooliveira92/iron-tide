@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { buildPrioritiesProjection } from "../src/priorities.js";
 import { MIN_RESEARCH_SHARE_BP, NEAR_COMPLETION_WORK_RATIO } from "../src/priorityConstants.js";
 import { HIGH_TENSION_THRESHOLD, isHighTension } from "../src/diplomacy.js";
+import { readFileSync } from "node:fs";
 import type { CampaignSnapshot } from "@bluewave/campaign";
 
 function makeNation(overrides: Partial<any> = {}): any {
@@ -328,5 +329,10 @@ describe("priorities projection", () => {
   it("constants are centralized and tested", () => {
     expect(MIN_RESEARCH_SHARE_BP).toBe(800);
     expect(NEAR_COMPLETION_WORK_RATIO).toBe(0.9);
+  });
+
+  it("builds no locale-formatted strings (map D6)", () => {
+    const source = readFileSync(new URL("../src/priorities.ts", import.meta.url), "utf8");
+    expect(source).not.toMatch(/toLocaleString|toFixed|Intl\./);
   });
 });

@@ -1,4 +1,4 @@
-import type { SafeInt } from "@bluewave/contracts";
+import type { Bp, Money, SafeInt } from "@bluewave/contracts";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";
 import type { PermanentDivision } from "./division.js";
@@ -336,9 +336,9 @@ export interface ForeignContractPaymentInstallment {
   /** Campaign month id (`YYYY-MM`) the instalment is due. */
   dueMonth: string;
   /** Instalment amount in the contract's currency unit. */
-  amountUnits: number;
+  amountUnits: Money;
   /** Fraction of the contract's total work this instalment unlocks, basis points `0..10_000`. */
-  workShareBp: number;
+  workShareBp: Bp;
 }
 
 /**
@@ -373,7 +373,7 @@ export interface ForeignConstructionContract {
   /** Total work per unit, in the project's work micro-units. */
   totalWorkPerUnit: number;
   /** Total price across all units, in `currencyUnit`. */
-  totalPriceUnits: number;
+  totalPriceUnits: Money;
   currencyUnit: string;
   paymentSchedule: ForeignContractPaymentInstallment[];
   capacityReservationSchedule: ForeignContractCapacityReservation[];
@@ -572,12 +572,12 @@ export interface DesignStudy {
   derived: boolean;
   failedCriteria: string[];
   baseStudyWork: number;
-  baseStudyCost: number;
-  discountBp: number;
+  baseStudyCost: Money;
+  discountBp: Bp;
   finalStudyWork: number;
-  finalStudyCost: number;
+  finalStudyCost: Money;
   workDone: number;
-  costPaid: number;
+  costPaid: Money;
   status: "IN_PROGRESS" | "COMPLETED";
   startMonth: string;
   completionMonth: string | null;
