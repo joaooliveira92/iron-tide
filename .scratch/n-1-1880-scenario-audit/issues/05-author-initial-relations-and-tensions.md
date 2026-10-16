@@ -9,11 +9,22 @@ Anglo-Russian, Austro-Russian) from
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] At least the major 1880 rivalries and alignments are represented with values
-      distinct from a uniform baseline.
-- [ ] Values are cited to a source; nothing fabricated.
-- [ ] A deterministic test drives the compiled 1880 snapshot and asserts the
-      authored relations/tensions load.
+- [x] At least the major 1880 rivalries and alignments are represented with values
+      distinct from a uniform baseline: 23 authored pairs in
+      `content/production/1880/diplomacy.yaml` (Dual Alliance Germany/Austria and
+      Anglo-Portuguese alliance as `allied` with NAPs; Franco-German 9,
+      Russo-Ottoman 8, Austro-Russian and Anglo-Russian 7, Anglo-French 6, and so
+      on). Unauthorized pairs keep the canonical neutral@5 default.
+- [x] Values are cited to a source; nothing fabricated: each record's direction
+      follows the cited diplomatic history (A. J. P. Taylor, *The Struggle for
+      Mastery in Europe 1848-1918*), and every record's provenance marks the
+      tension magnitude as an admitted balance choice
+      (`kind: balance_adjustment`, `sourceStatus: BALANCE_TARGET`) with a note
+      naming the relationship (see ADR-0213).
+- [x] A deterministic test drives the compiled 1880 snapshot and asserts the
+      authored relations/tensions load
+      (`packages/content-compiler/test/initialDiplomacy.test.ts`; verified red with
+      the Franco-German tension altered).
 

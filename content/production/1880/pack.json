@@ -13,6 +13,7 @@
     "fleets": ["fleets.yaml"],
     "economies": ["economies.yaml"],
     "constructions": ["constructions.yaml"],
+    "diplomacy": ["diplomacy.yaml"],
     "research": ["research.yaml"],
     "designs": ["designs.yaml"],
     "presentation": ["presentation.yaml"]
