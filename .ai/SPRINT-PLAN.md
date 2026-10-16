@@ -155,12 +155,14 @@ from authoritative state, and the output is reviewed. It is a new baseline, not 
 
 ## Frontier
 
-Status (2026-10-15, autonomous run): **G-0 is resolved** (re-baselined by G-1 under
+Status (2026-10-16, autonomous run): **G-0 is resolved** (re-baselined by G-1 under
 ADR-0210/DR-010; 0001's file still reads "blocked" but its finite exit was taken).
 G-1 and G-3 are complete; N-1's audit is complete with ticket 07 blocked. S-1
-(readiness and maintenance) is now scoped and sliced
-(`.ai/specs/s-1-readiness-and-maintenance.md`). The actionable frontier is empty,
-and the root blocker is the **absent golden baseline**:
+(readiness and maintenance), S-2 (prestige), mine-warfare and **U-1 (canonical
+values)** are now scoped and sliced; U-1 is also briefed
+(`.ai/specs/u-1-canonical-values.md`, `.ai/briefs/u-1-canonical-values.md`), and its
+**tickets 01–05 are on the actionable frontier**. The root blocker remains the
+**absent golden baseline**:
 
 1. **Golden baseline (decision request 0005).** `golden/hashes.json` does not exist,
    so `pnpm check`'s `check:golden` cannot run and no authoritative commit can meet
@@ -176,10 +178,15 @@ and the root blocker is the **absent golden baseline**:
    decision request **0007**, the readiness/crew/maintenance values); 08 on 0007.
 4. **mine-warfare (W-2)** tickets 01/02 are sliced but W-2's plan dependency
    (W-1, itself on S-1/T-1) is unmet.
-5. **U-1** (canonical values) is unstarted and has no brief (scoping sprint).
+5. **U-1** (canonical values) is scoped, sliced and briefed. Its value-preserving
+   tickets **01–05** (canonical units module; consolidate unit brands; one money
+   type and branded money fields; rounding helpers and the authoritative-float
+   gate; conversion boundary and formatting-leak removal) can start now; tickets
+   **06–08** (the combat/economy float→fixed conversions and U-1 acceptance) are
+   gated by 0005 because they move the reference run.
 
-Resolve 0005 first (golden baseline), then 0003/0004/0006/0007. U-1/U-2 remains an
-independent, unblocked lane.
+Resolve 0005 first (golden baseline), then 0003/0004/0006/0007. The actionable
+frontier is now **U-1 tickets 01–05**, plus the U-2 lane those tickets unblock.
 
 ## Decisions recorded
 
