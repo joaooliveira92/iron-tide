@@ -62,7 +62,30 @@ const FAMILY: Record<string, readonly string[]> = {
 const FALLBACK_GIVEN = ["Alex", "Morgan", "Robin", "Casey", "Jordan", "Sam"];
 const FALLBACK_FAMILY = ["Stone", "Reed", "Hale", "Cross", "Marsh", "Vance"];
 
-const ROSTER_SIZE = 6;
+/**
+ * The per-nation officer-corps shape `[captains, commodores, rear admirals]`
+ * (N-1 ticket 07, ADR-0224). The *direction* follows 1880 naval standing — the
+ * larger naval powers carry a deeper officer corps — while every magnitude is an
+ * admitted ADR-0213 `balance_adjustment`, never a sourced fact. The former
+ * uniform `[3, 2, 1]` for every nation is removed.
+ */
+const ROSTER_SHAPE: Readonly<Record<string, readonly [number, number, number]>> = {
+  uk: [5, 3, 1],
+  france: [4, 3, 1],
+  germany: [4, 2, 1],
+  russia: [3, 3, 1],
+  usa: [3, 2, 1],
+  italy: [3, 2, 1],
+  japan: [3, 2, 1],
+  austria_hungary: [2, 2, 1],
+  spain: [2, 2, 1],
+  qing: [2, 2, 1],
+  ottoman_empire: [2, 2, 1],
+  netherlands: [2, 1, 1],
+  portugal: [2, 1, 1],
+  brazil: [2, 2, 1],
+};
+const DEFAULT_ROSTER_SHAPE: readonly [number, number, number] = [2, 2, 1];
 
 /** A small stable hash of a string (FNV-1a), for deterministic skill spread. */
 function fnv(text: string): number {
@@ -74,19 +97,23 @@ function fnv(text: string): number {
   return h >>> 0;
 }
 
-/** The nation's officer corps: six officers, junior to senior, with a spread of skill. */
+/** The nation's officer corps: a nation-specific rank mix, junior to senior, with a spread of skill. */
 export function buildOfficerRoster(nationId: string): Officer[] {
   const given = GIVEN[nationId] ?? FALLBACK_GIVEN;
   const family = FAMILY[nationId] ?? FALLBACK_FAMILY;
-  const officers: Officer[] = [];
-  for (let i = 0; i < ROSTER_SIZE; i++) {
+  const [captains, commodores, rearAdmirals] = ROSTER_SHAPE[nationId] ?? DEFAULT_ROSTER_SHAPE;
+  const ranks: OfficerRank[] = [
+    ...Array<OfficerRank>(captains).fill("CAPTAIN"),
+    ...Array<OfficerRank>(commodores).fill("COMMODORE"),
+    ...Array<OfficerRank>(rearAdmirals).fill("REAR_ADMIRAL"),
+  ];
+  return ranks.map((rank, i) => {
     const id = `off_${nationId}_${String(i + 1)}`;
-    officers.push({
+    return {
       id,
-      name: `${given[i]!} ${family[(i + 2) % family.length]!}`,
-      rank: i < 3 ? "CAPTAIN" : i < 5 ? "COMMODORE" : "REAR_ADMIRAL",
+      name: `${given[i % given.length]!} ${family[(i + 2) % family.length]!}`,
+      rank,
       skill: SafeInt(30 + (fnv(id) % 61)),
-    });
-  }
-  return officers;
+    };
+  });
 }

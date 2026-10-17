@@ -6,7 +6,7 @@ without an active war shows the higher charge in war and the ledger explaining i
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done (2026-10-17; commit 8c08c86)
 
 - [ ] The month executor reads nation war state and applies a single ruleset
       multiplier to active-status maintenance only.

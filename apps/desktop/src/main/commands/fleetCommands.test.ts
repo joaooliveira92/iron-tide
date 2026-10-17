@@ -184,17 +184,17 @@ describe("fleet commands (Effect programs)", () => {
     expect(homeView!.ships).toHaveLength(homeFleet!.ships.length);
 
     // Real compiled ship names/designs, with status derived from the real
-    // isUnderConstruction flag (HMS Inflexible is under construction in the
-    // production pack; HMS Dreadnought/Alexandra are commissioned).
+    // readiness state (S-1 ticket 07): HMS Inflexible is under construction and
+    // working up in the production pack; HMS Dreadnought/Alexandra are active.
     const inflexible = homeView!.ships.find((s) => s.name === "HMS Inflexible");
     expect(inflexible).toBeDefined();
     const compiledInflexible = homeFleet!.ships.find((s) => s.id === "gbr_inflexible")!;
     expect(compiledInflexible.designVersionId).toBe("des_gbr_inflexible");
     expect(inflexible!.designId).toBe(compiledInflexible.designVersionId);
-    expect(inflexible!.status).toBe("under_construction");
+    expect(inflexible!.status).toBe("working_up");
     const dreadnought = homeView!.ships.find((s) => s.name === "HMS Dreadnought");
     expect(dreadnought).toBeDefined();
-    expect(dreadnought!.status).toBe("commissioned");
+    expect(dreadnought!.status).toBe("active");
 
     // No movement command can exist yet — honest empty list.
     expect(projection.movementCommands).toEqual([]);

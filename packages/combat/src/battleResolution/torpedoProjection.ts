@@ -27,10 +27,15 @@ import {
   type TorpedoTargetContext,
 } from "../torpedoes/index.js";
 import { BluewaveError } from "@bluewave/contracts";
+import { AUTO_TORPEDO_CREW_QUALITY_BP } from "./constants.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 
-/** Crew skill for the §12 launch-failure composition (neutral-competent crew). */
-export const AUTO_TORPEDO_CREW_QUALITY_BP = 7_000;
+/**
+ * Crew skill for the §12 launch-failure composition (neutral-competent crew).
+ * Re-exported from the versioned auto-resolution constants (ADR-0223) so no
+ * numeric gameplay constant is embedded in this module.
+ */
+export { AUTO_TORPEDO_CREW_QUALITY_BP };
 /** Torpedo running depth ordered by the auto doctrine (metres). */
 export const AUTO_TORPEDO_DEPTH_M = 3;
 /** Hull breach figure fed to the §16 scene for every auto-resolved target (m²). */

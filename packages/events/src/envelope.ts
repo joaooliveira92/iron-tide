@@ -100,6 +100,22 @@ export interface TechnologyDiscovered {
   readonly cost: SafeInt;
 }
 
+/**
+ * S-1: a ship changed readiness state. Recorded when the monthly crew ramp
+ * promotes a working-up ship to active, or when a repair countdown releases a
+ * ship. `reason` is a stable code (`WORKING_UP_COMPLETE`, `REPAIR_COMPLETE`);
+ * `crewQuality` is the ship's crew quality at the transition.
+ */
+export interface ShipReadinessChanged {
+  readonly kind: "ShipReadinessChanged";
+  readonly nationId: string;
+  readonly shipId: string;
+  readonly fromReadiness: string;
+  readonly toReadiness: string;
+  readonly reason: Reason;
+  readonly crewQuality: SafeInt;
+}
+
 export type DomainEventBody =
   | NationBudgetChanged
   | ConstructionProgressed
@@ -109,7 +125,8 @@ export type DomainEventBody =
   | ResearchProgressed
   | BattleInitiated
   | BattleResolved
-  | TechnologyDiscovered;
+  | TechnologyDiscovered
+  | ShipReadinessChanged;
 
 export interface DomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody> {
   readonly eventId: string;

@@ -1,6 +1,7 @@
+import { shipMaintenanceCost as campaignShipMaintenanceCost } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
-import { buildOpeningBriefingProjection } from "../src/opening-briefing.js";
+import { buildOpeningBriefingProjection, shipMaintenanceCost } from "../src/opening-briefing.js";
 import {
   fixtureConstructionProject,
   fixtureDesign,
@@ -10,6 +11,10 @@ import {
 } from "./fixtures.js";
 
 describe("buildOpeningBriefingProjection", () => {
+  it("uses the single campaign maintenance formula (parity, S-1 ticket 02)", () => {
+    expect(shipMaintenanceCost).toBe(campaignShipMaintenanceCost);
+  });
+
   it("returns undefined for a nation id absent from the snapshot", () => {
     const snapshot = fixtureSnapshot([fixtureNation({ id: "uk" })]);
     const state = fixtureState(snapshot);

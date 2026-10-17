@@ -38,7 +38,12 @@ import type {
 } from "@bluewave/campaign";
 import type { CommandEnvelope, CommandBody, CommandOutcome } from "@bluewave/commands";
 import { CommandLedger } from "@bluewave/commands";
-import { MonthExecutor, ReplayVerifier, resolveShipStrength } from "@bluewave/phase-engine";
+import {
+  MonthExecutor,
+  ReplayVerifier,
+  resolveCampaignBattleReadiness,
+  resolveShipStrength,
+} from "@bluewave/phase-engine";
 import {
   AMMUNITION_TYPES,
   generateBattles,
@@ -715,7 +720,7 @@ export const runBattleGenerate = (
           contentVersion: options.contentVersion,
           resolveStrength: (shipId) => resolveShipStrength(snapshot, shipId),
           resolveShipType: () => "BB",
-          resolveReadiness: () => 80,
+          resolveReadiness: (shipId) => resolveCampaignBattleReadiness(snapshot, shipId),
         }),
       collector,
       "battle:generate",

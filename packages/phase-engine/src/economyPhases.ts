@@ -1,6 +1,10 @@
 // Economy phases: monthly_revenue, appropriation, maintenance, obligation.
-import type { CampaignSnapshot, ConstructionProject, NationState, Ship } from "@bluewave/campaign";
-import { transitionConstructionProject } from "@bluewave/campaign";
+import type { CampaignSnapshot, ConstructionProject, NationState } from "@bluewave/campaign";
+import {
+  nationIsAtWar,
+  shipMonthlyMaintenanceCost,
+  transitionConstructionProject,
+} from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import {
   FOREIGN_PAYMENT_DEFAULT_DELAYED,
@@ -21,6 +25,7 @@ import { resolvePrivateDockExpansion } from "./dockExpansion.js";
 import { runForeignContractPhase } from "./foreignContractPhase.js";
 import { budgetChangedEvent, constructionDelayedEvent, makeLedgerEntry } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
+import { applyReadinessEvolution } from "./readinessEvolution.js";
 
 /**
  * Largest-remainder (Hamilton) apportionment of `total` across integer `weights`, deterministic and exact: the parts
@@ -51,10 +56,6 @@ export function splitLargestRemainder(total: number, weights: readonly number[])
     base[index] = base[index]! + 1;
   }
   return base;
-}
-
-function computeMaintenanceCost(ship: Ship): SafeInt {
-  return SafeInt.div(SafeInt.mul(ship["hitPoints"], SafeInt(10)), SafeInt(100), "floor");
 }
 
 function computeConstructionCap(nation: NationState): SafeInt {
@@ -519,10 +520,18 @@ export function runMaintenancePhase(ctx: MonthContext): void {
   for (const [nationId, nation] of ctx.currentSnapshot["nations"]) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
 
+    // S-1 D6: while the nation is at war, active-status maintenance rises by one
+    // ruleset multiplier (manual p.52). The war state is the existing snapshot
+    // `wars` collection — a declared read of the maintenance phase.
+    const atWar = nationIsAtWar(ctx.currentSnapshot["wars"]["wars"], nationId);
+
     let totalMaintenance = SafeInt.ZERO;
     for (const fleet of nation["fleets"]) {
       for (const ship of fleet["ships"]) {
-        totalMaintenance = SafeInt.add(totalMaintenance, computeMaintenanceCost(ship));
+        totalMaintenance = SafeInt.add(
+          totalMaintenance,
+          shipMonthlyMaintenanceCost(ship["hitPoints"], ship["readiness"], atWar),
+        );
       }
     }
 
@@ -567,6 +576,11 @@ export function runMaintenancePhase(ctx: MonthContext): void {
       ),
     );
   }
+
+  // S-1: after charging by readiness, advance each ship's readiness/crew one
+  // month (the crew-quality ramp, manual p.51). This writes the fleets resource
+  // the maintenance phase's footprint declares; it consumes no randomness.
+  applyReadinessEvolution(ctx);
 }
 
 export function runObligationPhase(ctx: MonthContext): void {

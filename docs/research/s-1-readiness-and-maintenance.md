@@ -268,3 +268,40 @@ non-normative BALANCE TARGET**, never invented as fact:
 - Any per-nation maintenance/crew differences beyond Japan's training discount (p.53)
   and the "Global naval power" rule (p.59) are unresearched; the manual does not give
   them. If S-1 needs variance, raise a decision request.
+
+## S-1 production constants and their provenance (ticket 08)
+
+Every S-1 numeric gameplay value is a named, centralized ruleset constant; none is
+embedded in a phase. The table records each constant, its value, and whether it is
+grounded in the manual or an admitted ADR-0213 `balance_adjustment` (a balance
+choice, never presented as a manual fact). Constants live in
+`packages/campaign/src/maintenance.ts` (maintenance) and
+`packages/campaign/src/readiness.ts` (readiness/crew).
+
+| Constant | Value | Class | Basis |
+| --- | --- | --- | --- |
+| `MAINTENANCE_ACTIVE_MULTIPLIER_BP` | 10_000 (base) | grounded anchor | Active is the base rate the manual's ratios are stated against (p.51) |
+| `MAINTENANCE_WORKING_UP_MULTIPLIER_BP` | 10_000 | balance_adjustment | Working-up ships are in commission at the base rate; the manual gives no figure |
+| `MAINTENANCE_RESERVE_MULTIPLIER_BP` | 7_500 | balance_adjustment | The manual says reserve is cheaper but gives no figure (p.51) |
+| `MAINTENANCE_MOTHBALLED_MULTIPLIER_BP` | 5_000 | grounded | Mothballed = half active (p.30) |
+| `MAINTENANCE_REPAIR_MULTIPLIER_BP` | 20_000 | grounded | Repair ≈ 2× active (p.51) |
+| `MAINTENANCE_WARTIME_MULTIPLIER_BP` | 12_500 | balance_adjustment | "Rises sharply", no figure (p.52); applied to active only |
+| `ACTIVE_CREW_CEILING` | 100 | balance_adjustment | "Best trained" (p.51); no scale given |
+| `WORKING_UP_CREW_CEILING` | 100 | balance_adjustment | Working-up ramps to the active standard (p.51) |
+| `RESERVE_CREW_CEILING` | 70 | balance_adjustment | "Reservists … time to get to full effectiveness" (p.51); no figure |
+| `MOTHBALLED_CREW_CEILING` | 30 | balance_adjustment | "Poorly trained … substantial time" (p.51); no figure |
+| `REPAIR_CREW_CEILING` | 100 | balance_adjustment | A repairing ship keeps its crew (p.51) |
+| `CREW_QUALITY_RAMP_PER_MONTH` | 5 | balance_adjustment | Status-driven, no RNG (D4); the manual gives no ramp schedule (p.51) |
+| `WORKING_UP_DECENT_THRESHOLD` | 60 | balance_adjustment | "Until they have decent crew quality" (p.51); no value given |
+| `REPAIR_MONTHS_MAX` | 120 | balance_adjustment | Bounds the per-ship repair month counter (p.48); no maximum stated |
+| `BATTLE_READINESS_FLOOR` | 60 | balance_adjustment | Pre-existing campaign combat floor; readiness below it is `FUEL_BATTLE_INELIGIBLE` |
+| `AUTO_TORPEDO_CREW_QUALITY_BP` | 7_000 | balance_adjustment | Auto-resolution torpedo neutral crew (ADR-0026); pending per-ship crew threading |
+
+The battle-readiness value combat consumes is the ship's crew quality (0..100), so no
+separate battle-readiness constant is needed; the former hard-coded `80` is removed
+(ADR-0223).
+
+No golden re-pin accompanies ticket 08: the reference run's fleet is all active, at
+its crew ceiling, and at peace, so every one of these constants is a no-op on the
+reference output. Observable production output therefore does not change, and the
+goldens stay pinned (`pnpm check:golden`: 11/11).

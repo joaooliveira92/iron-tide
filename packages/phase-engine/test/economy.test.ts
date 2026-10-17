@@ -165,6 +165,47 @@ describe("B10a economy & construction acceptance (criteria 1-7)", () => {
     expect(gbrEntries.some((e) => e.categoryId === "MAINTENANCE_EXPENDITURE")).toBe(true);
   });
 
+  it("C2b: maintenance is charged by readiness state (S-1 ticket 02)", () => {
+    const base = makeNation("GBR", {
+      treasury: SafeInt(10000),
+      baseResources: SafeInt(0),
+      expenses: SafeInt(0),
+    });
+    const states = ["ACTIVE", "RESERVE", "MOTHBALLED", "REPAIR"] as const;
+    const ships = states.map((readiness, i) => ({
+      id: `GBR-ship-${i}`,
+      name: `GBR Ship ${i}`,
+      classId: "battleship",
+      nationId: "GBR",
+      locationAreaId: "a-1",
+      designVersionId: "",
+      hitPoints: SafeInt(100),
+      maxHitPoints: SafeInt(100),
+      speed: SafeInt(10),
+      firepower: SafeInt(10),
+      armor: SafeInt(10),
+      isUnderConstruction: false,
+      constructionProgress: SafeInt(0),
+      constructionTotalWork: SafeInt(0),
+      readiness,
+      crewQuality: SafeInt(100),
+    }));
+    const nation: NationState = { ...base, fleets: [{ ...base.fleets[0]!, ships }] };
+    const snapshot = makeSnapshot([["GBR", nation]]);
+
+    const result = new MonthExecutor().execute(
+      snapshot,
+      [],
+      "s1-readiness-seed",
+      new DiagnosticCollector(),
+    );
+
+    expect(result.success).toBe(true);
+    // ACTIVE 10 + RESERVE 7 + MOTHBALLED 5 + REPAIR 20 = 42.
+    expect(result.finalSnapshot.nations.get("GBR")!.maintenanceCost as number).toBe(42);
+    expect(result.finalSnapshot.nations.get("GBR")!.treasury as number).toBe(10000 - 42);
+  });
+
   it("C3: financial ledger hash is deterministic and equals canonical serialization", () => {
     const gbr = makeNation("GBR", {
       treasury: SafeInt(10000),

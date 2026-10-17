@@ -8,19 +8,18 @@ nations that had one and make officer rosters nation-appropriate and distinct.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
-
-Decision request **0005** resolved (2026-10-17, Option A): implement with a
-same-commit golden re-pin. The golden baseline exists (`golden/hashes.json`,
-`0117adc`). Roster/division magnitudes are ADR-0213 `balance_adjustment` values;
-re-pin the reference hashes in the same behavioural commit with old/new/cause and
-assess the `NationState` compatibility impact (ADR-0224). Do not use the
-`not-needed` trailer.
+**Status:** partial (2026-10-17) — per-nation officer rosters landed with a
+same-commit golden re-pin (commit `94aee73`; `closingSnapshotHash` and
+`replayVerificationHash` moved with the recorded old/new values). **Remaining:**
+seeded 1880 divisions (an authored `divisions` collection plus compile wiring in
+`packages/campaign/src/nationCompilation.ts`, which still hard-codes `divisions:
+[]`). See ADR-0224.
 
 - [ ] Initial divisions are seeded for nations that had them in 1880 (or a cited
-      decision explains their absence).
-- [ ] Officer rosters differ per nation and are not a uniform template.
-- [ ] A deterministic test asserts the seeded structure loads from the snapshot.
-- [ ] The cross-process golden is re-pinned in the same commit with cause; the
-      `NationState` compatibility impact is assessed (migration or refusal).
+      decision explains their absence). — **remaining**
+- [x] Officer rosters differ per nation and are not a uniform template (`officers.test.ts`).
+- [ ] A deterministic test asserts the seeded division structure loads from the snapshot. — **remaining**
+- [x] The cross-process golden is re-pinned in the same commit with cause; the
+      `NationState` compatibility impact is assessed (officers are an existing
+      optional field, so no bump/migration is required).
 

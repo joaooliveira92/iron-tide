@@ -7,7 +7,7 @@ passes the decent threshold; the value is the one supplied to combat's crew inpu
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done (2026-10-17; commit 3bec415)
 
 - [ ] Crew quality moves toward the state ceiling by the ruleset rate each month and
       never leaves `0..100`.

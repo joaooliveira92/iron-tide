@@ -32,6 +32,12 @@ export interface Ship {
   readiness: ShipReadinessState;
   /** Worked-up crew quality `0..100` (S-1 D2/D4); ramps toward the state's ceiling. */
   crewQuality: SafeInt;
+  /**
+   * Remaining repair months while `readiness` is `REPAIR` (manual p.48: "a number
+   * means the ship is in repair for that number of months"). Absent on every other
+   * state; a laid-up (mothballed) ship keeps it but its countdown halts (p.51).
+   */
+  repairMonthsRemaining?: SafeInt;
   inBattleId?: string;
   /** Operational availability while a rebuild or conversion works on the ship; absent = available (ADR-0078). */
   availability?: ShipAvailability;

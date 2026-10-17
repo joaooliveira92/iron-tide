@@ -7,7 +7,7 @@ and observes the charge fall and the countdown stop.
 
 **Blocked by:** 01, 02
 
-**Status:** ready-for-agent
+**Status:** done (2026-10-17; commit c517b61)
 
 - [ ] `REPAIR` is a readiness state with a bounded remaining-months counter
       (non-integer and negative rejected).

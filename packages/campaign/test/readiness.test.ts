@@ -10,7 +10,14 @@ import {
 } from "@bluewave/test-support";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { CampaignCompiler, type CampaignCompilerInput } from "../src/compiler-public.js";
-import { resolveShipReadinessSeed, SHIP_READINESS_CODES } from "../src/readiness.js";
+import { SafeInt } from "@bluewave/contracts";
+import {
+  crewCeilingFor,
+  rampCrewQuality,
+  readinessAfterCrewRamp,
+  resolveShipReadinessSeed,
+  SHIP_READINESS_CODES,
+} from "../src/readiness.js";
 
 const FIXTURE = {
   pack: JSON.stringify({
@@ -194,6 +201,46 @@ describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
     if (!seed.ok) {
       expect(seed.error._tag).toBe("ShipReadinessFailure");
       expect(seed.error.code).toBe(SHIP_READINESS_CODES.excessKey);
+    }
+  });
+});
+
+describe("S-1 crew-quality ramp constants and helpers (ticket 03)", () => {
+  it("ramps toward the state ceiling, clamped, and never leaves 0..100", () => {
+    // ACTIVE at ceiling stays; below ceiling climbs; above ceiling falls back.
+    expect(rampCrewQuality(SafeInt(100), "ACTIVE") as number).toBe(100);
+    expect(rampCrewQuality(SafeInt(55), "ACTIVE") as number).toBe(60);
+    expect(rampCrewQuality(SafeInt(70), "MOTHBALLED" as const) as number).toBe(65);
+    // A laid-up crew climbs toward its lower ceiling and clamps there.
+    expect(rampCrewQuality(SafeInt(28), "MOTHBALLED") as number).toBe(30);
+    expect(crewCeilingFor("RESERVE") as number).toBe(70);
+    expect(crewCeilingFor("MOTHBALLED") as number).toBe(30);
+  });
+
+  it("promotes a working-up ship at the decent threshold and never returns it to working up", () => {
+    expect(readinessAfterCrewRamp("WORKING_UP", SafeInt(59))).toBe("WORKING_UP");
+    expect(readinessAfterCrewRamp("WORKING_UP", SafeInt(60))).toBe("ACTIVE");
+    expect(readinessAfterCrewRamp("ACTIVE", SafeInt(100))).toBe("ACTIVE");
+    expect(readinessAfterCrewRamp("RESERVE", SafeInt(70))).toBe("RESERVE");
+  });
+});
+
+describe("S-1 repair months counter (ticket 04)", () => {
+  it("accepts a bounded integer counter and rejects negative, non-integer or over-max values", () => {
+    const ok = resolveShipReadinessSeed(
+      { id: "s", readiness: "REPAIR", crewQuality: 50, repairMonthsRemaining: 6 },
+      "s",
+    );
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.value.repairMonthsRemaining as number).toBe(6);
+
+    for (const bad of [-1, 1.5, 121]) {
+      const r = resolveShipReadinessSeed(
+        { id: "s", readiness: "REPAIR", crewQuality: 50, repairMonthsRemaining: bad },
+        "s",
+      );
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.error.code).toBe(SHIP_READINESS_CODES.repairMonths);
     }
   });
 });
