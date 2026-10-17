@@ -1,6 +1,7 @@
 import { Bell, DollarSign, Gauge, Landmark, TrendingUp, Wallet } from "lucide-react";
 
 import { cn } from "../../../lib/utils.js";
+import { translate } from "../../../lib/strings.js";
 import type { HeaderMetric, MetricIcon } from "../../site-header-state.js";
 
 const METRIC_ICONS: Record<MetricIcon, typeof DollarSign> = {
@@ -23,7 +24,11 @@ export function CampaignMetric({ metric }: CampaignMetricProps) {
   return (
     <div
       className={cn("flex items-center gap-1.5", metric.placeholder && "text-muted-foreground")}
-      title={metric.placeholder ? `${metric.label} is not reported by the engine yet` : undefined}
+      title={
+        metric.placeholder
+          ? `${metric.label} ${translate("shell.header.metric.notReported")}`
+          : undefined
+      }
     >
       <Icon className="h-3 w-3" />
       <span className="text-xs tabular-nums">

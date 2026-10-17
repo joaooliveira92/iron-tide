@@ -6,6 +6,7 @@
  */
 
 import { monthName } from "../lib/campaign-month.js";
+import { translate } from "../lib/strings.js";
 
 /** Which shell the toolbar is decorating. Drives the adaptive second row. */
 export type ActiveView = "menu" | "new_game" | "playing" | "options" | "editor";
@@ -110,13 +111,14 @@ export function formatCampaignMonth(month: CampaignMonth): string {
 }
 
 export function headerTitleFor(campaign: HeaderCampaign | null): string {
-  if (campaign === null) return "Bluewave";
-  return `Bluewave — ${formatCampaignMonth(campaign.month)}`;
+  const appName = translate("shell.app.name");
+  if (campaign === null) return appName;
+  return `${appName} — ${formatCampaignMonth(campaign.month)}`;
 }
 
 const EDITOR_ACTIONS: readonly HeaderAction[] = [
-  { code: "validate", label: "Validate parameters", icon: "validate" },
-  { code: "save", label: "Save changes", icon: "save" },
+  { code: "validate", label: translate("shell.header.editor.validate"), icon: "validate" },
+  { code: "save", label: translate("shell.header.editor.save"), icon: "save" },
 ];
 
 export function describeSecondaryRow(
@@ -128,7 +130,7 @@ export function describeSecondaryRow(
     case "editor":
       return {
         kind: "editor",
-        scenario: `Active scenario: editing initial parameters (${campaign?.month.year ?? 1890})`,
+        scenario: `${translate("shell.header.editor.scenario")} (${campaign?.month.year ?? 1890})`,
         actions: EDITOR_ACTIONS,
       };
 
@@ -136,28 +138,31 @@ export function describeSecondaryRow(
       return {
         kind: "campaign",
         metrics: campaignMetrics(campaign),
-        status: campaign?.atWar === true ? "At war" : "Armed peace",
+        status:
+          campaign?.atWar === true
+            ? translate("shell.header.campaign.atWar")
+            : translate("shell.header.campaign.armedPeace"),
       };
 
     case "new_game":
       return {
         kind: "wizard",
-        heading: wizardStep?.heading ?? "Campaign setup assistant",
-        hint: wizardStep?.hint ?? "Select the historical scenario to continue",
+        heading: wizardStep?.heading ?? translate("shell.header.wizard.heading"),
+        hint: wizardStep?.hint ?? translate("shell.header.wizard.hint"),
       };
 
     case "options":
       return {
         kind: "preferences",
-        label: "Preferences:",
-        detail: "Storage directory and interface settings",
+        label: translate("shell.header.preferences.label"),
+        detail: translate("shell.header.preferences.detail"),
       };
 
     case "menu":
       return {
         kind: "status",
-        leading: "Active database (SQLite)",
-        trailing: "Ready for operation",
+        leading: translate("shell.header.menu.leading"),
+        trailing: translate("shell.header.menu.trailing"),
       };
   }
 }
@@ -166,25 +171,25 @@ function campaignMetrics(campaign: HeaderCampaign | null): readonly HeaderMetric
   return [
     {
       icon: "nation",
-      label: "Nation",
+      label: translate("shell.header.metric.nation"),
       value: campaign === null ? NO_VALUE : campaign.nationName,
       placeholder: campaign === null,
     },
     {
       icon: "budget",
-      label: "Budget",
+      label: translate("shell.header.metric.budget"),
       value: campaign === null ? NO_VALUE : formatTreasury(campaign.treasury),
       placeholder: campaign === null,
     },
     {
       icon: "balance",
-      label: "Projected balance",
+      label: translate("shell.header.metric.balance"),
       value: campaign === null ? NO_VALUE : formatTreasury(campaign.projectedSurplusDeficit),
       placeholder: campaign === null,
     },
     {
       icon: "alerts",
-      label: "Alerts",
+      label: translate("shell.header.metric.alerts"),
       value:
         campaign === null || campaign.activeAlertsCount === null
           ? NO_VALUE
@@ -192,10 +197,15 @@ function campaignMetrics(campaign: HeaderCampaign | null): readonly HeaderMetric
       placeholder: campaign === null || campaign.activeAlertsCount === null,
     },
     // Prestige and world tension are not part of the player projection yet.
-    { icon: "prestige", label: "Prestige", value: NO_VALUE, placeholder: true },
+    {
+      icon: "prestige",
+      label: translate("shell.header.metric.prestige"),
+      value: NO_VALUE,
+      placeholder: true,
+    },
     {
       icon: "tension",
-      label: "World tension",
+      label: translate("shell.header.metric.tension"),
       value: NO_VALUE,
       placeholder: true,
     },

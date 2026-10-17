@@ -4,8 +4,10 @@
  * `en-US` fallback, so a missing translation falls back to en-US with no raw key
  * ever reaching the screen.
  *
- * The Options screen is the first surface migrated onto this catalogue; other
- * screens migrate in a bounded follow-on (U-4 map D6).
+ * The Options screen and the application shell chrome (the screen registry,
+ * sidebar sections, site header, global search and the pre-campaign loading
+ * view) are migrated onto this catalogue; the remaining released screens'
+ * content migrates in a bounded follow-on (U-4 map D6).
  */
 import type { LanguagePreference } from "../../shared/preferences-contract.js";
 
@@ -79,6 +81,93 @@ export const EN_US_MESSAGES = {
 
   "settings.reset.all": "Reset all to defaults",
   "settings.reset.section": "Reset section",
+
+  "shell.app.name": "Bluewave",
+  "shell.campaign.loading": "Loading campaign…",
+
+  "nav.section.admiralty": "Admiralty",
+  "nav.section.operations": "Operations",
+  "nav.section.government": "Government",
+  "nav.section.foreign": "Foreign",
+  "nav.section.developer": "Developer",
+  "nav.section.settings": "Settings",
+
+  "nav.screen.overview.label": "Overview",
+  "nav.screen.overview.short": "Overview",
+  "nav.screen.construction.label": "Construction",
+  "nav.screen.construction.short": "Build",
+  "nav.screen.fleet.label": "Fleet",
+  "nav.screen.fleet.short": "Fleet",
+  "nav.screen.simulation.label": "Simulation & Turn",
+  "nav.screen.simulation.short": "Sim",
+  "nav.screen.tactical-sandbox.label": "Tactical Sandbox",
+  "nav.screen.tactical-sandbox.short": "Sandbox",
+  "nav.screen.debugging.label": "Debugging & Telemetry",
+  "nav.screen.debugging.short": "Debug",
+  "nav.screen.map-prototype.label": "Map Prototype",
+  "nav.screen.map-prototype.short": "Map",
+  "nav.screen.research.label": "Research & Technology",
+  "nav.screen.research.short": "Research",
+  "nav.screen.diplomacy.label": "Diplomacy & War",
+  "nav.screen.diplomacy.short": "Diplomacy",
+  "nav.screen.treasury.label": "Treasury",
+  "nav.screen.treasury.short": "Treasury",
+  "nav.screen.campaign-preferences.label": "Campaign Preferences",
+  "nav.screen.campaign-preferences.short": "Prefs",
+  "nav.screen.options.label": "Options",
+  "nav.screen.options.short": "Options",
+
+  "nav.bottom.landmark": "Campaign",
+  "nav.bottom.shipbuilding": "Shipbuilding",
+
+  "shell.header.title.default": "Naval Ministry",
+  "shell.header.back": "Go back",
+  "shell.header.forward": "Go forward",
+  "shell.header.advanceMonth.label": "Advance Month",
+  "shell.header.advanceMonth.aria": "Advance month",
+  "shell.header.advanceMonth.title": "Resolve the current strategic month",
+  "shell.header.advanceMonth.advancing": "Advancing…",
+  "shell.header.campaignMenu.aria": "Campaign menu",
+  "shell.header.campaignMenu.title": "Save, copy or close the campaign",
+  "shell.header.campaignMenu.label": "Campaign",
+  "shell.header.menu.save": "Save",
+  "shell.header.menu.saving": "Saving…",
+  "shell.header.menu.copy": "Copy game…",
+  "shell.header.menu.close": "Close campaign…",
+  "shell.header.closeDialog.title": "Close this campaign?",
+  "shell.header.closeDialog.description":
+    "You will be returned to the campaign file screen. Unsaved progress may be lost.",
+  "shell.header.closeDialog.cancel": "Cancel",
+  "shell.header.closeDialog.confirm": "Close campaign",
+  "shell.header.status.prefix": "Status:",
+  "shell.header.metric.notReported": "is not reported by the engine yet",
+
+  "shell.header.menu.leading": "Active database (SQLite)",
+  "shell.header.menu.trailing": "Ready for operation",
+  "shell.header.editor.scenario": "Active scenario: editing initial parameters",
+  "shell.header.editor.validate": "Validate parameters",
+  "shell.header.editor.save": "Save changes",
+  "shell.header.campaign.atWar": "At war",
+  "shell.header.campaign.armedPeace": "Armed peace",
+  "shell.header.wizard.heading": "Campaign setup assistant",
+  "shell.header.wizard.hint": "Select the historical scenario to continue",
+  "shell.header.preferences.label": "Preferences:",
+  "shell.header.preferences.detail": "Storage directory and interface settings",
+  "shell.header.metric.nation": "Nation",
+  "shell.header.metric.budget": "Budget",
+  "shell.header.metric.balance": "Projected balance",
+  "shell.header.metric.alerts": "Alerts",
+  "shell.header.metric.prestige": "Prestige",
+  "shell.header.metric.tension": "World tension",
+
+  "shell.search.aria": "Search",
+  "shell.search.title": "Search (Ctrl+F)",
+  "shell.search.dialog.title": "Search",
+  "shell.search.dialog.description": "Jump to any campaign screen",
+  "shell.search.placeholder": "Search screens…",
+  "shell.search.hint": "Type to search screens…",
+  "shell.search.empty": "No screens found.",
+  "shell.search.group": "Screens",
 } as const;
 
 export type MessageKey = keyof typeof EN_US_MESSAGES;

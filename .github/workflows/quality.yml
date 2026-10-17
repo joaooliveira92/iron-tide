@@ -70,8 +70,9 @@ jobs:
       # --no-cache: the typecheck step's build populates the Vite Task cache
       # first, and a replayed desktop build then reads a stale phase-engine
       # `dist`. Build from source here so the gate is not at the mercy of cache
-      # replay.
-      - run: pnpm exec vp run -r build --no-cache
+      # replay. The flag must precede the task specifier: after `build` it is
+      # forwarded to the task (`tsc -b --no-cache` → TS5072).
+      - run: pnpm exec vp run --no-cache -r build
       # The app hard-depends on the compiled content artifact; build it
       # explicitly so a green run cannot mean the tests executed against a
       # stale or missing artifact (it is otherwise only produced as a side

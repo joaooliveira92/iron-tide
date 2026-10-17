@@ -4,6 +4,7 @@ import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type { InspectOpeningBriefingResult } from "../../shared/campaign-command-contract.js";
 import { CampaignFileScreen } from "../screens/campaign-file/CampaignFileScreen.js";
+import { translate } from "../lib/strings.js";
 import { NewGameArchetypeScreen } from "../screens/new-game/NewGameArchetypeScreen.js";
 import { NewGameBriefingScreen } from "../screens/new-game/NewGameBriefingScreen.js";
 import { NewGameCommissioningReviewScreen } from "../screens/new-game/NewGameCommissioningReviewScreen.js";
@@ -207,7 +208,7 @@ export function CampaignUnavailableView({
 function CampaignLoadingView() {
   return (
     <div className="p-8">
-      <p>Loading campaign…</p>
+      <p>{translate("shell.campaign.loading")}</p>
     </div>
   );
 }

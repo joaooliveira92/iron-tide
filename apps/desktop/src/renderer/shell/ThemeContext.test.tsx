@@ -46,9 +46,9 @@ describe("theme model (U-4 ticket 03)", () => {
         </PreferencesProvider>
       </BridgeProvider>,
     );
-    await waitFor(() =>
-      expect(document.documentElement.classList.contains("high-contrast")).toBe(true),
-    );
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
+    await waitFor(() => {
+      expect(document.documentElement.classList.contains("high-contrast")).toBe(true);
+      expect(document.documentElement.classList.contains("dark")).toBe(true);
+    });
   });
 });

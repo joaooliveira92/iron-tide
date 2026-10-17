@@ -14,6 +14,11 @@ formatting are independent choices.
       production path.
 - [x] The Options screen's strings are migrated onto the catalogue (no inline
       literals remain on the screen).
+- [x] The shell chrome (screen registry and sidebar labels, site header, global
+      search, campaign menu/dialog, advance-month control, pre-campaign loading
+      view) is migrated onto the catalogue; `shell/chrome-strings.test.ts` guards
+      that every registered screen/section label resolves and no en-US value is a
+      raw key.
 - [x] The language control lists only fully supported languages (English only);
       the formatting-locale control lists only locales with automated formatting
       tests (`FORMATTING_LOCALES`, initially `en-US`).
@@ -22,4 +27,5 @@ formatting are independent choices.
 - [x] A test asserts the fallback warning, the absence of raw keys, and the
       independence of the two controls.
 - [x] The remaining released screens' string migration is a recorded scope
-      boundary (in U-4 if sized, else a bounded follow-on), not silently deferred.
+      boundary (Options + shell chrome landed; screen content is a bounded
+      follow-on), not silently deferred.
