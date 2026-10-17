@@ -24,6 +24,13 @@ export interface CampaignOverview {
   /** The player nation's name — INC-1's `PlayerProjection.nationName`. */
   readonly nationName: string;
   /**
+   * The player nation's id — INC-1's `PlayerProjection.playerNationId`. Optional
+   * so pre-existing shell fixtures stay valid; production always stamps it. Used
+   * by presentation to resolve the active nation (e.g. currency availability)
+   * without guessing from the display name.
+   */
+  readonly playerNationId?: string;
+  /**
    * Projected monthly surplus/deficit — INC-1's
    * `PlayerProjection.projectedSurplusDeficit`. After a month commit the
    * `CommitMonthResponse` carries no projection surface, so the shell keeps

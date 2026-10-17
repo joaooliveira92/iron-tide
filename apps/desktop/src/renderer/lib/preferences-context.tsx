@@ -11,15 +11,19 @@ import {
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import {
   DEFAULT_APP_PREFERENCES,
-  NO_ACTIVE_NATION_AVAILABILITY,
   resolveEffectiveCurrencyDisplayMode,
   type AppPreferences,
   type CurrencyDisplayMode,
   type CurrencyFallbackReason,
-  type NationalCurrencyAvailability,
   type PreferencesSnapshot,
   type WriteAppPreferencesRequest,
 } from "../../shared/preferences-contract.js";
+import {
+  computeNationalCurrencyAvailability,
+  NO_NATIONAL_CURRENCY_CONFIGURATIONS,
+  type ActiveCampaignCurrencyContext,
+  type NationalCurrencySource,
+} from "./presentation-format/index.js";
 import { useBridge } from "./bridge-context.js";
 
 export type PreferencesStatus = "loading" | "ready" | "error";
@@ -147,15 +151,20 @@ export interface CurrencyDisplayModeSelection {
 /**
  * The currency-display request (stored app-scope, ADR-0211) and the derived
  * effective mode, exposed separately so the UI can show the effective mode
- * truthfully without rewriting the request. `availability` is produced by U-3
- * from the active campaign; until that is wired it defaults to "no active
- * nation", so National Historical resolves to Naval Credits.
+ * truthfully without rewriting the request. The active campaign's nation and
+ * year (from the campaign shell) and the validated National Historical source
+ * are supplied by the caller; U-3's `computeNationalCurrencyAvailability`
+ * derives the availability, so the effective mode and its reason come from real
+ * state rather than a static default. With no active campaign the effective mode
+ * is Naval Credits and the reason is `noActiveNation`.
  */
 export function useCurrencyDisplayMode(
-  availability: NationalCurrencyAvailability = NO_ACTIVE_NATION_AVAILABILITY,
+  context: ActiveCampaignCurrencyContext = {},
+  source: NationalCurrencySource = NO_NATIONAL_CURRENCY_CONFIGURATIONS,
 ): CurrencyDisplayModeSelection {
   const { preferences, setApp } = usePreferences();
   const requested = preferences.currencyDisplayMode;
+  const availability = computeNationalCurrencyAvailability(context, source);
   const effective = resolveEffectiveCurrencyDisplayMode(requested, availability);
   const setRequested = useCallback(
     (mode: CurrencyDisplayMode) => setApp({ currencyDisplayMode: mode }),

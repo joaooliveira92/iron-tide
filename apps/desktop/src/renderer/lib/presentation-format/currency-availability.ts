@@ -29,6 +29,16 @@ export interface NationalCurrencySource {
   readonly invalidNationIds?: readonly string[];
 }
 
+/**
+ * The production National Historical source: no validated per-nation
+ * configuration is authored (U-3 owner decision, ADR-0211). A nation with no
+ * configuration falls back to Naval Credits with a stated reason; nothing is
+ * fabricated here.
+ */
+export const NO_NATIONAL_CURRENCY_CONFIGURATIONS: NationalCurrencySource = Object.freeze({
+  configurations: [] as const,
+});
+
 /** Compute National Historical availability for the active campaign. */
 export function computeNationalCurrencyAvailability(
   context: ActiveCampaignCurrencyContext,

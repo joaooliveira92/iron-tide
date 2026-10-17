@@ -26,6 +26,7 @@ export function overviewFromProjection(
     revision: projection.revision,
     sessionId,
     nationName: projection.nationName,
+    playerNationId: projection.playerNationId,
     projectedSurplusDeficit: projection.projectedSurplusDeficit,
     atWar: projection.knownEnemyNations.length > 0,
     // Real count from the engine's priorities projection; null only when that
@@ -53,6 +54,7 @@ export function overviewAfterCommit(
     revision: committed.closingSnapshot.revision,
     sessionId,
     nationName: previous.nationName,
+    ...(previous.playerNationId !== undefined ? { playerNationId: previous.playerNationId } : {}),
     projectedSurplusDeficit: previous.projectedSurplusDeficit,
     atWar: previous.atWar,
     // Last month's count would be wrong for this month; the refresh below fills it in.
