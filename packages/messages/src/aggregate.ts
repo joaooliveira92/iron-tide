@@ -59,12 +59,12 @@ function mergeGroup(group: readonly MessageDraft[]): MessageDraft {
   if (first === undefined) throw new Error("mergeGroup requires a non-empty group");
   if (group.length === 1) return first;
 
-  const subjectRefs = [...group.flatMap((m) => m.subjectRefs)].sort(compareRefs);
+  const subjectRefs = group.flatMap((m) => m.subjectRefs).sort(compareRefs);
   const uniqueSubjects = subjectRefs.filter(
     (ref, index) => index === 0 || refKey(subjectRefs[index - 1]!) !== refKey(ref),
   );
 
-  const effectRefs = [...group.flatMap((m) => m.effectRefs)];
+  const effectRefs = group.flatMap((m) => m.effectRefs);
   const uniqueEffects = [
     ...new Map(effectRefs.map((ref) => [canonicalSerialize(ref), ref])).values(),
   ].sort((a, b) => compareCodePoints(canonicalSerialize(a), canonicalSerialize(b)));

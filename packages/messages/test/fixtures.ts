@@ -3,7 +3,7 @@ import type { DomainEventBody, DomainEventEnvelope } from "@bluewave/events";
 import type { ProjectionSnapshot } from "../src/index.js";
 
 export function snapshot(overrides: Partial<ProjectionSnapshot> = {}): ProjectionSnapshot {
-  return { startYear: 1880, startMonth: 1, turnNumber: 1, ...overrides };
+  return { startYear: 1880, startMonth: 1, turnNumber: SafeInt(1), ...overrides };
 }
 
 export function envelope(

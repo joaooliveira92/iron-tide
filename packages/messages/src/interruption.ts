@@ -4,7 +4,6 @@ import type { EntityReference, Interpolation, TurnPhase } from "./schema.js";
 import { InterpolationSchema, EntityReferenceSchema, TurnPhaseSchema } from "./schema.js";
 
 const nonEmptyString = Schema.String.check(Schema.isMinLength(1));
-const scalar = Schema.Union([Schema.String, Schema.Number, Schema.Boolean]);
 
 export const INTERRUPTION_KINDS = ["decision", "battle"] as const;
 export type InterruptionKind = (typeof INTERRUPTION_KINDS)[number];

@@ -108,9 +108,8 @@ const pendingDecision: PendingDecision = {
 function run(snapshot: CampaignSnapshot, channel?: InterruptionChannel) {
   const executor = new MonthExecutor();
   const collector = new DiagnosticCollector();
-  return executor.execute(snapshot, [], "seam-seed", collector, undefined, {
-    ...(channel !== undefined ? { interruptions: channel } : {}),
-  });
+  const engineOptions = channel === undefined ? undefined : { interruptions: channel };
+  return executor.execute(snapshot, [], "seam-seed", collector, undefined, engineOptions);
 }
 
 function answerFor(request: DecisionRequest, optionId: string): RecordedInput {

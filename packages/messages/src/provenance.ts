@@ -120,7 +120,7 @@ export function describeEventBody(body: DomainEventBody): EventDescription {
             attribute: "cancelled",
             previousValue: body.consumedWork,
             newValue: 0,
-            delta: -body.lostAmount,
+            delta: -Number(body.lostAmount),
             visibility: "exact",
           },
         ],
