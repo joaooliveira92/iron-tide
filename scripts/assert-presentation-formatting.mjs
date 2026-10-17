@@ -38,6 +38,33 @@ const RULES = [
   { id: "dollar-amount", re: /["'`][^"'`]*\$\d[^"'`]*["'`]/u },
 ];
 
+/**
+ * Direct web-storage access in the settings/formatting/Options surfaces (U-5
+ * ticket 05, map D6): preferences are app-scope, campaign-scope or session
+ * capability state, never a second `localStorage` store. Scoped to the
+ * presentation surfaces so the guard is precise; a legitimate legacy-migration
+ * read is baselined as a ratchet (below), like the formatting findings.
+ */
+const STORAGE_GUARD_PREFIXES = [
+  "apps/desktop/src/renderer/screens/options/",
+  "apps/desktop/src/renderer/screens/campaign-preferences/",
+  "apps/desktop/src/renderer/lib/preferences-context.tsx",
+  "apps/desktop/src/renderer/lib/strings.ts",
+  "apps/desktop/src/renderer/shell/ThemeContext.tsx",
+  "apps/desktop/src/renderer/shell/DensityContext.tsx",
+  "apps/desktop/src/renderer/shell/FontContext.tsx",
+  "apps/desktop/src/renderer/shell/BackgroundContext.tsx",
+];
+
+const STORAGE_RULES = [
+  { id: "localStorage", re: /\blocalStorage\b/u },
+  { id: "sessionStorage", re: /\bsessionStorage\b/u },
+];
+
+function isStorageGuarded(rel) {
+  return STORAGE_GUARD_PREFIXES.some((prefix) => rel.includes(prefix));
+}
+
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
     const full = join(dir, name);
@@ -62,12 +89,20 @@ export function scan(rootDir) {
     const rel = relative(rootDir, file).split(sep).join("/");
     if (isExempt(rel)) continue;
     const lines = readFileSync(file, "utf8").split("\n");
+    const storageGuarded = isStorageGuarded(rel);
     lines.forEach((line, index) => {
       const trimmed = line.trim();
       if (trimmed.startsWith("//") || trimmed.startsWith("*")) return;
       for (const rule of RULES) {
         if (rule.re.test(line)) {
           findings.push(`${rel}:${index + 1}:${rule.id}:${trimmed}`);
+        }
+      }
+      if (storageGuarded && !trimmed.startsWith("/*")) {
+        for (const rule of STORAGE_RULES) {
+          if (rule.re.test(line)) {
+            findings.push(`${rel}:${index + 1}:${rule.id}:${trimmed}`);
+          }
         }
       }
     });
