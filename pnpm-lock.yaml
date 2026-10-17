@@ -492,6 +492,9 @@ importers:
       '@bluewave/random':
         specifier: workspace:*
         version: link:../random
+      '@bluewave/ship-design':
+        specifier: workspace:*
+        version: link:../ship-design
     devDependencies:
       '@bluewave/test-support':
         specifier: workspace:*

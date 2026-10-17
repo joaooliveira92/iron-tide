@@ -90,11 +90,11 @@ documented, seeds and clocks are controlled, the 1880 scenario passes structural
 validation, deterministic replay is demonstrated, presentation preferences are excluded
 from authoritative state, and the output is reviewed. It is a new baseline, not a restoration.
 
-| #   | Sprint                  | Size | Depends on | Acceptance                                                                                                                                                                                               |
-| --- | ----------------------- | ---- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| N-1 | 1880 scenario audit     | M    | G-1        | Per-nation report on fleets, classes, queues, budgets, maintenance, docks, tech state, research priorities, relations, possessions, presence. Every ship legal under 1880 tech. Findings become tickets. |
-| N-2 | 1880 content completion | L    | N-1        | Gaps closed from research notes; abstractions documented; no later tech copied in. Ten nations each pass a campaign viability test and a deterministic smoke run.                                        |
-| N-3 | 1880–1890 progression   | M    | N-2, S-1   | A scripted 10-year run shows decisions and unlocks each year (docks, torpedoes, protected cruisers, steel, QF guns); no idle stretch.                                                                    |
+| #   | Sprint                  | Size | Depends on | Acceptance                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| --- | ----------------------- | ---- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| N-1 | 1880 scenario audit     | M    | G-1        | Per-nation report on fleets, classes, queues, budgets, maintenance, docks, tech state, research priorities, relations, possessions, presence. Every ship legal under 1880 tech. Findings become tickets.                                                                                                                                                                                                                                                                                                   |
+| N-2 | 1880 content completion | L    | N-1        | Gaps closed from research notes; abstractions documented; no later tech copied in. Ten nations each pass a campaign viability test and a deterministic smoke run.                                                                                                                                                                                                                                                                                                                                          |
+| N-3 | 1880–1890 progression   | M    | N-2, S-1   | **Done 2026-10-17** (spec #47; report `.ai/reports/n-3-1880-1890-progression.md`): a deterministic 120-month command-free run shows a qualifying decision in each year 1880–1889 and ≥1 availability event per year (technology `year` or part/component introduction); docks, torpedoes, protected cruisers, steel and QF guns are available at their declared dates and not before. No idle stretch. The command-free treasury baseline is recorded by decision 0014; its economy fix is tracked as #95. |
 
 ### Phase 2 — Canonical values and Options (DR-002, DR-003)
 
@@ -202,11 +202,14 @@ decision sections in `.ai/decision-requests/` and ADR-0223/0224/0225.
    optional/defaulted and do not add prestige to production content.
 6. **0008** closed administratively.
 
-**Immediate next action (2026-10-17):** **N-3 — 1880–1890 progression (M)** now
-that N-2 and S-1 are complete. N-3 is a separate sprint: it owns the decade's
-decisions and unlocks (docks, torpedoes, protected cruisers, steel, QF guns) and
-any approved torpedo-contract id change. S-2/S-3 remain blocked on owner
-decisions 0003/0006; W-2's W-1 dependency is unmet.
+**Immediate next action (2026-10-17):** **N-3 is done** (spec #47, report
+`.ai/reports/n-3-1880-1890-progression.md`; map #42; tickets #48–#53). The decade
+is proven by a deterministic 120-month run, a per-year availability ledger, named
+unlock assertions, and January decision probes. N-3 changed no content, schema,
+compatibility version, content lock or golden. The command-free run exhausts every
+nation's treasury by design; owner decision 0014-A accepted that baseline for N-3
+and the economy/AI solvency fix is its own ticket, #95. S-2/S-3 remain blocked on
+owner decisions 0003/0006; W-2's W-1 dependency is unmet.
 
 **Lane isolation:** S-1 and N-1 both move goldens. Process them **sequentially** so
 each golden movement has one attributable cause; never bundle unrelated behavioural

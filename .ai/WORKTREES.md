@@ -26,6 +26,5 @@ Direction lives in [`ROADMAP.md`](ROADMAP.md); the backlog in
 | Slug | Branch | Scope | Owner | Status | Base | Created | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | work | dev | (primary dev checkout, not an effort) | user | active | dev | — | — |
-| s-3-budget-pressure-and-unrest | feat/s-3-budget-pressure-and-unrest | .scratch/s-3-budget-pressure-and-unrest | unknown | active | dev | — | — |
-| n-2-1880-content-completion | feat/n-2-1880-content-completion | n-2-1880-content-completion | unknown | active | dev | — | — |
+| n-3-progression | feat/n-3-progression | n-3-progression | orchestrator | active | dev | 2026-10-17 | — |
 <!-- worktrees:end -->

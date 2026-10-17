@@ -17,6 +17,7 @@
     "@bluewave/content-compiler": "workspace:*",
     "@bluewave/campaign": "workspace:*",
     "@bluewave/campaign-engine": "workspace:*",
+    "@bluewave/ship-design": "workspace:*",
     "@bluewave/commands": "workspace:*",
     "@bluewave/random": "workspace:*",
     "@bluewave/events": "workspace:*",

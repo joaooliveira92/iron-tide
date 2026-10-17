@@ -1,7 +1,6 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/campaign";
 import { CampaignCompiler } from "@bluewave/campaign/compiler";
 import { generateBattles } from "@bluewave/combat";
@@ -13,6 +12,14 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
 import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
 import { nationsYaml } from "@bluewave/test-support";
+
+import { buildProgressionLedger } from "./progression-ledger.js";
+import { assertDecisionProbes, probeDecisions } from "./decision-probes.js";
+import {
+  compileProductionBundle,
+  compileProductionCampaign,
+  probeReferenceDesigns,
+} from "./production-pack.js";
 
 const FIXTURE = {
   pack: JSON.stringify({
@@ -356,48 +363,8 @@ function run(): void {
  */
 const PRODUCTION_SMOKE_MONTHS = 12;
 const PRODUCTION_SMOKE_SEED = "ten-nation-smoke-1880";
-const PRODUCTION_PACK_DIR = resolve(
-  fileURLToPath(new URL(".", import.meta.url)),
-  "..",
-  "..",
-  "..",
-  "content",
-  "production",
-  "1880",
-);
-
-function compileProductionCampaign(): { state: CampaignState; contentHash: string } {
-  const collector = new DiagnosticCollector();
-  const signal = new AbortController().signal;
-  const input = buildFullSurfaceInput(
-    resolve(PRODUCTION_PACK_DIR, "pack.json"),
-    PRODUCTION_PACK_DIR,
-    collector,
-  );
-  const artifact = input ? buildContentBundleArtifact(input, signal, collector) : undefined;
-  if (!artifact || collector.hasErrors) {
-    throw new Error(
-      `Production pack compilation failed: ${collector.all.map((d) => d.message).join("; ")}`,
-    );
-  }
-  const output = new CampaignCompiler().compile(
-    {
-      contentBundle: artifact.bundle,
-      contentHash: artifact.envelope.bodyHash,
-      rulesetVersion: "1.0",
-      compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-    },
-    signal,
-    collector,
-  );
-  if (!output || collector.hasErrors) {
-    throw new Error(
-      `Production pack compilation failed: ${collector.all.map((d) => d.message).join("; ")}`,
-    );
-  }
-  return { state: output.state, contentHash: output.contentHash };
-}
-
+const PRODUCTION_TEN_YEAR_MONTHS = 120;
+const PRODUCTION_TEN_YEAR_SEED = "ten-year-progression-1880";
 interface SmokeDiagnostic {
   readonly month: number;
   readonly nationId: string | null;
@@ -418,25 +385,62 @@ function hullCounts(snapshot: CampaignSnapshot): Record<string, number> {
   return counts;
 }
 
-function advanceProductionSmoke(initial: CampaignSnapshot): {
+interface YearStart {
+  readonly year: number;
+  readonly month: string;
+  readonly snapshotHash: string;
+}
+
+interface ProductionRun {
+  readonly initialSnapshotHash: string;
+  readonly yearStarts: YearStart[];
   readonly monthlyHashes: string[];
   readonly monthlySuccess: boolean[];
   readonly closingSnapshotHash: string;
   readonly success: boolean;
   readonly diagnostics: SmokeDiagnostic[];
   readonly hullCounts: Record<string, number>;
+}
+
+function calendarAt(
+  initial: CampaignSnapshot,
+  monthOffset: number,
+): {
+  readonly year: number;
+  readonly month: number;
 } {
+  const startIndex = Number(initial.startYear) * 12 + Number(initial.startMonth) - 1;
+  const index = startIndex + monthOffset;
+  return { year: Math.floor(index / 12), month: (index % 12) + 1 };
+}
+
+function advanceProductionRun(
+  initial: CampaignSnapshot,
+  months: number,
+  seed: string,
+  onYearStart?: (snapshot: CampaignSnapshot, year: number) => void,
+): ProductionRun {
   let snapshot = initial;
+  const yearStarts: YearStart[] = [];
   const monthlyHashes: string[] = [];
   const monthlySuccess: boolean[] = [];
   const diagnostics: SmokeDiagnostic[] = [];
   let success = true;
-  for (let index = 0; index < PRODUCTION_SMOKE_MONTHS; index++) {
+  for (let index = 0; index < months; index++) {
+    const calendar = calendarAt(initial, index);
+    if (calendar.month === 1) {
+      yearStarts.push({
+        year: calendar.year,
+        month: `${String(calendar.year)}-01`,
+        snapshotHash: hashSnapshot(snapshot),
+      });
+      onYearStart?.(snapshot, calendar.year);
+    }
     const collector = new DiagnosticCollector();
     const result = new MonthExecutor().execute(
       snapshot,
       [],
-      `${PRODUCTION_SMOKE_SEED}:month:${String(snapshot.turnNumber)}`,
+      `${seed}:month:${String(snapshot.turnNumber)}`,
       collector,
     );
     success = success && result.success;
@@ -456,6 +460,8 @@ function advanceProductionSmoke(initial: CampaignSnapshot): {
     };
   }
   return {
+    initialSnapshotHash: hashSnapshot(initial),
+    yearStarts,
     monthlyHashes,
     monthlySuccess,
     closingSnapshotHash: hashSnapshot(snapshot),
@@ -463,6 +469,10 @@ function advanceProductionSmoke(initial: CampaignSnapshot): {
     diagnostics,
     hullCounts: hullCounts(snapshot),
   };
+}
+
+function advanceProductionSmoke(initial: CampaignSnapshot): ProductionRun {
+  return advanceProductionRun(initial, PRODUCTION_SMOKE_MONTHS, PRODUCTION_SMOKE_SEED);
 }
 
 function runProductionTenNationSmoke(): void {
@@ -489,8 +499,86 @@ function runProductionTenNationSmoke(): void {
   );
 }
 
+function runProgressionLedger(): void {
+  const { bundle } = compileProductionBundle();
+  const ledger = buildProgressionLedger(bundle);
+  process.stdout.write(
+    JSON.stringify({
+      mode: "progression-ledger",
+      ledgerHash: sha256Hex(canonicalSerialize(ledger)),
+      ledger,
+    }) + "\n",
+  );
+}
+
+function runProductionTenYear(): void {
+  const { state } = compileProductionCampaign();
+  const first = advanceProductionRun(
+    state.snapshot,
+    PRODUCTION_TEN_YEAR_MONTHS,
+    PRODUCTION_TEN_YEAR_SEED,
+  );
+  const second = advanceProductionRun(
+    state.snapshot,
+    PRODUCTION_TEN_YEAR_MONTHS,
+    PRODUCTION_TEN_YEAR_SEED,
+  );
+  const inProcessRepeatMatches =
+    canonicalSerialize(first.monthlyHashes) === canonicalSerialize(second.monthlyHashes) &&
+    first.closingSnapshotHash === second.closingSnapshotHash &&
+    canonicalSerialize(first.diagnostics) === canonicalSerialize(second.diagnostics);
+
+  process.stdout.write(
+    JSON.stringify({
+      mode: "production-ten-year",
+      months: PRODUCTION_TEN_YEAR_MONTHS,
+      inProcessRepeatMatches,
+      success: first.success && second.success,
+      initialSnapshotHash: first.initialSnapshotHash,
+      yearlyCheckpoints: first.yearStarts,
+      monthlyHashes: first.monthlyHashes,
+      monthlySuccess: first.monthlySuccess,
+      closingSnapshotHash: first.closingSnapshotHash,
+      diagnostics: first.diagnostics,
+      hullCounts: first.hullCounts,
+    }) + "\n",
+  );
+}
+
+function runProductionProbes(): void {
+  const { bundle, state } = compileProductionCampaign();
+  const slot = state.snapshot.slots.find((candidate) => candidate.type === "playable");
+  if (slot === undefined) throw new Error("production pack has no playable slot");
+  const references = probeReferenceDesigns(bundle);
+  const years: { year: number; probes: readonly unknown[] }[] = [];
+  const run = advanceProductionRun(
+    state.snapshot,
+    PRODUCTION_TEN_YEAR_MONTHS,
+    PRODUCTION_TEN_YEAR_SEED,
+    (snapshot, year) => {
+      if (year > 1889) return;
+      const probes = probeDecisions(snapshot, slot, year, references);
+      assertDecisionProbes(year, probes);
+      years.push({ year, probes });
+    },
+  );
+  process.stdout.write(
+    JSON.stringify({
+      mode: "production-probes",
+      years,
+      closingSnapshotHash: run.closingSnapshotHash,
+    }) + "\n",
+  );
+}
+
 if (process.argv[2] === "production-ten-nation") {
   runProductionTenNationSmoke();
+} else if (process.argv[2] === "production-ten-year") {
+  runProductionTenYear();
+} else if (process.argv[2] === "production-probes") {
+  runProductionProbes();
+} else if (process.argv[2] === "progression-ledger") {
+  runProgressionLedger();
 } else {
   run();
 }
