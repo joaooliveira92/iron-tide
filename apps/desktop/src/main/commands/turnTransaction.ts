@@ -142,9 +142,13 @@ export const runTurnTransaction = (
     const recordedInputs = input.recordedInputs ?? [];
     // `turnId` is a function of the pre-turn state and the committed orders — all
     // known before execution, so a suspended turn's interruption identities are
-    // reproduced byte-for-byte on resume.
+    // reproduced byte-for-byte on resume. The `orderedInputsHash` term therefore
+    // hashes the turn's PRE-execution input set (empty for a fresh turn), never
+    // the inputs accumulated while suspended: hashing the accumulators would
+    // change every interruption's id on each resume and defeat exactly-once
+    // resume (D-12 "stable identity under re-execution").
     const committedOrderHash = sha256Hex(canonicalSerialize(pendingCommands));
-    const orderedInputsHash = computeOrderedInputsHash(recordedInputs);
+    const orderedInputsHash = computeOrderedInputsHash([]);
     const turnId = computeTurnId({
       campaignId: record.state.snapshot.campaignId,
       startingRevision: currentRevision,
@@ -172,6 +176,19 @@ export const runTurnTransaction = (
     const armamentHash = yield* contentArtifact.armamentContentHash();
 
     if (result.outcome === "suspended") {
+      const request = result.suspended?.request ?? null;
+      // The minimum identity of the outstanding interruption, so the answer/
+      // submit boundary can match it (T7). A trailing-input suspension has no
+      // request and therefore no outstanding interruption.
+      const outstanding =
+        request === null
+          ? undefined
+          : {
+              kind: request.kind,
+              phase: request.phase,
+              ordinal: request.ordinal,
+              subjectKey: request.subjectKey,
+            };
       const pendingTurn = buildPendingTurn({
         projectionVersion: "1.0.0",
         turnId,
@@ -189,6 +206,7 @@ export const runTurnTransaction = (
         recordedInputs,
         nextInterruptionOrdinal: result.suspended?.nextInterruptionOrdinal ?? 0,
         createdAt: `${String(record.month.year)}-${String(record.month.month).padStart(2, "0")}`,
+        ...(outstanding !== undefined ? { outstanding } : {}),
       });
       return {
         kind: "suspended",

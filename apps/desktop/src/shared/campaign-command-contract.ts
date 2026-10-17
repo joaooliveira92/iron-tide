@@ -871,6 +871,13 @@ export type ResolveTurnResult =
 
 export interface ReadPendingTurnResult {
   readonly pending: PendingTurnDto | null;
+  /**
+   * Whether the stored pending turn can be trusted against the already-verified
+   * save (recomputed turn id + matching versions/content hashes). A stored but
+   * incompatible record must be reported as unavailable without being resumed or
+   * migrated.
+   */
+  readonly valid: boolean;
 }
 
 export interface AnswerDecisionPayload {

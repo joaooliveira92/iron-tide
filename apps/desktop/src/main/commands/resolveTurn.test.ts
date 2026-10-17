@@ -2,6 +2,7 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { computeOrderedInputsHash, computeTurnId } from "@bluewave/messages";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
 import { ManagedRuntime } from "effect";
@@ -9,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type {
   AbandonPendingTurnResult,
+  ReadPendingTurnResult,
   ResolveTurnResult,
 } from "../../shared/campaign-command-contract.js";
 import {
@@ -28,8 +30,16 @@ import {
   isPendingTurnValid,
   loadPendingTurn,
   savePendingTurn,
+  type PendingTurnRecord,
 } from "../pendingTurn.js";
-import { abandonPendingTurnProgram, resolveTurnProgram } from "./resolveTurn.js";
+import { armamentContentHash, shipBuildingContentHash } from "../shipBuildingContent.js";
+import {
+  abandonPendingTurnProgram,
+  answerDecisionProgram,
+  readPendingTurnProgram,
+  resolveTurnProgram,
+  submitBattleResultProgram,
+} from "./resolveTurn.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
@@ -200,5 +210,161 @@ describe("turn transaction commands", () => {
     expect(existsSync(join(saveDir, PENDING_TURN_FILENAME))).toBe(false);
     expect(getCampaignSession("session-abandon")!.state.rawHash).toBe(before);
     expect(Number(getCampaignSession("session-abandon")!.state.snapshot.turnNumber)).toBe(0);
+  });
+
+  function saveOutstandingPending(
+    saveDir: string,
+    outstanding: NonNullable<PendingTurnRecord["outstanding"]>,
+  ) {
+    savePendingTurn(
+      saveDir,
+      buildPendingTurn({
+        projectionVersion: "1.0.0",
+        turnId: "turn-outstanding",
+        campaignId: "c",
+        playerNationId: "uk",
+        startingRevision: 0,
+        rulesetVersion: "0.1.0",
+        compatibilityVersion: "0.1.0",
+        contentHashes: { shipBuilding: "s", armament: "a", contentArtifact: "c" },
+        committedOrderHash: "h",
+        recordedInputs: [],
+        nextInterruptionOrdinal: 0,
+        createdAt: "1880-01",
+        outstanding,
+      }),
+    );
+  }
+
+  it("rejects a decision answer with a mismatched interruptionId and leaves the sidecar unchanged", async () => {
+    const saveDir = join(saveRoot, "decision-mismatch");
+    registerProductionSession("session-decision-mismatch", saveDir);
+    saveOutstandingPending(saveDir, {
+      kind: "decision",
+      phase: "appropriation",
+      ordinal: 0,
+      subjectKey: "uk",
+    });
+    const before = loadPendingTurn(saveDir);
+
+    const result = await runProgram(answerDecisionProgram, {
+      sessionId: "session-decision-mismatch",
+      expectedRevision: 0,
+      transportRequestId: "req-1",
+      interruptionId: "tampered-id",
+      decisionId: "dec-1",
+      optionId: "approve",
+    });
+    expect(result.outcome).toBe("error");
+    if (result.outcome !== "error") return;
+    expect(result.reason).toBe("INTERRUPTION_ID_MISMATCH");
+    expect(loadPendingTurn(saveDir)).toEqual(before);
+  });
+
+  it("rejects a battle result with a mismatched interruptionId and leaves the sidecar unchanged", async () => {
+    const saveDir = join(saveRoot, "battle-mismatch");
+    registerProductionSession("session-battle-mismatch", saveDir);
+    saveOutstandingPending(saveDir, {
+      kind: "battle",
+      phase: "battle_resolution",
+      ordinal: 0,
+      subjectKey: "battle-1",
+    });
+    const before = loadPendingTurn(saveDir);
+
+    const result = await runProgram(submitBattleResultProgram, {
+      sessionId: "session-battle-mismatch",
+      expectedRevision: 0,
+      transportRequestId: "req-1",
+      interruptionId: "tampered-id",
+      battleId: "battle-1",
+      winnerId: "uk",
+      loserId: "fr",
+      attackerLosses: [],
+      defenderLosses: [],
+      damageReport: {},
+    });
+    expect(result.outcome).toBe("error");
+    if (result.outcome !== "error") return;
+    expect(result.reason).toBe("INTERRUPTION_ID_MISMATCH");
+    expect(loadPendingTurn(saveDir)).toEqual(before);
+  });
+
+  it("readPendingTurn reports a stale pending turn as invalid without mutating anything", async () => {
+    const saveDir = join(saveRoot, "read-stale");
+    registerProductionSession("session-read-stale", saveDir);
+    const state = getCampaignSession("session-read-stale")!.state;
+    const before = state.rawHash;
+    savePendingTurn(
+      saveDir,
+      buildPendingTurn({
+        projectionVersion: "1.0.0",
+        turnId: "bogus-turn-id",
+        campaignId: state.snapshot.campaignId,
+        playerNationId: "uk",
+        startingRevision: 0,
+        rulesetVersion: state.snapshot.rulesetVersion,
+        compatibilityVersion: state.snapshot.compatibilityVersion,
+        contentHashes: {
+          shipBuilding: shipBuildingContentHash(),
+          armament: armamentContentHash(),
+          contentArtifact: state.rawHash,
+        },
+        committedOrderHash: "h",
+        recordedInputs: [],
+        nextInterruptionOrdinal: 0,
+        createdAt: "1880-01",
+      }),
+    );
+
+    const result = await runProgram(readPendingTurnProgram, "session-read-stale");
+    expect(result.outcome).toBe("success");
+    if (result.outcome !== "success") return;
+    const value = result.value as ReadPendingTurnResult;
+    expect(value.pending).not.toBeNull();
+    expect(value.valid).toBe(false);
+    expect(getCampaignSession("session-read-stale")!.state.rawHash).toBe(before);
+    expect(existsSync(join(saveDir, PENDING_TURN_FILENAME))).toBe(true);
+  });
+
+  it("readPendingTurn reports a matching pending turn as valid", async () => {
+    const saveDir = join(saveRoot, "read-valid");
+    registerProductionSession("session-read-valid", saveDir);
+    const state = getCampaignSession("session-read-valid")!.state;
+    const committedOrderHash = "orders";
+    const turnId = computeTurnId({
+      campaignId: state.snapshot.campaignId,
+      startingRevision: 0,
+      committedOrderHash,
+      orderedInputsHash: computeOrderedInputsHash([]),
+    });
+    savePendingTurn(
+      saveDir,
+      buildPendingTurn({
+        projectionVersion: "1.0.0",
+        turnId,
+        campaignId: state.snapshot.campaignId,
+        playerNationId: "uk",
+        startingRevision: 0,
+        rulesetVersion: state.snapshot.rulesetVersion,
+        compatibilityVersion: state.snapshot.compatibilityVersion,
+        contentHashes: {
+          shipBuilding: shipBuildingContentHash(),
+          armament: armamentContentHash(),
+          contentArtifact: state.rawHash,
+        },
+        committedOrderHash,
+        recordedInputs: [],
+        nextInterruptionOrdinal: 0,
+        createdAt: "1880-01",
+      }),
+    );
+
+    const result = await runProgram(readPendingTurnProgram, "session-read-valid");
+    expect(result.outcome).toBe("success");
+    if (result.outcome !== "success") return;
+    const value = result.value as ReadPendingTurnResult;
+    expect(value.pending).not.toBeNull();
+    expect(value.valid).toBe(true);
   });
 });

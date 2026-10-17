@@ -1,11 +1,13 @@
 import { Effect, Schema } from "effect";
 import {
+  computeInterruptionId,
   computeOrderedInputsHash,
   computeTurnId,
   makeRecordedInput,
   type BattleResultInput,
   type DecisionAnswer,
   type InterruptionRequest,
+  type PendingDecision,
   type RecordedInput,
 } from "@bluewave/messages";
 import type {
@@ -25,6 +27,8 @@ import {
 } from "../pendingTurn.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
+import { ContentArtifact } from "../runtime/contentArtifact.js";
+import { DecisionSource } from "../runtime/decisionSource.js";
 import { withSchema } from "../runtime/commandProgram.js";
 import { runTurnTransaction } from "./turnTransaction.js";
 
@@ -108,16 +112,22 @@ function validatePending(
       compatibilityVersion: string;
     };
   },
+  contentHashes: { readonly shipBuilding: string; readonly armament: string },
 ): readonly RecordedInput[] | null {
+  // Turn identity is fixed before any interruption is answered, so the inputs
+  // accumulated while suspended must NOT enter it: doing so would change every
+  // interruption's id on resume (D-12 "stable identity under re-execution").
   const expectedTurnId = computeTurnId({
     campaignId: session.snapshot.campaignId,
     startingRevision: Number(session.snapshot.turnNumber),
     committedOrderHash: pending.committedOrderHash,
-    orderedInputsHash: computeOrderedInputsHash(pending.recordedInputs),
+    orderedInputsHash: computeOrderedInputsHash([]),
   });
   const valid =
     expectedTurnId === pending.turnId &&
     pending.contentHashes.contentArtifact === session.rawHash &&
+    pending.contentHashes.shipBuilding === contentHashes.shipBuilding &&
+    pending.contentHashes.armament === contentHashes.armament &&
     isPendingTurnValid(pending, {
       campaignId: session.snapshot.campaignId,
       startingRevision: Number(session.snapshot.turnNumber),
@@ -126,6 +136,43 @@ function validatePending(
       turnId: expectedTurnId,
     });
   return valid ? pending.recordedInputs : null;
+}
+
+/** Load the content identities a pending record's hashes must match to be trusted. */
+const expectedContentHashes = (): Effect.Effect<
+  { readonly shipBuilding: string; readonly armament: string },
+  CommandFailed,
+  ContentArtifact
+> =>
+  Effect.gen(function* () {
+    const contentArtifact = yield* ContentArtifact;
+    return {
+      shipBuilding: yield* contentArtifact.shipBuildingContentHash(),
+      armament: yield* contentArtifact.armamentContentHash(),
+    };
+  });
+
+/**
+ * The outstanding interruption the pending sidecar is waiting on, recomputed
+ * from its (load-validated) `turnId` and stored phase/ordinal/subjectKey. `null`
+ * when the record carries no outstanding request (e.g. a trailing-input
+ * suspension). The command boundary matches an answer/submission against this so
+ * a mismatched `interruptionId` is rejected before it is recorded (T7).
+ */
+function outstandingInterruption(
+  pending: PendingTurnRecord,
+): { readonly kind: "decision" | "battle"; readonly interruptionId: string } | null {
+  const outstanding = pending.outstanding;
+  if (outstanding === undefined) return null;
+  return {
+    kind: outstanding.kind,
+    interruptionId: computeInterruptionId({
+      turnId: pending.turnId,
+      phase: outstanding.phase,
+      ordinal: outstanding.ordinal,
+      subjectKey: outstanding.subjectKey,
+    }),
+  };
 }
 
 /**
@@ -141,7 +188,8 @@ export const resolveTurnProgram = withSchema(CommandEnvelopePayloadSchema, (payl
     const pending = loadPendingTurn(record.saveDir);
     let recordedInputs: readonly RecordedInput[] = [];
     if (pending !== null) {
-      const validated = validatePending(pending, record.state);
+      const hashes = yield* expectedContentHashes();
+      const validated = validatePending(pending, record.state, hashes);
       if (validated === null) {
         const unavailable: ResolveTurnResult = { status: "unavailable" };
         return { outcome: "success" as const, value: unavailable, diagnostics: [] };
@@ -149,10 +197,13 @@ export const resolveTurnProgram = withSchema(CommandEnvelopePayloadSchema, (payl
       recordedInputs = validated;
     }
 
+    const decisionSource = yield* DecisionSource;
+    const pendingDecisions = yield* decisionSource.pendingDecisions(payload.sessionId);
     return yield* finishTransaction({
       sessionId: payload.sessionId,
       expectedRevision: payload.expectedRevision,
       recordedInputs,
+      pendingDecisions,
     });
   }),
 );
@@ -161,6 +212,7 @@ const finishTransaction = (input: {
   readonly sessionId: string;
   readonly expectedRevision: number;
   readonly recordedInputs: readonly RecordedInput[];
+  readonly pendingDecisions: readonly PendingDecision[];
 }) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -169,11 +221,23 @@ const finishTransaction = (input: {
       sessionId: input.sessionId,
       expectedRevision: input.expectedRevision,
       recordedInputs: input.recordedInputs,
+      pendingDecisions: input.pendingDecisions,
       allowInterruptions: true,
     });
 
     switch (outcome.kind) {
       case "completed": {
+        // The turn is finished; a leftover pending-turn sidecar must never
+        // survive to prompt a resume of the already-resolved month. Clearing is
+        // best-effort — the authoritative save is already committed.
+        yield* Effect.try({
+          try: () => clearPendingTurn(record.saveDir),
+          catch: (error) =>
+            new CommandFailed({
+              reason: "PENDING_TURN_CLEAR_FAILED",
+              diagnostics: [error instanceof Error ? error.message : String(error)],
+            }),
+        }).pipe(Effect.catchTag("CommandFailed", () => Effect.void));
         const value: ResolveTurnResult = {
           status: "completed",
           summary: outcome.summary,
@@ -240,6 +304,23 @@ export const answerDecisionProgram = withSchema(AnswerDecisionPayloadSchema, (pa
         diagnostics: [`No pending turn for session ${payload.sessionId}`],
       };
     }
+    const outstanding = outstandingInterruption(pending);
+    if (outstanding === null || outstanding.kind !== "decision") {
+      return {
+        outcome: "error" as const,
+        reason: "NO_OUTSTANDING_DECISION",
+        diagnostics: [`Session ${payload.sessionId} is not awaiting a decision`],
+      };
+    }
+    if (payload.interruptionId !== outstanding.interruptionId) {
+      return {
+        outcome: "error" as const,
+        reason: "INTERRUPTION_ID_MISMATCH",
+        diagnostics: [
+          `Decision answer for session ${payload.sessionId} does not match the outstanding interruption`,
+        ],
+      };
+    }
     const ordinal = pending.nextInterruptionOrdinal;
     const answer: DecisionAnswer = {
       interruptionId: payload.interruptionId,
@@ -253,10 +334,13 @@ export const answerDecisionProgram = withSchema(AnswerDecisionPayloadSchema, (pa
       payload: answer,
     });
     yield* recordInput(record.saveDir, pending, recorded);
+    const decisionSource = yield* DecisionSource;
+    const pendingDecisions = yield* decisionSource.pendingDecisions(payload.sessionId);
     return yield* finishTransaction({
       sessionId: payload.sessionId,
       expectedRevision: payload.expectedRevision,
       recordedInputs: [...pending.recordedInputs, recorded],
+      pendingDecisions,
     });
   }),
 );
@@ -272,6 +356,23 @@ export const submitBattleResultProgram = withSchema(SubmitBattleResultPayloadSch
         outcome: "error" as const,
         reason: "NO_PENDING_TURN",
         diagnostics: [`No pending turn for session ${payload.sessionId}`],
+      };
+    }
+    const outstanding = outstandingInterruption(pending);
+    if (outstanding === null || outstanding.kind !== "battle") {
+      return {
+        outcome: "error" as const,
+        reason: "NO_OUTSTANDING_BATTLE",
+        diagnostics: [`Session ${payload.sessionId} is not awaiting a battle result`],
+      };
+    }
+    if (payload.interruptionId !== outstanding.interruptionId) {
+      return {
+        outcome: "error" as const,
+        reason: "INTERRUPTION_ID_MISMATCH",
+        diagnostics: [
+          `Battle result for session ${payload.sessionId} does not match the outstanding interruption`,
+        ],
       };
     }
     const ordinal = pending.nextInterruptionOrdinal;
@@ -291,10 +392,13 @@ export const submitBattleResultProgram = withSchema(SubmitBattleResultPayloadSch
       payload: result,
     });
     yield* recordInput(record.saveDir, pending, recorded);
+    const decisionSource = yield* DecisionSource;
+    const pendingDecisions = yield* decisionSource.pendingDecisions(payload.sessionId);
     return yield* finishTransaction({
       sessionId: payload.sessionId,
       expectedRevision: payload.expectedRevision,
       recordedInputs: [...pending.recordedInputs, recorded],
+      pendingDecisions,
     });
   }),
 );
@@ -329,8 +433,14 @@ export const readPendingTurnProgram = withSchema(SessionIdPayloadSchema, (sessio
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
     const pending = loadPendingTurn(record.saveDir);
+    if (pending === null) {
+      const value: ReadPendingTurnResult = { pending: null, valid: false };
+      return { outcome: "success" as const, value, diagnostics: [] };
+    }
+    const hashes = yield* expectedContentHashes();
     const value: ReadPendingTurnResult = {
-      pending: pending === null ? null : toPendingTurnDto(pending),
+      pending: toPendingTurnDto(pending),
+      valid: validatePending(pending, record.state, hashes) !== null,
     };
     return { outcome: "success" as const, value, diagnostics: [] };
   }),

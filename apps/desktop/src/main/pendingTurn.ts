@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Result, Schema } from "effect";
-import { RecordedInputSchema, type RecordedInput } from "@bluewave/messages";
+import { RecordedInputSchema, TurnPhaseSchema, type RecordedInput } from "@bluewave/messages";
 
 /**
  * The per-campaign pending-turn sidecar (spec: `pending-turn.json`). It records
@@ -21,6 +21,20 @@ const ContentHashesSchema = Schema.Struct({
   contentArtifact: nonEmpty,
 });
 
+/**
+ * The minimum identity of the interruption the suspended turn is waiting on, so
+ * a boundary answer/submission can be matched against it (task T7). The
+ * `interruptionId` is not stored directly — the command boundary recomputes it
+ * from the (load-validated) `turnId` plus these fields, so a tampered record
+ * cannot smuggle a matching id.
+ */
+export const OutstandingRequestSchema = Schema.Struct({
+  kind: Schema.Literals(["decision", "battle"]),
+  phase: TurnPhaseSchema,
+  ordinal: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
+  subjectKey: nonEmpty,
+});
+
 export const PendingTurnSchema = Schema.Struct({
   schemaVersion: nonEmpty,
   projectionVersion: nonEmpty,
@@ -35,6 +49,7 @@ export const PendingTurnSchema = Schema.Struct({
   recordedInputs: Schema.Array(RecordedInputSchema),
   nextInterruptionOrdinal: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
   createdAt: nonEmpty,
+  outstanding: Schema.optional(OutstandingRequestSchema),
 });
 export type PendingTurnRecord = typeof PendingTurnSchema.Type;
 
@@ -120,6 +135,7 @@ export function buildPendingTurn(input: {
   readonly recordedInputs: readonly RecordedInput[];
   readonly nextInterruptionOrdinal: number;
   readonly createdAt: string;
+  readonly outstanding?: PendingTurnRecord["outstanding"];
 }): PendingTurnRecord {
   return { schemaVersion: "1.0.0", ...input };
 }

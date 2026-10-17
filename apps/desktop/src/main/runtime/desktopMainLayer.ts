@@ -8,6 +8,7 @@ import { CampaignSessionStore, campaignSessionStoreLayer } from "./campaignSessi
 import { CommandQueueStore, commandQueueStoreLayer } from "./commandQueueStore.js";
 import { ContentArtifact, contentArtifactLayer } from "./contentArtifact.js";
 import { CrashReporter, crashReporterLayer } from "./crashReporter.js";
+import { DecisionSource, decisionSourceLayer } from "./decisionSource.js";
 import {
   AppPaths,
   appPathsLayer,
@@ -40,6 +41,7 @@ export type CommandEnv =
   | ReportsStore
   | TurnSummariesStore
   | DraftStore
+  | DecisionSource
   | PreferencesStore
   | NativeDialog
   | AppPaths
@@ -59,6 +61,7 @@ export function desktopMainLayer(): Layer.Layer<CommandEnv> {
     campaignSessionStoreLayer(),
     commandQueueStoreLayer(),
     sidecarStoresLayer(),
+    decisionSourceLayer(),
     nativeDialogLayer(),
     idGeneratorLayer(),
     replayServiceLayer(),
