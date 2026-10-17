@@ -34,6 +34,7 @@ export interface NormalizeOutput {
   research: Record<string, unknown>[];
   designs: Record<string, unknown>[];
   presentation?: unknown;
+  ui?: unknown;
 }
 
 function sortByField<T extends Record<string, unknown>>(items: T[], field: string): T[] {
@@ -105,6 +106,9 @@ export class NormalizeStage implements CompilerStage<FlattenOutput, NormalizeOut
       // sorts the map/region record keys, so the body hash stays reproducible by
       // rule (CAH-DET-1).
       ...(input.presentation !== undefined ? { presentation: input.presentation } : {}),
+      // The UI-string catalogue keeps its authored key order; `canonicalSerialize`
+      // still sorts the record keys, so the body hash stays reproducible.
+      ...(input.ui !== undefined ? { ui: input.ui } : {}),
     };
   }
 }

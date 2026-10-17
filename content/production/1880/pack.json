@@ -16,7 +16,8 @@
     "diplomacy": ["diplomacy.yaml"],
     "research": ["research.yaml"],
     "designs": ["designs.yaml"],
-    "presentation": ["presentation.yaml"]
+    "presentation": ["presentation.yaml"],
+    "ui": ["ui/en-US.yaml"]
   },
   "shipBuilding": {
     "shipComponents": ["ship-building/components.yaml"],

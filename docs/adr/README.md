@@ -76,6 +76,14 @@ Legality, consistency and authored posture of the 1880 scenario's starting conte
 | 0212 | [ADR-0212-initial-fleet-tech-legality.md](ADR-0212-initial-fleet-tech-legality.md) | Initial-fleet tech legality uses the global 1880 tech set | accepted | — |
 | 0213 | [ADR-0213-opening-posture-balance-choices.md](ADR-0213-opening-posture-balance-choices.md) | The 1880 opening posture is authored canon; magnitudes are balance choices | accepted | — |
 
+## Turns, interruptions & save/resume
+
+Turn identity and the suspend/resume interruption model.
+
+| # | File | Title | Status | Superseded by |
+| --- | --- | --- | --- | --- |
+| 0221 | [ADR-0221-turn-identity-stable-across-resume.md](ADR-0221-turn-identity-stable-across-resume.md) | A turn's interruption identity is stable across suspend and resume | accepted | — |
+
 ## Archive
 
 0 records retained for provenance (older or absorbed decisions).

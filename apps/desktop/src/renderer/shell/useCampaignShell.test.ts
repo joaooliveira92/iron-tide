@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vite-plus/test";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { CampaignCommandClient } from "../../shared/campaign-command-contract.js";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
+import { setUiCatalogue } from "../content/uiCatalogue.js";
 import { useCampaignShell } from "./useCampaignShell.js";
 
 type CampaignExecute = CampaignCommandClient["execute"];
@@ -32,33 +33,25 @@ const projection: PlayerProjection = {
   commandWorkspace: { commands: [], movementCommands: [] },
 };
 
-const monthCommitSuccess = {
+const monthResolveSuccess = {
   outcome: "success" as const,
   value: {
-    report: {
-      month: { month: 2, year: 1900 },
-      openingTreasury: 24_500_000,
-      maintenanceCost: 1_100_000,
-      newConstructionSpending: 400_000,
-      closingTreasury: 22_900_000,
+    status: "completed" as const,
+    summary: {
+      turnId: "turn-1",
+      projectionVersion: "1.0.0",
+      occurredAt: "1900-01",
+      rulesetVersion: "0.1.0",
+      contentVersion: "0.5.0",
+      messages: [],
     },
-    domainEvents: [],
-    financialLedger: [],
-    randomDecisions: [],
-    closingSnapshot: {
-      revision: 4,
-      month: { month: 2, year: 1900 },
-      submarinePools: [],
-      minePressure: [],
-      landTargetDamage: [],
-      battleOutcomes: [],
-      activeWars: [],
-    },
+    closing: { revision: 4, month: { month: 2, year: 1900 }, closingTreasury: 22_900_000 },
   },
   diagnostics: [],
 };
 
-function setup(execute: CampaignExecute) {
+function setup(executeImpl: unknown) {
+  const execute = executeImpl as CampaignExecute;
   const bridge = { campaign: { execute } } as unknown as BluewaveDesktopBridge;
   const rendered = renderHook(() => useCampaignShell(bridge));
   return { ...rendered, execute };
@@ -110,7 +103,7 @@ describe("useCampaignShell", () => {
         };
       }
       committed = true;
-      return monthCommitSuccess;
+      return monthResolveSuccess;
     }) as unknown as CampaignExecute;
     const { result } = setup(execute);
 
@@ -119,7 +112,7 @@ describe("useCampaignShell", () => {
     await act(() => result.current.advanceMonth());
 
     expect(execute).toHaveBeenCalledWith(
-      "commitMonth",
+      "resolveTurn",
       expect.objectContaining({ sessionId: "ses-1", expectedRevision: 3 }),
     );
     // Commit response alone has no projection surface, so the shell re-reads it:
@@ -151,6 +144,182 @@ describe("useCampaignShell", () => {
     revision = 9;
     await act(() => result.current.refreshCampaign("ses-1"));
     expect(result.current.campaign?.revision).toBe(9);
+  });
+
+  it("does not advance while a blocking decision or battle is outstanding", async () => {
+    const suspended = {
+      outcome: "success" as const,
+      value: {
+        status: "suspended" as const,
+        request: {
+          kind: "decision" as const,
+          turnId: "t1",
+          interruptionId: "i1",
+          ordinal: 0,
+          phase: "appropriation",
+          titleKey: "messages.decision.title",
+          bodyKey: "messages.decision.body",
+          interpolation: {},
+          decisionId: "dec-1",
+          options: [],
+        },
+        pendingTurn: {
+          turnId: "t1",
+          campaignId: "campaign_1",
+          playerNationId: "uk",
+          startingRevision: 3,
+          nextInterruptionOrdinal: 0,
+          recordedInputCount: 0,
+          createdAt: "1900-01",
+        },
+      },
+      diagnostics: [],
+    };
+    const execute = vi.fn(async (command: string) => {
+      if (command === "inspectCampaign") {
+        return { outcome: "success" as const, value: { projection }, diagnostics: [] };
+      }
+      if (command === "readPendingTurn") {
+        return {
+          outcome: "success" as const,
+          value: { pending: null, valid: false },
+          diagnostics: [],
+        };
+      }
+      return suspended;
+    });
+    const { result } = setup(execute);
+
+    await act(() => result.current.openCampaign("ses-1"));
+    await act(() => result.current.advanceMonth());
+    expect(result.current.interruption?.request?.kind).toBe("decision");
+
+    const resolveCalls = () =>
+      execute.mock.calls.filter(([command]) => command === "resolveTurn").length;
+    expect(resolveCalls()).toBe(1);
+    await act(() => result.current.advanceMonth());
+    expect(resolveCalls()).toBe(1);
+  });
+
+  const storedPending = {
+    turnId: "t1",
+    campaignId: "campaign_1",
+    playerNationId: "uk",
+    startingRevision: 3,
+    nextInterruptionOrdinal: 0,
+    recordedInputCount: 0,
+    createdAt: "1900-01",
+  };
+
+  function setupWithPending(valid: boolean) {
+    const execute = vi.fn(async (command: string) => {
+      if (command === "inspectCampaign") {
+        return { outcome: "success" as const, value: { projection }, diagnostics: [] };
+      }
+      if (command === "readPendingTurn") {
+        return {
+          outcome: "success" as const,
+          value: { pending: storedPending, valid },
+          diagnostics: [],
+        };
+      }
+      return { outcome: "success" as const, value: {}, diagnostics: [] };
+    });
+    return setup(execute);
+  }
+
+  it("marks a stored pending turn unavailable when it fails validation on load (T2)", async () => {
+    const { result } = setupWithPending(false);
+    await act(async () => {
+      await result.current.openCampaign("ses-1");
+      await Promise.resolve();
+    });
+    expect(result.current.interruption?.pending).not.toBeNull();
+    expect(result.current.interruption?.unavailable).toBe(true);
+  });
+
+  it("offers a stored pending turn for resume when it validates on load (T2)", async () => {
+    const { result } = setupWithPending(true);
+    await act(async () => {
+      await result.current.openCampaign("ses-1");
+      await Promise.resolve();
+    });
+    expect(result.current.interruption?.pending).not.toBeNull();
+    expect(result.current.interruption?.unavailable).toBe(false);
+  });
+
+  it("shows a result message naming what an answered decision changed", async () => {
+    setUiCatalogue({
+      locale: "en-US",
+      strings: {
+        "ui.decision.result": "Decision made: {change}.",
+        "ui.decision.result.treasury": "{nationId} treasury {delta}",
+        "ui.decision.result.noEffect": "no immediate effect",
+      },
+    });
+    const suspended = {
+      outcome: "success" as const,
+      value: {
+        status: "suspended" as const,
+        request: {
+          kind: "decision" as const,
+          turnId: "t1",
+          interruptionId: "i1",
+          ordinal: 0,
+          phase: "appropriation",
+          titleKey: "messages.decision.title",
+          bodyKey: "messages.decision.body",
+          interpolation: {},
+          decisionId: "dec-1",
+          options: [
+            {
+              optionId: "approve",
+              titleKey: "messages.decision.title",
+              bodyKey: "messages.decision.body",
+              hints: [],
+              effects: [{ nationId: "uk", attribute: "treasury" as const, delta: -25 }],
+            },
+          ],
+        },
+        pendingTurn: {
+          turnId: "t1",
+          campaignId: "campaign_1",
+          playerNationId: "uk",
+          startingRevision: 3,
+          nextInterruptionOrdinal: 0,
+          recordedInputCount: 0,
+          createdAt: "1900-01",
+        },
+      },
+      diagnostics: [],
+    };
+    const execute = vi.fn(async (command: string) => {
+      if (command === "inspectCampaign") {
+        return { outcome: "success" as const, value: { projection }, diagnostics: [] };
+      }
+      if (command === "inspectPriorities") {
+        return { outcome: "success" as const, value: { priorities: [] }, diagnostics: [] };
+      }
+      if (command === "readPendingTurn") {
+        return {
+          outcome: "success" as const,
+          value: { pending: null, valid: false },
+          diagnostics: [],
+        };
+      }
+      if (command === "answerDecision") {
+        return monthResolveSuccess;
+      }
+      return suspended;
+    });
+    const { result } = setup(execute);
+
+    await act(() => result.current.openCampaign("ses-1"));
+    await act(() => result.current.advanceMonth());
+    expect(result.current.interruption?.request?.kind).toBe("decision");
+
+    await act(() => result.current.answerDecision("approve"));
+    expect(result.current.saveMessage).toBe("Decision made: uk treasury -25.");
   });
 
   it("keeps the alert slot empty on a rejected commit and stays ready to retry", async () => {

@@ -59,7 +59,11 @@ import type {
   SetAccelerationCommandPayload,
   SubmitConstructionCommandPayload,
 } from "./construction-contract.js";
-import type { DrawingBoardContentDto, PresentationContentDto } from "./content-contract.js";
+import type {
+  DrawingBoardContentDto,
+  PresentationContentDto,
+  UiCatalogueDto,
+} from "./content-contract.js";
 import type {
   CancelMovementCommandPayload,
   FleetScreenProjection,
@@ -225,6 +229,12 @@ export interface UiStateInspectorLayout {
 export const INSPECTOR_MIN_WIDTH_PX = 360;
 export const INSPECTOR_MAX_WIDTH_PX = 560;
 
+/** Pin/read state for turn-summary messages — never deletes the underlying message. */
+export interface UiStateTurnMessages {
+  readonly pinnedIds: readonly string[];
+  readonly readIds: readonly string[];
+}
+
 export interface UiState {
   /** The turn the sidecar was last written at. */
   readonly turnNumber: number;
@@ -235,6 +245,8 @@ export interface UiState {
   readonly firstMonthInspection?: UiStateFirstMonthInspection;
   /** Shipbuilding inspector layout — persists per campaign, never authoritative. */
   readonly inspector?: UiStateInspectorLayout;
+  /** Turn-summary pin/read state — persists per campaign, never authoritative. */
+  readonly turnMessages?: UiStateTurnMessages;
 }
 
 export interface ReadUiStateResult {
@@ -256,6 +268,8 @@ export interface WriteUiStatePayload {
   readonly firstMonthInspection?: UiStateFirstMonthInspection;
   /** Shipbuilding inspector layout; absent means carried forward from the stored sidecar. */
   readonly inspector?: UiStateInspectorLayout;
+  /** Turn-summary pin/read state; absent means carried forward from the stored sidecar. */
+  readonly turnMessages?: UiStateTurnMessages;
 }
 
 export interface WriteUiStateResult {
@@ -406,6 +420,7 @@ export const CAMPAIGN_COMMAND_NAMES = [
   "inspectPriorities",
   "inspectDrawingBoardContent",
   "inspectPresentationContent",
+  "inspectUiCatalogue",
   "closeCampaign",
   "saveCampaign",
   "copyCampaign",
@@ -457,6 +472,12 @@ export const CAMPAIGN_COMMAND_NAMES = [
   "readUiState",
   "writeUiState",
   "readMonthlyReports",
+  "readTurnSummaries",
+  "resolveTurn",
+  "answerDecision",
+  "submitBattleResult",
+  "abandonPendingTurn",
+  "readPendingTurn",
 ] as const;
 
 /**
@@ -497,6 +518,7 @@ export interface CampaignCommandClient {
     command: "inspectPresentationContent",
     payload: undefined,
   ): Promise<BridgeResult<PresentationContentDto>>;
+  execute(command: "inspectUiCatalogue", payload: undefined): Promise<BridgeResult<UiCatalogueDto>>;
   execute(command: "closeCampaign", payload: string): Promise<BridgeResult<unknown>>;
   execute(command: "saveCampaign", payload: string): Promise<BridgeResult<SaveCampaignResult>>;
   execute(command: "copyCampaign", payload: string): Promise<BridgeResult<CopyCampaignResult>>;
@@ -686,4 +708,200 @@ export interface CampaignCommandClient {
     command: "readMonthlyReports",
     payload: string,
   ): Promise<BridgeResult<ReadMonthlyReportsResult>>;
+  execute(
+    command: "readTurnSummaries",
+    payload: string,
+  ): Promise<BridgeResult<ReadTurnSummariesResult>>;
+  execute(
+    command: "resolveTurn",
+    payload: CommitMonthPayload,
+  ): Promise<BridgeResult<ResolveTurnResult>>;
+  execute(
+    command: "answerDecision",
+    payload: AnswerDecisionPayload,
+  ): Promise<BridgeResult<ResolveTurnResult>>;
+  execute(
+    command: "submitBattleResult",
+    payload: SubmitBattleResultPayload,
+  ): Promise<BridgeResult<ResolveTurnResult>>;
+  execute(
+    command: "abandonPendingTurn",
+    payload: string,
+  ): Promise<BridgeResult<AbandonPendingTurnResult>>;
+  execute(
+    command: "readPendingTurn",
+    payload: string,
+  ): Promise<BridgeResult<ReadPendingTurnResult>>;
+}
+
+/** A stable reference to a domain entity a message concerns (renderer-safe mirror). */
+export interface EntityReferenceDto {
+  readonly type:
+    | "ship"
+    | "shipClass"
+    | "nation"
+    | "region"
+    | "technology"
+    | "constructionProject"
+    | "battle"
+    | "formation";
+  readonly id: string;
+}
+
+export interface EffectReferenceDto {
+  readonly target: EntityReferenceDto;
+  readonly attribute: string;
+  readonly previousValue?: string | number | boolean;
+  readonly newValue?: string | number | boolean;
+  readonly delta?: number;
+  readonly visibility: "exact" | "qualitative" | "hidden";
+}
+
+export interface TurnMessageDto {
+  readonly id: string;
+  readonly turnId: string;
+  readonly occurredAt: string;
+  readonly phase: string;
+  readonly category: string;
+  readonly severity: "CRITICAL" | "HIGH" | "NORMAL" | "LOW" | "TRACE";
+  readonly titleKey: string;
+  readonly bodyKey: string;
+  readonly interpolation: Readonly<Record<string, string | number | boolean>>;
+  readonly subjectRefs: readonly EntityReferenceDto[];
+  readonly effectRefs: readonly EffectReferenceDto[];
+  readonly blocking: boolean;
+  readonly requiresAcknowledgement: boolean;
+  readonly decisionId?: string;
+  readonly battleId?: string;
+  readonly deduplicationKey?: string;
+  readonly aggregateKey?: string;
+  readonly playerVisible: boolean;
+  readonly debugMetadata?: {
+    readonly sourceEventIds: readonly string[];
+    readonly projectionVersion: string;
+    readonly rulesetVersion: string;
+    readonly contentVersion: string;
+  };
+}
+
+/** One resolved turn's projected, player-visible messages (non-authoritative). */
+export interface TurnSummaryEntry {
+  readonly turnId: string;
+  readonly projectionVersion: string;
+  readonly occurredAt: string;
+  readonly rulesetVersion: string;
+  readonly contentVersion: string;
+  readonly messages: readonly TurnMessageDto[];
+}
+
+export interface ReadTurnSummariesResult {
+  readonly summaries: readonly TurnSummaryEntry[];
+}
+
+/** The tolerant-read sidecar shape: the most recent summaries, newest first. */
+export interface TurnSummaries {
+  readonly summaries: readonly TurnSummaryEntry[];
+}
+
+export interface EffectHintDto {
+  readonly target: EntityReferenceDto;
+  readonly attribute: string;
+  readonly direction: "increase" | "decrease" | "none";
+  readonly magnitude: "minor" | "moderate" | "major";
+}
+
+export interface DecisionOptionDto {
+  readonly optionId: string;
+  readonly titleKey: string;
+  readonly bodyKey: string;
+  readonly hints: readonly EffectHintDto[];
+  readonly effects: readonly {
+    readonly nationId: string;
+    readonly attribute: "treasury";
+    readonly delta: number;
+  }[];
+}
+
+/** An interruption the player must resolve before the turn can continue. */
+export interface InterruptionRequestDto {
+  readonly kind: "decision" | "battle";
+  readonly turnId: string;
+  readonly interruptionId: string;
+  readonly ordinal: number;
+  readonly phase: string;
+  readonly titleKey: string;
+  readonly bodyKey: string;
+  readonly interpolation: Readonly<Record<string, string | number | boolean>>;
+  readonly decisionId?: string;
+  readonly options?: readonly DecisionOptionDto[];
+  readonly battleId?: string;
+  readonly attackerId?: string;
+  readonly defenderId?: string;
+  readonly areaId?: string;
+}
+
+/** The non-authoritative pending-turn record summary the renderer may show. */
+export interface PendingTurnDto {
+  readonly turnId: string;
+  readonly campaignId: string;
+  readonly playerNationId: string;
+  readonly startingRevision: number;
+  readonly nextInterruptionOrdinal: number;
+  readonly recordedInputCount: number;
+  readonly createdAt: string;
+}
+
+export type ResolveTurnResult =
+  | {
+      readonly status: "completed";
+      readonly summary: TurnSummaryEntry;
+      /** The post-turn closing surface, so the header can update without a refresh round-trip. */
+      readonly closing: {
+        readonly revision: number;
+        readonly month: { readonly year: number; readonly month: number };
+        readonly closingTreasury: number;
+      };
+    }
+  | {
+      readonly status: "suspended";
+      readonly request: InterruptionRequestDto | null;
+      readonly pendingTurn: PendingTurnDto;
+    }
+  | { readonly status: "unavailable" };
+
+export interface ReadPendingTurnResult {
+  readonly pending: PendingTurnDto | null;
+  /**
+   * Whether the stored pending turn can be trusted against the already-verified
+   * save (recomputed turn id + matching versions/content hashes). A stored but
+   * incompatible record must be reported as unavailable without being resumed or
+   * migrated.
+   */
+  readonly valid: boolean;
+}
+
+export interface AnswerDecisionPayload {
+  readonly sessionId: string;
+  readonly expectedRevision: number;
+  readonly transportRequestId: string;
+  readonly interruptionId: string;
+  readonly decisionId: string;
+  readonly optionId: string;
+}
+
+export interface SubmitBattleResultPayload {
+  readonly sessionId: string;
+  readonly expectedRevision: number;
+  readonly transportRequestId: string;
+  readonly interruptionId: string;
+  readonly battleId: string;
+  readonly winnerId: string | null;
+  readonly loserId: string | null;
+  readonly attackerLosses: readonly string[];
+  readonly defenderLosses: readonly string[];
+  readonly damageReport: Readonly<Record<string, number>>;
+}
+
+export interface AbandonPendingTurnResult {
+  readonly abandoned: boolean;
 }

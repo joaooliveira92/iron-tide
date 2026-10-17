@@ -30,6 +30,12 @@ export function emptyUiState(turnNumber: number): UiState {
   return { turnNumber, dismissedFingerprints: [] };
 }
 
+function cloneTurnMessages(value: UiState["turnMessages"]): UiState["turnMessages"] {
+  return value === undefined
+    ? undefined
+    : { pinnedIds: [...value.pinnedIds], readIds: [...value.readIds] };
+}
+
 /**
  * The core expiry rule (spec §7 "Dismissal"): `dismissedFingerprints` are
  * honored only while `stored.turnNumber === currentTurnNumber`; on turn
@@ -45,6 +51,7 @@ export function resolveUiState(stored: UiState, currentTurnNumber: number): UiSt
     dismissedFingerprints: expired ? [] : [...stored.dismissedFingerprints],
     firstMonthInspection: stored.firstMonthInspection,
     inspector: stored.inspector,
+    turnMessages: cloneTurnMessages(stored.turnMessages),
   };
 }
 
@@ -137,6 +144,9 @@ export const writeUiStateProgram = withSchema(WriteUiStatePayloadSchema, (payloa
         : stored.inspector !== undefined
           ? { inspector: { ...stored.inspector } }
           : {}),
+      ...(payload.turnMessages !== undefined
+        ? { turnMessages: cloneTurnMessages(payload.turnMessages) }
+        : { turnMessages: cloneTurnMessages(stored.turnMessages) }),
     };
     yield* uiStates.save(record.saveDir, next);
 

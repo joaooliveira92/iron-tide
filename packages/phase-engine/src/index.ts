@@ -69,6 +69,16 @@ export type {
   StrategicWeatherPhaseOptions,
 } from "./month.js";
 export { MonthExecutor } from "./month.js";
+export {
+  applyRecordedBattleResult,
+  consumeBattleResult,
+  consumeDecision,
+  createInterruptionState,
+  runInterruptionCheckpoint,
+  trailingInputSuspension,
+  type InterruptionChannel,
+  type InterruptionState,
+} from "./interruption.js";
 export { applyBattleConsequences, collectLostShips, resolveShipStrength } from "./battles.js";
 export {
   PhaseGuard,
