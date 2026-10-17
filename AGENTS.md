@@ -157,3 +157,17 @@ demonstrated or a golden hash changes without an understood authoritative cause.
 Do not stop for routine local design choices — record the constraining ones as
 ADRs. The orchestration pipeline (chart → research → spec → slice → implement →
 review → gate) is in `.ai/ORCHESTRATION.md`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues (`joaooliveira92/iron-tide`), driven by the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical triage roles with default label strings. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Multi-context: a root `GLOSSARY-MAP.md` (once created) points to per-context `GLOSSARY.md` files; system ADRs in `docs/adr/`. See `docs/agents/domain.md`.

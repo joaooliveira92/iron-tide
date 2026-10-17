@@ -183,10 +183,6 @@ export default defineConfig({
         command: "node scripts/verify-test-focus.mjs",
         dependsOn: ["gate:git-state"],
       },
-      "gate:tracker-consistency": {
-        command: "node scripts/verify-tracker-consistency.mjs",
-        dependsOn: ["gate:git-state"],
-      },
       "gate:presentation-format-self-test": {
         command: "node scripts/assert-presentation-formatting.mjs --self-test",
         dependsOn: ["gate:git-state"],
@@ -253,7 +249,6 @@ export default defineConfig({
           "gate:torpedo-model-constants",
           "gate:upgradepath-refit-readers",
           "gate:test-focus",
-          "gate:tracker-consistency",
           "gate:presentation-format",
           "gate:worktrees",
           "gate:version-coherence",
