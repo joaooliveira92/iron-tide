@@ -66,7 +66,7 @@ export const MAX_CA_IN_BC_DIVISION = 2;
 export const CA_IN_BC_READINESS_GAP = 10;
 
 // Canonical ship-type vocabulary for division compatibility. The authoritative
-// classifier lives in @bluewave/combat (ship_type_classifier_v1); campaign uses
+// classifier lives in @bluewave/combat (ship_type_classifier_v2); campaign uses
 // this structural union so the package dependency stays one-directional.
 export type CanonicalShipType =
   | "CV"

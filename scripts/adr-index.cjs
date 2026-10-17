@@ -64,7 +64,7 @@ const AREAS = [
     name: "Scenario content & research",
     blurb:
       "Legality, consistency and authored posture of the 1880 scenario's starting content and research state.",
-    nums: [212, 213],
+    nums: [212, 213, 228],
   },
   {
     name: "Turns, interruptions & save/resume",

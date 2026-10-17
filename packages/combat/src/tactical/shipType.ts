@@ -23,7 +23,9 @@ export type CanonicalShipType = (typeof CANONICAL_SHIP_TYPES)[number];
 
 // ADR B-1-2: classification is derived deterministically from the compiled
 // design (versioned ruleset decision), never authored or inferred at runtime.
-export const SHIP_TYPE_CLASSIFIER_VERSION = "ship_type_classifier_v1" as const;
+// v2 (ADR-0228, N-2): aligns the opening-era armoured families to the 1880
+// scenario's ADR-0116 classification ruleset v2.
+export const SHIP_TYPE_CLASSIFIER_VERSION = "ship_type_classifier_v2" as const;
 
 export const InvalidShipType = "INVALID_SHIP_TYPE" as const;
 
@@ -45,6 +47,19 @@ interface HullFamily {
   minCaliberUm?: number;
   maxSpeedUms?: number; // slow battle-line caps (B)
 }
+
+// N-2 / ADR-0228: the 1880 scenario authors classification ruleset version 2
+// (content/production/1880/ship-building/balance.yaml `ship.classification`,
+// decoded as DESIGN_22_EARLY), which lowers the DESIGN-22 "B" floor for slow,
+// belted, heavy-gun opening-era hulls. The compiled design carries no ruleset
+// pointer, so this guard repeats the ruleset-v2 opening band for the four
+// opening-era families; the modern pre-dreadnought band is left at v1.
+const OPENING_BAND: Omit<HullFamily, "canonical"> = {
+  minDisplacementKg: 1_500_000,
+  minArmorUm: 4 * UM_PER_INCH,
+  minCaliberUm: 6 * UM_PER_INCH,
+  maxSpeedUms: 18 * UMS_PER_KNOT,
+};
 
 const HULL_FAMILY_MAP: Record<string, HullFamily> = {
   battleship: {
@@ -97,34 +112,10 @@ const HULL_FAMILY_MAP: Record<string, HullFamily> = {
   protected_cruiser: { canonical: "CL", minDisplacementKg: 2_000_000 },
   corvette: { canonical: "KE" },
   armed_merchant_cruiser: { canonical: "AMC", minDisplacementKg: 1_700_000 },
-  monitor: {
-    canonical: "B",
-    minDisplacementKg: 5_000_000,
-    minArmorUm: 6 * UM_PER_INCH,
-    minCaliberUm: 6 * UM_PER_INCH,
-    maxSpeedUms: 20 * UMS_PER_KNOT,
-  },
-  coast_defense_ship: {
-    canonical: "B",
-    minDisplacementKg: 5_000_000,
-    minArmorUm: 6 * UM_PER_INCH,
-    minCaliberUm: 6 * UM_PER_INCH,
-    maxSpeedUms: 20 * UMS_PER_KNOT,
-  },
-  central_battery_ship: {
-    canonical: "B",
-    minDisplacementKg: 5_000_000,
-    minArmorUm: 6 * UM_PER_INCH,
-    minCaliberUm: 6 * UM_PER_INCH,
-    maxSpeedUms: 20 * UMS_PER_KNOT,
-  },
-  ironclad_turret_ship: {
-    canonical: "B",
-    minDisplacementKg: 5_000_000,
-    minArmorUm: 6 * UM_PER_INCH,
-    minCaliberUm: 6 * UM_PER_INCH,
-    maxSpeedUms: 20 * UMS_PER_KNOT,
-  },
+  monitor: { canonical: "B", ...OPENING_BAND },
+  coast_defense_ship: { canonical: "B", ...OPENING_BAND },
+  central_battery_ship: { canonical: "B", ...OPENING_BAND },
+  ironclad_turret_ship: { canonical: "B", ...OPENING_BAND },
 };
 
 export function classifyShip(design: CompiledDesignVersion): CanonicalShipType {

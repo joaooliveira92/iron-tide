@@ -33,11 +33,10 @@ describe("production-pack ship promotion (AC-1/AC-14)", () => {
     // Prove the mechanism for any ship that carries a designVersionId: identical
     // inputs produce identical units (purity + determinism). Under-construction
     // ships carry a design but cannot be promoted (TACTICAL_UNIT_PROMOTION_INVALID),
-    // so the determinism check runs on commissioned linked ships only. Commissioned
-    // ships whose design fails DESIGN-22 classification are counted and reported
-    // (code INVALID_SHIP_TYPE) rather than fabricated — today that is every
-    // commissioned linked ship, because design authoring uses mm/knots while the
-    // classifier reads um (documented unit-scale mismatch, not a pack bug).
+    // so the determinism check runs on commissioned linked ships only. A design
+    // that fails DESIGN-22 classification is counted and reported (code
+    // INVALID_SHIP_TYPE) rather than fabricated; after N-2/ADR-0228 every
+    // commissioned linked 1880 ship classifies, so `blocked` must stay 0.
     let linked = 0;
     let promoted = 0;
     let blocked = 0;
@@ -83,11 +82,11 @@ describe("production-pack ship promotion (AC-1/AC-14)", () => {
     // Design registry itself is present and promotes (guards the content path).
     expect(designs.size).toBeGreaterThan(0);
     expect(linked).toBeGreaterThan(0);
-    // ADR-0037: compiled designs carry µm/µm·s⁻¹, so commissioned linked
-    // 1880 ships now classify and promote deterministically. Any ship that
-    // cannot (e.g. des_jpn_fuso below the DESIGN-22 "B" 5M kg floor) is
-    // reported, not fabricated.
+    // ADR-0037: compiled designs carry µm/µm·s⁻¹ and the classifier's opening
+    // band matches the 1880 ruleset (ADR-0228), so every commissioned linked
+    // 1880 ship classifies and promotes deterministically with nothing blocked.
     expect(promoted).toBeGreaterThan(0);
+    expect(blocked).toBe(0);
   });
 
   it("reports the ship->design linkage gap explicitly rather than fabricating it", () => {
