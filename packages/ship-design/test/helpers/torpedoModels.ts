@@ -5,9 +5,11 @@
  * Each authoritative combat `TorpedoModelDefinition` becomes a `TorpedoModelSource` with the
  * content-side facts the engine model does not carry: availability, provenance, and the 1884
  * Whitehead Mk IV re-rating (1877 26 lb / 12 kg → the model's current charge). Availability is
- * the model's introduction year (`docs/research/ship-building-early-band-2.md` §2, `docs/research/
- * c1-m3-torpedoes.md` §3.1, and the model id); the 14-inch Whitehead is the 1880 pattern the
- * content's `torp_whitehead_torpedo` technology introduces, so it is 1880-01 despite its model id.
+ * the model's introduction year; the 14-inch Whitehead is the 1880 pattern the content's
+ * `torp_whitehead_torpedo` technology introduces, so it is available `1880-01`. Its model id
+ * `whitehead_14in_1886` is a canonical repository identifier whose trailing year is a
+ * retrospective vintage label (the 14-in Fiume Mark IV, RN service ~1886), not a manufacturer or
+ * service designation — see `docs/research/n-2-whitehead-14in-identity.md` §5.
  *
  * The eight models are hard-coded here (the values combat's `torpedo_models_v1` set shipped with)
  * so the codemod input no longer imports `@bluewave/combat` — the parts are the authority.

@@ -408,6 +408,9 @@ export const TORPEDO_TRACK_MDEG_PER_DEGREE = 1_000;
 // (Whitehead 14-in 1886, RN 21-in Mk VIII 1927, USN 21-in Mk 14 1931). This
 // ordered list is the authoritative id surface for the torpedo_models_v1
 // contract, the torpedo_v1 shippedModelIds pin, and the model->fuze key set.
+// The ids are canonical repository labels: `whitehead_14in_1886` carries a
+// retrospective vintage year, not a manufacturer or service designation
+// (docs/research/n-2-whitehead-14in-identity.md §5).
 export const SEED_TORPEDO_MODEL_IDS = [
   "whitehead_18in_1894",
   "rn_21in_mk_iv_1916",

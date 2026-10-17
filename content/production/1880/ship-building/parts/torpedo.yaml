@@ -315,15 +315,12 @@ parts:
     provenance:
       confidence: MEDIUM
       kind: game_conversion
-      note: Mirrors the shipped combat torpedo_models_v1 constants; values grounded in the cited research.
+      note: Canonical repository model id carrying a retrospective vintage label (the 14-in Fiume Mark IV, in RN service ~1886), not a manufacturer or service designation; the simulated torpedo is the 1877 pattern available from the 1880 era start.
       sourceStatus: BALANCE_TARGET
       sources:
-        - archiveOrUrl: docs/research/ship-building-early-band-2.md
-          section: §2 14-inch Whitehead torpedo and its launching gear
-          title: Ship-building catalogue — EARLY band (1880–1899), second pass
-        - archiveOrUrl: docs/research/c1-m3-torpedoes.md
-          section: §3.1 Torpedo model table (1880–1945)
-          title: Torpedo model research (c1-m3)
+        - archiveOrUrl: docs/research/n-2-whitehead-14in-identity.md
+          section: §4–§5 (the id is a canonical repository identifier; historical object and marks)
+          title: N-2 — The 14-inch Whitehead torpedo model identity
     provides: torpedo
     quantities:
       - basis: PER_PART_UNIT
@@ -338,9 +335,9 @@ parts:
           note: The 1877 14-inch Whitehead carried a 26 lb (12 kg) wet-guncotton charge; the 1884 Mk IV re-rated it to the 58–70 lb (26–27 kg) charge the shipped model carries.
           sourceStatus: VERIFIED
           sources:
-            - archiveOrUrl: docs/research/ship-building-early-band-2.md
-              section: §2 (1877 14-in 26 lb → 1884 Mk IV 58–70 lb)
-              title: Ship-building catalogue — EARLY band (1880–1899), second pass
+            - archiveOrUrl: docs/research/n-2-whitehead-14in-identity.md
+              section: §3.2 (1877 26 lb → 1884 Mark IV 58–70 lb)
+              title: N-2 — The 14-inch Whitehead torpedo model identity
         spec:
           warheadExplosiveEquivalentMassKg: 27
           warheadExplosiveMassKg: 27
