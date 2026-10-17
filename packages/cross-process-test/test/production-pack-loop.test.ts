@@ -349,7 +349,8 @@ describe("S-1 acceptance (ticket 09): readiness and maintenance on the productio
   function s1Snapshot(): { snapshot: CampaignSnapshot; ids: string[] } {
     const snapshot = compileProductionPack().state.snapshot;
     const uk = snapshot.nations.get("uk")!;
-    const four = [...uk.fleets.flatMap((f) => f.ships)]
+    const four = uk.fleets
+      .flatMap((f) => f.ships)
       .sort((a, b) => Number(b.hitPoints) - Number(a.hitPoints))
       .slice(0, 4);
     if (four.length < 4) throw new Error("production pack: UK has fewer than 4 ships");

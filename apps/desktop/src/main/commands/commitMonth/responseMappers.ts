@@ -75,5 +75,7 @@ function describeDomainEventBody(body: DomainEventBody): string {
       return `Battle ${body.battleId}: ${body.winnerId} defeated ${body.loserId}`;
     case "TechnologyDiscovered":
       return `${body.nationId} discovered ${body.techId}`;
+    case "ShipReadinessChanged":
+      return `${body.nationId}: ship ${body.shipId} ${body.fromReadiness} -> ${body.toReadiness} (${body.reason})`;
   }
 }
