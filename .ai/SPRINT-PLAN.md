@@ -192,6 +192,15 @@ decision sections in `.ai/decision-requests/` and ADR-0223/0224/0225.
    optional/defaulted and do not add prestige to production content.
 5. **0008** closed administratively.
 
+**Immediate next action (2026-10-17):** **N-2 — 1880 content completion (L).**
+No brief exists yet, so start with the scoping sprint: turn the N-1 audit's
+residual findings (F1–F6, F8 in
+`.ai/reports/n-1-1880-scenario-audit.md`) into research notes and tickets, land
+`.ai/briefs/n-2-1880-content-completion.md`, then implement. N-2 owns the
+legacy-hull content gaps found while validating ticket 07 (`bra_brasil` below
+the classifier minimums, `aut_custoza` without a compiled design). S-2/S-3
+remain blocked on owner decisions 0003/0006; W-2's W-1 dependency is unmet.
+
 **Lane isolation:** S-1 and N-1 both move goldens. Process them **sequentially** so
 each golden movement has one attributable cause; never bundle unrelated behavioural
 changes into a single re-pin. If S-1 research cannot ground a value and it cannot be
