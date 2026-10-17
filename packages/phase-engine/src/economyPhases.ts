@@ -1,6 +1,6 @@
 // Economy phases: monthly_revenue, appropriation, maintenance, obligation.
-import type { CampaignSnapshot, ConstructionProject, NationState, Ship } from "@bluewave/campaign";
-import { transitionConstructionProject } from "@bluewave/campaign";
+import type { CampaignSnapshot, ConstructionProject, NationState } from "@bluewave/campaign";
+import { shipMaintenanceCost, transitionConstructionProject } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import {
   FOREIGN_PAYMENT_DEFAULT_DELAYED,
@@ -51,10 +51,6 @@ export function splitLargestRemainder(total: number, weights: readonly number[])
     base[index] = base[index]! + 1;
   }
   return base;
-}
-
-function computeMaintenanceCost(ship: Ship): SafeInt {
-  return SafeInt.div(SafeInt.mul(ship["hitPoints"], SafeInt(10)), SafeInt(100), "floor");
 }
 
 function computeConstructionCap(nation: NationState): SafeInt {
@@ -522,7 +518,10 @@ export function runMaintenancePhase(ctx: MonthContext): void {
     let totalMaintenance = SafeInt.ZERO;
     for (const fleet of nation["fleets"]) {
       for (const ship of fleet["ships"]) {
-        totalMaintenance = SafeInt.add(totalMaintenance, computeMaintenanceCost(ship));
+        totalMaintenance = SafeInt.add(
+          totalMaintenance,
+          shipMaintenanceCost(ship["hitPoints"], ship["readiness"]),
+        );
       }
     }
 

@@ -40,6 +40,8 @@ function makeNation(
               isUnderConstruction: s.underConstruction ?? false,
               constructionProgress: SafeInt(0),
               constructionTotalWork: SafeInt(0),
+              readiness: s.underConstruction ? "WORKING_UP" : "ACTIVE",
+              crewQuality: SafeInt(100),
             })),
           },
         ]
