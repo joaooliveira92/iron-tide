@@ -43,6 +43,7 @@ import {
 } from "../../lib/presentation-format/index.js";
 import { useCurrencyDisplayMode, usePreferences } from "../../lib/preferences-context.js";
 import { translate, type MessageKey } from "../../lib/strings.js";
+import { useActiveCampaignCurrencyContext } from "../../shell/CampaignShellContext.js";
 import { GlassCard } from "@/components/ui/glass-card.jsx";
 
 const DEFAULTS = DEFAULT_APP_PREFERENCES;
@@ -147,7 +148,8 @@ export function OptionsScreen() {
   const { font, setFont } = useFont();
   const { theme, setTheme } = useTheme();
   const { preferences, setApp } = usePreferences();
-  const currency = useCurrencyDisplayMode();
+  const currencyContext = useActiveCampaignCurrencyContext();
+  const currency = useCurrencyDisplayMode(currencyContext);
 
   const activeOption =
     BACKGROUND_OPTIONS.find((option) => option.value === background) ?? BACKGROUND_OPTIONS[0];

@@ -57,6 +57,7 @@ export {
 export {
   computeNationalCurrencyAvailability,
   currencyFallbackMessageKey,
+  NO_NATIONAL_CURRENCY_CONFIGURATIONS,
   resolveCurrencyDisplay,
   type ActiveCampaignCurrencyContext,
   type NationalCurrencySource,

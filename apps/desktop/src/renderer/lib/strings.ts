@@ -187,10 +187,24 @@ export function missingMessageKeys(): readonly string[] {
   return [...missingKeys];
 }
 
+/** Warns in development only (ADR-0209); production is a no-op. */
+function defaultMissingKeyWarner(key: string): void {
+  if (import.meta.env?.DEV) {
+    console.warn(`[strings] missing message key: ${key}`);
+  }
+}
+
+let missingKeyWarned: (key: string) => void = defaultMissingKeyWarner;
+
+/** Override the missing-key warning sink (used by tests), or omit to restore the default. */
+export function setMissingKeyWarner(warn?: (key: string) => void): void {
+  missingKeyWarned = warn ?? defaultMissingKeyWarner;
+}
+
 /**
  * Resolve a message keyed in the catalogue. Falls back to the complete en-US
- * catalogue; if a key is missing everywhere, returns an empty string rather than
- * a raw key (ADR-0209: no raw keys in production).
+ * catalogue; if a key is missing everywhere, warns in development and returns an
+ * empty string rather than a raw key (ADR-0209: no raw keys in production).
  */
 export function translate(key: string, language: LanguagePreference = "en"): string {
   const fromLanguage = CATALOGUES[language]?.[key as MessageKey];
@@ -198,5 +212,6 @@ export function translate(key: string, language: LanguagePreference = "en"): str
   const fallback = EN_US_MESSAGES[key as MessageKey];
   if (fallback !== undefined) return fallback;
   missingKeys.add(key);
+  missingKeyWarned(key);
   return "";
 }

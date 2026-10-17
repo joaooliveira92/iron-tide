@@ -90,6 +90,8 @@
   "apps/desktop/src/renderer/components/world-map/map-scale.ts:38:toLocaleString:if (nm >= 1) return `${nm.toLocaleString(\"en-US\")} nm`;",
   "apps/desktop/src/renderer/components/world-map/projection.ts:113:toFixed:path += `${i === 0 ? \"M\" : \"L\"}${x.toFixed(1)} ${y.toFixed(1)}`;",
   "apps/desktop/src/renderer/components/world-map/useFrameMeter.ts:37:toFixed:: `p50 ${p50.toFixed(1)} ms · p95 ${p95.toFixed(1)} ms · n=${sorted.length}`;",
+  "apps/desktop/src/renderer/screens/campaign-preferences/hooks/useDisplayPreferences.ts:15:localStorage:const raw = localStorage.getItem(LEGACY_STORAGE_KEY);",
+  "apps/desktop/src/renderer/screens/campaign-preferences/hooks/useDisplayPreferences.ts:50:localStorage:localStorage.removeItem(LEGACY_STORAGE_KEY);",
   "apps/desktop/src/renderer/screens/construction/components/BatchBuildDialog.tsx:172:toLocaleString:Yard {shown.yardId ?? \"not assigned\"} · {shown.designDisplacementKg.toLocaleString()} kg",
   "apps/desktop/src/renderer/screens/construction/components/BatchBuildDialog.tsx:77:toLocaleString:: `${shown.dockCeilingKg.toLocaleString()} kg dock ceiling`;",
   "apps/desktop/src/renderer/screens/construction/components/CommandRow.tsx:48:toLocaleString:{command.projectedCost.toLocaleString()}",

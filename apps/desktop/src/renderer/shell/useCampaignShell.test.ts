@@ -75,6 +75,7 @@ describe("useCampaignShell", () => {
       revision: 3,
       sessionId: "ses-1",
       nationName: "United Kingdom",
+      playerNationId: "uk",
       projectedSurplusDeficit: 1_250_000,
       atWar: false,
       // Forward-wired INC-2 slot: empty until the priorities projection lands.
@@ -123,6 +124,7 @@ describe("useCampaignShell", () => {
       revision: 4,
       sessionId: "ses-1",
       nationName: "United Kingdom",
+      playerNationId: "uk",
       projectedSurplusDeficit: -56,
       atWar: true,
       activeAlertsCount: null,

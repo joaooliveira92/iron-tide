@@ -2,7 +2,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
-import { CampaignShellProvider, useCampaignShellContext } from "./CampaignShellContext.js";
+import {
+  CampaignShellProvider,
+  useActiveCampaignCurrencyContext,
+  useCampaignShellContext,
+} from "./CampaignShellContext.js";
 import { useCampaignShell } from "./useCampaignShell.js";
 
 vi.mock("./useCampaignShell.js", () => ({
@@ -48,6 +52,11 @@ function Consumer() {
   );
 }
 
+function CurrencyConsumer() {
+  const context = useActiveCampaignCurrencyContext();
+  return <span data-testid="currency-context">{JSON.stringify(context)}</span>;
+}
+
 describe("CampaignShellProvider", () => {
   it("provides shell state, actions, and metadata", () => {
     vi.mocked(useCampaignShell).mockReturnValue(shell);
@@ -82,5 +91,46 @@ describe("CampaignShellProvider", () => {
       "useCampaignShellContext must be used within CampaignShellProvider",
     );
     consoleError.mockRestore();
+  });
+
+  it("derives the active campaign's nation and year for presentation resolution", () => {
+    vi.mocked(useCampaignShell).mockReturnValue({
+      ...shell,
+      campaign: {
+        month: { year: 1900, month: 3 },
+        treasury: 100,
+        revision: 4,
+        sessionId: "s1",
+        nationName: "United Kingdom",
+        playerNationId: "uk",
+        projectedSurplusDeficit: 0,
+        atWar: false,
+        activeAlertsCount: null,
+      },
+    });
+
+    render(
+      <CampaignShellProvider bridge={undefined}>
+        <CurrencyConsumer />
+      </CampaignShellProvider>,
+    );
+
+    expect(screen.getByTestId("currency-context").textContent).toBe(
+      JSON.stringify({ nationId: "uk", year: 1900 }),
+    );
+  });
+
+  it("resolves no currency context outside a campaign or provider", () => {
+    vi.mocked(useCampaignShell).mockReturnValue(shell);
+    const { unmount } = render(
+      <CampaignShellProvider bridge={undefined}>
+        <CurrencyConsumer />
+      </CampaignShellProvider>,
+    );
+    expect(screen.getByTestId("currency-context").textContent).toBe("{}");
+    unmount();
+    // Outside the provider, the helper must not throw (isolation tests/previews).
+    render(<CurrencyConsumer />);
+    expect(screen.getByTestId("currency-context").textContent).toBe("{}");
   });
 });

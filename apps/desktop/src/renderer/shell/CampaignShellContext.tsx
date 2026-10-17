@@ -1,5 +1,6 @@
 import { createContext, type ReactNode, use, useMemo } from "react";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
+import type { ActiveCampaignCurrencyContext } from "../lib/presentation-format/index.js";
 import type { useCampaignShell } from "./useCampaignShell.js";
 import { useCampaignShell as useCampaignShellState } from "./useCampaignShell.js";
 
@@ -118,4 +119,19 @@ export function useCampaignMonthId(): string | null {
   const context = use(CampaignShellContext);
   const month = context?.state.campaign?.month;
   return month ? `${month.year}-${String(month.month).padStart(2, "0")}` : null;
+}
+
+/**
+ * The active campaign's nation and year for presentation resolution (e.g.
+ * currency availability), or `{}` when no campaign is open. Never throws, so a
+ * screen used in isolation (tests, previews) resolves to the no-active-nation
+ * default rather than a fallback that silently pretends a nation exists.
+ */
+export function useActiveCampaignCurrencyContext(): ActiveCampaignCurrencyContext {
+  const context = use(CampaignShellContext);
+  const campaign = context?.state.campaign;
+  if (campaign === null || campaign === undefined) return {};
+  return campaign.playerNationId !== undefined
+    ? { nationId: campaign.playerNationId, year: campaign.month.year }
+    : { year: campaign.month.year };
 }
