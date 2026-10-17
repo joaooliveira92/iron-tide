@@ -2,12 +2,12 @@
   "contentArtifactHash": "a6f919a2335292538bcbccc0c1baeb77886f37daaf62fb77f62e209db52df0bc",
   "contentBundleHash": "d6f427fd0a069044e93720c9b199484b63f9bbb60c02a8e5430be71502c8e882",
   "initialSnapshotHash": "39f30c0e1b7089d0284f0fe4199e5a82a12ba9a1d917ddaf44eae58966c9c7ec",
-  "closingSnapshotHash": "eeff24fb00cc6bede0078aef6a70b1d97580682a49a79036e67e9e2e03c20eee",
+  "closingSnapshotHash": "c0502b79e4429ac0baff4e5c4498a6bb57cf664382a40f687c2856b70ff30569",
   "commandLedgerHash": "08b3225bcc14ab01371c0fbb72a7f328a467423585ebfa1dc3d072aac17200fa",
   "eventLedgerHash": "26af2cf3b853a824b98cb33af1d85086748b2848253538f8986e38f014c20ee5",
   "financialLedgerHash": "b5b481d9de8ab2d165920cfe61c1d4baa8440b5ca81b90fc41b121fa99fbbf7a",
   "randomDecisionLedgerHash": "cb9e67f9a76ac4c5cc79f85eade020775beaef9053d1f4c0d6ff19eb3100f678",
-  "replayVerificationHash": "b4f32f1caf64f66b22ebb329c147cecb07128e80307578639050a0f5e186f630",
+  "replayVerificationHash": "f1f055280c933d2dcb2cad13aa28ef3173c4038a50406b8e46ba24041b4241a4",
   "battleGenerationHash": "dcdb85c43321b44523b881ccd12623d1689455f060b5d98487850184bbdcb9b6",
   "success": true
 }
