@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0223).
+highest existing number + 1 (the next number is ADR-0226).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -83,6 +83,16 @@ Turn identity and the suspend/resume interruption model.
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
 | 0222 | [ADR-0222-turn-identity-stable-across-resume.md](ADR-0222-turn-identity-stable-across-resume.md) | A turn's interruption identity is stable across suspend and resume | accepted | — |
+
+## Fleet readiness, command & prestige
+
+Readiness and maintenance ruleset constants, the 1880 command structure, and the prestige value path.
+
+| # | File | Title | Status | Superseded by |
+| --- | --- | --- | --- | --- |
+| 0223 | [ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md](ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md) | S-1 readiness, crew and maintenance values are centralized ruleset constants | accepted | — |
+| 0224 | [ADR-0224-1880-command-structure-divisions-and-officers.md](ADR-0224-1880-command-structure-divisions-and-officers.md) | 1880 command structure — per-nation officer rosters and seeded divisions | accepted | — |
+| 0225 | [ADR-0225-prestige-required-field-and-research-first.md](ADR-0225-prestige-required-field-and-research-first.md) | Prestige is a required authored field; values are research-first and S-2 is gated on 0003 | accepted | — |
 
 ## Archive
 

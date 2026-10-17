@@ -2,7 +2,10 @@
 
 ## Status
 
-Decision-ready — blocked pending owner decision.
+Resolved (2026-10-17) — owner chose **Option A** (research and author grounded
+readiness, crew, and maintenance constants; classify every remaining unsourced
+magnitude as an explicit `balance_adjustment` target). See the owner decision
+below.
 
 ## Trigger
 
@@ -156,3 +159,27 @@ values, or choose B/C.
 wartime multipliers; the per-state crew ceilings and monthly ramp; the working-up
 threshold; the battle readiness value; whether structural tickets may carry fixture
 constants (only if not shipped as production).
+
+## Owner decision (2026-10-17)
+
+**Chosen:** Option A — research and author grounded readiness, crew, and
+maintenance constants; classify every remaining unsourced magnitude as an
+explicit `balance_adjustment` target. Recorded in
+[ADR-0223](../../docs/adr/ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md).
+
+**Authorized production values or rules.** Preserve the documented rules that
+repair costs approximately twice active maintenance, mothballing prevents
+repair, mothballed ships cost half maintenance, the `AF`/`RF`/`MB`/`WU` states
+remain distinct, and working-up ships cannot fight. Research the remaining
+constants using high-trust sources. Store all resulting values as named,
+centralized ruleset constants with provenance. Any value that cannot be grounded
+may be selected only as an explicitly labelled ADR-0213 `balance_adjustment`,
+covered by deterministic tests and designed for later tuning.
+
+**Additional constraints.** Do not embed numeric gameplay constants directly in
+`economyPhases.ts`, `battlePhases.ts`, `opening-briefing`, `projection`, or
+`torpedoProjection.ts`. Remove or replace the hard-coded battle-readiness value
+of `80` through the centralized ruleset mechanism. Ensure maintenance, readiness,
+projections, and opening-briefing calculations consume the same authoritative
+constants. Re-pin goldens only when observable deterministic output actually
+changes, using the established same-commit procedure.

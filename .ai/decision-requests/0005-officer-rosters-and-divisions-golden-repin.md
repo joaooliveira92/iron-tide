@@ -2,8 +2,9 @@
 
 ## Status
 
-Decision-ready — blocked pending owner decision (golden-baseline precondition
-resolved; see the packet below).
+Resolved (2026-10-17) — owner approved **Option A** (implement N-1 ticket 07
+with a same-commit golden re-pin). The golden-baseline precondition was already
+resolved. See the owner decision below.
 
 ## Trigger
 
@@ -150,3 +151,22 @@ ADR-0213 balance choices" (or supply values / decline).
 
 **Must not be guessed.** That the reference hashes move (they do); whether that
 behavioural change is acceptable; the provenance of roster/division magnitudes.
+
+## Owner decision (2026-10-17)
+
+**Chosen:** Option A — approve implementation of N-1 ticket 07 with a
+same-commit golden re-pin. Recorded in
+[ADR-0224](../../docs/adr/ADR-0224-1880-command-structure-divisions-and-officers.md).
+
+**Authorized production values or rules.** Implement the per-nation officer
+rosters and seeded 1880 divisions. Roster and division magnitudes may be
+authored as explicit ADR-0213 balance_adjustment values with provenance. Move
+and re-pin the affected authoritative golden hashes in the same behavioral
+commit, recording the old hash, new hash, and exact cause through the
+established golden-repin mechanism.
+
+**Additional constraints.** Preserve cross-platform determinism. Assess the
+`NationState` compatibility-version impact explicitly and either implement a
+deterministic migration or deliberately refuse incompatible prior saves
+according to the repository's existing compatibility policy. Do not use the
+`not-needed` trailer. Do not alter unrelated gameplay values.

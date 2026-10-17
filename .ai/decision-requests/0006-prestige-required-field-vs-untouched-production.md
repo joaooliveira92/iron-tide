@@ -2,9 +2,10 @@
 
 ## Status
 
-Decision-ready — blocked pending owner decision. Blocks S-2 ticket 01 and,
-transitively, tickets 02–09 (the whole S-2 sprint). Does not affect the mine-warfare
-campaign or N-1.
+Resolved (2026-10-17) — owner chose **Option B** (keep `NationState.prestige`
+required; gate S-2 implementation on resolution of decision 0003). S-2 ticket 01
+and, transitively, tickets 02–09 remain blocked until 0003 resolves. See the
+owner decision below.
 
 ## Trigger
 
@@ -157,3 +158,20 @@ prestige start for S-2 ticket 01, with sourced values deferred to ticket 08" (A)
 
 **Must not be guessed.** Whether the field is required; the placeholder magnitude; the
 gate policy; whether production content may be authored before 0003.
+
+## Owner decision (2026-10-17)
+
+**Chosen:** Option B — keep `NationState.prestige` required, but gate S-2
+implementation on resolution of decision 0003. Recorded in
+[ADR-0225](../../docs/adr/ADR-0225-prestige-required-field-and-research-first.md).
+
+**Authorized production values or rules.** No placeholder prestige magnitude is
+authorized. D2 remains in force: prestige is required and has no engine default.
+Author production prestige values only after decision 0003 research has produced
+adequately sourced rules and any unresolved residue has been returned to and
+decided by the owner.
+
+**Additional constraints.** Do not make prestige optional, nullable, silently
+defaulted, or derived from an unrelated field. Do not introduce fixture-class
+prestige values into production content. S-2 must remain blocked until the
+production value set is authorized.

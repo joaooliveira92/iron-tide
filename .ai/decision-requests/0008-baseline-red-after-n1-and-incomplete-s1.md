@@ -2,8 +2,9 @@
 
 ## Status
 
-Decision-ready — the red-baseline condition is resolved; closure pending owner
-confirmation. See the packet below.
+Closed (2026-10-17) — owner confirmed closure. The red-baseline condition was
+already resolved and the recorded acceptance conditions are met; see the owner
+decision below.
 
 ## Trigger
 
@@ -162,3 +163,16 @@ contradicting concern).
 
 **Must not be guessed.** Whether the N-1 content changes were intended (owner
 confirmation sought); whether to lower the anti-vacuity floor (no — it stays `≥10`).
+
+## Owner decision (2026-10-17)
+
+**Chosen:** Confirmed — close 0008.
+
+**Authorized production values or rules.** The brought-forward N-1 content
+changes are intended. Spain remains player-supported, and the production
+anti-vacuity floor must remain at least 10 playable nations in accordance with
+ADR-0214.
+
+**Additional constraints.** Closure is administrative. Do not combine it with
+unrelated implementation or reinterpret it as authorization for decisions 0003,
+0005, 0006, or 0007.

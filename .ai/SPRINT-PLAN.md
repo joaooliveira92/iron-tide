@@ -155,49 +155,46 @@ from authoritative state, and the output is reviewed. It is a new baseline, not 
 
 ## Frontier
 
-Status (2026-10-16, autonomous run): **G-0 is resolved** (re-baselined by G-1 under
-ADR-0210/DR-010). G-1 and G-3 are complete; N-1's audit is complete with ticket 07
-still blocked on **0005**. The **golden baseline exists** (`golden/hashes.json`,
-commit `0117adc`, `Golden-Repin: baseline-created`), so the same-commit re-pin path is
-available. **Phase 2 is complete: U-1, U-2, U-3, U-4 and U-5 are all done** (U-5
-accepted in `.ai/reports/u-5-presentation-invariance.md`); this pointer was refreshed
-after the U-5 run.
+Status (2026-10-17, owner decisions recorded): **G-0/G-1/G-3 complete; Phase 2
+(U-1..U-5) complete.** The **golden baseline exists** (`golden/hashes.json`, commit
+`0117adc`, `Golden-Repin: baseline-created`). Owner decisions **0005-A** and
+**0007-A** plus the closure of **0008** have unblocked the frontier; **0003-B**
+authorizes research only, and **0006-B** keeps S-2 gated on 0003. See the owner
+decision sections in `.ai/decision-requests/` and ADR-0223/0224/0225.
 
-1. **U-1 (canonical values)** complete (tickets 01–08; ADR-0215–0219).
-2. **U-2 (preferences domain)** complete (tickets 01–07).
-3. **U-3 (formatting boundary)** complete (tickets 01–07).
-4. **U-4 (Options screen)** complete (tickets 01–08); the remaining released-screen
-   string migration is the recorded bounded follow-on (U-4 map D6).
-5. **U-5 (presentation invariance)** complete (tickets 01–07); golden-neutral, no
-   compatibility bump.
-6. **N-1 ticket 07** (1880 divisions and officer rosters) remains blocked on decision
-   request **0005** (owner decision: the behavioural reference-run change with a
-   baseline now present). Its sibling N-1 tickets are done.
-7. **S-1 (readiness and maintenance):** ticket **01** is done (per-ship readiness +
-   crew state; compatibility bumped 2.0.0 → 3.0.0). Tickets **02–07, 09** are
-   structurally sliced but **queued on decision request 0007**: tickets 02–06 charge
-   and ramp with production values, so shipping placeholder rates would embed a
-   speculative default — only the value-free structure (ticket 01) has landed.
-8. **S-2 (prestige and career)** tickets **02–07, 09** are `ready-for-agent`; ticket
-   **01** and, transitively, the sprint are blocked on decision request **0006**;
-   ticket **08** (production values) on **0003**.
-9. **mine-warfare (W-2)** tickets 01/02 are sliced but W-2's plan dependency
-   (W-1, itself on S-1/T-1) is unmet.
+**Acceptable frontier (dependency order):**
 
-Owner decisions outstanding: **0003** (prestige values), **0004** (mine inventory),
-**0005** (officer rosters/divisions golden repin), **0006** (prestige field vs
-untouched production), **0007** (S-1 readiness/crew/maintenance values), **0008**
-(baseline restoration). Decision-ready packets for **0005–0008** are in
-`.ai/decision-requests/`.
+1. **S-1 (readiness and maintenance)** under **0007-A**: ticket **01** is done
+   (per-ship readiness + crew state; compatibility bumped 2.0.0 → 3.0.0). Tickets
+   **02–09** are unblocked — charge maintenance by state, ramp crew, repair ×2,
+   wartime multiplier, readiness gates battle, readiness in projection, author the
+   values, accept. Preserve the grounded rules (repair ≈2× active, mothball halts
+   repair and costs half, `AF`/`RF`/`MB`/`WU` distinct, working-up excluded);
+   research the remaining constants; store every numeric value as a named,
+   centralized ruleset constant with provenance; mark unsourced magnitudes
+   `balance_adjustment`; replace the hard-coded battle-readiness `80`. Re-pin
+   goldens only when observable output changes. See ADR-0223.
+2. **N-1 ticket 07** under **0005-A**: per-nation officer rosters + seeded 1880
+   divisions with a same-commit golden re-pin; then N-1 completion and its
+   dependent lanes (N-2, N-3). See ADR-0224.
+3. **0003-B research** (non-production): research the prestige scale and values
+   against high-trust sources, recording each adopted value with a citation in
+   `docs/research/` and an ADR; unresolved residue returns to the owner. No
+   production prestige value may be committed until its provenance is explicit.
+   See ADR-0225.
+4. **S-2 (prestige and career)** remains **blocked** under **0006-B** until 0003 is
+   fully resolved and the production value set is authorized. Do not make prestige
+   optional/defaulted and do not add prestige to production content.
+5. **0008** closed administratively.
 
-**Frontier assessment (reconciled 2026-10-17):** no implementation lane is
-independently acceptable right now. The S-1 and S-2 lanes are queued on **0007** and
-**0006**; N-1 ticket 07 is queued on **0005**. The only decision-independent work is
-governance (this reconciliation pass) plus the value-free structural seams already
-landed in S-1 ticket 01. Landing S-1/S-2 further tickets now would mean shipping
-placeholder production values — a speculative default — so those lanes stay queued
-until their owner decisions resolve. See
-`.ai/reports/reconciliation-2026-10-17.md`.
+**Lane isolation:** S-1 and N-1 both move goldens. Process them **sequentially** so
+each golden movement has one attributable cause; never bundle unrelated behavioural
+changes into a single re-pin. If S-1 research cannot ground a value and it cannot be
+responsibly classified as an ADR-0213 `balance_adjustment`, return that individual
+value for owner decision instead of guessing.
+
+Owner decisions outstanding: **0004** (mine inventory). W-2's plan dependency
+(W-1, itself on S-1/T-1) is unmet, so 0004 is not on the current frontier.
 
 ## Decisions recorded
 

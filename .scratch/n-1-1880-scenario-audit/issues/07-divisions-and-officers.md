@@ -8,16 +8,19 @@ nations that had one and make officer rosters nation-appropriate and distinct.
 
 **Blocked by:** None (can start immediately).
 
-**Status:** blocked
+**Status:** ready-for-agent
 
-Blocked on `.ai/decision-requests/0005-officer-rosters-and-divisions-golden-repin.md`:
-both parts change the reference-run `NationState` (officers/divisions), so the
-golden-repin guard requires a `golden/hashes.json` re-pin that is impossible while
-the baseline is Phase 1 and absent from this checkout. Recommended resolution:
-defer ticket 07 to Phase 1.
+Decision request **0005** resolved (2026-10-17, Option A): implement with a
+same-commit golden re-pin. The golden baseline exists (`golden/hashes.json`,
+`0117adc`). Roster/division magnitudes are ADR-0213 `balance_adjustment` values;
+re-pin the reference hashes in the same behavioural commit with old/new/cause and
+assess the `NationState` compatibility impact (ADR-0224). Do not use the
+`not-needed` trailer.
 
 - [ ] Initial divisions are seeded for nations that had them in 1880 (or a cited
       decision explains their absence).
 - [ ] Officer rosters differ per nation and are not a uniform template.
 - [ ] A deterministic test asserts the seeded structure loads from the snapshot.
+- [ ] The cross-process golden is re-pinned in the same commit with cause; the
+      `NationState` compatibility impact is assessed (migration or refusal).
 
