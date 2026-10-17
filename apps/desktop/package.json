@@ -37,6 +37,7 @@
     "@bluewave/combat": "workspace:*",
     "@bluewave/commands": "workspace:*",
     "@bluewave/events": "workspace:*",
+    "@bluewave/messages": "workspace:*",
     "@bluewave/persistence": "workspace:*",
     "@bluewave/phase-engine": "workspace:*",
     "@bluewave/random": "workspace:*",

@@ -197,6 +197,20 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
     // The M1 strength resolver always decides.
     expect(battle.result!.winnerId).toBeTruthy();
     expect(battle.result!.loserId).toBeTruthy();
+    // Fixed-point lock (BW-DET-001, map D4/D5). Two identical 480-strength
+    // fleets (fp 200, armour 12, hp 100 each). Through the month-executor seam the
+    // keyed campaign seed `CAMPAIGN_SEED` draws attacker 14 / defender 71 on the
+    // domain `combat:resolve:battle-m1`, i.e. factors 6400 bp / 12100 bp and
+    // W = 5_808_000 >= L = 3_072_000. The exact damage ratio is
+    // (W-L)/(2W) = 2_736_000/11_616_000 = 0.2355…: floor(100·ratio) = 23 damage
+    // per loser ship, and the ~23.55% sink threshold: g1's roll 25 survives, g2's
+    // roll 9 sinks. All integer/bigint arithmetic, so these values are exact and
+    // stable; any float regression or unit drift moves them visibly.
+    expect(battle.result!.winnerId).toBe(DEFENDER_NATION);
+    expect(battle.result!.loserId).toBe(ATTACKER_NATION);
+    expect(battle.result!.defenderLosses).toEqual([]);
+    expect(battle.result!.attackerLosses).toEqual(["g2"]);
+    expect(battle.result!.damageReport).toEqual({ g1: SafeInt(23), g2: SafeInt(23) });
     const scores = warScores(result.finalSnapshot);
     expect(scores.attacker !== 0 || scores.defender !== 0).toBe(true);
     expect(collector.errors).toHaveLength(0);

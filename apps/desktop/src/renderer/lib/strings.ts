@@ -1,0 +1,217 @@
+/**
+ * The string catalogues and resolver (U-4 map D6, ADR-0209). UI strings are keyed
+ * by stable identifiers, resolved through a per-language catalogue with a complete
+ * `en-US` fallback, so a missing translation falls back to en-US with no raw key
+ * ever reaching the screen.
+ *
+ * The Options screen and the application shell chrome (the screen registry,
+ * sidebar sections, site header, global search and the pre-campaign loading
+ * view) are migrated onto this catalogue; the remaining released screens'
+ * content migrates in a bounded follow-on (U-4 map D6).
+ */
+import type { LanguagePreference } from "../../shared/preferences-contract.js";
+
+/** The English (en-US) catalogue — the complete fallback. */
+export const EN_US_MESSAGES = {
+  "settings.title": "Options",
+  "settings.description": "Appearance, display, measurements, currency and accessibility.",
+
+  "settings.section.general": "General",
+  "settings.section.appearance": "Appearance",
+  "settings.section.measurements": "Measurements",
+  "settings.section.currency": "Currency and Numbers",
+  "settings.section.language": "Language and Region",
+  "settings.section.accessibility": "Accessibility",
+  "settings.section.advanced": "Advanced",
+
+  "settings.theme.label": "Theme",
+  "settings.theme.system": "System",
+  "settings.theme.light": "Light",
+  "settings.theme.dark": "Dark",
+  "settings.theme.highContrast": "High contrast",
+  "settings.background.label": "Background",
+  "settings.font.label": "Application font",
+  "settings.density.label": "Display density",
+  "settings.density.comfortable": "Comfortable",
+  "settings.density.compact": "Compact",
+  "settings.textScale.label": "Text size",
+  "settings.textScale.decrease": "Decrease text size",
+  "settings.textScale.increase": "Increase text size",
+
+  "settings.measurement.preset": "Measurement units",
+  "settings.measurement.imperial": "Imperial",
+  "settings.measurement.metric": "Metric",
+  "settings.measurement.category.speed": "Speed",
+  "settings.measurement.category.length": "Length",
+  "settings.measurement.category.calibre": "Calibre",
+  "settings.measurement.category.armour": "Armour",
+  "settings.measurement.category.range": "Range",
+  "settings.measurement.category.mass": "Mass",
+  "settings.measurement.category.volume": "Volume",
+  "settings.measurement.category.power": "Power",
+  "settings.numberScale.label": "Number style",
+  "settings.numberScale.full": "Full",
+  "settings.numberScale.abbreviated": "Abbreviated",
+
+  "settings.currency.label": "Currency display",
+  "settings.currency.navalCredits": "Naval Credits",
+  "settings.currency.budgetPoints": "Budget Points",
+  "settings.currency.nationalHistorical": "National Historical",
+  "settings.currency.unavailable.noActiveNation": "Available once a campaign is open.",
+  "settings.currency.unavailable.nationalCurrencyNotConfigured":
+    "No validated historical currency is configured for this nation.",
+  "settings.currency.unavailable.nationalCurrencyInvalid":
+    "The historical currency configuration for this nation is invalid.",
+  "settings.currency.unavailable.nationalCurrencyOutsideSupportedPeriod":
+    "The historical currency is not defined for this period.",
+
+  "settings.language.label": "Language",
+  "settings.language.en": "English",
+  "settings.locale.label": "Number and date formatting",
+  "settings.locale.en-US": "English (United States)",
+
+  "settings.reducedMotion.label": "Motion",
+  "settings.reducedMotion.system": "Follow system",
+  "settings.reducedMotion.reduce": "Reduce motion",
+  "settings.reducedMotion.noPreference": "No preference",
+  "settings.tooltipDetail.label": "Tooltip detail",
+  "settings.tooltipDetail.minimal": "Minimal",
+  "settings.tooltipDetail.standard": "Standard",
+  "settings.tooltipDetail.detailed": "Detailed",
+
+  "settings.reset.all": "Reset all to defaults",
+  "settings.reset.section": "Reset section",
+
+  "shell.app.name": "Bluewave",
+  "shell.campaign.loading": "Loading campaign…",
+
+  "nav.section.admiralty": "Admiralty",
+  "nav.section.operations": "Operations",
+  "nav.section.government": "Government",
+  "nav.section.foreign": "Foreign",
+  "nav.section.developer": "Developer",
+  "nav.section.settings": "Settings",
+
+  "nav.screen.overview.label": "Overview",
+  "nav.screen.overview.short": "Overview",
+  "nav.screen.construction.label": "Construction",
+  "nav.screen.construction.short": "Build",
+  "nav.screen.fleet.label": "Fleet",
+  "nav.screen.fleet.short": "Fleet",
+  "nav.screen.simulation.label": "Simulation & Turn",
+  "nav.screen.simulation.short": "Sim",
+  "nav.screen.tactical-sandbox.label": "Tactical Sandbox",
+  "nav.screen.tactical-sandbox.short": "Sandbox",
+  "nav.screen.debugging.label": "Debugging & Telemetry",
+  "nav.screen.debugging.short": "Debug",
+  "nav.screen.map-prototype.label": "Map Prototype",
+  "nav.screen.map-prototype.short": "Map",
+  "nav.screen.research.label": "Research & Technology",
+  "nav.screen.research.short": "Research",
+  "nav.screen.diplomacy.label": "Diplomacy & War",
+  "nav.screen.diplomacy.short": "Diplomacy",
+  "nav.screen.treasury.label": "Treasury",
+  "nav.screen.treasury.short": "Treasury",
+  "nav.screen.campaign-preferences.label": "Campaign Preferences",
+  "nav.screen.campaign-preferences.short": "Prefs",
+  "nav.screen.options.label": "Options",
+  "nav.screen.options.short": "Options",
+
+  "nav.bottom.landmark": "Campaign",
+  "nav.bottom.shipbuilding": "Shipbuilding",
+
+  "shell.header.title.default": "Naval Ministry",
+  "shell.header.back": "Go back",
+  "shell.header.forward": "Go forward",
+  "shell.header.advanceMonth.label": "Advance Month",
+  "shell.header.advanceMonth.aria": "Advance month",
+  "shell.header.advanceMonth.title": "Resolve the current strategic month",
+  "shell.header.advanceMonth.advancing": "Advancing…",
+  "shell.header.campaignMenu.aria": "Campaign menu",
+  "shell.header.campaignMenu.title": "Save, copy or close the campaign",
+  "shell.header.campaignMenu.label": "Campaign",
+  "shell.header.menu.save": "Save",
+  "shell.header.menu.saving": "Saving…",
+  "shell.header.menu.copy": "Copy game…",
+  "shell.header.menu.close": "Close campaign…",
+  "shell.header.closeDialog.title": "Close this campaign?",
+  "shell.header.closeDialog.description":
+    "You will be returned to the campaign file screen. Unsaved progress may be lost.",
+  "shell.header.closeDialog.cancel": "Cancel",
+  "shell.header.closeDialog.confirm": "Close campaign",
+  "shell.header.status.prefix": "Status:",
+  "shell.header.metric.notReported": "is not reported by the engine yet",
+
+  "shell.header.menu.leading": "Active database (SQLite)",
+  "shell.header.menu.trailing": "Ready for operation",
+  "shell.header.editor.scenario": "Active scenario: editing initial parameters",
+  "shell.header.editor.validate": "Validate parameters",
+  "shell.header.editor.save": "Save changes",
+  "shell.header.campaign.atWar": "At war",
+  "shell.header.campaign.armedPeace": "Armed peace",
+  "shell.header.wizard.heading": "Campaign setup assistant",
+  "shell.header.wizard.hint": "Select the historical scenario to continue",
+  "shell.header.preferences.label": "Preferences:",
+  "shell.header.preferences.detail": "Storage directory and interface settings",
+  "shell.header.metric.nation": "Nation",
+  "shell.header.metric.budget": "Budget",
+  "shell.header.metric.balance": "Projected balance",
+  "shell.header.metric.alerts": "Alerts",
+  "shell.header.metric.prestige": "Prestige",
+  "shell.header.metric.tension": "World tension",
+
+  "shell.search.aria": "Search",
+  "shell.search.title": "Search (Ctrl+F)",
+  "shell.search.dialog.title": "Search",
+  "shell.search.dialog.description": "Jump to any campaign screen",
+  "shell.search.placeholder": "Search screens…",
+  "shell.search.hint": "Type to search screens…",
+  "shell.search.empty": "No screens found.",
+  "shell.search.group": "Screens",
+} as const;
+
+export type MessageKey = keyof typeof EN_US_MESSAGES;
+
+/** Catalogues per language; only fully supported languages appear (ADR-0209). */
+const CATALOGUES: Readonly<
+  Record<LanguagePreference, Readonly<Partial<Record<MessageKey, string>>>>
+> = {
+  en: EN_US_MESSAGES,
+};
+
+/** Keys requested that were absent from every catalogue (for tests/telemetry). */
+const missingKeys = new Set<string>();
+
+/** The keys that were ever missing (a development aid; never shown to the player). */
+export function missingMessageKeys(): readonly string[] {
+  return [...missingKeys];
+}
+
+/** Warns in development only (ADR-0209); production is a no-op. */
+function defaultMissingKeyWarner(key: string): void {
+  if (import.meta.env?.DEV) {
+    console.warn(`[strings] missing message key: ${key}`);
+  }
+}
+
+let missingKeyWarned: (key: string) => void = defaultMissingKeyWarner;
+
+/** Override the missing-key warning sink (used by tests), or omit to restore the default. */
+export function setMissingKeyWarner(warn?: (key: string) => void): void {
+  missingKeyWarned = warn ?? defaultMissingKeyWarner;
+}
+
+/**
+ * Resolve a message keyed in the catalogue. Falls back to the complete en-US
+ * catalogue; if a key is missing everywhere, warns in development and returns an
+ * empty string rather than a raw key (ADR-0209: no raw keys in production).
+ */
+export function translate(key: string, language: LanguagePreference = "en"): string {
+  const fromLanguage = CATALOGUES[language]?.[key as MessageKey];
+  if (fromLanguage !== undefined) return fromLanguage;
+  const fallback = EN_US_MESSAGES[key as MessageKey];
+  if (fallback !== undefined) return fallback;
+  missingKeys.add(key);
+  missingKeyWarned(key);
+  return "";
+}

@@ -1,4 +1,5 @@
 import { cn } from "../lib/utils.js";
+import { translate } from "../lib/strings.js";
 import { GlobalSearch } from "./GlobalSearch.js";
 import {
   HeaderAdvanceMonth,
@@ -34,6 +35,8 @@ export interface SiteHeaderProps {
   readonly onSearchNavigate?: (id: string) => void;
   readonly onAdvanceMonth?: (() => void) | undefined;
   readonly advancingMonth?: boolean;
+  /** Disable the Turn control while a blocking interruption is open. */
+  readonly advanceDisabled?: boolean;
   /** Save / Copy game / Close handlers; the Campaign menu renders only with a campaign. */
   readonly campaignMenu?: HeaderCampaignMenuProps;
 }
@@ -42,7 +45,7 @@ const NOOP = (): void => undefined;
 const DISABLED_NAV: NavAction = { disabled: true, onTrigger: NOOP };
 
 export function SiteHeader({
-  title = "Naval Ministry",
+  title = translate("shell.header.title.default"),
   activeView = "menu",
   campaign = null,
   wizardStep,
@@ -54,6 +57,7 @@ export function SiteHeader({
   onSearchNavigate,
   onAdvanceMonth,
   advancingMonth = false,
+  advanceDisabled = false,
   campaignMenu,
 }: SiteHeaderProps) {
   const { platform } = useWindowContext();
@@ -81,7 +85,11 @@ export function SiteHeader({
           {continueAction !== undefined && <HeaderContinueAction action={continueAction} />}
 
           {campaign !== null && onAdvanceMonth !== undefined && (
-            <HeaderAdvanceMonth onAdvance={onAdvanceMonth} advancing={advancingMonth} />
+            <HeaderAdvanceMonth
+              onAdvance={onAdvanceMonth}
+              advancing={advancingMonth}
+              disabled={advanceDisabled}
+            />
           )}
 
           {campaign !== null && campaignMenu !== undefined && (

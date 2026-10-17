@@ -21,6 +21,8 @@
     "sweep:comments": "node scripts/sweep-comments.mjs",
     "save:migrate": "node tools/migrate-dev-saves/main.mjs",
     "check:balance-reports": "node scripts/check-balance-reports.cjs",
+    "worktrees": "node scripts/worktree.mjs",
+    "worktrees:prune": "node scripts/worktree.mjs prune",
     "check:golden": "node scripts/verify-golden-hashes.cjs",
     "check:golden-repin": "node scripts/verify-golden-repin.mjs",
     "check:determinism": "node scripts/verify-cross-process-determinism.cjs",

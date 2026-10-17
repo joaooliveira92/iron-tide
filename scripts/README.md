@@ -40,11 +40,11 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 - `verify-no-torpedo-model-constants.mjs` — no retired torpedo-model symbols in combat.
 - `verify-no-upgradepath-refit-readers.mjs` — no `upgradePath`/`supersedes` in refit/production paths.
 - `verify-test-focus.mjs` — no `.only`; `.skip` needs a `test-focus-allow-skip` note.
-- `verify-tracker-consistency.mjs` — `.scratch/` status/blocker/spec invariants.
 - `verify-version-coherence.mjs` — desktop version equals `CURRENT_COMPATIBILITY_VERSION` (ADR-0134).
 - `verify-check-parity.mjs` — every `pnpm check` step is CI-invoked or allowlisted (ADR-0140).
 - `verify-tsgo-integration.mjs` — `@effect/tsgo` matrix matches and is patched (ADR-0139).
 - `verify-vitest-config-parity.mjs` — every package spreads `vitest-shared.mjs`.
+- `verify-worktrees.mjs` — warn-only: stale or unregistered agent worktrees (ADR-0220).
 - `verify-content-lock.mjs`, `verify-content-gate.mjs` — built content matches the lock; no shipping placeholders.
 - `verify-codemod-determinism.mjs` — content codemod byte-identical and idempotent across processes.
 
@@ -62,6 +62,7 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 
 - `adr-index.cjs` (`pnpm adr:index`) — regenerate the `docs/adr/` indexes.
 - `change-scope.mjs` (`pnpm change-scope --base <ref>`) — change-scope JSON ([usage](../docs/agents/change-scope.md)).
+- `worktree.mjs` (`pnpm worktrees …`) — manage concurrent-agent worktrees and `.ai/WORKTREES.md` (ADR-0220, [worktree command](../.opencode/command/worktrees.md)).
 - `changelog.mjs` — draft a changelog section from Conventional Commits (ADR-0134).
 - `install-hooks.mjs` (`pnpm hooks:install`) — point `core.hooksPath` at `.githooks`.
 - `new-nation.mjs` — scaffold a nation's content ([adding a nation](../docs/agents/adding-a-nation.md)).

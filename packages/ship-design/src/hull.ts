@@ -1,3 +1,5 @@
+import { groupedInteger } from "./numberText.js";
+import { quantity } from "./explanation.js";
 import { powRational } from "@bluewave/deterministic";
 import type { Finding, Remedy } from "./findings.js";
 import { sortFindings } from "./findings.js";
@@ -116,7 +118,7 @@ export function reserveBuoyancyBp(h: HullSpec, form: HullForm): number {
   return toSafe("reserveBuoyancyBp", v);
 }
 
-const fmt = (n: number) => n.toLocaleString("en-US");
+const fmt = (n: number) => groupedInteger(n);
 
 /**
  * Computes the hull line, margin and reserve, completes the ledger and validates displacement and hull geometry.
@@ -205,8 +207,14 @@ export function compileHull(
     findings.push({
       id: "HULL_PROPORTIONS",
       severity: "WARNING",
-      what: `Length/beam ratio ${(lb / 100).toFixed(2)} is outside the ${form.id} range.`,
-      why: `Form range ${(form.lbMinX100 / 100).toFixed(2)}-${(form.lbMaxX100 / 100).toFixed(2)}.`,
+      what: ["Length/beam ratio ", quantity(lb, 100, 2), ` is outside the ${form.id} range.`],
+      why: [
+        "Form range ",
+        quantity(form.lbMinX100, 100, 2),
+        "-",
+        quantity(form.lbMaxX100, 100, 2),
+        ".",
+      ],
       consequence:
         lb < form.lbMinX100
           ? "Stubby hull: poor speed-power efficiency."

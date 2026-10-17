@@ -1,4 +1,5 @@
 export * from "./units.js";
+export * from "./explanation.js";
 export * from "./findings.js";
 export * from "./ledger.js";
 export * from "./component.js";

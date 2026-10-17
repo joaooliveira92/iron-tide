@@ -13,6 +13,7 @@ import { compileCampaignProgram } from "./commands/compileCampaign.js";
 import {
   inspectDrawingBoardContentProgram,
   inspectPresentationContentProgram,
+  inspectUiCatalogueProgram,
 } from "./commands/contentCommands.js";
 import {
   inspectConstructionScreenProgram,
@@ -85,6 +86,14 @@ import {
   writeDrawingBoardDraftProgram,
 } from "./drawingBoardDraft.js";
 import { readMonthlyReportsProgram } from "./monthlyReports.js";
+import { readTurnSummariesProgram } from "./turnSummaries.js";
+import {
+  abandonPendingTurnProgram,
+  answerDecisionProgram,
+  readPendingTurnProgram,
+  resolveTurnProgram,
+  submitBattleResultProgram,
+} from "./commands/resolveTurn.js";
 import { readUiStateProgram, writeUiStateProgram } from "./uiState.js";
 import { payloadless, withSchema, type CommandProgram } from "./runtime/commandProgram.js";
 import { NotImplemented, UnknownCommand } from "./runtime/commandError.js";
@@ -112,6 +121,7 @@ export const commandPrograms: Partial<Record<CampaignCommandName, CommandProgram
   inspectPriorities: inspectPrioritiesProgram,
   inspectDrawingBoardContent: payloadless(() => inspectDrawingBoardContentProgram),
   inspectPresentationContent: payloadless(() => inspectPresentationContentProgram),
+  inspectUiCatalogue: payloadless(() => inspectUiCatalogueProgram),
   commitMonth: commitMonthProgram,
   inspectConstructionScreen: inspectConstructionScreenProgram,
   submitConstructionCommand: submitConstructionCommandProgram,
@@ -153,6 +163,12 @@ export const commandPrograms: Partial<Record<CampaignCommandName, CommandProgram
   readUiState: readUiStateProgram,
   writeUiState: writeUiStateProgram,
   readMonthlyReports: readMonthlyReportsProgram,
+  readTurnSummaries: readTurnSummariesProgram,
+  resolveTurn: resolveTurnProgram,
+  answerDecision: answerDecisionProgram,
+  submitBattleResult: submitBattleResultProgram,
+  abandonPendingTurn: abandonPendingTurnProgram,
+  readPendingTurn: readPendingTurnProgram,
   loadCampaign: loadCampaignProgram,
   listCampaigns: listCampaignsProgram,
   verifyCampaign: verifyCampaignProgram,

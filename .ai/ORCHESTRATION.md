@@ -82,6 +82,13 @@ the sprint's validation report (`.ai/reports/<slug>.md`):
 - any authoritative hash changes get old/new + cause + migration assessment
   (ADR-0007 process). A build alone is not acceptance (ENGINEERING-CONTRACT §Tests).
 
+## Concurrent worktrees
+
+Run each effort in its own worktree (`.worktrees/<slug>`, ADR-0220) so several
+orchestrators progress in parallel without sharing a checkout. Track the live set
+in `.ai/WORKTREES.md` via `pnpm worktrees` (`new`/`list`/`sync`/`prune`);
+`pnpm preflight` warns on stale or unregistered subtrees.
+
 ## Orchestrator responsibilities
 
 - Pick the sprint from `.ai/SPRINT-PLAN.md`; optionally override with

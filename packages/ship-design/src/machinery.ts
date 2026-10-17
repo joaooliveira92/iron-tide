@@ -1,3 +1,5 @@
+import { groupedInteger } from "./numberText.js";
+import { quantity } from "./explanation.js";
 import { integerRoot } from "@bluewave/deterministic";
 import type { Finding } from "./findings.js";
 import { sortFindings } from "./findings.js";
@@ -153,8 +155,7 @@ function rangeNm(i: MachineryInput, b: MachineryBalance, speedMilliKnots: number
   return toSafe("range", (usableKg * BigInt(speedMilliKnots)) / (BigInt(kgph) * 1000n));
 }
 
-const fmt = (n: number) => n.toLocaleString("en-US");
-const kn = (mk: number) => (mk / 1000).toFixed(1);
+const fmt = (n: number) => groupedInteger(n);
 
 export function compileMachinery(i: MachineryInput, b: MachineryBalance): MachineryResult {
   const findings: Finding[] = [];
@@ -193,8 +194,18 @@ export function compileMachinery(i: MachineryInput, b: MachineryBalance): Machin
     findings.push({
       id: "SPEED_OUT_OF_RANGE",
       severity: "BLOCKING",
-      what: `Required speed ${kn(i.requiredSpeedMilliKnots)} kn is outside the modelled range.`,
-      why: `Model range ${kn(b.minSpeedMilliKnots)}-${kn(b.maxSpeedMilliKnots)} kn.`,
+      what: [
+        "Required speed ",
+        quantity(i.requiredSpeedMilliKnots, 1000, 1, "knots"),
+        " is outside the modelled range.",
+      ],
+      why: [
+        "Model range ",
+        quantity(b.minSpeedMilliKnots, 1000, 1),
+        "-",
+        quantity(b.maxSpeedMilliKnots, 1000, 1),
+        " kn.",
+      ],
       consequence: "The power model is not valid at this speed.",
       remedies: [
         { id: "clamp_speed", description: "Set the speed requirement within the modelled range." },
@@ -273,7 +284,13 @@ export function compileMachinery(i: MachineryInput, b: MachineryBalance): Machin
     findings.push({
       id: "PLANT_INSUFFICIENT",
       severity: "WARNING",
-      what: `Top speed ${kn(vmax)} kn falls short of the required ${kn(i.requiredSpeedMilliKnots)} kn.`,
+      what: [
+        "Top speed ",
+        quantity(vmax, 1000, 1, "knots"),
+        " falls short of the required ",
+        quantity(i.requiredSpeedMilliKnots, 1000, 1, "knots"),
+        ".",
+      ],
       why: `${fmt(i.installedKw)} kW installed; ${fmt(requiredKw(i, b, i.requiredSpeedMilliKnots))} kW needed at the required speed for ${fmt(i.displacementKg)} kg.`,
       consequence:
         "The ship cannot fulfil its intended role in speed and may be outrun by its adversaries.",
@@ -298,14 +315,22 @@ export function compileMachinery(i: MachineryInput, b: MachineryBalance): Machin
     findings.push({
       id: "RANGE_BELOW_REQUIREMENT",
       severity: "WARNING",
-      what: `Range ${fmt(cruiseRange)} nm at ${kn(i.cruiseSpeedMilliKnots)} kn is below the required ${fmt(i.requiredRangeNm)} nm.`,
+      what: [
+        `Range ${fmt(cruiseRange)} nm at `,
+        quantity(i.cruiseSpeedMilliKnots, 1000, 1, "knots"),
+        ` is below the required ${fmt(i.requiredRangeNm)} nm.`,
+      ],
       why: `Usable fuel ${fmt(Math.floor((i.fuelCapacityKg * (10_000 - b.fuelUnusableBp - b.fuelReserveBp)) / 10_000))} kg burns ${fmt(cruise.kgph)} kg/h.`,
       consequence: "The ship depends on nearby bases and cannot operate far from them.",
       remedies: [
         { id: "more_fuel", description: "Carry more fuel (adds weight and bunker volume)." },
         {
           id: "slower_cruise",
-          description: `Cruise at the economical ${kn(ecoSpeed)} kn for ${fmt(ecoRange)} nm.`,
+          description: [
+            "Cruise at the economical ",
+            quantity(ecoSpeed, 1000, 1, "knots"),
+            ` for ${fmt(ecoRange)} nm.`,
+          ],
         },
         { id: "efficient_plant", description: "Use a more fuel-efficient plant type." },
         { id: "lower_requirement", description: "Lower the range requirement." },
@@ -324,7 +349,13 @@ export function compileMachinery(i: MachineryInput, b: MachineryBalance): Machin
       id: "HULL_DRIVEN_BEYOND_FORM",
       severity: "WARNING",
       what: "The hull is driven far beyond its natural speed.",
-      why: `Speed-length ratio ${(slrMax / 1000).toFixed(2)} at top speed; limit ${(b.slrMaxX1000 / 1000).toFixed(2)}.`,
+      why: [
+        "Speed-length ratio ",
+        quantity(slrMax, 1000, 2),
+        " at top speed; limit ",
+        quantity(b.slrMaxX1000, 1000, 2),
+        ".",
+      ],
       consequence:
         "Power demand climbs steeply for little extra speed; wet and uncomfortable in a seaway.",
       remedies: [

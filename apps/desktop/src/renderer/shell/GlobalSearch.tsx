@@ -11,6 +11,7 @@ import {
   CommandList,
 } from "../components/ui/command.js";
 import { cn } from "../lib/utils.js";
+import { translate } from "../lib/strings.js";
 import type { SearchTarget } from "./global-search-state.js";
 import { filterSearchTargets } from "./global-search-state.js";
 
@@ -53,8 +54,8 @@ export function GlobalSearch({ className, targets, onNavigate }: GlobalSearchPro
         className={cn("h-8 w-8 shrink-0", className)}
         variant="ghost"
         size="icon"
-        aria-label="Search"
-        title="Search (Ctrl+F)"
+        aria-label={translate("shell.search.aria")}
+        title={translate("shell.search.title")}
         onClick={() => setOpen(true)}
       >
         <Search />
@@ -66,17 +67,23 @@ export function GlobalSearch({ className, targets, onNavigate }: GlobalSearchPro
           setOpen(nextOpen);
           if (!nextOpen) setQuery("");
         }}
-        title="Search"
-        description="Jump to any campaign screen"
+        title={translate("shell.search.dialog.title")}
+        description={translate("shell.search.dialog.description")}
       >
         <Command shouldFilter={false}>
-          <CommandInput placeholder="Search screens…" value={query} onValueChange={setQuery} />
+          <CommandInput
+            placeholder={translate("shell.search.placeholder")}
+            value={query}
+            onValueChange={setQuery}
+          />
           <CommandList>
             <CommandEmpty>
-              {query.trim().length === 0 ? "Type to search screens…" : "No screens found."}
+              {query.trim().length === 0
+                ? translate("shell.search.hint")
+                : translate("shell.search.empty")}
             </CommandEmpty>
             {matches.length > 0 && (
-              <CommandGroup heading="Screens">
+              <CommandGroup heading={translate("shell.search.group")}>
                 {matches.map((target) => (
                   <CommandItem
                     key={target.id}

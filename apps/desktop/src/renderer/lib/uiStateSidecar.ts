@@ -3,12 +3,14 @@ import type {
   UiState,
   UiStateFirstMonthInspection,
   UiStateInspectorLayout,
+  UiStateTurnMessages,
 } from "../../shared/campaign-command-contract.js";
 
 /** The optional fields a caller may write; each is carried forward from the sidecar when absent. */
 export interface UiStatePatch {
   readonly firstMonthInspection?: UiStateFirstMonthInspection;
   readonly inspector?: UiStateInspectorLayout;
+  readonly turnMessages?: UiStateTurnMessages;
 }
 
 /**

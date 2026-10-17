@@ -1,18 +1,17 @@
-import { createContext, type ReactNode, use, useLayoutEffect, useState } from "react";
+import { createContext, type ReactNode, use, useLayoutEffect } from "react";
+
+import type { FontPreference } from "../../shared/preferences-contract.js";
+import { usePreferences } from "../lib/preferences-context.js";
 
 /**
  * User-selectable application body font (ADR-0079).
  *
- * The single source of truth for the supported values, their labels and the
- * persistence key. `font-sans` resolves to whichever value is active via the
- * `[data-font]` mapping in styles/globals.css; components never name a family.
- *
- * Preferences are renderer-local (like theme/density/background) — no IPC, so
- * the Electron security boundary is untouched.
+ * The preference is stored and validated in the app-scope preferences domain;
+ * the labels and the option list live here. `font-sans` resolves to whichever
+ * value is active via the `[data-font]` mapping in styles/globals.css;
+ * components never name a family.
  */
-export type SansFontPreference = "inter" | "jakarta";
-
-export const SANS_FONT_STORAGE_KEY = "bluewave-font";
+export type SansFontPreference = FontPreference;
 
 /** Deterministic default when nothing valid is stored. */
 export const DEFAULT_SANS_FONT: SansFontPreference = "inter";
@@ -30,21 +29,6 @@ export const SANS_FONT_OPTIONS: readonly {
   },
 ];
 
-/** Narrowing guard — the single validator for the persisted value. */
-export function isSansFontPreference(value: unknown): value is SansFontPreference {
-  return value === "inter" || value === "jakarta";
-}
-
-/** The stored choice, or Inter for anything missing, malformed or unrecognised. */
-export function readStoredSansFont(): SansFontPreference {
-  try {
-    const stored = localStorage.getItem(SANS_FONT_STORAGE_KEY);
-    return isSansFontPreference(stored) ? stored : DEFAULT_SANS_FONT;
-  } catch {
-    return DEFAULT_SANS_FONT;
-  }
-}
-
 interface FontContextValue {
   readonly font: SansFontPreference;
   readonly setFont: (font: SansFontPreference) => void;
@@ -53,7 +37,8 @@ interface FontContextValue {
 const FontContext = createContext<FontContextValue | null>(null);
 
 export function FontProvider({ children }: { children: ReactNode }) {
-  const [font, setFontState] = useState<SansFontPreference>(readStoredSansFont);
+  const { preferences, setApp } = usePreferences();
+  const font = preferences.font;
 
   // Layout effect: set the attribute before first paint so the app never flashes
   // the wrong face on startup (same approach as DensityProvider).
@@ -61,14 +46,7 @@ export function FontProvider({ children }: { children: ReactNode }) {
     document.documentElement.dataset["font"] = font;
   }, [font]);
 
-  const setFont = (next: SansFontPreference) => {
-    try {
-      localStorage.setItem(SANS_FONT_STORAGE_KEY, next);
-    } catch {
-      // Storage unavailable: the choice still applies for this session.
-    }
-    setFontState(next);
-  };
+  const setFont = (next: SansFontPreference) => setApp({ font: next });
 
   return <FontContext.Provider value={{ font, setFont }}>{children}</FontContext.Provider>;
 }

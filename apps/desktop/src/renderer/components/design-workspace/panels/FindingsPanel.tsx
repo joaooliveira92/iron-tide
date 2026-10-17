@@ -18,6 +18,7 @@ import { Badge } from "../../ui/badge.js";
 import { Button } from "../../ui/button.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
 import { cn } from "../../../lib/utils.js";
+import { formatExplanation } from "../../../lib/presentation-format/index.js";
 import { Panel } from "./Panel.js";
 import { findingAttrs } from "../selection/navigation.js";
 import type { BoardFinding } from "../validation/boardFindings.js";
@@ -92,24 +93,25 @@ function FindingItem({
           <Badge variant={badge} className="shrink-0">
             {f.severity}
           </Badge>
-          <span>{f.what}</span>
+          <span>{formatExplanation(f.what)}</span>
         </span>
       </AccordionTrigger>
       <AccordionContent className="pt-0 pb-3 pl-6">
         <div className="space-y-1.5 text-sm">
           <p>
-            <strong>Why:</strong> <span className="text-muted-foreground">{f.why}</span>
+            <strong>Why:</strong>{" "}
+            <span className="text-muted-foreground">{formatExplanation(f.why)}</span>
           </p>
           <p>
             <strong>Consequence:</strong>{" "}
-            <span className="text-muted-foreground">{f.consequence}</span>
+            <span className="text-muted-foreground">{formatExplanation(f.consequence)}</span>
           </p>
           {f.remedies.length > 0 && (
             <div>
               <strong>Ways to fix it:</strong>
               <ul className="ml-5 list-disc text-muted-foreground">
                 {f.remedies.map((r) => (
-                  <li key={r.id}>{r.description}</li>
+                  <li key={r.id}>{formatExplanation(r.description)}</li>
                 ))}
               </ul>
             </div>
@@ -265,10 +267,10 @@ export function FindingsPanel({
             ) : (
               <ul className="space-y-2" aria-label="Suggested fixes">
                 {current.map((f) => (
-                  <li key={f.description}>
+                  <li key={formatExplanation(f.description)}>
                     <Alert role={undefined} variant="info">
                       <Lightbulb aria-hidden="true" />
-                      <AlertTitle>{f.description}</AlertTitle>
+                      <AlertTitle>{formatExplanation(f.description)}</AlertTitle>
                       <AlertDescription className="text-xs">
                         <FixSummary f={f} />
                       </AlertDescription>

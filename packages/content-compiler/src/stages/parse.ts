@@ -40,7 +40,7 @@ const WRAPPED_GROUPS: Readonly<Record<string, string>> = {
 };
 
 /** Collections whose files are a single mapping, kept whole (e.g. balance.yaml). */
-const OBJECT_GROUPS = ["shipBalance", "presentation"] as const;
+const OBJECT_GROUPS = ["shipBalance", "presentation", "ui"] as const;
 
 export class ParseStage implements CompilerStage<CompilerInput, ParseOutput> {
   readonly name = "parse";
@@ -86,6 +86,7 @@ export class ParseStage implements CompilerStage<CompilerInput, ParseOutput> {
       research: input.researchFiles ?? [],
       designs: input.designFiles ?? [],
       presentation: input.presentationFiles ?? [],
+      ui: input.uiFiles ?? [],
     };
 
     let manifest: unknown = undefined;

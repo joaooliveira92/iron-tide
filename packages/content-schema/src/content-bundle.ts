@@ -23,6 +23,7 @@ import { PresentationContentSchema } from "./presentation.js";
 import { PossessionSchema } from "./possession.js";
 import { ReferenceDesignSchema } from "./reference-design.js";
 import { RouteEdgeSchema } from "./route.js";
+import { UiCatalogueSchema } from "./ui-catalogue.js";
 import {
   PropulsionPlantSchema,
   ShipComponentSchema,
@@ -79,6 +80,7 @@ export const ContentBundleSchema = Schema.Struct({
   shipBuilding: Schema.optional(ShipBuildingCatalogueSchema),
   campaign: Schema.optional(CampaignCollectionsSchema),
   presentation: Schema.optional(PresentationContentSchema),
+  ui: Schema.optional(UiCatalogueSchema),
 });
 
 export type CompiledContentBundle = typeof ContentBundleSchema.Type;

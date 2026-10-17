@@ -2,15 +2,18 @@
 // ADR-0159): UI state, monthly-report history, and the drawing-board draft.
 // Each is a sibling of the save ids in the campaign save directory, outside the
 // envelope and hash. Raw `node:*` stays inside the service.
-import { renameSync, rmSync, writeFileSync } from "node:fs";
+import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 import { Context, Effect, Layer } from "effect";
 import { DRAWING_BOARD_DRAFT_FILENAME, loadDrawingBoardDraft } from "../drawingBoardDraft.js";
 import { MONTHLY_REPORTS_FILENAME, loadMonthlyReports } from "../monthlyReports.js";
+import { TURN_SUMMARIES_FILENAME, appendTurnSummary, loadTurnSummaries } from "../turnSummaries.js";
 import type {
   MonthlyReportEntry,
   MonthlyReports,
+  TurnSummaries,
+  TurnSummaryEntry,
   UiState,
 } from "../../shared/campaign-command-contract.js";
 import type {
@@ -18,6 +21,7 @@ import type {
   WriteDrawingBoardDraftPayload,
 } from "../../shared/design-contract.js";
 import { UI_STATE_FILENAME, loadUiState } from "../uiState.js";
+import { atomicWrite } from "./atomicWrite.js";
 import { CommandFailed } from "./commandError.js";
 
 function failure(reason: string, error: unknown): CommandFailed {
@@ -25,17 +29,6 @@ function failure(reason: string, error: unknown): CommandFailed {
     reason,
     diagnostics: [error instanceof Error ? error.message : String(error)],
   });
-}
-
-function atomicWrite(path: string, contents: string): void {
-  const tmp = `${path}.tmp`;
-  try {
-    writeFileSync(tmp, contents, "utf8");
-    renameSync(tmp, path);
-  } catch (error) {
-    rmSync(tmp, { force: true });
-    throw error;
-  }
 }
 
 export class UiStateStore extends Context.Service<
@@ -58,6 +51,18 @@ export class ReportsStore extends Context.Service<
   }
 >()("bluewave/desktop/ReportsStore") {}
 
+export class TurnSummariesStore extends Context.Service<
+  TurnSummariesStore,
+  {
+    readonly load: (saveDir: string) => Effect.Effect<TurnSummaries, CommandFailed>;
+    readonly save: (saveDir: string, data: TurnSummaries) => Effect.Effect<void, CommandFailed>;
+    readonly append: (
+      data: TurnSummaries,
+      summary: TurnSummaryEntry,
+    ) => Effect.Effect<TurnSummaries>;
+  }
+>()("bluewave/desktop/TurnSummariesStore") {}
+
 export class DraftStore extends Context.Service<
   DraftStore,
   {
@@ -73,7 +78,9 @@ export class DraftStore extends Context.Service<
   }
 >()("bluewave/desktop/DraftStore") {}
 
-export function sidecarStoresLayer(): Layer.Layer<UiStateStore | ReportsStore | DraftStore> {
+export function sidecarStoresLayer(): Layer.Layer<
+  UiStateStore | ReportsStore | DraftStore | TurnSummariesStore
+> {
   return Layer.mergeAll(
     Layer.succeed(UiStateStore, {
       load: (saveDir, turn) =>
@@ -101,6 +108,20 @@ export function sidecarStoresLayer(): Layer.Layer<UiStateStore | ReportsStore | 
           catch: (e) => failure("REPORTS_WRITE_FAILED", e),
         }),
       append: (data, report) => Effect.succeed({ reports: [report, ...data.reports].slice(0, 12) }),
+    }),
+    Layer.succeed(TurnSummariesStore, {
+      load: (saveDir) =>
+        Effect.try({
+          try: () => loadTurnSummaries(saveDir),
+          catch: (e) => failure("TURN_SUMMARIES_READ_FAILED", e),
+        }),
+      save: (saveDir, data) =>
+        Effect.try({
+          try: () =>
+            atomicWrite(join(saveDir, TURN_SUMMARIES_FILENAME), JSON.stringify(data, null, 2)),
+          catch: (e) => failure("TURN_SUMMARIES_WRITE_FAILED", e),
+        }),
+      append: (data, summary) => Effect.succeed(appendTurnSummary(data, summary)),
     }),
     Layer.succeed(DraftStore, {
       load: (saveDir) =>

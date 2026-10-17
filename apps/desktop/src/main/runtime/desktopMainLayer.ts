@@ -3,10 +3,16 @@
 // Electron main process builds one `ManagedRuntime` from this and disposes it on
 // quit.
 import { Layer } from "effect";
+import { PreferencesStore, preferencesStoreLayer } from "../preferences/preferencesStore.js";
+import {
+  CampaignPreferencesStore,
+  campaignPreferencesStoreLayer,
+} from "../preferences/campaignPreferencesStore.js";
 import { CampaignSessionStore, campaignSessionStoreLayer } from "./campaignSessionStore.js";
 import { CommandQueueStore, commandQueueStoreLayer } from "./commandQueueStore.js";
 import { ContentArtifact, contentArtifactLayer } from "./contentArtifact.js";
 import { CrashReporter, crashReporterLayer } from "./crashReporter.js";
+import { DecisionSource, decisionSourceLayer } from "./decisionSource.js";
 import {
   AppPaths,
   appPathsLayer,
@@ -19,7 +25,13 @@ import {
 } from "./platform.js";
 import { ProjectStore, projectStoreLayer } from "./projectStore.js";
 import { ReplayService, replayServiceLayer } from "./replayService.js";
-import { DraftStore, ReportsStore, UiStateStore, sidecarStoresLayer } from "./sidecarStores.js";
+import {
+  DraftStore,
+  ReportsStore,
+  TurnSummariesStore,
+  UiStateStore,
+  sidecarStoresLayer,
+} from "./sidecarStores.js";
 
 /** Every service the desktop command programs may require. */
 export type CommandEnv =
@@ -31,7 +43,11 @@ export type CommandEnv =
   | CrashReporter
   | UiStateStore
   | ReportsStore
+  | TurnSummariesStore
   | DraftStore
+  | DecisionSource
+  | PreferencesStore
+  | CampaignPreferencesStore
   | NativeDialog
   | AppPaths
   | Clock
@@ -50,9 +66,12 @@ export function desktopMainLayer(): Layer.Layer<CommandEnv> {
     campaignSessionStoreLayer(),
     commandQueueStoreLayer(),
     sidecarStoresLayer(),
+    decisionSourceLayer(),
     nativeDialogLayer(),
     idGeneratorLayer(),
     replayServiceLayer(),
+    preferencesStoreLayer().pipe(Layer.provideMerge(platform)),
+    campaignPreferencesStoreLayer(),
     crashReporterLayer().pipe(Layer.provideMerge(platform)),
   );
 }

@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { applyContentSecurityPolicy } from "./csp.js";
 import { commandPrograms, createCampaignCommandDispatcher } from "./campaignBridge.js";
 import { ContentArtifactError, loadContentArtifact } from "./contentArtifact.js";
+import { createPreferencesBridge } from "./preferences/preferencesBridge.js";
 import { CrashReporter } from "./runtime/crashReporter.js";
 import { desktopMainLayer, type CommandEnv } from "./runtime/desktopMainLayer.js";
 import { isDebugModeEnabled } from "./debugGate.js";
@@ -159,6 +160,21 @@ function registerIpc(runtime: DesktopMainRuntime): void {
   const dispatchCampaignCommand = createCampaignCommandDispatcher(commandPrograms, () => runtime);
   ipcMain.handle("campaign:execute", (_event, command: string, payload: unknown) =>
     dispatchCampaignCommand(command, payload),
+  );
+
+  // The dedicated app-scope preferences capability (D6): `read` returns the
+  // decoded snapshot (defaults when the file is missing/corrupt); `write`
+  // decodes the payload strictly at the boundary before persisting atomically.
+  const preferences = createPreferencesBridge(() => runtime);
+  ipcMain.handle("preferences:read", () => preferences.read());
+  ipcMain.handle("preferences:write", (_event, payload: unknown) => preferences.write(payload));
+  // Campaign-scope preferences live in a per-campaign sidecar (D3); the active
+  // campaign is resolved from the session id.
+  ipcMain.handle("preferences:read-campaign", (_event, sessionId: string) =>
+    preferences.readCampaign(sessionId),
+  );
+  ipcMain.handle("preferences:write-campaign", (_event, sessionId: string, payload: unknown) =>
+    preferences.writeCampaign(sessionId, payload),
   );
 
   // Renderer crash capture (ADR-0133): validate the renderer's payload at the

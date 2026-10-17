@@ -1,3 +1,7 @@
+import { useState } from "react";
+
+import { Button } from "../../components/ui/button.js";
+import { OptionsScreen } from "../options/OptionsScreen.js";
 import { CampaignActions } from "./components/CampaignActions.js";
 import { CampaignFileHeader } from "./components/CampaignFileHeader.js";
 import { OperationStatus } from "./components/OperationStatus.js";
@@ -22,6 +26,7 @@ export function CampaignFileScreen({ onOpenCampaign, onStartNewGame }: CampaignF
     runPackageOperation,
     dismissResult,
   } = useCampaignFiles({ onOpenCampaign });
+  const [showOptions, setShowOptions] = useState(false);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-8">
@@ -31,6 +36,11 @@ export function CampaignFileScreen({ onOpenCampaign, onStartNewGame }: CampaignF
         onOpenCampaign={openCampaign}
         onStartNewGame={onStartNewGame}
       />
+      {/* Options is reachable from the main menu, before any campaign is open (U-4). */}
+      <Button type="button" variant="outline" onClick={() => setShowOptions((open) => !open)}>
+        Options
+      </Button>
+      {showOptions ? <OptionsScreen /> : null}
       <RecentCampaigns
         files={recentFiles}
         disabled={pendingLabel !== null}

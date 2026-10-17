@@ -43,7 +43,7 @@ const AREAS = [
     name: "Values, currency & language",
     blurb:
       "Canonical values and the presentation-only units, currency, and language modes over them.",
-    nums: [202, 206, 207, 208, 209, 211],
+    nums: [202, 206, 207, 208, 209, 211, 215, 216, 217, 218, 219, 221],
   },
   {
     name: "Preferences & interfaces",
@@ -56,10 +56,20 @@ const AREAS = [
     nums: [210],
   },
   {
+    name: "Process & documentation",
+    blurb: "Concurrent-agent worktree coordination and repository process rules.",
+    nums: [220],
+  },
+  {
     name: "Scenario content & research",
     blurb:
       "Legality, consistency and authored posture of the 1880 scenario's starting content and research state.",
     nums: [212, 213],
+  },
+  {
+    name: "Turns, interruptions & save/resume",
+    blurb: "Turn identity and the suspend/resume interruption model.",
+    nums: [222],
   },
 ];
 

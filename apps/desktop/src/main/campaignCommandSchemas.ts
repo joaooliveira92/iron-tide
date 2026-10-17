@@ -400,12 +400,19 @@ export const InspectorLayoutSchema = Schema.Struct({
   collapsed: Schema.Boolean,
 });
 
+/** Turn-summary pin/read state: presentation-only, never authoritative (ADR-0038). */
+export const TurnMessagesSchema = Schema.Struct({
+  pinnedIds: Schema.Array(boundedString(1, 128)).check(Schema.isMaxLength(512)),
+  readIds: Schema.Array(boundedString(1, 128)).check(Schema.isMaxLength(512)),
+});
+
 /** The full on-disk `ui-state.json` shape (also the read command's result). */
 export const UiStateSchema = Schema.Struct({
   turnNumber: nonNegativeInt,
   dismissedFingerprints: Schema.Array(boundedString(1, 256)).check(Schema.isMaxLength(64)),
   firstMonthInspection: Schema.optional(FirstMonthInspectionSchema),
   inspector: Schema.optional(InspectorLayoutSchema),
+  turnMessages: Schema.optional(TurnMessagesSchema),
 });
 
 /**
@@ -424,6 +431,7 @@ export const WriteUiStatePayloadSchema = Schema.Struct({
   dismissedFingerprints: Schema.Array(boundedString(1, 256)).check(Schema.isMaxLength(64)),
   firstMonthInspection: Schema.optional(FirstMonthInspectionSchema),
   inspector: Schema.optional(InspectorLayoutSchema),
+  turnMessages: Schema.optional(TurnMessagesSchema),
 });
 
 /**

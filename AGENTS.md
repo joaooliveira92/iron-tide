@@ -26,6 +26,9 @@ contract → ADRs → milestone brief → local conventions. On a genuine confli
   and run `pnpm preflight` at session start; rebase before every push.
 - Never overwrite, revert, or reformat another contributor's work. Keep commits
   narrow and Conventional.
+- Work concurrently in a dedicated worktree per effort: `pnpm worktrees new
+  <slug>`; the live set is `.ai/WORKTREES.md`, and stale subtrees are pruned with
+  `pnpm worktrees:prune` (ADR-0220).
 - Review agents are read-only: they must not edit code, tests, commits, branches,
   or PR state.
 - Standing standards docs carry a word ceiling in
@@ -85,7 +88,8 @@ produce identical authoritative hashes across OSes.
   envelopes, and file contents with a strict schema before use. Never assert a
   boundary with `JSON.parse(...) as T`. See [domain](docs/agents/domain.md).
 - Wire formats are frozen; every schema change carries a parity test built from
-  the existing fixtures. Never dual-maintain two validators.
+  the existing fixtures. Never dual-maintain two validators. See
+  [Effect Schema patterns](agent-patterns/effect-schema.md).
 
 ## Content and compiler
 
@@ -153,3 +157,17 @@ demonstrated or a golden hash changes without an understood authoritative cause.
 Do not stop for routine local design choices — record the constraining ones as
 ADRs. The orchestration pipeline (chart → research → spec → slice → implement →
 review → gate) is in `.ai/ORCHESTRATION.md`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in this repo's GitHub Issues (`joaooliveira92/iron-tide`), driven by the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical triage roles with default label strings. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Multi-context: a root `GLOSSARY-MAP.md` (once created) points to per-context `GLOSSARY.md` files; system ADRs in `docs/adr/`. See `docs/agents/domain.md`.

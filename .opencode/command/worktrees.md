@@ -1,0 +1,39 @@
+---
+description: Manage concurrent-agent workflow subtrees. Provision a dedicated git worktree for a `.scratch/<slug>` effort, list the active subtrees, and prune merged/stale ones. Pass a subcommand ($ARGUMENTS): `new <slug>`, `list`, `sync`, `prune`, or `remove <slug>`.
+agent: build
+---
+
+You are managing the Bluetide worktree subtrees that let several agents work at
+once without sharing a checkout (ADR-0220). Each effort runs in its own git
+worktree under `.worktrees/<slug>` on a short-lived branch; the live set is the
+ledger [`.ai/WORKTREES.md`](../.ai/WORKTREES.md). Never edit that file by hand —
+[`scripts/worktree.mjs`](../scripts/worktree.mjs) owns it.
+
+Interpret `$ARGUMENTS` as `worktree.mjs` argv and run it:
+
+- `new <slug> [--branch <name>] [--base <ref>] [--owner <role>]` — create
+  `.worktrees/<slug>` on a branch from `dev` and register it. Then work its
+  frontier with `.opencode/command/work.md <path>`.
+- `list [--json]` — live subtrees joined with the ledger, with drift warnings.
+- `sync` — reconcile the ledger with actual git worktrees (`git worktree list`).
+- `prune [--force]` — **hygiene**: remove merged/gone/phantom subtrees and their
+  ledger rows. Refuses a dirty worktree without `--force`; never deletes an
+  unmerged branch.
+- `remove <slug> [--force]` — remove one subtree.
+
+Run `pnpm worktrees <args>` (or `node scripts/worktree.mjs <args>`). Report the
+observed command output verbatim — do not summarise away warnings. If
+`$ARGUMENTS` is empty, run `list` and report the active subtrees.
+
+## Hygiene rule
+
+Before starting new work, run `list` (or `pnpm worktrees:prune`); `pnpm
+preflight` warns via `scripts/verify-worktrees.mjs` when a subtree is merged or
+unregistered. Prune merged/gone/phantom subtrees promptly so the ledger reflects
+what is actually live. A phantom row (ledger entry with no worktree on disk) or an
+unregistered worktree is drift: fix it with `sync` or `prune`, never by editing
+`WORKTREES.md`.
+
+Stop and report if `new` fails because the slug, path, or branch already exists —
+do not force over another agent's subtree; that is exactly the shared-checkout
+hazard ADR-0165 removed.

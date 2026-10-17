@@ -1,4 +1,5 @@
 import type { DesignDraft, Finding } from "@bluewave/ship-design";
+import { formatExplanation } from "../../../lib/presentation-format/index.js";
 import { SECTION_IDS, SECTIONS } from "../panels/hull-plan/sections.js";
 import type { ShipEntity } from "../selection/store.js";
 
@@ -11,7 +12,7 @@ const naming = (token: string) => new RegExp(`(^|[^A-Za-z0-9_])${escape(token)}(
  * caller and never presented as authoritative. Remove a rule from here by giving its producer targets.
  */
 export function inferEntities(f: Finding, draft: DesignDraft): ShipEntity[] {
-  const text = `${f.what} ${f.why}`;
+  const text = `${formatExplanation(f.what)} ${formatExplanation(f.why)}`;
   const fittings: ShipEntity[] = draft.placements
     .filter((p) => naming(p.instanceId).test(text))
     .map((p) => ({ kind: "fitting", instanceId: p.instanceId }));

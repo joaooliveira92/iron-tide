@@ -24,6 +24,7 @@ import { BackgroundProvider } from "./shell/BackgroundContext.js";
 import { BottomNav } from "./shell/BottomNav.js";
 import { DensityProvider } from "./shell/DensityContext.js";
 import { FontProvider } from "./shell/FontContext.js";
+import { ThemeProvider } from "./shell/ThemeContext.js";
 
 /**
  * Automated accessibility audit (axe-core) over the screens and components built for the RTW3
@@ -213,13 +214,15 @@ describe("accessibility audit (axe-core)", () => {
 
   it("Options (appearance and display)", async () => {
     await audit(
-      <BackgroundProvider>
-        <DensityProvider>
-          <FontProvider>
-            <OptionsScreen />
-          </FontProvider>
-        </DensityProvider>
-      </BackgroundProvider>,
+      <ThemeProvider>
+        <BackgroundProvider>
+          <DensityProvider>
+            <FontProvider>
+              <OptionsScreen />
+            </FontProvider>
+          </DensityProvider>
+        </BackgroundProvider>
+      </ThemeProvider>,
     );
   });
 

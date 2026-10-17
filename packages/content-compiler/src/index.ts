@@ -1,4 +1,9 @@
-import type { CompiledPartModel, ContentPack, PresentationContent } from "@bluewave/content-schema";
+import type {
+  CompiledPartModel,
+  ContentPack,
+  PresentationContent,
+  UiCatalogue,
+} from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
 export interface CompilerInput {
@@ -79,6 +84,12 @@ export interface CompilerInput {
    * (CAH-PRES-1, CAH-PRES-2).
    */
   presentationFiles?: string[];
+  /**
+   * UI-string catalogue files (the keyed en-US presentation strings, CAH-UI-1).
+   * Optional like the other full-surface groups; a content-pack-only build leaves
+   * it undefined and the artifact stays byte-compatible.
+   */
+  uiFiles?: string[];
 }
 
 /**
@@ -139,6 +150,7 @@ export interface ContentBundle {
   shipBuilding?: ShipBuildingCatalogue;
   campaign?: CampaignCollections;
   presentation?: PresentationContent;
+  ui?: UiCatalogue;
 }
 
 export interface CompilerOutput {

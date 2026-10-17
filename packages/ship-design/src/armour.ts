@@ -1,3 +1,4 @@
+import { groupedInteger } from "./numberText.js";
 import type { Finding } from "./findings.js";
 import { placementTarget, sortFindings } from "./findings.js";
 import { evaluate, type LookupTable } from "./formula/eval.js";
@@ -73,7 +74,7 @@ export interface ArmourBalance {
 }
 
 const BP = 10_000n;
-const fmt = (n: number) => n.toLocaleString("en-US");
+const fmt = (n: number) => groupedInteger(n);
 
 /** F-A1: region plate weight in kg, rounded up. */
 export function regionWeightKg(r: ArmourRegion, b: ArmourBalance): number {
