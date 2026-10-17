@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0229).
+highest existing number + 1 (the next number is ADR-0230).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -77,6 +77,7 @@ Legality, consistency and authored posture of the 1880 scenario's starting conte
 | 0212 | [ADR-0212-initial-fleet-tech-legality.md](ADR-0212-initial-fleet-tech-legality.md) | Initial-fleet tech legality uses the global 1880 tech set | accepted | — |
 | 0213 | [ADR-0213-opening-posture-balance-choices.md](ADR-0213-opening-posture-balance-choices.md) | The 1880 opening posture is authored canon; magnitudes are balance choices | accepted | — |
 | 0228 | [ADR-0228-combat-classifier-1880-ruleset-v2.md](ADR-0228-combat-classifier-1880-ruleset-v2.md) | The combat ship-type classifier aligns to the 1880 classification ruleset v2 | accepted | — |
+| 0229 | [ADR-0229-technology-year-global-designer-unlock.md](ADR-0229-technology-year-global-designer-unlock.md) | Technology `year` is the global designer unlock year, not a research claim | accepted | — |
 
 ## Turns, interruptions & save/resume
 
