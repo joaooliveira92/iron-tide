@@ -155,22 +155,23 @@ fails `assertDecisionProbes` naming the year and family.
 Run on the N-3 branch; the final `pnpm check` is repeated on the exact ticket
 commit before delivery.
 
-| Command                                           | Result                                                                                                                                                                                                                                    |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm preflight`                                  | ok (all standing gates; content lock verified)                                                                                                                                                                                            |
-| `pnpm test:scripts`                               | 209 passed                                                                                                                                                                                                                                |
-| `pnpm check`                                      | green: format, lint, lint:effect, test:scripts, licences, typecheck, build, content:verify, test:run (327 files/2218 tests passed, 1 skipped), heavy (12), golden (11/11), determinism, equivalence, balance reports, desktop e2e (30/30) |
-| `pnpm --filter @bluewave/cross-process-test test` | 49 passed                                                                                                                                                                                                                                 |
-| `pnpm check:golden`                               | all 11 hashes match                                                                                                                                                                                                                       |
-| `pnpm check:determinism`                          | two runs byte-identical                                                                                                                                                                                                                   |
-| `pnpm content:verify`                             | lock verified at `868f34b7…`                                                                                                                                                                                                              |
+| Command                                           | Result                                                                                                                                                                                                               |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm preflight`                                  | ok (all standing gates; content lock verified)                                                                                                                                                                       |
+| `pnpm test:scripts`                               | 209 passed                                                                                                                                                                                                           |
+| `pnpm check` (without `test:e2e`)                 | green: format, lint, lint:effect, test:scripts, licences, typecheck, build, content:verify, test:run (327 files/2218 tests passed, 1 skipped), heavy (12), golden (11/11), determinism, equivalence, balance reports |
+| `pnpm --filter @bluewave/cross-process-test test` | 49 passed                                                                                                                                                                                                            |
+| `pnpm check:golden`                               | all 11 hashes match                                                                                                                                                                                                  |
+| `pnpm check:determinism`                          | two runs byte-identical                                                                                                                                                                                              |
+| `pnpm content:verify`                             | lock verified at `868f34b7…`                                                                                                                                                                                         |
 
 `pnpm check:golden-repin` reported its range (`1f34161…`) unavailable and
 skipped, as in N-2; the synthetic golden did not move and `check:golden` confirms
-it. The desktop e2e run initially failed one focus-sensitive ship-types test
-while a stale Playwright test-server from an earlier session was running; after
-that process was removed, the same build passed 30/30, and the app bundles are
-byte-identical to the base checkout. No e2e code or fixture was changed.
+it. Per owner instruction, `pnpm test:e2e` was **not** run on the final commit.
+The prior standalone run on the same desktop build (N-3 touches no desktop code)
+passed 30/30; a focus-sensitive ship-types spec flaked only while a stale
+Playwright test-server from an earlier session was running. No e2e code or
+fixture was changed.
 
 ## Follow-ups
 
