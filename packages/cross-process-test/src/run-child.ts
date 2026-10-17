@@ -6,13 +6,29 @@ import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/cam
 import { CampaignCompiler } from "@bluewave/campaign/compiler";
 import { generateBattles } from "@bluewave/combat";
 import type { BudgetProjectCommand, CommandEnvelope } from "@bluewave/commands";
-import { buildContentBundleArtifact, buildFullSurfaceInput } from "@bluewave/content-compiler";
+import {
+  buildContentBundleArtifact,
+  buildFullSurfaceInput,
+  type ContentBundle,
+} from "@bluewave/content-compiler";
+import {
+  ContentBundleSchema,
+  validateAgainstSchema,
+  type CompiledContentBundle,
+} from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
 import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
 import { nationsYaml } from "@bluewave/test-support";
+
+import { buildProgressionLedger } from "./progression-ledger.js";
+import {
+  assertDecisionProbes,
+  probeDecisions,
+  type ProbeReferenceDesign,
+} from "./decision-probes.js";
 
 const FIXTURE = {
   pack: JSON.stringify({
@@ -356,6 +372,8 @@ function run(): void {
  */
 const PRODUCTION_SMOKE_MONTHS = 12;
 const PRODUCTION_SMOKE_SEED = "ten-nation-smoke-1880";
+const PRODUCTION_TEN_YEAR_MONTHS = 120;
+const PRODUCTION_TEN_YEAR_SEED = "ten-year-progression-1880";
 const PRODUCTION_PACK_DIR = resolve(
   fileURLToPath(new URL(".", import.meta.url)),
   "..",
@@ -366,7 +384,11 @@ const PRODUCTION_PACK_DIR = resolve(
   "1880",
 );
 
-function compileProductionCampaign(): { state: CampaignState; contentHash: string } {
+function compileProductionBundle(): {
+  bundle: CompiledContentBundle;
+  campaignBundle: ContentBundle;
+  contentHash: string;
+} {
   const collector = new DiagnosticCollector();
   const signal = new AbortController().signal;
   const input = buildFullSurfaceInput(
@@ -380,10 +402,35 @@ function compileProductionCampaign(): { state: CampaignState; contentHash: strin
       `Production pack compilation failed: ${collector.all.map((d) => d.message).join("; ")}`,
     );
   }
+  const verification = validateAgainstSchema(
+    artifact.bundle,
+    ContentBundleSchema,
+    "ContentBundle",
+    "content-artifact.json",
+    collector,
+  );
+  if (verification === undefined) {
+    throw new Error(
+      `Production pack bundle is invalid: ${collector.all.map((d) => d.message).join("; ")}`,
+    );
+  }
+  return {
+    bundle: verification,
+    campaignBundle: artifact.bundle,
+    contentHash: artifact.envelope.bodyHash,
+  };
+}
+
+function compileCampaignFromBundle(
+  contentBundle: ContentBundle,
+  contentHash: string,
+): { state: CampaignState; contentHash: string } {
+  const collector = new DiagnosticCollector();
+  const signal = new AbortController().signal;
   const output = new CampaignCompiler().compile(
     {
-      contentBundle: artifact.bundle,
-      contentHash: artifact.envelope.bodyHash,
+      contentBundle,
+      contentHash,
       rulesetVersion: "1.0",
       compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
     },
@@ -396,6 +443,11 @@ function compileProductionCampaign(): { state: CampaignState; contentHash: strin
     );
   }
   return { state: output.state, contentHash: output.contentHash };
+}
+
+function compileProductionCampaign(): { state: CampaignState; contentHash: string } {
+  const { campaignBundle, contentHash } = compileProductionBundle();
+  return compileCampaignFromBundle(campaignBundle, contentHash);
 }
 
 interface SmokeDiagnostic {
@@ -418,25 +470,34 @@ function hullCounts(snapshot: CampaignSnapshot): Record<string, number> {
   return counts;
 }
 
-function advanceProductionSmoke(initial: CampaignSnapshot): {
+interface ProductionRun {
+  readonly initialSnapshotHash: string;
   readonly monthlyHashes: string[];
   readonly monthlySuccess: boolean[];
   readonly closingSnapshotHash: string;
   readonly success: boolean;
   readonly diagnostics: SmokeDiagnostic[];
   readonly hullCounts: Record<string, number>;
-} {
+}
+
+function advanceProductionRun(
+  initial: CampaignSnapshot,
+  months: number,
+  seed: string,
+  onYearStart?: (snapshot: CampaignSnapshot, year: number) => void,
+): ProductionRun {
   let snapshot = initial;
   const monthlyHashes: string[] = [];
   const monthlySuccess: boolean[] = [];
   const diagnostics: SmokeDiagnostic[] = [];
   let success = true;
-  for (let index = 0; index < PRODUCTION_SMOKE_MONTHS; index++) {
+  for (let index = 0; index < months; index++) {
+    if (index % 12 === 0) onYearStart?.(snapshot, 1880 + index / 12);
     const collector = new DiagnosticCollector();
     const result = new MonthExecutor().execute(
       snapshot,
       [],
-      `${PRODUCTION_SMOKE_SEED}:month:${String(snapshot.turnNumber)}`,
+      `${seed}:month:${String(snapshot.turnNumber)}`,
       collector,
     );
     success = success && result.success;
@@ -456,6 +517,7 @@ function advanceProductionSmoke(initial: CampaignSnapshot): {
     };
   }
   return {
+    initialSnapshotHash: hashSnapshot(initial),
     monthlyHashes,
     monthlySuccess,
     closingSnapshotHash: hashSnapshot(snapshot),
@@ -463,6 +525,10 @@ function advanceProductionSmoke(initial: CampaignSnapshot): {
     diagnostics,
     hullCounts: hullCounts(snapshot),
   };
+}
+
+function advanceProductionSmoke(initial: CampaignSnapshot): ProductionRun {
+  return advanceProductionRun(initial, PRODUCTION_SMOKE_MONTHS, PRODUCTION_SMOKE_SEED);
 }
 
 function runProductionTenNationSmoke(): void {
@@ -489,8 +555,102 @@ function runProductionTenNationSmoke(): void {
   );
 }
 
+function runProgressionLedger(): void {
+  const { bundle } = compileProductionBundle();
+  const ledger = buildProgressionLedger(bundle);
+  process.stdout.write(
+    JSON.stringify({
+      mode: "progression-ledger",
+      ledgerHash: sha256Hex(canonicalSerialize(ledger)),
+      ledger,
+    }) + "\n",
+  );
+}
+
+function runProductionTenYear(): void {
+  const { state } = compileProductionCampaign();
+  const first = advanceProductionRun(
+    state.snapshot,
+    PRODUCTION_TEN_YEAR_MONTHS,
+    PRODUCTION_TEN_YEAR_SEED,
+  );
+  const second = advanceProductionRun(
+    state.snapshot,
+    PRODUCTION_TEN_YEAR_MONTHS,
+    PRODUCTION_TEN_YEAR_SEED,
+  );
+  const inProcessRepeatMatches =
+    canonicalSerialize(first.monthlyHashes) === canonicalSerialize(second.monthlyHashes) &&
+    first.closingSnapshotHash === second.closingSnapshotHash &&
+    canonicalSerialize(first.diagnostics) === canonicalSerialize(second.diagnostics);
+
+  // A checkpoint is the state as each calendar year opens (1880–1889); the
+  // closing hash is the state at 1890-01 after 120 months.
+  const yearlyCheckpoints = Array.from({ length: 10 }, (_, index) => ({
+    year: 1880 + index,
+    month: `${String(1880 + index)}-01`,
+    snapshotHash: index === 0 ? first.initialSnapshotHash : first.monthlyHashes[index * 12 - 1]!,
+  }));
+
+  process.stdout.write(
+    JSON.stringify({
+      mode: "production-ten-year",
+      months: PRODUCTION_TEN_YEAR_MONTHS,
+      inProcessRepeatMatches,
+      success: first.success && second.success,
+      yearlyCheckpoints,
+      monthlyHashes: first.monthlyHashes,
+      monthlySuccess: first.monthlySuccess,
+      closingSnapshotHash: first.closingSnapshotHash,
+      diagnostics: first.diagnostics,
+      hullCounts: first.hullCounts,
+    }) + "\n",
+  );
+}
+
+function probeReferenceDesigns(bundle: CompiledContentBundle): readonly ProbeReferenceDesign[] {
+  return (bundle.shipBuilding?.referenceDesigns ?? []).map((reference) => ({
+    id: reference.id,
+    month: reference.month,
+    draft: { ...reference.draft },
+  }));
+}
+
+function runProductionProbes(): void {
+  const { bundle, campaignBundle, contentHash } = compileProductionBundle();
+  const { state } = compileCampaignFromBundle(campaignBundle, contentHash);
+  const slot = state.snapshot.slots.find((candidate) => candidate.type === "playable");
+  if (slot === undefined) throw new Error("production pack has no playable slot");
+  const references = probeReferenceDesigns(bundle);
+  const years: { year: number; probes: readonly unknown[] }[] = [];
+  const run = advanceProductionRun(
+    state.snapshot,
+    PRODUCTION_TEN_YEAR_MONTHS,
+    PRODUCTION_TEN_YEAR_SEED,
+    (snapshot, year) => {
+      if (year > 1889) return;
+      const probes = probeDecisions(snapshot, slot, year, references);
+      assertDecisionProbes(year, probes);
+      years.push({ year, probes });
+    },
+  );
+  process.stdout.write(
+    JSON.stringify({
+      mode: "production-probes",
+      years,
+      closingSnapshotHash: run.closingSnapshotHash,
+    }) + "\n",
+  );
+}
+
 if (process.argv[2] === "production-ten-nation") {
   runProductionTenNationSmoke();
+} else if (process.argv[2] === "production-ten-year") {
+  runProductionTenYear();
+} else if (process.argv[2] === "production-probes") {
+  runProductionProbes();
+} else if (process.argv[2] === "progression-ledger") {
+  runProgressionLedger();
 } else {
   run();
 }
