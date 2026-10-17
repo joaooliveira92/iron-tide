@@ -156,46 +156,38 @@ from authoritative state, and the output is reviewed. It is a new baseline, not 
 ## Frontier
 
 Status (2026-10-16, autonomous run): **G-0 is resolved** (re-baselined by G-1 under
-ADR-0210/DR-010; 0001's file still reads "blocked" but its finite exit was taken).
-G-1 and G-3 are complete; N-1's audit is complete with ticket 07 still blocked on
-**0005**. The **golden baseline now exists** (`golden/hashes.json`, commit
-`0117adc`, `Golden-Repin: baseline-created`), so the same-commit re-pin path is
-available and the snapshot-changing tickets are unblocked.
+ADR-0210/DR-010). G-1 and G-3 are complete; N-1's audit is complete with ticket 07
+still blocked on **0005**. The **golden baseline exists** (`golden/hashes.json`,
+commit `0117adc`, `Golden-Repin: baseline-created`), so the same-commit re-pin path is
+available. **Phase 2 is complete: U-1, U-2, U-3, U-4 and U-5 are all done** (U-5
+accepted in `.ai/reports/u-5-presentation-invariance.md`); this pointer was refreshed
+after the U-5 run.
 
-1. **U-1 (canonical values) is complete.** All eight tickets are done: **01–05**
-   (canonical units module; consolidate unit brands; one money type and branded money
-   fields; rounding helpers and the authoritative-float gate; conversion/locale
-   boundary and formatting-leak removal), **06** (construction-capacity fixed-point)
-   and **07** (combat strength/resolver fixed-point, exactly value-preserving), and
-   **08** (U-1 acceptance: the six criteria traced to named tests/gates, ADR-0215–0219
-   recorded and indexed, and the full `pnpm check` gate green).
-   **Immediate next action: U-2 ticket 03.**
-2. **U-2 (preferences domain)** is charted and sliced. Tickets **01** (versioned
-   domain, app-scope persistence, the `preferences.read`/`preferences.write`
-   capability, typed selectors, and the theme/background/font/density rewire off
-   `localStorage`) and **02** (the currency-display request vs the derived effective
-   mode) are **done**. Tickets **03–05** are `ready-for-agent` (03 UI language and
-   formatting locale; 04 measurement preset; 05 campaign scope and precedence).
-   Ticket **06** (migration/recovery) is blocked by 03–05 (02 done) and ticket
-   **07** (acceptance) by 06. U-2 is golden-neutral and ungated (map D7).
-   **Immediate next action: U-2 tickets 03–05.**
-3. **N-1 ticket 07** (1880 divisions and officer rosters) remains blocked on decision
+1. **U-1 (canonical values)** complete (tickets 01–08; ADR-0215–0219).
+2. **U-2 (preferences domain)** complete (tickets 01–07).
+3. **U-3 (formatting boundary)** complete (tickets 01–07).
+4. **U-4 (Options screen)** complete (tickets 01–08); the remaining released-screen
+   string migration is the recorded bounded follow-on (U-4 map D6).
+5. **U-5 (presentation invariance)** complete (tickets 01–07); golden-neutral, no
+   compatibility bump.
+6. **N-1 ticket 07** (1880 divisions and officer rosters) remains blocked on decision
    request **0005** (owner decision: the behavioural reference-run change with a
    baseline now present). Its sibling N-1 tickets are done.
-4. **S-1 (readiness and maintenance):** ticket **01** is done (per-ship readiness +
+7. **S-1 (readiness and maintenance):** ticket **01** is done (per-ship readiness +
    crew state; compatibility bumped 2.0.0 → 3.0.0). Tickets **02–07, 09** are
-   `ready-for-agent`; ticket **08** (author production values) is blocked on decision
-   request **0007**. Ticket 02–07 production constants also ride 0007.
-5. **S-2 (prestige and career)** tickets **02–07, 09** are `ready-for-agent`; ticket
+   `ready-for-agent`; ticket **08** (author production values) and the production
+   constants of 02–06 are gated by decision request **0007** (fixture-class constants
+   carry 02–06 until it resolves).
+8. **S-2 (prestige and career)** tickets **02–07, 09** are `ready-for-agent`; ticket
    **01** and, transitively, the sprint are blocked on decision request **0006**;
    ticket **08** (production values) on **0003**.
-6. **mine-warfare (W-2)** tickets 01/02 are sliced but W-2's plan dependency
+9. **mine-warfare (W-2)** tickets 01/02 are sliced but W-2's plan dependency
    (W-1, itself on S-1/T-1) is unmet.
 
 Owner decisions outstanding: **0003** (prestige values), **0004** (mine inventory),
-**0006** (prestige field vs untouched production), **0007** (S-1 readiness/crew/
-maintenance values). The actionable frontier is **U-2 tickets 03–05**, then the S-1
-structural lane (02–07, 09) and the S-2 structural lane (02–07, 09).
+**0005** (officer rosters/divisions golden repin), **0006** (prestige field vs
+untouched production), **0007** (S-1 readiness/crew/maintenance values), **0008**
+(baseline restoration). The actionable frontier is the **S-1 structural lane (02–07, 09)**, then the **S-2 structural lane (02–07, 09)**.
 
 ## Decisions recorded
 
