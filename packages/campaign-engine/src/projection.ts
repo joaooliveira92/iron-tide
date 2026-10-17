@@ -45,6 +45,10 @@ export interface PlayerProjectionPort {
 export interface PlayerProjectionShip {
   readonly name: string;
   readonly designId: string;
+  /** Readiness state (S-1 ticket 07): active/reserve/mothballed/working_up/repair. */
+  readonly readiness: string;
+  /** Worked-up crew quality `0..100` (S-1 ticket 07). */
+  readonly crewQuality: number;
 }
 
 export interface PlayerProjectionDivision {
@@ -188,6 +192,8 @@ export function buildPlayerProjection(
         ships: f.ships.map((ship) => ({
           name: ship.name,
           designId: ship.designVersionId,
+          readiness: ship.readiness,
+          crewQuality: Number(ship.crewQuality),
         })),
       },
     ],

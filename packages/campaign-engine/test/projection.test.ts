@@ -132,7 +132,14 @@ describe("buildPlayerProjection", () => {
           {
             name: "Home Fleet",
             areaId: "area-lon",
-            ships: [{ name: "HMS Majestic", designId: "design-majestic" }],
+            ships: [
+              {
+                name: "HMS Majestic",
+                designId: "design-majestic",
+                readiness: "ACTIVE",
+                crewQuality: 100,
+              },
+            ],
           },
         ],
       },
@@ -142,5 +149,72 @@ describe("buildPlayerProjection", () => {
     expect(projection.knownTechnologyIds).toEqual(["tech_steel_hull", "tech_triple_expansion"]);
     expect(projection.knownEnemyNations).toEqual(["germany"]);
     expect(projection.commandWorkspace).toEqual({ commands: [], movementCommands: [] });
+  });
+});
+
+describe("buildPlayerProjection — S-1 readiness in the fleet projection (ticket 07)", () => {
+  const mkShip = (id: string, readiness: "ACTIVE" | "RESERVE" | "MOTHBALLED") => ({
+    id,
+    name: id,
+    classId: "battleship",
+    nationId: "uk",
+    locationAreaId: "area-lon",
+    designVersionId: "des-1",
+    hitPoints: SafeInt(100),
+    maxHitPoints: SafeInt(100),
+    speed: SafeInt(10),
+    firepower: SafeInt(10),
+    armor: SafeInt(10),
+    isUnderConstruction: false,
+    constructionProgress: SafeInt(0),
+    constructionTotalWork: SafeInt(0),
+    readiness,
+    crewQuality: SafeInt(100),
+  });
+
+  it("carries each ship's readiness and crew quality into the projection", () => {
+    const uk = fixtureNation({
+      id: "uk",
+      fleets: [
+        {
+          id: "fleet-1",
+          nationId: "uk",
+          name: "Home Fleet",
+          locationAreaId: "area-lon",
+          ships: [mkShip("ship-active", "ACTIVE"), mkShip("ship-reserve", "RESERVE")],
+        },
+      ],
+    });
+    const projection = buildPlayerProjection(fixtureState(fixtureSnapshot([uk])), "uk", {
+      month: 1,
+      year: 1880,
+    });
+    expect(projection?.fleet[0]?.divisions[0]?.ships).toEqual([
+      { name: "ship-active", designId: "des-1", readiness: "ACTIVE", crewQuality: 100 },
+      { name: "ship-reserve", designId: "des-1", readiness: "RESERVE", crewQuality: 100 },
+    ]);
+  });
+
+  it("its derived fleet maintenance agrees with the committed nation.maintenanceCost", () => {
+    const uk = fixtureNation({
+      id: "uk",
+      fleets: [
+        {
+          id: "fleet-1",
+          nationId: "uk",
+          name: "Home Fleet",
+          locationAreaId: "area-lon",
+          ships: [mkShip("ship-active", "ACTIVE"), mkShip("ship-reserve", "RESERVE")],
+        },
+      ],
+    });
+    // The maintenance phase's own output: ACTIVE 10 + RESERVE 7 = 17.
+    uk.maintenanceCost = SafeInt(17);
+    const projection = buildPlayerProjection(fixtureState(fixtureSnapshot([uk])), "uk", {
+      month: 1,
+      year: 1880,
+    });
+    expect(projection?.economy.maintenanceCost).toBe(17);
+    expect(projection?.economy.maintenanceCost).toBe(Number(uk.maintenanceCost));
   });
 });
