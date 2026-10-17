@@ -31,10 +31,72 @@ export const SHIP_READINESS_CODES = {
 export const CREW_QUALITY_MIN = 0;
 export const CREW_QUALITY_MAX = 100;
 
-/** A fully worked-up crew (fixture-class ceiling until decision request 0007). */
+// S-1 crew-quality ceilings and ramp (ADR-0223, decision request 0007-A). The
+// manual gives no ramp schedule and no grades (p.51): it says active crews are
+// "best trained", reservists take "time", mothballed crews "substantial time",
+// and working-up ends at "decent crew quality". Every magnitude here is an
+// admitted `balance_adjustment` (ADR-0213) unless noted, never a manual fact.
+/** A fully worked-up active crew (balance_adjustment, ADR-0213). */
 export const ACTIVE_CREW_CEILING = SafeInt(100);
 /** A laid-up or newly launched hull starts with no worked-up crew. */
 export const LAID_UP_CREW_CEILING = SafeInt(0);
+/** Working-up ships ramp to the active standard before they join the fleet. */
+export const WORKING_UP_CREW_CEILING = SafeInt(100);
+/** Reserve crews never reach the active standard (balance_adjustment, ADR-0213). */
+export const RESERVE_CREW_CEILING = SafeInt(70);
+/** Mothballed crews are barely trained (balance_adjustment, ADR-0213). */
+export const MOTHBALLED_CREW_CEILING = SafeInt(30);
+/** Under repair a ship keeps its crew, so the ceiling is the active standard. */
+export const REPAIR_CREW_CEILING = SafeInt(100);
+
+/** Crew quality points a ship gains or loses toward its ceiling each month (balance_adjustment). */
+export const CREW_QUALITY_RAMP_PER_MONTH = SafeInt(5);
+/** The crew quality at which a working-up ship leaves working up (manual p.51 "decent"; balance_adjustment). */
+export const WORKING_UP_DECENT_THRESHOLD = SafeInt(60);
+
+const CREW_CEILING_BY_STATE: Record<ShipReadinessState, SafeInt> = {
+  ACTIVE: ACTIVE_CREW_CEILING,
+  WORKING_UP: WORKING_UP_CREW_CEILING,
+  RESERVE: RESERVE_CREW_CEILING,
+  MOTHBALLED: MOTHBALLED_CREW_CEILING,
+  REPAIR: REPAIR_CREW_CEILING,
+};
+
+/** The crew-quality ceiling a readiness state ramps toward. */
+export function crewCeilingFor(readiness: ShipReadinessState): SafeInt {
+  return CREW_CEILING_BY_STATE[readiness];
+}
+
+/**
+ * Move a ship's crew quality one month toward its readiness state's ceiling by
+ * `CREW_QUALITY_RAMP_PER_MONTH`, clamped to the ceiling and to `0..100`. Pure and
+ * integer-only: the ramp consumes no randomness (S-1 D4).
+ */
+export function rampCrewQuality(current: SafeInt, readiness: ShipReadinessState): SafeInt {
+  const ceiling = crewCeilingFor(readiness);
+  if (current < ceiling) {
+    const next = SafeInt.add(current, CREW_QUALITY_RAMP_PER_MONTH);
+    return next > ceiling ? ceiling : next;
+  }
+  if (current > ceiling) {
+    const next = SafeInt.sub(current, CREW_QUALITY_RAMP_PER_MONTH);
+    return next < ceiling ? ceiling : next;
+  }
+  return current;
+}
+
+/**
+ * The readiness state after a month's ramp: a working-up ship that has reached the
+ * "decent" crew threshold becomes active. Working up is entry-only (manual p.51,
+ * "but not back"), so this never returns a ship to working up.
+ */
+export function readinessAfterCrewRamp(
+  readiness: ShipReadinessState,
+  crewAfterRamp: SafeInt,
+): ShipReadinessState {
+  if (readiness === "WORKING_UP" && crewAfterRamp >= WORKING_UP_DECENT_THRESHOLD) return "ACTIVE";
+  return readiness;
+}
 
 export function isShipReadinessState(value: unknown): value is ShipReadinessState {
   return typeof value === "string" && (SHIP_READINESS_STATES as readonly string[]).includes(value);

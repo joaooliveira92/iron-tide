@@ -90,8 +90,11 @@ export class PhaseRegistry {
       id: "maintenance",
       name: "Maintenance",
       order: 4,
+      // S-1: the maintenance phase also advances per-ship readiness/crew (the
+      // crew-quality ramp and readiness transitions, manual p.51), so it writes
+      // the fleets resource as well as treasury. It consumes no randomness.
       readPermissions: ["treasury", "fleets"],
-      writePermissions: ["treasury"],
+      writePermissions: ["treasury", "fleets"],
       rngAllowed: false,
     },
     {

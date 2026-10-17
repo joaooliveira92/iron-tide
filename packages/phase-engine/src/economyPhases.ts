@@ -21,6 +21,7 @@ import { resolvePrivateDockExpansion } from "./dockExpansion.js";
 import { runForeignContractPhase } from "./foreignContractPhase.js";
 import { budgetChangedEvent, constructionDelayedEvent, makeLedgerEntry } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
+import { applyReadinessEvolution } from "./readinessEvolution.js";
 
 /**
  * Largest-remainder (Hamilton) apportionment of `total` across integer `weights`, deterministic and exact: the parts
@@ -566,6 +567,11 @@ export function runMaintenancePhase(ctx: MonthContext): void {
       ),
     );
   }
+
+  // S-1: after charging by readiness, advance each ship's readiness/crew one
+  // month (the crew-quality ramp, manual p.51). This writes the fleets resource
+  // the maintenance phase's footprint declares; it consumes no randomness.
+  applyReadinessEvolution(ctx);
 }
 
 export function runObligationPhase(ctx: MonthContext): void {

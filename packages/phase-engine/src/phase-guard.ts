@@ -90,7 +90,7 @@ export const PHASE_FOOTPRINTS: Readonly<Record<string, PhaseFootprint>> = {
   },
   maintenance: {
     reads: [PhaseResource.TREASURY, PhaseResource.FLEETS],
-    writes: [PhaseResource.TREASURY],
+    writes: [PhaseResource.TREASURY, PhaseResource.FLEETS],
     usesRng: false,
   },
   obligation: {
