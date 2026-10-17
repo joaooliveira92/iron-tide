@@ -173,6 +173,22 @@ passed 30/30; a focus-sensitive ship-types spec flaked only while a stale
 Playwright test-server from an earlier session was running. No e2e code or
 fixture was changed.
 
+### CI baseline on PR #120
+
+The PR's two red jobs are the pre-existing baseline recorded by N-1/N-2, not N-3
+regressions:
+
+- **quality** — the month-advance performance tripwire fails at month 10
+  (`month 10 must advance`) with the Portugal
+  `NEGATIVE_TREASURY_OBLIGATION` economy baseline. The tripwire is unmodified.
+- **determinism (windows-latest)** — the three documented Windows path /
+  directory-order tests fail on backslash separators: `schemaCoverage`,
+  `manifestAuthority`, `shipBuildingDiscovery`.
+
+`gates` (macOS/Windows), `determinism` (macOS/Ubuntu), and `commit-msgs` pass.
+Fixing the baseline is S-1/e2e hygiene, not N-3; no gate or fixture was weakened
+to hide it.
+
 ## Follow-ups
 
 - #95 — economy/AI solvency of a command-free decade (owner-requested, separate
