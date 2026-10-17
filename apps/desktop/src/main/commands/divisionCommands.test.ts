@@ -147,6 +147,29 @@ describe("division commands", () => {
     return { v, byArea };
   }
 
+  /**
+   * Dissolves the production start's seeded divisions so a scenario can found
+   * new ones from the freed ships. Each dissolve is a real command applied by a
+   * month commit, so the session advances one turn per division.
+   */
+  async function freeSeededDivisions(sessionId: string): Promise<DivisionScreenProjection> {
+    let current = await view(sessionId);
+    while (current.divisions.length > 0) {
+      const divisionId = current.divisions[0]!.divisionId;
+      const result = await submitDivisionCommand(
+        payload(
+          sessionId,
+          { type: "DissolveDivision", divisionId },
+          { expectedRevision: current.revision, transportRequestId: `free-${divisionId}` },
+        ),
+      );
+      expect(result.outcome).toBe("success");
+      await commit(sessionId, current.revision);
+      current = await view(sessionId);
+    }
+    return current;
+  }
+
   function create(
     sessionId: string,
     flagshipShipId: string,
@@ -177,13 +200,16 @@ describe("division commands", () => {
       expect(result).toMatchObject({ outcome: "error", reason: "SESSION_NOT_FOUND" });
     });
 
-    it("projects the real production start: no divisions, every UK ship unassigned, engine limits and costs", async () => {
+    it("projects the real production start: seeded UK divisions, no unassigned operational ships, engine limits and costs", async () => {
       registerSession("inspect");
       const v = await view("inspect");
       expect(v.revision).toBe(0);
-      expect(v.divisions).toEqual([]);
-      expect(v.unassignedShips.length).toBeGreaterThanOrEqual(3);
-      expect(v.unassignedShips.every((s) => s.name.length > 0 && s.areaName.length > 0)).toBe(true);
+      expect(v.divisions).toHaveLength(2);
+      expect(v.divisions.map((division) => division.role)).toEqual(["CORE", "INDEPENDENT"]);
+      expect(v.divisions.map((division) => division.ships.length).sort((a, b) => a - b)).toEqual([
+        1, 2,
+      ]);
+      expect(v.unassignedShips).toEqual([]);
       expect(v.roles).toContain("CORE");
       expect(v.formations).toContain("LINE_AHEAD");
       expect(v.maxShips).toBe(5);
@@ -194,9 +220,9 @@ describe("division commands", () => {
   describe("submitDivisionCommand — issue time", () => {
     it("queues a real CreateDivision envelope founded on one flagship, with a deterministic id", async () => {
       registerSession("create");
-      const { v } = await shipsByArea("create");
-      const flagship = v.unassignedShips[0]!.shipId;
-      const result = await create("create", flagship);
+      const freed = await freeSeededDivisions("create");
+      const flagship = freed.unassignedShips[0]!.shipId;
+      const result = await create("create", flagship, { expectedRevision: freed.revision });
       expect(result).toMatchObject({
         outcome: "success",
         value: { bodyType: "CreateDivision", appliedOnNextTurn: true },
@@ -211,29 +237,31 @@ describe("division commands", () => {
         divisionRole: "CORE",
         preferredFormation: "LINE_AHEAD",
       });
-      expect(body["divisionId"]).toBe(newDivisionId("uk", 0, flagship));
+      expect(body["divisionId"]).toBe(newDivisionId("uk", freed.revision, flagship));
       // The authoritative state is untouched until the month is committed.
       expect(getCampaignSession("create")!.state.snapshot.nations.get("uk")!.divisions).toEqual([]);
     });
 
     it("replays an identical retry and rejects a different body under the same transportRequestId", async () => {
       registerSession("idem");
-      const { v } = await shipsByArea("idem");
-      const [first, second] = [v.unassignedShips[0]!.shipId, v.unassignedShips[1]!.shipId];
-      const a = await create("idem", first);
-      const replay = await create("idem", first);
+      const freed = await freeSeededDivisions("idem");
+      const [first, second] = [freed.unassignedShips[0]!.shipId, freed.unassignedShips[1]!.shipId];
+      const a = await create("idem", first, { expectedRevision: freed.revision });
+      const replay = await create("idem", first, { expectedRevision: freed.revision });
       expect(replay).toEqual(a);
       expect(queued("idem")).toHaveLength(1);
 
-      const conflict = await create("idem", second);
+      const conflict = await create("idem", second, { expectedRevision: freed.revision });
       expect(conflict).toMatchObject({ outcome: "rejected", reason: "IDEMPOTENCY_CONFLICT" });
       expect(queued("idem")).toHaveLength(1);
     });
 
     it("rejects a stale revision without queueing", async () => {
       registerSession("stale");
-      const { v } = await shipsByArea("stale");
-      const result = await create("stale", v.unassignedShips[0]!.shipId, { expectedRevision: 7 });
+      const freed = await freeSeededDivisions("stale");
+      const result = await create("stale", freed.unassignedShips[0]!.shipId, {
+        expectedRevision: 7,
+      });
       expect(result).toMatchObject({ outcome: "rejected", reason: "REVISION_MISMATCH" });
       expect(queued("stale")).toEqual([]);
     });
@@ -273,13 +301,13 @@ describe("division commands", () => {
   describe("applied by commitMonth (the engine is the only mutator)", () => {
     it("founds a division on exactly its flagship (the engine's real semantics) with a vacant commander", async () => {
       registerSession("found");
-      const { v } = await shipsByArea("found");
-      const flagship = v.unassignedShips[0]!;
-      await create("found", flagship.shipId);
-      await commit("found", 0);
+      const freed = await freeSeededDivisions("found");
+      const flagship = freed.unassignedShips[0]!;
+      await create("found", flagship.shipId, { expectedRevision: freed.revision });
+      await commit("found", freed.revision);
 
       const now = await view("found");
-      expect(now.revision).toBe(1);
+      expect(now.revision).toBe(freed.revision + 1);
       expect(now.divisions).toHaveLength(1);
       expect(now.divisions[0]).toMatchObject({
         role: "CORE",
@@ -294,12 +322,12 @@ describe("division commands", () => {
 
     it("refuses a ship that already belongs to a division", async () => {
       registerSession("twice");
-      const { v } = await shipsByArea("twice");
-      const flagship = v.unassignedShips[0]!.shipId;
-      await create("twice", flagship);
-      await commit("twice", 0);
+      const freed = await freeSeededDivisions("twice");
+      const flagship = freed.unassignedShips[0]!.shipId;
+      await create("twice", flagship, { expectedRevision: freed.revision });
+      await commit("twice", freed.revision);
       const again = await create("twice", flagship, {
-        expectedRevision: 1,
+        expectedRevision: freed.revision + 1,
         transportRequestId: "req-2",
       });
       expect(again).toMatchObject({
@@ -310,14 +338,15 @@ describe("division commands", () => {
 
     it("adds a ship from the same area at the engine's stated cohesion cost, changes flagship, then dissolves", async () => {
       registerSession("life");
+      const freed = await freeSeededDivisions("life");
       const { byArea } = await shipsByArea("life");
-      const [, ships] = [...byArea.entries()].find(([, ids]) => ids.length >= 2)!.length
-        ? ([null, [...byArea.values()].find((ids) => ids.length >= 2)!] as const)
-        : [null, []];
+      const ships = [...byArea.values()].find((ids) => ids.length >= 2)!;
       const [flagship, second] = [ships[0]!, ships[1]!];
 
-      await create("life", flagship);
-      await commit("life", 0);
+      let rev = freed.revision;
+      await create("life", flagship, { expectedRevision: rev });
+      await commit("life", rev);
+      rev += 1;
       let now = await view("life");
       const divisionId = now.divisions[0]!.divisionId;
       const cohesionBefore = now.divisions[0]!.cohesion;
@@ -326,11 +355,12 @@ describe("division commands", () => {
         payload(
           "life",
           { type: "AddShipToDivision", divisionId, shipId: second },
-          { expectedRevision: 1, transportRequestId: "req-add" },
+          { expectedRevision: rev, transportRequestId: "req-add" },
         ),
       );
       expect(add.outcome).toBe("success");
-      await commit("life", 1);
+      await commit("life", rev);
+      rev += 1;
       now = await view("life");
       expect(now.divisions[0]!.ships.map((s) => s.shipId)).toEqual([flagship, second]);
       expect(now.divisions[0]!.cohesion).toBeLessThan(cohesionBefore);
@@ -339,11 +369,12 @@ describe("division commands", () => {
         payload(
           "life",
           { type: "ChangeDivisionFlagship", divisionId, newFlagshipShipId: second },
-          { expectedRevision: 2, transportRequestId: "req-flag" },
+          { expectedRevision: rev, transportRequestId: "req-flag" },
         ),
       );
       expect(flag.outcome).toBe("success");
-      await commit("life", 2);
+      await commit("life", rev);
+      rev += 1;
       now = await view("life");
       expect(now.divisions[0]!.flagshipShipId).toBe(second);
 
@@ -351,11 +382,11 @@ describe("division commands", () => {
         payload(
           "life",
           { type: "DissolveDivision", divisionId },
-          { expectedRevision: 3, transportRequestId: "req-dissolve" },
+          { expectedRevision: rev, transportRequestId: "req-dissolve" },
         ),
       );
       expect(dissolve.outcome).toBe("success");
-      await commit("life", 3);
+      await commit("life", rev);
       now = await view("life");
       expect(now.divisions).toEqual([]);
       expect(now.unassignedShips.map((s) => s.shipId)).toEqual(
@@ -365,25 +396,28 @@ describe("division commands", () => {
 
     it("PINS an engine gap: AddShipToDivision does not enforce the same-area rule (the UI must prevent it)", async () => {
       registerSession("cross");
+      const freed = await freeSeededDivisions("cross");
       const { byArea } = await shipsByArea("cross");
       const areas = [...byArea.entries()];
       expect(areas.length).toBeGreaterThanOrEqual(2);
       const homeShip = areas[0]![1][0]!;
       const farShip = areas[1]![1][0]!;
 
-      await create("cross", homeShip);
-      await commit("cross", 0);
+      let rev = freed.revision;
+      await create("cross", homeShip, { expectedRevision: rev });
+      await commit("cross", rev);
+      rev += 1;
       const divisionId = (await view("cross")).divisions[0]!.divisionId;
 
       const add = await submitDivisionCommand(
         payload(
           "cross",
           { type: "AddShipToDivision", divisionId, shipId: farShip },
-          { expectedRevision: 1, transportRequestId: "req-far" },
+          { expectedRevision: rev, transportRequestId: "req-far" },
         ),
       );
       expect(add.outcome).toBe("success");
-      await commit("cross", 1);
+      await commit("cross", rev);
       // DESIGN-26 lists DIVISION_LOCATION_CONFLICT, but the engine's add path does not
       // apply it: the division now spans two areas. The Fleet UI therefore offers only
       // same-area ships; if the engine starts enforcing the rule, this test should flip
@@ -394,6 +428,7 @@ describe("division commands", () => {
 
     it("reorders a division's ships at the engine's reorder cost, keeping the flagship", async () => {
       registerSession("reorder");
+      const freed = await freeSeededDivisions("reorder");
       const { v, byArea } = await shipsByArea("reorder");
       // At least two ships share an area; the engine does not enforce the
       // same-area rule on AddShipToDivision (pinned above), so a third may come
@@ -406,11 +441,12 @@ describe("division commands", () => {
         .find((id) => id !== flagship && id !== second)!;
       expect(third).toBeDefined();
 
-      await create("reorder", flagship);
-      await commit("reorder", 0);
+      let rev = freed.revision;
+      await create("reorder", flagship, { expectedRevision: rev });
+      await commit("reorder", rev);
+      rev += 1;
       const divisionId = (await view("reorder")).divisions[0]!.divisionId;
 
-      let rev = 1;
       for (const shipId of [second, third]) {
         const add = await submitDivisionCommand(
           payload(

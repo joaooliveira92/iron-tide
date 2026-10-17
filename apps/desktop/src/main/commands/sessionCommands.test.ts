@@ -241,15 +241,14 @@ describe("session commands (save / close / copy)", () => {
       // Queue a real command so there is something to discard.
       const view = await inspectDivisionScreen("c1");
       if (view.outcome !== "success") throw new Error("inspect failed");
+      expect(view.value.divisions.length).toBeGreaterThan(0);
       const queued = await submitDivisionCommand({
         sessionId: "c1",
         expectedRevision: 0,
         transportRequestId: "r1",
         command: {
-          type: "CreateDivision",
-          flagshipShipId: view.value.unassignedShips[0]!.shipId,
-          role: "CORE",
-          formation: "LINE_AHEAD",
+          type: "DissolveDivision",
+          divisionId: view.value.divisions[0]!.divisionId,
         },
       });
       expect(queued.outcome).toBe("success");
