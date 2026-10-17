@@ -178,28 +178,35 @@ decision sections in `.ai/decision-requests/` and ADR-0223/0224/0225.
    (commit `94aee73`) and seeded 1880 divisions (an authored `divisions`
    collection + compile wiring) landed under ADR-0224. N-1 is complete, which
    makes **N-2** (1880 content completion) and **N-3** (1880–1890 progression)
-   reachable; both are separate sprints, not started here. See ADR-0224 and the
-   N-1 report.
-3. **0003-B research** (non-production): **done** — it grounded the prestige
+   reachable. See ADR-0224 and the N-1 report.
+3. **N-2 (1880 content completion)**: **done** on
+   `feat/n-2-1880-content-completion` — map #26, decisions #27–#31 and #40.
+   The last design-less starting ships are linked (`aut_custoza`,
+   `gbr_temeraire`); Courbet is documented sister-ship reuse; the combat
+   classifier is v2 (ADR-0228); the 14-inch Whitehead id is recorded as a
+   canonical repository label; and the acceptance harness proves the
+   ten-playable, legal, classifiable, 1880-only start plus a deterministic
+   twelve-month fourteen-nation smoke run. Brief:
+   `.ai/briefs/n-2-1880-content-completion.md`; evidence:
+   `.ai/reports/n-2-1880-content-completion.md`. The smoke run allowlists only
+   the pre-existing S-1 Portugal/Netherlands treasury baseline.
+4. **0003-B research** (non-production): **done** — it grounded the prestige
    model (integer field, fresh-start 20, ≤16 sacking threshold, proportional
    loss, final prestige = career score) but not the magnitudes. Findings with
    per-value provenance are in `docs/research/rtw3-prestige-values.md`, recorded
    by ADR-0226; the unresolved/contradictory values are returned to the owner in
    decision request 0012. No production prestige value is committed. See
    ADR-0225/ADR-0226.
-4. **S-2 (prestige and career)** remains **blocked** under **0006-B** until 0003 is
+5. **S-2 (prestige and career)** remains **blocked** under **0006-B** until 0003 is
    fully resolved and the production value set is authorized. Do not make prestige
    optional/defaulted and do not add prestige to production content.
-5. **0008** closed administratively.
+6. **0008** closed administratively.
 
-**Immediate next action (2026-10-17):** **N-2 — 1880 content completion (L).**
-No brief exists yet, so start with the scoping sprint: turn the N-1 audit's
-residual findings (F1–F6, F8 in
-`.ai/reports/n-1-1880-scenario-audit.md`) into research notes and tickets, land
-`.ai/briefs/n-2-1880-content-completion.md`, then implement. N-2 owns the
-legacy-hull content gaps found while validating ticket 07 (`bra_brasil` below
-the classifier minimums, `aut_custoza` without a compiled design). S-2/S-3
-remain blocked on owner decisions 0003/0006; W-2's W-1 dependency is unmet.
+**Immediate next action (2026-10-17):** **N-3 — 1880–1890 progression (M)** now
+that N-2 and S-1 are complete. N-3 is a separate sprint: it owns the decade's
+decisions and unlocks (docks, torpedoes, protected cruisers, steel, QF guns) and
+any approved torpedo-contract id change. S-2/S-3 remain blocked on owner
+decisions 0003/0006; W-2's W-1 dependency is unmet.
 
 **Lane isolation:** S-1 and N-1 both move goldens. Process them **sequentially** so
 each golden movement has one attributable cause; never bundle unrelated behavioural

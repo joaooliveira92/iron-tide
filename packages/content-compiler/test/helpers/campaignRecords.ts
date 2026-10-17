@@ -8,6 +8,7 @@ import type { ContentBundle } from "../../src/index.js";
 
 export interface NationRecord {
   readonly id: string;
+  readonly isPlayable: boolean;
 }
 
 export interface ShipRecord {
