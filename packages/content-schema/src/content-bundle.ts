@@ -11,6 +11,7 @@ import {
   CampaignConstructionSchema,
   CampaignDesignSchema,
   CampaignDiplomacySchema,
+  CampaignDivisionSchema,
   CampaignEconomySchema,
   CampaignFleetSchema,
   CampaignResearchSchema,
@@ -23,6 +24,7 @@ import { PresentationContentSchema } from "./presentation.js";
 import { PossessionSchema } from "./possession.js";
 import { ReferenceDesignSchema } from "./reference-design.js";
 import { RouteEdgeSchema } from "./route.js";
+import { UiCatalogueSchema } from "./ui-catalogue.js";
 import {
   PropulsionPlantSchema,
   ShipComponentSchema,
@@ -64,6 +66,8 @@ const CampaignCollectionsSchema = Schema.Struct({
   diplomacy: Schema.Array(CampaignDiplomacySchema),
   research: Schema.Array(CampaignResearchSchema),
   designs: Schema.Array(CampaignDesignSchema),
+  /** Present only when the pack declares authored divisions (N-1 ticket 07). */
+  divisions: Schema.optional(Schema.Array(CampaignDivisionSchema)),
 });
 
 export const ContentBundleSchema = Schema.Struct({
@@ -79,6 +83,7 @@ export const ContentBundleSchema = Schema.Struct({
   shipBuilding: Schema.optional(ShipBuildingCatalogueSchema),
   campaign: Schema.optional(CampaignCollectionsSchema),
   presentation: Schema.optional(PresentationContentSchema),
+  ui: Schema.optional(UiCatalogueSchema),
 });
 
 export type CompiledContentBundle = typeof ContentBundleSchema.Type;

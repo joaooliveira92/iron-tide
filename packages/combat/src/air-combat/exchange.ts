@@ -22,8 +22,6 @@ import {
   AIR_COMBAT_NO_AVAILABLE_TARGET,
 } from "./reasonCodes.js";
 
-// ---- ExchangeInput ----
-
 export interface ExchangeInput {
   attackerCombatIndex: SafeInt; // 0-100
   defenderCombatIndex: SafeInt; // 0-100
@@ -36,8 +34,6 @@ export interface ExchangeInput {
   escortModifierBp: SafeInt; // 10_000 = full (no escort), lower = escort reduces CAP effect
 }
 
-// ---- ExchangeResult ----
-
 export interface ExchangeResult {
   killProbabilityBp: SafeInt;
   losses: SafeInt;
@@ -46,15 +42,11 @@ export interface ExchangeResult {
   rngDraw: SafeInt;
 }
 
-// ---- Altitude order mapping ----
-
 const ALTITUDE_ORDER: Record<string, number> = {
   HIGH: 3,
   MEDIUM: 2,
   LOW: 1,
 };
-
-// ---- Factor computation helpers ----
 
 /**
  * Compute the quality factor in basis points.
@@ -135,8 +127,6 @@ function computeDefenderSurvivalBp(toughness: SafeInt): SafeInt {
   return SafeInt(clamped);
 }
 
-// ---- Core exchange function ----
-
 /**
  * Executes the 6-factor air-to-air exchange formula.
  *
@@ -154,8 +144,6 @@ function computeDefenderSurvivalBp(toughness: SafeInt): SafeInt {
  * @throws BluewaveError on invalid input.
  */
 export function computeExchange(input: ExchangeInput, rngEngine: RandomEngine): ExchangeResult {
-  // ---- Input validation ----
-
   const attackerCI = Number(input.attackerCombatIndex);
   const defenderCI = Number(input.defenderCombatIndex);
   const attackerCount = Number(input.attackerCount);
@@ -233,24 +221,20 @@ export function computeExchange(input: ExchangeInput, rngEngine: RandomEngine): 
     Math.min(AIR_COMBAT_BASIS_POINTS, Math.max(0, rawKillProbability)),
   );
 
-  // ---- Losses ----
   const killProbNum = Number(killProbabilityBp);
   const rawLosses = Math.floor((killProbNum * defenderCount) / AIR_COMBAT_BASIS_POINTS);
   // Minimum 1 loss if kill probability > 0, cap at defenderCount
   const cappedLosses = Math.min(defenderCount, killProbNum > 0 ? Math.max(1, rawLosses) : 0);
   const losses = SafeInt(cappedLosses);
 
-  // ---- Damaged ----
   const rawDamaged = Math.floor(
     (cappedLosses * AIR_COMBAT_DESTROYED_DAMAGE_RATIO_BP) / AIR_COMBAT_BASIS_POINTS,
   );
   const damaged = SafeInt(rawDamaged);
 
-  // ---- RNG draw ----
   const stream = rngEngine.stream("air-combat/exchange");
   const rngDraw = drawUniform(stream, SafeInt(0), SafeInt(AIR_COMBAT_BASIS_POINTS - 1));
 
-  // ---- Apply RNG ----
   const isSuccessful = Number(rngDraw) < Number(killProbabilityBp);
 
   return {
@@ -261,8 +245,6 @@ export function computeExchange(input: ExchangeInput, rngEngine: RandomEngine): 
     rngDraw,
   };
 }
-
-// ---- computeCombatIndex ----
 
 /**
  * Computes a single combat index from aircraft performance scores.

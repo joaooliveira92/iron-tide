@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import { treasuryCostUnits } from "../src/index.js";
+import { isUnitError } from "@bluewave/contracts";
+import { TREASURY_UNITS_ROUNDING, UnitError, treasuryCostUnits } from "../src/index.js";
 
 describe("treasuryCostUnits", () => {
   it("rounds up so a ship is never priced below its cost", () => {
@@ -18,11 +19,20 @@ describe("treasuryCostUnits", () => {
       Number((BigInt(cost) + BigInt(unit) - 1n) / BigInt(unit)),
     );
   });
-  it("rejects negative, fractional and non-positive inputs", () => {
-    expect(() => treasuryCostUnits(-1, 10)).toThrow(RangeError);
-    expect(() => treasuryCostUnits(1.5, 10)).toThrow(RangeError);
-    expect(() => treasuryCostUnits(10, 0)).toThrow(RangeError);
-    expect(() => treasuryCostUnits(10, -5)).toThrow(RangeError);
-    expect(() => treasuryCostUnits(Number.NaN, 10)).toThrow(RangeError);
+  it("declares its single rounding mode as ceil", () => {
+    expect(TREASURY_UNITS_ROUNDING).toBe("ceil");
+  });
+  it("rejects negative, fractional and non-positive inputs with a typed error", () => {
+    expect(() => treasuryCostUnits(-1, 10)).toThrow(UnitError);
+    expect(() => treasuryCostUnits(1.5, 10)).toThrow(UnitError);
+    expect(() => treasuryCostUnits(10, 0)).toThrow(UnitError);
+    expect(() => treasuryCostUnits(10, -5)).toThrow(UnitError);
+    expect(() => treasuryCostUnits(Number.NaN, 10)).toThrow(UnitError);
+    try {
+      treasuryCostUnits(1.5, 10);
+      expect.unreachable("should have thrown");
+    } catch (error) {
+      expect(isUnitError(error)).toBe(true);
+    }
   });
 });

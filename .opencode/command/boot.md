@@ -27,7 +27,8 @@ Read, in this order, before editing anything:
    research → implementator → reviewer → validation gate).
 4. `.ai/SPRINT-PLAN.md` — the backlog and the **Immediate next action** pointer
    (your starting sprint). If `$ARGUMENTS` names a sprint id, start there instead.
-5. `docs/PROGRESS.md` and `docs/OPEN-ISSUES.md` — current acceptance status.
+5. `.ai/AUTHORITY-INDEX.md` and `.ai/reports/*` — authority and acceptance status
+   (`docs/PROGRESS.md`/`docs/OPEN-ISSUES.md` are unavailable; ADR-0210).
 6. `README.md` — canonical spec (DESIGN-55 defines "complete").
 7. The brief/spec for the sprint you are about to run (see SPRINT-PLAN /
    `.ai/briefs/` / `.scratch/<slug>/spec.md`).

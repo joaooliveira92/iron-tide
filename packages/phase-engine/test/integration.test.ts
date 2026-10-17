@@ -423,7 +423,7 @@ describe("Full-slice integration", () => {
   it("10. No ship in two unresolved battles", () => {
     const executor = new MonthExecutor();
     const nations = new Map<string, NationState>();
-    const gbrNation = {
+    const gbrNation: NationState = {
       id: "GBR",
       name: "United Kingdom",
       tag: "GBR",
@@ -454,6 +454,8 @@ describe("Full-slice integration", () => {
               isUnderConstruction: false,
               constructionProgress: SafeInt(0),
               constructionTotalWork: SafeInt(0),
+              readiness: "ACTIVE",
+              crewQuality: SafeInt(100),
               designVersionId: "",
               inBattleId: "battle-1",
             },
@@ -713,6 +715,8 @@ describe("Full-slice integration", () => {
               isUnderConstruction: false,
               constructionProgress: SafeInt(0),
               constructionTotalWork: SafeInt(0),
+              readiness: "ACTIVE",
+              crewQuality: SafeInt(100),
             },
           ],
         },
@@ -763,6 +767,8 @@ describe("Full-slice integration", () => {
               isUnderConstruction: false,
               constructionProgress: SafeInt(0),
               constructionTotalWork: SafeInt(0),
+              readiness: "ACTIVE",
+              crewQuality: SafeInt(100),
             },
           ],
         },

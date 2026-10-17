@@ -6,7 +6,7 @@ import type {
   NationState,
 } from "@bluewave/campaign";
 import { buildConstructionProjectQueue } from "@bluewave/campaign-engine";
-import { SafeInt } from "@bluewave/contracts";
+import { bp, money, SafeInt } from "@bluewave/contracts";
 import { LINE_IDS } from "@bluewave/ship-design";
 import { describe, expect, it } from "vite-plus/test";
 import { preservationCostUnits } from "../src/economyPhases.js";
@@ -110,14 +110,14 @@ function foreignContract(): ForeignConstructionContract {
       builderShipyardId: "yard:FRA",
       quantity: 1,
       totalWorkPerUnit: 200,
-      totalPriceUnits: 600,
+      totalPriceUnits: money(600),
       paymentSchedule: [
-        { dueMonth: "1880-01", amountUnits: 100, workShareBp: 2_000 },
-        { dueMonth: "1880-02", amountUnits: 100, workShareBp: 1_600 },
-        { dueMonth: "1880-03", amountUnits: 100, workShareBp: 1_600 },
-        { dueMonth: "1880-04", amountUnits: 100, workShareBp: 1_600 },
-        { dueMonth: "1880-05", amountUnits: 100, workShareBp: 1_600 },
-        { dueMonth: "1880-06", amountUnits: 100, workShareBp: 1_600 },
+        { dueMonth: "1880-01", amountUnits: money(100), workShareBp: bp(2_000) },
+        { dueMonth: "1880-02", amountUnits: money(100), workShareBp: bp(1_600) },
+        { dueMonth: "1880-03", amountUnits: money(100), workShareBp: bp(1_600) },
+        { dueMonth: "1880-04", amountUnits: money(100), workShareBp: bp(1_600) },
+        { dueMonth: "1880-05", amountUnits: money(100), workShareBp: bp(1_600) },
+        { dueMonth: "1880-06", amountUnits: money(100), workShareBp: bp(1_600) },
       ],
       authorizationMonth: "1880-01",
       plannedKeelMonth: "1880-01",

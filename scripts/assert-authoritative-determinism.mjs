@@ -21,6 +21,12 @@
 // deterministic; only *enumeration* (`readdir`/`opendir` and their `Sync`
 // variants) is rejected.
 //
+// A second rule (map D4/D5) rejects float arithmetic in the outcome-producing pure
+// packages (`FLOAT_ROOTS`): a fractional numeric literal or `parseFloat` fails closed,
+// so no float drifts into a hashed outcome. It excludes the rounding-vocabulary home
+// (`contracts`/`deterministic`) and presentation (`ship-visual`), which carry fractional
+// constants legitimately.
+//
 // New occurrences are forbidden; a small reviewed allowlist (keyed by file +
 // content fingerprint) exists for exceptions, and may only shrink.
 //
@@ -46,6 +52,23 @@ const BASELINE_PATH = "scripts/authoritative-determinism.baseline.json";
 export const DETERMINISM_ROOTS = RUNTIME_FREE_ROOTS.filter((entry) =>
   entry.startsWith("packages/"),
 );
+
+/**
+ * The outcome-producing pure packages whose arithmetic must stay integer/fixed-point
+ * (map D4/D5): the authoritative serialization roots plus the two float paths the audit
+ * found (combat strength, the economy capacity ratio). Excludes the rounding-vocabulary
+ * home (`contracts`, `deterministic`) and presentation (`ship-visual`), which legitimately
+ * carry fractional constants. A fractional float literal or `parseFloat` here fails closed.
+ */
+export const FLOAT_ROOTS = [
+  "packages/campaign/src",
+  "packages/campaign-engine/src",
+  "packages/commands/src",
+  "packages/events/src",
+  "packages/phase-engine/src",
+  "packages/combat/src",
+  "packages/ship-design/src",
+];
 
 const SOURCE_RE = /\.(?:[cm]?[jt]s|[jt]sx)$/u;
 const TEST_RE = /(?:^|\/)(?:test|tests|__tests__)\/|\.(?:test|spec)\.[cm]?[jt]sx?$/u;
@@ -94,6 +117,7 @@ function classifyCall(node) {
   if (callee === null || typeof callee !== "object") return null;
   if (callee.type === "Identifier") {
     if (callee.name === "randomUUID") return "random-uuid";
+    if (callee.name === "parseFloat") return "parse-float";
     if (FS_ENUMERATION.has(callee.name)) return "fs-enumeration";
     return null;
   }
@@ -108,6 +132,7 @@ function classifyCall(node) {
   if (object.name === "Date" && property === "now") return "date-now";
   if (object.name === "Math" && property === "random") return "math-random";
   if (object.name === "crypto" && property === "randomUUID") return "random-uuid";
+  if (object.name === "Number" && property === "parseFloat") return "parse-float";
   if (FS_ENUMERATION.has(property ?? "")) return "fs-enumeration";
   return null;
 }
@@ -167,6 +192,13 @@ export function findAmbientDeterminism(file, text) {
     } else if (node.type === "MemberExpression") {
       const kind = classifyMember(node);
       if (kind !== null) record(kind, node.start, node.end);
+    } else if (
+      node.type === "Literal" &&
+      typeof node.value === "number" &&
+      Number.isFinite(node.value) &&
+      !Number.isInteger(node.value)
+    ) {
+      record("float-literal", node.start, node.end);
     }
     for (const key of Object.keys(node)) {
       if (key === "type" || key === "start" || key === "end" || key === "range") continue;
@@ -212,9 +244,14 @@ export function scanAmbientDeterminism(repoRoot) {
     }
   }
 
-  return present.flatMap((file) =>
-    findAmbientDeterminism(file, readFileSync(resolve(repoRoot, file), "utf8")),
-  );
+  const isFloatKind = (kind) => kind === "float-literal" || kind === "parse-float";
+  return present
+    .flatMap((file) => findAmbientDeterminism(file, readFileSync(resolve(repoRoot, file), "utf8")))
+    .filter(
+      (finding) =>
+        !isFloatKind(finding.kind) ||
+        FLOAT_ROOTS.some((root) => finding.file.startsWith(`${root}/`)),
+    );
 }
 
 /** Count findings per file and fingerprint, in stable code-unit order. */
@@ -316,7 +353,6 @@ export function verifyAmbientDeterminism(repoRoot, mode = "verify") {
   return findings.length;
 }
 
-// ---- embedded self-test fixtures ------------------------------------------
 const FIXTURES = [
   { name: "Date.now() fails", source: "const t = Date.now();", expect: 1 },
   { name: "new Date() with no args fails", source: "const t = new Date();", expect: 1 },
@@ -361,6 +397,12 @@ const FIXTURES = [
     source: "const x = [Date.now(), Math.random()];",
     expect: 2,
   },
+  { name: "a fractional float literal fails", source: "const x = 1.5;", expect: 1 },
+  { name: "an integer literal is allowed", source: "const x = 2;", expect: 0 },
+  { name: "a BigInt literal is allowed", source: "const x = 2n;", expect: 0 },
+  { name: "a float value inside a string is allowed", source: 'const s = "1.5";', expect: 0 },
+  { name: "parseFloat fails", source: "const x = parseFloat(s);", expect: 1 },
+  { name: "Number.parseFloat fails", source: "const x = Number.parseFloat(s);", expect: 1 },
 ];
 
 export function runSelfTest(fixtures = FIXTURES) {

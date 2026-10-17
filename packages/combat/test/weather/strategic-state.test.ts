@@ -157,7 +157,6 @@ describe("AC-1: StrategicWeatherState invariant", () => {
     expect(() => withStrategicWeatherStateHash(s)).toThrow(BluewaveError);
   });
 
-  // ---- Hash reproducibility ----
   it("same inputs produce identical state hash (determinism)", () => {
     const state1 = withStrategicWeatherStateHash(seed());
     const state2 = withStrategicWeatherStateHash(seed());

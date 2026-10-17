@@ -4,6 +4,7 @@ import {
   CampaignConstructionSchema,
   CampaignDesignSchema,
   CampaignDiplomacySchema,
+  CampaignDivisionSchema,
   CampaignEconomySchema,
   CampaignFleetSchema,
   CampaignResearchSchema,
@@ -28,6 +29,7 @@ import {
   ShipTypeRecordSchema,
   SlotTemplateSchema,
   TechnologyPrerequisiteChainSchema,
+  UiCatalogueSchema,
   validateAgainstSchema,
   type ContentSchema,
 } from "@bluewave/content-schema";
@@ -68,7 +70,9 @@ export interface ValidateOutput {
   diplomacy?: unknown[];
   research?: unknown[];
   designs?: unknown[];
+  divisions?: unknown[];
   presentation?: unknown;
+  ui?: unknown;
 }
 
 /** The source file of each part-model record, by id, for the flatten stage. */
@@ -187,6 +191,7 @@ const CAMPAIGN_COLLECTIONS: readonly CampaignCollection[] = [
     label: "Diplomacy record",
     idField: "id",
   },
+  { key: "divisions", schema: CampaignDivisionSchema, label: "Division", idField: "id" },
 ];
 
 interface CampaignCollection {
@@ -272,6 +277,8 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
     const presentation = validatePresentation(input, collector);
     validatePresentationRegions(validated, presentation, input, collector);
 
+    const ui = validateUi(input, collector);
+
     if (collector.hasErrors) return undefined;
 
     return {
@@ -293,6 +300,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
       },
       ...campaign,
       ...(presentation !== undefined ? { presentation } : {}),
+      ...(ui !== undefined ? { ui } : {}),
     };
   }
 }
@@ -314,6 +322,18 @@ function validatePresentation(input: ParseOutput, collector: DiagnosticCollector
     sourcePath,
     collector,
   );
+}
+
+/**
+ * Structurally validates the UI-string catalogue (CAH-UI-1) through the strict
+ * validator. Absent from a pack keeps the artifact byte-compatible; a malformed
+ * catalogue (excess keys, non-string text) fails to compile.
+ */
+function validateUi(input: ParseOutput, collector: DiagnosticCollector): unknown {
+  const raw = input.objectDocs.get("ui");
+  if (raw === undefined) return undefined;
+  const sourcePath = input.objectSourcePaths.get("ui") ?? "ui/en-US.yaml";
+  return validateAgainstSchema(raw, UiCatalogueSchema, "UiCatalogue", sourcePath, collector);
 }
 
 /**
@@ -511,6 +531,7 @@ function validateCampaignCollections(
     diplomacy: out["diplomacy"] ?? [],
     research: out["research"] ?? [],
     designs: out["designs"] ?? [],
+    divisions: out["divisions"] ?? [],
   };
 }
 
@@ -602,6 +623,62 @@ function validateCampaignReferences(
           id,
           "designVersionId",
           `Construction '${id}' references unknown design version '${designVersionId}'`,
+        );
+      }
+    }
+  }
+
+  const divisions = campaign["divisions"] ?? [];
+  if (divisions.length > 0) {
+    const shipLocation = new Map<string, { nationId: string; areaId: string }>();
+    for (const item of campaign["fleets"] ?? []) {
+      const fleet = item as Record<string, unknown>;
+      const areaId = stringValue(fleet["locationAreaId"]);
+      const fleetNationId = stringValue(fleet["nationId"]);
+      for (const ship of Array.isArray(fleet["ships"]) ? (fleet["ships"] as unknown[]) : []) {
+        const shipId = stringValue((ship as Record<string, unknown>)["id"]);
+        if (shipId !== "") shipLocation.set(shipId, { nationId: fleetNationId, areaId });
+      }
+    }
+    for (const item of divisions) {
+      const division = item as Record<string, unknown>;
+      const divisionId = stringValue(division["id"]);
+      const nationId = stringValue(division["nationId"]);
+      const shipOrder = Array.isArray(division["shipOrder"])
+        ? (division["shipOrder"] as unknown[])
+        : [];
+      const areas = new Set<string>();
+      for (const shipId of shipOrder) {
+        if (typeof shipId !== "string") continue;
+        const located = shipLocation.get(shipId);
+        if (located === undefined) {
+          ref(
+            "divisions",
+            "id",
+            divisionId,
+            "shipOrder",
+            `Division '${divisionId}' references unknown ship '${shipId}'`,
+          );
+          continue;
+        }
+        if (located.nationId !== nationId) {
+          ref(
+            "divisions",
+            "id",
+            divisionId,
+            "shipOrder",
+            `Division '${divisionId}' includes ship '${shipId}' of another nation`,
+          );
+        }
+        areas.add(located.areaId);
+      }
+      if (areas.size > 1) {
+        ref(
+          "divisions",
+          "id",
+          divisionId,
+          "shipOrder",
+          `Division '${divisionId}' ships are not co-located (${[...areas].join(", ")})`,
         );
       }
     }

@@ -98,7 +98,6 @@ describe("AC-6: visibility distance formula", () => {
     expect(BigInt(result.divisorString)).toBe(10_000n ** 5n);
   });
 
-  // ---- Missing factor cases ----
   it("throws WEATHER_VISIBILITY_FORMULA_MISSING for NaN multiplier", () => {
     expect(() =>
       computeEffectiveVisibility({

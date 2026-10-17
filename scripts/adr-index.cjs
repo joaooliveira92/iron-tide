@@ -30,71 +30,59 @@ const ADR_DIR = path.join(ROOT, "docs/adr");
 const ARCHIVE_DIR = path.join(ADR_DIR, "archive");
 
 // Closed vocabulary of index sections, in display order.
+// Re-baselined corpus: DR-001..DR-011 recorded as ADR-0201..ADR-0211 (see
+// .ai/AUTHORITY-INDEX.md). Records referenced below 0201 are unavailable and
+// unverified legacy references and are deliberately not indexed here.
 const AREAS = [
   {
-    name: "Foundations",
-    blurb: "Core engine geometry, determinism, persistence, and the compiler pipeline.",
-    nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 32, 34, 35, 36, 37, 113, 122, 123, 124, 146],
+    name: "Scope & horizon",
+    blurb: "The sole 1880 start, the 1939 authored horizon, and the ten-nation roster.",
+    nums: [201, 204, 205, 214],
   },
   {
-    name: "Effect adoption",
+    name: "Values, currency & language",
     blurb:
-      "Adopting and vendoring Effect v4: the validator/runtime idiom, the read-only agent reference, and the determinism demotion.",
-    nums: [100, 101, 102, 103, 104, 105, 128, 155, 159],
+      "Canonical values and the presentation-only units, currency, and language modes over them.",
+    nums: [202, 206, 207, 208, 209, 211, 215, 216, 217, 218, 219, 221],
   },
   {
-    name: "Campaign & strategy",
-    blurb: "Strategic layer: diplomacy, economy, fleet, officers, command screens, and time.",
-    nums: [10, 11, 54, 60, 61, 62, 65, 68, 71, 75, 81, 86],
+    name: "Preferences & interfaces",
+    blurb: "The versioned preferences domain behind the Options screen.",
+    nums: [203],
   },
   {
-    name: "Combat",
-    blurb:
-      "Battle generation, tactical resolution, gunnery, torpedoes, mines, air, coastal defense, damage, weather.",
-    nums: [
-      12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25, 26, 27, 31, 33, 39, 40, 41, 42, 44, 46, 47, 48,
-      49, 50, 51, 52, 53, 56, 72, 73, 93, 94, 97, 98, 112,
-    ],
-  },
-  {
-    name: "Ship design & construction",
-    blurb: "Ship design, classification, construction, repair, and rebuild.",
-    nums: [
-      13, 63, 64, 66, 67, 70, 74, 76, 77, 78, 80, 83, 85, 88, 116, 129, 130, 131, 132, 135, 137,
-      138, 154, 156, 157, 158, 160, 161, 163,
-    ],
-  },
-  {
-    name: "National content",
-    blurb: "National naval profiles, the content pipeline, and AI procurement.",
-    nums: [89, 90, 91, 92, 108, 109, 110, 111, 114, 117, 119, 143, 144, 145, 147],
-  },
-  {
-    name: "Desktop & UI",
-    blurb: "Electron boundary, renderer screens, UX, and presentation.",
-    nums: [
-      23, 24, 28, 29, 30, 38, 55, 57, 58, 59, 69, 79, 82, 84, 87, 115, 118, 120, 121, 125, 126, 127,
-      133, 141, 142, 148, 149, 153, 162,
-    ],
+    name: "Repository authority & re-baselining",
+    blurb: "Unavailable-artifact policy and the project authority order.",
+    nums: [210],
   },
   {
     name: "Process & documentation",
-    blurb: "Repo process, docs/ADR authority, and release gates.",
-    nums: [45, 95, 96, 99, 106, 107, 134, 136, 139, 140, 150, 151, 152, 164, 165],
+    blurb: "Concurrent-agent worktree coordination and repository process rules.",
+    nums: [220],
+  },
+  {
+    name: "Scenario content & research",
+    blurb:
+      "Legality, consistency and authored posture of the 1880 scenario's starting content and research state.",
+    nums: [212, 213],
+  },
+  {
+    name: "Turns, interruptions & save/resume",
+    blurb: "Turn identity and the suspend/resume interruption model.",
+    nums: [222],
+  },
+  {
+    name: "Fleet readiness, command & prestige",
+    blurb:
+      "Readiness and maintenance ruleset constants, the 1880 command structure, and the prestige value path.",
+    nums: [223, 224, 225, 226],
   },
 ];
 
 // Records kept as historical provenance only: moved to docs/adr/archive/ and
-// listed in docs/adr/archive/README.md instead of the active index. Chosen per
-// area by live-reference count (the current wave and governance anchors are
-// protected), so the active index stays within each area's readable range while
-// every decision is still on disk and searchable.
-const ARCHIVED = new Set([
-  2, 4, 5, 6, 8, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 24, 27, 28, 30, 31, 33, 34, 35, 39, 40,
-  41, 42, 44, 45, 48, 49, 50, 51, 52, 53, 56, 58, 59, 63, 64, 68, 69, 72, 74, 76, 79, 80, 81, 82,
-  84, 87, 90, 96, 97, 99, 108, 110, 111, 112, 115, 116, 117, 118, 120, 124, 125, 126, 127, 129, 130,
-  131, 137, 138, 142,
-]);
+// listed in docs/adr/archive/README.md instead of the active index. The
+// re-baselined corpus archives nothing, so the set is empty.
+const ARCHIVED = new Set([]);
 
 const STATUS_OK = new Set(["accepted", "proposed", "deprecated", "superseded"]);
 const pad = (n) => String(n).padStart(4, "0");
@@ -173,7 +161,8 @@ function buildIndex() {
     "One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the",
     `highest existing number + 1 (the next number is ADR-${pad(max + 1)}).`,
     "Refresh this table from each file's H1 when one is added or re-titled.",
-    "(ADR-0043 was never written; the sequence intentionally continues at 0044.)",
+    "Records numbered below 0201 are unavailable and unverified legacy references;",
+    "see the [authority index](../../.ai/AUTHORITY-INDEX.md).",
     "See [DESIGN amendments](AMENDMENTS.md) for which ADRs amend which DESIGN doc.",
     "Work an ADR records as deferred is tracked in [DEFERRALS](../DEFERRALS.md).",
     "Older records kept as provenance are listed in [archive/README.md](archive/README.md).",

@@ -15,10 +15,12 @@ import {
   collectLostShips,
   recordResolvedBattle,
   resolveBattleManifest,
+  resolveCampaignBattleReadiness,
   resolveLegacyBattle,
   resolveShipStrength,
   toCampaignBattleResult,
 } from "./battles.js";
+import { applyRecordedBattleResult, consumeBattleResult } from "./interruption.js";
 import type { MonthContext } from "./monthContext.js";
 
 type AutoResolutionManifest = Parameters<typeof resolveBattleAuto>[0]["manifest"];
@@ -36,6 +38,8 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
   );
   if (!hadWars) return;
 
+  // S-1 D5: supply each ship's real battle readiness (its crew quality, 0..100)
+  // instead of the former hard-coded 80 (ADR-0223).
   const generationResult = generateBattles({
     snapshot: ctx.currentSnapshot,
     campaignMonth,
@@ -46,7 +50,7 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
     contentVersion: "0.1.0",
     resolveStrength: (shipId) => resolveShipStrength(ctx.currentSnapshot, shipId),
     resolveShipType: () => "BB",
-    resolveReadiness: () => 80,
+    resolveReadiness: (shipId) => resolveCampaignBattleReadiness(ctx.currentSnapshot, shipId),
   });
 
   if (generationResult.battleIds.length === 0) return;
@@ -130,6 +134,7 @@ export function runBattleResolutionPhase(ctx: MonthContext): void {
 
   for (const battle of battles) {
     resolveBattle(ctx, battle, resolver, randomEngine);
+    if (ctx.interruption?.suspended !== undefined) return;
   }
 }
 
@@ -160,6 +165,20 @@ function resolveBattle(
   randomEngine: RandomEngine,
 ): void {
   const { collector } = ctx;
+
+  // Additive interruption seam: when a channel is active a pending battle is a
+  // player-facing offer. A present, hash-valid recorded result is applied exactly
+  // once (never re-rolled); an absent one suspends the month. With no channel the
+  // pipeline auto-resolves exactly as before.
+  if (ctx.interruption !== undefined) {
+    const recorded = consumeBattleResult(ctx, battle);
+    if (ctx.interruption.suspended !== undefined) return;
+    if (recorded !== null) {
+      applyRecordedBattleResult(ctx, battle, recorded);
+      return;
+    }
+  }
+
   const attacker = ctx.currentSnapshot["nations"].get(battle["attackerId"]);
   const defender = ctx.currentSnapshot["nations"].get(battle["defenderId"]);
   if (!attacker || !defender) {

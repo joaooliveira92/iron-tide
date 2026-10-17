@@ -49,6 +49,7 @@ export const RUNTIME_FREE_ROOTS = [
   "packages/deterministic/src",
   "packages/diagnostics/src",
   "packages/events/src",
+  "packages/messages/src",
   "packages/phase-engine/src",
   "packages/random/src",
   "packages/ship-design/src",
@@ -214,7 +215,6 @@ export function scanRuntimeImports(repoRoot) {
   );
 }
 
-// ---- embedded self-test fixtures ------------------------------------------
 // Each fixture asserts the exact number of findings the checker must report.
 const FIXTURES = [
   {

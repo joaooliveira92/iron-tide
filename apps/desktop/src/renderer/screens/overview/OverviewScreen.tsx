@@ -1,4 +1,6 @@
 import { lazy, Suspense } from "react";
+import type { PlayerProjection } from "@bluewave/campaign-engine";
+import type { EntityReferenceDto } from "../../../shared/campaign-command-contract.js";
 import { Skeleton } from "../../components/ui/skeleton.js";
 import type { Screen } from "../../shell/campaign-screen-registry.js";
 import { DEBUG_MODE } from "../../shell/debug-flag.js";
@@ -11,7 +13,50 @@ import {
 } from "./components/index.js";
 import { nationHomeArea } from "../../content/presentationContent.js";
 import { monthLabel } from "./month-report-format.js";
+import { TurnSummaryPanel } from "./TurnSummaryPanel.js";
 import { useOverviewModel } from "./hooks/useOverviewModel.js";
+
+/** The screen an entity link opens (unavailable entities still open it read-only). */
+function screenForEntity(ref: EntityReferenceDto): Screen | null {
+  switch (ref.type) {
+    case "ship":
+    case "shipClass":
+    case "constructionProject":
+      return "construction";
+    case "technology":
+      return "research";
+    case "nation":
+    case "region":
+    case "formation":
+    case "battle":
+      return "diplomacy";
+    default:
+      return null;
+  }
+}
+
+/**
+ * Whether an entity link still resolves in the current campaign, from the
+ * projection the screen already loads. Only the entity kinds the projection
+ * enumerates are adjudicated; the rest default to available so their links
+ * behave as before (no fabricated availability, no new authoritative state).
+ */
+function entityAvailability(projection: PlayerProjection): (ref: EntityReferenceDto) => boolean {
+  return (ref) => {
+    switch (ref.type) {
+      case "technology":
+        return projection.knownTechnologyIds.includes(ref.id);
+      case "region":
+        return projection.strategicAreas.some((area) => area.id === ref.id);
+      case "nation":
+        return (
+          ref.id === projection.playerNationId || projection.knownEnemyNations.includes(ref.id)
+        );
+      default:
+        return true;
+    }
+  };
+}
 
 // The map (Canvas renderer + 2 MB coastline) is the heaviest thing on the home screen, so it loads
 // lazily and never delays the panels.
@@ -42,6 +87,11 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
     priorities,
     nationRail,
     monthReports,
+    turnSummaries,
+    turnSummariesLoading,
+    turnMessages,
+    togglePinned,
+    toggleRead,
     map,
     wide,
   } = useOverviewModel(sessionId);
@@ -70,6 +120,21 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
       reports={monthReports}
       areaName={areaName}
       defaultOpen={roomy && monthReports.length > 0}
+    />
+  );
+  const turnSummary = (
+    <TurnSummaryPanel
+      summaries={turnSummaries}
+      loading={turnSummariesLoading}
+      defaultOpen={roomy && turnSummaries.length > 0}
+      turnMessages={turnMessages}
+      onTogglePinned={togglePinned}
+      onToggleRead={toggleRead}
+      onOpenEntity={(ref) => {
+        const screen = screenForEntity(ref);
+        if (screen !== null && screen !== "overview") onNavigate(screen);
+      }}
+      isEntityAvailable={entityAvailability(projection)}
     />
   );
   const nationsPanel = (
@@ -105,6 +170,7 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
             leftPanels={
               <>
                 {prioritiesPanel}
+                {turnSummary}
                 {monthReport}
               </>
             }
@@ -130,6 +196,7 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
         </Suspense>
       </div>
       {prioritiesPanel}
+      {turnSummary}
       {monthReport}
       {nationsPanel}
     </div>

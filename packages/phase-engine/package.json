@@ -21,6 +21,7 @@
     "@bluewave/deterministic": "workspace:*",
     "@bluewave/diagnostics": "workspace:*",
     "@bluewave/events": "workspace:*",
+    "@bluewave/messages": "workspace:*",
     "@bluewave/persistence": "workspace:*",
     "@bluewave/random": "workspace:*",
     "@bluewave/ship-design": "workspace:*",

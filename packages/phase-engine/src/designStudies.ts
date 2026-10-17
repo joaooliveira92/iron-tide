@@ -5,7 +5,7 @@ import type {
   DesignStudy,
   NationState,
 } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import { SafeInt, bp, money } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import {
   assessSimilarity,
@@ -80,7 +80,11 @@ export function planDesignStudy(
     nationId,
     baselineDesignVersionId: derived && baseline ? baseline.designVersionId : "NONE",
     designFamilyId,
-    ...terms,
+    baseStudyWork: terms.baseStudyWork,
+    baseStudyCost: money(terms.baseStudyCost),
+    discountBp: bp(terms.discountBp),
+    finalStudyWork: terms.finalStudyWork,
+    finalStudyCost: money(terms.finalStudyCost),
     startMonth: month,
     rulesetVersion: snapshot["rulesetVersion"],
     formulaVersion: "design_study_v1" as const,
@@ -92,7 +96,7 @@ export function planDesignStudy(
     derived,
     failedCriteria: failed,
     workDone: 0,
-    costPaid: 0,
+    costPaid: money(0),
     status: "IN_PROGRESS",
     completionMonth: null,
     projectHash: sha256Hex(canonicalSerialize(identity)),
@@ -171,7 +175,7 @@ export function fundDesignStudies(ctx: MonthContext): void {
       const next: DesignStudy = {
         ...s,
         workDone: s.workDone + 1,
-        costPaid: s.costPaid + cost,
+        costPaid: money(s.costPaid + cost),
         ...(done ? { status: "COMPLETED" as const, completionMonth: campaignMonth } : {}),
       };
       nation = {

@@ -8,11 +8,13 @@ import { Context, Effect, Layer } from "effect";
 import type {
   DrawingBoardContentDto,
   PresentationContentDto,
+  UiCatalogueDto,
 } from "../../shared/content-contract.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { ContentArtifactError } from "../contentArtifact.js";
 import { resolveGeneratedContentDir } from "../contentPack.js";
 import { loadPresentationContent } from "../presentationContent.js";
+import { loadUiCatalogue } from "../uiCatalogue.js";
 import {
   armamentContentHash,
   loadShipBuildingContent,
@@ -64,6 +66,8 @@ export class ContentArtifact extends Context.Service<
     readonly armamentContentHash: () => Effect.Effect<string, CommandFailed>;
     /** Decodes the presentation corpus (fail-closed). */
     readonly loadPresentationContent: () => Effect.Effect<PresentationContentDto, CommandFailed>;
+    /** Decodes the UI-string catalogue (fail-closed). */
+    readonly loadUiCatalogue: () => Effect.Effect<UiCatalogueDto, CommandFailed>;
   }
 >()("bluewave/desktop/ContentArtifact") {}
 
@@ -105,5 +109,6 @@ export function contentArtifactLayer(
       Effect.try({ try: () => armamentContentHash(), catch: contentUnavailable }),
     loadPresentationContent: () =>
       Effect.try({ try: () => loadPresentationContent(), catch: contentUnavailable }),
+    loadUiCatalogue: () => Effect.try({ try: () => loadUiCatalogue(), catch: contentUnavailable }),
   });
 }

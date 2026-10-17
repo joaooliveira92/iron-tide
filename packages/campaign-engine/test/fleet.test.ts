@@ -26,6 +26,8 @@ function makeShip(id: string, name: string, overrides: Partial<Ship> = {}): Ship
     isUnderConstruction: false,
     constructionProgress: SafeInt(0),
     constructionTotalWork: SafeInt(0),
+    readiness: "ACTIVE",
+    crewQuality: SafeInt(100),
     ...overrides,
   };
 }
@@ -83,7 +85,7 @@ describe("buildFleetScreenView", () => {
     expect(home.ships.map((s) => s.name)).toEqual(["HMS Inflexible", "HMS Dreadnought"]);
   });
 
-  it("derives ship status from the real isUnderConstruction flag and keeps designVersionId verbatim", () => {
+  it("derives ship status from the readiness state and keeps designVersionId verbatim", () => {
     const snapshot = fixtureSnapshot([
       fixtureNation({
         id: "uk",
@@ -95,6 +97,8 @@ describe("buildFleetScreenView", () => {
               makeShip("gbr_inflexible", "HMS Inflexible", {
                 isUnderConstruction: true,
                 designVersionId: "des_inflexible",
+                readiness: "WORKING_UP",
+                crewQuality: SafeInt(0),
               }),
               makeShip("gbr_dreadnought", "HMS Dreadnought", {
                 isUnderConstruction: false,
@@ -109,8 +113,20 @@ describe("buildFleetScreenView", () => {
 
     const view = buildFleetScreenView(snapshot, "uk");
     expect(view.divisions[0]!.ships).toEqual([
-      { name: "HMS Inflexible", designId: "des_inflexible", status: "under_construction" },
-      { name: "HMS Dreadnought", designId: "", status: "commissioned" },
+      {
+        name: "HMS Inflexible",
+        designId: "des_inflexible",
+        status: "working_up",
+        readiness: "WORKING_UP",
+        crewQuality: 0,
+      },
+      {
+        name: "HMS Dreadnought",
+        designId: "",
+        status: "active",
+        readiness: "ACTIVE",
+        crewQuality: 100,
+      },
     ]);
   });
 

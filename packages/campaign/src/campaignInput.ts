@@ -29,4 +29,5 @@ export interface CampaignFileData {
   diplomacy: unknown[];
   research: unknown[];
   designs: unknown[];
+  divisions: unknown[];
 }

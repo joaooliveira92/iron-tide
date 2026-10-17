@@ -1,6 +1,4 @@
 /**
- * PROTOTYPE — throwaway. See ./README.md.
- *
  * The camera, built exactly the way ticket 13's research says to build it, so
  * that the prototype tests the claim rather than restating it:
  *

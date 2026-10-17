@@ -1,11 +1,26 @@
-import { act, cleanup, render, renderHook, screen } from "@testing-library/react";
+/* @vitest-environment jsdom */
+import { act, cleanup, render, renderHook, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
+import { BridgeProvider } from "../lib/bridge-context.js";
+import { PreferencesProvider } from "../lib/preferences-context.js";
 import {
-  DENSITY_STORAGE_KEY,
-  DensityProvider,
-  readStoredDensity,
-  useDensity,
-} from "./DensityContext.js";
+  createPreferencesBridgeStub,
+  type PreferencesBridgeStub,
+} from "../lib/preferences-test-bridge.js";
+import { DEFAULT_APP_PREFERENCES } from "../../shared/preferences-contract.js";
+import { DensityProvider, useDensity } from "./DensityContext.js";
+
+function wrapperFor(stub: PreferencesBridgeStub) {
+  return function Wrapper({ children }: { readonly children: React.ReactNode }) {
+    return (
+      <BridgeProvider bridge={stub.bridge}>
+        <PreferencesProvider>
+          <DensityProvider>{children}</DensityProvider>
+        </PreferencesProvider>
+      </BridgeProvider>
+    );
+  };
+}
 
 describe("density", () => {
   beforeEach(() => {
@@ -14,36 +29,48 @@ describe("density", () => {
   });
   afterEach(cleanup);
 
-  it("defaults to comfortable and reads only recognised stored values", () => {
-    expect(readStoredDensity()).toBe("comfortable");
-    localStorage.setItem(DENSITY_STORAGE_KEY, "compact");
-    expect(readStoredDensity()).toBe("compact");
-    localStorage.setItem(DENSITY_STORAGE_KEY, "gigantic");
-    expect(readStoredDensity()).toBe("comfortable");
-  });
-
-  it("sets the html attribute immediately, and updates it and storage when changed", () => {
-    const { result } = renderHook(() => useDensity(), { wrapper: DensityProvider });
+  it("defaults to comfortable and reads it from the preferences domain", async () => {
+    const stub = createPreferencesBridgeStub();
+    const { result } = renderHook(() => useDensity(), { wrapper: wrapperFor(stub) });
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
     expect(result.current.density).toBe("comfortable");
     expect(document.documentElement.dataset["density"]).toBe("comfortable");
-
-    act(() => result.current.setDensity("compact"));
-    expect(result.current.density).toBe("compact");
-    expect(document.documentElement.dataset["density"]).toBe("compact");
-    expect(localStorage.getItem(DENSITY_STORAGE_KEY)).toBe("compact");
   });
 
-  it("restores the stored choice on the next start", () => {
-    localStorage.setItem(DENSITY_STORAGE_KEY, "compact");
+  it("sets the html attribute immediately, and writes the domain when changed", async () => {
+    const stub = createPreferencesBridgeStub();
+    const { result } = renderHook(() => useDensity(), { wrapper: wrapperFor(stub) });
+    await waitFor(() => expect(result.current.density).toBe("comfortable"));
+
+    act(() => result.current.setDensity("compact"));
+    await waitFor(() => expect(result.current.density).toBe("compact"));
+    expect(document.documentElement.dataset["density"]).toBe("compact");
+
+    await waitFor(() => expect(stub.writes).toHaveLength(1));
+    expect(stub.writes[0]?.app.interfaceDensity).toBe("compact");
+    expect(stub.current().app.interfaceDensity).toBe("compact");
+    // The legacy localStorage key is no longer written.
+    expect(localStorage.getItem("bluewave-density")).toBeNull();
+  });
+
+  it("restores a stored domain choice on the next start", async () => {
+    const stub = createPreferencesBridgeStub({
+      ...DEFAULT_APP_PREFERENCES,
+      interfaceDensity: "compact",
+    });
     function Probe() {
       return <span>{useDensity().density}</span>;
     }
     render(
-      <DensityProvider>
-        <Probe />
-      </DensityProvider>,
+      <BridgeProvider bridge={stub.bridge}>
+        <PreferencesProvider>
+          <DensityProvider>
+            <Probe />
+          </DensityProvider>
+        </PreferencesProvider>
+      </BridgeProvider>,
     );
-    expect(screen.getByText("compact")).toBeTruthy();
+    expect(await screen.findByText("compact")).toBeTruthy();
     expect(document.documentElement.dataset["density"]).toBe("compact");
   });
 

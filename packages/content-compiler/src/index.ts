@@ -1,4 +1,9 @@
-import type { CompiledPartModel, ContentPack, PresentationContent } from "@bluewave/content-schema";
+import type {
+  CompiledPartModel,
+  ContentPack,
+  PresentationContent,
+  UiCatalogue,
+} from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
 export interface CompilerInput {
@@ -70,6 +75,8 @@ export interface CompilerInput {
   diplomacyFiles?: string[];
   researchFiles?: string[];
   designFiles?: string[];
+  /** Authored initial divisions (N-1 ticket 07). Optional like the other campaign groups. */
+  divisionFiles?: string[];
   /**
    * Presentation content (the nation-facing corpus: coordinates, flavor,
    * dossier, slot mapping, area→region grouping and the campaign-map join).
@@ -79,6 +86,12 @@ export interface CompilerInput {
    * (CAH-PRES-1, CAH-PRES-2).
    */
   presentationFiles?: string[];
+  /**
+   * UI-string catalogue files (the keyed en-US presentation strings, CAH-UI-1).
+   * Optional like the other full-surface groups; a content-pack-only build leaves
+   * it undefined and the artifact stays byte-compatible.
+   */
+  uiFiles?: string[];
 }
 
 /**
@@ -118,6 +131,8 @@ export interface CampaignCollections {
   diplomacy: unknown[];
   research: unknown[];
   designs: unknown[];
+  /** Authored initial divisions; absent for a pack that declares none (N-1 ticket 07). */
+  divisions?: unknown[];
 }
 
 /**
@@ -139,6 +154,7 @@ export interface ContentBundle {
   shipBuilding?: ShipBuildingCatalogue;
   campaign?: CampaignCollections;
   presentation?: PresentationContent;
+  ui?: UiCatalogue;
 }
 
 export interface CompilerOutput {

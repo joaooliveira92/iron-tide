@@ -1,5 +1,9 @@
 import type { PlayerProjection } from "@bluewave/campaign-engine";
-import type { MonthlyReportEntry } from "../../../../shared/campaign-command-contract.js";
+import type {
+  MonthlyReportEntry,
+  TurnSummaryEntry,
+  UiStateTurnMessages,
+} from "../../../../shared/campaign-command-contract.js";
 import type { WorldMapController } from "../../../components/world-map/useWorldMapController.js";
 import { useWorldMapController } from "../../../components/world-map/useWorldMapController.js";
 import { humanizeId } from "../../../lib/humanize-id.js";
@@ -7,6 +11,8 @@ import { useCampaignProjection } from "../../../lib/use-campaign-projection.js";
 import { useMinWidth } from "../../../lib/use-min-width.js";
 import { useDensity } from "../../../shell/DensityContext.js";
 import { useMonthlyReports } from "../useMonthlyReports.js";
+import { useTurnMessageState } from "../useTurnMessageState.js";
+import { useTurnSummaries } from "../useTurnSummaries.js";
 import { useNationRail, type NationRailLoad } from "../useNationRail.js";
 import { usePriorities, type PrioritiesState } from "../usePriorities.js";
 
@@ -28,6 +34,12 @@ export interface OverviewModel {
   readonly nationRail: NationRailLoad;
   /** The stored Monthly Naval Estimates reports for this campaign, newest first. */
   readonly monthReports: readonly MonthlyReportEntry[];
+  /** The projected turn summaries for this campaign, newest first. */
+  readonly turnSummaries: readonly TurnSummaryEntry[];
+  readonly turnSummariesLoading: boolean;
+  readonly turnMessages: UiStateTurnMessages;
+  readonly togglePinned: (id: string) => void;
+  readonly toggleRead: (id: string) => void;
   readonly map: WorldMapController;
   /** True when the viewport is wide enough for panels to float over the map (CC-9). */
   readonly wide: boolean;
@@ -44,6 +56,8 @@ export function useOverviewModel(sessionId: string): OverviewModel {
   const priorities = usePriorities(sessionId);
   const nationRail = useNationRail(sessionId);
   const monthReports = useMonthlyReports(sessionId);
+  const turnSummaries = useTurnSummaries(sessionId);
+  const turnMessageState = useTurnMessageState(sessionId);
   const map = useWorldMapController(sessionId);
   const { density } = useDensity();
   const wide = useMinWidth(COMMAND_OVERLAY_MIN_WIDTH);
@@ -63,6 +77,11 @@ export function useOverviewModel(sessionId: string): OverviewModel {
     priorities,
     nationRail,
     monthReports: monthReports.reports,
+    turnSummaries: turnSummaries.summaries,
+    turnSummariesLoading: turnSummaries.loading,
+    turnMessages: turnMessageState.turnMessages,
+    togglePinned: turnMessageState.togglePinned,
+    toggleRead: turnMessageState.toggleRead,
     map,
     wide,
   };

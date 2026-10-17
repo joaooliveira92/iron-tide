@@ -301,8 +301,6 @@ export function resolveDamage(
   return { newState, events };
 }
 
-// ---- Internal helpers ----
-
 /**
  * Build component state array from ShipDamageState for the pipeline.
  * Each component gets a default state with locationId derived from its id

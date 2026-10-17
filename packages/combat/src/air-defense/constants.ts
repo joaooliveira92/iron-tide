@@ -190,14 +190,12 @@ export const BASE_DEFENSE_VALUES = {
   },
 } as const;
 
-// ---- Layer definitions ----
 // Valid defense layer identifiers per DESIGN-45
 export const LAYER_IDS = ["HEAVY_AA", "MEDIUM_AA", "LIGHT_AA", "CIWS_TERMINAL_DEFENSE"] as const;
 
 // Category identifiers
 export const CATEGORY_IDS = [...LAYER_IDS] as const;
 
-// ---- Model versioning ----
 // Content version / hash for air-defense definitions
 export const AIR_DEFENSE_MODEL_VERSION = "air_defense_v1" as const;
 
@@ -222,12 +220,10 @@ export const FULL_DEFENSE_LAYER_ORDER = [
 // 10_000^8), floor once). Contracted by air_defense_v1.
 export const AIR_DEFENSE_FORMULA_VERSION = "air_defense_formula_v1" as const;
 
-// ---- Basis points ----
 // The universal basis-point scale of the air-defense ruleset (§19 multipliers, §6 severity
 // values, §12/§14/§16 tables). Contracted by air_defense_v1.
 export const AIR_DEFENSE_BASIS_POINTS = 10_000 as const;
 
-// ---- Engagement resolution formula constants ----
 // effectiveDefenseBp = floor(baseDefenseBp * director * radar * crew * damage * ammunition * targetProfile * weather * saturation / 10_000^8)
 // 10_000^8 = 10^32
 export const FORMULA_DENOMINATOR = 10_000 as const;
@@ -247,7 +243,6 @@ export const FORMULA_EXPONENT = 8 as const;
 // integer).
 export const MAX_ENGAGEMENT_FACTOR_BP = 31_000 as const;
 
-// ---- Crew quality constants ----
 export const CREW_QUALITY_MIN = 0 as const;
 export const CREW_QUALITY_MAX = 10_000 as const;
 
@@ -276,7 +271,6 @@ export const DESTROYED_MULTIPLIER_BP = 0 as const;
 // localControlSupported = true; otherwise the neutral 10_000 applies.
 export const LOCAL_CONTROL_MULTIPLIER_BP = 5_000 as const;
 
-// ---- State hash ----
 // SHA-256 hex output length
 export const STATE_HASH_LENGTH = 64 as const;
 

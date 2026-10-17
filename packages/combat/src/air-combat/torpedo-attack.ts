@@ -17,8 +17,6 @@ import {
 import { AIR_COMBAT_TORPEDO_ATTACK_INELIGIBLE } from "./reasonCodes.js";
 import type { GunneryImpact } from "../damage/engineWiring.js";
 
-// ---- AirTorpedoAttackInput ----
-
 export interface AirTorpedoAttackInput {
   attackerSquadronId: string;
   targetShipId: string;
@@ -29,15 +27,11 @@ export interface AirTorpedoAttackInput {
   targetSizeBp: SafeInt; // target size factor (10_000 = battleship, 5_000 = destroyer)
 }
 
-// ---- AirTorpedoAttackResult ----
-
 export interface AirTorpedoAttackResult {
   hit: boolean;
   hitProbabilityBp: SafeInt;
   damagePackage: GunneryImpact | null; // null if miss
 }
-
-// ---- resolveAirTorpedoAttack ----
 
 /**
  * Resolves an air-launched torpedo attack against a surface target.
@@ -56,8 +50,6 @@ export function resolveAirTorpedoAttack(
   input: AirTorpedoAttackInput,
   rngEngine: RandomEngine,
 ): AirTorpedoAttackResult {
-  // ---- Validate eligibility ----
-
   const dropSpeedMps = Number(input.dropSpeedMps);
   const dropAltitudeM = Number(input.dropAltitudeM);
   const distanceM = Number(input.distanceToTargetM);
@@ -102,7 +94,6 @@ export function resolveAirTorpedoAttack(
     });
   }
 
-  // ---- Compute hit probability ----
   //
   // hitProbabilityBp = baseHitBp * airLaunchBonus / 10_000 * targetSizeBp / 10_000 * 10_000 / max(1, targetSpeedBp)
   //
@@ -129,13 +120,11 @@ export function resolveAirTorpedoAttack(
   const rawHitProb = Number(step3);
   const clampedHitProb = SafeInt(Math.max(1_000, Math.min(AIR_COMBAT_BASIS_POINTS, rawHitProb)));
 
-  // ---- RNG draw ----
   const stream = rngEngine.stream("air-combat/torpedo-attack");
   const draw = drawUniform(stream, SafeInt.ZERO, SafeInt(AIR_COMBAT_BASIS_POINTS - 1));
 
   const isHit = Number(draw) < Number(clampedHitProb);
 
-  // ---- Damage package on hit ----
   let damagePackage: GunneryImpact | null = null;
 
   if (isHit) {

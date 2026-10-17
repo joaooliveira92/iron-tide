@@ -16,11 +16,7 @@ import {
   DEWATERING_RATE_KG_MIN,
 } from "./floodingConstants.js";
 
-// ---- Severity enum ----
-
 export type FloodingSeverity = "MINOR" | "SERIOUS" | "MAJOR" | "CRITICAL";
-
-// ---- kg -> bp-of-displacement conversion (DESIGN-41 §14/§48 v12; ADR-0047 d4) ----
 
 /**
  * Convert accumulated flooded-water MASS (integer kilograms — the
@@ -62,8 +58,6 @@ export function floodedWaterBpFromKg(floodedWaterKg: number, designDisplacementK
   }
   return Math.floor((floodedWaterKg * 10_000) / designDisplacementKg);
 }
-
-// ---- Severity from flooded-water mass proportion (DESIGN-41 §14) ----
 
 /**
  * Get flooding severity from flooded-water mass proportion (bp of displacement).

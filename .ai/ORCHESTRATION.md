@@ -82,6 +82,13 @@ the sprint's validation report (`.ai/reports/<slug>.md`):
 - any authoritative hash changes get old/new + cause + migration assessment
   (ADR-0007 process). A build alone is not acceptance (ENGINEERING-CONTRACT §Tests).
 
+## Concurrent worktrees
+
+Run each effort in its own worktree (`.worktrees/<slug>`, ADR-0220) so several
+orchestrators progress in parallel without sharing a checkout. Track the live set
+in `.ai/WORKTREES.md` via `pnpm worktrees` (`new`/`list`/`sync`/`prune`);
+`pnpm preflight` warns on stale or unregistered subtrees.
+
 ## Orchestrator responsibilities
 
 - Pick the sprint from `.ai/SPRINT-PLAN.md`; optionally override with
@@ -91,7 +98,7 @@ the sprint's validation report (`.ai/reports/<slug>.md`):
 - Own all Git: small Conventional Commits on a short-lived branch (never
   directly on `dev`), delivered by a checks-green pull request; no self-merge of
   a release PR into `main`; leave the tree clean (ADR-0165).
-- Update traceability (SPRINT-PLAN row done + pointer, PROGRESS.md, reports).
+- Update traceability (SPRINT-PLAN row done + pointer, `.ai/reports/*`).
 - Resolve routine decisions as ADRs; stop only on a genuine decision-request /
   stop condition.
 - Keep the roles tiny and focused so no single subagent accumulates the whole

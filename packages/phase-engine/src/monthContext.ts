@@ -12,9 +12,11 @@ import type {
 import type { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { EventLedger } from "@bluewave/events";
+import type { SuspendedTurn } from "@bluewave/messages";
 import type { RandomLedger } from "@bluewave/random";
 import type { ShipBuildingContent } from "@bluewave/ship-design";
 import type { FinancialLedger } from "./financial-ledger.js";
+import type { InterruptionChannel, InterruptionState } from "./interruption.js";
 import type { PhaseGuard } from "./phase-guard.js";
 import type { PhaseDefinition } from "./registry.js";
 
@@ -25,6 +27,14 @@ export interface MonthResult {
   randomLedger: RandomLedger;
   financialLedger: FinancialLedger;
   success: boolean;
+  /**
+   * Additive outcome. `"completed"` for an uninterrupted month (identical to
+   * today); `"suspended"` when the month paused for an interruption. Never
+   * repurposes `success` (R-21): a suspended month still reports `success: true`.
+   */
+  outcome?: "completed" | "suspended";
+  /** The pause point when `outcome` is `"suspended"`. */
+  suspended?: SuspendedTurn;
 }
 
 /**
@@ -50,6 +60,12 @@ export interface MonthExecutorEngineOptions {
   readonly phaseOverrides?: ReadonlyMap<string, PhaseDefinition>;
   /** Ship-building content used to compile `SubmitDesign` commands (ADR-0066). Without it such commands are skipped with a diagnostic. */
   readonly shipBuilding?: ShipBuildingContent;
+  /**
+   * Optional interruption channel. When present the month may suspend for a
+   * mandatory decision or a battle; when absent the pipeline is byte-identical to
+   * today. Not a `PhaseResource` — the phase registry/footprints are untouched.
+   */
+  readonly interruptions?: InterruptionChannel;
 }
 
 /**
@@ -79,5 +95,7 @@ export interface MonthContext {
   readonly collector: DiagnosticCollector;
   readonly options?: StrategicWeatherPhaseOptions;
   readonly engineOptions?: MonthExecutorEngineOptions;
+  /** Mutable interruption state; present only when a channel was supplied. */
+  readonly interruption?: InterruptionState;
   readonly nextSeq: () => SafeInt;
 }

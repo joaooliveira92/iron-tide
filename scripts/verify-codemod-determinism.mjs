@@ -8,14 +8,23 @@ import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const pkg = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "packages",
-  "content-codemod",
-);
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const pkg = path.resolve(root, "packages", "content-codemod");
 
 const FILES = ["test/determinism.test.ts", "test/publish.test.ts"];
+
+// This gate runs content-codemod's tests, which import workspace packages whose
+// published entry is their built `dist/` (e.g. `@bluewave/ship-design`,
+// `@bluewave/content-schema`). In a fresh checkout the workspace is not yet
+// built, and the preflight gates run in parallel, so without this the gate
+// intermittently loses the race and dies with "Failed to resolve entry for
+// package ...". Build this package's dependency closure first so the gate is
+// self-contained regardless of scheduling.
+execFileSync("pnpm", ["--filter", "@bluewave/content-codemod...", "build"], {
+  cwd: root,
+  stdio: "inherit",
+  shell: process.platform === "win32",
+});
 
 function migrateOnce() {
   const out = execFileSync("pnpm", ["exec", "vp", "test", "run", "--reporter=verbose", ...FILES], {

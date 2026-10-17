@@ -5,7 +5,9 @@ import type { ContentPack } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { toSafeIntOpt, toStr } from "./campaignInput.js";
+import { buildSeededDivisions } from "./divisions.js";
 import { buildOfficerRoster } from "./officers.js";
+import { resolveShipReadinessSeed } from "./readiness.js";
 import type {
   CampaignSlot,
   ConstructionProject,
@@ -33,34 +35,50 @@ function isNationPlayable(
   return flag;
 }
 
-function buildShips(fleet: Record<string, unknown>): Ship[] {
+function buildShips(fleet: Record<string, unknown>, collector: DiagnosticCollector): Ship[] {
   const shipsRaw = fleet["ships"];
   if (!Array.isArray(shipsRaw)) return [];
   const nationId = toStr(fleet["nationId"], "");
   const locationAreaId = toStr(fleet["locationAreaId"], "");
 
-  return shipsRaw
-    .map((s: Record<string, unknown>) => ({
-      id: toStr(s["id"], ""),
-      name: toStr(s["name"], ""),
-      classId: toStr(s["classId"], ""),
+  const ships: Ship[] = [];
+  for (const s of shipsRaw) {
+    const record = s as Record<string, unknown>;
+    const id = toStr(record["id"], "");
+    const seed = resolveShipReadinessSeed(record, id);
+    if (!seed.ok) {
+      collector.add(seed.error.toDiagnostic());
+      continue;
+    }
+    ships.push({
+      id,
+      name: toStr(record["name"], ""),
+      classId: toStr(record["classId"], ""),
       nationId,
       locationAreaId,
-      designVersionId: toStr(s["designVersionId"], ""),
-      hitPoints: toSafeIntOpt(s["hitPoints"], SafeInt(100)),
-      maxHitPoints: toSafeIntOpt(s["maxHitPoints"], SafeInt(100)),
-      speed: toSafeIntOpt(s["speed"], SafeInt(10)),
-      firepower: toSafeIntOpt(s["firepower"], SafeInt(10)),
-      armor: toSafeIntOpt(s["armor"], SafeInt(10)),
-      isUnderConstruction: s["isUnderConstruction"] === true,
-      constructionProgress: toSafeIntOpt(s["constructionProgress"], SafeInt(0)),
-      constructionTotalWork: toSafeIntOpt(s["constructionTotalWork"], SafeInt(0)),
-      inBattleId: typeof s["inBattleId"] === "string" ? s["inBattleId"] : undefined,
-    }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+      designVersionId: toStr(record["designVersionId"], ""),
+      hitPoints: toSafeIntOpt(record["hitPoints"], SafeInt(100)),
+      maxHitPoints: toSafeIntOpt(record["maxHitPoints"], SafeInt(100)),
+      speed: toSafeIntOpt(record["speed"], SafeInt(10)),
+      firepower: toSafeIntOpt(record["firepower"], SafeInt(10)),
+      armor: toSafeIntOpt(record["armor"], SafeInt(10)),
+      isUnderConstruction: record["isUnderConstruction"] === true,
+      constructionProgress: toSafeIntOpt(record["constructionProgress"], SafeInt(0)),
+      constructionTotalWork: toSafeIntOpt(record["constructionTotalWork"], SafeInt(0)),
+      readiness: seed.value.readiness,
+      crewQuality: seed.value.crewQuality,
+      repairMonthsRemaining: seed.value.repairMonthsRemaining,
+      inBattleId: typeof record["inBattleId"] === "string" ? record["inBattleId"] : undefined,
+    });
+  }
+  return ships.sort((a, b) => a.id.localeCompare(b.id));
 }
 
-function buildFleets(fleetsData: unknown[], nationId: string): FleetState[] {
+function buildFleets(
+  fleetsData: unknown[],
+  nationId: string,
+  collector: DiagnosticCollector,
+): FleetState[] {
   return fleetsData
     .filter((f) => (f as Record<string, unknown>)["nationId"] === nationId)
     .map((f) => {
@@ -70,7 +88,7 @@ function buildFleets(fleetsData: unknown[], nationId: string): FleetState[] {
         nationId: toStr(fRec["nationId"], ""),
         name: toStr(fRec["name"], ""),
         locationAreaId: toStr(fRec["locationAreaId"], ""),
-        ships: buildShips(fRec),
+        ships: buildShips(fRec, collector),
       };
     })
     .sort((a, b) => a.id.localeCompare(b.id));
@@ -171,6 +189,9 @@ export function buildNationStates(
   economiesData: unknown[],
   constructionsData: unknown[],
   researchData: unknown[],
+  divisionsData: unknown[],
+  rulesetVersion: string,
+  creationMonth: string,
   collector: DiagnosticCollector,
 ): Map<string, NationState> | undefined {
   const nations = new Map<string, NationState>();
@@ -188,9 +209,15 @@ export function buildNationStates(
 
     const isPlayable = isNationPlayable(id, countryRec, collector);
 
-    const fleets = buildFleets(fleetsData, id);
+    const fleets = buildFleets(fleetsData, id, collector);
     const research = buildResearch(researchData, id);
     const constructions = buildConstructions(constructionsData, id);
+    const officers = buildOfficerRoster(id);
+    const divisions = buildSeededDivisions(
+      divisionsData.filter((d) => (d as Record<string, unknown>)["nationId"] === id),
+      { nationId: id, fleets, officers, rulesetVersion, creationMonth },
+      collector,
+    );
 
     let treasury = SafeInt(500);
     let income = SafeInt(100);
@@ -216,8 +243,8 @@ export function buildNationStates(
       navalAppropriationRateBp: SafeInt(2000),
       maintenanceCost: SafeInt(0),
       fleets,
-      divisions: [],
-      officers: buildOfficerRoster(id),
+      divisions,
+      officers,
       research,
       constructionProjects: constructions,
       isPlayable,

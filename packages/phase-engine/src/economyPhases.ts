@@ -1,6 +1,10 @@
 // Economy phases: monthly_revenue, appropriation, maintenance, obligation.
-import type { CampaignSnapshot, ConstructionProject, NationState, Ship } from "@bluewave/campaign";
-import { transitionConstructionProject } from "@bluewave/campaign";
+import type { CampaignSnapshot, ConstructionProject, NationState } from "@bluewave/campaign";
+import {
+  nationIsAtWar,
+  shipMonthlyMaintenanceCost,
+  transitionConstructionProject,
+} from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import {
   FOREIGN_PAYMENT_DEFAULT_DELAYED,
@@ -21,9 +25,37 @@ import { resolvePrivateDockExpansion } from "./dockExpansion.js";
 import { runForeignContractPhase } from "./foreignContractPhase.js";
 import { budgetChangedEvent, constructionDelayedEvent, makeLedgerEntry } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
+import { applyReadinessEvolution } from "./readinessEvolution.js";
 
-function computeMaintenanceCost(ship: Ship): SafeInt {
-  return SafeInt.div(SafeInt.mul(ship["hitPoints"], SafeInt(10)), SafeInt(100), "floor");
+/**
+ * Largest-remainder (Hamilton) apportionment of `total` across integer `weights`, deterministic and exact: the parts
+ * sum to `total` — the single rounding point — with the remainder assigned to the largest fractional parts (ties broken
+ * by index). Integer/bigint only, so no float reaches the funding split (map D4/D5).
+ */
+export function splitLargestRemainder(total: number, weights: readonly number[]): number[] {
+  const weightSum = weights.reduce((sum, weight) => sum + weight, 0);
+  if (weightSum <= 0) return weights.map(() => 0);
+  const totalBig = BigInt(total);
+  const weightSumBig = BigInt(weightSum);
+  const base: number[] = [];
+  const remainders: { index: number; remainder: bigint }[] = [];
+  let assigned = 0n;
+  for (let index = 0; index < weights.length; index += 1) {
+    const numerator = totalBig * BigInt(weights[index]!);
+    const quotient = numerator / weightSumBig;
+    base.push(Number(quotient));
+    remainders.push({ index, remainder: numerator % weightSumBig });
+    assigned += quotient;
+  }
+  const leftover = Number(totalBig - assigned);
+  remainders.sort((a, b) =>
+    b.remainder === a.remainder ? a.index - b.index : b.remainder > a.remainder ? 1 : -1,
+  );
+  for (let i = 0; i < leftover; i += 1) {
+    const index = remainders[i]!.index;
+    base[index] = base[index]! + 1;
+  }
+  return base;
 }
 
 function computeConstructionCap(nation: NationState): SafeInt {
@@ -251,12 +283,17 @@ export function runAppropriationPhase(ctx: MonthContext): void {
         let remainingCap = constructionCap;
         updatedProjects = [...updatedProjects];
 
-        for (const project of fundable) {
+        const remainingWorks = fundable.map((p) =>
+          Number(SafeInt.sub(p["totalWork"], p["completedWork"])),
+        );
+        const allocations = splitLargestRemainder(available as number, remainingWorks);
+
+        for (let fi = 0; fi < fundable.length; fi += 1) {
+          const project = fundable[fi]!;
           if ((remainingCap as number) <= 0) break;
 
           const remainingWork = SafeInt.sub(project["totalWork"], project["completedWork"]);
-          const proportion = (remainingWork as number) / (totalRemainingWork as number);
-          const alloc = SafeInt(Math.floor(proportion * (available as number)));
+          const alloc = SafeInt(allocations[fi]!);
           const cappedAlloc =
             (remainingCap as number) > 0 && alloc > remainingCap ? remainingCap : alloc;
           const clampedAlloc = cappedAlloc > remainingWork ? remainingWork : cappedAlloc;
@@ -483,10 +520,18 @@ export function runMaintenancePhase(ctx: MonthContext): void {
   for (const [nationId, nation] of ctx.currentSnapshot["nations"]) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
 
+    // S-1 D6: while the nation is at war, active-status maintenance rises by one
+    // ruleset multiplier (manual p.52). The war state is the existing snapshot
+    // `wars` collection — a declared read of the maintenance phase.
+    const atWar = nationIsAtWar(ctx.currentSnapshot["wars"]["wars"], nationId);
+
     let totalMaintenance = SafeInt.ZERO;
     for (const fleet of nation["fleets"]) {
       for (const ship of fleet["ships"]) {
-        totalMaintenance = SafeInt.add(totalMaintenance, computeMaintenanceCost(ship));
+        totalMaintenance = SafeInt.add(
+          totalMaintenance,
+          shipMonthlyMaintenanceCost(ship["hitPoints"], ship["readiness"], atWar),
+        );
       }
     }
 
@@ -531,6 +576,11 @@ export function runMaintenancePhase(ctx: MonthContext): void {
       ),
     );
   }
+
+  // S-1: after charging by readiness, advance each ship's readiness/crew one
+  // month (the crew-quality ramp, manual p.51). This writes the fleets resource
+  // the maintenance phase's footprint declares; it consumes no randomness.
+  applyReadinessEvolution(ctx);
 }
 
 export function runObligationPhase(ctx: MonthContext): void {

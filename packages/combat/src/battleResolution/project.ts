@@ -199,7 +199,6 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
   // `directionBp` convention (0 = +X east, 180 = -X west), so ATTACKER 0 / DEFENDER 180
   // closing headings come straight from `computeInitialMovementStates`.
 
-  // ---- divisions -----------------------------------------------------------
   const divisions: TacticalDivision[] = [];
   const projectDivision = (
     div: PermanentDivision,
@@ -305,7 +304,6 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
     });
   }
 
-  // ---- per-ship damage contexts --------------------------------------------
   const targets: Record<string, DamageTargetContext> = {};
   for (const u of units) {
     const design = unitDesigns[u.assetId]!;

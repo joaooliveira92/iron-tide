@@ -28,14 +28,18 @@ export type {
   CampaignConstruction,
   CampaignDesign,
   CampaignDiplomacy,
+  CampaignDivision,
   CampaignEconomy,
   CampaignFleet,
   CampaignResearch,
 } from "./campaign.js";
 export {
+  CAMPAIGN_DIVISION_FORMATIONS,
+  CAMPAIGN_DIVISION_ROLES,
   CampaignConstructionSchema,
   CampaignDesignSchema,
   CampaignDiplomacySchema,
+  CampaignDivisionSchema,
   CampaignEconomySchema,
   CampaignFleetSchema,
   CampaignResearchSchema,
@@ -137,6 +141,7 @@ export {
   RegionGroupingSchema,
   RegionSchema,
 } from "./presentation.js";
+export { UiCatalogueSchema, type UiCatalogue } from "./ui-catalogue.js";
 export type { Possession } from "./possession.js";
 export { PossessionSchema } from "./possession.js";
 export type { ResearchFieldId } from "./research-fields.js";
@@ -351,3 +356,18 @@ export {
   visualTraitViolations,
   wholeInchesOf,
 } from "./visual-traits.js";
+
+export {
+  isValidNationalCurrencyConfiguration,
+  NationalCurrencyConfigurationSchema,
+  NationalCurrencyPeriodSchema,
+  NationalCurrencyScaleSchema,
+  validateNationalCurrencyConfiguration,
+} from "./national-currency.js";
+export type {
+  NationalCurrencyConfiguration,
+  NationalCurrencyDiagnostic,
+  NationalCurrencyDiagnosticReason,
+  NationalCurrencyPeriod,
+  NationalCurrencyScale,
+} from "./national-currency.js";

@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
+import { bp, money } from "@bluewave/contracts";
 import type { ForeignConstructionPreview } from "@bluewave/phase-engine";
 import { axeViolations } from "../../../lib/axe.js";
 import { ForeignContractPanel } from "./ForeignContractPanel.js";
@@ -31,10 +32,10 @@ const preview: ForeignConstructionPreview = {
   contract: {
     quantity: 2,
     totalWorkPerUnit: 119,
-    totalPriceUnits: 238,
+    totalPriceUnits: money(238),
     paymentSchedule: [
-      { dueMonth: "1880-01", amountUnits: 119, workShareBp: 5_000 },
-      { dueMonth: "1880-02", amountUnits: 119, workShareBp: 5_000 },
+      { dueMonth: "1880-01", amountUnits: money(119), workShareBp: bp(5_000) },
+      { dueMonth: "1880-02", amountUnits: money(119), workShareBp: bp(5_000) },
     ],
     capacityReservationSchedule: [
       { month: "1880-01", reservedMassKg: 23_760_000, pool: "NEW_CONSTRUCTION" },

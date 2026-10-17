@@ -1,4 +1,3 @@
-﻿//packages/combat/test/fixtures/unit-fixture.ts
 import type { CompiledDesignVersion, NationState, Ship } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 
@@ -42,6 +41,8 @@ export function makeShip(
     isUnderConstruction: false,
     constructionProgress: SafeInt(0),
     constructionTotalWork: SafeInt(0),
+    readiness: "ACTIVE",
+    crewQuality: SafeInt(100),
     inBattleId: undefined,
     ...overrides,
   };

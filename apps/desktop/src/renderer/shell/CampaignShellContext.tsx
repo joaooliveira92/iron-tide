@@ -1,5 +1,6 @@
 import { createContext, type ReactNode, use, useMemo } from "react";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
+import type { ActiveCampaignCurrencyContext } from "../lib/presentation-format/index.js";
 import type { useCampaignShell } from "./useCampaignShell.js";
 import { useCampaignShell as useCampaignShellState } from "./useCampaignShell.js";
 
@@ -15,6 +16,7 @@ export interface CampaignShellContextValue {
     | "saveMessage"
     | "primaryAction"
     | "committing"
+    | "interruption"
     | "mode"
     | "screen"
     | "canGoBack"
@@ -27,6 +29,9 @@ export interface CampaignShellContextValue {
     | "saveCampaign"
     | "copyCampaign"
     | "advanceMonth"
+    | "answerDecision"
+    | "submitBattleResult"
+    | "abandonPendingTurn"
     | "refreshCampaign"
     | "selectScreen"
     | "setPrimaryAction"
@@ -58,6 +63,7 @@ export function CampaignShellProvider({
         saveMessage: shell.saveMessage,
         primaryAction: shell.primaryAction,
         committing: shell.committing,
+        interruption: shell.interruption,
         mode: shell.mode,
         screen: shell.screen,
         canGoBack: shell.canGoBack,
@@ -69,6 +75,9 @@ export function CampaignShellProvider({
         saveCampaign: shell.saveCampaign,
         copyCampaign: shell.copyCampaign,
         advanceMonth: shell.advanceMonth,
+        answerDecision: shell.answerDecision,
+        submitBattleResult: shell.submitBattleResult,
+        abandonPendingTurn: shell.abandonPendingTurn,
         refreshCampaign: shell.refreshCampaign,
         selectScreen: shell.selectScreen,
         setPrimaryAction: shell.setPrimaryAction,
@@ -110,4 +119,19 @@ export function useCampaignMonthId(): string | null {
   const context = use(CampaignShellContext);
   const month = context?.state.campaign?.month;
   return month ? `${month.year}-${String(month.month).padStart(2, "0")}` : null;
+}
+
+/**
+ * The active campaign's nation and year for presentation resolution (e.g.
+ * currency availability), or `{}` when no campaign is open. Never throws, so a
+ * screen used in isolation (tests, previews) resolves to the no-active-nation
+ * default rather than a fallback that silently pretends a nation exists.
+ */
+export function useActiveCampaignCurrencyContext(): ActiveCampaignCurrencyContext {
+  const context = use(CampaignShellContext);
+  const campaign = context?.state.campaign;
+  if (campaign === null || campaign === undefined) return {};
+  return campaign.playerNationId !== undefined
+    ? { nationId: campaign.playerNationId, year: campaign.month.year }
+    : { year: campaign.month.year };
 }

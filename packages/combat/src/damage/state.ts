@@ -121,8 +121,6 @@ export interface ShipDamageState {
   stateHash: string;
 }
 
-// ---- Invariant guard ----
-
 function invariant(s: ShipDamageState, field: string, value: unknown, reason: string): never {
   const message = DAMAGE_STATE_INVARIANT_FAILED;
   throw new BluewaveError(message, {
@@ -238,8 +236,6 @@ export function assertFixedPointDamage(s: ShipDamageState): void {
   if (typeof s.formulaVersion !== "string" || s.formulaVersion.length === 0)
     invariant(s, "formulaVersion", s.formulaVersion, "formulaVersion must be a non-empty string");
 }
-
-// ---- State hash ----
 
 // Authoritative deterministic state hash: canonicalSerialize + sha256 over the non-hash
 // surface, domain-separated with the damage_v1 compatibility version.

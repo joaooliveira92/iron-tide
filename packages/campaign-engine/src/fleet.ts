@@ -8,18 +8,15 @@ import type { CampaignSnapshot } from "@bluewave/campaign";
  * exact same immutable snapshot every `inspectFleetScreen` call, and tests
  * can pin the derivation against fixture data.
  *
- * Divisions are the player nation's compiled `FleetState`s: the campaign
- * compiler never populates `nation.divisions` (every compiled nation has
- * `divisions: []`, so there are no `PermanentDivision` records in any
- * compiled campaign today), and the engine's ship groupings live on
- * `FleetState.ships`. `buildPlayerProjection` (projection.ts, ticket 12)
- * already established this repo convention — each compiled `FleetState`
- * becomes one division view carrying all of its ships.
+ * Divisions are the player nation's compiled `FleetState`s. The campaign
+ * compiler also seeds `nation.divisions` from authored content (N-1 ticket 07);
+ * this screen predates that command structure and keeps its established
+ * convention that each compiled `FleetState` becomes one division view carrying
+ * all of its ships (`buildPlayerProjection`, projection.ts, ticket 12).
  *
- * Ship `status` is a presentation derivation of the only real status datum
- * the compiled `Ship` carries (`isUnderConstruction`), in the same class as
- * `constructionShipTypeLabel`'s display mapping — the renderer shows ship
- * names only, never this string.
+ * Ship `status` is a presentation derivation of the ship's authoritative
+ * readiness state (S-1 ticket 07; the `READINESS_STATUS_LABEL` mapping), in the
+ * same class as `constructionShipTypeLabel`'s display mapping.
  */
 
 export type MovementCommandStatus =
@@ -44,8 +41,22 @@ export interface MovementCommand {
 export interface FleetShipView {
   readonly name: string;
   readonly designId: string;
+  /** Presentation status derived from the ship's readiness state (S-1 ticket 07). */
   readonly status: string;
+  /** The authoritative readiness state (S-1 ticket 07). */
+  readonly readiness: string;
+  /** Worked-up crew quality `0..100` (S-1 ticket 07). */
+  readonly crewQuality: number;
 }
+
+/** The readiness state's presentation label (S-1 ticket 07). */
+const READINESS_STATUS_LABEL: Readonly<Record<string, string>> = {
+  ACTIVE: "active",
+  RESERVE: "reserve",
+  MOTHBALLED: "mothballed",
+  WORKING_UP: "working_up",
+  REPAIR: "repair",
+};
 
 /** One compiled `FleetState` as the Fleet screen sees it (see header note). */
 export interface FleetDivisionView {
@@ -85,7 +96,7 @@ export interface FleetScreenView {
  * Builds the Fleet screen's divisions/areas/edges/ports for `playerSlotId`
  * from a real compiled `CampaignSnapshot`:
  * - `divisions`: one per compiled `FleetState` of the player nation (its
- *   ships in compiled order, `status` derived from `isUnderConstruction`).
+ *   ships in compiled order, `status` derived from the readiness state).
  * - `areas`: the full compiled world area map (`{id, name}`).
  * - `areaEdges`: the compiled world routes (`{from,to}`) as directed edges.
  * - `ports`: the player nation's own ports, `capacity` = authored `level`
@@ -108,7 +119,9 @@ export function buildFleetScreenView(
     ships: fleet.ships.map((ship) => ({
       name: ship.name,
       designId: ship.designVersionId,
-      status: ship.isUnderConstruction ? "under_construction" : "commissioned",
+      status: READINESS_STATUS_LABEL[ship.readiness] ?? "active",
+      readiness: ship.readiness,
+      crewQuality: Number(ship.crewQuality),
     })),
   }));
 

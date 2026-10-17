@@ -20,56 +20,12 @@ function expectedDensity(fuelBp: number, powerBp: number, machCondBp: number): n
 describe("computeFunnelSmokeDensity", () => {
   it("coal fuel at full power (15_000 multiplier band) produces correct density", () => {
     const density = computeFunnelSmokeDensity({ fuelType: "coal", powerSettingBp: 9_500 });
-    // coal 15_000 * power 15_000 = 225_000_000
-    // base 5_000 * 225_000_000 * 10_000 (default mach) / 1e12 = 5_000 * 225_000 = 1_125_000_000 / 1e12... wait
-    // Let me compute: 5_000 * 15_000 * 15_000 * 10_000 = 5_000 * 2_250_000_000 = 11_250_000_000_000
-    // / 1_000_000_000_000 = 11_250
-    // capped at 10_000
-    // Actually let me recompute: 10_000 * 10_000 * 10_000 = 1_000_000_000_000
-    // numerator = 5_000 * 15_000 * 15_000 * 10_000 = 5_000 * 2_250_000_000 = 11_250_000_000_000
-    // = 11_250_000_000_000 / 1_000_000_000_000 = 11.25, floor = 11...
-    // Wait that's wrong for the multipliers being in basis points.
-    // Let me reconsider: the base density is 5_000 bp = 5_000 / 10_000 = 0.5 opacity
-    // fuelMultiplierBp = 15_000 -> 1.5x
-    // powerMultiplierBp = 15_000 -> 1.5x
-    // machineryConditionBp = 10_000 -> 1.0x
-    // Result = 0.5 * 1.5 * 1.5 * 1.0 = 1.125 -> floor(1.125 * 10_000) = floor(11_250)... capped at 10_000
-    // Actually the formula says: min(10_000, floor(baseFunnelSmokeBp * fuelMultiplierBp * powerMultiplierBp * machCondBp / 10_000^3))
-    // baseFunnelSmokeBp = 5_000, fuelMultiplierBp = 15_000, powerMultiplierBp = 15_000, machCondBp = 10_000
-    // numerator = 5_000 * 15_000 * 15_000 * 10_000 = 11_250_000_000_000
-    // denominator = 10_000^3 = 1_000_000_000_000
-    // result = 11_250_000_000_000 / 1_000_000_000_000 = 11.25, floor = 11 ... that seems wrong
-    // Wait, I think bp here means the values are already in basis points.
-    // 5_000 bp * 15_000 bp * 15_000 bp * 10_000 bp / (10_000 * 10_000 * 10_000)
-    // = 5_000 * 15_000 * 15_000 * 10_000 / 1_000_000_000_000
-    // = 11_250_000_000_000 / 1_000_000_000_000
-    // = 11
-    // Hmm but that gives a very small number. Let me re-read the formula.
-    //
-    // The formula says: min(10_000, floor(baseFunnelSmokeBp * fuelMultiplierBp * powerMultiplierBp * machineryConditionMultiplierBp / 10_000^3))
-    // So it's treating all values as basis points (1/10_000th), and dividing by 10_000^3 to normalize.
-    // The result is in bp. So it's correct that coal at full power gives 11 bp.
-    // That seems very low. But the ticket says this is the formula from DESIGN-42 §11.
-    // Let me just compute it properly and test for the correct output.
-    //
-    // Actually, the formula I should compute:
-    // 5_000 * 15_000 * 15_000 * 10_000 / 1_000_000_000_000
-    // = 11_250_000_000_000 / 1_000_000_000_000
-    // = 11.25
-    // floor = 11
     const expected = expectedDensity(15_000, 15_000, 10_000);
     expect(density).toBe(expected);
   });
 
   it("oil fuel at cruise power (5_000..7_499 band = 10_000 multiplier)", () => {
     const density = computeFunnelSmokeDensity({ fuelType: "oil", powerSettingBp: 6_000 });
-    // oil = 7_500, power = 10_000 (from 5_000..7_499 band)
-    // 5_000 * 7_500 * 10_000 * 10_000 / 1_000_000_000_000 = 5_000 * 75_000_000_000 / 1_000_000_000_000 = 375_000_000_000_000 / 1_000_000_000_000 = 375
-    // Actually: 5_000 * 7_500 * 10_000 * 10_000 = 5_000 * 7_500 * 100_000_000 = 3_750_000_000_000
-    // Wait: 7_500 * 10_000 * 10_000 = 750_000_000_000
-    // Then * 5_000 = 3_750_000_000_000_000
-    // / 1_000_000_000_000 = 3_750
-    // That's 3_750 bp
     const expected = expectedDensity(7_500, 10_000, 10_000);
     expect(density).toBe(expected);
   });

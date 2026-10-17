@@ -1,4 +1,3 @@
-﻿//packages/ai/test/ai.test.ts
 import type { CampaignSnapshot, ConstructionProject, NationState } from "@bluewave/campaign";
 import { type CommandEnvelope, CommandIdempotencyMap, CommandLifecycle } from "@bluewave/commands";
 import { CANONICAL_RESEARCH_FIELD_IDS } from "@bluewave/content-schema";

@@ -1,4 +1,4 @@
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Contrast, Monitor, Moon, Sun } from "lucide-react";
 
 import { Button } from "../../components/ui/button.js";
 import type { Theme } from "../ThemeContext.js";
@@ -9,6 +9,7 @@ const THEME_ICONS: Record<Theme, typeof Sun> = {
   light: Sun,
   dark: Moon,
   system: Monitor,
+  highContrast: Contrast,
 };
 
 /** The header's theme control: shows the current theme and advances it on click. */

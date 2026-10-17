@@ -26,6 +26,11 @@ import {
   runObligationPhase,
 } from "./economyPhases.js";
 import { FinancialLedger } from "./financial-ledger.js";
+import {
+  createInterruptionState,
+  runInterruptionCheckpoint,
+  trailingInputSuspension,
+} from "./interruption.js";
 import type {
   MonthContext,
   MonthExecutorEngineOptions,
@@ -81,6 +86,10 @@ export class MonthExecutor {
       collector,
       options,
       engineOptions,
+      interruption:
+        engineOptions?.interruptions !== undefined
+          ? createInterruptionState(engineOptions.interruptions)
+          : undefined,
       nextSeq: () => {
         const current = SafeInt(eventSeq);
         eventSeq++;
@@ -192,6 +201,13 @@ export class MonthExecutor {
       ctx.currentSnapshot = result.snapshot;
     }
 
+    // Additive decision checkpoint: consume any pending decisions in
+    // deterministic (phase, subject) order before battles resolve. A no-op when
+    // no interruption channel was supplied (byte-identical to today).
+    if (!runInterruptionCheckpoint(ctx)) {
+      return this.finish(ctx, true);
+    }
+
     if (!this.assertPhase(phaseGuard, "battle_generation", collector)) {
       return this.finish(ctx, false);
     }
@@ -201,6 +217,9 @@ export class MonthExecutor {
       return this.finish(ctx, false);
     }
     runBattleResolutionPhase(ctx);
+    if (ctx.interruption?.suspended !== undefined) {
+      return this.finish(ctx, true);
+    }
 
     if (!this.assertPhase(phaseGuard, "closing_validation", collector)) {
       return this.finish(ctx, false);
@@ -210,6 +229,7 @@ export class MonthExecutor {
   }
 
   private finish(ctx: MonthContext, success: boolean): MonthResult {
+    const suspended = ctx.interruption?.suspended ?? trailingInputSuspension(ctx);
     return {
       finalSnapshot: ctx.currentSnapshot,
       commandLedger: ctx.commandLedger,
@@ -217,6 +237,8 @@ export class MonthExecutor {
       randomLedger: ctx.randomLedger,
       financialLedger: ctx.financialLedger,
       success,
+      outcome: suspended !== undefined ? "suspended" : "completed",
+      ...(suspended !== undefined ? { suspended } : {}),
     };
   }
 

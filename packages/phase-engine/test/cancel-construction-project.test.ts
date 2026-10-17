@@ -29,6 +29,8 @@ const ship = (id: string, over: Partial<Ship> = {}): Ship => ({
   isUnderConstruction: false,
   constructionProgress: SafeInt(0),
   constructionTotalWork: SafeInt(0),
+  readiness: "ACTIVE",
+  crewQuality: SafeInt(100),
   ...over,
 });
 const project = (over: Partial<ConstructionProject> = {}): ConstructionProject => ({

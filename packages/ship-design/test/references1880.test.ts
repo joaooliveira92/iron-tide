@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vite-plus/test";
 import { compileDesign, type DesignDraft } from "../src/index.js";
 import { earlyContext, readReferenceDesignEntries } from "./helpers/earlyContext.js";
+import { renderExplanation } from "./helpers/explanation.js";
 
 /**
  * The historical reference designs (starting points in the Drawing Board). Every design must be a valid,
@@ -23,7 +24,7 @@ describe("reference designs compile clean at their own month", () => {
       const blocking = r.findings.filter(
         (f) => f.severity === "BLOCKING" || f.severity === "CRITICAL",
       );
-      expect(blocking.map((f) => `${f.id}: ${f.what}`)).toEqual([]);
+      expect(blocking.map((f) => `${f.id}: ${renderExplanation(f.what)}`)).toEqual([]);
       expect(r.valid).toBe(true);
       expect(r.naturalClass).not.toBeNull();
     });

@@ -1,9 +1,10 @@
-import type { SafeInt } from "@bluewave/contracts";
+import type { Bp, Money, SafeInt } from "@bluewave/contracts";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";
 import type { PermanentDivision } from "./division.js";
 import type { Officer } from "./officers.js";
 import type { ConstructionProjectStatus } from "./constructionStatus.js";
+import type { ShipReadinessState } from "./readiness.js";
 
 /**
  * Operational availability of a ship while a project works on it (DESIGN-23 section 20). Absent means AVAILABLE. An
@@ -27,6 +28,16 @@ export interface Ship {
   isUnderConstruction: boolean;
   constructionProgress: SafeInt;
   constructionTotalWork: SafeInt;
+  /** Readiness state (S-1 D2): required on every ship, derived at compile, player-settable. */
+  readiness: ShipReadinessState;
+  /** Worked-up crew quality `0..100` (S-1 D2/D4); ramps toward the state's ceiling. */
+  crewQuality: SafeInt;
+  /**
+   * Remaining repair months while `readiness` is `REPAIR` (manual p.48: "a number
+   * means the ship is in repair for that number of months"). Absent on every other
+   * state; a laid-up (mothballed) ship keeps it but its countdown halts (p.51).
+   */
+  repairMonthsRemaining?: SafeInt;
   inBattleId?: string;
   /** Operational availability while a rebuild or conversion works on the ship; absent = available (ADR-0078). */
   availability?: ShipAvailability;
@@ -331,9 +342,9 @@ export interface ForeignContractPaymentInstallment {
   /** Campaign month id (`YYYY-MM`) the instalment is due. */
   dueMonth: string;
   /** Instalment amount in the contract's currency unit. */
-  amountUnits: number;
+  amountUnits: Money;
   /** Fraction of the contract's total work this instalment unlocks, basis points `0..10_000`. */
-  workShareBp: number;
+  workShareBp: Bp;
 }
 
 /**
@@ -368,7 +379,7 @@ export interface ForeignConstructionContract {
   /** Total work per unit, in the project's work micro-units. */
   totalWorkPerUnit: number;
   /** Total price across all units, in `currencyUnit`. */
-  totalPriceUnits: number;
+  totalPriceUnits: Money;
   currencyUnit: string;
   paymentSchedule: ForeignContractPaymentInstallment[];
   capacityReservationSchedule: ForeignContractCapacityReservation[];
@@ -567,12 +578,12 @@ export interface DesignStudy {
   derived: boolean;
   failedCriteria: string[];
   baseStudyWork: number;
-  baseStudyCost: number;
-  discountBp: number;
+  baseStudyCost: Money;
+  discountBp: Bp;
   finalStudyWork: number;
-  finalStudyCost: number;
+  finalStudyCost: Money;
   workDone: number;
-  costPaid: number;
+  costPaid: Money;
   status: "IN_PROGRESS" | "COMPLETED";
   startMonth: string;
   completionMonth: string | null;

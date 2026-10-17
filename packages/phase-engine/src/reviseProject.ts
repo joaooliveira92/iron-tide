@@ -104,7 +104,7 @@ export function applyReviseProject(
   if (decision.requiresRebuildProject)
     return fail(
       "REVISION_REQUIRES_REBUILD",
-      `Project ${project.id} is ${(decision.progressBp / 100).toFixed(1)}% built: this change would need a rebuild project (${decision.reasonCodes.join(", ")})`,
+      `Project ${project.id} cannot be revised: this change would need a rebuild project (${decision.reasonCodes.join(", ")}; progress ${decision.progressBp} bp)`,
     );
 
   // The manual's in-place revision limits (printed p27; ADR-0132): a change beyond them is no longer a revision but a

@@ -26,7 +26,7 @@ export function CampaignPreferencesScreen({
   onCloseCampaign,
 }: CampaignPreferencesScreenProps) {
   const { projection, loadError, loadProjection } = useCampaignProjection(sessionId);
-  const { displayPrefs, togglePref } = useDisplayPreferences();
+  const { displayPrefs, togglePref } = useDisplayPreferences(sessionId);
   const { copied, copy } = useClipboardCopy();
   const [restartMessage, setRestartMessage] = useState<string | null>(null);
   const bridge = useBridge();

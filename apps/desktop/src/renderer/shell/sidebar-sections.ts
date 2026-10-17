@@ -1,3 +1,4 @@
+import { translate, type MessageKey } from "../lib/strings.js";
 import type { CampaignScreen } from "./campaign-screen-registry.js";
 
 /**
@@ -22,13 +23,13 @@ export const SIDEBAR_SECTION_ORDER: readonly SidebarSectionId[] = [
   "settings",
 ];
 
-export const SIDEBAR_SECTION_LABELS: Readonly<Record<SidebarSectionId, string>> = {
-  admiralty: "Admiralty",
-  operations: "Operations",
-  government: "Government",
-  foreign: "Foreign",
-  developer: "Developer",
-  settings: "Settings",
+export const SIDEBAR_SECTION_LABEL_KEYS: Readonly<Record<SidebarSectionId, MessageKey>> = {
+  admiralty: "nav.section.admiralty",
+  operations: "nav.section.operations",
+  government: "nav.section.government",
+  foreign: "nav.section.foreign",
+  developer: "nav.section.developer",
+  settings: "nav.section.settings",
 };
 
 export const SECTION_OF_SCREEN: Readonly<Record<CampaignScreen, SidebarSectionId>> = {
@@ -62,7 +63,7 @@ export function buildSidebarSections<Item extends { readonly id: CampaignScreen 
 ): SidebarSection<Item>[] {
   return SIDEBAR_SECTION_ORDER.map((id) => ({
     id,
-    label: SIDEBAR_SECTION_LABELS[id],
+    label: translate(SIDEBAR_SECTION_LABEL_KEYS[id]),
     items: screens.filter((screen) => SECTION_OF_SCREEN[screen.id] === id),
   })).filter((section) => section.items.length > 0);
 }

@@ -1,4 +1,5 @@
 import { Schema } from "effect";
+import { UM_PER_INCH } from "@bluewave/contracts";
 
 /**
  * `visual-traits/1` (D16, proposal §8.2): the closed visual vocabulary a design's parts are
@@ -140,8 +141,6 @@ export interface VisualTraitValues {
   readonly size_class?: SizeClass | undefined;
   readonly elevation_style?: ElevationStyle | undefined;
 }
-
-const UM_PER_INCH = 25_400;
 
 /** Calibre in whole inches, rounded half up: `floor((µm + 12 700) / 25 400)`. */
 export function wholeInchesOf(calibreUm: number): number {

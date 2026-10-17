@@ -114,7 +114,7 @@ export function useWorldMapModel({
   );
   const areasById = useMemo(() => new Map(areas.map((area) => [area.id, area])), [areas]);
 
-  /** The playable nations' 1880 borders, tinted by nation and themed. */
+  /** The baked 1880 borders of the major powers, tinted by nation and themed. */
   const borderSets = useMemo<BorderSet[]>(
     () =>
       state.layers.borders

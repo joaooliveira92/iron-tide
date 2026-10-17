@@ -17,11 +17,15 @@ export { COMPATIBILITY_MISMATCH_CODE } from "./errors.js";
 // older saves are refused before decoding. An offline developer tool
 // (`saveMigration.ts`) migrates development fixtures only; no runtime
 // translation path ships (ADR-0113, ADR-0154 section 11).
-export const CURRENT_COMPATIBILITY_VERSION = "2.0.0";
+// S-1 (readiness and maintenance, map D2): bumped 2.0.0 -> 3.0.0 because every
+// compiled ship gains required readiness and crew-quality state. As with the
+// part-model bump, pre-change saves are refused before decoding (no released
+// save exists for the reject-only release; ADR-0113 section 5).
+export const CURRENT_COMPATIBILITY_VERSION = "3.0.0";
 
-// Retained as the named 2.0.0 declaration ticket 10 introduced; it is now the
-// current release constant. Kept so callers that name the part-model version
-// explicitly keep compiling.
+// The named version at which the ship part model landed; it stays 2.0.0 as a
+// historical declaration while the current release constant moves on. Kept so
+// callers that name the part-model version explicitly keep compiling.
 export const PART_MODEL_COMPATIBILITY_VERSION = "2.0.0";
 
 export class CompatibilityChecker {

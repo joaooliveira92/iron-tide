@@ -25,7 +25,7 @@ describe("buildConstructionDesignCatalog", () => {
         fixtureDesign("france", "des_f", { nationId: "france" }),
       ],
     );
-    const catalog = buildConstructionDesignCatalog(snapshot, "uk");
+    const catalog = buildConstructionDesignCatalog(snapshot, "uk", 1880);
     expect(catalog.map((d) => d.designId)).toEqual(["des_a", "des_c"]);
   });
 
@@ -42,8 +42,10 @@ describe("buildConstructionDesignCatalog", () => {
         }),
       ],
     );
-    const [design] = buildConstructionDesignCatalog(snapshot, "uk");
+    const [design] = buildConstructionDesignCatalog(snapshot, "uk", 1880);
     expect(design.className).toBe("Inflexible");
+    // No family authored → no vintage → never era-gated.
+    expect(design.available).toBe(true);
     expect(design.shipType).toBe("ironclad");
     // 11 880 t → mass 11 880, cost 119 (kg/100 000), capacity 12 (kt).
     expect(design.mass).toBe(11_880);
@@ -70,8 +72,12 @@ describe("buildConstructionDesignCatalog", () => {
       memberDesignVersionIds: ["des_pw"],
       familyCreationMonth: "1906-12",
     });
-    const [design] = buildConstructionDesignCatalog(snapshot, "uk");
+    const [design] = buildConstructionDesignCatalog(snapshot, "uk", 1880);
     expect(design.year).toBe(1906);
+    // A 1906 design is not buildable in an 1880 campaign...
+    expect(design.available).toBe(false);
+    // ...but is once the campaign reaches its era.
+    expect(buildConstructionDesignCatalog(snapshot, "uk", 1906)[0]!.available).toBe(true);
   });
 });
 

@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../../../components/ui/alert-dialog.js";
+import { translate } from "../../../lib/strings.js";
 
 export interface CloseCampaignDialogProps {
   readonly open: boolean;
@@ -21,14 +22,16 @@ export function CloseCampaignDialog({ open, onOpenChange, onConfirm }: CloseCamp
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Close this campaign?</AlertDialogTitle>
+          <AlertDialogTitle>{translate("shell.header.closeDialog.title")}</AlertDialogTitle>
           <AlertDialogDescription>
-            You will be returned to the campaign file screen. Unsaved progress may be lost.
+            {translate("shell.header.closeDialog.description")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Close campaign</AlertDialogAction>
+          <AlertDialogCancel>{translate("shell.header.closeDialog.cancel")}</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            {translate("shell.header.closeDialog.confirm")}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

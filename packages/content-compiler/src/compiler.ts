@@ -91,7 +91,9 @@ function withFileContents(input: CompilerInput): CompilerInput {
     ...(input.diplomacyFiles ?? []),
     ...(input.researchFiles ?? []),
     ...(input.designFiles ?? []),
+    ...(input.divisionFiles ?? []),
     ...(input.presentationFiles ?? []),
+    ...(input.uiFiles ?? []),
   ];
   for (const path of paths) {
     if (path in fileContents) continue;

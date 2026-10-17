@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Alert } from "../../../components/ui/alert.js";
+import { formatExplanation } from "../../../lib/presentation-format/index.js";
 import { Badge } from "../../../components/ui/badge.js";
 import { Button } from "../../../components/ui/button.js";
 import { ButtonGroup } from "../../../components/ui/button-group.js";
@@ -323,7 +324,8 @@ export function DrawingBoard({
             </span>
             {view.metrics.slice(0, 3).map((m) => (
               <span key={m.id} className="tabular-nums">
-                <span className="text-muted-foreground">{m.label}:</span> {m.value}
+                <span className="text-muted-foreground">{m.label}:</span>{" "}
+                {formatExplanation(m.value)}
               </span>
             ))}
           </button>

@@ -216,10 +216,14 @@ function toMutableBundle(decoded: CompiledContentBundle): ContentBundle {
       diplomacy: [...campaign.diplomacy],
       research: [...campaign.research],
       designs: [...campaign.designs],
+      ...(campaign.divisions !== undefined ? { divisions: [...campaign.divisions] } : {}),
     };
   }
   if (decoded.presentation !== undefined) {
     bundle.presentation = decoded.presentation;
+  }
+  if (decoded.ui !== undefined) {
+    bundle.ui = decoded.ui;
   }
   return bundle;
 }

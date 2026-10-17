@@ -1,7 +1,7 @@
 // SB3-R23 / DESIGN-16 §13.6-13.7: the settlement money a war outcome moves. A refund effect returns the cumulative
 // paid amount from the builder to the ordering nation; a zero-paid forfeiture moves nothing.
 import type { CampaignSnapshot, ForeignConstructionContract } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import { bp, money, SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import {
@@ -37,10 +37,10 @@ function terms() {
     builderShipyardId: "yard-france-1",
     quantity: 1,
     totalWorkPerUnit: 1000,
-    totalPriceUnits: 1000,
+    totalPriceUnits: money(1000),
     paymentSchedule: [
-      { dueMonth: MONTH_ID, amountUnits: 500, workShareBp: 5_000 },
-      { dueMonth: "1880-04", amountUnits: 500, workShareBp: 5_000 },
+      { dueMonth: MONTH_ID, amountUnits: money(500), workShareBp: bp(5_000) },
+      { dueMonth: "1880-04", amountUnits: money(500), workShareBp: bp(5_000) },
     ],
     authorizationMonth: MONTH_ID,
     plannedKeelMonth: MONTH_ID,
@@ -73,14 +73,14 @@ describe("foreignWarSettlementPostings (SB3-R23 §13.6/13.7)", () => {
         nationId: BUILDER,
         direction: "OUTFLOW",
         categoryId: FOREIGN_SETTLEMENT_CATEGORY_ID,
-        amountUnits: 500,
+        amountUnits: money(500),
         reason: `foreign_contract_settlement:${c.contractId}:CANCEL_WITH_SETTLEMENT`,
       },
       {
         nationId: ORDERING,
         direction: "INFLOW",
         categoryId: FOREIGN_SETTLEMENT_CATEGORY_ID,
-        amountUnits: 500,
+        amountUnits: money(500),
         reason: `foreign_contract_settlement:${c.contractId}:CANCEL_WITH_SETTLEMENT`,
       },
     ]);

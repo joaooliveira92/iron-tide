@@ -256,8 +256,6 @@ export function impactOrderingValid(o: {
   );
 }
 
-// ---- composed resolution ------------------------------------------------------
-
 export type TorpedoHitOutcome = "HIT" | "MISS";
 // The exact §14 predicate that rejected the contact (null on HIT).
 export type TorpedoHitRejection =

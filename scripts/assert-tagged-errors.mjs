@@ -274,7 +274,6 @@ export function scanTaggedErrors(repoRoot, roots, allowlist = ALLOWLIST) {
     .filter((finding) => !Object.hasOwn(allowlist, `${finding.file}#${finding.name}`));
 }
 
-// ---- embedded self-test fixtures ------------------------------------------
 const FIXTURES = [
   { name: "untagged extends Error fails", source: "class E extends Error {}", expect: 1 },
   {

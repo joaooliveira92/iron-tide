@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { PlayableSlotCountryId } from "@/content/nationAssetManifest.js";
 import { FleetDispatchBoard } from "./FleetDispatchBoard.js";
 
-const SLOTS: readonly PlayableSlotCountryId[] = ["gb", "de", "us"];
+const SLOTS: readonly PlayableSlotCountryId[] = ["gb", "de", "es"];
 
 function setup(focusedIndex = 0) {
   const onSelect = vi.fn();
@@ -29,7 +29,7 @@ describe("FleetDispatchBoard", () => {
     expect(screen.getByRole("listbox", { name: "Playable nations" })).toBeTruthy();
     expect(screen.getByRole("option", { name: "United Kingdom" })).toBeTruthy();
     expect(screen.getByRole("option", { name: "German Empire" })).toBeTruthy();
-    expect(screen.getByRole("option", { name: "United States" })).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Kingdom of Spain" })).toBeTruthy();
   });
 
   it("selects a nation when its (non-active) card is tapped", () => {

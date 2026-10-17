@@ -1,8 +1,11 @@
 /* @vitest-environment jsdom */
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { WindowState } from "../../shared/bridge-contract.js";
 import { SidebarProvider } from "../components/ui/sidebar.js";
+import { BridgeProvider } from "../lib/bridge-context.js";
+import { PreferencesProvider } from "../lib/preferences-context.js";
+import { createPreferencesBridgeStub } from "../lib/preferences-test-bridge.js";
 import { SiteHeader, type SiteHeaderProps } from "./SiteHeader.js";
 import type { HeaderCampaign } from "./site-header-state.js";
 import { ThemeProvider } from "./ThemeContext.js";
@@ -58,36 +61,44 @@ describe("SiteHeader", () => {
     cleanup();
   });
 
-  function renderHeader(platform: NodeJS.Platform = "linux", props: SiteHeaderProps = {}) {
+  async function renderHeader(platform: NodeJS.Platform = "linux", props: SiteHeaderProps = {}) {
     windowCtx = windowContext(platform);
-    return render(
-      <SidebarProvider>
-        <WindowContextProvider value={windowCtx}>
-          <ThemeProvider>
-            <SiteHeader {...props} />
-          </ThemeProvider>
-        </WindowContextProvider>
-      </SidebarProvider>,
+    const stub = createPreferencesBridgeStub();
+    const result = render(
+      <BridgeProvider bridge={stub.bridge}>
+        <PreferencesProvider>
+          <SidebarProvider>
+            <WindowContextProvider value={windowCtx}>
+              <ThemeProvider>
+                <SiteHeader {...props} />
+              </ThemeProvider>
+            </WindowContextProvider>
+          </SidebarProvider>
+        </PreferencesProvider>
+      </BridgeProvider>,
     );
+    // Flush the provider's async read so its state update lands inside `act`.
+    await act(async () => {});
+    return result;
   }
 
-  it("renders the nav and title slots", () => {
-    renderHeader();
+  it("renders the nav and title slots", async () => {
+    await renderHeader();
 
     expect(screen.getByRole("button", { name: "Go back" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Go forward" })).toBeTruthy();
     expect(screen.getByText("Naval Ministry")).toBeTruthy();
   });
 
-  it("renders the status secondary row on the menu view", () => {
-    renderHeader();
+  it("renders the status secondary row on the menu view", async () => {
+    await renderHeader();
 
     expect(screen.getByText("Active database (SQLite)")).toBeTruthy();
     expect(screen.getByText("Ready for operation")).toBeTruthy();
   });
 
-  it("disables back and forward navigation when the history cannot move", () => {
-    renderHeader("linux", {
+  it("disables back and forward navigation when the history cannot move", async () => {
+    await renderHeader("linux", {
       back: { disabled: false, onTrigger: vi.fn() },
       forward: { disabled: true, onTrigger: vi.fn() },
     });
@@ -100,24 +111,24 @@ describe("SiteHeader", () => {
     ).not.toBeNull();
   });
 
-  it("renders the custom window controls only on platforms without native controls", () => {
-    renderHeader("win32");
+  it("renders the custom window controls only on platforms without native controls", async () => {
+    await renderHeader("win32");
 
     expect(screen.getByRole("button", { name: "minimize" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "maximize" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "close" })).toBeTruthy();
   });
 
-  it("omits the custom window controls on macOS", () => {
-    renderHeader("darwin");
+  it("omits the custom window controls on macOS", async () => {
+    await renderHeader("darwin");
 
     expect(screen.queryByRole("button", { name: "minimize" })).toBeNull();
     expect(screen.queryByRole("button", { name: "maximize" })).toBeNull();
     expect(screen.queryByRole("button", { name: "close" })).toBeNull();
   });
 
-  it("dispatches window actions through the window-control part", () => {
-    renderHeader("linux");
+  it("dispatches window actions through the window-control part", async () => {
+    await renderHeader("linux");
 
     fireEvent.click(screen.getByRole("button", { name: "minimize" }));
     fireEvent.click(screen.getByRole("button", { name: "maximize" }));
@@ -128,18 +139,18 @@ describe("SiteHeader", () => {
     expect(windowCtx.windowClose).toHaveBeenCalledOnce();
   });
 
-  it("exposes the search slot only when there are search targets", () => {
+  it("exposes the search slot only when there are search targets", async () => {
     const searchTargets = [{ id: "overview", label: "Overview" }];
 
-    renderHeader("linux", { searchTargets });
+    await renderHeader("linux", { searchTargets });
 
     expect(screen.getByRole("button", { name: "Search" })).toBeTruthy();
   });
 
-  it("renders the continue action with its enabled state", () => {
+  it("renders the continue action with its enabled state", async () => {
     const onContinue = vi.fn();
 
-    renderHeader("linux", {
+    await renderHeader("linux", {
       continueAction: {
         label: "Advance turn",
         disabled: false,
@@ -154,35 +165,35 @@ describe("SiteHeader", () => {
     expect(onContinue).toHaveBeenCalledOnce();
   });
 
-  it("cycles the theme through the chrome slot", () => {
-    renderHeader("linux");
+  it("cycles the theme through the chrome slot", async () => {
+    await renderHeader("linux");
 
     const themeToggle = screen.getByRole("button", { name: /Theme:/ });
     expect(themeToggle.getAttribute("aria-label")).toContain("system");
 
     fireEvent.click(themeToggle);
 
-    expect(themeToggle.getAttribute("aria-label")).toContain("light");
+    await waitFor(() => expect(themeToggle.getAttribute("aria-label")).toContain("light"));
   });
 
-  it("renders the editor secondary row with its actions", () => {
+  it("renders the editor secondary row with its actions", async () => {
     const onActionClick = vi.fn();
 
-    renderHeader("linux", { activeView: "editor", onActionClick });
+    await renderHeader("linux", { activeView: "editor", onActionClick });
 
     fireEvent.click(screen.getByRole("button", { name: "Validate parameters" }));
     expect(onActionClick).toHaveBeenCalledWith("validate");
   });
 
-  it("renders the campaign secondary row from the campaign projection", () => {
-    renderHeader("linux", { activeView: "playing", campaign });
+  it("renders the campaign secondary row from the campaign projection", async () => {
+    await renderHeader("linux", { activeView: "playing", campaign });
 
     expect(screen.getByText("Armed peace")).toBeTruthy();
     expect(screen.getByText(/£24,500k/)).toBeTruthy();
   });
 
-  it("renders the INC-1 header fields: nation name and projected balance", () => {
-    renderHeader("linux", { activeView: "playing", campaign });
+  it("renders the INC-1 header fields: nation name and projected balance", async () => {
+    await renderHeader("linux", { activeView: "playing", campaign });
 
     expect(screen.getByText("Nation:")).toBeTruthy();
     expect(screen.getByText(/United Kingdom/)).toBeTruthy();
@@ -190,8 +201,8 @@ describe("SiteHeader", () => {
     expect(screen.getByText(/£1,500k/)).toBeTruthy();
   });
 
-  it("omits the alert-count slot until the INC-2 projection lands", () => {
-    renderHeader("linux", { activeView: "playing", campaign });
+  it("omits the alert-count slot until the INC-2 projection lands", async () => {
+    await renderHeader("linux", { activeView: "playing", campaign });
 
     // The forward-wired slot is null: it is not shown at all (no "Alerts: —"
     // placeholder, and certainly no fabricated count).
@@ -199,8 +210,8 @@ describe("SiteHeader", () => {
     expect(screen.queryByText(/^[0-9]+$/)).toBeNull();
   });
 
-  it("renders the alert count once the forward-wired slot is populated", () => {
-    renderHeader("linux", {
+  it("renders the alert count once the forward-wired slot is populated", async () => {
+    await renderHeader("linux", {
       activeView: "playing",
       campaign: { ...campaign, activeAlertsCount: 4 },
     });
@@ -209,9 +220,9 @@ describe("SiteHeader", () => {
     expect(screen.getByText("4")).toBeTruthy();
   });
 
-  it("renders the advance-month button on the right for an active campaign", () => {
+  it("renders the advance-month button on the right for an active campaign", async () => {
     const onAdvanceMonth = vi.fn();
-    renderHeader("linux", { activeView: "playing", campaign, onAdvanceMonth });
+    await renderHeader("linux", { activeView: "playing", campaign, onAdvanceMonth });
 
     const advance = screen.getByRole("button", { name: "Advance month" });
     expect(advance.attributes.getNamedItem("disabled")).toBeNull();
@@ -220,8 +231,8 @@ describe("SiteHeader", () => {
     expect(onAdvanceMonth).toHaveBeenCalledOnce();
   });
 
-  it("disables the advance-month button while a commit is running", () => {
-    renderHeader("linux", {
+  it("disables the advance-month button while a commit is running", async () => {
+    await renderHeader("linux", {
       activeView: "playing",
       campaign,
       onAdvanceMonth: vi.fn(),
@@ -234,22 +245,37 @@ describe("SiteHeader", () => {
     ).not.toBeNull();
   });
 
-  it("omits the advance-month button without an active campaign", () => {
-    renderHeader("linux", { activeView: "playing", onAdvanceMonth: vi.fn() });
+  it("disables the advance-month button while a blocking interruption is open", async () => {
+    const onAdvanceMonth = vi.fn();
+    await renderHeader("linux", {
+      activeView: "playing",
+      campaign,
+      onAdvanceMonth,
+      advanceDisabled: true,
+    });
+
+    const advance = screen.getByRole("button", { name: "Advance month" });
+    expect(advance.attributes.getNamedItem("disabled")).not.toBeNull();
+    fireEvent.click(advance);
+    expect(onAdvanceMonth).not.toHaveBeenCalled();
+  });
+
+  it("omits the advance-month button without an active campaign", async () => {
+    await renderHeader("linux", { activeView: "playing", onAdvanceMonth: vi.fn() });
     expect(screen.queryByRole("button", { name: "Advance month" })).toBeNull();
   });
 
-  it("renders the remaining adaptive secondary-row views", () => {
-    renderHeader("linux", { activeView: "new_game" });
+  it("renders the remaining adaptive secondary-row views", async () => {
+    await renderHeader("linux", { activeView: "new_game" });
     expect(screen.getByText("Campaign setup assistant")).toBeTruthy();
 
     cleanup();
-    renderHeader("linux", { activeView: "options" });
+    await renderHeader("linux", { activeView: "options" });
     expect(screen.getByText("Preferences:")).toBeTruthy();
   });
 
-  it("shows a wizard step's own heading and hint in place of the generic setup copy", () => {
-    renderHeader("linux", {
+  it("shows a wizard step's own heading and hint in place of the generic setup copy", async () => {
+    await renderHeader("linux", {
       activeView: "new_game",
       wizardStep: {
         heading: "Rules of the Naval Age",
@@ -264,11 +290,11 @@ describe("SiteHeader", () => {
     expect(screen.queryByText("Select the historical scenario to continue")).toBeNull();
   });
 
-  it("shows the Campaign menu only in a campaign with its handlers, beside the single Advance control", () => {
-    renderHeader();
+  it("shows the Campaign menu only in a campaign with its handlers, beside the single Advance control", async () => {
+    await renderHeader();
     expect(screen.queryByRole("button", { name: "Campaign menu" })).toBeNull();
     cleanup();
-    renderHeader("linux", {
+    await renderHeader("linux", {
       campaign,
       onAdvanceMonth: vi.fn(),
       campaignMenu: { saving: false, onSave: vi.fn(), onCopy: vi.fn(), onCloseCampaign: vi.fn() },

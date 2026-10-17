@@ -224,8 +224,6 @@ export function assertFixedPointTacticalWeather(c: BattleWeatherComponents): voi
   requireString(c, "formulaVersion", c.formulaVersion);
 }
 
-// ---- State hash ----
-
 // Authoritative deterministic component hash: canonicalSerialize + sha256 over
 // the non-hash surface, domain-separated with the weather_components_v1
 // compatibility version. Any provided stateHash is ignored.

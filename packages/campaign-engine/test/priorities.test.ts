@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { buildPrioritiesProjection } from "../src/priorities.js";
 import { MIN_RESEARCH_SHARE_BP, NEAR_COMPLETION_WORK_RATIO } from "../src/priorityConstants.js";
 import { HIGH_TENSION_THRESHOLD, isHighTension } from "../src/diplomacy.js";
+import { readFileSync } from "node:fs";
 import type { CampaignSnapshot } from "@bluewave/campaign";
 
 function makeNation(overrides: Partial<any> = {}): any {
@@ -14,7 +15,7 @@ function makeNation(overrides: Partial<any> = {}): any {
     navalAppropriationRateBp: 2000 as any,
     maintenanceCost: 0 as any,
     baseResources: 0 as any,
-    fleets: [{ ships: [{ hitPoints: 100 as any }] }],
+    fleets: [{ ships: [{ hitPoints: 100 as any, readiness: "ACTIVE" as any }] }],
     research: {
       researchBudget: 200_000 as any,
       discoveredTechs: [],
@@ -87,7 +88,7 @@ describe("priorities projection", () => {
       treasury: 50_000 as any,
       income: 100_000 as any,
       navalAppropriationRateBp: 1000 as any, // 10% => 10k
-      fleets: [{ ships: [{ hitPoints: 10000 as any }] }], // maintenance ~ shipMaintenanceCost(10000)
+      fleets: [{ ships: [{ hitPoints: 10000 as any, readiness: "ACTIVE" as any }] }], // maintenance ~ shipMaintenanceCost(10000)
       research: {
         researchBudget: 0 as any,
         discoveredTechs: [],
@@ -102,7 +103,7 @@ describe("priorities projection", () => {
       treasury: 500 as any,
       income: 100_000 as any,
       navalAppropriationRateBp: 1000 as any,
-      fleets: [{ ships: [{ hitPoints: 100000 as any }] }],
+      fleets: [{ ships: [{ hitPoints: 100000 as any, readiness: "ACTIVE" as any }] }],
       research: {
         researchBudget: 50000 as any,
         discoveredTechs: [],
@@ -328,5 +329,10 @@ describe("priorities projection", () => {
   it("constants are centralized and tested", () => {
     expect(MIN_RESEARCH_SHARE_BP).toBe(800);
     expect(NEAR_COMPLETION_WORK_RATIO).toBe(0.9);
+  });
+
+  it("builds no locale-formatted strings (map D6)", () => {
+    const source = readFileSync(new URL("../src/priorities.ts", import.meta.url), "utf8");
+    expect(source).not.toMatch(/toLocaleString|toFixed|Intl\./);
   });
 });

@@ -5,7 +5,7 @@ import type {
   ForeignConstructionContract,
   NationState,
 } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import { bp, money, SafeInt } from "@bluewave/contracts";
 import { RandomEngine, RandomLedger } from "@bluewave/random";
 import { describe, expect, it } from "vite-plus/test";
 import {
@@ -32,9 +32,9 @@ const contract = (
   designVersionId: "dv-1",
   quantity: 1,
   totalWorkPerUnit: 1_000,
-  totalPriceUnits: 1_000,
+  totalPriceUnits: money(1_000),
   currencyUnit: "treasury_unit",
-  paymentSchedule: [{ dueMonth: "1880-01", amountUnits: 1_000, workShareBp: 10_000 }],
+  paymentSchedule: [{ dueMonth: "1880-01", amountUnits: money(1_000), workShareBp: bp(10_000) }],
   capacityReservationSchedule: [
     { month: "1880-01", reservedMassKg: 1_000_000, pool: "NEW_CONSTRUCTION" },
   ],

@@ -3,6 +3,7 @@ import {
   type CampaignSnapshot,
   type CompiledDesignVersion,
 } from "@bluewave/campaign";
+import { designFamilyYear, isDesignBuildableByYear } from "@bluewave/campaign-engine";
 import {
   compileDesign,
   DESIGN_22_EARLY,
@@ -29,6 +30,7 @@ export type OrderRejectionCode =
   | AvailabilityReason["code"]
   | "DESIGN_REVALIDATION_FAILED"
   | "DESIGN_REVALIDATION_UNAVAILABLE"
+  | "DESIGN_NOT_YET_AVAILABLE"
   | "SHIP_EXCEEDS_DOMESTIC_DOCK_LIMIT"
   | "INSUFFICIENT_PROJECT_CAPACITY"
   | "FOREIGN_CONTRACT_PRIORITY_DEFERRED"
@@ -111,7 +113,9 @@ export function auxiliaryFleetCounts(
  * Whether the player may place a construction order for a design now (application layer, ADR-0088):
  *  1. a design made from a draft is compiled again under today's rules, so a component made obsolete, a treaty or a
  *     ruleset change that now blocks it stops the order instead of reaching the yard;
- *  2. an armed merchant cruiser is checked against the auxiliary fleet limits.
+ *  2. the design's era has been reached — a design whose family enters service after the campaign year cannot be laid
+ *     down yet (`DESIGN_NOT_YET_AVAILABLE`), so a later-era ship never reaches the 1880 yard;
+ *  3. an armed merchant cruiser is checked against the auxiliary fleet limits.
  * Authored designs have no draft and skip the first check (their legality is the content's, not the designer's).
  */
 export function constructionOrderEligibility(
@@ -155,6 +159,19 @@ export function constructionOrderEligibility(
       }
     }
   }
+  // Era availability: a design whose family enters service after the campaign year cannot be built yet. A design with
+  // no authored family year (0) is never gated, matching the catalog (`isDesignBuildableByYear`).
+  const family =
+    design.designFamilyId !== ""
+      ? snapshot["designFamilies"].get(design.designFamilyId)
+      : undefined;
+  const designYear = designFamilyYear(family?.familyCreationMonth);
+  const campaignYear = parseInt(month.slice(0, 4), 10);
+  if (!isDesignBuildableByYear(designYear, campaignYear))
+    rejections.push({
+      code: "DESIGN_NOT_YET_AVAILABLE",
+      message: `Design ${design.designVersionId} enters service in ${String(designYear)}, after the campaign month ${month}.`,
+    });
   if (design.hullType === AMC_HULL_TYPE) {
     // The limits are ruleset data (`ShipBalance.classification`); a pack that sets none gets the DESIGN-22 EARLY values.
     const rules = content?.environmentFor(month).ctx.balance.classification ?? DESIGN_22_EARLY;

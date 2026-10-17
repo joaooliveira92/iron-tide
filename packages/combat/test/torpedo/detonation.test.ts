@@ -603,8 +603,8 @@ describe("AC-14: determinism + fail-closed guards", () => {
   });
 
   it("a HIT with missing target geometry fails closed (TORPEDO_STATE_INVARIANT_FAILED)", () => {
-    // wait — a real HIT must carry zone/protection/damage; dropping them is a
-    // caller bug -> fail closed, never a silent NO_CONTACT.
+    // A real HIT must carry zone/protection/damage; dropping them is a caller
+    // bug -> fail closed, never a silent NO_CONTACT.
     const track = buildTorpedoTrack();
     const hit = hitVerdict(track);
     expect(hit.hit).toBe(true);

@@ -89,7 +89,11 @@ export const inspectConstructionScreenProgram = withSchema(SessionIdPayloadSchem
       revision: Number(record.state.snapshot.turnNumber),
       month: record.month,
       economy: constructionEconomy(record),
-      designs: buildConstructionDesignCatalog(record.state.snapshot, record.playerSlotId),
+      designs: buildConstructionDesignCatalog(
+        record.state.snapshot,
+        record.playerSlotId,
+        record.month.year,
+      ),
       projects: constructionProjectQueueWithReadouts(
         record.state.snapshot,
         record.playerSlotId,

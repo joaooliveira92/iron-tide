@@ -1,6 +1,6 @@
 {
   "name": "@bluewave/desktop",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
   "main": "./out/main/index.js",
@@ -37,6 +37,7 @@
     "@bluewave/combat": "workspace:*",
     "@bluewave/commands": "workspace:*",
     "@bluewave/events": "workspace:*",
+    "@bluewave/messages": "workspace:*",
     "@bluewave/persistence": "workspace:*",
     "@bluewave/phase-engine": "workspace:*",
     "@bluewave/random": "workspace:*",

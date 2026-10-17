@@ -11,7 +11,6 @@ import {
   AIR_DEFENSE_TARGET_INELIGIBLE,
 } from "./reasonCodes.js";
 
-// ---- AirDefenseOperability ----
 // System-level OPERATIONAL/DAMAGED/DESTROYED simplified model (§21) plus ship state.
 export interface AirDefenseOperability {
   defenderSunk: boolean;

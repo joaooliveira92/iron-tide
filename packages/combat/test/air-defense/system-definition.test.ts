@@ -1,4 +1,3 @@
-// packages/combat/src/air-defense/system-definition.test.ts
 // AC-1: System definitions validate correctly
 // Tests for AirDefenseSystemDefinition with valid and invalid cases.
 

@@ -72,8 +72,6 @@ export function checkPrivateVentureEligibility(
   return { eligible: true, eligibleRoles: sortedRoles };
 }
 
-// ---- Private venture proposal generation ----
-
 export interface PrivateVentureProposalParams {
   nationId: string;
   role: AircraftType;
@@ -164,8 +162,6 @@ export function computePrivateProposalHash(proposal: AircraftProposal): string {
   const envelope = createEnvelope("private-aircraft-proposal", AIRCRAFT_RULESET_VERSION, rest);
   return envelope.bodyHash;
 }
-
-// ---- Monthly resolution ----
 
 export interface ResolvePrivateVentureInput {
   nationId: string;

@@ -5,7 +5,7 @@ import type {
   ConstructionProject,
   ForeignConstructionContract,
 } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import { bp, money, SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { EventLedger } from "@bluewave/events";
 import { dockRecordFromDefinition, validateForeignBuilderCapability } from "@bluewave/ship-design";
@@ -90,10 +90,10 @@ function terms(over: Partial<ForeignContractTerms> = {}): ForeignContractTerms {
     builderShipyardId: "yard-france-1",
     quantity: 1,
     totalWorkPerUnit: 100,
-    totalPriceUnits: 1000,
+    totalPriceUnits: money(1000),
     paymentSchedule: [
-      { dueMonth: "1880-01", amountUnits: 500, workShareBp: 5000 },
-      { dueMonth: "1880-04", amountUnits: 500, workShareBp: 5000 },
+      { dueMonth: "1880-01", amountUnits: money(500), workShareBp: bp(5000) },
+      { dueMonth: "1880-04", amountUnits: money(500), workShareBp: bp(5000) },
     ],
     authorizationMonth: "1880-01",
     plannedKeelMonth: "1880-02",
@@ -247,8 +247,8 @@ describe("ordering abroad creates one contract (SB3-R20, DESIGN-16 section 13.1)
       terms: terms({
         authorizationMonth: "1880-01",
         paymentSchedule: [
-          { dueMonth: "1880-04", amountUnits: 500, workShareBp: 5_000 },
-          { dueMonth: "1880-08", amountUnits: 500, workShareBp: 5_000 },
+          { dueMonth: "1880-04", amountUnits: money(500), workShareBp: bp(5_000) },
+          { dueMonth: "1880-08", amountUnits: money(500), workShareBp: bp(5_000) },
         ],
       }),
     });
@@ -258,7 +258,9 @@ describe("ordering abroad creates one contract (SB3-R20, DESIGN-16 section 13.1)
       order(snapshot(), {
         terms: terms({
           authorizationMonth: "1880-04",
-          paymentSchedule: [{ dueMonth: "1880-04", amountUnits: 500, workShareBp: 10_000 }],
+          paymentSchedule: [
+            { dueMonth: "1880-04", amountUnits: money(500), workShareBp: bp(10_000) },
+          ],
         }),
       }).ok,
     ).toBe(true);
@@ -437,8 +439,8 @@ describe("payment schedule and grace (SB3-R22, DESIGN-16 section 13.4)", () => {
       designVersionId: "dv-1",
       terms: terms({
         paymentSchedule: [
-          { dueMonth: "1880-01", amountUnits: 100, workShareBp: 9_000 },
-          { dueMonth: "1880-04", amountUnits: 100, workShareBp: 9_000 },
+          { dueMonth: "1880-01", amountUnits: money(100), workShareBp: bp(9_000) },
+          { dueMonth: "1880-04", amountUnits: money(100), workShareBp: bp(9_000) },
         ],
       }),
       reservedMassKg: 1,
@@ -551,12 +553,12 @@ describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
       builderShipyardId: "yard-france-1",
       quantity: 1,
       totalWorkPerUnit: TOTAL_WORK,
-      totalPriceUnits: 1_000,
+      totalPriceUnits: money(1_000),
       // Two 5,000 bp instalments: paying the first unlocks half the work (MEDIUM-3 schedule-driven work), so the
       // project cannot complete on one payment.
       paymentSchedule: [
-        { dueMonth: DUE, amountUnits: 500, workShareBp: 5_000 },
-        { dueMonth: "1880-07", amountUnits: 500, workShareBp: 5_000 },
+        { dueMonth: DUE, amountUnits: money(500), workShareBp: bp(5_000) },
+        { dueMonth: "1880-07", amountUnits: money(500), workShareBp: bp(5_000) },
       ],
       authorizationMonth: DUE,
       plannedKeelMonth: "1880-03",
@@ -783,7 +785,7 @@ describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
     const ordered = orderedSnapshot(10_000, 0);
     const nation = ordered.nations.get(ORDERING)!;
     const contract = nation.foreignContracts![0]!;
-    const tampered = { ...contract, totalPriceUnits: contract.totalPriceUnits + 1 };
+    const tampered = { ...contract, totalPriceUnits: money(contract.totalPriceUnits + 1) };
     const tamperedSnapshot: CampaignSnapshot = {
       ...ordered,
       nations: new Map(ordered.nations).set(ORDERING, { ...nation, foreignContracts: [tampered] }),
@@ -1075,10 +1077,10 @@ describe("INC-9e foreign-project command guards and monthly hardening", () => {
         builderShipyardId: "yard-1",
         quantity: 1,
         totalWorkPerUnit: 100,
-        totalPriceUnits: 1_000,
+        totalPriceUnits: money(1_000),
         paymentSchedule: [
-          { dueMonth: "1880-01", amountUnits: 500, workShareBp: 5_000 },
-          { dueMonth: "1880-01", amountUnits: 500, workShareBp: 5_000 },
+          { dueMonth: "1880-01", amountUnits: money(500), workShareBp: bp(5_000) },
+          { dueMonth: "1880-01", amountUnits: money(500), workShareBp: bp(5_000) },
         ],
         authorizationMonth: "1880-01",
         plannedKeelMonth: "1880-02",

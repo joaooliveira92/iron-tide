@@ -32,7 +32,7 @@
         constructionTotalWork: 0,
       }
     - {
-        id: "gbr_alyxandra",
+        id: "gbr_alexandra",
         name: "HMS Alexandra",
         classId: "Alexandra",
         designVersionId: "des_gbr_alexandra",
@@ -51,8 +51,8 @@
   locationAreaId: "med_malta"
   ships:
     - {
-        id: "gbr_malta_temp",
-        name: "HMS Mediterranean (Temeraire)",
+        id: "gbr_temeraire",
+        name: "HMS Temeraire",
         classId: "Temeraire",
         hitPoints: 36,
         maxHitPoints: 36,
@@ -68,6 +68,12 @@
   name: "Cape & East Indies Squadron"
   locationAreaId: "africa_cape"
   ships: []
+  provenance:
+    sourceStatus: "ESTIMATE"
+    confidence: "LOW"
+    kind: "game_conversion"
+    sources: []
+    note: "Station held with no permanently-attached ironclads at the January 1880 start; ships are detached as needed."
 - id: "fleet_fra_med"
   nationId: "france"
   name: "Escadre de la Méditerranée"
@@ -91,6 +97,7 @@
         id: "fra_devastation",
         name: "Dévastation",
         classId: "Dévastation",
+        designVersionId: "des_fra_devastation",
         hitPoints: 42,
         maxHitPoints: 42,
         speed: 15,
@@ -108,7 +115,8 @@
     - {
         id: "fra_courbet",
         name: "Courbet",
-        classId: "Courbet",
+        classId: "Dévastation",
+        designVersionId: "des_fra_devastation",
         hitPoints: 40,
         maxHitPoints: 40,
         speed: 15,
@@ -281,7 +289,7 @@
     - {
         id: "jpn_fuso",
         name: "Fusō",
-        classId: "Fusō",
+        classId: "Fusō (1878)",
         designVersionId: "des_jpn_fuso",
         hitPoints: 22,
         maxHitPoints: 22,
@@ -301,6 +309,7 @@
         id: "ott_mesudiye",
         name: "Mesudiye",
         classId: "Mesudiye",
+        designVersionId: "des_ott_mesudiye",
         hitPoints: 34,
         maxHitPoints: 34,
         speed: 13,
@@ -319,6 +328,7 @@
         id: "esp_numancia",
         name: "Numancia",
         classId: "Numancia",
+        designVersionId: "des_esp_numancia",
         hitPoints: 30,
         maxHitPoints: 30,
         speed: 12,
@@ -332,17 +342,59 @@
   nationId: "netherlands"
   name: "Koninklijke Marine"
   locationAreaId: "ned_home_coast"
-  ships: []
+  ships:
+    - {
+        id: "nld_schorpioen",
+        name: "Schorpioen",
+        classId: "Schorpioen",
+        designVersionId: "des_nld_schorpioen",
+        hitPoints: 20,
+        maxHitPoints: 20,
+        speed: 12,
+        firepower: 12,
+        armor: 14,
+        isUnderConstruction: false,
+        constructionProgress: 0,
+        constructionTotalWork: 0,
+      }
 - id: "fleet_nld_dei"
   nationId: "netherlands"
   name: "Indische Militaire Marine"
   locationAreaId: "dei_java"
-  ships: []
+  ships:
+    - {
+        id: "nld_buffel",
+        name: "Buffel",
+        classId: "Buffel",
+        designVersionId: "des_nld_buffel",
+        hitPoints: 20,
+        maxHitPoints: 20,
+        speed: 12,
+        firepower: 12,
+        armor: 14,
+        isUnderConstruction: false,
+        constructionProgress: 0,
+        constructionTotalWork: 0,
+      }
 - id: "fleet_por_home"
   nationId: "portugal"
   name: "Marinha Portuguesa"
   locationAreaId: "por_home_coast"
-  ships: []
+  ships:
+    - {
+        id: "por_vasco_da_gama",
+        name: "Vasco da Gama",
+        classId: "Vasco da Gama",
+        designVersionId: "des_por_vasco_da_gama",
+        hitPoints: 24,
+        maxHitPoints: 24,
+        speed: 13,
+        firepower: 14,
+        armor: 15,
+        isUnderConstruction: false,
+        constructionProgress: 0,
+        constructionTotalWork: 0,
+      }
 - id: "fleet_chi_north"
   nationId: "qing"
   name: "Beiyang Fleet"
@@ -366,4 +418,18 @@
   nationId: "brazil"
   name: "Armada Imperial"
   locationAreaId: "bra_rio_coast"
-  ships: []
+  ships:
+    - {
+        id: "bra_brasil",
+        name: "Brasil",
+        classId: "Brasil",
+        designVersionId: "des_bra_brasil",
+        hitPoints: 18,
+        maxHitPoints: 18,
+        speed: 12,
+        firepower: 12,
+        armor: 13,
+        isUnderConstruction: false,
+        constructionProgress: 0,
+        constructionTotalWork: 0,
+      }

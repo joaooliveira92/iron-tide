@@ -130,7 +130,8 @@ export function buildPrioritiesProjection(
   const constructionSpend = totalPaidWork(nation);
   const fleetMaintenance = nation.fleets.reduce(
     (sum, fleet) =>
-      sum + fleet.ships.reduce((s, ship) => s + shipMaintenanceCost(Number(ship.hitPoints)), 0),
+      sum +
+      fleet.ships.reduce((s, ship) => s + shipMaintenanceCost(ship.hitPoints, ship.readiness), 0),
     0,
   );
   const projectedBalance =
@@ -151,7 +152,7 @@ export function buildPrioritiesProjection(
         type: "monthly_deficit",
         severity,
         title: "Monthly deficit",
-        summary: `Projected balance ${projectedBalance.toLocaleString()} — expenditure exceeds naval appropriation.`,
+        summary: `Projected balance ${projectedBalance} — expenditure exceeds naval appropriation.`,
         reason: `monthly_deficit: appropriation ${monthlyAppropriation} − maintenance ${fleetMaintenance} − construction ${constructionSpend} − research ${researchSpend} = ${projectedBalance}; treasury ${treasury} ${critical ? "insolvent" : "still solvent"}`,
         destination: destinationForType("monthly_deficit"),
         fingerprint,
@@ -172,7 +173,7 @@ export function buildPrioritiesProjection(
           type: "critical_cash_reserve",
           severity: "warning",
           title: "Critical cash reserve",
-          summary: `Treasury ${treasury.toLocaleString()} below one month's expenditure ${threshold.toLocaleString()}.`,
+          summary: `Treasury ${treasury} below one month's expenditure ${threshold}.`,
           reason: `critical_cash_reserve: treasury ${treasury} < max(totalMonthlyExpenditure ${totalMonthlyExpenditure}, 1) = ${threshold}`,
           destination: destinationForType("critical_cash_reserve"),
           fingerprint,
@@ -195,7 +196,7 @@ export function buildPrioritiesProjection(
           type: "low_research_spending",
           severity: "warning",
           title: "Low research spending",
-          summary: `Research ${researchSpend.toLocaleString()} is below ${MIN_RESEARCH_SHARE_BP / 100}% of naval appropriation ${monthlyAppropriation.toLocaleString()}.`,
+          summary: `Research ${researchSpend} is below ${MIN_RESEARCH_SHARE_BP / 100}% of naval appropriation ${monthlyAppropriation}.`,
           reason: `low_research_spending: researchSpend ${researchSpend} * 10_000 < monthlyAppropriation ${monthlyAppropriation} * ${MIN_RESEARCH_SHARE_BP}`,
           destination: destinationForType("low_research_spending"),
           fingerprint,
@@ -220,7 +221,7 @@ export function buildPrioritiesProjection(
           type: "construction_near_completion",
           severity: "information",
           title: "Construction near completion",
-          summary: `Project ${project.id} is ${((completed / total) * 100).toFixed(0)}% complete — reallocate yards on completion.`,
+          summary: `Project ${project.id} is ${Math.floor((completed * 100) / total)}% complete — reallocate yards on completion.`,
           reason: `construction_near_completion: project ${project.id} completedWork ${completed} / totalWork ${total} >= ${NEAR_COMPLETION_WORK_RATIO}`,
           destination: destinationForType("construction_near_completion"),
           fingerprint,

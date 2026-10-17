@@ -44,8 +44,6 @@ export const AIR_DEFENSE_SYSTEM_DEFINITION_FIELD_KEYS = [
   "contentHash",
 ] as const;
 
-// ---- Layer and category literals ----
-
 export const Layer = {
   HEAVY_AA: "HEAVY_AA" as const,
   MEDIUM_AA: "MEDIUM_AA" as const,
@@ -99,8 +97,6 @@ function safeIntSchema(
     }),
   );
 }
-
-// ---- AirDefenseSystemDefinition interface ----
 
 export interface AirDefenseSystemDefinition {
   systemId: string;
@@ -262,8 +258,6 @@ export function validateAirDefenseSystemDefinition(value: unknown): AirDefenseSy
   return result.success as AirDefenseSystemDefinition;
 }
 
-// ---- createAirDefenseSystemDefinition ----
-
 /**
  * Only `undefined` selects a default. The pre-migration Zod `.partial()` pass
  * accepted `undefined` for an omitted field but rejected a supplied `null`;
@@ -339,13 +333,9 @@ export function createAirDefenseSystemDefinition(
   return validateAirDefenseSystemDefinition(merged);
 }
 
-// ---- isValidLayer ----
-
 export function isValidLayer(layer: string): layer is LayerId {
   return ["HEAVY_AA", "MEDIUM_AA", "LIGHT_AA", "CIWS_TERMINAL_DEFENSE"].includes(layer);
 }
-
-// ---- isValidCategory ----
 
 export function isValidCategory(category: string): category is CategoryId {
   return ["HEAVY_AA", "MEDIUM_AA", "LIGHT_AA", "CIWS_TERMINAL_DEFENSE"].includes(category);

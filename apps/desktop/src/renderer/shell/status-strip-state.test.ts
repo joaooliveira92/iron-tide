@@ -27,8 +27,8 @@ function projection(overrides: Partial<PlayerProjection> = {}): PlayerProjection
             name: "Home",
             areaId: "a_home",
             ships: [
-              { name: "A", designId: "d" },
-              { name: "B", designId: "d" },
+              { name: "A", designId: "d", readiness: "ACTIVE", crewQuality: 100 },
+              { name: "B", designId: "d", readiness: "ACTIVE", crewQuality: 100 },
             ],
           },
         ],
@@ -36,8 +36,16 @@ function projection(overrides: Partial<PlayerProjection> = {}): PlayerProjection
       {
         name: "Far",
         divisions: [
-          { name: "Far", areaId: "a_foreign", ships: [{ name: "C", designId: "d" }] },
-          { name: "Sea", areaId: "a_sea", ships: [{ name: "D", designId: "d" }] },
+          {
+            name: "Far",
+            areaId: "a_foreign",
+            ships: [{ name: "C", designId: "d", readiness: "ACTIVE", crewQuality: 100 }],
+          },
+          {
+            name: "Sea",
+            areaId: "a_sea",
+            ships: [{ name: "D", designId: "d", readiness: "ACTIVE", crewQuality: 100 }],
+          },
         ],
       },
     ],

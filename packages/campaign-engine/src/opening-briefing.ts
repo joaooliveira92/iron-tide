@@ -82,21 +82,17 @@ export interface OpeningBriefingProjection {
   readonly immediateConcerns: readonly OpeningBriefingConcern[];
 }
 
-/**
- * Versioned replication of the engine's per-ship maintenance formula
- * (`packages/phase-engine/src/month.ts` `computeMaintenanceCost`: floor of
- * `hitPoints * 10 / 100`). `campaign-engine` cannot import `phase-engine`
- * (package boundary), so the formula is reproduced here, pinned by a test.
- * The compiled `NationState.maintenanceCost` is always 0 before the first
- * `commitMonth` (compiler sets it unconditionally and `commitMonth` is the
- * only place it is populated), so the briefing must derive it from ships.
- */
-export const MAINTENANCE_FORMULA_ID = "maintenance_v1";
-export const MAINTENANCE_FORMULA_VERSION = "1.0.0";
-
-export function shipMaintenanceCost(hitPoints: number): number {
-  return Math.floor((hitPoints * 10) / 100);
-}
+// S-1: the per-ship maintenance formula and its readiness-state multipliers are
+// owned by `@bluewave/campaign` (ADR-0223) so the maintenance phase, the opening
+// briefing and the player projection share one source. Re-exported for existing
+// callers. The compiled `NationState.maintenanceCost` is always 0 before the
+// first `commitMonth`, so the briefing must derive it from ships.
+import {
+  MAINTENANCE_FORMULA_ID,
+  MAINTENANCE_FORMULA_VERSION,
+  shipMaintenanceCost,
+} from "@bluewave/campaign";
+export { MAINTENANCE_FORMULA_ID, MAINTENANCE_FORMULA_VERSION, shipMaintenanceCost };
 
 /**
  * Qualitative treasury status (spec §8 page 3): lightweight UI-only threshold
@@ -181,7 +177,8 @@ export function buildOpeningBriefingProjection(
   // `nation.maintenanceCost`, which is always 0 before the first commitMonth.
   const fleetMaintenance = nation.fleets.reduce(
     (sum, fleet) =>
-      sum + fleet.ships.reduce((s, ship) => s + shipMaintenanceCost(Number(ship.hitPoints)), 0),
+      sum +
+      fleet.ships.reduce((s, ship) => s + shipMaintenanceCost(ship.hitPoints, ship.readiness), 0),
     0,
   );
 

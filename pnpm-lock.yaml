@@ -122,6 +122,9 @@ importers:
       '@bluewave/events':
         specifier: workspace:*
         version: link:../../packages/events
+      '@bluewave/messages':
+        specifier: workspace:*
+        version: link:../../packages/messages
       '@bluewave/persistence':
         specifier: workspace:*
         version: link:../../packages/persistence
@@ -527,6 +530,28 @@ importers:
         specifier: workspace:*
         version: link:../../vendor/effect
 
+  packages/messages:
+    dependencies:
+      '@bluewave/campaign':
+        specifier: workspace:*
+        version: link:../campaign
+      '@bluewave/deterministic':
+        specifier: workspace:*
+        version: link:../deterministic
+      '@bluewave/events':
+        specifier: workspace:*
+        version: link:../events
+      effect:
+        specifier: workspace:*
+        version: link:../../vendor/effect
+    devDependencies:
+      '@bluewave/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@bluewave/test-support':
+        specifier: workspace:*
+        version: link:../test-support
+
   packages/persistence:
     dependencies:
       '@bluewave/campaign':
@@ -580,6 +605,9 @@ importers:
       '@bluewave/events':
         specifier: workspace:*
         version: link:../events
+      '@bluewave/messages':
+        specifier: workspace:*
+        version: link:../messages
       '@bluewave/persistence':
         specifier: workspace:*
         version: link:../persistence

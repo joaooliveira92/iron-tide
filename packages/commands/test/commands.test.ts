@@ -341,6 +341,8 @@ describe("division commands (AC-3)", () => {
                 isUnderConstruction: false,
                 constructionProgress: SafeInt(0),
                 constructionTotalWork: SafeInt(0),
+                readiness: "ACTIVE",
+                crewQuality: SafeInt(100),
               },
             ],
           },

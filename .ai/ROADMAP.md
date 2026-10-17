@@ -1,53 +1,51 @@
-# Bluewave Engine and Compiler Roadmap
+# Bluewave Roadmap
 
-> **Superseded (2026-08-16).** This file describes the original B0–B10 bootstrap
-> roadmap (Milestone 1). The living backlog is `.ai/SPRINT-PLAN.md` (Tracks A–E,
-> CONTENT, REL). Kept for historical reference only.
+Direction for reaching _Rule the Waves 3_ rules parity. The RTW3 manual is
+authoritative for mechanics, terminology and design intent, not for scope. Sprints,
+acceptance criteria and evidence live in `.ai/SPRINT-PLAN.md`.
 
-## B0: Repository and governance
+## Accepted scope (2026-10-15)
 
-Create the workspace, strict TypeScript policies, package boundaries, CI entry points, ADR framework, traceability index, Git rules, and agent material.
+- **Sole start: 1880**, a deliberate choice, not a gap against the manual's 1890.
+  The scenario is production, never "experimental". No 1890 or other start without
+  a new accepted decision.
+- **Horizon:** authored technology through 1939. 1960 and the 1970 end are out of
+  scope; radar-centric, missile-era and postwar warfare await a separate expansion.
+- **Roster:** ten manual-backed nations are playable for the deliberate 1880-only
+  release: the manual's nine plus the USA (ADR-0214). Four others are AI-only until
+  each passes the readiness gate.
+- **Presentation:** units, currency, theme and accessibility are display
+  preferences over canonical values; they never change simulation. Currency modes:
+  Naval Credits (NC, default), National Historical (only with a validated national
+  configuration, never silently substituted), Budget Points (BP); no custom currency. UI language is English (en-US fallback); formatting locale is separate.
 
-## B1: Deterministic primitives and diagnostics
+## Where we are
 
-Implement branded integers, checked arithmetic, explicit rounding, stable IDs, canonical serializer, SHA-256 envelopes, structured diagnostics, and ambient-input guards.
+- Combat engine is deep but mostly unreachable from a campaign.
+- Ship building is the strongest vertical.
+- The strategic layer is thin: no prestige, unrest, events, treaties, readiness states, trade war or invasions.
+- AI is legal-random for budget and research.
+- An Options screen exists but is a single stub; there is no preferences domain.
 
-## B2: Minimal content compiler
+## Order
 
-Compile a manifest-driven, safe YAML fixture into a canonical artifact through typed immutable stages. Prove stable ordering, strict fields, reference validation, cancellation, and atomic output.
+1. Selectively restore and re-baseline documentation (decision request 0001). The
+   gate has a finite exit; artifacts that never existed are registered as unavailable
+   and replaced, not waited for.
+2. Record 1880 as sole start; strip language implying 1890.
+3. Validate and complete the 1880 scenario for the ten playable nations.
+4. Define canonical units and money representation.
+5. Preferences architecture, then the Options screen.
+6. Manual-backed strategic systems (a game you can lose).
+7. Player-fought battles integrated into campaign progression.
+8. Goal-directed AI replacing random decisions.
+9. Validate ten nations; promote the other four one at a time.
+10. Release validation across themes, units, currencies, accessibility, packaged
+    builds.
 
-## B3: Reduced-fixture campaign compiler
+## Rules that stay
 
-Compile a clearly non-production 1880 fixture into a validated initial snapshot containing the minimum connected world, nation, fleet, research, war, and persistence aggregates.
-
-## B4: Commands and strategic phases
-
-Add versioned command envelopes, idempotency, validation, reservation, locking, explicit outcomes, domain events, and the versioned monthly phase registry.
-
-## B5: One meaningful month
-
-Execute opening validation, one player command, appropriation, obligation, paid construction progress, a named deterministic research or project decision, closing validation, canonicalization, and hashes. Deferred phases execute only as explicit controlled no-ops.
-
-## B6: Persistence and replay
-
-Add content-addressed directory saves, ledgers, atomic commit and recovery, load, continuation, replay verification, cancellation cleanup, and compatibility rejection.
-
-## B7: Battle auto-resolution
-
-Add canonical battle manifests and a narrow explained deterministic opposed resolver mapped to campaign assets. Do not claim tactical equivalence.
-
-## B8: Determinism gate
-
-Prove identical fixture, save, ledger, and replay hashes across process restarts and Linux, Windows, and macOS with pinned tooling.
-
-## B9: Electron boundary
-
-Add secure main/preload/renderer separation, narrow Zod-validated capabilities, cancellation, CSP, navigation controls, and a packaged smoke test. Keep React non-authoritative.
-
-## B10: Milestone 1 expansion
-
-Expand economy, research, design, construction, deployment, diplomacy, war and peace, AI legality, and full scenario readiness gates through separate vertical slices.
-
-## Release principle
-
-A package scaffold or schema row does not make a campaign start-ready. Production support requires compilation, first monthly turn, battle or auto-resolution path, save/load continuation, replay, invariants, and repeated hash proof.
+- A capability counts only when a deterministic test drives it from a compiled
+  campaign month and observes authoritative state.
+- Determinism, boundary decoding and the runtime-free renderer are not traded away.
+- Values the manual lacks are researched or escalated, never invented.

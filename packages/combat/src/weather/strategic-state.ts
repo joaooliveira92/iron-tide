@@ -69,8 +69,6 @@ export interface StrategicWeatherState {
   stateHash: string;
 }
 
-// ---- Guard helpers ----
-
 function typeError(s: StrategicWeatherState, field: string, value: unknown, reason: string): never {
   throw new BluewaveError(INVALID_STRATEGIC_WEATHER_STATE, {
     code: INVALID_STRATEGIC_WEATHER_STATE,
@@ -202,8 +200,6 @@ export function assertFixedPointStrategicWeather(s: StrategicWeatherState): void
   requireString(s, "formulaVersion", s.formulaVersion);
   requireString(s, "rngVersion", s.rngVersion);
 }
-
-// ---- State hash ----
 
 // Authoritative deterministic state hash: canonicalSerialize + sha256 over the
 // non-hash surface, domain-separated with the weather_v1 compatibility version.

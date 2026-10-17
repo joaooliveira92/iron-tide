@@ -1,3 +1,4 @@
+import { groupedInteger } from "./numberText.js";
 import type { ComponentCategory } from "./component.js";
 import type { Finding } from "./findings.js";
 import { placementTarget, sortFindings, zoneTarget, type FindingTarget } from "./findings.js";
@@ -89,7 +90,7 @@ export interface ArrangementResult {
 }
 
 const BP = 10_000n;
-const fmt = (n: number) => n.toLocaleString("en-US");
+const fmt = (n: number) => groupedInteger(n);
 
 /** Structural checks on a zone set; returns problems (empty = valid). */
 export function checkZoneSet(zones: readonly ZoneDef[]): string[] {

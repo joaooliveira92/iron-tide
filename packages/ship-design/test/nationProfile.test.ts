@@ -25,6 +25,7 @@ import {
   type ProfileIssue,
   type StarterDesign,
 } from "../src/index.js";
+import { renderExplanation } from "./helpers/explanation.js";
 import {
   components,
   navalProfiles,
@@ -254,7 +255,7 @@ describe("national starters", () => {
         const env = shipBuildingContent.environmentFor("1880-01", nation);
         const r = compileDesign(s.draft, env.ctx);
         const blocking = r.findings.filter((f) => f.severity === "BLOCKING");
-        expect(blocking.map((f) => `${s.id} ${f.id}: ${f.what}`)).toEqual([]);
+        expect(blocking.map((f) => `${s.id} ${f.id}: ${renderExplanation(f.what)}`)).toEqual([]);
         expect(r.valid, s.id).toBe(true);
         expect(r.naturalClass, s.id).toBe(type);
       }

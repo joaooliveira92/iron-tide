@@ -6,12 +6,13 @@
 // authoring (designs.yaml and all design fixtures) stays human-friendly in
 // millimetres and knots; the campaign compiler normalizes to the canonical
 // units below, and display/projection consumers convert back for presentation.
+//
+// The canonical constants are declared once in `@bluewave/contracts` (ADR-0202,
+// map D2) and re-exported here; only the authoring/display conversions are local.
 
-/** 1 millimetre in micrometres. */
-export const MM_TO_UM = 1000;
+import { KNOTS_TO_UMS, MM_TO_UM } from "@bluewave/contracts";
 
-/** 1 knot in micrometres per second (1 kt = 0.514444 m/s). */
-export const KNOTS_TO_UMS = 514_444;
+export { KNOTS_TO_UMS, MM_TO_UM };
 
 /**
  * Convert an authored design value in knots to canonical micrometres per second.

@@ -13,9 +13,12 @@
     "fleets": ["fleets.yaml"],
     "economies": ["economies.yaml"],
     "constructions": ["constructions.yaml"],
+    "diplomacy": ["diplomacy.yaml"],
     "research": ["research.yaml"],
     "designs": ["designs.yaml"],
-    "presentation": ["presentation.yaml"]
+    "divisions": ["divisions.yaml"],
+    "presentation": ["presentation.yaml"],
+    "ui": ["ui/en-US.yaml"]
   },
   "shipBuilding": {
     "shipComponents": ["ship-building/components.yaml"],
