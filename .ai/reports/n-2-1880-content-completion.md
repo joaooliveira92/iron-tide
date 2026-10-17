@@ -70,6 +70,24 @@ treasury squeeze is the same. The perf tripwire is left unmodified.
 `pnpm check:golden-repin` reported its range (`1f34161…`) unavailable and
 skipped; the synthetic golden did not move, and `check:golden` confirms it.
 
+### CI baseline on the PR
+
+The PR's three red jobs are the pre-existing baseline recorded by N-1
+(`.ai/reports/n-1-1880-scenario-audit.md`, "Pre-existing validation baseline"),
+not N-2 regressions:
+
+- **quality** — the perf tripwire fails at month 10 with the Portugal
+  `NEGATIVE_TREASURY_OBLIGATION` (same baseline; the tripwire is unmodified).
+- **determinism (windows-latest)** — the three documented Windows path /
+  directory-order tests (`schemaCoverage`, `manifestAuthority`,
+  `shipBuildingDiscovery`).
+- **desktop-e2e** — the debug-only battle-drill spec stalls on the battle dialog
+  intercepting the bottom-nav click (the documented debug-spec issue; the
+  standard 30/30 suite is unaffected).
+
+Fixing those is S-1/e2e scope and is not part of N-2; the gates were not
+weakened to hide them.
+
 ## Determinism
 
 - No authoritative content, ruleset, or wire-format change moves the synthetic
