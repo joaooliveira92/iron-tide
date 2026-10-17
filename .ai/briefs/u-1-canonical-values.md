@@ -145,7 +145,7 @@ must not materially slow them.
 ## Required delivery
 
 - code and focused tests for each ticket;
-- traceability (SPRINT-PLAN row, `docs/PROGRESS.md`, `.ai/specs/` pointer);
+- traceability (SPRINT-PLAN row, `.ai/reports/*`, `.ai/specs/` pointer);
 - the implementation ADRs, indexed;
 - `.ai/reports/u-1-canonical-values.md` validation report with exact commands and
   observed results;

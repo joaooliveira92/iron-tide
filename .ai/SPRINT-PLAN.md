@@ -175,9 +175,9 @@ after the U-5 run.
    baseline now present). Its sibling N-1 tickets are done.
 7. **S-1 (readiness and maintenance):** ticket **01** is done (per-ship readiness +
    crew state; compatibility bumped 2.0.0 → 3.0.0). Tickets **02–07, 09** are
-   `ready-for-agent`; ticket **08** (author production values) and the production
-   constants of 02–06 are gated by decision request **0007** (fixture-class constants
-   carry 02–06 until it resolves).
+   structurally sliced but **queued on decision request 0007**: tickets 02–06 charge
+   and ramp with production values, so shipping placeholder rates would embed a
+   speculative default — only the value-free structure (ticket 01) has landed.
 8. **S-2 (prestige and career)** tickets **02–07, 09** are `ready-for-agent`; ticket
    **01** and, transitively, the sprint are blocked on decision request **0006**;
    ticket **08** (production values) on **0003**.
@@ -187,7 +187,17 @@ after the U-5 run.
 Owner decisions outstanding: **0003** (prestige values), **0004** (mine inventory),
 **0005** (officer rosters/divisions golden repin), **0006** (prestige field vs
 untouched production), **0007** (S-1 readiness/crew/maintenance values), **0008**
-(baseline restoration). The actionable frontier is the **S-1 structural lane (02–07, 09)**, then the **S-2 structural lane (02–07, 09)**.
+(baseline restoration). Decision-ready packets for **0005–0008** are in
+`.ai/decision-requests/`.
+
+**Frontier assessment (reconciled 2026-10-17):** no implementation lane is
+independently acceptable right now. The S-1 and S-2 lanes are queued on **0007** and
+**0006**; N-1 ticket 07 is queued on **0005**. The only decision-independent work is
+governance (this reconciliation pass) plus the value-free structural seams already
+landed in S-1 ticket 01. Landing S-1/S-2 further tickets now would mean shipping
+placeholder production values — a speculative default — so those lanes stay queued
+until their owner decisions resolve. See
+`.ai/reports/reconciliation-2026-10-17.md`.
 
 ## Decisions recorded
 

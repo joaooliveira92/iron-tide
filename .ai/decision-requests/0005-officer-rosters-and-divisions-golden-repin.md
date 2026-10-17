@@ -2,7 +2,8 @@
 
 ## Status
 
-Blocked pending owner decision.
+Decision-ready — blocked pending owner decision (golden-baseline precondition
+resolved; see the packet below).
 
 ## Trigger
 
@@ -99,3 +100,53 @@ with the Phase 1 golden baseline, re-pinned in the same commit.
 - ADR-0212 (initial-fleet tech legality) and ADR-0213 (opening posture as authored
   canon; magnitudes are balance choices) recorded and indexed.
 - Ticket 07 left `blocked` with a pointer to this request; no engine code changed.
+
+## Decision-ready packet (reconciled 2026-10-17)
+
+**Status reframe.** The original blocker — no golden baseline — is **resolved**: the
+baseline exists (`golden/hashes.json`, commit `0117adc`, `Golden-Repin:
+baseline-created`), so the same-commit re-pin path is available. The remaining
+question is owner approval of the behavioural change itself.
+
+**Exact question requiring owner authority.** Approve landing N-1 ticket 07's
+behavioural command-structure change — per-nation officer rosters
+(`packages/campaign/src/officers.ts`) and seeded 1880 divisions (a new authored
+collection plus `packages/campaign/src/nationCompilation.ts` wiring) — which moves the
+cross-process golden reference hashes, re-pinned in the same commit?
+
+**Affected scope.** N-1 ticket 07 (and N-1 completion); N-2/N-3 transitively;
+`packages/campaign/src/{officers,nationCompilation,state}.ts`;
+`content/production/1880/` (a new divisions collection); `golden/hashes.json`
+(same-commit re-pin); the reference run `packages/cross-process-test/src/run-child.ts`;
+the production-pack loop test. Acceptance: N-1's per-nation report and the reference
+run re-pinned with an understood cause.
+
+**Known constraints and invariants.** Determinism (identical hashes across OSes);
+`scripts/verify-golden-repin.mjs` requires a same-commit re-pin with old/new/cause;
+ADR-0213 permits authored opening-posture magnitudes as `provenance.kind:
+balance_adjustment`; the manual grounds command structure but supplies no roster
+magnitudes; compatibility-version policy on `NationState` changes.
+
+**Options.** A — implement now, re-pin in the same commit (the original Option A,
+now that the baseline exists). B — implement with a new gate trailer for pre-baseline
+behavioural changes (no longer needed). C — the false `not-needed` trailer (rejected).
+
+**Consequences.** _Gameplay:_ nations gain distinct officer rosters and initial
+divisions (command and division assignment). _Determinism:_ reference hashes move,
+with an understood cause; re-pinned in-commit. _Saves:_ `NationState` populates
+`officers`/`divisions`; a compatibility bump may be required if required-ness
+changes. _Wire:_ none. _Balance:_ roster/division magnitudes are balance choices
+(ADR-0213). _Content:_ a new authored divisions collection. _Tests:_ re-pin the
+reference golden and any pinned snapshot tests. _Migration:_ a prior-version save is
+refused or migrated per policy.
+
+**Recommendation.** Option A. The baseline now exists, so ticket 07 can land honestly
+with a same-commit re-pin; magnitudes are authored as ADR-0213 balance choices unless
+the owner supplies sourced values.
+
+**Minimum owner response to unblock.** "Approve the N-1/07 officer-roster and
+division change with a same-commit golden re-pin; magnitudes may be authored as
+ADR-0213 balance choices" (or supply values / decline).
+
+**Must not be guessed.** That the reference hashes move (they do); whether that
+behavioural change is acceptable; the provenance of roster/division magnitudes.

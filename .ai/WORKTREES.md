@@ -24,7 +24,5 @@ Direction lives in [`ROADMAP.md`](ROADMAP.md); the backlog in
 <!-- worktrees:begin -->
 | Slug | Branch | Scope | Owner | Status | Base | Created | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| u-3-formatting-boundary | feat/u-3-formatting-boundary | .scratch/u-3-formatting-boundary | orchestrator | active | dev | 2026-10-16 | — |
-| u-4-options-screen | feat/u-4-options-screen | .scratch/u-4-options-screen | orchestrator | active | dev | 2026-10-16 | — |
-| determinism-gate-hardening | feat/determinism-gate-hardening | .scratch/determinism-gate-hardening | orchestrator | active | dev | 2026-10-16 | — |
+| work | dev | (primary dev checkout, not an effort) | user | active | dev | — | — |
 <!-- worktrees:end -->
