@@ -55,4 +55,30 @@ describe("production part index carries the torpedo family (13a)", () => {
     if (whitehead?.family !== "torpedo") return;
     expect(whitehead.spec.warheadExplosiveMassKg).toBe(12);
   });
+
+  it("pins the canonical 14-inch Whitehead id and keeps it connected to its references (#40)", () => {
+    const byId = index?.byId ?? {};
+    const whitehead = byId["whitehead_14in_1886"];
+    // The id is a canonical repository label with a retrospective vintage year, not a
+    // manufacturer or service designation: docs/research/n-2-whitehead-14in-identity.md §4-§5.
+    expect(whitehead?.family).toBe("torpedo");
+    expect(whitehead?.lifecycle?.availableFrom).toBe("1880-01");
+    expect(whitehead?.revisions.map((r) => r.from)).toEqual(["1884-01"]);
+
+    const components = (bundle.shipBuilding?.components ?? []) as readonly {
+      torpedoMount?: { torpedoModelId?: string };
+    }[];
+    const mountedModelIds = components.flatMap((component) =>
+      component.torpedoMount?.torpedoModelId === undefined
+        ? []
+        : [component.torpedoMount.torpedoModelId],
+    );
+    // Every torpedo mount names an indexed torpedo part (no dangling model reference) and the
+    // 14-inch Whitehead is one of them (the id is not orphaned from the content).
+    expect(mountedModelIds.length).toBeGreaterThan(0);
+    for (const modelId of mountedModelIds) {
+      expect(byId[modelId]?.family, modelId).toBe("torpedo");
+    }
+    expect(mountedModelIds).toContain("whitehead_14in_1886");
+  });
 });

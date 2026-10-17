@@ -1,6 +1,7 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/campaign";
 import { CampaignCompiler } from "@bluewave/campaign/compiler";
 import { generateBattles } from "@bluewave/combat";
@@ -345,4 +346,151 @@ function run(): void {
   }
 }
 
-run();
+/**
+ * N-2 acceptance (#31): command-free 12-month production smoke run over all
+ * fourteen committed nations. The compiled production pack is advanced a full
+ * game year with the same per-month seed the desktop turn transaction derives,
+ * so the run reaches the known S-1 Portugal/Netherlands treasury event. Two
+ * in-process passes prove repeatability; the caller compares two fresh
+ * processes for the cross-process byte-identity proof.
+ */
+const PRODUCTION_SMOKE_MONTHS = 12;
+const PRODUCTION_SMOKE_SEED = "ten-nation-smoke-1880";
+const PRODUCTION_PACK_DIR = resolve(
+  fileURLToPath(new URL(".", import.meta.url)),
+  "..",
+  "..",
+  "..",
+  "content",
+  "production",
+  "1880",
+);
+
+function compileProductionCampaign(): { state: CampaignState; contentHash: string } {
+  const collector = new DiagnosticCollector();
+  const signal = new AbortController().signal;
+  const input = buildFullSurfaceInput(
+    resolve(PRODUCTION_PACK_DIR, "pack.json"),
+    PRODUCTION_PACK_DIR,
+    collector,
+  );
+  const artifact = input ? buildContentBundleArtifact(input, signal, collector) : undefined;
+  if (!artifact || collector.hasErrors) {
+    throw new Error(
+      `Production pack compilation failed: ${collector.all.map((d) => d.message).join("; ")}`,
+    );
+  }
+  const output = new CampaignCompiler().compile(
+    {
+      contentBundle: artifact.bundle,
+      contentHash: artifact.envelope.bodyHash,
+      rulesetVersion: "1.0",
+      compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
+    },
+    signal,
+    collector,
+  );
+  if (!output || collector.hasErrors) {
+    throw new Error(
+      `Production pack compilation failed: ${collector.all.map((d) => d.message).join("; ")}`,
+    );
+  }
+  return { state: output.state, contentHash: output.contentHash };
+}
+
+interface SmokeDiagnostic {
+  readonly month: number;
+  readonly nationId: string | null;
+  readonly code: string;
+  readonly message: string;
+}
+
+function nationIdOf(diagnostic: { readonly message: string }): string | null {
+  const match = /^Nation (\S+) /.exec(diagnostic.message);
+  return match?.[1] ?? null;
+}
+
+function hullCounts(snapshot: CampaignSnapshot): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const [nationId, nation] of snapshot.nations) {
+    counts[nationId] = nation.fleets.reduce((total, fleet) => total + fleet.ships.length, 0);
+  }
+  return counts;
+}
+
+function advanceProductionSmoke(initial: CampaignSnapshot): {
+  readonly monthlyHashes: string[];
+  readonly monthlySuccess: boolean[];
+  readonly closingSnapshotHash: string;
+  readonly success: boolean;
+  readonly diagnostics: SmokeDiagnostic[];
+  readonly hullCounts: Record<string, number>;
+} {
+  let snapshot = initial;
+  const monthlyHashes: string[] = [];
+  const monthlySuccess: boolean[] = [];
+  const diagnostics: SmokeDiagnostic[] = [];
+  let success = true;
+  for (let index = 0; index < PRODUCTION_SMOKE_MONTHS; index++) {
+    const collector = new DiagnosticCollector();
+    const result = new MonthExecutor().execute(
+      snapshot,
+      [],
+      `${PRODUCTION_SMOKE_SEED}:month:${String(snapshot.turnNumber)}`,
+      collector,
+    );
+    success = success && result.success;
+    monthlySuccess.push(result.success);
+    for (const diagnostic of collector.errors) {
+      diagnostics.push({
+        month: index + 1,
+        nationId: nationIdOf(diagnostic),
+        code: diagnostic.code,
+        message: diagnostic.message,
+      });
+    }
+    monthlyHashes.push(hashSnapshot(result.finalSnapshot));
+    snapshot = {
+      ...result.finalSnapshot,
+      turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt.ONE),
+    };
+  }
+  return {
+    monthlyHashes,
+    monthlySuccess,
+    closingSnapshotHash: hashSnapshot(snapshot),
+    success,
+    diagnostics,
+    hullCounts: hullCounts(snapshot),
+  };
+}
+
+function runProductionTenNationSmoke(): void {
+  const { state } = compileProductionCampaign();
+  const first = advanceProductionSmoke(state.snapshot);
+  const second = advanceProductionSmoke(state.snapshot);
+  const inProcessRepeatMatches =
+    canonicalSerialize(first.monthlyHashes) === canonicalSerialize(second.monthlyHashes) &&
+    first.closingSnapshotHash === second.closingSnapshotHash &&
+    canonicalSerialize(first.diagnostics) === canonicalSerialize(second.diagnostics);
+
+  process.stdout.write(
+    JSON.stringify({
+      mode: "production-ten-nation",
+      months: PRODUCTION_SMOKE_MONTHS,
+      inProcessRepeatMatches,
+      success: first.success && second.success,
+      monthlyHashes: first.monthlyHashes,
+      monthlySuccess: first.monthlySuccess,
+      closingSnapshotHash: first.closingSnapshotHash,
+      diagnostics: first.diagnostics,
+      hullCounts: first.hullCounts,
+    }) + "\n",
+  );
+}
+
+if (process.argv[2] === "production-ten-nation") {
+  runProductionTenNationSmoke();
+} else {
+  run();
+}
