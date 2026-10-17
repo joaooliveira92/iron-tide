@@ -178,7 +178,49 @@
   --color-admiralty-border: #1e2a3b;
   --color-admiralty-accent: #d4a359;
   --color-admiralty-accent-foreground: #05080e;
-  --color-admiralty-signal: #2ab8e6;
+  --color-admiralty-signal: #2ab6e6;
+}
+
+/*
+ * High-contrast theme (U-4 map D3). Applied alongside `.dark` (high contrast is a
+ * dark-based theme); these overrides strengthen the semantic tokens so text and
+ * borders meet a higher contrast bar on every released screen.
+ */
+.high-contrast {
+  --color-background: oklch(0 0 0);
+  --color-foreground: oklch(1 0 0);
+  --color-card: oklch(0 0 0);
+  --color-card-foreground: oklch(1 0 0);
+  --color-popover: oklch(0 0 0);
+  --color-popover-foreground: oklch(1 0 0);
+  --color-primary: oklch(1 0 0);
+  --color-primary-foreground: oklch(0 0 0);
+  --color-secondary: oklch(0.2 0 0);
+  --color-secondary-foreground: oklch(1 0 0);
+  --color-muted: oklch(0.2 0 0);
+  --color-muted-foreground: oklch(0.9 0 0);
+  --color-accent: oklch(0.2 0 0);
+  --color-accent-foreground: oklch(1 0 0);
+  --color-border: oklch(1 0 0);
+  --color-input: oklch(1 0 0 / 45%);
+  --color-ring: oklch(1 0 0);
+  --color-sidebar: oklch(0 0 0);
+  --color-sidebar-foreground: oklch(1 0 0);
+  --color-sidebar-border: oklch(1 0 0);
+}
+
+/*
+ * Reduced motion (U-4 map D4): the stored preference is applied as
+ * `data-reduced-motion="reduce"` on the root, which stops animation and
+ * transition motion app-wide regardless of what a component reads from the OS.
+ */
+:root[data-reduced-motion="reduce"] *,
+:root[data-reduced-motion="reduce"] *::before,
+:root[data-reduced-motion="reduce"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
 }
 
 /*

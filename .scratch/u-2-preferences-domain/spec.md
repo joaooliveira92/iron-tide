@@ -1,6 +1,6 @@
 # Spec: U-2 Preferences domain
 
-**Status:** ready-for-agent (sliced into `issues/`) · **Map:** `map.md` ·
+**Status:** done (sliced into `issues/`) · **Map:** `map.md` ·
 **Decisions:** `decisions/D1`-`D7` · **Authority:** ADR-0203 (architecture),
 ADR-0202 (presentation-only), ADR-0209 (language/locale), ADR-0206/0207/0208/0211
 (currency modes) · **Gating:** none — U-2 is golden-neutral and ungated (D7).

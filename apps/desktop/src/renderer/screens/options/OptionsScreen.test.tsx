@@ -10,19 +10,36 @@ import {
 import { BackgroundProvider } from "../../shell/BackgroundContext.js";
 import { DensityProvider } from "../../shell/DensityContext.js";
 import { FontProvider } from "../../shell/FontContext.js";
+import { ThemeProvider } from "../../shell/ThemeContext.js";
 import { OptionsScreen } from "./OptionsScreen.js";
+
+beforeEach(() => {
+  // jsdom has no matchMedia; ThemeContext and DisplayPreferencesProvider read it.
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  })) as typeof window.matchMedia;
+});
 
 function renderOptions(stub: PreferencesBridgeStub) {
   return render(
     <BridgeProvider bridge={stub.bridge}>
       <PreferencesProvider>
-        <BackgroundProvider>
-          <FontProvider>
-            <DensityProvider>
-              <OptionsScreen />
-            </DensityProvider>
-          </FontProvider>
-        </BackgroundProvider>
+        <ThemeProvider>
+          <BackgroundProvider>
+            <FontProvider>
+              <DensityProvider>
+                <OptionsScreen />
+              </DensityProvider>
+            </FontProvider>
+          </BackgroundProvider>
+        </ThemeProvider>
       </PreferencesProvider>
     </BridgeProvider>,
   );
@@ -109,5 +126,63 @@ describe("OptionsScreen application font", () => {
     await waitFor(() => expect(stub.writes).toHaveLength(1));
     expect(stub.writes[0]?.app.font).toBe("jakarta");
     expect(localStorage.getItem("bluewave-font")).toBeNull();
+  });
+});
+
+describe("OptionsScreen new sections (U-4)", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+  afterEach(cleanup);
+
+  it("offers the high-contrast theme and writes it to the domain", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    fireEvent.click(screen.getByRole("button", { name: "High contrast" }));
+    await waitFor(() => expect(stub.writes).toHaveLength(1));
+    expect(stub.writes[0]?.app.theme).toBe("highContrast");
+  });
+
+  it("changes text scale and clamps within range", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    fireEvent.click(screen.getByRole("button", { name: "Increase text size" }));
+    await waitFor(() => expect(stub.writes).toHaveLength(1));
+    expect(stub.writes[0]?.app.textScale).toBe(105);
+  });
+
+  it("states why National Historical is unavailable and preserves the request", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    fireEvent.click(screen.getByRole("button", { name: "National Historical" }));
+    await waitFor(() =>
+      expect(screen.getByRole("status").textContent).toContain("Available once a campaign is open"),
+    );
+    expect(stub.writes[0]?.app.currencyDisplayMode).toBe("nationalHistorical");
+  });
+
+  it("writes a per-category measurement selection", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    fireEvent.change(screen.getByRole("combobox", { name: "Calibre" }), {
+      target: { value: "millimetres" },
+    });
+    await waitFor(() => expect(stub.writes).toHaveLength(1));
+    expect(stub.writes[0]?.app.measurementSelections["calibre"]).toBe("millimetres");
+  });
+
+  it("resets all preferences to the central defaults", async () => {
+    const stub = createPreferencesBridgeStub();
+    renderOptions(stub);
+    await waitFor(() => expect(stub.readCalls()).toBe(1));
+    fireEvent.click(screen.getByRole("button", { name: "High contrast" }));
+    await waitFor(() => expect(stub.writes).toHaveLength(1));
+    fireEvent.click(screen.getAllByRole("button", { name: "Reset all to defaults" })[0]!);
+    await waitFor(() => expect(stub.writes).toHaveLength(2));
+    expect(stub.writes[1]?.app.theme).toBe("system");
   });
 });

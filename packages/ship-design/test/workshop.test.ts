@@ -14,6 +14,7 @@ import {
   shipBuildingContent,
 } from "./helpers/earlyContext.js";
 import { havock, majestic } from "./helpers/references.js";
+import { renderExplanation } from "./helpers/explanation.js";
 
 const env = (month: string): WorkshopEnvironment => ({
   ctx: earlyContext(month),
@@ -34,10 +35,10 @@ describe("buildWorkshopView", () => {
   });
   it("reports headline metrics with tones and the brief's targets", () => {
     const by = Object.fromEntries(v.metrics.map((m) => [m.id, m]));
-    expect(by.speed!.value).toMatch(/kn \(need 25\.5\)/);
+    expect(renderExplanation(by.speed!.value)).toMatch(/kn \(need 25\.5\)/);
     expect(by.speed!.tone).toBe("ok");
-    expect(by.range!.value).toContain("need 1,200");
-    expect(by.crew!.value).toMatch(/^\d+ \/ \d+$/);
+    expect(renderExplanation(by.range!.value)).toContain("need 1,200");
+    expect(renderExplanation(by.crew!.value)).toMatch(/^\d+ \/ \d+$/);
     expect(v.valid).toBe(true);
     expect(v.naturalClass).toBe("DD");
   });

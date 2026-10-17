@@ -16,6 +16,7 @@ import {
   type LegacyCompileView,
   type ShipBuildingData,
 } from "@bluewave/ship-design";
+import { formatExplanation } from "../../shared/explanation-text.js";
 import {
   buildDesignVersion,
   planDesignStudy,
@@ -125,7 +126,7 @@ export const submitDesignCommandProgram = withSchema(SubmitDesignCommandPayloadS
         reason: "DESIGN_REJECTED",
         diagnostics: compiledView.findings
           .filter((f) => f.severity === "BLOCKING")
-          .map((f) => `${f.what} ${f.why}`),
+          .map((f) => `${formatExplanation(f.what)} ${formatExplanation(f.why)}`),
       });
     }
     const compiled = compiledView.compiled;
@@ -326,7 +327,7 @@ export const reviseProjectCommandProgram = withSchema(
           reason: "REVISION_REJECTED",
           diagnostics: compiledView.findings
             .filter((f) => f.severity === "BLOCKING")
-            .map((f) => `${f.what} ${f.why}`),
+            .map((f) => `${formatExplanation(f.what)} ${formatExplanation(f.why)}`),
         });
       }
       const categories = new Map(content.components.map((c) => [c.id, c.category]));
@@ -462,10 +463,10 @@ export const loadShipDraftProgram = withSchema(LoadShipDraftPayloadSchema, (payl
 /** A `Finding` as the renderer's `RebuildFindingView`. */
 const findingView = (f: Finding): RebuildFindingView => ({
   id: f.id,
-  what: f.what,
-  why: f.why,
-  consequence: f.consequence,
-  remedies: f.remedies.map((r) => r.description),
+  what: formatExplanation(f.what),
+  why: formatExplanation(f.why),
+  consequence: formatExplanation(f.consequence),
+  remedies: f.remedies.map((r) => formatExplanation(r.description)),
 });
 
 /** The bulge requirement as a view finding, using the phase engine's own reason code. */
@@ -573,7 +574,7 @@ function rebuildCheck(
     const blockingProblems = (result: DraftCompileResult): string[] =>
       toLegacyCompileView(result)
         .findings.filter((f) => f.severity === "BLOCKING")
-        .map((f) => `${f.what} ${f.why}`);
+        .map((f) => `${formatExplanation(f.what)} ${formatExplanation(f.why)}`);
     // The retained-hull comparison needs both designs' derived facts, so each must pass the barrier.
     // A draft that does not is a normal "not allowed", never a bridge rejection: the panel renders a
     // `success` view's `designProblems`, and an issue-less rejection would leave it stuck on "Checking…".
@@ -607,7 +608,9 @@ function rebuildCheck(
     const current = currentResult.compiled;
     const designProblems = compiled.valid
       ? []
-      : compiled.findings.filter((f) => f.severity === "BLOCKING").map((f) => `${f.what} ${f.why}`);
+      : compiled.findings
+          .filter((f) => f.severity === "BLOCKING")
+          .map((f) => `${formatExplanation(f.what)} ${formatExplanation(f.why)}`);
     const report = validateRebuild(
       rebuildFactsOf(current, found.draft),
       rebuildFactsOf(compiled, draft),
@@ -675,7 +678,7 @@ export const startRebuildCommandProgram = withSchema(StartRebuildCommandPayloadS
         diagnostics: [
           ...(view.changesNothing ? ["The rebuild changes nothing"] : []),
           ...view.designProblems,
-          ...view.findings.map((f) => `${f.what} ${f.why}`),
+          ...view.findings.map((f) => `${formatExplanation(f.what)} ${formatExplanation(f.why)}`),
         ],
       });
     }

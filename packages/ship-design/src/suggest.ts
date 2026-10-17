@@ -1,3 +1,5 @@
+import { groupedInteger } from "./numberText.js";
+import { explanationKey, quantity, type ExplanationText } from "./explanation.js";
 import type { CompiledDesign, DesignDraft, ShipContext } from "./compile.js";
 import { compileDesign } from "./compile.js";
 import { previewEdit, type DraftEdit } from "./edits.js";
@@ -7,7 +9,7 @@ import { bp, mm } from "./units.js";
 export interface SuggestedFix {
   readonly edit: DraftEdit;
   /** Plain-language description of the change, e.g. "Reduce coal bunkers to 120 t". */
-  readonly description: string;
+  readonly description: ExplanationText;
   readonly resolved: readonly string[];
   readonly introduced: readonly string[];
   readonly countsBefore: Readonly<Record<Severity, number>>;
@@ -16,15 +18,15 @@ export interface SuggestedFix {
 }
 
 const pct = (v: number, p: number) => Math.max(1, Math.floor((v * (100 + p)) / 100));
-const t = (v: number) => `${Math.round(v / 1000).toLocaleString("en-US")} t`;
-const m = (v: number) => `${(v / 1000).toFixed(2)} m`;
+const t = (v: number) => `${groupedInteger(Math.round(v / 1000))} t`;
+const metres = (v: number) => quantity(v, 1000, 2, "metres");
 
 /** The fixed neighbourhood of simple, explainable edits. Pure function of the draft and context: no randomness. */
 export function candidateEdits(
   d: DesignDraft,
   ctx: ShipContext,
-): { edit: DraftEdit; description: string }[] {
-  const out: { edit: DraftEdit; description: string }[] = [];
+): { edit: DraftEdit; description: ExplanationText }[] {
+  const out: { edit: DraftEdit; description: ExplanationText }[] = [];
   const form = ctx.hullForms[d.hull.hullFormId]!.form;
   const mach = d.machinery;
   for (const p of [-85, -70, -50, -30, -20, -10, 10]) {
@@ -36,26 +38,30 @@ export function candidateEdits(
   for (const p of [-40, -20, -10, 10]) {
     out.push({
       edit: { kind: "set_machinery", patch: { installedKw: pct(mach.installedKw, p) } },
-      description: `${p < 0 ? "Reduce" : "Increase"} installed power to ${pct(mach.installedKw, p).toLocaleString("en-US")} kW`,
+      description: `${p < 0 ? "Reduce" : "Increase"} installed power to ${groupedInteger(pct(mach.installedKw, p))} kW`,
     });
   }
   out.push({
     edit: { kind: "set_hull", patch: { draught: mm(pct(d.hull.draught, 5)) } },
-    description: `Raise design draught to ${m(pct(d.hull.draught, 5))} (more buoyancy, less freeboard)`,
+    description: [
+      "Raise design draught to ",
+      metres(pct(d.hull.draught, 5)),
+      " (more buoyancy, less freeboard)",
+    ],
   });
   out.push({
     edit: { kind: "set_hull", patch: { draught: mm(pct(d.hull.draught, -5)) } },
-    description: `Reduce design draught to ${m(pct(d.hull.draught, -5))}`,
+    description: ["Reduce design draught to ", metres(pct(d.hull.draught, -5))],
   });
   const len = Math.min(form.lengthMaxMm, pct(d.hull.lengthWl, 5));
   if (len !== d.hull.lengthWl)
     out.push({
       edit: { kind: "set_hull", patch: { lengthWl: mm(len) } },
-      description: `Lengthen the hull to ${m(len)}`,
+      description: ["Lengthen the hull to ", metres(len)],
     });
   out.push({
     edit: { kind: "set_hull", patch: { beam: mm(pct(d.hull.beam, 5)) } },
-    description: `Widen the beam to ${m(pct(d.hull.beam, 5))}`,
+    description: ["Widen the beam to ", metres(pct(d.hull.beam, 5))],
   });
   out.push({
     edit: {
@@ -109,8 +115,9 @@ export function suggestFixes(
   const results: (SuggestedFix & { score: number[] })[] = [];
   const seen = new Set<string>();
   for (const { edit, description } of candidateEdits(draft, ctx)) {
-    if (seen.has(description)) continue;
-    seen.add(description);
+    const descriptionKey = explanationKey(description);
+    if (seen.has(descriptionKey)) continue;
+    seen.add(descriptionKey);
     let p;
     try {
       p = previewEdit(draft, ctx, edit, base);
@@ -137,7 +144,9 @@ export function suggestFixes(
   results.sort((a, b) => {
     for (let i = 0; i < a.score.length; i++)
       if (a.score[i] !== b.score[i]) return b.score[i]! - a.score[i]!;
-    return a.description < b.description ? -1 : a.description > b.description ? 1 : 0;
+    const aKey = explanationKey(a.description);
+    const bKey = explanationKey(b.description);
+    return aKey < bKey ? -1 : aKey > bKey ? 1 : 0;
   });
   return results.slice(0, limit).map(({ score: _score, ...fix }) => fix);
 }

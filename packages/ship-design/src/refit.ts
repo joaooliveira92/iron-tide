@@ -1,3 +1,5 @@
+import { groupedInteger } from "./numberText.js";
+import { quantity, type ExplanationText } from "./explanation.js";
 import type { FlattenedPart, PartInterface } from "@bluewave/content-schema";
 import { compareCodePoints } from "@bluewave/deterministic";
 import { armourAvailabilityFindings, type ArmourRegion, type ArmourRegionId } from "./armour.js";
@@ -38,10 +40,10 @@ export interface GunChange {
 
 const gunFinding = (
   id: string,
-  what: string,
-  why: string,
-  consequence: string,
-  remedies: readonly (readonly [string, string])[],
+  what: ExplanationText,
+  why: ExplanationText,
+  consequence: ExplanationText,
+  remedies: readonly (readonly [string, ExplanationText])[],
   inputs: Record<string, number> = {},
   threshold = 0,
   value = 1,
@@ -55,7 +57,7 @@ const gunFinding = (
   evidence: { formulaId: "DESIGN-23-21-armament", inputs, threshold, value },
 });
 
-const inches = (um: number) => (um / UM_PER_INCH).toFixed(1);
+const inchValue = (um: number) => quantity(um, UM_PER_INCH, 1, "inches");
 const barrelsWord = (n: number) =>
   n === 1 ? "single" : n === 2 ? "double" : n === 3 ? "triple" : `${n}-barrel`;
 
@@ -80,7 +82,11 @@ export function armamentChangeFindings(
         gunFinding(
           "ARMAMENT_SECONDARY_CHANGE_NOT_ALLOWED",
           "The secondary battery cannot be changed.",
-          `The existing ${barrelsWord(g.barrels)} ${inches(g.caliberUm)} in turret is neither a casemate nor a 6-inch-or-under mounting.`,
+          [
+            `The existing ${barrelsWord(g.barrels)} `,
+            inchValue(g.caliberUm),
+            " in turret is neither a casemate nor a 6-inch-or-under mounting.",
+          ],
           "Only casemates and turrets of 6 inches or smaller may be re-battered.",
           [
             ["keep_battery", "Keep the existing secondary guns."],
@@ -98,7 +104,11 @@ export function armamentChangeFindings(
         gunFinding(
           "ARMAMENT_SECONDARY_TOO_LARGE",
           "A secondary gun would be too large.",
-          `A ${inches(g.caliberUm)} in gun cannot be fitted as a secondary; the limit is 6 inches.`,
+          [
+            "A ",
+            inchValue(g.caliberUm),
+            " in gun cannot be fitted as a secondary; the limit is 6 inches.",
+          ],
           "Secondary and tertiary batteries are limited to 6-inch guns.",
           [
             ["smaller_gun", "Choose a gun of 6 inches or less."],
@@ -132,7 +142,11 @@ export function armamentChangeFindings(
           gunFinding(
             "ARMAMENT_MAIN_GUN_UNCHANGEABLE",
             "A main gun above 6 inches cannot be removed.",
-            `A ${inches(r.caliberUm)} in main gun may only be refreshed with a modern gun of the same calibre.`,
+            [
+              "A ",
+              inchValue(r.caliberUm),
+              " in main gun may only be refreshed with a modern gun of the same calibre.",
+            ],
             "The main battery above 6 inches is fixed for the ship's life.",
             [
               ["refresh", "Fit a modern gun of the same calibre."],
@@ -157,7 +171,13 @@ export function armamentChangeFindings(
         gunFinding(
           "ARMAMENT_INCOMPATIBLE_CALIBRE",
           "The main-battery change is not a compatible swap.",
-          `${barrelsWord(r.barrels)} ${inches(r.caliberUm)} in to ${barrelsWord(a.barrels)} ${inches(a.caliberUm)} in raises the weight of broadside beyond the guns replaced.`,
+          [
+            `${barrelsWord(r.barrels)} `,
+            inchValue(r.caliberUm),
+            ` in to ${barrelsWord(a.barrels)} `,
+            inchValue(a.caliberUm),
+            " in raises the weight of broadside beyond the guns replaced.",
+          ],
           "A refit may trade barrel count against calibre only within a compatible limit.",
           [
             ["fewer_barrels", "Reduce the number of barrels further."],
@@ -288,7 +308,7 @@ const ARMOUR_GATE_IDS: ReadonlySet<string> = new Set([
   "ARMOUR_TECH_UNAVAILABLE",
   "ARMOUR_THICKNESS_UNAVAILABLE",
 ]);
-const fmt = (n: number) => n.toLocaleString("en-US");
+const fmt = (n: number) => groupedInteger(n);
 
 /**
  * The legacy component categories that stood in for part interfaces before SPM-R18. Used only
@@ -761,7 +781,14 @@ export function evaluateRefit(
       !baseline.has(`${x.severity}:${x.id}`) &&
       !ARMOUR_GATE_IDS.has(x.id)
     ) {
-      findings.push({ ...x, id: `REFIT_${x.id}`, what: `Refit would cause: ${x.what}` });
+      findings.push({
+        ...x,
+        id: `REFIT_${x.id}`,
+        what:
+          typeof x.what === "string"
+            ? `Refit would cause: ${x.what}`
+            : ["Refit would cause: ", ...x.what],
+      });
     }
   }
 

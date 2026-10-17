@@ -351,3 +351,18 @@ export {
   visualTraitViolations,
   wholeInchesOf,
 } from "./visual-traits.js";
+
+export {
+  isValidNationalCurrencyConfiguration,
+  NationalCurrencyConfigurationSchema,
+  NationalCurrencyPeriodSchema,
+  NationalCurrencyScaleSchema,
+  validateNationalCurrencyConfiguration,
+} from "./national-currency.js";
+export type {
+  NationalCurrencyConfiguration,
+  NationalCurrencyDiagnostic,
+  NationalCurrencyDiagnosticReason,
+  NationalCurrencyPeriod,
+  NationalCurrencyScale,
+} from "./national-currency.js";

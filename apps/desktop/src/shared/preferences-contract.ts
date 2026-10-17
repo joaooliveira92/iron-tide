@@ -19,7 +19,7 @@ export const PREFERENCE_SCOPES = ["app", "campaign", "session"] as const;
 
 export type PreferenceScope = (typeof PREFERENCE_SCOPES)[number];
 
-export const THEME_PREFERENCES = ["system", "light", "dark"] as const;
+export const THEME_PREFERENCES = ["system", "light", "dark", "highContrast"] as const;
 export type ThemePreference = (typeof THEME_PREFERENCES)[number];
 
 /** The eight existing backdrop styles. */
@@ -126,7 +126,7 @@ export type FormattingLocale = (typeof FORMATTING_LOCALES)[number];
 export const TEXT_SCALE_MIN = 85;
 export const TEXT_SCALE_MAX = 130;
 
-/** The app-scope preferences (D4). `highContrast` is deliberately deferred to U-4. */
+/** The app-scope preferences (D4). */
 export interface AppPreferences {
   readonly theme: ThemePreference;
   readonly background: BackgroundPreference;
@@ -169,4 +169,46 @@ export interface PreferencesSnapshot {
 /** A full-object app-scope write; the renderer sends the merged full object (D6). */
 export interface WriteAppPreferencesRequest {
   readonly app: AppPreferences;
+}
+
+/**
+ * Campaign-scope preferences (D3): display choices that are per-campaign and
+ * stored in a campaign sidecar beside the existing per-campaign files, never
+ * inside the hashed save snapshot. They resolve ahead of the app scope and behind
+ * a session override.
+ */
+export interface CampaignPreferences {
+  readonly showDetailedTooltips: boolean;
+  readonly confirmBeforeTurn: boolean;
+  readonly showUnitFatigue: boolean;
+  readonly showSupplyOverlay: boolean;
+}
+
+export const DEFAULT_CAMPAIGN_PREFERENCES: CampaignPreferences = Object.freeze({
+  showDetailedTooltips: true,
+  confirmBeforeTurn: true,
+  showUnitFatigue: true,
+  showSupplyOverlay: false,
+});
+
+/** The `preferences.writeCampaign` wire request (a full campaign-scope object). */
+export interface WriteCampaignPreferencesRequest {
+  readonly campaign: CampaignPreferences;
+}
+
+/** A decoded campaign-scope snapshot: the format version plus the values. */
+export interface CampaignPreferencesSnapshot {
+  readonly version: number;
+  readonly campaign: CampaignPreferences;
+}
+
+/**
+ * Resolve a scoped preference (D3): `session ?? campaign ?? default`. Pure; a
+ * session override never rewrites the campaign or app value.
+ */
+export function resolveCampaignPreferences(
+  campaign: CampaignPreferences | undefined,
+  session: Partial<CampaignPreferences> | undefined,
+): CampaignPreferences {
+  return { ...DEFAULT_CAMPAIGN_PREFERENCES, ...campaign, ...session };
 }

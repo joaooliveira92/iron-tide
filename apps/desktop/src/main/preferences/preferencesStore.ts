@@ -26,17 +26,54 @@ export function defaultPreferencesSnapshot(): PreferencesSnapshot {
 }
 
 /** The decoded snapshot, or the defaults for a missing/corrupt/undecodable file. */
-function loadPreferencesFile(userDataDir: string): PreferencesSnapshot {
+export interface PreferencesRecovery {
+  readonly snapshot: PreferencesSnapshot;
+  /** True when the stored data could not be used and defaults were substituted. */
+  readonly recovered: boolean;
+  readonly reason: string | null;
+}
+
+/**
+ * Pure, total migration/decoding of the app-scope file (D5, ticket 06). A valid
+ * current-version object decodes; a missing file yields defaults silently; a
+ * corrupt, undecodable or unknown-version object recovers to the central defaults
+ * with a reason so the store can log it. Deterministic and idempotent: the same
+ * raw input always yields the same snapshot.
+ */
+export function migratePreferencesFileData(raw: unknown): PreferencesRecovery {
+  const decoded = Schema.decodeUnknownResult(PreferencesFileSchema, {
+    onExcessProperty: "error",
+  })(raw);
+  if (Result.isFailure(decoded)) {
+    const version =
+      typeof raw === "object" && raw !== null && "version" in raw
+        ? (raw as { readonly version?: unknown }).version
+        : undefined;
+    return {
+      snapshot: defaultPreferencesSnapshot(),
+      recovered: true,
+      reason:
+        typeof version === "number" && version !== PREFERENCES_SCHEMA_VERSION
+          ? `unknown-version:${version}`
+          : "undecodable",
+    };
+  }
+  return {
+    snapshot: { version: decoded.success.version, app: decoded.success.app },
+    recovered: false,
+    reason: null,
+  };
+}
+
+function loadPreferencesFile(userDataDir: string): PreferencesRecovery {
   const path = join(userDataDir, PREFERENCES_FILENAME);
-  if (!existsSync(path)) return defaultPreferencesSnapshot();
+  if (!existsSync(path)) {
+    return { snapshot: defaultPreferencesSnapshot(), recovered: false, reason: null };
+  }
   try {
-    const decoded = Schema.decodeUnknownResult(PreferencesFileSchema, {
-      onExcessProperty: "error",
-    })(JSON.parse(readFileSync(path, "utf8")));
-    if (Result.isFailure(decoded)) return defaultPreferencesSnapshot();
-    return { version: decoded.success.version, app: decoded.success.app };
+    return migratePreferencesFileData(JSON.parse(readFileSync(path, "utf8")));
   } catch {
-    return defaultPreferencesSnapshot();
+    return { snapshot: defaultPreferencesSnapshot(), recovered: true, reason: "unparseable" };
   }
 }
 
@@ -67,9 +104,14 @@ export function preferencesStoreLayer(): Layer.Layer<PreferencesStore, never, Ap
           const userDataDir = yield* paths
             .userDataDir()
             .pipe(Effect.catchTag("CommandFailed", () => Effect.succeed(null)));
-          return userDataDir === null
-            ? defaultPreferencesSnapshot()
-            : loadPreferencesFile(userDataDir);
+          if (userDataDir === null) return defaultPreferencesSnapshot();
+          const recovery = loadPreferencesFile(userDataDir);
+          if (recovery.recovered) {
+            yield* Effect.logWarning(
+              `preferences recovered to defaults (${recovery.reason ?? "unknown"})`,
+            );
+          }
+          return recovery.snapshot;
         }),
       write: (app) =>
         Effect.gen(function* () {

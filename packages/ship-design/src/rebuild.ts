@@ -1,4 +1,6 @@
 import type { CompiledDesign, DesignDraft } from "./compile.js";
+import type { ExplanationText } from "./explanation.js";
+import { quantity } from "./explanation.js";
 import type { Finding } from "./findings.js";
 import { yardFits, type Yard, type YardDemand } from "./yards.js";
 
@@ -77,10 +79,10 @@ const differsBeyond = (from: number, to: number, limitBp: number): boolean =>
 
 const finding = (
   id: string,
-  what: string,
-  why: string,
-  consequence: string,
-  remedies: readonly (readonly [string, string])[],
+  what: ExplanationText,
+  why: ExplanationText,
+  consequence: ExplanationText,
+  remedies: readonly (readonly [string, ExplanationText])[],
   formulaId: string,
   inputs: Record<string, number>,
   threshold: number,
@@ -95,8 +97,8 @@ const finding = (
   evidence: { formulaId, inputs, threshold, value },
 });
 
-const pct = (bp: number) => `${(bp / 100).toFixed(1)} %`;
-const knots = (milli: number) => `${(milli / 1000).toFixed(1)} kn`;
+const pctChange = (bp: number) => quantity(bp, 100, 1, "percentSpaced");
+const knotsChange = (milli: number) => quantity(milli, 1000, 1, "knots");
 
 /**
  * Checks a rebuild of a ship from `source` to `target` against the retained-hull limits, and that some yard can hold the
@@ -141,7 +143,13 @@ export function validateRebuild(
       finding(
         "REBUILD_DISPLACEMENT_LIMIT",
         "The rebuilt ship would be too much heavier than the ship it replaces.",
-        `Displacement rises ${pct(measures.displacementChangeBp)}; a rebuild may add at most ${pct(balance.maxDisplacementIncreaseBp)}.`,
+        [
+          "Displacement rises ",
+          pctChange(measures.displacementChangeBp),
+          "; a rebuild may add at most ",
+          pctChange(balance.maxDisplacementIncreaseBp),
+          ".",
+        ],
         "The retained hull cannot carry that much more; the rebuild is refused.",
         [
           [
@@ -163,7 +171,13 @@ export function validateRebuild(
       finding(
         "REBUILD_SPEED_LIMIT",
         "The rebuilt ship would be too much faster than the ship it replaces.",
-        `Speed rises ${knots(measures.speedChangeMilliKnots)}; a rebuild may add at most ${knots(balance.maxSpeedIncreaseMilliKnots)}.`,
+        [
+          "Speed rises ",
+          knotsChange(measures.speedChangeMilliKnots),
+          "; a rebuild may add at most ",
+          knotsChange(balance.maxSpeedIncreaseMilliKnots),
+          ".",
+        ],
         "The retained hull lines cannot take that much more power; the rebuild is refused.",
         [
           ["reduce_power", "Install less power so the speed gain is within the limit."],
@@ -200,7 +214,13 @@ export function validateRebuild(
         finding(
           id,
           `The rebuilt ship's ${label} would change too much.`,
-          `The ${label} changes ${pct(change)}; a rebuild may change it by at most ${pct(limit)} either way.`,
+          [
+            `The ${label} changes `,
+            pctChange(change),
+            "; a rebuild may change it by at most ",
+            pctChange(limit),
+            " either way.",
+          ],
           `The retained hull structure cannot be reshaped that far; the rebuild is refused.`,
           [
             ["keep_dimensions", `Keep the ${label} within the limit of the current hull.`],
