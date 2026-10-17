@@ -6,12 +6,9 @@ import { resolveGeneratedContentDir } from "../src/main/contentPack.js";
 
 // AC-1/AC-14: the promotion mechanism is deterministic and carries the design
 // data the tactical layer needs. This test proves the mechanism end-to-end on
-// the compiled production design registry and reports (rather than fabricates)
-// the ship->design linkage state. 14 of the pack's 20 ships now carry a
-// `designVersionId` resolving to a real `CompiledDesignVersion`; the remaining
-// 6 (Temeraire, Dévastation, Courbet, Custoza, Mesudiye, Numancia) are still
-// unlinked because no 1880-era design is authored for them — tracked as
-// CONTENT-track work (see docs/research/content-5-1880-pack-audit-2026-08-17.md).
+// the compiled production design registry. Every 1880 starting ship now carries
+// a `designVersionId` resolving to a real `CompiledDesignVersion` (N-2 tickets
+// 29/30 closed the last two, aut_custoza and gbr_temeraire).
 describe("production-pack ship promotion (AC-1/AC-14)", () => {
   it("deterministically promotes any ship carrying a resolvable designVersionId", () => {
     const collector = new DiagnosticCollector();
@@ -89,7 +86,7 @@ describe("production-pack ship promotion (AC-1/AC-14)", () => {
     expect(blocked).toBe(0);
   });
 
-  it("reports the ship->design linkage gap explicitly rather than fabricating it", () => {
+  it("links every starting ship to a real compiled design", () => {
     const collector = new DiagnosticCollector();
     const signal = new AbortController().signal;
 
@@ -122,11 +119,10 @@ describe("production-pack ship promotion (AC-1/AC-14)", () => {
     }
 
     expect(totalShips).toBeGreaterThan(0);
-    // Documented (not silent): the residual unlinked ships are exactly those
-    // classes with no authored 1880-era design. Reporting this residual gap keeps
-    // AC-14's per-ship promotion honest rather than fabricating a design for
-    // classes that have none.
+    // N-2 (tickets 29/30) authored a design for every remaining design-less
+    // class, so no starting ship is unlinked: each resolves a real compiled design.
     expect(linked).toBeGreaterThan(0);
-    expect(unlinkedIds.sort()).toEqual(["aut_custoza", "gbr_temeraire"]);
+    expect(linked).toBe(totalShips);
+    expect(unlinkedIds).toEqual([]);
   });
 });

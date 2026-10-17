@@ -54,6 +54,7 @@
         id: "gbr_temeraire",
         name: "HMS Temeraire",
         classId: "Temeraire",
+        designVersionId: "des_gbr_temeraire",
         hitPoints: 36,
         maxHitPoints: 36,
         speed: 15,
@@ -112,6 +113,8 @@
   name: "Escadre du Nord"
   locationAreaId: "fra_chan_coast"
   ships:
+    # Courbet is the second ship of the Dévastation class (sister-ship reuse is
+    # deliberate, not a data gap); she builds against des_fra_devastation (N-2 ticket 30).
     - {
         id: "fra_courbet",
         name: "Courbet",
@@ -220,6 +223,7 @@
         id: "aut_custoza",
         name: "SMS Custoza",
         classId: "Custoza",
+        designVersionId: "des_aut_custoza",
         hitPoints: 32,
         maxHitPoints: 32,
         speed: 14,

@@ -28,6 +28,14 @@
   paidWork: 0
   status: "ACTIVE"
   startedAt: "1880-01"
+  provenance:
+    sourceStatus: "DERIVED"
+    confidence: "HIGH"
+    kind: "game_conversion"
+    sources:
+      - title: "Dévastation-class ironclad"
+        archiveOrUrl: "https://en.wikipedia.org/wiki/D%C3%A9vastation-class_ironclad"
+    note: "Courbet is the second ship of the Dévastation class (laid down 1875, launched 1882); building against des_fra_devastation is deliberate sister-ship reuse, not a missing design (N-2 ticket 30)."
 - id: "con_ger_sachsen"
   nationId: "germany"
   type: "ship"
