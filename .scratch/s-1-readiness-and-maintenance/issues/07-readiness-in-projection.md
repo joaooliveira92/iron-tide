@@ -7,7 +7,7 @@ runtime-free; presentation never changes hashes.
 
 **Blocked by:** 01, 02, 03
 
-**Status:** ready-for-agent
+**Status:** done (2026-10-17; commit cbdbf58)
 
 - [ ] `PlayerProjectionShip` carries readiness and crew quality; the projection reads
       `nation.maintenanceCost` rather than re-deriving it (or both agree, asserted).

@@ -7,7 +7,7 @@ existing floor — each with its reason code.
 
 **Blocked by:** 01, 03
 
-**Status:** ready-for-agent
+**Status:** done (2026-10-17; commit f030929)
 
 - [ ] The campaign battle phase supplies authoritative readiness and crew quality to
       `generateBattles`, replacing `resolveReadiness: () => 80` and the neutral crew
