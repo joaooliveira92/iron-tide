@@ -5,10 +5,16 @@ import { Button } from "../../components/ui/button.js";
 export interface HeaderAdvanceMonthProps {
   readonly onAdvance: () => void;
   readonly advancing: boolean;
+  /** Disabled while a blocking interruption (decision/battle/recovery) is open. */
+  readonly disabled?: boolean;
 }
 
 /** The single Turn control: resolves the current strategic month. */
-export function HeaderAdvanceMonth({ onAdvance, advancing }: HeaderAdvanceMonthProps) {
+export function HeaderAdvanceMonth({
+  onAdvance,
+  advancing,
+  disabled = false,
+}: HeaderAdvanceMonthProps) {
   return (
     <Button
       variant="outline"
@@ -16,7 +22,7 @@ export function HeaderAdvanceMonth({ onAdvance, advancing }: HeaderAdvanceMonthP
       data-guided-target="advance-month"
       title="Resolve the current strategic month"
       onClick={onAdvance}
-      disabled={advancing}
+      disabled={advancing || disabled}
       className="h-8 shrink-0 justify-center gap-2 px-3"
     >
       <Play className="h-4 w-4" />

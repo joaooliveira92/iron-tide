@@ -8,7 +8,7 @@ import type {
 import { CollapsiblePanel } from "../../components/shared/CollapsiblePanel.js";
 import { resolveMessage } from "../../content/uiCatalogue.js";
 import {
-  CATEGORY_LABELS,
+  CATEGORY_ORDER,
   DEFAULT_FILTERS,
   SEVERITY_ORDER,
   filterTurnMessages,
@@ -29,6 +29,16 @@ const SEVERITY_CLASS: Readonly<Record<string, string>> = {
 /** Filter options: every severity except developer-only TRACE, plus "ALL". */
 const SEVERITIES = ["ALL", ...SEVERITY_ORDER.filter((severity) => severity !== "TRACE")] as const;
 
+/** The catalogue key for a message category's display label. */
+function categoryLabelKey(category: string): string {
+  return `ui.turnSummary.category.${category}`;
+}
+
+/** The catalogue key for a severity's display label. */
+function severityLabelKey(severity: string): string {
+  return `ui.turnSummary.severity.${severity}`;
+}
+
 export interface TurnSummaryPanelProps {
   readonly summaries: readonly TurnSummaryEntry[];
   readonly loading: boolean;
@@ -38,6 +48,45 @@ export interface TurnSummaryPanelProps {
   readonly onToggleRead: (id: string) => void;
   /** Navigate to the entity a message concerns; unavailable entities open read-only in place. */
   readonly onOpenEntity?: (ref: EntityReferenceDto) => void;
+  /**
+   * Whether an entity still exists in the current campaign. When it does not
+   * (sunk, scrapped, or otherwise gone), the link opens the message's stored
+   * historical record in place instead of navigating (ticket 06/T5). Defaults
+   * to "available" so links are unchanged without a signal.
+   */
+  readonly isEntityAvailable?: (ref: EntityReferenceDto) => boolean;
+}
+
+/** A read-only historical record for an entity a message concerns but which is no longer present. */
+function EntityHistoricalRecord({
+  message,
+  ref,
+}: {
+  readonly message: TurnMessageDto;
+  readonly ref: EntityReferenceDto;
+}) {
+  const effects = message.effectRefs.filter(
+    (effect) => effect.target.type === ref.type && effect.target.id === ref.id,
+  );
+  return (
+    <div
+      data-testid="entity-historical"
+      className="mt-1 space-y-1 rounded border border-border/60 bg-muted/40 p-1.5"
+    >
+      <p className="text-xs text-muted-foreground">
+        {resolveMessage("ui.turnSummary.unavailableEntity")}
+      </p>
+      <p className="text-xs font-medium">
+        {ref.type}: {ref.id}
+      </p>
+      {effects.map((effect, index) => (
+        <p key={index} className="text-xs text-muted-foreground">
+          {effect.attribute}: {String(effect.previousValue ?? "—")} →{" "}
+          {String(effect.newValue ?? "—")}
+        </p>
+      ))}
+    </div>
+  );
 }
 
 function MessageRow({
@@ -47,6 +96,7 @@ function MessageRow({
   onTogglePinned,
   onToggleRead,
   onOpenEntity,
+  isEntityAvailable,
 }: {
   readonly message: TurnMessageDto;
   readonly pinnedIds: readonly string[];
@@ -54,10 +104,20 @@ function MessageRow({
   readonly onTogglePinned: (id: string) => void;
   readonly onToggleRead: (id: string) => void;
   readonly onOpenEntity?: (ref: EntityReferenceDto) => void;
+  readonly isEntityAvailable?: (ref: EntityReferenceDto) => boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [historicalRef, setHistoricalRef] = useState<EntityReferenceDto | null>(null);
   const pinned = pinnedIds.includes(message.id);
   const read = readIds.includes(message.id);
+
+  const openEntity = (ref: EntityReferenceDto): void => {
+    if (isEntityAvailable !== undefined && !isEntityAvailable(ref)) {
+      setHistoricalRef(ref);
+      return;
+    }
+    onOpenEntity?.(ref);
+  };
 
   return (
     <li
@@ -73,7 +133,7 @@ function MessageRow({
             SEVERITY_CLASS[message.severity] ?? ""
           }`}
         >
-          {message.severity}
+          {resolveMessage(severityLabelKey(message.severity))}
         </span>
         <div className="min-w-0 flex-1">
           <p className={`font-medium ${read ? "text-muted-foreground" : ""}`}>
@@ -90,12 +150,15 @@ function MessageRow({
                   type="button"
                   data-testid="entity-link"
                   className="rounded border border-border/60 px-1.5 py-0.5 text-xs hover:bg-accent"
-                  onClick={() => onOpenEntity?.(ref)}
+                  onClick={() => openEntity(ref)}
                 >
                   {ref.type}: {ref.id}
                 </button>
               ))}
             </div>
+          )}
+          {historicalRef !== null && (
+            <EntityHistoricalRecord message={message} ref={historicalRef} />
           )}
           {expanded && (
             <div data-testid="message-detail" className="mt-1 space-y-1">
@@ -110,7 +173,9 @@ function MessageRow({
               ))}
               {message.debugMetadata && (
                 <p className="text-xs text-muted-foreground">
-                  Sources: {message.debugMetadata.sourceEventIds.join(", ")}
+                  {resolveMessage("ui.turnSummary.sources", {
+                    sources: message.debugMetadata.sourceEventIds.join(", "),
+                  })}
                 </p>
               )}
             </div>
@@ -123,7 +188,7 @@ function MessageRow({
             className="text-xs text-muted-foreground hover:text-foreground"
             onClick={() => setExpanded((value) => !value)}
           >
-            {expanded ? "Less" : "Details"}
+            {resolveMessage(expanded ? "ui.turnSummary.less" : "ui.turnSummary.details")}
           </button>
           <button
             type="button"
@@ -132,7 +197,7 @@ function MessageRow({
             className="text-xs text-muted-foreground hover:text-foreground"
             onClick={() => onTogglePinned(message.id)}
           >
-            {pinned ? "Unpin" : "Pin"}
+            {resolveMessage(pinned ? "ui.turnSummary.unpin" : "ui.turnSummary.pin")}
           </button>
           <button
             type="button"
@@ -141,7 +206,7 @@ function MessageRow({
             className="text-xs text-muted-foreground hover:text-foreground"
             onClick={() => onToggleRead(message.id)}
           >
-            {read ? "Unread" : "Read"}
+            {resolveMessage(read ? "ui.turnSummary.unread" : "ui.turnSummary.read")}
           </button>
         </div>
       </div>
@@ -165,6 +230,7 @@ export function TurnSummaryPanel({
   onTogglePinned,
   onToggleRead,
   onOpenEntity,
+  isEntityAvailable,
 }: TurnSummaryPanelProps) {
   const [selectedTurnId, setSelectedTurnId] = useState<string | null>(null);
   const [filters, setFilters] = useState<TurnSummaryFilters>(DEFAULT_FILTERS);
@@ -179,16 +245,18 @@ export function TurnSummaryPanel({
   return (
     <CollapsiblePanel
       panelId="home-turn-summary"
-      title="Turn summary"
+      title={resolveMessage("ui.turnSummary.title")}
       defaultOpen={defaultOpen}
       badge={summaries.length > 0 ? `${String(messages.length)}` : undefined}
       testId="home-turn-summary"
     >
       <div className="space-y-2 p-2" data-testid="turn-summary-panel">
-        {loading && <p className="text-muted-foreground">Loading turn summary…</p>}
+        {loading && (
+          <p className="text-muted-foreground">{resolveMessage("ui.turnSummary.loading")}</p>
+        )}
         {!loading && summaries.length === 0 && (
           <p className="text-muted-foreground" data-testid="turn-summary-empty">
-            No resolved turns yet.
+            {resolveMessage("ui.turnSummary.empty")}
           </p>
         )}
 
@@ -216,8 +284,8 @@ export function TurnSummaryPanel({
             <input
               type="search"
               data-testid="turn-search"
-              placeholder="Search"
-              aria-label="Search the turn summary"
+              placeholder={resolveMessage("ui.turnSummary.searchPlaceholder")}
+              aria-label={resolveMessage("ui.turnSummary.searchLabel")}
               className="min-w-0 flex-1 rounded border border-border/60 bg-background px-1.5 py-0.5 text-xs"
               value={filters.search}
               onChange={(event) =>
@@ -226,23 +294,23 @@ export function TurnSummaryPanel({
             />
             <select
               data-testid="category-filter"
-              aria-label="Filter by category"
+              aria-label={resolveMessage("ui.turnSummary.categoryLabel")}
               className="rounded border border-border/60 bg-background px-1 py-0.5 text-xs"
               value={filters.category}
               onChange={(event) =>
                 setFilters((current) => ({ ...current, category: event.target.value }))
               }
             >
-              <option value="ALL">All categories</option>
-              {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+              <option value="ALL">{resolveMessage("ui.turnSummary.allCategories")}</option>
+              {CATEGORY_ORDER.map((value) => (
                 <option key={value} value={value}>
-                  {label}
+                  {resolveMessage(categoryLabelKey(value))}
                 </option>
               ))}
             </select>
             <select
               data-testid="severity-filter"
-              aria-label="Filter by severity"
+              aria-label={resolveMessage("ui.turnSummary.severityLabel")}
               className="rounded border border-border/60 bg-background px-1 py-0.5 text-xs"
               value={filters.severity}
               onChange={(event) =>
@@ -251,7 +319,9 @@ export function TurnSummaryPanel({
             >
               {SEVERITIES.map((value) => (
                 <option key={value} value={value}>
-                  {value === "ALL" ? "All severities" : value}
+                  {value === "ALL"
+                    ? resolveMessage("ui.turnSummary.allSeverities")
+                    : resolveMessage(severityLabelKey(value))}
                 </option>
               ))}
             </select>
@@ -266,7 +336,7 @@ export function TurnSummaryPanel({
                 setFilters((current) => ({ ...current, actionableOnly: !current.actionableOnly }))
               }
             >
-              Actionable ({actionableCount})
+              {resolveMessage("ui.turnSummary.actionable", { count: actionableCount })}
             </button>
           </div>
         )}
@@ -278,7 +348,7 @@ export function TurnSummaryPanel({
             data-category={group.category}
           >
             <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {group.label} ({group.messages.length})
+              {resolveMessage(categoryLabelKey(group.category))} ({group.messages.length})
             </h3>
             <ul className="space-y-1">
               {group.messages.map((message) => (
@@ -290,6 +360,7 @@ export function TurnSummaryPanel({
                   onTogglePinned={onTogglePinned}
                   onToggleRead={onToggleRead}
                   {...(onOpenEntity !== undefined ? { onOpenEntity } : {})}
+                  {...(isEntityAvailable !== undefined ? { isEntityAvailable } : {})}
                 />
               ))}
             </ul>
@@ -298,7 +369,7 @@ export function TurnSummaryPanel({
 
         {!loading && messages.length > 0 && visible.length === 0 && (
           <p className="text-muted-foreground" data-testid="turn-summary-no-match">
-            No messages match the current filters.
+            {resolveMessage("ui.turnSummary.noMatch")}
           </p>
         )}
       </div>

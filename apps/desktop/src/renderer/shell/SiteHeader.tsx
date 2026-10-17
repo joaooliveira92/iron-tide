@@ -34,6 +34,8 @@ export interface SiteHeaderProps {
   readonly onSearchNavigate?: (id: string) => void;
   readonly onAdvanceMonth?: (() => void) | undefined;
   readonly advancingMonth?: boolean;
+  /** Disable the Turn control while a blocking interruption is open. */
+  readonly advanceDisabled?: boolean;
   /** Save / Copy game / Close handlers; the Campaign menu renders only with a campaign. */
   readonly campaignMenu?: HeaderCampaignMenuProps;
 }
@@ -54,6 +56,7 @@ export function SiteHeader({
   onSearchNavigate,
   onAdvanceMonth,
   advancingMonth = false,
+  advanceDisabled = false,
   campaignMenu,
 }: SiteHeaderProps) {
   const { platform } = useWindowContext();
@@ -81,7 +84,11 @@ export function SiteHeader({
           {continueAction !== undefined && <HeaderContinueAction action={continueAction} />}
 
           {campaign !== null && onAdvanceMonth !== undefined && (
-            <HeaderAdvanceMonth onAdvance={onAdvanceMonth} advancing={advancingMonth} />
+            <HeaderAdvanceMonth
+              onAdvance={onAdvanceMonth}
+              advancing={advancingMonth}
+              disabled={advanceDisabled}
+            />
           )}
 
           {campaign !== null && campaignMenu !== undefined && (

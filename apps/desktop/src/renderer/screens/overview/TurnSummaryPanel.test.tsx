@@ -16,6 +16,39 @@ beforeAll(() => {
       "messages.construction.progress.title": "Construction progressed",
       "messages.construction.progress.body": "Work advanced on {count} project(s).",
       "messages.generic.body": "Something happened.",
+      "ui.turnSummary.title": "Turn summary",
+      "ui.turnSummary.loading": "Loading turn summary…",
+      "ui.turnSummary.empty": "No resolved turns yet.",
+      "ui.turnSummary.searchPlaceholder": "Search",
+      "ui.turnSummary.searchLabel": "Search the turn summary",
+      "ui.turnSummary.allCategories": "All categories",
+      "ui.turnSummary.categoryLabel": "Filter by category",
+      "ui.turnSummary.allSeverities": "All severities",
+      "ui.turnSummary.severityLabel": "Filter by severity",
+      "ui.turnSummary.actionable": "Actionable ({count})",
+      "ui.turnSummary.details": "Details",
+      "ui.turnSummary.less": "Less",
+      "ui.turnSummary.pin": "Pin",
+      "ui.turnSummary.unpin": "Unpin",
+      "ui.turnSummary.read": "Read",
+      "ui.turnSummary.unread": "Unread",
+      "ui.turnSummary.noMatch": "No messages match the current filters.",
+      "ui.turnSummary.sources": "Sources: {sources}",
+      "ui.turnSummary.unavailableEntity":
+        "This entity is no longer available — showing the historical record.",
+      "ui.turnSummary.category.DECISION": "Decisions",
+      "ui.turnSummary.category.DIPLOMACY": "Diplomacy",
+      "ui.turnSummary.category.WAR": "War",
+      "ui.turnSummary.category.BATTLE": "Battles",
+      "ui.turnSummary.category.CONSTRUCTION": "Construction",
+      "ui.turnSummary.category.RESEARCH": "Research",
+      "ui.turnSummary.category.INTELLIGENCE": "Intelligence",
+      "ui.turnSummary.category.FINANCE": "Finance",
+      "ui.turnSummary.category.SYSTEM": "System",
+      "ui.turnSummary.severity.CRITICAL": "Critical",
+      "ui.turnSummary.severity.HIGH": "High",
+      "ui.turnSummary.severity.NORMAL": "Normal",
+      "ui.turnSummary.severity.LOW": "Low",
     },
   });
 });
@@ -75,9 +108,10 @@ describe("TurnSummaryPanel", () => {
       />,
     );
     expect(screen.getByTestId("turn-message-group").getAttribute("data-category")).toBe("FINANCE");
-    expect(screen.getByTestId("severity-badge").textContent).toBe("CRITICAL");
+    expect(screen.getByTestId("severity-badge").textContent).toBe("Critical");
     expect(screen.getByText("uk changed by 5.")).toBeTruthy();
     expect(screen.getByTestId("entity-link").textContent).toContain("uk");
+    expect(screen.getByText("Finance (1)")).toBeTruthy();
   });
 
   it("filters by search and restricts to actionable", () => {
@@ -102,6 +136,7 @@ describe("TurnSummaryPanel", () => {
       />,
     );
     expect(screen.getAllByTestId("turn-message")).toHaveLength(2);
+    expect(screen.getByTestId("actionable-toggle").textContent).toBe("Actionable (1)");
 
     fireEvent.click(screen.getByTestId("actionable-toggle"));
     expect(screen.getAllByTestId("turn-message")).toHaveLength(1);
@@ -147,6 +182,59 @@ describe("TurnSummaryPanel", () => {
     expect(onOpenEntity).toHaveBeenCalledWith({ type: "constructionProject", id: "p1" });
   });
 
+  it("navigates an entity that is still available", () => {
+    const onOpenEntity = vi.fn();
+    render(
+      <TurnSummaryPanel
+        summaries={[summary([message({ id: "m1" })])]}
+        loading={false}
+        defaultOpen
+        turnMessages={emptyState}
+        onTogglePinned={() => undefined}
+        onToggleRead={() => undefined}
+        onOpenEntity={onOpenEntity}
+        isEntityAvailable={() => true}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("entity-link"));
+    expect(onOpenEntity).toHaveBeenCalledWith({ type: "constructionProject", id: "p1" });
+    expect(screen.queryByTestId("entity-historical")).toBeNull();
+  });
+
+  it("opens a read-only historical record for an unavailable entity instead of navigating", () => {
+    const onOpenEntity = vi.fn();
+    render(
+      <TurnSummaryPanel
+        summaries={[
+          summary([
+            message({
+              id: "m1",
+              effectRefs: [
+                {
+                  target: { type: "constructionProject", id: "p1" },
+                  attribute: "progress",
+                  previousValue: 0,
+                  newValue: 50,
+                  visibility: "exact",
+                },
+              ],
+            }),
+          ]),
+        ]}
+        loading={false}
+        defaultOpen
+        turnMessages={emptyState}
+        onTogglePinned={() => undefined}
+        onToggleRead={() => undefined}
+        onOpenEntity={onOpenEntity}
+        isEntityAvailable={() => false}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("entity-link"));
+    expect(onOpenEntity).not.toHaveBeenCalled();
+    expect(screen.getByTestId("entity-historical").textContent).toContain("0 → 50");
+  });
+
   it("renders an empty state with no history", () => {
     render(
       <TurnSummaryPanel
@@ -158,6 +246,8 @@ describe("TurnSummaryPanel", () => {
         onToggleRead={() => undefined}
       />,
     );
-    expect(screen.getByTestId("turn-summary-empty")).toBeTruthy();
+    expect(screen.getByTestId("turn-summary-empty").textContent).toContain(
+      "No resolved turns yet.",
+    );
   });
 });

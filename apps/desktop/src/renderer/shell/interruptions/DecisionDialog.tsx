@@ -46,7 +46,12 @@ export function DecisionDialog({
                 <ul data-testid="decision-hints" className="mt-1 space-y-0.5">
                   {option.hints.map((hint, index) => (
                     <li key={index} className="text-xs text-muted-foreground">
-                      {hint.target.id} {hint.attribute}: {hint.direction} ({hint.magnitude})
+                      {resolveMessage("ui.decision.hint", {
+                        target: hint.target.id,
+                        attribute: hint.attribute,
+                        direction: resolveMessage(`ui.effect.direction.${hint.direction}`),
+                        magnitude: resolveMessage(`ui.effect.magnitude.${hint.magnitude}`),
+                      })}
                     </li>
                   ))}
                 </ul>
@@ -57,7 +62,7 @@ export function DecisionDialog({
                 className="mt-2 rounded border border-border px-2 py-1 text-xs hover:bg-accent"
                 onClick={() => onAnswer(option.optionId)}
               >
-                Choose
+                {resolveMessage("ui.decision.choose")}
               </button>
             </li>
           ))}
@@ -68,7 +73,7 @@ export function DecisionDialog({
           className="mt-3 text-xs text-muted-foreground hover:text-foreground"
           onClick={onAbandon}
         >
-          Abandon this turn
+          {resolveMessage("ui.interruption.abandon")}
         </button>
       </div>
     </div>

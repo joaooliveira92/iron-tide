@@ -6,6 +6,7 @@ import type {
   InterruptionRequestDto,
   ResolveTurnResult,
 } from "../../shared/campaign-command-contract.js";
+import { resolveMessage } from "../content/uiCatalogue.js";
 import { emitWideEvent } from "../lib/telemetry.js";
 import type { Screen } from "./campaign-screen-registry.js";
 import {
@@ -30,6 +31,29 @@ const SAVE_MESSAGE_DURATION_MS = 8_000;
 
 function diagnosticsSuffix(diagnostics: readonly string[]): string {
   return diagnostics.length > 0 ? ` ${diagnostics.join("; ")}` : "";
+}
+
+/**
+ * A presentation-only result line for an answered decision, derived from the
+ * chosen option's declared effects. It never owns authoritative state — it only
+ * describes what the engine already applied — and resolves through the UI
+ * catalogue, so the domain packages embed no prose (ADR-0209).
+ */
+function decisionResultMessage(request: InterruptionRequestDto, optionId: string): string {
+  const option = request.options?.find((candidate) => candidate.optionId === optionId);
+  const effects = option?.effects ?? [];
+  const change =
+    effects.length === 0
+      ? resolveMessage("ui.decision.result.noEffect")
+      : effects
+          .map((effect) =>
+            resolveMessage("ui.decision.result.treasury", {
+              nationId: effect.nationId,
+              delta: `${effect.delta >= 0 ? "+" : ""}${String(effect.delta)}`,
+            }),
+          )
+          .join("; ");
+  return resolveMessage("ui.decision.result", { change });
 }
 
 export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
@@ -82,7 +106,9 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
                 interruption: {
                   request: null,
                   pending: pending.value.pending,
-                  unavailable: false,
+                  // A stored but incompatible record is reported unavailable on
+                  // load, so the prompt never offers a resume that would fail.
+                  unavailable: !pending.value.valid,
                 },
               });
             }
@@ -227,6 +253,10 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
 
   const advanceMonth = useCallback(async () => {
     if (bridge === undefined || state.campaign === null) return;
+    // A blocking decision or battle must be answered (or the turn abandoned)
+    // before the month can advance; a pending-turn recovery prompt (no request)
+    // legitimately resumes via this same path.
+    if (state.interruption?.request != null) return;
     dispatch({ type: "month-commit-started" });
     const sessionId = state.campaign.sessionId;
     const started = performance.now();
@@ -254,7 +284,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
         message: error instanceof Error ? error.message : "Could not advance month.",
       });
     }
-  }, [bridge, state.campaign, applyResolveResult]);
+  }, [bridge, state.campaign, state.interruption, applyResolveResult]);
 
   const answerDecision = useCallback(
     async (optionId: string) => {
@@ -279,8 +309,10 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
         optionId,
       });
       applyResolveResult(result, sessionId);
+      // Ticket 07: name the change the choice made (presentation only).
+      collectMessage(decisionResultMessage(request, optionId));
     },
-    [bridge, state.campaign, state.interruption, applyResolveResult],
+    [bridge, state.campaign, state.interruption, applyResolveResult, collectMessage],
   );
 
   /** Submit the player's answer to a battle request (T-1 owns the offer policy). */

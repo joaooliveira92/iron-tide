@@ -18,6 +18,26 @@ beforeAll(() => {
       "messages.decision.decline.body": "Keep the funds.",
       "messages.battle.request.title": "Battle awaiting orders",
       "messages.battle.request.body": "A battle awaits.",
+      "ui.decision.choose": "Choose",
+      "ui.decision.hint": "{target} {attribute}: {direction} ({magnitude})",
+      "ui.effect.direction.increase": "increase",
+      "ui.effect.direction.decrease": "decrease",
+      "ui.effect.direction.none": "no change",
+      "ui.effect.magnitude.minor": "minor",
+      "ui.effect.magnitude.moderate": "moderate",
+      "ui.effect.magnitude.major": "major",
+      "ui.battle.accept": "Accept",
+      "ui.battle.decline": "Decline",
+      "ui.battle.delegate": "Delegate",
+      "ui.interruption.abandon": "Abandon this turn",
+      "ui.pendingTurn.label": "Outstanding turn",
+      "ui.pendingTurn.unavailableTitle": "Outstanding turn cannot be resumed",
+      "ui.pendingTurn.unavailableBody": "A saved turn could not be resumed against this campaign.",
+      "ui.pendingTurn.title": "A month is outstanding",
+      "ui.pendingTurn.body": "This campaign has a turn waiting to be resolved.",
+      "ui.pendingTurn.bodyWithDate": "This campaign has a turn waiting (started {createdAt}).",
+      "ui.pendingTurn.resume": "Resume turn",
+      "ui.pendingTurn.discard": "Discard outstanding turn",
     },
   });
 });
@@ -80,6 +100,7 @@ describe("turn interruption dialogs", () => {
     render(<DecisionDialog request={decision} onAnswer={onAnswer} onAbandon={() => undefined} />);
     expect(screen.getByTestId("decision-dialog").getAttribute("aria-modal")).toBe("true");
     expect(screen.getByTestId("decision-hints").textContent).toContain("uk treasury: decrease");
+    expect(screen.getAllByTestId("decision-option")[0]!.textContent).toBe("Choose");
     fireEvent.click(screen.getAllByTestId("decision-option")[0]!);
     expect(onAnswer).toHaveBeenCalledWith("approve");
   });
@@ -96,6 +117,9 @@ describe("turn interruption dialogs", () => {
     render(
       <BattleRequestDialog request={battle} onChoose={onChoose} onAbandon={() => undefined} />,
     );
+    expect(screen.getByTestId("battle-accept").textContent).toBe("Accept");
+    expect(screen.getByTestId("battle-decline").textContent).toBe("Decline");
+    expect(screen.getByTestId("battle-delegate").textContent).toBe("Delegate");
     fireEvent.click(screen.getByTestId("battle-accept"));
     fireEvent.click(screen.getByTestId("battle-decline"));
     fireEvent.click(screen.getByTestId("battle-delegate"));
@@ -121,6 +145,8 @@ describe("turn interruption dialogs", () => {
         onAbandon={onAbandon}
       />,
     );
+    expect(screen.getByTestId("pending-resume").textContent).toBe("Resume turn");
+    expect(screen.getByTestId("pending-abandon").textContent).toBe("Discard outstanding turn");
     fireEvent.click(screen.getByTestId("pending-resume"));
     fireEvent.click(screen.getByTestId("pending-abandon"));
     expect(onResume).toHaveBeenCalled();

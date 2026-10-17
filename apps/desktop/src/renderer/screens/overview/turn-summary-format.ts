@@ -19,18 +19,6 @@ export const CATEGORY_ORDER = [
   "SYSTEM",
 ] as const;
 
-export const CATEGORY_LABELS: Readonly<Record<string, string>> = {
-  DECISION: "Decisions",
-  DIPLOMACY: "Diplomacy",
-  WAR: "War",
-  BATTLE: "Battles",
-  CONSTRUCTION: "Construction",
-  RESEARCH: "Research",
-  INTELLIGENCE: "Intelligence",
-  FINANCE: "Finance",
-  SYSTEM: "System",
-};
-
 /** The categories offered in the filter, in canonical order, deriving only those present. */
 export function categoriesPresent(messages: readonly TurnMessageDto[]): readonly string[] {
   const present = new Set(messages.map((message) => message.category));
@@ -85,7 +73,6 @@ export function filterTurnMessages(
 
 export interface TurnMessageGroup {
   readonly category: string;
-  readonly label: string;
   readonly messages: readonly TurnMessageDto[];
 }
 
@@ -103,7 +90,7 @@ export function groupTurnMessages(
           (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
       );
     if (inCategory.length > 0) {
-      groups.push({ category, label: CATEGORY_LABELS[category] ?? category, messages: inCategory });
+      groups.push({ category, messages: inCategory });
     }
   }
   return groups;

@@ -1,4 +1,5 @@
 import type { PendingTurnDto } from "../../../shared/campaign-command-contract.js";
+import { resolveMessage } from "../../content/uiCatalogue.js";
 
 /**
  * The pending-turn recovery prompt (ticket 07). On load, a campaign that holds a
@@ -20,26 +21,27 @@ export function PendingTurnRecoveryPrompt({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Outstanding turn"
+      aria-label={resolveMessage("ui.pendingTurn.label")}
       data-testid="pending-turn-prompt"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
     >
       <div className="w-full max-w-md rounded-lg border border-border bg-background p-4 shadow-xl">
         {unavailable ? (
           <>
-            <h2 className="text-sm font-semibold">Outstanding turn cannot be resumed</h2>
+            <h2 className="text-sm font-semibold">
+              {resolveMessage("ui.pendingTurn.unavailableTitle")}
+            </h2>
             <p className="mt-1 text-xs text-muted-foreground" data-testid="pending-unavailable">
-              A saved turn could not be resumed against this campaign. Your save is unchanged. You
-              can discard the outstanding turn and start the month fresh.
+              {resolveMessage("ui.pendingTurn.unavailableBody")}
             </p>
           </>
         ) : (
           <>
-            <h2 className="text-sm font-semibold">A month is outstanding</h2>
+            <h2 className="text-sm font-semibold">{resolveMessage("ui.pendingTurn.title")}</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              This campaign has a turn waiting to be resolved
-              {pending?.createdAt !== undefined ? ` (started ${pending.createdAt})` : ""}. Resume it
-              or discard it to start fresh.
+              {pending?.createdAt !== undefined
+                ? resolveMessage("ui.pendingTurn.bodyWithDate", { createdAt: pending.createdAt })
+                : resolveMessage("ui.pendingTurn.body")}
             </p>
           </>
         )}
@@ -51,7 +53,7 @@ export function PendingTurnRecoveryPrompt({
               className="rounded border border-border px-2 py-1 text-xs hover:bg-accent"
               onClick={onResume}
             >
-              Resume turn
+              {resolveMessage("ui.pendingTurn.resume")}
             </button>
           )}
           <button
@@ -60,7 +62,7 @@ export function PendingTurnRecoveryPrompt({
             className="rounded border border-border px-2 py-1 text-xs hover:bg-accent"
             onClick={onAbandon}
           >
-            Discard outstanding turn
+            {resolveMessage("ui.pendingTurn.discard")}
           </button>
         </div>
       </div>

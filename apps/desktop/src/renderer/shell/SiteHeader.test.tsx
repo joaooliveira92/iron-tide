@@ -245,6 +245,21 @@ describe("SiteHeader", () => {
     ).not.toBeNull();
   });
 
+  it("disables the advance-month button while a blocking interruption is open", async () => {
+    const onAdvanceMonth = vi.fn();
+    await renderHeader("linux", {
+      activeView: "playing",
+      campaign,
+      onAdvanceMonth,
+      advanceDisabled: true,
+    });
+
+    const advance = screen.getByRole("button", { name: "Advance month" });
+    expect(advance.attributes.getNamedItem("disabled")).not.toBeNull();
+    fireEvent.click(advance);
+    expect(onAdvanceMonth).not.toHaveBeenCalled();
+  });
+
   it("omits the advance-month button without an active campaign", async () => {
     await renderHeader("linux", { activeView: "playing", onAdvanceMonth: vi.fn() });
     expect(screen.queryByRole("button", { name: "Advance month" })).toBeNull();

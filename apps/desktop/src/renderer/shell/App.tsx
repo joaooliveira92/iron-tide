@@ -184,6 +184,7 @@ function CampaignShellApplication({
       onSearchNavigate={(id) => shell.actions.selectScreen(id as Screen)}
       onAdvanceMonth={shell.state.campaign !== null ? () => setReviewOpen(true) : undefined}
       advancingMonth={shell.state.committing}
+      advanceDisabled={shell.state.interruption !== null}
       campaignMenu={{
         saving: shell.state.saving,
         onSave: shell.actions.saveCampaign,
