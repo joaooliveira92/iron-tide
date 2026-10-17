@@ -1,4 +1,6 @@
 import { BluewaveError, SafeInt, isBluewaveError } from "@bluewave/contracts";
+import { CAMPAIGN_DIVISION_FORMATIONS, CAMPAIGN_DIVISION_ROLES } from "@bluewave/content-schema";
+import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import {
   applyDivisionCommand,
@@ -22,6 +24,13 @@ import {
   type PermanentDivision,
   VACANT,
 } from "../src/division.js";
+import {
+  buildSeededDivisions,
+  DIVISION_SEED_CODES,
+  DivisionSeedFailure,
+} from "../src/divisions.js";
+import type { Officer } from "../src/officers.js";
+import type { FleetState, Ship } from "../src/state.js";
 
 function makeDivision(overrides: Partial<PermanentDivision> = {}): PermanentDivision {
   return {
@@ -212,4 +221,174 @@ describe("PermanentDivision aggregate (AC-2)", () => {
       expect((e as BluewaveError).message).toContain(DIVISION_SHIP_TYPE_INCOMPATIBLE);
     }
   });
+});
+
+// N-1 ticket 07 (ADR-0224): authored 1880 divisions are resolved into
+// authoritative PermanentDivision records at compile.
+function makeShip(id: string, nationId: string, locationAreaId: string): Ship {
+  return {
+    id,
+    name: id,
+    classId: "Test",
+    nationId,
+    locationAreaId,
+    designVersionId: "",
+    hitPoints: SafeInt(1),
+    maxHitPoints: SafeInt(1),
+    speed: SafeInt(1),
+    firepower: SafeInt(1),
+    armor: SafeInt(1),
+    isUnderConstruction: false,
+    constructionProgress: SafeInt(0),
+    constructionTotalWork: SafeInt(0),
+    readiness: "ACTIVE",
+    crewQuality: SafeInt(100),
+  };
+}
+
+function makeFleet(nationId: string, locationAreaId: string, shipIds: string[]): FleetState {
+  return {
+    id: `fleet_${nationId}_${locationAreaId}`,
+    nationId,
+    name: locationAreaId,
+    locationAreaId,
+    ships: shipIds.map((id) => makeShip(id, nationId, locationAreaId)),
+  };
+}
+
+function makeOfficer(nationId: string, index: number): Officer {
+  return {
+    id: `off_${nationId}_${String(index)}`,
+    name: "Test",
+    rank: "CAPTAIN",
+    skill: SafeInt(50),
+  };
+}
+
+const SEED_CONTEXT = {
+  nationId: "uk",
+  fleets: [
+    makeFleet("uk", "eng_home", ["s1", "s2"]),
+    makeFleet("uk", "med", ["s3"]),
+    makeFleet("france", "fra_med", ["f1"]),
+  ],
+  officers: [makeOfficer("uk", 1), makeOfficer("uk", 2)],
+  rulesetVersion: "1.0",
+  creationMonth: "1880-01",
+} as const;
+
+function seed(
+  record: Record<string, unknown>,
+  context: typeof SEED_CONTEXT = SEED_CONTEXT,
+): { divisions: PermanentDivision[]; collector: DiagnosticCollector } {
+  const collector = new DiagnosticCollector();
+  const divisions = buildSeededDivisions([record], context, collector);
+  return { divisions, collector };
+}
+
+describe("buildSeededDivisions (N-1 ticket 07)", () => {
+  const valid = {
+    id: "div_uk_home",
+    nationId: "uk",
+    shipOrder: ["s1", "s2"],
+    commanderOfficerId: "off_uk_1",
+    divisionRole: "CORE",
+    preferredFormation: "LINE_AHEAD",
+  };
+
+  it("keeps one vocabulary for the schema and the engine", () => {
+    expect([...DIVISION_ROLES]).toEqual([...CAMPAIGN_DIVISION_ROLES]);
+    expect([...DIVISION_FORMATIONS]).toEqual([...CAMPAIGN_DIVISION_FORMATIONS]);
+  });
+
+  it("builds a valid division with flagship-first order and DESIGN-26 initial values", () => {
+    const { divisions, collector } = seed(valid);
+    expect(collector.hasErrors).toBe(false);
+    expect(divisions).toHaveLength(1);
+    const division = divisions[0]!;
+    expect(division.divisionId).toBe("div_uk_home");
+    expect(division.nationId).toBe("uk");
+    expect(division.flagshipShipId).toBe("s1");
+    expect(division.commanderOfficerId).toBe("off_uk_1");
+    expect(division.locationAreaId).toBe("eng_home");
+    expect(division.experience).toBe(SafeInt(INITIAL_DIVISION_EXPERIENCE));
+    expect(division.cohesion).toBe(SafeInt(INITIAL_DIVISION_COHESION));
+    expect(division.creationMonth).toBe("1880-01");
+    expect(division.lastReorganizationMonth).toBe("1880-01");
+    expect(division.rulesetVersion).toBe("1.0");
+    expect(division.aggregateHash).toBeTruthy();
+  });
+
+  it("is deterministic and yields an id-ordered list", () => {
+    const a = seed(valid).divisions;
+    const b = seed(valid).divisions;
+    expect(a).toEqual(b);
+    const collector = new DiagnosticCollector();
+    const many = buildSeededDivisions(
+      [
+        { ...valid, id: "div_b", shipOrder: ["s3"] },
+        { ...valid, id: "div_a", shipOrder: ["s3"] },
+      ],
+      SEED_CONTEXT,
+      collector,
+    );
+    expect(many.map((d) => d.divisionId)).toEqual(["div_a", "div_b"]);
+  });
+
+  it("accepts VACANT for a commander", () => {
+    const { divisions, collector } = seed({ ...valid, commanderOfficerId: VACANT });
+    expect(collector.hasErrors).toBe(false);
+    expect(divisions[0]!.commanderOfficerId).toBe(VACANT);
+  });
+
+  const failures: ReadonlyArray<{ name: string; record: Record<string, unknown>; code: string }> = [
+    {
+      name: "unknown ship",
+      record: { ...valid, shipOrder: ["s1", "missing"] },
+      code: DIVISION_SEED_CODES.ship,
+    },
+    {
+      name: "empty shipOrder",
+      record: { ...valid, shipOrder: [] },
+      code: DIVISION_SEED_CODES.ship,
+    },
+    {
+      name: "non-colocated ships",
+      record: { ...valid, shipOrder: ["s1", "s3"] },
+      code: DIVISION_SEED_CODES.location,
+    },
+    {
+      name: "another nation's ship",
+      record: { ...valid, shipOrder: ["f1"] },
+      code: DIVISION_SEED_CODES.nation,
+    },
+    {
+      name: "unknown officer",
+      record: { ...valid, commanderOfficerId: "off_uk_99" },
+      code: DIVISION_SEED_CODES.officer,
+    },
+    {
+      name: "unknown role",
+      record: { ...valid, divisionRole: "BOGUS" },
+      code: DIVISION_SEED_CODES.role,
+    },
+    {
+      name: "unknown formation",
+      record: { ...valid, preferredFormation: "BOGUS" },
+      code: DIVISION_SEED_CODES.formation,
+    },
+  ];
+
+  for (const { name, record, code } of failures) {
+    it(`rejects ${name} with a _tag-discriminated diagnostic (never a default)`, () => {
+      const collector = new DiagnosticCollector();
+      const divisions = buildSeededDivisions([record], SEED_CONTEXT, collector);
+      expect(divisions).toHaveLength(0);
+      expect(collector.errors.map((e) => e.code)).toContain(code);
+      // The failure class is the `_tag`-discriminated compile-boundary error.
+      const failure = new DivisionSeedFailure(DIVISION_SEED_CODES.ship, "div_uk_home", "m", "r");
+      expect(failure._tag).toBe("DivisionSeedFailure");
+      expect(failure.toDiagnostic().stage).toBe("campaign-compile");
+    });
+  }
 });

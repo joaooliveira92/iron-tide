@@ -125,10 +125,14 @@ ships; `netherlands` (2 fleets), `brazil`, `portugal` have none. Five nations
 designs and zero techs. AI-only nations are placeholders rather than viable
 opponents.
 
-### F7 — Divisions and officers are unseeded (Low)
+### F7 — Divisions and officers are unseeded (Low) — resolved (ticket 07)
 
 Every nation has `0` divisions and exactly `6` officers (uniform across nations,
 e.g. uk: 3 CAPTAIN, 2 COMMODORE, 1 REAR_ADMIRAL) — placeholder seeding.
+**Resolved** under ADR-0224: per-nation officer rosters (commit `94aee73`) and
+seeded 1880 divisions (N-1 ticket 07, `divisions.yaml` + compile wiring). The
+reference-run golden is unchanged (golden-neutral) because the in-code fixture
+declares no divisions collection.
 
 ### F8 — Data hygiene (Low)
 
@@ -160,3 +164,17 @@ Findings became tickets under `.scratch/n-1-1880-scenario-audit/issues/`:
 04 research/tech seed reconciliation, 05 initial relations/tension,
 06 empty fleets / AI-only content, 07 divisions & officers, 08 data hygiene,
 09 idle research seeding. Ticket 01 is gated by D1.
+
+## Completion (2026-10-17)
+
+Tickets 01–09 are done. Ticket 07's divisions half landed last (ADR-0224): the
+authored `divisions` collection plus compile wiring replaced the hard-coded
+`divisions: []`. The change is golden-neutral for the cross-process reference run
+and moves only the authored content and the committed content lock. N-1 is
+complete; the 1880 start now carries the era's squadrons, divisions, officer
+corps, relations and research seeds.
+
+N-1 completion unblocks **N-2** (1880 content completion) and **N-3**
+(1880–1890 progression). Both are large separate sprints defined in
+`.ai/SPRINT-PLAN.md` and are not started here; the residual content gaps the
+audit recorded (F1–F6, F8) are the N-2 intake.

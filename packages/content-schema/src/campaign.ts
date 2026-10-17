@@ -119,9 +119,49 @@ export const CampaignDiplomacySchema = Schema.Struct({
   provenance: Schema.optional(ProvenanceSchema),
 });
 
+/**
+ * The DESIGN-26 §13/§17 canonical division vocabulary (N-1 ticket 07). Declared
+ * at the content boundary so the authored record is strictly typed; the campaign
+ * engine re-exports the same values (`packages/campaign/src/division.ts`) so the
+ * two cannot drift.
+ */
+export const CAMPAIGN_DIVISION_ROLES = [
+  "INDEPENDENT",
+  "CORE",
+  "SUPPORT",
+  "SCOUT",
+  "SCREEN",
+  "PATROL",
+] as const;
+export const CAMPAIGN_DIVISION_FORMATIONS = [
+  "LINE_AHEAD",
+  "LINE_ABREAST",
+  "SEARCH_LINE",
+  "SCREEN",
+] as const;
+
+/**
+ * An authored initial division (N-1 ticket 07, DESIGN-26). `shipOrder` names the
+ * member ships in canonical order (the first is the flagship); the campaign
+ * compiler resolves their shared area, seeds the DESIGN-26 initial experience
+ * and cohesion, and fills the rest. `commanderOfficerId` is a per-nation officer
+ * id or omitted for a vacant command. The magnitudes are ADR-0213
+ * `balance_adjustment` values (ADR-0224).
+ */
+export const CampaignDivisionSchema = Schema.Struct({
+  id: Schema.NonEmptyString,
+  nationId: Schema.NonEmptyString,
+  shipOrder: Schema.NonEmptyArray(Schema.NonEmptyString),
+  commanderOfficerId: Schema.optional(Schema.NonEmptyString),
+  divisionRole: Schema.Literals(CAMPAIGN_DIVISION_ROLES),
+  preferredFormation: Schema.Literals(CAMPAIGN_DIVISION_FORMATIONS),
+  provenance: Schema.optional(ProvenanceSchema),
+});
+
 export type CampaignDesign = typeof CampaignDesignSchema.Type;
 export type CampaignFleet = typeof CampaignFleetSchema.Type;
 export type CampaignEconomy = typeof CampaignEconomySchema.Type;
 export type CampaignConstruction = typeof CampaignConstructionSchema.Type;
 export type CampaignResearch = typeof CampaignResearchSchema.Type;
 export type CampaignDiplomacy = typeof CampaignDiplomacySchema.Type;
+export type CampaignDivision = typeof CampaignDivisionSchema.Type;

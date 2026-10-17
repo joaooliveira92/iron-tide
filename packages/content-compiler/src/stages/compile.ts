@@ -192,7 +192,8 @@ function buildCampaignCollections(input: NormalizeOutput): CampaignCollections |
     input.constructions.length > 0 ||
     input.diplomacy.length > 0 ||
     input.research.length > 0 ||
-    input.designs.length > 0;
+    input.designs.length > 0 ||
+    input.divisions.length > 0;
   if (!hasCampaign) return undefined;
 
   return {
@@ -202,5 +203,7 @@ function buildCampaignCollections(input: NormalizeOutput): CampaignCollections |
     diplomacy: input.diplomacy,
     research: input.research,
     designs: input.designs,
+    // Present only with authored divisions, so a pack without them keeps its body hash.
+    ...(input.divisions.length > 0 ? { divisions: input.divisions } : {}),
   };
 }

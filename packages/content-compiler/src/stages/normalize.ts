@@ -33,6 +33,7 @@ export interface NormalizeOutput {
   diplomacy: Record<string, unknown>[];
   research: Record<string, unknown>[];
   designs: Record<string, unknown>[];
+  divisions: Record<string, unknown>[];
   presentation?: unknown;
   ui?: unknown;
 }
@@ -100,6 +101,7 @@ export class NormalizeStage implements CompilerStage<FlattenOutput, NormalizeOut
       diplomacy: sortById((input.diplomacy ?? []) as Record<string, unknown>[]),
       research: sortByField((input.research ?? []) as Record<string, unknown>[], "nationId"),
       designs: sortByField((input.designs ?? []) as Record<string, unknown>[], "designId"),
+      divisions: sortById((input.divisions ?? []) as Record<string, unknown>[]),
       // Presentation keeps its authored order: the nation and region arrays are
       // meaningful slot/display order, not an id-keyed collection to canonicalize
       // (like the reference-design discovery order). `canonicalSerialize` still

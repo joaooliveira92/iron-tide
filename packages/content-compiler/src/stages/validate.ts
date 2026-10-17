@@ -4,6 +4,7 @@ import {
   CampaignConstructionSchema,
   CampaignDesignSchema,
   CampaignDiplomacySchema,
+  CampaignDivisionSchema,
   CampaignEconomySchema,
   CampaignFleetSchema,
   CampaignResearchSchema,
@@ -69,6 +70,7 @@ export interface ValidateOutput {
   diplomacy?: unknown[];
   research?: unknown[];
   designs?: unknown[];
+  divisions?: unknown[];
   presentation?: unknown;
   ui?: unknown;
 }
@@ -189,6 +191,7 @@ const CAMPAIGN_COLLECTIONS: readonly CampaignCollection[] = [
     label: "Diplomacy record",
     idField: "id",
   },
+  { key: "divisions", schema: CampaignDivisionSchema, label: "Division", idField: "id" },
 ];
 
 interface CampaignCollection {
@@ -528,6 +531,7 @@ function validateCampaignCollections(
     diplomacy: out["diplomacy"] ?? [],
     research: out["research"] ?? [],
     designs: out["designs"] ?? [],
+    divisions: out["divisions"] ?? [],
   };
 }
 
@@ -619,6 +623,62 @@ function validateCampaignReferences(
           id,
           "designVersionId",
           `Construction '${id}' references unknown design version '${designVersionId}'`,
+        );
+      }
+    }
+  }
+
+  const divisions = campaign["divisions"] ?? [];
+  if (divisions.length > 0) {
+    const shipLocation = new Map<string, { nationId: string; areaId: string }>();
+    for (const item of campaign["fleets"] ?? []) {
+      const fleet = item as Record<string, unknown>;
+      const areaId = stringValue(fleet["locationAreaId"]);
+      const fleetNationId = stringValue(fleet["nationId"]);
+      for (const ship of Array.isArray(fleet["ships"]) ? (fleet["ships"] as unknown[]) : []) {
+        const shipId = stringValue((ship as Record<string, unknown>)["id"]);
+        if (shipId !== "") shipLocation.set(shipId, { nationId: fleetNationId, areaId });
+      }
+    }
+    for (const item of divisions) {
+      const division = item as Record<string, unknown>;
+      const divisionId = stringValue(division["id"]);
+      const nationId = stringValue(division["nationId"]);
+      const shipOrder = Array.isArray(division["shipOrder"])
+        ? (division["shipOrder"] as unknown[])
+        : [];
+      const areas = new Set<string>();
+      for (const shipId of shipOrder) {
+        if (typeof shipId !== "string") continue;
+        const located = shipLocation.get(shipId);
+        if (located === undefined) {
+          ref(
+            "divisions",
+            "id",
+            divisionId,
+            "shipOrder",
+            `Division '${divisionId}' references unknown ship '${shipId}'`,
+          );
+          continue;
+        }
+        if (located.nationId !== nationId) {
+          ref(
+            "divisions",
+            "id",
+            divisionId,
+            "shipOrder",
+            `Division '${divisionId}' includes ship '${shipId}' of another nation`,
+          );
+        }
+        areas.add(located.areaId);
+      }
+      if (areas.size > 1) {
+        ref(
+          "divisions",
+          "id",
+          divisionId,
+          "shipOrder",
+          `Division '${divisionId}' ships are not co-located (${[...areas].join(", ")})`,
         );
       }
     }

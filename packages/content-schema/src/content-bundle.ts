@@ -11,6 +11,7 @@ import {
   CampaignConstructionSchema,
   CampaignDesignSchema,
   CampaignDiplomacySchema,
+  CampaignDivisionSchema,
   CampaignEconomySchema,
   CampaignFleetSchema,
   CampaignResearchSchema,
@@ -65,6 +66,8 @@ const CampaignCollectionsSchema = Schema.Struct({
   diplomacy: Schema.Array(CampaignDiplomacySchema),
   research: Schema.Array(CampaignResearchSchema),
   designs: Schema.Array(CampaignDesignSchema),
+  /** Present only when the pack declares authored divisions (N-1 ticket 07). */
+  divisions: Schema.optional(Schema.Array(CampaignDivisionSchema)),
 });
 
 export const ContentBundleSchema = Schema.Struct({

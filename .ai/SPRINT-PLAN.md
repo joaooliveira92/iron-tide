@@ -174,11 +174,12 @@ decision sections in `.ai/decision-requests/` and ADR-0223/0224/0225.
    run. The reference goldens are unchanged across 03–09 (all-active, at ceiling,
    at peace). Evidence: `.ai/reports/s-1-readiness-and-maintenance.md`; values and
    provenance in ADR-0223 and `docs/research/s-1-readiness-and-maintenance.md`.
-2. **N-1 ticket 07** under **0005-A**: per-nation officer rosters **done**
-   (commit `94aee73`, same-commit golden re-pin, old/new recorded). **Remaining:**
-   seeded 1880 divisions (an authored `divisions` collection + compile wiring) —
-   `nationCompilation.ts` still hard-codes `divisions: []`. Then N-1 completion and
-   its dependent lanes (N-2, N-3). See ADR-0224.
+2. **N-1 ticket 07** under **0005-A**: **done**. Per-nation officer rosters
+   (commit `94aee73`) and seeded 1880 divisions (an authored `divisions`
+   collection + compile wiring) landed under ADR-0224. N-1 is complete, which
+   makes **N-2** (1880 content completion) and **N-3** (1880–1890 progression)
+   reachable; both are separate sprints, not started here. See ADR-0224 and the
+   N-1 report.
 3. **0003-B research** (non-production): research the prestige scale and values
    against high-trust sources, recording each adopted value with a citation in
    `docs/research/` and an ADR; unresolved residue returns to the owner. No
