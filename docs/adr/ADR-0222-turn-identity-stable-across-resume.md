@@ -1,4 +1,4 @@
-# ADR-0221: A turn's interruption identity is stable across suspend and resume
+# ADR-0222: A turn's interruption identity is stable across suspend and resume
 
 ## Status
 
