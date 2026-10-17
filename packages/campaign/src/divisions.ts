@@ -92,6 +92,8 @@ export function buildSeededDivisions(
     }
   }
   const officerIds = new Set(context.officers.map((officer) => officer.id));
+  const claimedShips = new Map<string, string>();
+  const claimedOfficers = new Map<string, string>();
 
   const divisions: PermanentDivision[] = [];
   for (const record of records) {
@@ -105,7 +107,40 @@ export function buildSeededDivisions(
       collector.add(result.error.toDiagnostic());
       continue;
     }
-    divisions.push(result.value);
+    const division = result.value;
+    const duplicateShip = division.shipOrder.find((shipId) => claimedShips.has(shipId));
+    if (duplicateShip !== undefined) {
+      const owner = claimedShips.get(duplicateShip);
+      collector.add(
+        fail(
+          DIVISION_SEED_CODES.ship,
+          division.divisionId,
+          `Division '${division.divisionId}' reuses ship '${duplicateShip}' already assigned to '${String(owner)}'`,
+          "Assign each ship to at most one initial division",
+        ).error.toDiagnostic(),
+      );
+      continue;
+    }
+    if (
+      division.commanderOfficerId !== VACANT &&
+      claimedOfficers.has(division.commanderOfficerId)
+    ) {
+      const owner = claimedOfficers.get(division.commanderOfficerId);
+      collector.add(
+        fail(
+          DIVISION_SEED_CODES.officer,
+          division.divisionId,
+          `Division '${division.divisionId}' reuses commander '${division.commanderOfficerId}' already commanding '${String(owner)}'`,
+          "Give each officer at most one initial division, or leave the command vacant",
+        ).error.toDiagnostic(),
+      );
+      continue;
+    }
+    for (const shipId of division.shipOrder) claimedShips.set(shipId, division.divisionId);
+    if (division.commanderOfficerId !== VACANT) {
+      claimedOfficers.set(division.commanderOfficerId, division.divisionId);
+    }
+    divisions.push(division);
   }
   return divisions.sort((a, b) => compareCodePoints(a.divisionId, b.divisionId));
 }
@@ -127,13 +162,29 @@ function resolveSeededDivision(
 ):
   | { readonly ok: true; readonly value: PermanentDivision }
   | { readonly ok: false; readonly error: DivisionSeedFailure } {
-  const divisionId = typeof record["id"] === "string" ? record["id"] : "";
+  const rawId = record["id"];
+  if (typeof rawId !== "string" || rawId === "") {
+    return fail(
+      DIVISION_SEED_CODES.ship,
+      "",
+      "Division record has no non-empty id",
+      "Give the division a unique non-empty id",
+    );
+  }
+  const divisionId = rawId;
+
+  const recordNationId = record["nationId"];
+  if (recordNationId !== context.nationId) {
+    return fail(
+      DIVISION_SEED_CODES.nation,
+      divisionId,
+      `Division '${divisionId}' has nationId '${String(recordNationId)}' but was seeded for '${context.nationId}'`,
+      "Match the division's nationId to the nation being compiled",
+    );
+  }
 
   const rawOrder = record["shipOrder"];
-  const shipOrder = Array.isArray(rawOrder)
-    ? rawOrder.filter((value): value is string => typeof value === "string")
-    : [];
-  if (shipOrder.length === 0) {
+  if (!Array.isArray(rawOrder) || rawOrder.length === 0) {
     return fail(
       DIVISION_SEED_CODES.ship,
       divisionId,
@@ -141,6 +192,16 @@ function resolveSeededDivision(
       "Name at least one ship id from the nation's fleets",
     );
   }
+  const nonString = rawOrder.find((value) => typeof value !== "string");
+  if (nonString !== undefined) {
+    return fail(
+      DIVISION_SEED_CODES.ship,
+      divisionId,
+      `Division '${divisionId}' has a non-string shipOrder entry`,
+      "Name only ship id strings",
+    );
+  }
+  const shipOrder = rawOrder as string[];
 
   const role = record["divisionRole"];
   if (typeof role !== "string" || !(DIVISION_ROLES as readonly string[]).includes(role)) {
@@ -195,8 +256,16 @@ function resolveSeededDivision(
   }
 
   const rawCommander = record["commanderOfficerId"];
+  if (rawCommander !== undefined && typeof rawCommander !== "string") {
+    return fail(
+      DIVISION_SEED_CODES.officer,
+      divisionId,
+      `Division '${divisionId}' has a non-string commanderOfficerId`,
+      `Name an officer of the nation's roster, or ${VACANT}`,
+    );
+  }
   let commanderOfficerId: string = VACANT;
-  if (typeof rawCommander === "string" && rawCommander !== VACANT) {
+  if (rawCommander !== undefined && rawCommander !== VACANT) {
     if (!officerIds.has(rawCommander)) {
       return fail(
         DIVISION_SEED_CODES.officer,
@@ -218,7 +287,7 @@ function resolveSeededDivision(
     preferredFormation: formation as DivisionFormation,
     experience: SafeInt(INITIAL_DIVISION_EXPERIENCE),
     cohesion: SafeInt(INITIAL_DIVISION_COHESION),
-    locationAreaId: shipLocation.get(shipOrder[0]!)?.areaId ?? "",
+    locationAreaId: [...areas][0]!,
     creationMonth: context.creationMonth,
     lastReorganizationMonth: context.creationMonth,
     provenanceRefs: [],

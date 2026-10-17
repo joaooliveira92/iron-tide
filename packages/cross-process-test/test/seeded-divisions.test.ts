@@ -61,8 +61,14 @@ function divisionAssets(
 ): DivisionAssetView[] {
   const byId = new Map(fleets.flatMap((fleet) => fleet.ships).map((ship) => [ship.id, ship]));
   return division.shipOrder.map((shipId) => {
-    const ship = byId.get(shipId)!;
-    const design = designs.get(ship.designVersionId);
+    const ship = byId.get(shipId);
+    if (ship === undefined) throw new Error(`division references unknown ship ${shipId}`);
+    // Some legacy 1880 hulls are below the modern classifier's family minimums
+    // (e.g. Brasil at 1.5M kg) or carry no compiled design at all. N-2 content
+    // completion owns that gap; until then the invariant check only needs a
+    // coarse canonical type, so those ships use the BB bucket.
+    const design =
+      ship.designVersionId === undefined ? undefined : designs.get(ship.designVersionId);
     let shipType: CanonicalShipType = "BB";
     if (design !== undefined) {
       try {

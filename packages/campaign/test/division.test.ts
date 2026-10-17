@@ -24,11 +24,7 @@ import {
   type PermanentDivision,
   VACANT,
 } from "../src/division.js";
-import {
-  buildSeededDivisions,
-  DIVISION_SEED_CODES,
-  DivisionSeedFailure,
-} from "../src/divisions.js";
+import { buildSeededDivisions, DIVISION_SEED_CODES } from "../src/divisions.js";
 import type { Officer } from "../src/officers.js";
 import type { FleetState, Ship } from "../src/state.js";
 
@@ -326,13 +322,41 @@ describe("buildSeededDivisions (N-1 ticket 07)", () => {
     const collector = new DiagnosticCollector();
     const many = buildSeededDivisions(
       [
-        { ...valid, id: "div_b", shipOrder: ["s3"] },
-        { ...valid, id: "div_a", shipOrder: ["s3"] },
+        { ...valid, id: "div_b", shipOrder: ["s2"], commanderOfficerId: "off_uk_2" },
+        { ...valid, id: "div_a", shipOrder: ["s1"], commanderOfficerId: "off_uk_1" },
       ],
       SEED_CONTEXT,
       collector,
     );
     expect(many.map((d) => d.divisionId)).toEqual(["div_a", "div_b"]);
+  });
+
+  it("rejects a ship claimed by two seeded divisions", () => {
+    const collector = new DiagnosticCollector();
+    const divisions = buildSeededDivisions(
+      [
+        { ...valid, id: "div_a", shipOrder: ["s1"] },
+        { ...valid, id: "div_b", shipOrder: ["s1"], commanderOfficerId: VACANT },
+      ],
+      SEED_CONTEXT,
+      collector,
+    );
+    expect(divisions.map((d) => d.divisionId)).toEqual(["div_a"]);
+    expect(collector.errors.map((e) => e.code)).toContain(DIVISION_SEED_CODES.ship);
+  });
+
+  it("rejects an officer commanding two seeded divisions", () => {
+    const collector = new DiagnosticCollector();
+    const divisions = buildSeededDivisions(
+      [
+        { ...valid, id: "div_a", shipOrder: ["s1"] },
+        { ...valid, id: "div_b", shipOrder: ["s2"] },
+      ],
+      SEED_CONTEXT,
+      collector,
+    );
+    expect(divisions.map((d) => d.divisionId)).toEqual(["div_a"]);
+    expect(collector.errors.map((e) => e.code)).toContain(DIVISION_SEED_CODES.officer);
   });
 
   it("accepts VACANT for a commander", () => {
@@ -385,10 +409,7 @@ describe("buildSeededDivisions (N-1 ticket 07)", () => {
       const divisions = buildSeededDivisions([record], SEED_CONTEXT, collector);
       expect(divisions).toHaveLength(0);
       expect(collector.errors.map((e) => e.code)).toContain(code);
-      // The failure class is the `_tag`-discriminated compile-boundary error.
-      const failure = new DivisionSeedFailure(DIVISION_SEED_CODES.ship, "div_uk_home", "m", "r");
-      expect(failure._tag).toBe("DivisionSeedFailure");
-      expect(failure.toDiagnostic().stage).toBe("campaign-compile");
+      expect(collector.errors.map((e) => e.stage)).toContain("campaign-compile");
     });
   }
 });
