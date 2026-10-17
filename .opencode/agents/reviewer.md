@@ -15,8 +15,9 @@ You **do not edit**; you return findings.
 
 - `.ai/REVIEW-PROMPT.md` — the full review dimensions and required output format.
 - `.ai/ENGINEERING-CONTRACT.md`, `.ai/IMPLEMENTATION-PROMPT.md`.
-- The **ticket** being reviewed (`.scratch/<slug>/issues/<NN>-<name>.md`), the
-  spec (`.scratch/<slug>/spec.md`), and the implementator's changed-file list and
+- The **ticket issue** being reviewed (a GitHub issue in `joaooliveira92/iron-tide`,
+  via `gh issue view <n> --json number,title,body,labels,comments`), the spec (its
+  parent spec issue), and the implementator's changed-file list and
   reported validation results.
 - Governing DESIGN-* docs + related ADRs.
 - Actually inspect the diff and the code — verify claims against the repository,

@@ -1,7 +1,8 @@
 # Active worktrees
 
 The coordination ledger for concurrent agents (ADR-0220). Several orchestrator
-sessions may run at once, each scoped to one `.scratch/<slug>` effort. Each runs
+sessions may run at once, each scoped to one effort `<slug>` (a wayfinder map or
+spec issue). Each runs
 in its own git worktree under `.worktrees/<slug>` on a short-lived branch, so no
 two sessions share a checkout (ADR-0165). The table below is the single source of
 truth for which subtrees are live **right now**.
@@ -17,7 +18,7 @@ Manage it with [`scripts/worktree.mjs`](../scripts/worktree.mjs) (`pnpm worktree
   [`verify-worktrees.mjs`](../scripts/verify-worktrees.mjs)) when pruning is due.
 
 `Status` is `active`, `review`, or `done`; `prune` treats anything else as
-stale. `Scope` is the effort directory; `Owner` names the agent/role driving it.
+stale. `Scope` is the effort slug; `Owner` names the agent/role driving it.
 Direction lives in [`ROADMAP.md`](ROADMAP.md); the backlog in
 [`SPRINT-PLAN.md`](SPRINT-PLAN.md).
 
@@ -25,4 +26,5 @@ Direction lives in [`ROADMAP.md`](ROADMAP.md); the backlog in
 | Slug | Branch | Scope | Owner | Status | Base | Created | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | work | dev | (primary dev checkout, not an effort) | user | active | dev | — | — |
+| s-3-budget-pressure-and-unrest | feat/s-3-budget-pressure-and-unrest | .scratch/s-3-budget-pressure-and-unrest | unknown | active | dev | — | — |
 <!-- worktrees:end -->

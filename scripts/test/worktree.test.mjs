@@ -44,7 +44,7 @@ void test("ledger render then parse round-trips rows in order", () => {
     {
       slug: "u-3",
       branch: "feat/u-3",
-      scope: ".scratch/u-3",
+      scope: "u-3",
       owner: "orchestrator-a",
       status: "active",
       base: "dev",
@@ -54,7 +54,7 @@ void test("ledger render then parse round-trips rows in order", () => {
     {
       slug: "s-1",
       branch: "feat/s-1",
-      scope: ".scratch/s-1",
+      scope: "s-1",
       owner: "orchestrator-b",
       status: "review",
       base: "dev",

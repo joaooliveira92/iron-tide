@@ -58,7 +58,7 @@ const AREAS = [
   {
     name: "Process & documentation",
     blurb: "Concurrent-agent worktree coordination and repository process rules.",
-    nums: [220],
+    nums: [220, 227],
   },
   {
     name: "Scenario content & research",

@@ -35,7 +35,7 @@ you keep progressing.
 ## Read first
 
 - `.ai/ENGINEERING-CONTRACT.md` (Content + Factual grounding sections).
-- The current spec (`.scratch/<slug>/spec.md`) or brief to know exactly what data
+- The current spec (its GitHub spec issue) or brief to know exactly what data
   is needed.
 - Any signed-off scope (e.g., the primary scenario `scen_1880`, era bands).
 

@@ -1,5 +1,5 @@
 ---
-description: Manage concurrent-agent workflow subtrees. Provision a dedicated git worktree for a `.scratch/<slug>` effort, list the active subtrees, and prune merged/stale ones. Pass a subcommand ($ARGUMENTS): `new <slug>`, `list`, `sync`, `prune`, or `remove <slug>`.
+description: Manage concurrent-agent workflow subtrees. Provision a dedicated git worktree for an effort `<slug>`, list the active subtrees, and prune merged/stale ones. Pass a subcommand ($ARGUMENTS): `new <slug>`, `list`, `sync`, `prune`, or `remove <slug>`.
 agent: build
 ---
 
@@ -13,7 +13,7 @@ Interpret `$ARGUMENTS` as `worktree.mjs` argv and run it:
 
 - `new <slug> [--branch <name>] [--base <ref>] [--owner <role>]` — create
   `.worktrees/<slug>` on a branch from `dev` and register it. Then work its
-  frontier with `.opencode/command/work.md <path>`.
+  frontier with `.opencode/command/work.md <root issue>`.
 - `list [--json]` — live subtrees joined with the ledger, with drift warnings.
 - `sync` — reconcile the ledger with actual git worktrees (`git worktree list`).
 - `prune [--force]` — **hygiene**: remove merged/gone/phantom subtrees and their

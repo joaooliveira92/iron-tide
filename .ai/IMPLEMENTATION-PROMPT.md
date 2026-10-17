@@ -19,7 +19,7 @@ The orchestrator executes this procedure through the four subagent roles
 (`wayfinder`) → **ground** (`research`) → **spec** (`to-spec` / spec-creator) →
 **slice** (`to-tickets`) → **implement** → **review** → **orchestrator
 validation gate** → commit. Approved specs are sliced into vertical implementation
-tickets (`.scratch/<slug>/issues/`) and the implementator works the frontier one
+tickets (sub-issues of the spec issue) and the implementator works the frontier one
 ticket at a time.
 
 ### 1. Inspect

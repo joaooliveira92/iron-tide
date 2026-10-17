@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Worktree coordinator for concurrent agents (ADR-0220).
 //
-// Several orchestrator sessions may run at once, each scoped to one `.scratch/<slug>`
-// effort. They must never share a checkout — ADR-0165's incident was two agents in
+// Several orchestrator sessions may run at once, each scoped to one effort `<slug>`
+// (a wayfinder map or spec issue on the tracker). They must never share a checkout — ADR-0165's incident was two agents in
 // the same `dev` tree, one `git add -A` sweeping the other's work. So each effort
 // gets a dedicated worktree under `.worktrees/<slug>` on a short-lived branch, and
 // the set of live subtrees is tracked in `.ai/WORKTREES.md`.
@@ -220,7 +220,7 @@ export function unregisteredWorktrees(rows) {
     .map((w) => ({
       slug: w.slug,
       branch: w.branch || "detached",
-      scope: `.scratch/${w.slug}`,
+      scope: w.slug,
       owner: "unknown",
       status: "active",
       base: DEFAULT_BASE,
@@ -277,7 +277,7 @@ function cmdNew(args) {
   rows.push({
     slug,
     branch,
-    scope: `.scratch/${slug}`,
+    scope: slug,
     owner,
     status: "active",
     base,
@@ -286,7 +286,7 @@ function cmdNew(args) {
   });
   writeLedger(rows);
   console.log(`created ${path} on ${branch} (base ${base})`);
-  console.log(`next: work this subtree's frontier with ".opencode/command/work.md ${path}"`);
+  console.log(`next: work this subtree's frontier with ".opencode/command/work.md <root issue>"`);
 }
 
 function cmdList(args) {

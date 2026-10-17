@@ -31,11 +31,11 @@ Read, in this order, before editing anything:
    (`docs/PROGRESS.md`/`docs/OPEN-ISSUES.md` are unavailable; ADR-0210).
 6. `README.md` — canonical spec (DESIGN-55 defines "complete").
 7. The brief/spec for the sprint you are about to run (see SPRINT-PLAN /
-   `.ai/briefs/` / `.scratch/<slug>/spec.md`).
+   `.ai/briefs/` / the sprint's spec issue, per `docs/agents/issue-tracker.md`).
 
-Re-read files before editing; a subagent report is a spec, not the source of
-truth. If this session was restarted mid-effort, skim `.scratch/<slug>/spec.md`
-and its `issues/` to resume the frontier rather than beginning anew.
+Re-read issues and files before editing; a subagent report is a spec, not the
+source of truth. If this session was restarted mid-effort, re-read the spec issue
+and its sub-issues to resume the frontier rather than beginning anew.
 
 ## 3. Execute
 
