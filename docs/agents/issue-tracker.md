@@ -48,5 +48,5 @@ them to a task list in the map body and put `Part of #<map>` atop each child.
 
 ## Migration note
 
-`.scratch/` predates this move; historical specs and tickets remain there for
-provenance. The `verify-tracker-consistency` preflight gate is retired.
+`.scratch/` holds the pipeline's per-effort maps/specs/tickets (tracked), not mirrored
+into GitHub Issues. The `verify-tracker-consistency` preflight gate is retired.

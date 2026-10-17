@@ -2,7 +2,8 @@
 
 ## Status
 
-Blocked pending owner decision.
+Decision-ready — the red-baseline condition is resolved; closure pending owner
+confirmation. See the packet below.
 
 ## Trigger
 
@@ -115,3 +116,49 @@ intent is confirmed.
   seven tests): 82 → 0 errors.
 - Corrected the stale anti-vacuity floor in
   `packages/ship-design/test/productionNationCoverage.test.ts` (10 → 9, matching DR-005). **Reversed by ADR-0214**: the nine-nation roster was a regression; the anti-vacuity floor is restored to ≥10.
+
+## Decision-ready packet (reconciled 2026-10-17)
+
+**Status reframe.** The red-baseline condition this request was raised against
+(`HEAD 0117adc`) is **no longer present**. On the current `dev` (`51632a0`, which
+carries the N-1 content, ADR-0214's ten-playable roster, and S-1 ticket 01), the
+independent orchestrator observed: `pnpm preflight` **exit 0**; `pnpm lint` **0 errors**;
+`pnpm typecheck` **exit 0**; and the previously-red files all pass
+(`apps/desktop/src/main/commands/{commitMonth,listNewGameOptions,compileCampaign,battleSandboxCommands}.test.ts`,
+`apps/desktop/src/main/drawingBoardDraft.test.ts`, `apps/desktop/test/production-promotion.test.ts`
+→ 59 passed; `packages/ship-design/test/productionNationCoverage.test.ts` → 4 passed;
+the full `@bluewave/desktop` suite → 2218 passed, 1 skipped). The stale tests were
+brought current and the S-1 compatibility-bump ripple completed.
+
+**Exact question requiring owner authority.** Confirm Option A (a baseline-restoration
+pass, then S-1) was the intended remediation and is now satisfied — i.e. that the
+brought-forward N-1 content changes were intended, that Spain is player-supported, and
+that the anti-vacuity floor stays `≥10` (ADR-0214) rather than being lowered to nine.
+
+**Affected scope.** The N-1 content commits; the content-compiler bundle-typing tests
+and `packages/content-compiler/test/helpers/campaignRecords.ts`; the desktop command
+and promotion tests; `packages/ship-design/test/productionNationCoverage.test.ts`;
+S-1 ticket 01; the traceability of N-1's "complete" tickets.
+
+**Known constraints and invariants.** Do not weaken a gate to pass (fix the cause);
+ADR-0214 supersedes ADR-0205 (ten playable); DR-005's nine-plus-USA roster; the
+`≥10` production coverage assertion is the intentional release invariant.
+
+**Options.** A — baseline-restoration pass, then land S-1 (now the de-facto state).
+B — repair only the S-1 ripple and document the rest as pre-existing red (no longer
+applicable: the baseline is green). C — reopen N-1 for re-verification (unnecessary:
+the tests pass at current content).
+
+**Consequences.** _Gameplay:_ none beyond the already-landed N-1/ADR-0214 content.
+_Determinism:_ the golden baseline is green and matches (`check:golden` 11/11).
+_Saves/wire:_ unchanged. _Balance/content/tests/migration:_ already reflected in the
+landed commits.
+
+**Recommendation.** Close 0008 as resolved by Option A; the evidence above is the
+closure record. No further owner action is required to unblock work.
+
+**Minimum owner response to unblock.** "Confirmed — close 0008" (or reopen with a
+contradicting concern).
+
+**Must not be guessed.** Whether the N-1 content changes were intended (owner
+confirmation sought); whether to lower the anti-vacuity floor (no — it stays `≥10`).

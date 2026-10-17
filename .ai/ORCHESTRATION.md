@@ -98,7 +98,7 @@ in `.ai/WORKTREES.md` via `pnpm worktrees` (`new`/`list`/`sync`/`prune`);
 - Own all Git: small Conventional Commits on a short-lived branch (never
   directly on `dev`), delivered by a checks-green pull request; no self-merge of
   a release PR into `main`; leave the tree clean (ADR-0165).
-- Update traceability (SPRINT-PLAN row done + pointer, PROGRESS.md, reports).
+- Update traceability (SPRINT-PLAN row done + pointer, `.ai/reports/*`).
 - Resolve routine decisions as ADRs; stop only on a genuine decision-request /
   stop condition.
 - Keep the roles tiny and focused so no single subagent accumulates the whole
