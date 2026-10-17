@@ -2,6 +2,7 @@ import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 
 import { Button } from "../../components/ui/button.js";
 import { ButtonGroup } from "../../components/ui/button-group.js";
+import { translate } from "../../lib/strings.js";
 import { NO_DRAG } from "./drag-region.js";
 
 /** A header navigation control. The button is always visible, but may be disabled. */
@@ -22,7 +23,7 @@ export function HeaderNav({ back, forward }: HeaderNavProps) {
         <Button
           variant="outline"
           size="icon"
-          aria-label="Go back"
+          aria-label={translate("shell.header.back")}
           onClick={back.onTrigger}
           disabled={back.disabled}
         >
@@ -31,7 +32,7 @@ export function HeaderNav({ back, forward }: HeaderNavProps) {
         <Button
           variant="outline"
           size="icon"
-          aria-label="Go forward"
+          aria-label={translate("shell.header.forward")}
           onClick={forward.onTrigger}
           disabled={forward.disabled}
         >

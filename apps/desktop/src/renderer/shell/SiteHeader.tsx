@@ -1,4 +1,5 @@
 import { cn } from "../lib/utils.js";
+import { translate } from "../lib/strings.js";
 import { GlobalSearch } from "./GlobalSearch.js";
 import {
   HeaderAdvanceMonth,
@@ -44,7 +45,7 @@ const NOOP = (): void => undefined;
 const DISABLED_NAV: NavAction = { disabled: true, onTrigger: NOOP };
 
 export function SiteHeader({
-  title = "Naval Ministry",
+  title = translate("shell.header.title.default"),
   activeView = "menu",
   campaign = null,
   wizardStep,

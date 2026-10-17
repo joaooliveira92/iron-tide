@@ -182,9 +182,9 @@
   "apps/desktop/src/renderer/screens/treasury/components/BudgetBar.tsx:53:toLocaleString:<span className=\"tabular-nums text-muted-foreground\">{bar.income.toLocaleString()}</span>",
   "apps/desktop/src/renderer/screens/treasury/components/BudgetBar.tsx:58:toLocaleString:Spending exceeds income by {bar.overBudgetBy.toLocaleString()} this month.",
   "apps/desktop/src/renderer/screens/treasury/components/TreasurySummaryCards.tsx:12:toLocaleString:<span className=\"text-sm font-medium tabular-nums\">{value.toLocaleString()}</span>",
-  "apps/desktop/src/renderer/shell/site-header-state.ts:102:currency-symbol:if (magnitude < THOUSAND) return `${sign}£${groupDigits.format(magnitude)}`;",
-  "apps/desktop/src/renderer/shell/site-header-state.ts:103:currency-symbol:return `${sign}£${groupDigits.format(Math.trunc(magnitude / THOUSAND))}k`;",
-  "apps/desktop/src/renderer/shell/site-header-state.ts:90:intl:const groupDigits = new Intl.NumberFormat(\"en-GB\", { useGrouping: true });",
+  "apps/desktop/src/renderer/shell/site-header-state.ts:103:currency-symbol:if (magnitude < THOUSAND) return `${sign}£${groupDigits.format(magnitude)}`;",
+  "apps/desktop/src/renderer/shell/site-header-state.ts:104:currency-symbol:return `${sign}£${groupDigits.format(Math.trunc(magnitude / THOUSAND))}k`;",
+  "apps/desktop/src/renderer/shell/site-header-state.ts:91:intl:const groupDigits = new Intl.NumberFormat(\"en-GB\", { useGrouping: true });",
   "apps/desktop/src/renderer/shell/status-strip-state.ts:14:intl:const groupDigits = new Intl.NumberFormat(\"en-GB\", { useGrouping: true });",
   "apps/desktop/src/renderer/shell/status-strip-state.ts:16:currency-symbol:/** Exact, grouped money (\"-£1,200\"): the strip is for reading figures, so it never abbreviates. */",
   "apps/desktop/src/renderer/shell/status-strip-state.ts:19:currency-symbol:return `${value < 0 ? \"-\" : \"\"}£${groupDigits.format(Math.abs(value))}`;"

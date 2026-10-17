@@ -1,4 +1,5 @@
 import { Separator } from "../../../components/ui/separator.js";
+import { translate } from "../../../lib/strings.js";
 import type { CampaignRowModel } from "../../site-header-state.js";
 import { NO_DRAG } from "../drag-region.js";
 import { CampaignMetric } from "./CampaignMetric.js";
@@ -24,7 +25,7 @@ export function CampaignRow({ row }: CampaignRowProps) {
       </div>
       <div className="text-[12px]" style={NO_DRAG}>
         <span>
-          Status: <span>{row.status}</span>
+          {translate("shell.header.status.prefix")} <span>{row.status}</span>
         </span>
       </div>
     </div>

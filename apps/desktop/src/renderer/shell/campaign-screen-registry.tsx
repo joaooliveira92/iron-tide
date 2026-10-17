@@ -13,6 +13,7 @@ import {
   Terminal,
 } from "lucide-react";
 import { Suspense } from "react";
+import { translate } from "../lib/strings.js";
 import { useCampaignShellContext } from "./CampaignShellContext.js";
 import { CAMPAIGN_SCREEN_ROUTES } from "./campaign-screen-routes.js";
 import type { CampaignScreen, CampaignScreenDefinition, Screen } from "./campaign-screen-types.js";
@@ -24,8 +25,8 @@ export type { CampaignScreen, Screen } from "./campaign-screen-types.js";
 // a stray merge cannot ship a fixture world to players.
 const MAP_PROTOTYPE_SCREEN: CampaignScreenDefinition = {
   id: "map-prototype",
-  label: "Map Prototype",
-  shortLabel: "Map",
+  label: translate("nav.screen.map-prototype.label"),
+  shortLabel: translate("nav.screen.map-prototype.short"),
   icon: MapIcon,
   group: "campaign",
   searchable: true,
@@ -38,8 +39,8 @@ const MAP_PROTOTYPE_SCREEN: CampaignScreenDefinition = {
 
 const SIMULATION_SCREEN: CampaignScreenDefinition = {
   id: "simulation",
-  label: "Simulation & Turn",
-  shortLabel: "Sim",
+  label: translate("nav.screen.simulation.label"),
+  shortLabel: translate("nav.screen.simulation.short"),
   icon: Activity,
   group: "campaign",
   searchable: true,
@@ -47,8 +48,8 @@ const SIMULATION_SCREEN: CampaignScreenDefinition = {
 };
 const TACTICAL_SANDBOX_SCREEN: CampaignScreenDefinition = {
   id: "tactical-sandbox",
-  label: "Tactical Sandbox",
-  shortLabel: "Sandbox",
+  label: translate("nav.screen.tactical-sandbox.label"),
+  shortLabel: translate("nav.screen.tactical-sandbox.short"),
   icon: Crosshair,
   group: "campaign",
   searchable: true,
@@ -56,8 +57,8 @@ const TACTICAL_SANDBOX_SCREEN: CampaignScreenDefinition = {
 };
 const DEBUGGING_SCREEN: CampaignScreenDefinition = {
   id: "debugging",
-  label: "Debugging & Telemetry",
-  shortLabel: "Debug",
+  label: translate("nav.screen.debugging.label"),
+  shortLabel: translate("nav.screen.debugging.short"),
   icon: Terminal,
   group: "campaign",
   searchable: true,
@@ -68,8 +69,8 @@ const DEBUGGING_SCREEN: CampaignScreenDefinition = {
 // screens.
 const TREASURY_SCREEN: CampaignScreenDefinition = {
   id: "treasury",
-  label: "Treasury",
-  shortLabel: "Treasury",
+  label: translate("nav.screen.treasury.label"),
+  shortLabel: translate("nav.screen.treasury.short"),
   icon: Coins,
   group: "campaign",
   searchable: true,
@@ -79,8 +80,8 @@ const TREASURY_SCREEN: CampaignScreenDefinition = {
 export const CAMPAIGN_SCREEN_REGISTRY: readonly CampaignScreenDefinition[] = [
   {
     id: "overview",
-    label: "Overview",
-    shortLabel: "Overview",
+    label: translate("nav.screen.overview.label"),
+    shortLabel: translate("nav.screen.overview.short"),
     icon: LayoutDashboard,
     group: "campaign",
     searchable: true,
@@ -88,8 +89,8 @@ export const CAMPAIGN_SCREEN_REGISTRY: readonly CampaignScreenDefinition[] = [
   },
   {
     id: "construction",
-    label: "Construction",
-    shortLabel: "Build",
+    label: translate("nav.screen.construction.label"),
+    shortLabel: translate("nav.screen.construction.short"),
     icon: Hammer,
     group: "campaign",
     searchable: true,
@@ -97,8 +98,8 @@ export const CAMPAIGN_SCREEN_REGISTRY: readonly CampaignScreenDefinition[] = [
   },
   {
     id: "fleet",
-    label: "Fleet",
-    shortLabel: "Fleet",
+    label: translate("nav.screen.fleet.label"),
+    shortLabel: translate("nav.screen.fleet.short"),
     icon: Ship,
     group: "campaign",
     searchable: true,
@@ -107,8 +108,8 @@ export const CAMPAIGN_SCREEN_REGISTRY: readonly CampaignScreenDefinition[] = [
   ...(DEBUG_MODE ? [SIMULATION_SCREEN] : []),
   {
     id: "research",
-    label: "Research & Technology",
-    shortLabel: "Research",
+    label: translate("nav.screen.research.label"),
+    shortLabel: translate("nav.screen.research.short"),
     icon: FlaskConical,
     group: "campaign",
     searchable: true,
@@ -116,8 +117,8 @@ export const CAMPAIGN_SCREEN_REGISTRY: readonly CampaignScreenDefinition[] = [
   },
   {
     id: "diplomacy",
-    label: "Diplomacy & War",
-    shortLabel: "Diplomacy",
+    label: translate("nav.screen.diplomacy.label"),
+    shortLabel: translate("nav.screen.diplomacy.short"),
     icon: Handshake,
     group: "campaign",
     searchable: true,
@@ -128,8 +129,8 @@ export const CAMPAIGN_SCREEN_REGISTRY: readonly CampaignScreenDefinition[] = [
   ...(import.meta.env.DEV ? [MAP_PROTOTYPE_SCREEN] : []),
   {
     id: "campaign-preferences",
-    label: "Campaign Preferences",
-    shortLabel: "Prefs",
+    label: translate("nav.screen.campaign-preferences.label"),
+    shortLabel: translate("nav.screen.campaign-preferences.short"),
     icon: Settings2,
     group: "settings",
     searchable: false,
@@ -137,8 +138,8 @@ export const CAMPAIGN_SCREEN_REGISTRY: readonly CampaignScreenDefinition[] = [
   },
   {
     id: "options",
-    label: "Options",
-    shortLabel: "Options",
+    label: translate("nav.screen.options.label"),
+    shortLabel: translate("nav.screen.options.short"),
     icon: Settings,
     group: "settings",
     searchable: false,
