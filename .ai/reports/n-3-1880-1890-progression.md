@@ -152,8 +152,8 @@ fails `assertDecisionProbes` naming the year and family.
 
 ## Gate results (exact observed)
 
-Run on the N-3 branch; the final `pnpm check` is repeated on the exact ticket
-commit before delivery.
+Run on the N-3 branch; the final gate is repeated on the exact ticket commit
+before delivery, with `test:e2e` excluded by owner instruction.
 
 | Command                                           | Result                                                                                                                                                                                                               |
 | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
