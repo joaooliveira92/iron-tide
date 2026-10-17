@@ -39,3 +39,15 @@ decoded with a strict Effect Schema before use. Localized text never controls
 mechanics (BW-RUL-001); authored content never executes arbitrary scripts
 (BW-RUL-002). See [canonical content and rulesets](../architecture/canonical-content-and-rulesets.md)
 and [non-negotiable rules](../architecture/non-negotiable-rules.md).
+
+## How the engineering skills consume domain docs
+
+Multi-context: a root `GLOSSARY-MAP.md` (once created) points at one `GLOSSARY.md`
+per context; the root `GLOSSARY.md` symlinks `CONTEXT.md`.
+
+- Read `GLOSSARY-MAP.md` if present, else `CONTEXT.md`; also the relevant
+  `packages/<context>/GLOSSARY.md`.
+- Read `docs/adr/` for decisions touching the area; context-scoped ones live in
+  `packages/<context>/docs/adr/`.
+- If absent, proceed silently — don't flag it.
+- Use glossary vocabulary; surface ADR contradictions rather than overriding silently.

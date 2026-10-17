@@ -40,7 +40,6 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 - `verify-no-torpedo-model-constants.mjs` — no retired torpedo-model symbols in combat.
 - `verify-no-upgradepath-refit-readers.mjs` — no `upgradePath`/`supersedes` in refit/production paths.
 - `verify-test-focus.mjs` — no `.only`; `.skip` needs a `test-focus-allow-skip` note.
-- `verify-tracker-consistency.mjs` — `.scratch/` status/blocker/spec invariants.
 - `verify-version-coherence.mjs` — desktop version equals `CURRENT_COMPATIBILITY_VERSION` (ADR-0134).
 - `verify-check-parity.mjs` — every `pnpm check` step is CI-invoked or allowlisted (ADR-0140).
 - `verify-tsgo-integration.mjs` — `@effect/tsgo` matrix matches and is patched (ADR-0139).

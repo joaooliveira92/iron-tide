@@ -1,61 +1,52 @@
-# Issue tracker
+# Issue tracker: GitHub
 
-The project issue tracker is **local markdown** under `.scratch/`, created on
-demand by the pipeline. It is not a remote service: an autonomous agent reads it
-to decide what to do next, so it must stay truthful.
+Issues and specs for this repo live as GitHub issues in
+`joaooliveira92/iron-tide`. Use the `gh` CLI; infer the repo from `git remote -v`.
 
-## Layout
+## Conventions
 
-```
-.scratch/
-  <effort-slug>/
-    spec.md                 # the spec (to-spec format)
-    issues/
-      01-<slug>.md          # one ticket per file, numbered in dependency order
-      02-<slug>.md
-```
+- **Create**: `gh issue create --title "..." --body "..."` (heredoc for multi-line bodies).
+- **Read**: `gh issue view <n> --json number,title,body,labels,comments`.
+- **List**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'`, with `--label`/`--state` filters.
+- **Sub-issue**: `gh issue create --parent <parent> ...` (`gh` 2.94+), or `gh issue edit <parent> --add-sub-issue <child>`; older `gh`: `gh api --method POST repos/<owner>/<repo>/issues/<parent>/sub_issues -F sub_issue_id=<child-db-id>`. Without sub-issues, put `Part of #<parent>` atop the child body.
+- **Comment**: `gh issue comment <n> --body "..."`.
+- **Labels**: `gh issue edit <n> --add-label "..."` / `--remove-label "..."`.
+- **Close**: `gh issue close <n> --comment "..."`.
 
-`.scratch/handoff/` holds session handoff notes and is git-ignored. See
-`.ai/ORCHESTRATION.md` for how a spec and its tickets are produced
-(chart → research → spec → slice), and the `to-tickets` and `wayfinder` skills
-for the authoring rules.
+## Pull requests as a triage surface
 
-## Ticket format
+**PRs as a request surface: no.** _(Set to `yes` to treat external PRs as feature
+requests; `/triage` reads this.)_ When `yes`, PRs use the same labels/states:
+`gh pr view <n> --comments`, `gh pr diff <n>`, and the `gh pr` comment/label/close
+equivalents; list external ones via `gh api --paginate 'repos/{owner}/{repo}/pulls?state=open'`,
+filtered to non-`OWNER`/`MEMBER`/`COLLABORATOR` authors. Issues and PRs share one
+number space; resolve `#42` with `gh pr view 42`, else `gh issue view 42`.
 
-One ticket per file, blockers first, using the local template:
+## Skill phrases
 
-```
-# <NN>: <title>
+- "publish to the issue tracker" → create a GitHub issue.
+- "fetch the relevant ticket" → read it as in **Read** above.
 
-**What to build:** the end-to-end behaviour this ticket makes work.
+## Wayfinding (`/wayfinder`)
 
-**Blocked by:** the numbers/titles that gate this one, or "None (can start immediately)".
+The **map** is one issue labelled `wayfinder:map` (Notes / Decisions-so-far / Fog
+body). **Child tickets** are sub-issues labelled `wayfinder:<type>`
+(`research`/`prototype`/`grilling`/`task`); where sub-issues are unavailable, add
+them to a task list in the map body and put `Part of #<map>` atop each child.
 
-**Status:** ready-for-agent
+- **Blocking** uses GitHub **native issue dependencies**: `gh api --method POST
+  repos/<owner>/<repo>/issues/<child>/dependencies/blocked_by -F issue_id=<blocker-db-id>`,
+  where `<blocker-db-id>` is the blocker's numeric database id (`gh api
+  repos/<owner>/<repo>/issues/<n> --jq .id`), not `#number`. Read the live gate
+  from `issue_dependencies_summary.blocked_by`; fall back to a `Blocked by: #<n>`
+  line. A ticket unblocks when every blocker closes.
+- **Frontier**: list the map's open children; drop any with an open blocker or an
+  assignee; the first wins.
+- **Claim**: `gh issue edit <n> --add-assignee @me`.
+- **Resolve**: comment the answer, `gh issue close <n>`, then append a context
+  pointer to Decisions-so-far.
 
-- [ ] acceptance criterion
-```
+## Migration note
 
-Prefer the domain glossary (`CONTEXT.md`) and avoid file paths or snippets that go
-stale. A ticket is a **tracer-bullet vertical slice**: narrow but complete through
-every layer, demoable on its own, sized for one context window. A wide mechanical
-refactor is the exception — sequence it as expand → migrate → contract.
-
-## Working the frontier
-
-Any ticket whose blockers are all done is on the **frontier** and can start; for
-a linear chain that is top to bottom. Claim one ticket at a time. Each concurrent
-agent works one `.scratch/<slug>` effort in its own worktree (`.ai/WORKTREES.md`,
-ADR-0220).
-
-## The consistency gate
-
-`scripts/verify-tracker-consistency.mjs` runs in preflight. It warns on a ticket
-with a missing or unrecognised status, and **fails** when a `Blocked by:`
-reference names no sibling ticket, or when a `spec.md` still advertises
-`ready-for-agent` while every one of its tickets is terminal (the work is done —
-mark the spec done or archive it).
-
-Status vocabulary: `open`, `claimed`, `in-progress`, `blocked`, `ready-for-agent`
-(non-terminal); `resolved`, `closed`, `done`, `superseded`, `deferred` (terminal).
-Triage roles are in [triage labels](triage-labels.md).
+`.scratch/` predates this move; historical specs and tickets remain there for
+provenance. The `verify-tracker-consistency` preflight gate is retired.
