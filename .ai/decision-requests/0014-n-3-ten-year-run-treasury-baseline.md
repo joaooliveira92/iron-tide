@@ -2,7 +2,7 @@
 
 ## Status
 
-Blocked pending owner decision. Created 2026-10-17. Gates **N-3 ticket 03 (#50)**
+Resolved 2026-10-17: Option A accepted; Option C tracked as #95. Created 2026-10-17. Gates **N-3 ticket 03 (#50)**
 and, through it, tickets 04 (#51) and 06 (#53). Ticket 01 (#48) and ticket 05
 (#52) are complete; ticket 02 (#49) is complete.
 
@@ -26,22 +26,22 @@ Portugal and the Netherlands. The first new failure is Qing at month 13.
 From one `production-ten-year` run (deterministic output; the same run was
 repeated and byte-matched):
 
-| Nation          | Months with `NEGATIVE_TREASURY_OBLIGATION` | First month                        |
-| --------------- | ------------------------------------------ | ---------------------------------- |
-| portugal        | 110                                        | 11                                 |
-| netherlands     | 109                                        | 12                                 |
-| qing            | 108                                        | 13                                 |
-| austria_hungary | 104                                        | 17                                 |
-| germany         | 103                                        | 17 (same month as Austria-Hungary) |
-| france          | 102                                        | 20                                 |
-| italy           | 103                                        | 20                                 |
-| japan           | 102                                        | 20                                 |
-| ottoman_empire  | 102                                        | 20                                 |
-| russia          | 102                                        | 20                                 |
-| spain           | 102                                        | 20                                 |
-| uk              | 102                                        | 20                                 |
-| brazil          | 100                                        | 20                                 |
-| usa             | 97                                         | 22                                 |
+| Nation          | Months with `NEGATIVE_TREASURY_OBLIGATION` | First month |
+| --------------- | ------------------------------------------ | ----------- |
+| portugal        | 110                                        | 11          |
+| netherlands     | 109                                        | 12          |
+| qing            | 108                                        | 13          |
+| austria_hungary | 104                                        | 17          |
+| germany         | 103                                        | 18          |
+| france          | 102                                        | 19          |
+| italy           | 103                                        | 18          |
+| japan           | 102                                        | 19          |
+| ottoman_empire  | 102                                        | 19          |
+| russia          | 102                                        | 19          |
+| spain           | 102                                        | 19          |
+| uk              | 102                                        | 19          |
+| brazil          | 100                                        | 21          |
+| usa             | 97                                         | 24          |
 
 The table is a summary of the run's diagnostic list; the exact per-month
 sequence is in the run output. Every diagnostic has the same code and message

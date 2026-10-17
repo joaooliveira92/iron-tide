@@ -42,7 +42,7 @@ issue #42. Spec: issue #47. Tickets: #48–#53.
 
 | Req                             | Evidence                                                                                                                                                                                                                                   |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| R1 Progression ledger           | `packages/cross-process-test/src/progression-ledger.ts`; `test/progression-ledger.test.ts` (canonical order, provenance, cross-process byte identity). Ledger hash `0d3c042fd04b38b49e2c8630be6586b73b857c243fac36a2109405f5099d6cbc`.     |
+| R1 Progression ledger           | `packages/cross-process-test/src/progression-ledger.ts`; `test/progression-ledger.test.ts` (canonical order, provenance, cross-process byte identity). Ledger hash `601645e6af29ec1a1dc833bfda989ed3fb1cbd9ecf1c33ad20258020a9affe2f`.     |
 | R2 No idle year                 | `idleYears`/`assertNoIdleYears`; every year 1880–1889 has ≥1 event; pruned fixture returns `[1885]`.                                                                                                                                       |
 | R3 Named unlocks                | `packages/cross-process-test/src/designer-unlocks.ts`; `test/named-unlocks.test.ts`. Dates are read from content, never hard-coded; a mismatch names the id and both months.                                                               |
 | R4 Qualifying decisions         | `packages/cross-process-test/src/decision-probes.ts`; `test/decision-probes.test.ts` (10 years × 3 families accepted, restricted fixture names year/family, snapshot hash unchanged, two processes identical).                             |
@@ -53,7 +53,7 @@ issue #42. Spec: issue #47. Tickets: #48–#53.
 
 ## Progression ledger (1880–1889)
 
-340 events. Counts by year and kind:
+330 events. Counts by year and kind:
 
 | Year | Total | Technology | Part | Component |
 | ---- | ----- | ---------- | ---- | --------- |
@@ -71,9 +71,11 @@ issue #42. Spec: issue #47. Tickets: #48–#53.
 Quiet technology years 1883, 1884 and 1887 pass only through part/component
 introductions, as decision B4 requires. The ledger surfaces machine-readable
 provenance where content carries it: 72 `ESTIMATE`, 181 `DERIVED`, 19
-`PLACEHOLDER`, 3 `BALANCE_TARGET`, and 65 events whose records carry no
+`PLACEHOLDER`, 3 `BALANCE_TARGET`, and 55 events whose records carry no
 machine-readable provenance (mostly legacy components/technologies documented in
-YAML comments). The schema has no `UNVERIFIED` source status; `ESTIMATE` is the
+YAML comments). A generated part and its legacy component sharing one id and
+month are one fact: the ledger keeps the authoritative part and drops the
+duplicate component, so 10 fitting entries are counted once. The schema has no `UNVERIFIED` source status; `ESTIMATE` is the
 machine-readable flag for the estimated dates. No date is certified as RTW3
 behaviour.
 
@@ -98,15 +100,15 @@ torpedo part's identity pin is unchanged.
 | Year | Snapshot hash                                                      |
 | ---- | ------------------------------------------------------------------ |
 | 1880 | `11b6f824348b686c98ccb77d0ce34b5112c938c8f7a4da88179f544e756112c6` |
-| 1881 | `63ed07566e6a4b6292570762442627ea69aad65671a0d1d6be6e329af223b26e` |
-| 1882 | `e5f208ae120d9bedbe08ec4c6cb7687130a7c743e4d53c098f3e27688e1fe9a9` |
-| 1883 | `e57756911fa34ec9f7aed9a9f251df7b3e875c5848500fe8af9b90495b158e21` |
-| 1884 | `1dca7e292a7af73380907d9c741febb3a144b561e2ab36d17237a0580d411fe0` |
-| 1885 | `75eb1c0dead0416a4810d7cac26379e1c4e7f3001d6388aece1fac4c0ce07459` |
-| 1886 | `62ce825b5e8879605077ac854640f52f72ffa43ecdb35d5e2f4ff1e53abb2f31` |
-| 1887 | `184278913385f679d4af80b40b02a0685f0303dc72ec73e89a9234eefe2aee4a` |
-| 1888 | `ec7fe974777e211c54a8d8fe093d2aa20e97a81c71b43b081e27fbf417c5e107` |
-| 1889 | `d2ab120d326847763eefd0b739749ee0fb09734ede3da19ae5314475e689818a` |
+| 1881 | `ff93ba1bb2710440eeb46d6d5e91f36c896eab9ac125f2e7f4473ed43ad4f611` |
+| 1882 | `ccf400699defbc6b2aae34e2ada95e21940a8555b9d32dfe42485a82ba291baa` |
+| 1883 | `7c6b01a49467de258373f7c587db3f275eed6dce5165f50e8f8998bd2d8b5d20` |
+| 1884 | `d212e0efccce4311a072c2f3304e391ed82ba67d8d91851bb6786e24b4afc845` |
+| 1885 | `2b56fa847b20d787d20ff165b2b51432e559b31099f2980e96c1bef329a8f3f1` |
+| 1886 | `1ffa41a69de9c0448188037208de8845768f606c6eb240cf407235266fa14163` |
+| 1887 | `ab1396cf5af90f8f426788e2bc7cb59e503e5134fc9d1ea5f2a8f13fef17815d` |
+| 1888 | `c523fde0a5e6d96af08c2c9903e44e434c110fa683034c84585652402e88589f` |
+| 1889 | `74fbc40b1479d9c7a9a1a2ffb8525d4d0759b52f67c176719b9ea0708bdb4be0` |
 
 - Closing hash at 1890-01:
   `f54d498186c568a170fdd0ed868558c1ffb0dfdadbd8922414c60acde19c3d17`.
@@ -117,8 +119,9 @@ torpedo part's identity pin is unchanged.
 ### Command-free treasury baseline (owner decision 0014-A)
 
 The run records `NEGATIVE_TREASURY_OBLIGATION` for all fourteen nations
-(Portugal first at month 11, the Netherlands at 12, Qing at 13, the rest by month
-22). It reproduces identically. Owner decision 0014-A accepts this as the
+(Portugal first at month 11, the Netherlands at 12, Qing at 13, and the rest
+between months 17 and 24; the latest is the USA at 24). It reproduces
+identically. Owner decision 0014-A accepts this as the
 command-free decade baseline and requires every other diagnostic code to fail;
 the economy/AI solvency fix is ticket #95. N-3 itself changes no economy rule.
 
@@ -157,7 +160,7 @@ commit before delivery.
 | `pnpm preflight`                                  | ok (all standing gates; content lock verified)                                                                                                                                                                                            |
 | `pnpm test:scripts`                               | 209 passed                                                                                                                                                                                                                                |
 | `pnpm check`                                      | green: format, lint, lint:effect, test:scripts, licences, typecheck, build, content:verify, test:run (327 files/2218 tests passed, 1 skipped), heavy (12), golden (11/11), determinism, equivalence, balance reports, desktop e2e (30/30) |
-| `pnpm --filter @bluewave/cross-process-test test` | 48 passed                                                                                                                                                                                                                                 |
+| `pnpm --filter @bluewave/cross-process-test test` | 49 passed                                                                                                                                                                                                                                 |
 | `pnpm check:golden`                               | all 11 hashes match                                                                                                                                                                                                                       |
 | `pnpm check:determinism`                          | two runs byte-identical                                                                                                                                                                                                                   |
 | `pnpm content:verify`                             | lock verified at `868f34b7…`                                                                                                                                                                                                              |

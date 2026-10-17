@@ -2,7 +2,7 @@
 
 ## Status
 
-Blocked pending owner decision. Created 2026-10-17. Gates **N-3 only** (and, through it, the
+Resolved 2026-10-17 by owner delegation (see Owner response). Created 2026-10-17. Gates **N-3 only** (and, through it, the
 roadmap items that follow N-3 in `.ai/SPRINT-PLAN.md`). N-3 is not eligible for `wayfinder`
 until the response fields below are filled (see "Eligibility conditions").
 
@@ -401,7 +401,7 @@ deviation; (3) C is approved or rejected, with an owner-supplied id if approved;
 corrected; (5) the owner's responses are recorded in this file's "Owner response"
 section (and an ADR if C2, D2 or D3 constrain compatibility or determinism).
 
-## Prohibited until the decision is accepted
+## Prohibited until the decision was accepted (now resolved)
 
 - Running `wayfinder`, `to-spec` or `to-tickets` for N-3.
 - Authoring, renaming, redating or deleting any technology, part, component, torpedo id,
