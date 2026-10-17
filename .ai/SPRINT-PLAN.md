@@ -180,11 +180,13 @@ decision sections in `.ai/decision-requests/` and ADR-0223/0224/0225.
    makes **N-2** (1880 content completion) and **N-3** (1880–1890 progression)
    reachable; both are separate sprints, not started here. See ADR-0224 and the
    N-1 report.
-3. **0003-B research** (non-production): research the prestige scale and values
-   against high-trust sources, recording each adopted value with a citation in
-   `docs/research/` and an ADR; unresolved residue returns to the owner. No
-   production prestige value may be committed until its provenance is explicit.
-   See ADR-0225.
+3. **0003-B research** (non-production): **done** — it grounded the prestige
+   model (integer field, fresh-start 20, ≤16 sacking threshold, proportional
+   loss, final prestige = career score) but not the magnitudes. Findings with
+   per-value provenance are in `docs/research/rtw3-prestige-values.md`, recorded
+   by ADR-0226; the unresolved/contradictory values are returned to the owner in
+   decision request 0012. No production prestige value is committed. See
+   ADR-0225/ADR-0226.
 4. **S-2 (prestige and career)** remains **blocked** under **0006-B** until 0003 is
    fully resolved and the production value set is authorized. Do not make prestige
    optional/defaulted and do not add prestige to production content.
@@ -196,8 +198,9 @@ changes into a single re-pin. If S-1 research cannot ground a value and it canno
 responsibly classified as an ADR-0213 `balance_adjustment`, return that individual
 value for owner decision instead of guessing.
 
-Owner decisions outstanding: **0004** (mine inventory). W-2's plan dependency
-(W-1, itself on S-1/T-1) is unmet, so 0004 is not on the current frontier.
+Owner decisions outstanding: **0012** (prestige production values after the
+0003-B research) and **0004** (mine inventory). W-2's plan dependency (W-1, itself
+on S-1/T-1) is unmet, so 0004 is not on the current frontier.
 
 ## Decisions recorded
 
