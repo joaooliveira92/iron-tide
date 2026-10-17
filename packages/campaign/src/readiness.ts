@@ -102,6 +102,21 @@ export function readinessAfterCrewRamp(
   return readiness;
 }
 
+/**
+ * The battle-readiness value the combat battle-generation input consumes for a
+ * ship (`0..100`): its crew quality (S-1 D4/D5). A working-up ship is excluded
+ * before this is read; a low value keeps the combat `FUEL_BATTLE_INELIGIBLE`
+ * floor path.
+ */
+export function battleReadiness(crewQuality: SafeInt): number {
+  return Number(crewQuality);
+}
+
+/** Crew quality in combat's torpedo-model basis-point band (`0..10_000`). */
+export function crewQualityBp(crewQuality: SafeInt): number {
+  return Number(crewQuality) * 100;
+}
+
 export function isShipReadinessState(value: unknown): value is ShipReadinessState {
   return typeof value === "string" && (SHIP_READINESS_STATES as readonly string[]).includes(value);
 }

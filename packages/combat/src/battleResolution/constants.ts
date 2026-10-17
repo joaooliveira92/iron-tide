@@ -39,6 +39,12 @@ export const AUTO_RESOLUTION_BATTLE_DATE_DAY = 15 as const;
 export const AUTO_RESOLUTION_BATTLE_START_TIME = "06:00" as const;
 export const AUTO_RESOLUTION_BATTLE_START_MINUTES = 360 as const; // 06:00 -> minutes since midnight
 
+// S-1/ADR-0223: the crew skill the auto-resolution torpedo model uses when no
+// per-ship crew quality is threaded in (neutral-competent crew; a named
+// balance_adjustment, ADR-0213). Kept here so no numeric gameplay constant is
+// embedded directly in torpedoProjection.ts.
+export const AUTO_TORPEDO_CREW_QUALITY_BP = 7_000;
+
 // Main-battery gunnery surface (B-3 engine consumes these per battery):
 // one canonical base reload = one tactical minute, and one canonical base
 // accuracy (basis points). BALANCE TARGET anchors recorded in ADR-0026.

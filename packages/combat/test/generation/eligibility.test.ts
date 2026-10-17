@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vite-plus/test";
-import { gatherEligibleAssets } from "../../src/generation/eligibility.js";
+import type { Ship } from "@bluewave/campaign";
+import {
+  gatherEligibleAssets,
+  ORDINARY_ENGAGEMENT,
+  SURPRISE_ATTACK_ENGAGEMENT,
+} from "../../src/generation/eligibility.js";
 import {
   SHIP_WORKING_UP_BATTLE_INELIGIBLE,
+  SHIP_LAID_UP_BATTLE_INELIGIBLE,
   SHIP_ALREADY_RESERVED_FOR_BATTLE,
   FUEL_BATTLE_INELIGIBLE,
   BATTLE_RANGE_INELIGIBLE,
@@ -148,5 +154,49 @@ describe("eligible-asset gathering (AC-6)", () => {
     const a = gatherEligibleAssets(input(ships));
     const b = gatherEligibleAssets(input(ships));
     expect(a.eligible.map((e) => e.assetId)).toEqual(b.eligible.map((e) => e.assetId));
+  });
+});
+
+describe("S-1 readiness gating (ticket 06)", () => {
+  const mk = (id: string, readiness: Ship["readiness"]): Ship => ({
+    ...buildShip({
+      id,
+      classId: "battleship",
+      shipType: "BB",
+      locationAreaId: "area_battle",
+      firepower: 30,
+      hitPoints: 100,
+    }),
+    readiness,
+  });
+
+  it("excludes working-up ships by readiness, not isUnderConstruction", () => {
+    const ship = mk("wu", "WORKING_UP");
+    ship.isUnderConstruction = false;
+    const { eligible, exclusions } = gatherEligibleAssets(input([ship]));
+    expect(eligible).toEqual([]);
+    expect(exclusions[0]?.reason).toBe(SHIP_WORKING_UP_BATTLE_INELIGIBLE);
+  });
+
+  it("excludes reserve and mothballed ships from an ordinary battle", () => {
+    const { eligible, exclusions } = gatherEligibleAssets(
+      input([mk("res", "RESERVE"), mk("mb", "MOTHBALLED"), mk("act", "ACTIVE")], {
+        engagementKind: ORDINARY_ENGAGEMENT,
+      }),
+    );
+    expect(eligible.map((e) => e.assetId)).toEqual(["act"]);
+    const byId = new Map(exclusions.map((e) => [e.assetId, e.reason]));
+    expect(byId.get("res")).toBe(SHIP_LAID_UP_BATTLE_INELIGIBLE);
+    expect(byId.get("mb")).toBe(SHIP_LAID_UP_BATTLE_INELIGIBLE);
+  });
+
+  it("includes laid-up ships as a surprise-attack seam (manual p.69)", () => {
+    const { eligible, exclusions } = gatherEligibleAssets(
+      input([mk("res", "RESERVE"), mk("mb", "MOTHBALLED")], {
+        engagementKind: SURPRISE_ATTACK_ENGAGEMENT,
+      }),
+    );
+    expect(eligible.map((e) => e.assetId)).toEqual(["mb", "res"]);
+    expect(exclusions).toEqual([]);
   });
 });
