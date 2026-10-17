@@ -14,8 +14,9 @@ user passed a GitHub issue reference:
 - Parse `$ARGUMENTS` as a GitHub issue reference — a number (`42`), a URL, or a
   `#42`. If empty or unresolvable, stop and report exactly what is missing — do
   not guess.
-- Read it: `gh issue view <n> --json number,title,body,labels,comments,subIssues`.
-  It is the effort's **root issue**:
+- Read it: `gh issue view <n> --json number,title,body,labels,subIssues`, and
+  fetch comments separately with `--json comments --jq '.comments[-3:]'` (read
+  older ones only when resuming). It is the effort's **root issue**:
   - `wayfinder:map` → the effort is still being charted; its frontier is its
     **decision tickets** (see the tracker doc's Wayfinding section).
   - `ready-for-agent` → the effort's **spec issue**; its frontier is its
@@ -30,18 +31,9 @@ user passed a GitHub issue reference:
 
 ## 2. Load minimal operating context
 
-Read, in this order, before editing anything:
-
-1. `.ai/AUTONOMOUS-AGENT.md` — authority, autonomy, stop conditions.
-2. `.ai/ENGINEERING-CONTRACT.md` — the binding contract.
-3. `.ai/ORCHESTRATION.md` — the pipeline (wayfinder → to-spec → to-tickets →
-   research → implementator → reviewer → validation gate).
-4. `docs/agents/issue-tracker.md` — the tracker convention, frontier rule, and
-   `gh` operations.
-5. **The effort's own context**: the root issue body (map or spec) and its open
-   child/sub-issues, in dependency order.
-6. `.ai/AUTHORITY-INDEX.md` and `.ai/reports/*` — authority and acceptance status
-   (`docs/PROGRESS.md`/`docs/OPEN-ISSUES.md` are unavailable; ADR-0210).
+Load the operating context exactly as **`.opencode/command/boot.md` §3** specifies
+(it is the canonical list), then add the effort's own context: the root issue body
+(map or spec) and its open child/sub-issues, in dependency order.
 
 Re-read issues and files before editing; a subagent report is a spec, not the
 source of truth. If this session was restarted mid-effort, re-read the root issue
@@ -49,9 +41,9 @@ and its open children to resume the frontier rather than beginning anew.
 
 ## 3. Determine the frontier (this scopes the work)
 
-- Query the effort's frontier per `docs/agents/issue-tracker.md`: open child (or
-  sub-)issues, drop any with an open blocker or an assignee; **first in
-  dependency order wins**.
+- Run boot.md §2's single GraphQL scan and keep the issues whose `parent` is the
+  root issue (or whose body says `Part of #<root>`): drop any with `blockedBy > 0`
+  or an assignee; **first in dependency order wins**.
   - Decision tickets (`wayfinder:*` labels) are worked **one decision per
     session** (wayfinder rule): resolve it, comment the answer, close it, append a
     pointer to the map's Decisions-so-far, and stop.
@@ -68,8 +60,8 @@ source of truth for the sprint loop) — but substitute this effort's frontier f
 the plan's. That is: for each frontier ticket, run the implement → review →
 **validation gate** → commit pipeline, then auto-advance to the next frontier
 ticket in **this same effort** until none remains or a stop condition is hit. The
-context you loaded in §2 and the state you verified in §1 satisfy sprint.md's
-"load your operating context" step — do not re-read everything from scratch.
+context you loaded in §2 and the state you verified in §1 satisfy the
+context-loading step (boot.md §3) — do not re-read everything from scratch.
 
 - Claim before working: `gh issue edit <n> --add-assignee @me`, so the frontier is
   accurate if the session restarts.
