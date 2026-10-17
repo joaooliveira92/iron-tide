@@ -66,6 +66,7 @@ function buildShips(fleet: Record<string, unknown>, collector: DiagnosticCollect
       constructionTotalWork: toSafeIntOpt(record["constructionTotalWork"], SafeInt(0)),
       readiness: seed.value.readiness,
       crewQuality: seed.value.crewQuality,
+      repairMonthsRemaining: seed.value.repairMonthsRemaining,
       inBattleId: typeof record["inBattleId"] === "string" ? record["inBattleId"] : undefined,
     });
   }

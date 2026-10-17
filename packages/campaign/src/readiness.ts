@@ -25,11 +25,15 @@ export type ShipReadinessState = (typeof SHIP_READINESS_STATES)[number];
 export const SHIP_READINESS_CODES = {
   unknownState: "CAMPAIGN-SHIP-READINESS" as DiagnosticCode,
   crewQuality: "CAMPAIGN-SHIP-CREW-QUALITY" as DiagnosticCode,
+  repairMonths: "CAMPAIGN-SHIP-REPAIR-MONTHS" as DiagnosticCode,
   excessKey: "CAMPAIGN-SHIP-EXCESS-KEY" as DiagnosticCode,
 } as const;
 
 export const CREW_QUALITY_MIN = 0;
 export const CREW_QUALITY_MAX = 100;
+
+/** The largest remaining-months counter a `REPAIR` ship may carry (balance_adjustment, ADR-0213). */
+export const REPAIR_MONTHS_MAX = SafeInt(120);
 
 // S-1 crew-quality ceilings and ramp (ADR-0223, decision request 0007-A). The
 // manual gives no ramp schedule and no grades (p.51): it says active crews are
@@ -141,6 +145,7 @@ export class ShipReadinessFailure {
 export interface ShipReadinessSeed {
   readonly readiness: ShipReadinessState;
   readonly crewQuality: SafeInt;
+  readonly repairMonthsRemaining?: SafeInt;
 }
 
 /**
@@ -210,7 +215,37 @@ export function resolveShipReadinessSeed(
     };
   }
 
-  return { ok: true, value: { readiness, crewQuality } };
+  const rawRepairMonths = record["repairMonthsRemaining"];
+  let repairMonthsRemaining: SafeInt | undefined;
+  if (rawRepairMonths !== undefined) {
+    if (
+      typeof rawRepairMonths === "number" &&
+      Number.isSafeInteger(rawRepairMonths) &&
+      rawRepairMonths >= 0 &&
+      rawRepairMonths <= Number(REPAIR_MONTHS_MAX)
+    ) {
+      repairMonthsRemaining = SafeInt(rawRepairMonths);
+    } else {
+      return {
+        ok: false,
+        error: new ShipReadinessFailure(
+          SHIP_READINESS_CODES.repairMonths,
+          shipId,
+          `Ship '${shipId}' repairMonthsRemaining must be an integer in 0..${String(REPAIR_MONTHS_MAX)}`,
+          `Set repairMonthsRemaining to an integer in 0..${String(REPAIR_MONTHS_MAX)}`,
+        ),
+      };
+    }
+  }
+
+  return {
+    ok: true,
+    value: {
+      readiness,
+      crewQuality,
+      ...(repairMonthsRemaining === undefined ? {} : { repairMonthsRemaining }),
+    },
+  };
 }
 
 /** Keys a compiled fleet-ship record may carry, in addition to the optional readiness/crew seed. */
@@ -230,4 +265,5 @@ const ALLOWED_SHIP_INPUT_KEYS = new Set([
   "inBattleId",
   "readiness",
   "crewQuality",
+  "repairMonthsRemaining",
 ]);

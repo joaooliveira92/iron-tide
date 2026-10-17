@@ -140,3 +140,52 @@ describe("S-1 ticket 03: crew-quality ramp", () => {
     expect(result.eventLedger.all.some((e) => e.body.kind === "ShipReadinessChanged")).toBe(false);
   });
 });
+
+describe("S-1 ticket 04: repair state", () => {
+  it("counts down a repairing ship, charges it at 2x active, then releases it without losing crew", () => {
+    const repair: Ship = { ...makeShip("repair", "REPAIR", 50), repairMonthsRemaining: SafeInt(2) };
+    const snapshot = makeSnapshot(makeNation([repair]));
+
+    // Month 1: REPAIR charges 2x active (floor(100*10/100) * 2 = 20); counter 1.
+    const m1 = new MonthExecutor().execute(snapshot, [], "repair-seed", new DiagnosticCollector());
+    let ship = m1.finalSnapshot.nations.get("GBR")!.fleets[0]!.ships[0]!;
+    expect(m1.finalSnapshot.nations.get("GBR")!.maintenanceCost as number).toBe(20);
+    expect(ship.readiness).toBe("REPAIR");
+    expect(ship.repairMonthsRemaining as number).toBe(1);
+    expect(ship.crewQuality as number).toBe(50);
+
+    // Month 2: the counter reaches zero and the ship is released to active, crew held.
+    const m2 = new MonthExecutor().execute(
+      m1.finalSnapshot,
+      [],
+      "repair-seed",
+      new DiagnosticCollector(),
+    );
+    ship = m2.finalSnapshot.nations.get("GBR")!.fleets[0]!.ships[0]!;
+    expect(ship.readiness).toBe("ACTIVE");
+    expect(ship.repairMonthsRemaining).toBeUndefined();
+    expect(ship.crewQuality as number).toBe(50);
+    const released = m2.eventLedger.all.find((e) => e.body.kind === "ShipReadinessChanged");
+    if (released?.body.kind === "ShipReadinessChanged") {
+      expect(released.body.reason).toBe("REPAIR_COMPLETE");
+      expect(released.body.fromReadiness).toBe("REPAIR");
+      expect(released.body.toReadiness).toBe("ACTIVE");
+    } else {
+      throw new Error("expected a ShipReadinessChanged event");
+    }
+  });
+
+  it("halts the countdown and drops the premium while mothballed", () => {
+    const mothballed: Ship = {
+      ...makeShip("mb", "MOTHBALLED", 50),
+      repairMonthsRemaining: SafeInt(3),
+    };
+    const result = runMonth([mothballed]);
+    const ship = result.finalSnapshot.nations.get("GBR")!.fleets[0]!.ships[0]!;
+    // Mothballed charges half active (5), not the repair 2x premium.
+    expect(result.finalSnapshot.nations.get("GBR")!.maintenanceCost as number).toBe(5);
+    // The countdown is halted, not advanced.
+    expect(ship.repairMonthsRemaining as number).toBe(3);
+    expect(ship.readiness).toBe("MOTHBALLED");
+  });
+});

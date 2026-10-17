@@ -171,6 +171,7 @@ const F = {
     "constructionTotalWork",
     "readiness",
     "crewQuality",
+    "repairMonthsRemaining",
     "inBattleId",
     "availability",
     "availabilityProjectId",

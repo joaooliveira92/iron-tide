@@ -224,3 +224,23 @@ describe("S-1 crew-quality ramp constants and helpers (ticket 03)", () => {
     expect(readinessAfterCrewRamp("RESERVE", SafeInt(70))).toBe("RESERVE");
   });
 });
+
+describe("S-1 repair months counter (ticket 04)", () => {
+  it("accepts a bounded integer counter and rejects negative, non-integer or over-max values", () => {
+    const ok = resolveShipReadinessSeed(
+      { id: "s", readiness: "REPAIR", crewQuality: 50, repairMonthsRemaining: 6 },
+      "s",
+    );
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.value.repairMonthsRemaining as number).toBe(6);
+
+    for (const bad of [-1, 1.5, 121]) {
+      const r = resolveShipReadinessSeed(
+        { id: "s", readiness: "REPAIR", crewQuality: 50, repairMonthsRemaining: bad },
+        "s",
+      );
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.error.code).toBe(SHIP_READINESS_CODES.repairMonths);
+    }
+  });
+});
