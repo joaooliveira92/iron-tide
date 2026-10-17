@@ -66,6 +66,11 @@ const AREAS = [
       "Legality, consistency and authored posture of the 1880 scenario's starting content and research state.",
     nums: [212, 213],
   },
+  {
+    name: "Turns, interruptions & save/resume",
+    blurb: "Turn identity and the suspend/resume interruption model.",
+    nums: [221],
+  },
 ];
 
 // Records kept as historical provenance only: moved to docs/adr/archive/ and
