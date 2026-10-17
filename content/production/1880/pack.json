@@ -16,6 +16,7 @@
     "diplomacy": ["diplomacy.yaml"],
     "research": ["research.yaml"],
     "designs": ["designs.yaml"],
+    "divisions": ["divisions.yaml"],
     "presentation": ["presentation.yaml"],
     "ui": ["ui/en-US.yaml"]
   },

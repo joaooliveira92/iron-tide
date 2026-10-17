@@ -28,14 +28,18 @@ export type {
   CampaignConstruction,
   CampaignDesign,
   CampaignDiplomacy,
+  CampaignDivision,
   CampaignEconomy,
   CampaignFleet,
   CampaignResearch,
 } from "./campaign.js";
 export {
+  CAMPAIGN_DIVISION_FORMATIONS,
+  CAMPAIGN_DIVISION_ROLES,
   CampaignConstructionSchema,
   CampaignDesignSchema,
   CampaignDiplomacySchema,
+  CampaignDivisionSchema,
   CampaignEconomySchema,
   CampaignFleetSchema,
   CampaignResearchSchema,

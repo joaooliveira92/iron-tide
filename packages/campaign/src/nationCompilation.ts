@@ -5,6 +5,7 @@ import type { ContentPack } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { toSafeIntOpt, toStr } from "./campaignInput.js";
+import { buildSeededDivisions } from "./divisions.js";
 import { buildOfficerRoster } from "./officers.js";
 import { resolveShipReadinessSeed } from "./readiness.js";
 import type {
@@ -188,6 +189,9 @@ export function buildNationStates(
   economiesData: unknown[],
   constructionsData: unknown[],
   researchData: unknown[],
+  divisionsData: unknown[],
+  rulesetVersion: string,
+  creationMonth: string,
   collector: DiagnosticCollector,
 ): Map<string, NationState> | undefined {
   const nations = new Map<string, NationState>();
@@ -208,6 +212,12 @@ export function buildNationStates(
     const fleets = buildFleets(fleetsData, id, collector);
     const research = buildResearch(researchData, id);
     const constructions = buildConstructions(constructionsData, id);
+    const officers = buildOfficerRoster(id);
+    const divisions = buildSeededDivisions(
+      divisionsData.filter((d) => (d as Record<string, unknown>)["nationId"] === id),
+      { nationId: id, fleets, officers, rulesetVersion, creationMonth },
+      collector,
+    );
 
     let treasury = SafeInt(500);
     let income = SafeInt(100);
@@ -233,8 +243,8 @@ export function buildNationStates(
       navalAppropriationRateBp: SafeInt(2000),
       maintenanceCost: SafeInt(0),
       fleets,
-      divisions: [],
-      officers: buildOfficerRoster(id),
+      divisions,
+      officers,
       research,
       constructionProjects: constructions,
       isPlayable,

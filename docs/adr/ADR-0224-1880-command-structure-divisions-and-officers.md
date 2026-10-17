@@ -41,6 +41,18 @@ behavioural change itself.
   saves, per the repository's existing compatibility policy.
 - **Do not alter unrelated gameplay values** in the same change.
 
+## Amendment (2026-10-17): seeded divisions are reference-inert
+
+The officer-roster half moved the reference golden and was re-pinned in the same
+commit (`94aee73`), as decided above. The seeded-divisions half (commit
+`7931e3e`) does **not** move the reference output: the cross-process reference
+run's in-code fixture declares no `divisions` collection, so
+`campaignDataFromBundle` yields `[]` and every reference `NationState.divisions`
+stays exactly as before. The change records `Golden-Repin: not-needed` with that
+verified cause; only the committed content lock moves because authored content
+changed. `NationState.divisions` is an existing required field, so no
+compatibility bump or migration is required.
+
 ## Consequences
 
 - Nations gain distinct officer rosters and initial divisions; the command and
