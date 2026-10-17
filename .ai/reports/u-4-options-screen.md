@@ -70,3 +70,14 @@ follow-on** (U-4 map D6), not a silent deferral.
 - `determinism (windows-latest)` (pre-existing on `dev`): left unfixed — the
   content-compiler path-separator assertions touch authoritative `safePath`
   normalization and could move golden hashes.
+- `docs-check` (pre-existing on `dev`): #17 and #18 both merged an ADR numbered
+  0221, so `scripts/adr-index.cjs` assigned 221 to two areas and the index
+  dropped a record. The later turn-identity ADR (no code references) is
+  renumbered to 0222 and assigned in the AREAS map; the index is regenerated.
+
+## Landing
+
+`dev` advanced: #17 and #18 were both merged before this follow-on was pushed.
+These commits (ThemeContext race fix, shell-chrome strings, `quality.yml`
+`--no-cache` fix, ADR renumber) are therefore delivered on a **new** PR from this
+branch against the updated `dev`, not on the already-merged #17.
