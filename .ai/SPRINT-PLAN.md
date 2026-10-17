@@ -164,18 +164,16 @@ decision sections in `.ai/decision-requests/` and ADR-0223/0224/0225.
 
 **Acceptable frontier (dependency order):**
 
-1. **S-1 (readiness and maintenance)** under **0007-A**: ticket **01** is done
-   (per-ship readiness + crew state; compatibility bumped 2.0.0 → 3.0.0); ticket
-   **02** is done (maintenance charged by readiness state through one shared,
-   centralized formula; golden-neutral, `Golden-Repin: not-needed`). Tickets
-   **03–09** remain — ramp crew, repair ×2, wartime multiplier, readiness gates
-   battle, readiness in projection, author the values, accept. Preserve the
-   grounded rules (repair ≈2× active, mothball halts repair and costs half,
-   `AF`/`RF`/`MB`/`WU` distinct, working-up excluded); research the remaining
-   constants; store every numeric value as a named, centralized ruleset constant
-   with provenance; mark unsourced magnitudes `balance_adjustment`; replace the
-   hard-coded battle-readiness `80`. Re-pin goldens only when observable output
-   changes. See ADR-0223.
+1. **S-1 (readiness and maintenance)** under **0007-A**: **done** — tickets 01–09
+   complete on `feat/s1-readiness` (PR #23). Ticket **01** (per-ship readiness +
+   crew state; compatibility bumped 2.0.0 → 3.0.0) and ticket **02** (maintenance
+   charged by readiness state through one shared, centralized formula;
+   golden-neutral) landed first; tickets **03–09** add the crew ramp, the repair
+   state, the wartime multiplier, readiness battle gating, readiness in the
+   projection, the authored production values with provenance, and the acceptance
+   run. The reference goldens are unchanged across 03–09 (all-active, at ceiling,
+   at peace). Evidence: `.ai/reports/s-1-readiness-and-maintenance.md`; values and
+   provenance in ADR-0223 and `docs/research/s-1-readiness-and-maintenance.md`.
 2. **N-1 ticket 07** under **0005-A**: per-nation officer rosters + seeded 1880
    divisions with a same-commit golden re-pin; then N-1 completion and its
    dependent lanes (N-2, N-3). See ADR-0224.

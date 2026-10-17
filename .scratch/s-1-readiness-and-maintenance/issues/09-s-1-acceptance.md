@@ -8,7 +8,9 @@ report.
 
 **Blocked by:** 01, 02, 03, 04, 05, 06, 07, 08
 
-**Status:** ready-for-agent
+**Status:** done (2026-10-17) — acceptance test in
+`packages/cross-process-test/test/production-pack-loop.test.ts`; report in
+`.ai/reports/s-1-readiness-and-maintenance.md`.
 
 - [ ] Production 1880 compiled campaign: each S-1 mechanic is observed at least once
       in a scripted run.
