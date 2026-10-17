@@ -9,7 +9,9 @@ import {
   MAINTENANCE_RESERVE_MULTIPLIER_BP,
   MAINTENANCE_WORKING_UP_MULTIPLIER_BP,
   maintenanceMultiplierBp,
+  nationIsAtWar,
   shipMaintenanceCost,
+  shipMonthlyMaintenanceCost,
 } from "../src/maintenance.js";
 
 // S-1 ticket 02: maintenance is charged by readiness state through one shared,
@@ -58,5 +60,31 @@ describe("S-1 maintenance formula (ticket 02)", () => {
   it("declares a stable formula id and version", () => {
     expect(MAINTENANCE_FORMULA_ID).toBe("maintenance_v2");
     expect(MAINTENANCE_FORMULA_VERSION).toBe("2.0.0");
+  });
+});
+
+// S-1 ticket 05: the wartime maintenance multiplier.
+describe("S-1 wartime maintenance (ticket 05)", () => {
+  it("applies the multiplier to active ships at war and nothing otherwise", () => {
+    expect(shipMonthlyMaintenanceCost(SafeInt(100), "ACTIVE", false)).toBe(10);
+    expect(shipMonthlyMaintenanceCost(SafeInt(100), "ACTIVE", true)).toBe(12); // floor(10 * 12500 / 10000)
+    // Only active status is raised.
+    expect(shipMonthlyMaintenanceCost(SafeInt(100), "RESERVE", true)).toBe(
+      shipMonthlyMaintenanceCost(SafeInt(100), "RESERVE", false),
+    );
+    expect(shipMonthlyMaintenanceCost(SafeInt(100), "MOTHBALLED", true)).toBe(
+      shipMonthlyMaintenanceCost(SafeInt(100), "MOTHBALLED", false),
+    );
+  });
+
+  it("reads only live wars that name the nation", () => {
+    const wars = [
+      { status: "ACTIVE", attackerSideMembers: ["uk"], defenderSideMembers: ["france"] },
+      { status: "ENDED", attackerSideMembers: ["spain"], defenderSideMembers: ["uk"] },
+    ];
+    expect(nationIsAtWar(wars, "uk")).toBe(true);
+    expect(nationIsAtWar(wars, "france")).toBe(true);
+    expect(nationIsAtWar(wars, "spain")).toBe(false); // only in an ended war
+    expect(nationIsAtWar(wars, "italy")).toBe(false);
   });
 });

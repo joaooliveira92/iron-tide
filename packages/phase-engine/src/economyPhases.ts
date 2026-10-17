@@ -1,6 +1,10 @@
 // Economy phases: monthly_revenue, appropriation, maintenance, obligation.
 import type { CampaignSnapshot, ConstructionProject, NationState } from "@bluewave/campaign";
-import { shipMaintenanceCost, transitionConstructionProject } from "@bluewave/campaign";
+import {
+  nationIsAtWar,
+  shipMonthlyMaintenanceCost,
+  transitionConstructionProject,
+} from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import {
   FOREIGN_PAYMENT_DEFAULT_DELAYED,
@@ -516,12 +520,17 @@ export function runMaintenancePhase(ctx: MonthContext): void {
   for (const [nationId, nation] of ctx.currentSnapshot["nations"]) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
 
+    // S-1 D6: while the nation is at war, active-status maintenance rises by one
+    // ruleset multiplier (manual p.52). The war state is the existing snapshot
+    // `wars` collection — a declared read of the maintenance phase.
+    const atWar = nationIsAtWar(ctx.currentSnapshot["wars"]["wars"], nationId);
+
     let totalMaintenance = SafeInt.ZERO;
     for (const fleet of nation["fleets"]) {
       for (const ship of fleet["ships"]) {
         totalMaintenance = SafeInt.add(
           totalMaintenance,
-          shipMaintenanceCost(ship["hitPoints"], ship["readiness"]),
+          shipMonthlyMaintenanceCost(ship["hitPoints"], ship["readiness"], atWar),
         );
       }
     }

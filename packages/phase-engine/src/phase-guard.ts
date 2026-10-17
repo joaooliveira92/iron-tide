@@ -89,7 +89,9 @@ export const PHASE_FOOTPRINTS: Readonly<Record<string, PhaseFootprint>> = {
     usesRng: true,
   },
   maintenance: {
-    reads: [PhaseResource.TREASURY, PhaseResource.FLEETS],
+    // S-1: maintenance reads war state to apply the wartime multiplier (p.52)
+    // and writes fleets for the readiness/crew evolution.
+    reads: [PhaseResource.TREASURY, PhaseResource.FLEETS, PhaseResource.WARS],
     writes: [PhaseResource.TREASURY, PhaseResource.FLEETS],
     usesRng: false,
   },

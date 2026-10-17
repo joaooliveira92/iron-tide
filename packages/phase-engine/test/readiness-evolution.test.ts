@@ -52,7 +52,10 @@ function makeNation(ships: Ship[]): NationState {
   };
 }
 
-function makeSnapshot(nation: NationState): CampaignSnapshot {
+function makeSnapshot(
+  nation: NationState,
+  wars: CampaignSnapshot["wars"]["wars"] = [],
+): CampaignSnapshot {
   return {
     version: "0.1.0",
     turnNumber: SafeInt(1),
@@ -64,7 +67,7 @@ function makeSnapshot(nation: NationState): CampaignSnapshot {
     world: { areas: [], routes: [], ports: [] },
     nations: new Map([["GBR", nation]]),
     wars: {
-      wars: [],
+      wars,
       battles: [],
       participantMemberships: [],
       blockadeState: [],
@@ -79,9 +82,12 @@ function makeSnapshot(nation: NationState): CampaignSnapshot {
   };
 }
 
-function runMonth(ships: Ship[]): ReturnType<MonthExecutor["execute"]> {
+function runMonth(
+  ships: Ship[],
+  wars: CampaignSnapshot["wars"]["wars"] = [],
+): ReturnType<MonthExecutor["execute"]> {
   return new MonthExecutor().execute(
-    makeSnapshot(makeNation(ships)),
+    makeSnapshot(makeNation(ships), wars),
     [],
     "readiness-seed",
     new DiagnosticCollector(),
@@ -187,5 +193,56 @@ describe("S-1 ticket 04: repair state", () => {
     // The countdown is halted, not advanced.
     expect(ship.repairMonthsRemaining as number).toBe(3);
     expect(ship.readiness).toBe("MOTHBALLED");
+  });
+});
+
+describe("S-1 ticket 05: wartime maintenance", () => {
+  const war: CampaignSnapshot["wars"]["wars"] = [
+    {
+      id: "war_1",
+      attackerSideId: "side_a",
+      defenderSideId: "side_d",
+      attackerSideMembers: ["GBR"],
+      defenderSideMembers: ["FRA"],
+      attackerWarScore: 0,
+      defenderWarScore: 0,
+      attackerId: "GBR",
+      defenderId: "FRA",
+      startDate: "1880-01",
+      status: "ACTIVE",
+    },
+  ];
+
+  it("raises active maintenance by the ruleset multiplier in war and leaves other states unchanged", () => {
+    const ships = [makeShip("active", "ACTIVE", 100), makeShip("reserve", "RESERVE", 100)];
+
+    const peace = runMonth(ships);
+    const wartime = runMonth(ships, war);
+
+    // Peace: ACTIVE 10 + RESERVE floor(7.5) = 7 => 17.
+    expect(peace.finalSnapshot.nations.get("GBR")!.maintenanceCost as number).toBe(17);
+    // War: ACTIVE 10 * 1.25 = 12 (floor) + RESERVE 7 (unchanged) => 19.
+    expect(wartime.finalSnapshot.nations.get("GBR")!.maintenanceCost as number).toBe(19);
+
+    const peaceEntry = peace.financialLedger.all.find(
+      (e) => e.categoryId === "MAINTENANCE_EXPENDITURE",
+    );
+    const warEntry = wartime.financialLedger.all.find(
+      (e) => e.categoryId === "MAINTENANCE_EXPENDITURE",
+    );
+    expect(peaceEntry!.debit as number).toBe(17);
+    expect(warEntry!.debit as number).toBe(19);
+  });
+
+  it("a war that does not name the nation leaves its maintenance unchanged", () => {
+    const otherWar: CampaignSnapshot["wars"]["wars"] = [
+      { ...war[0]!, attackerSideMembers: ["FRA"], defenderSideMembers: ["RUS"] },
+    ];
+    const ships = [makeShip("active", "ACTIVE", 100)];
+    const peace = runMonth(ships);
+    const unrelated = runMonth(ships, otherWar);
+    expect(unrelated.finalSnapshot.nations.get("GBR")!.maintenanceCost as number).toBe(
+      peace.finalSnapshot.nations.get("GBR")!.maintenanceCost as number,
+    );
   });
 });

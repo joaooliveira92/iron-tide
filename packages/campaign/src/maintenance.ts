@@ -25,6 +25,12 @@ export const MAINTENANCE_RESERVE_MULTIPLIER_BP = SafeInt(7_500);
 export const MAINTENANCE_MOTHBALLED_MULTIPLIER_BP = SafeInt(5_000);
 /** Repair ≈ 2× active (manual p.51; grounded). */
 export const MAINTENANCE_REPAIR_MULTIPLIER_BP = SafeInt(20_000);
+/**
+ * Wartime raises active maintenance by this factor (manual p.52: "In wartime,
+ * maintenance costs will rise sharply", no figure given; balance_adjustment,
+ * ADR-0213). Applied to active-status ships only.
+ */
+export const MAINTENANCE_WARTIME_MULTIPLIER_BP = SafeInt(12_500);
 
 /** The readiness state's maintenance multiplier, in basis points. */
 const MULTIPLIER_BP: Record<ShipReadinessState, SafeInt> = {
@@ -48,6 +54,41 @@ export function shipMaintenanceCost(hitPoints: SafeInt, readiness: ShipReadiness
   const base = SafeInt.div(SafeInt.mul(hitPoints, SafeInt(10)), SafeInt(100), "floor");
   return SafeInt.div(
     SafeInt.mul(base, maintenanceMultiplierBp(readiness)),
+    SafeInt(10_000),
+    "floor",
+  );
+}
+
+/** A war party as the maintenance seam needs it: the parties and the war's status. */
+export interface WarPartyRecord {
+  readonly status: string;
+  readonly attackerSideMembers: readonly string[];
+  readonly defenderSideMembers: readonly string[];
+}
+
+/** Whether a nation is a party to any live war (`ACTIVE` or `DECLARED_NOT_ACTIVE`). */
+export function nationIsAtWar(wars: readonly WarPartyRecord[], nationId: string): boolean {
+  return wars.some(
+    (war) =>
+      (war.status === "ACTIVE" || war.status === "DECLARED_NOT_ACTIVE") &&
+      (war.attackerSideMembers.includes(nationId) || war.defenderSideMembers.includes(nationId)),
+  );
+}
+
+/**
+ * The per-ship maintenance the phase charges for a month: the state-scaled base
+ * cost, with the wartime multiplier applied to active-status ships while the
+ * nation is at war (manual p.52; S-1 D6). Integer-only and deterministic.
+ */
+export function shipMonthlyMaintenanceCost(
+  hitPoints: SafeInt,
+  readiness: ShipReadinessState,
+  atWar: boolean,
+): SafeInt {
+  const cost = shipMaintenanceCost(hitPoints, readiness);
+  if (!atWar || readiness !== "ACTIVE") return cost;
+  return SafeInt.div(
+    SafeInt.mul(cost, MAINTENANCE_WARTIME_MULTIPLIER_BP),
     SafeInt(10_000),
     "floor",
   );
