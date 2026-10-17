@@ -23,6 +23,7 @@ export const NAMED_UNLOCKS: readonly NamedUnlock[] = [
   { label: "protected cruiser", kind: "technology", id: "sd_protected_cruiser" },
   { label: "all-steel hull", kind: "technology", id: "hc_all_steel_hull" },
   { label: "QF light guns", kind: "technology", id: "gun_qf_light" },
+  { label: "QF medium guns", kind: "technology", id: "gun_qf_medium" },
 ];
 
 export interface NamedUnlockAvailability {

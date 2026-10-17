@@ -3,14 +3,6 @@ import { execFileSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { buildContentBundleArtifact, buildFullSurfaceInput } from "@bluewave/content-compiler";
-import {
-  ContentBundleSchema,
-  validateAgainstSchema,
-  type CompiledContentBundle,
-} from "@bluewave/content-schema";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
-
 import {
   IdleProgressionYearError,
   assertNoIdleYears,
@@ -19,49 +11,18 @@ import {
   progressionEventsForYear,
   type ProgressionEvent,
 } from "../src/progression-ledger.js";
+import { compileProductionBundle } from "../src/production-pack.js";
 
 const thisDir = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(thisDir, "..", "..", "..");
-const PRODUCTION_PACK = resolve(REPO_ROOT, "content", "production", "1880");
 const childScript = resolve(thisDir, "..", "dist", "run-child.js");
 const LEDGER_YEARS = Array.from({ length: 10 }, (_, index) => 1880 + index);
-
-function compileProductionBundle(): CompiledContentBundle {
-  const collector = new DiagnosticCollector();
-  const input = buildFullSurfaceInput(
-    resolve(PRODUCTION_PACK, "pack.json"),
-    PRODUCTION_PACK,
-    collector,
-  );
-  const artifact = input
-    ? buildContentBundleArtifact(input, new AbortController().signal, collector)
-    : undefined;
-  if (!artifact || collector.hasErrors) {
-    throw new Error(
-      `Production pack compilation failed: ${collector.all.map((d) => d.message).join("; ")}`,
-    );
-  }
-  const decoded = validateAgainstSchema(
-    artifact.bundle,
-    ContentBundleSchema,
-    "ContentBundle",
-    "content-artifact.json",
-    collector,
-  );
-  if (decoded === undefined) {
-    throw new Error(
-      `Production pack bundle is invalid: ${collector.all.map((d) => d.message).join("; ")}`,
-    );
-  }
-  return decoded;
-}
 
 function withoutYear(events: readonly ProgressionEvent[], year: number): ProgressionEvent[] {
   return events.filter((event) => event.year !== year);
 }
 
 describe("N-3 ledger: availability events by year", () => {
-  const bundle = compileProductionBundle();
+  const { bundle } = compileProductionBundle();
   const ledger = buildProgressionLedger(bundle);
 
   it("lists every 1880–1889 event in canonical year/kind/id order", () => {
@@ -113,15 +74,8 @@ describe("N-3 ledger: availability events by year", () => {
     const pruned = { ...ledger, events: withoutYear(ledger.events, 1885) };
     expect(idleYears(pruned, LEDGER_YEARS)).toEqual([1885]);
 
-    let thrown: unknown;
-    try {
-      assertNoIdleYears(pruned, LEDGER_YEARS);
-    } catch (error) {
-      thrown = error;
-    }
-    expect(thrown).toBeInstanceOf(IdleProgressionYearError);
-    expect((thrown as IdleProgressionYearError).years).toEqual([1885]);
-    expect((thrown as IdleProgressionYearError).message).toContain("1885");
+    expect(() => assertNoIdleYears(pruned, LEDGER_YEARS)).toThrow(IdleProgressionYearError);
+    expect(() => assertNoIdleYears(pruned, LEDGER_YEARS)).toThrow(/1885/);
   });
 
   it("is byte-identical across two fresh processes", () => {

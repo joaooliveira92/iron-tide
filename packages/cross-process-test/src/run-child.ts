@@ -1,21 +1,11 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/campaign";
 import { CampaignCompiler } from "@bluewave/campaign/compiler";
 import { generateBattles } from "@bluewave/combat";
 import type { BudgetProjectCommand, CommandEnvelope } from "@bluewave/commands";
-import {
-  buildContentBundleArtifact,
-  buildFullSurfaceInput,
-  type ContentBundle,
-} from "@bluewave/content-compiler";
-import {
-  ContentBundleSchema,
-  validateAgainstSchema,
-  type CompiledContentBundle,
-} from "@bluewave/content-schema";
+import { buildContentBundleArtifact, buildFullSurfaceInput } from "@bluewave/content-compiler";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -24,11 +14,12 @@ import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
 import { nationsYaml } from "@bluewave/test-support";
 
 import { buildProgressionLedger } from "./progression-ledger.js";
+import { assertDecisionProbes, probeDecisions } from "./decision-probes.js";
 import {
-  assertDecisionProbes,
-  probeDecisions,
-  type ProbeReferenceDesign,
-} from "./decision-probes.js";
+  compileProductionBundle,
+  compileProductionCampaign,
+  probeReferenceDesigns,
+} from "./production-pack.js";
 
 const FIXTURE = {
   pack: JSON.stringify({
@@ -374,82 +365,6 @@ const PRODUCTION_SMOKE_MONTHS = 12;
 const PRODUCTION_SMOKE_SEED = "ten-nation-smoke-1880";
 const PRODUCTION_TEN_YEAR_MONTHS = 120;
 const PRODUCTION_TEN_YEAR_SEED = "ten-year-progression-1880";
-const PRODUCTION_PACK_DIR = resolve(
-  fileURLToPath(new URL(".", import.meta.url)),
-  "..",
-  "..",
-  "..",
-  "content",
-  "production",
-  "1880",
-);
-
-function compileProductionBundle(): {
-  bundle: CompiledContentBundle;
-  campaignBundle: ContentBundle;
-  contentHash: string;
-} {
-  const collector = new DiagnosticCollector();
-  const signal = new AbortController().signal;
-  const input = buildFullSurfaceInput(
-    resolve(PRODUCTION_PACK_DIR, "pack.json"),
-    PRODUCTION_PACK_DIR,
-    collector,
-  );
-  const artifact = input ? buildContentBundleArtifact(input, signal, collector) : undefined;
-  if (!artifact || collector.hasErrors) {
-    throw new Error(
-      `Production pack compilation failed: ${collector.all.map((d) => d.message).join("; ")}`,
-    );
-  }
-  const verification = validateAgainstSchema(
-    artifact.bundle,
-    ContentBundleSchema,
-    "ContentBundle",
-    "content-artifact.json",
-    collector,
-  );
-  if (verification === undefined) {
-    throw new Error(
-      `Production pack bundle is invalid: ${collector.all.map((d) => d.message).join("; ")}`,
-    );
-  }
-  return {
-    bundle: verification,
-    campaignBundle: artifact.bundle,
-    contentHash: artifact.envelope.bodyHash,
-  };
-}
-
-function compileCampaignFromBundle(
-  contentBundle: ContentBundle,
-  contentHash: string,
-): { state: CampaignState; contentHash: string } {
-  const collector = new DiagnosticCollector();
-  const signal = new AbortController().signal;
-  const output = new CampaignCompiler().compile(
-    {
-      contentBundle,
-      contentHash,
-      rulesetVersion: "1.0",
-      compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-    },
-    signal,
-    collector,
-  );
-  if (!output || collector.hasErrors) {
-    throw new Error(
-      `Production pack compilation failed: ${collector.all.map((d) => d.message).join("; ")}`,
-    );
-  }
-  return { state: output.state, contentHash: output.contentHash };
-}
-
-function compileProductionCampaign(): { state: CampaignState; contentHash: string } {
-  const { campaignBundle, contentHash } = compileProductionBundle();
-  return compileCampaignFromBundle(campaignBundle, contentHash);
-}
-
 interface SmokeDiagnostic {
   readonly month: number;
   readonly nationId: string | null;
@@ -470,14 +385,33 @@ function hullCounts(snapshot: CampaignSnapshot): Record<string, number> {
   return counts;
 }
 
+interface YearStart {
+  readonly year: number;
+  readonly month: string;
+  readonly snapshotHash: string;
+}
+
 interface ProductionRun {
   readonly initialSnapshotHash: string;
+  readonly yearStarts: YearStart[];
   readonly monthlyHashes: string[];
   readonly monthlySuccess: boolean[];
   readonly closingSnapshotHash: string;
   readonly success: boolean;
   readonly diagnostics: SmokeDiagnostic[];
   readonly hullCounts: Record<string, number>;
+}
+
+function calendarAt(
+  initial: CampaignSnapshot,
+  monthOffset: number,
+): {
+  readonly year: number;
+  readonly month: number;
+} {
+  const startIndex = Number(initial.startYear) * 12 + Number(initial.startMonth) - 1;
+  const index = startIndex + monthOffset;
+  return { year: Math.floor(index / 12), month: (index % 12) + 1 };
 }
 
 function advanceProductionRun(
@@ -487,12 +421,21 @@ function advanceProductionRun(
   onYearStart?: (snapshot: CampaignSnapshot, year: number) => void,
 ): ProductionRun {
   let snapshot = initial;
+  const yearStarts: YearStart[] = [];
   const monthlyHashes: string[] = [];
   const monthlySuccess: boolean[] = [];
   const diagnostics: SmokeDiagnostic[] = [];
   let success = true;
   for (let index = 0; index < months; index++) {
-    if (index % 12 === 0) onYearStart?.(snapshot, 1880 + index / 12);
+    const calendar = calendarAt(initial, index);
+    if (calendar.month === 1) {
+      yearStarts.push({
+        year: calendar.year,
+        month: `${String(calendar.year)}-01`,
+        snapshotHash: hashSnapshot(snapshot),
+      });
+      onYearStart?.(snapshot, calendar.year);
+    }
     const collector = new DiagnosticCollector();
     const result = new MonthExecutor().execute(
       snapshot,
@@ -518,6 +461,7 @@ function advanceProductionRun(
   }
   return {
     initialSnapshotHash: hashSnapshot(initial),
+    yearStarts,
     monthlyHashes,
     monthlySuccess,
     closingSnapshotHash: hashSnapshot(snapshot),
@@ -584,21 +528,14 @@ function runProductionTenYear(): void {
     first.closingSnapshotHash === second.closingSnapshotHash &&
     canonicalSerialize(first.diagnostics) === canonicalSerialize(second.diagnostics);
 
-  // A checkpoint is the state as each calendar year opens (1880–1889); the
-  // closing hash is the state at 1890-01 after 120 months.
-  const yearlyCheckpoints = Array.from({ length: 10 }, (_, index) => ({
-    year: 1880 + index,
-    month: `${String(1880 + index)}-01`,
-    snapshotHash: index === 0 ? first.initialSnapshotHash : first.monthlyHashes[index * 12 - 1]!,
-  }));
-
   process.stdout.write(
     JSON.stringify({
       mode: "production-ten-year",
       months: PRODUCTION_TEN_YEAR_MONTHS,
       inProcessRepeatMatches,
       success: first.success && second.success,
-      yearlyCheckpoints,
+      initialSnapshotHash: first.initialSnapshotHash,
+      yearlyCheckpoints: first.yearStarts,
       monthlyHashes: first.monthlyHashes,
       monthlySuccess: first.monthlySuccess,
       closingSnapshotHash: first.closingSnapshotHash,
@@ -608,17 +545,8 @@ function runProductionTenYear(): void {
   );
 }
 
-function probeReferenceDesigns(bundle: CompiledContentBundle): readonly ProbeReferenceDesign[] {
-  return (bundle.shipBuilding?.referenceDesigns ?? []).map((reference) => ({
-    id: reference.id,
-    month: reference.month,
-    draft: { ...reference.draft },
-  }));
-}
-
 function runProductionProbes(): void {
-  const { bundle, campaignBundle, contentHash } = compileProductionBundle();
-  const { state } = compileCampaignFromBundle(campaignBundle, contentHash);
+  const { bundle, state } = compileProductionCampaign();
   const slot = state.snapshot.slots.find((candidate) => candidate.type === "playable");
   if (slot === undefined) throw new Error("production pack has no playable slot");
   const references = probeReferenceDesigns(bundle);

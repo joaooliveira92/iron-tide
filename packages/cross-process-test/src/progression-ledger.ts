@@ -100,8 +100,21 @@ export function buildProgressionLedger(
     });
   }
 
-  events.sort(compareEvents);
-  return { years: [...years], events };
+  // A generated part and its legacy component can share an id and month (for
+  // example the fitting entries copied from components.yaml). They are one
+  // availability fact; keep the part, which is the authoritative record, and
+  // drop the component duplicate. A different month stays a separate event.
+  const unique = new Map<string, ProgressionEvent>();
+  for (const event of events) {
+    const key = `${event.id}|${event.month}`;
+    const existing = unique.get(key);
+    if (existing === undefined || (existing.kind === "component" && event.kind !== "component")) {
+      unique.set(key, event);
+    }
+  }
+
+  const ordered = [...unique.values()].sort(compareEvents);
+  return { years: [...years], events: ordered };
 }
 
 export function progressionEventsForYear(

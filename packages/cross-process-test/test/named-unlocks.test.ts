@@ -1,14 +1,4 @@
 import { describe, it, expect } from "vite-plus/test";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-
-import { buildContentBundleArtifact, buildFullSurfaceInput } from "@bluewave/content-compiler";
-import {
-  ContentBundleSchema,
-  validateAgainstSchema,
-  type CompiledContentBundle,
-} from "@bluewave/content-schema";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { shiftMonth } from "@bluewave/ship-design";
 
 import {
@@ -18,43 +8,10 @@ import {
   inspectNamedUnlocks,
 } from "../src/designer-unlocks.js";
 import { buildProgressionLedger } from "../src/progression-ledger.js";
-
-const thisDir = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(thisDir, "..", "..", "..");
-const PRODUCTION_PACK = resolve(REPO_ROOT, "content", "production", "1880");
-
-function compileProductionBundle(): CompiledContentBundle {
-  const collector = new DiagnosticCollector();
-  const input = buildFullSurfaceInput(
-    resolve(PRODUCTION_PACK, "pack.json"),
-    PRODUCTION_PACK,
-    collector,
-  );
-  const artifact = input
-    ? buildContentBundleArtifact(input, new AbortController().signal, collector)
-    : undefined;
-  if (!artifact || collector.hasErrors) {
-    throw new Error(
-      `Production pack compilation failed: ${collector.all.map((d) => d.message).join("; ")}`,
-    );
-  }
-  const decoded = validateAgainstSchema(
-    artifact.bundle,
-    ContentBundleSchema,
-    "ContentBundle",
-    "content-artifact.json",
-    collector,
-  );
-  if (decoded === undefined) {
-    throw new Error(
-      `Production pack bundle is invalid: ${collector.all.map((d) => d.message).join("; ")}`,
-    );
-  }
-  return decoded;
-}
+import { compileProductionBundle } from "../src/production-pack.js";
 
 describe("N-3 named unlocks in the designer", () => {
-  const bundle = compileProductionBundle();
+  const { bundle } = compileProductionBundle();
   const ledger = buildProgressionLedger(bundle);
 
   it("makes each named unlock unavailable before its declared month and available at it", () => {
@@ -77,6 +34,24 @@ describe("N-3 named unlocks in the designer", () => {
     expect(assertNamedUnlocks(bundle, ledger)).toBeUndefined();
   });
 
+  it("lists every declared QF/light gun component introduction at its declared month", () => {
+    const components = bundle.shipBuilding?.components ?? [];
+    const qfGuns = components.filter((component) => {
+      const year = Number(component.introduction.fromMonth.slice(0, 4));
+      return year >= 1880 && year <= 1889 && /(^|_)(qf|hotchkiss|nordenfelt)/.test(component.id);
+    });
+    expect(qfGuns.length).toBeGreaterThan(0);
+    for (const component of qfGuns) {
+      const event = ledger.events.find(
+        (candidate) => candidate.id === component.id && candidate.kind === "component",
+      );
+      expect(event, `${component.id} is missing from the ledger`).toBeDefined();
+      expect(event?.month, `${component.id} declared introduction`).toBe(
+        component.introduction.fromMonth,
+      );
+    }
+  });
+
   it("names the id and both months when the ledger disagrees with the designer", () => {
     const forged = {
       ...ledger,
@@ -84,15 +59,9 @@ describe("N-3 named unlocks in the designer", () => {
         event.id === "whitehead_14in_1886" ? { ...event, month: "1881-01" } : event,
       ),
     };
-    let thrown: unknown;
-    try {
-      assertNamedUnlocks(bundle, forged);
-    } catch (error) {
-      thrown = error;
-    }
-    expect(thrown).toBeInstanceOf(NamedUnlockError);
-    expect((thrown as NamedUnlockError).unlockId).toBe("whitehead_14in_1886");
-    expect((thrown as NamedUnlockError).message).toContain("1881-01");
-    expect((thrown as NamedUnlockError).message).toContain("1880-01");
+    expect(() => assertNamedUnlocks(bundle, forged)).toThrow(NamedUnlockError);
+    expect(() => assertNamedUnlocks(bundle, forged)).toThrow(
+      /whitehead_14in_1886.*1881-01.*1880-01/,
+    );
   });
 });

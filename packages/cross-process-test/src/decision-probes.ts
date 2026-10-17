@@ -163,13 +163,13 @@ function designProbe(
   year: number,
   referenceDesigns: readonly ProbeReferenceDesign[],
 ): DecisionProbeResult {
-  const byMonth = `${String(year)}-12`;
+  const probeMonth = `${String(year)}-01`;
   const reference = [...referenceDesigns]
     .filter(
       (candidate) =>
         candidate.draft !== undefined &&
         candidate.draft.nationId === slot.nationId &&
-        (candidate.month ?? "0000-00") <= byMonth,
+        (candidate.month ?? "0000-00") <= probeMonth,
     )
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))[0];
   if (reference?.draft === undefined) {
@@ -185,9 +185,17 @@ function designProbe(
   const buildable = buildConstructionDesignCatalog(snapshot, slot.nationId, year).find(
     (entry) => entry.available,
   );
-  const className = buildable?.className ?? "N-3 probe";
-  const hullType = buildable?.shipType ?? "cruiser";
-  const machineryType = buildable?.machineryType ?? "probe";
+  if (buildable === undefined) {
+    return {
+      year,
+      family: "design",
+      accepted: false,
+      commandType: "SubmitDesign",
+      targetId: reference.id,
+      reasonCode: "NO_BUILDABLE_DESIGN",
+    };
+  }
+  const { className, shipType: hullType, machineryType } = buildable;
   const outcome = outcomeOf(
     snapshot,
     slot,
