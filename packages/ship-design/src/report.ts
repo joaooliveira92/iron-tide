@@ -47,7 +47,8 @@ export function balanceRows(
       rangeNm: c.machinery?.rangeNmAtCruise ?? 0,
       gmMm: c.stability?.gmMm ?? 0,
       costMicro: computeCost(c, draft, costBalance, costCtx).total,
-      cveBp: computeCve(c, draft, plant.reliabilityBp, cveBalance).cveBp,
+      cveBp: computeCve(c, draft, c.machinery?.reliabilityBp ?? plant.reliabilityBp, cveBalance)
+        .cveBp,
       blocking: n("BLOCKING"),
       critical: n("CRITICAL"),
       warning: n("WARNING"),
