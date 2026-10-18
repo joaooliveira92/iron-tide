@@ -42,21 +42,21 @@ describe("ship-visual presentation boundary", () => {
           (field) => pkg[field]?.[SELF] !== undefined,
         );
       })
-      .map((path) => relative(ROOT, path));
+      .map((path) => relative(ROOT, path).replaceAll("\\", "/"));
     expect(dependents).toEqual(["apps/desktop/package.json"]);
   });
 
   it("the desktop main process never imports it", () => {
     const offenders = files(join(ROOT, "apps/desktop/src/main"), (p) => /\.tsx?$/.test(p))
       .filter((path) => readFileSync(path, "utf8").includes(SELF))
-      .map((path) => relative(ROOT, path));
+      .map((path) => relative(ROOT, path).replaceAll("\\", "/"));
     expect(offenders).toEqual([]);
   });
 
   it("no content pack declares the catalog", () => {
     const offenders = files(join(ROOT, "content"), (p) => p.endsWith("pack.json"))
       .filter((path) => readFileSync(path, "utf8").includes("ship-visual"))
-      .map((path) => relative(ROOT, path));
+      .map((path) => relative(ROOT, path).replaceAll("\\", "/"));
     expect(offenders).toEqual([]);
   });
 });
