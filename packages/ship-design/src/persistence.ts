@@ -5,6 +5,7 @@ import { applyEdit, type DraftEdit } from "./edits.js";
 import { withoutSubjects } from "./findings.js";
 import { isShipTypeId } from "./shipTypes.js";
 import { ARMOUR_REGIONS } from "./armour.js";
+import { ARMOUR_SCHEME_IDS } from "./armourSchemes.js";
 
 export const DESIGN_FILE_FORMAT = "bwdesign";
 /**
@@ -111,8 +112,38 @@ export function validateDraftShape(raw: unknown): string[] {
     p.push(`requirement.category is not a registered ship type (SHIP_TYPE_UNREGISTERED)`);
   if (isObj(raw.hull) && typeof raw.hull.hullFormId !== "string")
     p.push("hull.hullFormId must be a string");
+  if (
+    isObj(raw.hull) &&
+    raw.hull.freeboardProfile !== undefined &&
+    raw.hull.freeboardProfile !== "NORMAL" &&
+    raw.hull.freeboardProfile !== "LOW"
+  )
+    p.push("hull.freeboardProfile must be NORMAL or LOW");
   if (isObj(raw.machinery) && typeof raw.machinery.plantId !== "string")
     p.push("machinery.plantId must be a string");
+  if (isObj(raw.armour) && raw.armour.schemeId !== undefined) {
+    if (!(ARMOUR_SCHEME_IDS as readonly unknown[]).includes(raw.armour.schemeId))
+      p.push("armour.schemeId is not a known armour scheme");
+  }
+  if (raw.tertiary !== undefined) {
+    const t = raw.tertiary;
+    if (
+      !isObj(t) ||
+      !Number.isSafeInteger(t.caliberUm) ||
+      (t.caliberUm as number) <= 0 ||
+      !Number.isSafeInteger(t.count) ||
+      (t.count as number) < 0
+    )
+      p.push("tertiary must be { caliberUm: positive integer, count: non-negative integer }");
+  }
+  if (raw.fireControl !== undefined) {
+    if (
+      !isObj(raw.fireControl) ||
+      !Number.isSafeInteger(raw.fireControl.positions) ||
+      (raw.fireControl.positions as number) < 0
+    )
+      p.push("fireControl.positions must be a non-negative integer");
+  }
   if (isObj(raw.machinery) && raw.machinery.enginePriorityBp !== undefined) {
     const e = raw.machinery.enginePriorityBp;
     if (!Number.isSafeInteger(e) || (e as number) < -10_000 || (e as number) > 10_000)

@@ -16,6 +16,7 @@ export type {
 export {
   ACCOMMODATION_STANDARDS,
   ARMOUR_REGION_IDS,
+  ARMOUR_SCHEME_IDS,
   MOUNT_SIDES,
   ReferenceDesignProvenanceSchema,
   ReferenceDesignSchema,

@@ -80,6 +80,24 @@ describe("batterySummary", () => {
   });
 });
 
+describe("batterySummary: tertiary guns", () => {
+  it("a TERTIARY_GUN fitting is its own TERTIARY battery, ordered after secondary and before torpedo", () => {
+    const rows = batterySummary(
+      [
+        comp("t1", "TORPEDO_TUBE", 0, { tubes: 1 }),
+        comp("q1", "TERTIARY_GUN", 57_000, { barrels: 1, rounds: 200 }),
+        comp("s1", "SECONDARY_GUN", 152_000, { barrels: 1, rounds: 150 }),
+      ],
+      [at("t1", 500), at("q1", 300), at("s1", 400)],
+    );
+    expect(rows.map((r) => [r.key, r.role])).toEqual([
+      ["SECONDARY:152000", "SECONDARY"],
+      ["TERTIARY:57000", "TERTIARY"],
+      ["TORPEDO:0", "TORPEDO"],
+    ]);
+  });
+});
+
 describe("mountNames", () => {
   const m = (id: string, station: number, side?: PlacementSpec["side"]) => at(id, station, side);
   const names = (mounts: ReturnType<typeof m>[]) =>

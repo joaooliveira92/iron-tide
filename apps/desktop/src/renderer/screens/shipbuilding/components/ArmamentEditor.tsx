@@ -13,6 +13,7 @@ import { Checkbox } from "../../../components/ui/checkbox.js";
 import type { DrawingBoardContent } from "../../../components/design-workspace/content.js";
 import { NumberField, SelectField } from "../../../components/design-workspace/fields.js";
 import { Panel } from "../../../components/design-workspace/panels/Panel.js";
+import { batterySymmetry } from "../../../components/design-workspace/batteryView.js";
 import { plural } from "../../../components/design-workspace/plural.js";
 import {
   placementAttrs,
@@ -180,7 +181,14 @@ export function ArmamentEditor({
           {entries.map((entry) => (
             <div key={entry.row.key} className="space-y-1.5">
               <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
-                <span className="font-medium">{entry.title}</span>
+                <span className="font-medium">
+                  {entry.title}
+                  {batterySymmetry(entry) === "asymmetric" && (
+                    <Badge variant="secondary" className="ml-2" title="Port and starboard differ">
+                      Asymmetric
+                    </Badge>
+                  )}
+                </span>
                 <span className="tabular-nums text-muted-foreground">
                   {plural(entry.mounts.length, "mount")} · {tonnes(entry.row.weightKg)} t
                 </span>

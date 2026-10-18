@@ -38,6 +38,12 @@ import { compileHull, type HullResult } from "./hull.js";
 import { emptyLedger, withLine, type LedgerCategory } from "./ledger.js";
 import { compileMachinery, type MachineryResult, type PropulsionPlant } from "./machinery.js";
 import { compileSystems, type SystemsResult } from "./systems.js";
+import {
+  expandTertiary,
+  NO_TERTIARY_BALANCE,
+  TERTIARY_STATION_PERMILLE,
+  TERTIARY_ZONE,
+} from "./tertiary.js";
 import { compileWeapons, type ArcObstacle, type GunMount, type WeaponsResult } from "./weapons.js";
 
 type AmmoMount = WeaponsResult["mounts"][number];
@@ -267,6 +273,24 @@ export function buildPlacementsAndArrangement(args: {
     forbidsCoLocation: [],
     critical: false,
   });
+  const tertiary = expandTertiary(draft.tertiary, b.tertiary ?? NO_TERTIARY_BALANCE);
+  if (tertiary.guns > 0) {
+    resolvedPlacements.push({
+      instanceId: "~tertiary",
+      componentId: "tertiary_battery",
+      category: "TERTIARY_GUN",
+      zoneId: TERTIARY_ZONE,
+      stationPermille: TERTIARY_STATION_PERMILLE,
+      weightKg: tertiary.weightKg,
+      volumeLitre: 0,
+      deckFootprintMm2: tertiary.footprintMm2,
+      heightMm: 0,
+      zCgMm: hull.depthToMainDeck,
+      allowedZones: [...ZONE_IDS],
+      forbidsCoLocation: [],
+      critical: false,
+    });
+  }
   const arrangement = analyseArrangement(
     resolvedPlacements,
     formData.zones,
@@ -364,7 +388,13 @@ export function compileWeaponSet(args: {
       reachPermille: r.attr.arcReachPermille ?? 0,
       blockedDeg: r.attr.arcBlockedDeg!,
     }));
-  const weapons = compileWeapons(mounts, obstacles, draft.requirement.crewQualityBp, b.weapons);
+  const gunsOnly = compileWeapons(mounts, obstacles, draft.requirement.crewQualityBp, b.weapons);
+  const tertiary = expandTertiary(draft.tertiary, b.tertiary ?? NO_TERTIARY_BALANCE);
+  const weapons: WeaponsResult = {
+    ...gunsOnly,
+    broadsidePortKg: gunsOnly.broadsidePortKg + tertiary.broadsideKg,
+    broadsideStbdKg: gunsOnly.broadsideStbdKg + tertiary.broadsideKg,
+  };
   findings.push(...weapons.findings);
   const ammoById = new Map(weapons.mounts.map((m) => [m.instanceId, m]));
   return { weapons, ammoById, gunRes, armaments };
@@ -417,6 +447,7 @@ export function compileSystemsAndMachinery(args: {
       generators,
       coolingSupplyKw: resolved.reduce((a, r) => a + (r.attr.coolingSupplyKw ?? 0), 0),
       displacementKg: hull.targetDisplacementKg,
+      fireControlPositions: draft.fireControl?.positions ?? 0,
       accommodationStandard: draft.requirement.accommodationStandard,
       accommodationVolumeLitre: accommodationVolume,
       guns,
@@ -519,7 +550,12 @@ export function compileStructure(args: {
     (machineryRaw.plantWeightKg + sumBy("machinery")) as never,
   );
   others = withLine(others, "fuel", (draft.machinery.fuelCapacityKg + sumBy("fuel")) as never);
-  others = withLine(others, "armament", sumBy("armament") as never);
+  others = withLine(
+    others,
+    "armament",
+    (sumBy("armament") +
+      expandTertiary(draft.tertiary, b.tertiary ?? NO_TERTIARY_BALANCE).weightKg) as never,
+  );
   others = withLine(others, "ammunition", (weapons.ammoMassKg + sumBy("ammunition")) as never);
   others = withLine(others, "sensors", sumBy("sensors") as never);
   others = withLine(others, "mission", sumBy("mission") as never);

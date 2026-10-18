@@ -2,6 +2,8 @@ import { describe, it, expect } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import {
   encodeDesignFile,
+  applyEdit,
+  EditError,
   decodeDesignFile,
   decodeCompiled,
   verifyCompiledHash,
@@ -388,5 +390,75 @@ describe("engine priority in the design file", () => {
     expect(d.draft.machinery.enginePriorityBp).toBe(-4_000);
     for (const bad of [10_001, -10_001, 1.5, "fast"])
       expect(() => decodeDesignFile(withPriority(bad), ctx.catalogue)).toThrow(PersistenceError);
+  });
+});
+
+describe("fire control in the design file", () => {
+  const withFc = (v: unknown) =>
+    JSON.stringify({
+      format: "bwdesign",
+      schemaVersion: 2,
+      draft: { ...draft, fireControl: v },
+      componentHashes: {},
+      compiledHash: null,
+    });
+  it("round-trips a position count and refuses a malformed one", () => {
+    expect(decodeDesignFile(withFc({ positions: 3 }), ctx.catalogue).draft.fireControl).toEqual({
+      positions: 3,
+    });
+    for (const bad of [{ positions: -1 }, { positions: 1.5 }, { positions: "2" }, 4])
+      expect(() => decodeDesignFile(withFc(bad), ctx.catalogue)).toThrow(PersistenceError);
+  });
+});
+
+describe("freeboard profile in the design file", () => {
+  const withProfile = (v: unknown) =>
+    JSON.stringify({
+      format: "bwdesign",
+      schemaVersion: 2,
+      draft: { ...draft, hull: { ...draft.hull, freeboardProfile: v } },
+      componentHashes: {},
+      compiledHash: null,
+    });
+  it("round-trips NORMAL and LOW and refuses anything else", () => {
+    for (const ok of ["NORMAL", "LOW"] as const)
+      expect(decodeDesignFile(withProfile(ok), ctx.catalogue).draft.hull.freeboardProfile).toBe(ok);
+    for (const bad of ["HIGH", "low", 1, null])
+      expect(() => decodeDesignFile(withProfile(bad), ctx.catalogue)).toThrow(PersistenceError);
+  });
+});
+
+describe("tertiary battery in the design file and edits", () => {
+  const withTertiary = (v: unknown) =>
+    JSON.stringify({
+      format: "bwdesign",
+      schemaVersion: 2,
+      draft: { ...draft, tertiary: v },
+      componentHashes: {},
+      compiledHash: null,
+    });
+  it("round-trips a battery and refuses a malformed one", () => {
+    expect(
+      decodeDesignFile(withTertiary({ caliberUm: 57_000, count: 6 }), ctx.catalogue).draft.tertiary,
+    ).toEqual({ caliberUm: 57_000, count: 6 });
+    for (const bad of [
+      { caliberUm: 0, count: 1 },
+      { caliberUm: 57_000, count: -1 },
+      { caliberUm: 57_000.5, count: 1 },
+      { caliberUm: 57_000 },
+      5,
+    ])
+      expect(() => decodeDesignFile(withTertiary(bad), ctx.catalogue)).toThrow(PersistenceError);
+  });
+  it("set_tertiary sets, and a null battery removes it", () => {
+    const set = applyEdit(draft, {
+      kind: "set_tertiary",
+      tertiary: { caliberUm: 47_000, count: 8 },
+    });
+    expect(set.tertiary).toEqual({ caliberUm: 47_000, count: 8 });
+    expect(applyEdit(set, { kind: "set_tertiary", tertiary: null }).tertiary).toBeUndefined();
+    expect(() =>
+      applyEdit(draft, { kind: "set_tertiary", tertiary: { caliberUm: 47_000, count: 1.5 } }),
+    ).toThrow(EditError);
   });
 });

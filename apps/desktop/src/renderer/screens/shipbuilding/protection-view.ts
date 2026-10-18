@@ -1,14 +1,19 @@
 import {
-  allOrNothingRegions,
+  applyArmourScheme,
   ARMOUR_REGIONS,
+  ARMOUR_SCHEMES,
+  armourSchemeAvailable,
   newArmourRegion,
   type ArmourMaterialOption,
   type ArmourRegion,
   type ArmourRegionId,
+  type ArmourSchemeId,
   type DesignDraft,
+  type DraftEdit,
   type RegionSizing,
   type WorkshopView,
 } from "@bluewave/ship-design";
+import { schemeDiagram, type SchemeDiagram } from "./scheme-diagram.js";
 
 /**
  * The Protection section's armour view model. Pure: it groups the design's armour regions spatially and turns each
@@ -109,6 +114,19 @@ export interface ProtectionGroup {
   readonly fields: readonly ProtectionField[];
 }
 
+/** One armour scheme as the selector shows it. */
+export interface SchemeChoice {
+  readonly id: ArmourSchemeId;
+  readonly label: string;
+  readonly citation: string;
+  readonly locked: boolean;
+  /** "Unlocks in 1905" when locked, else null. */
+  readonly lockedReason: string | null;
+  readonly active: boolean;
+  readonly regions: readonly ArmourRegion[];
+  readonly diagram: SchemeDiagram;
+}
+
 export interface ProtectionModel {
   readonly groups: readonly ProtectionGroup[];
   readonly fitted: readonly ProtectionField[];
@@ -123,8 +141,10 @@ export interface ProtectionModel {
   readonly regionSizing: RegionSizing;
   /** The material a newly added region starts with: the first fitted region's, else the first available. */
   readonly defaultMaterialId: string;
-  /** The "all or nothing" scheme the region list would become, for the one-click action. */
-  readonly allOrNothing: readonly ArmourRegion[];
+  /** The named armour schemes, in catalogue order, with their lock state against the calendar year. */
+  readonly schemes: readonly SchemeChoice[];
+  /** The scheme the regions were last set from, or "Custom" after any manual region edit. */
+  readonly schemeLabel: string;
   /** Things the model does not yet carry, said plainly rather than faked. */
   readonly notes: readonly string[];
 }
@@ -137,6 +157,7 @@ export function protectionModel(
   draft: DesignDraft,
   view: WorkshopView,
   materials: readonly ArmourMaterialOption[],
+  calendarYear: number,
 ): ProtectionModel {
   const armour = view.compiled.armour;
   const threat = draft.requirement.designThreatId;
@@ -201,13 +222,40 @@ export function protectionModel(
     protectionGoal: draft.requirement.protectionGoal ?? "STANDARD",
     regionSizing,
     defaultMaterialId,
-    allOrNothing: allOrNothingRegions(draft.armour.regions, draft.armour.citadelLengthMm),
+    schemes: ARMOUR_SCHEMES.map((s) => {
+      const locked = !armourSchemeAvailable(s, calendarYear);
+      return {
+        id: s.id,
+        label: s.displayName,
+        citation: s.citation,
+        locked,
+        lockedReason: locked ? `Unlocks in ${s.unlockYear}` : null,
+        active: draft.armour.schemeId === s.id,
+        regions: applyArmourScheme(s.id, draft.armour.regions, regionSizing, defaultMaterialId),
+        diagram: schemeDiagram(s),
+      };
+    }),
+    schemeLabel:
+      ARMOUR_SCHEMES.find((s) => s.id === draft.armour.schemeId)?.displayName ?? "Custom",
     notes: [
       "Coverage is each plate's fore-aft extent as a share of the waterline (the header's belt coverage is the belt's share of the citadel); the design gives no station, so the plan draws regions amidships (a convention).",
-      "Turret side, turret roof, subdivision, double bottom and the brief's 'extended deck' are not modelled as separate armour regions; the model carries the twelve regions above.",
+      "Subdivision and double bottom are not modelled as armour regions; the model carries the fourteen regions above, including the manual's nine universal fields.",
       "Inclination is modelled (cos obliquity); tapering and internal backing are not.",
     ],
   };
 }
 
 export { INCLINED_COS_BP, FLAT_COS_BP };
+
+/**
+ * The edit that applies a scheme as one undoable step, or null when the scheme is locked. The regions are the ones the
+ * model already computed for it, so the edit is exactly what the selector showed.
+ */
+export function schemeEdit(
+  model: ProtectionModel,
+  id: ArmourSchemeId,
+): Extract<DraftEdit, { kind: "set_armour_scheme" }> | null {
+  const choice = model.schemes.find((s) => s.id === id);
+  if (choice === undefined || choice.locked) return null;
+  return { kind: "set_armour_scheme", schemeId: id, regions: choice.regions };
+}

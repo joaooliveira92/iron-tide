@@ -30,6 +30,14 @@ export const ARMOUR_REGION_IDS = [
   "TORPEDO_BELT",
 ] as const;
 
+/** Mirrors `ARMOUR_SCHEME_IDS` in `@bluewave/ship-design` (a test keeps the two lists identical). */
+export const ARMOUR_SCHEME_IDS = [
+  "FLAT_DECK_ON_BELT",
+  "PROTECTED_CRUISER",
+  "BELT_AND_SLOPING_DECK",
+  "ALL_OR_NOTHING",
+] as const;
+
 /** Mirrors `MountSide` in `@bluewave/ship-design` (a test keeps the two lists identical). */
 export const MOUNT_SIDES = ["CENTRE", "PORT", "STBD"] as const;
 
@@ -74,6 +82,7 @@ export const HullSpecSchema = Schema.Struct({
   limitDisplacementKg: Schema.NullOr(positiveInt),
   designMarginBp: bp,
   growthReserveBp: bp,
+  freeboardProfile: Schema.optional(Schema.Literals(["NORMAL", "LOW"] as const)),
 });
 
 const MachineryRoomSchema = Schema.Struct({
@@ -111,6 +120,7 @@ const ArmourPlanSchema = Schema.Struct({
   citadelLengthMm: nonNegativeInt,
   torpedoWarheadKg: nonNegativeInt,
   bunkerProtectionBp: bp,
+  schemeId: Schema.optional(Schema.Literals(ARMOUR_SCHEME_IDS)),
 });
 
 const PlacementSpecSchema = Schema.Struct({
@@ -130,6 +140,8 @@ const DesignDraftSchema = Schema.Struct({
   machinery: MachineryPlanSchema,
   armour: ArmourPlanSchema,
   placements: Schema.Array(PlacementSpecSchema),
+  fireControl: Schema.optional(Schema.Struct({ positions: nonNegativeInt })),
+  tertiary: Schema.optional(Schema.Struct({ caliberUm: positiveInt, count: nonNegativeInt })),
 });
 
 /**
