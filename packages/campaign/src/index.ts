@@ -56,6 +56,7 @@ export type {
   NationDockExpansionState,
   NationDockState,
   NationState,
+  PossessionData,
   PossessionDockExpansionEligibility,
   ProcurementIntent,
   ProcurementIntentStatus,
@@ -72,6 +73,7 @@ export type {
   WorldState,
 } from "./state.js";
 export { isShipOperational } from "./state.js";
+export { presenceAreaIds } from "./presence.js";
 export * from "./technologyVariation.js";
 export * from "./technologyMaterialization.js";
 export * from "./timeline.js";

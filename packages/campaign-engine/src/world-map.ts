@@ -1,3 +1,4 @@
+import { presenceAreaIds } from "@bluewave/campaign";
 import type { CampaignSnapshot } from "@bluewave/campaign";
 
 /**
@@ -22,6 +23,10 @@ export interface WorldMapNationView {
   readonly id: string;
   readonly name: string;
   readonly tag: string;
+  /** The nation's authoritative home area (S-5); null for a save that predates it. */
+  readonly homeAreaId: string | null;
+  /** The distinct areas of the possessions the nation currently owns, ordered by area id. */
+  readonly presenceAreaIds: readonly string[];
 }
 
 export interface WorldMapAreaView {
@@ -65,7 +70,13 @@ export interface WorldMapView {
  */
 export function buildWorldMapView(snapshot: CampaignSnapshot): WorldMapView {
   const nations: WorldMapNationView[] = [...snapshot.nations.values()]
-    .map((nation) => ({ id: nation.id, name: nation.name, tag: nation.tag }))
+    .map((nation) => ({
+      id: nation.id,
+      name: nation.name,
+      tag: nation.tag,
+      homeAreaId: nation.homeAreaId ?? null,
+      presenceAreaIds: presenceAreaIds(snapshot.world.possessions ?? [], nation.id),
+    }))
     .sort((a, b) => a.id.localeCompare(b.id));
 
   const areas: WorldMapAreaView[] = snapshot.world.areas

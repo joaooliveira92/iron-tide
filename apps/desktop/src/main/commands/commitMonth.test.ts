@@ -237,16 +237,17 @@ describe("commitMonth", () => {
       // compiled snapshot and the USA slot flips ai -> playable, so both
       // authoritative hashes move with understood causes; re-pinned below. Re-pinned 2026-10-18 (economy #138,
       // ADR-0230): the snapshot gains the research catalogue, seeded construction packages and capacity, the derived
-      // economic base and compatibility 3.1.0.
+      // economic base and compatibility 3.1.0. Re-pinned 2026-10-18 (S-5 02, ADR-0231): the snapshot gains
+      // each nation's home area and the world possession ownership (+4498 bytes: 14 nations, 62 possessions).
       expect(updated.state.envelope).toEqual({
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-        bodyHash: "501800184420a12fa944f1dd53d1e9e60f43dd3737d95ea05a36d62340fff9dc",
-        bodyLength: 101616,
+        bodyHash: "07dc0763ae6dd25c34f2071ff66fc4c7b9e586ab3e09ae5e2472778f617b0310",
+        bodyLength: 106114,
       });
       expect(updated.state.rawHash).toBe(
-        "86831edc5c6b87c80de36a29dde76808859489fe0efef7e5b4a31b9c5772e833",
+        "91a543e392ff6c66d3ba9f6df9f136612f35986834acddb34a81ac3962426880",
       );
       const expectedActiveWars = updated.state.snapshot.wars.wars.filter(
         (w) => w.status !== "ENDED",

@@ -365,6 +365,7 @@ export function buildNationStates(
       baseResources,
       navalAppropriationRateBp: startRate,
       maintenanceCost: SafeInt(0),
+      ...(typeof countryRec["homeArea"] === "string" ? { homeAreaId: countryRec["homeArea"] } : {}),
       fleets,
       divisions,
       officers,

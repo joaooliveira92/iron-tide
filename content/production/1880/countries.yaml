@@ -3,6 +3,7 @@
   name: United Kingdom
   displayNameKey: nation.uk
   isPlayable: true
+  homeArea: eng_home_coast
   slot:
     id: uk
     order: 1
@@ -131,6 +132,7 @@
   name: German Empire
   displayNameKey: nation.germany
   isPlayable: true
+  homeArea: ger_baltic_coast
   slot:
     id: germany
     order: 2
@@ -249,6 +251,7 @@
   name: United States
   displayNameKey: nation.usa
   isPlayable: true
+  homeArea: usa_atlantic_coast
   slot:
     id: usa
     order: 3
@@ -363,6 +366,7 @@
   name: Empire of Japan
   displayNameKey: nation.japan
   isPlayable: true
+  homeArea: jpn_home_coast
   slot:
     id: japan
     order: 4
@@ -476,6 +480,7 @@
   name: French Republic
   displayNameKey: nation.france
   isPlayable: true
+  homeArea: fra_chan_coast
   slot:
     id: france
     order: 5
@@ -591,6 +596,7 @@
   name: Kingdom of Italy
   displayNameKey: nation.italy
   isPlayable: true
+  homeArea: ita_tyrrhenian_coast
   slot:
     id: italy
     order: 6
@@ -700,6 +706,7 @@
   name: Russian Empire
   displayNameKey: nation.russia
   isPlayable: true
+  homeArea: rus_baltic_coast
   slot:
     id: russia
     order: 7
@@ -813,6 +820,7 @@
   name: Austro-Hungarian Empire
   displayNameKey: nation.austria_hungary
   isPlayable: true
+  homeArea: auh_adriatic_coast
   slot:
     id: austria_hungary
     order: 8
@@ -927,6 +935,7 @@
   name: Kingdom of Spain
   displayNameKey: nation.spain
   isPlayable: true
+  homeArea: spa_med_coast
   slot:
     id: spain
     order: 9
@@ -1034,6 +1043,7 @@
   name: Qing Dynasty
   displayNameKey: nation.qing
   isPlayable: true
+  homeArea: chi_north_coast
   slot:
     id: qing
     order: 10
@@ -1151,6 +1161,7 @@
   name: Ottoman Empire
   displayNameKey: nation.ottoman_empire
   isPlayable: false
+  homeArea: ott_marmara_coast
   slot:
     id: ottoman_empire
     order: 11
@@ -1274,6 +1285,7 @@
   name: Netherlands
   displayNameKey: nation.netherlands
   isPlayable: false
+  homeArea: ned_home_coast
   slot:
     id: netherlands
     order: 13
@@ -1392,6 +1404,7 @@
   name: Kingdom of Portugal
   displayNameKey: nation.portugal
   isPlayable: false
+  homeArea: por_home_coast
   slot:
     id: portugal
     order: 16
@@ -1509,6 +1522,7 @@
   name: Empire of Brazil
   displayNameKey: nation.brazil
   isPlayable: false
+  homeArea: bra_rio_coast
   slot:
     id: brazil
     order: 18

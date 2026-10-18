@@ -62,8 +62,8 @@ function writeFixture(fixturePath: string, areasYaml: string, routesYaml = DEFAU
     fixturePath,
     "countries.yaml",
     nationsYaml([
-      { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true },
-      { id: "france", tag: "FRA", name: "France" },
+      { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true, homeArea: "lon" },
+      { id: "france", tag: "FRA", name: "France", homeArea: "par" },
     ]),
   );
   writeFile(fixturePath, "areas.yaml", areasYaml);

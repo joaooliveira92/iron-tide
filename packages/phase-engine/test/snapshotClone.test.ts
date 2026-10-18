@@ -28,6 +28,7 @@ function minimalSnapshot(): CampaignSnapshot {
           baseResources: {} as any,
           navalAppropriationRateBp: 1000,
           maintenanceCost: 1,
+          homeAreaId: "a1",
           fleets: [
             {
               id: "f1",

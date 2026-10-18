@@ -110,8 +110,8 @@ describe("buildWorldMapView", () => {
     const view = buildWorldMapView(snapshot);
 
     expect(view.nations).toEqual([
-      { id: "france", name: "France", tag: "FRA" },
-      { id: "uk", name: "Britain", tag: "GBR" },
+      { id: "france", name: "France", tag: "FRA", homeAreaId: null, presenceAreaIds: [] },
+      { id: "uk", name: "Britain", tag: "GBR", homeAreaId: null, presenceAreaIds: [] },
     ]);
 
     expect(view.areas).toEqual([
@@ -161,6 +161,45 @@ describe("buildWorldMapView", () => {
     const view = buildWorldMapView(snapshot);
     expect(view.areas).toEqual([
       { id: "sea_north_sea", name: "North Sea", type: "sea", controller: null },
+    ]);
+  });
+});
+
+describe("buildWorldMapView home and presence areas (S-5 02)", () => {
+  const snapshotWith = (possessions: { id: string; nationId: string; areaId: string }[]) =>
+    fixtureSnapshot(
+      [
+        fixtureNation({ id: "uk", homeAreaId: "eng_home_coast" }),
+        fixtureNation({ id: "france", homeAreaId: "fra_chan_coast" }),
+      ],
+      [],
+      { world: { areas: [], routes: [], ports: [], possessions } },
+    );
+  const held = [
+    { id: "p_malta", nationId: "uk", areaId: "med_malta" },
+    { id: "p_home", nationId: "uk", areaId: "eng_home_coast" },
+    { id: "p_chan", nationId: "france", areaId: "fra_chan_coast" },
+  ];
+
+  it("lists each nation's home area and its distinct possession areas ordered by area id", () => {
+    const { nations } = buildWorldMapView(snapshotWith(held));
+    expect(nations.find((n) => n.id === "uk")).toMatchObject({
+      homeAreaId: "eng_home_coast",
+      presenceAreaIds: ["eng_home_coast", "med_malta"],
+    });
+    expect(nations.find((n) => n.id === "france")).toMatchObject({
+      homeAreaId: "fra_chan_coast",
+      presenceAreaIds: ["fra_chan_coast"],
+    });
+  });
+
+  it("changes the presence areas when a possession changes hands", () => {
+    const ceded = held.map((p) => (p.id === "p_malta" ? { ...p, nationId: "france" } : p));
+    const { nations } = buildWorldMapView(snapshotWith(ceded));
+    expect(nations.find((n) => n.id === "uk")?.presenceAreaIds).toEqual(["eng_home_coast"]);
+    expect(nations.find((n) => n.id === "france")?.presenceAreaIds).toEqual([
+      "fra_chan_coast",
+      "med_malta",
     ]);
   });
 });
