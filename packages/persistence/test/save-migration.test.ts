@@ -9,7 +9,7 @@
 
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
@@ -76,7 +76,7 @@ describe("save migration (ticket 11d)", () => {
     const savePath = saveAt("1.2.0", tmpDir);
     const before = new SaveStore("1.2.0").loadById(
       tmpDir,
-      savePath.split("/").at(-1)!,
+      basename(savePath),
       new DiagnosticCollector(),
     )!;
 
