@@ -67,6 +67,12 @@ const AREAS = [
     nums: [212, 213, 228, 229],
   },
   {
+    name: "Campaign economy",
+    blurb:
+      "The monthly appropriation, ledger, research, deficit policy and construction capacity as one model.",
+    nums: [230],
+  },
+  {
     name: "Turns, interruptions & save/resume",
     blurb: "Turn identity and the suspend/resume interruption model.",
     nums: [222],
