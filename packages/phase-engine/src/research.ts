@@ -1,4 +1,9 @@
-import type { CampaignSnapshot, NationState, TechnologyProgress } from "@bluewave/campaign";
+import {
+  settleOutflow,
+  type CampaignSnapshot,
+  type NationState,
+  type TechnologyProgress,
+} from "@bluewave/campaign";
 import { CANONICAL_RESEARCH_FIELD_IDS as RESEARCH_FIELD_IDS } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -6,6 +11,7 @@ import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { EventLedger } from "@bluewave/events";
 import { RandomEngine, RandomLedger } from "@bluewave/random";
 import type { FinancialLedger } from "./financial-ledger.js";
+import { reportOutflowShortfall } from "./outflowShortfall.js";
 import {
   budgetChangedEvent,
   CURRENT_VERSION,
@@ -96,7 +102,9 @@ export function resolveResearchPhase(
     const research = nation["research"];
 
     // Stage 1: Calculate paid research resources
-    const actualPaidExpenditure = research["researchBudget"];
+    const settlement = settleOutflow(research["researchBudget"], nation["treasury"]);
+    reportOutflowShortfall(collector, nationId, "research", settlement, "resolve_research");
+    const actualPaidExpenditure = settlement.paid;
     const effectiveResources = computeResearchResources(actualPaidExpenditure);
 
     if ((effectiveResources as number) <= 0) continue;
@@ -120,10 +128,10 @@ export function resolveResearchPhase(
     }
 
     if (eligibleFields.length === 0) {
-      collector.addInfo(
-        "NO_ELIGIBLE_RESEARCH_FIELD",
-        `Nation ${nationId} has no eligible research fields`,
-        { stage: "resolve_research" },
+      collector.addWarning(
+        "RESEARCH_UNSPENT",
+        `Nation ${nationId} has no eligible research fields; ${String(actualPaidExpenditure)} of research is unspent`,
+        { stage: "resolve_research", entityId: nationId },
       );
       continue;
     }
@@ -311,6 +319,7 @@ export function resolveResearchPhase(
         safeNewBalance,
         "Research budget expenditure",
         campaignMonth,
+        settlement,
       ),
     );
 

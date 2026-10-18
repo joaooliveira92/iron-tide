@@ -399,6 +399,10 @@ interface ProductionRun {
   readonly closingSnapshotHash: string;
   readonly success: boolean;
   readonly diagnostics: SmokeDiagnostic[];
+  /** Per nation, the first month (1-based) that recorded an outflow shortfall; absent nations never fell short. */
+  readonly firstShortfallMonth: Record<string, number>;
+  /** Months where a nation's treasury change did not equal the sum of its paid ledger postings (must stay empty). */
+  readonly ledgerIdentityBreaks: string[];
   readonly hullCounts: Record<string, number>;
 }
 
@@ -425,6 +429,8 @@ function advanceProductionRun(
   const monthlyHashes: string[] = [];
   const monthlySuccess: boolean[] = [];
   const diagnostics: SmokeDiagnostic[] = [];
+  const firstShortfallMonth: Record<string, number> = {};
+  const ledgerIdentityBreaks: string[] = [];
   let success = true;
   for (let index = 0; index < months; index++) {
     const calendar = calendarAt(initial, index);
@@ -453,6 +459,23 @@ function advanceProductionRun(
         message: diagnostic.message,
       });
     }
+    for (const warning of collector.warnings) {
+      const nationId = warning.code === "OUTFLOW_SHORTFALL" ? nationIdOf(warning) : null;
+      if (nationId !== null && firstShortfallMonth[nationId] === undefined)
+        firstShortfallMonth[nationId] = index + 1;
+    }
+    for (const [nationId, before] of snapshot.nations) {
+      let net = 0;
+      for (const entry of result.financialLedger.all) {
+        if (entry.nationId !== nationId) continue;
+        const credits = entry.phaseId === "monthly_revenue" ? entry.credit : 0;
+        const debits = entry.phaseId === "monthly_revenue" ? 0 : entry.debit;
+        net += (credits as number) - (debits as number);
+      }
+      const after = result.finalSnapshot.nations.get(nationId);
+      if (after !== undefined && (after.treasury as number) !== (before.treasury as number) + net)
+        ledgerIdentityBreaks.push(`${String(index + 1)}:${nationId}`);
+    }
     monthlyHashes.push(hashSnapshot(result.finalSnapshot));
     snapshot = {
       ...result.finalSnapshot,
@@ -467,6 +490,8 @@ function advanceProductionRun(
     closingSnapshotHash: hashSnapshot(snapshot),
     success,
     diagnostics,
+    firstShortfallMonth,
+    ledgerIdentityBreaks,
     hullCounts: hullCounts(snapshot),
   };
 }
@@ -494,6 +519,8 @@ function runProductionTenNationSmoke(): void {
       monthlySuccess: first.monthlySuccess,
       closingSnapshotHash: first.closingSnapshotHash,
       diagnostics: first.diagnostics,
+      firstShortfallMonth: first.firstShortfallMonth,
+      ledgerIdentityBreaks: first.ledgerIdentityBreaks,
       hullCounts: first.hullCounts,
     }) + "\n",
   );
@@ -540,6 +567,8 @@ function runProductionTenYear(): void {
       monthlySuccess: first.monthlySuccess,
       closingSnapshotHash: first.closingSnapshotHash,
       diagnostics: first.diagnostics,
+      firstShortfallMonth: first.firstShortfallMonth,
+      ledgerIdentityBreaks: first.ledgerIdentityBreaks,
       hullCounts: first.hullCounts,
     }) + "\n",
   );

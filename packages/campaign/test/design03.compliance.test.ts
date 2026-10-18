@@ -852,6 +852,11 @@ describe("CampaignCompiler DESIGN-03 configuration gate", () => {
       nationYaml({ id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true }),
       "utf8",
     );
+    writeFileSync(
+      resolve(dir, "economies.yaml"),
+      '- nationId: "uk"\n  treasury: 800\n  income: 150\n  expenses: 75\n',
+      "utf8",
+    );
   }
 
   function compilerInput(dir: string) {
@@ -868,7 +873,7 @@ describe("CampaignCompiler DESIGN-03 configuration gate", () => {
         portFiles: [],
         technologyFiles: [],
         fleetFiles: [],
-        economyFiles: [],
+        economyFiles: ["economies.yaml"],
         constructionFiles: [],
         diplomacyFiles: [],
         researchFiles: [],

@@ -177,41 +177,11 @@ describe("N-2 deterministic ten-nation smoke run", () => {
       expect(hulls, `nation '${nationId}' fields no hulls after 12 months`).toBeGreaterThan(0);
     }
 
-    // The only tolerated failures are the pre-existing S-1 economy baseline:
-    // Portugal (first observed at month 10 by N-1) and the Netherlands (the same
-    // treasury squeeze one month later). Both reproduce on clean `e8cad96` with
-    // identical months and messages, so neither is an N-2 regression. Any new
-    // (nationId, reasonCode) pair fails the gate.
-    const allowed = new Set([
-      "portugal|NEGATIVE_TREASURY_OBLIGATION",
-      "netherlands|NEGATIVE_TREASURY_OBLIGATION",
-    ]);
-    for (const diagnostic of first.output.diagnostics) {
-      const key = `${diagnostic.nationId ?? "<unknown>"}|${diagnostic.code}`;
-      expect(
-        allowed.has(key),
-        `unexpected month-${String(diagnostic.month)} diagnostic ${key}: ${diagnostic.message}`,
-      ).toBe(true);
-    }
-    expect(first.output.diagnostics.map((d) => d.nationId)).toContain("portugal");
-    expect(first.output.diagnostics.map((d) => d.nationId)).toContain("netherlands");
-
-    // `success` is month-level and false whenever any error was recorded, so a
-    // failed month must be fully explained by the allowlisted baseline pairs.
-    const diagnosticsByMonth = new Map<number, SmokeDiagnostic[]>();
-    for (const diagnostic of first.output.diagnostics) {
-      const month = diagnosticsByMonth.get(diagnostic.month) ?? [];
-      month.push(diagnostic);
-      diagnosticsByMonth.set(diagnostic.month, month);
-    }
-    first.output.monthlySuccess.forEach((success, index) => {
-      const month = index + 1;
-      if (success) {
-        expect(diagnosticsByMonth.get(month) ?? []).toEqual([]);
-        return;
-      }
-      expect(diagnosticsByMonth.get(month)?.length ?? 0).toBeGreaterThan(0);
-    });
+    // Economy spec #138: no allowlist. A pack that credits its appropriation raises no error diagnostic in the first
+    // year, so any diagnostic at all (and any failed month) is a defect, not a baseline to tolerate. Portugal's
+    // structural deficit first realises a shortfall at month 41, outside this window.
+    expect(first.output.diagnostics).toEqual([]);
+    expect(first.output.monthlySuccess.every(Boolean)).toBe(true);
     expect(first.output.success).toBe(first.output.monthlySuccess.every(Boolean));
   }, 300_000);
 });

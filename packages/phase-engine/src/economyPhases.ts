@@ -1,7 +1,9 @@
 // Economy phases: monthly_revenue, appropriation, maintenance, obligation.
 import type { CampaignSnapshot, ConstructionProject, NationState } from "@bluewave/campaign";
 import {
+  monthlyRevenue,
   nationIsAtWar,
+  settleOutflow,
   shipMonthlyMaintenanceCost,
   transitionConstructionProject,
 } from "@bluewave/campaign";
@@ -25,6 +27,7 @@ import { resolvePrivateDockExpansion } from "./dockExpansion.js";
 import { runForeignContractPhase } from "./foreignContractPhase.js";
 import { budgetChangedEvent, constructionDelayedEvent, makeLedgerEntry } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
+import { reportOutflowShortfall } from "./outflowShortfall.js";
 import { applyReadinessEvolution } from "./readinessEvolution.js";
 
 /**
@@ -70,11 +73,7 @@ export function runMonthlyRevenuePhase(ctx: MonthContext): void {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
     const baseResources = nation["baseResources"] ?? (0 as SafeInt);
     const rateBp = nation["navalAppropriationRateBp"] ?? (0 as SafeInt);
-    const revenue = SafeInt.div(
-      SafeInt.div(SafeInt.mul(baseResources, rateBp), SafeInt(10000)),
-      SafeInt(12),
-      "floor",
-    );
+    const revenue = monthlyRevenue(baseResources, rateBp);
     if ((revenue as number) <= 0) continue;
 
     const previousBalance = nation["treasury"];
@@ -538,8 +537,9 @@ export function runMaintenancePhase(ctx: MonthContext): void {
     if ((totalMaintenance as number) <= 0) continue;
 
     const previousTreasury = nation["treasury"];
-    const newTreasury = SafeInt.sub(previousTreasury, totalMaintenance);
-    const actualNew = newTreasury < (0 as SafeInt) ? (0 as SafeInt) : newTreasury;
+    const settlement = settleOutflow(totalMaintenance, previousTreasury);
+    const actualNew = SafeInt.sub(previousTreasury, settlement.paid);
+    reportOutflowShortfall(ctx.collector, nationId, "maintenance", settlement, "maintenance");
 
     const updatedNation: NationState = {
       ...nation,
@@ -555,12 +555,13 @@ export function runMaintenancePhase(ctx: MonthContext): void {
         nationId,
         "maintenance",
         "MAINTENANCE_EXPENDITURE",
-        totalMaintenance,
-        totalMaintenance,
+        settlement.paid,
+        settlement.paid,
         previousTreasury,
         actualNew,
         "Monthly ship maintenance costs",
         campaignMonth,
+        settlement,
       ),
     );
 
@@ -569,7 +570,7 @@ export function runMaintenancePhase(ctx: MonthContext): void {
         nationId,
         previousTreasury,
         actualNew,
-        SafeInt.mul(totalMaintenance, SafeInt(-1)),
+        SafeInt.mul(settlement.paid, SafeInt(-1)),
         "Monthly ship maintenance costs",
         nextSeq(),
         campaignMonth,
@@ -588,18 +589,11 @@ export function runObligationPhase(ctx: MonthContext): void {
 
   for (const [nationId, nation] of ctx.currentSnapshot["nations"]) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
-    const expense = nation["expenses"];
     const previousTreasury = nation["treasury"];
-    const newTreasury = SafeInt.sub(previousTreasury, expense);
-    const actualNew = newTreasury < (0 as SafeInt) ? (0 as SafeInt) : newTreasury;
-
-    if ((newTreasury as number) < 0) {
-      collector.addError(
-        "NEGATIVE_TREASURY_OBLIGATION",
-        `Nation ${nationId} would have negative treasury after obligation`,
-        { stage: "obligation" },
-      );
-    }
+    const settlement = settleOutflow(nation["expenses"], previousTreasury);
+    const expense = settlement.paid;
+    const actualNew = SafeInt.sub(previousTreasury, expense);
+    reportOutflowShortfall(collector, nationId, "obligation", settlement, "obligation");
 
     const updatedNation: NationState = {
       ...nation,
@@ -620,6 +614,7 @@ export function runObligationPhase(ctx: MonthContext): void {
         actualNew,
         "Mandatory fixed expenses",
         campaignMonth,
+        settlement,
       ),
     );
 
