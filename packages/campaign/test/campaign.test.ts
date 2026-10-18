@@ -113,8 +113,8 @@ const FIXTURE = {
 
   // canonical strict-NationSchema-compliant nations
   countries: nationsYaml([
-    { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true },
-    { id: "france", tag: "FRA", name: "France" },
+    { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true, homeArea: "lon" },
+    { id: "france", tag: "FRA", name: "France", homeArea: "par" },
   ]),
 
   areas: `

@@ -393,6 +393,10 @@ export const NationSchema = Schema.Struct({
   name: Schema.String,
   displayNameKey: Schema.String,
   isPlayable: Schema.Boolean,
+  homeArea: Schema.optional(Schema.NonEmptyString).annotate({
+    description:
+      "Id of the nation's home area (S-5): authoritative, validated against the area set by the compiler",
+  }),
   slot: Schema.NullOr(NationSlotSchema),
   presentation: PresentationSchema,
   identity: IdentitySchema,

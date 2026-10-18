@@ -83,6 +83,11 @@ const AREAS = [
       "Readiness and maintenance ruleset constants, the 1880 command structure, and the prestige value path.",
     nums: [223, 224, 225, 226],
   },
+  {
+    name: "Foreign stations & presence",
+    blurb: "The authoritative home area and possession ownership behind per-area presence.",
+    nums: [231],
+  },
 ];
 
 // Records kept as historical provenance only: moved to docs/adr/archive/ and

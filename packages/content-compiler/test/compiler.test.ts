@@ -22,13 +22,19 @@ function writeFixture(base: string, rel: string, content: string): string {
 }
 
 /** A strict-NationSchema-compliant nation as a single YAML list item. */
-function nationYaml(id: string, tag: string, name: string, isPlayable = false): string {
+function nationYaml(
+  id: string,
+  tag: string,
+  name: string,
+  isPlayable = false,
+  homeArea?: string,
+): string {
   return `
 - id: "${id}"
   tag: "${tag}"
   name: "${name}"
   displayNameKey: "nation.${id}"
-  isPlayable: ${isPlayable}
+  isPlayable: ${isPlayable}${homeArea === undefined ? "" : `\n  homeArea: "${homeArea}"`}
   slot: null
   presentation: { colorBg: "#C8102E", colorFg: "#FFFFFF" }
   identity:
@@ -340,7 +346,11 @@ describe("Compiler", () => {
         }),
       );
 
-      writeFixture(fixture.path, "countries.yaml", nationYaml("uk", "GBR", "United Kingdom", true));
+      writeFixture(
+        fixture.path,
+        "countries.yaml",
+        nationYaml("uk", "GBR", "United Kingdom", true, "lon"),
+      );
 
       writeFixture(
         fixture.path,

@@ -109,7 +109,7 @@ describe("buildAreaTree", () => {
 describe("resolvePlayerNationId", () => {
   it("matches the projection's nation name against the world's nations", () => {
     const world = {
-      nations: [{ id: "uk", name: "Britain", tag: "GBR" }],
+      nations: [{ id: "uk", name: "Britain", tag: "GBR", homeAreaId: null, presenceAreaIds: [] }],
       areas: [],
       ports: [],
       fleets: [],

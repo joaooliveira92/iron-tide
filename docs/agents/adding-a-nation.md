@@ -25,6 +25,9 @@ carries a provenance block, or an explicitly classified `BALANCE_TARGET`.
 The profile separates **hard capability** (what the nation can build) from **soft
 doctrine** (what it prefers); capability can only ever remove options.
 
+Set `homeArea` on the nation in `countries.yaml` to an existing area id; the
+validator rejects a missing or unknown one (ADR-0231).
+
 ## 3. Starters and gates
 
 Author six classified opening starters under

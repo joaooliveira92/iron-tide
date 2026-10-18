@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0231).
+highest existing number + 1 (the next number is ADR-0232).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -105,6 +105,14 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 | 0224 | [ADR-0224-1880-command-structure-divisions-and-officers.md](ADR-0224-1880-command-structure-divisions-and-officers.md) | 1880 command structure — per-nation officer rosters and seeded divisions | accepted | — |
 | 0225 | [ADR-0225-prestige-required-field-and-research-first.md](ADR-0225-prestige-required-field-and-research-first.md) | Prestige is a required authored field; values are research-first and S-2 is gated on 0003 | accepted | — |
 | 0226 | [ADR-0226-rtw3-prestige-research-outcome.md](ADR-0226-rtw3-prestige-research-outcome.md) | RTW3 prestige research outcome — the model is grounded, the production values are not | accepted | — |
+
+## Foreign stations & presence
+
+The authoritative home area and possession ownership behind per-area presence.
+
+| # | File | Title | Status | Superseded by |
+| --- | --- | --- | --- | --- |
+| 0231 | [ADR-0231-nation-home-area-and-possession-ownership.md](ADR-0231-nation-home-area-and-possession-ownership.md) | Authoritative nation home area and possession ownership in campaign state | accepted | — |
 
 ## Archive
 

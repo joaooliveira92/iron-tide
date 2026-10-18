@@ -6,6 +6,7 @@ import { toSafeInt, toSafeIntOpt, toStr } from "./campaignInput.js";
 import type {
   AreaData,
   PortData,
+  PossessionData,
   RouteData,
   TechnologyDefinitionData,
   WorldState,
@@ -76,10 +77,19 @@ export function buildWorldState(
     }))
     .sort((a, b) => a.id.localeCompare(b.id));
 
+  const possessions: PossessionData[] = (pack.possessions ?? [])
+    .map((p) => ({
+      id: toStr(p.id, ""),
+      nationId: toStr(p.nationId, ""),
+      areaId: toStr(p.areaId, ""),
+    }))
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
   return {
     areas,
     routes,
     ports,
+    possessions,
     technologies: buildTechnologyCatalogue(pack, start.startYear, start.startMonth),
   };
 }

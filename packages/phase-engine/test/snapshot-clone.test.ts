@@ -129,6 +129,7 @@ function makeRichSnapshot(): CampaignSnapshot {
   });
 
   const gbr = snapshot.nations.get(ATTACKER_NATION)!;
+  gbr.homeAreaId = "a-2";
   gbr.research = {
     nationId: ATTACKER_NATION,
     technologies: [
@@ -473,6 +474,7 @@ function makeRichSnapshot(): CampaignSnapshot {
     ports: [
       { id: "p-1", name: "Port One", areaId: "a-2", nationId: ATTACKER_NATION, level: SafeInt(1) },
     ],
+    possessions: [{ id: "poss-1", nationId: ATTACKER_NATION, areaId: "a-2" }],
   };
   return snapshot;
 }
@@ -495,6 +497,7 @@ const CANONICAL_CLONE_TYPES = [
   "AreaData",
   "RouteData",
   "PortData",
+  "PossessionData",
   "WorldState",
   "WarDeclaration",
   "WarParticipantMembership",
@@ -636,6 +639,12 @@ describe("snapshotClone — deep isolation (identity checks, not value equality)
     expect(cloneRoute).not.toBe(inputRoute);
     cloneRoute.distance = SafeInt(0);
     expect(inputRoute.distance as number).toBe(10);
+    // world possession
+    const inputPossession = input.world.possessions![0]!;
+    const clonePossession = clone.world.possessions![0]!;
+    expect(clonePossession).not.toBe(inputPossession);
+    clonePossession.nationId = "mutated";
+    expect(inputPossession.nationId).toBe(ATTACKER_NATION);
     // politics shell
     const inputShells = input.politics.shells;
     const cloneShells = clone.politics.shells;
