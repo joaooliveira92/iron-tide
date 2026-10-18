@@ -12,7 +12,7 @@ import { fixtureAnchor, homeFocusPoint, joinWorldMap } from "./campaign-map-join
  */
 
 const WORLD: WorldMapView = {
-  nations: [{ id: "uk", name: "Britain", tag: "GBR" }],
+  nations: [{ id: "uk", name: "Britain", tag: "GBR", homeAreaId: null, presenceAreaIds: [] }],
   areas: [
     { id: "sea_north_sea", name: "North Sea", type: "sea", controller: "uk" },
     { id: "eng_home_coast", name: "English Home Waters", type: "coastal", controller: "uk" },

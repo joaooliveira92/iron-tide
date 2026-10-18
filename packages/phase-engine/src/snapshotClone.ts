@@ -32,6 +32,7 @@ import type {
   WarParticipantMembership,
   WarState,
   WorldState,
+  PossessionData,
   TechnologyDefinitionData,
 } from "@bluewave/campaign";
 import type { SafeInt } from "@bluewave/contracts";
@@ -334,6 +335,7 @@ const F = {
     "baseResources",
     "navalAppropriationRateBp",
     "maintenanceCost",
+    "homeAreaId",
     "fleets",
     "divisions",
     "officers",
@@ -365,7 +367,8 @@ const F = {
   AreaData: fields<AreaData>()("id", "name", "type", "controller"),
   RouteData: fields<RouteData>()("id", "from", "to", "type", "distance"),
   PortData: fields<PortData>()("id", "name", "areaId", "nationId", "level"),
-  WorldState: fields<WorldState>()("areas", "routes", "ports", "technologies"),
+  PossessionData: fields<PossessionData>()("id", "nationId", "areaId"),
+  WorldState: fields<WorldState>()("areas", "routes", "ports", "technologies", "possessions"),
   TechnologyDefinitionData: fields<TechnologyDefinitionData>()(
     "techId",
     "researchFieldId",
@@ -558,6 +561,7 @@ const _assert: [
   _Assert<AreaData, typeof F.AreaData>,
   _Assert<RouteData, typeof F.RouteData>,
   _Assert<PortData, typeof F.PortData>,
+  _Assert<PossessionData, typeof F.PossessionData>,
   _Assert<WorldState, typeof F.WorldState>,
   _Assert<TechnologyDefinitionData, typeof F.TechnologyDefinitionData>,
   _Assert<WarDeclaration, typeof F.WarDeclaration>,
@@ -579,6 +583,7 @@ const _assert: [
   _Assert<CampaignWeatherState, typeof F.CampaignWeatherState>,
   _Assert<CampaignSnapshot, typeof F.CampaignSnapshot>,
 ] = [
+  true,
   true,
   true,
   true,
@@ -776,6 +781,12 @@ export function cloneSnapshot(snapshot: CampaignSnapshot): CampaignSnapshot {
                       { prerequisites: (p) => [...(p as string[])] },
                       seen,
                     ),
+                  ),
+            possessions: (possessions) =>
+              possessions === undefined
+                ? undefined
+                : (possessions as PossessionData[]).map((p) =>
+                    recordClone(p, F.PossessionData, {}, seen),
                   ),
           },
           seen,

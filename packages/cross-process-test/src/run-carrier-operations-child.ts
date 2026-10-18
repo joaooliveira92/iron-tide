@@ -26,7 +26,9 @@ const FIXTURE = {
     },
   }),
   rulesets: `- id: "core"\n  name: "Core Rules"\n  version: "1.0"\n`,
-  countries: nationsYaml([{ id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true }]),
+  countries: nationsYaml([
+    { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true, homeArea: "lon" },
+  ]),
   areas: `- id: "lon"\n  name: "London"\n  type: "land"\n  controller: "uk"\n- id: "eng_ch"\n  name: "English Channel"\n  type: "sea"\n`,
   routes: `- id: "lon-eng_ch"\n  from: "lon"\n  to: "eng_ch"\n  type: "sea"\n  distance: 50\n`,
   possessions: `- id: "gbr-lon"\n  nationId: "uk"\n  areaId: "lon"\n`,

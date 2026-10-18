@@ -49,6 +49,29 @@ const JsonRecord = Schema.Record(Schema.String, Schema.Unknown);
 // defaulted. This matches Zod's `.default([])` accept/default semantics exactly.
 const emptyArrayDefault = Effect.succeed([]);
 
+/**
+ * One persisted possession (S-5 02): every key required and non-empty, and no other key accepted, so a malformed
+ * entry is refused at the boundary instead of reaching state. The whole `world.possessions` field stays optional
+ * for saves that predate it.
+ */
+export const StorablePossessionSchema = Schema.Record(Schema.String, Schema.Unknown)
+  .check(
+    Schema.makeFilter(
+      (o) =>
+        Object.keys(o).sort().join(",") === "areaId,id,nationId" ||
+        "a possession carries exactly id, nationId and areaId",
+    ),
+  )
+  .pipe(
+    Schema.decodeTo(
+      Schema.Struct({
+        id: Schema.NonEmptyString,
+        nationId: Schema.NonEmptyString,
+        areaId: Schema.NonEmptyString,
+      }),
+    ),
+  );
+
 const StorableSnapshotSchema = Schema.Struct({
   version: Schema.String,
   turnNumber: Schema.Finite,
@@ -65,6 +88,7 @@ const StorableSnapshotSchema = Schema.Struct({
     routes: Schema.Array(Schema.Unknown).pipe(Schema.withDecodingDefaultType(emptyArrayDefault)),
     ports: Schema.Array(Schema.Unknown).pipe(Schema.withDecodingDefaultType(emptyArrayDefault)),
     technologies: Schema.optional(Schema.Array(Schema.Record(Schema.String, Schema.Unknown))),
+    possessions: Schema.optional(Schema.Array(StorablePossessionSchema)),
   }),
   nations: JsonRecord,
   wars: Schema.Struct({
