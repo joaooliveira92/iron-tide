@@ -159,6 +159,8 @@ ship:
     localControlPenaltyBp: 1500
     smokeInterferencePermille: 40
     smokeInterferencePenaltyBp: 1000
+    # Fire-control positions: redundancy per position, bp. BALANCE TARGET (ADR-0213); the manual names the field, never a number.
+    fireControlPositionRedundancyBp: 2500
   ledgerCategoryOf:
     HULL_FORM: hull
     MATERIAL: hull

@@ -52,6 +52,8 @@ export interface SystemsBalance {
   readonly localControlPenaltyBp: number;
   readonly smokeInterferencePermille: number;
   readonly smokeInterferencePenaltyBp: number;
+  /** Redundancy each fire-control position adds, bp (capped at 10_000 in total). BALANCE TARGET; absent = 0. */
+  readonly fireControlPositionRedundancyBp?: number;
 }
 
 export interface SystemsInput {
@@ -64,6 +66,8 @@ export interface SystemsInput {
   readonly guns: readonly FcGun[];
   readonly directors: readonly DirectorUnit[];
   readonly funnelStationsPermille: readonly number[];
+  /** Fire-control positions (spotting tops, conning towers, plotting rooms): redundancy against loss. Absent = 0. */
+  readonly fireControlPositions?: number;
 }
 
 export interface GunControl {
@@ -83,6 +87,8 @@ export interface SystemsResult {
   /** >10_000 means overcrowded. */
   readonly crowdingBp: number;
   readonly gunControl: readonly GunControl[];
+  /** Share of the fire-control bonus that survives losing positions, bp. Redundancy, not accuracy. */
+  readonly fireControlRedundancyBp: number;
   readonly findings: readonly Finding[];
 }
 
@@ -300,6 +306,34 @@ export function compileSystems(i: SystemsInput, b: SystemsBalance): SystemsResul
     });
   }
 
+  const positions = i.fireControlPositions ?? 0;
+  if (!Number.isSafeInteger(positions) || positions < 0)
+    throw new Error(`fireControlPositions must be a non-negative integer, got ${positions}`);
+  if (positions === 0 && directors.length > 0 && i.guns.length > 0) {
+    findings.push({
+      id: "FIRE_CONTROL_NO_POSITIONS",
+      severity: "WARNING",
+      what: "Directors are fitted but there are no fire-control positions.",
+      why: `${directors.length} director(s) and ${i.guns.length} gun(s), 0 positions.`,
+      consequence:
+        "Central fire control has no redundancy: one hit on the director or its position leaves the guns under local control.",
+      remedies: [
+        { id: "add_positions", description: "Build in fire-control positions for redundancy." },
+        { id: "accept_risk", description: "Accept the single point of failure." },
+      ],
+      evidence: {
+        formulaId: "F-FC",
+        inputs: { directors: directors.length },
+        threshold: 1,
+        value: 0,
+      },
+    });
+  }
+  const fireControlRedundancyBp = Math.min(
+    10_000,
+    toSafe("fcRedundancy", BigInt(positions) * BigInt(b.fireControlPositionRedundancyBp ?? 0)),
+  );
+
   return {
     demandKw: demand,
     supplyKw: supply,
@@ -310,6 +344,7 @@ export function compileSystems(i: SystemsInput, b: SystemsBalance): SystemsResul
     crewCapacity,
     crowdingBp,
     gunControl: control,
+    fireControlRedundancyBp,
     findings: sortFindings(findings),
   };
 }

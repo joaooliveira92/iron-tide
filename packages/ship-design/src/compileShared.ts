@@ -80,6 +80,8 @@ export interface DesignDraft {
     readonly bunkerProtectionBp: number;
   };
   readonly placements: readonly PlacementSpec[];
+  /** Fire-control fit beyond the directors themselves (ADR-0233). Absent = no positions. */
+  readonly fireControl?: { readonly positions: number };
 }
 
 export interface HullFormData {

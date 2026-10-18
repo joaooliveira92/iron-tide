@@ -20,6 +20,8 @@ export function describeEdit(e: DraftEdit, nameOf: (componentId: string) => stri
       return `Machinery: ${Object.entries(e.patch)
         .map(([k, v]) => `${words(k)} → ${show(v)}`)
         .join(", ")}`;
+    case "set_fire_control":
+      return `Fire control: ${e.positions} position${e.positions === 1 ? "" : "s"}`;
     case "set_side":
       return `Set ${e.instanceId} to ${e.side === "CENTRE" ? "the centreline" : e.side === "PORT" ? "port" : "starboard"}`;
     case "batch":

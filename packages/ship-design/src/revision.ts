@@ -302,7 +302,9 @@ export function changeKindOf(
     case "set_hull":
       return Object.keys(e.patch).some((k) => STRUCTURE_KEYS.has(k)) ? "STRUCTURE" : "FITTINGS";
     case "set_machinery":
-      return Object.keys(e.patch).some((k) => k === "plantId" || k === "installedKw")
+      return Object.keys(e.patch).some(
+        (k) => k === "plantId" || k === "installedKw" || k === "enginePriorityBp",
+      )
         ? "MACHINERY"
         : "FITTINGS";
     case "set_armour_region":
@@ -310,6 +312,7 @@ export function changeKindOf(
     case "set_armour_regions":
       return "ARMOUR";
     case "add_placement":
+    case "set_fire_control":
       return "FITTINGS";
     case "remove_placement":
     case "move_placement":

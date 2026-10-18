@@ -16,6 +16,7 @@ import { SEVERITY_ORDER, type Severity } from "./findings.js";
 export type DraftEdit =
   | { readonly kind: "set_hull"; readonly patch: Partial<HullSpec> }
   | { readonly kind: "set_machinery"; readonly patch: Partial<MachineryPlan> }
+  | { readonly kind: "set_fire_control"; readonly positions: number }
   /** The design brief: ship type, required speed and range, crew and accommodation. A brief is not a build change. */
   | { readonly kind: "set_requirement"; readonly patch: Partial<DesignRequirement> }
   | { readonly kind: "add_placement"; readonly placement: PlacementSpec }
@@ -71,6 +72,10 @@ export function applyEdit(draft: DesignDraft, e: DraftEdit): DesignDraft {
       return { ...draft, hull: { ...draft.hull, ...e.patch } };
     case "set_machinery":
       return { ...draft, machinery: { ...draft.machinery, ...e.patch } };
+    case "set_fire_control":
+      if (!Number.isSafeInteger(e.positions) || e.positions < 0)
+        throw new EditError("fire-control positions must be a non-negative integer");
+      return { ...draft, fireControl: { positions: e.positions } };
     case "set_requirement":
       return { ...draft, requirement: { ...draft.requirement, ...e.patch } };
     case "add_placement":

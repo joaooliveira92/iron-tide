@@ -8,6 +8,7 @@ import type { DrawingBoardContent } from "../content.js";
 import { NumberField } from "../fields.js";
 import type { ShipEntity } from "../selection/store.js";
 import { Panel } from "./Panel.js";
+import { gunQualityLine, NEUTRAL_GUN_QUALITY } from "./gun-quality.js";
 import type { Edit } from "./types.js";
 import { batteryAttrs, shipLinkAttrs } from "../selection/navigation.js";
 
@@ -84,6 +85,11 @@ export function BatteryPanel({
                   </li>
                 ))}
               </ul>
+              {row.role !== "TORPEDO" && (
+                <p className="text-xs text-muted-foreground">
+                  {gunQualityLine(NEUTRAL_GUN_QUALITY)}
+                </p>
+              )}
               <div className="flex flex-wrap items-end gap-3">
                 {row.role !== "TORPEDO" && (
                   <NumberField
@@ -123,6 +129,18 @@ export function BatteryPanel({
           ))}
         </ul>
       )}
+      <div className="flex flex-wrap items-end gap-3 pt-2">
+        <NumberField
+          className="w-48"
+          label="Fire-control positions"
+          min={0}
+          value={draft.fireControl?.positions ?? 0}
+          onCommit={(v) => edit({ kind: "set_fire_control", positions: v })}
+        />
+        <span className="pb-2 text-xs text-muted-foreground">
+          Spotting tops and plotting rooms; more positions keep fire control working after hits.
+        </span>
+      </div>
     </Panel>
   );
 }

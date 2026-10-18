@@ -390,3 +390,21 @@ describe("engine priority in the design file", () => {
       expect(() => decodeDesignFile(withPriority(bad), ctx.catalogue)).toThrow(PersistenceError);
   });
 });
+
+describe("fire control in the design file", () => {
+  const withFc = (v: unknown) =>
+    JSON.stringify({
+      format: "bwdesign",
+      schemaVersion: 2,
+      draft: { ...draft, fireControl: v },
+      componentHashes: {},
+      compiledHash: null,
+    });
+  it("round-trips a position count and refuses a malformed one", () => {
+    expect(decodeDesignFile(withFc({ positions: 3 }), ctx.catalogue).draft.fireControl).toEqual({
+      positions: 3,
+    });
+    for (const bad of [{ positions: -1 }, { positions: 1.5 }, { positions: "2" }, 4])
+      expect(() => decodeDesignFile(withFc(bad), ctx.catalogue)).toThrow(PersistenceError);
+  });
+});

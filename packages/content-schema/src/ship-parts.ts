@@ -1313,6 +1313,8 @@ export const DesignHeaderSchema = Schema.Struct({
       ),
     ),
   }),
+  /** Fire-control positions (ADR-0233); absent = none. */
+  fireControl: Schema.optional(Schema.Struct({ positions: nonNegativeInt })),
   protection: Schema.Struct({
     citadelLengthMm: nonNegativeInt,
     torpedoWarheadKg: nonNegativeInt,

@@ -417,6 +417,7 @@ export function compileSystemsAndMachinery(args: {
       generators,
       coolingSupplyKw: resolved.reduce((a, r) => a + (r.attr.coolingSupplyKw ?? 0), 0),
       displacementKg: hull.targetDisplacementKg,
+      fireControlPositions: draft.fireControl?.positions ?? 0,
       accommodationStandard: draft.requirement.accommodationStandard,
       accommodationVolumeLitre: accommodationVolume,
       guns,
