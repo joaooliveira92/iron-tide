@@ -2,6 +2,7 @@ import { parseYamlSafe } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
 import type { CompilerInput, CompilerStage } from "../index.js";
+import { canonicalContentPath } from "../contentPath.js";
 
 export interface ParseOutput {
   manifest: unknown;
@@ -95,6 +96,7 @@ export class ParseStage implements CompilerStage<CompilerInput, ParseOutput> {
     for (const [group, files] of Object.entries(fileGroups)) {
       if (signal.aborted) return undefined;
       for (const file of files) {
+        const sourcePath = canonicalContentPath(input.contentDir, file);
         const content = input.fileContents?.[file];
         if (content === undefined) {
           collector.addError(
@@ -102,14 +104,14 @@ export class ParseStage implements CompilerStage<CompilerInput, ParseOutput> {
             `Failed to read file: ${file} is absent from the compiler input`,
             {
               stage: "parse",
-              sourceLocation: { path: file, line: 1 },
+              sourceLocation: { path: sourcePath, line: 1 },
             },
           );
           continue;
         }
-        const result = parseYamlSafe(content, file, collector);
+        const result = parseYamlSafe(content, sourcePath, collector);
         if (result.success && result.data !== undefined) {
-          this.collect(group, file, result.data, {
+          this.collect(group, sourcePath, result.data, {
             manifest: (value) => {
               manifest = value;
             },

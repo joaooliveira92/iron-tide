@@ -44,7 +44,7 @@ describe.skipIf(process.env.BLUEWAVE_PERF !== "1")("month-advance performance tr
         `${SEED}:month:${String(m)}`,
         new DiagnosticCollector(),
       );
-      expect(result.success, `month ${String(m)} must advance`).toBe(true);
+      expect(result.outcome, `month ${String(m)} must complete`).toBe("completed");
       snapshot = {
         ...result.finalSnapshot,
         turnNumber: SafeInt((result.finalSnapshot.turnNumber as number) + 1),

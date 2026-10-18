@@ -190,7 +190,7 @@ describe("content schema coverage — reference designs (CAH-SCH-1/4)", () => {
       "referenceDesignFiles",
     );
     const error = firstSchemaError(collector);
-    expect(error.path).toContain("reference-designs/uk/starters.yaml");
+    expect(error.path).toBe("ship-building/reference-designs/uk/starters.yaml");
     expect(error.message).toContain("draft.hull");
   });
 
@@ -201,7 +201,7 @@ describe("content schema coverage — reference designs (CAH-SCH-1/4)", () => {
       "referenceDesignFiles",
     );
     const error = firstSchemaError(collector);
-    expect(error.path).toContain("reference-designs/uk/starters.yaml");
+    expect(error.path).toBe("ship-building/reference-designs/uk/starters.yaml");
     expect(error.message).toContain("draft.hull.lengthWl");
   });
 
@@ -215,7 +215,7 @@ describe("content schema coverage — reference designs (CAH-SCH-1/4)", () => {
       "referenceDesignFiles",
     );
     const error = firstSchemaError(collector);
-    expect(error.path).toContain("reference-designs/uk/starters.yaml");
+    expect(error.path).toBe("ship-building/reference-designs/uk/starters.yaml");
     expect(error.message).toContain("bogus");
   });
 });
