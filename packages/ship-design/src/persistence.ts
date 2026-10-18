@@ -142,7 +142,7 @@ export type Migration = (raw: Record<string, unknown>) => Record<string, unknown
 
 type RawRegion = Record<string, unknown>;
 const LEGACY_TURRET_REGIONS: ReadonlySet<unknown> = new Set(["TURRET_FACE", "BARBETTE"]);
-const num = (v: unknown): number => (typeof v === "number" ? v : 0);
+const numOr0 = (v: unknown): number => (typeof v === "number" ? v : 0);
 
 /**
  * v1 -> v2 armour fold: the legacy turret face and barbette become the single `TURRET` region. A lone source is
@@ -156,11 +156,11 @@ export function foldLegacyTurretRegions(regions: readonly unknown[]): unknown[] 
   );
   if (legacy.length === 0) return [...regions];
   const pick = legacy.reduce((a, b) => {
-    if (num(b.thicknessUm) !== num(a.thicknessUm))
-      return num(b.thicknessUm) > num(a.thicknessUm) ? b : a;
+    if (numOr0(b.thicknessUm) !== numOr0(a.thicknessUm))
+      return numOr0(b.thicknessUm) > numOr0(a.thicknessUm) ? b : a;
     return String(b.materialId) < String(a.materialId) ? b : a;
   });
-  const max = (k: string) => Math.max(...legacy.map((r) => num(r[k])));
+  const max = (k: string) => Math.max(...legacy.map((r) => numOr0(r[k])));
   const folded: RawRegion = {
     ...pick,
     region: "TURRET",
@@ -325,7 +325,11 @@ function migrateLogV1(rawLog: Record<string, unknown>): EditLog {
   const v1Problems = validateDraftShape(foldDraftArmour(rawLog.base));
   if (v1Problems.length > 0) throw new PersistenceError("INVALID_DRAFT", v1Problems.join("; "));
   let d = rawLog.base as DesignDraft;
-  for (let i = 0; i < (cursor as number); i++) d = applyEdit(d, edits[i]!);
+  try {
+    for (let i = 0; i < (cursor as number); i++) d = applyEdit(d, edits[i]!);
+  } catch {
+    throw new PersistenceError("INVALID_DRAFT", "v1 edit log cannot be replayed");
+  }
   return { base: foldDraftArmour(d) as DesignDraft, edits: [], cursor: 0 };
 }
 

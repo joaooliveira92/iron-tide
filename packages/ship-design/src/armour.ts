@@ -21,6 +21,7 @@ export const ARMOUR_REGIONS = [
   "TORPEDO_BULKHEAD",
   "TORPEDO_BELT",
 ] as const;
+export type ArmourRegionId = (typeof ARMOUR_REGIONS)[number];
 
 /** Regions that face plunging fire at reduced striking velocity (`ArmourBalance.deckPenetrationBp`). */
 const DECK_REGIONS: ReadonlySet<ArmourRegionId> = new Set([
@@ -28,7 +29,6 @@ const DECK_REGIONS: ReadonlySet<ArmourRegionId> = new Set([
   "DECK_SLOPE",
   "DECK_EXTENDED",
 ]);
-export type ArmourRegionId = (typeof ARMOUR_REGIONS)[number];
 
 export interface ArmourRegion {
   readonly region: ArmourRegionId;
