@@ -103,27 +103,46 @@ export function resolveResearchPhase(
 
     const research = nation["research"];
 
+    // A standing budget no field can take is not drawn and so is neither paid nor short (the projection plans zero for it).
+    const techs = research["technologies"];
+    const eligibleFields = eligibleResearchFields(research, turnNumber, catalogue);
+    if ((research["researchBudget"] as number) > 0 && eligibleFields.length === 0) {
+      collector.addInfo(
+        "NO_ELIGIBLE_RESEARCH_FIELD",
+        `Nation ${nationId} has no eligible research field; its standing research budget of ${String(research["researchBudget"])} is not drawn`,
+        { stage: "resolve_research", entityId: nationId },
+      );
+      continue;
+    }
+
     // Stage 1: Calculate paid research resources
     const settlement = settleOutflow(research["researchBudget"], nation["treasury"]);
     reportOutflowShortfall(collector, nationId, "research", settlement, "resolve_research");
     const actualPaidExpenditure = settlement.paid;
     const effectiveResources = computeResearchResources(actualPaidExpenditure);
 
-    if ((effectiveResources as number) <= 0) continue;
-
-    // Stage 2: Allocate by field priority
-    const techs = research["technologies"];
-    const eligibleFields = eligibleResearchFields(research, turnNumber, catalogue);
-
-    if (eligibleFields.length === 0) {
-      collector.addInfo(
-        "NO_ELIGIBLE_RESEARCH_FIELD",
-        `Nation ${nationId} has no eligible research field; its standing research budget of ${String(actualPaidExpenditure)} is not drawn`,
-        { stage: "resolve_research", entityId: nationId },
-      );
+    if ((effectiveResources as number) <= 0) {
+      // A request the treasury could not pay at all is still a ledger line (requested, paid 0, shortfall), so the month
+      // ledger and the OUTFLOW_SHORTFALL warning agree and the projection's requested research appears in the ledger.
+      if ((settlement.shortfall as number) > 0)
+        financialLedger.append(
+          makeLedgerEntry(
+            nationId,
+            "resolve_research",
+            "RESEARCH_EXPENDITURE",
+            actualPaidExpenditure,
+            actualPaidExpenditure,
+            nation["treasury"],
+            nation["treasury"],
+            "Research budget expenditure",
+            campaignMonth,
+            settlement,
+          ),
+        );
       continue;
     }
 
+    // Stage 2: Allocate by field priority
     const fieldAllocations = largestRemainderAllocation(effectiveResources, eligibleFields);
 
     // Stage 3: Advance eligible technologies

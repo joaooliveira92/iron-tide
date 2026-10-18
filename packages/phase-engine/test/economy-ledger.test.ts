@@ -178,6 +178,38 @@ describe("economy ledger identity and shortfall", () => {
     expect(research.every((e) => (e.debit as number) === 0)).toBe(true);
   });
 
+  it("ledgers a research request the treasury cannot pay at all, so the warning has a matching line", () => {
+    const { result, collector } = run(
+      nation({
+        treasury: SafeInt(0),
+        baseResources: SafeInt(0),
+        expenses: SafeInt(0),
+        researchBudget: SafeInt(4),
+      }),
+      TEST_RESEARCH_CATALOGUE,
+    );
+    const research = result.financialLedger.all.filter(
+      (e) => e.categoryId === "RESEARCH_EXPENDITURE",
+    );
+    expect(research).toHaveLength(1);
+    expect(research[0]).toMatchObject({ requested: 4, debit: 0, shortfall: 4 });
+    expect(collector.warnings.filter((d) => d.code === "OUTFLOW_SHORTFALL")).toHaveLength(1);
+  });
+
+  it("reports no shortfall for a research budget that no field can take, whatever the treasury holds", () => {
+    const { result, collector } = run(
+      nation({
+        treasury: SafeInt(1),
+        baseResources: SafeInt(0),
+        expenses: SafeInt(0),
+        researchBudget: SafeInt(5),
+      }),
+    );
+    expect(collector.warnings.map((d) => d.code)).not.toContain("OUTFLOW_SHORTFALL");
+    expect(collector.all.map((d) => d.code)).toContain("NO_ELIGIBLE_RESEARCH_FIELD");
+    expect(result.finalSnapshot.nations.get("n")!.treasury).toBe(1);
+  });
+
   it("pays research from the pack catalogue and warns about progress beyond a technology's cost", () => {
     // basic_steam costs 100 and has 98 invested: of 5 points paid, 2 finish it and 3 cannot be applied.
     const { result, collector } = run(
@@ -203,6 +235,12 @@ describe("economy ledger identity and shortfall", () => {
     expect(spent).toMatchObject({ requested: 5, debit: 5, shortfall: 0 });
     const unspent = collector.warnings.find((d) => d.code === "RESEARCH_UNSPENT");
     expect(unspent?.message).toContain("3");
+    expect(unspent).toMatchObject({
+      severity: "warning",
+      stage: "resolve_research",
+      entityId: "n",
+    });
+    expect(unspent?.message).toBe("Nation n paid 3 research points beyond the cost of basic_steam"); // stable wording: the same run reports the same text
     expect(result.finalSnapshot.nations.get("n")!.research.discoveredTechs).toContain(
       "basic_steam",
     );

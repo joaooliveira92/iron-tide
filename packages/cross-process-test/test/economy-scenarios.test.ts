@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {
+  eligibleResearchFields,
   monthlyNetBeforeConstruction,
   monthlyRevenue,
   runwayMonths,
   shipMonthlyMaintenanceCost,
+  technologyCatalogueOf,
 } from "@bluewave/campaign";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { MonthExecutor } from "@bluewave/phase-engine";
@@ -159,6 +161,96 @@ describe("12-month worked examples (GB, France, Portugal)", () => {
         expect(sum("MAINTENANCE_EXPENDITURE", "requested")).toBe(want.maintenance);
         expect(sum("OBLIGATION", "requested")).toBe(want.obligation);
         if (want.research > 0) expect(sum("RESEARCH_EXPENDITURE", "requested")).toBe(want.research);
+      }
+      snapshot = {
+        ...result.finalSnapshot,
+        turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt.ONE),
+      };
+    }
+  });
+});
+
+// Economy spec #138 / #143 against the real shipped pack (no synthetic recreation).
+describe("1880 production research", () => {
+  const { state, diagnostics } = compileProductionCampaign();
+  const nations = [...state.snapshot.nations.values()];
+  const entityIds = (code: string): string[] =>
+    diagnostics
+      .filter((d) => d.code === code)
+      .map((d) => d.entityId ?? "")
+      .sort();
+
+  it("uses the canonical ids for Japan, the Netherlands, Portugal, Qing and Brazil", () => {
+    const named = Object.fromEntries(nations.map((n) => [n.id, n.name]));
+    for (const id of ["japan", "netherlands", "portugal", "qing", "brazil"])
+      expect(named[id], `no nation with id '${id}'`).toBeDefined();
+  });
+
+  it("reports RESEARCH_BELOW_RESOLUTION as info for exactly Japan, the Netherlands, Portugal, Qing and Brazil", () => {
+    const expected = ["brazil", "japan", "netherlands", "portugal", "qing"];
+    // The set is also what the data says: a nation with an authored allocation that floors to zero a month.
+    const derived = nations
+      .filter(
+        (n) =>
+          (n.research.annualResearchAllocation ?? 0) > 0 &&
+          (n.research.standingResearchBudget ?? 0) === 0,
+      )
+      .map((n) => n.id)
+      .sort();
+    const actual = entityIds("RESEARCH_BELOW_RESOLUTION");
+    expect(actual, `diagnosed ${actual.join(",")} vs expected ${expected.join(",")}`).toEqual(
+      expected,
+    );
+    expect(derived).toEqual(expected);
+    for (const d of diagnostics.filter((x) => x.code === "RESEARCH_BELOW_RESOLUTION"))
+      expect(d.severity).toBe("info");
+  });
+
+  it("never exceeds the 12% cap or the authored share for any shipped nation", () => {
+    for (const n of nations) {
+      const revenue = monthlyRevenue(n.baseResources, n.navalAppropriationRateBp) as number;
+      const standing = (n.research.standingResearchBudget ?? 0) as number;
+      const annual = (n.research.annualResearchAllocation ?? 0) as number;
+      expect(standing * 100 <= revenue * 12, `${n.id} above cap`).toBe(true);
+      expect(standing * 12 <= annual, `${n.id} above authored share`).toBe(true);
+    }
+  });
+
+  // The ticket says NO_ELIGIBLE_RESEARCH_FIELD "is a test failure in the shipped pack for any nation with a standing budget";
+  // ADR-0230 section 7 makes the same code an info diagnostic the engine raises at runtime. Both hold: the engine stays
+  // informational, and this test is the failure the ticket asks for, so the shipped pack must never trigger it.
+  it("gives every nation with a standing budget an eligible research field in the shipped catalogue", () => {
+    const catalogue = technologyCatalogueOf(state.snapshot);
+    expect(catalogue.size).toBeGreaterThan(0);
+    const funded = nations.filter((n) => (n.research.standingResearchBudget ?? 0) > 0);
+    expect(funded.length).toBeGreaterThan(0);
+    for (const n of funded)
+      expect(
+        eligibleResearchFields(n.research, state.snapshot.turnNumber, catalogue).length,
+        `${n.id} has a standing research budget but no eligible field`,
+      ).toBeGreaterThan(0);
+  });
+
+  it("debits research in the ledger every month for nations with a standing budget, and never reports NO_ELIGIBLE_RESEARCH_FIELD", () => {
+    let snapshot = state.snapshot;
+    const funded = nations.filter((n) => (n.research.standingResearchBudget ?? 0) > 0);
+    for (let month = 1; month <= 12; month++) {
+      const collector = new DiagnosticCollector();
+      const result = new MonthExecutor().execute(
+        snapshot,
+        [],
+        `research:${String(month)}`,
+        collector,
+      );
+      expect(collector.all.filter((d) => d.code === "NO_ELIGIBLE_RESEARCH_FIELD")).toEqual([]);
+      for (const n of funded) {
+        const entries = result.financialLedger.all.filter(
+          (e) => e.nationId === n.id && e.categoryId === "RESEARCH_EXPENDITURE",
+        );
+        expect(entries, `${n.id} month ${month}`).toHaveLength(1);
+        expect(entries[0]!.requested, `${n.id} month ${month}`).toBe(
+          n.research.standingResearchBudget,
+        );
       }
       snapshot = {
         ...result.finalSnapshot,
