@@ -63,6 +63,7 @@ export {
   type ActiveCampaignCurrencyContext,
   type NationalCurrencySource,
 } from "./currency-availability.js";
+export { formatPowerBoth, shaftHorsepower } from "./power.js";
 export { parseMeasurement, type ParseMeasurementOptions } from "./parse.js";
 export {
   DEFAULT_EXPLANATION_LOCALE,

@@ -96,6 +96,7 @@ export function MachineryEditor({
               step={100}
               onCommit={(v) => edit({ kind: "set_machinery", patch: { installedKw: v } })}
             />
+            <p className="col-span-2 text-xs text-muted-foreground">{inputs.installedPowerText}</p>
           </div>
           <DeltaPreview deltas={plantPreview} label="Effect of the highlighted plant" />
           <Advanced>

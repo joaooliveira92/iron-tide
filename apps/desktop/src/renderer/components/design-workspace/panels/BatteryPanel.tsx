@@ -3,7 +3,7 @@ import { Badge } from "../../ui/badge.js";
 import { Button } from "../../ui/button.js";
 import { ConfirmAction } from "../ConfirmAction.js";
 import type { BatteryCard } from "../batteryView.js";
-import { clearBatteryEdit, setRoundsEdit } from "../batteryView.js";
+import { batterySymmetry, clearBatteryEdit, setRoundsEdit } from "../batteryView.js";
 import type { DrawingBoardContent } from "../content.js";
 import { NumberField, SelectField } from "../fields.js";
 import type { ShipEntity } from "../selection/store.js";
@@ -57,7 +57,14 @@ export function BatteryPanel({
               )}
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <span className="font-medium">{title}</span>
+                <span className="font-medium">
+                  {title}
+                  {batterySymmetry({ mounts }) === "asymmetric" && (
+                    <Badge variant="secondary" className="ml-2" title="Port and starboard differ">
+                      Asymmetric
+                    </Badge>
+                  )}
+                </span>
                 <span className="text-sm tabular-nums text-muted-foreground">
                   {row.mounts} mount{row.mounts === 1 ? "" : "s"} · {row.barrels}{" "}
                   {unitWord(row.role, row.barrels)} · {tonnes(row.weightKg)} t
