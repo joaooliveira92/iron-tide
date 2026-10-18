@@ -5,6 +5,7 @@ import { applyEdit, type DraftEdit } from "./edits.js";
 import { withoutSubjects } from "./findings.js";
 import { isShipTypeId } from "./shipTypes.js";
 import { ARMOUR_REGIONS } from "./armour.js";
+import { ARMOUR_SCHEME_IDS } from "./armourSchemes.js";
 
 export const DESIGN_FILE_FORMAT = "bwdesign";
 /**
@@ -120,6 +121,10 @@ export function validateDraftShape(raw: unknown): string[] {
     p.push("hull.freeboardProfile must be NORMAL or LOW");
   if (isObj(raw.machinery) && typeof raw.machinery.plantId !== "string")
     p.push("machinery.plantId must be a string");
+  if (isObj(raw.armour) && raw.armour.schemeId !== undefined) {
+    if (!(ARMOUR_SCHEME_IDS as readonly unknown[]).includes(raw.armour.schemeId))
+      p.push("armour.schemeId is not a known armour scheme");
+  }
   if (raw.tertiary !== undefined) {
     const t = raw.tertiary;
     if (
