@@ -1,6 +1,8 @@
+import { SafeInt } from "@bluewave/contracts";
 import type { ContentPack } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
+import { MAX_ECONOMIC_BASE, monthlyRevenue } from "../src/economy.js";
 import { buildNationStates } from "../src/nationCompilation.js";
 
 // Economy spec #138 slice 2: the compiler derives the economic base and seeds the standing research budget.
@@ -75,19 +77,65 @@ describe("nation economy start state", () => {
     ).toContain("ECONOMY_VALUE_INVALID");
   });
 
-  it("fails when the derived base would overflow", () => {
-    const { collector } = compile(
-      ["a"],
-      [
-        {
-          nationId: "a",
-          treasury: 1,
-          income: Math.floor(Number.MAX_SAFE_INTEGER / 1000),
-          expenses: 0,
-        },
-      ],
-    );
-    expect(codes(collector, "error")).toContain("ECONOMY_BASE_OVERFLOW");
+  describe("economic base overflow (ECONOMY_BASE_OVERFLOW)", () => {
+    // The largest income whose derived base (60 x income at the 2000 bp start rate) stays inside MAX_ECONOMIC_BASE.
+    const lastFitting = Math.floor(MAX_ECONOMIC_BASE / 60);
+    const overflowDiagnostics = (income: number) => {
+      const { nations, collector } = compile(
+        ["a"],
+        [{ nationId: "a", treasury: 1, income, expenses: 0 }],
+      );
+      return { nations, found: collector.all.filter((d) => d.code === "ECONOMY_BASE_OVERFLOW") };
+    };
+
+    it("is silent at and below the ceiling and the base then yields a safe revenue at the top rate", () => {
+      for (const income of [lastFitting - 1, lastFitting]) {
+        const { nations, found } = overflowDiagnostics(income);
+        expect(found).toEqual([]);
+        const base = nations!.get("a")!.baseResources as number;
+        expect(base).toBe(60 * income); // independent of deriveEconomicBase
+        expect(base <= MAX_ECONOMIC_BASE).toBe(true);
+        expect(() => monthlyRevenue(nations!.get("a")!.baseResources, SafeInt(5000))).not.toThrow();
+      }
+    });
+
+    it("is one error at the compiler's own path for the first income above the ceiling, never a throw", () => {
+      expect(60 * (lastFitting + 1) > MAX_ECONOMIC_BASE).toBe(true);
+      let result!: ReturnType<typeof overflowDiagnostics>;
+      expect(() => {
+        result = overflowDiagnostics(lastFitting + 1);
+      }).not.toThrow();
+      expect(result.found).toHaveLength(1);
+      expect(result.found[0]).toMatchObject({
+        code: "ECONOMY_BASE_OVERFLOW",
+        severity: "error",
+        stage: "campaign-compile",
+        entityId: "a",
+      });
+      // The overflowing nation compiles to a zero base instead of an unsafe one, so nothing downstream sees a huge value.
+      expect(result.nations!.get("a")!.baseResources).toBe(0);
+    });
+
+    it("is deterministic and identical for very large safe incomes", () => {
+      for (const income of [Number.MAX_SAFE_INTEGER, Math.floor(Number.MAX_SAFE_INTEGER / 2)]) {
+        const first = overflowDiagnostics(income).found;
+        const second = overflowDiagnostics(income).found;
+        expect(first).toHaveLength(1);
+        expect(first).toEqual(second);
+      }
+    });
+
+    it("rejects an unsafe or fractional income as an invalid value, before any overflow arithmetic", () => {
+      for (const income of [
+        Number.MAX_SAFE_INTEGER + 1,
+        1.5,
+        Number.POSITIVE_INFINITY,
+        Number.NaN,
+      ]) {
+        const { collector } = compile(["a"], [{ nationId: "a", treasury: 1, income, expenses: 0 }]);
+        expect(codes(collector, "error")).toEqual(["ECONOMY_VALUE_INVALID"]);
+      }
+    });
   });
 
   it("fails authored research above the 12% share of monthly revenue", () => {
