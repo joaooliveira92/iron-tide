@@ -132,6 +132,7 @@ const DesignDraftSchema = Schema.Struct({
   armour: ArmourPlanSchema,
   placements: Schema.Array(PlacementSpecSchema),
   fireControl: Schema.optional(Schema.Struct({ positions: nonNegativeInt })),
+  tertiary: Schema.optional(Schema.Struct({ caliberUm: positiveInt, count: nonNegativeInt })),
 });
 
 /**

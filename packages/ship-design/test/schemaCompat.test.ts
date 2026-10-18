@@ -25,6 +25,8 @@ describe("content-schema stays in lock-step with ship-design", () => {
   it("category and zone lists are identical", () => {
     expect([...SHIP_COMPONENT_CATEGORIES]).toEqual([...COMPONENT_CATEGORIES]);
     expect([...SHIP_ZONE_IDS]).toEqual([...ZONE_IDS]);
+    expect(COMPONENT_CATEGORIES as readonly string[]).toContain("TERTIARY_GUN");
+    expect(SHIP_COMPONENT_CATEGORIES as readonly string[]).toContain("TERTIARY_GUN");
   });
   it("reference-design enum lists are identical", () => {
     expect([...ARMOUR_REGION_IDS]).toEqual([...ARMOUR_REGIONS]);

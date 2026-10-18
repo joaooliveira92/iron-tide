@@ -1,12 +1,13 @@
 import type { ComponentSummary, PlacementSpec } from "./compileShared.js";
 
 /** Which battery a gun or tube belongs to, by component category. */
-export type BatteryRole = "MAIN" | "SECONDARY" | "TORPEDO";
+export type BatteryRole = "MAIN" | "SECONDARY" | "TERTIARY" | "TORPEDO";
 
 const ROLE_OF: Readonly<Partial<Record<ComponentSummary["category"], BatteryRole>>> = {
   MAIN_GUN: "MAIN",
   SECONDARY_GUN: "SECONDARY",
   DUAL_PURPOSE_GUN: "SECONDARY",
+  TERTIARY_GUN: "TERTIARY",
   TORPEDO_TUBE: "TORPEDO",
 };
 
@@ -26,7 +27,12 @@ export interface BatteryRow {
   readonly instanceIds: readonly string[];
 }
 
-const ROLE_ORDER: Readonly<Record<BatteryRole, number>> = { MAIN: 0, SECONDARY: 1, TORPEDO: 2 };
+const ROLE_ORDER: Readonly<Record<BatteryRole, number>> = {
+  MAIN: 0,
+  SECONDARY: 1,
+  TERTIARY: 2,
+  TORPEDO: 3,
+};
 
 /**
  * The guns and tubes of a design grouped into batteries: main and secondary guns by calibre, torpedo tubes together.
