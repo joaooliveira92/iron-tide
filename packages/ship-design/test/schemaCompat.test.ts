@@ -28,6 +28,11 @@ describe("content-schema stays in lock-step with ship-design", () => {
   });
   it("reference-design enum lists are identical", () => {
     expect([...ARMOUR_REGION_IDS]).toEqual([...ARMOUR_REGIONS]);
+    expect(new Set(ARMOUR_REGIONS).size).toBe(ARMOUR_REGIONS.length);
+    expect(ARMOUR_REGIONS as readonly string[]).not.toContain("BARBETTE");
+    expect(ARMOUR_REGIONS as readonly string[]).not.toContain("TURRET_FACE");
+    for (const r of ["DECK_EXTENDED", "TURRET", "TURRET_TOP", "SECONDARY_GUN"])
+      expect(ARMOUR_REGIONS as readonly string[]).toContain(r);
     // Type-level parity: these only compile if the lists match ship-design.
     const sides: readonly MountSide[] = [...MOUNT_SIDES];
     const standards: readonly AccommodationStandard[] = [...ACCOMMODATION_STANDARDS];

@@ -641,7 +641,7 @@ designs:
               cosObliquityBp: 10000,
             }
           - {
-              region: BARBETTE,
+              region: TURRET,
               thicknessUm: 300000,
               lengthMm: 30000,
               heightMm: 3000,

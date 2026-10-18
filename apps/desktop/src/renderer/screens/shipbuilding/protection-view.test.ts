@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { buildWorkshopView } from "@bluewave/ship-design";
-import { armourMaterialOptions } from "@bluewave/ship-design";
+import { ARMOUR_REGIONS, armourMaterialOptions } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "../../components/design-workspace/index.js";
 import {
   PROTECTION_GROUPS,
@@ -41,6 +41,19 @@ describe("protection view model", () => {
     for (const region of ref.draft.armour.regions) {
       expect(regionLabel(region.region)).not.toContain("_");
     }
+  });
+
+  it("names every region, using the manual's terms for the parity fields (ADR-0232)", () => {
+    expect(regionLabel("BELT_ENDS")).toBe("Belt extended (BE)");
+    expect(regionLabel("DECK_EXTENDED")).toBe("Deck extended (DE)");
+    expect(regionLabel("TURRET")).toBe("Turret + barbette (T)");
+    expect(regionLabel("TURRET_TOP")).toBe("Turret top (TT)");
+    expect(regionLabel("SECONDARY_GUN")).toBe("Secondary gun armour (SEC)");
+    expect(protectionGroupOf("DECK_EXTENDED")).toBe("deck");
+    for (const region of ["TURRET", "TURRET_TOP", "SECONDARY_GUN"] as const)
+      expect(protectionGroupOf(region)).toBe("armament");
+    const labels = ARMOUR_REGIONS.map(regionLabel);
+    expect(new Set(labels).size).toBe(labels.length);
   });
 
   it("reports each fitted field's thickness, coverage, area and weight from the design", () => {

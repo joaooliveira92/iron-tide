@@ -11,8 +11,10 @@ export const ARMOUR_REGIONS = [
   "BELT_ENDS",
   "DECK_MAIN",
   "DECK_SLOPE",
-  "TURRET_FACE",
-  "BARBETTE",
+  "DECK_EXTENDED",
+  "TURRET",
+  "TURRET_TOP",
+  "SECONDARY_GUN",
   "CONNING_TOWER",
   "MAGAZINE_BOX",
   "SPLINTER_PLATING",
@@ -20,6 +22,13 @@ export const ARMOUR_REGIONS = [
   "TORPEDO_BELT",
 ] as const;
 export type ArmourRegionId = (typeof ARMOUR_REGIONS)[number];
+
+/** Regions that face plunging fire at reduced striking velocity (`ArmourBalance.deckPenetrationBp`). */
+const DECK_REGIONS: ReadonlySet<ArmourRegionId> = new Set([
+  "DECK_MAIN",
+  "DECK_SLOPE",
+  "DECK_EXTENDED",
+]);
 
 export interface ArmourRegion {
   readonly region: ArmourRegionId;
@@ -164,7 +173,7 @@ export function compileArmour(input: ArmourInput, b: ArmourBalance): ArmourResul
     weightByRegionKg[r.region] = (weightByRegionKg[r.region] ?? 0) + regionWeightKg(r, b);
     total += regionWeightKg(r, b);
     const m: Record<string, number> = marginBp[r.region] ?? {};
-    const isDeck = r.region === "DECK_MAIN" || r.region === "DECK_SLOPE";
+    const isDeck = DECK_REGIONS.has(r.region);
     for (const t of input.threats) {
       const effective = isDeck
         ? {
@@ -219,8 +228,8 @@ export function compileArmour(input: ArmourInput, b: ArmourBalance): ArmourResul
   const sides = [
     margin("BELT_MAIN"),
     margin("DECK_MAIN"),
-    margin("DECK_SLOPE"),
-    margin("TURRET_FACE"),
+    margin("DECK_EXTENDED"),
+    margin("TURRET"),
   ].filter((v): v is number => v !== null);
   if (sides.length > 0 && sides.every((v) => v < 0)) {
     findings.push({
@@ -480,8 +489,10 @@ const START_THICKNESS_UM: Readonly<Record<ArmourRegionId, number>> = {
   BELT_ENDS: 75_000,
   DECK_MAIN: 50_000,
   DECK_SLOPE: 75_000,
-  TURRET_FACE: 150_000,
-  BARBETTE: 150_000,
+  DECK_EXTENDED: 50_000,
+  TURRET: 150_000,
+  TURRET_TOP: 50_000,
+  SECONDARY_GUN: 75_000,
   CONNING_TOWER: 150_000,
   MAGAZINE_BOX: 50_000,
   SPLINTER_PLATING: 12_000,
@@ -509,8 +520,10 @@ export function newArmourRegion(
     BELT_ENDS: [Math.max(0, size.lengthWlMm - citadel), beltHeight],
     DECK_MAIN: [citadel, deckWidth],
     DECK_SLOPE: [citadel, deckWidth],
-    TURRET_FACE: [4_000, 2_500],
-    BARBETTE: [6_000, 2_500],
+    DECK_EXTENDED: [Math.max(0, size.lengthWlMm - citadel), deckWidth],
+    TURRET: [6_000, 2_500],
+    TURRET_TOP: [4_000, 4_000],
+    SECONDARY_GUN: [3_000, 2_000],
     CONNING_TOWER: [3_000, 2_000],
     MAGAZINE_BOX: [citadel, deckWidth],
     SPLINTER_PLATING: [citadel, beltHeight],
@@ -529,15 +542,15 @@ export function newArmourRegion(
 }
 
 /**
- * "All or nothing": armour only the citadel. Belts and decks are cut to the citadel length; the upper belt and the
- * unarmoured ends are dropped; everything else is kept as is. Pure. The caller supplies the citadel length.
+ * "All or nothing": armour only the citadel. Belts and decks are cut to the citadel length; the upper belt, the extended deck and
+ * the unarmoured ends are dropped; everything else is kept as is. Pure. The caller supplies the citadel length.
  */
 export function allOrNothingRegions(
   regions: readonly ArmourRegion[],
   citadelLengthMm: number,
 ): ArmourRegion[] {
   const cut = new Set<ArmourRegionId>(["BELT_MAIN", "DECK_MAIN", "DECK_SLOPE", "MAGAZINE_BOX"]);
-  const drop = new Set<ArmourRegionId>(["BELT_ENDS", "BELT_UPPER"]);
+  const drop = new Set<ArmourRegionId>(["BELT_ENDS", "BELT_UPPER", "DECK_EXTENDED"]);
   return regions
     .filter((r) => !drop.has(r.region))
     .map((r) =>

@@ -1,0 +1,206 @@
+{
+  "format": "bwdesign",
+  "schemaVersion": 1,
+  "draft": {
+    "nationId": "uk",
+    "requirement": {
+      "category": "DD",
+      "requiredSpeedMilliKnots": 20000,
+      "cruiseSpeedMilliKnots": 10000,
+      "requiredRangeNm": 2500,
+      "designThreatId": "qf_6pdr",
+      "modernizationExpectation": "NONE",
+      "crewQualityBp": 10000,
+      "accommodationStandard": "STANDARD"
+    },
+    "hull": {
+      "hullFormId": "fine_light",
+      "lengthWl": 70000,
+      "beam": 8400,
+      "draught": 2600,
+      "depthToMainDeck": 5200,
+      "blockCoeffBp": 4500,
+      "materialId": "mild_steel",
+      "structuralSchemeId": "mixed",
+      "subdivisionGrade": 2,
+      "targetDisplacementKg": 705000,
+      "limitDisplacementKg": null,
+      "designMarginBp": 400,
+      "growthReserveBp": 0
+    },
+    "machinery": {
+      "plantId": "triple_expansion_coal",
+      "installedKw": 3300,
+      "zoneId": "CENTRAL_MACHINERY",
+      "stationPermille": 400,
+      "fuelCapacityKg": 150000,
+      "fuelZoneId": "AFT_SERVICE",
+      "fuelStationPermille": 660,
+      "foulingBp": 0
+    },
+    "armour": {
+      "regions": [
+        {
+          "region": "BELT_MAIN",
+          "thicknessUm": 152000,
+          "lengthMm": 14000,
+          "heightMm": 1800,
+          "materialId": "iron",
+          "cosObliquityBp": 10000
+        },
+        {
+          "region": "DECK_MAIN",
+          "thicknessUm": 32000,
+          "lengthMm": 24000,
+          "heightMm": 5000,
+          "materialId": "mild_steel",
+          "cosObliquityBp": 10000
+        },
+        {
+          "region": "TURRET_FACE",
+          "thicknessUm": 203000,
+          "lengthMm": 4000,
+          "heightMm": 2500,
+          "materialId": "iron",
+          "cosObliquityBp": 8660
+        },
+        {
+          "region": "BARBETTE",
+          "thicknessUm": 254000,
+          "lengthMm": 6000,
+          "heightMm": 3000,
+          "materialId": "compound",
+          "cosObliquityBp": 10000
+        },
+        {
+          "region": "MAGAZINE_BOX",
+          "thicknessUm": 40000,
+          "lengthMm": 6000,
+          "heightMm": 2200,
+          "materialId": "mild_steel",
+          "cosObliquityBp": 10000
+        }
+      ],
+      "citadelLengthMm": 0,
+      "torpedoWarheadKg": 40,
+      "bunkerProtectionBp": 0
+    },
+    "placements": [
+      {
+        "instanceId": "a_gun_fwd",
+        "componentId": "qf_47in",
+        "zoneId": "FORECASTLE",
+        "stationPermille": 40,
+        "params": {
+          "barrels": 1,
+          "rounds": 100
+        },
+        "magazineRef": "mag_fwd"
+      },
+      {
+        "instanceId": "b_gun_aft",
+        "componentId": "qf_47in",
+        "zoneId": "QUARTERDECK",
+        "stationPermille": 950,
+        "params": {
+          "barrels": 1,
+          "rounds": 100
+        },
+        "magazineRef": "mag_aft"
+      },
+      {
+        "instanceId": "c_6pdr_p",
+        "componentId": "qf_6pdr",
+        "zoneId": "AFT_SERVICE",
+        "stationPermille": 700,
+        "side": "PORT",
+        "params": {
+          "rounds": 150
+        },
+        "magazineRef": "mag_aft"
+      },
+      {
+        "instanceId": "c_6pdr_s",
+        "componentId": "qf_6pdr",
+        "zoneId": "AFT_SERVICE",
+        "stationPermille": 700,
+        "side": "STBD",
+        "params": {
+          "rounds": 150
+        },
+        "magazineRef": "mag_aft"
+      },
+      {
+        "instanceId": "d_tubes",
+        "componentId": "tube_14in",
+        "zoneId": "AFT_SERVICE",
+        "stationPermille": 700,
+        "params": {
+          "tubes": 3
+        }
+      },
+      {
+        "instanceId": "mag_fwd",
+        "componentId": "magazine_small",
+        "zoneId": "FWD_MAGAZINE",
+        "stationPermille": 130
+      },
+      {
+        "instanceId": "mag_aft",
+        "componentId": "magazine_small",
+        "zoneId": "AFT_MAGAZINE",
+        "stationPermille": 820
+      },
+      {
+        "instanceId": "rf",
+        "componentId": "rangefinder_2m",
+        "zoneId": "SUPERSTRUCTURE",
+        "stationPermille": 520
+      },
+      {
+        "instanceId": "dyn_1",
+        "componentId": "dynamo_60kw",
+        "zoneId": "FWD_SERVICE",
+        "stationPermille": 200
+      },
+      {
+        "instanceId": "dyn_2",
+        "componentId": "dynamo_60kw",
+        "zoneId": "AFT_SERVICE",
+        "stationPermille": 680
+      },
+      {
+        "instanceId": "quarters_a",
+        "componentId": "quarters_basic",
+        "zoneId": "QUARTERDECK",
+        "stationPermille": 950
+      },
+      {
+        "instanceId": "quarters_b",
+        "componentId": "quarters_basic",
+        "zoneId": "SUPERSTRUCTURE",
+        "stationPermille": 600
+      },
+      {
+        "instanceId": "funnel",
+        "componentId": "funnel_single",
+        "zoneId": "SUPERSTRUCTURE",
+        "stationPermille": 580
+      },
+      {
+        "instanceId": "dc",
+        "componentId": "pumps_dc",
+        "zoneId": "FWD_SERVICE",
+        "stationPermille": 210
+      },
+      {
+        "instanceId": "vent",
+        "componentId": "ventilation",
+        "zoneId": "FWD_SERVICE",
+        "stationPermille": 220
+      }
+    ]
+  },
+  "componentHashes": {},
+  "compiledHash": null
+}

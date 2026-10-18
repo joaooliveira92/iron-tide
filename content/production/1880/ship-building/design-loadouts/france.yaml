@@ -147,7 +147,7 @@ designs:
             heightMm: 3000
             lengthMm: 30000
             thicknessUm: 300000
-          slot: armour.barbette
+          slot: armour.turret
       platform: coast_defence_form
     month: 1880-01
     name: Redoutable (1878, central-battery ironclad)

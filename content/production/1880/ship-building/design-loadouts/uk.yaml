@@ -166,7 +166,7 @@ designs:
             heightMm: 3000
             lengthMm: 40000
             thicknessUm: 203000
-          slot: armour.barbette
+          slot: armour.turret
       platform: coast_defence_form
     month: 1880-01
     name: Alexandra (1877, central-battery ironclad)
@@ -319,7 +319,7 @@ designs:
             heightMm: 3000
             lengthMm: 20000
             thicknessUm: 356000
-          slot: armour.barbette
+          slot: armour.turret
       platform: coast_defence_form
     month: 1880-01
     name: Devastation (1873, turret ironclad)
@@ -471,7 +471,7 @@ designs:
             heightMm: 3000
             lengthMm: 22000
             thicknessUm: 356000
-          slot: armour.barbette
+          slot: armour.turret
       platform: coast_defence_form
     month: 1880-01
     name: Dreadnought (1875, turret ironclad)
@@ -1024,18 +1024,10 @@ designs:
           part: harvey
           shape:
             cosObliquityBp: 10000
-            heightMm: 3000
+            heightMm: 4000
             lengthMm: 56000
             thicknessUm: 356000
-          slot: armour.barbette
-        - mountCount: 1
-          part: harvey
-          shape:
-            cosObliquityBp: 10000
-            heightMm: 4000
-            lengthMm: 40000
-            thicknessUm: 254000
-          slot: armour.turret_face
+          slot: armour.turret
       platform: pre_dreadnought_form
     month: 1896-01
     name: Majestic-like battleship (1895)

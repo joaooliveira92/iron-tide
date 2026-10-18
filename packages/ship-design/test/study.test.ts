@@ -99,8 +99,8 @@ describe("similarity (DESIGN-21 sections 10-16, acceptance 4-16)", () => {
       "DERIVED_DESIGN_HORIZONTAL_ARMOR_CHANGED",
     ]);
     // Adding a zone counts from zero.
-    expect(sim({ armourUm: { ...base.armourUm, BARBETTE: 25_400 } }).derived).toBe(true);
-    expect(sim({ armourUm: { ...base.armourUm, BARBETTE: 25_401 } }).derived).toBe(false);
+    expect(sim({ armourUm: { ...base.armourUm, TURRET: 25_400 } }).derived).toBe(true);
+    expect(sim({ armourUm: { ...base.armourUm, TURRET: 25_401 } }).derived).toBe(false);
   });
   it("hull category, fuel family and hull form changes break similarity, in a fixed order", () => {
     expect(sim({ hullCategory: "AUXILIARY" }).failed).toEqual([

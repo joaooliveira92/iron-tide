@@ -29,7 +29,7 @@ import {
   type ProtectionInteractionRecord,
   createDamageEventRecord,
 } from "./eventRecord.js";
-import { type PenetrationOutcome, type ArmorZoneType } from "./armorModel.js";
+import { type PenetrationOutcome, inferArmorZoneType } from "./armorModel.js";
 import { resolveHitLocation, type HitInput } from "./hitLocation.js";
 import { resolveProtectionInteraction, type ProtectionInput } from "./protectionInteraction.js";
 import {
@@ -463,7 +463,7 @@ function buildComponentStateFromIds(componentIds: readonly string[]): ComponentS
     id,
     componentType: inferComponentType(id),
     locationId: inferLocationId(id),
-    armorZoneType: inferArmorZoneType(id) as ArmorZoneType | undefined,
+    armorZoneType: inferArmorZoneType(id),
   }));
 }
 
@@ -474,24 +474,6 @@ function inferComponentType(id: string): string {
 
 function inferLocationId(id: string): string {
   return id;
-}
-
-function inferArmorZoneType(id: string): string | undefined {
-  const prefix = id.split("-")[0];
-  switch (prefix) {
-    case "TURRET":
-      return "TURRET_FACE";
-    case "BARBETTE":
-      return "BARBETTE";
-    case "CONNING":
-      return "CONNING_TOWER";
-    case "AA":
-    case "DIRECTOR":
-    case "RANGEFINDER":
-      return "SUPERSTRUCTURE";
-    default:
-      return undefined;
-  }
 }
 
 // ---- Re-export for backwards compatibility with existing test imports ----

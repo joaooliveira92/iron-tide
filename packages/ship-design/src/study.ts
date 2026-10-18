@@ -96,8 +96,7 @@ export const VERTICAL_ZONES = [
   "BELT_MAIN",
   "BELT_UPPER",
   "BELT_ENDS",
-  "TURRET_FACE",
-  "BARBETTE",
+  "TURRET",
   "CONNING_TOWER",
 ] as const;
 export const HORIZONTAL_ZONES = ["DECK_MAIN", "DECK_SLOPE"] as const;
