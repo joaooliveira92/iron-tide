@@ -21,7 +21,15 @@ export { COMPATIBILITY_MISMATCH_CODE } from "./errors.js";
 // compiled ship gains required readiness and crew-quality state. As with the
 // part-model bump, pre-change saves are refused before decoding (no released
 // save exists for the reject-only release; ADR-0113 section 5).
-export const CURRENT_COMPATIBILITY_VERSION = "3.0.0";
+// Economy #138 (1880 campaign economy model): bumped 3.0.0 -> 3.1.0 because authoritative
+// outcomes move by design (the compiled start state carries a derived economic base and a
+// seeded standing research budget, the snapshot gains the optional research catalogue
+// `world.technologies`, seeded construction projects carry packages and `capacityUnits`,
+// and outflow ledger entries record requested/shortfall). Every new field is optional, so a
+// 3.0.0 snapshot still decodes, but pre-change saves are REFUSED at the compatibility gate
+// (ADR-0113 section 5): no released save exists, and replaying a save under a different
+// economy would silently change its outcomes.
+export const CURRENT_COMPATIBILITY_VERSION = "3.1.0";
 
 // The named version at which the ship part model landed; it stays 2.0.0 as a
 // historical declaration while the current release constant moves on. Kept so

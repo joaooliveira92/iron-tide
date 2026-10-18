@@ -18,6 +18,14 @@ function projection(overrides: Partial<PlayerProjection> = {}): PlayerProjection
       constructionSpend: 1000,
       researchSpend: 800,
       maintenanceCost: 2000,
+      obligations: 500,
+      researchRequested: 800,
+      researchCap: 600,
+      plannedConstruction: 1000,
+      projectedNet: 1200,
+      shortfall: 0,
+      status: "healthy",
+      monthEndTreasury: 51200,
     },
     fleet: [
       {
@@ -65,22 +73,40 @@ const areas: StatusStripAreas = [
 ];
 
 describe("buildStatusStrip", () => {
-  it("derives the budget rows from the projection, with expenses as the sum of its lines", () => {
+  it("derives the budget rows from the projection, with expenses as the sum of its committed lines", () => {
     const strip = buildStatusStrip({ projection: projection(), areas, alertsCount: 2 });
     const rows = Object.fromEntries(strip.budget.map((r) => [r.id, r]));
     expect(rows["treasury"]?.value).toBe("£50,000");
-    expect(rows["monthly-budget"]?.label).toBe("Monthly budget (projected)");
+    expect(rows["monthly-budget"]?.label).toBe("Monthly appropriation");
     expect(rows["monthly-budget"]?.value).toBe("£5,000");
+    // The old "revenue source is not yet confirmed" footnote is gone: the figure is the credited revenue.
+    expect(rows["monthly-budget"]?.note).toBe("");
+    expect(rows["obligations"]?.value).toBe("£500");
     expect(rows["maintenance"]?.value).toBe("£2,000");
-    expect(rows["construction"]?.label).toBe("Construction (committed)");
     expect(rows["research"]?.value).toBe("£800");
-    expect(rows["total-expenses"]?.value).toBe("£3,800");
+    expect(rows["construction"]?.label).toBe("Construction (up to)");
+    expect(rows["construction"]?.value).toBe("£1,000");
+    // Construction is a bound, not a commitment: it is not in the total.
+    expect(rows["total-expenses"]?.value).toBe("£3,300");
     expect(rows["balance"]?.value).toBe("£1,200");
+    expect(rows["balance"]?.status).toBe("Healthy");
+    expect(rows["shortfall"]).toBeUndefined();
+    expect(rows["runway"]).toBeUndefined();
   });
 
-  it("marks a negative balance with text as well as a tone", () => {
+  it("marks a negative balance with the shared status band, a shortfall and a runway", () => {
+    const base = projection();
     const strip = buildStatusStrip({
-      projection: projection({ projectedSurplusDeficit: -450 }),
+      projection: projection({
+        projectedSurplusDeficit: -450,
+        economy: {
+          ...base.economy,
+          projectedNet: -450,
+          status: "deficit",
+          shortfall: 30,
+          runwayMonths: 7,
+        },
+      }),
       areas,
       alertsCount: 0,
     });
@@ -89,7 +115,25 @@ describe("buildStatusStrip", () => {
     expect(balance?.tone).toBe("alert");
     expect(balance?.status).toBe("Deficit");
     expect(strip.summary.balance.status).toBe("Deficit");
+    expect(strip.budget.find((r) => r.id === "shortfall")?.value).toBe("£30");
+    expect(strip.budget.find((r) => r.id === "runway")?.value).toBe("7 months");
     expect(strip.budget.find((r) => r.id === "treasury")?.tone).toBe("normal");
+  });
+
+  it("explains an unpaid research budget on the research row", () => {
+    const base = projection();
+    const strip = buildStatusStrip({
+      projection: projection({
+        economy: {
+          ...base.economy,
+          researchSpend: 0,
+          researchUnfundedReason: "ABOVE_CAP",
+        },
+      }),
+      areas,
+      alertsCount: 0,
+    });
+    expect(strip.budget.find((r) => r.id === "research")?.note).toMatch(/above the cap of 600/);
   });
 
   it("counts ships on foreign stations, excluding own and unclaimed areas", () => {
@@ -133,7 +177,7 @@ describe("buildStatusStrip", () => {
   it("summarises balance, treasury and alerts for the compact one-liner", () => {
     const strip = buildStatusStrip({ projection: projection(), areas, alertsCount: 3 });
     expect(strip.summary).toEqual({
-      balance: { value: "£1,200", status: "Surplus", tone: "normal" },
+      balance: { value: "£1,200", status: "Healthy", tone: "normal" },
       treasury: "£50,000",
       alerts: "3 alerts",
     });

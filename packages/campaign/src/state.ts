@@ -77,6 +77,8 @@ export interface ResearchState {
   researchBudget: SafeInt;
   /** Player-set monthly research budget that refills `researchBudget` each month (ADR-0060). */
   standingResearchBudget?: SafeInt;
+  /** The authored annual research allocation the compiler derived the standing monthly spend from (spec #138); display only. */
+  annualResearchAllocation?: SafeInt;
   activeCandidates: Map<string, string>;
   discoveredTechs: string[];
 }
@@ -663,6 +665,12 @@ export interface ConstructionProject {
   /** Id of the yard building the ship (ADR-0077); absent when no yard was chosen. */
   yardId?: string;
   /**
+   * The project's own monthly throughput per production line, in its treasury units (spec #138 slice 4). Set on a project
+   * the campaign starts with on the slips, whose authored design carries no construction plan; the project's own value
+   * wins over the design's when both exist. Absent for ordered projects, which use their design's plan.
+   */
+  capacityUnits?: Record<string, SafeInt>;
+  /**
    * National naval profile that priced this project at order time (ADR-0090); absent for nation-neutral orders.
    * The resolved cost and build-time multipliers are persisted here so a replay reuses the price the order was
    * placed at, even if the profile content changes afterwards.
@@ -734,6 +742,24 @@ export interface WorldState {
   areas: AreaData[];
   routes: RouteData[];
   ports: PortData[];
+  /**
+   * The pack's research catalogue, materialised at compile time (#138 slice 3). The research phase reads
+   * costs, fields, prerequisites and availability from here; an absent or empty catalogue leaves every
+   * field without an eligible technology.
+   */
+  technologies?: TechnologyDefinitionData[];
+}
+
+/** One technology of the compiled research catalogue, ordered by id in `WorldState.technologies`. */
+export interface TechnologyDefinitionData {
+  techId: string;
+  researchFieldId: string;
+  /** Research points (treasury units) needed to discover the technology. */
+  cost: SafeInt;
+  discoveryWeight: SafeInt;
+  prerequisites: string[];
+  /** First campaign month (0 = the start month) in which the technology can be researched. */
+  availabilityMonth: SafeInt;
 }
 
 export interface AreaData {

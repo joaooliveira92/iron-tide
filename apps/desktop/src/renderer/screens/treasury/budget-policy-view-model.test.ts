@@ -17,6 +17,11 @@ const state: BudgetPolicyState = {
     researchBudgetMin: 0,
     researchBudgetMax: 1000,
   },
+  // base 120000: cap = floor(12% x floor(6000 x rate / 120000)), one entry per 50 bp step.
+  researchCaps: Array.from({ length: 91 }, (_, i) => ({
+    rateBp: 500 + i * 50,
+    cap: Math.floor((Math.floor((120000 * (500 + i * 50)) / 120000) * 1200) / 10000),
+  })),
   pendingRequest: null,
   requiresRefresh: false,
   notice: null,
@@ -43,10 +48,23 @@ describe("buildBudgetPolicyViewModel", () => {
     expect(vm.loaded).toBe(true);
     expect(vm.knobs.map((k) => [k.id, k.value, k.display, k.min, k.max, k.step])).toEqual([
       ["appropriation", 2000, "20.0%", 500, 5000, 50],
-      ["research", 60, "60", 0, 1000, 10],
+      // The research slider tops out at the cap for the chosen rate: 12% of 2000 = 240.
+      ["research", 60, "60", 0, 240, 10],
     ]);
+    expect(vm.researchCap).toBe(240);
+    expect(vm.researchOverCap).toBe(false);
     expect(vm.dirty).toBe(false);
     expect(vm.canApply).toBe(false);
+  });
+
+  it("refuses to apply research above the cap at the chosen rate and says so", () => {
+    // Dropping the rate to 5% (500 bp) shrinks the cap to 60: a budget of 100 is no longer payable.
+    const vm = buildBudgetPolicyViewModel(input({ rate: 500, research: 100 }));
+    expect(vm.researchCap).toBe(60);
+    expect(vm.researchOverCap).toBe(true);
+    expect(vm.canApply).toBe(false);
+    expect(vm.notice).toMatch(/above the cap of 60/);
+    expect(vm.knobs.find((k) => k.id === "research")?.max).toBe(60);
   });
 
   it("marks the allocation dirty and applyable once a slider moves off the engine value", () => {

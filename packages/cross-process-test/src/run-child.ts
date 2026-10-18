@@ -401,6 +401,11 @@ interface ProductionRun {
   readonly diagnostics: SmokeDiagnostic[];
   /** Per nation, the first month (1-based) that recorded an outflow shortfall; absent nations never fell short. */
   readonly firstShortfallMonth: Record<string, number>;
+  /**
+   * Per nation, the first month (1-based) whose requested monthly flows left a negative net before construction
+   * (revenue less requested maintenance, obligation and research); absent nations never ran a deficit.
+   */
+  readonly firstDeficitMonth: Record<string, number>;
   /** Months where a nation's treasury change did not equal the sum of its paid ledger postings (must stay empty). */
   readonly ledgerIdentityBreaks: string[];
   readonly hullCounts: Record<string, number>;
@@ -430,6 +435,7 @@ function advanceProductionRun(
   const monthlySuccess: boolean[] = [];
   const diagnostics: SmokeDiagnostic[] = [];
   const firstShortfallMonth: Record<string, number> = {};
+  const firstDeficitMonth: Record<string, number> = {};
   const ledgerIdentityBreaks: string[] = [];
   let success = true;
   for (let index = 0; index < months; index++) {
@@ -464,6 +470,18 @@ function advanceProductionRun(
       if (nationId !== null && firstShortfallMonth[nationId] === undefined)
         firstShortfallMonth[nationId] = index + 1;
     }
+    for (const nationId of snapshot.nations.keys()) {
+      let revenue = 0;
+      let requested = 0;
+      for (const entry of result.financialLedger.all) {
+        if (entry.nationId !== nationId) continue;
+        if (entry.phaseId === "monthly_revenue") revenue += entry.credit as number;
+        else if (entry.phaseId !== "appropriation")
+          requested += (entry.requested ?? entry.debit) as number;
+      }
+      if (revenue - requested < 0 && firstDeficitMonth[nationId] === undefined)
+        firstDeficitMonth[nationId] = index + 1;
+    }
     for (const [nationId, before] of snapshot.nations) {
       let net = 0;
       for (const entry of result.financialLedger.all) {
@@ -491,6 +509,7 @@ function advanceProductionRun(
     success,
     diagnostics,
     firstShortfallMonth,
+    firstDeficitMonth,
     ledgerIdentityBreaks,
     hullCounts: hullCounts(snapshot),
   };
@@ -520,6 +539,7 @@ function runProductionTenNationSmoke(): void {
       closingSnapshotHash: first.closingSnapshotHash,
       diagnostics: first.diagnostics,
       firstShortfallMonth: first.firstShortfallMonth,
+      firstDeficitMonth: first.firstDeficitMonth,
       ledgerIdentityBreaks: first.ledgerIdentityBreaks,
       hullCounts: first.hullCounts,
     }) + "\n",
@@ -568,6 +588,7 @@ function runProductionTenYear(): void {
       closingSnapshotHash: first.closingSnapshotHash,
       diagnostics: first.diagnostics,
       firstShortfallMonth: first.firstShortfallMonth,
+      firstDeficitMonth: first.firstDeficitMonth,
       ledgerIdentityBreaks: first.ledgerIdentityBreaks,
       hullCounts: first.hullCounts,
     }) + "\n",

@@ -146,13 +146,10 @@ function TreasuryPage({ projection }: { readonly projection: OpeningBriefingProj
             label="Government allocation"
             value={formatTreasury(treasury.governmentAllocation)}
           />
+          <DetailRow label="Fixed obligations" value={`−${formatTreasury(treasury.obligations)}`} />
           <DetailRow
             label="Fleet maintenance"
             value={`−${formatTreasury(treasury.fleetMaintenance)}`}
-          />
-          <DetailRow
-            label="Construction committed"
-            value={`−${formatTreasury(treasury.constructionCommitted)}`}
           />
           <DetailRow
             label="Research expenditure"
@@ -162,6 +159,12 @@ function TreasuryPage({ projection }: { readonly projection: OpeningBriefingProj
             label="Projected surplus / deficit"
             value={formatSignedMoney(treasury.projectedSurplus)}
           />
+          {treasury.runwayMonths !== undefined && (
+            <DetailRow
+              label="Treasury lasts"
+              value={`${String(treasury.runwayMonths)} ${treasury.runwayMonths === 1 ? "month" : "months"}`}
+            />
+          )}
         </div>
       </GlassCard>
       <GlassCard glassVariant="liquid-refract">

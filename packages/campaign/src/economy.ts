@@ -80,3 +80,39 @@ export function incomeFitsEconomicBase(income: SafeInt): boolean {
     Math.floor((MAX_ECONOMIC_BASE * START_APPROPRIATION_RATE_BP) / ECONOMY_RATE_DENOMINATOR)
   );
 }
+
+/** The authored annual growth band, in basis points of the base a year (spec #138 G7). Rates stay with the budget-pressure work. */
+export const GROWTH_BAND_MIN_BP = 300;
+export const GROWTH_BAND_MAX_BP = 500;
+
+/** Whether `annualGrowthBp` is an integer inside the authored band. */
+export function isGrowthRateInBand(annualGrowthBp: number): boolean {
+  return (
+    Number.isSafeInteger(annualGrowthBp) &&
+    annualGrowthBp >= GROWTH_BAND_MIN_BP &&
+    annualGrowthBp <= GROWTH_BAND_MAX_BP
+  );
+}
+
+/**
+ * One month's growth of the economic base: `floor(base x annualGrowthBp / 120000)`, a monthly phase that runs before revenue.
+ * Throws outside the authored band. A base below 240 never grows even at the maximum rate (500 bp), and the result is bounded
+ * by the same revenue-product ceiling as the base itself, so growth can neither compound without limit nor overflow.
+ */
+export function monthlyBaseGrowth(base: SafeInt, annualGrowthBp: number): SafeInt {
+  if (!isGrowthRateInBand(annualGrowthBp))
+    throw new RangeError(
+      `annualGrowthBp must be an integer in ${String(GROWTH_BAND_MIN_BP)}..${String(GROWTH_BAND_MAX_BP)}, got ${String(annualGrowthBp)}`,
+    );
+  return SafeInt.div(
+    SafeInt.mul(base, SafeInt(annualGrowthBp)),
+    SafeInt(ECONOMY_RATE_DENOMINATOR),
+    "floor",
+  );
+}
+
+/** The base after one month of growth, held at `MAX_ECONOMIC_BASE`. */
+export function grownBase(base: SafeInt, annualGrowthBp: number): SafeInt {
+  const next = SafeInt.add(base, monthlyBaseGrowth(base, annualGrowthBp));
+  return (next as number) > MAX_ECONOMIC_BASE ? SafeInt(MAX_ECONOMIC_BASE) : next;
+}

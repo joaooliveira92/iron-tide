@@ -1,6 +1,12 @@
 import type { CampaignState } from "@bluewave/campaign";
-import { scaleValue } from "@bluewave/campaign";
-import { shipMaintenanceCost, totalPaidWork } from "./opening-briefing.js";
+import {
+  economyOutlook,
+  type EconomyStatus,
+  type ResearchUnfundedReason,
+} from "@bluewave/campaign";
+import { totalPaidWork } from "./opening-briefing.js";
+
+export type { EconomyStatus, ResearchUnfundedReason } from "@bluewave/campaign";
 
 /**
  * One nation's slice of `CampaignSnapshot`, flattened for UI convenience.
@@ -9,30 +15,45 @@ import { shipMaintenanceCost, totalPaidWork } from "./opening-briefing.js";
  */
 export interface PlayerProjectionEconomy {
   readonly treasury: number;
+  /** The monthly gross naval appropriation credited to the treasury: `floor(base x rate / 120000)`. */
   readonly monthlyAppropriation: number;
   readonly shipyardCapacity: number;
   /**
    * The nation's total committed work across its construction projects — the
-   * cumulative `sum(Number(project.paidWork))`. Mirrors the honest snapshot
-   * value `buildOpeningBriefingProjection` documents as `constructionCommitted`
-   * (`opening-briefing.ts`): there is no pre-commit monthly construction
-   * figure (`MonthReport.newConstructionSpending` only exists after a
-   * `commitMonth`), so this surfaces the cumulative commitment, not a
-   * fabricated monthly number.
+   * cumulative `sum(Number(project.paidWork))`. A stock, not a monthly flow: it
+   * feeds no net figure (the monthly bound is `plannedConstruction`).
    */
   readonly constructionSpend: number;
   /**
-   * The nation's current research expenditure — a direct read of
-   * `nation.research.researchBudget`.
+   * The research the engine will actually draw next month: the standing budget when a field can take it, else 0 (see
+   * `researchUnfundedReason`).
    */
   readonly researchSpend: number;
   /**
-   * The nation's fleet maintenance — re-derived from its ships
-   * (`shipMaintenanceCost` per hull), never the raw `nation.maintenanceCost`
-   * (0 before the first `commitMonth`). Same derivation as
-   * `projectedSurplusDeficit`'s.
+   * The nation's fleet maintenance next month, war-aware — the maintenance phase's own calculator over its ships, never the
+   * raw `nation.maintenanceCost` (0 before the first `commitMonth`).
    */
   readonly maintenanceCost: number;
+  /** Fixed monthly obligations (`NationState.expenses`). */
+  readonly obligations: number;
+  /** The standing monthly research budget as set, whether or not the engine will pay it. */
+  readonly researchRequested: number;
+  /** The most research the nation may fund: `floor(12% x monthly revenue)`. */
+  readonly researchCap: number;
+  /** Why a standing research budget is not paid next month; absent when it is, or when none is set. */
+  readonly researchUnfundedReason?: ResearchUnfundedReason;
+  /** An upper bound on next month's construction work: what the yards can absorb, before the treasury limits it. */
+  readonly plannedConstruction: number;
+  /** Revenue less obligations, maintenance and planned research: the net before construction. */
+  readonly projectedNet: number;
+  /** Unpaid obligations, maintenance and research if next month ran with construction at its upper bound. */
+  readonly shortfall: number;
+  /** The band of `projectedNet` against the monthly revenue; the one status every surface shows. */
+  readonly status: EconomyStatus;
+  /** The treasury after next month at that upper bound (never negative: a shortfall is not carried). */
+  readonly monthEndTreasury: number;
+  /** Whole months the treasury lasts at a negative net; absent when the net is not negative. */
+  readonly runwayMonths?: number;
 }
 
 export interface PlayerProjectionPort {
@@ -91,13 +112,9 @@ export interface PlayerProjection {
   readonly playerNationId: string;
   readonly nationName: string;
   /**
-   * Projected monthly surplus/deficit for the nation, derived from the same
-   * raw fields Treasury uses and reusing the briefing's `projectedSurplus`
-   * chain: `governmentAllocation (= scaleValue(income, navalAppropriationRateBp))`
-   * minus fleet maintenance (re-derived from ships — never the raw
-   * `nation.maintenanceCost`, which is 0 before the first `commitMonth`),
-   * minus committed construction work, minus research expenditure. Purely
-   * derived over the immutable snapshot.
+   * Projected monthly surplus/deficit for the nation: the net before construction, from the same calculators the month
+   * executor uses (`economyOutlook`) — revenue less obligations, war-aware maintenance and the research the engine will
+   * pay. Purely derived over the immutable snapshot.
    */
   readonly projectedSurplusDeficit: number;
   readonly economy: PlayerProjectionEconomy;
@@ -115,21 +132,17 @@ export interface PlayerProjection {
  * existed). Every field is derived from real snapshot data, not
  * placeholders:
  *
- * - `economy.monthlyAppropriation` reuses `@bluewave/campaign`'s existing
- *   basis-point scaling formula (`scaleValue`) over the nation's income and
- *   its own `navalAppropriationRateBp`, rather than inventing a new formula.
+ * - every `economy` flow comes from `@bluewave/campaign`'s `economyOutlook`, the
+ *   calculators the month executor itself uses (spec #138), so the screen
+ *   cannot contradict the ledger the month then produces.
  * - `economy.shipyardCapacity` and each port's `capacity` are the nation's
  *   own ports' authored `level` — there is no dedicated "shipyard capacity"
  *   concept elsewhere in the engine yet, so port level is the closest real,
  *   non-fabricated proxy (documented judgment call, ticket 12).
  * - `economy.constructionSpend` is the cumulative committed construction work
- *   (`sum(paidWork)` — the honest pre-commit value, same as the briefing's
- *   `constructionCommitted`), and `economy.researchSpend` is the real
- *   `researchBudget` (direct read).
- * - `nationName` is `NationState.name`; `projectedSurplusDeficit` reuses the
- *   briefing's `projectedSurplus` chain (`monthlyAppropriation` minus fleet
- *   maintenance re-derived from ships, committed construction, research
- *   spend) — never the raw `maintenanceCost` (0 pre-first-commit).
+ *   (`sum(paidWork)`, a stock); the monthly bound is `economy.plannedConstruction`.
+ * - `nationName` is `NationState.name`; `projectedSurplusDeficit` is the outlook's
+ *   projected net before construction.
  * - `fleet` flattens each compiled `FleetState` into one division carrying
  *   all of its ships — the compiled snapshot has no separate division
  *   grouping under a fleet (see `commandWorkspace`, deliberately left empty:
@@ -162,26 +175,9 @@ export function buildPlayerProjection(
     .sort((a, b) => a.id.localeCompare(b.id));
 
   const shipyardCapacity = ports.reduce((sum, port) => sum + port.capacity, 0);
-  const monthlyAppropriation = Number(
-    scaleValue(Number(nation.income), Number(nation.navalAppropriationRateBp)),
-  );
-
-  // Construction spend: cumulative committed work across construction
-  // projects (honest pre-commit value — see `PlayerProjectionEconomy`).
+  const outlook = economyOutlook(snapshot, playerSlotId)!;
+  // Construction committed so far: a stock shown for context, never a monthly flow.
   const constructionSpend = totalPaidWork(nation);
-  // Research spend: direct read of the real research budget.
-  const researchSpend = Number(nation.research.researchBudget);
-  // Fleet maintenance: re-derived from ships (never the raw `maintenanceCost`,
-  // which is 0 before the first commitMonth).
-  const fleetMaintenance = nation.fleets.reduce(
-    (sum, fleet) =>
-      sum +
-      fleet.ships.reduce((s, ship) => s + shipMaintenanceCost(ship.hitPoints, ship.readiness), 0),
-    0,
-  );
-  // Projected surplus/deficit — the briefing's `projectedSurplus` chain.
-  const projectedSurplusDeficit =
-    monthlyAppropriation - fleetMaintenance - constructionSpend - researchSpend;
 
   const fleet: PlayerProjectionFleet[] = nation.fleets.map((f) => ({
     name: f.name,
@@ -225,14 +221,26 @@ export function buildPlayerProjection(
     month,
     playerNationId: playerSlotId,
     nationName: nation.name,
-    projectedSurplusDeficit,
+    projectedSurplusDeficit: outlook.projectedNet,
     economy: {
       treasury: Number(nation.treasury),
-      monthlyAppropriation,
+      monthlyAppropriation: outlook.revenue,
       shipyardCapacity,
       constructionSpend,
-      researchSpend,
-      maintenanceCost: fleetMaintenance,
+      researchSpend: outlook.plannedResearch,
+      maintenanceCost: outlook.maintenance,
+      obligations: outlook.obligations,
+      researchRequested: outlook.researchRequested,
+      researchCap: outlook.researchCap,
+      ...(outlook.researchUnfundedReason === undefined
+        ? {}
+        : { researchUnfundedReason: outlook.researchUnfundedReason }),
+      plannedConstruction: outlook.plannedConstruction,
+      projectedNet: outlook.projectedNet,
+      shortfall: outlook.shortfall,
+      status: outlook.status,
+      monthEndTreasury: outlook.monthEndTreasury,
+      ...(outlook.runwayMonths === undefined ? {} : { runwayMonths: outlook.runwayMonths }),
     },
     fleet,
     ports,

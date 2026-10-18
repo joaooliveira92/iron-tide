@@ -43,7 +43,7 @@ import {
   makeRemainingRequirementFor,
   mergeForeignInsightAwardRecord,
 } from "./foreignInsight.js";
-import { researchCostOf } from "./research.js";
+import { researchCostLookup } from "./research.js";
 import {
   committedNewConstructionMassKg,
   designNewConstructionReservedMassKg,
@@ -539,7 +539,7 @@ export function placeForeignConstructionOrder(
   // DESIGN-16 section 13.5 (SB3-R24): award the design-study insight at acceptance, when the contract selects the
   // insight policy and the ordering nation still lacks the family's technology. It posts micro-points into the
   // existing research model and never grants a technology. The award record is absent until the first award.
-  const acceptedNation = applyAcceptanceInsight(updatedNation, contract);
+  const acceptedNation = applyAcceptanceInsight(updatedNation, contract, snapshot);
   const nations = new Map(snapshot["nations"]).set(request.nationId, acceptedNation);
   return {
     ok: true,
@@ -560,6 +560,7 @@ export function placeForeignConstructionOrder(
 function applyAcceptanceInsight(
   nation: NationState,
   contract: ForeignConstructionContract,
+  snapshot: CampaignSnapshot,
 ): NationState {
   if (!isForeignInsightContract(contract)) return nation;
   const research = nation["research"];
@@ -567,7 +568,7 @@ function applyAcceptanceInsight(
     contract,
     milestone: "DESIGN_STUDY",
     research,
-    remainingRequirementFor: makeRemainingRequirementFor(research, researchCostOf),
+    remainingRequirementFor: makeRemainingRequirementFor(research, researchCostLookup(snapshot)),
   });
   if (application.awards.length === 0) return nation;
   const foreignInsightAwards = mergeForeignInsightAwardRecord(

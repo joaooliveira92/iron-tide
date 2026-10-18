@@ -37,6 +37,7 @@ interface TenYearOutput {
   readonly closingSnapshotHash: string;
   readonly diagnostics: readonly TenYearDiagnostic[];
   readonly firstShortfallMonth: Readonly<Record<string, number>>;
+  readonly firstDeficitMonth: Readonly<Record<string, number>>;
   readonly ledgerIdentityBreaks: readonly string[];
   readonly hullCounts: Readonly<Record<string, number>>;
 }
@@ -92,9 +93,22 @@ describe("N-3 ten-year progression run", () => {
     expect(Object.keys(first.output.firstShortfallMonth).length).toBeLessThan(
       Object.keys(first.output.hullCounts).length,
     );
-    // Predicted first shortfall: Portugal alone runs a structural deficit (net -1 a month before construction), so its
-    // opening treasury is exhausted at the closed-form month 41 (spec #138 G8); no other nation ever falls short.
-    expect(first.output.firstShortfallMonth).toEqual({ portugal: 41 });
+    // Solvency implication: a shortfall only ever follows a month whose requested flows ran a deficit before
+    // construction, so no solvent nation falls short. Portugal runs a structural deficit from month 1 (net -1 a month),
+    // so its opening treasury is exhausted at the closed-form month 41 (spec #138 G8). Qing starts solvent: completing its
+    // seeded Dingyuan commissions a hull whose maintenance turns the net negative at month 71, and the treasury lasts to
+    // month 104 — an emergent, recorded deficit, not a modelling defect.
+    for (const [nationId, shortfall] of Object.entries(first.output.firstShortfallMonth)) {
+      const deficit = first.output.firstDeficitMonth[nationId];
+      expect(
+        deficit,
+        `nation '${nationId}' fell short without ever running a deficit`,
+      ).toBeDefined();
+      expect(shortfall).toBeGreaterThan(deficit!);
+    }
+    expect(first.output.firstDeficitMonth["portugal"]).toBe(1);
+    expect(first.output.firstShortfallMonth["portugal"]).toBe(41);
+    expect(first.output.firstShortfallMonth).toEqual({ portugal: 41, qing: 104 });
     expect(first.output.firstShortfallMonth).toEqual(second.output.firstShortfallMonth);
     expect(first.output.diagnostics).toEqual(second.output.diagnostics);
   }, 600_000);

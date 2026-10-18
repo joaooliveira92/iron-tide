@@ -154,13 +154,20 @@ describe("accessibility audit (axe-core)", () => {
       <BudgetBar
         breakdown={{
           income: 20,
+          obligations: 0,
           fleetMaintenance: 16,
-          constructionSpend: 0,
           researchSpend: 60,
+          researchRequested: 60,
+          researchCap: 240,
+          researchUnfundedReason: undefined,
+          plannedConstruction: 0,
           totalExpenditure: 76,
           projectedSurplusDeficit: -56,
+          status: "critical",
+          shortfall: 0,
           availableFunds: 1000,
           projectedMonthEndFunds: 944,
+          runwayMonths: undefined,
         }}
       />,
     );

@@ -8,7 +8,7 @@ import type { DiagnosticCollector } from "@bluewave/diagnostics";
 export function reportOutflowShortfall(
   collector: DiagnosticCollector,
   nationId: string,
-  kind: "obligation" | "maintenance" | "research",
+  kind: "obligation" | "maintenance" | "research" | "preservation",
   settlement: OutflowSettlement,
   stage: string,
 ): void {

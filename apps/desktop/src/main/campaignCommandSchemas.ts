@@ -452,6 +452,21 @@ const MonthlyReportLedgerRowSchema = Schema.Struct({
   phase: Schema.String,
   amount: int,
   runningBalance: int,
+  // Spec #138: additive, so reports stored before the economy model still decode.
+  requested: Schema.optional(int),
+  shortfall: Schema.optional(int),
+});
+
+const MonthlyReportReconciliationSchema = Schema.Struct({
+  opening: int,
+  revenue: int,
+  construction: int,
+  preservation: int,
+  maintenance: int,
+  obligation: int,
+  research: int,
+  other: int,
+  closing: int,
 });
 
 const MonthlyReportTreasurySchema = Schema.Struct({
@@ -463,6 +478,8 @@ const MonthlyReportTreasurySchema = Schema.Struct({
   governmentAllocation: int,
   netChange: int,
   ledgerRows: Schema.Array(MonthlyReportLedgerRowSchema),
+  obligationExpense: Schema.optional(int),
+  reconciliation: Schema.optional(MonthlyReportReconciliationSchema),
 });
 
 const MonthlyReportShipSchema = Schema.Struct({

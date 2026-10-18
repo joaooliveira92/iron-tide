@@ -235,16 +235,18 @@ describe("commitMonth", () => {
       // that should not happen here is caught as a hash drift. Re-pinned
       // 2026-10-16 (S-1 + ADR-0214): per-ship readiness/crew fields join the
       // compiled snapshot and the USA slot flips ai -> playable, so both
-      // authoritative hashes move with understood causes; re-pinned below.
+      // authoritative hashes move with understood causes; re-pinned below. Re-pinned 2026-10-18 (economy #138,
+      // ADR-0230): the snapshot gains the research catalogue, seeded construction packages and capacity, the derived
+      // economic base and compatibility 3.1.0.
       expect(updated.state.envelope).toEqual({
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-        bodyHash: "017c3ab0912414c0c104c933ad12e41faf47783bc825bad65d03a29b6d50cffd",
-        bodyLength: 87672,
+        bodyHash: "501800184420a12fa944f1dd53d1e9e60f43dd3737d95ea05a36d62340fff9dc",
+        bodyLength: 101616,
       });
       expect(updated.state.rawHash).toBe(
-        "3e72dfa7aa412f0f59e7c96ea89e8f83d67e90d2994191625dee58a45508ed10",
+        "86831edc5c6b87c80de36a29dde76808859489fe0efef7e5b4a31b9c5772e833",
       );
       const expectedActiveWars = updated.state.snapshot.wars.wars.filter(
         (w) => w.status !== "ENDED",

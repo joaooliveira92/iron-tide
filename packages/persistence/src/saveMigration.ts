@@ -44,16 +44,19 @@ export interface SaveMigrationStep {
 }
 
 /**
- * The supported migrations. The 2.0.0 (part-model) and 3.0.0 (S-1 readiness)
- * changes both re-stamp the version over permissive leaves with no guessed
- * value, so a 1.2.0 or 2.0.0 development fixture is brought straight forward;
+ * The supported migrations. The 2.0.0 (part-model), 3.0.0 (S-1 readiness) and
+ * 3.1.0 (economy #138, additive optional fields) changes all re-stamp the version
+ * over permissive leaves with no guessed value, so a 1.2.0, 2.0.0 or 3.0.0
+ * development fixture is brought straight forward (its stored economy is kept as
+ * saved: the migration never recomputes a base or a catalogue);
  * 1.0.0 and 1.1.0 predate fields that cannot be reconstructed without inventing
  * gameplay-affecting defaults, so they stay a documented rejection (ADR-0113 §5,
  * ADR-0129).
  */
 export const SAVE_MIGRATIONS: readonly SaveMigrationStep[] = [
-  { from: "1.2.0", to: "3.0.0" },
-  { from: "2.0.0", to: "3.0.0" },
+  { from: "1.2.0", to: "3.1.0" },
+  { from: "2.0.0", to: "3.1.0" },
+  { from: "3.0.0", to: "3.1.0" },
 ];
 
 export type SaveMigrationKind = "current" | "migrated" | "future" | "unknown" | "malformed";

@@ -44,7 +44,8 @@ const nationWith = (ships: Ship[], projects: ConstructionProject[]): NationState
     id: "GBR",
     name: "GBR",
     tag: "GBR",
-    treasury: SafeInt(1000),
+    // Empty: these tests exercise the rebuild's own state; a funded treasury would also pay for the unfinished project.
+    treasury: SafeInt(0),
     income: SafeInt(0),
     expenses: SafeInt(0),
     baseResources: SafeInt(0),

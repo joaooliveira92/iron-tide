@@ -4,6 +4,7 @@ import {
   MAX_HIGH_PRIORITY_FIELDS,
   RESEARCH_FIELD_PRIORITY_WEIGHTS,
 } from "@bluewave/content-schema";
+import { economyOutlook, type ResearchUnfundedReason } from "@bluewave/campaign";
 import type { PlayerProjectionMonth } from "./projection.js";
 
 /**
@@ -42,8 +43,14 @@ export interface ResearchInProgressTechnology {
 /** The Research & Technology screen's slice of a nation's `ResearchState`. */
 export interface ResearchScreenProjection {
   readonly nationId: string;
-  /** `ResearchState.researchBudget` (SafeInt) as a UI number. */
+  /** `ResearchState.researchBudget` (SafeInt) as a UI number: the standing monthly spend. */
   readonly researchBudget: number;
+  /** The authored annual allocation the standing monthly spend was derived from; null when the nation has none (spec #138). */
+  readonly annualAllocation: number | null;
+  /** The most the nation may fund a month: `floor(12% x monthly revenue)`; 0 when its appropriation is too small to fund research. */
+  readonly researchCap: number;
+  /** Why the standing budget is not paid next month, or null when it is (or none is set). */
+  readonly unfundedReason: ResearchUnfundedReason | null;
   /** `ResearchState.fieldPriorities`, same integer weight scale the engine
    * interprets (`RESEARCH_FIELD_PRIORITY_WEIGHTS`). Carries only the fields
    * the compiled snapshot actually holds — partial records are NOT padded. */
@@ -72,6 +79,7 @@ export function buildResearchScreenProjection(
   if (nation === undefined) return undefined;
 
   const research = nation.research;
+  const outlook = economyOutlook(state.snapshot, playerSlotId)!;
   const fieldPriorities: Record<string, number> = {};
   for (const [fieldId, weight] of Object.entries(research.fieldPriorities)) {
     fieldPriorities[fieldId] = Number(weight);
@@ -80,6 +88,12 @@ export function buildResearchScreenProjection(
   return {
     nationId: research.nationId,
     researchBudget: Number(research.researchBudget),
+    annualAllocation:
+      research.annualResearchAllocation === undefined
+        ? null
+        : Number(research.annualResearchAllocation),
+    researchCap: outlook.researchCap,
+    unfundedReason: outlook.researchUnfundedReason ?? null,
     fieldPriorities,
     discoveredTechIds: [...research.discoveredTechs].sort((a, b) => a.localeCompare(b)),
     inProgressTechnologies: research.technologies.map((tech) => ({

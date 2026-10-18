@@ -3,6 +3,8 @@ import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import { MonthExecutor } from "../src/index.js";
+import { applySetBudgetAllocation } from "../src/commands.js";
+import { TEST_RESEARCH_CATALOGUE } from "./research-catalogue.helper.js";
 
 // Economy spec #138 slice 5: every outflow is recorded as requested, paid and shortfall, the ledger identity closes on
 // paid, and a shortfall is a legal recorded state, not an error.
@@ -64,7 +66,10 @@ function nation(
   };
 }
 
-function snapshot(n: NationState): CampaignSnapshot {
+function snapshot(
+  n: NationState,
+  technologies?: CampaignSnapshot["world"]["technologies"],
+): CampaignSnapshot {
   return {
     version: "0.1.0",
     turnNumber: SafeInt(1),
@@ -73,7 +78,12 @@ function snapshot(n: NationState): CampaignSnapshot {
     startMonth: 1,
     strategicWeather: [],
     slots: [{ nationId: "n", type: "playable" }],
-    world: { areas: [], routes: [], ports: [] },
+    world: {
+      areas: [],
+      routes: [],
+      ports: [],
+      ...(technologies === undefined ? {} : { technologies }),
+    },
     nations: new Map([["n", n]]),
     wars: {
       wars: [],
@@ -91,9 +101,14 @@ function snapshot(n: NationState): CampaignSnapshot {
   };
 }
 
-function run(n: NationState) {
+function run(n: NationState, technologies?: CampaignSnapshot["world"]["technologies"]) {
   const collector = new DiagnosticCollector();
-  const result = new MonthExecutor().execute(snapshot(n), [], "econ-ledger", collector);
+  const result = new MonthExecutor().execute(
+    snapshot(n, technologies),
+    [],
+    "econ-ledger",
+    collector,
+  );
   return { result, collector };
 }
 
@@ -152,13 +167,93 @@ describe("economy ledger identity and shortfall", () => {
     expect(r.finalSnapshot.nations.get("zz")!.treasury).toBe(a.treasury);
   });
 
-  it("warns when a standing research budget finds no eligible field and charges nothing", () => {
+  it("reports, without charging, a standing research budget that finds no eligible field", () => {
     const { result, collector } = run(nation({ researchBudget: SafeInt(5) }));
     expect(collector.hasErrors).toBe(false);
-    expect(collector.warnings.map((d) => d.code)).toContain("RESEARCH_UNSPENT");
+    const info = collector.all.filter((d) => d.severity === "info").map((d) => d.code);
+    expect(info).toContain("NO_ELIGIBLE_RESEARCH_FIELD");
     const research = result.financialLedger.all.filter(
       (e) => e.categoryId === "RESEARCH_EXPENDITURE",
     );
     expect(research.every((e) => (e.debit as number) === 0)).toBe(true);
+  });
+
+  it("pays research from the pack catalogue and warns about progress beyond a technology's cost", () => {
+    // basic_steam costs 100 and has 98 invested: of 5 points paid, 2 finish it and 3 cannot be applied.
+    const { result, collector } = run(
+      nation({
+        researchBudget: SafeInt(5),
+        research: {
+          nationId: "n",
+          technologies: [{ techId: "basic_steam", investedPoints: SafeInt(98), completed: false }],
+          fieldPriorities: {
+            MACHINERY: SafeInt(1),
+            HULL_CONSTRUCTION: SafeInt(0),
+            GUNNERY: SafeInt(0),
+          },
+          researchBudget: SafeInt(5),
+          standingResearchBudget: SafeInt(5),
+          activeCandidates: new Map(),
+          discoveredTechs: [],
+        },
+      }),
+      TEST_RESEARCH_CATALOGUE,
+    );
+    const spent = result.financialLedger.all.find((e) => e.categoryId === "RESEARCH_EXPENDITURE")!;
+    expect(spent).toMatchObject({ requested: 5, debit: 5, shortfall: 0 });
+    const unspent = collector.warnings.find((d) => d.code === "RESEARCH_UNSPENT");
+    expect(unspent?.message).toContain("3");
+    expect(result.finalSnapshot.nations.get("n")!.research.discoveredTechs).toContain(
+      "basic_steam",
+    );
+  });
+
+  it("never funds a cancelled project", () => {
+    const { result, collector } = run(
+      nation({
+        constructionProjects: [
+          {
+            id: "proj-cancelled",
+            type: "ship",
+            projectType: "NEW_CONSTRUCTION",
+            targetId: "ship-x",
+            designVersionId: "",
+            totalWork: SafeInt(500),
+            completedWork: SafeInt(0),
+            paidWork: SafeInt(0),
+            status: "CANCELLED",
+            startedAt: "1880-01",
+          },
+        ],
+      }),
+    );
+    expect(collector.hasErrors).toBe(false);
+    const project = result.finalSnapshot.nations.get("n")!.constructionProjects[0]!;
+    expect(project.status).toBe("CANCELLED");
+    expect(project.paidWork).toBe(0);
+  });
+});
+
+describe("research cap on apply (defence in depth)", () => {
+  // The lifecycle refuses an over-cap budget at validation; the apply step enforces the same rule, so a command that reaches it
+  // by any other path cannot bypass the cap.
+  const body = (rate: number, research: number) => ({
+    type: "SetBudgetAllocation" as const,
+    nationId: "n",
+    appropriationRateBp: SafeInt(rate),
+    researchBudget: SafeInt(research),
+  });
+
+  it("applies a budget at the cap and refuses one above it, leaving the snapshot untouched", () => {
+    const snap = snapshot(nation({})); // base 6000: revenue 150 at 3000 bp => cap 18
+    const ok = new DiagnosticCollector();
+    const applied = applySetBudgetAllocation(snap, body(3000, 18), ok);
+    expect(ok.hasErrors).toBe(false);
+    expect(applied.nations.get("n")!.research.standingResearchBudget).toBe(18);
+
+    const refused = new DiagnosticCollector();
+    const same = applySetBudgetAllocation(snap, body(3000, 19), refused);
+    expect(refused.errors.map((d) => d.code)).toEqual(["RESEARCH_ABOVE_CAP"]);
+    expect(same).toBe(snap);
   });
 });

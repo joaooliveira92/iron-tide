@@ -474,6 +474,40 @@ describe("MonthlyReportsSchema", () => {
     });
   });
 
+  it("keeps decoding a report stored before the economy model and accepts the additive fields (parity, #138)", () => {
+    // The pre-existing fixture is unchanged: it carries none of the new optional fields.
+    expectSuccess(MonthlyReportsSchema, { reports: [VALID_MONTHLY_REPORT] });
+    expectSuccess(MonthlyReportsSchema, {
+      reports: [
+        {
+          ...VALID_MONTHLY_REPORT,
+          treasury: {
+            ...VALID_MONTHLY_REPORT.treasury,
+            obligationExpense: 38,
+            reconciliation: {
+              opening: 1000,
+              revenue: 25,
+              construction: 60,
+              preservation: 0,
+              maintenance: 16,
+              obligation: 38,
+              research: 5,
+              other: 38,
+              closing: 944,
+            },
+            ledgerRows: [
+              {
+                ...VALID_MONTHLY_REPORT.treasury.ledgerRows[0]!,
+                requested: 20,
+                shortfall: 4,
+              },
+            ],
+          },
+        },
+      ],
+    });
+  });
+
   it("rejects a non-integer treasury figure and a non-array ledger", () => {
     expectFailure(MonthlyReportsSchema, {
       reports: [

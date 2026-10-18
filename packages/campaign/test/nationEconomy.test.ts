@@ -44,6 +44,7 @@ describe("nation economy start state", () => {
     expect(gb.navalAppropriationRateBp).toBe(2000);
     expect(gb.research.researchBudget).toBe(5);
     expect(gb.research.standingResearchBudget).toBe(5);
+    expect(gb.research.annualResearchAllocation).toBe(65); // the authored annual figure is kept for display
     expect(codes(collector, "error")).toEqual([]);
   });
 

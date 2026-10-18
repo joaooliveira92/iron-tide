@@ -17,6 +17,12 @@ export interface BudgetScreenProjection {
     readonly researchBudgetMin: number;
     readonly researchBudgetMax: number;
   };
+  /**
+   * The most research the nation may fund at each selectable appropriation rate (12% of the monthly revenue at that rate),
+   * one entry per rate step from the minimum to the maximum. Computed by the engine's own calculators so the slider can
+   * never offer an unpayable budget (spec #138).
+   */
+  readonly researchCaps: readonly { readonly rateBp: number; readonly cap: number }[];
 }
 
 /** Wire shape of `SetBudgetAllocation`; `nationId` is always the session's player slot. */

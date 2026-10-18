@@ -103,7 +103,8 @@ function withProject(done: number): CampaignSnapshot {
     ...snapshot,
     nations: new Map([
       ...snapshot.nations,
-      [ATTACKER_NATION, { ...nation, constructionProjects: [project] }],
+      // Only the obligation reserve: these tests exercise the project's own state, not monthly appropriation.
+      [ATTACKER_NATION, { ...nation, treasury: nation.expenses, constructionProjects: [project] }],
     ]),
   };
 }

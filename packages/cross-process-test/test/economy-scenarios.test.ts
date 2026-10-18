@@ -3,8 +3,11 @@ import { SafeInt } from "@bluewave/contracts";
 import {
   monthlyNetBeforeConstruction,
   monthlyRevenue,
+  runwayMonths,
   shipMonthlyMaintenanceCost,
 } from "@bluewave/campaign";
+import { DiagnosticCollector } from "@bluewave/diagnostics";
+import { MonthExecutor } from "@bluewave/phase-engine";
 import { compileProductionCampaign } from "./economy-scenarios.helper.js";
 
 // Economy spec #138: golden worked examples from the shipped 1880 pack, read through the shared calculators.
@@ -50,10 +53,79 @@ describe("1880 production economy start state", () => {
       );
   });
 
+  it("falls short for the first time exactly one month after its closed-form runway", () => {
+    // Portugal has no seeded construction, so nothing but the structural deficit can exhaust its treasury.
+    const portugal = state.snapshot.nations.get("portugal")!;
+    expect(portugal.constructionProjects).toEqual([]);
+    const predicted = runwayMonths(portugal.treasury, flows("portugal").net)! + 1;
+
+    let snapshot = state.snapshot;
+    let first: number | undefined;
+    for (let month = 1; month <= predicted + 1 && first === undefined; month++) {
+      const collector = new DiagnosticCollector();
+      const result = new MonthExecutor().execute(
+        snapshot,
+        [],
+        `closed-form:${String(month)}`,
+        collector,
+      );
+      if (
+        collector.warnings.some((d) => d.code === "OUTFLOW_SHORTFALL" && d.entityId === "portugal")
+      )
+        first = month;
+      snapshot = {
+        ...result.finalSnapshot,
+        turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt.ONE),
+      };
+    }
+    expect(first).toBe(predicted);
+    expect(predicted).toBe(41);
+  });
+
   it("leaves Portugal as the only structural deficit", () => {
     const deficits = [...state.snapshot.nations.keys()].filter(
       (id) => (flows(id).net as number) < 0,
     );
     expect(deficits).toEqual(["portugal"]);
+  });
+});
+
+// Economy spec #138 slice 4: seeded 1880 projects are materialised with packages and yard throughput.
+describe("1880 seeded construction projects", () => {
+  const { state, diagnostics } = compileProductionCampaign();
+  const seeded = [...state.snapshot.nations.values()].flatMap((n) =>
+    n.constructionProjects.map((p) => ({ nation: n, project: p })),
+  );
+
+  it("has no seeded project without capacity", () => {
+    expect(diagnostics.filter((d) => d.code === "SEEDED_PROJECT_WITHOUT_CAPACITY")).toEqual([]);
+    expect(seeded.length).toBe(9);
+  });
+
+  it("gives every seeded project packages that sum to its authored size and a positive throughput", () => {
+    for (const { project } of seeded) {
+      expect(project.packages).toBeDefined();
+      const total = project.packages!.reduce((a, p) => a + (p.totalWork as number), 0);
+      const done = project.packages!.reduce((a, p) => a + (p.doneWork as number), 0);
+      expect(total).toBe(project.totalWork);
+      expect(done).toBe(project.completedWork);
+      const lines = Object.values(project.capacityUnits ?? {}).map((v) => v as number);
+      expect(lines.some((v) => v > 0)).toBe(true);
+    }
+  });
+
+  it("applies the national build speed from the naval profile", () => {
+    for (const { nation, project } of seeded) {
+      expect(project.nationalProfileId).toBe(nation.id);
+      expect(project.buildTimeMultiplierBp).toBeGreaterThan(0);
+    }
+  });
+
+  it("never derives throughput from the economic base", () => {
+    const uk = seeded.filter((s) => s.nation.id === "uk");
+    const portugalLike = seeded.filter((s) => s.nation.id !== "uk");
+    expect(uk.length).toBeGreaterThan(0);
+    expect(portugalLike.length).toBeGreaterThan(0);
+    for (const { project } of seeded) expect(project.capacityUnits?.["slipway"]).toBeGreaterThan(0);
   });
 });

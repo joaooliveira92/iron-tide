@@ -16,7 +16,7 @@ import {
   researchCap,
   runwayMonths,
 } from "./economy.js";
-import { shipMonthlyMaintenanceCost } from "./maintenance.js";
+import { nationMonthlyMaintenance } from "./maintenance.js";
 import { buildOfficerRoster } from "./officers.js";
 import { resolveShipReadinessSeed } from "./readiness.js";
 import type {
@@ -310,15 +310,10 @@ export function buildNationStates(
       ...research,
       researchBudget: monthlyResearch,
       standingResearchBudget: monthlyResearch,
+      annualResearchAllocation: annualResearch,
     };
 
-    let maintenance = SafeInt(0);
-    for (const fleet of fleets)
-      for (const ship of fleet.ships)
-        maintenance = SafeInt.add(
-          maintenance,
-          shipMonthlyMaintenanceCost(ship.hitPoints, ship.readiness, false),
-        );
+    const maintenance = nationMonthlyMaintenance(fleets, false);
     const net = monthlyNetBeforeConstruction({
       revenue,
       obligations: expenses,
