@@ -91,4 +91,13 @@
 # trailer; it was already pushed to origin/dev (force-push prohibited) and
 # rewording a non-HEAD commit would need an interactive rebase (prohibited), so
 # the ratchet is advanced past it instead as the documented fallback.
-1f34161b332f77af9155f78b5d01046dd86a9ea1
+#
+# The baseline is advanced to f90761cc, the dev head audited for #140/#142/#143, because the
+# previous baseline 1f34161b is not reachable from any ref (locally or on origin), so the
+# default range was unresolvable and the guard skipped. One commit in the unguarded span,
+# 2c0131c4 (economy review follow-ups: phase-engine/src/economyPhases.ts and research.ts),
+# changed authoritative source without a re-pin or a `Golden-Repin: not-needed` trailer.
+# `pnpm check:golden` reports all 11 hashes match and `pnpm check:determinism` is
+# byte-identical, so it moved no reference hash. It is already pushed to origin/dev
+# (force-push prohibited), so the ratchet is advanced past it as the documented fallback.
+f90761cc04064f141f1da7ca22b4438fa84ab93e
