@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
+import { readFileSync } from "node:fs";
 import {
   encodeDesignFile,
   decodeDesignFile,
@@ -19,6 +20,7 @@ import {
   encodeLog,
   decodeLog,
   DESIGN_SCHEMA_VERSION,
+  type ArmourRegion,
   type DraftEdit,
   type Migration,
 } from "../src/index.js";
@@ -178,5 +180,196 @@ describe("edit log (undo/redo)", () => {
       ),
     ).toThrow();
     expect(() => decodeLog("nope")).toThrow();
+  });
+});
+
+describe("schema v2: armour regions fold (ADR-0232, ADR-0233)", () => {
+  type Region = {
+    region: string;
+    thicknessUm: number;
+    lengthMm: number;
+    heightMm: number;
+    materialId: string;
+    cosObliquityBp: number;
+  };
+  const reg = (region: string, o: Partial<Region> = {}): Region => ({
+    region,
+    thicknessUm: 100_000,
+    lengthMm: 4_000,
+    heightMm: 2_500,
+    materialId: "iron",
+    cosObliquityBp: 10_000,
+    ...o,
+  });
+  const v1File = (regions: Region[]) =>
+    JSON.stringify({
+      format: "bwdesign",
+      schemaVersion: 1,
+      draft: { ...draft, armour: { ...draft.armour, regions } },
+      componentHashes: {},
+      compiledHash: null,
+    });
+  const decodeRegions = (regions: Region[]) => {
+    const d = decodeDesignFile(v1File(regions), ctx.catalogue);
+    return d.draft.armour.regions as readonly Region[];
+  };
+  const turret = (regions: Region[]) => decodeRegions(regions).filter((r) => r.region === "TURRET");
+
+  it("is schema 2, and a v1 file migrates", () => {
+    expect(DESIGN_SCHEMA_VERSION).toBe(2);
+    const d = decodeDesignFile(v1File([reg("DECK_MAIN")]), ctx.catalogue);
+    expect(d.migratedFrom).toBe(1);
+    expect(d.schemaVersion).toBe(2);
+  });
+  it("renames a lone TURRET_FACE or lone BARBETTE to TURRET, unchanged", () => {
+    expect(turret([reg("TURRET_FACE", { thicknessUm: 203_000, materialId: "compound" })])).toEqual([
+      reg("TURRET", { thicknessUm: 203_000, materialId: "compound" }),
+    ]);
+    expect(turret([reg("BARBETTE", { lengthMm: 6_000, cosObliquityBp: 8_660 })])).toEqual([
+      reg("TURRET", { lengthMm: 6_000, cosObliquityBp: 8_660 }),
+    ]);
+  });
+  it("merges both: per-field maximum for size, material and incline from the thicker source", () => {
+    const merged = turret([
+      reg("TURRET_FACE", {
+        thicknessUm: 200_000,
+        lengthMm: 9_000,
+        heightMm: 2_000,
+        materialId: "iron",
+        cosObliquityBp: 8_660,
+      }),
+      reg("BARBETTE", {
+        thicknessUm: 250_000,
+        lengthMm: 6_000,
+        heightMm: 3_000,
+        materialId: "compound",
+        cosObliquityBp: 10_000,
+      }),
+    ]);
+    expect(merged).toEqual([
+      reg("TURRET", {
+        thicknessUm: 250_000,
+        lengthMm: 9_000,
+        heightMm: 3_000,
+        materialId: "compound",
+        cosObliquityBp: 10_000,
+      }),
+    ]);
+    const other = turret([
+      reg("TURRET_FACE", { thicknessUm: 300_000, materialId: "iron", cosObliquityBp: 8_660 }),
+      reg("BARBETTE", { thicknessUm: 250_000, materialId: "compound", cosObliquityBp: 10_000 }),
+    ]);
+    expect([other[0]!.materialId, other[0]!.cosObliquityBp, other[0]!.thicknessUm]).toEqual([
+      "iron",
+      8_660,
+      300_000,
+    ]);
+  });
+  it("breaks an equal-thickness tie by the lexicographically smaller material id, either order", () => {
+    const a = reg("TURRET_FACE", { materialId: "nickel_steel", cosObliquityBp: 8_660 });
+    const b = reg("BARBETTE", { materialId: "compound", cosObliquityBp: 10_000 });
+    for (const regions of [
+      [a, b],
+      [b, a],
+    ]) {
+      const [t] = turret(regions);
+      expect([t!.materialId, t!.cosObliquityBp]).toEqual(["compound", 10_000]);
+    }
+  });
+  it("leaves no BARBETTE or TURRET_FACE, and one TURRET at most", () => {
+    const out = decodeRegions([reg("BARBETTE"), reg("DECK_MAIN"), reg("TURRET_FACE")]);
+    expect(out.map((r) => r.region)).toEqual(["TURRET", "DECK_MAIN"]);
+  });
+  it("is deterministic, does not mutate its input, and does not re-migrate a v2 file", () => {
+    const text = v1File([reg("BARBETTE"), reg("TURRET_FACE", { thicknessUm: 90_000 })]);
+    const before = text;
+    const once = decodeDesignFile(text, ctx.catalogue);
+    expect(decodeDesignFile(text, ctx.catalogue).draft).toEqual(once.draft);
+    expect(text).toBe(before);
+    const reEncoded = encodeDesignFile(once.draft, ctx.catalogue, null);
+    const again = decodeDesignFile(reEncoded, ctx.catalogue);
+    expect(again.migratedFrom).toBeNull();
+    expect(again.draft).toEqual(once.draft);
+  });
+  it("rejects a malformed armour record rather than producing a partial design", () => {
+    const bad = JSON.stringify({
+      format: "bwdesign",
+      schemaVersion: 1,
+      draft: { ...draft, armour: { ...draft.armour, regions: [{ region: "BARBETTE" }] } },
+    });
+    expect(() => decodeDesignFile(bad, ctx.catalogue)).toThrow(PersistenceError);
+  });
+  it("round-trips a v2 design: encode, decode, encode is stable and emits no BARBETTE", () => {
+    const v2 = (region: ArmourRegion["region"], o: Partial<ArmourRegion> = {}): ArmourRegion => ({
+      region,
+      thicknessUm: 100_000,
+      lengthMm: 4_000,
+      heightMm: 2_500,
+      materialId: "iron",
+      cosObliquityBp: 10_000,
+      ...o,
+    });
+    const d2: typeof draft = {
+      ...draft,
+      armour: {
+        ...draft.armour,
+        regions: [
+          v2("DECK_EXTENDED"),
+          v2("TURRET"),
+          v2("TURRET_TOP"),
+          v2("SECONDARY_GUN", { materialId: "compound" }),
+        ],
+      },
+    };
+    const text = encodeDesignFile(d2, ctx.catalogue, null);
+    const back = decodeDesignFile(text, ctx.catalogue);
+    expect(back.draft).toEqual(d2);
+    expect(encodeDesignFile(back.draft, ctx.catalogue, null)).toBe(text);
+    expect(text).not.toContain("BARBETTE");
+    expect(JSON.parse(text).schemaVersion).toBe(2);
+  });
+  it("migrates a hand-authored v1 save file whole, preserving everything outside armour", () => {
+    const fixture = readFileSync(
+      new URL("./fixtures/v1-ironclad-turret-and-barbette.bwdesign.json", import.meta.url),
+      "utf8",
+    );
+    const d = decodeDesignFile(fixture, ctx.catalogue);
+    const original = JSON.parse(fixture).draft;
+    expect(d.migratedFrom).toBe(1);
+    expect({ ...d.draft, armour: undefined }).toEqual({ ...original, armour: undefined });
+    expect(d.draft.armour.regions.map((r) => r.region)).toEqual([
+      "BELT_MAIN",
+      "DECK_MAIN",
+      "TURRET",
+      "MAGAZINE_BOX",
+    ]);
+    expect(d.draft.armour.regions.find((r) => r.region === "TURRET")).toEqual({
+      region: "TURRET",
+      thicknessUm: 254_000,
+      lengthMm: 6_000,
+      heightMm: 3_000,
+      materialId: "compound",
+      cosObliquityBp: 10_000,
+    });
+    expect(d.draft.armour.citadelLengthMm).toBe(original.armour.citadelLengthMm);
+  });
+  it("folds regions in a v1 edit log (base and edits) so autosaved drafts still open", () => {
+    const logText = JSON.stringify({
+      format: "bwdesign-log",
+      schemaVersion: 1,
+      log: {
+        base: { ...draft, armour: { ...draft.armour, regions: [reg("BARBETTE")] } },
+        edits: [
+          { kind: "set_armour_region", region: reg("TURRET_FACE", { thicknessUm: 120_000 }) },
+          { kind: "remove_armour_region", region: "BARBETTE" },
+          { kind: "set_armour_regions", regions: [reg("BARBETTE"), reg("DECK_MAIN")] },
+        ],
+        cursor: 3,
+      },
+    });
+    const log = decodeLog(logText);
+    expect(JSON.stringify(log)).not.toMatch(/BARBETTE|TURRET_FACE/);
+    expect(currentDraft(log).armour.regions.map((r) => r.region)).toEqual(["TURRET", "DECK_MAIN"]);
+    expect(log.edits).toEqual([]);
   });
 });

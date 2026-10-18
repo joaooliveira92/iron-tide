@@ -4,9 +4,14 @@ import type { CompiledDesign, DesignDraft } from "./compile.js";
 import { applyEdit, type DraftEdit } from "./edits.js";
 import { withoutSubjects } from "./findings.js";
 import { isShipTypeId } from "./shipTypes.js";
+import { ARMOUR_REGIONS } from "./armour.js";
 
 export const DESIGN_FILE_FORMAT = "bwdesign";
-export const DESIGN_SCHEMA_VERSION = 1;
+/**
+ * 2: armour regions follow the manual's nine universal fields (ADR-0232): `TURRET_FACE` is renamed `TURRET` and
+ * `BARBETTE` is folded into it; `DECK_EXTENDED`, `TURRET_TOP` and `SECONDARY_GUN` are new (absent = not fitted).
+ */
+export const DESIGN_SCHEMA_VERSION = 2;
 
 export class PersistenceError extends Error {
   /** Stable discriminator (RULES.md "Errors"): recover by `_tag`, not `instanceof`. */
@@ -87,6 +92,21 @@ export function validateDraftShape(raw: unknown): string[] {
         p.push(`placements[${i}].stationPermille must be an integer`);
     });
   }
+  if (isObj(raw.armour)) {
+    if (!Array.isArray(raw.armour.regions)) p.push("armour.regions must be an array");
+    else
+      raw.armour.regions.forEach((r, i) => {
+        if (
+          !isObj(r) ||
+          !(ARMOUR_REGIONS as readonly unknown[]).includes(r.region) ||
+          typeof r.materialId !== "string" ||
+          !["thicknessUm", "lengthMm", "heightMm", "cosObliquityBp"].every((k) =>
+            Number.isSafeInteger(r[k]),
+          )
+        )
+          p.push(`armour.regions[${i}] is malformed`);
+      });
+  }
   if (isObj(raw.requirement) && !isShipTypeId(raw.requirement.category))
     p.push(`requirement.category is not a registered ship type (SHIP_TYPE_UNREGISTERED)`);
   if (isObj(raw.hull) && typeof raw.hull.hullFormId !== "string")
@@ -120,6 +140,58 @@ export function encodeDesignFile(
 
 export type Migration = (raw: Record<string, unknown>) => Record<string, unknown>;
 
+type RawRegion = Record<string, unknown>;
+const LEGACY_TURRET_REGIONS: ReadonlySet<unknown> = new Set(["TURRET_FACE", "BARBETTE"]);
+const num = (v: unknown): number => (typeof v === "number" ? v : 0);
+
+/**
+ * v1 -> v2 armour fold: the legacy turret face and barbette become the single `TURRET` region. A lone source is
+ * renamed. Both: length, height and thickness take the per-field maximum; material and incline come together from
+ * the thicker source (equal thickness: the lexicographically smaller material id). The result takes the first
+ * source's position. Pure; non-legacy regions pass through untouched.
+ */
+export function foldLegacyTurretRegions(regions: readonly unknown[]): unknown[] {
+  const legacy = regions.filter(
+    (r): r is RawRegion => isObj(r) && LEGACY_TURRET_REGIONS.has(r.region),
+  );
+  if (legacy.length === 0) return [...regions];
+  const pick = legacy.reduce((a, b) => {
+    if (num(b.thicknessUm) !== num(a.thicknessUm))
+      return num(b.thicknessUm) > num(a.thicknessUm) ? b : a;
+    return String(b.materialId) < String(a.materialId) ? b : a;
+  });
+  const max = (k: string) => Math.max(...legacy.map((r) => num(r[k])));
+  const folded: RawRegion = {
+    ...pick,
+    region: "TURRET",
+    thicknessUm: max("thicknessUm"),
+    lengthMm: max("lengthMm"),
+    heightMm: max("heightMm"),
+  };
+  const out: unknown[] = [];
+  let placed = false;
+  for (const r of regions) {
+    if (isObj(r) && LEGACY_TURRET_REGIONS.has(r.region)) {
+      if (!placed) out.push(folded);
+      placed = true;
+    } else out.push(r);
+  }
+  return out;
+}
+
+function foldDraftArmour(draft: unknown): unknown {
+  if (!isObj(draft) || !isObj(draft.armour) || !Array.isArray(draft.armour.regions)) return draft;
+  return {
+    ...draft,
+    armour: { ...draft.armour, regions: foldLegacyTurretRegions(draft.armour.regions) },
+  };
+}
+
+/** Built-in forward migrations, keyed by the version they upgrade from. Caller-supplied migrations may extend them. */
+const BUILT_IN_MIGRATIONS: Readonly<Record<number, Migration>> = {
+  1: (raw) => ({ ...raw, schemaVersion: 2, draft: foldDraftArmour(raw.draft) }),
+};
+
 export interface DecodedDesign {
   readonly draft: DesignDraft;
   readonly schemaVersion: number;
@@ -133,8 +205,9 @@ export interface DecodedDesign {
 export function decodeDesignFile(
   text: string,
   catalogue: readonly ComponentDef[],
-  migrations: Readonly<Record<number, Migration>> = {},
+  extraMigrations: Readonly<Record<number, Migration>> = {},
 ): DecodedDesign {
+  const migrations = { ...BUILT_IN_MIGRATIONS, ...extraMigrations };
   let raw: unknown;
   try {
     raw = JSON.parse(text);
@@ -240,6 +313,22 @@ export function compact(log: EditLog, cap: number): EditLog {
   return { base, edits: log.edits.slice(drop), cursor: log.cursor - drop };
 }
 
+/**
+ * v1 -> v2 log: edits that name `BARBETTE`/`TURRET_FACE` cannot be replayed against the folded region, so the v1
+ * history is replayed to the cursor and folded; the log restarts from that draft (undo history is not carried over).
+ */
+function migrateLogV1(rawLog: Record<string, unknown>): EditLog {
+  const edits = Array.isArray(rawLog.edits) ? (rawLog.edits as DraftEdit[]) : [];
+  const cursor = rawLog.cursor;
+  if (!Number.isSafeInteger(cursor) || (cursor as number) < 0 || (cursor as number) > edits.length)
+    throw new PersistenceError("INVALID_DRAFT", "bad edits/cursor");
+  const v1Problems = validateDraftShape(foldDraftArmour(rawLog.base));
+  if (v1Problems.length > 0) throw new PersistenceError("INVALID_DRAFT", v1Problems.join("; "));
+  let d = rawLog.base as DesignDraft;
+  for (let i = 0; i < (cursor as number); i++) d = applyEdit(d, edits[i]!);
+  return { base: foldDraftArmour(d) as DesignDraft, edits: [], cursor: 0 };
+}
+
 export const encodeLog = (log: EditLog): string => {
   assertNoFloats(log);
   return canonicalSerialize({ format: "bwdesign-log", schemaVersion: DESIGN_SCHEMA_VERSION, log });
@@ -255,7 +344,8 @@ export function decodeLog(text: string): EditLog {
     throw new PersistenceError("BAD_FORMAT", "not a bwdesign-log file");
   if ((raw.schemaVersion as number) > DESIGN_SCHEMA_VERSION)
     throw new PersistenceError("UNSUPPORTED_FUTURE_VERSION", "newer log schema");
-  const log = raw.log as unknown as EditLog;
+  const log =
+    (raw.schemaVersion as number) < 2 ? migrateLogV1(raw.log) : (raw.log as unknown as EditLog);
   const problems = validateDraftShape(log.base);
   if (
     problems.length > 0 ||

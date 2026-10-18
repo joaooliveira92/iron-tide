@@ -298,8 +298,10 @@ describe("newArmourRegion", () => {
       "BELT_ENDS",
       "DECK_MAIN",
       "DECK_SLOPE",
-      "TURRET_FACE",
-      "BARBETTE",
+      "DECK_EXTENDED",
+      "TURRET",
+      "TURRET_TOP",
+      "SECONDARY_GUN",
       "CONNING_TOWER",
       "MAGAZINE_BOX",
       "SPLINTER_PLATING",
@@ -313,6 +315,67 @@ describe("newArmourRegion", () => {
   });
 });
 
+describe("manual-parity regions (ADR-0232)", () => {
+  const deckAt = (region: ArmourRegion["region"], o: Partial<ArmourRegion> = {}) =>
+    belt({ region, thicknessUm: 100_000, heightMm: 12_000, ...o });
+  const reducedBal = { ...bal, deckPenetrationBp: 4_000 };
+
+  it("DECK_EXTENDED, TURRET_TOP and SECONDARY_GUN add weight that grows with thickness", () => {
+    for (const region of ["DECK_EXTENDED", "TURRET_TOP", "SECONDARY_GUN"] as const) {
+      const thin = compileArmour(
+        input({ regions: [deckAt(region, { thicknessUm: 25_000 })] }),
+        bal,
+      );
+      const thick = compileArmour(input({ regions: [deckAt(region)] }), bal);
+      expect(thin.weightByRegionKg[region]).toBeGreaterThan(0);
+      expect(thick.totalWeightKg).toBeGreaterThan(thin.totalWeightKg);
+    }
+  });
+  it("DECK_EXTENDED is a deck: reduced penetration; TURRET_TOP and SECONDARY_GUN are not", () => {
+    const margin = (region: ArmourRegion["region"], b: ArmourBalance) =>
+      compileArmour(input({ regions: [deckAt(region)], designThreatId: "gun_12in" }), b).marginBp[
+        region
+      ]!.gun_12in!;
+    expect(margin("DECK_EXTENDED", reducedBal)).toBeGreaterThan(margin("DECK_EXTENDED", bal));
+    expect(margin("TURRET_TOP", reducedBal)).toBe(margin("TURRET_TOP", bal));
+    expect(margin("SECONDARY_GUN", reducedBal)).toBe(margin("SECONDARY_GUN", bal));
+  });
+  it("ARMOUR_INEFFECTIVE_VS_ADVERSARY considers belts, DECK_MAIN, DECK_EXTENDED and TURRET only", () => {
+    const flagged = (region: ArmourRegion["region"]) =>
+      compileArmour(
+        input({ regions: [deckAt(region, { thicknessUm: 10_000 })], designThreatId: "gun_12in" }),
+        bal,
+      ).findings.some((f) => f.id === "ARMOUR_INEFFECTIVE_VS_ADVERSARY");
+    for (const region of ["BELT_MAIN", "DECK_MAIN", "DECK_EXTENDED", "TURRET"] as const)
+      expect(flagged(region), region).toBe(true);
+    for (const region of ["TURRET_TOP", "SECONDARY_GUN", "CONNING_TOWER"] as const)
+      expect(flagged(region), region).toBe(false);
+  });
+  it("a critical region that defeats the adversary clears the finding", () => {
+    const r = compileArmour(
+      input({
+        regions: [
+          deckAt("DECK_EXTENDED", { thicknessUm: 10_000 }),
+          deckAt("TURRET", { thicknessUm: 900_000 }),
+        ],
+        designThreatId: "gun_12in",
+      }),
+      bal,
+    );
+    expect(r.findings.map((f) => f.id)).not.toContain("ARMOUR_INEFFECTIVE_VS_ADVERSARY");
+  });
+  it("new regions start with positive plates and are never BARBETTE", () => {
+    const size = { lengthWlMm: 100_000, beamMm: 15_000, depthMm: 8_000, citadelLengthMm: 60_000 };
+    for (const region of ["DECK_EXTENDED", "TURRET", "TURRET_TOP", "SECONDARY_GUN"] as const) {
+      const r = newArmourRegion(region, size, "compound");
+      expect(r.region).toBe(region);
+      expect(r.lengthMm).toBeGreaterThan(0);
+      expect(r.heightMm).toBeGreaterThan(0);
+    }
+    expect(newArmourRegion("DECK_EXTENDED", size, "compound").lengthMm).toBe(40_000);
+  });
+});
+
 describe("allOrNothingRegions", () => {
   const r = (region: ArmourRegion["region"], lengthMm: number): ArmourRegion =>
     belt({ region, lengthMm });
@@ -323,14 +386,25 @@ describe("allOrNothingRegions", () => {
         r("BELT_ENDS", 20_000),
         r("BELT_UPPER", 70_000),
         r("DECK_MAIN", 30_000),
-        r("BARBETTE", 6_000),
+        r("DECK_EXTENDED", 40_000),
+        r("TURRET", 6_000),
       ],
       50_000,
     );
     expect(out.map((x) => [x.region, x.lengthMm])).toEqual([
       ["BELT_MAIN", 50_000],
       ["DECK_MAIN", 30_000],
-      ["BARBETTE", 6_000],
+      ["TURRET", 6_000],
+    ]);
+  });
+  it("drops DECK_EXTENDED and cuts DECK_SLOPE and MAGAZINE_BOX to the citadel", () => {
+    const out = allOrNothingRegions(
+      [r("DECK_EXTENDED", 80_000), r("DECK_SLOPE", 90_000), r("MAGAZINE_BOX", 90_000)],
+      50_000,
+    );
+    expect(out.map((x) => [x.region, x.lengthMm])).toEqual([
+      ["DECK_SLOPE", 50_000],
+      ["MAGAZINE_BOX", 50_000],
     ]);
   });
   it("is idempotent and pure", () => {
@@ -347,9 +421,9 @@ describe("set_armour_regions edit", () => {
     const before = JSON.stringify(draft);
     const next = applyEdit(draft, {
       kind: "set_armour_regions",
-      regions: [belt({ region: "DECK_MAIN" }), belt({ region: "BARBETTE" })],
+      regions: [belt({ region: "DECK_MAIN" }), belt({ region: "TURRET" })],
     });
-    expect(next.armour.regions.map((x) => x.region)).toEqual(["DECK_MAIN", "BARBETTE"]);
+    expect(next.armour.regions.map((x) => x.region)).toEqual(["DECK_MAIN", "TURRET"]);
     expect(next.armour.citadelLengthMm).toBe(draft.armour.citadelLengthMm);
     expect(JSON.stringify(draft)).toBe(before);
   });

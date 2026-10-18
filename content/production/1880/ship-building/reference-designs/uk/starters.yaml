@@ -183,15 +183,9 @@ designs:
             heightMm: 19000
             materialId: steel
             cosObliquityBp: 10000
-          - region: BARBETTE
+          - region: TURRET
             thicknessUm: 356000
             lengthMm: 56000
-            heightMm: 3000
-            materialId: harvey
-            cosObliquityBp: 10000
-          - region: TURRET_FACE
-            thicknessUm: 254000
-            lengthMm: 40000
             heightMm: 4000
             materialId: harvey
             cosObliquityBp: 10000
@@ -995,7 +989,7 @@ designs:
               cosObliquityBp: 10000,
             }
           - {
-              region: BARBETTE,
+              region: TURRET,
               thicknessUm: 203000,
               lengthMm: 40000,
               heightMm: 3000,

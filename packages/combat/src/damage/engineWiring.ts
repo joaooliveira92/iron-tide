@@ -11,7 +11,7 @@
 // keyedRng function for deterministic randomness.
 
 import { type ShipDamageState, computeDamageStateHash, assertFixedPointDamage } from "./state.js";
-import { type PenetrationOutcome, type ArmorZoneType } from "./armorModel.js";
+import { type PenetrationOutcome, inferArmorZoneType } from "./armorModel.js";
 import { type SplinterIntensity } from "./componentDamage.js";
 import {
   resolveComponentDamage,
@@ -312,7 +312,7 @@ function buildComponentState(state: ShipDamageState): ComponentState[] {
     id,
     componentType: inferComponentType(id),
     locationId: inferLocationId(id),
-    armorZoneType: inferArmorZoneType(id) as ArmorZoneType | undefined,
+    armorZoneType: inferArmorZoneType(id),
   }));
 }
 
@@ -333,29 +333,4 @@ function inferComponentType(id: string): string {
  */
 function inferLocationId(id: string): string {
   return id;
-}
-
-/**
- * Infer armor zone type from component id.
- * TURRET-* → "TURRET_FACE"
- * ENGINE-* → no armor zone (internal)
- * RUDDER-* → no armor zone (internal)
- * FIRE_DIRECTOR-* → "SUPERSTRUCTURE"
- */
-function inferArmorZoneType(id: string): string | undefined {
-  const prefix = id.split("-")[0];
-  switch (prefix) {
-    case "TURRET":
-      return "TURRET_FACE";
-    case "BARBETTE":
-      return "BARBETTE";
-    case "CONNING":
-      return "CONNING_TOWER";
-    case "AA":
-    case "DIRECTOR":
-    case "RANGEFINDER":
-      return "SUPERSTRUCTURE";
-    default:
-      return undefined; // internal component, not exposed
-  }
 }

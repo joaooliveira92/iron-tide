@@ -111,7 +111,7 @@ designs:
             heightMm: 3000
             lengthMm: 30000
             thicknessUm: 114000
-          slot: armour.barbette
+          slot: armour.turret
         - mountCount: 1
           part: wrought_iron
           shape:

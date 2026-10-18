@@ -151,7 +151,7 @@ designs:
             heightMm: 3000
             lengthMm: 30000
             thicknessUm: 254000
-          slot: armour.barbette
+          slot: armour.turret
       platform: pre_dreadnought_form
     month: 1880-01
     name: Mesudiye (1875, central-battery ironclad)

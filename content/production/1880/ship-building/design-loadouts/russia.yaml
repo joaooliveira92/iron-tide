@@ -142,7 +142,7 @@ designs:
             heightMm: 3000
             lengthMm: 22000
             thicknessUm: 356000
-          slot: armour.barbette
+          slot: armour.turret
       platform: coast_defence_form
     month: 1880-01
     name: Petr Velikiy (1876, turret ship)
