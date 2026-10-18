@@ -4,7 +4,7 @@ import type { BattleManifest, BattleResolution } from "@bluewave/campaign-engine
 import { generateBattles, resolveBattleAuto } from "@bluewave/combat";
 import { SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
-import { resolveShipStrength } from "@bluewave/phase-engine";
+import { resolveCampaignBattleReadiness, resolveShipStrength } from "@bluewave/phase-engine";
 import { Effect, Option } from "effect";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type {
@@ -400,7 +400,7 @@ export const generateBattleProgram = withSchema(GenerateBattlePayloadSchema, (pa
       contentVersion: "0.1.0",
       resolveStrength: (shipId) => resolveShipStrength(working, shipId) * strengthScale,
       resolveShipType: () => "BB",
-      resolveReadiness: () => 80,
+      resolveReadiness: (shipId) => resolveCampaignBattleReadiness(working, shipId),
     });
 
     const index = generation.manifests.findIndex(

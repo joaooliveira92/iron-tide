@@ -80,3 +80,5 @@ export * from "./movement.js";
 export * from "./officers.js";
 // S-1: per-ship readiness vocabulary, crew band and compile-boundary seeding.
 export * from "./readiness.js";
+// S-1: the single per-ship maintenance formula and readiness-state multipliers.
+export * from "./maintenance.js";

@@ -75,6 +75,8 @@ export interface CompilerInput {
   diplomacyFiles?: string[];
   researchFiles?: string[];
   designFiles?: string[];
+  /** Authored initial divisions (N-1 ticket 07). Optional like the other campaign groups. */
+  divisionFiles?: string[];
   /**
    * Presentation content (the nation-facing corpus: coordinates, flavor,
    * dossier, slot mapping, area→region grouping and the campaign-map join).
@@ -129,6 +131,8 @@ export interface CampaignCollections {
   diplomacy: unknown[];
   research: unknown[];
   designs: unknown[];
+  /** Authored initial divisions; absent for a pack that declares none (N-1 ticket 07). */
+  divisions?: unknown[];
 }
 
 /**

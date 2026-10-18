@@ -35,11 +35,12 @@ Read, in this order, before editing anything:
 2. `.ai/ENGINEERING-CONTRACT.md` — the binding contract.
 3. `.ai/ORCHESTRATION.md` — the pipeline (wayfinder → to-spec → to-tickets →
    research → implementator → reviewer → validation gate).
-4. `docs/agents/issue-tracker.md` — the local ticket format and frontier rule.
+4. `docs/agents/issue-tracker.md` — the tracker convention and frontier rule.
 5. **The target directory's own context**, in this order if present:
    `.scratch/<slug>/map.md` (wayfinder chart), `.scratch/<slug>/spec.md` (the
    source of acceptance criteria), then its `issues/`.
-6. `docs/PROGRESS.md` and `docs/OPEN-ISSUES.md` — current acceptance status.
+6. `.ai/AUTHORITY-INDEX.md` and `.ai/reports/*` — authority and acceptance status
+   (`docs/PROGRESS.md`/`docs/OPEN-ISSUES.md` are unavailable; ADR-0210).
 
 Re-read files before editing; a subagent report is a spec, not the source of
 truth. If this session was restarted mid-effort, skim `.scratch/<slug>/spec.md`

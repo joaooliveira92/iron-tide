@@ -570,6 +570,8 @@ describe("rebuilding a ship through the programs (ADR-0078)", () => {
       isUnderConstruction: false,
       constructionProgress: SafeInt(0),
       constructionTotalWork: SafeInt(0),
+      readiness: "ACTIVE",
+      crewQuality: SafeInt(100),
     };
     Object.assign(record.state, {
       snapshot: {

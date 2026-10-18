@@ -15,7 +15,7 @@ function makeNation(overrides: Partial<any> = {}): any {
     navalAppropriationRateBp: 2000 as any,
     maintenanceCost: 0 as any,
     baseResources: 0 as any,
-    fleets: [{ ships: [{ hitPoints: 100 as any }] }],
+    fleets: [{ ships: [{ hitPoints: 100 as any, readiness: "ACTIVE" as any }] }],
     research: {
       researchBudget: 200_000 as any,
       discoveredTechs: [],
@@ -88,7 +88,7 @@ describe("priorities projection", () => {
       treasury: 50_000 as any,
       income: 100_000 as any,
       navalAppropriationRateBp: 1000 as any, // 10% => 10k
-      fleets: [{ ships: [{ hitPoints: 10000 as any }] }], // maintenance ~ shipMaintenanceCost(10000)
+      fleets: [{ ships: [{ hitPoints: 10000 as any, readiness: "ACTIVE" as any }] }], // maintenance ~ shipMaintenanceCost(10000)
       research: {
         researchBudget: 0 as any,
         discoveredTechs: [],
@@ -103,7 +103,7 @@ describe("priorities projection", () => {
       treasury: 500 as any,
       income: 100_000 as any,
       navalAppropriationRateBp: 1000 as any,
-      fleets: [{ ships: [{ hitPoints: 100000 as any }] }],
+      fleets: [{ ships: [{ hitPoints: 100000 as any, readiness: "ACTIVE" as any }] }],
       research: {
         researchBudget: 50000 as any,
         discoveredTechs: [],

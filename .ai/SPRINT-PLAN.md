@@ -155,39 +155,61 @@ from authoritative state, and the output is reviewed. It is a new baseline, not 
 
 ## Frontier
 
-Status (2026-10-16, autonomous run): **G-0 is resolved** (re-baselined by G-1 under
-ADR-0210/DR-010). G-1 and G-3 are complete; N-1's audit is complete with ticket 07
-still blocked on **0005**. The **golden baseline exists** (`golden/hashes.json`,
-commit `0117adc`, `Golden-Repin: baseline-created`), so the same-commit re-pin path is
-available. **Phase 2 is complete: U-1, U-2, U-3, U-4 and U-5 are all done** (U-5
-accepted in `.ai/reports/u-5-presentation-invariance.md`); this pointer was refreshed
-after the U-5 run.
+Status (2026-10-17, owner decisions recorded): **G-0/G-1/G-3 complete; Phase 2
+(U-1..U-5) complete.** The **golden baseline exists** (`golden/hashes.json`, commit
+`0117adc`, `Golden-Repin: baseline-created`). Owner decisions **0005-A** and
+**0007-A** plus the closure of **0008** have unblocked the frontier; **0003-B**
+authorizes research only, and **0006-B** keeps S-2 gated on 0003. See the owner
+decision sections in `.ai/decision-requests/` and ADR-0223/0224/0225.
 
-1. **U-1 (canonical values)** complete (tickets 01–08; ADR-0215–0219).
-2. **U-2 (preferences domain)** complete (tickets 01–07).
-3. **U-3 (formatting boundary)** complete (tickets 01–07).
-4. **U-4 (Options screen)** complete (tickets 01–08); the remaining released-screen
-   string migration is the recorded bounded follow-on (U-4 map D6).
-5. **U-5 (presentation invariance)** complete (tickets 01–07); golden-neutral, no
-   compatibility bump.
-6. **N-1 ticket 07** (1880 divisions and officer rosters) remains blocked on decision
-   request **0005** (owner decision: the behavioural reference-run change with a
-   baseline now present). Its sibling N-1 tickets are done.
-7. **S-1 (readiness and maintenance):** ticket **01** is done (per-ship readiness +
-   crew state; compatibility bumped 2.0.0 → 3.0.0). Tickets **02–07, 09** are
-   `ready-for-agent`; ticket **08** (author production values) and the production
-   constants of 02–06 are gated by decision request **0007** (fixture-class constants
-   carry 02–06 until it resolves).
-8. **S-2 (prestige and career)** tickets **02–07, 09** are `ready-for-agent`; ticket
-   **01** and, transitively, the sprint are blocked on decision request **0006**;
-   ticket **08** (production values) on **0003**.
-9. **mine-warfare (W-2)** tickets 01/02 are sliced but W-2's plan dependency
-   (W-1, itself on S-1/T-1) is unmet.
+**Acceptable frontier (dependency order):**
 
-Owner decisions outstanding: **0003** (prestige values), **0004** (mine inventory),
-**0005** (officer rosters/divisions golden repin), **0006** (prestige field vs
-untouched production), **0007** (S-1 readiness/crew/maintenance values), **0008**
-(baseline restoration). The actionable frontier is the **S-1 structural lane (02–07, 09)**, then the **S-2 structural lane (02–07, 09)**.
+1. **S-1 (readiness and maintenance)** under **0007-A**: **done** — tickets 01–09
+   complete on `feat/s1-readiness` (PR #23). Ticket **01** (per-ship readiness +
+   crew state; compatibility bumped 2.0.0 → 3.0.0) and ticket **02** (maintenance
+   charged by readiness state through one shared, centralized formula;
+   golden-neutral) landed first; tickets **03–09** add the crew ramp, the repair
+   state, the wartime multiplier, readiness battle gating, readiness in the
+   projection, the authored production values with provenance, and the acceptance
+   run. The reference goldens are unchanged across 03–09 (all-active, at ceiling,
+   at peace). Evidence: `.ai/reports/s-1-readiness-and-maintenance.md`; values and
+   provenance in ADR-0223 and `docs/research/s-1-readiness-and-maintenance.md`.
+2. **N-1 ticket 07** under **0005-A**: **done**. Per-nation officer rosters
+   (commit `94aee73`) and seeded 1880 divisions (an authored `divisions`
+   collection + compile wiring) landed under ADR-0224. N-1 is complete, which
+   makes **N-2** (1880 content completion) and **N-3** (1880–1890 progression)
+   reachable; both are separate sprints, not started here. See ADR-0224 and the
+   N-1 report.
+3. **0003-B research** (non-production): **done** — it grounded the prestige
+   model (integer field, fresh-start 20, ≤16 sacking threshold, proportional
+   loss, final prestige = career score) but not the magnitudes. Findings with
+   per-value provenance are in `docs/research/rtw3-prestige-values.md`, recorded
+   by ADR-0226; the unresolved/contradictory values are returned to the owner in
+   decision request 0012. No production prestige value is committed. See
+   ADR-0225/ADR-0226.
+4. **S-2 (prestige and career)** remains **blocked** under **0006-B** until 0003 is
+   fully resolved and the production value set is authorized. Do not make prestige
+   optional/defaulted and do not add prestige to production content.
+5. **0008** closed administratively.
+
+**Immediate next action (2026-10-17):** **N-2 — 1880 content completion (L).**
+No brief exists yet, so start with the scoping sprint: turn the N-1 audit's
+residual findings (F1–F6, F8 in
+`.ai/reports/n-1-1880-scenario-audit.md`) into research notes and tickets, land
+`.ai/briefs/n-2-1880-content-completion.md`, then implement. N-2 owns the
+legacy-hull content gaps found while validating ticket 07 (`bra_brasil` below
+the classifier minimums, `aut_custoza` without a compiled design). S-2/S-3
+remain blocked on owner decisions 0003/0006; W-2's W-1 dependency is unmet.
+
+**Lane isolation:** S-1 and N-1 both move goldens. Process them **sequentially** so
+each golden movement has one attributable cause; never bundle unrelated behavioural
+changes into a single re-pin. If S-1 research cannot ground a value and it cannot be
+responsibly classified as an ADR-0213 `balance_adjustment`, return that individual
+value for owner decision instead of guessing.
+
+Owner decisions outstanding: **0012** (prestige production values after the
+0003-B research) and **0004** (mine inventory). W-2's plan dependency (W-1, itself
+on S-1/T-1) is unmet, so 0004 is not on the current frontier.
 
 ## Decisions recorded
 

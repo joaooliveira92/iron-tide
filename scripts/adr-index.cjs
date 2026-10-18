@@ -71,6 +71,12 @@ const AREAS = [
     blurb: "Turn identity and the suspend/resume interruption model.",
     nums: [222],
   },
+  {
+    name: "Fleet readiness, command & prestige",
+    blurb:
+      "Readiness and maintenance ruleset constants, the 1880 command structure, and the prestige value path.",
+    nums: [223, 224, 225, 226],
+  },
 ];
 
 // Records kept as historical provenance only: moved to docs/adr/archive/ and

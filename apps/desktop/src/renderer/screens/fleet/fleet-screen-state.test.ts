@@ -43,7 +43,9 @@ const projection: FleetScreenProjection = {
         {
           name: "HMS Majestic",
           designId: "design_majestic",
-          status: "commissioned",
+          status: "active",
+          readiness: "ACTIVE",
+          crewQuality: 100,
         },
       ],
     },

@@ -20,7 +20,8 @@ Read, in order, before any editing:
 3. `.ai/ENGINEERING-CONTRACT.md` — the binding contract.
 4. `.ai/ORCHESTRATION.md` — the orchestrator + 4-subagent pipeline and validation gate.
 5. `.ai/SPRINT-PLAN.md` — the backlog and the current frontier pointer.
-6. `docs/PROGRESS.md` and `docs/OPEN-ISSUES.md` — current acceptance status.
+6. `.ai/AUTHORITY-INDEX.md` and `.ai/reports/*` — authority and acceptance status
+   (`docs/PROGRESS.md`/`docs/OPEN-ISSUES.md` are unavailable; ADR-0210).
 7. `README.md` — the canonical spec (`DESIGN-55` defines "complete").
 8. The brief for the sprint you are about to run (see below).
 
@@ -34,7 +35,7 @@ Read, in order, before any editing:
   `CONTENT-0`). If given, start there instead and then continue auto-advancing
   forward per the plan's dependency order.
 - Each sprint's brief lives at `.ai/briefs/<slug>.md` where referenced by the
-  plan and by `docs/PROGRESS.md`. A sprint with **no brief is a scoping sprint**:
+  plan and by `.ai/reports/*`. A sprint with **no brief is a scoping sprint**:
   follow IMPLEMENTATION-PROMPT §1–2 and the plan's "Scoping sprint" instructions
   (wayfinder + issue tickets + research), then land a brief before implementing.
 - A configuration/acceptance pass (e.g. A-0/A-1/A-2, REL-1) runs the full
@@ -45,7 +46,7 @@ Read, in order, before any editing:
 - For each sprint, produce the deliverable it declares (implementation, brief,
   acceptance evidence, or gate sign-off) following IMPLEMENTATION-PROMPT §3–8.
 - After a sprint completes: update `.ai/SPRINT-PLAN.md` (mark it done, refresh
-  "Immediate next action" to the next sprint), update `docs/PROGRESS.md`, write
+  "Immediate next action" to the next sprint), refresh the frontier row, write
   the validation report per `.ai/templates/validation-report.md`, and make clean
   Conventional Commits per `.ai/AUTONOMOUS-AGENT.md` Git policy.
 - Then **auto-advance**: continue to the next sprint in dependency order, repeating

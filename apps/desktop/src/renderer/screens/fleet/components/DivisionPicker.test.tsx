@@ -9,7 +9,15 @@ const row: DivisionPickerRow = {
   divisionId: "fleet_gbr_home",
   fleetName: "Home Fleet",
   areaName: "English Home Waters",
-  ships: [{ name: "HMS Alexandra", designId: "", status: "commissioned" }],
+  ships: [
+    {
+      name: "HMS Alexandra",
+      designId: "",
+      status: "active",
+      readiness: "ACTIVE",
+      crewQuality: 100,
+    },
+  ],
 };
 
 describe("DivisionPicker", () => {

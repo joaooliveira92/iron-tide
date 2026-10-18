@@ -286,16 +286,27 @@ test("row 6c: Fleet organization founds a division through the real engine and a
 
   await navigateTo(e2e.page, "Fleet");
   const organization = e2e.page.getByTestId("fleet-organization");
-  await expect(organization.getByText("No divisions yet")).toBeVisible({ timeout: 15_000 });
+  // The 1880 production start seeds its historical divisions, so the screen is populated.
+  await expect(organization.getByText("No divisions yet")).not.toBeVisible({ timeout: 15_000 });
+  await expect(organization.getByRole("heading", { name: /division — HMS / })).toHaveCount(2);
 
-  await organization.getByRole("button", { name: "Create division" }).click();
+  // Free a ship pool by dissolving a seeded division, then found a new one from it.
+  await organization.getByRole("button", { name: "Dissolve division" }).first().click();
+  await e2e.page.getByRole("button", { name: "Dissolve", exact: true }).click();
   // Queued, not applied: the engine only acts when the month is committed.
-  await expect(organization.getByRole("status")).toContainText("Create division queued");
-  await expect(organization.getByText("No divisions yet")).toBeVisible();
+  await expect(organization.getByText(/Dissolve division queued/)).toBeVisible();
+  await expect(organization.getByRole("heading", { name: /division — HMS / })).toHaveCount(2);
 
   await advanceMonths(e2e.page, 1);
   await navigateTo(e2e.page, "Fleet");
-  await expect(organization.getByRole("heading", { name: /division — HMS / })).toBeVisible({
+  await expect(organization.getByRole("heading", { name: /division — HMS / })).toHaveCount(1);
+
+  await organization.getByRole("button", { name: "Create division" }).click();
+  await expect(organization.getByText(/Create division queued/)).toBeVisible();
+
+  await advanceMonths(e2e.page, 1);
+  await navigateTo(e2e.page, "Fleet");
+  await expect(organization.getByRole("heading", { name: /division — HMS / })).toHaveCount(2, {
     timeout: 15_000,
   });
   await expect(organization.getByText("Commander vacant")).toBeVisible();

@@ -262,11 +262,13 @@ describe("a finished REBUILD completes into the new design (ADR-0078, DESIGN-23 
   });
 
   it("releases a rebuilt ship without losing its readiness or crew (S-1 D2)", () => {
+    // Seed the reserve crew at its ceiling so the month's readiness ramp is a
+    // no-op and this test isolates the rebuild-release path (S-1 ticket 03).
     const target = ship("s1", {
       availability: "UNAVAILABLE",
       availabilityProjectId: "proj-r",
       readiness: "RESERVE",
-      crewQuality: SafeInt(33),
+      crewQuality: SafeInt(70),
     });
     const { nation } = run(
       snapshotOfRebuild(
@@ -289,7 +291,7 @@ describe("a finished REBUILD completes into the new design (ADR-0078, DESIGN-23 
     const s = nation.fleets[0]!.ships[0]!;
     expect(s.availability).toBeUndefined();
     expect(s.readiness).toBe("RESERVE");
-    expect(s.crewQuality).toBe(33);
+    expect(s.crewQuality).toBe(70);
   });
 
   it("does nothing until the work is done: the ship stays unavailable and on its old design", () => {

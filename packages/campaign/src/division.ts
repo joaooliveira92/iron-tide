@@ -1,4 +1,5 @@
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
+import { CAMPAIGN_DIVISION_FORMATIONS, CAMPAIGN_DIVISION_ROLES } from "@bluewave/content-schema";
 import { sha256Hex, canonicalSerialize } from "@bluewave/deterministic";
 
 // DESIGN-26 §28 reason codes.
@@ -18,19 +19,13 @@ export const DIVISION_STATE_INVARIANT_FAILED = "DIVISION_STATE_INVARIANT_FAILED"
 export const DIVISION_TYPES = ["PERMANENT_DIVISION", "TACTICAL_DIVISION"] as const;
 export type DivisionType = (typeof DIVISION_TYPES)[number];
 
-// DESIGN-26 §13 canonical roles.
-export const DIVISION_ROLES = [
-  "INDEPENDENT",
-  "CORE",
-  "SUPPORT",
-  "SCOUT",
-  "SCREEN",
-  "PATROL",
-] as const;
+// DESIGN-26 §13 canonical roles. The values live in the content schema (the
+// authored-record boundary) and are re-exported here so there is one vocabulary.
+export const DIVISION_ROLES = CAMPAIGN_DIVISION_ROLES;
 export type DivisionRole = (typeof DIVISION_ROLES)[number];
 
 // DESIGN-26 §17 canonical formations.
-export const DIVISION_FORMATIONS = ["LINE_AHEAD", "LINE_ABREAST", "SEARCH_LINE", "SCREEN"] as const;
+export const DIVISION_FORMATIONS = CAMPAIGN_DIVISION_FORMATIONS;
 export type DivisionFormation = (typeof DIVISION_FORMATIONS)[number];
 
 // DESIGN-26 §2 authoritative permanent division.
@@ -229,7 +224,14 @@ function clampScore(v: number): number {
   return v;
 }
 
-function hashPermanentDivision(d: PermanentDivision): string {
+/**
+ * The canonical SHA-256 identity of a division's authoritative fields (DESIGN-26
+ * §2). `provenanceRefs` and `aggregateHash` are excluded: the hash covers the
+ * command-relevant value surface, not authored provenance. Exported so the
+ * compile-time seeder (N-1 ticket 07) stamps the same identity the runtime
+ * commands recompute.
+ */
+export function divisionAggregateHash(d: PermanentDivision): string {
   return sha256Hex(
     canonicalSerialize({
       divisionId: d.divisionId,
@@ -353,7 +355,7 @@ export function applyDivisionCommand(
     cohesion: SafeInt(clampScore((division.cohesion as number) + penalties.cohesion)),
     aggregateHash: "",
   };
-  next.aggregateHash = hashPermanentDivision(next);
+  next.aggregateHash = divisionAggregateHash(next);
   return { division: next, reorgReason, penaltiesApplied: penalties };
 }
 
@@ -382,6 +384,6 @@ export function applyCommanderChange(
     cohesion: SafeInt(clampScore((division.cohesion as number) + penalties.cohesion)),
     aggregateHash: "",
   };
-  next.aggregateHash = hashPermanentDivision(next);
+  next.aggregateHash = divisionAggregateHash(next);
   return { division: next, reorgReason: "CHANGE_FLAGSHIP", penaltiesApplied: penalties };
 }

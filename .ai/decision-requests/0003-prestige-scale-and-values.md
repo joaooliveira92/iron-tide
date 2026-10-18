@@ -2,8 +2,11 @@
 
 ## Status
 
-Blocked pending owner decision. Blocks only S-2 ticket 08 (author production
-values); tickets 01-07 proceed on fixture-class values and do not depend on it.
+Resolved (2026-10-17) — owner chose **Option B** (research against high-trust
+external sources before authoring production prestige values). Blocks only S-2
+ticket 08 until the research produces adequately sourced values; tickets 01-07
+proceed on fixture-class values and do not depend on it. See the owner decision
+below.
 
 ## Trigger
 
@@ -87,3 +90,24 @@ Everything structural in S-2 (state, seeding mechanism, ledger and proportional
 loss primitive, source hooks for unpaid funds and war/battle outcomes, sacking
 phase, career result, projection and UI) is specified as tickets 01-07 using
 fixture-class constants that never ship in the production pack.
+
+## Owner decision (2026-10-17)
+
+**Chosen:** Option B — conduct research against high-trust external sources
+before authoring production prestige values. Recorded in
+[ADR-0225](../../docs/adr/ADR-0225-prestige-required-field-and-research-first.md).
+
+**Authorized production values or rules.** Research the prestige scale and
+bounds, per-nation 1880 starting values, loss fractions by source, gain
+magnitudes by source, monthly sacking probability below the applicable
+threshold, and the final-score rule. Record every adopted value with a citation
+in `docs/research/` and the required ADR. Return every unresolved or
+contradictory value to the owner individually. Do not substitute a Bluewave
+calibration, fixture value, placeholder, inferred value, or undocumented
+approximation.
+
+**Additional constraints.** Research must distinguish directly documented RTW3
+behavior from historical analogues, community observations, reverse-engineered
+observations, and Bluewave balance decisions. No production prestige value may
+be committed until its provenance is explicit. Decision 0003-B authorizes
+research only; it does not authorize unsourced production values.

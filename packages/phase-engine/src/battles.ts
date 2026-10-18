@@ -7,6 +7,7 @@ import type {
   Ship,
 } from "@bluewave/campaign";
 import {
+  battleReadiness,
   isShipOperational,
   MAXIMUM_CONCURRENT_WARS,
   SURRENDER_SCORE,
@@ -33,6 +34,21 @@ export function resolveShipStrength(snapshot: CampaignSnapshot, shipId: string):
     for (const fleet of nation["fleets"]) {
       const ship = fleet["ships"].find((s) => s["id"] === shipId);
       if (ship) return ship["firepower"] as number;
+    }
+  }
+  return 0;
+}
+
+/**
+ * S-1 D5: the battle-readiness value combat's generation consumes for a ship —
+ * its real crew quality (`0..100`). A ship absent from the snapshot fails closed
+ * to `0` so it cannot be gathered. Replaces the former hard-coded `80` (ADR-0223).
+ */
+export function resolveCampaignBattleReadiness(snapshot: CampaignSnapshot, shipId: string): number {
+  for (const [, nation] of snapshot["nations"]) {
+    for (const fleet of nation["fleets"]) {
+      const ship = fleet["ships"].find((s) => s["id"] === shipId);
+      if (ship) return battleReadiness(ship["crewQuality"]);
     }
   }
   return 0;

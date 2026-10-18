@@ -341,3 +341,110 @@ describe("P-1 AC-7: torpedoes reachable from a compiled production-pack battle",
     expect(changed).toBeGreaterThan(0);
   });
 });
+
+describe("S-1 acceptance (ticket 09): readiness and maintenance on the production pack", () => {
+  // Build a scripted copy of the compiled production snapshot: four UK ships
+  // take one readiness state each, so every S-1 mechanic is observed at least
+  // once in a real production-pack month run.
+  function s1Snapshot(): { snapshot: CampaignSnapshot; ids: string[] } {
+    const snapshot = compileProductionPack().state.snapshot;
+    const uk = snapshot.nations.get("uk")!;
+    const four = uk.fleets
+      .flatMap((f) => f.ships)
+      .sort((a, b) => Number(b.hitPoints) - Number(a.hitPoints))
+      .slice(0, 4);
+    if (four.length < 4) throw new Error("production pack: UK has fewer than 4 ships");
+    const ids = four.map((s) => s.id);
+    const ships = four.map((s, i) => {
+      if (i === 0) return { ...s, readiness: "WORKING_UP" as const, crewQuality: SafeInt(55) };
+      if (i === 1) return { ...s, readiness: "RESERVE" as const, crewQuality: SafeInt(40) };
+      if (i === 2) return { ...s, readiness: "MOTHBALLED" as const, crewQuality: SafeInt(0) };
+      return { ...s, readiness: "REPAIR" as const, repairMonthsRemaining: SafeInt(2) };
+    });
+    const fleets = uk.fleets.map((f, fi) => (fi === 0 ? { ...f, ships } : { ...f, ships: [] }));
+    const nations = new Map(snapshot.nations);
+    nations.set("uk", { ...uk, fleets });
+    return { snapshot: { ...snapshot, nations }, ids };
+  }
+
+  it("exercises promotion, reserve/mothball/repair maintenance, the repair countdown and wartime — deterministically", () => {
+    const run = () =>
+      new MonthExecutor().execute(
+        s1Snapshot().snapshot,
+        [],
+        "s1-acceptance",
+        new DiagnosticCollector(),
+      );
+    const { ids } = s1Snapshot();
+
+    const peace1 = run();
+    expect(peace1.success).toBe(true);
+    const ships1 = peace1.finalSnapshot.nations.get("uk")!.fleets[0]!.ships;
+    const byId = (id: string) => ships1.find((s) => s.id === id)!;
+
+    // Month 1: the working-up ship (crew 55 -> 60) is promoted to active.
+    expect(byId(ids[0]!).readiness).toBe("ACTIVE");
+    // Reserve crew ramps toward its ceiling; mothballed is laid up.
+    expect(byId(ids[1]!).readiness).toBe("RESERVE");
+    expect(byId(ids[2]!).readiness).toBe("MOTHBALLED");
+    // The repairing ship counts down one month (2 -> 1) and stays in repair.
+    expect(byId(ids[3]!).readiness).toBe("REPAIR");
+    expect(byId(ids[3]!).repairMonthsRemaining as number).toBe(1);
+    // A readiness transition is recorded as a domain event.
+    expect(peace1.eventLedger.all.some((e) => e.body.kind === "ShipReadinessChanged")).toBe(true);
+
+    // Month 2: the repair countdown reaches zero and releases the ship to active.
+    const peace2 = new MonthExecutor().execute(
+      peace1.finalSnapshot,
+      [],
+      "s1-acceptance",
+      new DiagnosticCollector(),
+    );
+    const released = peace2.finalSnapshot.nations
+      .get("uk")!
+      .fleets[0]!.ships.find((s) => s.id === ids[3]!)!;
+    expect(released.readiness).toBe("ACTIVE");
+    expect(released.repairMonthsRemaining).toBeUndefined();
+
+    // Wartime raises the nation's maintenance above peace for the same fleet.
+    // Compare a month run with and without a live war (a distant opponent, so no
+    // battle disturbs the maintenance snapshot); the month-1 promotion leaves an
+    // active ship for the multiplier to apply to.
+    const warWars = {
+      ...peace1.finalSnapshot.wars,
+      wars: [
+        {
+          id: "war_s1",
+          attackerSideId: "side_a",
+          defenderSideId: "side_d",
+          attackerSideMembers: ["uk"],
+          defenderSideMembers: ["qing"],
+          attackerWarScore: 0,
+          defenderWarScore: 0,
+          attackerId: "uk",
+          defenderId: "qing",
+          startDate: "1880-01",
+          status: "ACTIVE" as const,
+        },
+      ],
+    };
+    const peaceMonth2 = new MonthExecutor().execute(
+      peace1.finalSnapshot,
+      [],
+      "s1-acceptance",
+      new DiagnosticCollector(),
+    );
+    const warMonth2 = new MonthExecutor().execute(
+      { ...peace1.finalSnapshot, wars: warWars },
+      [],
+      "s1-acceptance",
+      new DiagnosticCollector(),
+    );
+    const peaceMaintenance = peaceMonth2.finalSnapshot.nations.get("uk")!.maintenanceCost as number;
+    const warMaintenance = warMonth2.finalSnapshot.nations.get("uk")!.maintenanceCost as number;
+    expect(warMaintenance).toBeGreaterThan(peaceMaintenance);
+
+    // Deterministic: identical inputs produce byte-identical closing snapshots.
+    expect(hashSnapshot(run().finalSnapshot)).toBe(hashSnapshot(run().finalSnapshot));
+  });
+});

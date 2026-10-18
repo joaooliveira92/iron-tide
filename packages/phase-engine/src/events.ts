@@ -187,6 +187,41 @@ export function researchProgressedEvent(
   };
 }
 
+/**
+ * The readiness transition of a ship (S-1): the monthly crew ramp promoted a
+ * working-up ship to active, or a repair countdown released a ship. Deterministic
+ * timestamp from the campaign month, like every other domain event.
+ */
+export function shipReadinessChangedEvent(
+  shipId: string,
+  nationId: string,
+  fromReadiness: string,
+  toReadiness: string,
+  reason: string,
+  crewQuality: SafeInt,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `ShipReadinessChanged-${shipId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "ship",
+    aggregateId: shipId,
+    eventType: "ShipReadinessChanged",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "ShipReadinessChanged",
+      nationId,
+      shipId,
+      fromReadiness,
+      toReadiness,
+      reason,
+      crewQuality,
+    },
+    sequenceNumber: seq,
+  };
+}
+
 export function makeLedgerEntry(
   nationId: string,
   phaseId: string,

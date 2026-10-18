@@ -79,7 +79,12 @@ export {
   type InterruptionChannel,
   type InterruptionState,
 } from "./interruption.js";
-export { applyBattleConsequences, collectLostShips, resolveShipStrength } from "./battles.js";
+export {
+  applyBattleConsequences,
+  collectLostShips,
+  resolveCampaignBattleReadiness,
+  resolveShipStrength,
+} from "./battles.js";
 export {
   PhaseGuard,
   PHASE_ACCESS_DENIED,

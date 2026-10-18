@@ -2,7 +2,10 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved (2026-10-17) — owner chose **Option A** (research and author grounded
+readiness, crew, and maintenance constants; classify every remaining unsourced
+magnitude as an explicit `balance_adjustment` target). See the owner decision
+below.
 
 ## Trigger
 
@@ -102,3 +105,81 @@ ticket 08 stays blocked.
   tickets 01-09), `.ai/specs/s-1-readiness-and-maintenance.md` pointer.
 - Grounded research written: `docs/research/s-1-readiness-and-maintenance.md`.
 - No engine, content, test or golden change.
+
+## Decision-ready packet (reconciled 2026-10-17)
+
+**Exact question requiring owner authority.** What production values should S-1's
+readiness, crew and maintenance mechanics use, where the manual supplies almost none —
+research-grounded ruleset constants for the ungrounded numbers (A), immediate ADR-0213
+labelled balance placeholders (B), or gate all value-bearing tickets and ship only the
+value-free structure (C)?
+
+**Affected scope.** S-1 tickets 02–09 (ticket 08 authors values; ticket 09 acceptance);
+`packages/phase-engine/src/economyPhases.ts` (`computeMaintenanceCost`),
+`packages/phase-engine/src/battlePhases.ts` (`resolveReadiness`),
+`packages/campaign-engine/src/{opening-briefing,projection}.ts`,
+`packages/combat/src/battleResolution/torpedoProjection.ts`
+(`AUTO_TORPEDO_CREW_QUALITY_BP`); the ruleset constants; `golden/hashes.json`;
+compatibility version. Acceptance: "maintenance by status" and the working-up battle
+exclusion, driven from a compiled month.
+
+**Known constraints and invariants.** Grounded and shippable: repair ≈ 2× active
+maintenance and mothballing halts repair (manual p.51); mothballed = half maintenance
+(p.30, already `mothballedMaintenancePerMonthMicro` / `preservationCostBp: 5000`); the
+`AF`/`RF`/`MB`/`WU` states and the rule that working-up ships do not fight (pp.48, 51,
+69). Ungrounded and escalated (ADR-0210): the absolute active rate, the state
+multipliers, the wartime multiplier, crew ceilings and ramp, the working-up threshold,
+and the battle readiness value (today a hard-coded `80`). ADR-0213 permits labelled
+balance magnitudes; ADR-0210 forbids inventing values as fact.
+
+**Options.** A — research high-trust sources, author ruleset constants with provenance,
+mark the remainder `balance_adjustment`. B — author labelled placeholders immediately.
+C — ship only the value-free structure (representation and seams; ticket 01 already
+landed) and stop before any production charge or ramp.
+
+**Consequences.** _Gameplay:_ the economy and the training curve (how cheaply a fleet
+is laid up, how long a crew takes to fight) and wartime pressure. _Determinism:_
+maintenance/readiness feeding the snapshot moves the goldens (understood cause,
+re-pinned). _Saves:_ compatibility bump if the snapshot shape changes. _Wire:_ none.
+_Balance:_ the core surface — every value is a balance target unless sourced. _Content:_
+possibly a ruleset constants file. _Tests:_ re-pin goldens; parity test across the
+phase, opening briefing and projection. _Migration:_ compat bump; prior saves refused
+or migrated.
+
+**Recommendation.** Option A. It grounds what can be grounded (the research note
+exists at `docs/research/s-1-readiness-and-maintenance.md`), isolates every number as a
+tunable ruleset constant, and follows the 0003/0004 precedent. Until it resolves, do not
+ship placeholder rates as production; the value-free structure (ticket 01) has landed.
+
+**Minimum owner response to unblock.** "Approve Option A: author the grounded constants
+as above and mark the remaining numbers as `balance_adjustment` targets" — or supply the
+values, or choose B/C.
+
+**Must not be guessed.** The absolute active maintenance rate; the reserve/mothballed/
+wartime multipliers; the per-state crew ceilings and monthly ramp; the working-up
+threshold; the battle readiness value; whether structural tickets may carry fixture
+constants (only if not shipped as production).
+
+## Owner decision (2026-10-17)
+
+**Chosen:** Option A — research and author grounded readiness, crew, and
+maintenance constants; classify every remaining unsourced magnitude as an
+explicit `balance_adjustment` target. Recorded in
+[ADR-0223](../../docs/adr/ADR-0223-s1-readiness-crew-maintenance-ruleset-constants.md).
+
+**Authorized production values or rules.** Preserve the documented rules that
+repair costs approximately twice active maintenance, mothballing prevents
+repair, mothballed ships cost half maintenance, the `AF`/`RF`/`MB`/`WU` states
+remain distinct, and working-up ships cannot fight. Research the remaining
+constants using high-trust sources. Store all resulting values as named,
+centralized ruleset constants with provenance. Any value that cannot be grounded
+may be selected only as an explicitly labelled ADR-0213 `balance_adjustment`,
+covered by deterministic tests and designed for later tuning.
+
+**Additional constraints.** Do not embed numeric gameplay constants directly in
+`economyPhases.ts`, `battlePhases.ts`, `opening-briefing`, `projection`, or
+`torpedoProjection.ts`. Remove or replace the hard-coded battle-readiness value
+of `80` through the centralized ruleset mechanism. Ensure maintenance, readiness,
+projections, and opening-briefing calculations consume the same authoritative
+constants. Re-pin goldens only when observable deterministic output actually
+changes, using the established same-commit procedure.

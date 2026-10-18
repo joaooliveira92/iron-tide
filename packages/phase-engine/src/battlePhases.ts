@@ -15,6 +15,7 @@ import {
   collectLostShips,
   recordResolvedBattle,
   resolveBattleManifest,
+  resolveCampaignBattleReadiness,
   resolveLegacyBattle,
   resolveShipStrength,
   toCampaignBattleResult,
@@ -37,6 +38,8 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
   );
   if (!hadWars) return;
 
+  // S-1 D5: supply each ship's real battle readiness (its crew quality, 0..100)
+  // instead of the former hard-coded 80 (ADR-0223).
   const generationResult = generateBattles({
     snapshot: ctx.currentSnapshot,
     campaignMonth,
@@ -47,7 +50,7 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
     contentVersion: "0.1.0",
     resolveStrength: (shipId) => resolveShipStrength(ctx.currentSnapshot, shipId),
     resolveShipType: () => "BB",
-    resolveReadiness: () => 80,
+    resolveReadiness: (shipId) => resolveCampaignBattleReadiness(ctx.currentSnapshot, shipId),
   });
 
   if (generationResult.battleIds.length === 0) return;

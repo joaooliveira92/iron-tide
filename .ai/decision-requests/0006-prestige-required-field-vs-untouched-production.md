@@ -2,8 +2,10 @@
 
 ## Status
 
-Blocked pending owner decision. Blocks S-2 ticket 01 and, transitively, tickets
-02–09 (the whole S-2 sprint). Does not affect the mine-warfare campaign or N-1.
+Resolved (2026-10-17) — owner chose **Option B** (keep `NationState.prestige`
+required; gate S-2 implementation on resolution of decision 0003). S-2 ticket 01
+and, transitively, tickets 02–09 remain blocked until 0003 resolves. See the
+owner decision below.
 
 ## Trigger
 
@@ -114,3 +116,62 @@ approval, and do not make the field optional/defaulted.
 - Operating-context load and identification that `.ai/SPRINT-PLAN.md`'s "Frontier"
   section is stale (see `## Work safely completed` note in the SPRINT-PLAN update).
 - No code, content, tests, or authoritative artifacts changed.
+
+## Decision-ready packet (reconciled 2026-10-17)
+
+**Exact question requiring owner authority.** How should S-2's required
+`NationState.prestige` be satisfied against production 1880 that decision D6 says must
+stay untouched until the prestige scale (0003) is resolved — author an ADR-0213
+labelled balance placeholder now (A), gate all of S-2 on 0003 and author sourced
+values in ticket 01 (B), or invert D2 to an optional/defaulted field (C)?
+
+**Affected scope.** S-2 tickets 01–09 (the whole sprint; ticket 01 blocks the rest);
+`.scratch/s-2-prestige-and-career/{spec.md,decisions/D2,D6,issues/01}`;
+`packages/campaign/src/{state.ts,nationCompilation.ts}`;
+`content/production/1880/countries.yaml`; `golden/hashes.json`;
+`packages/cross-process-test/test/production-pack-loop.test.ts`.
+
+**Known constraints and invariants.** D2 fixes the field as required with no engine
+default; D6/0003 forbid authoring production prestige before the scale resolves; the
+production-pack loop compiles production and fails on a required unauthored field;
+ADR-0213 is precedent for labelled balance magnitudes; values the manual lacks are
+escalated, never invented (ADR-0210).
+
+**Options.** A — labelled ADR-0213 placeholder start, replaced in ticket 08 when 0003
+resolves. B — gate ticket 01 (and S-2) on 0003. C — optional/defaulted field
+(contradicts D2).
+
+**Consequences.** _Gameplay:_ prestige drives sacking timing and final score; a
+placeholder start shifts sacking until 08. _Determinism:_ a new required field moves
+the snapshot and goldens (understood cause, re-pinned). _Saves:_ compatibility-version
+bump; migration assessment required. _Wire:_ none. _Balance:_ the start magnitude and
+loss/gain rule are the balance surface. _Content:_ production countries gain a
+prestige value. _Tests:_ re-pin goldens; production-pack loop; new fixture tests.
+_Migration:_ compat bump; prior saves refused or migrated.
+
+**Recommendation.** Option A if the owner accepts a clearly-labelled placeholder (the
+ADR-0213 precedent); otherwise Option B. Do not make the field optional (C).
+
+**Minimum owner response to unblock.** "Accept an ADR-0213 labelled placeholder
+prestige start for S-2 ticket 01, with sourced values deferred to ticket 08" (A), or
+"defer S-2 until 0003 resolves" (B); confirm D2 stays required either way.
+
+**Must not be guessed.** Whether the field is required; the placeholder magnitude; the
+gate policy; whether production content may be authored before 0003.
+
+## Owner decision (2026-10-17)
+
+**Chosen:** Option B — keep `NationState.prestige` required, but gate S-2
+implementation on resolution of decision 0003. Recorded in
+[ADR-0225](../../docs/adr/ADR-0225-prestige-required-field-and-research-first.md).
+
+**Authorized production values or rules.** No placeholder prestige magnitude is
+authorized. D2 remains in force: prestige is required and has no engine default.
+Author production prestige values only after decision 0003 research has produced
+adequately sourced rules and any unresolved residue has been returned to and
+decided by the owner.
+
+**Additional constraints.** Do not make prestige optional, nullable, silently
+defaulted, or derived from an unrelated field. Do not introduce fixture-class
+prestige values into production content. S-2 must remain blocked until the
+production value set is authorized.

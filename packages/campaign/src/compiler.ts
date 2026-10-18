@@ -20,7 +20,11 @@ import { buildNationStates, buildSlots } from "./nationCompilation.js";
 import { buildPoliticalState, buildWarState } from "./politicalCompilation.js";
 import { getScenarioById, type ScenarioId } from "./scenario.js";
 import type { CampaignSnapshot, CampaignState } from "./state.js";
-import { DEFAULT_CAMPAIGN_START_MONTH, DEFAULT_CAMPAIGN_START_YEAR } from "./timeline.js";
+import {
+  DEFAULT_CAMPAIGN_START_MONTH,
+  DEFAULT_CAMPAIGN_START_YEAR,
+  campaignMonthId,
+} from "./timeline.js";
 import { buildWorldState } from "./worldCompilation.js";
 
 export interface CampaignCompilerInput {
@@ -136,12 +140,19 @@ export class CampaignCompiler {
 
     const world = buildWorldState(pack);
 
+    // B-6/ADR-0025: resolve the campaign start up front so the seeded 1880
+    // divisions (N-1 ticket 07) are created in the campaign's first month.
+    const campaignStart = resolveCampaignStart(input, startInput.value);
+
     const nations = buildNationStates(
       pack,
       data.fleets,
       data.economies,
       data.constructions,
       data.research,
+      data.divisions,
+      input.rulesetVersion,
+      campaignMonthId(campaignStart.startYear, campaignStart.startMonth, 0),
       collector,
     );
     if (!nations || signal.aborted) return undefined;
@@ -168,7 +179,6 @@ export class CampaignCompiler {
 
     const intelligence = { shells: {} };
 
-    const campaignStart = resolveCampaignStart(input, startInput.value);
     const snapshot: CampaignSnapshot = {
       version: "0.1.0",
       turnNumber: SafeInt(0),
@@ -252,6 +262,7 @@ function campaignDataFromBundle(bundle: ContentBundle): CampaignFileData {
     diplomacy: campaign?.diplomacy ?? [],
     research: campaign?.research ?? [],
     designs: campaign?.designs ?? [],
+    divisions: campaign?.divisions ?? [],
   };
 }
 

@@ -40,6 +40,8 @@ function makeNation(
               isUnderConstruction: s.underConstruction ?? false,
               constructionProgress: SafeInt(0),
               constructionTotalWork: SafeInt(0),
+              readiness: s.underConstruction ? "WORKING_UP" : "ACTIVE",
+              crewQuality: SafeInt(100),
             })),
           },
         ]
@@ -183,5 +185,40 @@ describe("battle_generation phase (AC-12)", () => {
     expect(a.finalSnapshot.wars.battles.map((x: BattleInstance) => x.id)).toEqual(
       b.finalSnapshot.wars.battles.map((x: BattleInstance) => x.id),
     );
+  });
+
+  it("a side with only working-up ships (not under construction) fights no battle (S-1 ticket 06)", () => {
+    const snapshot = makeSnapshot();
+    const fra = snapshot.nations.get("FRA")!;
+    fra.fleets = fra.fleets.map((f) => ({
+      ...f,
+      ships: f.ships.map((s) => ({
+        ...s,
+        readiness: "WORKING_UP" as const,
+        crewQuality: SafeInt(0),
+      })),
+    }));
+    const result = new MonthExecutor().execute(snapshot, [], "seed", new DiagnosticCollector());
+    expect(result.finalSnapshot.wars.battles).toEqual([]);
+  });
+
+  it("reserve ships are not reserved for an ordinary battle (S-1 ticket 06)", () => {
+    const snapshot = makeSnapshot();
+    const gbr = snapshot.nations.get("GBR")!;
+    gbr.fleets[0]!.ships.push({
+      ...gbr.fleets[0]!.ships[0]!,
+      id: "g_reserve",
+      readiness: "RESERVE",
+    });
+    const result = new MonthExecutor().execute(snapshot, [], "seed", new DiagnosticCollector());
+    const manifests = result.finalSnapshot.wars.battleManifests ?? [];
+    const reservedIds = manifests.flatMap((m) => m.persistentAssets);
+    expect(reservedIds).not.toContain("g_reserve");
+    // The reserve ship is still present in the fleet, unreserved.
+    const reserve = result.finalSnapshot.nations
+      .get("GBR")!
+      .fleets.flatMap((f) => f.ships)
+      .find((s) => s.id === "g_reserve");
+    expect(reserve?.inBattleId).toBeUndefined();
   });
 });

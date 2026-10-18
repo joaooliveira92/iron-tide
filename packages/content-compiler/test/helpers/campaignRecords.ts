@@ -19,6 +19,7 @@ export interface ShipRecord {
 export interface FleetRecord {
   readonly id: string;
   readonly nationId: string;
+  readonly locationAreaId: string;
   readonly ships: readonly ShipRecord[];
   readonly provenance?: unknown;
 }
@@ -69,6 +70,16 @@ export interface TechnologyRecord {
   readonly prerequisites?: readonly { readonly techId: string }[];
 }
 
+export interface DivisionRecord {
+  readonly id: string;
+  readonly nationId: string;
+  readonly shipOrder: readonly string[];
+  readonly commanderOfficerId?: string;
+  readonly divisionRole: string;
+  readonly preferredFormation: string;
+  readonly provenance?: ProvenanceRecord;
+}
+
 export function nationsOf(bundle: ContentBundle): NationRecord[] {
   return bundle.nations as NationRecord[];
 }
@@ -95,4 +106,8 @@ export function researchOf(bundle: ContentBundle): ResearchRecord[] {
 
 export function diplomacyOf(bundle: ContentBundle): DiplomacyRecord[] {
   return (bundle.campaign?.diplomacy ?? []) as DiplomacyRecord[];
+}
+
+export function divisionsOf(bundle: ContentBundle): DivisionRecord[] {
+  return (bundle.campaign?.divisions ?? []) as DivisionRecord[];
 }

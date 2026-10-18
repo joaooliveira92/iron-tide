@@ -130,7 +130,8 @@ export function buildPrioritiesProjection(
   const constructionSpend = totalPaidWork(nation);
   const fleetMaintenance = nation.fleets.reduce(
     (sum, fleet) =>
-      sum + fleet.ships.reduce((s, ship) => s + shipMaintenanceCost(Number(ship.hitPoints)), 0),
+      sum +
+      fleet.ships.reduce((s, ship) => s + shipMaintenanceCost(ship.hitPoints, ship.readiness), 0),
     0,
   );
   const projectedBalance =
