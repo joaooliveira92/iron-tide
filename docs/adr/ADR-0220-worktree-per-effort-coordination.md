@@ -40,3 +40,16 @@ changes without `--force`, and never deletes an unmerged branch.
 - Merge detection is ancestry-based, so squash-merged PRs are not auto-pruned;
   those subtrees are removed explicitly with `worktrees remove <slug>`.
 - Worktrees are machine-local and untracked; the ledger is the portable record.
+
+## Amendment (2026-10-18): audit and fail-closed arguments
+
+`pnpm worktrees audit` is a read-only inventory that reconciles `git worktree
+list` (including worktrees outside `.worktrees/`), local and remote branches, the
+ledger, and merged pull requests from `gh`, so squash merges are recognised.
+Integration status and cleanliness are separate fields. Drift (unregistered,
+outside, detached, phantom, branch-mismatched, or stale worktrees; stale or
+`gone` orphan branches) exits 1; open unmerged branches and dirtiness alone are
+not drift. `prune` now also considers live worktrees missing from the ledger, and
+every command validates its full argument list before mutating, so an unknown
+option exits 2 with no effect. The preflight gate stays warn-only and audits
+offline; a blocking rule is not adopted here.

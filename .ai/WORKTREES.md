@@ -13,6 +13,8 @@ Manage it with [`scripts/worktree.mjs`](../scripts/worktree.mjs) (`pnpm worktree
 - `pnpm worktrees new <slug>` — create a subtree and register it here.
 - `pnpm worktrees` — list live subtrees joined with this ledger.
 - `pnpm worktrees sync` — reconcile this ledger with actual git worktrees.
+- `pnpm worktrees audit` — read-only inventory and drift report (worktrees,
+  branches, remotes, ledger, merged PRs); exit 1 on drift.
 - `pnpm worktrees:prune` — **hygiene**: remove merged/gone/phantom subtrees and
   their rows. `pnpm preflight` warns (via
   [`verify-worktrees.mjs`](../scripts/verify-worktrees.mjs)) when pruning is due.
