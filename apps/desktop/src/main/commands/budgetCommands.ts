@@ -3,6 +3,8 @@ import {
   APPROPRIATION_RATE_MIN_BP,
   RESEARCH_BUDGET_MAX,
   RESEARCH_BUDGET_MIN,
+  monthlyRevenue,
+  researchCap,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { Effect } from "effect";
@@ -24,6 +26,21 @@ import { currentRevision, submitPlayerCommand } from "./playerCommandSupport.js"
  * read goes through the desktop service graph (`CampaignSessionStore`,
  * `CommandQueueStore`), never the module singletons.
  */
+/** Selectable appropriation rates move in steps of this many basis points (the slider's step). */
+const RATE_STEP_BP = 50;
+
+/** The research cap at every selectable rate, from the engine's own calculators. */
+function researchCapsByRate(base: SafeInt): BudgetScreenProjection["researchCaps"] {
+  const caps: { rateBp: number; cap: number }[] = [];
+  for (
+    let rate = APPROPRIATION_RATE_MIN_BP;
+    rate <= APPROPRIATION_RATE_MAX_BP;
+    rate += RATE_STEP_BP
+  )
+    caps.push({ rateBp: rate, cap: Number(researchCap(monthlyRevenue(base, SafeInt(rate)))) });
+  return caps;
+}
+
 export const inspectBudgetScreenProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -50,6 +67,7 @@ export const inspectBudgetScreenProgram = withSchema(SessionIdPayloadSchema, (se
         researchBudgetMin: RESEARCH_BUDGET_MIN,
         researchBudgetMax: RESEARCH_BUDGET_MAX,
       },
+      researchCaps: researchCapsByRate(nation.baseResources),
     };
     return { outcome: "success" as const, value, diagnostics: [] };
   }),

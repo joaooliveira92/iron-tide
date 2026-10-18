@@ -14,6 +14,9 @@ function fixtureProjection(
   return {
     nationId: "uk",
     researchBudget: 60,
+    annualAllocation: 720,
+    researchCap: 120,
+    unfundedReason: null,
     fieldPriorities: {
       GUNNERY: RESEARCH_FIELD_PRIORITY_WEIGHTS.HIGH,
       MACHINERY: RESEARCH_FIELD_PRIORITY_WEIGHTS.MEDIUM,
@@ -94,5 +97,20 @@ describe("buildResearchViewModel", () => {
     expect(vm.fields.every((field) => field.weight === RESEARCH_FIELD_PRIORITY_WEIGHTS.LOW)).toBe(
       true,
     );
+  });
+
+  it("carries the annual allocation, the cap and an honest note about an unpaid or impossible budget", () => {
+    const ok = buildResearchViewModel(loaded());
+    expect(ok.annualAllocation).toBe(720);
+    expect(ok.researchCap).toBe(120);
+    expect(ok.budgetNote).toBeNull();
+
+    const noField = buildResearchViewModel(
+      loaded({ unfundedReason: "NO_ELIGIBLE_RESEARCH_FIELD" }),
+    );
+    expect(noField.budgetNote).toMatch(/no field can take it/);
+
+    const tiny = buildResearchViewModel(loaded({ researchBudget: 0, researchCap: 0 }));
+    expect(tiny.budgetNote).toMatch(/too small to fund research/);
   });
 });

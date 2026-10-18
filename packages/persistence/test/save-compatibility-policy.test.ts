@@ -75,8 +75,9 @@ describe("save-compatibility policy (ADR-0113)", () => {
     // fixture and register a migration or a documented rejection — never edit the
     // constant silently. 2.0.0 -> 3.0.0 adds required per-ship readiness and
     // crew-quality state (S-1 map D2); like the part-model bump, 2.0.0 saves are
-    // refused before decoding (no released save exists to migrate).
-    expect(CURRENT_COMPATIBILITY_VERSION).toBe("3.0.0");
+    // refused before decoding (no released save exists to migrate). 3.0.0 -> 3.1.0 is the 1880 economy model (#138):
+    // additive optional fields, and 3.0.0 saves are refused at the gate for the same reason.
+    expect(CURRENT_COMPATIBILITY_VERSION).toBe("3.1.0");
   });
 
   it("round-trips a snapshot saved at the current compatibility version", () => {
@@ -126,7 +127,7 @@ describe("save-compatibility policy (ADR-0113)", () => {
     expect(diagnostics.errors[0]!.stage).toBe("persistence.load");
   });
 
-  it.each(["1.0.0", "1.1.0"])(
+  it.each(["1.0.0", "1.1.0", "3.0.0"])(
     "rejects a pre-change save at %s with the stable mismatch code (documented rejection, ADR-0129)",
     (prior) => {
       const state = createFixtureState();
@@ -152,7 +153,7 @@ describe("save-compatibility policy (ADR-0113)", () => {
     expect(PART_MODEL_COMPATIBILITY_VERSION).toBe("2.0.0");
   });
 
-  it("refuses a 2.0.0 campaign at the current 3.0.0 version, leaving the file byte-identical", () => {
+  it("refuses a 2.0.0 campaign at the current 3.1.0 version, leaving the file byte-identical", () => {
     const legacy = createFixtureState();
     const legacySnapshot = { ...legacy.snapshot, compatibilityVersion: "2.0.0" };
     const legacyEnvelope = createEnvelope("campaign-snapshot", "2.0.0", legacySnapshot);

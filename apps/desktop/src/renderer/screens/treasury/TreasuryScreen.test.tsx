@@ -26,6 +26,14 @@ const projection: PlayerProjection = {
     constructionSpend: 500,
     researchSpend: 300,
     maintenanceCost: 200,
+    obligations: 0,
+    researchRequested: 300,
+    researchCap: 480,
+    plannedConstruction: 500,
+    projectedNet: 3000,
+    shortfall: 0,
+    status: "healthy",
+    monthEndTreasury: 53000,
   },
   knownTechnologyIds: [],
   fleet: [
@@ -73,29 +81,29 @@ describe("TreasuryScreen", () => {
   it("renders the real income / expenditure / result figures from the projection", () => {
     render(<TreasuryScreen sessionId="ses-1" />);
 
-    expect(screen.getByText("Government naval allocation")).not.toBeNull();
+    expect(screen.getByText("Monthly naval appropriation")).not.toBeNull();
     // Income appears in its own card (and again in the budget bar legend): check the card.
     expect(
       within(
-        screen.getByText("Government naval allocation").parentElement as HTMLElement,
+        screen.getByText("Monthly naval appropriation").parentElement as HTMLElement,
       ).getByText("4,000"),
     ).not.toBeNull();
 
     // Named in the expenditure card and again in the budget bar legend.
     expect(screen.getAllByText("Fleet maintenance").length).toBeGreaterThanOrEqual(2);
-    // Named in the expenditure card and again in the budget bar legend.
-    expect(screen.getAllByText("Construction").length).toBeGreaterThanOrEqual(2);
-    // Named in the expenditure card and again in the budget bar legend.
     expect(screen.getAllByText("Research").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText("Total expenditure")).not.toBeNull();
-    expect(screen.getByText("1,000")).not.toBeNull();
+    expect(screen.getAllByText("Fixed obligations").length).toBeGreaterThanOrEqual(1);
+    // Construction is an "up to" bound, shown apart from the committed total.
+    expect(screen.getByText("Construction (up to)")).not.toBeNull();
+    expect(screen.getByText("Committed expenditure")).not.toBeNull();
+    expect(screen.getAllByText("500").length).toBeGreaterThanOrEqual(1);
 
-    expect(screen.getByText("Projected surplus / deficit")).not.toBeNull();
+    expect(screen.getByText("Projected net before construction")).not.toBeNull();
     expect(screen.getByText("Available funds")).not.toBeNull();
     expect(screen.getByText("Projected month-end funds")).not.toBeNull();
     expect(screen.getByText("50,000")).not.toBeNull();
     expect(screen.getByText("53,000")).not.toBeNull();
-    expect(screen.getByText("Surplus")).not.toBeNull();
+    expect(screen.getByText("Healthy")).not.toBeNull();
   });
 
   it("hosts the budget allocation panel (its own tests cover the controls)", () => {
@@ -103,15 +111,37 @@ describe("TreasuryScreen", () => {
     expect(screen.getByTestId("budget-policy-panel-stub")).not.toBeNull();
   });
 
-  it("flags a deficit honestly from a negative projected surplus", () => {
+  it("flags a deficit honestly, with the shortfall, the runway and why research is unpaid", () => {
     const deficit: PlayerProjection = {
       ...projection,
       projectedSurplusDeficit: -250,
-      economy: { ...projection.economy, maintenanceCost: 2500 },
+      economy: {
+        ...projection.economy,
+        maintenanceCost: 2500,
+        projectedNet: -250,
+        status: "critical",
+        shortfall: 40,
+        runwayMonths: 12,
+        researchSpend: 0,
+        researchUnfundedReason: "NO_ELIGIBLE_RESEARCH_FIELD",
+      },
     };
     hookMocks.state.mockReturnValue({ projection: deficit, loadError: null });
     render(<TreasuryScreen sessionId="ses-1" />);
-    expect(screen.getByText("Deficit")).not.toBeNull();
+    expect(screen.getByText("Critical")).not.toBeNull();
+    expect(screen.getByText(/Shortfall: 40/)).not.toBeNull();
+    expect(screen.getByText(/Treasury lasts 12 months/)).not.toBeNull();
+    expect(screen.getByText(/no field can take it, so nothing is paid/)).not.toBeNull();
+  });
+
+  it("says a too-small appropriation cannot fund research", () => {
+    const small: PlayerProjection = {
+      ...projection,
+      economy: { ...projection.economy, researchCap: 0, researchRequested: 0, researchSpend: 0 },
+    };
+    hookMocks.state.mockReturnValue({ projection: small, loadError: null });
+    render(<TreasuryScreen sessionId="ses-1" />);
+    expect(screen.getByText(/too small to fund research/)).not.toBeNull();
   });
 
   it("shows the budget at a glance with every segment named in text, not colour alone", () => {
@@ -119,7 +149,7 @@ describe("TreasuryScreen", () => {
     render(<TreasuryScreen sessionId="ses-1" />);
     const bar = screen.getByRole("img", { name: /Monthly budget: income 4,000/ });
     expect(bar.getAttribute("aria-label")).toContain("Fleet maintenance 200");
-    expect(bar.getAttribute("aria-label")).toContain("Construction 500");
+    expect(bar.getAttribute("aria-label")).toContain("Obligations 0");
     expect(bar.getAttribute("aria-label")).toContain("Research 300");
     expect(bar.getAttribute("aria-label")).toContain("Spending is within income.");
     expect(screen.getByTestId("budget-bar").textContent).toContain("Income");

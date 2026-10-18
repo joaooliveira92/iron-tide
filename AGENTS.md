@@ -170,4 +170,4 @@ Canonical triage roles with default label strings. See `docs/agents/triage-label
 
 ### Domain docs
 
-Multi-context: a root `GLOSSARY-MAP.md` (once created) points to per-context `GLOSSARY.md` files; system ADRs in `docs/adr/`. See `docs/agents/domain.md`.
+Multi-context: the root `GLOSSARY-MAP.md` points to per-context `GLOSSARY.md` files; system ADRs in `docs/adr/`. See `docs/agents/domain.md`.

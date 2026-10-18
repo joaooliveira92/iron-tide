@@ -9,6 +9,8 @@ import {
   fleetMoveProblem,
   isTerminalConstructionProjectStatus,
   isShipOperational,
+  monthlyRevenue,
+  researchCap,
 } from "@bluewave/campaign";
 import {
   CANONICAL_RESEARCH_FIELD_IDS,
@@ -442,6 +444,16 @@ function validateSetBudgetAllocation(
     return reject(
       "INVALID_COMMAND_PAYLOAD",
       `researchBudget must be an integer in ${String(RESEARCH_BUDGET_MIN)}..${String(RESEARCH_BUDGET_MAX)}`,
+    );
+  // Spec #138: the standing spend may not exceed 12% of the monthly revenue at the commanded rate, so an unpayable budget
+  // is refused here, at issue time, with the cap in the message. The engine enforces the same rule when it applies it.
+  const cap = researchCap(
+    monthlyRevenue(snapshot.nations.get(body.nationId)!.baseResources, body.appropriationRateBp),
+  ) as number;
+  if (research > cap)
+    return reject(
+      "RESEARCH_ABOVE_CAP",
+      `researchBudget ${String(research)} exceeds the cap of ${String(cap)} (12% of the monthly appropriation at ${String(rate)} bp)`,
     );
   return { ok: true };
 }

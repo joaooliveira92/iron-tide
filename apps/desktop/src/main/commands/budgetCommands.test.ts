@@ -154,7 +154,8 @@ describe("budget allocation", () => {
 
   it("queues a valid allocation and the engine applies it when the month is committed", async () => {
     registerSession("b");
-    const queued = await submitBudgetAllocation(pay(3000, 150));
+    // UK: revenue 150 at 3000 bp, so the 12% research cap is 18.
+    const queued = await submitBudgetAllocation(pay(3000, 15));
     expect(queued).toMatchObject({
       outcome: "success",
       value: { bodyType: "SetBudgetAllocation", appliedOnNextTurn: true },
@@ -168,20 +169,37 @@ describe("budget allocation", () => {
     const after = await inspectBudgetScreen("b");
     if (after.outcome !== "success") throw new Error(after.reason);
     expect(after.value.appropriationRateBp).toBe(3000);
-    expect(after.value.researchBudget).toBe(150);
+    expect(after.value.researchBudget).toBe(15);
+  });
+
+  it("refuses at issue time a research budget above the 12% cap and queues nothing", async () => {
+    registerSession("b");
+    const refused = await submitBudgetAllocation(pay(3000, 19));
+    expect(refused).toMatchObject({ outcome: "rejected", reason: "RESEARCH_ABOVE_CAP" });
+  });
+
+  it("offers the engine's research cap for every selectable rate", async () => {
+    registerSession("b");
+    const view = await inspectBudgetScreen("b");
+    if (view.outcome !== "success") throw new Error(view.reason);
+    const caps = new Map(view.value.researchCaps.map((c) => [c.rateBp, c.cap]));
+    expect(view.value.researchCaps).toHaveLength(91);
+    expect(caps.get(2000)).toBe(12); // UK: revenue 100 at the start rate
+    expect(caps.get(3000)).toBe(18);
+    expect(caps.get(500)).toBe(3);
   });
 
   it("replays the same transport request and rejects a conflicting body (idempotency)", async () => {
     registerSession("b");
-    const first = await submitBudgetAllocation(pay(3000, 150, { transportRequestId: "req-idem" }));
+    const first = await submitBudgetAllocation(pay(3000, 15, { transportRequestId: "req-idem" }));
     expect(first).toMatchObject({ outcome: "success" });
-    const replay = await submitBudgetAllocation(pay(3000, 150, { transportRequestId: "req-idem" }));
+    const replay = await submitBudgetAllocation(pay(3000, 15, { transportRequestId: "req-idem" }));
     expect(replay).toMatchObject({ outcome: "success" });
     if (first.outcome === "success" && replay.outcome === "success") {
       expect(replay.value.commandId).toBe(first.value.commandId);
     }
     const conflict = await submitBudgetAllocation(
-      pay(2500, 200, { transportRequestId: "req-idem" }),
+      pay(2500, 10, { transportRequestId: "req-idem" }),
     );
     expect(conflict).toMatchObject({ outcome: "rejected", reason: "IDEMPOTENCY_CONFLICT" });
   });

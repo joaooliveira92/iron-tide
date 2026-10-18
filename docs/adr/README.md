@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0230).
+highest existing number + 1 (the next number is ADR-0231).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -78,6 +78,14 @@ Legality, consistency and authored posture of the 1880 scenario's starting conte
 | 0213 | [ADR-0213-opening-posture-balance-choices.md](ADR-0213-opening-posture-balance-choices.md) | The 1880 opening posture is authored canon; magnitudes are balance choices | accepted | — |
 | 0228 | [ADR-0228-combat-classifier-1880-ruleset-v2.md](ADR-0228-combat-classifier-1880-ruleset-v2.md) | The combat ship-type classifier aligns to the 1880 classification ruleset v2 | accepted | — |
 | 0229 | [ADR-0229-technology-year-global-designer-unlock.md](ADR-0229-technology-year-global-designer-unlock.md) | Technology `year` is the global designer unlock year, not a research claim | accepted | — |
+
+## Campaign economy
+
+The monthly appropriation, ledger, research, deficit policy and construction capacity as one model.
+
+| # | File | Title | Status | Superseded by |
+| --- | --- | --- | --- | --- |
+| 0230 | [ADR-0230-campaign-economy-model.md](ADR-0230-campaign-economy-model.md) | Campaign economy model — one appropriation, one ledger, one set of calculators | accepted | — |
 
 ## Turns, interruptions & save/resume
 

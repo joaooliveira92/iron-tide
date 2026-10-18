@@ -17,6 +17,9 @@ import type { ResearchScreenState } from "./research-screen-state.js";
 const fixtureProjection = {
   nationId: "uk",
   researchBudget: 60,
+  annualAllocation: 720,
+  researchCap: 120,
+  unfundedReason: null,
   fieldPriorities: {
     GUNNERY: RESEARCH_FIELD_PRIORITY_WEIGHTS.HIGH,
     MACHINERY: RESEARCH_FIELD_PRIORITY_WEIGHTS.MEDIUM,

@@ -399,6 +399,15 @@ interface ProductionRun {
   readonly closingSnapshotHash: string;
   readonly success: boolean;
   readonly diagnostics: SmokeDiagnostic[];
+  /** Per nation, the first month (1-based) that recorded an outflow shortfall; absent nations never fell short. */
+  readonly firstShortfallMonth: Record<string, number>;
+  /**
+   * Per nation, the first month (1-based) whose requested monthly flows left a negative net before construction
+   * (revenue less requested maintenance, obligation and research); absent nations never ran a deficit.
+   */
+  readonly firstDeficitMonth: Record<string, number>;
+  /** Months where a nation's treasury change did not equal the sum of its paid ledger postings (must stay empty). */
+  readonly ledgerIdentityBreaks: string[];
   readonly hullCounts: Record<string, number>;
 }
 
@@ -425,6 +434,9 @@ function advanceProductionRun(
   const monthlyHashes: string[] = [];
   const monthlySuccess: boolean[] = [];
   const diagnostics: SmokeDiagnostic[] = [];
+  const firstShortfallMonth: Record<string, number> = {};
+  const firstDeficitMonth: Record<string, number> = {};
+  const ledgerIdentityBreaks: string[] = [];
   let success = true;
   for (let index = 0; index < months; index++) {
     const calendar = calendarAt(initial, index);
@@ -453,6 +465,35 @@ function advanceProductionRun(
         message: diagnostic.message,
       });
     }
+    for (const warning of collector.warnings) {
+      const nationId = warning.code === "OUTFLOW_SHORTFALL" ? nationIdOf(warning) : null;
+      if (nationId !== null && firstShortfallMonth[nationId] === undefined)
+        firstShortfallMonth[nationId] = index + 1;
+    }
+    for (const nationId of snapshot.nations.keys()) {
+      let revenue = 0;
+      let requested = 0;
+      for (const entry of result.financialLedger.all) {
+        if (entry.nationId !== nationId) continue;
+        if (entry.phaseId === "monthly_revenue") revenue += entry.credit as number;
+        else if (entry.phaseId !== "appropriation")
+          requested += (entry.requested ?? entry.debit) as number;
+      }
+      if (revenue - requested < 0 && firstDeficitMonth[nationId] === undefined)
+        firstDeficitMonth[nationId] = index + 1;
+    }
+    for (const [nationId, before] of snapshot.nations) {
+      let net = 0;
+      for (const entry of result.financialLedger.all) {
+        if (entry.nationId !== nationId) continue;
+        const credits = entry.phaseId === "monthly_revenue" ? entry.credit : 0;
+        const debits = entry.phaseId === "monthly_revenue" ? 0 : entry.debit;
+        net += (credits as number) - (debits as number);
+      }
+      const after = result.finalSnapshot.nations.get(nationId);
+      if (after !== undefined && (after.treasury as number) !== (before.treasury as number) + net)
+        ledgerIdentityBreaks.push(`${String(index + 1)}:${nationId}`);
+    }
     monthlyHashes.push(hashSnapshot(result.finalSnapshot));
     snapshot = {
       ...result.finalSnapshot,
@@ -467,6 +508,9 @@ function advanceProductionRun(
     closingSnapshotHash: hashSnapshot(snapshot),
     success,
     diagnostics,
+    firstShortfallMonth,
+    firstDeficitMonth,
+    ledgerIdentityBreaks,
     hullCounts: hullCounts(snapshot),
   };
 }
@@ -494,6 +538,9 @@ function runProductionTenNationSmoke(): void {
       monthlySuccess: first.monthlySuccess,
       closingSnapshotHash: first.closingSnapshotHash,
       diagnostics: first.diagnostics,
+      firstShortfallMonth: first.firstShortfallMonth,
+      firstDeficitMonth: first.firstDeficitMonth,
+      ledgerIdentityBreaks: first.ledgerIdentityBreaks,
       hullCounts: first.hullCounts,
     }) + "\n",
   );
@@ -540,6 +587,9 @@ function runProductionTenYear(): void {
       monthlySuccess: first.monthlySuccess,
       closingSnapshotHash: first.closingSnapshotHash,
       diagnostics: first.diagnostics,
+      firstShortfallMonth: first.firstShortfallMonth,
+      firstDeficitMonth: first.firstDeficitMonth,
+      ledgerIdentityBreaks: first.ledgerIdentityBreaks,
       hullCounts: first.hullCounts,
     }) + "\n",
   );

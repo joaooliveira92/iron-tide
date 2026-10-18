@@ -13,6 +13,10 @@ export interface LedgerTransaction {
   previousBalance: SafeInt;
   newBalance: SafeInt;
   reason: string;
+  /** Outflows only: what the rules asked for; `debit`/`credit` carry what was paid (spec #138). */
+  requested?: SafeInt;
+  /** Outflows only: `requested - paid`, a recorded non-carried shortfall. */
+  shortfall?: SafeInt;
   preTransactionHash: string;
   postTransactionHash: string;
 }

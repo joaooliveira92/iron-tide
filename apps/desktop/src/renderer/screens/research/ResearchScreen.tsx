@@ -50,6 +50,9 @@ export function ResearchScreen({ sessionId }: { readonly sessionId: string }) {
 
       <ResearchSummarySections
         researchBudget={vm.researchBudget}
+        annualAllocation={vm.annualAllocation}
+        researchCap={vm.researchCap}
+        budgetNote={vm.budgetNote}
         currentProjectLabel={vm.currentProjectLabel}
         discoveredTechs={vm.discoveredTechs}
       />

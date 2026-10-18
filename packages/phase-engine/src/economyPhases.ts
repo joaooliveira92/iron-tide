@@ -1,8 +1,10 @@
 // Economy phases: monthly_revenue, appropriation, maintenance, obligation.
 import type { CampaignSnapshot, ConstructionProject, NationState } from "@bluewave/campaign";
 import {
+  monthlyRevenue,
   nationIsAtWar,
-  shipMonthlyMaintenanceCost,
+  nationMonthlyMaintenance,
+  settleOutflow,
   transitionConstructionProject,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
@@ -25,6 +27,7 @@ import { resolvePrivateDockExpansion } from "./dockExpansion.js";
 import { runForeignContractPhase } from "./foreignContractPhase.js";
 import { budgetChangedEvent, constructionDelayedEvent, makeLedgerEntry } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
+import { reportOutflowShortfall } from "./outflowShortfall.js";
 import { applyReadinessEvolution } from "./readinessEvolution.js";
 
 /**
@@ -58,10 +61,13 @@ export function splitLargestRemainder(total: number, weights: readonly number[])
   return base;
 }
 
-function computeConstructionCap(nation: NationState): SafeInt {
-  const base = nation["baseResources"] ?? (0 as SafeInt);
-  return SafeInt.div(SafeInt.div(base, SafeInt(12)), SafeInt(100), "floor");
-}
+/**
+ * The acceleration-pressure pool (DESIGN-13 section 11.3.3), in treasury units per month. It is deliberately 0 (always
+ * saturated, as before the economy model) until a national work-to-treasury-unit conversion is defined: spec #138 slice 4
+ * records the spike that computes it (docs/research/economy/acceleration-pool/README.md) but keeps the numeric pool out of scope.
+ * It is never derived from the economic base — construction capacity is yard throughput plus the tonnage concurrency cap.
+ */
+export const ACCELERATION_POOL_UNDEFINED_UNITS = 0;
 
 export function runMonthlyRevenuePhase(ctx: MonthContext): void {
   const { campaignMonth, eventLedger, financialLedger, nextSeq } = ctx;
@@ -70,11 +76,7 @@ export function runMonthlyRevenuePhase(ctx: MonthContext): void {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
     const baseResources = nation["baseResources"] ?? (0 as SafeInt);
     const rateBp = nation["navalAppropriationRateBp"] ?? (0 as SafeInt);
-    const revenue = SafeInt.div(
-      SafeInt.div(SafeInt.mul(baseResources, rateBp), SafeInt(10000)),
-      SafeInt(12),
-      "floor",
-    );
+    const revenue = monthlyRevenue(baseResources, rateBp);
     if ((revenue as number) <= 0) continue;
 
     const previousBalance = nation["treasury"];
@@ -116,12 +118,17 @@ export function runMonthlyRevenuePhase(ctx: MonthContext): void {
   }
 }
 
-/** The monthly yard capacity (treasury units per line) recorded on a project's design, or undefined when it has none. */
-function capacityOf(
+/**
+ * The monthly yard capacity (treasury units per line) of a project: its own seeded throughput when the campaign started it
+ * on the slips, else the capacity recorded on its design, or undefined when it has none.
+ */
+export function capacityOf(
   designs: CampaignSnapshot["designs"],
   project: ConstructionProject,
 ): Record<string, number> | undefined {
-  const capacity = designs.get(project["designVersionId"])?.constructionPlan?.capacityUnits;
+  const capacity =
+    project["capacityUnits"] ??
+    designs.get(project["designVersionId"])?.constructionPlan?.capacityUnits;
   return capacity === undefined
     ? undefined
     : Object.fromEntries(Object.entries(capacity).map(([line, v]) => [line, v as number]));
@@ -155,7 +162,7 @@ export function preservationCostUnits(
 }
 
 // Phase 4: appropriation — proportional funding of construction projects within
-// the nation's construction cap. Halted projects take no ordinary charge and pay
+// each project's yard throughput (no treasury-unit cap; spec #138 slice 4). Halted projects take no ordinary charge and pay
 // the preservation cost instead; delayed projects take no charge at all and
 // resume the following month (DESIGN-23 section 7).
 export function runAppropriationPhase(ctx: MonthContext): void {
@@ -209,7 +216,7 @@ export function runAppropriationPhase(ctx: MonthContext): void {
         campaignMonth,
         normalDemand,
         acceleratedDemand,
-        availableCapacity: Number(computeConstructionCap(nation)),
+        availableCapacity: ACCELERATION_POOL_UNDEFINED_UNITS,
         acceleratedProjects,
         randomEngine: accelerationRng,
         randomLedger: ctx.randomLedger,
@@ -252,6 +259,17 @@ export function runAppropriationPhase(ctx: MonthContext): void {
       else preservationDelta = preservationCostUnits(balance, unitMicro) * haltedProjects.length;
     }
 
+    // Preservation is paid first and from the treasury itself; what the treasury cannot cover is a recorded shortfall.
+    const preservationSettlement = settleOutflow(SafeInt(preservationDelta), nation["treasury"]);
+    reportOutflowShortfall(
+      collector,
+      nationId,
+      "preservation",
+      preservationSettlement,
+      "appropriation",
+    );
+    preservationDelta = preservationSettlement.paid as number;
+
     let updatedProjects = projects;
     if (delayedByPressure.size > 0)
       updatedProjects = projects.map((p) =>
@@ -260,27 +278,42 @@ export function runAppropriationPhase(ctx: MonthContext): void {
     let totalDelta = SafeInt.ZERO;
 
     const expenseReserve = nation["expenses"];
-    const available = SafeInt.sub(nation["treasury"], expenseReserve);
+    const available = SafeInt.sub(
+      SafeInt.sub(nation["treasury"], SafeInt(preservationDelta)),
+      expenseReserve,
+    );
     const fundable =
       (available as number) > 0
         ? updatedProjects.filter(
             (p) =>
               (p["completedWork"] as number) < (p["totalWork"] as number) &&
               p["status"] !== "COMPLETED" &&
+              p["status"] !== "CANCELLED" &&
               p["status"] !== "HALTED" &&
               p["status"] !== "DELAYED" &&
               !(foreignSkip?.has(p["id"]) ?? false),
           )
         : [];
+    // What the fundable projects could absorb this month with unlimited funds (yard throughput and dependencies bound
+    // it); the ledger records it as the construction entry's `requested`, so a treasury-limited month shows a shortfall.
+    const constructionRequested = fundable.reduce((sum: number, p) => {
+      const remaining = (p["totalWork"] as number) - (p["completedWork"] as number);
+      if (p["packages"] === undefined) return sum + remaining;
+      const absorbable = fundConstructionProject(
+        p,
+        capacityOf(ctx.currentSnapshot["designs"], p),
+        Number.MAX_SAFE_INTEGER,
+        campaignMonth,
+      ).applied;
+      return sum + Math.min(remaining, absorbable);
+    }, 0);
     if (fundable.length > 0) {
       const totalRemainingWork = fundable.reduce(
         (sum: SafeInt, p) => SafeInt.add(sum, SafeInt.sub(p["totalWork"], p["completedWork"])),
         SafeInt.ZERO,
       );
       if ((totalRemainingWork as number) > 0) {
-        const constructionCap = computeConstructionCap(nation);
         let remainingFunds = available;
-        let remainingCap = constructionCap;
         updatedProjects = [...updatedProjects];
 
         const remainingWorks = fundable.map((p) =>
@@ -290,13 +323,11 @@ export function runAppropriationPhase(ctx: MonthContext): void {
 
         for (let fi = 0; fi < fundable.length; fi += 1) {
           const project = fundable[fi]!;
-          if ((remainingCap as number) <= 0) break;
+          if ((remainingFunds as number) <= 0) break;
 
           const remainingWork = SafeInt.sub(project["totalWork"], project["completedWork"]);
           const alloc = SafeInt(allocations[fi]!);
-          const cappedAlloc =
-            (remainingCap as number) > 0 && alloc > remainingCap ? remainingCap : alloc;
-          const clampedAlloc = cappedAlloc > remainingWork ? remainingWork : cappedAlloc;
+          const clampedAlloc = alloc > remainingWork ? remainingWork : alloc;
           if ((clampedAlloc as number) <= 0) continue;
 
           if (project["packages"] !== undefined) {
@@ -311,7 +342,6 @@ export function runAppropriationPhase(ctx: MonthContext): void {
             const applied = SafeInt(funded.applied);
             totalDelta = SafeInt.add(totalDelta, applied);
             remainingFunds = SafeInt.sub(remainingFunds, applied);
-            remainingCap = SafeInt.sub(remainingCap, applied);
             updatedProjects = updatedProjects.map((p) =>
               p["id"] === project["id"] ? funded.project : p,
             );
@@ -320,7 +350,6 @@ export function runAppropriationPhase(ctx: MonthContext): void {
 
           totalDelta = SafeInt.add(totalDelta, clampedAlloc);
           remainingFunds = SafeInt.sub(remainingFunds, clampedAlloc);
-          remainingCap = SafeInt.sub(remainingCap, clampedAlloc);
 
           updatedProjects = updatedProjects.map((p) =>
             p["id"] === project["id"]
@@ -337,7 +366,6 @@ export function runAppropriationPhase(ctx: MonthContext): void {
         const leftover = applyLeftoverFunding(
           updatedProjects,
           remainingFunds,
-          remainingCap,
           ctx.currentSnapshot["designs"],
           campaignMonth,
           foreignSkip,
@@ -397,6 +425,11 @@ export function runAppropriationPhase(ctx: MonthContext): void {
             newTreasury,
             "Proportional appropriation to construction projects",
             campaignMonth,
+            {
+              requested: SafeInt(Math.max(constructionRequested, totalDelta as number)),
+              paid: totalDelta,
+              shortfall: SafeInt(Math.max(constructionRequested - (totalDelta as number), 0)),
+            },
           ),
         );
       }
@@ -413,6 +446,7 @@ export function runAppropriationPhase(ctx: MonthContext): void {
             newTreasury,
             `Preservation cost for ${haltedProjects.length} halted project(s)`,
             campaignMonth,
+            preservationSettlement,
           ),
         );
       }
@@ -455,27 +489,29 @@ export function runAppropriationPhase(ctx: MonthContext): void {
 function applyLeftoverFunding(
   projects: ConstructionProject[],
   remainingFunds: SafeInt,
-  remainingCap: SafeInt,
   designs: CampaignSnapshot["designs"],
   campaignMonth: string,
   foreignSkip: ReadonlySet<string> | undefined,
 ): { projects: ConstructionProject[]; delta: SafeInt } {
-  if ((remainingFunds as number) <= 0 || (remainingCap as number) <= 0) {
+  if ((remainingFunds as number) <= 0) {
     return { projects, delta: SafeInt.ZERO };
   }
   const skipped = (p: ConstructionProject): boolean => foreignSkip?.has(p["id"]) ?? false;
   // Projects with work packages take leftover funds in order, skipping one the yard cannot work on this month (ADR-0077).
-  const offered =
-    (remainingFunds as number) > (remainingCap as number) ? remainingCap : remainingFunds;
   for (const candidate of projects) {
-    if (candidate["packages"] === undefined || candidate["status"] === "COMPLETED") continue;
+    if (
+      candidate["packages"] === undefined ||
+      candidate["status"] === "COMPLETED" ||
+      candidate["status"] === "CANCELLED"
+    )
+      continue;
     if (candidate["status"] === "HALTED" || candidate["status"] === "DELAYED") continue;
     if (skipped(candidate)) continue;
     if ((candidate["completedWork"] as number) >= (candidate["totalWork"] as number)) continue;
     const funded = fundConstructionProject(
       candidate,
       capacityOf(designs, candidate),
-      offered as number,
+      remainingFunds as number,
       campaignMonth,
     );
     if (funded.applied <= 0) continue;
@@ -489,6 +525,7 @@ function applyLeftoverFunding(
       p["packages"] === undefined &&
       (p["completedWork"] as number) < (p["totalWork"] as number) &&
       p["status"] !== "COMPLETED" &&
+      p["status"] !== "CANCELLED" &&
       p["status"] !== "HALTED" &&
       p["status"] !== "DELAYED" &&
       !skipped(p),
@@ -497,20 +534,19 @@ function applyLeftoverFunding(
 
   const remainingWork = SafeInt.sub(firstIncomplete["totalWork"], firstIncomplete["completedWork"]);
   const extra = remainingFunds > remainingWork ? remainingWork : remainingFunds;
-  const cappedExtra = extra > remainingCap ? remainingCap : extra;
-  if ((cappedExtra as number) <= 0) return { projects, delta: SafeInt.ZERO };
+  if ((extra as number) <= 0) return { projects, delta: SafeInt.ZERO };
 
   return {
     projects: projects.map((p) =>
       p["id"] === firstIncomplete["id"]
         ? {
             ...transitionConstructionProject(p, constructionWorkStatus(p["status"])),
-            completedWork: SafeInt.add(p["completedWork"], cappedExtra),
-            paidWork: SafeInt.add(p["paidWork"], cappedExtra),
+            completedWork: SafeInt.add(p["completedWork"], extra),
+            paidWork: SafeInt.add(p["paidWork"], extra),
           }
         : p,
     ),
-    delta: cappedExtra,
+    delta: extra,
   };
 }
 
@@ -525,21 +561,14 @@ export function runMaintenancePhase(ctx: MonthContext): void {
     // `wars` collection — a declared read of the maintenance phase.
     const atWar = nationIsAtWar(ctx.currentSnapshot["wars"]["wars"], nationId);
 
-    let totalMaintenance = SafeInt.ZERO;
-    for (const fleet of nation["fleets"]) {
-      for (const ship of fleet["ships"]) {
-        totalMaintenance = SafeInt.add(
-          totalMaintenance,
-          shipMonthlyMaintenanceCost(ship["hitPoints"], ship["readiness"], atWar),
-        );
-      }
-    }
+    const totalMaintenance = nationMonthlyMaintenance(nation["fleets"], atWar);
 
     if ((totalMaintenance as number) <= 0) continue;
 
     const previousTreasury = nation["treasury"];
-    const newTreasury = SafeInt.sub(previousTreasury, totalMaintenance);
-    const actualNew = newTreasury < (0 as SafeInt) ? (0 as SafeInt) : newTreasury;
+    const settlement = settleOutflow(totalMaintenance, previousTreasury);
+    const actualNew = SafeInt.sub(previousTreasury, settlement.paid);
+    reportOutflowShortfall(ctx.collector, nationId, "maintenance", settlement, "maintenance");
 
     const updatedNation: NationState = {
       ...nation,
@@ -555,12 +584,13 @@ export function runMaintenancePhase(ctx: MonthContext): void {
         nationId,
         "maintenance",
         "MAINTENANCE_EXPENDITURE",
-        totalMaintenance,
-        totalMaintenance,
+        settlement.paid,
+        settlement.paid,
         previousTreasury,
         actualNew,
         "Monthly ship maintenance costs",
         campaignMonth,
+        settlement,
       ),
     );
 
@@ -569,7 +599,7 @@ export function runMaintenancePhase(ctx: MonthContext): void {
         nationId,
         previousTreasury,
         actualNew,
-        SafeInt.mul(totalMaintenance, SafeInt(-1)),
+        SafeInt.mul(settlement.paid, SafeInt(-1)),
         "Monthly ship maintenance costs",
         nextSeq(),
         campaignMonth,
@@ -588,18 +618,11 @@ export function runObligationPhase(ctx: MonthContext): void {
 
   for (const [nationId, nation] of ctx.currentSnapshot["nations"]) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
-    const expense = nation["expenses"];
     const previousTreasury = nation["treasury"];
-    const newTreasury = SafeInt.sub(previousTreasury, expense);
-    const actualNew = newTreasury < (0 as SafeInt) ? (0 as SafeInt) : newTreasury;
-
-    if ((newTreasury as number) < 0) {
-      collector.addError(
-        "NEGATIVE_TREASURY_OBLIGATION",
-        `Nation ${nationId} would have negative treasury after obligation`,
-        { stage: "obligation" },
-      );
-    }
+    const settlement = settleOutflow(nation["expenses"], previousTreasury);
+    const expense = settlement.paid;
+    const actualNew = SafeInt.sub(previousTreasury, expense);
+    reportOutflowShortfall(collector, nationId, "obligation", settlement, "obligation");
 
     const updatedNation: NationState = {
       ...nation,
@@ -620,6 +643,7 @@ export function runObligationPhase(ctx: MonthContext): void {
         actualNew,
         "Mandatory fixed expenses",
         campaignMonth,
+        settlement,
       ),
     );
 

@@ -6,9 +6,8 @@ import { fileURLToPath } from "node:url";
 // N-3 acceptance (#47 R5): a command-free run over the fourteen committed
 // nations from the compiled 1880 pack through 120 months to 1890-01, with a
 // checkpoint as each calendar year opens. Two fresh processes must agree on
-// every checkpoint and the closing hash. Owner decision 0014-A accepts the
-// command-free treasury baseline for every nation; any other diagnostic code is
-// a stop condition, never a new allowlist entry.
+// every checkpoint and the closing hash. Economy gates are model-derived (#138):
+// no allowlist, no tolerated diagnostic.
 
 const thisDir = dirname(fileURLToPath(import.meta.url));
 const childScript = resolve(thisDir, "..", "dist", "run-child.js");
@@ -37,6 +36,9 @@ interface TenYearOutput {
   readonly monthlySuccess: readonly boolean[];
   readonly closingSnapshotHash: string;
   readonly diagnostics: readonly TenYearDiagnostic[];
+  readonly firstShortfallMonth: Readonly<Record<string, number>>;
+  readonly firstDeficitMonth: Readonly<Record<string, number>>;
+  readonly ledgerIdentityBreaks: readonly string[];
   readonly hullCounts: Readonly<Record<string, number>>;
 }
 
@@ -83,19 +85,31 @@ describe("N-3 ten-year progression run", () => {
       expect(hulls, `nation '${nationId}' fields no hulls after 120 months`).toBeGreaterThan(0);
     }
 
-    // Owner decision 0014-A: a command-free decade is expected to exhaust every
-    // nation's treasury, so NEGATIVE_TREASURY_OBLIGATION is the only tolerated
-    // code. A new diagnostic code fails the gate; the economy fix is a separate
-    // milestone ticket, not part of N-3.
-    for (const diagnostic of first.output.diagnostics) {
-      expect(
-        diagnostic.code,
-        `unexpected month-${String(diagnostic.month)} diagnostic ${diagnostic.nationId ?? "<unknown>"}|${diagnostic.code}: ${diagnostic.message}`,
-      ).toBe("NEGATIVE_TREASURY_OBLIGATION");
-    }
-    expect(new Set(first.output.diagnostics.map((diagnostic) => diagnostic.nationId))).toEqual(
-      new Set(Object.keys(first.output.hullCounts)),
+    // Economy spec #138 gates (replacing the decade-insolvency tolerance of decision 0014-A, now superseded): no error
+    // diagnostic, the ledger identity closes every month, and insolvency is not the uniform state of the pack.
+    expect(first.output.diagnostics).toEqual([]);
+    expect(first.output.ledgerIdentityBreaks).toEqual([]);
+    expect(first.output.monthlySuccess.every(Boolean)).toBe(true);
+    expect(Object.keys(first.output.firstShortfallMonth).length).toBeLessThan(
+      Object.keys(first.output.hullCounts).length,
     );
+    // Solvency implication: a shortfall only ever follows a month whose requested flows ran a deficit before
+    // construction, so no solvent nation falls short. Portugal runs a structural deficit from month 1 (net -1 a month),
+    // so its opening treasury is exhausted at the closed-form month 41 (spec #138 G8). Qing starts solvent: completing its
+    // seeded Dingyuan commissions a hull whose maintenance turns the net negative at month 71, and the treasury lasts to
+    // month 104 — an emergent, recorded deficit, not a modelling defect.
+    for (const [nationId, shortfall] of Object.entries(first.output.firstShortfallMonth)) {
+      const deficit = first.output.firstDeficitMonth[nationId];
+      expect(
+        deficit,
+        `nation '${nationId}' fell short without ever running a deficit`,
+      ).toBeDefined();
+      expect(shortfall).toBeGreaterThan(deficit!);
+    }
+    expect(first.output.firstDeficitMonth["portugal"]).toBe(1);
+    expect(first.output.firstShortfallMonth["portugal"]).toBe(41);
+    expect(first.output.firstShortfallMonth).toEqual({ portugal: 41, qing: 104 });
+    expect(first.output.firstShortfallMonth).toEqual(second.output.firstShortfallMonth);
     expect(first.output.diagnostics).toEqual(second.output.diagnostics);
   }, 600_000);
 });

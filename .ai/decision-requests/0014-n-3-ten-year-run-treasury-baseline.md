@@ -2,7 +2,9 @@
 
 ## Status
 
-Resolved 2026-10-17: Option A accepted; Option C tracked as #95. Created 2026-10-17. Gates **N-3 ticket 03 (#50)**
+Superseded by [ADR-0230](../../docs/adr/ADR-0230-campaign-economy-model.md) (2026-10-18): the economy model
+credits revenue, so the decade is no longer insolvent for every nation, and the allowlist of Option A is replaced by
+model-derived gates; Option C (#95) is absorbed into spec #138. Previously: resolved 2026-10-17: Option A accepted; Option C tracked as #95. Created 2026-10-17. Gates **N-3 ticket 03 (#50)**
 and, through it, tickets 04 (#51) and 06 (#53). Ticket 01 (#48) and ticket 05
 (#52) are complete; ticket 02 (#49) is complete.
 

@@ -3,6 +3,7 @@ import {
   MAX_HIGH_PRIORITY_FIELDS,
   RESEARCH_FIELD_PRIORITY_WEIGHTS,
 } from "@bluewave/campaign-engine";
+import { researchNote } from "../../lib/economy-wording.js";
 import { humanizeId } from "../../lib/humanize-id.js";
 import { deriveProjectedResearchAllocations } from "./research-allocation.js";
 import { draftHighCount, isDraftDirty } from "./research-field-priorities.js";
@@ -30,7 +31,13 @@ export interface ResearchTechBadge {
 }
 
 export interface ResearchViewModel {
+  /** The standing monthly spend. */
   readonly researchBudget: number;
+  /** The authored annual allocation it was derived from; null when there is none. */
+  readonly annualAllocation: number | null;
+  readonly researchCap: number;
+  /** Why the budget is unpaid or absent (cap of zero, no eligible field, above the cap); null when nothing needs saying. */
+  readonly budgetNote: string | null;
   readonly currentProjectLabel: string | null;
   readonly discoveredTechs: readonly ResearchTechBadge[];
   readonly inProgressTechnologies: readonly ResearchProgressRow[];
@@ -54,6 +61,13 @@ export function buildResearchViewModel(state: ResearchScreenActiveData): Researc
 
   return {
     researchBudget: projection.researchBudget,
+    annualAllocation: projection.annualAllocation,
+    researchCap: projection.researchCap,
+    budgetNote: researchNote({
+      researchCap: projection.researchCap,
+      researchRequested: projection.researchBudget,
+      researchUnfundedReason: projection.unfundedReason ?? undefined,
+    }),
     currentProjectLabel:
       projection.currentProjectTechId === null ? null : humanizeId(projection.currentProjectTechId),
     discoveredTechs: projection.discoveredTechIds.map((techId) => ({

@@ -78,6 +78,52 @@ describe("MonthReportCard", () => {
     expect(card.textContent).toContain("treasury moved −56");
   });
 
+  it("shows a reconciliation line that closes and flags every shortfall with requested, paid and unpaid", () => {
+    render(
+      <MonthReportCard
+        reports={[
+          report(2, {
+            treasury: {
+              ...report(2).treasury,
+              openingTreasury: 10,
+              closingTreasury: 0,
+              obligationExpense: 2,
+              reconciliation: {
+                opening: 10,
+                revenue: 3,
+                construction: 4,
+                preservation: 0,
+                maintenance: 2,
+                obligation: 2,
+                research: 0,
+                other: -5,
+                closing: 0,
+              },
+              ledgerRows: [
+                {
+                  id: "l9",
+                  description: "Fleet maintenance",
+                  phase: "maintenance",
+                  amount: -2,
+                  runningBalance: 0,
+                  requested: 5,
+                  shortfall: 3,
+                },
+              ],
+            },
+          }),
+        ]}
+      />,
+    );
+    const card = screen.getByTestId("month-report-card");
+    expect(card.textContent).toContain(
+      "Reconciliation: opening 10 + revenue 3 − construction 4 − maintenance 2 − obligations 2 ± other −5 = closing 0",
+    );
+    const ledger = screen.getByRole("list", { name: "Financial ledger" });
+    expect(ledger.textContent).toContain("requested 5, paid 2, shortfall 3");
+    expect(card.textContent).toContain("Obligations 2");
+  });
+
   it("renders the Construction section from real project progress and pre→post deltas", () => {
     render(
       <MonthReportCard

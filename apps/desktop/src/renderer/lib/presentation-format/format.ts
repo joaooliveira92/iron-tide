@@ -58,6 +58,14 @@ export function formatNumber(value: number, options: FormatNumberOptions): strin
   return new Intl.NumberFormat(options.locale, formatOptions).format(value);
 }
 
+/**
+ * A whole count grouped for reading ("12,345"): the presentation of treasury-unit figures on the economy surfaces, which have no
+ * fractions and never abbreviate. The locale defaults to the one supported formatting locale.
+ */
+export function formatCount(value: number, locale: FormattingLocale = "en-US"): string {
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value);
+}
+
 export interface FormatPercentOptions {
   readonly locale: FormattingLocale;
   readonly maximumFractionDigits?: number;

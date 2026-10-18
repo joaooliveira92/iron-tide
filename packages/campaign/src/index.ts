@@ -65,6 +65,7 @@ export type {
   Ship,
   ShipAvailability,
   TechnologyProgress,
+  TechnologyDefinitionData,
   WarDeclaration,
   WarParticipantMembership,
   WarState,
@@ -82,3 +83,7 @@ export * from "./officers.js";
 export * from "./readiness.js";
 // S-1: the single per-ship maintenance formula and readiness-state multipliers.
 export * from "./maintenance.js";
+export * from "./researchEligibility.js";
+export * from "./economyOutlook.js";
+// Economy spec #138: the shared revenue / research / outflow-settlement calculators.
+export * from "./economy.js";

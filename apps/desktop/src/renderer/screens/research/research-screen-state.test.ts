@@ -25,6 +25,9 @@ function fixtureProjection(
   return {
     nationId: "uk",
     researchBudget: 60,
+    annualAllocation: 720,
+    researchCap: 120,
+    unfundedReason: null,
     fieldPriorities: { MACHINERY: 4, GUNNERY: 2, HULL_CONSTRUCTION: 2 },
     discoveredTechIds: ["hc_wrought_iron_hull"],
     inProgressTechnologies: [

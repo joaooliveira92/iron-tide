@@ -2,15 +2,22 @@ import { Beaker, Lightbulb, ListChecks } from "lucide-react";
 import { Badge } from "../../../components/ui/badge.js";
 import { GlassSectionCard } from "../../../components/shared/GlassSectionCard.js";
 import type { ResearchTechBadge } from "../research-view-model.js";
+import { formatCount } from "../../../lib/presentation-format/index.js";
 
 export interface ResearchSummarySectionsProps {
   readonly researchBudget: number;
+  readonly annualAllocation: number | null;
+  readonly researchCap: number;
+  readonly budgetNote: string | null;
   readonly currentProjectLabel: string | null;
   readonly discoveredTechs: readonly ResearchTechBadge[];
 }
 
 export function ResearchSummarySections({
   researchBudget,
+  annualAllocation,
+  researchCap,
+  budgetNote,
   currentProjectLabel,
   discoveredTechs,
 }: ResearchSummarySectionsProps) {
@@ -20,8 +27,17 @@ export function ResearchSummarySections({
         icon={<Beaker className="h-4 w-4 text-muted-foreground" />}
         title="Research budget"
       >
-        <p className="text-2xl font-semibold tracking-tight">{researchBudget.toLocaleString()}</p>
-        <p className="text-xs text-muted-foreground">points available to allocate this month</p>
+        <p className="text-2xl font-semibold tracking-tight">{formatCount(researchBudget)}</p>
+        <p className="text-xs text-muted-foreground">standing spend paid each month</p>
+        {annualAllocation !== null && (
+          <p className="text-xs text-muted-foreground">
+            Authored annual allocation {formatCount(annualAllocation)}
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Cap {formatCount(researchCap)} a month (12% of the naval appropriation)
+        </p>
+        {budgetNote !== null && <p className="text-xs text-destructive">{budgetNote}</p>}
       </GlassSectionCard>
 
       <GlassSectionCard
