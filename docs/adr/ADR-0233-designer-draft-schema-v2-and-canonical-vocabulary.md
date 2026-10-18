@@ -21,7 +21,7 @@ mirrored structurally at the content boundary
 design file (`packages/ship-design/src/persistence.ts:8-9`,
 `DESIGN_FILE_FORMAT = "bwdesign"`, `DESIGN_SCHEMA_VERSION = 1`), which migrates
 forward only and rejects unknown future versions
-(`persistence.ts:148-159`). The map's parity bar adds four model surfaces the
+(`persistence.ts:148-159`). The map's parity bar adds five model surfaces the
 draft cannot express today: an engine-priority axis, fire-control positions, a
 freeboard preset, a tertiary battery, and an armour-scheme reference. Each is
 either additive or a vocabulary change, so they are versioned together.
