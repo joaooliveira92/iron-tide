@@ -88,6 +88,12 @@ const AREAS = [
     blurb: "The authoritative home area and possession ownership behind per-area presence.",
     nums: [231],
   },
+  {
+    name: "Ship design & construction",
+    blurb:
+      "The ship-designer model, its armour regions, named schemes, and the design draft schema.",
+    nums: [232, 233],
+  },
 ];
 
 // Records kept as historical provenance only: moved to docs/adr/archive/ and

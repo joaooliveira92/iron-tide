@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0232).
+highest existing number + 1 (the next number is ADR-0234).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -113,6 +113,15 @@ The authoritative home area and possession ownership behind per-area presence.
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
 | 0231 | [ADR-0231-nation-home-area-and-possession-ownership.md](ADR-0231-nation-home-area-and-possession-ownership.md) | Authoritative nation home area and possession ownership in campaign state | accepted | — |
+
+## Ship design & construction
+
+The ship-designer model, its armour regions, named schemes, and the design draft schema.
+
+| # | File | Title | Status | Superseded by |
+| --- | --- | --- | --- | --- |
+| 0232 | [ADR-0232-armour-region-model-and-manual-parity.md](ADR-0232-armour-region-model-and-manual-parity.md) | Armour region model and manual parity | accepted | — |
+| 0233 | [ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md](ADR-0233-designer-draft-schema-v2-and-canonical-vocabulary.md) | Designer draft-schema v2 and canonical vocabulary | accepted | — |
 
 ## Archive
 
