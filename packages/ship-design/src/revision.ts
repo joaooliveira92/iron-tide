@@ -311,6 +311,7 @@ export function changeKindOf(
     case "set_armour_region":
     case "remove_armour_region":
     case "set_armour_regions":
+    case "set_armour_scheme":
       return "ARMOUR";
     case "add_placement":
     case "set_fire_control":

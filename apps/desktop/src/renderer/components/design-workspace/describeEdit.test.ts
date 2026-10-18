@@ -11,3 +11,14 @@ describe("describeEdit: fire control", () => {
     );
   });
 });
+
+describe("describeEdit: armour scheme", () => {
+  it("names the scheme in words", () => {
+    expect(
+      describeEdit(
+        { kind: "set_armour_scheme", schemeId: "FLAT_DECK_ON_BELT", regions: [] },
+        String,
+      ),
+    ).toBe("Armour scheme: flat deck on belt");
+  });
+});

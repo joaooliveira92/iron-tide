@@ -11,6 +11,7 @@ import { evaluate } from "./formula/eval.js";
 import { parseFormula } from "./formula/parse.js";
 import type { HullBalance, HullForm, HullResult, HullSpec } from "./hull.js";
 import type { DisplacementLedger, LedgerCategory } from "./ledger.js";
+import type { ArmourSchemeId } from "./armourSchemes.js";
 import type { TertiaryBalance, TertiaryBattery } from "./tertiary.js";
 import type { MachineryBalance, MachineryResult, PropulsionPlant } from "./machinery.js";
 import type { StabilityBalance, StabilityResult, StabilityWindow } from "./stability.js";
@@ -79,6 +80,8 @@ export interface DesignDraft {
     readonly citadelLengthMm: number;
     readonly torpedoWarheadKg: number;
     readonly bunkerProtectionBp: number;
+    /** The named scheme the regions were last set from; absent = Custom (ADR-0232). */
+    readonly schemeId?: ArmourSchemeId;
   };
   readonly placements: readonly PlacementSpec[];
   /** Fire-control fit beyond the directors themselves (ADR-0233). Absent = no positions. */
