@@ -5,7 +5,7 @@ import { ConfirmAction } from "../ConfirmAction.js";
 import type { BatteryCard } from "../batteryView.js";
 import { clearBatteryEdit, setRoundsEdit } from "../batteryView.js";
 import type { DrawingBoardContent } from "../content.js";
-import { NumberField } from "../fields.js";
+import { NumberField, SelectField } from "../fields.js";
 import type { ShipEntity } from "../selection/store.js";
 import { Panel } from "./Panel.js";
 import { gunQualityLine, NEUTRAL_GUN_QUALITY } from "./gun-quality.js";
@@ -16,6 +16,8 @@ const tonnes = (kg: number) => (kg / 1000).toLocaleString("en-US", { maximumFrac
 /** "gun"/"guns", "tube"/"tubes". */
 const unitWord = (role: string, n: number) =>
   `${role === "TORPEDO" ? "tube" : "gun"}${n === 1 ? "" : "s"}`;
+/** Light-gun calibres a tertiary battery can carry, micrometres (3-pdr, 6-pdr and 3-inch classes). */
+const TERTIARY_CALIBRES_UM = [47_000, 57_000, 76_200] as const;
 const sideText = { CENTRE: "centreline", PORT: "port", STBD: "starboard" } as const;
 
 /** The guns and tubes grouped as batteries: named mounts, totals, rounds per gun, and clearing a whole battery. */
@@ -129,6 +131,40 @@ export function BatteryPanel({
           ))}
         </ul>
       )}
+      <div className="flex flex-wrap items-end gap-3 pt-2">
+        <SelectField
+          label="Tertiary gun"
+          value={String(draft.tertiary?.caliberUm ?? TERTIARY_CALIBRES_UM[1])}
+          options={TERTIARY_CALIBRES_UM.map((um) => ({
+            value: String(um),
+            label: `${um / 1000} mm`,
+          }))}
+          onChange={(v) =>
+            edit({
+              kind: "set_tertiary",
+              tertiary: { caliberUm: Number(v), count: draft.tertiary?.count ?? 0 },
+            })
+          }
+        />
+        <NumberField
+          className="w-40"
+          label="Tertiary guns"
+          min={0}
+          value={draft.tertiary?.count ?? 0}
+          onCommit={(v) =>
+            edit({
+              kind: "set_tertiary",
+              tertiary:
+                v === 0
+                  ? null
+                  : { caliberUm: draft.tertiary?.caliberUm ?? TERTIARY_CALIBRES_UM[1], count: v },
+            })
+          }
+        />
+        <span className="pb-2 text-xs text-muted-foreground">
+          A count of light guns against torpedo craft: no placement or fire arc.
+        </span>
+      </div>
       <div className="flex flex-wrap items-end gap-3 pt-2">
         <NumberField
           className="w-48"

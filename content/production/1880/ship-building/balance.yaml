@@ -52,6 +52,12 @@ ship:
     enginePriorityPowerSwingBp: 500
     enginePriorityReliabilitySwingBp: 2500
     enginePriorityReliabilityWarnBp: 7000
+  # Tertiary battery (RTW3 manual p.28 names the battery, never a magnitude). BALANCE TARGETs (ADR-0213).
+  tertiary:
+    gunWeightNanoKgPerMm3: 1500000
+    footprintFactorPermille: 400000
+    shellNanoKgPerMm3: 20000
+    bearingBp: 5000
   arrangement:
     concentrationAdvisoryBp: 6000
     concentrationWarningBp: 8000
@@ -174,6 +180,7 @@ ship:
     GENERATOR: auxiliary
     MAIN_GUN: armament
     SECONDARY_GUN: armament
+    TERTIARY_GUN: armament
     DUAL_PURPOSE_GUN: armament
     AA_WEAPON: armament
     TORPEDO_TUBE: armament
@@ -359,6 +366,7 @@ construction:
     GENERATOR: machinery
     MAIN_GUN: heavy_gun
     SECONDARY_GUN: heavy_gun
+    TERTIARY_GUN: heavy_gun
     DUAL_PURPOSE_GUN: heavy_gun
     AA_WEAPON: heavy_gun
     TORPEDO_TUBE: heavy_gun

@@ -1315,6 +1315,8 @@ export const DesignHeaderSchema = Schema.Struct({
   }),
   /** Fire-control positions (ADR-0233); absent = none. */
   fireControl: Schema.optional(Schema.Struct({ positions: nonNegativeInt })),
+  /** Tertiary battery (ADR-0233); absent = none. */
+  tertiary: Schema.optional(Schema.Struct({ caliberUm: positiveInt, count: nonNegativeInt })),
   protection: Schema.Struct({
     citadelLengthMm: nonNegativeInt,
     torpedoWarheadKg: nonNegativeInt,
