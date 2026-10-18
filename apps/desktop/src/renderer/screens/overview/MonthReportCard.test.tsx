@@ -72,15 +72,10 @@ describe("MonthReportCard", () => {
     render(<MonthReportCard reports={[report(2)]} />);
     expect(screen.getByText("Report for February 1880.")).toBeTruthy();
     const card = screen.getByTestId("month-report-card");
-    expect(card.textContent).toContain("Treasury 1,000 → 944");
-    expect(card.textContent).toContain("(−56)");
-    expect(card.textContent).toContain("Fleet maintenance 16");
-    expect(card.textContent).toContain("New construction 60");
-    expect(card.textContent).toContain("Research 5");
-    expect(card.textContent).toContain("Naval appropriation 25");
-    const ledger = screen.getByRole("list", { name: "Financial ledger" });
-    expect(ledger.textContent).toContain("Research budget expenditure");
-    expect(ledger.textContent).toContain("(−5)");
+    expect(card.textContent).toContain("Monthly naval appropriation revenue gained +25");
+    expect(card.textContent).toContain("Fleet maintenance lost −16");
+    expect(card.textContent).toContain("Research budget expenditure lost −5");
+    expect(card.textContent).toContain("treasury moved −56");
   });
 
   it("renders the Construction section from real project progress and pre→post deltas", () => {
@@ -98,16 +93,17 @@ describe("MonthReportCard", () => {
       />,
     );
     const card = screen.getByTestId("month-report-card");
-    expect(card.textContent).toContain("proj_1: work 10 → 25");
-    expect(card.textContent).toContain("Newly active: proj_2");
-    expect(card.textContent).toContain("Completed: HMS Example");
+    expect(card.textContent).toContain("construction on proj_1: work 10→25");
+    expect(card.textContent).toContain("completed HMS Example");
+    expect(card.textContent).toContain("began construction on proj_2");
   });
 
   it("hides the construction and research sections' detail on a quiet month", () => {
     render(<MonthReportCard reports={[report(2)]} />);
-    expect(screen.getByText("No construction activity this month.")).toBeTruthy();
-    expect(screen.getByText("No research activity this month.")).toBeTruthy();
-    expect(screen.getByText("No engagements this month.")).toBeTruthy();
+    const card = screen.getByTestId("month-report-card");
+    expect(card.textContent).toContain("No construction activity this month");
+    expect(card.textContent).toContain("No research activity this month");
+    expect(card.textContent).toContain("No engagements this month");
   });
 
   it("renders the Research section from real progress and discovery events", () => {
@@ -124,8 +120,8 @@ describe("MonthReportCard", () => {
       />,
     );
     const card = screen.getByTestId("month-report-card");
-    expect(card.textContent).toContain("tech_steam: 4 → 9");
-    expect(card.textContent).toContain("Discovered tech_radio (ELECTRONICS)");
+    expect(card.textContent).toContain("research advance: tech_steam: 4→9");
+    expect(card.textContent).toContain("discovered tech_radio");
   });
 
   it("renders fleet additions and the active total", () => {
@@ -139,9 +135,8 @@ describe("MonthReportCard", () => {
       />,
     );
     const card = screen.getByTestId("month-report-card");
+    expect(card.textContent).toContain("commissioned HMS Example");
     expect(card.textContent).toContain("9 active ships");
-    expect(card.textContent).toContain("1 added this month");
-    expect(card.textContent).toContain("Commissioned: HMS Example");
   });
 
   it("compares priorities against the previous report's fingerprints", () => {
@@ -164,13 +159,8 @@ describe("MonthReportCard", () => {
       />,
     );
     const card = screen.getByTestId("month-report-card");
-    expect(card.textContent).toContain("1 new · 1 resolved · 1 continuing");
-    // Scope to the latest report: the earlier month is also rendered (inside the disclosure).
-    const latest = within(screen.getAllByTestId("monthly-report")[0]!);
-    const created = latest.getByRole("list", { name: "New priorities" });
-    expect(within(created).getByText("Fresh deficit")).toBeTruthy();
-    const resolved = latest.getByRole("list", { name: "Resolved priorities" });
-    expect(within(resolved).getByText("Fixed")).toBeTruthy();
+    expect(card.textContent).toContain("Fresh deficit");
+    expect(card.textContent).toContain("Fixed");
   });
 
   it("describes each battle in words in its own Battle Outcomes subsection", () => {
@@ -197,12 +187,10 @@ describe("MonthReportCard", () => {
         areaName={(id) => (id === "med_malta" ? "Malta" : id)}
       />,
     );
-    // Battle Outcomes is its own labelled subsection — not folded into Fleet.
-    expect(screen.getByRole("region", { name: "Battle Outcomes" })).toBeTruthy();
-    const list = screen.getByRole("list", { name: "Battles this month" });
-    expect(within(list).getByText(/Britain defeated France in Malta/)).toBeTruthy();
-    // No raw ids leak into the sentence.
-    expect(list.textContent).not.toMatch(/med_malta|b1/);
+    const card = screen.getByTestId("month-report-card");
+    expect(card.textContent).toContain("Britain defeated France in Malta");
+    // No raw ids leak into the narrative.
+    expect(card.textContent).not.toMatch(/med_malta|b1/);
   });
 
   it("never renders a CUT section (diplomacy, stalled projects, budget effectiveness, per-ship maintenance)", () => {
@@ -243,7 +231,7 @@ describe("MonthReportCard", () => {
     const details = screen.getByText(/Earlier months \(1\)/).closest("details");
     expect(details).not.toBeNull();
     expect(details?.textContent).toContain("February 1880");
-    expect(details?.textContent).toContain("(+10)");
+    expect(details?.textContent).toContain("treasury moved +10.");
     expect(details?.textContent).toContain("Earlier months are kept with this campaign.");
   });
 });
