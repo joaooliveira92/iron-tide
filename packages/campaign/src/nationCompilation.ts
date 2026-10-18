@@ -89,6 +89,30 @@ function readEconomyRow(
   };
 }
 
+/**
+ * Issue #142: the derived gross monthly revenue at the start rate must be at least one treasury unit. At the 2000 bp start
+ * rate it equals the validated `income` (>= 1), so this guards the start-rate / base derivation against a future change. It reads
+ * the canonical integer calculator, ignores outflows and the nation's name, and is a compile-time rule, never a runtime one.
+ */
+export function checkStartRevenue(
+  nationId: string,
+  base: SafeInt,
+  startRate: SafeInt,
+  collector: DiagnosticCollector,
+): void {
+  if (monthlyRevenue(base, startRate) > 0) return;
+  collector.addError(
+    "ZERO_MONTHLY_REVENUE",
+    `Nation '${nationId}' derives zero monthly revenue (base ${String(base)}, start rate ${String(startRate)} bp)`,
+    {
+      stage: "campaign-compile",
+      entityId: nationId,
+      remediation:
+        "Raise the authored income or the start appropriation rate so revenue is at least 1 treasury unit.",
+    },
+  );
+}
+
 function buildShips(fleet: Record<string, unknown>, collector: DiagnosticCollector): Ship[] {
   const shipsRaw = fleet["ships"];
   if (!Array.isArray(shipsRaw)) return [];
@@ -288,6 +312,7 @@ export function buildNationStates(
     }
     const baseResources =
       income > 0 && baseFits ? deriveEconomicBase(income, startRate) : SafeInt(0);
+    if (economyValid && baseFits) checkStartRevenue(id, baseResources, startRate, collector);
     const revenue = monthlyRevenue(baseResources, startRate);
     const cap = researchCap(revenue);
     const annualResearch = research.researchBudget;
