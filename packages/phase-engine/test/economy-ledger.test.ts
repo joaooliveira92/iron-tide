@@ -235,6 +235,12 @@ describe("economy ledger identity and shortfall", () => {
     expect(spent).toMatchObject({ requested: 5, debit: 5, shortfall: 0 });
     const unspent = collector.warnings.find((d) => d.code === "RESEARCH_UNSPENT");
     expect(unspent?.message).toContain("3");
+    expect(unspent).toMatchObject({
+      severity: "warning",
+      stage: "resolve_research",
+      entityId: "n",
+    });
+    expect(unspent?.message).toBe("Nation n paid 3 research points beyond the cost of basic_steam"); // stable wording: the same run reports the same text
     expect(result.finalSnapshot.nations.get("n")!.research.discoveredTechs).toContain(
       "basic_steam",
     );

@@ -2,6 +2,7 @@ import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
+import { applySetBudgetAllocation } from "../src/commands.js";
 import { MonthExecutor } from "../src/index.js";
 import { TEST_RESEARCH_CATALOGUE } from "./research-catalogue.helper.js";
 
@@ -281,5 +282,66 @@ describe(`economy ledger invariants (seed 0x${SEED.toString(16)}, ${RANDOM_CASES
       withCatalogue: true,
       projectWork: 3_000,
     });
+  });
+});
+
+// Spec #138 / #143: the research cap is a rule of the engine. Enumerated, not sampled: the cap is revenue-bound, so for every
+// appropriation rate (a prime step plus both ends) and a base from nothing to the supported maximum the command is accepted
+// exactly when research <= floor(12% x revenue), and refused with the stable RESEARCH_ABOVE_CAP tag otherwise.
+describe("standing research never exceeds the cap (SetBudgetAllocation)", () => {
+  const rates = [
+    ...Array.from({ length: Math.ceil(4501 / 13) }, (_, i) => 500 + i * 13),
+    5000,
+  ].filter((r) => r <= 5000);
+  const bases = [0, 1, 239, 6000, 20_000];
+
+  it("accepts a budget at or below floor(12% x revenue) and refuses every one above it", () => {
+    let checked = 0;
+    for (const base of bases)
+      for (const rateBp of rates) {
+        const revenue = Math.floor(Math.floor((base * rateBp) / 10_000) / 12);
+        // Independent integer oracle: research * 100 <= revenue * 12 is the same inequality as research <= floor(12% x revenue).
+        const snapshot = build({
+          treasury: 0,
+          base,
+          rateBp,
+          expenses: 0,
+          ships: 0,
+          research: 0,
+          withCatalogue: false,
+          projectWork: 0,
+        });
+        const cap = Math.floor((revenue * 12) / 100);
+        for (const research of new Set(
+          [0, 1, cap - 1, cap, cap + 1, cap + 2].filter((r) => r >= 0),
+        )) {
+          const collector = new DiagnosticCollector();
+          const applied = applySetBudgetAllocation(
+            snapshot,
+            {
+              type: "SetBudgetAllocation",
+              nationId: "n",
+              appropriationRateBp: SafeInt(rateBp),
+              researchBudget: SafeInt(research),
+            },
+            collector,
+          );
+          const label = `base=${base} rate=${rateBp} revenue=${revenue} research=${research} cap=${cap}`;
+          const within = research * 100 <= revenue * 12;
+          expect(research <= cap, label).toBe(within);
+          if (within) {
+            expect(collector.hasErrors, label).toBe(false);
+            expect(applied.nations.get("n")!.research.standingResearchBudget, label).toBe(research);
+          } else {
+            expect(
+              collector.errors.map((d) => d.code),
+              label,
+            ).toEqual(["RESEARCH_ABOVE_CAP"]);
+            expect(applied, label).toBe(snapshot);
+          }
+          checked += 1;
+        }
+      }
+    expect(checked).toBeGreaterThan(1_000);
   });
 });
