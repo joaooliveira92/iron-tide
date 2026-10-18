@@ -74,9 +74,15 @@ extension point owned by the budget-pressure work.
 
 | Code | Severity |
 | --- | --- |
-| `ECONOMY_ROW_MISSING`, `ECONOMY_VALUE_INVALID`, `ECONOMY_BASE_OVERFLOW`, `RESEARCH_ABOVE_CAP`, `SEEDED_PROJECT_WITHOUT_CAPACITY`, `ECONOMY_UNIFORM_DEFICIT` | error |
+| `ECONOMY_ROW_MISSING`, `ECONOMY_VALUE_INVALID`, `ECONOMY_BASE_OVERFLOW`, `ZERO_MONTHLY_REVENUE`, `RESEARCH_ABOVE_CAP`, `SEEDED_PROJECT_WITHOUT_CAPACITY`, `ECONOMY_UNIFORM_DEFICIT` | error |
 | `STRUCTURAL_DEFICIT`, `OUTFLOW_SHORTFALL`, `RESEARCH_UNSPENT` | warning |
 | `RESEARCH_BELOW_RESOLUTION`, `NO_ELIGIBLE_RESEARCH_FIELD` | info |
+
+`ZERO_MONTHLY_REVENUE` is a compile-time check in `buildNationStates`: the derived **gross**
+monthly revenue at the start rate, before any outflow, is exactly 0. It is not zero or negative
+net (`STRUCTURAL_DEFICIT`) and never fires at runtime, where zero revenue at a player-chosen
+rate is a legal state recorded as shortfalls. With the 2000 bp start rate it cannot fire
+today (revenue equals `income` ≥ 1); it guards a future start-rate override.
 
 `SetBudgetAllocation` enforces the same research cap at runtime (`RESEARCH_ABOVE_CAP`),
 so the cap is a rule of the engine and not only of the compiler.
