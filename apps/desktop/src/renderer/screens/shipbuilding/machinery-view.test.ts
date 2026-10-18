@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { buildWorkshopView } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "../../components/design-workspace/index.js";
+import { formatPowerBoth } from "../../lib/presentation-format/index.js";
 import { machineryModel, plantDeltas } from "./machinery-view.js";
 
 const content = loadDrawingBoardContent();
@@ -18,6 +19,19 @@ describe("machinery view model", () => {
     expect(model.inputs.installedKw).toBe(ref.draft.machinery.installedKw);
     expect(model.inputs.fuelCapacityKg).toBe(ref.draft.machinery.fuelCapacityKg);
     expect(model.inputs.plantOptions.length).toBe(content.plants.length);
+  });
+
+  it("shows power in both kW and horsepower (#168 step 6)", () => {
+    const model = machineryModel(ref.draft, view, content, ref.month, env.ctx.unlockedTechs);
+    const kwPerShpBp = env.ctx.balance.machinery.kwPerShpBp;
+    const required = view.compiled.machinery!.requiredKwAtMax;
+    expect(model.outputs.find((o) => o.id === "required-power")!.value).toBe(
+      formatPowerBoth(required, kwPerShpBp),
+    );
+    expect(model.inputs.installedPowerText).toBe(
+      formatPowerBoth(ref.draft.machinery.installedKw, kwPerShpBp),
+    );
+    expect(model.inputs.installedPowerText).toMatch(/ kW \([\d,]+ hp\)$/);
   });
 
   it("reports the calculated results from the compiled design", () => {

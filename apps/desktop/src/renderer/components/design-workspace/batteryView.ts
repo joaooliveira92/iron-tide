@@ -16,6 +16,7 @@ export interface BatteryMount {
   readonly name: string;
   readonly side: MountSide;
   readonly stationPermille: number;
+  readonly componentId: string;
 }
 
 export interface BatteryCard {
@@ -55,9 +56,27 @@ export function batteryCards(view: WorkshopView, draft: DesignDraft): BatteryCar
         name: names.get(p.instanceId) ?? p.instanceId,
         side: p.side ?? "CENTRE",
         stationPermille: p.stationPermille,
+        componentId: p.componentId,
       })),
     };
   });
+}
+
+/**
+ * Whether a battery's port and starboard mounts carry the same guns. Null when it has no wing mounts (centreline only),
+ * so only a battery that could be lopsided says anything. Asymmetry is allowed; the badge makes it deliberate.
+ */
+export function batterySymmetry(card: {
+  readonly mounts: readonly { readonly side: MountSide; readonly componentId: string }[];
+}): "symmetric" | "asymmetric" | null {
+  const wing = (side: "PORT" | "STBD") =>
+    card.mounts
+      .filter((m) => m.side === side)
+      .map((m) => m.componentId)
+      .sort()
+      .join("|");
+  if (!card.mounts.some((m) => m.side === "PORT" || m.side === "STBD")) return null;
+  return wing("PORT") === wing("STBD") ? "symmetric" : "asymmetric";
 }
 
 /** instanceId -> mount name across every battery, for labelling rows and drawings. */
