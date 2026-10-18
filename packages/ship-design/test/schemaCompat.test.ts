@@ -2,6 +2,7 @@ import { describe, it, expect } from "vite-plus/test";
 import {
   ACCOMMODATION_STANDARDS,
   ARMOUR_REGION_IDS,
+  ARMOUR_SCHEME_IDS as CONTENT_ARMOUR_SCHEME_IDS,
   MOUNT_SIDES,
   ShipComponentSchema,
   SHIP_COMPONENT_CATEGORIES,
@@ -11,6 +12,7 @@ import {
 } from "@bluewave/content-schema";
 import {
   ARMOUR_REGIONS,
+  ARMOUR_SCHEME_IDS,
   COMPONENT_CATEGORIES,
   ZONE_IDS,
   lintCatalogue,
@@ -30,6 +32,7 @@ describe("content-schema stays in lock-step with ship-design", () => {
   });
   it("reference-design enum lists are identical", () => {
     expect([...ARMOUR_REGION_IDS]).toEqual([...ARMOUR_REGIONS]);
+    expect([...CONTENT_ARMOUR_SCHEME_IDS]).toEqual([...ARMOUR_SCHEME_IDS]);
     expect(new Set(ARMOUR_REGIONS).size).toBe(ARMOUR_REGIONS.length);
     expect(ARMOUR_REGIONS as readonly string[]).not.toContain("BARBETTE");
     expect(ARMOUR_REGIONS as readonly string[]).not.toContain("TURRET_FACE");

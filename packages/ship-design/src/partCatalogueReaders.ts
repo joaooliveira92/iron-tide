@@ -333,6 +333,7 @@ export function headerFromDraft(draft: DesignDraft): DesignHeaderData {
       citadelLengthMm: draft.armour.citadelLengthMm,
       torpedoWarheadKg: draft.armour.torpedoWarheadKg,
       bunkerProtectionBp: draft.armour.bunkerProtectionBp,
+      ...(draft.armour.schemeId !== undefined ? { schemeId: draft.armour.schemeId } : {}),
     },
   };
 }
@@ -498,6 +499,9 @@ export function rebuildDraft(input: {
         citadelLengthMm: input.header.protection.citadelLengthMm,
         torpedoWarheadKg: input.header.protection.torpedoWarheadKg,
         bunkerProtectionBp: input.header.protection.bunkerProtectionBp,
+        ...(input.header.protection.schemeId !== undefined
+          ? { schemeId: input.header.protection.schemeId }
+          : {}),
       },
       placements: places.placements,
       ...(input.header.tertiary !== undefined

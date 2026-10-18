@@ -49,6 +49,8 @@ export function describeEdit(e: DraftEdit, nameOf: (componentId: string) => stri
       const slope = r.cosObliquityBp < 10_000 ? ", inclined" : "";
       return `Armour: set ${words(r.region)} (${(r.thicknessUm / 1000).toFixed(0)} mm ${words(r.materialId)}, ${(r.lengthMm / 1000).toFixed(1)} m × ${(r.heightMm / 1000).toFixed(1)} m${slope})`;
     }
+    case "set_armour_scheme":
+      return `Armour scheme: ${words(e.schemeId)}`;
     case "set_armour_regions":
       return `Armour scheme: ${e.regions.length} region${e.regions.length === 1 ? "" : "s"}`;
     case "remove_armour_region":
