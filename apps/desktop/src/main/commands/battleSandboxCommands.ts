@@ -125,9 +125,10 @@ function liveAreas(nation: NationState | undefined): Set<string> {
 
 /**
  * `resolveBattleAuto` fails closed on a committed ship with no compiled design,
- * and the engine's eligibility check never looks for one (production data has
- * e.g. `gbr_temeraire` with an empty design id). On the temporary copy such
- * ships are treated as unavailable, and reported, rather than aborting the run.
+ * and the engine's eligibility check never looks for one. Production data now
+ * links every starting ship, but a save or future content can still carry a
+ * design-less ship; on the temporary copy such ships are treated as unavailable,
+ * and reported, rather than aborting the run.
  */
 export function excludeUndesignedShips(snapshot: CampaignSnapshot): {
   readonly snapshot: CampaignSnapshot;

@@ -14,7 +14,9 @@ function makeNation(overrides: Partial<any> = {}): any {
     income: 2_000_000 as any,
     navalAppropriationRateBp: 2000 as any,
     maintenanceCost: 0 as any,
-    baseResources: 0 as any,
+    // Revenue = income at the 2000 bp start rate: base = 60 x income.
+    baseResources: 120_000_000 as any,
+    expenses: 0 as any,
     fleets: [{ ships: [{ hitPoints: 100 as any, readiness: "ACTIVE" as any }] }],
     research: {
       researchBudget: 200_000 as any,
@@ -83,60 +85,39 @@ describe("priorities projection", () => {
   });
 
   it("monthly_deficit warning vs critical via treasury+projectedBalance predicate", () => {
-    // Force deficit: income 0 => appropriation 0, maintenance 10000, so projected -200k
-    const _snapSolvent = makeSnapshot({
-      treasury: 50_000 as any,
-      income: 100_000 as any,
-      navalAppropriationRateBp: 1000 as any, // 10% => 10k
-      fleets: [{ ships: [{ hitPoints: 10000 as any, readiness: "ACTIVE" as any }] }], // maintenance ~ shipMaintenanceCost(10000)
-      research: {
-        researchBudget: 0 as any,
-        discoveredTechs: [],
-        technologies: [],
-        fieldPriorities: {},
-        activeCandidates: new Map(),
-      },
-      constructionProjects: [],
-    });
-    // Need a deficit case: craft by using large maintenance via many ships
-    const snapCritical = makeSnapshot({
-      treasury: 500 as any,
-      income: 100_000 as any,
-      navalAppropriationRateBp: 1000 as any,
-      fleets: [{ ships: [{ hitPoints: 100000 as any, readiness: "ACTIVE" as any }] }],
-      research: {
-        researchBudget: 50000 as any,
-        discoveredTechs: [],
-        technologies: [],
-        fieldPriorities: {},
-        activeCandidates: new Map(),
-      },
-      constructionProjects: [
-        {
-          id: "proj1",
-          type: "ship",
-          projectType: "NEW_CONSTRUCTION",
-          targetId: "d1",
-          designVersionId: "dv1",
-          totalWork: 1000 as any,
-          completedWork: 0 as any,
-          paidWork: 50000 as any,
-          status: "ACTIVE",
-          startedAt: "1900-01",
+    // revenue = base 7_200_000 x 1000 bp / 120_000 = 60_000; obligations 100_000 => net -40_000.
+    const deficitNation = (treasury: number) =>
+      makeSnapshot({
+        treasury: treasury as any,
+        baseResources: 7_200_000 as any,
+        navalAppropriationRateBp: 1000 as any,
+        expenses: 100_000 as any,
+        fleets: [],
+        research: {
+          researchBudget: 0 as any,
+          discoveredTechs: [],
+          technologies: [],
+          fieldPriorities: {},
+          activeCandidates: new Map(),
         },
-      ],
-    });
-    const out = buildPrioritiesProjection(snapCritical, "gbr");
-    const deficit = out.find((p) => p.type === "monthly_deficit");
-    expect(deficit).toBeDefined();
-    // treasury + projectedBalance <0 => critical
-    if (deficit) expect(deficit.severity).toBe("critical");
+        constructionProjects: [],
+      });
+    const solvent = buildPrioritiesProjection(deficitNation(1_000_000), "gbr").find(
+      (p) => p.type === "monthly_deficit",
+    );
+    expect(solvent?.severity).toBe("warning");
+    // treasury + projectedBalance < 0 => critical
+    const insolvent = buildPrioritiesProjection(deficitNation(30_000), "gbr").find(
+      (p) => p.type === "monthly_deficit",
+    );
+    expect(insolvent?.severity).toBe("critical");
+    expect(insolvent?.reason).toContain("obligations 100000");
   });
 
   it("low_research_spending triggers below 800bp", () => {
     const snap = makeSnapshot({
-      income: 2_000_000 as any,
-      navalAppropriationRateBp: 5000 as any, // 50% => 1M appropriation
+      baseResources: 24_000_000 as any,
+      navalAppropriationRateBp: 5000 as any, // base 24M x 5000 bp / 120_000 => 1M revenue
       research: {
         researchBudget: 1000 as any,
         discoveredTechs: [],
@@ -148,17 +129,32 @@ describe("priorities projection", () => {
     const out = buildPrioritiesProjection(snap, "gbr");
     expect(out.some((p) => p.type === "low_research_spending")).toBe(true);
     // Above threshold should not trigger
-    const snapOk = makeSnapshot({
-      income: 2_000_000 as any,
-      navalAppropriationRateBp: 5000 as any,
-      research: {
-        researchBudget: 200_000 as any,
-        discoveredTechs: [],
-        technologies: [],
-        fieldPriorities: {},
-        activeCandidates: new Map(),
+    // A budget only counts as spending when a field can take it, so the catalogue offers one open technology.
+    const snapOk = makeSnapshot(
+      {
+        baseResources: 24_000_000 as any,
+        navalAppropriationRateBp: 5000 as any,
+        research: {
+          researchBudget: 200_000 as any,
+          discoveredTechs: [],
+          technologies: [],
+          fieldPriorities: {},
+          activeCandidates: new Map(),
+        },
       },
-    });
+      {
+        technologies: [
+          {
+            techId: "t1",
+            researchFieldId: "GUNNERY",
+            cost: 100 as any,
+            discoveryWeight: 1 as any,
+            prerequisites: [],
+            availabilityMonth: 0 as any,
+          },
+        ],
+      },
+    );
     expect(
       buildPrioritiesProjection(snapOk, "gbr").some((p) => p.type === "low_research_spending"),
     ).toBe(false);

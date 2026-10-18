@@ -1,3 +1,4 @@
+import type { OutflowSettlement } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import type { DomainEventEnvelope } from "@bluewave/events";
 import type { LedgerTransactionInput } from "./financial-ledger.js";
@@ -232,8 +233,12 @@ export function makeLedgerEntry(
   newBalance: SafeInt,
   reason: string,
   campaignMonth: string,
+  settlement?: OutflowSettlement,
 ): LedgerTransactionInput {
   return {
+    ...(settlement === undefined
+      ? {}
+      : { requested: settlement.requested, shortfall: settlement.shortfall }),
     campaignMonth,
     phaseId,
     nationId,

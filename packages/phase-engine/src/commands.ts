@@ -10,6 +10,8 @@ import {
   DIVISION_MEMBERSHIP_CHANGE_INELIGIBLE,
   fleetMoveProblem,
   isTerminalConstructionProjectStatus,
+  monthlyRevenue,
+  researchCap,
   transitionConstructionProject,
   VACANT,
 } from "@bluewave/campaign";
@@ -208,6 +210,17 @@ export function applySetBudgetAllocation(
     });
     return currentSnapshot;
   }
+  // Spec #138 research cap: the standing monthly spend may not exceed 12% of the monthly revenue at the commanded rate.
+  // The compiler enforces the same rule on authored research, so a runtime change cannot bypass it.
+  const cap = researchCap(monthlyRevenue(nation["baseResources"], body["appropriationRateBp"]));
+  if ((body["researchBudget"] as number) > (cap as number)) {
+    collector.addError(
+      "RESEARCH_ABOVE_CAP",
+      `Nation ${body["nationId"]} research budget ${String(body["researchBudget"])} exceeds the cap of ${String(cap)} (12% of monthly revenue at ${String(body["appropriationRateBp"])} bp)`,
+      { stage: "command_collection", entityId: body["nationId"] },
+    );
+    return currentSnapshot;
+  }
   const updatedNation: NationState = {
     ...nation,
     navalAppropriationRateBp: body["appropriationRateBp"],
@@ -299,8 +312,9 @@ export function applyBudgetProject(
   let fundedProject: ConstructionProject | undefined;
   if (project["packages"] !== undefined) {
     // Per-package construction (ADR-0077): only the work the yard can do this month is applied and charged.
-    const capacity = currentSnapshot["designs"].get(project["designVersionId"])?.constructionPlan
-      ?.capacityUnits;
+    const capacity =
+      project["capacityUnits"] ??
+      currentSnapshot["designs"].get(project["designVersionId"])?.constructionPlan?.capacityUnits;
     const funded = fundConstructionProject(
       project,
       capacity === undefined

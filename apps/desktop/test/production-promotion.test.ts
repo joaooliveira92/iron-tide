@@ -6,12 +6,9 @@ import { resolveGeneratedContentDir } from "../src/main/contentPack.js";
 
 // AC-1/AC-14: the promotion mechanism is deterministic and carries the design
 // data the tactical layer needs. This test proves the mechanism end-to-end on
-// the compiled production design registry and reports (rather than fabricates)
-// the ship->design linkage state. 14 of the pack's 20 ships now carry a
-// `designVersionId` resolving to a real `CompiledDesignVersion`; the remaining
-// 6 (Temeraire, Dévastation, Courbet, Custoza, Mesudiye, Numancia) are still
-// unlinked because no 1880-era design is authored for them — tracked as
-// CONTENT-track work (see docs/research/content-5-1880-pack-audit-2026-08-17.md).
+// the compiled production design registry. Every 1880 starting ship now carries
+// a `designVersionId` resolving to a real `CompiledDesignVersion` (N-2 tickets
+// 29/30 closed the last two, aut_custoza and gbr_temeraire).
 describe("production-pack ship promotion (AC-1/AC-14)", () => {
   it("deterministically promotes any ship carrying a resolvable designVersionId", () => {
     const collector = new DiagnosticCollector();
@@ -33,11 +30,10 @@ describe("production-pack ship promotion (AC-1/AC-14)", () => {
     // Prove the mechanism for any ship that carries a designVersionId: identical
     // inputs produce identical units (purity + determinism). Under-construction
     // ships carry a design but cannot be promoted (TACTICAL_UNIT_PROMOTION_INVALID),
-    // so the determinism check runs on commissioned linked ships only. Commissioned
-    // ships whose design fails DESIGN-22 classification are counted and reported
-    // (code INVALID_SHIP_TYPE) rather than fabricated — today that is every
-    // commissioned linked ship, because design authoring uses mm/knots while the
-    // classifier reads um (documented unit-scale mismatch, not a pack bug).
+    // so the determinism check runs on commissioned linked ships only. A design
+    // that fails DESIGN-22 classification is counted and reported (code
+    // INVALID_SHIP_TYPE) rather than fabricated; after N-2/ADR-0228 every
+    // commissioned linked 1880 ship classifies, so `blocked` must stay 0.
     let linked = 0;
     let promoted = 0;
     let blocked = 0;
@@ -83,14 +79,14 @@ describe("production-pack ship promotion (AC-1/AC-14)", () => {
     // Design registry itself is present and promotes (guards the content path).
     expect(designs.size).toBeGreaterThan(0);
     expect(linked).toBeGreaterThan(0);
-    // ADR-0037: compiled designs carry µm/µm·s⁻¹, so commissioned linked
-    // 1880 ships now classify and promote deterministically. Any ship that
-    // cannot (e.g. des_jpn_fuso below the DESIGN-22 "B" 5M kg floor) is
-    // reported, not fabricated.
+    // ADR-0037: compiled designs carry µm/µm·s⁻¹ and the classifier's opening
+    // band matches the 1880 ruleset (ADR-0228), so every commissioned linked
+    // 1880 ship classifies and promotes deterministically with nothing blocked.
     expect(promoted).toBeGreaterThan(0);
+    expect(blocked).toBe(0);
   });
 
-  it("reports the ship->design linkage gap explicitly rather than fabricating it", () => {
+  it("links every starting ship to a real compiled design", () => {
     const collector = new DiagnosticCollector();
     const signal = new AbortController().signal;
 
@@ -123,11 +119,10 @@ describe("production-pack ship promotion (AC-1/AC-14)", () => {
     }
 
     expect(totalShips).toBeGreaterThan(0);
-    // Documented (not silent): the residual unlinked ships are exactly those
-    // classes with no authored 1880-era design. Reporting this residual gap keeps
-    // AC-14's per-ship promotion honest rather than fabricating a design for
-    // classes that have none.
+    // N-2 (tickets 29/30) authored a design for every remaining design-less
+    // class, so no starting ship is unlinked: each resolves a real compiled design.
     expect(linked).toBeGreaterThan(0);
-    expect(unlinkedIds.sort()).toEqual(["aut_custoza", "gbr_temeraire"]);
+    expect(linked).toBe(totalShips);
+    expect(unlinkedIds).toEqual([]);
   });
 });

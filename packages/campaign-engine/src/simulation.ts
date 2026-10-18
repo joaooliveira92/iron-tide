@@ -35,6 +35,10 @@ export interface FinancialLedgerEntry {
   readonly phase: string;
   readonly amount: number;
   readonly runningBalance: number;
+  /** Outflows only (spec #138): what the rules asked for; `amount` carries what was paid. */
+  readonly requested?: number;
+  /** Outflows only: `requested - paid`, a recorded non-carried shortfall. */
+  readonly shortfall?: number;
 }
 
 /** Grounded in `EngineAuditInspector.tsx`'s table rendering. */

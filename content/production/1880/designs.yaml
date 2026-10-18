@@ -816,3 +816,54 @@
     kind: "game_conversion"
     sources: []
     note: "Numancia, Spanish ironclad of 1863-64, still afloat and in service in 1880; figures approximate."
+# --- 1880 ships whose class had no authored design (N-2 tickets 29/30). ---
+# Custoza and Temeraire are real 1880-or-earlier hulls the scenario opens with; no
+# design existed for their classes, so the starting ship carried no designVersionId.
+# Performance figures are approximate game estimates (no sourced measurement), so
+# each design carries ESTIMATE provenance (ADR-0213).
+- designId: "des_aut_custoza"
+  designVersionId: "des_aut_custoza"
+  designFamilyId: "fam_aut_custoza"
+  nationId: "austria_hungary"
+  className: "Custoza"
+  hullType: "central_battery_ship"
+  displacementKg: 7610000
+  speedUms: 14
+  armorBeltUm: 229
+  mainGuns:
+    caliber: 260
+    count: 8
+    mounts: 8
+  machineryType: "reciprocating_compound"
+  hitPoints: 32
+  crewComplement: 550
+  familyCreationMonth: "1880-01"
+  provenance:
+    sourceStatus: "ESTIMATE"
+    confidence: "LOW"
+    kind: "game_conversion"
+    sources: []
+    note: "Custoza, Austro-Hungarian casemate (central-battery) ironclad in service from 1875: 8 x 26 cm guns, 229 mm belt, 13.75 kn; figures approximate."
+- designId: "des_gbr_temeraire"
+  designVersionId: "des_gbr_temeraire"
+  designFamilyId: "fam_gbr_temeraire"
+  nationId: "uk"
+  className: "Temeraire"
+  hullType: "ironclad_turret_ship"
+  displacementKg: 8540000
+  speedUms: 15
+  armorBeltUm: 280
+  mainGuns:
+    caliber: 280
+    count: 4
+    mounts: 2
+  machineryType: "reciprocating_compound"
+  hitPoints: 36
+  crewComplement: 580
+  familyCreationMonth: "1880-01"
+  provenance:
+    sourceStatus: "ESTIMATE"
+    confidence: "LOW"
+    kind: "game_conversion"
+    sources: []
+    note: "Temeraire, the Royal Navy's first barbette ironclad, in service from 1877: 4 x 11 in in barbettes, 11 in belt, 14.65 kn; figures approximate."

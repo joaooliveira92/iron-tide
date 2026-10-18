@@ -229,7 +229,11 @@ describe("ship part collections at the content compile seam", () => {
       expect(output).toBeUndefined();
       const schemaErrors = collector.errors.filter((error) => error.code === "SCHEMA");
       expect(schemaErrors.length).toBeGreaterThan(0);
-      expect(schemaErrors.every((error) => error.sourceLocation?.path === file)).toBe(true);
+      expect(
+        schemaErrors.every(
+          (error) => error.sourceLocation?.path === "ship-building/parts/guns.yaml",
+        ),
+      ).toBe(true);
       expect(schemaErrors.map((error) => error.message).join("\n")).toContain(path);
     } finally {
       fixture.cleanup();
@@ -267,7 +271,7 @@ describe("ship part collections at the content compile seam", () => {
       const { output, collector } = compile(baseInput(fixture, { slotTemplateFiles: [file] }));
       expect(output).toBeUndefined();
       const error = collector.errors.find((e) => e.message.includes("constraints.calibreMmMin"));
-      expect(error?.sourceLocation?.path).toBe(file);
+      expect(error?.sourceLocation?.path).toBe("ship-building/slot-templates.yaml");
       expect(error?.message).toContain("SlotTemplate.slots.0.constraints.calibreMmMin:");
     } finally {
       fixture.cleanup();

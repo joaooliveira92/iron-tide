@@ -1,11 +1,19 @@
-import type { CampaignSnapshot, NationState, TechnologyProgress } from "@bluewave/campaign";
-import { CANONICAL_RESEARCH_FIELD_IDS as RESEARCH_FIELD_IDS } from "@bluewave/content-schema";
+import {
+  eligibleResearchFields,
+  eligibleTechnologiesForField,
+  settleOutflow,
+  technologyCatalogueOf,
+  type CampaignSnapshot,
+  type NationState,
+  type TechnologyCatalogue,
+} from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { EventLedger } from "@bluewave/events";
 import { RandomEngine, RandomLedger } from "@bluewave/random";
 import type { FinancialLedger } from "./financial-ledger.js";
+import { reportOutflowShortfall } from "./outflowShortfall.js";
 import {
   budgetChangedEvent,
   CURRENT_VERSION,
@@ -14,7 +22,6 @@ import {
 } from "./events.js";
 
 const RESEARCH_RESOURCE_CONVERSION_BP = SafeInt(10_000);
-const CANONICAL_FIELD_IDS = RESEARCH_FIELD_IDS;
 
 function drawWeighted(
   stream: import("@bluewave/random").RandomStream,
@@ -89,45 +96,53 @@ export function resolveResearchPhase(
   campaignMonth: string,
 ): CampaignSnapshot {
   let currentSnapshot = snapshot;
+  const catalogue = technologyCatalogueOf(snapshot);
 
   for (const [nationId, nation] of currentSnapshot["nations"]) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
 
     const research = nation["research"];
 
-    // Stage 1: Calculate paid research resources
-    const actualPaidExpenditure = research["researchBudget"];
-    const effectiveResources = computeResearchResources(actualPaidExpenditure);
-
-    if ((effectiveResources as number) <= 0) continue;
-
-    // Stage 2: Allocate by field priority
-    const priorities = research["fieldPriorities"];
-    const eligibleFields: [string, SafeInt][] = [];
-
+    // A standing budget no field can take is not drawn and so is neither paid nor short (the projection plans zero for it).
     const techs = research["technologies"];
-    const discoveredTechs = research["discoveredTechs"];
-
-    for (const fieldId of CANONICAL_FIELD_IDS) {
-      // Find eligible tech for this field
-      const eligibleTech = findEligibleTech(fieldId, techs, discoveredTechs, turnNumber);
-      if (!eligibleTech) continue;
-
-      const priority = priorities[fieldId] ?? SafeInt(1);
-      if ((priority as number) <= 0) continue;
-
-      eligibleFields.push([fieldId, priority]);
-    }
-
-    if (eligibleFields.length === 0) {
+    const eligibleFields = eligibleResearchFields(research, turnNumber, catalogue);
+    if ((research["researchBudget"] as number) > 0 && eligibleFields.length === 0) {
       collector.addInfo(
         "NO_ELIGIBLE_RESEARCH_FIELD",
-        `Nation ${nationId} has no eligible research fields`,
-        { stage: "resolve_research" },
+        `Nation ${nationId} has no eligible research field; its standing research budget of ${String(research["researchBudget"])} is not drawn`,
+        { stage: "resolve_research", entityId: nationId },
       );
       continue;
     }
 
+    // Stage 1: Calculate paid research resources
+    const settlement = settleOutflow(research["researchBudget"], nation["treasury"]);
+    reportOutflowShortfall(collector, nationId, "research", settlement, "resolve_research");
+    const actualPaidExpenditure = settlement.paid;
+    const effectiveResources = computeResearchResources(actualPaidExpenditure);
+
+    if ((effectiveResources as number) <= 0) {
+      // A request the treasury could not pay at all is still a ledger line (requested, paid 0, shortfall), so the month
+      // ledger and the OUTFLOW_SHORTFALL warning agree and the projection's requested research appears in the ledger.
+      if ((settlement.shortfall as number) > 0)
+        financialLedger.append(
+          makeLedgerEntry(
+            nationId,
+            "resolve_research",
+            "RESEARCH_EXPENDITURE",
+            actualPaidExpenditure,
+            actualPaidExpenditure,
+            nation["treasury"],
+            nation["treasury"],
+            "Research budget expenditure",
+            campaignMonth,
+            settlement,
+          ),
+        );
+      continue;
+    }
+
+    // Stage 2: Allocate by field priority
     const fieldAllocations = largestRemainderAllocation(effectiveResources, eligibleFields);
 
     // Stage 3: Advance eligible technologies
@@ -142,11 +157,12 @@ export function resolveResearchPhase(
 
       if (!activeTechId) {
         // Select eligible technology with highest discovery weight
-        const fieldTechs = findEligibleTechsForField(
+        const fieldTechs = eligibleTechnologiesForField(
           fieldId,
           updatedTechs,
           [...monthDiscoveredTechs],
           turnNumber,
+          catalogue,
         );
         if (fieldTechs.length === 0) {
           collector.addInfo(
@@ -198,16 +214,27 @@ export function resolveResearchPhase(
       }
 
       // Stage 4: Add progress to active candidate
-      const techIdx = updatedTechs.findIndex((t) => t["techId"] === activeTechId);
-      if (techIdx < 0) continue;
+      let techIdx = updatedTechs.findIndex((t) => t["techId"] === activeTechId);
+      if (techIdx < 0) {
+        // A catalogue technology no one has started yet gains its progress row on first funding.
+        updatedTechs.push({ techId: activeTechId, investedPoints: SafeInt.ZERO, completed: false });
+        techIdx = updatedTechs.length - 1;
+      }
 
       const tech = updatedTechs[techIdx]!;
       const newPoints = SafeInt.add(tech["investedPoints"], allocation);
       updatedTechs[techIdx] = { ...tech, investedPoints: newPoints };
 
       // Calculate progress beyond cost
-      const cost = findTechCost(activeTechId);
+      const cost = findTechCost(catalogue, activeTechId);
       const clampedPoints = (newPoints as number) > (cost as number) ? cost : newPoints;
+      // Points beyond what the technology still needs were paid for but cannot be applied: reported, never silent.
+      if ((newPoints as number) > (cost as number))
+        collector.addWarning(
+          "RESEARCH_UNSPENT",
+          `Nation ${nationId} paid ${String((newPoints as number) - (cost as number))} research points beyond the cost of ${activeTechId}`,
+          { stage: "resolve_research", entityId: nationId },
+        );
       updatedTechs[techIdx] = { ...updatedTechs[techIdx]!, investedPoints: clampedPoints };
 
       eventLedger.append(
@@ -224,11 +251,12 @@ export function resolveResearchPhase(
       // Stage 5: Check if discovered
       if ((clampedPoints as number) >= (cost as number)) {
         // Stage 7: revalidate prerequisites and availability before discovery.
-        const revalidated = findEligibleTechsForField(
+        const revalidated = eligibleTechnologiesForField(
           fieldId,
           updatedTechs,
           [...monthDiscoveredTechs],
           turnNumber,
+          catalogue,
         ).some((t) => t.techId === activeTechId);
         if (!revalidated) {
           collector.addError(
@@ -311,6 +339,7 @@ export function resolveResearchPhase(
         safeNewBalance,
         "Research budget expenditure",
         campaignMonth,
+        settlement,
       ),
     );
 
@@ -370,125 +399,23 @@ function applyHistoricalTimingModifier(
   return (adjusted as number) < 1 ? SafeInt.ONE : adjusted;
 }
 
-function findEligibleTech(
-  fieldId: string,
-  techs: TechnologyProgress[],
-  discoveredTechs: string[],
-  turnNumber: SafeInt,
-): TechnologyProgress | undefined {
-  return findEligibleTechsForField(fieldId, techs, discoveredTechs, turnNumber)[0] ?? undefined;
-}
-
-function findEligibleTechsForField(
-  fieldId: string,
-  techs: TechnologyProgress[],
-  discoveredTechs: string[],
-  turnNumber: SafeInt,
-): (TechnologyProgress & { discoveryWeight: SafeInt; availabilityMonth?: SafeInt })[] {
-  const allDiscovered = new Set(discoveredTechs);
-  return techs
-    .filter((t) => {
-      const def = TECH_DEFINITIONS[t["techId"]];
-      if (!def) return false;
-      if (def["researchFieldId"] !== fieldId) return false;
-      if (t["completed"] || allDiscovered.has(t["techId"])) return false;
-      // Check if not already discovered
-      // Check prerequisites
-      const prereqs = def["prerequisites"] ?? [];
-      for (const prereqId of prereqs) {
-        const prereqTech = techs.find((pt) => pt["techId"] === prereqId);
-        if (!prereqTech || !prereqTech["completed"]) return false;
-      }
-      // Check availability month
-      if (
-        def["availabilityMonth"] !== undefined &&
-        (turnNumber as number) < (def["availabilityMonth"] as number)
-      ) {
-        return false;
-      }
-      return true;
-    })
-    .map((t) => {
-      const def = TECH_DEFINITIONS[t["techId"]]!;
-      return {
-        ...t,
-        discoveryWeight: def["discoveryWeight"],
-        availabilityMonth: def["availabilityMonth"],
-      };
-    });
-}
-
-interface TechDefinition {
-  techId: string;
-  researchFieldId: string;
-  cost: SafeInt;
-  discoveryWeight: SafeInt;
-  prerequisites: string[];
-  availabilityMonth?: SafeInt;
-}
-
-const TECH_DEFINITIONS: Record<string, TechDefinition> = {
-  basic_hull: {
-    techId: "basic_hull",
-    researchFieldId: "HULL_CONSTRUCTION",
-    cost: SafeInt(100),
-    discoveryWeight: SafeInt(10),
-    prerequisites: [],
-    availabilityMonth: SafeInt(0),
-  },
-  advanced_hull: {
-    techId: "advanced_hull",
-    researchFieldId: "HULL_CONSTRUCTION",
-    cost: SafeInt(200),
-    discoveryWeight: SafeInt(8),
-    prerequisites: ["basic_hull"],
-    availabilityMonth: SafeInt(0),
-  },
-  basic_steam: {
-    techId: "basic_steam",
-    researchFieldId: "MACHINERY",
-    cost: SafeInt(100),
-    discoveryWeight: SafeInt(10),
-    prerequisites: [],
-    availabilityMonth: SafeInt(0),
-  },
-  advanced_steam: {
-    techId: "advanced_steam",
-    researchFieldId: "MACHINERY",
-    cost: SafeInt(200),
-    discoveryWeight: SafeInt(8),
-    prerequisites: ["basic_steam"],
-    availabilityMonth: SafeInt(0),
-  },
-  basic_gunnery: {
-    techId: "basic_gunnery",
-    researchFieldId: "GUNNERY",
-    cost: SafeInt(100),
-    discoveryWeight: SafeInt(10),
-    prerequisites: [],
-    availabilityMonth: SafeInt(0),
-  },
-  advanced_gunnery: {
-    techId: "advanced_gunnery",
-    researchFieldId: "GUNNERY",
-    cost: SafeInt(200),
-    discoveryWeight: SafeInt(8),
-    prerequisites: ["basic_gunnery"],
-    availabilityMonth: SafeInt(0),
-  },
-};
-
-function findTechCost(techId: string): SafeInt {
-  return TECH_DEFINITIONS[techId]?.["cost"] ?? SafeInt(100);
+function findTechCost(catalogue: TechnologyCatalogue, techId: string): SafeInt {
+  // Only ever called for a technology picked from this catalogue, so the entry exists.
+  return catalogue.get(techId)!["cost"];
 }
 
 /**
- * The research model's authoritative cost for a technology id, or `undefined` when the model carries none. The
- * engine's cost table is the stub `TECH_DEFINITIONS` today (real content technologies are not materialised into
- * it). Foreign insight reads this only to cap an award at the technology's remaining requirement and never
- * fabricates a cost it does not know: an unknown cost applies no per-technology cap (the family cap still holds).
+ * The research model's authoritative cost for a technology id, read from the snapshot's compiled catalogue, or
+ * `undefined` when the catalogue carries none. Foreign insight reads this only to cap an award at the technology's
+ * remaining requirement and never fabricates a cost it does not know: an unknown cost applies no per-technology cap
+ * (the family cap still holds).
  */
-export function researchCostOf(techId: string): number | undefined {
-  const def = TECH_DEFINITIONS[techId];
-  return def === undefined ? undefined : (def["cost"] as number);
+export function researchCostLookup(
+  snapshot: CampaignSnapshot,
+): (techId: string) => number | undefined {
+  const catalogue = technologyCatalogueOf(snapshot);
+  return (techId) => {
+    const def = catalogue.get(techId);
+    return def === undefined ? undefined : (def["cost"] as number);
+  };
 }

@@ -16,6 +16,7 @@ export default defineConfig({
     globalSetup: ["./scripts/content-global-setup.mjs"],
     setupFiles: ["./src/renderer/test-setup.ts"],
     testTimeout: 60000,
+    hookTimeout: 60000,
     environment: "jsdom",
     // The renderer suite is heavy (jsdom + axe-core audits over large DOMs). Left at the default
     // (one worker per core) the load starves the axe passes and they time out mid-run. A bounded

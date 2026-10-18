@@ -31,6 +31,10 @@ export function toFinancialLedgerEntries(
     phase: entry.phaseId,
     amount: Number(entry.newBalance) - Number(entry.previousBalance),
     runningBalance: Number(entry.newBalance),
+    // Outflows carry what was asked for and what was left unpaid (spec #138); the paid figure is the debit.
+    ...(entry.requested === undefined
+      ? {}
+      : { requested: Number(entry.requested), shortfall: Number(entry.shortfall ?? 0) }),
   }));
 }
 

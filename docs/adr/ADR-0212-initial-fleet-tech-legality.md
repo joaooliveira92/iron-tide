@@ -34,8 +34,9 @@ initial-fleet legality.
 
 Reading 2. A ship is legal if the technologies its design requires were available
 by 1880 (year ≤ 1880) in the global technology set. Per-nation `completedTechs`
-do not gate inherited starting ships; they gate new construction, modernization,
-and design availability at order time.
+do not gate inherited starting ships. As implemented, they also do not gate new
+construction, modernization, or design availability: the designer's unlock gate
+is global and calendar-only (ADR-0229).
 
 Starting ships that cannot be tied to a modeled design are carried by an explicit,
 documented exemption (a recorded reason), never a fabricated design or technology
@@ -54,3 +55,15 @@ link. No starting ship may be silently illegal: each is either design-linked and
   build today. This is intended (a service-vs-build distinction) and must be
   stated so it is not read as a defect.
 - No wire-format or schema change; the effect is content and validation only.
+
+
+## Amendment (2026-10-17): `completedTechs` does not gate construction
+
+The Decision sentence above originally read that per-nation `completedTechs`
+"gate new construction, modernization, and design availability at order time".
+That described an intention, not the shipped code: no consumer in
+`packages/*/src` or `apps/desktop/src` reads a nation's completed technologies
+when gating construction or design. The gate is
+`unlockedTechIds`/`unlockedTechs`, keyed only off the global technology `year`
+(ADR-0229). The sentence is corrected in place above; the initial-fleet legality
+decision itself is unchanged.

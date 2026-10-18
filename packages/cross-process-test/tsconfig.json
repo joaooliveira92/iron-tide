@@ -12,6 +12,8 @@
     { "path": "../content-schema" },
     { "path": "../content-compiler" },
     { "path": "../campaign" },
+    { "path": "../campaign-engine" },
+    { "path": "../ship-design" },
     { "path": "../commands" },
     { "path": "../random" },
     { "path": "../events" },

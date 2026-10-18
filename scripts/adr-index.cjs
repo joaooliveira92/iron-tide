@@ -58,13 +58,19 @@ const AREAS = [
   {
     name: "Process & documentation",
     blurb: "Concurrent-agent worktree coordination and repository process rules.",
-    nums: [220],
+    nums: [220, 227],
   },
   {
     name: "Scenario content & research",
     blurb:
       "Legality, consistency and authored posture of the 1880 scenario's starting content and research state.",
-    nums: [212, 213],
+    nums: [212, 213, 228, 229],
+  },
+  {
+    name: "Campaign economy",
+    blurb:
+      "The monthly appropriation, ledger, research, deficit policy and construction capacity as one model.",
+    nums: [230],
   },
   {
     name: "Turns, interruptions & save/resume",

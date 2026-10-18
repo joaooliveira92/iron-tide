@@ -44,6 +44,7 @@ function addPlaceholderArea(dir: string): void {
   writeFileSync(areasPath, `${readFileSync(areasPath, "utf8")}${PLACEHOLDER_AREA}`, "utf8");
   const presentationPath = resolve(dir, "presentation.yaml");
   const patched = readFileSync(presentationPath, "utf8")
+    .replaceAll("\r\n", "\n")
     .replace("  areaRegion:\n", "  areaRegion:\n    cah_placeholder_area: northern_europe\n")
     .replace(
       "  campaignAreaToFixture:\n",

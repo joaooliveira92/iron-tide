@@ -1,5 +1,7 @@
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
+import { economyStatusLabel, researchNote } from "../lib/economy-wording.js";
+
 /**
  * Pure view model for the bottom status strip (campaign-command-screen CC-3, ADR-0059 s1).
  * Every value is real or derived from `inspectCampaign` / `inspectMap`; anything the engine does
@@ -89,11 +91,20 @@ function alertsLabel(count: number | null): string {
 export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
   const { projection, areas, alertsCount } = input;
   const economy = projection.economy;
-  const totalExpenses = economy.maintenanceCost + economy.constructionSpend + economy.researchSpend;
+  // Committed monthly flows; construction is an "up to" bound and is not in the total.
+  const totalExpenses = economy.obligations + economy.maintenanceCost + economy.researchSpend;
   const balance = projection.projectedSurplusDeficit;
   const inDeficit = balance < 0;
-  const balanceStatus = inDeficit ? "Deficit" : "Surplus";
-  const balanceTone: StripTone = inDeficit ? "alert" : "normal";
+  // The same band the Treasury screen's chip shows (spec #138): one status, never two.
+  const balanceStatus = economyStatusLabel(economy.status);
+  const balanceTone: StripTone =
+    inDeficit || economy.status === "deficit" || economy.status === "critical" ? "alert" : "normal";
+  const researchRemark =
+    researchNote({
+      researchCap: economy.researchCap,
+      researchRequested: economy.researchRequested,
+      researchUnfundedReason: economy.researchUnfundedReason,
+    }) ?? "";
 
   const foreignStations: StripRow =
     areas === null
@@ -135,20 +146,16 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
 
   const budget: StripRow[] = [
     real("treasury", "Treasury", formatMoney(economy.treasury)),
-    real(
-      "monthly-budget",
-      "Monthly budget (projected)",
-      formatMoney(economy.monthlyAppropriation),
-      "Projected from income and the appropriation rate; the revenue source is not yet confirmed.",
-    ),
+    real("monthly-budget", "Monthly appropriation", formatMoney(economy.monthlyAppropriation)),
+    real("obligations", "Obligations", formatMoney(economy.obligations)),
     real("maintenance", "Maintenance", formatMoney(economy.maintenanceCost)),
+    real("research", "Research", formatMoney(economy.researchSpend), researchRemark),
     real(
       "construction",
-      "Construction (committed)",
-      formatMoney(economy.constructionSpend),
-      "Cumulative committed work, not a monthly figure.",
+      "Construction (up to)",
+      formatMoney(economy.plannedConstruction),
+      "An upper bound limited by yard capacity, before the treasury limits it.",
     ),
-    real("research", "Research", formatMoney(economy.researchSpend)),
     deferred(
       "naval-aircraft",
       "Naval aircraft",
@@ -158,10 +165,31 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
     deferred("intelligence", "Intelligence", "Intelligence spending is not modelled."),
     real(
       "total-expenses",
-      "Total expenses",
+      "Committed expenses",
       formatMoney(totalExpenses),
-      "Maintenance + construction + research; deferred lines are omitted, not zeroed.",
+      "Obligations + maintenance + research; deferred lines are omitted, not zeroed.",
     ),
+    ...(economy.shortfall > 0
+      ? [
+          real(
+            "shortfall",
+            "Shortfall",
+            formatMoney(economy.shortfall),
+            "Costs the treasury cannot pay this month.",
+            "alert",
+          ),
+        ]
+      : []),
+    ...(economy.runwayMonths === undefined
+      ? []
+      : [
+          real(
+            "runway",
+            "Runway",
+            `${String(economy.runwayMonths)} ${economy.runwayMonths === 1 ? "month" : "months"}`,
+            "How long the treasury lasts at the current net.",
+          ),
+        ]),
     {
       id: "balance",
       label: "Monthly balance (projected)",

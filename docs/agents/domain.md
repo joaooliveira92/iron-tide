@@ -42,7 +42,7 @@ and [non-negotiable rules](../architecture/non-negotiable-rules.md).
 
 ## How the engineering skills consume domain docs
 
-Multi-context: a root `GLOSSARY-MAP.md` (once created) points at one `GLOSSARY.md`
+Multi-context: the root `GLOSSARY-MAP.md` points at one `GLOSSARY.md`
 per context; the root `GLOSSARY.md` symlinks `CONTEXT.md`.
 
 - Read `GLOSSARY-MAP.md` if present, else `CONTEXT.md`; also the relevant

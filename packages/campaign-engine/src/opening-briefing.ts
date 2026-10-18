@@ -1,5 +1,5 @@
 import type { CampaignState } from "@bluewave/campaign";
-import { isShipOperational, scaleValue } from "@bluewave/campaign";
+import { economyOutlook, isShipOperational } from "@bluewave/campaign";
 import { buildDiplomacyScreenProjection } from "./diplomacy.js";
 import { constructionShipTypeLabel, projectedConstructionOrderCosts } from "./construction.js";
 import type { PlayerProjectionMonth } from "./projection.js";
@@ -75,6 +75,10 @@ export interface OpeningBriefingProjection {
     readonly researchExpenditure: number;
     readonly projectedSurplus: number;
     readonly status: OpeningBriefingTreasuryStatus;
+    /** Fixed monthly obligations. */
+    readonly obligations: number;
+    /** Whole months the treasury lasts at a negative net; absent when the net is not negative. */
+    readonly runwayMonths?: number;
   };
   readonly foreignIntelligence: {
     readonly relations: readonly OpeningBriefingRelationsRow[];
@@ -93,24 +97,6 @@ import {
   shipMaintenanceCost,
 } from "@bluewave/campaign";
 export { MAINTENANCE_FORMULA_ID, MAINTENANCE_FORMULA_VERSION, shipMaintenanceCost };
-
-/**
- * Qualitative treasury status (spec §8 page 3): lightweight UI-only threshold
- * logic over the real projected-surplus number, relative to the government
- * allocation. Exact thresholds are an implementation detail (spec §8).
- * Guarded against a zero/negative allocation so a degenerate nation still
- * classifies deterministically rather than dividing by zero.
- */
-function treasuryStatus(
-  projectedSurplus: number,
-  governmentAllocation: number,
-): OpeningBriefingTreasuryStatus {
-  const baseline = governmentAllocation > 0 ? governmentAllocation : 1;
-  if (projectedSurplus >= 0.25 * baseline) return "healthy";
-  if (projectedSurplus >= 0) return "narrow";
-  if (projectedSurplus >= -0.1 * baseline) return "deficit";
-  return "critical";
-}
 
 /** Total work the nation has already paid into its construction projects. */
 export function totalPaidWork(nation: {
@@ -172,15 +158,10 @@ export function buildOpeningBriefingProjection(
     .filter((port) => port.nationId === playerSlotId)
     .reduce((max, port) => Math.max(max, Number(port.level)), 0);
 
-  // Total maintenance: replicated from the engine's computeMaintenanceCost
-  // over every fleet ship (see MAINTENANCE_FORMULA_ID). NOT
-  // `nation.maintenanceCost`, which is always 0 before the first commitMonth.
-  const fleetMaintenance = nation.fleets.reduce(
-    (sum, fleet) =>
-      sum +
-      fleet.ships.reduce((s, ship) => s + shipMaintenanceCost(ship.hitPoints, ship.readiness), 0),
-    0,
-  );
+  // Every monthly flow comes from the outlook — the calculators the month executor itself uses (spec #138) — so the briefing
+  // agrees with the ledger the first month produces.
+  const outlook = economyOutlook(snapshot, playerSlotId)!;
+  const fleetMaintenance = outlook.maintenance;
 
   // Construction committed: the nation's total paid work across all
   // construction projects — the honest snapshot value at opening time. The
@@ -190,15 +171,11 @@ export function buildOpeningBriefingProjection(
   const constructionCommitted = totalPaidWork(nation);
 
   // --- Treasury (spec §8 page 3) --------------------------------------------
-  // Government allocation reuses the engine's own basis-point scaling formula
-  // (scaleValue) over income and navalAppropriationRateBp — identical to
-  // PlayerProjectionEconomy.monthlyAppropriation.
-  const governmentAllocation = Number(
-    scaleValue(Number(nation.income), Number(nation.navalAppropriationRateBp)),
-  );
-  const researchExpenditure = Number(nation.research.researchBudget);
-  const projectedSurplus =
-    governmentAllocation - fleetMaintenance - constructionCommitted - researchExpenditure;
+  // Government allocation is the monthly revenue; the surplus is the net before construction (committed construction is a
+  // stock, not a monthly flow). The band is the outlook's, shared with the status strip and the Treasury screen.
+  const governmentAllocation = outlook.revenue;
+  const researchExpenditure = outlook.plannedResearch;
+  const projectedSurplus = outlook.projectedNet;
 
   // --- Foreign Intelligence (spec §8 page 4) --------------------------------
   // Relations label + tension score only — no ship counts, no intel-quality
@@ -234,7 +211,7 @@ export function buildOpeningBriefingProjection(
         "Your battle line lacks a modern capital ship. Authorizing a new battleship class should be a priority.",
     });
   }
-  if (projectedSurplus < 0) {
+  if (projectedSurplus < 0 || outlook.shortfall > 0) {
     immediateConcerns.push({
       category: "budget_shortfall",
       message:
@@ -248,7 +225,7 @@ export function buildOpeningBriefingProjection(
         "A hull is nearing completion and will soon demand crew, armament, and operating funds.",
     });
   }
-  if (governmentAllocation <= 0 || researchExpenditure < 0.1 * governmentAllocation) {
+  if (governmentAllocation <= 0 || researchExpenditure * 10 < governmentAllocation) {
     immediateConcerns.push({
       category: "low_research_spending",
       message:
@@ -274,7 +251,9 @@ export function buildOpeningBriefingProjection(
       constructionCommitted,
       researchExpenditure,
       projectedSurplus,
-      status: treasuryStatus(projectedSurplus, governmentAllocation),
+      status: outlook.status,
+      obligations: outlook.obligations,
+      ...(outlook.runwayMonths === undefined ? {} : { runwayMonths: outlook.runwayMonths }),
     },
     foreignIntelligence: { relations },
     immediateConcerns,

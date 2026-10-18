@@ -1,6 +1,7 @@
 import type { TreasuryBreakdown } from "./treasury-summary.js";
+import { formatCount } from "../../lib/presentation-format/index.js";
 
-export type BudgetSegmentId = "maintenance" | "construction" | "research";
+export type BudgetSegmentId = "obligations" | "maintenance" | "research";
 
 interface BudgetSegmentSpec {
   readonly id: BudgetSegmentId;
@@ -18,16 +19,16 @@ interface BudgetSegmentSpec {
  */
 export const BUDGET_SEGMENTS: readonly BudgetSegmentSpec[] = [
   {
+    id: "obligations",
+    label: "Obligations",
+    className: "bg-warning",
+    valueOf: (breakdown) => breakdown.obligations,
+  },
+  {
     id: "maintenance",
     label: "Fleet maintenance",
     className: "bg-primary",
     valueOf: (breakdown) => breakdown.fleetMaintenance,
-  },
-  {
-    id: "construction",
-    label: "Construction",
-    className: "bg-warning",
-    valueOf: (breakdown) => breakdown.constructionSpend,
   },
   {
     id: "research",
@@ -64,8 +65,9 @@ export interface BudgetBar {
 /**
  * Geometry for the "budget at a glance" bar (spec V-4): expenditure stacked in
  * segments against an income marker, on one shared scale (whichever is larger),
- * so over-spending is visible as the bar running past the marker. Presentation
- * only — every figure comes from `summarizeTreasury`.
+ * so over-spending is visible as the bar running past the marker. The stack is the committed monthly flows (obligations,
+ * maintenance, research); construction is an "up to" bound limited by yards, not a commitment, and is not in it.
+ * Presentation only — every figure comes from `summarizeTreasury`.
  */
 export function buildBudgetBar(breakdown: TreasuryBreakdown): BudgetBar {
   const income = Math.max(0, breakdown.income);
@@ -84,7 +86,7 @@ export function buildBudgetBar(breakdown: TreasuryBreakdown): BudgetBar {
   });
   const overBudget = spend > income;
   const spent = segments
-    .map((segment) => `${segment.label} ${segment.value.toLocaleString()}`)
+    .map((segment) => `${segment.label} ${formatCount(segment.value)}`)
     .join(", ");
   return {
     income,
@@ -93,7 +95,7 @@ export function buildBudgetBar(breakdown: TreasuryBreakdown): BudgetBar {
     incomeMarker: income / scale,
     overBudget,
     overBudgetBy: Math.max(0, spend - income),
-    label: `Monthly budget: income ${income.toLocaleString()}; expenditure ${spend.toLocaleString()} (${spent}). ${
+    label: `Monthly budget: income ${formatCount(income)}; expenditure ${formatCount(spend)} (${spent}). ${
       overBudget ? "Spending exceeds income." : "Spending is within income."
     }`,
   };

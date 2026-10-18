@@ -363,6 +363,11 @@ describe("CampaignCompiler", () => {
         "countries.yaml",
         nationYaml({ id: "france", tag: "FRA", name: "France", isPlayable: true }),
       );
+      writeFile(
+        fixture.path,
+        "economies.yaml",
+        '- nationId: "france"\n  treasury: 600\n  income: 120\n  expenses: 60\n',
+      );
 
       const collector = new DiagnosticCollector();
       const signal = new AbortController().signal;
@@ -377,7 +382,7 @@ describe("CampaignCompiler", () => {
           portFiles: [],
           technologyFiles: [],
           fleetFiles: [],
-          economyFiles: [],
+          economyFiles: ["economies.yaml"],
           constructionFiles: [],
           diplomacyFiles: [],
           researchFiles: [],

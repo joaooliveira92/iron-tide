@@ -24,20 +24,12 @@ const SCENARIO_YEAR = 1880;
 
 /**
  * Starting ships with no modelled 1880 design, grandfathered under ADR-0212.
- * Each entry is a shipped historical hull the scenario opens with; a matching
- * design is authored later (ticket 08 for the UK placeholder). The value is the
- * required reason.
+ * Each entry is a shipped historical hull the scenario opens with and whose
+ * design is not yet authored, with the required reason. N-2 (tickets 29/30)
+ * authored the last two (aut_custoza, gbr_temeraire), so the map is empty; it
+ * remains the guard against a future design-less ship slipping in unreviewed.
  */
-const DESIGN_LESS_EXEMPTIONS: ReadonlyMap<string, string> = new Map([
-  [
-    "aut_custoza",
-    "Austro-Hungarian Custoza-class ironclad; no 1880 design is authored in the pack.",
-  ],
-  [
-    "gbr_temeraire",
-    "UK Temeraire-class central-battery ironclad; no 1880 design is authored in the pack.",
-  ],
-]);
+const DESIGN_LESS_EXEMPTIONS: ReadonlyMap<string, string> = new Map();
 
 function buildProductionBundle(): ContentBundle {
   const collector = new DiagnosticCollector();

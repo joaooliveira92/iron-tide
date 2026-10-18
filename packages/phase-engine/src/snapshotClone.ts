@@ -32,6 +32,7 @@ import type {
   WarParticipantMembership,
   WarState,
   WorldState,
+  TechnologyDefinitionData,
 } from "@bluewave/campaign";
 import type { SafeInt } from "@bluewave/contracts";
 import { PhaseEngineError } from "./errors.js";
@@ -185,6 +186,7 @@ const F = {
     "fieldPriorities",
     "researchBudget",
     "standingResearchBudget",
+    "annualResearchAllocation",
     "activeCandidates",
     "discoveredTechs",
   ),
@@ -224,6 +226,7 @@ const F = {
     "nationalProfileId",
     "costMultiplierBp",
     "buildTimeMultiplierBp",
+    "capacityUnits",
     "newConstructionReservedMassKg",
     "shipName",
     "batchId",
@@ -362,7 +365,15 @@ const F = {
   AreaData: fields<AreaData>()("id", "name", "type", "controller"),
   RouteData: fields<RouteData>()("id", "from", "to", "type", "distance"),
   PortData: fields<PortData>()("id", "name", "areaId", "nationId", "level"),
-  WorldState: fields<WorldState>()("areas", "routes", "ports"),
+  WorldState: fields<WorldState>()("areas", "routes", "ports", "technologies"),
+  TechnologyDefinitionData: fields<TechnologyDefinitionData>()(
+    "techId",
+    "researchFieldId",
+    "cost",
+    "discoveryWeight",
+    "prerequisites",
+    "availabilityMonth",
+  ),
   WarDeclaration: fields<WarDeclaration>()(
     "id",
     "attackerSideId",
@@ -548,6 +559,7 @@ const _assert: [
   _Assert<RouteData, typeof F.RouteData>,
   _Assert<PortData, typeof F.PortData>,
   _Assert<WorldState, typeof F.WorldState>,
+  _Assert<TechnologyDefinitionData, typeof F.TechnologyDefinitionData>,
   _Assert<WarDeclaration, typeof F.WarDeclaration>,
   _Assert<WarParticipantMembership, typeof F.WarParticipantMembership>,
   _Assert<BlockadeState, typeof F.BlockadeState>,
@@ -567,6 +579,7 @@ const _assert: [
   _Assert<CampaignWeatherState, typeof F.CampaignWeatherState>,
   _Assert<CampaignSnapshot, typeof F.CampaignSnapshot>,
 ] = [
+  true,
   true,
   true,
   true,
@@ -632,6 +645,7 @@ const cloneConstructionProject = (c: ConstructionProject): ConstructionProject =
     packages: (v) =>
       v === undefined ? undefined : (v as ConstructionPackage[]).map(cloneConstructionPackage),
     monthUsage: (v) => (v === undefined ? undefined : cloneMonthUsage(v as ConstructionMonthUsage)),
+    capacityUnits: (v) => (v === undefined ? undefined : { ...(v as Record<string, SafeInt>) }),
   });
 const cloneDesignStudy = (st: DesignStudy): DesignStudy =>
   recordClone(st, F.DesignStudy, {
@@ -752,6 +766,17 @@ export function cloneSnapshot(snapshot: CampaignSnapshot): CampaignSnapshot {
               (routes as RouteData[]).map((r) => recordClone(r, F.RouteData, {}, seen)),
             ports: (ports) =>
               (ports as PortData[]).map((p) => recordClone(p, F.PortData, {}, seen)),
+            technologies: (technologies) =>
+              technologies === undefined
+                ? undefined
+                : (technologies as TechnologyDefinitionData[]).map((t) =>
+                    recordClone(
+                      t,
+                      F.TechnologyDefinitionData,
+                      { prerequisites: (p) => [...(p as string[])] },
+                      seen,
+                    ),
+                  ),
           },
           seen,
         ),

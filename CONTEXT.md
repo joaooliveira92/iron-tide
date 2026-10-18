@@ -7,10 +7,15 @@ inventing a synonym. (`GLOSSARY.md` is a symlink to this file.)
 - **Bluewave** — a deterministic 1880s naval strategy and tactical game, and the
   engine and content-compiler that produce it. Runs as an Electron desktop app.
 - **Nation** (never "country") — a playable or AI power with a date-banded naval
-  profile, dockyards, fleets, budget, and research.
+  profile, dockyards, fleets, appropriation, and research (see the
+  [campaign economy glossary](packages/campaign/GLOSSARY.md)).
 - **Naval profile** — a nation's authored capability and doctrine. _Hard
   capability_ (technology, industry, facilities, licences) only ever removes
   options; _soft doctrine_ is preference. See `content/`.
+- **Technology year** — a technology's global designer unlock year: from January
+  of that year every nation may design with it. It is not an RTW3 research date
+  or a per-nation discovery claim; per-nation research wiring is deferred
+  (ADR-0229).
 - **Campaign** — one loaded scenario instance: the compiled content, a starting
   snapshot, and a turn history.
 - **Snapshot** — the validated canonical authoritative state after a month.

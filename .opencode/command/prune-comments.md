@@ -12,6 +12,6 @@ agent file (excluding `vendor/**`, `repos/**`, `**/dist/**`, `**/node_modules/**
 
 Follow the agent's Run steps exactly. Adopt **poteto-mode**, use the **swarm**
 skill phases, and hand each worker the **no-comments** rubric. This is an
-**analysis**: return the plan in chat and, if useful, write it to
-`.scratch/comment-pruning/plan.md`. Do not apply edits or commit unless the
+**analysis**: return the plan in chat and, if useful, publish it as a GitHub issue
+per `docs/agents/issue-tracker.md`. Do not apply edits or commit unless the
 operator asks.

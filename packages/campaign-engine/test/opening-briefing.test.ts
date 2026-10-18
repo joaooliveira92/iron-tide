@@ -3,6 +3,8 @@ import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import { buildOpeningBriefingProjection, shipMaintenanceCost } from "../src/opening-briefing.js";
 import {
+  baseFor,
+  fixtureCatalogue,
   fixtureConstructionProject,
   fixtureDesign,
   fixtureNation,
@@ -177,6 +179,8 @@ describe("buildOpeningBriefingProjection", () => {
     const uk = fixtureNation({
       id: "uk",
       income: SafeInt(10_000),
+      baseResources: baseFor(2_000), // revenue 2000 at the 2000 bp start rate
+      expenses: SafeInt(400),
       navalAppropriationRateBp: SafeInt(2_000), // 20%
       research: {
         nationId: "uk",
@@ -223,7 +227,9 @@ describe("buildOpeningBriefingProjection", () => {
         }),
       ],
     });
-    const snapshot = fixtureSnapshot([uk]);
+    const snapshot = fixtureSnapshot([uk], [], {
+      world: { areas: [], routes: [], ports: [], technologies: fixtureCatalogue },
+    });
     const projection = buildOpeningBriefingProjection(fixtureState(snapshot), "uk", {
       month: 1,
       year: 1880,
@@ -231,13 +237,15 @@ describe("buildOpeningBriefingProjection", () => {
     expect(projection).toBeDefined();
     if (!projection) return;
 
-    // governmentAllocation = 10000 * 2000bp / 10000 = 2000.
+    // governmentAllocation is the monthly revenue: floor(120_000 x 2000bp / 120_000) = 2000.
     expect(projection.treasury.governmentAllocation).toBe(2_000);
     // fleetMaintenance derived from the single 7000-HP ship: floor(7000/10)=700.
     expect(projection.treasury.fleetMaintenance).toBe(700);
     expect(projection.treasury.constructionCommitted).toBe(400);
     expect(projection.treasury.researchExpenditure).toBe(500);
-    expect(projection.treasury.projectedSurplus).toBe(2_000 - 700 - 400 - 500);
+    // Construction committed is a stock, so the surplus is revenue less obligations, maintenance and research.
+    expect(projection.treasury.obligations).toBe(400);
+    expect(projection.treasury.projectedSurplus).toBe(2_000 - 400 - 700 - 500);
     // Surplus 400 is < 25% of 2000 (healthy threshold) but >= 0 -> narrow.
     expect(projection.treasury.status).toBe("narrow");
   });
@@ -246,6 +254,7 @@ describe("buildOpeningBriefingProjection", () => {
     const uk = fixtureNation({
       id: "uk",
       income: SafeInt(10_000),
+      baseResources: baseFor(2_000),
       navalAppropriationRateBp: SafeInt(2_000),
       fleets: [
         {
@@ -320,6 +329,8 @@ describe("buildOpeningBriefingProjection", () => {
     const uk = fixtureNation({
       id: "uk",
       income: SafeInt(10_000),
+      baseResources: baseFor(2_000),
+      expenses: SafeInt(2_500), // obligations above the 2000 revenue drive the projected surplus negative
       navalAppropriationRateBp: SafeInt(2_000),
       research: {
         nationId: "uk",
@@ -336,7 +347,7 @@ describe("buildOpeningBriefingProjection", () => {
           designVersionId: "design-cl",
           totalWork: SafeInt(100),
           completedWork: SafeInt(95), // >= 90% -> near-complete
-          paidWork: SafeInt(2_000), // drives the projected surplus negative
+          paidWork: SafeInt(2_000), // a stock: it no longer enters the monthly net
           status: "ACTIVE",
         }),
       ],
@@ -369,7 +380,9 @@ describe("buildOpeningBriefingProjection", () => {
         },
       ],
     });
-    const snapshot = fixtureSnapshot([uk], [designCl]);
+    const snapshot = fixtureSnapshot([uk], [designCl], {
+      world: { areas: [], routes: [], ports: [], technologies: fixtureCatalogue },
+    });
     const projection = buildOpeningBriefingProjection(fixtureState(snapshot), "uk", {
       month: 1,
       year: 1880,

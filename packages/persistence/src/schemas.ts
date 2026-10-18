@@ -64,6 +64,7 @@ const StorableSnapshotSchema = Schema.Struct({
     ),
     routes: Schema.Array(Schema.Unknown).pipe(Schema.withDecodingDefaultType(emptyArrayDefault)),
     ports: Schema.Array(Schema.Unknown).pipe(Schema.withDecodingDefaultType(emptyArrayDefault)),
+    technologies: Schema.optional(Schema.Array(Schema.Record(Schema.String, Schema.Unknown))),
   }),
   nations: JsonRecord,
   wars: Schema.Struct({

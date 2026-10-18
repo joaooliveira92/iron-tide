@@ -227,9 +227,9 @@ describe("submitDesignCommand (ADR-0066)", () => {
     });
   });
   afterEach(() => {
-    rmSync(saveRoot, { recursive: true, force: true });
     clearCampaignSessionsForTest();
     clearPendingWorkspacesForTest();
+    rmSync(saveRoot, { recursive: true, force: true });
   });
 
   const submit = (over: Partial<SubmitDesignCommandPayload> = {}) =>
@@ -366,9 +366,9 @@ describe("reviseProjectCommand and loadProjectDraft (ADR-0070)", () => {
     });
   });
   afterEach(() => {
-    rmSync(saveRoot, { recursive: true, force: true });
     clearCampaignSessionsForTest();
     clearPendingWorkspacesForTest();
+    rmSync(saveRoot, { recursive: true, force: true });
   });
 
   const revision = () => Number(getCampaignSession("rv")!.state.snapshot.turnNumber);
@@ -531,9 +531,9 @@ describe("rebuilding a ship through the programs (ADR-0078)", () => {
     });
   });
   afterEach(() => {
-    rmSync(saveRoot, { recursive: true, force: true });
     clearCampaignSessionsForTest();
     clearPendingWorkspacesForTest();
+    rmSync(saveRoot, { recursive: true, force: true });
   });
 
   const revision = () => Number(getCampaignSession("rb")!.state.snapshot.turnNumber);

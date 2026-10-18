@@ -267,9 +267,7 @@ describe("Compiler", () => {
       expect(output).toBeUndefined();
       const dup = collector.errors.find((d) => d.code === "DUP-ID");
       expect(dup).toBeDefined();
-      expect(dup!.sourceLocation?.path).toBe(
-        resolve(fixture.path, "ship-building/components.yaml"),
-      );
+      expect(dup!.sourceLocation?.path).toBe("ship-building/components.yaml");
       expect(dup!.entityId).toBe("comp_a");
     } finally {
       fixture.cleanup();
@@ -314,8 +312,11 @@ describe("Compiler", () => {
       const refs = collector.errors.filter((d) => d.code === "REF");
       expect(refs.some((d) => d.message.includes("missing_form"))).toBe(true);
       expect(refs.some((d) => d.message.includes("missing_plant"))).toBe(true);
-      const refSource = resolve(fixture.path, "ship-building/reference-designs/uk/starters.yaml");
-      expect(refs.every((d) => d.sourceLocation?.path === refSource)).toBe(true);
+      expect(
+        refs.every(
+          (d) => d.sourceLocation?.path === "ship-building/reference-designs/uk/starters.yaml",
+        ),
+      ).toBe(true);
     } finally {
       fixture.cleanup();
     }
@@ -719,7 +720,7 @@ describe("Compiler", () => {
       expect(cycle).toBeDefined();
       expect(cycle!.message).toContain("tech_a");
       expect(cycle!.message).toContain("tech_b");
-      expect(cycle!.sourceLocation?.path).toBe(resolve(fixture.path, "technologies.yaml"));
+      expect(cycle!.sourceLocation?.path).toBe("technologies.yaml");
       expect((cycle!.relatedLocations ?? []).length).toBeGreaterThanOrEqual(2);
     } finally {
       fixture.cleanup();
@@ -773,7 +774,7 @@ describe("Compiler", () => {
       const selfRef = collector.errors.find((d) => d.code === "SELF_REFERENCE");
       expect(selfRef).toBeDefined();
       expect(selfRef!.entityId).toBe("tech_a");
-      expect(selfRef!.sourceLocation?.path).toBe(resolve(fixture.path, "technologies.yaml"));
+      expect(selfRef!.sourceLocation?.path).toBe("technologies.yaml");
     } finally {
       fixture.cleanup();
     }
@@ -870,9 +871,7 @@ describe("Compiler", () => {
       const selfRef = collector.errors.find((d) => d.code === "SELF_REFERENCE");
       expect(selfRef).toBeDefined();
       expect(selfRef!.entityId).toBe("comp_a");
-      expect(selfRef!.sourceLocation?.path).toBe(
-        resolve(fixture.path, "ship-building/components.yaml"),
-      );
+      expect(selfRef!.sourceLocation?.path).toBe("ship-building/components.yaml");
     } finally {
       fixture.cleanup();
     }
@@ -916,9 +915,7 @@ describe("Compiler", () => {
       expect(cycle).toBeDefined();
       expect(cycle!.message).toContain("comp_a");
       expect(cycle!.message).toContain("comp_b");
-      expect(cycle!.sourceLocation?.path).toBe(
-        resolve(fixture.path, "ship-building/components.yaml"),
-      );
+      expect(cycle!.sourceLocation?.path).toBe("ship-building/components.yaml");
     } finally {
       fixture.cleanup();
     }

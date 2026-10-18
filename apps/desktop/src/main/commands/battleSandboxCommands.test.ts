@@ -256,15 +256,33 @@ describe("battle sandbox commands (ADR-0057)", () => {
         new DiagnosticCollector(),
       );
       if (!output) throw new Error("compile failed");
-      const snapshot = output.state.snapshot;
+      // N-2 (tickets 29/30) closed the last production linkage gaps, so inject a
+      // design-less ship to exercise the guard.
+      const base = output.state.snapshot;
+      const uk = base.nations.get("uk")!;
+      const target = uk.fleets
+        .flatMap((fleet) => fleet.ships)
+        .find((ship) => !ship.isUnderConstruction)!;
+      const snapshot: CampaignSnapshot = {
+        ...base,
+        nations: new Map(base.nations).set("uk", {
+          ...uk,
+          fleets: uk.fleets.map((fleet) => ({
+            ...fleet,
+            ships: fleet.ships.map((ship) =>
+              ship.id === target.id ? { ...ship, designVersionId: "des_absent" } : ship,
+            ),
+          })),
+        }),
+      };
       const before = structuredClone(snapshot);
       const result = excludeUndesignedShips(snapshot);
-      expect(result.excluded).toContain("gbr_temeraire");
+      expect(result.excluded).toContain(target.id);
       expect(snapshot).toEqual(before);
       const ship = result.snapshot.nations
         .get("uk")!
         .fleets.flatMap((f) => f.ships)
-        .find((s) => s.id === "gbr_temeraire")!;
+        .find((s) => s.id === target.id)!;
       expect(ship.isUnderConstruction).toBe(true);
     });
   });

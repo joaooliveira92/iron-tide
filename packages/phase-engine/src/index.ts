@@ -306,7 +306,7 @@ export {
   type ForeignInsightResolution,
   type ForeignInsightResolveInput,
 } from "./foreignInsight.js";
-export { researchCostOf } from "./research.js";
+export { researchCostLookup } from "./research.js";
 export {
   REBUILD_BULGE_REQUIRED,
   gunDiffOf,

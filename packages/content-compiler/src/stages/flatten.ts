@@ -15,6 +15,7 @@ import { compareCodePoints } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
 import type { CompilerStage } from "../index.js";
+import { canonicalContentPath } from "../contentPath.js";
 import type { PartModelSources, ValidateOutput } from "./validate.js";
 
 /**
@@ -142,11 +143,11 @@ export function compilePartModel(
       prototype === undefined ? undefined : (context.sources.parts.get(prototype.id) ?? sourceFile);
     const record = flattenPart(
       part,
-      artifactPath(context.sources.contentDir, sourceFile),
+      canonicalContentPath(context.sources.contentDir, sourceFile),
       prototype,
       prototypeFile === undefined
         ? undefined
-        : artifactPath(context.sources.contentDir, prototypeFile),
+        : canonicalContentPath(context.sources.contentDir, prototypeFile),
     );
     const decoded = validateAgainstSchema(
       record,
@@ -636,17 +637,6 @@ function push(map: Map<string, string[]>, key: string, value: string): void {
 
 function sortedIds(ids: readonly string[] | undefined): string[] {
   return [...new Set(ids ?? [])].sort(compareCodePoints);
-}
-
-/**
- * A source file as the artifact records it: relative to the content root, with `/`
- * separators, so the body hash does not depend on the checkout path or the host OS.
- * A pure string operation (no `node:path`, which would resolve against the cwd).
- */
-function artifactPath(contentDir: string, file: string): string {
-  const path = file.replaceAll("\\", "/");
-  const root = contentDir.replaceAll("\\", "/").replace(/\/+$/, "");
-  return root !== "" && path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
 }
 
 function compareById(a: { readonly id: string }, b: { readonly id: string }): number {

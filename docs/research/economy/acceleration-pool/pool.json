@@ -1,0 +1,268 @@
+[
+  {
+    "nationId": "austria_hungary",
+    "dockKg": 8000000,
+    "reference": "starter_ca_austria_hungary_1880",
+    "referenceKg": 4864821,
+    "referenceUnits": 35,
+    "yardId": "yard_medium",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  },
+  {
+    "nationId": "brazil",
+    "dockKg": 5000000,
+    "reference": "starter_ca_brazil_1880",
+    "referenceKg": 4864821,
+    "referenceUnits": 35,
+    "yardId": "yard_medium",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  },
+  {
+    "nationId": "france",
+    "dockKg": 12000000,
+    "reference": "redoutable_1878",
+    "referenceKg": 8382066,
+    "referenceUnits": 63,
+    "yardId": "yard_large",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  },
+  {
+    "nationId": "germany",
+    "dockKg": 9000000,
+    "reference": "sachsen_1878",
+    "referenceKg": 7589174,
+    "referenceUnits": 51,
+    "yardId": "yard_large",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  },
+  {
+    "nationId": "italy",
+    "dockKg": 14000000,
+    "reference": "principe_amedeo_1874",
+    "referenceKg": 5207737,
+    "referenceUnits": 35,
+    "yardId": "yard_medium",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  },
+  {
+    "nationId": "japan",
+    "dockKg": 5000000,
+    "reference": "starter_ca_japan_1880",
+    "referenceKg": 4864821,
+    "referenceUnits": 35,
+    "yardId": "yard_medium",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  },
+  {
+    "nationId": "netherlands",
+    "dockKg": 5000000,
+    "reference": "starter_ca_netherlands_1880",
+    "referenceKg": 4864821,
+    "referenceUnits": 35,
+    "yardId": "yard_medium",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  },
+  {
+    "nationId": "ottoman_empire",
+    "dockKg": 9000000,
+    "reference": "mesudiye_1875",
+    "referenceKg": 7052006,
+    "referenceUnits": 50,
+    "yardId": "yard_large",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  },
+  {
+    "nationId": "portugal",
+    "dockKg": 5000000,
+    "reference": "starter_ca_portugal_1880",
+    "referenceKg": 4864821,
+    "referenceUnits": 35,
+    "yardId": "yard_medium",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  },
+  {
+    "nationId": "qing",
+    "dockKg": 10000000,
+    "reference": "starter_b_qing_1880",
+    "referenceKg": 9377426,
+    "referenceUnits": 64,
+    "yardId": "yard_large",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  },
+  {
+    "nationId": "russia",
+    "dockKg": 11000000,
+    "reference": "petr_velikiy_1876",
+    "referenceKg": 9248545,
+    "referenceUnits": 57,
+    "yardId": "yard_large",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  },
+  {
+    "nationId": "spain",
+    "dockKg": 8000000,
+    "reference": "numancia_1864",
+    "referenceKg": 5439004,
+    "referenceUnits": 33,
+    "yardId": "yard_medium",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  },
+  {
+    "nationId": "uk",
+    "dockKg": 13000000,
+    "reference": "alexandra_1877",
+    "referenceKg": 9377426,
+    "referenceUnits": 64,
+    "yardId": "yard_large",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  },
+  {
+    "nationId": "usa",
+    "dockKg": 5000000,
+    "reference": "starter_ca_usa_1880",
+    "referenceKg": 4864821,
+    "referenceUnits": 35,
+    "yardId": "yard_medium",
+    "capacityUnitsPerLine": {
+      "slipway": 1,
+      "armour_plate": 1,
+      "heavy_gun": 1,
+      "machinery": 1,
+      "quay": 1,
+      "trials": 1
+    },
+    "capacityUnitsPerMonth": 6,
+    "multipleBp": 30000,
+    "candidatePoolUnitsPerMonth": 18
+  }
+]

@@ -456,6 +456,9 @@ importers:
       '@bluewave/campaign':
         specifier: workspace:*
         version: link:../campaign
+      '@bluewave/campaign-engine':
+        specifier: workspace:*
+        version: link:../campaign-engine
       '@bluewave/combat':
         specifier: workspace:*
         version: link:../combat
@@ -489,6 +492,9 @@ importers:
       '@bluewave/random':
         specifier: workspace:*
         version: link:../random
+      '@bluewave/ship-design':
+        specifier: workspace:*
+        version: link:../ship-design
     devDependencies:
       '@bluewave/test-support':
         specifier: workspace:*

@@ -30,6 +30,7 @@ function fixtureProjection(
       researchExpenditure: 500,
       projectedSurplus: 100,
       status: "narrow",
+      obligations: 600,
     },
     foreignIntelligence: {
       relations: [{ nationId: "germany", name: "German Empire", relation: "at_war", tension: 10 }],

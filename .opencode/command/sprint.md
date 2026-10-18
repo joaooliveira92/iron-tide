@@ -11,19 +11,11 @@ sprint through the four subagent roles in `.opencode/agents/`
 orchestrator-owned **validation gate** before every commit — see
 `.ai/ORCHESTRATION.md` for the pipeline and handoff contract.
 
-## Load your operating context first (mandatory reading order)
+## Load your operating context first (mandatory)
 
-Read, in order, before any editing:
-
-1. `.ai/AUTONOMOUS-AGENT.md` — your operating authority, autonomy, and stop conditions.
-2. `.ai/IMPLEMENTATION-PROMPT.md` — the per-sprint procedure (§1–8).
-3. `.ai/ENGINEERING-CONTRACT.md` — the binding contract.
-4. `.ai/ORCHESTRATION.md` — the orchestrator + 4-subagent pipeline and validation gate.
-5. `.ai/SPRINT-PLAN.md` — the backlog and the current frontier pointer.
-6. `.ai/AUTHORITY-INDEX.md` and `.ai/reports/*` — authority and acceptance status
-   (`docs/PROGRESS.md`/`docs/OPEN-ISSUES.md` are unavailable; ADR-0210).
-7. `README.md` — the canonical spec (`DESIGN-55` defines "complete").
-8. The brief for the sprint you are about to run (see below).
+Load the operating context exactly as **`.opencode/command/boot.md` §3** specifies
+(it is the canonical list and applies when this command is run standalone). Do not
+duplicate that reading here.
 
 ## Determine the current sprint (auto-advance)
 

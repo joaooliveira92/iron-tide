@@ -20,18 +20,18 @@ validation gate. Subagents live in `.opencode/agents/`. The pipeline is
 1. **Chart (wayfinder)** — when an effort spans more than one session or the way
    is foggy, run **wayfinder**: name the destination, map the frontier, create a
    `map.md` + decision tickets (`research`/`prototype`/`grilling`/`task`) on the
-   `.scratch/` issue tracker, wire blocking edges, and work it one ticket per
+   GitHub issue tracker, wire blocking edges, and work it one ticket per
    session. If the way is already clear and fits one session, skip straight to Spec.
 2. **Ground (research)** — for content/spec-heavy sprints, the **research** role
    spins up a background agent against primary sources and writes
    `docs/research/<slug>-<topic>.md`.
 3. **Spec (spec-creator)** — the **spec-creator** role synthesizes a spec in the
    **to-spec** format (Problem/Solution/User Stories/Implementation Decisions/
-   Testing/Out of Scope), writes it to `.scratch/<slug>/spec.md`, and registers a
-   pointer marking it ready for slicing (`.ai/specs/` is an index, not a store).
+   Testing/Out of Scope), publishes it as a GitHub issue labelled `ready-for-agent`,
+   and records its number for slicing.
 4. **Slice (to-tickets)** — once a spec is approved, **to-tickets** breaks it into
    **tracer-bullet vertical slices**, each declaring its blocking edges, published
-   as `.scratch/<slug>/issues/<NN>-<name>.md` (frontier-ordered; blockers first).
+   as **sub-issues** of the spec issue (frontier-ordered; blockers first).
 5. **Execute (implementator)** — the **implementator** works the **frontier**
    (open, unblocked, `Frontier: yes`) tickets, one at a time, per
    ENGINEERING-CONTRACT.
@@ -44,7 +44,7 @@ validation gate. Subagents live in `.opencode/agents/`. The pipeline is
 
 | Role              | `.opencode/agents/` | Skill                                     | Permissions         | Output                                                                  |
 | ----------------- | ------------------- | ----------------------------------------- | ------------------- | ----------------------------------------------------------------------- |
-| 1. spec-creator   | `spec-creator.md`   | `to-spec`                                 | write spec only     | `.scratch/<slug>/spec.md` + `.ai/specs/` pointer                        |
+| 1. spec-creator   | `spec-creator.md`   | `to-spec`                                 | write spec issue    | spec issue (`ready-for-agent`)                                          |
 | 2. research       | `research.md`       | `research`                                | write notes only    | `docs/research/<slug>-<topic>.md`                                       |
 | 3. implementator  | `implementator.md`  | — (works `to-tickets` output)             | edit+run            | frontier ticket done + code + tests + exact results + changed-file list |
 | 4. reviewer       | `reviewer.md`       | —                                         | read-only           | severity-tagged findings + APPROVE / NEEDS_REWORK                       |
@@ -58,8 +58,8 @@ validation gate → commit**.
 - Each subagent's final report is a **spec for the next step, not the source of
   truth**. The orchestrator re-reads files before editing and independently
   verifies claimed results.
-- Write scope is role-locked: spec-creator writes only
-  `.scratch/<slug>/spec.md` + its `.ai/specs/` pointer; research writes only
+- Write scope is role-locked: spec-creator writes only the spec issue;
+  research writes only
   `docs/research/<slug>-<topic>.md`; the reviewer writes nothing. The
   orchestrator re-reads those files (not the reports) before acting on them.
 - The implementator works one **frontier ticket** (from to-tickets); the reviewer
@@ -93,8 +93,8 @@ in `.ai/WORKTREES.md` via `pnpm worktrees` (`new`/`list`/`sync`/`prune`);
 
 - Pick the sprint from `.ai/SPRINT-PLAN.md`; optionally override with
   `$ARGUMENTS`; auto-advance per plan dependency order.
-- For huge/foggy efforts, chart via **wayfinder** (`map.md` + decision tickets on
-  `.scratch/`); otherwise go spec → slice → implement directly.
+- For huge/foggy efforts, chart via **wayfinder** (`map` + decision tickets on
+  GitHub Issues); otherwise go spec → slice → implement directly.
 - Own all Git: small Conventional Commits on a short-lived branch (never
   directly on `dev`), delivered by a checks-green pull request; no self-merge of
   a release PR into `main`; leave the tree clean (ADR-0165).

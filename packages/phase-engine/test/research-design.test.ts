@@ -4,6 +4,7 @@
   ConstructionProject,
   NationState,
 } from "@bluewave/campaign";
+import { TEST_RESEARCH_CATALOGUE } from "./research-catalogue.helper.js";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -89,7 +90,7 @@ function makeSnapshot(
       nationId,
       type: nationId === "GBR" ? ("playable" as const) : ("ai" as const),
     })),
-    world: { areas: [], routes: [], ports: [] },
+    world: { areas: [], routes: [], ports: [], technologies: TEST_RESEARCH_CATALOGUE },
     nations,
     wars: {
       wars: [],
@@ -245,7 +246,11 @@ describe("B10b research acceptance (criteria 1-10)", () => {
       treasury: SafeInt(1000),
       researchBudget: SafeInt(100),
       techs: [{ techId: "basic_steam", investedPoints: SafeInt(0), completed: false }],
-      priorities: { MACHINERY: SafeInt(4) },
+      priorities: {
+        MACHINERY: SafeInt(4),
+        HULL_CONSTRUCTION: SafeInt(0),
+        GUNNERY: SafeInt(0),
+      },
     });
     const posSnapshot = makeSnapshot(new Map([["GBR", gbrPos]]));
     const posRun = runMonth(posSnapshot, []).result;
@@ -398,29 +403,30 @@ describe("B10b research acceptance (criteria 1-10)", () => {
     expect(run1.randomLedger.hash()).toBe(run2.randomLedger.hash());
   });
 
-  it("C10: a technology not yet available (prerequisite missing) remains ineligible and consumes no resources", () => {
+  it("C10: a technology whose prerequisite is undiscovered stays ineligible; the budget goes to the prerequisite", () => {
     const gbr = makeResearchNation("GBR", {
       researchBudget: SafeInt(100),
       techs: [
         // advanced_steam requires basic_steam discovered; basic_steam is undiscovered.
         { techId: "advanced_steam", investedPoints: SafeInt(0), completed: false },
       ],
-      priorities: { MACHINERY: SafeInt(4) },
+      priorities: {
+        MACHINERY: SafeInt(4),
+        HULL_CONSTRUCTION: SafeInt(0),
+        GUNNERY: SafeInt(0),
+      },
     });
     const snapshot = makeSnapshot(new Map([["GBR", gbr]]));
     const { result, collector } = runMonth(snapshot, []);
 
     expect(result.success).toBe(true);
-    // No eligible field => zero resources consumed, no crash.
     expect(collector.errors.length).toBe(0);
     const final = result.finalSnapshot.nations.get("GBR")!;
     const advanced = final.research.technologies.find((t) => t.techId === "advanced_steam")!;
     expect(advanced.investedPoints as number).toBe(0);
-    expect(
-      result.financialLedger.all.some(
-        (e) => e.nationId === "GBR" && e.categoryId === "RESEARCH_EXPENDITURE",
-      ),
-    ).toBe(false);
+    // The catalogue technology nobody had started gains a progress row and takes the whole budget.
+    const basic = final.research.technologies.find((t) => t.techId === "basic_steam")!;
+    expect(basic.investedPoints as number).toBe(100);
   });
 
   it("C15: research resolution is deterministic for a fixed seed (replay produces identical snapshots and hashes)", () => {
@@ -528,6 +534,7 @@ describe("SetBudgetAllocation (ADR-0060)", () => {
   it("sets the appropriation rate and keeps paying the research budget every month", () => {
     const gbr = makeResearchNation("GBR", {
       treasury: SafeInt(1000),
+      baseResources: SafeInt(120000),
       techs: techs(),
       priorities: defaultPriorities(),
     });
@@ -544,6 +551,30 @@ describe("SetBudgetAllocation (ADR-0060)", () => {
       (e) => e.nationId === "GBR" && e.categoryId === "RESEARCH_EXPENDITURE",
     );
     expect(spent.some((e) => (e.debit as number) === 80)).toBe(true);
+  });
+
+  it("refuses a research budget above 12% of the monthly revenue at the commanded rate", () => {
+    // base 120000 at 3000 bp => revenue 3000 => cap floor(12% x 3000) = 360
+    const gbr = makeResearchNation("GBR", {
+      treasury: SafeInt(1000),
+      baseResources: SafeInt(120000),
+      techs: techs(),
+    });
+    const snapshot = makeSnapshot(new Map([["GBR", gbr]]));
+
+    const over = runMonth(snapshot, [command(snapshot, 3000, 361)]);
+    const refused = over.result.finalSnapshot.nations.get("GBR")!;
+    expect(refused.navalAppropriationRateBp as number).toBe(2000);
+    expect(refused.research.standingResearchBudget).toBeUndefined();
+    // The lifecycle refuses it at validation, with the stable code and the cap, before the engine would apply it.
+    const ledger = JSON.stringify(over.result.commandLedger.all);
+    expect(ledger).toContain("RESEARCH_ABOVE_CAP");
+    expect(ledger).toContain("cap of 360");
+
+    const atCap = runMonth(snapshot, [command(snapshot, 3000, 360)]);
+    const accepted = atCap.result.finalSnapshot.nations.get("GBR")!;
+    expect(accepted.research.standingResearchBudget as number).toBe(360);
+    expect(atCap.collector.errors.map((d) => d.code)).not.toContain("RESEARCH_ABOVE_CAP");
   });
 
   it("rejects out-of-range allocations and leaves the nation unchanged", () => {

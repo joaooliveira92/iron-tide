@@ -13,6 +13,14 @@ import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence"
 import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
 import { nationsYaml } from "@bluewave/test-support";
 
+import { buildProgressionLedger } from "./progression-ledger.js";
+import { assertDecisionProbes, probeDecisions } from "./decision-probes.js";
+import {
+  compileProductionBundle,
+  compileProductionCampaign,
+  probeReferenceDesigns,
+} from "./production-pack.js";
+
 const FIXTURE = {
   pack: JSON.stringify({
     name: "1880-test-scenario",
@@ -345,4 +353,282 @@ function run(): void {
   }
 }
 
-run();
+/**
+ * N-2 acceptance (#31): command-free 12-month production smoke run over all
+ * fourteen committed nations. The compiled production pack is advanced a full
+ * game year with the same per-month seed the desktop turn transaction derives,
+ * so the run reaches the known S-1 Portugal/Netherlands treasury event. Two
+ * in-process passes prove repeatability; the caller compares two fresh
+ * processes for the cross-process byte-identity proof.
+ */
+const PRODUCTION_SMOKE_MONTHS = 12;
+const PRODUCTION_SMOKE_SEED = "ten-nation-smoke-1880";
+const PRODUCTION_TEN_YEAR_MONTHS = 120;
+const PRODUCTION_TEN_YEAR_SEED = "ten-year-progression-1880";
+interface SmokeDiagnostic {
+  readonly month: number;
+  readonly nationId: string | null;
+  readonly code: string;
+  readonly message: string;
+}
+
+function nationIdOf(diagnostic: { readonly message: string }): string | null {
+  const match = /^Nation (\S+) /.exec(diagnostic.message);
+  return match?.[1] ?? null;
+}
+
+function hullCounts(snapshot: CampaignSnapshot): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const [nationId, nation] of snapshot.nations) {
+    counts[nationId] = nation.fleets.reduce((total, fleet) => total + fleet.ships.length, 0);
+  }
+  return counts;
+}
+
+interface YearStart {
+  readonly year: number;
+  readonly month: string;
+  readonly snapshotHash: string;
+}
+
+interface ProductionRun {
+  readonly initialSnapshotHash: string;
+  readonly yearStarts: YearStart[];
+  readonly monthlyHashes: string[];
+  readonly monthlySuccess: boolean[];
+  readonly closingSnapshotHash: string;
+  readonly success: boolean;
+  readonly diagnostics: SmokeDiagnostic[];
+  /** Per nation, the first month (1-based) that recorded an outflow shortfall; absent nations never fell short. */
+  readonly firstShortfallMonth: Record<string, number>;
+  /**
+   * Per nation, the first month (1-based) whose requested monthly flows left a negative net before construction
+   * (revenue less requested maintenance, obligation and research); absent nations never ran a deficit.
+   */
+  readonly firstDeficitMonth: Record<string, number>;
+  /** Months where a nation's treasury change did not equal the sum of its paid ledger postings (must stay empty). */
+  readonly ledgerIdentityBreaks: string[];
+  readonly hullCounts: Record<string, number>;
+}
+
+function calendarAt(
+  initial: CampaignSnapshot,
+  monthOffset: number,
+): {
+  readonly year: number;
+  readonly month: number;
+} {
+  const startIndex = Number(initial.startYear) * 12 + Number(initial.startMonth) - 1;
+  const index = startIndex + monthOffset;
+  return { year: Math.floor(index / 12), month: (index % 12) + 1 };
+}
+
+function advanceProductionRun(
+  initial: CampaignSnapshot,
+  months: number,
+  seed: string,
+  onYearStart?: (snapshot: CampaignSnapshot, year: number) => void,
+): ProductionRun {
+  let snapshot = initial;
+  const yearStarts: YearStart[] = [];
+  const monthlyHashes: string[] = [];
+  const monthlySuccess: boolean[] = [];
+  const diagnostics: SmokeDiagnostic[] = [];
+  const firstShortfallMonth: Record<string, number> = {};
+  const firstDeficitMonth: Record<string, number> = {};
+  const ledgerIdentityBreaks: string[] = [];
+  let success = true;
+  for (let index = 0; index < months; index++) {
+    const calendar = calendarAt(initial, index);
+    if (calendar.month === 1) {
+      yearStarts.push({
+        year: calendar.year,
+        month: `${String(calendar.year)}-01`,
+        snapshotHash: hashSnapshot(snapshot),
+      });
+      onYearStart?.(snapshot, calendar.year);
+    }
+    const collector = new DiagnosticCollector();
+    const result = new MonthExecutor().execute(
+      snapshot,
+      [],
+      `${seed}:month:${String(snapshot.turnNumber)}`,
+      collector,
+    );
+    success = success && result.success;
+    monthlySuccess.push(result.success);
+    for (const diagnostic of collector.errors) {
+      diagnostics.push({
+        month: index + 1,
+        nationId: nationIdOf(diagnostic),
+        code: diagnostic.code,
+        message: diagnostic.message,
+      });
+    }
+    for (const warning of collector.warnings) {
+      const nationId = warning.code === "OUTFLOW_SHORTFALL" ? nationIdOf(warning) : null;
+      if (nationId !== null && firstShortfallMonth[nationId] === undefined)
+        firstShortfallMonth[nationId] = index + 1;
+    }
+    for (const nationId of snapshot.nations.keys()) {
+      let revenue = 0;
+      let requested = 0;
+      for (const entry of result.financialLedger.all) {
+        if (entry.nationId !== nationId) continue;
+        if (entry.phaseId === "monthly_revenue") revenue += entry.credit as number;
+        else if (entry.phaseId !== "appropriation")
+          requested += (entry.requested ?? entry.debit) as number;
+      }
+      if (revenue - requested < 0 && firstDeficitMonth[nationId] === undefined)
+        firstDeficitMonth[nationId] = index + 1;
+    }
+    for (const [nationId, before] of snapshot.nations) {
+      let net = 0;
+      for (const entry of result.financialLedger.all) {
+        if (entry.nationId !== nationId) continue;
+        const credits = entry.phaseId === "monthly_revenue" ? entry.credit : 0;
+        const debits = entry.phaseId === "monthly_revenue" ? 0 : entry.debit;
+        net += (credits as number) - (debits as number);
+      }
+      const after = result.finalSnapshot.nations.get(nationId);
+      if (after !== undefined && (after.treasury as number) !== (before.treasury as number) + net)
+        ledgerIdentityBreaks.push(`${String(index + 1)}:${nationId}`);
+    }
+    monthlyHashes.push(hashSnapshot(result.finalSnapshot));
+    snapshot = {
+      ...result.finalSnapshot,
+      turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt.ONE),
+    };
+  }
+  return {
+    initialSnapshotHash: hashSnapshot(initial),
+    yearStarts,
+    monthlyHashes,
+    monthlySuccess,
+    closingSnapshotHash: hashSnapshot(snapshot),
+    success,
+    diagnostics,
+    firstShortfallMonth,
+    firstDeficitMonth,
+    ledgerIdentityBreaks,
+    hullCounts: hullCounts(snapshot),
+  };
+}
+
+function advanceProductionSmoke(initial: CampaignSnapshot): ProductionRun {
+  return advanceProductionRun(initial, PRODUCTION_SMOKE_MONTHS, PRODUCTION_SMOKE_SEED);
+}
+
+function runProductionTenNationSmoke(): void {
+  const { state } = compileProductionCampaign();
+  const first = advanceProductionSmoke(state.snapshot);
+  const second = advanceProductionSmoke(state.snapshot);
+  const inProcessRepeatMatches =
+    canonicalSerialize(first.monthlyHashes) === canonicalSerialize(second.monthlyHashes) &&
+    first.closingSnapshotHash === second.closingSnapshotHash &&
+    canonicalSerialize(first.diagnostics) === canonicalSerialize(second.diagnostics);
+
+  process.stdout.write(
+    JSON.stringify({
+      mode: "production-ten-nation",
+      months: PRODUCTION_SMOKE_MONTHS,
+      inProcessRepeatMatches,
+      success: first.success && second.success,
+      monthlyHashes: first.monthlyHashes,
+      monthlySuccess: first.monthlySuccess,
+      closingSnapshotHash: first.closingSnapshotHash,
+      diagnostics: first.diagnostics,
+      firstShortfallMonth: first.firstShortfallMonth,
+      firstDeficitMonth: first.firstDeficitMonth,
+      ledgerIdentityBreaks: first.ledgerIdentityBreaks,
+      hullCounts: first.hullCounts,
+    }) + "\n",
+  );
+}
+
+function runProgressionLedger(): void {
+  const { bundle } = compileProductionBundle();
+  const ledger = buildProgressionLedger(bundle);
+  process.stdout.write(
+    JSON.stringify({
+      mode: "progression-ledger",
+      ledgerHash: sha256Hex(canonicalSerialize(ledger)),
+      ledger,
+    }) + "\n",
+  );
+}
+
+function runProductionTenYear(): void {
+  const { state } = compileProductionCampaign();
+  const first = advanceProductionRun(
+    state.snapshot,
+    PRODUCTION_TEN_YEAR_MONTHS,
+    PRODUCTION_TEN_YEAR_SEED,
+  );
+  const second = advanceProductionRun(
+    state.snapshot,
+    PRODUCTION_TEN_YEAR_MONTHS,
+    PRODUCTION_TEN_YEAR_SEED,
+  );
+  const inProcessRepeatMatches =
+    canonicalSerialize(first.monthlyHashes) === canonicalSerialize(second.monthlyHashes) &&
+    first.closingSnapshotHash === second.closingSnapshotHash &&
+    canonicalSerialize(first.diagnostics) === canonicalSerialize(second.diagnostics);
+
+  process.stdout.write(
+    JSON.stringify({
+      mode: "production-ten-year",
+      months: PRODUCTION_TEN_YEAR_MONTHS,
+      inProcessRepeatMatches,
+      success: first.success && second.success,
+      initialSnapshotHash: first.initialSnapshotHash,
+      yearlyCheckpoints: first.yearStarts,
+      monthlyHashes: first.monthlyHashes,
+      monthlySuccess: first.monthlySuccess,
+      closingSnapshotHash: first.closingSnapshotHash,
+      diagnostics: first.diagnostics,
+      firstShortfallMonth: first.firstShortfallMonth,
+      firstDeficitMonth: first.firstDeficitMonth,
+      ledgerIdentityBreaks: first.ledgerIdentityBreaks,
+      hullCounts: first.hullCounts,
+    }) + "\n",
+  );
+}
+
+function runProductionProbes(): void {
+  const { bundle, state } = compileProductionCampaign();
+  const slot = state.snapshot.slots.find((candidate) => candidate.type === "playable");
+  if (slot === undefined) throw new Error("production pack has no playable slot");
+  const references = probeReferenceDesigns(bundle);
+  const years: { year: number; probes: readonly unknown[] }[] = [];
+  const run = advanceProductionRun(
+    state.snapshot,
+    PRODUCTION_TEN_YEAR_MONTHS,
+    PRODUCTION_TEN_YEAR_SEED,
+    (snapshot, year) => {
+      if (year > 1889) return;
+      const probes = probeDecisions(snapshot, slot, year, references);
+      assertDecisionProbes(year, probes);
+      years.push({ year, probes });
+    },
+  );
+  process.stdout.write(
+    JSON.stringify({
+      mode: "production-probes",
+      years,
+      closingSnapshotHash: run.closingSnapshotHash,
+    }) + "\n",
+  );
+}
+
+if (process.argv[2] === "production-ten-nation") {
+  runProductionTenNationSmoke();
+} else if (process.argv[2] === "production-ten-year") {
+  runProductionTenYear();
+} else if (process.argv[2] === "production-probes") {
+  runProductionProbes();
+} else if (process.argv[2] === "progression-ledger") {
+  runProgressionLedger();
+} else {
+  run();
+}

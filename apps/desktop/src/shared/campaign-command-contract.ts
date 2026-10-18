@@ -5,6 +5,7 @@ import type {
   CampaignConfiguration,
   CommitMonthResponse,
   InspectPrioritiesResult,
+  LedgerReconciliation,
   OpeningBriefingProjection,
   PlayerProjection,
   RandomDecisionRecord,
@@ -284,6 +285,10 @@ export interface MonthlyReportLedgerRow {
   /** The row's balance movement (`newBalance − previousBalance`). */
   readonly amount: number;
   readonly runningBalance: number;
+  /** Outflows only (spec #138): what the rules asked for; `amount` carries what was paid. Absent on older reports. */
+  readonly requested?: number;
+  /** Outflows only: `requested - paid`, a recorded non-carried shortfall. Absent on older reports. */
+  readonly shortfall?: number;
 }
 
 /** The month's real treasury figures plus the two ledger-derived lines (spec §16). */
@@ -300,6 +305,10 @@ export interface MonthlyReportTreasury {
   readonly netChange: number;
   /** The real player ledger rows — render the ledger, never an invented balancing row. */
   readonly ledgerRows: readonly MonthlyReportLedgerRow[];
+  /** Paid fixed obligations, from the ledger `OBLIGATION` category. Absent on reports stored before spec #138. */
+  readonly obligationExpense?: number;
+  /** The month's reconciliation line (spec #138 G2). Absent on reports stored before it existed. */
+  readonly reconciliation?: LedgerReconciliation;
 }
 
 /** One `ConstructionProgressed` event's per-project work delta. */

@@ -93,3 +93,26 @@ export function shipMonthlyMaintenanceCost(
     "floor",
   );
 }
+
+/** The ships of a nation's fleets, as the monthly maintenance total needs them. */
+export interface MaintainedFleet {
+  readonly ships: readonly {
+    readonly hitPoints: SafeInt;
+    readonly readiness: ShipReadinessState;
+  }[];
+}
+
+/**
+ * A nation's total monthly maintenance requested: the sum of `shipMonthlyMaintenanceCost` over every ship of every fleet.
+ * The maintenance phase and every projection call this one function (spec #138), so the figure cannot drift between them.
+ */
+export function nationMonthlyMaintenance(
+  fleets: readonly MaintainedFleet[],
+  atWar: boolean,
+): SafeInt {
+  let total = SafeInt.ZERO;
+  for (const fleet of fleets)
+    for (const ship of fleet.ships)
+      total = SafeInt.add(total, shipMonthlyMaintenanceCost(ship.hitPoints, ship.readiness, atWar));
+  return total;
+}
