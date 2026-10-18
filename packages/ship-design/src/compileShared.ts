@@ -42,6 +42,8 @@ export interface MachineryPlan {
   readonly fuelZoneId: ZoneId;
   readonly fuelStationPermille: number;
   readonly foulingBp: number;
+  /** Speed <-> reliability axis, -10_000 (reliability) .. +10_000 (speed). Absent = 0 = balanced (ADR-0233). */
+  readonly enginePriorityBp?: number;
   /**
    * Optional machinery rooms (boiler rooms, engine rooms). The plant's weight and volume are split by `shareBp`
    * (sum 10_000); each room is a separate critical system. When absent the plant is one room at `zoneId`.

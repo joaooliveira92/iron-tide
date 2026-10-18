@@ -4,6 +4,7 @@ import { NumberField, SelectField } from "../fields.js";
 import { Panel } from "./Panel.js";
 import type { Edit } from "./types.js";
 import { plural } from "../plural.js";
+import { enginePriorityTrade } from "./engine-priority.js";
 
 export function MachineryPanel({
   draft,
@@ -37,7 +38,20 @@ export function MachineryPanel({
           scale={1000}
           onCommit={(v) => edit({ kind: "set_machinery", patch: { fuelCapacityKg: v } })}
         />
+        <NumberField
+          label="Engine priority — Reliability ←→ Speed"
+          shortLabel="Engine priority"
+          unit="% (− reliability, + speed)"
+          value={m.enginePriorityBp ?? 0}
+          scale={100}
+          min={-100}
+          max={100}
+          onCommit={(v) => edit({ kind: "set_machinery", patch: { enginePriorityBp: v } })}
+        />
       </div>
+      <p className="text-xs text-muted-foreground">
+        {enginePriorityTrade(m.enginePriorityBp ?? 0)}
+      </p>
       <p className="text-xs text-muted-foreground">
         {plural(m.rooms?.length ?? 1, "machinery room")}. Cruise speed and range target come from
         the requirement: {(draft.requirement.cruiseSpeedMilliKnots / 1000).toFixed(1)} kn,{" "}

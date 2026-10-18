@@ -373,3 +373,20 @@ describe("schema v2: armour regions fold (ADR-0232, ADR-0233)", () => {
     expect(log.edits).toEqual([]);
   });
 });
+
+describe("engine priority in the design file", () => {
+  const withPriority = (v: unknown) =>
+    JSON.stringify({
+      format: "bwdesign",
+      schemaVersion: 2,
+      draft: { ...draft, machinery: { ...draft.machinery, enginePriorityBp: v } },
+      componentHashes: {},
+      compiledHash: null,
+    });
+  it("round-trips an in-range priority and refuses one off the axis or non-integer", () => {
+    const d = decodeDesignFile(withPriority(-4_000), ctx.catalogue);
+    expect(d.draft.machinery.enginePriorityBp).toBe(-4_000);
+    for (const bad of [10_001, -10_001, 1.5, "fast"])
+      expect(() => decodeDesignFile(withPriority(bad), ctx.catalogue)).toThrow(PersistenceError);
+  });
+});

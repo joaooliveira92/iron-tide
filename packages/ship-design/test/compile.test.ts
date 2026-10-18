@@ -196,3 +196,47 @@ describe("compileDesign: invalid designs", () => {
     expect((performance.now() - t) / 100).toBeLessThan(25);
   });
 });
+
+describe("compileDesign: engine priority (#168 step 2)", () => {
+  const tuned = withCtx({
+    balance: {
+      ...ctx.balance,
+      machinery: {
+        ...ctx.balance.machinery,
+        enginePriorityWeightSwingBp: 1_500,
+        enginePriorityPowerSwingBp: 500,
+        enginePriorityReliabilitySwingBp: 3_000,
+        enginePriorityReliabilityWarnBp: 7_000,
+      },
+    },
+  });
+  const at = (p: number | undefined) =>
+    compileDesign(
+      withDraft({
+        machinery: { ...draft.machinery, ...(p === undefined ? {} : { enginePriorityBp: p }) },
+      }),
+      tuned,
+    );
+
+  it("a draft without the field compiles exactly as before (priority 0 = balanced)", () => {
+    expect(at(0).hash).toBe(at(undefined).hash);
+    expect(compileDesign(draft, ctx).hash).toBe(compileDesign(draft, tuned).hash);
+  });
+  it("speed priority lightens the machinery ledger and raises top speed; reliability priority does the reverse", () => {
+    const fast = at(10_000);
+    const mid = at(0);
+    const safe = at(-10_000);
+    expect(fast.ledger.machinery).toBeLessThan(mid.ledger.machinery);
+    expect(safe.ledger.machinery).toBeGreaterThan(mid.ledger.machinery);
+    expect(fast.machinery!.maxSpeedMilliKnots).toBeGreaterThan(mid.machinery!.maxSpeedMilliKnots);
+    expect(safe.machinery!.reliabilityBp).toBeGreaterThan(mid.machinery!.reliabilityBp);
+    expect(fast.machinery!.reliabilityBp).toBeLessThan(mid.machinery!.reliabilityBp);
+  });
+  it("warns of breakdown risk only on the speed side, with a well-formed finding", () => {
+    const f = at(10_000).findings.find((x) => x.id === "ENGINE_PRIORITY_BREAKDOWN_RISK");
+    expect(f).toBeDefined();
+    expect(checkFindingShape(f!)).toEqual([]);
+    expect(ids(at(0))).not.toContain("ENGINE_PRIORITY_BREAKDOWN_RISK");
+    expect(ids(at(-10_000))).not.toContain("ENGINE_PRIORITY_BREAKDOWN_RISK");
+  });
+});

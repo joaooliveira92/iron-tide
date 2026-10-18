@@ -91,6 +91,9 @@ const MachineryPlanSchema = Schema.Struct({
   fuelZoneId: ZoneIdSchema,
   fuelStationPermille: bp,
   foulingBp: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(-10_000)),
+  enginePriorityBp: Schema.optional(
+    Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: -10_000, maximum: 10_000 })),
+  ),
   rooms: Schema.optional(Schema.Array(MachineryRoomSchema)),
 });
 

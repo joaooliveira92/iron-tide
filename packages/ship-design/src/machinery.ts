@@ -43,6 +43,16 @@ export interface MachineryBalance {
   readonly fuelReserveBp: number;
   /** Bunker volume per kg of fuel, bp of a litre (10_000 = 1 L/kg). Welsh coal stows at about 40 ft3 per long ton = 11_148. */
   readonly bunkerLitreBpPerKg: number;
+  /**
+   * Engine priority swings, bp of the base value at full priority (+/-10_000). Positive priority = speed-optimised
+   * (lighter plant, more effective power, less reliable); negative = reliability-optimised (the reverse). BALANCE TARGETs
+   * (ADR-0213), authored in the ruleset; absent = 0 = the axis has no effect.
+   */
+  readonly enginePriorityWeightSwingBp?: number;
+  readonly enginePriorityPowerSwingBp?: number;
+  readonly enginePriorityReliabilitySwingBp?: number;
+  /** Below this plant reliability (bp) a speed-optimised plant raises ENGINE_PRIORITY_BREAKDOWN_RISK. Absent = never. */
+  readonly enginePriorityReliabilityWarnBp?: number;
 }
 
 export interface MachineryInput {
@@ -57,9 +67,13 @@ export interface MachineryInput {
   readonly cruiseSpeedMilliKnots: number;
   readonly requiredSpeedMilliKnots: number;
   readonly requiredRangeNm: number;
+  /** Speed <-> reliability axis in bp, -10_000 (reliability) .. +10_000 (speed); absent or 0 = balanced. */
+  readonly enginePriorityBp?: number;
 }
 
 export interface MachineryResult {
+  /** Plant reliability after the engine-priority trade, bp. */
+  readonly reliabilityBp: number;
   readonly plantWeightKg: Kg;
   readonly plantVolumeLitre: Litre;
   readonly bunkerVolumeLitre: Litre;
@@ -76,6 +90,27 @@ export interface MachineryResult {
 
 const BP = 10_000n;
 const E9 = 1_000_000_000n;
+
+function enginePriority(i: MachineryInput): bigint {
+  const p = i.enginePriorityBp ?? 0;
+  if (!Number.isSafeInteger(p) || p < -10_000 || p > 10_000)
+    throw new Error(`enginePriorityBp must be an integer in -10000..10000, got ${p}`);
+  return BigInt(p);
+}
+
+/** `base` moved by `swingBp` of itself per full priority, `sign` +1 raising it and -1 lowering it. Truncates toward zero. */
+function swung(
+  base: bigint,
+  i: MachineryInput,
+  swingBp: number | undefined,
+  sign: 1n | -1n,
+): bigint {
+  return base + (sign * base * enginePriority(i) * BigInt(swingBp ?? 0)) / (BP * BP);
+}
+
+/** Installed power as the speed model sees it: a speed-optimised plant delivers more of its rated kW. */
+const effectiveKw = (i: MachineryInput, b: MachineryBalance): number =>
+  toSafe("effectiveKw", swung(BigInt(i.installedKw), i, b.enginePriorityPowerSwingBp, 1n));
 
 /** SLR x1000 = V_knots / sqrt(L_ft) * 1000. */
 export function speedLengthRatioX1000(speedMilliKnots: number, lengthMm: number): number {
@@ -120,10 +155,11 @@ export function requiredKw(
 export function maxSpeed(i: MachineryInput, b: MachineryBalance): number {
   let lo = 0;
   let hi = b.maxSpeedMilliKnots;
-  if (requiredKw(i, b, hi) <= i.installedKw) return hi;
+  const available = effectiveKw(i, b);
+  if (requiredKw(i, b, hi) <= available) return hi;
   while (hi - lo > 1) {
     const mid = Math.floor((lo + hi) / 2);
-    if (requiredKw(i, b, mid) <= i.installedKw) lo = mid;
+    if (requiredKw(i, b, mid) <= available) lo = mid;
     else hi = mid;
   }
   return lo;
@@ -226,13 +262,23 @@ export function compileMachinery(i: MachineryInput, b: MachineryBalance): Machin
       },
     });
   }
+  const baseWeightMilliKgPerKw = BigInt(p.weightMilliKgPerKw);
   const plantWeightKg = kg(
     toSafe(
       "plantWeight",
-      (BigInt(i.installedKw) * BigInt(p.weightMilliKgPerKw) * (BP + BigInt(b.auxWeightBp)) +
+      (BigInt(i.installedKw) *
+        swung(baseWeightMilliKgPerKw, i, b.enginePriorityWeightSwingBp, -1n) *
+        (BP + BigInt(b.auxWeightBp)) +
         1000n * BP -
         1n) /
         (1000n * BP),
+    ),
+  );
+  const reliabilityBp = Math.max(
+    0,
+    Math.min(
+      10_000,
+      Number(swung(BigInt(p.reliabilityBp), i, b.enginePriorityReliabilitySwingBp, -1n)),
     ),
   );
   const plantVolumeLitre = toSafe(
@@ -244,12 +290,40 @@ export function compileMachinery(i: MachineryInput, b: MachineryBalance): Machin
     (BigInt(i.fuelCapacityKg) * BigInt(b.bunkerLitreBpPerKg) + BP - 1n) / BP,
   ) as Litre;
 
+  if (
+    b.enginePriorityReliabilityWarnBp !== undefined &&
+    enginePriority(i) > 0n &&
+    reliabilityBp < b.enginePriorityReliabilityWarnBp
+  ) {
+    findings.push({
+      id: "ENGINE_PRIORITY_BREAKDOWN_RISK",
+      severity: "WARNING",
+      what: "The engine priority favours speed at the cost of reliability.",
+      why: `Plant reliability ${fmt(reliabilityBp)} bp (${p.id} base ${fmt(p.reliabilityBp)} bp) is below ${fmt(b.enginePriorityReliabilityWarnBp)} bp at priority ${fmt(i.enginePriorityBp ?? 0)}.`,
+      consequence: "The machinery is more likely to break down, costing speed and availability.",
+      remedies: [
+        {
+          id: "less_speed_priority",
+          description: "Move the engine priority toward balanced or reliability.",
+        },
+        { id: "more_power", description: "Install more power instead of tuning for speed." },
+      ],
+      evidence: {
+        formulaId: "F-M2",
+        inputs: { enginePriorityBp: i.enginePriorityBp ?? 0 },
+        threshold: b.enginePriorityReliabilityWarnBp,
+        value: reliabilityBp,
+      },
+    });
+  }
+
   if (findings.some((f) => f.severity === "BLOCKING")) {
     return {
       plantWeightKg,
       plantVolumeLitre,
       bunkerVolumeLitre,
       installedKw: i.installedKw as Kw,
+      reliabilityBp,
       maxSpeedMilliKnots: 0,
       requiredKwAtMax: 0,
       cruiseKw: 0,
@@ -372,6 +446,7 @@ export function compileMachinery(i: MachineryInput, b: MachineryBalance): Machin
     plantVolumeLitre,
     bunkerVolumeLitre,
     installedKw: i.installedKw as Kw,
+    reliabilityBp,
     maxSpeedMilliKnots: vmax,
     requiredKwAtMax,
     cruiseKw: cruise.kw,

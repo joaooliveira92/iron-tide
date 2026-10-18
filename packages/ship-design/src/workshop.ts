@@ -245,7 +245,12 @@ export function buildWorkshopView(draft: DesignDraft, env: WorkshopEnvironment):
   } else {
     note = "Resolve blocking findings to get a schedule.";
   }
-  const cve = computeCve(c, draft, plant?.reliabilityBp ?? 0, env.cveBalance);
+  const cve = computeCve(
+    c,
+    draft,
+    c.machinery?.reliabilityBp ?? plant?.reliabilityBp ?? 0,
+    env.cveBalance,
+  );
   return {
     valid: c.valid,
     naturalClass: c.naturalClass,

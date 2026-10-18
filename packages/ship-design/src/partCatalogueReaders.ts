@@ -316,6 +316,9 @@ export function headerFromDraft(draft: DesignDraft): DesignHeaderData {
       fuelZoneId: draft.machinery.fuelZoneId,
       fuelStationPermille: draft.machinery.fuelStationPermille,
       foulingBp: draft.machinery.foulingBp,
+      ...(draft.machinery.enginePriorityBp !== undefined
+        ? { enginePriorityBp: draft.machinery.enginePriorityBp }
+        : {}),
       ...(draft.machinery.rooms !== undefined
         ? { rooms: draft.machinery.rooms.map((r) => ({ ...r })) }
         : {}),
@@ -380,6 +383,9 @@ export function readMachineryPlan(
     fuelZoneId: header.machinery.fuelZoneId,
     fuelStationPermille: header.machinery.fuelStationPermille,
     foulingBp: header.machinery.foulingBp,
+    ...(header.machinery.enginePriorityBp !== undefined
+      ? { enginePriorityBp: header.machinery.enginePriorityBp }
+      : {}),
     ...(header.machinery.rooms !== undefined
       ? { rooms: header.machinery.rooms.map((r) => ({ ...r })) }
       : {}),

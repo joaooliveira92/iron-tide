@@ -435,6 +435,9 @@ export function compileSystemsAndMachinery(args: {
       lengthWlMm: hull.lengthWl,
       displacementKg: hull.targetDisplacementKg,
       foulingBp: draft.machinery.foulingBp,
+      ...(draft.machinery.enginePriorityBp !== undefined
+        ? { enginePriorityBp: draft.machinery.enginePriorityBp }
+        : {}),
       fuelCapacityKg: draft.machinery.fuelCapacityKg,
       cruiseSpeedMilliKnots: draft.requirement.cruiseSpeedMilliKnots,
       requiredSpeedMilliKnots: draft.requirement.requiredSpeedMilliKnots,
