@@ -7,7 +7,8 @@ inventing a synonym. (`GLOSSARY.md` is a symlink to this file.)
 - **Bluewave** — a deterministic 1880s naval strategy and tactical game, and the
   engine and content-compiler that produce it. Runs as an Electron desktop app.
 - **Nation** (never "country") — a playable or AI power with a date-banded naval
-  profile, dockyards, fleets, budget, and research.
+  profile, dockyards, fleets, appropriation, and research (see the
+  [campaign economy glossary](packages/campaign/GLOSSARY.md)).
 - **Naval profile** — a nation's authored capability and doctrine. _Hard
   capability_ (technology, industry, facilities, licences) only ever removes
   options; _soft doctrine_ is preference. See `content/`.

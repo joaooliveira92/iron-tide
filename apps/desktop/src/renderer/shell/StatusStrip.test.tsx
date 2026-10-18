@@ -19,6 +19,14 @@ function model(balance: number) {
       constructionSpend: 1000,
       researchSpend: 800,
       maintenanceCost: 2000,
+      obligations: 500,
+      researchRequested: 800,
+      researchCap: 600,
+      plannedConstruction: 1000,
+      projectedNet: balance,
+      shortfall: 0,
+      status: balance < 0 ? "deficit" : "healthy",
+      monthEndTreasury: 50000 + balance,
     },
     fleet: [],
     strategicAreas: [],
@@ -54,7 +62,7 @@ describe("StatusStripView", () => {
     const region = screen.getByRole("region", { name: "Status strip" });
     expect(within(region).getByRole("group", { name: "Nation" })).toBeTruthy();
     expect(within(region).getByRole("group", { name: "Budget" })).toBeTruthy();
-    expect(within(region).getByText("Monthly budget (projected)")).toBeTruthy();
+    expect(within(region).getByText("Monthly appropriation")).toBeTruthy();
     expect(screen.getByRole("button", { name: /collapse/i }).getAttribute("aria-pressed")).toBe(
       "true",
     );
@@ -65,7 +73,7 @@ describe("StatusStripView", () => {
     const region = screen.getByRole("region", { name: "Status strip" });
     expect(within(region).queryByText("Prestige")).toBeNull();
     expect(within(region).getByText("Shipyard capacity (port levels)")).toBeTruthy();
-    expect(within(region).getByText("Total expenses")).toBeTruthy();
+    expect(within(region).getByText("Committed expenses")).toBeTruthy();
   });
 
   it("keeps deferred rows in one popover with their reasons, out of the expanded band", async () => {
@@ -98,7 +106,7 @@ describe("StatusStripView", () => {
     const region = screen.getByRole("region", { name: "Status strip" });
     expect(within(region).queryByRole("group", { name: "Nation" })).toBeNull();
     expect(region.textContent).toContain("£1,200");
-    expect(region.textContent).toContain("Surplus");
+    expect(region.textContent).toContain("Healthy");
     expect(region.textContent).toContain("£50,000");
     expect(region.textContent).toContain("2 alerts");
     fireEvent.click(screen.getByRole("button", { name: /expand/i }));

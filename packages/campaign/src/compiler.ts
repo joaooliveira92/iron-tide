@@ -17,6 +17,7 @@ import {
   buildDesignsFromData,
 } from "./designCompilation.js";
 import { buildNationStates, buildSlots } from "./nationCompilation.js";
+import { materialiseSeededConstructions } from "./seededConstructions.js";
 import { buildPoliticalState, buildWarState } from "./politicalCompilation.js";
 import { getScenarioById, type ScenarioId } from "./scenario.js";
 import type { CampaignSnapshot, CampaignState } from "./state.js";
@@ -138,13 +139,13 @@ export class CampaignCompiler {
 
     if (collector.hasErrors || signal.aborted) return undefined;
 
-    const world = buildWorldState(pack);
-
     // B-6/ADR-0025: resolve the campaign start up front so the seeded 1880
     // divisions (N-1 ticket 07) are created in the campaign's first month.
     const campaignStart = resolveCampaignStart(input, startInput.value);
 
-    const nations = buildNationStates(
+    const world = buildWorldState(pack, campaignStart);
+
+    const builtNations = buildNationStates(
       pack,
       data.fleets,
       data.economies,
@@ -155,11 +156,11 @@ export class CampaignCompiler {
       campaignMonthId(campaignStart.startYear, campaignStart.startMonth, 0),
       collector,
     );
-    if (!nations || signal.aborted) return undefined;
+    if (!builtNations || signal.aborted) return undefined;
 
     const wars = buildWarState();
 
-    const politics = buildPoliticalState(data.diplomacy, nations, collector);
+    const politics = buildPoliticalState(data.diplomacy, builtNations, collector);
 
     // Step 6b: Build designs from design data. When the bundle carries the ship-building part
     // model, resolve each torpedo mount's neutral compiled torpedo so combat reads it directly
@@ -170,6 +171,15 @@ export class CampaignCompiler {
       torpedoResolverFor(input.contentBundle),
     );
     const designFamilies = buildDesignFamiliesFromData(data.designs);
+
+    // Spec #138 slice 4: projects already on the slips get work packages and yard throughput.
+    const nations = materialiseSeededConstructions(
+      builtNations,
+      designs,
+      input.contentBundle.shipBuilding,
+      campaignMonthId(campaignStart.startYear, campaignStart.startMonth, 0),
+      collector,
+    );
 
     // Validate fleet -> design link (immutable reference)
     if (!assertFleetDesignLinks(nations, designs, collector)) return undefined;

@@ -26,5 +26,7 @@
   ".ai/RELEASE-PROMPT.md": 300,
   ".ai/REQUIREMENTS.md": 1160,
   ".ai/REVIEW-PROMPT.md": 400,
-  ".ai/ROADMAP.md": 400
+  ".ai/ROADMAP.md": 400,
+  "GLOSSARY-MAP.md": 50,
+  "packages/campaign/GLOSSARY.md": 370
 }

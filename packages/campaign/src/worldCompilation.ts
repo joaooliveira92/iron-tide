@@ -3,9 +3,50 @@
 import type { ContentPack } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { toSafeInt, toSafeIntOpt, toStr } from "./campaignInput.js";
-import type { AreaData, PortData, RouteData, WorldState } from "./state.js";
+import type {
+  AreaData,
+  PortData,
+  RouteData,
+  TechnologyDefinitionData,
+  WorldState,
+} from "./state.js";
 
-export function buildWorldState(pack: ContentPack): WorldState {
+/** Months from the campaign start (year, month) to January of `year`; never negative. */
+function monthsFromStartToYear(year: number, startYear: number, startMonth: number): number {
+  return Math.max(0, (year - startYear) * 12 - (startMonth - 1));
+}
+
+/**
+ * The research catalogue: every pack technology that names a research field and a positive cost. A technology
+ * is available from its authored `availabilityMonth`, else from January of its authored `year`, else from the start.
+ */
+function buildTechnologyCatalogue(
+  pack: ContentPack,
+  startYear: number,
+  startMonth: number,
+): TechnologyDefinitionData[] {
+  const catalogue: TechnologyDefinitionData[] = [];
+  for (const t of pack.technologies ?? []) {
+    if (t.researchFieldId === undefined || t.cost === undefined) continue;
+    const availability =
+      t.availabilityMonth ??
+      (t.year === undefined ? 0 : monthsFromStartToYear(t.year, startYear, startMonth));
+    catalogue.push({
+      techId: t.id,
+      researchFieldId: t.researchFieldId,
+      cost: SafeInt(t.cost),
+      discoveryWeight: SafeInt(t.discoveryWeight ?? 1),
+      prerequisites: (t.prerequisites ?? []).map((p) => p.techId).sort(),
+      availabilityMonth: SafeInt(availability),
+    });
+  }
+  return catalogue.sort((a, b) => (a.techId < b.techId ? -1 : a.techId > b.techId ? 1 : 0));
+}
+
+export function buildWorldState(
+  pack: ContentPack,
+  start: { readonly startYear: number; readonly startMonth: number },
+): WorldState {
   const areas: AreaData[] = (pack.areas ?? [])
     .map((a: Record<string, unknown>) => ({
       id: toStr(a["id"], ""),
@@ -35,5 +76,10 @@ export function buildWorldState(pack: ContentPack): WorldState {
     }))
     .sort((a, b) => a.id.localeCompare(b.id));
 
-  return { areas, routes, ports };
+  return {
+    areas,
+    routes,
+    ports,
+    technologies: buildTechnologyCatalogue(pack, start.startYear, start.startMonth),
+  };
 }

@@ -158,7 +158,7 @@ export function constructionProjectReadout(
     };
   }
 
-  const capacityUnits = design?.constructionPlan?.capacityUnits;
+  const capacityUnits = project.capacityUnits ?? design?.constructionPlan?.capacityUnits;
   const capacityTotal =
     capacityUnits === undefined
       ? remainingWork

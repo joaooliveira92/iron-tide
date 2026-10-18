@@ -8,6 +8,7 @@ export interface BudgetPolicyState extends RequestLifecycle {
   readonly appropriationRateBp: number;
   readonly researchBudget: number;
   readonly bounds: BudgetScreenProjection["bounds"];
+  readonly researchCaps: BudgetScreenProjection["researchCaps"];
 }
 
 export function initialBudgetPolicyState(): BudgetPolicyState {
@@ -21,6 +22,7 @@ export function initialBudgetPolicyState(): BudgetPolicyState {
       researchBudgetMin: 0,
       researchBudgetMax: 0,
     },
+    researchCaps: [],
     pendingRequest: null,
     requiresRefresh: false,
     notice: null,
@@ -34,6 +36,7 @@ export function projectBudgetPolicy(
     appropriationRateBp: projection.appropriationRateBp,
     researchBudget: projection.researchBudget,
     bounds: projection.bounds,
+    researchCaps: projection.researchCaps,
   };
 }
 

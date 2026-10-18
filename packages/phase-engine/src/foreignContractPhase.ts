@@ -45,7 +45,7 @@ import {
   makeRemainingRequirementFor,
   mergeForeignInsightAwardRecord,
 } from "./foreignInsight.js";
-import { researchCostOf } from "./research.js";
+import { researchCostLookup } from "./research.js";
 import { relationAndTension } from "./foreignTerms.js";
 import { nationalConstructionCapacity } from "./newConstructionCapacity.js";
 import type { MonthContext } from "./monthContext.js";
@@ -432,7 +432,10 @@ export function runForeignContractPhase(
             milestone,
             record: insightRecords.get(contractId),
             research: insightResearch,
-            remainingRequirementFor: makeRemainingRequirementFor(insightResearch, researchCostOf),
+            remainingRequirementFor: makeRemainingRequirementFor(
+              insightResearch,
+              researchCostLookup(ctx.currentSnapshot),
+            ),
           });
           if (application.awards.length === 0) continue;
           insightResearch = application.research;

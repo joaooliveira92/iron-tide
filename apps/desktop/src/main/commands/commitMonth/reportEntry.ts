@@ -1,5 +1,5 @@
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
-import { buildPrioritiesProjection } from "@bluewave/campaign-engine";
+import { buildPrioritiesProjection, reconcileMonthLedger } from "@bluewave/campaign-engine";
 import type { CommitMonthResponse } from "@bluewave/campaign-engine";
 import type { DomainEventEnvelope } from "@bluewave/events";
 import type { LedgerTransaction } from "@bluewave/phase-engine";
@@ -173,7 +173,20 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
         phase: entry.phase,
         amount: entry.amount,
         runningBalance: entry.runningBalance,
+        ...(entry.requested === undefined
+          ? {}
+          : { requested: entry.requested, shortfall: entry.shortfall ?? 0 }),
       })),
+      obligationExpense: sumByCategory(input.ledgerEntries, ["OBLIGATION"]),
+      reconciliation: reconcileMonthLedger(
+        input.ledgerEntries.map((entry) => ({
+          categoryId: entry.categoryId,
+          debit: Number(entry.debit),
+          credit: Number(entry.credit),
+        })),
+        response.report.openingTreasury,
+        response.report.closingTreasury,
+      ),
     },
     construction: {
       projects: constructionProgressFromEvents(input.domainEvents, playerNationId),

@@ -1,8 +1,7 @@
 import { Schema } from "effect";
 import type { CampaignSnapshot } from "@bluewave/campaign";
-import { scaleValue } from "@bluewave/campaign";
+import { economyOutlook } from "@bluewave/campaign";
 import { HIGH_TENSION_THRESHOLD, isHighTension } from "./diplomacy.js";
-import { shipMaintenanceCost, totalPaidWork } from "./opening-briefing.js";
 import { MIN_RESEARCH_SHARE_BP, NEAR_COMPLETION_WORK_RATIO } from "./priorityConstants.js";
 
 /**
@@ -123,20 +122,15 @@ export function buildPrioritiesProjection(
   const ports = snapshot.world.ports.filter((p) => p.nationId === playerNationId);
   const shipyardCapacity = ports.reduce((sum, p) => sum + Number(p.level), 0);
 
-  const monthlyAppropriation = Number(
-    scaleValue(Number(nation.income), Number(nation.navalAppropriationRateBp)),
-  );
-  const researchSpend = Number(nation.research.researchBudget);
-  const constructionSpend = totalPaidWork(nation);
-  const fleetMaintenance = nation.fleets.reduce(
-    (sum, fleet) =>
-      sum +
-      fleet.ships.reduce((s, ship) => s + shipMaintenanceCost(ship.hitPoints, ship.readiness), 0),
-    0,
-  );
-  const projectedBalance =
-    monthlyAppropriation - fleetMaintenance - constructionSpend - researchSpend;
-  const totalMonthlyExpenditure = fleetMaintenance + constructionSpend + researchSpend;
+  // Spec #138: the monthly flows are the outlook's — the calculators the month executor itself uses. Committed construction
+  // is a stock, not a monthly flow, so it no longer enters the balance.
+  const outlook = economyOutlook(snapshot, playerNationId)!;
+  const monthlyAppropriation = outlook.revenue;
+  const researchSpend = outlook.plannedResearch;
+  const fleetMaintenance = outlook.maintenance;
+  const obligations = outlook.obligations;
+  const projectedBalance = outlook.projectedNet;
+  const totalMonthlyExpenditure = fleetMaintenance + obligations + researchSpend;
   const treasury = Number(nation.treasury);
 
   const ranked: RankedPriority[] = [];
@@ -153,7 +147,7 @@ export function buildPrioritiesProjection(
         severity,
         title: "Monthly deficit",
         summary: `Projected balance ${projectedBalance} — expenditure exceeds naval appropriation.`,
-        reason: `monthly_deficit: appropriation ${monthlyAppropriation} − maintenance ${fleetMaintenance} − construction ${constructionSpend} − research ${researchSpend} = ${projectedBalance}; treasury ${treasury} ${critical ? "insolvent" : "still solvent"}`,
+        reason: `monthly_deficit: appropriation ${monthlyAppropriation} − obligations ${obligations} − maintenance ${fleetMaintenance} − research ${researchSpend} = ${projectedBalance}; treasury ${treasury} ${critical ? "insolvent" : "still solvent"}`,
         destination: destinationForType("monthly_deficit"),
         fingerprint,
       },

@@ -239,8 +239,8 @@ describe("B10a economy & construction acceptance (criteria 1-7)", () => {
 
   it("C4: construction progresses only when funded; zero payment => zero progress", () => {
     const noFunds = makeNation("GBR", {
-      treasury: SafeInt(10000),
-      baseResources: SafeInt(0), // no revenue -> no appropriation
+      treasury: SafeInt(50), // only the obligation reserve -> nothing left to appropriate
+      baseResources: SafeInt(0),
       projects: [
         {
           id: "proj-nf",

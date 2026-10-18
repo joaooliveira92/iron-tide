@@ -6,6 +6,17 @@ import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { toSafeIntOpt, toStr } from "./campaignInput.js";
 import { buildSeededDivisions } from "./divisions.js";
+import {
+  incomeFitsEconomicBase,
+  START_APPROPRIATION_RATE_BP,
+  deriveEconomicBase,
+  monthlyNetBeforeConstruction,
+  monthlyResearchSpend,
+  monthlyRevenue,
+  researchCap,
+  runwayMonths,
+} from "./economy.js";
+import { nationMonthlyMaintenance } from "./maintenance.js";
 import { buildOfficerRoster } from "./officers.js";
 import { resolveShipReadinessSeed } from "./readiness.js";
 import type {
@@ -33,6 +44,49 @@ function isNationPlayable(
     return false;
   }
   return flag;
+}
+
+interface EconomyRow {
+  /** False when the row was missing or invalid: the error is already raised, so downstream diagnostics are skipped. */
+  valid: boolean;
+  treasury: SafeInt;
+  income: SafeInt;
+  expenses: SafeInt;
+}
+
+/** Read a nation's authored economy row; a missing row or an invalid value is an error, never a silent default. */
+function readEconomyRow(
+  economiesData: unknown[],
+  nationId: string,
+  collector: DiagnosticCollector,
+): EconomyRow {
+  const row = economiesData.find((e) => (e as Record<string, unknown>)["nationId"] === nationId) as
+    | Record<string, unknown>
+    | undefined;
+  const none = { treasury: SafeInt(0), income: SafeInt(0), expenses: SafeInt(0), valid: false };
+  if (row === undefined) {
+    collector.addError("ECONOMY_ROW_MISSING", `Nation '${nationId}' has no economy row`, {
+      stage: "campaign-compile",
+      entityId: nationId,
+    });
+    return none;
+  }
+  const valid = (v: unknown, min: number): v is number =>
+    typeof v === "number" && Number.isSafeInteger(v) && v >= min;
+  if (!(valid(row["treasury"], 0) && valid(row["income"], 1) && valid(row["expenses"], 0))) {
+    collector.addError(
+      "ECONOMY_VALUE_INVALID",
+      `Nation '${nationId}' economy needs integer treasury >= 0, income > 0 and expenses >= 0`,
+      { stage: "campaign-compile", entityId: nationId },
+    );
+    return none;
+  }
+  return {
+    treasury: SafeInt(row["treasury"] as number),
+    income: SafeInt(row["income"] as number),
+    expenses: SafeInt(row["expenses"] as number),
+    valid: true,
+  };
 }
 
 function buildShips(fleet: Record<string, unknown>, collector: DiagnosticCollector): Ship[] {
@@ -195,6 +249,7 @@ export function buildNationStates(
   collector: DiagnosticCollector,
 ): Map<string, NationState> | undefined {
   const nations = new Map<string, NationState>();
+  let structuralDeficits = 0;
 
   // sort nations by canonical id for deterministic Map insertion / rawHash
   const sortedNations = [...(pack.nations ?? [])].sort((a, b) => {
@@ -219,17 +274,60 @@ export function buildNationStates(
       collector,
     );
 
-    let treasury = SafeInt(500);
-    let income = SafeInt(100);
-    let expenses = SafeInt(50);
+    const economy = readEconomyRow(economiesData, id, collector);
+    const { treasury, income, expenses, valid: economyValid } = economy;
+    const startRate = SafeInt(START_APPROPRIATION_RATE_BP);
+    // Spec #138: the economic base is a derived annual stock set once here; authored income is a start-state input only.
+    const baseFits = incomeFitsEconomicBase(income);
+    if (income > 0 && !baseFits) {
+      collector.addError(
+        "ECONOMY_BASE_OVERFLOW",
+        `Nation '${id}' income ${String(income)} overflows the derived economic base`,
+        { stage: "campaign-compile", entityId: id },
+      );
+    }
+    const baseResources =
+      income > 0 && baseFits ? deriveEconomicBase(income, startRate) : SafeInt(0);
+    const revenue = monthlyRevenue(baseResources, startRate);
+    const cap = researchCap(revenue);
+    const annualResearch = research.researchBudget;
+    const monthlyResearch = monthlyResearchSpend(annualResearch);
+    if (economyValid && monthlyResearch > cap) {
+      collector.addError(
+        "RESEARCH_ABOVE_CAP",
+        `Nation '${id}' monthly research ${String(monthlyResearch)} exceeds the 12% cap ${String(cap)}`,
+        { stage: "campaign-compile", entityId: id },
+      );
+    }
+    if (annualResearch > 0 && monthlyResearch === 0) {
+      collector.addInfo(
+        "RESEARCH_BELOW_RESOLUTION",
+        `Nation '${id}' annual research ${String(annualResearch)} is below one treasury unit a month`,
+        { stage: "campaign-compile", entityId: id },
+      );
+    }
+    const seededResearch: ResearchState = {
+      ...research,
+      researchBudget: monthlyResearch,
+      standingResearchBudget: monthlyResearch,
+      annualResearchAllocation: annualResearch,
+    };
 
-    for (const eco of economiesData) {
-      const ecoRec = eco as Record<string, unknown>;
-      if (ecoRec["nationId"] === id) {
-        treasury = toSafeIntOpt(ecoRec["treasury"], SafeInt(500));
-        income = toSafeIntOpt(ecoRec["income"], SafeInt(100));
-        expenses = toSafeIntOpt(ecoRec["expenses"], SafeInt(50));
-      }
+    const maintenance = nationMonthlyMaintenance(fleets, false);
+    const net = monthlyNetBeforeConstruction({
+      revenue,
+      obligations: expenses,
+      maintenance,
+      research: monthlyResearch,
+    });
+    const runway = runwayMonths(treasury, net);
+    if (economyValid && runway !== undefined) {
+      structuralDeficits += 1;
+      collector.addWarning(
+        "STRUCTURAL_DEFICIT",
+        `Nation '${id}' runs a structural deficit of ${String(Math.abs(net as number))} a month; the treasury lasts ${String(runway)} months`,
+        { stage: "campaign-compile", entityId: id },
+      );
     }
 
     nations.set(id, {
@@ -239,17 +337,25 @@ export function buildNationStates(
       treasury,
       income,
       expenses,
-      baseResources: SafeInt(0),
-      navalAppropriationRateBp: SafeInt(2000),
+      baseResources,
+      navalAppropriationRateBp: startRate,
       maintenanceCost: SafeInt(0),
       fleets,
       divisions,
       officers,
-      research,
+      research: seededResearch,
       constructionProjects: constructions,
       isPlayable,
       isAI: !isPlayable,
     });
+  }
+
+  if (nations.size > 1 && structuralDeficits === nations.size) {
+    collector.addError(
+      "ECONOMY_UNIFORM_DEFICIT",
+      "Every nation in the pack runs a structural deficit",
+      { stage: "campaign-compile" },
+    );
   }
 
   if (nations.size === 0) {

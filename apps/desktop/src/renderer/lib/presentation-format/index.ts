@@ -28,6 +28,7 @@ export {
   type MeasurementSelections,
 } from "./units.js";
 export {
+  formatCount,
   formatMeasurement,
   formatNumber,
   formatPercent,

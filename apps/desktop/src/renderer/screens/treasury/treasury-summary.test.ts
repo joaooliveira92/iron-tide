@@ -9,7 +9,7 @@ const projection: PlayerProjection = {
   month: { year: 1880, month: 3 },
   playerNationId: "uk",
   nationName: "United Kingdom",
-  projectedSurplusDeficit: 1000,
+  projectedSurplusDeficit: 3400,
   economy: {
     treasury: 50000,
     monthlyAppropriation: 4000,
@@ -17,6 +17,14 @@ const projection: PlayerProjection = {
     constructionSpend: 500,
     researchSpend: 300,
     maintenanceCost: 200,
+    obligations: 100,
+    researchRequested: 300,
+    researchCap: 480,
+    plannedConstruction: 500,
+    projectedNet: 3400,
+    shortfall: 0,
+    status: "healthy",
+    monthEndTreasury: 53400,
   },
   knownTechnologyIds: ["tech_steel_hull"],
   fleet: [
@@ -40,26 +48,46 @@ const projection: PlayerProjection = {
 };
 
 describe("treasury-summary", () => {
-  it("summarizes every row from the projection (income, expenditure, result)", () => {
+  it("summarizes every row from the projection (income, committed expenditure, result)", () => {
     const t = summarizeTreasury(projection);
     expect(t.income).toBe(4000);
+    expect(t.obligations).toBe(100);
     expect(t.fleetMaintenance).toBe(200);
-    expect(t.constructionSpend).toBe(500);
     expect(t.researchSpend).toBe(300);
-    expect(t.totalExpenditure).toBe(1000);
-    expect(t.projectedSurplusDeficit).toBe(1000);
+    // Committed flows only: construction is an "up to" bound and is not in the total.
+    expect(t.totalExpenditure).toBe(600);
+    expect(t.plannedConstruction).toBe(500);
+    expect(t.projectedSurplusDeficit).toBe(3400);
     expect(t.availableFunds).toBe(50000);
-    expect(t.projectedMonthEndFunds).toBe(51000);
+    expect(t.projectedMonthEndFunds).toBe(53400);
+    expect(t.status).toBe("healthy");
+    expect(t.shortfall).toBe(0);
+    expect(t.runwayMonths).toBeUndefined();
   });
 
-  it("carries a negative projected surplus/deficit honestly", () => {
+  it("carries a negative net, the shortfall, the runway and the research reason honestly", () => {
     const deficit: PlayerProjection = {
       ...projection,
       projectedSurplusDeficit: -250,
-      economy: { ...projection.economy, maintenanceCost: 2500 },
+      economy: {
+        ...projection.economy,
+        maintenanceCost: 3_950,
+        projectedNet: -250,
+        shortfall: 40,
+        status: "critical",
+        monthEndTreasury: 49_750,
+        runwayMonths: 200,
+        researchSpend: 0,
+        researchUnfundedReason: "NO_ELIGIBLE_RESEARCH_FIELD",
+      },
     };
     const t = summarizeTreasury(deficit);
     expect(t.projectedSurplusDeficit).toBe(-250);
     expect(t.projectedMonthEndFunds).toBe(49750);
+    expect(t.shortfall).toBe(40);
+    expect(t.runwayMonths).toBe(200);
+    expect(t.status).toBe("critical");
+    expect(t.researchUnfundedReason).toBe("NO_ELIGIBLE_RESEARCH_FIELD");
+    expect(t.researchRequested).toBe(300);
   });
 });

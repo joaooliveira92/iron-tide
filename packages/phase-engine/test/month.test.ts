@@ -1,4 +1,5 @@
 ﻿import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
+import { TEST_RESEARCH_CATALOGUE } from "./research-catalogue.helper.js";
 import type { BudgetProjectCommand, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -67,7 +68,7 @@ function createSnapshot(overrides?: Partial<CampaignSnapshot>): CampaignSnapshot
     startMonth: 1,
     strategicWeather: [],
     slots: [{ nationId: "GBR", type: "playable" }],
-    world: { areas: [], routes: [], ports: [] },
+    world: { areas: [], routes: [], ports: [], technologies: TEST_RESEARCH_CATALOGUE },
     nations,
     wars: {
       wars: [],
@@ -311,9 +312,10 @@ describe("MonthExecutor", () => {
     const result = executor.execute(snapshot, [], "seed", collector);
     const gbr = result["finalSnapshot"]["nations"].get("GBR")!;
 
-    // revenue = 120000 * 2000 / 10000 / 12 = 2000
-    // treasury = 500 + 2000 - 100 (appropriation cap) - 50 (obligation) = 2350
-    expect(gbr["treasury"] as number).toBe(2350);
+    // revenue = 120000 * 2000 / 120000 = 2000
+    // construction takes everything the two projects can still absorb (150 + 100 = 250; no treasury-unit cap)
+    // treasury = 500 + 2000 - 250 (appropriation) - 50 (obligation) = 2200
+    expect(gbr["treasury"] as number).toBe(2200);
     expect(result["success"]).toBe(true);
   });
 
@@ -357,9 +359,9 @@ describe("MonthExecutor", () => {
     const finalGbr = result["finalSnapshot"]["nations"].get("GBR")!;
 
     // maintenance = floor(100 * 10 / 100) = 10
-    // revenue = 120000 * 2000 / 10000 / 12 = 2000
-    // treasury = 10000 + 2000 - 100 (appropriation) - 10 (maintenance) - 50 (obligation) = 11840
-    expect(finalGbr["treasury"] as number).toBe(11840);
+    // revenue = 120000 * 2000 / 120000 = 2000
+    // treasury = 10000 + 2000 - 250 (appropriation) - 10 (maintenance) - 50 (obligation) = 11690
+    expect(finalGbr["treasury"] as number).toBe(11690);
     expect(finalGbr["maintenanceCost"] as number).toBe(10);
     expect(result["success"]).toBe(true);
   });
@@ -445,9 +447,9 @@ describe("MonthExecutor", () => {
     const executor = new MonthExecutor();
     const snapshot = createSnapshot();
     const gbr = snapshot["nations"].get("GBR")!;
-    // No base resources => no revenue => no appropriation
+    // The treasury holds only the obligation reserve => nothing is left to appropriate
     gbr.baseResources = SafeInt(0);
-    gbr.treasury = SafeInt(10000);
+    gbr.treasury = gbr.expenses;
     gbr.constructionProjects = [
       {
         id: "proj-no-funds",
@@ -526,58 +528,53 @@ describe("MonthExecutor", () => {
 
     const ger = result["finalSnapshot"]["nations"].get("GER")!;
     expect(ger).toBeDefined();
-    // GER revenue = 60000 * 2000 / 10000 / 12 = 1000
-    // AI planning budgets 46 to ger-proj-1 (deterministic from seed), then
-    // appropriation caps at 50 and obligation subtracts 20:
-    // treasury = 300 + 1000 - 46 (AI budget) - 50 (appropriation) - 20 (obligation) = 1184
-    expect(ger["treasury"] as number).toBe(1184);
+    // GER revenue = 60000 * 2000 / 120000 = 1000
+    // the whole 150-unit project is funded (AI budget plus appropriation; no treasury-unit cap)
+    // and the obligation subtracts 20:
+    // treasury = 300 + 1000 - 150 (construction) - 20 (obligation) = 1130
+    expect(ger["treasury"] as number).toBe(1130);
     expect(ger["constructionProjects"].length).toBe(1);
   });
 
-  it("construction capacity cap limits total monthly work", () => {
+  it("construction is bounded by the project's yard throughput, not by the treasury", () => {
     const executor = new MonthExecutor();
     const snapshot = createSnapshot();
     const gbr = snapshot["nations"].get("GBR")!;
-    // baseResources = 12000 => cap = 12000 / 12 / 100 = 10
-    gbr.baseResources = SafeInt(12000);
     gbr.treasury = SafeInt(10000);
-    gbr.constructionProjects = [
-      {
-        id: "proj-cap-1",
-        type: "ship",
-        projectType: "NEW_CONSTRUCTION",
-        targetId: "ship-cap-1",
-        designVersionId: "",
-        totalWork: SafeInt(200),
-        completedWork: SafeInt(0),
-        paidWork: SafeInt(0),
-        status: "PLANNED",
-        startedAt: "1880-01",
-      },
-      {
-        id: "proj-cap-2",
-        type: "ship",
-        projectType: "NEW_CONSTRUCTION",
-        targetId: "ship-cap-2",
-        designVersionId: "",
-        totalWork: SafeInt(200),
-        completedWork: SafeInt(0),
-        paidWork: SafeInt(0),
-        status: "PLANNED",
-        startedAt: "1880-01",
-      },
-    ];
+    const seeded = (id: string, done: number) => ({
+      id,
+      type: "ship" as const,
+      projectType: "NEW_CONSTRUCTION" as const,
+      targetId: `ship-${id}`,
+      designVersionId: "",
+      totalWork: SafeInt(100),
+      completedWork: SafeInt(done),
+      paidWork: SafeInt(0),
+      status: "ACTIVE" as const,
+      startedAt: "1880-01",
+      packages: [
+        {
+          id: "hull",
+          kind: "HULL" as const,
+          line: "slipway",
+          totalWork: SafeInt(100),
+          doneWork: SafeInt(done),
+          dependsOn: [],
+        },
+      ],
+      capacityUnits: { slipway: SafeInt(4) },
+    });
+    gbr.constructionProjects = [seeded("proj-cap-1", 0), seeded("proj-cap-2", 10)];
     const collector = new DiagnosticCollector();
 
     const result = executor.execute(snapshot, [], "seed", collector);
     const finalGbr = result["finalSnapshot"]["nations"].get("GBR")!;
 
-    const totalWork = finalGbr["constructionProjects"].reduce(
-      (sum, p) => sum + (p["completedWork"] as number),
-      0,
+    // rich treasury, plenty of remaining work: each project still moves only 4 units a month
+    const gained = finalGbr["constructionProjects"].map(
+      (p, i) => (p["completedWork"] as number) - (i === 0 ? 0 : 10),
     );
-    // cap = 12000 / 12 / 100 = 10, so total work across both projects <= 10
-    expect(totalWork).toBeLessThanOrEqual(10);
+    expect(gained).toEqual([4, 4]);
     expect(result["success"]).toBe(true);
   });
 });
