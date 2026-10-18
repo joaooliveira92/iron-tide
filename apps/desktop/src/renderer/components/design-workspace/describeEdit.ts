@@ -22,6 +22,10 @@ export function describeEdit(e: DraftEdit, nameOf: (componentId: string) => stri
         .join(", ")}`;
     case "set_fire_control":
       return `Fire control: ${e.positions} position${e.positions === 1 ? "" : "s"}`;
+    case "set_tertiary":
+      return e.tertiary === null
+        ? "Remove the tertiary battery"
+        : `Tertiary battery: ${e.tertiary.count} × ${Math.round(e.tertiary.caliberUm / 1000)} mm`;
     case "set_side":
       return `Set ${e.instanceId} to ${e.side === "CENTRE" ? "the centreline" : e.side === "PORT" ? "port" : "starboard"}`;
     case "batch":

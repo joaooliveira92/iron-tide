@@ -27,6 +27,7 @@ export interface BatteryCard {
 const ROLE_TITLE = {
   MAIN: "Main battery",
   SECONDARY: "Secondary battery",
+  TERTIARY: "Tertiary battery",
   TORPEDO: "Torpedo tubes",
 } as const;
 

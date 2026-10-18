@@ -9,6 +9,7 @@ import {
 import type { ArmourRegion } from "./armour.js";
 import type { DesignRequirement } from "./compileShared.js";
 import type { MountSide } from "./weapons.js";
+import type { TertiaryBattery } from "./tertiary.js";
 import type { HullSpec } from "./hull.js";
 import { SEVERITY_ORDER, type Severity } from "./findings.js";
 
@@ -17,6 +18,8 @@ export type DraftEdit =
   | { readonly kind: "set_hull"; readonly patch: Partial<HullSpec> }
   | { readonly kind: "set_machinery"; readonly patch: Partial<MachineryPlan> }
   | { readonly kind: "set_fire_control"; readonly positions: number }
+  /** The tertiary battery: a count of one chosen gun; `null` removes it. */
+  | { readonly kind: "set_tertiary"; readonly tertiary: TertiaryBattery | null }
   /** The design brief: ship type, required speed and range, crew and accommodation. A brief is not a build change. */
   | { readonly kind: "set_requirement"; readonly patch: Partial<DesignRequirement> }
   | { readonly kind: "add_placement"; readonly placement: PlacementSpec }
@@ -76,6 +79,18 @@ export function applyEdit(draft: DesignDraft, e: DraftEdit): DesignDraft {
       if (!Number.isSafeInteger(e.positions) || e.positions < 0)
         throw new EditError("fire-control positions must be a non-negative integer");
       return { ...draft, fireControl: { positions: e.positions } };
+    case "set_tertiary": {
+      const t = e.tertiary;
+      if (t === null) {
+        const { tertiary: _removed, ...rest } = draft;
+        return rest;
+      }
+      if (!Number.isSafeInteger(t.caliberUm) || t.caliberUm <= 0)
+        throw new EditError("tertiary calibre must be a positive integer");
+      if (!Number.isSafeInteger(t.count) || t.count < 0)
+        throw new EditError("tertiary count must be a non-negative integer");
+      return { ...draft, tertiary: { caliberUm: t.caliberUm, count: t.count } };
+    }
     case "set_requirement":
       return { ...draft, requirement: { ...draft.requirement, ...e.patch } };
     case "add_placement":

@@ -323,6 +323,9 @@ export function headerFromDraft(draft: DesignDraft): DesignHeaderData {
         ? { rooms: draft.machinery.rooms.map((r) => ({ ...r })) }
         : {}),
     },
+    ...(draft.tertiary !== undefined
+      ? { tertiary: { caliberUm: draft.tertiary.caliberUm, count: draft.tertiary.count } }
+      : {}),
     ...(draft.fireControl !== undefined
       ? { fireControl: { positions: draft.fireControl.positions } }
       : {}),
@@ -497,6 +500,14 @@ export function rebuildDraft(input: {
         bunkerProtectionBp: input.header.protection.bunkerProtectionBp,
       },
       placements: places.placements,
+      ...(input.header.tertiary !== undefined
+        ? {
+            tertiary: {
+              caliberUm: input.header.tertiary.caliberUm,
+              count: input.header.tertiary.count,
+            },
+          }
+        : {}),
       ...(input.header.fireControl !== undefined
         ? { fireControl: { positions: input.header.fireControl.positions } }
         : {}),

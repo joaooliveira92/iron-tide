@@ -120,6 +120,17 @@ export function validateDraftShape(raw: unknown): string[] {
     p.push("hull.freeboardProfile must be NORMAL or LOW");
   if (isObj(raw.machinery) && typeof raw.machinery.plantId !== "string")
     p.push("machinery.plantId must be a string");
+  if (raw.tertiary !== undefined) {
+    const t = raw.tertiary;
+    if (
+      !isObj(t) ||
+      !Number.isSafeInteger(t.caliberUm) ||
+      (t.caliberUm as number) <= 0 ||
+      !Number.isSafeInteger(t.count) ||
+      (t.count as number) < 0
+    )
+      p.push("tertiary must be { caliberUm: positive integer, count: non-negative integer }");
+  }
   if (raw.fireControl !== undefined) {
     if (
       !isObj(raw.fireControl) ||

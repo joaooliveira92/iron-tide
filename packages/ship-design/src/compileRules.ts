@@ -1,5 +1,11 @@
 // Layout, stability and regulatory (dock/treaty/modernization) stages of the
 // design-compile pipeline.
+import {
+  expandTertiary,
+  NO_TERTIARY_BALANCE,
+  TERTIARY_STATION_PERMILLE,
+  TERTIARY_ZONE,
+} from "./tertiary.js";
 import { ZONE_IDS, type ZoneId } from "./arrangement.js";
 import type { ArmourResult } from "./armour.js";
 import {
@@ -104,6 +110,16 @@ export function buildStabilityLumps(args: {
     stationPermille: draft.machinery.fuelStationPermille,
     zoneId: draft.machinery.fuelZoneId,
   });
+  const tertiary = expandTertiary(draft.tertiary, b.tertiary ?? NO_TERTIARY_BALANCE);
+  if (tertiary.weightKg > 0) {
+    lumps.push({
+      label: "tertiary",
+      kg: tertiary.weightKg,
+      zMm: hull.depthToMainDeck,
+      stationPermille: TERTIARY_STATION_PERMILLE,
+      zoneId: TERTIARY_ZONE,
+    });
+  }
   for (const [region, kg] of Object.entries(armour.weightByRegionKg)) {
     lumps.push({
       label: `armour:${region}`,

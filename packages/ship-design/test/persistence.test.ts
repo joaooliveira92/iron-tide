@@ -2,6 +2,8 @@ import { describe, it, expect } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import {
   encodeDesignFile,
+  applyEdit,
+  EditError,
   decodeDesignFile,
   decodeCompiled,
   verifyCompiledHash,
@@ -423,5 +425,40 @@ describe("freeboard profile in the design file", () => {
       expect(decodeDesignFile(withProfile(ok), ctx.catalogue).draft.hull.freeboardProfile).toBe(ok);
     for (const bad of ["HIGH", "low", 1, null])
       expect(() => decodeDesignFile(withProfile(bad), ctx.catalogue)).toThrow(PersistenceError);
+  });
+});
+
+describe("tertiary battery in the design file and edits", () => {
+  const withTertiary = (v: unknown) =>
+    JSON.stringify({
+      format: "bwdesign",
+      schemaVersion: 2,
+      draft: { ...draft, tertiary: v },
+      componentHashes: {},
+      compiledHash: null,
+    });
+  it("round-trips a battery and refuses a malformed one", () => {
+    expect(
+      decodeDesignFile(withTertiary({ caliberUm: 57_000, count: 6 }), ctx.catalogue).draft.tertiary,
+    ).toEqual({ caliberUm: 57_000, count: 6 });
+    for (const bad of [
+      { caliberUm: 0, count: 1 },
+      { caliberUm: 57_000, count: -1 },
+      { caliberUm: 57_000.5, count: 1 },
+      { caliberUm: 57_000 },
+      5,
+    ])
+      expect(() => decodeDesignFile(withTertiary(bad), ctx.catalogue)).toThrow(PersistenceError);
+  });
+  it("set_tertiary sets, and a null battery removes it", () => {
+    const set = applyEdit(draft, {
+      kind: "set_tertiary",
+      tertiary: { caliberUm: 47_000, count: 8 },
+    });
+    expect(set.tertiary).toEqual({ caliberUm: 47_000, count: 8 });
+    expect(applyEdit(set, { kind: "set_tertiary", tertiary: null }).tertiary).toBeUndefined();
+    expect(() =>
+      applyEdit(draft, { kind: "set_tertiary", tertiary: { caliberUm: 47_000, count: 1.5 } }),
+    ).toThrow(EditError);
   });
 });
