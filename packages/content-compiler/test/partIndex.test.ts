@@ -362,7 +362,7 @@ describe("the ship-type registry rides beside the part index, id-sorted", () => 
       expect(output).toBeUndefined();
       const error = collector.errors.find((e) => e.code === "SCHEMA");
       expect(error?.message).toContain("ShipType");
-      expect(error?.sourceLocation?.path).toBe(file);
+      expect(error?.sourceLocation?.path).toBe("ship-building/ship-types.yaml");
     });
   });
 });
@@ -521,7 +521,7 @@ describe("the flatten stage fails with a structured diagnostic", () => {
       const error = collector.errors.find((e) => e.code === code);
       expect(error, collector.errors.map((e) => `${e.code} ${e.message}`).join("\n")).toBeDefined();
       expect(error?.stage).toBe("flatten");
-      expect(error?.sourceLocation?.path).toBe(file);
+      expect(error?.sourceLocation?.path).toBe(CASE_FILE);
       expect(error?.message).toContain(message);
     });
   });
@@ -561,7 +561,7 @@ describe("cross-references fail with the file and field path", () => {
       expect(output).toBeUndefined();
       const error = collector.errors.find((e) => e.message.includes(message));
       expect(error?.code).toBe("REF");
-      expect(error?.sourceLocation?.path).toBe(file);
+      expect(error?.sourceLocation?.path).toBe("ship-building/platforms.yaml");
     });
   });
 
@@ -602,7 +602,7 @@ describe("cross-references fail with the file and field path", () => {
       expect(output).toBeUndefined();
       const error = collector.errors.find((e) => e.message.includes(message));
       expect(error?.code, collector.errors.map((e) => e.message).join("\n")).toBe("REF");
-      expect(error?.sourceLocation?.path).toBe(file);
+      expect(error?.sourceLocation?.path).toBe(CASE_FILE);
     });
   });
 });
