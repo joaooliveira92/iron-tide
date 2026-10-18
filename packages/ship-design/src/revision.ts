@@ -280,6 +280,7 @@ export const STRUCTURE_KEYS: ReadonlySet<string> = new Set([
   "materialId",
   "structuralSchemeId",
   "subdivisionGrade",
+  "freeboardProfile",
 ]);
 
 /**

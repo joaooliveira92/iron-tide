@@ -151,3 +151,43 @@ describe("compileHull", () => {
       expect(JSON.stringify(compileHull(hull, form, balance, loads()))).toBe(a);
   });
 });
+
+describe("freeboard preset (#168 step 4, ADR-0233)", () => {
+  const tuned: HullBalance = {
+    ...balance,
+    lowFreeboardReserveCutBp: 3_000,
+    lowFreeboardHullWeightSavingBp: 400,
+  };
+  const low: HullSpec = { ...hull, freeboardProfile: "LOW" };
+  const compile = (h: HullSpec, b: HullBalance) => compileHull(h, form, b, loads());
+
+  it("NORMAL and absent are identical to today", () => {
+    expect(reserveBuoyancyBp({ ...hull, freeboardProfile: "NORMAL" }, form, tuned)).toBe(
+      reserveBuoyancyBp(hull, form),
+    );
+    expect(hullStructureWeight({ ...hull, freeboardProfile: "NORMAL" }, form, tuned)).toBe(
+      hullStructureWeight(hull, form, balance),
+    );
+    expect(compile({ ...hull, freeboardProfile: "NORMAL" }, tuned)).toEqual(compile(hull, tuned));
+  });
+  it("LOW cuts reserve buoyancy by the authored share and saves a little hull weight", () => {
+    const normal = reserveBuoyancyBp(hull, form, tuned);
+    expect(reserveBuoyancyBp(low, form, tuned)).toBe(Math.floor((normal * 7_000) / 10_000));
+    const w = hullStructureWeight(hull, form, tuned);
+    expect(hullStructureWeight(low, form, tuned)).toBeLessThan(w);
+    expect(hullStructureWeight(low, form, tuned)).toBeGreaterThan(Math.floor(w * 0.9));
+  });
+  it("LOW without authored balance has no numeric effect", () => {
+    expect(reserveBuoyancyBp(low, form, balance)).toBe(reserveBuoyancyBp(hull, form));
+    expect(hullStructureWeight(low, form, balance)).toBe(hullStructureWeight(hull, form, balance));
+  });
+  it("LOW reports the compiled reserve and raises a well-formed advisory only for LOW", () => {
+    const r = compile(low, tuned);
+    expect(r.reserveBuoyancyBp).toBe(reserveBuoyancyBp(low, form, tuned));
+    const f = r.findings.find((x) => x.id === "LOW_FREEBOARD_PRESET");
+    expect(f).toBeDefined();
+    expect(f!.severity).toBe("ADVISORY");
+    expect(checkFindingShape(f!)).toEqual([]);
+    expect(compile(hull, tuned).findings.map((x) => x.id)).not.toContain("LOW_FREEBOARD_PRESET");
+  });
+});

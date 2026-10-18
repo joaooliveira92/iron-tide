@@ -39,6 +39,8 @@ export interface HullSpec {
   readonly limitDisplacementKg: Kg | null;
   readonly designMarginBp: Bp;
   readonly growthReserveBp: Bp;
+  /** Freeboard preset (ADR-0233): `NORMAL` (default) keeps the derived freeboard; `LOW` applies the balance's cuts. */
+  readonly freeboardProfile?: "NORMAL" | "LOW";
 }
 
 /** Balancing coefficients (spec §7). Authored in balance/hull.yaml, passed in; never defaulted in code. */
@@ -54,6 +56,10 @@ export interface HullBalance {
   readonly overTargetTolBp: number;
   readonly reserveBuoyancyWarnBp: number;
   readonly reserveBuoyancyCriticalBp: number;
+  /** Share of reserve buoyancy a LOW freeboard gives up, bp. BALANCE TARGET (ADR-0213); absent = 0. */
+  readonly lowFreeboardReserveCutBp?: number;
+  /** Share of hull structure weight a LOW freeboard saves, bp. BALANCE TARGET; absent = 0. */
+  readonly lowFreeboardHullWeightSavingBp?: number;
 }
 
 export interface HullResult {
@@ -104,18 +110,21 @@ export function hullStructureWeight(h: HullSpec, form: HullForm, b: HullBalance)
     BigInt(sub) *
     BigInt(form.formBp) *
     p;
-  const den = 1000n * BP ** 4n * MM3_TO_M3_POW_FACTOR;
-  return kg(toSafe("hullStructureWeight", (num + den - 1n) / den));
+  const keepBp =
+    h.freeboardProfile === "LOW" ? BP - BigInt(b.lowFreeboardHullWeightSavingBp ?? 0) : BP;
+  const den = 1000n * BP ** 4n * MM3_TO_M3_POW_FACTOR * BP;
+  return kg(toSafe("hullStructureWeight", (num * keepBp + den - 1n) / den));
 }
 
 /** F-H4: reserve buoyancy in bp = (D-T)/T * Cwp * sheer / Cb. */
-export function reserveBuoyancyBp(h: HullSpec, form: HullForm): number {
+export function reserveBuoyancyBp(h: HullSpec, form: HullForm, b?: HullBalance): number {
   const fb = BigInt(h.depthToMainDeck) - BigInt(h.draught);
   if (fb <= 0n) return 0;
   const v =
     (fb * BigInt(form.waterplaneCoeffBp) * BigInt(form.sheerBp)) /
     (BigInt(h.draught) * BigInt(h.blockCoeffBp));
-  return toSafe("reserveBuoyancyBp", v);
+  const keepBp = h.freeboardProfile === "LOW" ? BP - BigInt(b?.lowFreeboardReserveCutBp ?? 0) : BP;
+  return toSafe("reserveBuoyancyBp", (v * keepBp) / BP);
 }
 
 const fmt = (n: number) => groupedInteger(n);
@@ -335,7 +344,27 @@ export function compileHull(
   }
 
   const freeboardMm = hull.depthToMainDeck - hull.draught;
-  const reserve = reserveBuoyancyBp(hull, form);
+  const reserve = reserveBuoyancyBp(hull, form, balance);
+  if (hull.freeboardProfile === "LOW") {
+    findings.push({
+      id: "LOW_FREEBOARD_PRESET",
+      severity: "ADVISORY",
+      what: "The low-freeboard construction preset is selected.",
+      why: `Reserve buoyancy is reduced to ${reserve} bp (freeboard ${fmt(freeboardMm)} mm) in exchange for a lighter hull.`,
+      consequence:
+        "Less reserve buoyancy: the ship is wetter in a seaway and tolerates less flooding than the normal preset.",
+      remedies: [
+        { id: "normal_freeboard", description: "Return to the normal freeboard preset." },
+        { id: "raise_depth", description: "Increase depth to the main deck instead." },
+      ],
+      evidence: {
+        formulaId: "F-H4",
+        inputs: { freeboardMm, draught: hull.draught },
+        threshold: balance.reserveBuoyancyWarnBp,
+        value: reserve,
+      },
+    });
+  }
   if (reserve < balance.reserveBuoyancyWarnBp) {
     const critical = reserve < balance.reserveBuoyancyCriticalBp;
     findings.push({
