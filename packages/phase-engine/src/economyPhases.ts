@@ -64,7 +64,7 @@ export function splitLargestRemainder(total: number, weights: readonly number[])
 /**
  * The acceleration-pressure pool (DESIGN-13 section 11.3.3), in treasury units per month. It is deliberately 0 (always
  * saturated, as before the economy model) until a national work-to-treasury-unit conversion is defined: spec #138 slice 4
- * records the spike that computes it (docs/research/economy/acceleration-pool.md) but keeps the numeric pool out of scope.
+ * records the spike that computes it (docs/research/economy/acceleration-pool/README.md) but keeps the numeric pool out of scope.
  * It is never derived from the economic base — construction capacity is yard throughput plus the tonnage concurrency cap.
  */
 export const ACCELERATION_POOL_UNDEFINED_UNITS = 0;
@@ -498,7 +498,6 @@ function applyLeftoverFunding(
   }
   const skipped = (p: ConstructionProject): boolean => foreignSkip?.has(p["id"]) ?? false;
   // Projects with work packages take leftover funds in order, skipping one the yard cannot work on this month (ADR-0077).
-  const offered = remainingFunds;
   for (const candidate of projects) {
     if (
       candidate["packages"] === undefined ||
@@ -512,7 +511,7 @@ function applyLeftoverFunding(
     const funded = fundConstructionProject(
       candidate,
       capacityOf(designs, candidate),
-      offered as number,
+      remainingFunds as number,
       campaignMonth,
     );
     if (funded.applied <= 0) continue;

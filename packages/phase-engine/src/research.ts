@@ -381,7 +381,8 @@ function applyHistoricalTimingModifier(
 }
 
 function findTechCost(catalogue: TechnologyCatalogue, techId: string): SafeInt {
-  return catalogue.get(techId)?.["cost"] ?? SafeInt(100);
+  // Only ever called for a technology picked from this catalogue, so the entry exists.
+  return catalogue.get(techId)!["cost"];
 }
 
 /**

@@ -129,3 +129,41 @@ describe("1880 seeded construction projects", () => {
     for (const { project } of seeded) expect(project.capacityUnits?.["slipway"]).toBeGreaterThan(0);
   });
 });
+
+// Twelve executed months for the three worked examples: every month's requested lines are the spec's figures.
+describe("12-month worked examples (GB, France, Portugal)", () => {
+  const { state } = compileProductionCampaign();
+  const expected: Record<
+    string,
+    { revenue: number; maintenance: number; obligation: number; research: number }
+  > = {
+    uk: { revenue: 100, maintenance: 16, obligation: 38, research: 5 },
+    france: { revenue: 68, maintenance: 12, obligation: 26, research: 4 },
+    portugal: { revenue: 3, maintenance: 2, obligation: 2, research: 0 },
+  };
+  it("posts the same requested flows every month and closes the ledger identity", () => {
+    let snapshot = state.snapshot;
+    for (let month = 1; month <= 12; month++) {
+      const result = new MonthExecutor().execute(
+        snapshot,
+        [],
+        `worked:${String(month)}`,
+        new DiagnosticCollector(),
+      );
+      for (const [id, want] of Object.entries(expected)) {
+        const sum = (category: string, field: "requested" | "credit"): number =>
+          result.financialLedger.all
+            .filter((e) => e.nationId === id && e.categoryId === category)
+            .reduce((a, e) => a + Number(e[field] ?? e.debit), 0);
+        expect(sum("NAVAL_APPROPRIATION", "credit")).toBe(want.revenue);
+        expect(sum("MAINTENANCE_EXPENDITURE", "requested")).toBe(want.maintenance);
+        expect(sum("OBLIGATION", "requested")).toBe(want.obligation);
+        if (want.research > 0) expect(sum("RESEARCH_EXPENDITURE", "requested")).toBe(want.research);
+      }
+      snapshot = {
+        ...result.finalSnapshot,
+        turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt.ONE),
+      };
+    }
+  });
+});

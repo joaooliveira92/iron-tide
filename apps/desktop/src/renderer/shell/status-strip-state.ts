@@ -97,7 +97,8 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
   const inDeficit = balance < 0;
   // The same band the Treasury screen's chip shows (spec #138): one status, never two.
   const balanceStatus = economyStatusLabel(economy.status);
-  const balanceTone: StripTone = inDeficit ? "alert" : "normal";
+  const balanceTone: StripTone =
+    inDeficit || economy.status === "deficit" || economy.status === "critical" ? "alert" : "normal";
   const researchRemark =
     researchNote({
       researchCap: economy.researchCap,

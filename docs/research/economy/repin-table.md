@@ -45,5 +45,13 @@ Empire rows, are balance questions for the owner. This change applies none of th
 ## Golden hashes
 
 `golden/hashes.json` moved with an understood cause: the compiled start state carries a derived base, the research catalogue and
-compatibility 3.1.0; construction is no longer capped by the base; outflow ledger entries record requested and shortfall. The old
-and new values are in the commit body that re-pinned them.
+compatibility 3.1.0; construction is no longer capped by the base; outflow ledger entries record requested and shortfall. Old and new values:
+
+| Hash | Old | New |
+| --- | --- | --- |
+| initialSnapshotHash | 39f30c0e… | 6692d74d… |
+| closingSnapshotHash | fd2e97be… | 522db3e4… |
+| commandLedgerHash | 08b3225b… | bf85774b… |
+| eventLedgerHash | f844d880… | 55688ab8… |
+| financialLedgerHash | 32f32ecf… | 0edc4b7d… |
+| replayVerificationHash | d6b053db… | 13eed097… |
