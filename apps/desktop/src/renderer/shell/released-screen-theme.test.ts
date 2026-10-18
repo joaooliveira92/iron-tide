@@ -54,7 +54,7 @@ describe("released screens honour the theme tokens (U-4 ticket 07)", () => {
     const offenders: string[] = [];
     for (const root of SCAN_ROOTS) {
       for (const file of walk(join(RENDERER, root))) {
-        const relToRenderer = relative(RENDERER, file);
+        const relToRenderer = relative(RENDERER, file).replaceAll("\\", "/");
         if (EXCLUDED_SEGMENTS.some((segment) => `/${relToRenderer}`.includes(segment))) continue;
         if (ALLOWLIST.has(relToRenderer)) continue;
         if (HEX.test(readFileSync(file, "utf8"))) offenders.push(relToRenderer);
