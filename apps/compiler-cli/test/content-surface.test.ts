@@ -220,6 +220,7 @@ describe("content:verify over the production pack (CAH-LOCK)", () => {
     writeFileSync(
       presentationPath,
       readFileSync(presentationPath, "utf8")
+        .replaceAll("\r\n", "\n")
         .replace("  areaRegion:\n", "  areaRegion:\n    cah_drift_area: northern_europe\n")
         .replace(
           "  campaignAreaToFixture:\n",
