@@ -130,6 +130,7 @@ const DesignDraftSchema = Schema.Struct({
   machinery: MachineryPlanSchema,
   armour: ArmourPlanSchema,
   placements: Schema.Array(PlacementSpecSchema),
+  fireControl: Schema.optional(Schema.Struct({ positions: nonNegativeInt })),
 });
 
 /**

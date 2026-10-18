@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vite-plus/test";
 import {
   compileDesign,
+  applyEdit,
+  EditError,
+  changeKindOf,
   checkFindingShape,
   LEDGER_CATEGORIES,
   ledgerTotal,
@@ -55,6 +58,7 @@ describe("compileDesign: reference gunboat", () => {
         "vmax": 21377,
         "warnings": [
           "ARMOUR_INEFFECTIVE_VS_ADVERSARY",
+          "FIRE_CONTROL_NO_POSITIONS",
           "MAGAZINE_UNPROTECTED",
           "MAGAZINE_UNPROTECTED",
         ],
@@ -238,5 +242,24 @@ describe("compileDesign: engine priority (#168 step 2)", () => {
     expect(checkFindingShape(f!)).toEqual([]);
     expect(ids(at(0))).not.toContain("ENGINE_PRIORITY_BREAKDOWN_RISK");
     expect(ids(at(-10_000))).not.toContain("ENGINE_PRIORITY_BREAKDOWN_RISK");
+  });
+});
+
+describe("compileDesign: fire-control positions (#168 step 3)", () => {
+  it("carry through edits, the draft hash and an absent field means none", () => {
+    const edited = applyEdit(draft, { kind: "set_fire_control", positions: 2 });
+    expect(edited.fireControl).toEqual({ positions: 2 });
+    expect(() => applyEdit(draft, { kind: "set_fire_control", positions: -1 })).toThrow(EditError);
+    expect(changeKindOf({ kind: "set_fire_control", positions: 1 }, () => undefined)).toBe(
+      "FITTINGS",
+    );
+    expect(compileDesign(edited, ctx).systems!.fireControlRedundancyBp).toBe(
+      compileDesign(draft, ctx).systems!.fireControlRedundancyBp,
+    );
+  });
+  it("engine priority is a machinery change", () => {
+    expect(
+      changeKindOf({ kind: "set_machinery", patch: { enginePriorityBp: 500 } }, () => undefined),
+    ).toBe("MACHINERY");
   });
 });

@@ -113,6 +113,14 @@ export function validateDraftShape(raw: unknown): string[] {
     p.push("hull.hullFormId must be a string");
   if (isObj(raw.machinery) && typeof raw.machinery.plantId !== "string")
     p.push("machinery.plantId must be a string");
+  if (raw.fireControl !== undefined) {
+    if (
+      !isObj(raw.fireControl) ||
+      !Number.isSafeInteger(raw.fireControl.positions) ||
+      (raw.fireControl.positions as number) < 0
+    )
+      p.push("fireControl.positions must be a non-negative integer");
+  }
   if (isObj(raw.machinery) && raw.machinery.enginePriorityBp !== undefined) {
     const e = raw.machinery.enginePriorityBp;
     if (!Number.isSafeInteger(e) || (e as number) < -10_000 || (e as number) > 10_000)
