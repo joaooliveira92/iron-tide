@@ -13,12 +13,15 @@ const read = (file: string): unknown =>
   parseYamlSafe(readFileSync(resolve(CONTENT, file), "utf8"), file, new DiagnosticCollector()).data;
 const load = (file: string): Record<string, unknown>[] => read(file) as Record<string, unknown>[];
 
-function validate(countries: unknown[]): DiagnosticCollector {
+function validate(
+  countries: unknown[],
+  areas: unknown[] = load("areas.yaml"),
+): DiagnosticCollector {
   const input: ParseOutput = {
     manifest: { name: "test-pack", version: "0.1.0", type: "fixture", files: {} },
     collectionDocs: new Map<string, unknown[]>([
       ["countries", countries],
-      ["areas", load("areas.yaml")],
+      ["areas", areas],
     ]),
     sourcePaths: new Map(),
     objectDocs: new Map(),
@@ -73,5 +76,31 @@ describe("nation home area", () => {
       n["id"] === "uk" ? { ...n, homeAreaa: "eng_home_coast" } : n,
     );
     expect(validate(countries).hasErrors).toBe(true);
+  });
+
+  describe("a pack with nations and zero areas", () => {
+    it("fails HOME_AREA_UNKNOWN for a nation that declares a home area", () => {
+      const codes = validate(load("countries.yaml"), []).all.filter(
+        (d) => d.code === "HOME_AREA_UNKNOWN",
+      );
+      expect(codes.map((d) => d.entityId).sort((a, b) => ((a ?? "") < (b ?? "") ? -1 : 1))).toEqual(
+        load("countries.yaml")
+          .map((n) => n["id"] as string)
+          .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
+      );
+    });
+
+    it("fails HOME_AREA_MISSING for a nation that declares none", () => {
+      const d = validate(withHome("uk", undefined), []).all.find(
+        (x) => x.code === "HOME_AREA_MISSING",
+      );
+      expect(d?.entityId).toBe("uk");
+    });
+
+    it("still accepts a genuinely empty pack (no nations, no areas)", () => {
+      const codes = validate([], []).all.map((d) => d.code as string);
+      expect(codes).not.toContain("HOME_AREA_MISSING");
+      expect(codes).not.toContain("HOME_AREA_UNKNOWN");
+    });
   });
 });

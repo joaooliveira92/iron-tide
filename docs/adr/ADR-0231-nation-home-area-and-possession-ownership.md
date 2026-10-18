@@ -19,7 +19,8 @@ possession ownership was compiled away, so a possession could never change hands
 1. `homeArea` is an optional `Nation` field in `countries.yaml`. The compiler
    validates it against the area set: a nation without one fails with
    `HOME_AREA_MISSING`, one naming an unknown area with `HOME_AREA_UNKNOWN`. The
-   values are the existing presentation-join values (a parity test pins this);
+   check does not depend on the area set being non-empty: a pack with nations and
+   no areas fails; only a pack with neither nations nor areas is valid. The values are the existing presentation-join values (a parity test pins this);
    the presentation join stays presentation.
 2. `NationState.homeAreaId` and `WorldState.possessions` (`id`, `nationId`,
    `areaId`, ordered by id) are additive, optional snapshot fields.
@@ -28,12 +29,28 @@ possession ownership was compiled away, so a possession could never change hands
    a possession's `nationId` changes the answer on the next evaluation.
 4. `WorldMapView` nations expose `homeAreaId` and `presenceAreaIds`.
 
+## Compatibility policy
+
+Additive snapshot fields do not require a compatibility-version bump when older
+saves can be deterministically migrated or reconstructed without simulation
+ambiguity. A bump is required only for changes that cannot be loaded or migrated
+safely. This change is the first case: both fields are optional at the
+persistence boundary, an older save loads with them absent, and the compiled
+state stays deterministic. `CURRENT_COMPATIBILITY_VERSION` therefore stays
+`3.1.0`; the repository's bump refuses older saves, which would contradict
+spec #73 story 24.
+
 ## Consequences
 
-- **Compatibility:** `CURRENT_COMPATIBILITY_VERSION` stays `3.1.0`. Both snapshot
-  fields are optional and the persistence schema accepts them absent, so saves
-  from earlier builds still load with them absent (round-trip parity test
-  `presence-roundtrip.test.ts`). No authoritative outcome changes.
+- **Persistence:** `world.possessions` is optional as a whole, but each present
+  entry must carry exactly a non-empty `id`, `nationId` and `areaId`; malformed
+  entries and extra keys are refused at load (`StorablePossessionSchema`). The
+  existing loose `world.technologies` schema is unchanged and out of scope.
+- **Compilation:** possession fields are read as validated by `PossessionSchema`;
+  nothing is defaulted to an empty string.
+- **Deferred:** possession transfer itself (commands, events, validation,
+  persistence, replay) is a later ticket; this change only makes presence derive
+  from current ownership.
 - **Golden re-pin:** content, snapshot, ledger and replay hashes move because the
   compiled state now carries the new fields and the fixture nations carry
   `homeArea`. The cause is understood and no simulation value changed.

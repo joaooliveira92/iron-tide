@@ -843,13 +843,24 @@ describe("CampaignCompiler DESIGN-03 configuration gate", () => {
         name: "campaign-config-test",
         version: "0.1.0",
         type: "fixture",
-        files: { countries: ["countries.yaml"] },
+        files: { countries: ["countries.yaml"], areas: ["areas.yaml"] },
       }),
       "utf8",
     );
     writeFileSync(
       resolve(dir, "countries.yaml"),
-      nationYaml({ id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true }),
+      nationYaml({
+        id: "uk",
+        tag: "GBR",
+        name: "United Kingdom",
+        isPlayable: true,
+        homeArea: "lon",
+      }),
+      "utf8",
+    );
+    writeFileSync(
+      resolve(dir, "areas.yaml"),
+      '- id: "lon"\n  name: "London"\n  type: "land"\n  controller: "uk"\n',
       "utf8",
     );
     writeFileSync(
@@ -867,7 +878,7 @@ describe("CampaignCompiler DESIGN-03 configuration gate", () => {
         contentDir: dir,
         rulesetFiles: [],
         countryFiles: ["countries.yaml"],
-        areaFiles: [],
+        areaFiles: ["areas.yaml"],
         routeFiles: [],
         possessionFiles: [],
         portFiles: [],

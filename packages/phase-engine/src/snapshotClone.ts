@@ -32,6 +32,7 @@ import type {
   WarParticipantMembership,
   WarState,
   WorldState,
+  PossessionData,
   TechnologyDefinitionData,
 } from "@bluewave/campaign";
 import type { SafeInt } from "@bluewave/contracts";
@@ -40,7 +41,6 @@ import { PhaseEngineError } from "./errors.js";
 type AreaData = WorldState["areas"][number];
 type RouteData = WorldState["routes"][number];
 type PortData = WorldState["ports"][number];
-type PossessionData = NonNullable<WorldState["possessions"]>[number];
 
 // Field-exhaustive structural deep-clone of the campaign snapshot.
 // Every record type has an explicit copy entry in `F`. Compile-time

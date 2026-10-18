@@ -355,13 +355,18 @@ describe("CampaignCompiler", () => {
           name: "flag-drive",
           version: "0.1.0",
           type: "fixture",
-          files: { countries: ["countries.yaml"] },
+          files: { countries: ["countries.yaml"], areas: ["areas.yaml"] },
         }),
       );
       writeFile(
         fixture.path,
         "countries.yaml",
-        nationYaml({ id: "france", tag: "FRA", name: "France", isPlayable: true }),
+        nationYaml({ id: "france", tag: "FRA", name: "France", isPlayable: true, homeArea: "par" }),
+      );
+      writeFile(
+        fixture.path,
+        "areas.yaml",
+        '- id: "par"\n  name: "Paris"\n  type: "land"\n  controller: "france"\n',
       );
       writeFile(
         fixture.path,
@@ -376,7 +381,7 @@ describe("CampaignCompiler", () => {
         input: {
           rulesetFiles: [],
           countryFiles: ["countries.yaml"],
-          areaFiles: [],
+          areaFiles: ["areas.yaml"],
           routeFiles: [],
           possessionFiles: [],
           portFiles: [],

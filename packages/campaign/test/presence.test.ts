@@ -52,7 +52,7 @@ describe("presenceAreaIds", () => {
 
 describe("buildWorldState possessions", () => {
   it("carries the pack possessions ordered by id", () => {
-    const pack = { areas: [], possessions: loadPossessions() } as ContentPack;
+    const pack = { areas: [], possessions: loadPossessions() };
     const world = buildWorldState(pack, START);
     const ids = (world.possessions ?? []).map((p) => p.id);
     expect(ids).toHaveLength(loadPossessions().length);
@@ -61,7 +61,7 @@ describe("buildWorldState possessions", () => {
 
   it("gives every production nation its distinct possession areas as presence areas", () => {
     const possessions = loadPossessions();
-    const world = buildWorldState({ areas: [], possessions } as ContentPack, START);
+    const world = buildWorldState({ areas: [], possessions }, START);
     for (const nation of load("countries.yaml")) {
       const id = nation["id"] as string;
       const expected = [

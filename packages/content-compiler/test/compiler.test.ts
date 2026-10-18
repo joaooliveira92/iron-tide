@@ -516,11 +516,25 @@ describe("Compiler", () => {
           name: "test-pack",
           version: "0.1.0",
           type: "fixture",
-          files: { countries: ["countries.yaml"] },
+          files: { countries: ["countries.yaml"], areas: ["areas.yaml"] },
         }),
       );
 
-      writeFixture(fixture.path, "countries.yaml", nationYaml("uk", "GBR", "United Kingdom"));
+      writeFixture(
+        fixture.path,
+        "countries.yaml",
+        nationYaml("uk", "GBR", "United Kingdom", false, "lon"),
+      );
+      writeFixture(
+        fixture.path,
+        "areas.yaml",
+        `
+- id: "lon"
+  name: "London"
+  type: "land"
+  controller: "uk"
+      `,
+      );
 
       const compiler = new Compiler();
       const signal = new AbortController().signal;
@@ -532,7 +546,7 @@ describe("Compiler", () => {
           contentDir: fixture.path,
           rulesetFiles: [],
           countryFiles: [resolve(fixture.path, "countries.yaml")],
-          areaFiles: [],
+          areaFiles: [resolve(fixture.path, "areas.yaml")],
           routeFiles: [],
           possessionFiles: [],
           portFiles: [],
@@ -549,7 +563,7 @@ describe("Compiler", () => {
           contentDir: fixture.path,
           rulesetFiles: [],
           countryFiles: [resolve(fixture.path, "countries.yaml")],
-          areaFiles: [],
+          areaFiles: [resolve(fixture.path, "areas.yaml")],
           routeFiles: [],
           possessionFiles: [],
           portFiles: [],
