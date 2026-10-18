@@ -74,6 +74,7 @@ export const HullSpecSchema = Schema.Struct({
   limitDisplacementKg: Schema.NullOr(positiveInt),
   designMarginBp: bp,
   growthReserveBp: bp,
+  freeboardProfile: Schema.optional(Schema.Literals(["NORMAL", "LOW"] as const)),
 });
 
 const MachineryRoomSchema = Schema.Struct({

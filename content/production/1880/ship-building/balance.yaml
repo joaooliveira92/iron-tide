@@ -20,6 +20,9 @@ ship:
       - 11500
       - 13000
     buoyancyTolBp: 500
+    # Low-freeboard preset (RTW3 manual p.39 names the choice, never a magnitude). BALANCE TARGETs (ADR-0213).
+    lowFreeboardReserveCutBp: 3000
+    lowFreeboardHullWeightSavingBp: 400
     overTargetTolBp: 300
     reserveBuoyancyWarnBp: 3000
     reserveBuoyancyCriticalBp: 1500
