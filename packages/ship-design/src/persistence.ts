@@ -111,6 +111,13 @@ export function validateDraftShape(raw: unknown): string[] {
     p.push(`requirement.category is not a registered ship type (SHIP_TYPE_UNREGISTERED)`);
   if (isObj(raw.hull) && typeof raw.hull.hullFormId !== "string")
     p.push("hull.hullFormId must be a string");
+  if (
+    isObj(raw.hull) &&
+    raw.hull.freeboardProfile !== undefined &&
+    raw.hull.freeboardProfile !== "NORMAL" &&
+    raw.hull.freeboardProfile !== "LOW"
+  )
+    p.push("hull.freeboardProfile must be NORMAL or LOW");
   if (isObj(raw.machinery) && typeof raw.machinery.plantId !== "string")
     p.push("machinery.plantId must be a string");
   if (raw.fireControl !== undefined) {

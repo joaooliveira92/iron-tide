@@ -408,3 +408,20 @@ describe("fire control in the design file", () => {
       expect(() => decodeDesignFile(withFc(bad), ctx.catalogue)).toThrow(PersistenceError);
   });
 });
+
+describe("freeboard profile in the design file", () => {
+  const withProfile = (v: unknown) =>
+    JSON.stringify({
+      format: "bwdesign",
+      schemaVersion: 2,
+      draft: { ...draft, hull: { ...draft.hull, freeboardProfile: v } },
+      componentHashes: {},
+      compiledHash: null,
+    });
+  it("round-trips NORMAL and LOW and refuses anything else", () => {
+    for (const ok of ["NORMAL", "LOW"] as const)
+      expect(decodeDesignFile(withProfile(ok), ctx.catalogue).draft.hull.freeboardProfile).toBe(ok);
+    for (const bad of ["HIGH", "low", 1, null])
+      expect(() => decodeDesignFile(withProfile(bad), ctx.catalogue)).toThrow(PersistenceError);
+  });
+});
