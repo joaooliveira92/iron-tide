@@ -44,7 +44,9 @@ export default defineConfig({
     // `.scratch/**` is the local agent issue tracker (see docs/agents/issue-tracker.md):
     // not repository code, and already excluded from `fmt`. Linting it makes a local
     // scratch probe break `pnpm check` while CI, which also has the tree, disagrees.
-    ignorePatterns: ["vendor/**", "repos/**", ".scratch/**", ".worktrees/**"],
+    // `.agents/**` holds vendored third-party agent skills (e.g. anatomy, with its own
+    // LICENSE and CHANGELOG); `fmt` already excludes it and it is not repository code.
+    ignorePatterns: ["vendor/**", "repos/**", ".agents/**", ".scratch/**", ".worktrees/**"],
     plugins: ["typescript", "unicorn", "oxc"],
     categories: {
       correctness: "error",
