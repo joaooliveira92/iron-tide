@@ -21,8 +21,8 @@ import { passesFilter } from "../../validation/severity.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../ui/popover.js";
 import { FittingTargets } from "./FittingTargets.js";
 import { SelectionLayer } from "./SelectionLayer.js";
-import { GunArcLayer, HullFittingLayer } from "./fitting-layers.js";
-import { HullOutlineLayer, HullZoneLayer } from "./plan-layers.js";
+import { ARC_R_FOCUS, GunArcLayer, HullFittingLayer } from "./fitting-layers.js";
+import { HullDeckLayer, HullOutlineLayer, HullZoneLayer } from "./plan-layers.js";
 import { HullTopsideLayer } from "./HullTopsideLayer.js";
 import {
   ArmourZoneLayer,
@@ -32,6 +32,8 @@ import {
 } from "./ship-view-layers.js";
 import { DEFAULT_VIEW, SHIP_VIEW_DEFS, type ShipOverlay, type ShipView } from "./ship-view.js";
 import { buildAnatomyShip } from "./anatomy/ship-anatomy.js";
+import { fittingKind } from "./sections.js";
+import { planSymbolFor } from "./plan-symbols.js";
 import { planModel, type PlanModel } from "./planModel.js";
 import { useHullPlanEditing, type HullPlanEditing } from "./useHullPlanEditing.js";
 import { Info } from "lucide-react";
@@ -140,8 +142,28 @@ export function HullPlanPanel({
     }),
     [draft, view, model],
   );
+  const symbolOf = useMemo(() => {
+    const mountOf = new Map(model.visualMounts.map((m) => [m.instanceId, m]));
+    return (p: DesignDraft["placements"][number]) => {
+      const entry = model.entryOf(p.componentId);
+      if (entry === undefined) return undefined;
+      const mount = mountOf.get(p.instanceId);
+      return planSymbolFor({
+        kind: fittingKind(entry.category, entry.tags),
+        category: entry.category,
+        mountType: mount?.mountType,
+        gunCount: mount?.gunCount,
+        caliberUm: mount?.caliberUm,
+      });
+    };
+  }, [model]);
   return (
-    <Panel title="Hull plan" className="rounded-none border-0 bg-transparent">
+    <Panel
+      title="Hull plan"
+      // In the workspace the view toolbar already names the drawing; on its own the panel keeps its heading.
+      compact={givenShipView !== undefined}
+      className="rounded-none border-0 bg-transparent"
+    >
       <PlanToolOptions
         tool={tool}
         draft={draft}
@@ -180,6 +202,7 @@ export function HullPlanPanel({
             aria-label={planLabel(facts)}
           >
             <HullOutlineLayer frame={frame} />
+            <HullDeckLayer frame={frame} />
             <SelectionLayer frame={frame} zones={zones} draft={draft} warns={model.warns} />
             <HullZoneLayer frame={frame} zones={zones} />
             {viewDef.id === "compartments" && <CompartmentLayer frame={frame} zones={zones} />}
@@ -198,12 +221,21 @@ export function HullPlanPanel({
               <MassMarkersLayer frame={frame} lcgPermille={lcgPermille} />
             )}
             {on("machinery") && <MachineryLayoutLayer frame={frame} draft={draft} />}
-            {arcsOn && <GunArcLayer frame={frame} draft={draft} mounts={mounts} />}
+            {arcsOn && (
+              <GunArcLayer
+                frame={frame}
+                draft={draft}
+                mounts={mounts}
+                radius={viewDef.id === "arcs" ? ARC_R_FOCUS : undefined}
+                labelled={viewDef.id === "arcs"}
+              />
+            )}
             {on("footprint") && (
               <HullFittingLayer
                 frame={frame}
                 draft={draft}
                 selectedId={tool.mode === "move" ? tool.instanceId : undefined}
+                symbolOf={symbolOf}
               />
             )}
             {tool.mode !== "off" && (
@@ -250,6 +282,7 @@ export function HullPlanPanel({
           )}
         </div>
         <SectionLabels
+          numbered={viewDef.id === "compartments"}
           zones={zones}
           anchor={planRef}
           renderCard={(id) => (

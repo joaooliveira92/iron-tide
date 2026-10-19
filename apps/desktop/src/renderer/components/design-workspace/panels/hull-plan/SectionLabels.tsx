@@ -29,6 +29,7 @@ export function SectionLabels({
   zones,
   renderCard,
   anchor,
+  numbered = false,
 }: {
   readonly zones: readonly ZoneRange[];
   readonly renderCard: (id: SectionId) => ReactNode;
@@ -37,6 +38,8 @@ export function SectionLabels({
    * the neighbouring labels (which the pointer may be heading for).
    */
   readonly anchor?: RefObject<HTMLElement | null>;
+  /** Prefix each name with its bow-to-stern number, to match the numbers on the Compartments view. */
+  readonly numbered?: boolean;
 }) {
   const [handle] = useState(() => createHoverCardHandle<SectionId>());
   // The open card is the selection store's `preview`; a click or Enter/Space also pins the section (`selected`).
@@ -111,6 +114,11 @@ export function SectionLabels({
                 />
               }
             >
+              {numbered && (
+                <span aria-hidden="true" className="mr-1 font-semibold text-foreground">
+                  {i + 1}
+                </span>
+              )}
               <span className="@[40rem]:hidden">{meta.shortLabel}</span>
               <span className="hidden @[40rem]:inline">{meta.name}</span>
             </HoverCardTrigger>

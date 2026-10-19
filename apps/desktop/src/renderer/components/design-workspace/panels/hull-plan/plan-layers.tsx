@@ -9,20 +9,46 @@ import {
   STROKE,
 } from "./drafting.js";
 import { PLAN_MID, PLAN_PAD, PLAN_W, type PlanFrame } from "./geometry.js";
+import { type Point, polygonPoints } from "./path.js";
 
 const PLAN_FONT = LABEL_FONT;
 
 /** Length of the drawn ram beak, px (into the left padding). */
 const RAM_LEN = 10;
 
-/** Closed outline polygon points for the hull scaled by `scale` about the centreline. */
+/** How far a rounded end reaches past its end station, as a multiple of the end's half-width. */
+const STERN_CAP: Record<PlanFrame["stern"], number> = { counter: 1.6, round: 1.2, transom: 0 };
+const BOW_CAP: Record<PlanFrame["bow"], number> = { ram: 0, spoon: 1.5, plumb: 0 };
+const CAP_STEPS = 6;
+
+/**
+ * Points of a half-ellipse closing the hull at one end, from the upper side round to the lower. `dir` is +1 at the
+ * stern (reaching right) and -1 at the bow (reaching left); no depth is a flat end.
+ */
+function capPoints(endX: number, half: number, depth: number, dir: 1 | -1): Point[] {
+  if (depth <= 0 || half <= 0) return [];
+  const reach = half * depth;
+  return Array.from({ length: CAP_STEPS - 1 }, (_, i) => {
+    const angle = (Math.PI * (i + 1)) / CAP_STEPS - Math.PI / 2;
+    return { x: endX + dir * reach * Math.cos(angle), y: PLAN_MID + half * Math.sin(angle) };
+  });
+}
+
+/**
+ * Closed outline polygon points for the hull scaled by `scale` about the centreline. The stern and spoon bow close
+ * in a rounded cap (a drawing convention per hull form); a transom, a plumb bow and a ram stay flat.
+ */
 function outlinePoints(frame: PlanFrame, scale: number): string {
-  const pts: string[] = [];
-  for (let i = 0; i <= 40; i++)
-    pts.push(`${frame.x(i * 25).toFixed(2)},${(PLAN_MID - frame.half(i / 40) * scale).toFixed(2)}`);
-  for (let i = 40; i >= 0; i--)
-    pts.push(`${frame.x(i * 25).toFixed(2)},${(PLAN_MID + frame.half(i / 40) * scale).toFixed(2)}`);
-  return pts.join(" ");
+  const at = (i: number, side: 1 | -1): Point => ({
+    x: frame.x(i * 25),
+    y: PLAN_MID + side * frame.half(i / 40) * scale,
+  });
+  const pts: Point[] = [];
+  for (let i = 0; i <= 40; i++) pts.push(at(i, -1));
+  pts.push(...capPoints(frame.x(1000), frame.half(1) * scale, STERN_CAP[frame.stern], 1));
+  for (let i = 40; i >= 0; i--) pts.push(at(i, 1));
+  pts.push(...capPoints(frame.x(0), frame.half(0) * scale, BOW_CAP[frame.bow], -1).reverse());
+  return polygonPoints(pts);
 }
 
 /** Hull waterline, ram and deck edge: the hull's shape alone, also drawn magnified in the section cards. */
@@ -53,6 +79,20 @@ export function HullShapeLayer({ frame }: { readonly frame: PlanFrame }) {
         data-testid="hull-deck-edge"
       />
     </>
+  );
+}
+
+/**
+ * The weather deck as a filled surface inside the hull plating, so the plan reads as a ship seen from above (hull
+ * side lighter, deck darker) rather than an empty outline. Drawn under the section, armour and fitting layers.
+ */
+export function HullDeckLayer({ frame }: { readonly frame: PlanFrame }) {
+  return (
+    <polygon
+      points={outlinePoints(frame, 0.9)}
+      className="pointer-events-none fill-muted-foreground/25"
+      data-testid="hull-deck-fill"
+    />
   );
 }
 

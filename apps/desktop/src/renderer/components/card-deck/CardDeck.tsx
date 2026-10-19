@@ -211,7 +211,10 @@ export interface CardDeckProps {
   autoplay?: boolean;
   autoplayDelay?: number;
   pauseOnHover?: boolean;
-  /** Called with the index of the new top card whenever the stack moves itself. */
+  /**
+   * Called with the index of the new top card when the stack moves itself (a fling, a drag, autoplay). Never called
+   * for a change the parent drove through `topIndex`: echoing those back races the parent's next step.
+   */
   onChange?: (index: number) => void;
   /** Controlled top card. When it changes the card is brought to the front. */
   topIndex?: number;
@@ -279,7 +282,6 @@ export function CardDeck({
   onChangeRef.current = onChange;
   const onCardActivateRef = useRef(onCardActivate);
   onCardActivateRef.current = onCardActivate;
-  const suppressChangeRef = useRef<number | null>(null);
 
   if (order.length !== count || order.some((index) => index >= count)) {
     const next = order.filter((index) => index < count);
@@ -431,6 +433,7 @@ export function CardDeck({
     const next = [...current.slice(1), top];
     if (s.reduceMotion) {
       commit(next);
+      onChangeRef.current?.(next[0] as number);
       return;
     }
     let dx: number;
@@ -463,6 +466,7 @@ export function CardDeck({
     animate(values.y, out[1], velocity ? { ...launch, velocity: velocity[1] } : launch);
     settleFace(values, s);
     commit(next);
+    onChangeRef.current?.(next[0] as number);
     const span = Math.max(Math.hypot(out[0] - values.x.get(), out[1] - values.y.get()), 1);
     let landed = false;
     const turn = (): void => {
@@ -685,24 +689,8 @@ export function CardDeck({
     const current = orderRef.current;
     if (current[0] === topIndex) return;
     if (!current.includes(topIndex)) return;
-    suppressChangeRef.current = topIndex;
     commit([topIndex, ...current.filter((index) => index !== topIndex)]);
   }, [topIndex, count]);
-
-  const top = order[0];
-  const changedRef = useRef(false);
-  useEffect(() => {
-    if (!changedRef.current) {
-      changedRef.current = true;
-      return;
-    }
-    if (top === undefined) return;
-    if (suppressChangeRef.current === top) {
-      suppressChangeRef.current = null;
-      return;
-    }
-    onChangeRef.current?.(top);
-  }, [top]);
 
   useEffect(() => {
     if (!autoplay || count < 2 || dragging || (pauseOnHover && hovered)) return undefined;

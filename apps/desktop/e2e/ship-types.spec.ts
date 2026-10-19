@@ -63,11 +63,19 @@ test("the opening roster offers the six pre-dreadnought types, and a battleship 
   const targetId = await e2e.page
     .getByRole("option", { name: "Pre-dreadnought battleship (B)" })
     .getAttribute("id");
+  expect(targetId).not.toBeNull();
   await roster.focus();
+  // The active option moves through React state, so a key press is only complete once the roster reports a new
+  // active option: read it again before stepping on, or a stale read overshoots to the last card (the AMC).
+  const activeId = () => roster.getAttribute("aria-activedescendant");
   for (let step = 0; step < 6; step++) {
-    if ((await roster.getAttribute("aria-activedescendant")) === targetId) break;
+    const before = await activeId();
+    if (before === targetId) break;
     await roster.press("ArrowRight");
+    await expect.poll(activeId).not.toBe(before);
   }
+  // Enter only on the battleship; any other card fails here rather than starting a different design.
+  await expect(roster).toHaveAttribute("aria-activedescendant", targetId!);
   await roster.press("Enter");
   const replace = e2e.page.getByRole("button", { name: "Replace my design" });
   if (await replace.isVisible().catch(() => false)) await replace.click();
