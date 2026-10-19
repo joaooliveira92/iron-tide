@@ -145,9 +145,9 @@ function Panel({
       className={cn("flex min-w-0 flex-col rounded-lg border bg-card/40 px-3 py-2", className)}
     >
       <div className="mb-1.5 flex items-baseline justify-between gap-2">
-        <h3 className="text-xs font-semibold uppercase leading-4 tracking-widest text-muted-foreground">
+        <h2 className="text-xs font-semibold uppercase leading-4 tracking-widest text-muted-foreground">
           {name}
-        </h3>
+        </h2>
         {aside !== undefined && (
           <span title={aside} className="truncate text-xs font-medium text-foreground/80">
             {aside}

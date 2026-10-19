@@ -197,10 +197,10 @@ describe("StatusStripView", () => {
     expect(await axeViolations(document.body)).toEqual([]);
   });
 
-  it("orders Nation, Budget, Outlook in reading order under level-3 headings", async () => {
+  it("orders Nation, Budget, Outlook in reading order under level-2 headings", async () => {
     await renderStrip();
     const region = screen.getByRole("region", { name: "Status strip" });
-    const headings = within(region).getAllByRole("heading", { level: 3 });
+    const headings = within(region).getAllByRole("heading", { level: 2 });
     expect(headings.map((h) => h.textContent)).toEqual(["Nation", "Budget", "Outlook"]);
   });
 
