@@ -4,13 +4,6 @@ import type {
   VerifyCampaignResponse,
 } from "../../../shared/continuity-contract.js";
 
-export interface RecentFile {
-  readonly path: string;
-  readonly campaignIdentity: string;
-  readonly activeRevision: number;
-  readonly lastOpened: number;
-}
-
 export type OperationKind = "verify" | "replay" | "recover";
 
 export type OperationResult =

@@ -36,6 +36,7 @@ import type {
 } from "./design-contract.js";
 import type {
   LoadCampaignResponse,
+  RecentCampaignEntry,
   RecoverCampaignResponse,
   ReplayCampaignResponse,
   VerifyCampaignResponse,
@@ -441,6 +442,8 @@ export const CAMPAIGN_COMMAND_NAMES = [
   "seedCampaignBattleDrill",
   "loadCampaign",
   "loadRecentCampaign",
+  "listRecentCampaigns",
+  "removeRecentCampaign",
   "listCampaigns",
   "verifyCampaign",
   "replayCampaign",
@@ -557,6 +560,14 @@ export interface CampaignCommandClient {
     payload: SeedCampaignBattleDrillPayload,
   ): Promise<BridgeResult<SeedCampaignBattleDrillResult>>;
   execute(command: "loadCampaign", payload: undefined): Promise<BridgeResult<LoadCampaignResponse>>;
+  execute(
+    command: "listRecentCampaigns",
+    payload: undefined,
+  ): Promise<BridgeResult<readonly RecentCampaignEntry[]>>;
+  execute(
+    command: "removeRecentCampaign",
+    payload: { readonly packagePath: string },
+  ): Promise<BridgeResult<readonly RecentCampaignEntry[]>>;
   execute(
     command: "loadRecentCampaign",
     payload: { readonly packagePath: string },

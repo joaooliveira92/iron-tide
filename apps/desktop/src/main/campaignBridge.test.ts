@@ -85,6 +85,8 @@ const IMPLEMENTED_COMMANDS = new Set([
   "readMonthlyReports",
   "loadCampaign",
   "loadRecentCampaign",
+  "listRecentCampaigns",
+  "removeRecentCampaign",
   "listCampaigns",
   "verifyCampaign",
   "replayCampaign",

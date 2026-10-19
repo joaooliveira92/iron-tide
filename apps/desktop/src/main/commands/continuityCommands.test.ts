@@ -1,4 +1,14 @@
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  renameSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,6 +30,7 @@ import type {
 } from "../../shared/campaign-command-contract.js";
 import type {
   LoadCampaignResponse,
+  RecentCampaignEntry,
   RecoverCampaignResponse,
   ReplayCampaignResponse,
   VerifyCampaignResponse,
@@ -35,7 +46,9 @@ import { submitConstructionCommandProgram } from "./constructionCommands.js";
 import {
   listCampaignsProgram,
   loadCampaignProgram,
+  listRecentCampaignsProgram,
   loadRecentCampaignProgram,
+  removeRecentCampaignProgram,
   recoverCampaignProgram,
   replayCampaignProgram,
   verifyCampaignProgram,
@@ -101,6 +114,10 @@ const commitMonth = (payload: {
 const loadCampaign = () => runProgram<LoadCampaignResponse>(loadCampaignProgram, undefined);
 const loadRecentCampaign = (packagePath: string) =>
   runProgram<LoadCampaignResponse>(loadRecentCampaignProgram, { packagePath });
+const listRecentCampaigns = () =>
+  runProgram<readonly RecentCampaignEntry[]>(listRecentCampaignsProgram, undefined);
+const removeRecentCampaign = (packagePath: string) =>
+  runProgram<readonly RecentCampaignEntry[]>(removeRecentCampaignProgram, { packagePath });
 const listCampaigns = () => runProgram<SaveMetadata[]>(listCampaignsProgram, undefined);
 const verifyCampaign = () => runProgram<VerifyCampaignResponse>(verifyCampaignProgram, undefined);
 const replayCampaign = () => runProgram<ReplayCampaignResponse>(replayCampaignProgram, undefined);
@@ -697,7 +714,7 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     const again = await loadRecentCampaign(saveDir);
     expect(again.outcome).toBe("success");
     if (again.outcome !== "success") return;
-    expect(again.value.packagePath).toBe(saveDir);
+    expect(again.value.packagePath).toBe(realpathSync(saveDir));
   });
 
   it("loadRecentCampaign rejects a path the user never picked in the dialog", async () => {
@@ -708,6 +725,76 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(result.outcome).toBe("error");
     if (result.outcome !== "error") return;
     expect(result.reason).toBe("PACKAGE_NOT_APPROVED");
+  });
+
+  it("lists recents newest first and flags a package that disappeared", async () => {
+    const dirA = resolve(saveRoot, "save-list-a");
+    const dirB = resolve(saveRoot, "save-list-b");
+    await compileAndSave(dirA);
+    await compileAndSave(dirB);
+    packageAt(dirA);
+    expect((await loadCampaign()).outcome).toBe("success");
+    packageAt(dirB);
+    expect((await loadCampaign()).outcome).toBe("success");
+
+    const listed = await listRecentCampaigns();
+    expect(listed.outcome).toBe("success");
+    if (listed.outcome !== "success") return;
+    const mine = listed.value.filter((e) =>
+      [dirA, dirB].some((d) => e.packagePath.endsWith(d.split("/").pop()!)),
+    );
+    expect(mine).toHaveLength(2);
+    expect(mine.every((e) => e.available)).toBe(true);
+
+    const moved = `${dirB}-moved`;
+    renameSync(dirB, moved);
+    const after = await listRecentCampaigns();
+    if (after.outcome !== "success") throw new Error("list failed");
+    const missing = after.value.find((e) => e.packagePath.endsWith("save-list-b"));
+    expect(missing?.available).toBe(false);
+
+    const result = await loadRecentCampaign(missing!.packagePath);
+    expect(result.outcome).toBe("error");
+    if (result.outcome === "error") expect(result.reason).toBe("PACKAGE_MISSING");
+  });
+
+  it("removeRecentCampaign forgets an entry, which can no longer be reopened", async () => {
+    const saveDir = resolve(saveRoot, "save-remove");
+    await compileAndSave(saveDir);
+    packageAt(saveDir);
+    expect((await loadCampaign()).outcome).toBe("success");
+
+    const removed = await removeRecentCampaign(saveDir);
+    expect(removed.outcome).toBe("success");
+    if (removed.outcome !== "success") return;
+    expect(removed.value.some((e) => e.packagePath.endsWith("save-remove"))).toBe(false);
+
+    const result = await loadRecentCampaign(saveDir);
+    expect(result.outcome).toBe("error");
+    if (result.outcome === "error") expect(result.reason).toBe("PACKAGE_NOT_APPROVED");
+  });
+
+  it("matches approved packages by canonical path, so a symlink reaches the same entry", async () => {
+    const saveDir = resolve(saveRoot, "save-canonical");
+    await compileAndSave(saveDir);
+    packageAt(saveDir);
+    expect((await loadCampaign()).outcome).toBe("success");
+
+    const link = resolve(saveRoot, "link-to-canonical");
+    symlinkSync(saveDir, link);
+    const viaLink = await loadRecentCampaign(link);
+    expect(viaLink.outcome).toBe("success");
+    const before = await listRecentCampaigns();
+    if (before.outcome !== "success") throw new Error("list failed");
+    expect(before.value.filter((e) => e.packagePath.endsWith("save-canonical"))).toHaveLength(1);
+  });
+
+  it("rejects an unknown payload shape for loadRecentCampaign", async () => {
+    const result = await runProgram<LoadCampaignResponse>(loadRecentCampaignProgram, {
+      packagePath: "/tmp/x",
+      extra: true,
+    });
+    expect(result.outcome).toBe("error");
   });
 
   // Edge cases: cancellation and missing sidecar metadata
