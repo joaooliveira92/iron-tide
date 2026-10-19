@@ -33,6 +33,7 @@ import {
 import { DEFAULT_VIEW, SHIP_VIEW_DEFS, type ShipOverlay, type ShipView } from "./ship-view.js";
 import { buildAnatomyShip } from "./anatomy/ship-anatomy.js";
 import { fittingKind } from "./sections.js";
+import { planSymbolFor } from "./plan-symbols.js";
 import { planModel, type PlanModel } from "./planModel.js";
 import { useHullPlanEditing, type HullPlanEditing } from "./useHullPlanEditing.js";
 import { Info } from "lucide-react";
@@ -141,6 +142,21 @@ export function HullPlanPanel({
     }),
     [draft, view, model],
   );
+  const symbolOf = useMemo(() => {
+    const mountOf = new Map(model.visualMounts.map((m) => [m.instanceId, m]));
+    return (p: DesignDraft["placements"][number]) => {
+      const entry = model.entryOf(p.componentId);
+      if (entry === undefined) return undefined;
+      const mount = mountOf.get(p.instanceId);
+      return planSymbolFor({
+        kind: fittingKind(entry.category, entry.tags),
+        category: entry.category,
+        mountType: mount?.mountType,
+        gunCount: mount?.gunCount,
+        caliberUm: mount?.caliberUm,
+      });
+    };
+  }, [model]);
   return (
     <Panel title="Hull plan" className="rounded-none border-0 bg-transparent">
       <PlanToolOptions
@@ -206,10 +222,7 @@ export function HullPlanPanel({
                 frame={frame}
                 draft={draft}
                 selectedId={tool.mode === "move" ? tool.instanceId : undefined}
-                kindOf={(id) => {
-                  const entry = model.entryOf(id);
-                  return entry ? fittingKind(entry.category, entry.tags) : "other";
-                }}
+                symbolOf={symbolOf}
               />
             )}
             {tool.mode !== "off" && (

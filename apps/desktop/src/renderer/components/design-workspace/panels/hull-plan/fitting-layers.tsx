@@ -3,60 +3,90 @@ import { arcSectors, sectorPath } from "./arcs.js";
 import { useShipSelection } from "../../selection/useShipSelection.js";
 import { NON_SCALING, STROKE } from "./drafting.js";
 import { fittingPoint, type PlanFrame } from "./geometry.js";
-import type { FittingKind } from "./sections.js";
-
-/** Drawn gun barrel length and turret radius, SVG units. Mount size is a convention, not data. */
-const TURRET_R = 4.5;
-const BARREL_LEN = 8;
+import type { PlanSymbolSpec } from "./plan-symbols.js";
 
 /**
- * One fitting's plan symbol, centred on (x, y): guns are a turret ring with barrels pointing outboard-forward
- * (aft of amidships they point aft, as the plan diagrams draw it), torpedo tubes lie across the beam, spaces under
- * the deck are faint squares. The element carrying `data-fitting` is always a circle at (x, y).
+ * One fitting's plan symbol, centred on (x, y). Guns are a mount ring per its class with one barrel per gun, pointing
+ * toward the bow forward of amidships and toward the stern aft of it (as the guide's plan diagrams draw them); torpedo
+ * tubes lie across the beam; spaces below the deck are faint dashed marks. The element carrying `data-fitting` is
+ * always a circle at (x, y).
  */
 function PlanSymbol({
-  kind,
+  spec,
   x,
   y,
   id,
   aft,
 }: {
-  readonly kind: FittingKind;
+  readonly spec: PlanSymbolSpec;
   readonly x: number;
   readonly y: number;
   readonly id: string;
   readonly aft: boolean;
 }) {
   const stroke = { strokeWidth: STROKE.structure, ...NON_SCALING };
-  switch (kind) {
+  switch (spec.shape) {
     case "gun": {
       const dir = aft ? 1 : -1;
+      const r = spec.radius;
+      const len = r + 3 + r * 0.9;
+      const spread = spec.barrels > 1 ? r * 0.55 : 0;
+      const barrels = Array.from(
+        { length: spec.barrels },
+        (_, i) => (spec.barrels === 1 ? 0 : (i / (spec.barrels - 1) - 0.5) * 2) * spread,
+      );
+      if (spec.mountClass === "CASEMATE") {
+        return (
+          <g data-kind="gun" data-mount-class="CASEMATE">
+            <rect
+              x={x - r}
+              y={y - r * 0.6}
+              width={r * 2}
+              height={r * 1.2}
+              className="fill-background stroke-foreground"
+              {...stroke}
+            />
+            <circle cx={x} cy={y} r={1.2} className="fill-primary" data-fitting={id} />
+          </g>
+        );
+      }
       return (
-        <g data-kind="gun">
-          {[-1.4, 1.4].map((dy) => (
+        <g data-kind="gun" data-mount-class={spec.mountClass}>
+          {barrels.map((dy) => (
             <line
               key={dy}
               x1={x}
-              x2={x + dir * (TURRET_R + BARREL_LEN)}
+              x2={x + dir * len}
               y1={y + dy}
               y2={y + dy}
               className="stroke-foreground"
               {...stroke}
             />
           ))}
+          {spec.mountClass === "BARBETTE" && (
+            <circle
+              cx={x}
+              cy={y}
+              r={r + 1.6}
+              className="fill-none stroke-muted-foreground"
+              {...stroke}
+            />
+          )}
           <circle
             cx={x}
             cy={y}
-            r={TURRET_R}
+            r={r}
             className="fill-background stroke-foreground"
             data-fitting={id}
             {...stroke}
           />
-          <circle cx={x} cy={y} r={1.4} className="fill-primary" />
+          <circle cx={x} cy={y} r={Math.min(1.4, r / 2)} className="fill-primary" />
         </g>
       );
     }
-    case "torpedo":
+    case "anchor":
+      return <circle cx={x} cy={y} r={1.4} className="fill-background" data-fitting={id} />;
+    case "tube":
       return (
         <g data-kind="torpedo">
           <rect
@@ -71,25 +101,45 @@ function PlanSymbol({
           <circle cx={x} cy={y} r={1.4} className="fill-primary" data-fitting={id} />
         </g>
       );
-    case "magazine":
-    case "machinery":
+    case "space":
       return (
-        <g data-kind={kind}>
-          <rect
-            x={x - 3.5}
-            y={y - 3.5}
-            width={7}
-            height={7}
-            className="fill-none stroke-muted-foreground"
-            strokeDasharray="2 1.5"
-            {...stroke}
-          />
+        <g data-kind={spec.kind}>
+          {spec.kind === "other" ? (
+            <polygon
+              points={`${x},${y - 3.5} ${x + 3.5},${y} ${x},${y + 3.5} ${x - 3.5},${y}`}
+              className="fill-none stroke-muted-foreground"
+              strokeDasharray="2 1.5"
+              {...stroke}
+            />
+          ) : (
+            <rect
+              x={x - 3.5}
+              y={y - 3.5}
+              width={7}
+              height={7}
+              className="fill-none stroke-muted-foreground"
+              strokeDasharray="2 1.5"
+              {...stroke}
+            />
+          )}
           <circle cx={x} cy={y} r={1.6} className="fill-primary" data-fitting={id} />
         </g>
       );
-    default:
-      return <circle cx={x} cy={y} r={4} className="fill-primary" data-fitting={id} />;
   }
+}
+
+/** A fitting's symbol, or the plain dot when it has none. */
+function PlanMark(props: {
+  readonly spec: PlanSymbolSpec | undefined;
+  readonly x: number;
+  readonly y: number;
+  readonly id: string;
+  readonly aft: boolean;
+}) {
+  const { spec, x, y, id, aft } = props;
+  if (spec === undefined)
+    return <circle cx={x} cy={y} r={4} className="fill-primary" data-fitting={id} />;
+  return <PlanSymbol spec={spec} x={x} y={y} id={id} aft={aft} />;
 }
 
 /** The fittings' markers. Names, hover and selection are on the `FittingTargets` overlay above the drawing. */
@@ -97,14 +147,14 @@ export function HullFittingLayer({
   frame,
   draft,
   selectedId,
-  kindOf,
+  symbolOf,
 }: {
   readonly frame: PlanFrame;
   readonly draft: DesignDraft;
   /** Fitting to ring (the one being moved from the plan tools). */
   readonly selectedId?: string;
-  /** The symbol class of a component; omitted, every fitting is a plain dot. */
-  readonly kindOf?: (componentId: string) => FittingKind;
+  /** The symbol a placement is drawn with; omitted, or undefined for a placement, it is a plain dot. */
+  readonly symbolOf?: (placement: DesignDraft["placements"][number]) => PlanSymbolSpec | undefined;
 }) {
   return (
     <>
@@ -123,8 +173,8 @@ export function HullFittingLayer({
                 data-testid="plan-selected-ring"
               />
             )}
-            <PlanSymbol
-              kind={kindOf?.(p.componentId) ?? "other"}
+            <PlanMark
+              spec={symbolOf?.(p)}
               x={x}
               y={y}
               id={p.instanceId}

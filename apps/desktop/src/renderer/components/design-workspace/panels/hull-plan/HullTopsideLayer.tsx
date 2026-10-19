@@ -3,6 +3,35 @@ import type { DrawingBoardContent } from "../../content.js";
 import { funnelPlacements } from "./funnelPlacements.js";
 import { PLAN_MID, type PlanFrame } from "./geometry.js";
 
+type Zone = { readonly startPermille: number; readonly endPermille: number };
+
+/** Bridge starts a fifth along the superstructure and ends two thirds along it, as the profile's upper mass does. */
+const BRIDGE_START = 0.2;
+const BRIDGE_END = 0.65;
+
+const along = (z: Zone, t: number) => z.startPermille + (z.endPermille - z.startPermille) * t;
+
+/** CONVENTION, as in the profile: a foremast at the bridge and a mainmast at the aft end of the superstructure. */
+function mastStations(z: Zone): number[] {
+  return [Math.round(along(z, BRIDGE_START)), z.endPermille];
+}
+
+function bridgePoints(frame: PlanFrame, z: Zone, half: number): string {
+  const x0 = frame.x(along(z, BRIDGE_START));
+  const x1 = frame.x(along(z, BRIDGE_END));
+  const h = half * 0.7;
+  const point = Math.min(4, (x1 - x0) * 0.25);
+  return [
+    [x0 - point, PLAN_MID],
+    [x0, PLAN_MID - h],
+    [x1, PLAN_MID - h],
+    [x1, PLAN_MID + h],
+    [x0, PLAN_MID + h],
+  ]
+    .map(([x, y]) => `${x},${y}`)
+    .join(" ");
+}
+
 /** Superstructure block (over its zone) and funnel ovals, in plan. Footprints are schematic: no data gives their width. */
 export function HullTopsideLayer({
   frame,
@@ -46,26 +75,30 @@ export function HullTopsideLayer({
       {sup && supHalf > 1 && (
         <g className="pointer-events-none" data-testid="hull-bridge">
           <polygon
-            // Bridge house: a tapered wedge on the forward end of the block, as the guide's plan diagrams draw it.
-            points={`${frame.x(sup.startPermille) - 4},${PLAN_MID} ${frame.x(sup.startPermille)},${PLAN_MID - supHalf * 0.7} ${frame.x(sup.startPermille) + (frame.x(sup.endPermille) - frame.x(sup.startPermille)) * 0.35},${PLAN_MID - supHalf * 0.7} ${frame.x(sup.startPermille) + (frame.x(sup.endPermille) - frame.x(sup.startPermille)) * 0.35},${PLAN_MID + supHalf * 0.7} ${frame.x(sup.startPermille)},${PLAN_MID + supHalf * 0.7}`}
+            // Bridge house: from a fifth to two thirds along the block (the profile's upper mass), pointed forward as
+            // the guide's plan diagrams draw it.
+            points={bridgePoints(frame, sup, supHalf)}
             className="fill-muted stroke-muted-foreground"
-            strokeWidth={0.8}
-            vectorEffect="non-scaling-stroke"
-          />
-          <line
-            x1={
-              frame.x(sup.startPermille) +
-              (frame.x(sup.endPermille) - frame.x(sup.startPermille)) * 0.5
-            }
-            x2={frame.x(sup.endPermille) - 2}
-            y1={PLAN_MID}
-            y2={PLAN_MID}
-            className="stroke-muted-foreground"
             strokeWidth={0.8}
             vectorEffect="non-scaling-stroke"
           />
         </g>
       )}
+      {sup &&
+        mastStations(sup).map((p) => (
+          <g key={p} className="pointer-events-none" data-testid="hull-mast" aria-hidden="true">
+            <line
+              x1={frame.x(p)}
+              x2={frame.x(p)}
+              y1={PLAN_MID - 4}
+              y2={PLAN_MID + 4}
+              className="stroke-foreground"
+              strokeWidth={0.8}
+              vectorEffect="non-scaling-stroke"
+            />
+            <circle cx={frame.x(p)} cy={PLAN_MID} r={1.4} className="fill-foreground" />
+          </g>
+        ))}
       {funnels.map((f) => (
         <g key={f.instanceId}>
           <ellipse

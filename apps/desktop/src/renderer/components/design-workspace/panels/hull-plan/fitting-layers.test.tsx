@@ -2,6 +2,7 @@ import type { DesignDraft } from "@bluewave/ship-design";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
 import { planFrame } from "./geometry.js";
+import type { PlanSymbolSpec } from "./plan-symbols.js";
 import { GunArcLayer, HullFittingLayer } from "./fitting-layers.js";
 
 const frame = planFrame({ lengthWl: 100_000, beam: 14_000 } as never);
@@ -76,13 +77,23 @@ describe("HullFittingLayer symbols", () => {
     { instanceId: "g", componentId: "gun", zoneId: "FORECASTLE", stationPermille: 100 },
     { instanceId: "t", componentId: "tube", zoneId: "AFT_SERVICE", stationPermille: 800 },
   ] as DesignDraft["placements"]);
-  const kindOf = (id: string) => (id === "gun" ? "gun" : "torpedo");
+  const gun: PlanSymbolSpec = { shape: "gun", mountClass: "TURRET", barrels: 2, radius: 4 };
+  const symbolOf = (p: { componentId: string }): PlanSymbolSpec =>
+    p.componentId === "gun" ? gun : { shape: "tube" };
 
-  it("draws each fitting as its kind's symbol, still anchored by a data-fitting circle", () => {
-    const { container } = draw(<HullFittingLayer frame={frame} draft={d} kindOf={kindOf} />);
+  it("draws each fitting as its symbol, still anchored by a data-fitting circle", () => {
+    const { container } = draw(<HullFittingLayer frame={frame} draft={d} symbolOf={symbolOf} />);
     expect(container.querySelector("[data-kind='gun']")).not.toBeNull();
     expect(container.querySelector("[data-kind='torpedo']")).not.toBeNull();
     expect(container.querySelectorAll("circle[data-fitting]")).toHaveLength(2);
+  });
+
+  it("draws one barrel per gun of a multi-gun turret", () => {
+    const triple: PlanSymbolSpec = { ...gun, barrels: 3 } as PlanSymbolSpec;
+    const { container } = draw(
+      <HullFittingLayer frame={frame} draft={d} symbolOf={() => triple} />,
+    );
+    expect(container.querySelector("[data-kind='gun']")!.querySelectorAll("line")).toHaveLength(3);
   });
 
   it("points a forward gun's barrels toward the bow and an aft gun's toward the stern", () => {
@@ -90,7 +101,7 @@ describe("HullFittingLayer symbols", () => {
       { instanceId: "f", componentId: "gun", zoneId: "FORECASTLE", stationPermille: 100 },
       { instanceId: "a", componentId: "gun", zoneId: "AFT_SERVICE", stationPermille: 900 },
     ] as DesignDraft["placements"]);
-    const { container } = draw(<HullFittingLayer frame={frame} draft={both} kindOf={kindOf} />);
+    const { container } = draw(<HullFittingLayer frame={frame} draft={both} symbolOf={symbolOf} />);
     const [fwd, aft] = Array.from(container.querySelectorAll("[data-kind='gun']"));
     const barrel = (g: Element) => g.querySelector("line")!;
     expect(Number(barrel(fwd!).getAttribute("x2"))).toBeLessThan(
@@ -99,5 +110,19 @@ describe("HullFittingLayer symbols", () => {
     expect(Number(barrel(aft!).getAttribute("x2"))).toBeGreaterThan(
       Number(barrel(aft!).getAttribute("x1")),
     );
+  });
+
+  it("draws a casemate as a hull-side box with no barrel", () => {
+    const casemate: PlanSymbolSpec = {
+      shape: "gun",
+      mountClass: "CASEMATE",
+      barrels: 1,
+      radius: 3,
+    };
+    const { container } = draw(
+      <HullFittingLayer frame={frame} draft={d} symbolOf={() => casemate} />,
+    );
+    expect(container.querySelector("[data-mount-class='CASEMATE'] rect")).not.toBeNull();
+    expect(container.querySelector("[data-mount-class='CASEMATE'] line")).toBeNull();
   });
 });
