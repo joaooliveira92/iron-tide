@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { resolve, join, dirname } from "node:path";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { advanceMonths, dismissTour, startNewCampaign } from "./flows.js";
+import { advanceMonths, dismissTour, startNewCampaign } from "./flows.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
