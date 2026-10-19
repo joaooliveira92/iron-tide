@@ -21,7 +21,7 @@ import { passesFilter } from "../../validation/severity.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../ui/popover.js";
 import { FittingTargets } from "./FittingTargets.js";
 import { SelectionLayer } from "./SelectionLayer.js";
-import { GunArcLayer, HullFittingLayer } from "./fitting-layers.js";
+import { ARC_R_FOCUS, GunArcLayer, HullFittingLayer } from "./fitting-layers.js";
 import { HullDeckLayer, HullOutlineLayer, HullZoneLayer } from "./plan-layers.js";
 import { HullTopsideLayer } from "./HullTopsideLayer.js";
 import {
@@ -158,7 +158,12 @@ export function HullPlanPanel({
     };
   }, [model]);
   return (
-    <Panel title="Hull plan" className="rounded-none border-0 bg-transparent">
+    <Panel
+      title="Hull plan"
+      // In the workspace the view toolbar already names the drawing; on its own the panel keeps its heading.
+      compact={givenShipView !== undefined}
+      className="rounded-none border-0 bg-transparent"
+    >
       <PlanToolOptions
         tool={tool}
         draft={draft}
@@ -216,7 +221,15 @@ export function HullPlanPanel({
               <MassMarkersLayer frame={frame} lcgPermille={lcgPermille} />
             )}
             {on("machinery") && <MachineryLayoutLayer frame={frame} draft={draft} />}
-            {arcsOn && <GunArcLayer frame={frame} draft={draft} mounts={mounts} />}
+            {arcsOn && (
+              <GunArcLayer
+                frame={frame}
+                draft={draft}
+                mounts={mounts}
+                radius={viewDef.id === "arcs" ? ARC_R_FOCUS : undefined}
+                labelled={viewDef.id === "arcs"}
+              />
+            )}
             {on("footprint") && (
               <HullFittingLayer
                 frame={frame}
@@ -269,6 +282,7 @@ export function HullPlanPanel({
           )}
         </div>
         <SectionLabels
+          numbered={viewDef.id === "compartments"}
           zones={zones}
           anchor={planRef}
           renderCard={(id) => (

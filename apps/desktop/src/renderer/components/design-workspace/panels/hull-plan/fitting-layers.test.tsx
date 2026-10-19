@@ -126,3 +126,35 @@ describe("HullFittingLayer symbols", () => {
     expect(container.querySelector("[data-mount-class='CASEMATE'] line")).toBeNull();
   });
 });
+
+describe("GunArcLayer focus", () => {
+  const d = draft([
+    { instanceId: "m", componentId: "gun", zoneId: "FORECASTLE", stationPermille: 300 },
+  ] as DesignDraft["placements"]);
+  const mounts = [{ instanceId: "m", effectiveBeamArcDeg: 120 }];
+
+  it("draws a larger wedge when given a larger radius", () => {
+    const reach = (r?: number) => {
+      const { container } = draw(
+        <GunArcLayer frame={frame} draft={d} mounts={mounts} radius={r} />,
+      );
+      const nums = container
+        .querySelector("[data-arc]")!
+        .getAttribute("d")!
+        .match(/-?\d+(\.\d+)?/g)!
+        .map(Number);
+      return Math.max(...nums) - Math.min(...nums);
+    };
+    expect(reach(48)).toBeGreaterThan(reach());
+  });
+
+  it("writes each wedge's width only when labelled", () => {
+    const plain = draw(<GunArcLayer frame={frame} draft={d} mounts={mounts} />);
+    expect(plain.container.querySelectorAll("[data-arc-label]")).toHaveLength(0);
+    plain.unmount();
+    const { container } = draw(<GunArcLayer frame={frame} draft={d} mounts={mounts} labelled />);
+    expect(
+      Array.from(container.querySelectorAll("[data-arc-label]")).map((t) => t.textContent),
+    ).toEqual(["120°", "120°"]);
+  });
+});

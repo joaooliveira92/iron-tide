@@ -7,6 +7,7 @@ import { machineryRooms } from "../../selection/facts.js";
 import { LABEL_FONT, NON_SCALING, STROKE } from "./drafting.js";
 import { armourShape, BELT_INNER, BELT_OUTER, regionPath, stripPath } from "./armour-plan.js";
 import { PLAN_MID, type PlanFrame } from "./geometry.js";
+import { SECTION_IDS, SECTIONS } from "./section-meta.js";
 
 /**
  * The overlays the central workspace can lay over its drawings. Each reads only the design (draft and compile
@@ -199,7 +200,34 @@ export function ArmourZoneLayer({
   );
 }
 
-/** The hull's internal subdivision: each section as a translucent band, named for the pointer. */
+type CompartmentKind = "magazine" | "machinery" | "other";
+
+/** Tint class per kind of section: magazines read warm, the machinery spaces take the accent. */
+const COMPARTMENT_TINT: {
+  readonly [K in CompartmentKind]: { readonly className: string; readonly opacity: number };
+} = {
+  magazine: { className: "fill-warning stroke-warning", opacity: 0.22 },
+  machinery: { className: "fill-primary stroke-primary", opacity: 0.2 },
+  other: { className: "fill-muted-foreground stroke-muted-foreground", opacity: 0.1 },
+};
+
+const compartmentKind = (zoneId: string): CompartmentKind =>
+  zoneId.endsWith("_MAGAZINE")
+    ? "magazine"
+    : zoneId === "CENTRAL_MACHINERY"
+      ? "machinery"
+      : "other";
+
+/** Section number, bow to stern, for the eight sections under the plan; undefined for any other zone. */
+const sectionNumber = (zoneId: string): number | undefined => {
+  const i = SECTION_IDS.findIndex((id) => SECTIONS[id].zoneId === zoneId);
+  return i < 0 ? undefined : i + 1;
+};
+
+/**
+ * The hull's internal subdivision: each section as a band that follows the hull, tinted by what the section is
+ * (magazine, machinery, other) and numbered to match the strip under the drawing.
+ */
 export function CompartmentLayer({
   frame,
   zones,
@@ -213,24 +241,37 @@ export function CompartmentLayer({
 }) {
   return (
     <g data-testid="compartments">
-      {zones.map((z, i) => {
-        const { x, width } = band(frame, z.startPermille, z.endPermille);
+      {zones.map((z) => {
+        const kind = compartmentKind(z.id);
+        const tint = COMPARTMENT_TINT[kind];
+        const number = sectionNumber(z.id);
         return (
-          <rect
-            key={z.id}
-            x={x}
-            width={width}
-            y={BAND.y(frame)}
-            height={BAND.h(frame)}
-            className="pointer-events-none fill-primary stroke-primary"
-            fillOpacity={i % 2 === 0 ? 0.1 : 0.04}
-            strokeOpacity={0.4}
-            strokeWidth={STROKE.guide}
-            {...NON_SCALING}
-            data-compartment={z.id}
-          >
-            <title>{z.id.replaceAll("_", " ").toLowerCase()}</title>
-          </rect>
+          <g key={z.id}>
+            <path
+              d={regionPath(frame, z.startPermille, z.endPermille, BELT_OUTER)}
+              className={`pointer-events-none ${tint.className}`}
+              fillOpacity={tint.opacity}
+              strokeOpacity={0.45}
+              strokeWidth={STROKE.guide}
+              {...NON_SCALING}
+              data-compartment={z.id}
+              data-kind={kind}
+            >
+              <title>{z.id.replaceAll("_", " ").toLowerCase()}</title>
+            </path>
+            {number !== undefined && (
+              <text
+                x={frame.x((z.startPermille + z.endPermille) / 2)}
+                y={PLAN_MID + frame.maxHalf * 0.8 + 3}
+                textAnchor="middle"
+                className="pointer-events-none fill-foreground font-medium"
+                fontSize={LABEL_FONT}
+                data-compartment-number={number}
+              >
+                {number}
+              </text>
+            )}
+          </g>
         );
       })}
     </g>

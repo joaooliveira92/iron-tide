@@ -8,6 +8,7 @@ import {
   MachineryLayoutLayer,
   MassMarkersLayer,
 } from "./ship-view-layers.js";
+import { PLAN_MID } from "./geometry.js";
 import { frame, hullForm, reference, view } from "./test-fixtures.js";
 
 afterEach(cleanup);
@@ -129,6 +130,38 @@ describe("CompartmentLayer", () => {
     expect(screen.getByTestId("compartments").querySelectorAll("[data-compartment]")).toHaveLength(
       hullForm.zones.length,
     );
+  });
+
+  it("clips each section to the hull instead of boxing it past the bow and stern", () => {
+    const { container } = draw(<CompartmentLayer frame={frame} zones={hullForm.zones} />);
+    const bow = container.querySelector("[data-compartment='FORECASTLE']")!;
+    expect(bow.tagName.toLowerCase()).toBe("path");
+    const ys = bow
+      .getAttribute("d")!
+      .replace(/[MZ]/g, " ")
+      .trim()
+      .split(/\s+/)
+      .map((p) => Number(p.split(",")[1]));
+    // The forecastle's forward edge is the stem, so the band narrows to the hull there, not the full beam.
+    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThanOrEqual(frame.maxHalf * 2);
+    expect(Math.min(...ys)).toBeGreaterThan(PLAN_MID - frame.maxHalf);
+  });
+
+  it("tints magazines and machinery apart from the other sections", () => {
+    const { container } = draw(<CompartmentLayer frame={frame} zones={hullForm.zones} />);
+    const kind = (id: string) =>
+      container.querySelector(`[data-compartment='${id}']`)!.getAttribute("data-kind");
+    expect(kind("FWD_MAGAZINE")).toBe("magazine");
+    expect(kind("CENTRAL_MACHINERY")).toBe("machinery");
+    expect(kind("QUARTERDECK")).toBe("other");
+  });
+
+  it("numbers the eight sections bow to stern, matching the strip beneath", () => {
+    const { container } = draw(<CompartmentLayer frame={frame} zones={hullForm.zones} />);
+    const labels = Array.from(container.querySelectorAll("[data-compartment-number]")).map(
+      (t) => t.textContent,
+    );
+    expect(labels).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"]);
   });
 });
 

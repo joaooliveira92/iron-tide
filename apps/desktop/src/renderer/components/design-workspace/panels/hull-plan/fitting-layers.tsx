@@ -1,7 +1,7 @@
 import type { DesignDraft } from "@bluewave/ship-design";
-import { arcSectors, sectorPath } from "./arcs.js";
+import { arcSectors, bearingVector, sectorPath } from "./arcs.js";
 import { useShipSelection } from "../../selection/useShipSelection.js";
-import { NON_SCALING, STROKE } from "./drafting.js";
+import { LABEL_FONT, NON_SCALING, STROKE } from "./drafting.js";
 import { fittingPoint, type PlanFrame } from "./geometry.js";
 import type { PlanSymbolSpec } from "./plan-symbols.js";
 
@@ -189,15 +189,23 @@ export function HullFittingLayer({
 
 /** Schematic radius of an arc wedge, px. Range is not data. The section card draws its own (26) under magnification; do not unify them. */
 const ARC_R = 30;
+/** The larger radius the Firing arcs view draws, where the arcs are the subject and carry their width. */
+export const ARC_R_FOCUS = 48;
 
 export function GunArcLayer({
   frame,
   draft,
   mounts,
+  radius = ARC_R,
+  labelled = false,
 }: {
   readonly frame: PlanFrame;
   readonly draft: DesignDraft;
   readonly mounts: readonly { instanceId: string; effectiveBeamArcDeg: number }[];
+  /** Drawn radius of each wedge, SVG units. */
+  readonly radius?: number;
+  /** Write each wedge's width in degrees on it. */
+  readonly labelled?: boolean;
 }) {
   const arcByInstance = new Map(mounts.map((m) => [m.instanceId, m.effectiveBeamArcDeg]));
   // A selected mount's arcs read strongest: the coverage it can actually bear on its own drawing.
@@ -208,19 +216,35 @@ export function GunArcLayer({
       {draft.placements.flatMap((p, i) => {
         const { x, y } = fittingPoint(frame, p.stationPermille, p.side, i);
         const highlighted = p.instanceId === highlightId;
-        return arcSectors(p.instanceId, p.side, arcByInstance.get(p.instanceId)).map((s) => (
-          <path
-            key={`${p.instanceId}-${s.beam}`}
-            d={sectorPath(x, y, ARC_R, s)}
-            className="fill-primary stroke-primary"
-            fillOpacity={highlighted ? 0.3 : 0.12}
-            strokeOpacity={highlighted ? 0.9 : 0.4}
-            data-arc={`${p.instanceId}:${s.beam}`}
-            data-highlight={highlighted || undefined}
-          >
-            <title>{`${p.instanceId}: ${Math.round(s.widthDeg)}° ${s.beam === "STBD" ? "starboard" : "port"} beam arc`}</title>
-          </path>
-        ));
+        return arcSectors(p.instanceId, p.side, arcByInstance.get(p.instanceId)).map((s) => {
+          const mid = bearingVector(s.startDeg + s.widthDeg / 2);
+          return (
+            <g key={`${p.instanceId}-${s.beam}`}>
+              <path
+                d={sectorPath(x, y, radius, s)}
+                className="fill-primary stroke-primary"
+                fillOpacity={highlighted ? 0.3 : 0.12}
+                strokeOpacity={highlighted ? 0.9 : 0.4}
+                data-arc={`${p.instanceId}:${s.beam}`}
+                data-highlight={highlighted || undefined}
+              >
+                <title>{`${p.instanceId}: ${Math.round(s.widthDeg)}° ${s.beam === "STBD" ? "starboard" : "port"} beam arc`}</title>
+              </path>
+              {labelled && (
+                <text
+                  x={x + mid.dx * radius * 0.62}
+                  y={y + mid.dy * radius * 0.62 + 2.5}
+                  textAnchor="middle"
+                  className="pointer-events-none fill-foreground font-medium"
+                  fontSize={LABEL_FONT}
+                  data-arc-label={`${p.instanceId}:${s.beam}`}
+                >
+                  {`${Math.round(s.widthDeg)}°`}
+                </text>
+              )}
+            </g>
+          );
+        });
       })}
     </g>
   );
