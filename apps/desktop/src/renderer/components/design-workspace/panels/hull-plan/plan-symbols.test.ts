@@ -47,7 +47,11 @@ describe("planSymbolFor", () => {
 
   it("grows the mount with the calibre and clamps at both ends", () => {
     expect(turretRadius(12 * 25_400)).toBeGreaterThan(turretRadius(3 * 25_400));
-    expect(turretRadius(100 * 25_400)).toBe(6.5);
+    expect(turretRadius(100 * 25_400)).toBe(7.5);
     expect(turretRadius(undefined)).toBe(4);
+  });
+
+  it("makes a heavy turret read at least two and a half times a light quick-firer", () => {
+    expect(turretRadius(12 * 25_400) / turretRadius(1 * 25_400)).toBeGreaterThanOrEqual(2.5);
   });
 });

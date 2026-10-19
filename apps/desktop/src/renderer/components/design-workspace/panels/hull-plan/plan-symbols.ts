@@ -32,7 +32,7 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
 /** Turret radius (SVG units) from calibre: heavier guns sit in bigger mounts. Unknown calibre draws a mid-size mount. */
 export function turretRadius(caliberUm: number | undefined): number {
   if (caliberUm === undefined || !Number.isFinite(caliberUm) || caliberUm <= 0) return 4;
-  return clamp(2.6 + (caliberUm / UM_PER_INCH) * 0.32, 2.6, 6.5);
+  return clamp(2.2 + (caliberUm / UM_PER_INCH) * 0.45, 2.2, 7.5);
 }
 
 /** The symbol for a fitting. A funnel is an anchor only: the topside layer draws its oval. */
