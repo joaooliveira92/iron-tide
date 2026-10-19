@@ -5,9 +5,11 @@ import { AreasLayer } from "./layers/AreasLayer.js";
 import { FleetsLayer } from "./layers/FleetsLayer.js";
 import { GraticuleLayer } from "./layers/GraticuleLayer.js";
 import { LabelsLayer } from "./layers/LabelsLayer.js";
+import { LanesLayer } from "./layers/LanesLayer.js";
 import { PassagesLayer } from "./layers/PassagesLayer.js";
 import { PortsLayer } from "./layers/PortsLayer.js";
 import { RoutesLayer } from "./layers/RoutesLayer.js";
+import { StrengthLayer } from "./layers/StrengthLayer.js";
 
 export interface MapLayersProps {
   readonly model: WorldMapModel;
@@ -46,15 +48,19 @@ export function MapLayers({ model, palette, width, onAreaClick }: MapLayersProps
             areaEdge={palette.areaEdge}
             selectedEdge={palette.selectedEdge}
             route={palette.route}
+            unavailable={model.unavailable}
+            unavailableWash={palette.areaUnavailable}
             nameOf={model.areaName}
             describe={model.describeAreaFor}
             fillFor={model.fillFor}
             onAreaClick={onAreaClick}
           />
 
-          <RoutesLayer d={model.routePath} stroke={palette.route} />
+          {state.layers.lanes && <LanesLayer lanes={model.lanes} stroke={palette.lane} />}
 
-          {state.layers.passages && <PassagesLayer marks={model.passageMarks} />}
+          <RoutesLayer d={model.routePath} stroke={palette.route} casing={palette.routeCasing} />
+
+          {state.layers.passages && <PassagesLayer marks={model.passageMarks} palette={palette} />}
 
           {state.layers.possessions && (
             <PortsLayer marks={model.portMarks} strokeFor={model.strokeFor} />
@@ -66,6 +72,15 @@ export function MapLayers({ model, palette, width, onAreaClick }: MapLayersProps
               strokeFor={model.strokeFor}
               live={model.live}
               playerNationId={model.playerNationId}
+            />
+          )}
+
+          {state.layers.fleets && (
+            <StrengthLayer
+              regions={model.strengths}
+              anchorOf={model.anchorOf}
+              strokeFor={model.strokeFor}
+              palette={palette}
             />
           )}
 

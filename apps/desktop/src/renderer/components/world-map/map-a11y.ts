@@ -12,13 +12,19 @@ export interface AreaOwnershipRow {
   /** Ports and other possessions in the area. */
   readonly possessions: number;
   readonly selected: boolean;
+  /** The region's strength in words (see `describeStrength`), or null when no ships are present. */
+  readonly strength: string | null;
+  /** True when a live campaign has no data for the area. */
+  readonly unavailable: boolean;
 }
 
 export function describeArea(row: AreaOwnershipRow): string {
   const owner = row.owner === null ? "unclaimed" : `held by ${row.owner}`;
   const fleets =
     row.fleets === 0 ? "no fleets" : row.fleets === 1 ? "1 fleet" : `${row.fleets} fleets`;
-  return `${row.name}: ${owner}, ${fleets}`;
+  const strength = row.strength === null ? "" : `, ${row.strength}`;
+  const unavailable = row.unavailable ? ", no campaign data" : "";
+  return `${row.name}: ${owner}, ${fleets}${strength}${unavailable}`;
 }
 
 export function buildOwnershipRows(
@@ -27,6 +33,8 @@ export function buildOwnershipRows(
   fleetCountOf: (areaId: string) => number,
   possessionCountOf: (areaId: string) => number,
   selected: string | null,
+  strengthOf: (areaId: string) => string | null = () => null,
+  unavailableOf: (areaId: string) => boolean = () => false,
 ): AreaOwnershipRow[] {
   return areas
     .map((area) => ({
@@ -36,6 +44,8 @@ export function buildOwnershipRows(
       fleets: fleetCountOf(area.id),
       possessions: possessionCountOf(area.id),
       selected: area.id === selected,
+      strength: strengthOf(area.id),
+      unavailable: unavailableOf(area.id),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }

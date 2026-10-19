@@ -70,7 +70,7 @@ describe("WorldMapChart", () => {
     expect(areas.length).toBe(36); // one reachable copy per area, not one per wrap turn
     for (const area of areas) {
       expect(area.getAttribute("aria-label")).toMatch(
-        /: (held by .+|unclaimed), (no fleets|\d+ fleets?)$/,
+        /: (held by .+|unclaimed), (no fleets|\d+ fleets?)(, strength \d+ ships? \(.+\))?$/,
       );
       expect(area.getAttribute("tabindex")).toBe("0");
     }

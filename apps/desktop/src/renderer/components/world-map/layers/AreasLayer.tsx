@@ -13,6 +13,9 @@ export interface AreasLayerProps {
   readonly areaEdge: string;
   readonly selectedEdge: string;
   readonly route: string;
+  /** Areas a live campaign has no data for: washed out, and still inspectable. */
+  readonly unavailable: ReadonlySet<string>;
+  readonly unavailableWash: string;
   readonly nameOf: (id: string) => string;
   readonly describe: (id: string) => string;
   readonly fillFor: (nation: string | null, alpha: number) => string;
@@ -36,6 +39,8 @@ export function AreasLayer({
   areaEdge,
   selectedEdge,
   route,
+  unavailable,
+  unavailableWash,
   nameOf,
   describe,
   fillFor,
@@ -48,22 +53,26 @@ export function AreasLayer({
         const held = control.get(area.id);
         const isSelected = selected === area.id;
         const onRouteLeg = routeSet.has(area.id);
+        const noData = unavailable.has(area.id);
         return (
           <path
             key={area.id}
             d={area.path}
             fill={
-              ownershipOn
-                ? fillFor(held?.owner ?? null, isSelected ? 0.42 : 0.2)
-                : isSelected
-                  ? areaWashSelected
-                  : areaWash
+              noData
+                ? unavailableWash
+                : ownershipOn
+                  ? fillFor(held?.owner ?? null, isSelected ? 0.42 : 0.2)
+                  : isSelected
+                    ? areaWashSelected
+                    : areaWash
             }
             stroke={isSelected ? selectedEdge : onRouteLeg ? route : areaEdge}
             strokeWidth={isSelected ? 2.5 : onRouteLeg ? 2 : 0.9}
             vectorEffect="non-scaling-stroke"
-            strokeDasharray={held?.contested === true ? "6 4" : undefined}
-            className="cursor-pointer outline-none transition-[fill] duration-150 focus-visible:[stroke:var(--map-focus)] focus-visible:stroke-[3]"
+            strokeDasharray={noData ? "2 4" : held?.contested === true ? "6 4" : undefined}
+            data-unavailable={noData ? "" : undefined}
+            className="cursor-pointer outline-none transition-[fill] duration-150 motion-reduce:transition-none hover:[stroke:var(--map-hover)] hover:stroke-[2] focus-visible:[stroke:var(--map-focus)] focus-visible:stroke-[3]"
             role={interactive ? "button" : undefined}
             tabIndex={interactive ? 0 : undefined}
             aria-hidden={interactive ? undefined : true}

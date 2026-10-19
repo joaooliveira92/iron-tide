@@ -11,6 +11,7 @@
  */
 
 import {
+  AREAS,
   FLEETS,
   POSSESSIONS,
   type AreaControl,
@@ -48,6 +49,11 @@ export interface WorldMapSource {
   readonly fleets: readonly FleetPlacement[];
   /** Possessions per fixture area, for the area list's lens and badges. */
   readonly possessionCounts: ReadonlyMap<AreaId, number>;
+  /**
+   * Areas a live campaign never mentions. They stay on the chart for orientation, but their
+   * ownership is the static fixture's, not the campaign's, so they are drawn as having no data.
+   */
+  readonly unavailable: ReadonlySet<AreaId>;
   fillFor(nation: NationId | null, alpha: number): string;
   strokeFor(nation: NationId | null): string;
   nameFor(nation: NationId | null): string;
@@ -90,6 +96,7 @@ export function fixtureWorldMapSource(): WorldMapSource {
     ports: fixturePorts(),
     fleets: fixtureFleets(),
     possessionCounts,
+    unavailable: new Set(),
     fillFor: nationFill,
     strokeFor: nationStroke,
     nameFor: nationName,
@@ -146,6 +153,9 @@ export function campaignWorldMapSource(overlay: LiveWorldMapOverlay): WorldMapSo
     ports,
     fleets,
     possessionCounts,
+    unavailable: new Set(
+      AREAS.filter((area) => !overlay.ownership.has(area.id)).map((area) => area.id),
+    ),
     fillFor: (nation, alpha) =>
       nation === null
         ? UNCLAIMED_FILL(alpha)
