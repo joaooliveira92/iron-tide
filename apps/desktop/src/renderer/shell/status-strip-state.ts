@@ -53,6 +53,10 @@ export interface AllocationSegment {
   readonly percent: string;
   /** Bar width as a fraction (0..1) of the bar's scale: the larger of appropriation and outlay. */
   readonly fraction: number;
+  /** Share of the committed total ("—" for the planned construction bound, which is not in it). */
+  readonly shareOfCommitted: string;
+  /** The line over twelve months, so a monthly figure can be read as a yearly commitment. */
+  readonly yearly: string;
 }
 
 /** How the monthly appropriation is spent, for the stacked bar and its legend. */
@@ -64,8 +68,61 @@ export interface BudgetAllocation {
   readonly overCommitted: boolean;
 }
 
+/** One step of the monthly waterfall: the appropriation less each committed line down to the balance. */
+export interface WaterfallStep {
+  readonly id: string;
+  readonly label: string;
+  readonly value: string;
+  /** Running remainder after this step, as money. */
+  readonly remainder: string;
+  /** Running remainder as a fraction (0..1) of the appropriation, clamped for drawing. */
+  readonly remainderFraction: number;
+}
+
+/** The numbers behind the balance and treasury hovers. */
+export interface OutlookDetail {
+  readonly appropriation: string;
+  readonly steps: readonly WaterfallStep[];
+  readonly balance: { readonly value: string; readonly status: string; readonly tone: StripTone };
+  /** The balance with construction spent at its upper bound: the worst case the treasury must carry. */
+  readonly afterConstruction: { readonly value: string; readonly tone: StripTone };
+  readonly treasury: string;
+  readonly monthEndTreasury: string;
+  readonly runway: string | null;
+  readonly shortfall: string | null;
+  readonly research: { readonly requested: string; readonly cap: string; readonly note: string };
+}
+
+export interface ForeignStationGroup {
+  readonly areaId: string;
+  readonly areaName: string;
+  readonly controller: string;
+  readonly ships: readonly string[];
+}
+
+/** Where the player's ships sit, for the "ships on foreign stations" hover. */
+export interface StationDetail {
+  readonly total: number;
+  readonly foreign: number;
+  readonly foreignGroups: readonly ForeignStationGroup[];
+  /** True when the map could not be read, so the split is unknown. */
+  readonly unknown: boolean;
+}
+
+export interface PortDetail {
+  readonly id: string;
+  readonly name: string;
+  readonly areaName: string;
+  readonly capacity: number;
+  /** Fraction (0..1) of the largest port, for a comparative bar. */
+  readonly fraction: number;
+}
+
 export interface StatusStripModel {
   readonly nationName: string;
+  readonly outlook: OutlookDetail;
+  readonly stations: StationDetail;
+  readonly ports: readonly PortDetail[];
   readonly allocation: BudgetAllocation;
   readonly nation: readonly StripRow[];
   readonly budget: readonly StripRow[];
@@ -76,6 +133,7 @@ export interface StatusStripModel {
 
 export type StatusStripAreas = readonly {
   readonly id: string;
+  readonly name?: string;
   readonly controller: string | null;
 }[];
 
@@ -172,11 +230,116 @@ function buildAllocation(economy: PlayerProjection["economy"]): BudgetAllocation
       kind: l.kind,
       percent: percentOf(l.amount, appropriation),
       fraction: scale > 0 ? known(l.amount) / scale : 0,
+      shareOfCommitted: l.kind === "planned" ? "—" : percentOf(l.amount, committed),
+      yearly: l.amount === null ? "—" : formatMoney(l.amount * 12),
     })),
     committed: { value: formatMoney(committed), percent: percentOf(committed, appropriation) },
     // No appropriation at all with committed lines is over-committed; an unknown one is not judged.
     overCommitted: appropriation !== null && committed > Math.max(0, appropriation),
   };
+}
+
+function buildOutlook(
+  projection: PlayerProjection,
+  balanceStatus: string,
+  balanceTone: StripTone,
+  researchRemark: string,
+): OutlookDetail {
+  const economy = projection.economy;
+  const appropriation = economy.monthlyAppropriation;
+  const scale = appropriation > 0 ? appropriation : 1;
+  let remainder = appropriation;
+  const steps = (
+    [
+      ["obligations", "Obligations", economy.obligations],
+      ["maintenance", "Maintenance", economy.maintenanceCost],
+      ["research", "Research", economy.researchSpend],
+    ] as const
+  ).map(([id, label, amount]) => {
+    remainder -= amount;
+    return {
+      id,
+      label,
+      value: `-${formatMoney(amount)}`,
+      remainder: formatMoney(remainder),
+      remainderFraction: Math.min(1, Math.max(0, remainder / scale)),
+    } satisfies WaterfallStep;
+  });
+  const afterConstruction = projection.projectedSurplusDeficit - economy.plannedConstruction;
+  return {
+    appropriation: formatMoney(appropriation),
+    steps,
+    balance: {
+      value: formatMoney(projection.projectedSurplusDeficit),
+      status: balanceStatus,
+      tone: balanceTone,
+    },
+    afterConstruction: {
+      value: formatMoney(afterConstruction),
+      tone: afterConstruction < 0 ? "alert" : "normal",
+    },
+    treasury: formatMoney(economy.treasury),
+    monthEndTreasury: formatMoney(economy.monthEndTreasury),
+    runway:
+      economy.runwayMonths === undefined
+        ? null
+        : `${String(economy.runwayMonths)} ${economy.runwayMonths === 1 ? "month" : "months"}`,
+    shortfall: economy.shortfall > 0 ? formatMoney(economy.shortfall) : null,
+    research: {
+      requested: formatMoney(economy.researchRequested),
+      cap: formatMoney(economy.researchCap),
+      note: researchRemark,
+    },
+  };
+}
+
+function buildStations(
+  projection: PlayerProjection,
+  areas: StatusStripAreas | null,
+): StationDetail {
+  const divisions = projection.fleet.flatMap((f) => f.divisions);
+  const total = divisions.reduce((sum, d) => sum + d.ships.length, 0);
+  if (areas === null) return { total, foreign: 0, foreignGroups: [], unknown: true };
+  const own = new Set(projection.strategicAreas.map((a) => a.id));
+  const foreignAreas = new Map(
+    areas.filter((a) => a.controller !== null && !own.has(a.id)).map((a) => [a.id, a]),
+  );
+  const groups = new Map<string, { area: StatusStripAreas[number]; ships: string[] }>();
+  for (const division of divisions) {
+    const area = foreignAreas.get(division.areaId);
+    if (area === undefined) continue;
+    const group = groups.get(area.id) ?? { area, ships: [] };
+    group.ships.push(...division.ships.map((ship) => ship.name));
+    groups.set(area.id, group);
+  }
+  const foreignGroups = [...groups.values()]
+    .map(({ area, ships }) => ({
+      areaId: area.id,
+      areaName: area.name ?? area.id,
+      controller: area.controller ?? "",
+      ships: ships.toSorted((a, b) => a.localeCompare(b, "en")),
+    }))
+    .toSorted((a, b) => b.ships.length - a.ships.length || a.areaId.localeCompare(b.areaId, "en"));
+  return {
+    total,
+    foreign: foreignGroups.reduce((sum, g) => sum + g.ships.length, 0),
+    foreignGroups,
+    unknown: false,
+  };
+}
+
+function buildPorts(projection: PlayerProjection): readonly PortDetail[] {
+  const areaNames = new Map(projection.strategicAreas.map((a) => [a.id, a.name]));
+  const largest = Math.max(1, ...projection.ports.map((p) => p.capacity));
+  return projection.ports
+    .map((port) => ({
+      id: port.id,
+      name: port.name,
+      areaName: areaNames.get(port.areaId) ?? port.areaId,
+      capacity: port.capacity,
+      fraction: port.capacity / largest,
+    }))
+    .toSorted((a, b) => b.capacity - a.capacity || a.id.localeCompare(b.id, "en"));
 }
 
 export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
@@ -294,6 +457,9 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
 
   return {
     nationName: projection.nationName,
+    outlook: buildOutlook(projection, balanceStatus, balanceTone, researchRemark),
+    stations: buildStations(projection, areas),
+    ports: buildPorts(projection),
     allocation: buildAllocation(economy),
     nation,
     budget,
