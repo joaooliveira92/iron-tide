@@ -1,11 +1,10 @@
 "use strict";
 
-import { Link } from "lucide-react";
 import type { MonthlyReportEntry } from "../../../shared/campaign-command-contract.js";
 import { campaignNationLabel } from "../../content/presentationContent.js";
 import { formatNumber } from "../../lib/presentation-format/index.js";
 import { humanizeId } from "../../lib/humanize-id.js";
-import { describeBattle, monthLabel, signed } from "./month-report-format.js";
+import { monthLabel, signed } from "./month-report-format.js";
 
 /** Prose summary for a single month, flowing as narrative text. */
 export function narrativeMonthSummary(
@@ -146,9 +145,9 @@ function narrativePrioritiesSection(
     return "Priorities untouched this month — stable strategic picture.";
   }
 
-  const created: readonly { fingerprint: string; title: string }[] = [];
-  const resolved: readonly { fingerprint: string; title: string }[] = [];
-  const continuing: readonly { fingerprint: string; title: string }[] = [];
+  const created: { fingerprint: string; title: string }[] = [];
+  const resolved: { fingerprint: string; title: string }[] = [];
+  const continuing: { fingerprint: string; title: string }[] = [];
 
   const prevFingerprints = previous ? new Set(previous.map((p) => p.fingerprint)) : new Set();
 
@@ -274,7 +273,6 @@ export function NarrativeMonthSummary({
   }
 
   const narrative = narrativeMonthSummary(latest, earlier[0], areaName ?? humanizeId);
-  const reportKey = `${latest.period.from.year}-${latest.period.from.month}`;
 
   return (
     <div className="space-y-4 text-sm leading-relaxed">
