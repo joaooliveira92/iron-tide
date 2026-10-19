@@ -95,7 +95,7 @@ export function WorldMapChart({
   // Open centred on the player's home waters (once per mount). This runs after the camera's own
   // reset effect, declared earlier in `useMapCamera`, so the focus is not immediately undone; the
   // Overview remounts the chart each time the screen opens, so it fires on every visit.
-  useInitialFocusArea(camera, initialFocusAreaId);
+  useInitialFocusArea(camera, initialFocusAreaId, projection, state.centre);
 
   /** Keyboard parity for pan/zoom (wheel and drag stay the pointer path). */
   function handleMapKey(event: React.KeyboardEvent<SVGSVGElement>): void {

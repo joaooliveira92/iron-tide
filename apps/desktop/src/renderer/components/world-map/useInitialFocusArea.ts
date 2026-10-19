@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { homeFocusPoint } from "./campaign-map-join.js";
+import type { Projection } from "./projection.js";
 
 /**
  * How far the camera zooms in when the chart opens centred on a nation's home
@@ -18,11 +19,18 @@ export interface FocusableCamera {
  * whose fixture polygon has no geometry, leaves the camera untouched (it stays
  * at "fit world") rather than guessing.
  */
-export function useInitialFocusArea(camera: FocusableCamera, campaignAreaId: string | null): void {
+export function useInitialFocusArea(
+  camera: FocusableCamera,
+  campaignAreaId: string | null,
+  projection: Projection,
+  centre: number,
+): void {
   useEffect(() => {
     const point = homeFocusPoint(campaignAreaId);
     if (point === null) return;
-    camera.focusOn(point[0], point[1], HOME_FOCUS_SCALE);
+    // The anchor is lon/lat; the camera works in projected world units (as the coastline does).
+    const [x, y] = projection.project(point[0] - centre, point[1]);
+    camera.focusOn(x, y, HOME_FOCUS_SCALE);
     // `camera` is a stable bundle of refs; only a different area should re-focus.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaignAreaId]);
