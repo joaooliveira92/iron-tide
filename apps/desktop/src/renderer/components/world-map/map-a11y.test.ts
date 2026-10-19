@@ -11,6 +11,8 @@ describe("describeArea", () => {
         fleets: 2,
         possessions: 1,
         selected: false,
+        strength: null,
+        unavailable: false,
       }),
     ).toBe("North Sea: held by Britain, 2 fleets");
     expect(
@@ -21,6 +23,8 @@ describe("describeArea", () => {
         fleets: 1,
         possessions: 0,
         selected: false,
+        strength: null,
+        unavailable: false,
       }),
     ).toBe("Baltic: unclaimed, 1 fleet");
     expect(
@@ -31,8 +35,40 @@ describe("describeArea", () => {
         fleets: 0,
         possessions: 0,
         selected: false,
+        strength: null,
+        unavailable: false,
       }),
     ).toBe("Arctic: held by Russia, no fleets");
+  });
+
+  it("appends the strength in words, so bar height and flag art are never the only signal", () => {
+    expect(
+      describeArea({
+        id: "a",
+        name: "North Sea",
+        owner: "Britain",
+        fleets: 2,
+        possessions: 1,
+        selected: false,
+        strength: "strength 9 ships (Britain 5, France 4)",
+        unavailable: false,
+      }),
+    ).toBe("North Sea: held by Britain, 2 fleets, strength 9 ships (Britain 5, France 4)");
+  });
+
+  it("says when the campaign has no data for the area", () => {
+    expect(
+      describeArea({
+        id: "a",
+        name: "Arctic",
+        owner: null,
+        fleets: 0,
+        possessions: 0,
+        selected: false,
+        strength: null,
+        unavailable: true,
+      }),
+    ).toBe("Arctic: unclaimed, no fleets, no campaign data");
   });
 });
 
@@ -49,16 +85,56 @@ describe("buildOwnershipRows", () => {
       "z",
     );
     expect(rows.map((r) => r.name)).toEqual(["Aden", "Zanzibar"]);
-    expect(rows[0]).toMatchObject({ owner: "Britain", fleets: 0, possessions: 2, selected: false });
-    expect(rows[1]).toMatchObject({ owner: null, fleets: 3, selected: true });
+    expect(rows[0]).toMatchObject({
+      owner: "Britain",
+      fleets: 0,
+      possessions: 2,
+      selected: false,
+      strength: null,
+      unavailable: false,
+    });
+    expect(rows[1]).toMatchObject({
+      owner: null,
+      fleets: 3,
+      selected: true,
+      strength: null,
+      unavailable: false,
+    });
   });
 });
 
 describe("filterAreaRows", () => {
   const rows = [
-    { id: "a", name: "North Sea", owner: "Britain", fleets: 2, possessions: 1, selected: false },
-    { id: "b", name: "Baltic", owner: "Germany", fleets: 0, possessions: 0, selected: false },
-    { id: "c", name: "Arabian Sea", owner: null, fleets: 0, possessions: 0, selected: false },
+    {
+      id: "a",
+      name: "North Sea",
+      owner: "Britain",
+      fleets: 2,
+      possessions: 1,
+      selected: false,
+      strength: null,
+      unavailable: false,
+    },
+    {
+      id: "b",
+      name: "Baltic",
+      owner: "Germany",
+      fleets: 0,
+      possessions: 0,
+      selected: false,
+      strength: null,
+      unavailable: false,
+    },
+    {
+      id: "c",
+      name: "Arabian Sea",
+      owner: null,
+      fleets: 0,
+      possessions: 0,
+      selected: false,
+      strength: null,
+      unavailable: false,
+    },
   ];
 
   it("keeps everything for an empty or blank query", () => {
@@ -81,7 +157,16 @@ describe("filterAreaRows", () => {
 });
 
 describe("areaMetricText", () => {
-  const row = { id: "a", name: "A", owner: null, fleets: 1, possessions: 3, selected: false };
+  const row = {
+    id: "a",
+    name: "A",
+    owner: null,
+    fleets: 1,
+    possessions: 3,
+    selected: false,
+    strength: null,
+    unavailable: false,
+  };
 
   it("words the count for the chosen metric, singular and plural", () => {
     expect(areaMetricText(row, "ships")).toBe("1 fleet");

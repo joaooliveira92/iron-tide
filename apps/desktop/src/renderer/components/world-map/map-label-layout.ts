@@ -86,6 +86,17 @@ export interface LabelLayoutRequest {
   readonly fleetMarks: readonly FleetMark[];
   /** Passage badge midpoints, in world user units. */
   readonly passageAnchors: readonly Point[];
+  /**
+   * Regional strength glyphs, each pinned at a world-unit anchor; `top`/`bottom` are screen pixels
+   * relative to it (negative is up) and `hw` is half the glyph's width.
+   */
+  readonly strengthMarks: readonly {
+    readonly ux: number;
+    readonly uy: number;
+    readonly hw: number;
+    readonly top: number;
+    readonly bottom: number;
+  }[];
   readonly transform: Readonly<CameraTransform>;
   readonly minScale: number;
   readonly turns: readonly number[];
@@ -104,6 +115,7 @@ export function layoutLabels(request: LabelLayoutRequest): PlacedLabel[] {
     portMarks,
     fleetMarks,
     passageAnchors,
+    strengthMarks,
     transform,
     minScale,
     turns,
@@ -196,16 +208,35 @@ export function layoutLabels(request: LabelLayoutRequest): PlacedLabel[] {
       });
     }
   }
-  const markers: { ux: number; uy: number; hw: number; hh: number }[] = [];
+  const markers: {
+    ux: number;
+    uy: number;
+    hw: number;
+    hh: number;
+    oy?: number;
+    /** A port dot: the one marker its own name may sit beside. */
+    port?: boolean;
+  }[] = [];
   if (flags.possessions) {
     for (const mark of portMarks) {
       const half = mark.count > 1 ? 11 : 8;
-      markers.push({ ux: mark.ux, uy: mark.uy, hw: half, hh: half });
+      markers.push({ ux: mark.ux, uy: mark.uy, hw: half, hh: half, port: true });
     }
   }
   if (flags.fleets) {
     for (const mark of fleetMarks) {
       markers.push({ ux: mark.ux, uy: mark.uy, hw: mark.count > 1 ? 17 : 13, hh: 10 });
+    }
+  }
+  if (flags.fleets) {
+    for (const glyph of strengthMarks) {
+      markers.push({
+        ux: glyph.ux,
+        uy: glyph.uy,
+        hw: glyph.hw,
+        hh: (glyph.bottom - glyph.top) / 2,
+        oy: (glyph.top + glyph.bottom) / 2,
+      });
     }
   }
   if (flags.passages) {
@@ -228,15 +259,21 @@ export function layoutLabels(request: LabelLayoutRequest): PlacedLabel[] {
       // A port's own dot is not an obstacle to its own name.
       const markerBoxes: Box[] = markers
         .filter(
-          (marker) => !(spec.kind === "port" && marker.ux === spec.ux && marker.uy === spec.uy),
+          (marker) =>
+            !(
+              spec.kind === "port" &&
+              marker.port === true &&
+              marker.ux === spec.ux &&
+              marker.uy === spec.uy
+            ),
         )
         .map((marker) => {
           const m = toScreen(marker.ux, marker.uy, turn);
           return {
             x0: m.x - marker.hw,
             x1: m.x + marker.hw,
-            y0: m.y - marker.hh,
-            y1: m.y + marker.hh,
+            y0: m.y + (marker.oy ?? 0) - marker.hh,
+            y1: m.y + (marker.oy ?? 0) + marker.hh,
           };
         });
       for (const [dx, dy] of NUDGES) {

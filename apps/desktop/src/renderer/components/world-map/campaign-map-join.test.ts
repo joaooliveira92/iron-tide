@@ -36,6 +36,7 @@ const WORLD: WorldMapView = {
       shipCount: 3,
     },
   ],
+  routes: [],
 };
 
 describe("joinWorldMap", () => {
@@ -117,5 +118,56 @@ describe("homeFocusPoint", () => {
   it("centres nowhere for an unknown or unmapped area rather than guessing", () => {
     expect(homeFocusPoint("not_a_real_area")).toBeNull();
     expect(homeFocusPoint(null)).toBeNull();
+  });
+});
+
+describe("joinWorldMap lanes", () => {
+  const route = (id: string, from: string, to: string, type: "sea" | "land" | "rail" = "sea") => ({
+    id,
+    from,
+    to,
+    type,
+    distance: 100,
+  });
+
+  it("turns compiled sea routes into lanes between the fixture areas they sit on", () => {
+    const north = fixtureAreaId("sea_north_sea");
+    const channel = fixtureAreaId("sea_english_channel");
+    expect(north).not.toBeNull();
+    expect(channel).not.toBeNull();
+    const overlay = joinWorldMap({
+      ...WORLD,
+      routes: [route("r1", "sea_north_sea", "sea_english_channel")],
+    });
+    const wanted = [north as string, channel as string].sort();
+    // Several campaign areas can share one fixture polygon, in which case there is nothing to draw.
+    expect(overlay.lanes).toEqual(wanted[0] === wanted[1] ? [] : [{ a: wanted[0], b: wanted[1] }]);
+  });
+
+  it("drops land and rail links, self-pairs, duplicates and unmapped ends", () => {
+    const overlay = joinWorldMap({
+      ...WORLD,
+      routes: [
+        route("r_rail", "sea_north_sea", "sea_english_channel", "rail"),
+        route("r_self", "sea_north_sea", "sea_north_sea"),
+        route("r_ghost", "sea_north_sea", "no_such_area"),
+        route("r_dup1", "sea_north_sea", "sea_atlantic_n"),
+        route("r_dup2", "sea_atlantic_n", "sea_north_sea"),
+      ],
+    });
+    expect(overlay.lanes?.length).toBeLessThanOrEqual(1);
+    for (const lane of overlay.lanes ?? []) expect(lane.a < lane.b).toBe(true);
+  });
+
+  it("orders lanes by pair so the same campaign always draws the same lanes", () => {
+    const routes = [
+      route("r1", "sea_atlantic_n", "sea_north_sea"),
+      route("r2", "sea_english_channel", "sea_mediterranean_w"),
+      route("r3", "sea_arabian_sea", "africa_cape"),
+    ];
+    const forward = joinWorldMap({ ...WORLD, routes }).lanes ?? [];
+    const backward = joinWorldMap({ ...WORLD, routes: [...routes].reverse() }).lanes ?? [];
+    expect(backward).toEqual(forward);
+    expect(forward.length).toBeGreaterThan(0);
   });
 });

@@ -113,6 +113,7 @@ describe("resolvePlayerNationId", () => {
       areas: [],
       ports: [],
       fleets: [],
+      routes: [],
     };
     expect(resolvePlayerNationId(world, "Britain")).toBe("uk");
     expect(resolvePlayerNationId(world, "Nowhere")).toBeNull();

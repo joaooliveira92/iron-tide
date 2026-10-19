@@ -202,4 +202,28 @@ describe("buildWorldMapView home and presence areas (S-5 02)", () => {
       "med_malta",
     ]);
   });
+
+  it("exposes the compiled routes in id order, with their distance as a plain number", () => {
+    const snapshot = fixtureSnapshot(
+      [fixtureNation({ id: "uk", name: "Britain", tag: "GBR" })],
+      [],
+      {
+        world: {
+          areas: [],
+          ports: [],
+          routes: [
+            { id: "r_b", from: "sea_b", to: "sea_c", type: "sea", distance: SafeInt(2400) },
+            { id: "r_a", from: "sea_a", to: "sea_b", type: "sea", distance: SafeInt(1700) },
+            { id: "r_rail", from: "inland_a", to: "inland_b", type: "rail", distance: SafeInt(90) },
+          ],
+        },
+      },
+    );
+
+    expect(buildWorldMapView(snapshot).routes).toEqual([
+      { id: "r_a", from: "sea_a", to: "sea_b", type: "sea", distance: 1700 },
+      { id: "r_b", from: "sea_b", to: "sea_c", type: "sea", distance: 2400 },
+      { id: "r_rail", from: "inland_a", to: "inland_b", type: "rail", distance: 90 },
+    ]);
+  });
 });

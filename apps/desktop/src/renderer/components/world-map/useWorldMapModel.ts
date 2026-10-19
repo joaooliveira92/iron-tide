@@ -35,6 +35,16 @@ import {
 } from "./map-markers.js";
 import { layoutLabels, type PlacedLabel } from "./map-label-layout.js";
 import { buildGraticule } from "./map-graticule.js";
+import { separateGlyphs } from "./map-glyph-layout.js";
+import { buildLanes, laneEdges, type LaneMark } from "./map-lanes.js";
+import {
+  buildRegionStrengths,
+  compactGlyphs,
+  describeStrength,
+  type RegionStrength,
+} from "./map-strength.js";
+import { strengthExtent, strengthHalfWidth } from "./layers/StrengthLayer.js";
+import { nationFlagUrl } from "../../content/nation-flag.js";
 import type { MapPalette } from "./map-palette.js";
 import type { MapCamera } from "./useMapCamera.js";
 import type { BorderSet } from "./CoastlineCanvas.js";
@@ -66,6 +76,17 @@ export interface WorldMapModel {
   readonly portMarks: readonly PortMark[];
   readonly fleetMarks: readonly FleetMark[];
   readonly passageMarks: readonly PassageMark[];
+  /** Passive sea lanes from the same graph the route reading searches. */
+  readonly lanes: readonly LaneMark[];
+  /** Regions that hold ships, strongest bars normalised across the whole map. */
+  readonly strengths: readonly RegionStrength[];
+  /** Sideways shift in screen px per region id, so neighbouring glyphs do not overlap. */
+  readonly glyphOffsets: ReadonlyMap<string, number>;
+  /** Whether the map is small enough that glyph bars use the compact scale. */
+  readonly compactGlyphs: boolean;
+  /** Areas a live campaign has no data for. */
+  readonly unavailable: ReadonlySet<string>;
+  readonly anchorOf: (areaId: string) => readonly [number, number] | undefined;
   readonly placedLabels: readonly PlacedLabel[];
   readonly graticule: string;
   readonly routePath: string;
@@ -76,7 +97,7 @@ export interface WorldMapModel {
   readonly summary: AreaSummary | null;
   readonly areaName: (id: string) => string;
   readonly fillFor: (nation: string | null, alpha: number) => string;
-  readonly strokeFor: (nation: string) => string;
+  readonly strokeFor: (nation: string | null) => string;
   readonly nameFor: (nation: string | null) => string;
   readonly describeAreaFor: (id: string) => string;
 }
@@ -165,6 +186,59 @@ export function useWorldMapModel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areasById, camera.zoomBand, source.fleets, portMarks, viewVersion]);
 
+  const lanes = useMemo(
+    () =>
+      buildLanes(
+        laneEdges(overlay.lanes, EDGES),
+        new Map([...areasById].map(([id, area]) => [id, area.label] as const)),
+        projection.width,
+      ),
+    [areasById, overlay.lanes, projection.width],
+  );
+
+  const strengths = useMemo(
+    () =>
+      buildRegionStrengths(source.fleets, {
+        nameFor: (nation) => source.nameFor(nation),
+        flagUrlFor: (nation) => (nation === null ? null : nationFlagUrl(nation)),
+      }),
+    [source],
+  );
+  const strengthById = useMemo(
+    () => new Map(strengths.map((region) => [region.areaId, region])),
+    [strengths],
+  );
+  // Read at the settled-camera signal, like labels, so a window resize re-scales the glyphs.
+  const compact = useMemo(
+    () => compactGlyphs(camera.svgRef.current?.clientHeight ?? 0),
+    // `viewVersion` is the settled-camera signal (see placedLabels).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [viewVersion],
+  );
+  const glyphOffsets = useMemo(() => {
+    const factor = camera.getTransform().scale * camera.getPixelsPerUnit();
+    return separateGlyphs(
+      strengths.flatMap((region) => {
+        const at = areasById.get(region.areaId)?.label;
+        if (at === undefined) return [];
+        return [
+          {
+            id: region.areaId,
+            ships: region.total,
+            ux: at[0],
+            uy: at[1],
+            hw: strengthHalfWidth(region),
+            ...strengthExtent(region, compact),
+          },
+        ];
+      }),
+      factor,
+    );
+    // `viewVersion` is the settled-camera signal (see placedLabels).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [strengths, areasById, compact, viewVersion]);
+  const anchorOf = useMemo(() => (areaId: string) => areasById.get(areaId)?.label, [areasById]);
+
   const passageMarks = useMemo<PassageMark[]>(() => {
     const marks: PassageMark[] = [];
     for (const edge of EDGES) {
@@ -202,6 +276,20 @@ export function useWorldMapModel({
       portMarks,
       fleetMarks,
       passageAnchors: passageMarks.map((mark) => mark.mid),
+      strengthMarks: strengths.flatMap((region) => {
+        const at = areasById.get(region.areaId)?.label;
+        if (at === undefined) return [];
+        const factor = camera.getTransform().scale * camera.getPixelsPerUnit();
+        const shift = (glyphOffsets.get(region.areaId) ?? 0) / (factor > 0 ? factor : 1);
+        return [
+          {
+            ux: at[0] + shift,
+            uy: at[1],
+            hw: strengthHalfWidth(region),
+            ...strengthExtent(region, compact),
+          },
+        ];
+      }),
       transform: camera.getTransform(),
       minScale: camera.getMinScale(),
       turns: camera.isWrapping() ? WORLD_WRAP_TURNS : [0],
@@ -218,6 +306,10 @@ export function useWorldMapModel({
     projection,
     state.centre,
     state.layers,
+    strengths,
+    areasById,
+    compact,
+    glyphOffsets,
     viewVersion,
   ]);
 
@@ -232,8 +324,13 @@ export function useWorldMapModel({
         (id) => source.fleets.filter((fleet) => fleet.area === id).length,
         (id) => source.possessionCounts.get(id) ?? 0,
         state.selected,
+        (id) => {
+          const region = strengthById.get(id);
+          return region === undefined ? null : describeStrength(region);
+        },
+        (id) => source.unavailable.has(id),
       ),
-    [areas, source, state.selected],
+    [areas, source, state.selected, strengthById],
   );
   const rowById = useMemo(
     () => new Map(ownershipRows.map((row) => [row.id, row])),
@@ -295,6 +392,12 @@ export function useWorldMapModel({
     portMarks,
     fleetMarks,
     passageMarks,
+    lanes,
+    strengths,
+    compactGlyphs: compact,
+    glyphOffsets,
+    unavailable: source.unavailable,
+    anchorOf,
     placedLabels,
     graticule,
     routePath,

@@ -59,9 +59,19 @@ export interface LiveWorldMapOverlay {
    * fleets sitting in it. The map draws at fixture granularity; the area tree lists these.
    */
   readonly campaignAreas: readonly CampaignAreaEntry[];
+  /**
+   * The campaign's sea connectivity on fixture areas: one entry per connected pair (`a < b`), in
+   * pair order. Null when no campaign is loaded, in which case the chart draws the fixture's own graph.
+   */
+  readonly lanes: readonly CampaignLane[] | null;
   /** The player's nation id, when the host has resolved it; the tree's Ships/Possessions key off it. */
   readonly playerNationId: string | null;
   readonly source: "campaign" | "none";
+}
+
+export interface CampaignLane {
+  readonly a: AreaId;
+  readonly b: AreaId;
 }
 
 export interface CampaignAreaEntry {
@@ -122,7 +132,29 @@ export function joinWorldMap(world: WorldMapView): LiveWorldMapOverlay {
       .map((fleet) => ({ nation: fleet.nationId, ships: fleet.shipCount })),
   }));
 
-  return { ownership, ports, fleets, campaignAreas, playerNationId: null, source: "campaign" };
+  const pairs = new Map<string, CampaignLane>();
+  for (const route of world.routes) {
+    if (route.type !== "sea") continue;
+    const from = fixtureAreaId(route.from);
+    const to = fixtureAreaId(route.to);
+    // Several campaign areas share one polygon (nothing to draw between them); an unmapped end has no place.
+    if (from === null || to === null || from === to) continue;
+    const [a, b] = from < to ? [from, to] : [to, from];
+    pairs.set(`${a}~${b}`, { a, b });
+  }
+  const lanes = [...pairs.entries()]
+    .sort(([x], [y]) => (x < y ? -1 : x > y ? 1 : 0))
+    .map(([, lane]) => lane);
+
+  return {
+    ownership,
+    ports,
+    fleets,
+    campaignAreas,
+    lanes,
+    playerNationId: null,
+    source: "campaign",
+  };
 }
 
 export const EMPTY_LIVE_OVERLAY: LiveWorldMapOverlay = {
@@ -130,6 +162,7 @@ export const EMPTY_LIVE_OVERLAY: LiveWorldMapOverlay = {
   ports: [],
   fleets: [],
   campaignAreas: [],
+  lanes: null,
   playerNationId: null,
   source: "none",
 };
