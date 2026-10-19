@@ -21,7 +21,7 @@ import {
   type Tone,
 } from "./iso.js";
 
-type Fill = "paper" | "face" | "ink" | "boot";
+type Fill = "paper" | "face" | "ink" | "boot" | "under";
 
 export interface AnatomySolid {
   readonly paths: SolidPaths;
@@ -47,7 +47,7 @@ export interface AnatomyDot {
 
 export interface AnatomyInk {
   readonly d: string;
-  readonly tone?: "ink" | "glass";
+  readonly tone?: "ink" | "glass" | "shadow";
 }
 
 export interface AnatomyPart {
@@ -93,6 +93,11 @@ export interface AnatomyInput {
   readonly azimuth: number;
   readonly width?: number;
   readonly height?: number;
+}
+
+interface Reach {
+  readonly bow: number;
+  readonly stern: number;
 }
 
 interface PartDraft {
@@ -325,17 +330,37 @@ export function buildAnatomyShip(input: AnatomyInput): AnatomyShip {
     radius: anchorRad,
   });
 
-  const ring = (scale: number, zOf: (t: number) => number): Point3[] => {
-    const points: Point3[] = [[0, 0, zOf(0)]];
+  // How far a level's outline reaches past the waterline ends: the stem rakes forward at the deck and falls
+  // back at the forefoot, and the stern overhangs by its style. Positive reaches go outboard along x.
+  const bowRake = model.frame.bow === "plumb" ? 0.008 : model.frame.bow === "spoon" ? 0.03 : 0.014;
+  const sternRake =
+    model.frame.stern === "counter" ? 0.034 : model.frame.stern === "round" ? 0.026 : 0.01;
+  const DECK_REACH: Reach = { bow: bowRake * L, stern: sternRake * L };
+  const WATER_REACH: Reach = { bow: 0, stern: sternRake * 0.35 * L };
+  const KEEL_REACH: Reach = { bow: -0.032 * L, stern: 0 };
+  const ring = (
+    scale: number,
+    zOf: (t: number) => number,
+    reach: Reach = WATER_REACH,
+  ): Point3[] => {
     const steps = 30;
+    const stemX = (t: number) => t * L - reach.bow * Math.max(0, 1 - t / 0.08) ** 2;
+    const points: Point3[] = [[stemX(0), 0, zOf(0)]];
     for (let step = 1; step <= steps; step++) {
       const t = step / steps;
-      points.push([t * L, halfAt(t) * scale, zOf(t)]);
+      points.push([stemX(t), halfAt(t) * scale, zOf(t)]);
     }
-    points.push([L, -halfAt(1) * scale, zOf(1)]);
+    // The stern closes in a rounded arc, so a counter or round stern is no longer a flat cut-off.
+    const half = halfAt(1) * scale;
+    const arc = 6;
+    for (let step = 1; step < arc; step++) {
+      const u = 1 - (2 * step) / arc;
+      points.push([L + reach.stern * Math.sqrt(1 - u * u), half * u, zOf(1)]);
+    }
+    points.push([L, -half, zOf(1)]);
     for (let step = steps - 1; step >= 1; step--) {
       const t = step / steps;
-      points.push([t * L, -halfAt(t) * scale, zOf(t)]);
+      points.push([stemX(t), -halfAt(t) * scale, zOf(t)]);
     }
     return points;
   };
@@ -387,6 +412,14 @@ export function buildAnatomyShip(input: AnatomyInput): AnatomyShip {
       tone: "faint",
     });
     const top = wayBase + 0.075 * D;
+    part.inks.push({
+      d: lineOf(
+        ring(0.92, () => top).map(([x, y, z]): Point3 => [x + 0.012 * L, y - near * 0.05 * B, z]),
+        P,
+        true,
+      ),
+      tone: "shadow",
+    });
     for (const t of [0.13, 0.3, 0.5, 0.7, 0.87]) {
       const bw = 0.052 * L;
       const bd = 0.15 * B;
@@ -503,15 +536,15 @@ export function buildAnatomyShip(input: AnatomyInput): AnatomyShip {
       solid(
         loft(
           ring(0.96, () => T),
-          ring(0.5, keelZ),
+          ring(0.5, keelZ, KEEL_REACH),
           P,
         ),
         "hi",
-        { crease: "none" },
+        { crease: "none", fill: "under" },
       ),
       solid(
         loft(
-          ring(1, deckZ),
+          ring(1, deckZ, DECK_REACH),
           ring(0.96, () => T),
           P,
         ),
@@ -600,14 +633,14 @@ export function buildAnatomyShip(input: AnatomyInput): AnatomyShip {
     if (model.frame.bow === "ram") {
       const bowHalf = Math.max(0.018 * B, halfAt(0.012));
       const ramTop: Point3[] = [
-        [-0.028 * L, 0, 0.82 * T],
-        [0.015 * L, bowHalf, 0.82 * T],
-        [0.015 * L, -bowHalf, 0.82 * T],
+        [-0.002 * L, 0, 0.74 * T],
+        [0.024 * L, bowHalf, 0.74 * T],
+        [0.024 * L, -bowHalf, 0.74 * T],
       ];
       const ramBottom: Point3[] = [
-        [-0.028 * L, 0, 0.52 * T],
-        [0.015 * L, bowHalf, 0.52 * T],
-        [0.015 * L, -bowHalf, 0.52 * T],
+        [-0.026 * L, 0, 0.5 * T],
+        [0.02 * L, bowHalf, 0.5 * T],
+        [0.02 * L, -bowHalf, 0.5 * T],
       ];
       part.solids.push(solid(loft(ramTop, ramBottom, P), "hi", { crease: "mid" }));
     }
@@ -662,7 +695,10 @@ export function buildAnatomyShip(input: AnatomyInput): AnatomyShip {
     };
     part.lines.push({
       d: lineOf(
-        ring(0.975, (t) => deckZ(t) + 0.006 * D),
+        ring(0.975, (t) => deckZ(t) + 0.006 * D, {
+          bow: DECK_REACH.bow * 0.97,
+          stern: DECK_REACH.stern * 0.97,
+        }),
         P,
         true,
       ),

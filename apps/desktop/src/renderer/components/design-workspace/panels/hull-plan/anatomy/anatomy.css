@@ -19,6 +19,13 @@
   --an-boot: #a97a68;
   --an-halo: #8a8a80;
   --an-halo-opacity: 0.32;
+  --an-under: #cfcfcb;
+  --an-under-0: #bdbdb8;
+  --an-under-1: #c8c8c3;
+  --an-under-2: #d2d2ce;
+  --an-under-3: #dcdcd8;
+  --an-shadow: #6b6b66;
+  --an-shadow-opacity: 0.2;
   display: block;
   width: 100%;
   height: auto;
@@ -28,11 +35,18 @@
 .dark .an-ship {
   --an-paper: #38383b;
   --an-face: #424246;
-  --an-top: #4c4c50;
-  --an-shade-0: #2b2b2e;
-  --an-shade-1: #313134;
-  --an-shade-2: #38383b;
-  --an-shade-3: #3f3f42;
+  --an-top: #5b5b61;
+  --an-shade-0: #29292c;
+  --an-shade-1: #333336;
+  --an-shade-2: #3e3e42;
+  --an-shade-3: #4a4a4e;
+  --an-under: #232326;
+  --an-under-0: #19191b;
+  --an-under-1: #1f1f22;
+  --an-under-2: #252528;
+  --an-under-3: #2b2b2e;
+  --an-shadow: #000000;
+  --an-shadow-opacity: 0.55;
   --an-hi: #f4f4f4;
   --an-mid: #b8b8bd;
   --an-lo: #7a7a80;
@@ -68,6 +82,26 @@
 
 .an-solid[data-fill="boot"] .an-fill {
   fill: var(--an-boot);
+}
+
+.an-solid[data-fill="under"] .an-fill {
+  fill: var(--an-under);
+}
+
+.an-solid[data-fill="under"] .an-shade[data-shade="0"] {
+  fill: var(--an-under-0);
+}
+
+.an-solid[data-fill="under"] .an-shade[data-shade="1"] {
+  fill: var(--an-under-1);
+}
+
+.an-solid[data-fill="under"] .an-shade[data-shade="2"] {
+  fill: var(--an-under-2);
+}
+
+.an-solid[data-fill="under"] .an-shade[data-shade="3"] {
+  fill: var(--an-under-3);
 }
 
 .an-part[data-lit] .an-solid[data-fill="paper"] .an-fill {
@@ -174,6 +208,12 @@
 
 .an-ink-fill[data-tone="glass"] {
   fill: var(--an-glass);
+}
+
+.an-ink-fill[data-tone="shadow"] {
+  fill: var(--an-shadow);
+  opacity: var(--an-shadow-opacity);
+  filter: blur(5px);
 }
 
 .an-line {
