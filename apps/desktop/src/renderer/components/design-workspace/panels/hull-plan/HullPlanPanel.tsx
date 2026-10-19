@@ -34,6 +34,7 @@ import { DEFAULT_VIEW, SHIP_VIEW_DEFS, type ShipOverlay, type ShipView } from ".
 import { planModel, type PlanModel } from "./planModel.js";
 import { useHullPlanEditing, type HullPlanEditing } from "./useHullPlanEditing.js";
 import { Info } from "lucide-react";
+import { formatHullMetres } from "../../../../lib/presentation-format/index.js";
 import { plural } from "../../plural.js";
 import type { BoardFinding } from "../../validation/boardFindings.js";
 import type { PlanTool } from "./plan-tool.js";
@@ -247,7 +248,7 @@ export function HullPlanPanel({
       </div>
       <div className="space-y-1">
         <p className="text-xs font-medium text-muted-foreground">
-          Profile · depth {facts.depthM.toFixed(1)} m · draught {facts.draughtM.toFixed(1)} m
+          Profile · depth {formatHullMetres(facts.depthM, 1)} m · draught {formatHullMetres(facts.draughtM, 1)} m
         </p>
         <ProfileView
           draft={draft}
@@ -274,7 +275,7 @@ export function HullPlanPanel({
       />
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span>
-          {frame.lengthM.toFixed(0)} m × {frame.beamM.toFixed(1)} m ·{" "}
+          {formatHullMetres(frame.lengthM, 0)} m × {formatHullMetres(frame.beamM, 1)} m ·{" "}
           {plural(draft.placements.length, "fitting")} · Schematic, not a lines plan.
         </span>
         <Popover>

@@ -1,7 +1,6 @@
 import {
   batterySummary,
   mountNames,
-  UM_PER_INCH,
   type BatteryRow,
   type DesignDraft,
   type DraftEdit,
@@ -9,6 +8,7 @@ import {
   type PartCatalogueEntry,
   type WorkshopView,
 } from "@bluewave/ship-design";
+import { formatCalibreInches } from "../../lib/presentation-format/index.js";
 
 export interface BatteryMount {
   readonly instanceId: string;
@@ -36,7 +36,7 @@ const ROLE_TITLE = {
 export function batteryTitle(row: BatteryRow): string {
   return row.role === "TORPEDO"
     ? ROLE_TITLE.TORPEDO
-    : `${ROLE_TITLE[row.role]}, ${(row.caliberUm / UM_PER_INCH).toFixed(1)}-inch`;
+    : `${ROLE_TITLE[row.role]}, ${formatCalibreInches(row.caliberUm)}`;
 }
 
 /** The design's batteries with each mount named by the naval convention. Pure: reads only the compiled view and the draft. */
