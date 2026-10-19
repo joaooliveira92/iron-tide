@@ -1,5 +1,6 @@
 import type { Locator } from "@playwright/test";
 import { test, expect, openCampaign } from "./fixtures.js";
+import { advanceMonths } from "./flows.js";
 
 // The expanded status strip: Nation, Budget and Outlook cards over the real campaign projection.
 // Deterministic seed; asserts what the player sees (cards, budget wording, the deferred popover)
@@ -179,4 +180,32 @@ test("a clicked status strip card stays pinned, two can be compared, and a click
   await expect(popup("Over a year")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(popup("Over a year")).toBeHidden();
+});
+
+// The trend reads the stored monthly reports, so it only exists once a month has really been
+// advanced: a new campaign shows none, and the next month draws it from that month's own report.
+test("the status strip shows a treasury trend only after a month has been advanced", async ({
+  e2e,
+  campaignTemplate,
+}) => {
+  const page = e2e.page;
+  await openCampaign(e2e, campaignTemplate);
+  const strip = page.getByRole("region", { name: "Status strip" });
+  if ((await strip.getAttribute("data-expanded")) !== "true") {
+    await strip.getByRole("button", { name: /expand/i }).click();
+  }
+  await expect(strip.locator("[data-trend-delta]")).toHaveCount(0);
+
+  await advanceMonths(page, 1);
+  await expect(strip.locator("[data-trend-delta]")).toHaveCount(1);
+
+  await strip.getByText("Treasury", { exact: true }).hover();
+  const card = page
+    .locator("[data-open][data-side][tabindex='-1']")
+    .filter({ hasText: "Next month end" });
+  await expect(card.locator("[data-trend=treasury]")).toBeVisible();
+  // One advanced month: opening and closing treasury, so two points.
+  await expect(
+    card.getByRole("img", { name: /^Treasury: 2 points from Jan 1880 to Feb 1880/ }),
+  ).toBeVisible();
 });

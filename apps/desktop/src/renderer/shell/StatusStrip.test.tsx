@@ -8,6 +8,7 @@ import { DensityProvider } from "./DensityContext.js";
 import { axeViolations } from "../lib/axe.js";
 import { StatusStripView } from "./StatusStrip.js";
 import { buildStatusStrip } from "./status-strip-state.js";
+import { buildTrend, type TrendReport } from "./status-strip-trend.js";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
 function model(balance: number) {
@@ -377,6 +378,82 @@ describe("StatusStripView", () => {
     });
     expect(await screen.findByText("tonnage unknown")).toBeTruthy();
     expect(screen.getByText(/partial total would mislead/i)).toBeTruthy();
+  });
+
+  describe("month-over-month trend", () => {
+    const report = (fromMonth: number, open: number, net: number): TrendReport => ({
+      period: {
+        from: { year: 1880, month: fromMonth },
+        to: { year: 1880, month: fromMonth + 1 },
+      },
+      treasury: { openingTreasury: open, closingTreasury: open + net, netChange: net },
+    });
+    const trend = buildTrend([report(2, 1_035, -20), report(1, 1_000, 35)]);
+
+    async function renderWith(value: ReturnType<typeof buildTrend>) {
+      const stub = createPreferencesBridgeStub({ ...DEFAULT_APP_PREFERENCES });
+      render(
+        <BridgeProvider bridge={stub.bridge}>
+          <PreferencesProvider>
+            <DensityProvider>
+              <StatusStripView model={model(1200)} trend={value} />
+            </DensityProvider>
+          </PreferencesProvider>
+        </BridgeProvider>,
+      );
+      await act(async () => {});
+    }
+
+    it("shows the treasury's change beside the Outlook treasury line, in words and an arrow", async () => {
+      await renderWith(trend);
+      const outlook = screen.getByRole("group", { name: "Outlook" });
+      const delta = outlook.querySelector("[data-trend-delta]");
+      expect(delta?.getAttribute("data-trend-delta")).toBe("down");
+      expect(delta?.textContent).toContain("-£20");
+      // The direction is spelled out for screen readers, not left to the arrow or its colour.
+      expect(delta?.textContent).toMatch(/down on Feb 1880/);
+    });
+
+    it("draws the treasury and actual-net sparklines in their cards with text alternatives", async () => {
+      await renderWith(trend);
+      const outlook = screen.getByRole("group", { name: "Outlook" });
+      act(() => {
+        within(outlook).getByText("Treasury").focus();
+      });
+      const spark = await screen.findByRole("img", { name: /^Treasury: 3 points from Jan 1880/ });
+      expect(spark.getAttribute("aria-label")).toContain("latest £1,015");
+      expect(screen.getByText("Treasury, last 2 months")).toBeTruthy();
+    });
+
+    it("shows the actual monthly net with its change in the balance card", async () => {
+      await renderWith(trend);
+      const outlook = screen.getByRole("group", { name: "Outlook" });
+      act(() => {
+        within(outlook).getByText("Monthly balance (projected)").focus();
+      });
+      expect(await screen.findByText("Actual net, last 2 months")).toBeTruthy();
+      const spark = screen.getByRole("img", { name: /^Actual monthly net: 2 points/ });
+      expect(spark.getAttribute("aria-label")).toContain("latest -£20");
+    });
+
+    it("puts the change on the collapsed treasury chip and in its accessible name", async () => {
+      await renderWith(trend);
+      fireEvent.click(screen.getByRole("button", { name: /collapse/i }));
+      const chip = screen.getByRole("button", { name: /^Treasury/ });
+      expect(chip.getAttribute("aria-label")).toBe("Treasury £50,000, -£20 on Feb 1880");
+      expect(chip.textContent).toContain("-£20");
+    });
+
+    it("says nothing about a trend before any month has been advanced", async () => {
+      await renderWith(null);
+      const outlook = screen.getByRole("group", { name: "Outlook" });
+      expect(outlook.querySelector("[data-trend-delta]")).toBeNull();
+      act(() => {
+        within(outlook).getByText("Treasury").focus();
+      });
+      await screen.findByText("Next month end");
+      expect(document.querySelector("[data-trend]")).toBeNull();
+    });
   });
 
   it("groups the not-yet-modelled readouts by where they would sit", async () => {
