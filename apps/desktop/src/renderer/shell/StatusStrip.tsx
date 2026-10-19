@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
 import {
   Activity,
   Bell,
@@ -17,6 +17,7 @@ import { Badge } from "../components/ui/badge.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../components/ui/hover-card.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover.js";
 import { Toggle } from "../components/ui/toggle.js";
+import { PinnedHint, usePinnableCard } from "./pinnable-card.js";
 import { cn } from "../lib/utils.js";
 import { useBridgeQuery } from "../lib/use-bridge-query.js";
 import { useDensity } from "./DensityContext.js";
@@ -87,6 +88,64 @@ function StatusBadge({ status, tone }: { readonly status: string; readonly tone:
 }
 
 /**
+ * A hover card that a click pins open (see `usePinnableCard`). It owns the trigger element and the
+ * card; `triggerProps` carries the trigger's own attributes (aria-label, data-*, style).
+ */
+function PinnableCard({
+  trigger,
+  triggerClassName,
+  triggerProps,
+  children,
+  card,
+  width = "w-72",
+  align,
+  delay = 150,
+  onActive,
+  labelled = false,
+}: {
+  readonly trigger: ReactElement;
+  readonly triggerClassName?: string;
+  readonly triggerProps?: Record<string, string | number | boolean | CSSProperties | undefined>;
+  readonly children?: ReactNode;
+  readonly card: ReactNode;
+  readonly width?: string;
+  readonly align?: "start" | "center" | "end";
+  readonly delay?: number;
+  readonly onActive?: (open: boolean) => void;
+  /** A trigger that is not a real button needs Enter and Space to pin. */
+  readonly labelled?: boolean;
+}) {
+  const pin = usePinnableCard(onActive);
+  return (
+    <HoverCard {...pin.rootProps}>
+      <HoverCardTrigger
+        delay={delay}
+        render={trigger}
+        className={triggerClassName}
+        {...pin.triggerProps}
+        {...(labelled ? { onKeyDown: pin.onKeyDown, role: "button" } : {})}
+        {...triggerProps}
+      >
+        {children}
+      </HoverCardTrigger>
+      <HoverCardContent
+        side="top"
+        align={align}
+        {...pin.contentProps}
+        className={cn(
+          "overflow-hidden p-0 text-xs leading-snug",
+          width,
+          pin.contentProps.className,
+        )}
+      >
+        {card}
+        <PinnedHint pinned={pin.pinned} />
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
+
+/**
  * A readout label that explains itself on hover or keyboard focus. `card` replaces the one-line
  * explanation with a full panel; `onOpenChange` lets a caller link the card to something else
  * on the band (the budget bar highlights the line being described).
@@ -111,28 +170,28 @@ function ReadoutLabel({
     return <span className={cn(LABEL_FIELD, fit, className)}>{row.label}</span>;
   }
   return (
-    <HoverCard onOpenChange={onOpenChange}>
-      <HoverCardTrigger
-        delay={200}
-        render={<span tabIndex={0} />}
-        className={cn(
-          LABEL_FIELD,
-          fit,
-          className,
-          "cursor-help underline decoration-muted-foreground/30 decoration-dotted underline-offset-2 outline-none hover:text-foreground focus-visible:text-foreground",
-        )}
-      >
-        {row.label}
-      </HoverCardTrigger>
-      <HoverCardContent side="top" className="w-72 overflow-hidden p-0 text-xs leading-snug">
-        {card ?? (
+    <PinnableCard
+      trigger={<span tabIndex={0} />}
+      labelled
+      delay={200}
+      onActive={onOpenChange}
+      triggerClassName={cn(
+        LABEL_FIELD,
+        fit,
+        className,
+        "cursor-help underline decoration-muted-foreground/30 decoration-dotted underline-offset-2 outline-none hover:text-foreground focus-visible:text-foreground",
+      )}
+      card={
+        card ?? (
           <>
             <CardHeader title={row.label} />
             <p className="px-3 py-2.5">{description}</p>
           </>
-        )}
-      </HoverCardContent>
-    </HoverCard>
+        )
+      }
+    >
+      {row.label}
+    </PinnableCard>
   );
 }
 
@@ -237,34 +296,33 @@ function AllocationBar({
       {allocation.segments
         .filter((segment) => segment.fraction > 0)
         .map((segment) => (
-          <HoverCard
+          <PinnableCard
             key={segment.id}
-            onOpenChange={(open) => {
+            trigger={<span />}
+            delay={80}
+            onActive={(open) => {
               onActive(open ? segment.id : null);
             }}
-          >
-            <HoverCardTrigger
-              delay={80}
-              render={<span />}
-              data-segment={segment.id}
-              data-active={active === segment.id}
+            triggerProps={{
+              "data-segment": segment.id,
+              "data-active": active === segment.id,
               // A tiny but real line keeps a visible sliver; the legend carries its exact share.
-              className={cn(
-                "h-full min-w-0.5 cursor-help transition-[opacity,filter] first:rounded-l-full last:rounded-r-full",
-                SEGMENT_FILL[segment.id],
-                active !== null && active !== segment.id && "opacity-30",
-                active === segment.id && "brightness-125",
-              )}
-              style={{ width: `${String(Math.round(segment.fraction * 1000) / 10)}%` }}
-            />
-            <HoverCardContent side="top" className="w-72 overflow-hidden p-0 text-xs leading-snug">
+              style: { width: `${String(Math.round(segment.fraction * 1000) / 10)}%` },
+            }}
+            triggerClassName={cn(
+              "h-full min-w-0.5 cursor-help transition-[opacity,filter] first:rounded-l-full last:rounded-r-full",
+              SEGMENT_FILL[segment.id],
+              active !== null && active !== segment.id && "opacity-30",
+              active === segment.id && "brightness-125",
+            )}
+            card={
               <BudgetLineCard
                 segment={segment}
                 allocation={allocation}
                 note={noteFor(segment.id)}
               />
-            </HoverCardContent>
-          </HoverCard>
+            }
+          />
         ))}
     </div>
   );
@@ -519,79 +577,72 @@ function BalanceChip({ model }: { readonly model: StatusStripModel }) {
   const { summary } = model;
   const alert = summary.balance.tone === "alert";
   return (
-    <HoverCard>
-      <HoverCardTrigger
-        delay={150}
-        closeDelay={100}
-        render={<button type="button" />}
-        aria-label={`Monthly balance ${summary.balance.value}, ${summary.balance.status}`}
-        className={cn(CHIP, "cursor-help", alert && "border-destructive/40 bg-destructive/5")}
-      >
-        {alert ? (
-          <TrendingDown className="size-3.5 text-destructive" aria-hidden="true" />
-        ) : (
-          <TrendingUp className="size-3.5 text-success" aria-hidden="true" />
-        )}
-        <span className="text-muted-foreground">Balance</span>
-        <span className={cn("tabular-nums font-semibold", alert && "text-destructive")}>
-          {summary.balance.value}
-        </span>
-        <StatusBadge status={summary.balance.status} tone={summary.balance.tone} />
-      </HoverCardTrigger>
-      <HoverCardContent side="top" align="start" className="w-80 overflow-hidden p-0 text-xs">
-        <BalanceCard outlook={model.outlook} />
-      </HoverCardContent>
-    </HoverCard>
+    <PinnableCard
+      trigger={<button type="button" />}
+      width="w-80"
+      align="start"
+      triggerProps={{
+        "aria-label": `Monthly balance ${summary.balance.value}, ${summary.balance.status}`,
+      }}
+      triggerClassName={cn(CHIP, "cursor-help", alert && "border-destructive/40 bg-destructive/5")}
+      card={<BalanceCard outlook={model.outlook} />}
+    >
+      {alert ? (
+        <TrendingDown className="size-3.5 text-destructive" aria-hidden="true" />
+      ) : (
+        <TrendingUp className="size-3.5 text-success" aria-hidden="true" />
+      )}
+      <span className="text-muted-foreground">Balance</span>
+      <span className={cn("tabular-nums font-semibold", alert && "text-destructive")}>
+        {summary.balance.value}
+      </span>
+      <StatusBadge status={summary.balance.status} tone={summary.balance.tone} />
+    </PinnableCard>
   );
 }
 
 function TreasuryChip({ model }: { readonly model: StatusStripModel }) {
   return (
-    <HoverCard>
-      <HoverCardTrigger
-        delay={150}
-        render={<button type="button" />}
-        aria-label={`Treasury ${model.summary.treasury}`}
-        className={CHIP}
-      >
-        <Landmark className="size-3.5 text-muted-foreground" aria-hidden="true" />
-        <span className="text-muted-foreground">Treasury</span>
-        <span className="tabular-nums font-semibold">{model.summary.treasury}</span>
-      </HoverCardTrigger>
-      <HoverCardContent side="top" className="w-72 overflow-hidden p-0 text-xs">
-        <TreasuryCard outlook={model.outlook} />
-      </HoverCardContent>
-    </HoverCard>
+    <PinnableCard
+      trigger={<button type="button" />}
+      triggerProps={{ "aria-label": `Treasury ${model.summary.treasury}` }}
+      triggerClassName={CHIP}
+      card={<TreasuryCard outlook={model.outlook} />}
+    >
+      <Landmark className="size-3.5 text-muted-foreground" aria-hidden="true" />
+      <span className="text-muted-foreground">Treasury</span>
+      <span className="tabular-nums font-semibold">{model.summary.treasury}</span>
+    </PinnableCard>
   );
 }
 
 function AlertsChip({ alerts }: { readonly alerts: string }) {
   const unavailable = alerts.toLowerCase().includes("unavailable");
   return (
-    <HoverCard>
-      <HoverCardTrigger
-        delay={150}
-        render={<button type="button" />}
-        aria-label={`Priorities: ${alerts}`}
-        className={cn(CHIP, unavailable && "text-muted-foreground")}
-      >
-        {unavailable ? (
-          <CircleAlert className="size-3.5" aria-hidden="true" />
-        ) : (
-          <Bell className="size-3.5 text-muted-foreground" aria-hidden="true" />
-        )}
-        <span>{alerts}</span>
-      </HoverCardTrigger>
-      <HoverCardContent side="top" className="w-64 overflow-hidden p-0 text-xs">
-        <CardHeader title="Priorities" icon={<Bell className="size-3.5" aria-hidden="true" />} />
-        <p className="px-3 py-2.5 text-sm font-semibold">{alerts}</p>
-        <CardFoot>
-          {unavailable
-            ? "The priorities projection could not be read, so no count is shown."
-            : "Strategic priorities the campaign has raised for attention. Open Overview to act on them."}
-        </CardFoot>
-      </HoverCardContent>
-    </HoverCard>
+    <PinnableCard
+      trigger={<button type="button" />}
+      width="w-64"
+      triggerProps={{ "aria-label": `Priorities: ${alerts}` }}
+      triggerClassName={cn(CHIP, unavailable && "text-muted-foreground")}
+      card={
+        <>
+          <CardHeader title="Priorities" icon={<Bell className="size-3.5" aria-hidden="true" />} />
+          <p className="px-3 py-2.5 text-sm font-semibold">{alerts}</p>
+          <CardFoot>
+            {unavailable
+              ? "The priorities projection could not be read, so no count is shown."
+              : "Strategic priorities the campaign has raised for attention. Open Overview to act on them."}
+          </CardFoot>
+        </>
+      }
+    >
+      {unavailable ? (
+        <CircleAlert className="size-3.5" aria-hidden="true" />
+      ) : (
+        <Bell className="size-3.5 text-muted-foreground" aria-hidden="true" />
+      )}
+      <span>{alerts}</span>
+    </PinnableCard>
   );
 }
 
