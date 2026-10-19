@@ -35,7 +35,7 @@ import {
 } from "./map-markers.js";
 import { layoutLabels, type PlacedLabel } from "./map-label-layout.js";
 import { buildGraticule } from "./map-graticule.js";
-import { buildLanes, type LaneMark } from "./map-lanes.js";
+import { buildLanes, laneEdges, type LaneMark } from "./map-lanes.js";
 import { buildRegionStrengths, describeStrength, type RegionStrength } from "./map-strength.js";
 import { strengthExtent, strengthHalfWidth } from "./layers/StrengthLayer.js";
 import { nationFlagUrl } from "../../content/nation-flag.js";
@@ -179,11 +179,11 @@ export function useWorldMapModel({
   const lanes = useMemo(
     () =>
       buildLanes(
-        EDGES,
+        laneEdges(overlay.lanes, EDGES),
         new Map([...areasById].map(([id, area]) => [id, area.label] as const)),
         projection.width,
       ),
-    [areasById, projection.width],
+    [areasById, overlay.lanes, projection.width],
   );
 
   const strengths = useMemo(

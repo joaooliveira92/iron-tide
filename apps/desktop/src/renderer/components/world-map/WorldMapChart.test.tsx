@@ -200,6 +200,7 @@ describe("WorldMapChart", () => {
       ownership: new Map(),
       fleets: [],
       ports: [],
+      lanes: [],
       playerNationId: "uk",
       campaignAreas: [
         {

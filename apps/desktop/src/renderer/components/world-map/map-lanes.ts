@@ -21,6 +21,26 @@ export interface LaneMark {
 }
 
 /**
+ * The edges the lanes are drawn from: the campaign's own sea connectivity when one is loaded,
+ * otherwise the fixture graph. A campaign pair that the fixture gates as a strait or canal keeps
+ * its gate, so the passage layer — not the passive lane — keeps drawing it.
+ */
+export function laneEdges(
+  campaign: readonly { readonly a: string; readonly b: string }[] | null,
+  fixture: readonly PrototypeEdge[],
+): readonly PrototypeEdge[] {
+  if (campaign === null) return fixture;
+  const gates = new Map<string, string>();
+  for (const edge of fixture) {
+    if (edge.passage !== undefined) gates.set([edge.a, edge.b].sort().join("~"), edge.passage);
+  }
+  return campaign.map((lane) => {
+    const passage = gates.get([lane.a, lane.b].sort().join("~"));
+    return passage === undefined ? { a: lane.a, b: lane.b } : { a: lane.a, b: lane.b, passage };
+  });
+}
+
+/**
  * Lanes for every ungated edge whose two areas both have an anchor, ordered by
  * id. `worldWidth` lets a lane that crosses the antimeridian take the short way
  * round: the chart draws a copy of the world at ±width, so a line running past

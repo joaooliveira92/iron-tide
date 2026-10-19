@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { EDGES } from "./fixture-world.js";
-import { buildLanes } from "./map-lanes.js";
+import { buildLanes, laneEdges } from "./map-lanes.js";
 import { projectAreas, projectionById } from "./projection.js";
 import { AREAS } from "./fixture-world.js";
 
@@ -73,5 +73,28 @@ describe("buildLanes", () => {
     for (const lane of buildLanes(EDGES, anchors, projection.width)) {
       expect([...lane.from, ...lane.to].every(Number.isFinite)).toBe(true);
     }
+  });
+});
+
+describe("laneEdges", () => {
+  it("falls back to the fixture graph when no campaign is loaded", () => {
+    expect(laneEdges(null, EDGES)).toBe(EDGES);
+  });
+
+  it("uses the campaign's own connectivity when one is loaded, not the fixture's", () => {
+    const edges = laneEdges([{ a: "p", b: "q" }], EDGES);
+    expect(edges).toEqual([{ a: "p", b: "q" }]);
+  });
+
+  it("keeps a gated strait gated, so the passage layer still owns its styling", () => {
+    const gated = EDGES.find((edge) => edge.passage !== undefined);
+    expect(gated).toBeDefined();
+    const edges = laneEdges([{ a: gated!.a, b: gated!.b }], EDGES);
+    expect(edges[0]?.passage).toBe(gated!.passage);
+    expect(buildLanes(edges, anchors, projection.width)).toEqual([]);
+  });
+
+  it("draws nothing for a campaign that has no sea connectivity", () => {
+    expect(buildLanes(laneEdges([], EDGES), anchors, projection.width)).toEqual([]);
   });
 });

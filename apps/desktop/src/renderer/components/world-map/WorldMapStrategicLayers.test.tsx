@@ -90,6 +90,24 @@ describe("strategic map: sea lanes", () => {
     expect(lanes?.querySelector('path[stroke-dasharray="10 6"]')).toBeNull();
   });
 
+  it("draws a live campaign's own sea connectivity, leaving gated straits to the passage layer", () => {
+    const overlay: LiveWorldMapOverlay = {
+      source: "campaign",
+      ownership: new Map(),
+      fleets: [],
+      ports: [],
+      campaignAreas: [],
+      playerNationId: null,
+      lanes: [
+        { a: "area_north_sea", b: "area_western_approaches" },
+        { a: "area_baltic", b: "area_north_sea" }, // the Danish straits: gated in the fixture
+      ],
+    };
+    const { container } = render(chart({ overlay }));
+    const lines = [...(homeLayer(container, "lanes")?.querySelectorAll("line") ?? [])];
+    expect(lines).toHaveLength(1);
+  });
+
   it("is stable across rerenders", () => {
     const { container, rerender } = render(chart());
     const before = homeLayer(container, "lanes")?.innerHTML;
@@ -174,6 +192,7 @@ describe("strategic map: area states", () => {
     ownership: new Map(owned.map((id) => [id, "uk"])),
     fleets: [],
     ports: [],
+    lanes: [],
     playerNationId: "uk",
     campaignAreas: [],
   });
