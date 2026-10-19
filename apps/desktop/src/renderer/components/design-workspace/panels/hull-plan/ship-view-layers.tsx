@@ -15,11 +15,6 @@ import { SECTION_IDS, SECTIONS } from "./section-meta.js";
  * drawing is mistaken for authoritative.
  */
 
-const BAND = {
-  y: (f: PlanFrame) => PLAN_MID - f.maxHalf,
-  h: (f: PlanFrame) => f.maxHalf * 2,
-} as const;
-
 const beltLengthMm = (draft: DesignDraft): number =>
   draft.armour.regions
     .filter((r) => r.region === "BELT_MAIN")
@@ -29,18 +24,6 @@ const permilleOf = (lengthMm: number, lengthWlMm: number): number => {
   if (lengthWlMm <= 0) return 0;
   return Math.max(0, Math.min(1000, (lengthMm * 1000) / lengthWlMm));
 };
-
-/** A band centred amidships, from `startPermille` to `endPermille`. */
-function band(
-  frame: PlanFrame,
-  startPermille: number,
-  endPermille: number,
-): { readonly x: number; readonly width: number } {
-  return {
-    x: frame.x(startPermille),
-    width: frame.x(endPermille) - frame.x(startPermille),
-  };
-}
 
 /** A hoverable armour zone: the anatomy plate opens on the belt or citadel only. */
 function ArmourHover({
