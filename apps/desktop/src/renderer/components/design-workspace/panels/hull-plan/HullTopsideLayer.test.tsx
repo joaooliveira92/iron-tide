@@ -38,3 +38,11 @@ describe("HullTopsideLayer", () => {
     expect(Number(ellipse.getAttribute("cx"))).toBeCloseTo(frame.x(560), 6);
   });
 });
+
+describe("HullTopsideLayer detail", () => {
+  it("adds a bridge wedge to the superstructure and a dark uptake bore to each funnel", () => {
+    const { container } = draw(form.zones);
+    expect(container.querySelector("[data-testid='hull-bridge']")).not.toBeNull();
+    expect(container.querySelectorAll("[data-testid='hull-funnel-bore']")).toHaveLength(1);
+  });
+});

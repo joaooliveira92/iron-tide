@@ -2,7 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
 import { ZONE_IDS } from "@bluewave/ship-design";
 import { PLAN_MID, planFrame } from "./geometry.js";
-import { HullOutlineLayer, HullShapeLayer, HullZoneLayer } from "./plan-layers.js";
+import { HullDeckLayer, HullOutlineLayer, HullShapeLayer, HullZoneLayer } from "./plan-layers.js";
 import { hullForm as form, reference } from "./test-fixtures.js";
 
 /** A ram frame: the layer's ram beak only draws for a ram bow, which the reference ship is not. */
@@ -81,5 +81,14 @@ describe("HullZoneLayer", () => {
       />,
     );
     expect(container.querySelectorAll("g")).toHaveLength(0);
+  });
+});
+
+describe("HullDeckLayer", () => {
+  it("fills the deck edge inside the hull outline and ignores the pointer", () => {
+    const { container } = draw(<HullDeckLayer frame={frame} />);
+    const deck = container.querySelector("[data-testid='hull-deck-fill']")!;
+    expect(deck.getAttribute("class")).toMatch(/pointer-events-none/);
+    expect(deck.getAttribute("points")).toBeTruthy();
   });
 });

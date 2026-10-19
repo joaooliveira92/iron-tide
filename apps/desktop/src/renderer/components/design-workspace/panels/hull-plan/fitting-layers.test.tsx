@@ -70,3 +70,34 @@ describe("GunArcLayer", () => {
     expect(container.querySelectorAll("[data-arc]")).toHaveLength(0);
   });
 });
+
+describe("HullFittingLayer symbols", () => {
+  const d = draft([
+    { instanceId: "g", componentId: "gun", zoneId: "FORECASTLE", stationPermille: 100 },
+    { instanceId: "t", componentId: "tube", zoneId: "AFT_SERVICE", stationPermille: 800 },
+  ] as DesignDraft["placements"]);
+  const kindOf = (id: string) => (id === "gun" ? "gun" : "torpedo");
+
+  it("draws each fitting as its kind's symbol, still anchored by a data-fitting circle", () => {
+    const { container } = draw(<HullFittingLayer frame={frame} draft={d} kindOf={kindOf} />);
+    expect(container.querySelector("[data-kind='gun']")).not.toBeNull();
+    expect(container.querySelector("[data-kind='torpedo']")).not.toBeNull();
+    expect(container.querySelectorAll("circle[data-fitting]")).toHaveLength(2);
+  });
+
+  it("points a forward gun's barrels toward the bow and an aft gun's toward the stern", () => {
+    const both = draft([
+      { instanceId: "f", componentId: "gun", zoneId: "FORECASTLE", stationPermille: 100 },
+      { instanceId: "a", componentId: "gun", zoneId: "AFT_SERVICE", stationPermille: 900 },
+    ] as DesignDraft["placements"]);
+    const { container } = draw(<HullFittingLayer frame={frame} draft={both} kindOf={kindOf} />);
+    const [fwd, aft] = Array.from(container.querySelectorAll("[data-kind='gun']"));
+    const barrel = (g: Element) => g.querySelector("line")!;
+    expect(Number(barrel(fwd!).getAttribute("x2"))).toBeLessThan(
+      Number(barrel(fwd!).getAttribute("x1")),
+    );
+    expect(Number(barrel(aft!).getAttribute("x2"))).toBeGreaterThan(
+      Number(barrel(aft!).getAttribute("x1")),
+    );
+  });
+});

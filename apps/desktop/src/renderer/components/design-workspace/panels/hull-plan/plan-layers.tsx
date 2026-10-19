@@ -56,6 +56,20 @@ export function HullShapeLayer({ frame }: { readonly frame: PlanFrame }) {
   );
 }
 
+/**
+ * The weather deck as a filled surface inside the hull plating, so the plan reads as a ship seen from above (hull
+ * side lighter, deck darker) rather than an empty outline. Drawn under the section, armour and fitting layers.
+ */
+export function HullDeckLayer({ frame }: { readonly frame: PlanFrame }) {
+  return (
+    <polygon
+      points={outlinePoints(frame, 0.9)}
+      className="pointer-events-none fill-muted-foreground/25"
+      data-testid="hull-deck-fill"
+    />
+  );
+}
+
 export function HullOutlineLayer({ frame }: { readonly frame: PlanFrame }) {
   const lcbX = frame.x(frame.lcbPermille);
   return (

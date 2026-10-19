@@ -22,7 +22,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "../../../ui/popover.js"
 import { FittingTargets } from "./FittingTargets.js";
 import { SelectionLayer } from "./SelectionLayer.js";
 import { GunArcLayer, HullFittingLayer } from "./fitting-layers.js";
-import { HullOutlineLayer, HullZoneLayer } from "./plan-layers.js";
+import { HullDeckLayer, HullOutlineLayer, HullZoneLayer } from "./plan-layers.js";
 import { HullTopsideLayer } from "./HullTopsideLayer.js";
 import {
   ArmourZoneLayer,
@@ -32,6 +32,7 @@ import {
 } from "./ship-view-layers.js";
 import { DEFAULT_VIEW, SHIP_VIEW_DEFS, type ShipOverlay, type ShipView } from "./ship-view.js";
 import { buildAnatomyShip } from "./anatomy/ship-anatomy.js";
+import { fittingKind } from "./sections.js";
 import { planModel, type PlanModel } from "./planModel.js";
 import { useHullPlanEditing, type HullPlanEditing } from "./useHullPlanEditing.js";
 import { Info } from "lucide-react";
@@ -180,6 +181,7 @@ export function HullPlanPanel({
             aria-label={planLabel(facts)}
           >
             <HullOutlineLayer frame={frame} />
+            <HullDeckLayer frame={frame} />
             <SelectionLayer frame={frame} zones={zones} draft={draft} warns={model.warns} />
             <HullZoneLayer frame={frame} zones={zones} />
             {viewDef.id === "compartments" && <CompartmentLayer frame={frame} zones={zones} />}
@@ -204,6 +206,10 @@ export function HullPlanPanel({
                 frame={frame}
                 draft={draft}
                 selectedId={tool.mode === "move" ? tool.instanceId : undefined}
+                kindOf={(id) => {
+                  const entry = model.entryOf(id);
+                  return entry ? fittingKind(entry.category, entry.tags) : "other";
+                }}
               />
             )}
             {tool.mode !== "off" && (
