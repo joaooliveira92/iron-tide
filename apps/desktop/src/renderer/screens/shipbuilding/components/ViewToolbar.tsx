@@ -1,6 +1,7 @@
 import { Checkbox } from "../../../components/ui/checkbox.js";
 import { Layers } from "lucide-react";
 import { Button, buttonVariants } from "../../../components/ui/button.js";
+import { ButtonGroup } from "../../../components/ui/button-group.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover.js";
 import { cn } from "../../../lib/utils.js";
 import {
@@ -25,22 +26,20 @@ export interface ViewToolbarProps {
  */
 export function ViewToolbar({ view, onView, overlays, onToggleOverlay }: ViewToolbarProps) {
   return (
-    <>
-      <div role="group" aria-label="Ship view" className="flex flex-wrap items-center gap-1">
-        {VIEW_ORDER.map((v) => (
-          <Button
-            key={v.id}
-            type="button"
-            size="sm"
-            variant={view === v.id ? "default" : "outline"}
-            aria-pressed={view === v.id}
-            title={v.hint}
-            onClick={() => onView(v.id)}
-          >
-            {v.label}
-          </Button>
-        ))}
-      </div>
+    <ButtonGroup aria-label="Ship view">
+      {VIEW_ORDER.map((v) => (
+        <Button
+          key={v.id}
+          type="button"
+          size="sm"
+          variant={view === v.id ? "default" : "outline"}
+          aria-pressed={view === v.id}
+          title={v.hint}
+          onClick={() => onView(v.id)}
+        >
+          {v.label}
+        </Button>
+      ))}
       <Popover>
         <PopoverTrigger
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
@@ -66,6 +65,6 @@ export function ViewToolbar({ view, onView, overlays, onToggleOverlay }: ViewToo
           </div>
         </PopoverContent>
       </Popover>
-    </>
+    </ButtonGroup>
   );
 }
