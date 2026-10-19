@@ -1,5 +1,6 @@
 /* @vitest-environment jsdom */
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { useEffect, useRef, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { CardDeck } from "./CardDeck.js";
 
@@ -43,6 +44,44 @@ describe("CardDeck", () => {
 
     expect(topLabel(container)).toBe("Bravo");
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("never reports a parent-driven change back, even when the parent steps again in the same commit", () => {
+    // A parent that follows the deck's own onChange (as the listbox surfaces do) and, as keys arrive quickly,
+    // moves on to the next card while the deck is still bringing the previous one forward.
+    const reported: number[] = [];
+    function Parent() {
+      const [index, setIndex] = useState(0);
+      const steppedOn = useRef(false);
+      useEffect(() => {
+        if (index !== 1 || steppedOn.current) return;
+        steppedOn.current = true;
+        setIndex(2);
+      }, [index]);
+      return (
+        <>
+          <button type="button" onClick={() => setIndex(1)}>
+            step
+          </button>
+          <CardDeck
+            cards={cards()}
+            layout="deck"
+            topIndex={index}
+            onChange={(i) => {
+              reported.push(i);
+              // Bounded, so a deck that keeps reporting fails the assertion below instead of looping forever.
+              if (reported.length <= 3) setIndex(i);
+            }}
+          />
+        </>
+      );
+    }
+    const { container } = render(<Parent />);
+
+    fireEvent.click(screen.getByText("step"));
+
+    expect(reported).toEqual([]);
+    expect(topLabel(container)).toBe("Charlie");
   });
 
   it("activates a non-top card as soon as it is tapped", () => {
