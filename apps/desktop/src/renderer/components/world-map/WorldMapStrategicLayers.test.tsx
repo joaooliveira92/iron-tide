@@ -1,5 +1,5 @@
-import { cleanup, render } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vite-plus/test";
+import { cleanup, render, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { WorldMapChart, type WorldMapChartProps } from "./WorldMapChart.js";
 import { AREAS, EDGES, FLEETS } from "./fixture-world.js";
 import type { LiveWorldMapOverlay } from "./campaign-map-join.js";
@@ -158,6 +158,32 @@ describe("strategic map: regional strength", () => {
       expect(layer.getAttribute("aria-hidden")).toBe("true");
       expect(layer.getAttribute("pointer-events")).toBe("none");
     }
+  });
+
+  it("shortens its bars on a small map and keeps them full-size on a large one", async () => {
+    const tallest = (container: HTMLElement) =>
+      Math.max(
+        ...[...container.querySelectorAll('[data-layer="strength"] [data-region]')].map((glyph) =>
+          Math.max(
+            ...[...glyph.querySelectorAll("rect")].map((rect) =>
+              Number(rect.getAttribute("height")),
+            ),
+          ),
+        ),
+      );
+    const height = vi.spyOn(Element.prototype, "clientHeight", "get");
+
+    height.mockReturnValue(900);
+    const large = render(chart());
+    await waitFor(() => expect(large.container.querySelector("[data-compact]")).toBeNull());
+    const fullBar = tallest(large.container);
+    large.unmount();
+
+    height.mockReturnValue(420);
+    const small = render(chart());
+    await waitFor(() => expect(small.container.querySelector("[data-compact]")).not.toBeNull());
+    expect(tallest(small.container)).toBeLessThan(fullBar);
+    height.mockRestore();
   });
 
   it("follows the fleets layer toggle", () => {

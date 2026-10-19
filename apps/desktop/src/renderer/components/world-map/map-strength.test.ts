@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
 import {
+  BAR_MAX_COMPACT,
+  COMPACT_BELOW_PX,
   FLAG_CLUSTER_LIMIT,
   barHeight,
+  compactGlyphs,
   buildRegionStrengths,
   describeStrength,
   type StrengthOptions,
@@ -122,6 +125,26 @@ describe("buildRegionStrengths", () => {
       options,
     );
     expect(regions.map((r) => r.areaId)).toEqual(["alpha", "zeta"]);
+  });
+});
+
+describe("barHeight compact", () => {
+  it("shortens every bar on a small map, keeping the order and a visible stub", () => {
+    for (const fraction of [0.01, 0.25, 0.5, 1]) {
+      expect(barHeight(fraction, true)).toBeLessThan(barHeight(fraction));
+    }
+    expect(barHeight(1, true)).toBe(BAR_MAX_COMPACT);
+    expect(barHeight(0.01, true)).toBeGreaterThanOrEqual(5);
+    expect(barHeight(0.25, true)).toBeLessThan(barHeight(0.5, true));
+  });
+});
+
+describe("compactGlyphs", () => {
+  it("is on only for a laid-out map shorter than the compact threshold", () => {
+    expect(compactGlyphs(0)).toBe(false); // not laid out yet
+    expect(compactGlyphs(COMPACT_BELOW_PX - 1)).toBe(true);
+    expect(compactGlyphs(COMPACT_BELOW_PX)).toBe(false);
+    expect(compactGlyphs(900)).toBe(false);
   });
 });
 

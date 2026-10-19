@@ -18,11 +18,14 @@ export const STRENGTH_GLYPH = {
 } as const;
 
 /** Vertical extent of a glyph above the anchor, for label avoidance. */
-export function strengthExtent(region: RegionStrength): { top: number; bottom: number } {
+export function strengthExtent(
+  region: RegionStrength,
+  compact = false,
+): { top: number; bottom: number } {
   const { flagsBottom, flagHeight, countRoom } = STRENGTH_GLYPH;
   const flagsTop = flagsBottom - flagHeight;
   return {
-    top: flagsTop - 2 - barHeight(region.fraction) - countRoom,
+    top: flagsTop - 2 - barHeight(region.fraction, compact) - countRoom,
     bottom: flagsBottom,
   };
 }
@@ -40,6 +43,10 @@ export interface StrengthLayerProps {
   readonly anchorOf: (areaId: string) => readonly [number, number] | undefined;
   readonly strokeFor: (nation: string | null) => string;
   readonly palette: MapPalette;
+  /** Shorter bars, for a small map (see `compactGlyphs`). */
+  readonly compact?: boolean;
+  /** Sideways shift in screen px per region (see `separateGlyphs`); absent means none. */
+  readonly offsets?: ReadonlyMap<string, number>;
 }
 
 /**
@@ -49,7 +56,14 @@ export interface StrengthLayerProps {
  * area's own label (`describeStrength`), so nothing here depends on colour,
  * bar height or flag art.
  */
-export function StrengthLayer({ regions, anchorOf, strokeFor, palette }: StrengthLayerProps) {
+export function StrengthLayer({
+  regions,
+  anchorOf,
+  strokeFor,
+  palette,
+  compact = false,
+  offsets,
+}: StrengthLayerProps) {
   return (
     <g data-layer="strength" aria-hidden="true" pointerEvents="none">
       {regions.map((region) => {
@@ -60,9 +74,12 @@ export function StrengthLayer({ regions, anchorOf, strokeFor, palette }: Strengt
             key={region.areaId}
             data-region={region.areaId}
             data-ships={region.total}
+            data-compact={compact ? "" : undefined}
             style={pinned(anchor[0], anchor[1])}
           >
-            <Glyph region={region} strokeFor={strokeFor} palette={palette} />
+            <g transform={`translate(${offsets?.get(region.areaId) ?? 0} 0)`}>
+              <Glyph region={region} strokeFor={strokeFor} palette={palette} compact={compact} />
+            </g>
           </g>
         );
       })}
@@ -74,13 +91,15 @@ function Glyph({
   region,
   strokeFor,
   palette,
+  compact,
 }: {
   region: RegionStrength;
   strokeFor: (nation: string | null) => string;
   palette: MapPalette;
+  compact: boolean;
 }) {
   const { flagWidth, flagHeight, flagGap, barWidth, flagsBottom, countRoom } = STRENGTH_GLYPH;
-  const height = barHeight(region.fraction);
+  const height = barHeight(region.fraction, compact);
   const flagsTop = flagsBottom - flagHeight;
   const barBottom = flagsTop - 2;
   const barTop = barBottom - height;

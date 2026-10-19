@@ -35,8 +35,14 @@ import {
 } from "./map-markers.js";
 import { layoutLabels, type PlacedLabel } from "./map-label-layout.js";
 import { buildGraticule } from "./map-graticule.js";
+import { separateGlyphs } from "./map-glyph-layout.js";
 import { buildLanes, laneEdges, type LaneMark } from "./map-lanes.js";
-import { buildRegionStrengths, describeStrength, type RegionStrength } from "./map-strength.js";
+import {
+  buildRegionStrengths,
+  compactGlyphs,
+  describeStrength,
+  type RegionStrength,
+} from "./map-strength.js";
 import { strengthExtent, strengthHalfWidth } from "./layers/StrengthLayer.js";
 import { nationFlagUrl } from "../../content/nation-flag.js";
 import type { MapPalette } from "./map-palette.js";
@@ -74,6 +80,10 @@ export interface WorldMapModel {
   readonly lanes: readonly LaneMark[];
   /** Regions that hold ships, strongest bars normalised across the whole map. */
   readonly strengths: readonly RegionStrength[];
+  /** Sideways shift in screen px per region id, so neighbouring glyphs do not overlap. */
+  readonly glyphOffsets: ReadonlyMap<string, number>;
+  /** Whether the map is small enough that glyph bars use the compact scale. */
+  readonly compactGlyphs: boolean;
   /** Areas a live campaign has no data for. */
   readonly unavailable: ReadonlySet<string>;
   readonly anchorOf: (areaId: string) => readonly [number, number] | undefined;
@@ -198,6 +208,35 @@ export function useWorldMapModel({
     () => new Map(strengths.map((region) => [region.areaId, region])),
     [strengths],
   );
+  // Read at the settled-camera signal, like labels, so a window resize re-scales the glyphs.
+  const compact = useMemo(
+    () => compactGlyphs(camera.svgRef.current?.clientHeight ?? 0),
+    // `viewVersion` is the settled-camera signal (see placedLabels).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [viewVersion],
+  );
+  const glyphOffsets = useMemo(() => {
+    const factor = camera.getTransform().scale * camera.getPixelsPerUnit();
+    return separateGlyphs(
+      strengths.flatMap((region) => {
+        const at = areasById.get(region.areaId)?.label;
+        if (at === undefined) return [];
+        return [
+          {
+            id: region.areaId,
+            ships: region.total,
+            ux: at[0],
+            uy: at[1],
+            hw: strengthHalfWidth(region),
+            ...strengthExtent(region, compact),
+          },
+        ];
+      }),
+      factor,
+    );
+    // `viewVersion` is the settled-camera signal (see placedLabels).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [strengths, areasById, compact, viewVersion]);
   const anchorOf = useMemo(() => (areaId: string) => areasById.get(areaId)?.label, [areasById]);
 
   const passageMarks = useMemo<PassageMark[]>(() => {
@@ -240,7 +279,16 @@ export function useWorldMapModel({
       strengthMarks: strengths.flatMap((region) => {
         const at = areasById.get(region.areaId)?.label;
         if (at === undefined) return [];
-        return [{ ux: at[0], uy: at[1], hw: strengthHalfWidth(region), ...strengthExtent(region) }];
+        const factor = camera.getTransform().scale * camera.getPixelsPerUnit();
+        const shift = (glyphOffsets.get(region.areaId) ?? 0) / (factor > 0 ? factor : 1);
+        return [
+          {
+            ux: at[0] + shift,
+            uy: at[1],
+            hw: strengthHalfWidth(region),
+            ...strengthExtent(region, compact),
+          },
+        ];
       }),
       transform: camera.getTransform(),
       minScale: camera.getMinScale(),
@@ -260,6 +308,8 @@ export function useWorldMapModel({
     state.layers,
     strengths,
     areasById,
+    compact,
+    glyphOffsets,
     viewVersion,
   ]);
 
@@ -344,6 +394,8 @@ export function useWorldMapModel({
     passageMarks,
     lanes,
     strengths,
+    compactGlyphs: compact,
+    glyphOffsets,
     unavailable: source.unavailable,
     anchorOf,
     placedLabels,

@@ -81,6 +81,8 @@ export function MapLayers({ model, palette, width, onAreaClick }: MapLayersProps
               anchorOf={model.anchorOf}
               strokeFor={model.strokeFor}
               palette={palette}
+              compact={model.compactGlyphs}
+              offsets={model.glyphOffsets}
             />
           )}
 

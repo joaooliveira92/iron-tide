@@ -20,6 +20,16 @@ export const FLAG_CLUSTER_LIMIT = 3;
 /** Bar height in screen pixels: the weakest drawn region, and the strongest. */
 const BAR_MIN = 6;
 export const BAR_MAX = 44;
+/** On a small map the regions sit closer together, so bars are shorter. */
+const BAR_MIN_COMPACT = 5;
+export const BAR_MAX_COMPACT = 28;
+/** A map shorter than this (CSS px) is "small": the stacked layout at the minimum window. */
+export const COMPACT_BELOW_PX = 600;
+
+/** Whether glyphs use the compact scale; a map that has not been laid out yet (0) is not small. */
+export function compactGlyphs(mapHeightPx: number): boolean {
+  return mapHeightPx > 0 && mapHeightPx < COMPACT_BELOW_PX;
+}
 
 export interface NationStrength {
   readonly nation: string | null;
@@ -115,9 +125,10 @@ export function buildRegionStrengths(
 }
 
 /** Bar height in screen pixels for a normalised strength: linear, never a sliver. */
-export function barHeight(fraction: number): number {
+export function barHeight(fraction: number, compact = false): number {
   const clamped = Math.min(1, Math.max(0, fraction));
-  return Math.round(BAR_MIN + (BAR_MAX - BAR_MIN) * clamped);
+  const [min, max] = compact ? [BAR_MIN_COMPACT, BAR_MAX_COMPACT] : [BAR_MIN, BAR_MAX];
+  return Math.round(min + (max - min) * clamped);
 }
 
 function shipCount(count: number): string {
