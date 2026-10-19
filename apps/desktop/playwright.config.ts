@@ -10,8 +10,11 @@ export default defineConfig({
   testIgnore: "**/*.debug.spec.ts",
   timeout: 120_000,
   expect: { timeout: 15_000 },
-  fullyParallel: false,
-  workers: 1,
+  // Every test launches its own hermetic Electron app on a private user-data dir and works on a private copy
+  // of the compiled campaign, so tests are independent. Parallelism is capped: each worker is a full
+  // Electron + WebGL instance, and oversubscribing the machine is what makes UI tests flaky.
+  fullyParallel: true,
+  workers: CI ? 2 : 3,
   retries: CI ? 2 : 0,
   outputDir: "test-results",
   reporter: CI ? "github" : "list",

@@ -1,3 +1,4 @@
+import { expect } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
 
 export interface NewCampaignOptions {
@@ -68,11 +69,15 @@ export async function startNewCampaign(page: Page, opts: NewCampaignOptions = {}
  * "Pre-turn review" dialog's "Advance to <Mon YYYY>" confirmation.
  */
 export async function advanceMonths(page: Page, count: number): Promise<void> {
+  // The header's "Bluewave — <Month YYYY>" label is the observable calendar; wait for it to move
+  // rather than sleeping, so the next step never races the month commit.
+  const calendar = page.getByText(/^Bluewave — [A-Za-z]+ \d{4}$/).first();
   for (let i = 0; i < count; i++) {
+    const before = await calendar.textContent();
     await page.getByRole("button", { name: /^advance month$/i }).click();
     await page.getByRole("button", { name: /^advance to /i }).click();
     await page.getByRole("dialog", { name: "Pre-turn review" }).waitFor({ state: "hidden" });
-    await page.waitForTimeout(500);
+    await expect(calendar).not.toHaveText(before ?? "");
   }
 }
 

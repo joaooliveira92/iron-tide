@@ -1,18 +1,14 @@
-import { SEED, test, expect } from "./fixtures.js";
-import { dismissTour, startNewCampaign } from "./flows.js";
+import { test, expect, openCampaign } from "./fixtures.js";
 
 // The expanded status strip: Nation, Budget and Outlook cards over the real campaign projection.
 // Deterministic seed; asserts what the player sees (cards, budget wording, the deferred popover)
 // and that nothing overflows the window at its minimum supported width.
 test("the status strip expands into Nation, Budget and Outlook cards that fit the minimum window", async ({
   e2e,
+  campaignTemplate,
 }) => {
   const page = e2e.page;
-  await startNewCampaign(page, { seed: SEED });
-  await expect(page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-    timeout: 30_000,
-  });
-  await dismissTour(page);
+  await openCampaign(e2e, campaignTemplate);
 
   const strip = page.getByRole("region", { name: "Status strip" });
   if ((await strip.getAttribute("data-expanded")) !== "true") {

@@ -36,7 +36,13 @@ for (const background of ANIMATED_BACKGROUNDS) {
 
     await page.getByRole("button", { name: /Theme:/ }).click();
     await page.waitForFunction(() => document.documentElement.classList.contains("dark"));
-    await page.waitForTimeout(300);
+    // Let the rebuilt program run two frames, so a lost context has surfaced before it is read.
+    await page.evaluate(
+      () =>
+        new Promise<void>((done) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => done())),
+        ),
+    );
 
     expect(await contextLost(page)).toBe(false);
   });

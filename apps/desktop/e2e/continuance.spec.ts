@@ -1,43 +1,18 @@
-import { mkdtemp, readFile, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { SEED, test, expect, copyFixturePackage } from "./fixtures.js";
-import { advanceMonths, dismissTour, startNewCampaign } from "./flows.js";
+import { test, expect, copyFixturePackage, openCampaign } from "./fixtures.js";
 
-// Serial continuance narrative (matrix rows 7-11). Independent of
-// mvp-loop.spec.ts's create-side narrative; the shipped production package
-// (content/production/1880/bluewave-austria_hungary-scen_1880/) is no
-// longer in the working tree (untracked at charting time -- see ticket 02's
-// finding), so this file compiles its own master fixture package via the
-// create-side flow and copies it fresh for every row. The shipped tree is
-// never touched.
-test.describe.configure({ mode: "serial" });
+// Continuance: Load, Recent Campaigns, Verify, Replay and Recover. Each test works on its own copy of a
+// compiled package (the worker's templates), so the originals are never touched and tests are independent.
 
 const CLOSE_MENU_LABEL = "Close campaign…";
 const CLOSE_CONFIRM_LABEL = "Close campaign";
-const ARCHETYPE = "Shipyard Baron";
-const NATION = "United Kingdom";
-
-// Turn-0-only package: Load/Verify/Replay/tamper->Verify all target a
-// pristine, never-advanced production package.
-let masterPackageDir = "";
-// Turn-0 + turn-1 package: Recover needs a predecessor save to revert to,
-// so this fixture has one committed month on top of the fresh compile.
-let recoverMasterPackageDir = "";
-
-async function compileFreshCampaign(page: import("@playwright/test").Page): Promise<void> {
-  await startNewCampaign(page, { seed: SEED, archetype: ARCHETYPE, nation: NATION });
-  await expect(page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-    timeout: 30_000,
-  });
-}
 
 /**
- * Corrupts the package's currently-active save so `SaveStore.load`'s
- * rawHash check fails deterministically (`store.ts`'s `loadById`) -- the
- * exact corruption-detection path Verify/Recover exercise. Stays valid
- * JSON (only a snapshot field changes) so the failure is specifically the
- * hash mismatch, not a parse error.
+ * Corrupts the package's currently-active save so `SaveStore.load`'s rawHash check fails
+ * deterministically (`store.ts`'s `loadById`) -- the exact corruption-detection path Verify/Recover
+ * exercise. Stays valid JSON (only a snapshot field changes) so the failure is specifically the hash
+ * mismatch, not a parse error.
  */
 async function tamperActiveSave(packageDir: string): Promise<void> {
   const pointer = JSON.parse(await readFile(join(packageDir, "pointer.json"), "utf8")) as {
@@ -54,51 +29,21 @@ async function tamperActiveSave(packageDir: string): Promise<void> {
   await writeFile(campaignPath, JSON.stringify(parsed), "utf8");
 }
 
-test("setup: compile the master production package fixtures", async ({ e2e }) => {
-  masterPackageDir = join(await mkdtemp(join(tmpdir(), "bluewave-continuance-master-")), "package");
-  await e2e.retargetDialog(masterPackageDir);
-  await compileFreshCampaign(e2e.page);
-  await expect(e2e.page.getByText("Bluewave — January 1880")).toBeVisible();
-});
-
-test("setup: compile a two-revision package fixture for Recover", async ({ e2e }) => {
-  recoverMasterPackageDir = join(
-    await mkdtemp(join(tmpdir(), "bluewave-continuance-recover-")),
-    "package",
-  );
-  await e2e.retargetDialog(recoverMasterPackageDir);
-  await compileFreshCampaign(e2e.page);
-  await dismissTour(e2e.page);
-  await advanceMonths(e2e.page, 1);
-  await expect(e2e.page.getByText("Bluewave — February 1880")).toBeVisible();
-});
-
-test("row 7: Load restores Overview from a production package copy", async ({ e2e }) => {
-  const pkg = await copyFixturePackage(masterPackageDir, e2e.scratch);
-  await e2e.retargetDialog(pkg);
-
-  await e2e.page.getByRole("button", { name: "Open Campaign" }).click();
-  await expect(e2e.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-    timeout: 30_000,
-  });
+test("Load restores Overview from a package copy", async ({ e2e, campaignTemplate }) => {
+  await openCampaign(e2e, campaignTemplate);
   await expect(e2e.page.getByText("Bluewave — January 1880")).toBeVisible();
   await expect(
     e2e.page.getByText("campaign-bluewave-1880-production", { exact: true }),
   ).toBeVisible();
 });
 
-test("row 7b: Recent Campaigns reopens a package without prompting the file dialog", async ({
+test("Recent Campaigns reopens a package without prompting the file dialog", async ({
   e2e,
+  campaignTemplate,
 }) => {
-  const pkg = await copyFixturePackage(masterPackageDir, e2e.scratch);
-  await e2e.retargetDialog(pkg);
-  await e2e.page.getByRole("button", { name: "Open Campaign" }).click();
-  await expect(e2e.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
-    timeout: 30_000,
-  });
+  const pkg = await openCampaign(e2e, campaignTemplate);
 
   // Close the campaign and return to the main menu.
-  await dismissTour(e2e.page);
   await e2e.page.getByRole("button", { name: "Campaign menu" }).click();
   await e2e.page.getByRole("button", { name: CLOSE_MENU_LABEL }).click();
   await e2e.page.getByRole("button", { name: CLOSE_CONFIRM_LABEL, exact: true }).click();
@@ -116,62 +61,46 @@ test("row 7b: Recent Campaigns reopens a package without prompting the file dial
   });
 });
 
-test("row 8: Verify reports package integrity", async ({ e2e }) => {
-  const pkg = await copyFixturePackage(masterPackageDir, e2e.scratch);
+test("Verify and Replay report on a healthy package, which still opens afterwards", async ({
+  e2e,
+  campaignTemplate,
+}) => {
+  const pkg = await copyFixturePackage(campaignTemplate, e2e.scratch);
   await e2e.retargetDialog(pkg);
 
   await e2e.page.getByRole("button", { name: "Verify" }).click();
-  await expect(e2e.page.getByText(/Package verified — campaign/)).toBeVisible({
-    timeout: 15_000,
-  });
+  await expect(e2e.page.getByText(/Package verified — campaign/)).toBeVisible();
 
-  // The app remains operable after verification: the same package still
-  // opens to Overview.
-  await e2e.retargetDialog(pkg);
+  await e2e.page.getByRole("button", { name: "Replay" }).click();
+  await expect(e2e.page.getByText(/Replay complete/)).toBeVisible();
+
+  // The app remains operable after verification and replay: the same package still opens.
   await e2e.page.getByRole("button", { name: "Open Campaign" }).click();
   await expect(e2e.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
     timeout: 30_000,
   });
 });
 
-test("row 9: Replay completes deterministically", async ({ e2e }) => {
-  const pkg = await copyFixturePackage(masterPackageDir, e2e.scratch);
-  await e2e.retargetDialog(pkg);
-
-  await e2e.page.getByRole("button", { name: "Replay" }).click();
-  await expect(e2e.page.getByText(/Replay complete/)).toBeVisible({
-    timeout: 15_000,
-  });
-});
-
-test("row 10: Recover repairs a damaged package", async ({ e2e }) => {
-  const pkg = await copyFixturePackage(recoverMasterPackageDir, e2e.scratch);
+test("Recover repairs a damaged package", async ({ e2e, advancedCampaignTemplate }) => {
+  // The advanced template has a predecessor save for Recover to revert to.
+  const pkg = await copyFixturePackage(advancedCampaignTemplate, e2e.scratch);
   await tamperActiveSave(pkg);
   await e2e.retargetDialog(pkg);
 
   await e2e.page.getByRole("button", { name: "Recover" }).click();
-  await expect(e2e.page.getByText(/Recovery complete — active revision 0/)).toBeVisible({
-    timeout: 15_000,
-  });
+  await expect(e2e.page.getByText(/Recovery complete — active revision 0/)).toBeVisible();
 
-  // Recovered package is playable: opens cleanly to Overview, no crash.
-  await e2e.retargetDialog(pkg);
+  // The recovered package is playable: it opens cleanly to Overview.
   await e2e.page.getByRole("button", { name: "Open Campaign" }).click();
   await expect(e2e.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
     timeout: 30_000,
   });
 });
 
-// Row 11 (tamper -> Verify mismatch) is deliberately NOT covered here.
-// `verificationResultFromBridge` (renderer/screens/campaign-file/utils/
-// package-operations.ts) maps ANY outcome:"success" VerifyCampaignResponse
-// -- including `{ valid: false, issues: [...] }` -- to the "verify" result
-// kind, and `OperationResultMessage`'s verify branch (OperationStatus.tsx)
-// renders "Package verified - campaign ..." unconditionally, never reading
-// `response.valid`/`issues`. So today a tampered package's Verify surfaces
-// the SAME "Package verified" copy as a healthy one -- a real stub-surface
-// honesty gap, not a flaky-fixture problem. Asserting today's copy would
-// enshrine that gap as expected behavior; per the coverage matrix's own
-// allowance ("otherwise the recover row is the minimum"), row 11 stays
-// covered by persistence's unit tests until that renderer branch is fixed
-// (out of scope here: this effort is test-only, no source changes).
+// Tamper -> Verify mismatch is deliberately NOT covered here.
+// `verificationResultFromBridge` (renderer/screens/campaign-file/utils/package-operations.ts) maps ANY
+// outcome:"success" VerifyCampaignResponse -- including `{ valid: false, issues: [...] }` -- to the
+// "verify" result kind, and `OperationResultMessage`'s verify branch (OperationStatus.tsx) renders
+// "Package verified - campaign ..." unconditionally, never reading `response.valid`/`issues`. So today a
+// tampered package's Verify shows the SAME copy as a healthy one. Asserting today's copy would enshrine
+// that gap; persistence's unit tests cover the mismatch until the renderer branch is fixed.
