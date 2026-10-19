@@ -287,6 +287,23 @@ describe("Central ship workspace views and overlays", () => {
     expect(plan()).not.toBeNull();
   });
 
+  it("switches the plan tools with P and M, and ignores them while typing", () => {
+    render(<ShipbuildingWorkspace />);
+    const tools = () => screen.getByRole("group", { name: "Plan tools" });
+    const pressed = (name: string) =>
+      within(tools()).getByRole("button", { name }).getAttribute("aria-pressed");
+    const workspace = screen.getByTestId("shipbuilding-workspace");
+    fireEvent.keyDown(workspace, { key: "m" });
+    expect(pressed("Move on plan")).toBe("true");
+    fireEvent.keyDown(workspace, { key: "p" });
+    expect(pressed("Place on plan")).toBe("true");
+    expect(pressed("Move on plan")).toBe("false");
+    fireEvent.keyDown(workspace, { key: "p" });
+    expect(pressed("Place on plan")).toBe("false");
+    fireEvent.keyDown(within(commands()).getByLabelText("Class name"), { key: "m" });
+    expect(pressed("Move on plan")).toBe("false");
+  });
+
   it("controls the overlays independently, and no view turns them all on", () => {
     render(<ShipbuildingWorkspace />);
     expect(overlay("Turret arcs").getAttribute("aria-checked")).toBe("true");
