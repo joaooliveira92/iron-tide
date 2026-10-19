@@ -124,7 +124,11 @@ export function restorePendingQueue(sessionId: string): number {
     parsed = null;
   }
   if (parsed === null || parsed.turnNumber !== Number(record.state.snapshot.turnNumber)) {
-    rmSync(path, { force: true });
+    try {
+      rmSync(path, { force: true });
+    } catch {
+      // A read-only package cannot be cleaned up; the stale file is ignored again on the next open.
+    }
     return 0;
   }
   const queue = pendingFor(sessionId);

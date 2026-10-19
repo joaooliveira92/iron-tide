@@ -1,4 +1,5 @@
 import {
+  chmodSync,
   existsSync,
   mkdtempSync,
   mkdirSync,
@@ -55,7 +56,7 @@ import {
 } from "./continuityCommands.js";
 import { inspectCampaignProgram } from "./inspectCampaign.js";
 import { submitDesignCommandProgram } from "./designCommands.js";
-import { clearPendingWorkspacesForTest } from "../pendingCommands.js";
+import { clearPendingWorkspacesForTest, PENDING_COMMANDS_FILENAME } from "../pendingCommands.js";
 import { readReferenceDesigns } from "../referenceDesigns.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
@@ -795,6 +796,21 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
       extra: true,
     });
     expect(result.outcome).toBe("error");
+  });
+
+  it("loads a read-only package even when it holds a stale pending-commands file", async () => {
+    const saveDir = resolve(saveRoot, "save-readonly");
+    await compileAndSave(saveDir);
+    // A malformed queue file is normally removed on load; that cleanup must not fail the load.
+    writeFileSync(resolve(saveDir, PENDING_COMMANDS_FILENAME), "{ not json", "utf8");
+    chmodSync(saveDir, 0o555);
+    try {
+      packageAt(saveDir);
+      const loaded = await loadCampaign();
+      expect(loaded.outcome).toBe("success");
+    } finally {
+      chmodSync(saveDir, 0o755);
+    }
   });
 
   // Edge cases: cancellation and missing sidecar metadata
