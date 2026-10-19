@@ -1,5 +1,4 @@
 import type { MonthlyReportEntry } from "../../../../shared/campaign-command-contract.js";
-import { humanizeId } from "../../lib/humanize-id.js";
 import { monthLabel } from "../month-report-format.js";
 import { NarrativeMonthSummary } from "../NarrativeMonthSummary.js";
 
