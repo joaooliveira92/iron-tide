@@ -32,6 +32,7 @@ function model(balance: number) {
     nationName: "Britain",
     fleet: [],
     strategicAreas: [],
+    ports: [],
   } as unknown as PlayerProjection;
   return buildStatusStrip({ projection, areas: [], alertsCount: 2 });
 }
@@ -195,6 +196,42 @@ describe("StatusStripView", () => {
     expect(await axeViolations(container)).toEqual([]);
     fireEvent.click(screen.getByRole("button", { name: /Not yet modelled \(\d+\)/ }));
     expect(await axeViolations(document.body)).toEqual([]);
+  });
+
+  it("opens a full card for a budget line on keyboard focus and links it to the bar", async () => {
+    await renderStrip();
+    const budget = screen.getByRole("group", { name: "Budget" });
+    const label = within(budget).getByText("Maintenance");
+    act(() => {
+      label.focus();
+    });
+    expect(await screen.findByText("Over a year")).toBeTruthy();
+    expect(screen.getByText("£24,000")).toBeTruthy();
+    expect(budget.querySelector("[data-segment=maintenance]")?.getAttribute("data-active")).toBe(
+      "true",
+    );
+    expect(budget.querySelector("[data-segment=research]")?.className).toContain("opacity-30");
+  });
+
+  it("walks the appropriation down to the balance in the balance card", async () => {
+    await renderStrip(1200);
+    const outlook = screen.getByRole("group", { name: "Outlook" });
+    act(() => {
+      within(outlook).getByText("Monthly balance (projected)").focus();
+    });
+    expect(await screen.findByText("Balance breakdown")).toBeTruthy();
+    const steps = [...document.querySelectorAll("[data-step]")].map((el) =>
+      el.getAttribute("data-step"),
+    );
+    expect(steps).toEqual(["obligations", "maintenance", "research", "balance"]);
+    expect(screen.getByText("With construction at its upper bound")).toBeTruthy();
+  });
+
+  it("groups the not-yet-modelled readouts by where they would sit", async () => {
+    await renderStrip();
+    fireEvent.click(screen.getByRole("button", { name: /Not yet modelled \(\d+\)/ }));
+    expect(screen.getByRole("region", { name: "Nation readouts" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Budget readouts" })).toBeTruthy();
   });
 
   it("orders Nation, Budget, Outlook in reading order under level-2 headings", async () => {

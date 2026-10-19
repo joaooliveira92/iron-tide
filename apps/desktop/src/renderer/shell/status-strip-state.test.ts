@@ -328,3 +328,81 @@ describe("buildStatusStrip", () => {
     expect(a.committed.percent).toMatch(/^\d+%$/);
   });
 });
+
+describe("buildStatusStrip hover detail", () => {
+  it("walks the appropriation down through each committed line to the balance", () => {
+    const { outlook } = buildStatusStrip({ projection: projection(), areas, alertsCount: 0 });
+    expect(outlook.appropriation).toBe("£5,000");
+    expect(outlook.steps.map((s) => [s.id, s.value, s.remainder])).toEqual([
+      ["obligations", "-£500", "£4,500"],
+      ["maintenance", "-£2,000", "£2,500"],
+      ["research", "-£800", "£1,700"],
+    ]);
+    expect(outlook.balance.value).toBe("£1,200");
+    // £1,200 less the £1,000 construction bound.
+    expect(outlook.afterConstruction).toEqual({ value: "£200", tone: "normal" });
+    expect(outlook.monthEndTreasury).toBe("£51,200");
+    expect(outlook.runway).toBeNull();
+    expect(outlook.shortfall).toBeNull();
+  });
+
+  it("flags a worst case that tips into deficit once construction is spent", () => {
+    const base = projection();
+    const { outlook } = buildStatusStrip({
+      projection: projection({ projectedSurplusDeficit: 300, economy: { ...base.economy } }),
+      areas,
+      alertsCount: 0,
+    });
+    expect(outlook.afterConstruction).toEqual({ value: "-£700", tone: "alert" });
+  });
+
+  it("adds each line's yearly figure and its share of the committed total", () => {
+    const { allocation } = buildStatusStrip({ projection: projection(), areas, alertsCount: 0 });
+    const maintenance = allocation.segments.find((s) => s.id === "maintenance");
+    expect(maintenance?.yearly).toBe("£24,000");
+    expect(maintenance?.shareOfCommitted).toBe("61%");
+    expect(allocation.segments.find((s) => s.id === "construction")?.shareOfCommitted).toBe("—");
+  });
+
+  it("names the areas, controllers and ships behind the foreign-station count", () => {
+    const { stations } = buildStatusStrip({
+      projection: projection(),
+      areas: [
+        { id: "a_home", name: "Home waters", controller: "gbr" },
+        { id: "a_foreign", name: "Biscay", controller: "fra" },
+        { id: "a_sea", name: "Open sea", controller: null },
+      ],
+      alertsCount: 0,
+    });
+    expect(stations).toMatchObject({ total: 4, foreign: 1, unknown: false });
+    expect(stations.foreignGroups).toEqual([
+      { areaId: "a_foreign", areaName: "Biscay", controller: "fra", ships: ["C"] },
+    ]);
+  });
+
+  it("reports the station split as unknown when the map could not be read", () => {
+    const { stations } = buildStatusStrip({
+      projection: projection(),
+      areas: null,
+      alertsCount: 0,
+    });
+    expect(stations).toMatchObject({ total: 4, unknown: true, foreignGroups: [] });
+  });
+
+  it("lists ports largest first with a bar scaled to the largest", () => {
+    const { ports } = buildStatusStrip({
+      projection: projection({
+        ports: [
+          { id: "p2", name: "Malta", areaId: "a_foreign", capacity: 2 },
+          { id: "p1", name: "Portsmouth", areaId: "a_home", capacity: 4 },
+        ],
+      }),
+      areas,
+      alertsCount: 0,
+    });
+    expect(ports.map((p) => [p.name, p.areaName, p.fraction])).toEqual([
+      ["Portsmouth", "Home waters", 1],
+      ["Malta", "a_foreign", 0.5],
+    ]);
+  });
+});

@@ -1,0 +1,368 @@
+import type { ReactNode } from "react";
+import { ArrowRight, Anchor, Flag, Hourglass, Ship } from "lucide-react";
+
+import { cn } from "../lib/utils.js";
+import type {
+  AllocationSegment,
+  BudgetAllocation,
+  OutlookDetail,
+  PortDetail,
+  StationDetail,
+  StripTone,
+} from "./status-strip-state.js";
+
+/**
+ * Bodies for the status strip's hover cards. Each is a small self-contained panel (a header, the
+ * figures behind the readout, and a footnote) so a hover answers "where does this number come
+ * from?" and not only "what is it called?". Every figure is formatted by the view model.
+ */
+
+/** Fill for each stacked-bar segment; the legend swatch and the cards reuse it so they agree. */
+export const SEGMENT_FILL: Record<AllocationSegment["id"], string> = {
+  obligations: "bg-muted-foreground/60",
+  maintenance: "bg-primary/70",
+  research: "bg-warning/80",
+  construction: "border border-dashed border-primary/60 bg-primary/10",
+};
+
+const TONE_TEXT: Record<StripTone, string> = {
+  normal: "text-foreground",
+  alert: "font-semibold text-destructive",
+};
+
+/** The one-line explanation of each budget line, shown under its figures. */
+const LINE_MEANING: Record<AllocationSegment["id"], string> = {
+  obligations: "Fixed monthly commitments that are charged before anything else.",
+  maintenance: "Fleet upkeep, charged every month and higher in wartime.",
+  research: "The standing research budget the engine will actually pay next month.",
+  construction:
+    "An upper bound on shipbuilding: what the yards can absorb, before the treasury limits it. Not part of committed expenses.",
+};
+
+export function CardHeader({
+  icon,
+  title,
+  aside,
+}: {
+  readonly icon?: ReactNode;
+  readonly title: string;
+  readonly aside?: ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
+      <p className="flex min-w-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {icon}
+        <span className="truncate">{title}</span>
+      </p>
+      {aside}
+    </div>
+  );
+}
+
+export function CardFoot({ children }: { readonly children: ReactNode }) {
+  return (
+    <p className="border-t bg-muted/30 px-3 py-2 text-xs leading-snug text-muted-foreground">
+      {children}
+    </p>
+  );
+}
+
+/** A thin proportional bar; `fraction` is clamped so an overshoot never leaves the track. */
+function Meter({
+  fraction,
+  fill,
+  className,
+}: {
+  readonly fraction: number;
+  readonly fill: string;
+  readonly className?: string;
+}) {
+  const clamped = Math.min(1, Math.max(0, fraction));
+  return (
+    <span
+      aria-hidden="true"
+      className={cn("block h-1.5 w-full overflow-hidden rounded-full bg-muted", className)}
+    >
+      <span
+        className={cn("block h-full rounded-full", fill)}
+        style={{ width: `${String(Math.round(clamped * 1000) / 10)}%` }}
+      />
+    </span>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  tone = "normal",
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly tone?: StripTone;
+}) {
+  return (
+    <div className="min-w-0 rounded-md bg-muted/40 px-2 py-1">
+      <dt className="truncate text-xs text-muted-foreground">{label}</dt>
+      <dd className={cn("text-xs font-medium tabular-nums", TONE_TEXT[tone])}>{value}</dd>
+    </div>
+  );
+}
+
+/** One budget line: its amount, how much of the appropriation and of the committed total it takes. */
+export function BudgetLineCard({
+  segment,
+  allocation,
+  note,
+}: {
+  readonly segment: AllocationSegment;
+  readonly allocation: BudgetAllocation;
+  readonly note: string;
+}) {
+  const planned = segment.kind === "planned";
+  return (
+    <>
+      <CardHeader
+        title={segment.label}
+        icon={
+          <span
+            aria-hidden="true"
+            className={cn("size-2.5 shrink-0 rounded-sm", SEGMENT_FILL[segment.id])}
+          />
+        }
+        aside={
+          <span className="text-xs font-medium text-muted-foreground">
+            {planned ? "Upper bound" : "Committed"}
+          </span>
+        }
+      />
+      <div className="space-y-2 px-3 py-2.5">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-lg leading-6 font-semibold tabular-nums">{segment.value}</span>
+          <span className="text-xs text-muted-foreground">per month</span>
+        </div>
+        <div className="space-y-1">
+          <Meter fraction={segment.fraction} fill={SEGMENT_FILL[segment.id]} />
+          <div className="flex justify-between text-xs tabular-nums text-muted-foreground">
+            <span>{segment.percent} of the appropriation</span>
+            <span>{allocation.appropriation}</span>
+          </div>
+        </div>
+        <dl className="grid grid-cols-2 gap-1.5">
+          <Stat label="Over a year" value={segment.yearly} />
+          <Stat
+            label={planned ? "In committed total" : "Of committed total"}
+            value={planned ? "Not included" : segment.shareOfCommitted}
+          />
+        </dl>
+      </div>
+      <CardFoot>
+        {note === "" ? LINE_MEANING[segment.id] : `${LINE_MEANING[segment.id]} ${note}`}
+      </CardFoot>
+    </>
+  );
+}
+
+/** The appropriation walked down, line by line, to the monthly balance. */
+export function BalanceCard({ outlook }: { readonly outlook: OutlookDetail }) {
+  const { balance } = outlook;
+  return (
+    <>
+      <CardHeader
+        title="Balance breakdown"
+        aside={
+          <span
+            className={cn("text-xs font-semibold uppercase tracking-wide", TONE_TEXT[balance.tone])}
+          >
+            {balance.status}
+          </span>
+        }
+      />
+      <div className="space-y-2 px-3 py-2.5">
+        <div className="flex items-baseline justify-between gap-3 text-xs">
+          <span className="text-muted-foreground">Monthly appropriation</span>
+          <span className="font-semibold tabular-nums">{outlook.appropriation}</span>
+        </div>
+        <ol className="space-y-1.5">
+          {outlook.steps.map((step) => (
+            <li key={step.id} data-step={step.id} className="space-y-0.5">
+              <div className="flex items-baseline justify-between gap-3 text-xs">
+                <span className="text-muted-foreground">{step.label}</span>
+                <span className="tabular-nums">
+                  <span className="font-medium">{step.value}</span>
+                  <span className="ml-2 text-muted-foreground">
+                    <ArrowRight className="mr-1 inline size-3" aria-hidden="true" />
+                    {step.remainder}
+                  </span>
+                </span>
+              </div>
+              <Meter
+                fraction={step.remainderFraction}
+                fill={SEGMENT_FILL[step.id as AllocationSegment["id"]]}
+              />
+            </li>
+          ))}
+        </ol>
+        <div
+          data-step="balance"
+          className={cn(
+            "flex items-baseline justify-between gap-3 rounded-md px-2 py-1.5",
+            balance.tone === "alert" ? "bg-destructive/10" : "bg-success/10",
+          )}
+        >
+          <span className="text-xs font-semibold">Monthly balance</span>
+          <span className="text-sm font-semibold tabular-nums">{balance.value}</span>
+        </div>
+        <div className="flex items-baseline justify-between gap-3 text-xs">
+          <span className="text-muted-foreground">With construction at its upper bound</span>
+          <span
+            className={cn("font-medium tabular-nums", TONE_TEXT[outlook.afterConstruction.tone])}
+          >
+            {outlook.afterConstruction.value}
+          </span>
+        </div>
+      </div>
+      <CardFoot>
+        Deficits are spelled out as well as coloured. Lines the campaign does not model are left
+        out, not counted as zero.
+      </CardFoot>
+    </>
+  );
+}
+
+/** Cash now, cash after next month at the construction upper bound, and how long it would last. */
+export function TreasuryCard({ outlook }: { readonly outlook: OutlookDetail }) {
+  return (
+    <>
+      <CardHeader title="Treasury" icon={<Hourglass className="size-3.5" aria-hidden="true" />} />
+      <div className="space-y-2 px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1 rounded-md bg-muted/40 px-2 py-1.5">
+            <p className="text-xs text-muted-foreground">Now</p>
+            <p className="text-sm font-semibold tabular-nums">{outlook.treasury}</p>
+          </div>
+          <ArrowRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <div className="min-w-0 flex-1 rounded-md bg-muted/40 px-2 py-1.5">
+            <p className="text-xs text-muted-foreground">Next month end</p>
+            <p className="text-sm font-semibold tabular-nums">{outlook.monthEndTreasury}</p>
+          </div>
+        </div>
+        <dl className="grid grid-cols-2 gap-1.5">
+          <Stat label="Monthly balance" value={outlook.balance.value} tone={outlook.balance.tone} />
+          <Stat label="Runway" value={outlook.runway ?? "Not draining"} />
+          {outlook.shortfall !== null && (
+            <Stat label="Unpaid costs" value={outlook.shortfall} tone="alert" />
+          )}
+        </dl>
+      </div>
+      <CardFoot>
+        Month-end assumes construction is spent at its upper bound. A shortfall is never carried
+        into the next month.
+      </CardFoot>
+    </>
+  );
+}
+
+/** Where ships sit relative to areas held by other nations, with each ship named. */
+export function StationsCard({ stations }: { readonly stations: StationDetail }) {
+  return (
+    <>
+      <CardHeader
+        title="Foreign stations"
+        icon={<Flag className="size-3.5" aria-hidden="true" />}
+      />
+      <div className="space-y-2 px-3 py-2.5">
+        {stations.unknown ? (
+          <p className="text-xs text-muted-foreground">
+            The map could not be read, so the split cannot be shown.
+          </p>
+        ) : (
+          <>
+            <div className="space-y-1">
+              <Meter
+                fraction={stations.total === 0 ? 0 : stations.foreign / stations.total}
+                fill="bg-primary/70"
+              />
+              <p className="text-xs tabular-nums text-muted-foreground">
+                {stations.foreign} of {stations.total} {stations.total === 1 ? "ship" : "ships"} in
+                areas held by another nation
+              </p>
+            </div>
+            {stations.foreignGroups.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Every ship is in your own areas or an unclaimed sea.
+              </p>
+            ) : (
+              <ul className="max-h-48 space-y-1.5 overflow-y-auto">
+                {stations.foreignGroups.map((group) => (
+                  <li
+                    key={group.areaId}
+                    data-area={group.areaId}
+                    className="rounded-md bg-muted/40 px-2 py-1"
+                  >
+                    <div className="flex items-baseline justify-between gap-2 text-xs">
+                      <span className="flex min-w-0 items-center gap-1 font-medium">
+                        <Ship className="size-3 shrink-0" aria-hidden="true" />
+                        <span className="truncate">{group.areaName}</span>
+                      </span>
+                      <span className="shrink-0 tabular-nums text-muted-foreground">
+                        {group.ships.length}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Held by {group.controller}</p>
+                    <p className="text-xs leading-snug">{group.ships.join(", ")}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </div>
+      <CardFoot>
+        A ship count, not tonnage: ship displacement is not in the campaign views.
+      </CardFoot>
+    </>
+  );
+}
+
+/** Port levels that add up to the shipyard capacity, largest first. */
+export function ShipyardCard({
+  ports,
+  total,
+}: {
+  readonly ports: readonly PortDetail[];
+  readonly total: string;
+}) {
+  return (
+    <>
+      <CardHeader
+        title="Shipyard capacity"
+        icon={<Anchor className="size-3.5" aria-hidden="true" />}
+        aside={<span className="text-xs font-semibold tabular-nums">{total}</span>}
+      />
+      <div className="px-3 py-2.5">
+        {ports.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No ports are listed for this nation.</p>
+        ) : (
+          <ul className="max-h-48 space-y-1.5 overflow-y-auto">
+            {ports.map((port) => (
+              <li key={port.id} data-port={port.id} className="space-y-0.5">
+                <div className="flex items-baseline justify-between gap-2 text-xs">
+                  <span className="min-w-0 truncate">
+                    <span className="font-medium">{port.name}</span>
+                    <span className="text-muted-foreground"> · {port.areaName}</span>
+                  </span>
+                  <span className="shrink-0 font-medium tabular-nums">{port.capacity}</span>
+                </div>
+                <Meter fraction={port.fraction} fill="bg-primary/70" />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <CardFoot>
+        The sum of your ports&rsquo; levels, a stand-in for RTW3 shipyard capacity until per-port
+        facilities land.
+      </CardFoot>
+    </>
+  );
+}

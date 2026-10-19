@@ -21,12 +21,21 @@ import { cn } from "../lib/utils.js";
 import { useBridgeQuery } from "../lib/use-bridge-query.js";
 import { useDensity } from "./DensityContext.js";
 import {
+  BalanceCard,
+  BudgetLineCard,
+  CardFoot,
+  CardHeader,
+  SEGMENT_FILL,
+  ShipyardCard,
+  StationsCard,
+  TreasuryCard,
+} from "./StatusStripCards.js";
+import {
   buildStatusStrip,
   NOT_YET_MODELLED,
   type AllocationSegment,
   type BudgetAllocation,
   type StatusStripModel,
-  type StatusStripSummary,
   type StripRow,
   type StripTone,
 } from "./status-strip-state.js";
@@ -77,24 +86,32 @@ function StatusBadge({ status, tone }: { readonly status: string; readonly tone:
   );
 }
 
-/** A readout label that explains itself on hover or keyboard focus. */
+/**
+ * A readout label that explains itself on hover or keyboard focus. `card` replaces the one-line
+ * explanation with a full panel; `onOpenChange` lets a caller link the card to something else
+ * on the band (the budget bar highlights the line being described).
+ */
 function ReadoutLabel({
   row,
   wrap = false,
   className,
+  card,
+  onOpenChange,
 }: {
   readonly row: StripRow;
   readonly wrap?: boolean;
   readonly className?: string;
+  readonly card?: ReactNode;
+  readonly onOpenChange?: (open: boolean) => void;
 }) {
   const description = descriptionFor(row);
   // Wrapped labels keep their full text; truncating "Shipyard capacity (port levels)" hid meaning.
   const fit = wrap ? "break-words" : "truncate";
-  if (description === "") {
+  if (description === "" && card === undefined) {
     return <span className={cn(LABEL_FIELD, fit, className)}>{row.label}</span>;
   }
   return (
-    <HoverCard>
+    <HoverCard onOpenChange={onOpenChange}>
       <HoverCardTrigger
         delay={200}
         render={<span tabIndex={0} />}
@@ -107,20 +124,17 @@ function ReadoutLabel({
       >
         {row.label}
       </HoverCardTrigger>
-      <HoverCardContent side="top" className="w-64 text-xs leading-snug">
-        {description}
+      <HoverCardContent side="top" className="w-72 overflow-hidden p-0 text-xs leading-snug">
+        {card ?? (
+          <>
+            <CardHeader title={row.label} />
+            <p className="px-3 py-2.5">{description}</p>
+          </>
+        )}
       </HoverCardContent>
     </HoverCard>
   );
 }
-
-/** Fill for each stacked-bar segment; the legend swatch reuses it so the two always agree. */
-const SEGMENT_FILL: Record<AllocationSegment["id"], string> = {
-  obligations: "bg-muted-foreground/60",
-  maintenance: "bg-primary/70",
-  research: "bg-warning/80",
-  construction: "border border-dashed border-primary/60 bg-primary/10",
-};
 
 function rowById(rows: readonly StripRow[], id: string): StripRow | undefined {
   return rows.find((row) => row.id === id);
@@ -160,7 +174,7 @@ function Panel({
 }
 
 /** One headline figure: a small label over a large tabular value. */
-function StatTile({ row }: { readonly row: StripRow }) {
+function StatTile({ row, card }: { readonly row: StripRow; readonly card?: ReactNode }) {
   return (
     <div
       data-row={row.id}
@@ -168,14 +182,14 @@ function StatTile({ row }: { readonly row: StripRow }) {
       data-deferred={row.deferred}
       className="min-w-0 rounded-md bg-muted/40 px-2.5 py-1.5"
     >
-      <ReadoutLabel row={row} wrap />
+      <ReadoutLabel row={row} wrap card={card} />
       <div className="text-base leading-6 font-semibold tabular-nums">{row.value}</div>
     </div>
   );
 }
 
 /** A plain label-and-value line, for the small supporting figures. */
-function LedgerLine({ row }: { readonly row: StripRow }) {
+function LedgerLine({ row, card }: { readonly row: StripRow; readonly card?: ReactNode }) {
   return (
     <div
       data-row={row.id}
@@ -183,7 +197,7 @@ function LedgerLine({ row }: { readonly row: StripRow }) {
       data-deferred={row.deferred}
       className="flex items-baseline justify-between gap-3"
     >
-      <ReadoutLabel row={row} />
+      <ReadoutLabel row={row} card={card} />
       <span
         className={cn(
           "text-xs font-medium tabular-nums",
@@ -196,8 +210,21 @@ function LedgerLine({ row }: { readonly row: StripRow }) {
   );
 }
 
-/** The appropriation as one bar; the empty track is what is left after the committed lines. */
-function AllocationBar({ allocation }: { readonly allocation: BudgetAllocation }) {
+/**
+ * The appropriation as one bar; the empty track is what is left after the committed lines. Each
+ * segment opens the same card as its legend row, and `active` dims the rest so the two read as one.
+ */
+function AllocationBar({
+  allocation,
+  active,
+  onActive,
+  noteFor,
+}: {
+  readonly allocation: BudgetAllocation;
+  readonly active: AllocationSegment["id"] | null;
+  readonly onActive: (id: AllocationSegment["id"] | null) => void;
+  readonly noteFor: (id: AllocationSegment["id"]) => string;
+}) {
   return (
     <div
       role="img"
@@ -210,16 +237,34 @@ function AllocationBar({ allocation }: { readonly allocation: BudgetAllocation }
       {allocation.segments
         .filter((segment) => segment.fraction > 0)
         .map((segment) => (
-          <span
+          <HoverCard
             key={segment.id}
-            data-segment={segment.id}
-            // A tiny but real line keeps a visible sliver; the legend carries its exact share.
-            className={cn(
-              "h-full min-w-0.5 first:rounded-l-full last:rounded-r-full",
-              SEGMENT_FILL[segment.id],
-            )}
-            style={{ width: `${String(Math.round(segment.fraction * 1000) / 10)}%` }}
-          />
+            onOpenChange={(open) => {
+              onActive(open ? segment.id : null);
+            }}
+          >
+            <HoverCardTrigger
+              delay={80}
+              render={<span />}
+              data-segment={segment.id}
+              data-active={active === segment.id}
+              // A tiny but real line keeps a visible sliver; the legend carries its exact share.
+              className={cn(
+                "h-full min-w-0.5 cursor-help transition-[opacity,filter] first:rounded-l-full last:rounded-r-full",
+                SEGMENT_FILL[segment.id],
+                active !== null && active !== segment.id && "opacity-30",
+                active === segment.id && "brightness-125",
+              )}
+              style={{ width: `${String(Math.round(segment.fraction * 1000) / 10)}%` }}
+            />
+            <HoverCardContent side="top" className="w-72 overflow-hidden p-0 text-xs leading-snug">
+              <BudgetLineCard
+                segment={segment}
+                allocation={allocation}
+                note={noteFor(segment.id)}
+              />
+            </HoverCardContent>
+          </HoverCard>
         ))}
     </div>
   );
@@ -227,8 +272,10 @@ function AllocationBar({ allocation }: { readonly allocation: BudgetAllocation }
 
 function BudgetPanel({ model }: { readonly model: StatusStripModel }) {
   const { allocation } = model;
+  const [active, setActive] = useState<AllocationSegment["id"] | null>(null);
   const appropriation = rowById(model.budget, "monthly-budget");
   const committedRow = rowById(model.budget, "total-expenses");
+  const noteFor = (id: AllocationSegment["id"]) => rowById(model.budget, id)?.note ?? "";
   return (
     <Panel name="Budget" aside="Monthly" className="@container">
       <div className="space-y-2">
@@ -242,25 +289,61 @@ function BudgetPanel({ model }: { readonly model: StatusStripModel }) {
             {allocation.appropriation}
           </span>
         </div>
-        <AllocationBar allocation={allocation} />
+        <AllocationBar
+          allocation={allocation}
+          active={active}
+          onActive={setActive}
+          noteFor={noteFor}
+        />
         <div className="grid gap-x-6 gap-y-0.5 @lg:grid-cols-2">
           {allocation.segments.map((segment) => {
             const row = rowById(model.budget, segment.id);
+            const card = (
+              <BudgetLineCard
+                segment={segment}
+                allocation={allocation}
+                note={noteFor(segment.id)}
+              />
+            );
             return (
               <div
                 key={segment.id}
                 data-row={segment.id}
-                className="grid grid-cols-[auto_minmax(0,1fr)_auto_2.5rem] items-baseline gap-x-1.5"
+                data-active={active === segment.id}
+                className={cn(
+                  "grid grid-cols-[auto_minmax(0,1fr)_auto_2.5rem] items-baseline gap-x-1.5 rounded-sm transition-opacity",
+                  active !== null && active !== segment.id && "opacity-50",
+                )}
+                onMouseEnter={() => {
+                  setActive(segment.id);
+                }}
+                onMouseLeave={() => {
+                  setActive(null);
+                }}
               >
                 <span
                   aria-hidden="true"
                   className={cn("size-2 self-center rounded-sm", SEGMENT_FILL[segment.id])}
                 />
-                {row === undefined ? (
-                  <span className={cn(LABEL_FIELD, "break-words")}>{segment.label}</span>
-                ) : (
-                  <ReadoutLabel row={{ ...row, label: segment.label }} wrap />
-                )}
+                <ReadoutLabel
+                  row={
+                    row === undefined
+                      ? {
+                          id: segment.id,
+                          label: segment.label,
+                          value: segment.value,
+                          deferred: false,
+                          note: "",
+                          tone: "normal",
+                        }
+                      : { ...row, label: segment.label }
+                  }
+                  wrap
+                  card={card}
+                  onOpenChange={(open) => {
+                    setActive(open ? segment.id : null);
+                  }}
+                />
                 <span className="text-xs font-medium tabular-nums">{segment.value}</span>
                 <span className="text-right text-xs tabular-nums text-muted-foreground">
                   {segment.percent}
@@ -315,7 +398,11 @@ function OutlookPanel({ model }: { readonly model: StatusStripModel }) {
               alert ? "bg-destructive/10" : "bg-success/10",
             )}
           >
-            <ReadoutLabel row={balance} className="text-foreground/80" />
+            <ReadoutLabel
+              row={balance}
+              className="text-foreground/80"
+              card={<BalanceCard outlook={model.outlook} />}
+            />
             <div className="flex items-center justify-between gap-2">
               <span className="text-lg leading-7 font-semibold tabular-nums">{balance.value}</span>
               {balance.status !== undefined && (
@@ -326,7 +413,11 @@ function OutlookPanel({ model }: { readonly model: StatusStripModel }) {
         )}
         <div className="space-y-0.5">
           {others.map((row) => (
-            <LedgerLine key={row.id} row={row} />
+            <LedgerLine
+              key={row.id}
+              row={row}
+              card={row.id === "treasury" ? <TreasuryCard outlook={model.outlook} /> : undefined}
+            />
           ))}
         </div>
       </div>
@@ -336,11 +427,17 @@ function OutlookPanel({ model }: { readonly model: StatusStripModel }) {
 
 function NationPanel({ model }: { readonly model: StatusStripModel }) {
   const rows = model.nation.filter((row) => !row.deferred);
+  const cardFor = (row: StripRow): ReactNode => {
+    if (row.id === "foreign-stations") return <StationsCard stations={model.stations} />;
+    if (row.id === "shipyard-capacity")
+      return <ShipyardCard ports={model.ports} total={row.value} />;
+    return undefined;
+  };
   return (
     <Panel name="Nation" aside={model.nationName}>
       <div className="grid grid-cols-2 content-start gap-1.5">
         {rows.map((row) => (
-          <StatTile key={row.id} row={row} />
+          <StatTile key={row.id} row={row} card={cardFor(row)} />
         ))}
       </div>
     </Panel>
@@ -349,10 +446,16 @@ function NationPanel({ model }: { readonly model: StatusStripModel }) {
 
 /**
  * Every deferred readout, each with the reason the campaign does not model it yet, behind one
- * popover. Kept off the band so the panel stays short and the placeholder is never a number.
+ * popover grouped by where the readout would sit. Kept off the band so the panel stays short and
+ * the placeholder is never a number.
  */
-function DeferredPopover({ rows }: { readonly rows: readonly StripRow[] }) {
+function DeferredPopover({ model }: { readonly model: StatusStripModel }) {
+  const { deferredRows: rows } = model;
   if (rows.length === 0) return null;
+  const groups = [
+    { name: "Nation", rows: model.nation.filter((row) => row.deferred) },
+    { name: "Budget", rows: model.budget.filter((row) => row.deferred) },
+  ].filter((group) => group.rows.length > 0);
   return (
     <Popover>
       <PopoverTrigger
@@ -375,28 +478,36 @@ function DeferredPopover({ rows }: { readonly rows: readonly StripRow[] }) {
           </p>
         </div>
         <div className="max-h-72 overflow-y-auto">
-          <ul className="divide-y divide-border/60">
-            {rows.map((row) => (
-              <li
-                key={row.id}
-                data-row={row.id}
-                data-tone={row.tone}
-                data-deferred={row.deferred}
-                className="px-3 py-1.5"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium">{row.label}</span>
-                  <Badge
-                    variant="outline"
-                    className="shrink-0 px-1.5 py-0 text-xs text-muted-foreground"
+          {groups.map((group) => (
+            <section key={group.name} aria-label={`${group.name} readouts`}>
+              <p className="sticky top-0 flex items-center justify-between bg-popover/95 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground backdrop-blur-sm">
+                {group.name}
+                <span className="tabular-nums">{group.rows.length}</span>
+              </p>
+              <ul className="divide-y divide-border/60">
+                {group.rows.map((row) => (
+                  <li
+                    key={row.id}
+                    data-row={row.id}
+                    data-tone={row.tone}
+                    data-deferred={row.deferred}
+                    className="px-3 py-1.5"
                   >
-                    {NOT_YET_MODELLED}
-                  </Badge>
-                </div>
-                <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{row.note}</p>
-              </li>
-            ))}
-          </ul>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-medium">{row.label}</span>
+                      <Badge
+                        variant="outline"
+                        className="shrink-0 px-1.5 py-0 text-xs text-muted-foreground"
+                      >
+                        {NOT_YET_MODELLED}
+                      </Badge>
+                    </div>
+                    <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{row.note}</p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
         </div>
       </PopoverContent>
     </Popover>
@@ -404,15 +515,9 @@ function DeferredPopover({ rows }: { readonly rows: readonly StripRow[] }) {
 }
 
 /** Collapsed one-liner: balance, treasury and alerts as hoverable chips. */
-function BalanceChip({
-  summary,
-  budgetRows,
-}: {
-  readonly summary: StatusStripSummary;
-  readonly budgetRows: readonly StripRow[];
-}) {
+function BalanceChip({ model }: { readonly model: StatusStripModel }) {
+  const { summary } = model;
   const alert = summary.balance.tone === "alert";
-  const ledger = budgetRows.filter((row) => !row.deferred);
   return (
     <HoverCard>
       <HoverCardTrigger
@@ -433,58 +538,28 @@ function BalanceChip({
         </span>
         <StatusBadge status={summary.balance.status} tone={summary.balance.tone} />
       </HoverCardTrigger>
-      <HoverCardContent side="top" align="start" className="w-80 space-y-2 p-3">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Monthly budget
-          </p>
-          <StatusBadge status={summary.balance.status} tone={summary.balance.tone} />
-        </div>
-        <dl className="space-y-1 text-xs">
-          {ledger.map((row) => (
-            <div key={row.id} className="flex items-baseline justify-between gap-4">
-              <dt
-                className={cn(
-                  "text-muted-foreground",
-                  row.id === "balance" && "font-semibold text-foreground",
-                )}
-              >
-                {row.label}
-              </dt>
-              <dd
-                className={cn(
-                  "tabular-nums font-medium",
-                  row.tone === "alert" && "font-semibold text-destructive",
-                )}
-              >
-                {row.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        <p className="border-t pt-2 text-xs text-muted-foreground">
-          &ldquo;{NOT_YET_MODELLED}&rdquo; lines are omitted, not zeroed.
-        </p>
+      <HoverCardContent side="top" align="start" className="w-80 overflow-hidden p-0 text-xs">
+        <BalanceCard outlook={model.outlook} />
       </HoverCardContent>
     </HoverCard>
   );
 }
 
-function TreasuryChip({ treasury }: { readonly treasury: string }) {
+function TreasuryChip({ model }: { readonly model: StatusStripModel }) {
   return (
     <HoverCard>
       <HoverCardTrigger
         delay={150}
         render={<button type="button" />}
-        aria-label={`Treasury ${treasury}`}
+        aria-label={`Treasury ${model.summary.treasury}`}
         className={CHIP}
       >
         <Landmark className="size-3.5 text-muted-foreground" aria-hidden="true" />
         <span className="text-muted-foreground">Treasury</span>
-        <span className="tabular-nums font-semibold">{treasury}</span>
+        <span className="tabular-nums font-semibold">{model.summary.treasury}</span>
       </HoverCardTrigger>
-      <HoverCardContent side="top" className="w-auto max-w-64 px-3 py-1.5 text-xs">
-        Cash on hand at the start of the month.
+      <HoverCardContent side="top" className="w-72 overflow-hidden p-0 text-xs">
+        <TreasuryCard outlook={model.outlook} />
       </HoverCardContent>
     </HoverCard>
   );
@@ -507,8 +582,14 @@ function AlertsChip({ alerts }: { readonly alerts: string }) {
         )}
         <span>{alerts}</span>
       </HoverCardTrigger>
-      <HoverCardContent side="top" className="w-auto max-w-64 px-3 py-1.5 text-xs">
-        Strategic priorities the campaign has raised for attention.
+      <HoverCardContent side="top" className="w-64 overflow-hidden p-0 text-xs">
+        <CardHeader title="Priorities" icon={<Bell className="size-3.5" aria-hidden="true" />} />
+        <p className="px-3 py-2.5 text-sm font-semibold">{alerts}</p>
+        <CardFoot>
+          {unavailable
+            ? "The priorities projection could not be read, so no count is shown."
+            : "Strategic priorities the campaign has raised for attention. Open Overview to act on them."}
+        </CardFoot>
       </HoverCardContent>
     </HoverCard>
   );
@@ -543,14 +624,14 @@ export function StatusStripView({ model }: { readonly model: StatusStripModel })
           </span>
         ) : (
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-            <BalanceChip summary={summary} budgetRows={model.budget} />
-            <TreasuryChip treasury={summary.treasury} />
+            <BalanceChip model={model} />
+            <TreasuryChip model={model} />
             <AlertsChip alerts={summary.alerts} />
           </div>
         )}
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
-          <DeferredPopover rows={model.deferredRows} />
+          <DeferredPopover model={model} />
           <Toggle
             variant="outline"
             size="sm"
