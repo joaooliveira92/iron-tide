@@ -111,40 +111,71 @@ function alertsLabel(count: number | null): string {
   return `${count} ${count === 1 ? "alert" : "alerts"}`;
 }
 
-function percentOf(amount: number, whole: number): string {
-  return whole > 0 ? `${String(Math.round((amount / whole) * 100))}%` : "—";
+/**
+ * Whole-number share of `whole`. A non-zero amount never reads "0%" (it is "<1%"), and a missing
+ * amount or no usable appropriation reads "—" rather than a made-up figure.
+ */
+function percentOf(amount: number | null, whole: number | null): string {
+  if (amount === null || whole === null || whole <= 0) return "—";
+  const percent = Math.round((amount / whole) * 100);
+  if (percent === 0 && amount > 0) return "<1%";
+  return `${String(percent)}%`;
+}
+
+/** A figure the engine actually reported: non-finite values are missing, never coerced to zero. */
+function finiteOrNull(value: number): number | null {
+  return Number.isFinite(value) ? value : null;
 }
 
 function buildAllocation(economy: PlayerProjection["economy"]): BudgetAllocation {
+  const appropriation = finiteOrNull(economy.monthlyAppropriation);
   const lines = [
-    { id: "obligations", label: "Obligations", amount: economy.obligations, kind: "committed" },
-    { id: "maintenance", label: "Maintenance", amount: economy.maintenanceCost, kind: "committed" },
-    { id: "research", label: "Research", amount: economy.researchSpend, kind: "committed" },
+    {
+      id: "obligations",
+      label: "Obligations",
+      amount: finiteOrNull(economy.obligations),
+      kind: "committed",
+    },
+    {
+      id: "maintenance",
+      label: "Maintenance",
+      amount: finiteOrNull(economy.maintenanceCost),
+      kind: "committed",
+    },
+    {
+      id: "research",
+      label: "Research",
+      amount: finiteOrNull(economy.researchSpend),
+      kind: "committed",
+    },
     {
       id: "construction",
       label: "Construction (up to)",
-      amount: economy.plannedConstruction,
+      amount: finiteOrNull(economy.plannedConstruction),
       kind: "planned",
     },
   ] as const;
-  const committed = lines.filter((l) => l.kind === "committed").reduce((n, l) => n + l.amount, 0);
-  const outlay = lines.reduce((n, l) => n + l.amount, 0);
-  const scale = Math.max(economy.monthlyAppropriation, outlay);
+  const known = (amount: number | null) => Math.max(0, amount ?? 0);
+  const committed = lines
+    .filter((l) => l.kind === "committed")
+    .reduce((n, l) => n + (l.amount ?? 0), 0);
+  // Bar widths are display-only: they share one scale (the larger of the appropriation and the
+  // total outlay) so the bar never exceeds its container, while the legend keeps the true share.
+  const outlay = lines.reduce((n, l) => n + known(l.amount), 0);
+  const scale = Math.max(known(appropriation), outlay);
   return {
-    appropriation: formatMoney(economy.monthlyAppropriation),
+    appropriation: appropriation === null ? "—" : formatMoney(appropriation),
     segments: lines.map((l) => ({
       id: l.id,
       label: l.label,
-      value: formatMoney(l.amount),
+      value: l.amount === null ? "—" : formatMoney(l.amount),
       kind: l.kind,
-      percent: percentOf(l.amount, economy.monthlyAppropriation),
-      fraction: scale > 0 ? l.amount / scale : 0,
+      percent: percentOf(l.amount, appropriation),
+      fraction: scale > 0 ? known(l.amount) / scale : 0,
     })),
-    committed: {
-      value: formatMoney(committed),
-      percent: percentOf(committed, economy.monthlyAppropriation),
-    },
-    overCommitted: committed > economy.monthlyAppropriation,
+    committed: { value: formatMoney(committed), percent: percentOf(committed, appropriation) },
+    // No appropriation at all with committed lines is over-committed; an unknown one is not judged.
+    overCommitted: appropriation !== null && committed > Math.max(0, appropriation),
   };
 }
 

@@ -5,6 +5,7 @@ import { BridgeProvider } from "../lib/bridge-context.js";
 import { PreferencesProvider } from "../lib/preferences-context.js";
 import { createPreferencesBridgeStub } from "../lib/preferences-test-bridge.js";
 import { DensityProvider } from "./DensityContext.js";
+import { axeViolations } from "../lib/axe.js";
 import { StatusStripView } from "./StatusStrip.js";
 import { buildStatusStrip } from "./status-strip-state.js";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
@@ -156,6 +157,60 @@ describe("StatusStripView", () => {
       </BridgeProvider>,
     );
     await act(async () => {});
-    expect(screen.getByText(/over-committed/i)).toBeTruthy();
+    expect(screen.getAllByText(/over-committed/i).length).toBeGreaterThan(0);
+    const bar = within(screen.getByRole("group", { name: "Budget" })).getByRole("img");
+    expect(bar.getAttribute("aria-label")).toMatch(/over-committed/);
+  });
+
+  it("draws no bar segment for a zero line", async () => {
+    const stub = createPreferencesBridgeStub({ ...DEFAULT_APP_PREFERENCES });
+    const base = model(100);
+    render(
+      <BridgeProvider bridge={stub.bridge}>
+        <PreferencesProvider>
+          <DensityProvider>
+            <StatusStripView
+              model={{
+                ...base,
+                allocation: {
+                  ...base.allocation,
+                  segments: base.allocation.segments.map((s) =>
+                    s.id === "research" ? { ...s, fraction: 0 } : s,
+                  ),
+                },
+              }}
+            />
+          </DensityProvider>
+        </PreferencesProvider>
+      </BridgeProvider>,
+    );
+    await act(async () => {});
+    const budget = screen.getByRole("group", { name: "Budget" });
+    expect(budget.querySelector("[data-segment=research]")).toBeNull();
+    expect(within(budget).getByText("Research")).toBeTruthy();
+  });
+
+  it("has no axe violations expanded, in deficit, or with the deferred popover open", async () => {
+    const { container } = await renderStrip(-450);
+    expect(await axeViolations(container)).toEqual([]);
+    fireEvent.click(screen.getByRole("button", { name: /Not yet modelled \(\d+\)/ }));
+    expect(await axeViolations(document.body)).toEqual([]);
+  });
+
+  it("orders Nation, Budget, Outlook in reading order under level-3 headings", async () => {
+    await renderStrip();
+    const region = screen.getByRole("region", { name: "Status strip" });
+    const headings = within(region).getAllByRole("heading", { level: 3 });
+    expect(headings.map((h) => h.textContent)).toEqual(["Nation", "Budget", "Outlook"]);
+  });
+
+  it("opens the deferred popover from the keyboard and closes it with Escape", async () => {
+    await renderStrip();
+    const trigger = screen.getByRole("button", { name: /Not yet modelled \(\d+\)/ });
+    trigger.focus();
+    fireEvent.click(trigger);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+    await waitFor(() => expect(trigger.getAttribute("aria-expanded")).toBe("false"));
   });
 });

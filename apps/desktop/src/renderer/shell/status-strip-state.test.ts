@@ -255,4 +255,76 @@ describe("buildStatusStrip", () => {
     const strip = buildStatusStrip({ projection: projection(), areas, alertsCount: 0 });
     expect(strip.nationName).toBe("Britain");
   });
+
+  const withEconomy = (patch: Partial<PlayerProjection["economy"]>) => {
+    const base = projection();
+    return buildStatusStrip({
+      projection: projection({ economy: { ...base.economy, ...patch } }),
+      areas,
+      alertsCount: 0,
+    }).allocation;
+  };
+
+  it("is not over-committed when committed lines exactly equal the appropriation", () => {
+    const a = withEconomy({ monthlyAppropriation: 3300 });
+    expect(a.overCommitted).toBe(false);
+    expect(a.committed.percent).toBe("100%");
+  });
+
+  it("judges over-commitment on committed lines only, never on the construction bound", () => {
+    // Committed £3,300 fits in £3,500 even though committed + construction (£4,300) does not.
+    const a = withEconomy({ monthlyAppropriation: 3500 });
+    expect(a.overCommitted).toBe(false);
+  });
+
+  it("is over-committed when there is no appropriation but there are committed lines", () => {
+    expect(withEconomy({ monthlyAppropriation: 0 }).overCommitted).toBe(true);
+    expect(withEconomy({ monthlyAppropriation: Number.NaN }).overCommitted).toBe(false);
+  });
+
+  it("never rounds a non-zero amount down to 0%", () => {
+    const a = withEconomy({ monthlyAppropriation: 100000, obligations: 20, researchSpend: 3 });
+    const pct = Object.fromEntries(a.segments.map((s) => [s.id, s.percent]));
+    expect(pct["obligations"]).toBe("<1%");
+    expect(pct["research"]).toBe("<1%");
+    expect(a.segments.find((s) => s.id === "obligations")?.fraction).toBeGreaterThan(0);
+  });
+
+  it("keeps a missing (non-finite) line missing: no figure, no width, not counted", () => {
+    const a = withEconomy({ researchSpend: Number.NaN });
+    const research = a.segments.find((s) => s.id === "research");
+    expect(research).toMatchObject({ value: "—", percent: "—", fraction: 0 });
+    expect(a.committed.value).toBe("£2,500");
+    expect(a.segments.every((s) => Number.isFinite(s.fraction))).toBe(true);
+  });
+
+  it("treats an invalid appropriation as none: no percentages, bounded finite widths", () => {
+    for (const bad of [Number.NaN, Number.POSITIVE_INFINITY, -5]) {
+      const a = withEconomy({ monthlyAppropriation: bad });
+      expect(a.segments.every((s) => s.percent === "—")).toBe(true);
+      expect(a.committed.percent).toBe("—");
+      for (const s of a.segments) {
+        expect(Number.isFinite(s.fraction)).toBe(true);
+        expect(s.fraction).toBeGreaterThanOrEqual(0);
+        expect(s.fraction).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
+  it("clamps a negative line's bar width to zero without hiding its true amount", () => {
+    const seg = withEconomy({ obligations: -200 }).segments.find((s) => s.id === "obligations");
+    expect(seg?.fraction).toBe(0);
+    expect(seg?.value).toBe("-£200");
+  });
+
+  it("keeps the bar bounded and the legend honest for very large values", () => {
+    const a = withEconomy({
+      monthlyAppropriation: 1,
+      obligations: 9_000_000_000_000,
+      maintenanceCost: 9_000_000_000_000,
+    });
+    expect(a.segments.reduce((n, s) => n + s.fraction, 0)).toBeLessThanOrEqual(1 + 1e-9);
+    expect(a.overCommitted).toBe(true);
+    expect(a.committed.percent).toMatch(/^\d+%$/);
+  });
 });

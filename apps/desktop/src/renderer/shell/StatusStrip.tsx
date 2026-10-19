@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronUp,
   CircleAlert,
+  CircleCheck,
   Eye,
   Info,
   Landmark,
@@ -54,26 +55,43 @@ function descriptionFor(row: StripRow): string {
 
 /** A surplus/deficit stamp. The word is always present, so colour is never the only signal. */
 function StatusBadge({ status, tone }: { readonly status: string; readonly tone: StripTone }) {
+  // The text stays body-coloured: the red and green text tokens miss 4.5:1 on their own tints.
+  // Colour rides on the border, tint and icon, and the word carries the meaning.
+  const Icon = tone === "alert" ? CircleAlert : CircleCheck;
   return (
     <Badge
       variant="outline"
       className={cn(
-        "px-1.5 py-0 text-xs font-semibold uppercase tracking-wide",
+        "gap-1 px-1.5 py-0 text-xs font-semibold uppercase tracking-wide text-foreground",
         tone === "alert"
-          ? "border-destructive/40 bg-destructive/10 text-destructive"
-          : "border-success/40 bg-success/10 text-success",
+          ? "border-destructive/40 bg-destructive/10"
+          : "border-success/40 bg-success/10",
       )}
     >
+      <Icon
+        className={cn("size-3", tone === "alert" ? "text-destructive" : "text-success")}
+        aria-hidden="true"
+      />
       {status}
     </Badge>
   );
 }
 
 /** A readout label that explains itself on hover or keyboard focus. */
-function ReadoutLabel({ row }: { readonly row: StripRow }) {
+function ReadoutLabel({
+  row,
+  wrap = false,
+  className,
+}: {
+  readonly row: StripRow;
+  readonly wrap?: boolean;
+  readonly className?: string;
+}) {
   const description = descriptionFor(row);
+  // Wrapped labels keep their full text; truncating "Shipyard capacity (port levels)" hid meaning.
+  const fit = wrap ? "break-words" : "truncate";
   if (description === "") {
-    return <span className={cn(LABEL_FIELD, "truncate")}>{row.label}</span>;
+    return <span className={cn(LABEL_FIELD, fit, className)}>{row.label}</span>;
   }
   return (
     <HoverCard>
@@ -82,7 +100,9 @@ function ReadoutLabel({ row }: { readonly row: StripRow }) {
         render={<span tabIndex={0} />}
         className={cn(
           LABEL_FIELD,
-          "cursor-help truncate underline decoration-muted-foreground/30 decoration-dotted underline-offset-2 outline-none hover:text-foreground focus-visible:text-foreground",
+          fit,
+          className,
+          "cursor-help underline decoration-muted-foreground/30 decoration-dotted underline-offset-2 outline-none hover:text-foreground focus-visible:text-foreground",
         )}
       >
         {row.label}
@@ -122,14 +142,16 @@ function Panel({
     <div
       role="group"
       aria-label={name}
-      className={cn("min-w-0 rounded-lg border bg-card/40 px-3 py-2", className)}
+      className={cn("flex min-w-0 flex-col rounded-lg border bg-card/40 px-3 py-2", className)}
     >
       <div className="mb-1.5 flex items-baseline justify-between gap-2">
-        <h3 className="text-xs font-semibold uppercase leading-4 tracking-widest text-muted-foreground/70">
+        <h3 className="text-xs font-semibold uppercase leading-4 tracking-widest text-muted-foreground">
           {name}
         </h3>
         {aside !== undefined && (
-          <span className="truncate text-xs font-medium text-foreground/80">{aside}</span>
+          <span title={aside} className="truncate text-xs font-medium text-foreground/80">
+            {aside}
+          </span>
         )}
       </div>
       {children}
@@ -146,7 +168,7 @@ function StatTile({ row }: { readonly row: StripRow }) {
       data-deferred={row.deferred}
       className="min-w-0 rounded-md bg-muted/40 px-2.5 py-1.5"
     >
-      <ReadoutLabel row={row} />
+      <ReadoutLabel row={row} wrap />
       <div className="text-base leading-6 font-semibold tabular-nums">{row.value}</div>
     </div>
   );
@@ -179,23 +201,26 @@ function AllocationBar({ allocation }: { readonly allocation: BudgetAllocation }
   return (
     <div
       role="img"
-      aria-label={`${allocation.committed.value} committed, ${allocation.committed.percent} of the monthly appropriation of ${allocation.appropriation}`}
+      aria-label={`${allocation.committed.value} committed, ${allocation.committed.percent} of the monthly appropriation of ${allocation.appropriation}${allocation.overCommitted ? ", over-committed" : ""}`}
       className={cn(
         "flex h-2.5 w-full gap-px overflow-hidden rounded-full bg-muted",
         allocation.overCommitted && "ring-1 ring-destructive/50",
       )}
     >
-      {allocation.segments.map((segment) => (
-        <span
-          key={segment.id}
-          data-segment={segment.id}
-          className={cn(
-            "h-full first:rounded-l-full last:rounded-r-full",
-            SEGMENT_FILL[segment.id],
-          )}
-          style={{ width: `${String(Math.round(segment.fraction * 1000) / 10)}%` }}
-        />
-      ))}
+      {allocation.segments
+        .filter((segment) => segment.fraction > 0)
+        .map((segment) => (
+          <span
+            key={segment.id}
+            data-segment={segment.id}
+            // A tiny but real line keeps a visible sliver; the legend carries its exact share.
+            className={cn(
+              "h-full min-w-0.5 first:rounded-l-full last:rounded-r-full",
+              SEGMENT_FILL[segment.id],
+            )}
+            style={{ width: `${String(Math.round(segment.fraction * 1000) / 10)}%` }}
+          />
+        ))}
     </div>
   );
 }
@@ -205,7 +230,7 @@ function BudgetPanel({ model }: { readonly model: StatusStripModel }) {
   const appropriation = rowById(model.budget, "monthly-budget");
   const committedRow = rowById(model.budget, "total-expenses");
   return (
-    <Panel name="Budget" aside="Monthly" className="md:col-span-1">
+    <Panel name="Budget" aside="Monthly" className="@container">
       <div className="space-y-2">
         <div data-row="monthly-budget" className="flex items-baseline justify-between gap-3">
           {appropriation === undefined ? (
@@ -218,7 +243,7 @@ function BudgetPanel({ model }: { readonly model: StatusStripModel }) {
           </span>
         </div>
         <AllocationBar allocation={allocation} />
-        <div className="grid gap-x-6 gap-y-0.5 sm:grid-cols-2">
+        <div className="grid gap-x-6 gap-y-0.5 @lg:grid-cols-2">
           {allocation.segments.map((segment) => {
             const row = rowById(model.budget, segment.id);
             return (
@@ -232,9 +257,9 @@ function BudgetPanel({ model }: { readonly model: StatusStripModel }) {
                   className={cn("size-2 self-center rounded-sm", SEGMENT_FILL[segment.id])}
                 />
                 {row === undefined ? (
-                  <span className={cn(LABEL_FIELD, "truncate")}>{segment.label}</span>
+                  <span className={cn(LABEL_FIELD, "break-words")}>{segment.label}</span>
                 ) : (
-                  <ReadoutLabel row={{ ...row, label: segment.label }} />
+                  <ReadoutLabel row={{ ...row, label: segment.label }} wrap />
                 )}
                 <span className="text-xs font-medium tabular-nums">{segment.value}</span>
                 <span className="text-right text-xs tabular-nums text-muted-foreground">
@@ -253,8 +278,9 @@ function BudgetPanel({ model }: { readonly model: StatusStripModel }) {
             {allocation.overCommitted && (
               <Badge
                 variant="outline"
-                className="border-destructive/40 bg-destructive/10 px-1.5 py-0 text-xs font-semibold uppercase tracking-wide text-destructive"
+                className="gap-1 border-destructive/40 bg-destructive/10 px-1.5 py-0 text-xs font-semibold uppercase tracking-wide text-foreground"
               >
+                <CircleAlert className="size-3 text-destructive" aria-hidden="true" />
                 Over-committed
               </Badge>
             )}
@@ -289,16 +315,9 @@ function OutlookPanel({ model }: { readonly model: StatusStripModel }) {
               alert ? "bg-destructive/10" : "bg-success/10",
             )}
           >
-            <ReadoutLabel row={balance} />
+            <ReadoutLabel row={balance} className="text-foreground/80" />
             <div className="flex items-center justify-between gap-2">
-              <span
-                className={cn(
-                  "text-lg leading-7 font-semibold tabular-nums",
-                  alert && "text-destructive",
-                )}
-              >
-                {balance.value}
-              </span>
+              <span className="text-lg leading-7 font-semibold tabular-nums">{balance.value}</span>
               {balance.status !== undefined && (
                 <StatusBadge status={balance.status} tone={balance.tone} />
               )}
@@ -319,7 +338,7 @@ function NationPanel({ model }: { readonly model: StatusStripModel }) {
   const rows = model.nation.filter((row) => !row.deferred);
   return (
     <Panel name="Nation" aside={model.nationName}>
-      <div className="grid grid-cols-2 gap-1.5">
+      <div className="grid grid-cols-2 content-start gap-1.5">
         {rows.map((row) => (
           <StatTile key={row.id} row={row} />
         ))}
@@ -345,7 +364,7 @@ function DeferredPopover({ rows }: { readonly rows: readonly StripRow[] }) {
           {NOT_YET_MODELLED} ({rows.length})
         </span>
       </PopoverTrigger>
-      <PopoverContent side="top" align="end" className="w-96 p-0">
+      <PopoverContent side="top" align="end" aria-label={NOT_YET_MODELLED} className="w-96 p-0">
         <div className="border-b px-3 py-2">
           <p className="flex items-center gap-1.5 text-xs font-semibold">
             <Info className="size-3.5 text-muted-foreground" aria-hidden="true" />
