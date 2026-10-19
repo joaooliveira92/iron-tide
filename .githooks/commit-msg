@@ -9,4 +9,6 @@ if ! command -v node >/dev/null 2>&1; then
   esac
 fi
 # Validate the Conventional-Commit subject (ADR-0099/0107).
-exec node scripts/check-commit-msgs.cjs --message-file "$1"
+node scripts/check-commit-msgs.cjs --message-file "$1" || exit 1
+# Refuse authoritative source changes with no golden re-pin or trailer (ADR-0238).
+exec node scripts/check-golden-repin-staged.mjs --message-file "$1"
