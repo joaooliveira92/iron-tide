@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ArmourRegionId, DesignDraft, WorkshopView } from "@bluewave/ship-design";
 import type { DrawingBoardContent } from "../../content.js";
 import { Checkbox } from "../../../ui/checkbox.js";
@@ -31,6 +31,7 @@ import {
   MassMarkersLayer,
 } from "./ship-view-layers.js";
 import { DEFAULT_VIEW, SHIP_VIEW_DEFS, type ShipOverlay, type ShipView } from "./ship-view.js";
+import { buildAnatomyShip } from "./anatomy/ship-anatomy.js";
 import { planModel, type PlanModel } from "./planModel.js";
 import { useHullPlanEditing, type HullPlanEditing } from "./useHullPlanEditing.js";
 import { Info } from "lucide-react";
@@ -132,6 +133,13 @@ export function HullPlanPanel({
   const on = (overlay: ShipOverlay) => givenOverlays === undefined || givenOverlays.has(overlay);
   const arcsOn = (overlaysGiven ? on("arcs") : true) && showArcs;
   const lcgPermille = view.compiled.stability?.lcgPermille;
+  const anatomy = useMemo(
+    () => ({
+      starboard: buildAnatomyShip({ draft, view, model, azimuth: 135 }),
+      port: buildAnatomyShip({ draft, view, model, azimuth: 225 }),
+    }),
+    [draft, view, model],
+  );
   return (
     <Panel title="Hull plan" className="rounded-none border-0 bg-transparent">
       <PlanToolOptions
@@ -176,7 +184,12 @@ export function HullPlanPanel({
             <HullZoneLayer frame={frame} zones={zones} />
             {viewDef.id === "compartments" && <CompartmentLayer frame={frame} zones={zones} />}
             {on("armour") && (
-              <ArmourZoneLayer frame={frame} draft={draft} highlight={armourHighlight} />
+              <ArmourZoneLayer
+                frame={frame}
+                draft={draft}
+                highlight={armourHighlight}
+                anatomy={anatomy.starboard}
+              />
             )}
             {on("topside") && (
               <HullTopsideLayer frame={frame} draft={draft} content={content} zones={zones} />
@@ -226,6 +239,7 @@ export function HullPlanPanel({
             targets={targets}
             disabled={tool.mode !== "off"}
             warns={(instanceId) => model.warns({ kind: "fitting", instanceId })}
+            anatomy={anatomy}
           />
           {on("conflicts") && (
             <FindingMarkers
@@ -248,7 +262,8 @@ export function HullPlanPanel({
       </div>
       <div className="space-y-1">
         <p className="text-xs font-medium text-muted-foreground">
-          Profile · depth {formatHullMetres(facts.depthM, 1)} m · draught {formatHullMetres(facts.draughtM, 1)} m
+          Profile · depth {formatHullMetres(facts.depthM, 1)} m · draught{" "}
+          {formatHullMetres(facts.draughtM, 1)} m
         </p>
         <ProfileView
           draft={draft}

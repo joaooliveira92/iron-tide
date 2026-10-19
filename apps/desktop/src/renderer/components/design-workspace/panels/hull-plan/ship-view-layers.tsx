@@ -1,4 +1,8 @@
+import type { ReactNode } from "react";
 import type { ArmourRegionId, DesignDraft } from "@bluewave/ship-design";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../../ui/hover-card.js";
+import { AnatomyCardContent } from "./anatomy/AnatomyCardContent.js";
+import type { AnatomyShip } from "./anatomy/ship-anatomy.js";
 import { machineryRooms } from "../../selection/facts.js";
 import { LABEL_FONT, NON_SCALING, STROKE } from "./drafting.js";
 import { PLAN_MID, type PlanFrame } from "./geometry.js";
@@ -36,6 +40,39 @@ function band(
   };
 }
 
+/** A hoverable armour zone: the anatomy plate opens on the belt or citadel only. */
+function ArmourHover({
+  anatomy,
+  id,
+  title,
+  children,
+}: {
+  readonly anatomy: AnatomyShip | undefined;
+  readonly id: string;
+  readonly title: string;
+  readonly children: ReactNode;
+}) {
+  if (anatomy === undefined) return <>{children}</>;
+  return (
+    <HoverCard>
+      <HoverCardTrigger render={<g className="cursor-help" />}>{children}</HoverCardTrigger>
+      <HoverCardContent
+        side="top"
+        collisionPadding={12}
+        className="w-[26rem] max-w-[min(26rem,calc(100vw-2rem))] p-2"
+      >
+        <AnatomyCardContent
+          plate={anatomy}
+          highlight={id}
+          title={title}
+          detail={anatomy.facts.get(id)}
+          testId="armour-anatomy"
+        />
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
+
 /**
  * The citadel and the armoured belt. SCHEMATIC: the belt and citadel lengths are real, but the design model gives
  * no station for either, so both are drawn amidships — a convention, not a position from the design.
@@ -44,11 +81,14 @@ export function ArmourZoneLayer({
   frame,
   draft,
   highlight,
+  anatomy,
 }: {
   readonly frame: PlanFrame;
   readonly draft: DesignDraft;
   /** The region the Protection editor has selected, highlighted over the scheme (presentation only). */
   readonly highlight?: ArmourRegionId | null;
+  /** The isometric plate the belt and citadel hover cards show. Omitted, the zones stay inert. */
+  readonly anatomy?: AnatomyShip;
 }) {
   const lengthWlMm = Number(draft.hull.lengthWl);
   const citadelPermille = permilleOf(draft.armour.citadelLengthMm, lengthWlMm);
@@ -66,37 +106,45 @@ export function ArmourZoneLayer({
   return (
     <g data-testid="armour-zones">
       {citadelPermille > 0 && (
-        <rect
-          x={citadel.x}
-          width={citadel.width}
-          y={BAND.y(frame)}
-          height={BAND.h(frame)}
-          className="pointer-events-none fill-primary stroke-primary"
-          fillOpacity={0.08}
-          strokeOpacity={0.6}
-          strokeDasharray="4 2"
-          strokeWidth={STROKE.guide}
-          {...NON_SCALING}
-          data-testid="armour-citadel"
-        >
-          <title>{`Armoured citadel (${Math.round(citadelPermille)}‰ of length; amidships is a convention)`}</title>
-        </rect>
+        <ArmourHover anatomy={anatomy} id="armour:citadel" title="Armoured citadel">
+          <rect
+            x={citadel.x}
+            width={citadel.width}
+            y={BAND.y(frame)}
+            height={BAND.h(frame)}
+            className={`fill-primary stroke-primary ${
+              anatomy === undefined ? "pointer-events-none" : "cursor-help"
+            }`}
+            fillOpacity={0.08}
+            strokeOpacity={0.6}
+            strokeDasharray="4 2"
+            strokeWidth={STROKE.guide}
+            {...NON_SCALING}
+            data-testid="armour-citadel"
+          >
+            <title>{`Armoured citadel (${Math.round(citadelPermille)}‰ of length; amidships is a convention)`}</title>
+          </rect>
+        </ArmourHover>
       )}
       {beltPermille > 0 && (
-        <rect
-          x={belt.x}
-          width={belt.width}
-          y={BAND.y(frame)}
-          height={BAND.h(frame)}
-          className="pointer-events-none fill-primary stroke-primary"
-          fillOpacity={0.24}
-          strokeOpacity={0.85}
-          strokeWidth={STROKE.structure}
-          {...NON_SCALING}
-          data-testid="armour-belt"
-        >
-          <title>{`Main belt (${Math.round(beltPermille)}‰ of length; amidships is a convention)`}</title>
-        </rect>
+        <ArmourHover anatomy={anatomy} id="armour:belt" title="Main belt">
+          <rect
+            x={belt.x}
+            width={belt.width}
+            y={BAND.y(frame)}
+            height={BAND.h(frame)}
+            className={`fill-primary stroke-primary ${
+              anatomy === undefined ? "pointer-events-none" : "cursor-help"
+            }`}
+            fillOpacity={0.24}
+            strokeOpacity={0.85}
+            strokeWidth={STROKE.structure}
+            {...NON_SCALING}
+            data-testid="armour-belt"
+          >
+            <title>{`Main belt (${Math.round(beltPermille)}‰ of length; amidships is a convention)`}</title>
+          </rect>
+        </ArmourHover>
       )}
       {highlightBand !== undefined && region !== undefined && (
         <rect

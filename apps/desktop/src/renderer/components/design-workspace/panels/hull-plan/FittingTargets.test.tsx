@@ -1,10 +1,11 @@
 import type { DesignDraft } from "@bluewave/ship-design";
-import { act, fireEvent, render } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
 import { createSelectionStore } from "../../selection/store.js";
 import { ShipSelectionProvider } from "../../selection/useShipSelection.js";
 import { planFrame } from "./geometry.js";
 import { FittingTargets, type FittingTarget } from "./FittingTargets.js";
+import type { AnatomyShip } from "./anatomy/ship-anatomy.js";
 
 const frame = planFrame({ lengthWl: 100_000, beam: 14_000 } as never);
 const draft = {
@@ -23,6 +24,19 @@ const targets = new Map<string, FittingTarget>([
   ["a", { instanceId: "a", name: "Gun A", mount: "A" }],
   ["b", { instanceId: "b", name: "Gun B", mount: undefined }],
 ]);
+const plate = (azimuth: number, fact: string): AnatomyShip => ({
+  width: 120,
+  height: 70,
+  label: `plate ${azimuth}`,
+  azimuth,
+  parts: [],
+  anchors: new Map([["a", { at: [60, 35], radius: 8 }]]),
+  facts: new Map([
+    ["a", fact],
+    ["b", `B fact ${fact}`],
+  ]),
+});
+const anatomy = { starboard: plate(135, "starboard plate"), port: plate(225, "port plate") };
 const draw = (
   over: Partial<Parameters<typeof FittingTargets>[0]> = {},
   store = createSelectionStore(),
@@ -85,6 +99,33 @@ describe("FittingTargets", () => {
     const ring = container.querySelector("[data-testid='fitting-linked-ring']")!;
     expect(ring).not.toBeNull();
     expect(ring.closest("[data-target]")!.getAttribute("data-target")).toBe("b");
+  });
+
+  it("shows the starboard anatomy plate when a centreline fitting is hovered", async () => {
+    const { container } = draw({ anatomy });
+    await act(async () => {
+      (buttons(container)[0] as SVGGElement).focus();
+      fireEvent.focus(buttons(container)[0]!);
+    });
+    const card = await screen.findByTestId("fitting-anatomy");
+    expect(card.textContent).toContain("Gun A");
+    expect(card.textContent).toContain("starboard plate");
+    expect(card.querySelector("[data-testid='anatomy-ship']")!.getAttribute("data-azimuth")).toBe(
+      "135",
+    );
+  });
+
+  it("turns the plate to the port broadside for a port fitting", async () => {
+    const { container } = draw({ anatomy });
+    await act(async () => {
+      (buttons(container)[1] as SVGGElement).focus();
+      fireEvent.focus(buttons(container)[1]!);
+    });
+    const card = await screen.findByTestId("fitting-anatomy");
+    expect(card.textContent).toContain("B fact port plate");
+    expect(card.querySelector("[data-testid='anatomy-ship']")!.getAttribute("data-azimuth")).toBe(
+      "225",
+    );
   });
 
   it("steps aside while a plan tool is active, leaving the click layer the clicks", () => {
