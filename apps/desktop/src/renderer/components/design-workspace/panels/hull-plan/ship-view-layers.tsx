@@ -5,6 +5,7 @@ import { AnatomyCardContent } from "./anatomy/AnatomyCardContent.js";
 import type { AnatomyShip } from "./anatomy/ship-anatomy.js";
 import { machineryRooms } from "../../selection/facts.js";
 import { LABEL_FONT, NON_SCALING, STROKE } from "./drafting.js";
+import { armourShape, BELT_INNER, BELT_OUTER, regionPath, stripPath } from "./armour-plan.js";
 import { PLAN_MID, type PlanFrame } from "./geometry.js";
 
 /**
@@ -96,25 +97,45 @@ export function ArmourZoneLayer({
   const region =
     highlight == null ? undefined : draft.armour.regions.find((r) => r.region === highlight);
   const regionPermille = region === undefined ? 0 : permilleOf(region.lengthMm, lengthWlMm);
-  const highlightBand =
-    regionPermille > 0
-      ? band(frame, (1000 - regionPermille) / 2, (1000 + regionPermille) / 2)
-      : undefined;
-  if (citadelPermille <= 0 && beltPermille <= 0 && highlightBand === undefined) return null;
-  const citadel = band(frame, (1000 - citadelPermille) / 2, (1000 + citadelPermille) / 2);
-  const belt = band(frame, (1000 - beltPermille) / 2, (1000 + beltPermille) / 2);
+  const deckPermille = permilleOf(
+    Math.max(
+      0,
+      ...draft.armour.regions
+        .filter((r) => armourShape(r.region) === "deck")
+        .map((r) => r.lengthMm),
+    ),
+    lengthWlMm,
+  );
+  if (citadelPermille <= 0 && beltPermille <= 0 && deckPermille <= 0 && regionPermille <= 0)
+    return null;
+  const amidships = (permille: number): readonly [number, number] => [
+    (1000 - permille) / 2,
+    (1000 + permille) / 2,
+  ];
+  const [c1, c2] = amidships(citadelPermille);
+  const [b1, b2] = amidships(beltPermille);
+  const [r1, r2] = amidships(regionPermille);
+  const [d1, d2] = amidships(deckPermille);
+  const hover = anatomy === undefined ? "pointer-events-none" : "cursor-help";
+  const highlightShape = region === undefined ? undefined : armourShape(region.region);
   return (
     <g data-testid="armour-zones">
+      <defs>
+        <pattern
+          id="plan-armour-deck"
+          width={4}
+          height={4}
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <line x1={0} y1={0} x2={0} y2={4} className="stroke-primary" strokeWidth={0.8} />
+        </pattern>
+      </defs>
       {citadelPermille > 0 && (
         <ArmourHover anatomy={anatomy} id="armour:citadel" title="Armoured citadel">
-          <rect
-            x={citadel.x}
-            width={citadel.width}
-            y={BAND.y(frame)}
-            height={BAND.h(frame)}
-            className={`fill-primary stroke-primary ${
-              anatomy === undefined ? "pointer-events-none" : "cursor-help"
-            }`}
+          <path
+            d={regionPath(frame, c1, c2, BELT_INNER)}
+            className={`fill-primary stroke-primary ${hover}`}
             fillOpacity={0.08}
             strokeOpacity={0.6}
             strokeDasharray="4 2"
@@ -123,35 +144,45 @@ export function ArmourZoneLayer({
             data-testid="armour-citadel"
           >
             <title>{`Armoured citadel (${Math.round(citadelPermille)}‰ of length; amidships is a convention)`}</title>
-          </rect>
+          </path>
         </ArmourHover>
+      )}
+      {deckPermille > 0 && (
+        <path
+          d={regionPath(frame, d1, d2, BELT_INNER)}
+          fill="url(#plan-armour-deck)"
+          fillOpacity={0.55}
+          className="pointer-events-none stroke-primary"
+          strokeOpacity={0.5}
+          strokeWidth={STROKE.guide}
+          {...NON_SCALING}
+          data-testid="armour-deck"
+        >
+          <title>{`Armoured deck (${Math.round(deckPermille)}‰ of length; amidships is a convention)`}</title>
+        </path>
       )}
       {beltPermille > 0 && (
         <ArmourHover anatomy={anatomy} id="armour:belt" title="Main belt">
-          <rect
-            x={belt.x}
-            width={belt.width}
-            y={BAND.y(frame)}
-            height={BAND.h(frame)}
-            className={`fill-primary stroke-primary ${
-              anatomy === undefined ? "pointer-events-none" : "cursor-help"
-            }`}
-            fillOpacity={0.24}
-            strokeOpacity={0.85}
+          <path
+            d={stripPath(frame, b1, b2, BELT_OUTER, BELT_INNER)}
+            className={`fill-primary stroke-primary ${hover}`}
+            fillOpacity={0.45}
+            strokeOpacity={0.9}
             strokeWidth={STROKE.structure}
             {...NON_SCALING}
             data-testid="armour-belt"
           >
             <title>{`Main belt (${Math.round(beltPermille)}‰ of length; amidships is a convention)`}</title>
-          </rect>
+          </path>
         </ArmourHover>
       )}
-      {highlightBand !== undefined && region !== undefined && (
-        <rect
-          x={highlightBand.x}
-          width={highlightBand.width}
-          y={BAND.y(frame)}
-          height={BAND.h(frame)}
+      {region !== undefined && regionPermille > 0 && (
+        <path
+          d={
+            highlightShape === "strip"
+              ? stripPath(frame, r1, r2, BELT_OUTER, BELT_INNER)
+              : regionPath(frame, r1, r2, highlightShape === "deck" ? BELT_INNER : BELT_OUTER)
+          }
           className="pointer-events-none fill-primary stroke-primary"
           fillOpacity={0.4}
           strokeOpacity={1}
@@ -162,7 +193,7 @@ export function ArmourZoneLayer({
           data-region={region.region}
         >
           <title>{`${region.region.replaceAll("_", " ").toLowerCase()} (${Math.round(regionPermille)}‰ of length; amidships is a convention)`}</title>
-        </rect>
+        </path>
       )}
     </g>
   );
