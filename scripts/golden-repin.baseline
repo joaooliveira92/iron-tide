@@ -113,4 +113,15 @@
 # on origin/dev (force-push prohibited) and rewording them would need an interactive
 # rebase (prohibited), so the ratchet is advanced past them as the documented fallback.
 # Every later commit stays gated.
-2469fad1385387e5b874b747940ba365cab1a6e5
+#
+# The baseline is advanced again to 341ce675bedb8f9fe588d90ff35cb0600b109210, the flagged
+# commit itself, as an incident-baseline adjustment (not a permanent exemption). 341ce675
+# ("feat(map): draw sea lanes from the campaign's compiled routes") changed
+# packages/campaign-engine/src/world-map.ts, a golden-sensitive path, without re-pinning
+# golden/hashes.json or carrying a `Golden-Repin: not-needed` trailer. It is already in shared
+# history on origin/dev, and rewriting origin/dev would violate the repository history policy.
+# `node scripts/verify-golden-hashes.cjs` reports all 11 hashes match the committed golden, so
+# no reference hash moved and a repin would be misleading. world-map.ts stays gated (no path is
+# exempted, REFERENCE_RUN_EXEMPTIONS is unchanged) and every commit after 341ce675 must still
+# re-pin or carry the trailer; scripts/test/verify-golden-repin.test.mjs proves it.
+341ce675bedb8f9fe588d90ff35cb0600b109210
