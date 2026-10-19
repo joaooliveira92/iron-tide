@@ -38,3 +38,4 @@ keep features locally and merge them into `dev` locally.
 - History is not rewritten and nothing is force-pushed.
 
 Amended by: ADR-0236 (up to three concurrent worktrees).
+Amended by: ADR-0237 (cap raised to five).
