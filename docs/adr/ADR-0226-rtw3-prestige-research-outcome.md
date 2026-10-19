@@ -7,6 +7,8 @@ Accepted (2026-10-17). Records the product of decision
 research only), authorized by
 [ADR-0225](ADR-0225-prestige-required-field-and-research-first.md). Sprints: S-2.
 
+Gate lifted (2026-10-19) by [ADR-0239](ADR-0239-s2-prestige-values-balance-targets.md), which resolves decision request 0012.
+
 ## Context
 
 Decision 0003-B authorized research of the RTW3 prestige scale/bounds, per-nation

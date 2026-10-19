@@ -70,7 +70,7 @@ const AREAS = [
     name: "Campaign economy",
     blurb:
       "The monthly appropriation, ledger, research, deficit policy and construction capacity as one model.",
-    nums: [230],
+    nums: [230, 240],
   },
   {
     name: "Turns, interruptions & save/resume",
@@ -81,7 +81,7 @@ const AREAS = [
     name: "Fleet readiness, command & prestige",
     blurb:
       "Readiness and maintenance ruleset constants, the 1880 command structure, and the prestige value path.",
-    nums: [223, 224, 225, 226],
+    nums: [223, 224, 225, 226, 239],
   },
   {
     name: "Foreign stations & presence",

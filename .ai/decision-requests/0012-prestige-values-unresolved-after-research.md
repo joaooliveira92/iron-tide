@@ -2,10 +2,9 @@
 
 ## Status
 
-Blocked pending owner decision. Returns the residue of decision
-[0003](0003-prestige-scale-and-values.md) (Option B) as required by that decision
-and ADR-0225. S-2 ticket 08 stays blocked; no production prestige value has been
-or will be authored without this decision.
+Resolved (2026-10-19) by owner delegation: **Option B**, recorded as
+[ADR-0239](../../docs/adr/ADR-0239-s2-prestige-values-balance-targets.md). S-2 ticket 08
+and tickets 01 to 09 are unblocked.
 
 ## Trigger
 
@@ -113,3 +112,32 @@ chooses.
   provenance classes and full citations.
 - ADR-0226 records the research outcome and keeps S-2 gated on this decision.
 - No production content, code, or golden file was changed by the research pass.
+
+## Owner decision
+
+Resolved 2026-10-19. The owner delegated the decision, asking that it be made on the
+best available judgment and recommendation. **Option B** is adopted: the grounded
+model stands as sourced, and the unsourced magnitudes are admitted as ADR-0213
+`balance_adjustment` / `BALANCE_TARGET` ruleset constants with a recorded rationale.
+Each of the ten returned items is decided individually in ADR-0239 with its
+provenance class. The "simulation matches RTW3" constraint is waived only for the
+labelled balance values. The one-time golden movement S-2 causes is approved.
+
+Per-item outcome (full rationale and provenance in ADR-0239; each item decided
+individually, none bundled):
+
+1. Upper bound: 1000 (balance).
+2. Lower bound: 0 (balance).
+3. Fresh-start value: 20 (reverse-engineered, most saves); the player's 19 is recorded
+   as an unexplained anomaly and not adopted.
+4. AI-nation prestige: stored for every nation, unchanged by S-2 until A-1.
+5. 1880 per-nation starts: 20 for every nation (RTW3's flat-20 rule extended; balance for
+   the five nations with no RTW3 counterpart).
+6. Loss: battle lost 500 bp; funds unpaid 300 bp per month (balance).
+7. Gain: battle won +1; tie or undecided changes nothing (balance).
+8. Monthly sacking chance at 16 or below: 1000 bp (balance).
+9. Final score: prestige held at career end, no conversion (documented).
+10. VP versus prestige: kept separate; VP never converts to prestige (documented).
+
+War outcome and capital-ship loss as prestige sources stay excluded and open, as spec
+#74 sets; no value is chosen for them.

@@ -3,6 +3,14 @@
 Status: new research note, created 2026-10-17 by the N-1 ticket-07 research pass.
 Extends `docs/research/rtw3-manual-baseline.md`; it does not rewrite it.
 
+## Resolution (2026-10-19)
+
+The unresolved values below were decided by the owner's delegation in
+[ADR-0239](../adr/ADR-0239-s2-prestige-values-balance-targets.md) (decision request 0012,
+Option B). Grounded values here are used as sourced; the rest are labelled Bluewave
+balance decisions there. The statements below describe the research as it stood and are
+kept unchanged as provenance.
+
 ## Scope and authority
 
 - **Decision 0003-B authorizes research only.** The owner chose Option B

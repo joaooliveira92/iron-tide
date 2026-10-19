@@ -197,9 +197,11 @@ decision sections in `.ai/decision-requests/` and ADR-0223/0224/0225.
    by ADR-0226; the unresolved/contradictory values are returned to the owner in
    decision request 0012. No production prestige value is committed. See
    ADR-0225/ADR-0226.
-5. **S-2 (prestige and career)** remains **blocked** under **0006-B** until 0003 is
-   fully resolved and the production value set is authorized. Do not make prestige
-   optional/defaulted and do not add prestige to production content.
+5. **S-2 (prestige and career)** is **unblocked** (2026-10-19): decision 0012 was
+   resolved as Option B and recorded as ADR-0239 (grounded model plus labelled balance
+   targets); decisions 0010 and 0011 for S-3 are ADR-0240. Prestige stays a required
+   field with no default (0006-B). War outcome and capital-ship loss stay excluded
+   sources (spec #74).
 6. **0008** closed administratively.
 
 **Immediate next action (2026-10-17):** **N-3 is done** (spec #47, report

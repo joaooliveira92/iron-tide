@@ -8,6 +8,8 @@ Accepted (2026-10-17). Resolves decision requests
 [0003](../../.ai/decision-requests/0003-prestige-scale-and-values.md)
 (Option B). Sprints: S-2.
 
+Gate lifted (2026-10-19) by [ADR-0239](ADR-0239-s2-prestige-values-balance-targets.md), which resolves decision request 0012.
+
 ## Context
 
 S-2 must seed prestige per nation in 1880, apply proportional loss, sack the
