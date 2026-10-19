@@ -13,6 +13,16 @@ const ship = (azimuth = 135, draft = reference.draft): AnatomyShip =>
   buildAnatomyShip({ draft, view, model, azimuth });
 
 describe("buildAnatomyShip", () => {
+  it("detailing: laid planking lanes, a deck rail, a catted anchor and a rudder", () => {
+    const plate = ship();
+    const deck = plate.parts.find((part) => part.id === "deck")!;
+    const hull = plate.parts.find((part) => part.id === "hull")!;
+    expect(deck.lines.length).toBeGreaterThan(20);
+    expect(deck.dots.length).toBeGreaterThan(10);
+    expect(hull.lines.filter((line) => line.heavy).length).toBeGreaterThanOrEqual(2);
+    expect(hull.solids.length).toBeGreaterThanOrEqual(4);
+  });
+
   it("draws a part and an anchor for every placed fitting, including funnels", () => {
     const plate = ship();
     for (const placement of reference.draft.placements) {

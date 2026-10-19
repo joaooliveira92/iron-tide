@@ -624,6 +624,51 @@ export function buildAnatomyShip(input: AnatomyInput): AnatomyShip {
       tone: "lo",
       dotted: true,
     });
+    {
+      // A stocked anchor catted at the hawse: shank, stock across the head and the curved arms.
+      const ax = 0.052 * L;
+      const ay = near * (halfAtZ(0.052, hawseZ) + 0.012 * B);
+      const top = hawseZ - 0.03 * D;
+      const foot = hawseZ - 0.22 * D;
+      const arm = 0.055 * D;
+      part.lines.push(
+        {
+          d: lineOf(
+            [
+              [ax, ay, top],
+              [ax, ay, foot],
+            ],
+            P,
+          ),
+          tone: "mid",
+          heavy: true,
+        },
+        {
+          d: lineOf(
+            [
+              [ax - 0.7 * arm, ay, top - 0.02 * D],
+              [ax + 0.7 * arm, ay, top - 0.02 * D],
+            ],
+            P,
+          ),
+          tone: "mid",
+        },
+        {
+          d: lineOf(
+            [
+              [ax - arm, ay, foot + 0.045 * D],
+              [ax - 0.5 * arm, ay, foot - 0.005 * D],
+              [ax, ay, foot],
+              [ax + 0.5 * arm, ay, foot - 0.005 * D],
+              [ax + arm, ay, foot + 0.045 * D],
+            ],
+            P,
+          ),
+          tone: "mid",
+          heavy: true,
+        },
+      );
+    }
     for (let index = 0; index < 6; index++) {
       const t = 0.045 + index * 0.006;
       const z = hawseZ - 0.012 * D * index;
@@ -645,12 +690,13 @@ export function buildAnatomyShip(input: AnatomyInput): AnatomyShip {
       part.solids.push(solid(loft(ramTop, ramBottom, P), "hi", { crease: "mid" }));
     }
     const shaftZ = 0.28 * T;
+    const rudderX = L + WATER_REACH.stern - 0.01 * L;
     part.solids.push(
       solid(
         extrude(
-          roundedPlan({ x: 0.965 * L, y: -0.012 * B, w: 0.022 * L, d: 0.024 * B, r: 0.004 * L }, 3),
-          0.12 * T,
-          0.36 * T,
+          roundedPlan({ x: rudderX, y: -0.006 * B, w: 0.016 * L, d: 0.01 * B, r: 0.003 * L }, 3),
+          0.16 * T,
+          0.5 * T,
           P,
         ),
         "mid",
@@ -714,18 +760,47 @@ export function buildAnatomyShip(input: AnatomyInput): AnatomyShip {
       ),
       tone: "faint",
     });
-    for (let t = 0.05; t < 0.96; t += 0.038) {
-      const y = halfAt(t) * 0.97;
-      part.lines.push({
-        d: lineOf(
-          [
-            [t * L, -y, deckZ(t) + 0.006 * D],
-            [t * L, y, deckZ(t) + 0.006 * D],
-          ],
-          P,
-        ),
-        tone: "faint",
-      });
+    // Planking: lanes run fore and aft and stop at the deck edge; butt joints are staggered lane by lane.
+    const laneWidth = 0.075 * B;
+    const lanes = Math.floor((halfAt(0.5) * 0.97) / laneWidth);
+    for (let lane = -lanes; lane <= lanes; lane++) {
+      const y = lane * laneWidth;
+      const run: Point3[] = [];
+      const seams: string[] = [];
+      for (let step = 0; step <= 60; step++) {
+        const t = 0.04 + (0.92 * step) / 60;
+        if (halfAt(t) * 0.97 > Math.abs(y)) run.push([t * L, y, deckZ(t) + 0.006 * D]);
+        else if (run.length > 1) {
+          seams.push(lineOf(run.splice(0), P));
+        } else run.length = 0;
+      }
+      if (run.length > 1) seams.push(lineOf(run, P));
+      if (lane !== 0) {
+        for (const d of seams) part.lines.push({ d, tone: "faint" });
+      }
+      const butts: Point3[] = [];
+      const spacing = 0.062;
+      for (let t = 0.07 + (((lane % 4) + 4) % 4) * (spacing / 4); t < 0.95; t += spacing) {
+        if (halfAt(t) * 0.97 <= Math.abs(y) + laneWidth * 0.5) continue;
+        const z = deckZ(t) + 0.006 * D;
+        butts.push([t * L, y - laneWidth / 2, z], [t * L, y + laneWidth / 2, z]);
+      }
+      if (butts.length > 0) part.lines.push({ d: lineOf(butts, P), tone: "faint" });
+    }
+    // The rail along the deck edge: a line a little above the plating with stanchions on the near side.
+    const railReach: Reach = { bow: DECK_REACH.bow * 0.985, stern: DECK_REACH.stern * 0.985 };
+    part.lines.push({
+      d: lineOf(
+        ring(0.985, (t) => deckZ(t) + 0.045 * D, railReach),
+        P,
+        true,
+      ),
+      tone: "lo",
+    });
+    for (let t = 0.1; t < 0.93; t += 0.05) {
+      const y = near * halfAt(t) * 0.985;
+      const [px, py] = iso([t * L, y, deckZ(t) + 0.045 * D], P);
+      part.dots.push({ x: px, y: py, r: 0.6, tone: "mid" });
     }
     for (const t of [0.2, 0.72]) {
       const plan = { x: t * L - 0.028 * L, y: -0.11 * B, w: 0.056 * L, d: 0.22 * B, r: 0.012 * L };
@@ -1327,6 +1402,28 @@ export function buildAnatomyShip(input: AnatomyInput): AnatomyShip {
           true,
         ),
         tone: "lo",
+      });
+    }
+    part.lines.push({
+      d: lineOf(
+        circle(x + rake, 0, topRadius * 1.06, 24).map(
+          ([px, py]) => [px, py, topZ - 0.012 * D] as Point3,
+        ),
+        P,
+        true,
+      ),
+      tone: "hi",
+    });
+    for (const side of [-1, 1]) {
+      part.lines.push({
+        d: lineOf(
+          [
+            [x + rake * 0.7, side * radius * 0.7, baseZ + (topZ - baseZ) * 0.78],
+            [x + rake * 0.4 - radius * 1.4, side * radius * 2.4, baseZ],
+          ],
+          P,
+        ),
+        tone: "faint",
       });
     }
     const pipeX = x - radius * 0.2;
