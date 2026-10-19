@@ -3,9 +3,17 @@ import type { DesignDraft } from "@bluewave/ship-design";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../../ui/hover-card.js";
 import { sameEntity, type ShipEntity } from "../../selection/store.js";
 import { useSelectionStore, useShipSelection } from "../../selection/useShipSelection.js";
+import { AnatomyCardContent } from "./anatomy/AnatomyCardContent.js";
+import type { AnatomyShip } from "./anatomy/ship-anatomy.js";
 import { NON_SCALING, STROKE } from "./drafting.js";
 import { fittingPoint, PLAN_H, PLAN_W, type PlanFrame } from "./geometry.js";
 import { WarningGlyph } from "./WarningGlyph.js";
+
+/** The anatomy plate for each broadside, so a port fitting is never drawn on the far side of the hull. */
+export interface AnatomyViews {
+  readonly starboard: AnatomyShip;
+  readonly port: AnatomyShip;
+}
 
 const SIDE = { CENTRE: "centreline", PORT: "port", STBD: "starboard" } as const;
 /** Hit radius around a fitting marker, plan units: larger than the 4-unit dot so it is easy to click. */
@@ -30,6 +38,7 @@ export function FittingTargets({
   targets,
   disabled,
   warns,
+  anatomy,
 }: {
   readonly frame: PlanFrame;
   readonly draft: DesignDraft;
@@ -37,6 +46,8 @@ export function FittingTargets({
   readonly disabled: boolean;
   /** Whether the selected fitting has findings above advisory. */
   readonly warns: (instanceId: string) => boolean;
+  /** The isometric anatomy plates. Omitted, the hover card keeps its plain name. */
+  readonly anatomy?: AnatomyViews;
 }) {
   const store = useSelectionStore();
   const selected = useShipSelection((s) => s.selected);
@@ -72,6 +83,10 @@ export function FittingTargets({
         const isSelected = sameEntity(selected, entity);
         const isLinked = linked.some((l) => sameEntity(l, entity));
         const name = label(p.instanceId, p.side ?? "CENTRE", p.stationPermille);
+        const plate =
+          anatomy === undefined ? undefined : p.side === "PORT" ? anatomy.port : anatomy.starboard;
+        const fact = plate?.facts.get(p.instanceId);
+        const title = targets.get(p.instanceId)?.name ?? p.instanceId;
         return (
           <HoverCard key={p.instanceId}>
             <HoverCardTrigger
@@ -146,8 +161,27 @@ export function FittingTargets({
                 </g>
               )}
             </HoverCardTrigger>
-            <HoverCardContent side="top" className="w-auto max-w-64 px-3 py-1.5 text-xs">
-              {name}
+            <HoverCardContent
+              side="top"
+              collisionPadding={12}
+              className={
+                plate === undefined
+                  ? "w-auto max-w-64 px-3 py-1.5 text-xs"
+                  : "w-[26rem] max-w-[min(26rem,calc(100vw-2rem))] p-2"
+              }
+            >
+              {plate === undefined ? (
+                name
+              ) : (
+                <AnatomyCardContent
+                  plate={plate}
+                  highlight={p.instanceId}
+                  title={title}
+                  aside={`${SIDE[p.side ?? "CENTRE"]} · ${p.stationPermille}‰`}
+                  detail={fact}
+                  testId="fitting-anatomy"
+                />
+              )}
             </HoverCardContent>
           </HoverCard>
         );
