@@ -1,4 +1,4 @@
-import type { DesignDraft } from "@bluewave/ship-design";
+import type { DesignDraft, MountSide } from "@bluewave/ship-design";
 import { arcSectors, bearingVector, sectorPath } from "./arcs.js";
 import { useShipSelection } from "../../selection/useShipSelection.js";
 import { LABEL_FONT, NON_SCALING, STROKE } from "./drafting.js";
@@ -17,12 +17,14 @@ function PlanSymbol({
   y,
   id,
   aft,
+  side,
 }: {
   readonly spec: PlanSymbolSpec;
   readonly x: number;
   readonly y: number;
   readonly id: string;
   readonly aft: boolean;
+  readonly side?: MountSide;
 }) {
   const stroke = { strokeWidth: STROKE.structure, ...NON_SCALING };
   switch (spec.shape) {
@@ -31,9 +33,17 @@ function PlanSymbol({
       const r = spec.radius;
       const len = r + 3 + r * 0.9;
       const spread = spec.barrels > 1 ? r * 0.55 : 0;
-      const barrels = Array.from(
+      const offsets = Array.from(
         { length: spec.barrels },
         (_, i) => (spec.barrels === 1 ? 0 : (i / (spec.barrels - 1) - 0.5) * 2) * spread,
+      );
+      // A wing mount fires across the beam, outward on its own side (starboard is the upper side of the drawing); a
+      // centreline mount points along the hull. The barrel is a vector (dx, dy) from the mount, spread perpendicular.
+      const wing = side === "STBD" ? -1 : side === "PORT" ? 1 : 0;
+      const barrels = offsets.map((o) =>
+        wing === 0
+          ? { x1: x, y1: y + o, x2: x + dir * len, y2: y + o }
+          : { x1: x + o, y1: y, x2: x + o, y2: y + wing * len },
       );
       if (spec.mountClass === "CASEMATE") {
         return (
@@ -52,13 +62,13 @@ function PlanSymbol({
       }
       return (
         <g data-kind="gun" data-mount-class={spec.mountClass}>
-          {barrels.map((dy) => (
+          {barrels.map((b) => (
             <line
-              key={dy}
-              x1={x}
-              x2={x + dir * len}
-              y1={y + dy}
-              y2={y + dy}
+              key={`${b.x1}:${b.y1}`}
+              x1={b.x1}
+              x2={b.x2}
+              y1={b.y1}
+              y2={b.y2}
               className="stroke-foreground"
               {...stroke}
             />
@@ -135,11 +145,12 @@ function PlanMark(props: {
   readonly y: number;
   readonly id: string;
   readonly aft: boolean;
+  readonly side?: MountSide;
 }) {
-  const { spec, x, y, id, aft } = props;
+  const { spec, x, y, id, aft, side } = props;
   if (spec === undefined)
     return <circle cx={x} cy={y} r={4} className="fill-primary" data-fitting={id} />;
-  return <PlanSymbol spec={spec} x={x} y={y} id={id} aft={aft} />;
+  return <PlanSymbol spec={spec} x={x} y={y} id={id} aft={aft} side={side} />;
 }
 
 /** The fittings' markers. Names, hover and selection are on the `FittingTargets` overlay above the drawing. */
@@ -179,6 +190,7 @@ export function HullFittingLayer({
               y={y}
               id={p.instanceId}
               aft={p.stationPermille >= 500}
+              side={p.side}
             />
           </g>
         );

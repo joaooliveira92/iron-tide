@@ -112,6 +112,42 @@ describe("HullFittingLayer symbols", () => {
     );
   });
 
+  it("points a wing mount's barrels across the beam, outward on its own side", () => {
+    const wings = draft([
+      {
+        instanceId: "s",
+        componentId: "gun",
+        zoneId: "SUPERSTRUCTURE",
+        stationPermille: 500,
+        side: "STBD",
+      },
+      {
+        instanceId: "p",
+        componentId: "gun",
+        zoneId: "SUPERSTRUCTURE",
+        stationPermille: 500,
+        side: "PORT",
+      },
+    ] as DesignDraft["placements"]);
+    const { container } = draw(
+      <HullFittingLayer frame={frame} draft={wings} symbolOf={symbolOf} />,
+    );
+    const [stbd, port] = Array.from(container.querySelectorAll("[data-kind='gun']"));
+    for (const barrel of Array.from(stbd!.querySelectorAll("line"))) {
+      expect(barrel.getAttribute("x2")).toBe(barrel.getAttribute("x1"));
+      // Starboard is the upper side of the drawing (smaller y).
+      expect(Number(barrel.getAttribute("y2"))).toBeLessThan(Number(barrel.getAttribute("y1")));
+    }
+    for (const barrel of Array.from(port!.querySelectorAll("line"))) {
+      expect(barrel.getAttribute("x2")).toBe(barrel.getAttribute("x1"));
+      expect(Number(barrel.getAttribute("y2"))).toBeGreaterThan(Number(barrel.getAttribute("y1")));
+    }
+    // Two barrels spread along the hull, not across it.
+    expect(
+      new Set(Array.from(stbd!.querySelectorAll("line")).map((l) => l.getAttribute("x1"))).size,
+    ).toBe(2);
+  });
+
   it("draws a casemate as a hull-side box with no barrel", () => {
     const casemate: PlanSymbolSpec = {
       shape: "gun",
