@@ -17,7 +17,7 @@ describe("armour plan geometry", () => {
     expect(Math.min(...xs)).toBeCloseTo(frame.x(300), 1);
     expect(Math.max(...xs)).toBeCloseTo(frame.x(700), 1);
     // Every point lies within the hull's half-beam at its station.
-    for (const [x, y] of pts)
+    for (const [, y] of pts)
       expect(Math.abs(y - PLAN_MID)).toBeLessThanOrEqual(frame.maxHalf + 0.01);
   });
 
