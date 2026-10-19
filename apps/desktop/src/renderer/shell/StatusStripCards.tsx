@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
-import { ArrowRight, Anchor, Flag, Hourglass, Ship } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, Anchor, Flag, Hourglass, Minus, Ship } from "lucide-react";
 
 import { cn } from "../lib/utils.js";
 import { formatTons } from "./status-strip-state.js";
+import type { TrendDetail, TrendDirection, TrendSeries } from "./status-strip-trend.js";
 import type {
   AllocationSegment,
   BudgetAllocation,
@@ -109,6 +110,119 @@ function Stat({
   );
 }
 
+const DIRECTION_WORD: Record<TrendDirection, string> = {
+  up: "up",
+  down: "down",
+  flat: "unchanged",
+};
+
+/** An arrow and a signed amount: direction is stated in words and shape, never colour alone. */
+export function TrendDelta({
+  series,
+  className,
+}: {
+  readonly series: TrendSeries;
+  readonly className?: string;
+}) {
+  if (series.delta === null || series.direction === null) return null;
+  const Icon =
+    series.direction === "up" ? ArrowUp : series.direction === "down" ? ArrowDown : Minus;
+  const previous = series.labels[series.labels.length - 2];
+  return (
+    <span
+      data-trend-delta={series.direction}
+      className={cn("inline-flex items-center gap-0.5 tabular-nums", className)}
+    >
+      <Icon
+        className={cn(
+          "size-3",
+          series.direction === "up" && "text-success",
+          series.direction === "down" && "text-destructive",
+        )}
+        aria-hidden="true"
+      />
+      <span className="font-medium">{series.delta}</span>
+      <span className="sr-only">
+        {` ${DIRECTION_WORD[series.direction]} on ${previous ?? "the previous month"}`}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * A small line of one series with its end point marked. The chart is decorative; the figures and
+ * the first and last month are written out beside it, and the wrapper carries a text alternative.
+ */
+export function TrendSpark({
+  series,
+  title,
+  zeroLine = false,
+}: {
+  readonly series: TrendSeries;
+  readonly title: string;
+  /** Draw the zero baseline when the series crosses it (a net can be negative). */
+  readonly zeroLine?: boolean;
+}) {
+  const { values, labels } = series;
+  const lo = Math.min(...values, ...(zeroLine ? [0] : []));
+  const hi = Math.max(...values, ...(zeroLine ? [0] : []));
+  const span = hi - lo;
+  // A single value or an unchanging series has no range: draw it level, mid-height.
+  const x = (i: number) => (values.length === 1 ? 50 : (i / (values.length - 1)) * 100);
+  const y = (v: number) => (span === 0 ? 50 : 88 - ((v - lo) / span) * 76);
+  const points = values.map((v, i) => `${String(x(i))},${String(y(v))}`).join(" ");
+  const lastIndex = values.length - 1;
+  const first = labels[0];
+  const last = labels[lastIndex];
+  return (
+    <div
+      role="img"
+      data-spark={title}
+      aria-label={`${title}: ${values.length} points from ${first ?? ""} to ${last ?? ""}, latest ${series.current}`}
+      className="space-y-0.5"
+    >
+      <div className="relative h-8" aria-hidden="true">
+        <svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          className="absolute inset-0 size-full"
+        >
+          {zeroLine && lo < 0 && hi > 0 && (
+            <line
+              x1="0"
+              x2="100"
+              y1={y(0)}
+              y2={y(0)}
+              stroke="currentColor"
+              strokeDasharray="2 3"
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+              className="text-muted-foreground/50"
+            />
+          )}
+          <polyline
+            points={points}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+            className="text-primary"
+          />
+        </svg>
+        <span
+          className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-popover"
+          style={{ left: `${String(x(lastIndex))}%`, top: `${String(y(values[lastIndex] ?? 0))}%` }}
+        />
+      </div>
+      <div className="flex justify-between text-xs tabular-nums text-muted-foreground">
+        <span>{first}</span>
+        {lastIndex > 0 && <span>{last}</span>}
+      </div>
+    </div>
+  );
+}
 /** One budget line: its amount, how much of the appropriation and of the committed total it takes. */
 export function BudgetLineCard({
   segment,
@@ -164,7 +278,13 @@ export function BudgetLineCard({
 }
 
 /** The appropriation walked down, line by line, to the monthly balance. */
-export function BalanceCard({ outlook }: { readonly outlook: OutlookDetail }) {
+export function BalanceCard({
+  outlook,
+  trend,
+}: {
+  readonly outlook: OutlookDetail;
+  readonly trend?: TrendDetail | null;
+}) {
   const { balance } = outlook;
   return (
     <>
@@ -221,6 +341,17 @@ export function BalanceCard({ outlook }: { readonly outlook: OutlookDetail }) {
             {outlook.afterConstruction.value}
           </span>
         </div>
+        {trend !== undefined && trend !== null && (
+          <div data-trend="net" className="space-y-1 border-t pt-2">
+            <div className="flex items-baseline justify-between gap-3 text-xs">
+              <span className="text-muted-foreground">
+                Actual net, last {trend.months} {trend.months === 1 ? "month" : "months"}
+              </span>
+              <TrendDelta series={trend.net} />
+            </div>
+            <TrendSpark series={trend.net} title="Actual monthly net" zeroLine />
+          </div>
+        )}
       </div>
       <CardFoot>
         Deficits are spelled out as well as coloured. Lines the campaign does not model are left
@@ -231,7 +362,13 @@ export function BalanceCard({ outlook }: { readonly outlook: OutlookDetail }) {
 }
 
 /** Cash now, cash after next month at the construction upper bound, and how long it would last. */
-export function TreasuryCard({ outlook }: { readonly outlook: OutlookDetail }) {
+export function TreasuryCard({
+  outlook,
+  trend,
+}: {
+  readonly outlook: OutlookDetail;
+  readonly trend?: TrendDetail | null;
+}) {
   return (
     <>
       <CardHeader title="Treasury" icon={<Hourglass className="size-3.5" aria-hidden="true" />} />
@@ -254,6 +391,17 @@ export function TreasuryCard({ outlook }: { readonly outlook: OutlookDetail }) {
             <Stat label="Unpaid costs" value={outlook.shortfall} tone="alert" />
           )}
         </dl>
+        {trend !== undefined && trend !== null && (
+          <div data-trend="treasury" className="space-y-1 border-t pt-2">
+            <div className="flex items-baseline justify-between gap-3 text-xs">
+              <span className="text-muted-foreground">
+                Treasury, last {trend.months} {trend.months === 1 ? "month" : "months"}
+              </span>
+              <TrendDelta series={trend.treasury} />
+            </div>
+            <TrendSpark series={trend.treasury} title="Treasury" />
+          </div>
+        )}
       </div>
       <CardFoot>
         Month-end assumes construction is spent at its upper bound. A shortfall is never carried

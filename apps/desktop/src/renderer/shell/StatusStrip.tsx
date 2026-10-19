@@ -18,6 +18,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "../components/ui/
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover.js";
 import { Toggle } from "../components/ui/toggle.js";
 import { PinnedHint, usePinnableCard } from "./pinnable-card.js";
+import { buildTrend, type TrendDetail } from "./status-strip-trend.js";
 import { cn } from "../lib/utils.js";
 import { useBridgeQuery } from "../lib/use-bridge-query.js";
 import { useDensity } from "./DensityContext.js";
@@ -30,6 +31,7 @@ import {
   ShipyardCard,
   StationsCard,
   TreasuryCard,
+  TrendDelta,
 } from "./StatusStripCards.js";
 import {
   buildStatusStrip,
@@ -248,7 +250,15 @@ function StatTile({ row, card }: { readonly row: StripRow; readonly card?: React
 }
 
 /** A plain label-and-value line, for the small supporting figures. */
-function LedgerLine({ row, card }: { readonly row: StripRow; readonly card?: ReactNode }) {
+function LedgerLine({
+  row,
+  card,
+  extra,
+}: {
+  readonly row: StripRow;
+  readonly card?: ReactNode;
+  readonly extra?: ReactNode;
+}) {
   return (
     <div
       data-row={row.id}
@@ -257,13 +267,16 @@ function LedgerLine({ row, card }: { readonly row: StripRow; readonly card?: Rea
       className="flex items-baseline justify-between gap-3"
     >
       <ReadoutLabel row={row} card={card} />
-      <span
-        className={cn(
-          "text-xs font-medium tabular-nums",
-          row.tone === "alert" && "font-semibold text-destructive",
-        )}
-      >
-        {row.value}
+      <span className="flex items-baseline gap-1.5">
+        {extra}
+        <span
+          className={cn(
+            "text-xs font-medium tabular-nums",
+            row.tone === "alert" && "font-semibold text-destructive",
+          )}
+        >
+          {row.value}
+        </span>
       </span>
     </div>
   );
@@ -436,7 +449,13 @@ function BudgetPanel({ model }: { readonly model: StatusStripModel }) {
   );
 }
 
-function OutlookPanel({ model }: { readonly model: StatusStripModel }) {
+function OutlookPanel({
+  model,
+  trend,
+}: {
+  readonly model: StatusStripModel;
+  readonly trend: TrendDetail | null;
+}) {
   const balance = rowById(model.budget, "balance");
   const others = ["treasury", "runway", "shortfall"].flatMap((id) => {
     const row = rowById(model.budget, id);
@@ -459,7 +478,7 @@ function OutlookPanel({ model }: { readonly model: StatusStripModel }) {
             <ReadoutLabel
               row={balance}
               className="text-foreground/80"
-              card={<BalanceCard outlook={model.outlook} />}
+              card={<BalanceCard outlook={model.outlook} trend={trend} />}
             />
             <div className="flex items-center justify-between gap-2">
               <span className="text-lg leading-7 font-semibold tabular-nums">{balance.value}</span>
@@ -474,7 +493,16 @@ function OutlookPanel({ model }: { readonly model: StatusStripModel }) {
             <LedgerLine
               key={row.id}
               row={row}
-              card={row.id === "treasury" ? <TreasuryCard outlook={model.outlook} /> : undefined}
+              card={
+                row.id === "treasury" ? (
+                  <TreasuryCard outlook={model.outlook} trend={trend} />
+                ) : undefined
+              }
+              extra={
+                row.id === "treasury" && trend !== null ? (
+                  <TrendDelta series={trend.treasury} className="text-xs" />
+                ) : undefined
+              }
             />
           ))}
         </div>
@@ -573,7 +601,13 @@ function DeferredPopover({ model }: { readonly model: StatusStripModel }) {
 }
 
 /** Collapsed one-liner: balance, treasury and alerts as hoverable chips. */
-function BalanceChip({ model }: { readonly model: StatusStripModel }) {
+function BalanceChip({
+  model,
+  trend,
+}: {
+  readonly model: StatusStripModel;
+  readonly trend: TrendDetail | null;
+}) {
   const { summary } = model;
   const alert = summary.balance.tone === "alert";
   return (
@@ -585,7 +619,7 @@ function BalanceChip({ model }: { readonly model: StatusStripModel }) {
         "aria-label": `Monthly balance ${summary.balance.value}, ${summary.balance.status}`,
       }}
       triggerClassName={cn(CHIP, "cursor-help", alert && "border-destructive/40 bg-destructive/5")}
-      card={<BalanceCard outlook={model.outlook} />}
+      card={<BalanceCard outlook={model.outlook} trend={trend} />}
     >
       {alert ? (
         <TrendingDown className="size-3.5 text-destructive" aria-hidden="true" />
@@ -601,17 +635,29 @@ function BalanceChip({ model }: { readonly model: StatusStripModel }) {
   );
 }
 
-function TreasuryChip({ model }: { readonly model: StatusStripModel }) {
+function TreasuryChip({
+  model,
+  trend,
+}: {
+  readonly model: StatusStripModel;
+  readonly trend: TrendDetail | null;
+}) {
   return (
     <PinnableCard
       trigger={<button type="button" />}
-      triggerProps={{ "aria-label": `Treasury ${model.summary.treasury}` }}
+      triggerProps={{
+        "aria-label":
+          trend?.treasury.delta == null
+            ? `Treasury ${model.summary.treasury}`
+            : `Treasury ${model.summary.treasury}, ${trend.treasury.delta} on ${trend.treasury.labels.at(-2) ?? "the previous month"}`,
+      }}
       triggerClassName={CHIP}
-      card={<TreasuryCard outlook={model.outlook} />}
+      card={<TreasuryCard outlook={model.outlook} trend={trend} />}
     >
       <Landmark className="size-3.5 text-muted-foreground" aria-hidden="true" />
       <span className="text-muted-foreground">Treasury</span>
       <span className="tabular-nums font-semibold">{model.summary.treasury}</span>
+      {trend !== null && <TrendDelta series={trend.treasury} />}
     </PinnableCard>
   );
 }
@@ -654,7 +700,14 @@ function AlertsChip({ alerts }: { readonly alerts: string }) {
  * "Not yet modelled" popover, so the band stays short. Deficits are always spelled out in text,
  * never conveyed by colour alone.
  */
-export function StatusStripView({ model }: { readonly model: StatusStripModel }) {
+export function StatusStripView({
+  model,
+  trend = null,
+}: {
+  readonly model: StatusStripModel;
+  /** Month-over-month history from the stored reports; null until a month has been advanced. */
+  readonly trend?: TrendDetail | null;
+}) {
   const { density } = useDensity();
   const [chosen, setChosen] = useState<boolean | null>(null);
   const expanded = chosen ?? density !== "compact";
@@ -675,8 +728,8 @@ export function StatusStripView({ model }: { readonly model: StatusStripModel })
           </span>
         ) : (
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-            <BalanceChip model={model} />
-            <TreasuryChip model={model} />
+            <BalanceChip model={model} trend={trend} />
+            <TreasuryChip model={model} trend={trend} />
             <AlertsChip alerts={summary.alerts} />
           </div>
         )}
@@ -704,7 +757,7 @@ export function StatusStripView({ model }: { readonly model: StatusStripModel })
         <div className="mt-1 grid gap-2 border-t border-border/60 py-2 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_minmax(0,2fr)]">
           <NationPanel model={model} />
           <BudgetPanel model={model} />
-          <OutlookPanel model={model} />
+          <OutlookPanel model={model} trend={trend} />
         </div>
       )}
     </section>
@@ -727,9 +780,15 @@ export function StatusStrip({ sessionId, revision, alertsCount }: StatusStripPro
     bridge.campaign.execute("inspectMap", id),
   );
 
+  // History is a bonus: while it loads, or if it cannot be read, the strip simply has no trend.
+  const reports = useBridgeQuery(sessionId, revision, (bridge, id) =>
+    bridge.campaign.execute("readMonthlyReports", id),
+  );
+
   if (campaign.status !== "ready") return null;
   return (
     <StatusStripView
+      trend={buildTrend(reports.status === "ready" ? reports.value.reports : null)}
       model={buildStatusStrip({
         projection: campaign.value.projection,
         areas: map.status === "ready" ? map.value.world.areas : null,
