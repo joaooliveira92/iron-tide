@@ -1,5 +1,5 @@
 // Reads data/run-*.json (produced by run-months.mjs) and writes the CSV/JSON datasets.
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { DATA, INTERPRETATIONS, readYaml, compileProductionCampaign, engineRevenue, constructionCap } from "./lib.mjs";
 
@@ -157,7 +157,7 @@ for (const [id, rs] of Object.entries(base0)) {
   const forgiven = rs.reduce((s, x) => s + (x.clamped_OBLIGATION ?? 0) + (x.clamped_MAINTENANCE_EXPENDITURE ?? 0), 0);
   let briefing = "";
   try { const b = buildOpeningBriefingProjection(state, id, { year: 1880, month: 1 }); briefing = b ? `governmentAllocation=${b.treasury.governmentAllocation};projectedSurplus=${b.treasury.projectedSurplus};status=${b.treasury.status}` : "undefined"; } catch (e) { briefing = "THROWS " + String(e.message).slice(0, 80); }
-  const i2 = group(runs.I2_income_is_appropriation.rows)[id][0];
+  const _i2 = group(runs.I2_income_is_appropriation.rows)[id][0];
   groups.push({ nation: id, isPlayable: state.snapshot.nations.get(id).isPlayable, T0: r.treasury, expenses: r.expenses, maintenance_m1: r.debit_MAINTENANCE_EXPENDITURE, maintenance_min_120m: Math.min(...maint), maintenance_max_120m: Math.max(...maint),
     drain_expenses_plus_maint: drain, runway_months_exact: +(r.treasury / drain).toFixed(2), maintenance_share_of_drain_pct: +(100 * (r.debit_MAINTENANCE_EXPENDITURE ?? 0) / drain).toFixed(1),
     income_authored: r.income, income_minus_drain_if_income_is_monthly: r.income - drain, income_over_drain: +(r.income / drain).toFixed(2),

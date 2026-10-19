@@ -71,6 +71,11 @@ test("the opening roster offers the six pre-dreadnought types, and a battleship 
   await roster.press("Enter");
   const replace = e2e.page.getByRole("button", { name: "Replace my design" });
   if (await replace.isVisible().catch(() => false)) await replace.click();
+  // Inside a campaign an unnamed design reads "Needs a class name": name it, then it can be submitted.
+  await workspace
+    .getByRole("group", { name: "Design commands" })
+    .getByRole("textbox", { name: "Class name" })
+    .fill(CLASS_NAME);
   await expect(workspace.getByText("Can be submitted")).toBeVisible();
 
   // 3. Thin the belt below 6 inches: the design stops qualifying as a battleship and cannot be built.
@@ -88,10 +93,6 @@ test("the opening roster offers the six pre-dreadnought types, and a battleship 
   await expect(workspace.getByText("Can be submitted")).toBeVisible();
 
   // 6. Submit the design; it is queued once and the button cannot send it twice.
-  await workspace
-    .getByRole("group", { name: "Design commands" })
-    .getByRole("textbox", { name: "Class name" })
-    .fill(CLASS_NAME);
   await workspace.getByRole("button", { name: "Finish design" }).click();
   await workspace.getByRole("button", { name: "Submit design" }).click();
   await expect(workspace.getByText(new RegExp(`Design queued\\. .*"${CLASS_NAME}"`))).toBeVisible({
