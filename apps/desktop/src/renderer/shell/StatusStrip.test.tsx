@@ -227,6 +227,70 @@ describe("StatusStripView", () => {
     expect(screen.getByText("With construction at its upper bound")).toBeTruthy();
   });
 
+  describe("pinning a card", () => {
+    async function openMaintenance() {
+      await renderStrip();
+      const budget = screen.getByRole("group", { name: "Budget" });
+      const label = within(budget).getByText("Maintenance");
+      act(() => {
+        label.focus();
+      });
+      await screen.findByText("Over a year");
+      return label;
+    }
+
+    it("keeps a pinned card open after focus leaves, with a hint on how to close it", async () => {
+      const label = await openMaintenance();
+      fireEvent.click(label);
+      act(() => {
+        label.blur();
+      });
+      // A pinned card ignores hover-out and blur.
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      });
+      expect(screen.getByText("Over a year")).toBeTruthy();
+      expect(screen.getByText(/Pinned\. Press Esc/)).toBeTruthy();
+    });
+
+    it("unpins and closes on Escape", async () => {
+      const label = await openMaintenance();
+      fireEvent.click(label);
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+      await waitFor(() => expect(screen.queryByText("Over a year")).toBeNull());
+    });
+
+    it("pins from the keyboard with Enter on a label", async () => {
+      const label = await openMaintenance();
+      expect(label.getAttribute("role")).toBe("button");
+      fireEvent.keyDown(label, { key: "Enter" });
+      act(() => {
+        label.blur();
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      });
+      expect(screen.getByText(/Pinned\. Press Esc/)).toBeTruthy();
+    });
+
+    it("toggles: a second click unpins", async () => {
+      const label = await openMaintenance();
+      fireEvent.click(label);
+      expect(screen.getByText(/Pinned\. Press Esc/)).toBeTruthy();
+      fireEvent.click(label);
+      await waitFor(() => expect(screen.queryByText("Over a year")).toBeNull());
+    });
+
+    it("pins a collapsed chip, which is already a button", async () => {
+      await renderStrip();
+      fireEvent.click(screen.getByRole("button", { name: /collapse/i }));
+      const chip = screen.getByRole("button", { name: /^Treasury/ });
+      fireEvent.click(chip);
+      expect(await screen.findByText("Next month end")).toBeTruthy();
+      expect(screen.getByText(/Pinned\. Press Esc/)).toBeTruthy();
+    });
+  });
+
   it("groups the not-yet-modelled readouts by where they would sit", async () => {
     await renderStrip();
     fireEvent.click(screen.getByRole("button", { name: /Not yet modelled \(\d+\)/ }));

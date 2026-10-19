@@ -134,3 +134,49 @@ test("every status strip hover card opens inside the minimum window", async ({
     "chip-alerts",
   );
 });
+
+// Pinning needs a real pointer: a click keeps a card open while the mouse moves on, a second card
+// can be pinned beside it to compare, and a press away from every pinned card lets go of both.
+test("a clicked status strip card stays pinned, two can be compared, and a click away closes them", async ({
+  e2e,
+  campaignTemplate,
+}) => {
+  const page = e2e.page;
+  await openCampaign(e2e, campaignTemplate);
+  const strip = page.getByRole("region", { name: "Status strip" });
+  if ((await strip.getAttribute("data-expanded")) !== "true") {
+    await strip.getByRole("button", { name: /expand/i }).click();
+  }
+  const popup = (heading: string) =>
+    page.locator("[data-open][data-side][tabindex='-1']").filter({ hasText: heading });
+
+  const maintenance = strip.getByText("Maintenance", { exact: true });
+  await maintenance.click();
+  await expect(popup("Over a year")).toBeVisible();
+
+  // Moving the pointer away would close an unpinned card.
+  await page.mouse.move(5, 5);
+  await page.waitForTimeout(400);
+  await expect(popup("Over a year")).toBeVisible();
+  await expect(popup("Over a year").getByText(/Pinned\. Press Esc/)).toBeVisible();
+
+  // A second card pins beside the first; the first stays.
+  await strip.getByText("Monthly balance (projected)", { exact: true }).click();
+  await expect(popup("Balance breakdown")).toBeVisible();
+  await expect(popup("Over a year")).toBeVisible();
+
+  // A press inside a pinned card does not unpin the other one.
+  await popup("Balance breakdown").getByText("Monthly balance", { exact: true }).click();
+  await expect(popup("Over a year")).toBeVisible();
+
+  // A press away from every pinned card lets go of both.
+  await page.mouse.click(5, 300);
+  await expect(popup("Over a year")).toBeHidden();
+  await expect(popup("Balance breakdown")).toBeHidden();
+
+  // Escape lets go too.
+  await maintenance.click();
+  await expect(popup("Over a year")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(popup("Over a year")).toBeHidden();
+});
