@@ -11,6 +11,7 @@ import { flushSync } from "react-dom";
 import type { ArmourRegionId, BatteryRole, ComponentCategory } from "@bluewave/ship-design";
 import { Alert } from "../../components/ui/alert.js";
 import { Button } from "../../components/ui/button.js";
+import { toast } from "../../components/ui/toast.js";
 import {
   AlternativesPanel,
   BriefPanel,
@@ -37,8 +38,6 @@ import {
   mountNameMap,
   planModel,
   plural,
-  shipTypeChoices,
-  shipTypeIcon,
   useDraftAutosave,
   useFindingsView,
   useHullPlanEditing,
@@ -47,6 +46,8 @@ import {
   technologyMonths,
   type EntityContext,
   type PlanTool,
+  shipTypeChoices,
+  shipTypeIcon,
 } from "../../components/design-workspace/index.js";
 import {
   DEFAULT_VIEW,
@@ -94,8 +95,9 @@ import { sectionStatuses } from "./section-status.js";
 import { focusEntityControl, placeForEntity } from "./selection.js";
 import { useInspectorLayout } from "./useInspectorLayout.js";
 
-/** How long "Saved" shows after an explicit save. */
-const SAVED_FLASH_MS = 2000;
+/** Stable id so validating again updates the toast instead of stacking another. */
+const VALIDATION_TOAST_ID = "shipbuilding-validation";
+const VALIDATION_TOAST_MS = 4000;
 
 type OverflowDialog = "start" | "file" | "history" | "alternatives";
 
@@ -188,12 +190,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
     if (region !== null) setOverlays((current) => new Set(current).add("armour"));
   };
   const [dialog, setDialog] = useState<OverflowDialog | null>(null);
-  const [savedAt, setSavedAt] = useState<number | null>(null);
-  useEffect(() => {
-    if (savedAt === null) return;
-    const t = setTimeout(() => setSavedAt(null), SAVED_FLASH_MS);
-    return () => clearTimeout(t);
-  }, [savedAt]);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useRestoredDraftToast({
     restored: autosave.restored,
@@ -201,14 +198,30 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
     startOver: () => loadPreset(state.preset.id),
   });
 
-  const shipTypes = shipTypeChoices(env.ctx, draft.requirement.category).map((c) => {
-    const Icon = shipTypeIcon(c.value);
-    return { ...c, icon: <Icon aria-hidden="true" className="size-4" /> };
-  });
-  const status = {
-    label: view.valid ? "Can be submitted" : "Cannot be built",
-    tone: view.valid ? ("ok" as const) : ("bad" as const),
-    detail: `${view.counts.BLOCKING} blocking · ${view.counts.CRITICAL} critical · ${plural(view.counts.WARNING, "warning")}`,
+  const findingCounts = `${view.counts.BLOCKING} blocking · ${view.counts.CRITICAL} critical · ${plural(view.counts.WARNING, "warning")}`;
+  // Submission needs a class name, so inside a campaign an unnamed design is not yet ready to finish.
+  const needsName = sessionId !== undefined && shipClassName.trim() === "";
+  const status =
+    view.valid && needsName
+      ? { label: "Needs a class name", tone: "warn" as const, detail: findingCounts }
+      : {
+          label: view.valid ? "Can be submitted" : "Cannot be built",
+          tone: view.valid ? ("ok" as const) : ("bad" as const),
+          detail: findingCounts,
+        };
+  const shipType = draft.requirement.category;
+  const shipTypeChoice = shipTypeChoices(env.ctx, shipType).find((c) => c.value === shipType);
+  const ShipTypeIcon = shipTypeIcon(shipType);
+  const validate = () => {
+    openSection("review", "findings");
+    toast(`${view.valid ? "No blocking findings" : "Blocking findings found"}: ${findingCounts}.`, {
+      id: VALIDATION_TOAST_ID,
+      duration: VALIDATION_TOAST_MS,
+    });
+  };
+  const finish = () => {
+    openSection("review", "finish");
+    if (needsName) nameInputRef.current?.focus();
   };
   const readouts = useMemo(() => engineeringStatus(view), [view]);
 
@@ -464,9 +477,11 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
         <CommandBar
           shipClassName={shipClassName}
           onShipClassName={setShipClassName}
-          shipType={draft.requirement.category}
-          shipTypes={shipTypes}
-          onShipType={(v) => actions.edit({ kind: "set_requirement", patch: { category: v } })}
+          nameInputRef={nameInputRef}
+          onStartFromReference={() => setDialog("start")}
+          shipType={shipType}
+          shipTypeLabel={shipTypeChoice?.label ?? shipType}
+          shipTypeIcon={<ShipTypeIcon aria-hidden="true" className="size-4" />}
           month={state.month}
           months={campaignMonth !== null ? null : technologyMonths(state.month)}
           onMonth={actions.setMonth}
@@ -476,29 +491,34 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           onUndo={actions.undo}
           onRedo={actions.redo}
           compare={<ComparePanel baseline={state.baseline} view={view} name={state.preset.name} />}
-          onSave={
-            autosave.enabled
-              ? () => {
-                  if (autosave.saveNow()) setSavedAt(Date.now());
-                }
-              : null
-          }
-          saveLabel={savedAt !== null ? "Saved" : "Save draft"}
-          onValidate={() => openSection("review", "findings")}
-          onFinish={() => openSection("review", "finish")}
+          autosaved={autosave.enabled}
+          onValidate={validate}
+          onFinish={finish}
           overflow={[
-            { label: "Start from a reference design…", onSelect: () => setDialog("start") },
-            { label: "Import or export design…", onSelect: () => setDialog("file") },
-            { label: "Edit history…", onSelect: () => setDialog("history") },
-            { label: "Design alternatives…", onSelect: () => setDialog("alternatives") },
             {
-              label: "Rebuild a completed ship…",
-              onSelect: () => openSection("review", "rebuild"),
+              label: "Design",
+              items: [
+                { label: "Edit history…", onSelect: () => setDialog("history") },
+                { label: "Design alternatives…", onSelect: () => setDialog("alternatives") },
+                {
+                  label: "Rebuild a completed ship…",
+                  onSelect: () => openSection("review", "rebuild"),
+                },
+              ],
             },
             {
-              label: "Reset to the starting design",
-              destructive: true,
-              onSelect: () => setPendingPreset(state.preset.id),
+              label: "File",
+              items: [{ label: "Import or export design…", onSelect: () => setDialog("file") }],
+            },
+            {
+              label: "Danger zone",
+              items: [
+                {
+                  label: "Reset to the starting design",
+                  destructive: true,
+                  onSelect: () => setPendingPreset(state.preset.id),
+                },
+              ],
             },
           ]}
         />

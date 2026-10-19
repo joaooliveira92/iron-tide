@@ -35,7 +35,7 @@ describe("Shipbuilding workspace shell", () => {
 
   it("keeps ordinary ship parameters out of the command bar", () => {
     render(<ShipbuildingWorkspace />);
-    // Design-level commands only: class name, ship type and the technology year are the bar's only inputs.
+    // Design-level commands only: the class name is the bar's only text input.
     const inputs = within(commands()).queryAllByRole("textbox");
     expect(inputs.map((i) => i.getAttribute("aria-label"))).toEqual(["Class name"]);
     expect(within(commands()).queryAllByRole("spinbutton")).toEqual([]);
@@ -104,12 +104,41 @@ describe("Shipbuilding workspace shell", () => {
     expect(screen.getByRole("region", { name: "Validation" })).toBeTruthy();
   });
 
-  it("disables Save draft outside a campaign, where there is nowhere to save", () => {
+  it("offers no save control: drafts autosave, and outside a campaign there is nowhere to save", () => {
     render(<ShipbuildingWorkspace />);
-    const save = within(commands()).getByRole("button", {
-      name: /Save draft/,
-    }) as HTMLButtonElement;
-    expect(save.disabled).toBe(true);
+    expect(within(commands()).queryByRole("button", { name: /Save/ })).toBeNull();
+    expect(within(commands()).queryByText("Autosaved")).toBeNull();
+  });
+
+  it("replaces the ship type select with a reference-design button that keeps the type visible", () => {
+    render(<ShipbuildingWorkspace />);
+    expect(within(commands()).queryByRole("combobox", { name: /Ship type/ })).toBeNull();
+    const button = within(commands()).getByRole("button", {
+      name: /Start from a reference design/,
+    });
+    expect(within(button).getByLabelText(/^Current type /)).toBeTruthy();
+    fireEvent.click(button);
+    expect(screen.getByRole("dialog", { name: "Start from a reference design" })).toBeTruthy();
+  });
+
+  it("groups the overflow menu and no longer lists the reference design there", () => {
+    render(<ShipbuildingWorkspace />);
+    fireEvent.click(within(commands()).getByRole("button", { name: /More design actions/ }));
+    for (const group of ["Design", "File", "Danger zone"])
+      expect(screen.getByText(group)).toBeTruthy();
+    expect(screen.queryByRole("menuitem", { name: /Start from a reference design/ })).toBeNull();
+  });
+
+  it("flags an unnamed design in a campaign and sends Finish to the class name", () => {
+    render(<ShipbuildingWorkspace sessionId="s1" />);
+    const status = within(commands()).getByRole("status");
+    expect(status.textContent).toContain("Needs a class name");
+    fireEvent.click(within(commands()).getByRole("button", { name: /Finish design/ }));
+    expect(document.activeElement).toBe(within(commands()).getByLabelText("Class name"));
+    fireEvent.change(within(commands()).getByLabelText("Class name"), {
+      target: { value: "Test class" },
+    });
+    expect(within(commands()).getByRole("status").textContent).not.toContain("Needs a class name");
   });
 });
 
@@ -232,7 +261,15 @@ describe("Design map and inspector routing", () => {
 describe("Central ship workspace views and overlays", () => {
   const ship = () => screen.getByRole("region", { name: "Ship view" });
   const viewGroup = () => within(ship()).getByRole("group", { name: "Ship view" });
-  const overlays = () => within(ship()).getByRole("group", { name: "Overlays" });
+  // The overlay toggles live in the Layers popover, which renders in a portal.
+  const openLayers = () => {
+    if (!screen.queryByRole("group", { name: "Overlays" }))
+      fireEvent.click(within(ship()).getByRole("button", { name: /^Layers/ }));
+  };
+  const overlays = () => {
+    openLayers();
+    return screen.getByRole("group", { name: "Overlays" });
+  };
   const viewButton = (name: string) => within(viewGroup()).getByRole("button", { name });
   const overlay = (name: string) => within(overlays()).getByRole("checkbox", { name });
   const plan = () => screen.queryByRole("img", { name: /^Top-down plan/ });
