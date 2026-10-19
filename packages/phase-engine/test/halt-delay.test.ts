@@ -32,6 +32,7 @@ import { PROJECT_DELAYED_ZERO_WORK, preservationCostUnits } from "../src/economy
 import { FinancialLedger } from "../src/financial-ledger.js";
 import { MonthExecutor } from "../src/index.js";
 import { productionShipBuildingContent } from "./helpers/contentFiles.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 const content = productionShipBuildingContent();
 const productionBalance = content.environmentFor("1880-02").constructionBalance;
@@ -87,6 +88,7 @@ function design(perLine: number, id = "d1"): CompiledDesignVersion {
 
 function nation(projects: ConstructionProject[], baseResources = 0): NationState {
   return {
+    prestige: SafeInt(20),
     id: "GBR",
     name: "Great Britain",
     tag: "GBR",
@@ -118,6 +120,7 @@ function snapshot(
   baseResources = 0,
 ): CampaignSnapshot {
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "halt-delay",

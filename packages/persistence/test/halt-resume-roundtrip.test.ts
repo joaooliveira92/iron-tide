@@ -16,6 +16,7 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function project(status: ConstructionProject["status"], id: string): ConstructionProject {
   return {
@@ -43,6 +44,7 @@ function nation(): NationState {
     baseResources: SafeInt(0),
     navalAppropriationRateBp: SafeInt(2_000),
     maintenanceCost: SafeInt(0),
+    prestige: SafeInt(20),
     fleets: [],
     divisions: [],
     research: {
@@ -81,6 +83,7 @@ function state(): CampaignState {
     intelligence: { shells: {} },
     designs: new Map(),
     designFamilies: new Map(),
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     rulesetVersion: "1.0.0",
     compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
   };

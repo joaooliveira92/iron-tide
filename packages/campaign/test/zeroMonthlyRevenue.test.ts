@@ -5,6 +5,7 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { parse } from "yaml";
 import { describe, expect, it } from "vite-plus/test";
 import { buildNationStates, checkStartRevenue } from "../src/nationCompilation.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 // Spec #138 / issue #142: ZERO_MONTHLY_REVENUE guards the start-rate derivation. With the 2000 bp start rate it cannot fire
 // (revenue == income >= 1), so the check is exercised through its seam with inputs that round to zero, and the compiler
@@ -17,10 +18,21 @@ type Economy = { nationId: string; treasury: number; income: number; expenses: n
 
 function compile(nations: NationRow[], economies: unknown[]): DiagnosticCollector {
   const pack = {
-    nations: nations.map(({ id, name }) => ({ id, name, tag: id, isPlayable: true })),
+    nations: nations.map(({ id, name }) => ({ id, name, tag: id, isPlayable: true, prestige: 20 })),
   } as ContentPack;
   const collector = new DiagnosticCollector();
-  buildNationStates(pack, [], economies, [], [], [], "test", "1880-01", collector);
+  buildNationStates(
+    pack,
+    [],
+    economies,
+    [],
+    [],
+    [],
+    "test",
+    "1880-01",
+    FIXTURE_PRESTIGE_RULES,
+    collector,
+  );
   return collector;
 }
 
@@ -139,7 +151,18 @@ describe("shipped 1880 pack", () => {
     const run = (): DiagnosticCollector => {
       const pack = { nations: read("countries.yaml") } as ContentPack;
       const collector = new DiagnosticCollector();
-      buildNationStates(pack, [], read("economies.yaml"), [], [], [], "test", "1880-01", collector);
+      buildNationStates(
+        pack,
+        [],
+        read("economies.yaml"),
+        [],
+        [],
+        [],
+        "test",
+        "1880-01",
+        FIXTURE_PRESTIGE_RULES,
+        collector,
+      );
       return collector;
     };
     const first = run();

@@ -11,6 +11,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import { MonthExecutor } from "../src/index.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 function makeResearchNation(
   id: string,
@@ -24,6 +25,7 @@ function makeResearchNation(
   }>,
 ): NationState {
   return {
+    prestige: SafeInt(20),
     id,
     name: id,
     tag: id,
@@ -80,6 +82,7 @@ function makeSnapshot(
   designs = new Map<string, CompiledDesignVersion>(),
 ): CampaignSnapshot {
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "research-acceptance",

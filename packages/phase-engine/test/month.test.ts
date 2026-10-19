@@ -6,10 +6,12 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import { MonthExecutor, PHASE_FOOTPRINTS, PhaseGuard, PhaseRegistry } from "../src/index.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 function createSnapshot(overrides?: Partial<CampaignSnapshot>): CampaignSnapshot {
   const nations = new Map<string, NationState>();
   nations.set("GBR", {
+    prestige: SafeInt(20),
     id: "GBR",
     name: "United Kingdom",
     tag: "GBR",
@@ -61,6 +63,7 @@ function createSnapshot(overrides?: Partial<CampaignSnapshot>): CampaignSnapshot
   });
 
   const base: CampaignSnapshot = {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "test-campaign-06",
@@ -242,6 +245,7 @@ describe("MonthExecutor", () => {
     const executor = new MonthExecutor();
     const nations = new Map<string, NationState>();
     nations.set("GBR", {
+      prestige: SafeInt(20),
       id: "GBR",
       name: "UK",
       tag: "GBR",
@@ -481,6 +485,7 @@ describe("MonthExecutor", () => {
     const executor = new MonthExecutor();
     const snapshot = createSnapshot();
     const gerNation: NationState = {
+      prestige: SafeInt(20),
       id: "GER",
       name: "Germany",
       tag: "GER",

@@ -398,6 +398,11 @@ export const NationSchema = Schema.Struct({
       "Id of the nation's home area (S-5): authoritative, validated against the area set by the compiler",
   }),
   slot: Schema.NullOr(NationSlotSchema),
+  // S-2: the authored starting prestige (ADR-0239). Kept structurally open (any finite number)
+  // so a missing, non-integer, unsafe or out-of-range value reaches the campaign compile boundary
+  // as a named diagnostic, which also validates it against the ruleset's declared bounds. There is
+  // no default: an absent value is a compile error, never a silent seed.
+  prestige: Schema.optional(Schema.Finite),
   presentation: PresentationSchema,
   identity: IdentitySchema,
   regime: NationRegimeSchema,

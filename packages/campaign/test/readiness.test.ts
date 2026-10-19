@@ -3,10 +3,11 @@ import { tmpdir } from "node:os";
 import { buildContentBundleArtifact, type CompilerInput } from "@bluewave/content-compiler";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
+  FIXTURE_RULESETS_YAML,
   createFixtureDir,
   nationsYaml,
-  writeFixture,
   type FixtureDir,
+  writeFixture,
 } from "@bluewave/test-support";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { CampaignCompiler, type CampaignCompilerInput } from "../src/compiler-public.js";
@@ -34,7 +35,7 @@ const FIXTURE = {
       technologies: ["technologies.yaml"],
     },
   }),
-  rulesets: `- id: "core"\n  name: "Core Rules"\n  version: "1.0"\n`,
+  rulesets: FIXTURE_RULESETS_YAML,
   countries: nationsYaml([
     { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true, homeArea: "lon" },
     { id: "france", tag: "FRA", name: "France", homeArea: "par" },

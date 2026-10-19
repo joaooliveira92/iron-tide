@@ -2,6 +2,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import { economyOutlook } from "../src/economyOutlook.js";
 import type { CampaignSnapshot, ConstructionProject, NationState } from "../src/state.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 // Economy spec #138 slice 6: the outlook is the one place every screen reads the month ahead from.
 function ship(hitPoints: number) {
@@ -46,6 +47,7 @@ function nation(
 ): NationState {
   const { research, ...rest } = over;
   return {
+    prestige: SafeInt(20),
     id: "n",
     name: "n",
     tag: "N",
@@ -76,6 +78,7 @@ function nation(
 
 function snapshot(n: NationState, withCatalogue = true): CampaignSnapshot {
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(0),
     campaignId: "outlook",

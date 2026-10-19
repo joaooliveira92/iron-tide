@@ -5,6 +5,7 @@ import {
   type CompilerInput,
   type ContentBundle,
 } from "@bluewave/content-compiler";
+import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
 export interface FixtureDir {
@@ -18,7 +19,67 @@ export interface NationFixtureSpec {
   name: string;
   isPlayable?: boolean;
   homeArea?: string;
+  /** The authored starting prestige; defaults to `FIXTURE_NATION_PRESTIGE`. Any value, so boundary tests can break it. */
+  prestige?: unknown;
+  /** Leave `prestige` off the nation entirely (to test the missing-value boundary). */
+  omitPrestige?: boolean;
 }
+
+// S-2 fixtures. These numbers exist only to exercise the prestige compile boundary in tests; they
+// are NOT prestige values and must never reach production content (a campaign test asserts it).
+/** A fixture nation's starting prestige: inside the fixture bounds. */
+export const FIXTURE_NATION_PRESTIGE = 20;
+
+/** A complete fixture prestige value set, in the authored (YAML/JSON) shape. */
+export const FIXTURE_PRESTIGE_VALUE_SET = {
+  lowerBound: 0,
+  upperBound: 100,
+  sackingThreshold: 10,
+  sackingProbabilityBp: 2_500,
+  rules: {
+    UNPAID_FUNDS: { kind: "PROPORTIONAL_LOSS", basisPoints: 300 },
+    BATTLE_LOST: { kind: "PROPORTIONAL_LOSS", basisPoints: 500 },
+    BATTLE_WON: { kind: "FIXED_GAIN", amount: 1 },
+  },
+} as const;
+
+/**
+ * The fixture value set as the branded in-memory shape a `CampaignSnapshot.prestigeRules` carries,
+ * for tests that build snapshots directly. Test-only: it is not a prestige value (see above).
+ */
+export const FIXTURE_PRESTIGE_RULES = {
+  lowerBound: SafeInt(FIXTURE_PRESTIGE_VALUE_SET.lowerBound),
+  upperBound: SafeInt(FIXTURE_PRESTIGE_VALUE_SET.upperBound),
+  sackingThreshold: SafeInt(FIXTURE_PRESTIGE_VALUE_SET.sackingThreshold),
+  sackingProbabilityBp: SafeInt(FIXTURE_PRESTIGE_VALUE_SET.sackingProbabilityBp),
+  rules: {
+    UNPAID_FUNDS: {
+      kind: "PROPORTIONAL_LOSS" as const,
+      basisPoints: SafeInt(FIXTURE_PRESTIGE_VALUE_SET.rules.UNPAID_FUNDS.basisPoints),
+    },
+    BATTLE_LOST: {
+      kind: "PROPORTIONAL_LOSS" as const,
+      basisPoints: SafeInt(FIXTURE_PRESTIGE_VALUE_SET.rules.BATTLE_LOST.basisPoints),
+    },
+    BATTLE_WON: {
+      kind: "FIXED_GAIN" as const,
+      amount: SafeInt(FIXTURE_PRESTIGE_VALUE_SET.rules.BATTLE_WON.amount),
+    },
+  },
+};
+
+/**
+ * A fixture `rulesets.yaml`: one core ruleset carrying the fixture prestige value set. Pass
+ * `prestige: "omit"` to leave the value set off, or any other value to test a malformed one.
+ */
+export function rulesetsYaml(options: { prestige?: unknown } = {}): string {
+  const prestige = "prestige" in options ? options.prestige : FIXTURE_PRESTIGE_VALUE_SET;
+  const block = prestige === "omit" ? "" : `\n  prestige: ${JSON.stringify(prestige)}`;
+  return `- id: "core"\n  name: "Core Rules"\n  version: "1.0"${block}\n`;
+}
+
+/** The standard fixture rulesets file. */
+export const FIXTURE_RULESETS_YAML = rulesetsYaml();
 
 export function createFixtureDir(basePath: string): FixtureDir {
   mkdirSync(basePath, { recursive: true });
@@ -40,12 +101,15 @@ export function writeFixture(basePath: string, relativePath: string, content: st
 /** A single valid, strict-NationSchema-compliant nation as a YAML list item. */
 export function nationYaml(spec: NationFixtureSpec): string {
   const { id, tag, name, isPlayable = false, homeArea } = spec;
+  const prestigeLine = spec.omitPrestige
+    ? ""
+    : `\n  prestige: ${JSON.stringify(spec.prestige ?? FIXTURE_NATION_PRESTIGE)}`;
   return `
 - id: "${id}"
   tag: "${tag}"
   name: "${name}"
   displayNameKey: "nation.${id}"
-  isPlayable: ${isPlayable}${homeArea === undefined ? "" : `\n  homeArea: "${homeArea}"`}
+  isPlayable: ${isPlayable}${homeArea === undefined ? "" : `\n  homeArea: "${homeArea}"`}${prestigeLine}
   slot: null
   presentation: { colorBg: "#C8102E", colorFg: "#FFFFFF" }
   identity:
@@ -154,11 +218,8 @@ export const VALID_ROUTES_YAML = `
   distance: 800
 `;
 
-export const VALID_RULESETS_YAML = `
-- id: "core"
-  name: "Core Rules"
-  version: "1.0"
-`;
+/** The standard valid rulesets file; it carries the fixture prestige value set (S-2, test-only). */
+export const VALID_RULESETS_YAML = `\n${FIXTURE_RULESETS_YAML}`;
 
 export const VALID_POSSESSIONS_YAML = `
 - id: "uk-lon"

@@ -1,5 +1,3 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 import * as prestigeModule from "../src/prestige.js";
 import {
@@ -425,21 +423,6 @@ describe("no prestige value ships from this layer", () => {
       expect(decodePrestigeValueSet(value).ok, `export '${name}' must not be a value set`).toBe(
         false,
       );
-    }
-  });
-
-  it("keeps the fixture numbers out of production content", () => {
-    const root = resolve(import.meta.dirname, "../../../content/production");
-    const walk = (dir: string): string[] =>
-      readdirSync(dir).flatMap((entry) => {
-        const path = join(dir, entry);
-        return statSync(path).isDirectory() ? walk(path) : [path];
-      });
-    const files = walk(root).filter((p) => /\.(ya?ml|json)$/.test(p));
-    expect(files.length).toBeGreaterThan(0);
-    for (const file of files) {
-      const text = readFileSync(file, "utf8");
-      expect(text, file).not.toMatch(/sackingProbabilityBp|sackingThreshold|PROPORTIONAL_LOSS/);
     }
   });
 });

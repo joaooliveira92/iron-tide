@@ -11,9 +11,11 @@ import {
   AiCommandGenerator,
   AiPlanner,
 } from "../src/index.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function makeNation(id: string, treasury: SafeInt, projects: ConstructionProject[]): NationState {
   return {
+    prestige: SafeInt(20),
     id,
     name: id,
     tag: id,
@@ -45,6 +47,7 @@ function makeSnapshot(
 ): CampaignSnapshot {
   const map = new Map(nations);
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: turn,
     campaignId: "ai-test-campaign",

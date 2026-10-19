@@ -3,6 +3,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import { MonthExecutor } from "../src/index.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 function makeShip(id: string, readiness: Ship["readiness"], crewQuality: number): Ship {
   return {
@@ -27,6 +28,7 @@ function makeShip(id: string, readiness: Ship["readiness"], crewQuality: number)
 
 function makeNation(ships: Ship[]): NationState {
   return {
+    prestige: SafeInt(20),
     id: "GBR",
     name: "GBR",
     tag: "GBR",
@@ -57,6 +59,7 @@ function makeSnapshot(
   wars: CampaignSnapshot["wars"]["wars"] = [],
 ): CampaignSnapshot {
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "readiness-evolution",

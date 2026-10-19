@@ -53,6 +53,7 @@ export function makeNation(
   overrides: Partial<NationState> & { ships?: Ship[] } = {},
 ): NationState {
   return {
+    prestige: SafeInt(20),
     id,
     name: id.toUpperCase(),
     tag: id,

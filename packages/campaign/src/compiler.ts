@@ -17,6 +17,11 @@ import {
   buildDesignsFromData,
 } from "./designCompilation.js";
 import { buildNationStates, buildSlots } from "./nationCompilation.js";
+import {
+  decodePrestigeValueSet,
+  PRESTIGE_COMPILE_CODES,
+  type PrestigeValueSet,
+} from "./prestige.js";
 import { materialiseSeededConstructions } from "./seededConstructions.js";
 import { buildPoliticalState, buildWarState } from "./politicalCompilation.js";
 import { getScenarioById, type ScenarioId } from "./scenario.js";
@@ -145,6 +150,11 @@ export class CampaignCompiler {
 
     const world = buildWorldState(pack, campaignStart);
 
+    // S-2: the prestige value set the campaign runs on, decoded strictly from the ruleset content.
+    // It must exist and be valid before any nation's authored prestige is checked against its bounds.
+    const prestigeRules = resolvePrestigeRules(pack.rulesets, collector);
+    if (prestigeRules === undefined || signal.aborted) return undefined;
+
     const builtNations = buildNationStates(
       pack,
       data.fleets,
@@ -154,6 +164,7 @@ export class CampaignCompiler {
       data.divisions,
       input.rulesetVersion,
       campaignMonthId(campaignStart.startYear, campaignStart.startMonth, 0),
+      prestigeRules,
       collector,
     );
     if (!builtNations || signal.aborted) return undefined;
@@ -204,6 +215,7 @@ export class CampaignCompiler {
       designs,
       designFamilies,
       strategicWeather: [],
+      prestigeRules,
       rulesetVersion: input.rulesetVersion,
       compatibilityVersion: input.compatibilityVersion,
     };
@@ -242,6 +254,46 @@ function torpedoResolverFor(
       part !== undefined && part.family === "torpedo" ? compileTorpedo(part, "9999-12") : undefined;
     return compiled !== undefined && compiled.ok ? compiled.value : undefined;
   };
+}
+
+/**
+ * Decode the one prestige value set the pack's rulesets carry (S-2, ADR-0239). Exactly one ruleset
+ * must carry it: none is `VALUE-SET-MISSING`, more than one is `VALUE-SET-AMBIGUOUS` (never guessed),
+ * and a malformed one is `VALUE-SET-INVALID` naming the offending field. There is no default.
+ */
+function resolvePrestigeRules(
+  rulesets: readonly { readonly id: string; readonly prestige?: unknown }[],
+  collector: DiagnosticCollectorType,
+): PrestigeValueSet | undefined {
+  const carriers = rulesets.filter((ruleset) => ruleset.prestige !== undefined);
+  const stage = { stage: "campaign-compile" } as const;
+  if (carriers.length === 0) {
+    collector.addError(
+      PRESTIGE_COMPILE_CODES.valueSetMissing,
+      "No ruleset carries a prestige value set; it is required and has no default",
+      stage,
+    );
+    return undefined;
+  }
+  const [carrier] = carriers;
+  if (carriers.length > 1 || carrier === undefined) {
+    collector.addError(
+      PRESTIGE_COMPILE_CODES.valueSetAmbiguous,
+      `More than one ruleset carries a prestige value set (${carriers.map((r) => r.id).join(", ")}); exactly one must`,
+      stage,
+    );
+    return undefined;
+  }
+  const decoded = decodePrestigeValueSet(carrier.prestige);
+  if (!decoded.ok) {
+    collector.addError(
+      PRESTIGE_COMPILE_CODES.valueSetInvalid,
+      `Ruleset '${carrier.id}' prestige value set is invalid at '${decoded.error.field}': ${decoded.error.message}`,
+      { ...stage, entityId: carrier.id },
+    );
+    return undefined;
+  }
+  return decoded.value;
 }
 
 /**

@@ -6,6 +6,7 @@ import type {
   ConstructionProject,
   NationState,
 } from "@bluewave/campaign";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 /**
  * Hand-built fixtures for `campaign-engine`'s pure projection/configuration
@@ -32,6 +33,7 @@ export const baseFor = (income: number): ReturnType<typeof SafeInt> => SafeInt(i
 export function fixtureNation(overrides: Partial<NationState> & { id: string }): NationState {
   const { id, ...rest } = overrides;
   return {
+    prestige: SafeInt(20),
     id,
     name: id,
     tag: id.toUpperCase(),
@@ -109,6 +111,7 @@ export function fixtureSnapshot(
   const nationsMap = new Map(nations.map((n) => [n.id, n]));
   const designsMap = new Map(designs.map((d) => [d.designVersionId, d]));
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(0),
     campaignId: "campaign-test",

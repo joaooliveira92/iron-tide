@@ -21,6 +21,10 @@ export const RulesetManifestSchema = Schema.Struct({
   id: Schema.NonEmptyString,
   name: Schema.NonEmptyString,
   version: Schema.NonEmptyString,
+  // S-2: the prestige value set (bounds, sacking threshold and probability, per-source rules;
+  // ADR-0239). Opaque here on purpose: the campaign compiler decodes it strictly (excess keys
+  // rejected, no defaults) with `decodePrestigeValueSet` and names the offending field.
+  prestige: Schema.optional(Schema.Unknown),
   provenance: Schema.optional(ProvenanceSchema),
 });
 

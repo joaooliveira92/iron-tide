@@ -6,6 +6,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import { MonthExecutor, PhaseRegistry } from "../src/index.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 const NATIONS = ["GBR", "FRA", "GER"];
 
@@ -45,6 +46,7 @@ function makeNation(
 ): NationState {
   const ships = overrides.ships ?? 0;
   return {
+    prestige: SafeInt(20),
     id,
     name: id,
     tag: id,
@@ -101,6 +103,7 @@ function makeSnapshot(
 ): CampaignSnapshot {
   const map = new Map(nations);
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "diplomacy-acceptance",

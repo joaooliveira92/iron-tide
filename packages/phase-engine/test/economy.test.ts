@@ -4,6 +4,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import { MonthExecutor } from "../src/index.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 function makeNation(
   id: string,
@@ -18,6 +19,7 @@ function makeNation(
 ): NationState {
   const ships = overrides.ships ?? 0;
   return {
+    prestige: SafeInt(20),
     id,
     name: id,
     tag: id,
@@ -71,6 +73,7 @@ function makeNation(
 function makeSnapshot(nations: Array<[string, NationState]>): CampaignSnapshot {
   const map = new Map(nations);
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "economy-acceptance",

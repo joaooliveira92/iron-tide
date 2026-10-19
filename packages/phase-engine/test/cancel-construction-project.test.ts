@@ -13,6 +13,7 @@ import {
   CANCELLATION_WORK_CONSUMED,
   cancellationSettlement,
 } from "../src/cancelConstructionProject.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 const ship = (id: string, over: Partial<Ship> = {}): Ship => ({
   id,
@@ -48,6 +49,7 @@ const project = (over: Partial<ConstructionProject> = {}): ConstructionProject =
   ...over,
 });
 const nationWith = (ships: Ship[], projects: ConstructionProject[]): NationState => ({
+  prestige: SafeInt(20),
   id: "GBR",
   name: "GBR",
   tag: "GBR",
@@ -74,6 +76,7 @@ const nationWith = (ships: Ship[], projects: ConstructionProject[]): NationState
 });
 
 const snapshotOf = (n: NationState): CampaignSnapshot => ({
+  prestigeRules: FIXTURE_PRESTIGE_RULES,
   version: "0.1.0",
   turnNumber: SafeInt(1),
   campaignId: "cancel",

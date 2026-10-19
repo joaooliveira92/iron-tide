@@ -1,0 +1,15 @@
+{
+  "saveId": "1792451559193-7dac206b-c7f8-498a-974a-474ea76e2e65",
+  "timestamp": "2026-10-19T23:12:39.193Z",
+  "turnNumber": 0,
+  "campaignId": "save-corpus-4-0-0",
+  "snapshotHash": "7e0e5e6a78af02a28dd3b28b4948734dfd4665e423f347490da6dc8cbe289aa7",
+  "compatibilityVersion": "4.0.0",
+  "contentArtifactHash": "eb7c81acf1d37ac89483f25ae6cabaaa0c244f1633b03a2e67be99ac4088bad6",
+  "campaignName": "save-corpus-4-0-0",
+  "nationId": "uk",
+  "campaignDate": {
+    "year": 1880,
+    "month": 1
+  }
+}

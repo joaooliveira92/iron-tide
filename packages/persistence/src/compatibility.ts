@@ -29,7 +29,11 @@ export { COMPATIBILITY_MISMATCH_CODE } from "./errors.js";
 // 3.0.0 snapshot still decodes, but pre-change saves are REFUSED at the compatibility gate
 // (ADR-0113 section 5): no released save exists, and replaying a save under a different
 // economy would silently change its outcomes.
-export const CURRENT_COMPATIBILITY_VERSION = "3.1.0";
+// S-2 (prestige and career, ADR-0239): bumped 3.1.0 -> 4.0.0 because every compiled nation gains a
+// required prestige and the snapshot gains the required prestige value set. Neither has a default, so
+// an older save cannot be read without inventing a gameplay value: pre-change saves are REFUSED at the
+// compatibility gate before decoding (ADR-0113 section 5) and no migration ships.
+export const CURRENT_COMPATIBILITY_VERSION = "4.0.0";
 
 // The named version at which the ship part model landed; it stays 2.0.0 as a
 // historical declaration while the current release constant moves on. Kept so

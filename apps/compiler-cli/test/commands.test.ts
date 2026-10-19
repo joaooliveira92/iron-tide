@@ -165,6 +165,18 @@ const storableCampaignState: any = {
     designs: {},
     designFamilies: {},
     strategicWeather: [],
+    // S-2: the required prestige value set (test-only fixture numbers, not prestige values).
+    prestigeRules: {
+      lowerBound: 0,
+      upperBound: 100,
+      sackingThreshold: 10,
+      sackingProbabilityBp: 2500,
+      rules: {
+        UNPAID_FUNDS: { kind: "PROPORTIONAL_LOSS", basisPoints: 300 },
+        BATTLE_LOST: { kind: "PROPORTIONAL_LOSS", basisPoints: 500 },
+        BATTLE_WON: { kind: "FIXED_GAIN", amount: 1 },
+      },
+    },
     rulesetVersion: "0.1.0",
     compatibilityVersion: "0.1.0",
   },

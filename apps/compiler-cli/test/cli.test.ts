@@ -6,10 +6,12 @@ import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import type { CommandEnvelope, BudgetProjectCommand } from "@bluewave/commands";
 import { CommandLedger } from "@bluewave/commands";
 import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function createSnapshot(): CampaignSnapshot {
   const nations = new Map<string, NationState>();
   nations.set("GBR", {
+    prestige: SafeInt(20),
     id: "GBR",
     name: "United Kingdom",
     tag: "GBR",
@@ -48,6 +50,7 @@ function createSnapshot(): CampaignSnapshot {
     isAI: false,
   });
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "replay-test",

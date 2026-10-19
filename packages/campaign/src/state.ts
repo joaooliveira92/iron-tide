@@ -1,4 +1,5 @@
 import type { Bp, Money, SafeInt } from "@bluewave/contracts";
+import type { PrestigeValueSet } from "./prestige.js";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";
 import type { PermanentDivision } from "./division.js";
@@ -472,6 +473,11 @@ export interface NationState {
   navalAppropriationRateBp: SafeInt;
   maintenanceCost: SafeInt;
   /**
+   * The nation's prestige (S-2, ADR-0239): a plain integer within the ruleset's declared bounds,
+   * seeded per nation from authored content with no default. Required, never optional or derived.
+   */
+  prestige: SafeInt;
+  /**
    * The nation's home area (S-5, spec #73 R3): authoritative content, validated against the area set. Absent in
    * saves from earlier builds.
    */
@@ -895,6 +901,12 @@ export interface CampaignSnapshot {
   // ADR-0025). Canonically ordered by areaId (stable serializer order; only the
   // CURRENT campaign month is stored — no unbounded growth). Empty at compile.
   strategicWeather: CampaignWeatherState[];
+  /**
+   * The prestige value set the campaign runs on (S-2, ADR-0239): bounds, sacking threshold and
+   * probability, and each source's rule, decoded strictly from the ruleset at compile. Required,
+   * with no default; later S-2 phases read it from here rather than from any constant.
+   */
+  prestigeRules: PrestigeValueSet;
   rulesetVersion: string;
   compatibilityVersion: string;
 }

@@ -18,6 +18,11 @@ import {
 } from "./economy.js";
 import { nationMonthlyMaintenance } from "./maintenance.js";
 import { buildOfficerRoster } from "./officers.js";
+import {
+  PRESTIGE_COMPILE_CODES,
+  resolveNationPrestige,
+  type PrestigeValueSet,
+} from "./prestige.js";
 import { resolveShipReadinessSeed } from "./readiness.js";
 import type {
   CampaignSlot,
@@ -44,6 +49,54 @@ function isNationPlayable(
     return false;
   }
   return flag;
+}
+
+/**
+ * Read a nation's authored starting prestige against the ruleset bounds. A missing, non-integer,
+ * unsafe or out-of-range value is a named diagnostic naming the nation, never a default. On error
+ * the returned value is a placeholder: the raised error stops the compile, so it is never output.
+ */
+function readNationPrestige(
+  nationId: string,
+  authored: unknown,
+  prestigeRules: PrestigeValueSet,
+  collector: DiagnosticCollector,
+): SafeInt {
+  const resolved = resolveNationPrestige(authored, prestigeRules);
+  if (resolved.ok) return resolved.value;
+  const { error } = resolved;
+  const raise = (
+    code: (typeof PRESTIGE_COMPILE_CODES)[keyof typeof PRESTIGE_COMPILE_CODES],
+    message: string,
+  ) => {
+    collector.addError(code, message, { stage: "campaign-compile", entityId: nationId });
+  };
+  switch (error._tag) {
+    case "PrestigeMissing":
+      raise(
+        PRESTIGE_COMPILE_CODES.missing,
+        `Nation '${nationId}' has no authored prestige; it is required and has no default`,
+      );
+      break;
+    case "PrestigeNotInteger":
+      raise(PRESTIGE_COMPILE_CODES.notInteger, `Nation '${nationId}' prestige must be an integer`);
+      break;
+    case "PrestigeUnsafeInteger":
+      raise(
+        PRESTIGE_COMPILE_CODES.unsafeInteger,
+        `Nation '${nationId}' prestige must be a safe integer`,
+      );
+      break;
+    case "PrestigeOutOfRange":
+      raise(
+        PRESTIGE_COMPILE_CODES.outOfRange,
+        `Nation '${nationId}' prestige ${String(error.value)} is outside the ruleset bounds ${String(error.lowerBound)} to ${String(error.upperBound)}`,
+      );
+      break;
+    default:
+      raise(PRESTIGE_COMPILE_CODES.notInteger, `Nation '${nationId}' prestige is invalid`);
+  }
+  return SafeInt(0);
 }
 
 interface EconomyRow {
@@ -270,6 +323,7 @@ export function buildNationStates(
   divisionsData: unknown[],
   rulesetVersion: string,
   creationMonth: string,
+  prestigeRules: PrestigeValueSet,
   collector: DiagnosticCollector,
 ): Map<string, NationState> | undefined {
   const nations = new Map<string, NationState>();
@@ -287,6 +341,7 @@ export function buildNationStates(
     const id = toStr(countryRec["id"], "");
 
     const isPlayable = isNationPlayable(id, countryRec, collector);
+    const prestige = readNationPrestige(id, countryRec["prestige"], prestigeRules, collector);
 
     const fleets = buildFleets(fleetsData, id, collector);
     const research = buildResearch(researchData, id);
@@ -365,6 +420,7 @@ export function buildNationStates(
       baseResources,
       navalAppropriationRateBp: startRate,
       maintenanceCost: SafeInt(0),
+      prestige,
       ...(typeof countryRec["homeArea"] === "string" ? { homeAreaId: countryRec["homeArea"] } : {}),
       fleets,
       divisions,
