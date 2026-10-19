@@ -35,6 +35,7 @@ import { submitConstructionCommandProgram } from "./constructionCommands.js";
 import {
   listCampaignsProgram,
   loadCampaignProgram,
+  loadRecentCampaignProgram,
   recoverCampaignProgram,
   replayCampaignProgram,
   verifyCampaignProgram,
@@ -46,7 +47,7 @@ import { readReferenceDesigns } from "../referenceDesigns.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import type { CommandProgram } from "../runtime/commandProgram.js";
-import { IdGenerator, NativeDialog } from "../runtime/platform.js";
+import { AppPaths, IdGenerator, NativeDialog } from "../runtime/platform.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
@@ -56,6 +57,8 @@ const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 // these test-scoped variables, so the real electron dialog is never touched.
 let chooseSaveDirectoryAnswer: string | null = null;
 let choosePackageDirectoryAnswer: string | null = null;
+// The approved-package list lives under the app's user-data dir; tests point it at a temp dir.
+const userDataRoot = mkdtempSync(resolve(tmpdir(), "bw-desktop-userdata-"));
 
 // Session ids are injected (production-hardening ticket 04): a deterministic,
 // per-call counter proves compile/load take the id from the `IdGenerator`
@@ -72,6 +75,15 @@ const runtime = ManagedRuntime.make(
       chooseCopyDirectory: () => Effect.succeed(null),
     }),
     Layer.succeed(IdGenerator, { next: () => Effect.sync(nextTestId) }),
+    Layer.succeed(AppPaths, {
+      supportDir: () => Effect.succeed(resolve(userDataRoot, "support")),
+      userDataDir: () => Effect.succeed(userDataRoot),
+      homeDir: userDataRoot,
+      appVersion: () => Effect.succeed("test"),
+      platform: "darwin",
+      arch: "arm64",
+      processId: 1,
+    }),
   ),
 );
 
@@ -87,6 +99,8 @@ const commitMonth = (payload: {
   transportRequestId: string;
 }) => runProgram<CommitMonthResponse>(commitMonthProgram, payload);
 const loadCampaign = () => runProgram<LoadCampaignResponse>(loadCampaignProgram, undefined);
+const loadRecentCampaign = (packagePath: string) =>
+  runProgram<LoadCampaignResponse>(loadRecentCampaignProgram, { packagePath });
 const listCampaigns = () => runProgram<SaveMetadata[]>(listCampaignsProgram, undefined);
 const verifyCampaign = () => runProgram<VerifyCampaignResponse>(verifyCampaignProgram, undefined);
 const replayCampaign = () => runProgram<ReplayCampaignResponse>(replayCampaignProgram, undefined);
@@ -668,6 +682,32 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(load.outcome).toBe("success");
     if (load.outcome !== "success") return;
     expect(load.value.activeRevision).toBe(0);
+  });
+
+  it("loadRecentCampaign reopens a dialog-approved package without prompting again", async () => {
+    const saveDir = resolve(saveRoot, "save-recent");
+    await compileAndSave(saveDir);
+
+    packageAt(saveDir);
+    const first = await loadCampaign();
+    expect(first.outcome).toBe("success");
+
+    // No dialog answer is set: only the approved list can supply the path.
+    choosePackageDirectoryAnswer = null;
+    const again = await loadRecentCampaign(saveDir);
+    expect(again.outcome).toBe("success");
+    if (again.outcome !== "success") return;
+    expect(again.value.packagePath).toBe(saveDir);
+  });
+
+  it("loadRecentCampaign rejects a path the user never picked in the dialog", async () => {
+    const saveDir = resolve(saveRoot, "save-unapproved");
+    await compileAndSave(saveDir);
+
+    const result = await loadRecentCampaign(saveDir);
+    expect(result.outcome).toBe("error");
+    if (result.outcome !== "error") return;
+    expect(result.reason).toBe("PACKAGE_NOT_APPROVED");
   });
 
   // Edge cases: cancellation and missing sidecar metadata

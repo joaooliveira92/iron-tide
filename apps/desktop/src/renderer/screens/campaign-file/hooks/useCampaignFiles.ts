@@ -88,12 +88,22 @@ export function useCampaignFiles({
   }, [bridge, recordLoadedCampaign, showResult]);
 
   const openRecentCampaign = useCallback(
-    async (_file: RecentFile) => {
-      // Recent entries are display hints only. The main process requires the
-      // user to select the package again instead of trusting a renderer path.
+    async (file: RecentFile) => {
+      if (bridge === undefined) return;
+      setPendingLabel("Loading campaign…");
+      const loadResult = await bridge.campaign.execute("loadRecentCampaign", {
+        packagePath: file.path,
+      });
+      setPendingLabel(null);
+
+      if (loadResult.outcome === "success") {
+        recordLoadedCampaign(file.path, loadResult);
+        return;
+      }
+      // Not approved by the main process (or gone from disk): ask the user to pick it again.
       await openCampaign();
     },
-    [openCampaign],
+    [bridge, openCampaign, recordLoadedCampaign],
   );
 
   const removeRecentCampaign = useCallback((path: string) => {

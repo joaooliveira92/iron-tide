@@ -35,6 +35,7 @@ import {
 import {
   listCampaignsProgram,
   loadCampaignProgram,
+  loadRecentCampaignProgram,
   recoverCampaignProgram,
   replayCampaignProgram,
   verifyCampaignProgram,
@@ -170,6 +171,7 @@ export const commandPrograms: Partial<Record<CampaignCommandName, CommandProgram
   abandonPendingTurn: abandonPendingTurnProgram,
   readPendingTurn: readPendingTurnProgram,
   loadCampaign: loadCampaignProgram,
+  loadRecentCampaign: loadRecentCampaignProgram,
   listCampaigns: listCampaignsProgram,
   verifyCampaign: verifyCampaignProgram,
   replayCampaign: replayCampaignProgram,

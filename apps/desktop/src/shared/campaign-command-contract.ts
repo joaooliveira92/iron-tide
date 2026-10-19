@@ -440,6 +440,7 @@ export const CAMPAIGN_COMMAND_NAMES = [
   "replayBattleBoundary",
   "seedCampaignBattleDrill",
   "loadCampaign",
+  "loadRecentCampaign",
   "listCampaigns",
   "verifyCampaign",
   "replayCampaign",
@@ -556,6 +557,10 @@ export interface CampaignCommandClient {
     payload: SeedCampaignBattleDrillPayload,
   ): Promise<BridgeResult<SeedCampaignBattleDrillResult>>;
   execute(command: "loadCampaign", payload: undefined): Promise<BridgeResult<LoadCampaignResponse>>;
+  execute(
+    command: "loadRecentCampaign",
+    payload: { readonly packagePath: string },
+  ): Promise<BridgeResult<LoadCampaignResponse>>;
   execute(
     command: "listCampaigns",
     payload: undefined,

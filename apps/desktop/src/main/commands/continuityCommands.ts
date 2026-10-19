@@ -2,15 +2,16 @@ import { advanceMonth, getScenarioById, type CampaignState } from "@bluewave/cam
 import { CommandLedger } from "@bluewave/commands";
 import { DiagnosticCollector, type DiagnosticCode } from "@bluewave/diagnostics";
 import type { SaveMetadata } from "@bluewave/persistence";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import type { ReplayedRevision } from "../../shared/continuity-contract.js";
+import { approvePackage, loadApprovedPackages } from "../approvedPackages.js";
 import { ledgerOf, parseMonthInput } from "../monthInput.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandQueueStore } from "../runtime/commandQueueStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
-import { payloadless } from "../runtime/commandProgram.js";
+import { payloadless, withStrictSchema } from "../runtime/commandProgram.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
-import { IdGenerator, NativeDialog } from "../runtime/platform.js";
+import { AppPaths, IdGenerator, NativeDialog } from "../runtime/platform.js";
 import { ProjectStore } from "../runtime/projectStore.js";
 import { ReplayService } from "../runtime/replayService.js";
 
@@ -64,19 +65,60 @@ function cancelled() {
 export const loadCampaignProgram = payloadless(() =>
   Effect.gen(function* () {
     const dialogs = yield* NativeDialog;
+    const paths = yield* AppPaths;
+
+    const saveDir = yield* dialogs.choosePackageDirectory();
+    if (saveDir === null) return cancelled();
+
+    const result = yield* loadPackageAt(saveDir);
+    if (result.outcome === "success") {
+      // Remember the user's pick so Recent Campaigns can reopen it without a
+      // dialog. Best-effort: failing to remember must never block opening.
+      yield* paths.userDataDir().pipe(
+        Effect.flatMap((userDataDir) => Effect.try(() => approvePackage(userDataDir, saveDir))),
+        Effect.ignore,
+      );
+    }
+    return result;
+  }),
+);
+
+/**
+ * `loadRecentCampaign({ packagePath })` — reopens a package the user already
+ * chose through the native dialog. The renderer's path is only a lookup key:
+ * it must match a path in the main-process approved list, otherwise the
+ * command fails with `PACKAGE_NOT_APPROVED` and the renderer falls back to the
+ * dialog.
+ */
+export const loadRecentCampaignProgram = withStrictSchema(
+  Schema.Struct({ packagePath: Schema.NonEmptyString }),
+  ({ packagePath }) =>
+    Effect.gen(function* () {
+      const paths = yield* AppPaths;
+      const userDataDir = yield* paths.userDataDir();
+      if (!loadApprovedPackages(userDataDir).includes(packagePath)) {
+        return {
+          outcome: "error" as const,
+          reason: "PACKAGE_NOT_APPROVED",
+          diagnostics: ["This package was not opened through the file dialog; choose it again."],
+        };
+      }
+      return yield* loadPackageAt(packagePath);
+    }),
+);
+
+const loadPackageAt = (saveDir: string) =>
+  Effect.gen(function* () {
     const projects = yield* ProjectStore;
     const sessions = yield* CampaignSessionStore;
     const queue = yield* CommandQueueStore;
     const ids = yield* IdGenerator;
 
-    const saveDir = yield* dialogs.choosePackageDirectory();
-    if (saveDir === null) return cancelled();
-
     const collector = new DiagnosticCollector();
     const state = yield* projects.load(saveDir, collector);
     if (!state) {
       return {
-        outcome: "error",
+        outcome: "error" as const,
         reason: "LOAD_FAILED",
         diagnostics: collector.all.map((d) => d.message),
       };
@@ -85,7 +127,7 @@ export const loadCampaignProgram = payloadless(() =>
     const metadata = yield* projects.readSessionMetadata(saveDir);
     if (!metadata) {
       return {
-        outcome: "error",
+        outcome: "error" as const,
         reason: "SESSION_METADATA_MISSING",
         diagnostics: [
           `${saveDir} is a valid package but has no readable session.json metadata. It cannot be restored — only packages written by the New Game flow carry the player slot, seed, and scenario needed to continue.`,
@@ -95,7 +137,7 @@ export const loadCampaignProgram = payloadless(() =>
 
     if (!state.snapshot.nations.has(metadata.playerSlotId)) {
       return {
-        outcome: "error",
+        outcome: "error" as const,
         reason: "UNKNOWN_PLAYER_SLOT",
         diagnostics: [
           `Nation ${metadata.playerSlotId} (from session.json) does not exist in the package snapshot.`,
@@ -106,7 +148,7 @@ export const loadCampaignProgram = payloadless(() =>
     const scenario = getScenarioById(metadata.scenarioId);
     if (!scenario) {
       return {
-        outcome: "error",
+        outcome: "error" as const,
         reason: "SESSION_METADATA_INVALID",
         diagnostics: [`Scenario ${metadata.scenarioId} is not a canonical scenario.`],
       };
@@ -128,7 +170,7 @@ export const loadCampaignProgram = payloadless(() =>
     yield* queue.restore(sessionId);
 
     return {
-      outcome: "success",
+      outcome: "success" as const,
       value: {
         sessionId,
         packagePath: saveDir,
@@ -137,8 +179,7 @@ export const loadCampaignProgram = payloadless(() =>
       },
       diagnostics: [],
     };
-  }),
-);
+  });
 
 /**
  * `listCampaigns(undefined) -> BridgeResult<SaveMetadata[]>` — the
