@@ -85,7 +85,7 @@ function PlanSymbol({
       );
     }
     case "anchor":
-      return <circle cx={x} cy={y} r={1.4} className="fill-background" data-fitting={id} />;
+      return <circle cx={x} cy={y} r={1.4} className="fill-transparent" data-fitting={id} />;
     case "tube":
       return (
         <g data-kind="torpedo">
