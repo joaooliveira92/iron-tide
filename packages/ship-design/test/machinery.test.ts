@@ -186,3 +186,51 @@ describe("bunker volume", () => {
     expect(vol(60_000, 11_148)).toBeGreaterThan(vol(60_000, 10_000));
   });
 });
+
+describe("engine priority (speed <-> reliability axis, ADR-0233)", () => {
+  const bal: MachineryBalance = {
+    ...balance,
+    enginePriorityWeightSwingBp: 1_500,
+    enginePriorityPowerSwingBp: 500,
+    enginePriorityReliabilitySwingBp: 2_000,
+  };
+  const at = (p: number | undefined) =>
+    compileMachinery(p === undefined ? base : { ...base, enginePriorityBp: p }, bal);
+
+  it("balanced (0) and absent are identical", () => {
+    expect(at(0)).toEqual(at(undefined));
+    expect(at(0).reliabilityBp).toBe(triple.reliabilityBp);
+  });
+  it("speed-optimised is lighter and faster but less reliable; reliability-optimised the reverse", () => {
+    const fast = at(10_000);
+    const mid = at(0);
+    const safe = at(-10_000);
+    expect(fast.plantWeightKg).toBeLessThan(mid.plantWeightKg);
+    expect(safe.plantWeightKg).toBeGreaterThan(mid.plantWeightKg);
+    expect(fast.maxSpeedMilliKnots).toBeGreaterThan(mid.maxSpeedMilliKnots);
+    expect(safe.maxSpeedMilliKnots).toBeLessThan(mid.maxSpeedMilliKnots);
+    expect(fast.reliabilityBp).toBeLessThan(mid.reliabilityBp);
+    expect(safe.reliabilityBp).toBeGreaterThan(mid.reliabilityBp);
+  });
+  it("is monotone in the priority across the whole axis", () => {
+    const steps = [-10_000, -5_000, -1, 0, 1, 5_000, 10_000].map(at);
+    for (let i = 1; i < steps.length; i++) {
+      expect(steps[i]!.plantWeightKg).toBeLessThanOrEqual(steps[i - 1]!.plantWeightKg);
+      expect(steps[i]!.maxSpeedMilliKnots).toBeGreaterThanOrEqual(steps[i - 1]!.maxSpeedMilliKnots);
+      expect(steps[i]!.reliabilityBp).toBeLessThanOrEqual(steps[i - 1]!.reliabilityBp);
+    }
+  });
+  it("keeps reliability inside 0..10000 and rejects a priority off the axis", () => {
+    const extreme = compileMachinery(
+      { ...base, enginePriorityBp: 10_000 },
+      { ...bal, enginePriorityReliabilitySwingBp: 20_000 },
+    );
+    expect(extreme.reliabilityBp).toBe(0);
+    for (const bad of [10_001, -10_001, 0.5]) expect(() => at(bad)).toThrow(/enginePriorityBp/);
+  });
+  it("without authored swings the axis has no effect", () => {
+    expect(compileMachinery({ ...base, enginePriorityBp: 10_000 }, balance)).toEqual(
+      compileMachinery(base, balance),
+    );
+  });
+});

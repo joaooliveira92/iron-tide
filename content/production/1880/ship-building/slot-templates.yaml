@@ -41,10 +41,6 @@ slotTemplates:
     slots:
       - accepts:
           - armour_material
-        id: armour.barbette
-        region: BARBETTE
-      - accepts:
-          - armour_material
         id: armour.belt_ends
         region: BELT_ENDS
       - accepts:
@@ -61,6 +57,10 @@ slotTemplates:
         region: CONNING_TOWER
       - accepts:
           - armour_material
+        id: armour.deck_extended
+        region: DECK_EXTENDED
+      - accepts:
+          - armour_material
         id: armour.deck_main
         region: DECK_MAIN
       - accepts:
@@ -71,6 +71,10 @@ slotTemplates:
           - armour_material
         id: armour.magazine_box
         region: MAGAZINE_BOX
+      - accepts:
+          - armour_material
+        id: armour.secondary_gun
+        region: SECONDARY_GUN
       - accepts:
           - armour_material
         id: armour.splinter_plating
@@ -85,8 +89,12 @@ slotTemplates:
         region: TORPEDO_BULKHEAD
       - accepts:
           - armour_material
-        id: armour.turret_face
-        region: TURRET_FACE
+        id: armour.turret
+        region: TURRET
+      - accepts:
+          - armour_material
+        id: armour.turret_top
+        region: TURRET_TOP
   - id: compatibility_damage_control
     slots:
       - accepts:

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { buildWorkshopView } from "@bluewave/ship-design";
+import { buildWorkshopView, DESIGN_SCHEMA_VERSION } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "./content.js";
 import { designFileName, exportDesign, importDesign } from "./designFile.js";
 
@@ -20,7 +20,7 @@ describe("design files", () => {
   });
   it("rejects a file from a newer schema version", () => {
     const text = exportDesign(ref.draft, content.components, view.compiled).replace(
-      '"schemaVersion":1',
+      `"schemaVersion":${DESIGN_SCHEMA_VERSION}`,
       '"schemaVersion":99',
     );
     expect(importDesign(text, content.components)).toMatchObject({ ok: false });

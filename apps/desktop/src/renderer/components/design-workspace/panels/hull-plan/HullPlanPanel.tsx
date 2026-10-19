@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ArmourRegionId, DesignDraft, WorkshopView } from "@bluewave/ship-design";
 import type { DrawingBoardContent } from "../../content.js";
 import { Checkbox } from "../../../ui/checkbox.js";
@@ -21,8 +21,8 @@ import { passesFilter } from "../../validation/severity.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../ui/popover.js";
 import { FittingTargets } from "./FittingTargets.js";
 import { SelectionLayer } from "./SelectionLayer.js";
-import { GunArcLayer, HullFittingLayer } from "./fitting-layers.js";
-import { HullOutlineLayer, HullZoneLayer } from "./plan-layers.js";
+import { ARC_R_FOCUS, GunArcLayer, HullFittingLayer } from "./fitting-layers.js";
+import { HullDeckLayer, HullOutlineLayer, HullZoneLayer } from "./plan-layers.js";
 import { HullTopsideLayer } from "./HullTopsideLayer.js";
 import {
   ArmourZoneLayer,
@@ -31,9 +31,13 @@ import {
   MassMarkersLayer,
 } from "./ship-view-layers.js";
 import { DEFAULT_VIEW, SHIP_VIEW_DEFS, type ShipOverlay, type ShipView } from "./ship-view.js";
+import { buildAnatomyShip } from "./anatomy/ship-anatomy.js";
+import { fittingKind } from "./sections.js";
+import { planSymbolFor } from "./plan-symbols.js";
 import { planModel, type PlanModel } from "./planModel.js";
 import { useHullPlanEditing, type HullPlanEditing } from "./useHullPlanEditing.js";
 import { Info } from "lucide-react";
+import { formatHullMetres } from "../../../../lib/presentation-format/index.js";
 import { plural } from "../../plural.js";
 import type { BoardFinding } from "../../validation/boardFindings.js";
 import type { PlanTool } from "./plan-tool.js";
@@ -131,8 +135,35 @@ export function HullPlanPanel({
   const on = (overlay: ShipOverlay) => givenOverlays === undefined || givenOverlays.has(overlay);
   const arcsOn = (overlaysGiven ? on("arcs") : true) && showArcs;
   const lcgPermille = view.compiled.stability?.lcgPermille;
+  const anatomy = useMemo(
+    () => ({
+      starboard: buildAnatomyShip({ draft, view, model, azimuth: 135 }),
+      port: buildAnatomyShip({ draft, view, model, azimuth: 225 }),
+    }),
+    [draft, view, model],
+  );
+  const symbolOf = useMemo(() => {
+    const mountOf = new Map(model.visualMounts.map((m) => [m.instanceId, m]));
+    return (p: DesignDraft["placements"][number]) => {
+      const entry = model.entryOf(p.componentId);
+      if (entry === undefined) return undefined;
+      const mount = mountOf.get(p.instanceId);
+      return planSymbolFor({
+        kind: fittingKind(entry.category, entry.tags),
+        category: entry.category,
+        mountType: mount?.mountType,
+        gunCount: mount?.gunCount,
+        caliberUm: mount?.caliberUm,
+      });
+    };
+  }, [model]);
   return (
-    <Panel title="Hull plan" className="rounded-none border-0 bg-transparent">
+    <Panel
+      title="Hull plan"
+      // In the workspace the view toolbar already names the drawing; on its own the panel keeps its heading.
+      compact={givenShipView !== undefined}
+      className="rounded-none border-0 bg-transparent"
+    >
       <PlanToolOptions
         tool={tool}
         draft={draft}
@@ -171,11 +202,17 @@ export function HullPlanPanel({
             aria-label={planLabel(facts)}
           >
             <HullOutlineLayer frame={frame} />
+            <HullDeckLayer frame={frame} />
             <SelectionLayer frame={frame} zones={zones} draft={draft} warns={model.warns} />
             <HullZoneLayer frame={frame} zones={zones} />
             {viewDef.id === "compartments" && <CompartmentLayer frame={frame} zones={zones} />}
             {on("armour") && (
-              <ArmourZoneLayer frame={frame} draft={draft} highlight={armourHighlight} />
+              <ArmourZoneLayer
+                frame={frame}
+                draft={draft}
+                highlight={armourHighlight}
+                anatomy={anatomy.starboard}
+              />
             )}
             {on("topside") && (
               <HullTopsideLayer frame={frame} draft={draft} content={content} zones={zones} />
@@ -184,12 +221,21 @@ export function HullPlanPanel({
               <MassMarkersLayer frame={frame} lcgPermille={lcgPermille} />
             )}
             {on("machinery") && <MachineryLayoutLayer frame={frame} draft={draft} />}
-            {arcsOn && <GunArcLayer frame={frame} draft={draft} mounts={mounts} />}
+            {arcsOn && (
+              <GunArcLayer
+                frame={frame}
+                draft={draft}
+                mounts={mounts}
+                radius={viewDef.id === "arcs" ? ARC_R_FOCUS : undefined}
+                labelled={viewDef.id === "arcs"}
+              />
+            )}
             {on("footprint") && (
               <HullFittingLayer
                 frame={frame}
                 draft={draft}
                 selectedId={tool.mode === "move" ? tool.instanceId : undefined}
+                symbolOf={symbolOf}
               />
             )}
             {tool.mode !== "off" && (
@@ -225,6 +271,7 @@ export function HullPlanPanel({
             targets={targets}
             disabled={tool.mode !== "off"}
             warns={(instanceId) => model.warns({ kind: "fitting", instanceId })}
+            anatomy={anatomy}
           />
           {on("conflicts") && (
             <FindingMarkers
@@ -235,6 +282,7 @@ export function HullPlanPanel({
           )}
         </div>
         <SectionLabels
+          numbered={viewDef.id === "compartments"}
           zones={zones}
           anchor={planRef}
           renderCard={(id) => (
@@ -247,7 +295,8 @@ export function HullPlanPanel({
       </div>
       <div className="space-y-1">
         <p className="text-xs font-medium text-muted-foreground">
-          Profile · depth {facts.depthM.toFixed(1)} m · draught {facts.draughtM.toFixed(1)} m
+          Profile · depth {formatHullMetres(facts.depthM, 1)} m · draught{" "}
+          {formatHullMetres(facts.draughtM, 1)} m
         </p>
         <ProfileView
           draft={draft}
@@ -274,7 +323,7 @@ export function HullPlanPanel({
       />
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span>
-          {frame.lengthM.toFixed(0)} m × {frame.beamM.toFixed(1)} m ·{" "}
+          {formatHullMetres(frame.lengthM, 0)} m × {formatHullMetres(frame.beamM, 1)} m ·{" "}
           {plural(draft.placements.length, "fitting")} · Schematic, not a lines plan.
         </span>
         <Popover>

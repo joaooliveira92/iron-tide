@@ -1,12 +1,12 @@
 /** The ruler route: a dark casing under a dashed highlight along its legs. */
-export function RoutesLayer({ d, stroke }: { d: string; stroke: string }) {
+export function RoutesLayer({ d, stroke, casing }: { d: string; stroke: string; casing: string }) {
   if (d === "") return null;
   return (
     <>
       <path
         d={d}
         fill="none"
-        stroke="oklch(0.2 0 0 / 0.6)"
+        stroke={casing}
         strokeWidth={6}
         vectorEffect="non-scaling-stroke"
         strokeLinecap="round"

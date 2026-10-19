@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vite-plus/test";
 import {
   compileDesign,
+  applyEdit,
+  EditError,
+  changeKindOf,
   checkFindingShape,
   LEDGER_CATEGORIES,
   ledgerTotal,
@@ -55,6 +58,7 @@ describe("compileDesign: reference gunboat", () => {
         "vmax": 21377,
         "warnings": [
           "ARMOUR_INEFFECTIVE_VS_ADVERSARY",
+          "FIRE_CONTROL_NO_POSITIONS",
           "MAGAZINE_UNPROTECTED",
           "MAGAZINE_UNPROTECTED",
         ],
@@ -194,5 +198,110 @@ describe("compileDesign: invalid designs", () => {
     const t = performance.now();
     for (let i = 0; i < 100; i++) compileDesign(draft, ctx);
     expect((performance.now() - t) / 100).toBeLessThan(25);
+  });
+});
+
+describe("compileDesign: engine priority (#168 step 2)", () => {
+  const tuned = withCtx({
+    balance: {
+      ...ctx.balance,
+      machinery: {
+        ...ctx.balance.machinery,
+        enginePriorityWeightSwingBp: 1_500,
+        enginePriorityPowerSwingBp: 500,
+        enginePriorityReliabilitySwingBp: 3_000,
+        enginePriorityReliabilityWarnBp: 7_000,
+      },
+    },
+  });
+  const at = (p: number | undefined) =>
+    compileDesign(
+      withDraft({
+        machinery: { ...draft.machinery, ...(p === undefined ? {} : { enginePriorityBp: p }) },
+      }),
+      tuned,
+    );
+
+  it("a draft without the field compiles exactly as before (priority 0 = balanced)", () => {
+    expect(at(0).hash).toBe(at(undefined).hash);
+    expect(compileDesign(draft, ctx).hash).toBe(compileDesign(draft, tuned).hash);
+  });
+  it("speed priority lightens the machinery ledger and raises top speed; reliability priority does the reverse", () => {
+    const fast = at(10_000);
+    const mid = at(0);
+    const safe = at(-10_000);
+    expect(fast.ledger.machinery).toBeLessThan(mid.ledger.machinery);
+    expect(safe.ledger.machinery).toBeGreaterThan(mid.ledger.machinery);
+    expect(fast.machinery!.maxSpeedMilliKnots).toBeGreaterThan(mid.machinery!.maxSpeedMilliKnots);
+    expect(safe.machinery!.reliabilityBp).toBeGreaterThan(mid.machinery!.reliabilityBp);
+    expect(fast.machinery!.reliabilityBp).toBeLessThan(mid.machinery!.reliabilityBp);
+  });
+  it("warns of breakdown risk only on the speed side, with a well-formed finding", () => {
+    const f = at(10_000).findings.find((x) => x.id === "ENGINE_PRIORITY_BREAKDOWN_RISK");
+    expect(f).toBeDefined();
+    expect(checkFindingShape(f!)).toEqual([]);
+    expect(ids(at(0))).not.toContain("ENGINE_PRIORITY_BREAKDOWN_RISK");
+    expect(ids(at(-10_000))).not.toContain("ENGINE_PRIORITY_BREAKDOWN_RISK");
+  });
+});
+
+describe("compileDesign: fire-control positions (#168 step 3)", () => {
+  it("carry through edits, the draft hash and an absent field means none", () => {
+    const edited = applyEdit(draft, { kind: "set_fire_control", positions: 2 });
+    expect(edited.fireControl).toEqual({ positions: 2 });
+    expect(() => applyEdit(draft, { kind: "set_fire_control", positions: -1 })).toThrow(EditError);
+    expect(changeKindOf({ kind: "set_fire_control", positions: 1 }, () => undefined)).toBe(
+      "FITTINGS",
+    );
+    expect(compileDesign(edited, ctx).systems!.fireControlRedundancyBp).toBe(
+      compileDesign(draft, ctx).systems!.fireControlRedundancyBp,
+    );
+  });
+  it("engine priority is a machinery change", () => {
+    expect(
+      changeKindOf({ kind: "set_machinery", patch: { enginePriorityBp: 500 } }, () => undefined),
+    ).toBe("MACHINERY");
+  });
+});
+
+describe("compileDesign: tertiary battery (#168 step 4b)", () => {
+  const tertiaryBalance = {
+    gunWeightNanoKgPerMm3: 1_500_000,
+    footprintFactorPermille: 400_000,
+    shellNanoKgPerMm3: 20_000,
+    bearingBp: 5_000,
+  };
+  const tuned = withCtx({ balance: { ...ctx.balance, tertiary: tertiaryBalance } });
+  const withBattery = (count: number) => withDraft({ tertiary: { caliberUm: 57_000, count } });
+  const base = compileDesign(draft, tuned);
+  const four = compileDesign(withBattery(4), tuned);
+
+  it("no battery, a zero count and absent balance all leave the design unchanged", () => {
+    expect(compileDesign(withBattery(0), tuned).hash).toBe(base.hash);
+    expect(compileDesign(draft, ctx).hash).toBe(base.hash);
+    expect(compileDesign(withBattery(4), ctx).totalKg).toBe(compileDesign(draft, ctx).totalKg);
+  });
+  it("adds its weight to the armament line and the displacement", () => {
+    expect(four.ledger.armament - base.ledger.armament).toBe(4 * 278);
+    expect(four.totalKg).toBeGreaterThan(base.totalKg);
+  });
+  it("loads the topside by its deck footprint", () => {
+    const used = (r: typeof base) => r.arrangement!.zones.reduce((a, z) => a + z.deckUsedMm2, 0);
+    expect(used(four) - used(base)).toBe(4 * 1_299_600);
+  });
+  it("adds a bearing share of its shell mass to both broadsides", () => {
+    expect(four.weapons!.broadsidePortKg).toBeGreaterThan(base.weapons!.broadsidePortKg);
+    expect(four.weapons!.broadsideStbdKg - base.weapons!.broadsideStbdKg).toBe(
+      four.weapons!.broadsidePortKg - base.weapons!.broadsidePortKg,
+    );
+  });
+  it("keeps the stability lumps summing exactly to the ledger (I1, I2)", () => {
+    expect(four.totalKg).toBe(ledgerTotal(four.ledger));
+    expect(four.stability!.displacementKg).toBe(four.totalKg);
+  });
+  it("rejects a malformed battery", () => {
+    expect(() => compileDesign(withDraft({ tertiary: { caliberUm: 0, count: 1 } }), tuned)).toThrow(
+      /tertiary/,
+    );
   });
 });

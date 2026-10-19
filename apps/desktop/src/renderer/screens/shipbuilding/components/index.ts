@@ -1,4 +1,4 @@
-export { CommandBar, type CommandBarOption, type DesignStatus } from "./CommandBar.js";
+export { CommandBar, type DesignStatus } from "./CommandBar.js";
 export { ArmamentEditor } from "./ArmamentEditor.js";
 export { DesignMap } from "./DesignMap.js";
 export { EngineeringStatusBar } from "./EngineeringStatusBar.js";
@@ -13,3 +13,4 @@ export { ShipStage } from "./ShipStage.js";
 export { ViewToolbar } from "./ViewToolbar.js";
 export { WorkspaceDialog } from "./WorkspaceDialog.js";
 export { ReferenceDesignBrowser } from "./ReferenceDesignBrowser.js";
+export { DesignMapFooter } from "./DesignMapFooter.js";

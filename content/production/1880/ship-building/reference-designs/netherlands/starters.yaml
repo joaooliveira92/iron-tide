@@ -82,7 +82,7 @@ designs:
               cosObliquityBp: 10000,
             }
           - {
-              region: TURRET_FACE,
+              region: TURRET,
               thicknessUm: 305000,
               lengthMm: 8000,
               heightMm: 3500,

@@ -4,6 +4,7 @@ import { TORPEDO_MOUNT_TYPE_VALUES } from "./design.js";
 import { ProvenanceSchema } from "./provenance.js";
 import {
   ARMOUR_REGION_IDS,
+  ARMOUR_SCHEME_IDS,
   DesignRequirementSchema,
   HullSpecSchema,
   MOUNT_SIDES,
@@ -1298,6 +1299,10 @@ export const DesignHeaderSchema = Schema.Struct({
     fuelZoneId: Schema.Literals(SHIP_ZONE_IDS),
     fuelStationPermille: permille,
     foulingBp: int.check(Schema.isGreaterThanOrEqualTo(-10_000)),
+    /** Speed <-> reliability axis (ADR-0233); absent = balanced. */
+    enginePriorityBp: Schema.optional(
+      int.check(Schema.isBetween({ minimum: -10_000, maximum: 10_000 })),
+    ),
     /** Optional split of the plant across zones; shares sum to 10000 (checked by the compile). */
     rooms: Schema.optional(
       Schema.Array(
@@ -1309,10 +1314,16 @@ export const DesignHeaderSchema = Schema.Struct({
       ),
     ),
   }),
+  /** Fire-control positions (ADR-0233); absent = none. */
+  fireControl: Schema.optional(Schema.Struct({ positions: nonNegativeInt })),
+  /** Tertiary battery (ADR-0233); absent = none. */
+  tertiary: Schema.optional(Schema.Struct({ caliberUm: positiveInt, count: nonNegativeInt })),
   protection: Schema.Struct({
     citadelLengthMm: nonNegativeInt,
     torpedoWarheadKg: nonNegativeInt,
     bunkerProtectionBp: bp,
+    /** The named armour scheme the regions were set from (ADR-0232); absent = Custom. */
+    schemeId: Schema.optional(Schema.Literals(ARMOUR_SCHEME_IDS)),
   }),
 });
 

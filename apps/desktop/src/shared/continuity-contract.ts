@@ -36,3 +36,13 @@ export interface RecoverCampaignResponse {
   readonly activeRevision: number | null;
   readonly notes: readonly string[];
 }
+
+/** One entry of the main-process recent-campaigns list. */
+export interface RecentCampaignEntry {
+  readonly packagePath: string;
+  readonly campaignIdentity: string;
+  readonly activeRevision: number;
+  readonly lastOpened: number;
+  /** False when the package directory no longer exists on disk. */
+  readonly available: boolean;
+}

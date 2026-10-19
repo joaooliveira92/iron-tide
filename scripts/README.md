@@ -44,7 +44,7 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 - `verify-check-parity.mjs` — every `pnpm check` step is CI-invoked or allowlisted (ADR-0140).
 - `verify-tsgo-integration.mjs` — `@effect/tsgo` matrix matches and is patched (ADR-0139).
 - `verify-vitest-config-parity.mjs` — every package spreads `vitest-shared.mjs`.
-- `verify-worktrees.mjs` — warn-only: stale or unregistered agent worktrees (ADR-0220).
+- `verify-worktrees.mjs` — warn-only: drift reported by `pnpm worktrees audit`, run offline (ADR-0220).
 - `verify-content-lock.mjs`, `verify-content-gate.mjs` — built content matches the lock; no shipping placeholders.
 - `verify-codemod-determinism.mjs` — content codemod byte-identical and idempotent across processes.
 

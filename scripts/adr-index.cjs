@@ -58,7 +58,7 @@ const AREAS = [
   {
     name: "Process & documentation",
     blurb: "Concurrent-agent worktree coordination and repository process rules.",
-    nums: [220, 227],
+    nums: [220, 227, 234, 236, 237],
   },
   {
     name: "Scenario content & research",
@@ -75,13 +75,24 @@ const AREAS = [
   {
     name: "Turns, interruptions & save/resume",
     blurb: "Turn identity and the suspend/resume interruption model.",
-    nums: [222],
+    nums: [222, 235],
   },
   {
     name: "Fleet readiness, command & prestige",
     blurb:
       "Readiness and maintenance ruleset constants, the 1880 command structure, and the prestige value path.",
     nums: [223, 224, 225, 226],
+  },
+  {
+    name: "Foreign stations & presence",
+    blurb: "The authoritative home area and possession ownership behind per-area presence.",
+    nums: [231],
+  },
+  {
+    name: "Ship design & construction",
+    blurb:
+      "The ship-designer model, its armour regions, named schemes, and the design draft schema.",
+    nums: [232, 233],
   },
 ];
 

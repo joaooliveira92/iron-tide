@@ -38,3 +38,23 @@ describe("HullTopsideLayer", () => {
     expect(Number(ellipse.getAttribute("cx"))).toBeCloseTo(frame.x(560), 6);
   });
 });
+
+describe("HullTopsideLayer detail", () => {
+  it("adds a bridge wedge to the superstructure and a dark uptake bore to each funnel", () => {
+    const { container } = draw(form.zones);
+    expect(container.querySelector("[data-testid='hull-bridge']")).not.toBeNull();
+    expect(container.querySelectorAll("[data-testid='hull-funnel-bore']")).toHaveLength(1);
+  });
+
+  it("stands a foremast at the bridge and a mainmast at the aft end, and none without a superstructure", () => {
+    const { container } = draw(form.zones);
+    const xs = Array.from(container.querySelectorAll("[data-testid='hull-mast'] line")).map((l) =>
+      Number(l.getAttribute("x1")),
+    );
+    const span = sup.endPermille - sup.startPermille;
+    expect(xs).toHaveLength(2);
+    expect(xs[0]).toBeCloseTo(frame.x(Math.round(sup.startPermille + span * 0.2)), 6);
+    expect(xs[1]).toBeCloseTo(frame.x(sup.endPermille), 6);
+    expect(draw([]).container.querySelectorAll("[data-testid='hull-mast']")).toHaveLength(0);
+  });
+});

@@ -36,8 +36,8 @@ const FIXTURE = {
   }),
   rulesets: `- id: "core"\n  name: "Core Rules"\n  version: "1.0"\n`,
   countries: nationsYaml([
-    { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true },
-    { id: "france", tag: "FRA", name: "France" },
+    { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true, homeArea: "lon" },
+    { id: "france", tag: "FRA", name: "France", homeArea: "par" },
   ]),
   areas: `- id: "lon"\n  name: "London"\n  type: "land"\n  controller: "uk"\n- id: "par"\n  name: "Paris"\n  type: "land"\n  controller: "france"\n`,
   routes: `- id: "lon-par"\n  from: "lon"\n  to: "par"\n  type: "sea"\n  distance: 300\n`,

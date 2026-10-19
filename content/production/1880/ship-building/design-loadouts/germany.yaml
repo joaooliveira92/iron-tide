@@ -159,7 +159,7 @@ designs:
             heightMm: 3000
             lengthMm: 20000
             thicknessUm: 203000
-          slot: armour.barbette
+          slot: armour.turret
       platform: coast_defence_form
     month: 1880-01
     name: Kaiser (1875, armoured frigate)
@@ -306,7 +306,7 @@ designs:
             heightMm: 3000
             lengthMm: 25000
             thicknessUm: 254000
-          slot: armour.barbette
+          slot: armour.turret
       platform: coast_defence_form
     month: 1880-01
     name: Sachsen (1878, armoured corvette)

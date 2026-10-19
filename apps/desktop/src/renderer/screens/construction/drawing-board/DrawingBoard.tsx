@@ -408,7 +408,12 @@ export function DrawingBoard({
                     </div>
                     <div className="space-y-4">
                       <HullPanel draft={draft} content={content} edit={actions.edit} />
-                      <MachineryPanel draft={draft} content={content} edit={actions.edit} />
+                      <MachineryPanel
+                        draft={draft}
+                        content={content}
+                        edit={actions.edit}
+                        kwPerShpBp={boardEnv.ctx.balance.machinery.kwPerShpBp}
+                      />
                     </div>
                   </>
                 )}

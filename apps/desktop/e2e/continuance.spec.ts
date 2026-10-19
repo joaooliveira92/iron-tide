@@ -13,6 +13,8 @@ import { advanceMonths, dismissTour, startNewCampaign } from "./flows.js";
 // never touched.
 test.describe.configure({ mode: "serial" });
 
+const CLOSE_MENU_LABEL = "Close campaign…";
+const CLOSE_CONFIRM_LABEL = "Close campaign";
 const ARCHETYPE = "Shipyard Baron";
 const NATION = "United Kingdom";
 
@@ -83,6 +85,35 @@ test("row 7: Load restores Overview from a production package copy", async ({ e2
   await expect(
     e2e.page.getByText("campaign-bluewave-1880-production", { exact: true }),
   ).toBeVisible();
+});
+
+test("row 7b: Recent Campaigns reopens a package without prompting the file dialog", async ({
+  e2e,
+}) => {
+  const pkg = await copyFixturePackage(masterPackageDir, e2e.scratch);
+  await e2e.retargetDialog(pkg);
+  await e2e.page.getByRole("button", { name: "Open Campaign" }).click();
+  await expect(e2e.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
+    timeout: 30_000,
+  });
+
+  // Close the campaign and return to the main menu.
+  await dismissTour(e2e.page);
+  await e2e.page.getByRole("button", { name: "Campaign menu" }).click();
+  await e2e.page.getByRole("button", { name: CLOSE_MENU_LABEL }).click();
+  await e2e.page.getByRole("button", { name: CLOSE_CONFIRM_LABEL, exact: true }).click();
+  await expect(e2e.page.getByText("Recent Campaigns")).toBeVisible();
+
+  // Any further native dialog would be a regression: make it fail loudly.
+  await e2e.app.evaluate(({ dialog }) => {
+    dialog.showOpenDialog = async () => {
+      throw new Error("file dialog must not open for a recent campaign");
+    };
+  });
+  await e2e.page.getByTitle(new RegExp(pkg.split("/").pop()!)).click();
+  await expect(e2e.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
+    timeout: 30_000,
+  });
 });
 
 test("row 8: Verify reports package integrity", async ({ e2e }) => {

@@ -1,5 +1,5 @@
 ---
-description: Manage concurrent-agent workflow subtrees. Provision a dedicated git worktree for an effort `<slug>`, list the active subtrees, and prune merged/stale ones. Pass a subcommand ($ARGUMENTS): `new <slug>`, `list`, `sync`, `prune`, or `remove <slug>`.
+description: Manage concurrent-agent workflow subtrees. Provision a dedicated git worktree for an effort `<slug>`, list the active subtrees, and prune merged/stale ones. Pass a subcommand ($ARGUMENTS): `new <slug>`, `list`, `sync`, `prune`, `remove <slug>`, or `audit`.
 agent: build
 ---
 
@@ -16,10 +16,17 @@ Interpret `$ARGUMENTS` as `worktree.mjs` argv and run it:
   frontier with `.opencode/command/work.md <root issue>`.
 - `list [--json]` — live subtrees joined with the ledger, with drift warnings.
 - `sync` — reconcile the ledger with actual git worktrees (`git worktree list`).
-- `prune [--force]` — **hygiene**: remove merged/gone/phantom subtrees and their
-  ledger rows. Refuses a dirty worktree without `--force`; never deletes an
-  unmerged branch.
-- `remove <slug> [--force]` — remove one subtree.
+- `prune [--check|--force]` — **hygiene**: remove merged/gone/phantom subtrees and
+  their ledger rows, including live worktrees the ledger does not know about.
+  `--check` only reports. Refuses a dirty worktree without `--force`; never
+  deletes an unmerged branch or a detached worktree.
+- `remove <slug> [--force]` — remove one subtree (registered or not).
+- `audit [--json] [--no-gh]` — **read-only** inventory of every worktree (inside or
+  outside `.worktrees/`), local and remote branch, ledger row and merged PR
+  (via `gh`). Integration status (`merged`, `merged-by-PR`, `gone`,
+  `open-unmerged`, `fresh`, `base`) is reported apart from cleanliness (`dirty`).
+  Exit 0 = no drift, 1 = drift, 2 = error. Run it before deleting anything.
+- `--help` prints usage. Unknown options exit 2 and change nothing.
 
 Run `pnpm worktrees <args>` (or `node scripts/worktree.mjs <args>`). Report the
 observed command output verbatim — do not summarise away warnings. If

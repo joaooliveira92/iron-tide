@@ -52,6 +52,28 @@ export const ZONE_MAXIMA_UM: Record<string, number> = {
 };
 
 /**
+ * Armour zone a component id (`<TYPE>-<n>`) is exposed through, or undefined for internals.
+ * The design's single `TURRET` region (turret + barbette, ADR-0232) reaches combat as `TURRET_FACE`: a `BARBETTE-*`
+ * component is folded into it, so design data never produces a separate barbette zone. The `BARBETTE` zone type and
+ * its maximum stay in the armour contract unchanged (no rebalance); nothing emits it.
+ */
+export function inferArmorZoneType(id: string): ArmorZoneType | undefined {
+  switch (id.split("-")[0]) {
+    case "TURRET":
+    case "BARBETTE":
+      return "TURRET_FACE";
+    case "CONNING":
+      return "CONNING_TOWER";
+    case "AA":
+    case "DIRECTOR":
+    case "RANGEFINDER":
+      return "SUPERSTRUCTURE";
+    default:
+      return undefined;
+  }
+}
+
+/**
  * Retrieve the authoritative maximum thickness (µm) for a given zone type.
  * @throws BluewaveError(ARMOR_ZONE_MAXIMUM_MISSING) if the zone type is unknown.
  */

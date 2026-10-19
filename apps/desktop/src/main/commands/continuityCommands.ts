@@ -2,15 +2,22 @@ import { advanceMonth, getScenarioById, type CampaignState } from "@bluewave/cam
 import { CommandLedger } from "@bluewave/commands";
 import { DiagnosticCollector, type DiagnosticCode } from "@bluewave/diagnostics";
 import type { SaveMetadata } from "@bluewave/persistence";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import type { ReplayedRevision } from "../../shared/continuity-contract.js";
+import {
+  isApprovedPackage,
+  isPackageDirectory,
+  listRecentPackages,
+  recordRecentPackage,
+  removeRecentPackage,
+} from "../recentPackages.js";
 import { ledgerOf, parseMonthInput } from "../monthInput.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandQueueStore } from "../runtime/commandQueueStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
-import { payloadless } from "../runtime/commandProgram.js";
+import { payloadless, withStrictSchema } from "../runtime/commandProgram.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
-import { IdGenerator, NativeDialog } from "../runtime/platform.js";
+import { AppPaths, Clock, IdGenerator, NativeDialog } from "../runtime/platform.js";
 import { ProjectStore } from "../runtime/projectStore.js";
 import { ReplayService } from "../runtime/replayService.js";
 
@@ -64,19 +71,92 @@ function cancelled() {
 export const loadCampaignProgram = payloadless(() =>
   Effect.gen(function* () {
     const dialogs = yield* NativeDialog;
+
+    const saveDir = yield* dialogs.choosePackageDirectory();
+    if (saveDir === null) return cancelled();
+
+    return yield* loadPackageAt(saveDir);
+  }),
+);
+
+/**
+ * `listRecentCampaigns(undefined)` — the main-process recents, newest first,
+ * each flagged `available: false` when its directory has gone missing.
+ */
+export const listRecentCampaignsProgram = payloadless(() =>
+  Effect.gen(function* () {
+    const paths = yield* AppPaths;
+    const userDataDir = yield* paths.userDataDir();
+    return {
+      outcome: "success" as const,
+      value: listRecentPackages(userDataDir),
+      diagnostics: [],
+    };
+  }),
+);
+
+const RecentPackagePayload = Schema.Struct({ packagePath: Schema.NonEmptyString });
+
+/** `removeRecentCampaign({ packagePath })` — forgets one recent entry. */
+export const removeRecentCampaignProgram = withStrictSchema(
+  RecentPackagePayload,
+  ({ packagePath }) =>
+    Effect.gen(function* () {
+      const paths = yield* AppPaths;
+      const userDataDir = yield* paths.userDataDir();
+      removeRecentPackage(userDataDir, packagePath);
+      return {
+        outcome: "success" as const,
+        value: listRecentPackages(userDataDir),
+        diagnostics: [],
+      };
+    }),
+);
+
+/**
+ * `loadRecentCampaign({ packagePath })` — reopens a package the user already
+ * chose through the native dialog. The renderer's path is only a lookup key:
+ * it must match the canonical path of an entry in the main-process recents,
+ * otherwise the command fails with `PACKAGE_NOT_APPROVED`. A listed package
+ * whose directory is gone fails with `PACKAGE_MISSING`.
+ */
+export const loadRecentCampaignProgram = withStrictSchema(RecentPackagePayload, ({ packagePath }) =>
+  Effect.gen(function* () {
+    const paths = yield* AppPaths;
+    const userDataDir = yield* paths.userDataDir();
+    const approved = isApprovedPackage(userDataDir, packagePath);
+    if (approved === null) {
+      const listed = listRecentPackages(userDataDir).some(
+        (entry) => entry.packagePath === packagePath,
+      );
+      return listed && !isPackageDirectory(packagePath)
+        ? {
+            outcome: "error" as const,
+            reason: "PACKAGE_MISSING",
+            diagnostics: [`${packagePath} no longer exists. It may have been moved or deleted.`],
+          }
+        : {
+            outcome: "error" as const,
+            reason: "PACKAGE_NOT_APPROVED",
+            diagnostics: ["This package was not opened through the file dialog; choose it again."],
+          };
+    }
+    return yield* loadPackageAt(approved);
+  }),
+);
+
+const loadPackageAt = (saveDir: string) =>
+  Effect.gen(function* () {
     const projects = yield* ProjectStore;
     const sessions = yield* CampaignSessionStore;
     const queue = yield* CommandQueueStore;
     const ids = yield* IdGenerator;
 
-    const saveDir = yield* dialogs.choosePackageDirectory();
-    if (saveDir === null) return cancelled();
-
     const collector = new DiagnosticCollector();
     const state = yield* projects.load(saveDir, collector);
     if (!state) {
       return {
-        outcome: "error",
+        outcome: "error" as const,
         reason: "LOAD_FAILED",
         diagnostics: collector.all.map((d) => d.message),
       };
@@ -85,7 +165,7 @@ export const loadCampaignProgram = payloadless(() =>
     const metadata = yield* projects.readSessionMetadata(saveDir);
     if (!metadata) {
       return {
-        outcome: "error",
+        outcome: "error" as const,
         reason: "SESSION_METADATA_MISSING",
         diagnostics: [
           `${saveDir} is a valid package but has no readable session.json metadata. It cannot be restored — only packages written by the New Game flow carry the player slot, seed, and scenario needed to continue.`,
@@ -95,7 +175,7 @@ export const loadCampaignProgram = payloadless(() =>
 
     if (!state.snapshot.nations.has(metadata.playerSlotId)) {
       return {
-        outcome: "error",
+        outcome: "error" as const,
         reason: "UNKNOWN_PLAYER_SLOT",
         diagnostics: [
           `Nation ${metadata.playerSlotId} (from session.json) does not exist in the package snapshot.`,
@@ -106,7 +186,7 @@ export const loadCampaignProgram = payloadless(() =>
     const scenario = getScenarioById(metadata.scenarioId);
     if (!scenario) {
       return {
-        outcome: "error",
+        outcome: "error" as const,
         reason: "SESSION_METADATA_INVALID",
         diagnostics: [`Scenario ${metadata.scenarioId} is not a canonical scenario.`],
       };
@@ -127,8 +207,27 @@ export const loadCampaignProgram = payloadless(() =>
     // Commands the player queued for this month before the app closed are queued again.
     yield* queue.restore(sessionId);
 
+    // Remember the package for Recent Campaigns. Best-effort: failing to
+    // remember must never block opening.
+    const appPaths = yield* AppPaths;
+    const clock = yield* Clock;
+    const now = yield* clock.now();
+    yield* appPaths.userDataDir().pipe(
+      Effect.flatMap((userDataDir) =>
+        Effect.try(() =>
+          recordRecentPackage(userDataDir, {
+            path: saveDir,
+            campaignIdentity: state.snapshot.campaignId,
+            activeRevision,
+            lastOpened: now.getTime(),
+          }),
+        ),
+      ),
+      Effect.ignore,
+    );
+
     return {
-      outcome: "success",
+      outcome: "success" as const,
       value: {
         sessionId,
         packagePath: saveDir,
@@ -137,8 +236,7 @@ export const loadCampaignProgram = payloadless(() =>
       },
       diagnostics: [],
     };
-  }),
-);
+  });
 
 /**
  * `listCampaigns(undefined) -> BridgeResult<SaveMetadata[]>` — the

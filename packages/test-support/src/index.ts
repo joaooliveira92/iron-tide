@@ -17,6 +17,7 @@ export interface NationFixtureSpec {
   tag: string;
   name: string;
   isPlayable?: boolean;
+  homeArea?: string;
 }
 
 export function createFixtureDir(basePath: string): FixtureDir {
@@ -38,13 +39,13 @@ export function writeFixture(basePath: string, relativePath: string, content: st
 
 /** A single valid, strict-NationSchema-compliant nation as a YAML list item. */
 export function nationYaml(spec: NationFixtureSpec): string {
-  const { id, tag, name, isPlayable = false } = spec;
+  const { id, tag, name, isPlayable = false, homeArea } = spec;
   return `
 - id: "${id}"
   tag: "${tag}"
   name: "${name}"
   displayNameKey: "nation.${id}"
-  isPlayable: ${isPlayable}
+  isPlayable: ${isPlayable}${homeArea === undefined ? "" : `\n  homeArea: "${homeArea}"`}
   slot: null
   presentation: { colorBg: "#C8102E", colorFg: "#FFFFFF" }
   identity:
@@ -109,9 +110,9 @@ export const VALID_FIXTURE_MANIFEST = JSON.stringify({
 });
 
 export const VALID_NATIONS_YAML = nationsYaml([
-  { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true },
-  { id: "france", tag: "FRA", name: "France" },
-  { id: "germany", tag: "GER", name: "Germany" },
+  { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true, homeArea: "lon" },
+  { id: "france", tag: "FRA", name: "France", homeArea: "par" },
+  { id: "germany", tag: "GER", name: "Germany", homeArea: "ber" },
 ]);
 
 export const VALID_AREAS_YAML = `

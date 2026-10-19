@@ -20,6 +20,9 @@ ship:
       - 11500
       - 13000
     buoyancyTolBp: 500
+    # Low-freeboard preset (RTW3 manual p.39 names the choice, never a magnitude). BALANCE TARGETs (ADR-0213).
+    lowFreeboardReserveCutBp: 3000
+    lowFreeboardHullWeightSavingBp: 400
     overTargetTolBp: 300
     reserveBuoyancyWarnBp: 3000
     reserveBuoyancyCriticalBp: 1500
@@ -43,6 +46,18 @@ ship:
     # Bunker stowage: Welsh steam coal about 40 ft3 per long ton (research 2, section 4: VERIFIED), i.e.
     # 40 x 28.3168 L / 1016.05 kg = 1.1148 L/kg. In bp of a litre per kg so the figure is not rounded to an integer.
     bunkerLitreBpPerKg: 11148
+    # Engine priority (speed <-> reliability axis, RTW3 manual p.41): the manual names the axis, never a magnitude.
+    # BALANCE TARGETs (ADR-0213), bp of the base value at full priority; provenance in docs/research/rtw-designer-parity-values.md.
+    enginePriorityWeightSwingBp: 1500
+    enginePriorityPowerSwingBp: 500
+    enginePriorityReliabilitySwingBp: 2500
+    enginePriorityReliabilityWarnBp: 7000
+  # Tertiary battery (RTW3 manual p.28 names the battery, never a magnitude). BALANCE TARGETs (ADR-0213).
+  tertiary:
+    gunWeightNanoKgPerMm3: 1500000
+    footprintFactorPermille: 400000
+    shellNanoKgPerMm3: 20000
+    bearingBp: 5000
   arrangement:
     concentrationAdvisoryBp: 6000
     concentrationWarningBp: 8000
@@ -153,6 +168,8 @@ ship:
     localControlPenaltyBp: 1500
     smokeInterferencePermille: 40
     smokeInterferencePenaltyBp: 1000
+    # Fire-control positions: redundancy per position, bp. BALANCE TARGET (ADR-0213); the manual names the field, never a number.
+    fireControlPositionRedundancyBp: 2500
   ledgerCategoryOf:
     HULL_FORM: hull
     MATERIAL: hull
@@ -163,6 +180,7 @@ ship:
     GENERATOR: auxiliary
     MAIN_GUN: armament
     SECONDARY_GUN: armament
+    TERTIARY_GUN: armament
     DUAL_PURPOSE_GUN: armament
     AA_WEAPON: armament
     TORPEDO_TUBE: armament
@@ -348,6 +366,7 @@ construction:
     GENERATOR: machinery
     MAIN_GUN: heavy_gun
     SECONDARY_GUN: heavy_gun
+    TERTIARY_GUN: heavy_gun
     DUAL_PURPOSE_GUN: heavy_gun
     AA_WEAPON: heavy_gun
     TORPEDO_TUBE: heavy_gun

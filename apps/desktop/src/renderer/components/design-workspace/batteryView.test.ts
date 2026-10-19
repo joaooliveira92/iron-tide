@@ -6,6 +6,9 @@ import {
   clearBatteryEdit,
   mountNameMap,
   setRoundsEdit,
+  batterySymmetry,
+  type BatteryCard,
+  type BatteryMount,
 } from "./batteryView.js";
 import { loadDrawingBoardContent } from "./content.js";
 
@@ -82,5 +85,62 @@ describe("battery edits", () => {
     const e = setRoundsEdit(main, 1_000_000, ref.draft, defOf)!;
     const maxed = applyEdit(ref.draft, e);
     expect(setRoundsEdit(main, 1_000_000, maxed, defOf)).toBeNull();
+  });
+});
+
+describe("batterySymmetry (#168 step 6)", () => {
+  const mount = (
+    instanceId: string,
+    side: "CENTRE" | "PORT" | "STBD",
+    componentId: string,
+  ): BatteryMount => ({ instanceId, name: instanceId, side, stationPermille: 500, componentId });
+  const card = (mounts: BatteryMount[]): BatteryCard => ({
+    row: {
+      key: "MAIN:254000",
+      role: "MAIN",
+      caliberUm: 254_000,
+      mounts: mounts.length,
+      barrels: mounts.length,
+      roundsPerGun: null,
+      weightKg: 0,
+      instanceIds: mounts.map((m) => m.instanceId),
+    },
+    title: "Main battery",
+    mounts,
+  });
+
+  it("has nothing to say about centreline-only batteries", () => {
+    expect(batterySymmetry(card([mount("a", "CENTRE", "gun_a")]))).toBeNull();
+  });
+  it("is symmetric when port and starboard carry the same guns", () => {
+    expect(batterySymmetry(card([mount("p", "PORT", "gun_a"), mount("s", "STBD", "gun_a")]))).toBe(
+      "symmetric",
+    );
+  });
+  it("is asymmetric when the sides carry different guns, or only one side is fitted", () => {
+    expect(batterySymmetry(card([mount("p", "PORT", "gun_a"), mount("s", "STBD", "gun_b")]))).toBe(
+      "asymmetric",
+    );
+    expect(batterySymmetry(card([mount("p", "PORT", "gun_a")]))).toBe("asymmetric");
+    expect(
+      batterySymmetry(
+        card([
+          mount("p1", "PORT", "gun_a"),
+          mount("p2", "PORT", "gun_a"),
+          mount("s", "STBD", "gun_a"),
+        ]),
+      ),
+    ).toBe("asymmetric");
+  });
+  it("ignores centreline mounts and the order of mounts", () => {
+    expect(
+      batterySymmetry(
+        card([
+          mount("s", "STBD", "gun_b"),
+          mount("c", "CENTRE", "gun_z"),
+          mount("p", "PORT", "gun_b"),
+        ]),
+      ),
+    ).toBe("symmetric");
   });
 });

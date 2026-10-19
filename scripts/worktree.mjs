@@ -14,9 +14,14 @@
 //   sync            reconcile the ledger with actual git worktrees
 //   prune           remove merged/gone/phantom subtrees and their ledger rows
 //   remove <slug>   remove one subtree (refuses on uncommitted changes)
+//   audit           read-only inventory + reconciliation of worktrees, branches,
+//                   remotes, the ledger, and (via `gh`) merged pull requests
 //
 // `prune --check` reports without mutating (used by the preflight hygiene gate).
-// Everything here reads git state only; no clock, RNG, network, or environment.
+// Arguments are parsed and validated in full before any command touches git or
+// the ledger: an unknown option fails closed with exit 2 and changes nothing.
+// Everything here reads git state only (plus `gh pr list` for `audit`); no
+// clock, RNG, or environment.
 
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -31,6 +36,9 @@ export const DEFAULT_BRANCH_PREFIX = "feat/";
 const LEDGER_BEGIN = "<!-- worktrees:begin -->";
 const LEDGER_END = "<!-- worktrees:end -->";
 const COLUMNS = ["Slug", "Branch", "Scope", "Owner", "Status", "Base", "Created", "PR"];
+
+/** Most worktrees allowed at once, main checkout included (ADR-0237). */
+export const MAX_WORKTREES = 5;
 
 /** Non-terminal subtree states. `prune` removes everything else. */
 export const TERMINAL_STATES = new Set(["merged", "gone", "phantom"]);
@@ -130,6 +138,17 @@ export function writeLedger(rows) {
   writeFileSync(LEDGER_PATH, renderLedger(base, rows));
 }
 
+/**
+ * The ref a branch is measured against. Prefer the remote-tracking base so a
+ * merge only counts once it has reached the shared branch; fall back to the
+ * local base for repositories without a remote.
+ */
+export function resolveBaseRef(base = DEFAULT_BASE) {
+  return gitOk(["show-ref", "--verify", "--quiet", `refs/remotes/origin/${base}`])
+    ? `origin/${base}`
+    : base;
+}
+
 function revParse(ref) {
   try {
     return git(["rev-parse", ref]).trim();
@@ -141,7 +160,8 @@ function revParse(ref) {
 // A subtree is merged only once its base has advanced past its tip. A branch
 // created moments ago is trivially an ancestor of its base but carries no work,
 // so tip equality excludes it — otherwise every fresh subtree would read as
-// prunable. (Squash-merged PRs are not detectable this way; prune those by name.)
+// prunable. (Squash-merged PRs are not detectable this way; `audit` finds them
+// through `gh`, and they are removed explicitly with `worktrees remove`.)
 function isBranchMerged(branch, base) {
   if (!gitOk(["merge-base", "--is-ancestor", branch, base])) return false;
   const tip = revParse(branch);
@@ -180,8 +200,22 @@ export function slugFromPath(path) {
 }
 
 /** Classify one subtree for hygiene. Pure over the facts it is given. */
-export function classifyWorktree({ pathExists, branchExists: branchLive, merged, dirty }) {
+export function classifyWorktree({
+  pathExists,
+  branchExists: branchLive,
+  merged,
+  dirty,
+  detached = false,
+}) {
   if (!pathExists) return { state: "phantom", warnings: ["ledger row has no worktree on disk"] };
+  // A detached HEAD has no branch to test, so it can carry unreferenced commits;
+  // never treat it as prunable.
+  if (detached) {
+    return {
+      state: "detached",
+      warnings: ["detached HEAD — not auto-pruned; check out a branch or remove it explicitly"],
+    };
+  }
   if (branchLive === false) {
     return { state: "gone", warnings: ["worktree branch no longer exists"] };
   }
@@ -196,19 +230,29 @@ export function classifyWorktree({ pathExists, branchExists: branchLive, merged,
 /** Live git facts for a registry row, joined for `list`/`prune`. */
 export function inspectRows(rows, { base = DEFAULT_BASE } = {}) {
   const live = new Map(liveWorktrees().map((w) => [w.slug, w]));
+  const baseRef = resolveBaseRef(base);
   return rows.map((row) => {
     const entry = live.get(row.slug);
     const pathExists = entry ? existsSync(entry.path) : false;
-    const branchLive = entry ? branchExists(entry.branch) : false;
-    const merged = entry && branchLive ? isBranchMerged(entry.branch, base) : false;
+    const detached = entry ? entry.branch === null : false;
+    const branchLive = entry && !detached ? branchExists(entry.branch) : false;
+    const merged = entry && branchLive ? isBranchMerged(entry.branch, baseRef) : false;
     const dirty = entry && pathExists ? isDirty(entry.path) : false;
     const { state, warnings } = classifyWorktree({
       pathExists,
-      branchExists: entry ? branchLive : false,
+      branchExists: entry ? (detached ? true : branchLive) : false,
+      detached,
       merged,
       dirty,
     });
-    return { ...row, path: entry?.path, state, dirty, warnings };
+    return {
+      ...row,
+      path: entry?.path,
+      branch: entry?.branch ?? row.branch,
+      state,
+      dirty,
+      warnings,
+    };
   });
 }
 
@@ -229,6 +273,412 @@ export function unregisteredWorktrees(rows) {
     }));
 }
 
+/**
+ * Every subtree hygiene commands act on: the ledger rows plus live worktrees the
+ * ledger does not know about. Pruning only the ledger left an unregistered merged
+ * worktree invisible to `prune`, so it lingered until someone noticed.
+ */
+function hygieneRows() {
+  const ledger = readLedger();
+  return [
+    ...ledger.map((row) => ({ ...row, registered: true })),
+    ...unregisteredWorktrees(ledger).map((row) => ({ ...row, registered: false })),
+  ];
+}
+
+const LEDGER_FIELDS = ["slug", "branch", "scope", "owner", "status", "base", "created", "pr"];
+const ledgerRow = (row) => Object.fromEntries(LEDGER_FIELDS.map((f) => [f, row[f]]));
+
+// --- audit -------------------------------------------------------------------
+
+const BASE_BRANCH_NAMES = ["master", "main"];
+
+/** Index of merged pull requests from `gh pr list --state merged --json …`. */
+export function parsePullRequests(json) {
+  const merged = new Map();
+  for (const pr of JSON.parse(json)) {
+    const tips = merged.get(pr.headRefName) ?? new Set();
+    tips.add(pr.headRefOid);
+    merged.set(pr.headRefName, tips);
+  }
+  return { isMerged: (name, tip) => merged.get(name)?.has(tip) ?? false };
+}
+
+/**
+ * Integration status of a ref relative to the base. `gone` (upstream deleted)
+ * is reported only when the work is *not* integrated: a deleted remote on a
+ * merged branch is just housekeeping, while on an unmerged one it is at risk.
+ */
+function classifyIntegration(branch, { baseTip }, baseNames) {
+  if (baseNames.has(branch.name)) return "base";
+  if (branch.ancestor) return branch.tip === baseTip ? "fresh" : "merged";
+  if (branch.prMerged) return "merged-by-PR";
+  if (branch.upstream === "gone") return "gone";
+  return "open-unmerged";
+}
+
+const STALE = new Set(["merged", "merged-by-PR", "gone"]);
+const compareText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+const byText = (key) => (a, b) => compareText(a[key], b[key]);
+
+/**
+ * Pure reconciliation of collected git/ledger/PR facts. Integration status and
+ * cleanliness are separate fields: a dirty worktree is never relabelled, and
+ * dirtiness alone is not drift. Open unmerged branches are legitimate work and
+ * never drift either.
+ */
+export function buildAudit(facts) {
+  const baseNames = new Set([facts.base, ...BASE_BRANCH_NAMES]);
+  const branches = facts.branches
+    .map((b) => ({
+      name: b.name,
+      tip: b.tip,
+      integration: classifyIntegration(b, facts, baseNames),
+      unique: b.unique,
+      remote: b.upstream,
+    }))
+    .sort(byText("name"));
+  const branchByName = new Map(branches.map((b) => [b.name, b]));
+  const ledgerBySlug = new Map(facts.ledger.map((r) => [r.slug, r]));
+  const drift = [];
+  const prunable = new Set();
+  const flag = (code, subject, detail, action) => drift.push({ code, subject, detail, action });
+
+  const worktrees = facts.worktrees.map((w, index) => {
+    const slug = index === 0 ? null : slugFromPath(w.path);
+    const location = index === 0 ? "primary" : slug === null ? "outside" : ".worktrees";
+    const exists = w.exists !== false;
+    const detached = w.branch === null;
+    const b = detached ? null : branchByName.get(w.branch);
+    const row = slug === null ? undefined : ledgerBySlug.get(slug);
+    const item = {
+      path: w.path,
+      slug,
+      location,
+      branch: w.branch,
+      integration: detached ? "detached" : (b?.integration ?? "missing"),
+      unique: b?.unique ?? null,
+      dirty: w.dirty,
+      registered: index === 0 ? null : row !== undefined,
+    };
+    if (index === 0 || !exists) return item;
+    const subject = slug ?? w.path;
+    if (location === "outside") {
+      flag(
+        "worktree-outside",
+        subject,
+        "worktree is outside .worktrees/",
+        "git worktree remove it, or recreate with `pnpm worktrees new`",
+      );
+    }
+    if (detached) {
+      flag(
+        "worktree-detached",
+        subject,
+        "detached HEAD",
+        "check out a branch or remove the worktree",
+      );
+    } else if (STALE.has(item.integration)) {
+      const dirty = w.dirty ? " (uncommitted changes: needs --force)" : "";
+      flag(
+        "worktree-stale",
+        subject,
+        `branch ${w.branch} is ${item.integration}${dirty}`,
+        "pnpm worktrees remove " + (slug ?? "<slug>"),
+      );
+      if (slug !== null && item.integration === "merged") prunable.add(slug);
+    }
+    if (slug !== null && row === undefined) {
+      flag(
+        "worktree-unregistered",
+        subject,
+        "worktree is absent from .ai/WORKTREES.md",
+        "pnpm worktrees sync",
+      );
+    } else if (row !== undefined && !detached && row.branch !== w.branch) {
+      flag(
+        "ledger-branch-mismatch",
+        subject,
+        `ledger says ${row.branch}, worktree has ${w.branch}`,
+        "fix the ledger row or the checkout",
+      );
+    }
+    return item;
+  });
+  worktrees.sort(byText("path"));
+
+  const liveSlugs = new Set(
+    facts.worktrees
+      .slice(1)
+      .filter((w) => w.exists !== false)
+      .map((w) => slugFromPath(w.path)),
+  );
+  for (const row of facts.ledger) {
+    if (!liveSlugs.has(row.slug)) {
+      flag("ledger-phantom", row.slug, "ledger row has no worktree", "pnpm worktrees:prune");
+      prunable.add(row.slug);
+    }
+  }
+
+  const checkedOut = new Set(facts.worktrees.map((w) => w.branch));
+  for (const b of branches) {
+    if (checkedOut.has(b.name)) continue;
+    if (b.integration === "merged" || b.integration === "merged-by-PR") {
+      flag(
+        "branch-stale",
+        b.name,
+        `branch is ${b.integration} and has no worktree`,
+        `git branch -D ${b.name}`,
+      );
+    } else if (b.integration === "gone") {
+      flag(
+        "branch-gone",
+        b.name,
+        `upstream deleted with ${b.unique} unintegrated commit(s)`,
+        "push it, open a PR, or delete it deliberately",
+      );
+    }
+  }
+
+  const remotes = facts.remotes
+    .map((r) => ({
+      name: r.name,
+      tip: r.tip,
+      integration: classifyIntegration(
+        { ...r, name: r.name.replace(/^origin\//u, ""), upstream: "present" },
+        facts,
+        baseNames,
+      ),
+      unique: r.unique,
+      local: branchByName.has(r.name.replace(/^origin\//u, "")),
+    }))
+    .sort(byText("name"));
+
+  const warnings = [];
+  if (facts.prLookup !== "ok") {
+    warnings.push("pull-request lookup skipped: squash-merged branches are not detected");
+  }
+  drift.sort((a, b) => byText("code")(a, b) || byText("subject")(a, b));
+  return {
+    schema: 1,
+    base: facts.baseRef,
+    ok: drift.length === 0,
+    worktrees,
+    branches,
+    remotes,
+    ledger: facts.ledger.map((r) => ({
+      slug: r.slug,
+      branch: r.branch,
+      worktree: liveSlugs.has(r.slug),
+    })),
+    prunable: [...prunable].sort(compareText),
+    drift,
+    warnings,
+  };
+}
+
+class AuditToolError extends Error {}
+
+function readMergedPullRequests() {
+  try {
+    const json = execFileSync(
+      "gh",
+      [
+        "pr",
+        "list",
+        "--state",
+        "merged",
+        "--limit",
+        "1000",
+        "--json",
+        "number,headRefName,headRefOid",
+      ],
+      { cwd: REPO_ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+    );
+    return parsePullRequests(json);
+  } catch (error) {
+    const detail = String(error.stderr || error.message)
+      .trim()
+      .split("\n")[0];
+    throw new AuditToolError(
+      `cannot read merged pull requests via gh (${detail}); pass --no-gh to audit without them`,
+    );
+  }
+}
+
+/** Collect the facts `buildAudit` reconciles. Read-only. */
+export function collectFacts({ gh }) {
+  const base = DEFAULT_BASE;
+  const baseRef = resolveBaseRef(base);
+  const prs = gh ? readMergedPullRequests() : null;
+  const measure = (name, tip) => ({
+    ancestor: gitOk(["merge-base", "--is-ancestor", tip, baseRef]),
+    unique: Number(git(["rev-list", "--count", `${baseRef}..${tip}`]).trim()),
+    prMerged: prs ? prs.isMerged(name, tip) : false,
+  });
+  const refs = (namespace, format) =>
+    git(["for-each-ref", `--format=${format}`, namespace])
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => line.split("\t"));
+
+  const branches = refs(
+    "refs/heads",
+    "%(refname:short)%09%(objectname)%09%(upstream)%09%(upstream:track)",
+  ).map(([name, tip, upstream, track]) => ({
+    name,
+    tip,
+    upstream: track.includes("gone") ? "gone" : upstream === "" ? "none" : "present",
+    ...measure(name, tip),
+  }));
+  const remotes = refs("refs/remotes/origin", "%(refname:short)%09%(objectname)")
+    .filter(([name]) => name !== "origin" && name !== "origin/HEAD")
+    .map(([name, tip]) => ({ name, tip, ...measure(name.replace(/^origin\//u, ""), tip) }));
+  const worktrees = parseWorktreeList(git(["worktree", "list", "--porcelain"])).map((w) => {
+    const exists = existsSync(w.path);
+    return { ...w, exists, dirty: exists ? isDirty(w.path) : false };
+  });
+  return {
+    base,
+    baseRef,
+    baseTip: revParse(baseRef),
+    repoRoot: REPO_ROOT,
+    worktrees,
+    branches,
+    remotes,
+    ledger: readLedger(),
+    prLookup: gh ? "ok" : "skipped",
+  };
+}
+
+function formatAudit(audit) {
+  const cell = (value) => (value === null || value === undefined ? "-" : String(value));
+  const lines = [`audit against ${audit.base}`, "", "worktrees"];
+  for (const w of audit.worktrees) {
+    lines.push(
+      `  ${w.location}\t${cell(w.slug ?? w.path)}\t${cell(w.branch)}\t${w.integration}\tunique=${cell(w.unique)}\t${w.dirty ? "dirty" : "clean"}\tregistered=${cell(w.registered)}`,
+    );
+  }
+  lines.push("", "branches");
+  for (const b of audit.branches) {
+    lines.push(`  ${b.name}\t${b.integration}\tunique=${b.unique}\tremote=${b.remote}`);
+  }
+  lines.push("", "remote branches");
+  for (const r of audit.remotes) {
+    lines.push(`  ${r.name}\t${r.integration}\tunique=${r.unique}\tlocal=${r.local}`);
+  }
+  lines.push(
+    "",
+    `ledger rows: ${audit.ledger.length}; auto-prunable: ${audit.prunable.join(", ") || "none"}`,
+  );
+  for (const w of audit.warnings) lines.push(`warning: ${w}`);
+  lines.push("", audit.ok ? "drift: none" : `drift: ${audit.drift.length}`);
+  for (const d of audit.drift) lines.push(`  ${d.code}\t${d.subject}\t${d.detail}\t-> ${d.action}`);
+  return lines.join("\n");
+}
+
+function cmdAudit({ flags }) {
+  let audit;
+  try {
+    audit = buildAudit(collectFacts({ gh: !flags["no-gh"] }));
+  } catch (error) {
+    if (!(error instanceof AuditToolError)) throw error;
+    console.error(`audit: ${error.message}`);
+    process.exitCode = 2;
+    return;
+  }
+  console.log(flags.json ? JSON.stringify(audit, null, 2) : formatAudit(audit));
+  process.exitCode = audit.ok ? 0 : 1;
+}
+
+// --- argument parsing --------------------------------------------------------
+
+const USAGE = `usage: worktree.mjs <command> [options]
+
+commands:
+  new <slug> [--branch <name>] [--base <ref>] [--owner <role>]
+                   create .worktrees/<slug> on a branch and register it
+  list [--json]    live worktrees joined with the ledger
+  sync             reconcile the ledger with git worktrees
+  prune [--check|--force]
+                   remove merged, gone, and phantom subtrees (--check only reports)
+  remove <slug> [--force]
+                   remove one subtree
+  audit [--json] [--no-gh]
+                   read-only inventory of worktrees, branches, remotes, ledger and
+                   merged PRs; exit 0 clean, 1 drift, 2 error (--no-gh skips PRs)
+  help             show this message
+
+Unknown commands or options fail with exit 2 and change nothing.`;
+
+const COMMAND_SPECS = {
+  new: { positional: "slug", flags: [], values: ["branch", "base", "owner"] },
+  list: { flags: ["json"], values: [] },
+  sync: { flags: [], values: [] },
+  prune: { flags: ["check", "force"], values: [], exclusive: [["check", "force"]] },
+  remove: { positional: "slug", flags: ["force"], values: [] },
+  audit: { flags: ["json", "no-gh"], values: [] },
+};
+
+const isHelp = (arg) => arg === "--help" || arg === "-h";
+
+/**
+ * Parse and validate argv in full, with no side effects. Anything not declared
+ * in COMMAND_SPECS is an error, so no mutating command can run on a typo.
+ */
+export function parseCliArgs(argv) {
+  const [command, ...rest] = argv;
+  if (command === undefined || command === "help" || isHelp(command)) {
+    return { ok: true, help: true };
+  }
+  const spec = COMMAND_SPECS[command];
+  if (!spec) return { ok: false, error: `unknown command "${command}"` };
+  if (rest.some(isHelp)) return { ok: true, help: true, command };
+
+  const flags = {};
+  const values = {};
+  const positionals = [];
+  for (let i = 0; i < rest.length; i += 1) {
+    const arg = rest[i];
+    if (!arg.startsWith("-")) {
+      positionals.push(arg);
+      continue;
+    }
+    const [rawName, inline] = arg.startsWith("--")
+      ? arg.slice(2).split(/=(.*)/su)
+      : [arg, undefined];
+    if (spec.values.includes(rawName)) {
+      const value = inline ?? rest[(i += 1)];
+      if (value === undefined || value === "" || value.startsWith("-")) {
+        return { ok: false, command, error: `option --${rawName} needs a value` };
+      }
+      values[rawName] = value;
+    } else if (spec.flags.includes(rawName) && inline === undefined) {
+      flags[rawName] = true;
+    } else {
+      return { ok: false, command, error: `unknown option "${arg}" for "${command}"` };
+    }
+  }
+  const expected = spec.positional ? 1 : 0;
+  if (positionals.length !== expected) {
+    return {
+      ok: false,
+      command,
+      error: expected
+        ? `"${command}" takes exactly one <${spec.positional}>`
+        : `"${command}" takes no positional arguments`,
+    };
+  }
+  for (const group of spec.exclusive ?? []) {
+    if (group.every((name) => flags[name])) {
+      return { ok: false, command, error: `--${group.join(" and --")} cannot be combined` };
+    }
+  }
+  return { ok: true, command, positionals, flags, values };
+}
+
+// --- commands ----------------------------------------------------------------
+
 function todayIso() {
   // Local date only — never authoritative; stamped for human coordination.
   const now = new Date();
@@ -237,27 +687,23 @@ function todayIso() {
   ).padStart(2, "0")}`;
 }
 
-function cmdNew(args) {
-  const [slug] = args;
-  if (!slug || slug.startsWith("-")) {
-    console.error(
-      "usage: worktree.mjs new <slug> [--branch <name>] [--base <ref>] [--owner <role>]",
-    );
-    process.exitCode = 1;
-    return;
-  }
-  const flag = (name, fallback) => {
-    const i = args.indexOf(`--${name}`);
-    return i === -1 ? fallback : args[i + 1];
-  };
-  const branch = flag("branch", `${DEFAULT_BRANCH_PREFIX}${slug}`);
-  const base = flag("base", DEFAULT_BASE);
-  const owner = flag("owner", "orchestrator");
+function cmdNew({ positionals: [slug], values }) {
+  const branch = values.branch ?? `${DEFAULT_BRANCH_PREFIX}${slug}`;
+  const base = values.base ?? DEFAULT_BASE;
+  const owner = values.owner ?? "orchestrator";
   const path = join(WORKTREES_DIR, slug);
 
   const rows = readLedger();
   if (rows.some((r) => r.slug === slug)) {
     console.error(`worktree "${slug}" is already registered in the ledger`);
+    process.exitCode = 1;
+    return;
+  }
+  const total = parseWorktreeList(git(["worktree", "list", "--porcelain"])).length;
+  if (total >= MAX_WORKTREES) {
+    console.error(
+      `worktree cap reached: ${total}/${MAX_WORKTREES} (main checkout included, ADR-0237); prune or remove one first`,
+    );
     process.exitCode = 1;
     return;
   }
@@ -289,11 +735,11 @@ function cmdNew(args) {
   console.log(`next: work this subtree's frontier with ".opencode/command/work.md <root issue>"`);
 }
 
-function cmdList(args) {
+function cmdList({ flags }) {
   const rows = readLedger();
   const inspected = inspectRows(rows);
   const extra = unregisteredWorktrees(rows);
-  if (args.includes("--json")) {
+  if (flags.json) {
     console.log(JSON.stringify({ registered: inspected, unregistered: extra }, null, 2));
     return;
   }
@@ -325,50 +771,41 @@ function cmdSync() {
 
 function removeWorktree(row, { force }) {
   if (row.path && existsSync(row.path)) {
-    if (row.dirty && !force) return `skipped ${row.slug}: uncommitted changes (use --force)`;
+    if (row.dirty && !force) {
+      return { removed: false, message: `skipped ${row.slug}: uncommitted changes (use --force)` };
+    }
     git(["worktree", "remove", ...(force ? ["--force"] : []), row.path]);
   }
-  if (row.state === "merged" || !branchExists(row.branch)) {
-    if (branchExists(row.branch)) git(["branch", "-D", row.branch]);
-  }
-  return `removed ${row.slug} (${row.state})`;
+  if (row.state === "merged" && branchExists(row.branch)) git(["branch", "-D", row.branch]);
+  return { removed: true, message: `removed ${row.slug} (${row.state})` };
 }
 
-function cmdPrune(args) {
-  const check = args.includes("--check");
-  const force = args.includes("--force");
-  const rows = readLedger();
-  const inspected = inspectRows(rows);
+function cmdPrune({ flags }) {
+  const check = Boolean(flags.check);
+  const force = Boolean(flags.force);
+  const inspected = inspectRows(hygieneRows());
   const keep = [];
   const lines = [];
   let stale = 0;
+  let removedCount = 0;
   for (const row of inspected) {
-    if (TERMINAL_STATES.has(row.state)) {
-      stale += 1;
-      if (check) {
-        lines.push(`stale ${row.slug} (${row.state}): ${row.warnings[0] ?? "prune it"}`);
-      } else {
-        lines.push(removeWorktree(row, { force }));
-      }
-    } else {
+    if (!TERMINAL_STATES.has(row.state)) {
       keep.push(row);
       if (row.warnings.length) lines.push(`warn ${row.slug}: ${row.warnings.join("; ")}`);
+      continue;
     }
+    stale += 1;
+    if (check) {
+      lines.push(`stale ${row.slug} (${row.state}): ${row.warnings[0] ?? "prune it"}`);
+      continue;
+    }
+    const { removed, message } = removeWorktree(row, { force });
+    lines.push(message);
+    if (removed) removedCount += 1;
+    // A row we could not remove (e.g. dirty without --force) must stay registered.
+    if (!removed) keep.push(row);
   }
-  if (!check) {
-    writeLedger(
-      keep.map((r) => ({
-        slug: r.slug,
-        branch: r.branch,
-        scope: r.scope,
-        owner: r.owner,
-        status: r.status,
-        base: r.base,
-        created: r.created,
-        pr: r.pr,
-      })),
-    );
-  }
+  if (!check) writeLedger(keep.filter((r) => r.registered).map(ledgerRow));
   for (const line of lines) console.log(line);
   if (check) {
     console.log(
@@ -377,59 +814,49 @@ function cmdPrune(args) {
         : "worktrees: stale subtrees present — run `pnpm worktrees:prune`",
     );
   } else {
-    console.log(`pruned ${stale} subtree(s); ${keep.length} active`);
+    console.log(`pruned ${removedCount} subtree(s); ${keep.length} kept`);
   }
 }
 
-function cmdRemove(args) {
-  const [slug] = args;
-  const force = args.includes("--force");
-  if (!slug || slug.startsWith("-")) {
-    console.error("usage: worktree.mjs remove <slug> [--force]");
-    process.exitCode = 1;
-    return;
-  }
-  const rows = readLedger();
+function cmdRemove({ positionals: [slug], flags }) {
+  const rows = hygieneRows();
   const inspected = inspectRows(rows).find((r) => r.slug === slug);
   if (!inspected) {
-    console.error(`no registered subtree "${slug}"`);
+    console.error(`no subtree "${slug}"`);
     process.exitCode = 1;
     return;
   }
-  const message = removeWorktree(inspected, { force });
-  if (message.startsWith("skipped")) {
+  const { removed, message } = removeWorktree(inspected, { force: Boolean(flags.force) });
+  if (!removed) {
     console.error(message);
     process.exitCode = 1;
     return;
   }
-  writeLedger(rows.filter((r) => r.slug !== slug));
+  writeLedger(rows.filter((r) => r.registered && r.slug !== slug).map(ledgerRow));
   console.log(message);
 }
 
+const COMMANDS = {
+  new: cmdNew,
+  list: cmdList,
+  sync: cmdSync,
+  prune: cmdPrune,
+  remove: cmdRemove,
+  audit: cmdAudit,
+};
+
 function main() {
-  const [command, ...args] = process.argv.slice(2);
-  switch (command) {
-    case "new":
-      cmdNew(args);
-      break;
-    case "list":
-      cmdList(args);
-      break;
-    case "sync":
-      cmdSync();
-      break;
-    case "prune":
-      cmdPrune(args);
-      break;
-    case "remove":
-      cmdRemove(args);
-      break;
-    default:
-      console.log(
-        "usage: worktree.mjs <new <slug>|list|sync|prune [--check]|remove <slug>> [--json|--force]",
-      );
-      process.exitCode = command ? 1 : 0;
+  const parsed = parseCliArgs(process.argv.slice(2));
+  if (!parsed.ok) {
+    console.error(`worktree.mjs: ${parsed.error}\n\n${USAGE}`);
+    process.exitCode = 2;
+    return;
   }
+  if (parsed.help) {
+    console.log(USAGE);
+    return;
+  }
+  COMMANDS[parsed.command](parsed);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) main();

@@ -43,6 +43,7 @@ const CATEGORY_META = {
   GENERATOR: { icon: Zap, description: "Auxiliary electrical generation." },
   MAIN_GUN: { icon: Crosshair, description: "Main-battery gun." },
   SECONDARY_GUN: { icon: Target, description: "Secondary and light gun." },
+  TERTIARY_GUN: { icon: Target, description: "Light anti-torpedo-boat gun." },
   DUAL_PURPOSE_GUN: { icon: Crosshair, description: "Dual-purpose gun: surface and air." },
   AA_WEAPON: { icon: Target, description: "Anti-aircraft weapon." },
   TORPEDO_TUBE: { icon: Rocket, description: "Torpedo tube." },

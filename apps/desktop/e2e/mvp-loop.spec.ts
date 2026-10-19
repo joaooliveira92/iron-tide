@@ -195,12 +195,14 @@ test("row 6k: a valid design is submitted from the Shipbuilding workspace and qu
     .getByRole("region", { name: "Notifications" })
     .getByRole("button", { name: "Start over" });
   if (await startOver.isVisible().catch(() => false)) await startOver.click();
-  await expect(workspace.getByText("Can be submitted")).toBeVisible();
-  // Name the class in the top command bar, then finish: the Submit panel shows the same name.
+  // Inside a campaign an unnamed design reads "Needs a class name"; name it in the
+  // top command bar, after which it can be submitted. The Submit panel shows the same name.
+  await expect(workspace.getByText("Needs a class name")).toBeVisible();
   await workspace
     .getByRole("group", { name: "Design commands" })
     .getByRole("textbox", { name: "Class name" })
     .fill("Arethusa E2E");
+  await expect(workspace.getByText("Can be submitted")).toBeVisible();
   await workspace.getByRole("button", { name: "Finish design" }).click();
   await workspace.getByRole("button", { name: "Submit design" }).click();
   // Submitting now starts a design study (DESIGN-21): the queued notice says the

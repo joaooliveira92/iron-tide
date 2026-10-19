@@ -9,6 +9,7 @@ import {
 import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
 import {
+  ARMOUR_REGIONS,
   buildAmmunitionPartModel,
   buildArmourPartModel,
   buildFittingPartModel,
@@ -428,8 +429,8 @@ describe("fit over production armour materials (ticket 05 hand-over)", () => {
     platformSlots(compatibility, present(compatibility.platforms[0], "p").id) ?? []
   ).filter((s) => s.region !== undefined);
 
-  it("covers all 12 armour-region slots, each accepting only armour_material", () => {
-    expect(regionSlots).toHaveLength(12);
+  it("covers all 14 armour-region slots, each accepting only armour_material", () => {
+    expect(regionSlots).toHaveLength(ARMOUR_REGIONS.length);
     for (const s of regionSlots) expect(s.accepts).toEqual(["armour_material"]);
   });
 

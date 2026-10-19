@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useBridge } from "../../../lib/bridge-context.js";
 
-import type { BridgeResult } from "../../../../shared/bridge-contract.js";
-import type { LoadCampaignResponse } from "../../../../shared/continuity-contract.js";
-import type { OperationKind, OperationResult, RecentFile } from "../types.js";
-import { loadRecentFiles, removeRecentFile, saveRecentFile } from "../utils/recent-files.js";
+import type { RecentCampaignEntry } from "../../../../shared/continuity-contract.js";
+import type { OperationKind, OperationResult } from "../types.js";
 import {
   operationPendingLabel,
   recoveryResultFromBridge,
@@ -17,13 +15,13 @@ interface UseCampaignFilesOptions {
 }
 
 interface UseCampaignFilesResult {
-  readonly recentFiles: readonly RecentFile[];
+  readonly recentFiles: readonly RecentCampaignEntry[];
   readonly result: OperationResult | null;
   readonly pendingOperation: OperationKind | null;
   readonly pendingLabel: string | null;
   readonly openCampaign: () => void;
-  readonly openRecentCampaign: (file: RecentFile) => void;
-  readonly removeRecentCampaign: (path: string) => void;
+  readonly openRecentCampaign: (file: RecentCampaignEntry) => void;
+  readonly removeRecentCampaign: (packagePath: string) => void;
   readonly runPackageOperation: (kind: OperationKind) => void;
   readonly dismissResult: () => void;
 }
@@ -32,7 +30,7 @@ export function useCampaignFiles({
   onOpenCampaign,
 }: UseCampaignFilesOptions): UseCampaignFilesResult {
   const bridge = useBridge();
-  const [recentFiles, setRecentFiles] = useState<readonly RecentFile[]>(loadRecentFiles);
+  const [recentFiles, setRecentFiles] = useState<readonly RecentCampaignEntry[]>([]);
   const [result, setResult] = useState<OperationResult | null>(null);
   const [pendingOperation, setPendingOperation] = useState<OperationKind | null>(null);
   const [pendingLabel, setPendingLabel] = useState<string | null>(null);
@@ -48,25 +46,20 @@ export function useCampaignFiles({
   const showResult = useCallback((nextResult: OperationResult) => {
     setResult(nextResult);
     if (resultTimerRef.current !== null) clearTimeout(resultTimerRef.current);
-    resultTimerRef.current = setTimeout(() => setResult(null), 15_000);
+    // Errors stay until dismissed; only success summaries expire.
+    resultTimerRef.current =
+      nextResult.kind === "error" ? null : setTimeout(() => setResult(null), 15_000);
   }, []);
 
-  const recordLoadedCampaign = useCallback(
-    (
-      path: string,
-      loadResult: Extract<BridgeResult<LoadCampaignResponse>, { outcome: "success" }>,
-    ) => {
-      saveRecentFile({
-        path,
-        campaignIdentity: loadResult.value.campaignIdentity,
-        activeRevision: loadResult.value.activeRevision,
-        lastOpened: Date.now(),
-      });
-      setRecentFiles(loadRecentFiles());
-      onOpenCampaign(loadResult.value.sessionId);
-    },
-    [onOpenCampaign],
-  );
+  const refreshRecents = useCallback(async () => {
+    if (bridge === undefined) return;
+    const listed = await bridge.campaign.execute("listRecentCampaigns", undefined);
+    if (listed.outcome === "success") setRecentFiles(listed.value);
+  }, [bridge]);
+
+  useEffect(() => {
+    void refreshRecents();
+  }, [refreshRecents]);
 
   const openCampaign = useCallback(async () => {
     if (bridge === undefined) return;
@@ -84,22 +77,43 @@ export function useCampaignFiles({
       return;
     }
 
-    recordLoadedCampaign(loadResult.value.packagePath, loadResult);
-  }, [bridge, recordLoadedCampaign, showResult]);
+    onOpenCampaign(loadResult.value.sessionId);
+  }, [bridge, onOpenCampaign, showResult]);
 
   const openRecentCampaign = useCallback(
-    async (_file: RecentFile) => {
-      // Recent entries are display hints only. The main process requires the
-      // user to select the package again instead of trusting a renderer path.
-      await openCampaign();
+    async (file: RecentCampaignEntry) => {
+      if (bridge === undefined) return;
+      setPendingLabel("Loading campaign…");
+      const loadResult = await bridge.campaign.execute("loadRecentCampaign", {
+        packagePath: file.packagePath,
+      });
+      setPendingLabel(null);
+
+      if (loadResult.outcome === "success") {
+        onOpenCampaign(loadResult.value.sessionId);
+        return;
+      }
+      if (loadResult.reason === "PACKAGE_NOT_APPROVED") {
+        // Not a package the main process remembers: ask the user to pick it.
+        await openCampaign();
+        return;
+      }
+      await refreshRecents();
+      const diagnostics =
+        loadResult.diagnostics.length > 0 ? ` — ${loadResult.diagnostics.join("; ")}` : "";
+      showResult({ kind: "error", message: `Load failed: ${loadResult.reason}${diagnostics}` });
     },
-    [openCampaign],
+    [bridge, onOpenCampaign, openCampaign, refreshRecents, showResult],
   );
 
-  const removeRecentCampaign = useCallback((path: string) => {
-    removeRecentFile(path);
-    setRecentFiles(loadRecentFiles());
-  }, []);
+  const removeRecentCampaign = useCallback(
+    async (packagePath: string) => {
+      if (bridge === undefined) return;
+      const removed = await bridge.campaign.execute("removeRecentCampaign", { packagePath });
+      if (removed.outcome === "success") setRecentFiles(removed.value);
+    },
+    [bridge],
+  );
 
   const runPackageOperation = useCallback(
     async (kind: OperationKind) => {
@@ -129,7 +143,7 @@ export function useCampaignFiles({
     pendingLabel,
     openCampaign: () => void openCampaign(),
     openRecentCampaign: (file) => void openRecentCampaign(file),
-    removeRecentCampaign,
+    removeRecentCampaign: (packagePath) => void removeRecentCampaign(packagePath),
     runPackageOperation: (kind) => void runPackageOperation(kind),
     dismissResult,
   };

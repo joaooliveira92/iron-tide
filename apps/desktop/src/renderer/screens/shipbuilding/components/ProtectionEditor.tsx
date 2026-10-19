@@ -10,6 +10,7 @@ import { Button } from "../../../components/ui/button.js";
 import { Checkbox } from "../../../components/ui/checkbox.js";
 import { Advanced } from "../../../components/design-workspace/Advanced.js";
 import { NumberField, SelectField } from "../../../components/design-workspace/fields.js";
+import { ArmourSchemeSelector } from "./ArmourSchemeSelector.js";
 import { Panel } from "../../../components/design-workspace/panels/Panel.js";
 import {
   armourMaterialChoices,
@@ -55,9 +56,6 @@ export function ProtectionEditor({
     });
     setToAdd("");
   };
-  const schemeChanges =
-    JSON.stringify(model.allOrNothing) !== JSON.stringify(model.fitted.map((f) => f.armour));
-
   return (
     <Panel title="Protection">
       <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -69,15 +67,8 @@ export function ProtectionEditor({
         <Badge variant="outline" className="tabular-nums">
           {tonnes(model.totalWeightKg)} t
         </Badge>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={!schemeChanges || model.regionSizing.citadelLengthMm <= 0}
-          onClick={() => edit({ kind: "set_armour_regions", regions: model.allOrNothing })}
-        >
-          All or nothing
-        </Button>
       </div>
+      <ArmourSchemeSelector model={model} edit={edit} />
 
       {model.fitted.length === 0 ? (
         <p className="text-sm text-muted-foreground">

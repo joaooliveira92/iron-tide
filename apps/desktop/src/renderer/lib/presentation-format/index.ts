@@ -63,9 +63,12 @@ export {
   type ActiveCampaignCurrencyContext,
   type NationalCurrencySource,
 } from "./currency-availability.js";
+export { formatCalibreInches, formatPoundsFromMicro, formatTonnes } from "./armament.js";
+export { formatPowerBoth, shaftHorsepower } from "./power.js";
 export { parseMeasurement, type ParseMeasurementOptions } from "./parse.js";
 export {
   DEFAULT_EXPLANATION_LOCALE,
   formatExplanation,
   formatExplanationValue,
 } from "../../../shared/explanation-text.js";
+export { formatHullMetres } from "./hull-metres.js";

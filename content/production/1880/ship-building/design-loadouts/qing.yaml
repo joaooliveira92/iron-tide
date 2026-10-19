@@ -274,7 +274,7 @@ designs:
             heightMm: 3000
             lengthMm: 40000
             thicknessUm: 203000
-          slot: armour.barbette
+          slot: armour.turret
       platform: coast_defence_form
     month: 1880-01
     name: Battleship (starter, B) — Qing China

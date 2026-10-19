@@ -13,6 +13,7 @@ import {
   ZONE_MAXIMUM_TURRET_FACE_BARBETTE_CONNING_TOWER_UM,
   ZONE_MAXIMA_UM,
   getZoneMaximumUm,
+  inferArmorZoneType,
   validateArmorThickness,
   ARMOR_ZONE_MAXIMUM_MISSING,
   ARMOR_THICKNESS_LIMIT_EXCEEDED,
@@ -499,5 +500,21 @@ describe("AC-5: SHIPPED_ARMOR_CONTRACT + validate guard (fail closed)", () => {
         zoneMaximaUm: { ...ZONE_MAXIMA_UM, BELT: 500_000 },
       }),
     ).toThrow(BluewaveError);
+  });
+});
+
+describe("inferArmorZoneType: design armour regions reach combat as zones (ADR-0232)", () => {
+  it("turret components map to TURRET_FACE; the folded barbette no longer yields its own zone", () => {
+    expect(inferArmorZoneType("TURRET-1")).toBe("TURRET_FACE");
+    expect(inferArmorZoneType("BARBETTE-1")).toBe("TURRET_FACE");
+  });
+  it("keeps the other component prefixes and leaves internals unexposed", () => {
+    expect(inferArmorZoneType("CONNING-1")).toBe("CONNING_TOWER");
+    expect(inferArmorZoneType("DIRECTOR-2")).toBe("SUPERSTRUCTURE");
+    expect(inferArmorZoneType("ENGINE-1")).toBeUndefined();
+  });
+  it("only ever returns a canonical zone type", () => {
+    for (const id of ["TURRET-1", "BARBETTE-1", "CONNING-1", "AA-3", "RANGEFINDER-1"])
+      expect(ARMOR_ZONE_TYPES as readonly string[]).toContain(inferArmorZoneType(id));
   });
 });

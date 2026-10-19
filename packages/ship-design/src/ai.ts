@@ -234,7 +234,12 @@ export function generateCandidates(env: AiEnvironment, req: AiRequest): AiResult
         [d.requirement.category]: spec.weights,
       },
     };
-    const cve = computeCve(compiled, d, plant.reliabilityBp, cveBal);
+    const cve = computeCve(
+      compiled,
+      d,
+      compiled.machinery?.reliabilityBp ?? plant.reliabilityBp,
+      cveBal,
+    );
     const count = (s: string) => compiled.findings.filter((f) => f.severity === s).length;
     let obj =
       cve.cveBp -

@@ -100,4 +100,17 @@
 # `pnpm check:golden` reports all 11 hashes match and `pnpm check:determinism` is
 # byte-identical, so it moved no reference hash. It is already pushed to origin/dev
 # (force-push prohibited), so the ratchet is advanced past it as the documented fallback.
-f90761cc04064f141f1da7ca22b4438fa84ab93e
+#
+# The baseline is advanced again to 2469fad1385387e5b874b747940ba365cab1a6e5, the first
+# commit that contains every flagged commit (a merge), during dev gate stabilization. Ten commits of ship-design work (#168:
+# manual-parity armour regions and draft schema v2, engine priority, fire-control
+# positions, freeboard preset, tertiary battery, named armour schemes; the pairs
+# 4f3f45d5/607748dd, 52d32177/3490ef41 and 18a65de5/50fdd9a5 are cherry-picks) changed
+# authoritative package source without re-pinning golden/hashes.json or carrying a
+# `Golden-Repin: not-needed` trailer. `pnpm check:golden` reports all 11 hashes match and
+# `pnpm check:determinism` and `pnpm check:equivalence` are byte-identical, so none moved
+# the reference run net (its fixture declares no ship-design collection). They are already
+# on origin/dev (force-push prohibited) and rewording them would need an interactive
+# rebase (prohibited), so the ratchet is advanced past them as the documented fallback.
+# Every later commit stays gated.
+2469fad1385387e5b874b747940ba365cab1a6e5

@@ -24,6 +24,7 @@ import { nauticalMiles, type ProjectionId } from "./projection.js";
 export type LayerId =
   | "ownership"
   | "borders"
+  | "lanes"
   | "passages"
   | "possessions"
   | "fleets"
@@ -33,6 +34,7 @@ export type LayerId =
 export const LAYERS: readonly { id: LayerId; label: string }[] = [
   { id: "ownership", label: "Ownership" },
   { id: "borders", label: "1880 borders" },
+  { id: "lanes", label: "Sea lanes" },
   { id: "passages", label: "Passages" },
   { id: "possessions", label: "Possessions" },
   { id: "fleets", label: "Fleets" },
@@ -52,11 +54,12 @@ export interface MapPrototypeState {
 
 export const initialMapPrototypeState: MapPrototypeState = {
   selected: null,
-  rulerFrom: "area_north_sea",
-  rulerTo: "area_malacca",
+  rulerFrom: null,
+  rulerTo: null,
   layers: {
     ownership: true,
     borders: true,
+    lanes: true,
     passages: true,
     possessions: true,
     fleets: true,

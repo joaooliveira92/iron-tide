@@ -1,0 +1,309 @@
+.an-ship {
+  --an-paper: #fbfbfa;
+  --an-face: #ffffff;
+  --an-top: #ffffff;
+  --an-shade-0: #d8d8d4;
+  --an-shade-1: #e3e3df;
+  --an-shade-2: #ececea;
+  --an-shade-3: #f4f4f1;
+  --an-hi: #26262a;
+  --an-mid: #8a8a8f;
+  --an-lo: #b6b6ba;
+  --an-faint: #d9d9dc;
+  --an-lit: #111114;
+  --an-lit-top: #ffffff;
+  --an-lit-shade: #ececea;
+  --an-dot: #54545a;
+  --an-ink: #2c2c31;
+  --an-glass: #2c2c31;
+  --an-boot: #a97a68;
+  --an-halo: #8a8a80;
+  --an-halo-opacity: 0.32;
+  --an-under: #cfcfcb;
+  --an-under-0: #bdbdb8;
+  --an-under-1: #c8c8c3;
+  --an-under-2: #d2d2ce;
+  --an-under-3: #dcdcd8;
+  --an-shadow: #6b6b66;
+  --an-shadow-opacity: 0.2;
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.dark .an-ship {
+  --an-paper: #38383b;
+  --an-face: #424246;
+  --an-top: #5b5b61;
+  --an-shade-0: #29292c;
+  --an-shade-1: #333336;
+  --an-shade-2: #3e3e42;
+  --an-shade-3: #4a4a4e;
+  --an-under: #232326;
+  --an-under-0: #19191b;
+  --an-under-1: #1f1f22;
+  --an-under-2: #252528;
+  --an-under-3: #2b2b2e;
+  --an-shadow: #000000;
+  --an-shadow-opacity: 0.55;
+  --an-hi: #f4f4f4;
+  --an-mid: #b8b8bd;
+  --an-lo: #7a7a80;
+  --an-faint: #4a4a50;
+  --an-lit: #ffffff;
+  --an-lit-top: #8a8a90;
+  --an-lit-shade: #5a5a60;
+  --an-dot: #e8e8e8;
+  --an-ink: #0b0b0d;
+  --an-glass: #7c7c82;
+  --an-boot: #5a4038;
+  --an-halo: #000000;
+  --an-halo-opacity: 0.7;
+}
+
+.an-ship path,
+.an-ship circle {
+  vector-effect: non-scaling-stroke;
+}
+
+.an-fill {
+  fill: var(--an-paper);
+  stroke: none;
+}
+
+.an-solid[data-fill="face"] .an-fill {
+  fill: var(--an-face);
+}
+
+.an-solid[data-fill="ink"] .an-fill {
+  fill: var(--an-ink);
+}
+
+.an-solid[data-fill="boot"] .an-fill {
+  fill: var(--an-boot);
+}
+
+.an-solid[data-fill="under"] .an-fill {
+  fill: var(--an-under);
+}
+
+.an-solid[data-fill="under"] .an-shade[data-shade="0"] {
+  fill: var(--an-under-0);
+}
+
+.an-solid[data-fill="under"] .an-shade[data-shade="1"] {
+  fill: var(--an-under-1);
+}
+
+.an-solid[data-fill="under"] .an-shade[data-shade="2"] {
+  fill: var(--an-under-2);
+}
+
+.an-solid[data-fill="under"] .an-shade[data-shade="3"] {
+  fill: var(--an-under-3);
+}
+
+.an-part[data-lit] .an-solid[data-fill="paper"] .an-fill {
+  fill: var(--an-face);
+}
+
+.an-shade,
+.an-top {
+  stroke: none;
+}
+
+.an-shade[data-shade="0"] {
+  fill: var(--an-shade-0);
+}
+
+.an-shade[data-shade="1"] {
+  fill: var(--an-shade-1);
+}
+
+.an-shade[data-shade="2"] {
+  fill: var(--an-shade-2);
+}
+
+.an-shade[data-shade="3"] {
+  fill: var(--an-shade-3);
+}
+
+.an-top {
+  fill: var(--an-top);
+}
+
+.an-solid {
+  --an-edge: var(--an-hi);
+  --an-crease: var(--an-faint);
+}
+
+.an-solid[data-tone="mid"] {
+  --an-edge: var(--an-mid);
+  --an-crease: var(--an-lo);
+}
+
+.an-solid[data-tone="lo"] {
+  --an-edge: var(--an-lo);
+  --an-crease: var(--an-faint);
+}
+
+.an-solid[data-tone="faint"] {
+  --an-edge: var(--an-faint);
+  --an-crease: var(--an-faint);
+}
+
+.an-edge {
+  fill: none;
+  stroke: var(--an-edge);
+  stroke-width: 0.8px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.an-crease {
+  fill: none;
+  stroke: var(--an-crease);
+  stroke-width: 0.65px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.an-crease[data-tone="mid"] {
+  stroke: var(--an-mid);
+}
+
+.an-crease[data-tone="lo"] {
+  stroke: var(--an-lo);
+}
+
+.an-crease[data-tone="hi"] {
+  stroke: var(--an-hi);
+}
+
+.an-part[data-lit] .an-solid .an-edge {
+  stroke: var(--an-lit);
+  stroke-width: 1.1px;
+}
+
+.an-part[data-lit] .an-solid .an-top {
+  fill: var(--an-lit-top);
+}
+
+.an-part[data-lit] .an-solid .an-shade {
+  fill: var(--an-lit-shade);
+}
+
+.an-halo {
+  fill: var(--an-halo);
+  opacity: var(--an-halo-opacity);
+  filter: blur(7px);
+  transform: translateY(2px);
+}
+
+.an-ink-fill {
+  fill: var(--an-ink);
+  stroke: none;
+}
+
+.an-ink-fill[data-tone="glass"] {
+  fill: var(--an-glass);
+}
+
+.an-ink-fill[data-tone="shadow"] {
+  fill: var(--an-shadow);
+  opacity: var(--an-shadow-opacity);
+  filter: blur(5px);
+}
+
+.an-line {
+  fill: none;
+  stroke: var(--an-lo);
+  stroke-width: 0.75px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.an-line[data-tone="hi"] {
+  stroke: var(--an-hi);
+}
+
+.an-line[data-tone="mid"] {
+  stroke: var(--an-mid);
+}
+
+.an-line[data-tone="lo"] {
+  stroke: var(--an-lo);
+}
+
+.an-line[data-tone="faint"] {
+  stroke: var(--an-faint);
+}
+
+.an-line[data-tone="ink"] {
+  stroke: var(--an-ink);
+  stroke-width: 1.6px;
+}
+
+.an-line[data-heavy] {
+  stroke-width: 1.15px;
+}
+
+.an-line[data-dotted] {
+  stroke-dasharray: 0.01 3.2;
+  stroke-width: 1px;
+}
+
+.an-dot {
+  fill: var(--an-dot);
+  stroke: none;
+  opacity: 0.3;
+}
+
+.an-dot[data-tone="hi"] {
+  opacity: 0.9;
+}
+
+.an-dot[data-tone="mid"] {
+  opacity: 0.45;
+}
+
+.an-dot[data-tone="lo"] {
+  opacity: 0.24;
+}
+
+.an-dot[data-tone="faint"] {
+  opacity: 0.12;
+}
+
+.an-part[data-lit] .an-dot {
+  fill: var(--an-lit);
+  opacity: 0.9;
+}
+
+.an-highlight {
+  pointer-events: none;
+}
+
+.an-ring,
+.an-ring-halo {
+  fill: none;
+  stroke: var(--an-lit);
+  vector-effect: non-scaling-stroke;
+}
+
+.an-ring {
+  stroke-width: 1.2px;
+  stroke-dasharray: 3 3;
+}
+
+.an-ring-halo {
+  stroke-width: 4px;
+  opacity: 0.16;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .an-ring {
+    stroke-dasharray: none;
+  }
+}

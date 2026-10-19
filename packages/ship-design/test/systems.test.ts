@@ -172,3 +172,45 @@ describe("fire control", () => {
     );
   });
 });
+
+describe("fire-control positions (#168 step 3)", () => {
+  const withBal = { ...bal, fireControlPositionRedundancyBp: 2_500 };
+  const ids = (r: ReturnType<typeof compileSystems>) => r.findings.map((f) => f.id);
+
+  it("warns when directors and guns are fitted but there are no positions", () => {
+    const r = compileSystems({ ...base, fireControlPositions: 0 }, withBal);
+    expect(ids(r)).toContain("FIRE_CONTROL_NO_POSITIONS");
+    expect(r.findings.find((f) => f.id === "FIRE_CONTROL_NO_POSITIONS")!.severity).toBe("WARNING");
+    expect(ids(compileSystems(base, withBal))).toContain("FIRE_CONTROL_NO_POSITIONS");
+  });
+  it("does not warn with a position, with no directors, or with no guns", () => {
+    expect(ids(compileSystems({ ...base, fireControlPositions: 1 }, withBal))).not.toContain(
+      "FIRE_CONTROL_NO_POSITIONS",
+    );
+    expect(ids(compileSystems({ ...base, directors: [] }, withBal))).not.toContain(
+      "FIRE_CONTROL_NO_POSITIONS",
+    );
+    expect(ids(compileSystems({ ...base, guns: [] }, withBal))).not.toContain(
+      "FIRE_CONTROL_NO_POSITIONS",
+    );
+  });
+  it("redundancy rises with the position count, capped at 10_000, and is 0 without authored balance", () => {
+    const at = (n: number) =>
+      compileSystems({ ...base, fireControlPositions: n }, withBal).fireControlRedundancyBp;
+    expect([at(0), at(1), at(2), at(4), at(9)]).toEqual([0, 2_500, 5_000, 10_000, 10_000]);
+    expect(compileSystems({ ...base, fireControlPositions: 3 }, bal).fireControlRedundancyBp).toBe(
+      0,
+    );
+  });
+  it("leaves per-gun accuracy untouched (positions are redundancy, not accuracy)", () => {
+    expect(compileSystems({ ...base, fireControlPositions: 3 }, withBal).gunControl).toEqual(
+      compileSystems(base, withBal).gunControl,
+    );
+  });
+  it("rejects a negative or non-integer count", () => {
+    for (const bad of [-1, 1.5])
+      expect(() => compileSystems({ ...base, fireControlPositions: bad }, withBal)).toThrow(
+        /fireControlPositions/,
+      );
+  });
+});

@@ -95,7 +95,7 @@ export function WorldMapChart({
   // Open centred on the player's home waters (once per mount). This runs after the camera's own
   // reset effect, declared earlier in `useMapCamera`, so the focus is not immediately undone; the
   // Overview remounts the chart each time the screen opens, so it fires on every visit.
-  useInitialFocusArea(camera, initialFocusAreaId);
+  useInitialFocusArea(camera, initialFocusAreaId, projection, state.centre);
 
   /** Keyboard parity for pan/zoom (wheel and drag stay the pointer path). */
   function handleMapKey(event: React.KeyboardEvent<SVGSVGElement>): void {
@@ -137,7 +137,11 @@ export function WorldMapChart({
   return (
     <div
       ref={rootRef}
-      style={{ ["--map-focus" as string]: palette.selectedEdge }}
+      style={{
+        ["--map-focus" as string]: palette.selectedEdge,
+        ["--map-hover" as string]: palette.hoverEdge,
+        background: palette.ocean,
+      }}
       className={cn("relative h-full w-full overflow-hidden", layout.root, className)}
     >
       {coastline.status === "ready" && (
@@ -195,6 +199,7 @@ export function WorldMapChart({
             <th scope="col">Area</th>
             <th scope="col">Controlled by</th>
             <th scope="col">Fleets</th>
+            <th scope="col">Strength</th>
           </tr>
         </thead>
         <tbody>
@@ -203,6 +208,7 @@ export function WorldMapChart({
               <th scope="row">{row.name}</th>
               <td>{row.owner ?? "Unclaimed"}</td>
               <td>{row.fleets}</td>
+              <td>{row.strength ?? "No ships"}</td>
             </tr>
           ))}
         </tbody>

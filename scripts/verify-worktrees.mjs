@@ -3,42 +3,27 @@
 //
 // A stale or unregistered worktree is a coordination smell — an agent may think
 // a subtree is live when its branch is already merged, or two sessions may pick
-// the same frontier. This surfaces the ledger drift and the prune backlog so the
-// nudge is visible in `pnpm preflight`, without blocking unrelated work (a
+// the same frontier. This surfaces the drift reported by `pnpm worktrees audit`
+// so the nudge is visible in `pnpm preflight`, without blocking unrelated work (a
 // correctness gate must not depend on shared git-worktree state, which is
-// machine-local and untracked).
+// machine-local and untracked). It audits offline (no `gh`), so squash-merged
+// branches are only caught by the full `pnpm worktrees audit`.
 //
 // Usage: `node scripts/verify-worktrees.mjs [--strict]`
-//   --strict exits non-zero when stale subtrees exist (opt-in, for CI hygiene).
+//   --strict exits non-zero when drift exists (opt-in, for CI hygiene).
 // Wired into `pnpm preflight` via `gate:worktrees`.
 
-import { existsSync } from "node:fs";
-import { readLedger, inspectRows, unregisteredWorktrees, WORKTREES_DIR } from "./worktree.mjs";
+import { buildAudit, collectFacts } from "./worktree.mjs";
 
 const strict = process.argv.includes("--strict");
-const registered = inspectRows(readLedger());
-const unregistered = unregisteredWorktrees(readLedger());
+const audit = buildAudit(collectFacts({ gh: false }));
 
-const warnings = [];
-for (const row of registered) {
-  if (row.warnings.length > 0) warnings.push(`${row.slug}: ${row.warnings.join("; ")}`);
-}
-if (unregistered.length > 0) {
-  warnings.push(
-    `unregistered worktrees: ${unregistered.map((r) => r.slug).join(", ")} — run \`pnpm worktrees sync\``,
-  );
-}
-if (!existsSync(WORKTREES_DIR) && registered.length === 0) {
-  console.log("worktrees: ok (none registered)");
-  process.exit(0);
-}
-
-if (warnings.length === 0) {
-  console.log(`worktrees: ok (${registered.length} active)`);
+if (audit.ok) {
+  console.log(`worktrees: ok (${audit.ledger.length} registered)`);
   process.exit(0);
 }
 
 console.warn("worktrees: hygiene warnings (non-blocking)");
-for (const w of warnings) console.warn(`  - ${w}`);
-console.warn("  run `pnpm worktrees:prune` to remove merged/phantom subtrees");
+for (const d of audit.drift) console.warn(`  - ${d.code} ${d.subject}: ${d.detail} -> ${d.action}`);
+console.warn("  run `pnpm worktrees audit` for the full inventory");
 process.exit(strict ? 1 : 0);

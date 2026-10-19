@@ -2,7 +2,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
 import { ZONE_IDS } from "@bluewave/ship-design";
 import { PLAN_MID, planFrame } from "./geometry.js";
-import { HullOutlineLayer, HullShapeLayer, HullZoneLayer } from "./plan-layers.js";
+import { HullDeckLayer, HullOutlineLayer, HullShapeLayer, HullZoneLayer } from "./plan-layers.js";
 import { hullForm as form, reference } from "./test-fixtures.js";
 
 /** A ram frame: the layer's ram beak only draws for a ram bow, which the reference ship is not. */
@@ -19,7 +19,7 @@ describe("HullShapeLayer", () => {
     const { container } = draw(<HullShapeLayer frame={frame} />);
     const outline = container.querySelector("[data-testid='hull-outline']")!;
     expect(outline.tagName.toLowerCase()).toBe("polygon");
-    expect(outline.getAttribute("points")!.split(" ").length).toBe(82);
+    expect(outline.getAttribute("points")!.split(" ").length).toBeGreaterThan(82);
     const deck = container.querySelector("[data-testid='hull-deck-edge']")!;
     expect(deck.getAttribute("points")).not.toBe(outline.getAttribute("points"));
   });
@@ -81,5 +81,63 @@ describe("HullZoneLayer", () => {
       />,
     );
     expect(container.querySelectorAll("g")).toHaveLength(0);
+  });
+});
+
+describe("HullDeckLayer", () => {
+  it("fills the deck edge inside the hull outline and ignores the pointer", () => {
+    const { container } = draw(<HullDeckLayer frame={frame} />);
+    const deck = container.querySelector("[data-testid='hull-deck-fill']")!;
+    expect(deck.getAttribute("class")).toMatch(/pointer-events-none/);
+    expect(deck.getAttribute("points")).toBeTruthy();
+  });
+
+  it("tones the hull side as a ring between the outline and the deck edge", () => {
+    const { container } = draw(<HullDeckLayer frame={frame} />);
+    const band = container.querySelector("[data-testid='hull-side-band']")!;
+    expect(band.getAttribute("class")).toMatch(/pointer-events-none/);
+    expect(band.getAttribute("fill-rule")).toBe("evenodd");
+    // Two closed sub-paths: the outer plating edge and the inner deck edge.
+    expect(band.getAttribute("d")!.match(/M/g)).toHaveLength(2);
+  });
+});
+
+describe("hull ends from above", () => {
+  const outlineXs = (bow: "ram" | "spoon" | "plumb", stern: "counter" | "transom" | "round") => {
+    const f = planFrame(reference.draft.hull, {
+      waterplaneCoeffBp: form.waterplaneCoeffBp,
+      lcbPermille: form.lcbPermille,
+      bow,
+      stern,
+    });
+    const { container } = draw(<HullShapeLayer frame={f} />);
+    const pts = container
+      .querySelector("[data-testid='hull-outline']")!
+      .getAttribute("points")!
+      .split(" ")
+      .map((p) => Number(p.split(",")[0]));
+    return { f, min: Math.min(...pts), max: Math.max(...pts) };
+  };
+
+  it("rounds a counter or round stern past the stern station and leaves a transom flat", () => {
+    for (const stern of ["counter", "round"] as const) {
+      const { f, max } = outlineXs("ram", stern);
+      expect(max).toBeGreaterThan(f.x(1000));
+    }
+    const flat = outlineXs("ram", "transom");
+    expect(flat.max).toBeCloseTo(flat.f.x(1000), 6);
+  });
+
+  it("rounds a spoon bow ahead of the stem station and leaves a plumb bow flat", () => {
+    const spoon = outlineXs("spoon", "transom");
+    expect(spoon.min).toBeLessThan(spoon.f.x(0));
+    const plumb = outlineXs("plumb", "transom");
+    expect(plumb.min).toBeCloseTo(plumb.f.x(0), 6);
+  });
+
+  it("keeps the rounded ends inside the drawing's padding", () => {
+    const { max, min } = outlineXs("spoon", "counter");
+    expect(min).toBeGreaterThanOrEqual(0);
+    expect(max).toBeLessThanOrEqual(640);
   });
 });

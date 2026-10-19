@@ -1,5 +1,5 @@
 import type { MonthlyReportEntry } from "../../../shared/campaign-command-contract.js";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vite-plus/test";
 import { MonthReportCard } from "./MonthReportCard.js";
 

@@ -316,14 +316,24 @@ export function headerFromDraft(draft: DesignDraft): DesignHeaderData {
       fuelZoneId: draft.machinery.fuelZoneId,
       fuelStationPermille: draft.machinery.fuelStationPermille,
       foulingBp: draft.machinery.foulingBp,
+      ...(draft.machinery.enginePriorityBp !== undefined
+        ? { enginePriorityBp: draft.machinery.enginePriorityBp }
+        : {}),
       ...(draft.machinery.rooms !== undefined
         ? { rooms: draft.machinery.rooms.map((r) => ({ ...r })) }
         : {}),
     },
+    ...(draft.tertiary !== undefined
+      ? { tertiary: { caliberUm: draft.tertiary.caliberUm, count: draft.tertiary.count } }
+      : {}),
+    ...(draft.fireControl !== undefined
+      ? { fireControl: { positions: draft.fireControl.positions } }
+      : {}),
     protection: {
       citadelLengthMm: draft.armour.citadelLengthMm,
       torpedoWarheadKg: draft.armour.torpedoWarheadKg,
       bunkerProtectionBp: draft.armour.bunkerProtectionBp,
+      ...(draft.armour.schemeId !== undefined ? { schemeId: draft.armour.schemeId } : {}),
     },
   };
 }
@@ -380,6 +390,9 @@ export function readMachineryPlan(
     fuelZoneId: header.machinery.fuelZoneId,
     fuelStationPermille: header.machinery.fuelStationPermille,
     foulingBp: header.machinery.foulingBp,
+    ...(header.machinery.enginePriorityBp !== undefined
+      ? { enginePriorityBp: header.machinery.enginePriorityBp }
+      : {}),
     ...(header.machinery.rooms !== undefined
       ? { rooms: header.machinery.rooms.map((r) => ({ ...r })) }
       : {}),
@@ -486,8 +499,22 @@ export function rebuildDraft(input: {
         citadelLengthMm: input.header.protection.citadelLengthMm,
         torpedoWarheadKg: input.header.protection.torpedoWarheadKg,
         bunkerProtectionBp: input.header.protection.bunkerProtectionBp,
+        ...(input.header.protection.schemeId !== undefined
+          ? { schemeId: input.header.protection.schemeId }
+          : {}),
       },
       placements: places.placements,
+      ...(input.header.tertiary !== undefined
+        ? {
+            tertiary: {
+              caliberUm: input.header.tertiary.caliberUm,
+              count: input.header.tertiary.count,
+            },
+          }
+        : {}),
+      ...(input.header.fireControl !== undefined
+        ? { fireControl: { positions: input.header.fireControl.positions } }
+        : {}),
     },
     issues,
   };

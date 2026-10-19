@@ -153,7 +153,7 @@ designs:
             heightMm: 3000
             lengthMm: 25000
             thicknessUm: 140000
-          slot: armour.barbette
+          slot: armour.turret
       platform: coast_defence_form
     month: 1880-01
     name: Principe Amedeo (1874, central-battery ironclad)

@@ -1,6 +1,7 @@
 import type { DesignDraft, WorkshopEnvironment, WorkshopView } from "@bluewave/ship-design";
 import type { DrawingBoardContent } from "../../components/design-workspace/content.js";
 import { previewOptionDeltas, type Delta } from "../../components/design-workspace/optionDelta.js";
+import { formatPowerBoth } from "../../lib/presentation-format/index.js";
 
 /**
  * The Machinery section's outcomes-first view model. Pure: the editable performance targets and propulsion
@@ -25,6 +26,8 @@ export interface MachineryInputs {
   readonly rangeNm: number;
   readonly plantId: string;
   readonly installedKw: number;
+  /** Installed power in both units, e.g. "3,300 kW (4,425 hp)". */
+  readonly installedPowerText: string;
   readonly fuelCapacityKg: number;
   readonly plantOptions: readonly PlantOption[];
 }
@@ -114,13 +117,14 @@ export function machineryModel(
   });
   const plant = content.plants.find((p) => p.id === draft.machinery.plantId);
   const machinery = view.compiled.machinery;
+  const kwPerShpBp = content.environmentFor(month, draft.nationId).ctx.balance.machinery.kwPerShpBp;
   const fuelCost = view.forecast.costBreakdown.machinery;
 
   const outputs: MachineryOutput[] = [
     {
       id: "required-power",
       label: "Power required at target speed",
-      value: machinery === null ? "n/a" : `${machinery.requiredKwAtMax.toLocaleString("en-US")} kW`,
+      value: machinery === null ? "n/a" : formatPowerBoth(machinery.requiredKwAtMax, kwPerShpBp),
     },
     {
       id: "max-speed",
@@ -162,6 +166,7 @@ export function machineryModel(
       rangeNm: draft.requirement.requiredRangeNm,
       plantId: draft.machinery.plantId,
       installedKw: draft.machinery.installedKw,
+      installedPowerText: formatPowerBoth(draft.machinery.installedKw, kwPerShpBp),
       fuelCapacityKg: draft.machinery.fuelCapacityKg,
       plantOptions,
     },

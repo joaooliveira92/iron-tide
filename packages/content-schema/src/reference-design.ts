@@ -19,13 +19,23 @@ export const ARMOUR_REGION_IDS = [
   "BELT_ENDS",
   "DECK_MAIN",
   "DECK_SLOPE",
-  "TURRET_FACE",
-  "BARBETTE",
+  "DECK_EXTENDED",
+  "TURRET",
+  "TURRET_TOP",
+  "SECONDARY_GUN",
   "CONNING_TOWER",
   "MAGAZINE_BOX",
   "SPLINTER_PLATING",
   "TORPEDO_BULKHEAD",
   "TORPEDO_BELT",
+] as const;
+
+/** Mirrors `ARMOUR_SCHEME_IDS` in `@bluewave/ship-design` (a test keeps the two lists identical). */
+export const ARMOUR_SCHEME_IDS = [
+  "FLAT_DECK_ON_BELT",
+  "PROTECTED_CRUISER",
+  "BELT_AND_SLOPING_DECK",
+  "ALL_OR_NOTHING",
 ] as const;
 
 /** Mirrors `MountSide` in `@bluewave/ship-design` (a test keeps the two lists identical). */
@@ -72,6 +82,7 @@ export const HullSpecSchema = Schema.Struct({
   limitDisplacementKg: Schema.NullOr(positiveInt),
   designMarginBp: bp,
   growthReserveBp: bp,
+  freeboardProfile: Schema.optional(Schema.Literals(["NORMAL", "LOW"] as const)),
 });
 
 const MachineryRoomSchema = Schema.Struct({
@@ -89,6 +100,9 @@ const MachineryPlanSchema = Schema.Struct({
   fuelZoneId: ZoneIdSchema,
   fuelStationPermille: bp,
   foulingBp: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(-10_000)),
+  enginePriorityBp: Schema.optional(
+    Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: -10_000, maximum: 10_000 })),
+  ),
   rooms: Schema.optional(Schema.Array(MachineryRoomSchema)),
 });
 
@@ -106,6 +120,7 @@ const ArmourPlanSchema = Schema.Struct({
   citadelLengthMm: nonNegativeInt,
   torpedoWarheadKg: nonNegativeInt,
   bunkerProtectionBp: bp,
+  schemeId: Schema.optional(Schema.Literals(ARMOUR_SCHEME_IDS)),
 });
 
 const PlacementSpecSchema = Schema.Struct({
@@ -125,6 +140,8 @@ const DesignDraftSchema = Schema.Struct({
   machinery: MachineryPlanSchema,
   armour: ArmourPlanSchema,
   placements: Schema.Array(PlacementSpecSchema),
+  fireControl: Schema.optional(Schema.Struct({ positions: nonNegativeInt })),
+  tertiary: Schema.optional(Schema.Struct({ caliberUm: positiveInt, count: nonNegativeInt })),
 });
 
 /**

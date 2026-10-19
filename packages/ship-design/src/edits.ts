@@ -7,8 +7,10 @@ import {
   type ShipContext,
 } from "./compile.js";
 import type { ArmourRegion } from "./armour.js";
+import type { ArmourSchemeId } from "./armourSchemes.js";
 import type { DesignRequirement } from "./compileShared.js";
 import type { MountSide } from "./weapons.js";
+import type { TertiaryBattery } from "./tertiary.js";
 import type { HullSpec } from "./hull.js";
 import { SEVERITY_ORDER, type Severity } from "./findings.js";
 
@@ -16,6 +18,9 @@ import { SEVERITY_ORDER, type Severity } from "./findings.js";
 export type DraftEdit =
   | { readonly kind: "set_hull"; readonly patch: Partial<HullSpec> }
   | { readonly kind: "set_machinery"; readonly patch: Partial<MachineryPlan> }
+  | { readonly kind: "set_fire_control"; readonly positions: number }
+  /** The tertiary battery: a count of one chosen gun; `null` removes it. */
+  | { readonly kind: "set_tertiary"; readonly tertiary: TertiaryBattery | null }
   /** The design brief: ship type, required speed and range, crew and accommodation. A brief is not a build change. */
   | { readonly kind: "set_requirement"; readonly patch: Partial<DesignRequirement> }
   | { readonly kind: "add_placement"; readonly placement: PlacementSpec }
@@ -39,7 +44,13 @@ export type DraftEdit =
   /** Several edits as one undoable step, applied in order; if any fails none is applied. Batches do not nest. */
   | { readonly kind: "batch"; readonly edits: readonly Exclude<DraftEdit, { kind: "batch" }>[] }
   /** Replaces every armour region at once (an armour scheme), as one undoable step. Order is kept. */
-  | { readonly kind: "set_armour_regions"; readonly regions: readonly ArmourRegion[] };
+  | { readonly kind: "set_armour_regions"; readonly regions: readonly ArmourRegion[] }
+  /** Applies a named armour scheme (ADR-0232): the regions it produced and its label, as one undoable step. */
+  | {
+      readonly kind: "set_armour_scheme";
+      readonly schemeId: ArmourSchemeId;
+      readonly regions: readonly ArmourRegion[];
+    };
 
 export class EditError extends Error {
   /** Stable discriminator (RULES.md "Errors"): recover by `_tag`, not `instanceof`. */
@@ -65,12 +76,37 @@ const need = (draft: DesignDraft, id: string): PlacementSpec => {
 };
 
 /** Pure: returns a new draft; the input is never mutated. Throws EditError for edits that reference nothing. */
+/** The armour plan with new regions and no scheme label: a manual edit leaves a named scheme for "Custom". */
+function customArmour(
+  armour: DesignDraft["armour"],
+  regions: ArmourRegion[],
+): DesignDraft["armour"] {
+  const { schemeId: _scheme, ...rest } = armour;
+  return { ...rest, regions };
+}
+
 export function applyEdit(draft: DesignDraft, e: DraftEdit): DesignDraft {
   switch (e.kind) {
     case "set_hull":
       return { ...draft, hull: { ...draft.hull, ...e.patch } };
     case "set_machinery":
       return { ...draft, machinery: { ...draft.machinery, ...e.patch } };
+    case "set_fire_control":
+      if (!Number.isSafeInteger(e.positions) || e.positions < 0)
+        throw new EditError("fire-control positions must be a non-negative integer");
+      return { ...draft, fireControl: { positions: e.positions } };
+    case "set_tertiary": {
+      const t = e.tertiary;
+      if (t === null) {
+        const { tertiary: _removed, ...rest } = draft;
+        return rest;
+      }
+      if (!Number.isSafeInteger(t.caliberUm) || t.caliberUm <= 0)
+        throw new EditError("tertiary calibre must be a positive integer");
+      if (!Number.isSafeInteger(t.count) || t.count < 0)
+        throw new EditError("tertiary count must be a non-negative integer");
+      return { ...draft, tertiary: { caliberUm: t.caliberUm, count: t.count } };
+    }
     case "set_requirement":
       return { ...draft, requirement: { ...draft.requirement, ...e.patch } };
     case "add_placement":
@@ -108,7 +144,7 @@ export function applyEdit(draft: DesignDraft, e: DraftEdit): DesignDraft {
     }
     case "set_armour_region": {
       const rest = draft.armour.regions.filter((r) => r.region !== e.region.region);
-      return { ...draft, armour: { ...draft.armour, regions: [...rest, e.region] } };
+      return { ...draft, armour: customArmour(draft.armour, [...rest, e.region]) };
     }
     case "set_side": {
       need(draft, e.instanceId);
@@ -129,15 +165,26 @@ export function applyEdit(draft: DesignDraft, e: DraftEdit): DesignDraft {
         if (seen.has(r.region)) throw new EditError(`armour region '${r.region}' listed twice`);
         seen.add(r.region);
       }
-      return { ...draft, armour: { ...draft.armour, regions: [...e.regions] } };
+      return { ...draft, armour: customArmour(draft.armour, [...e.regions]) };
+    }
+    case "set_armour_scheme": {
+      const seen = new Set<string>();
+      for (const r of e.regions) {
+        if (seen.has(r.region)) throw new EditError(`armour region '${r.region}' listed twice`);
+        seen.add(r.region);
+      }
+      return {
+        ...draft,
+        armour: { ...draft.armour, regions: [...e.regions], schemeId: e.schemeId },
+      };
     }
     case "remove_armour_region":
       return {
         ...draft,
-        armour: {
-          ...draft.armour,
-          regions: draft.armour.regions.filter((r) => r.region !== e.region),
-        },
+        armour: customArmour(
+          draft.armour,
+          draft.armour.regions.filter((r) => r.region !== e.region),
+        ),
       };
   }
 }

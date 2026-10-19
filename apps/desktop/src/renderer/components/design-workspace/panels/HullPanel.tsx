@@ -76,6 +76,21 @@ export function HullPanel({
           decimals={2}
           onCommit={(v) => edit({ kind: "set_hull", patch: { depthToMainDeck: mm(v) } })}
         />
+        <SelectField
+          label="Freeboard"
+          value={h.freeboardProfile ?? "NORMAL"}
+          options={[
+            { value: "NORMAL", label: "Normal" },
+            {
+              value: "LOW",
+              label: "Low",
+              description: "Lighter hull, but less reserve buoyancy.",
+            },
+          ]}
+          onChange={(v) =>
+            edit({ kind: "set_hull", patch: { freeboardProfile: v === "LOW" ? "LOW" : "NORMAL" } })
+          }
+        />
         <NumberField
           label="Block coefficient"
           value={h.blockCoeffBp}

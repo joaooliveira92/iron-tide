@@ -1,3 +1,4 @@
+import { presenceAreaIds } from "@bluewave/campaign";
 import type { CampaignSnapshot } from "@bluewave/campaign";
 
 /**
@@ -22,6 +23,10 @@ export interface WorldMapNationView {
   readonly id: string;
   readonly name: string;
   readonly tag: string;
+  /** The nation's authoritative home area (S-5); null for a save that predates it. */
+  readonly homeAreaId: string | null;
+  /** The distinct areas of the possessions the nation currently owns, ordered by area id. */
+  readonly presenceAreaIds: readonly string[];
 }
 
 export interface WorldMapAreaView {
@@ -47,11 +52,22 @@ export interface WorldMapFleetView {
   readonly shipCount: number;
 }
 
+/** A compiled connection between two areas; the map draws the sea ones as lanes. */
+export interface WorldMapRouteView {
+  readonly id: string;
+  readonly from: string;
+  readonly to: string;
+  readonly type: "land" | "sea" | "rail";
+  readonly distance: number;
+}
+
 export interface WorldMapView {
   readonly nations: readonly WorldMapNationView[];
   readonly areas: readonly WorldMapAreaView[];
   readonly ports: readonly WorldMapPortView[];
   readonly fleets: readonly WorldMapFleetView[];
+  /** Every compiled route, ordered by id: the campaign's own connectivity. */
+  readonly routes: readonly WorldMapRouteView[];
 }
 
 /**
@@ -62,10 +78,18 @@ export interface WorldMapView {
  * - `ports`: every port, `level` unwrapped from `SafeInt`, ordered by id.
  * - `fleets`: every fleet across every nation with its ship count, ordered by
  *   nation then fleet id.
+ * - `routes`: every compiled route, `distance` unwrapped from `SafeInt`, ordered
+ *   by id.
  */
 export function buildWorldMapView(snapshot: CampaignSnapshot): WorldMapView {
   const nations: WorldMapNationView[] = [...snapshot.nations.values()]
-    .map((nation) => ({ id: nation.id, name: nation.name, tag: nation.tag }))
+    .map((nation) => ({
+      id: nation.id,
+      name: nation.name,
+      tag: nation.tag,
+      homeAreaId: nation.homeAreaId ?? null,
+      presenceAreaIds: presenceAreaIds(snapshot.world.possessions ?? [], nation.id),
+    }))
     .sort((a, b) => a.id.localeCompare(b.id));
 
   const areas: WorldMapAreaView[] = snapshot.world.areas
@@ -101,5 +125,15 @@ export function buildWorldMapView(snapshot: CampaignSnapshot): WorldMapView {
         })),
     );
 
-  return { nations, areas, ports, fleets };
+  const routes: WorldMapRouteView[] = snapshot.world.routes
+    .map((route) => ({
+      id: route.id,
+      from: route.from,
+      to: route.to,
+      type: route.type,
+      distance: Number(route.distance),
+    }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  return { nations, areas, ports, fleets, routes };
 }

@@ -2,8 +2,15 @@ import { describe, expect, it } from "vite-plus/test";
 import { projectionById, type ProjectedArea } from "./projection.js";
 import { layoutLabels, type LabelLayoutRequest } from "./map-label-layout.js";
 import type { PortMark } from "./map-markers.js";
+import { strengthExtent } from "./layers/StrengthLayer.js";
+import { buildRegionStrengths } from "./map-strength.js";
 
 const projection = projectionById("equirectangular");
+
+const glyphRegion = buildRegionStrengths([{ id: "f", area: "big", ships: 5, owner: "uk" }], {
+  nameFor: () => "UK",
+  flagUrlFor: () => null,
+})[0]!;
 
 function fakeSvg(width: number, height: number): SVGSVGElement {
   return {
@@ -47,6 +54,7 @@ function request(overrides: Partial<LabelLayoutRequest> = {}): LabelLayoutReques
     portMarks: [],
     fleetMarks: [],
     passageAnchors: [],
+    strengthMarks: [],
     transform: { scale: 1, x: 0, y: 0 },
     minScale: 1,
     turns: [0],
@@ -92,6 +100,51 @@ describe("layoutLabels", () => {
     const texts = labels.map((entry) => entry.spec.text);
     expect(texts).toContain("North Sea");
     expect(texts).not.toContain("Gulf");
+  });
+
+  it("keeps a sea's name beside its strength glyph: the glyph is an obstacle, and the name stays", () => {
+    const big = area("big", [300, 300], 200);
+    const base = { areas: [big], areaName: () => "North Sea" };
+    const clear = layoutLabels(request(base)).find((entry) => entry.spec.text === "North Sea");
+    expect(clear).toMatchObject({ dx: 0, dy: 0 });
+
+    // A glyph that sits right over the name pushes it off...
+    const covering = layoutLabels(
+      request({
+        ...base,
+        strengthMarks: [{ ux: 300, uy: 300, hw: 40, top: -20, bottom: 10 }],
+      }),
+    ).find((entry) => entry.spec.text === "North Sea");
+    expect(covering === undefined || covering.dx !== 0 || covering.dy !== 0).toBe(true);
+
+    // ...while the glyph's real footprint (above the name's first nudge) leaves the name in place.
+    const above = layoutLabels(
+      request({
+        ...base,
+        strengthMarks: [{ ux: 300, uy: 300, hw: 26, ...strengthExtent(glyphRegion) }],
+      }),
+    ).find((entry) => entry.spec.text === "North Sea");
+    expect(above).toMatchObject({ dx: 0, dy: 0 });
+  });
+
+  it("does not let a port's name sit on a strength glyph pinned at the same point", () => {
+    // Campaign ports are placed on their area's anchor, where the glyph is also pinned.
+    const port: PortMark = {
+      id: "p1",
+      name: "Algiers",
+      ux: 500,
+      uy: 400,
+      owner: "france",
+      major: true,
+      count: 1,
+    };
+    const glyph = { ux: 500, uy: 400, hw: 40, top: -30, bottom: 30 };
+    const labels = layoutLabels(
+      request({ portMarks: [port], strengthMarks: [glyph], minScale: 0.25 }),
+    );
+    const name = labels.find((entry) => entry.spec.text === "Algiers");
+    // Named only where it clears the glyph: nudged away, or not at all.
+    expect(name === undefined || Math.abs(name.dx) >= 40 || Math.abs(name.dy) >= 30).toBe(true);
   });
 
   it("only names a major port once zoomed past its window", () => {

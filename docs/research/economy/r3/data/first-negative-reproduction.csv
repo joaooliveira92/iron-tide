@@ -1,0 +1,15 @@
+nation,dr0014_first,measured_first,dr0014_count,measured_count,match,first_treasury_zero_month,T0,expenses,maintenance_m1,monthly_drain
+portugal,11,11,110,110,true,10,40,2,2,4
+netherlands,12,12,109,109,true,12,80,3,4,7
+qing,13,13,108,108,true,13,100,4,4,8
+austria_hungary,17,17,104,104,true,16,240,9,6,15
+germany,18,18,103,103,true,18,320,12,6,18
+france,19,19,102,102,true,19,700,26,12,38
+italy,18,18,103,103,true,18,400,14,9,23
+japan,19,19,102,102,true,19,130,5,2,7
+ottoman_empire,19,19,102,102,true,18,180,7,3,10
+russia,19,19,102,102,true,19,550,21,8,29
+spain,19,19,102,102,true,18,180,7,3,10
+uk,19,19,102,102,true,19,1000,38,16,54
+brazil,21,21,100,100,true,20,60,2,1,3
+usa,24,24,97,97,true,24,280,10,2,12

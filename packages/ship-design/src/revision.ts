@@ -280,6 +280,7 @@ export const STRUCTURE_KEYS: ReadonlySet<string> = new Set([
   "materialId",
   "structuralSchemeId",
   "subdivisionGrade",
+  "freeboardProfile",
 ]);
 
 /**
@@ -302,14 +303,19 @@ export function changeKindOf(
     case "set_hull":
       return Object.keys(e.patch).some((k) => STRUCTURE_KEYS.has(k)) ? "STRUCTURE" : "FITTINGS";
     case "set_machinery":
-      return Object.keys(e.patch).some((k) => k === "plantId" || k === "installedKw")
+      return Object.keys(e.patch).some(
+        (k) => k === "plantId" || k === "installedKw" || k === "enginePriorityBp",
+      )
         ? "MACHINERY"
         : "FITTINGS";
     case "set_armour_region":
     case "remove_armour_region":
     case "set_armour_regions":
+    case "set_armour_scheme":
       return "ARMOUR";
     case "add_placement":
+    case "set_fire_control":
+    case "set_tertiary":
       return "FITTINGS";
     case "remove_placement":
     case "move_placement":

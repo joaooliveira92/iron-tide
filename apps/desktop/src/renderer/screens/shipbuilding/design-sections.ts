@@ -131,6 +131,7 @@ export const CATEGORY_PLACE: { readonly [K in ComponentCategory]: InspectorPlace
   MAIN_GUN: { section: "armament", tab: "main" },
   SECONDARY_GUN: { section: "armament", tab: "secondary" },
   DUAL_PURPOSE_GUN: { section: "armament", tab: "secondary" },
+  TERTIARY_GUN: { section: "armament", tab: "other" },
   TORPEDO_TUBE: { section: "armament", tab: "torpedoes" },
   AA_WEAPON: { section: "armament", tab: "other" },
   MINE_GEAR: { section: "armament", tab: "other" },

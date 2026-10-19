@@ -471,6 +471,11 @@ export interface NationState {
   baseResources: SafeInt;
   navalAppropriationRateBp: SafeInt;
   maintenanceCost: SafeInt;
+  /**
+   * The nation's home area (S-5, spec #73 R3): authoritative content, validated against the area set. Absent in
+   * saves from earlier builds.
+   */
+  homeAreaId?: string;
   fleets: FleetState[];
   divisions: PermanentDivision[];
   /** The nation's officer corps (ADR-0065); absent in saves from earlier builds. */
@@ -748,6 +753,18 @@ export interface WorldState {
    * field without an eligible technology.
    */
   technologies?: TechnologyDefinitionData[];
+  /**
+   * The possessions and their current owners, ordered by id (S-5, spec #73 R3). A possession that changes hands
+   * is updated here; a nation's presence areas are derived from it. Absent in saves from earlier builds.
+   */
+  possessions?: PossessionData[];
+}
+
+/** One owned possession: the nation that holds it and the area it lies in. */
+export interface PossessionData {
+  id: string;
+  nationId: string;
+  areaId: string;
 }
 
 /** One technology of the compiled research catalogue, ordered by id in `WorldState.technologies`. */

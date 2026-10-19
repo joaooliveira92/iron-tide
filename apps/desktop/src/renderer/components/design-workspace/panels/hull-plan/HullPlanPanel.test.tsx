@@ -27,6 +27,43 @@ describe("HullPlanPanel", () => {
     expect(panel.textContent).toMatch(/Schematic, not a lines plan\./);
   });
 
+  it("drops its own heading inside the workspace, where the view toolbar names the drawing", () => {
+    const { rerender } = draw();
+    expect(screen.getByText("Hull plan")).toBeTruthy();
+    rerender(
+      <HullPlanPanel
+        draft={reference.draft}
+        content={content}
+        view={view}
+        month={reference.month}
+        edit={() => {}}
+        findings={[]}
+        shipView="top"
+      />,
+    );
+    expect(screen.queryByText("Hull plan")).toBeNull();
+    expect(screen.getByRole("region", { name: "Hull plan" })).toBeTruthy();
+  });
+
+  it("numbers the section labels on the compartments view only", () => {
+    const { rerender } = draw();
+    const panel = () => screen.getByRole("region", { name: "Hull plan" });
+    const strip = () => within(panel()).getByTestId("section-labels");
+    expect(strip().textContent).not.toMatch(/^1/);
+    rerender(
+      <HullPlanPanel
+        draft={reference.draft}
+        content={content}
+        view={view}
+        month={reference.month}
+        edit={() => {}}
+        findings={[]}
+        shipView="compartments"
+      />,
+    );
+    expect(strip().textContent).toMatch(/1.*2.*3.*4.*5.*6.*7.*8/);
+  });
+
   it("starts with no plan tool active, explaining how to use one", () => {
     draw();
     const panel = screen.getByRole("region", { name: "Hull plan" });

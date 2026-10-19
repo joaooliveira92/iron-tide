@@ -6,10 +6,16 @@ import { toSafeInt, toSafeIntOpt, toStr } from "./campaignInput.js";
 import type {
   AreaData,
   PortData,
+  PossessionData,
   RouteData,
   TechnologyDefinitionData,
   WorldState,
 } from "./state.js";
+
+/** The pack collections the world aggregate reads; any may be absent (a partial or fixture pack). */
+type WorldPackSource = Partial<
+  Pick<ContentPack, "areas" | "routes" | "ports" | "possessions" | "technologies">
+>;
 
 /** Months from the campaign start (year, month) to January of `year`; never negative. */
 function monthsFromStartToYear(year: number, startYear: number, startMonth: number): number {
@@ -21,7 +27,7 @@ function monthsFromStartToYear(year: number, startYear: number, startMonth: numb
  * is available from its authored `availabilityMonth`, else from January of its authored `year`, else from the start.
  */
 function buildTechnologyCatalogue(
-  pack: ContentPack,
+  pack: WorldPackSource,
   startYear: number,
   startMonth: number,
 ): TechnologyDefinitionData[] {
@@ -44,7 +50,7 @@ function buildTechnologyCatalogue(
 }
 
 export function buildWorldState(
-  pack: ContentPack,
+  pack: WorldPackSource,
   start: { readonly startYear: number; readonly startMonth: number },
 ): WorldState {
   const areas: AreaData[] = (pack.areas ?? [])
@@ -76,10 +82,17 @@ export function buildWorldState(
     }))
     .sort((a, b) => a.id.localeCompare(b.id));
 
+  // The pack's possessions are already decoded by PossessionSchema (non-empty id, nation and area), so the fields
+  // are read as validated; nothing is defaulted.
+  const possessions: PossessionData[] = (pack.possessions ?? [])
+    .map((p) => ({ id: p.id, nationId: p.nationId, areaId: p.areaId }))
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
   return {
     areas,
     routes,
     ports,
+    possessions,
     technologies: buildTechnologyCatalogue(pack, start.startYear, start.startMonth),
   };
 }

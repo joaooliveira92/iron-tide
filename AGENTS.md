@@ -26,9 +26,9 @@ contract → ADRs → milestone brief → local conventions. On a genuine confli
   and run `pnpm preflight` at session start; rebase before every push.
 - Never overwrite, revert, or reformat another contributor's work. Keep commits
   narrow and Conventional.
-- Work concurrently in a dedicated worktree per effort: `pnpm worktrees new
-  <slug>`; the live set is `.ai/WORKTREES.md`, and stale subtrees are pruned with
-  `pnpm worktrees:prune` (ADR-0220).
+- Work in the main checkout on a short-lived local branch. Up to 5 worktrees
+  (main checkout included) may exist at once, created with `pnpm worktrees new
+  <slug>` (ADR-0237, which amends ADR-0236 and ADR-0234). One session per checkout.
 - Review agents are read-only: they must not edit code, tests, commits, branches,
   or PR state.
 - Standing standards docs carry a word ceiling in
@@ -130,8 +130,10 @@ produce identical authoritative hashes across OSes.
 
 ## Git policy
 
-- Work on a short-lived branch in a dedicated worktree; never commit on `dev` or
-  `main`. Deliver by a checks-green pull request; never self-merge a release PR.
+- Work on a short-lived local branch; never commit on `dev` or `main`. Deliver by
+  merging the branch into `dev` locally once `pnpm preflight`, `pnpm test:scripts`
+  and `pnpm check` are green; a pull request is optional (ADR-0234). Delete a
+  branch only after it is merged.
 - Do not force-push or rewrite history; never commit secrets, `.env` files,
   stores, caches, or machine-specific settings. End a milestone tree-clean.
 - Use `pnpm change-scope` for change-based filtering: see

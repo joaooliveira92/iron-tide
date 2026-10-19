@@ -1249,6 +1249,30 @@ function validateMissingReferences(
   const nationIds = idMap.get("countries") ?? new Set();
   const areaIds = idMap.get("areas") ?? new Set();
 
+  // Not gated on the area set being non-empty: a pack with nations and no areas cannot resolve any home area.
+  for (const nation of validated["countries"] ?? []) {
+    const record = nation as Record<string, unknown>;
+    const nationId = String(record["id"]);
+    const home = record["homeArea"];
+    if (home === undefined) {
+      collector.addError("HOME_AREA_MISSING", `Nation '${nationId}' has no home area`, {
+        stage: "validate",
+        entityId: nationId,
+        remediation: `Add 'homeArea' to nation '${nationId}'`,
+      });
+    } else if (typeof home === "string" && !areaIds.has(home)) {
+      collector.addError(
+        "HOME_AREA_UNKNOWN",
+        `Nation '${nationId}' home area names unknown area '${home}'`,
+        {
+          stage: "validate",
+          entityId: nationId,
+          remediation: `Point '${nationId}' at a known area`,
+        },
+      );
+    }
+  }
+
   const possessions = validated["possessions"] ?? [];
   for (const p of possessions) {
     const pRecord = p as Record<string, unknown>;
