@@ -52,8 +52,8 @@ export interface MapPrototypeState {
 
 export const initialMapPrototypeState: MapPrototypeState = {
   selected: null,
-  rulerFrom: "area_north_sea",
-  rulerTo: "area_malacca",
+  rulerFrom: null,
+  rulerTo: null,
   layers: {
     ownership: true,
     borders: true,
