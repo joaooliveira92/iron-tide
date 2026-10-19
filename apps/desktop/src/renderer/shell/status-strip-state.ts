@@ -7,9 +7,9 @@ import { economyStatusLabel, researchNote } from "../lib/economy-wording.js";
  * Every value is real or derived from `inspectCampaign` / `inspectMap`; anything the engine does
  * not model is a visible "Not yet modelled" row with its reason, never a number.
  *
- * Foreign-station rule (`FOREIGN_STATION_RULE_V1`): a player ship counts when it sits in an area
- * controlled by another nation. Own areas and unclaimed seas do not count. The engine views carry
- * no per-ship displacement, so this is a ship count, not RTW3's tonnage.
+ * Foreign-station rule (`FOREIGN_STATION_RULE_V1`): a ship counts in an area held by another nation
+ * (not own areas or open sea). Tonnage is the sum of design displacement in metric tons, shown only
+ * when every ship in the sum has one; the count is always shown.
  */
 export const FOREIGN_STATION_RULE_V1 = "controlled-by-another-nation";
 
@@ -93,17 +93,31 @@ export interface OutlookDetail {
   readonly research: { readonly requested: string; readonly cap: string; readonly note: string };
 }
 
+export interface StationShip {
+  readonly name: string;
+  /** Displacement in metric tons, or null when the ship's design is not loaded. */
+  readonly tons: number | null;
+}
+
 export interface ForeignStationGroup {
   readonly areaId: string;
   readonly areaName: string;
   readonly controller: string;
-  readonly ships: readonly string[];
+  readonly ships: readonly StationShip[];
+  /** The group's tonnage, or null when any of its ships has none (a partial sum would mislead). */
+  readonly tons: string | null;
 }
 
 /** Where the player's ships sit, for the "ships on foreign stations" hover. */
 export interface StationDetail {
   readonly total: number;
   readonly foreign: number;
+  /** Tonnage of every foreign-station ship, or null when any of them has none. */
+  readonly foreignTons: string | null;
+  /** Tonnage of the whole fleet, or null when any ship has none. */
+  readonly totalTons: string | null;
+  /** Foreign share of the fleet by tonnage (0..1) when both are known, else null. */
+  readonly foreignTonsFraction: number | null;
   readonly foreignGroups: readonly ForeignStationGroup[];
   /** True when the map could not be read, so the split is unknown. */
   readonly unknown: boolean;
@@ -153,15 +167,25 @@ function deferred(id: string, label: string, reason: string): StripRow {
   return { id, label, value: NOT_YET_MODELLED, deferred: true, note: reason, tone: "normal" };
 }
 
-function countForeignStationShips(projection: PlayerProjection, areas: StatusStripAreas): number {
-  const own = new Set(projection.strategicAreas.map((a) => a.id));
-  const foreign = new Set(
-    areas.filter((a) => a.controller !== null && !own.has(a.id)).map((a) => a.id),
-  );
-  return projection.fleet
-    .flatMap((f) => f.divisions)
-    .filter((d) => foreign.has(d.areaId))
-    .reduce((sum, d) => sum + d.ships.length, 0);
+/** "11,880 t", the one tonnage format on the strip. */
+export function formatTons(tons: number): string {
+  return `${groupDigits.format(tons)} t`;
+}
+
+/** Sum of tonnages, or null when any is unknown: a partial total would read as the whole. */
+function sumTons(ships: readonly StationShip[]): number | null {
+  let total = 0;
+  for (const ship of ships) {
+    if (ship.tons === null) return null;
+    total += ship.tons;
+  }
+  return total;
+}
+
+function foreignStationsValue(projection: PlayerProjection, areas: StatusStripAreas): string {
+  const { foreign, foreignTons } = buildStations(projection, areas);
+  const count = `${String(foreign)} ${foreign === 1 ? "ship" : "ships"}`;
+  return foreignTons === null || foreign === 0 ? count : `${count} · ${foreignTons}`;
 }
 
 function alertsLabel(count: number | null): string {
@@ -298,31 +322,58 @@ function buildStations(
   areas: StatusStripAreas | null,
 ): StationDetail {
   const divisions = projection.fleet.flatMap((f) => f.divisions);
-  const total = divisions.reduce((sum, d) => sum + d.ships.length, 0);
-  if (areas === null) return { total, foreign: 0, foreignGroups: [], unknown: true };
+  const toShip = (ship: { name: string; displacementTons?: number }): StationShip => ({
+    name: ship.name,
+    tons: ship.displacementTons ?? null,
+  });
+  const all = divisions.flatMap((d) => d.ships.map(toShip));
+  const totalTons = sumTons(all);
+  if (areas === null) {
+    return {
+      total: all.length,
+      foreign: 0,
+      foreignTons: null,
+      totalTons: totalTons === null ? null : formatTons(totalTons),
+      foreignTonsFraction: null,
+      foreignGroups: [],
+      unknown: true,
+    };
+  }
   const own = new Set(projection.strategicAreas.map((a) => a.id));
   const foreignAreas = new Map(
     areas.filter((a) => a.controller !== null && !own.has(a.id)).map((a) => [a.id, a]),
   );
-  const groups = new Map<string, { area: StatusStripAreas[number]; ships: string[] }>();
+  const groups = new Map<string, { area: StatusStripAreas[number]; ships: StationShip[] }>();
   for (const division of divisions) {
     const area = foreignAreas.get(division.areaId);
     if (area === undefined) continue;
     const group = groups.get(area.id) ?? { area, ships: [] };
-    group.ships.push(...division.ships.map((ship) => ship.name));
+    group.ships.push(...division.ships.map(toShip));
     groups.set(area.id, group);
   }
   const foreignGroups = [...groups.values()]
-    .map(({ area, ships }) => ({
-      areaId: area.id,
-      areaName: area.name ?? area.id,
-      controller: area.controller ?? "",
-      ships: ships.toSorted((a, b) => a.localeCompare(b, "en")),
-    }))
+    .map(({ area, ships }) => {
+      const tons = sumTons(ships);
+      return {
+        areaId: area.id,
+        areaName: area.name ?? area.id,
+        controller: area.controller ?? "",
+        ships: ships.toSorted((a, b) => a.name.localeCompare(b.name, "en")),
+        tons: tons === null ? null : formatTons(tons),
+      };
+    })
     .toSorted((a, b) => b.ships.length - a.ships.length || a.areaId.localeCompare(b.areaId, "en"));
+  const foreignShips = foreignGroups.flatMap((g) => g.ships);
+  const foreignTons = sumTons(foreignShips);
   return {
-    total,
-    foreign: foreignGroups.reduce((sum, g) => sum + g.ships.length, 0),
+    total: all.length,
+    foreign: foreignShips.length,
+    foreignTons: foreignTons === null ? null : formatTons(foreignTons),
+    totalTons: totalTons === null ? null : formatTons(totalTons),
+    foreignTonsFraction:
+      foreignTons === null || totalTons === null || totalTons === 0
+        ? null
+        : foreignTons / totalTons,
     foreignGroups,
     unknown: false,
   };
@@ -366,11 +417,8 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
       : real(
           "foreign-stations",
           "Ships on foreign stations",
-          (() => {
-            const n = countForeignStationShips(projection, areas);
-            return `${n} ${n === 1 ? "ship" : "ships"}`;
-          })(),
-          "A ship count in areas held by another nation, not tonnage: ship displacement is not in the campaign views.",
+          foreignStationsValue(projection, areas),
+          "Ships in areas held by another nation. Tonnage is shown when every one of those ships has a known design displacement.",
         );
 
   const nation: StripRow[] = [
