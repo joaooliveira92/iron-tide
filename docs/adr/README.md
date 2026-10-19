@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0239).
+highest existing number + 1 (the next number is ADR-0241).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -90,6 +90,7 @@ The monthly appropriation, ledger, research, deficit policy and construction cap
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
 | 0230 | [ADR-0230-campaign-economy-model.md](ADR-0230-campaign-economy-model.md) | Campaign economy model — one appropriation, one ledger, one set of calculators | accepted | — |
+| 0240 | [ADR-0240-s3-unrest-values-and-government-classification.md](ADR-0240-s3-unrest-values-and-government-classification.md) | S-3 unrest and economy values are researched then tunable; government type derives from political system | accepted | — |
 
 ## Turns, interruptions & save/resume
 
@@ -110,6 +111,7 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 | 0224 | [ADR-0224-1880-command-structure-divisions-and-officers.md](ADR-0224-1880-command-structure-divisions-and-officers.md) | 1880 command structure — per-nation officer rosters and seeded divisions | accepted | — |
 | 0225 | [ADR-0225-prestige-required-field-and-research-first.md](ADR-0225-prestige-required-field-and-research-first.md) | Prestige is a required authored field; values are research-first and S-2 is gated on 0003 | accepted | — |
 | 0226 | [ADR-0226-rtw3-prestige-research-outcome.md](ADR-0226-rtw3-prestige-research-outcome.md) | RTW3 prestige research outcome — the model is grounded, the production values are not | accepted | — |
+| 0239 | [ADR-0239-s2-prestige-values-balance-targets.md](ADR-0239-s2-prestige-values-balance-targets.md) | S-2 prestige values: the grounded model plus labelled balance targets | accepted | — |
 
 ## Foreign stations & presence
 

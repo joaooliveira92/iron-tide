@@ -2,8 +2,9 @@
 
 ## Status
 
-Blocked pending owner decision. Gates S-3 ticket 14 only; tickets 01-13 proceed on
-fixture-class values.
+Resolved (2026-10-19) by owner delegation: **Option A**, recorded as
+[ADR-0240](../../docs/adr/ADR-0240-s3-unrest-values-and-government-classification.md).
+S-3 ticket 14 is unblocked once S-2 lands; tickets 01 to 13 are unchanged.
 
 ## Trigger
 
@@ -56,3 +57,10 @@ isolated. Approve the one-time reference-run change for S-3 together with it.
 ## Work safely completed while blocked
 
 Map, spec and tickets 01-13 with fixture constants; no production value authored.
+
+## Owner decision
+
+Resolved 2026-10-19 by owner delegation. **Option A**: research first, then tunable
+constants. Grounded rules (3 to 5% growth, the 10% and 12% research curve, the p.62
+drivers) stay binding; every other number is a labelled `BALANCE_TARGET` ruleset
+constant. The one-time reference-run change and its re-pin are approved. See ADR-0240.

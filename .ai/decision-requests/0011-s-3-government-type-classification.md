@@ -2,8 +2,9 @@
 
 ## Status
 
-Blocked pending owner decision. Gates S-3 ticket 14 only (ticket 09 uses a fixture
-mapping).
+Resolved (2026-10-19) by owner delegation: **Option A**, recorded as
+[ADR-0240](../../docs/adr/ADR-0240-s3-unrest-values-and-government-classification.md).
+S-3 ticket 14 authors the table; ticket 09 keeps its fixture mapping.
 
 ## Trigger
 
@@ -44,3 +45,11 @@ Option A with a research note justifying each borderline nation.
 ## Work safely completed while blocked
 
 Ticket 09 with a fixture mapping and the no-default diagnostic.
+
+## Owner decision
+
+Resolved 2026-10-19 by owner delegation. **Option A**: derive government type from
+political system through one ruleset table. A nation is a liberal democracy only if its
+executive was answerable to an elected legislature in 1880 practice, and any nation the
+research cannot place with confidence is not one. ADR-0240 fixes the rule and the
+tie-break; ticket 14's research note justifies each borderline nation.
