@@ -13,3 +13,4 @@ export { ShipStage } from "./ShipStage.js";
 export { ViewToolbar } from "./ViewToolbar.js";
 export { WorkspaceDialog } from "./WorkspaceDialog.js";
 export { ReferenceDesignBrowser } from "./ReferenceDesignBrowser.js";
+export { DesignMapFooter } from "./DesignMapFooter.js";

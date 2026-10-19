@@ -67,9 +67,10 @@ describe("Shipbuilding workspace shell", () => {
     expect(statusOf("cost")).toContain(
       `£${Math.round(view.forecast.costMicro / 1_000_000).toLocaleString("en-US")}`,
     );
-    expect(within(commands()).getByRole("status").textContent).toContain(
-      view.valid ? "Can be submitted" : "Cannot be built",
-    );
+    expect(
+      within(screen.getByRole("navigation", { name: "Design map" })).getByRole("status")
+        .textContent,
+    ).toContain(view.valid ? "Can be submitted" : "Cannot be built");
   });
 
   it("edits the hull from the inspector, updates the strip, and undoes the edit", () => {
@@ -131,14 +132,19 @@ describe("Shipbuilding workspace shell", () => {
 
   it("flags an unnamed design in a campaign and sends Finish to the class name", () => {
     render(<ShipbuildingWorkspace sessionId="s1" />);
-    const status = within(commands()).getByRole("status");
+    const status = within(screen.getByRole("navigation", { name: "Design map" })).getByRole(
+      "status",
+    );
     expect(status.textContent).toContain("Needs a class name");
     fireEvent.click(within(commands()).getByRole("button", { name: /Finish design/ }));
     expect(document.activeElement).toBe(within(commands()).getByLabelText("Class name"));
     fireEvent.change(within(commands()).getByLabelText("Class name"), {
       target: { value: "Test class" },
     });
-    expect(within(commands()).getByRole("status").textContent).not.toContain("Needs a class name");
+    expect(
+      within(screen.getByRole("navigation", { name: "Design map" })).getByRole("status")
+        .textContent,
+    ).not.toContain("Needs a class name");
   });
 });
 

@@ -1,6 +1,5 @@
 import { Fragment, type ReactNode, type Ref } from "react";
 import {
-  CalendarClock,
   CheckCircle2,
   ClipboardCheck,
   GitCompare,
@@ -22,11 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "../../../components/ui/dropdown-menu.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover.js";
-import {
-  SHORTCUT_MOD,
-  SHORTCUT_SHIFT,
-  SelectField,
-} from "../../../components/design-workspace/index.js";
+import { SHORTCUT_MOD, SHORTCUT_SHIFT } from "../../../components/design-workspace/index.js";
 import { cn } from "../../../lib/utils.js";
 
 export interface DesignStatus {
@@ -49,11 +44,6 @@ export interface CommandBarProps {
   readonly shipType: string;
   readonly shipTypeLabel: string;
   readonly shipTypeIcon: ReactNode;
-  /** The technology date: fixed to the campaign month in a campaign, chosen outside one. */
-  readonly month: string;
-  readonly months: readonly string[] | null;
-  readonly onMonth: (month: string) => void;
-  readonly status: DesignStatus;
   readonly canUndo: boolean;
   readonly canRedo: boolean;
   readonly onUndo: () => void;
@@ -87,10 +77,6 @@ export function CommandBar({
   shipType,
   shipTypeLabel,
   shipTypeIcon,
-  month,
-  months,
-  onMonth,
-  status,
   canUndo,
   canRedo,
   onUndo,
@@ -136,37 +122,6 @@ export function CommandBar({
             {shipType}
           </Badge>
         </Button>
-        {months === null ? (
-          <span
-            className="flex h-9 shrink-0 items-center gap-1.5 px-1 text-sm tabular-nums"
-            title="Fixed to the campaign date: the design can use only what your navy has this month."
-          >
-            <CalendarClock aria-hidden="true" className="size-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Tech date</span>
-            <span className="sr-only"> (campaign date) </span>
-            {month}
-          </span>
-        ) : (
-          <SelectField
-            inline
-            label="Technology as of"
-            shortLabel="Year"
-            value={month}
-            options={months.map((m) => ({ value: m, label: m }))}
-            onChange={onMonth}
-          />
-        )}
-        <Badge
-          role="status"
-          variant={
-            status.tone === "ok" ? "secondary" : status.tone === "warn" ? "outline" : "destructive"
-          }
-          title={status.detail}
-        >
-          <span className="sr-only">Design status: </span>
-          {status.label}
-          <span className="sr-only">, {status.detail}</span>
-        </Badge>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <ButtonGroup aria-label="History">

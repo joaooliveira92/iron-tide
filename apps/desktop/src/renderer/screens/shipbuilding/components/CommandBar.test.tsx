@@ -12,10 +12,6 @@ const props = (over: Partial<CommandBarProps> = {}): CommandBarProps => ({
   shipType: "DD",
   shipTypeLabel: "DD · Torpedo boat",
   shipTypeIcon: null,
-  month: "1880-01",
-  months: null,
-  onMonth: () => {},
-  status: { label: "Can be submitted", tone: "ok", detail: "0 blocking" },
   canUndo: false,
   canRedo: false,
   onUndo: () => {},
@@ -31,14 +27,6 @@ const props = (over: Partial<CommandBarProps> = {}): CommandBarProps => ({
 const bar = () => screen.getByRole("group", { name: "Design commands" });
 
 describe("CommandBar", () => {
-  it("labels the date as fixed when the campaign owns it, and offers a year select otherwise", () => {
-    const { rerender } = render(<CommandBar {...props()} />);
-    expect(within(bar()).getByText("Tech date")).toBeTruthy();
-    expect(within(bar()).getByText("1880-01")).toBeTruthy();
-    rerender(<CommandBar {...props({ months: ["1880-01", "1880-02"] })} />);
-    expect(within(bar()).queryByText("Tech date")).toBeNull();
-  });
-
   it("keeps the current type on the reference button and opens the browser from it", () => {
     const onStartFromReference = vi.fn();
     render(<CommandBar {...props({ onStartFromReference })} />);
@@ -47,21 +35,6 @@ describe("CommandBar", () => {
     expect(within(button).getByLabelText("Current type DD")).toBeTruthy();
     fireEvent.click(button);
     expect(onStartFromReference).toHaveBeenCalledOnce();
-  });
-
-  it("announces each status tone", () => {
-    const { rerender } = render(<CommandBar {...props()} />);
-    expect(within(bar()).getByRole("status").textContent).toContain("Can be submitted");
-    rerender(
-      <CommandBar
-        {...props({ status: { label: "Needs a class name", tone: "warn", detail: "" } })}
-      />,
-    );
-    expect(within(bar()).getByRole("status").textContent).toContain("Needs a class name");
-    rerender(
-      <CommandBar {...props({ status: { label: "Cannot be built", tone: "bad", detail: "" } })} />,
-    );
-    expect(within(bar()).getByRole("status").textContent).toContain("Cannot be built");
   });
 
   it("shows Autosaved only when the design autosaves, and never a save button", () => {

@@ -62,6 +62,7 @@ import {
   ArmamentEditor,
   CommandBar,
   DesignMap,
+  DesignMapFooter,
   DEFAULT_PRIORITIES,
   EngineeringStatusBar,
   Inspector,
@@ -489,10 +490,6 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           shipType={shipType}
           shipTypeLabel={shipTypeChoice?.label ?? shipType}
           shipTypeIcon={<ShipTypeIcon aria-hidden="true" className="size-4" />}
-          month={state.month}
-          months={campaignMonth !== null ? null : technologyMonths(state.month)}
-          onMonth={actions.setMonth}
-          status={status}
           canUndo={state.canUndo}
           canRedo={state.canRedo}
           onUndo={actions.undo}
@@ -544,6 +541,14 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
             active={place.section}
             statuses={statuses}
             onSelect={(id) => openSection(id)}
+            footer={
+              <DesignMapFooter
+                month={state.month}
+                months={campaignMonth !== null ? null : technologyMonths(state.month)}
+                onMonth={actions.setMonth}
+                status={status}
+              />
+            }
           />
           <ShipStage
             toolbar={
