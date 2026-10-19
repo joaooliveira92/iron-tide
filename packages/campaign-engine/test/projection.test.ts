@@ -1,7 +1,13 @@
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import { buildPlayerProjection } from "../src/projection.js";
-import { baseFor, fixtureNation, fixtureSnapshot, fixtureState } from "./fixtures.js";
+import {
+  baseFor,
+  fixtureDesign,
+  fixtureNation,
+  fixtureSnapshot,
+  fixtureState,
+} from "./fixtures.js";
 
 describe("buildPlayerProjection", () => {
   it("returns undefined for a nation id absent from the snapshot", () => {
@@ -194,6 +200,36 @@ describe("buildPlayerProjection — S-1 readiness in the fleet projection (ticke
       { name: "ship-active", designId: "des-1", readiness: "ACTIVE", crewQuality: 100 },
       { name: "ship-reserve", designId: "des-1", readiness: "RESERVE", crewQuality: 100 },
     ]);
+  });
+
+  it("carries each ship's displacement in metric tons from its design, and omits it when the design is unknown", () => {
+    const uk = fixtureNation({
+      id: "uk",
+      fleets: [
+        {
+          id: "fleet-1",
+          nationId: "uk",
+          name: "Home Fleet",
+          locationAreaId: "area-lon",
+          ships: [
+            { ...mkShip("ship-known", "ACTIVE"), designVersionId: "des-known" },
+            { ...mkShip("ship-unknown", "ACTIVE"), designVersionId: "des-missing" },
+          ],
+        },
+      ],
+    });
+    const design = fixtureDesign("uk", "des-known", {
+      normalizedDisplacementKg: SafeInt(11_880_000),
+    });
+    const projection = buildPlayerProjection(fixtureState(fixtureSnapshot([uk], [design])), "uk", {
+      month: 1,
+      year: 1880,
+    });
+    const [known, unknown] = projection?.fleet[0]?.divisions[0]?.ships ?? [];
+    expect(known?.displacementTons).toBe(11_880);
+    // An unresolved design is absent, never zero: a zero would read as a real (empty) ship.
+    expect(unknown).toBeDefined();
+    expect(unknown !== undefined && "displacementTons" in unknown).toBe(false);
   });
 
   it("its derived fleet maintenance agrees with the committed nation.maintenanceCost", () => {

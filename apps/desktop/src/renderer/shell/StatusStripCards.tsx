@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowRight, Anchor, Flag, Hourglass, Ship } from "lucide-react";
 
 import { cn } from "../lib/utils.js";
+import { formatTons } from "./status-strip-state.js";
 import type {
   AllocationSegment,
   BudgetAllocation,
@@ -264,6 +265,12 @@ export function TreasuryCard({ outlook }: { readonly outlook: OutlookDetail }) {
 
 /** Where ships sit relative to areas held by other nations, with each ship named. */
 export function StationsCard({ stations }: { readonly stations: StationDetail }) {
+  const byTonnage = stations.foreignTonsFraction !== null;
+  const share = byTonnage
+    ? stations.foreignTonsFraction
+    : stations.total === 0
+      ? 0
+      : stations.foreign / stations.total;
   return (
     <>
       <CardHeader
@@ -278,14 +285,19 @@ export function StationsCard({ stations }: { readonly stations: StationDetail })
         ) : (
           <>
             <div className="space-y-1">
-              <Meter
-                fraction={stations.total === 0 ? 0 : stations.foreign / stations.total}
-                fill="bg-primary/70"
-              />
+              <Meter fraction={share ?? 0} fill="bg-primary/70" />
               <p className="text-xs tabular-nums text-muted-foreground">
                 {stations.foreign} of {stations.total} {stations.total === 1 ? "ship" : "ships"} in
                 areas held by another nation
               </p>
+              {stations.foreignTons !== null && stations.totalTons !== null && (
+                <p
+                  data-stat="foreign-tons"
+                  className="text-xs font-medium tabular-nums text-foreground"
+                >
+                  {stations.foreignTons} of {stations.totalTons}
+                </p>
+              )}
             </div>
             {stations.foreignGroups.length === 0 ? (
               <p className="text-xs text-muted-foreground">
@@ -305,11 +317,21 @@ export function StationsCard({ stations }: { readonly stations: StationDetail })
                         <span className="truncate">{group.areaName}</span>
                       </span>
                       <span className="shrink-0 tabular-nums text-muted-foreground">
-                        {group.ships.length}
+                        {group.ships.length} {group.ships.length === 1 ? "ship" : "ships"}
+                        {group.tons !== null && ` · ${group.tons}`}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">Held by {group.controller}</p>
-                    <p className="text-xs leading-snug">{group.ships.join(", ")}</p>
+                    <ul className="text-xs leading-snug">
+                      {group.ships.map((ship) => (
+                        <li key={ship.name} className="flex justify-between gap-2">
+                          <span className="min-w-0 truncate">{ship.name}</span>
+                          <span className="shrink-0 tabular-nums text-muted-foreground">
+                            {ship.tons === null ? "tonnage unknown" : formatTons(ship.tons)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </li>
                 ))}
               </ul>
@@ -318,7 +340,9 @@ export function StationsCard({ stations }: { readonly stations: StationDetail })
         )}
       </div>
       <CardFoot>
-        A ship count, not tonnage: ship displacement is not in the campaign views.
+        {stations.foreignTons === null && !stations.unknown && stations.foreign > 0
+          ? "Tonnage is left out because at least one ship's design displacement is not loaded; a partial total would mislead."
+          : "Tonnage is each ship's design displacement in metric tons. The bar shows the foreign share by tonnage."}
       </CardFoot>
     </>
   );

@@ -8,6 +8,8 @@ import { totalPaidWork } from "./opening-briefing.js";
 
 export type { EconomyStatus, ResearchUnfundedReason } from "@bluewave/campaign";
 
+const KILOGRAMS_PER_TON = 1_000;
+
 /**
  * One nation's slice of `CampaignSnapshot`, flattened for UI convenience.
  * Shape confirmed in the desktop-mvp map, ticket 07 (Q15), with fields
@@ -70,6 +72,11 @@ export interface PlayerProjectionShip {
   readonly readiness: string;
   /** Worked-up crew quality `0..100` (S-1 ticket 07). */
   readonly crewQuality: number;
+  /**
+   * The ship's displacement in metric tons, from its compiled design's `normalizedDisplacementKg`
+   * (rounded). Absent when the design is not in the snapshot: an unknown tonnage is never zero.
+   */
+  readonly displacementTons?: number;
 }
 
 export interface PlayerProjectionDivision {
@@ -185,12 +192,22 @@ export function buildPlayerProjection(
       {
         name: f.name,
         areaId: f.locationAreaId,
-        ships: f.ships.map((ship) => ({
-          name: ship.name,
-          designId: ship.designVersionId,
-          readiness: ship.readiness,
-          crewQuality: Number(ship.crewQuality),
-        })),
+        ships: f.ships.map((ship) => {
+          const design = snapshot.designs.get(ship.designVersionId);
+          return {
+            name: ship.name,
+            designId: ship.designVersionId,
+            readiness: ship.readiness,
+            crewQuality: Number(ship.crewQuality),
+            ...(design === undefined
+              ? {}
+              : {
+                  displacementTons: Math.round(
+                    Number(design.normalizedDisplacementKg) / KILOGRAMS_PER_TON,
+                  ),
+                }),
+          };
+        }),
       },
     ],
   }));

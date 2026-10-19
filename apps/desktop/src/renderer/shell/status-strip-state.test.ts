@@ -139,8 +139,9 @@ describe("buildStatusStrip", () => {
   it("counts ships on foreign stations, excluding own and unclaimed areas", () => {
     const strip = buildStatusStrip({ projection: projection(), areas, alertsCount: null });
     const row = strip.nation.find((r) => r.id === "foreign-stations");
+    // The fixture ships carry no displacement, so only the count is shown, never a made-up tonnage.
     expect(row?.value).toBe("1 ship");
-    expect(row?.note).toMatch(/not tonnage/i);
+    expect(row?.note).toMatch(/tonnage is shown when every one/i);
   });
 
   it("defers the foreign-station count when the map areas are unavailable", () => {
@@ -376,7 +377,13 @@ describe("buildStatusStrip hover detail", () => {
     });
     expect(stations).toMatchObject({ total: 4, foreign: 1, unknown: false });
     expect(stations.foreignGroups).toEqual([
-      { areaId: "a_foreign", areaName: "Biscay", controller: "fra", ships: ["C"] },
+      {
+        areaId: "a_foreign",
+        areaName: "Biscay",
+        controller: "fra",
+        ships: [{ name: "C", tons: null }],
+        tons: null,
+      },
     ]);
   });
 
@@ -404,5 +411,79 @@ describe("buildStatusStrip hover detail", () => {
       ["Portsmouth", "Home waters", 1],
       ["Malta", "a_foreign", 0.5],
     ]);
+  });
+});
+
+describe("buildStatusStrip foreign-station tonnage", () => {
+  const withTons = (tons: Record<string, number | undefined>) => {
+    const base = projection();
+    return projection({
+      fleet: base.fleet.map((f) => ({
+        ...f,
+        divisions: f.divisions.map((d) => ({
+          ...d,
+          ships: d.ships.map((ship) => {
+            const t = tons[ship.name];
+            return t === undefined ? ship : { ...ship, displacementTons: t };
+          }),
+        })),
+      })),
+    });
+  };
+  const namedAreas: StatusStripAreas = [
+    { id: "a_home", name: "Home waters", controller: "gbr" },
+    { id: "a_foreign", name: "Biscay", controller: "fra" },
+    { id: "a_sea", name: "Open sea", controller: null },
+  ];
+
+  it("sums the foreign ships' design displacement and shows it beside the count", () => {
+    const strip = buildStatusStrip({
+      projection: withTons({ A: 5_000, B: 6_000, C: 11_880, D: 2_000 }),
+      areas: namedAreas,
+      alertsCount: 0,
+    });
+    expect(strip.nation.find((r) => r.id === "foreign-stations")?.value).toBe("1 ship · 11,880 t");
+    expect(strip.stations).toMatchObject({
+      foreign: 1,
+      foreignTons: "11,880 t",
+      totalTons: "24,880 t",
+    });
+    expect(strip.stations.foreignTonsFraction).toBeCloseTo(11_880 / 24_880, 10);
+    expect(strip.stations.foreignGroups[0]).toMatchObject({
+      tons: "11,880 t",
+      ships: [{ name: "C", tons: 11_880 }],
+    });
+  });
+
+  it("omits the tonnage rather than sum a partial fleet when one ship has none", () => {
+    // The foreign ship is known but a home ship is not: the foreign sum is exact, the total is not.
+    const strip = buildStatusStrip({
+      projection: withTons({ C: 11_880 }),
+      areas: namedAreas,
+      alertsCount: 0,
+    });
+    expect(strip.stations.foreignTons).toBe("11,880 t");
+    expect(strip.stations.totalTons).toBeNull();
+    expect(strip.stations.foreignTonsFraction).toBeNull();
+  });
+
+  it("shows only the count when a foreign ship has no known displacement", () => {
+    const strip = buildStatusStrip({
+      projection: withTons({ A: 5_000 }),
+      areas: namedAreas,
+      alertsCount: 0,
+    });
+    expect(strip.nation.find((r) => r.id === "foreign-stations")?.value).toBe("1 ship");
+    expect(strip.stations.foreignTons).toBeNull();
+    expect(strip.stations.foreignGroups[0]?.tons).toBeNull();
+  });
+
+  it("treats a ship with zero displacement as known, not missing", () => {
+    const strip = buildStatusStrip({
+      projection: withTons({ A: 1, B: 1, C: 0, D: 1 }),
+      areas: namedAreas,
+      alertsCount: 0,
+    });
+    expect(strip.stations.foreignTons).toBe("0 t");
   });
 });

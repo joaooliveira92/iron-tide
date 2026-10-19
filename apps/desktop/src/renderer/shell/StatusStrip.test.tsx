@@ -291,6 +291,94 @@ describe("StatusStripView", () => {
     });
   });
 
+  it("shows foreign-station tonnage per area and per ship in its card", async () => {
+    const stub = createPreferencesBridgeStub({ ...DEFAULT_APP_PREFERENCES });
+    const base = model(100);
+    render(
+      <BridgeProvider bridge={stub.bridge}>
+        <PreferencesProvider>
+          <DensityProvider>
+            <StatusStripView
+              model={{
+                ...base,
+                stations: {
+                  total: 3,
+                  foreign: 2,
+                  foreignTons: "17,880 t",
+                  totalTons: "30,000 t",
+                  foreignTonsFraction: 17_880 / 30_000,
+                  unknown: false,
+                  foreignGroups: [
+                    {
+                      areaId: "a_foreign",
+                      areaName: "Biscay",
+                      controller: "fra",
+                      tons: "17,880 t",
+                      ships: [
+                        { name: "HMS Alexandra", tons: 11_880 },
+                        { name: "HMS Temeraire", tons: 6_000 },
+                      ],
+                    },
+                  ],
+                },
+              }}
+            />
+          </DensityProvider>
+        </PreferencesProvider>
+      </BridgeProvider>,
+    );
+    await act(async () => {});
+    act(() => {
+      screen.getByText("Ships on foreign stations").focus();
+    });
+    expect(await screen.findByText("Foreign stations")).toBeTruthy();
+    expect(screen.getByText("17,880 t of 30,000 t")).toBeTruthy();
+    expect(screen.getByText(/2 ships · 17,880 t/)).toBeTruthy();
+    expect(screen.getByText("11,880 t")).toBeTruthy();
+    expect(screen.getByText(/each ship's design displacement/i)).toBeTruthy();
+  });
+
+  it("says why tonnage is missing when a foreign ship has no known design", async () => {
+    const stub = createPreferencesBridgeStub({ ...DEFAULT_APP_PREFERENCES });
+    const base = model(100);
+    render(
+      <BridgeProvider bridge={stub.bridge}>
+        <PreferencesProvider>
+          <DensityProvider>
+            <StatusStripView
+              model={{
+                ...base,
+                stations: {
+                  total: 1,
+                  foreign: 1,
+                  foreignTons: null,
+                  totalTons: null,
+                  foreignTonsFraction: null,
+                  unknown: false,
+                  foreignGroups: [
+                    {
+                      areaId: "a_foreign",
+                      areaName: "Biscay",
+                      controller: "fra",
+                      tons: null,
+                      ships: [{ name: "HMS Alexandra", tons: null }],
+                    },
+                  ],
+                },
+              }}
+            />
+          </DensityProvider>
+        </PreferencesProvider>
+      </BridgeProvider>,
+    );
+    await act(async () => {});
+    act(() => {
+      screen.getByText("Ships on foreign stations").focus();
+    });
+    expect(await screen.findByText("tonnage unknown")).toBeTruthy();
+    expect(screen.getByText(/partial total would mislead/i)).toBeTruthy();
+  });
+
   it("groups the not-yet-modelled readouts by where they would sit", async () => {
     await renderStrip();
     fireEvent.click(screen.getByRole("button", { name: /Not yet modelled \(\d+\)/ }));
