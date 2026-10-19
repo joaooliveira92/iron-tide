@@ -10,7 +10,7 @@ import { resolve } from "node:path";
 import { buildContentBundleArtifact } from "@bluewave/content-compiler";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { nationsYaml } from "@bluewave/test-support";
+import { FIXTURE_RULESETS_YAML, nationsYaml } from "@bluewave/test-support";
 import { describe, expect, it } from "vite-plus/test";
 import { CampaignCompiler } from "../src/compiler-public.js";
 import type { CampaignSnapshot } from "../src/state.js";
@@ -57,7 +57,7 @@ function writeFixture(fixturePath: string, areasYaml: string, routesYaml = DEFAU
       },
     }),
   );
-  writeFile(fixturePath, "rulesets.yaml", `- id: "core"\n  name: "Core Rules"\n  version: "1.0"\n`);
+  writeFile(fixturePath, "rulesets.yaml", FIXTURE_RULESETS_YAML);
   writeFile(
     fixturePath,
     "countries.yaml",

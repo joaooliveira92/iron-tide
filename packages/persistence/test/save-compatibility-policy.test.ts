@@ -20,6 +20,7 @@ import {
 } from "../src/compatibility.js";
 import { CORRUPT_SAVE_CODE } from "../src/errors.js";
 import { SaveStore } from "../src/store.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function createFixtureState(): CampaignState {
   const snapshot: CampaignSnapshot = {
@@ -47,6 +48,7 @@ function createFixtureState(): CampaignState {
     intelligence: { shells: {} },
     designs: new Map(),
     designFamilies: new Map(),
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     rulesetVersion: "1.0.0",
     compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
   };
@@ -77,7 +79,10 @@ describe("save-compatibility policy (ADR-0113)", () => {
     // crew-quality state (S-1 map D2); like the part-model bump, 2.0.0 saves are
     // refused before decoding (no released save exists to migrate). 3.0.0 -> 3.1.0 is the 1880 economy model (#138):
     // additive optional fields, and 3.0.0 saves are refused at the gate for the same reason.
-    expect(CURRENT_COMPATIBILITY_VERSION).toBe("3.1.0");
+    // 3.1.0 -> 4.0.0 is S-2 prestige (ADR-0239): every nation gains a required prestige and the snapshot
+    // a required value set, neither with a default, so 3.1.0 saves are refused before decoding and no
+    // migration ships.
+    expect(CURRENT_COMPATIBILITY_VERSION).toBe("4.0.0");
   });
 
   it("round-trips a snapshot saved at the current compatibility version", () => {
@@ -153,7 +158,7 @@ describe("save-compatibility policy (ADR-0113)", () => {
     expect(PART_MODEL_COMPATIBILITY_VERSION).toBe("2.0.0");
   });
 
-  it("refuses a 2.0.0 campaign at the current 3.1.0 version, leaving the file byte-identical", () => {
+  it("refuses a 2.0.0 campaign at the current 4.0.0 version, leaving the file byte-identical", () => {
     const legacy = createFixtureState();
     const legacySnapshot = { ...legacy.snapshot, compatibilityVersion: "2.0.0" };
     const legacyEnvelope = createEnvelope("campaign-snapshot", "2.0.0", legacySnapshot);

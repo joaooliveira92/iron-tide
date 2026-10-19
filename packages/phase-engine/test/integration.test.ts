@@ -9,9 +9,14 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
-import { buildFixtureContentBundle, nationsYaml } from "@bluewave/test-support";
+import {
+  FIXTURE_RULESETS_YAML,
+  buildFixtureContentBundle,
+  nationsYaml,
+} from "@bluewave/test-support";
 import { afterAll, beforeAll, describe, expect, it } from "vite-plus/test";
 import { MonthExecutor, PhaseRegistry, ReplayVerifier } from "../src/index.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 const FIXTURE = {
   pack: JSON.stringify({
@@ -29,7 +34,7 @@ const FIXTURE = {
     },
   }),
 
-  rulesets: `- id: "core"\n  name: "Core Rules"\n  version: "1.0"\n`,
+  rulesets: FIXTURE_RULESETS_YAML,
 
   countries: nationsYaml([
     { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true, homeArea: "lon" },
@@ -424,6 +429,7 @@ describe("Full-slice integration", () => {
     const executor = new MonthExecutor();
     const nations = new Map<string, NationState>();
     const gbrNation: NationState = {
+      prestige: SafeInt(20),
       id: "GBR",
       name: "United Kingdom",
       tag: "GBR",
@@ -478,6 +484,7 @@ describe("Full-slice integration", () => {
     nations.set("GBR", gbrNation);
 
     const testSnapshot: CampaignSnapshot = {
+      prestigeRules: FIXTURE_PRESTIGE_RULES,
       version: "0.1.0",
       turnNumber: SafeInt(1),
       campaignId: "test-ship-battles",
@@ -684,6 +691,7 @@ describe("Full-slice integration", () => {
     const nations = new Map<string, NationState>();
 
     const gbrNation: NationState = {
+      prestige: SafeInt(20),
       id: "GBR",
       name: "United Kingdom",
       tag: "GBR",
@@ -736,6 +744,7 @@ describe("Full-slice integration", () => {
     };
 
     const fraNation: NationState = {
+      prestige: SafeInt(20),
       id: "FRA",
       name: "France",
       tag: "FRA",
@@ -791,6 +800,7 @@ describe("Full-slice integration", () => {
     nations.set("FRA", fraNation);
 
     const testSnapshot: CampaignSnapshot = {
+      prestigeRules: FIXTURE_PRESTIGE_RULES,
       version: "0.1.0",
       turnNumber: SafeInt(1),
       campaignId: "test-battle-narrow",

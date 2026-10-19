@@ -16,6 +16,7 @@ import {
 } from "../src/constructionReadout.js";
 import { buildForeignConstructionContract } from "../src/foreignConstruction.js";
 import { productionShipBuildingContent } from "./helpers/contentFiles.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 const content = productionShipBuildingContent({ navalProfiles: true });
 
@@ -74,6 +75,7 @@ function design(perLine: number, id = "d1"): CompiledDesignVersion {
 
 function nation(projects: ConstructionProject[]): NationState {
   return {
+    prestige: SafeInt(20),
     id: "GBR",
     name: "Great Britain",
     tag: "GBR",
@@ -134,6 +136,7 @@ function snapshot(
   nationOverrides: Partial<NationState> = {},
 ): CampaignSnapshot {
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "construction-readout",

@@ -8,7 +8,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 import { MonthExecutor } from "@bluewave/phase-engine";
-import { nationsYaml } from "@bluewave/test-support";
+import { FIXTURE_RULESETS_YAML, nationsYaml } from "@bluewave/test-support";
 
 const FIXTURE = {
   pack: JSON.stringify({
@@ -25,7 +25,7 @@ const FIXTURE = {
       technologies: ["technologies.yaml"],
     },
   }),
-  rulesets: `- id: "core"\n  name: "Core Rules"\n  version: "1.0"\n`,
+  rulesets: FIXTURE_RULESETS_YAML,
   countries: nationsYaml([
     { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true, homeArea: "lon" },
   ]),

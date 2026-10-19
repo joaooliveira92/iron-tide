@@ -18,6 +18,7 @@ import {
 } from "../src/compatibility.js";
 import { cleanup, RecoveryManager } from "../src/recovery.js";
 import { SaveStore } from "../src/store.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function createFixtureState(): CampaignState {
   const snapshot: CampaignSnapshot = {
@@ -45,6 +46,7 @@ function createFixtureState(): CampaignState {
     intelligence: { shells: {} },
     designs: new Map(),
     designFamilies: new Map(),
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     rulesetVersion: "1.0.0",
     compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
   };
@@ -121,6 +123,7 @@ describe("SaveStore", () => {
       baseResources: SafeInt(10),
       navalAppropriationRateBp: SafeInt(500),
       maintenanceCost: SafeInt(20),
+      prestige: SafeInt(20),
       fleets: [],
       divisions: [],
       research: {
@@ -181,6 +184,7 @@ describe("SaveStore", () => {
       baseResources: SafeInt(10),
       navalAppropriationRateBp: SafeInt(500),
       maintenanceCost: SafeInt(20),
+      prestige: SafeInt(20),
       fleets: [],
       divisions: [],
       research: {
@@ -352,6 +356,7 @@ describe("SaveStore", () => {
       intelligence: { shells: {} },
       designs: new Map(),
       designFamilies: new Map(),
+      prestigeRules: FIXTURE_PRESTIGE_RULES,
       rulesetVersion: "1.0.0",
       compatibilityVersion: "0.0.0",
     };

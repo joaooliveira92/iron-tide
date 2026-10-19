@@ -8,6 +8,7 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 // Builds a snapshot carrying the new B-1 snapshot fields (battleManifests,
 // divisions, manifestHash) so save/load round-trips them (AC-13).
@@ -37,6 +38,7 @@ function makeManifestSnapshot(): CampaignSnapshot {
           baseResources: SafeInt(0),
           navalAppropriationRateBp: SafeInt(2000),
           maintenanceCost: SafeInt(0),
+          prestige: SafeInt(20),
           fleets: [],
           divisions: [
             {
@@ -129,6 +131,7 @@ function makeManifestSnapshot(): CampaignSnapshot {
     intelligence: { shells: {} },
     designs: new Map(),
     designFamilies: new Map(),
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     rulesetVersion: "1.0",
     compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
   };
@@ -174,6 +177,6 @@ describe("battle-generation persistence (AC-13)", () => {
   });
 
   it("schema version is pinned and recorded", () => {
-    expect(CURRENT_COMPATIBILITY_VERSION).toBe("3.1.0");
+    expect(CURRENT_COMPATIBILITY_VERSION).toBe("4.0.0");
   });
 });

@@ -72,6 +72,30 @@ export const StorablePossessionSchema = Schema.Record(Schema.String, Schema.Unkn
     ),
   );
 
+// S-2: the prestige value set (ADR-0239) in its stored shape. Every field is required and none has
+// a default: a 4.0.0 save without it, or with a malformed one, is not loadable. Integer-ness and
+// bounds are enforced where the set is decoded (`decodePrestigeValueSet`); here the stored shape is
+// pinned so an unlisted field can never be silently stripped on load.
+const StorablePrestigeRuleSchema = Schema.Union([
+  Schema.Struct({
+    kind: Schema.Literal("PROPORTIONAL_LOSS"),
+    basisPoints: Schema.Finite,
+  }),
+  Schema.Struct({ kind: Schema.Literal("FIXED_GAIN"), amount: Schema.Finite }),
+]);
+
+const StorablePrestigeValueSetSchema = Schema.Struct({
+  lowerBound: Schema.Finite,
+  upperBound: Schema.Finite,
+  sackingThreshold: Schema.Finite,
+  sackingProbabilityBp: Schema.Finite,
+  rules: Schema.Struct({
+    UNPAID_FUNDS: StorablePrestigeRuleSchema,
+    BATTLE_LOST: StorablePrestigeRuleSchema,
+    BATTLE_WON: StorablePrestigeRuleSchema,
+  }),
+});
+
 const StorableSnapshotSchema = Schema.Struct({
   version: Schema.String,
   turnNumber: Schema.Finite,
@@ -110,6 +134,7 @@ const StorableSnapshotSchema = Schema.Struct({
   strategicWeather: Schema.Array(Schema.Unknown).pipe(
     Schema.withDecodingDefaultType(emptyArrayDefault),
   ),
+  prestigeRules: StorablePrestigeValueSetSchema,
   rulesetVersion: Schema.String,
   compatibilityVersion: Schema.String,
 });

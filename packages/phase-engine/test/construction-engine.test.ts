@@ -101,6 +101,7 @@ const project = (withPackages: boolean): ConstructionProject => ({
 });
 
 const nation = (projects: ConstructionProject[]): NationState => ({
+  prestige: SafeInt(20),
   id: "GBR",
   name: "GBR",
   tag: "GBR",

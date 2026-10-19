@@ -8,6 +8,7 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 /**
  * Corruption fuzz: a save file is attacker/mutation-controlled input. For a deterministic,
@@ -38,6 +39,7 @@ function createFixtureState(): CampaignState {
     intelligence: { shells: {} },
     designs: new Map(),
     designFamilies: new Map(),
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     rulesetVersion: "1.0.0",
     compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
   };

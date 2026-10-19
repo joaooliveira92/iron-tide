@@ -7,6 +7,7 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { buildNationStates } from "../src/nationCompilation.js";
 import { buildWorldState } from "../src/worldCompilation.js";
 import { presenceAreaIds } from "../src/presence.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 // S-5 02 (#76, spec #73 R3/R13): presence areas are the distinct areas of a nation's currently owned possessions.
 const CONTENT = resolve(import.meta.dirname, "../../../content/production/1880");
@@ -75,7 +76,16 @@ describe("buildWorldState possessions", () => {
 describe("buildNationStates home area", () => {
   it("carries the authored home area onto the nation state", () => {
     const pack = {
-      nations: [{ id: "uk", name: "uk", tag: "GBR", isPlayable: true, homeArea: "eng_home_coast" }],
+      nations: [
+        {
+          id: "uk",
+          name: "uk",
+          tag: "GBR",
+          isPlayable: true,
+          prestige: 20,
+          homeArea: "eng_home_coast",
+        },
+      ],
     } as ContentPack;
     const economies = [{ nationId: "uk", treasury: 10, income: 10, expenses: 1 }];
     const states = buildNationStates(
@@ -87,6 +97,7 @@ describe("buildNationStates home area", () => {
       [],
       "test",
       "1880-01",
+      FIXTURE_PRESTIGE_RULES,
       new DiagnosticCollector(),
     );
     expect(states?.get("uk")?.homeAreaId).toBe("eng_home_coast");

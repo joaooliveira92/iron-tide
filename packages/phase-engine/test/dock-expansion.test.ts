@@ -24,6 +24,7 @@ import {
   resolvePrivateDockExpansion,
   trailingDockUtilizationBp,
 } from "../src/dockExpansion.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 const DOCK: NationDockState = {
   maximumNewConstructionMassKg: 10_000_000,
@@ -52,6 +53,7 @@ function history(
 
 function nation(id: string, over: Partial<NationState> = {}): NationState {
   return {
+    prestige: SafeInt(20),
     id,
     name: id,
     tag: id.toUpperCase(),
@@ -80,6 +82,7 @@ function nation(id: string, over: Partial<NationState> = {}): NationState {
 
 function snapshot(nations: NationState[]): CampaignSnapshot {
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "dock-expansion",

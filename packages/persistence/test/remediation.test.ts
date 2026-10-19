@@ -24,6 +24,7 @@ import { RecoveryManager } from "../src/recovery.js";
 import type { SigFile } from "../src/schemas.js";
 import { toStorableSnapshot } from "../src/snapshotSerialization.js";
 import { SaveStore } from "../src/store.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function fixture(): CampaignState {
   const snapshot: CampaignSnapshot = {
@@ -47,6 +48,7 @@ function fixture(): CampaignState {
     intelligence: { shells: {} },
     designs: new Map(),
     designFamilies: new Map(),
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     rulesetVersion: "1.0",
     compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
   };

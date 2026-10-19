@@ -12,6 +12,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { FOREIGN_INSTALMENT_COUNT, MonthExecutor } from "../src/index.js";
 import { DOCK_EXPANSION_PROJECT_TYPE } from "../src/dockExpansion.js";
 import { productionShipBuildingContent } from "./helpers/contentFiles.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 const content = productionShipBuildingContent({ navalProfiles: true });
 
@@ -40,6 +41,7 @@ function design(id: string, over: Partial<Design> = {}): Design {
 
 function nation(id = "uk"): NationState {
   return {
+    prestige: SafeInt(20),
     id,
     name: id,
     tag: id.toUpperCase(),
@@ -70,6 +72,7 @@ function snapshot(
   nationIds: readonly string[] = ["uk"],
 ): CampaignSnapshot {
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "sb3-wiring",

@@ -28,6 +28,7 @@ function minimalSnapshot(): CampaignSnapshot {
           baseResources: {} as any,
           navalAppropriationRateBp: 1000,
           maintenanceCost: 1,
+          prestige: 20,
           homeAreaId: "a1",
           fleets: [
             {
@@ -108,6 +109,7 @@ function minimalSnapshot(): CampaignSnapshot {
     designs: new Map(),
     designFamilies: new Map(),
     strategicWeather: undefined as any,
+    prestigeRules: { lowerBound: 0 } as any,
     rulesetVersion: "1",
     compatibilityVersion: "1",
   } as unknown as CampaignSnapshot;

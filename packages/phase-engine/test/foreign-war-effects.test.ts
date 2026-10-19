@@ -85,6 +85,7 @@ const project = (status: ConstructionProject["status"]): ConstructionProject => 
 
 const nation = (status: ConstructionProject["status"]): NationState =>
   ({
+    prestige: SafeInt(20),
     id: "uk",
     name: "United Kingdom",
     tag: "UK",

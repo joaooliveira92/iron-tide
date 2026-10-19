@@ -8,6 +8,7 @@
 // `campaign` is renderer-reachable, so failures are plain classes with a readonly `_tag` and never
 // `Data.TaggedError` (ADR-0128 §1, MIG-EXCL-1). All arithmetic is exact integer arithmetic.
 import { SafeInt } from "@bluewave/contracts";
+import type { DiagnosticCode } from "@bluewave/diagnostics";
 
 /** Basis points in one whole (a proportional loss rate and a sacking probability are in bp). */
 export const BASIS_POINTS_PER_WHOLE = 10_000;
@@ -90,6 +91,11 @@ export class PrestigeOutOfRange {
   ) {}
 }
 
+/** A nation had no authored prestige: there is no default to fall back to. */
+export class PrestigeMissing {
+  readonly _tag = "PrestigeMissing";
+}
+
 export class PrestigeUnknownReason {
   readonly _tag = "PrestigeUnknownReason";
   constructor(readonly reason: string) {}
@@ -121,6 +127,7 @@ export type PrestigeError =
   | PrestigeNotInteger
   | PrestigeUnsafeInteger
   | PrestigeOutOfRange
+  | PrestigeMissing
   | PrestigeUnknownReason
   | PrestigeDrawInvalid
   | PrestigeValueSetInvalid
@@ -408,4 +415,31 @@ export function decodePrestigeValueSet(
     sackingProbabilityBp: sackingProbabilityBp.value,
     rules: rules as Record<PrestigeReasonCode, PrestigeRule>,
   });
+}
+
+// -- Campaign compile boundary. ------------------------------------------------------------------
+
+/** Compile-boundary diagnostic codes for a malformed authored prestige or value set. */
+export const PRESTIGE_COMPILE_CODES = {
+  missing: "CAMPAIGN-PRESTIGE-MISSING" as DiagnosticCode,
+  notInteger: "CAMPAIGN-PRESTIGE-NOT-INTEGER" as DiagnosticCode,
+  unsafeInteger: "CAMPAIGN-PRESTIGE-UNSAFE-INTEGER" as DiagnosticCode,
+  outOfRange: "CAMPAIGN-PRESTIGE-OUT-OF-RANGE" as DiagnosticCode,
+  valueSetMissing: "CAMPAIGN-PRESTIGE-VALUE-SET-MISSING" as DiagnosticCode,
+  valueSetInvalid: "CAMPAIGN-PRESTIGE-VALUE-SET-INVALID" as DiagnosticCode,
+  valueSetAmbiguous: "CAMPAIGN-PRESTIGE-VALUE-SET-AMBIGUOUS" as DiagnosticCode,
+} as const;
+
+/**
+ * Resolve one nation's authored starting prestige against the ruleset's bounds. An absent value is
+ * `missing`, never a default; a bad one is the matching rule-layer error (`PrestigeNotInteger`,
+ * `PrestigeUnsafeInteger`, `PrestigeOutOfRange`) for the caller to turn into a named diagnostic.
+ */
+export function resolveNationPrestige(
+  authored: unknown,
+  set: PrestigeValueSet,
+): PrestigeResult<SafeInt> {
+  if (authored === undefined) return fail(new PrestigeMissing());
+  if (typeof authored !== "number") return fail(new PrestigeNotInteger(Number.NaN));
+  return checkPrestige(authored, set);
 }

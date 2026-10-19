@@ -3,6 +3,7 @@
   name: United Kingdom
   displayNameKey: nation.uk
   isPlayable: true
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: eng_home_coast
   slot:
     id: uk
@@ -132,6 +133,7 @@
   name: German Empire
   displayNameKey: nation.germany
   isPlayable: true
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: ger_baltic_coast
   slot:
     id: germany
@@ -251,6 +253,7 @@
   name: United States
   displayNameKey: nation.usa
   isPlayable: true
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: usa_atlantic_coast
   slot:
     id: usa
@@ -366,6 +369,7 @@
   name: Empire of Japan
   displayNameKey: nation.japan
   isPlayable: true
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: jpn_home_coast
   slot:
     id: japan
@@ -480,6 +484,7 @@
   name: French Republic
   displayNameKey: nation.france
   isPlayable: true
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: fra_chan_coast
   slot:
     id: france
@@ -596,6 +601,7 @@
   name: Kingdom of Italy
   displayNameKey: nation.italy
   isPlayable: true
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: ita_tyrrhenian_coast
   slot:
     id: italy
@@ -706,6 +712,7 @@
   name: Russian Empire
   displayNameKey: nation.russia
   isPlayable: true
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: rus_baltic_coast
   slot:
     id: russia
@@ -820,6 +827,7 @@
   name: Austro-Hungarian Empire
   displayNameKey: nation.austria_hungary
   isPlayable: true
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: auh_adriatic_coast
   slot:
     id: austria_hungary
@@ -935,6 +943,7 @@
   name: Kingdom of Spain
   displayNameKey: nation.spain
   isPlayable: true
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: spa_med_coast
   slot:
     id: spain
@@ -1043,6 +1052,7 @@
   name: Qing Dynasty
   displayNameKey: nation.qing
   isPlayable: true
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: chi_north_coast
   slot:
     id: qing
@@ -1161,6 +1171,7 @@
   name: Ottoman Empire
   displayNameKey: nation.ottoman_empire
   isPlayable: false
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: ott_marmara_coast
   slot:
     id: ottoman_empire
@@ -1285,6 +1296,7 @@
   name: Netherlands
   displayNameKey: nation.netherlands
   isPlayable: false
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: ned_home_coast
   slot:
     id: netherlands
@@ -1404,6 +1416,7 @@
   name: Kingdom of Portugal
   displayNameKey: nation.portugal
   isPlayable: false
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: por_home_coast
   slot:
     id: portugal
@@ -1522,6 +1535,7 @@
   name: Empire of Brazil
   displayNameKey: nation.brazil
   isPlayable: false
+  prestige: 20 # ADR-0239 item 5: RTW3's flat start of 20, extended to every nation
   homeArea: bra_rio_coast
   slot:
     id: brazil

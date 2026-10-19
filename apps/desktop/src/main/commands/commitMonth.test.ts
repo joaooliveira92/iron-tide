@@ -27,6 +27,7 @@ import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { toSaveableState } from "../saveHelpers.js";
 import { commitMonthProgram } from "./commitMonth.js";
 import { mapBattleOutcome } from "./commitMonth/battleOutcomes.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
@@ -239,15 +240,17 @@ describe("commitMonth", () => {
       // ADR-0230): the snapshot gains the research catalogue, seeded construction packages and capacity, the derived
       // economic base and compatibility 3.1.0. Re-pinned 2026-10-18 (S-5 02, ADR-0231): the snapshot gains
       // each nation's home area and the world possession ownership (+4498 bytes: 14 nations, 62 possessions).
+      // Re-pinned 2026-10-19 (S-2 03, ADR-0239): the snapshot gains the prestige value set and compatibility
+      // 4.0.0 (+280 bytes: exactly the serialized `prestigeRules` entry; nations are Maps and do not serialize here).
       expect(updated.state.envelope).toEqual({
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-        bodyHash: "07dc0763ae6dd25c34f2071ff66fc4c7b9e586ab3e09ae5e2472778f617b0310",
-        bodyLength: 106114,
+        bodyHash: "6a485b928b24f2d31ec4c23886d939a3578c7ae43e5830b2b5445d2e538b8b14",
+        bodyLength: 106394,
       });
       expect(updated.state.rawHash).toBe(
-        "91a543e392ff6c66d3ba9f6df9f136612f35986834acddb34a81ac3962426880",
+        "18e80a3c8be9a0686ee67b891907d55c440f72891268d8f6b9e63b754ddb7937",
       );
       const expectedActiveWars = updated.state.snapshot.wars.wars.filter(
         (w) => w.status !== "ENDED",
@@ -370,6 +373,7 @@ describe("commitMonth", () => {
         ]),
       );
       return {
+        prestigeRules: FIXTURE_PRESTIGE_RULES,
         version: "0.1.0",
         turnNumber: SafeInt(0),
         campaignId: "commit-month-battle-fixture",
@@ -618,6 +622,7 @@ describe("mapBattleOutcome (pre-battle-snapshot war-score re-derivation, INC-2 f
       name: id,
       tag: id,
       treasury: SafeInt(0),
+      prestige: SafeInt(20),
       income: SafeInt(0),
       expenses: SafeInt(0),
       baseResources: SafeInt(0),
@@ -676,6 +681,7 @@ describe("mapBattleOutcome (pre-battle-snapshot war-score re-derivation, INC-2 f
       startYear: 1880,
       startMonth: 1,
       strategicWeather: [],
+      prestigeRules: FIXTURE_PRESTIGE_RULES,
       slots: [],
       world: { areas: [{ id: "a-1", name: "a-1", type: "sea" }], routes: [], ports: [] },
       nations,

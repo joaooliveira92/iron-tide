@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { Schema } from "effect";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 import { SafeInt } from "@bluewave/contracts";
 import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
 import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/campaign";
@@ -21,6 +22,7 @@ function buildNation(id: string): NationState {
     baseResources: SafeInt.ZERO,
     navalAppropriationRateBp: SafeInt.ZERO,
     maintenanceCost: SafeInt.ZERO,
+    prestige: SafeInt(20),
     fleets: [],
     divisions: [],
     research: {
@@ -62,6 +64,7 @@ function buildSnapshot(): CampaignSnapshot {
     intelligence: { shells: {} },
     designs: new Map(),
     designFamilies: new Map(),
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     rulesetVersion: "1.0.0",
     compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
   };

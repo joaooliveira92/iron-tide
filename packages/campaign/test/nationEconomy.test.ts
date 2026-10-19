@@ -4,10 +4,17 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import { MAX_ECONOMIC_BASE, monthlyRevenue } from "../src/economy.js";
 import { buildNationStates } from "../src/nationCompilation.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 // Economy spec #138 slice 2: the compiler derives the economic base and seeds the standing research budget.
 function pack(ids: string[]): ContentPack {
-  const nations = ids.map((id) => ({ id, name: id, tag: id.toUpperCase(), isPlayable: true }));
+  const nations = ids.map((id) => ({
+    id,
+    name: id,
+    tag: id.toUpperCase(),
+    isPlayable: true,
+    prestige: 20,
+  }));
   return { nations } as ContentPack;
 }
 
@@ -26,6 +33,7 @@ function compile(
     [],
     "test",
     "1880-01",
+    FIXTURE_PRESTIGE_RULES,
     collector,
   );
   return { nations, collector };

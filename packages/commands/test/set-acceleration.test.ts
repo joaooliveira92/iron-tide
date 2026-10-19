@@ -4,6 +4,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
 import type { CommandBody, CommandEnvelope } from "../src/index.js";
 import { CommandIdempotencyMap, CommandLifecycle } from "../src/index.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function project(
   status: ConstructionProject["status"],
@@ -26,6 +27,7 @@ function project(
 
 function snapshotWith(projects: ConstructionProject[]): CampaignSnapshot {
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "set-acceleration-commands",
@@ -47,6 +49,7 @@ function snapshotWith(projects: ConstructionProject[]): CampaignSnapshot {
           baseResources: SafeInt(0),
           navalAppropriationRateBp: SafeInt(2_000),
           maintenanceCost: SafeInt(0),
+          prestige: SafeInt(20),
           fleets: [],
           divisions: [],
           research: {

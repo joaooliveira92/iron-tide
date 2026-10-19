@@ -6,6 +6,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import { applyDivisionCommandMonth } from "../src/divisionCommands.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 function makeDivision(): PermanentDivision {
   return {
@@ -46,6 +47,7 @@ function makeSnapshot(): CampaignSnapshot {
   });
   const slot: CampaignSlot = { nationId: "GBR", type: "playable" };
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "division-reorder-test",

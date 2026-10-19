@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { StorablePossessionSchema } from "../src/schemas.js";
 import { SaveStore } from "../src/store.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function nation(seeded: boolean): NationState {
   return {
@@ -24,6 +25,7 @@ function nation(seeded: boolean): NationState {
     baseResources: SafeInt(6000),
     navalAppropriationRateBp: SafeInt(2000),
     maintenanceCost: SafeInt(16),
+    prestige: SafeInt(20),
     ...(seeded ? { homeAreaId: "area-1" } : {}),
     fleets: [],
     divisions: [],
@@ -89,6 +91,7 @@ function state(seeded: boolean): CampaignState {
     intelligence: { shells: {} },
     designs: new Map(),
     designFamilies: new Map(),
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     rulesetVersion: "1.0.0",
     compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
   };

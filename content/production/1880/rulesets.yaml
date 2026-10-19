@@ -1,3 +1,27 @@
+# The 1880 core ruleset. The prestige value set (S-2, ADR-0239) is authored here, not defaulted in
+# code. Grounded rules (a sacking threshold of 16 or below, proportional loss, final prestige as the
+# career score) follow RTW3 (manual pp.12, 62). Every magnitude the sources do not give is an admitted
+# Bluewave balance choice recorded by ADR-0239 (kind: balance_adjustment, sourceStatus: BALANCE_TARGET).
 - id: "core"
   name: "Bluewave Core Ruleset"
   version: "1.0"
+  prestige:
+    lowerBound: 0
+    upperBound: 1000
+    sackingThreshold: 16
+    sackingProbabilityBp: 1000
+    rules:
+      UNPAID_FUNDS: { kind: "PROPORTIONAL_LOSS", basisPoints: 300 }
+      BATTLE_LOST: { kind: "PROPORTIONAL_LOSS", basisPoints: 500 }
+      BATTLE_WON: { kind: "FIXED_GAIN", amount: 1 }
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "Rule the Waves 3 manual"
+        author: "Naval War Simulations / Matrix Games"
+        year: 2023
+        page: "12, 62"
+        section: "Prestige; sacking threshold of 16 or below; final prestige as the career score"
+    note: "ADR-0239. The threshold of 16 and the proportional-loss shape are documented RTW3; the bounds, the loss and gain rates and the monthly sacking probability are Bluewave balance targets."

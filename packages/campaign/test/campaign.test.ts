@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { buildContentBundleArtifact, type CompilerInput } from "@bluewave/content-compiler";
-import { nationsYaml, nationYaml } from "@bluewave/test-support";
+import { FIXTURE_RULESETS_YAML, nationYaml, nationsYaml } from "@bluewave/test-support";
 import { describe, expect, it } from "vite-plus/test";
 import { CampaignCompiler, type CampaignCompilerInput } from "../src/compiler-public.js";
 
@@ -105,11 +105,7 @@ const FIXTURE = {
     },
   }),
 
-  rulesets: `
-- id: "core"
-  name: "Core Rules"
-  version: "1.0"
-`,
+  rulesets: FIXTURE_RULESETS_YAML,
 
   // canonical strict-NationSchema-compliant nations
   countries: nationsYaml([
@@ -355,9 +351,14 @@ describe("CampaignCompiler", () => {
           name: "flag-drive",
           version: "0.1.0",
           type: "fixture",
-          files: { countries: ["countries.yaml"], areas: ["areas.yaml"] },
+          files: {
+            rulesets: ["rulesets.yaml"],
+            countries: ["countries.yaml"],
+            areas: ["areas.yaml"],
+          },
         }),
       );
+      writeFile(fixture.path, "rulesets.yaml", FIXTURE_RULESETS_YAML);
       writeFile(
         fixture.path,
         "countries.yaml",
@@ -379,7 +380,7 @@ describe("CampaignCompiler", () => {
 
       const output = compileFixture(fixture.path, collector, signal, {
         input: {
-          rulesetFiles: [],
+          rulesetFiles: ["rulesets.yaml"],
           countryFiles: ["countries.yaml"],
           areaFiles: ["areas.yaml"],
           routeFiles: [],

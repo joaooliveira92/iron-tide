@@ -13,6 +13,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { MonthExecutor } from "@bluewave/phase-engine";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 const LINES: readonly string[] = [
   "slipway",
@@ -78,6 +79,7 @@ function project(): ConstructionProject {
 
 function nation(): NationState {
   return {
+    prestige: SafeInt(20),
     id: "GBR",
     name: "Great Britain",
     tag: "GBR",
@@ -105,6 +107,7 @@ function nation(): NationState {
 
 function snapshot(): CampaignSnapshot {
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "acceleration-cross-process",

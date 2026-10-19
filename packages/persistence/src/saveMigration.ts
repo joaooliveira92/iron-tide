@@ -52,12 +52,12 @@ export interface SaveMigrationStep {
  * 1.0.0 and 1.1.0 predate fields that cannot be reconstructed without inventing
  * gameplay-affecting defaults, so they stay a documented rejection (ADR-0113 §5,
  * ADR-0129).
+ *
+ * S-2 (4.0.0, ADR-0239): none. Every nation gains a required prestige and the snapshot a required
+ * prestige value set, with no default, so no earlier save can be brought forward without inventing
+ * gameplay values. Every earlier version is a documented refusal (ADR-0113 §5).
  */
-export const SAVE_MIGRATIONS: readonly SaveMigrationStep[] = [
-  { from: "1.2.0", to: "3.1.0" },
-  { from: "2.0.0", to: "3.1.0" },
-  { from: "3.0.0", to: "3.1.0" },
-];
+export const SAVE_MIGRATIONS: readonly SaveMigrationStep[] = [];
 
 export type SaveMigrationKind = "current" | "migrated" | "future" | "unknown" | "malformed";
 
@@ -135,6 +135,7 @@ function verifyMigratedState(state: CampaignState): boolean {
 export function migrateSaveDirectory(
   savePath: string,
   current: string = CURRENT_COMPATIBILITY_VERSION,
+  migrations: readonly SaveMigrationStep[] = SAVE_MIGRATIONS,
 ): MigrateSaveDirectoryResult {
   const campaignPath = join(savePath, CAMPAIGN_FILE);
   if (!existsSync(campaignPath)) {
@@ -166,7 +167,7 @@ export function migrateSaveDirectory(
       reason: `save version "${from}" is newer than the current engine version "${current}"`,
     };
   }
-  if (!SAVE_MIGRATIONS.some((step) => step.from === from && step.to === current)) {
+  if (!migrations.some((step) => step.from === from && step.to === current)) {
     return {
       status: "refused",
       kind: "unknown",

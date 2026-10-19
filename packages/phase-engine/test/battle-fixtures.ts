@@ -18,6 +18,7 @@ import type {
 import { buildManifest } from "@bluewave/combat";
 import { SafeInt } from "@bluewave/contracts";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 export const BATTLE_AREA = "a-1";
 export const ATTACKER_NATION = "GBR";
@@ -108,6 +109,7 @@ export function makeNation(id: string, ships: Ship[]): NationState {
     baseResources: SafeInt(0),
     navalAppropriationRateBp: SafeInt(2000),
     maintenanceCost: SafeInt(0),
+    prestige: SafeInt(20),
     fleets: [
       {
         id: `fleet-${id}`,
@@ -275,6 +277,7 @@ export function makeBattleSnapshot(opts: BattleSnapshotOptions = {}): CampaignSn
     designs,
     designFamilies: new Map(),
     strategicWeather: [],
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     rulesetVersion: "0.1.0",
     compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
   };

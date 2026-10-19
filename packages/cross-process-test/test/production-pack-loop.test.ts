@@ -11,6 +11,8 @@ import type { CommandEnvelope, BudgetProjectCommand } from "@bluewave/commands";
 import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
 import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
 import { mkdirSync, rmSync } from "node:fs";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
+import { compileProductionCampaign } from "../src/production-pack.js";
 import { tmpdir } from "node:os";
 
 // Ticket 05 (.scratch/desktop-mvp/issues/05-verify-full-loop-against-production-pack.md):
@@ -446,5 +448,80 @@ describe("S-1 acceptance (ticket 09): readiness and maintenance on the productio
 
     // Deterministic: identical inputs produce byte-identical closing snapshots.
     expect(hashSnapshot(run().finalSnapshot)).toBe(hashSnapshot(run().finalSnapshot));
+  });
+});
+
+// S-2 ticket 03 (spec #74 R3): prestige on the production pack. Every value here traces to
+// ADR-0239 (decision request 0012, Option B); a fixture number must never be reachable.
+describe("S-2 ticket 03: prestige on the production pack (ADR-0239)", () => {
+  const EXPECTED_RULES = {
+    lowerBound: SafeInt(0),
+    upperBound: SafeInt(1000),
+    sackingThreshold: SafeInt(16),
+    sackingProbabilityBp: SafeInt(1000),
+    rules: {
+      UNPAID_FUNDS: { kind: "PROPORTIONAL_LOSS", basisPoints: SafeInt(300) },
+      BATTLE_LOST: { kind: "PROPORTIONAL_LOSS", basisPoints: SafeInt(500) },
+      BATTLE_WON: { kind: "FIXED_GAIN", amount: SafeInt(1) },
+    },
+  };
+
+  it("carries the authorized start of 20 for all fourteen nations and keeps ten playable", () => {
+    const { state } = compileProductionCampaign();
+    const nations = [...state.snapshot.nations.values()];
+    expect(nations).toHaveLength(14);
+    for (const nation of nations) {
+      expect(nation.prestige, nation.id).toBe(20);
+    }
+    expect(nations.filter((n) => n.isPlayable)).toHaveLength(10);
+    expect(nations.filter((n) => !n.isPlayable)).toHaveLength(4);
+  });
+
+  it("runs on exactly the value set ADR-0239 authorizes", () => {
+    const { state } = compileProductionCampaign();
+    expect(state.snapshot.prestigeRules).toEqual(EXPECTED_RULES);
+  });
+
+  it("never reaches a fixture value: the production set differs from the fixture set in every field", () => {
+    const { state } = compileProductionCampaign();
+    const production = state.snapshot.prestigeRules;
+    expect(production).not.toEqual(FIXTURE_PRESTIGE_RULES);
+    expect(production.upperBound).not.toBe(FIXTURE_PRESTIGE_RULES.upperBound);
+    expect(production.sackingThreshold).not.toBe(FIXTURE_PRESTIGE_RULES.sackingThreshold);
+    expect(production.sackingProbabilityBp).not.toBe(FIXTURE_PRESTIGE_RULES.sackingProbabilityBp);
+  });
+
+  it("keeps every nation's start inside the bounds the ruleset declares", () => {
+    const { state } = compileProductionCampaign();
+    const { lowerBound, upperBound } = state.snapshot.prestigeRules;
+    for (const nation of state.snapshot.nations.values()) {
+      expect(nation.prestige).toBeGreaterThanOrEqual(lowerBound);
+      expect(nation.prestige).toBeLessThanOrEqual(upperBound);
+    }
+  });
+
+  it("round-trips prestige and the value set through a save and load, exactly", () => {
+    const { state } = compileProductionCampaign();
+    const dir = resolve(
+      tmpdir(),
+      `bw-s2-prestige-${String(process.pid)}-${Math.random().toString(36).slice(2)}`,
+    );
+    mkdirSync(dir, { recursive: true });
+    try {
+      const store = new SaveStore();
+      // As the full-loop test above does: a raw compile output carries its compile-time rawHash, so
+      // the saved state is given the hash the store verifies.
+      const { rawHash: _rawHash, ...stateForSave } = state;
+      store.save({ ...state, rawHash: sha256Hex(canonicalSerialize(stateForSave)) }, dir);
+      const diagnostics = new DiagnosticCollector();
+      const loaded = store.load(dir, diagnostics);
+      expect(diagnostics.errors.map((d) => `${d.code}: ${d.message}`)).toEqual([]);
+      expect(loaded?.snapshot.prestigeRules).toEqual(EXPECTED_RULES);
+      for (const [id, nation] of state.snapshot.nations) {
+        expect(loaded?.snapshot.nations.get(id)?.prestige, id).toBe(nation.prestige);
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

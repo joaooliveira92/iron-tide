@@ -25,10 +25,12 @@ import {
   makeBattle,
   makeBattleSnapshot,
 } from "./battle-fixtures.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 function createSnapshot(): CampaignSnapshot {
   const nations = new Map<string, NationState>();
   nations.set("GBR", {
+    prestige: SafeInt(20),
     id: "GBR",
     name: "United Kingdom",
     tag: "GBR",
@@ -55,6 +57,7 @@ function createSnapshot(): CampaignSnapshot {
   });
 
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "interruption-seam-test",

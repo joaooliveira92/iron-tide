@@ -41,6 +41,7 @@ function makeNation(
   overrides?: Partial<NationState>,
 ): NationState {
   return {
+    prestige: SafeInt(20),
     id,
     name: `Nation ${id}`,
     tag: id,

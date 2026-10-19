@@ -16,8 +16,14 @@ import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/determi
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
-import { detectSaveVersion, migrateSaveDirectory } from "../src/saveMigration.js";
+import {
+  detectSaveVersion,
+  migrateSaveDirectory,
+  SAVE_MIGRATIONS,
+  type SaveMigrationStep,
+} from "../src/saveMigration.js";
 import { SaveStore } from "../src/store.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function fixtureState(compatibilityVersion: string): CampaignState {
   const snapshot: CampaignSnapshot = {
@@ -41,6 +47,7 @@ function fixtureState(compatibilityVersion: string): CampaignState {
     intelligence: { shells: {} },
     designs: new Map(),
     designFamilies: new Map(),
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     rulesetVersion: "1.0.0",
     compatibilityVersion,
   };
@@ -50,6 +57,15 @@ function fixtureState(compatibilityVersion: string): CampaignState {
 }
 
 /** Write a save directory at `version` and return the save-id directory. */
+/**
+ * S-2 (4.0.0) ships NO registered migration: bringing an older save forward would mean inventing a
+ * prestige and a value set, which have no default. These tests inject a synthetic step so the atomic,
+ * backed-up migration machinery stays exercised; the shipped table itself is asserted empty below.
+ */
+const INJECTED_STEPS: readonly SaveMigrationStep[] = [
+  { from: "1.2.0", to: CURRENT_COMPATIBILITY_VERSION },
+];
+
 function saveAt(version: string, dir: string): string {
   new SaveStore().save(fixtureState(version), dir);
   const saveId = new SaveStore().getActiveSaveId(dir)!;
@@ -72,7 +88,7 @@ describe("save migration (ticket 11d)", () => {
     expect(detectSaveVersion({ not: "a save" })).toBeNull();
   });
 
-  it("migrates the supported 1.2.0 save to current and preserves player-owned identity", () => {
+  it("migrates a save through an injected step to current and preserves player-owned identity", () => {
     const savePath = saveAt("1.2.0", tmpDir);
     const before = new SaveStore("1.2.0").loadById(
       tmpDir,
@@ -80,7 +96,7 @@ describe("save migration (ticket 11d)", () => {
       new DiagnosticCollector(),
     )!;
 
-    const result = migrateSaveDirectory(savePath);
+    const result = migrateSaveDirectory(savePath, CURRENT_COMPATIBILITY_VERSION, INJECTED_STEPS);
     expect(result.status).toBe("migrated");
     if (result.status !== "migrated") return;
     expect([result.from, result.to]).toEqual(["1.2.0", CURRENT_COMPATIBILITY_VERSION]);
@@ -103,14 +119,28 @@ describe("save migration (ticket 11d)", () => {
       "current",
     );
     const savePath = saveAt("1.2.0", tmpDir);
-    expect(migrateSaveDirectory(savePath).status).toBe("migrated");
-    expect(migrateSaveDirectory(savePath).status).toBe("current");
+    const migrate = () =>
+      migrateSaveDirectory(savePath, CURRENT_COMPATIBILITY_VERSION, INJECTED_STEPS);
+    expect(migrate().status).toBe("migrated");
+    expect(migrate().status).toBe("current");
   });
 
   it("refuses an unsupported future version", () => {
-    const result = migrateSaveDirectory(saveAt("4.0.0", tmpDir));
+    const result = migrateSaveDirectory(saveAt("5.0.0", tmpDir));
     expect(result.status).toBe("refused");
     if (result.status === "refused") expect(result.kind).toBe("future");
+  });
+
+  it("ships no migration: bringing a save forward would invent a prestige and a value set", () => {
+    expect(SAVE_MIGRATIONS).toEqual([]);
+  });
+
+  it("refuses every earlier version with the unknown kind instead of guessing defaults", () => {
+    for (const version of ["1.2.0", "2.0.0", "3.0.0", "3.1.0"]) {
+      const result = migrateSaveDirectory(saveAt(version, tmpDir));
+      expect(result.status, version).toBe("refused");
+      if (result.status === "refused") expect(result.kind, version).toBe("unknown");
+    }
   });
 
   it("refuses a malformed save", () => {
@@ -130,7 +160,7 @@ describe("save migration (ticket 11d)", () => {
   it("migrates a save directory atomically and leaves the original recoverable", () => {
     const savePath = saveAt("1.2.0", tmpDir);
     const originalBytes = readFileSync(join(savePath, "campaign.json"));
-    const result = migrateSaveDirectory(savePath);
+    const result = migrateSaveDirectory(savePath, CURRENT_COMPATIBILITY_VERSION, INJECTED_STEPS);
     expect(result.status).toBe("migrated");
     if (result.status !== "migrated") return;
     expect(existsSync(result.backup)).toBe(true);

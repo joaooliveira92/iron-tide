@@ -5,9 +5,11 @@ import { CANONICAL_RESEARCH_FIELD_IDS } from "@bluewave/content-schema";
 import type { CampaignSnapshot, CampaignSlot } from "@bluewave/campaign";
 import type { CommandEnvelope, CommandBody } from "../src/index.js";
 import { CommandLifecycle, CommandIdempotencyMap, CommandLedger } from "../src/index.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function makeTestSnapshot(treasury: SafeInt = SafeInt(1000)): CampaignSnapshot {
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "test-campaign",
@@ -29,6 +31,7 @@ function makeTestSnapshot(treasury: SafeInt = SafeInt(1000)): CampaignSnapshot {
           baseResources: SafeInt(120000),
           navalAppropriationRateBp: SafeInt(2000),
           maintenanceCost: SafeInt(0),
+          prestige: SafeInt(20),
           fleets: [],
           divisions: [],
           research: {

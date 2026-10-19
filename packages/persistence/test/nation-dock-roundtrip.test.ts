@@ -15,6 +15,7 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 const dock = {
   maximumNewConstructionMassKg: 13_000_000,
@@ -34,6 +35,7 @@ function nation(projects: ConstructionProject[] = []): NationState {
     baseResources: SafeInt(0),
     navalAppropriationRateBp: SafeInt(2000),
     maintenanceCost: SafeInt(0),
+    prestige: SafeInt(20),
     fleets: [],
     divisions: [],
     research: {
@@ -73,6 +75,7 @@ function state(projects: ConstructionProject[] = []): CampaignState {
     intelligence: { shells: {} },
     designs: new Map(),
     designFamilies: new Map(),
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     rulesetVersion: "1.0.0",
     compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
   };

@@ -5,6 +5,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { MonthExecutor } from "../src/index.js";
 import { applySetBudgetAllocation } from "../src/commands.js";
 import { TEST_RESEARCH_CATALOGUE } from "./research-catalogue.helper.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 // Economy spec #138 slice 5: every outflow is recorded as requested, paid and shortfall, the ledger identity closes on
 // paid, and a shortfall is a legal recorded state, not an error.
@@ -14,6 +15,7 @@ function nation(
   const { ships: shipCount, researchBudget: _budget, ...rest } = over;
   const ships = shipCount ?? 0;
   return {
+    prestige: SafeInt(20),
     id: "n",
     name: "n",
     tag: "N",
@@ -71,6 +73,7 @@ function snapshot(
   technologies?: CampaignSnapshot["world"]["technologies"],
 ): CampaignSnapshot {
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "economy-ledger",

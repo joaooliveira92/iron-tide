@@ -15,10 +15,12 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { EventLedger } from "@bluewave/events";
 import { describe, expect, it } from "vite-plus/test";
 import { BudgetProjectLifecycle, FinancialLedger, MonthExecutor } from "../src/index.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 function createSnapshot(overrides?: Partial<CampaignSnapshot>): CampaignSnapshot {
   const nations = new Map<string, NationState>();
   nations.set("GBR", {
+    prestige: SafeInt(20),
     id: "GBR",
     name: "United Kingdom",
     tag: "GBR",
@@ -58,6 +60,7 @@ function createSnapshot(overrides?: Partial<CampaignSnapshot>): CampaignSnapshot
   });
 
   const base: CampaignSnapshot = {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "test-campaign-lifecycle",

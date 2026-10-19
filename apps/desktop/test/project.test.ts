@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vite-plus/test";
 import { mkdtempSync, writeFileSync, rmSync, mkdirSync, readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { nationsYaml } from "@bluewave/test-support";
+import { FIXTURE_RULESETS_YAML, nationsYaml } from "@bluewave/test-support";
 import {
   loadContentDirectory,
   saveProjectFile,
@@ -23,7 +23,7 @@ const FIXTURE_FILES: Record<string, string> = {
       countries: ["countries.yaml"],
     },
   }),
-  "rulesets.yaml": `- id: "core"\n  name: "Core Rules"\n  version: "1.0"\n`,
+  "rulesets.yaml": FIXTURE_RULESETS_YAML,
   "countries.yaml": nationsYaml([{ id: "uk", tag: "GBR", name: "United Kingdom" }]),
 };
 

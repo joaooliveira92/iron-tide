@@ -26,6 +26,7 @@ import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { PointerFileSchema, StorableCampaignStateSchema } from "../src/schemas.js";
 import { fromStorableSnapshot } from "../src/snapshotSerialization.js";
 import { SaveStore } from "../src/store.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function createFixtureState(): CampaignState {
   const snapshot: CampaignSnapshot = {
@@ -49,6 +50,7 @@ function createFixtureState(): CampaignState {
     intelligence: { shells: {} },
     designs: new Map(),
     designFamilies: new Map(),
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     rulesetVersion: "1.0.0",
     compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
   };
@@ -127,6 +129,7 @@ describe("Effect Schema save-boundary serialization (MIG-WIRE-4)", () => {
         intelligence: { shells: {} },
         designs: {},
         designFamilies: {},
+        prestigeRules: FIXTURE_PRESTIGE_RULES,
         rulesetVersion: "1.0.0",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
       },
@@ -176,6 +179,7 @@ describe("Effect Schema save-boundary serialization (MIG-WIRE-4)", () => {
         intelligence: { shells: {} },
         designs: {},
         designFamilies: {},
+        prestigeRules: FIXTURE_PRESTIGE_RULES,
         rulesetVersion: "1.0.0",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
       },

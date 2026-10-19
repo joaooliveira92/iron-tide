@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { buildContentBundleArtifact } from "@bluewave/content-compiler";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { nationYaml } from "@bluewave/test-support";
+import { FIXTURE_RULESETS_YAML, nationYaml } from "@bluewave/test-support";
 import { describe, expect, it } from "vite-plus/test";
 import { CampaignCompiler } from "../src/compiler-public.js";
 import {
@@ -843,10 +843,15 @@ describe("CampaignCompiler DESIGN-03 configuration gate", () => {
         name: "campaign-config-test",
         version: "0.1.0",
         type: "fixture",
-        files: { countries: ["countries.yaml"], areas: ["areas.yaml"] },
+        files: {
+          rulesets: ["rulesets.yaml"],
+          countries: ["countries.yaml"],
+          areas: ["areas.yaml"],
+        },
       }),
       "utf8",
     );
+    writeFileSync(resolve(dir, "rulesets.yaml"), FIXTURE_RULESETS_YAML, "utf8");
     writeFileSync(
       resolve(dir, "countries.yaml"),
       nationYaml({
@@ -876,7 +881,7 @@ describe("CampaignCompiler DESIGN-03 configuration gate", () => {
       {
         manifestPath: resolve(dir, "pack.json"),
         contentDir: dir,
-        rulesetFiles: [],
+        rulesetFiles: ["rulesets.yaml"],
         countryFiles: ["countries.yaml"],
         areaFiles: ["areas.yaml"],
         routeFiles: [],

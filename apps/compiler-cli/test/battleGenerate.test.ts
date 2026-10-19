@@ -14,6 +14,7 @@ vi.mock("@bluewave/persistence", async (importOriginal) => ({
 
 import { runBattleGenerate, type BattleGenerateCliOptions } from "../src/commands.js";
 import { runCli } from "./runCli.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function stdoutSpy() {
   return vi.spyOn(process.stdout, "write").mockImplementation(() => true as any);
@@ -42,6 +43,7 @@ function makeShip(id: string, nationId: string, firepower: number): Ship {
 
 function makeNation(id: string, ships: Ship[]): NationState {
   return {
+    prestige: SafeInt(20),
     id,
     name: id,
     tag: id,
@@ -83,6 +85,7 @@ function fixtureSnapshot(): CampaignSnapshot {
   );
   nations.set("FRA", makeNation("FRA", [makeShip("fra_bb1", "FRA", 300)]));
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "battle-generate-test",

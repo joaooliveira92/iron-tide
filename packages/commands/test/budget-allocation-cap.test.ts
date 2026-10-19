@@ -3,10 +3,12 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { describe, expect, it } from "vite-plus/test";
 import { CommandLifecycle, type CommandBody, type CommandEnvelope } from "../src/index.js";
+import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 // Economy spec #138: the research cap is a rule of issue-time validation too, so a player cannot queue an unpayable budget.
 function snapshot(baseResources: number): CampaignSnapshot {
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "budget-cap",
@@ -28,6 +30,7 @@ function snapshot(baseResources: number): CampaignSnapshot {
           baseResources: SafeInt(baseResources),
           navalAppropriationRateBp: SafeInt(2000),
           maintenanceCost: SafeInt(0),
+          prestige: SafeInt(20),
           fleets: [],
           divisions: [],
           research: {

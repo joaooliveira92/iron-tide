@@ -5,6 +5,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { applySetBudgetAllocation } from "../src/commands.js";
 import { MonthExecutor } from "../src/index.js";
 import { TEST_RESEARCH_CATALOGUE } from "./research-catalogue.helper.js";
+import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 // Economy spec #138 / #140: the ledger identity, the shortfall accounting and the clamp, checked over many valid states
 // through the production month executor. Randomised cases use a fixed, printed seed (a failure names its seed and state);
@@ -59,6 +60,7 @@ function build(state: State): CampaignSnapshot {
     crewQuality: SafeInt(100),
   }));
   const nation: NationState = {
+    prestige: SafeInt(20),
     id: "n",
     name: "n",
     tag: "N",
@@ -104,6 +106,7 @@ function build(state: State): CampaignSnapshot {
     isAI: false,
   };
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "economy-ledger-property",

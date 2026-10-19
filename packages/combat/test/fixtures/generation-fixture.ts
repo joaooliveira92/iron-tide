@@ -1,5 +1,6 @@
 import type { CampaignSnapshot, NationState, Ship } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
+import { FIXTURE_PRESTIGE_RULES } from "../prestige-fixture.js";
 
 export interface GenShipSpec {
   id: string;
@@ -40,6 +41,7 @@ export function makeNation(
   overrides: Partial<NationState> = {},
 ): NationState {
   return {
+    prestige: SafeInt(20),
     id,
     name: id,
     tag: id,
@@ -99,6 +101,7 @@ export function buildGenerationSnapshot(
   nations.set("GBR", makeNation("GBR", gbShips));
   nations.set("FRA", makeNation("FRA", fraShips));
   return {
+    prestigeRules: FIXTURE_PRESTIGE_RULES,
     version: "0.1.0",
     turnNumber: SafeInt(1),
     campaignId: "generation-fixture",
