@@ -26,9 +26,9 @@ contract → ADRs → milestone brief → local conventions. On a genuine confli
   and run `pnpm preflight` at session start; rebase before every push.
 - Never overwrite, revert, or reformat another contributor's work. Keep commits
   narrow and Conventional.
-- Work in the single main checkout on a short-lived local branch; do not create
-  worktrees (ADR-0234, which supersedes ADR-0220). Only one session edits the
-  checkout at a time.
+- Work in the main checkout on a short-lived local branch. Up to 3 worktrees
+  (main checkout included) may exist at once, created with `pnpm worktrees new
+  <slug>` (ADR-0236, which amends ADR-0234). One session per checkout.
 - Review agents are read-only: they must not edit code, tests, commits, branches,
   or PR state.
 - Standing standards docs carry a word ceiling in

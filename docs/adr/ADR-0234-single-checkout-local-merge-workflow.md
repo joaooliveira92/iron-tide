@@ -36,3 +36,5 @@ keep features locally and merge them into `dev` locally.
 - Concurrent sessions must not share the checkout; uncommitted work is stashed
   or committed on its branch before switching.
 - History is not rewritten and nothing is force-pushed.
+
+Amended by: ADR-0236 (up to three concurrent worktrees).

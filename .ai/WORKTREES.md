@@ -38,4 +38,6 @@ Direction lives in [`ROADMAP.md`](ROADMAP.md); the backlog in
 | designer-parity-schemes | feat/designer-parity-schemes | designer-parity-schemes | orchestrator | active | feat/designer-parity-tertiary | 2026-10-18 | — |
 | designer-parity-presentation | feat/designer-parity-presentation | designer-parity-presentation | orchestrator | active | feat/designer-parity-schemes | 2026-10-18 | — |
 | designer-parity-values | feat/designer-parity-values | designer-parity-values | orchestrator | active | feat/designer-parity-presentation | 2026-10-18 | — |
+| strategic-map | feat/strategic-map-overhaul | strategic-map | orchestrator | active | dev | 2026-10-19 | — |
+| status-strip-polish | feat/status-strip-polish | status-strip-polish | orchestrator | active | dev | 2026-10-19 | — |
 <!-- worktrees:end -->

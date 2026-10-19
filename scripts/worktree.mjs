@@ -37,6 +37,9 @@ const LEDGER_BEGIN = "<!-- worktrees:begin -->";
 const LEDGER_END = "<!-- worktrees:end -->";
 const COLUMNS = ["Slug", "Branch", "Scope", "Owner", "Status", "Base", "Created", "PR"];
 
+/** Most worktrees allowed at once, main checkout included (ADR-0236). */
+export const MAX_WORKTREES = 3;
+
 /** Non-terminal subtree states. `prune` removes everything else. */
 export const TERMINAL_STATES = new Set(["merged", "gone", "phantom"]);
 
@@ -693,6 +696,14 @@ function cmdNew({ positionals: [slug], values }) {
   const rows = readLedger();
   if (rows.some((r) => r.slug === slug)) {
     console.error(`worktree "${slug}" is already registered in the ledger`);
+    process.exitCode = 1;
+    return;
+  }
+  const total = parseWorktreeList(git(["worktree", "list", "--porcelain"])).length;
+  if (total >= MAX_WORKTREES) {
+    console.error(
+      `worktree cap reached: ${total}/${MAX_WORKTREES} (main checkout included, ADR-0236); prune or remove one first`,
+    );
     process.exitCode = 1;
     return;
   }
