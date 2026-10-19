@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   Activity,
   Bell,
@@ -22,6 +22,8 @@ import { useDensity } from "./DensityContext.js";
 import {
   buildStatusStrip,
   NOT_YET_MODELLED,
+  type AllocationSegment,
+  type BudgetAllocation,
   type StatusStripModel,
   type StatusStripSummary,
   type StripRow,
@@ -31,10 +33,6 @@ import {
 /** Shared pill shell for the compact summary row (collapsed strip). */
 const CHIP =
   "inline-flex items-center gap-1.5 rounded-md border bg-muted/40 px-2 py-0.5 text-xs outline-none transition-colors hover:bg-muted focus-visible:ring-1 focus-visible:ring-ring";
-
-/** The right-aligned boxed value field, RTW3 style. */
-const VALUE_FIELD =
-  "ml-auto inline-flex min-w-16 items-center justify-end rounded-sm border bg-background/70 px-1.5 py-0 text-right text-xs leading-4 font-medium tabular-nums";
 
 const LABEL_FIELD = "flex min-w-0 items-center gap-1 text-xs leading-4 text-muted-foreground";
 
@@ -96,50 +94,237 @@ function ReadoutLabel({ row }: { readonly row: StripRow }) {
   );
 }
 
-/** One RTW3-style readout line: a label on the left and a boxed value on the right. */
-function ReadoutField({ row }: { readonly row: StripRow }) {
-  const alert = row.tone === "alert";
+/** Fill for each stacked-bar segment; the legend swatch reuses it so the two always agree. */
+const SEGMENT_FILL: Record<AllocationSegment["id"], string> = {
+  obligations: "bg-muted-foreground/60",
+  maintenance: "bg-primary/70",
+  research: "bg-warning/80",
+  construction: "border border-dashed border-primary/60 bg-primary/10",
+};
+
+function rowById(rows: readonly StripRow[], id: string): StripRow | undefined {
+  return rows.find((row) => row.id === id);
+}
+
+/** A titled card holding one group of readouts. */
+function Panel({
+  name,
+  aside,
+  className,
+  children,
+}: {
+  readonly name: string;
+  readonly aside?: string;
+  readonly className?: string;
+  readonly children: ReactNode;
+}) {
   return (
-    <div data-row={row.id} data-tone={row.tone} data-deferred={row.deferred} className="min-w-0">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1.5">
-        <ReadoutLabel row={row} />
-        <div className="flex items-center gap-1.5">
-          <span
-            className={cn(
-              VALUE_FIELD,
-              alert && "border-destructive/40 font-semibold text-destructive",
-            )}
-          >
-            {row.value}
-          </span>
-          {row.status !== undefined && <StatusBadge status={row.status} tone={row.tone} />}
-        </div>
+    <div
+      role="group"
+      aria-label={name}
+      className={cn("min-w-0 rounded-lg border bg-card/40 px-3 py-2", className)}
+    >
+      <div className="mb-1.5 flex items-baseline justify-between gap-2">
+        <h3 className="text-xs font-semibold uppercase leading-4 tracking-widest text-muted-foreground/70">
+          {name}
+        </h3>
+        {aside !== undefined && (
+          <span className="truncate text-xs font-medium text-foreground/80">{aside}</span>
+        )}
       </div>
+      {children}
     </div>
   );
 }
 
-/** One titled column of readout fields (Nation or Budget), optionally split into sub-columns. */
-function ReadoutColumn({
-  name,
-  rows,
-  multiColumn = false,
-}: {
-  readonly name: string;
-  readonly rows: readonly StripRow[];
-  readonly multiColumn?: boolean;
-}) {
+/** One headline figure: a small label over a large tabular value. */
+function StatTile({ row }: { readonly row: StripRow }) {
   return (
-    <div role="group" aria-label={name} className="min-w-0">
-      <h3 className="text-xs font-semibold uppercase leading-4 tracking-widest text-muted-foreground/60">
-        {name}
-      </h3>
-      <div className={cn("gap-x-6", multiColumn ? "columns-1 sm:columns-2" : "columns-1")}>
+    <div
+      data-row={row.id}
+      data-tone={row.tone}
+      data-deferred={row.deferred}
+      className="min-w-0 rounded-md bg-muted/40 px-2.5 py-1.5"
+    >
+      <ReadoutLabel row={row} />
+      <div className="text-base leading-6 font-semibold tabular-nums">{row.value}</div>
+    </div>
+  );
+}
+
+/** A plain label-and-value line, for the small supporting figures. */
+function LedgerLine({ row }: { readonly row: StripRow }) {
+  return (
+    <div
+      data-row={row.id}
+      data-tone={row.tone}
+      data-deferred={row.deferred}
+      className="flex items-baseline justify-between gap-3"
+    >
+      <ReadoutLabel row={row} />
+      <span
+        className={cn(
+          "text-xs font-medium tabular-nums",
+          row.tone === "alert" && "font-semibold text-destructive",
+        )}
+      >
+        {row.value}
+      </span>
+    </div>
+  );
+}
+
+/** The appropriation as one bar; the empty track is what is left after the committed lines. */
+function AllocationBar({ allocation }: { readonly allocation: BudgetAllocation }) {
+  return (
+    <div
+      role="img"
+      aria-label={`${allocation.committed.value} committed, ${allocation.committed.percent} of the monthly appropriation of ${allocation.appropriation}`}
+      className={cn(
+        "flex h-2.5 w-full gap-px overflow-hidden rounded-full bg-muted",
+        allocation.overCommitted && "ring-1 ring-destructive/50",
+      )}
+    >
+      {allocation.segments.map((segment) => (
+        <span
+          key={segment.id}
+          data-segment={segment.id}
+          className={cn(
+            "h-full first:rounded-l-full last:rounded-r-full",
+            SEGMENT_FILL[segment.id],
+          )}
+          style={{ width: `${String(Math.round(segment.fraction * 1000) / 10)}%` }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function BudgetPanel({ model }: { readonly model: StatusStripModel }) {
+  const { allocation } = model;
+  const appropriation = rowById(model.budget, "monthly-budget");
+  const committedRow = rowById(model.budget, "total-expenses");
+  return (
+    <Panel name="Budget" aside="Monthly" className="md:col-span-1">
+      <div className="space-y-2">
+        <div data-row="monthly-budget" className="flex items-baseline justify-between gap-3">
+          {appropriation === undefined ? (
+            <span className={LABEL_FIELD}>Monthly appropriation</span>
+          ) : (
+            <ReadoutLabel row={appropriation} />
+          )}
+          <span className="text-base leading-6 font-semibold tabular-nums">
+            {allocation.appropriation}
+          </span>
+        </div>
+        <AllocationBar allocation={allocation} />
+        <div className="grid gap-x-6 gap-y-0.5 sm:grid-cols-2">
+          {allocation.segments.map((segment) => {
+            const row = rowById(model.budget, segment.id);
+            return (
+              <div
+                key={segment.id}
+                data-row={segment.id}
+                className="grid grid-cols-[auto_minmax(0,1fr)_auto_2.5rem] items-baseline gap-x-1.5"
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn("size-2 self-center rounded-sm", SEGMENT_FILL[segment.id])}
+                />
+                {row === undefined ? (
+                  <span className={cn(LABEL_FIELD, "truncate")}>{segment.label}</span>
+                ) : (
+                  <ReadoutLabel row={{ ...row, label: segment.label }} />
+                )}
+                <span className="text-xs font-medium tabular-nums">{segment.value}</span>
+                <span className="text-right text-xs tabular-nums text-muted-foreground">
+                  {segment.percent}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div
+          data-row="total-expenses"
+          className="flex items-center justify-between gap-3 border-t border-border/60 pt-1.5"
+        >
+          {committedRow === undefined ? null : <ReadoutLabel row={committedRow} />}
+          <span className="flex items-center gap-1.5">
+            {allocation.overCommitted && (
+              <Badge
+                variant="outline"
+                className="border-destructive/40 bg-destructive/10 px-1.5 py-0 text-xs font-semibold uppercase tracking-wide text-destructive"
+              >
+                Over-committed
+              </Badge>
+            )}
+            <span className="text-xs font-semibold tabular-nums">{allocation.committed.value}</span>
+            <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
+              {allocation.committed.percent}
+            </span>
+          </span>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function OutlookPanel({ model }: { readonly model: StatusStripModel }) {
+  const balance = rowById(model.budget, "balance");
+  const others = ["treasury", "runway", "shortfall"].flatMap((id) => {
+    const row = rowById(model.budget, id);
+    return row === undefined ? [] : [row];
+  });
+  const alert = balance?.tone === "alert";
+  return (
+    <Panel name="Outlook">
+      <div className="space-y-2">
+        {balance !== undefined && (
+          <div
+            data-row="balance"
+            data-tone={balance.tone}
+            data-deferred={balance.deferred}
+            className={cn(
+              "rounded-md px-2.5 py-1.5",
+              alert ? "bg-destructive/10" : "bg-success/10",
+            )}
+          >
+            <ReadoutLabel row={balance} />
+            <div className="flex items-center justify-between gap-2">
+              <span
+                className={cn(
+                  "text-lg leading-7 font-semibold tabular-nums",
+                  alert && "text-destructive",
+                )}
+              >
+                {balance.value}
+              </span>
+              {balance.status !== undefined && (
+                <StatusBadge status={balance.status} tone={balance.tone} />
+              )}
+            </div>
+          </div>
+        )}
+        <div className="space-y-0.5">
+          {others.map((row) => (
+            <LedgerLine key={row.id} row={row} />
+          ))}
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function NationPanel({ model }: { readonly model: StatusStripModel }) {
+  const rows = model.nation.filter((row) => !row.deferred);
+  return (
+    <Panel name="Nation" aside={model.nationName}>
+      <div className="grid grid-cols-2 gap-1.5">
         {rows.map((row) => (
-          <ReadoutField key={row.id} row={row} />
+          <StatTile key={row.id} row={row} />
         ))}
       </div>
-    </div>
+    </Panel>
   );
 }
 
@@ -313,8 +498,8 @@ function AlertsChip({ alerts }: { readonly alerts: string }) {
 /**
  * The collapsible bottom status strip. Collapsed (the default in compact density) it is one line
  * of hoverable summary chips: balance (with a budget hover card), treasury and alerts. Expanded it
- * mirrors the RTW3 status panel: the Nation and Budget readouts as two dense columns of label and
- * boxed value fields. Every label explains itself in a tooltip, and the deferred lines live in one
+ * shows three cards: Nation (headline figures), Budget (the appropriation as a stacked bar with each
+ * line's share) and Outlook (balance, treasury, runway). Every label explains itself in a tooltip, and the deferred lines live in one
  * "Not yet modelled" popover, so the band stays short. Deficits are always spelled out in text,
  * never conveyed by colour alone.
  */
@@ -323,8 +508,6 @@ export function StatusStripView({ model }: { readonly model: StatusStripModel })
   const [chosen, setChosen] = useState<boolean | null>(null);
   const expanded = chosen ?? density !== "compact";
   const { summary } = model;
-
-  const real = (rows: readonly StripRow[]) => rows.filter((row) => !row.deferred);
 
   return (
     <section
@@ -367,9 +550,10 @@ export function StatusStripView({ model }: { readonly model: StatusStripModel })
       </div>
 
       {expanded && (
-        <div className="mt-0.5 grid gap-x-8 gap-y-0.5 border-t border-border/60 pt-0.5 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-          <ReadoutColumn name="Nation" rows={real(model.nation)} />
-          <ReadoutColumn name="Budget" rows={real(model.budget)} multiColumn />
+        <div className="mt-1 grid gap-2 border-t border-border/60 py-2 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_minmax(0,2fr)]">
+          <NationPanel model={model} />
+          <BudgetPanel model={model} />
+          <OutlookPanel model={model} />
         </div>
       )}
     </section>

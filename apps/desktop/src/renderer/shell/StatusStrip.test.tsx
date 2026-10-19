@@ -28,6 +28,7 @@ function model(balance: number) {
       status: balance < 0 ? "deficit" : "healthy",
       monthEndTreasury: 50000 + balance,
     },
+    nationName: "Britain",
     fleet: [],
     strategicAreas: [],
   } as unknown as PlayerProjection;
@@ -117,5 +118,44 @@ describe("StatusStripView", () => {
     await renderStrip(1200, "compact");
     await waitFor(() => expect(screen.queryByRole("group", { name: "Nation" })).toBeNull());
     expect(screen.getByRole("button", { name: /expand/i })).toBeTruthy();
+  });
+
+  it("draws the appropriation as a described stacked bar with a legend of shares", async () => {
+    await renderStrip();
+    const budget = screen.getByRole("group", { name: "Budget" });
+    const bar = within(budget).getByRole("img", { name: /of the monthly appropriation/i });
+    expect(bar.getAttribute("aria-label")).toContain("£3,300");
+    expect(bar.getAttribute("aria-label")).toContain("66%");
+    const maintenance = within(budget).getByText("Maintenance").closest("[data-row]");
+    expect(maintenance?.textContent).toContain("£2,000");
+    expect(maintenance?.textContent).toContain("40%");
+    expect(budget.querySelectorAll("[data-segment]").length).toBe(4);
+  });
+
+  it("names the nation and puts treasury and balance in an outlook group", async () => {
+    await renderStrip();
+    const region = screen.getByRole("region", { name: "Status strip" });
+    expect(within(region).getAllByText("Britain").length).toBeGreaterThan(0);
+    const outlook = within(region).getByRole("group", { name: "Outlook" });
+    expect(within(outlook).getByText("Treasury")).toBeTruthy();
+    expect(within(outlook).getByText("Monthly balance (projected)")).toBeTruthy();
+  });
+
+  it("says so in words when the committed lines exceed the appropriation", async () => {
+    const stub = createPreferencesBridgeStub({ ...DEFAULT_APP_PREFERENCES });
+    const base = model(100);
+    render(
+      <BridgeProvider bridge={stub.bridge}>
+        <PreferencesProvider>
+          <DensityProvider>
+            <StatusStripView
+              model={{ ...base, allocation: { ...base.allocation, overCommitted: true } }}
+            />
+          </DensityProvider>
+        </PreferencesProvider>
+      </BridgeProvider>,
+    );
+    await act(async () => {});
+    expect(screen.getByText(/over-committed/i)).toBeTruthy();
   });
 });

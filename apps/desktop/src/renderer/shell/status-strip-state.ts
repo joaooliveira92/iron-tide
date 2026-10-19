@@ -43,7 +43,30 @@ export interface StatusStripSummary {
   readonly alerts: string;
 }
 
+export interface AllocationSegment {
+  readonly id: "obligations" | "maintenance" | "research" | "construction";
+  readonly label: string;
+  readonly value: string;
+  /** `committed` lines are charged every month; `planned` is the "up to" construction bound. */
+  readonly kind: "committed" | "planned";
+  /** Share of the monthly appropriation as a whole-number percent, or "—" when there is none. */
+  readonly percent: string;
+  /** Bar width as a fraction (0..1) of the bar's scale: the larger of appropriation and outlay. */
+  readonly fraction: number;
+}
+
+/** How the monthly appropriation is spent, for the stacked bar and its legend. */
+export interface BudgetAllocation {
+  readonly appropriation: string;
+  readonly segments: readonly AllocationSegment[];
+  readonly committed: { readonly value: string; readonly percent: string };
+  /** Committed lines alone exceed the appropriation. */
+  readonly overCommitted: boolean;
+}
+
 export interface StatusStripModel {
+  readonly nationName: string;
+  readonly allocation: BudgetAllocation;
   readonly nation: readonly StripRow[];
   readonly budget: readonly StripRow[];
   /** Every deferred row from both groups, for the single "Not yet modelled" disclosure. */
@@ -86,6 +109,43 @@ function countForeignStationShips(projection: PlayerProjection, areas: StatusStr
 function alertsLabel(count: number | null): string {
   if (count === null) return "Alerts unavailable";
   return `${count} ${count === 1 ? "alert" : "alerts"}`;
+}
+
+function percentOf(amount: number, whole: number): string {
+  return whole > 0 ? `${String(Math.round((amount / whole) * 100))}%` : "—";
+}
+
+function buildAllocation(economy: PlayerProjection["economy"]): BudgetAllocation {
+  const lines = [
+    { id: "obligations", label: "Obligations", amount: economy.obligations, kind: "committed" },
+    { id: "maintenance", label: "Maintenance", amount: economy.maintenanceCost, kind: "committed" },
+    { id: "research", label: "Research", amount: economy.researchSpend, kind: "committed" },
+    {
+      id: "construction",
+      label: "Construction (up to)",
+      amount: economy.plannedConstruction,
+      kind: "planned",
+    },
+  ] as const;
+  const committed = lines.filter((l) => l.kind === "committed").reduce((n, l) => n + l.amount, 0);
+  const outlay = lines.reduce((n, l) => n + l.amount, 0);
+  const scale = Math.max(economy.monthlyAppropriation, outlay);
+  return {
+    appropriation: formatMoney(economy.monthlyAppropriation),
+    segments: lines.map((l) => ({
+      id: l.id,
+      label: l.label,
+      value: formatMoney(l.amount),
+      kind: l.kind,
+      percent: percentOf(l.amount, economy.monthlyAppropriation),
+      fraction: scale > 0 ? l.amount / scale : 0,
+    })),
+    committed: {
+      value: formatMoney(committed),
+      percent: percentOf(committed, economy.monthlyAppropriation),
+    },
+    overCommitted: committed > economy.monthlyAppropriation,
+  };
 }
 
 export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
@@ -202,6 +262,8 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
   ];
 
   return {
+    nationName: projection.nationName,
+    allocation: buildAllocation(economy),
     nation,
     budget,
     deferredRows: [...nation, ...budget].filter((r) => r.deferred),

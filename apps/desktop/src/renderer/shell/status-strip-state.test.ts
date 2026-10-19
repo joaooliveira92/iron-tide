@@ -197,4 +197,62 @@ describe("buildStatusStrip", () => {
     );
     expect(strip.deferredRows[0]?.id).toBe("prestige");
   });
+
+  it("splits the appropriation into committed lines with their share of it", () => {
+    const { allocation } = buildStatusStrip({ projection: projection(), areas, alertsCount: 0 });
+    expect(allocation.appropriation).toBe("£5,000");
+    expect(allocation.segments.map((s) => [s.id, s.kind, s.value, s.percent])).toEqual([
+      ["obligations", "committed", "£500", "10%"],
+      ["maintenance", "committed", "£2,000", "40%"],
+      ["research", "committed", "£800", "16%"],
+      ["construction", "planned", "£1,000", "20%"],
+    ]);
+    expect(allocation.committed).toEqual({ value: "£3,300", percent: "66%" });
+    expect(allocation.overCommitted).toBe(false);
+  });
+
+  it("sizes bar segments as fractions of one scale that never exceeds 1", () => {
+    const { allocation } = buildStatusStrip({ projection: projection(), areas, alertsCount: 0 });
+    const total = allocation.segments.reduce((sum, s) => sum + s.fraction, 0);
+    expect(total).toBeCloseTo(0.86, 5);
+    expect(allocation.segments.every((s) => s.fraction >= 0 && s.fraction <= 1)).toBe(true);
+  });
+
+  it("rescales to the commitments and flags over-commitment when they exceed the appropriation", () => {
+    const base = projection();
+    const { allocation } = buildStatusStrip({
+      projection: projection({ economy: { ...base.economy, monthlyAppropriation: 2000 } }),
+      areas,
+      alertsCount: 0,
+    });
+    expect(allocation.overCommitted).toBe(true);
+    expect(allocation.committed.percent).toBe("165%");
+    expect(allocation.segments.reduce((sum, s) => sum + s.fraction, 0)).toBeCloseTo(1, 5);
+  });
+
+  it("shows no percentages, and empty bars, when there is no appropriation", () => {
+    const base = projection();
+    const { allocation } = buildStatusStrip({
+      projection: projection({
+        economy: {
+          ...base.economy,
+          monthlyAppropriation: 0,
+          obligations: 0,
+          maintenanceCost: 0,
+          researchSpend: 0,
+          plannedConstruction: 0,
+        },
+      }),
+      areas,
+      alertsCount: 0,
+    });
+    expect(allocation.segments.every((s) => s.percent === "—" && s.fraction === 0)).toBe(true);
+    expect(allocation.committed.percent).toBe("—");
+    expect(allocation.overCommitted).toBe(false);
+  });
+
+  it("names the nation for the panel header", () => {
+    const strip = buildStatusStrip({ projection: projection(), areas, alertsCount: 0 });
+    expect(strip.nationName).toBe("Britain");
+  });
 });
