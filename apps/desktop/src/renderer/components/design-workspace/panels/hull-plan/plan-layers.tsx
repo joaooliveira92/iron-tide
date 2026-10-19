@@ -82,17 +82,33 @@ export function HullShapeLayer({ frame }: { readonly frame: PlanFrame }) {
   );
 }
 
+/** Where the plating band starts, as a share of the hull's half-width: just inside the outline stroke. */
+const SIDE_BAND_OUTER = 0.985;
+/** The deck edge, shared by the deck fill, the band's inner edge and the dashed deck-edge line. */
+const DECK_EDGE = 0.9;
+
+const closedPath = (points: string) => `M${points.trim().split(/\s+/).join(" L")} Z`;
+
 /**
- * The weather deck as a filled surface inside the hull plating, so the plan reads as a ship seen from above (hull
- * side lighter, deck darker) rather than an empty outline. Drawn under the section, armour and fitting layers.
+ * The weather deck as a filled surface inside the hull plating, so the plan reads as a ship seen from above (dark
+ * plating band, lighter deck, as the guide's plan diagrams draw it) rather than an empty outline. Drawn under the
+ * section, armour and fitting layers.
  */
 export function HullDeckLayer({ frame }: { readonly frame: PlanFrame }) {
   return (
-    <polygon
-      points={outlinePoints(frame, 0.9)}
-      className="pointer-events-none fill-muted-foreground/25"
-      data-testid="hull-deck-fill"
-    />
+    <>
+      <path
+        d={`${closedPath(outlinePoints(frame, SIDE_BAND_OUTER))} ${closedPath(outlinePoints(frame, DECK_EDGE))}`}
+        fillRule="evenodd"
+        className="pointer-events-none fill-muted-foreground/45"
+        data-testid="hull-side-band"
+      />
+      <polygon
+        points={outlinePoints(frame, DECK_EDGE)}
+        className="pointer-events-none fill-muted-foreground/15"
+        data-testid="hull-deck-fill"
+      />
+    </>
   );
 }
 

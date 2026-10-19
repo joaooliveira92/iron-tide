@@ -91,6 +91,15 @@ describe("HullDeckLayer", () => {
     expect(deck.getAttribute("class")).toMatch(/pointer-events-none/);
     expect(deck.getAttribute("points")).toBeTruthy();
   });
+
+  it("tones the hull side as a ring between the outline and the deck edge", () => {
+    const { container } = draw(<HullDeckLayer frame={frame} />);
+    const band = container.querySelector("[data-testid='hull-side-band']")!;
+    expect(band.getAttribute("class")).toMatch(/pointer-events-none/);
+    expect(band.getAttribute("fill-rule")).toBe("evenodd");
+    // Two closed sub-paths: the outer plating edge and the inner deck edge.
+    expect(band.getAttribute("d")!.match(/M/g)).toHaveLength(2);
+  });
 });
 
 describe("hull ends from above", () => {
