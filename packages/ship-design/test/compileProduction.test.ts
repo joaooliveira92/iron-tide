@@ -1,264 +1,238 @@
 // The production parts compile boundary (ship-part-model ticket 11d, AC 7). A design carried as
-// a `DesignHeader` + `DesignLoadout` compiles through `compileDesignFromLoadout`: the inverse
-// readers rebuild the draft, `validateLoadoutFit` runs first, and `compileDesign` is reached only
+// a `DesignHeader` + `DesignLoadout` compiles through `compileDesignFromLoadout`: each referenced
+// part is resolved once, `validateLoadoutFit` runs first, and `compileResolved` is reached only
 // through `deriveAfterFit`. An invalid loadout exposes fit information and no derived metric, so
 // no production caller can obtain metrics for a loadout that does not fit.
+//
+// The fit validates the same part records the resolver reads, and the ledger is derived from
+// those records: a part's quantity edited in the model reaches the compiled component weight,
+// and a part's lifecycle edited in the model is what the fit rejects.
 
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
-  LoadoutSchema,
+  FlattenedPartSchema,
+  PlatformSchema,
+  ReferenceDesignLoadoutSchema,
+  SlotTemplateSchema,
   decodeStrict,
+  parseYamlSafe,
   type FlattenedPart,
-  type LoadoutData,
-  type LoadoutEntryData,
+  type ReferenceDesignLoadoutData,
+  type SlotTemplateData,
+  type PlatformData,
 } from "@bluewave/content-schema";
-import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
+import { canonicalSerialize } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
 import {
-  buildArmourPartModel,
-  buildFittingPartModel,
-  buildLauncherPartModel,
-  buildPlantPartModel,
   buildProductionPartModel,
-  catalogueForNation,
   compileDesign,
   compileDesignFromLoadout,
-  headerFromDraft,
-  translateArmourRegion,
-  translateFittingPlacement,
-  translateMachinery,
-  translateTubePlacement,
-  type FitMountCountRanges,
   type ProductionCompile,
+  type ProductionPartModel,
 } from "../src/index.js";
-import {
-  components,
-  navalProfiles,
-  nationalContext,
-  plants,
-  shipBalance,
-} from "./helpers/earlyContext.js";
-import {
-  compatibility,
-  designs,
-  gunPlacements,
-  present,
-  resolveRow,
-  type Design,
-} from "./helpers/gunReadPath.js";
-import { torpedoDiameterUm } from "./helpers/torpedoModels.js";
+import { nationalContext, readReferenceDesignEntries } from "./helpers/earlyContext.js";
 
-const WEAPON = new Set(["MAIN_GUN", "SECONDARY_GUN", "DUAL_PURPOSE_GUN", "AA_WEAPON"]);
-const categoryOf = (id: string) => components.find((c) => c.id === id)?.category;
+const shipBuilding = join(
+  import.meta.dirname,
+  "..",
+  "..",
+  "..",
+  "content",
+  "production",
+  "1880",
+  "ship-building",
+);
 
-const fittingModel = buildFittingPartModel({ components });
-const plantModel = buildPlantPartModel({ plants });
-const armourModel = buildArmourPartModel({ armour: shipBalance.armour });
-const launcherModel = buildLauncherPartModel({
-  components,
-  profiles: navalProfiles,
-  torpedoDiameterUm,
-});
-
-interface ProductionDesign {
-  readonly design: Design;
-  readonly loadout: LoadoutData;
-  readonly header: ReturnType<typeof headerFromDraft>;
-  readonly parts: readonly FlattenedPart[];
-  readonly ranges: FitMountCountRanges;
+function readYaml(path: string): Record<string, unknown> {
+  const collector = { addError: () => undefined, hasErrors: false } as never;
+  const parsed = parseYamlSafe(readFileSync(path, "utf8"), path, collector);
+  if (!parsed.success) throw new Error(`bad YAML: ${path}`);
+  return parsed.data as Record<string, unknown>;
 }
 
-function productionDesign(design: Design): ProductionDesign {
-  const nationId = design.draft.nationId;
-  const profile = present(
-    navalProfiles.find((p) => p.nationId === nationId),
-    nationId,
+const parts: FlattenedPart[] = readdirSync(join(shipBuilding, "parts"))
+  .filter((name) => name.endsWith(".yaml"))
+  .flatMap((name) =>
+    (readYaml(join(shipBuilding, "parts", name))["parts"] as unknown[]).map((record) =>
+      decodeStrict(FlattenedPartSchema, record),
+    ),
   );
-  const applied = catalogueForNation(components, profile, design.month).appliedModels;
-  const entries: LoadoutEntryData[] = [];
-  const parts: FlattenedPart[] = [];
-  const ranges: Record<string, { min: number; max: number; step: number }> = {};
-  for (const placement of design.draft.placements) {
-    const category = categoryOf(placement.componentId);
-    if (category === "TORPEDO_TUBE") {
-      const t = present(
-        translateTubePlacement({
-          designId: design.id,
-          placement,
-          nationId,
-          model: launcherModel,
-          appliedModels: applied,
-        }).translation,
-        placement.instanceId,
-      );
-      entries.push(t.entry);
-      parts.push(t.launcherPart);
-      const tubes = components.find((c) => c.id === placement.componentId)?.parameters["tubes"];
-      if (tubes !== undefined) ranges[t.launcherPart.id] = tubes;
-    } else if (WEAPON.has(category ?? "")) {
-      const row = present(
-        gunPlacements.find((g) => g.design.id === design.id && g.placement === placement),
-        placement.instanceId,
-      );
-      const t = present(resolveRow(row).translation, placement.instanceId);
-      entries.push(t.entry);
-      parts.push(t.mountPart, t.gunPart);
-    } else {
-      const t = present(
-        translateFittingPlacement({ designId: design.id, placement, model: fittingModel })
-          .translation,
-        placement.instanceId,
-      );
-      entries.push(t.entry);
-      parts.push(t.record.part);
-      const counted = t.record.countParameter;
-      const range = counted === null ? undefined : t.record.legacy.parameters[counted];
-      if (range !== undefined) ranges[t.record.part.id] = range;
+const platforms: PlatformData[] = (
+  readYaml(join(shipBuilding, "platforms.yaml"))["platforms"] as unknown[]
+).map((record) => decodeStrict(PlatformSchema, record));
+const slotTemplates: SlotTemplateData[] = (
+  readYaml(join(shipBuilding, "slot-templates.yaml"))["slotTemplates"] as unknown[]
+).map((record) => decodeStrict(SlotTemplateSchema, record));
+const loadouts: ReferenceDesignLoadoutData[] = readdirSync(join(shipBuilding, "design-loadouts"))
+  .filter((name) => name.endsWith(".yaml"))
+  .flatMap((name) =>
+    (readYaml(join(shipBuilding, "design-loadouts", name))["designs"] as unknown[]).map((record) =>
+      decodeStrict(ReferenceDesignLoadoutSchema, record),
+    ),
+  );
+
+const model = buildProductionPartModel({ parts, slotTemplates, platforms });
+const legacyById = new Map(readReferenceDesignEntries().map((d) => [d.id, d] as const));
+
+/**
+ * Drop the compiled-torpedo contract (and the design hash that covers it) before comparing to
+ * the legacy compile: the parts pipeline resolves the neutral `CompiledTorpedo` onto each tube
+ * mount, and the legacy path has no parts to compile.
+ */
+function stripCompiledTorpedo(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stripCompiledTorpedo);
+  if (value !== null && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, inner] of Object.entries(value as Record<string, unknown>)) {
+      if (key === "compiledTorpedo" || key === "hash") continue;
+      out[key] = stripCompiledTorpedo(inner);
     }
+    return out;
   }
-  const machinery = present(
-    translateMachinery({
-      designId: design.id,
-      machinery: design.draft.machinery,
-      model: plantModel,
-    }).translation,
-    `${design.id} machinery`,
-  );
-  entries.push(machinery.entry);
-  parts.push(machinery.plantPart);
-  design.draft.armour.regions.forEach((region, index) => {
-    const t = present(
-      translateArmourRegion({ designId: design.id, index, region, model: armourModel }).translation,
-      `${design.id} armour ${index}`,
-    );
-    entries.push(t.entry);
-    parts.push(t.materialPart);
-  });
-  return {
-    design,
-    header: headerFromDraft(design.draft),
-    loadout: decodeStrict(LoadoutSchema, { platform: design.draft.hull.hullFormId, entries }),
-    parts,
-    ranges,
-  };
+  return value;
 }
 
-const uniqueParts = (parts: readonly FlattenedPart[]): FlattenedPart[] => {
-  const byId = new Map<string, FlattenedPart>();
-  for (const part of parts) byId.set(part.id, part);
-  return [...byId.values()].sort((a, b) => compareCodePoints(a.id, b.id));
-};
-
-const all: readonly ProductionDesign[] = designs.map(productionDesign);
-
-const modelFor = (d: ProductionDesign) =>
-  buildProductionPartModel({
-    parts: uniqueParts(d.parts),
-    slotTemplates: compatibility.slotTemplates,
-    platforms: compatibility.platforms,
-  });
-
-const compile = (d: ProductionDesign, loadout: LoadoutData = d.loadout): ProductionCompile =>
+const compile = (
+  loadout: ReferenceDesignLoadoutData,
+  partModel: ProductionPartModel = model,
+): ProductionCompile =>
   compileDesignFromLoadout({
-    designId: d.design.id,
-    header: d.header,
-    loadout,
-    model: modelFor(d),
-    month: d.design.month,
-    nation: { nationId: d.design.draft.nationId },
-    mountCountRanges: d.ranges,
-    ctx: nationalContext(d.design.month, d.design.draft.nationId),
+    designId: loadout.id,
+    header: loadout.header,
+    loadout: loadout.loadout,
+    model: partModel,
+    month: loadout.month,
+    nation: { nationId: loadout.header.nation },
+    ctx: nationalContext(loadout.month, loadout.header.nation),
   });
 
 describe("production compile from a parts loadout (ticket 11d)", () => {
   it("compiles every production design through the barrier and matches the legacy result", () => {
-    for (const d of all) {
-      const result = compile(d);
-      expect(result.status, d.design.id).toBe("ACCEPTED");
+    for (const loadout of loadouts) {
+      const result = compile(loadout);
+      expect(result.status, loadout.id).toBe("ACCEPTED");
       if (result.status !== "ACCEPTED") continue;
-      const legacy = compileDesign(
-        d.design.draft,
-        nationalContext(d.design.month, d.design.draft.nationId),
+      const legacy = legacyById.get(loadout.id)!;
+      const legacyCompiled = compileDesign(
+        legacy.draft,
+        nationalContext(loadout.month, legacy.draft.nationId),
       );
-      expect(canonicalSerialize(result.compiled), d.design.id).toBe(canonicalSerialize(legacy));
+      expect(canonicalSerialize(stripCompiledTorpedo(result.compiled)), loadout.id).toBe(
+        canonicalSerialize(stripCompiledTorpedo(legacyCompiled)),
+      );
     }
   });
 
   it("exposes no derived metric for a loadout that does not fit", () => {
-    const d = present(all[0], "a design");
-    const broken: LoadoutData = {
-      ...d.loadout,
-      entries: d.loadout.entries.map((entry) =>
+    const loadout = loadouts[0]!;
+    const broken = {
+      ...loadout.loadout,
+      entries: loadout.loadout.entries.map((entry) =>
         entry.params?.["installedKw"] === undefined
           ? entry
           : { ...entry, params: { installedKw: 99_999_999 } },
       ),
     };
-    const result = compile(d, broken);
+    const result = compile({ ...loadout, loadout: broken });
     expect(result.status).toBe("REJECTED");
     if (result.status !== "REJECTED") return;
     expect(result.findings.length).toBeGreaterThan(0);
     expect("compiled" in result).toBe(false);
   });
 
-  it("refuses a loadout whose parts the inverse readers cannot rebuild", () => {
-    const d = present(all[0], "a design");
-    const unknown: LoadoutData = {
-      ...d.loadout,
-      entries: d.loadout.entries.map((entry) =>
-        entry.part === d.loadout.entries[0]!.part ? { ...entry, part: "no_such_part" } : entry,
+  it("refuses a loadout whose part the resolver cannot read", () => {
+    const loadout = loadouts[0]!;
+    const unknown = {
+      ...loadout.loadout,
+      entries: loadout.loadout.entries.map((entry) =>
+        entry.part === loadout.loadout.entries[0]!.part
+          ? { ...entry, part: "no_such_part" }
+          : entry,
       ),
     };
-    const result = compile(d, unknown);
+    const result = compile({ ...loadout, loadout: unknown });
     expect(result.status).toBe("UNTRANSLATED");
     if (result.status !== "UNTRANSLATED") return;
-    expect(result.issues.length).toBeGreaterThan(0);
+    expect(result.issues.map((i) => i.code)).toContain("RESOLVE_UNKNOWN_PART");
   });
 
   it("a visual-only change leaves every derived metric and the compiled design identical (I-14)", () => {
-    const d = present(all[0], "a design");
-    const baseline = compile(d);
+    const loadout = loadouts[0]!;
+    const baseline = compile(loadout);
     expect(baseline.status).toBe("ACCEPTED");
     if (baseline.status !== "ACCEPTED") return;
-    const target = d.parts[0]!.id;
-    const withVisual = d.parts.map((p) =>
-      p.id === target
+    const target = loadout.loadout.entries[0]!.part;
+    const withVisual = parts.map((part) =>
+      part.id === target
         ? {
-            ...p,
+            ...part,
             visual: { traits: { enclosure: { value: "enclosed" as const, reason: "I-14" } } },
           }
-        : p,
+        : part,
     );
-    const model = buildProductionPartModel({
-      parts: uniqueParts(withVisual),
-      slotTemplates: compatibility.slotTemplates,
-      platforms: compatibility.platforms,
-    });
-    const result = compileDesignFromLoadout({
-      designId: d.design.id,
-      header: d.header,
-      loadout: d.loadout,
-      model,
-      month: d.design.month,
-      nation: { nationId: d.design.draft.nationId },
-      mountCountRanges: d.ranges,
-      ctx: nationalContext(d.design.month, d.design.draft.nationId),
-    });
+    const result = compile(
+      loadout,
+      buildProductionPartModel({ parts: withVisual, slotTemplates, platforms }),
+    );
     expect(result.status).toBe("ACCEPTED");
     if (result.status !== "ACCEPTED") return;
     expect(canonicalSerialize(result.compiled)).toBe(canonicalSerialize(baseline.compiled));
   });
 
-  it("reaches derivation only through the barrier: REJECTED never carries compiled metrics", () => {
-    const d = present(all[0], "a design");
-    const broken = compile(d, {
-      ...d.loadout,
-      entries: d.loadout.entries.map((entry) =>
-        entry.params?.["installedKw"] === undefined
-          ? entry
-          : { ...entry, params: { installedKw: 0 } },
-      ),
+  it("derives the ledger from the same part record the fit validated", () => {
+    const loadout = loadouts[0]!;
+    const baseline = compile(loadout);
+    expect(baseline.status).toBe("ACCEPTED");
+    if (baseline.status !== "ACCEPTED") return;
+    // A quantity the ledger reads, on a part the entry mounts once, so the expectation is exact.
+    const entry = loadout.loadout.entries.find((e) => {
+      if ((e.mountCount ?? 1) !== 1) return false;
+      const part = model.partOf(e.part);
+      return part?.quantities.some((q) => q.kind === "massKg" && q.basis === "PER_PART_UNIT");
     });
-    expect(["REJECTED", "NOT_EVALUABLE"]).toContain(broken.status);
-    expect(Object.hasOwn(broken, "compiled")).toBe(false);
+    expect(entry, "a singly-mounted part with a mass quantity").toBeDefined();
+    if (entry === undefined) return;
+    const part = model.partOf(entry.part)!;
+    const deltaKg = 1234;
+    const heavier = parts.map((p) =>
+      p.id === part.id
+        ? {
+            ...p,
+            quantities: p.quantities.map((q) =>
+              q.kind === "massKg" && q.basis === "PER_PART_UNIT"
+                ? { ...q, value: q.value + deltaKg }
+                : q,
+            ),
+          }
+        : p,
+    );
+    const result = compile(
+      loadout,
+      buildProductionPartModel({ parts: heavier, slotTemplates, platforms }),
+    );
+    expect(result.status).toBe("ACCEPTED");
+    if (result.status !== "ACCEPTED") return;
+    const before = baseline.compiled.components.find((c) => c.instanceId === entry.id)!;
+    const after = result.compiled.components.find((c) => c.instanceId === entry.id)!;
+    expect(after.weightKg - before.weightKg).toBe(deltaKg);
+  });
+
+  it("rejects a part the model makes unavailable, so fit and ledger cannot disagree", () => {
+    const loadout = loadouts[0]!;
+    const target = loadout.loadout.entries[0]!.part;
+    const unavailable = parts.map((part) =>
+      part.id === target
+        ? { ...part, lifecycle: { ...part.lifecycle, availableFrom: "9999-01" } }
+        : part,
+    );
+    const result = compile(
+      loadout,
+      buildProductionPartModel({ parts: unavailable, slotTemplates, platforms }),
+    );
+    expect(result.status).toBe("REJECTED");
+    if (result.status !== "REJECTED") return;
+    expect(result.findings.map((f) => f.id)).toContain("FIT_NOT_YET_AVAILABLE");
+    expect(Object.hasOwn(result, "compiled")).toBe(false);
   });
 });

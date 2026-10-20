@@ -8,9 +8,10 @@
  * barrier as the reference designs (`compileDesignFromLoadout`). Nothing here reads
  * `ctx.catalogue` for a placement: the catalogue is legacy and the parts are authoritative.
  *
- * The conversion mirrors the proven equivalence path (the read-path adapters, as the candidate
- * pipeline composes them); the round-trip test proves a draft compiles byte-identically through
- * this barrier and through the legacy `compileDesign`.
+ * The loadout references the pack's complete parts, looked up by the id each adapter resolves;
+ * the adapters only decide *which* part a placement uses, never what it contains. The
+ * round-trip test proves a draft compiles byte-identically through this barrier and through the
+ * legacy `compileDesign`.
  */
 import type {
   DesignHeaderData,
@@ -36,6 +37,7 @@ import { buildGunPartModel, gunKey, type GunPartRequest } from "./gunPartAdapter
 import type { PropulsionPlant } from "./machinery.js";
 import type { NationNavalProfile } from "./nationProfile.js";
 import type { CompatibilityModel } from "./partCompatibility.js";
+import { mountPartIdFor } from "./partCatalogue.js";
 import { headerFromDraft } from "./partCatalogueReaders.js";
 import type {
   FitAmmunitionCompatibility,
@@ -69,6 +71,8 @@ export interface DraftCompileContent {
   readonly compatibility: CompatibilityModel;
   /** The structured diameter (µm) of a torpedo model, for the launcher read path. */
   readonly torpedoDiameterUm: (torpedoModelId: string) => number | undefined;
+  /** The pack's complete parts: the loadout references these, not the adapters' records. */
+  readonly parts: readonly FlattenedPart[];
 }
 
 /** A placement or design fact that could not be translated to a part, with its reason. */
@@ -131,14 +135,26 @@ export function draftToLoadout(input: {
     requests,
   });
 
+  const production = new Map(content.parts.map((part) => [part.id, part] as const));
   const entries: LoadoutEntryData[] = [];
   const referenced = new Map<string, FlattenedPart>();
   const ranges: Record<string, { min: number; max: number; step: number }> = {};
   const untranslated: DraftTranslationIssue[] = [];
   const at = (instanceId: string, field: string) =>
     `${designId}.${instanceId}${field === "" ? "" : `.${field}`}`;
-  const reference = (part: FlattenedPart): void => {
+  /** The pack's complete part an adapter resolved, or a typed missing-part issue. */
+  const reference = (id: string, path: string): FlattenedPart | null => {
+    const part = production.get(id);
+    if (part === undefined) {
+      untranslated.push({
+        code: "PART_READ_PATH_MISSING_PART",
+        path,
+        message: `The pack has no part '${id}', so the placement cannot be compiled.`,
+      });
+      return null;
+    }
     referenced.set(part.id, part);
+    return part;
   };
 
   for (const placement of draft.placements) {
@@ -160,10 +176,18 @@ export function draftToLoadout(input: {
         });
         continue;
       }
+      const launcher = reference(r.translation.launcherPart.id, at(placement.instanceId, "part"));
+      if (launcher === null) continue;
+      // The resolver compiles the torpedo a launcher loads, so the loadout depends on that part
+      // even though no entry references it directly.
+      const loaded =
+        launcher.family === "torpedo_launcher" ? launcher.spec.loadsTorpedo : undefined;
+      if (loaded !== undefined && reference(loaded, at(placement.instanceId, "torpedo")) === null) {
+        continue;
+      }
       entries.push(r.translation.entry);
-      reference(r.translation.launcherPart);
-      const tubes = component?.parameters["tubes"];
-      if (tubes !== undefined) ranges[r.translation.launcherPart.id] = tubes;
+      const tubes = launcher.entryUnits ?? component?.parameters["tubes"];
+      if (tubes !== undefined) ranges[launcher.id] = tubes;
     } else if (category !== undefined && WEAPON_GUN.has(category)) {
       const gun = gunModel.byRequest.get(gunKey(nationId, placement.componentId));
       if (gun === undefined) {
@@ -190,9 +214,14 @@ export function draftToLoadout(input: {
         });
         continue;
       }
-      entries.push(t.entry);
-      reference(t.mountPart);
-      reference(t.gunPart);
+      // A central battery is already canonical; every other multi-gun mount is cut from its
+      // legacy record by gun count, exactly as the part catalogue names it.
+      const mountId =
+        t.disposition !== null ? t.mountPart.id : mountPartIdFor(t.legacyMountId, t.gunsPerMount);
+      const mount = reference(mountId, at(placement.instanceId, "part"));
+      const gunPart = reference(t.gunPart.id, at(placement.instanceId, "gun"));
+      if (mount === null || gunPart === null) continue;
+      entries.push({ ...t.entry, part: mount.id });
     } else {
       const r = translateFittingPlacement({ designId, placement, model: fittingModel });
       if (r.translation === null) {
@@ -203,11 +232,14 @@ export function draftToLoadout(input: {
         });
         continue;
       }
+      const fitting = reference(r.translation.record.part.id, at(placement.instanceId, "part"));
+      if (fitting === null) continue;
       entries.push(r.translation.entry);
-      reference(r.translation.record.part);
       const counted = r.translation.record.countParameter;
-      const range = counted === null ? undefined : r.translation.record.legacy.parameters[counted];
-      if (range !== undefined) ranges[r.translation.record.part.id] = range;
+      const range =
+        fitting.entryUnits ??
+        (counted === null ? undefined : r.translation.record.legacy.parameters[counted]);
+      if (range !== undefined) ranges[fitting.id] = range;
     }
   }
 
@@ -218,9 +250,8 @@ export function draftToLoadout(input: {
       path: `${designId}.machinery`,
       message: machinery.untranslated.message,
     });
-  } else {
+  } else if (reference(machinery.translation.plantPart.id, `${designId}.machinery`) !== null) {
     entries.push(machinery.translation.entry);
-    reference(machinery.translation.plantPart);
   }
 
   draft.armour.regions.forEach((region, index) => {
@@ -231,9 +262,10 @@ export function draftToLoadout(input: {
         path: `${designId}.armour[${String(index)}]`,
         message: r.untranslated.message,
       });
-    } else {
+    } else if (
+      reference(r.translation.materialPart.id, `${designId}.armour[${String(index)}]`) !== null
+    ) {
       entries.push(r.translation.entry);
-      reference(r.translation.materialPart);
     }
   });
 
@@ -252,7 +284,6 @@ export type DraftCompileResult =
   | {
       readonly status: "ACCEPTED";
       readonly fit: FitResult;
-      readonly draft: DesignDraft;
       readonly compiled: CompiledDesign;
     }
   | {

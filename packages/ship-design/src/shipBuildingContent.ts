@@ -18,6 +18,7 @@ import { checkStudyBalance, type StudyBalance } from "./study.js";
 import { buildYards } from "./yards.js";
 import { catalogueForNation } from "./componentVariants.js";
 import { type NationNavalProfile, resolveNavalProfile } from "./nationProfile.js";
+import { compareCodePoints } from "@bluewave/deterministic";
 import type { AuthoredArmamentContent } from "./armamentContent.js";
 import type { StarterDesign } from "./shipTypeRoster.js";
 import type { DesignDraft } from "./compileShared.js";
@@ -234,7 +235,7 @@ export function buildShipBuildingContent(data: ShipBuildingData): ShipBuildingCo
     return part.spec.diameterUm;
   };
   const draftCompileContent: DraftCompileContent | undefined =
-    data.armament === undefined
+    data.armament === undefined || data.partModel === undefined
       ? undefined
       : {
           components: data.components,
@@ -244,6 +245,9 @@ export function buildShipBuildingContent(data: ShipBuildingData): ShipBuildingCo
           armour: ship.armour,
           compatibility,
           torpedoDiameterUm,
+          parts: Object.values(data.partModel.partIndex.byId).sort((a, b) =>
+            compareCodePoints(a.id, b.id),
+          ),
         };
   // The authoritative source of reference designs is the parts loadouts when the pack carries
   // them; the legacy `referenceDesigns` array remains the equivalence-harness baseline.

@@ -1,4 +1,4 @@
-import type { CompiledDesign, DesignDraft } from "./compile.js";
+import type { CompiledDesign, DesignIntent } from "./compileShared.js";
 import {
   classPredicates,
   classRuleFailures,
@@ -32,7 +32,7 @@ const GUN_CATEGORIES: readonly string[] = ["MAIN_GUN", "SECONDARY_GUN", "DUAL_PU
 /** Reads the facts out of a compiled design. Main-gun turret count is the number of main-gun mounts fitted. */
 export function classFacts(
   c: Pick<CompiledDesign, "totalKg" | "machinery" | "components">,
-  d: DesignDraft,
+  d: DesignIntent,
   rules: Pick<ClassificationRules, "clMaxGunUm"> = DESIGN_22_EARLY,
   merchantHull = false,
 ): ClassFacts {

@@ -21,11 +21,14 @@ import type { Finding } from "./findings.js";
 import { hasBlocking, sortFindings, withoutSubjects } from "./findings.js";
 import { withRuleSubject } from "./findingSubjects.js";
 import { compileStability, type StabilityResult } from "./stability.js";
+import type { PropulsionPlant } from "./machinery.js";
 import {
-  num,
   type CompiledDesign,
   type ComponentSummary,
   type DesignDraft,
+  type DesignIntent,
+  type Resolved,
+  type ShipBalance,
   type ShipContext,
 } from "./compileShared.js";
 import {
@@ -42,6 +45,7 @@ export type {
   MachineryPlan,
   DesignRequirement,
   DesignDraft,
+  DesignIntent,
   HullFormData,
   Facility,
   TreatyLimits,
@@ -49,17 +53,49 @@ export type {
   ShipContext,
   CompiledDesign,
   ComponentSummary,
+  Resolved,
+  ResolvedTorpedoMount,
 } from "./compileShared.js";
 
+/** Facts the caller resolves from parts instead of the shared balance. */
+export interface CompileResolvedOptions {
+  /** The balance to compile against; defaults to the context's. */
+  readonly balance?: ShipBalance;
+}
+
+/**
+ * Resolve a legacy draft and compile it. The legacy path resolves each placement from its
+ * `ComponentDef`; the production path resolves parts first and calls `compileResolved` directly.
+ */
 export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDesign {
-  const b = ctx.balance;
   const findings: Finding[] = [];
-  const formData = ctx.hullForms[draft.hull.hullFormId];
-  if (!formData) throw new Error(`unknown hull form '${draft.hull.hullFormId}'`);
+  if (ctx.hullForms[draft.hull.hullFormId] === undefined)
+    throw new Error(`unknown hull form '${draft.hull.hullFormId}'`);
   const plant = ctx.plants.find((p) => p.id === draft.machinery.plantId);
   if (!plant) throw new Error(`unknown plant '${draft.machinery.plantId}'`);
   const catalogue = new Map(ctx.catalogue.map((c) => [c.id, c]));
-  const intended = draft.requirement.category;
+
+  // 1. Technology availability and parameter validity (stage VALIDATE_TECHNOLOGY)
+  const resolved = resolveDesignComponents(draft, ctx, catalogue, plant, findings);
+  return compileResolved(draft, plant, resolved, ctx, findings);
+}
+
+/**
+ * Compile an already-resolved design: the intent, its plant, and every placement's resolved
+ * part facts. Findings accumulate into `findings`; corruption in the context throws.
+ */
+export function compileResolved(
+  intent: DesignIntent,
+  plant: PropulsionPlant,
+  resolved: readonly Resolved[],
+  ctx: ShipContext,
+  findings: Finding[],
+  options: CompileResolvedOptions = {},
+): CompiledDesign {
+  const b = options.balance ?? ctx.balance;
+  const formData = ctx.hullForms[intent.hull.hullFormId];
+  if (!formData) throw new Error(`unknown hull form '${intent.hull.hullFormId}'`);
+  const intended = intent.requirement.category;
   // The compiled ship-type registry when the context carries content (ADR-0156, ticket 12b); absent
   // falls back to the code registry inside each consumer. Classification outcomes are identical
   // because the 12a regression pins the content records to the code values.
@@ -74,14 +110,12 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
     ...(shipTypes === undefined ? {} : { definitions: shipTypes.byId }),
   });
 
-  // 1. Technology availability and parameter validity (stage VALIDATE_TECHNOLOGY)
-  const resolved = resolveDesignComponents(draft, ctx, catalogue, plant, findings);
   const byId = new Map(resolved.map((r) => [r.spec.instanceId, r]));
-  const hull = draft.hull;
+  const hull = intent.hull;
 
   // 2-3. Weapons, then machinery/systems.
   const { weapons, ammoById, gunRes, armaments } = compileWeaponSet({
-    draft,
+    draft: intent,
     ctx,
     resolved,
     byId,
@@ -89,7 +123,7 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
     findings,
   });
   const { systems, machineryRaw } = compileSystemsAndMachinery({
-    draft,
+    draft: intent,
     ctx,
     resolved,
     gunRes,
@@ -100,7 +134,7 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
 
   // 4-5. Armour + hull + displacement ledger.
   const { hullRes, armour } = compileStructure({
-    draft,
+    draft: intent,
     ctx,
     resolved,
     plant,
@@ -114,7 +148,7 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
 
   // 6. Arrangement
   const { arrangement, rooms, roomPart } = buildPlacementsAndArrangement({
-    draft,
+    draft: intent,
     resolved,
     plant,
     machineryRaw,
@@ -126,7 +160,7 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
 
   // 7. Stability: every ledger kilogram becomes a weight lump
   const lumps = buildStabilityLumps({
-    draft,
+    draft: intent,
     resolved,
     hull,
     formData,
@@ -139,11 +173,11 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
     roomPart,
     armour,
   });
-  const window = b.stabilityWindowByCategory[draft.requirement.category];
+  const window = b.stabilityWindowByCategory[intent.requirement.category];
   // A type that is not available has no window by definition and is rejected by a finding below, not by a throw. An
   // available type without one is a content error.
   if (!window && availability.available)
-    throw new Error(`no stability window for category '${draft.requirement.category}'`);
+    throw new Error(`no stability window for category '${intent.requirement.category}'`);
   let stability: StabilityResult | null = null;
   if (window && !hasBlocking(hullRes.findings) && lumps.reduce((a, l) => a + l.kg, 0) > 0) {
     stability = compileStability(
@@ -167,20 +201,17 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
 
   const components: ComponentSummary[] = resolved.map((r) => ({
     instanceId: r.spec.instanceId,
-    componentId: r.def.id,
-    category: r.def.category,
+    componentId: r.componentId,
+    category: r.category,
     weightKg: r.weightKg,
     costMicro: r.costMicro,
-    maintenanceMonthlyBp: r.def.maintenanceMonthlyBp ?? 0,
-    buildWorkMicro:
-      r.def.buildWorkMicro === undefined
-        ? null
-        : num(r.def.buildWorkMicro, { ...r.def.constants, ...r.params }),
-    productionLine: r.def.productionLine ?? null,
-    requires: r.def.requires,
+    maintenanceMonthlyBp: r.maintenanceMonthlyBp,
+    buildWorkMicro: r.buildWorkMicro,
+    productionLine: r.productionLine,
+    requires: r.requires,
     params: r.params,
     attr: r.attr,
-    torpedoMount: r.def.torpedoMount ?? null,
+    torpedoMount: r.torpedoMount,
     ...(armaments.has(r.spec.instanceId) ? { armament: armaments.get(r.spec.instanceId)! } : {}),
   }));
 
@@ -191,7 +222,7 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
   const rules = b.classification ?? DESIGN_22_EARLY;
   const facts = classFacts(
     { totalKg: hullRes.totalKg, machinery: machineryRaw, components },
-    draft,
+    intent,
     rules,
     formData.traits?.includes("merchant_derived") ?? false,
   );
@@ -209,21 +240,22 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
           colonialServiceEligibility({
             displacementKg: hullRes.totalKg,
             cruiseRangeNm: machineryRaw?.rangeNmAtCruise ?? 0,
-            accommodation: draft.requirement.accommodationStandard,
+            accommodation: intent.requirement.accommodationStandard,
             campaignAllows: ctx.colonialServiceAllowed ?? true,
           }),
         ),
       );
   }
 
-  const colonialService = colonialFitting(draft, ctx);
+  const colonialService = colonialFitting(intent, ctx);
   findings.push(...colonialFittingFindings(colonialService));
 
   // 8. Dock, treaty, modernization
   const total = hullRes.totalKg;
   collectDockTreatyModernizationFindings({
-    draft,
+    draft: intent,
     ctx,
+    b,
     resolved,
     total,
     reserveKg: hullRes.ledger.reserve,
@@ -236,7 +268,7 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
     "CITADEL_INCOMPLETE",
   ]);
   const adjusted =
-    draft.requirement.protectionGoal === "NONE"
+    intent.requirement.protectionGoal === "NONE"
       ? findings.map((x) => (protectionIds.has(x.id) ? { ...x, severity: "ADVISORY" as const } : x))
       : findings;
   const sorted = sortFindings(adjusted.map(withRuleSubject));

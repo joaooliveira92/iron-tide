@@ -1,7 +1,7 @@
 /**
  * The production derivation barrier (ship-part-model I-10, ticket 11a).
  *
- * `compileDesign` is the derivation itself: stages that turn a resolved design into its
+ * `compileResolved` is the derivation itself: stages that turn a resolved design into its
  * metrics. This wrapper decides whether that derivation may run at all. The fit stage runs
  * first and `deriveAfterFit` is the only path to `derive`, so a rejected or non-evaluable
  * loadout yields fit findings and no derived metric of any kind.
@@ -46,6 +46,26 @@ function fitFindings(fit: FitResult): Finding[] {
 
 /**
  * Run the fit check, then derive only when it is `ACCEPTED`. `check` and `derive` are
+ * injected so the caller owns what is fitted and what is derived; production fits a parts
+ * loadout and derives from its one resolution, while the reference path fits a draft.
+ */
+export function compileThroughFit(
+  check: () => FitResult,
+  derive: () => CompiledDesign,
+): FitCheckedCompile {
+  const outcome = deriveAfterFit(check(), derive);
+  if (outcome.derived) {
+    return { status: "ACCEPTED", fit: outcome.fit, compiled: outcome.value };
+  }
+  return {
+    status: outcome.fit.status === "NOT_EVALUABLE" ? "NOT_EVALUABLE" : "REJECTED",
+    fit: outcome.fit,
+    findings: fitFindings(outcome.fit),
+  };
+}
+
+/**
+ * Run the fit check, then derive only when it is `ACCEPTED`. `check` and `derive` are
  * injected so the caller owns how a draft becomes a loadout; `derive` defaults to
  * `compileDesign`.
  */
@@ -55,13 +75,8 @@ export function compileDesignThroughFit(
   check: (draft: DesignDraft) => FitResult,
   derive: (draft: DesignDraft, ctx: ShipContext) => CompiledDesign = compileDesign,
 ): FitCheckedCompile {
-  const outcome = deriveAfterFit(check(draft), () => derive(draft, ctx));
-  if (outcome.derived) {
-    return { status: "ACCEPTED", fit: outcome.fit, compiled: outcome.value };
-  }
-  return {
-    status: outcome.fit.status === "NOT_EVALUABLE" ? "NOT_EVALUABLE" : "REJECTED",
-    fit: outcome.fit,
-    findings: fitFindings(outcome.fit),
-  };
+  return compileThroughFit(
+    () => check(draft),
+    () => derive(draft, ctx),
+  );
 }
