@@ -73,6 +73,7 @@ export function ProtectionEditor({
         </Badge>
       </div>
       <ArmourSchemeSelector model={model} edit={edit} />
+      <MagazineBoxToggle model={model} edit={edit} />
 
       {model.fitted.length === 0 ? (
         <p className="text-sm text-muted-foreground">
@@ -264,5 +265,48 @@ function Readout({ label, children }: { readonly label: string; readonly childre
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="tabular-nums">{children}</dd>
     </div>
+  );
+}
+
+/**
+ * RTW3's "Magazine box" as one choice. It is the existing `MAGAZINE_BOX` armour region (ADR-0246), so there is no
+ * separate setting: ticking adds the region with its starting convention, unticking removes it, and the region's own
+ * thickness, length and material stay editable in the list below like any other.
+ */
+function MagazineBoxToggle({
+  model,
+  edit,
+}: {
+  readonly model: ProtectionModel;
+  readonly edit: (e: DraftEdit) => void;
+}) {
+  const fitted = model.fitted.some((f) => f.region === "MAGAZINE_BOX");
+  const canAdd = model.defaultMaterialId !== "";
+  return (
+    <label className="flex items-center gap-2 text-sm">
+      <Checkbox
+        aria-label="Magazine box"
+        checked={fitted}
+        disabled={!fitted && !canAdd}
+        onCheckedChange={(on) =>
+          edit(
+            on === true
+              ? {
+                  kind: "set_armour_region",
+                  region: newArmourRegion(
+                    "MAGAZINE_BOX",
+                    model.regionSizing,
+                    model.defaultMaterialId,
+                  ),
+                }
+              : { kind: "remove_armour_region", region: "MAGAZINE_BOX" },
+          )
+        }
+      />
+      <span aria-hidden="true">Magazine box</span>
+      <span className="text-xs text-muted-foreground">
+        Armoured box round the magazines; adjust it below.
+      </span>
+    </label>
   );
 }

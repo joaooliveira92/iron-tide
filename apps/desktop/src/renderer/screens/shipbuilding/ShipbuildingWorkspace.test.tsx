@@ -350,6 +350,20 @@ describe("Central ship workspace views and overlays", () => {
     expect(within(dialog).getByText("National identity")).toBeTruthy();
   });
 
+  it("adds and removes the magazine box with one checkbox, as the existing armour region", () => {
+    render(<ShipbuildingWorkspace />);
+    openMap("Protection");
+    const box = () => screen.getByRole("checkbox", { name: "Magazine box" });
+    const hadBox = box().getAttribute("aria-checked") === "true";
+    fireEvent.click(box());
+    expect(box().getAttribute("aria-checked")).toBe(String(!hadBox));
+    // A fitted box is a region in the list, with its own editable thickness.
+    const region = screen.queryByLabelText(/Thickness of MAGAZINE_BOX/);
+    expect(region !== null).toBe(!hadBox);
+    fireEvent.click(box());
+    expect(box().getAttribute("aria-checked")).toBe(String(hadBox));
+  });
+
   it("controls the overlays independently, and no view turns them all on", () => {
     render(<ShipbuildingWorkspace />);
     expect(overlay("Turret arcs").getAttribute("aria-checked")).toBe("true");
