@@ -3,8 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { SetPrimaryAction } from "../../shell/primary-action.js";
 import {
   OPENING_BRIEFING_PAGE_COUNT,
-  PAGE_1_NEXT_LABEL,
-  PAGE_LAST_ACTION_LABEL,
+  forwardLabel,
   nextPageIndex,
   previousPageIndex,
 } from "./new-game-briefing-screen-state.js";
@@ -45,7 +44,7 @@ export function useBriefingPager({
   useEffect(() => {
     if (!ready) return;
     onPrimaryActionChange({
-      label: isLastPage ? PAGE_LAST_ACTION_LABEL : pageIndex === 0 ? PAGE_1_NEXT_LABEL : "Next",
+      label: forwardLabel(pageIndex),
       disabled: false,
       onTrigger: isLastPage ? onTakeCommand : () => setPageIndex(nextPageIndex(pageIndex)),
     });

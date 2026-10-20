@@ -32,12 +32,22 @@ export interface OpeningBriefingShipClassCount {
   readonly count: number;
 }
 
+/** A world area under a nation's control. */
+export interface OpeningBriefingArea {
+  readonly areaId: string;
+  readonly name: string;
+}
+
 /** One rival's relations row on the "Foreign Intelligence" page. */
 export interface OpeningBriefingRelationsRow {
   readonly nationId: string;
   readonly name: string;
   readonly relation: "neutral" | "allied" | "at_war" | "trade_agreement";
   readonly tension: number;
+  /** Whether a non-aggression pact is in force between the two nations. */
+  readonly nap: boolean;
+  /** The world areas this rival controls, sorted by id; the briefing places it by theatre. */
+  readonly controlledAreas: readonly OpeningBriefingArea[];
 }
 
 export type OpeningBriefingTreasuryStatus = "healthy" | "narrow" | "deficit" | "critical";
@@ -82,6 +92,8 @@ export interface OpeningBriefingProjection {
   };
   readonly foreignIntelligence: {
     readonly relations: readonly OpeningBriefingRelationsRow[];
+    /** The world areas the player nation controls, sorted by id. */
+    readonly playerAreas: readonly OpeningBriefingArea[];
   };
   readonly immediateConcerns: readonly OpeningBriefingConcern[];
 }
@@ -181,6 +193,13 @@ export function buildOpeningBriefingProjection(
   // Relations label + tension score only — no ship counts, no intel-quality
   // tiering (both are out-of-scope fog-of-war concepts). Reuses the engine's
   // own diplomacy projection to avoid duplicating the relation-shaping logic.
+  // Area control is the one geographic fact the snapshot holds per nation; it lets
+  // the briefing place each rival by theatre without inventing coordinates.
+  const controlledAreas = (nationId: string): OpeningBriefingArea[] =>
+    snapshot.world.areas
+      .filter((area) => area.controller === nationId)
+      .map((area) => ({ areaId: area.id, name: area.name }))
+      .sort((a, b) => a.areaId.localeCompare(b.areaId));
   const relations: OpeningBriefingRelationsRow[] = (
     buildDiplomacyScreenProjection(state, playerSlotId, month)?.relations ?? []
   ).map((relation) => ({
@@ -188,6 +207,8 @@ export function buildOpeningBriefingProjection(
     name: relation.partnerName,
     relation: relation.relation,
     tension: relation.tension,
+    nap: relation.nap,
+    controlledAreas: controlledAreas(relation.partnerNationId),
   }));
 
   // --- Immediate Concerns (spec §8 page 5) ----------------------------------
@@ -255,7 +276,7 @@ export function buildOpeningBriefingProjection(
       obligations: outlook.obligations,
       ...(outlook.runwayMonths === undefined ? {} : { runwayMonths: outlook.runwayMonths }),
     },
-    foreignIntelligence: { relations },
+    foreignIntelligence: { relations, playerAreas: controlledAreas(playerSlotId) },
     immediateConcerns,
   };
 }

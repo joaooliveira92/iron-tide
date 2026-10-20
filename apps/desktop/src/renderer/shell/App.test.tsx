@@ -542,7 +542,7 @@ describe("App", () => {
                 projectedSurplus: 100,
                 status: "narrow",
               },
-              foreignIntelligence: { relations: [] },
+              foreignIntelligence: { relations: [], playerAreas: [] },
               immediateConcerns: [],
             },
           },
@@ -622,9 +622,9 @@ describe("App", () => {
       });
     };
     triggerPrimary("Review Naval Estimates");
-    triggerPrimary("Next");
-    triggerPrimary("Next");
-    triggerPrimary("Next");
+    triggerPrimary("Continue to Treasury Position");
+    triggerPrimary("Continue to Foreign Intelligence");
+    triggerPrimary("Continue to Immediate Concerns");
     triggerPrimary("Take command");
     expect(shell.openCampaign).toHaveBeenCalledWith("ses-created");
   });

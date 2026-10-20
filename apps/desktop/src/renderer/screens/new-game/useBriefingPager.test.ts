@@ -45,7 +45,7 @@ describe("useBriefingPager", () => {
     act(() => primary()?.onTrigger());
 
     expect(result.current.pageIndex).toBe(1);
-    expect(primary()?.label).toBe("Next");
+    expect(primary()?.label).toBe("Continue to Treasury Position");
   });
 
   it("uses the closing label on the last page and fires the take-command action", () => {

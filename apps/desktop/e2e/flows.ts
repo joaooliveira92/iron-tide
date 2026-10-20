@@ -58,10 +58,16 @@ export async function startNewCampaign(page: Page, opts: NewCampaignOptions = {}
   await click(page, "Next: Review Campaign");
   await click(page, "Begin Commission");
 
-  // Five-page opening briefing: "Review Naval Estimates", "Next" x3, "Take command".
-  await click(page, "Review Naval Estimates");
-  for (let i = 0; i < 3; i++) await click(page, "Next");
-  await click(page, "Take command");
+  // Five-page opening briefing: each forward action names the page it opens.
+  for (const label of [
+    "Review Naval Estimates",
+    "Continue to Treasury Position",
+    "Continue to Foreign Intelligence",
+    "Continue to Immediate Concerns",
+    "Take command",
+  ]) {
+    await click(page, label);
+  }
 }
 
 /**

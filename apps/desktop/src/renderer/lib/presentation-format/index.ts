@@ -72,3 +72,4 @@ export {
   formatExplanationValue,
 } from "../../../shared/explanation-text.js";
 export { formatHullMetres } from "./hull-metres.js";
+export { formatConjunctionList } from "./list.js";
