@@ -68,7 +68,7 @@ describe("HullPlanPanel", () => {
     draw();
     const panel = screen.getByRole("region", { name: "Hull plan" });
     expect(screen.queryByTestId("plan-click-layer")).toBeNull();
-    expect(within(panel).getByRole("status").textContent).toMatch(/Use the Place and Move tools/);
+    expect(within(panel).getByRole("status").textContent).toMatch(/Right-click the plan/);
   });
 
   it("draws and hides the gun arcs with the show-arcs checkbox", () => {

@@ -293,21 +293,18 @@ describe("Central ship workspace views and overlays", () => {
     expect(plan()).not.toBeNull();
   });
 
-  it("switches the plan tools with P and M, and ignores them while typing", () => {
+  it("reaches the plan tools only from the plan's context menu, not from buttons or P and M", async () => {
     render(<ShipbuildingWorkspace />);
-    const tools = () => screen.getByRole("group", { name: "Plan tools" });
-    const pressed = (name: string) =>
-      within(tools()).getByRole("button", { name }).getAttribute("aria-pressed");
+    expect(screen.queryByRole("group", { name: "Plan tools" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Place on plan" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Move on plan" })).toBeNull();
     const workspace = screen.getByTestId("shipbuilding-workspace");
     fireEvent.keyDown(workspace, { key: "m" });
-    expect(pressed("Move on plan")).toBe("true");
     fireEvent.keyDown(workspace, { key: "p" });
-    expect(pressed("Place on plan")).toBe("true");
-    expect(pressed("Move on plan")).toBe("false");
-    fireEvent.keyDown(workspace, { key: "p" });
-    expect(pressed("Place on plan")).toBe("false");
-    fireEvent.keyDown(within(commands()).getByLabelText("Class name"), { key: "m" });
-    expect(pressed("Move on plan")).toBe("false");
+    expect(screen.queryByTestId("plan-click-layer")).toBeNull();
+    fireEvent.contextMenu(screen.getByRole("group", { name: /^Ship plan/ }));
+    expect(await screen.findByRole("menuitem", { name: "Place" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Move" })).toBeTruthy();
   });
 
   it("controls the overlays independently, and no view turns them all on", () => {

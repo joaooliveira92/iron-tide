@@ -28,7 +28,6 @@ import {
   LedgerPanel,
   MetricsPanel,
   PlacementsPanel,
-  PlanModeButtons,
   RebuildPanel,
   ShipSelectionProvider,
   ShipViewBoundary,
@@ -93,7 +92,6 @@ import {
   type DesignSectionId,
   type InspectorPlace,
 } from "./design-sections.js";
-import { PLAN_TOOL_HINT, planToolShortcut } from "./plan-tool-shortcut.js";
 import { engineeringStatus } from "./engineering-status.js";
 import { INSPECTOR_COLLAPSED_PX } from "./inspector-layout.js";
 import { sectionStatuses } from "./section-status.js";
@@ -485,12 +483,6 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
             toggleInspector();
             return;
           }
-          const next = planToolShortcut(e, planTool);
-          if (next !== null) {
-            e.preventDefault();
-            setPlanTool(next);
-            return;
-          }
           // Escape clears a pinned ship element from the drawing or the inspector, one step per press.
           if (e.key !== "Escape") return;
           const s = selection.get();
@@ -573,32 +565,12 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           />
           <ShipStage
             toolbar={
-              <>
-                <ViewToolbar
-                  view={shipView}
-                  onView={changeView}
-                  overlays={overlays}
-                  onToggleOverlay={flipOverlay}
-                />
-                <div
-                  role="group"
-                  aria-label="Plan tools"
-                  title={PLAN_TOOL_HINT}
-                  className="flex items-center gap-1 border-l border-border pl-2"
-                >
-                  <span className="mr-1 text-xs text-muted-foreground" aria-hidden="true">
-                    Edit plan
-                  </span>
-                  <PlanModeButtons
-                    tool={planTool}
-                    onTool={setPlanTool}
-                    draft={draft}
-                    available={model.available}
-                    entryOf={model.entryOf}
-                    onAutoPlace={editing.onAutoPlace}
-                  />
-                </div>
-              </>
+              <ViewToolbar
+                view={shipView}
+                onView={changeView}
+                overlays={overlays}
+                onToggleOverlay={flipOverlay}
+              />
             }
           >
             <ShipViewBoundary resetKey={draft}>

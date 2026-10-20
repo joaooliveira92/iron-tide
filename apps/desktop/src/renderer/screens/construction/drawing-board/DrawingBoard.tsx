@@ -43,7 +43,6 @@ import {
   MetricsPanel,
   PlacementsPanel,
   PlanDisplayMenu,
-  PlanModeButtons,
   RebuildPanel,
   RequirementChip,
   RevisionPanel,
@@ -290,14 +289,6 @@ export function DrawingBoard({
               {plural(state.editCount, "edit", "edits", "No edits")}
             </span>
             <Separator orientation="vertical" className="h-6" />
-            <PlanModeButtons
-              tool={planTool}
-              onTool={setPlanTool}
-              draft={draft}
-              available={planModelData.available}
-              entryOf={planModelData.entryOf}
-              onAutoPlace={planEditing.onAutoPlace}
-            />
             <PlanDisplayMenu
               showArcs={showArcs}
               onShowArcs={setShowArcs}

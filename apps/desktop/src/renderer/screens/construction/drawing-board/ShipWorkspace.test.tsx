@@ -5,7 +5,7 @@ import { DrawingBoard } from "./DrawingBoard.js";
 import { loadDrawingBoardContent } from "../../../components/design-workspace/content.js";
 import { HullPlanPanel } from "../../../components/design-workspace/panels/index.js";
 import { buildWorkshopView, type DesignDraft } from "@bluewave/ship-design";
-import { openPlanDisplay, openTab } from "./test-helpers.js";
+import { armMove, openPlanDisplay, openTab } from "./test-helpers.js";
 import { ShipViewBoundary } from "../../../components/design-workspace/workspace/ShipViewBoundary.js";
 import { ShipWorkspace } from "../../../components/design-workspace/workspace/ShipWorkspace.js";
 import {
@@ -26,11 +26,11 @@ const plan = () => within(shipView()).getByRole("img", { name: /Top-down plan/ }
 const fittings = () => Number(/(\d+) fittings placed/.exec(plan().getAttribute("aria-label")!)![1]);
 
 describe("Drawing Board workspace", () => {
-  it("keeps one ship drawing mounted, with its tool state, across all five tabs", () => {
+  it("keeps one ship drawing mounted, with its tool state, across all five tabs", async () => {
     render(<DrawingBoard />);
     const drawing = plan();
-    const placeTool = screen.getByRole("button", { name: "Place on plan" });
-    fireEvent.click(placeTool);
+    await armMove();
+    const clickLayer = screen.getByTestId("plan-click-layer");
     openPlanDisplay();
     fireEvent.click(screen.getByLabelText("Show gun arcs"));
     for (const tab of TAB_NAMES) {
@@ -41,7 +41,7 @@ describe("Drawing Board workspace", () => {
       // Same DOM node: the drawing was neither re-created nor re-mounted by the tab switch.
       expect(plan()).toBe(drawing);
       expect(drawing.isConnected).toBe(true);
-      expect(placeTool.getAttribute("aria-pressed")).toBe("true");
+      expect(screen.getByTestId("plan-click-layer")).toBe(clickLayer);
       expect(drawing.querySelectorAll("[data-arc]").length).toBe(0);
     }
     expect(screen.getAllByRole("img", { name: /Top-down plan/ })).toHaveLength(1);
@@ -74,11 +74,11 @@ describe("Drawing Board workspace", () => {
     expect(fittings()).toBe(before);
   });
 
-  it("lets every tab use the plan tools without leaving it", () => {
+  it("lets every tab use the plan tools without leaving it", async () => {
     render(<DrawingBoard />);
     openTab("Analysis");
-    fireEvent.click(screen.getByRole("button", { name: "Move on plan" }));
-    expect(screen.getByLabelText("Fitting to move")).toBeTruthy();
+    await armMove();
+    expect(screen.getByTestId("plan-click-layer")).toBeTruthy();
   });
 
   it("gives the ship view and the tab pane their own scroll containers on wide layouts", () => {

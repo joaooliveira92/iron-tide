@@ -8,7 +8,7 @@ import {
   PLAN_W,
   stationX,
 } from "../../../components/design-workspace/panels/hull-plan/geometry.js";
-import { chooseOption, openPlanTool, openTab, region } from "./test-helpers.js";
+import { armMove, armPlace, chooseOption, openTab, planMenu, region } from "./test-helpers.js";
 
 afterEach(cleanup);
 
@@ -107,20 +107,17 @@ describe("DrawingBoard panels", () => {
         }) as DOMRect;
     };
 
-    it("places a fitting by clicking the plan, with the zone and station from the point", () => {
+    it("has no Place or Move buttons: the tools are reached from the plan's context menu", () => {
+      render(<DrawingBoard />);
+      expect(screen.queryByRole("button", { name: "Place on plan" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Move on plan" })).toBeNull();
+    });
+
+    it("places a fitting by clicking the plan, with the zone and station from the point", async () => {
       render(<DrawingBoard />);
       const panel = region("Hull plan");
       sized(within(panel).getByRole("img", { name: /^Top-down plan/ }));
-      fireEvent.click(screen.getByRole("button", { name: "Place on plan" }));
-      // Choosing nothing first says what to do instead of failing silently.
-      fireEvent.click(screen.getByTestId("plan-click-layer"), {
-        clientX: stationX(300),
-        clientY: PLAN_MID,
-      });
-      expect(within(panel).getByRole("status").textContent).toMatch(/Choose a component/);
-      // The picker lives in the toolbar menu, so reopen it to choose.
-      openPlanTool("Place on plan");
-      chooseOption("Component to place", placeable.displayName);
+      await armPlace(placeable);
       fireEvent.click(screen.getByTestId("plan-click-layer"), {
         clientX: stationX(300),
         clientY: PLAN_MID,
@@ -130,12 +127,10 @@ describe("DrawingBoard panels", () => {
       expect(within(region("Edit history")).getByText(/Add .* to central machinery/)).toBeTruthy();
     });
 
-    it("moves a fitting with keyboard-reachable buttons, one undoable edit each", () => {
+    it("moves a fitting with keyboard-reachable buttons, one undoable edit each", async () => {
       render(<DrawingBoard />);
       const panel = region("Hull plan");
-      fireEvent.click(screen.getByRole("button", { name: "Move on plan" }));
-      fireEvent.click(screen.getByLabelText("Fitting to move"));
-      fireEvent.click(screen.getAllByRole("option")[1]!);
+      await armMove("last");
       expect(screen.getByTestId("plan-selected-ring")).toBeTruthy();
       fireEvent.click(
         within(panel).getByRole("button", { name: /Move 10 permille toward the stern/ }),
@@ -145,12 +140,26 @@ describe("DrawingBoard panels", () => {
       expect(within(region("Edit history")).getByText(/Move .* at \d+‰/)).toBeTruthy();
     });
 
-    it("picks a fitting by clicking it, and drags a fitting to a new station as one edit", () => {
+    it("offers to move the fitting under a right-click directly", async () => {
       render(<DrawingBoard />);
       const panel = region("Hull plan");
       const svg = within(panel).getByRole("img", { name: /^Top-down plan/ });
       sized(svg);
-      fireEvent.click(screen.getByRole("button", { name: "Move on plan" }));
+      const dot = svg.querySelector<SVGElement>("[data-fitting]")!;
+      fireEvent.contextMenu(screen.getByRole("group", { name: /^Ship plan/ }), {
+        clientX: Number(dot.getAttribute("cx")),
+        clientY: Number(dot.getAttribute("cy")),
+      });
+      fireEvent.click(await screen.findByRole("menuitem", { name: "Move this fitting" }));
+      expect(screen.getByTestId("plan-selected-ring")).toBeTruthy();
+    });
+
+    it("picks a fitting by clicking it, and drags a fitting to a new station as one edit", async () => {
+      render(<DrawingBoard />);
+      const panel = region("Hull plan");
+      const svg = within(panel).getByRole("img", { name: /^Top-down plan/ });
+      sized(svg);
+      await armMove("last");
       const layer = screen.getByTestId("plan-click-layer");
       const dot = svg.querySelector<SVGElement>("[data-fitting]");
       const target = () => {
@@ -183,19 +192,17 @@ describe("DrawingBoard panels", () => {
       expect(within(region("Edit history")).getAllByText(/Move .* at \d+‰/)).toHaveLength(1);
     });
 
-    it("auto-places a chosen component where the ship stays most level, as one edit", () => {
+    it("auto-places a chosen component where the ship stays most level, as one edit", async () => {
       render(<DrawingBoard />);
       const panel = region("Hull plan");
-      fireEvent.click(screen.getByRole("button", { name: "Place on plan" }));
-      openPlanTool("Place on plan");
-      const auto = () => screen.getByRole("button", { name: "Auto-place" }) as HTMLButtonElement;
-      expect(auto().disabled).toBe(true);
-      chooseOption(
-        "Component to place",
-        content.components.find((c) => c.id === "pumps_damage_control")!.displayName,
-      );
-      expect(auto().disabled).toBe(false);
-      fireEvent.click(auto());
+      // Auto-place waits for a component.
+      fireEvent.contextMenu(screen.getByRole("group", { name: /^Ship plan/ }));
+      const idle = await screen.findByRole("menuitem", { name: "Auto-place" });
+      expect(idle.getAttribute("aria-disabled")).toBe("true");
+      fireEvent.keyDown(idle, { key: "Escape" });
+      await armPlace(content.components.find((c) => c.id === "pumps_damage_control")!);
+      fireEvent.contextMenu(screen.getByRole("group", { name: /^Ship plan/ }));
+      fireEvent.click(await screen.findByRole("menuitem", { name: /^Auto-place \S/ }));
       expect(within(panel).getByRole("status").textContent).toMatch(
         /^Placed .* at \d+‰, where the ship stays most level/,
       );
@@ -203,12 +210,12 @@ describe("DrawingBoard panels", () => {
       expect(within(region("Edit history")).getAllByText(/^.*Add /)).toHaveLength(1);
     });
 
-    it("treats a shaky click on a fitting as a click, not a drag", () => {
+    it("treats a shaky click on a fitting as a click, not a drag", async () => {
       render(<DrawingBoard />);
       const panel = region("Hull plan");
       const svg = within(panel).getByRole("img", { name: /^Top-down plan/ });
       sized(svg);
-      fireEvent.click(screen.getByRole("button", { name: "Move on plan" }));
+      await armMove("last");
       const layer = screen.getByTestId("plan-click-layer");
       const d = svg.querySelector<SVGElement>("[data-fitting]")!;
       const x = Number(d.getAttribute("cx"));
@@ -219,22 +226,6 @@ describe("DrawingBoard panels", () => {
       fireEvent.pointerUp(layer, { clientX: x + 2, clientY: y + 1, pointerId: 1 });
       fireEvent.click(layer, { clientX: x + 2, clientY: y + 1 });
       expect(within(panel).getByRole("status").textContent).toMatch(/^Picked /);
-    });
-
-    it("says what is missing instead of failing silently, and adds nothing", () => {
-      render(<DrawingBoard />);
-      const panel = region("Hull plan");
-      sized(within(panel).getByRole("img", { name: /^Top-down plan/ }));
-      fireEvent.click(screen.getByRole("button", { name: "Move on plan" }));
-      fireEvent.click(screen.getByTestId("plan-click-layer"), {
-        clientX: stationX(300),
-        clientY: PLAN_MID,
-      });
-      expect(within(panel).getByRole("status").textContent).toMatch(
-        /Choose a fitting to move first/,
-      );
-      openTab("History");
-      expect(within(region("Edit history")).queryByText(/Move |Add /)).toBeNull();
     });
 
     it("is off by default: no click layer until a tool is chosen", () => {
@@ -259,26 +250,15 @@ describe("DrawingBoard panels", () => {
       expect(arcs()).toBe(0);
     });
 
-    it("switches from the board toolbar, one mode at a time, and a switch clears the last notice", () => {
+    it("switches between the tools from the context menu, a switch clears the last notice, and Stop turns it off", async () => {
       render(<DrawingBoard />);
       const panel = region("Hull plan");
-      const toolbar = screen.getByRole("group", { name: "Design toolbar" });
-      const place = within(toolbar).getByRole("button", { name: "Place on plan" });
-      const move = within(toolbar).getByRole("button", { name: "Move on plan" });
-      expect(within(panel).queryByRole("button", { name: /on plan$/ })).toBeNull();
       sized(within(panel).getByRole("img", { name: /^Top-down plan/ }));
-      fireEvent.click(place);
-      fireEvent.click(screen.getByTestId("plan-click-layer"), {
-        clientX: stationX(300),
-        clientY: PLAN_MID,
-      });
-      expect(within(panel).getByRole("status").textContent).toMatch(/Choose a component/);
-      fireEvent.click(move);
-      expect(place.getAttribute("aria-pressed")).toBe("false");
-      expect(move.getAttribute("aria-pressed")).toBe("true");
+      await armPlace(placeable);
+      expect(within(panel).getByRole("status").textContent).toMatch(/^Click the plan to place it/);
+      await armMove("last");
       expect(within(panel).getByRole("status").textContent).toMatch(/^Click a fitting on the plan/);
-      fireEvent.click(move);
-      expect(move.getAttribute("aria-pressed")).toBe("false");
+      await planMenu("Stop moving");
       expect(screen.queryByTestId("plan-click-layer")).toBeNull();
     });
   });
