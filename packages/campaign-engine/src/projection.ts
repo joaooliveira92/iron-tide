@@ -72,6 +72,8 @@ export interface PlayerProjectionShip {
   readonly readiness: string;
   /** Worked-up crew quality `0..100` (S-1 ticket 07). */
   readonly crewQuality: number;
+  /** The authoritative station assignment (S-5 03); absent when the ship has none. */
+  readonly stationAssignment?: "FOREIGN_STATION";
   /**
    * The ship's displacement in metric tons, from its compiled design's `normalizedDisplacementKg`
    * (rounded). Absent when the design is not in the snapshot: an unknown tonnage is never zero.
@@ -199,6 +201,9 @@ export function buildPlayerProjection(
             designId: ship.designVersionId,
             readiness: ship.readiness,
             crewQuality: Number(ship.crewQuality),
+            ...(ship.stationAssignment === undefined
+              ? {}
+              : { stationAssignment: ship.stationAssignment }),
             ...(design === undefined
               ? {}
               : {

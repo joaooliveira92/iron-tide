@@ -6,6 +6,7 @@ import type { PermanentDivision } from "./division.js";
 import type { Officer } from "./officers.js";
 import type { ConstructionProjectStatus } from "./constructionStatus.js";
 import type { ShipReadinessState } from "./readiness.js";
+import type { StationAssignment } from "./stationAssignment.js";
 
 /**
  * Operational availability of a ship while a project works on it (DESIGN-23 section 20). Absent means AVAILABLE. An
@@ -39,6 +40,11 @@ export interface Ship {
    * state; a laid-up (mothballed) ship keeps it but its countdown halts (p.51).
    */
   repairMonthsRemaining?: SafeInt;
+  /**
+   * S-5 station assignment (spec #73 R1), orthogonal to `readiness`: a ship with it is ACTIVE. Absent = none. Any
+   * readiness change away from ACTIVE clears it through `setShipReadiness`.
+   */
+  stationAssignment?: StationAssignment;
   inBattleId?: string;
   /** Operational availability while a rebuild or conversion works on the ship; absent = available (ADR-0078). */
   availability?: ShipAvailability;

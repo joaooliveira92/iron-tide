@@ -74,6 +74,8 @@ export type {
 } from "./state.js";
 export { isShipOperational } from "./state.js";
 export { presenceAreaIds } from "./presence.js";
+// S-5: foreign-station assignment rules (value-free; spec #73 R1/R2).
+export * from "./stationAssignment.js";
 export * from "./technologyVariation.js";
 export * from "./technologyMaterialization.js";
 export * from "./timeline.js";

@@ -47,6 +47,10 @@ export interface FleetShipView {
   readonly readiness: string;
   /** Worked-up crew quality `0..100` (S-1 ticket 07). */
   readonly crewQuality: number;
+  /** The authoritative station assignment (S-5 03); absent when the ship has none. */
+  readonly stationAssignment?: "FOREIGN_STATION";
+  /** The manual's ship-list code for the assignment (p.48 `FS`); absent when the ship has none. */
+  readonly stationCode?: "FS";
 }
 
 /** The readiness state's presentation label (S-1 ticket 07). */
@@ -122,6 +126,9 @@ export function buildFleetScreenView(
       status: READINESS_STATUS_LABEL[ship.readiness] ?? "active",
       readiness: ship.readiness,
       crewQuality: Number(ship.crewQuality),
+      ...(ship.stationAssignment === undefined
+        ? {}
+        : { stationAssignment: ship.stationAssignment, stationCode: "FS" as const }),
     })),
   }));
 

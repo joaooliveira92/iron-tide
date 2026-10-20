@@ -128,6 +128,15 @@ export const ShipReadinessChangedSchema = Schema.Struct({
   crewQuality: nonNegativeSafeInt,
 });
 
+export const ShipStationAssignmentChangedSchema = Schema.Struct({
+  kind: Schema.Literal("ShipStationAssignmentChanged"),
+  nationId: nonEmptyString,
+  shipId: nonEmptyString,
+  fromAssignment: nonEmptyString,
+  toAssignment: nonEmptyString,
+  reason: nonEmptyString,
+});
+
 export const DomainEventBodySchema = Schema.Union([
   NationBudgetChangedSchema,
   ConstructionProgressedSchema,
@@ -139,6 +148,7 @@ export const DomainEventBodySchema = Schema.Union([
   BattleResolvedSchema,
   TechnologyDiscoveredSchema,
   ShipReadinessChangedSchema,
+  ShipStationAssignmentChangedSchema,
 ]);
 
 export const DomainEventEnvelopeSchema = Schema.Struct({

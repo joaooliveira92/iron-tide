@@ -81,5 +81,7 @@ function describeDomainEventBody(body: DomainEventBody): string {
       return `${body.nationId} discovered ${body.techId}`;
     case "ShipReadinessChanged":
       return `${body.nationId}: ship ${body.shipId} ${body.fromReadiness} -> ${body.toReadiness} (${body.reason})`;
+    case "ShipStationAssignmentChanged":
+      return `${body.nationId}: ship ${body.shipId} station ${body.fromAssignment} -> ${body.toAssignment} (${body.reason})`;
   }
 }

@@ -130,6 +130,34 @@ describe("buildFleetScreenView", () => {
     ]);
   });
 
+  it("shows FS for a foreign-station ship and nothing extra for others (S-5 03)", () => {
+    const snapshot = fixtureSnapshot([
+      fixtureNation({
+        id: "uk",
+        fleets: [
+          makeFleet(
+            "fleet_gbr_home",
+            "Home Fleet",
+            [
+              makeShip("fs", "HMS Station", { stationAssignment: "FOREIGN_STATION" }),
+              makeShip("home", "HMS Home"),
+            ],
+            "eng_home_coast",
+          ),
+        ],
+      }),
+    ]);
+    const [fs, home] = buildFleetScreenView(snapshot, "uk").divisions[0]!.ships;
+    expect(fs).toMatchObject({
+      status: "active",
+      readiness: "ACTIVE",
+      stationAssignment: "FOREIGN_STATION",
+      stationCode: "FS",
+    });
+    expect(home).not.toHaveProperty("stationAssignment");
+    expect(home).not.toHaveProperty("stationCode");
+  });
+
   it("lists the world areas, routes as directed edges, and only the player's ports with level capacity", () => {
     const snapshot = fixtureSnapshot(
       [

@@ -54,6 +54,7 @@ import {
 import type { MonthContext } from "./monthContext.js";
 import { applyReviseProject } from "./reviseProject.js";
 import { applyStartRebuild } from "./startRebuild.js";
+import { applyStationAssignmentCommand } from "./stationAssignment.js";
 import { applyCancelConstructionProject } from "./cancelConstructionProject.js";
 import { constructionProjectCancelledEvent } from "./events.js";
 
@@ -83,6 +84,7 @@ function applyPlayerCommand(ctx: MonthContext, body: CommandBody, commandId: str
   if (applyAdministrativeCommand(ctx, body)) return;
   if (applyDiplomacyCommand(ctx, body)) return;
   if (applyDivisionCommand(ctx, body)) return;
+  if (applyStationAssignmentCommand(ctx, body)) return;
   applyConstructionCommand(ctx, body, commandId);
 }
 

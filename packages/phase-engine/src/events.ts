@@ -223,6 +223,38 @@ export function shipReadinessChangedEvent(
   };
 }
 
+/**
+ * S-5: a ship's foreign-station assignment changed (assigned, cleared by command, or cleared because its readiness left
+ * ACTIVE). Deterministic timestamp from the campaign month, like every other domain event.
+ */
+export function shipStationAssignmentChangedEvent(
+  shipId: string,
+  nationId: string,
+  fromAssignment: string,
+  toAssignment: string,
+  reason: string,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `ShipStationAssignmentChanged-${shipId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "ship",
+    aggregateId: shipId,
+    eventType: "ShipStationAssignmentChanged",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "ShipStationAssignmentChanged",
+      nationId,
+      shipId,
+      fromAssignment,
+      toAssignment,
+      reason,
+    },
+    sequenceNumber: seq,
+  };
+}
+
 export function makeLedgerEntry(
   nationId: string,
   phaseId: string,
