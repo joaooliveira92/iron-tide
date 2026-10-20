@@ -178,6 +178,9 @@ describe("section labels on the hull plan", () => {
     });
   });
 
+  /** The section-centred position inside a label's min(centre, limit): what alignment is measured against. */
+  const centreOf = (left: string) => parseFloat(/^min\(([\d.]+)%, /.exec(left)![1]!);
+
   it("aligns each label with its section's span of the drawing", () => {
     render(<DrawingBoard />);
     expect(strip().dataset["aligned"]).toBe("true");
@@ -185,15 +188,15 @@ describe("section labels on the hull plan", () => {
       const zone = form.zones.find((z) => z.id === SECTIONS[id].zoneId)!;
       const span = sectionSpan(zone);
       const style = label(SECTIONS[id].name).style;
-      expect(parseFloat(style.left)).toBeCloseTo(span.leftPct + span.widthPct / 2, 4);
-      expect(style.width).toContain(`${span.widthPct}%`);
+      expect(centreOf(style.left)).toBeCloseTo(span.leftPct + span.widthPct / 2, 4);
+      expect(style.width).toContain(`${Number(span.widthPct.toFixed(3))}%`);
     }
   });
 
   it("follows the zones it is given, and falls back to an even row without them", () => {
     const zones = form.zones.map((z) => (z.id === "FORECASTLE" ? { ...z, endPermille: 120 } : z));
     const { rerender } = render(<SectionLabels zones={zones} renderCard={() => null} />);
-    const left = parseFloat(label("Forecastle").style.left);
+    const left = centreOf(label("Forecastle").style.left);
     expect(left).toBeCloseTo(
       sectionSpan(zones[0]!).leftPct + sectionSpan(zones[0]!).widthPct / 2,
       4,

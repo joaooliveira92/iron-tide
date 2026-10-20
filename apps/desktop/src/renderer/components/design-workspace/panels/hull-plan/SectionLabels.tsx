@@ -17,6 +17,25 @@ export const SECTION_CLOSE_DELAY = 300;
 const isSectionId = (v: string | undefined): v is SectionId =>
   (SECTION_IDS as readonly string[]).includes(v ?? "");
 
+/** The least room right of a label's centre, so the name at the stern end is never pushed past the row. */
+const LABEL_EDGE_ROOM = "3.25rem";
+
+/**
+ * Where a section's label sits: centred on the section but held inside the row's right edge, so the stern-most
+ * name (its span is narrow and at the very edge) stays fully visible instead of overflowing and adding a scrollbar.
+ */
+export function labelPlacement(span: { readonly leftPct: number; readonly widthPct: number }): {
+  readonly left: string;
+  readonly width: string;
+} {
+  const pct = (n: number) => Math.round(n * 1000) / 1000;
+  const half = `max(${pct(span.widthPct / 2)}%, ${LABEL_EDGE_ROOM})`;
+  return {
+    left: `min(${pct(span.leftPct + span.widthPct / 2)}%, calc(100% - ${half}))`,
+    width: `max(${pct(span.widthPct)}%, 2.75rem)`,
+  };
+}
+
 /**
  * The section names under the plan, one button per section placed over that section's span, alternating
  * between two rows so neighbouring names never collide. All eight share one hover card: moving between labels
@@ -96,8 +115,7 @@ export function SectionLabels({
                   style={
                     aligned && span
                       ? {
-                          left: `${span.leftPct + span.widthPct / 2}%`,
-                          width: `max(${span.widthPct}%, 2.75rem)`,
+                          ...labelPlacement(span),
                           top: i % 2 === 0 ? 0 : "1.875rem",
                         }
                       : undefined
