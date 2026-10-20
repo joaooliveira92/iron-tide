@@ -43,9 +43,11 @@ describe("DesignMapFooter", () => {
     const onStatusAction = vi.fn<() => void>();
     const status = { label: "Needs a class name", tone: "warn" as const, detail: "" };
     const { rerender } = render(<DesignMapFooter {...props({ status })} />);
-    expect(screen.queryByRole("button", { name: /click to fix/ })).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
     rerender(<DesignMapFooter {...props({ status, onStatusAction })} />);
-    fireEvent.click(screen.getByRole("button", { name: /Needs a class name/ }));
+    // The status stays one live region, and the button has its own explicit name.
+    expect(screen.getByRole("status")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^Needs a class name.*Activate to fix$/ }));
     expect(onStatusAction).toHaveBeenCalledOnce();
   });
 });

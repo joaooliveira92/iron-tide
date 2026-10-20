@@ -28,7 +28,7 @@ export function DesignMapFooter({
 }: DesignMapFooterProps) {
   const badge = (
     <Badge
-      role="status"
+      role={onStatusAction === undefined ? "status" : undefined}
       variant={
         status.tone === "ok" ? "secondary" : status.tone === "warn" ? "outline" : "destructive"
       }
@@ -66,14 +66,18 @@ export function DesignMapFooter({
       {onStatusAction === undefined ? (
         badge
       ) : (
-        <button
-          type="button"
-          onClick={onStatusAction}
-          title={`${status.label}: click to fix`}
-          className="cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring max-xl:flex"
-        >
-          {badge}
-        </button>
+        // A live region inside a button is dropped from the button's name, so the name is explicit.
+        <div role="status">
+          <button
+            type="button"
+            onClick={onStatusAction}
+            aria-label={`${status.label}, ${status.detail}. Activate to fix`}
+            title={`${status.label}: click to fix`}
+            className="cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring max-xl:flex"
+          >
+            {badge}
+          </button>
+        </div>
       )}
     </div>
   );

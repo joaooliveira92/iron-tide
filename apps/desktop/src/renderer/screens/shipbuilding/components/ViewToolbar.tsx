@@ -25,21 +25,25 @@ export interface ViewToolbarProps {
  * beside it. Presentation only; the drawing reads their values.
  */
 export function ViewToolbar({ view, onView, overlays, onToggleOverlay }: ViewToolbarProps) {
+  // The views are one segmented group; Layers stands apart so the toolbar can wrap it onto the next line in a narrow
+  // stage instead of spilling out of the column.
   return (
-    <ButtonGroup aria-label="Ship view">
-      {VIEW_ORDER.map((v) => (
-        <Button
-          key={v.id}
-          type="button"
-          size="sm"
-          variant={view === v.id ? "default" : "outline"}
-          aria-pressed={view === v.id}
-          title={v.hint}
-          onClick={() => onView(v.id)}
-        >
-          {v.label}
-        </Button>
-      ))}
+    <>
+      <ButtonGroup aria-label="Ship view">
+        {VIEW_ORDER.map((v) => (
+          <Button
+            key={v.id}
+            type="button"
+            size="sm"
+            variant={view === v.id ? "default" : "outline"}
+            aria-pressed={view === v.id}
+            title={v.hint}
+            onClick={() => onView(v.id)}
+          >
+            {v.label}
+          </Button>
+        ))}
+      </ButtonGroup>
       <Popover>
         <PopoverTrigger
           title="Show or hide drawing layers"
@@ -66,6 +70,6 @@ export function ViewToolbar({ view, onView, overlays, onToggleOverlay }: ViewToo
           </div>
         </PopoverContent>
       </Popover>
-    </ButtonGroup>
+    </>
   );
 }
