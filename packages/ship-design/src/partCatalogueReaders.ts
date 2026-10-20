@@ -331,6 +331,7 @@ export function headerFromDraft(draft: DesignDraft): DesignHeaderData {
       : {}),
     ...(draft.colonialServiceFitted === true ? { colonialServiceFitted: true as const } : {}),
     ...(draft.aluminiumSuperstructure === true ? { aluminiumSuperstructure: true as const } : {}),
+    ...(draft.antiAircraft !== undefined ? { antiAircraft: { ...draft.antiAircraft } } : {}),
     protection: {
       citadelLengthMm: draft.armour.citadelLengthMm,
       torpedoWarheadKg: draft.armour.torpedoWarheadKg,
@@ -519,6 +520,9 @@ export function rebuildDraft(input: {
         : {}),
       ...(input.header.colonialServiceFitted === true ? { colonialServiceFitted: true } : {}),
       ...(input.header.aluminiumSuperstructure === true ? { aluminiumSuperstructure: true } : {}),
+      ...(input.header.antiAircraft !== undefined
+        ? { antiAircraft: { ...input.header.antiAircraft } }
+        : {}),
     },
     issues,
   };

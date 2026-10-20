@@ -370,6 +370,13 @@ describe("Central ship workspace views and overlays", () => {
     expect(screen.queryByRole("checkbox", { name: "Aluminium superstructure" })).toBeNull();
   });
 
+  it("does not offer an AA fit at the dates the standalone designer covers", () => {
+    render(<ShipbuildingWorkspace />);
+    openMap("Armament");
+    fireEvent.click(screen.getByRole("tab", { name: "Other" }));
+    expect(screen.queryByLabelText("AA directors")).toBeNull();
+  });
+
   it("controls the overlays independently, and no view turns them all on", () => {
     render(<ShipbuildingWorkspace />);
     expect(overlay("Turret arcs").getAttribute("aria-checked")).toBe("true");

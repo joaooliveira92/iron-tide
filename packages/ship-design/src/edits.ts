@@ -10,6 +10,7 @@ import type { ArmourRegion } from "./armour.js";
 import type { ArmourSchemeId } from "./armourSchemes.js";
 import type { DesignRequirement } from "./compileShared.js";
 import type { MountSide } from "./weapons.js";
+import { antiAircraftFitProblem, hasAntiAircraft, type AntiAircraftFit } from "./antiAircraft.js";
 import type { TertiaryBattery } from "./tertiary.js";
 import type { HullSpec } from "./hull.js";
 import { SEVERITY_ORDER, type Severity } from "./findings.js";
@@ -23,6 +24,8 @@ export type DraftEdit =
   | { readonly kind: "set_colonial_service"; readonly fitted: boolean }
   /** Ask for or drop an aluminium superstructure (manual p.45). Dropping removes the flag, restoring the prior draft shape. */
   | { readonly kind: "set_aluminium_superstructure"; readonly fitted: boolean }
+  /** The AA fit: light and medium AA guns and AA directors, as counts; `null` or all zeros removes it (manual p.43). */
+  | { readonly kind: "set_anti_aircraft"; readonly antiAircraft: AntiAircraftFit | null }
   /** The tertiary battery: a count of one chosen gun; `null` removes it. */
   | { readonly kind: "set_tertiary"; readonly tertiary: TertiaryBattery | null }
   /** The design brief: ship type, required speed and range, crew and accommodation. A brief is not a build change. */
@@ -116,6 +119,25 @@ export function applyEdit(draft: DesignDraft, e: DraftEdit): DesignDraft {
         return rest;
       }
       return { ...draft, aluminiumSuperstructure: true };
+    }
+    case "set_anti_aircraft": {
+      const fit = e.antiAircraft;
+      if (fit !== null) {
+        const problem = antiAircraftFitProblem(fit);
+        if (problem !== null) throw new EditError(problem);
+      }
+      if (!hasAntiAircraft(fit ?? undefined)) {
+        const { antiAircraft: _removed, ...rest } = draft;
+        return rest;
+      }
+      return {
+        ...draft,
+        antiAircraft: {
+          lightGuns: fit!.lightGuns,
+          mediumGuns: fit!.mediumGuns,
+          directors: fit!.directors,
+        },
+      };
     }
     case "set_tertiary": {
       const t = e.tertiary;

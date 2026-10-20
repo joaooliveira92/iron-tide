@@ -12,6 +12,7 @@ import {
 import { availabilityFindings, evaluateShipTypeAvailability } from "./shipTypeAvailability.js";
 import { shipTypeRegistryFromRecords } from "./shipTypeRegistry.js";
 import { aluminiumFitting, aluminiumFindings } from "./aluminium.js";
+import { antiAircraftFindings, antiAircraftResult, expandAntiAircraft } from "./antiAircraft.js";
 import {
   colonialFitting,
   colonialFittingFindings,
@@ -99,10 +100,14 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
     findings,
   });
 
+  // The AA fit adds weight and topside load, like the tertiary battery, only while the ruleset offers it (ADR-0246).
+  const aa = expandAntiAircraft(draft.antiAircraft, b.antiAircraft, ctx.month);
+
   // 4-5. Armour + hull + displacement ledger.
   const { hullRes, armour } = compileStructure({
     draft,
     ctx,
+    aa,
     resolved,
     plant,
     formData,
@@ -116,6 +121,7 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
   // 6. Arrangement
   const { arrangement, rooms, roomPart } = buildPlacementsAndArrangement({
     draft,
+    aa,
     resolved,
     plant,
     machineryRaw,
@@ -128,6 +134,7 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
   // 7. Stability: every ledger kilogram becomes a weight lump
   const lumps = buildStabilityLumps({
     draft,
+    aa,
     resolved,
     hull,
     formData,
@@ -221,6 +228,8 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
   findings.push(...colonialFittingFindings(colonialService));
   const aluminium = aluminiumFitting(draft, ctx.balance.aluminiumSuperstructure, ctx.month);
   findings.push(...aluminiumFindings(aluminium));
+  const antiAircraft = antiAircraftResult(draft.antiAircraft, b.antiAircraft, ctx.month);
+  findings.push(...antiAircraftFindings(antiAircraft));
 
   // 8. Dock, treaty, modernization
   const total = hullRes.totalKg;
@@ -260,6 +269,7 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
     findings: sorted,
     ...(colonialService === null ? {} : { colonialService }),
     ...(aluminium === null ? {} : { aluminium }),
+    ...(antiAircraft === null ? {} : { antiAircraft }),
     valid: !hasBlocking(sorted),
   };
   return { ...body, hash: sha256Hex(canonicalSerialize(withoutSubjects(body))) };

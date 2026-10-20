@@ -53,6 +53,10 @@ export function describeEdit(e: DraftEdit, nameOf: (componentId: string) => stri
       return `Armour scheme: ${words(e.schemeId)}`;
     case "set_armour_regions":
       return `Armour scheme: ${e.regions.length} region${e.regions.length === 1 ? "" : "s"}`;
+    case "set_anti_aircraft":
+      return e.antiAircraft === null
+        ? "Remove the AA fit"
+        : `AA fit: ${e.antiAircraft.lightGuns} light, ${e.antiAircraft.mediumGuns} medium, ${e.antiAircraft.directors} directors`;
     case "set_aluminium_superstructure":
       return e.fitted ? "Use an aluminium superstructure" : "Return to a steel superstructure";
     case "set_colonial_service":

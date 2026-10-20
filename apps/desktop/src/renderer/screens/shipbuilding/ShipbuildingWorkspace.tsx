@@ -60,6 +60,7 @@ import { sameEntity, type ShipEntity } from "../../components/design-workspace/s
 import { useCampaignMonthId } from "../../shell/CampaignShellContext.js";
 import {
   AluminiumSuperstructurePanel,
+  AntiAircraftPanel,
   ArmamentEditor,
   ClassNameBrowser,
   ColonialServicePanel,
@@ -82,6 +83,7 @@ import {
   type PriorityLevel,
 } from "./components/index.js";
 import { aluminiumModel } from "./aluminium-view.js";
+import { antiAircraftModel } from "./anti-aircraft-view.js";
 import { armamentEntries } from "./armament.js";
 import { nameGroups, namePoolFor, suggestClassName } from "./class-name-suggestions.js";
 import { colonialServiceModel } from "./colonial-service-view.js";
@@ -254,6 +256,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
     [content, state.month, draft.nationId],
   );
   const aluminium = aluminiumModel(view, env.ctx.balance.aluminiumSuperstructure, state.month);
+  const antiAircraft = antiAircraftModel(draft, view, env.ctx.balance.antiAircraft, state.month);
   const namePool = namePoolFor(nationEnv.ctx.navalProfile, shipType);
   const machineryDeltas = useMemo(
     () => (place.section === "machinery" ? plantDeltas(draft, nationEnv, view, content) : null),
@@ -402,7 +405,15 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
         );
       case "armament": {
         const role = TAB_BATTERY[at.tab];
-        if (role === undefined) return fittingsOnly(at);
+        if (role === undefined)
+          return antiAircraft.offered && at.tab === "other" ? (
+            <>
+              <AntiAircraftPanel model={antiAircraft} edit={actions.edit} />
+              {fittingsPanel(at)}
+            </>
+          ) : (
+            fittingsOnly(at)
+          );
         const entries = armamentEntries(role, batteries, draft, view, content);
         return (
           <>

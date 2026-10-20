@@ -349,3 +349,61 @@ describe("compileDesign: aluminium superstructure (ADR-0246)", () => {
     ).toBe("STRUCTURE");
   });
 });
+
+describe("compileDesign: AA fit (ADR-0246)", () => {
+  // Fixture values, not game values.
+  const section = {
+    fromMonth: "1880-01",
+    lightGunWeightKg: 100,
+    mediumGunWeightKg: 1_000,
+    directorWeightKg: 500,
+    lightGunFootprintMm2: 1_000_000,
+    mediumGunFootprintMm2: 5_000_000,
+    directorFootprintMm2: 2_000_000,
+  };
+  const tuned = withCtx({ balance: { ...ctx.balance, antiAircraft: section } });
+  const fit = { lightGuns: 4, mediumGuns: 2, directors: 3 };
+  const withFit = withDraft({ antiAircraft: fit });
+  const base = compileDesign(draft, tuned);
+  const fitted = compileDesign(withFit, tuned);
+
+  it("an unset design and an absent balance section leave the design unchanged", () => {
+    expect(compileDesign(draft, ctx).hash).toBe(base.hash);
+    expect(base.antiAircraft).toBeUndefined();
+    expect(compileDesign(withFit, ctx).ledger.armament).toBe(base.ledger.armament);
+  });
+  it("adds the fit's weight to the armament line and the displacement", () => {
+    expect(fitted.ledger.armament - base.ledger.armament).toBe(4 * 100 + 2 * 1_000 + 3 * 500);
+    expect(fitted.totalKg).toBeGreaterThan(base.totalKg);
+  });
+  it("loads the topside by the fit's deck area", () => {
+    const used = (r: typeof base) => r.arrangement!.zones.reduce((a, z) => a + z.deckUsedMm2, 0);
+    expect(used(fitted) - used(base)).toBe(4 * 1_000_000 + 2 * 5_000_000 + 3 * 2_000_000);
+  });
+  it("keeps the stability lumps summing exactly to the ledger (I1, I2)", () => {
+    expect(fitted.totalKg).toBe(ledgerTotal(fitted.ledger));
+    expect(fitted.stability!.displacementKg).toBe(fitted.totalKg);
+  });
+  it("does nothing, and says so, before the fit is available", () => {
+    const early = withCtx({
+      balance: { ...ctx.balance, antiAircraft: { ...section, fromMonth: "2000-01" } },
+    });
+    const r = compileDesign(withFit, early);
+    expect(r.ledger.armament).toBe(base.ledger.armament);
+    expect(r.antiAircraft?.available).toBe(false);
+    expect(r.findings.some((f) => f.id === "ANTI_AIRCRAFT_UNAVAILABLE")).toBe(true);
+  });
+  it("notes that battle does not yet read it", () => {
+    expect(fitted.findings.some((f) => f.id === "ANTI_AIRCRAFT_NOT_MODELLED_IN_BATTLE")).toBe(true);
+  });
+  it("rejects more than four directors", () => {
+    expect(() =>
+      compileDesign(withDraft({ antiAircraft: { ...fit, directors: 5 } }), tuned),
+    ).toThrow(/antiAircraft/);
+  });
+  it("is a fittings change", () => {
+    expect(changeKindOf({ kind: "set_anti_aircraft", antiAircraft: fit }, () => undefined)).toBe(
+      "FITTINGS",
+    );
+  });
+});

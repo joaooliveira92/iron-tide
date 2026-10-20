@@ -1320,6 +1320,14 @@ export const DesignHeaderSchema = Schema.Struct({
   colonialServiceFitted: Schema.optional(Schema.Boolean),
   /** Aluminium superstructure (ADR-0246); absent = steel. */
   aluminiumSuperstructure: Schema.optional(Schema.Boolean),
+  /** Light and medium AA guns and AA directors, as counts (ADR-0246); absent = none. */
+  antiAircraft: Schema.optional(
+    Schema.Struct({
+      lightGuns: nonNegativeInt,
+      mediumGuns: nonNegativeInt,
+      directors: nonNegativeInt,
+    }),
+  ),
   /** Tertiary battery (ADR-0233); absent = none. */
   tertiary: Schema.optional(Schema.Struct({ caliberUm: positiveInt, count: nonNegativeInt })),
   protection: Schema.Struct({

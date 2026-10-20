@@ -14,6 +14,7 @@ import type { HullBalance, HullForm, HullResult, HullSpec } from "./hull.js";
 import type { DisplacementLedger, LedgerCategory } from "./ledger.js";
 import type { ArmourSchemeId } from "./armourSchemes.js";
 import type { AluminiumBalance, AluminiumResult } from "./aluminium.js";
+import type { AntiAircraftBalance, AntiAircraftFit, AntiAircraftResult } from "./antiAircraft.js";
 import type { TertiaryBalance, TertiaryBattery } from "./tertiary.js";
 import type { MachineryBalance, MachineryResult, PropulsionPlant } from "./machinery.js";
 import type { StabilityBalance, StabilityResult, StabilityWindow } from "./stability.js";
@@ -94,6 +95,8 @@ export interface DesignDraft {
   readonly colonialServiceFitted?: boolean;
   /** Aluminium superstructure (manual p.45; ADR-0246). Absent or false = steel, identical to a design that predates it. */
   readonly aluminiumSuperstructure?: boolean;
+  /** Light and medium AA guns and AA directors: counts only (manual p.43; ADR-0246). Absent = none. */
+  readonly antiAircraft?: AntiAircraftFit;
 }
 
 export interface HullFormData {
@@ -130,6 +133,8 @@ export interface ShipBalance {
   readonly tertiary?: TertiaryBalance;
   /** Aluminium-superstructure values, all PROVISIONAL (ADR-0246). Absent = the option does nothing and is not offered. */
   readonly aluminiumSuperstructure?: AluminiumBalance;
+  /** AA-fit values, all PROVISIONAL (ADR-0246). Absent = the fit does nothing and is not offered. */
+  readonly antiAircraft?: AntiAircraftBalance;
   readonly armour: ArmourBalance;
   readonly stability: StabilityBalance;
   readonly systems: SystemsBalance;
@@ -214,6 +219,8 @@ export interface CompiledDesign {
   readonly colonialService?: ColonialFittingResult;
   /** Present only on a design that asks for an aluminium superstructure, so every other design's hash is unchanged. */
   readonly aluminium?: AluminiumResult;
+  /** Present only on a design that asks for an AA fit, so every other design's hash is unchanged. */
+  readonly antiAircraft?: AntiAircraftResult;
   readonly valid: boolean;
   /** SHA-256 over the canonical serialisation of the whole result. */
   readonly hash: string;

@@ -144,6 +144,13 @@ const DesignDraftSchema = Schema.Struct({
   tertiary: Schema.optional(Schema.Struct({ caliberUm: positiveInt, count: nonNegativeInt })),
   colonialServiceFitted: Schema.optional(Schema.Boolean),
   aluminiumSuperstructure: Schema.optional(Schema.Boolean),
+  antiAircraft: Schema.optional(
+    Schema.Struct({
+      lightGuns: nonNegativeInt,
+      mediumGuns: nonNegativeInt,
+      directors: nonNegativeInt,
+    }),
+  ),
 });
 
 /**
