@@ -163,7 +163,7 @@ describe("economyOutlook", () => {
     expect(o.researchUnfundedReason).toBe("ABOVE_CAP");
   });
 
-  it("bounds planned construction by yard throughput and leaves held projects out", () => {
+  it("bounds planned construction by the shared monthly draw and leaves held projects out", () => {
     const o = economyOutlook(
       snapshot(
         nation({
@@ -173,14 +173,31 @@ describe("economyOutlook", () => {
             project({ id: "c", status: "HALTED" }),
             project({ id: "d", status: "COMPLETED", completedWork: SafeInt(100) }),
             project({ id: "e", foreignContractId: "fc" }),
+            project({
+              id: "f",
+              status: "ACCELERATED",
+              completedWork: SafeInt(0),
+              capacityUnits: { slipway: SafeInt(10) },
+              packages: [
+                {
+                  id: "hull",
+                  kind: "HULL",
+                  line: "slipway",
+                  totalWork: SafeInt(100),
+                  doneWork: SafeInt(0),
+                  dependsOn: [],
+                },
+              ],
+            }),
           ],
         }),
       ),
       "n",
     )!;
-    // a: min(40 remaining, 2+2) = 4; b: 2 remaining, no capacity record; c, d, e excluded.
-    expect(o.plannedConstruction).toBe(6);
-    expect(o.monthEndTreasury).toBe(500 + 41 - 6);
+    // a and b have no package schedule, so they absorb their remaining work (40 + 2); f is accelerated, so its slipway
+    // throughput is floor(10 x 11_000 / 10_000) = 11; c, d and e are excluded.
+    expect(o.plannedConstruction).toBe(53);
+    expect(o.monthEndTreasury).toBe(500 + 41 - 53);
   });
 
   it("reports the runway and the first shortfall of a structural deficit", () => {

@@ -319,16 +319,16 @@ describe("a DELAYED month (SB3-R6)", () => {
 });
 
 describe("constructionProjectReadout (SB3-R31)", () => {
-  it("derives instalment, remaining months, total cost and launch month from the compiled design", () => {
+  it("derives the draw, remaining months, total cost and launch month from the project", () => {
     const readout = constructionProjectReadout(
       project({ totalWork: 600, designVersionId: "d1" }),
       design(25),
       "1880-01",
     );
     expect(readout.totalCostUnits).toBe(600);
-    expect(readout.monthlyInstalmentUnits).toBe(150); // six lines x 25 capacity
-    expect(readout.remainingMonths).toBe(4);
-    expect(readout.launchMonth).toBe("1880-05");
+    expect(readout.monthlyInstalmentUnits).toBe(600); // no package schedule: the remaining work is the draw
+    expect(readout.remainingMonths).toBe(1);
+    expect(readout.launchMonth).toBe("1880-02");
   });
 
   it("reports no launch month for a finished project", () => {

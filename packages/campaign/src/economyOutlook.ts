@@ -2,6 +2,7 @@
 // Treasury screen, opening briefing, priorities — reads this, so the screen never contradicts the ledger it is about to
 // produce. Pure, integer-only, derived from the immutable snapshot; no formula lives in the UI.
 import { SafeInt } from "@bluewave/contracts";
+import { monthlyAbsorbable } from "./constructionDraw.js";
 import {
   monthlyNetBeforeConstruction,
   monthlyRevenue,
@@ -11,7 +12,8 @@ import {
 } from "./economy.js";
 import { nationIsAtWar, nationMonthlyMaintenance } from "./maintenance.js";
 import { eligibleResearchFields, technologyCatalogueOf } from "./researchEligibility.js";
-import type { CampaignSnapshot, ConstructionProject, NationState } from "./state.js";
+import type { CampaignSnapshot, NationState } from "./state.js";
+import { campaignMonthId } from "./timeline.js";
 
 /** The qualitative band of a month's net before construction, relative to the monthly revenue (spec #138 G6). */
 export type EconomyStatus = "healthy" | "narrow" | "deficit" | "critical";
@@ -63,25 +65,24 @@ export interface EconomyOutlook {
 
 const TERMINAL_OR_HELD = new Set(["COMPLETED", "CANCELLED", "HALTED", "DELAYED"]);
 
-/** The most a project can take in a month: its remaining work, bounded by its summed line throughput when it has one. */
-function monthlyAbsorbable(project: ConstructionProject, snapshot: CampaignSnapshot): number {
-  const remaining = (project["totalWork"] as number) - (project["completedWork"] as number);
-  if (remaining <= 0) return 0;
-  const capacity =
-    project["capacityUnits"] ??
-    snapshot["designs"].get(project["designVersionId"])?.["constructionPlan"]?.["capacityUnits"];
-  if (capacity === undefined) return remaining;
-  const throughput = Object.values(capacity).reduce((sum, units) => sum + (units as number), 0);
-  return throughput > 0 ? Math.min(remaining, throughput) : remaining;
-}
-
-function plannedConstructionOf(nation: NationState, snapshot: CampaignSnapshot): number {
+function plannedConstructionOf(
+  nation: NationState,
+  snapshot: CampaignSnapshot,
+  month: string,
+): number {
   let total = 0;
   for (const project of nation["constructionProjects"]) {
     if (TERMINAL_OR_HELD.has(project["status"])) continue;
     // A foreign order is paid by its contract schedule, never by ordinary appropriation.
     if (project["foreignContractId"] !== undefined) continue;
-    total += monthlyAbsorbable(project, snapshot);
+    total += monthlyAbsorbable(
+      project,
+      project["capacityUnits"] ??
+        snapshot["designs"].get(project["designVersionId"])?.["constructionPlan"]?.[
+          "capacityUnits"
+        ],
+      month,
+    );
   }
   return total;
 }
@@ -98,6 +99,11 @@ export function economyOutlook(
   const nation = snapshot["nations"].get(nationId);
   if (nation === undefined) return undefined;
 
+  const month = campaignMonthId(
+    snapshot["startYear"],
+    snapshot["startMonth"],
+    snapshot["turnNumber"] as number,
+  );
   const revenue = monthlyRevenue(nation["baseResources"], nation["navalAppropriationRateBp"]);
   const maintenance = nationMonthlyMaintenance(
     nation["fleets"],
@@ -118,7 +124,7 @@ export function economyOutlook(
   if ((requested as number) > 0 && !hasField) unfundedReason = "NO_ELIGIBLE_RESEARCH_FIELD";
   else if ((requested as number) > (cap as number)) unfundedReason = "ABOVE_CAP";
 
-  const planned = plannedConstructionOf(nation, snapshot);
+  const planned = plannedConstructionOf(nation, snapshot, month);
   const net = monthlyNetBeforeConstruction({ revenue, obligations, maintenance, research });
 
   // Settle in phase order against the funds the month opens with.

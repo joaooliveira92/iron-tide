@@ -9,20 +9,27 @@
 // a random-decision ledger record, and a delay additionally carries reason `ACCELERATION_CAPACITY_PRESSURE_DELAY`.
 
 import type { ConstructionPackage, ConstructionProject } from "@bluewave/campaign";
-import { constructionAccelerationAllowed } from "@bluewave/campaign";
+import {
+  ACCELERATION_WORK_RATE_MULTIPLIER_BP,
+  accelerateCapacityUnits,
+  constructionAccelerationAllowed,
+  monthlyAbsorbable,
+} from "@bluewave/campaign";
 import { checkedMul, roundToInt, SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { RandomDecision, RandomEngine, RandomLedger, RandomStream } from "@bluewave/random";
 
-export { constructionAccelerationAllowed };
+export {
+  ACCELERATION_WORK_RATE_MULTIPLIER_BP,
+  accelerateCapacityUnits,
+  constructionAccelerationAllowed,
+};
 
 /** The versioned policy id of the shipped acceleration ruleset (DESIGN-13 section 11.3). */
 export const CONSTRUCTION_ACCELERATION_POLICY_ID = "construction_acceleration_v1" as const;
 
 /** `+5%` remaining-work premium, basis points (DESIGN-13 section 11.3.1; DESIGN-23 section 8). */
 export const ACCELERATION_TOTAL_WORK_MULTIPLIER_BP = 10_500 as const;
-/** `10%` faster work rate in a paid accelerated month, basis points (DESIGN-13 section 11.3.2; DESIGN-23 section 8). */
-export const ACCELERATION_WORK_RATE_MULTIPLIER_BP = 11_000 as const;
 /** Accelerated demand weight on a construction pool, basis points (DESIGN-13 section 11.3.3; DESIGN-23 section 9). */
 export const ACCELERATION_CAPACITY_PRESSURE_WEIGHT_BP = 12_500 as const;
 /** Delay eligibility begins above this capacity pressure, in basis points (strictly greater, DESIGN-13 section 11.3.3). */
@@ -144,32 +151,15 @@ export function applyAccelerationPremium(project: ConstructionProject): Accelera
 }
 
 /**
- * The paid-month effective capacity of an accelerated project: `floor(baseEffectiveCapacity * 11_000 / 10_000)` per
- * line (DESIGN-13 section 11.3.2; DESIGN-23 section 8). Used only in paid accelerated months.
- */
-export function accelerateCapacityUnits(
-  capacityUnits: Readonly<Record<string, number>>,
-): Record<string, number> {
-  return Object.fromEntries(
-    Object.entries(capacityUnits).map(([line, value]) => [
-      line,
-      roundToInt(checkedMul(value, ACCELERATION_WORK_RATE_MULTIPLIER_BP) / BP, "floor"),
-    ]),
-  );
-}
-
-/**
- * The monthly capacity a project asks of its construction pool: the design's construction-plan capacity summed over
- * its lines. A project with no plan capacity record (legacy single-figure projects) asks its whole remaining work,
- * matching `constructionProjectReadout`'s instalment. Pure.
+ * The monthly construction a project asks of its pool: the shared `monthlyAbsorbable` answer over its remaining work,
+ * packages, month usage, build time and acceleration (ADR-0230 section 6). Pure.
  */
 export function projectConstructionDemand(
   project: ConstructionProject,
   capacityUnits: Readonly<Record<string, number>> | undefined,
+  month: string,
 ): number {
-  if (capacityUnits === undefined)
-    return Math.max(0, Number(project["totalWork"]) - Number(project["completedWork"]));
-  return Object.values(capacityUnits).reduce((sum, value) => sum + Number(value), 0);
+  return monthlyAbsorbable(project, capacityUnits, month);
 }
 
 /** `weightedDemand = normalDemand + floor(acceleratedDemand * 12_500 / 10_000)` (DESIGN-13 section 11.3.3). */
