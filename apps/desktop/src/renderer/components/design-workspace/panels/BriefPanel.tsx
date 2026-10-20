@@ -7,6 +7,17 @@ import { shipTypeChoices } from "../shipTypes.js";
 import { Panel } from "./Panel.js";
 import type { Edit } from "./types.js";
 
+/** The accommodation standards, each with the manual's name for it (RTW3 p.42: cramped, normal, spacious). */
+const ACCOMMODATION_OPTIONS = [
+  {
+    value: "SPARTAN",
+    label: "Spartan",
+    description: "Cramped: least crew space, cannot sustain a long posting.",
+  },
+  { value: "STANDARD", label: "Standard", description: "Normal crew space." },
+  { value: "GENEROUS", label: "Generous", description: "Spacious: most crew space, heaviest." },
+] as const;
+
 /** The design brief: the ship type the design must qualify as, and the speed and range it is judged against. */
 export function BriefPanel({
   draft,
@@ -87,6 +98,19 @@ export function BriefPanel({
           value={r.requiredRangeNm}
           error={errorFor?.("set_requirement:requiredRangeNm")}
           onCommit={(v) => edit({ kind: "set_requirement", patch: { requiredRangeNm: v } })}
+        />
+        <SelectField
+          label="Accommodation"
+          className="col-span-2"
+          value={r.accommodationStandard}
+          options={ACCOMMODATION_OPTIONS}
+          error={errorFor?.("set_requirement:accommodationStandard")}
+          onChange={(v) =>
+            edit({
+              kind: "set_requirement",
+              patch: { accommodationStandard: v as typeof r.accommodationStandard },
+            })
+          }
         />
       </div>
       {briefFindings.length > 0 && (
