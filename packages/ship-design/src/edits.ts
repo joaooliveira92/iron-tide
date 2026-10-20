@@ -21,6 +21,8 @@ export type DraftEdit =
   | { readonly kind: "set_fire_control"; readonly positions: number }
   /** Fit or unfit colonial service (S-5, manual p.42). Unfitting removes the flag, restoring the pre-S-5 draft shape. */
   | { readonly kind: "set_colonial_service"; readonly fitted: boolean }
+  /** Ask for or drop an aluminium superstructure (manual p.45). Dropping removes the flag, restoring the prior draft shape. */
+  | { readonly kind: "set_aluminium_superstructure"; readonly fitted: boolean }
   /** The tertiary battery: a count of one chosen gun; `null` removes it. */
   | { readonly kind: "set_tertiary"; readonly tertiary: TertiaryBattery | null }
   /** The design brief: ship type, required speed and range, crew and accommodation. A brief is not a build change. */
@@ -105,6 +107,15 @@ export function applyEdit(draft: DesignDraft, e: DraftEdit): DesignDraft {
         return rest;
       }
       return { ...draft, colonialServiceFitted: true };
+    }
+    case "set_aluminium_superstructure": {
+      if (typeof e.fitted !== "boolean")
+        throw new EditError("aluminium superstructure must be on or off");
+      if (!e.fitted) {
+        const { aluminiumSuperstructure: _removed, ...rest } = draft;
+        return rest;
+      }
+      return { ...draft, aluminiumSuperstructure: true };
     }
     case "set_tertiary": {
       const t = e.tertiary;

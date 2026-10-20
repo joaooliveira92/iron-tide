@@ -11,6 +11,7 @@ import {
 } from "./classification.js";
 import { availabilityFindings, evaluateShipTypeAvailability } from "./shipTypeAvailability.js";
 import { shipTypeRegistryFromRecords } from "./shipTypeRegistry.js";
+import { aluminiumFitting, aluminiumFindings } from "./aluminium.js";
 import {
   colonialFitting,
   colonialFittingFindings,
@@ -218,6 +219,8 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
 
   const colonialService = colonialFitting(draft, ctx);
   findings.push(...colonialFittingFindings(colonialService));
+  const aluminium = aluminiumFitting(draft, ctx.balance.aluminiumSuperstructure, ctx.month);
+  findings.push(...aluminiumFindings(aluminium));
 
   // 8. Dock, treaty, modernization
   const total = hullRes.totalKg;
@@ -256,6 +259,7 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
     components,
     findings: sorted,
     ...(colonialService === null ? {} : { colonialService }),
+    ...(aluminium === null ? {} : { aluminium }),
     valid: !hasBlocking(sorted),
   };
   return { ...body, hash: sha256Hex(canonicalSerialize(withoutSubjects(body))) };

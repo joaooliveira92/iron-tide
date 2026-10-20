@@ -13,6 +13,7 @@ import { parseFormula } from "./formula/parse.js";
 import type { HullBalance, HullForm, HullResult, HullSpec } from "./hull.js";
 import type { DisplacementLedger, LedgerCategory } from "./ledger.js";
 import type { ArmourSchemeId } from "./armourSchemes.js";
+import type { AluminiumBalance, AluminiumResult } from "./aluminium.js";
 import type { TertiaryBalance, TertiaryBattery } from "./tertiary.js";
 import type { MachineryBalance, MachineryResult, PropulsionPlant } from "./machinery.js";
 import type { StabilityBalance, StabilityResult, StabilityWindow } from "./stability.js";
@@ -91,6 +92,8 @@ export interface DesignDraft {
   readonly tertiary?: TertiaryBattery;
   /** Fitted for colonial service (manual p.42; S-5, spec #73 R4). Absent or false = unfitted, identical to a design that predates it. */
   readonly colonialServiceFitted?: boolean;
+  /** Aluminium superstructure (manual p.45; ADR-0246). Absent or false = steel, identical to a design that predates it. */
+  readonly aluminiumSuperstructure?: boolean;
 }
 
 export interface HullFormData {
@@ -125,6 +128,8 @@ export interface ShipBalance {
   readonly weapons: WeaponBalance;
   /** Tertiary-battery coefficients (BALANCE TARGETs). Absent = the battery contributes nothing. */
   readonly tertiary?: TertiaryBalance;
+  /** Aluminium-superstructure values, all PROVISIONAL (ADR-0246). Absent = the option does nothing and is not offered. */
+  readonly aluminiumSuperstructure?: AluminiumBalance;
   readonly armour: ArmourBalance;
   readonly stability: StabilityBalance;
   readonly systems: SystemsBalance;
@@ -207,6 +212,8 @@ export interface CompiledDesign {
   readonly findings: readonly Finding[];
   /** Present only on a design fitted for colonial service, so an unfitted design's compiled hash is unchanged. */
   readonly colonialService?: ColonialFittingResult;
+  /** Present only on a design that asks for an aluminium superstructure, so every other design's hash is unchanged. */
+  readonly aluminium?: AluminiumResult;
   readonly valid: boolean;
   /** SHA-256 over the canonical serialisation of the whole result. */
   readonly hash: string;

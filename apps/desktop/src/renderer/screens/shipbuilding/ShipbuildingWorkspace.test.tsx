@@ -364,6 +364,12 @@ describe("Central ship workspace views and overlays", () => {
     expect(box().getAttribute("aria-checked")).toBe(String(hadBox));
   });
 
+  it("does not offer an aluminium superstructure at the dates the standalone designer covers", () => {
+    render(<ShipbuildingWorkspace />);
+    openMap("Hull");
+    expect(screen.queryByRole("checkbox", { name: "Aluminium superstructure" })).toBeNull();
+  });
+
   it("controls the overlays independently, and no view turns them all on", () => {
     render(<ShipbuildingWorkspace />);
     expect(overlay("Turret arcs").getAttribute("aria-checked")).toBe("true");

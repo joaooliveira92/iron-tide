@@ -59,6 +59,7 @@ import {
 import { sameEntity, type ShipEntity } from "../../components/design-workspace/selection/store.js";
 import { useCampaignMonthId } from "../../shell/CampaignShellContext.js";
 import {
+  AluminiumSuperstructurePanel,
   ArmamentEditor,
   ClassNameBrowser,
   ColonialServicePanel,
@@ -80,6 +81,7 @@ import {
   WorkspaceDialog,
   type PriorityLevel,
 } from "./components/index.js";
+import { aluminiumModel } from "./aluminium-view.js";
 import { armamentEntries } from "./armament.js";
 import { nameGroups, namePoolFor, suggestClassName } from "./class-name-suggestions.js";
 import { colonialServiceModel } from "./colonial-service-view.js";
@@ -251,6 +253,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
     () => content.environmentFor(state.month, draft.nationId),
     [content, state.month, draft.nationId],
   );
+  const aluminium = aluminiumModel(view, env.ctx.balance.aluminiumSuperstructure, state.month);
   const namePool = namePoolFor(nationEnv.ctx.navalProfile, shipType);
   const machineryDeltas = useMemo(
     () => (place.section === "machinery" ? plantDeltas(draft, nationEnv, view, content) : null),
@@ -357,6 +360,9 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
               edit={actions.edit}
               errorFor={choiceCheck.errorFor}
             />
+            {aluminium.offered && (
+              <AluminiumSuperstructurePanel model={aluminium} edit={actions.edit} />
+            )}
             {fittingsPanel(at)}
           </>
         );

@@ -462,3 +462,29 @@ describe("tertiary battery in the design file and edits", () => {
     ).toThrow(EditError);
   });
 });
+
+describe("aluminium superstructure in the design file and edits", () => {
+  const withFlag = (v: unknown) =>
+    JSON.stringify({
+      format: "bwdesign",
+      schemaVersion: 2,
+      draft: { ...draft, aluminiumSuperstructure: v },
+      componentHashes: {},
+      compiledHash: null,
+    });
+  it("round-trips the flag and refuses a non-boolean, without a schema bump", () => {
+    expect(decodeDesignFile(withFlag(true), ctx.catalogue).draft.aluminiumSuperstructure).toBe(
+      true,
+    );
+    for (const bad of ["yes", 1, null])
+      expect(() => decodeDesignFile(withFlag(bad), ctx.catalogue)).toThrow(PersistenceError);
+    expect(DESIGN_SCHEMA_VERSION).toBe(2);
+  });
+  it("set_aluminium_superstructure sets the flag, and unsetting removes the key", () => {
+    const on = applyEdit(draft, { kind: "set_aluminium_superstructure", fitted: true });
+    expect(on.aluminiumSuperstructure).toBe(true);
+    const off = applyEdit(on, { kind: "set_aluminium_superstructure", fitted: false });
+    expect("aluminiumSuperstructure" in off).toBe(false);
+    expect(off).toEqual(draft);
+  });
+});

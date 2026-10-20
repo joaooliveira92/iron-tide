@@ -1318,6 +1318,8 @@ export const DesignHeaderSchema = Schema.Struct({
   fireControl: Schema.optional(Schema.Struct({ positions: nonNegativeInt })),
   /** Fitted for colonial service (S-5, ADR-0242); absent = unfitted. */
   colonialServiceFitted: Schema.optional(Schema.Boolean),
+  /** Aluminium superstructure (ADR-0246); absent = steel. */
+  aluminiumSuperstructure: Schema.optional(Schema.Boolean),
   /** Tertiary battery (ADR-0233); absent = none. */
   tertiary: Schema.optional(Schema.Struct({ caliberUm: positiveInt, count: nonNegativeInt })),
   protection: Schema.Struct({

@@ -300,6 +300,8 @@ export function changeKindOf(
       return e.edits.length === 0 ? null : changeKindOf(e.edits[0]!, categoryOf);
     case "set_side":
       return categoryOf(e.instanceId) === "MAIN_GUN" ? "MAIN_ARMAMENT" : "FITTINGS";
+    case "set_aluminium_superstructure":
+      return "STRUCTURE";
     case "set_hull":
       return Object.keys(e.patch).some((k) => STRUCTURE_KEYS.has(k)) ? "STRUCTURE" : "FITTINGS";
     case "set_machinery":

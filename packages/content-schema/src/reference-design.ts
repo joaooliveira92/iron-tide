@@ -143,6 +143,7 @@ const DesignDraftSchema = Schema.Struct({
   fireControl: Schema.optional(Schema.Struct({ positions: nonNegativeInt })),
   tertiary: Schema.optional(Schema.Struct({ caliberUm: positiveInt, count: nonNegativeInt })),
   colonialServiceFitted: Schema.optional(Schema.Boolean),
+  aluminiumSuperstructure: Schema.optional(Schema.Boolean),
 });
 
 /**

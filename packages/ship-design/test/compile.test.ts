@@ -305,3 +305,47 @@ describe("compileDesign: tertiary battery (#168 step 4b)", () => {
     );
   });
 });
+
+describe("compileDesign: aluminium superstructure (ADR-0246)", () => {
+  const section = { fromMonth: "1880-01", hullWeightSavingBp: 1_000 };
+  const tuned = withCtx({ balance: { ...ctx.balance, aluminiumSuperstructure: section } });
+  const aluminium = withDraft({ aluminiumSuperstructure: true });
+  const base = compileDesign(draft, tuned);
+  const light = compileDesign(aluminium, tuned);
+
+  it("an unset design and an absent balance section leave the design unchanged", () => {
+    expect(compileDesign(draft, ctx).hash).toBe(base.hash);
+    expect(compileDesign(withDraft({ aluminiumSuperstructure: false }), tuned).hash).toBe(
+      base.hash,
+    );
+    expect(base.aluminium).toBeUndefined();
+  });
+  it("saves the configured share of the hull weight", () => {
+    expect(light.ledger.hull).toBeLessThan(base.ledger.hull);
+    const saved = base.ledger.hull - light.ledger.hull;
+    expect(saved).toBe(Math.floor(base.ledger.hull / 10));
+    expect(light.aluminium).toEqual({ fitted: true, available: true, savingBp: 1_000 });
+  });
+  it("keeps the ledger summing to the displacement", () => {
+    expect(light.totalKg).toBe(ledgerTotal(light.ledger));
+  });
+  it("does nothing, and says so, before the option is available or without a section", () => {
+    const early = withCtx({
+      balance: { ...ctx.balance, aluminiumSuperstructure: { ...section, fromMonth: "2000-01" } },
+    });
+    for (const c of [early, ctx]) {
+      const r = compileDesign(aluminium, c);
+      expect(r.ledger.hull).toBe(base.ledger.hull);
+      expect(r.aluminium?.available).toBe(false);
+      expect(r.findings.some((f) => f.id === "ALUMINIUM_SUPERSTRUCTURE_UNAVAILABLE")).toBe(true);
+    }
+  });
+  it("notes the fire susceptibility the battle model does not yet carry", () => {
+    expect(light.findings.some((f) => f.id === "ALUMINIUM_FIRE_SUSCEPTIBILITY")).toBe(true);
+  });
+  it("is a structure change", () => {
+    expect(
+      changeKindOf({ kind: "set_aluminium_superstructure", fitted: true }, () => undefined),
+    ).toBe("STRUCTURE");
+  });
+});

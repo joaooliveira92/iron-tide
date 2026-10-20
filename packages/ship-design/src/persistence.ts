@@ -138,6 +138,8 @@ export function validateDraftShape(raw: unknown): string[] {
   }
   if (raw.colonialServiceFitted !== undefined && typeof raw.colonialServiceFitted !== "boolean")
     p.push("colonialServiceFitted must be a boolean");
+  if (raw.aluminiumSuperstructure !== undefined && typeof raw.aluminiumSuperstructure !== "boolean")
+    p.push("aluminiumSuperstructure must be a boolean");
   if (raw.fireControl !== undefined) {
     if (
       !isObj(raw.fireControl) ||

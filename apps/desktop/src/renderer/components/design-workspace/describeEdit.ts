@@ -53,6 +53,8 @@ export function describeEdit(e: DraftEdit, nameOf: (componentId: string) => stri
       return `Armour scheme: ${words(e.schemeId)}`;
     case "set_armour_regions":
       return `Armour scheme: ${e.regions.length} region${e.regions.length === 1 ? "" : "s"}`;
+    case "set_aluminium_superstructure":
+      return e.fitted ? "Use an aluminium superstructure" : "Return to a steel superstructure";
     case "set_colonial_service":
       return e.fitted ? "Fit for colonial service" : "Remove the colonial-service fitting";
     case "remove_armour_region":

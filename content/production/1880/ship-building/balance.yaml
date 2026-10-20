@@ -58,6 +58,11 @@ ship:
     footprintFactorPermille: 400000
     shellNanoKgPerMm3: 20000
     bearingBp: 5000
+  # Aluminium superstructure (RTW3 manual p.45). hullWeightSavingBp is the manual's own 10%. fromMonth is a PROVISIONAL
+  # gameplay parameter (ADR-0246, ADR-0213): the pack has no aluminium technology yet, so a date stands in for the research.
+  aluminiumSuperstructure:
+    fromMonth: "1930-01"
+    hullWeightSavingBp: 1000
   arrangement:
     concentrationAdvisoryBp: 6000
     concentrationWarningBp: 8000

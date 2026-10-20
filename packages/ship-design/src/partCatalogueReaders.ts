@@ -330,6 +330,7 @@ export function headerFromDraft(draft: DesignDraft): DesignHeaderData {
       ? { fireControl: { positions: draft.fireControl.positions } }
       : {}),
     ...(draft.colonialServiceFitted === true ? { colonialServiceFitted: true as const } : {}),
+    ...(draft.aluminiumSuperstructure === true ? { aluminiumSuperstructure: true as const } : {}),
     protection: {
       citadelLengthMm: draft.armour.citadelLengthMm,
       torpedoWarheadKg: draft.armour.torpedoWarheadKg,
@@ -517,6 +518,7 @@ export function rebuildDraft(input: {
         ? { fireControl: { positions: input.header.fireControl.positions } }
         : {}),
       ...(input.header.colonialServiceFitted === true ? { colonialServiceFitted: true } : {}),
+      ...(input.header.aluminiumSuperstructure === true ? { aluminiumSuperstructure: true } : {}),
     },
     issues,
   };
