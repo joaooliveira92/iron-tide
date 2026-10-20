@@ -3,6 +3,7 @@ import { ChevronDown, Move, SquarePlus, X, type LucideIcon } from "lucide-react"
 import { useState } from "react";
 import { cn } from "../../../../lib/utils.js";
 import { Button } from "../../../ui/button.js";
+import { Kbd } from "../../../ui/kbd.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../ui/popover.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../../ui/hover-card.js";
 import { componentCategoryMeta } from "../../componentCategory.js";
@@ -87,12 +88,12 @@ export function PlanModeButtons({
           <>
             <Icon aria-hidden="true" />
             {label}
-            <kbd
+            <Kbd
               aria-hidden="true"
-              className="rounded border border-current/30 px-1 font-sans text-xs leading-4 opacity-70"
+              className="border-current/30 bg-transparent text-current opacity-70"
             >
               {mode === "place" ? "P" : "M"}
-            </kbd>
+            </Kbd>
             <ChevronDown aria-hidden="true" className="-mr-1 size-3 opacity-60" />
           </>
         );
