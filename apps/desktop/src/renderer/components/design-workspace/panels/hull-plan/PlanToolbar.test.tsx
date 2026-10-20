@@ -140,7 +140,7 @@ describe("PlanModeButtons", () => {
   it("explains how to use the place tool in a hover tooltip on its button", async () => {
     render(<ModeButtons onChange={() => {}} />);
     fireEvent.focus(screen.getByRole("button", { name: "Place on plan" }));
-    const tip = await screen.findByText(/Choose a component in the Place menu/);
+    const tip = await screen.findByText(/Choose a component in the menu, then click the plan/);
     expect(tip).toBeTruthy();
   });
 
@@ -203,5 +203,21 @@ describe("PlanToolOptions", () => {
       />,
     );
     expect(screen.getByRole("status").textContent).toBe("Placed Gun A at 300‰.");
+  });
+
+  it("names the active tool in the banner and offers Done only while a tool is on", () => {
+    const onDone = vi.fn<() => void>();
+    const { rerender } = render(<PlanToolOptions {...base} tool={IDLE_TOOL} onDone={onDone} />);
+    expect(screen.queryByRole("button", { name: "Done" })).toBeNull();
+    rerender(<PlanToolOptions {...base} tool={{ ...IDLE_TOOL, mode: "place" }} onDone={onDone} />);
+    const options = screen.getByRole("group", { name: "Plan tool options" });
+    expect(options.textContent).toContain("Placing");
+    expect(within(options).getByRole("status").textContent).toMatch(/Choose a component/);
+    fireEvent.click(within(options).getByRole("button", { name: "Done" }));
+    expect(onDone).toHaveBeenCalledOnce();
+    rerender(<PlanToolOptions {...base} tool={{ ...IDLE_TOOL, mode: "move" }} onDone={onDone} />);
+    expect(screen.getByRole("group", { name: "Plan tool options" }).textContent).toContain(
+      "Moving",
+    );
   });
 });

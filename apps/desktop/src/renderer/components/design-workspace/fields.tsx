@@ -65,9 +65,10 @@ export function NumberField({
     recommended === undefined ? null : Math.round(clampShown(recommended / scale) * scale);
   const showReset = resetValue !== null && recommended !== value;
   return (
-    <div className={cn("space-y-1", className)}>
-      <div className="flex items-center justify-between gap-2">
-        <label htmlFor={id} className="block text-xs text-muted-foreground">
+    // Label on top, control pinned to the bottom: when a long label wraps in a grid row, the inputs still line up.
+    <div className={cn("flex h-full flex-col gap-1", className)}>
+      <div className="flex flex-1 items-start justify-between gap-2">
+        <label htmlFor={id} className="block text-xs leading-snug text-muted-foreground">
           {shortLabel ?? label}
           {unit ? ` (${unit})` : ""}
         </label>
@@ -154,10 +155,15 @@ export function SelectField({
 }) {
   const id = useId();
   return (
-    <div className={cn(inline ? "flex items-center gap-2" : "space-y-1", className)}>
+    <div
+      className={cn(inline ? "flex items-center gap-2" : "flex h-full flex-col gap-1", className)}
+    >
       <label
         htmlFor={id}
-        className={cn("text-xs text-muted-foreground", inline ? "shrink-0" : "block")}
+        className={cn(
+          "text-xs leading-snug text-muted-foreground",
+          inline ? "shrink-0" : "block flex-1",
+        )}
       >
         {shortLabel ?? label}
       </label>

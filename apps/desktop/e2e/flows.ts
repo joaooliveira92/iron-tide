@@ -87,7 +87,7 @@ export async function advanceMonths(page: Page, count: number): Promise<void> {
  * returns the dialog once its ship-building content has loaded.
  */
 export async function openShipbuilding(page: Page): Promise<Locator> {
-  await page.getByTestId("bottom-nav").getByRole("button", { name: "Shipbuilding" }).click();
+  await page.getByTestId("bottom-nav").getByRole("button", { name: "Ship design" }).click();
   const dialog = page.getByTestId("shipbuilding-dialog");
   await dialog.getByTestId("shipbuilding-workspace").waitFor({ timeout: 15_000 });
   return dialog;

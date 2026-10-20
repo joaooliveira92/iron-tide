@@ -25,7 +25,7 @@ describe("BottomNav (proof of concept)", () => {
       ...CAMPAIGN_NAVIGATION_SECTIONS.flatMap((section) =>
         section.items.map((item) => item.shortLabel),
       ),
-      "Shipbuilding",
+      "Ship design",
     ]);
   });
 
@@ -60,12 +60,12 @@ describe("BottomNav (proof of concept)", () => {
     expect(onSelect).toHaveBeenCalledWith("fleet");
   });
 
-  it("opens the Shipbuilding workspace modal from the bottom bar without navigating", () => {
+  it("opens the Ship design workspace modal from the bottom bar without navigating", () => {
     const onSelect = vi.fn();
     render(<BottomNav screen="overview" onSelect={onSelect} />);
     expect(screen.queryByRole("dialog")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Shipbuilding" }));
-    expect(within(screen.getByRole("dialog")).getByText("Shipbuilding")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Ship design" }));
+    expect(within(screen.getByRole("dialog")).getByText("Ship design")).toBeTruthy();
     expect(onSelect).not.toHaveBeenCalled();
   });
 

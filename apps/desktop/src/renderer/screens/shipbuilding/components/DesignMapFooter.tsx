@@ -10,6 +10,8 @@ export interface DesignMapFooterProps {
   readonly months: readonly string[] | null;
   readonly onMonth: (month: string) => void;
   readonly status: DesignStatus;
+  /** What fixes the status (e.g. focus the class name): when given, the status becomes a button that runs it. */
+  readonly onStatusAction?: () => void;
 }
 
 /**
@@ -17,7 +19,27 @@ export interface DesignMapFooterProps {
  * design, so they sit with the design map rather than in the command bar. Below extra-large widths the rail is icon
  * width, so the date shrinks to its text and the status to a dot, each keeping its full spoken name.
  */
-export function DesignMapFooter({ month, months, onMonth, status }: DesignMapFooterProps) {
+export function DesignMapFooter({
+  month,
+  months,
+  onMonth,
+  status,
+  onStatusAction,
+}: DesignMapFooterProps) {
+  const badge = (
+    <Badge
+      role={onStatusAction === undefined ? "status" : undefined}
+      variant={
+        status.tone === "ok" ? "secondary" : status.tone === "warn" ? "outline" : "destructive"
+      }
+      title={status.detail}
+      className={cn("justify-center max-xl:size-3 max-xl:rounded-full max-xl:p-0")}
+    >
+      <span className="sr-only">Design status: </span>
+      <span className="max-xl:sr-only">{status.label}</span>
+      <span className="sr-only">, {status.detail}</span>
+    </Badge>
+  );
   return (
     <div className="mt-auto flex flex-col gap-2 border-t pt-2 max-xl:items-center">
       {months === null ? (
@@ -41,18 +63,22 @@ export function DesignMapFooter({ month, months, onMonth, status }: DesignMapFoo
           onChange={onMonth}
         />
       )}
-      <Badge
-        role="status"
-        variant={
-          status.tone === "ok" ? "secondary" : status.tone === "warn" ? "outline" : "destructive"
-        }
-        title={status.detail}
-        className={cn("justify-center max-xl:size-3 max-xl:rounded-full max-xl:p-0")}
-      >
-        <span className="sr-only">Design status: </span>
-        <span className="max-xl:sr-only">{status.label}</span>
-        <span className="sr-only">, {status.detail}</span>
-      </Badge>
+      {onStatusAction === undefined ? (
+        badge
+      ) : (
+        // A live region inside a button is dropped from the button's name, so the name is explicit.
+        <div role="status">
+          <button
+            type="button"
+            onClick={onStatusAction}
+            aria-label={`${status.label}, ${status.detail}. Activate to fix`}
+            title={`${status.label}: click to fix`}
+            className="cursor-pointer rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring max-xl:flex"
+          >
+            {badge}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

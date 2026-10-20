@@ -118,7 +118,7 @@ export const EN_US_MESSAGES = {
   "nav.screen.options.short": "Options",
 
   "nav.bottom.landmark": "Campaign",
-  "nav.bottom.shipbuilding": "Shipbuilding",
+  "nav.bottom.shipbuilding": "Ship design",
 
   "shell.header.title.default": "Naval Ministry",
   "shell.header.back": "Go back",

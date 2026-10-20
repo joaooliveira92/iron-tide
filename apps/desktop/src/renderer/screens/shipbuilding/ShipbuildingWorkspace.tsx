@@ -445,7 +445,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           />
         ) : (
           <NotAvailable title="Finishing: not available">
-            A design is finished into a campaign; open the Shipbuilding workspace from a campaign to
+            A design is finished into a campaign; open the Ship design workspace from a campaign to
             submit it.
           </NotAvailable>
         );
@@ -547,6 +547,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
                 months={campaignMonth !== null ? null : technologyMonths(state.month)}
                 onMonth={actions.setMonth}
                 status={status}
+                onStatusAction={needsName ? () => nameInputRef.current?.focus() : undefined}
               />
             }
           />
@@ -563,8 +564,11 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
                   role="group"
                   aria-label="Plan tools"
                   title={PLAN_TOOL_HINT}
-                  className="flex gap-1"
+                  className="flex items-center gap-1 border-l border-border pl-2"
                 >
+                  <span className="mr-1 text-xs text-muted-foreground" aria-hidden="true">
+                    Edit plan
+                  </span>
                   <PlanModeButtons
                     tool={planTool}
                     onTool={setPlanTool}
