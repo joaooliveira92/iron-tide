@@ -46,6 +46,7 @@ import { join, resolve } from "node:path";
 import { advanceMonths, dismissTour, startNewCampaign } from "../e2e/flows.ts";
 import { writeAppPreferences } from "../e2e/preferences-fixture.ts";
 import { copyFixturePackage, launchHarness, teardownHarness } from "../e2e/fixtures.ts";
+import { createProblemLog } from "./snap-problems.ts";
 import { parseSnapArgs, SnapUsageError, type SnapAction } from "./snap-args.ts";
 
 // Idle structural DOM mutations per second above which a screen is reported as churning.
@@ -76,18 +77,18 @@ const makeSave = opts.makeSave ? resolve(opts.makeSave) : undefined;
 const h = await launchHarness({ saveDir: saveDir ?? makeSave });
 const log: string[] = [];
 // What --strict fails on. Always logged; only fatal under --strict.
-const problems: string[] = [];
-const problem = (message: string) => {
-  problems.push(message);
+const problems = createProblemLog();
+const problem = (message: string, key?: string) => {
+  problems.record(message, key);
   log.push(`[snap] WARNING: ${message}`);
 };
 h.page.on("console", (m) => {
   log.push(`[${m.type()}] ${m.text()}`);
-  if (m.type() === "error") problems.push(`console error: ${m.text()}`);
+  if (m.type() === "error") problems.record(`console error: ${m.text()}`);
 });
 h.page.on("pageerror", (e) => {
   log.push(`[pageerror] ${e.message}`);
-  problems.push(`page error: ${e.message}`);
+  problems.record(`page error: ${e.message}`);
 });
 
 // Accessible role/name match (waits for it to render, e.g. after a compile). "TEXT @last" /
@@ -119,7 +120,10 @@ async function resolveControl(arg: string) {
     .catch(() => false);
   if (appeared) return byRole;
   // Not found by role: a bare text match can hit the wrong element, so it is a reportable fallback.
-  problem(`"${arg}" matched no accessible control; fell back to a visible-text match`);
+  problem(
+    `"${arg}" matched no accessible control; fell back to a visible-text match`,
+    `control:${arg}`,
+  );
   return h.page.getByText(label).first();
 }
 
@@ -136,7 +140,7 @@ async function runAction(action: SnapAction): Promise<void> {
       // An element that keeps re-mounting never becomes "stable"; fall back to a
       // direct DOM click and note it (a churning screen is itself worth knowing).
       await target.click({ timeout: 5_000 }).catch(async () => {
-        problem(`"${arg}" never stabilised; used dispatchEvent click`);
+        problem(`"${arg}" never stabilised; used dispatchEvent click`, `control:${arg}`);
         await target.dispatchEvent("click");
       });
       break;
@@ -211,6 +215,7 @@ try {
     await runAction(action).catch((e: unknown) =>
       problem(
         `${action.kind} failed: ${(e instanceof Error ? e.message : String(e)).split("\n")[0]}`,
+        "target" in action ? `control:${action.target}` : undefined,
       ),
     );
     await h.page.waitForTimeout(opts.waitMs);
@@ -259,11 +264,9 @@ try {
   await writeFile(resolve(outDir, "console.log"), log.join("\n") + "\n");
   console.log(`captured -> ${outDir}\n  screenshot.png  aria.yaml  text.txt  console.log`);
   if (log.some((l) => l.includes("WARNING"))) console.log("  ! warnings — see console.log");
-  if (opts.strict && problems.length > 0) {
-    console.error(`snap --strict: ${problems.length} problem(s)`);
-    for (const p of problems) console.error(`  - ${p}`);
-    process.exitCode = 1;
-  }
+  const failure = problems.summary();
+  if (opts.strict && failure) console.error(failure);
+  process.exitCode = problems.exitCode(opts.strict);
 } finally {
   await teardownHarness(h);
   if (saveScratch) await rm(saveScratch, { recursive: true, force: true }).catch(() => {});

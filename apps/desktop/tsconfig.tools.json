@@ -14,8 +14,7 @@
   },
   "include": [
     "scripts/view.ts",
-    "scripts/snap-args.ts",
-    "scripts/snap-args.test.ts",
+    "scripts/snap-*.ts",
     "e2e/flows.ts",
     "e2e/fixtures.ts",
     "e2e/preferences-fixture.ts"
