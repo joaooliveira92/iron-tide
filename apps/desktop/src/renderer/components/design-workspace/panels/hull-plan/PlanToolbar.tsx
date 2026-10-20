@@ -89,7 +89,7 @@ export function PlanModeButtons({
             {label}
             <kbd
               aria-hidden="true"
-              className="rounded border border-current/30 px-1 font-sans text-[10px] leading-4 opacity-70"
+              className="rounded border border-current/30 px-1 font-sans text-xs leading-4 opacity-70"
             >
               {mode === "place" ? "P" : "M"}
             </kbd>
