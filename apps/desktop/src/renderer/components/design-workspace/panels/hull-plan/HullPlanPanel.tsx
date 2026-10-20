@@ -37,6 +37,7 @@ import { planSymbolFor } from "./plan-symbols.js";
 import { planModel, type PlanModel } from "./planModel.js";
 import { useHullPlanEditing, type HullPlanEditing } from "./useHullPlanEditing.js";
 import { Info } from "lucide-react";
+import { cn } from "../../../../lib/utils.js";
 import { formatHullMetres } from "../../../../lib/presentation-format/index.js";
 import { plural } from "../../plural.js";
 import type { BoardFinding } from "../../validation/boardFindings.js";
@@ -171,6 +172,7 @@ export function HullPlanPanel({
         notice={notice}
         onNudge={onNudge}
         onSide={onSide}
+        onDone={() => editing.setTool({ ...tool, mode: "off" })}
       />
       {showArcsControl && (
         <div className="flex items-center gap-2 text-sm">
@@ -197,7 +199,10 @@ export function HullPlanPanel({
         <div className="relative">
           <svg
             viewBox={`0 0 ${PLAN_W} ${PLAN_H}`}
-            className="block w-full rounded bg-muted/40"
+            className={cn(
+              "block w-full rounded bg-muted/40",
+              tool.mode !== "off" && "ring-2 ring-primary/50",
+            )}
             role="img"
             aria-label={planLabel(facts)}
           >

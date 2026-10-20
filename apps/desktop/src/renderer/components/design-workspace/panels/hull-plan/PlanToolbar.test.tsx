@@ -140,7 +140,7 @@ describe("PlanModeButtons", () => {
   it("explains how to use the place tool in a hover tooltip on its button", async () => {
     render(<ModeButtons onChange={() => {}} />);
     fireEvent.focus(screen.getByRole("button", { name: "Place on plan" }));
-    const tip = await screen.findByText(/Choose a component in the Place menu/);
+    const tip = await screen.findByText(/Choose a component in the menu, then click the plan/);
     expect(tip).toBeTruthy();
   });
 

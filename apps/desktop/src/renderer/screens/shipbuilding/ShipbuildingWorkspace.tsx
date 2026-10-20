@@ -563,8 +563,11 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
                   role="group"
                   aria-label="Plan tools"
                   title={PLAN_TOOL_HINT}
-                  className="flex gap-1"
+                  className="flex items-center gap-1 border-l border-border pl-2"
                 >
+                  <span className="mr-1 text-xs text-muted-foreground" aria-hidden="true">
+                    Edit plan
+                  </span>
                   <PlanModeButtons
                     tool={planTool}
                     onTool={setPlanTool}

@@ -1,6 +1,7 @@
 import type { DesignDraft, MountSide, PartCatalogueEntry } from "@bluewave/ship-design";
-import { Move, SquarePlus, type LucideIcon } from "lucide-react";
+import { ChevronDown, Move, SquarePlus, X, type LucideIcon } from "lucide-react";
 import { useState } from "react";
+import { cn } from "../../../../lib/utils.js";
 import { Button } from "../../../ui/button.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../../ui/popover.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../../ui/hover-card.js";
@@ -29,9 +30,15 @@ const MODES: readonly {
     name: "Place on plan",
     label: "Place",
     Icon: SquarePlus,
-    hint: "Choose a component in the Place menu, then click the plan (near the centreline places it on the centreline, above port, below starboard), or use Auto-place there.",
+    hint: "Add a new fitting. Choose a component in the menu, then click the plan to drop it (near the centreline places it on the centreline, above port, below starboard), or use Auto-place there.",
   },
-  { mode: "move", name: "Move on plan", label: "Move", Icon: Move },
+  {
+    mode: "move",
+    name: "Move on plan",
+    label: "Move",
+    Icon: Move,
+    hint: "Reposition a fitting that is already on the plan. Choose it in the menu or click it on the plan, then click or drag it to its new spot.",
+  },
 ];
 
 /**
@@ -80,6 +87,13 @@ export function PlanModeButtons({
           <>
             <Icon aria-hidden="true" />
             {label}
+            <kbd
+              aria-hidden="true"
+              className="rounded border border-current/30 px-1 font-sans text-[10px] leading-4 opacity-70"
+            >
+              {mode === "place" ? "P" : "M"}
+            </kbd>
+            <ChevronDown aria-hidden="true" className="-mr-1 size-3 opacity-60" />
           </>
         );
         return (
@@ -213,6 +227,7 @@ export function PlanToolOptions({
   onNudge,
   onSide,
   notice,
+  onDone,
 }: {
   readonly tool: PlanTool;
   readonly draft: DesignDraft;
@@ -220,7 +235,10 @@ export function PlanToolOptions({
   readonly onNudge: (deltaPermille: number) => void;
   readonly onSide: (side: MountSide) => void;
   readonly notice: string | null;
+  /** Turns the active tool off (the "Done" button of the active-tool banner); omitted, no button is shown. */
+  readonly onDone?: () => void;
 }) {
+  const active = tool.mode !== "off";
   const selected = draft.placements.find((p) => p.instanceId === tool.instanceId);
   const selectedEntry = selected ? entryOf(selected.componentId) : undefined;
   return (
@@ -263,17 +281,36 @@ export function PlanToolOptions({
           )}
         </div>
       )}
-      {/* With nothing chosen, the guidance is the Place button's hover tooltip, so the status line stays quiet. */}
-      <p role="status" className="min-h-4 text-xs text-muted-foreground">
-        {notice ??
-          (tool.mode === "place"
-            ? tool.componentId === ""
-              ? null
-              : "Click the plan to place it. Stations snap to 10‰."
-            : tool.mode === "move"
-              ? "Click a fitting on the plan (or choose it above), then click where it should go or drag it there."
-              : "Use the Place and Move tools in the toolbar to edit the arrangement from this drawing.")}
-      </p>
+      <div
+        className={cn(
+          "flex min-h-8 items-center gap-2 rounded-md px-2 text-xs",
+          active
+            ? "border border-primary/40 bg-primary/10 text-foreground"
+            : "text-muted-foreground",
+        )}
+      >
+        {active && (
+          <span className="shrink-0 font-semibold">
+            {tool.mode === "place" ? "Placing" : "Moving"}
+          </span>
+        )}
+        <p role="status" className="min-w-0 flex-1">
+          {notice ??
+            (tool.mode === "place"
+              ? tool.componentId === ""
+                ? "Choose a component in the Place menu, then click the plan to drop it."
+                : "Click the plan to place it. Stations snap to 10‰."
+              : tool.mode === "move"
+                ? "Click a fitting on the plan (or choose it in the Move menu), then click where it should go or drag it there."
+                : "Use the Place and Move tools in the toolbar to add or reposition fittings on this drawing.")}
+        </p>
+        {active && onDone !== undefined && (
+          <Button variant="ghost" size="sm" className="shrink-0" onClick={onDone}>
+            <X aria-hidden="true" />
+            Done
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
