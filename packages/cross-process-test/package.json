@@ -23,7 +23,8 @@
     "@bluewave/events": "workspace:*",
     "@bluewave/combat": "workspace:*",
     "@bluewave/persistence": "workspace:*",
-    "@bluewave/phase-engine": "workspace:*"
+    "@bluewave/phase-engine": "workspace:*",
+    "effect": "workspace:*"
   },
   "devDependencies": {
     "@bluewave/test-support": "workspace:*"
