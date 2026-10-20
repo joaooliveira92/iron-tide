@@ -156,9 +156,11 @@ describe("Design map and inspector routing", () => {
 
   it("lists the seven sections, each announcing its status", () => {
     render(<ShipbuildingWorkspace />);
+    // The class-name helpers share the rail's foot but are not sections.
     const names = within(map())
       .getAllByRole("button")
-      .map((b) => b.getAttribute("aria-label") ?? "");
+      .map((b) => b.getAttribute("aria-label") ?? "")
+      .filter((n) => n !== "Suggest a class name" && n !== "Browse class names");
     expect(names.map((n) => n.split(",")[0])).toEqual([
       "Overview",
       "Hull",
@@ -305,6 +307,31 @@ describe("Central ship workspace views and overlays", () => {
     fireEvent.contextMenu(screen.getByRole("group", { name: /^Ship plan/ }));
     expect(await screen.findByRole("menuitem", { name: "Place" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Move" })).toBeTruthy();
+  });
+
+  it("suggests class names from the nation's list for the ship type, one after another", () => {
+    render(<ShipbuildingWorkspace />);
+    const name = () => (within(commands()).getByLabelText("Class name") as HTMLInputElement).value;
+    expect(name()).toBe("");
+    const suggest = screen.getByRole("button", { name: "Suggest a class name" });
+    fireEvent.click(suggest);
+    const first = name();
+    expect(first).not.toBe("");
+    fireEvent.click(suggest);
+    expect(name()).not.toBe(first);
+  });
+
+  it("opens a list of the nation's names and fills the class name from the one chosen", async () => {
+    render(<ShipbuildingWorkspace />);
+    fireEvent.click(screen.getByRole("button", { name: "Browse class names" }));
+    const dialog = await screen.findByRole("dialog", { name: "Class names" });
+    const pick = within(dialog).getAllByRole("button", { pressed: false })[0]!;
+    const chosen = pick.textContent!;
+    fireEvent.click(pick);
+    expect(screen.queryByRole("dialog", { name: "Class names" })).toBeNull();
+    expect((within(commands()).getByLabelText("Class name") as HTMLInputElement).value).toBe(
+      chosen,
+    );
   });
 
   it("controls the overlays independently, and no view turns them all on", () => {

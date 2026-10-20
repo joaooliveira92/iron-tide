@@ -60,6 +60,7 @@ import { sameEntity, type ShipEntity } from "../../components/design-workspace/s
 import { useCampaignMonthId } from "../../shell/CampaignShellContext.js";
 import {
   ArmamentEditor,
+  ClassNameBrowser,
   ColonialServicePanel,
   CommandBar,
   DesignMap,
@@ -80,6 +81,7 @@ import {
   type PriorityLevel,
 } from "./components/index.js";
 import { armamentEntries } from "./armament.js";
+import { nameGroups, namePoolFor, suggestClassName } from "./class-name-suggestions.js";
 import { colonialServiceModel } from "./colonial-service-view.js";
 import { machineryModel, plantDeltas } from "./machinery-view.js";
 import { overviewModel, type PriorityId } from "./overview.js";
@@ -102,7 +104,7 @@ import { useInspectorLayout } from "./useInspectorLayout.js";
 const VALIDATION_TOAST_ID = "shipbuilding-validation";
 const VALIDATION_TOAST_MS = 4000;
 
-type OverflowDialog = "start" | "file" | "history" | "alternatives";
+type OverflowDialog = "start" | "file" | "history" | "alternatives" | "names";
 
 /** The battery each Armament tab shows; "other" holds no battery. */
 const TAB_BATTERY: { readonly [tab: string]: BatteryRole } = {
@@ -195,6 +197,8 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
   };
   const [dialog, setDialog] = useState<OverflowDialog | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  // Suggest walks the nation's name list for this ship type; the position is only presentation state.
+  const [nameCursor, setNameCursor] = useState(0);
 
   useRestoredDraftToast({
     restored: autosave.restored,
@@ -246,6 +250,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
     () => content.environmentFor(state.month, draft.nationId),
     [content, state.month, draft.nationId],
   );
+  const namePool = namePoolFor(previewEnv.ctx.navalProfile, shipType);
   const machineryDeltas = useMemo(
     () => (place.section === "machinery" ? plantDeltas(draft, previewEnv, view, content) : null),
     [place.section, draft, previewEnv, view, content],
@@ -560,6 +565,16 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
                 onMonth={actions.setMonth}
                 status={status}
                 onStatusAction={needsName ? () => nameInputRef.current?.focus() : undefined}
+                names={{
+                  canSuggest: namePool.length > 0,
+                  onBrowse: () => setDialog("names"),
+                  onSuggest: () => {
+                    const next = suggestClassName(namePool, shipClassName, nameCursor);
+                    if (next === null) return;
+                    setShipClassName(next.name);
+                    setNameCursor(next.cursor);
+                  },
+                }}
               />
             }
           />
@@ -669,6 +684,21 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
             setPendingPreset(null);
           }}
         />
+        <WorkspaceDialog
+          open={dialog === "names"}
+          onClose={() => setDialog(null)}
+          title="Class names"
+          description="The ship names your nation uses, by ship type. Choosing one sets the class name."
+        >
+          <ClassNameBrowser
+            groups={nameGroups(previewEnv.ctx.navalProfile, shipType)}
+            current={shipClassName}
+            onPick={(name) => {
+              setShipClassName(name);
+              setDialog(null);
+            }}
+          />
+        </WorkspaceDialog>
         <WorkspaceDialog
           open={dialog === "start"}
           onClose={() => setDialog(null)}
