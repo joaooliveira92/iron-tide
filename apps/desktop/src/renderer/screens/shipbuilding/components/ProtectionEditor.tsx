@@ -9,6 +9,7 @@ import { Badge } from "../../../components/ui/badge.js";
 import { Button } from "../../../components/ui/button.js";
 import { Checkbox } from "../../../components/ui/checkbox.js";
 import { Advanced } from "../../../components/design-workspace/Advanced.js";
+import { FieldError } from "../../../components/ui/field.js";
 import { NumberField, SelectField } from "../../../components/design-workspace/fields.js";
 import { ArmourSchemeSelector } from "./ArmourSchemeSelector.js";
 import { Panel } from "../../../components/design-workspace/panels/Panel.js";
@@ -32,11 +33,14 @@ const m2 = (area: number) => area.toLocaleString("en-US", { maximumFractionDigit
 export function ProtectionEditor({
   model,
   edit,
+  errorFor,
   onSelectRegion,
   selectedRegion,
 }: {
   readonly model: ProtectionModel;
   readonly edit: (e: DraftEdit) => void;
+  /** The inline message for an edit, filed as `set_armour_region:<region>` (see `editField`), while it breaks the design. */
+  readonly errorFor?: (field: string) => string | undefined;
   /** Pins the region for the ship-plan highlight; null clears it. */
   readonly onSelectRegion?: (region: ArmourRegionId | null) => void;
   readonly selectedRegion?: ArmourRegionId | null;
@@ -87,6 +91,7 @@ export function ProtectionEditor({
                     field={field}
                     materials={model.materials}
                     selected={selectedRegion === field.region}
+                    error={errorFor?.(`set_armour_region:${field.region}`)}
                     onSelect={() =>
                       onSelectRegion?.(selectedRegion === field.region ? null : field.region)
                     }
@@ -133,6 +138,7 @@ function ProtectionFieldRow({
   field,
   materials,
   selected,
+  error,
   onSelect,
   onPatch,
   onRemove,
@@ -140,6 +146,8 @@ function ProtectionFieldRow({
   readonly field: ProtectionField;
   readonly materials: ProtectionModel["materials"];
   readonly selected: boolean;
+  /** Why this region breaks the design, while it does. */
+  readonly error?: string | undefined;
   readonly onSelect: () => void;
   readonly onPatch: (region: ArmourRegion, change: Partial<ArmourRegion>) => void;
   readonly onRemove: () => void;
@@ -223,6 +231,7 @@ function ProtectionFieldRow({
           onCommit={(v) => onPatch(region, { heightMm: v })}
         />
       </div>
+      {error && <FieldError>{error}</FieldError>}
 
       <Advanced className="text-xs text-muted-foreground">
         <div className="grid grid-cols-2 items-end gap-2">

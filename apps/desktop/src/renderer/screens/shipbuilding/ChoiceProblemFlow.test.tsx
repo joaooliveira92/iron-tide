@@ -73,4 +73,22 @@ describe("inline errors beyond the hull", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Keep it and fix it myself" }));
     expect(power.getAttribute("aria-invalid")).toBe("true");
   });
+
+  it("marks the armour region whose addition broke the design", () => {
+    render(<ShipbuildingWorkspace />);
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "Design map" })).getByRole("button", {
+        name: /Protection/,
+      }),
+    );
+    const panel = screen.getByRole("region", { name: "Protection" });
+    fireEvent.click(within(panel).getByRole("button", { name: "Add region" }));
+    fireEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", {
+        name: "Keep it and fix it myself",
+      }),
+    );
+    const row = panel.querySelector<HTMLElement>("[data-armour-region]");
+    expect(within(row as HTMLElement).getByRole("alert")).toBeTruthy();
+  });
 });

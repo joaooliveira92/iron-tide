@@ -11,6 +11,7 @@ import {
 import { Badge } from "../../ui/badge.js";
 import { Button } from "../../ui/button.js";
 import { Checkbox } from "../../ui/checkbox.js";
+import { FieldError } from "../../ui/field.js";
 import { NumberField, SelectField } from "../fields.js";
 import { Panel } from "./Panel.js";
 import type { Edit } from "./types.js";
@@ -28,11 +29,14 @@ export function ArmourPanel({
   view,
   materials,
   edit,
+  errorFor,
 }: {
   readonly draft: DesignDraft;
   readonly view: WorkshopView;
   readonly materials: readonly ArmourMaterialOption[];
   readonly edit: Edit;
+  /** The inline message for an edit, filed as `set_armour_region:<region>` (see `editField`), while it breaks the design. */
+  readonly errorFor?: (field: string) => string | undefined;
 }) {
   const [toAdd, setToAdd] = useState("");
   const fitted = new Set<string>(draft.armour.regions.map((r) => r.region));
@@ -148,6 +152,9 @@ export function ArmourPanel({
                   onChange={(v) => patch(r, { materialId: v })}
                 />
               </div>
+              {errorFor?.(`set_armour_region:${r.region}`) && (
+                <FieldError>{errorFor(`set_armour_region:${r.region}`)}</FieldError>
+              )}
               <label className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Checkbox
                   aria-label={`Inclined ${r.region}`}

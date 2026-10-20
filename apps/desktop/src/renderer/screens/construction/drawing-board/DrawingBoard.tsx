@@ -453,6 +453,7 @@ export function DrawingBoard({
                     />
                     <div className={TAB_GRID}>
                       <ArmourPanel
+                        errorFor={choiceCheck.errorFor}
                         draft={draft}
                         view={view}
                         materials={armourMaterials}

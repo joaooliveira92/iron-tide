@@ -379,6 +379,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
         return at.tab === "armour" ? (
           <>
             <ProtectionEditor
+              errorFor={choiceCheck.errorFor}
               model={protectionModel(draft, view, armourMaterials, Number(state.month.slice(0, 4)))}
               edit={actions.edit}
               onSelectRegion={selectArmourRegion}

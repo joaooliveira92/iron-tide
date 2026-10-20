@@ -25,9 +25,11 @@ export function technologyMonths(current: string): string[] {
 
 /**
  * The key an edit's inline error is filed under: the edit kind plus the setting it changes, so a field can ask for
- * `set_hull:materialId`.
+ * `set_hull:materialId`; an armour region is filed as `set_armour_region:<region>`.
  */
 export function editField(e: DraftEdit): string {
+  // An armour edit carries the whole region, so the error is filed per region.
+  if (e.kind === "set_armour_region") return `${e.kind}:${e.region.region}`;
   const patch = "patch" in e ? Object.keys(e.patch)[0] : undefined;
   return patch === undefined ? e.kind : `${e.kind}:${patch}`;
 }
