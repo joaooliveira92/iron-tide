@@ -42,6 +42,7 @@ export function ViewToolbar({ view, onView, overlays, onToggleOverlay }: ViewToo
       ))}
       <Popover>
         <PopoverTrigger
+          title="Show or hide drawing layers"
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
         >
           <Layers aria-hidden="true" className="size-4" />

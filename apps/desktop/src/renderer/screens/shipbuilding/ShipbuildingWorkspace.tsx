@@ -445,7 +445,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           />
         ) : (
           <NotAvailable title="Finishing: not available">
-            A design is finished into a campaign; open the Shipbuilding workspace from a campaign to
+            A design is finished into a campaign; open the Ship design workspace from a campaign to
             submit it.
           </NotAvailable>
         );
@@ -547,6 +547,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
                 months={campaignMonth !== null ? null : technologyMonths(state.month)}
                 onMonth={actions.setMonth}
                 status={status}
+                onStatusAction={needsName ? () => nameInputRef.current?.focus() : undefined}
               />
             }
           />

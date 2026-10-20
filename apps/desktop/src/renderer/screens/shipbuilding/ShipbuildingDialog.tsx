@@ -15,7 +15,7 @@ export interface ShipbuildingDialogProps {
 }
 
 /**
- * The Shipbuilding workspace opens from the bottom bar in a near full-screen modal, over whichever screen is current.
+ * The ship design workspace opens from the bottom bar in a near full-screen modal, over whichever screen is current.
  * It is the app's only designer; the Construction screen's Drawing Board tab was removed (ADR-0153).
  */
 export function ShipbuildingDialog({ open, onOpenChange, sessionId }: ShipbuildingDialogProps) {
@@ -26,7 +26,7 @@ export function ShipbuildingDialog({ open, onOpenChange, sessionId }: Shipbuildi
         className="flex h-[96vh] w-[98vw] max-w-none flex-col gap-3 overflow-hidden p-4"
       >
         <DialogHeader>
-          <DialogTitle>Shipbuilding</DialogTitle>
+          <DialogTitle>Ship design</DialogTitle>
           <DialogDescription>
             Navigate by ship system, edit in the inspector, and watch the consequences on the ship.
             Your design is saved as you work.
