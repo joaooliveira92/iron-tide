@@ -11,6 +11,7 @@
 import {
   advanceMonth,
   monthId,
+  monthlyAbsorbable,
   type CampaignSnapshot,
   type CompiledDesignVersion,
   type ConstructionProject,
@@ -30,9 +31,10 @@ export interface ConstructionProjectReadout {
   /** The project's total cost in treasury/work units (its total work). */
   readonly totalCostUnits: number;
   /**
-   * The most work (and so payment) the project can take in one month: its yard's summed line capacity, capped by what
-   * is left. For a foreign project it is the next unpaid contract instalment (in the same cost units — a contract's
-   * `totalPriceUnits` equals the project's `totalWork` by construction, `foreignTerms.ts`).
+   * The most work (and so payment) the project can take in one month: the shared construction draw (`monthlyAbsorbable`)
+   * over its remaining work, packages, month usage, build time and acceleration. For a foreign project it is the next
+   * unpaid contract instalment (in the same cost units — a contract's `totalPriceUnits` equals the project's `totalWork`
+   * by construction, `foreignTerms.ts`).
    */
   readonly monthlyInstalmentUnits: number;
   /** Whole months left at the monthly instalment, 0 for a finished project (unpaid contract instalments for a foreign one). */
@@ -75,9 +77,10 @@ function addMonths(month: string, months: number): string {
 }
 
 /**
- * The compiled readout for one project. `monthlyInstalmentUnits` is the design's construction-plan capacity summed over
- * its lines (an order with no plan has no capacity record, so the whole remaining work is one instalment). When the
- * project carries a `foreign` schedule its instalment/launch come from the contract instead (INC-3c); when it is
+ * The compiled readout for one project. `monthlyInstalmentUnits` is the month's shared construction draw
+ * (`monthlyAbsorbable`): remaining work scheduled through the packages at the month's effective throughput (a
+ * single-figure project absorbs its remaining work, having no package schedule to pace). When the project carries a
+ * `foreign` schedule its instalment/launch come from the contract instead (INC-3c); when it is
  * halted/delayed/impounded/awaiting capacity/cancelled, on a revision hold, or a foreign order with no resolvable
  * contract, the schedule is reported unavailable rather than misstated. Pure, deterministic, integer arithmetic only;
  * the UI slice renders these values (humanising only the reason code) and authors no figure.
@@ -159,16 +162,7 @@ export function constructionProjectReadout(
   }
 
   const capacityUnits = project.capacityUnits ?? design?.constructionPlan?.capacityUnits;
-  const capacityTotal =
-    capacityUnits === undefined
-      ? remainingWork
-      : Object.values(capacityUnits).reduce((sum, value) => sum + Number(value), 0);
-  const monthlyInstalmentUnits =
-    remainingWork <= 0
-      ? 0
-      : capacityTotal > 0
-        ? Math.min(remainingWork, capacityTotal)
-        : remainingWork;
+  const monthlyInstalmentUnits = monthlyAbsorbable(project, capacityUnits, campaignMonth);
   const remainingMonths =
     remainingWork <= 0 || monthlyInstalmentUnits <= 0
       ? 0

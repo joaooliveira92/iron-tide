@@ -163,15 +163,15 @@ function snapshot(
 }
 
 describe("constructionProjectQueueWithReadouts (SB3-R31)", () => {
-  it("attaches the compiled instalment, remaining months, total cost and launch month", () => {
+  it("attaches the shared monthly draw, remaining months, total cost and launch month", () => {
     const from = snapshot([project({ designVersionId: "d1" })], new Map([["d1", design(25)]]));
     const entries = constructionProjectQueueWithReadouts(from, "GBR", content, "1880-01");
     const entry = entries.find((e) => e.projectId === "proj-1")!;
     expect(entry.readout).toEqual({
       totalCostUnits: 200,
-      monthlyInstalmentUnits: 150, // six lines x 25 capacity
-      remainingMonths: 2,
-      launchMonth: "1880-03",
+      monthlyInstalmentUnits: 200, // no package schedule: the remaining work is the draw
+      remainingMonths: 1,
+      launchMonth: "1880-02",
       scheduleBasis: "YARD_CAPACITY",
       scheduleUnavailableReason: null,
       haltedCarryingCostUnits: null,
@@ -251,7 +251,7 @@ describe("constructionProjectReadout status awareness (INC-3c, SB3-R31)", () => 
     expect(readout.monthlyInstalmentUnits).toBe(0);
   });
 
-  it("uses yard capacity for a running project and once the hold has elapsed", () => {
+  it("runs the shared monthly draw for a running project and once the hold has elapsed", () => {
     expect(constructionProjectReadout(project(), design(25), "1880-01").scheduleBasis).toBe(
       "YARD_CAPACITY",
     );
@@ -261,7 +261,7 @@ describe("constructionProjectReadout status awareness (INC-3c, SB3-R31)", () => 
       "1880-01",
     );
     expect(ended.scheduleBasis).toBe("YARD_CAPACITY");
-    expect(ended.monthlyInstalmentUnits).toBe(150);
+    expect(ended.monthlyInstalmentUnits).toBe(200);
   });
 
   it("derives a foreign project's instalment and launch from its contract schedule, not yard capacity", () => {

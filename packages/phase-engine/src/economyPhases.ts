@@ -207,7 +207,11 @@ export function runAppropriationPhase(ctx: MonthContext): void {
           project["status"] === "COMPLETED"
         )
           continue;
-        const demand = projectConstructionDemand(project, capacityOf(designs, project));
+        const demand = projectConstructionDemand(
+          project,
+          capacityOf(designs, project),
+          campaignMonth,
+        );
         if (project["status"] === "ACCELERATED") acceleratedDemand += demand;
         else normalDemand += demand;
       }

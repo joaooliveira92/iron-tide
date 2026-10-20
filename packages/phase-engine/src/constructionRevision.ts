@@ -1,9 +1,11 @@
-import type {
-  ConstructionMonthUsage,
-  ConstructionPackage,
-  ConstructionPackageKind,
-  ConstructionPlanRecord,
-  ConstructionProject,
+import {
+  constructionPlanOf,
+  packageProgressOf,
+  type ConstructionMonthUsage,
+  type ConstructionPackage,
+  type ConstructionPackageKind,
+  type ConstructionPlanRecord,
+  type ConstructionProject,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -12,8 +14,6 @@ import {
   type ChangeKind,
   type RevisionDecision,
 } from "@bluewave/ship-design";
-import { doneOf, planOf } from "./constructionFunding.js";
-
 /**
  * What the revision rules need to know about a project's build, read from its real package state (ADR-0077): hull progress,
  * whether armour or machinery work has started, whether the ship is launched. Undefined for a project without packages,
@@ -22,7 +22,7 @@ import { doneOf, planOf } from "./constructionFunding.js";
 export function projectBuildProgress(project: ConstructionProject): BuildProgress | undefined {
   const packages = project["packages"];
   if (packages === undefined) return undefined;
-  return buildProgressOf(planOf(packages), doneOf(packages));
+  return buildProgressOf(constructionPlanOf(packages), packageProgressOf(packages));
 }
 
 /** The package a kind of change reworks, in the order rework is charged when several kinds change. */
