@@ -40,7 +40,9 @@ export type CommandBody =
   | RemoveShipFromDivisionCommand
   | DissolveDivisionCommand
   | ChangeDivisionFlagshipCommand
-  | ReorderDivisionShipsCommand;
+  | ReorderDivisionShipsCommand
+  | AssignForeignStationCommand
+  | ClearForeignStationCommand;
 export interface BudgetProjectCommand {
   type: "budget_project";
   nationId: string;
@@ -296,4 +298,21 @@ export interface ReorderDivisionShipsCommand {
   nationId: string;
   divisionId: string;
   shipOrder: string[];
+}
+
+/**
+ * Assigns ships to foreign-station status (spec #73 R2, manual p.47). `shipIds` is a non-empty set of the nation's
+ * commissioned, operational, ACTIVE ships that are not yet assigned. The whole command is rejected, with one typed
+ * reason per ineligible ship, when any ship is ineligible. It routes nothing (S-5 07) and changes no readiness.
+ */
+export interface AssignForeignStationCommand {
+  type: "AssignForeignStation";
+  nationId: string;
+  shipIds: string[];
+}
+/** Clears foreign-station status from ships that carry it; rejected whole, with per-ship reasons, otherwise. */
+export interface ClearForeignStationCommand {
+  type: "ClearForeignStation";
+  nationId: string;
+  shipIds: string[];
 }

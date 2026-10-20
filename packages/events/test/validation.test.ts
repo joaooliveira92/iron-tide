@@ -150,6 +150,14 @@ describe("event validation parity (Zod → Effect Schema)", () => {
         discoveryMonth: "1880-01",
         cost: 0,
       },
+      {
+        kind: "ShipStationAssignmentChanged",
+        nationId: "n1",
+        shipId: "s1",
+        fromAssignment: "NONE",
+        toAssignment: "FOREIGN_STATION",
+        reason: "ASSIGNED",
+      },
     ] as const;
 
     for (const body of bodies) {
@@ -179,5 +187,22 @@ describe("event validation parity (Zod → Effect Schema)", () => {
         cost: 0,
       }),
     ).toThrow();
+  });
+});
+
+describe("ShipStationAssignmentChanged (S-5 03)", () => {
+  const body = {
+    kind: "ShipStationAssignmentChanged",
+    nationId: "n1",
+    shipId: "s1",
+    fromAssignment: "FOREIGN_STATION",
+    toAssignment: "NONE",
+    reason: "READINESS_LEFT_ACTIVE",
+  } as const;
+
+  it("rejects excess keys and empty fields", () => {
+    expect(() => parseDomainEventBody({ ...body, extra: 1 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, shipId: "" })).toThrow();
+    expect(parseDomainEventBody(body).kind).toBe("ShipStationAssignmentChanged");
   });
 });

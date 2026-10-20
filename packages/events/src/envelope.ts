@@ -116,6 +116,20 @@ export interface ShipReadinessChanged {
   readonly crewQuality: SafeInt;
 }
 
+/**
+ * S-5: a ship's foreign-station assignment changed (spec #73 R1/R2). `reason` is a stable code: `ASSIGNED`,
+ * `CLEARED_BY_COMMAND`, or `READINESS_LEFT_ACTIVE` when a readiness change away from ACTIVE removed it.
+ * `fromAssignment`/`toAssignment` are the assignment names, or `NONE` when absent.
+ */
+export interface ShipStationAssignmentChanged {
+  readonly kind: "ShipStationAssignmentChanged";
+  readonly nationId: string;
+  readonly shipId: string;
+  readonly fromAssignment: string;
+  readonly toAssignment: string;
+  readonly reason: Reason;
+}
+
 export type DomainEventBody =
   | NationBudgetChanged
   | ConstructionProgressed
@@ -126,7 +140,8 @@ export type DomainEventBody =
   | BattleInitiated
   | BattleResolved
   | TechnologyDiscovered
-  | ShipReadinessChanged;
+  | ShipReadinessChanged
+  | ShipStationAssignmentChanged;
 
 export interface DomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody> {
   readonly eventId: string;

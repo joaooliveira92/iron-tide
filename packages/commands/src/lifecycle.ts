@@ -336,6 +336,13 @@ export class CommandLifecycle {
         snapshotHash,
         result: { nationId: body.nationId, divisionId: body.divisionId },
       };
+    if (body.type === "AssignForeignStation" || body.type === "ClearForeignStation")
+      return {
+        type: "success",
+        commandId: envelope.commandId,
+        snapshotHash,
+        result: { nationId: body.nationId, shipIds: [...body.shipIds] },
+      };
     const b = body as BudgetProjectCommand;
     return {
       type: "success",
