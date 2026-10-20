@@ -35,6 +35,7 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 - `link-claude-skills.mjs` — recreate the `.claude/skills` → `.agents/skills` symlinks.
 - `docs-check.cjs` — markdown links/anchors, ADR index/status/supersession, deferrals, DESIGN amendments.
 - `verify-doc-budgets.mjs` — word ceilings in `doc-budgets.manifest.json` (`--list`).
+- `verify-package-agents.mjs` — every package has an `AGENTS.md` (or an exemption) whose `Class` matches the runtime-free gate.
 - `verify-package-dependencies.mjs` — dependency policy (no floating specs, `effect` `workspace:*`).
 - `verify-no-unknown-casts.mjs` — ratchet against new `as unknown` casts.
 - `verify-no-torpedo-model-constants.mjs` — no retired torpedo-model symbols in combat.
