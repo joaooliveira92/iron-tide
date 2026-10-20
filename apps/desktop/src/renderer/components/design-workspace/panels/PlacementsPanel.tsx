@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Trash2 } from "lucide-react";
 import {
   ZONE_IDS,
   type ComponentCategory,
@@ -195,29 +195,39 @@ export function PlacementsPanel({
 
   return (
     <Panel title={title}>
-      <div className="overflow-x-auto">
-        <table className="w-full table-fixed text-sm">
-          <thead>
-            <tr className="text-left text-xs text-muted-foreground">
-              <th className="w-1/4 p-1">Fitting</th>
-              <th className="p-1">Zone</th>
-              <th className="p-1">Station</th>
+      {/* A narrow inspector stacks each fitting's fields instead of squeezing five columns; explicit roles keep the table
+          semantics when the layout stops being a table. */}
+      <div className="@container overflow-x-auto">
+        <table role="table" className="w-full table-fixed text-sm @max-xl:block">
+          <thead role="rowgroup" className="@max-xl:sr-only">
+            <tr role="row" className="text-left text-xs text-muted-foreground">
+              <th role="columnheader" className="w-[30%] p-1">
+                Fitting
+              </th>
+              <th className="w-24 p-1">Zone</th>
+              <th className="w-20 p-1">Station</th>
               <th className="p-1">Settings</th>
-              <th className="p-1">
+              <th className="w-20 p-1">
                 <span className="sr-only">Actions</span>
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody role="rowgroup" className="@max-xl:block">
             {placements.map((p) => {
               const d = catalogueById.get(p.componentId);
               const otherZones = zonesFor(d).filter((z) => z !== p.zoneId);
               return (
                 <ContextMenu key={p.instanceId}>
                   <ContextMenuTrigger
-                    render={<tr className="border-t align-top" {...placementAttrs(p.instanceId)} />}
+                    render={
+                      <tr
+                        role="row"
+                        className="border-t align-top @max-xl:grid @max-xl:grid-cols-2 @max-xl:items-start @max-xl:gap-x-2 @max-xl:py-2"
+                        {...placementAttrs(p.instanceId)}
+                      />
+                    }
                   >
-                    <th scope="row" className="p-1 text-left font-normal">
+                    <th scope="row" className="p-1 text-left font-normal @max-xl:col-span-2">
                       <ComponentHover
                         entry={catalogueById.get(p.componentId)}
                         placement={p}
@@ -237,7 +247,7 @@ export function PlacementsPanel({
                     <td className="p-1">
                       <Badge variant="outline">{zoneLabel(p.zoneId)}</Badge>
                     </td>
-                    <td className="w-24 p-1">
+                    <td className="w-20 p-1 @max-xl:w-auto">
                       <NumberField
                         label={`Station of ${p.instanceId}`}
                         shortLabel="Station"
@@ -253,11 +263,11 @@ export function PlacementsPanel({
                         }
                       />
                     </td>
-                    <td className="p-1">
+                    <td className="p-1 @max-xl:col-span-2">
                       <div className="flex flex-wrap gap-2">
                         {names.has(p.instanceId) && (
                           <SelectField
-                            className="w-28"
+                            className="w-36"
                             label={`Side of ${p.instanceId}`}
                             shortLabel="Side"
                             value={p.side ?? "CENTRE"}
@@ -294,15 +304,16 @@ export function PlacementsPanel({
                         ))}
                       </div>
                     </td>
-                    <td className="p-1">
+                    <td className="p-1 @max-xl:col-span-2 @max-xl:justify-self-end">
                       <div className="flex items-center gap-1">
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon-sm"
                           aria-label={`Remove ${p.instanceId}`}
+                          title={`Remove ${p.instanceId}`}
                           onClick={() => remove(p)}
                         >
-                          Remove
+                          <Trash2 aria-hidden="true" />
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger
