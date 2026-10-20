@@ -19,7 +19,7 @@
  *
  * Run (the GeoJSON is untrusted input: pass it by path, from a directory of its own;
  * the clipper is `polygon-clipping`, installed in a scratch directory outside the repo):
- *   pnpm tsx apps/desktop/src/renderer/components/world-map/bake-borders.ts \
+ *   /path/to/node_modules/.bin/tsx apps/desktop/src/renderer/components/world-map/bake-borders.ts \
  *     /path/to/world_1880.geojson /path/to/node_modules/polygon-clipping/dist/polygon-clipping.esm.js
  *
  * See docs/adr/ for the provenance and licensing note that goes with this data.

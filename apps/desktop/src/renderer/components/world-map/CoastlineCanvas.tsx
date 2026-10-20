@@ -271,9 +271,23 @@ export function CoastlineCanvas({
     schedule();
 
     let building: TimeSliceHandle | null = null;
-    const buildFrom = (index: number) => {
+    let warming: ReturnType<typeof setTimeout> | undefined;
+    // Once the land is built, make the border tiers too — one per task, coarsest first — so
+    // crossing a zoom threshold never pays for simplifying a nation's coast on the spot.
+    const warmBorders = (index: number) => {
       const tier = TIERS[index];
       if (tier === undefined) return;
+      warming = setTimeout(() => {
+        bordersRef.current(tier);
+        warmBorders(index + 1);
+      }, 0);
+    };
+    const buildFrom = (index: number) => {
+      const tier = TIERS[index];
+      if (tier === undefined) {
+        warmBorders(0);
+        return;
+      }
       building = runTimeSliced(
         buildTier(polygons, tier, projection, centre),
         {
@@ -294,6 +308,7 @@ export function CoastlineCanvas({
 
     return () => {
       building?.cancel();
+      clearTimeout(warming);
       unsubscribe();
       observer?.disconnect();
       if (frame !== 0) cancelAnimationFrame(frame);
