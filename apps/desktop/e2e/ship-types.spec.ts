@@ -98,6 +98,10 @@ test("a battleship design is built, submitted, studied, ordered and survives a r
   const original = await belt.inputValue();
   await belt.fill("100");
   await belt.press("Enter");
+  // The choice is explained at once; the player keeps it and corrects it by hand.
+  const explanation = page.getByRole("alertdialog");
+  await expect(explanation.getByText("This change breaks the design")).toBeVisible();
+  await explanation.getByRole("button", { name: "Keep it and fix it myself" }).click();
   await expect(workspace.getByText("Cannot be built")).toBeVisible();
 
   // Correct it: the finding clears and the design can be submitted again.

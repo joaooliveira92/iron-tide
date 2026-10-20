@@ -23,11 +23,14 @@ export interface MachineryRecommended {
 export function MachineryEditor({
   model,
   edit,
+  errorFor,
   previewDeltas,
   recommended,
 }: {
   readonly model: MachineryModel;
   readonly edit: (e: DraftEdit) => void;
+  /** The inline message for a setting, filed as `<edit kind>:<setting>` (see `editField`), while it breaks the design. */
+  readonly errorFor?: (field: string) => string | undefined;
   /** Per plant, what choosing it would change; absent where no preview is available. */
   readonly previewDeltas?: ReadonlyMap<string, readonly Delta[]>;
   readonly recommended?: MachineryRecommended;
@@ -50,6 +53,7 @@ export function MachineryEditor({
               decimals={1}
               step={0.5}
               recommended={recommended?.targetSpeedMilliKnots}
+              error={errorFor?.("set_requirement:requiredSpeedMilliKnots")}
               onCommit={(v) =>
                 edit({ kind: "set_requirement", patch: { requiredSpeedMilliKnots: v } })
               }
@@ -63,6 +67,7 @@ export function MachineryEditor({
               decimals={1}
               step={0.5}
               recommended={recommended?.cruiseSpeedMilliKnots}
+              error={errorFor?.("set_requirement:cruiseSpeedMilliKnots")}
               onCommit={(v) =>
                 edit({ kind: "set_requirement", patch: { cruiseSpeedMilliKnots: v } })
               }
@@ -74,6 +79,7 @@ export function MachineryEditor({
               value={inputs.rangeNm}
               step={50}
               recommended={recommended?.rangeNm}
+              error={errorFor?.("set_requirement:requiredRangeNm")}
               onCommit={(v) => edit({ kind: "set_requirement", patch: { requiredRangeNm: v } })}
             />
             <SelectField
@@ -85,6 +91,7 @@ export function MachineryEditor({
                 label: p.reason === null ? p.label : `${p.label} — ${p.reason}`,
                 disabled: p.disabled,
               }))}
+              error={errorFor?.("set_machinery:plantId")}
               onChange={(v) => edit({ kind: "set_machinery", patch: { plantId: v } })}
               onActiveValueChange={setPreviewPlant}
             />
@@ -94,6 +101,7 @@ export function MachineryEditor({
               unit="kW"
               value={inputs.installedKw}
               step={100}
+              error={errorFor?.("set_machinery:installedKw")}
               onCommit={(v) => edit({ kind: "set_machinery", patch: { installedKw: v } })}
             />
             <p className="col-span-2 text-xs text-muted-foreground">{inputs.installedPowerText}</p>
@@ -107,6 +115,7 @@ export function MachineryEditor({
                 unit="t"
                 value={inputs.fuelCapacityKg}
                 scale={1000}
+                error={errorFor?.("set_machinery:fuelCapacityKg")}
                 onCommit={(v) => edit({ kind: "set_machinery", patch: { fuelCapacityKg: v } })}
               />
             </div>

@@ -12,11 +12,14 @@ export function BriefPanel({
   draft,
   view,
   edit,
+  errorFor,
   ctx,
 }: {
   readonly draft: DesignDraft;
   readonly view: WorkshopView;
   readonly edit: Edit;
+  /** The inline message for a setting, filed as `<edit kind>:<setting>` (see `editField`), while it breaks the design. */
+  readonly errorFor?: (field: string) => string | undefined;
   /** The rules context of the board's month, for which ship types are offered. */
   readonly ctx: ShipContext;
 }) {
@@ -57,6 +60,7 @@ export function BriefPanel({
           className="col-span-2"
           value={r.category}
           options={options}
+          error={errorFor?.("set_requirement:category")}
           onChange={(v) => edit({ kind: "set_requirement", patch: { category: v } })}
         />
         <NumberField
@@ -65,6 +69,7 @@ export function BriefPanel({
           value={r.requiredSpeedMilliKnots}
           scale={1000}
           decimals={1}
+          error={errorFor?.("set_requirement:requiredSpeedMilliKnots")}
           onCommit={(v) => edit({ kind: "set_requirement", patch: { requiredSpeedMilliKnots: v } })}
         />
         <NumberField
@@ -73,12 +78,14 @@ export function BriefPanel({
           value={r.cruiseSpeedMilliKnots}
           scale={1000}
           decimals={1}
+          error={errorFor?.("set_requirement:cruiseSpeedMilliKnots")}
           onCommit={(v) => edit({ kind: "set_requirement", patch: { cruiseSpeedMilliKnots: v } })}
         />
         <NumberField
           label="Required range"
           unit="nm"
           value={r.requiredRangeNm}
+          error={errorFor?.("set_requirement:requiredRangeNm")}
           onCommit={(v) => edit({ kind: "set_requirement", patch: { requiredRangeNm: v } })}
         />
       </div>

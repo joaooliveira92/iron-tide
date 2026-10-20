@@ -16,6 +16,7 @@ import {
   AlternativesPanel,
   BriefPanel,
   ComparePanel,
+  ChoiceProblemDialog,
   ConfirmDialog,
   FilePanel,
   FindingsPanel,
@@ -125,6 +126,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
     env,
     batteries,
     findings,
+    choiceCheck,
     selection,
     loadPreset,
     loadDraft,
@@ -321,7 +323,13 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
     switch (at.section) {
       case "overview":
         return at.tab === "brief" ? (
-          <BriefPanel draft={draft} view={view} edit={actions.edit} ctx={env.ctx} />
+          <BriefPanel
+            draft={draft}
+            view={view}
+            edit={actions.edit}
+            errorFor={choiceCheck.errorFor}
+            ctx={env.ctx}
+          />
         ) : (
           <>
             <OverviewPanel
@@ -339,7 +347,12 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           <TopsidePanel view={view} />
         ) : (
           <>
-            <HullPanel draft={draft} content={content} edit={actions.edit} />
+            <HullPanel
+              draft={draft}
+              content={content}
+              edit={actions.edit}
+              errorFor={choiceCheck.errorFor}
+            />
             {fittingsPanel(at)}
           </>
         );
@@ -349,6 +362,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
         ) : (
           <>
             <MachineryEditor
+              errorFor={choiceCheck.errorFor}
               model={machineryModel(draft, view, content, state.month, env.ctx.unlockedTechs)}
               edit={actions.edit}
               previewDeltas={machineryDeltas ?? undefined}
@@ -365,6 +379,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
         return at.tab === "armour" ? (
           <>
             <ProtectionEditor
+              errorFor={choiceCheck.errorFor}
               model={protectionModel(draft, view, armourMaterials, Number(state.month.slice(0, 4)))}
               edit={actions.edit}
               onSelectRegion={selectArmourRegion}
@@ -661,6 +676,12 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           </div>
         </div>
         <EngineeringStatusBar readouts={readouts} />
+        <ChoiceProblemDialog
+          problem={choiceCheck.problem}
+          open={choiceCheck.open}
+          onOpenChange={choiceCheck.setOpen}
+          onUndo={actions.undo}
+        />
         <ConfirmDialog
           open={pendingPreset !== null}
           onOpenChange={(open) => !open && setPendingPreset(null)}

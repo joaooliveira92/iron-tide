@@ -29,6 +29,7 @@ import {
   BatteryPanel,
   BriefPanel,
   ComparePanel,
+  ChoiceProblemDialog,
   ConfirmDialog,
   FilePanel,
   FindingsPanel,
@@ -110,6 +111,7 @@ export function DrawingBoard({
     zones,
     batteries,
     findings,
+    choiceCheck,
     selection,
     loadPreset,
     loadDraft,
@@ -330,6 +332,12 @@ export function DrawingBoard({
             ))}
           </button>
         </div>
+        <ChoiceProblemDialog
+          problem={choiceCheck.problem}
+          open={choiceCheck.open}
+          onOpenChange={choiceCheck.setOpen}
+          onUndo={actions.undo}
+        />
         <ConfirmDialog
           open={pendingPreset !== null}
           onOpenChange={(open) => !open && setPendingPreset(null)}
@@ -403,15 +411,22 @@ export function DrawingBoard({
                         draft={draft}
                         view={view}
                         edit={actions.edit}
+                        errorFor={choiceCheck.errorFor}
                         ctx={boardEnv.ctx}
                       />
                     </div>
                     <div className="space-y-4">
-                      <HullPanel draft={draft} content={content} edit={actions.edit} />
+                      <HullPanel
+                        draft={draft}
+                        content={content}
+                        edit={actions.edit}
+                        errorFor={choiceCheck.errorFor}
+                      />
                       <MachineryPanel
                         draft={draft}
                         content={content}
                         edit={actions.edit}
+                        errorFor={choiceCheck.errorFor}
                         kwPerShpBp={boardEnv.ctx.balance.machinery.kwPerShpBp}
                       />
                     </div>
@@ -438,6 +453,7 @@ export function DrawingBoard({
                     />
                     <div className={TAB_GRID}>
                       <ArmourPanel
+                        errorFor={choiceCheck.errorFor}
                         draft={draft}
                         view={view}
                         materials={armourMaterials}

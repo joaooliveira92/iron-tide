@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { armourMaterialOptions, type DesignDraft } from "@bluewave/ship-design";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { armourMaterialOptions, type DesignDraft, type DraftEdit } from "@bluewave/ship-design";
 import { batteryCards } from "./batteryView.js";
 import { entityExists } from "./selection/facts.js";
 import { createSelectionStore } from "./selection/store.js";
 import { boardFindings } from "./validation/boardFindings.js";
+import { describeEdit } from "./describeEdit.js";
+import { useChoiceCheck } from "./useChoiceCheck.js";
 import { useDrawingBoard } from "./useDrawingBoard.js";
 
 /** Technology dates offered outside a campaign (inside one the campaign month is fixed). */
@@ -22,18 +24,43 @@ export function technologyMonths(current: string): string[] {
 }
 
 /**
+ * The key an edit's inline error is filed under: the edit kind plus the setting it changes, so a field can ask for
+ * `set_hull:materialId`; an armour region is filed as `set_armour_region:<region>`.
+ */
+export function editField(e: DraftEdit): string {
+  // An armour edit carries the whole region, so the error is filed per region.
+  if (e.kind === "set_armour_region") return `${e.kind}:${e.region.region}`;
+  const patch = "patch" in e ? Object.keys(e.patch)[0] : undefined;
+  return patch === undefined ? e.kind : `${e.kind}:${patch}`;
+}
+
+/**
  * Everything a designer host wires around the draft, whatever its layout: the undoable draft and its compile, the
  * findings shared by drawing and inspector, the presentation selection (pruned as the design changes), and loading
  * another design behind a confirmation once there are edits to lose.
  */
 export function useDesignSession(fixedMonth: string | null) {
-  const { state, actions } = useDrawingBoard(fixedMonth);
+  const { state, actions: boardActions } = useDrawingBoard(fixedMonth);
   const { draft, view, content } = state;
   const env = useMemo(() => content.environmentFor(state.month), [content, state.month]);
   const zones = content.hullForms.find((f) => f.id === draft.hull.hullFormId)?.zones ?? [];
   const batteries = useMemo(() => batteryCards(view, draft), [view, draft]);
   // One finding list per compile, shared by the drawing, the inspector and the findings list.
   const findings = useMemo(() => boardFindings(view, draft, batteries), [view, draft, batteries]);
+  // Every edit is watched: one that introduces a blocking or critical finding is explained at once, whichever panel made it.
+  const choiceCheck = useChoiceCheck(findings);
+  const { guard } = choiceCheck;
+  const boardEdit = boardActions.edit;
+  const edit = useCallback(
+    (e: DraftEdit) =>
+      guard(
+        editField(e),
+        describeEdit(e, (id) => id.replaceAll("_", " ")),
+        () => boardEdit(e),
+      ),
+    [guard, boardEdit],
+  );
+  const actions = useMemo(() => ({ ...boardActions, edit }), [boardActions, edit]);
   // Presentation selection (pinned, form-linked, hover preview): one store per host, never design state.
   const [selection] = useState(createSelectionStore);
   useEffect(() => selection.prune((e) => entityExists(e, draft, zones)), [selection, draft, zones]);
@@ -76,6 +103,8 @@ export function useDesignSession(fixedMonth: string | null) {
     zones,
     batteries,
     findings,
+    /** The explanation of the last edit that broke the design; render it once with `ChoiceProblemDialog`. */
+    choiceCheck,
     selection,
     loadPreset,
     loadDraft,

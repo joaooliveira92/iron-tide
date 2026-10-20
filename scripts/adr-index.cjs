@@ -93,7 +93,7 @@ const AREAS = [
     name: "Ship design & construction",
     blurb:
       "The ship-designer model, its armour regions, named schemes, and the design draft schema.",
-    nums: [232, 233],
+    nums: [232, 233, 243],
   },
 ];
 

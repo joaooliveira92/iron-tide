@@ -8,10 +8,13 @@ export function HullPanel({
   draft,
   content,
   edit,
+  errorFor,
 }: {
   readonly draft: DesignDraft;
   readonly content: DrawingBoardContent;
   readonly edit: Edit;
+  /** The inline message for a setting, filed as `set_hull:<setting>` (see `editField`), while it breaks the design. */
+  readonly errorFor: (field: string) => string | undefined;
 }) {
   const h = draft.hull;
   return (
@@ -25,6 +28,7 @@ export function HullPanel({
               value: f.id,
               label: f.id.replaceAll("_", " "),
             }))}
+            error={errorFor("set_hull:hullFormId")}
             onChange={(v) => edit({ kind: "set_hull", patch: { hullFormId: v } })}
           />
           <SelectField
@@ -35,16 +39,27 @@ export function HullPanel({
               { value: "mild_steel", label: "Mild steel" },
               { value: "high_tensile", label: "High-tensile steel" },
             ]}
-            onChange={(v) => edit({ kind: "set_hull", patch: { materialId: v } })}
+            error={errorFor("set_hull:materialId")}
+            onChange={(v) =>
+              edit({
+                kind: "set_hull",
+                patch: {
+                  materialId: v,
+                },
+              })
+            }
           />
           <SelectField
             label="Subdivision"
             value={String(h.subdivisionGrade)}
             options={[0, 1, 2, 3, 4].map((g) => ({ value: String(g), label: `Grade ${g}` }))}
+            error={errorFor("set_hull:subdivisionGrade")}
             onChange={(v) =>
               edit({
                 kind: "set_hull",
-                patch: { subdivisionGrade: Number(v) as 0 | 1 | 2 | 3 | 4 },
+                patch: {
+                  subdivisionGrade: Number(v) as 0 | 1 | 2 | 3 | 4,
+                },
               })
             }
           />
@@ -54,6 +69,7 @@ export function HullPanel({
             value={h.lengthWl}
             scale={1000}
             decimals={1}
+            error={errorFor("set_hull:lengthWl")}
             onCommit={(v) => edit({ kind: "set_hull", patch: { lengthWl: mm(v) } })}
           />
           <NumberField
@@ -62,6 +78,7 @@ export function HullPanel({
             value={h.beam}
             scale={1000}
             decimals={2}
+            error={errorFor("set_hull:beam")}
             onCommit={(v) => edit({ kind: "set_hull", patch: { beam: mm(v) } })}
           />
           <NumberField
@@ -70,6 +87,7 @@ export function HullPanel({
             value={h.draught}
             scale={1000}
             decimals={2}
+            error={errorFor("set_hull:draught")}
             onCommit={(v) => edit({ kind: "set_hull", patch: { draught: mm(v) } })}
           />
           <NumberField
@@ -78,6 +96,7 @@ export function HullPanel({
             value={h.depthToMainDeck}
             scale={1000}
             decimals={2}
+            error={errorFor("set_hull:depthToMainDeck")}
             onCommit={(v) => edit({ kind: "set_hull", patch: { depthToMainDeck: mm(v) } })}
           />
           <SelectField
@@ -91,10 +110,13 @@ export function HullPanel({
                 description: "Lighter hull, but less reserve buoyancy.",
               },
             ]}
+            error={errorFor("set_hull:freeboardProfile")}
             onChange={(v) =>
               edit({
                 kind: "set_hull",
-                patch: { freeboardProfile: v === "LOW" ? "LOW" : "NORMAL" },
+                patch: {
+                  freeboardProfile: v === "LOW" ? "LOW" : "NORMAL",
+                },
               })
             }
           />
@@ -103,6 +125,7 @@ export function HullPanel({
             value={h.blockCoeffBp}
             scale={10_000}
             decimals={2}
+            error={errorFor("set_hull:blockCoeffBp")}
             onCommit={(v) => edit({ kind: "set_hull", patch: { blockCoeffBp: bp(v) } })}
           />
           <NumberField
@@ -110,7 +133,15 @@ export function HullPanel({
             unit="t"
             value={h.targetDisplacementKg}
             scale={1000}
-            onCommit={(v) => edit({ kind: "set_hull", patch: { targetDisplacementKg: kg(v) } })}
+            error={errorFor("set_hull:targetDisplacementKg")}
+            onCommit={(v) =>
+              edit({
+                kind: "set_hull",
+                patch: {
+                  targetDisplacementKg: kg(v),
+                },
+              })
+            }
           />
           <NumberField
             label="Design margin"
@@ -118,6 +149,7 @@ export function HullPanel({
             value={h.designMarginBp}
             scale={100}
             decimals={1}
+            error={errorFor("set_hull:designMarginBp")}
             onCommit={(v) => edit({ kind: "set_hull", patch: { designMarginBp: bp(v) } })}
           />
           <NumberField
@@ -126,6 +158,7 @@ export function HullPanel({
             value={h.growthReserveBp}
             scale={100}
             decimals={1}
+            error={errorFor("set_hull:growthReserveBp")}
             onCommit={(v) => edit({ kind: "set_hull", patch: { growthReserveBp: bp(v) } })}
           />
         </div>

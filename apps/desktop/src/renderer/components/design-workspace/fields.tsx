@@ -7,6 +7,7 @@ import {
   NumberFieldInput,
 } from "../ui/number-field.js";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select.js";
+import { FieldError } from "../ui/field.js";
 import { cn } from "../../lib/utils.js";
 
 /**
@@ -40,6 +41,7 @@ export function NumberField({
   onCommit,
   className,
   shortLabel,
+  error,
 }: {
   readonly label: string;
   /** Compact text shown above the input; the full `label` stays its accessible name (for repeated table rows). */
@@ -55,8 +57,11 @@ export function NumberField({
   readonly recommended?: number;
   readonly onCommit: (internal: number) => void;
   readonly className?: string;
+  /** Marks the field invalid and shows this message under it. */
+  readonly error?: ReactNode;
 }) {
   const id = useId();
+  const errorId = `${id}-error`;
   const shown = value / scale;
   const stepBy = step ?? (decimals > 0 ? Number((1 / 10 ** decimals).toFixed(decimals)) : 1);
   const clampShown = (n: number) => Math.min(max ?? Infinity, Math.max(min ?? -Infinity, n));
@@ -103,10 +108,12 @@ export function NumberField({
           if (internal !== value) onCommit(internal);
         }}
       >
-        <NumberFieldGroup>
+        <NumberFieldGroup aria-invalid={error ? true : undefined}>
           <NumberFieldDecrement />
           <NumberFieldInput
             aria-label={accessibleName}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
             onChangeCapture={(e) => {
               const raw = e.currentTarget.value;
               const normalized = normalizeDecimalMark(raw);
@@ -119,6 +126,7 @@ export function NumberField({
           <NumberFieldIncrement />
         </NumberFieldGroup>
       </NumberFieldBase>
+      {error && <FieldError id={errorId}>{error}</FieldError>}
     </div>
   );
 }
@@ -132,6 +140,7 @@ export function SelectField({
   onActiveValueChange,
   className,
   inline = false,
+  error,
 }: {
   readonly label: string;
   /** Compact text shown above the select; the full `label` stays its accessible name (for repeated rows). */
@@ -152,8 +161,11 @@ export function SelectField({
   /** Called whenever the highlighted option changes (hovered or keyboard-active); null when none is highlighted. */
   readonly onActiveValueChange?: (value: string | null) => void;
   readonly className?: string;
+  /** Marks the field invalid and shows this message under it. */
+  readonly error?: ReactNode;
 }) {
   const id = useId();
+  const errorId = `${id}-error`;
   return (
     <div
       className={cn(inline ? "flex items-center gap-2" : "flex h-full flex-col gap-1", className)}
@@ -176,7 +188,9 @@ export function SelectField({
         <SelectTrigger
           id={id}
           aria-label={shortLabel === undefined ? undefined : label}
-          className={inline ? "h-9 py-0" : undefined}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
+          className={cn(inline && "h-9 py-0", error && "border-destructive")}
         >
           <SelectValue placeholder="Select" className="min-w-0 flex-1 truncate text-left" />
         </SelectTrigger>
@@ -194,6 +208,7 @@ export function SelectField({
           ))}
         </SelectContent>
       </Select>
+      {error && <FieldError id={errorId}>{error}</FieldError>}
     </div>
   );
 }
