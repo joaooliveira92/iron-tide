@@ -28,5 +28,18 @@
   ".ai/REVIEW-PROMPT.md": 400,
   ".ai/ROADMAP.md": 400,
   "GLOSSARY-MAP.md": 50,
-  "packages/campaign/GLOSSARY.md": 370
+  "packages/campaign/GLOSSARY.md": 370,
+  "packages/contracts/AGENTS.md": 100,
+  "packages/deterministic/AGENTS.md": 100,
+  "packages/random/AGENTS.md": 100,
+  "packages/campaign/AGENTS.md": 100,
+  "packages/campaign-engine/AGENTS.md": 100,
+  "packages/commands/AGENTS.md": 100,
+  "packages/events/AGENTS.md": 100,
+  "packages/combat/AGENTS.md": 100,
+  "packages/phase-engine/AGENTS.md": 100,
+  "packages/ship-design/AGENTS.md": 75,
+  "packages/persistence/AGENTS.md": 125,
+  "packages/content-compiler/AGENTS.md": 100,
+  "packages/ship-visual/AGENTS.md": 100
 }

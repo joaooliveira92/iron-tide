@@ -8,7 +8,7 @@
 
 Rules: the graph is directed and acyclic, leaf primitives at the bottom and the
 phase engine composing them; import only a package's public `exports`
-(`src/index.ts`), never another package's source. Build/test one package with
+(`src/index.ts`), never another package's source. Packages with non-obvious constraints carry a short `AGENTS.md` (role, boundary, invariants); read it before editing. Build/test one package with
 `pnpm --filter @bluewave/<name> <build|test|typecheck|lint>`.
 
 | Package | Role |
