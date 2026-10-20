@@ -2,6 +2,8 @@
 
 **Role:** Parse, validate, normalize, compile stages with diagnostics.
 
+**Class:** io-boundary
+
 **Boundary:** IO boundary: full `effect` runtime allowed. Stages are statically ordered, immutable, and free of ambient I/O, randomness and final-artifact writes.
 
 **Invariants:**

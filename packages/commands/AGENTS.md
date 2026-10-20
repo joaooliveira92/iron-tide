@@ -2,6 +2,8 @@
 
 **Role:** Command envelopes, the 7-step lifecycle, authorization, ledger, reason codes.
 
+**Class:** runtime-free
+
 **Boundary:** Authoritative, runtime-free. Depends on `campaign`, `ship-design`, `content-schema`; never on `phase-engine` or `combat`.
 
 **Invariants:**

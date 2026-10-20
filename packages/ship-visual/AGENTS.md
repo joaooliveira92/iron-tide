@@ -2,6 +2,8 @@
 
 **Role:** Presentation-only ship visual parts (ADR-0148). See `README.md` for catalog regeneration.
 
+**Class:** runtime-free
+
 **Boundary:** Not authoritative; runtime-free; renderer-only consumer. No runtime dependencies and no `effect`.
 
 **Invariants:**

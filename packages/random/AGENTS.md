@@ -2,6 +2,8 @@
 
 **Role:** Domain-separated seeded PRNG with an audit ledger.
 
+**Class:** runtime-free
+
 **Boundary:** Authoritative, runtime-free. Depends on `contracts`, `deterministic`, `diagnostics` only.
 
 **Invariants:**

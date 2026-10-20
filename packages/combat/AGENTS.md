@@ -2,6 +2,8 @@
 
 **Role:** Deterministic tactical battle engine and auto-resolution.
 
+**Class:** runtime-free
+
 **Boundary:** Authoritative, runtime-free. Uses `random` for all draws; never `Math.random`.
 
 **Invariants:**

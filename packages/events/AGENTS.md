@@ -2,6 +2,8 @@
 
 **Role:** Domain event envelopes, explanation trees, ledger.
 
+**Class:** runtime-free
+
 **Boundary:** Authoritative, runtime-free. Depends on `campaign` and foundations only.
 
 **Invariants:**

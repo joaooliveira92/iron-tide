@@ -2,11 +2,13 @@
 
 **Role:** Campaign compiler and state aggregates (world, nations, fleets, war, prestige).
 
+**Class:** runtime-free
+
 **Boundary:** Authoritative (determinism gate), runtime-free. Has a second export, `./compiler` (`src/compiler-public.ts`). Import siblings via their public `src/index.ts` only.
 
 **Invariants:**
 
-- State-shape changes need a compatibility-version bump and a persistence parity test.
+- Authoritative state-shape changes carry a compatibility-version bump and a schema parity test from existing fixtures.
 - Vocabulary lives in `GLOSSARY.md` here and in `CONTEXT.md`.
 - Compile-time repair is explicit, narrow and logged.
 

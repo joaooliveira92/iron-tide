@@ -2,6 +2,8 @@
 
 **Role:** Canonical JSON, SHA-256 domain-separated envelopes, fixed-point maths.
 
+**Class:** runtime-free
+
 **Boundary:** Authoritative foundation, runtime-free. May depend only on `contracts` (plus `@noble/hashes`).
 
 **Invariants:**

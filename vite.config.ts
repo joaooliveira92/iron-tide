@@ -157,6 +157,14 @@ export default defineConfig({
         command: "node scripts/verify-doc-budgets.mjs",
         dependsOn: ["gate:git-state"],
       },
+      "gate:package-agents-self-test": {
+        command: "node scripts/verify-package-agents.mjs --self-test",
+        dependsOn: ["gate:git-state"],
+      },
+      "gate:package-agents": {
+        command: "node scripts/verify-package-agents.mjs",
+        dependsOn: ["gate:package-agents-self-test", "gate:doc-budgets"],
+      },
       "gate:dependency-policy": {
         command: "node scripts/verify-package-dependencies.mjs",
         dependsOn: ["gate:git-state"],
@@ -246,6 +254,7 @@ export default defineConfig({
           "gate:claude-skill-links",
           "gate:docs",
           "gate:doc-budgets",
+          "gate:package-agents",
           "gate:dependency-policy",
           "gate:unknown-casts",
           "gate:torpedo-model-constants",
