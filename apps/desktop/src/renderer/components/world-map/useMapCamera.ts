@@ -256,18 +256,36 @@ export function useMapCamera(
     [applyTransform, clamp, pixelsPerUnit],
   );
 
+  /**
+   * Height of the shell bars floating over a cover-viewport map (`--chrome-top` / `--chrome-bottom`,
+   * set by AppFrame), in camera user units. Zero for a map that is not under the bars.
+   */
+  const chromeInsets = useCallback((): { top: number; bottom: number } => {
+    const svg = svgRef.current;
+    if (!coverViewport || svg === null) return { top: 0, bottom: 0 };
+    const styles = getComputedStyle(svg);
+    const factor = pixelsPerUnit();
+    const read = (name: string) => {
+      const pixels = Number.parseFloat(styles.getPropertyValue(name));
+      return Number.isFinite(pixels) ? pixels / factor : 0;
+    };
+    return { top: read("--chrome-top"), bottom: read("--chrome-bottom") };
+  }, [coverViewport, pixelsPerUnit]);
+
   const focusOn = useCallback(
     (x: number, y: number, scale = 3.5) => {
       const current = camera.current;
       touched.current = true;
       const visible = viewportUnits();
+      const { top, bottom } = chromeInsets();
       current.scale = Math.min(MAX_SCALE, Math.max(minScale(), scale));
       current.x = visible.left + visible.width / 2 - x * current.scale;
-      current.y = visible.top + visible.height / 2 - y * current.scale;
+      // The point goes to the middle of what the bars leave free, not of the whole panel.
+      current.y = visible.top + top + (visible.height - top - bottom) / 2 - y * current.scale;
       clamp();
       applyTransform();
     },
-    [applyTransform, clamp, minScale, viewportUnits],
+    [applyTransform, chromeInsets, clamp, minScale, viewportUnits],
   );
 
   useEffect(() => {

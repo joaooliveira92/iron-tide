@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
+import { decodeCoastline } from "../../lib/coastline-codec.js";
 import { BORDERS_1880 } from "./borders-1880-data.js";
+import { COASTLINE_BASE64 } from "./coastline-data.js";
 
 // Package tests run with the package dir (apps/desktop) as cwd.
 const COUNTRIES_YAML = resolve(process.cwd(), "../../content/production/1880/countries.yaml");
@@ -50,6 +52,38 @@ describe("1880 borders (baked from historical-basemaps)", () => {
           }
         }
       }
+    }
+  });
+
+  it("is clipped to the coastline's own detail, not the coarse 1880 outline", () => {
+    // The coarse source holds ~220 points for Germany; clipped to the 1:10m coast it holds far more.
+    const points = (BORDERS_1880.germany ?? []).reduce(
+      (n, rings) => n + rings.reduce((m, ring) => m + ring.length / 2, 0),
+      0,
+    );
+    expect(points).toBeGreaterThan(1000);
+  });
+
+  it("still follows the current coastline (rebake the borders after a coastline rebake)", () => {
+    const coast = new Set<string>();
+    for (const polygon of decodeCoastline(Buffer.from(COASTLINE_BASE64, "base64").buffer)) {
+      for (const ring of polygon) {
+        for (let i = 0; i < ring.length; i += 2) coast.add(`${ring[i]},${ring[i + 1]}`);
+      }
+    }
+    for (const [nation, polygons] of Object.entries(BORDERS_1880)) {
+      let total = 0;
+      let onCoast = 0;
+      for (const rings of polygons) {
+        for (const ring of rings) {
+          for (let i = 0; i < ring.length; i += 2) {
+            total++;
+            if (coast.has(`${ring[i]},${ring[i + 1]}`)) onCoast++;
+          }
+        }
+      }
+      // Measured 0.67–0.95 across the ten nations; a stale bake drops to ~0.
+      expect(onCoast / total, nation).toBeGreaterThan(0.5);
     }
   });
 });

@@ -167,6 +167,7 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
             showMinimap={false}
             treeDefaultOpen={false}
             initialFocusAreaId={homeAreaId}
+            initialFocusNationId={projection.playerNationId}
             leftPanels={
               <>
                 {prioritiesPanel}
@@ -191,6 +192,7 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
             className="h-full"
             variant="panel"
             initialFocusAreaId={homeAreaId}
+            initialFocusNationId={projection.playerNationId}
             {...map}
           />
         </Suspense>

@@ -95,6 +95,11 @@ const AREAS = [
       "The ship-designer model, its armour regions, named schemes, and the design draft schema.",
     nums: [232, 233, 243],
   },
+  {
+    name: "World map",
+    blurb: "How the presentation-only strategic map's baked geography is produced.",
+    nums: [244],
+  },
 ];
 
 // Records kept as historical provenance only: moved to docs/adr/archive/ and

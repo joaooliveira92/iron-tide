@@ -2,7 +2,7 @@ import { cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { fixtureAnchor } from "./campaign-map-join.js";
 import { projectionById } from "./projection.js";
-import { HOME_FOCUS_SCALE, useInitialFocusArea } from "./useInitialFocusArea.js";
+import { HOME_FOCUS_SCALE, nationFocusPoint, useInitialFocusArea } from "./useInitialFocusArea.js";
 
 const projection = projectionById("equirectangular");
 
@@ -48,5 +48,36 @@ describe("useInitialFocusArea", () => {
 
     rerender({ area: "jpn_home_coast" });
     expect(focusOn).toHaveBeenCalledTimes(2);
+  });
+
+  it("frames a nation's land together with its home waters", () => {
+    const focusOn = vi.fn();
+    renderHook(() => useInitialFocusArea({ focusOn }, "eng_home_coast", projection, 0, "germany"));
+    const anchor = fixtureAnchor("area_north_sea")!;
+    const target = nationFocusPoint(anchor, "germany");
+    expect(target).not.toEqual(anchor);
+    expect(focusOn).toHaveBeenCalledWith(
+      ...projection.project(target[0], target[1]),
+      HOME_FOCUS_SCALE,
+    );
+  });
+});
+
+describe("nationFocusPoint", () => {
+  const anchor = [3, 56] as const;
+  const square = (x0: number, y0: number, x1: number, y1: number) => [
+    [x0, y0, x1, y0, x1, y1, x0, y1],
+  ];
+
+  it("centres on the main landmass and the waters together", () => {
+    const borders = { de: [square(6, 47, 23, 55), square(8, 54, 9, 55)] };
+    expect(nationFocusPoint(anchor, "de", borders)).toEqual([13, 51.5]);
+  });
+
+  it("keeps the waters' anchor for a continent, an unknown nation, or no nation", () => {
+    const borders = { big: [square(-120, 30, -70, 50)] };
+    expect(nationFocusPoint(anchor, "big", borders)).toBe(anchor);
+    expect(nationFocusPoint(anchor, "nowhere", borders)).toBe(anchor);
+    expect(nationFocusPoint(anchor, null, borders)).toBe(anchor);
   });
 });
