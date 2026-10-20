@@ -334,6 +334,15 @@ describe("Central ship workspace views and overlays", () => {
     );
   });
 
+  it("points an empty battery at controls this workspace has, not at a panel it lacks", () => {
+    render(<ShipbuildingWorkspace />);
+    openMap("Armament");
+    // The starting torpedo gunboat carries no main battery.
+    const inspector = screen.getByRole("complementary", { name: /^Inspector/ });
+    expect(within(inspector).getByText(/right-click the ship plan and choose Place/)).toBeTruthy();
+    expect(within(inspector).queryByText(/Components and arrangement/)).toBeNull();
+  });
+
   it("controls the overlays independently, and no view turns them all on", () => {
     render(<ShipbuildingWorkspace />);
     expect(overlay("Turret arcs").getAttribute("aria-checked")).toBe("true");
