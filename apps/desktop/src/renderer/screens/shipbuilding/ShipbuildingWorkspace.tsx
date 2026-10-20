@@ -244,16 +244,17 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
   }, [draft, content]);
   const statuses = useMemo(() => sectionStatuses(findings, fittings), [findings, fittings]);
 
-  // Comparison before commitment: each plant's preview is compiled against the same nation-aware environment the
-  // view was built with, and only while the Machinery section is open (each preview is a full compile).
-  const previewEnv = useMemo(
+  // The nation-aware environment (the session's own is nation-agnostic): it carries the designing nation's naval
+  // profile, so the plant comparison, class-name lists and reference-design browser all read it. Each plant preview is
+  // compiled against it only while the Machinery section is open (each preview is a full compile).
+  const nationEnv = useMemo(
     () => content.environmentFor(state.month, draft.nationId),
     [content, state.month, draft.nationId],
   );
-  const namePool = namePoolFor(previewEnv.ctx.navalProfile, shipType);
+  const namePool = namePoolFor(nationEnv.ctx.navalProfile, shipType);
   const machineryDeltas = useMemo(
-    () => (place.section === "machinery" ? plantDeltas(draft, previewEnv, view, content) : null),
-    [place.section, draft, previewEnv, view, content],
+    () => (place.section === "machinery" ? plantDeltas(draft, nationEnv, view, content) : null),
+    [place.section, draft, nationEnv, view, content],
   );
 
   const entityCtx: EntityContext = {
@@ -691,7 +692,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           description="The ship names your nation uses, by ship type. Choosing one sets the class name."
         >
           <ClassNameBrowser
-            groups={nameGroups(previewEnv.ctx.navalProfile, shipType)}
+            groups={nameGroups(nationEnv.ctx.navalProfile, shipType)}
             current={shipClassName}
             onPick={(name) => {
               setShipClassName(name);
@@ -707,7 +708,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           wide
         >
           <ReferenceDesignBrowser
-            env={env}
+            env={nationEnv}
             starters={starters}
             content={content}
             month={state.month}

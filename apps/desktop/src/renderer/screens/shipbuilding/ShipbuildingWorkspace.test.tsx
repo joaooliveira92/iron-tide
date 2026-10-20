@@ -343,6 +343,13 @@ describe("Central ship workspace views and overlays", () => {
     expect(within(inspector).queryByText(/Components and arrangement/)).toBeNull();
   });
 
+  it("shows the designing nation's identity in the reference-design browser", async () => {
+    render(<ShipbuildingWorkspace />);
+    fireEvent.click(screen.getByRole("button", { name: /^Start from a reference design/ }));
+    const dialog = await screen.findByRole("dialog", { name: "Start from a reference design" });
+    expect(within(dialog).getByText("National identity")).toBeTruthy();
+  });
+
   it("controls the overlays independently, and no view turns them all on", () => {
     render(<ShipbuildingWorkspace />);
     expect(overlay("Turret arcs").getAttribute("aria-checked")).toBe("true");
