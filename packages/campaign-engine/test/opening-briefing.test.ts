@@ -294,7 +294,7 @@ describe("buildOpeningBriefingProjection", () => {
     expect(projection?.treasury.status).toBe("deficit");
   });
 
-  it("derives Foreign Intelligence relations as label + tension only", () => {
+  it("derives Foreign Intelligence relations with status, tension, pact and held areas", () => {
     const uk = fixtureNation({ id: "uk" });
     const germany = fixtureNation({ id: "germany" });
     const snapshot = fixtureSnapshot([uk, germany], [], {
@@ -317,8 +317,59 @@ describe("buildOpeningBriefingProjection", () => {
       year: 1880,
     });
     expect(projection?.foreignIntelligence.relations).toEqual([
-      { nationId: "germany", name: "germany", relation: "at_war", tension: 10 },
+      {
+        nationId: "germany",
+        name: "germany",
+        relation: "at_war",
+        tension: 10,
+        nap: false,
+        controlledAreas: [],
+      },
     ]);
+    expect(projection?.foreignIntelligence.playerAreas).toEqual([]);
+  });
+
+  it("lists the areas each nation controls, sorted, without touching the snapshot", () => {
+    const japan = fixtureNation({ id: "japan" });
+    const russia = fixtureNation({ id: "russia" });
+    const snapshot = fixtureSnapshot([japan, russia], [], {
+      world: {
+        areas: [
+          { id: "rus_pacific_coast", name: "Vladivostok", type: "coastal", controller: "russia" },
+          { id: "jpn_kyushu_coast", name: "Kyushu", type: "coastal", controller: "japan" },
+          { id: "jpn_home_coast", name: "Home", type: "coastal", controller: "japan" },
+          { id: "sea_pacific_n", name: "North Pacific", type: "sea" },
+        ],
+        routes: [],
+        ports: [],
+      },
+      politics: {
+        relations: [
+          {
+            nationA: "japan",
+            nationB: "russia",
+            relation: "neutral",
+            tension: 4,
+            nap: false,
+            since: "1880-01",
+          },
+        ],
+        shells: {},
+      },
+    });
+    const before = JSON.stringify(snapshot.world.areas);
+    const projection = buildOpeningBriefingProjection(fixtureState(snapshot), "japan", {
+      month: 1,
+      year: 1880,
+    });
+    expect(projection?.foreignIntelligence.playerAreas).toEqual([
+      { areaId: "jpn_home_coast", name: "Home" },
+      { areaId: "jpn_kyushu_coast", name: "Kyushu" },
+    ]);
+    expect(projection?.foreignIntelligence.relations[0]?.controlledAreas).toEqual([
+      { areaId: "rus_pacific_coast", name: "Vladivostok" },
+    ]);
+    expect(JSON.stringify(snapshot.world.areas)).toBe(before);
   });
 
   it("triggers each Immediate Concerns category from real snapshot data", () => {

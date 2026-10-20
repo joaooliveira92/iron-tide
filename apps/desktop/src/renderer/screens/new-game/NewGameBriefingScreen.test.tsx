@@ -33,7 +33,17 @@ function fixtureProjection(
       obligations: 600,
     },
     foreignIntelligence: {
-      relations: [{ nationId: "germany", name: "German Empire", relation: "at_war", tension: 10 }],
+      relations: [
+        {
+          nationId: "germany",
+          name: "German Empire",
+          relation: "at_war",
+          tension: 10,
+          nap: false,
+          controlledAreas: [],
+        },
+      ],
+      playerAreas: [],
     },
     immediateConcerns: [
       { category: "budget_shortfall", message: "The projected monthly budget runs a deficit." },
@@ -52,6 +62,11 @@ beforeAll(() => {
     (globalThis as { ResizeObserver?: unknown }).ResizeObserver = ResizeObserverStub;
   }
 });
+
+/** The briefing progress list's current step, by its accessible marker. */
+function currentStep(): string {
+  return document.querySelector('[aria-current="step"]')?.textContent ?? "";
+}
 
 function renderScreen(projection: OpeningBriefingProjection, onTakeCommand = vi.fn()) {
   const onInspect = vi
@@ -106,100 +121,49 @@ describe("NewGameBriefingScreen", () => {
 
     // Page 1 -> 2 via "Review Naval Estimates".
     triggerPrimary();
-    expect(screen.getByText("State of the Navy")).toBeTruthy();
+    expect(currentStep()).toContain("State of the Navy");
     expect(screen.getByText("Majestic class (£150)")).toBeTruthy();
     expect(screen.getByText("Ships under construction")).toBeTruthy();
 
     // Page 2 -> 3.
-    expect(primaryLabel()).toBe("Next");
+    expect(primaryLabel()).toBe("Continue to Treasury Position");
     triggerPrimary();
-    expect(screen.getByText("Treasury Position")).toBeTruthy();
+    expect(currentStep()).toContain("Treasury Position");
     expect(screen.getByText("Projected surplus / deficit")).toBeTruthy();
     expect(screen.getByText("narrow")).toBeTruthy();
 
-    // Page 3 -> 4.
-    expect(primaryLabel()).toBe("Next");
+    // Page 3 -> 4: the World Situation Briefing.
+    expect(primaryLabel()).toBe("Continue to Foreign Intelligence");
     triggerPrimary();
-    expect(screen.getByText("Foreign Intelligence")).toBeTruthy();
-    expect(screen.getByText("German Empire")).toBeTruthy();
-    expect(screen.getByText("At war")).toBeTruthy();
-    expect(screen.getByText("War imminent")).toBeTruthy();
-    expect(screen.getByText("10/10")).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "World Situation Briefing" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("heading", { level: 4, name: "German Empire" })).toBeTruthy();
 
-    // Page 4 -> 5.
-    expect(primaryLabel()).toBe("Next");
+    // The page says it is review-only and where continuing leads.
+    expect(
+      screen.getByText(/Review only\. Nothing on this page changes your standing\./),
+    ).toBeTruthy();
+    expect(screen.getByText(/Continuing opens Immediate Concerns\./)).toBeTruthy();
+
+    // Page 4 -> 5: the action names its destination.
+    expect(primaryLabel()).toBe("Continue to Immediate Concerns");
     triggerPrimary();
-    expect(screen.getByText("Immediate Concerns")).toBeTruthy();
+    expect(currentStep()).toContain("Immediate Concerns");
     expect(screen.getByText("The projected monthly budget runs a deficit.")).toBeTruthy();
 
     // Back returns to page 4.
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    expect(screen.getByText("Foreign Intelligence")).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "World Situation Briefing" }),
+    ).toBeTruthy();
 
     // Forward again then Take command.
-    expect(primaryLabel()).toBe("Next");
+    expect(primaryLabel()).toBe("Continue to Immediate Concerns");
     triggerPrimary();
     expect(primaryLabel()).toBe("Take command");
     triggerPrimary();
     expect(onTakeCommand).toHaveBeenCalledTimes(1);
-  });
-
-  it("renders flags and expressive relation/tension treatments on the Foreign Intelligence page", async () => {
-    const { view, primaryLabel, triggerPrimary } = renderScreen(
-      fixtureProjection({
-        foreignIntelligence: {
-          relations: [
-            { nationId: "germany", name: "German Empire", relation: "neutral", tension: 5 },
-            { nationId: "france", name: "France", relation: "allied", tension: 1 },
-          ],
-        },
-      }),
-    );
-    await screen.findByText("Opening Strategic Briefing");
-    await waitFor(() => expect(primaryLabel()).toBe("Review Naval Estimates"));
-    triggerPrimary(); // 1 -> 2
-    triggerPrimary(); // 2 -> 3
-    triggerPrimary(); // 3 -> 4
-    expect(screen.getByText("Foreign Intelligence")).toBeTruthy();
-
-    // A flag image renders for each power.
-    expect(view.container.querySelectorAll("img")).toHaveLength(2);
-
-    // Relation vocabulary is spelled out with its own pill.
-    expect(screen.getByText("Allied")).toBeTruthy();
-    // A "neutral" relation at the "neutral" band collapses to one word — the pill
-    // carries it; the band word is suppressed rather than repeating it.
-    expect(screen.getAllByText("Neutral")).toHaveLength(1);
-    expect(screen.getByText("Cordial")).toBeTruthy();
-
-    // The tension meter is a real 10-segment bar, tinted by the engine's band.
-    const neutralMeter = screen.getByRole("img", { name: "Tension 5 of 10" });
-    expect(neutralMeter.querySelectorAll(".bg-amber-500")).toHaveLength(5);
-    const cordialMeter = screen.getByRole("img", { name: "Tension 1 of 10" });
-    expect(cordialMeter.querySelectorAll(".bg-emerald-500")).toHaveLength(1);
-  });
-
-  it("orders relations most-hostile first so the forecast surfaces at the top", async () => {
-    const { primaryLabel, triggerPrimary } = renderScreen(
-      fixtureProjection({
-        foreignIntelligence: {
-          relations: [
-            { nationId: "france", name: "France", relation: "neutral", tension: 2 },
-            { nationId: "germany", name: "German Empire", relation: "at_war", tension: 10 },
-            { nationId: "japan", name: "Japan", relation: "neutral", tension: 6 },
-          ],
-        },
-      }),
-    );
-    await screen.findByText("Opening Strategic Briefing");
-    await waitFor(() => expect(primaryLabel()).toBe("Review Naval Estimates"));
-    triggerPrimary();
-    triggerPrimary();
-    triggerPrimary();
-    const names = screen
-      .getAllByText(/(German Empire|France|Japan)$/)
-      .map((node) => node.textContent);
-    expect(names).toEqual(["German Empire", "Japan", "France"]);
   });
 
   it("shows an error state when the inspection fails", async () => {

@@ -110,9 +110,15 @@ try {
   await click("Next");
   await click("Next: Review Campaign");
   await click("Begin Commission");
-  await click("Review Naval Estimates");
-  for (let i = 0; i < 3; i++) await click("Next");
-  await click("Take command");
+  for (const label of [
+    "Review Naval Estimates",
+    "Continue to Treasury Position",
+    "Continue to Foreign Intelligence",
+    "Continue to Immediate Concerns",
+    "Take command",
+  ]) {
+    await click(label);
+  }
 
   await page.getByRole("heading", { name: "Campaign Overview" }).waitFor({ timeout: 30_000 });
   check("fresh campaign compiles onto Overview", true);

@@ -15,7 +15,7 @@ export function HeaderContinueAction({ action }: HeaderContinueActionProps) {
       aria-label={action.label}
       onClick={action.onTrigger}
       disabled={action.disabled}
-      className="w-44 shrink-0 justify-center gap-2"
+      className="min-w-44 max-w-80 shrink-0 justify-center gap-2"
     >
       <ClockArrowRight className="h-4 w-4" />
       <span className="truncate">{action.label}</span>
