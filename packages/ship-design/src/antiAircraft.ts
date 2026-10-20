@@ -1,6 +1,6 @@
 // The light and medium AA fit and the AA directors (RTW3 manual p.43). The manual states what limits them (weight and
 // topside space, more of each as mounts improve) and that directors stop at four; it states no weight, space or date.
-// Every number here is therefore a PROVISIONAL gameplay parameter (ADR-0246) authored in the ship balance and tunable in
+// Every number here is therefore a PROVISIONAL gameplay parameter (ADR-0247) authored in the ship balance and tunable in
 // one place. Absent section = the fit does nothing and is not offered. Integer arithmetic only.
 import type { Finding } from "./findings.js";
 import { shipTarget } from "./findings.js";
@@ -15,7 +15,7 @@ export interface AntiAircraftFit {
   readonly directors: number;
 }
 
-/** The `antiAircraft` section of the ship balance. Every value is provisional (ADR-0213, ADR-0246). */
+/** The `antiAircraft` section of the ship balance. Every value is provisional (ADR-0213, ADR-0247). */
 export interface AntiAircraftBalance {
   /** First campaign month the fit can be used, YYYY-MM. Provisional: the pack has no AA technology yet. */
   readonly fromMonth: string;

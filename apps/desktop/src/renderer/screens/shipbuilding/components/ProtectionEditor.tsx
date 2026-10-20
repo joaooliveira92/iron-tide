@@ -269,7 +269,7 @@ function Readout({ label, children }: { readonly label: string; readonly childre
 }
 
 /**
- * RTW3's "Magazine box" as one choice. It is the existing `MAGAZINE_BOX` armour region (ADR-0246), so there is no
+ * RTW3's "Magazine box" as one choice. It is the existing `MAGAZINE_BOX` armour region (ADR-0247), so there is no
  * separate setting: ticking adds the region with its starting convention, unticking removes it, and the region's own
  * thickness, length and material stay editable in the list below like any other.
  */

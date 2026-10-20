@@ -5,7 +5,7 @@ import {
 } from "@bluewave/ship-design";
 
 /**
- * The Hull tab's aluminium-superstructure readout (manual p.45, ADR-0246). Pure: it reads what the compile decided.
+ * The Hull tab's aluminium-superstructure readout (manual p.45, ADR-0247). Pure: it reads what the compile decided.
  * The option is offered only once the ruleset makes it available for the design date, or while a design already asks for
  * it, so an 1880 design is never shown a feature its era lacks. The saving is stated as the share the ruleset configures,
  * and the fire risk is stated as what it is: noted, not yet modelled in battle.

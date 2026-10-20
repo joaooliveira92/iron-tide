@@ -59,13 +59,13 @@ ship:
     shellNanoKgPerMm3: 20000
     bearingBp: 5000
   # Aluminium superstructure (RTW3 manual p.45). hullWeightSavingBp is the manual's own 10%. fromMonth is a PROVISIONAL
-  # gameplay parameter (ADR-0246, ADR-0213): the pack has no aluminium technology yet, so a date stands in for the research.
+  # gameplay parameter (ADR-0247, ADR-0213): the pack has no aluminium technology yet, so a date stands in for the research.
   aluminiumSuperstructure:
     fromMonth: "1930-01"
     hullWeightSavingBp: 1000
   # Light and medium AA guns and AA directors (RTW3 manual p.43). The manual states only that they are limited by weight and
   # topside space and that directors stop at four (enforced in code); it gives no weight, deck area or date. EVERY value here
-  # is a PROVISIONAL gameplay parameter (ADR-0246, ADR-0213), not a historical figure: tune them here and nowhere else.
+  # is a PROVISIONAL gameplay parameter (ADR-0247, ADR-0213), not a historical figure: tune them here and nowhere else.
   # fromMonth stands in for the AA technology the pack does not have yet; areas are mm^2 of deck.
   antiAircraft:
     fromMonth: "1915-01"

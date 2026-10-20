@@ -9,7 +9,7 @@ import {
 import { formatTonnes } from "../../lib/presentation-format/index.js";
 
 /**
- * The Armament "Other" tab's AA readout (manual p.43, ADR-0246). Pure: it reads what the compile decided. The control is
+ * The Armament "Other" tab's AA readout (manual p.43, ADR-0247). Pure: it reads what the compile decided. The control is
  * offered only once the ruleset makes the fit available for the design date, or while a design already asks for one, so
  * an 1880 design is never shown a feature its era lacks. Battle does not read the fit yet, and the text says so.
  */

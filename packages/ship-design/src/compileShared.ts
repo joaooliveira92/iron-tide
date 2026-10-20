@@ -93,9 +93,9 @@ export interface DesignDraft {
   readonly tertiary?: TertiaryBattery;
   /** Fitted for colonial service (manual p.42; S-5, spec #73 R4). Absent or false = unfitted, identical to a design that predates it. */
   readonly colonialServiceFitted?: boolean;
-  /** Aluminium superstructure (manual p.45; ADR-0246). Absent or false = steel, identical to a design that predates it. */
+  /** Aluminium superstructure (manual p.45; ADR-0247). Absent or false = steel, identical to a design that predates it. */
   readonly aluminiumSuperstructure?: boolean;
-  /** Light and medium AA guns and AA directors: counts only (manual p.43; ADR-0246). Absent = none. */
+  /** Light and medium AA guns and AA directors: counts only (manual p.43; ADR-0247). Absent = none. */
   readonly antiAircraft?: AntiAircraftFit;
 }
 
@@ -131,9 +131,9 @@ export interface ShipBalance {
   readonly weapons: WeaponBalance;
   /** Tertiary-battery coefficients (BALANCE TARGETs). Absent = the battery contributes nothing. */
   readonly tertiary?: TertiaryBalance;
-  /** Aluminium-superstructure values, all PROVISIONAL (ADR-0246). Absent = the option does nothing and is not offered. */
+  /** Aluminium-superstructure values, all PROVISIONAL (ADR-0247). Absent = the option does nothing and is not offered. */
   readonly aluminiumSuperstructure?: AluminiumBalance;
-  /** AA-fit values, all PROVISIONAL (ADR-0246). Absent = the fit does nothing and is not offered. */
+  /** AA-fit values, all PROVISIONAL (ADR-0247). Absent = the fit does nothing and is not offered. */
   readonly antiAircraft?: AntiAircraftBalance;
   readonly armour: ArmourBalance;
   readonly stability: StabilityBalance;

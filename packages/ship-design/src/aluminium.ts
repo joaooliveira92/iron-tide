@@ -1,11 +1,11 @@
 // The aluminium superstructure (RTW3 manual p.45): "once you have developed the technology" it saves 10% of the hull
 // weight, but makes the ship more susceptible to fire damage. The 10% is the manual's; the date it becomes available
-// and everything else here is a PROVISIONAL gameplay parameter (ADR-0246) authored in the ship balance and tunable in
+// and everything else here is a PROVISIONAL gameplay parameter (ADR-0247) authored in the ship balance and tunable in
 // one place. Absent section = the option does nothing and is not offered. Integer arithmetic only.
 import type { Finding } from "./findings.js";
 import { shipTarget } from "./findings.js";
 
-/** The `aluminiumSuperstructure` section of the ship balance. Every value is provisional (ADR-0213, ADR-0246). */
+/** The `aluminiumSuperstructure` section of the ship balance. Every value is provisional (ADR-0213, ADR-0247). */
 export interface AluminiumBalance {
   /** First campaign month the option can be used, YYYY-MM. Provisional: the pack has no aluminium technology yet. */
   readonly fromMonth: string;

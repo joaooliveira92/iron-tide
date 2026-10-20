@@ -100,7 +100,7 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
     findings,
   });
 
-  // The AA fit adds weight and topside load, like the tertiary battery, only while the ruleset offers it (ADR-0246).
+  // The AA fit adds weight and topside load, like the tertiary battery, only while the ruleset offers it (ADR-0247).
   const aa = expandAntiAircraft(draft.antiAircraft, b.antiAircraft, ctx.month);
 
   // 4-5. Armour + hull + displacement ledger.

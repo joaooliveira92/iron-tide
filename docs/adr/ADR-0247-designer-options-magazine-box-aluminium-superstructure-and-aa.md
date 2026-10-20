@@ -1,4 +1,4 @@
-# ADR-0246: Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values
+# ADR-0247: Magazine box, aluminium superstructure and AA fit are additive designer options with provisional values
 
 ## Status
 

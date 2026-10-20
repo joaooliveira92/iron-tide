@@ -139,7 +139,7 @@ export function compileHull(
   form: HullForm,
   balance: HullBalance,
   others: DisplacementLedger,
-  /** Share of the hull-structure weight saved by an aluminium superstructure, bp (ADR-0246); 0 = steel. */
+  /** Share of the hull-structure weight saved by an aluminium superstructure, bp (ADR-0247); 0 = steel. */
   hullWeightSavingBp = 0,
 ): HullResult {
   const findings: Finding[] = [];
