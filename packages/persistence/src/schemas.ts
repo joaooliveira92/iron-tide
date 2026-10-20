@@ -72,6 +72,33 @@ export const StorablePossessionSchema = Schema.Record(Schema.String, Schema.Unkn
     ),
   );
 
+/**
+ * One persisted technology of the compiled research catalogue (`TechnologyDefinitionData`): every key required and
+ * non-empty where meaningful, and no other key accepted, so a malformed catalogue entry is refused at the boundary
+ * instead of reaching state. The whole `world.technologies` field stays optional for saves that predate it.
+ */
+export const StorableTechnologySchema = Schema.Record(Schema.String, Schema.Unknown)
+  .check(
+    Schema.makeFilter(
+      (o) =>
+        Object.keys(o).sort().join(",") ===
+          "availabilityMonth,cost,discoveryWeight,prerequisites,researchFieldId,techId" ||
+        "a technology carries exactly techId, researchFieldId, cost, discoveryWeight, prerequisites and availabilityMonth",
+    ),
+  )
+  .pipe(
+    Schema.decodeTo(
+      Schema.Struct({
+        techId: Schema.NonEmptyString,
+        researchFieldId: Schema.NonEmptyString,
+        cost: Schema.Finite,
+        discoveryWeight: Schema.Finite,
+        prerequisites: Schema.Array(Schema.NonEmptyString),
+        availabilityMonth: Schema.Finite,
+      }),
+    ),
+  );
+
 // S-2: the prestige value set (ADR-0239) in its stored shape. Every field is required and none has
 // a default: a 4.0.0 save without it, or with a malformed one, is not loadable. Integer-ness and
 // bounds are enforced where the set is decoded (`decodePrestigeValueSet`); here the stored shape is
@@ -111,7 +138,7 @@ const StorableSnapshotSchema = Schema.Struct({
     ),
     routes: Schema.Array(Schema.Unknown).pipe(Schema.withDecodingDefaultType(emptyArrayDefault)),
     ports: Schema.Array(Schema.Unknown).pipe(Schema.withDecodingDefaultType(emptyArrayDefault)),
-    technologies: Schema.optional(Schema.Array(Schema.Record(Schema.String, Schema.Unknown))),
+    technologies: Schema.optional(Schema.Array(StorableTechnologySchema)),
     possessions: Schema.optional(Schema.Array(StorablePossessionSchema)),
   }),
   nations: JsonRecord,
