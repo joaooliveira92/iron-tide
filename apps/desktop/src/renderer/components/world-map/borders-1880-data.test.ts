@@ -52,4 +52,13 @@ describe("1880 borders (baked from historical-basemaps)", () => {
       }
     }
   });
+
+  it("is clipped to the coastline's own detail, not the coarse 1880 outline", () => {
+    // The coarse source holds ~220 points for Germany; clipped to the 1:10m coast it holds far more.
+    const points = (BORDERS_1880.germany ?? []).reduce(
+      (n, rings) => n + rings.reduce((m, ring) => m + ring.length / 2, 0),
+      0,
+    );
+    expect(points).toBeGreaterThan(1000);
+  });
 });

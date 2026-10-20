@@ -54,8 +54,30 @@ interface BuiltBorders {
   readonly edge: string;
 }
 
+/**
+ * The borders are clipped to the coastline (bake-borders.ts), so they carry its full detail and
+ * are simplified per zoom tier exactly as the land is — each tier is built the first time the
+ * camera needs it and kept.
+ */
+function bordersByTier(
+  sets: readonly BorderSet[],
+  projection: Projection,
+  centre: number,
+): (tier: CoastlineTier) => BuiltBorders[] {
+  const cache = new Map<CoastlineTier, BuiltBorders[]>();
+  return (tier) => {
+    let built = cache.get(tier);
+    if (built === undefined) {
+      built = buildBorders(sets, COASTLINE_TIER_TOLERANCES[tier] as number, projection, centre);
+      cache.set(tier, built);
+    }
+    return built;
+  };
+}
+
 function buildBorders(
   sets: readonly BorderSet[],
+  tolerance: number,
   projection: Projection,
   centre: number,
 ): BuiltBorders[] {
@@ -64,7 +86,8 @@ function buildBorders(
   if (typeof new Path2D().moveTo !== "function") return [];
   return sets.map((set) => {
     const path = new Path2D();
-    for (const rings of set.polygons) {
+    const polygons = tolerance === 0 ? set.polygons : simplifyPolygons(set.polygons, tolerance);
+    for (const rings of polygons) {
       for (const flat of rings) {
         for (let k = 0; k < flat.length; k += 2) {
           const [x, y] = projection.project((flat[k] as number) - centre, flat[k + 1] as number);
@@ -139,10 +162,10 @@ export function CoastlineCanvas({
   const builtRef = useRef(new Map<number, BuiltPolygon[]>());
   // Borders live outside the main effect so toggling or recolouring them never
   // throws away the (expensive) built coastline tiers; they just ask for a redraw.
-  const bordersRef = useRef<BuiltBorders[]>([]);
+  const bordersRef = useRef<(tier: CoastlineTier) => BuiltBorders[]>(() => []);
   const redrawRef = useRef<() => void>(() => undefined);
   const builtBorders = useMemo(
-    () => buildBorders(snapBordersToIslands(borders ?? [], polygons), projection, centre),
+    () => bordersByTier(snapBordersToIslands(borders ?? [], polygons), projection, centre),
     [borders, polygons, projection, centre],
   );
   useEffect(() => {
@@ -184,9 +207,10 @@ export function CoastlineCanvas({
         canvas.height = height;
       }
       const transform = camera.getTransform();
+      const wantedTier = coastlineTierFor(transform.scale);
       // Best tier that is ready, at or below the wanted detail.
       let built: BuiltPolygon[] | undefined;
-      for (let tier = coastlineTierFor(transform.scale); tier >= 0 && built === undefined; tier--) {
+      for (let tier: number = wantedTier; tier >= 0 && built === undefined; tier--) {
         built = builtRef.current.get(tier);
       }
 
@@ -217,12 +241,13 @@ export function CoastlineCanvas({
           context.stroke(polygon.path);
         }
         // Borders go on after the land, and only where land already is: the
-        // 1880 borders are coarser than the coastline, so clipping them to it
-        // keeps their coastal edges from spilling into the sea.
-        if (bordersRef.current.length > 0) {
+        // baked borders follow the coastline, and clipping them to the drawn land
+        // keeps any simplification slack from spilling into the sea.
+        const builtBordersNow = bordersRef.current(wantedTier);
+        if (builtBordersNow.length > 0) {
           context.globalCompositeOperation = "source-atop";
           context.lineWidth = (1.6 * dpr) / Math.min(a, d);
-          for (const border of bordersRef.current) {
+          for (const border of builtBordersNow) {
             context.fillStyle = border.tint;
             context.fill(border.path, "evenodd");
             context.strokeStyle = border.edge;

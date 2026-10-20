@@ -60,6 +60,8 @@ export interface WorldMapChartProps extends MapViewProps {
    * Overview passes the player nation's home area). Null/undefined leaves the camera at "fit world".
    */
   readonly initialFocusAreaId?: string | null;
+  /** The player's nation: the opening view then frames its land as well as its home waters. */
+  readonly initialFocusNationId?: string | null;
 }
 
 export function WorldMapChart({
@@ -79,6 +81,7 @@ export function WorldMapChart({
   rightPanels,
   treeDefaultOpen = true,
   initialFocusAreaId = null,
+  initialFocusNationId = null,
 }: WorldMapChartProps) {
   const layout = MAP_VARIANT_LAYOUT[variant];
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -95,7 +98,7 @@ export function WorldMapChart({
   // Open centred on the player's home waters (once per mount). This runs after the camera's own
   // reset effect, declared earlier in `useMapCamera`, so the focus is not immediately undone; the
   // Overview remounts the chart each time the screen opens, so it fires on every visit.
-  useInitialFocusArea(camera, initialFocusAreaId, projection, state.centre);
+  useInitialFocusArea(camera, initialFocusAreaId, projection, state.centre, initialFocusNationId);
 
   /** Keyboard parity for pan/zoom (wheel and drag stay the pointer path). */
   function handleMapKey(event: React.KeyboardEvent<SVGSVGElement>): void {
