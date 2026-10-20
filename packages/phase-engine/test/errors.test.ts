@@ -1,5 +1,5 @@
-// Ticket 30 (audit rescope) — the eight foundation `throw`s in snapshotClone,
-// financial-ledger and commandLifecycle are `PhaseEngineError` (a runtime-free
+// Ticket 30 (audit rescope) — the foundation `throw`s in snapshotClone
+// and financial-ledger are `PhaseEngineError` (a runtime-free
 // `Data.TaggedError`) instead of plain `Error` / `Object.assign(Error, {code})`.
 // These tests prove the tagged error carries the verbatim `message` and the
 // preserved `code`, so in-process callers that match on either are unaffected
