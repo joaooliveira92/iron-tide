@@ -143,6 +143,14 @@ const DesignDraftSchema = Schema.Struct({
   fireControl: Schema.optional(Schema.Struct({ positions: nonNegativeInt })),
   tertiary: Schema.optional(Schema.Struct({ caliberUm: positiveInt, count: nonNegativeInt })),
   colonialServiceFitted: Schema.optional(Schema.Boolean),
+  aluminiumSuperstructure: Schema.optional(Schema.Boolean),
+  antiAircraft: Schema.optional(
+    Schema.Struct({
+      lightGuns: nonNegativeInt,
+      mediumGuns: nonNegativeInt,
+      directors: nonNegativeInt,
+    }),
+  ),
 });
 
 /**

@@ -462,3 +462,70 @@ describe("tertiary battery in the design file and edits", () => {
     ).toThrow(EditError);
   });
 });
+
+describe("aluminium superstructure in the design file and edits", () => {
+  const withFlag = (v: unknown) =>
+    JSON.stringify({
+      format: "bwdesign",
+      schemaVersion: 2,
+      draft: { ...draft, aluminiumSuperstructure: v },
+      componentHashes: {},
+      compiledHash: null,
+    });
+  it("round-trips the flag and refuses a non-boolean, without a schema bump", () => {
+    expect(decodeDesignFile(withFlag(true), ctx.catalogue).draft.aluminiumSuperstructure).toBe(
+      true,
+    );
+    for (const bad of ["yes", 1, null])
+      expect(() => decodeDesignFile(withFlag(bad), ctx.catalogue)).toThrow(PersistenceError);
+    expect(DESIGN_SCHEMA_VERSION).toBe(2);
+  });
+  it("set_aluminium_superstructure sets the flag, and unsetting removes the key", () => {
+    const on = applyEdit(draft, { kind: "set_aluminium_superstructure", fitted: true });
+    expect(on.aluminiumSuperstructure).toBe(true);
+    const off = applyEdit(on, { kind: "set_aluminium_superstructure", fitted: false });
+    expect("aluminiumSuperstructure" in off).toBe(false);
+    expect(off).toEqual(draft);
+  });
+});
+
+describe("AA fit in the design file and edits", () => {
+  const withFit = (v: unknown) =>
+    JSON.stringify({
+      format: "bwdesign",
+      schemaVersion: 2,
+      draft: { ...draft, antiAircraft: v },
+      componentHashes: {},
+      compiledHash: null,
+    });
+  const fit = { lightGuns: 6, mediumGuns: 2, directors: 2 };
+  it("round-trips a fit and refuses a malformed one, without a schema bump", () => {
+    expect(decodeDesignFile(withFit(fit), ctx.catalogue).draft.antiAircraft).toEqual(fit);
+    for (const bad of [
+      { ...fit, directors: 5 },
+      { ...fit, lightGuns: -1 },
+      { ...fit, mediumGuns: 1.5 },
+      { lightGuns: 1 },
+      5,
+    ])
+      expect(() => decodeDesignFile(withFit(bad), ctx.catalogue)).toThrow(PersistenceError);
+    expect(DESIGN_SCHEMA_VERSION).toBe(2);
+  });
+  it("set_anti_aircraft sets the fit, and null or all zeros removes the key", () => {
+    const on = applyEdit(draft, { kind: "set_anti_aircraft", antiAircraft: fit });
+    expect(on.antiAircraft).toEqual(fit);
+    for (const off of [
+      applyEdit(on, { kind: "set_anti_aircraft", antiAircraft: null }),
+      applyEdit(on, {
+        kind: "set_anti_aircraft",
+        antiAircraft: { lightGuns: 0, mediumGuns: 0, directors: 0 },
+      }),
+    ]) {
+      expect("antiAircraft" in off).toBe(false);
+      expect(off).toEqual(draft);
+    }
+    expect(() =>
+      applyEdit(draft, { kind: "set_anti_aircraft", antiAircraft: { ...fit, directors: 5 } }),
+    ).toThrow(EditError);
+  });
+});

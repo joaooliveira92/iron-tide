@@ -1,4 +1,6 @@
 import type { HullFormData, ShipBalance } from "./compile.js";
+import { aluminiumBalanceProblem } from "./aluminium.js";
+import { antiAircraftBalanceProblem } from "./antiAircraft.js";
 import { classificationRulesFromRecord } from "./classificationRules.js";
 import type { PropulsionPlant } from "./machinery.js";
 import { bp } from "./units.js";
@@ -106,6 +108,14 @@ export function shipBalanceFromRecord(raw: unknown): ShipBalance {
   const rec = raw as Record<string, unknown>;
   for (const k of REQUIRED_BALANCE_KEYS)
     if (rec[k] === undefined) throw new ContentError(`ship balance is missing '${k}'`);
+  if (rec.antiAircraft !== undefined) {
+    const problem = antiAircraftBalanceProblem(rec.antiAircraft);
+    if (problem !== null) throw new ContentError(problem);
+  }
+  if (rec.aluminiumSuperstructure !== undefined) {
+    const problem = aluminiumBalanceProblem(rec.aluminiumSuperstructure);
+    if (problem !== null) throw new ContentError(problem);
+  }
   if (rec.classification !== undefined) {
     try {
       classificationRulesFromRecord(rec.classification);

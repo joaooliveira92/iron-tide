@@ -139,6 +139,8 @@ export function compileHull(
   form: HullForm,
   balance: HullBalance,
   others: DisplacementLedger,
+  /** Share of the hull-structure weight saved by an aluminium superstructure, bp (ADR-0247); 0 = steel. */
+  hullWeightSavingBp = 0,
 ): HullResult {
   const findings: Finding[] = [];
   const dims = { L: hull.lengthWl, B: hull.beam, T: hull.draught, D: hull.depthToMainDeck };
@@ -243,7 +245,8 @@ export function compileHull(
   }
 
   const buoyantKg = buoyantDisplacement(hull, balance);
-  const hullKg = hullStructureWeight(hull, form, balance);
+  const structureKg = hullStructureWeight(hull, form, balance);
+  const hullKg = kg(structureKg - Number((BigInt(structureKg) * BigInt(hullWeightSavingBp)) / BP));
   let ledger = withLine(others, "hull", hullKg);
 
   // Margin and reserve are derived lines (F-H5): margin on the other ten, reserve on the target.

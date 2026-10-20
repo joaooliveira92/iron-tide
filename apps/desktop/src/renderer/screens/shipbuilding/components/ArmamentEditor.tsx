@@ -177,7 +177,8 @@ export function ArmamentEditor({
     <Panel title="Batteries">
       {mounts.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No guns or torpedo tubes are fitted here. Add them under Components and arrangement.
+          No guns or torpedo tubes are fitted here. Use Add component below, or right-click the ship
+          plan and choose Place.
         </p>
       ) : (
         <div className="space-y-4">

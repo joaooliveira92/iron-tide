@@ -38,7 +38,7 @@ export { passesFilter } from "./validation/severity.js";
 
 // Panel library and the hull plan's editing surface.
 export * from "./panels/index.js";
-export { IDLE_TOOL, PlanModeButtons, type PlanTool } from "./panels/hull-plan/PlanToolbar.js";
+export { IDLE_TOOL, type PlanTool } from "./panels/hull-plan/PlanToolbar.js";
 export { planModel } from "./panels/hull-plan/planModel.js";
 export { StarterProfile } from "./panels/hull-plan/StarterProfile.js";
 export { ShipTypeDetails, ShipTypeFacts } from "./panels/ShipTypeDetails.js";

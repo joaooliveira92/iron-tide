@@ -14,6 +14,8 @@ export * from "./revisionDiff.js";
 export * from "./weapons.js";
 export * from "./armourSchemes.js";
 export * from "./tertiary.js";
+export * from "./aluminium.js";
+export * from "./antiAircraft.js";
 export * from "./armour.js";
 export * from "./stability.js";
 export * from "./systems.js";

@@ -4,7 +4,7 @@ import { buildWorkshopView } from "@bluewave/ship-design";
 import { batteryCards } from "../../../components/design-workspace/batteryView.js";
 import { loadDrawingBoardContent } from "../../../components/design-workspace/content.js";
 import { DrawingBoard } from "./DrawingBoard.js";
-import { chooseOption, openTab } from "./test-helpers.js";
+import { armMove, chooseOption, openTab } from "./test-helpers.js";
 import {
   SECTION_IDS,
   SECTIONS,
@@ -188,9 +188,9 @@ describe("selecting fittings", () => {
     expect(target("tubes").getAttribute("aria-label")).toMatch(/14|tube/i);
   });
 
-  it("is unavailable while a plan tool owns the drawing, so placing and moving work as before", () => {
+  it("is unavailable while a plan tool owns the drawing, so placing and moving work as before", async () => {
     render(<DrawingBoard />);
-    fireEvent.click(screen.getByRole("button", { name: "Move on plan" }));
+    await armMove();
     expect(fittings().getAttribute("aria-disabled")).toBe("true");
     expect(fittings().getAttribute("class")).toContain("pointer-events-none");
     expect(

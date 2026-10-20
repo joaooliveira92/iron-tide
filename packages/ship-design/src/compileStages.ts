@@ -35,6 +35,8 @@ import {
 import type { Finding } from "./findings.js";
 import { about, placementTarget, type FindingTarget } from "./findings.js";
 import { compileHull, type HullResult } from "./hull.js";
+import { aluminiumFitting } from "./aluminium.js";
+import type { AntiAircraftExpansion } from "./antiAircraft.js";
 import { colonialFitting } from "./colonialService.js";
 import { emptyLedger, withLine, type LedgerCategory } from "./ledger.js";
 import { compileMachinery, type MachineryResult, type PropulsionPlant } from "./machinery.js";
@@ -195,6 +197,7 @@ export function resolveDesignComponents(
 // bunkers) into placements and analyse the layout.
 export function buildPlacementsAndArrangement(args: {
   draft: DesignDraft;
+  aa: AntiAircraftExpansion;
   resolved: Resolved[];
   plant: PropulsionPlant;
   machineryRaw: MachineryResult;
@@ -207,7 +210,7 @@ export function buildPlacementsAndArrangement(args: {
   rooms: readonly { zoneId: ZoneId; stationPermille: number; shareBp: number }[];
   roomPart: (total: number, i: number) => number;
 } {
-  const { draft, resolved, plant, machineryRaw, formData, b, ammoById } = args;
+  const { draft, aa, resolved, plant, machineryRaw, formData, b, ammoById } = args;
   const hull = draft.hull;
 
   const resolvedPlacements: ResolvedPlacement[] = resolved.map((r) => ({
@@ -285,6 +288,23 @@ export function buildPlacementsAndArrangement(args: {
       weightKg: tertiary.weightKg,
       volumeLitre: 0,
       deckFootprintMm2: tertiary.footprintMm2,
+      heightMm: 0,
+      zCgMm: hull.depthToMainDeck,
+      allowedZones: [...ZONE_IDS],
+      forbidsCoLocation: [],
+      critical: false,
+    });
+  }
+  if (aa.weightKg > 0 || aa.footprintMm2 > 0) {
+    resolvedPlacements.push({
+      instanceId: "~aa",
+      componentId: "anti_aircraft_fit",
+      category: "AA_WEAPON",
+      zoneId: TERTIARY_ZONE,
+      stationPermille: TERTIARY_STATION_PERMILLE,
+      weightKg: aa.weightKg,
+      volumeLitre: 0,
+      deckFootprintMm2: aa.footprintMm2,
       heightMm: 0,
       zCgMm: hull.depthToMainDeck,
       allowedZones: [...ZONE_IDS],
@@ -485,6 +505,7 @@ export function compileSystemsAndMachinery(args: {
 // break the reserve-buoyancy circular dependency.
 export function compileStructure(args: {
   draft: DesignDraft;
+  aa: AntiAircraftExpansion;
   ctx: ShipContext;
   resolved: Resolved[];
   plant: PropulsionPlant;
@@ -495,7 +516,7 @@ export function compileStructure(args: {
   machineryRaw: MachineryResult;
   findings: Finding[];
 }): { hullRes: HullResult; armour: ArmourResult } {
-  const { draft, ctx, resolved, plant, formData, b, weapons, systems, machineryRaw, findings } =
+  const { draft, aa, ctx, resolved, plant, formData, b, weapons, systems, machineryRaw, findings } =
     args;
   const hull = draft.hull;
 
@@ -555,7 +576,8 @@ export function compileStructure(args: {
     others,
     "armament",
     (sumBy("armament") +
-      expandTertiary(draft.tertiary, b.tertiary ?? NO_TERTIARY_BALANCE).weightKg) as never,
+      expandTertiary(draft.tertiary, b.tertiary ?? NO_TERTIARY_BALANCE).weightKg +
+      aa.weightKg) as never,
   );
   others = withLine(others, "ammunition", (weapons.ammoMassKg + sumBy("ammunition")) as never);
   others = withLine(others, "sensors", sumBy("sensors") as never);
@@ -567,7 +589,13 @@ export function compileStructure(args: {
     (sumBy("auxiliary") + (colonialFitting(draft, ctx)?.displacementKg ?? 0)) as never,
   );
   others = withLine(others, "armour", (armourPre.totalWeightKg + sumBy("armour")) as never);
-  const hullRes = compileHull(hull, formData.form, b.hull, others);
+  const hullRes = compileHull(
+    hull,
+    formData.form,
+    b.hull,
+    others,
+    aluminiumFitting(draft, b.aluminiumSuperstructure, ctx.month)?.savingBp ?? 0,
+  );
   findings.push(...hullRes.findings);
   const armour = compileArmour(armourInput(hullRes.reserveBuoyancyBp, magazines), b.armour);
   findings.push(...armour.findings);

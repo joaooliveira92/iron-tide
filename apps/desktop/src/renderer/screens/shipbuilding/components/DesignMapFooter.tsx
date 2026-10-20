@@ -1,5 +1,6 @@
-import { CalendarClock } from "lucide-react";
+import { BookOpen, CalendarClock, Sparkles } from "lucide-react";
 import { Badge } from "../../../components/ui/badge.js";
+import { Button } from "../../../components/ui/button.js";
 import { SelectField } from "../../../components/design-workspace/index.js";
 import { cn } from "../../../lib/utils.js";
 import type { DesignStatus } from "./CommandBar.js";
@@ -12,6 +13,15 @@ export interface DesignMapFooterProps {
   readonly status: DesignStatus;
   /** What fixes the status (e.g. focus the class name): when given, the status becomes a button that runs it. */
   readonly onStatusAction?: () => void;
+  /** The class-name helpers above the status; omitted, the buttons are not shown. */
+  readonly names?: {
+    /** Puts the next suggested name for this nation and ship type in the class name field. */
+    readonly onSuggest: () => void;
+    /** Opens the list of the nation's names to choose from. */
+    readonly onBrowse: () => void;
+    /** False when the nation has no names for this ship type: Suggest is then disabled. */
+    readonly canSuggest: boolean;
+  };
 }
 
 /**
@@ -25,6 +35,7 @@ export function DesignMapFooter({
   onMonth,
   status,
   onStatusAction,
+  names,
 }: DesignMapFooterProps) {
   const badge = (
     <Badge
@@ -62,6 +73,33 @@ export function DesignMapFooter({
           options={months.map((m) => ({ value: m, label: m }))}
           onChange={onMonth}
         />
+      )}
+      {names !== undefined && (
+        <div role="group" aria-label="Class name" className="flex gap-1 max-xl:flex-col">
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-w-0 flex-1 gap-1.5 max-xl:px-2"
+            disabled={!names.canSuggest}
+            aria-label="Suggest a class name"
+            title="Fill in a name from this nation's list for this ship type; press again for the next"
+            onClick={names.onSuggest}
+          >
+            <Sparkles aria-hidden="true" />
+            <span className="max-xl:sr-only">Suggest</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-w-0 flex-1 gap-1.5 max-xl:px-2"
+            aria-label="Browse class names"
+            title="Choose from this nation's ship names"
+            onClick={names.onBrowse}
+          >
+            <BookOpen aria-hidden="true" />
+            <span className="max-xl:sr-only">Names</span>
+          </Button>
+        </div>
       )}
       {onStatusAction === undefined ? (
         badge

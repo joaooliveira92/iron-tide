@@ -7,7 +7,9 @@ import { PLAN_H, PLAN_W } from "./geometry.js";
 import { planLabel } from "./describe.js";
 import { HullPlanLegend } from "./HullPlanLegend.js";
 import { legendEntries } from "./legend.js";
+import { PlanContextMenu } from "./PlanContextMenu.js";
 import { PlanToolOptions } from "./PlanToolbar.js";
+import { clientToPlan, fittingAt } from "./plan-pointer.js";
 import { ProfileView } from "./ProfileView.js";
 import { SectionCard } from "./SectionCard.js";
 import { SectionLabels } from "./SectionLabels.js";
@@ -113,6 +115,7 @@ export function HullPlanPanel({
   const showArcsControl = onShowArcs === undefined && givenOverlays === undefined;
   const findingsControl = onFindingsView === undefined;
   const planRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const model = givenModel ?? planModel(draft, content, view, month, given);
   // The board owns the plan tool when its toolbar (with the pickers) is shown; the plan keeps its own when alone.
   const ownEditing = useHullPlanEditing({
@@ -135,6 +138,11 @@ export function HullPlanPanel({
   const overlaysGiven = givenOverlays !== undefined;
   const on = (overlay: ShipOverlay) => givenOverlays === undefined || givenOverlays.has(overlay);
   const arcsOn = (overlaysGiven ? on("arcs") : true) && showArcs;
+  const fittingUnder = (clientX: number, clientY: number) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    const point = rect && clientToPlan(rect, clientX, clientY);
+    return point ? fittingAt(frame, draft, point.x, point.y) : null;
+  };
   const lcgPermille = view.compiled.stability?.lcgPermille;
   const anatomy = useMemo(
     () => ({
@@ -196,96 +204,107 @@ export function HullPlanPanel({
         <p className="text-xs font-medium text-muted-foreground">
           {viewDef.profileOnly ? "Waterline plan" : viewDef.hint}
         </p>
-        <div className="relative">
-          <svg
-            viewBox={`0 0 ${PLAN_W} ${PLAN_H}`}
-            className={cn(
-              "block w-full rounded bg-muted/40",
-              tool.mode !== "off" && "ring-2 ring-primary/50",
-            )}
-            role="img"
-            aria-label={planLabel(facts)}
-          >
-            <HullOutlineLayer frame={frame} />
-            <HullDeckLayer frame={frame} />
-            <SelectionLayer frame={frame} zones={zones} draft={draft} warns={model.warns} />
-            <HullZoneLayer frame={frame} zones={zones} />
-            {viewDef.id === "compartments" && <CompartmentLayer frame={frame} zones={zones} />}
-            {on("armour") && (
-              <ArmourZoneLayer
-                frame={frame}
-                draft={draft}
-                highlight={armourHighlight}
-                anatomy={anatomy.starboard}
-              />
-            )}
-            {on("topside") && (
-              <HullTopsideLayer frame={frame} draft={draft} content={content} zones={zones} />
-            )}
-            {on("mass") && lcgPermille !== undefined && (
-              <MassMarkersLayer frame={frame} lcgPermille={lcgPermille} />
-            )}
-            {on("machinery") && <MachineryLayoutLayer frame={frame} draft={draft} />}
-            {arcsOn && (
-              <GunArcLayer
-                frame={frame}
-                draft={draft}
-                mounts={mounts}
-                radius={viewDef.id === "arcs" ? ARC_R_FOCUS : undefined}
-                labelled={viewDef.id === "arcs"}
-              />
-            )}
-            {on("footprint") && (
-              <HullFittingLayer
-                frame={frame}
-                draft={draft}
-                selectedId={tool.mode === "move" ? tool.instanceId : undefined}
-                symbolOf={symbolOf}
-              />
-            )}
-            {tool.mode !== "off" && (
-              <rect
-                x={0}
-                y={0}
-                width={PLAN_W}
-                height={PLAN_H}
-                fill="transparent"
-                className="cursor-crosshair"
-                aria-hidden="true"
-                data-testid="plan-click-layer"
-                {...planHandlers}
-              />
-            )}
-            {ghost !== null && (
-              <circle
-                cx={ghost.x}
-                cy={ghost.y}
-                r={7}
-                fill="none"
-                stroke="currentColor"
-                strokeDasharray="3 2"
-                pointerEvents="none"
-                data-testid="plan-drag-ghost"
-                aria-hidden="true"
-              />
-            )}
-          </svg>
-          <FittingTargets
-            frame={frame}
-            draft={draft}
-            targets={targets}
-            disabled={tool.mode !== "off"}
-            warns={(instanceId) => model.warns({ kind: "fitting", instanceId })}
-            anatomy={anatomy}
-          />
-          {on("conflicts") && (
-            <FindingMarkers
-              groups={findingsView.visible ? layoutMarkers(shown, frame, draft, zones) : []}
-              names={model.entityName}
-              hidden={tool.mode !== "off"}
+        <PlanContextMenu
+          tool={tool}
+          onTool={editing.setTool}
+          draft={draft}
+          available={model.available}
+          entryOf={model.entryOf}
+          onAutoPlace={editing.onAutoPlace}
+          fittingAt={fittingUnder}
+        >
+          <div className="relative">
+            <svg
+              ref={svgRef}
+              viewBox={`0 0 ${PLAN_W} ${PLAN_H}`}
+              className={cn(
+                "block w-full rounded bg-muted/40",
+                tool.mode !== "off" && "ring-2 ring-primary/50",
+              )}
+              role="img"
+              aria-label={planLabel(facts)}
+            >
+              <HullOutlineLayer frame={frame} />
+              <HullDeckLayer frame={frame} />
+              <SelectionLayer frame={frame} zones={zones} draft={draft} warns={model.warns} />
+              <HullZoneLayer frame={frame} zones={zones} />
+              {viewDef.id === "compartments" && <CompartmentLayer frame={frame} zones={zones} />}
+              {on("armour") && (
+                <ArmourZoneLayer
+                  frame={frame}
+                  draft={draft}
+                  highlight={armourHighlight}
+                  anatomy={anatomy.starboard}
+                />
+              )}
+              {on("topside") && (
+                <HullTopsideLayer frame={frame} draft={draft} content={content} zones={zones} />
+              )}
+              {on("mass") && lcgPermille !== undefined && (
+                <MassMarkersLayer frame={frame} lcgPermille={lcgPermille} />
+              )}
+              {on("machinery") && <MachineryLayoutLayer frame={frame} draft={draft} />}
+              {arcsOn && (
+                <GunArcLayer
+                  frame={frame}
+                  draft={draft}
+                  mounts={mounts}
+                  radius={viewDef.id === "arcs" ? ARC_R_FOCUS : undefined}
+                  labelled={viewDef.id === "arcs"}
+                />
+              )}
+              {on("footprint") && (
+                <HullFittingLayer
+                  frame={frame}
+                  draft={draft}
+                  selectedId={tool.mode === "move" ? tool.instanceId : undefined}
+                  symbolOf={symbolOf}
+                />
+              )}
+              {tool.mode !== "off" && (
+                <rect
+                  x={0}
+                  y={0}
+                  width={PLAN_W}
+                  height={PLAN_H}
+                  fill="transparent"
+                  className="cursor-crosshair"
+                  aria-hidden="true"
+                  data-testid="plan-click-layer"
+                  {...planHandlers}
+                />
+              )}
+              {ghost !== null && (
+                <circle
+                  cx={ghost.x}
+                  cy={ghost.y}
+                  r={7}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeDasharray="3 2"
+                  pointerEvents="none"
+                  data-testid="plan-drag-ghost"
+                  aria-hidden="true"
+                />
+              )}
+            </svg>
+            <FittingTargets
+              frame={frame}
+              draft={draft}
+              targets={targets}
+              disabled={tool.mode !== "off"}
+              warns={(instanceId) => model.warns({ kind: "fitting", instanceId })}
+              anatomy={anatomy}
             />
-          )}
-        </div>
+            {on("conflicts") && (
+              <FindingMarkers
+                groups={findingsView.visible ? layoutMarkers(shown, frame, draft, zones) : []}
+                names={model.entityName}
+                hidden={tool.mode !== "off"}
+              />
+            )}
+          </div>
+        </PlanContextMenu>
         <SectionLabels
           numbered={viewDef.id === "compartments"}
           zones={zones}
