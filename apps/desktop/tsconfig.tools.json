@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist/tools",
+    "rootDir": ".",
+    "lib": ["ES2024", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "emitDeclarationOnly": true,
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true
+  },
+  "include": [
+    "scripts/view.ts",
+    "scripts/snap-*.ts",
+    "e2e/flows.ts",
+    "e2e/fixtures.ts",
+    "e2e/preferences-fixture.ts"
+  ],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}

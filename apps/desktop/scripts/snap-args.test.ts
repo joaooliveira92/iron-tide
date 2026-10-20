@@ -65,6 +65,7 @@ describe("parseSnapArgs", () => {
       out: ".dev-data/view",
       waitMs: 300,
       settleMs: 0,
+      waitMaxMs: 5000,
       tour: false,
       strict: false,
       actions: [],
@@ -89,11 +90,22 @@ describe("parseSnapArgs", () => {
     });
   });
 
+  it("--freeze implies the static background unless one is chosen", () => {
+    expect(parseSnapArgs(["--freeze"])).toMatchObject({ freeze: true, background: "none" });
+    expect(parseSnapArgs(["--freeze", "--background", "stars"])).toMatchObject({
+      freeze: true,
+      background: "stars",
+    });
+    expect(parseSnapArgs([])).toMatchObject({ freeze: false });
+    expect(parseSnapArgs([]).background).toBeUndefined();
+  });
+
   it.each([
     [["--theme", "darK"]],
     [["--background", "lava"]],
     [["--size", "900"]],
     [["--wait", "-1"]],
+    [["--wait-max", "0"]],
     [["--advance", "0"]],
     [["--advance", "x"]],
     [["--shot", "../evil"]],

@@ -55,3 +55,8 @@ is surfaced rather than leaving a blank window, a crashed renderer stays
 recoverable, shutdown is bounded by a renderer flush handshake, a second launch
 focuses the running window, and a local support bundle captures crash/error
 observability with bounded, privacy-respecting writes.
+
+## Seeing the app
+
+Agents inspect and drive the running app with `pnpm snap`; see
+[desktop snap](desktop-snap.md).
