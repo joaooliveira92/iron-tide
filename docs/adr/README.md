@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0245).
+highest existing number + 1 (the next number is ADR-0246).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -112,6 +112,7 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 | 0225 | [ADR-0225-prestige-required-field-and-research-first.md](ADR-0225-prestige-required-field-and-research-first.md) | Prestige is a required authored field; values are research-first and S-2 is gated on 0003 | accepted | — |
 | 0226 | [ADR-0226-rtw3-prestige-research-outcome.md](ADR-0226-rtw3-prestige-research-outcome.md) | RTW3 prestige research outcome — the model is grounded, the production values are not | accepted | — |
 | 0239 | [ADR-0239-s2-prestige-values-balance-targets.md](ADR-0239-s2-prestige-values-balance-targets.md) | S-2 prestige values: the grounded model plus labelled balance targets | accepted | — |
+| 0245 | [ADR-0245-player-nation-id-in-campaign-state.md](ADR-0245-player-nation-id-in-campaign-state.md) | The player nation is stored in authoritative campaign state | accepted | — |
 
 ## Foreign stations & presence
 
