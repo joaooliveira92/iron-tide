@@ -40,12 +40,14 @@ export interface SnapOptions {
   readonly actions: readonly SnapAction[];
   readonly waitMs: number;
   readonly settleMs: number;
+  readonly waitMaxMs: number;
   readonly evalSource?: string;
   readonly save?: string;
   readonly makeSave?: string;
   readonly selector?: string;
   readonly tour: boolean;
   readonly strict: boolean;
+  readonly freeze: boolean;
   readonly size?: { readonly width: number; readonly height: number };
   readonly theme?: ThemePreference;
   readonly background?: BackgroundPreference;
@@ -130,12 +132,14 @@ export function parseSnapArgs(argv: readonly string[]): SnapOptions {
         scroll: { type: "string", multiple: true },
         wait: { type: "string", default: "300" },
         settle: { type: "string", default: "0" },
+        "wait-max": { type: "string", default: "5000" },
         eval: { type: "string" },
         save: { type: "string" },
         "make-save": { type: "string" },
         selector: { type: "string" },
         tour: { type: "boolean", default: false },
         strict: { type: "boolean", default: false },
+        freeze: { type: "boolean", default: false },
         size: { type: "string" },
         theme: { type: "string" },
         background: { type: "string" },
@@ -169,18 +173,23 @@ export function parseSnapArgs(argv: readonly string[]): SnapOptions {
     actions,
     waitMs: toInt("--wait", values.wait, 0),
     settleMs: toInt("--settle", values.settle, 0),
+    waitMaxMs: toInt("--wait-max", values["wait-max"], 1),
     ...(values.eval !== undefined ? { evalSource: values.eval } : {}),
     ...(values.save !== undefined ? { save: values.save } : {}),
     ...(values["make-save"] !== undefined ? { makeSave: values["make-save"] } : {}),
     ...(values.selector !== undefined ? { selector: values.selector } : {}),
     tour: values.tour,
     strict: values.strict,
+    freeze: values.freeze,
     ...(size !== undefined ? { size } : {}),
     ...(values.theme !== undefined
       ? { theme: oneOf("--theme", values.theme, THEME_PREFERENCES) }
       : {}),
+    // A frozen capture should not depend on an animated backdrop.
     ...(values.background !== undefined
       ? { background: oneOf("--background", values.background, BACKGROUND_PREFERENCES) }
-      : {}),
+      : values.freeze
+        ? { background: "none" as const }
+        : {}),
   };
 }

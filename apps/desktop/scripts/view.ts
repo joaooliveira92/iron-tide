@@ -5,7 +5,7 @@
  *
  *   pnpm --filter @bluewave/desktop snap [--out DIR] [--click TEXT]... [--fill LABEL=VALUE]...
  *                                        [--hover TEXT]... [--click-at X,Y]... [--scroll DX,DY[@X,Y]]...
- *                                        [--shot NAME]... [--strict]
+ *                                        [--shot NAME]... [--strict] [--freeze]
  *                                        [--press KEY]... [--wait MS] [--eval JS]
  *                                        [--save PACKAGE_DIR] [--selector CSS]
  *                                        [--advance N] [--settle MS] [--tour]
@@ -16,10 +16,17 @@
  * --click-at X,Y  clicks at window coordinates (canvas content such as the map has no controls).
  * --scroll DX,DY[@X,Y]  mouse-wheel scroll, after moving the pointer to X,Y when given.
  * --shot NAME     saves a mid-flow screenshot as NAME.png, in order with the other actions.
+ * --freeze        steadier captures: reduced-motion media, CSS animations/transitions disabled in
+ *                 screenshots, and the static "none" backdrop unless --background says otherwise.
+ *                 WebGL/canvas content (the globe, shaders) keeps animating and is not frozen.
  * --strict        exit 1 when anything went wrong: page errors, console errors, a click that had
  *                 to fall back (no accessible match, never stabilised), or an idle render loop.
  *                 Without it these are only written to console.log.
  * --advance   clicks "Advance Month" N times, in order with the other actions (repeatable).
+ * --wait MS   minimum pause after each action (default 300); then it waits for the DOM to go
+ *             structurally quiet (200ms of no added/removed nodes or text changes).
+ * --wait-max MS  ceiling for that quiet wait (default 5000); past it the capture goes ahead and
+ *             console.log says the screen was still changing.
  * --settle    extra wait (ms) once, right before capture (--wait is per action).
  * --tour      leave the first-month guided tour overlay alone (default: dismiss it).
  * --make-save runs the new-game flow, compiles a campaign into DIR (so it can be
@@ -46,13 +53,16 @@ import { join, resolve } from "node:path";
 import { advanceMonths, dismissTour, startNewCampaign } from "../e2e/flows.ts";
 import { writeAppPreferences } from "../e2e/preferences-fixture.ts";
 import { copyFixturePackage, launchHarness, teardownHarness } from "../e2e/fixtures.ts";
+import { waitForQuiet } from "./snap-quiet.ts";
 import { createProblemLog } from "./snap-problems.ts";
-import { parseSnapArgs, SnapUsageError, type SnapAction } from "./snap-args.ts";
+import { parseSnapArgs, SnapUsageError, type SnapAction, type SnapOptions } from "./snap-args.ts";
 
 // Idle structural DOM mutations per second above which a screen is reported as churning.
 const CHURN_THRESHOLD = 500;
+// Structural DOM silence, in ms, that counts as "the screen has settled".
+const QUIET_MS = 200;
 
-let opts;
+let opts: SnapOptions;
 try {
   opts = parseSnapArgs(process.argv.slice(2));
 } catch (e) {
@@ -90,6 +100,19 @@ h.page.on("pageerror", (e) => {
   log.push(`[pageerror] ${e.message}`);
   problems.record(`page error: ${e.message}`);
 });
+
+const shotOptions = opts.freeze ? ({ animations: "disabled" } as const) : {};
+
+// After an action: at least --wait, then until the DOM stops changing structurally (up to
+// --wait-max), so a slow screen is captured settled and a fast one is not padded with idle time.
+async function settle(extraMs = 0): Promise<void> {
+  await h.page.waitForTimeout(opts.waitMs + extraMs);
+  const { settled } = await h.page.evaluate(waitForQuiet, {
+    quietMs: QUIET_MS,
+    maxMs: opts.waitMaxMs,
+  });
+  if (!settled) log.push(`[snap] screen still changing after ${opts.waitMaxMs}ms (--wait-max)`);
+}
 
 // Accessible role/name match (waits for it to render, e.g. after a compile). "TEXT @last" /
 // "TEXT @N" target the last / Nth (0-based) match instead of the first.
@@ -162,7 +185,7 @@ async function runAction(action: SnapAction): Promise<void> {
       await h.page.mouse.wheel(action.dx, action.dy);
       break;
     case "shot":
-      await h.page.screenshot({ path: resolve(outDir, `${action.name}.png`) });
+      await h.page.screenshot({ path: resolve(outDir, `${action.name}.png`), ...shotOptions });
       log.push(`[snap] shot ${action.name}.png`);
       break;
   }
@@ -182,7 +205,7 @@ try {
   }
   if (saveDir) {
     await h.page.getByRole("button", { name: "Open Campaign" }).click();
-    await h.page.waitForTimeout(opts.waitMs);
+    await settle();
   }
   if (makeSave) {
     await startNewCampaign(h.page);
@@ -191,6 +214,7 @@ try {
       .waitFor({ timeout: 60_000 })
       .catch(() => problem("Overview did not appear after Begin Commission"));
   }
+  if (opts.freeze) await h.page.emulateMedia({ reducedMotion: "reduce" });
   if (opts.size) {
     const { width, height } = opts.size;
     await h.app.evaluate(
@@ -203,7 +227,7 @@ try {
       },
       [width, height],
     );
-    await h.page.waitForTimeout(500);
+    await settle();
   }
   // The tour mounts shortly after the Overview, so only the first check waits.
   const tidy = async (waitMs = 0) => {
@@ -218,13 +242,13 @@ try {
         "target" in action ? `control:${action.target}` : undefined,
       ),
     );
-    await h.page.waitForTimeout(opts.waitMs);
+    await settle();
     await tidy();
   }
   if (opts.evalSource) {
     log.push(`[eval] ${JSON.stringify(await h.page.evaluate(opts.evalSource))}`);
   }
-  await h.page.waitForTimeout(opts.waitMs + opts.settleMs);
+  await settle(opts.settleMs);
 
   // Churn probe: a render loop (e.g. an unstable effect dependency) keeps adding and
   // removing nodes; a calm screen changes a few dozen per second. Only structural
@@ -256,7 +280,7 @@ try {
   }
   log.push(`[snap] idle mutations/s: structural=${structural} attributes=${attributes}`);
 
-  const shot = { path: resolve(outDir, "screenshot.png") };
+  const shot = { path: resolve(outDir, "screenshot.png"), ...shotOptions };
   if (opts.selector) await h.page.locator(opts.selector).first().screenshot(shot);
   else await h.page.screenshot(shot);
   await writeFile(resolve(outDir, "aria.yaml"), await h.page.locator("body").ariaSnapshot());
