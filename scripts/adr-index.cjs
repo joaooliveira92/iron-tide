@@ -86,8 +86,8 @@ const AREAS = [
   {
     name: "Foreign stations & presence",
     blurb:
-      "The authoritative home area and possession ownership behind per-area presence, and the foreign-station assignment state.",
-    nums: [231, 241],
+      "The authoritative home area and possession ownership behind per-area presence, the foreign-station assignment state, and the colonial-service fitting with its dormant ruleset section.",
+    nums: [231, 241, 242],
   },
   {
     name: "Ship design & construction",

@@ -136,6 +136,8 @@ export function validateDraftShape(raw: unknown): string[] {
     )
       p.push("tertiary must be { caliberUm: positive integer, count: non-negative integer }");
   }
+  if (raw.colonialServiceFitted !== undefined && typeof raw.colonialServiceFitted !== "boolean")
+    p.push("colonialServiceFitted must be a boolean");
   if (raw.fireControl !== undefined) {
     if (
       !isObj(raw.fireControl) ||

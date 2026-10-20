@@ -12,6 +12,17 @@ describe("describeEdit: fire control", () => {
   });
 });
 
+describe("describeEdit: colonial service", () => {
+  it("says whether the ship is fitted", () => {
+    expect(describeEdit({ kind: "set_colonial_service", fitted: true }, String)).toBe(
+      "Fit for colonial service",
+    );
+    expect(describeEdit({ kind: "set_colonial_service", fitted: false }, String)).toBe(
+      "Remove the colonial-service fitting",
+    );
+  });
+});
+
 describe("describeEdit: armour scheme", () => {
   it("names the scheme in words", () => {
     expect(

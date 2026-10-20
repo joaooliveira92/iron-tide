@@ -232,6 +232,35 @@ describe("a finished REBUILD completes into the new design (ADR-0078, DESIGN-23 
     expect(nation.constructionProjects[0]!.status).toBe("COMPLETED");
   });
 
+  it("follows the new design's colonial-service fitting, fitted or not (S-5, spec #73 R4)", () => {
+    const toFitted = run(
+      snapshotOfRebuild(finished(), [
+        ["d_new", designVersion("d_new", { colonialServiceFitted: true })],
+        ["d1", designVersion("d1")],
+      ]),
+    ).nation.fleets[0]!.ships[0]!;
+    expect(toFitted.colonialServiceFitted).toBe(true);
+
+    const fittedBefore = nationWith(
+      [{ ...unavailable(), colonialServiceFitted: true }],
+      [
+        project({
+          designVersionId: "d_new",
+          completedWork: SafeInt(10),
+          totalWork: SafeInt(10),
+          status: "ACTIVE",
+        }),
+      ],
+    );
+    const toPlain = run(
+      snapshotOfRebuild(fittedBefore, [
+        ["d_new", designVersion("d_new")],
+        ["d1", designVersion("d1", { colonialServiceFitted: true })],
+      ]),
+    ).nation.fleets[0]!.ships[0]!;
+    expect("colonialServiceFitted" in toPlain).toBe(false);
+  });
+
   it("keeps the old design version in the snapshot and records one ShipRebuilt transition", () => {
     const { result } = run(
       snapshotOfRebuild(finished(), [

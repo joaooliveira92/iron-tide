@@ -25,6 +25,9 @@ export const RulesetManifestSchema = Schema.Struct({
   // ADR-0239). Opaque here on purpose: the campaign compiler decodes it strictly (excess keys
   // rejected, no defaults) with `decodePrestigeValueSet` and names the offending field.
   prestige: Schema.optional(Schema.Unknown),
+  // S-5: the optional presence value set (ADR-0242). Opaque here on purpose, like `prestige`: the compiler
+  // decodes it strictly with `decodePresenceRules` and names the offending field. Absent = dormant.
+  presence: Schema.optional(Schema.Unknown),
   provenance: Schema.optional(ProvenanceSchema),
 });
 

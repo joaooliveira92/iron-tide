@@ -45,6 +45,11 @@ export interface Ship {
    * readiness change away from ACTIVE clears it through `setShipReadiness`.
    */
   stationAssignment?: StationAssignment;
+  /**
+   * S-5 (spec #73 R4): the ship's design is fitted for colonial service (manual p.42), copied from its design version when
+   * the hull launches and updated by a rebuild. Absent = unfitted. Shown as `c` (manual p.48).
+   */
+  colonialServiceFitted?: true;
   inBattleId?: string;
   /** Operational availability while a rebuild or conversion works on the ship; absent = available (ADR-0078). */
   availability?: ShipAvailability;
@@ -120,6 +125,8 @@ export interface CompiledDesignVersion {
    * `SubmitDesign` carry one; authored pack designs have none. It lets a later revision start from the real design.
    */
   sourceDraft?: Readonly<Record<string, unknown>>;
+  /** S-5 (spec #73 R4): fitted for colonial service (manual p.42). Absent = unfitted; written only when fitted. */
+  colonialServiceFitted?: true;
   /**
    * Cost of building this design in treasury units, priced by the ship-design cost model when the design was compiled
    * (ADR-0074). Absent for authored designs, which fall back to the displacement formula `construction_order_v1`.

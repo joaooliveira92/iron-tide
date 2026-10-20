@@ -8,6 +8,7 @@ export { MachineryEditor } from "./MachineryEditor.js";
 export { NotAvailable } from "./NotAvailable.js";
 export { ProtectionEditor } from "./ProtectionEditor.js";
 export { OverviewPanel, DEFAULT_PRIORITIES, type PriorityLevel } from "./OverviewPanel.js";
+export { ColonialServicePanel } from "./ColonialServicePanel.js";
 export { SystemsPanel } from "./SystemsPanel.js";
 export { ShipStage } from "./ShipStage.js";
 export { ViewToolbar } from "./ViewToolbar.js";

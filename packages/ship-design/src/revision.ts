@@ -315,6 +315,7 @@ export function changeKindOf(
       return "ARMOUR";
     case "add_placement":
     case "set_fire_control":
+    case "set_colonial_service":
     case "set_tertiary":
       return "FITTINGS";
     case "remove_placement":

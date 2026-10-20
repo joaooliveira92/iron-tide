@@ -35,6 +35,7 @@ import {
 import type { Finding } from "./findings.js";
 import { about, placementTarget, type FindingTarget } from "./findings.js";
 import { compileHull, type HullResult } from "./hull.js";
+import { colonialFitting } from "./colonialService.js";
 import { emptyLedger, withLine, type LedgerCategory } from "./ledger.js";
 import { compileMachinery, type MachineryResult, type PropulsionPlant } from "./machinery.js";
 import { compileSystems, type SystemsResult } from "./systems.js";
@@ -560,7 +561,11 @@ export function compileStructure(args: {
   others = withLine(others, "sensors", sumBy("sensors") as never);
   others = withLine(others, "mission", sumBy("mission") as never);
   others = withLine(others, "crew", crewKg as never);
-  others = withLine(others, "auxiliary", sumBy("auxiliary") as never);
+  others = withLine(
+    others,
+    "auxiliary",
+    (sumBy("auxiliary") + (colonialFitting(draft, ctx)?.displacementKg ?? 0)) as never,
+  );
   others = withLine(others, "armour", (armourPre.totalWeightKg + sumBy("armour")) as never);
   const hullRes = compileHull(hull, formData.form, b.hull, others);
   findings.push(...hullRes.findings);

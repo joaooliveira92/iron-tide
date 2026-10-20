@@ -87,6 +87,18 @@ describe("SubmitDesign through the month", () => {
     expect(d.sourceDraft).not.toBe(havockDraft);
   });
 
+  it("records a colonial-service fitting on the compiled design version, and only then (S-5, spec #73 R4)", () => {
+    const snapshot = snapshotIn(1895);
+    const fitted = { ...havockDraft, colonialServiceFitted: true };
+    const withFit = run(snapshot, [submit(snapshot, fitted)]).designs.get("des_test_destroyer")!;
+    expect(withFit.colonialServiceFitted).toBe(true);
+    expect((withFit.sourceDraft as Record<string, unknown>)["colonialServiceFitted"]).toBe(true);
+    const plain = run(snapshot, [submit(snapshot)]).designs.get("des_test_destroyer")!;
+    expect("colonialServiceFitted" in plain).toBe(false);
+    // Dormant production ruleset: the fitting is recorded but takes no displacement.
+    expect(withFit.normalizedDisplacementKg).toBe(plain.normalizedDisplacementKg);
+  });
+
   it("compiles a valid design and adds it, with its family, to the snapshot", () => {
     const snapshot = snapshotIn(1895);
     const { designs, families, collector } = run(snapshot, [submit(snapshot)]);

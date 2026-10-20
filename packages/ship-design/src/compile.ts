@@ -11,7 +11,12 @@ import {
 } from "./classification.js";
 import { availabilityFindings, evaluateShipTypeAvailability } from "./shipTypeAvailability.js";
 import { shipTypeRegistryFromRecords } from "./shipTypeRegistry.js";
-import { colonialServiceAdvisory, colonialServiceEligibility } from "./colonialService.js";
+import {
+  colonialFitting,
+  colonialFittingFindings,
+  colonialServiceAdvisory,
+  colonialServiceEligibility,
+} from "./colonialService.js";
 import type { Finding } from "./findings.js";
 import { hasBlocking, sortFindings, withoutSubjects } from "./findings.js";
 import { withRuleSubject } from "./findingSubjects.js";
@@ -211,6 +216,9 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
       );
   }
 
+  const colonialService = colonialFitting(draft, ctx);
+  findings.push(...colonialFittingFindings(colonialService));
+
   // 8. Dock, treaty, modernization
   const total = hullRes.totalKg;
   collectDockTreatyModernizationFindings({
@@ -247,6 +255,7 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
     componentCostMicro: costMicro,
     components,
     findings: sorted,
+    ...(colonialService === null ? {} : { colonialService }),
     valid: !hasBlocking(sorted),
   };
   return { ...body, hash: sha256Hex(canonicalSerialize(withoutSubjects(body))) };

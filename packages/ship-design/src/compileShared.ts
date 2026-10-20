@@ -4,6 +4,7 @@
 import type { ArrangementBalance, ArrangementResult, ZoneDef, ZoneId } from "./arrangement.js";
 import type { ArmourBalance, ArmourRegion, ArmourResult, ThreatProfile } from "./armour.js";
 import type { ClassificationRules } from "./classification.js";
+import type { ColonialFittingResult } from "./colonialService.js";
 import type { ComponentCategory, ComponentDef } from "./component.js";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { Finding } from "./findings.js";
@@ -88,6 +89,8 @@ export interface DesignDraft {
   readonly fireControl?: { readonly positions: number };
   /** Tertiary battery: a count of one chosen gun, no placement, arc or role (ADR-0233). Absent = none. */
   readonly tertiary?: TertiaryBattery;
+  /** Fitted for colonial service (manual p.42; S-5, spec #73 R4). Absent or false = unfitted, identical to a design that predates it. */
+  readonly colonialServiceFitted?: boolean;
 }
 
 export interface HullFormData {
@@ -165,6 +168,11 @@ export interface ShipContext {
   readonly restrictedShipTypes?: readonly string[];
   /** Scenario switch for colonial-service ships (KE); absent = allowed. */
   readonly colonialServiceAllowed?: boolean;
+  /**
+   * The proportion of displacement a colonial-service fitting takes, from the optional S-5 ruleset section (ADR-0242).
+   * Absent = the section is not configured: a fitting is recorded and flagged, and costs nothing. Never defaulted.
+   */
+  readonly colonialFitting?: { readonly displacementBp: number };
   /** The nation's naval profile, when the context was built for a nation (the UI reads this for the doctrine brief). */
   readonly navalProfile?: import("./nationProfile.js").NationNavalProfile;
   /**
@@ -197,6 +205,8 @@ export interface CompiledDesign {
   /** Per-placement resolved data used by cost and construction planning. */
   readonly components: readonly ComponentSummary[];
   readonly findings: readonly Finding[];
+  /** Present only on a design fitted for colonial service, so an unfitted design's compiled hash is unchanged. */
+  readonly colonialService?: ColonialFittingResult;
   readonly valid: boolean;
   /** SHA-256 over the canonical serialisation of the whole result. */
   readonly hash: string;

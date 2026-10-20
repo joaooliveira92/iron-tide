@@ -232,6 +232,31 @@ describe("buildPlayerProjection — S-1 readiness in the fleet projection (ticke
     expect(unknown !== undefined && "displacementTons" in unknown).toBe(false);
   });
 
+  it("marks a ship fitted for colonial service and nothing on an unfitted one (S-5 04)", () => {
+    const uk = fixtureNation({
+      id: "uk",
+      fleets: [
+        {
+          id: "fleet-1",
+          nationId: "uk",
+          name: "Home Fleet",
+          locationAreaId: "area-lon",
+          ships: [
+            { ...mkShip("ship-c", "ACTIVE"), colonialServiceFitted: true as const },
+            mkShip("ship-plain", "ACTIVE"),
+          ],
+        },
+      ],
+    });
+    const projection = buildPlayerProjection(fixtureState(fixtureSnapshot([uk])), "uk", {
+      month: 1,
+      year: 1880,
+    });
+    const [fitted, plain] = projection?.fleet[0]?.divisions[0]?.ships ?? [];
+    expect(fitted?.colonialServiceFitted).toBe(true);
+    expect(plain !== undefined && "colonialServiceFitted" in plain).toBe(false);
+  });
+
   it("its derived fleet maintenance agrees with the committed nation.maintenanceCost", () => {
     const uk = fixtureNation({
       id: "uk",

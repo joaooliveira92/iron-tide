@@ -158,6 +158,29 @@ describe("buildFleetScreenView", () => {
     expect(home).not.toHaveProperty("stationCode");
   });
 
+  it("shows c for a ship fitted for colonial service and nothing extra for others (S-5 04)", () => {
+    const snapshot = fixtureSnapshot([
+      fixtureNation({
+        id: "uk",
+        fleets: [
+          makeFleet(
+            "fleet_gbr_home",
+            "Home Fleet",
+            [
+              makeShip("c", "HMS Colonial", { colonialServiceFitted: true }),
+              makeShip("plain", "HMS Plain"),
+            ],
+            "eng_home_coast",
+          ),
+        ],
+      }),
+    ]);
+    const [fitted, plain] = buildFleetScreenView(snapshot, "uk").divisions[0]!.ships;
+    expect(fitted).toMatchObject({ colonialServiceFitted: true, colonialCode: "c" });
+    expect(plain).not.toHaveProperty("colonialServiceFitted");
+    expect(plain).not.toHaveProperty("colonialCode");
+  });
+
   it("lists the world areas, routes as directed edges, and only the player's ports with level capacity", () => {
     const snapshot = fixtureSnapshot(
       [

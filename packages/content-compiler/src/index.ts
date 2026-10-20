@@ -207,6 +207,7 @@ export {
   type PlaceholderViolation,
 } from "./releaseGate.js";
 export { safePath } from "./safePath.js";
+export { presenceFromRulesets, type PresenceValues } from "./presenceRules.js";
 export { discoverShipBuildingFiles, type ShipBuildingFileGroups } from "./shipBuildingDiscovery.js";
 export { buildFullSurfaceInput } from "./fullSurface.js";
 export {

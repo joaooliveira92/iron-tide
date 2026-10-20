@@ -60,6 +60,7 @@ import { sameEntity, type ShipEntity } from "../../components/design-workspace/s
 import { useCampaignMonthId } from "../../shell/CampaignShellContext.js";
 import {
   ArmamentEditor,
+  ColonialServicePanel,
   CommandBar,
   DesignMap,
   DesignMapFooter,
@@ -79,6 +80,7 @@ import {
   type PriorityLevel,
 } from "./components/index.js";
 import { armamentEntries } from "./armament.js";
+import { colonialServiceModel } from "./colonial-service-view.js";
 import { machineryModel, plantDeltas } from "./machinery-view.js";
 import { overviewModel, type PriorityId } from "./overview.js";
 import { protectionModel } from "./protection-view.js";
@@ -396,6 +398,9 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
       case "systems":
         return (
           <>
+            {at.tab === "accommodation" && (
+              <ColonialServicePanel model={colonialServiceModel(view)} edit={actions.edit} />
+            )}
             <SystemsPanel
               groups={systemsModel(
                 categoriesOf(at),

@@ -19,6 +19,8 @@ export type DraftEdit =
   | { readonly kind: "set_hull"; readonly patch: Partial<HullSpec> }
   | { readonly kind: "set_machinery"; readonly patch: Partial<MachineryPlan> }
   | { readonly kind: "set_fire_control"; readonly positions: number }
+  /** Fit or unfit colonial service (S-5, manual p.42). Unfitting removes the flag, restoring the pre-S-5 draft shape. */
+  | { readonly kind: "set_colonial_service"; readonly fitted: boolean }
   /** The tertiary battery: a count of one chosen gun; `null` removes it. */
   | { readonly kind: "set_tertiary"; readonly tertiary: TertiaryBattery | null }
   /** The design brief: ship type, required speed and range, crew and accommodation. A brief is not a build change. */
@@ -95,6 +97,15 @@ export function applyEdit(draft: DesignDraft, e: DraftEdit): DesignDraft {
       if (!Number.isSafeInteger(e.positions) || e.positions < 0)
         throw new EditError("fire-control positions must be a non-negative integer");
       return { ...draft, fireControl: { positions: e.positions } };
+    case "set_colonial_service": {
+      if (typeof e.fitted !== "boolean")
+        throw new EditError("colonial service must be fitted or not fitted");
+      if (!e.fitted) {
+        const { colonialServiceFitted: _removed, ...rest } = draft;
+        return rest;
+      }
+      return { ...draft, colonialServiceFitted: true };
+    }
     case "set_tertiary": {
       const t = e.tertiary;
       if (t === null) {

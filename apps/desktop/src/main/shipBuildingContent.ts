@@ -1,5 +1,5 @@
 import { hashWithContext } from "@bluewave/deterministic";
-import type { ShipBuildingCatalogue } from "@bluewave/content-compiler";
+import { presenceFromRulesets, type ShipBuildingCatalogue } from "@bluewave/content-compiler";
 import {
   buildShipBuildingContent,
   type AuthoredArmamentContent,
@@ -41,6 +41,7 @@ function loadShipBuilding(): LoadedShipBuilding {
       "The compiled content artifact carries no ship-building catalogue.",
     );
   }
+  const presence = presenceFromRulesets(bundle.rulesets);
   const data: ShipBuildingData = {
     components: catalogue.components as ComponentDef[],
     plants: catalogue.plants as unknown as PropulsionPlant[],
@@ -51,6 +52,7 @@ function loadShipBuilding(): LoadedShipBuilding {
     armament: catalogue.armament as unknown as AuthoredArmamentContent,
     referenceDesigns: catalogue.referenceDesigns as RawReferenceDesign[],
     ...(catalogue.partModel !== undefined ? { partModel: catalogue.partModel } : {}),
+    ...(presence === undefined ? {} : { presence }),
     ...(catalogue.designLoadouts !== undefined
       ? {
           designLoadouts: catalogue.designLoadouts as NonNullable<

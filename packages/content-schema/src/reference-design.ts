@@ -142,6 +142,7 @@ const DesignDraftSchema = Schema.Struct({
   placements: Schema.Array(PlacementSpecSchema),
   fireControl: Schema.optional(Schema.Struct({ positions: nonNegativeInt })),
   tertiary: Schema.optional(Schema.Struct({ caliberUm: positiveInt, count: nonNegativeInt })),
+  colonialServiceFitted: Schema.optional(Schema.Boolean),
 });
 
 /**

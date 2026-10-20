@@ -79,3 +79,52 @@ export function colonialServiceAdvisory(result: ColonialServiceResult): Finding[
     },
   ];
 }
+
+/** What a colonial-service fitting did to a compiled design (S-5, spec #73 R4). Present only when the draft is fitted. */
+export interface ColonialFittingResult {
+  readonly fitted: true;
+  /** Whether the ruleset carries the proportion. False = recorded but free, and flagged 'not configured'. */
+  readonly configured: boolean;
+  readonly proportionBp: number | null;
+  /** Kilograms of the displacement the fitting takes; 0 while not configured. */
+  readonly displacementKg: number;
+}
+
+/**
+ * The fitting's cost in kilograms: `proportionBp` of the draft's target displacement, rounded up to a whole kilogram
+ * (the rounding the growth reserve already uses), in integer arithmetic. Null when the draft is not fitted. The base
+ * is the target, not the solved total, so the fitting never feeds back into its own size.
+ */
+export function colonialFitting(
+  draft: {
+    readonly colonialServiceFitted?: boolean;
+    readonly hull: { readonly targetDisplacementKg: number };
+  },
+  ctx: { readonly colonialFitting?: { readonly displacementBp: number } },
+): ColonialFittingResult | null {
+  if (draft.colonialServiceFitted !== true) return null;
+  const rule = ctx.colonialFitting;
+  if (rule === undefined)
+    return { fitted: true, configured: false, proportionBp: null, displacementKg: 0 };
+  const kg = Number(
+    (BigInt(draft.hull.targetDisplacementKg) * BigInt(rule.displacementBp) + 9_999n) / 10_000n,
+  );
+  return { fitted: true, configured: true, proportionBp: rule.displacementBp, displacementKg: kg };
+}
+
+/** The advisory a fitted design carries while the ruleset does not configure the fitting's cost. */
+export function colonialFittingFindings(result: ColonialFittingResult | null): Finding[] {
+  if (result === null || result.configured) return [];
+  return [
+    {
+      id: "COLONIAL_SERVICE_NOT_CONFIGURED",
+      severity: "ADVISORY",
+      what: "The colonial-service fitting is recorded but its displacement cost is not configured.",
+      why: "The ruleset does not state what proportion of displacement a colonial-service fitting takes.",
+      consequence: "The fitting costs no displacement until the ruleset configures it.",
+      remedies: [],
+      evidence: { formulaId: "DESIGN-22", inputs: {}, threshold: 0, value: 0 },
+      subject: { targets: [shipTarget], settings: "brief" },
+    },
+  ];
+}

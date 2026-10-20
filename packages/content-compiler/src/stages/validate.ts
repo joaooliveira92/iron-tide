@@ -32,6 +32,7 @@ import {
   UiCatalogueSchema,
   validateAgainstSchema,
   type ContentSchema,
+  decodePresenceRules,
 } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
@@ -264,6 +265,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
     }
 
     validateDuplicateIds(validated, collector);
+    validatePresenceRules(validated["rulesets"] ?? [], collector);
     validateMissingReferences(validated, collector);
     validateTechnologyGraph(validated, input, collector);
 
@@ -1232,6 +1234,38 @@ function collectIds(validated: Record<string, unknown[]>): Map<string, Set<strin
     idMap.set(key, ids);
   }
   return idMap;
+}
+
+/**
+ * S-5 (spec #73 R11, ADR-0242): a ruleset's optional presence section is dormant when absent and all-or-nothing when
+ * present. A partial, mistyped or out-of-range section fails with `PRESENCE_RULES_INVALID` naming the field.
+ */
+function validatePresenceRules(rulesets: readonly unknown[], collector: DiagnosticCollector): void {
+  const carriers = rulesets.filter(
+    (ruleset) => (ruleset as Record<string, unknown>)["presence"] !== undefined,
+  );
+  if (carriers.length > 1)
+    collector.addError(
+      "PRESENCE_RULES_AMBIGUOUS",
+      `More than one ruleset carries a presence section (${carriers.map((r) => String((r as Record<string, unknown>)["id"])).join(", ")}); exactly one may`,
+      { stage: "validate" },
+    );
+  for (const ruleset of rulesets) {
+    const record = ruleset as Record<string, unknown>;
+    if (record["presence"] === undefined) continue;
+    const rulesetId = String(record["id"]);
+    const decoded = decodePresenceRules(record["presence"]);
+    if (decoded.ok) continue;
+    collector.addError(
+      "PRESENCE_RULES_INVALID",
+      `Ruleset '${rulesetId}' presence section is invalid at '${decoded.field}': ${decoded.message}`,
+      {
+        stage: "validate",
+        entityId: rulesetId,
+        remediation: `Author every presence value in ruleset '${rulesetId}', or remove the section to leave it dormant`,
+      },
+    );
+  }
 }
 
 function validateMissingReferences(

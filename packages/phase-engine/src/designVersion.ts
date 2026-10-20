@@ -135,6 +135,7 @@ export function buildDesignVersion(
         }
       : {}),
     sourceDraft: structuredClone(draft) as unknown as Readonly<Record<string, unknown>>,
+    ...(draft.colonialServiceFitted === true ? { colonialServiceFitted: true as const } : {}),
     // A copy: the immutable armament snapshot must not alias the command body (plain JSON).
     ...(e.armament ? { armament: structuredClone(e.armament) } : {}),
     ...(e.torpedoArmament

@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vite-plus/test";
 import { hashWithContext } from "@bluewave/deterministic";
+import { presenceFromRulesets } from "@bluewave/content-compiler";
 import { compileDraftFromParts } from "@bluewave/ship-design";
 
 import { readContentArtifact } from "./contentArtifact.js";
@@ -11,6 +12,7 @@ import { resolveGeneratedContentDir } from "./contentPack.js";
 import {
   armamentContentHash,
   loadShipBuildingContent,
+  loadShipBuildingData,
   shipBuildingContentHash,
 } from "./shipBuildingContent.js";
 
@@ -77,5 +79,34 @@ describe("ship-building runtime content (ADR-0093 Step 3, ADR-0123)", () => {
       expect(source).not.toMatch(/node:fs/);
       expect(source).not.toMatch(/@bluewave\/content-schema/);
     }
+  });
+});
+
+describe("S-5 presence ruleset section reaching ship-building content (ADR-0242)", () => {
+  // FIXTURE-CLASS value: it exercises the plumbing and is never a production number.
+  const fixture = {
+    colonialServiceDisplacementBp: 137,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "LOW",
+      kind: "balance_adjustment",
+      sources: [],
+    },
+  };
+
+  it("is absent from production content: the section is dormant until authored", () => {
+    expect(loadShipBuildingData().presence).toBeUndefined();
+    expect(loadShipBuildingContent().environmentFor("1880-01").ctx.colonialFitting).toBeUndefined();
+  });
+
+  it("reads the one ruleset that carries a section, and nothing when none does", () => {
+    expect(presenceFromRulesets([{ id: "core" }])).toBeUndefined();
+    expect(presenceFromRulesets([{ id: "core", presence: fixture }])).toEqual({
+      colonialServiceDisplacementBp: 137,
+    });
+    // A corrupt section is an error, never silently dormant.
+    expect(() => presenceFromRulesets([{ id: "core", presence: { provenance: {} } }])).toThrow(
+      /presence section is invalid/,
+    );
   });
 });

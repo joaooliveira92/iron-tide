@@ -74,6 +74,8 @@ export interface PlayerProjectionShip {
   readonly crewQuality: number;
   /** The authoritative station assignment (S-5 03); absent when the ship has none. */
   readonly stationAssignment?: "FOREIGN_STATION";
+  /** Whether the ship's design is fitted for colonial service (S-5 04); absent when unfitted. */
+  readonly colonialServiceFitted?: true;
   /**
    * The ship's displacement in metric tons, from its compiled design's `normalizedDisplacementKg`
    * (rounded). Absent when the design is not in the snapshot: an unknown tonnage is never zero.
@@ -204,6 +206,9 @@ export function buildPlayerProjection(
             ...(ship.stationAssignment === undefined
               ? {}
               : { stationAssignment: ship.stationAssignment }),
+            ...(ship.colonialServiceFitted === true
+              ? { colonialServiceFitted: true as const }
+              : {}),
             ...(design === undefined
               ? {}
               : {

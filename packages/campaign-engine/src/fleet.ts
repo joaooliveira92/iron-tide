@@ -51,6 +51,10 @@ export interface FleetShipView {
   readonly stationAssignment?: "FOREIGN_STATION";
   /** The manual's ship-list code for the assignment (p.48 `FS`); absent when the ship has none. */
   readonly stationCode?: "FS";
+  /** Whether the ship's design is fitted for colonial service (S-5 04); absent when unfitted. */
+  readonly colonialServiceFitted?: true;
+  /** The manual's ship-list code for the fitting (p.48 `c`); absent when unfitted. */
+  readonly colonialCode?: "c";
 }
 
 /** The readiness state's presentation label (S-1 ticket 07). */
@@ -129,6 +133,9 @@ export function buildFleetScreenView(
       ...(ship.stationAssignment === undefined
         ? {}
         : { stationAssignment: ship.stationAssignment, stationCode: "FS" as const }),
+      ...(ship.colonialServiceFitted === true
+        ? { colonialServiceFitted: true as const, colonialCode: "c" as const }
+        : {}),
     })),
   }));
 

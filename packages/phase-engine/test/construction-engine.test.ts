@@ -41,8 +41,12 @@ const plan: ConstructionPlan = (() => {
 })();
 const TOTAL = plan.totalWork;
 
-const design = (capacityPerLine: number): CompiledDesignVersion =>
+const design = (
+  capacityPerLine: number,
+  over: Partial<CompiledDesignVersion> = {},
+): CompiledDesignVersion =>
   ({
+    ...over,
     designVersionId: "d1",
     designFamilyId: "fam",
     className: "Test",
@@ -126,7 +130,11 @@ const nation = (projects: ConstructionProject[]): NationState => ({
   isAI: false,
 });
 
-const snapshotOf = (projects: ConstructionProject[], capacityPerLine: number): CampaignSnapshot =>
+const snapshotOf = (
+  projects: ConstructionProject[],
+  capacityPerLine: number,
+  designOver: Partial<CompiledDesignVersion> = {},
+): CampaignSnapshot =>
   ({
     version: "0.1.0",
     turnNumber: SafeInt(1),
@@ -146,7 +154,7 @@ const snapshotOf = (projects: ConstructionProject[], capacityPerLine: number): C
     },
     politics: { relations: [], shells: {} },
     intelligence: { shells: {} },
-    designs: new Map([["d1", design(capacityPerLine)]]),
+    designs: new Map([["d1", design(capacityPerLine, designOver)]]),
     designFamilies: new Map(),
     rulesetVersion: "0.1.0",
     compatibilityVersion: "0.1.0",
@@ -288,5 +296,17 @@ describe("budget_project on a project with work packages (ADR-0077)", () => {
     const { next } = budget(snap, 50, "1880-02");
     expect(gbr(next).constructionProjects[0]!.completedWork).toBe(50);
     expect(gbr(snap).treasury - gbr(next).treasury).toBe(50);
+  });
+});
+
+describe("a launched hull records its design's colonial-service fitting (S-5, spec #73 R4)", () => {
+  it("carries the fitting from a fitted design and leaves an unfitted ship's shape unchanged", () => {
+    const fitted = runUntilComplete(
+      snapshotOf([project(true)], 30, { colonialServiceFitted: true }),
+    ).final.nations.get("GBR")!.fleets[0]!.ships[0]!;
+    expect(fitted.colonialServiceFitted).toBe(true);
+    const plain = runUntilComplete(snapshotOf([project(true)], 30)).final.nations.get("GBR")!
+      .fleets[0]!.ships[0]!;
+    expect("colonialServiceFitted" in plain).toBe(false);
   });
 });

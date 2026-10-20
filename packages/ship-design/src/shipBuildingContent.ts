@@ -99,6 +99,11 @@ export interface ShipBuildingData {
    */
   readonly partModel?: CompiledPartModel;
   readonly designLoadouts?: readonly ReferenceDesignLoadoutData[];
+  /**
+   * The values of the optional S-5 ruleset section (ADR-0242), when the pack authors one. Absent = dormant: the
+   * context carries no colonial fitting rule and a fitting is recorded but costs nothing.
+   */
+  readonly presence?: { readonly colonialServiceDisplacementBp: number };
 }
 
 /** Everything a caller needs, built once. `environmentFor(month)` is pure: same data and month, same environment. */
@@ -266,6 +271,9 @@ export function buildShipBuildingContent(data: ShipBuildingData): ShipBuildingCo
       ...(data.partModel === undefined ? {} : { shipTypes: data.partModel.partIndex.shipTypes }),
       // SPM-R18 (ticket 14): a refit evaluates slot acceptance from the parts when the pack carries them.
       ...(data.partModel === undefined ? {} : { partModel: data.partModel }),
+      ...(data.presence === undefined
+        ? {}
+        : { colonialFitting: { displacementBp: data.presence.colonialServiceDisplacementBp } }),
       ...(profile !== null
         ? {
             capabilities: new Set(profile.hardCapabilities.grants),

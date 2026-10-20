@@ -272,6 +272,9 @@ function buildCompletedShip(
     const design = ctx.currentSnapshot["designs"]?.get(designVersionId);
     if (design) stats = shipStatsFromDesign(design);
   }
+  const fitted = designVersionId
+    ? ctx.currentSnapshot["designs"]?.get(designVersionId)?.colonialServiceFitted === true
+    : false;
 
   // A batch lays down several ships of one design; two completing in the same month would otherwise share
   // `ship-<design>-<turn>` (SB3-R11 "stable ship identifiers"). A batch project's stable, ordinaled id keeps each hull
@@ -299,6 +302,7 @@ function buildCompletedShip(
     // S-1: a hull leaving the slipway launches into working up (manual p.51).
     readiness: "WORKING_UP",
     crewQuality: LAID_UP_CREW_CEILING,
+    ...(fitted ? { colonialServiceFitted: true as const } : {}),
   };
 }
 
@@ -326,11 +330,13 @@ function completeRebuild(
   const design = ctx.currentSnapshot["designs"]?.get(project["designVersionId"]);
   // A ship must never stay unavailable for a project that is over: without the design it is released as it was.
   const { availability: _availability, availabilityProjectId: _reason, ...rest } = ship;
+  // The rebuilt ship takes the new design's fitting, so the old design's flag is dropped before it is applied.
+  const { colonialServiceFitted: _oldFitting, ...restWithoutFitting } = rest;
   const stats = design ? shipStatsFromDesign(design) : undefined;
   const rebuilt: Ship =
     design && stats
       ? {
-          ...rest,
+          ...restWithoutFitting,
           classId: stats.className,
           designVersionId: design["designVersionId"],
           hitPoints: stats.hitPoints,
@@ -338,6 +344,9 @@ function completeRebuild(
           speed: stats.speed,
           firepower: stats.firepower,
           armor: stats.armor,
+          ...(design.colonialServiceFitted === true
+            ? { colonialServiceFitted: true as const }
+            : {}),
         }
       : rest;
   return {
