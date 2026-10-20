@@ -2,7 +2,14 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved (2026-10-20) by the owner: **Option C**, an ADR-0213 `balance_adjustment`.
+
+Agreed shape (the agent's recommendation, accepted): `required(nation, area) = sum over the nation's possessions in
+the area of perPossessionTons x valueWeight`, in integer tons, with no floor or cap at first. `valueWeight` is the
+integer port `level` (1 to 10) in that area, and one flat weight where the area has no port. The `perPossessionTons`
+magnitude is **not yet chosen**: it is set when the S-5 ruleset section is authored (#85) and must be labelled
+`balance_adjustment`, never `manual`. The authoring ADR records the rationale. Nothing is authored or defaulted by
+this decision; the section stays dormant until #85.
 
 ## Trigger
 
