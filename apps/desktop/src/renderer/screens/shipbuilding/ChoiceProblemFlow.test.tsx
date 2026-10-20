@@ -57,3 +57,20 @@ describe("a choice that breaks the design", () => {
     expect(length().getAttribute("aria-invalid")).toBeNull();
   });
 });
+
+describe("inline errors beyond the hull", () => {
+  it("marks the machinery field whose change broke the design", () => {
+    render(<ShipbuildingWorkspace />);
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "Design map" })).getByRole("button", {
+        name: /Machinery/,
+      }),
+    );
+    const power = screen.getByLabelText(/^Installed power/) as HTMLInputElement;
+    fireEvent.change(power, { target: { value: "1" } });
+    fireEvent.blur(power);
+    const dialog = screen.getByRole("alertdialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Keep it and fix it myself" }));
+    expect(power.getAttribute("aria-invalid")).toBe("true");
+  });
+});

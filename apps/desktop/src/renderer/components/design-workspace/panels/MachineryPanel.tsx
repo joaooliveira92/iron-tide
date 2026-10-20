@@ -11,11 +11,14 @@ export function MachineryPanel({
   draft,
   content,
   edit,
+  errorFor,
   kwPerShpBp,
 }: {
   readonly draft: DesignDraft;
   readonly content: DrawingBoardContent;
   readonly edit: Edit;
+  /** The inline message for a setting, filed as `<edit kind>:<setting>` (see `editField`), while it breaks the design. */
+  readonly errorFor?: (field: string) => string | undefined;
   /** The ruleset's kW-per-shp constant, so installed power can be read in horsepower too. */
   readonly kwPerShpBp?: number;
 }) {
@@ -27,12 +30,14 @@ export function MachineryPanel({
           label="Plant"
           value={m.plantId}
           options={content.plants.map((p) => ({ value: p.id, label: p.id.replaceAll("_", " ") }))}
+          error={errorFor?.("set_machinery:plantId")}
           onChange={(v) => edit({ kind: "set_machinery", patch: { plantId: v } })}
         />
         <NumberField
           label="Installed power"
           unit="kW"
           value={m.installedKw}
+          error={errorFor?.("set_machinery:installedKw")}
           onCommit={(v) => edit({ kind: "set_machinery", patch: { installedKw: v } })}
         />
         <NumberField
@@ -40,6 +45,7 @@ export function MachineryPanel({
           unit="t"
           value={m.fuelCapacityKg}
           scale={1000}
+          error={errorFor?.("set_machinery:fuelCapacityKg")}
           onCommit={(v) => edit({ kind: "set_machinery", patch: { fuelCapacityKg: v } })}
         />
         <NumberField
@@ -50,6 +56,7 @@ export function MachineryPanel({
           scale={100}
           min={-100}
           max={100}
+          error={errorFor?.("set_machinery:enginePriorityBp")}
           onCommit={(v) => edit({ kind: "set_machinery", patch: { enginePriorityBp: v } })}
         />
       </div>

@@ -411,6 +411,7 @@ export function DrawingBoard({
                         draft={draft}
                         view={view}
                         edit={actions.edit}
+                        errorFor={choiceCheck.errorFor}
                         ctx={boardEnv.ctx}
                       />
                     </div>
@@ -425,6 +426,7 @@ export function DrawingBoard({
                         draft={draft}
                         content={content}
                         edit={actions.edit}
+                        errorFor={choiceCheck.errorFor}
                         kwPerShpBp={boardEnv.ctx.balance.machinery.kwPerShpBp}
                       />
                     </div>

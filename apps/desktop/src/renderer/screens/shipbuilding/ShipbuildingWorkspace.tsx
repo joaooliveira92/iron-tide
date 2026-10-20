@@ -323,7 +323,13 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
     switch (at.section) {
       case "overview":
         return at.tab === "brief" ? (
-          <BriefPanel draft={draft} view={view} edit={actions.edit} ctx={env.ctx} />
+          <BriefPanel
+            draft={draft}
+            view={view}
+            edit={actions.edit}
+            errorFor={choiceCheck.errorFor}
+            ctx={env.ctx}
+          />
         ) : (
           <>
             <OverviewPanel
@@ -356,6 +362,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
         ) : (
           <>
             <MachineryEditor
+              errorFor={choiceCheck.errorFor}
               model={machineryModel(draft, view, content, state.month, env.ctx.unlockedTechs)}
               edit={actions.edit}
               previewDeltas={machineryDeltas ?? undefined}
