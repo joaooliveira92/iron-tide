@@ -16,6 +16,7 @@ import {
   AlternativesPanel,
   BriefPanel,
   ComparePanel,
+  ChoiceProblemDialog,
   ConfirmDialog,
   FilePanel,
   FindingsPanel,
@@ -125,6 +126,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
     env,
     batteries,
     findings,
+    choiceCheck,
     selection,
     loadPreset,
     loadDraft,
@@ -339,7 +341,12 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           <TopsidePanel view={view} />
         ) : (
           <>
-            <HullPanel draft={draft} content={content} edit={actions.edit} />
+            <HullPanel
+              draft={draft}
+              content={content}
+              edit={actions.edit}
+              errorFor={choiceCheck.errorFor}
+            />
             {fittingsPanel(at)}
           </>
         );
@@ -661,6 +668,12 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           </div>
         </div>
         <EngineeringStatusBar readouts={readouts} />
+        <ChoiceProblemDialog
+          problem={choiceCheck.problem}
+          open={choiceCheck.open}
+          onOpenChange={choiceCheck.setOpen}
+          onUndo={actions.undo}
+        />
         <ConfirmDialog
           open={pendingPreset !== null}
           onOpenChange={(open) => !open && setPendingPreset(null)}

@@ -50,6 +50,7 @@ export { useHullPlanEditing } from "./panels/hull-plan/useHullPlanEditing.js";
 export { ShipViewBoundary } from "./workspace/ShipViewBoundary.js";
 export { ShipWorkspace } from "./workspace/ShipWorkspace.js";
 export { ConfirmDialog } from "./ConfirmAction.js";
+export { ChoiceProblemDialog } from "./ChoiceProblemDialog.js";
 export { PlanDisplayMenu } from "./PlanDisplayMenu.js";
 export { RequirementChip } from "./RequirementChip.js";
 export { SelectField } from "./fields.js";

@@ -1,4 +1,5 @@
 import { configure } from "@testing-library/react";
+import { vi } from "vite-plus/test";
 
 import { loadShipBuildingData } from "../main/shipBuildingContent.js";
 import { loadPresentationContent } from "../main/presentationContent.js";
@@ -45,3 +46,12 @@ if (typeof globalThis.ResizeObserver === "undefined") {
 if (typeof Element !== "undefined" && typeof Element.prototype.scrollIntoView !== "function") {
   Element.prototype.scrollIntoView = () => {};
 }
+
+/**
+ * The "this change breaks the design" dialog is modal, and many tests make deliberately heavy edits (armour, extra
+ * mounts) to check something else; it would sit over the screen they inspect. It renders nothing by default; the
+ * tests that cover it call `vi.unmock` on this module.
+ */
+vi.mock("./components/design-workspace/ChoiceProblemDialog.js", () => ({
+  ChoiceProblemDialog: () => null,
+}));
