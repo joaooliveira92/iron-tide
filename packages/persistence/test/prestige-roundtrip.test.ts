@@ -62,7 +62,11 @@ function makeNation(prestige: number): NationState {
   };
 }
 
-function makeFixtureState(prestige = 33, version = CURRENT_COMPATIBILITY_VERSION): CampaignState {
+function makeFixtureState(
+  prestige = 33,
+  version = CURRENT_COMPATIBILITY_VERSION,
+  prestigeRules: PrestigeValueSet = VALUE_SET,
+): CampaignState {
   const snapshot: CampaignSnapshot = {
     version: "1.0.0",
     turnNumber: SafeInt.ONE,
@@ -88,7 +92,7 @@ function makeFixtureState(prestige = 33, version = CURRENT_COMPATIBILITY_VERSION
     intelligence: { shells: {} },
     designs: new Map(),
     designFamilies: new Map(),
-    prestigeRules: VALUE_SET,
+    prestigeRules,
     rulesetVersion: "1.0.0",
     compatibilityVersion: version,
   };
@@ -141,6 +145,22 @@ describe("SaveStore round-trips the S-2 prestige state", () => {
     expect(sha256Hex(canonicalSerialize(toStorableSnapshot(base)))).not.toBe(
       sha256Hex(canonicalSerialize(toStorableSnapshot(changed))),
     );
+  });
+
+  it("round-trips an authored DECLINED_BATTLE fixed-loss rule exactly (ADR-0261)", () => {
+    const withRule = makeFixtureState(33, CURRENT_COMPATIBILITY_VERSION, {
+      ...VALUE_SET,
+      rules: { ...VALUE_SET.rules, DECLINED_BATTLE: { kind: "FIXED_LOSS", amount: SafeInt(2) } },
+    });
+    new SaveStore().save(withRule, tmpDir);
+    const loaded = new SaveStore().load(tmpDir, new DiagnosticCollector());
+    expect(loaded?.snapshot.prestigeRules).toEqual(withRule.snapshot.prestigeRules);
+    expect(loaded?.rawHash).toBe(withRule.rawHash);
+  });
+
+  it("stores a value set without DECLINED_BATTLE with no such key, so its bytes do not move (ADR-0261)", () => {
+    const stored = canonicalSerialize(toStorableSnapshot(makeFixtureState(20).snapshot));
+    expect(stored).not.toContain("DECLINED_BATTLE");
   });
 
   it("refuses a save from the previous compatibility version before decoding it", () => {

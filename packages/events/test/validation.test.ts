@@ -383,6 +383,15 @@ describe("PrestigeChanged (S-2 04)", () => {
   });
 
   it("rejects excess keys, empty ids, unknown codes and kinds, and non-integer values", () => {
+    expect(
+      parseDomainEventBody({
+        ...body,
+        reasonCode: "DECLINED_BATTLE",
+        ruleKind: "FIXED_LOSS",
+        delta: -3,
+        after: 17,
+      }).kind,
+    ).toBe("PrestigeChanged");
     expect(() => parseDomainEventBody({ ...body, extra: 1 })).toThrow();
     expect(() => parseDomainEventBody({ ...body, nationId: "" })).toThrow();
     expect(() => parseDomainEventBody({ ...body, rulesetVersion: "" })).toThrow();

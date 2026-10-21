@@ -3,7 +3,9 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
+import { EventLedger } from "@bluewave/events";
 import { MonthExecutor } from "../src/index.js";
+import { applyPrestigeChange } from "../src/prestigeApplication.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 // S-2 04 (#89): the unpaid-funds prestige source. The rule values come from the test-support fixture value set
@@ -210,5 +212,57 @@ describe("S-2 04: unpaid-funds prestige loss in the obligation phase", () => {
     expect(a.finalSnapshot.nations.get("GBR")!.prestige).toBe(
       b.finalSnapshot.nations.get("GBR")!.prestige,
     );
+  });
+});
+
+describe("applyPrestigeChange with an explicitly supplied rule (ADR-0261)", () => {
+  function context(nationPrestige: number) {
+    const snapshot = makeSnapshot([
+      ["GBR", makeNation("GBR", { ...FLUSH, prestige: SafeInt(nationPrestige) })],
+    ]);
+    const eventLedger = new EventLedger();
+    const collector = new DiagnosticCollector();
+    let seq = 0;
+    return {
+      currentSnapshot: snapshot,
+      collector,
+      eventLedger,
+      campaignMonth: "1880-01",
+      nextSeq: () => SafeInt(seq++),
+    };
+  }
+  const fixedLoss = { kind: "FIXED_LOSS", amount: SafeInt(3) } as const;
+
+  it("applies a fixed loss for DECLINED_BATTLE and records its reason code and rule kind", () => {
+    const ctx = context(50);
+    const change = applyPrestigeChange(ctx, "GBR", "DECLINED_BATTLE", fixedLoss);
+    expect(change).toMatchObject({ before: 50, after: 47, delta: -3 });
+    expect(ctx.currentSnapshot.nations.get("GBR")!.prestige).toBe(47);
+    expect(ctx.eventLedger.all.map((e) => e.body)).toEqual([
+      {
+        kind: "PrestigeChanged",
+        nationId: "GBR",
+        reasonCode: "DECLINED_BATTLE",
+        ruleKind: "FIXED_LOSS",
+        before: 50,
+        after: 47,
+        delta: -3,
+        rulesetVersion: "0.1.0",
+      },
+    ]);
+  });
+
+  it("emits nothing for a zero delta", () => {
+    const ctx = context(0);
+    applyPrestigeChange(ctx, "GBR", "DECLINED_BATTLE", fixedLoss);
+    expect(ctx.eventLedger.all).toHaveLength(0);
+  });
+
+  it("records a collector error and changes nothing when the source has no rule anywhere", () => {
+    const ctx = context(50);
+    expect(applyPrestigeChange(ctx, "GBR", "DECLINED_BATTLE")).toBeUndefined();
+    expect(ctx.collector.hasErrors).toBe(true);
+    expect(ctx.currentSnapshot.nations.get("GBR")!.prestige).toBe(50);
+    expect(ctx.eventLedger.all).toHaveLength(0);
   });
 });

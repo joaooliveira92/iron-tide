@@ -14,8 +14,29 @@ import type { DiagnosticCode } from "@bluewave/diagnostics";
 export const BASIS_POINTS_PER_WHOLE = 10_000;
 
 /** The closed, stable set of prestige sources S-2 wires. Later sprints add codes through the same seam. */
-export const PRESTIGE_REASON_CODES = ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"] as const;
+export const PRESTIGE_REASON_CODES = [
+  "UNPAID_FUNDS",
+  "BATTLE_LOST",
+  "BATTLE_WON",
+  "DECLINED_BATTLE",
+] as const;
 export type PrestigeReasonCode = (typeof PRESTIGE_REASON_CODES)[number];
+
+/** The reason codes every value set must author a rule for (ADR-0239). */
+export const REQUIRED_PRESTIGE_REASON_CODES = [
+  "UNPAID_FUNDS",
+  "BATTLE_LOST",
+  "BATTLE_WON",
+] as const;
+export type RequiredPrestigeReasonCode = (typeof REQUIRED_PRESTIGE_REASON_CODES)[number];
+
+/**
+ * Reason codes a value set MAY author. A rule here is absent by default and the source is then dormant: no default is
+ * ever substituted (ADR-0261). `DECLINED_BATTLE` takes its rule from the battle-offer section (spec #109 G5), passed to
+ * `applyPrestigeRule` explicitly, so a value set normally leaves it out.
+ */
+export const OPTIONAL_PRESTIGE_REASON_CODES = ["DECLINED_BATTLE"] as const;
+export type OptionalPrestigeReasonCode = (typeof OPTIONAL_PRESTIGE_REASON_CODES)[number];
 
 /** Why a career ended: the player was sacked, or the campaign reached its final month in office. */
 export const CAREER_END_REASONS = ["SACKED", "CAMPAIGN_END"] as const;
@@ -33,7 +54,13 @@ export interface FixedGainRule {
   readonly amount: SafeInt;
 }
 
-export type PrestigeRule = ProportionalLossRule | FixedGainRule;
+/** A fixed loss, independent of current prestige (ADR-0261). */
+export interface FixedLossRule {
+  readonly kind: "FIXED_LOSS";
+  readonly amount: SafeInt;
+}
+
+export type PrestigeRule = ProportionalLossRule | FixedGainRule | FixedLossRule;
 
 /** Everything the rule layer needs and nothing it assumes. There is deliberately no default instance. */
 export interface PrestigeValueSet {
@@ -43,7 +70,8 @@ export interface PrestigeValueSet {
   readonly sackingThreshold: SafeInt;
   /** Chance of being sacked in a month at or below the threshold, in basis points (0..10000). */
   readonly sackingProbabilityBp: SafeInt;
-  readonly rules: Readonly<Record<PrestigeReasonCode, PrestigeRule>>;
+  readonly rules: Readonly<Record<RequiredPrestigeReasonCode, PrestigeRule>> &
+    Readonly<Partial<Record<OptionalPrestigeReasonCode, PrestigeRule>>>;
 }
 
 export interface PrestigeChange {
@@ -101,6 +129,12 @@ export class PrestigeUnknownReason {
   constructor(readonly reason: string) {}
 }
 
+/** No rule is authored (or supplied) for a source that needs one: there is no default to fall back to. */
+export class PrestigeRuleMissing {
+  readonly _tag = "PrestigeRuleMissing";
+  constructor(readonly reason: string) {}
+}
+
 export class PrestigeDrawInvalid {
   readonly _tag = "PrestigeDrawInvalid";
   constructor(readonly draw: number) {}
@@ -129,6 +163,7 @@ export type PrestigeError =
   | PrestigeOutOfRange
   | PrestigeMissing
   | PrestigeUnknownReason
+  | PrestigeRuleMissing
   | PrestigeDrawInvalid
   | PrestigeValueSetInvalid
   | CareerResultInvalid;
@@ -184,6 +219,10 @@ function checkPrestige(value: number, set: PrestigeValueSet): PrestigeResult<Saf
  * - Proportional loss: `loss = ceil(current * basisPoints / 10000)` (rounded up, see
  *   `ceilDivBasisPoints`), then `after = max(lowerBound, current - loss)`.
  * - Fixed gain: `after = min(upperBound, current + amount)`.
+ * - Fixed loss: `after = max(lowerBound, current - amount)`.
+ *
+ * The rule is `set.rules[reason]` unless `rule` is supplied (a source whose rule is authored outside the value set,
+ * such as `DECLINED_BATTLE`). With neither, the result is `PrestigeRuleMissing`.
  *
  * `delta` is what was actually applied after clamping, so a change at a bound is smaller than the
  * rule asked for, and zero when nothing moved. The result never leaves the ruleset bounds.
@@ -192,6 +231,7 @@ export function applyPrestigeRule(
   current: number,
   reason: PrestigeReasonCode,
   set: PrestigeValueSet,
+  rule?: PrestigeRule,
 ): PrestigeResult<PrestigeChange> {
   if (!(PRESTIGE_REASON_CODES as readonly string[]).includes(reason)) {
     return fail(new PrestigeUnknownReason(String(reason)));
@@ -199,15 +239,21 @@ export function applyPrestigeRule(
   const checked = checkPrestige(current, set);
   if (!checked.ok) return checked;
   const before = checked.value;
-  const rule = set.rules[reason];
+  const applied: PrestigeRule | undefined = rule ?? set.rules[reason];
+  if (applied === undefined) return fail(new PrestigeRuleMissing(reason));
+  const rate = applied.kind === "PROPORTIONAL_LOSS" ? applied.basisPoints : applied.amount;
+  const rateChecked = checkInteger(rate);
+  if (!rateChecked.ok) return rateChecked;
 
   let target: number;
-  if (rule.kind === "PROPORTIONAL_LOSS") {
-    const product = before * rule.basisPoints;
+  if (applied.kind === "PROPORTIONAL_LOSS") {
+    const product = before * applied.basisPoints;
     if (!Number.isSafeInteger(product)) return fail(new PrestigeUnsafeInteger(product));
     target = before - ceilDivBasisPoints(product);
+  } else if (applied.kind === "FIXED_LOSS") {
+    target = before - applied.amount;
   } else {
-    target = before + rule.amount;
+    target = before + applied.amount;
   }
   const after = Math.min(set.upperBound, Math.max(set.lowerBound, target));
   return succeed({ before, after: SafeInt(after), delta: SafeInt(after - before) });
@@ -352,7 +398,13 @@ function decodeRule(
     const amount = readInt(input, "amount", `${path}.amount`, 0, span);
     return amount.ok ? succeed({ kind: "FIXED_GAIN", amount: amount.value }) : amount;
   }
-  return invalid(`${path}.kind`, "must be PROPORTIONAL_LOSS or FIXED_GAIN");
+  if (input["kind"] === "FIXED_LOSS") {
+    const extra = excessKey(input, ["kind", "amount"], `${path}.`);
+    if (extra !== undefined) return invalid(extra, "is not a field of a fixed loss rule");
+    const amount = readInt(input, "amount", `${path}.amount`, 0, span);
+    return amount.ok ? succeed({ kind: "FIXED_LOSS", amount: amount.value }) : amount;
+  }
+  return invalid(`${path}.kind`, "must be PROPORTIONAL_LOSS, FIXED_GAIN or FIXED_LOSS");
 }
 
 /**
@@ -400,9 +452,17 @@ export function decodePrestigeValueSet(
 
   const span = upperBound.value - lowerBound.value;
   const rules: Partial<Record<PrestigeReasonCode, PrestigeRule>> = {};
-  for (const code of PRESTIGE_REASON_CODES) {
+  for (const code of REQUIRED_PRESTIGE_REASON_CODES) {
     const rule = rulesInput[code];
     if (rule === undefined) return invalid(`rules.${code}`, "is required and has no default");
+    const decoded = decodeRule(rule, `rules.${code}`, span);
+    if (!decoded.ok) return decoded;
+    rules[code] = decoded.value;
+  }
+  // An optional source is dormant when absent: the key is then left out entirely, never defaulted.
+  for (const code of OPTIONAL_PRESTIGE_REASON_CODES) {
+    const rule = rulesInput[code];
+    if (rule === undefined) continue;
     const decoded = decodeRule(rule, `rules.${code}`, span);
     if (!decoded.ok) return decoded;
     rules[code] = decoded.value;
@@ -413,7 +473,7 @@ export function decodePrestigeValueSet(
     upperBound: upperBound.value,
     sackingThreshold: sackingThreshold.value,
     sackingProbabilityBp: sackingProbabilityBp.value,
-    rules: rules as Record<PrestigeReasonCode, PrestigeRule>,
+    rules: rules as PrestigeValueSet["rules"],
   });
 }
 

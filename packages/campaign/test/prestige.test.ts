@@ -1,3 +1,4 @@
+import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import * as prestigeModule from "../src/prestige.js";
 import {
@@ -7,7 +8,9 @@ import {
   decodePrestigeValueSet,
   isSackingEligible,
   PRESTIGE_REASON_CODES,
+  REQUIRED_PRESTIGE_REASON_CODES,
   resolveSacking,
+  type PrestigeRule,
   type PrestigeValueSet,
 } from "../src/prestige.js";
 
@@ -33,7 +36,18 @@ function fixtureSet(overrides: Record<string, unknown> = {}): PrestigeValueSet {
 
 describe("the closed vocabularies", () => {
   it("exports exactly the three prestige reason codes and two career end reasons", () => {
-    expect([...PRESTIGE_REASON_CODES]).toEqual(["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"]);
+    expect([...PRESTIGE_REASON_CODES]).toEqual([
+      "UNPAID_FUNDS",
+      "BATTLE_LOST",
+      "BATTLE_WON",
+      "DECLINED_BATTLE",
+    ]);
+    // DECLINED_BATTLE is authored by the battle-offer section, never required of a value set (ADR-0261).
+    expect([...REQUIRED_PRESTIGE_REASON_CODES]).toEqual([
+      "UNPAID_FUNDS",
+      "BATTLE_LOST",
+      "BATTLE_WON",
+    ]);
     expect([...CAREER_END_REASONS]).toEqual(["SACKED", "CAMPAIGN_END"]);
   });
 });
@@ -60,7 +74,7 @@ describe("decodePrestigeValueSet", () => {
         expect(decoded.error.field).toBe(key);
       }
     }
-    for (const code of PRESTIGE_REASON_CODES) {
+    for (const code of REQUIRED_PRESTIGE_REASON_CODES) {
       const rules = { ...(FIXTURE["rules"] as Record<string, unknown>) };
       delete rules[code];
       const decoded = decodePrestigeValueSet({ ...FIXTURE, rules });
@@ -259,6 +273,67 @@ describe("applyPrestigeRule: fixed gain", () => {
     expect(result.ok && result.value).toMatchObject({ before: 99, after: 100, delta: 1 });
     const full = applyPrestigeRule(100, "BATTLE_WON", set);
     expect(full.ok && full.value).toMatchObject({ before: 100, after: 100, delta: 0 });
+  });
+});
+
+describe("applyPrestigeRule: fixed loss (ADR-0261)", () => {
+  const set = fixtureSet();
+  const fixedLoss: PrestigeRule = { kind: "FIXED_LOSS", amount: SafeInt(3) };
+
+  it("subtracts the supplied amount regardless of current prestige and clamps at the lower bound", () => {
+    for (const current of [50, 90]) {
+      const result = applyPrestigeRule(current, "DECLINED_BATTLE", set, fixedLoss);
+      expect(result.ok && result.value).toMatchObject({ before: current, delta: -3 });
+    }
+    const near = applyPrestigeRule(2, "DECLINED_BATTLE", set, fixedLoss);
+    expect(near.ok && near.value).toMatchObject({ before: 2, after: 0, delta: -2 });
+    const floor = applyPrestigeRule(0, "DECLINED_BATTLE", set, fixedLoss);
+    expect(floor.ok && floor.value).toMatchObject({ before: 0, after: 0, delta: 0 });
+  });
+
+  it("takes an explicitly supplied rule of any kind, and rejects a non-integer amount", () => {
+    const loss = applyPrestigeRule(40, "DECLINED_BATTLE", set, {
+      kind: "PROPORTIONAL_LOSS",
+      basisPoints: SafeInt(500),
+    });
+    expect(loss.ok && loss.value.delta).toBe(-2);
+    const bad = applyPrestigeRule(40, "DECLINED_BATTLE", set, {
+      kind: "FIXED_LOSS",
+      amount: 1.5 as SafeInt,
+    });
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) expect(bad.error._tag).toBe("PrestigeNotInteger");
+  });
+
+  it("fails with a typed error, never a default, when DECLINED_BATTLE has no rule", () => {
+    const result = applyPrestigeRule(40, "DECLINED_BATTLE", set);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error._tag).toBe("PrestigeRuleMissing");
+  });
+
+  it("leaves every existing source's result unchanged when a rule is not supplied", () => {
+    const result = applyPrestigeRule(50, "UNPAID_FUNDS", set);
+    expect(result.ok && result.value).toMatchObject({ before: 50, after: 47, delta: -3 });
+  });
+});
+
+describe("decodePrestigeValueSet: the optional DECLINED_BATTLE rule (ADR-0261)", () => {
+  const withRules = (extra: Record<string, unknown>) =>
+    decodePrestigeValueSet({ ...FIXTURE, rules: { ...(FIXTURE["rules"] as object), ...extra } });
+
+  it("decodes a value set without it and carries no DECLINED_BATTLE key", () => {
+    const decoded = decodePrestigeValueSet(FIXTURE);
+    expect(decoded.ok && "DECLINED_BATTLE" in decoded.value.rules).toBe(false);
+  });
+
+  it("accepts a fixed-loss rule for it when authored, bounded by the span, and rejects excess keys", () => {
+    const ok = withRules({ DECLINED_BATTLE: { kind: "FIXED_LOSS", amount: 2 } });
+    expect(ok.ok && ok.value.rules.DECLINED_BATTLE).toEqual({ kind: "FIXED_LOSS", amount: 2 });
+    expect(withRules({ DECLINED_BATTLE: { kind: "FIXED_LOSS", amount: 101 } }).ok).toBe(false);
+    expect(withRules({ DECLINED_BATTLE: { kind: "FIXED_LOSS", amount: -1 } }).ok).toBe(false);
+    expect(
+      withRules({ DECLINED_BATTLE: { kind: "FIXED_LOSS", amount: 1, basisPoints: 1 } }).ok,
+    ).toBe(false);
   });
 });
 

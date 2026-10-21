@@ -6,10 +6,16 @@
 // owning phase declares the `nations` read and write in its footprint. It consumes no randomness and reads no
 // ambient input.
 import { applyPrestigeRule } from "@bluewave/campaign";
-import type { PrestigeChange, PrestigeReasonCode } from "@bluewave/campaign";
+import type { PrestigeChange, PrestigeReasonCode, PrestigeRule } from "@bluewave/campaign";
 import type { NationState } from "@bluewave/campaign";
 import { prestigeChangedEvent } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
+
+/** What the seam touches of a month context; a phase passes its `MonthContext`. */
+export type PrestigeApplicationContext = Pick<
+  MonthContext,
+  "currentSnapshot" | "collector" | "eventLedger" | "nextSeq" | "campaignMonth"
+>;
 
 /** Collector error code for a prestige rule that could not be applied (a malformed prestige or value set). */
 export const PRESTIGE_APPLICATION_FAILED = "PRESTIGE_APPLICATION_FAILED" as const;
@@ -18,17 +24,31 @@ export const PRESTIGE_APPLICATION_FAILED = "PRESTIGE_APPLICATION_FAILED" as cons
  * Apply `reason`'s rule to `nationId`'s prestige in `ctx.currentSnapshot`. Returns the applied change, or
  * `undefined` when the nation is absent or the rule failed (the failure is recorded as a collector error). A zero
  * delta writes nothing and emits no event. The caller decides WHETHER the source fires and for WHICH nation.
+ *
+ * The rule is the value set's rule for `reason`, unless `rule` is supplied: a source whose rule is authored outside the
+ * value set (`DECLINED_BATTLE`, from the battle-offer section, ADR-0261) passes it here. A source with no rule anywhere
+ * is a collector error, never a default.
  */
 export function applyPrestigeChange(
-  ctx: MonthContext,
+  ctx: PrestigeApplicationContext,
   nationId: string,
   reason: PrestigeReasonCode,
+  rule?: PrestigeRule,
 ): PrestigeChange | undefined {
   const nation = ctx.currentSnapshot["nations"].get(nationId);
   if (nation === undefined) return undefined;
   const set = ctx.currentSnapshot["prestigeRules"];
 
-  const applied = applyPrestigeRule(nation["prestige"], reason, set);
+  const used = rule ?? set.rules[reason];
+  if (used === undefined) {
+    ctx.collector.addError(
+      PRESTIGE_APPLICATION_FAILED,
+      `Prestige rule ${reason} could not be applied to nation ${nationId}: PrestigeRuleMissing`,
+      { stage: "prestige", entityId: nationId },
+    );
+    return undefined;
+  }
+  const applied = applyPrestigeRule(nation["prestige"], reason, set, used);
   if (!applied.ok) {
     ctx.collector.addError(
       PRESTIGE_APPLICATION_FAILED,
@@ -49,7 +69,7 @@ export function applyPrestigeChange(
     prestigeChangedEvent(
       nationId,
       reason,
-      set.rules[reason].kind,
+      used.kind,
       change,
       ctx.currentSnapshot["rulesetVersion"],
       ctx.nextSeq(),

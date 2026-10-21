@@ -278,8 +278,8 @@ export interface EnemyDeclinedBattle {
 export interface PrestigeChanged {
   readonly kind: "PrestigeChanged";
   readonly nationId: string;
-  readonly reasonCode: "UNPAID_FUNDS" | "BATTLE_LOST" | "BATTLE_WON";
-  readonly ruleKind: "PROPORTIONAL_LOSS" | "FIXED_GAIN";
+  readonly reasonCode: "UNPAID_FUNDS" | "BATTLE_LOST" | "BATTLE_WON" | "DECLINED_BATTLE";
+  readonly ruleKind: "PROPORTIONAL_LOSS" | "FIXED_GAIN" | "FIXED_LOSS";
   readonly before: SafeInt;
   readonly after: SafeInt;
   readonly delta: SafeInt;
