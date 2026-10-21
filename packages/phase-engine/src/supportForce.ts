@@ -32,36 +32,16 @@ import {
   resolveGenerationShipType,
   resolveShipStrength,
 } from "./battles.js";
-import { OFFERED_MISSION_TYPES } from "./battleOffer.js";
 import type { MonthContext } from "./monthContext.js";
+import {
+  committedStrength,
+  drawAndRecord,
+  enemyOf,
+  type GeneratedManifest,
+} from "./offeredBattles.js";
 
 /** The stream of the presence draw; the entity key is the battle, which carries the war, area, mission and month. */
 export const SUPPORT_FORCE_STREAM = "battle-offer/support-force";
-
-type GeneratedManifest = BattleGenerationResult["manifests"][number];
-
-function enemyOf(manifest: GeneratedManifest, playerNationId: string): string | null {
-  if (!OFFERED_MISSION_TYPES.some((mission) => mission === manifest["missionType"])) return null;
-  if (manifest["attackerId"] === playerNationId) return manifest["defenderId"];
-  if (manifest["defenderId"] === playerNationId) return manifest["attackerId"];
-  return null;
-}
-
-function committedStrength(
-  snapshot: CampaignSnapshot,
-  nationId: string,
-  committed: ReadonlySet<string>,
-): number {
-  const nation = snapshot["nations"].get(nationId);
-  if (nation === undefined) return 0;
-  let total = 0n;
-  for (const fleet of nation["fleets"]) {
-    for (const ship of fleet["ships"]) {
-      if (committed.has(ship["id"])) total += BigInt(resolveShipStrength(snapshot, ship["id"]));
-    }
-  }
-  return Number(total);
-}
 
 /** The nations allied with the player that may support this battle, in code-point order. */
 function supportingNations(
@@ -154,31 +134,29 @@ export function applySupportForces(
     if (composition.length === 0) return;
 
     const battleId = manifest["battleId"];
-    const draw = Math.floor(
-      engine.stream(`${SUPPORT_FORCE_STREAM}/${battleId}`).next() * SUPPORT_FORCE_DRAW_RANGE_BP,
-    );
-    const present = supportForceDrawPresent(draw, rule.presenceChanceBp);
-    ctx.randomLedger.record({
+    const { present } = drawAndRecord(ctx, engine, {
       streamId: SUPPORT_FORCE_STREAM,
-      entityKey: battleId,
-      phase: "battle_generation",
-      rulesetVersion: snapshot["rulesetVersion"],
-      inputHash: sha256Hex(
-        canonicalSerialize({
-          battleId,
-          manifestHash: manifest["manifestHash"],
-          sectionVersion: rules.sectionVersion,
-          presenceChanceBp: rule.presenceChanceBp,
-          shareOfCapBp: rule.shareOfCapBp,
-          source: rule.source,
-          capStrength: cap,
-          candidates: supportCandidateDigest(candidates),
-          composition: composition.map((c) => c.assetId),
-        }),
-      ),
-      draw,
-      outcome: present ? "PRESENT" : "ABSENT",
-      reasonCode: present ? BATTLE_SUPPORT_FORCE_PRESENT : BATTLE_SUPPORT_FORCE_ABSENT,
+      battleId,
+      rangeBp: SUPPORT_FORCE_DRAW_RANGE_BP,
+      inputs: {
+        battleId,
+        manifestHash: manifest["manifestHash"],
+        sectionVersion: rules.sectionVersion,
+        presenceChanceBp: rule.presenceChanceBp,
+        shareOfCapBp: rule.shareOfCapBp,
+        source: rule.source,
+        capStrength: cap,
+        candidates: supportCandidateDigest(candidates),
+        composition: composition.map((c) => c.assetId),
+      },
+      classify: (draw) => {
+        const isPresent = supportForceDrawPresent(draw, rule.presenceChanceBp);
+        return {
+          present: isPresent,
+          outcome: isPresent ? "PRESENT" : "ABSENT",
+          reasonCode: isPresent ? BATTLE_SUPPORT_FORCE_PRESENT : BATTLE_SUPPORT_FORCE_ABSENT,
+        };
+      },
     });
     if (!present) return;
 

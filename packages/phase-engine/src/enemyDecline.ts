@@ -5,7 +5,6 @@
 // manifest, no reservation, no offer. The player is told through one event that carries neither the draw nor the enemy
 // force. Dormant without the battle-offer section, the player nation and an interruption channel (R3); the channel is
 // only tested for presence, so the decision cannot depend on how or when the player answers an offer.
-import type { CampaignSnapshot } from "@bluewave/campaign";
 import {
   BATTLE_ENEMY_DECLINED,
   BATTLE_ENEMY_PROCEEDS,
@@ -15,40 +14,13 @@ import {
   type BattleGenerationResult,
 } from "@bluewave/combat";
 import type { BattleOfferRules } from "@bluewave/content-schema";
-import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
-import { applyWarScoreDelta, resolveShipStrength } from "./battles.js";
-import { OFFERED_MISSION_TYPES } from "./battleOffer.js";
+import { applyWarScoreDelta } from "./battles.js";
 import { enemyDeclinedBattleEvent } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
+import { committedStrength, drawAndRecord, enemyOf } from "./offeredBattles.js";
 
 /** The stream of the decline draw; the entity key is the prospective battle, which carries the war, area, mission and month. */
 export const ENEMY_DECLINE_STREAM = "battle-offer/enemy-decline";
-
-function committedStrength(
-  snapshot: CampaignSnapshot,
-  nationId: string,
-  committed: ReadonlySet<string>,
-): number {
-  const nation = snapshot["nations"].get(nationId);
-  if (nation === undefined) return 0;
-  let total = 0n;
-  for (const fleet of nation["fleets"]) {
-    for (const ship of fleet["ships"]) {
-      if (committed.has(ship["id"])) total += BigInt(resolveShipStrength(snapshot, ship["id"]));
-    }
-  }
-  return Number(total);
-}
-
-type GeneratedManifest = BattleGenerationResult["manifests"][number];
-
-/** Whether the player is a party to this offered-mission manifest, and who the enemy is. */
-function enemyOf(manifest: GeneratedManifest, playerNationId: string): string | null {
-  if (!OFFERED_MISSION_TYPES.some((mission) => mission === manifest["missionType"])) return null;
-  if (manifest["attackerId"] === playerNationId) return manifest["defenderId"];
-  if (manifest["defenderId"] === playerNationId) return manifest["attackerId"];
-  return null;
-}
 
 /**
  * Apply the enemy-decline rule to a month's generated battles and return the battles that remain. Returns the input
@@ -90,28 +62,26 @@ export function applyEnemyDeclines(
     }
 
     const battleId = manifest["battleId"];
-    const draw = Math.floor(
-      engine.stream(`${ENEMY_DECLINE_STREAM}/${battleId}`).next() * ENEMY_DECLINE_DRAW_RANGE_BP,
-    );
-    const declines = enemyDeclineDrawDeclines(draw, rule.probabilityBp);
-    ctx.randomLedger.record({
+    const { declines } = drawAndRecord(ctx, engine, {
       streamId: ENEMY_DECLINE_STREAM,
-      entityKey: battleId,
-      phase: "battle_generation",
-      rulesetVersion: snapshot["rulesetVersion"],
-      inputHash: sha256Hex(
-        canonicalSerialize({
-          battleId,
-          manifestHash: manifest["manifestHash"],
-          sectionVersion: rules.sectionVersion,
-          comparison: rule.comparison,
-          thresholdBp: rule.thresholdBp,
-          probabilityBp: rule.probabilityBp,
-        }),
-      ),
-      draw,
-      outcome: declines ? "DECLINED" : "PROCEEDS",
-      reasonCode: declines ? BATTLE_ENEMY_DECLINED : BATTLE_ENEMY_PROCEEDS,
+      battleId,
+      rangeBp: ENEMY_DECLINE_DRAW_RANGE_BP,
+      inputs: {
+        battleId,
+        manifestHash: manifest["manifestHash"],
+        sectionVersion: rules.sectionVersion,
+        comparison: rule.comparison,
+        thresholdBp: rule.thresholdBp,
+        probabilityBp: rule.probabilityBp,
+      },
+      classify: (draw) => {
+        const declined = enemyDeclineDrawDeclines(draw, rule.probabilityBp);
+        return {
+          declines: declined,
+          outcome: declined ? "DECLINED" : "PROCEEDS",
+          reasonCode: declined ? BATTLE_ENEMY_DECLINED : BATTLE_ENEMY_PROCEEDS,
+        };
+      },
     });
     if (!declines) {
       keptIndexes.push(index);
