@@ -4,7 +4,7 @@ import { buildWorkshopView, type Finding, type WorkshopView } from "@bluewave/sh
 import { batteryCards } from "../../../components/design-workspace/batteryView.js";
 import { loadDrawingBoardContent } from "../../../components/design-workspace/content.js";
 import { DrawingBoard } from "./DrawingBoard.js";
-import { openPlanDisplay, openTab } from "./test-helpers.js";
+import { armMove, openPlanDisplay, openTab, planMenu } from "./test-helpers.js";
 import {
   bowStyleFor,
   fittingPoint,
@@ -333,12 +333,12 @@ describe("display controls", () => {
     expect(screen.getByRole("button", { name: "Undo" }).hasAttribute("disabled")).toBe(true);
   });
 
-  it("steps aside while Place or Move is active", () => {
+  it("steps aside while Place or Move is active", async () => {
     render(<DrawingBoard />);
-    fireEvent.click(screen.getByRole("button", { name: "Place on plan" }));
+    await armMove();
     expect(screen.queryByTestId("finding-markers")).toBeNull();
     expect(screen.getByTestId("plan-click-layer")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Place on plan" }));
+    await planMenu("Stop moving");
     expect(screen.getByTestId("finding-markers")).toBeTruthy();
   });
 

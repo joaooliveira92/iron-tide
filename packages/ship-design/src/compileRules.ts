@@ -17,6 +17,7 @@ import {
   type ShipContext,
 } from "./compileShared.js";
 import type { Finding } from "./findings.js";
+import type { AntiAircraftExpansion } from "./antiAircraft.js";
 import type { HullResult, HullSpec } from "./hull.js";
 import type { MachineryResult } from "./machinery.js";
 import type { WeightItem } from "./stability.js";
@@ -26,6 +27,7 @@ type AmmoMount = WeaponsResult["mounts"][number];
 
 export function buildStabilityLumps(args: {
   draft: DesignIntent;
+  aa: AntiAircraftExpansion;
   resolved: readonly Resolved[];
   hull: HullSpec;
   formData: HullFormData;
@@ -40,6 +42,7 @@ export function buildStabilityLumps(args: {
 }): WeightItem[] {
   const {
     draft,
+    aa,
     resolved,
     hull,
     formData,
@@ -115,6 +118,15 @@ export function buildStabilityLumps(args: {
     lumps.push({
       label: "tertiary",
       kg: tertiary.weightKg,
+      zMm: hull.depthToMainDeck,
+      stationPermille: TERTIARY_STATION_PERMILLE,
+      zoneId: TERTIARY_ZONE,
+    });
+  }
+  if (aa.weightKg > 0) {
+    lumps.push({
+      label: "anti-aircraft",
+      kg: aa.weightKg,
       zMm: hull.depthToMainDeck,
       stationPermille: TERTIARY_STATION_PERMILLE,
       zoneId: TERTIARY_ZONE,

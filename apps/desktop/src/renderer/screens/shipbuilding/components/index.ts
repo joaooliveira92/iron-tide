@@ -1,3 +1,6 @@
+export { AntiAircraftPanel } from "./AntiAircraftPanel.js";
+export { AluminiumSuperstructurePanel } from "./AluminiumSuperstructurePanel.js";
+export { ClassNameBrowser } from "./ClassNameBrowser.js";
 export { CommandBar, type DesignStatus } from "./CommandBar.js";
 export { ArmamentEditor } from "./ArmamentEditor.js";
 export { DesignMap } from "./DesignMap.js";

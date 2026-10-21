@@ -269,6 +269,6 @@ describe("section labels on the hull plan", () => {
     }
     await tabTo(label("Aft service"));
     expect(card()?.dataset["section"]).toBe("aft-service");
-    expect(screen.getByRole("button", { name: "Place on plan" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: /^Ship plan/ })).toBeTruthy();
   });
 });

@@ -145,7 +145,7 @@ Game-lead bar: the player's experience is the product.
 
 - **Playable** on every merge: the desktop app launches and the vertical slice runs.
 - **Seen**: a UI change is verified in the running app with `pnpm snap` before it is done.
-- **Tunable**: gameplay numbers live in content or balance data, marked PROVISIONAL until sourced or playtested (ADR-0247); code holds mechanisms, not magic numbers.
+- **Tunable**: gameplay numbers live in content or balance data, marked PROVISIONAL until sourced or playtested (ADR-0252); code holds mechanisms, not magic numbers.
 - **Explainable**: every number the player sees traces to an explanation tree.
 - **Measured**: balance claims cite the generated reports (`pnpm check:balance-reports`), not intuition.
 

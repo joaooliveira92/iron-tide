@@ -28,7 +28,6 @@ import {
   LedgerPanel,
   MetricsPanel,
   PlacementsPanel,
-  PlanModeButtons,
   RebuildPanel,
   ShipSelectionProvider,
   ShipViewBoundary,
@@ -60,7 +59,10 @@ import {
 import { sameEntity, type ShipEntity } from "../../components/design-workspace/selection/store.js";
 import { useCampaignMonthId } from "../../shell/CampaignShellContext.js";
 import {
+  AluminiumSuperstructurePanel,
+  AntiAircraftPanel,
   ArmamentEditor,
+  ClassNameBrowser,
   ColonialServicePanel,
   CommandBar,
   DesignMap,
@@ -80,7 +82,10 @@ import {
   WorkspaceDialog,
   type PriorityLevel,
 } from "./components/index.js";
+import { aluminiumModel } from "./aluminium-view.js";
+import { antiAircraftModel } from "./anti-aircraft-view.js";
 import { armamentEntries } from "./armament.js";
+import { nameGroups, namePoolFor, suggestClassName } from "./class-name-suggestions.js";
 import { colonialServiceModel } from "./colonial-service-view.js";
 import { machineryModel, plantDeltas } from "./machinery-view.js";
 import { overviewModel, type PriorityId } from "./overview.js";
@@ -93,7 +98,6 @@ import {
   type DesignSectionId,
   type InspectorPlace,
 } from "./design-sections.js";
-import { PLAN_TOOL_HINT, planToolShortcut } from "./plan-tool-shortcut.js";
 import { engineeringStatus } from "./engineering-status.js";
 import { INSPECTOR_COLLAPSED_PX } from "./inspector-layout.js";
 import { sectionStatuses } from "./section-status.js";
@@ -104,7 +108,7 @@ import { useInspectorLayout } from "./useInspectorLayout.js";
 const VALIDATION_TOAST_ID = "shipbuilding-validation";
 const VALIDATION_TOAST_MS = 4000;
 
-type OverflowDialog = "start" | "file" | "history" | "alternatives";
+type OverflowDialog = "start" | "file" | "history" | "alternatives" | "names";
 
 /** The battery each Armament tab shows; "other" holds no battery. */
 const TAB_BATTERY: { readonly [tab: string]: BatteryRole } = {
@@ -197,6 +201,8 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
   };
   const [dialog, setDialog] = useState<OverflowDialog | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  // Suggest walks the nation's name list for this ship type; the position is only presentation state.
+  const [nameCursor, setNameCursor] = useState(0);
 
   useRestoredDraftToast({
     restored: autosave.restored,
@@ -242,11 +248,19 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
   }, [draft, content]);
   const statuses = useMemo(() => sectionStatuses(findings, fittings), [findings, fittings]);
 
-  // Comparison before commitment: each plant's preview is compiled against the session environment, the same one
-  // the view was built with, and only while the Machinery section is open (each preview is a full compile).
+  // The nation-aware environment (the session's own is nation-agnostic): it carries the designing nation's naval
+  // profile, so the plant comparison, class-name lists and reference-design browser all read it. Each plant preview is
+  // compiled against it only while the Machinery section is open (each preview is a full compile).
+  const nationEnv = useMemo(
+    () => content.environmentFor(state.month, draft.nationId),
+    [content, state.month, draft.nationId],
+  );
+  const aluminium = aluminiumModel(view, env.ctx.balance.aluminiumSuperstructure, state.month);
+  const antiAircraft = antiAircraftModel(draft, view, env.ctx.balance.antiAircraft, state.month);
+  const namePool = namePoolFor(nationEnv.ctx.navalProfile, shipType);
   const machineryDeltas = useMemo(
-    () => (place.section === "machinery" ? plantDeltas(draft, env, view) : null),
-    [place.section, draft, env, view],
+    () => (place.section === "machinery" ? plantDeltas(draft, nationEnv, view) : null),
+    [place.section, draft, nationEnv, view],
   );
 
   const entityCtx: EntityContext = {
@@ -349,6 +363,9 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
               edit={actions.edit}
               errorFor={choiceCheck.errorFor}
             />
+            {aluminium.offered && (
+              <AluminiumSuperstructurePanel model={aluminium} edit={actions.edit} />
+            )}
             {fittingsPanel(at)}
           </>
         );
@@ -388,7 +405,15 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
         );
       case "armament": {
         const role = TAB_BATTERY[at.tab];
-        if (role === undefined) return fittingsOnly(at);
+        if (role === undefined)
+          return antiAircraft.offered && at.tab === "other" ? (
+            <>
+              <AntiAircraftPanel model={antiAircraft} edit={actions.edit} />
+              {fittingsPanel(at)}
+            </>
+          ) : (
+            fittingsOnly(at)
+          );
         const entries = armamentEntries(role, batteries, draft, view, content);
         return (
           <>
@@ -481,12 +506,6 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
             toggleInspector();
             return;
           }
-          const next = planToolShortcut(e, planTool);
-          if (next !== null) {
-            e.preventDefault();
-            setPlanTool(next);
-            return;
-          }
           // Escape clears a pinned ship element from the drawing or the inspector, one step per press.
           if (e.key !== "Escape") return;
           const s = selection.get();
@@ -564,37 +583,27 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
                 onMonth={actions.setMonth}
                 status={status}
                 onStatusAction={needsName ? () => nameInputRef.current?.focus() : undefined}
+                names={{
+                  canSuggest: namePool.length > 0,
+                  onBrowse: () => setDialog("names"),
+                  onSuggest: () => {
+                    const next = suggestClassName(namePool, shipClassName, nameCursor);
+                    if (next === null) return;
+                    setShipClassName(next.name);
+                    setNameCursor(next.cursor);
+                  },
+                }}
               />
             }
           />
           <ShipStage
             toolbar={
-              <>
-                <ViewToolbar
-                  view={shipView}
-                  onView={changeView}
-                  overlays={overlays}
-                  onToggleOverlay={flipOverlay}
-                />
-                <div
-                  role="group"
-                  aria-label="Plan tools"
-                  title={PLAN_TOOL_HINT}
-                  className="flex items-center gap-1 border-l border-border pl-2"
-                >
-                  <span className="mr-1 text-xs text-muted-foreground" aria-hidden="true">
-                    Edit plan
-                  </span>
-                  <PlanModeButtons
-                    tool={planTool}
-                    onTool={setPlanTool}
-                    draft={draft}
-                    available={model.available}
-                    entryOf={model.entryOf}
-                    onAutoPlace={editing.onAutoPlace}
-                  />
-                </div>
-              </>
+              <ViewToolbar
+                view={shipView}
+                onView={changeView}
+                overlays={overlays}
+                onToggleOverlay={flipOverlay}
+              />
             }
           >
             <ShipViewBoundary resetKey={draft}>
@@ -694,6 +703,21 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           }}
         />
         <WorkspaceDialog
+          open={dialog === "names"}
+          onClose={() => setDialog(null)}
+          title="Class names"
+          description="The ship names your nation uses, by ship type. Choosing one sets the class name."
+        >
+          <ClassNameBrowser
+            groups={nameGroups(nationEnv.ctx.navalProfile, shipType)}
+            current={shipClassName}
+            onPick={(name) => {
+              setShipClassName(name);
+              setDialog(null);
+            }}
+          />
+        </WorkspaceDialog>
+        <WorkspaceDialog
           open={dialog === "start"}
           onClose={() => setDialog(null)}
           title="Start from a reference design"
@@ -701,7 +725,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           wide
         >
           <ReferenceDesignBrowser
-            env={env}
+            env={nationEnv}
             starters={starters}
             content={content}
             month={state.month}

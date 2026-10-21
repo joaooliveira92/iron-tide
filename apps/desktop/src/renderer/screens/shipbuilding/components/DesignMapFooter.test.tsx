@@ -50,4 +50,30 @@ describe("DesignMapFooter", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Needs a class name.*Activate to fix$/ }));
     expect(onStatusAction).toHaveBeenCalledOnce();
   });
+
+  it("offers the class-name helpers only when given, and runs them", () => {
+    const onSuggest = vi.fn<() => void>();
+    const onBrowse = vi.fn<() => void>();
+    const { rerender } = render(<DesignMapFooter {...props()} />);
+    expect(screen.queryByRole("button", { name: "Suggest a class name" })).toBeNull();
+    rerender(<DesignMapFooter {...props({ names: { onSuggest, onBrowse, canSuggest: true } })} />);
+    fireEvent.click(screen.getByRole("button", { name: "Suggest a class name" }));
+    fireEvent.click(screen.getByRole("button", { name: "Browse class names" }));
+    expect(onSuggest).toHaveBeenCalledOnce();
+    expect(onBrowse).toHaveBeenCalledOnce();
+  });
+
+  it("disables Suggest, but not the list, when the nation has no names for the type", () => {
+    render(
+      <DesignMapFooter
+        {...props({ names: { onSuggest: () => {}, onBrowse: () => {}, canSuggest: false } })}
+      />,
+    );
+    expect(
+      (screen.getByRole("button", { name: "Suggest a class name" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByRole("button", { name: "Browse class names" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+  });
 });

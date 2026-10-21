@@ -9,7 +9,9 @@ import { DeferredFeaturesPanel } from "./components/shared/DeferredFeaturesPanel
 import { WorldMapChart } from "./components/world-map/WorldMapChart.js";
 import { initialMapPrototypeState } from "./components/world-map/map-state.js";
 import { axeViolations } from "./lib/axe.js";
+import { loadDrawingBoardContent } from "./components/design-workspace/content.js";
 import { DrawingBoard } from "./screens/construction/drawing-board/DrawingBoard.js";
+import { armMove, armPlace } from "./screens/construction/drawing-board/test-helpers.js";
 import { BattleHistorySection } from "./screens/diplomacy/components/BattleHistorySection.js";
 import { AreaOverviewTable } from "./screens/fleet/components/AreaOverviewTable.js";
 import { MovementCommandsTable } from "./screens/fleet/components/MovementCommandsTable.js";
@@ -291,13 +293,23 @@ describe("accessibility audit (axe-core)", () => {
   );
 
   it(
-    "Drawing Board — plan tools in both modes",
+    "Drawing Board — the plan's context menu and both tool modes",
     async () => {
       const container = openBattleship();
-      for (const mode of ["Place on plan", "Move on plan"]) {
-        fireEvent.click(screen.getByRole("button", { name: mode }));
-        expect(await axeViolations(container), mode).toEqual([]);
-      }
+      fireEvent.contextMenu(screen.getByRole("group", { name: /^Ship plan/ }));
+      await screen.findByRole("menuitem", { name: "Place" });
+      // The menu is a portal, so the whole document is audited; it has no page landmarks, so "region" does not apply.
+      expect(
+        (await axeViolations(document.body)).filter((v) => !v.startsWith("region ")),
+        "context menu",
+      ).toEqual([]);
+      fireEvent.keyDown(screen.getByRole("menuitem", { name: "Place" }), { key: "Escape" });
+      await armMove();
+      expect(await axeViolations(container), "Move armed").toEqual([]);
+      await armPlace(
+        loadDrawingBoardContent().components.find((c) => c.id === "pumps_damage_control")!,
+      );
+      expect(await axeViolations(container), "Place armed").toEqual([]);
     },
     BOARD_TIMEOUT_MS,
   );

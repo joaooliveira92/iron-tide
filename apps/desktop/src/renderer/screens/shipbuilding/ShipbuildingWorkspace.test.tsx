@@ -156,9 +156,11 @@ describe("Design map and inspector routing", () => {
 
   it("lists the seven sections, each announcing its status", () => {
     render(<ShipbuildingWorkspace />);
+    // The class-name helpers share the rail's foot but are not sections.
     const names = within(map())
       .getAllByRole("button")
-      .map((b) => b.getAttribute("aria-label") ?? "");
+      .map((b) => b.getAttribute("aria-label") ?? "")
+      .filter((n) => n !== "Suggest a class name" && n !== "Browse class names");
     expect(names.map((n) => n.split(",")[0])).toEqual([
       "Overview",
       "Hull",
@@ -293,21 +295,86 @@ describe("Central ship workspace views and overlays", () => {
     expect(plan()).not.toBeNull();
   });
 
-  it("switches the plan tools with P and M, and ignores them while typing", () => {
+  it("reaches the plan tools only from the plan's context menu, not from buttons or P and M", async () => {
     render(<ShipbuildingWorkspace />);
-    const tools = () => screen.getByRole("group", { name: "Plan tools" });
-    const pressed = (name: string) =>
-      within(tools()).getByRole("button", { name }).getAttribute("aria-pressed");
+    expect(screen.queryByRole("group", { name: "Plan tools" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Place on plan" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Move on plan" })).toBeNull();
     const workspace = screen.getByTestId("shipbuilding-workspace");
     fireEvent.keyDown(workspace, { key: "m" });
-    expect(pressed("Move on plan")).toBe("true");
     fireEvent.keyDown(workspace, { key: "p" });
-    expect(pressed("Place on plan")).toBe("true");
-    expect(pressed("Move on plan")).toBe("false");
-    fireEvent.keyDown(workspace, { key: "p" });
-    expect(pressed("Place on plan")).toBe("false");
-    fireEvent.keyDown(within(commands()).getByLabelText("Class name"), { key: "m" });
-    expect(pressed("Move on plan")).toBe("false");
+    expect(screen.queryByTestId("plan-click-layer")).toBeNull();
+    fireEvent.contextMenu(screen.getByRole("group", { name: /^Ship plan/ }));
+    expect(await screen.findByRole("menuitem", { name: "Place" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Move" })).toBeTruthy();
+  });
+
+  it("suggests class names from the nation's list for the ship type, one after another", () => {
+    render(<ShipbuildingWorkspace />);
+    const name = () => (within(commands()).getByLabelText("Class name") as HTMLInputElement).value;
+    expect(name()).toBe("");
+    const suggest = screen.getByRole("button", { name: "Suggest a class name" });
+    fireEvent.click(suggest);
+    const first = name();
+    expect(first).not.toBe("");
+    fireEvent.click(suggest);
+    expect(name()).not.toBe(first);
+  });
+
+  it("opens a list of the nation's names and fills the class name from the one chosen", async () => {
+    render(<ShipbuildingWorkspace />);
+    fireEvent.click(screen.getByRole("button", { name: "Browse class names" }));
+    const dialog = await screen.findByRole("dialog", { name: "Class names" });
+    const pick = within(dialog).getAllByRole("button", { pressed: false })[0]!;
+    const chosen = pick.textContent!;
+    fireEvent.click(pick);
+    expect(screen.queryByRole("dialog", { name: "Class names" })).toBeNull();
+    expect((within(commands()).getByLabelText("Class name") as HTMLInputElement).value).toBe(
+      chosen,
+    );
+  });
+
+  it("points an empty battery at controls this workspace has, not at a panel it lacks", () => {
+    render(<ShipbuildingWorkspace />);
+    openMap("Armament");
+    // The starting torpedo gunboat carries no main battery.
+    const inspector = screen.getByRole("complementary", { name: /^Inspector/ });
+    expect(within(inspector).getByText(/right-click the ship plan and choose Place/)).toBeTruthy();
+    expect(within(inspector).queryByText(/Components and arrangement/)).toBeNull();
+  });
+
+  it("shows the designing nation's identity in the reference-design browser", async () => {
+    render(<ShipbuildingWorkspace />);
+    fireEvent.click(screen.getByRole("button", { name: /^Start from a reference design/ }));
+    const dialog = await screen.findByRole("dialog", { name: "Start from a reference design" });
+    expect(within(dialog).getByText("National identity")).toBeTruthy();
+  });
+
+  it("adds and removes the magazine box with one checkbox, as the existing armour region", () => {
+    render(<ShipbuildingWorkspace />);
+    openMap("Protection");
+    const box = () => screen.getByRole("checkbox", { name: "Magazine box" });
+    const hadBox = box().getAttribute("aria-checked") === "true";
+    fireEvent.click(box());
+    expect(box().getAttribute("aria-checked")).toBe(String(!hadBox));
+    // A fitted box is a region in the list, with its own editable thickness.
+    const region = screen.queryByLabelText(/Thickness of MAGAZINE_BOX/);
+    expect(region !== null).toBe(!hadBox);
+    fireEvent.click(box());
+    expect(box().getAttribute("aria-checked")).toBe(String(hadBox));
+  });
+
+  it("does not offer an aluminium superstructure at the dates the standalone designer covers", () => {
+    render(<ShipbuildingWorkspace />);
+    openMap("Hull");
+    expect(screen.queryByRole("checkbox", { name: "Aluminium superstructure" })).toBeNull();
+  });
+
+  it("does not offer an AA fit at the dates the standalone designer covers", () => {
+    render(<ShipbuildingWorkspace />);
+    openMap("Armament");
+    fireEvent.click(screen.getByRole("tab", { name: "Other" }));
+    expect(screen.queryByLabelText("AA directors")).toBeNull();
   });
 
   it("controls the overlays independently, and no view turns them all on", () => {

@@ -34,14 +34,26 @@ export function openPlanDisplay(): void {
   fireEvent.click(screen.getByRole("button", { name: "Plan display" }));
 }
 
-/** Opens a plan tool's picker menu from its button, unless it is already open. */
-export function openPlanTool(name: string): void {
-  if (screen.queryByRole("dialog", { name }) !== null) return;
-  const trigger = screen.getByRole("button", { name });
-  // The tool is a toggle: a first press on an active (but dismissed) tool turns it off, a second turns it on again.
-  fireEvent.click(trigger);
-  if (screen.queryByRole("dialog", { name }) !== null) return;
-  fireEvent.click(trigger);
+/** Right-clicks the ship plan and walks the context menu: each label is a menu item (or submenu) to click in turn. */
+export async function planMenu(...path: string[]): Promise<void> {
+  fireEvent.contextMenu(screen.getByRole("group", { name: /^Ship plan/ }));
+  for (const label of path) fireEvent.click(await screen.findByRole("menuitem", { name: label }));
+}
+
+const categoryLabel = (category: string) => {
+  const spaced = category.replaceAll("_", " ").toLowerCase();
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+};
+
+/** Arms the Place tool for `component` from the plan's context menu. */
+export const armPlace = (component: { readonly category: string; readonly displayName: string }) =>
+  planMenu("Place", categoryLabel(component.category), component.displayName);
+
+/** Arms the Move tool for the first or last fitting in the plan's Move submenu. */
+export async function armMove(which: "first" | "last" = "last"): Promise<void> {
+  await planMenu("Move");
+  const items = await screen.findAllByRole("menuitem", { name: /\(.+\)$/ });
+  fireEvent.click(which === "first" ? items[0]! : items[items.length - 1]!);
 }
 
 /** Opens a `<Select>` by its trigger's accessible name and clicks the option whose visible text matches. */

@@ -4,6 +4,7 @@ import type { CompiledDesign, DesignDraft } from "./compile.js";
 import { applyEdit, type DraftEdit } from "./edits.js";
 import { withoutSubjects } from "./findings.js";
 import { isShipTypeId } from "./shipTypes.js";
+import { antiAircraftFitProblem } from "./antiAircraft.js";
 import { ARMOUR_REGIONS } from "./armour.js";
 import { ARMOUR_SCHEME_IDS } from "./armourSchemes.js";
 
@@ -138,6 +139,12 @@ export function validateDraftShape(raw: unknown): string[] {
   }
   if (raw.colonialServiceFitted !== undefined && typeof raw.colonialServiceFitted !== "boolean")
     p.push("colonialServiceFitted must be a boolean");
+  if (raw.antiAircraft !== undefined) {
+    const problem = antiAircraftFitProblem(raw.antiAircraft);
+    if (problem !== null) p.push(problem);
+  }
+  if (raw.aluminiumSuperstructure !== undefined && typeof raw.aluminiumSuperstructure !== "boolean")
+    p.push("aluminiumSuperstructure must be a boolean");
   if (raw.fireControl !== undefined) {
     if (
       !isObj(raw.fireControl) ||
