@@ -69,9 +69,9 @@ describe("PhaseRegistry", () => {
     expect(phases[0]!["id"]).toBe("opening_validation");
     expect(phases[1]!["id"]).toBe("weather_generation");
     expect(phases[2]!["id"]).toBe("monthly_revenue");
-    expect(phases[3]!["id"]).toBe("ai_planning");
-    expect(phases[4]!["id"]).toBe("ai_procurement");
-    expect(phases[5]!["id"]).toBe("command_collection");
+    expect(phases[3]!["id"]).toBe("command_collection");
+    expect(phases[4]!["id"]).toBe("ai_planning");
+    expect(phases[5]!["id"]).toBe("ai_procurement");
     expect(phases[6]!["id"]).toBe("appropriation");
     expect(phases[7]!["id"]).toBe("maintenance");
     expect(phases[8]!["id"]).toBe("obligation");
@@ -87,7 +87,10 @@ describe("PhaseRegistry", () => {
     for (let i = 0; i < phases.length - 1; i++) {
       expect(phases[i]!["order"]).toBeLessThan(phases[i + 1]!["order"]);
     }
-    expect(PhaseRegistry.getById("ai_planning")!["order"]).toBe(1.5);
+    expect(PhaseRegistry.getById("ai_planning")!["order"]).toBe(1.6);
+    expect(PhaseRegistry.getById("command_collection")!["order"]).toBeLessThan(
+      PhaseRegistry.getById("ai_planning")!["order"],
+    );
     expect(PhaseRegistry.getById("resolve_diplomacy")!["order"]).toBe(6.5);
     expect(PhaseRegistry.getById("battle_generation")!["order"]).toBe(7.5);
     // B-5/ADR-0022: weather_generation runs right after opening_validation and
@@ -152,6 +155,40 @@ describe("PhaseRegistry", () => {
     const aiPlan = PhaseRegistry.getById("ai_planning")!;
     expect(aiPlan["rngAllowed"]).toBe(true);
     expect(collect["rngAllowed"]).toBe(false);
+  });
+});
+
+describe("Canonical phase order (the registry drives the runner)", () => {
+  it("places command_collection before ai_planning and ai_procurement", () => {
+    // ADR-0246 records the authoritative runtime pipeline: opening validation,
+    // weather, revenue, command collection, AI planning and procurement, ...
+    // The runner iterates the registry, so the registry's declaration order is
+    // the canonical phase order; a registry entry that orders AI before player
+    // command collection is a discrepancy that would move authoritative
+    // outcomes (the golden pipeline runs commands first).
+    const ids = PhaseRegistry.all.map((p) => p["id"]);
+    expect(ids).toEqual([
+      "opening_validation",
+      "weather_generation",
+      "monthly_revenue",
+      "command_collection",
+      "ai_planning",
+      "ai_procurement",
+      "appropriation",
+      "maintenance",
+      "obligation",
+      "construction_processing",
+      "resolve_diplomacy",
+      "resolve_research",
+      "resolve_aircraft_development",
+      "resolve_carrier_operations",
+      "battle_generation",
+      "battle_resolution",
+      "closing_validation",
+    ]);
+    const indexOf = (id: string) => PhaseRegistry.all.findIndex((p) => p["id"] === id);
+    expect(indexOf("command_collection")).toBeLessThan(indexOf("ai_planning"));
+    expect(indexOf("ai_planning")).toBeLessThan(indexOf("ai_procurement"));
   });
 });
 

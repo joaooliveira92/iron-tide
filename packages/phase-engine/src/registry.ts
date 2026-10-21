@@ -44,9 +44,24 @@ export class PhaseRegistry {
       rngAllowed: false,
     },
     {
+      // ADR-0246 records the authoritative runtime pipeline: ... revenue,
+      // command collection, AI planning and procurement, ... The executor has
+      // always run command_collection before ai_planning/ai_procurement (the
+      // golden hashes pin that order); the registry numbers used to say
+      // otherwise and are corrected here so the registry alone drives dispatch.
+      id: "command_collection",
+      name: "Command Collection",
+      order: 1.5,
+      readPermissions: ["all"],
+      // ADR-0036: command_collection authoritatively applies player commands,
+      // mutating treasury/constructions/research/wars/politics/fleets.
+      writePermissions: ["treasury", "constructions", "research", "wars", "politics", "fleets"],
+      rngAllowed: false,
+    },
+    {
       id: "ai_planning",
       name: "AI Planning",
-      order: 1.5,
+      order: 1.6,
       readPermissions: ["nations", "constructions", "research", "treasury"],
       // ADR-0036: the AI path applies SetResearchPriority and budget_project,
       // so it writes research/treasury/constructions.
@@ -56,21 +71,11 @@ export class PhaseRegistry {
     {
       id: "ai_procurement",
       name: "AI Procurement",
-      order: 1.6,
+      order: 1.7,
       // ADR-0091: plans and submits design studies and places construction orders for AI nations.
       readPermissions: ["nations", "constructions", "treasury", "research", "designs"],
       writePermissions: ["nations", "constructions", "designs"],
       rngAllowed: true,
-    },
-    {
-      id: "command_collection",
-      name: "Command Collection",
-      order: 2,
-      readPermissions: ["all"],
-      // ADR-0036: command_collection authoritatively applies player commands,
-      // mutating treasury/constructions/research/wars/politics/fleets.
-      writePermissions: ["treasury", "constructions", "research", "wars", "politics", "fleets"],
-      rngAllowed: false,
     },
     {
       id: "appropriation",
