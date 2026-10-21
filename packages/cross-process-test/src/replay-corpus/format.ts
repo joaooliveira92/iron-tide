@@ -9,7 +9,13 @@ const Count = Schema.Int.check(Schema.isGreaterThanOrEqualTo(0));
 const LedgerCheckpoint = Schema.Struct({
   count: Count,
   entryHashes: Schema.Array(Hash),
-});
+}).check(
+  Schema.makeFilter((ledger) =>
+    ledger.count === ledger.entryHashes.length
+      ? undefined
+      : `count ${String(ledger.count)} must equal the number of entry hashes ${String(ledger.entryHashes.length)}`,
+  ),
+);
 
 const MonthCheckpoint = Schema.Struct({
   turnNumber: Count,

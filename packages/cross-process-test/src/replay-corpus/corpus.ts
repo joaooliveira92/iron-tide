@@ -6,7 +6,7 @@ import { MonthExecutor } from "@bluewave/phase-engine";
 import { Result } from "effect";
 
 import { compileProductionCampaign } from "../production-pack.js";
-import { LEDGER_ORDER, fullSnapshotHash, monthCheckpoint } from "./checkpoint.js";
+import { LEDGER_ORDER, fullSnapshotHash, ledgerEntryText, monthCheckpoint } from "./checkpoint.js";
 import {
   REPLAY_FORMAT_VERSION,
   ReplayFileError,
@@ -30,8 +30,35 @@ export interface ReplayDivergence {
   readonly where: "content" | "initial" | "snapshot" | LedgerName;
   /** Index of the first differing ledger entry; present only when `where` is a ledger. */
   readonly entryIndex?: number;
+  /** Recorded hash, or `(missing)` when the recorded ledger is shorter. */
   readonly expected: string;
+  /** Re-executed hash, or `(missing)` when the re-executed ledger is shorter. */
   readonly actual: string;
+  /** Ledger lengths; present only when `where` is a ledger. */
+  readonly expectedCount?: number;
+  readonly actualCount?: number;
+  /** Canonical text of the re-executed entry; absent when that ledger has no such entry. */
+  readonly actualEntry?: string;
+}
+
+/**
+ * Render a divergence as stable text: LF line endings, no paths, no timestamps,
+ * so the same divergence prints identically on every OS.
+ */
+export function formatDivergence(d: ReplayDivergence): string {
+  const entry = d.entryIndex === undefined ? "" : ` entry ${String(d.entryIndex)}`;
+  const lines = [
+    `month ${String(d.month)} (turn ${String(d.turnNumber)}) ${d.where}${entry}`,
+    `  expected ${d.expected}`,
+    `  actual   ${d.actual}`,
+  ];
+  if (d.expectedCount !== undefined && d.actualCount !== undefined) {
+    lines.push(
+      `  ledger length expected ${String(d.expectedCount)}, actual ${String(d.actualCount)}`,
+    );
+  }
+  if (d.actualEntry !== undefined) lines.push(`  actual entry ${d.actualEntry}`);
+  return `${lines.join("\n")}\n`;
 }
 
 export type VerifyOutcome =
@@ -158,7 +185,16 @@ export function verifyReplay(text: string): Result.Result<VerifyOutcome, ReplayF
         actual.ledgers[ledger].entryHashes,
       );
       if (difference !== undefined) {
-        return fail({ month, turnNumber: actual.turnNumber, where: ledger, ...difference });
+        const actualEntry = ledgerEntryText(step.result, ledger, difference.entryIndex);
+        return fail({
+          month,
+          turnNumber: actual.turnNumber,
+          where: ledger,
+          ...difference,
+          expectedCount: recorded.ledgers[ledger].count,
+          actualCount: actual.ledgers[ledger].count,
+          ...(actualEntry === undefined ? {} : { actualEntry }),
+        });
       }
     }
     if (actual.snapshotHash !== recorded.snapshotHash) {

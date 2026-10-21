@@ -4,7 +4,12 @@ import { fileURLToPath } from "node:url";
 
 import { Result } from "effect";
 
-import { recordReplay, verifyReplay, REPLAY_SCENARIOS } from "./replay-corpus/index.js";
+import {
+  formatDivergence,
+  recordReplay,
+  verifyReplay,
+  REPLAY_SCENARIOS,
+} from "./replay-corpus/index.js";
 
 const REPLAY_DIR = resolve(
   fileURLToPath(new URL(".", import.meta.url)),
@@ -49,11 +54,7 @@ function main(argv: readonly string[]): number {
       process.stdout.write(`verified ${target}: ${String(result.success.months)} months\n`);
       return 0;
     }
-    const d = result.success.divergence;
-    const entry = d.entryIndex === undefined ? "" : ` entry ${String(d.entryIndex)}`;
-    process.stderr.write(
-      `DIVERGED ${target}: month ${String(d.month)} (turn ${String(d.turnNumber)}) ${d.where}${entry}\n  expected ${d.expected}\n  actual   ${d.actual}\n`,
-    );
+    process.stderr.write(`DIVERGED ${target}: ${formatDivergence(result.success.divergence)}`);
     return 1;
   }
   process.stderr.write(`${USAGE}\n`);
