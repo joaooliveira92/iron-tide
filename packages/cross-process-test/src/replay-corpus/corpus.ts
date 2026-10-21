@@ -1,8 +1,9 @@
 import type { CampaignSnapshot } from "@bluewave/campaign";
+import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { MonthExecutor } from "@bluewave/phase-engine";
+import { MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
 import { Result } from "effect";
 
 import { compileProductionCampaign } from "../production-pack.js";
@@ -77,13 +78,40 @@ function monthSeed(seed: string, snapshot: CampaignSnapshot): string {
   return `${seed}:month:${String(snapshot.turnNumber)}`;
 }
 
-function advance(snapshot: CampaignSnapshot, seed: string) {
+/**
+ * A deliberate break of the executor's input, applied to one month during verification only.
+ * Each hook sees the 1-based `month` and may return a changed value; an omitted hook leaves
+ * that input alone. This proves the gate notices a real regression (mutation check).
+ */
+export interface ExecutorPerturbation {
+  readonly month: number;
+  readonly snapshot?: (snapshot: CampaignSnapshot) => CampaignSnapshot;
+  readonly seed?: (seed: string) => string;
+  readonly commands?: (snapshot: CampaignSnapshot) => CommandEnvelope<CommandBody>[];
+  /**
+   * Alters the executed month in place before it is checkpointed, e.g. appending to a ledger to
+   * stand in for an engine that emits one entry too many. The financial and random ledgers
+   * cannot be isolated through input alone because the event ledger echoes them.
+   */
+  readonly afterExecute?: (result: MonthResult) => void;
+}
+
+export interface VerifyOptions {
+  readonly perturb?: ExecutorPerturbation;
+}
+
+function advance(
+  snapshot: CampaignSnapshot,
+  seed: string,
+  perturb?: Omit<ExecutorPerturbation, "month">,
+) {
   const result = new MonthExecutor().execute(
-    snapshot,
-    [],
-    monthSeed(seed, snapshot),
+    perturb?.snapshot?.(snapshot) ?? snapshot,
+    perturb?.commands?.(snapshot) ?? [],
+    perturb?.seed?.(monthSeed(seed, snapshot)) ?? monthSeed(seed, snapshot),
     new DiagnosticCollector(),
   );
+  perturb?.afterExecute?.(result);
   if (result.outcome === "suspended") {
     throw new Error(
       `Month ${String(snapshot.turnNumber)} suspended for an interruption; replay format v${String(REPLAY_FORMAT_VERSION)} cannot record it`,
@@ -147,7 +175,10 @@ function firstLedgerDifference(
  * Re-execute a replay file through the real engine, checking each month against
  * its recorded checkpoint. A file that cannot be decoded fails with `ReplayFileError`.
  */
-export function verifyReplay(text: string): Result.Result<VerifyOutcome, ReplayFileError> {
+export function verifyReplay(
+  text: string,
+  options: VerifyOptions = {},
+): Result.Result<VerifyOutcome, ReplayFileError> {
   const decoded = decodeReplayFile(text);
   if (Result.isFailure(decoded)) return Result.fail(decoded.failure);
   const file = decoded.success;
@@ -177,7 +208,11 @@ export function verifyReplay(text: string): Result.Result<VerifyOutcome, ReplayF
   }
   for (const [index, recorded] of file.months.entries()) {
     const month = index + 1;
-    const step = advance(snapshot, file.seed);
+    const step = advance(
+      snapshot,
+      file.seed,
+      options.perturb?.month === month ? options.perturb : undefined,
+    );
     const actual = monthCheckpoint(Number(snapshot.turnNumber), step.result);
     for (const ledger of LEDGER_ORDER) {
       const difference = firstLedgerDifference(

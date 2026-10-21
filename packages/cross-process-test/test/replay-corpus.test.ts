@@ -4,11 +4,13 @@ import { canonicalSerialize } from "@bluewave/deterministic";
 import { Result } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 
+import type { CommandBody, CommandEnvelope, SetResearchPriorityCommand } from "@bluewave/commands";
 import {
   decodeReplayFile,
   formatDivergence,
   recordReplay,
   verifyReplay,
+  type ExecutorPerturbation,
   type ReplayScenario,
 } from "../src/replay-corpus/index.js";
 
@@ -141,5 +143,116 @@ describe("replay file format parity", () => {
       }),
     );
     expect(Result.isFailure(result) && result.failure.message).toContain("count");
+  });
+});
+
+describe("replay corpus mutation check", () => {
+  const recorded = recordReplay(SCENARIO);
+
+  function perturbed(perturb: ExecutorPerturbation) {
+    const result = verifyReplay(recorded, { perturb });
+    if (Result.isFailure(result)) throw new Error(result.failure.message);
+    return result.success;
+  }
+
+  const rogueCommand = (snapshot: Parameters<NonNullable<ExecutorPerturbation["commands"]>>[0]) => {
+    const body: SetResearchPriorityCommand = {
+      type: "SetResearchPriority",
+      nationId: [...snapshot.nations.keys()][0] ?? "",
+      fieldPriorities: {},
+    };
+    return [
+      {
+        commandId: "mutation-1",
+        version: "0.1.0",
+        expectedSnapshotHash: "0".repeat(64),
+        idempotencyKey: "mutation-1",
+        timestamp: "test",
+        body,
+      },
+    ] as CommandEnvelope<CommandBody>[];
+  };
+
+  const treasuryPlusOne = (
+    snapshot: Parameters<NonNullable<ExecutorPerturbation["snapshot"]>>[0],
+  ) => {
+    const nations = new Map(snapshot.nations);
+    const [id, nation] = [...nations][0]!;
+    nations.set(id, {
+      ...nation,
+      treasury: (Number(nation.treasury) + 1) as typeof nation.treasury,
+    });
+    return { ...snapshot, nations };
+  };
+
+  it("keeps an unperturbed run green", () => {
+    expect(verified(recorded)).toEqual({ ok: true, months: 2 });
+  });
+
+  it("detects an injected command at the command ledger", () => {
+    const outcome = perturbed({ month: 2, commands: rogueCommand });
+    expect(outcome).toMatchObject({
+      ok: false,
+      divergence: { month: 2, where: "command", entryIndex: 0, expectedCount: 0, actualCount: 1 },
+    });
+  });
+
+  it("detects an extra financial transaction at the financial ledger", () => {
+    const outcome = perturbed({
+      month: 2,
+      afterExecute: (result) => {
+        const last = result.financialLedger.all.at(-1)!;
+        result.financialLedger.append({
+          campaignMonth: last.campaignMonth,
+          phaseId: last.phaseId,
+          nationId: last.nationId,
+          categoryId: last.categoryId,
+          debit: last.debit,
+          credit: last.credit,
+          previousBalance: last.newBalance,
+          newBalance: last.newBalance,
+          reason: "mutation",
+        });
+      },
+    });
+    expect(outcome).toMatchObject({
+      ok: false,
+      divergence: { month: 2, where: "financial", entryIndex: 59, expected: "(missing)" },
+    });
+  });
+
+  it("detects an extra random draw at the random ledger", () => {
+    const outcome = perturbed({
+      month: 1,
+      afterExecute: (result) => {
+        result.randomLedger.record({
+          streamId: "mutation",
+          entityKey: "mutation",
+          phase: "mutation",
+          rulesetVersion: "0.1.0",
+          inputHash: "0".repeat(64),
+          draw: 1,
+          outcome: "mutation",
+          reasonCode: "MUTATION",
+        });
+      },
+    });
+    expect(outcome).toMatchObject({
+      ok: false,
+      divergence: { month: 1, where: "random", entryIndex: 656, expected: "(missing)" },
+    });
+  });
+
+  it("detects a changed seed at the first diverging ledger of the month", () => {
+    const outcome = perturbed({ month: 1, seed: (seed) => `${seed}!` });
+    expect(outcome).toMatchObject({ ok: false, divergence: { month: 1, where: "event" } });
+  });
+
+  it("detects changed month state at the event ledger", () => {
+    const outcome = perturbed({ month: 1, snapshot: treasuryPlusOne });
+    expect(outcome).toMatchObject({
+      ok: false,
+      divergence: { month: 1, where: "event", entryIndex: 0 },
+    });
   });
 });
