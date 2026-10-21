@@ -100,16 +100,24 @@ export function regionWeightKg(r: ArmourRegion, b: ArmourBalance): number {
   return toSafe("regionWeight", (num + den - 1n) / den);
 }
 
+/** Effective thickness against a flat hit, um: thickness x material effectiveness x cos obliquity. */
+function effectiveThicknessUm(r: ArmourRegion, b: ArmourBalance): number {
+  const eff = b.materialEffBp[r.materialId];
+  if (eff === undefined) throw new Error(`unknown armour material '${r.materialId}'`);
+  return toSafe(
+    "effectiveThickness",
+    (BigInt(r.thicknessUm) * BigInt(eff) * BigInt(r.cosObliquityBp)) / (BP * BP),
+  );
+}
+
 /** F-A2: penetration margin in bp, clamped to [-10000, +10000]. Negative = the shell defeats the plate. */
 export function penetrationMarginBp(
   r: ArmourRegion,
   threat: ThreatProfile,
   b: ArmourBalance,
 ): number {
-  const eff = b.materialEffBp[r.materialId];
-  if (eff === undefined) throw new Error(`unknown armour material '${r.materialId}'`);
   if (threat.penetrationUm <= 0) throw new Error("threat penetration must be > 0");
-  const effective = (BigInt(r.thicknessUm) * BigInt(eff) * BigInt(r.cosObliquityBp)) / (BP * BP);
+  const effective = BigInt(effectiveThicknessUm(r, b));
   const pen = BigInt(threat.penetrationUm);
   const raw = ((effective - pen) * BP) / pen;
   const v = raw > BP ? BP : raw < -BP ? -BP : raw;
@@ -145,6 +153,8 @@ export interface ArmourInput {
 export interface ArmourResult {
   readonly weightByRegionKg: Readonly<Record<string, number>>;
   readonly totalWeightKg: number;
+  /** Effective thickness against a flat hit per region, um: thickness x material effectiveness x cos obliquity. */
+  readonly effectiveThicknessByRegionUm: Readonly<Record<string, number>>;
   /** Margin in bp per region per threat id. */
   readonly marginBp: Readonly<Record<string, Readonly<Record<string, number>>>>;
   readonly coverageBp: number;
@@ -167,11 +177,17 @@ export function compileArmour(input: ArmourInput, b: ArmourBalance): ArmourResul
     x.region < y.region ? -1 : x.region > y.region ? 1 : 0,
   );
   const weightByRegionKg: Record<string, number> = {};
+  const effectiveThicknessByRegionUm: Record<string, number> = {};
   const marginBp: Record<string, Record<string, number>> = {};
   let total = 0;
   for (const r of regions) {
     weightByRegionKg[r.region] = (weightByRegionKg[r.region] ?? 0) + regionWeightKg(r, b);
     total += regionWeightKg(r, b);
+    // Duplicate regions are merged like the margin: the best plate at that region defends it.
+    effectiveThicknessByRegionUm[r.region] = Math.max(
+      effectiveThicknessByRegionUm[r.region] ?? 0,
+      effectiveThicknessUm(r, b),
+    );
     const m: Record<string, number> = marginBp[r.region] ?? {};
     const isDeck = DECK_REGIONS.has(r.region);
     for (const t of input.threats) {
@@ -327,6 +343,7 @@ export function compileArmour(input: ArmourInput, b: ArmourBalance): ArmourResul
   return {
     weightByRegionKg,
     totalWeightKg: total,
+    effectiveThicknessByRegionUm,
     marginBp,
     coverageBp,
     magazineProtectionBp,

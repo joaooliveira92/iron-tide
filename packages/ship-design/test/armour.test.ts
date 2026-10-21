@@ -115,6 +115,18 @@ describe("compileArmour", () => {
     expect(r.coverageBp).toBe(10_000);
     expect(r.findings).toEqual([]);
   });
+  it("reports effective thickness from material and obliquity", () => {
+    const r = compileArmour(input(), bal);
+    // 305 mm of compound (10_000 eff) hit flat-on is 305 mm effective.
+    expect(r.effectiveThicknessByRegionUm.BELT_MAIN).toBe(305_000);
+    expect(r.effectiveThicknessByRegionUm.DECK_MAIN).toBe(50_000);
+    const sloped = compileArmour(
+      input({ regions: [belt({ materialId: "face_hardened", cosObliquityBp: 8_660 })] }),
+      bal,
+    );
+    // 305 mm x 14_000/10_000 x 8_660/10_000 = 369.782 mm.
+    expect(sloped.effectiveThicknessByRegionUm.BELT_MAIN).toBe(369_782);
+  });
   it("short belt gives CITADEL_INCOMPLETE (warning then critical)", () => {
     const w = compileArmour(input({ regions: [belt({ lengthMm: 50_000 })] }), bal).findings.find(
       (f) => f.id === "CITADEL_INCOMPLETE",

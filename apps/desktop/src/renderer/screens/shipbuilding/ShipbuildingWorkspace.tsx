@@ -242,15 +242,11 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
   }, [draft, content]);
   const statuses = useMemo(() => sectionStatuses(findings, fittings), [findings, fittings]);
 
-  // Comparison before commitment: each plant's preview is compiled against the same nation-aware environment the
-  // view was built with, and only while the Machinery section is open (each preview is a full compile).
-  const previewEnv = useMemo(
-    () => content.environmentFor(state.month, draft.nationId),
-    [content, state.month, draft.nationId],
-  );
+  // Comparison before commitment: each plant's preview is compiled against the session environment, the same one
+  // the view was built with, and only while the Machinery section is open (each preview is a full compile).
   const machineryDeltas = useMemo(
-    () => (place.section === "machinery" ? plantDeltas(draft, previewEnv, view, content) : null),
-    [place.section, draft, previewEnv, view, content],
+    () => (place.section === "machinery" ? plantDeltas(draft, env, view) : null),
+    [place.section, draft, env, view],
   );
 
   const entityCtx: EntityContext = {
@@ -363,7 +359,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           <>
             <MachineryEditor
               errorFor={choiceCheck.errorFor}
-              model={machineryModel(draft, view, content, state.month, env.ctx.unlockedTechs)}
+              model={machineryModel(draft, view, env)}
               edit={actions.edit}
               previewDeltas={machineryDeltas ?? undefined}
               recommended={{
