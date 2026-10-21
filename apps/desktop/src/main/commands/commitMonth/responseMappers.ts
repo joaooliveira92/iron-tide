@@ -91,6 +91,8 @@ function describeDomainEventBody(body: DomainEventBody): string {
       return `${body.nationId}: declined-battle count ${String(body.count)} reached the threshold of ${String(body.threshold)} (${body.scope} scope)`;
     case "EnemyDeclinedBattle":
       return `${body.nationId}: ${body.enemyNationId} declined battle ${body.battleId} in ${body.areaId} (${body.missionType}); no battle took place`;
+    case "PrestigeChanged":
+      return `${body.nationId}: prestige ${String(body.before)} to ${String(body.after)} (${String(body.delta)}; ${body.reasonCode}, ${body.ruleKind})`;
     case "PresenceShortfall":
       return `${body.nationId}: presence in ${body.areaId} short by ${body.shortfallTons} t (${body.presentTons} of ${body.requiredTons} t)`;
     case "PrestigeLossRequested":

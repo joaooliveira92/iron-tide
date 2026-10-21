@@ -189,6 +189,17 @@ export const EnemyDeclinedBattleSchema = Schema.Struct({
   reasonCode: Schema.Literal("ENEMY_DECLINED_BATTLE"),
 });
 
+export const PrestigeChangedSchema = Schema.Struct({
+  kind: Schema.Literal("PrestigeChanged"),
+  nationId: nonEmptyString,
+  reasonCode: Schema.Literals(["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON", "DECLINED_BATTLE"]),
+  ruleKind: Schema.Literals(["PROPORTIONAL_LOSS", "FIXED_GAIN", "FIXED_LOSS"]),
+  before: nonNegativeSafeInt,
+  after: nonNegativeSafeInt,
+  delta: safeInt,
+  rulesetVersion: nonEmptyString,
+});
+
 export const PrestigeLossRequestedSchema = Schema.Struct({
   kind: Schema.Literal("PrestigeLossRequested"),
   nationId: nonEmptyString,
@@ -262,6 +273,7 @@ export const DomainEventBodySchema = Schema.Union([
   BattleDeclinedSchema,
   DeclineThresholdReachedSchema,
   EnemyDeclinedBattleSchema,
+  PrestigeChangedSchema,
 ]);
 
 export const DomainEventEnvelopeSchema = Schema.Struct({

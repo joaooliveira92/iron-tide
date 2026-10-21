@@ -270,6 +270,22 @@ export interface EnemyDeclinedBattle {
   readonly reasonCode: "ENEMY_DECLINED_BATTLE";
 }
 
+/**
+ * S-2 04 (spec #74 R4, R5): a nation's prestige changed through one source's rule. Emitted only when the applied change
+ * is non-zero, inside the owning monthly phase. `delta` is `after - before` as actually applied (after clamping).
+ * `reasonCode` and `ruleKind` mirror the campaign prestige vocabulary; this package does not import it.
+ */
+export interface PrestigeChanged {
+  readonly kind: "PrestigeChanged";
+  readonly nationId: string;
+  readonly reasonCode: "UNPAID_FUNDS" | "BATTLE_LOST" | "BATTLE_WON" | "DECLINED_BATTLE";
+  readonly ruleKind: "PROPORTIONAL_LOSS" | "FIXED_GAIN" | "FIXED_LOSS";
+  readonly before: SafeInt;
+  readonly after: SafeInt;
+  readonly delta: SafeInt;
+  readonly rulesetVersion: string;
+}
+
 export type DomainEventBody =
   | NationBudgetChanged
   | ConstructionProgressed
@@ -292,7 +308,8 @@ export type DomainEventBody =
   | BattleOfferAnswered
   | BattleDeclined
   | DeclineThresholdReached
-  | EnemyDeclinedBattle;
+  | EnemyDeclinedBattle
+  | PrestigeChanged;
 
 export interface DomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody> {
   readonly eventId: string;

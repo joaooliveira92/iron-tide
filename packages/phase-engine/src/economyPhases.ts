@@ -29,6 +29,7 @@ import { budgetChangedEvent, constructionDelayedEvent, makeLedgerEntry } from ".
 import type { MonthContext } from "./monthContext.js";
 import { PhaseResource } from "./phase-resource.js";
 import type { PhaseDescriptor } from "./registry.js";
+import { applyPrestigeChange } from "./prestigeApplication.js";
 import { reportOutflowShortfall } from "./outflowShortfall.js";
 import { applyReadinessEvolution } from "./readinessEvolution.js";
 
@@ -664,6 +665,13 @@ export function runObligationPhase(ctx: MonthContext): void {
         campaignMonth,
       ),
     );
+
+    // S-2 04 (spec #74 R4): the unpaid-funds prestige source. It fires for the player's nation only, in the same
+    // month the existing obligation shortfall condition fires, after the treasury outputs above are final. With no
+    // player nation supplied it is dormant.
+    if (ctx.playerNationId === nationId && (settlement.shortfall as number) > 0) {
+      applyPrestigeChange(ctx, nationId, "UNPAID_FUNDS");
+    }
   }
 }
 
@@ -733,12 +741,12 @@ export const obligationPhase: PhaseDescriptor = {
   id: "obligation",
   name: "Obligation",
   order: 50,
-  readPermissions: ["treasury"],
-  writePermissions: ["treasury"],
+  readPermissions: ["treasury", "nations"],
+  writePermissions: ["treasury", "nations"],
   rngAllowed: false,
   footprint: {
-    reads: [PhaseResource.TREASURY],
-    writes: [PhaseResource.TREASURY],
+    reads: [PhaseResource.TREASURY, PhaseResource.NATIONS],
+    writes: [PhaseResource.TREASURY, PhaseResource.NATIONS],
     usesRng: false,
   },
   run: (ctx) => {

@@ -165,6 +165,7 @@ const StorablePrestigeRuleSchema = Schema.Union([
     basisPoints: Schema.Finite,
   }),
   Schema.Struct({ kind: Schema.Literal("FIXED_GAIN"), amount: Schema.Finite }),
+  Schema.Struct({ kind: Schema.Literal("FIXED_LOSS"), amount: Schema.Finite }),
 ]);
 
 const StorablePrestigeValueSetSchema = Schema.Struct({
@@ -176,6 +177,8 @@ const StorablePrestigeValueSetSchema = Schema.Struct({
     UNPAID_FUNDS: StorablePrestigeRuleSchema,
     BATTLE_LOST: StorablePrestigeRuleSchema,
     BATTLE_WON: StorablePrestigeRuleSchema,
+    // Optional and dormant when absent (ADR-0261): a save without it decodes and re-encodes with no such key.
+    DECLINED_BATTLE: Schema.optionalKey(StorablePrestigeRuleSchema),
   }),
 });
 

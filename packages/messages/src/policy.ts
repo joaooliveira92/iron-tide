@@ -162,6 +162,15 @@ export function classifyEventBody(body: DomainEventBody): MessageClassification 
         bodyKey: "messages.battle.declined.body",
         deduplicationKey: `battle:declined:${body.battleId}`,
       });
+    case "PrestigeChanged":
+      return classification({
+        category: "SYSTEM",
+        severity: "HIGH",
+        phase: "obligation",
+        titleKey: "messages.prestige.changed.title",
+        bodyKey: "messages.prestige.changed.body",
+        deduplicationKey: `prestige:changed:${body.nationId}:${body.reasonCode}`,
+      });
     case "DeclineThresholdReached":
       return classification({
         category: "BATTLE",

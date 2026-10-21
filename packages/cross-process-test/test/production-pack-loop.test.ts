@@ -564,3 +564,82 @@ describe("T-1 02 (#111): the battle-offer section is dormant on the production p
     );
   });
 });
+
+describe("S-2 04 (#89): the unpaid-funds prestige source on the production pack (ADR-0239)", () => {
+  // A compiled production month driven into the shortfall: the player nation's treasury cannot cover its fixed
+  // expenses, so the obligation phase pays what it can and the authorized 300 bp proportional loss applies.
+  function shortfallSnapshot(shortNationIds: readonly string[]): CampaignSnapshot {
+    const { state } = compileProductionCampaign();
+    const nations = new Map(state.snapshot.nations);
+    for (const id of shortNationIds) {
+      const nation = nations.get(id)!;
+      nations.set(id, {
+        ...nation,
+        treasury: SafeInt(0),
+        income: SafeInt(0),
+        expenses: SafeInt(1_000),
+        baseResources: SafeInt(0),
+      });
+    }
+    return { ...state.snapshot, nations };
+  }
+  const run = (snapshot: CampaignSnapshot, playerNationId?: string) =>
+    new MonthExecutor().execute(
+      snapshot,
+      [],
+      "s-2-04-seed",
+      new DiagnosticCollector(),
+      undefined,
+      playerNationId === undefined ? undefined : { playerNationId },
+    );
+  const prestigeEvents = (result: ReturnType<typeof run>) =>
+    result.eventLedger.all.filter((e) => e.body.kind === "PrestigeChanged");
+
+  it("lowers the player's prestige by the authorized rate in the shortfall month and records the event", () => {
+    const snapshot = shortfallSnapshot(["uk"]);
+    const before = snapshot.nations.get("uk")!.prestige as number;
+    const result = run(snapshot, "uk");
+    const after = Math.max(
+      Number(snapshot.prestigeRules.lowerBound),
+      before - Math.ceil((before * 300) / 10_000),
+    );
+    expect(after).toBeLessThan(before);
+    expect(result.finalSnapshot.nations.get("uk")!.prestige).toBe(after);
+    const events = prestigeEvents(result);
+    expect(events).toHaveLength(1);
+    expect(events[0]!.body).toEqual({
+      kind: "PrestigeChanged",
+      nationId: "uk",
+      reasonCode: "UNPAID_FUNDS",
+      ruleKind: "PROPORTIONAL_LOSS",
+      before,
+      after,
+      delta: after - before,
+      rulesetVersion: snapshot.rulesetVersion,
+    });
+  });
+
+  it("changes nothing and emits no event for a shortfall in an AI-only nation or with no shortfall", () => {
+    const aiOnly = [...compileProductionCampaign().state.snapshot.nations.values()].find(
+      (n) => n.isAI && !n.isPlayable,
+    )!;
+    const aiShort = run(shortfallSnapshot([aiOnly.id]), "uk");
+    expect(aiShort.finalSnapshot.nations.get(aiOnly.id)!.prestige).toBe(aiOnly.prestige);
+    expect(prestigeEvents(aiShort)).toHaveLength(0);
+
+    const plain = compileProductionCampaign().state.snapshot;
+    const quiet = run(plain, "uk");
+    expect(prestigeEvents(quiet)).toHaveLength(0);
+    expect(hashSnapshot(quiet.finalSnapshot)).toBe(hashSnapshot(run(plain).finalSnapshot));
+  });
+
+  it("is byte-identical across two runs of the scripted month", () => {
+    const snapshot = shortfallSnapshot(["uk"]);
+    const a = run(snapshot, "uk");
+    const b = run(snapshot, "uk");
+    expect(hashSnapshot(a.finalSnapshot)).toBe(hashSnapshot(b.finalSnapshot));
+    expect(sha256Hex(canonicalSerialize(a.eventLedger))).toBe(
+      sha256Hex(canonicalSerialize(b.eventLedger)),
+    );
+  });
+});

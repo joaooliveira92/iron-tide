@@ -211,6 +211,17 @@ export function describeEventBody(body: DomainEventBody): EventDescription {
         ],
         effectRefs: [],
       };
+    case "PrestigeChanged":
+      return {
+        interpolation: {
+          nationId: body.nationId,
+          reasonCode: body.reasonCode,
+          before: body.before,
+          after: body.after,
+        },
+        subjectRefs: [nation(body.nationId)],
+        effectRefs: [],
+      };
     case "DeclineThresholdReached":
       return {
         interpolation: {

@@ -356,6 +356,52 @@ describe("EnemyDeclinedBattle (T-1 07)", () => {
   });
 });
 
+describe("PrestigeChanged (S-2 04)", () => {
+  const body = {
+    kind: "PrestigeChanged",
+    nationId: "uk",
+    reasonCode: "UNPAID_FUNDS",
+    ruleKind: "PROPORTIONAL_LOSS",
+    before: 20,
+    after: 17,
+    delta: -3,
+    rulesetVersion: "1.0.0",
+  } as const;
+
+  it("records nation, reason code, rule kind, before, after, delta and ruleset version", () => {
+    expect(parseDomainEventBody(body)).toEqual(body);
+    expect(
+      parseDomainEventBody({
+        ...body,
+        reasonCode: "BATTLE_WON",
+        ruleKind: "FIXED_GAIN",
+        before: 5,
+        after: 6,
+        delta: 1,
+      }).kind,
+    ).toBe("PrestigeChanged");
+  });
+
+  it("rejects excess keys, empty ids, unknown codes and kinds, and non-integer values", () => {
+    expect(
+      parseDomainEventBody({
+        ...body,
+        reasonCode: "DECLINED_BATTLE",
+        ruleKind: "FIXED_LOSS",
+        delta: -3,
+        after: 17,
+      }).kind,
+    ).toBe("PrestigeChanged");
+    expect(() => parseDomainEventBody({ ...body, extra: 1 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, nationId: "" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, rulesetVersion: "" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, reasonCode: "UNKNOWN" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, ruleKind: "WINDFALL" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, before: 1.5 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, after: -1 })).toThrow();
+  });
+});
+
 describe("penalty requests (S-5 06)", () => {
   for (const kind of ["PrestigeLossRequested", "RevoltPressureRequested"] as const) {
     it(`${kind} carries integer tons only and rejects excess keys, empty ids and a non-positive shortfall`, () => {

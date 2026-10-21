@@ -1,6 +1,6 @@
 import type { OutflowSettlement } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
-import type { DomainEventEnvelope } from "@bluewave/events";
+import type { DomainEventEnvelope, PrestigeChanged as PrestigeChangedBody } from "@bluewave/events";
 import type { LedgerTransactionInput } from "./financial-ledger.js";
 
 export const CURRENT_VERSION = "0.1.0" as const;
@@ -350,6 +350,40 @@ export function enemyDeclinedBattleEvent(
       areaId,
       enemyVictoryPointCost,
       reasonCode: "ENEMY_DECLINED_BATTLE",
+    },
+    sequenceNumber: seq,
+  };
+}
+
+/**
+ * S-2 04: a nation's prestige changed through one source's rule. Built only for a non-zero applied change (the caller
+ * checks); `delta` is `after - before`. Mirrors the S-2 `PrestigeChange` plus the source and ruleset identity.
+ */
+export function prestigeChangedEvent(
+  nationId: string,
+  reasonCode: PrestigeChangedBody["reasonCode"],
+  ruleKind: PrestigeChangedBody["ruleKind"],
+  change: { readonly before: SafeInt; readonly after: SafeInt; readonly delta: SafeInt },
+  rulesetVersion: string,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `PrestigeChanged-${nationId}-${reasonCode}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "nation",
+    aggregateId: nationId,
+    eventType: "PrestigeChanged",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "PrestigeChanged",
+      nationId,
+      reasonCode,
+      ruleKind,
+      before: change.before,
+      after: change.after,
+      delta: change.delta,
+      rulesetVersion,
     },
     sequenceNumber: seq,
   };
