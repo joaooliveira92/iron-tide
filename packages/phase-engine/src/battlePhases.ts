@@ -21,6 +21,7 @@ import {
   toCampaignBattleResult,
 } from "./battles.js";
 import { applyDecline } from "./battleDecline.js";
+import { applyEnemyDeclines } from "./enemyDecline.js";
 import { buildOfferContent, offeredManifestFor } from "./battleOffer.js";
 import { battleOfferAnsweredEvent } from "./events.js";
 import { applyRecordedBattleResult, consumeBattleResult, consumeOffer } from "./interruption.js";
@@ -48,7 +49,7 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
 
   // S-1 D5: supply each ship's real battle readiness (its crew quality, 0..100)
   // instead of the former hard-coded 80 (ADR-0223).
-  const generationResult = generateBattles({
+  const generated = generateBattles({
     snapshot: ctx.currentSnapshot,
     campaignMonth,
     campaignSeed: randomSeed,
@@ -60,6 +61,10 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
     resolveShipType: () => "BB",
     resolveReadiness: (shipId) => resolveCampaignBattleReadiness(ctx.currentSnapshot, shipId),
   });
+
+  // T-1 07 (spec #109 R11): the enemy may decline a battle with the player before it exists. Dormant (the same object)
+  // without the battle-offer section and the player nation.
+  const generationResult = applyEnemyDeclines(ctx, generated);
 
   if (generationResult.battleIds.length === 0) return;
 

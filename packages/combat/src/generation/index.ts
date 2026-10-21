@@ -15,3 +15,4 @@ export * from "./reservation.js";
 export * from "./autoResolutionProof.js";
 export * from "./acceptance.js";
 export * from "./pipeline.js";
+export * from "./enemyDecline.js";

@@ -86,6 +86,7 @@ export {
   priceDecline,
   type DeclinePrice,
 } from "./battleDecline.js";
+export { applyEnemyDeclines, ENEMY_DECLINE_STREAM } from "./enemyDecline.js";
 export {
   declineScopeKey,
   tallyDecline,

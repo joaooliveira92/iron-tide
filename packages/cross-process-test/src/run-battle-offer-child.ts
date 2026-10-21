@@ -21,7 +21,10 @@ const AREA = "eng_home_coast";
 const SEED = "battle-offer-cross-process-seed";
 const TURN = "battle-offer-cross-process-turn";
 
-function warSnapshot(base: CampaignSnapshot): CampaignSnapshot {
+function warSnapshot(
+  base: CampaignSnapshot,
+  firepower: { readonly player: number; readonly enemy: number } = { player: 200, enemy: 200 },
+): CampaignSnapshot {
   const nations = new Map<string, NationState>(base.nations);
   for (const id of [PLAYER, ENEMY]) {
     const nation = nations.get(id)!;
@@ -31,7 +34,7 @@ function warSnapshot(base: CampaignSnapshot): CampaignSnapshot {
       .map((ship) => ({
         ...ship,
         locationAreaId: AREA,
-        firepower: SafeInt(200),
+        firepower: SafeInt(id === PLAYER ? firepower.player : firepower.enemy),
         hitPoints: ship.maxHitPoints,
         isUnderConstruction: false,
         readiness: "ACTIVE" as const,
@@ -148,7 +151,49 @@ function runChild(): void {
     const requestText = JSON.stringify(request);
     const draws = accepted.randomLedger.all.filter((d) => d.streamId.startsWith("battle-offer"));
 
+    // T-1 07 (#116): the enemy declines. The enemy is far weaker than the player (fixture predicate: under 4000 bp), and the
+    // draw is forced to each side with a fixture probability, so both the withdrawal and the offer are observed.
+    const lopsided = warSnapshot(state.snapshot, { player: 400, enemy: 155 });
+    const withRules = (probabilityBp: number, snap: typeof snapshot): MonthResult =>
+      new MonthExecutor().execute(snap, [], SEED, new DiagnosticCollector(), undefined, {
+        battleOffers: {
+          ...FIXTURE_BATTLE_OFFER_RULES,
+          enemyDecline: { ...FIXTURE_BATTLE_OFFER_RULES.enemyDecline, probabilityBp },
+        },
+        playerNationId: PLAYER,
+        interruptions: { turnId: TURN, recordedInputs: [] },
+      });
+    const enemyDeclined = withRules(10_000, lopsided);
+    const enemyDeclinedAgain = withRules(10_000, lopsided);
+    const enemyProceeds = withRules(0, lopsided);
+    const enemyStream = (result: MonthResult) =>
+      result.randomLedger.all.filter((d) => d.streamId === "battle-offer/enemy-decline");
+    const withdrawals = (result: MonthResult) =>
+      result.eventLedger.all.filter((e) => e.body.kind === "EnemyDeclinedBattle");
+
     const output = {
+      enemyDeclined: {
+        outcome: enemyDeclined.outcome,
+        battles: enemyDeclined.finalSnapshot.wars.battles.length,
+        manifests: (enemyDeclined.finalSnapshot.wars.battleManifests ?? []).length,
+        reservedShips: [...enemyDeclined.finalSnapshot.nations.values()]
+          .flatMap((n) => n.fleets.flatMap((f) => f.ships))
+          .filter((ship) => ship.inBattleId !== undefined).length,
+        withdrawals: withdrawals(enemyDeclined).length,
+        draws: enemyStream(enemyDeclined),
+        snapshotHash: hashSnapshot(enemyDeclined.finalSnapshot),
+        eventLedgerHash: enemyDeclined.eventLedger.hash(),
+        randomLedgerHash: enemyDeclined.randomLedger.hash(),
+        inProcessEqual:
+          hashSnapshot(enemyDeclined.finalSnapshot) ===
+            hashSnapshot(enemyDeclinedAgain.finalSnapshot) &&
+          enemyDeclined.randomLedger.hash() === enemyDeclinedAgain.randomLedger.hash(),
+        proceedsOutcome: enemyProceeds.outcome,
+        proceedsRequestKind: enemyProceeds.suspended?.request?.kind ?? null,
+        proceedsDraws: enemyStream(enemyProceeds),
+        proceedsWithdrawals: withdrawals(enemyProceeds).length,
+        proceedsRandomLedgerHash: enemyProceeds.randomLedger.hash(),
+      },
       success:
         dormant.success &&
         nonOffered.success &&

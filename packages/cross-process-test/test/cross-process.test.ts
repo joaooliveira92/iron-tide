@@ -395,6 +395,23 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     secondSnapshotHash: string;
     secondEventLedgerHash: string;
     secondInProcessEqual: boolean;
+    enemyDeclined: {
+      outcome: string;
+      battles: number;
+      manifests: number;
+      reservedShips: number;
+      withdrawals: number;
+      draws: { draw: number; outcome: string; reasonCode: string; phase: string }[];
+      snapshotHash: string;
+      eventLedgerHash: string;
+      randomLedgerHash: string;
+      inProcessEqual: boolean;
+      proceedsOutcome: string;
+      proceedsRequestKind: string | null;
+      proceedsDraws: { draw: number; outcome: string }[];
+      proceedsWithdrawals: number;
+      proceedsRandomLedgerHash: string;
+    };
   }
 
   function runOfferChild(): OfferChildOutput {
@@ -468,6 +485,32 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     expect(r1.secondInProcessEqual).toBe(true);
     expect(r2.secondSnapshotHash).toBe(r1.secondSnapshotHash);
     expect(r2.secondEventLedgerHash).toBe(r1.secondEventLedgerHash);
+  });
+
+  it("the enemy's decline is identical across two clean processes: one recorded draw, no battle, no reservation, no offer (T-1 07)", () => {
+    const r1 = runOfferChild();
+    const r2 = runOfferChild();
+    expect(r2.enemyDeclined).toEqual(r1.enemyDeclined);
+    const d = r1.enemyDeclined;
+    expect(d.outcome).toBe("completed");
+    expect(d.battles).toBe(0);
+    expect(d.manifests).toBe(0);
+    expect(d.reservedShips).toBe(0);
+    expect(d.withdrawals).toBe(1);
+    expect(d.draws).toHaveLength(1);
+    expect(d.draws[0]).toMatchObject({
+      outcome: "DECLINED",
+      reasonCode: "BATTLE_ENEMY_DECLINED",
+      phase: "battle_generation",
+    });
+    expect(d.inProcessEqual).toBe(true);
+    // The complementary draw: the normal offer, the draw still recorded once.
+    expect(d.proceedsOutcome).toBe("suspended");
+    expect(d.proceedsRequestKind).toBe("offer");
+    expect(d.proceedsDraws).toHaveLength(1);
+    expect(d.proceedsDraws[0]?.outcome).toBe("PROCEEDS");
+    expect(d.proceedsWithdrawals).toBe(0);
+    expect(d.proceedsDraws[0]?.draw).toBe(d.draws[0]?.draw);
   });
 
   it("is byte-identical to the dormant month when no offer is possible (no channel)", () => {
