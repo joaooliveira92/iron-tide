@@ -356,6 +356,7 @@ function createShell(overrides: Record<string, unknown> = {}) {
     refreshCampaign: vi.fn(),
     answerDecision: vi.fn(async () => undefined),
     submitBattleResult: vi.fn(async () => undefined),
+    submitOfferResponse: vi.fn(async () => undefined),
     abandonPendingTurn: vi.fn(async () => undefined),
     selectScreen: vi.fn(),
     setPrimaryAction: vi.fn(),
@@ -501,6 +502,54 @@ describe("App", () => {
     expect(screen.getByTestId("site-header").dataset.searchTargetCount).toBe("2");
     expect(screen.getByTestId("site-header").dataset.nation).toBe("United Kingdom");
     expect(screen.getByText("Advance turn")).toBeTruthy();
+  });
+
+  it("shows the battle offer dialog for an offer interruption and answers it with a typed response", () => {
+    const shell = createShell({
+      campaign: {
+        sessionId: "ses-1",
+        month: { year: 1900, month: 1 },
+        treasury: 50_000,
+        nationName: "United Kingdom",
+        projectedSurplusDeficit: 2_000,
+        activeAlertsCount: null,
+      },
+      screen: "overview",
+      interruption: {
+        unavailable: false,
+        pending: null,
+        request: {
+          kind: "offer",
+          turnId: "t1",
+          interruptionId: "i-offer",
+          ordinal: 0,
+          phase: "battle_resolution",
+          titleKey: "messages.offer.request.title",
+          bodyKey: "messages.offer.request.body",
+          interpolation: {},
+          battleId: "battle-1",
+          attackerId: "uk",
+          defenderId: "france",
+          areaId: "a-1",
+          missionType: "FLEET_BATTLE",
+          acceptanceClass: "OPTIONAL",
+          playerSide: "ATTACKER",
+          playerForce: [],
+          estimate: { model: "EXACT", strength: 400 },
+          supportForcePresent: false,
+          declineStatementKeys: [],
+        },
+      },
+    });
+    testState.shell = shell;
+
+    render(<App />);
+
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog).toBeTruthy();
+    fireEvent.click(screen.getByTestId("offer-delegate"));
+    expect(shell.submitOfferResponse).toHaveBeenCalledWith("delegate");
+    expect(screen.queryByTestId("battle-dialog")).toBeNull();
   });
 
   it("renders the selected background as an explicit variant", () => {

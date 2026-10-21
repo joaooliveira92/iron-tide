@@ -29,6 +29,7 @@ import { CampaignUnavailableView } from "./CampaignUnavailableView.js";
 import { CampaignShellProvider, useCampaignShellContext } from "./CampaignShellContext.js";
 import { GuidedInspectionOverlay } from "./GuidedInspectionOverlay.js";
 import { BattleRequestDialog } from "./interruptions/BattleRequestDialog.js";
+import { OfferDialog } from "./interruptions/OfferDialog.js";
 import { DecisionDialog } from "./interruptions/DecisionDialog.js";
 import { PendingTurnRecoveryPrompt } from "./interruptions/PendingTurnRecoveryPrompt.js";
 import { MapSheet } from "./MapSheet.js";
@@ -267,6 +268,12 @@ function CampaignShellApplication({
           <DecisionDialog
             request={shell.state.interruption.request}
             onAnswer={shell.actions.answerDecision}
+            onAbandon={shell.actions.abandonPendingTurn}
+          />
+        ) : shell.state.interruption.request.kind === "offer" ? (
+          <OfferDialog
+            request={shell.state.interruption.request}
+            onChoose={shell.actions.submitOfferResponse}
             onAbandon={shell.actions.abandonPendingTurn}
           />
         ) : (

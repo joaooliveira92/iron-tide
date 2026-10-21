@@ -23,6 +23,7 @@
     "@bluewave/events": "workspace:*",
     "@bluewave/combat": "workspace:*",
     "@bluewave/persistence": "workspace:*",
+    "@bluewave/messages": "workspace:*",
     "@bluewave/phase-engine": "workspace:*",
     "effect": "workspace:*"
   },

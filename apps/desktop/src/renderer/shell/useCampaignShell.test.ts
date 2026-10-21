@@ -332,6 +332,105 @@ describe("useCampaignShell", () => {
     expect(result.current.saveMessage).toBe("Decision made: uk treasury -25.");
   });
 
+  describe("a battle offer (T-1 03)", () => {
+    const offerRequest = {
+      kind: "offer" as const,
+      turnId: "t1",
+      interruptionId: "i-offer",
+      ordinal: 0,
+      phase: "battle_resolution",
+      titleKey: "messages.offer.request.title",
+      bodyKey: "messages.offer.request.body",
+      interpolation: { areaId: "a-1" },
+      battleId: "battle-1",
+      attackerId: "uk",
+      defenderId: "france",
+      areaId: "a-1",
+      missionType: "FLEET_BATTLE",
+      acceptanceClass: "OPTIONAL",
+      playerSide: "ATTACKER" as const,
+      playerForce: [{ shipId: "s1", name: "HMS One", classId: "c1" }],
+      estimate: { model: "PERTURBED" as const, strength: 410 },
+      supportForcePresent: false,
+      declineStatementKeys: [],
+    };
+    const suspendedAtOffer = {
+      outcome: "success" as const,
+      value: {
+        status: "suspended" as const,
+        request: offerRequest,
+        pendingTurn: {
+          turnId: "t1",
+          campaignId: "campaign_1",
+          playerNationId: "uk",
+          startingRevision: 3,
+          nextInterruptionOrdinal: 0,
+          recordedInputCount: 0,
+          createdAt: "1900-01",
+        },
+      },
+      diagnostics: [],
+    };
+    const executeWith = (answer: unknown, sent: [string, unknown][] = []) =>
+      vi.fn(async (command: string, payload?: unknown) => {
+        sent.push([command, payload]);
+        if (command === "inspectCampaign") {
+          return { outcome: "success" as const, value: { projection }, diagnostics: [] };
+        }
+        if (command === "readPendingTurn") {
+          return {
+            outcome: "success" as const,
+            value: { pending: null, valid: false },
+            diagnostics: [],
+          };
+        }
+        if (command === "submitOfferResponse") return answer;
+        return suspendedAtOffer;
+      });
+
+    for (const response of ["accept", "delegate"] as const) {
+      it(`answers the offer with a typed ${response} response, never a null/null tie`, async () => {
+        const sent: [string, unknown][] = [];
+        const { result } = setup(executeWith(monthResolveSuccess, sent));
+        await act(() => result.current.openCampaign("ses-1"));
+        await act(() => result.current.advanceMonth());
+        expect(result.current.interruption?.request?.kind).toBe("offer");
+
+        await act(() => result.current.submitOfferResponse(response));
+        const answers = sent.filter(([command]) => command === "submitOfferResponse");
+        expect(answers).toHaveLength(1);
+        expect(answers[0]![1]).toMatchObject({
+          sessionId: "ses-1",
+          expectedRevision: 3,
+          interruptionId: "i-offer",
+          battleId: "battle-1",
+          response,
+        });
+        expect(sent.some(([command]) => command === "submitBattleResult")).toBe(false);
+        expect(result.current.interruption).toBeNull();
+        expect(result.current.saveMessage).toBe(
+          response === "accept"
+            ? "Battle at a-1 accepted and resolved."
+            : "Battle at a-1 delegated to staff and resolved.",
+        );
+      });
+    }
+
+    it("keeps the offer pending and reports a refused answer", async () => {
+      const execute = executeWith({
+        outcome: "error" as const,
+        reason: "OfferResponseStale",
+        diagnostics: ["stale"],
+      });
+      const { result } = setup(execute);
+      await act(() => result.current.openCampaign("ses-1"));
+      await act(() => result.current.advanceMonth());
+      await act(() => result.current.submitOfferResponse("accept"));
+      expect(result.current.interruption?.request?.kind).toBe("offer");
+      expect(result.current.saveMessage).toContain("OfferResponseStale");
+    });
+  });
+
   it("keeps the alert slot empty on a rejected commit and stays ready to retry", async () => {
     const execute = vi.fn(async (command: string) => {
       if (command === "inspectCampaign") {

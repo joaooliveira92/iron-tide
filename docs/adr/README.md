@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0255).
+highest existing number + 1 (the next number is ADR-0256).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -131,6 +131,7 @@ The authoritative home area and possession ownership behind per-area presence, t
 | 0251 | [ADR-0251-fleet-screen-foreign-station-status-assign-and-presence-readout.md](ADR-0251-fleet-screen-foreign-station-status-assign-and-presence-readout.md) | The fleet screen shows manual p.48 status, assigns foreign station, and reads presence from the projection | accepted | — |
 | 0253 | [ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md](ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md) | Battle-offer values live in a dormant ruleset section; the month takes the player nation; the offer response is an additive interruption input | accepted | — |
 | 0254 | [ADR-0254-t1-battle-offer-values-balance-targets.md](ADR-0254-t1-battle-offer-values-balance-targets.md) | T-1 battle-offer values: labelled balance targets | accepted | — |
+| 0255 | [ADR-0255-battle-offer-request-estimate-and-answer.md](ADR-0255-battle-offer-request-estimate-and-answer.md) | The battle offer: request shape, estimate, accept and delegate, typed refusals | accepted | — |
 
 ## Ship design & construction
 

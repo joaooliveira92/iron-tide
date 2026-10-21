@@ -24,6 +24,8 @@ import {
 } from "./campaign-shell-state.js";
 import { canGoBack, canGoForward, goBack, goForward } from "./navigation-history.js";
 import type { BattleChoice } from "./interruptions/BattleRequestDialog.js";
+import type { OfferChoice } from "./interruptions/OfferDialog.js";
+import { offerText } from "./interruptions/offer-text.js";
 import type { PrimaryAction } from "./primary-action.js";
 import { formatCampaignMonth } from "./site-header-state.js";
 
@@ -348,6 +350,40 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     [bridge, state.campaign, state.interruption, applyResolveResult, collectMessage],
   );
 
+  /**
+   * Submit the player's answer to a battle offer (T-1 03). It is a typed accept or delegate response, never a battle
+   * outcome: a tie is a result, not an answer to an offer (spec #109 decision C). A refused answer leaves the offer open.
+   */
+  const submitOfferResponse = useCallback(
+    async (choice: OfferChoice) => {
+      const request = state.interruption?.request;
+      if (
+        bridge === undefined ||
+        state.campaign === null ||
+        request === null ||
+        request === undefined ||
+        request.kind !== "offer"
+      ) {
+        return;
+      }
+      const sessionId = state.campaign.sessionId;
+      dispatch({ type: "month-commit-started" });
+      const result = await bridge.campaign.execute("submitOfferResponse", {
+        sessionId,
+        expectedRevision: state.campaign.revision,
+        transportRequestId: crypto.randomUUID(),
+        interruptionId: request.interruptionId,
+        battleId: request.battleId ?? "",
+        response: choice,
+      });
+      applyResolveResult(result, sessionId);
+      if (result.outcome === "success") {
+        collectMessage(offerText(`ui.offer.result.${choice}`, { areaId: request.areaId ?? "" }));
+      }
+    },
+    [bridge, state.campaign, state.interruption, applyResolveResult, collectMessage],
+  );
+
   const abandonPendingTurn = useCallback(async () => {
     if (bridge === undefined || state.campaign === null) return;
     const sessionId = state.campaign.sessionId;
@@ -394,6 +430,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       advanceMonth,
       answerDecision,
       submitBattleResult,
+      submitOfferResponse,
       abandonPendingTurn,
       refreshCampaign,
       selectScreen,
@@ -410,6 +447,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       advanceMonth,
       answerDecision,
       submitBattleResult,
+      submitOfferResponse,
       abandonPendingTurn,
       refreshCampaign,
       selectScreen,
