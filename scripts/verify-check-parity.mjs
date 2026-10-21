@@ -24,6 +24,8 @@ export const ALLOWLIST = {
     "determinism.yml runs `node scripts/verify-golden-hashes.cjs` (Verify golden hashes)",
   "check:determinism":
     "determinism.yml runs `node packages/cross-process-test/dist/run-child.js` (Cross-process determinism)",
+  "check:reachability-ledger":
+    "preflight gate:reachability-ledger runs `node scripts/verify-reachability-ledger.mjs` — same command as pnpm check:reachability-ledger, so the check chain is always covered",
 };
 
 /**

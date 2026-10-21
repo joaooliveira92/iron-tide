@@ -1,0 +1,791 @@
+{
+  "version": 1,
+  "capabilities": [
+    {
+      "id": "cmd-set-research-priority",
+      "description": "Set a nation's research priority for a tech field",
+      "engine_entry": "applySetResearchPriority",
+      "engine_package": "phase-engine",
+      "main_commands": ["inspectResearchScreen", "setResearchPriorityCommand"],
+      "renderer_screen": "screens/research/ResearchScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-officer-command",
+      "description": "Assign or relieve an officer",
+      "engine_entry": "applyOfficerCommand",
+      "engine_package": "phase-engine",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — no officer management UI"
+    },
+    {
+      "id": "cmd-move-fleet",
+      "description": "Move a fleet one route hop per month",
+      "engine_entry": "applyMoveFleet",
+      "engine_package": "phase-engine",
+      "main_commands": [
+        "inspectFleetScreen",
+        "submitMovementCommand",
+        "replaceMovementCommand",
+        "cancelMovementCommand",
+        "submitStationAssignment"
+      ],
+      "renderer_screen": "screens/fleet/FleetScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-set-budget-allocation",
+      "description": "Set budget allocation across spending categories",
+      "engine_entry": "applySetBudgetAllocation",
+      "engine_package": "phase-engine",
+      "main_commands": ["inspectBudgetScreen", "submitBudgetAllocation"],
+      "renderer_screen": "screens/treasury/TreasuryScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-budget-project",
+      "description": "Execute a budget project",
+      "engine_entry": "applyBudgetProject",
+      "engine_package": "phase-engine",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "cmd-submit-design",
+      "description": "Submit a ship design from the drawing board",
+      "engine_entry": "applySubmitDesign",
+      "engine_package": "phase-engine",
+      "main_commands": [
+        "submitDesignCommand",
+        "loadProjectDraft",
+        "readDrawingBoardDraft",
+        "writeDrawingBoardDraft",
+        "loadShipDraft"
+      ],
+      "renderer_screen": "screens/shipbuilding/ShipbuildingDialog.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-revise-project",
+      "description": "Revise an existing ship project",
+      "engine_entry": "applyReviseProject",
+      "engine_package": "phase-engine",
+      "main_commands": ["reviseProjectCommand", "loadProjectDraft"],
+      "renderer_screen": "screens/shipbuilding/ShipbuildingDialog.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-start-rebuild",
+      "description": "Start a ship rebuild/conversion",
+      "engine_entry": "applyStartRebuild",
+      "engine_package": "phase-engine",
+      "main_commands": ["listRebuildableShips", "checkRebuild", "startRebuildCommand"],
+      "renderer_screen": "screens/shipbuilding/ShipbuildingDialog.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-halt-construction",
+      "description": "Halt construction of a ship",
+      "engine_entry": "applyHaltConstruction",
+      "engine_package": "phase-engine",
+      "main_commands": ["haltConstructionCommand"],
+      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-resume-construction",
+      "description": "Resume construction of a halted ship",
+      "engine_entry": "applyResumeConstruction",
+      "engine_package": "phase-engine",
+      "main_commands": ["resumeConstructionCommand"],
+      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-set-acceleration",
+      "description": "Set construction acceleration",
+      "engine_entry": "applySetAcceleration",
+      "engine_package": "phase-engine",
+      "main_commands": ["setAccelerationCommand"],
+      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-order-construction",
+      "description": "Order a new construction project",
+      "engine_entry": "applyOrderConstruction",
+      "engine_package": "phase-engine",
+      "main_commands": [
+        "orderConstructionBatchCommand",
+        "previewConstructionBatchCommand",
+        "submitConstructionCommand",
+        "replaceConstructionCommand",
+        "cancelConstructionCommand"
+      ],
+      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-authorize-dock-expansion",
+      "description": "Authorize a dock expansion",
+      "engine_entry": "applyAuthorizeDockExpansion",
+      "engine_package": "phase-engine",
+      "main_commands": ["authorizeDockExpansionCommand"],
+      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-order-foreign-construction",
+      "description": "Order construction at a foreign yard",
+      "engine_entry": "applyOrderForeignConstruction",
+      "engine_package": "phase-engine",
+      "main_commands": ["placeForeignConstructionCommand", "previewForeignConstructionCommand"],
+      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-cancel-construction-project",
+      "description": "Cancel a construction project",
+      "engine_entry": "applyCancelConstructionProject",
+      "engine_package": "phase-engine",
+      "main_commands": ["cancelConstructionProjectCommand"],
+      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-declare-war",
+      "description": "Declare war on another nation",
+      "engine_entry": "applyDeclareWar",
+      "engine_package": "phase-engine",
+      "main_commands": ["inspectDiplomacyScreen", "submitDiplomacyCommand"],
+      "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-accept-peace",
+      "description": "Accept a peace settlement",
+      "engine_entry": "applyAcceptPeace",
+      "engine_package": "phase-engine",
+      "main_commands": ["inspectDiplomacyScreen", "submitDiplomacyCommand"],
+      "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-set-relation",
+      "description": "Set diplomatic relations",
+      "engine_entry": "applySetRelation",
+      "engine_package": "phase-engine",
+      "main_commands": ["inspectDiplomacyScreen", "submitDiplomacyCommand"],
+      "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-set-nap",
+      "description": "Set a non-aggression pact",
+      "engine_entry": "applySetNap",
+      "engine_package": "phase-engine",
+      "main_commands": ["inspectDiplomacyScreen", "submitDiplomacyCommand"],
+      "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-declare-blockade",
+      "description": "Declare a blockade",
+      "engine_entry": "applyDeclareBlockade",
+      "engine_package": "phase-engine",
+      "main_commands": ["inspectDiplomacyScreen", "submitDiplomacyCommand"],
+      "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-division-commands",
+      "description": "Create, modify and dissolve ship divisions",
+      "engine_entry": "applyDivisionCommandMonth",
+      "engine_package": "phase-engine",
+      "main_commands": ["inspectDivisionScreen", "submitDivisionCommand"],
+      "renderer_screen": "screens/fleet/FleetScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-station-assignment",
+      "description": "Assign ships to foreign stations",
+      "engine_entry": "applyStationAssignmentCommand",
+      "engine_package": "phase-engine",
+      "main_commands": ["submitStationAssignment"],
+      "renderer_screen": "screens/fleet/FleetScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-battle-flow",
+      "description": "Battle offer, acceptance, decline, support forces, war score, consequences",
+      "engine_entry": "applyDecline,applyEnemyDeclines,applySupportForces,applyWarScoreDelta,applyBattleConsequences,applyRecordedBattleResult",
+      "engine_package": "phase-engine",
+      "main_commands": [
+        "resolveTurn",
+        "answerDecision",
+        "submitBattleResult",
+        "submitOfferResponse",
+        "abandonPendingTurn",
+        "readPendingTurn"
+      ],
+      "renderer_screen": "shell/",
+      "status": "reachable"
+    },
+    {
+      "id": "cmd-prestige-change",
+      "description": "Apply prestige changes",
+      "engine_entry": "applyPrestigeChange",
+      "engine_package": "phase-engine",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — S-2 not started; no prestige UI"
+    },
+    {
+      "id": "cmd-readiness-evolution",
+      "description": "Monthly readiness-state evolution (active/reserve/mothballed/working-up)",
+      "engine_entry": "applyReadinessEvolution",
+      "engine_package": "phase-engine",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — S-1 gate accepted; readiness projection missing"
+    },
+    {
+      "id": "cmd-aircraft-development",
+      "description": "Monthly aircraft development resolution",
+      "engine_entry": "resolveAircraftDevelopment",
+      "engine_package": "phase-engine",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — no aircraft or airbase UI"
+    },
+    {
+      "id": "cmd-carrier-operations",
+      "description": "Monthly carrier operations resolution",
+      "engine_entry": "resolveCarrierOperations",
+      "engine_package": "phase-engine",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "cmd-foreign-construction-phases",
+      "description": "Foreign construction phase runner",
+      "engine_entry": "runForeignContractPhase",
+      "engine_package": "phase-engine",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "cmd-foreign-insight",
+      "description": "Foreign insight awards and milestones",
+      "engine_entry": "applyForeignInsightAwards,applyForeignInsightMilestone",
+      "engine_package": "phase-engine",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "cmd-foreign-payment",
+      "description": "Foreign payment month resolution",
+      "engine_entry": "applyForeignPaymentOutcome",
+      "engine_package": "phase-engine",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "cmd-dock-expansion-step",
+      "description": "Monthly dock expansion step",
+      "engine_entry": "applyDockExpansionStep",
+      "engine_package": "phase-engine",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "cmd-acceleration-premium",
+      "description": "Apply acceleration premium work",
+      "engine_entry": "applyAccelerationPremium",
+      "engine_package": "phase-engine",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "cmd-design-studies",
+      "description": "Ship design studies (similarity, compile, study terms)",
+      "engine_entry": "designStudies",
+      "engine_package": "phase-engine",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-gunnery",
+      "description": "Gunnery resolution (hit chance, fall of shot)",
+      "engine_entry": "gunnery",
+      "engine_package": "combat",
+      "main_commands": ["generateBattle", "resolveTacticalBattle"],
+      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
+    },
+    {
+      "id": "combat-weather",
+      "description": "Weather effects on tactical combat",
+      "engine_entry": "weather",
+      "engine_package": "combat",
+      "main_commands": ["generateBattle", "resolveTacticalBattle"],
+      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
+    },
+    {
+      "id": "combat-damage",
+      "description": "Damage allocation and effects",
+      "engine_entry": "damage",
+      "engine_package": "combat",
+      "main_commands": ["generateBattle", "resolveTacticalBattle"],
+      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
+    },
+    {
+      "id": "combat-torpedoes",
+      "description": "Torpedo attack resolution",
+      "engine_entry": "torpedoes",
+      "engine_package": "combat",
+      "main_commands": ["generateBattle", "resolveTacticalBattle"],
+      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
+    },
+    {
+      "id": "combat-movement",
+      "description": "Tactical movement resolution",
+      "engine_entry": "movement",
+      "engine_package": "combat",
+      "main_commands": ["generateBattle", "resolveTacticalBattle"],
+      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
+    },
+    {
+      "id": "combat-spotting",
+      "description": "Visual spotting and detection",
+      "engine_entry": "spotting",
+      "engine_package": "combat",
+      "main_commands": ["generateBattle", "resolveTacticalBattle"],
+      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
+    },
+    {
+      "id": "combat-contact",
+      "description": "Contact reporting and reaction",
+      "engine_entry": "contact",
+      "engine_package": "combat",
+      "main_commands": ["generateBattle", "resolveTacticalBattle"],
+      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
+    },
+    {
+      "id": "combat-air-combat",
+      "description": "Air-to-air combat resolution",
+      "engine_entry": "air-combat",
+      "engine_package": "combat",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — no air-combat UI; campaign-level air component missing"
+    },
+    {
+      "id": "combat-air-defense",
+      "description": "Anti-aircraft defense resolution",
+      "engine_entry": "air-defense",
+      "engine_package": "combat",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — no air-combat UI; campaign-level air component missing"
+    },
+    {
+      "id": "combat-mines",
+      "description": "Mine warfare resolution",
+      "engine_entry": "mines",
+      "engine_package": "combat",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — campaign-level mining gated on W-2"
+    },
+    {
+      "id": "combat-submarines",
+      "description": "Submarine warfare resolution",
+      "engine_entry": "submarines",
+      "engine_package": "combat",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — campaign-level submarines gated on W-2"
+    },
+    {
+      "id": "combat-carrier-operations",
+      "description": "Carrier aircraft operations (deck handling, launch, recovery)",
+      "engine_entry": "carrier-operations",
+      "engine_package": "combat",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — no carrier-operations UI"
+    },
+    {
+      "id": "combat-battle-resolver",
+      "description": "Auto-resolution of an entire tactical battle",
+      "engine_entry": "BattleResolver",
+      "engine_package": "combat",
+      "main_commands": ["resolveBattle", "generateBattle"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-strength-calculator",
+      "description": "Force-strength estimation for battle offers",
+      "engine_entry": "StrengthCalculator",
+      "engine_package": "combat",
+      "main_commands": ["commitMonth"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-tactical-time",
+      "description": "Tactical clock, pipeline",
+      "engine_entry": "tacticalTime,tacticalClock,tacticalPipeline",
+      "engine_package": "combat",
+      "main_commands": ["resolveTacticalBattle"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-targeting",
+      "description": "Target selection and engagement",
+      "engine_entry": "targeting",
+      "engine_package": "combat",
+      "main_commands": ["resolveTacticalBattle"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-command-quantization",
+      "description": "Tactical command quantization, record, reach",
+      "engine_entry": "commandQuantization,commandRecord,commandReach",
+      "engine_package": "combat",
+      "main_commands": ["resolveTacticalBattle"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-realism",
+      "description": "Realism mode enforcement",
+      "engine_entry": "realism",
+      "engine_package": "combat",
+      "main_commands": ["resolveTacticalBattle"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-aircraft",
+      "description": "Aircraft performance models",
+      "engine_entry": "aircraft",
+      "engine_package": "combat",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-battle-turn-away",
+      "description": "Battle turn-away, withdrawal, end",
+      "engine_entry": "battleTurnAway,withdrawal,battleEnd",
+      "engine_package": "combat",
+      "main_commands": ["resolveTacticalBattle", "resolveBattle"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-battle-ledger",
+      "description": "Battle event ledger",
+      "engine_entry": "battleLedger",
+      "engine_package": "combat",
+      "main_commands": ["resolveBattle", "replayBattleBoundary"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-auto-resolution",
+      "description": "Full auto-resolution of battles",
+      "engine_entry": "autoResolution",
+      "engine_package": "combat",
+      "main_commands": ["resolveBattle"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-full-speed-stress",
+      "description": "Full-speed stress on machinery",
+      "engine_entry": "fullSpeedStress",
+      "engine_package": "combat",
+      "main_commands": ["resolveTacticalBattle"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-simulation",
+      "description": "Tactical simulation engine and spawn",
+      "engine_entry": "simulation/engine,simulation/spawn",
+      "engine_package": "combat",
+      "main_commands": ["generateBattle", "seedCampaignBattleDrill"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-tactical",
+      "description": "Tactical behaviour system",
+      "engine_entry": "tactical",
+      "engine_package": "combat",
+      "main_commands": ["resolveTacticalBattle"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-generation",
+      "description": "Battle generation system",
+      "engine_entry": "generation",
+      "engine_package": "combat",
+      "main_commands": ["generateBattle"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-battle-resolution",
+      "description": "Battle resolution pipeline",
+      "engine_entry": "battleResolution",
+      "engine_package": "combat",
+      "main_commands": ["resolveBattle"],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-errors",
+      "description": "Combat error types",
+      "engine_entry": "errors",
+      "engine_package": "combat",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "combat-reason-codes",
+      "description": "Combat outcome reason codes",
+      "engine_entry": "reasonCodes",
+      "engine_package": "combat",
+      "main_commands": [],
+      "renderer_screen": null,
+      "status": "internal"
+    },
+    {
+      "id": "projection-overview",
+      "description": "Campaign overview projection",
+      "engine_entry": "PlayerProjection",
+      "engine_package": "campaign-engine",
+      "main_commands": ["inspectCampaign"],
+      "renderer_screen": "screens/overview/OverviewScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "projection-construction",
+      "description": "Construction screen projection",
+      "engine_entry": "inspectConstructionScreen",
+      "engine_package": "campaign-engine",
+      "main_commands": ["inspectConstructionScreen"],
+      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "projection-fleet",
+      "description": "Fleet screen projection",
+      "engine_entry": "inspectFleetScreen",
+      "engine_package": "campaign-engine",
+      "main_commands": ["inspectFleetScreen"],
+      "renderer_screen": "screens/fleet/FleetScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "projection-research",
+      "description": "Research screen projection",
+      "engine_entry": "inspectResearchScreen",
+      "engine_package": "campaign-engine",
+      "main_commands": ["inspectResearchScreen"],
+      "renderer_screen": "screens/research/ResearchScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "projection-diplomacy",
+      "description": "Diplomacy screen projection",
+      "engine_entry": "inspectDiplomacyScreen",
+      "engine_package": "campaign-engine",
+      "main_commands": ["inspectDiplomacyScreen"],
+      "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "projection-budget",
+      "description": "Budget screen projection",
+      "engine_entry": "inspectBudgetScreen",
+      "engine_package": "campaign-engine",
+      "main_commands": ["inspectBudgetScreen"],
+      "renderer_screen": "screens/treasury/TreasuryScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "projection-map",
+      "description": "Strategic map projection",
+      "engine_entry": "WorldMapView",
+      "engine_package": "campaign-engine",
+      "main_commands": ["inspectMap"],
+      "renderer_screen": "screens/map-prototype/MapPrototypeScreen.tsx",
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — map prototype, dev-only; production gated on F-1"
+    },
+    {
+      "id": "projection-battle-history",
+      "description": "Battle history projection",
+      "engine_entry": "BattleHistoryView",
+      "engine_package": "campaign-engine",
+      "main_commands": ["inspectBattleHistory"],
+      "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "projection-priorities",
+      "description": "Strategic priorities projection",
+      "engine_entry": "InspectPrioritiesResult",
+      "engine_package": "campaign-engine",
+      "main_commands": ["inspectPriorities"],
+      "renderer_screen": "screens/overview/OverviewScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "projection-opening-briefing",
+      "description": "Opening briefing projection",
+      "engine_entry": "OpeningBriefingProjection",
+      "engine_package": "campaign-engine",
+      "main_commands": ["inspectOpeningBriefing"],
+      "renderer_screen": "screens/new-game/NewGameBriefingScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "desktop-save-load",
+      "description": "Campaign save, close, copy, list, load, verify, replay, recover",
+      "engine_entry": null,
+      "engine_package": "desktop",
+      "main_commands": [
+        "saveCampaign",
+        "closeCampaign",
+        "copyCampaign",
+        "loadCampaign",
+        "loadRecentCampaign",
+        "listRecentCampaigns",
+        "removeRecentCampaign",
+        "listCampaigns",
+        "verifyCampaign",
+        "replayCampaign",
+        "recoverCampaign"
+      ],
+      "renderer_screen": "screens/campaign-file/CampaignFileScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "desktop-ui-state",
+      "description": "UI state persistence (sidebar, open cards)",
+      "engine_entry": null,
+      "engine_package": "desktop",
+      "main_commands": ["readUiState", "writeUiState"],
+      "renderer_screen": "shell/",
+      "status": "reachable"
+    },
+    {
+      "id": "desktop-monthly-reports",
+      "description": "Monthly reports and turn summaries",
+      "engine_entry": null,
+      "engine_package": "desktop",
+      "main_commands": ["readMonthlyReports", "readTurnSummaries"],
+      "renderer_screen": "screens/overview/OverviewScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "desktop-new-game",
+      "description": "New game setup flow (nation, archetype, fleet method, briefing)",
+      "engine_entry": null,
+      "engine_package": "desktop",
+      "main_commands": ["listNewGameOptions", "compileCampaign"],
+      "renderer_screen": "screens/new-game/",
+      "status": "reachable"
+    },
+    {
+      "id": "desktop-battle-sandbox",
+      "description": "Battle sandbox (debug-only)",
+      "engine_entry": null,
+      "engine_package": "desktop",
+      "main_commands": [
+        "generateBattle",
+        "resolveBattle",
+        "resolveTacticalBattle",
+        "replayBattleBoundary",
+        "seedCampaignBattleDrill"
+      ],
+      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — debug only; production gated on T-2"
+    },
+    {
+      "id": "desktop-content-inspection",
+      "description": "Content inspection screens (drawing board, presentation, UI catalogue)",
+      "engine_entry": null,
+      "engine_package": "desktop",
+      "main_commands": [
+        "inspectDrawingBoardContent",
+        "inspectPresentationContent",
+        "inspectUiCatalogue"
+      ],
+      "renderer_screen": "screens/debugging/DebuggingScreen.tsx",
+      "status": "dormant-by-decision",
+      "adr_or_issue": "#220 — debug only"
+    },
+    {
+      "id": "desktop-campaign-preferences",
+      "description": "Campaign preferences screen",
+      "engine_entry": null,
+      "engine_package": "desktop",
+      "main_commands": [],
+      "renderer_screen": "screens/campaign-preferences/CampaignPreferencesScreen.tsx",
+      "status": "reachable"
+    },
+    {
+      "id": "desktop-options",
+      "description": "Application options screen",
+      "engine_entry": null,
+      "engine_package": "desktop",
+      "main_commands": [],
+      "renderer_screen": "screens/options/OptionsScreen.tsx",
+      "status": "reachable"
+    }
+  ]
+}

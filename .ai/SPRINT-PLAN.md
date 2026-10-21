@@ -35,6 +35,16 @@ and `.scratch` references do not resolve in this checkout.
 
 ## Gap against the manual
 
+The machine-checked **reachability ledger** (`scripts/data/reachability-ledger.json`,
+verified by `scripts/verify-reachability-ledger.mjs` in `pnpm preflight` and `pnpm check`)
+maps every engine capability to its desktop path. Each row is classified as
+`reachable`, `dormant-by-decision` (with ADR/issue citation), `internal`, or
+`unclassified`. The gate fails when an export or command is unclassified or a
+reachable row's screen no longer exists.
+
+Current classification (2026-10-21): **36 reachable, 19 dormant-by-decision, 25 internal**.
+The table below summarises the player-facing gaps the ledger documents in detail.
+
 | Manual area                                                                           | Status                                                                                                                                                             |
 | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Budget, colonies, oil, research priorities (pp.12–17)                                 | Partial. Treasury, appropriation rate and priorities exist; colonial income decay, oil gating, 12% research cap with diminishing returns above 10% to be verified. |

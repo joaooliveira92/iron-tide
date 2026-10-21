@@ -43,5 +43,6 @@
   "packages/ship-design/AGENTS.md": 100,
   "packages/persistence/AGENTS.md": 125,
   "packages/content-compiler/AGENTS.md": 100,
-  "packages/ship-visual/AGENTS.md": 100
+  "packages/ship-visual/AGENTS.md": 100,
+  "scripts/data/reachability-ledger.json": 1800
 }
