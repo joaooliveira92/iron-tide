@@ -395,6 +395,31 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     secondSnapshotHash: string;
     secondEventLedgerHash: string;
     secondInProcessEqual: boolean;
+    support: {
+      outcome: string;
+      requestFlag: boolean;
+      requestNations: string[] | null;
+      requestLeaksAllyShip: boolean;
+      draws: { draw: number; outcome: string; reasonCode: string; phase: string }[];
+      temporaryAssets: string[];
+      persistentAssets: string[];
+      playerSideParticipants: string[];
+      manifestHash: string;
+      battleSeed: string;
+      inProcessEqual: boolean;
+      randomLedgerHash: string;
+      declinedAllyReserved: number;
+      declinedAllyUndamaged: boolean;
+      declinedSnapshotHash: string;
+      acceptedOutcome: string;
+      acceptedAllyReserved: number;
+      acceptedAllyUndamaged: boolean;
+      acceptedSnapshotHash: string;
+      absentDraws: { outcome: string }[];
+      absentFlag: boolean;
+      noCandidateDraws: number;
+      noCandidateFlag: boolean;
+    };
     enemyDeclined: {
       outcome: string;
       battles: number;
@@ -511,6 +536,40 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     expect(d.proceedsDraws[0]?.outcome).toBe("PROCEEDS");
     expect(d.proceedsWithdrawals).toBe(0);
     expect(d.proceedsDraws[0]?.draw).toBe(d.draws[0]?.draw);
+  });
+
+  it("a friendly support force is identical across two clean processes: one recorded draw, disclosed on the offer, in the manifest within the cap (T-1 08)", () => {
+    const r1 = runOfferChild();
+    const r2 = runOfferChild();
+    expect(r2.support).toEqual(r1.support);
+    const s = r1.support;
+    expect(s.outcome).toBe("suspended");
+    expect(s.requestFlag).toBe(true);
+    expect(s.requestNations).toEqual(["italy"]);
+    expect(s.requestLeaksAllyShip).toBe(false);
+    expect(s.draws).toHaveLength(1);
+    expect(s.draws[0]).toMatchObject({
+      outcome: "PRESENT",
+      reasonCode: "BATTLE_SUPPORT_FORCE_PRESENT",
+      phase: "battle_generation",
+    });
+    expect(s.temporaryAssets).toHaveLength(2);
+    expect(s.persistentAssets).toHaveLength(4);
+    expect(s.playerSideParticipants).toEqual(["italy", "uk"]);
+    expect(s.manifestHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(s.inProcessEqual).toBe(true);
+    // Declining or accepting leaves the support ships unreserved and undamaged.
+    expect(s.declinedAllyReserved).toBe(0);
+    expect(s.declinedAllyUndamaged).toBe(true);
+    expect(s.acceptedOutcome).toBe("completed");
+    expect(s.acceptedAllyReserved).toBe(0);
+    expect(s.acceptedAllyUndamaged).toBe(true);
+    // The complementary draw and the no-candidate month.
+    expect(s.absentDraws).toHaveLength(1);
+    expect(s.absentDraws[0]?.outcome).toBe("ABSENT");
+    expect(s.absentFlag).toBe(false);
+    expect(s.noCandidateDraws).toBe(0);
+    expect(s.noCandidateFlag).toBe(false);
   });
 
   it("is byte-identical to the dormant month when no offer is possible (no channel)", () => {

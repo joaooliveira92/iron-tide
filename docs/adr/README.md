@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0259).
+highest existing number + 1 (the next number is ADR-0260).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -135,6 +135,7 @@ The authoritative home area and possession ownership behind per-area presence, t
 | 0256 | [ADR-0256-battle-offer-decline-record-release-and-victory-point-cost.md](ADR-0256-battle-offer-decline-record-release-and-victory-point-cost.md) | Declining a battle offer: terminal record, released ships, victory-point cost | accepted | — |
 | 0257 | [ADR-0257-declined-battle-tally-and-threshold-event.md](ADR-0257-declined-battle-tally-and-threshold-event.md) | Declined-battle tally and the repeated-decline threshold event | accepted | — |
 | 0258 | [ADR-0258-enemy-declines-a-battle-with-the-player.md](ADR-0258-enemy-declines-a-battle-with-the-player.md) | The enemy declines a battle with the player | accepted | — |
+| 0259 | [ADR-0259-friendly-support-force-joins-the-players-side.md](ADR-0259-friendly-support-force-joins-the-players-side.md) | A friendly support force joins the player's side | accepted | — |
 
 ## Ship design & construction
 
