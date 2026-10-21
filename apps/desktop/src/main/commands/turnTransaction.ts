@@ -197,6 +197,7 @@ export const runTurnTransaction = (
               phase: request.phase,
               ordinal: request.ordinal,
               subjectKey: request.subjectKey,
+              ...(request.kind === "offer" ? { acceptanceClass: request.acceptanceClass } : {}),
             };
       const pendingTurn = buildPendingTurn({
         projectionVersion: "1.0.0",

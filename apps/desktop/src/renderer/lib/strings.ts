@@ -274,6 +274,15 @@ export const EN_US_MESSAGES = {
   "ui.offer.abandon": "Abandon this turn",
   "ui.offer.result.accept": "Battle at {areaId} accepted and resolved.",
   "ui.offer.result.delegate": "Battle at {areaId} delegated to staff and resolved.",
+  "ui.offer.decline": "Decline battle",
+  "ui.offer.decline.unavoidable":
+    "This battle is operationally unavoidable, so it cannot be declined.",
+  "ui.offer.result.decline": "Battle at {areaId} declined.",
+  "ui.offer.result.decline.cost":
+    "Battle at {areaId} declined; {victoryPointCost} victory points lost.",
+  "messages.battle.declined.title": "Battle declined",
+  "messages.battle.declined.body":
+    "{nationId} declined the battle at {areaId} and lost {victoryPointCost} victory points.",
   "ui.offer.decline.costsVictoryPoints": "Declining a battle costs victory points.",
   "ui.offer.decline.mayCostPrestige": "Repeated declines may also cost prestige.",
 } as const;

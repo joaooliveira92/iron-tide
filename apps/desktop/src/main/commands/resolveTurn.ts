@@ -1,3 +1,4 @@
+import { BATTLE_DECLINE_NOT_ALLOWED } from "@bluewave/combat";
 import { Effect, Schema } from "effect";
 import {
   computeInterruptionId,
@@ -439,7 +440,7 @@ export const submitBattleResultProgram = withSchema(SubmitBattleResultPayloadSch
  * Record a player's answer to a battle offer at the next ordinal and resume (T-1 03, spec #109 R6). The answer is refused
  * with a stable typed reason, before anything is recorded and with the offer left pending, when no offer is outstanding or
  * the interruption id is stale (a duplicate or out-of-order answer), when it names another battle, or when it is a decline
- * (not yet an available answer). The engine validates the recorded input again on re-execution.
+ * (an unavoidable mission). The engine validates the recorded input again on re-execution.
  */
 export const submitOfferResponseProgram = withStrictSchema(
   SubmitOfferResponsePayloadSchema,
@@ -479,11 +480,17 @@ export const submitOfferResponseProgram = withStrictSchema(
           diagnostics: [`Offer answer for session ${payload.sessionId} names another battle`],
         };
       }
-      if (payload.response === "decline") {
+      if (
+        payload.response === "decline" &&
+        pending.outstanding?.acceptanceClass === "OPERATIONALLY_UNAVOIDABLE"
+      ) {
+        // The existing typed refusal: an unavoidable mission cannot be declined, and nothing is recorded.
         return {
           outcome: "error" as const,
-          reason: "OfferDeclineUnavailable",
-          diagnostics: ["Declining a battle is not yet available; the offer stays pending"],
+          reason: BATTLE_DECLINE_NOT_ALLOWED,
+          diagnostics: [
+            `Battle ${payload.battleId} is operationally unavoidable and cannot be declined; the offer stays pending`,
+          ],
         };
       }
       const answer: OfferResponseInput = {

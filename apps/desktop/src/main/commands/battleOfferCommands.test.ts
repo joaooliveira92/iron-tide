@@ -18,7 +18,7 @@ import {
   registerCampaignSession,
 } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
-import { loadPendingTurn, PENDING_TURN_FILENAME } from "../pendingTurn.js";
+import { loadPendingTurn, PENDING_TURN_FILENAME, savePendingTurn } from "../pendingTurn.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import type { CommandProgram } from "../runtime/commandProgram.js";
 import { ContentArtifact, contentArtifactLayer } from "../runtime/contentArtifact.js";
@@ -256,7 +256,7 @@ describe("battle offer commands", () => {
     expect(again.status === "suspended" ? again.request : null).toEqual(first);
   });
 
-  it("refuses stale, wrong-battle, duplicate and decline answers with typed reasons, leaving the offer pending", async () => {
+  it("refuses stale, wrong-battle, duplicate and surplus-key answers with typed reasons, leaving the offer pending", async () => {
     const saveDir = join(saveRoot, "refuse");
     const request = await suspendAtOffer("s-refuse", saveDir);
     const before = readFileSync(join(saveDir, PENDING_TURN_FILENAME), "utf8");
@@ -273,13 +273,84 @@ describe("battle offer commands", () => {
     expect(await refused({ ...base, battleId: "other", response: "accept" })).toBe(
       "OfferResponseWrongBattle",
     );
-    expect(await refused({ ...base, response: "decline" })).toBe("OfferDeclineUnavailable");
     expect(await refused({ ...base, response: "accept", surprise: 1 })).toBe("INVALID_PAYLOAD");
 
     const accepted = await submit("s-refuse", { ...base, response: "accept" });
     expect(accepted.outcome).toBe("success");
     const duplicate = await submit("s-refuse", { ...base, response: "accept" });
     expect(duplicate.outcome).toBe("error");
+  });
+
+  it("declines the battle: a declined record, released ships, the lowered war score and the turn message", async () => {
+    const saveDir = join(saveRoot, "decline");
+    const request = await suspendAtOffer("s-decline", saveDir);
+    const answered = await submit("s-decline", {
+      interruptionId: request.interruptionId,
+      battleId: request.battleId,
+      response: "decline",
+    });
+    expect(answered.outcome).toBe("success");
+    if (answered.outcome !== "success") return;
+    const value = answered.value as ResolveTurnResult;
+    expect(value.status).toBe("completed");
+    expect(existsSync(join(saveDir, PENDING_TURN_FILENAME))).toBe(false);
+
+    const snapshot = getCampaignSession("s-decline")!.state.snapshot;
+    // The declined record, once, with the fixture rule's cost (FLEET_BATTLE 4) and no opponent credit.
+    expect(snapshot.wars.declinedBattles).toHaveLength(1);
+    expect(snapshot.wars.declinedBattles?.[0]).toMatchObject({
+      battleId: request.battleId,
+      nationId: "uk",
+      missionType: "FLEET_BATTLE",
+      areaId: AREA,
+      victoryPointCost: 4,
+      opponentCredit: 0,
+    });
+    // The battle never resolved, the war score fell, and no ship stays reserved or damaged.
+    expect(snapshot.wars.battles.map((b) => b.phase)).toEqual(["declined"]);
+    expect(snapshot.wars.wars[0]).toMatchObject({ attackerWarScore: -4, defenderWarScore: 0 });
+    const ships = [...snapshot.nations.values()].flatMap((n) => n.fleets.flatMap((f) => f.ships));
+    expect(ships.some((ship) => ship.inBattleId !== undefined)).toBe(false);
+    expect(ships.every((ship) => ship.hitPoints === ship.maxHitPoints)).toBe(true);
+
+    // The player-visible turn message reports the decline and its victory-point cost.
+    if (value.status !== "completed") return;
+    const message = value.summary.messages.find(
+      (m) => m.bodyKey === "messages.battle.declined.body",
+    );
+    expect(message?.interpolation).toMatchObject({
+      battleId: request.battleId,
+      areaId: AREA,
+      victoryPointCost: 4,
+    });
+
+    // The save restores the record exactly.
+    const loaded = new SaveStore().load(saveDir, new DiagnosticCollector());
+    expect(JSON.stringify(loaded?.snapshot.wars.declinedBattles)).toBe(
+      JSON.stringify(snapshot.wars.declinedBattles),
+    );
+  });
+
+  it("refuses a decline of an operationally unavoidable offer with the typed refusal, leaving the offer pending", async () => {
+    const saveDir = join(saveRoot, "unavoidable");
+    const request = await suspendAtOffer("s-unavoidable", saveDir);
+    const pending = loadPendingTurn(saveDir)!;
+    savePendingTurn(saveDir, {
+      ...pending,
+      outstanding: { ...pending.outstanding!, acceptanceClass: "OPERATIONALLY_UNAVOIDABLE" },
+    });
+    const before = readFileSync(join(saveDir, PENDING_TURN_FILENAME), "utf8");
+    const refused = await submit("s-unavoidable", {
+      interruptionId: request.interruptionId,
+      battleId: request.battleId,
+      response: "decline",
+    });
+    expect(refused.outcome).toBe("error");
+    expect(refused.outcome === "error" ? refused.reason : "").toBe("BATTLE_DECLINE_NOT_ALLOWED");
+    expect(readFileSync(join(saveDir, PENDING_TURN_FILENAME), "utf8")).toBe(before);
+    expect(
+      getCampaignSession("s-unavoidable")!.state.snapshot.wars.declinedBattles,
+    ).toBeUndefined();
   });
 
   it("abandoning the pending turn discards the offer with no state change", async () => {

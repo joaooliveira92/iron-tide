@@ -12,8 +12,11 @@ import {
 import { Button } from "../../components/ui/button.js";
 import { offerText } from "./offer-text.js";
 
-/** The answers a battle offer accepts in this ticket; decline arrives with ticket #113. */
-export type OfferChoice = "accept" | "delegate";
+/** The answers a battle offer accepts: fight it, let staff fight it, or decline it (which costs victory points). */
+export type OfferChoice = "accept" | "delegate" | "decline";
+
+/** The acceptance class whose battles cannot be declined (the engine refuses the answer with a typed reason). */
+const UNAVOIDABLE_CLASS = "OPERATIONALLY_UNAVOIDABLE";
 
 /**
  * The battle-offer modal (T-1 03, spec #109 R14). It shows the mission and acceptance class, the area, the two sides, the
@@ -37,6 +40,7 @@ export function OfferDialog({
   const mission = request.missionType ?? "";
   const acceptanceClass = request.acceptanceClass ?? "";
   const estimate = request.estimate;
+  const declineRefused = acceptanceClass === UNAVOIDABLE_CLASS;
   const rows: readonly (readonly [string, string])[] = [
     [offerText("ui.offer.field.mission"), offerText(`ui.offer.mission.${mission}`)],
     [offerText("ui.offer.field.class"), offerText(`ui.offer.class.${acceptanceClass}`)],
@@ -122,6 +126,27 @@ export function OfferDialog({
             {offerText("ui.offer.delegate")}
           </Button>
           <p className="text-xs text-muted-foreground">{offerText("ui.offer.delegate.hint")}</p>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            data-testid="offer-decline"
+            aria-disabled={declineRefused}
+            aria-describedby="offer-decline-statement"
+            onClick={() => {
+              if (!declineRefused) onChoose("decline");
+            }}
+          >
+            {offerText("ui.offer.decline")}
+          </Button>
+          <div id="offer-decline-statement" className="text-xs text-muted-foreground">
+            {declineRefused ? (
+              <p data-testid="offer-decline-reason">{offerText("ui.offer.decline.unavoidable")}</p>
+            ) : null}
+            {(request.declineStatementKeys ?? []).map((key) => (
+              <p key={key}>{offerText(key)}</p>
+            ))}
+          </div>
           <Button
             type="button"
             variant="ghost"

@@ -33,6 +33,11 @@ export const OutstandingRequestSchema = Schema.Struct({
   phase: TurnPhaseSchema,
   ordinal: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
   subjectKey: nonEmpty,
+  /**
+   * Offer only (T-1 04): the offered battle's acceptance class, so the answer boundary can refuse a decline of an
+   * OPERATIONALLY_UNAVOIDABLE mission before recording anything. Advisory: the engine re-validates on re-execution.
+   */
+  acceptanceClass: Schema.optional(nonEmpty),
 });
 
 export const PendingTurnSchema = Schema.Struct({

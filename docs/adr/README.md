@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0256).
+highest existing number + 1 (the next number is ADR-0257).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -132,6 +132,7 @@ The authoritative home area and possession ownership behind per-area presence, t
 | 0253 | [ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md](ADR-0253-battle-offer-ruleset-section-player-nation-input-and-offer-response.md) | Battle-offer values live in a dormant ruleset section; the month takes the player nation; the offer response is an additive interruption input | accepted | — |
 | 0254 | [ADR-0254-t1-battle-offer-values-balance-targets.md](ADR-0254-t1-battle-offer-values-balance-targets.md) | T-1 battle-offer values: labelled balance targets | accepted | — |
 | 0255 | [ADR-0255-battle-offer-request-estimate-and-answer.md](ADR-0255-battle-offer-request-estimate-and-answer.md) | The battle offer: request shape, estimate, accept and delegate, typed refusals | accepted | — |
+| 0256 | [ADR-0256-battle-offer-decline-record-release-and-victory-point-cost.md](ADR-0256-battle-offer-decline-record-release-and-victory-point-cost.md) | Declining a battle offer: terminal record, released ships, victory-point cost | accepted | — |
 
 ## Ship design & construction
 

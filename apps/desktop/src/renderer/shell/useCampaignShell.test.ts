@@ -416,6 +416,46 @@ describe("useCampaignShell", () => {
       });
     }
 
+    it("answers a decline with a typed decline response and reports its victory-point cost from the turn summary", async () => {
+      const sent: [string, unknown][] = [];
+      const declinedMessage = {
+        bodyKey: "messages.battle.declined.body",
+        titleKey: "messages.battle.declined.title",
+        interpolation: { battleId: "battle-1", areaId: "a-1", victoryPointCost: 5 },
+      };
+      const answer = {
+        ...monthResolveSuccess,
+        value: {
+          ...monthResolveSuccess.value,
+          summary: { ...monthResolveSuccess.value.summary, messages: [declinedMessage] },
+        },
+      };
+      const { result } = setup(executeWith(answer, sent));
+      await act(() => result.current.openCampaign("ses-1"));
+      await act(() => result.current.advanceMonth());
+
+      await act(() => result.current.submitOfferResponse("decline"));
+      const answers = sent.filter(([command]) => command === "submitOfferResponse");
+      expect(answers).toHaveLength(1);
+      expect(answers[0]![1]).toMatchObject({
+        interruptionId: "i-offer",
+        battleId: "battle-1",
+        response: "decline",
+      });
+      expect(result.current.interruption).toBeNull();
+      expect(result.current.saveMessage).toBe("Battle at a-1 declined; 5 victory points lost.");
+    });
+
+    it("reports a decline without the figure when the month stays suspended at the next offer", async () => {
+      const { result } = setup(
+        executeWith({ ...suspendedAtOffer, value: { ...suspendedAtOffer.value } }),
+      );
+      await act(() => result.current.openCampaign("ses-1"));
+      await act(() => result.current.advanceMonth());
+      await act(() => result.current.submitOfferResponse("decline"));
+      expect(result.current.saveMessage).toBe("Battle at a-1 declined.");
+    });
+
     it("keeps the offer pending and reports a refused answer", async () => {
       const execute = executeWith({
         outcome: "error" as const,

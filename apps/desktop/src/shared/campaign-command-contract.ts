@@ -902,7 +902,7 @@ export interface SubmitBattleResultPayload {
   readonly damageReport: Readonly<Record<string, number>>;
 }
 
-/** The player's answer to a battle offer (T-1 03). Decline is not yet an available answer (ticket #113). */
+/** The player's answer to a battle offer (T-1 03, T-1 04): accept, delegate to staff, or decline. */
 export interface SubmitOfferResponsePayload {
   readonly sessionId: string;
   readonly expectedRevision: number;

@@ -351,7 +351,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
   );
 
   /**
-   * Submit the player's answer to a battle offer (T-1 03). It is a typed accept or delegate response, never a battle
+   * Submit the player's answer to a battle offer (T-1 03, T-1 04). It is a typed accept, delegate or decline response, never a battle
    * outcome: a tie is a result, not an answer to an offer (spec #109 decision C). A refused answer leaves the offer open.
    */
   const submitOfferResponse = useCallback(
@@ -378,7 +378,26 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       });
       applyResolveResult(result, sessionId);
       if (result.outcome === "success") {
-        collectMessage(offerText(`ui.offer.result.${choice}`, { areaId: request.areaId ?? "" }));
+        const areaId = request.areaId ?? "";
+        // A decline reports its victory-point cost when the month completed and the turn summary carries it (the
+        // authoritative BattleDeclined event projected as a message); otherwise it is reported without the figure.
+        const declined =
+          choice === "decline" && result.value.status === "completed"
+            ? result.value.summary.messages.find(
+                (message) =>
+                  message.bodyKey === "messages.battle.declined.body" &&
+                  message.interpolation["battleId"] === request.battleId,
+              )
+            : undefined;
+        const cost = declined?.interpolation["victoryPointCost"];
+        collectMessage(
+          cost === undefined
+            ? offerText(`ui.offer.result.${choice}`, { areaId })
+            : offerText("ui.offer.result.decline.cost", {
+                areaId,
+                victoryPointCost: String(cost),
+              }),
+        );
       }
     },
     [bridge, state.campaign, state.interruption, applyResolveResult, collectMessage],
