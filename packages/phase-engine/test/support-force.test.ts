@@ -223,6 +223,27 @@ describe("the support force (R12)", () => {
     expect(request.supportForcePresent).toBe(true);
   });
 
+  it("clamps a composition larger than the cap to floor(committed strength x min(share, 5000) / 10000)", () => {
+    const candidates = snapshotOf([...ELIGIBLE], {});
+    const supportStrength = (result: MonthResult): number =>
+      (manifestOf(result)?.temporaryAssets ?? []).reduce(
+        (sum, id) => sum + (ships(result, ALLY).find((s) => s.id === id)?.firepower ?? 0),
+        0,
+      );
+    // All three candidates total 600, above every cap below; the player commits g1 (800).
+    const offered = (shareOfCapBp: number) =>
+      run(candidates, rules({ presenceChanceBp: 10_000, shareOfCapBp }));
+    // A share under the 50% ceiling binds at floor(800 x 3000 / 10000) = 240: only i1 (200) fits.
+    const bound = offered(3_000);
+    expect(manifestOf(bound)?.temporaryAssets).toEqual(["i1"]);
+    expect(supportStrength(bound)).toBeLessThanOrEqual(Math.floor((800 * 3_000) / 10_000));
+    // A share above the ceiling is clamped to 5000: the cap is 400, never floor(800 x 9000 / 10000) = 720.
+    const clamped = offered(9_000);
+    expect(manifestOf(clamped)?.temporaryAssets).toEqual(["i2", "i3"]);
+    expect(supportStrength(clamped)).toBe(Math.floor((800 * 5_000) / 10_000));
+    expect(manifestOf(clamped)?.manifestHash).toBe(manifestOf(offered(5_000))?.manifestHash);
+  });
+
   it("discloses presence and the supporting nation, and nothing beyond the player's own force view", () => {
     const request = offerOf(run(withCandidates, present));
     expect(request.supportForcePresent).toBe(true);
