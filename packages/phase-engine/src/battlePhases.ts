@@ -1,4 +1,4 @@
-// Battle phases: battle_generation (order 7.5) and battle_resolution (order 8).
+// Battle phases: battle_generation (order 75) and battle_resolution (order 80).
 import type { BattleInstance, CampaignWeatherState, NationState } from "@bluewave/campaign";
 import {
   BATTLE_AUTO_RESOLUTION_FAILED,
@@ -21,11 +21,16 @@ import {
   toCampaignBattleResult,
 } from "./battles.js";
 import { applyRecordedBattleResult, consumeBattleResult } from "./interruption.js";
+import { runForeignStationDeploymentStep } from "./foreignStationDeployment.js";
+import { runPresenceMeasurementStep } from "./presenceMeasurement.js";
+import { runBaseLimitStep } from "./baseLimits.js";
 import type { MonthContext } from "./monthContext.js";
+import type { PhaseDescriptor } from "./registry.js";
+import { PhaseResource } from "./phase-resource.js";
 
 type AutoResolutionManifest = Parameters<typeof resolveBattleAuto>[0]["manifest"];
 
-// Phase 9.5: battle_generation (order 7.5). Generates BattleInstances + manifests
+// Phase 9.5: battle_generation (order 75). Generates BattleInstances + manifests
 // for reachable missions from committed post-construction state; feeds
 // battle_resolution (phase 10) unchanged. No-op path keeps the new collections
 // ABSENT so a no-war month's final-state hash is unchanged (AC-12 pin). Uses no
@@ -318,3 +323,63 @@ function resolveViaTacticalAuto(
     resolveViaLegacyPath(ctx, battle, attacker, defender, randomEngine, resolver);
   }
 }
+
+export const battleGenerationPhase: PhaseDescriptor = {
+  id: "battle_generation",
+  name: "Battle Generation",
+  order: 75,
+  // ADR-0036: battle_generation reads the nations map (ship strength/
+  // readiness) and writes wars (battles + manifests) plus nations (ship
+  // inBattleId reservations).
+  readPermissions: ["wars", "fleets", "politics", "nations"],
+  writePermissions: ["wars", "nations"],
+  rngAllowed: true,
+  footprint: {
+    reads: [PhaseResource.WARS, PhaseResource.FLEETS, PhaseResource.NATIONS],
+    writes: [PhaseResource.WARS, PhaseResource.NATIONS],
+    usesRng: true,
+  },
+  run: (ctx) => {
+    runBattleGenerationPhase(ctx);
+    return { status: "continue" };
+  },
+};
+
+export const battleResolutionPhase: PhaseDescriptor = {
+  id: "battle_resolution",
+  name: "Battle Resolution",
+  order: 80,
+  // ADR-0036: battle_resolution reads committed strategic weather + the
+  // nations map and writes wars + fleets + nations (per-ship damage/loss
+  // and reservation clearing). S-5: its month-end presence step also reads
+  // compiled designs (ship tonnage) and writes nothing but events.
+  readPermissions: ["wars", "fleets", "nations", "strategicWeather", "designs"],
+  writePermissions: ["wars", "fleets", "nations"],
+  rngAllowed: true,
+  footprint: {
+    reads: [
+      PhaseResource.WARS,
+      PhaseResource.FLEETS,
+      PhaseResource.NATIONS,
+      PhaseResource.STRATEGIC_WEATHER,
+      PhaseResource.DESIGNS,
+    ],
+    writes: [PhaseResource.WARS, PhaseResource.FLEETS, PhaseResource.NATIONS],
+    usesRng: true,
+  },
+  run: (ctx) => {
+    runBattleResolutionPhase(ctx);
+    if (ctx.interruption?.suspended !== undefined) {
+      return { status: "finish", success: true };
+    }
+    // S-5 month-end steps in the battle_resolution footprint: presence is
+    // measured after movement and battle resolution (spec #73 R5/R6), then
+    // foreign-station ships route one hop toward the largest shortfall, and
+    // base limits are checked last so battles this month saw the full fleet
+    // (spec #73 R10). Each is dormant (a strict no-op) unless the pack authors
+    // the presence ruleset section.
+    runForeignStationDeploymentStep(ctx, runPresenceMeasurementStep(ctx));
+    runBaseLimitStep(ctx);
+    return { status: "continue" };
+  },
+};

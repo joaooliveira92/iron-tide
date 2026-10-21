@@ -17,6 +17,8 @@ import type {
   DeclareWarCommand,
 } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
+import type { PhaseDescriptor } from "./registry.js";
+import { PhaseResource } from "./phase-resource.js";
 
 function pairKey(a: string, b: string): string {
   return [a, b].sort().join("\u0000");
@@ -276,3 +278,21 @@ export function settleWar(
   });
   return next;
 }
+
+export const diplomacyPhase: PhaseDescriptor = {
+  id: "resolve_diplomacy",
+  name: "Diplomacy Resolution",
+  order: 65,
+  readPermissions: ["wars", "politics", "fleets"],
+  writePermissions: ["wars", "politics"],
+  rngAllowed: false,
+  footprint: {
+    reads: [PhaseResource.WARS, PhaseResource.POLITICS],
+    writes: [PhaseResource.WARS],
+    usesRng: false,
+  },
+  run: (ctx) => {
+    ctx.currentSnapshot = resolveDiplomacyPhase(ctx.currentSnapshot, ctx.campaignMonth);
+    return { status: "continue" };
+  },
+};

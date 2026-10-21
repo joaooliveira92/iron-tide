@@ -22,6 +22,8 @@ import {
 } from "./dockExpansion.js";
 import { constructionProgressedEvent, shipRebuiltEvent } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
+import type { PhaseDescriptor } from "./registry.js";
+import { PhaseResource } from "./phase-resource.js";
 import { checkRebuildClassification } from "./rebuildClassification.js";
 
 export function runConstructionProcessingPhase(ctx: MonthContext): void {
@@ -30,6 +32,27 @@ export function runConstructionProcessingPhase(ctx: MonthContext): void {
     applyConstructionToNation(ctx, nationId, nation);
   }
 }
+
+export const constructionProcessingPhase: PhaseDescriptor = {
+  id: "construction_processing",
+  name: "Construction Processing",
+  order: 60,
+  // SB3-R16: advances dock-expansion elapsed months and raises the nation's
+  // dock limits on completion, so it reads/writes the nations resource (dock
+  // limits) as well as constructions/fleets.
+  readPermissions: ["constructions", "fleets", "nations"],
+  writePermissions: ["constructions", "fleets", "nations"],
+  rngAllowed: false,
+  footprint: {
+    reads: [PhaseResource.CONSTRUCTIONS, PhaseResource.FLEETS, PhaseResource.NATIONS],
+    writes: [PhaseResource.CONSTRUCTIONS, PhaseResource.FLEETS, PhaseResource.NATIONS],
+    usesRng: false,
+  },
+  run: (ctx) => {
+    runConstructionProcessingPhase(ctx);
+    return { status: "continue" };
+  },
+};
 
 function applyConstructionToNation(ctx: MonthContext, nationId: string, nation: NationState): void {
   const { campaignMonth, eventLedger, collector, nextSeq } = ctx;

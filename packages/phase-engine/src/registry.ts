@@ -1,3 +1,33 @@
+// The phase registry. Each phase module registers one `PhaseDescriptor` — its
+// declared registry policy (read/writePermissions + rngAllowed), its
+// authoritative runtime footprint ("reality", ADR-0036), and its body — and
+// MonthExecutor runs every phase by iterating this registry in canonical
+// order. The registry is the single dispatch seam: adding or gating a phase
+// means adding or swapping one descriptor here, never editing MonthExecutor.
+//
+// The pipeline also has one pinned, non-phase control node: the interruption
+// checkpoint between resolve_carrier_operations and battle_generation. It is
+// deliberately NOT a registered phase (interruption.test.ts pins that).
+import type { MonthContext } from "./monthContext.js";
+import type { PhaseFootprint } from "./phase-resource.js";
+import { runInterruptionCheckpoint } from "./interruption.js";
+import { aircraftDevelopmentPhase } from "./aircraft.js";
+import { constructionProcessingPhase } from "./constructionPhase.js";
+import { aiProcurementPhase } from "./aiProcurement.js";
+import { battleGenerationPhase, battleResolutionPhase } from "./battlePhases.js";
+import { carrierOperationsPhase } from "./carrier-operations.js";
+import { aiPlanningPhase, commandCollectionPhase } from "./commandPhases.js";
+import { diplomacyPhase } from "./diplomacy.js";
+import {
+  appropriationPhase,
+  maintenancePhase,
+  monthlyRevenuePhase,
+  obligationPhase,
+} from "./economyPhases.js";
+import { researchPhase } from "./research.js";
+import { closingValidationPhase, openingValidationPhase } from "./validationPhases.js";
+import { weatherGenerationPhase } from "./weatherPhase.js";
+
 export interface PhaseDefinition {
   id: string;
   name: string;
@@ -7,197 +37,95 @@ export interface PhaseDefinition {
   rngAllowed: boolean;
 }
 
+/**
+ * Outcomes of running a phase body:
+ * - `continue` — the month advances to the next node;
+ * - `finish` — the month stops here, with the supplied `success` flag
+ *   (opening_validation fails closed with `success: false`; a suspension from
+ *   the interruption seam reports `success: true`, R-21).
+ */
+export type PhaseRunOutcome =
+  | { readonly status: "continue" }
+  | { readonly status: "finish"; readonly success: boolean };
+
+/** A phase body: performs the phase's authoritative work against `ctx`. */
+export interface PhaseRun {
+  (ctx: MonthContext): PhaseRunOutcome;
+}
+
+/** The unit a phase module registers: the declared policy, the footprint, the body. */
+export interface PhaseDescriptor extends PhaseDefinition {
+  readonly footprint: PhaseFootprint;
+  readonly run: PhaseRun;
+}
+
+/**
+ * A non-phase pipeline node that gates control flow between two phases. It
+ * carries an `order` rank like a phase so the whole pipeline sorts strictly
+ * ascending; returning `false` stops the month with `success: true` (the month
+ * suspended for an interruption input).
+ */
+export interface PhaseCheckpoint {
+  readonly kind: "checkpoint";
+  readonly id: string;
+  readonly name: string;
+  readonly order: number;
+  readonly run: (ctx: MonthContext) => boolean;
+}
+
+export type PhasePipelineNode = PhaseDescriptor | PhaseCheckpoint;
+
 export class PhaseRegistry {
-  static readonly PHASES: PhaseDefinition[] = [
+  /**
+   * The canonical pipeline in execution order. Declaration order and the
+   * monotonic integer `order` ranks are authoritative: reordering moves the
+   * month's outcomes, so changes go through golden repinning (ADR-0007).
+   */
+  static readonly NODES: readonly PhasePipelineNode[] = [
+    openingValidationPhase,
+    weatherGenerationPhase,
+    monthlyRevenuePhase,
+    commandCollectionPhase,
+    aiPlanningPhase,
+    aiProcurementPhase,
+    appropriationPhase,
+    maintenancePhase,
+    obligationPhase,
+    constructionProcessingPhase,
+    diplomacyPhase,
+    researchPhase,
+    aircraftDevelopmentPhase,
+    carrierOperationsPhase,
     {
-      id: "opening_validation",
-      name: "Opening Validation",
-      order: 0,
-      readPermissions: ["all"],
-      writePermissions: [],
-      rngAllowed: false,
+      kind: "checkpoint",
+      id: "interruption_checkpoint",
+      name: "Interruption Checkpoint",
+      order: 74,
+      run: (ctx) => runInterruptionCheckpoint(ctx),
     },
-    {
-      id: "weather_generation",
-      name: "Strategic Weather Generation",
-      // B-5/ADR-0022 + B-6/ADR-0025: monthly per-area StrategicWeatherState
-      // generation (DESIGN-42 §1), ordered after opening_validation and before
-      // command_collection. The pure generation engine lives in
-      // @bluewave/combat (generateStrategicWeather, keyed stream
-      // `campaign/weather/<areaId>/<month>`); MonthExecutor wires it
-      // authoritatively into the campaign snapshot (default climate profile
-      // `defaultClimateProfile_v1`; committed per-area states before
-      // command_collection).
-      order: 0.5,
-      readPermissions: ["all"],
-      // ADR-0036: weather_generation commits per-area StrategicWeatherState into
-      // the snapshot (DESIGN-42 §1), so it writes the strategicWeather resource.
-      writePermissions: ["strategicWeather"],
-      rngAllowed: true,
-    },
-    {
-      id: "monthly_revenue",
-      name: "Monthly Revenue",
-      order: 1,
-      readPermissions: ["treasury"],
-      writePermissions: ["treasury"],
-      rngAllowed: false,
-    },
-    {
-      id: "ai_planning",
-      name: "AI Planning",
-      order: 1.5,
-      readPermissions: ["nations", "constructions", "research", "treasury"],
-      // ADR-0036: the AI path applies SetResearchPriority and budget_project,
-      // so it writes research/treasury/constructions.
-      writePermissions: ["research", "treasury", "constructions"],
-      rngAllowed: true,
-    },
-    {
-      id: "ai_procurement",
-      name: "AI Procurement",
-      order: 1.6,
-      // ADR-0091: plans and submits design studies and places construction orders for AI nations.
-      readPermissions: ["nations", "constructions", "treasury", "research", "designs"],
-      writePermissions: ["nations", "constructions", "designs"],
-      rngAllowed: true,
-    },
-    {
-      id: "command_collection",
-      name: "Command Collection",
-      order: 2,
-      readPermissions: ["all"],
-      // ADR-0036: command_collection authoritatively applies player commands,
-      // mutating treasury/constructions/research/wars/politics/fleets.
-      writePermissions: ["treasury", "constructions", "research", "wars", "politics", "fleets"],
-      rngAllowed: false,
-    },
-    {
-      id: "appropriation",
-      name: "Appropriation",
-      order: 3,
-      // ADR-0036: appropriation reads and advances constructionProjects, so the
-      // "budget" resource is expressed as constructions. INC-4/SB3-R9: it also
-      // draws the keyed acceleration capacity-pressure delay decisions, so it is
-      // an rngAllowed phase (no draw occurs without an accelerated project).
-      // SB3-R17: it also resolves the private dock-expansion event, which reads/writes
-      // nation dock-expansion state and adds an INFRASTRUCTURE project.
-      readPermissions: ["treasury", "constructions", "nations"],
-      writePermissions: ["treasury", "constructions", "nations"],
-      rngAllowed: true,
-    },
-    {
-      id: "maintenance",
-      name: "Maintenance",
-      order: 4,
-      // S-1: the maintenance phase also advances per-ship readiness/crew (the
-      // crew-quality ramp and readiness transitions, manual p.51) and reads the
-      // war state for the wartime multiplier (p.52), so it reads wars, writes
-      // fleets as well as treasury, and consumes no randomness.
-      readPermissions: ["treasury", "fleets", "wars"],
-      writePermissions: ["treasury", "fleets"],
-      rngAllowed: false,
-    },
-    {
-      id: "obligation",
-      name: "Obligation",
-      order: 5,
-      readPermissions: ["treasury"],
-      writePermissions: ["treasury"],
-      rngAllowed: false,
-    },
-    {
-      id: "construction_processing",
-      name: "Construction Processing",
-      order: 6,
-      // SB3-R16: it also advances dock-expansion elapsed months and raises the nation's dock limits on completion, so
-      // it reads/writes the nations resource (the dock limits) as well as constructions/fleets.
-      readPermissions: ["constructions", "fleets", "nations"],
-      writePermissions: ["constructions", "fleets", "nations"],
-      rngAllowed: false,
-    },
-    {
-      id: "resolve_diplomacy",
-      name: "Diplomacy Resolution",
-      order: 6.5,
-      readPermissions: ["wars", "politics", "fleets"],
-      writePermissions: ["wars", "politics"],
-      rngAllowed: false,
-    },
-    {
-      id: "resolve_research",
-      name: "Research Resolution",
-      order: 7,
-      // ADR-0036: resolve_research also spends the research budget from treasury,
-      // so it reads/writes treasury in addition to research.
-      readPermissions: ["research", "treasury"],
-      writePermissions: ["research", "treasury"],
-      rngAllowed: true,
-    },
-    {
-      id: "resolve_aircraft_development",
-      name: "Aircraft Development Resolution",
-      // D-1: per-nation aircraft development pipeline (DESIGN-43 §§4-12),
-      // ordered after resolve_research (order 7) and before battle_generation
-      // (order 7.5). Strict no-op when no nation has aviation tech.
-      order: 7.2,
-      readPermissions: ["nations", "treasury", "research"],
-      writePermissions: ["nations"],
-      rngAllowed: true,
-    },
-    {
-      id: "resolve_carrier_operations",
-      name: "Carrier Operations Resolution",
-      // D-2: per-nation carrier operations pipeline (DESIGN-44), ordered after
-      // resolve_aircraft_development (order 7.2) and before battle_generation
-      // (order 7.5). Strict no-op when no nation has carrier-capable ships.
-      order: 7.3,
-      readPermissions: ["nations"],
-      writePermissions: ["nations"],
-      rngAllowed: true,
-    },
-    {
-      id: "battle_generation",
-      name: "Battle Generation",
-      order: 7.5,
-      // ADR-0036: battle_generation reads the nations map (ship strength/
-      // readiness) and writes wars (battles + manifests) plus nations (ship
-      // inBattleId reservations).
-      readPermissions: ["wars", "fleets", "politics", "nations"],
-      writePermissions: ["wars", "nations"],
-      rngAllowed: true,
-    },
-    {
-      id: "battle_resolution",
-      name: "Battle Resolution",
-      order: 8,
-      // ADR-0036: battle_resolution reads committed strategic weather + the
-      // nations map and writes wars + fleets + nations (per-ship damage/loss
-      // and reservation clearing).
-      // S-5: its month-end presence step also reads compiled designs (ship tonnage) and writes nothing but events.
-      readPermissions: ["wars", "fleets", "nations", "strategicWeather", "designs"],
-      writePermissions: ["wars", "fleets", "nations"],
-      rngAllowed: true,
-    },
-    {
-      id: "closing_validation",
-      name: "Closing Validation",
-      order: 9,
-      readPermissions: ["all"],
-      writePermissions: [],
-      rngAllowed: false,
-    },
+    battleGenerationPhase,
+    battleResolutionPhase,
+    closingValidationPhase,
   ];
 
-  static getById(id: string): PhaseDefinition | undefined {
+  /** The seventeen registered phases (the checkpoint above is not a phase). */
+  static readonly PHASES: readonly PhaseDescriptor[] = PhaseRegistry.NODES.filter(
+    (node): node is PhaseDescriptor => !("kind" in node),
+  );
+
+  static get nodes(): readonly PhasePipelineNode[] {
+    return PhaseRegistry.NODES;
+  }
+
+  static getById(id: string): PhaseDescriptor | undefined {
     return PhaseRegistry.PHASES.find((p) => p["id"] === id);
   }
 
-  static getByOrder(order: number): PhaseDefinition | undefined {
+  static getByOrder(order: number): PhaseDescriptor | undefined {
     return PhaseRegistry.PHASES.find((p) => p["order"] === order);
   }
 
-  static get all(): readonly PhaseDefinition[] {
+  static get all(): readonly PhaseDescriptor[] {
     return PhaseRegistry.PHASES;
   }
 

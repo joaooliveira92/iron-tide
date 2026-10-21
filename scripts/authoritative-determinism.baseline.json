@@ -40,15 +40,6 @@
   "packages/combat/src/weather/night-twilight.ts": {
     "9ea97194e5d4cfce3aca8e2b8de89a44c6b11ca1afda9278943937a38c7265b9": 1
   },
-  "packages/phase-engine/src/registry.ts": {
-    "586cc7bd3ff8332e39c97e55238f63877de6dd5305e0c72cc4dde3e03640e240": 1,
-    "5b3ad1db6f4869c37e4d2db681952bd484b9286e5e9002745c3895081097bfa7": 1,
-    "668ba626056ca18c7f8869f67e56636547e5dbace64ab337917f9dbc021cf91c": 1,
-    "9ea97194e5d4cfce3aca8e2b8de89a44c6b11ca1afda9278943937a38c7265b9": 1,
-    "a93092d00c9c2063f0fa9fd50fbcec1303ed90bcc3c5e42af27fe6594f7d68c4": 1,
-    "b9cb0fa30a259f898320849c3152196bdf1b35c8482963f903a13db3aba6702e": 1,
-    "c95c19f4417f1731bde4d12c107b47de769788278ef199fb5b2aeca21df3cfab": 1
-  },
   "packages/ship-design/src/nationalResearch.ts": {
     "3a1b2bae8bde73009468f72868cd76d938b76abca18aee6fb11f2dac8f1c5c5d": 1,
     "d35fd68387ad38be91685679af84c2000da94b9ac4e4356d406257852a44f93a": 1
