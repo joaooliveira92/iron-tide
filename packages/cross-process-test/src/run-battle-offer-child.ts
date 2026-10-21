@@ -122,6 +122,25 @@ function runChild(): void {
       "decline",
     );
 
+    // T-1 05 (#114): the scripted second decline. The next month starts from the tally the first decline saved, so the
+    // fixture threshold (2) is reached and exactly one typed event is raised; a third pass proves in-process equality.
+    const seeded: typeof snapshot = {
+      ...snapshot,
+      wars: {
+        ...snapshot.wars,
+        declineCounters: declined.finalSnapshot.wars.declineCounters ?? [],
+      },
+    };
+    const secondRequest = offerOf(run(seeded, { offers: true, channel: true }));
+    const second = run(seeded, { offers: true, channel: true, response: secondRequest }, "decline");
+    const secondAgain = run(
+      seeded,
+      { offers: true, channel: true, response: secondRequest },
+      "decline",
+    );
+    const thresholdEvents = (result: MonthResult) =>
+      result.eventLedger.all.filter((e) => e.body.kind === "DeclineThresholdReached");
+
     const enemyShipIds = snapshot.nations
       .get(ENEMY)!
       .fleets.flatMap((f) => f.ships)
@@ -169,6 +188,17 @@ function runChild(): void {
         .flatMap((n) => n.fleets.flatMap((f) => f.ships))
         .filter((ship) => ship.inBattleId !== undefined).length,
       declinedEventLedgerHash: declined.eventLedger.hash(),
+      firstCounters: declined.finalSnapshot.wars.declineCounters ?? [],
+      firstThresholdEvents: thresholdEvents(declined).length,
+      dormantCounters: "declineCounters" in dormant.finalSnapshot.wars,
+      secondOutcome: second.outcome,
+      secondCounters: second.finalSnapshot.wars.declineCounters ?? [],
+      secondThresholdBodies: thresholdEvents(second).map((e) => e.body),
+      secondSnapshotHash: hashSnapshot(second.finalSnapshot),
+      secondEventLedgerHash: second.eventLedger.hash(),
+      secondInProcessEqual:
+        hashSnapshot(second.finalSnapshot) === hashSnapshot(secondAgain.finalSnapshot) &&
+        second.eventLedger.hash() === secondAgain.eventLedger.hash(),
     };
     process.stdout.write(JSON.stringify(output) + "\n");
   } catch (err) {

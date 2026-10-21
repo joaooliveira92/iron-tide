@@ -322,6 +322,40 @@ export function battleDeclinedEvent(
 }
 
 /**
+ * T-1 05: a decline made the player's declined-battle count reach the ruleset threshold. One event per such decline,
+ * appended right after the decline's own `BattleDeclined`. It has no effect here; the prestige ticket consumes it.
+ */
+export function declineThresholdReachedEvent(
+  nationId: string,
+  battleId: string,
+  count: number,
+  threshold: number,
+  scope: "WAR" | "NATION" | "CAMPAIGN",
+  rulesetVersion: string,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `DeclineThresholdReached-${battleId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "battle",
+    aggregateId: battleId,
+    eventType: "DeclineThresholdReached",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "DeclineThresholdReached",
+      nationId,
+      battleId,
+      count,
+      threshold,
+      scope,
+      rulesetVersion,
+    },
+    sequenceNumber: seq,
+  };
+}
+
+/**
  * S-5: a nation's effective present tonnage in an area fell short of its requirement at month end. One event per
  * nation-area with a positive shortfall; emitted in (nation, area) order.
  */

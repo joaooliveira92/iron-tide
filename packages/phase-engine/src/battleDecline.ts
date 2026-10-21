@@ -15,7 +15,8 @@ import type { BattleOfferRules } from "@bluewave/content-schema";
 import { isBluewaveError } from "@bluewave/contracts";
 import { applyWarScoreDelta, type resolveBattleManifest } from "./battles.js";
 import { divide, type OfferContent } from "./battleOffer.js";
-import { battleDeclinedEvent } from "./events.js";
+import { tallyDecline } from "./declineCounter.js";
+import { battleDeclinedEvent, declineThresholdReachedEvent } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
 import type { OfferRefusal } from "./interruption.js";
 
@@ -139,6 +140,16 @@ export function applyDecline(
   }
   next = releaseReservations(next, new Set(manifest["persistentAssets"]));
 
+  // The tally of the player nation's declines (R9): applied with the record, so a duplicate (returned above) never counts.
+  const tally = tallyDecline(next["wars"]["declineCounters"], {
+    rules: rules.declineCounter,
+    repeatEachDecline: rules.declinedBattlePrestige?.repeat === "EACH_FURTHER_DECLINE",
+    warId: manifest["warId"],
+    nationId: decliner,
+    month: ctx.campaignMonth,
+    wars: next["wars"]["wars"],
+  });
+
   const record: DeclinedBattleRecord = {
     battleId: battle["id"],
     warId: manifest["warId"],
@@ -158,6 +169,7 @@ export function applyDecline(
         b["id"] === battle["id"] ? { ...b, phase: "declined" as const } : b,
       ),
       declinedBattles: [...existing, record],
+      declineCounters: tally.entries,
     },
   };
   ctx.eventLedger.append(
@@ -172,5 +184,19 @@ export function applyDecline(
       ctx.campaignMonth,
     ),
   );
+  if (tally.thresholdReached) {
+    ctx.eventLedger.append(
+      declineThresholdReachedEvent(
+        decliner,
+        battle["id"],
+        tally.count,
+        rules.declineCounter.threshold,
+        rules.declineCounter.scope,
+        next["rulesetVersion"],
+        ctx.nextSeq(),
+        ctx.campaignMonth,
+      ),
+    );
+  }
   return true;
 }
