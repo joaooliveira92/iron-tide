@@ -28,6 +28,9 @@ export const RulesetManifestSchema = Schema.Struct({
   // S-5: the optional presence value set (ADR-0242). Opaque here on purpose, like `prestige`: the compiler
   // decodes it strictly with `decodePresenceRules` and names the offending field. Absent = dormant.
   presence: Schema.optional(Schema.Unknown),
+  // T-1 (spec #109): the optional battle-offer value set. Opaque here like `presence`; the compiler decodes it strictly with
+  // `decodeBattleOfferRules`. Absent = dormant, never a numeric default.
+  battleOffers: Schema.optional(Schema.Unknown),
   provenance: Schema.optional(ProvenanceSchema),
 });
 

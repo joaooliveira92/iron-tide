@@ -158,6 +158,8 @@ export type { NationNavalProfileData } from "./naval-profile.js";
 export { NavalProfileCatalogueSchema, NationNavalProfileSchema } from "./naval-profile.js";
 export type { Provenance } from "./provenance.js";
 export { DerivationSchema, ProvenanceSchema, SourceReferenceSchema } from "./provenance.js";
+export type { BattleOfferRules, BattleOfferRulesDecoded } from "./battle-offer-rules.js";
+export { BattleOfferRulesSchema, decodeBattleOfferRules } from "./battle-offer-rules.js";
 export type { PresenceRules, PresenceRulesDecoded } from "./presence-rules.js";
 export { decodePresenceRules, PresenceRulesSchema } from "./presence-rules.js";
 export {

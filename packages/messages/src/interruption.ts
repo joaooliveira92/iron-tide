@@ -5,7 +5,7 @@ import { InterpolationSchema, EntityReferenceSchema, TurnPhaseSchema } from "./s
 
 const nonEmptyString = Schema.String.check(Schema.isMinLength(1));
 
-export const INTERRUPTION_KINDS = ["decision", "battle"] as const;
+export const INTERRUPTION_KINDS = ["decision", "battle", "offer"] as const;
 export type InterruptionKind = (typeof INTERRUPTION_KINDS)[number];
 
 export const EFFECT_DIRECTIONS = ["increase", "decrease", "none"] as const;
@@ -113,8 +113,21 @@ export interface BattleResultInput {
   readonly damageReport: Readonly<Record<string, number>>;
 }
 
+export const OFFER_RESPONSES = ["accept", "decline", "delegate"] as const;
+export type OfferResponse = (typeof OFFER_RESPONSES)[number];
+
+/**
+ * A player-supplied answer to a battle offer (spec #109 R3): accept, decline, or delegate the battle to the automatic
+ * resolution. Additive beside {@link BattleResultInput}, which is unchanged.
+ */
+export interface OfferResponseInput {
+  readonly interruptionId: string;
+  readonly battleId: string;
+  readonly response: OfferResponse;
+}
+
 export type InterruptionRequest = DecisionRequest | BattleRequest;
-export type InterruptionPayload = DecisionAnswer | BattleResultInput;
+export type InterruptionPayload = DecisionAnswer | BattleResultInput | OfferResponseInput;
 
 /** A recorded external input, consumed strictly by ordinal on re-execution. */
 export interface RecordedInput {
@@ -256,11 +269,17 @@ export const BattleResultInputSchema = Schema.Struct({
   damageReport: Schema.Record(Schema.String, Schema.Number),
 });
 
+export const OfferResponseInputSchema = Schema.Struct({
+  interruptionId: nonEmptyString,
+  battleId: nonEmptyString,
+  response: Schema.Literals(OFFER_RESPONSES),
+});
+
 export const RecordedInputSchema = Schema.Struct({
   ordinal: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
   kind: Schema.Literals(INTERRUPTION_KINDS),
   interruptionId: nonEmptyString,
-  payload: Schema.Union([DecisionAnswerSchema, BattleResultInputSchema]),
+  payload: Schema.Union([DecisionAnswerSchema, BattleResultInputSchema, OfferResponseInputSchema]),
   inputHash: nonEmptyString,
 });
 
@@ -279,6 +298,7 @@ function decode<T>(schema: Schema.ConstraintDecoder<T, never>) {
 export const decodeInterruptionRequest = decode<InterruptionRequest>(InterruptionRequestSchema);
 export const decodeDecisionAnswer = decode<DecisionAnswer>(DecisionAnswerSchema);
 export const decodeBattleResultInput = decode<BattleResultInput>(BattleResultInputSchema);
+export const decodeOfferResponseInput = decode<OfferResponseInput>(OfferResponseInputSchema);
 export const decodeRecordedInput = decode<RecordedInput>(RecordedInputSchema);
 export const decodeSuspendedTurn = decode<SuspendedTurn>(SuspendedTurnSchema);
 export const decodeRecordedInputs = decode<readonly RecordedInput[]>(
@@ -290,7 +310,9 @@ export function decodeInterruptionPayload(
   kind: InterruptionKind,
   input: unknown,
 ): InterruptionPayload {
-  return kind === "decision" ? decodeDecisionAnswer(input) : decodeBattleResultInput(input);
+  if (kind === "decision") return decodeDecisionAnswer(input);
+  if (kind === "offer") return decodeOfferResponseInput(input);
+  return decodeBattleResultInput(input);
 }
 
 export type { Interpolation };

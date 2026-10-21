@@ -10,7 +10,7 @@ import type { CampaignState, CampaignSnapshot, NationState } from "@bluewave/cam
 import type { CommandEnvelope, BudgetProjectCommand } from "@bluewave/commands";
 import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
 import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
-import { mkdirSync, rmSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 import { compileProductionCampaign } from "../src/production-pack.js";
 import { tmpdir } from "node:os";
@@ -523,5 +523,44 @@ describe("S-2 ticket 03: prestige on the production pack (ADR-0239)", () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("T-1 02 (#111): the battle-offer section is dormant on the production pack", () => {
+  const PRODUCTION_DIR = resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    "../../../content/production/1880",
+  );
+
+  it("authors no battleOffers section anywhere in the production pack", () => {
+    const files = readdirSync(PRODUCTION_DIR, { recursive: true, encoding: "utf8" }).filter(
+      (name) => /\.(ya?ml|json)$/.test(name),
+    );
+    expect(files.length).toBeGreaterThan(0);
+    for (const name of files) {
+      expect(readFileSync(resolve(PRODUCTION_DIR, name), "utf8"), name).not.toContain(
+        "battleOffers",
+      );
+    }
+  });
+
+  it("supplying the player nation to a compiled production month changes no output byte", () => {
+    const { state } = compileProductionCampaign();
+    const run = (playerNationId?: string) =>
+      new MonthExecutor().execute(
+        state.snapshot,
+        [],
+        "t-1-02-seed",
+        new DiagnosticCollector(),
+        undefined,
+        playerNationId === undefined ? undefined : { playerNationId },
+      );
+    const control = run();
+    const withPlayer = run("uk");
+    expect(withPlayer.success).toBe(control.success);
+    expect(hashSnapshot(withPlayer.finalSnapshot)).toBe(hashSnapshot(control.finalSnapshot));
+    expect(sha256Hex(canonicalSerialize(withPlayer.eventLedger))).toBe(
+      sha256Hex(canonicalSerialize(control.eventLedger)),
+    );
   });
 });
