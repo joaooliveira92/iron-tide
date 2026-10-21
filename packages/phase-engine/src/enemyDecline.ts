@@ -3,8 +3,8 @@
 // mission is an offered one, a ruleset predicate on the force balance decides whether a draw is made at all, and a
 // recorded, domain-separated draw decides the decline. A declined battle is removed before it exists: no instance, no
 // manifest, no reservation, no offer. The player is told through one event that carries neither the draw nor the enemy
-// force. Dormant without the battle-offer section and the player nation; nothing here reads the interruption channel, so
-// the decision cannot depend on how or when the player answers an offer.
+// force. Dormant without the battle-offer section, the player nation and an interruption channel (R3); the channel is
+// only tested for presence, so the decision cannot depend on how or when the player answers an offer.
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import {
   BATTLE_ENEMY_DECLINED,
@@ -61,7 +61,9 @@ export function applyEnemyDeclines(
 ): BattleGenerationResult {
   const rules: BattleOfferRules | undefined = ctx.battleOffers;
   const playerNationId = ctx.playerNationId;
-  if (rules === undefined || playerNationId === undefined) return generated;
+  // Dormant without the interruption channel exactly as the offer path is (spec #109 R3): no draw, no change.
+  if (rules === undefined || playerNationId === undefined || ctx.interruption === undefined)
+    return generated;
   const engine = ctx.phaseGuard.rng("battle_generation", ctx.randomSeed);
   if (engine === null) return generated;
 

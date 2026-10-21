@@ -3,8 +3,8 @@
 // allied candidates, composes them through the existing candidate ordering under the ruleset-clamped share of the existing
 // cap, and only when that composition is non-empty makes one recorded, domain-separated presence draw. A present force
 // rides on the manifest as temporary assets (never reserved, promoted or damaged by the unchanged auto-resolution) with
-// its nations on the player's side. Dormant without the battle-offer section and the player nation; it never reads the
-// interruption channel, so the draw cannot depend on how or when the player answers an offer.
+// its nations on the player's side. Dormant without the battle-offer section, the player nation and an interruption channel (R3); it only tests
+// the channel for presence, so the draw cannot depend on how or when the player answers an offer.
 //
 // Eligibility (ADR-0259): an ally is a nation in an `allied` relation with the player that is neither party to the battle
 // nor on the enemy's side of its war (that relation is the operational access and the authorization the repository models);
@@ -99,7 +99,9 @@ export function applySupportForces(
 ): BattleGenerationResult {
   const rules: BattleOfferRules | undefined = ctx.battleOffers;
   const playerNationId = ctx.playerNationId;
-  if (rules === undefined || playerNationId === undefined) return generated;
+  // Dormant without the interruption channel exactly as the offer path is (spec #109 R3): no draw, no change.
+  if (rules === undefined || playerNationId === undefined || ctx.interruption === undefined)
+    return generated;
   const engine = ctx.phaseGuard.rng("battle_generation", ctx.randomSeed);
   if (engine === null) return generated;
 

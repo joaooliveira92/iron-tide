@@ -224,3 +224,17 @@ describe("the enemy declines (R11)", () => {
     expect(low).toBe(high);
   });
 });
+
+describe("without an interruption channel the month is byte-identical to today (R3)", () => {
+  it("makes no enemy-decline draw and removes no battle although the section and player are set", () => {
+    const snapshot = snapshotOf(800, 310);
+    const withSection = run(snapshot, rules({ probabilityBp: 10_000 }), [], false);
+    const without = run(snapshot, undefined, [], false);
+    expect(draws(withSection)).toHaveLength(0);
+    expect(withdrawn(withSection)).toHaveLength(0);
+    expect(withSection.finalSnapshot.wars.battles).toHaveLength(1);
+    expect(hashSnapshot(withSection.finalSnapshot)).toBe(hashSnapshot(without.finalSnapshot));
+    expect(withSection.eventLedger.hash()).toBe(without.eventLedger.hash());
+    expect(withSection.randomLedger.all).toEqual(without.randomLedger.all);
+  });
+});

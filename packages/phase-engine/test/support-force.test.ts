@@ -291,3 +291,21 @@ describe("the support force (R12)", () => {
     expect(result.finalSnapshot.wars.battleManifests?.[0]?.temporaryAssets).toEqual([]);
   });
 });
+
+describe("without an interruption channel the month is byte-identical to today (R3)", () => {
+  it("makes no presence draw and adds no support although the section and player are set", () => {
+    const snapshot = snapshotOf([...ELIGIBLE], {});
+    const execute = (battleOffers: Rules | undefined) =>
+      new MonthExecutor().execute(snapshot, [], SEED, new DiagnosticCollector(), undefined, {
+        playerNationId: ATTACKER_NATION,
+        ...(battleOffers === undefined ? {} : { battleOffers }),
+      });
+    const withSection = execute(rules({ presenceChanceBp: 10_000 }));
+    const without = execute(undefined);
+    expect(draws(withSection)).toHaveLength(0);
+    expect(manifestOf(withSection)?.temporaryAssets).toEqual([]);
+    expect(hashSnapshot(withSection.finalSnapshot)).toBe(hashSnapshot(without.finalSnapshot));
+    expect(withSection.eventLedger.hash()).toBe(without.eventLedger.hash());
+    expect(withSection.randomLedger.all).toEqual(without.randomLedger.all);
+  });
+});
