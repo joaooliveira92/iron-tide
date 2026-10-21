@@ -70,14 +70,22 @@ export {
   applyRecordedBattleResult,
   consumeBattleResult,
   consumeDecision,
+  consumeOffer,
   consumeOfferResponse,
   createInterruptionState,
   runInterruptionCheckpoint,
   trailingInputSuspension,
   type InterruptionChannel,
   type InterruptionState,
+  type OfferRefusal,
   type OfferResponseResolution,
 } from "./interruption.js";
+export {
+  buildOfferContent,
+  estimateEnemyStrength,
+  OFFERED_MISSION_TYPES,
+  type OfferContent,
+} from "./battleOffer.js";
 export {
   applyBattleConsequences,
   collectLostShips,

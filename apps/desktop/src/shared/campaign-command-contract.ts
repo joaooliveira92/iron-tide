@@ -492,6 +492,7 @@ export const CAMPAIGN_COMMAND_NAMES = [
   "resolveTurn",
   "answerDecision",
   "submitBattleResult",
+  "submitOfferResponse",
   "abandonPendingTurn",
   "readPendingTurn",
 ] as const;
@@ -757,6 +758,10 @@ export interface CampaignCommandClient {
     payload: SubmitBattleResultPayload,
   ): Promise<BridgeResult<ResolveTurnResult>>;
   execute(
+    command: "submitOfferResponse",
+    payload: SubmitOfferResponsePayload,
+  ): Promise<BridgeResult<ResolveTurnResult>>;
+  execute(
     command: "abandonPendingTurn",
     payload: string,
   ): Promise<BridgeResult<AbandonPendingTurnResult>>;
@@ -856,7 +861,7 @@ export interface DecisionOptionDto {
 
 /** An interruption the player must resolve before the turn can continue. */
 export interface InterruptionRequestDto {
-  readonly kind: "decision" | "battle";
+  readonly kind: "decision" | "battle" | "offer";
   readonly turnId: string;
   readonly interruptionId: string;
   readonly ordinal: number;
@@ -870,6 +875,30 @@ export interface InterruptionRequestDto {
   readonly attackerId?: string;
   readonly defenderId?: string;
   readonly areaId?: string;
+  /** Offer only (T-1 03, spec #109 R4): the registry mission type and its acceptance class. */
+  readonly missionType?: string;
+  readonly acceptanceClass?: string;
+  /** Offer only: which side the player's nation is on. */
+  readonly playerSide?: "ATTACKER" | "DEFENDER";
+  /** Offer only: the player's own selected force. The enemy force is never carried. */
+  readonly playerForce?: readonly OfferForceShipDto[];
+  /** Offer only: the enemy-strength estimate. It is an estimate, never the true strength. */
+  readonly estimate?: OfferEstimateDto;
+  /** Offer only: whether a friendly support force is present. */
+  readonly supportForcePresent?: boolean;
+  /** Offer only: the message keys of the qualitative decline statement. */
+  readonly declineStatementKeys?: readonly string[];
+}
+
+export interface OfferForceShipDto {
+  readonly shipId: string;
+  readonly name: string;
+  readonly classId: string;
+}
+
+export interface OfferEstimateDto {
+  readonly model: "EXACT" | "BANDED" | "PERTURBED";
+  readonly strength: number;
 }
 
 /** The non-authoritative pending-turn record summary the renderer may show. */
@@ -932,6 +961,16 @@ export interface SubmitBattleResultPayload {
   readonly attackerLosses: readonly string[];
   readonly defenderLosses: readonly string[];
   readonly damageReport: Readonly<Record<string, number>>;
+}
+
+/** The player's answer to a battle offer (T-1 03). Decline is not yet an available answer (ticket #113). */
+export interface SubmitOfferResponsePayload {
+  readonly sessionId: string;
+  readonly expectedRevision: number;
+  readonly transportRequestId: string;
+  readonly interruptionId: string;
+  readonly battleId: string;
+  readonly response: "accept" | "delegate" | "decline";
 }
 
 export interface AbandonPendingTurnResult {

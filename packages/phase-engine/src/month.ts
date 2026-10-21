@@ -94,6 +94,9 @@ export class MonthExecutor {
       ...(engineOptions?.playerNationId === undefined
         ? {}
         : { playerNationId: engineOptions.playerNationId }),
+      ...(engineOptions?.battleOffers === undefined
+        ? {}
+        : { battleOffers: engineOptions.battleOffers }),
       interruption:
         engineOptions?.interruptions !== undefined
           ? createInterruptionState(engineOptions.interruptions)

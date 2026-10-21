@@ -256,6 +256,37 @@ export function shipStationAssignmentChangedEvent(
 }
 
 /**
+ * T-1 03: the player answered a battle offer by accepting it or delegating it to staff. Both resolve through the
+ * unchanged auto-resolution path, so this event is the durable record of the answer (and of the delegate intent).
+ */
+export function battleOfferAnsweredEvent(
+  nationId: string,
+  battleId: string,
+  missionType: string,
+  response: "accept" | "delegate",
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `BattleOfferAnswered-${battleId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "battle",
+    aggregateId: battleId,
+    eventType: "BattleOfferAnswered",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "BattleOfferAnswered",
+      nationId,
+      battleId,
+      missionType,
+      response,
+      resolutionMode: "AUTO_RESOLVE",
+    },
+    sequenceNumber: seq,
+  };
+}
+
+/**
  * S-5: a nation's effective present tonnage in an area fell short of its requirement at month end. One event per
  * nation-area with a positive shortfall; emitted in (nation, area) order.
  */

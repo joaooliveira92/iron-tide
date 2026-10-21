@@ -102,6 +102,58 @@ export interface BattleRequest {
   readonly areaId: string;
 }
 
+export const OFFER_ESTIMATE_MODELS = ["EXACT", "BANDED", "PERTURBED"] as const;
+export type OfferEstimateModel = (typeof OFFER_ESTIMATE_MODELS)[number];
+
+export const OFFER_SIDES = ["ATTACKER", "DEFENDER"] as const;
+export type OfferSide = (typeof OFFER_SIDES)[number];
+
+/** One of the player's own ships in the offered force (the player's own identities are not withheld). */
+export interface OfferForceShip {
+  readonly shipId: string;
+  readonly name: string;
+  readonly classId: string;
+}
+
+/**
+ * The enemy-strength estimate shown on an offer (spec #109 R5): the model that produced it and one integer strength.
+ * The true strength, the enemy ship identities and the perturbation draw are never carried.
+ */
+export interface OfferEstimate {
+  readonly model: OfferEstimateModel;
+  readonly strength: number;
+}
+
+/**
+ * A battle offer (spec #109 R3/R4, ticket #112): raised at `battle_resolution` for a pending battle that involves the
+ * player's nation. It carries the mission type and acceptance class, the area, the two sides, the player's own selected
+ * force, the enemy-strength estimate, a support-force indicator and the message keys for the qualitative decline
+ * statement. It never carries the enemy's ship identities or names, the battle seed, the manifest or input hashes, or any
+ * draw, and it is identical on every re-execution of the same suspended month.
+ */
+export interface OfferRequest {
+  readonly kind: "offer";
+  readonly turnId: string;
+  readonly interruptionId: string;
+  readonly phase: TurnPhase;
+  readonly ordinal: number;
+  readonly subjectKey: string;
+  readonly battleId: string;
+  readonly titleKey: string;
+  readonly bodyKey: string;
+  readonly interpolation: Interpolation;
+  readonly missionType: string;
+  readonly acceptanceClass: string;
+  readonly areaId: string;
+  readonly attackerId: string;
+  readonly defenderId: string;
+  readonly playerSide: OfferSide;
+  readonly playerForce: readonly OfferForceShip[];
+  readonly estimate: OfferEstimate;
+  readonly supportForcePresent: boolean;
+  readonly declineStatementKeys: readonly string[];
+}
+
 /** A player-supplied battle outcome. Null winner/loser represents a tie. */
 export interface BattleResultInput {
   readonly interruptionId: string;
@@ -126,7 +178,7 @@ export interface OfferResponseInput {
   readonly response: OfferResponse;
 }
 
-export type InterruptionRequest = DecisionRequest | BattleRequest;
+export type InterruptionRequest = DecisionRequest | BattleRequest | OfferRequest;
 export type InterruptionPayload = DecisionAnswer | BattleResultInput | OfferResponseInput;
 
 /** A recorded external input, consumed strictly by ordinal on re-execution. */
@@ -144,6 +196,11 @@ export interface SuspendedTurn {
   readonly request: InterruptionRequest | null;
   readonly nextInterruptionOrdinal: number;
   readonly reason: SuspensionReason;
+  /**
+   * The stable `_tag` of the typed refusal that left an offer pending (T-1 03, spec #109 R6); absent for every other
+   * suspension. Additive: a suspension without it decodes exactly as before.
+   */
+  readonly refusalTag?: string;
 }
 
 export const SUSPENSION_REASONS = ["awaiting-input", "invalid-input"] as const;
@@ -248,10 +305,43 @@ const BattleRequestSchema = Schema.Struct({
   areaId: nonEmptyString,
 });
 
+const OfferRequestSchema = Schema.Struct({
+  kind: Schema.Literal("offer"),
+  turnId: nonEmptyString,
+  interruptionId: nonEmptyString,
+  phase: TurnPhaseSchema,
+  ordinal: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
+  subjectKey: nonEmptyString,
+  battleId: nonEmptyString,
+  titleKey: nonEmptyString,
+  bodyKey: nonEmptyString,
+  interpolation: InterpolationSchema,
+  missionType: nonEmptyString,
+  acceptanceClass: nonEmptyString,
+  areaId: nonEmptyString,
+  attackerId: nonEmptyString,
+  defenderId: nonEmptyString,
+  playerSide: Schema.Literals(OFFER_SIDES),
+  playerForce: Schema.Array(
+    Schema.Struct({ shipId: nonEmptyString, name: nonEmptyString, classId: nonEmptyString }),
+  ),
+  estimate: Schema.Struct({
+    model: Schema.Literals(OFFER_ESTIMATE_MODELS),
+    strength: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
+  }),
+  supportForcePresent: Schema.Boolean,
+  declineStatementKeys: Schema.Array(nonEmptyString),
+});
+
 export const DecisionRequestWireSchema = DecisionRequestSchema;
 export const BattleRequestWireSchema = BattleRequestSchema;
+export const OfferRequestWireSchema = OfferRequestSchema;
 
-export const InterruptionRequestSchema = Schema.Union([DecisionRequestSchema, BattleRequestSchema]);
+export const InterruptionRequestSchema = Schema.Union([
+  DecisionRequestSchema,
+  BattleRequestSchema,
+  OfferRequestSchema,
+]);
 
 export const DecisionAnswerSchema = Schema.Struct({
   interruptionId: nonEmptyString,
@@ -288,6 +378,7 @@ export const SuspendedTurnSchema = Schema.Struct({
   request: Schema.NullOr(InterruptionRequestSchema),
   nextInterruptionOrdinal: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
   reason: Schema.Literals(SUSPENSION_REASONS),
+  refusalTag: Schema.optional(nonEmptyString),
 });
 
 function decode<T>(schema: Schema.ConstraintDecoder<T, never>) {
@@ -296,6 +387,7 @@ function decode<T>(schema: Schema.ConstraintDecoder<T, never>) {
 }
 
 export const decodeInterruptionRequest = decode<InterruptionRequest>(InterruptionRequestSchema);
+export const decodeOfferRequest = decode<OfferRequest>(OfferRequestSchema);
 export const decodeDecisionAnswer = decode<DecisionAnswer>(DecisionAnswerSchema);
 export const decodeBattleResultInput = decode<BattleResultInput>(BattleResultInputSchema);
 export const decodeOfferResponseInput = decode<OfferResponseInput>(OfferResponseInputSchema);

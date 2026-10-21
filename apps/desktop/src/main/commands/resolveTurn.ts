@@ -7,6 +7,7 @@ import {
   type BattleResultInput,
   type DecisionAnswer,
   type InterruptionRequest,
+  type OfferResponseInput,
   type PendingDecision,
   type RecordedInput,
 } from "@bluewave/messages";
@@ -29,7 +30,7 @@ import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { DecisionSource } from "../runtime/decisionSource.js";
-import { withSchema } from "../runtime/commandProgram.js";
+import { withSchema, withStrictSchema } from "../runtime/commandProgram.js";
 import { runTurnTransaction } from "./turnTransaction.js";
 
 const nonEmpty = Schema.String.check(Schema.isMinLength(1));
@@ -50,6 +51,13 @@ const SubmitBattleResultPayloadSchema = Schema.Struct({
   attackerLosses: Schema.Array(nonEmpty),
   defenderLosses: Schema.Array(nonEmpty),
   damageReport: Schema.Record(Schema.String, Schema.Number),
+});
+
+const SubmitOfferResponsePayloadSchema = Schema.Struct({
+  ...CommandEnvelopePayloadSchema.fields,
+  interruptionId: nonEmpty,
+  battleId: nonEmpty,
+  response: Schema.Literals(["accept", "decline", "delegate"]),
 });
 
 function toPendingTurnDto(record: PendingTurnRecord): PendingTurnDto {
@@ -77,6 +85,29 @@ function toRequestDto(request: InterruptionRequest): InterruptionRequestDto {
       interpolation: request.interpolation,
       decisionId: request.decisionId,
       options: request.options,
+    };
+  }
+  if (request.kind === "offer") {
+    return {
+      kind: "offer",
+      turnId: request.turnId,
+      interruptionId: request.interruptionId,
+      ordinal: request.ordinal,
+      phase: request.phase,
+      titleKey: request.titleKey,
+      bodyKey: request.bodyKey,
+      interpolation: request.interpolation,
+      battleId: request.battleId,
+      attackerId: request.attackerId,
+      defenderId: request.defenderId,
+      areaId: request.areaId,
+      missionType: request.missionType,
+      acceptanceClass: request.acceptanceClass,
+      playerSide: request.playerSide,
+      playerForce: request.playerForce,
+      estimate: request.estimate,
+      supportForcePresent: request.supportForcePresent,
+      declineStatementKeys: request.declineStatementKeys,
     };
   }
   return {
@@ -159,9 +190,10 @@ const expectedContentHashes = (): Effect.Effect<
  * suspension). The command boundary matches an answer/submission against this so
  * a mismatched `interruptionId` is rejected before it is recorded (T7).
  */
-function outstandingInterruption(
-  pending: PendingTurnRecord,
-): { readonly kind: "decision" | "battle"; readonly interruptionId: string } | null {
+function outstandingInterruption(pending: PendingTurnRecord): {
+  readonly kind: "decision" | "battle" | "offer";
+  readonly interruptionId: string;
+} | null {
   const outstanding = pending.outstanding;
   if (outstanding === undefined) return null;
   return {
@@ -401,6 +433,80 @@ export const submitBattleResultProgram = withSchema(SubmitBattleResultPayloadSch
       pendingDecisions,
     });
   }),
+);
+
+/**
+ * Record a player's answer to a battle offer at the next ordinal and resume (T-1 03, spec #109 R6). The answer is refused
+ * with a stable typed reason, before anything is recorded and with the offer left pending, when no offer is outstanding or
+ * the interruption id is stale (a duplicate or out-of-order answer), when it names another battle, or when it is a decline
+ * (not yet an available answer). The engine validates the recorded input again on re-execution.
+ */
+export const submitOfferResponseProgram = withStrictSchema(
+  SubmitOfferResponsePayloadSchema,
+  (payload) =>
+    Effect.gen(function* () {
+      const sessions = yield* CampaignSessionStore;
+      const record = yield* sessions.get(payload.sessionId);
+      const pending = loadPendingTurn(record.saveDir);
+      if (pending === null) {
+        return {
+          outcome: "error" as const,
+          reason: "NO_PENDING_TURN",
+          diagnostics: [`No pending turn for session ${payload.sessionId}`],
+        };
+      }
+      const outstanding = outstandingInterruption(pending);
+      if (outstanding === null || outstanding.kind !== "offer") {
+        return {
+          outcome: "error" as const,
+          reason: "OfferResponseStale",
+          diagnostics: [`Session ${payload.sessionId} is not awaiting a battle offer answer`],
+        };
+      }
+      if (payload.interruptionId !== outstanding.interruptionId) {
+        return {
+          outcome: "error" as const,
+          reason: "OfferResponseStale",
+          diagnostics: [
+            `Offer answer for session ${payload.sessionId} does not match the outstanding interruption`,
+          ],
+        };
+      }
+      if (payload.battleId !== pending.outstanding?.subjectKey) {
+        return {
+          outcome: "error" as const,
+          reason: "OfferResponseWrongBattle",
+          diagnostics: [`Offer answer for session ${payload.sessionId} names another battle`],
+        };
+      }
+      if (payload.response === "decline") {
+        return {
+          outcome: "error" as const,
+          reason: "OfferDeclineUnavailable",
+          diagnostics: ["Declining a battle is not yet available; the offer stays pending"],
+        };
+      }
+      const answer: OfferResponseInput = {
+        interruptionId: payload.interruptionId,
+        battleId: payload.battleId,
+        response: payload.response,
+      };
+      const recorded = makeRecordedInput({
+        ordinal: pending.nextInterruptionOrdinal,
+        kind: "offer",
+        interruptionId: payload.interruptionId,
+        payload: answer,
+      });
+      yield* recordInput(record.saveDir, pending, recorded);
+      const decisionSource = yield* DecisionSource;
+      const pendingDecisions = yield* decisionSource.pendingDecisions(payload.sessionId);
+      return yield* finishTransaction({
+        sessionId: payload.sessionId,
+        expectedRevision: payload.expectedRevision,
+        recordedInputs: [...pending.recordedInputs, recorded],
+        pendingDecisions,
+      });
+    }),
 );
 
 /** Append a recorded input to the pending sidecar and advance its ordinal. */

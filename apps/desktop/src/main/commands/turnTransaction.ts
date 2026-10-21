@@ -138,6 +138,8 @@ export const runTurnTransaction = (
     );
     const pendingCommands = yield* queue.forExecution(input.sessionId, executionSnapshot);
     const shipBuilding = yield* contentArtifact.loadShipBuildingContent();
+    // T-1 (spec #109 R1): absent section = dormant, so a month without it never sees the player nation or an offer.
+    const battleOffers = yield* contentArtifact.loadBattleOfferRules();
 
     const recordedInputs = input.recordedInputs ?? [];
     // `turnId` is a function of the pre-turn state and the committed orders — all
@@ -172,6 +174,9 @@ export const runTurnTransaction = (
       {
         shipBuilding,
         ...(shipBuilding.presence !== undefined ? { presence: shipBuilding.presence } : {}),
+        ...(battleOffers !== undefined
+          ? { battleOffers, playerNationId: record.playerSlotId }
+          : {}),
         ...(channel !== undefined ? { interruptions: channel } : {}),
       },
     );

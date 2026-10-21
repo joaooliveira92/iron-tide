@@ -29,7 +29,7 @@ const ContentHashesSchema = Schema.Struct({
  * cannot smuggle a matching id.
  */
 export const OutstandingRequestSchema = Schema.Struct({
-  kind: Schema.Literals(["decision", "battle"]),
+  kind: Schema.Literals(["decision", "battle", "offer"]),
   phase: TurnPhaseSchema,
   ordinal: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
   subjectKey: nonEmpty,
