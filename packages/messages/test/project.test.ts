@@ -205,6 +205,34 @@ describe("TurnMessage projection", () => {
     expect(message?.subjectRefs).toContainEqual({ type: "nation", id: "uk" });
   });
 
+  it("reports every declined-battle prestige loss of a month, while other sources keep one message per source (T-1 review)", () => {
+    const change = (reasonCode: "DECLINED_BATTLE" | "UNPAID_FUNDS", before: number, seq: number) =>
+      envelope(
+        {
+          kind: "PrestigeChanged",
+          nationId: "uk",
+          reasonCode,
+          ruleKind: "FIXED_LOSS",
+          before: SafeInt(before),
+          after: SafeInt(before - 2),
+          delta: SafeInt(-2),
+          rulesetVersion: "1.0.0",
+        },
+        "uk",
+        seq,
+      );
+    const declined = projectTurnMessages(
+      input([change("DECLINED_BATTLE", 50, 1), change("DECLINED_BATTLE", 48, 2)]),
+    );
+    expect(declined.filter((m) => m.titleKey === "messages.prestige.changed.title")).toHaveLength(
+      2,
+    );
+    const unpaid = projectTurnMessages(
+      input([change("UNPAID_FUNDS", 50, 1), change("UNPAID_FUNDS", 48, 2)]),
+    );
+    expect(unpaid.filter((m) => m.titleKey === "messages.prestige.changed.title")).toHaveLength(1);
+  });
+
   it("aggregates routine construction progress under one aggregate key", () => {
     const messages = projectTurnMessages(
       input([constructionProgress("p1", 10, 1), constructionProgress("p2", 20, 2)]),

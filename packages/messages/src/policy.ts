@@ -169,7 +169,12 @@ export function classifyEventBody(body: DomainEventBody): MessageClassification 
         phase: "obligation",
         titleKey: "messages.prestige.changed.title",
         bodyKey: "messages.prestige.changed.body",
-        deduplicationKey: `prestige:changed:${body.nationId}:${body.reasonCode}`,
+        // A declined battle is its own event: two in one month are two outcomes, told apart by the step they took.
+        // Every other source keeps one message per nation and source.
+        deduplicationKey:
+          body.reasonCode === "DECLINED_BATTLE"
+            ? `prestige:changed:${body.nationId}:${body.reasonCode}:${String(body.before)}:${String(body.after)}`
+            : `prestige:changed:${body.nationId}:${body.reasonCode}`,
       });
     case "DeclineThresholdReached":
       return classification({
