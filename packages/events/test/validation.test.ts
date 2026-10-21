@@ -311,6 +311,28 @@ describe("BattleDeclined (T-1 04)", () => {
   });
 });
 
+describe("DeclineThresholdReached (T-1 05)", () => {
+  const body = {
+    kind: "DeclineThresholdReached",
+    nationId: "GBR",
+    battleId: "battle-1",
+    count: 3,
+    threshold: 3,
+    scope: "WAR",
+    rulesetVersion: "1.0.0",
+  } as const;
+
+  it("records nation, count, threshold, scope and ruleset version and rejects excess keys, empty ids and bad counts", () => {
+    expect(parseDomainEventBody(body).kind).toBe("DeclineThresholdReached");
+    expect(() => parseDomainEventBody({ ...body, extra: 1 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, nationId: "" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, rulesetVersion: "" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, count: 0 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, threshold: 1.5 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, scope: "GLOBAL" })).toThrow();
+  });
+});
+
 describe("penalty requests (S-5 06)", () => {
   for (const kind of ["PrestigeLossRequested", "RevoltPressureRequested"] as const) {
     it(`${kind} carries integer tons only and rejects excess keys, empty ids and a non-positive shortfall`, () => {

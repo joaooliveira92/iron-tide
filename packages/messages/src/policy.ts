@@ -162,6 +162,15 @@ export function classifyEventBody(body: DomainEventBody): MessageClassification 
         bodyKey: "messages.battle.declined.body",
         deduplicationKey: `battle:declined:${body.battleId}`,
       });
+    case "DeclineThresholdReached":
+      return classification({
+        category: "BATTLE",
+        severity: "HIGH",
+        phase: "battle_resolution",
+        titleKey: "messages.battle.declineThreshold.title",
+        bodyKey: "messages.battle.declineThreshold.body",
+        deduplicationKey: `battle:declineThreshold:${body.nationId}:${body.battleId}`,
+      });
     default:
       return classification({
         category: "SYSTEM",

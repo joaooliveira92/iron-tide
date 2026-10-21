@@ -3,7 +3,12 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { CampaignSnapshot, CampaignState, DeclinedBattleRecord } from "@bluewave/campaign";
+import type {
+  CampaignSnapshot,
+  CampaignState,
+  DeclineCounterEntry,
+  DeclinedBattleRecord,
+} from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -24,7 +29,18 @@ const RECORD: DeclinedBattleRecord = {
   opponentCredit: 0,
 };
 
-function state(declined: readonly DeclinedBattleRecord[] | undefined): CampaignState {
+const COUNTER: DeclineCounterEntry = {
+  key: "WAR|war_1|GBR",
+  nationId: "GBR",
+  lastWarId: "war_1",
+  count: 2,
+  decayAnchorMonth: "1880-01",
+};
+
+function state(
+  declined: readonly DeclinedBattleRecord[] | undefined,
+  counters?: readonly DeclineCounterEntry[],
+): CampaignState {
   const snapshot: CampaignSnapshot = {
     version: "1.0.0",
     turnNumber: SafeInt.ONE,
@@ -52,6 +68,7 @@ function state(declined: readonly DeclinedBattleRecord[] | undefined): CampaignS
       blockadeState: [],
       battleManifests: [],
       ...(declined === undefined ? {} : { declinedBattles: [...declined] }),
+      ...(counters === undefined ? {} : { declineCounters: [...counters] }),
     },
     politics: { relations: [], shells: {} },
     intelligence: { shells: {} },
@@ -86,6 +103,18 @@ describe("declined-battle record save/load parity", () => {
     const file = join(tmpDir, pointer.activeSaveId, "campaign.json");
     const raw = JSON.parse(readFileSync(file, "utf8")) as {
       snapshot: { wars: { declinedBattles: unknown[] } };
+    };
+    edit(raw.snapshot.wars);
+    writeFileSync(file, JSON.stringify(raw));
+  }
+
+  function tamperCounters(edit: (wars: { declineCounters: unknown[] }) => void): void {
+    const pointer = JSON.parse(readFileSync(join(tmpDir, "pointer.json"), "utf8")) as {
+      activeSaveId: string;
+    };
+    const file = join(tmpDir, pointer.activeSaveId, "campaign.json");
+    const raw = JSON.parse(readFileSync(file, "utf8")) as {
+      snapshot: { wars: { declineCounters: unknown[] } };
     };
     edit(raw.snapshot.wars);
     writeFileSync(file, JSON.stringify(raw));
@@ -132,6 +161,42 @@ describe("declined-battle record save/load parity", () => {
       store.save(state([RECORD]), tmpDir);
       tamper((wars) => {
         wars.declinedBattles = [bad];
+      });
+      const diagnostics = new DiagnosticCollector();
+      expect(store.load(tmpDir, diagnostics)).toBeNull();
+      expect(diagnostics.hasErrors).toBe(true);
+    }
+  });
+
+  it("round-trips the decline tallies exactly and loads a save without them with the field absent (T-1 05)", () => {
+    const saved = state([RECORD], [COUNTER, { ...COUNTER, key: "CAMPAIGN", count: 0 }]);
+    store.save(saved, tmpDir);
+    const loaded = store.load(tmpDir, new DiagnosticCollector());
+    expect(loaded!.rawHash).toBe(saved.rawHash);
+    expect(loaded!.snapshot.wars.declineCounters).toEqual([
+      COUNTER,
+      { ...COUNTER, key: "CAMPAIGN", count: 0 },
+    ]);
+
+    const bare = state([RECORD]);
+    store.save(bare, tmpDir);
+    const reloaded = store.load(tmpDir, new DiagnosticCollector());
+    expect("declineCounters" in reloaded!.snapshot.wars).toBe(false);
+  });
+
+  it("refuses a save holding a malformed, short or over-keyed decline tally (T-1 05)", () => {
+    for (const bad of [
+      { ...COUNTER, key: "" },
+      { ...COUNTER, count: -1 },
+      { ...COUNTER, count: 1.5 },
+      { ...COUNTER, decayAnchorMonth: "1880-13" },
+      { ...COUNTER, extra: "x" },
+      { key: "CAMPAIGN" },
+      "not-an-object",
+    ]) {
+      store.save(state([RECORD], [COUNTER]), tmpDir);
+      tamperCounters((wars) => {
+        wars.declineCounters = [bad];
       });
       const diagnostics = new DiagnosticCollector();
       expect(store.load(tmpDir, diagnostics)).toBeNull();

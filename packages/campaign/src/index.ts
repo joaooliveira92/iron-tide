@@ -38,6 +38,7 @@ export type {
   CompiledDesignVersion,
   CompiledTorpedoMount,
   DeclinedBattleRecord,
+  DeclineCounterEntry,
   ConstructionPackage,
   ConstructionMonthUsage,
   ConstructionPackageKind,

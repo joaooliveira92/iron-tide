@@ -283,6 +283,9 @@ export const EN_US_MESSAGES = {
   "messages.battle.declined.title": "Battle declined",
   "messages.battle.declined.body":
     "{nationId} declined the battle at {areaId} and lost {victoryPointCost} victory points.",
+  "messages.battle.declineThreshold.title": "Repeated battle declines",
+  "messages.battle.declineThreshold.body":
+    "{nationId} has now declined {count} battles, reaching the threshold of {threshold}.",
   "ui.offer.decline.costsVictoryPoints": "Declining a battle costs victory points.",
   "ui.offer.decline.mayCostPrestige": "Repeated declines may also cost prestige.",
 } as const;

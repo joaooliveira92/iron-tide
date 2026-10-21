@@ -11,6 +11,7 @@ export type {
   EventType,
   EventVersion,
   BattleDeclined,
+  DeclineThresholdReached,
   BattleOfferAnswered,
   ForeignStationNoRoute,
   ForeignStationShipMoved,

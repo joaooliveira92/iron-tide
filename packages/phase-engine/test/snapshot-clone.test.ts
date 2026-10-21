@@ -385,6 +385,15 @@ function makeRichSnapshot(): CampaignSnapshot {
       opponentCredit: 0,
     },
   ];
+  snapshot.wars.declineCounters = [
+    {
+      key: `WAR|war_1|${ATTACKER_NATION}`,
+      nationId: ATTACKER_NATION,
+      lastWarId: "war_1",
+      count: 1,
+      decayAnchorMonth: "1880-01",
+    },
+  ];
   snapshot.wars.battleManifests = [
     {
       battleId: "battle-1",
@@ -519,6 +528,7 @@ const CANONICAL_CLONE_TYPES = [
   "BattleResult",
   "BattleManifest",
   "BattleManifestSide",
+  "DeclineCounterEntry",
   "DeclinedBattleRecord",
   "WarState",
   "CampaignSlot",
@@ -587,6 +597,9 @@ describe("snapshotClone — field-exhaustive clone coverage audit", () => {
     );
     expect(Object.keys(clone.wars.battleManifests![0]!).sort()).toEqual(
       [...CLONE_COVERAGE.BattleManifest!].sort(),
+    );
+    expect(Object.keys(clone.wars.declineCounters![0]!).sort()).toEqual(
+      [...CLONE_COVERAGE.DeclineCounterEntry!].sort(),
     );
     expect(Object.keys(clone.wars.declinedBattles![0]!).sort()).toEqual(
       [...CLONE_COVERAGE.DeclinedBattleRecord!].sort(),
