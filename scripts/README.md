@@ -56,6 +56,7 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 - `verify-golden-hashes.cjs` (`check:golden`) — reference run matches `golden/hashes.json`.
 - `verify-cross-process-determinism.cjs` (`check:determinism`) — child hash reports byte-identical.
 - `verify-equivalence-determinism.mjs` (`check:equivalence`) — equivalence/part-build SHA-256 stable (SPM-R24).
+- `verify-replay-corpus.mjs` (`check:replay-corpus`) — replays verified twice, identical output.
 - `verify-golden-repin.mjs` (`check:golden-repin`) — authoritative edits re-pin golden or carry `Golden-Repin: not-needed`.
 - `check-balance-reports.cjs` (`check:balance-reports`) — committed reports match the regenerated ones.
 
