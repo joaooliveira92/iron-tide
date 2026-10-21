@@ -25,3 +25,12 @@ value, the cause**, and a migration assessment — per the ENGINEERING-CONTRACT
 hash also states its reason, and reviewed exemptions name paths that cannot move
 it. A golden that changes without an understood authoritative cause is a stop
 condition (see `AGENTS.md`).
+
+## Replay corpus approvals
+
+Replay files in `golden/replays/` are not re-pinned. `golden/replay-approvals.json` holds
+entries bound to the exact old and new checkpoint hashes of one replay and month (ADR-0246).
+After `pnpm replay:record <id>`, run `pnpm replay:approve --cause "<why>" --migration
+"<assessment>"` to propose entries from the diff against `origin/dev` (`--base <ref>`).
+`pnpm check:replay-approvals` fails an unapproved, mismatched, orphaned, reused or rewritten
+entry. CI only verifies; entries are append-only.

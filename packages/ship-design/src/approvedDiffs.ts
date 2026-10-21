@@ -70,6 +70,13 @@ const PATTERN_CHARS = /[*?{}()|+^$\\]/;
 const BROAD_WORDS = /^\s*(all|every|any|whole|entire|design|placement)\b/i;
 const BROAD_REASON = /\b(all|every|any)\b[^.]*\b(changes?|diffs?|differences?)\b/i;
 
+/**
+ * Whether free text reads as a broad approval (a wildcard, pattern or "all changes" wording).
+ * Shared with the replay-corpus approvals so both gates refuse the same shortcuts.
+ */
+export const readsAsBroadApproval = (text: string): boolean =>
+  PATTERN_CHARS.test(text) || BROAD_REASON.test(text);
+
 const isMetricValue = (v: unknown): v is MetricValue =>
   v === null || typeof v === "string" || (typeof v === "number" && Number.isFinite(v));
 
@@ -100,7 +107,7 @@ function decodeEntry(raw: unknown, at: string, errors: string[]): ApprovedDiff |
   }
   for (const key of ["decisionId", "reason", "approvalReference"] as const) {
     const v = o[key];
-    if (typeof v === "string" && (PATTERN_CHARS.test(v) || BROAD_REASON.test(v))) {
+    if (typeof v === "string" && readsAsBroadApproval(v)) {
       errors.push(`${at}: '${key}' reads as a broad approval`);
     }
   }
