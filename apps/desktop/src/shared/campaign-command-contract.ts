@@ -417,10 +417,7 @@ export interface ReadMonthlyReportsResult {
 /**
  * Single source of truth for the command name set — `campaignBridge.ts`'s
  * runtime registry derives from this instead of hand-duplicating the list.
- * TypeScript can't generate overload signatures from a runtime tuple, so
- * `CampaignCommandClient` below must still list each command by hand; keep
- * the two in sync when adding a command (a mismatch fails
- * `campaignBridge.test.ts`).
+ * Keep its entries in sync with {@link CampaignCommandMap}.
  */
 export const CAMPAIGN_COMMAND_NAMES = [
   "listNewGameOptions",
@@ -497,273 +494,215 @@ export const CAMPAIGN_COMMAND_NAMES = [
 ] as const;
 
 /**
- * The full `bridge.campaign` surface — one overload per command, grounded
- * in every real call site across the screens (desktop-mvp map tickets
- * 07-10). Overloaded (not a single generic `execute<Value>`) so call sites
- * get the correct result type from the command's literal string alone,
- * matching how every screen already calls it.
+ * The command-descriptor registry: one entry per command, mapping each name to
+ * its payload and result types. Adding a command is one line here, plus one
+ * entry in {@link CAMPAIGN_COMMAND_NAMES} and its handler module — no overload
+ * to write.
+ */
+export interface CampaignCommandMap {
+  listNewGameOptions: { readonly payload: undefined; readonly result: NewGameOptions };
+  compileCampaign: {
+    readonly payload: CampaignConfiguration;
+    readonly result: CompileCampaignResult;
+  };
+  inspectCampaign: { readonly payload: string; readonly result: InspectCampaignResult };
+  inspectOpeningBriefing: {
+    readonly payload: string;
+    readonly result: InspectOpeningBriefingResult;
+  };
+  inspectMap: { readonly payload: string; readonly result: InspectMapResult };
+  inspectBattleHistory: { readonly payload: string; readonly result: InspectBattleHistoryResult };
+  inspectPriorities: { readonly payload: string; readonly result: InspectPrioritiesResult };
+  inspectDrawingBoardContent: {
+    readonly payload: undefined;
+    readonly result: DrawingBoardContentDto;
+  };
+  inspectPresentationContent: {
+    readonly payload: undefined;
+    readonly result: PresentationContentDto;
+  };
+  inspectUiCatalogue: { readonly payload: undefined; readonly result: UiCatalogueDto };
+  closeCampaign: { readonly payload: string; readonly result: unknown };
+  saveCampaign: { readonly payload: string; readonly result: SaveCampaignResult };
+  copyCampaign: { readonly payload: string; readonly result: CopyCampaignResult };
+  commitMonth: { readonly payload: CommitMonthPayload; readonly result: CommitMonthResponse };
+  generateBattle: {
+    readonly payload: GenerateBattlePayload;
+    readonly result: GenerateBattleResult;
+  };
+  resolveBattle: { readonly payload: ResolveBattlePayload; readonly result: ResolveBattleResult };
+  resolveTacticalBattle: {
+    readonly payload: ResolveTacticalBattlePayload;
+    readonly result: ResolveTacticalBattleResult;
+  };
+  replayBattleBoundary: {
+    readonly payload: ReplayBattleBoundaryPayload;
+    readonly result: ReplayBattleBoundaryResponse;
+  };
+  seedCampaignBattleDrill: {
+    readonly payload: SeedCampaignBattleDrillPayload;
+    readonly result: SeedCampaignBattleDrillResult;
+  };
+  loadCampaign: { readonly payload: undefined; readonly result: LoadCampaignResponse };
+  listRecentCampaigns: {
+    readonly payload: undefined;
+    readonly result: readonly RecentCampaignEntry[];
+  };
+  removeRecentCampaign: {
+    readonly payload: { readonly packagePath: string };
+    readonly result: readonly RecentCampaignEntry[];
+  };
+  loadRecentCampaign: {
+    readonly payload: { readonly packagePath: string };
+    readonly result: LoadCampaignResponse;
+  };
+  listCampaigns: { readonly payload: undefined; readonly result: readonly SaveMetadata[] };
+  verifyCampaign: { readonly payload: undefined; readonly result: VerifyCampaignResponse };
+  replayCampaign: { readonly payload: undefined; readonly result: ReplayCampaignResponse };
+  recoverCampaign: { readonly payload: undefined; readonly result: RecoverCampaignResponse };
+  inspectConstructionScreen: {
+    readonly payload: string;
+    readonly result: ConstructionScreenProjection;
+  };
+  submitConstructionCommand: {
+    readonly payload: SubmitConstructionCommandPayload;
+    readonly result: ConstructionCommandOutcome;
+  };
+  replaceConstructionCommand: {
+    readonly payload: ReplaceConstructionCommandPayload;
+    readonly result: ConstructionCommandOutcome;
+  };
+  cancelConstructionCommand: {
+    readonly payload: CancelConstructionCommandPayload;
+    readonly result: ConstructionCommandOutcome;
+  };
+  haltConstructionCommand: {
+    readonly payload: HaltConstructionCommandPayload;
+    readonly result: ConstructionCommandQueuedOutcome;
+  };
+  resumeConstructionCommand: {
+    readonly payload: ResumeConstructionCommandPayload;
+    readonly result: ConstructionCommandQueuedOutcome;
+  };
+  setAccelerationCommand: {
+    readonly payload: SetAccelerationCommandPayload;
+    readonly result: ConstructionCommandQueuedOutcome;
+  };
+  cancelConstructionProjectCommand: {
+    readonly payload: CancelConstructionProjectCommandPayload;
+    readonly result: ConstructionCommandQueuedOutcome;
+  };
+  orderConstructionBatchCommand: {
+    readonly payload: OrderConstructionBatchCommandPayload;
+    readonly result: ConstructionCommandQueuedOutcome;
+  };
+  previewConstructionBatchCommand: {
+    readonly payload: PreviewConstructionBatchCommandPayload;
+    readonly result: ConstructionBatchPreviewOutcome;
+  };
+  authorizeDockExpansionCommand: {
+    readonly payload: AuthorizeDockExpansionCommandPayload;
+    readonly result: ConstructionCommandQueuedOutcome;
+  };
+  placeForeignConstructionCommand: {
+    readonly payload: PlaceForeignConstructionCommandPayload;
+    readonly result: ConstructionCommandQueuedOutcome;
+  };
+  previewForeignConstructionCommand: {
+    readonly payload: PreviewForeignConstructionCommandPayload;
+    readonly result: ForeignConstructionPreviewOutcome;
+  };
+  inspectFleetScreen: { readonly payload: string; readonly result: FleetScreenProjection };
+  submitMovementCommand: {
+    readonly payload: SubmitMovementCommandPayload;
+    readonly result: MovementCommandOutcome;
+  };
+  submitStationAssignment: {
+    readonly payload: SubmitStationAssignmentPayload;
+    readonly result: StationAssignmentOutcome;
+  };
+  replaceMovementCommand: {
+    readonly payload: ReplaceMovementCommandPayload;
+    readonly result: MovementCommandOutcome;
+  };
+  submitDesignCommand: {
+    readonly payload: SubmitDesignCommandPayload;
+    readonly result: DesignCommandOutcome;
+  };
+  reviseProjectCommand: {
+    readonly payload: ReviseProjectCommandPayload;
+    readonly result: ReviseCommandOutcome;
+  };
+  loadProjectDraft: {
+    readonly payload: LoadProjectDraftPayload;
+    readonly result: ProjectDraftView;
+  };
+  readDrawingBoardDraft: { readonly payload: string; readonly result: ReadDrawingBoardDraftResult };
+  writeDrawingBoardDraft: {
+    readonly payload: WriteDrawingBoardDraftPayload;
+    readonly result: { readonly saved: boolean };
+  };
+  listRebuildableShips: {
+    readonly payload: string;
+    readonly result: readonly RebuildableShipView[];
+  };
+  loadShipDraft: { readonly payload: LoadShipDraftPayload; readonly result: ShipDraftView };
+  checkRebuild: { readonly payload: RebuildCheckPayload; readonly result: RebuildCheckView };
+  startRebuildCommand: {
+    readonly payload: StartRebuildCommandPayload;
+    readonly result: RebuildCommandOutcome;
+  };
+  cancelMovementCommand: {
+    readonly payload: CancelMovementCommandPayload;
+    readonly result: MovementCommandOutcome;
+  };
+  inspectResearchScreen: { readonly payload: string; readonly result: ResearchScreenProjection };
+  setResearchPriorityCommand: {
+    readonly payload: SetResearchPriorityCommandPayload;
+    readonly result: ResearchPriorityOutcome;
+  };
+  inspectDiplomacyScreen: { readonly payload: string; readonly result: DiplomacyScreenProjection };
+  submitDiplomacyCommand: {
+    readonly payload: SubmitDiplomacyCommandPayload;
+    readonly result: DiplomacyCommandOutcome;
+  };
+  inspectDivisionScreen: { readonly payload: string; readonly result: DivisionScreenProjection };
+  submitDivisionCommand: {
+    readonly payload: SubmitDivisionCommandPayload;
+    readonly result: DivisionCommandOutcome;
+  };
+  inspectBudgetScreen: { readonly payload: string; readonly result: BudgetScreenProjection };
+  submitBudgetAllocation: {
+    readonly payload: SubmitBudgetAllocationPayload;
+    readonly result: BudgetCommandOutcome;
+  };
+  readUiState: { readonly payload: string; readonly result: ReadUiStateResult };
+  writeUiState: { readonly payload: WriteUiStatePayload; readonly result: WriteUiStateResult };
+  readMonthlyReports: { readonly payload: string; readonly result: ReadMonthlyReportsResult };
+  readTurnSummaries: { readonly payload: string; readonly result: ReadTurnSummariesResult };
+  resolveTurn: { readonly payload: CommitMonthPayload; readonly result: ResolveTurnResult };
+  answerDecision: { readonly payload: AnswerDecisionPayload; readonly result: ResolveTurnResult };
+  submitBattleResult: {
+    readonly payload: SubmitBattleResultPayload;
+    readonly result: ResolveTurnResult;
+  };
+  abandonPendingTurn: { readonly payload: string; readonly result: AbandonPendingTurnResult };
+  readPendingTurn: { readonly payload: string; readonly result: ReadPendingTurnResult };
+}
+
+export type CampaignCommandName = keyof CampaignCommandMap;
+
+/**
+ * The full `bridge.campaign` surface — a single generic `execute` whose
+ * payload/result types come from {@link CampaignCommandMap}. Adding a command
+ * is one line in the map, one entry in {@link CAMPAIGN_COMMAND_NAMES}, and
+ * its handler module — no overload to write or update across files.
  */
 export interface CampaignCommandClient {
-  execute(command: "listNewGameOptions", payload: undefined): Promise<BridgeResult<NewGameOptions>>;
-  execute(
-    command: "compileCampaign",
-    payload: CampaignConfiguration,
-  ): Promise<BridgeResult<CompileCampaignResult>>;
-  execute(
-    command: "inspectCampaign",
-    payload: string,
-  ): Promise<BridgeResult<InspectCampaignResult>>;
-  execute(
-    command: "inspectOpeningBriefing",
-    payload: string,
-  ): Promise<BridgeResult<InspectOpeningBriefingResult>>;
-  execute(command: "inspectMap", payload: string): Promise<BridgeResult<InspectMapResult>>;
-  execute(
-    command: "inspectBattleHistory",
-    payload: string,
-  ): Promise<BridgeResult<InspectBattleHistoryResult>>;
-  execute(
-    command: "inspectPriorities",
-    payload: string,
-  ): Promise<BridgeResult<InspectPrioritiesResult>>;
-  execute(
-    command: "inspectDrawingBoardContent",
-    payload: undefined,
-  ): Promise<BridgeResult<DrawingBoardContentDto>>;
-  execute(
-    command: "inspectPresentationContent",
-    payload: undefined,
-  ): Promise<BridgeResult<PresentationContentDto>>;
-  execute(command: "inspectUiCatalogue", payload: undefined): Promise<BridgeResult<UiCatalogueDto>>;
-  execute(command: "closeCampaign", payload: string): Promise<BridgeResult<unknown>>;
-  execute(command: "saveCampaign", payload: string): Promise<BridgeResult<SaveCampaignResult>>;
-  execute(command: "copyCampaign", payload: string): Promise<BridgeResult<CopyCampaignResult>>;
-  execute(
-    command: "commitMonth",
-    payload: CommitMonthPayload,
-  ): Promise<BridgeResult<CommitMonthResponse>>;
-  execute(
-    command: "generateBattle",
-    payload: GenerateBattlePayload,
-  ): Promise<BridgeResult<GenerateBattleResult>>;
-  execute(
-    command: "resolveBattle",
-    payload: ResolveBattlePayload,
-  ): Promise<BridgeResult<ResolveBattleResult>>;
-  execute(
-    command: "resolveTacticalBattle",
-    payload: ResolveTacticalBattlePayload,
-  ): Promise<BridgeResult<ResolveTacticalBattleResult>>;
-  execute(
-    command: "replayBattleBoundary",
-    payload: ReplayBattleBoundaryPayload,
-  ): Promise<BridgeResult<ReplayBattleBoundaryResponse>>;
-  execute(
-    command: "seedCampaignBattleDrill",
-    payload: SeedCampaignBattleDrillPayload,
-  ): Promise<BridgeResult<SeedCampaignBattleDrillResult>>;
-  execute(command: "loadCampaign", payload: undefined): Promise<BridgeResult<LoadCampaignResponse>>;
-  execute(
-    command: "listRecentCampaigns",
-    payload: undefined,
-  ): Promise<BridgeResult<readonly RecentCampaignEntry[]>>;
-  execute(
-    command: "removeRecentCampaign",
-    payload: { readonly packagePath: string },
-  ): Promise<BridgeResult<readonly RecentCampaignEntry[]>>;
-  execute(
-    command: "loadRecentCampaign",
-    payload: { readonly packagePath: string },
-  ): Promise<BridgeResult<LoadCampaignResponse>>;
-  execute(
-    command: "listCampaigns",
-    payload: undefined,
-  ): Promise<BridgeResult<readonly SaveMetadata[]>>;
-  execute(
-    command: "verifyCampaign",
-    payload: undefined,
-  ): Promise<BridgeResult<VerifyCampaignResponse>>;
-  execute(
-    command: "replayCampaign",
-    payload: undefined,
-  ): Promise<BridgeResult<ReplayCampaignResponse>>;
-  execute(
-    command: "recoverCampaign",
-    payload: undefined,
-  ): Promise<BridgeResult<RecoverCampaignResponse>>;
-  execute(
-    command: "inspectConstructionScreen",
-    payload: string,
-  ): Promise<BridgeResult<ConstructionScreenProjection>>;
-  execute(
-    command: "submitConstructionCommand",
-    payload: SubmitConstructionCommandPayload,
-  ): Promise<BridgeResult<ConstructionCommandOutcome>>;
-  execute(
-    command: "replaceConstructionCommand",
-    payload: ReplaceConstructionCommandPayload,
-  ): Promise<BridgeResult<ConstructionCommandOutcome>>;
-  execute(
-    command: "cancelConstructionCommand",
-    payload: CancelConstructionCommandPayload,
-  ): Promise<BridgeResult<ConstructionCommandOutcome>>;
-  execute(
-    command: "haltConstructionCommand",
-    payload: HaltConstructionCommandPayload,
-  ): Promise<BridgeResult<ConstructionCommandQueuedOutcome>>;
-  execute(
-    command: "resumeConstructionCommand",
-    payload: ResumeConstructionCommandPayload,
-  ): Promise<BridgeResult<ConstructionCommandQueuedOutcome>>;
-  execute(
-    command: "setAccelerationCommand",
-    payload: SetAccelerationCommandPayload,
-  ): Promise<BridgeResult<ConstructionCommandQueuedOutcome>>;
-  execute(
-    command: "cancelConstructionProjectCommand",
-    payload: CancelConstructionProjectCommandPayload,
-  ): Promise<BridgeResult<ConstructionCommandQueuedOutcome>>;
-  execute(
-    command: "orderConstructionBatchCommand",
-    payload: OrderConstructionBatchCommandPayload,
-  ): Promise<BridgeResult<ConstructionCommandQueuedOutcome>>;
-  execute(
-    command: "previewConstructionBatchCommand",
-    payload: PreviewConstructionBatchCommandPayload,
-  ): Promise<BridgeResult<ConstructionBatchPreviewOutcome>>;
-  execute(
-    command: "authorizeDockExpansionCommand",
-    payload: AuthorizeDockExpansionCommandPayload,
-  ): Promise<BridgeResult<ConstructionCommandQueuedOutcome>>;
-  execute(
-    command: "placeForeignConstructionCommand",
-    payload: PlaceForeignConstructionCommandPayload,
-  ): Promise<BridgeResult<ConstructionCommandQueuedOutcome>>;
-  execute(
-    command: "previewForeignConstructionCommand",
-    payload: PreviewForeignConstructionCommandPayload,
-  ): Promise<BridgeResult<ForeignConstructionPreviewOutcome>>;
-  execute(
-    command: "inspectFleetScreen",
-    payload: string,
-  ): Promise<BridgeResult<FleetScreenProjection>>;
-  execute(
-    command: "submitMovementCommand",
-    payload: SubmitMovementCommandPayload,
-  ): Promise<BridgeResult<MovementCommandOutcome>>;
-  execute(
-    command: "submitStationAssignment",
-    payload: SubmitStationAssignmentPayload,
-  ): Promise<BridgeResult<StationAssignmentOutcome>>;
-  execute(
-    command: "replaceMovementCommand",
-    payload: ReplaceMovementCommandPayload,
-  ): Promise<BridgeResult<MovementCommandOutcome>>;
-  execute(
-    command: "submitDesignCommand",
-    payload: SubmitDesignCommandPayload,
-  ): Promise<BridgeResult<DesignCommandOutcome>>;
-  execute(
-    command: "reviseProjectCommand",
-    payload: ReviseProjectCommandPayload,
-  ): Promise<BridgeResult<ReviseCommandOutcome>>;
-  execute(
-    command: "loadProjectDraft",
-    payload: LoadProjectDraftPayload,
-  ): Promise<BridgeResult<ProjectDraftView>>;
-  execute(
-    command: "readDrawingBoardDraft",
-    payload: string,
-  ): Promise<BridgeResult<ReadDrawingBoardDraftResult>>;
-  execute(
-    command: "writeDrawingBoardDraft",
-    payload: WriteDrawingBoardDraftPayload,
-  ): Promise<BridgeResult<{ readonly saved: boolean }>>;
-  execute(
-    command: "listRebuildableShips",
-    payload: string,
-  ): Promise<BridgeResult<readonly RebuildableShipView[]>>;
-  execute(
-    command: "loadShipDraft",
-    payload: LoadShipDraftPayload,
-  ): Promise<BridgeResult<ShipDraftView>>;
-  execute(
-    command: "checkRebuild",
-    payload: RebuildCheckPayload,
-  ): Promise<BridgeResult<RebuildCheckView>>;
-  execute(
-    command: "startRebuildCommand",
-    payload: StartRebuildCommandPayload,
-  ): Promise<BridgeResult<RebuildCommandOutcome>>;
-  execute(
-    command: "cancelMovementCommand",
-    payload: CancelMovementCommandPayload,
-  ): Promise<BridgeResult<MovementCommandOutcome>>;
-  execute(
-    command: "inspectResearchScreen",
-    payload: string,
-  ): Promise<BridgeResult<ResearchScreenProjection>>;
-  execute(
-    command: "setResearchPriorityCommand",
-    payload: SetResearchPriorityCommandPayload,
-  ): Promise<BridgeResult<ResearchPriorityOutcome>>;
-  execute(
-    command: "inspectDiplomacyScreen",
-    payload: string,
-  ): Promise<BridgeResult<DiplomacyScreenProjection>>;
-  execute(
-    command: "submitDiplomacyCommand",
-    payload: SubmitDiplomacyCommandPayload,
-  ): Promise<BridgeResult<DiplomacyCommandOutcome>>;
-  execute(
-    command: "inspectDivisionScreen",
-    payload: string,
-  ): Promise<BridgeResult<DivisionScreenProjection>>;
-  execute(
-    command: "submitDivisionCommand",
-    payload: SubmitDivisionCommandPayload,
-  ): Promise<BridgeResult<DivisionCommandOutcome>>;
-  execute(
-    command: "inspectBudgetScreen",
-    payload: string,
-  ): Promise<BridgeResult<BudgetScreenProjection>>;
-  execute(
-    command: "submitBudgetAllocation",
-    payload: SubmitBudgetAllocationPayload,
-  ): Promise<BridgeResult<BudgetCommandOutcome>>;
-  execute(command: "readUiState", payload: string): Promise<BridgeResult<ReadUiStateResult>>;
-  execute(
-    command: "writeUiState",
-    payload: WriteUiStatePayload,
-  ): Promise<BridgeResult<WriteUiStateResult>>;
-  execute(
-    command: "readMonthlyReports",
-    payload: string,
-  ): Promise<BridgeResult<ReadMonthlyReportsResult>>;
-  execute(
-    command: "readTurnSummaries",
-    payload: string,
-  ): Promise<BridgeResult<ReadTurnSummariesResult>>;
-  execute(
-    command: "resolveTurn",
-    payload: CommitMonthPayload,
-  ): Promise<BridgeResult<ResolveTurnResult>>;
-  execute(
-    command: "answerDecision",
-    payload: AnswerDecisionPayload,
-  ): Promise<BridgeResult<ResolveTurnResult>>;
-  execute(
-    command: "submitBattleResult",
-    payload: SubmitBattleResultPayload,
-  ): Promise<BridgeResult<ResolveTurnResult>>;
-  execute(
-    command: "abandonPendingTurn",
-    payload: string,
-  ): Promise<BridgeResult<AbandonPendingTurnResult>>;
-  execute(
-    command: "readPendingTurn",
-    payload: string,
-  ): Promise<BridgeResult<ReadPendingTurnResult>>;
+  execute<N extends CampaignCommandName>(
+    command: N,
+    payload: CampaignCommandMap[N]["payload"],
+  ): Promise<BridgeResult<CampaignCommandMap[N]["result"]>>;
 }
 
 /** A stable reference to a domain entity a message concerns (renderer-safe mirror). */

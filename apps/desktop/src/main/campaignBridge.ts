@@ -1,6 +1,9 @@
 import { Effect, ManagedRuntime, Result, Schema } from "effect";
 import type { BridgeResult } from "../shared/bridge-contract.js";
-import { CAMPAIGN_COMMAND_NAMES } from "../shared/campaign-command-contract.js";
+import {
+  CAMPAIGN_COMMAND_NAMES,
+  type CampaignCommandName,
+} from "../shared/campaign-command-contract.js";
 import {
   generateBattleProgram,
   replayBattleBoundaryProgram,
@@ -106,8 +109,6 @@ import { type CommandEnv, desktopMainLayer } from "./runtime/desktopMainLayer.js
 import { SessionIdPayloadSchema } from "./campaignCommandSchemas.js";
 
 const CommandNameSchema = Schema.Literals(CAMPAIGN_COMMAND_NAMES);
-
-type CampaignCommandName = (typeof CAMPAIGN_COMMAND_NAMES)[number];
 
 /**
  * Every `campaign:execute` command as a native Effect program (ADR-0159). The
