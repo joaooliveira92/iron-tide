@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vite-plus/test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type {
   TurnMessageDto,
   TurnSummaryEntry,
@@ -7,7 +7,7 @@ import type {
 import { setUiCatalogue } from "../../content/uiCatalogue.js";
 import { TurnSummaryPanel } from "./TurnSummaryPanel.js";
 
-beforeAll(() => {
+beforeEach(() => {
   setUiCatalogue({
     locale: "en-US",
     strings: {

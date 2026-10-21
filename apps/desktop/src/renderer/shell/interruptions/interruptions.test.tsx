@@ -1,12 +1,12 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vite-plus/test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { InterruptionRequestDto } from "../../../shared/campaign-command-contract.js";
 import { setUiCatalogue } from "../../content/uiCatalogue.js";
 import { BattleRequestDialog } from "./BattleRequestDialog.js";
 import { DecisionDialog } from "./DecisionDialog.js";
 import { PendingTurnRecoveryPrompt } from "./PendingTurnRecoveryPrompt.js";
 
-beforeAll(() => {
+beforeEach(() => {
   setUiCatalogue({
     locale: "en-US",
     strings: {
