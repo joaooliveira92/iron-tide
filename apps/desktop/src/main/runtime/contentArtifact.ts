@@ -2,6 +2,7 @@
 // raw synchronous content reads and the campaign compiler in `Effect` methods, so
 // command programs resolve content through the Layer rather than constructing it
 // inline. Raw `node:*` stays inside the service; no platform services are adopted.
+import type { BattleOfferRules } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { ShipBuildingContent, ShipBuildingData } from "@bluewave/ship-design";
 import { Context, Effect, Layer } from "effect";
@@ -17,6 +18,7 @@ import { loadPresentationContent } from "../presentationContent.js";
 import { loadUiCatalogue } from "../uiCatalogue.js";
 import {
   armamentContentHash,
+  loadBattleOfferRules,
   loadShipBuildingContent,
   loadShipBuildingData,
   shipBuildingContentHash,
@@ -58,6 +60,8 @@ export class ContentArtifact extends Context.Service<
     >;
     /** Builds the runtime ship-building content every month executes on (fail-closed). */
     readonly loadShipBuildingContent: () => Effect.Effect<ShipBuildingContent, CommandFailed>;
+    /** The optional battle-offer ruleset section; `undefined` = dormant (spec #109 R1). Fail-closed on a corrupt artifact. */
+    readonly loadBattleOfferRules: () => Effect.Effect<BattleOfferRules | undefined, CommandFailed>;
     /** Decodes the ship-building catalogue data a month input is built from (fail-closed). */
     readonly loadShipBuildingData: () => Effect.Effect<ShipBuildingData, CommandFailed>;
     /** The artifact-derived ship-building content identity a month records (fail-closed). */
@@ -101,6 +105,8 @@ export function contentArtifactLayer(
       Effect.try({ try: () => loadShipBuildingData(), catch: contentUnavailable }),
     loadShipBuildingContent: () =>
       Effect.try({ try: () => loadShipBuildingContent(), catch: contentUnavailable }),
+    loadBattleOfferRules: () =>
+      Effect.try({ try: () => loadBattleOfferRules(), catch: contentUnavailable }),
     loadShipBuildingData: () =>
       Effect.try({ try: () => loadShipBuildingData(), catch: contentUnavailable }),
     shipBuildingContentHash: () =>

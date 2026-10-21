@@ -20,12 +20,14 @@ import {
   type DecisionOption,
   type DecisionRequest,
   type InterruptionRequest,
+  type OfferRequest,
   type OfferResponseInput,
   type TurnPhase,
   type PendingDecision,
   type RecordedInput,
   type SuspendedTurn,
 } from "@bluewave/messages";
+import type { OfferContent } from "./battleOffer.js";
 import type { MonthContext } from "./monthContext.js";
 
 /**
@@ -69,12 +71,14 @@ function suspend(
   state: InterruptionState,
   request: InterruptionRequest,
   reason: SuspendedTurn["reason"],
+  refusalTag?: string,
 ): void {
   state.suspended = {
     turnId: state.turnId,
     request,
     nextInterruptionOrdinal: state.nextOrdinal,
     reason,
+    ...(refusalTag === undefined ? {} : { refusalTag }),
   };
 }
 
@@ -249,17 +253,37 @@ export function consumeBattleResult(
   return result;
 }
 
+/**
+ * The typed refusals of a recorded battle-offer response (spec #109 R6). Each leaves the offer pending and the ordinal
+ * unadvanced; callers discriminate on `_tag`.
+ */
+export type OfferRefusal =
+  | { readonly _tag: "OfferResponseDuplicate" }
+  | { readonly _tag: "OfferResponseOutOfOrder" }
+  | { readonly _tag: "OfferResponseWrongKind" }
+  | { readonly _tag: "OfferResponseStale" }
+  | { readonly _tag: "OfferResponseTampered" }
+  | { readonly _tag: "OfferResponseWrongBattle" }
+  | { readonly _tag: "OfferDeclineUnavailable" };
+
 /** The outcome of looking for a recorded battle-offer response at the next ordinal. */
 export type OfferResponseResolution =
   | { readonly status: "inactive" }
   | { readonly status: "awaiting"; readonly ordinal: number; readonly interruptionId: string }
-  | { readonly status: "invalid"; readonly ordinal: number; readonly interruptionId: string }
+  | {
+      readonly status: "invalid";
+      readonly ordinal: number;
+      readonly interruptionId: string;
+      readonly refusal: OfferRefusal;
+    }
   | { readonly status: "resolved"; readonly response: OfferResponseInput };
 
 /**
- * Consume the recorded input for the next ordinal as a battle-offer response (spec #109 R3, ticket #111). Hash-validated
- * and consumed strictly by ordinal, like decisions and battle results. No offer is raised by this ticket, so it reports
- * `awaiting`/`invalid` rather than suspending; the ordinal advances only on a valid, matching response.
+ * Consume the recorded input for the next ordinal as a battle-offer response (spec #109 R3, R6). Hash-validated and
+ * consumed strictly by ordinal, like decisions and battle results. It reports `awaiting`/`invalid` rather than
+ * suspending (the caller owns the request); the ordinal advances only on a valid, matching response. A refusal names its
+ * reason by `_tag`: a duplicate or out-of-order response, a wrong input kind, a stale interruption id, a tampered payload,
+ * or a response naming another battle.
  */
 export function consumeOfferResponse(
   state: InterruptionState | undefined,
@@ -273,27 +297,104 @@ export function consumeOfferResponse(
     ordinal,
     subjectKey: subject.battleId,
   });
-  const recorded = state.recordedInputs.find((input) => input.ordinal === ordinal);
-  if (recorded === undefined) return { status: "awaiting", ordinal, interruptionId };
+  const refuse = (refusal: OfferRefusal): OfferResponseResolution => ({
+    status: "invalid",
+    ordinal,
+    interruptionId,
+    refusal,
+  });
+  const atOrdinal = state.recordedInputs.filter((input) => input.ordinal === ordinal);
+  if (atOrdinal.length === 0) {
+    return state.recordedInputs.some((input) => input.ordinal > ordinal)
+      ? refuse({ _tag: "OfferResponseOutOfOrder" })
+      : { status: "awaiting", ordinal, interruptionId };
+  }
+  if (atOrdinal.length > 1) return refuse({ _tag: "OfferResponseDuplicate" });
+  const recorded = atOrdinal[0]!;
+  if (recorded.kind !== "offer") return refuse({ _tag: "OfferResponseWrongKind" });
+  if (recorded.interruptionId !== interruptionId) return refuse({ _tag: "OfferResponseStale" });
   const expectedHash = computeInputHash({
     ordinal,
     kind: "offer",
     interruptionId,
     payload: recorded.payload,
   });
-  if (
-    recorded.kind !== "offer" ||
-    recorded.interruptionId !== interruptionId ||
-    recorded.inputHash !== expectedHash
-  ) {
-    return { status: "invalid", ordinal, interruptionId };
-  }
+  if (recorded.inputHash !== expectedHash) return refuse({ _tag: "OfferResponseTampered" });
   const response = recorded.payload as OfferResponseInput;
-  if (response.battleId !== subject.battleId || response.interruptionId !== interruptionId) {
-    return { status: "invalid", ordinal, interruptionId };
-  }
+  if (response.interruptionId !== interruptionId) return refuse({ _tag: "OfferResponseStale" });
+  if (response.battleId !== subject.battleId) return refuse({ _tag: "OfferResponseWrongBattle" });
   state.nextOrdinal = ordinal + 1;
   return { status: "resolved", response };
+}
+
+/**
+ * Raise a battle offer and consume its answer (spec #109 R3, R6, ticket #112). Returns the validated accept or delegate
+ * response, or `null` after suspending: the answer is absent (`awaiting-input`) or refused with a typed `_tag`
+ * (`invalid-input`, the offer stays pending). A decline is refused here until the decline ticket lands; the player's
+ * answer is never defaulted, auto-declined or auto-accepted.
+ */
+export function consumeOffer(
+  ctx: MonthContext,
+  content: OfferContent,
+): (OfferResponseInput & { readonly response: "accept" | "delegate" }) | null {
+  const state = ctx.interruption;
+  if (state === undefined) return null;
+  const phase = "battle_resolution" as const;
+  const resolution = consumeOfferResponse(state, { battleId: content.battleId, phase });
+  if (resolution.status === "inactive") return null;
+
+  const ordinal = state.nextOrdinal - (resolution.status === "resolved" ? 1 : 0);
+  const interruptionId =
+    resolution.status === "resolved"
+      ? resolution.response.interruptionId
+      : resolution.interruptionId;
+  const request: OfferRequest = {
+    kind: "offer",
+    turnId: state.turnId,
+    interruptionId,
+    phase,
+    ordinal,
+    subjectKey: content.battleId,
+    battleId: content.battleId,
+    titleKey: "messages.offer.request.title",
+    bodyKey: "messages.offer.request.body",
+    interpolation: {
+      battleId: content.battleId,
+      missionType: content.missionType,
+      areaId: content.areaId,
+      attackerId: content.attackerId,
+      defenderId: content.defenderId,
+    },
+    missionType: content.missionType,
+    acceptanceClass: content.acceptanceClass,
+    areaId: content.areaId,
+    attackerId: content.attackerId,
+    defenderId: content.defenderId,
+    playerSide: content.playerSide,
+    playerForce: content.playerForce,
+    estimate: content.estimate,
+    supportForcePresent: content.supportForcePresent,
+    declineStatementKeys: content.declineStatementKeys,
+  };
+
+  switch (resolution.status) {
+    case "awaiting":
+      suspend(state, request, "awaiting-input");
+      return null;
+    case "invalid":
+      suspend(state, request, "invalid-input", resolution.refusal._tag);
+      return null;
+    case "resolved": {
+      const answered = resolution.response;
+      if (answered.response === "decline") {
+        // Not yet an available answer: leave the offer pending and the ordinal unconsumed.
+        state.nextOrdinal = ordinal;
+        suspend(state, request, "invalid-input", "OfferDeclineUnavailable");
+        return null;
+      }
+      return { ...answered, response: answered.response };
+    }
+  }
 }
 
 function damageReport(result: BattleResultInput): Record<string, SafeInt> {

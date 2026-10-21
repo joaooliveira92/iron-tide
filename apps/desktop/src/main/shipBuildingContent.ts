@@ -1,5 +1,10 @@
 import { hashWithContext } from "@bluewave/deterministic";
-import { presenceFromRulesets, type ShipBuildingCatalogue } from "@bluewave/content-compiler";
+import {
+  battleOffersFromRulesets,
+  presenceFromRulesets,
+  type ShipBuildingCatalogue,
+} from "@bluewave/content-compiler";
+import type { BattleOfferRules } from "@bluewave/content-schema";
 import {
   buildShipBuildingContent,
   type AuthoredArmamentContent,
@@ -70,6 +75,19 @@ function loadShipBuilding(): LoadedShipBuilding {
     armamentHash: hashWithContext(manifest.bodyHash, "armament-content"),
   };
   return loaded;
+}
+
+let battleOffers: { readonly rules: BattleOfferRules | undefined } | null = null;
+
+/**
+ * The optional battle-offer ruleset section of the compiled content artifact (spec #109 R1), decoded once per process.
+ * Absent = dormant (`undefined`): no offer is raised and war months behave exactly as before.
+ */
+export function loadBattleOfferRules(): BattleOfferRules | undefined {
+  if (battleOffers !== null) return battleOffers.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  battleOffers = { rules: battleOffersFromRulesets(bundle.rulesets) };
+  return battleOffers.rules;
 }
 
 /**

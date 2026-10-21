@@ -40,6 +40,7 @@ const IMPLEMENTED_COMMANDS = new Set([
   "resolveTurn",
   "answerDecision",
   "submitBattleResult",
+  "submitOfferResponse",
   "abandonPendingTurn",
   "readPendingTurn",
   "commitMonth",

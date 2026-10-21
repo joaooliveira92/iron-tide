@@ -20,7 +20,9 @@ import {
   resolveShipStrength,
   toCampaignBattleResult,
 } from "./battles.js";
-import { applyRecordedBattleResult, consumeBattleResult } from "./interruption.js";
+import { buildOfferContent, offeredManifestFor } from "./battleOffer.js";
+import { battleOfferAnsweredEvent } from "./events.js";
+import { applyRecordedBattleResult, consumeBattleResult, consumeOffer } from "./interruption.js";
 import { runForeignStationDeploymentStep } from "./foreignStationDeployment.js";
 import { runPresenceMeasurementStep } from "./presenceMeasurement.js";
 import { runBaseLimitStep } from "./baseLimits.js";
@@ -171,11 +173,45 @@ function resolveBattle(
 ): void {
   const { collector } = ctx;
 
-  // Additive interruption seam: when a channel is active a pending battle is a
-  // player-facing offer. A present, hash-valid recorded result is applied exactly
-  // once (never re-rolled); an absent one suspends the month. With no channel the
-  // pipeline auto-resolves exactly as before.
-  if (ctx.interruption !== undefined) {
+  // T-1 03 (spec #109 R3): with a channel, the player nation and the battle-offer ruleset section, a pending battle that
+  // involves the player is a player-facing offer. An absent or refused answer suspends the month; an accept or delegate
+  // falls through to the unchanged auto-resolution below. Every other battle auto-resolves unchanged.
+  if (
+    ctx.interruption !== undefined &&
+    ctx.playerNationId !== undefined &&
+    ctx.battleOffers !== undefined
+  ) {
+    const manifest = offeredManifestFor(ctx.currentSnapshot, battle, ctx.playerNationId);
+    if (manifest !== null) {
+      const content = buildOfferContent({
+        snapshot: ctx.currentSnapshot,
+        battle,
+        manifest,
+        playerNationId: ctx.playerNationId,
+        rules: ctx.battleOffers,
+        randomEngine,
+        randomLedger: ctx.randomLedger,
+      });
+      const answered = consumeOffer(ctx, content);
+      if (ctx.interruption.suspended !== undefined) return;
+      if (answered !== null) {
+        ctx.eventLedger.append(
+          battleOfferAnsweredEvent(
+            ctx.playerNationId,
+            battle["id"],
+            content.missionType,
+            answered.response,
+            ctx.nextSeq(),
+            ctx.campaignMonth,
+          ),
+        );
+      }
+    }
+  } else if (ctx.interruption !== undefined) {
+    // Additive interruption seam: when a channel is active a pending battle is a
+    // player-facing request. A present, hash-valid recorded result is applied exactly
+    // once (never re-rolled); an absent one suspends the month. With no channel the
+    // pipeline auto-resolves exactly as before.
     const recorded = consumeBattleResult(ctx, battle);
     if (ctx.interruption.suspended !== undefined) return;
     if (recorded !== null) {

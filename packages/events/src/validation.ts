@@ -146,6 +146,15 @@ export const PresenceShortfallSchema = Schema.Struct({
   shortfallTons: nonNegativeSafeInt.check(Schema.isGreaterThan(0)),
 });
 
+export const BattleOfferAnsweredSchema = Schema.Struct({
+  kind: Schema.Literal("BattleOfferAnswered"),
+  nationId: nonEmptyString,
+  battleId: nonEmptyString,
+  missionType: nonEmptyString,
+  response: Schema.Literals(["accept", "delegate"]),
+  resolutionMode: Schema.Literal("AUTO_RESOLVE"),
+});
+
 export const PrestigeLossRequestedSchema = Schema.Struct({
   kind: Schema.Literal("PrestigeLossRequested"),
   nationId: nonEmptyString,
@@ -215,6 +224,7 @@ export const DomainEventBodySchema = Schema.Union([
   ShipRemovedFromDivisionSchema,
   ForeignStationShipMovedSchema,
   ForeignStationNoRouteSchema,
+  BattleOfferAnsweredSchema,
 ]);
 
 export const DomainEventEnvelopeSchema = Schema.Struct({

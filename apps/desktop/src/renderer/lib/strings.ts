@@ -239,6 +239,43 @@ export const EN_US_MESSAGES = {
   "fleet.overBase.title": "Ships beyond the base limit",
   "fleet.overBase.none": "No ships are beyond a base limit.",
   "fleet.overBase.item": "{ship} in {area}",
+
+  // T-1 03 (#112): the battle offer dialog. Kept in the renderer catalogue, not the compiled content catalogue,
+  // so a dormant feature does not move the content lock; the keys are stable and migrate with the go-live ticket.
+  "messages.offer.request.title": "Battle offered",
+  "messages.offer.request.body":
+    "A battle is offered at {areaId} between {attackerId} and {defenderId}. Review the estimate of the enemy force, then choose how to proceed.",
+  "ui.offer.field.mission": "Mission",
+  "ui.offer.field.class": "Acceptance class",
+  "ui.offer.field.area": "Area",
+  "ui.offer.field.sides": "Sides",
+  "ui.offer.field.yourSide": "Your side",
+  "ui.offer.sides.value": "{attackerId} (attacker) against {defenderId} (defender)",
+  "ui.offer.mission.FLEET_BATTLE": "Fleet battle",
+  "ui.offer.mission.CRUISER_BATTLE": "Cruiser battle",
+  "ui.offer.class.OPTIONAL": "Optional",
+  "ui.offer.class.POLITICALLY_EXPECTED": "Politically expected",
+  "ui.offer.class.OPERATIONALLY_UNAVOIDABLE": "Operationally unavoidable",
+  "ui.offer.side.ATTACKER": "Attacker",
+  "ui.offer.side.DEFENDER": "Defender",
+  "ui.offer.force.heading": "Your force",
+  "ui.offer.force.ship": "{name} ({classId})",
+  "ui.offer.estimate.EXACT": "Enemy strength: {strength}",
+  "ui.offer.estimate.BANDED": "Enemy strength: about {strength} (banded estimate)",
+  "ui.offer.estimate.PERTURBED": "Enemy strength: about {strength} (an estimate, may be off)",
+  "ui.offer.support.present": "A friendly support force is present.",
+  "ui.offer.support.absent": "No friendly support force is present.",
+  "ui.offer.accept": "Accept battle",
+  "ui.offer.accept.hint":
+    "Fight the battle. Until the tactical screen exists, your staff resolves it as battles are resolved today.",
+  "ui.offer.delegate": "Delegate to staff",
+  "ui.offer.delegate.hint":
+    "Accept the battle and let your staff resolve it. It costs nothing extra.",
+  "ui.offer.abandon": "Abandon this turn",
+  "ui.offer.result.accept": "Battle at {areaId} accepted and resolved.",
+  "ui.offer.result.delegate": "Battle at {areaId} delegated to staff and resolved.",
+  "ui.offer.decline.costsVictoryPoints": "Declining a battle costs victory points.",
+  "ui.offer.decline.mayCostPrestige": "Repeated declines may also cost prestige.",
 } as const;
 
 export type MessageKey = keyof typeof EN_US_MESSAGES;

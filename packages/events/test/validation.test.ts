@@ -269,6 +269,26 @@ describe("PresenceShortfall (S-5 05)", () => {
   });
 });
 
+describe("BattleOfferAnswered (T-1 03)", () => {
+  const body = {
+    kind: "BattleOfferAnswered",
+    nationId: "GBR",
+    battleId: "battle-1",
+    missionType: "FLEET_BATTLE",
+    response: "delegate",
+    resolutionMode: "AUTO_RESOLVE",
+  } as const;
+
+  it("records an accepted or delegated offer and rejects excess keys, empty ids and other values", () => {
+    expect(parseDomainEventBody(body).kind).toBe("BattleOfferAnswered");
+    expect(parseDomainEventBody({ ...body, response: "accept" }).kind).toBe("BattleOfferAnswered");
+    expect(() => parseDomainEventBody({ ...body, extra: 1 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, battleId: "" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, response: "decline" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, resolutionMode: "TACTICAL_PLAY" })).toThrow();
+  });
+});
+
 describe("penalty requests (S-5 06)", () => {
   for (const kind of ["PrestigeLossRequested", "RevoltPressureRequested"] as const) {
     it(`${kind} carries integer tons only and rejects excess keys, empty ids and a non-positive shortfall`, () => {

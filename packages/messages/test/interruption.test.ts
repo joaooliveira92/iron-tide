@@ -4,13 +4,17 @@ import {
   decodeBattleResultInput,
   decodeDecisionAnswer,
   decodeInterruptionPayload,
+  decodeInterruptionRequest,
+  decodeOfferRequest,
   decodeOfferResponseInput,
   decodeRecordedInput,
   decodeRecordedInputs,
+  decodeSuspendedTurn,
   makeRecordedInput,
   OFFER_RESPONSES,
   type BattleResultInput,
   type DecisionAnswer,
+  type OfferRequest,
   type OfferResponseInput,
 } from "../src/index.js";
 
@@ -119,5 +123,93 @@ describe("existing interruption fixtures still round-trip", () => {
       }),
     ];
     expect(decodeRecordedInputs(JSON.parse(JSON.stringify(inputs)))).toEqual(inputs);
+  });
+});
+
+// T-1 03 (#112, spec #109 R4): the offer request is additive beside the decision and battle requests. It carries exactly
+// the R4 fields and none of the withheld ones, and every existing request fixture still round-trips.
+const offerRequest: OfferRequest = {
+  kind: "offer",
+  turnId: "t-1",
+  interruptionId: "i-9",
+  phase: "battle_resolution",
+  ordinal: 0,
+  subjectKey: "battle-9",
+  battleId: "battle-9",
+  titleKey: "messages.offer.request.title",
+  bodyKey: "messages.offer.request.body",
+  interpolation: { areaId: "a-1", missionType: "FLEET_BATTLE" },
+  missionType: "FLEET_BATTLE",
+  acceptanceClass: "OPTIONAL",
+  areaId: "a-1",
+  attackerId: "GBR",
+  defenderId: "FRA",
+  playerSide: "ATTACKER",
+  playerForce: [{ shipId: "g1", name: "HMS One", classId: "dv-1" }],
+  estimate: { model: "PERTURBED", strength: 410 },
+  supportForcePresent: false,
+  declineStatementKeys: ["ui.offer.decline.costsVictoryPoints", "ui.offer.decline.mayCostPrestige"],
+};
+
+describe("offer request schema", () => {
+  it("round-trips through JSON and the request union", () => {
+    expect(decodeOfferRequest(JSON.parse(JSON.stringify(offerRequest)))).toEqual(offerRequest);
+    expect(decodeInterruptionRequest(JSON.parse(JSON.stringify(offerRequest)))).toEqual(
+      offerRequest,
+    );
+  });
+
+  it("rejects the information the offer must never carry, and any excess key", () => {
+    for (const withheld of [
+      { enemyShipIds: ["f1"] },
+      { enemyNames: ["FS One"] },
+      { battleSeed: "seed" },
+      { manifestHash: "h" },
+      { inputHash: "h" },
+      { surprise: 1 },
+    ]) {
+      expect(() => decodeOfferRequest({ ...offerRequest, ...withheld })).toThrow();
+    }
+  });
+
+  it("rejects an unknown estimate model, a non-integer strength and an unknown side", () => {
+    expect(() =>
+      decodeOfferRequest({ ...offerRequest, estimate: { model: "MAGIC", strength: 1 } }),
+    ).toThrow();
+    expect(() =>
+      decodeOfferRequest({ ...offerRequest, estimate: { model: "EXACT", strength: 1.5 } }),
+    ).toThrow();
+    expect(() => decodeOfferRequest({ ...offerRequest, playerSide: "NEUTRAL" })).toThrow();
+  });
+
+  it("keeps the decision and battle request wire shapes unchanged", () => {
+    const battle = {
+      kind: "battle" as const,
+      turnId: "t",
+      interruptionId: "i",
+      phase: "battle_resolution" as const,
+      ordinal: 0,
+      subjectKey: "b",
+      battleId: "b",
+      titleKey: "k",
+      bodyKey: "k",
+      interpolation: {},
+      attackerId: "A",
+      defenderId: "D",
+      areaId: "a",
+    };
+    expect(decodeInterruptionRequest(battle)).toEqual(battle);
+  });
+});
+
+describe("suspended turn refusal tag (T-1 03)", () => {
+  const base = { turnId: "t", request: offerRequest, nextInterruptionOrdinal: 0 } as const;
+
+  it("is optional: a suspension without it still decodes, and one with it round-trips", () => {
+    const plain = { ...base, reason: "awaiting-input" as const };
+    expect(decodeSuspendedTurn(plain)).toEqual(plain);
+    const refused = { ...base, reason: "invalid-input" as const, refusalTag: "OfferResponseStale" };
+    expect(decodeSuspendedTurn(JSON.parse(JSON.stringify(refused)))).toEqual(refused);
+    expect(() => decodeSuspendedTurn({ ...refused, refusalTag: "" })).toThrow();
   });
 });

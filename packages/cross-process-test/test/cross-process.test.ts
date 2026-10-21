@@ -357,3 +357,65 @@ describe("Presence measurement cross-process determinism (S-5 05)", () => {
     expect(r1.configuredSnapshotHash).toBe(r1.dormantSnapshotHash);
   });
 });
+
+describe("Battle offer cross-process determinism (T-1 03)", () => {
+  const offerChildScript = resolve(thisDir, "..", "dist", "run-battle-offer-child.js");
+
+  interface OfferChildOutput {
+    success: boolean;
+    error?: string;
+    request: { kind: string; missionType: string; estimate: { model: string; strength: number } };
+    requestReExecutedEqual: boolean;
+    requestLeaksEnemyShip: boolean;
+    dormantSnapshotHash: string;
+    nonOfferedSnapshotHash: string;
+    acceptedSnapshotHash: string;
+    delegatedSnapshotHash: string;
+    acceptedOutcome: string;
+    delegatedOutcome: string;
+    acceptedWars: string;
+    nonOfferedWars: string;
+    dormantRandomLedgerHash: string;
+    nonOfferedRandomLedgerHash: string;
+    draws: { streamId: string; draw: number; reasonCode: string }[];
+  }
+
+  function runOfferChild(): OfferChildOutput {
+    const stdout = execFileSync(process.execPath, [offerChildScript], {
+      encoding: "utf8",
+      timeout: 120000,
+      env: { ...process.env, NODE_OPTIONS: "" },
+    });
+    const lines = stdout.trim().split("\n");
+    return JSON.parse(lines[lines.length - 1]!) as OfferChildOutput;
+  }
+
+  it("two clean processes produce the identical offer, estimate draw and resumed state", () => {
+    const r1 = runOfferChild();
+    const r2 = runOfferChild();
+    expect(r1.error).toBeUndefined();
+    expect(r1.success).toBe(true);
+    expect(r2).toEqual(r1);
+    expect(r1.request.kind).toBe("offer");
+    expect(r1.request.missionType).toBe("FLEET_BATTLE");
+    expect(r1.requestReExecutedEqual).toBe(true);
+    expect(r1.draws).toHaveLength(1);
+    expect(r1.draws[0]?.reasonCode).toBe("BATTLE_OFFER_ESTIMATE_PERTURBED");
+  });
+
+  it("never leaks an enemy ship, and accept and delegate end with the state of the non-offered run", () => {
+    const r = runOfferChild();
+    expect(r.requestLeaksEnemyShip).toBe(false);
+    expect(r.acceptedOutcome).toBe("completed");
+    expect(r.delegatedOutcome).toBe("completed");
+    expect(r.acceptedSnapshotHash).toBe(r.nonOfferedSnapshotHash);
+    expect(r.delegatedSnapshotHash).toBe(r.nonOfferedSnapshotHash);
+    expect(r.acceptedWars).toBe(r.nonOfferedWars);
+  });
+
+  it("is byte-identical to the dormant month when no offer is possible (no channel)", () => {
+    const r = runOfferChild();
+    expect(r.nonOfferedSnapshotHash).toBe(r.dormantSnapshotHash);
+    expect(r.nonOfferedRandomLedgerHash).toBe(r.dormantRandomLedgerHash);
+  });
+});

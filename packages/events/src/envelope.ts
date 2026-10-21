@@ -209,6 +209,20 @@ export interface ForeignStationNoRoute {
   readonly targetAreaId: string;
 }
 
+/**
+ * T-1 03 (spec #109 R7, ticket #112): the player answered a battle offer by accepting it or delegating it to staff. Both
+ * resolve through the unchanged auto-resolution path, so the delegate intent is recorded here rather than in campaign
+ * state (an accepted or delegated battle leaves the same state as a non-offered one). Declines are a later ticket's.
+ */
+export interface BattleOfferAnswered {
+  readonly kind: "BattleOfferAnswered";
+  readonly nationId: string;
+  readonly battleId: string;
+  readonly missionType: string;
+  readonly response: "accept" | "delegate";
+  readonly resolutionMode: "AUTO_RESOLVE";
+}
+
 export type DomainEventBody =
   | NationBudgetChanged
   | ConstructionProgressed
@@ -227,7 +241,8 @@ export type DomainEventBody =
   | ShipDetachedToFleet
   | ShipRemovedFromDivision
   | ForeignStationShipMoved
-  | ForeignStationNoRoute;
+  | ForeignStationNoRoute
+  | BattleOfferAnswered;
 
 export interface DomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody> {
   readonly eventId: string;

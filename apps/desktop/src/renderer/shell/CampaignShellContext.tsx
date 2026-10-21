@@ -31,6 +31,7 @@ export interface CampaignShellContextValue {
     | "advanceMonth"
     | "answerDecision"
     | "submitBattleResult"
+    | "submitOfferResponse"
     | "abandonPendingTurn"
     | "refreshCampaign"
     | "selectScreen"
@@ -77,6 +78,7 @@ export function CampaignShellProvider({
         advanceMonth: shell.advanceMonth,
         answerDecision: shell.answerDecision,
         submitBattleResult: shell.submitBattleResult,
+        submitOfferResponse: shell.submitOfferResponse,
         abandonPendingTurn: shell.abandonPendingTurn,
         refreshCampaign: shell.refreshCampaign,
         selectScreen: shell.selectScreen,

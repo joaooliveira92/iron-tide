@@ -5,6 +5,7 @@ import {
   type CompilerInput,
   type ContentBundle,
 } from "@bluewave/content-compiler";
+import type { BattleOfferRules } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
@@ -378,4 +379,41 @@ export function buildFixtureContentBundle(
     );
   }
   return { bundle: artifact.bundle, contentHash: artifact.envelope.bodyHash };
+}
+
+// T-1 fixtures (spec #109 R1). FIXTURE-CLASS values for exercising the battle-offer mechanics in tests. They are NOT the
+// ADR-0254 balance targets and not sourced values, and must never reach the production pack (a campaign test asserts the
+// pack authors no battleOffers section until ticket #118).
+/** A complete fixture-class `battleOffers` section: a perturbing estimate model, so the recorded-draw path is exercised. */
+export const FIXTURE_BATTLE_OFFER_RULES: BattleOfferRules = {
+  sectionVersion: 1,
+  estimateModel: {
+    kind: "PERTURBED",
+    errorBoundBp: 1_500,
+    rounding: "HALF_UP",
+    showComposition: false,
+  },
+  declineVictoryPoints: {
+    pointsByMission: { FLEET_BATTLE: 4, CRUISER_BATTLE: 2 },
+    distanceModifier: { kind: "NONE" },
+    rounding: "FLOOR",
+    opponentCredit: { kind: "NONE" },
+  },
+  declineCounter: { threshold: 2, scope: "WAR", reset: { kind: "ON_WAR_END" } },
+  enemyDecline: { comparison: "LESS_THAN", thresholdBp: 4_000, probabilityBp: 6_000 },
+  supportForce: { presenceChanceBp: 2_500, shareOfCapBp: 5_000, source: "ALLIED_ONLY" },
+  provenance: {
+    sourceStatus: "BALANCE_TARGET",
+    confidence: "LOW",
+    kind: "balance_adjustment",
+    sources: [],
+    note: "Fixture-class value for tests only.",
+  },
+};
+
+/** The fixture section with a different estimate model (EXACT, BANDED or a differently-bounded PERTURBED). */
+export function fixtureBattleOfferRules(
+  estimateModel: BattleOfferRules["estimateModel"],
+): BattleOfferRules {
+  return { ...FIXTURE_BATTLE_OFFER_RULES, estimateModel };
 }

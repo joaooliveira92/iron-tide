@@ -3,6 +3,7 @@
 // bodies never need a reference to the executor.
 import type { CampaignSnapshot, PresenceMeasurementRules } from "@bluewave/campaign";
 import type { ClimateProfile } from "@bluewave/combat";
+import type { BattleOfferRules } from "@bluewave/content-schema";
 import type {
   CommandBody,
   CommandEnvelope,
@@ -80,6 +81,11 @@ export interface MonthExecutorEngineOptions {
    * `PLAYER_NATION_UNKNOWN`. Absent = today's behaviour; no phase consumes it yet.
    */
   readonly playerNationId?: string;
+  /**
+   * The values of the optional battle-offer ruleset section (spec #109 R1, ADR-0253). Absent = dormant: no offer is raised
+   * and the interruption seam behaves exactly as before. An offer needs this, the player nation and an interruption channel.
+   */
+  readonly battleOffers?: BattleOfferRules;
 }
 
 /**
@@ -113,5 +119,7 @@ export interface MonthContext {
   readonly interruption?: InterruptionState;
   /** The validated player nation, when supplied. */
   readonly playerNationId?: string;
+  /** The battle-offer ruleset section, when the pack authors one. */
+  readonly battleOffers?: BattleOfferRules;
   readonly nextSeq: () => SafeInt;
 }

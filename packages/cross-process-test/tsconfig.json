@@ -18,6 +18,7 @@
     { "path": "../random" },
     { "path": "../events" },
     { "path": "../combat" },
+    { "path": "../messages" },
     { "path": "../persistence" },
     { "path": "../phase-engine" }
   ]
