@@ -20,6 +20,8 @@ import {
   type DecisionOption,
   type DecisionRequest,
   type InterruptionRequest,
+  type OfferResponseInput,
+  type TurnPhase,
   type PendingDecision,
   type RecordedInput,
   type SuspendedTurn,
@@ -245,6 +247,53 @@ export function consumeBattleResult(
   }
   state.nextOrdinal = ordinal + 1;
   return result;
+}
+
+/** The outcome of looking for a recorded battle-offer response at the next ordinal. */
+export type OfferResponseResolution =
+  | { readonly status: "inactive" }
+  | { readonly status: "awaiting"; readonly ordinal: number; readonly interruptionId: string }
+  | { readonly status: "invalid"; readonly ordinal: number; readonly interruptionId: string }
+  | { readonly status: "resolved"; readonly response: OfferResponseInput };
+
+/**
+ * Consume the recorded input for the next ordinal as a battle-offer response (spec #109 R3, ticket #111). Hash-validated
+ * and consumed strictly by ordinal, like decisions and battle results. No offer is raised by this ticket, so it reports
+ * `awaiting`/`invalid` rather than suspending; the ordinal advances only on a valid, matching response.
+ */
+export function consumeOfferResponse(
+  state: InterruptionState | undefined,
+  subject: { readonly battleId: string; readonly phase: TurnPhase },
+): OfferResponseResolution {
+  if (state === undefined) return { status: "inactive" };
+  const ordinal = state.nextOrdinal;
+  const interruptionId = computeInterruptionId({
+    turnId: state.turnId,
+    phase: subject.phase,
+    ordinal,
+    subjectKey: subject.battleId,
+  });
+  const recorded = state.recordedInputs.find((input) => input.ordinal === ordinal);
+  if (recorded === undefined) return { status: "awaiting", ordinal, interruptionId };
+  const expectedHash = computeInputHash({
+    ordinal,
+    kind: "offer",
+    interruptionId,
+    payload: recorded.payload,
+  });
+  if (
+    recorded.kind !== "offer" ||
+    recorded.interruptionId !== interruptionId ||
+    recorded.inputHash !== expectedHash
+  ) {
+    return { status: "invalid", ordinal, interruptionId };
+  }
+  const response = recorded.payload as OfferResponseInput;
+  if (response.battleId !== subject.battleId || response.interruptionId !== interruptionId) {
+    return { status: "invalid", ordinal, interruptionId };
+  }
+  state.nextOrdinal = ordinal + 1;
+  return { status: "resolved", response };
 }
 
 function damageReport(result: BattleResultInput): Record<string, SafeInt> {

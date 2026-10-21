@@ -31,8 +31,9 @@ import {
   runInterruptionCheckpoint,
   trailingInputSuspension,
 } from "./interruption.js";
-import type {
-  MonthContext,
+import {
+  PLAYER_NATION_UNKNOWN,
+  type MonthContext,
   MonthExecutorEngineOptions,
   MonthResult,
   StrategicWeatherPhaseOptions,
@@ -46,6 +47,7 @@ import { cloneSnapshot } from "./snapshotClone.js";
 import { runClosingValidationPhase, runOpeningValidationPhase } from "./validationPhases.js";
 import { runWeatherGenerationPhase } from "./weatherPhase.js";
 
+export { PLAYER_NATION_UNKNOWN };
 export type { MonthExecutorEngineOptions, MonthResult, StrategicWeatherPhaseOptions };
 
 export class MonthExecutor {
@@ -89,6 +91,9 @@ export class MonthExecutor {
       collector,
       options,
       engineOptions,
+      ...(engineOptions?.playerNationId === undefined
+        ? {}
+        : { playerNationId: engineOptions.playerNationId }),
       interruption:
         engineOptions?.interruptions !== undefined
           ? createInterruptionState(engineOptions.interruptions)
@@ -99,6 +104,15 @@ export class MonthExecutor {
         return current;
       },
     };
+
+    if (ctx.playerNationId !== undefined && !snapshot["nations"].has(ctx.playerNationId)) {
+      collector.addError(
+        PLAYER_NATION_UNKNOWN,
+        `Player nation '${ctx.playerNationId}' is not a nation of this campaign`,
+        { stage: "player_nation", entityId: ctx.playerNationId },
+      );
+      return this.finish(ctx, false);
+    }
 
     if (!this.assertPhase(phaseGuard, "opening_validation", collector)) {
       return this.finish(ctx, false);

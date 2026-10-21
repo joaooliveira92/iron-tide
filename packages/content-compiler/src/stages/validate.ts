@@ -32,6 +32,7 @@ import {
   UiCatalogueSchema,
   validateAgainstSchema,
   type ContentSchema,
+  decodeBattleOfferRules,
   decodePresenceRules,
 } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -266,6 +267,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
 
     validateDuplicateIds(validated, collector);
     validatePresenceRules(validated["rulesets"] ?? [], collector);
+    validateBattleOfferRules(validated["rulesets"] ?? [], collector);
     validateMissingReferences(validated, collector);
     validateTechnologyGraph(validated, input, collector);
 
@@ -1263,6 +1265,41 @@ function validatePresenceRules(rulesets: readonly unknown[], collector: Diagnost
         stage: "validate",
         entityId: rulesetId,
         remediation: `Author every presence value in ruleset '${rulesetId}', or remove the section to leave it dormant`,
+      },
+    );
+  }
+}
+
+/**
+ * T-1 (spec #109 R1, ticket #111): a ruleset's optional `battleOffers` section is dormant when absent and all-or-nothing
+ * when present. A partial, mistyped or out-of-range section fails with `BATTLE_OFFER_RULES_INVALID` naming the field.
+ */
+function validateBattleOfferRules(
+  rulesets: readonly unknown[],
+  collector: DiagnosticCollector,
+): void {
+  const carriers = rulesets.filter(
+    (ruleset) => (ruleset as Record<string, unknown>)["battleOffers"] !== undefined,
+  );
+  if (carriers.length > 1)
+    collector.addError(
+      "BATTLE_OFFER_RULES_AMBIGUOUS",
+      `More than one ruleset carries a battleOffers section (${carriers.map((r) => String((r as Record<string, unknown>)["id"])).join(", ")}); exactly one may`,
+      { stage: "validate" },
+    );
+  for (const ruleset of rulesets) {
+    const record = ruleset as Record<string, unknown>;
+    if (record["battleOffers"] === undefined) continue;
+    const rulesetId = String(record["id"]);
+    const decoded = decodeBattleOfferRules(record["battleOffers"]);
+    if (decoded.ok) continue;
+    collector.addError(
+      "BATTLE_OFFER_RULES_INVALID",
+      `Ruleset '${rulesetId}' battleOffers section is invalid at '${decoded.field}': ${decoded.message}`,
+      {
+        stage: "validate",
+        entityId: rulesetId,
+        remediation: `Author every battleOffers value in ruleset '${rulesetId}', or remove the section to leave it dormant`,
       },
     );
   }

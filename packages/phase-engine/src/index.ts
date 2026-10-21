@@ -65,16 +65,18 @@ export type {
   MonthResult,
   StrategicWeatherPhaseOptions,
 } from "./month.js";
-export { MonthExecutor } from "./month.js";
+export { MonthExecutor, PLAYER_NATION_UNKNOWN } from "./month.js";
 export {
   applyRecordedBattleResult,
   consumeBattleResult,
   consumeDecision,
+  consumeOfferResponse,
   createInterruptionState,
   runInterruptionCheckpoint,
   trailingInputSuspension,
   type InterruptionChannel,
   type InterruptionState,
+  type OfferResponseResolution,
 } from "./interruption.js";
 export {
   applyBattleConsequences,

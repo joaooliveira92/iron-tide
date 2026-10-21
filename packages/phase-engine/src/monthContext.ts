@@ -20,6 +20,9 @@ import type { InterruptionChannel, InterruptionState } from "./interruption.js";
 import type { PhaseGuard } from "./phase-guard.js";
 import type { PhaseDefinition } from "./registry.js";
 
+/** Stable diagnostic code for a supplied player nation the snapshot does not contain. */
+export const PLAYER_NATION_UNKNOWN = "PLAYER_NATION_UNKNOWN" as const;
+
 export interface MonthResult {
   finalSnapshot: CampaignSnapshot;
   commandLedger: CommandLedger;
@@ -71,6 +74,12 @@ export interface MonthExecutorEngineOptions {
    * today. Not a `PhaseResource` — the phase registry/footprints are untouched.
    */
   readonly interruptions?: InterruptionChannel;
+  /**
+   * The player-controlled nation (the session's player slot), supplied explicitly so no phase reads it ambiently
+   * (spec #109 R3). Validated against the snapshot's nations before any phase runs: an unknown id fails the month with
+   * `PLAYER_NATION_UNKNOWN`. Absent = today's behaviour; no phase consumes it yet.
+   */
+  readonly playerNationId?: string;
 }
 
 /**
@@ -102,5 +111,7 @@ export interface MonthContext {
   readonly engineOptions?: MonthExecutorEngineOptions;
   /** Mutable interruption state; present only when a channel was supplied. */
   readonly interruption?: InterruptionState;
+  /** The validated player nation, when supplied. */
+  readonly playerNationId?: string;
   readonly nextSeq: () => SafeInt;
 }
