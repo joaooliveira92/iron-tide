@@ -35,4 +35,4 @@ After `pnpm replay:record <id>`, run `pnpm replay:approve --cause "<why>" --migr
 `pnpm check:replay-approvals` fails an unapproved, mismatched, orphaned, reused or rewritten
 entry. CI only verifies; entries are append-only.
 
-`pnpm check:replay-corpus` (in `pnpm check` and on three OSes in `determinism.yml`) verifies each replay twice, prints the first divergence.
+`pnpm check:replay-corpus` (in `pnpm check` and on three OSes in `determinism.yml`) verifies replays twice and via save/load, printing divergence.

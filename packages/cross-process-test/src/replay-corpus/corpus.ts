@@ -1,8 +1,13 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
+import { SaveStore, restampState } from "@bluewave/persistence";
 import { MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
 import { Result } from "effect";
 
@@ -28,7 +33,7 @@ export interface ReplayDivergence {
   /** 1-based month index; 0 for a mismatch found before any month ran. */
   readonly month: number;
   readonly turnNumber: number;
-  readonly where: "content" | "initial" | "snapshot" | LedgerName;
+  readonly where: "content" | "initial" | "snapshot" | "roundtrip" | LedgerName;
   /** Index of the first differing ledger entry; present only when `where` is a ledger. */
   readonly entryIndex?: number;
   /** Recorded hash, or `(missing)` when the recorded ledger is shorter. */
@@ -96,8 +101,51 @@ export interface ExecutorPerturbation {
   readonly afterExecute?: (result: MonthResult) => void;
 }
 
+/**
+ * Save and load the campaign through the production `SaveStore` after every month but the last,
+ * and continue the replay from the loaded state, so persistence cannot silently change the run.
+ */
+export interface RoundTripOptions {
+  /**
+   * Alters the snapshot handed to the store after `month` (1-based), standing in for a
+   * serializer that loses data. Its output is saved as if it were authoritative.
+   */
+  readonly lossy?: (snapshot: CampaignSnapshot, month: number) => CampaignSnapshot;
+}
+
 export interface VerifyOptions {
   readonly perturb?: ExecutorPerturbation;
+  readonly roundTrip?: RoundTripOptions;
+}
+
+type RoundTrip =
+  | { readonly ok: true; readonly snapshot: CampaignSnapshot }
+  | { readonly ok: false; readonly reason: string };
+
+/** Write `snapshot` with the production store, read it back, and return what came out. */
+function saveAndLoad(snapshot: CampaignSnapshot): RoundTrip {
+  const saveDir = mkdtempSync(join(tmpdir(), "bw-replay-roundtrip-"));
+  try {
+    const store = new SaveStore();
+    // Restamp over the snapshot as saved, as the production migration path does, so the
+    // store's own integrity gates pass and only a real fidelity loss can show.
+    const state = restampState(
+      { snapshot, envelope: undefined as never, rawHash: "" },
+      snapshot.compatibilityVersion,
+    );
+    store.save(state, saveDir);
+    const diagnostics = new DiagnosticCollector();
+    const loaded = store.load(saveDir, diagnostics);
+    if (loaded === null || diagnostics.hasErrors) {
+      return {
+        ok: false,
+        reason: diagnostics.all.find((d) => d.severity === "error")?.message ?? "load failed",
+      };
+    }
+    return { ok: true, snapshot: loaded.snapshot };
+  } finally {
+    rmSync(saveDir, { recursive: true, force: true });
+  }
 }
 
 function advance(
@@ -242,6 +290,22 @@ export function verifyReplay(
       });
     }
     snapshot = step.next;
+    if (options.roundTrip !== undefined && month < file.months.length) {
+      const expected = fullSnapshotHash(snapshot);
+      const stored = options.roundTrip.lossy?.(snapshot, month) ?? snapshot;
+      const trip = saveAndLoad(stored);
+      const actual = trip.ok ? fullSnapshotHash(trip.snapshot) : `(load failed: ${trip.reason})`;
+      if (actual !== expected) {
+        return fail({
+          month,
+          turnNumber: Number(snapshot.turnNumber),
+          where: "roundtrip",
+          expected,
+          actual,
+        });
+      }
+      if (trip.ok) snapshot = trip.snapshot;
+    }
   }
   return Result.succeed<VerifyOutcome>({ ok: true, months: file.months.length });
 }

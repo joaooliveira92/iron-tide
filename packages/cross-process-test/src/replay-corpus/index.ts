@@ -3,6 +3,7 @@ export type {
   ExecutorPerturbation,
   ReplayDivergence,
   ReplayScenario,
+  RoundTripOptions,
   VerifyOptions,
   VerifyOutcome,
 } from "./corpus.js";

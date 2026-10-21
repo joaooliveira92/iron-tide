@@ -1,9 +1,10 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { Result } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 
+import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope, SetResearchPriorityCommand } from "@bluewave/commands";
 import {
   decodeReplayFile,
@@ -12,6 +13,7 @@ import {
   verifyReplay,
   type ExecutorPerturbation,
   type ReplayScenario,
+  type RoundTripOptions,
 } from "../src/replay-corpus/index.js";
 
 const SCENARIO: ReplayScenario = { id: "test-two-months", seed: "replay-test", months: 2 };
@@ -256,3 +258,51 @@ describe("replay corpus mutation check", () => {
     });
   });
 });
+
+describe("replay corpus save/load round-trip", () => {
+  const replayDir = new URL("../../../golden/replays/", import.meta.url);
+  const recorded = recordReplay(SCENARIO);
+
+  function roundTripped(text: string, roundTrip: RoundTripOptions = {}) {
+    const result = verifyReplay(text, { roundTrip });
+    if (Result.isFailure(result)) throw new Error(result.failure.message);
+    return result.success;
+  }
+
+  it("matches the uninterrupted run after a production save and load every month", () => {
+    expect(roundTripped(recorded)).toEqual({ ok: true, months: 2 });
+  });
+
+  for (const name of readdirSync(replayDir).filter((n) => n.endsWith(".replay.json"))) {
+    it(`holds for the checked-in replay ${name}`, () => {
+      const text = readFileSync(new URL(name, replayDir), "utf8");
+      expect(roundTripped(text)).toMatchObject({ ok: true });
+    });
+  }
+
+  it("catches a lossy save and locates the month that lost data", () => {
+    const dropped = roundTripped(recorded, {
+      lossy: (snapshot, month) => (month === 1 ? dropFirstNationTreasury(snapshot) : snapshot),
+    });
+    expect(dropped).toMatchObject({ ok: false, divergence: { month: 1, where: "roundtrip" } });
+    if (!dropped.ok) {
+      expect(dropped.divergence.expected).toMatch(/^[0-9a-f]{64}$/);
+      expect(dropped.divergence.actual).not.toBe(dropped.divergence.expected);
+      expect(formatDivergence(dropped.divergence)).toContain("month 1 (turn 1) roundtrip");
+    }
+  });
+
+  it("reports a save that cannot be loaded back", () => {
+    const outcome = roundTripped(recorded, {
+      lossy: (snapshot, month) => (month === 1 ? { ...snapshot, version: 7 as never } : snapshot),
+    });
+    expect(outcome).toMatchObject({ ok: false, divergence: { month: 1, where: "roundtrip" } });
+  });
+});
+
+function dropFirstNationTreasury(snapshot: CampaignSnapshot): CampaignSnapshot {
+  const nations = new Map(snapshot.nations);
+  const [id, nation] = [...nations][0]!;
+  nations.set(id, { ...nation, treasury: (Number(nation.treasury) + 1) as typeof nation.treasury });
+  return { ...snapshot, nations };
+}

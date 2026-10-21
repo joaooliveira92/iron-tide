@@ -45,17 +45,26 @@ function main(argv: readonly string[]): number {
     return 0;
   }
   if (command === "verify" && target !== undefined) {
-    const result = verifyReplay(readFileSync(resolve(target), "utf8"));
-    if (Result.isFailure(result)) {
-      process.stderr.write(`rejected: ${result.failure.message}\n`);
-      return 2;
+    const text = readFileSync(resolve(target), "utf8");
+    // Straight-through and save/load/continue must both reproduce the recorded checkpoints.
+    for (const [label, options] of [
+      ["", {}],
+      [" (save/load round trip)", { roundTrip: {} }],
+    ] as const) {
+      const result = verifyReplay(text, options);
+      if (Result.isFailure(result)) {
+        process.stderr.write(`rejected: ${result.failure.message}\n`);
+        return 2;
+      }
+      if (!result.success.ok) {
+        process.stderr.write(
+          `DIVERGED ${target}${label}: ${formatDivergence(result.success.divergence)}`,
+        );
+        return 1;
+      }
+      process.stdout.write(`verified ${target}${label}: ${String(result.success.months)} months\n`);
     }
-    if (result.success.ok) {
-      process.stdout.write(`verified ${target}: ${String(result.success.months)} months\n`);
-      return 0;
-    }
-    process.stderr.write(`DIVERGED ${target}: ${formatDivergence(result.success.divergence)}`);
-    return 1;
+    return 0;
   }
   process.stderr.write(`${USAGE}\n`);
   return 2;
