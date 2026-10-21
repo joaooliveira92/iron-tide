@@ -1,5 +1,4 @@
 import type { DesignDraft, WorkshopEnvironment, WorkshopView } from "@bluewave/ship-design";
-import type { DrawingBoardContent } from "../../components/design-workspace/content.js";
 import { previewOptionDeltas, type Delta } from "../../components/design-workspace/optionDelta.js";
 import { formatPowerBoth } from "../../lib/presentation-format/index.js";
 
@@ -58,11 +57,10 @@ export function plantDeltas(
   draft: DesignDraft,
   env: WorkshopEnvironment,
   view: WorkshopView,
-  content: DrawingBoardContent,
 ): ReadonlyMap<string, readonly Delta[]> {
-  const current = content.plants.find((p) => p.id === draft.machinery.plantId);
+  const current = env.ctx.plants.find((p) => p.id === draft.machinery.plantId);
   const map = new Map<string, readonly Delta[]>();
-  for (const p of content.plants) {
+  for (const p of env.ctx.plants) {
     if (p.id === draft.machinery.plantId) {
       map.set(p.id, []);
       continue;
@@ -90,19 +88,17 @@ export function plantDeltas(
 }
 
 /**
- * The propulsion configuration and the calculated results for a draft. `month` and `unlockedTechs` gate the plant
- * choices; `view` supplies every calculated value (never recomputed here).
+ * The propulsion configuration and the calculated results for a draft. The environment gates the plant choices and
+ * converts power; `view` supplies every calculated value (never recomputed here).
  */
 export function machineryModel(
   draft: DesignDraft,
   view: WorkshopView,
-  content: DrawingBoardContent,
-  month: string,
-  unlockedTechs: ReadonlySet<string>,
+  env: WorkshopEnvironment,
 ): MachineryModel {
-  const plantOptions: PlantOption[] = content.plants.map((p) => {
-    const tooEarly = p.introduction !== undefined && p.introduction.fromMonth > month;
-    const missing = (p.requires ?? []).filter((t) => !unlockedTechs.has(t));
+  const plantOptions: PlantOption[] = env.ctx.plants.map((p) => {
+    const tooEarly = p.introduction !== undefined && p.introduction.fromMonth > env.ctx.month;
+    const missing = (p.requires ?? []).filter((t) => !env.ctx.unlockedTechs.has(t));
     const reason = tooEarly
       ? `unavailable until ${p.introduction!.fromMonth}`
       : missing.length > 0
@@ -115,9 +111,9 @@ export function machineryModel(
       reason,
     };
   });
-  const plant = content.plants.find((p) => p.id === draft.machinery.plantId);
+  const plant = env.ctx.plants.find((p) => p.id === draft.machinery.plantId);
   const machinery = view.compiled.machinery;
-  const kwPerShpBp = content.environmentFor(month, draft.nationId).ctx.balance.machinery.kwPerShpBp;
+  const kwPerShpBp = env.ctx.balance.machinery.kwPerShpBp;
   const fuelCost = view.forecast.costBreakdown.machinery;
 
   const outputs: MachineryOutput[] = [

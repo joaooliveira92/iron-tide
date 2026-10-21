@@ -16,6 +16,7 @@ import {
   type DraftEdit,
   type DesignDraft,
   type EditLog,
+  type WorkshopEnvironment,
   type WorkshopView,
 } from "@bluewave/ship-design";
 import {
@@ -30,6 +31,8 @@ export interface DrawingBoardState {
   readonly preset: ReferenceDesign;
   readonly month: string;
   readonly draft: DesignDraft;
+  /** The one nation-aware environment the draft and its baseline were compiled with. */
+  readonly env: WorkshopEnvironment;
   readonly view: WorkshopView;
   /** The starting design compiled under the same rules, for the "developed from" comparison. */
   readonly baseline: WorkshopView;
@@ -111,6 +114,7 @@ export function useDrawingBoard(fixedMonth: string | null = null): {
       preset,
       month,
       draft,
+      env,
       view,
       baseline,
       canUndo: canUndo(log),

@@ -82,15 +82,18 @@ describe("protection view model", () => {
     }
   });
 
-  it("derives effective thickness from thickness, material effectiveness and obliquity", () => {
+  it("reads effective thickness from the compile rather than recomputing it", () => {
     const model = protectionModel(ref.draft, view, materials, 1880);
+    const compiled = view.compiled.armour!.effectiveThicknessByRegionUm;
     for (const field of model.fitted) {
-      const eff = materials.find((m) => m.id === field.materialId)?.effBp ?? 10_000;
-      const cos = field.inclined ? 8_660 : 10_000;
-      expect(field.effectiveThicknessMm).toBeCloseTo(
-        (field.thicknessMm * eff * cos) / (10_000 * 10_000),
-        4,
-      );
+      expect(field.effectiveThicknessMm).toBe((compiled[field.region] ?? 0) / 1000);
+    }
+    // A materials table that disagrees with the compile cannot move the readout.
+    const tampered = materials.map((m) => ({ ...m, effBp: 1 }));
+    const tamperedModel = protectionModel(ref.draft, view, tampered, 1880);
+    const byRegion = new Map(model.fitted.map((f) => [f.region, f.effectiveThicknessMm]));
+    for (const field of tamperedModel.fitted) {
+      expect(field.effectiveThicknessMm).toBe(byRegion.get(field.region));
     }
   });
 

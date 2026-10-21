@@ -162,7 +162,6 @@ export function protectionModel(
   const armour = view.compiled.armour;
   const threat = draft.requirement.designThreatId;
   const lengthWl = Number(draft.hull.lengthWl);
-  const effOf = new Map(materials.map((m) => [m.id, m.effBp]));
   const regionSizing: RegionSizing = {
     lengthWlMm: draft.hull.lengthWl,
     beamMm: draft.hull.beam,
@@ -173,7 +172,6 @@ export function protectionModel(
     draft.armour.regions[0]?.materialId ?? materials.find((m) => m.available)?.id ?? "";
 
   const fitted: ProtectionField[] = draft.armour.regions.map((r) => {
-    const eff = effOf.get(r.materialId) ?? 10_000;
     const marginBp = armour?.marginBp[r.region]?.[threat] ?? null;
     return {
       region: r.region,
@@ -192,7 +190,7 @@ export function protectionModel(
         r.materialId,
       ),
       inclined: r.cosObliquityBp < FLAT_COS_BP,
-      effectiveThicknessMm: (r.thicknessUm * eff * r.cosObliquityBp) / (10_000 * 10_000) / 1000,
+      effectiveThicknessMm: (armour?.effectiveThicknessByRegionUm[r.region] ?? 0) / 1000,
       marginBp,
       defeatsDesignThreat: marginBp !== null && marginBp >= 0,
     };

@@ -41,8 +41,7 @@ export function editField(e: DraftEdit): string {
  */
 export function useDesignSession(fixedMonth: string | null) {
   const { state, actions: boardActions } = useDrawingBoard(fixedMonth);
-  const { draft, view, content } = state;
-  const env = useMemo(() => content.environmentFor(state.month), [content, state.month]);
+  const { draft, view, content, env } = state;
   const zones = content.hullForms.find((f) => f.id === draft.hull.hullFormId)?.zones ?? [];
   const batteries = useMemo(() => batteryCards(view, draft), [view, draft]);
   // One finding list per compile, shared by the drawing, the inspector and the findings list.
