@@ -81,12 +81,19 @@ export {
   type OfferResponseResolution,
 } from "./interruption.js";
 export {
+  BATTLE_DECLINED_REASON,
+  OFFER_DECLINE_UNPRICED,
+  priceDecline,
+  type DeclinePrice,
+} from "./battleDecline.js";
+export {
   buildOfferContent,
   estimateEnemyStrength,
   OFFERED_MISSION_TYPES,
   type OfferContent,
 } from "./battleOffer.js";
 export {
+  applyWarScoreDelta,
   applyBattleConsequences,
   collectLostShips,
   resolveCampaignBattleReadiness,

@@ -54,6 +54,49 @@ export function resolveCampaignBattleReadiness(snapshot: CampaignSnapshot, shipI
   return 0;
 }
 
+/** The war-score clamp every war-score change shares (the score scale is -100..100). */
+const clampWarScore = (value: number): number => Math.max(-100, Math.min(100, value));
+
+/** The surrender check every war-score change shares: a side at or above the surrender score settles the war. */
+function settleOnSurrender(
+  snapshot: CampaignSnapshot,
+  war: {
+    readonly id: string;
+    readonly attackerWarScore: number;
+    readonly defenderWarScore: number;
+  },
+  campaignMonth: string,
+): CampaignSnapshot {
+  return war["attackerWarScore"] >= SURRENDER_SCORE || war["defenderWarScore"] >= SURRENDER_SCORE
+    ? settleWar(snapshot, war["id"], campaignMonth)
+    : snapshot;
+}
+
+/**
+ * Move a war's score by a signed amount per side through the one war-score seam (T-1 04, spec #109 R8): the same clamp and
+ * surrender check as a decided battle. A war that is not in the snapshot is left untouched.
+ */
+export function applyWarScoreDelta(
+  snapshot: CampaignSnapshot,
+  warId: string,
+  delta: { readonly attacker: number; readonly defender: number },
+  campaignMonth: string,
+): CampaignSnapshot {
+  const war = snapshot["wars"]["wars"].find((w) => w["id"] === warId);
+  if (war === undefined) return snapshot;
+  const moved = {
+    ...war,
+    attackerWarScore: clampWarScore(war["attackerWarScore"] + delta.attacker),
+    defenderWarScore: clampWarScore(war["defenderWarScore"] + delta.defender),
+  };
+  const wars = snapshot["wars"]["wars"].map((w) => (w["id"] === warId ? moved : w));
+  return settleOnSurrender(
+    { ...snapshot, wars: { ...snapshot["wars"], wars } },
+    moved,
+    campaignMonth,
+  );
+}
+
 export function applyBattleResult(
   snapshot: CampaignSnapshot,
   battle: {
@@ -168,7 +211,7 @@ export function applyBattleResult(
         : (WAR_SCORE_MINOR as number);
 
   const winnerSide = attackerWins ? "attacker" : "defender";
-  const clamp = (v: number) => Math.max(-100, Math.min(100, v));
+  const clamp = clampWarScore;
 
   const winnerScore = winnerSide === "attacker" ? war["attackerWarScore"] : war["defenderWarScore"];
   const loserScore = winnerSide === "attacker" ? war["defenderWarScore"] : war["attackerWarScore"];
@@ -199,19 +242,13 @@ export function applyBattleResult(
 
   wars = wars.map((w) => (w["id"] === war["id"] ? war : w));
 
-  let next: CampaignSnapshot = {
+  const next: CampaignSnapshot = {
     ...snapshot,
     wars: { ...snapshot["wars"], wars, participantMemberships },
   };
 
   // Surrender auto-check.
-  const attackerScore = war["attackerWarScore"] as number;
-  const defenderScore = war["defenderWarScore"] as number;
-  if (attackerScore >= SURRENDER_SCORE || defenderScore >= SURRENDER_SCORE) {
-    next = settleWar(next, war["id"], campaignMonth);
-  }
-
-  return next;
+  return settleOnSurrender(next, war, campaignMonth);
 }
 
 // B-6 INC-3: battle_resolution phase helpers (AC-8/AC-9). The tactical

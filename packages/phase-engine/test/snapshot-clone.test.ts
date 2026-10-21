@@ -372,6 +372,19 @@ function makeRichSnapshot(): CampaignSnapshot {
       establishedMonth: "1880-01",
     },
   ];
+  snapshot.wars.declinedBattles = [
+    {
+      battleId: "battle-declined",
+      warId: "war_1",
+      nationId: ATTACKER_NATION,
+      areaId: "a-1",
+      month: "1880-01",
+      missionType: "FLEET_BATTLE",
+      responseInputHash: "a".repeat(64),
+      victoryPointCost: 4,
+      opponentCredit: 0,
+    },
+  ];
   snapshot.wars.battleManifests = [
     {
       battleId: "battle-1",
@@ -506,6 +519,7 @@ const CANONICAL_CLONE_TYPES = [
   "BattleResult",
   "BattleManifest",
   "BattleManifestSide",
+  "DeclinedBattleRecord",
   "WarState",
   "CampaignSlot",
   "CompiledDesignVersion",
@@ -573,6 +587,9 @@ describe("snapshotClone — field-exhaustive clone coverage audit", () => {
     );
     expect(Object.keys(clone.wars.battleManifests![0]!).sort()).toEqual(
       [...CLONE_COVERAGE.BattleManifest!].sort(),
+    );
+    expect(Object.keys(clone.wars.declinedBattles![0]!).sort()).toEqual(
+      [...CLONE_COVERAGE.DeclinedBattleRecord!].sort(),
     );
   });
 });

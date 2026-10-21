@@ -388,10 +388,6 @@ describe("refusals leave the offer pending (R6)", () => {
     expectPending([{ ...good, ordinal: 1 }], "OfferResponseOutOfOrder");
   });
 
-  it("refuses a decline, which this ticket does not offer", () => {
-    expectPending([answer(request(), "decline")], "OfferDeclineUnavailable");
-  });
-
   it("suspends, never defaulting, when no response is recorded", () => {
     const result = run(warSnapshot(), { rules: exact });
     expect(result.suspended?.reason).toBe("awaiting-input");

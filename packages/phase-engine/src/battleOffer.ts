@@ -28,7 +28,7 @@ export const OFFER_DECLINE_STATEMENT_KEYS: readonly string[] = [
 ];
 
 type EstimateModel = BattleOfferRules["estimateModel"];
-type Rounding = "FLOOR" | "CEIL" | "HALF_UP";
+export type Rounding = "FLOOR" | "CEIL" | "HALF_UP";
 
 function assertNonNegativeSafeInteger(value: number, what: string): void {
   if (!Number.isSafeInteger(value) || value < 0) {
@@ -51,7 +51,7 @@ function toSafeInteger(value: bigint): number {
 }
 
 /** Exact non-negative integer division with the stated rounding, from a bigint intermediate. */
-function divide(numerator: bigint, denominator: bigint, rounding: Rounding): bigint {
+export function divide(numerator: bigint, denominator: bigint, rounding: Rounding): bigint {
   const quotient = numerator / denominator;
   const remainder = numerator % denominator;
   if (remainder === 0n || rounding === "FLOOR") return quotient;

@@ -194,6 +194,23 @@ export function describeEventBody(body: DomainEventBody): EventDescription {
         ],
         effectRefs: [],
       };
+    case "BattleDeclined":
+      return {
+        interpolation: {
+          battleId: body.battleId,
+          nationId: body.nationId,
+          areaId: body.areaId,
+          missionType: body.missionType,
+          victoryPointCost: body.victoryPointCost,
+          opponentCredit: body.opponentCredit,
+        },
+        subjectRefs: [
+          { type: "battle", id: body.battleId },
+          { type: "region", id: body.areaId },
+          nation(body.nationId),
+        ],
+        effectRefs: [],
+      };
     default:
       return { interpolation: {}, subjectRefs: [], effectRefs: [] };
   }

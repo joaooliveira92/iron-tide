@@ -153,6 +153,15 @@ export function classifyEventBody(body: DomainEventBody): MessageClassification 
         bodyKey: "messages.battle.resolved.body",
         deduplicationKey: `battle:resolved:${body.battleId}`,
       });
+    case "BattleDeclined":
+      return classification({
+        category: "BATTLE",
+        severity: "HIGH",
+        phase: "battle_resolution",
+        titleKey: "messages.battle.declined.title",
+        bodyKey: "messages.battle.declined.body",
+        deduplicationKey: `battle:declined:${body.battleId}`,
+      });
     default:
       return classification({
         category: "SYSTEM",

@@ -289,6 +289,28 @@ describe("BattleOfferAnswered (T-1 03)", () => {
   });
 });
 
+describe("BattleDeclined (T-1 04)", () => {
+  const body = {
+    kind: "BattleDeclined",
+    nationId: "GBR",
+    battleId: "battle-1",
+    missionType: "FLEET_BATTLE",
+    areaId: "a-1",
+    victoryPointCost: 5,
+    opponentCredit: 0,
+    reasonCode: "BATTLE_DECLINED_WITH_CONSEQUENCES",
+  } as const;
+
+  it("records a decline and rejects excess keys, empty ids, negative or fractional points and other reasons", () => {
+    expect(parseDomainEventBody(body).kind).toBe("BattleDeclined");
+    expect(() => parseDomainEventBody({ ...body, extra: 1 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, battleId: "" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, victoryPointCost: -1 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, opponentCredit: 1.5 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, reasonCode: "OTHER" })).toThrow();
+  });
+});
+
 describe("penalty requests (S-5 06)", () => {
   for (const kind of ["PrestigeLossRequested", "RevoltPressureRequested"] as const) {
     it(`${kind} carries integer tons only and rejects excess keys, empty ids and a non-positive shortfall`, () => {

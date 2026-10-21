@@ -155,6 +155,17 @@ export const BattleOfferAnsweredSchema = Schema.Struct({
   resolutionMode: Schema.Literal("AUTO_RESOLVE"),
 });
 
+export const BattleDeclinedSchema = Schema.Struct({
+  kind: Schema.Literal("BattleDeclined"),
+  nationId: nonEmptyString,
+  battleId: nonEmptyString,
+  missionType: nonEmptyString,
+  areaId: nonEmptyString,
+  victoryPointCost: nonNegativeSafeInt,
+  opponentCredit: nonNegativeSafeInt,
+  reasonCode: Schema.Literal("BATTLE_DECLINED_WITH_CONSEQUENCES"),
+});
+
 export const PrestigeLossRequestedSchema = Schema.Struct({
   kind: Schema.Literal("PrestigeLossRequested"),
   nationId: nonEmptyString,
@@ -225,6 +236,7 @@ export const DomainEventBodySchema = Schema.Union([
   ForeignStationShipMovedSchema,
   ForeignStationNoRouteSchema,
   BattleOfferAnsweredSchema,
+  BattleDeclinedSchema,
 ]);
 
 export const DomainEventEnvelopeSchema = Schema.Struct({

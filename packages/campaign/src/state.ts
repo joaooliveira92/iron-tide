@@ -207,7 +207,8 @@ export interface PoliticalState {
 
 export interface BattleInstance {
   id: string;
-  phase: "pending" | "resolving" | "resolved";
+  /** `declined` (T-1 04) is terminal: the battle was never resolved or fought. */
+  phase: "pending" | "resolving" | "resolved" | "declined";
   attackerId: string;
   defenderId: string;
   areaId: string;
@@ -287,12 +288,36 @@ export interface BattleManifest {
   manifestHash: string;
 }
 
+/**
+ * T-1 04 (spec #109 R8): the terminal record of a battle the player declined. The battle is never resolved or fought;
+ * this record is the durable proof that it was declined (and scored) exactly once. Additive and absent until the first
+ * decline, so a campaign that never declines hashes exactly as before.
+ */
+export interface DeclinedBattleRecord {
+  battleId: string;
+  warId: string;
+  /** The declining nation (the player). */
+  nationId: string;
+  areaId: string;
+  /** Campaign month (YYYY-MM) the decline was applied in. */
+  month: string;
+  missionType: string;
+  /** The hash of the recorded offer-response input that declined the battle. */
+  responseInputHash: string;
+  /** War-score points the decliner lost (a non-negative integer, before the clamp). */
+  victoryPointCost: number;
+  /** War-score points credited to the opponent (0 unless the ruleset's credit shape says so). */
+  opponentCredit: number;
+}
+
 export interface WarState {
   wars: WarDeclaration[];
   battles: BattleInstance[];
   participantMemberships: WarParticipantMembership[];
   blockadeState: BlockadeState[];
   battleManifests: BattleManifest[];
+  /** Terminal declined-battle records in the order they were applied; absent until the first decline. */
+  declinedBattles?: DeclinedBattleRecord[];
 }
 
 export interface WarDeclaration {
