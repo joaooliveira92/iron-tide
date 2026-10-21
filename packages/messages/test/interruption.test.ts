@@ -182,6 +182,15 @@ describe("offer request schema", () => {
     expect(() => decodeOfferRequest({ ...offerRequest, playerSide: "NEUTRAL" })).toThrow();
   });
 
+  it("discloses the supporting nations only as an optional list, so an offer without support is unchanged", () => {
+    const supported = { ...offerRequest, supportForcePresent: true, supportNationIds: ["ITA"] };
+    expect(decodeOfferRequest(JSON.parse(JSON.stringify(supported)))).toEqual(supported);
+    expect("supportNationIds" in decodeOfferRequest(offerRequest)).toBe(false);
+    expect(() => decodeOfferRequest({ ...supported, supportNationIds: [""] })).toThrow();
+    expect(() => decodeOfferRequest({ ...supported, supportNationIds: "ITA" })).toThrow();
+    expect(() => decodeOfferRequest({ ...supported, supportShipIds: ["i1"] })).toThrow();
+  });
+
   it("keeps the decision and battle request wire shapes unchanged", () => {
     const battle = {
       kind: "battle" as const,
