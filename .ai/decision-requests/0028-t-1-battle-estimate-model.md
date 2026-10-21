@@ -2,7 +2,9 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved (2026-10-21) by owner delegation: **Option C**, recorded as
+[ADR-0254](../../docs/adr/ADR-0254-t1-battle-offer-values-balance-targets.md). The
+value is a labelled `BALANCE_TARGET`; ticket #118 is no longer blocked on it.
 
 ## Trigger
 
