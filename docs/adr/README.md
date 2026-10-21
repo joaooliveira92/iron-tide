@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0249).
+highest existing number + 1 (the next number is ADR-0250).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -126,6 +126,7 @@ The authoritative home area and possession ownership behind per-area presence, t
 | 0242 | [ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md](ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) | Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section | accepted | — |
 | 0247 | [ADR-0247-presence-measurement-and-shortfall.md](ADR-0247-presence-measurement-and-shortfall.md) | Presence is measured at month end from the dormant S-5 section and reported as typed shortfall events | accepted | — |
 | 0248 | [ADR-0248-blockade-exemption-and-typed-penalty-requests.md](ADR-0248-blockade-exemption-and-typed-penalty-requests.md) | A blockaded nation at war is exempt from presence, and shortfalls emit typed penalty requests | accepted | — |
+| 0249 | [ADR-0249-foreign-station-deployment-routes-ships-to-the-largest-shortfall.md](ADR-0249-foreign-station-deployment-routes-ships-to-the-largest-shortfall.md) | Foreign-station ships are routed one hop a month toward the largest shortfall | accepted | — |
 
 ## Ship design & construction
 

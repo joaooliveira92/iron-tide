@@ -43,6 +43,10 @@ const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   PresenceShortfall: "battle_resolution",
   PrestigeLossRequested: "battle_resolution",
   RevoltPressureRequested: "battle_resolution",
+  ShipDetachedToFleet: "battle_resolution",
+  ShipRemovedFromDivision: "battle_resolution",
+  ForeignStationShipMoved: "battle_resolution",
+  ForeignStationNoRoute: "battle_resolution",
 };
 
 const NEUTRAL_EVENT_TYPES: ReadonlySet<string> = new Set(["NationBudgetChanged"]);

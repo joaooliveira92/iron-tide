@@ -166,6 +166,38 @@ describe("event validation parity (Zod → Effect Schema)", () => {
         presentTons: 100,
         shortfallTons: 300,
       },
+      {
+        kind: "ShipDetachedToFleet",
+        nationId: "n1",
+        shipId: "s1",
+        fromFleetId: "f1",
+        toFleetId: "f2",
+        areaId: "a1",
+      },
+      {
+        kind: "ShipRemovedFromDivision",
+        nationId: "n1",
+        shipId: "s1",
+        divisionId: "d1",
+        divisionDissolved: false,
+        reason: "FOREIGN_STATION_DEPLOYMENT",
+      },
+      {
+        kind: "ForeignStationShipMoved",
+        nationId: "n1",
+        shipId: "s1",
+        fleetId: "f2",
+        fromAreaId: "a1",
+        toAreaId: "a2",
+        targetAreaId: "a3",
+      },
+      {
+        kind: "ForeignStationNoRoute",
+        nationId: "n1",
+        shipId: "s1",
+        areaId: "a1",
+        targetAreaId: "a3",
+      },
       { kind: "PrestigeLossRequested", nationId: "n1", areaId: "a1", shortfallTons: 300 },
       { kind: "RevoltPressureRequested", nationId: "n1", areaId: "a1", shortfallTons: 300 },
     ] as const;
@@ -248,4 +280,30 @@ describe("penalty requests (S-5 06)", () => {
       expect(() => parseDomainEventBody({ ...body, shortfallTons: 1.5 })).toThrow();
     });
   }
+});
+
+describe("foreign-station deployment events (S-5 07)", () => {
+  it("rejects excess keys, empty ids and a non-boolean dissolved flag", () => {
+    const moved = {
+      kind: "ForeignStationShipMoved",
+      nationId: "n1",
+      shipId: "s1",
+      fleetId: "f1",
+      fromAreaId: "a1",
+      toAreaId: "a2",
+      targetAreaId: "a3",
+    };
+    expect(parseDomainEventBody(moved).kind).toBe("ForeignStationShipMoved");
+    expect(() => parseDomainEventBody({ ...moved, extra: 1 })).toThrow();
+    expect(() => parseDomainEventBody({ ...moved, toAreaId: "" })).toThrow();
+    const left = {
+      kind: "ShipRemovedFromDivision",
+      nationId: "n1",
+      shipId: "s1",
+      divisionId: "d1",
+      divisionDissolved: false,
+      reason: "R",
+    };
+    expect(() => parseDomainEventBody({ ...left, divisionDissolved: "no" })).toThrow();
+  });
 });

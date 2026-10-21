@@ -11,7 +11,8 @@ export interface FleetMoveProblem {
     | "INVALID_COMMAND_PAYLOAD"
     | "INVALID_ROUTE"
     | "SHIP_NOT_OPERATIONAL"
-    | "SHIP_UNAVAILABLE";
+    | "SHIP_UNAVAILABLE"
+    | "FOREIGN_STATION_ASSIGNED";
   readonly message: string;
 }
 
@@ -26,6 +27,13 @@ export function fleetMoveProblem(
   const fleet = nation.fleets.find((f) => f.id === fleetId);
   if (!fleet)
     return { code: "INVALID_COMMAND_PAYLOAD", message: `Fleet ${fleetId} is not ${nationId}'s` };
+  // S-5 (spec #73 R9): the month routes a foreign-station ship itself; a manual order is refused until the assignment is cleared.
+  const stationed = fleet.ships.find((s) => s.stationAssignment !== undefined);
+  if (stationed !== undefined)
+    return {
+      code: "FOREIGN_STATION_ASSIGNED",
+      message: `${stationed.name} is on foreign station and is routed by the month; clear its assignment before ordering fleet ${fleet.name} to move`,
+    };
   if (!fleet.ships.some((s) => isShipOperational(s)))
     return {
       code: "SHIP_NOT_OPERATIONAL",

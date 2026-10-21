@@ -160,6 +160,42 @@ export const RevoltPressureRequestedSchema = Schema.Struct({
   shortfallTons: nonNegativeSafeInt.check(Schema.isGreaterThan(0)),
 });
 
+export const ShipDetachedToFleetSchema = Schema.Struct({
+  kind: Schema.Literal("ShipDetachedToFleet"),
+  nationId: nonEmptyString,
+  shipId: nonEmptyString,
+  fromFleetId: nonEmptyString,
+  toFleetId: nonEmptyString,
+  areaId: nonEmptyString,
+});
+
+export const ShipRemovedFromDivisionSchema = Schema.Struct({
+  kind: Schema.Literal("ShipRemovedFromDivision"),
+  nationId: nonEmptyString,
+  shipId: nonEmptyString,
+  divisionId: nonEmptyString,
+  divisionDissolved: Schema.Boolean,
+  reason: nonEmptyString,
+});
+
+export const ForeignStationShipMovedSchema = Schema.Struct({
+  kind: Schema.Literal("ForeignStationShipMoved"),
+  nationId: nonEmptyString,
+  shipId: nonEmptyString,
+  fleetId: nonEmptyString,
+  fromAreaId: nonEmptyString,
+  toAreaId: nonEmptyString,
+  targetAreaId: nonEmptyString,
+});
+
+export const ForeignStationNoRouteSchema = Schema.Struct({
+  kind: Schema.Literal("ForeignStationNoRoute"),
+  nationId: nonEmptyString,
+  shipId: nonEmptyString,
+  areaId: nonEmptyString,
+  targetAreaId: nonEmptyString,
+});
+
 export const DomainEventBodySchema = Schema.Union([
   NationBudgetChangedSchema,
   ConstructionProgressedSchema,
@@ -175,6 +211,10 @@ export const DomainEventBodySchema = Schema.Union([
   PresenceShortfallSchema,
   PrestigeLossRequestedSchema,
   RevoltPressureRequestedSchema,
+  ShipDetachedToFleetSchema,
+  ShipRemovedFromDivisionSchema,
+  ForeignStationShipMovedSchema,
+  ForeignStationNoRouteSchema,
 ]);
 
 export const DomainEventEnvelopeSchema = Schema.Struct({

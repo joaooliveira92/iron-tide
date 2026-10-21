@@ -279,6 +279,11 @@ describe("Presence measurement cross-process determinism (S-5 05)", () => {
     configuredEventLedgerHash: string;
     shortfalls: { nationId: string; areaId: string; shortfallTons: number }[];
     penaltySnapshotHash: string;
+    stationedShipId: string;
+    deploymentEvents: { kind: string; shipId: string }[];
+    deploymentSnapshotHash: string;
+    configuredFullSnapshotHash: string;
+    deploymentEventLedgerHash: string;
     prestigeRequests: { nationId: string; areaId: string; shortfallTons: number }[];
     revoltRequests: { nationId: string; areaId: string; shortfallTons: number }[];
     exemptNationEventsUnblockaded: number;
@@ -325,5 +330,16 @@ describe("Presence measurement cross-process determinism (S-5 05)", () => {
     expect(r1.penaltySnapshotHash).toBe(r1.dormantSnapshotHash);
     expect(r1.exemptNationEventsUnblockaded).toBeGreaterThan(0);
     expect(r1.exemptNationEventsBlockaded).toBe(0);
+  });
+
+  it("a foreign-station ship is routed identically in two clean processes and only its own events appear (S-5 07)", () => {
+    const r1 = runPresenceChild();
+    const r2 = runPresenceChild();
+    expect(r2).toEqual(r1);
+    expect(r1.stationedShipId).not.toBe("");
+    expect(r1.deploymentEvents.length).toBeGreaterThan(0);
+    expect(r1.deploymentEvents.every((e) => e.shipId === r1.stationedShipId)).toBe(true);
+    // The routed ship changed the full authoritative snapshot (fleets and divisions), unlike the same month without it.
+    expect(r1.deploymentSnapshotHash).not.toBe(r1.configuredFullSnapshotHash);
   });
 });

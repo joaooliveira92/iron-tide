@@ -6,7 +6,7 @@
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { CampaignSnapshot } from "@bluewave/campaign";
-import { MonthExecutor } from "@bluewave/phase-engine";
+import { hashSnapshot, MonthExecutor } from "@bluewave/phase-engine";
 
 import { compileProductionCampaign } from "./production-pack.js";
 
@@ -86,7 +86,56 @@ function run(): void {
             e.body.kind === "RevoltPressureRequested") &&
           e.body.nationId === exemptNation,
       ).length;
+    // S-5 07: assign one active ship outside its nation's shortfall areas to foreign station; the month routes it.
+    const shortAreas = new Set(shortfalls.map((e) => `${e.nationId}/${e.areaId}`));
+    let stationed: CampaignSnapshot | undefined;
+    let stationedShipId = "";
+    for (const sf of shortfalls) {
+      if (stationed !== undefined) break;
+      const nation = state.snapshot.nations.get(sf.nationId)!;
+      const candidate = nation.fleets
+        .flatMap((f) => f.ships)
+        .find(
+          (sh) =>
+            sh.nationId === sf.nationId &&
+            sh.readiness === "ACTIVE" &&
+            !sh.isUnderConstruction &&
+            sh.availability !== "UNAVAILABLE" &&
+            !shortAreas.has(`${sf.nationId}/${sh.locationAreaId}`),
+        );
+      if (candidate === undefined) continue;
+      stationedShipId = candidate.id;
+      const nations = new Map(state.snapshot.nations);
+      nations.set(sf.nationId, {
+        ...nation,
+        fleets: nation.fleets.map((f) => ({
+          ...f,
+          ships: f.ships.map((sh) =>
+            sh.id === candidate.id ? { ...sh, stationAssignment: "FOREIGN_STATION" as const } : sh,
+          ),
+        })),
+      });
+      stationed = { ...state.snapshot, nations };
+    }
+    const deployed = stationed === undefined ? undefined : execute(true, false, stationed);
+    const deploymentKinds = [
+      "ShipRemovedFromDivision",
+      "ShipDetachedToFleet",
+      "ForeignStationShipMoved",
+      "ForeignStationNoRoute",
+    ];
+    const deploymentEvents =
+      deployed === undefined
+        ? []
+        : deployed.eventLedger.all
+            .filter((e) => deploymentKinds.includes(e.body.kind))
+            .map((e) => e.body);
     const output = {
+      stationedShipId,
+      deploymentEvents,
+      deploymentSnapshotHash: deployed === undefined ? "" : hashSnapshot(deployed.finalSnapshot),
+      configuredFullSnapshotHash: hashSnapshot(configured.finalSnapshot),
+      deploymentEventLedgerHash: deployed === undefined ? "" : deployed.eventLedger.hash(),
       penaltySnapshotHash: sha256Hex(canonicalSerialize(penalised.finalSnapshot)),
       penaltyEventLedgerHash: penalised.eventLedger.hash(),
       prestigeRequests: requestsOf(penalised, "PrestigeLossRequested"),

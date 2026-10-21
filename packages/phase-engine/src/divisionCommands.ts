@@ -29,7 +29,7 @@ import type {
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
-function divisionAssetsFor(
+export function divisionAssetsFor(
   snapshot: CampaignSnapshot,
   nationId: string,
   shipIds: string[],

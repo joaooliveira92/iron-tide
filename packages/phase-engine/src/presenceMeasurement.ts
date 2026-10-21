@@ -2,14 +2,19 @@
 // the optional presence ruleset section, and records one typed `PresenceShortfall` event per nation-area with a shortfall.
 // A nation at war and blockaded is exempt (R7). With penalty parameters it also records typed prestige-loss and
 // revolt-pressure requests. It mutates no state (S-2/S-3 own the consequences) and draws no randomness. With the section absent it does nothing.
-import { isPresenceExempt, measurePresence } from "@bluewave/campaign";
+import { isPresenceExempt, measurePresence, type PresenceAreaRow } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { presencePenaltyRequestEvent, presenceShortfallEvent } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
 
-export function runPresenceMeasurementStep(ctx: MonthContext): void {
+/**
+ * Returns the shortfall rows that count this month (non-exempt, positive), in (nation, area) order: the demand the
+ * foreign-station deployment (ADR-0249) routes toward. Empty when the section is absent.
+ */
+export function runPresenceMeasurementStep(ctx: MonthContext): PresenceAreaRow[] {
   const rules = ctx.engineOptions?.presence;
-  if (rules === undefined) return;
+  if (rules === undefined) return [];
+  const demand: PresenceAreaRow[] = [];
 
   const snapshot = ctx.currentSnapshot;
   const exempt = new Map<string, boolean>();
@@ -24,6 +29,7 @@ export function runPresenceMeasurementStep(ctx: MonthContext): void {
     if (isExempt) continue;
     const nation = snapshot["nations"].get(row.nationId);
     if (nation === undefined || (!nation["isPlayable"] && !nation["isAI"])) continue;
+    demand.push(row);
     ctx.eventLedger.append(
       presenceShortfallEvent(
         row.nationId,
@@ -49,4 +55,5 @@ export function runPresenceMeasurementStep(ctx: MonthContext): void {
       );
     }
   }
+  return demand;
 }

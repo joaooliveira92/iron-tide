@@ -163,6 +163,52 @@ export interface RevoltPressureRequested {
   readonly shortfallTons: SafeInt;
 }
 
+/**
+ * S-5 (spec #73 R9, ADR-0249): a foreign-station ship was detached from a multi-ship fleet into a single-ship fleet so it
+ * can move alone. Not emitted when the ship already sailed alone.
+ */
+export interface ShipDetachedToFleet {
+  readonly kind: "ShipDetachedToFleet";
+  readonly nationId: string;
+  readonly shipId: string;
+  readonly fromFleetId: string;
+  readonly toFleetId: string;
+  readonly areaId: string;
+}
+
+/**
+ * S-5 (spec #73 R9, ADR-0249): a foreign-station ship left its permanent division so it could be routed alone.
+ * `divisionDissolved` is true when it was the division's only ship (removing a final ship dissolves the division).
+ */
+export interface ShipRemovedFromDivision {
+  readonly kind: "ShipRemovedFromDivision";
+  readonly nationId: string;
+  readonly shipId: string;
+  readonly divisionId: string;
+  readonly divisionDissolved: boolean;
+  readonly reason: Reason;
+}
+
+/** S-5 (spec #73 R9, ADR-0249): a foreign-station ship sailed one route hop toward the area with the largest shortfall. */
+export interface ForeignStationShipMoved {
+  readonly kind: "ForeignStationShipMoved";
+  readonly nationId: string;
+  readonly shipId: string;
+  readonly fleetId: string;
+  readonly fromAreaId: string;
+  readonly toAreaId: string;
+  readonly targetAreaId: string;
+}
+
+/** S-5 (spec #73 R9, ADR-0249): no sea route connects a foreign-station ship to its target area; the ship stays put. */
+export interface ForeignStationNoRoute {
+  readonly kind: "ForeignStationNoRoute";
+  readonly nationId: string;
+  readonly shipId: string;
+  readonly areaId: string;
+  readonly targetAreaId: string;
+}
+
 export type DomainEventBody =
   | NationBudgetChanged
   | ConstructionProgressed
@@ -177,7 +223,11 @@ export type DomainEventBody =
   | ShipStationAssignmentChanged
   | PresenceShortfall
   | PrestigeLossRequested
-  | RevoltPressureRequested;
+  | RevoltPressureRequested
+  | ShipDetachedToFleet
+  | ShipRemovedFromDivision
+  | ForeignStationShipMoved
+  | ForeignStationNoRoute;
 
 export interface DomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody> {
   readonly eventId: string;

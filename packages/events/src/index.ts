@@ -10,13 +10,17 @@ export type {
   DomainEventEnvelope,
   EventType,
   EventVersion,
+  ForeignStationNoRoute,
+  ForeignStationShipMoved,
   NationBudgetChanged,
   PresenceShortfall,
   PrestigeLossRequested,
   RevoltPressureRequested,
   Reason,
   ResearchProgressed,
+  ShipDetachedToFleet,
   ShipRebuilt,
+  ShipRemovedFromDivision,
   TechnologyDiscovered,
 } from "./envelope.js";
 export type { ExplanationTree } from "./explanation.js";

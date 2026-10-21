@@ -89,5 +89,13 @@ function describeDomainEventBody(body: DomainEventBody): string {
       return `${body.nationId}: prestige loss requested for a presence shortfall of ${body.shortfallTons} t in ${body.areaId}`;
     case "RevoltPressureRequested":
       return `${body.nationId}: revolt pressure requested for a presence shortfall of ${body.shortfallTons} t in ${body.areaId}`;
+    case "ShipDetachedToFleet":
+      return `${body.nationId}: ship ${body.shipId} detached from fleet ${body.fromFleetId} into fleet ${body.toFleetId} in ${body.areaId}`;
+    case "ShipRemovedFromDivision":
+      return `${body.nationId}: ship ${body.shipId} left division ${body.divisionId}${body.divisionDissolved ? " (division dissolved)" : ""} (${body.reason})`;
+    case "ForeignStationShipMoved":
+      return `${body.nationId}: foreign-station ship ${body.shipId} sailed ${body.fromAreaId} -> ${body.toAreaId} toward ${body.targetAreaId}`;
+    case "ForeignStationNoRoute":
+      return `${body.nationId}: foreign-station ship ${body.shipId} in ${body.areaId} has no route to ${body.targetAreaId}`;
   }
 }

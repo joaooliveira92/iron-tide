@@ -311,6 +311,100 @@ export function presencePenaltyRequestEvent(
   };
 }
 
+function shipRoutingEvent(
+  body: Extract<
+    DomainEventEnvelope["body"],
+    {
+      kind:
+        | "ShipDetachedToFleet"
+        | "ShipRemovedFromDivision"
+        | "ForeignStationShipMoved"
+        | "ForeignStationNoRoute";
+    }
+  >,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `${body.kind}-${body.shipId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "ship",
+    aggregateId: body.shipId,
+    eventType: body.kind,
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body,
+    sequenceNumber: seq,
+  };
+}
+
+/** S-5 07 (ADR-0249): typed events of the foreign-station deployment, one event per fact. */
+export const foreignStationEvents = {
+  detached: (
+    nationId: string,
+    shipId: string,
+    fromFleetId: string,
+    toFleetId: string,
+    areaId: string,
+    seq: SafeInt,
+    month: string,
+  ): DomainEventEnvelope =>
+    shipRoutingEvent(
+      { kind: "ShipDetachedToFleet", nationId, shipId, fromFleetId, toFleetId, areaId },
+      seq,
+      month,
+    ),
+  leftDivision: (
+    nationId: string,
+    shipId: string,
+    divisionId: string,
+    divisionDissolved: boolean,
+    reason: string,
+    seq: SafeInt,
+    month: string,
+  ): DomainEventEnvelope =>
+    shipRoutingEvent(
+      { kind: "ShipRemovedFromDivision", nationId, shipId, divisionId, divisionDissolved, reason },
+      seq,
+      month,
+    ),
+  moved: (
+    nationId: string,
+    shipId: string,
+    fleetId: string,
+    fromAreaId: string,
+    toAreaId: string,
+    targetAreaId: string,
+    seq: SafeInt,
+    month: string,
+  ): DomainEventEnvelope =>
+    shipRoutingEvent(
+      {
+        kind: "ForeignStationShipMoved",
+        nationId,
+        shipId,
+        fleetId,
+        fromAreaId,
+        toAreaId,
+        targetAreaId,
+      },
+      seq,
+      month,
+    ),
+  noRoute: (
+    nationId: string,
+    shipId: string,
+    areaId: string,
+    targetAreaId: string,
+    seq: SafeInt,
+    month: string,
+  ): DomainEventEnvelope =>
+    shipRoutingEvent(
+      { kind: "ForeignStationNoRoute", nationId, shipId, areaId, targetAreaId },
+      seq,
+      month,
+    ),
+};
+
 export function makeLedgerEntry(
   nationId: string,
   phaseId: string,
