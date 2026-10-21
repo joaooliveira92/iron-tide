@@ -151,6 +151,8 @@ export interface OfferRequest {
   readonly playerForce: readonly OfferForceShip[];
   readonly estimate: OfferEstimate;
   readonly supportForcePresent: boolean;
+  /** T-1 08: the nations whose ships form the support force, sorted; present only when a support force is. Never ship identities. */
+  readonly supportNationIds?: readonly string[];
   readonly declineStatementKeys: readonly string[];
 }
 
@@ -330,6 +332,7 @@ const OfferRequestSchema = Schema.Struct({
     strength: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
   }),
   supportForcePresent: Schema.Boolean,
+  supportNationIds: Schema.optional(Schema.Array(nonEmptyString)),
   declineStatementKeys: Schema.Array(nonEmptyString),
 });
 

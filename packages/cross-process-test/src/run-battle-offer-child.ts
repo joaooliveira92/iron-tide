@@ -171,7 +171,141 @@ function runChild(): void {
     const withdrawals = (result: MonthResult) =>
       result.eventLedger.all.filter((e) => e.body.kind === "EnemyDeclinedBattle");
 
+    // T-1 08 (#117): a friendly support force. Italy is allied with the player and holds two ships in the area; the fixture
+    // cap (5000 bp of the player's committed 400) admits both. The presence draw is forced to each side by the chance.
+    const ally = "italy";
+    const baseNations = new Map<string, NationState>(snapshot.nations);
+    const italy = baseNations.get(ally)!;
+    baseNations.set(ally, {
+      ...italy,
+      fleets: [
+        {
+          id: `fleet-${ally}`,
+          nationId: ally,
+          name: `${ally} fleet`,
+          locationAreaId: AREA,
+          ships: italy.fleets
+            .flatMap((fleet) => fleet.ships)
+            .slice(0, 2)
+            .map((ship) => ({
+              ...ship,
+              locationAreaId: AREA,
+              firepower: SafeInt(100),
+              hitPoints: ship.maxHitPoints,
+              isUnderConstruction: false,
+              readiness: "ACTIVE" as const,
+              crewQuality: SafeInt(100),
+              inBattleId: undefined,
+            })),
+        },
+      ],
+    });
+    const supported: typeof snapshot = {
+      ...snapshot,
+      nations: baseNations,
+      politics: {
+        ...snapshot.politics,
+        relations: [
+          ...snapshot.politics.relations.filter(
+            (r) =>
+              !(
+                (r.nationA === PLAYER && r.nationB === ally) ||
+                (r.nationA === ally && r.nationB === PLAYER)
+              ),
+          ),
+          {
+            nationA: PLAYER,
+            nationB: ally,
+            relation: "allied" as const,
+            tension: 0,
+            nap: false,
+            since: "1880-01",
+          },
+        ],
+      },
+    };
+    const withSupport = (
+      chanceBp: number,
+      snap: typeof snapshot,
+      response?: OfferRequest,
+      answer?: OfferResponse,
+    ) =>
+      new MonthExecutor().execute(snap, [], SEED, new DiagnosticCollector(), undefined, {
+        battleOffers: {
+          ...FIXTURE_BATTLE_OFFER_RULES,
+          enemyDecline: { comparison: "LESS_THAN", thresholdBp: 0, probabilityBp: 0 },
+          supportForce: { ...FIXTURE_BATTLE_OFFER_RULES.supportForce, presenceChanceBp: chanceBp },
+        },
+        playerNationId: PLAYER,
+        interruptions: {
+          turnId: TURN,
+          recordedInputs:
+            response === undefined || answer === undefined
+              ? []
+              : [
+                  makeRecordedInput({
+                    ordinal: response.ordinal,
+                    kind: "offer",
+                    interruptionId: response.interruptionId,
+                    payload: {
+                      interruptionId: response.interruptionId,
+                      battleId: response.battleId,
+                      response: answer,
+                    },
+                  }),
+                ],
+        },
+      });
+    const supportStream = (result: MonthResult) =>
+      result.randomLedger.all.filter((d) => d.streamId === "battle-offer/support-force");
+    const present = withSupport(10_000, supported);
+    const presentAgain = withSupport(10_000, supported);
+    const presentRequest = offerOf(present);
+    const presentDeclined = withSupport(10_000, supported, presentRequest, "decline");
+    const presentAccepted = withSupport(10_000, supported, presentRequest, "accept");
+    const absent = withSupport(0, supported);
+    const noCandidates = withSupport(10_000, snapshot);
+    const allyShips = (result: MonthResult) =>
+      result.finalSnapshot.nations.get(ally)!.fleets.flatMap((f) => f.ships);
+    const supportManifest = present.finalSnapshot.wars.battleManifests?.[0];
+
     const output = {
+      support: {
+        outcome: present.outcome,
+        requestFlag: presentRequest.supportForcePresent,
+        requestNations: presentRequest.supportNationIds ?? null,
+        requestLeaksAllyShip: allyShips(present).some((ship) =>
+          JSON.stringify(presentRequest).includes(`"${ship.id}"`),
+        ),
+        draws: supportStream(present),
+        temporaryAssets: supportManifest?.temporaryAssets ?? [],
+        persistentAssets: supportManifest?.persistentAssets ?? [],
+        playerSideParticipants:
+          supportManifest?.sides.find((side) => side.sideId === "ATTACKER")?.participantIds ?? [],
+        manifestHash: supportManifest?.manifestHash ?? "",
+        battleSeed: supportManifest?.battleSeed ?? "",
+        inProcessEqual:
+          hashSnapshot(present.finalSnapshot) === hashSnapshot(presentAgain.finalSnapshot) &&
+          present.randomLedger.hash() === presentAgain.randomLedger.hash(),
+        randomLedgerHash: present.randomLedger.hash(),
+        declinedAllyReserved: allyShips(presentDeclined).filter((s) => s.inBattleId !== undefined)
+          .length,
+        declinedAllyUndamaged: allyShips(presentDeclined).every(
+          (s) => s.hitPoints === s.maxHitPoints,
+        ),
+        declinedSnapshotHash: hashSnapshot(presentDeclined.finalSnapshot),
+        acceptedOutcome: presentAccepted.outcome,
+        acceptedAllyReserved: allyShips(presentAccepted).filter((s) => s.inBattleId !== undefined)
+          .length,
+        acceptedAllyUndamaged: allyShips(presentAccepted).every(
+          (s) => s.hitPoints === s.maxHitPoints,
+        ),
+        acceptedSnapshotHash: hashSnapshot(presentAccepted.finalSnapshot),
+        absentDraws: supportStream(absent),
+        absentFlag: offerOf(absent).supportForcePresent,
+        noCandidateDraws: supportStream(noCandidates).length,
+        noCandidateFlag: offerOf(noCandidates).supportForcePresent,
+      },
       enemyDeclined: {
         outcome: enemyDeclined.outcome,
         battles: enemyDeclined.finalSnapshot.wars.battles.length,

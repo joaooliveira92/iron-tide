@@ -110,6 +110,8 @@ export interface OfferContent {
   readonly playerForce: readonly OfferForceShip[];
   readonly estimate: OfferEstimate;
   readonly supportForcePresent: boolean;
+  /** The nations of the support force, sorted; absent when there is none (never ship identities). */
+  readonly supportNationIds?: readonly string[];
   readonly declineStatementKeys: readonly string[];
 }
 
@@ -188,6 +190,14 @@ export function buildOfferContent(input: {
     });
   }
 
+  // T-1 08 (R12): a support force is on the manifest as temporary assets, its nations beside the player's on the player's side.
+  const support: readonly string[] =
+    manifest["temporaryAssets"].length === 0
+      ? []
+      : (manifest["sides"].find((side) => side["sideId"] === playerSide)?.["participantIds"] ?? [])
+          .filter((nationId) => nationId !== playerNationId)
+          .sort(compareCodePoints);
+
   return {
     battleId: battle["id"],
     missionType: manifest["missionType"],
@@ -201,8 +211,8 @@ export function buildOfferContent(input: {
       model: model.kind,
       strength: estimateEnemyStrength(model, toSafeInteger(trueStrength), perturbationBp),
     },
-    // The support force is a later ticket's mechanic (#116); until it lands no battle carries one.
-    supportForcePresent: false,
+    supportForcePresent: support.length > 0,
+    ...(support.length > 0 ? { supportNationIds: support } : {}),
     declineStatementKeys: OFFER_DECLINE_STATEMENT_KEYS,
   };
 }

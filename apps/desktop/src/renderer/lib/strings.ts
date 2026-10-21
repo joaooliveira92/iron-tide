@@ -264,6 +264,7 @@ export const EN_US_MESSAGES = {
   "ui.offer.estimate.BANDED": "Enemy strength: about {strength} (banded estimate)",
   "ui.offer.estimate.PERTURBED": "Enemy strength: about {strength} (an estimate, may be off)",
   "ui.offer.support.present": "A friendly support force is present.",
+  "ui.offer.support.presentFrom": "A friendly support force from {nations} is present.",
   "ui.offer.support.absent": "No friendly support force is present.",
   "ui.offer.accept": "Accept battle",
   "ui.offer.accept.hint":

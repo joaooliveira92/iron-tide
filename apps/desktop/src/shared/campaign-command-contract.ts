@@ -825,6 +825,8 @@ export interface InterruptionRequestDto {
   readonly estimate?: OfferEstimateDto;
   /** Offer only: whether a friendly support force is present. */
   readonly supportForcePresent?: boolean;
+  /** Offer only (T-1 08): the nations whose ships form the support force; absent when there is none. */
+  readonly supportNationIds?: readonly string[];
   /** Offer only: the message keys of the qualitative decline statement. */
   readonly declineStatementKeys?: readonly string[];
 }

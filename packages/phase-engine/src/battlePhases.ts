@@ -22,6 +22,7 @@ import {
 } from "./battles.js";
 import { applyDecline } from "./battleDecline.js";
 import { applyEnemyDeclines } from "./enemyDecline.js";
+import { applySupportForces } from "./supportForce.js";
 import { buildOfferContent, offeredManifestFor } from "./battleOffer.js";
 import { battleOfferAnsweredEvent } from "./events.js";
 import { applyRecordedBattleResult, consumeBattleResult, consumeOffer } from "./interruption.js";
@@ -64,7 +65,10 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
 
   // T-1 07 (spec #109 R11): the enemy may decline a battle with the player before it exists. Dormant (the same object)
   // without the battle-offer section and the player nation.
-  const generationResult = applyEnemyDeclines(ctx, generated);
+  const surviving = applyEnemyDeclines(ctx, generated);
+  // T-1 08 (spec #109 R12): a friendly AI support force may join the player's side of a battle that exists. Dormant (the
+  // same object) without the battle-offer section and the player nation.
+  const generationResult = applySupportForces(ctx, surviving);
 
   if (generationResult.battleIds.length === 0) return;
 
