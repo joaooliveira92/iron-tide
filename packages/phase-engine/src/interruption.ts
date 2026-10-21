@@ -382,6 +382,9 @@ export function consumeOffer(ctx: MonthContext, content: OfferContent): Answered
     playerForce: content.playerForce,
     estimate: content.estimate,
     supportForcePresent: content.supportForcePresent,
+    ...(content.supportNationIds === undefined
+      ? {}
+      : { supportNationIds: content.supportNationIds }),
     declineStatementKeys: content.declineStatementKeys,
   };
 
