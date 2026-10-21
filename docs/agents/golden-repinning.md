@@ -26,17 +26,8 @@ hash also states its reason, and reviewed exemptions name paths that cannot move
 it. A golden that changes without an understood authoritative cause is a stop
 condition (see `AGENTS.md`).
 
-## Replay corpus approvals
+## Replay corpus replays are not re-pinned
 
-Replay files in `golden/replays/` are not re-pinned. `golden/replay-approvals.json` holds
-entries bound to the exact old and new checkpoint hashes of one replay and month (ADR-0246).
-After `pnpm replay:record <id>`, run `pnpm replay:approve --cause "<why>" --migration
-"<assessment>"` to propose entries from the diff against `origin/dev` (`--base <ref>`).
-`pnpm check:replay-approvals` fails an unapproved, mismatched, orphaned, reused or rewritten
-entry. CI only verifies; entries are append-only.
-
-`pnpm check:replay-corpus` (in `pnpm check` and on three OSes in `determinism.yml`) verifies replays twice and via save/load, printing divergence.
-
-New scenarios go in `scenarios.ts` with a one-line `purpose`; a new replay file is an addition and needs no approval. `pnpm replay:coverage` lists the subsystems each replay exercises and those none do.
-
-Fuzz cases (`FUZZ_CASES`, pinned in `golden/replay-fuzz.json`) run in the test suite on three OSes. A failure prints its seed; reproduce with `pnpm replay:fuzz run <seed> <months>`. Only `pnpm replay:fuzz record` (local, refused under CI) rewrites the pin.
+Replays in `golden/replays/` never use the `Golden-Repin` trailer or `scripts/golden-repin.baseline`.
+Their intended changes go through hash-bound approvals: see [replay corpus](replay-corpus.md).
+This doc covers `golden/hashes.json` only, which stays as a smoke test.

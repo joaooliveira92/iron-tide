@@ -1,0 +1,52 @@
+{
+  "probes": {
+    "contentArtifactHash": {
+      "mutation": null,
+      "reason": "No corpus mutation test perturbs compiled content; replays record only the bundle hash."
+    },
+    "contentBundleHash": {
+      "mutation": null,
+      "reason": "No corpus mutation test perturbs the content bundle."
+    },
+    "initialSnapshotHash": {
+      "mutation": null,
+      "reason": "No corpus mutation test perturbs the initial snapshot of a replay."
+    },
+    "closingSnapshotHash": {
+      "mutation": null,
+      "reason": "Mutation tests localise state changes at ledgers; none asserts the snapshot checkpoint itself."
+    },
+    "commandLedgerHash": {
+      "mutation": {
+        "file": "packages/cross-process-test/test/replay-corpus.test.ts",
+        "test": "detects an injected command at the command ledger"
+      }
+    },
+    "eventLedgerHash": {
+      "mutation": {
+        "file": "packages/cross-process-test/test/replay-corpus.test.ts",
+        "test": "detects changed month state at the event ledger"
+      }
+    },
+    "financialLedgerHash": {
+      "mutation": {
+        "file": "packages/cross-process-test/test/replay-corpus.test.ts",
+        "test": "detects an extra financial transaction at the financial ledger"
+      }
+    },
+    "randomDecisionLedgerHash": {
+      "mutation": {
+        "file": "packages/cross-process-test/test/replay-corpus.test.ts",
+        "test": "detects an extra random draw at the random ledger"
+      }
+    },
+    "replayVerificationHash": {
+      "mutation": null,
+      "reason": "No corpus mutation test targets the engine replay-verification hash."
+    },
+    "battleGenerationHash": {
+      "mutation": null,
+      "reason": "No corpus mutation test targets battle generation output."
+    }
+  }
+}
