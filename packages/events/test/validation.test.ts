@@ -298,6 +298,7 @@ describe("BattleDeclined (T-1 04)", () => {
     areaId: "a-1",
     victoryPointCost: 5,
     opponentCredit: 0,
+    declineCount: 1,
     reasonCode: "BATTLE_DECLINED_WITH_CONSEQUENCES",
   } as const;
 
@@ -308,6 +309,10 @@ describe("BattleDeclined (T-1 04)", () => {
     expect(() => parseDomainEventBody({ ...body, victoryPointCost: -1 })).toThrow();
     expect(() => parseDomainEventBody({ ...body, opponentCredit: 1.5 })).toThrow();
     expect(() => parseDomainEventBody({ ...body, reasonCode: "OTHER" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, declineCount: 0 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, declineCount: 1.5 })).toThrow();
+    const { declineCount: _omitted, ...without } = body;
+    expect(() => parseDomainEventBody(without)).toThrow();
   });
 });
 

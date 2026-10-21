@@ -174,6 +174,7 @@ export function applyDecline(
       battle["areaId"],
       price.cost,
       price.credit,
+      tally.count,
       ctx.nextSeq(),
       ctx.campaignMonth,
     ),

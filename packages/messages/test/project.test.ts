@@ -93,6 +93,7 @@ describe("TurnMessage projection", () => {
             areaId: "a-1",
             victoryPointCost: 5,
             opponentCredit: 0,
+            declineCount: 2,
             reasonCode: "BATTLE_DECLINED_WITH_CONSEQUENCES",
           },
           "battle-1",
@@ -107,7 +108,12 @@ describe("TurnMessage projection", () => {
       titleKey: "messages.battle.declined.title",
       bodyKey: "messages.battle.declined.body",
       playerVisible: true,
-      interpolation: { battleId: "battle-1", areaId: "a-1", victoryPointCost: 5 },
+      interpolation: {
+        battleId: "battle-1",
+        areaId: "a-1",
+        victoryPointCost: 5,
+        declineCount: 2,
+      },
     });
     expect(message?.subjectRefs).toContainEqual({ type: "battle", id: "battle-1" });
     expect(message?.subjectRefs).toContainEqual({ type: "nation", id: "uk" });

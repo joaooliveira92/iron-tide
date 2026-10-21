@@ -297,6 +297,7 @@ export function battleDeclinedEvent(
   areaId: string,
   victoryPointCost: number,
   opponentCredit: number,
+  declineCount: number,
   seq: SafeInt,
   campaignMonth: string,
 ): DomainEventEnvelope {
@@ -315,6 +316,7 @@ export function battleDeclinedEvent(
       areaId,
       victoryPointCost,
       opponentCredit,
+      declineCount,
       reasonCode: "BATTLE_DECLINED_WITH_CONSEQUENCES",
     },
     sequenceNumber: seq,

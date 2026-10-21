@@ -155,6 +155,7 @@ describe("a decline (R8)", () => {
       areaId: "a-1",
       victoryPointCost: 4,
       opponentCredit: 0,
+      declineCount: 1,
       reasonCode: "BATTLE_DECLINED_WITH_CONSEQUENCES",
     });
     expect(result.eventLedger.all.some((e) => e.eventType === "BattleOfferAnswered")).toBe(false);
