@@ -2,7 +2,8 @@
 
 ## Status
 
-Blocked pending owner decision. Behavior is unchanged meanwhile (the values below stay as shipped in ADR-0259).
+Resolved (2026-10-21) by owner delegation: **Option A**, recorded as
+[ADR-0266](../../docs/adr/ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md).
 
 ## Trigger
 

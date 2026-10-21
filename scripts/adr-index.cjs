@@ -89,6 +89,7 @@ const AREAS = [
       "The authoritative home area and possession ownership behind per-area presence, the foreign-station assignment state, and the colonial-service fitting with its dormant ruleset section.",
     nums: [
       231, 241, 242, 247, 248, 249, 250, 251, 253, 254, 255, 256, 257, 258, 259, 262, 263, 264, 265,
+      266,
     ],
   },
   {
