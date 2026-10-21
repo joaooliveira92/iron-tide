@@ -1,0 +1,106 @@
+# Acceptance report: S-5 foreign stations and presence
+
+Status: **behaviour implemented and accepted under fixture values only** (ticket 11, #87; spec #73
+R15) on `feat/milestone-54`. The production `presence` ruleset section is **dormant (absent)**, so
+production behaviour and goldens are unchanged. Production values (#85) and the S-5 follow-up
+(#165, possession transfer) remain blocked on owner decisions. Nothing here claims production
+presence rules are live.
+
+## What landed
+
+| Ticket                                                    | State       | Evidence                                                           |
+| --------------------------------------------------------- | ----------- | ------------------------------------------------------------------ |
+| 01 value grounding                                        | done        | `docs/research/s-5-presence-and-base-limits.md` (provenance table) |
+| 02-04 assignment state, colonial fitting, ruleset section | done        | ADR-0241, ADR-0242                                                 |
+| 05 measurement, requirement, shortfall (#79)              | done        | ADR-0247                                                           |
+| 06 blockade exemption and typed penalty requests (#80)    | done        | ADR-0248                                                           |
+| 07 foreign-station routing (#81)                          | done        | ADR-0249                                                           |
+| 08 base limits (#82)                                      | done        | ADR-0250                                                           |
+| 09 fleet screen and presence readout (#83)                | done        | ADR-0251                                                           |
+| 10 authoring production values (#85)                      | **blocked** | decision requests 0017-0023, 0026                                  |
+| 11 acceptance (this report, #87)                          | done        | `packages/cross-process-test/test/s5-acceptance.test.ts`           |
+
+## Acceptance evidence
+
+The acceptance scenario `runS5Acceptance` (`packages/cross-process-test/src/s5-acceptance.ts`)
+compiles the 1880 production pack, runs strategic months through `MonthExecutor` under a
+**fixture-class** `presence` section (labelled in the source; never reaches the production
+pack) and observes authoritative state and events. The test asserts each item:
+
+- **FS assignment and clear:** `AssignForeignStation` sets `FOREIGN_STATION` (event reason
+  `ASSIGNED`); `ClearForeignStation` removes it (`CLEARED_BY_COMMAND`); clearing an unassigned
+  ship is rejected.
+- **1.5x weighting:** a colonial-service ship on FS adds exactly `floor(tons / 2)` more present
+  tons than the same ship unweighted, and the shortfall event agrees with the measured row.
+- **Reserve/mothballed exclusion:** the same ship in RESERVE or MOTHBALLED contributes 0.
+- **Blockade exemption and its end:** a nation at war and blockaded emits no shortfall or
+  request; the same blockade with the war ENDED restores every event; base-limit flags are
+  identical with and without the blockade (not exempt).
+- **Routing:** an FS ship outside the shortfall areas sails one adjacent sea hop toward the
+  nation's largest shortfall area (ties by area id).
+- **Shortfall and penalty-request events:** one `PresenceShortfall`, one `PrestigeLossRequested`
+  and one `RevoltPressureRequested` per shortfall; requests change no state (snapshot hash equals
+  the dormant run). The dormant section emits none.
+- **Over-base flag:** with the fixture base-limit block, ships beyond the limit carry `overBase`
+  with reduced crew quality; without the block none do.
+- **Cross-process determinism:** the observation from two clean `node` processes is byte-identical
+  to each other and to the in-process run.
+
+## Determinism evidence
+
+Same month, seed `s5-acceptance-seed`, darwin arm64, two child processes plus in-process:
+
+- Old (production section dormant) snapshot hash:
+  `53552f150c21970f3e43318684a1bfe27c3e5c9170d5766fb5e7dabf5aac9182`
+- Old event ledger hash: `2f28c50deae78b4a280c1b1dcae65af76b2972ee8f84dd58ce0db311e53ee191`
+- New (fixture section with base-limit block) snapshot hash:
+  `b36f33290b764f7f8c6d2369d0f00aa5a20f0695b10e71fbc5dcf5b43cb8cf38`
+- New event ledger hash: `2c6236cfd86093c2bac04c0b059add3b7647693562f49a7c2811914856c2bcd8`
+
+The "new" hashes are fixture-class and are **not** production hashes or goldens. `golden/hashes.json`
+is unchanged by this ticket (and by tickets 05-09).
+
+## Ruleset section state
+
+**Dormant** in production. The optional `presence` section is absent from
+`content/production/1880`; no requirement, limit, shortfall, penalty or base consequence is live.
+The fixture section exists only inside the test seam.
+
+## Provenance table pointer
+
+`docs/research/s-5-presence-and-base-limits.md`, section "Provenance table". Only decision request
+0016 (tonnage-required formula) is resolved (Option C, ADR-0213 `balance_adjustment`, 2026-10-20);
+it is not authored into production because the section is all-or-nothing and the rest is blocked.
+
+## S-2 / S-3 dependency status
+
+S-5 emits typed `PrestigeLossRequested` and `RevoltPressureRequested` events only (ADR-0248).
+**No consumer exists** on this branch: S-2 prestige loss and S-3 revolt pressure have not
+consumed them, and magnitudes and trigger are gated (decision request 0023). Consumption stays a
+dependency on S-2/S-3 artifacts. A-1 and F-1 consume S-5 later.
+
+## Gated-value observations (open, not invented)
+
+Blocked pending owner decision: 0017 base value, limit mapping and no-base limit; 0018 base-slot
+occupying readiness states; 0019 over-base maintenance and crew-quality effects; 0020 cramped and
+short-range counting fraction; 0021 colonial-service displacement proportion; 0022 home-area
+requirement and its blockade exemption; 0023 penalty magnitudes and revolt trigger; 0026
+cramped/short-range ship classification. Resolved: 0016 only. #85 (authoring) and #165 (S-5
+follow-up, possession transfer) stay open behind these.
+
+## Commands and observed results
+
+```text
+pnpm --filter @bluewave/cross-process-test exec vp test run test/s5-acceptance.test.ts   9 passed
+pnpm preflight / pnpm test:scripts / pnpm check                                          exit 0 each
+```
+
+## Gate results
+
+`pnpm preflight`, `pnpm test:scripts` and `pnpm check` were run green on the delivery commit
+(the commit containing this report); the tree was clean afterwards.
+
+## Known limitations
+
+- Acceptance is under fixture values; production presence behaviour is not live.
+- Penalty requests have no consumer yet (S-2/S-3).
