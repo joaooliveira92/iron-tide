@@ -13,6 +13,8 @@ import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { EventLedger } from "@bluewave/events";
 import { RandomEngine, RandomLedger } from "@bluewave/random";
 import type { FinancialLedger } from "./financial-ledger.js";
+import type { PhaseDescriptor } from "./registry.js";
+import { PhaseResource } from "./phase-resource.js";
 import { reportOutflowShortfall } from "./outflowShortfall.js";
 import {
   budgetChangedEvent,
@@ -419,3 +421,33 @@ export function researchCostLookup(
     return def === undefined ? undefined : (def["cost"] as number);
   };
 }
+
+export const researchPhase: PhaseDescriptor = {
+  id: "resolve_research",
+  name: "Research Resolution",
+  order: 70,
+  // ADR-0036: resolve_research also spends the research budget from treasury,
+  // so it reads/writes treasury in addition to research.
+  readPermissions: ["research", "treasury"],
+  writePermissions: ["research", "treasury"],
+  rngAllowed: true,
+  footprint: {
+    reads: [PhaseResource.RESEARCH, PhaseResource.TREASURY],
+    writes: [PhaseResource.RESEARCH, PhaseResource.TREASURY],
+    usesRng: true,
+  },
+  run: (ctx) => {
+    ctx.currentSnapshot = resolveResearchPhase(
+      ctx.currentSnapshot,
+      ctx.randomSeed,
+      ctx.turnNumber,
+      ctx.randomLedger,
+      ctx.eventLedger,
+      ctx.financialLedger,
+      ctx.collector,
+      ctx.nextSeq,
+      ctx.campaignMonth,
+    );
+    return { status: "continue" };
+  },
+};

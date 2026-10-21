@@ -27,6 +27,8 @@ import { resolvePrivateDockExpansion } from "./dockExpansion.js";
 import { runForeignContractPhase } from "./foreignContractPhase.js";
 import { budgetChangedEvent, constructionDelayedEvent, makeLedgerEntry } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
+import { PhaseResource } from "./phase-resource.js";
+import type { PhaseDescriptor } from "./registry.js";
 import { reportOutflowShortfall } from "./outflowShortfall.js";
 import { applyReadinessEvolution } from "./readinessEvolution.js";
 
@@ -664,3 +666,83 @@ export function runObligationPhase(ctx: MonthContext): void {
     );
   }
 }
+
+export const monthlyRevenuePhase: PhaseDescriptor = {
+  id: "monthly_revenue",
+  name: "Monthly Revenue",
+  order: 10,
+  readPermissions: ["treasury"],
+  writePermissions: ["treasury"],
+  rngAllowed: false,
+  footprint: {
+    reads: [PhaseResource.TREASURY],
+    writes: [PhaseResource.TREASURY],
+    usesRng: false,
+  },
+  run: (ctx) => {
+    runMonthlyRevenuePhase(ctx);
+    return { status: "continue" };
+  },
+};
+
+// Phase 4: appropriation — proportional funding of construction projects within
+// each project's yard throughput (no treasury-unit cap; spec #138 slice 4).
+// INC-4/SB3-R9: draws the keyed acceleration capacity-pressure delay decisions
+// (no draw without an accelerated project); SB3-R17: resolves the private
+// dock-expansion event.
+export const appropriationPhase: PhaseDescriptor = {
+  id: "appropriation",
+  name: "Appropriation",
+  order: 30,
+  readPermissions: ["treasury", "constructions", "nations"],
+  writePermissions: ["treasury", "constructions", "nations"],
+  rngAllowed: true,
+  footprint: {
+    reads: [PhaseResource.TREASURY, PhaseResource.CONSTRUCTIONS, PhaseResource.NATIONS],
+    writes: [PhaseResource.TREASURY, PhaseResource.CONSTRUCTIONS, PhaseResource.NATIONS],
+    usesRng: true,
+  },
+  run: (ctx) => {
+    runAppropriationPhase(ctx);
+    return { status: "continue" };
+  },
+};
+
+// S-1: the maintenance phase also advances per-ship readiness/crew (the
+// crew-quality ramp, manual p.51) and reads war state for the wartime
+// multiplier (p.52), so it reads wars and writes fleets as well as treasury.
+export const maintenancePhase: PhaseDescriptor = {
+  id: "maintenance",
+  name: "Maintenance",
+  order: 40,
+  readPermissions: ["treasury", "fleets", "wars"],
+  writePermissions: ["treasury", "fleets"],
+  rngAllowed: false,
+  footprint: {
+    reads: [PhaseResource.TREASURY, PhaseResource.FLEETS, PhaseResource.WARS],
+    writes: [PhaseResource.TREASURY, PhaseResource.FLEETS],
+    usesRng: false,
+  },
+  run: (ctx) => {
+    runMaintenancePhase(ctx);
+    return { status: "continue" };
+  },
+};
+
+export const obligationPhase: PhaseDescriptor = {
+  id: "obligation",
+  name: "Obligation",
+  order: 50,
+  readPermissions: ["treasury"],
+  writePermissions: ["treasury"],
+  rngAllowed: false,
+  footprint: {
+    reads: [PhaseResource.TREASURY],
+    writes: [PhaseResource.TREASURY],
+    usesRng: false,
+  },
+  run: (ctx) => {
+    runObligationPhase(ctx);
+    return { status: "continue" };
+  },
+};

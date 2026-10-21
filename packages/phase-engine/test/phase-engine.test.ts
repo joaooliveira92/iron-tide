@@ -87,21 +87,27 @@ describe("PhaseRegistry", () => {
     for (let i = 0; i < phases.length - 1; i++) {
       expect(phases[i]!["order"]).toBeLessThan(phases[i + 1]!["order"]);
     }
-    expect(PhaseRegistry.getById("ai_planning")!["order"]).toBe(1.6);
+    expect(PhaseRegistry.getById("ai_planning")!["order"]).toBe(16);
     expect(PhaseRegistry.getById("command_collection")!["order"]).toBeLessThan(
       PhaseRegistry.getById("ai_planning")!["order"],
     );
-    expect(PhaseRegistry.getById("resolve_diplomacy")!["order"]).toBe(6.5);
-    expect(PhaseRegistry.getById("battle_generation")!["order"]).toBe(7.5);
+    expect(PhaseRegistry.getById("resolve_diplomacy")!["order"]).toBe(65);
+    expect(PhaseRegistry.getById("battle_generation")!["order"]).toBe(75);
     // B-5/ADR-0022: weather_generation runs right after opening_validation and
-    // before command_collection (order 0.5).
-    expect(PhaseRegistry.getById("weather_generation")!["order"]).toBe(0.5);
+    // before command_collection (order 5).
+    expect(PhaseRegistry.getById("weather_generation")!["order"]).toBe(5);
     expect(PhaseRegistry.getById("weather_generation")!["order"]).toBeGreaterThan(
       PhaseRegistry.getById("opening_validation")!["order"],
     );
     expect(PhaseRegistry.getById("weather_generation")!["order"]).toBeLessThan(
       PhaseRegistry.getById("command_collection")!["order"],
     );
+    // Integer order ranks sort strictly ascending across the full pipeline,
+    // control checkpoint included (ADR-0007 golden-repin keeps it honest).
+    for (let i = 0; i < PhaseRegistry.nodes.length - 1; i++) {
+      expect(PhaseRegistry.nodes[i]!["order"]).toBeLessThan(PhaseRegistry.nodes[i + 1]!["order"]);
+    }
+    expect(Number.isInteger(PhaseRegistry.getById("battle_resolution")!["order"])).toBe(true);
     const constructionIdx = phases.findIndex((p) => p["id"] === "construction_processing")!;
     const diplomacyIdx = phases.findIndex((p) => p["id"] === "resolve_diplomacy")!;
     const researchIdx = phases.findIndex((p) => p["id"] === "resolve_research")!;
@@ -118,7 +124,7 @@ describe("PhaseRegistry", () => {
     expect(byId).toBeDefined();
     expect(byId!["name"]).toBe("Appropriation");
 
-    const byOrder = PhaseRegistry.getByOrder(7);
+    const byOrder = PhaseRegistry.getByOrder(70);
     expect(byOrder).toBeDefined();
     expect(byOrder!["id"]).toBe("resolve_research");
   });
@@ -189,6 +195,36 @@ describe("Canonical phase order (the registry drives the runner)", () => {
     const indexOf = (id: string) => PhaseRegistry.all.findIndex((p) => p["id"] === id);
     expect(indexOf("command_collection")).toBeLessThan(indexOf("ai_planning"));
     expect(indexOf("ai_planning")).toBeLessThan(indexOf("ai_procurement"));
+  });
+
+  it("pins the interruption checkpoint as a non-phase node between carrier operations and battle generation", () => {
+    // The checkpoint is control flow, not a phase (interruption.test.ts also
+    // asserts it never joins the registry). The runner consumes the node
+    // sequence, so its pinned position — after resolve_carrier_operations and
+    // before battle_generation — is part of what byte-identical replay pins.
+    const kinds = PhaseRegistry.nodes.map((n) =>
+      "kind" in n ? `checkpoint:${n.id}` : `phase:${n.id}`,
+    );
+    expect(kinds).toEqual([
+      "phase:opening_validation",
+      "phase:weather_generation",
+      "phase:monthly_revenue",
+      "phase:command_collection",
+      "phase:ai_planning",
+      "phase:ai_procurement",
+      "phase:appropriation",
+      "phase:maintenance",
+      "phase:obligation",
+      "phase:construction_processing",
+      "phase:resolve_diplomacy",
+      "phase:resolve_research",
+      "phase:resolve_aircraft_development",
+      "phase:resolve_carrier_operations",
+      "checkpoint:interruption_checkpoint",
+      "phase:battle_generation",
+      "phase:battle_resolution",
+      "phase:closing_validation",
+    ]);
   });
 });
 

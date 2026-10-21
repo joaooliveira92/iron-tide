@@ -1,31 +1,8 @@
 import { RandomEngine } from "@bluewave/random";
+import { PhaseResource, type PhaseFootprint } from "./phase-resource.js";
 import { PhaseRegistry, type PhaseDefinition } from "./registry.js";
 
-/**
- * Canonical resource domains the phase registry models. These map to snapshot
- * regions the MonthExecutor phases actually read/write. `all` is a wildcard.
- */
-export const PhaseResource = {
-  ALL: "all",
-  TREASURY: "treasury",
-  FLEETS: "fleets",
-  CONSTRUCTIONS: "constructions",
-  RESEARCH: "research",
-  WARS: "wars",
-  POLITICS: "politics",
-  NATIONS: "nations",
-  STRATEGIC_WEATHER: "strategicWeather",
-  DESIGNS: "designs",
-} as const;
-
-export interface PhaseFootprint {
-  /** resources the phase reads */
-  readonly reads: string[];
-  /** resources the phase writes */
-  readonly writes: string[];
-  /** whether the phase draws randomness */
-  readonly usesRng: boolean;
-}
+export { PhaseResource, type PhaseFootprint };
 
 /**
  * The authoritative runtime footprint of each phase — what a phase actually
@@ -35,118 +12,14 @@ export interface PhaseFootprint {
  *
  * ADR-0036: reconciled so every footprint sits within its phase's declared
  * permissions (no phase is denied in a well-formed run).
+ *
+ * Each footprint lives on the phase's own descriptor (one phase, one module,
+ * one descriptor); this map is derived from the registry so the two cannot
+ * drift.
  */
-export const PHASE_FOOTPRINTS: Readonly<Record<string, PhaseFootprint>> = {
-  opening_validation: {
-    reads: [PhaseResource.NATIONS, PhaseResource.WARS],
-    writes: [],
-    usesRng: false,
-  },
-  weather_generation: {
-    reads: [PhaseResource.ALL],
-    writes: [PhaseResource.STRATEGIC_WEATHER],
-    usesRng: true,
-  },
-  monthly_revenue: {
-    reads: [PhaseResource.TREASURY],
-    writes: [PhaseResource.TREASURY],
-    usesRng: false,
-  },
-  ai_planning: {
-    reads: [PhaseResource.RESEARCH, PhaseResource.CONSTRUCTIONS, PhaseResource.TREASURY],
-    writes: [PhaseResource.RESEARCH, PhaseResource.TREASURY, PhaseResource.CONSTRUCTIONS],
-    usesRng: true,
-  },
-  ai_procurement: {
-    reads: [
-      PhaseResource.NATIONS,
-      PhaseResource.CONSTRUCTIONS,
-      PhaseResource.TREASURY,
-      PhaseResource.RESEARCH,
-      PhaseResource.DESIGNS,
-    ],
-    writes: [PhaseResource.NATIONS, PhaseResource.CONSTRUCTIONS, PhaseResource.DESIGNS],
-    usesRng: true,
-  },
-  command_collection: {
-    reads: [PhaseResource.ALL],
-    writes: [
-      PhaseResource.TREASURY,
-      PhaseResource.CONSTRUCTIONS,
-      PhaseResource.RESEARCH,
-      PhaseResource.WARS,
-      PhaseResource.POLITICS,
-      PhaseResource.FLEETS,
-    ],
-    usesRng: false,
-  },
-  appropriation: {
-    reads: [PhaseResource.TREASURY, PhaseResource.CONSTRUCTIONS, PhaseResource.NATIONS],
-    writes: [PhaseResource.TREASURY, PhaseResource.CONSTRUCTIONS, PhaseResource.NATIONS],
-    // INC-4/SB3-R9: the appropriation phase draws the keyed acceleration capacity-pressure delay decisions over the
-    // `appropriation`-scoped engine (no draw occurs when no project is accelerated). SB3-R17: it also resolves the
-    // private dock-expansion event (no draw occurs without explicit dock-expansion eligibility).
-    usesRng: true,
-  },
-  maintenance: {
-    // S-1: maintenance reads war state to apply the wartime multiplier (p.52)
-    // and writes fleets for the readiness/crew evolution.
-    reads: [PhaseResource.TREASURY, PhaseResource.FLEETS, PhaseResource.WARS],
-    writes: [PhaseResource.TREASURY, PhaseResource.FLEETS],
-    usesRng: false,
-  },
-  obligation: {
-    reads: [PhaseResource.TREASURY],
-    writes: [PhaseResource.TREASURY],
-    usesRng: false,
-  },
-  construction_processing: {
-    reads: [PhaseResource.CONSTRUCTIONS, PhaseResource.FLEETS, PhaseResource.NATIONS],
-    writes: [PhaseResource.CONSTRUCTIONS, PhaseResource.FLEETS, PhaseResource.NATIONS],
-    usesRng: false,
-  },
-  resolve_diplomacy: {
-    reads: [PhaseResource.WARS, PhaseResource.POLITICS],
-    writes: [PhaseResource.WARS],
-    usesRng: false,
-  },
-  resolve_research: {
-    reads: [PhaseResource.RESEARCH, PhaseResource.TREASURY],
-    writes: [PhaseResource.RESEARCH, PhaseResource.TREASURY],
-    usesRng: true,
-  },
-  resolve_aircraft_development: {
-    reads: [PhaseResource.NATIONS, PhaseResource.TREASURY, PhaseResource.RESEARCH],
-    writes: [PhaseResource.NATIONS],
-    usesRng: true,
-  },
-  resolve_carrier_operations: {
-    reads: [PhaseResource.NATIONS],
-    writes: [PhaseResource.NATIONS],
-    usesRng: true,
-  },
-  battle_generation: {
-    reads: [PhaseResource.WARS, PhaseResource.FLEETS, PhaseResource.NATIONS],
-    writes: [PhaseResource.WARS, PhaseResource.NATIONS],
-    usesRng: true,
-  },
-  battle_resolution: {
-    reads: [
-      PhaseResource.WARS,
-      PhaseResource.FLEETS,
-      PhaseResource.NATIONS,
-      PhaseResource.STRATEGIC_WEATHER,
-      PhaseResource.DESIGNS,
-    ],
-    writes: [PhaseResource.WARS, PhaseResource.FLEETS, PhaseResource.NATIONS],
-    usesRng: true,
-  },
-  closing_validation: {
-    reads: [PhaseResource.NATIONS, PhaseResource.CONSTRUCTIONS],
-    writes: [],
-    usesRng: false,
-  },
-};
+export const PHASE_FOOTPRINTS: Readonly<Record<string, PhaseFootprint>> = Object.fromEntries(
+  PhaseRegistry.PHASES.map((phase) => [phase.id, phase.footprint]),
+);
 
 /**
  * Stable diagnostic code emitted when a phase oversteps its declared registry

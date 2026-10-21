@@ -1,4 +1,4 @@
-// Player command + AI planning phases: command_collection (3) and ai_planning (3.5).
+// Player command + AI planning phases: command_collection (15) and ai_planning (16).
 import { AiPhaseExecutor } from "@bluewave/ai";
 import { researchPriorityAllocation } from "@bluewave/ship-design";
 import { TENSION_ALLIANCE, TENSION_PEACE } from "@bluewave/campaign";
@@ -52,6 +52,8 @@ import {
   applySetRelation,
 } from "./diplomacy.js";
 import type { MonthContext } from "./monthContext.js";
+import type { PhaseDescriptor } from "./registry.js";
+import { PhaseResource } from "./phase-resource.js";
 import { applyReviseProject } from "./reviseProject.js";
 import { applyStartRebuild } from "./startRebuild.js";
 import { applyStationAssignmentCommand } from "./stationAssignment.js";
@@ -445,3 +447,50 @@ export function runAiPlanningPhase(ctx: MonthContext): void {
     }
   }
 }
+
+export const commandCollectionPhase: PhaseDescriptor = {
+  id: "command_collection",
+  name: "Command Collection",
+  order: 15,
+  readPermissions: ["all"],
+  // ADR-0036: command_collection authoritatively applies player commands,
+  // mutating treasury/constructions/research/wars/politics/fleets.
+  writePermissions: ["treasury", "constructions", "research", "wars", "politics", "fleets"],
+  rngAllowed: false,
+  footprint: {
+    reads: [PhaseResource.ALL],
+    writes: [
+      PhaseResource.TREASURY,
+      PhaseResource.CONSTRUCTIONS,
+      PhaseResource.RESEARCH,
+      PhaseResource.WARS,
+      PhaseResource.POLITICS,
+      PhaseResource.FLEETS,
+    ],
+    usesRng: false,
+  },
+  run: (ctx) => {
+    runCommandCollectionPhase(ctx);
+    return { status: "continue" };
+  },
+};
+
+export const aiPlanningPhase: PhaseDescriptor = {
+  id: "ai_planning",
+  name: "AI Planning",
+  order: 16,
+  readPermissions: ["nations", "constructions", "research", "treasury"],
+  // ADR-0036: the AI path applies SetResearchPriority and budget_project,
+  // so it writes research/treasury/constructions.
+  writePermissions: ["research", "treasury", "constructions"],
+  rngAllowed: true,
+  footprint: {
+    reads: [PhaseResource.RESEARCH, PhaseResource.CONSTRUCTIONS, PhaseResource.TREASURY],
+    writes: [PhaseResource.RESEARCH, PhaseResource.TREASURY, PhaseResource.CONSTRUCTIONS],
+    usesRng: true,
+  },
+  run: (ctx) => {
+    runAiPlanningPhase(ctx);
+    return { status: "continue" };
+  },
+};

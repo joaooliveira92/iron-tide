@@ -27,6 +27,8 @@ import {
 import { applySubmitDesign } from "./commands.js";
 import { placeConstructionOrder } from "./constructionOrder.js";
 import type { MonthContext } from "./monthContext.js";
+import { PhaseResource } from "./phase-resource.js";
+import type { PhaseDescriptor } from "./registry.js";
 
 /** Named, configurable procurement policy constants (ADR-0091 §5, §6, §7). */
 export const AI_PROCUREMENT = {
@@ -433,3 +435,31 @@ function rejectedIntent(
     reason,
   };
 }
+
+// Phase 3.6: ai_procurement — the live AI naval procurement lifecycle (ADR-0091),
+// ordered after ai_planning and before appropriation. Plans and submits design
+// studies and places construction orders for AI nations only; never writes
+// designs/studies/projects directly.
+export const aiProcurementPhase: PhaseDescriptor = {
+  id: "ai_procurement",
+  name: "AI Procurement",
+  order: 17,
+  readPermissions: ["nations", "constructions", "treasury", "research", "designs"],
+  writePermissions: ["nations", "constructions", "designs"],
+  rngAllowed: true,
+  footprint: {
+    reads: [
+      PhaseResource.NATIONS,
+      PhaseResource.CONSTRUCTIONS,
+      PhaseResource.TREASURY,
+      PhaseResource.RESEARCH,
+      PhaseResource.DESIGNS,
+    ],
+    writes: [PhaseResource.NATIONS, PhaseResource.CONSTRUCTIONS, PhaseResource.DESIGNS],
+    usesRng: true,
+  },
+  run: (ctx) => {
+    runAiProcurementPhase(ctx);
+    return { status: "continue" };
+  },
+};

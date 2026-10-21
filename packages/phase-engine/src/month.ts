@@ -1,6 +1,7 @@
-// MonthExecutor: the strategic month pipeline orchestrator. It owns the phase
-// registry guard, the shared run context, and the canonical phase order; each
-// phase body lives in its own focused module.
+// MonthExecutor: the strategic month pipeline orchestrator. It owns the shared
+// run context and runs every phase by iterating the PhaseRegistry's canonical
+// order — it contains no per-phase code. Each phase's policy, footprint and
+// body are declared by its own module as one `PhaseDescriptor` (ADR-0036).
 import { type CampaignSnapshot, campaignMonthId } from "@bluewave/campaign";
 import {
   type CommandBody,
@@ -12,25 +13,8 @@ import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { EventLedger } from "@bluewave/events";
 import { RandomLedger } from "@bluewave/random";
-import { resolveAircraftDevelopment } from "./aircraft.js";
-import { runBattleGenerationPhase, runBattleResolutionPhase } from "./battlePhases.js";
-import { resolveCarrierOperations } from "./carrier-operations.js";
-import { runAiPlanningPhase, runCommandCollectionPhase } from "./commandPhases.js";
-import { runAiProcurementPhase } from "./aiProcurement.js";
-import { runConstructionProcessingPhase } from "./constructionPhase.js";
-import { resolveDiplomacyPhase } from "./diplomacy.js";
-import {
-  runAppropriationPhase,
-  runMaintenancePhase,
-  runMonthlyRevenuePhase,
-  runObligationPhase,
-} from "./economyPhases.js";
 import { FinancialLedger } from "./financial-ledger.js";
-import {
-  createInterruptionState,
-  runInterruptionCheckpoint,
-  trailingInputSuspension,
-} from "./interruption.js";
+import { createInterruptionState, trailingInputSuspension } from "./interruption.js";
 import {
   PLAYER_NATION_UNKNOWN,
   type MonthContext,
@@ -38,14 +22,9 @@ import {
   MonthResult,
   StrategicWeatherPhaseOptions,
 } from "./monthContext.js";
-import { PHASE_ACCESS_DENIED, PHASE_FOOTPRINTS, PhaseGuard } from "./phase-guard.js";
-import { runBaseLimitStep } from "./baseLimits.js";
-import { runForeignStationDeploymentStep } from "./foreignStationDeployment.js";
-import { runPresenceMeasurementStep } from "./presenceMeasurement.js";
-import { resolveResearchPhase } from "./research.js";
+import { PHASE_ACCESS_DENIED, PhaseGuard } from "./phase-guard.js";
+import { PhaseRegistry, type PhaseDescriptor } from "./registry.js";
 import { cloneSnapshot } from "./snapshotClone.js";
-import { runClosingValidationPhase, runOpeningValidationPhase } from "./validationPhases.js";
-import { runWeatherGenerationPhase } from "./weatherPhase.js";
 
 export { PLAYER_NATION_UNKNOWN };
 export type { MonthExecutorEngineOptions, MonthResult, StrategicWeatherPhaseOptions };
@@ -114,141 +93,32 @@ export class MonthExecutor {
       return this.finish(ctx, false);
     }
 
-    if (!this.assertPhase(phaseGuard, "opening_validation", collector)) {
-      return this.finish(ctx, false);
-    }
-    if (!runOpeningValidationPhase(ctx.currentSnapshot, collector)) {
-      return this.finish(ctx, false);
-    }
+    return this.runPhases(ctx);
+  }
 
-    if (!this.assertPhase(phaseGuard, "weather_generation", collector)) {
-      return this.finish(ctx, false);
+  /**
+   * The runner: iterate the pipeline in canonical registry order, enforcing the
+   * ADR-0036 footprint contract and delegating each phase's work to its own
+   * descriptor. Control-flow nodes (the interruption checkpoint) gate between
+   * phases. Adding or gating a phase never touches this method.
+   */
+  private runPhases(ctx: MonthContext): MonthResult {
+    for (const node of PhaseRegistry.nodes) {
+      if ("kind" in node) {
+        if (!node.run(ctx)) {
+          return this.finish(ctx, true);
+        }
+        continue;
+      }
+      if (!this.assertPhase(ctx.phaseGuard, node, ctx.collector)) {
+        return this.finish(ctx, false);
+      }
+      const outcome = node.run(ctx);
+      if (outcome.status === "finish") {
+        return this.finish(ctx, outcome.success);
+      }
     }
-    runWeatherGenerationPhase(ctx);
-
-    if (!this.assertPhase(phaseGuard, "monthly_revenue", collector)) {
-      return this.finish(ctx, false);
-    }
-    runMonthlyRevenuePhase(ctx);
-
-    if (!this.assertPhase(phaseGuard, "command_collection", collector)) {
-      return this.finish(ctx, false);
-    }
-    runCommandCollectionPhase(ctx);
-
-    if (!this.assertPhase(phaseGuard, "ai_planning", collector)) {
-      return this.finish(ctx, false);
-    }
-    runAiPlanningPhase(ctx);
-
-    if (!this.assertPhase(phaseGuard, "ai_procurement", collector)) {
-      return this.finish(ctx, false);
-    }
-    runAiProcurementPhase(ctx);
-
-    if (!this.assertPhase(phaseGuard, "appropriation", collector)) {
-      return this.finish(ctx, false);
-    }
-    runAppropriationPhase(ctx);
-
-    if (!this.assertPhase(phaseGuard, "maintenance", collector)) {
-      return this.finish(ctx, false);
-    }
-    runMaintenancePhase(ctx);
-
-    if (!this.assertPhase(phaseGuard, "obligation", collector)) {
-      return this.finish(ctx, false);
-    }
-    runObligationPhase(ctx);
-
-    if (!this.assertPhase(phaseGuard, "construction_processing", collector)) {
-      return this.finish(ctx, false);
-    }
-    runConstructionProcessingPhase(ctx);
-
-    if (!this.assertPhase(phaseGuard, "resolve_diplomacy", collector)) {
-      return this.finish(ctx, false);
-    }
-    ctx.currentSnapshot = resolveDiplomacyPhase(ctx.currentSnapshot, ctx.campaignMonth);
-
-    if (!this.assertPhase(phaseGuard, "resolve_research", collector)) {
-      return this.finish(ctx, false);
-    }
-    ctx.currentSnapshot = resolveResearchPhase(
-      ctx.currentSnapshot,
-      randomSeed,
-      ctx.turnNumber,
-      randomLedger,
-      eventLedger,
-      financialLedger,
-      collector,
-      ctx.nextSeq,
-      campaignMonth,
-    );
-
-    // Phase 7.2: resolve_aircraft_development (after resolve_research, before
-    // battle_generation). D-1: per-nation aircraft development pipeline
-    // (DESIGN-43 §§4-12). Strict no-op when no nation has aviation tech.
-    if (!this.assertPhase(phaseGuard, "resolve_aircraft_development", collector)) {
-      return this.finish(ctx, false);
-    }
-    const aircraftRng = phaseGuard.rng("resolve_aircraft_development", randomSeed);
-    if (aircraftRng) {
-      const result = resolveAircraftDevelopment({
-        snapshot: ctx.currentSnapshot,
-        campaignMonth,
-        rngStream: aircraftRng.stream("aircraft/development"),
-      });
-      ctx.currentSnapshot = result.snapshot;
-    }
-
-    // Phase 7.3: resolve_carrier_operations (after resolve_aircraft_development,
-    // before battle_generation). D-2: per-nation carrier operations pipeline
-    // (DESIGN-44). Strict no-op when no nation has carrier-capable ships.
-    if (!this.assertPhase(phaseGuard, "resolve_carrier_operations", collector)) {
-      return this.finish(ctx, false);
-    }
-    const carrierRng = phaseGuard.rng("resolve_carrier_operations", randomSeed);
-    if (carrierRng) {
-      const result = resolveCarrierOperations({
-        snapshot: ctx.currentSnapshot,
-        campaignMonth,
-        rngStream: carrierRng.stream("carrier/operations"),
-      });
-      ctx.currentSnapshot = result.snapshot;
-    }
-
-    // Additive decision checkpoint: consume any pending decisions in
-    // deterministic (phase, subject) order before battles resolve. A no-op when
-    // no interruption channel was supplied (byte-identical to today).
-    if (!runInterruptionCheckpoint(ctx)) {
-      return this.finish(ctx, true);
-    }
-
-    if (!this.assertPhase(phaseGuard, "battle_generation", collector)) {
-      return this.finish(ctx, false);
-    }
-    runBattleGenerationPhase(ctx);
-
-    if (!this.assertPhase(phaseGuard, "battle_resolution", collector)) {
-      return this.finish(ctx, false);
-    }
-    runBattleResolutionPhase(ctx);
-    if (ctx.interruption?.suspended !== undefined) {
-      return this.finish(ctx, true);
-    }
-
-    // S-5 month-end step (spec #73 R5/R6): presence is measured after movement and battle resolution, so it is part of the
-    // battle_resolution footprint. Dormant (a strict no-op) unless the pack authors the presence ruleset section.
-    runForeignStationDeploymentStep(ctx, runPresenceMeasurementStep(ctx));
-    // S-5 08 (spec #73 R10): base limits are checked last, so battles this month saw the full fleet. Dormant without the block.
-    runBaseLimitStep(ctx);
-
-    if (!this.assertPhase(phaseGuard, "closing_validation", collector)) {
-      return this.finish(ctx, false);
-    }
-    const closingOk = runClosingValidationPhase(ctx.currentSnapshot, collector);
-    return this.finish(ctx, closingOk);
+    return this.finish(ctx, true);
   }
 
   private finish(ctx: MonthContext, success: boolean): MonthResult {
@@ -267,19 +137,20 @@ export class MonthExecutor {
 
   /**
    * ADR-0036: enforce the phase registry contract at runtime. Asserts the
-   * phase's authoritative footprint against its registry-declared
-   * read/writePermissions + rngAllowed. On any violation, records a stable
+   * phase's authoritative footprint (from its own descriptor) against the
+   * effective registry definition (phaseOverrides may substitute a phase's
+   * declared permissions). On any violation, records a stable
    * PHASE_ACCESS_DENIED diagnostic and returns false — the caller fails the
    * phase closed (the phase body does not run).
    */
-  private assertPhase(guard: PhaseGuard, phaseId: string, collector: DiagnosticCollector): boolean {
-    const footprint = PHASE_FOOTPRINTS[phaseId];
-    const violations =
-      footprint === undefined
-        ? [`phase "${phaseId}" has no registered runtime footprint`]
-        : guard.assert(phaseId, footprint);
+  private assertPhase(
+    guard: PhaseGuard,
+    phase: PhaseDescriptor,
+    collector: DiagnosticCollector,
+  ): boolean {
+    const violations = guard.assert(phase.id, phase.footprint);
     for (const message of violations) {
-      collector.addError(PHASE_ACCESS_DENIED, message, { stage: phaseId });
+      collector.addError(PHASE_ACCESS_DENIED, message, { stage: phase.id });
     }
     return violations.length === 0;
   }

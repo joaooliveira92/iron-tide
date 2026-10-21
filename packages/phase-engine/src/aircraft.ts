@@ -1,5 +1,5 @@
 // D-1: resolveAircraftDevelopment — campaign-level aircraft development phase
-// resolver. Phase order 7.2 (after resolve_research, before battle_generation).
+// resolver. Phase order 72 (after resolve_research, before battle_generation).
 // Strict no-op when no nation has aviation tech.
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import type { AircraftNationState } from "@bluewave/combat";
@@ -16,6 +16,8 @@ import {
   type AircraftRecord,
 } from "@bluewave/combat";
 import type { RandomStream } from "@bluewave/random";
+import type { PhaseDescriptor } from "./registry.js";
+import { PhaseResource } from "./phase-resource.js";
 
 export interface AircraftDevelopmentPhaseInput {
   snapshot: CampaignSnapshot;
@@ -177,3 +179,32 @@ export function resolveAircraftDevelopment(
     records,
   };
 }
+
+// D-1: campaign-level aircraft development pipeline (DESIGN-43 §§4-12), ordered
+// after resolve_research (order 70) and before battle_generation (order 75).
+// Strict no-op when no nation has aviation tech.
+export const aircraftDevelopmentPhase: PhaseDescriptor = {
+  id: "resolve_aircraft_development",
+  name: "Aircraft Development Resolution",
+  order: 72,
+  readPermissions: ["nations", "treasury", "research"],
+  writePermissions: ["nations"],
+  rngAllowed: true,
+  footprint: {
+    reads: [PhaseResource.NATIONS, PhaseResource.TREASURY, PhaseResource.RESEARCH],
+    writes: [PhaseResource.NATIONS],
+    usesRng: true,
+  },
+  run: (ctx) => {
+    const aircraftRng = ctx.phaseGuard.rng("resolve_aircraft_development", ctx.randomSeed);
+    if (aircraftRng) {
+      const result = resolveAircraftDevelopment({
+        snapshot: ctx.currentSnapshot,
+        campaignMonth: ctx.campaignMonth,
+        rngStream: aircraftRng.stream("aircraft/development"),
+      });
+      ctx.currentSnapshot = result.snapshot;
+    }
+    return { status: "continue" };
+  },
+};

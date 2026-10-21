@@ -575,7 +575,8 @@ describe("Full-slice integration", () => {
     expect(openingPhase.rngAllowed).toBe(false);
     expect(openingPhase.writePermissions).toEqual([]);
 
-    const commandCollectPhase = PhaseRegistry.getByOrder(1)!;
+    const commandCollectPhase = PhaseRegistry.getByOrder(15)!;
+    expect(commandCollectPhase.id).toBe("command_collection");
     expect(commandCollectPhase.rngAllowed).toBe(false);
   });
 
