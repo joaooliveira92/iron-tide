@@ -2,11 +2,13 @@
 // PresenceShortfall per nation-area with a shortfall; with the section absent it records nothing and the final hash is
 // identical to a run that never heard of S-5.
 // EVERY RULESET NUMBER BELOW IS FIXTURE-CLASS: it exercises the mechanics and is never a production value (R11, R14).
-import type {
-  CampaignSnapshot,
-  CompiledDesignVersion,
-  NationState,
-  Ship,
+import {
+  isPresenceExempt,
+  measurePresence,
+  type CampaignSnapshot,
+  type CompiledDesignVersion,
+  type NationState,
+  type Ship,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -121,7 +123,48 @@ function snapshot(gbrShips: Ship[]): CampaignSnapshot {
   };
 }
 
-function run(from: CampaignSnapshot, withSection: boolean) {
+function withWarAndBlockade(
+  from: CampaignSnapshot,
+  over: { war?: "ACTIVE" | "ENDED" | null; blockade?: boolean; blockadedNation?: string } = {},
+): CampaignSnapshot {
+  const { war = "ACTIVE", blockade = true, blockadedNation = "GBR" } = over;
+  return {
+    ...from,
+    wars: {
+      ...from.wars,
+      wars:
+        war === null
+          ? []
+          : [
+              {
+                id: "w1",
+                attackerSideId: "a",
+                defenderSideId: "d",
+                attackerSideMembers: ["FRA"],
+                defenderSideMembers: ["GBR"],
+                attackerWarScore: 0,
+                defenderWarScore: 0,
+                attackerId: "FRA",
+                defenderId: "GBR",
+                startDate: "1880-01",
+                status: war,
+              },
+            ],
+      blockadeState: blockade
+        ? [
+            {
+              blockaderId: "FRA",
+              blockadedNationId: blockadedNation,
+              areaId: "india",
+              establishedMonth: "1880-01",
+            },
+          ]
+        : [],
+    },
+  };
+}
+
+function run(from: CampaignSnapshot, withSection: boolean, extra: object = {}) {
   return new MonthExecutor().execute(
     from,
     [],
@@ -130,7 +173,7 @@ function run(from: CampaignSnapshot, withSection: boolean) {
     undefined,
     {
       shipBuilding: productionShipBuildingContent(),
-      ...(withSection ? { presence: FIXTURE_PRESENCE } : {}),
+      ...(withSection ? { presence: { ...FIXTURE_PRESENCE, ...extra } } : {}),
     },
   );
 }
@@ -228,5 +271,100 @@ describe("S-5 05: month-end presence step", () => {
     expect(hash(run(from, true))).toBe(hash(run(from, false)));
     const events = (r: ReturnType<typeof run>) => sha256Hex(canonicalSerialize(r.eventLedger.all));
     expect(events(run(from, true))).toBe(events(run(from, true)));
+  });
+
+  describe("S-5 06: blockade exemption and penalty requests", () => {
+    const kinds = (r: ReturnType<typeof run>, nationId: string) =>
+      r.eventLedger.all
+        .filter(
+          (e) =>
+            (e.body.kind === "PresenceShortfall" ||
+              e.body.kind === "PrestigeLossRequested" ||
+              e.body.kind === "RevoltPressureRequested") &&
+            e.body.nationId === nationId,
+        )
+        .map((e) => `${e.body.kind}:${"areaId" in e.body ? e.body.areaId : ""}`);
+
+    it("suspends the requirement in every area while at war and blockaded, and only for the blockaded nation", () => {
+      const blockaded = run(withWarAndBlockade(snapshot([])), true, { penaltyRequests: true });
+      expect(kinds(blockaded, "GBR")).toEqual([]);
+      expect(kinds(blockaded, "FRA")).toEqual([
+        "PresenceShortfall:india",
+        "PrestigeLossRequested:india",
+        "RevoltPressureRequested:india",
+      ]);
+    });
+
+    it("applies the requirement when at war but not blockaded, blockaded outside war, or after the war ends", () => {
+      for (const from of [
+        withWarAndBlockade(snapshot([]), { blockade: false }),
+        withWarAndBlockade(snapshot([]), { war: null }),
+        withWarAndBlockade(snapshot([]), { war: "ENDED" }),
+        withWarAndBlockade(snapshot([]), { blockadedNation: "FRA" }),
+      ]) {
+        expect(
+          shortfalls(run(from, true)).filter(
+            (e) => e.kind === "PresenceShortfall" && e.nationId === "GBR",
+          ),
+        ).toHaveLength(2);
+      }
+    });
+
+    it("shows shortfall in peace, none while blockaded at war, and shortfall again after the blockade lifts", () => {
+      const gbr = (from: CampaignSnapshot) =>
+        shortfalls(run(from, true)).filter((e) => "nationId" in e && e.nationId === "GBR").length;
+      expect([
+        gbr(snapshot([])),
+        gbr(withWarAndBlockade(snapshot([]))),
+        gbr(withWarAndBlockade(snapshot([]), { blockade: false })),
+      ]).toEqual([2, 0, 2]);
+    });
+
+    it("emits one shortfall, one prestige request and one revolt request per nation-area, in canonical order, only with penalty parameters", () => {
+      const withPenalty = run(snapshot([]), true, { penaltyRequests: true });
+      expect(kinds(withPenalty, "GBR")).toEqual([
+        "PresenceShortfall:cape",
+        "PrestigeLossRequested:cape",
+        "RevoltPressureRequested:cape",
+        "PresenceShortfall:india",
+        "PrestigeLossRequested:india",
+        "RevoltPressureRequested:india",
+      ]);
+      const request = withPenalty.eventLedger.all.find(
+        (e) => e.body.kind === "PrestigeLossRequested",
+      );
+      expect(request?.body).toEqual({
+        kind: "PrestigeLossRequested",
+        nationId: "FRA",
+        areaId: "india",
+        shortfallTons: 200,
+      });
+      const dormantPenalty = run(snapshot([]), true);
+      expect(
+        dormantPenalty.eventLedger.all.filter(
+          (e) =>
+            e.body.kind === "PrestigeLossRequested" || e.body.kind === "RevoltPressureRequested",
+        ),
+      ).toEqual([]);
+    });
+
+    it("leaves prestige, unrest and treasury untouched: the final hash equals a run without S-5 events", () => {
+      const from = withWarAndBlockade(snapshot([]), { blockade: false });
+      const hash = (r: ReturnType<typeof run>) => sha256Hex(canonicalSerialize(r.finalSnapshot));
+      expect(hash(run(from, true, { penaltyRequests: true }))).toBe(hash(run(from, false)));
+      const prestigeAndTreasury = (r: ReturnType<typeof run>) =>
+        [...r.finalSnapshot.nations.values()].map((n) => [n.id, n.prestige, n.treasury]);
+      expect(prestigeAndTreasury(run(from, true, { penaltyRequests: true }))).toEqual(
+        prestigeAndTreasury(run(from, false)),
+      );
+    });
+
+    it("keeps the exemption out of base-limit checks: the exemption predicate is the requirement's alone (contract note)", () => {
+      // S-5 08 (base limits) must not call isPresenceExempt; this test double pins that the predicate is requirement-only
+      // by showing the exempt nation still has presence rows that a base-limit check can read.
+      const from = withWarAndBlockade(snapshot([ship("a")]));
+      expect(isPresenceExempt(from, "GBR", "1880-01")).toBe(true);
+      expect(measurePresence(from, FIXTURE_PRESENCE).some((r) => r.nationId === "GBR")).toBe(true);
+    });
   });
 });

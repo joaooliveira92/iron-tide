@@ -33,6 +33,12 @@ export const PresenceRulesSchema = Schema.Struct({
     Schema.isInt(),
     Schema.isBetween({ minimum: 1, maximum: 9_999 }),
   ),
+  /**
+   * Penalty parameters (spec #73 R8, ADR-0248): when `true`, every presence shortfall also emits typed prestige-loss and
+   * revolt-pressure requests for S-2/S-3. A flag, not a magnitude: magnitudes and the revolt trigger are gated (decision
+   * request 0023) and belong to the consumers. Absent = no requests.
+   */
+  penaltyRequests: Schema.optional(Schema.Literal(true)),
   provenance: ProvenanceSchema,
 });
 

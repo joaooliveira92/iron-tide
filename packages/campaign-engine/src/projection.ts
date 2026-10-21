@@ -1,7 +1,9 @@
 import type { CampaignState } from "@bluewave/campaign";
 import {
   economyOutlook,
+  isPresenceExempt,
   measurePresence,
+  monthId,
   type EconomyStatus,
   type PresenceMeasurementRules,
   type ResearchUnfundedReason,
@@ -115,7 +117,15 @@ export interface PlayerProjectionPresenceArea {
  */
 export type PlayerProjectionPresence =
   | { readonly configured: false }
-  | { readonly configured: true; readonly areas: readonly PlayerProjectionPresenceArea[] };
+  | {
+      readonly configured: true;
+      /**
+       * The blockade exemption notice (spec #73 R7, manual p.46): `true` while the nation is at war and blockaded. The
+       * requirement is then suspended in every area: each row's shortfall is 0 and no shortfall is charged.
+       */
+      readonly exempt: boolean;
+      readonly areas: readonly PlayerProjectionPresenceArea[];
+    };
 
 export interface PlayerProjectionMonth {
   readonly month: number;
@@ -211,6 +221,9 @@ export function buildPlayerProjection(
 
   const shipyardCapacity = ports.reduce((sum, port) => sum + port.capacity, 0);
   const outlook = economyOutlook(snapshot, playerSlotId)!;
+  const exempt =
+    presenceRules !== undefined &&
+    isPresenceExempt(snapshot, playerSlotId, monthId(month.year, month.month));
   // Construction committed so far: a stock shown for context, never a monthly flow.
   const constructionSpend = totalPaidWork(nation);
 
@@ -303,13 +316,14 @@ export function buildPlayerProjection(
         ? { configured: false }
         : {
             configured: true,
+            exempt,
             areas: measurePresence(snapshot, presenceRules)
               .filter((row) => row.nationId === playerSlotId)
               .map(({ areaId, requiredTons, presentTons, shortfallTons }) => ({
                 areaId,
                 requiredTons,
                 presentTons,
-                shortfallTons,
+                shortfallTons: exempt ? 0 : shortfallTons,
               })),
           },
     commandWorkspace: { commands: [], movementCommands: [] },

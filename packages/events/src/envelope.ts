@@ -144,6 +144,25 @@ export interface PresenceShortfall {
   readonly shortfallTons: SafeInt;
 }
 
+/**
+ * S-5 (spec #73 R8, ADR-0248): a typed request that S-2 reduce the nation's prestige for a presence shortfall in an area.
+ * It names the shortfall only; the magnitude is S-2's to resolve (decision request 0023). S-5 mutates no prestige.
+ */
+export interface PrestigeLossRequested {
+  readonly kind: "PrestigeLossRequested";
+  readonly nationId: string;
+  readonly areaId: string;
+  readonly shortfallTons: SafeInt;
+}
+
+/** S-5 (spec #73 R8, ADR-0248): a typed request that S-3 raise revolt pressure in the area; magnitude and trigger are S-3's. */
+export interface RevoltPressureRequested {
+  readonly kind: "RevoltPressureRequested";
+  readonly nationId: string;
+  readonly areaId: string;
+  readonly shortfallTons: SafeInt;
+}
+
 export type DomainEventBody =
   | NationBudgetChanged
   | ConstructionProgressed
@@ -156,7 +175,9 @@ export type DomainEventBody =
   | TechnologyDiscovered
   | ShipReadinessChanged
   | ShipStationAssignmentChanged
-  | PresenceShortfall;
+  | PresenceShortfall
+  | PrestigeLossRequested
+  | RevoltPressureRequested;
 
 export interface DomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody> {
   readonly eventId: string;

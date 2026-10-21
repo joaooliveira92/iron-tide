@@ -14,6 +14,11 @@ export interface PresenceMeasurementRules {
   readonly noPortValueWeight: number;
   /** Basis points of tonnage a cramped or short-range ship counts for (manual p.46; strictly below 10_000). */
   readonly crampedOrShortRangeCountBp: number;
+  /**
+   * Present (and `true`) when the ruleset carries penalty parameters: each shortfall then also emits typed prestige-loss and
+   * revolt-pressure requests (spec #73 R8, ADR-0248). Absent = dormant: shortfall events only. Carries no magnitude.
+   */
+  readonly penaltyRequests?: true;
 }
 
 /** One nation's presence in one area for the month. All tonnages are whole metric tons. */
@@ -137,4 +142,30 @@ export function measurePresence(
     }
   }
   return rows;
+}
+
+/**
+ * Whether a nation is exempt from the presence requirement this month (spec #73 R7, decision C, manual p.46): it is a
+ * member of a war that has not ended AND it is the blockaded party of an established blockade record. Blockade
+ * determination is unchanged: this only reads the records. Both conditions are needed (blockaded outside war, or at war
+ * unblockaded, is not exempt), so the exemption lifts the month either ends. The exemption covers every area, and it is
+ * about the presence requirement only: base-limit checks (S-5 08) must not call this (spec #73 R7, R10).
+ */
+export function isPresenceExempt(
+  snapshot: Pick<CampaignSnapshot, "wars">,
+  nationId: string,
+  campaignMonth: string,
+): boolean {
+  const { wars, blockadeState } = snapshot.wars;
+  const atWar = wars.some(
+    (w) =>
+      w.status !== "ENDED" &&
+      (w.attackerSideMembers.includes(nationId) || w.defenderSideMembers.includes(nationId)),
+  );
+  return (
+    atWar &&
+    blockadeState.some(
+      (b) => b.blockadedNationId === nationId && b.establishedMonth <= campaignMonth,
+    )
+  );
 }

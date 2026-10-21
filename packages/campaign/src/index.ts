@@ -79,6 +79,7 @@ export { presenceAreaIds } from "./presence.js";
 // S-5: monthly presence measurement, requirement and shortfall (spec #73 R5/R6, ADR-0247).
 export {
   contributesToPresence,
+  isPresenceExempt,
   measurePresence,
   requiredTonsInArea,
   shipCountedKg,

@@ -85,5 +85,9 @@ function describeDomainEventBody(body: DomainEventBody): string {
       return `${body.nationId}: ship ${body.shipId} station ${body.fromAssignment} -> ${body.toAssignment} (${body.reason})`;
     case "PresenceShortfall":
       return `${body.nationId}: presence in ${body.areaId} short by ${body.shortfallTons} t (${body.presentTons} of ${body.requiredTons} t)`;
+    case "PrestigeLossRequested":
+      return `${body.nationId}: prestige loss requested for a presence shortfall of ${body.shortfallTons} t in ${body.areaId}`;
+    case "RevoltPressureRequested":
+      return `${body.nationId}: revolt pressure requested for a presence shortfall of ${body.shortfallTons} t in ${body.areaId}`;
   }
 }

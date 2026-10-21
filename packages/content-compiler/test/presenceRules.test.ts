@@ -112,4 +112,15 @@ describe("S-5 presence ruleset section", () => {
       }
     }
   });
+
+  it("accepts penaltyRequests only as the literal true and keeps it optional (S-5 06)", () => {
+    expect(codes(validate([ruleset(complete({ penaltyRequests: true }))]))).not.toContain(
+      "PRESENCE_RULES_INVALID",
+    );
+    for (const value of [false, 1, "yes"]) {
+      expect(codes(validate([ruleset(complete({ penaltyRequests: value }))]))).toContain(
+        "PRESENCE_RULES_INVALID",
+      );
+    }
+  });
 });

@@ -41,6 +41,8 @@ const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   TechnologyDiscovered: "resolve_research",
   ShipStationAssignmentChanged: "command_collection",
   PresenceShortfall: "battle_resolution",
+  PrestigeLossRequested: "battle_resolution",
+  RevoltPressureRequested: "battle_resolution",
 };
 
 const NEUTRAL_EVENT_TYPES: ReadonlySet<string> = new Set(["NationBudgetChanged"]);

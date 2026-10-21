@@ -146,6 +146,20 @@ export const PresenceShortfallSchema = Schema.Struct({
   shortfallTons: nonNegativeSafeInt.check(Schema.isGreaterThan(0)),
 });
 
+export const PrestigeLossRequestedSchema = Schema.Struct({
+  kind: Schema.Literal("PrestigeLossRequested"),
+  nationId: nonEmptyString,
+  areaId: nonEmptyString,
+  shortfallTons: nonNegativeSafeInt.check(Schema.isGreaterThan(0)),
+});
+
+export const RevoltPressureRequestedSchema = Schema.Struct({
+  kind: Schema.Literal("RevoltPressureRequested"),
+  nationId: nonEmptyString,
+  areaId: nonEmptyString,
+  shortfallTons: nonNegativeSafeInt.check(Schema.isGreaterThan(0)),
+});
+
 export const DomainEventBodySchema = Schema.Union([
   NationBudgetChangedSchema,
   ConstructionProgressedSchema,
@@ -159,6 +173,8 @@ export const DomainEventBodySchema = Schema.Union([
   ShipReadinessChangedSchema,
   ShipStationAssignmentChangedSchema,
   PresenceShortfallSchema,
+  PrestigeLossRequestedSchema,
+  RevoltPressureRequestedSchema,
 ]);
 
 export const DomainEventEnvelopeSchema = Schema.Struct({

@@ -5,6 +5,7 @@
 // EVERY RULESET NUMBER BELOW IS FIXTURE-CLASS: it exercises the mechanics and never reaches the production pack.
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
+import type { CampaignSnapshot } from "@bluewave/campaign";
 import { MonthExecutor } from "@bluewave/phase-engine";
 
 import { compileProductionCampaign } from "./production-pack.js";
@@ -18,21 +19,82 @@ const FIXTURE_PRESENCE = {
 function run(): void {
   try {
     const { state } = compileProductionCampaign();
-    const execute = (withSection: boolean) =>
+    const execute = (
+      withSection: boolean,
+      penalty = false,
+      snapshot: CampaignSnapshot = state.snapshot,
+    ) =>
       new MonthExecutor().execute(
-        state.snapshot,
+        snapshot,
         [],
         "presence-cross-process-seed",
         new DiagnosticCollector(),
         undefined,
-        withSection ? { presence: FIXTURE_PRESENCE } : undefined,
+        withSection
+          ? {
+              presence: penalty
+                ? { ...FIXTURE_PRESENCE, penaltyRequests: true as const }
+                : FIXTURE_PRESENCE,
+            }
+          : undefined,
       );
     const dormant = execute(false);
     const configured = execute(true);
-    const shortfalls = configured.eventLedger.all
-      .filter((e) => e.body.kind === "PresenceShortfall")
-      .map((e) => e.body);
+    const shortfalls = configured.eventLedger.all.flatMap((e) =>
+      e.body.kind === "PresenceShortfall" ? [e.body] : [],
+    );
+    const penalised = execute(true, true);
+    const requestsOf = (r: typeof penalised, kind: string) =>
+      r.eventLedger.all.filter((e) => e.body.kind === kind).map((e) => e.body);
+    // Put the first under-covered nation at war and under blockade: it must drop out of every output.
+    const exemptNation = shortfalls[0]!.nationId;
+    const blockadedSnapshot: CampaignSnapshot = {
+      ...state.snapshot,
+      wars: {
+        ...state.snapshot.wars,
+        wars: [
+          {
+            id: "fixture-war",
+            attackerSideId: "fixture-attackers",
+            defenderSideId: "fixture-defenders",
+            attackerSideMembers: ["fixture-blockader"],
+            defenderSideMembers: [exemptNation],
+            attackerWarScore: 0,
+            defenderWarScore: 0,
+            attackerId: "fixture-blockader",
+            defenderId: exemptNation,
+            startDate: "1880-01",
+            status: "ACTIVE",
+          },
+        ],
+        blockadeState: [
+          {
+            blockaderId: "fixture-blockader",
+            blockadedNationId: exemptNation,
+            areaId: shortfalls[0]!.areaId,
+            establishedMonth: "1880-01",
+          },
+        ],
+      },
+    };
+    const blockaded = execute(true, true, blockadedSnapshot);
+    const involving = (r: typeof penalised) =>
+      r.eventLedger.all.filter(
+        (e) =>
+          (e.body.kind === "PresenceShortfall" ||
+            e.body.kind === "PrestigeLossRequested" ||
+            e.body.kind === "RevoltPressureRequested") &&
+          e.body.nationId === exemptNation,
+      ).length;
     const output = {
+      penaltySnapshotHash: sha256Hex(canonicalSerialize(penalised.finalSnapshot)),
+      penaltyEventLedgerHash: penalised.eventLedger.hash(),
+      prestigeRequests: requestsOf(penalised, "PrestigeLossRequested"),
+      revoltRequests: requestsOf(penalised, "RevoltPressureRequested"),
+      exemptNation,
+      exemptNationEventsUnblockaded: involving(penalised),
+      exemptNationEventsBlockaded: involving(blockaded),
+      blockadedEventLedgerHash: blockaded.eventLedger.hash(),
       dormantSnapshotHash: sha256Hex(canonicalSerialize(dormant.finalSnapshot)),
       dormantEventLedgerHash: dormant.eventLedger.hash(),
       dormantShortfallCount: dormant.eventLedger.all.filter(

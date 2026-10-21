@@ -278,6 +278,11 @@ describe("Presence measurement cross-process determinism (S-5 05)", () => {
     configuredSnapshotHash: string;
     configuredEventLedgerHash: string;
     shortfalls: { nationId: string; areaId: string; shortfallTons: number }[];
+    penaltySnapshotHash: string;
+    prestigeRequests: { nationId: string; areaId: string; shortfallTons: number }[];
+    revoltRequests: { nationId: string; areaId: string; shortfallTons: number }[];
+    exemptNationEventsUnblockaded: number;
+    exemptNationEventsBlockaded: number;
     success: boolean;
     error?: string;
   }
@@ -306,5 +311,19 @@ describe("Presence measurement cross-process determinism (S-5 05)", () => {
     const keys = r1.shortfalls.map((s) => `${s.nationId}/${s.areaId}`);
     expect(keys).toEqual([...keys].sort());
     expect(r1.shortfalls.every((s) => s.shortfallTons > 0)).toBe(true);
+  });
+
+  it("penalty requests mirror the shortfalls exactly once, and a blockaded nation at war drops out of every output (S-5 06)", () => {
+    const r1 = runPresenceChild();
+    const r2 = runPresenceChild();
+    expect(r2).toEqual(r1);
+    const key = (e: { nationId: string; areaId: string; shortfallTons: number }) =>
+      `${e.nationId}/${e.areaId}/${e.shortfallTons}`;
+    expect(r1.prestigeRequests.map(key)).toEqual(r1.shortfalls.map(key));
+    expect(r1.revoltRequests.map(key)).toEqual(r1.shortfalls.map(key));
+    // Requests are events only: authoritative state is unchanged.
+    expect(r1.penaltySnapshotHash).toBe(r1.dormantSnapshotHash);
+    expect(r1.exemptNationEventsUnblockaded).toBeGreaterThan(0);
+    expect(r1.exemptNationEventsBlockaded).toBe(0);
   });
 });

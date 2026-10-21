@@ -6,6 +6,7 @@ export interface PresenceValues {
   readonly requiredTonsPerPossessionWeight: number;
   readonly noPortValueWeight: number;
   readonly crampedOrShortRangeCountBp: number;
+  readonly penaltyRequests?: true;
 }
 
 /**
@@ -28,6 +29,7 @@ export function presenceFromRulesets(rulesets: readonly unknown[]): PresenceValu
       requiredTonsPerPossessionWeight: value.requiredTonsPerPossessionWeight,
       noPortValueWeight: value.noPortValueWeight,
       crampedOrShortRangeCountBp: value.crampedOrShortRangeCountBp,
+      ...(value.penaltyRequests === true ? { penaltyRequests: true as const } : {}),
     };
   }
   return undefined;

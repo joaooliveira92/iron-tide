@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0248).
+highest existing number + 1 (the next number is ADR-0249).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -125,6 +125,7 @@ The authoritative home area and possession ownership behind per-area presence, t
 | 0241 | [ADR-0241-foreign-station-assignment-state.md](ADR-0241-foreign-station-assignment-state.md) | Foreign-station assignment is optional ship state, orthogonal to readiness | accepted | — |
 | 0242 | [ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md](ADR-0242-colonial-service-fitting-and-presence-ruleset-section.md) | Colonial-service fitting is optional design state; its cost is a value of the dormant S-5 ruleset section | accepted | — |
 | 0247 | [ADR-0247-presence-measurement-and-shortfall.md](ADR-0247-presence-measurement-and-shortfall.md) | Presence is measured at month end from the dormant S-5 section and reported as typed shortfall events | accepted | — |
+| 0248 | [ADR-0248-blockade-exemption-and-typed-penalty-requests.md](ADR-0248-blockade-exemption-and-typed-penalty-requests.md) | A blockaded nation at war is exempt from presence, and shortfalls emit typed penalty requests | accepted | — |
 
 ## Ship design & construction
 

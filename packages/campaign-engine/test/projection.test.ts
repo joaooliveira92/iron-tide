@@ -316,11 +316,76 @@ describe("buildPlayerProjection — S-1 readiness in the fleet projection (ticke
     );
     expect(projection?.presence).toEqual({
       configured: true,
+      exempt: false,
       areas: [
         { areaId: "cape", requiredTons: 200, presentTons: 0, shortfallTons: 200 },
         { areaId: "india", requiredTons: 400, presentTons: 200, shortfallTons: 200 },
       ],
     });
+  });
+
+  it("shows the exemption notice and no shortfall while at war and blockaded, and the shortfall again after it lifts (S-5 06)", () => {
+    // FIXTURE-CLASS rules: mechanics only, never a production value.
+    const rules = {
+      requiredTonsPerPossessionWeight: 100,
+      noPortValueWeight: 2,
+      crampedOrShortRangeCountBp: 5_000,
+    };
+    const war = {
+      id: "w1",
+      attackerSideId: "a",
+      defenderSideId: "d",
+      attackerSideMembers: ["fra"],
+      defenderSideMembers: ["uk"],
+      attackerWarScore: 0,
+      defenderWarScore: 0,
+      attackerId: "fra",
+      defenderId: "uk",
+      startDate: "1880-01",
+      status: "ACTIVE" as "ACTIVE" | "ENDED",
+    };
+    const blockade = {
+      blockaderId: "fra",
+      blockadedNationId: "uk",
+      areaId: "india",
+      establishedMonth: "1880-01",
+    };
+    const project = (wars: (typeof war)[], blockadeState: (typeof blockade)[]) => {
+      const snapshot = fixtureSnapshot(
+        [fixtureNation({ id: "uk" }), fixtureNation({ id: "fra" })],
+        [],
+        {
+          world: {
+            areas: [],
+            routes: [],
+            ports: [],
+            possessions: [{ id: "p1", nationId: "uk", areaId: "india" }],
+          },
+          wars: {
+            wars,
+            battles: [],
+            participantMemberships: [],
+            blockadeState,
+            battleManifests: [],
+          },
+        },
+      );
+      return buildPlayerProjection(fixtureState(snapshot), "uk", { month: 2, year: 1880 }, rules)
+        ?.presence;
+    };
+    const row = { areaId: "india", requiredTons: 200, presentTons: 0 };
+    expect(project([war], [])).toEqual({
+      configured: true,
+      exempt: false,
+      areas: [{ ...row, shortfallTons: 200 }],
+    });
+    expect(project([war], [blockade])).toEqual({
+      configured: true,
+      exempt: true,
+      areas: [{ ...row, shortfallTons: 0 }],
+    });
+    expect(project([{ ...war, status: "ENDED" }], [blockade])).toMatchObject({ exempt: false });
+    expect(project([], [blockade])).toMatchObject({ exempt: false });
   });
 
   it("its derived fleet maintenance agrees with the committed nation.maintenanceCost", () => {

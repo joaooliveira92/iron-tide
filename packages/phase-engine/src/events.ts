@@ -287,6 +287,30 @@ export function presenceShortfallEvent(
   };
 }
 
+/**
+ * S-5: a typed request for S-2 (`PrestigeLossRequested`) or S-3 (`RevoltPressureRequested`) naming one nation-area
+ * shortfall. Integer tons only; the consumer resolves any magnitude. Emitted right after the shortfall event.
+ */
+export function presencePenaltyRequestEvent(
+  kind: "PrestigeLossRequested" | "RevoltPressureRequested",
+  nationId: string,
+  areaId: string,
+  shortfallTons: SafeInt,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `${kind}-${nationId}-${areaId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "nation",
+    aggregateId: nationId,
+    eventType: kind,
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: { kind, nationId, areaId, shortfallTons },
+    sequenceNumber: seq,
+  };
+}
+
 export function makeLedgerEntry(
   nationId: string,
   phaseId: string,

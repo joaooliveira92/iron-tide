@@ -12,6 +12,8 @@ export type {
   EventVersion,
   NationBudgetChanged,
   PresenceShortfall,
+  PrestigeLossRequested,
+  RevoltPressureRequested,
   Reason,
   ResearchProgressed,
   ShipRebuilt,

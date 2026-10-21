@@ -166,6 +166,8 @@ describe("event validation parity (Zod → Effect Schema)", () => {
         presentTons: 100,
         shortfallTons: 300,
       },
+      { kind: "PrestigeLossRequested", nationId: "n1", areaId: "a1", shortfallTons: 300 },
+      { kind: "RevoltPressureRequested", nationId: "n1", areaId: "a1", shortfallTons: 300 },
     ] as const;
 
     for (const body of bodies) {
@@ -233,4 +235,17 @@ describe("PresenceShortfall (S-5 05)", () => {
     expect(() => parseDomainEventBody({ ...body, shortfallTons: 0 })).toThrow();
     expect(() => parseDomainEventBody({ ...body, requiredTons: 1.5 })).toThrow();
   });
+});
+
+describe("penalty requests (S-5 06)", () => {
+  for (const kind of ["PrestigeLossRequested", "RevoltPressureRequested"] as const) {
+    it(`${kind} carries integer tons only and rejects excess keys, empty ids and a non-positive shortfall`, () => {
+      const body = { kind, nationId: "n1", areaId: "a1", shortfallTons: 300 };
+      expect(parseDomainEventBody(body).kind).toBe(kind);
+      expect(() => parseDomainEventBody({ ...body, magnitude: 5 })).toThrow();
+      expect(() => parseDomainEventBody({ ...body, nationId: "" })).toThrow();
+      expect(() => parseDomainEventBody({ ...body, shortfallTons: 0 })).toThrow();
+      expect(() => parseDomainEventBody({ ...body, shortfallTons: 1.5 })).toThrow();
+    });
+  }
 });

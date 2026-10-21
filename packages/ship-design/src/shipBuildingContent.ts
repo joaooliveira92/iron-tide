@@ -116,6 +116,7 @@ export interface PresenceRuleValues {
   readonly requiredTonsPerPossessionWeight: number;
   readonly noPortValueWeight: number;
   readonly crampedOrShortRangeCountBp: number;
+  readonly penaltyRequests?: true;
 }
 
 /** Everything a caller needs, built once. `environmentFor(month)` is pure: same data and month, same environment. */
