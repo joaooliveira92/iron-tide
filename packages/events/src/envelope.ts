@@ -223,6 +223,22 @@ export interface BattleOfferAnswered {
   readonly resolutionMode: "AUTO_RESOLVE";
 }
 
+/**
+ * T-1 04 (spec #109 R8, ticket #113): the player declined a battle offer. The battle is never resolved or fought; the
+ * decliner's war score fell by `victoryPointCost` through the war-score seam and the opponent was credited
+ * `opponentCredit` (0 unless the ruleset's credit shape says so). `reasonCode` is the stable decline reason.
+ */
+export interface BattleDeclined {
+  readonly kind: "BattleDeclined";
+  readonly nationId: string;
+  readonly battleId: string;
+  readonly missionType: string;
+  readonly areaId: string;
+  readonly victoryPointCost: number;
+  readonly opponentCredit: number;
+  readonly reasonCode: "BATTLE_DECLINED_WITH_CONSEQUENCES";
+}
+
 export type DomainEventBody =
   | NationBudgetChanged
   | ConstructionProgressed
@@ -242,7 +258,8 @@ export type DomainEventBody =
   | ShipRemovedFromDivision
   | ForeignStationShipMoved
   | ForeignStationNoRoute
-  | BattleOfferAnswered;
+  | BattleOfferAnswered
+  | BattleDeclined;
 
 export interface DomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody> {
   readonly eventId: string;

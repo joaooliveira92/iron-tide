@@ -73,6 +73,37 @@ export const StorablePossessionSchema = Schema.Record(Schema.String, Schema.Unkn
   );
 
 /**
+ * One persisted declined-battle record (T-1 04, spec #109 R8, R15): every key required, ids non-empty, costs non-negative
+ * safe integers, and no other key accepted, so a malformed record is refused at the boundary instead of reaching state.
+ * The whole `wars.declinedBattles` field stays optional: it is absent until the first decline, so saves that predate it
+ * (and every save that never declines) decode unchanged.
+ */
+export const StorableDeclinedBattleSchema = Schema.Record(Schema.String, Schema.Unknown)
+  .check(
+    Schema.makeFilter(
+      (o) =>
+        Object.keys(o).sort().join(",") ===
+          "areaId,battleId,missionType,month,nationId,opponentCredit,responseInputHash,victoryPointCost,warId" ||
+        "a declined-battle record carries exactly its nine fields",
+    ),
+  )
+  .pipe(
+    Schema.decodeTo(
+      Schema.Struct({
+        battleId: Schema.NonEmptyString,
+        warId: Schema.NonEmptyString,
+        nationId: Schema.NonEmptyString,
+        areaId: Schema.NonEmptyString,
+        month: Schema.NonEmptyString,
+        missionType: Schema.NonEmptyString,
+        responseInputHash: Schema.NonEmptyString,
+        victoryPointCost: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
+        opponentCredit: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
+      }),
+    ),
+  );
+
+/**
  * One persisted technology of the compiled research catalogue (`TechnologyDefinitionData`): every key required and
  * non-empty where meaningful, and no other key accepted, so a malformed catalogue entry is refused at the boundary
  * instead of reaching state. The whole `world.technologies` field stays optional for saves that predate it.
@@ -148,6 +179,8 @@ const StorableSnapshotSchema = Schema.Struct({
     participantMemberships: Schema.Array(Schema.Unknown),
     blockadeState: Schema.Array(Schema.Unknown),
     battleManifests: Schema.Array(Schema.Unknown),
+    // T-1 04 (#113): additive, absent until the first decline.
+    declinedBattles: Schema.optional(Schema.Array(StorableDeclinedBattleSchema)),
   }),
   politics: Schema.Struct({
     relations: Schema.Array(Schema.Unknown),

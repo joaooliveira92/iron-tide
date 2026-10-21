@@ -37,6 +37,7 @@ export type {
   CampaignWeatherState,
   CompiledDesignVersion,
   CompiledTorpedoMount,
+  DeclinedBattleRecord,
   ConstructionPackage,
   ConstructionMonthUsage,
   ConstructionPackageKind,

@@ -8,6 +8,7 @@ import type {
   CampaignSnapshot,
   CampaignWeatherState,
   CompiledDesignVersion,
+  DeclinedBattleRecord,
   ConstructionMonthUsage,
   ConstructionPackage,
   ConstructionProject,
@@ -463,12 +464,24 @@ const F = {
     "manifestHash",
   ),
   BattleManifestSide: fields<BattleManifestSide>()("sideId", "participantIds"),
+  DeclinedBattleRecord: fields<DeclinedBattleRecord>()(
+    "battleId",
+    "warId",
+    "nationId",
+    "areaId",
+    "month",
+    "missionType",
+    "responseInputHash",
+    "victoryPointCost",
+    "opponentCredit",
+  ),
   WarState: fields<WarState>()(
     "wars",
     "battles",
     "participantMemberships",
     "blockadeState",
     "battleManifests",
+    "declinedBattles",
   ),
   CampaignSlot: fields<CampaignSlot>()("nationId", "type"),
   CompiledDesignVersion: fields<CompiledDesignVersion>()(
@@ -579,6 +592,7 @@ const _assert: [
   _Assert<BattleResult, typeof F.BattleResult>,
   _Assert<BattleManifest, typeof F.BattleManifest>,
   _Assert<BattleManifestSide, typeof F.BattleManifestSide>,
+  _Assert<DeclinedBattleRecord, typeof F.DeclinedBattleRecord>,
   _Assert<WarState, typeof F.WarState>,
   _Assert<CampaignSlot, typeof F.CampaignSlot>,
   _Assert<CompiledDesignVersion, typeof F.CompiledDesignVersion>,
@@ -591,6 +605,7 @@ const _assert: [
   _Assert<CampaignWeatherState, typeof F.CampaignWeatherState>,
   _Assert<CampaignSnapshot, typeof F.CampaignSnapshot>,
 ] = [
+  true,
   true,
   true,
   true,
@@ -822,6 +837,12 @@ export function cloneSnapshot(snapshot: CampaignSnapshot): CampaignSnapshot {
               manifests === undefined
                 ? undefined
                 : (manifests as BattleManifest[]).map(cloneManifest),
+            declinedBattles: (records) =>
+              records === undefined
+                ? undefined
+                : (records as DeclinedBattleRecord[]).map((r) =>
+                    recordClone(r, F.DeclinedBattleRecord),
+                  ),
           },
           seen,
         ),

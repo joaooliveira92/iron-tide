@@ -10,6 +10,7 @@ export type {
   DomainEventEnvelope,
   EventType,
   EventVersion,
+  BattleDeclined,
   BattleOfferAnswered,
   ForeignStationNoRoute,
   ForeignStationShipMoved,

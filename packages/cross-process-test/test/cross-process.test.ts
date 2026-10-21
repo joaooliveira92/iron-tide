@@ -378,6 +378,14 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     dormantRandomLedgerHash: string;
     nonOfferedRandomLedgerHash: string;
     draws: { streamId: string; draw: number; reasonCode: string }[];
+    declinedOutcome: string;
+    declinedSnapshotHash: string;
+    declinedInProcessEqual: boolean;
+    declinedRecords: { missionType: string; victoryPointCost: number; nationId: string }[];
+    declinedBattlePhases: string[];
+    declinedWarScores: number[][];
+    declinedReservedShips: number;
+    declinedEventLedgerHash: string;
   }
 
   function runOfferChild(): OfferChildOutput {
@@ -411,6 +419,25 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     expect(r.acceptedSnapshotHash).toBe(r.nonOfferedSnapshotHash);
     expect(r.delegatedSnapshotHash).toBe(r.nonOfferedSnapshotHash);
     expect(r.acceptedWars).toBe(r.nonOfferedWars);
+  });
+
+  it("a decline is byte-identical across two clean processes: one record, a lowered score, released ships", () => {
+    const r1 = runOfferChild();
+    const r2 = runOfferChild();
+    expect(r2.declinedSnapshotHash).toBe(r1.declinedSnapshotHash);
+    expect(r2.declinedEventLedgerHash).toBe(r1.declinedEventLedgerHash);
+    expect(r1.declinedInProcessEqual).toBe(true);
+    expect(r1.declinedOutcome).toBe("completed");
+    expect(r1.declinedRecords).toHaveLength(1);
+    expect(r1.declinedRecords[0]).toMatchObject({
+      nationId: "uk",
+      missionType: "FLEET_BATTLE",
+      victoryPointCost: 4,
+    });
+    expect(r1.declinedBattlePhases).toEqual(["declined"]);
+    expect(r1.declinedWarScores).toEqual([[-4, 0]]);
+    expect(r1.declinedReservedShips).toBe(0);
+    expect(r1.declinedSnapshotHash).not.toBe(r1.nonOfferedSnapshotHash);
   });
 
   it("is byte-identical to the dormant month when no offer is possible (no channel)", () => {

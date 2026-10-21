@@ -20,6 +20,7 @@ import {
   resolveShipStrength,
   toCampaignBattleResult,
 } from "./battles.js";
+import { applyDecline } from "./battleDecline.js";
 import { buildOfferContent, offeredManifestFor } from "./battleOffer.js";
 import { battleOfferAnsweredEvent } from "./events.js";
 import { applyRecordedBattleResult, consumeBattleResult, consumeOffer } from "./interruption.js";
@@ -194,13 +195,26 @@ function resolveBattle(
       });
       const answered = consumeOffer(ctx, content);
       if (ctx.interruption.suspended !== undefined) return;
+      if (answered !== null && answered.response === "decline") {
+        // A declined battle is terminal: it is never resolved or fought (spec #109 R8).
+        applyDecline(
+          ctx,
+          battle,
+          manifest,
+          content,
+          ctx.playerNationId,
+          ctx.battleOffers,
+          answered.inputHash,
+        );
+        return;
+      }
       if (answered !== null) {
         ctx.eventLedger.append(
           battleOfferAnsweredEvent(
             ctx.playerNationId,
             battle["id"],
             content.missionType,
-            answered.response,
+            answered.response === "delegate" ? "delegate" : "accept",
             ctx.nextSeq(),
             ctx.campaignMonth,
           ),

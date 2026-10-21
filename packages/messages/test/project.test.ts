@@ -81,6 +81,38 @@ describe("TurnMessage projection", () => {
     }
   });
 
+  it("projects a declined battle as a player-visible battle message carrying the victory-point cost (T-1 04)", () => {
+    const [message] = projectTurnMessages(
+      input([
+        envelope(
+          {
+            kind: "BattleDeclined",
+            nationId: "uk",
+            battleId: "battle-1",
+            missionType: "FLEET_BATTLE",
+            areaId: "a-1",
+            victoryPointCost: 5,
+            opponentCredit: 0,
+            reasonCode: "BATTLE_DECLINED_WITH_CONSEQUENCES",
+          },
+          "battle-1",
+          1,
+        ),
+      ]),
+    );
+    expect(message).toMatchObject({
+      category: "BATTLE",
+      severity: "HIGH",
+      phase: "battle_resolution",
+      titleKey: "messages.battle.declined.title",
+      bodyKey: "messages.battle.declined.body",
+      playerVisible: true,
+      interpolation: { battleId: "battle-1", areaId: "a-1", victoryPointCost: 5 },
+    });
+    expect(message?.subjectRefs).toContainEqual({ type: "battle", id: "battle-1" });
+    expect(message?.subjectRefs).toContainEqual({ type: "nation", id: "uk" });
+  });
+
   it("aggregates routine construction progress under one aggregate key", () => {
     const messages = projectTurnMessages(
       input([constructionProgress("p1", 10, 1), constructionProgress("p2", 20, 2)]),

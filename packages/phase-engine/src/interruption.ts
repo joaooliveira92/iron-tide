@@ -27,6 +27,7 @@ import {
   type RecordedInput,
   type SuspendedTurn,
 } from "@bluewave/messages";
+import { declineRefusal } from "./battleDecline.js";
 import type { OfferContent } from "./battleOffer.js";
 import type { MonthContext } from "./monthContext.js";
 
@@ -264,7 +265,8 @@ export type OfferRefusal =
   | { readonly _tag: "OfferResponseStale" }
   | { readonly _tag: "OfferResponseTampered" }
   | { readonly _tag: "OfferResponseWrongBattle" }
-  | { readonly _tag: "OfferDeclineUnavailable" };
+  | { readonly _tag: "BATTLE_DECLINE_NOT_ALLOWED" }
+  | { readonly _tag: "OfferDeclineUnpriced" };
 
 /** The outcome of looking for a recorded battle-offer response at the next ordinal. */
 export type OfferResponseResolution =
@@ -276,7 +278,12 @@ export type OfferResponseResolution =
       readonly interruptionId: string;
       readonly refusal: OfferRefusal;
     }
-  | { readonly status: "resolved"; readonly response: OfferResponseInput };
+  | {
+      readonly status: "resolved";
+      readonly response: OfferResponseInput;
+      /** The hash of the recorded input that carried the response. */
+      readonly inputHash: string;
+    };
 
 /**
  * Consume the recorded input for the next ordinal as a battle-offer response (spec #109 R3, R6). Hash-validated and
@@ -324,19 +331,20 @@ export function consumeOfferResponse(
   if (response.interruptionId !== interruptionId) return refuse({ _tag: "OfferResponseStale" });
   if (response.battleId !== subject.battleId) return refuse({ _tag: "OfferResponseWrongBattle" });
   state.nextOrdinal = ordinal + 1;
-  return { status: "resolved", response };
+  return { status: "resolved", response, inputHash: recorded.inputHash };
 }
 
+/** A validated answer to an offer, with the hash of the recorded input that carried it. */
+export type AnsweredOffer = OfferResponseInput & { readonly inputHash: string };
+
 /**
- * Raise a battle offer and consume its answer (spec #109 R3, R6, ticket #112). Returns the validated accept or delegate
- * response, or `null` after suspending: the answer is absent (`awaiting-input`) or refused with a typed `_tag`
- * (`invalid-input`, the offer stays pending). A decline is refused here until the decline ticket lands; the player's
- * answer is never defaulted, auto-declined or auto-accepted.
+ * Raise a battle offer and consume its answer (spec #109 R3, R6, R8, tickets #112, #113). Returns the validated accept,
+ * delegate or decline response, or `null` after suspending: the answer is absent (`awaiting-input`) or refused with a
+ * typed `_tag` (`invalid-input`, the offer stays pending and the ordinal unconsumed). A decline of an
+ * OPERATIONALLY_UNAVOIDABLE mission (`BATTLE_DECLINE_NOT_ALLOWED`), or one the ruleset cannot price, is refused; the
+ * player's answer is never defaulted, auto-declined or auto-accepted.
  */
-export function consumeOffer(
-  ctx: MonthContext,
-  content: OfferContent,
-): (OfferResponseInput & { readonly response: "accept" | "delegate" }) | null {
+export function consumeOffer(ctx: MonthContext, content: OfferContent): AnsweredOffer | null {
   const state = ctx.interruption;
   if (state === undefined) return null;
   const phase = "battle_resolution" as const;
@@ -387,12 +395,16 @@ export function consumeOffer(
     case "resolved": {
       const answered = resolution.response;
       if (answered.response === "decline") {
-        // Not yet an available answer: leave the offer pending and the ordinal unconsumed.
-        state.nextOrdinal = ordinal;
-        suspend(state, request, "invalid-input", "OfferDeclineUnavailable");
-        return null;
+        const refusal =
+          ctx.battleOffers === undefined ? null : declineRefusal(content, ctx.battleOffers);
+        if (refusal !== null) {
+          // Leave the offer pending and the ordinal unconsumed.
+          state.nextOrdinal = ordinal;
+          suspend(state, request, "invalid-input", refusal._tag);
+          return null;
+        }
       }
-      return { ...answered, response: answered.response };
+      return { ...answered, inputHash: resolution.inputHash };
     }
   }
 }

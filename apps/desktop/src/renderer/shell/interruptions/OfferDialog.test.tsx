@@ -87,14 +87,46 @@ describe("OfferDialog", () => {
     );
   });
 
-  it("offers accept and delegate, and no decline", () => {
+  it("offers accept, delegate and decline as named buttons", () => {
     const onChoose = vi.fn();
     renderOffer(offer, { onChoose });
     const dialog = screen.getByRole("alertdialog");
     fireEvent.click(within(dialog).getByRole("button", { name: /Accept battle/ }));
     fireEvent.click(within(dialog).getByRole("button", { name: /Delegate to staff/ }));
-    expect(onChoose.mock.calls.map((call) => call[0])).toEqual(["accept", "delegate"]);
-    expect(within(dialog).queryByText(/decline/i)).toBeNull();
+    fireEvent.click(within(dialog).getByRole("button", { name: /Decline battle/ }));
+    expect(onChoose.mock.calls.map((call) => call[0])).toEqual(["accept", "delegate", "decline"]);
+  });
+
+  it("states plainly that declining costs victory points and may cost prestige, tied to the decline control", () => {
+    renderOffer({
+      ...offer,
+      declineStatementKeys: [
+        "ui.offer.decline.costsVictoryPoints",
+        "ui.offer.decline.mayCostPrestige",
+      ],
+    });
+    const decline = screen.getByTestId("offer-decline");
+    const statement = document.getElementById(decline.getAttribute("aria-describedby") ?? "");
+    expect(statement?.textContent).toContain("Declining a battle costs victory points.");
+    expect(statement?.textContent).toContain("Repeated declines may also cost prestige.");
+    expect(screen.queryByTestId("offer-decline-reason")).toBeNull();
+    expect(decline.getAttribute("aria-disabled")).toBe("false");
+  });
+
+  it("refuses to decline an operationally unavoidable battle, with a reason, and stays keyboard reachable", () => {
+    const onChoose = vi.fn();
+    renderOffer({ ...offer, acceptanceClass: "OPERATIONALLY_UNAVOIDABLE" }, { onChoose });
+    const decline = screen.getByTestId("offer-decline");
+    expect(decline.getAttribute("aria-disabled")).toBe("true");
+    decline.focus();
+    expect(document.activeElement).toBe(decline);
+    expect(screen.getByTestId("offer-decline-reason").textContent).toBe(
+      "This battle is operationally unavoidable, so it cannot be declined.",
+    );
+    fireEvent.click(decline);
+    expect(onChoose).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId("offer-accept"));
+    expect(onChoose).toHaveBeenCalledWith("accept");
   });
 
   it("moves focus into the dialog and stays open on Escape (a missing answer holds, never defaults)", async () => {

@@ -114,6 +114,13 @@ function runChild(): void {
     const reExecuted = offerOf(run(snapshot, { offers: true, channel: true }));
     const accepted = run(snapshot, { offers: true, channel: true, response: request }, "accept");
     const delegated = run(snapshot, { offers: true, channel: true, response: request }, "delegate");
+    // T-1 04 (#113): the declined month, twice in-process; the war score and the declined record are observed.
+    const declined = run(snapshot, { offers: true, channel: true, response: request }, "decline");
+    const declinedAgain = run(
+      snapshot,
+      { offers: true, channel: true, response: request },
+      "decline",
+    );
 
     const enemyShipIds = snapshot.nations
       .get(ENEMY)!
@@ -123,7 +130,12 @@ function runChild(): void {
     const draws = accepted.randomLedger.all.filter((d) => d.streamId.startsWith("battle-offer"));
 
     const output = {
-      success: dormant.success && nonOffered.success && accepted.success && delegated.success,
+      success:
+        dormant.success &&
+        nonOffered.success &&
+        accepted.success &&
+        delegated.success &&
+        declined.success,
       request,
       requestReExecutedEqual: canonicalSerialize(reExecuted) === canonicalSerialize(request),
       requestLeaksEnemyShip: enemyShipIds.some((id) => requestText.includes(`"${id}"`)),
@@ -141,6 +153,22 @@ function runChild(): void {
       dormantRandomLedgerHash: dormant.randomLedger.hash(),
       nonOfferedRandomLedgerHash: nonOffered.randomLedger.hash(),
       draws,
+      declinedOutcome: declined.outcome,
+      declinedSnapshotHash: hashSnapshot(declined.finalSnapshot),
+      declinedInProcessEqual:
+        hashSnapshot(declined.finalSnapshot) === hashSnapshot(declinedAgain.finalSnapshot) &&
+        declined.eventLedger.hash() === declinedAgain.eventLedger.hash() &&
+        declined.randomLedger.hash() === declinedAgain.randomLedger.hash(),
+      declinedRecords: declined.finalSnapshot.wars.declinedBattles ?? [],
+      declinedBattlePhases: declined.finalSnapshot.wars.battles.map((b) => b.phase),
+      declinedWarScores: declined.finalSnapshot.wars.wars.map((w) => [
+        w.attackerWarScore,
+        w.defenderWarScore,
+      ]),
+      declinedReservedShips: [...declined.finalSnapshot.nations.values()]
+        .flatMap((n) => n.fleets.flatMap((f) => f.ships))
+        .filter((ship) => ship.inBattleId !== undefined).length,
+      declinedEventLedgerHash: declined.eventLedger.hash(),
     };
     process.stdout.write(JSON.stringify(output) + "\n");
   } catch (err) {

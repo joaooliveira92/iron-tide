@@ -287,6 +287,41 @@ export function battleOfferAnsweredEvent(
 }
 
 /**
+ * T-1 04: the player declined a battle offer. One event per declined battle, carrying the war-score cost and credit that
+ * were applied through the war-score seam, so scoring is auditable without reading presentation.
+ */
+export function battleDeclinedEvent(
+  nationId: string,
+  battleId: string,
+  missionType: string,
+  areaId: string,
+  victoryPointCost: number,
+  opponentCredit: number,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `BattleDeclined-${battleId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "battle",
+    aggregateId: battleId,
+    eventType: "BattleDeclined",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "BattleDeclined",
+      nationId,
+      battleId,
+      missionType,
+      areaId,
+      victoryPointCost,
+      opponentCredit,
+      reasonCode: "BATTLE_DECLINED_WITH_CONSEQUENCES",
+    },
+    sequenceNumber: seq,
+  };
+}
+
+/**
  * S-5: a nation's effective present tonnage in an area fell short of its requirement at month end. One event per
  * nation-area with a positive shortfall; emitted in (nation, area) order.
  */
