@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0266).
+highest existing number + 1 (the next number is ADR-0267).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -142,6 +142,7 @@ The authoritative home area and possession ownership behind per-area presence, t
 | 0263 | [ADR-0263-battle-offer-section-goes-live-on-the-production-pack.md](ADR-0263-battle-offer-section-goes-live-on-the-production-pack.md) | The battle-offer section goes live on the production pack | accepted | — |
 | 0264 | [ADR-0264-t1-battle-offer-state-keeps-compatibility-version-4-0-0.md](ADR-0264-t1-battle-offer-state-keeps-compatibility-version-4-0-0.md) | The T-1 battle-offer state keeps compatibility version 4.0.0 | accepted | — |
 | 0265 | [ADR-0265-battle-declined-event-carries-the-running-decline-count.md](ADR-0265-battle-declined-event-carries-the-running-decline-count.md) | The BattleDeclined event carries the running decline count | accepted | — |
+| 0266 | [ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md](ADR-0266-s5-presence-values-and-open-requests-resolved-by-delegation.md) | S-5 presence values and the other open decision requests, resolved by delegation | accepted | — |
 
 ## Ship design & construction
 
