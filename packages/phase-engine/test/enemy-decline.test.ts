@@ -166,7 +166,7 @@ describe("the enemy declines (R11)", () => {
       const result = run(snapshot, rules({ probabilityBp: 10_000 }));
       expect(draws(result)).toHaveLength(0);
       expect(withdrawn(result)).toHaveLength(0);
-      expect(result.suspended?.request.kind).toBe("offer");
+      expect(result.suspended?.request?.kind).toBe("offer");
     }
   });
 

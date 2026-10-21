@@ -13,7 +13,6 @@ import {
   enemyDeclineDrawDeclines,
   enemyDeclinePredicateHolds,
   type BattleGenerationResult,
-  type BattleManifest,
 } from "@bluewave/combat";
 import type { BattleOfferRules } from "@bluewave/content-schema";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
