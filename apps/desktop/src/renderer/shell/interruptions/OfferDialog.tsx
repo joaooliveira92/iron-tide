@@ -99,11 +99,13 @@ export function OfferDialog({
           </p>
         )}
         <p className="text-xs" data-testid="offer-support">
-          {offerText(
-            request.supportForcePresent === true
-              ? "ui.offer.support.present"
-              : "ui.offer.support.absent",
-          )}
+          {request.supportForcePresent !== true
+            ? offerText("ui.offer.support.absent")
+            : (request.supportNationIds ?? []).length > 0
+              ? offerText("ui.offer.support.presentFrom", {
+                  nations: (request.supportNationIds ?? []).join(", "),
+                })
+              : offerText("ui.offer.support.present")}
         </p>
         <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
           <Button

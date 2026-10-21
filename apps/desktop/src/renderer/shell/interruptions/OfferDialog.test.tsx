@@ -81,6 +81,15 @@ describe("OfferDialog", () => {
       "A friendly support force is present.",
     );
     cleanup();
+    renderOffer({
+      ...offer,
+      supportForcePresent: true,
+      supportNationIds: ["italy", "austria"],
+    });
+    expect(screen.getByTestId("offer-support").textContent).toBe(
+      "A friendly support force from italy, austria is present.",
+    );
+    cleanup();
     renderOffer({ ...offer, estimate: { model: "BANDED", strength: 450 } });
     expect(screen.getByRole("alertdialog").textContent).toContain(
       "Enemy strength: about 450 (banded estimate)",

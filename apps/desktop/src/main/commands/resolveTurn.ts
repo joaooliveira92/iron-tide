@@ -108,6 +108,9 @@ function toRequestDto(request: InterruptionRequest): InterruptionRequestDto {
       playerForce: request.playerForce,
       estimate: request.estimate,
       supportForcePresent: request.supportForcePresent,
+      ...(request.supportNationIds === undefined
+        ? {}
+        : { supportNationIds: request.supportNationIds }),
       declineStatementKeys: request.declineStatementKeys,
     };
   }
