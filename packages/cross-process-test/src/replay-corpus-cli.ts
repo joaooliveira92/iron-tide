@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { Result } from "effect";
 
 import {
+  buildCoverageReport,
+  formatCoverageReport,
   formatDivergence,
   recordReplay,
   verifyReplay,
@@ -23,6 +25,7 @@ const REPLAY_DIR = resolve(
 const USAGE = `usage:
   replay-corpus record <scenario-id> [--out <file>]   record a scenario into a replay file
   replay-corpus verify <file>                         re-execute a replay file and check it
+  replay-corpus coverage                              list the subsystems each scenario exercises
 scenarios: ${REPLAY_SCENARIOS.map((s) => s.id).join(", ")}`;
 
 function main(argv: readonly string[]): number {
@@ -42,6 +45,10 @@ function main(argv: readonly string[]): number {
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, recordReplay(scenario), "utf8");
     process.stdout.write(`recorded ${scenario.id} -> ${out}\n`);
+    return 0;
+  }
+  if (command === "coverage") {
+    process.stdout.write(formatCoverageReport(buildCoverageReport(REPLAY_SCENARIOS)));
     return 0;
   }
   if (command === "verify" && target !== undefined) {

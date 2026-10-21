@@ -10,6 +10,15 @@ export type {
 export { REPLAY_FORMAT_VERSION, ReplayFileError, decodeReplayFile } from "./format.js";
 export { REPLAY_SCENARIOS } from "./scenarios.js";
 export {
+  SUBSYSTEMS,
+  buildCoverageReport,
+  formatCoverageReport,
+  monthCoverage,
+} from "./coverage.js";
+export type { CorpusScenario, CoverageReport, MonthCoverage, ReplayCoverage } from "./coverage.js";
+export { executeScenario } from "./corpus.js";
+export type { ExecutedMonth } from "./corpus.js";
+export {
   ApprovalsError,
   REPLAY_APPROVALS_SCHEMA,
   checkReplayApprovals,

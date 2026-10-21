@@ -174,15 +174,28 @@ function advance(
   };
 }
 
+/** One executed month of a scenario: the real engine result and the turn it ran at. */
+export interface ExecutedMonth {
+  readonly turnNumber: number;
+  readonly result: MonthResult;
+}
+
+/** Run `scenario` command-free through the real engine from the production pack, month by month. */
+export function* executeScenario(scenario: ReplayScenario): Generator<ExecutedMonth> {
+  let snapshot = production().state.snapshot;
+  for (let index = 0; index < scenario.months; index++) {
+    const step = advance(snapshot, scenario.seed);
+    yield { turnNumber: Number(snapshot.turnNumber), result: step.result };
+    snapshot = step.next;
+  }
+}
+
 /** Record `scenario` through the real engine into canonical replay-file text. */
 export function recordReplay(scenario: ReplayScenario): string {
   const { state, contentHash } = production();
-  let snapshot = state.snapshot;
   const months: ReplayFile["months"][number][] = [];
-  for (let index = 0; index < scenario.months; index++) {
-    const step = advance(snapshot, scenario.seed);
-    months.push(monthCheckpoint(Number(snapshot.turnNumber), step.result));
-    snapshot = step.next;
+  for (const executed of executeScenario(scenario)) {
+    months.push(monthCheckpoint(executed.turnNumber, executed.result));
   }
   const file: ReplayFile = {
     formatVersion: REPLAY_FORMAT_VERSION,
