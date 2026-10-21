@@ -29,6 +29,15 @@ import { countActiveWarsFor, settleWar } from "./diplomacy.js";
 // the single lookup seam (never a deep cross-package import).
 type AutoResolutionManifest = Parameters<typeof resolveBattleAuto>[0]["manifest"];
 
+/**
+ * The ship type battle generation assigns to every ship. The campaign carries no authoritative per-ship battle type, so
+ * generation and the support force share this one resolver rather than each hard-coding it; giving ships real types is a
+ * gameplay decision and is not made here.
+ */
+export function resolveGenerationShipType(): string {
+  return "BB";
+}
+
 export function resolveShipStrength(snapshot: CampaignSnapshot, shipId: string): number {
   for (const [, nation] of snapshot["nations"]) {
     for (const fleet of nation["fleets"]) {

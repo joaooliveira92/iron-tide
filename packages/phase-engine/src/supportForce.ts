@@ -3,8 +3,8 @@
 // allied candidates, composes them through the existing candidate ordering under the ruleset-clamped share of the existing
 // cap, and only when that composition is non-empty makes one recorded, domain-separated presence draw. A present force
 // rides on the manifest as temporary assets (never reserved, promoted or damaged by the unchanged auto-resolution) with
-// its nations on the player's side. Dormant without the battle-offer section and the player nation; it never reads the
-// interruption channel, so the draw cannot depend on how or when the player answers an offer.
+// its nations on the player's side. Dormant without the battle-offer section, the player nation and an interruption channel (R3); it only tests
+// the channel for presence, so the draw cannot depend on how or when the player answers an offer.
 //
 // Eligibility (ADR-0259): an ally is a nation in an `allied` relation with the player that is neither party to the battle
 // nor on the enemy's side of its war (that relation is the operational access and the authorization the repository models);
@@ -14,6 +14,7 @@ import type { CampaignSnapshot } from "@bluewave/campaign";
 import {
   BATTLE_SUPPORT_FORCE_ABSENT,
   BATTLE_SUPPORT_FORCE_PRESENT,
+  GENERATION_SEED_FORMULA_VERSION,
   SUPPORT_FORCE_DRAW_RANGE_BP,
   composeSupportForce,
   gatherEligibleAssets,
@@ -26,37 +27,21 @@ import {
 } from "@bluewave/combat";
 import type { BattleOfferRules } from "@bluewave/content-schema";
 import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
-import { resolveCampaignBattleReadiness, resolveShipStrength } from "./battles.js";
-import { OFFERED_MISSION_TYPES } from "./battleOffer.js";
+import {
+  resolveCampaignBattleReadiness,
+  resolveGenerationShipType,
+  resolveShipStrength,
+} from "./battles.js";
 import type { MonthContext } from "./monthContext.js";
+import {
+  committedStrength,
+  drawAndRecord,
+  enemyOf,
+  type GeneratedManifest,
+} from "./offeredBattles.js";
 
 /** The stream of the presence draw; the entity key is the battle, which carries the war, area, mission and month. */
 export const SUPPORT_FORCE_STREAM = "battle-offer/support-force";
-
-type GeneratedManifest = BattleGenerationResult["manifests"][number];
-
-function enemyOf(manifest: GeneratedManifest, playerNationId: string): string | null {
-  if (!OFFERED_MISSION_TYPES.some((mission) => mission === manifest["missionType"])) return null;
-  if (manifest["attackerId"] === playerNationId) return manifest["defenderId"];
-  if (manifest["defenderId"] === playerNationId) return manifest["attackerId"];
-  return null;
-}
-
-function committedStrength(
-  snapshot: CampaignSnapshot,
-  nationId: string,
-  committed: ReadonlySet<string>,
-): number {
-  const nation = snapshot["nations"].get(nationId);
-  if (nation === undefined) return 0;
-  let total = 0n;
-  for (const fleet of nation["fleets"]) {
-    for (const ship of fleet["ships"]) {
-      if (committed.has(ship["id"])) total += BigInt(resolveShipStrength(snapshot, ship["id"]));
-    }
-  }
-  return Number(total);
-}
 
 /** The nations allied with the player that may support this battle, in code-point order. */
 function supportingNations(
@@ -99,7 +84,9 @@ export function applySupportForces(
 ): BattleGenerationResult {
   const rules: BattleOfferRules | undefined = ctx.battleOffers;
   const playerNationId = ctx.playerNationId;
-  if (rules === undefined || playerNationId === undefined) return generated;
+  // Dormant without the interruption channel exactly as the offer path is (spec #109 R3): no draw, no change.
+  if (rules === undefined || playerNationId === undefined || ctx.interruption === undefined)
+    return generated;
   const engine = ctx.phaseGuard.rng("battle_generation", ctx.randomSeed);
   if (engine === null) return generated;
 
@@ -126,7 +113,7 @@ export function applySupportForces(
         areaId: manifest["areaId"],
         reservedAssetIds: taken,
         resolveStrength: (ship) => resolveShipStrength(snapshot, ship["id"]),
-        resolveShipType: () => "BB",
+        resolveShipType: resolveGenerationShipType,
         resolveReadiness: (ship) => resolveCampaignBattleReadiness(snapshot, ship["id"]),
       });
       for (const asset of eligible) {
@@ -147,31 +134,29 @@ export function applySupportForces(
     if (composition.length === 0) return;
 
     const battleId = manifest["battleId"];
-    const draw = Math.floor(
-      engine.stream(`${SUPPORT_FORCE_STREAM}/${battleId}`).next() * SUPPORT_FORCE_DRAW_RANGE_BP,
-    );
-    const present = supportForceDrawPresent(draw, rule.presenceChanceBp);
-    ctx.randomLedger.record({
+    const { present } = drawAndRecord(ctx, engine, {
       streamId: SUPPORT_FORCE_STREAM,
-      entityKey: battleId,
-      phase: "battle_generation",
-      rulesetVersion: snapshot["rulesetVersion"],
-      inputHash: sha256Hex(
-        canonicalSerialize({
-          battleId,
-          manifestHash: manifest["manifestHash"],
-          sectionVersion: rules.sectionVersion,
-          presenceChanceBp: rule.presenceChanceBp,
-          shareOfCapBp: rule.shareOfCapBp,
-          source: rule.source,
-          capStrength: cap,
-          candidates: supportCandidateDigest(candidates),
-          composition: composition.map((c) => c.assetId),
-        }),
-      ),
-      draw,
-      outcome: present ? "PRESENT" : "ABSENT",
-      reasonCode: present ? BATTLE_SUPPORT_FORCE_PRESENT : BATTLE_SUPPORT_FORCE_ABSENT,
+      battleId,
+      rangeBp: SUPPORT_FORCE_DRAW_RANGE_BP,
+      inputs: {
+        battleId,
+        manifestHash: manifest["manifestHash"],
+        sectionVersion: rules.sectionVersion,
+        presenceChanceBp: rule.presenceChanceBp,
+        shareOfCapBp: rule.shareOfCapBp,
+        source: rule.source,
+        capStrength: cap,
+        candidates: supportCandidateDigest(candidates),
+        composition: composition.map((c) => c.assetId),
+      },
+      classify: (draw) => {
+        const isPresent = supportForceDrawPresent(draw, rule.presenceChanceBp);
+        return {
+          present: isPresent,
+          outcome: isPresent ? "PRESENT" : "ABSENT",
+          reasonCode: isPresent ? BATTLE_SUPPORT_FORCE_PRESENT : BATTLE_SUPPORT_FORCE_ABSENT,
+        };
+      },
     });
     if (!present) return;
 
@@ -181,7 +166,7 @@ export function applySupportForces(
       rngVersion: manifest["rngVersion"],
       campaignSeed: ctx.randomSeed,
       campaignMonth: ctx.campaignMonth,
-      battleGenerationFormulaVersion: "1",
+      battleGenerationFormulaVersion: GENERATION_SEED_FORMULA_VERSION,
     });
     for (const id of assets) taken.add(id);
     manifests[index] = next;

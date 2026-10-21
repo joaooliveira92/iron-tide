@@ -93,6 +93,7 @@ describe("TurnMessage projection", () => {
             areaId: "a-1",
             victoryPointCost: 5,
             opponentCredit: 0,
+            declineCount: 2,
             reasonCode: "BATTLE_DECLINED_WITH_CONSEQUENCES",
           },
           "battle-1",
@@ -107,7 +108,12 @@ describe("TurnMessage projection", () => {
       titleKey: "messages.battle.declined.title",
       bodyKey: "messages.battle.declined.body",
       playerVisible: true,
-      interpolation: { battleId: "battle-1", areaId: "a-1", victoryPointCost: 5 },
+      interpolation: {
+        battleId: "battle-1",
+        areaId: "a-1",
+        victoryPointCost: 5,
+        declineCount: 2,
+      },
     });
     expect(message?.subjectRefs).toContainEqual({ type: "battle", id: "battle-1" });
     expect(message?.subjectRefs).toContainEqual({ type: "nation", id: "uk" });
@@ -203,6 +209,34 @@ describe("TurnMessage projection", () => {
       interpolation: { nationId: "uk", reasonCode: "UNPAID_FUNDS", before: 50, after: 48 },
     });
     expect(message?.subjectRefs).toContainEqual({ type: "nation", id: "uk" });
+  });
+
+  it("reports every declined-battle prestige loss of a month, while other sources keep one message per source (T-1 review)", () => {
+    const change = (reasonCode: "DECLINED_BATTLE" | "UNPAID_FUNDS", before: number, seq: number) =>
+      envelope(
+        {
+          kind: "PrestigeChanged",
+          nationId: "uk",
+          reasonCode,
+          ruleKind: "FIXED_LOSS",
+          before: SafeInt(before),
+          after: SafeInt(before - 2),
+          delta: SafeInt(-2),
+          rulesetVersion: "1.0.0",
+        },
+        "uk",
+        seq,
+      );
+    const declined = projectTurnMessages(
+      input([change("DECLINED_BATTLE", 50, 1), change("DECLINED_BATTLE", 48, 2)]),
+    );
+    expect(declined.filter((m) => m.titleKey === "messages.prestige.changed.title")).toHaveLength(
+      2,
+    );
+    const unpaid = projectTurnMessages(
+      input([change("UNPAID_FUNDS", 50, 1), change("UNPAID_FUNDS", 48, 2)]),
+    );
+    expect(unpaid.filter((m) => m.titleKey === "messages.prestige.changed.title")).toHaveLength(1);
   });
 
   it("aggregates routine construction progress under one aggregate key", () => {

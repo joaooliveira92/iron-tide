@@ -165,6 +165,7 @@ export const BattleDeclinedSchema = Schema.Struct({
   areaId: nonEmptyString,
   victoryPointCost: nonNegativeSafeInt,
   opponentCredit: nonNegativeSafeInt,
+  declineCount: positiveSafeInt,
   reasonCode: Schema.Literal("BATTLE_DECLINED_WITH_CONSEQUENCES"),
 });
 

@@ -203,6 +203,7 @@ export function describeEventBody(body: DomainEventBody): EventDescription {
           missionType: body.missionType,
           victoryPointCost: body.victoryPointCost,
           opponentCredit: body.opponentCredit,
+          declineCount: body.declineCount,
         },
         subjectRefs: [
           { type: "battle", id: body.battleId },

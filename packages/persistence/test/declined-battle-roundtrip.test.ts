@@ -149,11 +149,27 @@ describe("declined-battle record save/load parity", () => {
     expect(CURRENT_COMPATIBILITY_VERSION).toBe("4.0.0");
   });
 
+  it("refuses, rather than silently loading, a state-bearing save whose new keys a reader without them would drop (R15)", () => {
+    // An older reader strips the keys it does not know; the semantic hash gate (rawHash over the decoded state) then no
+    // longer matches the stored one, so the save is refused instead of loaded with the declines forgotten.
+    for (const dropped of ["declinedBattles", "declineCounters"] as const) {
+      store.save(state([RECORD], [COUNTER]), tmpDir);
+      tamper((wars) => {
+        delete (wars as Record<string, unknown>)[dropped];
+      });
+      const diagnostics = new DiagnosticCollector();
+      expect(store.load(tmpDir, diagnostics)).toBeNull();
+      expect(diagnostics.hasErrors).toBe(true);
+    }
+  });
+
   it("refuses a save holding a malformed, short or over-keyed declined record", () => {
     for (const bad of [
       { ...RECORD, battleId: "" },
       { ...RECORD, victoryPointCost: -1 },
       { ...RECORD, victoryPointCost: 1.5 },
+      { ...RECORD, victoryPointCost: Number.MAX_SAFE_INTEGER + 1 },
+      { ...RECORD, opponentCredit: Number.MAX_SAFE_INTEGER + 1 },
       { ...RECORD, extra: "x" },
       { battleId: "battle-1" },
       "not-an-object",
@@ -189,6 +205,7 @@ describe("declined-battle record save/load parity", () => {
       { ...COUNTER, key: "" },
       { ...COUNTER, count: -1 },
       { ...COUNTER, count: 1.5 },
+      { ...COUNTER, count: Number.MAX_SAFE_INTEGER + 1 },
       { ...COUNTER, decayAnchorMonth: "1880-13" },
       { ...COUNTER, extra: "x" },
       { key: "CAMPAIGN" },

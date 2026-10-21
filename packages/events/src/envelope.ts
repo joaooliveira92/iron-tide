@@ -236,6 +236,8 @@ export interface BattleDeclined {
   readonly areaId: string;
   readonly victoryPointCost: number;
   readonly opponentCredit: number;
+  /** The running count of the player's declines in the ruleset's counter scope, including this one (T-1 review R14). */
+  readonly declineCount: number;
   readonly reasonCode: "BATTLE_DECLINED_WITH_CONSEQUENCES";
 }
 
