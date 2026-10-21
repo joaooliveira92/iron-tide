@@ -290,6 +290,9 @@ export const EN_US_MESSAGES = {
   "messages.battle.enemyDeclined.title": "Enemy withdrew from battle",
   "messages.battle.enemyDeclined.body":
     "{enemyNationId} withdrew from the battle at {areaId}; no engagement took place.",
+  "messages.prestige.changed.title": "Prestige changed",
+  "messages.prestige.changed.body":
+    "{nationId} prestige moved from {before} to {after} ({reasonCode}).",
   "ui.offer.decline.costsVictoryPoints": "Declining a battle costs victory points.",
   "ui.offer.decline.mayCostPrestige": "Repeated declines may also cost prestige.",
 } as const;

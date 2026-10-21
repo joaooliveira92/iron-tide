@@ -175,6 +175,36 @@ describe("TurnMessage projection", () => {
     expect(message?.subjectRefs).toContainEqual({ type: "nation", id: "fr" });
   });
 
+  it("projects a prestige change as a high-severity player-visible message naming the source (S-2 04)", () => {
+    const [message] = projectTurnMessages(
+      input([
+        envelope(
+          {
+            kind: "PrestigeChanged",
+            nationId: "uk",
+            reasonCode: "UNPAID_FUNDS",
+            ruleKind: "PROPORTIONAL_LOSS",
+            before: SafeInt(50),
+            after: SafeInt(48),
+            delta: SafeInt(-2),
+            rulesetVersion: "1.0.0",
+          },
+          "uk",
+          1,
+        ),
+      ]),
+    );
+    expect(message).toMatchObject({
+      phase: "obligation",
+      severity: "HIGH",
+      titleKey: "messages.prestige.changed.title",
+      bodyKey: "messages.prestige.changed.body",
+      playerVisible: true,
+      interpolation: { nationId: "uk", reasonCode: "UNPAID_FUNDS", before: 50, after: 48 },
+    });
+    expect(message?.subjectRefs).toContainEqual({ type: "nation", id: "uk" });
+  });
+
   it("aggregates routine construction progress under one aggregate key", () => {
     const messages = projectTurnMessages(
       input([constructionProgress("p1", 10, 1), constructionProgress("p2", 20, 2)]),

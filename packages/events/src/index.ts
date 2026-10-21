@@ -13,6 +13,7 @@ export type {
   BattleDeclined,
   DeclineThresholdReached,
   EnemyDeclinedBattle,
+  PrestigeChanged,
   BattleOfferAnswered,
   ForeignStationNoRoute,
   ForeignStationShipMoved,
