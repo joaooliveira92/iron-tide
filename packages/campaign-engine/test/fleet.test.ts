@@ -181,6 +181,29 @@ describe("buildFleetScreenView", () => {
     expect(plain).not.toHaveProperty("colonialCode");
   });
 
+  it("shows * for an over-base ship and nothing extra for others (S-5 08)", () => {
+    const snapshot = fixtureSnapshot([
+      fixtureNation({
+        id: "uk",
+        fleets: [
+          makeFleet(
+            "fleet_gbr_home",
+            "Home Fleet",
+            [
+              makeShip("over", "HMS Over", { overBase: { maintenanceAdderBp: SafeInt(5_000) } }),
+              makeShip("within", "HMS Within"),
+            ],
+            "eng_home_coast",
+          ),
+        ],
+      }),
+    ]);
+    const [over, within] = buildFleetScreenView(snapshot, "uk").divisions[0]!.ships;
+    expect(over).toMatchObject({ overBase: true, overBaseCode: "*" });
+    expect(within).not.toHaveProperty("overBase");
+    expect(within).not.toHaveProperty("overBaseCode");
+  });
+
   it("lists the world areas, routes as directed edges, and only the player's ports with level capacity", () => {
     const snapshot = fixtureSnapshot(
       [

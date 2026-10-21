@@ -257,6 +257,34 @@ describe("buildPlayerProjection — S-1 readiness in the fleet projection (ticke
     expect(plain !== undefined && "colonialServiceFitted" in plain).toBe(false);
   });
 
+  it("carries the over-base flag on flagged ships only (S-5 08)", () => {
+    const uk = fixtureNation({
+      id: "uk",
+      fleets: [
+        {
+          id: "fleet-1",
+          nationId: "uk",
+          name: "Home Fleet",
+          locationAreaId: "area-lon",
+          ships: [
+            {
+              ...mkShip("ship-over", "ACTIVE"),
+              overBase: { maintenanceAdderBp: SafeInt(5_000) },
+            },
+            mkShip("ship-within", "ACTIVE"),
+          ],
+        },
+      ],
+    });
+    const projection = buildPlayerProjection(fixtureState(fixtureSnapshot([uk])), "uk", {
+      month: 1,
+      year: 1880,
+    });
+    const [over, within] = projection?.fleet[0]?.divisions[0]?.ships ?? [];
+    expect(over?.overBase).toBe(true);
+    expect(within !== undefined && "overBase" in within).toBe(false);
+  });
+
   it("reports presence as not configured when no ruleset values are passed (S-5 05, dormant)", () => {
     const uk = fixtureNation({ id: "uk" });
     const snapshot = fixtureSnapshot([uk], [], {

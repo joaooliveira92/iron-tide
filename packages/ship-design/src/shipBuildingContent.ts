@@ -117,6 +117,20 @@ export interface PresenceRuleValues {
   readonly noPortValueWeight: number;
   readonly crampedOrShortRangeCountBp: number;
   readonly penaltyRequests?: true;
+  /** The optional base-limit block (spec #73 R10, ADR-0250); absent = base limits dormant. */
+  readonly baseLimits?: {
+    readonly limitByBaseLevel: readonly number[];
+    readonly noBaseLimit: number;
+    readonly occupyingStates: readonly (
+      | "ACTIVE"
+      | "RESERVE"
+      | "MOTHBALLED"
+      | "WORKING_UP"
+      | "REPAIR"
+    )[];
+    readonly maintenanceAdderBp: number;
+    readonly crewQualityReduction: number;
+  };
 }
 
 /** Everything a caller needs, built once. `environmentFor(month)` is pure: same data and month, same environment. */

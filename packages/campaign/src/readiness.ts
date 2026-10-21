@@ -90,6 +90,15 @@ export function rampCrewQuality(current: SafeInt, readiness: ShipReadinessState)
 }
 
 /**
+ * S-5 08 (spec #73 R10): the over-base crew-quality consequence. Subtract the ruleset's `points` from a ship's crew quality,
+ * floored at `CREW_QUALITY_MIN`. The magnitude is a ruleset value; this seam owns only the arithmetic. Integer-only.
+ */
+export function reduceCrewQuality(current: SafeInt, points: SafeInt): SafeInt {
+  const next = SafeInt.sub(current, points);
+  return next < CREW_QUALITY_MIN ? SafeInt(CREW_QUALITY_MIN) : next;
+}
+
+/**
  * The readiness state after a month's ramp: a working-up ship that has reached the
  * "decent" crew threshold becomes active. Working up is entry-only (manual p.51,
  * "but not back"), so this never returns a ship to working up.

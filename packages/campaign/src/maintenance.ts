@@ -84,11 +84,17 @@ export function shipMonthlyMaintenanceCost(
   hitPoints: SafeInt,
   readiness: ShipReadinessState,
   atWar: boolean,
+  overBaseAdderBp?: SafeInt,
 ): SafeInt {
   const cost = shipMaintenanceCost(hitPoints, readiness);
-  if (!atWar || readiness !== "ACTIVE") return cost;
+  const monthly =
+    !atWar || readiness !== "ACTIVE"
+      ? cost
+      : SafeInt.div(SafeInt.mul(cost, MAINTENANCE_WARTIME_MULTIPLIER_BP), SafeInt(10_000), "floor");
+  if (overBaseAdderBp === undefined) return monthly;
+  // S-5 08 (spec #73 R10): an over-base ship pays the ruleset's adder on top, with one more floor rounding.
   return SafeInt.div(
-    SafeInt.mul(cost, MAINTENANCE_WARTIME_MULTIPLIER_BP),
+    SafeInt.mul(monthly, SafeInt.add(SafeInt(10_000), overBaseAdderBp)),
     SafeInt(10_000),
     "floor",
   );
@@ -99,6 +105,8 @@ export interface MaintainedFleet {
   readonly ships: readonly {
     readonly hitPoints: SafeInt;
     readonly readiness: ShipReadinessState;
+    /** S-5 08: present while the ship is over its area's base limit; carries the ruleset's maintenance adder. */
+    readonly overBase?: { readonly maintenanceAdderBp: SafeInt };
   }[];
 }
 
@@ -113,6 +121,14 @@ export function nationMonthlyMaintenance(
   let total = SafeInt.ZERO;
   for (const fleet of fleets)
     for (const ship of fleet.ships)
-      total = SafeInt.add(total, shipMonthlyMaintenanceCost(ship.hitPoints, ship.readiness, atWar));
+      total = SafeInt.add(
+        total,
+        shipMonthlyMaintenanceCost(
+          ship.hitPoints,
+          ship.readiness,
+          atWar,
+          ship.overBase?.maintenanceAdderBp,
+        ),
+      );
   return total;
 }

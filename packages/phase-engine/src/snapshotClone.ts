@@ -176,6 +176,7 @@ const F = {
     "repairMonthsRemaining",
     "stationAssignment",
     "colonialServiceFitted",
+    "overBase",
     "inBattleId",
     "availability",
     "availabilityProjectId",

@@ -65,6 +65,7 @@ export type {
   PersistenceManifest,
   PoliticalState,
   ResearchState,
+  OverBaseFlag,
   Ship,
   ShipAvailability,
   TechnologyProgress,
@@ -87,6 +88,13 @@ export {
   type PresenceMeasurementRules,
   type ShipCountingTraits,
 } from "./presenceMeasurement.js";
+// S-5: the month-end base-limit check (spec #73 R10, ADR-0250).
+export {
+  baseLimitInArea,
+  measureBaseLimits,
+  type BaseLimitRow,
+  type BaseLimitRules,
+} from "./baseLimits.js";
 // S-5: foreign-station assignment rules (value-free; spec #73 R1/R2).
 export * from "./stationAssignment.js";
 export * from "./technologyVariation.js";

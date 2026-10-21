@@ -10,6 +10,7 @@ import {
   MAINTENANCE_WORKING_UP_MULTIPLIER_BP,
   maintenanceMultiplierBp,
   nationIsAtWar,
+  nationMonthlyMaintenance,
   shipMaintenanceCost,
   shipMonthlyMaintenanceCost,
 } from "../src/maintenance.js";
@@ -86,5 +87,31 @@ describe("S-1 wartime maintenance (ticket 05)", () => {
     expect(nationIsAtWar(wars, "france")).toBe(true);
     expect(nationIsAtWar(wars, "spain")).toBe(false); // only in an ended war
     expect(nationIsAtWar(wars, "italy")).toBe(false);
+  });
+});
+
+describe("S-5 08 over-base maintenance adder (ticket 82)", () => {
+  it("adds the ruleset basis points on top of the state and wartime cost, floor-rounded", () => {
+    expect(shipMonthlyMaintenanceCost(SafeInt(100), "ACTIVE", false, SafeInt(2_500))).toBe(12);
+    expect(shipMonthlyMaintenanceCost(SafeInt(100), "ACTIVE", true, SafeInt(2_500))).toBe(15);
+    expect(shipMonthlyMaintenanceCost(SafeInt(100), "ACTIVE", false, SafeInt(0))).toBe(10);
+  });
+
+  it("leaves the cost unchanged without an adder", () => {
+    expect(shipMonthlyMaintenanceCost(SafeInt(100), "ACTIVE", false)).toBe(10);
+  });
+
+  it("charges a flagged ship's adder in the nation total and nothing for unflagged ships", () => {
+    const fleet = {
+      ships: [
+        { hitPoints: SafeInt(100), readiness: "ACTIVE" as const },
+        {
+          hitPoints: SafeInt(100),
+          readiness: "ACTIVE" as const,
+          overBase: { maintenanceAdderBp: SafeInt(5_000) },
+        },
+      ],
+    };
+    expect(nationMonthlyMaintenance([fleet], false)).toBe(10 + 15);
   });
 });

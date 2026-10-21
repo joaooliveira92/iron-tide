@@ -55,6 +55,10 @@ export interface FleetShipView {
   readonly colonialServiceFitted?: true;
   /** The manual's ship-list code for the fitting (p.48 `c`); absent when unfitted. */
   readonly colonialCode?: "c";
+  /** The ship is beyond its area's base limit as of the last month end (S-5 08); absent otherwise. */
+  readonly overBase?: true;
+  /** The manual's ship-list code for it (p.48 `*`); absent when within the limit. */
+  readonly overBaseCode?: "*";
 }
 
 /** The readiness state's presentation label (S-1 ticket 07). */
@@ -136,6 +140,9 @@ export function buildFleetScreenView(
       ...(ship.colonialServiceFitted === true
         ? { colonialServiceFitted: true as const, colonialCode: "c" as const }
         : {}),
+      ...(ship.overBase === undefined
+        ? {}
+        : { overBase: true as const, overBaseCode: "*" as const }),
     })),
   }));
 

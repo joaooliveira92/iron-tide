@@ -15,6 +15,7 @@ import { SafeInt } from "@bluewave/contracts";
 import {
   crewCeilingFor,
   rampCrewQuality,
+  reduceCrewQuality,
   readinessAfterCrewRamp,
   resolveShipReadinessSeed,
   SHIP_READINESS_CODES,
@@ -243,5 +244,13 @@ describe("S-1 repair months counter (ticket 04)", () => {
       expect(r.ok).toBe(false);
       if (!r.ok) expect(r.error.code).toBe(SHIP_READINESS_CODES.repairMonths);
     }
+  });
+});
+
+describe("S-5 08 over-base crew-quality reduction (ticket 82)", () => {
+  it("subtracts the ruleset points and never goes below the crew-quality floor", () => {
+    expect(reduceCrewQuality(SafeInt(100), SafeInt(15)) as number).toBe(85);
+    expect(reduceCrewQuality(SafeInt(10), SafeInt(15)) as number).toBe(0);
+    expect(reduceCrewQuality(SafeInt(40), SafeInt(0)) as number).toBe(40);
   });
 });

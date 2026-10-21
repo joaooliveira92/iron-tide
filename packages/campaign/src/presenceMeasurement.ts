@@ -3,6 +3,7 @@
 // optional ruleset section through `PresenceMeasurementRules`; this module owns no number, so with the section absent the
 // caller passes no rules and gets nothing back. Blockade exemption, penalties, routing and base limits are later tickets.
 import { SafeInt } from "@bluewave/contracts";
+import type { BaseLimitRules } from "./baseLimits.js";
 import { presenceAreaIds } from "./presence.js";
 import { isShipOperational, type CampaignSnapshot, type Ship } from "./state.js";
 
@@ -19,6 +20,11 @@ export interface PresenceMeasurementRules {
    * revolt-pressure requests (spec #73 R8, ADR-0248). Absent = dormant: shortfall events only. Carries no magnitude.
    */
   readonly penaltyRequests?: true;
+  /**
+   * The optional base-limit block (spec #73 R10, ADR-0250). Absent = base limits dormant even when the rest of the section
+   * is authored: no flag, no consequence.
+   */
+  readonly baseLimits?: BaseLimitRules;
 }
 
 /** One nation's presence in one area for the month. All tonnages are whole metric tons. */

@@ -288,6 +288,9 @@ describe("Presence measurement cross-process determinism (S-5 05)", () => {
     revoltRequests: { nationId: string; areaId: string; shortfallTons: number }[];
     exemptNationEventsUnblockaded: number;
     exemptNationEventsBlockaded: number;
+    baseLimitFlagged: string[];
+    baseLimitSnapshotHash: string;
+    baseLimitEventLedgerHash: string;
     success: boolean;
     error?: string;
   }
@@ -341,5 +344,16 @@ describe("Presence measurement cross-process determinism (S-5 05)", () => {
     expect(r1.deploymentEvents.every((e) => e.shipId === r1.stationedShipId)).toBe(true);
     // The routed ship changed the full authoritative snapshot (fleets and divisions), unlike the same month without it.
     expect(r1.deploymentSnapshotHash).not.toBe(r1.configuredFullSnapshotHash);
+  });
+
+  it("base-limit flags and consequences are identical in two clean processes and absent without the block (S-5 08)", () => {
+    const r1 = runPresenceChild();
+    const r2 = runPresenceChild();
+    expect(r2).toEqual(r1);
+    expect(r1.baseLimitFlagged.length).toBeGreaterThan(0);
+    expect(r1.baseLimitFlagged).toEqual([...r1.baseLimitFlagged].sort());
+    // The block moves authoritative state (flags, crew); without it the presence run still equals the dormant one.
+    expect(r1.baseLimitSnapshotHash).not.toBe(r1.configuredFullSnapshotHash);
+    expect(r1.configuredSnapshotHash).toBe(r1.dormantSnapshotHash);
   });
 });

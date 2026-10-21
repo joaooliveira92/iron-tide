@@ -50,11 +50,23 @@ export interface Ship {
    * the hull launches and updated by a rebuild. Absent = unfitted. Shown as `c` (manual p.48).
    */
   colonialServiceFitted?: true;
+  /**
+   * S-5 08 (spec #73 R10, manual p.45): the ship is beyond its area's base limit as of the last month-end check (`*`, manual
+   * p.48). Carries the ruleset's maintenance adder so every maintenance consumer reads one source. Absent = within the limit
+   * or the base-limit rules are dormant; the compiler never writes it.
+   */
+  overBase?: OverBaseFlag;
   inBattleId?: string;
   /** Operational availability while a rebuild or conversion works on the ship; absent = available (ADR-0078). */
   availability?: ShipAvailability;
   /** The project that made the ship unavailable, while it is. */
   availabilityProjectId?: string;
+}
+
+/** The over-base flag a ship carries between month-end checks (S-5 08). */
+export interface OverBaseFlag {
+  /** Basis points added to the ship's monthly maintenance while flagged (a ruleset value, never defaulted). */
+  maintenanceAdderBp: SafeInt;
 }
 
 /**

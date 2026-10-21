@@ -80,6 +80,8 @@ export interface PlayerProjectionShip {
   readonly stationAssignment?: "FOREIGN_STATION";
   /** Whether the ship's design is fitted for colonial service (S-5 04); absent when unfitted. */
   readonly colonialServiceFitted?: true;
+  /** Beyond the area's base limit as of the last month end (S-5 08, manual p.48 `*`); absent when within it or dormant. */
+  readonly overBase?: true;
   /**
    * The ship's displacement in metric tons, from its compiled design's `normalizedDisplacementKg`
    * (rounded). Absent when the design is not in the snapshot: an unknown tonnage is never zero.
@@ -246,6 +248,7 @@ export function buildPlayerProjection(
             ...(ship.colonialServiceFitted === true
               ? { colonialServiceFitted: true as const }
               : {}),
+            ...(ship.overBase === undefined ? {} : { overBase: true as const }),
             ...(design === undefined
               ? {}
               : {

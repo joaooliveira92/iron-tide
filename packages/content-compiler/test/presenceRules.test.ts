@@ -123,4 +123,45 @@ describe("S-5 presence ruleset section", () => {
       );
     }
   });
+  // S-5 08 (#82): the optional base-limit block. FIXTURE-CLASS values only.
+  const baseLimits = (extra: Record<string, unknown> = {}): Record<string, unknown> => ({
+    limitByBaseLevel: [1, 1, 2, 2, 3, 3, 4, 4, 5, 5],
+    noBaseLimit: 1,
+    occupyingStates: ["ACTIVE", "RESERVE"],
+    maintenanceAdderBp: 2_500,
+    crewQualityReduction: 10,
+    ...extra,
+  });
+
+  it("accepts the base-limit block and keeps it optional (S-5 08)", () => {
+    expect(codes(validate([ruleset(complete({ baseLimits: baseLimits() }))]))).not.toContain(
+      "PRESENCE_RULES_INVALID",
+    );
+    expect(codes(validate([ruleset(complete())]))).not.toContain("PRESENCE_RULES_INVALID");
+  });
+
+  it("rejects a partial, mistyped or excess base-limit block (S-5 08)", () => {
+    const bad: Record<string, unknown>[] = [
+      { limitByBaseLevel: [1, 2, 3] },
+      { limitByBaseLevel: [1, 1, 2, 2, 3, 3, 4, 4, 5, -1] },
+      { limitByBaseLevel: [1, 1, 2, 2, 3, 3, 4, 4, 5, 5.5] },
+      { noBaseLimit: -1 },
+      { occupyingStates: [] },
+      { occupyingStates: ["ACTIVE", "ACTIVE"] },
+      { occupyingStates: ["FLOATING"] },
+      { maintenanceAdderBp: 1.5 },
+      { crewQualityReduction: 101 },
+      { crewQualityReduction: -1 },
+      { surprise: 1 },
+    ];
+    for (const extra of bad) {
+      expect(codes(validate([ruleset(complete({ baseLimits: baseLimits(extra) }))]))).toContain(
+        "PRESENCE_RULES_INVALID",
+      );
+    }
+    const { noBaseLimit: _omitted, ...partial } = baseLimits();
+    expect(codes(validate([ruleset(complete({ baseLimits: partial }))]))).toContain(
+      "PRESENCE_RULES_INVALID",
+    );
+  });
 });

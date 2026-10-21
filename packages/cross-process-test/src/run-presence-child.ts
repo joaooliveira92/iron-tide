@@ -16,6 +16,15 @@ const FIXTURE_PRESENCE = {
   crampedOrShortRangeCountBp: 5_000,
 };
 
+// FIXTURE-CLASS base-limit block (S-5 08): a tight limit everywhere so the production fleets exceed it somewhere.
+const FIXTURE_BASE_LIMITS = {
+  limitByBaseLevel: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+  noBaseLimit: 1,
+  occupyingStates: ["ACTIVE", "RESERVE", "MOTHBALLED", "WORKING_UP", "REPAIR"] as const,
+  maintenanceAdderBp: 2_500,
+  crewQualityReduction: 10,
+};
+
 function run(): void {
   try {
     const { state } = compileProductionCampaign();
@@ -130,7 +139,24 @@ function run(): void {
         : deployed.eventLedger.all
             .filter((e) => deploymentKinds.includes(e.body.kind))
             .map((e) => e.body);
+    // S-5 08: the same month with the fixture base-limit block flags ships beyond the limits and applies the consequences.
+    const baseLimited = new MonthExecutor().execute(
+      state.snapshot,
+      [],
+      "presence-cross-process-seed",
+      new DiagnosticCollector(),
+      undefined,
+      { presence: { ...FIXTURE_PRESENCE, baseLimits: FIXTURE_BASE_LIMITS } },
+    );
+    const baseLimitFlagged = [...baseLimited.finalSnapshot.nations.values()]
+      .flatMap((n) => n.fleets.flatMap((f) => f.ships))
+      .filter((sh) => sh.overBase !== undefined)
+      .map((sh) => sh.id)
+      .sort();
     const output = {
+      baseLimitFlagged,
+      baseLimitSnapshotHash: hashSnapshot(baseLimited.finalSnapshot),
+      baseLimitEventLedgerHash: baseLimited.eventLedger.hash(),
       stationedShipId,
       deploymentEvents,
       deploymentSnapshotHash: deployed === undefined ? "" : hashSnapshot(deployed.finalSnapshot),
