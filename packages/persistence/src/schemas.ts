@@ -104,6 +104,31 @@ export const StorableDeclinedBattleSchema = Schema.Record(Schema.String, Schema.
   );
 
 /**
+ * One persisted declined-battle tally (T-1 05, spec #109 R9, R15): every key required, ids non-empty, the count a
+ * non-negative safe integer, the anchor a `YYYY-MM` month, and no other key accepted. The whole `wars.declineCounters`
+ * field stays optional: absent until the first decline.
+ */
+export const StorableDeclineCounterSchema = Schema.Record(Schema.String, Schema.Unknown)
+  .check(
+    Schema.makeFilter(
+      (o) =>
+        Object.keys(o).sort().join(",") === "count,decayAnchorMonth,key,lastWarId,nationId" ||
+        "a decline-counter entry carries exactly its five fields",
+    ),
+  )
+  .pipe(
+    Schema.decodeTo(
+      Schema.Struct({
+        key: Schema.NonEmptyString,
+        nationId: Schema.NonEmptyString,
+        lastWarId: Schema.NonEmptyString,
+        count: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
+        decayAnchorMonth: Schema.String.check(Schema.isPattern(/^\d{4}-(0[1-9]|1[0-2])$/)),
+      }),
+    ),
+  );
+
+/**
  * One persisted technology of the compiled research catalogue (`TechnologyDefinitionData`): every key required and
  * non-empty where meaningful, and no other key accepted, so a malformed catalogue entry is refused at the boundary
  * instead of reaching state. The whole `world.technologies` field stays optional for saves that predate it.
@@ -181,6 +206,8 @@ const StorableSnapshotSchema = Schema.Struct({
     battleManifests: Schema.Array(Schema.Unknown),
     // T-1 04 (#113): additive, absent until the first decline.
     declinedBattles: Schema.optional(Schema.Array(StorableDeclinedBattleSchema)),
+    // T-1 05 (#114): additive, absent until the first decline.
+    declineCounters: Schema.optional(Schema.Array(StorableDeclineCounterSchema)),
   }),
   politics: Schema.Struct({
     relations: Schema.Array(Schema.Unknown),

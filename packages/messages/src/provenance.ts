@@ -211,6 +211,18 @@ export function describeEventBody(body: DomainEventBody): EventDescription {
         ],
         effectRefs: [],
       };
+    case "DeclineThresholdReached":
+      return {
+        interpolation: {
+          nationId: body.nationId,
+          battleId: body.battleId,
+          count: body.count,
+          threshold: body.threshold,
+          scope: body.scope,
+        },
+        subjectRefs: [{ type: "battle", id: body.battleId }, nation(body.nationId)],
+        effectRefs: [],
+      };
     default:
       return { interpolation: {}, subjectRefs: [], effectRefs: [] };
   }

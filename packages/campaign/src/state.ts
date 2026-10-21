@@ -310,6 +310,24 @@ export interface DeclinedBattleRecord {
   opponentCredit: number;
 }
 
+/**
+ * T-1 05 (spec #109 R9): one declined-battle tally of the player nation. `key` is the canonical scope key (WAR:
+ * `WAR|warId|nationId`, NATION: `NATION|nationId`, CAMPAIGN: `CAMPAIGN`), so a tally never collides across scopes.
+ * `count` rises by exactly one per recorded decline and falls only through the ruleset's declared reset or decay.
+ * Additive: the collection is absent until the first decline.
+ */
+export interface DeclineCounterEntry {
+  key: string;
+  /** The nation that declined last (the player nation). */
+  nationId: string;
+  /** The war of the most recent decline, which an ON_WAR_END reset inspects. */
+  lastWarId: string;
+  /** The current (post-reset, post-decay) number of declined battles. */
+  count: number;
+  /** Campaign month (YYYY-MM) from which the next decay period is measured. */
+  decayAnchorMonth: string;
+}
+
 export interface WarState {
   wars: WarDeclaration[];
   battles: BattleInstance[];
@@ -318,6 +336,8 @@ export interface WarState {
   battleManifests: BattleManifest[];
   /** Terminal declined-battle records in the order they were applied; absent until the first decline. */
   declinedBattles?: DeclinedBattleRecord[];
+  /** Declined-battle tallies (T-1 05); absent until the first decline. */
+  declineCounters?: DeclineCounterEntry[];
 }
 
 export interface WarDeclaration {

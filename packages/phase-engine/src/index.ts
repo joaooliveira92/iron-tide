@@ -87,6 +87,13 @@ export {
   type DeclinePrice,
 } from "./battleDecline.js";
 export {
+  declineScopeKey,
+  tallyDecline,
+  type DeclineCounterRules,
+  type TallyInput,
+  type TallyResult,
+} from "./declineCounter.js";
+export {
   buildOfferContent,
   estimateEnemyStrength,
   OFFERED_MISSION_TYPES,

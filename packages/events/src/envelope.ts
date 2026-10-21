@@ -239,6 +239,21 @@ export interface BattleDeclined {
   readonly reasonCode: "BATTLE_DECLINED_WITH_CONSEQUENCES";
 }
 
+/**
+ * T-1 05 (spec #109 R9, ticket #114): a decline made the player's declined-battle count reach the ruleset threshold. It
+ * has no effect of its own; the prestige ticket (T-1 06) maps it to a loss through the S-2 seam. `count` is the count
+ * after the decline that raised the event, `scope` the ruleset-declared counter scope, `rulesetVersion` the snapshot's.
+ */
+export interface DeclineThresholdReached {
+  readonly kind: "DeclineThresholdReached";
+  readonly nationId: string;
+  readonly battleId: string;
+  readonly count: number;
+  readonly threshold: number;
+  readonly scope: "WAR" | "NATION" | "CAMPAIGN";
+  readonly rulesetVersion: string;
+}
+
 export type DomainEventBody =
   | NationBudgetChanged
   | ConstructionProgressed
@@ -259,7 +274,8 @@ export type DomainEventBody =
   | ForeignStationShipMoved
   | ForeignStationNoRoute
   | BattleOfferAnswered
-  | BattleDeclined;
+  | BattleDeclined
+  | DeclineThresholdReached;
 
 export interface DomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody> {
   readonly eventId: string;

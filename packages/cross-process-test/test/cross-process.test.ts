@@ -386,6 +386,15 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     declinedWarScores: number[][];
     declinedReservedShips: number;
     declinedEventLedgerHash: string;
+    firstCounters: { count: number; key: string }[];
+    firstThresholdEvents: number;
+    dormantCounters: boolean;
+    secondOutcome: string;
+    secondCounters: { count: number }[];
+    secondThresholdBodies: Record<string, unknown>[];
+    secondSnapshotHash: string;
+    secondEventLedgerHash: string;
+    secondInProcessEqual: boolean;
   }
 
   function runOfferChild(): OfferChildOutput {
@@ -438,6 +447,27 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     expect(r1.declinedWarScores).toEqual([[-4, 0]]);
     expect(r1.declinedReservedShips).toBe(0);
     expect(r1.declinedSnapshotHash).not.toBe(r1.nonOfferedSnapshotHash);
+  });
+
+  it("the scripted declines raise the threshold event exactly at the threshold, identically in two clean processes (T-1 05)", () => {
+    const r1 = runOfferChild();
+    const r2 = runOfferChild();
+    expect(r1.firstCounters.map((c) => c.count)).toEqual([1]);
+    expect(r1.firstThresholdEvents).toBe(0);
+    expect(r1.dormantCounters).toBe(false);
+    expect(r1.secondOutcome).toBe("completed");
+    expect(r1.secondCounters.map((c) => c.count)).toEqual([2]);
+    expect(r1.secondThresholdBodies).toHaveLength(1);
+    expect(r1.secondThresholdBodies[0]).toMatchObject({
+      kind: "DeclineThresholdReached",
+      nationId: "uk",
+      count: 2,
+      threshold: 2,
+      scope: "WAR",
+    });
+    expect(r1.secondInProcessEqual).toBe(true);
+    expect(r2.secondSnapshotHash).toBe(r1.secondSnapshotHash);
+    expect(r2.secondEventLedgerHash).toBe(r1.secondEventLedgerHash);
   });
 
   it("is byte-identical to the dormant month when no offer is possible (no channel)", () => {

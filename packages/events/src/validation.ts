@@ -25,6 +25,8 @@ const safeInt = Schema.Finite.check(
 /** Zod `safeInt.refine((value) => value >= 0)`. */
 const nonNegativeSafeInt = safeInt.check(Schema.isGreaterThanOrEqualTo(0));
 
+const positiveSafeInt = safeInt.check(Schema.isGreaterThanOrEqualTo(1));
+
 /**
  * Zod v4 `z.string().datetime({ offset: true })` pattern, ported verbatim so the
  * timestamp stays a **plain string** on the wire (never a `DateTime` object).
@@ -166,6 +168,16 @@ export const BattleDeclinedSchema = Schema.Struct({
   reasonCode: Schema.Literal("BATTLE_DECLINED_WITH_CONSEQUENCES"),
 });
 
+export const DeclineThresholdReachedSchema = Schema.Struct({
+  kind: Schema.Literal("DeclineThresholdReached"),
+  nationId: nonEmptyString,
+  battleId: nonEmptyString,
+  count: positiveSafeInt,
+  threshold: positiveSafeInt,
+  scope: Schema.Literals(["WAR", "NATION", "CAMPAIGN"]),
+  rulesetVersion: nonEmptyString,
+});
+
 export const PrestigeLossRequestedSchema = Schema.Struct({
   kind: Schema.Literal("PrestigeLossRequested"),
   nationId: nonEmptyString,
@@ -237,6 +249,7 @@ export const DomainEventBodySchema = Schema.Union([
   ForeignStationNoRouteSchema,
   BattleOfferAnsweredSchema,
   BattleDeclinedSchema,
+  DeclineThresholdReachedSchema,
 ]);
 
 export const DomainEventEnvelopeSchema = Schema.Struct({

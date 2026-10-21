@@ -113,6 +113,36 @@ describe("TurnMessage projection", () => {
     expect(message?.subjectRefs).toContainEqual({ type: "nation", id: "uk" });
   });
 
+  it("projects the repeated-decline threshold as a high-severity player-visible battle message (T-1 05)", () => {
+    const [message] = projectTurnMessages(
+      input([
+        envelope(
+          {
+            kind: "DeclineThresholdReached",
+            nationId: "uk",
+            battleId: "battle-2",
+            count: 3,
+            threshold: 3,
+            scope: "WAR",
+            rulesetVersion: "1.0.0",
+          },
+          "battle-2",
+          1,
+        ),
+      ]),
+    );
+    expect(message).toMatchObject({
+      category: "BATTLE",
+      severity: "HIGH",
+      phase: "battle_resolution",
+      titleKey: "messages.battle.declineThreshold.title",
+      bodyKey: "messages.battle.declineThreshold.body",
+      playerVisible: true,
+      interpolation: { nationId: "uk", count: 3, threshold: 3, scope: "WAR" },
+    });
+    expect(message?.subjectRefs).toContainEqual({ type: "nation", id: "uk" });
+  });
+
   it("aggregates routine construction progress under one aggregate key", () => {
     const messages = projectTurnMessages(
       input([constructionProgress("p1", 10, 1), constructionProgress("p2", 20, 2)]),
