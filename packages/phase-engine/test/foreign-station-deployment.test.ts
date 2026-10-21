@@ -58,7 +58,7 @@ function division(id: string, shipOrder: string[], area = "home"): PermanentDivi
     shipOrder,
     flagshipShipId: shipOrder[0]!,
     commanderOfficerId: "VACANT",
-    divisionRole: "BATTLE_LINE",
+    divisionRole: "CORE",
     preferredFormation: "LINE_AHEAD",
     experience: SafeInt(20),
     cohesion: SafeInt(30),
@@ -68,7 +68,7 @@ function division(id: string, shipOrder: string[], area = "home"): PermanentDivi
     provenanceRefs: [],
     rulesetVersion: "0.1.0",
     aggregateHash: "",
-  } as PermanentDivision;
+  };
 }
 
 interface Layout {
