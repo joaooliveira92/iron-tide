@@ -267,3 +267,44 @@ describe("Acceleration capacity-pressure cross-process determinism (SB3-R9)", ()
     expect(r1.snapshotHash).toBe(r2.snapshotHash);
   });
 });
+
+describe("Presence measurement cross-process determinism (S-5 05)", () => {
+  const presenceChildScript = resolve(thisDir, "..", "dist", "run-presence-child.js");
+
+  interface PresenceChildOutput {
+    dormantSnapshotHash: string;
+    dormantEventLedgerHash: string;
+    dormantShortfallCount: number;
+    configuredSnapshotHash: string;
+    configuredEventLedgerHash: string;
+    shortfalls: { nationId: string; areaId: string; shortfallTons: number }[];
+    success: boolean;
+    error?: string;
+  }
+
+  function runPresenceChild(): PresenceChildOutput {
+    const stdout = execFileSync(process.execPath, [presenceChildScript], {
+      encoding: "utf8",
+      timeout: 60000,
+      env: { ...process.env, NODE_OPTIONS: "" },
+    });
+    const lines = stdout.trim().split("\n");
+    return JSON.parse(lines[lines.length - 1]!) as PresenceChildOutput;
+  }
+
+  it("two clean processes over a fixture ruleset produce identical shortfall events and hashes; dormant emits none", () => {
+    const r1 = runPresenceChild();
+    const r2 = runPresenceChild();
+    expect(r1.error).toBeUndefined();
+    expect(r1.success).toBe(true);
+    expect(r2).toEqual(r1);
+    // Dormant: nothing is measured. Configured: the step adds events only, so authoritative state is unchanged.
+    expect(r1.dormantShortfallCount).toBe(0);
+    expect(r1.configuredSnapshotHash).toBe(r1.dormantSnapshotHash);
+    expect(r1.shortfalls.length).toBeGreaterThan(0);
+    expect(r1.configuredEventLedgerHash).not.toBe(r1.dormantEventLedgerHash);
+    const keys = r1.shortfalls.map((s) => `${s.nationId}/${s.areaId}`);
+    expect(keys).toEqual([...keys].sort());
+    expect(r1.shortfalls.every((s) => s.shortfallTons > 0)).toBe(true);
+  });
+});

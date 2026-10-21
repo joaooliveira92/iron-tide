@@ -3,6 +3,9 @@ import { decodePresenceRules } from "@bluewave/content-schema";
 /** The S-5 values a pack's rulesets carry, as the ship-building content reads them (ADR-0242). */
 export interface PresenceValues {
   readonly colonialServiceDisplacementBp: number;
+  readonly requiredTonsPerPossessionWeight: number;
+  readonly noPortValueWeight: number;
+  readonly crampedOrShortRangeCountBp: number;
 }
 
 /**
@@ -19,7 +22,13 @@ export function presenceFromRulesets(rulesets: readonly unknown[]): PresenceValu
       throw new Error(
         `ruleset presence section is invalid at '${decoded.field}': ${decoded.message}`,
       );
-    return { colonialServiceDisplacementBp: decoded.value.colonialServiceDisplacementBp };
+    const { value } = decoded;
+    return {
+      colonialServiceDisplacementBp: value.colonialServiceDisplacementBp,
+      requiredTonsPerPossessionWeight: value.requiredTonsPerPossessionWeight,
+      noPortValueWeight: value.noPortValueWeight,
+      crampedOrShortRangeCountBp: value.crampedOrShortRangeCountBp,
+    };
   }
   return undefined;
 }

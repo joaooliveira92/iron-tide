@@ -174,7 +174,8 @@ export class PhaseRegistry {
       // ADR-0036: battle_resolution reads committed strategic weather + the
       // nations map and writes wars + fleets + nations (per-ship damage/loss
       // and reservation clearing).
-      readPermissions: ["wars", "fleets", "nations", "strategicWeather"],
+      // S-5: its month-end presence step also reads compiled designs (ship tonnage) and writes nothing but events.
+      readPermissions: ["wars", "fleets", "nations", "strategicWeather", "designs"],
       writePermissions: ["wars", "fleets", "nations"],
       rngAllowed: true,
     },

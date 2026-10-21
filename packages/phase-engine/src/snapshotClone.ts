@@ -490,6 +490,8 @@ const F = {
     "torpedoArmament",
     "sourceDraft",
     "colonialServiceFitted",
+    "crampedAccommodation",
+    "shortRange",
     "constructionCostUnits",
     "constructionPlan",
   ),

@@ -257,6 +257,72 @@ describe("buildPlayerProjection — S-1 readiness in the fleet projection (ticke
     expect(plain !== undefined && "colonialServiceFitted" in plain).toBe(false);
   });
 
+  it("reports presence as not configured when no ruleset values are passed (S-5 05, dormant)", () => {
+    const uk = fixtureNation({ id: "uk" });
+    const snapshot = fixtureSnapshot([uk], [], {
+      world: {
+        areas: [],
+        routes: [],
+        ports: [],
+        possessions: [{ id: "p1", nationId: "uk", areaId: "india" }],
+      },
+    });
+    const projection = buildPlayerProjection(fixtureState(snapshot), "uk", {
+      month: 1,
+      year: 1880,
+    });
+    expect(projection?.presence).toEqual({ configured: false });
+  });
+
+  it("lists the player's presence areas with required, present and shortfall once configured (S-5 05)", () => {
+    // FIXTURE-CLASS rules: mechanics only, never a production value.
+    const rules = {
+      requiredTonsPerPossessionWeight: 100,
+      noPortValueWeight: 2,
+      crampedOrShortRangeCountBp: 5_000,
+    };
+    const ship = {
+      ...mkShip("s1", "ACTIVE"),
+      locationAreaId: "india",
+      designVersionId: "des-small",
+    };
+    const uk = fixtureNation({
+      id: "uk",
+      fleets: [{ id: "f", nationId: "uk", name: "f", locationAreaId: "india", ships: [ship] }],
+    });
+    const fra = fixtureNation({ id: "fra" });
+    const snapshot = fixtureSnapshot(
+      [uk, fra],
+      [fixtureDesign("uk", "des-small", { normalizedDisplacementKg: SafeInt(200_000) })],
+      {
+        world: {
+          areas: [],
+          routes: [],
+          ports: [],
+          possessions: [
+            { id: "p2", nationId: "uk", areaId: "india" },
+            { id: "p1", nationId: "uk", areaId: "india" },
+            { id: "p3", nationId: "uk", areaId: "cape" },
+            { id: "p4", nationId: "fra", areaId: "india" },
+          ],
+        },
+      },
+    );
+    const projection = buildPlayerProjection(
+      fixtureState(snapshot),
+      "uk",
+      { month: 1, year: 1880 },
+      rules,
+    );
+    expect(projection?.presence).toEqual({
+      configured: true,
+      areas: [
+        { areaId: "cape", requiredTons: 200, presentTons: 0, shortfallTons: 200 },
+        { areaId: "india", requiredTons: 400, presentTons: 200, shortfallTons: 200 },
+      ],
+    });
+  });
+
   it("its derived fleet maintenance agrees with the committed nation.maintenanceCost", () => {
     const uk = fixtureNation({
       id: "uk",

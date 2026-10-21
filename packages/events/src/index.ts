@@ -11,6 +11,7 @@ export type {
   EventType,
   EventVersion,
   NationBudgetChanged,
+  PresenceShortfall,
   Reason,
   ResearchProgressed,
   ShipRebuilt,

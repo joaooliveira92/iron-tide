@@ -137,6 +137,15 @@ export const ShipStationAssignmentChangedSchema = Schema.Struct({
   reason: nonEmptyString,
 });
 
+export const PresenceShortfallSchema = Schema.Struct({
+  kind: Schema.Literal("PresenceShortfall"),
+  nationId: nonEmptyString,
+  areaId: nonEmptyString,
+  requiredTons: nonNegativeSafeInt,
+  presentTons: nonNegativeSafeInt,
+  shortfallTons: nonNegativeSafeInt.check(Schema.isGreaterThan(0)),
+});
+
 export const DomainEventBodySchema = Schema.Union([
   NationBudgetChangedSchema,
   ConstructionProgressedSchema,
@@ -149,6 +158,7 @@ export const DomainEventBodySchema = Schema.Union([
   TechnologyDiscoveredSchema,
   ShipReadinessChangedSchema,
   ShipStationAssignmentChangedSchema,
+  PresenceShortfallSchema,
 ]);
 
 export const DomainEventEnvelopeSchema = Schema.Struct({

@@ -128,6 +128,13 @@ export interface CompiledDesignVersion {
   /** S-5 (spec #73 R4): fitted for colonial service (manual p.42). Absent = unfitted; written only when fitted. */
   colonialServiceFitted?: true;
   /**
+   * S-5 (spec #73 R5): the design has cramped accommodation (manual p.46), so its ships count for less toward presence.
+   * Absent = not cramped. Nothing writes it yet: the classification is gated (decision request 0026).
+   */
+  crampedAccommodation?: true;
+  /** S-5 (spec #73 R5): the design has short range (manual p.46). Absent = not short-range; gated like the above. */
+  shortRange?: true;
+  /**
    * Cost of building this design in treasury units, priced by the ship-design cost model when the design was compiled
    * (ADR-0074). Absent for authored designs, which fall back to the displacement formula `construction_order_v1`.
    */

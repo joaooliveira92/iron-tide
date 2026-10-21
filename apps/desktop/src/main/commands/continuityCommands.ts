@@ -478,10 +478,15 @@ export const replayCampaignProgram = payloadless(() =>
           metadata.playerSlotId,
         ),
       );
+      const shipBuilding =
+        input === null ? undefined : yield* contentArtifact.loadShipBuildingContent();
       const engineOptions =
-        input === null
+        shipBuilding === undefined
           ? undefined
-          : { shipBuilding: yield* contentArtifact.loadShipBuildingContent() };
+          : {
+              shipBuilding,
+              ...(shipBuilding.presence !== undefined ? { presence: shipBuilding.presence } : {}),
+            };
       const result = yield* replay.verify({
         snapshot: executed,
         commands: input === null ? [] : [...input.commands],

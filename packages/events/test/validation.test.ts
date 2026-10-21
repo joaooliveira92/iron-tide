@@ -158,6 +158,14 @@ describe("event validation parity (Zod → Effect Schema)", () => {
         toAssignment: "FOREIGN_STATION",
         reason: "ASSIGNED",
       },
+      {
+        kind: "PresenceShortfall",
+        nationId: "n1",
+        areaId: "a1",
+        requiredTons: 400,
+        presentTons: 100,
+        shortfallTons: 300,
+      },
     ] as const;
 
     for (const body of bodies) {
@@ -204,5 +212,25 @@ describe("ShipStationAssignmentChanged (S-5 03)", () => {
     expect(() => parseDomainEventBody({ ...body, extra: 1 })).toThrow();
     expect(() => parseDomainEventBody({ ...body, shipId: "" })).toThrow();
     expect(parseDomainEventBody(body).kind).toBe("ShipStationAssignmentChanged");
+  });
+});
+
+describe("PresenceShortfall (S-5 05)", () => {
+  const body = {
+    kind: "PresenceShortfall",
+    nationId: "n1",
+    areaId: "a1",
+    requiredTons: 400,
+    presentTons: 100,
+    shortfallTons: 300,
+  } as const;
+
+  it("rejects excess keys, empty ids, negative tonnage and a zero or negative shortfall", () => {
+    expect(parseDomainEventBody(body).kind).toBe("PresenceShortfall");
+    expect(() => parseDomainEventBody({ ...body, extra: 1 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, areaId: "" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, presentTons: -1 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, shortfallTons: 0 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, requiredTons: 1.5 })).toThrow();
   });
 });

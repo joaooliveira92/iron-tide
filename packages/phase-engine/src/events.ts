@@ -255,6 +255,38 @@ export function shipStationAssignmentChangedEvent(
   };
 }
 
+/**
+ * S-5: a nation's effective present tonnage in an area fell short of its requirement at month end. One event per
+ * nation-area with a positive shortfall; emitted in (nation, area) order.
+ */
+export function presenceShortfallEvent(
+  nationId: string,
+  areaId: string,
+  requiredTons: SafeInt,
+  presentTons: SafeInt,
+  shortfallTons: SafeInt,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `PresenceShortfall-${nationId}-${areaId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "nation",
+    aggregateId: nationId,
+    eventType: "PresenceShortfall",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "PresenceShortfall",
+      nationId,
+      areaId,
+      requiredTons,
+      presentTons,
+      shortfallTons,
+    },
+    sequenceNumber: seq,
+  };
+}
+
 export function makeLedgerEntry(
   nationId: string,
   phaseId: string,

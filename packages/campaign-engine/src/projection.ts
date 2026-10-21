@@ -1,7 +1,9 @@
 import type { CampaignState } from "@bluewave/campaign";
 import {
   economyOutlook,
+  measurePresence,
   type EconomyStatus,
+  type PresenceMeasurementRules,
   type ResearchUnfundedReason,
 } from "@bluewave/campaign";
 import { totalPaidWork } from "./opening-briefing.js";
@@ -99,6 +101,22 @@ export interface PlayerProjectionStrategicArea {
   readonly name: string;
 }
 
+/** One presence area of the player's nation: required, present and shortfall in whole tons (S-5 05). */
+export interface PlayerProjectionPresenceArea {
+  readonly areaId: string;
+  readonly requiredTons: number;
+  readonly presentTons: number;
+  readonly shortfallTons: number;
+}
+
+/**
+ * The player's presence readout (spec #73 R5/R6/R12). `configured: false` means the pack authors no presence ruleset
+ * section: no requirement exists and the screen says 'not configured' instead of showing any number.
+ */
+export type PlayerProjectionPresence =
+  | { readonly configured: false }
+  | { readonly configured: true; readonly areas: readonly PlayerProjectionPresenceArea[] };
+
 export interface PlayerProjectionMonth {
   readonly month: number;
   readonly year: number;
@@ -134,6 +152,8 @@ export interface PlayerProjection {
   readonly knownTechnologyIds: readonly string[];
   readonly strategicAreas: readonly PlayerProjectionStrategicArea[];
   readonly knownEnemyNations: readonly string[];
+  /** The nation's presence per area, or `{ configured: false }` while the ruleset section is dormant (S-5 05); absent reads as not configured. */
+  readonly presence?: PlayerProjectionPresence;
   readonly commandWorkspace: PlayerProjectionCommandWorkspace;
 }
 
@@ -163,6 +183,9 @@ export interface PlayerProjection {
  * - `knownEnemyNations` are derived from `politics.relations` where the
  *   relation is `at_war` and this nation is a party.
  *
+ * - `presence` is the S-5 readout from `measurePresence` when the caller passes the pack's presence rules, else
+ *   `{ configured: false }` (dormant).
+ *
  * Returns `undefined` if `playerSlotId` doesn't resolve to a nation in the
  * snapshot.
  */
@@ -170,6 +193,7 @@ export function buildPlayerProjection(
   state: CampaignState,
   playerSlotId: string,
   month: PlayerProjectionMonth,
+  presenceRules?: PresenceMeasurementRules,
 ): PlayerProjection | undefined {
   const snapshot = state.snapshot;
   const nation = snapshot.nations.get(playerSlotId);
@@ -274,6 +298,20 @@ export function buildPlayerProjection(
     knownTechnologyIds: [...nation.research.discoveredTechs].sort((a, b) => a.localeCompare(b)),
     strategicAreas,
     knownEnemyNations,
+    presence:
+      presenceRules === undefined
+        ? { configured: false }
+        : {
+            configured: true,
+            areas: measurePresence(snapshot, presenceRules)
+              .filter((row) => row.nationId === playerSlotId)
+              .map(({ areaId, requiredTons, presentTons, shortfallTons }) => ({
+                areaId,
+                requiredTons,
+                presentTons,
+                shortfallTons,
+              })),
+          },
     commandWorkspace: { commands: [], movementCommands: [] },
   };
 }

@@ -169,7 +169,11 @@ export const runTurnTransaction = (
       randomSeed,
       collector,
       undefined,
-      { shipBuilding, ...(channel !== undefined ? { interruptions: channel } : {}) },
+      {
+        shipBuilding,
+        ...(shipBuilding.presence !== undefined ? { presence: shipBuilding.presence } : {}),
+        ...(channel !== undefined ? { interruptions: channel } : {}),
+      },
     );
 
     const shipBuildingHash = yield* contentArtifact.shipBuildingContentHash();

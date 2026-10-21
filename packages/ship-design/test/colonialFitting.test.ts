@@ -103,7 +103,12 @@ describe("colonial-service fitting", () => {
   it("reaches the compile context only when the ruleset section supplies it (dormant otherwise)", () => {
     const withSection = buildShipBuildingContent({
       ...shipBuildingData,
-      presence: { colonialServiceDisplacementBp: FIXTURE_BP },
+      presence: {
+        colonialServiceDisplacementBp: FIXTURE_BP,
+        requiredTonsPerPossessionWeight: 100,
+        noPortValueWeight: 1,
+        crampedOrShortRangeCountBp: 5_000,
+      },
     });
     expect(withSection.environmentFor("1880-01").ctx.colonialFitting).toEqual({
       displacementBp: FIXTURE_BP,

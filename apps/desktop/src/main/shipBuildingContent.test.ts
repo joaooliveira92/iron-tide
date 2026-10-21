@@ -86,6 +86,9 @@ describe("S-5 presence ruleset section reaching ship-building content (ADR-0242)
   // FIXTURE-CLASS value: it exercises the plumbing and is never a production number.
   const fixture = {
     colonialServiceDisplacementBp: 137,
+    requiredTonsPerPossessionWeight: 100,
+    noPortValueWeight: 1,
+    crampedOrShortRangeCountBp: 5_000,
     provenance: {
       sourceStatus: "BALANCE_TARGET",
       confidence: "LOW",
@@ -103,6 +106,9 @@ describe("S-5 presence ruleset section reaching ship-building content (ADR-0242)
     expect(presenceFromRulesets([{ id: "core" }])).toBeUndefined();
     expect(presenceFromRulesets([{ id: "core", presence: fixture }])).toEqual({
       colonialServiceDisplacementBp: 137,
+      requiredTonsPerPossessionWeight: 100,
+      noPortValueWeight: 1,
+      crampedOrShortRangeCountBp: 5_000,
     });
     // A corrupt section is an error, never silently dormant.
     expect(() => presenceFromRulesets([{ id: "core", presence: { provenance: {} } }])).toThrow(

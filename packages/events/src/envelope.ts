@@ -130,6 +130,20 @@ export interface ShipStationAssignmentChanged {
   readonly reason: Reason;
 }
 
+/**
+ * S-5 (spec #73 R8, ADR-0247): a nation is short of its required presence in an area this month. Integer whole tons;
+ * `shortfallTons` is `requiredTons - presentTons` and always positive (an area with no shortfall emits nothing). The event
+ * is a typed request for S-2/S-3 to consume; S-5 mutates no prestige or unrest state.
+ */
+export interface PresenceShortfall {
+  readonly kind: "PresenceShortfall";
+  readonly nationId: string;
+  readonly areaId: string;
+  readonly requiredTons: SafeInt;
+  readonly presentTons: SafeInt;
+  readonly shortfallTons: SafeInt;
+}
+
 export type DomainEventBody =
   | NationBudgetChanged
   | ConstructionProgressed
@@ -141,7 +155,8 @@ export type DomainEventBody =
   | BattleResolved
   | TechnologyDiscovered
   | ShipReadinessChanged
-  | ShipStationAssignmentChanged;
+  | ShipStationAssignmentChanged
+  | PresenceShortfall;
 
 export interface DomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody> {
   readonly eventId: string;

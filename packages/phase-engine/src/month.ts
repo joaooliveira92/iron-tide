@@ -38,6 +38,7 @@ import type {
   StrategicWeatherPhaseOptions,
 } from "./monthContext.js";
 import { PHASE_ACCESS_DENIED, PHASE_FOOTPRINTS, PhaseGuard } from "./phase-guard.js";
+import { runPresenceMeasurementStep } from "./presenceMeasurement.js";
 import { resolveResearchPhase } from "./research.js";
 import { cloneSnapshot } from "./snapshotClone.js";
 import { runClosingValidationPhase, runOpeningValidationPhase } from "./validationPhases.js";
@@ -220,6 +221,10 @@ export class MonthExecutor {
     if (ctx.interruption?.suspended !== undefined) {
       return this.finish(ctx, true);
     }
+
+    // S-5 month-end step (spec #73 R5/R6): presence is measured after movement and battle resolution, so it is part of the
+    // battle_resolution footprint. Dormant (a strict no-op) unless the pack authors the presence ruleset section.
+    runPresenceMeasurementStep(ctx);
 
     if (!this.assertPhase(phaseGuard, "closing_validation", collector)) {
       return this.finish(ctx, false);

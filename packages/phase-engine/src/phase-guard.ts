@@ -136,6 +136,7 @@ export const PHASE_FOOTPRINTS: Readonly<Record<string, PhaseFootprint>> = {
       PhaseResource.FLEETS,
       PhaseResource.NATIONS,
       PhaseResource.STRATEGIC_WEATHER,
+      PhaseResource.DESIGNS,
     ],
     writes: [PhaseResource.WARS, PhaseResource.FLEETS, PhaseResource.NATIONS],
     usesRng: true,

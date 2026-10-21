@@ -1,7 +1,7 @@
 // Shared types + runtime state for the month phase pipeline. The MonthExecutor
 // orchestrator and each phase module communicate through `MonthContext` so phase
 // bodies never need a reference to the executor.
-import type { CampaignSnapshot } from "@bluewave/campaign";
+import type { CampaignSnapshot, PresenceMeasurementRules } from "@bluewave/campaign";
 import type { ClimateProfile } from "@bluewave/combat";
 import type {
   CommandBody,
@@ -60,6 +60,11 @@ export interface MonthExecutorEngineOptions {
   readonly phaseOverrides?: ReadonlyMap<string, PhaseDefinition>;
   /** Ship-building content used to compile `SubmitDesign` commands (ADR-0066). Without it such commands are skipped with a diagnostic. */
   readonly shipBuilding?: ShipBuildingContent;
+  /**
+   * The values of the optional S-5 presence ruleset section (ADR-0247), read by the month-end presence step. Absent =
+   * dormant: no measurement, no shortfall event. The desktop passes `shipBuilding.presence`.
+   */
+  readonly presence?: PresenceMeasurementRules;
   /**
    * Optional interruption channel. When present the month may suspend for a
    * mandatory decision or a battle; when absent the pipeline is byte-identical to

@@ -104,7 +104,18 @@ export interface ShipBuildingData {
    * The values of the optional S-5 ruleset section (ADR-0242), when the pack authors one. Absent = dormant: the
    * context carries no colonial fitting rule and a fitting is recorded but costs nothing.
    */
-  readonly presence?: { readonly colonialServiceDisplacementBp: number };
+  readonly presence?: PresenceRuleValues;
+}
+
+/**
+ * The decoded values of the optional S-5 ruleset section (ADR-0242, ADR-0247). The design compile reads only the colonial
+ * fitting; the presence measurement reads the rest through `ShipBuildingContent.presence`.
+ */
+export interface PresenceRuleValues {
+  readonly colonialServiceDisplacementBp: number;
+  readonly requiredTonsPerPossessionWeight: number;
+  readonly noPortValueWeight: number;
+  readonly crampedOrShortRangeCountBp: number;
 }
 
 /** Everything a caller needs, built once. `environmentFor(month)` is pure: same data and month, same environment. */
@@ -121,6 +132,8 @@ export interface ShipBuildingContent {
   readonly aiEnvironmentFor: (month: string, nationId?: string) => AiEnvironment;
   /** Revision-tier thresholds, or null when the pack has none. */
   readonly revision: RevisionBalance | null;
+  /** The S-5 ruleset section's values when the pack authors one; absent = dormant (ADR-0247). */
+  readonly presence?: PresenceRuleValues;
   /** Retained-hull limits of a rebuild, or null when the pack has none. */
   readonly rebuild: RebuildBalance | null;
   /** Design-study rules, or null when the pack has none (designs are then approved without a study). */
@@ -302,6 +315,7 @@ export function buildShipBuildingContent(data: ShipBuildingData): ShipBuildingCo
     environmentFor,
     kgPerHitPoint: data.balance.environment.kgPerHitPoint,
     treasuryUnitMicro: data.balance.environment.treasuryUnitMicro,
+    ...(data.presence === undefined ? {} : { presence: data.presence }),
     revision: data.balance.revision ?? null,
     rebuild: data.balance.rebuild ?? null,
     study,
