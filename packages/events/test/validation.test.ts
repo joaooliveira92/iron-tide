@@ -333,6 +333,29 @@ describe("DeclineThresholdReached (T-1 05)", () => {
   });
 });
 
+describe("EnemyDeclinedBattle (T-1 07)", () => {
+  const body = {
+    kind: "EnemyDeclinedBattle",
+    nationId: "GBR",
+    enemyNationId: "FRA",
+    battleId: "battle-1",
+    missionType: "FLEET_BATTLE",
+    areaId: "a-1",
+    enemyVictoryPointCost: 0,
+    reasonCode: "ENEMY_DECLINED_BATTLE",
+  } as const;
+
+  it("names nation, enemy, area and cost, and rejects a draw, enemy force, excess keys and bad values", () => {
+    expect(parseDomainEventBody(body).kind).toBe("EnemyDeclinedBattle");
+    expect(() => parseDomainEventBody({ ...body, draw: 12 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, enemyStrength: 300 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, enemyNationId: "" })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, enemyVictoryPointCost: -1 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, enemyVictoryPointCost: 1.5 })).toThrow();
+    expect(() => parseDomainEventBody({ ...body, reasonCode: "OTHER" })).toThrow();
+  });
+});
+
 describe("penalty requests (S-5 06)", () => {
   for (const kind of ["PrestigeLossRequested", "RevoltPressureRequested"] as const) {
     it(`${kind} carries integer tons only and rejects excess keys, empty ids and a non-positive shortfall`, () => {

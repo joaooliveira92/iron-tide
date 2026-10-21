@@ -143,6 +143,38 @@ describe("TurnMessage projection", () => {
     expect(message?.subjectRefs).toContainEqual({ type: "nation", id: "uk" });
   });
 
+  it("projects an enemy withdrawal as a high-severity player-visible message without the draw or enemy force (T-1 07)", () => {
+    const [message] = projectTurnMessages(
+      input([
+        envelope(
+          {
+            kind: "EnemyDeclinedBattle",
+            nationId: "uk",
+            enemyNationId: "fr",
+            battleId: "battle-3",
+            missionType: "FLEET_BATTLE",
+            areaId: "a-1",
+            enemyVictoryPointCost: 0,
+            reasonCode: "ENEMY_DECLINED_BATTLE",
+          },
+          "battle-3",
+          1,
+        ),
+      ]),
+    );
+    expect(message).toMatchObject({
+      category: "BATTLE",
+      severity: "HIGH",
+      phase: "battle_generation",
+      titleKey: "messages.battle.enemyDeclined.title",
+      bodyKey: "messages.battle.enemyDeclined.body",
+      playerVisible: true,
+      interpolation: { battleId: "battle-3", enemyNationId: "fr", areaId: "a-1" },
+    });
+    expect(Object.keys(message?.interpolation ?? {})).not.toContain("draw");
+    expect(message?.subjectRefs).toContainEqual({ type: "nation", id: "fr" });
+  });
+
   it("aggregates routine construction progress under one aggregate key", () => {
     const messages = projectTurnMessages(
       input([constructionProgress("p1", 10, 1), constructionProgress("p2", 20, 2)]),

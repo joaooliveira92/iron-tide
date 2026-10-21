@@ -322,6 +322,40 @@ export function battleDeclinedEvent(
 }
 
 /**
+ * T-1 07: the enemy declined a battle the player would have fought. The event never carries the draw or the enemy force.
+ */
+export function enemyDeclinedBattleEvent(
+  nationId: string,
+  enemyNationId: string,
+  battleId: string,
+  missionType: string,
+  areaId: string,
+  enemyVictoryPointCost: number,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `EnemyDeclinedBattle-${battleId}-${String(seq)}`,
+    version: CURRENT_VERSION,
+    aggregateType: "battle",
+    aggregateId: battleId,
+    eventType: "EnemyDeclinedBattle",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "EnemyDeclinedBattle",
+      nationId,
+      enemyNationId,
+      battleId,
+      missionType,
+      areaId,
+      enemyVictoryPointCost,
+      reasonCode: "ENEMY_DECLINED_BATTLE",
+    },
+    sequenceNumber: seq,
+  };
+}
+
+/**
  * T-1 05: a decline made the player's declined-battle count reach the ruleset threshold. One event per such decline,
  * appended right after the decline's own `BattleDeclined`. It has no effect here; the prestige ticket consumes it.
  */

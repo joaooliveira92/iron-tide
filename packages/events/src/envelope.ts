@@ -254,6 +254,22 @@ export interface DeclineThresholdReached {
   readonly rulesetVersion: string;
 }
 
+/**
+ * T-1 07 (spec #109 R11, ticket #116): the enemy declined a battle the player would have fought. No battle exists for
+ * the opportunity. The body names who and where, never the draw or the enemy force; `enemyVictoryPointCost` is the
+ * war-score points the ruleset charged the declining enemy (0 when the ruleset states none).
+ */
+export interface EnemyDeclinedBattle {
+  readonly kind: "EnemyDeclinedBattle";
+  readonly nationId: string;
+  readonly enemyNationId: string;
+  readonly battleId: string;
+  readonly missionType: string;
+  readonly areaId: string;
+  readonly enemyVictoryPointCost: number;
+  readonly reasonCode: "ENEMY_DECLINED_BATTLE";
+}
+
 export type DomainEventBody =
   | NationBudgetChanged
   | ConstructionProgressed
@@ -275,7 +291,8 @@ export type DomainEventBody =
   | ForeignStationNoRoute
   | BattleOfferAnswered
   | BattleDeclined
-  | DeclineThresholdReached;
+  | DeclineThresholdReached
+  | EnemyDeclinedBattle;
 
 export interface DomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody> {
   readonly eventId: string;

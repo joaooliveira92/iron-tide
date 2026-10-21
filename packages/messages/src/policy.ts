@@ -171,6 +171,15 @@ export function classifyEventBody(body: DomainEventBody): MessageClassification 
         bodyKey: "messages.battle.declineThreshold.body",
         deduplicationKey: `battle:declineThreshold:${body.nationId}:${body.battleId}`,
       });
+    case "EnemyDeclinedBattle":
+      return classification({
+        category: "BATTLE",
+        severity: "HIGH",
+        phase: "battle_generation",
+        titleKey: "messages.battle.enemyDeclined.title",
+        bodyKey: "messages.battle.enemyDeclined.body",
+        deduplicationKey: `battle:enemyDeclined:${body.battleId}`,
+      });
     default:
       return classification({
         category: "SYSTEM",
