@@ -4,7 +4,11 @@
 // round-trip proof: the same draft compiles byte-identically through the barrier and through the
 // legacy `compileDesign`.
 
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { FlattenedPartSchema, decodeStrict, type FlattenedPart } from "@bluewave/content-schema";
 import { canonicalSerialize } from "@bluewave/deterministic";
+import { parse } from "yaml";
 import { describe, expect, it } from "vite-plus/test";
 import {
   compileDesign,
@@ -24,6 +28,24 @@ import {
 import { compatibility, designs, present } from "./helpers/gunReadPath.js";
 import { torpedoDiameterUm } from "./helpers/torpedoModels.js";
 
+const partsDir = join(
+  import.meta.dirname,
+  "..",
+  "..",
+  "..",
+  "content",
+  "production",
+  "1880",
+  "ship-building",
+  "parts",
+);
+const productionParts: readonly FlattenedPart[] = readdirSync(partsDir)
+  .filter((name) => name.endsWith(".yaml"))
+  .flatMap((name) => {
+    const file = parse(readFileSync(join(partsDir, name), "utf8")) as { parts: unknown[] };
+    return file.parts.map((record) => decodeStrict(FlattenedPartSchema, record));
+  });
+
 const content: DraftCompileContent = {
   components,
   plants,
@@ -32,7 +54,26 @@ const content: DraftCompileContent = {
   armour: shipBalance.armour,
   compatibility,
   torpedoDiameterUm,
+  parts: productionParts,
 };
+
+/**
+ * Drop the compiled-torpedo contract (and the design hash that covers it) before comparing to
+ * the legacy compile: the production parts carry the torpedo a launcher loads, the legacy draft
+ * does not. Every other field must still be identical.
+ */
+function stripCompiledTorpedo(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stripCompiledTorpedo);
+  if (value !== null && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, inner] of Object.entries(value as Record<string, unknown>)) {
+      if (key === "compiledTorpedo" || key === "hash") continue;
+      out[key] = stripCompiledTorpedo(inner);
+    }
+    return out;
+  }
+  return value;
+}
 
 describe("draft → loadout → parts barrier (ticket 17a)", () => {
   it("compiles every reference draft identically through the forward adapter and the legacy path", () => {
@@ -51,7 +92,9 @@ describe("draft → loadout → parts barrier (ticket 17a)", () => {
         design.draft,
         nationalContext(design.month, design.draft.nationId),
       );
-      expect(canonicalSerialize(result.compiled), design.id).toBe(canonicalSerialize(legacy));
+      expect(canonicalSerialize(stripCompiledTorpedo(result.compiled)), design.id).toBe(
+        canonicalSerialize(stripCompiledTorpedo(legacy)),
+      );
     }
   });
 

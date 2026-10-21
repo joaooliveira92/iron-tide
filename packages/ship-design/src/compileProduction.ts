@@ -2,11 +2,14 @@
  * The production parts compile path (ship-part-model SPM-R21, ticket 11d).
  *
  * A design is carried as a `DesignHeader` + `DesignLoadout` — the parts representation the
- * content compiler emits. This is the production boundary: it rebuilds the legacy `DesignDraft`
- * from the parts (never from a legacy placement list), validates the loadout through
- * `validateLoadoutFit`, and reaches `compileDesign` only through `deriveAfterFit`. A loadout that
- * is `REJECTED` or `NOT_EVALUABLE` yields fit information and no derived metric of any kind, so no
- * caller can obtain derived metrics from an invalid loadout.
+ * content compiler emits. This is the production boundary: it resolves each referenced part
+ * **once** (`resolveLoadout`), validates the loadout through `validateLoadoutFit`, and reaches
+ * `compileResolved` only through `deriveAfterFit`. The fit and the ledger read the same resolved
+ * quantities, so a mount's mass and cost have one source.
+ *
+ * A loadout the resolver cannot read is `UNTRANSLATED`; a `REJECTED` or `NOT_EVALUABLE` loadout
+ * yields fit information and no derived metric of any kind, so no caller can obtain derived
+ * metrics from an invalid loadout.
  */
 import type {
   DesignHeaderData,
@@ -16,12 +19,14 @@ import type {
   SlotData,
   SlotTemplateData,
 } from "@bluewave/content-schema";
-import { rebuildDraft, type InverseReaderIssue } from "./partCatalogueReaders.js";
+import { armourBalanceFromParts } from "./armourPartAdapter.js";
+import { compileResolved } from "./compile.js";
+import type { CompiledDesign, ShipContext } from "./compileShared.js";
+import { compileThroughFit } from "./compileThroughFit.js";
+import type { Finding } from "./findings.js";
+import { resolveLoadout, type LoadoutResolutionIssue } from "./loadoutResolution.js";
 import type { CompatibilityModel } from "./partCompatibility.js";
 import { platformSlots } from "./partCompatibility.js";
-import { compileDesignThroughFit } from "./compileThroughFit.js";
-import type { CompiledDesign, DesignDraft, ShipContext } from "./compileShared.js";
-import type { Finding } from "./findings.js";
 import { validateLoadoutFit } from "./partFit.js";
 import { shipTypeRequirementsFor } from "./shipTypeRegistry.js";
 import type {
@@ -68,7 +73,6 @@ export type ProductionCompile =
   | {
       readonly status: "ACCEPTED";
       readonly fit: FitResult;
-      readonly draft: DesignDraft;
       readonly compiled: CompiledDesign;
     }
   | {
@@ -79,7 +83,7 @@ export type ProductionCompile =
     }
   | {
       readonly status: "UNTRANSLATED";
-      readonly issues: readonly InverseReaderIssue[];
+      readonly issues: readonly LoadoutResolutionIssue[];
     };
 
 export interface CompileDesignFromLoadoutInput {
@@ -96,21 +100,21 @@ export interface CompileDesignFromLoadoutInput {
 }
 
 /**
- * Compile one design from its parts loadout through the fit barrier. A loadout the inverse
- * readers cannot rebuild is `UNTRANSLATED`; otherwise the fit decides whether `compileDesign`
- * runs, and an invalid loadout exposes only fit information.
+ * Compile one design from its parts loadout through the fit barrier. The loadout is resolved
+ * once into the compile's resolved records, the fit validates the same parts, and only an
+ * `ACCEPTED` fit reaches `compileResolved`.
  */
 export function compileDesignFromLoadout(input: CompileDesignFromLoadoutInput): ProductionCompile {
   const slots = platformSlots(input.model.compatibility, input.loadout.platform) ?? [];
-  const rebuilt = rebuildDraft({
+  const resolution = resolveLoadout({
     designId: input.designId,
     header: input.header,
     loadout: input.loadout,
     partOf: input.model.partOf,
     slotOf: (slotId) => slots.find((slot) => slot.id === slotId),
   });
-  if (rebuilt.draft === null || rebuilt.issues.length > 0) {
-    return { status: "UNTRANSLATED", issues: rebuilt.issues };
+  if (resolution.status === "UNRESOLVED") {
+    return { status: "UNTRANSLATED", issues: resolution.issues };
   }
 
   // The intended type's fit requirements come from the compiled registry in the context; a context
@@ -135,14 +139,19 @@ export function compileDesignFromLoadout(input: CompileDesignFromLoadoutInput): 
       ...(requirements.length === 0 ? {} : { shipTypeRequirements: requirements }),
     });
 
-  const outcome = compileDesignThroughFit(rebuilt.draft, input.ctx, check);
-  if (outcome.status === "ACCEPTED") {
-    return {
-      status: "ACCEPTED",
-      fit: outcome.fit,
-      draft: rebuilt.draft,
-      compiled: outcome.compiled,
+  return compileThroughFit(check, () => {
+    const findings: Finding[] = [];
+    const balance = {
+      ...input.ctx.balance,
+      armour: armourBalanceFromParts(input.ctx.balance.armour, resolution.armourParts),
     };
-  }
-  return { status: outcome.status, fit: outcome.fit, findings: outcome.findings };
+    return compileResolved(
+      resolution.intent,
+      resolution.plant,
+      resolution.resolved,
+      input.ctx,
+      findings,
+      { balance },
+    );
+  });
 }

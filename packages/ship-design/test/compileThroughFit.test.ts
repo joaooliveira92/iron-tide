@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import {
   compileDesignThroughFit,
+  compileThroughFit,
   type DesignDraft,
   type FitResult,
   type ShipContext,
@@ -89,5 +90,29 @@ describe("compileDesignThroughFit", () => {
         }) as never,
     );
     expect(out.status).toBe("ACCEPTED");
+  });
+});
+
+describe("compileThroughFit", () => {
+  it("fits a loadout with no draft and derives only when accepted", () => {
+    let derived = 0;
+    const rejected = compileThroughFit(
+      () => fit("REJECTED"),
+      () => {
+        derived += 1;
+        throw new Error("must not derive");
+      },
+    );
+    expect(rejected.status).toBe("REJECTED");
+    expect(derived).toBe(0);
+    const accepted = compileThroughFit(
+      () => fit("ACCEPTED"),
+      () => {
+        derived += 1;
+        return { marker: 1 } as never;
+      },
+    );
+    expect(accepted.status).toBe("ACCEPTED");
+    expect(derived).toBe(1);
   });
 });

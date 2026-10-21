@@ -27,6 +27,7 @@ import {
   WEAPON_CATEGORIES,
   type CompiledWeaponArmament,
   type DesignDraft,
+  type DesignIntent,
   type HullFormData,
   type Resolved,
   type ShipBalance,
@@ -174,7 +175,21 @@ export function resolveDesignComponents(
     for (const [k, src] of Object.entries(def.attributes ?? {})) attr[k] = num(src, vars);
     resolved.push({
       spec,
-      def,
+      componentId: def.id,
+      category: def.category,
+      tags: def.tags,
+      ...(def.fcClass === undefined ? {} : { fcClass: def.fcClass }),
+      fcClasses: def.fcClasses ?? [],
+      ...(def.allowedZones === undefined
+        ? {}
+        : { allowedZones: def.allowedZones as readonly ZoneId[] }),
+      forbidsCoLocation: def.forbidsCoLocation ?? [],
+      critical: def.critical ?? false,
+      maintenanceMonthlyBp: def.maintenanceMonthlyBp ?? 0,
+      buildWorkMicro: def.buildWorkMicro === undefined ? null : num(def.buildWorkMicro, vars),
+      productionLine: def.productionLine ?? null,
+      requires: def.requires,
+      torpedoMount: def.torpedoMount ?? null,
       params,
       weightKg: num(def.weightKg, vars),
       volumeLitre: num(def.volumeLitre, vars),
@@ -194,8 +209,8 @@ export function resolveDesignComponents(
 // Stage 6 - arrangement: turn resolved components (plus machinery rooms and
 // bunkers) into placements and analyse the layout.
 export function buildPlacementsAndArrangement(args: {
-  draft: DesignDraft;
-  resolved: Resolved[];
+  draft: DesignIntent;
+  resolved: readonly Resolved[];
   plant: PropulsionPlant;
   machineryRaw: MachineryResult;
   formData: HullFormData;
@@ -212,8 +227,8 @@ export function buildPlacementsAndArrangement(args: {
 
   const resolvedPlacements: ResolvedPlacement[] = resolved.map((r) => ({
     instanceId: r.spec.instanceId,
-    componentId: r.def.id,
-    category: r.def.category,
+    componentId: r.componentId,
+    category: r.category,
     zoneId: r.spec.zoneId,
     stationPermille: r.spec.stationPermille,
     weightKg: r.weightKg,
@@ -221,10 +236,10 @@ export function buildPlacementsAndArrangement(args: {
     deckFootprintMm2: r.deckFootprintMm2,
     heightMm: r.heightMm,
     zCgMm: r.zCgMm,
-    allowedZones: (r.def.allowedZones as ZoneId[] | undefined) ?? [...ZONE_IDS],
-    forbidsCoLocation: r.def.forbidsCoLocation ?? [],
-    critical: r.def.critical ?? false,
-    ...(r.def.category === "MAGAZINE" ? { magazineLitre: r.attr.magazineLitre ?? 0 } : {}),
+    allowedZones: r.allowedZones ?? [...ZONE_IDS],
+    forbidsCoLocation: r.forbidsCoLocation,
+    critical: r.critical,
+    ...(r.category === "MAGAZINE" ? { magazineLitre: r.attr.magazineLitre ?? 0 } : {}),
     ...(ammoById.has(r.spec.instanceId)
       ? { ammoVolumeLitre: ammoById.get(r.spec.instanceId)!.ammoVolumeLitre }
       : {}),
@@ -310,22 +325,22 @@ export function buildPlacementsAndArrangement(args: {
 
 // Stage 2 - weapons: build gun mounts + arc obstacles and compile the battery.
 export function compileWeaponSet(args: {
-  draft: DesignDraft;
+  draft: DesignIntent;
   ctx: ShipContext;
-  resolved: Resolved[];
+  resolved: readonly Resolved[];
   byId: Map<string, Resolved>;
   b: ShipBalance;
   findings: Finding[];
 }): {
   weapons: WeaponsResult;
   ammoById: Map<string, AmmoMount>;
-  gunRes: Resolved[];
+  gunRes: readonly Resolved[];
   armaments: Map<string, CompiledWeaponArmament>;
 } {
   const { draft, ctx, resolved, byId, b, findings } = args;
   const station = (id: string | undefined) => (id ? byId.get(id)?.spec.stationPermille : undefined);
 
-  const gunRes = resolved.filter((r) => WEAPON_CATEGORIES.includes(r.def.category));
+  const gunRes = resolved.filter((r) => WEAPON_CATEGORIES.includes(r.category));
   const armaments = new Map<string, CompiledWeaponArmament>();
   const access = componentAccessOf(ctx.navalProfile);
   const armamentContent = ctx.armamentContent ?? null;
@@ -353,7 +368,7 @@ export function compileWeaponSet(args: {
       content: armamentContent!,
       components: ctx.catalogue,
       nationId: draft.nationId,
-      familyId: r.def.id,
+      familyId: r.componentId,
       gunCount: legacy.barrels,
       month: ctx.month,
       unlockedTechnologyIds: ctx.unlockedTechs,
@@ -403,10 +418,10 @@ export function compileWeaponSet(args: {
 
 // Stage 3 - machinery: systems balance, installed power and propulsion plant.
 export function compileSystemsAndMachinery(args: {
-  draft: DesignDraft;
+  draft: DesignIntent;
   ctx: ShipContext;
-  resolved: Resolved[];
-  gunRes: Resolved[];
+  resolved: readonly Resolved[];
+  gunRes: readonly Resolved[];
   plant: PropulsionPlant;
   b: ShipBalance;
   findings: Finding[];
@@ -415,32 +430,32 @@ export function compileSystemsAndMachinery(args: {
   const hull = draft.hull;
 
   const accommodationVolume = resolved
-    .filter((r) => r.def.category === "ACCOMMODATION")
+    .filter((r) => r.category === "ACCOMMODATION")
     .reduce((a, r) => a + r.volumeLitre, 0);
   const systemsItems = resolved.map((r) => ({
     instanceId: r.spec.instanceId,
-    category: r.def.category,
+    category: r.category,
     powerKw: r.powerKw,
     coolingKw: r.coolingKw,
     crew: r.crew,
   }));
   const generators = resolved
-    .filter((r) => r.def.category === "GENERATOR")
+    .filter((r) => r.category === "GENERATOR")
     .map((r) => ({ instanceId: r.spec.instanceId, kw: r.attr.genKw ?? 0, zoneId: r.spec.zoneId }));
   const directors = resolved
-    .filter((r) => r.def.category === "DIRECTOR" || r.def.category === "RANGEFINDER")
+    .filter((r) => r.category === "DIRECTOR" || r.category === "RANGEFINDER")
     .map((r) => ({
       instanceId: r.spec.instanceId,
-      supportedClasses: r.def.fcClasses ?? [],
+      supportedClasses: r.fcClasses,
       accuracyBonusBp: r.attr.accuracyBonusBp ?? 0,
       capacity: r.attr.capacity ?? 0,
       stationPermille: r.spec.stationPermille,
     }));
   const guns = gunRes
-    .filter((r) => r.def.fcClass)
-    .map((r) => ({ instanceId: r.spec.instanceId, fcClass: r.def.fcClass! }));
+    .filter((r) => r.fcClass !== undefined)
+    .map((r) => ({ instanceId: r.spec.instanceId, fcClass: r.fcClass! }));
   const funnels = resolved
-    .filter((r) => r.def.tags.includes("funnel"))
+    .filter((r) => r.tags.includes("funnel"))
     .map((r) => r.spec.stationPermille);
   const systems = compileSystems(
     {
@@ -484,9 +499,9 @@ export function compileSystemsAndMachinery(args: {
 // Stages 4-5 - armour + hull + ledger: guard armour before the hull is sized to
 // break the reserve-buoyancy circular dependency.
 export function compileStructure(args: {
-  draft: DesignDraft;
+  draft: DesignIntent;
   ctx: ShipContext;
-  resolved: Resolved[];
+  resolved: readonly Resolved[];
   plant: PropulsionPlant;
   formData: HullFormData;
   b: ShipBalance;
@@ -524,10 +539,10 @@ export function compileStructure(args: {
   const mag = (region: string, threatId: string) => armourPre.marginBp[region]?.[threatId] ?? null;
   const designThreat = draft.requirement.designThreatId;
   const magazines = resolved
-    .filter((r) => r.def.category === "MAGAZINE")
+    .filter((r) => r.category === "MAGAZINE")
     .map((r) => {
       const near = (cat: Parameters<(typeof WEAPON_CATEGORIES)["includes"]>[0]) =>
-        resolved.some((o) => o.def.category === cat && o.spec.zoneId === r.spec.zoneId);
+        resolved.some((o) => o.category === cat && o.spec.zoneId === r.spec.zoneId);
       return {
         magazineId: r.spec.instanceId,
         beltMarginBp: mag("BELT_MAIN", designThreat),
@@ -541,7 +556,7 @@ export function compileStructure(args: {
 
   const sumBy = (cat: LedgerCategory, extra = 0) =>
     resolved
-      .filter((r) => b.ledgerCategoryOf[r.def.category] === cat)
+      .filter((r) => b.ledgerCategoryOf[r.category] === cat)
       .reduce((a, r) => a + r.weightKg, extra);
   const crewKg = systems.crewRequired * b.crewKgPerHead;
   let others = emptyLedger();

@@ -93,6 +93,9 @@ export interface DesignDraft {
   readonly colonialServiceFitted?: boolean;
 }
 
+/** A design's header facts: everything the compile derives from, without its placements. */
+export type DesignIntent = Omit<DesignDraft, "placements">;
+
 export interface HullFormData {
   readonly form: HullForm;
   readonly zones: readonly ZoneDef[];
@@ -226,11 +229,7 @@ export interface ComponentSummary {
   /** Chosen parameters and evaluated attributes, for adapters (e.g. caliber, barrels, tubes). */
   readonly params: Readonly<Record<string, number>>;
   readonly attr: Readonly<Record<string, number>>;
-  readonly torpedoMount: {
-    readonly mountType: string;
-    readonly torpedoModelId: string;
-    readonly compiledTorpedo?: CompiledTorpedo;
-  } | null;
+  readonly torpedoMount: ResolvedTorpedoMount | null;
   /**
    * The armament identity a gun placement compiled from (ADR-0093 Step 3). Present for gun categories
    * when the context carried first-class armament content and the combination resolved; absent otherwise.
@@ -255,9 +254,35 @@ export const WEAPON_CATEGORIES: readonly ComponentCategory[] = [
   "AA_WEAPON",
 ];
 
+/** The neutral torpedo contract a launcher placement carries into the compiled summary. */
+export interface ResolvedTorpedoMount {
+  readonly mountType: string;
+  readonly torpedoModelId: string;
+  readonly compiledTorpedo?: CompiledTorpedo;
+}
+
+/**
+ * One placement resolved once, from its parts (production) or its legacy component (fixtures and
+ * the legacy path). Fit and the compile both read this record, so a mount's mass and cost have a
+ * single source.
+ */
 export interface Resolved {
   readonly spec: PlacementSpec;
-  readonly def: ComponentDef;
+  /** The legacy component id the placement names: a gun's family, a launcher's base id. */
+  readonly componentId: string;
+  readonly category: ComponentCategory;
+  readonly tags: readonly string[];
+  readonly fcClass?: string;
+  readonly fcClasses: readonly string[];
+  readonly allowedZones?: readonly ZoneId[];
+  readonly forbidsCoLocation: readonly ComponentCategory[];
+  readonly critical: boolean;
+  readonly maintenanceMonthlyBp: number;
+  /** Authored build work, or null to use the balance default. */
+  readonly buildWorkMicro: number | null;
+  readonly productionLine: string | null;
+  readonly requires: readonly string[];
+  readonly torpedoMount: ResolvedTorpedoMount | null;
   readonly params: Record<string, number>;
   readonly weightKg: number;
   readonly volumeLitre: number;

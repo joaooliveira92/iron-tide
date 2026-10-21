@@ -10,7 +10,7 @@ import { ZONE_IDS, type ZoneId } from "./arrangement.js";
 import type { ArmourResult } from "./armour.js";
 import {
   f,
-  type DesignDraft,
+  type DesignIntent,
   type HullFormData,
   type Resolved,
   type ShipBalance,
@@ -25,8 +25,8 @@ import type { WeaponsResult } from "./weapons.js";
 type AmmoMount = WeaponsResult["mounts"][number];
 
 export function buildStabilityLumps(args: {
-  draft: DesignDraft;
-  resolved: Resolved[];
+  draft: DesignIntent;
+  resolved: readonly Resolved[];
   hull: HullSpec;
   formData: HullFormData;
   b: ShipBalance;
@@ -133,16 +133,16 @@ export function buildStabilityLumps(args: {
 }
 
 export function collectDockTreatyModernizationFindings(args: {
-  draft: DesignDraft;
+  draft: DesignIntent;
   ctx: ShipContext;
-  resolved: Resolved[];
+  b: ShipBalance;
+  resolved: readonly Resolved[];
   total: number;
   reserveKg: number;
   findings: Finding[];
 }): void {
-  const { draft, ctx, resolved, total, reserveKg, findings } = args;
+  const { draft, ctx, b, resolved, total, reserveKg, findings } = args;
   const hull = draft.hull;
-  const b = ctx.balance;
 
   const heaviest = Math.max(0, ...resolved.map((r) => r.weightKg));
   if (
@@ -191,7 +191,7 @@ export function collectDockTreatyModernizationFindings(args: {
     }
     if (t.maxMainGunCaliberUm !== undefined) {
       const over = resolved.filter(
-        (r) => r.def.category === "MAIN_GUN" && (r.attr.caliberUm ?? 0) > t.maxMainGunCaliberUm!,
+        (r) => r.category === "MAIN_GUN" && (r.attr.caliberUm ?? 0) > t.maxMainGunCaliberUm!,
       );
       if (over.length > 0)
         findings.push(
