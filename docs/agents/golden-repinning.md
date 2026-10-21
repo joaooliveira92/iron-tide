@@ -38,3 +38,5 @@ entry. CI only verifies; entries are append-only.
 `pnpm check:replay-corpus` (in `pnpm check` and on three OSes in `determinism.yml`) verifies replays twice and via save/load, printing divergence.
 
 New scenarios go in `scenarios.ts` with a one-line `purpose`; a new replay file is an addition and needs no approval. `pnpm replay:coverage` lists the subsystems each replay exercises and those none do.
+
+Fuzz cases (`FUZZ_CASES`, pinned in `golden/replay-fuzz.json`) run in the test suite on three OSes. A failure prints its seed; reproduce with `pnpm replay:fuzz run <seed> <months>`. Only `pnpm replay:fuzz record` (local, refused under CI) rewrites the pin.

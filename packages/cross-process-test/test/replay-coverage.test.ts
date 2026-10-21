@@ -10,6 +10,7 @@ import {
   buildCoverageReport,
   decodeReplayFile,
   formatCoverageReport,
+  fuzzSubsystems,
   recordReplay,
 } from "../src/replay-corpus/index.js";
 import { Result } from "effect";
@@ -94,6 +95,24 @@ describe("checked-in replay corpus", () => {
     const file = resolve(REPLAY_DIR, `${shortest.id}.replay.json`);
     expect(existsSync(file)).toBe(true);
     expect(recordReplay(shortest)).toBe(readFileSync(file, "utf8"));
+  });
+
+  it("shrinks the uncovered list by what the fuzz corpus reaches, and no more", () => {
+    const report = buildCoverageReport(REPLAY_SCENARIOS);
+    const fuzzed = fuzzSubsystems();
+    expect(fuzzed).toContain("command_collection");
+    // Pinned on purpose: seeded fuzz commands cover command collection; the rest stay open.
+    expect(report.uncovered.filter((id) => !fuzzed.includes(id))).toEqual([
+      "opening_validation",
+      "ai_planning",
+      "ai_procurement",
+      "resolve_diplomacy",
+      "resolve_aircraft_development",
+      "resolve_carrier_operations",
+      "battle_generation",
+      "battle_resolution",
+      "closing_validation",
+    ]);
   });
 
   it("leaves no authoritative subsystem silently assumed covered", () => {

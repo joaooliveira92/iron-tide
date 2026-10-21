@@ -26,6 +26,7 @@
     "replay:record": "pnpm --filter @bluewave/cross-process-test build && node packages/cross-process-test/dist/replay-corpus-cli.js record",
     "replay:verify": "pnpm --filter @bluewave/cross-process-test build && node packages/cross-process-test/dist/replay-corpus-cli.js verify",
     "replay:coverage": "pnpm --filter @bluewave/cross-process-test build && node packages/cross-process-test/dist/replay-corpus-cli.js coverage",
+    "replay:fuzz": "pnpm --filter @bluewave/cross-process-test build && node packages/cross-process-test/dist/replay-corpus-cli.js fuzz",
     "replay:approve": "pnpm --filter @bluewave/cross-process-test build && node packages/cross-process-test/dist/replay-approvals-cli.js propose",
     "check:replay-approvals": "node packages/cross-process-test/dist/replay-approvals-cli.js check",
     "check:replay-corpus": "node scripts/verify-replay-corpus.mjs",

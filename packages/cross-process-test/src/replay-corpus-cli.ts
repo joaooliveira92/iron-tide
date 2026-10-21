@@ -5,6 +5,12 @@ import { fileURLToPath } from "node:url";
 import { Result } from "effect";
 
 import {
+  FUZZ_CASES,
+  checkFuzzCase,
+  decodeFuzzManifest,
+  fuzzSubsystems,
+  formatFuzzFailure,
+  recordFuzzManifest,
   buildCoverageReport,
   formatCoverageReport,
   formatDivergence,
@@ -22,11 +28,52 @@ const REPLAY_DIR = resolve(
   "replays",
 );
 
+const FUZZ_MANIFEST = resolve(REPLAY_DIR, "..", "replay-fuzz.json");
+
 const USAGE = `usage:
   replay-corpus record <scenario-id> [--out <file>]   record a scenario into a replay file
   replay-corpus verify <file>                         re-execute a replay file and check it
   replay-corpus coverage                              list the subsystems each scenario exercises
+  replay-corpus fuzz record                           re-record golden/replay-fuzz.json (local only)
+  replay-corpus fuzz run <seed> <months>              check the fuzz properties for one seed
+  replay-corpus fuzz check                            check every fuzz case against the pinned file
 scenarios: ${REPLAY_SCENARIOS.map((s) => s.id).join(", ")}`;
+
+function fuzz(action: string | undefined, args: readonly string[]): number {
+  if (action === "record") {
+    if (process.env["CI"] !== undefined) {
+      process.stderr.write("refusing to record the fuzz manifest under CI\n");
+      return 2;
+    }
+    writeFileSync(FUZZ_MANIFEST, recordFuzzManifest(FUZZ_CASES), "utf8");
+    process.stdout.write(`recorded ${String(FUZZ_CASES.length)} fuzz cases -> ${FUZZ_MANIFEST}\n`);
+    return 0;
+  }
+  const [seed, monthsText] = args;
+  const cases =
+    action === "run" && seed !== undefined && monthsText !== undefined
+      ? [{ seed, months: Number(monthsText) }]
+      : action === "check"
+        ? FUZZ_CASES
+        : undefined;
+  if (cases === undefined || cases.some((c) => !Number.isSafeInteger(c.months) || c.months < 1)) {
+    process.stderr.write(`${USAGE}\n`);
+    return 2;
+  }
+  const manifest = decodeFuzzManifest(readFileSync(FUZZ_MANIFEST, "utf8"));
+  for (const fuzzCase of cases) {
+    const pinned = manifest.cases.find(
+      (c) => c.seed === fuzzCase.seed && c.months === fuzzCase.months,
+    );
+    const outcome = checkFuzzCase(fuzzCase, pinned === undefined ? {} : { pinned });
+    if (!outcome.ok) {
+      process.stderr.write(formatFuzzFailure(outcome));
+      return 1;
+    }
+    process.stdout.write(`fuzz ok: seed ${fuzzCase.seed}, ${String(fuzzCase.months)} months\n`);
+  }
+  return 0;
+}
 
 function main(argv: readonly string[]): number {
   const [command, target, ...rest] = argv;
@@ -47,8 +94,15 @@ function main(argv: readonly string[]): number {
     process.stdout.write(`recorded ${scenario.id} -> ${out}\n`);
     return 0;
   }
+  if (command === "fuzz") return fuzz(target, rest);
   if (command === "coverage") {
-    process.stdout.write(formatCoverageReport(buildCoverageReport(REPLAY_SCENARIOS)));
+    const report = buildCoverageReport(REPLAY_SCENARIOS);
+    process.stdout.write(formatCoverageReport(report));
+    const fuzzed = fuzzSubsystems();
+    process.stdout.write(`fuzz exercises: ${fuzzed.join(", ")}\n`);
+    process.stdout.write(
+      `uncovered by replays and fuzz: ${report.uncovered.filter((id) => !fuzzed.includes(id)).join(", ")}\n`,
+    );
     return 0;
   }
   if (command === "verify" && target !== undefined) {

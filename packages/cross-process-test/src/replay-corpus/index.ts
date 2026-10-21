@@ -36,3 +36,24 @@ export type {
 } from "./approvals.js";
 export { approvalsCommand } from "./approvals-command.js";
 export type { ApprovalsIo } from "./approvals-command.js";
+export {
+  FUZZ_CASES,
+  FuzzManifestError,
+  checkFuzzCase,
+  decodeFuzzManifest,
+  fuzzSubsystems,
+  formatFuzzFailure,
+  generateFuzzCommands,
+  recordFuzzManifest,
+  runFuzzCase,
+} from "./fuzz.js";
+export type {
+  CheckOptions,
+  FuzzCase,
+  FuzzManifest,
+  FuzzOutcome,
+  FuzzProperty,
+  FuzzRun,
+  FuzzRunOptions,
+  PinnedCase,
+} from "./fuzz.js";

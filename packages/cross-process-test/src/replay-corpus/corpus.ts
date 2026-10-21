@@ -79,6 +79,11 @@ function production(): ReturnType<typeof compileProductionCampaign> {
   return productionCampaign;
 }
 
+/** The production pack's opening snapshot: where every replay and fuzz case starts. */
+export function productionStartSnapshot(): CampaignSnapshot {
+  return production().state.snapshot;
+}
+
 function monthSeed(seed: string, snapshot: CampaignSnapshot): string {
   return `${seed}:month:${String(snapshot.turnNumber)}`;
 }
@@ -118,12 +123,12 @@ export interface VerifyOptions {
   readonly roundTrip?: RoundTripOptions;
 }
 
-type RoundTrip =
+export type RoundTrip =
   | { readonly ok: true; readonly snapshot: CampaignSnapshot }
   | { readonly ok: false; readonly reason: string };
 
 /** Write `snapshot` with the production store, read it back, and return what came out. */
-function saveAndLoad(snapshot: CampaignSnapshot): RoundTrip {
+export function saveAndLoad(snapshot: CampaignSnapshot): RoundTrip {
   const saveDir = mkdtempSync(join(tmpdir(), "bw-replay-roundtrip-"));
   try {
     const store = new SaveStore();
@@ -148,7 +153,7 @@ function saveAndLoad(snapshot: CampaignSnapshot): RoundTrip {
   }
 }
 
-function advance(
+export function advance(
   snapshot: CampaignSnapshot,
   seed: string,
   perturb?: Omit<ExecutorPerturbation, "month">,
@@ -215,7 +220,7 @@ export function recordReplay(scenario: ReplayScenario): string {
   return `${canonicalSerialize(file)}\n`;
 }
 
-function firstLedgerDifference(
+export function firstLedgerDifference(
   expected: readonly string[],
   actual: readonly string[],
 ): { entryIndex: number; expected: string; actual: string } | undefined {
