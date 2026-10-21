@@ -5,6 +5,8 @@ import { computeManifestHash } from "./manifest.js";
 
 export const BATTLE_SEED_FAMILY = "battle/battle_id/root" as const;
 export const BATTLE_SEED_FORMULA_VERSION = "battle_seed_v1" as const;
+/** The `battleGenerationFormulaVersion` the generation pipeline and the support force both feed the seed. Frozen wire value. */
+export const GENERATION_SEED_FORMULA_VERSION = "1" as const;
 
 export interface BattleSeedInputs {
   rngVersion: string;

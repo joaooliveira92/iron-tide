@@ -16,6 +16,7 @@ import {
   recordResolvedBattle,
   resolveBattleManifest,
   resolveCampaignBattleReadiness,
+  resolveGenerationShipType,
   resolveLegacyBattle,
   resolveShipStrength,
   toCampaignBattleResult,
@@ -59,7 +60,7 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
     rulesetVersion: ctx.currentSnapshot["rulesetVersion"],
     contentVersion: "0.1.0",
     resolveStrength: (shipId) => resolveShipStrength(ctx.currentSnapshot, shipId),
-    resolveShipType: () => "BB",
+    resolveShipType: resolveGenerationShipType,
     resolveReadiness: (shipId) => resolveCampaignBattleReadiness(ctx.currentSnapshot, shipId),
   });
 

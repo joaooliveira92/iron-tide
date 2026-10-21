@@ -4,7 +4,7 @@ import { RandomEngine } from "@bluewave/random";
 import { determineMissionOpportunities, type BattleMissionOpportunity } from "./opportunity.js";
 import { determineParticipatingSides } from "./sides.js";
 import { buildManifest, type BattleManifest } from "./manifest.js";
-import { deriveBattleSeed } from "./seed.js";
+import { GENERATION_SEED_FORMULA_VERSION, deriveBattleSeed } from "./seed.js";
 import { reserveAssets } from "./reservation.js";
 import { proveAutoResolvable, shippedResolverCapabilities } from "./autoResolutionProof.js";
 import { resolveDecisionBoundary } from "./acceptance.js";
@@ -563,7 +563,7 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       areaId: opp.areaId,
       missionType: opp.missionType,
       opportunityId: opp.opportunityId,
-      battleGenerationFormulaVersion: "1",
+      battleGenerationFormulaVersion: GENERATION_SEED_FORMULA_VERSION,
     };
     const seed = deriveBattleSeed(seedInputs, manifest);
     const manifestWithSeed = { ...manifest, battleSeed: seed };

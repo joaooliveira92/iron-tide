@@ -14,6 +14,7 @@ import type { CampaignSnapshot } from "@bluewave/campaign";
 import {
   BATTLE_SUPPORT_FORCE_ABSENT,
   BATTLE_SUPPORT_FORCE_PRESENT,
+  GENERATION_SEED_FORMULA_VERSION,
   SUPPORT_FORCE_DRAW_RANGE_BP,
   composeSupportForce,
   gatherEligibleAssets,
@@ -26,7 +27,11 @@ import {
 } from "@bluewave/combat";
 import type { BattleOfferRules } from "@bluewave/content-schema";
 import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
-import { resolveCampaignBattleReadiness, resolveShipStrength } from "./battles.js";
+import {
+  resolveCampaignBattleReadiness,
+  resolveGenerationShipType,
+  resolveShipStrength,
+} from "./battles.js";
 import { OFFERED_MISSION_TYPES } from "./battleOffer.js";
 import type { MonthContext } from "./monthContext.js";
 
@@ -128,7 +133,7 @@ export function applySupportForces(
         areaId: manifest["areaId"],
         reservedAssetIds: taken,
         resolveStrength: (ship) => resolveShipStrength(snapshot, ship["id"]),
-        resolveShipType: () => "BB",
+        resolveShipType: resolveGenerationShipType,
         resolveReadiness: (ship) => resolveCampaignBattleReadiness(snapshot, ship["id"]),
       });
       for (const asset of eligible) {
@@ -183,7 +188,7 @@ export function applySupportForces(
       rngVersion: manifest["rngVersion"],
       campaignSeed: ctx.randomSeed,
       campaignMonth: ctx.campaignMonth,
-      battleGenerationFormulaVersion: "1",
+      battleGenerationFormulaVersion: GENERATION_SEED_FORMULA_VERSION,
     });
     for (const id of assets) taken.add(id);
     manifests[index] = next;

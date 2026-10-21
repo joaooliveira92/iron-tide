@@ -5,7 +5,11 @@ import {
   canonicalizeManifest,
 } from "../../src/generation/manifest.js";
 import { BATTLE_MANIFEST_INVALID } from "../../src/generation/reasonCodes.js";
-import { deriveBattleSeed, BATTLE_SEED_FAMILY } from "../../src/generation/seed.js";
+import {
+  deriveBattleSeed,
+  BATTLE_SEED_FAMILY,
+  GENERATION_SEED_FORMULA_VERSION,
+} from "../../src/generation/seed.js";
 
 function baseManifest() {
   return {
@@ -98,5 +102,11 @@ describe("manifest canonicalization + seed (AC-10)", () => {
   it("canonicalizeManifest is idempotent", () => {
     const m = buildManifest(baseManifest());
     expect(canonicalizeManifest(canonicalizeManifest(m))).toEqual(canonicalizeManifest(m));
+  });
+});
+
+describe("the generation seed formula version", () => {
+  it("is the single frozen wire value shared by generation and the support force", () => {
+    expect(GENERATION_SEED_FORMULA_VERSION).toBe("1");
   });
 });
