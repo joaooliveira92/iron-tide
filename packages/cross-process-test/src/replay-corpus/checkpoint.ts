@@ -64,3 +64,18 @@ export function monthCheckpoint(turnNumber: number, result: MonthResult): MonthC
     },
   };
 }
+
+/** Canonical text of one ledger entry, for showing the value behind a divergent hash. */
+export function ledgerEntryText(
+  result: MonthResult,
+  ledger: LedgerName,
+  index: number,
+): string | undefined {
+  const entry = {
+    command: result.commandLedger.all,
+    event: result.eventLedger.all,
+    financial: result.financialLedger.all,
+    random: result.randomLedger.all,
+  }[ledger][index];
+  return entry === undefined ? undefined : canonicalSerialize(plain(entry));
+}

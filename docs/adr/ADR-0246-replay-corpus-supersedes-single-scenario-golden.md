@@ -78,6 +78,14 @@ blind spot, and the duplicate copy is a drift risk.
    authoritative output is an approval event for every affected replay, recorded in the approval entry.
    Replays that stay valid against retired rulesets are deferred.
 
+9. **Retirement is a checkable criterion (ticket #217).** `golden/probe-retirement.json` classifies every
+   probe pinned in `golden/hashes.json`: it cites the corpus mutation test (file and exact title) that
+   catches the same class of break, or states why none does. `pnpm check:probe-retirement` fails on an
+   unclassified probe or a cited test that does not exist, and reports retire-eligible probes. No probe is
+   removed by this decision; each retirement is its own reviewed change. Corpus replays never use the
+   `Golden-Repin` trailer or the ratchet baseline; approvals are the only path (decision 5). Fuzz digests in
+   `golden/replay-fuzz.json` sit outside `golden/replays/` and are not covered by approvals (follow-up).
+
 ## Consequences
 
 - A determinism failure points at a month, ledger and entry instead of an opaque hash.

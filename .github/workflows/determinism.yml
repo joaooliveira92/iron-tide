@@ -37,6 +37,12 @@ jobs:
       - run: pnpm exec vp run -r --concurrency-limit=2 test
       - name: Cross-process determinism
         run: node packages/cross-process-test/dist/run-child.js
+      # Replay corpus (ADR-0246): every golden/replays file re-executed through the
+      # real engine in two fresh processes on each OS; output must be identical and a
+      # divergence prints the first-divergence report. CI only verifies; it never
+      # records or approves a replay.
+      - name: Replay corpus
+        run: pnpm check:replay-corpus
       - name: Upload hash artifact
         uses: actions/upload-artifact@v7
         with:

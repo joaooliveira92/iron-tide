@@ -1,12 +1,18 @@
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import type { CampaignSnapshot } from "@bluewave/campaign";
+import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { MonthExecutor } from "@bluewave/phase-engine";
+import { SaveStore, restampState } from "@bluewave/persistence";
+import { MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
 import { Result } from "effect";
 
 import { compileProductionCampaign } from "../production-pack.js";
-import { LEDGER_ORDER, fullSnapshotHash, monthCheckpoint } from "./checkpoint.js";
+import { LEDGER_ORDER, fullSnapshotHash, ledgerEntryText, monthCheckpoint } from "./checkpoint.js";
 import {
   REPLAY_FORMAT_VERSION,
   ReplayFileError,
@@ -27,11 +33,38 @@ export interface ReplayDivergence {
   /** 1-based month index; 0 for a mismatch found before any month ran. */
   readonly month: number;
   readonly turnNumber: number;
-  readonly where: "content" | "initial" | "snapshot" | LedgerName;
+  readonly where: "content" | "initial" | "snapshot" | "roundtrip" | LedgerName;
   /** Index of the first differing ledger entry; present only when `where` is a ledger. */
   readonly entryIndex?: number;
+  /** Recorded hash, or `(missing)` when the recorded ledger is shorter. */
   readonly expected: string;
+  /** Re-executed hash, or `(missing)` when the re-executed ledger is shorter. */
   readonly actual: string;
+  /** Ledger lengths; present only when `where` is a ledger. */
+  readonly expectedCount?: number;
+  readonly actualCount?: number;
+  /** Canonical text of the re-executed entry; absent when that ledger has no such entry. */
+  readonly actualEntry?: string;
+}
+
+/**
+ * Render a divergence as stable text: LF line endings, no paths, no timestamps,
+ * so the same divergence prints identically on every OS.
+ */
+export function formatDivergence(d: ReplayDivergence): string {
+  const entry = d.entryIndex === undefined ? "" : ` entry ${String(d.entryIndex)}`;
+  const lines = [
+    `month ${String(d.month)} (turn ${String(d.turnNumber)}) ${d.where}${entry}`,
+    `  expected ${d.expected}`,
+    `  actual   ${d.actual}`,
+  ];
+  if (d.expectedCount !== undefined && d.actualCount !== undefined) {
+    lines.push(
+      `  ledger length expected ${String(d.expectedCount)}, actual ${String(d.actualCount)}`,
+    );
+  }
+  if (d.actualEntry !== undefined) lines.push(`  actual entry ${d.actualEntry}`);
+  return `${lines.join("\n")}\n`;
 }
 
 export type VerifyOutcome =
@@ -46,17 +79,92 @@ function production(): ReturnType<typeof compileProductionCampaign> {
   return productionCampaign;
 }
 
+/** The production pack's opening snapshot: where every replay and fuzz case starts. */
+export function productionStartSnapshot(): CampaignSnapshot {
+  return production().state.snapshot;
+}
+
 function monthSeed(seed: string, snapshot: CampaignSnapshot): string {
   return `${seed}:month:${String(snapshot.turnNumber)}`;
 }
 
-function advance(snapshot: CampaignSnapshot, seed: string) {
+/**
+ * A deliberate break of the executor's input, applied to one month during verification only.
+ * Each hook sees the 1-based `month` and may return a changed value; an omitted hook leaves
+ * that input alone. This proves the gate notices a real regression (mutation check).
+ */
+export interface ExecutorPerturbation {
+  readonly month: number;
+  readonly snapshot?: (snapshot: CampaignSnapshot) => CampaignSnapshot;
+  readonly seed?: (seed: string) => string;
+  readonly commands?: (snapshot: CampaignSnapshot) => CommandEnvelope<CommandBody>[];
+  /**
+   * Alters the executed month in place before it is checkpointed, e.g. appending to a ledger to
+   * stand in for an engine that emits one entry too many. The financial and random ledgers
+   * cannot be isolated through input alone because the event ledger echoes them.
+   */
+  readonly afterExecute?: (result: MonthResult) => void;
+}
+
+/**
+ * Save and load the campaign through the production `SaveStore` after every month but the last,
+ * and continue the replay from the loaded state, so persistence cannot silently change the run.
+ */
+export interface RoundTripOptions {
+  /**
+   * Alters the snapshot handed to the store after `month` (1-based), standing in for a
+   * serializer that loses data. Its output is saved as if it were authoritative.
+   */
+  readonly lossy?: (snapshot: CampaignSnapshot, month: number) => CampaignSnapshot;
+}
+
+export interface VerifyOptions {
+  readonly perturb?: ExecutorPerturbation;
+  readonly roundTrip?: RoundTripOptions;
+}
+
+export type RoundTrip =
+  | { readonly ok: true; readonly snapshot: CampaignSnapshot }
+  | { readonly ok: false; readonly reason: string };
+
+/** Write `snapshot` with the production store, read it back, and return what came out. */
+export function saveAndLoad(snapshot: CampaignSnapshot): RoundTrip {
+  const saveDir = mkdtempSync(join(tmpdir(), "bw-replay-roundtrip-"));
+  try {
+    const store = new SaveStore();
+    // Restamp over the snapshot as saved, as the production migration path does, so the
+    // store's own integrity gates pass and only a real fidelity loss can show.
+    const state = restampState(
+      { snapshot, envelope: undefined as never, rawHash: "" },
+      snapshot.compatibilityVersion,
+    );
+    store.save(state, saveDir);
+    const diagnostics = new DiagnosticCollector();
+    const loaded = store.load(saveDir, diagnostics);
+    if (loaded === null || diagnostics.hasErrors) {
+      return {
+        ok: false,
+        reason: diagnostics.all.find((d) => d.severity === "error")?.message ?? "load failed",
+      };
+    }
+    return { ok: true, snapshot: loaded.snapshot };
+  } finally {
+    rmSync(saveDir, { recursive: true, force: true });
+  }
+}
+
+export function advance(
+  snapshot: CampaignSnapshot,
+  seed: string,
+  perturb?: Omit<ExecutorPerturbation, "month">,
+) {
   const result = new MonthExecutor().execute(
-    snapshot,
-    [],
-    monthSeed(seed, snapshot),
+    perturb?.snapshot?.(snapshot) ?? snapshot,
+    perturb?.commands?.(snapshot) ?? [],
+    perturb?.seed?.(monthSeed(seed, snapshot)) ?? monthSeed(seed, snapshot),
     new DiagnosticCollector(),
   );
+  perturb?.afterExecute?.(result);
   if (result.outcome === "suspended") {
     throw new Error(
       `Month ${String(snapshot.turnNumber)} suspended for an interruption; replay format v${String(REPLAY_FORMAT_VERSION)} cannot record it`,
@@ -71,15 +179,28 @@ function advance(snapshot: CampaignSnapshot, seed: string) {
   };
 }
 
+/** One executed month of a scenario: the real engine result and the turn it ran at. */
+export interface ExecutedMonth {
+  readonly turnNumber: number;
+  readonly result: MonthResult;
+}
+
+/** Run `scenario` command-free through the real engine from the production pack, month by month. */
+export function* executeScenario(scenario: ReplayScenario): Generator<ExecutedMonth> {
+  let snapshot = production().state.snapshot;
+  for (let index = 0; index < scenario.months; index++) {
+    const step = advance(snapshot, scenario.seed);
+    yield { turnNumber: Number(snapshot.turnNumber), result: step.result };
+    snapshot = step.next;
+  }
+}
+
 /** Record `scenario` through the real engine into canonical replay-file text. */
 export function recordReplay(scenario: ReplayScenario): string {
   const { state, contentHash } = production();
-  let snapshot = state.snapshot;
   const months: ReplayFile["months"][number][] = [];
-  for (let index = 0; index < scenario.months; index++) {
-    const step = advance(snapshot, scenario.seed);
-    months.push(monthCheckpoint(Number(snapshot.turnNumber), step.result));
-    snapshot = step.next;
+  for (const executed of executeScenario(scenario)) {
+    months.push(monthCheckpoint(executed.turnNumber, executed.result));
   }
   const file: ReplayFile = {
     formatVersion: REPLAY_FORMAT_VERSION,
@@ -99,7 +220,7 @@ export function recordReplay(scenario: ReplayScenario): string {
   return `${canonicalSerialize(file)}\n`;
 }
 
-function firstLedgerDifference(
+export function firstLedgerDifference(
   expected: readonly string[],
   actual: readonly string[],
 ): { entryIndex: number; expected: string; actual: string } | undefined {
@@ -120,7 +241,10 @@ function firstLedgerDifference(
  * Re-execute a replay file through the real engine, checking each month against
  * its recorded checkpoint. A file that cannot be decoded fails with `ReplayFileError`.
  */
-export function verifyReplay(text: string): Result.Result<VerifyOutcome, ReplayFileError> {
+export function verifyReplay(
+  text: string,
+  options: VerifyOptions = {},
+): Result.Result<VerifyOutcome, ReplayFileError> {
   const decoded = decodeReplayFile(text);
   if (Result.isFailure(decoded)) return Result.fail(decoded.failure);
   const file = decoded.success;
@@ -150,7 +274,11 @@ export function verifyReplay(text: string): Result.Result<VerifyOutcome, ReplayF
   }
   for (const [index, recorded] of file.months.entries()) {
     const month = index + 1;
-    const step = advance(snapshot, file.seed);
+    const step = advance(
+      snapshot,
+      file.seed,
+      options.perturb?.month === month ? options.perturb : undefined,
+    );
     const actual = monthCheckpoint(Number(snapshot.turnNumber), step.result);
     for (const ledger of LEDGER_ORDER) {
       const difference = firstLedgerDifference(
@@ -158,7 +286,16 @@ export function verifyReplay(text: string): Result.Result<VerifyOutcome, ReplayF
         actual.ledgers[ledger].entryHashes,
       );
       if (difference !== undefined) {
-        return fail({ month, turnNumber: actual.turnNumber, where: ledger, ...difference });
+        const actualEntry = ledgerEntryText(step.result, ledger, difference.entryIndex);
+        return fail({
+          month,
+          turnNumber: actual.turnNumber,
+          where: ledger,
+          ...difference,
+          expectedCount: recorded.ledgers[ledger].count,
+          actualCount: actual.ledgers[ledger].count,
+          ...(actualEntry === undefined ? {} : { actualEntry }),
+        });
       }
     }
     if (actual.snapshotHash !== recorded.snapshotHash) {
@@ -171,6 +308,22 @@ export function verifyReplay(text: string): Result.Result<VerifyOutcome, ReplayF
       });
     }
     snapshot = step.next;
+    if (options.roundTrip !== undefined && month < file.months.length) {
+      const expected = fullSnapshotHash(snapshot);
+      const stored = options.roundTrip.lossy?.(snapshot, month) ?? snapshot;
+      const trip = saveAndLoad(stored);
+      const actual = trip.ok ? fullSnapshotHash(trip.snapshot) : `(load failed: ${trip.reason})`;
+      if (actual !== expected) {
+        return fail({
+          month,
+          turnNumber: Number(snapshot.turnNumber),
+          where: "roundtrip",
+          expected,
+          actual,
+        });
+      }
+      if (trip.ok) snapshot = trip.snapshot;
+    }
   }
   return Result.succeed<VerifyOutcome>({ ok: true, months: file.months.length });
 }

@@ -25,3 +25,9 @@ value, the cause**, and a migration assessment — per the ENGINEERING-CONTRACT
 hash also states its reason, and reviewed exemptions name paths that cannot move
 it. A golden that changes without an understood authoritative cause is a stop
 condition (see `AGENTS.md`).
+
+## Replay corpus replays are not re-pinned
+
+Replays in `golden/replays/` never use the `Golden-Repin` trailer or `scripts/golden-repin.baseline`.
+Their intended changes go through hash-bound approvals: see [replay corpus](replay-corpus.md).
+This doc covers `golden/hashes.json` only, which stays as a smoke test.
