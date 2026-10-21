@@ -22,7 +22,11 @@ async function openCampaignMenuItem(page: Page, name: string | RegExp) {
 }
 
 test("New Game compiles a fresh campaign onto Overview", async ({ e2e }) => {
-  await startNewCampaign(e2e.page, { seed: SEED, archetype: ARCHETYPE, nation: NATION });
+  await startNewCampaign(e2e.page, {
+    seed: SEED,
+    archetype: ARCHETYPE,
+    nation: NATION,
+  });
 
   // Compiled -> the shell moves into the active campaign, always on Overview.
   await expect(e2e.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
@@ -82,6 +86,44 @@ test("Fleet and Diplomacy & War render the honest compiled state", async ({
   await expect(page.getByText(/Trade protection/)).toBeVisible();
 });
 
+test("a ship is assigned to and cleared from foreign station, and the presence readout is dormant", async ({
+  e2e,
+  campaignTemplate,
+}) => {
+  const page = e2e.page;
+  await openCampaign(e2e, campaignTemplate);
+  await navigateTo(page, "Fleet");
+
+  const section = page.getByTestId("fleet-station");
+  await expect(
+    section.getByRole("heading", { name: "Ships and foreign-station status" }),
+  ).toBeVisible();
+  // The production pack authors no presence section: stated, never a number.
+  await expect(section.getByTestId("fleet-presence-not-configured")).toBeVisible();
+  const row = section.getByTestId("fleet-station-row-gbr_dreadnought");
+  await expect(row.getByText("Active fleet")).toBeVisible();
+
+  // Keyboard-operable selection, then assign: queued, applied by the engine on the month advance.
+  await row.getByRole("checkbox").focus();
+  await page.keyboard.press("Space");
+  await section.getByRole("button", { name: "Assign to foreign station" }).click();
+  await expect(section.getByTestId("fleet-station-notice")).toContainText("queued for 1 ship(s)");
+
+  // Clearing a ship that is not (yet) on foreign station is rejected whole, with the reason in text.
+  await row.getByRole("checkbox").focus();
+  await page.keyboard.press("Space");
+  await section.getByRole("button", { name: "Clear foreign station" }).click();
+  await expect(section.getByTestId("fleet-station-notice")).toContainText(
+    "HMS Dreadnought is not on foreign station.",
+  );
+
+  await advanceMonths(page, 1);
+  await navigateTo(page, "Fleet");
+  await expect(
+    page.getByTestId("fleet-station-row-gbr_dreadnought").getByText("On foreign station"),
+  ).toBeVisible();
+});
+
 test("a fleet ordered to sail moves one hop when the month advances", async ({
   e2e,
   campaignTemplate,
@@ -110,7 +152,9 @@ test("Fleet organization founds a division through the real engine and applies i
 
   await navigateTo(page, "Fleet");
   const organization = page.getByTestId("fleet-organization");
-  const divisions = organization.getByRole("heading", { name: /division — HMS / });
+  const divisions = organization.getByRole("heading", {
+    name: /division — HMS /,
+  });
   // The 1880 production start seeds its historical divisions, so the screen is populated.
   await expect(divisions).toHaveCount(2);
 

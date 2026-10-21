@@ -31,6 +31,8 @@ const movementCommand = {
 };
 
 const projection: FleetScreenProjection = {
+  presence: { configured: false },
+  overBaseShips: [],
   revision: 3,
   month: { year: 1900, month: 1 },
   playerNationId: "nation_uk",
@@ -41,6 +43,7 @@ const projection: FleetScreenProjection = {
       areaId: "area_northern_europe",
       ships: [
         {
+          shipId: "majestic",
           name: "HMS Majestic",
           designId: "design_majestic",
           status: "active",

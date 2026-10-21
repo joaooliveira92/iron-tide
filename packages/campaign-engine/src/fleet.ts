@@ -1,4 +1,9 @@
-import type { CampaignSnapshot } from "@bluewave/campaign";
+import type { CampaignSnapshot, PresenceMeasurementRules } from "@bluewave/campaign";
+import {
+  buildPresenceReadout,
+  type PlayerProjectionMonth,
+  type PlayerProjectionPresence,
+} from "./projection.js";
 
 /**
  * Fleet-screen projections (desktop-mvp ticket 15). Everything here is a
@@ -39,6 +44,8 @@ export interface MovementCommand {
  * (the production pack's ships all lack one today; the empty string is the
  * honest reflection of that pre-existing content gap). */
 export interface FleetShipView {
+  /** The ship's stable id: what the assign and clear commands name (S-5 09). */
+  readonly shipId: string;
   readonly name: string;
   readonly designId: string;
   /** Presentation status derived from the ship's readiness state (S-1 ticket 07). */
@@ -55,6 +62,12 @@ export interface FleetShipView {
   readonly colonialServiceFitted?: true;
   /** The manual's ship-list code for the fitting (p.48 `c`); absent when unfitted. */
   readonly colonialCode?: "c";
+  /** Months left in repair (S-1); shown as the number in the status column (manual p.48). Absent unless repairing. */
+  readonly repairMonthsRemaining?: number;
+  /** The ship's design has cramped accommodation (S-5 05); its manual code (p.48 `a`). Absent when not classified. */
+  readonly crampedCode?: "a";
+  /** The ship's design has short range (S-5 05); its manual code (p.48 `S`). Absent when not classified: `L` is never inferred. */
+  readonly rangeCode?: "S";
   /** The ship is beyond its area's base limit as of the last month end (S-5 08); absent otherwise. */
   readonly overBase?: true;
   /** The manual's ship-list code for it (p.48 `*`); absent when within the limit. */
@@ -96,12 +109,29 @@ export interface FleetPort {
   readonly capacity: number;
 }
 
+/** One ship beyond its area's base limit, for the presence readout's over-base list (S-5 09). */
+export interface FleetOverBaseShip {
+  readonly shipId: string;
+  readonly name: string;
+  readonly areaId: string;
+}
+
+/** What the presence readout needs beyond the snapshot: the campaign month (for the blockade exemption) and the pack's rules. */
+export interface FleetPresenceInput {
+  readonly month: PlayerProjectionMonth;
+  readonly rules: PresenceMeasurementRules;
+}
+
 /** The pure snapshot-derived portion of the shared `FleetScreenProjection`. */
 export interface FleetScreenView {
   readonly divisions: readonly FleetDivisionView[];
   readonly areas: readonly FleetArea[];
   readonly areaEdges: readonly FleetAreaEdge[];
   readonly ports: readonly FleetPort[];
+  /** The nation's presence readout, or `{ configured: false }` while the ruleset section is dormant (S-5 09). */
+  readonly presence: PlayerProjectionPresence;
+  /** The nation's ships flagged over-base, in ascending ship id (S-5 09). */
+  readonly overBaseShips: readonly FleetOverBaseShip[];
 }
 
 /**
@@ -113,15 +143,25 @@ export interface FleetScreenView {
  * - `areaEdges`: the compiled world routes (`{from,to}`) as directed edges.
  * - `ports`: the player nation's own ports, `capacity` = authored `level`
  *   (the same port-level proxy `buildPlayerProjection` uses, ticket 12).
+ * - `presence` / `overBaseShips`: the S-5 readout (`buildPresenceReadout`) and the flagged ships; with no `presence` input
+ *   the readout is `{ configured: false }`, which the screen words as 'not configured'.
  * Returns an empty view when `playerSlotId` doesn't resolve to a nation.
  */
 export function buildFleetScreenView(
   snapshot: CampaignSnapshot,
   playerSlotId: string,
+  presence?: FleetPresenceInput,
 ): FleetScreenView {
   const nation = snapshot.nations.get(playerSlotId);
   if (!nation) {
-    return { divisions: [], areas: [], areaEdges: [], ports: [] };
+    return {
+      divisions: [],
+      areas: [],
+      areaEdges: [],
+      ports: [],
+      presence: { configured: false },
+      overBaseShips: [],
+    };
   }
 
   const divisions: FleetDivisionView[] = nation.fleets.map((fleet) => ({
@@ -129,6 +169,7 @@ export function buildFleetScreenView(
     fleetName: fleet.name,
     areaId: fleet.locationAreaId,
     ships: fleet.ships.map((ship) => ({
+      shipId: ship.id,
       name: ship.name,
       designId: ship.designVersionId,
       status: READINESS_STATUS_LABEL[ship.readiness] ?? "active",
@@ -137,6 +178,15 @@ export function buildFleetScreenView(
       ...(ship.stationAssignment === undefined
         ? {}
         : { stationAssignment: ship.stationAssignment, stationCode: "FS" as const }),
+      ...(ship.readiness === "REPAIR" && ship.repairMonthsRemaining !== undefined
+        ? { repairMonthsRemaining: Number(ship.repairMonthsRemaining) }
+        : {}),
+      ...(snapshot.designs.get(ship.designVersionId)?.crampedAccommodation === true
+        ? { crampedCode: "a" as const }
+        : {}),
+      ...(snapshot.designs.get(ship.designVersionId)?.shortRange === true
+        ? { rangeCode: "S" as const }
+        : {}),
       ...(ship.colonialServiceFitted === true
         ? { colonialServiceFitted: true as const, colonialCode: "c" as const }
         : {}),
@@ -167,5 +217,23 @@ export function buildFleetScreenView(
     }))
     .sort((a, b) => a.id.localeCompare(b.id));
 
-  return { divisions, areas, areaEdges, ports };
+  const overBaseShips: FleetOverBaseShip[] = nation.fleets
+    .flatMap((fleet) =>
+      fleet.ships
+        .filter((ship) => ship.overBase !== undefined)
+        .map((ship) => ({ shipId: ship.id, name: ship.name, areaId: ship.locationAreaId })),
+    )
+    .sort((a, b) => a.shipId.localeCompare(b.shipId));
+
+  return {
+    divisions,
+    areas,
+    areaEdges,
+    ports,
+    presence:
+      presence === undefined
+        ? { configured: false }
+        : buildPresenceReadout(snapshot, playerSlotId, presence.month, presence.rules),
+    overBaseShips,
+  };
 }

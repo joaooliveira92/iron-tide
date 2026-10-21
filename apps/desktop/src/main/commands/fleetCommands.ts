@@ -1,18 +1,24 @@
 import { buildFleetScreenView, type MovementCommand } from "@bluewave/campaign-engine";
 import { Effect } from "effect";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
-import type { FleetScreenProjection, MovementCommandOutcome } from "../../shared/fleet-contract.js";
+import type {
+  FleetScreenProjection,
+  MovementCommandOutcome,
+  StationAssignmentOutcome,
+} from "../../shared/fleet-contract.js";
 import {
   CancelMovementCommandPayloadSchema,
   ReplaceMovementCommandPayloadSchema,
   SessionIdPayloadSchema,
   SubmitMovementCommandPayloadSchema,
+  SubmitStationAssignmentPayloadSchema,
 } from "../campaignCommandSchemas.js";
 import type { CampaignSessionRecord } from "../campaignSessions.js";
 import type { PendingCommandEntry } from "../pendingCommands.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed, CommandRejected, type CommandError } from "../runtime/commandError.js";
 import { withSchema } from "../runtime/commandProgram.js";
+import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { CommandQueueStore } from "../runtime/commandQueueStore.js";
 import { currentRevision, submitPlayerCommand, verifyEnvelope } from "./playerCommandSupport.js";
 
@@ -151,7 +157,15 @@ export const inspectFleetScreenProgram = withSchema(SessionIdPayloadSchema, (ses
       });
     }
 
-    const view = buildFleetScreenView(record.state.snapshot, record.playerSlotId);
+    const contentArtifact = yield* ContentArtifact;
+    const shipBuilding = yield* contentArtifact.loadShipBuildingContent();
+    const view = buildFleetScreenView(
+      record.state.snapshot,
+      record.playerSlotId,
+      shipBuilding.presence === undefined
+        ? undefined
+        : { month: record.month, rules: shipBuilding.presence },
+    );
     const projection: FleetScreenProjection = {
       revision: Number(record.state.snapshot.turnNumber),
       month: record.month,
@@ -161,6 +175,8 @@ export const inspectFleetScreenProgram = withSchema(SessionIdPayloadSchema, (ses
       areaEdges: view.areaEdges,
       ports: view.ports,
       movementCommands: queuedMovementCommands(record, yield* queue.entries(record.sessionId)),
+      presence: view.presence,
+      overBaseShips: view.overBaseShips,
     };
 
     return { outcome: "success" as const, value: projection, diagnostics: [] };
@@ -228,4 +244,44 @@ export const cancelMovementCommandProgram = withSchema(
         "cancelled",
       );
     }),
+);
+
+/**
+ * Queues an `AssignForeignStation` / `ClearForeignStation` for the player's nation (S-5 09, spec #73 R2). The batch
+ * is checked whole by the engine's own validator at issue time; a rejection surfaces the engine's stable code and the
+ * per-ship reasons verbatim and queues nothing. The discriminator is the sorted ship set, so the same request replays
+ * and a different selection never collides.
+ */
+export const submitStationAssignmentProgram = withSchema(
+  SubmitStationAssignmentPayloadSchema,
+  (payload) =>
+    Effect.map(
+      submitPlayerCommand({
+        sessionId: payload.sessionId,
+        expectedRevision: payload.expectedRevision,
+        transportRequestId: payload.transportRequestId,
+        build: (record) => {
+          const shipIds = [...payload.shipIds];
+          return {
+            body:
+              payload.intent === "assign"
+                ? { type: "AssignForeignStation" as const, nationId: record.playerSlotId, shipIds }
+                : { type: "ClearForeignStation" as const, nationId: record.playerSlotId, shipIds },
+            discriminator: [...shipIds].sort().join("\u0000"),
+          };
+        },
+      }),
+      (result): BridgeResult<StationAssignmentOutcome> =>
+        result.outcome === "success"
+          ? {
+              ...result,
+              value: {
+                commandId: result.value.commandId,
+                intent: payload.intent,
+                shipCount: payload.shipIds.length,
+                appliedOnNextTurn: true,
+              },
+            }
+          : result,
+    ),
 );

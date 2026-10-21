@@ -15,6 +15,7 @@ import { FleetReportSections } from "./components/FleetReportSections.js";
 import { MovementCommandsTable } from "./components/MovementCommandsTable.js";
 import { OrderSection } from "./components/OrderSection.js";
 import { FleetOrganizationSection } from "./organization/FleetOrganizationSection.js";
+import { FleetStationSection } from "./station/FleetStationSection.js";
 import { AreaOverviewTable } from "./components/AreaOverviewTable.js";
 import { useFleetScreen } from "./hooks/useFleetScreen.js";
 import { DivisionPicker } from "./components/DivisionPicker.js";
@@ -148,6 +149,8 @@ function FleetScreen({ sessionId }: { readonly sessionId: string }) {
       </CollapsibleSection>
       <Separator />
       <FleetOrganizationSection sessionId={sessionId} />
+      <Separator />
+      <FleetStationSection sessionId={sessionId} />
       <Separator />
       <OrderSection
         destinations={reachableAreas}

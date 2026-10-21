@@ -170,6 +170,33 @@ export interface PlayerProjection {
 }
 
 /**
+ * The player's presence readout (S-5, spec #73 R5-R7): the measured rows for `nationId`, the blockade exemption notice and,
+ * while exempt, a zero shortfall per row. Without rules the section is dormant: `{ configured: false }`. Shared by the
+ * player projection and the fleet screen so both read one derivation.
+ */
+export function buildPresenceReadout(
+  snapshot: Parameters<typeof measurePresence>[0] & Parameters<typeof isPresenceExempt>[0],
+  nationId: string,
+  month: PlayerProjectionMonth,
+  presenceRules?: PresenceMeasurementRules,
+): PlayerProjectionPresence {
+  if (presenceRules === undefined) return { configured: false };
+  const exempt = isPresenceExempt(snapshot, nationId, monthId(month.year, month.month));
+  return {
+    configured: true,
+    exempt,
+    areas: measurePresence(snapshot, presenceRules)
+      .filter((row) => row.nationId === nationId)
+      .map(({ areaId, requiredTons, presentTons, shortfallTons }) => ({
+        areaId,
+        requiredTons,
+        presentTons,
+        shortfallTons: exempt ? 0 : shortfallTons,
+      })),
+  };
+}
+
+/**
  * Builds a `PlayerProjection` for `playerSlotId` from a real compiled
  * `CampaignState` — the function ticket 12 found missing (only the type
  * existed). Every field is derived from real snapshot data, not
@@ -223,9 +250,6 @@ export function buildPlayerProjection(
 
   const shipyardCapacity = ports.reduce((sum, port) => sum + port.capacity, 0);
   const outlook = economyOutlook(snapshot, playerSlotId)!;
-  const exempt =
-    presenceRules !== undefined &&
-    isPresenceExempt(snapshot, playerSlotId, monthId(month.year, month.month));
   // Construction committed so far: a stock shown for context, never a monthly flow.
   const constructionSpend = totalPaidWork(nation);
 
@@ -314,21 +338,7 @@ export function buildPlayerProjection(
     knownTechnologyIds: [...nation.research.discoveredTechs].sort((a, b) => a.localeCompare(b)),
     strategicAreas,
     knownEnemyNations,
-    presence:
-      presenceRules === undefined
-        ? { configured: false }
-        : {
-            configured: true,
-            exempt,
-            areas: measurePresence(snapshot, presenceRules)
-              .filter((row) => row.nationId === playerSlotId)
-              .map(({ areaId, requiredTons, presentTons, shortfallTons }) => ({
-                areaId,
-                requiredTons,
-                presentTons,
-                shortfallTons: exempt ? 0 : shortfallTons,
-              })),
-          },
+    presence: buildPresenceReadout(snapshot, playerSlotId, month, presenceRules),
     commandWorkspace: { commands: [], movementCommands: [] },
   };
 }

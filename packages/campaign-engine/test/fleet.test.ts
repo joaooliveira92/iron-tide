@@ -2,7 +2,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import type { FleetState, Ship } from "@bluewave/campaign";
 import { buildFleetScreenView } from "../src/fleet.js";
-import { fixtureNation, fixtureSnapshot } from "./fixtures.js";
+import { fixtureDesign, fixtureNation, fixtureSnapshot } from "./fixtures.js";
 
 /**
  * Pure projection tests for the Fleet screen view (desktop-mvp ticket 15),
@@ -114,6 +114,7 @@ describe("buildFleetScreenView", () => {
     const view = buildFleetScreenView(snapshot, "uk");
     expect(view.divisions[0]!.ships).toEqual([
       {
+        shipId: "gbr_inflexible",
         name: "HMS Inflexible",
         designId: "des_inflexible",
         status: "working_up",
@@ -121,6 +122,7 @@ describe("buildFleetScreenView", () => {
         crewQuality: 0,
       },
       {
+        shipId: "gbr_dreadnought",
         name: "HMS Dreadnought",
         designId: "",
         status: "active",
@@ -204,6 +206,91 @@ describe("buildFleetScreenView", () => {
     expect(within).not.toHaveProperty("overBaseCode");
   });
 
+  it("shows the repair month count, a for cramped and S for short-range designs (manual p.48)", () => {
+    const snapshot = fixtureSnapshot(
+      [
+        fixtureNation({
+          id: "uk",
+          fleets: [
+            makeFleet(
+              "fleet_gbr_home",
+              "Home Fleet",
+              [
+                makeShip("rep", "HMS Repair", {
+                  readiness: "REPAIR",
+                  repairMonthsRemaining: SafeInt(3),
+                  designVersionId: "des_a",
+                }),
+                makeShip("plain", "HMS Plain", { designVersionId: "des_plain" }),
+              ],
+              "eng_home_coast",
+            ),
+          ],
+        }),
+      ],
+      [
+        fixtureDesign("uk", "des_a", { crampedAccommodation: true, shortRange: true }),
+        fixtureDesign("uk", "des_plain"),
+      ],
+    );
+    const [rep, plain] = buildFleetScreenView(snapshot, "uk").divisions[0]!.ships;
+    expect(rep).toMatchObject({ repairMonthsRemaining: 3, crampedCode: "a", rangeCode: "S" });
+    expect(plain).not.toHaveProperty("repairMonthsRemaining");
+    expect(plain).not.toHaveProperty("crampedCode");
+    expect(plain).not.toHaveProperty("rangeCode");
+  });
+
+  it("lists the over-base ships with their area for the readout (S-5 09)", () => {
+    const snapshot = fixtureSnapshot([
+      fixtureNation({
+        id: "uk",
+        fleets: [
+          makeFleet(
+            "fleet_gbr_home",
+            "Home Fleet",
+            [
+              makeShip("b_over", "HMS B", { overBase: { maintenanceAdderBp: SafeInt(5_000) } }),
+              makeShip("a_over", "HMS A", { overBase: { maintenanceAdderBp: SafeInt(5_000) } }),
+              makeShip("within", "HMS Within"),
+            ],
+            "eng_home_coast",
+          ),
+        ],
+      }),
+    ]);
+    expect(buildFleetScreenView(snapshot, "uk").overBaseShips).toEqual([
+      { shipId: "a_over", name: "HMS A", areaId: "eng_home_coast" },
+      { shipId: "b_over", name: "HMS B", areaId: "eng_home_coast" },
+    ]);
+    expect(buildFleetScreenView(snapshot, "nobody").overBaseShips).toEqual([]);
+  });
+
+  it("reads 'not configured' without presence rules and the measured areas with them (S-5 09)", () => {
+    // FIXTURE-CLASS rules: mechanics only, never a production value.
+    const rules = {
+      requiredTonsPerPossessionWeight: 100,
+      noPortValueWeight: 2,
+      crampedOrShortRangeCountBp: 5_000,
+    };
+    const snapshot = fixtureSnapshot([fixtureNation({ id: "uk" })], [], {
+      world: {
+        areas: [],
+        routes: [],
+        ports: [],
+        possessions: [{ id: "p1", nationId: "uk", areaId: "india" }],
+      },
+    });
+    expect(buildFleetScreenView(snapshot, "uk").presence).toEqual({ configured: false });
+    expect(
+      buildFleetScreenView(snapshot, "uk", { month: { month: 1, year: 1880 }, rules }).presence,
+    ).toEqual({
+      configured: true,
+      exempt: false,
+      areas: [{ areaId: "india", requiredTons: 200, presentTons: 0, shortfallTons: 200 }],
+    });
+    expect(buildFleetScreenView(snapshot, "nobody").presence).toEqual({ configured: false });
+  });
+
   it("lists the world areas, routes as directed edges, and only the player's ports with level capacity", () => {
     const snapshot = fixtureSnapshot(
       [
@@ -279,6 +366,8 @@ describe("buildFleetScreenView", () => {
       areas: [],
       areaEdges: [],
       ports: [],
+      presence: { configured: false },
+      overBaseShips: [],
     });
   });
 });

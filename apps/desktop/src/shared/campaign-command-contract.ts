@@ -70,6 +70,8 @@ import type {
   CancelMovementCommandPayload,
   FleetScreenProjection,
   MovementCommandOutcome,
+  StationAssignmentOutcome,
+  SubmitStationAssignmentPayload,
   ReplaceMovementCommandPayload,
   SubmitMovementCommandPayload,
 } from "./fleet-contract.js";
@@ -463,6 +465,7 @@ export const CAMPAIGN_COMMAND_NAMES = [
   "previewForeignConstructionCommand",
   "inspectFleetScreen",
   "submitMovementCommand",
+  "submitStationAssignment",
   "replaceMovementCommand",
   "cancelMovementCommand",
   "submitDesignCommand",
@@ -648,6 +651,10 @@ export interface CampaignCommandClient {
     command: "submitMovementCommand",
     payload: SubmitMovementCommandPayload,
   ): Promise<BridgeResult<MovementCommandOutcome>>;
+  execute(
+    command: "submitStationAssignment",
+    payload: SubmitStationAssignmentPayload,
+  ): Promise<BridgeResult<StationAssignmentOutcome>>;
   execute(
     command: "replaceMovementCommand",
     payload: ReplaceMovementCommandPayload,

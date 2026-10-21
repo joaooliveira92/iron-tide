@@ -2,8 +2,10 @@ import type {
   FleetArea,
   FleetAreaEdge,
   FleetDivisionView,
+  FleetOverBaseShip,
   FleetPort,
   MovementCommand,
+  PlayerProjectionPresence,
 } from "@bluewave/campaign-engine";
 import type { CommandEnvelope } from "./bridge-contract.js";
 
@@ -11,8 +13,11 @@ export type {
   FleetArea,
   FleetAreaEdge,
   FleetDivisionView,
+  FleetOverBaseShip,
   FleetPort,
   FleetShipView,
+  PlayerProjectionPresence,
+  PlayerProjectionPresenceArea,
 } from "@bluewave/campaign-engine";
 
 /**
@@ -37,6 +42,10 @@ export interface FleetScreenProjection {
   readonly areaEdges: readonly FleetAreaEdge[];
   readonly ports: readonly FleetPort[];
   readonly movementCommands: readonly MovementCommand[];
+  /** The presence readout; `{ configured: false }` while the pack authors no presence ruleset (S-5 09). */
+  readonly presence: PlayerProjectionPresence;
+  /** The player's ships flagged over-base, for the readout's over-base list (S-5 09). */
+  readonly overBaseShips: readonly FleetOverBaseShip[];
 }
 
 export interface MovementCommandOutcome {
@@ -56,4 +65,22 @@ export interface ReplaceMovementCommandPayload extends SubmitMovementCommandPayl
 
 export interface CancelMovementCommandPayload extends CommandEnvelope {
   readonly commandId: string;
+}
+
+/** Assign or clear foreign-station status for one or more ships (spec #73 R2, S-5 09). */
+export type StationAssignmentIntent = "assign" | "clear";
+
+export interface SubmitStationAssignmentPayload extends CommandEnvelope {
+  readonly intent: StationAssignmentIntent;
+  /** A non-empty selection of the player's ship ids; the engine validates the batch whole at issue time. */
+  readonly shipIds: readonly string[];
+}
+
+/** The engine applies the queued assignment on the next `commitMonth`. */
+export interface StationAssignmentOutcome {
+  readonly commandId: string;
+  readonly intent: StationAssignmentIntent;
+  /** How many ships the queued command names. */
+  readonly shipCount: number;
+  readonly appliedOnNextTurn: true;
 }

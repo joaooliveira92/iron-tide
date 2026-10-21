@@ -65,6 +65,7 @@ const IMPLEMENTED_COMMANDS = new Set([
   "saveCampaign",
   "closeCampaign",
   "submitDivisionCommand",
+  "submitStationAssignment",
   "inspectBudgetScreen",
   "submitMovementCommand",
   "replaceMovementCommand",

@@ -12,6 +12,8 @@ export type RequestKind =
   | "accelerate"
   | "order-batch"
   | "order-foreign"
+  | "assign-station"
+  | "clear-station"
   | "authorize-dock-expansion";
 
 export interface PendingRequest {

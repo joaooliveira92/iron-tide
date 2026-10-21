@@ -64,6 +64,7 @@ import {
   inspectFleetScreenProgram,
   replaceMovementCommandProgram,
   submitMovementCommandProgram,
+  submitStationAssignmentProgram,
 } from "./commands/fleetCommands.js";
 import {
   inspectBudgetScreenProgram,
@@ -141,6 +142,7 @@ export const commandPrograms: Partial<Record<CampaignCommandName, CommandProgram
   previewForeignConstructionCommand: previewForeignConstructionCommandProgram,
   inspectFleetScreen: inspectFleetScreenProgram,
   submitMovementCommand: submitMovementCommandProgram,
+  submitStationAssignment: submitStationAssignmentProgram,
   replaceMovementCommand: replaceMovementCommandProgram,
   cancelMovementCommand: cancelMovementCommandProgram,
   submitDesignCommand: submitDesignCommandProgram,

@@ -14,7 +14,9 @@ import type {
   FleetScreenProjection,
   MovementCommandOutcome,
   ReplaceMovementCommandPayload,
+  StationAssignmentOutcome,
   SubmitMovementCommandPayload,
+  SubmitStationAssignmentPayload,
 } from "../../shared/fleet-contract.js";
 import {
   clearCampaignSessionsForTest,
@@ -33,6 +35,7 @@ import {
   inspectFleetScreenProgram,
   replaceMovementCommandProgram,
   submitMovementCommandProgram,
+  submitStationAssignmentProgram,
 } from "./fleetCommands.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -56,6 +59,8 @@ const replaceMovementCommand = (payload: ReplaceMovementCommandPayload) =>
   runProgram<MovementCommandOutcome>(replaceMovementCommandProgram, payload);
 const cancelMovementCommand = (payload: CancelMovementCommandPayload) =>
   runProgram<MovementCommandOutcome>(cancelMovementCommandProgram, payload);
+const submitStationAssignment = (payload: SubmitStationAssignmentPayload) =>
+  runProgram<StationAssignmentOutcome>(submitStationAssignmentProgram, payload);
 const commitMonth = (payload: {
   sessionId: string;
   expectedRevision: number;
@@ -216,6 +221,80 @@ describe("fleet commands (Effect programs)", () => {
     expect(portsmouth!.capacity).toBe(
       Number(ukPorts.find((p) => p.id === "gbr_portsmouth")!.level),
     );
+  });
+
+  it("carries ship ids and the dormant 'not configured' presence readout (S-5 09, production pack authors no section)", async () => {
+    registerProductionSession("session-uk-presence", resolve(saveRoot, "save-uk-p"), "uk");
+    const result = await inspectFleetScreen("session-uk-presence");
+    expect(result.outcome).toBe("success");
+    if (result.outcome !== "success") return;
+    const home = result.value.divisions.find((d) => d.divisionId === "fleet_gbr_home")!;
+    expect(home.ships.map((s) => s.shipId)).toContain("gbr_dreadnought");
+    expect(result.value.presence).toEqual({ configured: false });
+    expect(result.value.overBaseShips).toEqual([]);
+  });
+
+  describe("station assignment (S-5 09)", () => {
+    const base = { expectedRevision: 0 };
+
+    it("queues an assign for an active ship and a clear is then rejected whole with the typed reason", async () => {
+      registerProductionSession("session-station", resolve(saveRoot, "save-station"), "uk");
+      const assigned = await submitStationAssignment({
+        ...base,
+        sessionId: "session-station",
+        transportRequestId: "tx-assign",
+        intent: "assign",
+        shipIds: ["gbr_dreadnought"],
+      });
+      expect(assigned).toMatchObject({
+        outcome: "success",
+        value: { intent: "assign", shipCount: 1, appliedOnNextTurn: true },
+      });
+
+      const cleared = await submitStationAssignment({
+        ...base,
+        sessionId: "session-station",
+        transportRequestId: "tx-clear",
+        intent: "clear",
+        shipIds: ["gbr_dreadnought"],
+      });
+      expect(cleared).toMatchObject({ outcome: "rejected", reason: "STATION_ASSIGNMENT_REJECTED" });
+      if (cleared.outcome !== "rejected") return;
+      expect(cleared.diagnostics.join(" ")).toContain("gbr_dreadnought=NOT_ASSIGNED");
+    });
+
+    it("rejects an unknown ship with every reason named and does not queue", async () => {
+      registerProductionSession("session-station2", resolve(saveRoot, "save-station2"), "uk");
+      const result = await submitStationAssignment({
+        ...base,
+        sessionId: "session-station2",
+        transportRequestId: "tx-bad",
+        intent: "assign",
+        shipIds: ["gbr_dreadnought", "nope"],
+      });
+      expect(result).toMatchObject({ outcome: "rejected", reason: "STATION_ASSIGNMENT_REJECTED" });
+      if (result.outcome !== "rejected") return;
+      expect(result.diagnostics.join(" ")).toContain("nope=NOT_OWNED");
+    });
+
+    it("rejects an empty or malformed selection at the schema boundary", async () => {
+      const result = await runProgram(submitStationAssignmentProgram, {
+        sessionId: "s",
+        expectedRevision: 0,
+        transportRequestId: "tx",
+        intent: "assign",
+        shipIds: [],
+      });
+      expect(result).toMatchObject({ outcome: "error", reason: "INVALID_PAYLOAD" });
+      const badIntent = await runProgram(submitStationAssignmentProgram, {
+        sessionId: "s",
+        expectedRevision: 0,
+        transportRequestId: "tx",
+        intent: "toggle",
+        shipIds: ["a"],
+      });
+      expect(badIntent).toMatchObject({ outcome: "error", reason: "INVALID_PAYLOAD" });
+    });
   });
 
   it("excludes non-player nations' fleets and ports from the projection", async () => {

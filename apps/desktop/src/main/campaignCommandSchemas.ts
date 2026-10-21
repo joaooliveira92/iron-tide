@@ -368,6 +368,13 @@ export const SubmitBudgetAllocationPayloadSchema = Schema.Struct({
   researchBudget: int,
 });
 
+/** Wire shape for `submitStationAssignment`; ownership, status and eligibility are the engine's (issue-time validation). */
+export const SubmitStationAssignmentPayloadSchema = Schema.Struct({
+  ...CommandEnvelopePayloadSchema.fields,
+  intent: Schema.Literals(["assign", "clear"]),
+  shipIds: Schema.Array(nonEmptyString).check(Schema.isMinLength(1), Schema.isMaxLength(256)),
+});
+
 /** Wire shape for `submitDivisionCommand`. */
 export const SubmitDivisionCommandPayloadSchema = Schema.Struct({
   ...CommandEnvelopePayloadSchema.fields,

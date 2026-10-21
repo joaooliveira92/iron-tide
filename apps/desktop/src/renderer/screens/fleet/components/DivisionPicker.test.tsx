@@ -11,6 +11,7 @@ const row: DivisionPickerRow = {
   areaName: "English Home Waters",
   ships: [
     {
+      shipId: "alexandra",
       name: "HMS Alexandra",
       designId: "",
       status: "active",
