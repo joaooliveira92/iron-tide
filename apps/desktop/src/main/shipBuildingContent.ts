@@ -4,7 +4,6 @@ import {
   presenceFromRulesets,
   type ShipBuildingCatalogue,
 } from "@bluewave/content-compiler";
-import type { BattleOfferRules } from "@bluewave/content-schema";
 import {
   buildShipBuildingContent,
   type AuthoredArmamentContent,
@@ -76,6 +75,8 @@ function loadShipBuilding(): LoadedShipBuilding {
   };
   return loaded;
 }
+
+type BattleOfferRules = ReturnType<typeof battleOffersFromRulesets>;
 
 let battleOffers: { readonly rules: BattleOfferRules | undefined } | null = null;
 
