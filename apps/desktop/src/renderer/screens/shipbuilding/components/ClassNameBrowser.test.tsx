@@ -11,12 +11,22 @@ const groups: readonly NameGroup[] = [
 ];
 
 describe("ClassNameBrowser", () => {
-  it("lists the names by ship type and marks the design's own type", () => {
+  it("has a tab per ship type with its name count, opening on the design's own type", () => {
     render(<ClassNameBrowser groups={groups} current="" onPick={() => {}} />);
-    expect(screen.getByRole("region", { name: "DD · Destroyer" })).toBeTruthy();
-    expect(screen.getByRole("region", { name: "B · Battleship" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /DD · Destroyer/ }).getAttribute("aria-selected")).toBe(
+      "true",
+    );
+    expect(screen.getByRole("tab", { name: /B · Battleship/ })).toBeTruthy();
     expect(screen.getByText("This design's type")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Havock" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Devastation" })).toBeNull();
+  });
+
+  it("shows another type's names when its tab is chosen", () => {
+    render(<ClassNameBrowser groups={groups} current="" onPick={() => {}} />);
+    fireEvent.click(screen.getByRole("tab", { name: /B · Battleship/ }));
     expect(screen.getByRole("button", { name: "Devastation" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Havock" })).toBeNull();
   });
 
   it("hands the chosen name to the host", () => {
@@ -36,10 +46,10 @@ describe("ClassNameBrowser", () => {
     );
   });
 
-  it("filters, dropping groups with no match, and says when nothing matches", () => {
+  it("filters, dropping tabs with no match, and says when nothing matches", () => {
     render(<ClassNameBrowser groups={groups} current="" onPick={() => {}} />);
     fireEvent.change(screen.getByLabelText("Filter names"), { target: { value: "dev" } });
-    expect(screen.queryByRole("region", { name: "DD · Destroyer" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: /DD · Destroyer/ })).toBeNull();
     expect(screen.getByRole("button", { name: "Devastation" })).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Filter names"), { target: { value: "zzz" } });
     expect(screen.getByRole("status").textContent).toMatch(/No name matches/);
