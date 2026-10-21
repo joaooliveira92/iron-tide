@@ -144,6 +144,40 @@ function runChild(): void {
     const thresholdEvents = (result: MonthResult) =>
       result.eventLedger.all.filter((e) => e.body.kind === "DeclineThresholdReached");
 
+    // T-1 06 (#115): the same scripted crossing with a FIXTURE-CLASS declined-battle prestige sub-rule (a fixed 3-point
+    // loss) lowers the player's prestige through the S-2 seam. The loss is a fixture value and never reaches production.
+    const prestigeRules = {
+      ...FIXTURE_BATTLE_OFFER_RULES,
+      declinedBattlePrestige: {
+        rule: { kind: "FIXED_LOSS", amount: 3 },
+        repeat: "ONCE_AT_THRESHOLD",
+      },
+    } as const;
+    const withPrestige = (): MonthResult =>
+      new MonthExecutor().execute(seeded, [], SEED, new DiagnosticCollector(), undefined, {
+        battleOffers: prestigeRules,
+        playerNationId: PLAYER,
+        interruptions: {
+          turnId: TURN,
+          recordedInputs: [
+            makeRecordedInput({
+              ordinal: secondRequest.ordinal,
+              kind: "offer",
+              interruptionId: secondRequest.interruptionId,
+              payload: {
+                interruptionId: secondRequest.interruptionId,
+                battleId: secondRequest.battleId,
+                response: "decline",
+              },
+            }),
+          ],
+        },
+      });
+    const costed = withPrestige();
+    const costedAgain = withPrestige();
+    const prestigeEvents = (result: MonthResult) =>
+      result.eventLedger.all.filter((e) => e.body.kind === "PrestigeChanged").map((e) => e.body);
+
     const enemyShipIds = snapshot.nations
       .get(ENEMY)!
       .fleets.flatMap((f) => f.ships)
@@ -370,6 +404,18 @@ function runChild(): void {
       firstCounters: declined.finalSnapshot.wars.declineCounters ?? [],
       firstThresholdEvents: thresholdEvents(declined).length,
       dormantCounters: "declineCounters" in dormant.finalSnapshot.wars,
+      prestigeBefore: seeded.nations.get(PLAYER)!.prestige,
+      prestigeAfter: costed.finalSnapshot.nations.get(PLAYER)!.prestige,
+      enemyPrestigeUnchanged:
+        costed.finalSnapshot.nations.get(ENEMY)!.prestige === seeded.nations.get(ENEMY)!.prestige,
+      prestigeBodies: prestigeEvents(costed),
+      prestigeUntouchedWithoutRule:
+        second.finalSnapshot.nations.get(PLAYER)!.prestige === seeded.nations.get(PLAYER)!.prestige,
+      prestigeSnapshotHash: hashSnapshot(costed.finalSnapshot),
+      prestigeEventLedgerHash: costed.eventLedger.hash(),
+      prestigeInProcessEqual:
+        hashSnapshot(costed.finalSnapshot) === hashSnapshot(costedAgain.finalSnapshot) &&
+        costed.eventLedger.hash() === costedAgain.eventLedger.hash(),
       secondOutcome: second.outcome,
       secondCounters: second.finalSnapshot.wars.declineCounters ?? [],
       secondThresholdBodies: thresholdEvents(second).map((e) => e.body),

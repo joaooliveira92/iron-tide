@@ -389,6 +389,14 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     firstCounters: { count: number; key: string }[];
     firstThresholdEvents: number;
     dormantCounters: boolean;
+    prestigeBefore: number;
+    prestigeAfter: number;
+    enemyPrestigeUnchanged: boolean;
+    prestigeBodies: Record<string, unknown>[];
+    prestigeUntouchedWithoutRule: boolean;
+    prestigeSnapshotHash: string;
+    prestigeEventLedgerHash: string;
+    prestigeInProcessEqual: boolean;
     secondOutcome: string;
     secondCounters: { count: number }[];
     secondThresholdBodies: Record<string, unknown>[];
@@ -510,6 +518,27 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     expect(r1.secondInProcessEqual).toBe(true);
     expect(r2.secondSnapshotHash).toBe(r1.secondSnapshotHash);
     expect(r2.secondEventLedgerHash).toBe(r1.secondEventLedgerHash);
+  });
+
+  it("the threshold crossing lowers only the player's prestige through the S-2 seam, identically in two clean processes (T-1 06)", () => {
+    const r1 = runOfferChild();
+    const r2 = runOfferChild();
+    expect(r1.prestigeAfter).toBe(r1.prestigeBefore - 3);
+    expect(r1.enemyPrestigeUnchanged).toBe(true);
+    expect(r1.prestigeUntouchedWithoutRule).toBe(true);
+    expect(r1.prestigeBodies).toHaveLength(1);
+    expect(r1.prestigeBodies[0]).toMatchObject({
+      kind: "PrestigeChanged",
+      nationId: "uk",
+      reasonCode: "DECLINED_BATTLE",
+      ruleKind: "FIXED_LOSS",
+      before: r1.prestigeBefore,
+      after: r1.prestigeAfter,
+      delta: -3,
+    });
+    expect(r1.prestigeInProcessEqual).toBe(true);
+    expect(r2.prestigeSnapshotHash).toBe(r1.prestigeSnapshotHash);
+    expect(r2.prestigeEventLedgerHash).toBe(r1.prestigeEventLedgerHash);
   });
 
   it("the enemy's decline is identical across two clean processes: one recorded draw, no battle, no reservation, no offer (T-1 07)", () => {

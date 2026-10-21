@@ -12,13 +12,14 @@ import type {
 import { assertDeclineAllowed, BATTLE_DECLINE_NOT_ALLOWED } from "@bluewave/combat";
 import type { AcceptanceClass } from "@bluewave/combat";
 import type { BattleOfferRules } from "@bluewave/content-schema";
-import { isBluewaveError } from "@bluewave/contracts";
+import { isBluewaveError, SafeInt } from "@bluewave/contracts";
 import { applyWarScoreDelta, type resolveBattleManifest } from "./battles.js";
 import { divide, type OfferContent } from "./battleOffer.js";
 import { tallyDecline } from "./declineCounter.js";
 import { battleDeclinedEvent, declineThresholdReachedEvent } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
 import type { OfferRefusal } from "./interruption.js";
+import { applyPrestigeChange } from "./prestigeApplication.js";
 
 /** The stable reason a decline was applied (the combat vocabulary's code for a decline that costs). */
 export const BATTLE_DECLINED_REASON = "BATTLE_DECLINED_WITH_CONSEQUENCES";
@@ -197,6 +198,18 @@ export function applyDecline(
         ctx.campaignMonth,
       ),
     );
+    // R10: the crossing costs the PLAYER prestige, only through the S-2 seam and only when the ruleset authors the rule.
+    const prestige = rules.declinedBattlePrestige;
+    if (prestige !== undefined && decliner === ctx.playerNationId) {
+      applyPrestigeChange(
+        ctx,
+        decliner,
+        "DECLINED_BATTLE",
+        prestige.rule.kind === "FIXED_LOSS"
+          ? { kind: "FIXED_LOSS", amount: SafeInt(prestige.rule.amount) }
+          : { kind: "PROPORTIONAL_LOSS", basisPoints: SafeInt(prestige.rule.basisPoints) },
+      );
+    }
   }
   return true;
 }
