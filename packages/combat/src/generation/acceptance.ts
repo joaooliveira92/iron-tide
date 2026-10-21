@@ -50,11 +50,16 @@ export function resolveDecisionBoundary(
   return null;
 }
 
+/** Whether a battle of this acceptance class may be declined (an operationally unavoidable one may not). */
+export function isDeclineAllowed(acceptanceClass: AcceptanceClass): boolean {
+  return acceptanceClass !== "OPERATIONALLY_UNAVOIDABLE";
+}
+
 export function assertDeclineAllowed(
   acceptanceClass: AcceptanceClass,
   context?: Record<string, unknown>,
 ): void {
-  if (acceptanceClass === "OPERATIONALLY_UNAVOIDABLE") {
+  if (!isDeclineAllowed(acceptanceClass)) {
     throw new BluewaveError(BATTLE_DECLINE_NOT_ALLOWED, {
       code: BATTLE_DECLINE_NOT_ALLOWED,
       acceptanceClass,

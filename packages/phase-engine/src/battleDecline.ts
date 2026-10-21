@@ -9,10 +9,10 @@ import type {
   DeclinedBattleRecord,
   NationState,
 } from "@bluewave/campaign";
-import { assertDeclineAllowed, BATTLE_DECLINE_NOT_ALLOWED } from "@bluewave/combat";
+import { BATTLE_DECLINE_NOT_ALLOWED, isDeclineAllowed } from "@bluewave/combat";
 import type { AcceptanceClass } from "@bluewave/combat";
 import type { BattleOfferRules } from "@bluewave/content-schema";
-import { isBluewaveError, SafeInt } from "@bluewave/contracts";
+import { SafeInt } from "@bluewave/contracts";
 import { applyWarScoreDelta, type resolveBattleManifest } from "./battles.js";
 import { divide, type OfferContent } from "./battleOffer.js";
 import { tallyDecline } from "./declineCounter.js";
@@ -65,15 +65,8 @@ export function declineRefusal(
   content: OfferContent,
   rules: BattleOfferRules,
 ): OfferRefusal | null {
-  try {
-    assertDeclineAllowed(content.acceptanceClass as AcceptanceClass, {
-      battleId: content.battleId,
-    });
-  } catch (error) {
-    if (isBluewaveError(error) && error.context?.["code"] === BATTLE_DECLINE_NOT_ALLOWED) {
-      return { _tag: BATTLE_DECLINE_NOT_ALLOWED };
-    }
-    throw error;
+  if (!isDeclineAllowed(content.acceptanceClass as AcceptanceClass)) {
+    return { _tag: BATTLE_DECLINE_NOT_ALLOWED };
   }
   return priceDecline(rules, content.missionType) === null
     ? { _tag: OFFER_DECLINE_UNPRICED }
