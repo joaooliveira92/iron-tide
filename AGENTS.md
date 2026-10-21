@@ -139,6 +139,26 @@ produce identical authoritative hashes across OSes.
 - Use `pnpm change-scope` for change-based filtering: see
   [change scope](docs/agents/change-scope.md).
 
+## Shipping bar (game-team standard)
+
+Game-lead bar: the player's experience is the product.
+
+- **Playable** on every merge: the desktop app launches and the vertical slice runs.
+- **Seen**: a UI change is verified in the running app with `pnpm snap` before it is done.
+- **Tunable**: gameplay numbers live in content or balance data, marked PROVISIONAL until sourced or playtested (ADR-0247); code holds mechanisms, not magic numbers.
+- **Explainable**: every number the player sees traces to an explanation tree.
+- **Measured**: balance claims cite the generated reports (`pnpm check:balance-reports`), not intuition.
+
+## Task guides
+
+Reach for the guide when the task matches:
+
+- Editing `apps/desktop` renderer, main, or preload: [desktop view](docs/agents/desktop-view.md).
+- Seeing the running app (screenshot, aria tree, console): [desktop snap](docs/agents/desktop-snap.md).
+- Adding a nation: [adding a nation](docs/agents/adding-a-nation.md).
+- Editing inside a package: read its `AGENTS.md` first when it has one; the roster is in [packages/README.md](packages/README.md).
+- Unsure where something lives: [repo map](docs/agents/repo-map.md).
+
 ## Vendored repositories
 
 `vendor/` and `repos/` are read-only reference material (byte-identical upstream

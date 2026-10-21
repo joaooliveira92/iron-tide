@@ -26,6 +26,12 @@ produce the same authoritative hashes, on every supported OS.
   and an explicit resolution outcome, and emit domain events.
 - **Phases.** The month advances through an ordered, registered phase pipeline
   with declared read/write footprints.
+- **Player first.** The player's experience is the product: the game is
+  playable on every merge, decisions are readable, and every number shown
+  explains itself.
+- **Tune with data.** Gameplay values live in content and balance data, marked
+  provisional until sourced or playtested; balance claims cite the generated
+  benchmark reports, never intuition.
 - **Replay and compatibility.** Saves are content-addressed and refused on a
   version mismatch, never migrated at runtime.
 

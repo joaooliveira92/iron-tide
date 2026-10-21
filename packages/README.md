@@ -1,20 +1,20 @@
 # Packages
 
-19 standalone TypeScript composite projects. **Authoritative sources:**
+21 standalone TypeScript composite projects. **Authoritative sources:**
 
-- **Boundaries and dependency direction** — see [`docs/adr`](../docs/adr). Read the ADR index before adding a package or a cross-package import.
-- **Domain vocabulary** — [CONTEXT.md](../CONTEXT.md) (glossary; e.g. `Nation` not "country").
+- **Boundaries** — [`docs/adr`](../docs/adr); read the index before adding a package or cross-package import.
+- **Vocabulary** — [CONTEXT.md](../CONTEXT.md).
 - **Non-negotiable rules** — [`DESIGN-57`](../docs/architecture/non-negotiable-rules.md).
 
 Rules: the graph is directed and acyclic, leaf primitives at the bottom and the
 phase engine composing them; import only a package's public `exports`
-(`src/index.ts`), never another package's source. Packages with non-obvious constraints carry a short `AGENTS.md` (role, boundary, invariants); read it before editing. Build/test one package with
+(`src/index.ts`), never another package's source. Packages with non-obvious constraints carry an `AGENTS.md`; read it before editing. Build/test one package with
 `pnpm --filter @bluewave/<name> <build|test|typecheck|lint>`.
 
 | Package | Role |
 | --- | --- |
 | `contracts` | Branded `SafeInt` types, checked arithmetic, rounding. Graph root. |
-| `diagnostics` | Structured diagnostic collector with stable codes. |
+| `diagnostics` | Diagnostic collector, stable codes. |
 | `deterministic` | Canonical JSON, SHA-256, hash contexts, envelopes, fixed-point math. |
 | `armament` | Platform-independent authoritative armament domain + resolver (ADR-0093). |
 | `random` | Domain-separated seeded PRNG with an audit ledger. |
@@ -23,14 +23,16 @@ phase engine composing them; import only a package's public `exports`
 | `campaign` | Campaign compiler and state aggregates (world, nations, fleets, war…). |
 | `ship-design` | Component-level ship compiler (DESIGN-21/63). |
 | `ship-visual` | Presentation-only ship visual parts: era/nation part catalog, resolver, placement (ADR-0148). Renderer-only. |
+| `messages` | Turn interruptions, decision requests, recorded inputs, message aggregation. |
+| `content-codemod` | Legacy-to-parts content codemod; stages content, never activates production. |
 | `commands` | Command envelopes, 7-step lifecycle, authorization, ledger, reason codes. |
 | `events` | Domain event envelopes, explanation trees, ledger. |
 | `combat` | Deterministic tactical battle engine and auto-resolution. |
 | `ai` | Legal-only uniform-random AI planning via keyed RNG. |
 | `persistence` | Content-addressed atomic save/load, snapshots, recovery. |
 | `phase-engine` | Ordered monthly turn pipeline (17 phases), replay verifier, ledger. |
-| `campaign-engine` | Desktop read-only projections + the `campaign:execute` bridge. |
-| `test-support` | Fixture helpers and valid/invalid definitions. |
-| `cross-process-test` | Cross-process determinism proof harness. |
+| `campaign-engine` | Desktop read-only projections + `campaign:execute` bridge. |
+| `test-support` | Fixture helpers. |
+| `cross-process-test` | Cross-process determinism harness. |
 
 Applications live in [apps/](../apps/README.md).
