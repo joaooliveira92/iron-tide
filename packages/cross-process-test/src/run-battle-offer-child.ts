@@ -4,7 +4,7 @@
 // non-offered control as JSON for byte-for-byte comparison across two clean processes.
 //
 // EVERY RULESET NUMBER COMES FROM @bluewave/test-support AND IS FIXTURE-CLASS: it exercises the mechanics and never
-// reaches the production pack, which authors no battleOffers section until ticket #118.
+// reaches the production pack, whose own ADR-0254 section is exercised by test/production-battle-offer.test.ts.
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";

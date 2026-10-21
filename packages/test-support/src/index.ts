@@ -382,8 +382,8 @@ export function buildFixtureContentBundle(
 }
 
 // T-1 fixtures (spec #109 R1). FIXTURE-CLASS values for exercising the battle-offer mechanics in tests. They are NOT the
-// ADR-0254 balance targets and not sourced values, and must never reach the production pack (a campaign test asserts the
-// pack authors no battleOffers section until ticket #118).
+// ADR-0254 balance targets and not sourced values, and must never reach the production pack (a cross-process test asserts the
+// pack's battleOffers section is the ADR-0254 set and shares no field with this one).
 /** A complete fixture-class `battleOffers` section: a perturbing estimate model, so the recorded-draw path is exercised. */
 export const FIXTURE_BATTLE_OFFER_RULES: BattleOfferRules = {
   sectionVersion: 1,

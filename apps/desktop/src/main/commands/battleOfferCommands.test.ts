@@ -32,8 +32,9 @@ import {
 } from "./resolveTurn.js";
 
 // T-1 03 (#112): the desktop command path of a battle offer, over the compiled production campaign with a war injected
-// into the session snapshot. The production pack authors no battleOffers section (ticket #118), so the FIXTURE-CLASS
-// section is supplied through the ContentArtifact test seam, exactly as the DecisionSource seam supplies decisions.
+// into the session snapshot. The mechanics run under a FIXTURE-CLASS section supplied through the ContentArtifact test
+// seam, exactly as the DecisionSource seam supplies decisions; the production pack now authors its own section (T-1 09,
+// ADR-0254), which the "production" and "dormant" cases below exercise through the real and the section-less artifact.
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
@@ -49,7 +50,15 @@ const withOffers = Layer.effect(
 ).pipe(Layer.provide(contentArtifactLayer()));
 
 const offerRuntime = ManagedRuntime.make(Layer.mergeAll(desktopMainLayer(), withOffers));
-const dormantRuntime = ManagedRuntime.make(desktopMainLayer());
+const withoutSection = Layer.effect(
+  ContentArtifact,
+  Effect.gen(function* () {
+    const real = yield* ContentArtifact;
+    return { ...real, loadBattleOfferRules: () => Effect.succeed(undefined) };
+  }),
+).pipe(Layer.provide(contentArtifactLayer()));
+const dormantRuntime = ManagedRuntime.make(Layer.mergeAll(desktopMainLayer(), withoutSection));
+const productionRuntime = ManagedRuntime.make(desktopMainLayer());
 
 async function run(
   runtime: typeof offerRuntime,
@@ -211,7 +220,16 @@ describe("battle offer commands", () => {
     });
   });
 
-  it("is dormant without the section: the pre-existing battle request, never an offer", async () => {
+  it("raises an offer from the section the production pack authors, with a perturbed strength-only estimate", async () => {
+    registerWarSession("s-production", join(saveRoot, "production"));
+    const value = await resolveTurn(productionRuntime, "s-production");
+    expect(value.status).toBe("suspended");
+    if (value.status !== "suspended") return;
+    expect(value.request?.kind).toBe("offer");
+    expect(value.request).toMatchObject({ estimate: { model: "PERTURBED" } });
+  });
+
+  it("is dormant with the section removed: the pre-existing battle request, never an offer", async () => {
     const saveDir = join(saveRoot, "dormant");
     registerWarSession("s-dormant", saveDir);
     const value = await resolveTurn(dormantRuntime, "s-dormant");

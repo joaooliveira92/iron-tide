@@ -25,3 +25,53 @@
         page: "12, 62"
         section: "Prestige; sacking threshold of 16 or below; final prestige as the career score"
     note: "ADR-0239. The threshold of 16 and the proportional-loss shape are documented RTW3; the bounds, the loss and gain rates and the monthly sacking probability are Bluewave balance targets."
+  # The battle-offer section (T-1, spec #109). Every value is a Bluewave balance decision recorded by ADR-0254 (decision
+  # requests 0028-0034, Option C): the manual (p.67) says each quantity exists but supplies no number. Retuning is a
+  # ruleset version change with a golden re-pin. Removing this section returns the pack to the dormant behaviour.
+  battleOffers:
+    sectionVersion: 1
+    # G1 (ADR-0254): a perturbed strength-only estimate, symmetric error of 2000 bp of the true strength.
+    estimateModel:
+      kind: "PERTURBED"
+      errorBoundBp: 2000
+      rounding: "HALF_UP"
+      showComposition: false
+    # G2, G3 (ADR-0254): war-score points per mission, no distance modifier, the enemy is not credited. The rounding is
+    # required by the section shape and is inert here: it only rounds a fractional opponent credit, and there is none.
+    declineVictoryPoints:
+      pointsByMission:
+        FLEET_BATTLE: 5
+        CRUISER_BATTLE: 2
+      distanceModifier: { kind: "NONE" }
+      rounding: "HALF_UP"
+      opponentCredit: { kind: "NONE" }
+    # G4 (ADR-0254): "several" is three declines within a war, cleared when the war ends.
+    declineCounter:
+      threshold: 3
+      scope: "WAR"
+      reset: { kind: "ON_WAR_END" }
+    # G6 (ADR-0254): the enemy declines half the time when it is outmatched two to one or worse; no cost to the enemy.
+    enemyDecline:
+      comparison: "LESS_THAN"
+      thresholdBp: 5000
+      probabilityBp: 5000
+    # G7 (ADR-0254): one battle in five has a support force, at the full existing allied cap, from allies only.
+    supportForce:
+      presenceChanceBp: 2000
+      shareOfCapBp: 5000
+      source: "ALLIED_ONLY"
+    # G5 (ADR-0254, ADR-0262): 3 percent of current prestige on each decline at or after the threshold.
+    declinedBattlePrestige:
+      rule: { kind: "PROPORTIONAL_LOSS", basisPoints: 300 }
+      repeat: "EACH_FURTHER_DECLINE"
+    provenance:
+      sourceStatus: "BALANCE_TARGET"
+      confidence: "LOW"
+      kind: "balance_adjustment"
+      sources:
+        - title: "Rule the Waves 3 manual"
+          author: "Naval War Simulations / Matrix Games"
+          year: 2023
+          page: "62, 67, 99"
+          section: "Battle offers: force estimate, declining costs victory points and may cost prestige after several declines, the enemy may decline, a friendly support force sometimes joins"
+      note: "ADR-0254. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (docs/research/t-1-battle-offer-values.md, decisions 0028-0034)."

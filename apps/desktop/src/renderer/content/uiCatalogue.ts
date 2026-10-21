@@ -69,8 +69,7 @@ export function resolveMessage(
   key: string,
   interpolation: Readonly<Record<string, string | number | boolean>> = {},
 ): string {
-  // The compiled catalogue wins. A key the pack has not authored yet (the dormant T-1 battle-offer messages, which stay out of
-  // the compiled content until go-live so no content hash moves) falls back to the renderer's own en-US catalogue.
+  // The compiled catalogue wins; the renderer's own en-US catalogue answers only a key the pack does not author.
   const template = injected?.strings[key] ?? EN_US_MESSAGES[key as MessageKey];
   if (template === undefined) {
     missingKeyWarned(key);

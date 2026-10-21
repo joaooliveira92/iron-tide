@@ -2,7 +2,11 @@ import { describe, it, expect } from "vite-plus/test";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SafeInt } from "@bluewave/contracts";
-import { buildContentBundleArtifact, buildFullSurfaceInput } from "@bluewave/content-compiler";
+import {
+  battleOffersFromRulesets,
+  buildContentBundleArtifact,
+  buildFullSurfaceInput,
+} from "@bluewave/content-compiler";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { CampaignCompiler } from "@bluewave/campaign/compiler";
@@ -11,7 +15,7 @@ import type { CommandEnvelope, BudgetProjectCommand } from "@bluewave/commands";
 import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
 import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
 import { mkdirSync, readdirSync, readFileSync, rmSync } from "node:fs";
-import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
+import { FIXTURE_BATTLE_OFFER_RULES, FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 import { compileProductionCampaign } from "../src/production-pack.js";
 import { tmpdir } from "node:os";
 
@@ -526,20 +530,69 @@ describe("S-2 ticket 03: prestige on the production pack (ADR-0239)", () => {
   });
 });
 
-describe("T-1 02 (#111): the battle-offer section is dormant on the production pack", () => {
+describe("T-1 09 (#118): the battle-offer section is configured on the production pack (ADR-0254)", () => {
   const PRODUCTION_DIR = resolve(
     dirname(fileURLToPath(import.meta.url)),
     "../../../content/production/1880",
   );
 
-  it("authors no battleOffers section anywhere in the production pack", () => {
+  // The owner-authorized values of ADR-0254, restated independently of the pack so a drift in either side fails.
+  const ADR_0254_VALUES = {
+    sectionVersion: 1,
+    estimateModel: {
+      kind: "PERTURBED",
+      errorBoundBp: 2_000,
+      rounding: "HALF_UP",
+      showComposition: false,
+    },
+    declineVictoryPoints: {
+      pointsByMission: { FLEET_BATTLE: 5, CRUISER_BATTLE: 2 },
+      distanceModifier: { kind: "NONE" },
+      rounding: "HALF_UP",
+      opponentCredit: { kind: "NONE" },
+    },
+    declineCounter: { threshold: 3, scope: "WAR", reset: { kind: "ON_WAR_END" } },
+    enemyDecline: { comparison: "LESS_THAN", thresholdBp: 5_000, probabilityBp: 5_000 },
+    supportForce: { presenceChanceBp: 2_000, shareOfCapBp: 5_000, source: "ALLIED_ONLY" },
+    declinedBattlePrestige: {
+      rule: { kind: "PROPORTIONAL_LOSS", basisPoints: 300 },
+      repeat: "EACH_FURTHER_DECLINE",
+    },
+  } as const;
+
+  it("exposes the section on the compiled production campaign with every ADR-0254 value and balance-target provenance", () => {
+    const { bundle } = compileProductionCampaign();
+    const section = battleOffersFromRulesets(bundle.rulesets);
+    expect(section).toBeDefined();
+    const { provenance, ...values } = section!;
+    expect(values).toEqual(ADR_0254_VALUES);
+    expect(provenance).toMatchObject({
+      sourceStatus: "BALANCE_TARGET",
+      kind: "balance_adjustment",
+    });
+    expect(provenance.note).toContain("ADR-0254");
+  });
+
+  it("carries no fixture-class value: not the fixture section, no fixture label, and no field equal to a fixture field", () => {
+    const { bundle } = compileProductionCampaign();
+    const section = battleOffersFromRulesets(bundle.rulesets)!;
+    expect(section).not.toEqual(FIXTURE_BATTLE_OFFER_RULES);
+    expect(JSON.stringify(section).toLowerCase()).not.toContain("fixture");
+    for (const key of [
+      "estimateModel",
+      "declineVictoryPoints",
+      "declineCounter",
+      "enemyDecline",
+      "supportForce",
+    ] as const) {
+      expect(section[key], key).not.toEqual(FIXTURE_BATTLE_OFFER_RULES[key]);
+    }
     const files = readdirSync(PRODUCTION_DIR, { recursive: true, encoding: "utf8" }).filter(
       (name) => /\.(ya?ml|json)$/.test(name),
     );
-    expect(files.length).toBeGreaterThan(0);
     for (const name of files) {
-      expect(readFileSync(resolve(PRODUCTION_DIR, name), "utf8"), name).not.toContain(
-        "battleOffers",
+      expect(readFileSync(resolve(PRODUCTION_DIR, name), "utf8").toLowerCase(), name).not.toContain(
+        "fixture-class",
       );
     }
   });

@@ -1,12 +1,14 @@
 import { configure } from "@testing-library/react";
-import { vi } from "vite-plus/test";
+import { beforeEach, vi } from "vite-plus/test";
 
 import { loadShipBuildingData } from "../main/shipBuildingContent.js";
+import { loadUiCatalogue } from "../main/uiCatalogue.js";
 import { loadPresentationContent } from "../main/presentationContent.js";
 // The seam module directly, not the barrel: loading the whole layer here would cache it before a
 // test file's `vi.mock` of one of its dependencies takes effect.
 import { setDrawingBoardContent } from "./components/design-workspace/content.js";
 import { setPresentationContent } from "./content/presentationContent.js";
+import { setUiCatalogue } from "./content/uiCatalogue.js";
 
 /**
  * Renderer tests inject decoded content instead of parsing raw YAML (ticket 04,
@@ -24,6 +26,14 @@ setDrawingBoardContent({ catalogue: loadShipBuildingData() });
  * DTO arrives over `inspectPresentationContent` via `PresentationContentGate`.
  */
 setPresentationContent(loadPresentationContent());
+
+/**
+ * The UI-string catalogue (ADR-0209/ADR-0218) is decoded by main from the same artifact and ships over `inspectUiCatalogue`;
+ * seed the renderer seam from the main loader so every dialog and message renders the strings the pack authors, including
+ * the battle-offer set (T-1 09). Re-seeded before every test so one test's own catalogue never leaks into the next.
+ */
+const PRODUCTION_UI_CATALOGUE = loadUiCatalogue();
+beforeEach(() => setUiCatalogue(PRODUCTION_UI_CATALOGUE));
 
 /**
  * Testing Library's default async wait is 1s. Under the full suite, files run in parallel and
