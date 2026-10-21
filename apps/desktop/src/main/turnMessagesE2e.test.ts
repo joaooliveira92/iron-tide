@@ -33,6 +33,7 @@ import { PENDING_TURN_FILENAME } from "./pendingTurn.js";
 import { projectCommandExit } from "./runtime/bridgeResult.js";
 import type { CommandProgram } from "./runtime/commandProgram.js";
 import { DecisionSource } from "./runtime/decisionSource.js";
+import { ContentArtifact, contentArtifactLayer } from "./runtime/contentArtifact.js";
 import { desktopMainLayer } from "./runtime/desktopMainLayer.js";
 import { toSaveableState } from "./saveHelpers.js";
 import { TURN_SUMMARIES_FILENAME, readTurnSummariesProgram } from "./turnSummaries.js";
@@ -117,9 +118,22 @@ describe("turn-messages end-to-end acceptance", () => {
   const BATTLE_ID = "test-pending-battle";
   const DECISION_SEED = "e2e-decision-battle-seed-0123456789";
 
+  // This acceptance exercises the pre-existing battle request (a hand-made pending battle with no manifest). With the
+  // production battle-offer section configured (T-1 09) such a battle is auto-resolved rather than raised, so the artifact
+  // is supplied without the section: the dormant behaviour the section's removal restores. The offer path itself is covered
+  // by battleOfferCommands.test.ts.
+  const withoutBattleOffers = Layer.effect(
+    ContentArtifact,
+    Effect.gen(function* () {
+      const real = yield* ContentArtifact;
+      return { ...real, loadBattleOfferRules: () => Effect.succeed(undefined) };
+    }),
+  ).pipe(Layer.provide(contentArtifactLayer()));
+
   const decisionRuntime = ManagedRuntime.make(
     Layer.mergeAll(
       desktopMainLayer(),
+      withoutBattleOffers,
       Layer.succeed(DecisionSource, {
         pendingDecisions: () => Effect.succeed([TEST_DECISION]),
       }),
