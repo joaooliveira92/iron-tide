@@ -1,10 +1,9 @@
 import { buildBattleHistory } from "@bluewave/campaign-engine";
 import { Effect } from "effect";
-import { SessionIdPayloadSchema } from "../../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
-import { withSchema } from "../runtime/commandProgram.js";
+import type { CommandHandler } from "../runtime/commandProgram.js";
 
-export const inspectBattleHistoryProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const inspectBattleHistoryProgram: CommandHandler<"inspectBattleHistory"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
@@ -18,5 +17,4 @@ export const inspectBattleHistoryProgram = withSchema(SessionIdPayloadSchema, (s
       },
       diagnostics: [],
     };
-  }),
-);
+  });

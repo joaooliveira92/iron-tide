@@ -9,13 +9,9 @@ import {
 import { SafeInt } from "@bluewave/contracts";
 import { Effect } from "effect";
 import type { BudgetScreenProjection } from "../../shared/budget-contract.js";
-import {
-  SessionIdPayloadSchema,
-  SubmitBudgetAllocationPayloadSchema,
-} from "../../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
-import { withSchema } from "../runtime/commandProgram.js";
+import type { CommandHandler } from "../runtime/commandProgram.js";
 import { currentRevision, submitPlayerCommand } from "./playerCommandSupport.js";
 
 const RATE_STEP_BP = 50;
@@ -31,7 +27,7 @@ function researchCapsByRate(base: SafeInt): BudgetScreenProjection["researchCaps
   return caps;
 }
 
-export const inspectBudgetScreenProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const inspectBudgetScreenProgram: CommandHandler<"inspectBudgetScreen"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
@@ -60,24 +56,20 @@ export const inspectBudgetScreenProgram = withSchema(SessionIdPayloadSchema, (se
       researchCaps: researchCapsByRate(nation.baseResources),
     };
     return { outcome: "success" as const, value, diagnostics: [] };
-  }),
-);
+  });
 
-export const submitBudgetAllocationProgram = withSchema(
-  SubmitBudgetAllocationPayloadSchema,
-  (payload) =>
-    submitPlayerCommand({
-      sessionId: payload.sessionId,
-      expectedRevision: payload.expectedRevision,
-      transportRequestId: payload.transportRequestId,
-      build: (record) => ({
-        body: {
-          type: "SetBudgetAllocation",
-          nationId: record.playerSlotId,
-          appropriationRateBp: SafeInt(payload.appropriationRateBp),
-          researchBudget: SafeInt(payload.researchBudget),
-        },
-        discriminator: "budget",
-      }),
+export const submitBudgetAllocationProgram: CommandHandler<"submitBudgetAllocation"> = (payload) =>
+  submitPlayerCommand({
+    sessionId: payload.sessionId,
+    expectedRevision: payload.expectedRevision,
+    transportRequestId: payload.transportRequestId,
+    build: (record) => ({
+      body: {
+        type: "SetBudgetAllocation",
+        nationId: record.playerSlotId,
+        appropriationRateBp: SafeInt(payload.appropriationRateBp),
+        researchBudget: SafeInt(payload.researchBudget),
+      },
+      discriminator: "budget",
     }),
-);
+  });

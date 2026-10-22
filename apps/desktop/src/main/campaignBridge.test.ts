@@ -9,7 +9,8 @@ import type {
   ConstructionBatchPreviewOutcome,
   ForeignConstructionPreviewOutcome,
 } from "../shared/construction-contract.js";
-import { dispatchCampaignCommand } from "./campaignBridge.js";
+import { CAMPAIGN_COMMAND_NAMES } from "../shared/campaign-command-descriptors.js";
+import { commandHandlers, dispatchCampaignCommand } from "./campaignBridge.js";
 import { clearCampaignSessionsForTest, registerCampaignSession } from "./campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "./compiler.js";
 import { toSaveableState } from "./saveHelpers.js";
@@ -19,6 +20,24 @@ const REPO_ROOT = resolve(__dirname, "../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
 describe("dispatchCampaignCommand", () => {
+  it("registers a handler for every command in the descriptor table", () => {
+    expect(Object.keys(commandHandlers).toSorted()).toEqual([...CAMPAIGN_COMMAND_NAMES].toSorted());
+  });
+
+  it("rejects excess keys on strict rows and strips them on lenient rows", async () => {
+    const strict = await dispatchCampaignCommand("loadRecentCampaign", {
+      packagePath: "p",
+      extra: 1,
+    });
+    expect(strict).toMatchObject({ outcome: "error", reason: "INVALID_PAYLOAD" });
+    const lenient = await dispatchCampaignCommand("generateBattle", {
+      sessionId: "s",
+      warId: "w",
+      extra: 1,
+    });
+    expect(lenient).toMatchObject({ outcome: "rejected", reason: "DEBUG_ONLY" });
+  });
+
   it("rejects an unknown command name", async () => {
     const result = await dispatchCampaignCommand("notARealCommand", undefined);
     expect(result.outcome).toBe("error");

@@ -2,13 +2,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Effect, Result, Schema } from "effect";
 import type { UiState } from "../shared/campaign-command-contract.js";
-import {
-  SessionIdPayloadSchema,
-  UiStateSchema,
-  WriteUiStatePayloadSchema,
-} from "../shared/campaignCommandSchemas.js";
+import { UiStateSchema } from "../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
-import { withSchema } from "./runtime/commandProgram.js";
+import type { CommandHandler } from "./runtime/commandProgram.js";
 import { UiStateStore } from "./runtime/sidecarStores.js";
 
 export const UI_STATE_FILENAME = "ui-state.json";
@@ -52,7 +48,7 @@ export function loadUiState(saveDir: string, currentTurnNumber: number): UiState
   }
 }
 
-export const readUiStateProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const readUiStateProgram: CommandHandler<"readUiState"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
@@ -61,10 +57,9 @@ export const readUiStateProgram = withSchema(SessionIdPayloadSchema, (sessionId)
     const uiState = yield* uiStates.load(record.saveDir, Number(record.state.snapshot.turnNumber));
 
     return { outcome: "success" as const, value: { uiState }, diagnostics: [] };
-  }),
-);
+  });
 
-export const writeUiStateProgram = withSchema(WriteUiStatePayloadSchema, (payload) =>
+export const writeUiStateProgram: CommandHandler<"writeUiState"> = (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(payload.sessionId);
@@ -92,5 +87,4 @@ export const writeUiStateProgram = withSchema(WriteUiStatePayloadSchema, (payloa
     yield* uiStates.save(record.saveDir, next);
 
     return { outcome: "success" as const, value: { uiState: next }, diagnostics: [] };
-  }),
-);
+  });

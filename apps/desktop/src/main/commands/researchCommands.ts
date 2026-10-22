@@ -13,20 +13,16 @@ import type {
   ResearchPriorityOutcome,
   ResearchScreenProjection,
 } from "../../shared/research-contract.js";
-import {
-  SessionIdPayloadSchema,
-  SetResearchPriorityCommandPayloadSchema,
-} from "../../shared/campaignCommandSchemas.js";
 import type { CampaignSessionRecord } from "../campaignSessions.js";
 import type { PendingCommandEntry } from "../pendingCommands.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed, CommandRejected } from "../runtime/commandError.js";
-import { withSchema } from "../runtime/commandProgram.js";
+import type { CommandHandler } from "../runtime/commandProgram.js";
 import { CommandQueueStore } from "../runtime/commandQueueStore.js";
 import { ProjectStore } from "../runtime/projectStore.js";
 import { currentRevision, deterministicTimestamp, verifyEnvelope } from "./commandEnvelope.js";
 
-export const inspectResearchScreenProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const inspectResearchScreenProgram: CommandHandler<"inspectResearchScreen"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
@@ -49,68 +45,66 @@ export const inspectResearchScreenProgram = withSchema(SessionIdPayloadSchema, (
       month: record.month,
     };
     return { outcome: "success" as const, value, diagnostics: [] };
-  }),
-);
+  });
 
-export const setResearchPriorityCommandProgram = withSchema(
-  SetResearchPriorityCommandPayloadSchema,
-  (payload) =>
-    Effect.gen(function* () {
-      const sessions = yield* CampaignSessionStore;
-      const queue = yield* CommandQueueStore;
-      const projects = yield* ProjectStore;
-      const record = yield* sessions.get(payload.sessionId);
+export const setResearchPriorityCommandProgram: CommandHandler<"setResearchPriorityCommand"> = (
+  payload,
+) =>
+  Effect.gen(function* () {
+    const sessions = yield* CampaignSessionStore;
+    const queue = yield* CommandQueueStore;
+    const projects = yield* ProjectStore;
+    const record = yield* sessions.get(payload.sessionId);
 
-      const verified = verifyEnvelope(record, payload.expectedRevision);
-      if (verified.outcome !== "success") return verified;
+    const verified = verifyEnvelope(record, payload.expectedRevision);
+    if (verified.outcome !== "success") return verified;
 
-      const violations = validateResearchPriorities(payload.fieldPriorities);
-      if (violations.length > 0) {
+    const violations = validateResearchPriorities(payload.fieldPriorities);
+    if (violations.length > 0) {
+      return yield* new CommandRejected({
+        reason: "RESEARCH_PRIORITY_CONSTRAINT_VIOLATED",
+        diagnostics: violations,
+      });
+    }
+
+    if (payload.exactTechId !== undefined) {
+      return yield* new CommandRejected({
+        reason: "EXACT_TECHNOLOGY_SELECTION_PROHIBITED",
+        diagnostics: [`Exact technology selection is prohibited: ${payload.exactTechId}`],
+      });
+    }
+
+    const frozenPriorities: Readonly<Record<string, number>> = Object.freeze({
+      ...payload.fieldPriorities,
+    });
+    const exactTechId = payload.exactTechId;
+
+    const envelope = buildResearchEnvelope(record, frozenPriorities, exactTechId);
+    const prior = yield* queue.lookup(payload.sessionId, payload.transportRequestId);
+    if (prior) {
+      if (prior.payloadFingerprint !== queue.fingerprintOfBody(envelope.body)) {
         return yield* new CommandRejected({
-          reason: "RESEARCH_PRIORITY_CONSTRAINT_VIOLATED",
-          diagnostics: violations,
+          reason: "IDEMPOTENCY_CONFLICT",
+          diagnostics: [
+            `transportRequestId ${payload.transportRequestId} was already used by command ${prior.envelope.commandId}`,
+          ],
         });
       }
+      return replayOutcome(prior);
+    }
 
-      if (payload.exactTechId !== undefined) {
-        return yield* new CommandRejected({
-          reason: "EXACT_TECHNOLOGY_SELECTION_PROHIBITED",
-          diagnostics: [`Exact technology selection is prohibited: ${payload.exactTechId}`],
-        });
-      }
+    yield* queue.queue(payload.sessionId, {
+      transportRequestId: payload.transportRequestId,
+      envelope,
+      payloadFingerprint: queue.fingerprintOfBody(envelope.body),
+    });
 
-      const frozenPriorities: Readonly<Record<string, number>> = Object.freeze({
-        ...payload.fieldPriorities,
-      });
-      const exactTechId = payload.exactTechId;
+    yield* projects
+      .save(record.state, record.saveDir)
+      .pipe(Effect.tapError(() => queue.delete(payload.sessionId, payload.transportRequestId)));
 
-      const envelope = buildResearchEnvelope(record, frozenPriorities, exactTechId);
-      const prior = yield* queue.lookup(payload.sessionId, payload.transportRequestId);
-      if (prior) {
-        if (prior.payloadFingerprint !== queue.fingerprintOfBody(envelope.body)) {
-          return yield* new CommandRejected({
-            reason: "IDEMPOTENCY_CONFLICT",
-            diagnostics: [
-              `transportRequestId ${payload.transportRequestId} was already used by command ${prior.envelope.commandId}`,
-            ],
-          });
-        }
-        return replayOutcome(prior);
-      }
-
-      yield* queue.queue(payload.sessionId, {
-        transportRequestId: payload.transportRequestId,
-        envelope,
-        payloadFingerprint: queue.fingerprintOfBody(envelope.body),
-      });
-
-      yield* projects
-        .save(record.state, record.saveDir)
-        .pipe(Effect.tapError(() => queue.delete(payload.sessionId, payload.transportRequestId)));
-
-      return { outcome: "success" as const, value: outcomeFor(envelope), diagnostics: [] };
-    }),
-);
+    return { outcome: "success" as const, value: outcomeFor(envelope), diagnostics: [] };
+  });
 
 const PLAYER_ENVELOPE_VERSION = "0.1.0" as const;
 

@@ -2,7 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, session } from "electron";
 import { Effect, ManagedRuntime } from "effect";
 import { resolve } from "node:path";
 import { applyContentSecurityPolicy } from "./csp.js";
-import { commandPrograms, createCampaignCommandDispatcher } from "./campaignBridge.js";
+import { commandHandlers, createCampaignCommandDispatcher } from "./campaignBridge.js";
 import { ContentArtifactError, loadContentArtifact } from "./contentArtifact.js";
 import { createPreferencesBridge } from "./preferences/preferencesBridge.js";
 import { CrashReporter } from "./runtime/crashReporter.js";
@@ -128,7 +128,7 @@ function createWindow(): BrowserWindow {
 type DesktopMainRuntime = ManagedRuntime.ManagedRuntime<CommandEnv, never>;
 
 function registerIpc(runtime: DesktopMainRuntime): void {
-  const dispatchCampaignCommand = createCampaignCommandDispatcher(commandPrograms, () => runtime);
+  const dispatchCampaignCommand = createCampaignCommandDispatcher(commandHandlers, () => runtime);
   ipcMain.handle("campaign:execute", (_event, command: string, payload: unknown) =>
     dispatchCampaignCommand(command, payload),
   );

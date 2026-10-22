@@ -9,9 +9,8 @@ import type {
 } from "../shared/campaign-command-contract.js";
 import type { DomainEventEnvelope } from "@bluewave/events";
 import type { CampaignSnapshot } from "@bluewave/campaign";
-import { SessionIdPayloadSchema } from "../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
-import { withSchema } from "./runtime/commandProgram.js";
+import type { CommandHandler } from "./runtime/commandProgram.js";
 import { TurnSummariesStore } from "./runtime/sidecarStores.js";
 
 export const TURN_SUMMARIES_FILENAME = "turn-summaries.json";
@@ -106,7 +105,7 @@ export function buildTurnSummary(input: {
   };
 }
 
-export const readTurnSummariesProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const readTurnSummariesProgram: CommandHandler<"readTurnSummaries"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
@@ -114,5 +113,4 @@ export const readTurnSummariesProgram = withSchema(SessionIdPayloadSchema, (sess
     const data = yield* store.load(record.saveDir);
     const value: ReadTurnSummariesResult = { summaries: data.summaries };
     return { outcome: "success" as const, value, diagnostics: [] };
-  }),
-);
+  });

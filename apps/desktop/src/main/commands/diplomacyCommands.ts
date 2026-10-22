@@ -5,16 +5,14 @@ import type {
   DiplomacyCommandBody,
   DiplomacyScreenProjection,
 } from "../../shared/diplomacy-contract.js";
-import {
-  SessionIdPayloadSchema,
-  SubmitDiplomacyCommandPayloadSchema,
-} from "../../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
-import { withSchema } from "../runtime/commandProgram.js";
+import type { CommandHandler } from "../runtime/commandProgram.js";
 import { currentRevision, submitPlayerCommand } from "./playerCommandSupport.js";
 
-export const inspectDiplomacyScreenProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const inspectDiplomacyScreenProgram: CommandHandler<"inspectDiplomacyScreen"> = (
+  sessionId,
+) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
@@ -37,19 +35,15 @@ export const inspectDiplomacyScreenProgram = withSchema(SessionIdPayloadSchema, 
       month: record.month,
     };
     return { outcome: "success" as const, value, diagnostics: [] };
-  }),
-);
+  });
 
-export const submitDiplomacyCommandProgram = withSchema(
-  SubmitDiplomacyCommandPayloadSchema,
-  (payload) =>
-    submitPlayerCommand({
-      sessionId: payload.sessionId,
-      expectedRevision: payload.expectedRevision,
-      transportRequestId: payload.transportRequestId,
-      build: (record) => planDiplomacyCommand(payload.command, record.playerSlotId),
-    }),
-);
+export const submitDiplomacyCommandProgram: CommandHandler<"submitDiplomacyCommand"> = (payload) =>
+  submitPlayerCommand({
+    sessionId: payload.sessionId,
+    expectedRevision: payload.expectedRevision,
+    transportRequestId: payload.transportRequestId,
+    build: (record) => planDiplomacyCommand(payload.command, record.playerSlotId),
+  });
 
 interface DiplomacyCommandPlan {
   readonly body: Extract<CommandBody, { type: DiplomacyCommandBody["type"] }>;

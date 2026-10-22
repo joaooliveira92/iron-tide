@@ -2,9 +2,9 @@ import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "nod
 import { join } from "node:path";
 import { Effect, Result, Schema } from "effect";
 import type { MonthlyReportEntry, MonthlyReports } from "../shared/campaign-command-contract.js";
-import { MonthlyReportsSchema, SessionIdPayloadSchema } from "../shared/campaignCommandSchemas.js";
+import { MonthlyReportsSchema } from "../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
-import { withSchema } from "./runtime/commandProgram.js";
+import type { CommandHandler } from "./runtime/commandProgram.js";
 import { ReportsStore } from "./runtime/sidecarStores.js";
 
 export const MONTHLY_REPORTS_FILENAME = "monthly-reports.json";
@@ -65,7 +65,7 @@ export function appendMonthlyReport(
   return { reports: [report, ...data.reports].slice(0, MONTHLY_REPORTS_LIMIT) };
 }
 
-export const readMonthlyReportsProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const readMonthlyReportsProgram: CommandHandler<"readMonthlyReports"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
@@ -74,5 +74,4 @@ export const readMonthlyReportsProgram = withSchema(SessionIdPayloadSchema, (ses
     const data = yield* reports.load(record.saveDir);
 
     return { outcome: "success" as const, value: { reports: data.reports }, diagnostics: [] };
-  }),
-);
+  });

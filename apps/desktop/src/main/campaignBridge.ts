@@ -1,6 +1,5 @@
 import { Effect, ManagedRuntime, Result, Schema } from "effect";
 import type { BridgeResult } from "../shared/bridge-contract.js";
-import type { CampaignCommandName } from "../shared/campaign-command-contract.js";
 import { CAMPAIGN_COMMAND_NAMES } from "../shared/campaign-command-descriptors.js";
 import {
   generateBattleProgram,
@@ -106,25 +105,24 @@ import {
   startPlayerBattleProgram,
 } from "./commands/playerBattle.js";
 import { readUiStateProgram, writeUiStateProgram } from "./uiState.js";
-import { payloadless, withSchema, type CommandProgram } from "./runtime/commandProgram.js";
+import { runCommandHandler, type CommandHandlers } from "./runtime/commandProgram.js";
 import { NotImplemented, UnknownCommand } from "./runtime/commandError.js";
 import { projectCommandExit } from "./runtime/bridgeResult.js";
 import { type CommandEnv, desktopMainLayer } from "./runtime/desktopMainLayer.js";
-import { SessionIdPayloadSchema } from "../shared/campaignCommandSchemas.js";
 
 const CommandNameSchema = Schema.Literals(CAMPAIGN_COMMAND_NAMES);
 
-export const commandPrograms: Record<CampaignCommandName, CommandProgram> = {
-  listNewGameOptions: payloadless(() => listNewGameOptionsProgram),
+export const commandHandlers: CommandHandlers = {
+  listNewGameOptions: () => listNewGameOptionsProgram,
   compileCampaign: compileCampaignProgram,
   inspectCampaign: inspectCampaignProgram,
   inspectMap: inspectMapProgram,
   inspectBattleHistory: inspectBattleHistoryProgram,
   inspectOpeningBriefing: inspectOpeningBriefingProgram,
   inspectPriorities: inspectPrioritiesProgram,
-  inspectDrawingBoardContent: payloadless(() => inspectDrawingBoardContentProgram),
-  inspectPresentationContent: payloadless(() => inspectPresentationContentProgram),
-  inspectUiCatalogue: payloadless(() => inspectUiCatalogueProgram),
+  inspectDrawingBoardContent: () => inspectDrawingBoardContentProgram,
+  inspectPresentationContent: () => inspectPresentationContentProgram,
+  inspectUiCatalogue: () => inspectUiCatalogueProgram,
   commitMonth: commitMonthProgram,
   inspectConstructionScreen: inspectConstructionScreenProgram,
   submitConstructionCommand: submitConstructionCommandProgram,
@@ -161,9 +159,9 @@ export const commandPrograms: Record<CampaignCommandName, CommandProgram> = {
   submitDivisionCommand: submitDivisionCommandProgram,
   inspectBudgetScreen: inspectBudgetScreenProgram,
   submitBudgetAllocation: submitBudgetAllocationProgram,
-  saveCampaign: withSchema(SessionIdPayloadSchema, (sessionId) => saveCampaignProgram(sessionId)),
-  closeCampaign: withSchema(SessionIdPayloadSchema, (sessionId) => closeCampaignProgram(sessionId)),
-  copyCampaign: withSchema(SessionIdPayloadSchema, (sessionId) => copyCampaignProgram(sessionId)),
+  saveCampaign: saveCampaignProgram,
+  closeCampaign: closeCampaignProgram,
+  copyCampaign: copyCampaignProgram,
   readUiState: readUiStateProgram,
   writeUiState: writeUiStateProgram,
   readMonthlyReports: readMonthlyReportsProgram,
@@ -193,7 +191,7 @@ export const commandPrograms: Record<CampaignCommandName, CommandProgram> = {
 };
 
 export function createCampaignCommandDispatcher(
-  programs: Partial<Record<CampaignCommandName, CommandProgram>>,
+  handlers: Partial<CommandHandlers>,
   getRuntime: () => ManagedRuntime.ManagedRuntime<CommandEnv, never>,
 ): (command: string, payload: unknown) => Promise<BridgeResult<unknown>> {
   return async (command, payload) => {
@@ -202,11 +200,12 @@ export function createCampaignCommandDispatcher(
       if (Result.isFailure(parsedCommand)) {
         return yield* new UnknownCommand({ command });
       }
-      const handler = programs[parsedCommand.success];
+      const name = parsedCommand.success;
+      const handler = handlers[name];
       if (handler === undefined) {
-        return yield* new NotImplemented({ command: parsedCommand.success });
+        return yield* new NotImplemented({ command: name });
       }
-      return yield* handler(payload);
+      return yield* runCommandHandler(name, handler, payload);
     });
 
     const exit = await getRuntime().runPromiseExit(program);
@@ -222,6 +221,6 @@ export function getDefaultCommandRuntime(): ManagedRuntime.ManagedRuntime<Comman
 }
 
 export const dispatchCampaignCommand = createCampaignCommandDispatcher(
-  commandPrograms,
+  commandHandlers,
   getDefaultCommandRuntime,
 );

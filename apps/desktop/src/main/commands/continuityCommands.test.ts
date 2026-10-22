@@ -60,7 +60,7 @@ import { clearPendingWorkspacesForTest, PENDING_COMMANDS_FILENAME } from "../pen
 import { readReferenceDesigns } from "../referenceDesigns.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
-import type { CommandProgram } from "../runtime/commandProgram.js";
+import { programFor, type AnyCommandHandler } from "../runtime/registeredProgram.js";
 import { AppPaths, IdGenerator, NativeDialog } from "../runtime/platform.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -95,8 +95,13 @@ const runtime = ManagedRuntime.make(
   ),
 );
 
-async function runProgram<A>(program: CommandProgram, payload: unknown): Promise<BridgeResult<A>> {
-  return projectCommandExit(await runtime.runPromiseExit(program(payload))) as BridgeResult<A>;
+async function runProgram<A>(
+  program: AnyCommandHandler,
+  payload: unknown,
+): Promise<BridgeResult<A>> {
+  return projectCommandExit(
+    await runtime.runPromiseExit(programFor(program)(payload)),
+  ) as BridgeResult<A>;
 }
 
 const compileCampaign = (configuration: CampaignConfiguration) =>

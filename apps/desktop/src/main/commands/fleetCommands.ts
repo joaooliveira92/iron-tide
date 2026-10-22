@@ -6,18 +6,11 @@ import type {
   MovementCommandOutcome,
   StationAssignmentOutcome,
 } from "../../shared/fleet-contract.js";
-import {
-  CancelMovementCommandPayloadSchema,
-  ReplaceMovementCommandPayloadSchema,
-  SessionIdPayloadSchema,
-  SubmitMovementCommandPayloadSchema,
-  SubmitStationAssignmentPayloadSchema,
-} from "../../shared/campaignCommandSchemas.js";
 import type { CampaignSessionRecord } from "../campaignSessions.js";
 import type { PendingCommandEntry } from "../pendingCommands.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed, CommandRejected, type CommandError } from "../runtime/commandError.js";
-import { withSchema } from "../runtime/commandProgram.js";
+import type { CommandHandler } from "../runtime/commandProgram.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { CommandQueueStore } from "../runtime/commandQueueStore.js";
 import { currentRevision, submitPlayerCommand, verifyEnvelope } from "./playerCommandSupport.js";
@@ -115,7 +108,7 @@ function submitMovement(
   });
 }
 
-export const inspectFleetScreenProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const queue = yield* CommandQueueStore;
@@ -152,102 +145,91 @@ export const inspectFleetScreenProgram = withSchema(SessionIdPayloadSchema, (ses
     };
 
     return { outcome: "success" as const, value: projection, diagnostics: [] };
-  }),
-);
+  });
 
-export const submitMovementCommandProgram = withSchema(
-  SubmitMovementCommandPayloadSchema,
-  (payload) => submitMovement(payload),
-);
+export const submitMovementCommandProgram: CommandHandler<"submitMovementCommand"> = (payload) =>
+  submitMovement(payload);
 
-export const replaceMovementCommandProgram = withSchema(
-  ReplaceMovementCommandPayloadSchema,
-  (payload) =>
-    Effect.gen(function* () {
-      const sessions = yield* CampaignSessionStore;
-      const queue = yield* CommandQueueStore;
-      const record = yield* sessions.get(payload.sessionId);
+export const replaceMovementCommandProgram: CommandHandler<"replaceMovementCommand"> = (payload) =>
+  Effect.gen(function* () {
+    const sessions = yield* CampaignSessionStore;
+    const queue = yield* CommandQueueStore;
+    const record = yield* sessions.get(payload.sessionId);
 
-      const verified = verifyEnvelope(record, payload.expectedRevision);
-      if (verified.outcome !== "success") return verified;
+    const verified = verifyEnvelope(record, payload.expectedRevision);
+    if (verified.outcome !== "success") return verified;
 
-      const existing = (yield* queue.entries(payload.sessionId)).some(
-        (entry) => entry.envelope.commandId === payload.commandId,
-      );
-      if (!existing) {
-        return yield* new CommandRejected({
-          reason: "COMMAND_NOT_FOUND",
-          diagnostics: [`No pending movement command ${payload.commandId}`],
-        });
-      }
-      return yield* submitMovement(payload);
+    const existing = (yield* queue.entries(payload.sessionId)).some(
+      (entry) => entry.envelope.commandId === payload.commandId,
+    );
+    if (!existing) {
+      return yield* new CommandRejected({
+        reason: "COMMAND_NOT_FOUND",
+        diagnostics: [`No pending movement command ${payload.commandId}`],
+      });
+    }
+    return yield* submitMovement(payload);
+  });
+
+export const cancelMovementCommandProgram: CommandHandler<"cancelMovementCommand"> = (payload) =>
+  Effect.gen(function* () {
+    const sessions = yield* CampaignSessionStore;
+    const queue = yield* CommandQueueStore;
+    const record = yield* sessions.get(payload.sessionId);
+
+    const verified = verifyEnvelope(record, payload.expectedRevision);
+    if (verified.outcome !== "success") return verified;
+
+    const matches = (yield* queue.entries(payload.sessionId)).filter(
+      (entry) =>
+        entry.envelope.commandId === payload.commandId && entry.envelope.body.type === "MoveFleet",
+    );
+    if (matches.length === 0) {
+      return yield* new CommandRejected({
+        reason: "COMMAND_NOT_FOUND",
+        diagnostics: [`No pending movement command ${payload.commandId}`],
+      });
+    }
+    for (const entry of matches) {
+      yield* queue.delete(payload.sessionId, entry.transportRequestId);
+    }
+    return movementSuccess(
+      record,
+      yield* queue.entries(payload.sessionId),
+      payload.commandId,
+      "cancelled",
+    );
+  });
+
+export const submitStationAssignmentProgram: CommandHandler<"submitStationAssignment"> = (
+  payload,
+) =>
+  Effect.map(
+    submitPlayerCommand({
+      sessionId: payload.sessionId,
+      expectedRevision: payload.expectedRevision,
+      transportRequestId: payload.transportRequestId,
+      build: (record) => {
+        const shipIds = [...payload.shipIds];
+        return {
+          body:
+            payload.intent === "assign"
+              ? { type: "AssignForeignStation" as const, nationId: record.playerSlotId, shipIds }
+              : { type: "ClearForeignStation" as const, nationId: record.playerSlotId, shipIds },
+          discriminator: [...shipIds].sort().join("\u0000"),
+        };
+      },
     }),
-);
-
-export const cancelMovementCommandProgram = withSchema(
-  CancelMovementCommandPayloadSchema,
-  (payload) =>
-    Effect.gen(function* () {
-      const sessions = yield* CampaignSessionStore;
-      const queue = yield* CommandQueueStore;
-      const record = yield* sessions.get(payload.sessionId);
-
-      const verified = verifyEnvelope(record, payload.expectedRevision);
-      if (verified.outcome !== "success") return verified;
-
-      const matches = (yield* queue.entries(payload.sessionId)).filter(
-        (entry) =>
-          entry.envelope.commandId === payload.commandId &&
-          entry.envelope.body.type === "MoveFleet",
-      );
-      if (matches.length === 0) {
-        return yield* new CommandRejected({
-          reason: "COMMAND_NOT_FOUND",
-          diagnostics: [`No pending movement command ${payload.commandId}`],
-        });
-      }
-      for (const entry of matches) {
-        yield* queue.delete(payload.sessionId, entry.transportRequestId);
-      }
-      return movementSuccess(
-        record,
-        yield* queue.entries(payload.sessionId),
-        payload.commandId,
-        "cancelled",
-      );
-    }),
-);
-
-export const submitStationAssignmentProgram = withSchema(
-  SubmitStationAssignmentPayloadSchema,
-  (payload) =>
-    Effect.map(
-      submitPlayerCommand({
-        sessionId: payload.sessionId,
-        expectedRevision: payload.expectedRevision,
-        transportRequestId: payload.transportRequestId,
-        build: (record) => {
-          const shipIds = [...payload.shipIds];
-          return {
-            body:
-              payload.intent === "assign"
-                ? { type: "AssignForeignStation" as const, nationId: record.playerSlotId, shipIds }
-                : { type: "ClearForeignStation" as const, nationId: record.playerSlotId, shipIds },
-            discriminator: [...shipIds].sort().join("\u0000"),
-          };
-        },
-      }),
-      (result): BridgeResult<StationAssignmentOutcome> =>
-        result.outcome === "success"
-          ? {
-              ...result,
-              value: {
-                commandId: result.value.commandId,
-                intent: payload.intent,
-                shipCount: payload.shipIds.length,
-                appliedOnNextTurn: true,
-              },
-            }
-          : result,
-    ),
-);
+    (result): BridgeResult<StationAssignmentOutcome> =>
+      result.outcome === "success"
+        ? {
+            ...result,
+            value: {
+              commandId: result.value.commandId,
+              intent: payload.intent,
+              shipCount: payload.shipIds.length,
+              appliedOnNextTurn: true,
+            },
+          }
+        : result,
+  );

@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0270).
+highest existing number + 1 (the next number is ADR-0271).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -50,6 +50,7 @@ The versioned preferences domain behind the Options screen.
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
 | 0203 | [ADR-0203-options-and-preferences-architecture.md](ADR-0203-options-and-preferences-architecture.md) | Options screen and preferences architecture | accepted | — |
+| 0270 | [ADR-0270-campaign-command-table-is-the-registry.md](ADR-0270-campaign-command-table-is-the-registry.md) | The campaign command descriptor table is the command registry | accepted | — |
 
 ## Repository authority & re-baselining
 

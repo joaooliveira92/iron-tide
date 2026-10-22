@@ -1,13 +1,21 @@
 import { Effect, Result, Schema, SchemaIssue } from "effect";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
+import {
+  NO_PAYLOAD,
+  campaignCommandShapes,
+  type CampaignCommandMap,
+  type CampaignCommandName,
+} from "../../shared/campaign-command-descriptors.js";
 import { InvalidCommandPayload, type CommandError } from "./commandError.js";
 import type { CommandEnv } from "./desktopMainLayer.js";
 
-export type CommandProgram = (
-  payload: unknown,
-) => Effect.Effect<BridgeResult<unknown>, CommandError, CommandEnv>;
-
 export type CommandBodyEffect = Effect.Effect<BridgeResult<unknown>, CommandError, CommandEnv>;
+
+export type CommandHandler<N extends CampaignCommandName> = (
+  payload: CampaignCommandMap[N]["payload"],
+) => CommandBodyEffect;
+
+export type CommandHandlers = { readonly [N in CampaignCommandName]: CommandHandler<N> };
 
 const formatIssues = SchemaIssue.makeFormatterStandardSchemaV1();
 
@@ -15,34 +23,33 @@ function issueMessages(error: Schema.SchemaError): readonly string[] {
   return formatIssues(error.issue).issues.map((issue) => issue.message);
 }
 
-export function withSchema<T>(
-  schema: Schema.ConstraintDecoder<T, never>,
-  run: (payload: T) => CommandBodyEffect,
+export type CommandProgram = (payload: unknown) => CommandBodyEffect;
+
+export function bindCommandProgram<N extends CampaignCommandName>(
+  name: N,
+  handler: CommandHandler<N>,
 ): CommandProgram {
-  return (payload) =>
-    Effect.gen(function* () {
-      const decoded = Schema.decodeUnknownResult(schema)(payload);
-      if (Result.isFailure(decoded)) {
-        return yield* new InvalidCommandPayload({ issues: issueMessages(decoded.failure) });
-      }
-      return yield* run(decoded.success);
-    });
+  return (payload) => runCommandHandler(name, handler, payload);
 }
 
-export function withStrictSchema<T>(
-  schema: Schema.ConstraintDecoder<T, never>,
-  run: (payload: T) => CommandBodyEffect,
-): CommandProgram {
-  return (payload) =>
-    Effect.gen(function* () {
-      const decoded = Schema.decodeUnknownResult(schema, { onExcessProperty: "error" })(payload);
-      if (Result.isFailure(decoded)) {
-        return yield* new InvalidCommandPayload({ issues: issueMessages(decoded.failure) });
-      }
-      return yield* run(decoded.success);
-    });
-}
+type ErasedHandler = (payload: unknown) => CommandBodyEffect;
 
-export function payloadless(run: () => CommandBodyEffect): CommandProgram {
-  return () => run();
+export function runCommandHandler(
+  name: CampaignCommandName,
+  handler: (payload: never) => CommandBodyEffect,
+  payload: unknown,
+): CommandBodyEffect {
+  const shape = campaignCommandShapes[name];
+  const run = handler as ErasedHandler;
+  if (shape.payload === NO_PAYLOAD) {
+    return run(undefined);
+  }
+  const decoded = Schema.decodeUnknownResult(
+    shape.payload,
+    shape.strict ? { onExcessProperty: "error" } : undefined,
+  )(payload);
+  if (Result.isFailure(decoded)) {
+    return Effect.fail(new InvalidCommandPayload({ issues: issueMessages(decoded.failure) }));
+  }
+  return run(decoded.success);
 }

@@ -125,21 +125,31 @@ export interface ResultType<R> {
 export const resultType = <R>(): ResultType<R> => ({}) as ResultType<R>;
 
 export interface CommandShape<P, R> {
-  readonly payload: Schema.Schema<P> | typeof NO_PAYLOAD;
+  readonly payload: Schema.ConstraintDecoder<P, never> | typeof NO_PAYLOAD;
   readonly payloadType: P;
   readonly result: ResultType<R>;
+  readonly strict: boolean;
+}
+
+export interface CommandOptions {
+  readonly strict?: boolean;
 }
 
 export function command<R>(
   payload: typeof NO_PAYLOAD,
   result: ResultType<R>,
 ): CommandShape<undefined, R>;
-export function command<P, R>(payload: Schema.Schema<P>, result: ResultType<R>): CommandShape<P, R>;
+export function command<P, R>(
+  payload: Schema.ConstraintDecoder<P, never>,
+  result: ResultType<R>,
+  options?: CommandOptions,
+): CommandShape<P, R>;
 export function command(
-  payload: typeof NO_PAYLOAD | Schema.Schema<unknown>,
+  payload: typeof NO_PAYLOAD | Schema.ConstraintDecoder<unknown, never>,
   result: ResultType<unknown>,
+  options?: CommandOptions,
 ): CommandShape<unknown, unknown> {
-  return { payload, payloadType: undefined, result };
+  return { payload, payloadType: undefined, result, strict: options?.strict === true };
 }
 
 export interface AnswerDecisionPayload {
@@ -218,11 +228,14 @@ export const campaignCommandShapes = {
     resultType<SeedCampaignBattleDrillResult>(),
   ),
   loadCampaign: command(NO_PAYLOAD, resultType<LoadCampaignResponse>()),
-  loadRecentCampaign: command(RecentPackagePayloadSchema, resultType<LoadCampaignResponse>()),
+  loadRecentCampaign: command(RecentPackagePayloadSchema, resultType<LoadCampaignResponse>(), {
+    strict: true,
+  }),
   listRecentCampaigns: command(NO_PAYLOAD, resultType<readonly RecentCampaignEntry[]>()),
   removeRecentCampaign: command(
     RecentPackagePayloadSchema,
     resultType<readonly RecentCampaignEntry[]>(),
+    { strict: true },
   ),
   listCampaigns: command(NO_PAYLOAD, resultType<readonly SaveMetadata[]>()),
   verifyCampaign: command(NO_PAYLOAD, resultType<VerifyCampaignResponse>()),
@@ -275,6 +288,7 @@ export const campaignCommandShapes = {
   placeForeignConstructionCommand: command(
     PlaceForeignConstructionCommandPayloadSchema,
     resultType<ConstructionCommandQueuedOutcome>(),
+    { strict: true },
   ),
   previewForeignConstructionCommand: command(
     PreviewForeignConstructionCommandPayloadSchema,
@@ -348,16 +362,24 @@ export const campaignCommandShapes = {
   resolveTurn: command(CommandEnvelopePayloadSchema, resultType<ResolveTurnResult>()),
   answerDecision: command(AnswerDecisionPayloadSchema, resultType<ResolveTurnResult>()),
   submitBattleResult: command(SubmitBattleResultPayloadSchema, resultType<ResolveTurnResult>()),
-  startPlayerBattle: command(StartPlayerBattlePayloadSchema, resultType<StartPlayerBattleResult>()),
+  startPlayerBattle: command(
+    StartPlayerBattlePayloadSchema,
+    resultType<StartPlayerBattleResult>(),
+    { strict: true },
+  ),
   advancePlayerBattle: command(
     AdvancePlayerBattlePayloadSchema,
     resultType<AdvancePlayerBattleResult>(),
+    { strict: true },
   ),
   finishPlayerBattle: command(
     FinishPlayerBattlePayloadSchema,
     resultType<FinishPlayerBattleResult>(),
+    { strict: true },
   ),
-  submitOfferResponse: command(SubmitOfferResponsePayloadSchema, resultType<ResolveTurnResult>()),
+  submitOfferResponse: command(SubmitOfferResponsePayloadSchema, resultType<ResolveTurnResult>(), {
+    strict: true,
+  }),
   abandonPendingTurn: command(SessionIdPayloadSchema, resultType<AbandonPendingTurnResult>()),
   readPendingTurn: command(SessionIdPayloadSchema, resultType<ReadPendingTurnResult>()),
 } as const;
