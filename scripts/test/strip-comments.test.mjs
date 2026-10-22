@@ -50,6 +50,7 @@ void test("keeps the comments a tool reads", () => {
     "/** @vitest-environment jsdom */",
     "// biome-ignore lint: x",
     "// istanbul ignore next",
+    "// test-focus-allow-skip: Electron optional outside e2e",
   ];
   for (const text of kept)
     assert.ok(

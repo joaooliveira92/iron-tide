@@ -56,6 +56,7 @@ const KEEP_RULES = [
       ),
   ],
   ["deprecated", (c) => /@deprecated\b/.test(c.value)],
+  ["test-focus-allow-skip", (c) => /test-focus-allow-skip:\s*\S/.test(c.value)],
 ];
 
 export const keepReason = (comment) => KEEP_RULES.find(([, test]) => test(comment))?.[0] ?? null;
