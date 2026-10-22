@@ -114,7 +114,7 @@ function matchesType(value, type) {
  * @returns {string[]}
  */
 export function extractCommandNames(source) {
-  const match = /campaignCommandShapes\s*=\s*\{([\s\S]*?)\}\s*satisfies/u.exec(source);
+  const match = /campaignCommandShapes\s*=\s*\{([\s\S]*?)\}\s*as const/u.exec(source);
   if (match === null) return [];
   return [...match[1].matchAll(/^ {2}([A-Za-z0-9]+):\s*command\(/gmu)].map((m) => m[1]);
 }
