@@ -30,4 +30,5 @@ Direction lives in [`ROADMAP.md`](ROADMAP.md); the backlog in
 | campaign-readouts | feat/campaign-readouts | campaign-readouts | unknown | active | dev | — | — |
 | f1-spec | feat/f1-spec | f1-spec | unknown | active | dev | — | — |
 | s5-go-live | feat/s5-10-go-live | s5-go-live | unknown | active | dev | — | — |
+| domain-event-keys | feat/domain-event-keys | domain-event-keys | orchestrator | active | dev | 2026-10-22 | — |
 <!-- worktrees:end -->

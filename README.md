@@ -1,34 +1,20 @@
 # Bluewave
 
-Bluewave is a deterministic 1880s naval strategy and tactical game — and the
-engine and content compiler that produce it. One codebase holds the rules, the
-authored content, the campaign simulation, and the Electron desktop app that
-plays it. **This file is the binding canonical design baseline**; where a
-contract disagrees, the contract wins and this file is fixed in the same change
-(see `RULES.md`).
+Bluewave is a deterministic 1880s naval strategy and tactical game — and the engine and content compiler that produce it. One codebase holds the rules, the authored content, the campaign simulation, and the Electron desktop app that plays it. **This file is the binding canonical design baseline**; where a contract disagrees, the contract wins and this file is fixed in the same change (see `RULES.md`).
 
 ## What it is
 
-A monthly-turn strategic layer (nations, dockyards, fleets, budget, research,
-war) drives a deterministic tactical battle resolver. Content is authored in
-YAML, compiled into a canonical JSON artifact, and run by the app. The same
-content, ruleset, inputs, commands, seeds, and compatibility versions always
-produce the same authoritative hashes, on every supported OS.
+A monthly-turn strategic layer (nations, dockyards, fleets, budget, research, war) drives a deterministic tactical battle resolver. Content is authored in YAML, compiled into a canonical JSON artifact, and run by the app. The same
+content, ruleset, inputs, commands, seeds, and compatibility versions always produce the same authoritative hashes, on every supported OS.
 
 ## Design pillars
 
-- **Determinism.** Authoritative outcomes use integer/fixed-point maths,
-  domain-separated RNG, and a canonical serializer. No wall-clock, locale, or
-  filesystem-order dependence (`.ai/REQUIREMENTS.md` BW-DET-*).
-- **Content is data.** Authored YAML never executes; a manifest declares the
-  whole loaded surface, and only the compiled artifact is run.
-- **Commands, not mutations.** Intents pass validation, reservation, locking,
-  and an explicit resolution outcome, and emit domain events.
+- **Determinism.** Authoritative outcomes use integer/fixed-point maths,  domain-separated RNG, and a canonical serializer. No wall-clock, locale, or  filesystem-order dependence (`.ai/REQUIREMENTS.md` BW-DET-*).
+- **Content is data.** Authored YAML never executes; a manifest declares the whole loaded surface, and only the compiled artifact is run.
+- **Commands, not mutations.** Intents pass validation, reservation, locking, and an explicit resolution outcome, and emit domain events.
 - **Phases.** The month advances through an ordered, registered phase pipeline
   with declared read/write footprints.
-- **Player first.** The player's experience is the product: the game is
-  playable on every merge, decisions are readable, and every number shown
-  explains itself.
+- **Player first.** The player's experience is the product: the game is playable on every merge, decisions are readable, and every number shown explains itself.
 - **Tune with data.** Gameplay values live in content and balance data, marked
   provisional until sourced or playtested; balance claims cite the generated
   benchmark reports, never intuition.
