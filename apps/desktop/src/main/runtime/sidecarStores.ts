@@ -1,10 +1,11 @@
-import { rmSync } from "node:fs";
-import { join } from "node:path";
-import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 import { Context, Effect, Layer } from "effect";
-import { DRAWING_BOARD_DRAFT_FILENAME, loadDrawingBoardDraft } from "../drawingBoardDraft.js";
-import { MONTHLY_REPORTS_FILENAME, loadMonthlyReports } from "../monthlyReports.js";
-import { TURN_SUMMARIES_FILENAME, appendTurnSummary, loadTurnSummaries } from "../turnSummaries.js";
+import {
+  loadDrawingBoardDraft,
+  removeDrawingBoardDraft,
+  saveDrawingBoardDraft,
+} from "../drawingBoardDraft.js";
+import { appendMonthlyReport, loadMonthlyReports, saveMonthlyReports } from "../monthlyReports.js";
+import { appendTurnSummary, loadTurnSummaries, saveTurnSummaries } from "../turnSummaries.js";
 import type {
   MonthlyReportEntry,
   MonthlyReports,
@@ -16,8 +17,7 @@ import type {
   DrawingBoardDraftRecord,
   WriteDrawingBoardDraftPayload,
 } from "../../shared/design-contract.js";
-import { UI_STATE_FILENAME, loadUiState } from "../uiState.js";
-import { atomicWrite } from "./atomicWrite.js";
+import { loadUiState, saveUiState } from "../uiState.js";
 import { CommandFailed } from "./commandError.js";
 
 function failure(reason: string, error: unknown): CommandFailed {
@@ -74,77 +74,36 @@ export class DraftStore extends Context.Service<
   }
 >()("bluewave/desktop/DraftStore") {}
 
+function attempt<A>(reason: string, run: () => A): Effect.Effect<A, CommandFailed> {
+  return Effect.try({ try: run, catch: (e) => failure(reason, e) });
+}
+
 export function sidecarStoresLayer(): Layer.Layer<
   UiStateStore | ReportsStore | DraftStore | TurnSummariesStore
 > {
   return Layer.mergeAll(
     Layer.succeed(UiStateStore, {
-      load: (saveDir, turn) =>
-        Effect.try({
-          try: () => loadUiState(saveDir, turn),
-          catch: (e) => failure("UI_STATE_READ_FAILED", e),
-        }),
+      load: (saveDir, turn) => attempt("UI_STATE_READ_FAILED", () => loadUiState(saveDir, turn)),
       save: (saveDir, uiState) =>
-        Effect.try({
-          try: () =>
-            atomicWrite(join(saveDir, UI_STATE_FILENAME), JSON.stringify(uiState, null, 2)),
-          catch: (e) => failure("UI_STATE_WRITE_FAILED", e),
-        }),
+        attempt("UI_STATE_WRITE_FAILED", () => saveUiState(saveDir, uiState)),
     }),
     Layer.succeed(ReportsStore, {
-      load: (saveDir) =>
-        Effect.try({
-          try: () => loadMonthlyReports(saveDir),
-          catch: (e) => failure("REPORTS_READ_FAILED", e),
-        }),
+      load: (saveDir) => attempt("REPORTS_READ_FAILED", () => loadMonthlyReports(saveDir)),
       save: (saveDir, data) =>
-        Effect.try({
-          try: () =>
-            atomicWrite(join(saveDir, MONTHLY_REPORTS_FILENAME), JSON.stringify(data, null, 2)),
-          catch: (e) => failure("REPORTS_WRITE_FAILED", e),
-        }),
-      append: (data, report) => Effect.succeed({ reports: [report, ...data.reports].slice(0, 12) }),
+        attempt("REPORTS_WRITE_FAILED", () => saveMonthlyReports(saveDir, data)),
+      append: (data, report) => Effect.succeed(appendMonthlyReport(data, report)),
     }),
     Layer.succeed(TurnSummariesStore, {
-      load: (saveDir) =>
-        Effect.try({
-          try: () => loadTurnSummaries(saveDir),
-          catch: (e) => failure("TURN_SUMMARIES_READ_FAILED", e),
-        }),
+      load: (saveDir) => attempt("TURN_SUMMARIES_READ_FAILED", () => loadTurnSummaries(saveDir)),
       save: (saveDir, data) =>
-        Effect.try({
-          try: () =>
-            atomicWrite(join(saveDir, TURN_SUMMARIES_FILENAME), JSON.stringify(data, null, 2)),
-          catch: (e) => failure("TURN_SUMMARIES_WRITE_FAILED", e),
-        }),
+        attempt("TURN_SUMMARIES_WRITE_FAILED", () => saveTurnSummaries(saveDir, data)),
       append: (data, summary) => Effect.succeed(appendTurnSummary(data, summary)),
     }),
     Layer.succeed(DraftStore, {
-      load: (saveDir) =>
-        Effect.try({
-          try: () => loadDrawingBoardDraft(saveDir),
-          catch: (e) => failure("DRAFT_READ_FAILED", e),
-        }),
+      load: (saveDir) => attempt("DRAFT_READ_FAILED", () => loadDrawingBoardDraft(saveDir)),
       save: (saveDir, draft, savedAt) =>
-        Effect.try({
-          try: () =>
-            atomicWrite(
-              join(saveDir, DRAWING_BOARD_DRAFT_FILENAME),
-              JSON.stringify({
-                schema: "drawing_board_draft_v1",
-                savedAt,
-                presetId: draft.presetId,
-                log: draft.log,
-                compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-              }),
-            ),
-          catch: (e) => failure("DRAFT_WRITE_FAILED", e),
-        }),
-      remove: (saveDir) =>
-        Effect.try({
-          try: () => rmSync(join(saveDir, DRAWING_BOARD_DRAFT_FILENAME), { force: true }),
-          catch: (e) => failure("DRAFT_WRITE_FAILED", e),
-        }),
+        attempt("DRAFT_WRITE_FAILED", () => saveDrawingBoardDraft(saveDir, draft, savedAt)),
+      remove: (saveDir) => attempt("DRAFT_WRITE_FAILED", () => removeDrawingBoardDraft(saveDir)),
     }),
   );
 }

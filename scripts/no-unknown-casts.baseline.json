@@ -167,9 +167,6 @@
   "apps/desktop/src/renderer/shell/GuidedInspectionOverlay.test.tsx": {
     "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
   },
-  "apps/desktop/src/renderer/shell/StatusStrip.test.tsx": {
-    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
-  },
   "apps/desktop/src/renderer/shell/new-game-compile.test.ts": {
     "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 4
   },

@@ -1,6 +1,4 @@
-import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { Effect, Result, Schema } from "effect";
+import { Effect, Schema } from "effect";
 import { playerVisibleMessages, projectTurnMessages, TurnMessageSchema } from "@bluewave/messages";
 import type {
   ReadTurnSummariesResult,
@@ -11,6 +9,7 @@ import type { DomainEventEnvelope } from "@bluewave/events";
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
 import type { CommandHandler } from "./runtime/commandProgram.js";
+import { defineSidecar, prependBounded } from "./runtime/sidecar.js";
 import { TurnSummariesStore } from "./runtime/sidecarStores.js";
 
 export const TURN_SUMMARIES_FILENAME = "turn-summaries.json";
@@ -32,28 +31,21 @@ const TurnSummariesSchema = Schema.Struct({
   summaries: Schema.Array(TurnSummaryEntrySchema),
 });
 
-function createAbortError(): Error {
-  const error = new Error("Turn-summary write was cancelled");
-  error.name = "AbortError";
-  return error;
-}
+const sidecar = defineSidecar<TurnSummaries, TurnSummaries>({
+  filename: TURN_SUMMARIES_FILENAME,
+  schema: TurnSummariesSchema,
+  decodeOptions: { onExcessProperty: "error" },
+  space: 2,
+  empty: emptyTurnSummaries,
+  resolve: (stored) => stored,
+});
 
 export function emptyTurnSummaries(): TurnSummaries {
   return { summaries: [] };
 }
 
 export function loadTurnSummaries(saveDir: string): TurnSummaries {
-  const path = join(saveDir, TURN_SUMMARIES_FILENAME);
-  if (!existsSync(path)) return emptyTurnSummaries();
-  try {
-    const parsed = Schema.decodeUnknownResult(TurnSummariesSchema, {
-      onExcessProperty: "error",
-    })(JSON.parse(readFileSync(path, "utf8")));
-    if (Result.isFailure(parsed)) return emptyTurnSummaries();
-    return parsed.success;
-  } catch {
-    return emptyTurnSummaries();
-  }
+  return sidecar.read(saveDir, undefined);
 }
 
 export function saveTurnSummaries(
@@ -61,21 +53,18 @@ export function saveTurnSummaries(
   data: TurnSummaries,
   signal?: AbortSignal,
 ): void {
-  if (signal?.aborted) throw createAbortError();
-  const path = join(saveDir, TURN_SUMMARIES_FILENAME);
-  const tmpPath = `${path}.tmp`;
-  try {
-    writeFileSync(tmpPath, JSON.stringify(data, null, 2), "utf8");
-    renameSync(tmpPath, path);
-  } catch (err) {
-    rmSync(tmpPath, { force: true });
-    throw err;
-  }
+  sidecar.write(saveDir, data, signal);
 }
 
 export function appendTurnSummary(data: TurnSummaries, summary: TurnSummaryEntry): TurnSummaries {
-  const withoutDuplicate = data.summaries.filter((entry) => entry.turnId !== summary.turnId);
-  return { summaries: [summary, ...withoutDuplicate].slice(0, TURN_SUMMARIES_LIMIT) };
+  return {
+    summaries: prependBounded(
+      data.summaries,
+      summary,
+      TURN_SUMMARIES_LIMIT,
+      (a, b) => a.turnId === b.turnId,
+    ),
+  };
 }
 
 export function buildTurnSummary(input: {
