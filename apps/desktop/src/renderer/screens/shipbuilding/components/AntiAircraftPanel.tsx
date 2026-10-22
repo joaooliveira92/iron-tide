@@ -3,10 +3,6 @@ import { NumberField } from "../../../components/design-workspace/fields.js";
 import { Panel } from "../../../components/design-workspace/panels/Panel.js";
 import type { AntiAircraftModel } from "../anti-aircraft-view.js";
 
-/**
- * Light and medium AA guns and AA directors (manual p.43) as counts. Setting every count to zero removes the fit. The
- * readout states what the compile decided.
- */
 export function AntiAircraftPanel({
   model,
   edit,

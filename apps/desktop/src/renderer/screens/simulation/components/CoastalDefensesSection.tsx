@@ -14,7 +14,6 @@ interface CoastalDefensesSectionProps {
   readonly targets: readonly LandTargetDamage[];
 }
 
-/** Coastal batteries and their current damage state. */
 export function CoastalDefensesSection({ targets }: CoastalDefensesSectionProps) {
   return (
     <AccordionItem value="defenses">

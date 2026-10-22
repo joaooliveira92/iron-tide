@@ -5,13 +5,10 @@ export interface BattleHistorySummary {
   readonly won: number;
   readonly lost: number;
   readonly undecided: number;
-  /** Ships the player lost, across battles the player fought in. */
   readonly playerLosses: number;
-  /** Ships the opposing side lost in those same battles. */
   readonly enemyLosses: number;
 }
 
-/** Totals over the battles the player fought in; third-party battles are ignored. */
 export function summarizeBattleHistory(
   battles: readonly BattleHistoryEntry[],
 ): BattleHistorySummary {

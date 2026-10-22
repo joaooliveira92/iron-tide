@@ -1,13 +1,3 @@
-/**
- * The approved-diff gate (ship-part-model SPM-R25; ticket 09). A later, intended change to a
- * derived metric must match an owner-approved entry in `approved-diffs.json`, or the gate fails.
- *
- * Pure: it decodes a parsed JSON value and judges a finished equivalence report. The file
- * starts empty, and an empty file approves nothing. Approvals are exact: one design, one
- * placement (or entity), one field path, one old and one new value. Wildcards, globs, regular
- * expressions, whole-design approvals and "every change from ticket X" entries are rejected
- * at decode.
- */
 import type { EquivalenceReport, MetricRow } from "./equivalenceReport.js";
 import { checkEquivalenceReport } from "./equivalenceReport.js";
 import type { GateFailure } from "./equivalenceReport.js";
@@ -25,7 +15,6 @@ export type DifferenceClass = (typeof DIFFERENCE_CLASSES)[number];
 export interface ApprovedDiff {
   readonly decisionId: string;
   readonly designId: string;
-  /** The placement, or the affected entity when the metric is not placement-scoped. */
   readonly placementId: string;
   readonly fieldPath: string;
   readonly oldValue: MetricValue;
@@ -33,9 +22,7 @@ export interface ApprovedDiff {
   readonly differenceClass: DifferenceClass;
   readonly reason: string;
   readonly approvalReference: string;
-  /** Numeric entries: the expected `newValue − oldValue`. */
   readonly expectedDelta?: number;
-  /** Numeric entries: the expected replacement value (must equal `newValue`). */
   readonly expectedReplacement?: number;
 }
 
@@ -64,16 +51,10 @@ const KNOWN_KEYS = new Set<string>([
   "expectedDelta",
   "expectedReplacement",
 ]);
-/** Glob and regular-expression metacharacters. `.`, `[` and `]` are legitimate in metric paths. */
 const PATTERN_CHARS = /[*?{}()|+^$\\]/;
-/** A value that is itself a broad word approves a set, not one thing. */
 const BROAD_WORDS = /^\s*(all|every|any|whole|entire|design|placement)\b/i;
 const BROAD_REASON = /\b(all|every|any)\b[^.]*\b(changes?|diffs?|differences?)\b/i;
 
-/**
- * Whether free text reads as a broad approval (a wildcard, pattern or "all changes" wording).
- * Shared with the replay-corpus approvals so both gates refuse the same shortcuts.
- */
 export const readsAsBroadApproval = (text: string): boolean =>
   PATTERN_CHARS.test(text) || BROAD_REASON.test(text);
 
@@ -176,7 +157,6 @@ function decodeEntry(raw: unknown, at: string, errors: string[]): ApprovedDiff |
   };
 }
 
-/** Strict decode of a parsed `approved-diffs.json`. Never throws. */
 export function decodeApprovedDiffs(raw: unknown): DecodeResult {
   const errors: string[] = [];
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
@@ -207,7 +187,6 @@ export function decodeApprovedDiffs(raw: unknown): DecodeResult {
 const placementMatches = (row: MetricRow, entry: ApprovedDiff): boolean =>
   row.path.includes(`[${entry.placementId}]`) || row.path.startsWith(`${entry.placementId}.`);
 
-/** Whether `entry` approves exactly this `changed` row of this design. */
 export function approves(entry: ApprovedDiff, designId: string, row: MetricRow): boolean {
   if (row.status !== "changed") return false;
   if (entry.designId !== designId || entry.fieldPath !== row.path) return false;
@@ -227,15 +206,9 @@ export function approves(entry: ApprovedDiff, designId: string, row: MetricRow):
 export interface ApprovedGateResult {
   readonly ok: boolean;
   readonly failures: readonly GateFailure[];
-  /** Entries that matched at least one changed row. */
   readonly applied: readonly ApprovedDiff[];
 }
 
-/**
- * The equivalence gates with approved diffs applied: a `changed` row passes only when an entry
- * approves it exactly, and an entry that matches nothing fails as stale. Every other structural
- * and semantic failure is unaffected by approvals.
- */
 export function checkWithApprovedDiffs(
   report: EquivalenceReport,
   approved: ApprovedDiffsFile,

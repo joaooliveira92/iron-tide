@@ -6,7 +6,6 @@ import { describeEdit } from "../describeEdit.js";
 import type { DraftEdit } from "@bluewave/ship-design";
 import { Panel } from "./Panel.js";
 
-/** The edit history as a list; choosing a step moves the working design there (later steps stay redo-able). */
 export function HistoryPanel({
   history,
   cursor,

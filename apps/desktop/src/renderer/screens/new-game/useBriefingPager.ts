@@ -22,11 +22,6 @@ export interface BriefingPager {
   readonly goBack: () => void;
 }
 
-/**
- * Owns the briefing's linear page cursor and its primary-action registration.
- * The cursor resets when the session changes; the primary action only registers
- * once the projection has loaded, so the shell never shows a dead trigger.
- */
 export function useBriefingPager({
   sessionId,
   ready,

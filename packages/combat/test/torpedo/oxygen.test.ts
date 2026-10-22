@@ -1,10 +1,3 @@
-// AC-18 (DESIGN-40 §23): oxygen torpedoes. An OXYGEN model MUST declare the
-// exact shipped effects — range 15_000 / speed 11_000 / wake-detection 7_500 /
-// tube-hit severe-flooding 15_000 / chain-reaction base 3_000 bp. Performance
-// gains apply ONLY when the selected setting AND launcher are compatible with
-// the model (otherwise neutral 10_000 multipliers + the exact reason).
-// Fixtures: the shipped Type 93 oxygen (jpn_61cm_type93_1935), the G7a
-// wet-heater (ger_533mm_g7a_1934), G7e electric.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {

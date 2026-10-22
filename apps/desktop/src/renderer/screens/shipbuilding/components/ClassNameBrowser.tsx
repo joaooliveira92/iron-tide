@@ -5,18 +5,12 @@ import { Button } from "../../../components/ui/button.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs.js";
 import type { NameGroup } from "../class-name-suggestions.js";
 
-/**
- * The nation's authored ship names: one vertical tab per ship type (with its name count), the names of the chosen
- * type beside it, and a filter across all types. Choosing a name hands it to `onPick`; the host decides what that
- * does (here: sets the class name and closes). The design's own type opens first.
- */
 export function ClassNameBrowser({
   groups,
   current,
   onPick,
 }: {
   readonly groups: readonly NameGroup[];
-  /** The class name now in the field; its button shows as pressed. */
   readonly current: string;
   readonly onPick: (name: string) => void;
 }) {

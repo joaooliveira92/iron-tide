@@ -3,7 +3,6 @@ import { BATTLE_COMPOSITION_IRREPARABLE } from "./reasonCodes.js";
 
 export const BATTLE_COMPOSITION_REPAIR_V1 = "battle_composition_repair_v1" as const;
 
-// DESIGN-37 §28: at most exactly 3 repair passes; permitted range 1..5.
 export const REPAIR_MAX_PASSES = 3;
 export const REPAIR_MIN_PASSES = 1;
 export const REPAIR_MAX_RANGE = 5;
@@ -19,7 +18,6 @@ export interface RepairAction {
   assetId?: string;
 }
 
-// DESIGN-37 §28 repair ordering.
 export const REPAIR_ORDER: RepairAction["kind"][] = [
   "REMOVE_OPTIONAL_INELIGIBLE",
   "REPLACE_OPTIONAL",
@@ -35,8 +33,6 @@ export interface RepairResult {
   repaired: boolean;
 }
 
-// Structural repair driver: iterates up to 3 passes applying only the permitted
-// actions; if still invalid the caller rejects with BATTLE_COMPOSITION_IRREPARABLE.
 export function battleCompositionRepairV1(
   invalidOptionalAssets: string[],
   optionalCandidatePool: string[],

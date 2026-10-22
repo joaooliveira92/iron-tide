@@ -1,22 +1,3 @@
-// B-6 INC-2 (AC-5/AC-6/AC-7/AC-10): `resolveBattleAuto` — the pure,
-// deterministic auto-resolution orchestrator.
-//
-// Consumes the SAME manifest, campaign asset state, battle seed, weather,
-// objectives (none in this slice), realism-independent stats, and ruleset/
-// formula/RNG versions as tactical play (DESIGN-38 §33; DESIGN-37 §32 seed
-// family battle/battle_id/root). Never ambient clock/random/env/fs.
-//
-// Per resolved minute the full DESIGN-38 step pipeline applies (steps 4-8,
-// 7.5 weather, 8.5 gunnery, 9-10 damage), then `decideBattleEnd` runs (§32
-// precedence incl. the time-limit cap; terminating-minute effects are part of
-// the ending minute — a side's last ship counted sunk in the minute the battle
-// ends). The result carries the exact §32 reason id, elapsed minutes,
-// winner/loser, survivor/sunk per side, the per-ship accumulated-loss
-// damageReport, the canonical event-ledger hash, per-minute hashes, and a
-// domain-separated result hash.
-//
-// Fail-closed: a missing/undefined manifest -> AUTO_RESOLUTION_UNAVAILABLE;
-// every other malformed input -> a stable diagnostic; never a partial result.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine, type RandomLedger } from "@bluewave/random";
@@ -76,84 +57,39 @@ import {
 export interface ResolveBattleAutoInput {
   battleId: string;
   areaId: string;
-  /** Campaign month id (e.g. "1880-02" — DESIGN-42 stream domain). */
   campaignMonth: string;
-  /** The accepted immutable B-1 manifest (mandatory; missing -> AUTO_RESOLUTION_UNAVAILABLE). */
   manifest: BattleManifest;
   attacker: AutoResolverNation;
   defender: AutoResolverNation;
-  /** The battle area's committed strategic weather state (AC-3). */
   strategicWeather: StrategicWeatherState;
-  /** The campaign random seed (never a save-derived value). */
   campaignSeed: string;
   rulesetVersion: string;
   formulaVersion: string;
   rngVersion: string;
-  /** Battle-duration cap; default DESIGN-38 §32 360 minutes. */
   maxMinutes?: number;
-  /** Optional ledger recording every keyed random decision (port pattern). */
   randomLedger?: RandomLedger;
 }
 
 export interface BattleResolutionResult {
   battleId: string;
-  /** Exact §32 reason id. */
   battleEndReason: string;
-  /** Number of fully-resolved minutes. */
   elapsedMinutes: number;
-  /** Nation id of the winner; null for ties / non-decided ends per §32
-   *  precedence (time_limit without an eliminated side, mutual_disengagement). */
   winnerId: string | null;
   loserId: string | null;
   attackerSurvivorIds: string[];
   defenderSurvivorIds: string[];
   attackerSunkIds: string[];
   defenderSunkIds: string[];
-  /** shipId -> accumulated battle hp loss (integer >= 0, ADR-0026 mapping). */
   damageReport: Record<string, SafeInt>;
-  /** sha256 of the canonicalized battle-event ledger (sorted, §35). */
   eventLedgerHash: string;
-  /** Per-minute authoritative hash list (byte-stable across processes). */
   minuteHashes: string[];
-  /** Domain-separated envelope hash over the result surface. */
   resultHash: string;
-  /**
-   * P-1 (ADR-0052): why each sunk/foundered ship was lost, keyed by ship id
-   * (gunfire | fire | flooding | torpedo). Present only when at least one ship
-   * was lost. OBSERVATIONAL: excluded from `resultHash`.
-   */
   causeOfLoss?: Record<string, LossCause>;
-  /**
-   * ADR-0098: the structured reason a side broke off (fleet-strength
-   * classification), present only for withdrawal / mutual-disengagement ends.
-   * OBSERVATIONAL: excluded from `resultHash`.
-   */
   withdrawalReason?: WithdrawalReason;
-  /**
-   * ADR-0098: observational gunnery telemetry (salvoes fired/rounds/hits).
-   * OBSERVATIONAL: excluded from `resultHash`.
-   */
   telemetry?: BattleTelemetry;
-  /** P-1: torpedo activity — present only when a combatant carried torpedo armament. */
   torpedoSummary?: { tubesFired: number; hits: number };
-  /**
-   * C-5 reachability: smoke lifecycle events resolved during the battle. Present
-   * only when the battle had committed smoke sources. OBSERVATIONAL: excluded
-   * from `resultHash`.
-   */
   smokeActivity?: { events: number };
-  /**
-   * D-3 reachability: air-combat activity (CAP engagements / strike attacks).
-   * Present only when the battle had committed air groups. OBSERVATIONAL:
-   * excluded from `resultHash`.
-   */
   airCombatActivity?: { capEngagements: number; strikeAttacks: number; losses: number };
-  /**
-   * D-4 reachability: air-defense activity (engagements / kills / aborts /
-   * disruptions). Present only when the battle had committed air-defense
-   * installations and an attacking strike. OBSERVATIONAL: excluded from
-   * `resultHash`.
-   */
   airDefenseActivity?: {
     engagements: number;
     kills: number;
@@ -167,8 +103,6 @@ export interface BattleResolutionResult {
   };
 }
 
-// Targeting: nearest legal enemy contact per battery (tie-break by asset id).
-
 function squaredDistance(
   a: readonly [number, number] | undefined,
   b: readonly [number, number] | undefined,
@@ -179,8 +113,6 @@ function squaredDistance(
   return dx * dx + dy * dy;
 }
 
-/** Assign each battery its target contact id this minute: nearest viable enemy
- *  with a legal contact track; NO_TARGET when none. */
 export function assignTargetContactIds(
   batteries: readonly GunneryBattery[],
   battleState: TacticalBattleState,
@@ -199,7 +131,6 @@ export function assignTargetContactIds(
       const key = `${battleId}:${enemy.assetId}`;
       if (!contacts.has(key)) continue;
       const state = damage.targets[enemy.assetId]?.state;
-      // skip enemies already terminally non-viable: focus remaining firepower
       if (state && state.terminalStatus !== "NORMAL") continue;
       const d2 = squaredDistance(shooterPos, movement[enemy.assetId]?.position);
       if (!best || d2 < best.d2 || (d2 === best.d2 && enemy.assetId < best.assetId)) {
@@ -211,7 +142,6 @@ export function assignTargetContactIds(
   return out;
 }
 
-/** Thread the post-minute damage states back into the context targets. */
 export function mergeTargetStates(
   targets: Record<string, DamageTargetContext>,
   states: Record<string, ShipDamageState>,
@@ -223,11 +153,6 @@ export function mergeTargetStates(
   }
   return out;
 }
-
-// Damage control (P-1 ticket 07): per-ship contexts derived from each ship's
-// CURRENT damage state. Wired in every battle (ticket 09 / ADR-0049). The keyedRng is scoped per (battleId, minute,
-// shipId, draw ordinal) so every ship resolves from its own deterministic
-// streams — mirrors damage.ts scopedRng (ADR-0026 §random).
 
 export function buildDamageControlContexts(input: {
   battleId: string;
@@ -243,14 +168,11 @@ export function buildDamageControlContexts(input: {
   const shipIds = units.map((u) => u.assetId).sort();
   for (const shipId of shipIds) {
     const target = damage.targets[shipId];
-    if (!target) continue; // every committed ship is in targets; defensive no-op
+    if (!target) continue;
     const state = target.state;
     const currentSpeedBp = movementStates?.[shipId]?.currentSpeed ?? 0;
     let drawCall = 0;
     const scopedRng = (stream: string): number => {
-      // The ordinal is part of the ledger inputHash too (domain-separated
-      // input-hash requirement): the SAME (battleId, minute, shipId, stream)
-      // tuple produces a DIFFERENT decision for A different ordinal.
       const ordinal = drawCall;
       drawCall += 1;
       const domain = `${stream}:${battleId}:${minute}:${shipId}:${ordinal}`;
@@ -280,8 +202,6 @@ export function buildDamageControlContexts(input: {
     contexts[shipId] = {
       fireRecords: [...state.fireRecords],
       floodingRecords: [...state.floodingRecords],
-      // accumulated flooded-water MASS in kg (progressiveFloodingTotal surface;
-      // ADR-0047 decision 4 — severity converts to bp via designDisplacementKg).
       floodedWaterBp: state.progressiveFloodingTotal,
       designDisplacementKg: target.designDisplacementKg,
       shipType: target.shipType,
@@ -349,7 +269,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     });
   }
 
-  // ---- deterministic battle seed (DESIGN-37 §32) --------------------------
   const battleSeed = deriveBattleSeed(
     {
       rngVersion: input.rngVersion,
@@ -366,7 +285,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
   const manifestHash = computeManifestHash(input.manifest);
   const engine = new RandomEngine(battleSeed);
 
-  // ---- projection (AC-4) ---------------------------------------------------
   const projected: ProjectBattleOutput = projectBattle({
     manifest: input.manifest,
     areaId: input.areaId,
@@ -386,7 +304,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     });
   }
 
-  // ---- battle weather (AC-3) -----------------------------------------------
   const weather = buildBattleWeather({
     battleId: input.manifest.battleId,
     areaId: input.areaId,
@@ -404,14 +321,8 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
   let gunnery: GunneryBattery[] = [...projected.batteries];
   let damage: DamageContext = { ...projected.damage, engine, randomLedger: input.randomLedger };
   let weatherCtx = weather.context;
-  // P-1 (AC-5): torpedo launchers/targets/tracks; absent when no unit is armed (AC-6).
   let torpedo: TorpedoContext | undefined = projected.torpedoes;
   const torpedoSummary = { tubesFired: 0, hits: 0 };
-  // C-5/D-3/D-4 reachability: project the manifest's optional capability
-  // declarations into the stage contexts. Each is ALWAYS supplied (empty when the
-  // manifest declares no capability) so the smoke / air-combat / air-defense
-  // stages are reachable through the production auto-resolution path; an empty
-  // context is a strict, byte-identical no-op, never a fabricated capability.
   let smoke = projectSmokeContext(input.manifest, weather.context.components);
   let airCombat = projectAirCombatContext(input.manifest, projected.state.battleId);
   let airDefense = projectAirDefenseContext(input.manifest, engine);
@@ -431,7 +342,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
   let elapsedMinutes = 0;
 
   for (let minute = 1; minute <= maxMinutes; minute++) {
-    // 1. targeting: nearest legal enemy for each battery (pre-minute state)
     const targets = assignTargetContactIds(
       gunnery,
       battleState,
@@ -446,7 +356,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
         : b;
     });
 
-    // 1b. torpedo doctrine (P-1): sync target damage, then plan this minute's launches
     if (torpedo) {
       const targets = { ...torpedo.targets };
       for (const [shipId, t] of Object.entries(targets)) {
@@ -467,12 +376,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
       torpedoSummary.tubesFired += torpedo.commands.reduce((n, c) => n + c.tubeIndexes.length, 0);
     }
 
-    // 1c. damage control (P-1 tickets 07/09): per-ship contexts derived from each
-    // ship's CURRENT (pre-minute) damage state, wired in EVERY auto-resolved
-    // battle (DESIGN-41 §13/§19/§44; ADR-0049 retired the ADR-0047 torpedo gate).
-    // The engine step 8.6 resolves each ship independently and writes
-    // flooding/flotation/terminal changes back per ship (a strict no-op until a
-    // ship actually has fires or flooding).
     const damageControl = buildDamageControlContexts({
       battleId: projected.state.battleId,
       minute,
@@ -483,7 +386,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
       randomLedger: input.randomLedger,
     });
 
-    // 2. one fully-resolved tactical minute (steps 4-8 + 7.5 + 8.5 + 9-10 + 10.5)
     const res = advanceMinute({
       state: battleState,
       minute,
@@ -510,7 +412,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     minuteHashes.push(res.minuteHash);
     elapsedMinutes = minute;
 
-    // C-5/D-3/D-4 observational activity (excluded from resultHash).
     if (res.smokeRecords) smokeEventCount += res.smokeRecords.length;
     if (res.airCombatSummary) {
       airCombatActivity.capEngagements += res.airCombatSummary.capEngagements;
@@ -527,7 +428,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
       }
     }
 
-    // ADR-0098 observational telemetry (no draws, no state effect).
     if (res.gunneryRecords) {
       for (const rec of res.gunneryRecords) {
         telemetry.salvosFired += 1;
@@ -537,7 +437,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
       }
     }
 
-    // 3. thread per-minute state forward
     battleState = {
       ...battleState,
       contacts: res.contacts.map((c) => ({ ...c })),
@@ -557,7 +456,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     if (res.damageStates) {
       const preTargets = damage.targets;
       damage = { ...damage, targets: mergeTargetStates(damage.targets, res.damageStates) };
-      // cause-of-loss observation (ADR-0052; not hashed, no draws)
       const hitKeys = new Set(
         (res.torpedoRecords ?? [])
           .filter(
@@ -585,7 +483,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
       torpedo = {
         ...torpedo,
         commands: [],
-        // the stage reports only RUNNING tracks; none reported -> none running
         tracks: (res.torpedoTracks ?? []).map((t) => ({ ...t })),
         launchers: launcherStates
           ? torpedo.launchers.map((w) => {
@@ -596,9 +493,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
       };
     }
 
-    // Thread the C-5/D-3/D-4 stage state forward (mirrors advanceMinutes):
-    // smoke clouds drift/decay; air-combat records accumulate; air-defense
-    // per-defender ammunition is carried to the next minute.
     if (res.smokeClouds) smoke = { ...smoke, clouds: res.smokeClouds };
     if (res.airCombatRecords) {
       airCombat = { ...airCombat, existingRecords: res.airCombatRecords.map((r) => ({ ...r })) };
@@ -614,7 +508,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
       };
     }
 
-    // 4. §32 battle end (terminating-minute effects already applied)
     const viabilities: ShipViability[] = projected.units.map((u) => ({
       assetId: u.assetId,
       sideId: u.sideId as BattleSide,
@@ -643,9 +536,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
   const sunkOf = (ships: readonly TacticalShipUnit[]): string[] =>
     ships
       .filter((u) => {
-        // Fail-closed: every projected unit MUST have a damage target (the
-        // projector creates one per promoted unit). A missing target is a
-        // wiring defect, never a silent "sunk".
         const st = damage.targets[u.assetId]?.state;
         if (!st) {
           throw new BluewaveError(BATTLE_AUTO_RESOLUTION_FAILED, {
@@ -678,7 +568,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     damageReport[u.assetId] = battleLoss(u.hitPoints as number, st, u.maxHitPoints as number);
   }
 
-  // winner/loser per §32 precedence (ties and time_limit -> both null)
   let winnerId: string | null = null;
   let loserId: string | null = null;
   if (endReason === "no_viable_combatants") {
@@ -689,9 +578,7 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
       winnerId = input.attacker.nationId;
       loserId = input.defender.nationId;
     }
-    // eliminatedSide === null (both non-viable tie): winner/loser remain null (ADR-0026)
   } else if (endReason === "withdrawal_complete") {
-    // ADR-0073: the side that broke off loses; mutual_disengagement -> no winner.
     if (withdrawnSide === "ATTACKER") {
       winnerId = input.defender.nationId;
       loserId = input.attacker.nationId;
@@ -701,7 +588,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     }
   }
 
-  // canonical event ledger hash (§35 ordering)
   const ledger = new BattleLedger();
   for (const e of allEvents) ledger.append(e);
 
@@ -742,8 +628,6 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     telemetry: finalizeTelemetry(telemetry),
     provenance,
   };
-  // resultHash: domain-separated envelope over the whole non-hash surface
-  // causeOfLoss is observational (ADR-0052) and excluded so no baseline moves.
   const {
     resultHash: _hash,
     causeOfLoss: _cause,

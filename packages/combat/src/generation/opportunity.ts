@@ -7,7 +7,6 @@ import { getMission, REACHABLE_MISSION_SUBSET_V1 } from "./mission.js";
 
 export const OPPORTUNITY_REACHABILITY_V1 = "opportunity_reachability_v1" as const;
 
-// DESIGN-37 §5 opportunity statuses.
 export type BattleOpportunityStatus =
   | "CANDIDATE"
   | "ELIGIBLE"
@@ -40,8 +39,8 @@ export interface BattleMissionOpportunity {
 export interface OpportunityInputs {
   snapshot: CampaignSnapshot;
   campaignMonth: string;
-  acceptedOpportunityIds: ReadonlySet<string>; // already accepted battles this month
-  acceptedWarAreaPairs: ReadonlySet<string>; // warId:areaId accepted this month
+  acceptedOpportunityIds: ReadonlySet<string>;
+  acceptedWarAreaPairs: ReadonlySet<string>;
 }
 
 function presenceByArea(snapshot: CampaignSnapshot, nationId: string): Set<string> {
@@ -57,8 +56,6 @@ function presenceByArea(snapshot: CampaignSnapshot, nationId: string): Set<strin
   return areas;
 }
 
-// ADR B-1-7: reachable predicate = opposing active-war surface presence
-// co-located in the same area post-movement.
 export function determineMissionOpportunities(
   inputs: OpportunityInputs,
 ): BattleMissionOpportunity[] {
@@ -109,7 +106,6 @@ export function determineMissionOpportunities(
     }
   }
 
-  // DESIGN-37 §7 ordering: warId → areaId → mission priority → opportunityId.
   opportunities.sort((a, b) => {
     if (a.warId !== b.warId) return a.warId.localeCompare(b.warId);
     if (a.areaId !== b.areaId) return a.areaId.localeCompare(b.areaId);
@@ -117,7 +113,6 @@ export function determineMissionOpportunities(
     return a.opportunityId.localeCompare(b.opportunityId);
   });
 
-  // DESIGN-37 §7 monthly limits: 1 accepted battle per area per month.
   const perArea = new Map<string, number>();
   const limited: BattleMissionOpportunity[] = [];
   for (const opp of opportunities) {
@@ -125,7 +120,6 @@ export function determineMissionOpportunities(
     if (inputs.acceptedOpportunityIds.has(opp.opportunityId)) {
       limited.push(opp);
     } else if (areaCount > MAX_BATTLES_PER_AREA_PER_MONTH) {
-      // mark REJECTED with monthly-limit reason
       limited.push({ ...opp, status: "REJECTED" });
       perArea.set(opp.areaId, areaCount);
       continue;

@@ -1,11 +1,3 @@
-// AC-9/AC-10: fire-solution quality (DESIGN-40 §10) — the exact basis-point
-// rational retained through all TEN multiplier factors, rounded ONCE with FLOOR
-// (never truncated mid-product), clamped to [0, 10_000]. A missing/undefined/
-// non-integer factor throws TORPEDO_FIRE_SOLUTION_FACTOR_MISSING — never a
-// silent 10_000 fallback. The raw numerator reaches ~10^44 (> Number.MAX_SAFE_
-// INTEGER) so the intermediate product is bigint; the floored result is a safe
-// integer. AC-10 minimums: kind thresholds + the §24 friendly-danger-sector
-// 7_500 bp raise applied to every launch kind.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -35,14 +27,12 @@ describe("AC-9: the §10 11-factor formula (exact integer rational, one FLOOR)",
   });
 
   it("floors ONCE at the final division — never truncates mid-product", () => {
-    // 1_000 * 3_333 / 10_000 = 333.3 -> floor 333
     const factors = neutralTorpedoSolutionFactors(1_000);
     factors.bearing = 3_333;
     expect(computeTorpedoSolutionQuality(factors).solutionQualityBp).toBe(333);
   });
 
   it("multiple varied factors multiply through the manifest", () => {
-    // 10_000 * (5_000 * 6_000) / 10_000^2 = 3_000
     const factors = neutralTorpedoSolutionFactors(10_000);
     factors.range = 5_000;
     factors.targetMotion = 6_000;
@@ -50,12 +40,10 @@ describe("AC-9: the §10 11-factor formula (exact integer rational, one FLOOR)",
   });
 
   it("clamps to the [0, 10_000] final range (over-capacity base and zero)", () => {
-    // Factors are bounded to [0, 10_000], so the over-capacity path is a base
-    // above 10_000: raw 20_000 -> clamped 10_000, diagnostic keeps the raw 20_000.
     const boosted = neutralTorpedoSolutionFactors(20_000);
     const resolution = computeTorpedoSolutionQuality(boosted);
     expect(resolution.solutionQualityBp).toBe(10_000);
-    expect(resolution.rounding.rawFlooredBp).toBe(20_000); // unclamped raw value
+    expect(resolution.rounding.rawFlooredBp).toBe(20_000);
     expect(computeTorpedoSolutionQuality(neutralTorpedoSolutionFactors(0)).solutionQualityBp).toBe(
       0,
     );
@@ -63,7 +51,7 @@ describe("AC-9: the §10 11-factor formula (exact integer rational, one FLOOR)",
 
   it("bounds every factor multiplier to [0, 10_000]: 10_000 accepted, 10_001 and -1 rejected", () => {
     const atBoundary = neutralTorpedoSolutionFactors(5_000);
-    atBoundary.range = 10_000; // the shipped neutral — exact boundary, accepted
+    atBoundary.range = 10_000;
     expect(computeTorpedoSolutionQuality(atBoundary).solutionQualityBp).toBe(5_000);
 
     const above = neutralTorpedoSolutionFactors(5_000);
@@ -84,8 +72,6 @@ describe("AC-9: the §10 11-factor formula (exact integer rational, one FLOOR)",
   });
 
   it("saturates the raw diagnostic when an absurd base exceeds MAX_SAFE_INTEGER — the authoritative clamp stays exact", () => {
-    // 1e30 passes Number.isInteger but is lossy in a Number: the DIAGNOSTIC
-    // saturates to Number.MAX_SAFE_INTEGER while solutionQualityBp clamps to 10_000.
     const absurd = neutralTorpedoSolutionFactors(1e30);
     const resolution = computeTorpedoSolutionQuality(absurd);
     expect(resolution.solutionQualityBp).toBe(10_000);
@@ -93,14 +79,11 @@ describe("AC-9: the §10 11-factor formula (exact integer rational, one FLOOR)",
   });
 
   it("BIGINT boundary: the full-magnitude numerator (10_000^11 = 10^44) is retained exactly", () => {
-    // This is the proof that Number cannot hold the intermediate product:
-    // 10^44 > Number.MAX_SAFE_INTEGER (~9.0e15) — the formula MUST use bigint.
     const resolution = computeTorpedoSolutionQuality(neutralTorpedoSolutionFactors(10_000));
     expect(resolution.solutionQualityBp).toBe(10_000);
     expect(resolution.rounding.numerator).toBe("1" + "0".repeat(44));
     expect(resolution.rounding.denominator).toBe("1" + "0".repeat(40));
     expect(TORPEDO_SOLUTION_DENOMINATOR).toBe(10_000n ** 10n);
-    // the floored raw value is a plain safe integer
     expect(Number.isSafeInteger(resolution.rounding.rawFlooredBp)).toBe(true);
   });
 

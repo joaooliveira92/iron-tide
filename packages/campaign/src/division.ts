@@ -2,7 +2,6 @@ import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { CAMPAIGN_DIVISION_FORMATIONS, CAMPAIGN_DIVISION_ROLES } from "@bluewave/content-schema";
 import { sha256Hex, canonicalSerialize } from "@bluewave/deterministic";
 
-// DESIGN-26 §28 reason codes.
 export const DIVISION_SIZE_LIMIT_EXCEEDED = "DIVISION_SIZE_LIMIT_EXCEEDED" as const;
 export const DIVISION_SHIP_TYPE_INCOMPATIBLE = "DIVISION_SHIP_TYPE_INCOMPATIBLE" as const;
 export const CA_BC_DIVISION_MIX_INELIGIBLE = "CA_BC_DIVISION_MIX_INELIGIBLE" as const;
@@ -15,20 +14,15 @@ export const DIVISION_ROLE_INELIGIBLE = "DIVISION_ROLE_INELIGIBLE" as const;
 export const DIVISION_FORMATION_INELIGIBLE = "DIVISION_FORMATION_INELIGIBLE" as const;
 export const DIVISION_STATE_INVARIANT_FAILED = "DIVISION_STATE_INVARIANT_FAILED" as const;
 
-// DESIGN-26 §1 canonical division types.
 export const DIVISION_TYPES = ["PERMANENT_DIVISION", "TACTICAL_DIVISION"] as const;
 export type DivisionType = (typeof DIVISION_TYPES)[number];
 
-// DESIGN-26 §13 canonical roles. The values live in the content schema (the
-// authored-record boundary) and are re-exported here so there is one vocabulary.
 export const DIVISION_ROLES = CAMPAIGN_DIVISION_ROLES;
 export type DivisionRole = (typeof DIVISION_ROLES)[number];
 
-// DESIGN-26 §17 canonical formations.
 export const DIVISION_FORMATIONS = CAMPAIGN_DIVISION_FORMATIONS;
 export type DivisionFormation = (typeof DIVISION_FORMATIONS)[number];
 
-// DESIGN-26 §2 authoritative permanent division.
 export const VACANT = "VACANT";
 export type CommanderRef = string;
 
@@ -40,8 +34,8 @@ export interface PermanentDivision {
   commanderOfficerId: CommanderRef;
   divisionRole: DivisionRole;
   preferredFormation: DivisionFormation;
-  experience: SafeInt; // 0..100
-  cohesion: SafeInt; // 0..100
+  experience: SafeInt;
+  cohesion: SafeInt;
   locationAreaId: string;
   creationMonth: string;
   lastReorganizationMonth: string;
@@ -50,24 +44,17 @@ export interface PermanentDivision {
   aggregateHash: string;
 }
 
-// DESIGN-26 §10 initial values.
 export const INITIAL_DIVISION_EXPERIENCE = 20;
 export const INITIAL_DIVISION_COHESION = 30;
 
-// DESIGN-26 §3 size bounds.
 export const DIVISION_MAX_SHIPS = 5;
 export const DD_DIVISION_MAX_SHIPS = 6;
 
-// DESIGN-26 §4 compatibility policy id.
 export const DIVISION_TYPE_COMPATIBILITY_V1 = "division_type_compatibility_v1" as const;
 
-// DESIGN-26 §25-26 constraints.
 export const MAX_CA_IN_BC_DIVISION = 2;
 export const CA_IN_BC_READINESS_GAP = 10;
 
-// Canonical ship-type vocabulary for division compatibility. The authoritative
-// classifier lives in @bluewave/combat (ship_type_classifier_v2); campaign uses
-// this structural union so the package dependency stays one-directional.
 export type CanonicalShipType =
   | "CV"
   | "CVL"
@@ -84,8 +71,6 @@ export type CanonicalShipType =
   | "KE"
   | "AMC";
 
-// DESIGN-26 §4: division canonical type. The member ship types must already be
-// individually compatible; this computes the aggregate label.
 export function divisionCanonicalType(shipTypes: CanonicalShipType[]): CanonicalShipType {
   if (shipTypes.length === 0) return shipTypes[0] as CanonicalShipType;
   const distinct = [...new Set(shipTypes)];
@@ -97,7 +82,6 @@ export function divisionCanonicalType(shipTypes: CanonicalShipType[]): Canonical
   return distinct[0]!;
 }
 
-// DESIGN-26 §4 compatibility: identical types, BB/B, or eligible BC+CA mix.
 export function isDivisionTypeCompatible(
   current: CanonicalShipType[],
   incoming: CanonicalShipType,
@@ -106,7 +90,6 @@ export function isDivisionTypeCompatible(
   const distinct = [...new Set([...current, incoming])];
   if (distinct.length === 1) return true;
   if (distinct.includes("BB") && distinct.includes("B") && distinct.length === 2) return true;
-  // CA in a BC division is permitted only under §5 rules (caller checks eligibility).
   if (distinct.includes("BC") && distinct.includes("CA") && distinct.length === 2) return true;
   return false;
 }
@@ -118,8 +101,6 @@ export interface DivisionAssetView {
   isUnderConstruction: boolean;
 }
 
-// DESIGN-26 §29 invariant check. `assets` is the authoritative per-ship picture;
-// returns nothing when valid, throws a DIVISION_STATE_INVARIANT_FAILED BluewaveError.
 export function assertDivisionInvariants(
   division: PermanentDivision,
   assets: DivisionAssetView[],
@@ -149,7 +130,6 @@ export function assertDivisionInvariants(
     });
   }
 
-  // flagship is the first in stored canonical order.
   if (division.flagshipShipId !== division.shipOrder[0]) {
     throw new BluewaveError(DIVISION_FLAGSHIP_INVALID, {
       code: DIVISION_FLAGSHIP_INVALID,
@@ -160,7 +140,6 @@ export function assertDivisionInvariants(
     });
   }
 
-  // co-location.
   const locations = new Set(division.shipOrder.map((id) => locationByShip.get(id)));
   if (locations.size > 1) {
     throw new BluewaveError(DIVISION_LOCATION_CONFLICT, {
@@ -171,7 +150,6 @@ export function assertDivisionInvariants(
     });
   }
 
-  // type compatibility.
   const shipTypes = division.shipOrder.map((id) => shipByType.get(id));
   const distinctTypes = [...new Set(shipTypes)];
   if (
@@ -224,13 +202,6 @@ function clampScore(v: number): number {
   return v;
 }
 
-/**
- * The canonical SHA-256 identity of a division's authoritative fields (DESIGN-26
- * §2). `provenanceRefs` and `aggregateHash` are excluded: the hash covers the
- * command-relevant value surface, not authored provenance. Exported so the
- * compile-time seeder (N-1 ticket 07) stamps the same identity the runtime
- * commands recompute.
- */
 export function divisionAggregateHash(d: PermanentDivision): string {
   return sha256Hex(
     canonicalSerialize({
@@ -251,8 +222,6 @@ export function divisionAggregateHash(d: PermanentDivision): string {
   );
 }
 
-// DESIGN-26 §7-12: pure, atomic membership command application. Returns the new
-// division with §12 penalties applied and a fresh aggregate hash. Never mutates.
 export function applyDivisionCommand(
   division: PermanentDivision,
   op:
@@ -310,7 +279,6 @@ export function applyDivisionCommand(
       if (!shipOrder.includes(op.newFlagshipShipId)) reorgReason = "CHANGE_FLAGSHIP";
       else {
         flagship = op.newFlagshipShipId;
-        // DESIGN-26 §12: flagship change penalty; re-canonicalize order so flagship first.
         shipOrder = [
           op.newFlagshipShipId,
           ...shipOrder.filter((id) => id !== op.newFlagshipShipId),
@@ -324,8 +292,6 @@ export function applyDivisionCommand(
       break;
     }
     case "reorder": {
-      // DESIGN-26 §12: reordering ships without changing the flagship costs
-      // cohesion only. The flagship (canonical first ship, §8) is unchanged.
       shipOrder = [...op.shipOrder];
       penalties = {
         experience: DIVISION_PENALTIES.reorderWithoutFlagship.experience,
@@ -359,11 +325,6 @@ export function applyDivisionCommand(
   return { division: next, reorgReason, penaltiesApplied: penalties };
 }
 
-/**
- * Puts `commanderId` (an officer id, or `VACANT`) in command of a division (ADR-0065).
- * Filling a vacancy is free; replacing or relieving a sitting commander costs the
- * DESIGN-26 commander-change penalty. Pure; returns a new division with a fresh hash.
- */
 export function applyCommanderChange(
   division: PermanentDivision,
   commanderId: CommanderRef,

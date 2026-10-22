@@ -1,26 +1,3 @@
-/**
- * PROTOTYPE — throwaway. See ../README.md.
- *
- * Variant B — "Stylised board".
- *
- * Premise: throw the coastlines away. There is no projection, no polygon and
- * no geography — an area is a tile on a grid, an edge is a drawn connector,
- * and a passage is a gate sitting on that connector. The player reads hops
- * directly because hops are the only thing on screen.
- *
- * Costs this variant makes visible, both of which are schema questions:
- *
- * - It needs a **second authored layout** (`tile`), unrelated to the polygon.
- *   Two layouts means two things to keep in sync when an area is added.
- * - A board has **no wrap**. The Pacific runs off both ends of the grid, and
- *   the three-copy trick that saves the geographic variants is unavailable
- *   because tiles are discrete. Long connectors are drawn as labelled stubs
- *   instead — the board-game answer, shown here so it can be judged.
- *
- * Unlike variant A this uses the app's own theme tokens throughout, so it can
- * be judged as "part of Bluewave" rather than as a chart pasted into Bluewave.
- */
-
 import { useMemo } from "react";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Badge } from "../../../components/ui/badge.js";
@@ -54,7 +31,6 @@ const ROWS = 9;
 const BOARD_WIDTH = COLUMNS * (TILE_WIDTH + GUTTER_X);
 const BOARD_HEIGHT = ROWS * (TILE_HEIGHT + GUTTER_Y);
 
-/** A connector this wide across the board would read as noise, so it stubs. */
 const STUB_THRESHOLD = 6;
 
 interface TileBox {
@@ -131,7 +107,6 @@ export function VariantBBoard({
 
   return (
     <div className="flex h-[calc(100svh-9rem)] flex-col gap-3">
-      {/* A legend band across the top: on a board, the key is chrome, not overlay. */}
       <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-card px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
           {NATIONS.map((nation) => (
@@ -179,7 +154,6 @@ export function VariantBBoard({
           aria-label="Strategic map, stylised board variant"
         >
           <g ref={camera.worldRef}>
-            {/* Layer: connectors. On a board these are the geography. */}
             {EDGES.map((edge) => {
               const from = boxes.get(edge.a);
               const to = boxes.get(edge.b);
@@ -197,7 +171,6 @@ export function VariantBBoard({
               const width = onRouteLeg ? 6 : passage !== null ? 4 : 2.5;
 
               if (Math.abs(from.col - to.col) > STUB_THRESHOLD) {
-                // Wrap-around leg: two stubs rather than a line across the board.
                 return (
                   <g key={key}>
                     {[
@@ -294,7 +267,6 @@ export function VariantBBoard({
               );
             })}
 
-            {/* Layer: tiles. Ownership is a solid fill, not a wash. */}
             {AREAS.map((area) => {
               const box = boxes.get(area.id);
               if (box === undefined) return null;
@@ -351,7 +323,6 @@ export function VariantBBoard({
                       {held?.contested === true ? " · contested" : ""}
                     </text>
                   )}
-                  {/* Possessions as pips along the tile's foot. */}
                   {state.layers.possessions &&
                     areaPossessions.map((possession, index) => (
                       <circle
@@ -364,7 +335,6 @@ export function VariantBBoard({
                         strokeWidth={1.5}
                       />
                     ))}
-                  {/* Fleets as counters, stacked the way a wargame stacks them. */}
                   {state.layers.fleets &&
                     areaFleets.map((fleet, index) => (
                       <g
@@ -398,7 +368,6 @@ export function VariantBBoard({
           </g>
         </svg>
 
-        {/* Chrome: a drawer, not an overlay panel. It takes space when open. */}
         {summary !== null && (
           <div className="absolute inset-x-0 bottom-0 border-t bg-card/95 px-4 py-3 backdrop-blur">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2">

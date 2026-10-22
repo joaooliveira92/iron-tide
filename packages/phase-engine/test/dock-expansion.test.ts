@@ -33,13 +33,11 @@ const DOCK: NationDockState = {
   maximumConversionMassKg: 10_000_000,
 };
 
-/** `YYYY-MM` shifted by `delta` months (may cross years). */
 function addMonths(month: string, delta: number): string {
   const idx = Number(month.slice(0, 4)) * 12 + (Number(month.slice(5, 7)) - 1) + delta;
   return `${String(Math.floor(idx / 12))}-${String((idx % 12) + 1).padStart(2, "0")}`;
 }
 
-/** `count` ascending monthly utilisation records ending at `end` inclusive. */
 function history(
   end: string,
   utilizationBp: number,
@@ -129,11 +127,9 @@ function expansionProject(over: Partial<ConstructionProject> = {}): Construction
 
 describe("dock expansion completion (SB3-R16)", () => {
   it("completes only when BOTH elapsed active months and paid work are sufficient", () => {
-    // Elapsed time alone never completes it.
     expect(
       dockExpansionCompletes(expansionProject({ elapsedActiveMonths: 12, paidWork: SafeInt(0) })),
     ).toBe(false);
-    // Paid work alone never completes it.
     expect(
       dockExpansionCompletes(
         expansionProject({
@@ -142,7 +138,6 @@ describe("dock expansion completion (SB3-R16)", () => {
         }),
       ),
     ).toBe(false);
-    // Both conditions met completes it.
     expect(
       dockExpansionCompletes(
         expansionProject({
@@ -151,7 +146,6 @@ describe("dock expansion completion (SB3-R16)", () => {
         }),
       ),
     ).toBe(true);
-    // A non-expansion project is never judged by this rule.
     expect(dockExpansionCompletes(expansionProject({ dockExpansionStepKg: undefined }))).toBe(
       false,
     );
@@ -220,7 +214,6 @@ describe("dock expansion authorization (SB3-R16)", () => {
     expect(early.project.dockExpansionDurationMonths).toBe(12);
     expect(isDockExpansionProject(early.project)).toBe(true);
 
-    // The step resolved for a later month differs, but the stored project step remains the authorization value.
     const later = authorizeDockExpansion(snapshot([nation("GBR")]), {
       nationId: "GBR",
       possessionId: "gbr-home",
@@ -256,9 +249,7 @@ describe("private dock-expansion opportunity (SB3-R17)", () => {
   it("measures the trailing-12-month utilisation and refuses to infer from missing history", () => {
     expect(trailingDockUtilizationBp(history("1880-06", 8_000), "1880-06")).toBe(8_000);
     expect(trailingDockUtilizationBp(history("1880-06", 6_000), "1880-06")).toBe(6_000);
-    // Eleven records is not a trailing-12-month window.
     expect(trailingDockUtilizationBp(history("1880-06", 8_000, 11), "1880-06")).toBeNull();
-    // A record missing from the month id is ignored.
     expect(
       trailingDockUtilizationBp(
         [...history("1880-06", 8_000), { month: "nonsense", utilizationBp: 10_000 }],
@@ -274,15 +265,12 @@ describe("private dock-expansion opportunity (SB3-R17)", () => {
       reason: "ELIGIBLE",
       trailingUtilizationBp: 8_000,
     });
-    // Exactly at the threshold is eligible (>=).
     const onThreshold = eligibleNation("AAA");
     onThreshold.dockExpansion!.possessions[0]!.utilization = history("1880-06", 7_500);
     expect(privateDockExpansionEligibility(onThreshold, "1880-06").eligible).toBe(true);
-    // Below the threshold is not.
     const below = eligibleNation("AAA");
     below.dockExpansion!.possessions[0]!.utilization = history("1880-06", 7_499);
     expect(privateDockExpansionEligibility(below, "1880-06").reason).toBe("BELOW_UTILIZATION");
-    // No explicit eligibility is never inferred into development.
     const noEligibility = nation("AAA", {
       dockExpansion: {
         possessions: [
@@ -293,9 +281,7 @@ describe("private dock-expansion opportunity (SB3-R17)", () => {
     expect(privateDockExpansionEligibility(noEligibility, "1880-06").reason).toBe(
       "NO_EXPLICIT_ELIGIBILITY",
     );
-    // No state at all is not inferred either.
     expect(privateDockExpansionEligibility(nation("AAA"), "1880-06").reason).toBe("NO_STATE");
-    // Short history is an explicit shortfall, not a guess.
     const short = nation("AAA", {
       dockExpansion: {
         possessions: [
@@ -316,7 +302,6 @@ describe("private dock-expansion opportunity (SB3-R17)", () => {
       },
     });
     expect(privateDockExpansionEligibility(cooled, "1880-06").reason).toBe("COOLDOWN");
-    // Exactly the cooldown elapsed is eligible again.
     const cooledOut = eligibleNation("AAA", {
       dockExpansion: {
         possessions: [
@@ -399,9 +384,7 @@ describe("private dock-expansion opportunity (SB3-R17)", () => {
       if (outcome.triggered.length === 0) continue;
       triggered = true;
       const nationAfter = outcome.snapshot.nations.get("AAA")!;
-      // Dock size is unchanged immediately.
       expect(nationAfter.dock).toEqual(DOCK);
-      // A normal INFRASTRUCTURE project exists with the locked 1880-era step.
       const project = nationAfter.constructionProjects.find(
         (p) => p.id === outcome.triggered[0]!.projectId,
       )!;
@@ -410,9 +393,7 @@ describe("private dock-expansion opportunity (SB3-R17)", () => {
       expect(project.dockExpansionDurationMonths).toBe(12);
       expect(project.elapsedActiveMonths).toBe(0);
       expect(project.paidWork).toBe(0);
-      // The cooldown starts now.
       expect(nationAfter.dockExpansion?.lastOpportunityMonth).toBe("1880-06");
-      // The decision ledger records the one fired opportunity.
       expect(ledger.all).toHaveLength(1);
     }
     expect(triggered).toBe(true);

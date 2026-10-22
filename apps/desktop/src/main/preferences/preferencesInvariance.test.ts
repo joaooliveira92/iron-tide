@@ -31,14 +31,6 @@ const GOLDEN = join(DIR, "..", "..", "..", "..", "..", "golden", "hashes.json");
 const decodeApp = Schema.decodeUnknownSync(AppPreferencesSchema);
 const decodeCampaign = Schema.decodeUnknownSync(CampaignPreferencesSchema);
 
-/**
- * U-2 ticket 07 invariance: changing any preference cannot change an authoritative
- * outcome. The mechanism is structural — the preferences domain imports no
- * authoritative engine package and the shared contract imports nothing — so no
- * preference value can enter a compiled design, a save, or the golden reference
- * run. The cross-process golden run (`pnpm test:cross-process`) is the observable
- * evidence that the reference hashes are unchanged.
- */
 describe("preferences invariance (U-2 ticket 07)", () => {
   it("the preferences domain imports no authoritative engine package", () => {
     const offenders: string[] = [];
@@ -85,7 +77,6 @@ describe("preferences invariance (U-2 ticket 07)", () => {
     }
     const campaign = { ...DEFAULT_CAMPAIGN_PREFERENCES, showSupplyOverlay: true };
     expect(decodeCampaign(campaign)).toEqual(campaign as CampaignPreferencesDecoded);
-    // No preference write can move the reference run.
     expect(readFileSync(GOLDEN, "utf8")).toBe(goldenBefore);
   });
 });

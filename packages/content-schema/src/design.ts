@@ -8,8 +8,6 @@ export const MainGunsSchema = Schema.Struct({
   mounts: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(1)),
 });
 
-// DESIGN-40 §2 closed mount-type enum (mirrors @bluewave/combat TORPEDO_MOUNT_TYPES;
-// content-schema stays dependency-free of the engine).
 export const TORPEDO_MOUNT_TYPE_VALUES = [
   "ABOVE_WATER_FIXED",
   "ABOVE_WATER_TRAINABLE",
@@ -18,7 +16,6 @@ export const TORPEDO_MOUNT_TYPE_VALUES = [
   "SUBMARINE_INTERNAL",
 ] as const;
 
-// P-1 AC-1: one entry per torpedo mount group on the design.
 export const TorpedoMountSchema = Schema.Struct({
   mountType: Schema.Literals(TORPEDO_MOUNT_TYPE_VALUES),
   tubeCount: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(1)),

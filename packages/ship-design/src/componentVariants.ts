@@ -1,19 +1,8 @@
-/**
- * Shared component families with national models (docs/ships-nation-orientation.md §3): a family is a
- * `components.yaml` entry; a national model overlays it with a bounded set of field overrides. Guns are kept
- * separate from their installation (`GunModelDef.mounts`) and their ammunition pattern, so a 6-in gun in a
- * casemate does not behave identically to the same gun in a turret.
- *
- * `catalogueForNation` is the single place a nation's catalogue is derived from the shared one. It only ever
- * *restricts* (drops UNAVAILABLE families, enforces the hard-capability calibre ceiling) or *relabels* (overlays a
- * national model); it never widens the global component set, so global classification stays authoritative.
- */
 import type { ComponentDef } from "./component.js";
 import type { AmmunitionPattern, GunModelDef, NationNavalProfile } from "./nationProfile.js";
 
 const monthIndex = (m: string): number => Number(m.slice(0, 4)) * 12 + (Number(m.slice(5, 7)) - 1);
 
-/** The `ComponentDef` fields a national override may touch (plus `attributes.<name>` and `constants.<name>`). */
 const OVERRIDABLE_FIELDS = new Set<string>([
   "displayName",
   "weightKg",
@@ -43,7 +32,6 @@ export interface VariantLintIssue {
   readonly message: string;
 }
 
-/** Lint a variant's override keys against the allowed field space. Deterministic; never throws. */
 export function lintVariantOverrides(
   overrides: Readonly<Record<string, unknown>>,
 ): VariantLintIssue[] {
@@ -60,7 +48,6 @@ export function lintVariantOverrides(
   return out;
 }
 
-/** Apply a shallow override map to a base component, merging one level into `attributes`/`constants`/`parameters`. */
 export function applyComponentOverrides(
   base: ComponentDef,
   overrides: Readonly<Record<string, string | number | readonly string[]>>,
@@ -82,7 +69,6 @@ export function applyComponentOverrides(
   return next as unknown as ComponentDef;
 }
 
-/** A national gun model applied to its shared family, with the model's introduction floor enforced. */
 export function applyGunModel(base: ComponentDef, model: GunModelDef): ComponentDef {
   const merged = applyComponentOverrides(base, model.overrides);
   const fromMonth = model.introductionMonth ?? merged.introduction.fromMonth;
@@ -98,7 +84,6 @@ export function applyGunModel(base: ComponentDef, model: GunModelDef): Component
   };
 }
 
-/** Read a numeric override-or-base value (e.g. an attribute), or undefined. */
 function attrOf(def: ComponentDef, name: string): number | undefined {
   const raw = def.attributes?.[name] ?? def.constants?.[name];
   if (raw === undefined) return undefined;
@@ -108,21 +93,10 @@ function attrOf(def: ComponentDef, name: string): number | undefined {
 
 export interface CatalogueSelection {
   readonly catalogue: readonly ComponentDef[];
-  /** Family id → the national model id that replaced it (for the UI's provenance badge). */
   readonly appliedModels: Readonly<Record<string, string>>;
-  /** Family ids removed because the nation cannot obtain them. */
   readonly unavailable: readonly string[];
 }
 
-/**
- * Derive a nation's component catalogue from the shared one at a month.
- *
- * Order of operations (all restrict-or-relabel, never widen):
- *  1. drop families whose access is UNAVAILABLE;
- *  2. enforce the hard-capability gun calibre ceiling (domestic, or the import ceiling for imported families, ADR-0114);
- *  3. overlay the newest applicable national gun model or component variant;
- *  4. apply a variant's introduction floor.
- */
 export function catalogueForNation(
   base: readonly ComponentDef[],
   profile: NationNavalProfile,
@@ -132,8 +106,6 @@ export function catalogueForNation(
   const unavailable: string[] = [];
   const out: ComponentDef[] = [];
 
-  // Pick, per family, the newest national model introduced at or before the month; if every model is still in the
-  // future, keep the earliest so the family survives (its introduction floor then date-gates it).
   const intro = (m?: string) => monthIndex(m ?? "1880-01");
   const pick = <T extends { introductionMonth?: string }>(
     list: readonly T[],
@@ -165,9 +137,6 @@ export function catalogueForNation(
       unavailable.push(def.id);
       continue;
     }
-    // Hard-capability calibre ceiling: only restricts, never grants. A family the profile obtains from
-    // abroad (IMPORTED/LICENSE_BUILT/CAPTURED_OR_STUDIED) may exceed the domestic ceiling up to the
-    // nation's import ceiling; the domestic ceiling itself is never inflated (ADR-0114).
     const caliber = attrOf(def, "caliberUm");
     const importCeiling =
       profile.hardCapabilities.maxImportedGunCaliberUm ?? profile.hardCapabilities.maxGunCaliberUm;
@@ -195,12 +164,8 @@ export function catalogueForNation(
   return { catalogue: out, appliedModels, unavailable };
 }
 
-/**
- * The nation's preferred ammunition pattern for a doctrine bias: the pattern whose penetration bias is closest to
- * the profile's `hePreferenceBp` (a low bias favours HE, a high bias AP). Deterministic tie-break by id.
- */
 export function preferredAmmunition(profile: NationNavalProfile): AmmunitionPattern | null {
-  const want = 10_000 - profile.doctrineProfile.hePreferenceBp; // hePreferenceBp 10000 = pure AP -> bias 0
+  const want = 10_000 - profile.doctrineProfile.hePreferenceBp;
   const sorted = [...profile.ammunitionPatterns].sort(
     (a, b) =>
       Math.abs(a.penetrationBiasBp - want) - Math.abs(b.penetrationBiasBp - want) ||
@@ -209,7 +174,6 @@ export function preferredAmmunition(profile: NationNavalProfile): AmmunitionPatt
   return sorted.length === 0 ? null : sorted[0]!.pattern;
 }
 
-/** Lint a profile's arms content: override keys, duplicate ids, and release placeholders. */
 export function lintNavalArms(profile: NationNavalProfile, release: boolean): VariantLintIssue[] {
   const out: VariantLintIssue[] = [];
   const seen = new Set<string>();

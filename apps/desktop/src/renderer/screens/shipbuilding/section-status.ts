@@ -2,20 +2,14 @@ import type { ComponentCategory, SettingGroup } from "@bluewave/ship-design";
 import type { BoardFinding } from "../../components/design-workspace/validation/boardFindings.js";
 import { CATEGORY_PLACE, DESIGN_SECTIONS, type DesignSectionId } from "./design-sections.js";
 
-/**
- * A design-map section's state at a glance: valid, warnings only, a count of unresolved (blocking or critical)
- * issues, or nothing of it configured yet. Advisory findings never change it.
- */
 export type SectionStatus =
   | { readonly kind: "valid" }
   | { readonly kind: "warning"; readonly count: number }
   | { readonly kind: "issues"; readonly count: number }
   | { readonly kind: "not-configured" };
 
-/** What a section's status reads from a finding. */
 export type StatusFinding = Pick<BoardFinding, "severity" | "settings" | "entities">;
 
-/** The section that fixes each settings group; arrangement findings go by their fittings instead. */
 const SETTINGS_SECTION: { readonly [K in SettingGroup]: DesignSectionId | null } = {
   brief: "overview",
   hull: "hull",
@@ -24,7 +18,6 @@ const SETTINGS_SECTION: { readonly [K in SettingGroup]: DesignSectionId | null }
   arrangement: null,
 };
 
-/** Sections that exist only through what is fitted: with nothing fitted they are not configured. */
 const FITTED_SECTIONS: readonly DesignSectionId[] = ["armament", "systems"];
 
 function sectionsOf(
@@ -42,11 +35,6 @@ function sectionsOf(
   return owners;
 }
 
-/**
- * Each section's status. Review carries the whole design; every other section carries the findings fixed in it
- * (by settings group, or for arrangement findings by the fittings they name). Findings no section owns count
- * in Review only. `fittings` maps each placed fitting's instance id to its category.
- */
 export function sectionStatuses(
   findings: readonly StatusFinding[],
   fittings: ReadonlyMap<string, ComponentCategory>,

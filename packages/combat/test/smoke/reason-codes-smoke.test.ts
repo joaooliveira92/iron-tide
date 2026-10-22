@@ -1,17 +1,8 @@
-// AC-17: DESIGN-42 §30 reason-code set-equality for the C-5 smoke module.
-// The smoke module ships exactly the in-slice §30 codes (spec §1.4) plus the
-// documented in-slice marker SMOKE_RESOLUTION_DEFERRED; every §30 code owned by
-// the module is shipped — no §30 code is deferred. This guard fails the build if
-// a code is added to SMOKE_REASON_CODES without a matching update to this test.
-// Mirrors the weather set-equality idiom (reason-codes-weather.test.ts) exactly.
 import { describe, expect, it } from "vite-plus/test";
 import { SMOKE_REASON_CODES } from "../../src/smoke/reasonCodes.js";
 import { REASON_CODES } from "../../src/reasonCodes.js";
 import { DAMAGE_REASON_CODES } from "../../src/damage/reasonCodes.js";
 
-// DESIGN-42 §30 "Reason Codes" — the full authoritative list for the smoke
-// subsystem (docs/rules/smoke.md §30). All 15 §30 codes are in-slice for this
-// sprint (spec §1.4); there is NO deferred code within §30.
 const DESIGN_42_SECTION_30_CODES = [
   "INVALID_SMOKE_CLOUD",
   "SMOKE_LINE_INTERSECTION_FAILED",
@@ -30,8 +21,6 @@ const DESIGN_42_SECTION_30_CODES = [
   "WEATHER_SMOKE_STATE_INVARIANT_FAILED",
 ] as const;
 
-// Spec §1.4 in-slice subset (owned by C-5, recorded in ADR-0040) — ALL 15 §30
-// codes ship in-slice; nothing from §30 is deferred to another track.
 const IN_SLICE_SECTION_30_CODES = [
   "INVALID_SMOKE_CLOUD",
   "SMOKE_LINE_INTERSECTION_FAILED",
@@ -50,21 +39,10 @@ const IN_SLICE_SECTION_30_CODES = [
   "WEATHER_SMOKE_STATE_INVARIANT_FAILED",
 ] as const;
 
-// Spec §1.4 deferred §30-family ownership (recorded, NOT dropped): no §30 codes
-// are deferred — all §30 codes ship in this sprint.
 const DEFERRED_SECTION_30_FAMILY_CODES = [] as const;
 
-// Spec §1.4 in-slice markers: shipped codes that are NOT §30 codes themselves
-// but are authoritative for this slice (mirrors the torpedo/gunnery NON-SECTION
-// marker pattern). SMOKE_RESOLUTION_DEFERRED mirrors C-1's
-// TORPEDO_ELIGIBILITY_PREDICATE_DEFERRED precedent — a local marker a later
-// increment fires if any caller reaches a would-be-deferred boundary.
 const NON_SECTION_30_IN_SLICE_MARKERS = ["SMOKE_RESOLUTION_DEFERRED"] as const;
 
-// Reused codes: WEATHER_SMOKE_STATE_INVARIANT_FAILED is a §30 code that was
-// originally shipped in B-5 (weather) and is now also shipped in C-5 (smoke).
-// It is documented in both modules' reasonCode catalogs as a §30 weather-only
-// code that the smoke module re-declares for contract validation.
 const _SECTION_30_REUSED_ACROSS_MODULES = ["WEATHER_SMOKE_STATE_INVARIANT_FAILED"] as const;
 
 describe("AC-17: smoke reason-code set-equality vs DESIGN-42 §30", () => {

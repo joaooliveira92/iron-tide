@@ -51,7 +51,6 @@ describe("UI catalogue resolver (ADR-0209/ADR-0218)", () => {
       nationId: "uk",
       newTreasury: 10,
     });
-    // Formatting locale lives in preferences and never reaches the text resolver.
     const after = resolveMessage("messages.finance.deficit.body", {
       nationId: "uk",
       newTreasury: 10,

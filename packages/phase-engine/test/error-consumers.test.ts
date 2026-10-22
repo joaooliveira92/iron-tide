@@ -1,10 +1,3 @@
-// Regression tests for the migrated PhaseEngineError throws: a real consumer
-// path must still observe the stable reason code / message it relied on before
-// the plain-`Error` → `Data.TaggedError` conversion (MIG-RUNTIME-1, MIG-DET-1).
-// `TacticalReplayVerifier.verify` is the public fail-closed consumer: it wraps
-// `resolveBattleAuto` and surfaces a stable `TACTICAL_REPLAY_ERROR` diagnostic
-// rather than crashing.
-
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
@@ -28,9 +21,6 @@ describe("TacticalReplayVerifier error consumer (ticket 30 regression)", () => {
       },
     };
 
-    // Strip the attacker's committed ships so `resolveBattleAuto` fail-closes
-    // ("both sides require at least one committed, promotable ship") while the
-    // stored manifest still passes the tamper check — the catch path runs.
     const nations = new Map(verifySnap.nations);
     const attacker = nations.get(ATTACKER_NATION);
     if (!attacker) throw new Error("fixture missing the attacker nation");

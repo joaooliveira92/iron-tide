@@ -1,5 +1,3 @@
-// P-1 ticket 08: spawn headings follow movement's directionBp convention
-// (0 = +X east, 180 = -X west) so ATTACKER (west edge) closes on DEFENDER (east edge).
 import { describe, expect, it } from "vite-plus/test";
 import { directionBp } from "../../src/movement/kinematics.js";
 import { computeInitialMovementStates } from "../../src/simulation/spawn.js";

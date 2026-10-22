@@ -3,12 +3,6 @@ import type { DesignDraft, Severity, WorkshopView } from "@bluewave/ship-design"
 import { plural } from "../../components/design-workspace/plural.js";
 import { formatExplanation, type PresentationFormat } from "../../lib/presentation-format/index.js";
 
-/**
- * The Overview section's summary view model. Pure: every value is derived from the compiled design (never an
- * editable duplicate of another section), and the design warnings are the same counts the Review section shows.
- */
-
-/** The five design priorities the player may record; setting one never changes the design. */
 export const PRIORITY_IDS = ["speed", "protection", "firepower", "range", "cost"] as const;
 export type PriorityId = (typeof PRIORITY_IDS)[number];
 
@@ -33,7 +27,6 @@ export interface OverviewWarning {
 
 export interface OverviewModel {
   readonly values: readonly OverviewValue[];
-  /** The same severity counts the Review section's validation shows. */
   readonly warnings: readonly OverviewWarning[];
 }
 
@@ -42,9 +35,6 @@ const words = (s: string) => s.replaceAll("_", " ").toLowerCase();
 const metric = (view: WorkshopView, id: string): string =>
   formatExplanation(view.metrics.find((m) => m.id === id)?.value ?? "n/a");
 
-/**
- * The design summary. `batteries` supplies the main-armament summary; `month` is the design year.
- */
 export function overviewModel(
   draft: DesignDraft,
   view: WorkshopView,

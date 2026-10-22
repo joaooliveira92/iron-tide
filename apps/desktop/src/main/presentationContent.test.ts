@@ -28,12 +28,6 @@ interface AuthoredPresentation {
 
 const authored = parse(readFileSync(PRESENTATION_PATH, "utf8")) as AuthoredPresentation;
 
-/**
- * Boundary proof (CAH-PRES-3, CAH-PRES-5): the narrow content IPC serves the
- * presentation corpus decoded from the verified artifact, and that DTO is the
- * authored content — no file path, raw document, or parser reaches the
- * renderer.
- */
 describe("presentation content over the content IPC (CAH-PRES-3)", () => {
   it("serves the authored presentation corpus as a data-only DTO", async () => {
     const result = await dispatchCampaignCommand("inspectPresentationContent", undefined);

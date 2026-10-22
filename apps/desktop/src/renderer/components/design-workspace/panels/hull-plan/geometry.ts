@@ -7,25 +7,16 @@ export type { BowStyle, SternStyle };
 export { waterplaneShape };
 export type { HullLines };
 
-/**
- * Plan-view geometry for the hull plan. SCHEMATIC: see HullPlanPanel. Bow is on the left, so starboard is
- * the upper side of the drawing and port the lower (looking forward from the stern, starboard is on the right).
- * Bow/stern character lives in `hull-character.ts` and the waterplane maths in `waterplane.ts`; both are
- * re-exported here so `geometry` stays the single import for the plan drawing.
- */
 export const PLAN_W = 640;
 export const PLAN_H = 170;
-/** Left/right padding, shared with the profile so both views use the same horizontal origin and length scale. */
 export const PLAN_PAD = 32;
 export const PLAN_MID = PLAN_H / 2;
 
 export interface PlanFrame {
   readonly lengthM: number;
   readonly beamM: number;
-  /** Half the drawn beam, px. */
   readonly maxHalf: number;
   readonly x: (permille: number) => number;
-  /** Half-beam (px) at a station fraction 0..1 (0 = bow). */
   readonly half: (t: number) => number;
   readonly lcbPermille: number;
   readonly bow: BowStyle;
@@ -53,7 +44,6 @@ export function planFrame(hull: DesignDraft["hull"], lines?: HullLines): PlanFra
 
 const clampPermille = (p: number) => Math.min(1000, Math.max(0, p));
 
-/** Horizontal position (px, bow at the left) of a station in permille of the waterline length; shared by plan and profile. */
 export function stationX(permille: number): number {
   return PLAN_PAD + ((PLAN_W - 2 * PLAN_PAD) * clampPermille(permille)) / 1000;
 }
@@ -63,7 +53,6 @@ export interface PlanPoint {
   readonly y: number;
 }
 
-/** Position of a fitting. Centreline fittings get a cosmetic vertical nudge (by `index`) so overlaps stay visible. */
 export function fittingPoint(
   frame: PlanFrame,
   stationPermille: number,

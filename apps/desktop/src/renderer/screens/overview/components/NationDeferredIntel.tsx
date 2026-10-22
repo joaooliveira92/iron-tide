@@ -1,13 +1,11 @@
 import type { DeferredFeature } from "../../../components/shared/DeferredFeaturesPanel.js";
 
-/** Right-rail items the engine cannot supply (it has an empty `IntelligenceState`; ticket 07). */
 export const DEFERRED_NATION_RAIL_ITEMS: readonly DeferredFeature[] = [
   { id: "intel-level", name: "Intel level", reason: "The engine has no intelligence state yet." },
   { id: "intel-reports", name: "Intel reports", reason: "There are no intelligence reports yet." },
   { id: "almanac", name: "Almanac", reason: "Static reference content is a later ticket." },
 ];
 
-/** One disclosure listing the intel features the engine cannot yet back with data. */
 export function NationDeferredIntel() {
   return (
     <details

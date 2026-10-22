@@ -9,30 +9,17 @@ import {
   type VisualEra,
 } from "./vocabulary.js";
 
-/**
- * The drawing resolution order (D16, proposal §8.2): part-specific override → trait match →
- * interface-family fallback → a visibly marked missing-asset glyph. `trait match` translates the
- * (presentation form, enclosure) pair to the drawn mount class (ADR-0148 translation map) and runs
- * the style/era fallback chain; `family` is the interface-family glyph — the universal dreadnought
- * drawing for the same size — used when no class matches. A gap is never silent: an unmatched trait
- * value emits `VISUAL_TRAIT_UNMATCHED`.
- */
-
-/** The traits the renderer selects a drawing with. */
 export interface VisualTraitQuery {
   readonly style: NationStyle;
   readonly era: VisualEra;
   readonly size: SizeBand;
-  /** The effective `presentation_form` (from `@bluewave/content-schema` derive/override). */
   readonly presentationForm: string;
-  /** The effective `enclosure`, when the form has one. */
   readonly enclosure?: string | undefined;
   readonly guns: number;
 }
 
 export type VisualResolutionStep = "override" | FallbackStep | "family" | "missing";
 
-/** The one diagnostic an unmatched trait emits, so a gap surfaces instead of drawing silently. */
 export interface VisualTraitUnmatched {
   readonly code: "VISUAL_TRAIT_UNMATCHED";
   readonly trait: "presentation_form";
@@ -40,7 +27,6 @@ export interface VisualTraitUnmatched {
 }
 
 export interface VisualResolution {
-  /** The drawing to place; the missing-asset glyph for the `missing` step. */
   readonly part: MountPart;
   readonly step: VisualResolutionStep;
   readonly diagnostics: readonly VisualTraitUnmatched[];
@@ -48,10 +34,6 @@ export interface VisualResolution {
 
 const MISSING_ASSET_SHAPE: Shape = { tone: "void", d: "M -4 4 L 4 -4 M -4 -4 L 4 4" };
 
-/**
- * A visibly marked placeholder drawn when no drawing resolves: an X-cross, id `missing_asset`.
- * It is never a member of the authored catalog, so a real trait match can never select it.
- */
 export const MISSING_ASSET_PART: MountPart = {
   id: "missing_asset",
   key: {
@@ -74,12 +56,6 @@ export const MISSING_ASSET_PART: MountPart = {
   },
 };
 
-/**
- * Resolve the drawing for one mounted part. `overrideId` is the part's authored `visual.override`
- * (a catalog entry id); when it names an entry it wins. Otherwise the trait pair selects a class
- * and the style/era chain runs; a class-less or unmatched trait falls to the interface-family
- * drawing for the same size, or the missing-asset glyph. Pure and deterministic.
- */
 export function resolveVisualMount(
   catalog: PartCatalog,
   query: VisualTraitQuery,
@@ -110,7 +86,6 @@ export function resolveVisualMount(
   return { part: MISSING_ASSET_PART, step: "missing", diagnostics };
 }
 
-/** The interface-family fallback: the universal dreadnought drawing for a size, any class. */
 function resolveInterfaceFamily(catalog: PartCatalog, size: SizeBand): MountPart | undefined {
   return catalog.mounts.find(
     (p) =>

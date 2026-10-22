@@ -1,12 +1,8 @@
-// DESIGN-43 versioned authoritative constant surface for D-1.
-// Mirrors packages/combat/src/submarines/constants.ts (ADR-0033 precedent).
-
 export const AIRCRAFT_RULESET_VERSION = "aircraft_ruleset_v1" as const;
 export const AIRCRAFT_FORMULA_VERSION = "aircraft_formula_v1" as const;
 
 export const AIRCRAFT_BASIS_POINTS_PER_UNIT = 10_000 as const;
 
-// DESIGN-43 §1 canonical aircraft type enum — exactly these 12 values.
 export const AIRCRAFT_TYPES = [
   "FIGHTER",
   "TORPEDO_BOMBER",
@@ -23,7 +19,6 @@ export const AIRCRAFT_TYPES = [
 ] as const;
 export type AircraftType = (typeof AIRCRAFT_TYPES)[number];
 
-// DESIGN-43 §9 canonical emphasised traits — exactly these 9 values.
 export const AIRCRAFT_TRAITS = [
   "SPEED",
   "FIREPOWER",
@@ -37,7 +32,6 @@ export const AIRCRAFT_TRAITS = [
 ] as const;
 export type AircraftTrait = (typeof AIRCRAFT_TRAITS)[number];
 
-// DESIGN-43 §13 canonical inventory states — exactly these 9 values.
 export const AIRCRAFT_INVENTORY_STATES = [
   "UNASSIGNED_OPERATIONAL",
   "ASSIGNED_OPERATIONAL",
@@ -51,7 +45,6 @@ export const AIRCRAFT_INVENTORY_STATES = [
 ] as const;
 export type AircraftInventoryState = (typeof AIRCRAFT_INVENTORY_STATES)[number];
 
-// DESIGN-43 §32 canonical basing classes — exactly these 6 values.
 export const AIRCRAFT_BASING_CLASSES = [
   "LAND_BASED",
   "CARRIER_BASED",
@@ -62,7 +55,6 @@ export const AIRCRAFT_BASING_CLASSES = [
 ] as const;
 export type AircraftBasingClass = (typeof AIRCRAFT_BASING_CLASSES)[number];
 
-// DESIGN-43 §21 canonical damaged dispositions — exactly these 7 values.
 export const AIRCRAFT_DAMAGED_DISPOSITIONS = [
   "REPAIR_LOCALLY",
   "AWAIT_REPAIR_CAPACITY",
@@ -74,11 +66,9 @@ export const AIRCRAFT_DAMAGED_DISPOSITIONS = [
 ] as const;
 export type AircraftDamagedDisposition = (typeof AIRCRAFT_DAMAGED_DISPOSITIONS)[number];
 
-// DESIGN-43 §14 squadron re-equipment states.
 export const SQUADRON_REEQUIPMENT_STATES = ["NONE", "IN_PROGRESS", "COMPLETED"] as const;
 export type SquadronReequipmentState = (typeof SQUADRON_REEQUIPMENT_STATES)[number];
 
-// DESIGN-43 §6 development project statuses.
 export const AIRCRAFT_PROJECT_STATUSES = [
   "REQUESTED",
   "DEVELOPING",
@@ -90,28 +80,17 @@ export const AIRCRAFT_PROJECT_STATUSES = [
 ] as const;
 export type AircraftProjectStatus = (typeof AIRCRAFT_PROJECT_STATUSES)[number];
 
-// Score range bounds.
 export const AIRCRAFT_SCORE_MIN = 0 as const;
 export const AIRCRAFT_SCORE_MAX = 100 as const;
 
-// RNG stream key prefix for aircraft development proposal generation.
 export const AIRCRAFT_DESIGN_STREAM_KEY_PREFIX = "aircraft/development/nation" as const;
 
-// ---- INC-4 private venture constants ----
-
-// DESIGN-43 §11: private venture cooldown — exactly 12 completed months per nation.
 export const PRIVATE_VENTURE_COOLDOWN_MONTHS = 12 as const;
 
-// DESIGN-43 §11: maximum number of unexpired private proposals per nation.
 export const PRIVATE_VENTURE_MAX_UNEXPIRED = 3 as const;
 
-// DESIGN-43 §12: private proposal lifetime — exactly 12 completed months.
 export const PRIVATE_PROPOSAL_LIFETIME_MONTHS = 12 as const;
 
-// ---- INC-3 constants ----
-
-// DESIGN-43 §7: aircraft_development_duration_v1
-// Base duration: 4 paid months. Range: clamp(3, 6, base + modifiers).
 export const AIRCRAFT_DEVELOPMENT_BASE_MONTHS = 4 as const;
 export const AIRCRAFT_DEVELOPMENT_MIN_MONTHS = 3 as const;
 export const AIRCRAFT_DEVELOPMENT_MAX_MONTHS = 6 as const;
@@ -119,9 +98,6 @@ export const AIRCRAFT_DEVELOPMENT_COMPLEXITY_MODIFIER = 1 as const;
 export const AIRCRAFT_DEVELOPMENT_TECHNOLOGY_MODIFIER = -1 as const;
 export const AIRCRAFT_DEVELOPMENT_INDUSTRY_MODIFIER = -1 as const;
 
-// DESIGN-43 §9: attribute allocation
-// Role baseline vectors: per-role base attribute values (speed, firepower, maneuverability, toughness).
-// Order: [speed, firepower, maneuverability, toughness]
 export const AIRCRAFT_ROLE_BASELINES: Record<string, readonly [number, number, number, number]> = {
   FIGHTER: [40, 25, 50, 30],
   TORPEDO_BOMBER: [20, 30, 20, 35],
@@ -137,7 +113,6 @@ export const AIRCRAFT_ROLE_BASELINES: Record<string, readonly [number, number, n
   SPECIAL_SQUADRON: [30, 30, 30, 30],
 };
 
-// Per-trait bonus when emphasised: +10 to the matching attribute.
 export const AIRCRAFT_TRAIT_BONUS: Record<string, number> = {
   SPEED: 10,
   FIREPOWER: 10,
@@ -150,11 +125,8 @@ export const AIRCRAFT_TRAIT_BONUS: Record<string, number> = {
   EASE_OF_PRODUCTION: 0,
 };
 
-// Trait trade-off: when two traits are emphasised, each gets the same +10,
-// and the remaining attributes each take a -5 penalty (total -10 across 2 attributes).
 export const AIRCRAFT_TRADE_OFF_PENALTY = -5 as const;
 
-// Role attribute minimums (cannot go below these after allocation).
 export const AIRCRAFT_ROLE_ATTRIBUTE_MINS: Record<
   string,
   readonly [number, number, number, number]

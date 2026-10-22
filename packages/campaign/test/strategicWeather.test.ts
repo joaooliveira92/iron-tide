@@ -1,9 +1,3 @@
-// B-6/ADR-0025: the compiled campaign snapshot stamps the canonical start date
-// (startYear/startMonth) and the (empty) current-month per-area
-// strategicWeather collection; the campaign month id helper derives YYYY-MM
-// ids deterministically; the compiled snapshot hash is deterministic and
-// sensitive to the area set (serializer canonically ordered).
-
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -286,7 +280,6 @@ describe("B-6 strategic weather snapshot surface (campaign)", () => {
       "1880-12",
     ]);
     expect(ids[12]).toBe("1881-01");
-    // Strictly ordered strings (YYYY-MM pads, so lexicographic == chronological)
     for (let i = 1; i < ids.length; i++) {
       expect(ids[i]! > ids[i - 1]!).toBe(true);
     }

@@ -59,7 +59,6 @@ describe("SaveStore month input", () => {
       value: input,
     });
     expect(d.all).toHaveLength(0);
-    // The campaign state itself is untouched by the extra artifact.
     expect(store.loadById(dir, metadata.saveId, new DiagnosticCollector())).not.toBeNull();
   });
 

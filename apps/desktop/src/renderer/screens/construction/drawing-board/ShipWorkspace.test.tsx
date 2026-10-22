@@ -38,7 +38,6 @@ describe("Drawing Board workspace", () => {
       expect(
         screen.getByRole("tab", { name: new RegExp(tab, "i") }).getAttribute("aria-selected"),
       ).toBe("true");
-      // Same DOM node: the drawing was neither re-created nor re-mounted by the tab switch.
       expect(plan()).toBe(drawing);
       expect(drawing.isConnected).toBe(true);
       expect(screen.getByTestId("plan-click-layer")).toBe(clickLayer);
@@ -102,7 +101,6 @@ describe("narrow layouts", () => {
     fireEvent.click(toggle);
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     expect(toggle.textContent).toContain("Show ship view");
-    // Hidden on narrow screens only; wide layouts always show it.
     expect(body.className).toMatch(/(^| )hidden( |$)/);
     expect(body.className).toMatch(/lg:block/);
     expect(drawing.isConnected).toBe(true);
@@ -182,7 +180,6 @@ describe("ship view states", () => {
   const content = loadDrawingBoardContent();
   const ref = content.references[0]!;
   const refView = buildWorkshopView(ref.draft, content.environmentFor(ref.month));
-  // The plan draws from the draft; the compiled view only supplies gun arcs, so the reference's view serves.
   const drawFor = (draft: DesignDraft) =>
     render(
       <HullPlanPanel

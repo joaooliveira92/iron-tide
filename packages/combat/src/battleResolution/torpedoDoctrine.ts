@@ -1,14 +1,3 @@
-// P-1 ticket 04 (AC-5): the deterministic auto-resolution torpedo doctrine.
-//
-// Each minute, every launcher with a loaded tube on a viable ship fires ONE tube at
-// the nearest viable enemy whose legal contact position lies on its run: the
-// torpedo travels along the firing ship's heading (DESIGN-40 §13 slice — the
-// engine launches every torpedo along the ship heading; ADR-0046), so the doctrine
-// fires only when the target's PREDICTED end-of-minute position (legal contact
-// position advanced by the contact's own course/speed for one minute — the instant
-// the engine hit-checks, substep 56) sits ahead within its collision radius of that
-// line, beyond the model's arming distance and inside the first setting's run. Ties
-// break on ascending asset id. No randomness — the engine's keyed RNG owns every draw.
 import { directionBp, speedBpKnotsToUmS } from "../movement/kinematics.js";
 import { DIRECTION_FIXED } from "../movement/constants.js";
 import type { TacticalBattleState } from "../tactical/state.js";
@@ -34,7 +23,6 @@ export function planTorpedoCommands(input: {
 }): TorpedoLaunchCommand[] {
   const { battleId, torpedoes, battleState, damage, units } = input;
   const movement = battleState.movementStates ?? {};
-  // predicted end-of-minute contact position (firing-side knowledge only)
   const contactPos = new Map(
     (battleState.contacts ?? []).map((c) => {
       const { cosBp, sinBp } = directionBp(c.course);
@@ -71,8 +59,6 @@ export function planTorpedoCommands(input: {
     const model = compiledTorpedoOf(torpedoes.torpedoes, wiring.launcher.loadedPerTube[tubeIndex]!);
     const setting = model.speedSettings[0]!;
     const { cosBp, sinBp } = directionBp(own.heading);
-    // launch point: the engine resolves torpedoes (step 10.5) AFTER this minute's
-    // movement, from the firing ship's end-of-minute position — predict it.
     const leadUm = speedBpKnotsToUmS(own.currentSpeed) * PREDICTION_SECONDS;
     const launchX = own.position[0] + Math.round((leadUm * cosBp) / DIRECTION_FIXED);
     const launchY = own.position[1] + Math.round((leadUm * sinBp) / DIRECTION_FIXED);
@@ -85,7 +71,7 @@ export function planTorpedoCommands(input: {
       if (!viable(enemy.assetId)) continue;
       const contactId = `${battleId}:${enemy.assetId}`;
       const pos = contactPos.get(contactId);
-      if (!pos) continue; // fog of war: only legal contacts are targetable
+      if (!pos) continue;
       const dx = pos[0] - launchX;
       const dy = pos[1] - launchY;
       const alongM = Math.floor((dx * cosBp + dy * sinBp) / DIRECTION_FIXED / UM_PER_M);

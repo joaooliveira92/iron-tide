@@ -1,12 +1,3 @@
-/**
- * The display-unit taxonomy and the canonical→display conversions (U-3 map D2/D3).
- * This is one half of the single presentation conversion home: every screen reads
- * a display unit from here instead of dividing by a literal at the call site.
- *
- * Runtime-free: it imports only the canonical table from `@bluewave/contracts`
- * and the effect-free preferences types. It never touches `effect`, Node, the
- * filesystem, or an authoritative package.
- */
 import {
   KNOTS_TO_UMS,
   MM_TO_UM,
@@ -20,22 +11,14 @@ import {
 
 import type { MeasurementPreset } from "../../../shared/preferences-contract.js";
 
-/** Per-category display-unit selections (mirrors the U-2 preference shape). */
 export type MeasurementSelections = Readonly<Record<string, string>>;
 
-/** Canonical micrometres in one yard (36 inches). */
 export const UM_PER_YARD = UM_PER_INCH * 36;
-/** Canonical micrometres in one metre. */
 export const UM_PER_METRE = 1_000_000;
-/** Canonical micrometres in one kilometre. */
 export const UM_PER_KILOMETRE = 1_000_000_000;
-/** Kilograms in one tonne. */
 export const KG_PER_TONNE = 1_000;
-/** Kilograms in one pound (international avoirdupois, exact). */
 export const KG_PER_POUND = 0.45359237;
-/** Litres in one cubic metre. */
 export const LITRE_PER_CUBIC_METRE = 1_000;
-/** Kilowatts in one mechanical horsepower (1 hp = 745.699872 W). */
 export const KW_PER_HORSEPOWER = 0.745699872;
 
 export const MEASUREMENT_CATEGORIES = [
@@ -65,18 +48,14 @@ export type DisplayUnitId =
   | "kilowatts"
   | "horsepower";
 
-/** The canonical quantity a category converts from. */
 export type CanonicalQuantity = "Um" | "UmPerSec" | "Kg" | "Litre" | "Kw";
 
 export interface DisplayUnitDefinition {
   readonly id: DisplayUnitId;
   readonly category: MeasurementCategory;
   readonly symbol: string;
-  /** The preset this unit is the default for, or `both`. */
   readonly preset: MeasurementPreset | "both";
-  /** canonical unit → display value (may be fractional; presentation only). */
   readonly fromCanonical: (canonical: number) => number;
-  /** display value → canonical unit (authoring/parser direction). */
   readonly toCanonical: (display: number) => number;
 }
 
@@ -102,7 +81,6 @@ const kwToHorsepower = (v: number): number => v / KW_PER_HORSEPOWER;
 const horsepowerToKw = (v: number): number => v * KW_PER_HORSEPOWER;
 
 const ALL_UNITS: readonly DisplayUnitDefinition[] = [
-  // speed — knots is the naval default in both presets.
   {
     id: "knots",
     category: "speed",
@@ -119,7 +97,6 @@ const ALL_UNITS: readonly DisplayUnitDefinition[] = [
     fromCanonical: umsToMetresPerSecond,
     toCanonical: metresPerSecondToUms,
   },
-  // length / calibre / armour / range — canonical micrometres.
   {
     id: "inches",
     category: "calibre",
@@ -184,7 +161,6 @@ const ALL_UNITS: readonly DisplayUnitDefinition[] = [
     fromCanonical: umToMetres,
     toCanonical: metresToUm,
   },
-  // mass — tonnes is the common default; pounds is the manual's bomb-weight unit (p.18).
   {
     id: "tonnes",
     category: "mass",
@@ -201,7 +177,6 @@ const ALL_UNITS: readonly DisplayUnitDefinition[] = [
     fromCanonical: kgToPounds,
     toCanonical: poundsToKg,
   },
-  // volume / power.
   {
     id: "cubicMetres",
     category: "volume",
@@ -236,7 +211,6 @@ const ALL_UNITS: readonly DisplayUnitDefinition[] = [
   },
 ];
 
-/** A typed failure of the measurement taxonomy (discriminate by `_tag`, RULES.md). */
 export class PresentationFormatError extends Error {
   readonly _tag = "PresentationFormatError";
   constructor(
@@ -273,7 +247,6 @@ export function displayUnitsForCategory(
   return ALL_UNITS.filter((unit) => unit.category === category);
 }
 
-/** The preset's default unit for a category (the manual's imperial default, p.18). */
 export function defaultDisplayUnit(
   category: MeasurementCategory,
   preset: MeasurementPreset,
@@ -289,11 +262,6 @@ export function defaultDisplayUnit(
   return match;
 }
 
-/**
- * Reject a selection that names an unknown unit or one from another category.
- * Used at the selection-write boundary; `formatMeasurement` degrades a malformed
- * selection to the preset default instead of throwing on the render path.
- */
 export function assertMeasurementSelection(category: MeasurementCategory, unitId: string): void {
   const unit = ALL_UNITS.find(
     (candidate) => candidate.id === unitId && candidate.category === category,
@@ -306,7 +274,6 @@ export function assertMeasurementSelection(category: MeasurementCategory, unitId
   }
 }
 
-/** The unit for a category: the valid per-category selection, else the preset default. */
 export function resolveDisplayUnit(
   category: MeasurementCategory,
   preset: MeasurementPreset,
@@ -326,7 +293,6 @@ export function resolveDisplayUnit(
   return defaultDisplayUnit(category, preset);
 }
 
-/** Convert a canonical value to its display-unit value under a category/preset/selection. */
 export function convertToDisplay(
   canonical: number,
   category: MeasurementCategory,
@@ -337,5 +303,4 @@ export function convertToDisplay(
   return { value: unit.fromCanonical(canonical), unit };
 }
 
-/** Narrow canonical inputs to their branded types for call-site clarity. */
 export type { Kg, Kw, Litre, Um, UmPerSec };

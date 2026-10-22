@@ -27,7 +27,6 @@ function SummaryCard({ title, children }: { title: string; children: ReactNode }
   );
 }
 
-/** The income / expenditure / result cards, folded from a treasury breakdown. */
 export function TreasurySummaryCards({ breakdown }: { readonly breakdown: TreasuryBreakdown }) {
   const deficit = breakdown.projectedSurplusDeficit < 0;
   const note = researchNote(breakdown);

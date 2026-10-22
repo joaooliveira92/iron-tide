@@ -166,9 +166,6 @@ function snapshotToHashable(snapshot: CampaignSnapshot): unknown {
     version: snapshot.version,
     turnNumber: snapshot.turnNumber,
     campaignId: snapshot.campaignId,
-    // B-6/ADR-0025: start date + current-month weather are part of the
-    // authoritative snapshot surface (hash parity with ReplayVerifier /
-    // run-child).
     startYear: snapshot.startYear,
     startMonth: snapshot.startMonth,
     strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),
@@ -221,7 +218,6 @@ describe("Full-slice integration", () => {
     fixtureCleanup();
   });
 
-  // 1. Repeated compilation yields identical initial snapshot hash
   it("1. Repeated compilation yields identical initial snapshot hash", () => {
     const state1 = compileCampaign(fixtureDir);
     const state2 = compileCampaign(fixtureDir);
@@ -229,7 +225,6 @@ describe("Full-slice integration", () => {
     expect(state1.rawHash).toHaveLength(64);
   });
 
-  // 2. Deterministic month — same seed/commands yields identical 5 ledger hashes
   it("2. Same opening snapshot and commands yield identical closing snapshot, command, event, financial, and random-decision ledger hashes", () => {
     const executor = new MonthExecutor();
     const cmd = makeBudgetCommand(snapshot, "uk", "con-gbr-ship-battleship2", SafeInt(100));
@@ -249,7 +244,6 @@ describe("Full-slice integration", () => {
     expect(r2.success).toBe(true);
   });
 
-  // 3. Save/load before advancement preserves future outcomes
   it("3. Save/load before advancement preserves snapshot hash", () => {
     const store = new SaveStore();
     const saveDir = resolve(
@@ -276,7 +270,6 @@ describe("Full-slice integration", () => {
     }
   });
 
-  // 4. Replay reproduces authoritative hashes
   it("4. Child-process replay reproduces all authoritative hashes", () => {
     const executor = new MonthExecutor();
     const cmd = makeBudgetCommand(snapshot, "uk", "con-gbr-ship-battleship2", SafeInt(100));
@@ -301,7 +294,6 @@ describe("Full-slice integration", () => {
     expect(replayResult.replayedCommandLedgerHash).toBe(replayResult.originalCommandLedgerHash);
   });
 
-  // 5. Stale expected snapshot hash is rejected
   it("5. Stale expected snapshot hash is rejected", () => {
     const lifecycle = new CommandLifecycle();
     const slot = snapshot.slots.find((s) => s.nationId === "uk")!;
@@ -318,7 +310,6 @@ describe("Full-slice integration", () => {
     }
   });
 
-  // 6. Idempotency
   it("6. Same idempotency key and canonical command returns original result; different command returns IDEMPOTENCY_CONFLICT", () => {
     const lifecycle = new CommandLifecycle();
     const slot = snapshot.slots.find((s) => s.nationId === "uk")!;
@@ -347,7 +338,6 @@ describe("Full-slice integration", () => {
     expect(conflictResult.type).toBe("idempotency_conflict");
   });
 
-  // 7. Unlocked/invalid command
   it("7. An unlocked, invalid, or unreserved command cannot resolve", () => {
     const lifecycle = new CommandLifecycle();
     const slot = snapshot.slots.find((s) => s.nationId === "uk")!;
@@ -384,7 +374,6 @@ describe("Full-slice integration", () => {
     expect(fraResult.type).toBe("rejected");
   });
 
-  // 8. Treasury never negative
   it("8. Treasury never silently becomes negative and financial postings balance", () => {
     const executor = new MonthExecutor();
     const collector = new DiagnosticCollector();
@@ -402,7 +391,6 @@ describe("Full-slice integration", () => {
     }
   });
 
-  // 9. Construction progress capped
   it("9. Construction progress based on paid work and never exceeds total work", () => {
     const executor = new MonthExecutor();
     const collector = new DiagnosticCollector();
@@ -424,7 +412,6 @@ describe("Full-slice integration", () => {
     expect(workAdded).toBeGreaterThanOrEqual(0);
   });
 
-  // 10. No ship in two unresolved battles
   it("10. No ship in two unresolved battles", () => {
     const executor = new MonthExecutor();
     const nations = new Map<string, NationState>();
@@ -536,7 +523,6 @@ describe("Full-slice integration", () => {
     expect(shipDiag.length).toBeGreaterThanOrEqual(1);
   });
 
-  // 11. RNG stability
   it("11. RNG decisions stable when unrelated queries inserted", () => {
     const executor = new MonthExecutor();
     const cmd = makeBudgetCommand(snapshot, "uk", "con-gbr-ship-battleship2", SafeInt(50));
@@ -550,7 +536,6 @@ describe("Full-slice integration", () => {
     expect(hash1).toBe(hash2);
   });
 
-  // 12. Phase order enforced
   it("12. Phase order, aggregate ownership, and permitted RNG families enforced", () => {
     const phases = PhaseRegistry.all;
 
@@ -580,7 +565,6 @@ describe("Full-slice integration", () => {
     expect(commandCollectPhase.rngAllowed).toBe(false);
   });
 
-  // 13. Registry access rules enforced at runtime (fails closed)
   it("13. A phase that writes a resource it lacks permission for fails closed with a diagnostic", () => {
     const executor = new MonthExecutor();
     const collector = new DiagnosticCollector();
@@ -601,7 +585,6 @@ describe("Full-slice integration", () => {
   it("13b. A phase whose registry denies randomness fails closed at runtime", () => {
     const executor = new MonthExecutor();
     const collector = new DiagnosticCollector();
-    // resolve_research normally draws randomness; override it to rngAllowed=false.
     const overrides = new Map([
       [
         "resolve_research",
@@ -624,7 +607,6 @@ describe("Full-slice integration", () => {
     expect(denied[0]!.message).toContain('phase "resolve_research"');
   });
 
-  // 14. Corrupt save rejection
   it("14. Corrupt/incompatible saves rejected with stable diagnostics", () => {
     const store = new SaveStore();
     const saveDir = resolve(
@@ -656,7 +638,6 @@ describe("Full-slice integration", () => {
     }
   });
 
-  // 15. Cancellation
   it("15. Cancellation leaves save pointer and committed artifacts valid", () => {
     const store = new SaveStore();
     const saveDir = resolve(
@@ -687,7 +668,6 @@ describe("Full-slice integration", () => {
     }
   });
 
-  // 16. Battle labeled narrow
   it("16. Auto-resolver labeled narrow, no tactical equivalence claim", () => {
     const nations = new Map<string, NationState>();
 
@@ -869,7 +849,6 @@ describe("Full-slice integration", () => {
     }
   });
 
-  // 17. Invariants run after every authoritative transition and at closing snapshot
   it("17. Invariants run after every authoritative transition and at closing snapshot", () => {
     const executor = new MonthExecutor();
     const cmd = makeBudgetCommand(snapshot, "uk", "con-gbr-ship-battleship2", SafeInt(100));
@@ -886,8 +865,6 @@ describe("Full-slice integration", () => {
       expect(project.completedWork as number).toBeLessThanOrEqual(project.totalWork as number);
     }
 
-    // Closing validation still runs to completion on an empty month via the
-    // single MonthExecutor path (no alternate engine facade).
     const phaseCollector = new DiagnosticCollector();
     const phaseResult = executor.execute(
       {

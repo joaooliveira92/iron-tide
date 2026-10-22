@@ -1,14 +1,5 @@
 import type { CompiledDesignVersion } from "./design.js";
 
-/**
- * MVP scope, per the desktop-mvp map (ticket 09): `commitMonth` auto-resolves
- * any triggered battle inline. `CommitMonthResponse`/`MonthReport` are real,
- * implemented types. Everything else in this file (`BattleManifest` through
- * `LandTargetDamage`) is dev-tool-only surface shared with Tactical
- * Sandbox — typed accurately enough for the existing screens to compile,
- * but not wired to real commands until tactical play is in scope.
- */
-
 export interface MonthReportPeriod {
   readonly month: number;
   readonly year: number;
@@ -35,13 +26,10 @@ export interface FinancialLedgerEntry {
   readonly phase: string;
   readonly amount: number;
   readonly runningBalance: number;
-  /** Outflows only (spec #138): what the rules asked for; `amount` carries what was paid. */
   readonly requested?: number;
-  /** Outflows only: `requested - paid`, a recorded non-carried shortfall. */
   readonly shortfall?: number;
 }
 
-/** Grounded in `EngineAuditInspector.tsx`'s table rendering. */
 export interface RandomDecisionRecord {
   readonly purpose: string;
   readonly phase: string;
@@ -50,13 +38,6 @@ export interface RandomDecisionRecord {
   readonly outcome: string;
 }
 
-/**
- * Flat, vanilla-safe (web-renderable) summary of one month's auto-resolved
- * battle. Grounded in the engine's `BattleResult`/`BattleInstance` surface but
- * shaped for the renderer: no nested element instances, no mutable references.
- * A battle that ends without a decisive winner/loser carries
- * `winnerId`/`loserId` as `null` (bridge must not fabricate a result).
- */
 export interface BattleOutcome {
   readonly battleId: string;
   readonly areaId: string;
@@ -80,12 +61,6 @@ export interface ClosingSnapshotSummary {
   readonly activeWars: readonly unknown[];
 }
 
-/**
- * Grounded directly in `useSimulationScreen.ts`'s `handleAdvanceTurn`
- * (reads `randomDecisions`/`closingSnapshot` at the top level) and
- * `TurnReportTab.tsx`/`TreasuryGrid.tsx` (reads `report`/`domainEvents`/
- * `financialLedger`) — both are real consumers of the same response.
- */
 export interface CommitMonthResponse {
   readonly report: MonthReport;
   readonly domainEvents: readonly DomainEvent[];
@@ -93,8 +68,6 @@ export interface CommitMonthResponse {
   readonly randomDecisions: readonly RandomDecisionRecord[];
   readonly closingSnapshot: ClosingSnapshotSummary;
 }
-
-// --- Dev-tool-only, unimplemented for MVP (ticket 09) ---
 
 export interface BattleParticipant {
   readonly shipId: string;
@@ -108,7 +81,6 @@ export interface BattleSide {
   readonly participants: readonly BattleParticipant[];
 }
 
-/** Milestone-3+ element-instantiation audit trail — dev-tool-only, grounded in `tactical-sandbox-screen-state.test.ts`. */
 export interface BattleElementInstantiation {
   readonly step: string;
   readonly outcome: string;
@@ -260,8 +232,6 @@ export interface ReplayBattleBoundaryResponse {
   readonly actualHash?: string;
   readonly diagnostics: readonly string[];
 }
-
-// --- Construction commands (real, MVP scope per ticket 10) ---
 
 export type ConstructionCommandStatus = "submitted" | "accepted" | "superseded" | "cancelled";
 

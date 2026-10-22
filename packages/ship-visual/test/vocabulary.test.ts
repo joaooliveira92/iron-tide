@@ -60,14 +60,14 @@ describe("nationStyleOf", () => {
 
 describe("sizeBandOf (whole inches, manual p141)", () => {
   it.each([
-    [76_200, "SMALL"], // 3 in
-    [127_000, "SMALL"], // 5 in
-    [139_700, "MEDIUM"], // 5.5 in rounds to 6
-    [152_400, "MEDIUM"], // 6 in
-    [279_400, "MEDIUM"], // 11 in
-    [292_100, "LARGE"], // 11.5 in rounds to 12
-    [305_000, "LARGE"], // 12 in
-    [406_000, "LARGE"], // 16 in
+    [76_200, "SMALL"],
+    [127_000, "SMALL"],
+    [139_700, "MEDIUM"],
+    [152_400, "MEDIUM"],
+    [279_400, "MEDIUM"],
+    [292_100, "LARGE"],
+    [305_000, "LARGE"],
+    [406_000, "LARGE"],
   ])("%i µm is %s", (um, band) => {
     expect(sizeBandOf(um)).toBe(band);
   });

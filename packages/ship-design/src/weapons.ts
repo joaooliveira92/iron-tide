@@ -6,47 +6,33 @@ import { toSafe } from "./units.js";
 
 export type MountSide = "CENTRE" | "PORT" | "STBD";
 
-/** A weapon mount resolved from a gun-class ComponentDef plus the player's chosen parameters. */
 export interface GunMount {
   readonly instanceId: string;
   readonly stationPermille: number;
   readonly side: MountSide;
   readonly barrels: number;
   readonly roundsPerBarrel: number;
-  /** Projectile mass in grams (machine-gun bullets and 3-pdr shells are not whole kilograms). */
   readonly shellMassG: number;
-  /** Propellant charge as bp of shell mass. */
   readonly chargeBp: number;
-  /** Stowed volume of one round in millilitres. */
   readonly roundVolumeMl: number;
-  /** Base rate of fire, hundredths of rounds per barrel per minute. */
   readonly rofBaseX100: number;
-  /** Degrees that can bear on the beam on one side before obstruction. */
   readonly beamArcDeg: number;
-  /** Magazine distance in permille of length (from the arrangement model). */
   readonly feedDistancePermille: number;
 }
 
-/** Superstructure / funnel / mast block that can shadow nearby mounts. */
 export interface ArcObstacle {
   readonly id: string;
   readonly fromPermille: number;
   readonly toPermille: number;
-  /** A mount within this many permille of the block is shadowed. */
   readonly reachPermille: number;
   readonly blockedDeg: number;
 }
 
 export interface WeaponBalance {
-  /** Feed factor (bp) versus magazine distance (permille). */
   readonly feedFactor: LookupTable;
-  /** Stowage overhead on round volume, bp (10_000 = none). */
   readonly stowageBp: number;
-  /** Blast load per kg of shell mass, bp. */
   readonly blastLoadBp: number;
-  /** A mount counts toward the broadside only if its effective beam arc is at least this. */
   readonly minBeamArcDeg: number;
-  /** Arc loss (deg) above which a warning is raised. */
   readonly arcWarnLossDeg: number;
 }
 
@@ -54,7 +40,6 @@ export interface MountResult {
   readonly instanceId: string;
   readonly ammoMassKg: number;
   readonly ammoVolumeLitre: number;
-  /** Rounds per minute x100 for the whole mount. */
   readonly rofX100: number;
   readonly effectiveBeamArcDeg: number;
   readonly countsToBroadside: boolean;
@@ -64,10 +49,8 @@ export interface WeaponsResult {
   readonly mounts: readonly MountResult[];
   readonly ammoMassKg: number;
   readonly ammoVolumeLitre: number;
-  /** Shell mass of one simultaneous salvo, per side (kg). */
   readonly broadsidePortKg: number;
   readonly broadsideStbdKg: number;
-  /** Sustained shell mass per minute, weaker side (kg/min, x100). */
   readonly sustainedPerMinX100: number;
   readonly blastLoadKg: number;
   readonly findings: readonly Finding[];
@@ -147,8 +130,8 @@ export function compileWeapons(
       });
     }
 
-    const shellPerSalvo = BigInt(m.barrels) * BigInt(m.shellMassG); // grams
-    const sustained = BigInt(m.shellMassG) * rof; // grams x rounds/min x100
+    const shellPerSalvo = BigInt(m.barrels) * BigInt(m.shellMassG);
+    const sustained = BigInt(m.shellMassG) * rof;
     if (counts) {
       if (m.side !== "STBD") {
         port += shellPerSalvo;

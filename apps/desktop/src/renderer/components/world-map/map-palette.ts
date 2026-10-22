@@ -1,14 +1,6 @@
-/**
- * Colours for the map surface itself (land, graticule, area edges, labels).
- * The ocean is the map's own `ocean` surface, so land, areas, lanes and labels read
- * against a known ground in both themes. Floating chrome (panels, readouts) keeps its own dark
- * styling and does not use this.
- */
-
 import { useSyncExternalStore } from "react";
 
 export interface MapPalette {
-  /** The sea: the map's own surface, so land, areas and labels read against a known ground. */
   readonly ocean: string;
   readonly land: string;
   readonly landEdge: string;
@@ -17,16 +9,11 @@ export interface MapPalette {
   readonly areaWash: string;
   readonly areaWashSelected: string;
   readonly selectedEdge: string;
-  /** Pointer-over edge on an area; distinct from selection and from the keyboard focus ring. */
   readonly hoverEdge: string;
-  /** Wash over an area the campaign has no data for, so it never reads as a live region. */
   readonly areaUnavailable: string;
-  /** The planned/measured route: the loudest line on the chart. */
   readonly route: string;
   readonly routeCasing: string;
-  /** Passive sea lanes between connected areas: quiet, and never confusable with a route. */
   readonly lane: string;
-  /** A strait or canal the route cannot use, and one it can. */
   readonly passageOpenLine: string;
   readonly passageClosedLine: string;
   readonly passageOpenFill: string;
@@ -34,7 +21,6 @@ export interface MapPalette {
   readonly passageOpenRing: string;
   readonly passageClosedRing: string;
   readonly passageInk: string;
-  /** Regional strength glyphs: bar track and casing, the count ink, flag chip border. */
   readonly strengthTrack: string;
   readonly strengthCasing: string;
   readonly strengthInk: string;
@@ -42,10 +28,8 @@ export interface MapPalette {
   readonly flagBorder: string;
   readonly labelInk: string;
   readonly labelHalo: string;
-  /** OKLCH lightness for nation border tints and lines (hue comes from the nation). */
   readonly borderTintLightness: number;
   readonly borderEdgeLightness: number;
-  /** The minimap inset: its own surface, since the main ocean is transparent. */
   readonly minimapOcean: string;
   readonly minimapLand: string;
   readonly minimapInk: string;
@@ -135,7 +119,6 @@ function isDark(): boolean {
   return document.documentElement.classList.contains("dark");
 }
 
-/** The map palette for the current theme (the app toggles `.dark` on `<html>`). */
 export function useMapPalette(): MapPalette {
   return useSyncExternalStore(subscribe, isDark, () => true) ? DARK_MAP_PALETTE : LIGHT_MAP_PALETTE;
 }

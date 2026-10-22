@@ -1,8 +1,3 @@
-// Locale-independence proof for the compiler's canonical order (CAH-DET-1).
-// Builds a tiny full-surface bundle whose ids sort differently under a
-// locale-dependent comparison (en-US orders "i" before "I"; Turkish orders "I"
-// before "i"; codepoint orders "I" before "i" always) and prints its body hash.
-// A locale-dependent compiler would print two different hashes.
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";

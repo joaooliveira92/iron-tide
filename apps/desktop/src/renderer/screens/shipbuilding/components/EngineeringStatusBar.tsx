@@ -1,7 +1,6 @@
 import type { EngineeringReadout } from "../engineering-status.js";
 import { ReadoutItem } from "./ReadoutItem.js";
 
-/** The persistent bottom strip: the engineering outcomes that must never scroll out of sight. */
 export function EngineeringStatusBar({
   readouts,
 }: {

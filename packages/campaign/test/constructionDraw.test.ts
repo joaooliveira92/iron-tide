@@ -3,8 +3,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { monthlyAbsorbable } from "../src/constructionDraw.js";
 import type { ConstructionPackage, ConstructionProject } from "../src/state.js";
 
-// ADR-0230 section 6: one draw shared by the appropriation phase, the outlook, the capacity-pressure demand and the
-// dockyard readout. These tests pin that answer through its interface, not through any one caller.
 function pkg(
   id: string,
   line: ConstructionPackage["line"],

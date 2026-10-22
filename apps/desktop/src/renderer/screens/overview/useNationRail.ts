@@ -8,7 +8,6 @@ export type NationRailLoad =
   | { readonly status: "ready"; readonly projection: DiplomacyScreenProjection }
   | { readonly status: "unavailable" };
 
-/** The Diplomacy & War inspect view, reloaded when the campaign revision changes. */
 export function useNationRail(sessionId: string): NationRailLoad {
   const revision = useCampaignRevision();
   const state = useBridgeQuery(

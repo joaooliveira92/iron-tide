@@ -47,7 +47,6 @@ describe("AC-10: two-process battle auto-resolution determinism", () => {
     for (const loss of Object.values(parsed.damageReport)) {
       expect(loss).toBeGreaterThanOrEqual(0);
     }
-    // survivor/sunk partition covers all 4 ships
     const all = [
       ...parsed.survivorSunk.attackerSurvivorIds,
       ...parsed.survivorSunk.defenderSurvivorIds,

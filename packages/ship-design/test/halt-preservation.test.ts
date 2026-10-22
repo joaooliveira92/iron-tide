@@ -13,7 +13,7 @@ describe("preservationCostPerMonthMicro (SB3-R5, DESIGN-23 section 7)", () => {
       preservationCostPerMonthMicro(
         withBase({ mothballedMaintenancePerMonthMicro: 1, preservationCostBp: 5_000 }),
       ),
-    ).toBe(0); // floor(1 * 5000 / 10000)
+    ).toBe(0);
     expect(
       preservationCostPerMonthMicro(
         withBase({ mothballedMaintenancePerMonthMicro: 3, preservationCostBp: 5_000 }),

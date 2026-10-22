@@ -3,7 +3,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { createPresentationFormat } from "../lib/presentation-format/index.js";
 import { buildTrend, TREND_MONTHS, type TrendReport } from "./status-strip-trend.js";
 
-/** The default presentation (en-US, Naval Credits) the trend renders under. */
 const FORMAT = createPresentationFormat({
   locale: "en-US",
   numberScale: "full",
@@ -14,7 +13,6 @@ const FORMAT = createPresentationFormat({
 
 const trendOf = (reports: readonly TrendReport[] | null) => buildTrend(reports, FORMAT);
 
-/** A stored report for the month `from` -> `from + 1`, treasury `open` -> `open + net`. */
 function report(fromMonth: number, open: number, net: number): TrendReport {
   const to = fromMonth + 1;
   return {
@@ -39,7 +37,6 @@ describe("buildTrend", () => {
     expect(trend?.treasury.labels).toEqual(["Jan 1880", "Feb 1880"]);
     expect(trend?.treasury.delta).toBe("+35 NC");
     expect(trend?.treasury.direction).toBe("up");
-    // One month of net has nothing to compare with.
     expect(trend?.net.values).toEqual([35]);
     expect(trend?.net.delta).toBeNull();
     expect(trend?.net.direction).toBeNull();
@@ -73,7 +70,6 @@ describe("buildTrend", () => {
     expect(trend?.months).toBe(TREND_MONTHS);
     expect(trend?.net.values).toHaveLength(TREND_MONTHS);
     expect(trend?.treasury.values).toHaveLength(TREND_MONTHS + 1);
-    // The newest month is last.
     expect(trend?.net.labels.at(-1)).toBe("Oct 1880");
   });
 

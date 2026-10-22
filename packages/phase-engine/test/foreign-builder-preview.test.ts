@@ -1,5 +1,3 @@
-// SB3-R20/R23/R34 (INC-9b): the read-only foreign-order preview. It must agree with the order path (same dock,
-// capacity and capability derivation) and refuse an out-of-range quantity with the command's own reason code.
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
@@ -92,7 +90,6 @@ describe("previewForeignConstruction (SB3-R20/R23/R34)", () => {
   });
 
   it("marks a hull over the builder's dock limit as incapable (FOREIGN_BUILDER_CAPABILITY_INSUFFICIENT)", () => {
-    // france's authored dock ceiling is well below 40,000,000 kg.
     const result = preview(snapshot(40_000_000), 1, { builderNationId: BUILDER });
     expect(result.ok).toBe(true);
     if (!result.ok) return;

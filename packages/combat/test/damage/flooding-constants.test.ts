@@ -1,5 +1,3 @@
-// INC-6 — Per-minute flooding resolution constants (DESIGN-41 §§13-18).
-// Proves: policy ID stability, non-negative constants, correct threshold ordering.
 import { describe, it, expect } from "vite-plus/test";
 import {
   floodingPolicyId,

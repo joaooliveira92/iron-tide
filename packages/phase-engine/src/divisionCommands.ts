@@ -1,5 +1,3 @@
-// Canonical application of the DESIGN-26 division commands (create / add /
-// remove / change flagship / dissolve), used by the command_collection phase.
 import type {
   CampaignSnapshot,
   CanonicalShipType,
@@ -169,10 +167,6 @@ export function applyDivisionCommandMonth(
     }
     const division = nation["divisions"][idx]!;
     if (body["type"] === "ReorderDivisionShips") {
-      // Commands are authorized against the month-start snapshot but applied in
-      // order, so an earlier command this month may have changed the membership.
-      // Re-check against the division being applied: a stale order must never be
-      // able to drop an added ship, resurrect a removed one, or desync the flagship.
       const next = (body as ReorderDivisionShipsCommand)["shipOrder"];
       const current = division["shipOrder"];
       const stillValid =

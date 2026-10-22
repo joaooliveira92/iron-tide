@@ -1,4 +1,3 @@
-// AC-16/17 (INC-5): Re-equipment duration, unavailability, experience penalty.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {

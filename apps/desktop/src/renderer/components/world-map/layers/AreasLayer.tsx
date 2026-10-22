@@ -13,7 +13,6 @@ export interface AreasLayerProps {
   readonly areaEdge: string;
   readonly selectedEdge: string;
   readonly route: string;
-  /** Areas a live campaign has no data for: washed out, and still inspectable. */
   readonly unavailable: ReadonlySet<string>;
   readonly unavailableWash: string;
   readonly nameOf: (id: string) => string;
@@ -22,11 +21,6 @@ export interface AreasLayerProps {
   readonly onAreaClick: (id: string, shiftKey: boolean) => void;
 }
 
-/**
- * Area polygons with the ownership wash, and the chart's keyboard surface: the
- * map draws every layer three times to wrap seamlessly, but only the home copy
- * (`turn === 0`) is exposed to keyboard and screen readers.
- */
 export function AreasLayer({
   turn,
   areas,
@@ -86,7 +80,6 @@ export function AreasLayer({
               onAreaClick(area.id, event.shiftKey);
             }}
           >
-            {/* Hover name, so an area whose label was thinned out stays identifiable. */}
             {interactive && <title>{nameOf(area.id)}</title>}
           </path>
         );

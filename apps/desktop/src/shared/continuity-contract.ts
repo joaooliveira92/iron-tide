@@ -1,15 +1,8 @@
-/**
- * "Package" = `@bluewave/persistence`'s `SaveStore` save directory — not
- * the older `.bluewave` content-authoring format in `main/project.ts`.
- * Grounded in `desktop-mvp` map ticket 08 and, for exact field names,
- * `OperationStatus.tsx` (the real consumer).
- */
-
 export interface LoadCampaignResponse {
   readonly sessionId: string;
   readonly packagePath: string;
-  readonly campaignIdentity: string; // CampaignSnapshot.campaignId
-  readonly activeRevision: number; // CampaignSnapshot.turnNumber
+  readonly campaignIdentity: string;
+  readonly activeRevision: number;
 }
 
 export interface VerifyCampaignResponse {
@@ -37,12 +30,10 @@ export interface RecoverCampaignResponse {
   readonly notes: readonly string[];
 }
 
-/** One entry of the main-process recent-campaigns list. */
 export interface RecentCampaignEntry {
   readonly packagePath: string;
   readonly campaignIdentity: string;
   readonly activeRevision: number;
   readonly lastOpened: number;
-  /** False when the package directory no longer exists on disk. */
   readonly available: boolean;
 }

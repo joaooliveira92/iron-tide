@@ -21,8 +21,6 @@ import {
   type FitResult,
 } from "../src/index.js";
 
-// Fixtures: every record is decoded through the real strict schema.
-
 const PROVENANCE = {
   sourceStatus: "PLACEHOLDER",
   confidence: "LOW",
@@ -270,8 +268,6 @@ const goodMount = (extra: Partial<LoadoutEntryData> = {}): LoadoutEntryData =>
     ...extra,
   });
 
-// The fixtures themselves are strict
-
 describe("ticket 06 fixtures", () => {
   it("are accepted by the strict schemas, and an undeclared field fails", () => {
     expect(PARTS.length).toBeGreaterThan(10);
@@ -280,8 +276,6 @@ describe("ticket 06 fixtures", () => {
     );
   });
 });
-
-// General fit behaviour
 
 describe("fit: a loadout that fits", () => {
   it("is ACCEPTED with no findings, data issues or waivers", () => {
@@ -590,7 +584,6 @@ describe("fit: data that cannot be evaluated is not an incompatibility", () => {
   });
 
   it("an entry id is decoded, and a malformed one is rejected (ticket 11a)", () => {
-    // Identity checks (duplicates, cycles) are in partFitCompleteness.test.ts.
     expect(
       decodeStrictResult(LoadoutSchema, {
         platform: "p",
@@ -679,7 +672,6 @@ describe("fit: armour regions", () => {
   it("rejects an armour material in a weapon slot", () => {
     expect(codes(fit([entry({ slot: "fwd_main", part: "iron" })]))).toEqual([
       "FIT_INTERFACE_MISMATCH",
-      // the shape is also unexpected there
     ]);
   });
 
@@ -763,7 +755,6 @@ describe("fit: torpedo launchers (synthetic)", () => {
       code: "DQ-TORPEDO-001",
       waives: "diameterUmEqualsBore",
     });
-    // A different mismatching torpedo is not waived.
     expect(codes(fit([tube("l14_waived", "t_other")]))).toEqual(["FIT_CONSTRAINT_VIOLATED"]);
   });
 
@@ -777,7 +768,6 @@ describe("fit: torpedo launchers (synthetic)", () => {
     ]);
     expect(r.waivers).toHaveLength(1);
     expect(codes(r)).toEqual(["FIT_INTERFACE_MISMATCH"]);
-    // …nor a gun-carrying entry's own findings: placed on an unknown slot it still fails.
     expect(codes(fit([entry({ slot: "nope", part: "l14_waived" })]))).toEqual(["FIT_UNKNOWN_SLOT"]);
   });
 
@@ -788,9 +778,7 @@ describe("fit: torpedo launchers (synthetic)", () => {
         { code: "DQ-TORPEDO-001", waives: "diameterUmEqualsBore", forPart: "t18", note: "forged" },
       ],
     };
-    // The strict schema refuses it…
     expect(decodeStrictResult(FlattenedPartSchema, forged)._tag).toBe("Failure");
-    // …and the evaluator would not honour it for a launcher-slot even if one slipped through.
     const slotted: FlattenedPart = {
       ...forged,
       slots: [{ id: "torpedo", accepts: ["torpedo"], constraints: { diameterUmEqualsBore: true } }],
@@ -886,8 +874,6 @@ describe("fit: nested ammunition", () => {
     expect(e.entries?.["ammunition"]?.[0]).toEqual({ part: "ap" });
   });
 });
-
-// Determinism, ordering, barrier
 
 function shuffle<T>(items: readonly T[], seed: number): T[] {
   const out = [...items];
@@ -1032,10 +1018,6 @@ describe("fit: ship-type requirements (SPM-R12, ticket 12b)", () => {
 });
 
 describe("fit: ship-type requirements name real dotted platform slots (ticket 12b)", () => {
-  // The platform slots every real loadout fills are dotted (`armour.belt_main` in the fixture
-  // template, and `forecastle.gun_mount` etc. in production). A requirement's `slot` decodes
-  // through the same dotted-capable `slotId` as `SlotSchema.id`, so a real slot can be named
-  // and honoured; before the schema fix a bare `stableId` made every authored requirement inert.
   const plate = {
     thicknessUm: 200_000,
     lengthMm: 40_000,

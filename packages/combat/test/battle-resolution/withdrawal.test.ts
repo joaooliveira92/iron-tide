@@ -1,4 +1,3 @@
-// ADR-0073 (P-1 ticket 12): withdrawal / mutual-disengagement predicate.
 import { describe, expect, it } from "vite-plus/test";
 import {
   classifyWithdrawalReason,
@@ -18,7 +17,6 @@ import {
 import { initialDamageState } from "../../src/battleResolution/damage.js";
 import { DEFAULT_MAX_BATTLE_MINUTES, BATTLE_END_PRECEDENCE } from "../../src/battleEnd.js";
 
-/** A ship at `bp` strength (structure and flotation both at bp/10_000). */
 function atBp(sideId: "ATTACKER" | "DEFENDER", assetId: string, bp: number): ShipViability {
   return {
     assetId,
@@ -47,7 +45,6 @@ describe("ADR-0073 withdrawal predicate", () => {
         withdrawalStrengthThresholdBp: T + 1,
       }),
     ).toThrow();
-    // reuses the real DESIGN-38 §32 ids — no invented reason
     expect(BATTLE_END_PRECEDENCE).toContain("withdrawal_complete");
     expect(BATTLE_END_PRECEDENCE).toContain("mutual_disengagement");
   });
@@ -114,11 +111,9 @@ describe("ADR-0073 withdrawal predicate", () => {
   });
 
   it("classifies the withdrawal reason from the dominant loss (ADR-0098)", () => {
-    // Flotation loss dominant -> flooding.
     expect(classifyWithdrawalReason([atBp("ATTACKER", "a1", 1_000)], "ATTACKER")).toBe(
       "FLEET_STRENGTH_FLOODING",
     );
-    // Pure structural loss (flotation intact) with an active fire -> fire.
     const burning: ShipViability = {
       assetId: "a1",
       sideId: "ATTACKER",
@@ -129,7 +124,6 @@ describe("ADR-0073 withdrawal predicate", () => {
       },
     };
     expect(classifyWithdrawalReason([burning], "ATTACKER")).toBe("FLEET_STRENGTH_FIRE");
-    // Pure structural loss, no fire -> gunfire.
     const holed: ShipViability = {
       assetId: "a1",
       sideId: "ATTACKER",
@@ -147,13 +141,11 @@ describe("ADR-0073 withdrawal predicate", () => {
       sideId: "DEFENDER",
       damageState: { ...initialDamageState("d1"), terminalStatus: "SINKING" },
     };
-    // defender eliminated while attacker is also below threshold -> elimination
     expect(decide([atBp("ATTACKER", "a1", 100), sunk])).toEqual({
       ended: true,
       reason: "no_viable_combatants",
       eliminatedSide: "DEFENDER",
     });
-    // final minute with a side below threshold -> withdrawal_complete, not time_limit
     expect(
       decideBattleEnd(
         [atBp("ATTACKER", "a1", 100), atBp("DEFENDER", "d1", 10_000)],

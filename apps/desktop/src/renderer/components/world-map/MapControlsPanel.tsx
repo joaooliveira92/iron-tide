@@ -6,7 +6,6 @@ import { PROJECTIONS, type ProjectionId } from "./projection.js";
 import type { AreaTreeRow } from "./area-tree.js";
 
 export interface MapControlsPanelProps {
-  /** Fully-resolved panel classes (variant layout + open/closed state). */
   readonly className: string;
   readonly state: MapPrototypeState;
   readonly onSetProjection: (projection: ProjectionId) => void;
@@ -14,13 +13,11 @@ export interface MapControlsPanelProps {
   readonly onSetCentre: (centre: number) => void;
   readonly onReset: () => void;
   readonly meterRef: React.RefObject<HTMLSpanElement | null>;
-  /** Full/panel nest the area list here; the command shell puts it in the dock. */
   readonly inlineAreas: boolean;
   readonly treeRows: readonly AreaTreeRow[];
   readonly onFocusTreeRow: (row: AreaTreeRow) => void;
 }
 
-/** Projection, layer, centre and reset controls, plus the inline area list. */
 export function MapControlsPanel({
   className,
   state,

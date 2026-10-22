@@ -109,12 +109,6 @@ function toRequestDto(request: InterruptionRequest): InterruptionRequestDto {
   };
 }
 
-/**
- * Validate a stored pending turn against the already-verified save. Recomputes
- * the `turnId` from the record's own hash inputs and compares; a mismatch is
- * never migrated — the caller reports resumption unavailable and leaves the
- * authoritative state untouched.
- */
 function validatePending(
   pending: PendingTurnRecord,
   session: {
@@ -128,9 +122,6 @@ function validatePending(
   },
   contentHashes: { readonly shipBuilding: string; readonly armament: string },
 ): readonly RecordedInput[] | null {
-  // Turn identity is fixed before any interruption is answered, so the inputs
-  // accumulated while suspended must NOT enter it: doing so would change every
-  // interruption's id on resume (D-12 "stable identity under re-execution").
   const expectedTurnId = computeTurnId({
     campaignId: session.snapshot.campaignId,
     startingRevision: Number(session.snapshot.turnNumber),
@@ -152,7 +143,6 @@ function validatePending(
   return valid ? pending.recordedInputs : null;
 }
 
-/** Load the content identities a pending record's hashes must match to be trusted. */
 const expectedContentHashes = (): Effect.Effect<
   { readonly shipBuilding: string; readonly armament: string },
   CommandFailed,
@@ -166,13 +156,6 @@ const expectedContentHashes = (): Effect.Effect<
     };
   });
 
-/**
- * The outstanding interruption the pending sidecar is waiting on, recomputed
- * from its (load-validated) `turnId` and stored phase/ordinal/subjectKey. `null`
- * when the record carries no outstanding request (e.g. a trailing-input
- * suspension). The command boundary matches an answer/submission against this so
- * a mismatched `interruptionId` is rejected before it is recorded (T7).
- */
 function outstandingInterruption(pending: PendingTurnRecord): {
   readonly kind: "decision" | "battle" | "offer";
   readonly interruptionId: string;
@@ -190,11 +173,6 @@ function outstandingInterruption(pending: PendingTurnRecord): {
   };
 }
 
-/**
- * Resume-or-start a turn transaction. Returns a `completed` summary, a
- * `suspended` interruption request (persisted to `pending-turn.json`), or
- * `unavailable` when a stored pending turn cannot be trusted.
- */
 export const resolveTurnProgram = withSchema(CommandEnvelopePayloadSchema, (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -242,9 +220,6 @@ const finishTransaction = (input: {
 
     switch (outcome.kind) {
       case "completed": {
-        // The turn is finished; a leftover pending-turn sidecar must never
-        // survive to prompt a resume of the already-resolved month. Clearing is
-        // best-effort — the authoritative save is already committed.
         yield* Effect.try({
           try: () => clearPendingTurn(record.saveDir),
           catch: (error) =>
@@ -302,11 +277,6 @@ const finishTransaction = (input: {
     }
   });
 
-/**
- * Record a decision answer at the next interruption ordinal and resume the
- * suspended turn. The answer is validated at this boundary and never reaches the
- * renderer as engine state.
- */
 export const answerDecisionProgram = withSchema(AnswerDecisionPayloadSchema, (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -360,7 +330,6 @@ export const answerDecisionProgram = withSchema(AnswerDecisionPayloadSchema, (pa
   }),
 );
 
-/** Record a player-resolved battle result at the next ordinal and resume. */
 export const submitBattleResultProgram = withSchema(SubmitBattleResultPayloadSchema, (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -418,12 +387,6 @@ export const submitBattleResultProgram = withSchema(SubmitBattleResultPayloadSch
   }),
 );
 
-/**
- * Record a player's answer to a battle offer at the next ordinal and resume (T-1 03, spec #109 R6). The answer is refused
- * with a stable typed reason, before anything is recorded and with the offer left pending, when no offer is outstanding or
- * the interruption id is stale (a duplicate or out-of-order answer), when it names another battle, or when it is a decline
- * (an unavoidable mission). The engine validates the recorded input again on re-execution.
- */
 export const submitOfferResponseProgram = withStrictSchema(
   SubmitOfferResponsePayloadSchema,
   (payload) =>
@@ -466,7 +429,6 @@ export const submitOfferResponseProgram = withStrictSchema(
         payload.response === "decline" &&
         pending.outstanding?.acceptanceClass === "OPERATIONALLY_UNAVOIDABLE"
       ) {
-        // The existing typed refusal: an unavoidable mission cannot be declined, and nothing is recorded.
         return {
           outcome: "error" as const,
           reason: BATTLE_DECLINE_NOT_ALLOWED,
@@ -498,7 +460,6 @@ export const submitOfferResponseProgram = withStrictSchema(
     }),
 );
 
-/** Append a recorded input to the pending sidecar and advance its ordinal. */
 const recordInput = (
   saveDir: string,
   pending: PendingTurnRecord,
@@ -518,11 +479,6 @@ const recordInput = (
       }),
   });
 
-/**
- * `readPendingTurn(sessionId) -> { pending }` reports whether a suspended turn
- * exists for the campaign, without touching it. The renderer uses it on load to
- * prompt the player to resume.
- */
 export const readPendingTurnProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -541,11 +497,6 @@ export const readPendingTurnProgram = withSchema(SessionIdPayloadSchema, (sessio
   }),
 );
 
-/**
- * `abandonPendingTurn(sessionId)` clears only the non-authoritative pending-turn
- * sidecar — no authoritative save, pointer, envelope or compatibility version
- * changes.
- */
 export const abandonPendingTurnProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;

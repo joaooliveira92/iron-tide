@@ -1,5 +1,3 @@
-// INC-5 — Magazine/ammunition secondary hazard (DESIGN-41 §10 item 1).
-// Proves: detonation conditions, RNG behavior, no-magazine cases, deferred hazard types.
 import { describe, it, expect } from "vite-plus/test";
 import {
   evaluateMagazineHazard,
@@ -7,12 +5,9 @@ import {
   type MagazineHazardInput,
 } from "../../src/damage/index.js";
 
-// Deterministic RNG for testing
 function rngThat(returnValues: Record<string, number>): (stream: string) => number {
   return (stream: string) => returnValues[stream] ?? 0.5;
 }
-
-// Magazine zone type detection
 
 describe("AC-5: Magazine zone type detection", () => {
   it("recognizes MAGAZINE as a magazine zone type", () => {
@@ -40,10 +35,7 @@ describe("AC-5: Magazine zone type detection", () => {
   });
 });
 
-// Magazine hazard evaluation
-
 describe("AC-5: Magazine hazard evaluation (§10)", () => {
-  // Base valid input: full penetration of a magazine
   const validMagazineInput: MagazineHazardInput = {
     hasMagazineInZone: true,
     penetrationOutcome: "FULL_PENETRATION",
@@ -51,7 +43,6 @@ describe("AC-5: Magazine hazard evaluation (§10)", () => {
   };
 
   it("triggers detonation with full penetration of magazine zone and RNG below threshold", () => {
-    // Base detonation = 8_000 bp. RNG = 0.0 → drawBp = 0 < 8000 → detonation
     const result = evaluateMagazineHazard(
       validMagazineInput,
       rngThat({ "battle/ship/damage/magazine": 0.0 }),
@@ -114,7 +105,6 @@ describe("AC-5: Magazine hazard evaluation (§10)", () => {
   });
 
   it("returns no detonation when RNG draw exceeds detonation threshold", () => {
-    // Base detonation = 8_000 bp. RNG = 0.85 → drawBp = 8500 ≥ 8000 → no detonation
     const result = evaluateMagazineHazard(
       validMagazineInput,
       rngThat({ "battle/ship/damage/magazine": 0.85 }),
@@ -142,8 +132,6 @@ describe("AC-5: Magazine hazard evaluation (§10)", () => {
   });
 });
 
-// Deferred hazard types
-
 describe("AC-5: Deferred hazard types (M3/C-5)", () => {
   it("only MAGAZINE_DETONATION or NONE are returned as hazard types", () => {
     const validTypes: string[] = [];
@@ -162,9 +150,8 @@ describe("AC-5: Deferred hazard types (M3/C-5)", () => {
       rngThat({}),
     );
     validTypes.push(noResult.hazardType);
-    validTypes.push("NONE"); // expected
+    validTypes.push("NONE");
 
-    // Only MAGAZINE_DETONATION and NONE should ever appear
     for (const t of validTypes) {
       expect(["MAGAZINE_DETONATION", "NONE"]).toContain(t);
     }

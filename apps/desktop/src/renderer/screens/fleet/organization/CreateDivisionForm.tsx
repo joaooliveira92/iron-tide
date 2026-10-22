@@ -11,7 +11,6 @@ import {
 
 const SELECT_CLASS = "h-8 min-w-0 rounded-md border bg-background px-2 text-sm disabled:opacity-50";
 
-/** Found a new division on one commissioned ship; more ships join afterwards. */
 export function CreateDivisionForm({
   state,
   busy,

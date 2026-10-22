@@ -1,6 +1,5 @@
 import { Data, Result, Schema, SchemaIssue } from "effect";
 
-/** The only replay file format this build understands; an unknown version is rejected, never guessed at. */
 export const REPLAY_FORMAT_VERSION = 1;
 
 const Hash = Schema.String.check(Schema.isPattern(/^[0-9a-f]{64}$/));
@@ -19,7 +18,6 @@ const LedgerCheckpoint = Schema.Struct({
 
 const MonthCheckpoint = Schema.Struct({
   turnNumber: Count,
-  /** v1 command streams are empty; a non-empty stream needs a format version bump. */
   commands: Schema.Array(Schema.Never),
   snapshotHash: Hash,
   ledgers: Schema.Struct({
@@ -36,7 +34,6 @@ export const ReplayFileSchema = Schema.Struct({
   rulesetVersion: Schema.String,
   compatibilityVersion: Schema.String,
   seed: Schema.String,
-  /** Body hash of the compiled production bundle; the bundle itself is not embedded. */
   contentHash: Hash,
   initial: Schema.Struct({
     kind: Schema.Literal("production-pack"),
@@ -50,7 +47,6 @@ export const ReplayFileSchema = Schema.Struct({
 export type ReplayFile = typeof ReplayFileSchema.Type;
 export type LedgerName = keyof ReplayFile["months"][number]["ledgers"];
 
-/** The file is unreadable, foreign, or from a format version this build does not know. */
 export class ReplayFileError extends Data.TaggedError("ReplayFileError")<{
   readonly message: string;
 }> {}

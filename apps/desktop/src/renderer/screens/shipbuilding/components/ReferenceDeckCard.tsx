@@ -5,16 +5,10 @@ import type { DrawingBoardContent } from "../../../components/design-workspace/c
 import { StarterProfile } from "../../../components/design-workspace/index.js";
 import type { ReferenceDeckEntry } from "../reference-deck.js";
 
-/** DOM id of a ship type's option element; the listbox points `aria-activedescendant` at it. */
 export function referenceOptionId(listboxId: string, typeId: string): string {
   return `${listboxId}-option-${typeId}`;
 }
 
-/**
- * One ship-type card's content: the starter design's side profile as its picture, the type's name and recommended
- * use. The deck owns position, depth and drag; this only paints one card. `aria-selected` marks the current design's
- * type; the listbox's `aria-activedescendant` marks the focused one.
- */
 export const ReferenceDeckCard = memo(function ReferenceDeckCard({
   entry,
   palette,

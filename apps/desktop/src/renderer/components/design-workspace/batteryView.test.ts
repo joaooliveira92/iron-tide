@@ -25,7 +25,6 @@ describe("batteryCards", () => {
     expect(cards[0]!.title).toMatch(/^Main battery, \d+\.\d-inch$/);
     const main = cards[0]!;
     expect(main.mounts.length).toBe(main.row.mounts);
-    // Names follow bow-to-stern order: A first, Y last for four or more centreline mounts.
     const centre = main.mounts.filter((m) => m.side === "CENTRE");
     if (centre.length >= 2) {
       expect(centre[0]!.name).toBe("A");

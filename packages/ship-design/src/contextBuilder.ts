@@ -6,7 +6,6 @@ import type { PropulsionPlant } from "./machinery.js";
 import { bp } from "./units.js";
 import type { ZoneDef, ZoneId } from "./arrangement.js";
 
-/** Parsed hull-form record as authored in hull-forms.yaml (validated upstream by content-schema). */
 export interface HullFormRecord {
   readonly id: string;
   readonly lengthMinMm: number;
@@ -19,7 +18,6 @@ export interface HullFormRecord {
   readonly volumeFullnessBp: number;
   readonly deckFullnessBp: number;
   readonly lcbPermille: number;
-  /** Optional traits such as `merchant_derived` (validated by content-schema). */
   readonly traits?: readonly string[];
   readonly zones: readonly {
     readonly id: string;
@@ -32,7 +30,6 @@ export interface HullFormRecord {
 }
 
 export class ContentError extends Error {
-  /** Stable discriminator (RULES.md "Errors"): recover by `_tag`, not `instanceof`. */
   readonly _tag = "ContentError";
   constructor(message: string) {
     super(message);
@@ -40,7 +37,6 @@ export class ContentError extends Error {
   }
 }
 
-/** Converts authored hull-form records into the runtime map `ShipContext.hullForms`. Duplicate ids are an error. */
 export function hullFormsFromRecords(
   records: readonly HullFormRecord[],
 ): Record<string, HullFormData> {
@@ -101,7 +97,6 @@ const REQUIRED_BALANCE_KEYS = [
   "minReserveBpByExpectation",
 ] as const;
 
-/** Light shape check of balance.yaml's `ship` section; throws a ContentError naming the missing key. */
 export function shipBalanceFromRecord(raw: unknown): ShipBalance {
   if (raw === null || typeof raw !== "object")
     throw new ContentError("ship balance must be an object");

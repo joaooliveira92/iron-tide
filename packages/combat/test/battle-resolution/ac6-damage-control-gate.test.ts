@@ -1,12 +1,3 @@
-// P-1 ticket 09 (ADR-0049): damage control now runs in EVERY auto-resolved
-// battle (the ADR-0047 torpedo-armament gate is gone). This file pins an unarmed
-// baseline whose random ledger proves the fixture contains shell-started fires
-// (§9 FIRE_SOURCE_CREATED draws). Ticket 09 was observably quiet here because
-// shell-created sources were not persisted; ticket 10 (ADR-0050) persists them
-// into ShipDamageState.fireRecords/floodingRecords, so step 8.6 now progresses
-// them and the baseline was re-pinned through the ADR-0007 process.
-//
-// Pure/deterministic: fixed fixture, fixed campaign seed, no ambient random.
 import { describe, expect, it } from "vite-plus/test";
 import { RandomLedger } from "@bluewave/random";
 import { projectBattle } from "../../src/battleResolution/project.js";
@@ -14,52 +5,10 @@ import { resolveBattleAuto } from "../../src/battleResolution/resolve.js";
 import { getFireRiskBp } from "../../src/damage/immediateFireFlooding.js";
 import { makeAutoInput, makeNations } from "./fixtures.js";
 
-// Second unarmed fixture: 4-gun batteries instead of the default 10, so the
-// pinned hashes are independent of baseline #1 (auto-resolve.test.ts).
 const FIRE_BASELINE_INPUT = makeAutoInput({
   nations: makeNations({ attackerGuns: [4, 4], defenderGuns: [4, 4] }),
 });
 
-// Auto-resolution gunnery fidelity (P-1 ticket 06 / ADR-0048) made the timeline
-// range- and gun-count-sensitive, so this unarmed (torpedo-sense) baseline hash
-// moved 2026-10-06. Re-pinned; the fixture still ends no_viable_combatants at
-// minute 18. Old -> new: RESULT 1c47f90b0a36... -> 9c88d23f3931...; minutes 1-6
-// and 14-17 changed (minutes 0, 7, 9-13 byte-identical — those minutes fired no
-// gunnery salvo). Minute 0 (704d9118...) unchanged because no battery has
-// completed a reload at minute 0.
-//
-// Re-pinned for ticket 10 / ADR-0050 (shell-created fire/flooding persisted):
-// RESULT 9c88d23f39316ad8... -> c6b73c6f73d16d4a...; minutes 0-2 byte-identical,
-// minutes 3-17 changed (first persisted source progresses from minute 3); the
-// fixture still ends no_viable_combatants at minute 18.
-//
-// Re-pinned for ADR-0053 (P-1 lethality tuning: FLOAT_UNIT 50_000 -> 400_000 and
-// magazine-weighted hit zones): RESULT c6b73c6f... -> f762c5855afe...; the fixture now ends
-// no_viable_combatants at minute 70 (was 18); minutes 0-1 byte-identical
-// (2e2de88b... at minute 1), later minutes changed. A forced-old-constant run
-// (FLOAT_UNIT 50_000, equal zone weights) reproduces c6b73c6f... exactly, so the
-// move is due to the tuning alone.
-// Re-pinned for ADR-0073 (P-1 ticket 12, withdrawal predicate: a side below 20%
-// fleet strength breaks off): RESULT f762c585... -> 24dd6c78...; minutes 0-51
-// byte-identical to the previous pin (the 52-entry list is a strict prefix of the
-// old 70), the fixture now ends withdrawal_complete at minute 52 (was
-// no_viable_combatants at 70) with no ship sunk. The cause is the new battle-end
-// predicate alone.
-//
-// Re-pinned for ADR-0094 (caliber unit-scale correction): production-scale
-// penetration is PARTIAL (not the inflated-scale FULL), so this 4-gun fixture
-// deals much weaker damage and grinds the full 360 minutes to time_limit with no
-// winner. The fire_creation ledger draws and the shell-started fire persistence
-// this file proves are unchanged; only the resolved damage/hash baseline moved.
-// Minute 0 is unchanged (704d9118...) and minute 1 is unchanged (2e2de88b...,
-// the first fired minute's pre-damage state), later minutes changed.
-//
-// Re-pinned for ADR-0098 (post-correction lethality rebalance): bounded
-// partial-penetration breaches + the breach flood rate restore progressive
-// lethality, so this 4-gun fixture now decides at minute 65 by
-// withdrawal_complete (was time_limit 360). The fire_creation ledger draws and
-// the shell-started fire persistence this file proves are unchanged; only the
-// resolved damage/hash baseline moved. Minute 0 and minute 1 are unchanged.
 const FIRE_BASELINE_RESULT_HASH =
   "18af1816d5976290233afeaeaf2d726088e9f1ef43c649653bc9027ed808f362";
 const FIRE_BASELINE_MINUTE_HASHES = [
@@ -132,7 +81,6 @@ const FIRE_BASELINE_MINUTE_HASHES = [
 
 describe("unarmed damage control (P-1 ticket 09)", () => {
   it("unarmed baseline #2: damage control wired in an unarmed battle with persisted shell-started fires (ticket 10)", () => {
-    // Unarmed in the torpedo sense, yet the damage-control stage is wired.
     const unarmedProjection = projectBattle({
       ...FIRE_BASELINE_INPUT,
       rulesetVersion: FIRE_BASELINE_INPUT.rulesetVersion,
@@ -143,14 +91,6 @@ describe("unarmed damage control (P-1 ticket 09)", () => {
     const result = resolveBattleAuto({ ...FIRE_BASELINE_INPUT, randomLedger: ledger });
     expect(result.torpedoSummary).toBeUndefined();
 
-    // ---- the ledger actually contains fire sources ------------------------
-    // Every shell hit that clears the §9 ignition preconditions draws on
-    // battle/ship/damage/fire_creation (immediateFireFlooding.ts). All four
-    // fixture ships are battleship-hull designs -> canonical type BB, whose
-    // §20 fire-risk multiplier is the 10_000 bp (100%) default, so EVERY
-    // recorded draw passes §9's `drawBp < fireRiskBp` test and produced a
-    // FireRecord with cause FIRE_SOURCE_CREATED. (The fixture's entityKeys
-    // are exactly the four battleship-hull ships.)
     const fireCreationDraws = ledger.all.filter((d) =>
       d.streamId.startsWith("battle/ship/damage/fire_creation:"),
     );
@@ -164,13 +104,10 @@ describe("unarmed damage control (P-1 ticket 09)", () => {
     );
     expect(fireSourcesCreated.length).toBe(fireCreationDraws.length);
 
-    // The ledger is observational: recording keyed draws must not perturb the
-    // authoritative hashes (otherwise this baseline would pin ledger-on hashes).
     const withoutLedger = resolveBattleAuto(FIRE_BASELINE_INPUT);
     expect(withoutLedger.resultHash).toBe(result.resultHash);
     expect(withoutLedger.minuteHashes).toEqual(result.minuteHashes);
 
-    // ---- pinned baseline (re-pinned for the ADR-0094 unit correction)
     expect(result.battleEndReason).toBe("withdrawal_complete");
     expect(result.elapsedMinutes).toBe(65);
     expect(result.resultHash).toBe(FIRE_BASELINE_RESULT_HASH);

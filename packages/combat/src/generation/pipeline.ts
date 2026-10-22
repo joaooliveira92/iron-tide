@@ -20,7 +20,6 @@ import {
   BATTLE_REACHABILITY_FAILED,
 } from "./reasonCodes.js";
 
-// DESIGN-37 §4 the 15 stages in exact order.
 export const GENERATION_STAGES = [
   "DETERMINE_MISSION_OPPORTUNITIES",
   "DETERMINE_PARTICIPATING_SIDES",
@@ -40,7 +39,6 @@ export const GENERATION_STAGES = [
 ] as const;
 export type GenerationStage = (typeof GENERATION_STAGES)[number];
 
-// DESIGN-37 §4 stage record.
 export interface BattleGenerationStageRecord {
   opportunityId: string;
   prospectiveBattleId: string;
@@ -59,7 +57,6 @@ export interface BattleGenerationStageRecord {
   formulaVersion: string;
 }
 
-// DESIGN-37 §43 monthly record.
 export interface BattleGenerationRecord {
   month: string;
   opportunities: BattleMissionOpportunity[];
@@ -139,12 +136,7 @@ function stageRecord(
   };
 }
 
-// Pure monthly generation entry point. Produces stage records for all 15 stages
-// per opportunity, builds manifests for accepted opportunities, derives seeds,
-// reserves assets, and emits a BattleGenerationRecord. Unreachable mission types
-// (ADR B-1-3) yield successful empty records.
 function roleScoreFor(a: EligibleAsset): number {
-  // DESIGN-37 §14 role-eligibility score: higher for mandatory-role-fit types.
   const core = new Set(["BB", "B", "BC", "CA", "CV", "CVL"]);
   return core.has(a.shipType) ? 10 : 1;
 }
@@ -175,7 +167,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
     const prospectiveBattleId = `battle_${opp.warId}_${opp.areaId}_${opp.missionType.toLowerCase()}_${inputs.campaignMonth}`;
     const stageRecords: BattleGenerationStageRecord[] = [];
 
-    // Stage 1 was determination; emit empty record.
     stageRecords.push(
       stageRecord(
         opp,
@@ -186,7 +177,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       ),
     );
 
-    // Stage 2: sides.
     let sides;
     try {
       sides = determineParticipatingSides(
@@ -212,7 +202,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       ),
     );
 
-    // Stage 3: create force requirements.
     const forcePolicy = createForceRequirements(opp.missionType);
     stageRecords.push(
       stageRecord(
@@ -227,7 +216,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       ),
     );
 
-    // Gather eligible assets for each side (deterministic ordering, no randomness).
     const shipsOfNation = (nationId: string) => {
       const nation = snapshot.nations.get(nationId);
       return nation ? nation.fleets.flatMap((f) => f.ships) : [];
@@ -265,7 +253,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       ),
     );
 
-    // ADR B-1-5/7: enforce strength floors per mission (AC-5).
     const attackerStrength = attackerEligible.reduce((s, e) => s + e.effectiveStrength, 0);
     const defenderStrength = defenderEligible.reduce((s, e) => s + e.effectiveStrength, 0);
     const minStrength =
@@ -297,7 +284,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       continue;
     }
 
-    // Stage 5: preserve permanent divisions (projection).
     const permanentDivisionIds: string[] = [];
     const tacticalDivisions: never[] = [];
     for (const [nationId, nation] of snapshot.nations) {
@@ -324,7 +310,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       ),
     );
 
-    // Stage 6: assign mandatory CORE role for each side.
     const mandatoryAssets: EligibleAsset[] = [];
     for (const side of ["ATTACKER", "DEFENDER"] as const) {
       const sideAssets = eligibleAssets.filter((a) => a.sideId === side);
@@ -371,7 +356,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       ),
     );
 
-    // Stage 7: optional asset selection via v1 weighted keyed stream.
     const reservedIds = new Set(mandatoryAssets.map((a) => a.assetId));
     const optionalCandidates = eligibleAssets.filter((a) => !reservedIds.has(a.assetId));
     let selectedOptional: string[] = [];
@@ -414,7 +398,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       ),
     );
 
-    // Stages 8-9: no allied support / no generated elements in B-1 reachable set.
     stageRecords.push(
       stageRecord(
         opp,
@@ -440,7 +423,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       ),
     );
 
-    // Stage 10: reachability/legality revalidation.
     try {
       revalidateReachabilityAndLegality([], {
         areaId: opp.areaId,
@@ -476,7 +458,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       continue;
     }
 
-    // Stage 11: repair (no invalid optional assets in B-1 path by construction).
     const repair = battleCompositionRepairV1([], []);
     stageRecords.push(
       stageRecord(
@@ -491,7 +472,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
         },
       ),
     );
-    // Stage 12: rejection (accepted here).
     stageRecords.push(
       stageRecord(
         opp,
@@ -510,7 +490,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       ...eligibleAssets.filter((a) => selectedOptional.includes(a.assetId)),
     ].map((a) => a.assetId);
 
-    // Stage 13: canonicalize manifest.
     const manifest = buildManifest({
       battleId: prospectiveBattleId,
       opportunityId: opp.opportunityId,
@@ -554,7 +533,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       ),
     );
 
-    // Stage 14: seed.
     const seedInputs = {
       rngVersion: inputs.rngVersion,
       campaignSeed: inputs.campaignSeed,
@@ -580,7 +558,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       ),
     );
 
-    // Stage 15: intelligence-limited presentation (thin full-knowledge in B-1).
     stageRecords.push(
       stageRecord(
         opp,
@@ -591,7 +568,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       ),
     );
 
-    // Auto-resolution proof + decision boundary (AC-11/AC-12).
     proveAutoResolvable(manifestWithSeed, shippedResolverCapabilities());
     const decision = resolveDecisionBoundary({
       acceptanceClass: manifestWithSeed.acceptanceClass,
@@ -603,7 +579,6 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       continue;
     }
 
-    // Reserve assets (empty persistent set in fixture).
     reserveAssets(manifestWithSeed.battleId, manifestWithSeed.persistentAssets, new Set());
 
     manifests.push(manifestWithSeed);

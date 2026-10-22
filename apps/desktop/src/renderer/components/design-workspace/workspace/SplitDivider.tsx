@@ -3,21 +3,14 @@ import { SPLIT_DEFAULT, SPLIT_MAX, SPLIT_MIN } from "./useSplitWidth.js";
 
 const STEP = 2;
 
-/**
- * The draggable bar between the ship view and the tab content (WAI-ARIA window splitter). Arrow keys move it,
- * Home/End jump to the limits, Enter restores the default; dragging sets the share from the pointer position
- * within `container`.
- */
 export function SplitDivider({
   value,
   onChange,
   controls,
   className,
 }: {
-  /** Ship-view share of the workspace, in percent. */
   readonly value: number;
   readonly onChange: (pct: number) => void;
-  /** Id of the pane whose size this divider sets. */
   readonly controls: string;
   readonly className?: string;
 }) {

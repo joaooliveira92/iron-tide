@@ -6,9 +6,6 @@ import { MonthExecutor } from "@bluewave/phase-engine";
 import { describe, expect, it } from "vite-plus/test";
 import { compileProductionCampaign } from "./economy-scenarios.helper.js";
 
-// Economy spec #138 slice 7: metamorphic gates over the shipped 1880 pack. Relabelling nations, permuting their order and
-// scaling the money inputs together must leave the economy's outcomes unchanged (or scaled), which proves the model has no
-// branch on a nation's name or position.
 const MONTHS = 12;
 const { state } = compileProductionCampaign();
 
@@ -17,7 +14,6 @@ interface MonthSummary {
   readonly ledger: Record<string, number[]>;
 }
 
-/** Deep-clone a value, rewriting every exact string equal to a key of `rename` (strings and Map keys alike). */
 function relabel<T>(value: T, rename: ReadonlyMap<string, string>): T {
   const walk = (v: unknown): unknown => {
     if (typeof v === "string") return rename.get(v) ?? v;

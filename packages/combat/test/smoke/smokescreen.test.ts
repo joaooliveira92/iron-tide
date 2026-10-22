@@ -21,8 +21,6 @@ import {
   SMOKE_FORMULA_VERSION,
 } from "../../src/smoke/constants.js";
 
-// Helper: build a default eligible DD params object
-
 function eligibleDDParams(
   overrides?: Partial<SmokescreenEligibilityParams>,
 ): SmokescreenEligibilityParams {
@@ -47,8 +45,6 @@ function eligibleCLParams(
 ): SmokescreenEligibilityParams {
   return eligibleDDParams({ shipClass: "CL", ...overrides });
 }
-
-// §12 isShipEligibleForSmokescreen
 
 describe("isShipEligibleForSmokescreen", () => {
   it("eligible DD at 10kt, no cooldown", () => {
@@ -136,10 +132,8 @@ describe("isShipEligibleForSmokescreen", () => {
   });
 
   it("eligible: OPERATIONAL and DEGRADED all other predicates pass", () => {
-    // Verify OPERATIONAL works with full default set (includes DD, ACTIVE, etc.)
     const op = isShipEligibleForSmokescreen(eligibleDDParams({ damageState: "OPERATIONAL" }));
     expect(op.eligible).toBe(true);
-    // Verify DEGRADED works
     const deg = isShipEligibleForSmokescreen(eligibleDDParams({ damageState: "DEGRADED" }));
     expect(deg.eligible).toBe(true);
   });
@@ -176,7 +170,6 @@ describe("isShipEligibleForSmokescreen", () => {
   });
 
   it("multiple predicates fail: returns first failing predicate", () => {
-    // Wrong class + no equipment + slow — should fail on first predicate (shipClass)
     const result = isShipEligibleForSmokescreen(
       eligibleDDParams({
         shipClass: "BB",
@@ -198,8 +191,6 @@ describe("isShipEligibleForSmokescreen", () => {
     expect(ir.reason).toBe(SMOKESCREEN_INELIGIBILITY_REASONS.readinessActive);
   });
 });
-
-// §13 computeSmokescreenSegment
 
 describe("computeSmokescreenSegment", () => {
   it("creates cloud with correct density 9_000", () => {
@@ -234,10 +225,6 @@ describe("computeSmokescreenSegment", () => {
     });
     expect(cloud.verticalExtentM).toBe(SMOKESCREEN_VERTICAL_EXTENT_M);
     expect(cloud.verticalExtentM).toBe(100);
-    // SmokeCloud does not directly carry width; it carries a driftVector, expansionRate
-    // and densityDecayRate. The reference width constant is used for the
-    // reference geometry (§13) — the cloud's density and vertical extent are
-    // the key stored fields.
     expect(cloud.sourceType).toBe("SMOKESCREEN");
   });
 
@@ -308,8 +295,6 @@ describe("computeSmokescreenSegment", () => {
   });
 });
 
-// §14 checkSmokescreenCooldown
-
 describe("checkSmokescreenCooldown", () => {
   it("available after 20 minutes", () => {
     const result = checkSmokescreenCooldown(100, 120);
@@ -324,7 +309,6 @@ describe("checkSmokescreenCooldown", () => {
   });
 
   it("exact boundary: minute 20 (available)", () => {
-    // lastGenerationMinute=100, currentMinute=120 => elapsed=20 => remaining=0 => available
     const result = checkSmokescreenCooldown(100, 120);
     expect(result.available).toBe(true);
     expect(result.remainingMinutes).toBe(0);
@@ -358,8 +342,6 @@ describe("checkSmokescreenCooldown", () => {
     expect(result.remainingMinutes).toBe(0);
   });
 });
-
-// §13 generateSmokescreenMinute
 
 describe("generateSmokescreenMinute", () => {
   function defaultGenParams(
@@ -423,7 +405,6 @@ describe("generateSmokescreenMinute", () => {
   });
 
   it("generation completes after SMOKESCREEN_GENERATION_DURATION_MINUTES minutes", () => {
-    // Start at minute 100, now at 100 + duration => elapsed >= duration
     const genDuration = SMOKESCREEN_GENERATION_DURATION_MINUTES;
     const result = generateSmokescreenMinute(
       defaultGenParams({ generationStartMinute: 100 }, {}, { currentMinute: 100 + genDuration }),
@@ -455,8 +436,6 @@ describe("generateSmokescreenMinute", () => {
   });
 });
 
-// SmokescreenState transitions
-
 describe("SmokescreenState", () => {
   it("createInitialSmokescreenState sets default values", () => {
     const state = createInitialSmokescreenState();
@@ -475,7 +454,6 @@ describe("SmokescreenState", () => {
   it("generating state transitions correctly: start -> generating -> cooldown", () => {
     const initial = createInitialSmokescreenState();
 
-    // Simulate starting generation
     const startResult = generateSmokescreenMinute({
       shipState: eligibleDDParams(),
       smokescreenState: { ...initial, generating: true, generationStartMinute: 100 },
@@ -489,13 +467,11 @@ describe("SmokescreenState", () => {
       densityDecayRate: 0,
       fuelComposition: "fuel",
     });
-    // Should produce a cloud and remain generating
     expect(startResult.cloud).not.toBeNull();
     expect(startResult.newState.generating).toBe(true);
     expect(startResult.newState.cooldownRemainingMinutes).toBe(0);
     expect(startResult.interrupted).toBe(false);
 
-    // After generation duration, should enter cooldown
     const elapsed = SMOKESCREEN_GENERATION_DURATION_MINUTES;
     const endResult = generateSmokescreenMinute({
       shipState: eligibleDDParams(),
@@ -515,7 +491,6 @@ describe("SmokescreenState", () => {
     expect(endResult.newState.cooldownRemainingMinutes).toBe(SMOKESCREEN_COOLDOWN_MINUTES);
     expect(endResult.interrupted).toBe(false);
 
-    // Cooldown check after 20 minutes
     const cooldownCheck = checkSmokescreenCooldown(
       100 + elapsed,
       100 + elapsed + SMOKESCREEN_COOLDOWN_MINUTES,
@@ -523,8 +498,6 @@ describe("SmokescreenState", () => {
     expect(cooldownCheck.available).toBe(true);
   });
 });
-
-// §16 smokescreenConcealmentBonusBp
 
 describe("smokescreenConcealmentBonusBp", () => {
   it("returns density bp for active cloud", () => {

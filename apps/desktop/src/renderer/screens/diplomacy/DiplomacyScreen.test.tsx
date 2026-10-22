@@ -6,18 +6,9 @@ import {
   diplomacyBeginAction,
   diplomacyBeginSubmit,
   diplomacyLoadSuccess,
-  initialDiplomacyScreenState,
   diplomacySubmitRejected,
 } from "./diplomacy-screen-state.js";
 import { DiplomacyScreen } from "./DiplomacyScreen.js";
-
-/**
- * Render test for the Diplomacy & War screen (desktop-diplomacy-war INC-3,
- * spec Testing → renderer screen test). The hook is mocked so the test
- * asserts PURE rendering: the real projection data is shown (relations rows,
- * war list with scores, blockades), honest empty states, and engine-code
- * rejection notices — never fabricated success copy.
- */
 
 const fixtureProjection = {
   playerNationId: "uk",
@@ -78,7 +69,7 @@ const fixtureProjection = {
 
 function makeLoaded(overrides = {}): DiplomacyScreenState {
   const projection = { ...fixtureProjection, ...overrides };
-  return diplomacyLoadSuccess(initialDiplomacyScreenState(), projection as never);
+  return diplomacyLoadSuccess(projection as never);
 }
 
 const hookMocks = vi.hoisted(() => {
@@ -102,9 +93,6 @@ const hookMocks = vi.hoisted(() => {
   };
 });
 
-// `GlassCard`/`Select` measure their elements with ResizeObserver — jsdom
-// doesn't ship it; a no-op shim is enough for a pure render test (mirrors the
-// research screen test).
 const ResizeObserverMock = vi.hoisted(
   () =>
     class implements ResizeObserver {
@@ -115,7 +103,6 @@ const ResizeObserverMock = vi.hoisted(
 );
 vi.stubGlobal("ResizeObserver", ResizeObserverMock);
 
-// The vitest config turns the debug flag on globally; flip it per test.
 const debugFlag = vi.hoisted(() => ({ on: false }));
 vi.mock("../../shell/debug-flag.js", () => ({
   get DEBUG_MODE() {
@@ -133,6 +120,7 @@ vi.mock("./hooks/useBattleHistory.js", () => ({
 vi.mock("./hooks/useDiplomacyScreen.js", () => ({
   useDiplomacyScreen: (_sessionId: string) => ({
     state: hookMocks.stateFn(),
+    loadError: null,
     setRowAction: hookMocks.setRowAction,
     setPeaceAction: hookMocks.setPeaceAction,
     setBlockadeArea: hookMocks.setBlockadeArea,
@@ -153,22 +141,17 @@ describe("DiplomacyScreen", () => {
   it("renders the real projection: relations rows, war list with scores, blockades", () => {
     render(<DiplomacyScreen sessionId="ses-1" />);
 
-    // Relations rows with honest labels + tension + NAP badge.
     expect(screen.getByText("At war")).not.toBeNull();
     expect(screen.getByText("tension 9/10")).not.toBeNull();
     expect(screen.getByText("NAP")).not.toBeNull();
-    // The relations row (the war score bar also names France, so scope to the row).
     expect(screen.getByText("France", { selector: "span.text-sm.font-medium" })).not.toBeNull();
     expect(screen.getByText("Germany")).not.toBeNull();
 
-    // War list with sides, scores, status + the ACTIVE Accept-peace control.
-    // The raw war id is engine detail: not shown in a release build (ADR-0058).
     expect(screen.queryByText("war_uk_france_1880-01")).toBeNull();
     expect(screen.getByText("score 3:1")).not.toBeNull();
     expect(screen.getByText("you: attacker")).not.toBeNull();
     expect(screen.getByRole("button", { name: "Accept peace" })).toBeTruthy();
 
-    // Blockade row with blockader → blockaded in an area (player = "your nation").
     expect(screen.getByText("your nation → France")).not.toBeNull();
   });
 
@@ -185,7 +168,6 @@ describe("DiplomacyScreen", () => {
   it("shows the war score as a player-vs-enemy bar derived from the engine's scores", () => {
     render(<DiplomacyScreen sessionId="ses-1" />);
     const bar = screen.getByRole("img", { name: /War score:/ });
-    // The player (UK) is the attacker with 3; France defends with 1.
     expect(bar.getAttribute("aria-label")).toBe("War score: your nation 3, France 1");
   });
 
@@ -201,7 +183,6 @@ describe("DiplomacyScreen", () => {
     ]) {
       expect(panel.textContent).toContain(name);
     }
-    // No fabricated figure sits next to any deferred item.
     expect(panel.textContent).not.toMatch(/\d+\s*(of|\/)\s*\d+/);
   });
 
@@ -269,7 +250,6 @@ describe("DiplomacyScreen", () => {
   it("labels a drafted war declaration as such and warns it cannot be cancelled", () => {
     hookMocks.stateFn.mockReturnValue(diplomacyBeginAction(makeLoaded(), "france", "DeclareWar"));
     render(<DiplomacyScreen sessionId="ses-1" />);
-    // Relation rows also carry "Declare war" buttons — scope to the pinned queue bar.
     const bar = within(screen.getByText("Command queue").closest("div.sticky") as HTMLElement);
     expect(bar.getByRole("button", { name: "Declare war" })).not.toBeNull();
     expect(bar.getByRole("alert").textContent).toMatch(/cannot be cancelled/);
@@ -293,11 +273,8 @@ describe("DiplomacyScreen", () => {
 
   it("shows a relation once (no duplicate badge) and hides engine metadata outside debug builds", () => {
     render(<DiplomacyScreen sessionId="ses-1" />);
-    // Germany is "neutral" at tension 5: the tension band is also "neutral", which
-    // used to render a second, lowercase badge next to "Neutral".
     expect(screen.getAllByText("Neutral")).toHaveLength(1);
     expect(screen.queryByText("neutral")).toBeNull();
-    // Revision and month code are debug-only.
     expect(screen.queryByText(/^REV /)).toBeNull();
   });
 

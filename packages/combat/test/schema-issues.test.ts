@@ -1,8 +1,3 @@
-// Characterization of `formatContractIssues`: the shared projector that maps an
-// Effect v4 `SchemaError` issue tree onto the `{ path, message }` entries the
-// combat contract validators put into their BluewaveError context. It must keep
-// the application contract (stable shape, `.`-joined nested/array paths) rather
-// than leak Effect formatter internals.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
 import { Result, Schema } from "effect";

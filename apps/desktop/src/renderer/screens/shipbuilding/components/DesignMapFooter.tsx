@@ -6,29 +6,18 @@ import { cn } from "../../../lib/utils.js";
 import type { DesignStatus } from "./CommandBar.js";
 
 export interface DesignMapFooterProps {
-  /** The technology date: fixed to the campaign month in a campaign, chosen outside one. */
   readonly month: string;
   readonly months: readonly string[] | null;
   readonly onMonth: (month: string) => void;
   readonly status: DesignStatus;
-  /** What fixes the status (e.g. focus the class name): when given, the status becomes a button that runs it. */
   readonly onStatusAction?: () => void;
-  /** The class-name helpers above the status; omitted, the buttons are not shown. */
   readonly names?: {
-    /** Puts the next suggested name for this nation and ship type in the class name field. */
     readonly onSuggest: () => void;
-    /** Opens the list of the nation's names to choose from. */
     readonly onBrowse: () => void;
-    /** False when the nation has no names for this ship type: Suggest is then disabled. */
     readonly canSuggest: boolean;
   };
 }
 
-/**
- * The foot of the left rail: the design's technology date and whether it can be submitted. Both describe the whole
- * design, so they sit with the design map rather than in the command bar. Below extra-large widths the rail is icon
- * width, so the date shrinks to its text and the status to a dot, each keeping its full spoken name.
- */
 export function DesignMapFooter({
   month,
   months,
@@ -104,7 +93,6 @@ export function DesignMapFooter({
       {onStatusAction === undefined ? (
         badge
       ) : (
-        // A live region inside a button is dropped from the button's name, so the name is explicit.
         <div role="status">
           <button
             type="button"

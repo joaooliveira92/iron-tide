@@ -1,6 +1,3 @@
-// The session-scoped pending command queue as a service (INC-3b; ADR-0159).
-// Owns `pendingCommands.ts` (the in-memory queue + its `pending-commands.json`
-// sidecar mirror) so command programs queue envelopes through the Layer.
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { Context, Effect, Layer } from "effect";

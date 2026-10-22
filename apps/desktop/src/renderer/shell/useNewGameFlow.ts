@@ -54,15 +54,6 @@ export interface NewGameFlow {
   };
 }
 
-/**
- * Owns the new-campaign workflow independently from the application shell UI.
- * The hook coordinates draft state and navigation; compilation lives in
- * `new-game-compile` and the draft model in `new-game-draft`. Navigation and
- * the desktop bridge remain dependency-injected at the boundary. Step order:
- * nation -> preferences (Rules of the Naval Age) -> archetype -> identity ->
- * fleet method -> launch. Nation is confirmed first, before any preference
- * exists, so it carries no scenario/options dependency of its own.
- */
 export function useNewGameFlow(
   bridge: NewGameBridge | undefined,
   navigation: NewGameNavigation,
@@ -91,12 +82,6 @@ export function useNewGameFlow(
     [navigation],
   );
 
-  /**
-   * Nation confirmation's "Recommended Setup" control (spec §1) — pre-fills
-   * the Admiral preset + default fleet method directly into the draft,
-   * without navigating away, so downstream screens (not yet built) can start
-   * from these values while staying fully editable.
-   */
   const applyRecommendedSetup = useCallback((nationId: string) => {
     setDraft((current) => ({
       ...draftWithNation(current, nationId),
@@ -157,16 +142,6 @@ export function useNewGameFlow(
     navigation.selectScreen("new-game-fleet-method");
   }, [navigation]);
 
-  /**
-   * Navigates to the "Establishing the Naval Order" presentation (spec §7)
-   * before starting the real, untouched `compileCampaign` call — the
-   * presentation screen paces its own cosmetic checklist independently, but
-   * on success we still wait out `COSMETIC_MINIMUM_DURATION_MS` here so a
-   * fast resolution doesn't cut the sequence short. `SAVE_LOCATION_CANCELLED`
-   * returns silently to the review screen with no minimum wait; other failures
-   * surface immediately as `error` for the presentation screen's dedicated
-   * error state to show.
-   */
   const launch = useCallback(async () => {
     if (bridge === undefined || !isLaunchableDraft(draft)) return;
     navigation.selectScreen("new-game-launching");
@@ -196,12 +171,6 @@ export function useNewGameFlow(
     navigation.selectScreen("new-game-review");
   }, [navigation]);
 
-  /**
-   * The Opening Strategic Briefing's closing "Take command" action (spec §8):
-   * transitions into the existing, unchanged Overview dashboard for the
-   * compiled session. Runs only once the world-gen presentation has handed off
-   * a real session id; clears it on success so the flow can start fresh.
-   */
   const takeCommand = useCallback(async () => {
     if (briefingSessionId === null) return;
     const sessionId = briefingSessionId;

@@ -21,23 +21,12 @@ import type { OfferChoice } from "./interruptions/OfferDialog.js";
 import { offerText } from "./interruptions/offer-text.js";
 import { formatCampaignMonth } from "./site-header-state.js";
 
-/**
- * The one module that answers a turn interruption. Four callbacks used to repeat
- * the same five steps — guard the request kind, mark the commit started, mint a
- * transport id, send, fold the reply — so every interruption kind added ~40 lines
- * and a branch. Here the answer is a typed value, the envelope, transport
- * identity, outcome fold, status line and failure signal live once, and the next
- * kind is a data entry rather than another callback.
- */
-
-/** A typed answer to the outstanding interruption. */
 export type InterruptionAnswer =
   | { readonly kind: "decision"; readonly optionId: string }
   | { readonly kind: "battle-delegated"; readonly choice: BattleChoice }
   | { readonly kind: "battle-outcome"; readonly outcome: PlayerBattleResultDto }
   | { readonly kind: "offer"; readonly choice: OfferChoice };
 
-/** Why an answer was not sent. A tagged value, never prose to be sniffed. */
 export type InterruptionAnswerFailure =
   | { readonly _tag: "NoCampaign" }
   | { readonly _tag: "NoOutstandingRequest" }
@@ -47,13 +36,11 @@ export type InterruptionAnswerFailure =
       readonly answerKind: InterruptionAnswer["kind"];
     };
 
-/** An assembled answer: the command to send and the fully-formed payload it carries. */
 export type InterruptionCommand =
   | { readonly command: "answerDecision"; readonly payload: AnswerDecisionPayload }
   | { readonly command: "submitBattleResult"; readonly payload: SubmitBattleResultPayload }
   | { readonly command: "submitOfferResponse"; readonly payload: SubmitOfferResponsePayload };
 
-/** The shell-visible effect of a `resolveTurn` reply, before it is dispatched. */
 export type ResolveOutcome =
   | {
       readonly _tag: "Completed";
@@ -64,7 +51,6 @@ export type ResolveOutcome =
   | { readonly _tag: "Unavailable" }
   | { readonly _tag: "Failed"; readonly failure: MonthCommitFailure };
 
-/** What answering an interruption produced: a sent command's outcome, or a refusal to send. */
 export type InterruptionAnswerOutcome =
   | { readonly _tag: "Sent"; readonly outcome: ResolveOutcome }
   | { readonly _tag: "NotSent"; readonly reason: InterruptionAnswerFailure };
@@ -80,11 +66,6 @@ function mismatch(
   };
 }
 
-/**
- * Assemble the command for a typed answer: pick the request kind it answers,
- * stamp the campaign's session/revision, and mint the transport identity once
- * through the shared generator. Pure over its inputs, so it tests as data.
- */
 export function planInterruptionAnswer(
   campaign: CampaignOverview,
   request: InterruptionRequestDto,
@@ -135,7 +116,6 @@ export function planInterruptionAnswer(
   };
 }
 
-/** Send a planned answer through the campaign client. */
 export function sendInterruptionAnswer(
   client: CampaignCommandClient,
   command: InterruptionCommand,
@@ -159,13 +139,6 @@ function failed(
   };
 }
 
-/**
- * Fold a `resolveTurn` reply into the shell-visible outcome: a completed turn
- * updates the header, a suspended turn opens the blocking interruption, an
- * untrustworthy pending turn opens the recovery prompt, a failure becomes a
- * typed value. Never mutates authoritative state — the command boundary already
- * validated and persisted it.
- */
 export function foldResolveTurn(
   result: BridgeResult<ResolveTurnResult>,
   previous: CampaignOverview | null,
@@ -195,11 +168,6 @@ export function foldResolveTurn(
   }
 }
 
-/**
- * The status line the player sees for a successful answer, derived from the
- * chosen option/outcome. Presentation only: it describes effects the engine
- * already applied, resolved through the UI catalogue (ADR-0209).
- */
 function describeAnswer(
   request: InterruptionRequestDto,
   answer: InterruptionAnswer,
@@ -230,9 +198,6 @@ function describeAnswer(
         : `Battle ${request.battleId ?? ""} resolved: ${answer.outcome.winnerId} won.`;
     case "offer": {
       const areaId = request.areaId ?? "";
-      // A decline reports its victory-point cost when the month completed and the
-      // turn summary carries it (the authoritative BattleDeclined event projected
-      // as a message); otherwise it is reported without the figure.
       const declined =
         answer.choice === "decline" && value.status === "completed"
           ? value.summary.messages.find(
@@ -252,11 +217,6 @@ function describeAnswer(
   }
 }
 
-/**
- * Fold an answer's transport result. A rejected or errored answer surfaces the
- * tagged failure and suppresses the answer's own status line, so a failure is
- * never overwritten by a cheerful "done" message.
- */
 export function foldInterruptionAnswer(
   result: BridgeResult<ResolveTurnResult>,
   request: InterruptionRequestDto,

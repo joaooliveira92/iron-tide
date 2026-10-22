@@ -12,13 +12,11 @@ export interface ScreenLoadStateProps {
 }
 
 export interface ScreenLoadErrorStateProps extends ScreenLoadStateProps {
-  /** The Alert heading, e.g. `"Research screen failed to load"`. */
   readonly errorTitle: string;
   readonly message: string;
   readonly onRetry: () => void;
 }
 
-/** The loading skeleton body inside the screen's frame. */
 export function ScreenLoadingState({
   guidedTarget,
   icon,
@@ -36,7 +34,6 @@ export function ScreenLoadingState({
   );
 }
 
-/** The load-failure alert (message verbatim + retry) inside the screen's frame. */
 export function ScreenLoadErrorState({
   guidedTarget,
   icon,

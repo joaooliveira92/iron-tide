@@ -6,14 +6,6 @@ export interface SlideVisibility {
   entered: boolean;
 }
 
-/**
- * Drives a slide panel's mount/enter/exit lifecycle from `isOpen`: `mounted`
- * keeps the panel in the tree through its exit transition, `entered` flips on
- * two frames after mounting so the CSS transition has a start state to leave.
- *
- * `animateOnMount` makes a panel that is open from its first render ease in
- * rather than appear fully entered.
- */
 export function useSlideVisibility(isOpen: boolean, animateOnMount = false): SlideVisibility {
   const [mounted, setMounted] = useState(isOpen);
   const [entered, setEntered] = useState(isOpen && !animateOnMount);

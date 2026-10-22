@@ -1,13 +1,3 @@
-/**
- * Canvas coastline layer (ADR-0055). Sits behind the transparent SVG that
- * carries the interactive overlays. It follows the camera by subscribing to
- * its transform instead of living in React state, picks a simplified tier by
- * zoom, and culls whole landmasses by bounding box. The detail tiers are built
- * in the background in short time slices (coarsest first), and the best tier
- * that is ready is drawn meanwhile, so crossing a zoom threshold never stalls
- * a frame.
- */
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   COASTLINE_TIER_TOLERANCES,
@@ -35,16 +25,13 @@ export interface CoastlineCanvasProps {
   readonly centre: number;
   readonly fill: string;
   readonly stroke: string;
-  /** Political borders drawn over the land only (clipped to the coastline). */
   readonly borders?: readonly BorderSet[];
 }
 
 export interface BorderSet {
   readonly id: string;
   readonly polygons: readonly FlatPolygon[];
-  /** Translucent wash over the territory. */
   readonly tint: string;
-  /** The border line. */
   readonly edge: string;
 }
 
@@ -54,11 +41,6 @@ interface BuiltBorders {
   readonly edge: string;
 }
 
-/**
- * The borders are clipped to the coastline (bake-borders.ts), so they carry its full detail and
- * are simplified per zoom tier exactly as the land is — each tier is built the first time the
- * camera needs it and kept.
- */
 function bordersByTier(
   sets: readonly BorderSet[],
   projection: Projection,
@@ -81,7 +63,6 @@ function buildBorders(
   projection: Projection,
   centre: number,
 ): BuiltBorders[] {
-  // Same support check as the coastline itself (jsdom has no Path2D).
   if (sets.length === 0 || typeof Path2D === "undefined") return [];
   if (typeof new Path2D().moveTo !== "function") return [];
   return sets.map((set) => {
@@ -102,9 +83,7 @@ function buildBorders(
 }
 
 const TIERS: readonly CoastlineTier[] = [0, 1, 2];
-/** Source polygons simplified per step. */
 const BATCH = 8;
-/** Points projected between yields, so one continent cannot stall a frame. */
 const POINTS_PER_STEP = 4000;
 const SLICE_BUDGET_MS = 6;
 
@@ -160,8 +139,6 @@ export function CoastlineCanvas({
 }: CoastlineCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const builtRef = useRef(new Map<number, BuiltPolygon[]>());
-  // Borders live outside the main effect so toggling or recolouring them never
-  // throws away the (expensive) built coastline tiers; they just ask for a redraw.
   const bordersRef = useRef<(tier: CoastlineTier) => BuiltBorders[]>(() => []);
   const redrawRef = useRef<() => void>(() => undefined);
   const builtBorders = useMemo(
@@ -172,8 +149,6 @@ export function CoastlineCanvas({
     bordersRef.current = builtBorders;
     redrawRef.current();
   }, [builtBorders]);
-  // `camera` is a fresh object every render; the effect must not restart (and
-  // throw away the built tiers) each time the zoom band re-renders the chart.
   const cameraRef = useRef(camera);
   useEffect(() => {
     cameraRef.current = camera;
@@ -208,7 +183,6 @@ export function CoastlineCanvas({
       }
       const transform = camera.getTransform();
       const wantedTier = coastlineTierFor(transform.scale);
-      // Best tier that is ready, at or below the wanted detail.
       let built: BuiltPolygon[] | undefined;
       for (let tier: number = wantedTier; tier >= 0 && built === undefined; tier--) {
         built = builtRef.current.get(tier);
@@ -222,7 +196,6 @@ export function CoastlineCanvas({
       const f = ctm.d * transform.y + ctm.f - rect.top;
       context.fillStyle = fill;
       context.strokeStyle = stroke;
-      // Hairline stays ~1 screen pixel at every zoom.
       context.lineWidth = dpr / Math.min(a, d);
       context.lineJoin = "round";
 
@@ -240,9 +213,6 @@ export function CoastlineCanvas({
           context.fill(polygon.path, "evenodd");
           context.stroke(polygon.path);
         }
-        // Borders go on after the land, and only where land already is: the
-        // baked borders follow the coastline, and clipping them to the drawn land
-        // keeps any simplification slack from spilling into the sea.
         const builtBordersNow = bordersRef.current(wantedTier);
         if (builtBordersNow.length > 0) {
           context.globalCompositeOperation = "source-atop";
@@ -272,8 +242,6 @@ export function CoastlineCanvas({
 
     let building: TimeSliceHandle | null = null;
     let warming: ReturnType<typeof setTimeout> | undefined;
-    // Once the land is built, make the border tiers too — one per task, coarsest first — so
-    // crossing a zoom threshold never pays for simplifying a nation's coast on the spot.
     const warmBorders = (index: number) => {
       const tier = TIERS[index];
       if (tier === undefined) return;

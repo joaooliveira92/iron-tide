@@ -1,4 +1,3 @@
-// DESIGN-43 §§15-16 auto-equip eligibility + deterministic selection.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { AIRCRAFT_BASIS_POINTS_PER_UNIT, type AircraftType } from "./constants.js";
 import { SQUADRON_AUTO_EQUIP_UNAVAILABLE } from "./reasonCodes.js";

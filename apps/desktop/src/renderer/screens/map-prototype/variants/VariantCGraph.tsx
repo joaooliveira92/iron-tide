@@ -1,27 +1,3 @@
-/**
- * PROTOTYPE — throwaway. See ../README.md.
- *
- * Variant C — "Operational graph".
- *
- * Premise: the data model is a graph, so draw the graph. Areas are nodes, not
- * polygons. Coastlines survive only as a faint orientation wash. Ownership is
- * a node *ring* rather than a fill, because a fill on a node says nothing
- * about the water in between. Edges are the loudest thing on screen.
- *
- * The two things this variant exists to settle:
- *
- * - Node positions come from a **computed area centroid**, not the fixture's
- *   hand-placed label anchor. Flip between this and variant A to see whether
- *   the schema needs an authored label at all.
- * - It has no area polygons, so it is the cheapest possible authoring
- *   contract: an area needs one point, not a ring. If this reads well enough
- *   to play, ticket 01's asset layer gets dramatically smaller.
- *
- * Layout is a split, not an overlay: a permanent left rail listing every area,
- * cross-highlighted with the map. Ticket 09 will need a list like this anyway
- * as the keyboard-traversal surface, so it is here to be judged now.
- */
-
 import { useMemo, useState } from "react";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Input } from "../../../components/ui/input.js";
@@ -68,8 +44,6 @@ export function VariantCGraph({
   const coastline = useMemo(
     () =>
       (coastlineState.status === "ready" ? coastlineState.polygons : []).map((rings) => ({
-        // Stable id from the raw geometry (independent of projection/centre), so a
-        // pan or zoom reconciles the same path instead of remounting it.
         id: rings.map((flat) => `${flat.length}:${flat[0] ?? ""}:${flat[1] ?? ""}`).join("|"),
         d: rings
           .map((flat) => {
@@ -127,7 +101,6 @@ export function VariantCGraph({
 
   return (
     <div className="flex h-[calc(100svh-9rem)] gap-4">
-      {/* The rail. Permanent, not a drawer — a graph needs an index. */}
       <div className="flex w-80 shrink-0 flex-col gap-3 overflow-hidden rounded-lg border bg-card p-3">
         <Input
           value={filter}
@@ -195,12 +168,10 @@ export function VariantCGraph({
           <g ref={camera.worldRef}>
             {WORLD_WRAP_TURNS.map((turn) => (
               <g key={turn} transform={`translate(${turn * projection.width} 0)`}>
-                {/* Geography demoted to a wash. It orients; it does not inform. */}
                 {coastline.map(({ id, d }) => (
                   <path key={id} d={d} fill="var(--muted)" fillRule="evenodd" />
                 ))}
 
-                {/* Edges are the primary object here. */}
                 {EDGES.map((edge) => {
                   const from = nodes.get(edge.a);
                   const to = nodes.get(edge.b);
@@ -212,8 +183,6 @@ export function VariantCGraph({
                   const incident =
                     state.selected !== null &&
                     (edge.a === state.selected || edge.b === state.selected);
-                  // Long spans are the Pacific wrapping. Drawn dimmed rather than
-                  // hidden, so the seam is visible instead of quietly missing.
                   const wraps = Math.abs(from[0] - to[0]) > projection.width * 0.55;
                   return (
                     <g key={key}>
@@ -266,7 +235,6 @@ export function VariantCGraph({
                   );
                 })}
 
-                {/* Nodes. Radius carries presence; the ring carries ownership. */}
                 {AREAS.map((area) => {
                   const node = nodes.get(area.id);
                   if (node === undefined) return null;

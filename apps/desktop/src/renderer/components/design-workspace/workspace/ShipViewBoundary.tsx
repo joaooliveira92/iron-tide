@@ -3,7 +3,6 @@ import { Alert } from "../../ui/alert.js";
 import { Button } from "../../ui/button.js";
 
 interface ShipViewBoundaryProps {
-  /** Changes whenever the design changes, so a fixed design redraws without a manual retry. */
   readonly resetKey: unknown;
   readonly children: ReactNode;
 }
@@ -13,10 +12,6 @@ interface ShipViewBoundaryState {
   readonly failed: boolean;
 }
 
-/**
- * Contains a failure in the ship drawing to the ship view: the tabs, the draft and its history stay usable, and
- * the drawing is retried on the next design change or on request.
- */
 export class ShipViewBoundary extends Component<ShipViewBoundaryProps, ShipViewBoundaryState> {
   override state: ShipViewBoundaryState = { failedKey: undefined, failed: false };
 

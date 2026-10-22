@@ -5,27 +5,16 @@ import * as React from "react";
 import { cn } from "../../lib/utils.js";
 import { Button } from "./button.js";
 
-/**
- * Toasts (ReUI/sonner-style, https://reui.io/components/sonner), built on the
- * Base UI Toast primitive the rest of the UI already uses rather than adding the
- * Sonner dependency. Toasts appear bottom-right, announce through a live region,
- * and carry optional action buttons.
- */
 export interface ToastAction {
   readonly label: React.ReactNode;
   readonly onClick: () => void;
 }
 
 export interface ToastOptions {
-  /** Re-adding an existing id updates the toast in place instead of stacking a new one. */
   readonly id?: string;
-  /** The primary action (e.g. "Start over"). */
   readonly action?: ToastAction;
-  /** The secondary action (e.g. "Keep working"). */
   readonly cancel?: ToastAction;
-  /** Milliseconds before auto-dismiss; `0` keeps the toast until it is acted on. */
   readonly duration?: number;
-  /** Called whenever the toast is closed, however it was dismissed. */
   readonly onClose?: () => void;
 }
 
@@ -36,7 +25,6 @@ interface ToastData {
 
 const toastManager = Toast.createToastManager<ToastData>();
 
-/** Queues a toast; returns its id so the caller can dismiss it. */
 export const toast = (description: React.ReactNode, options: ToastOptions = {}): string =>
   toastManager.add({
     id: options.id,
@@ -49,7 +37,6 @@ export const toast = (description: React.ReactNode, options: ToastOptions = {}):
     },
   });
 
-/** Closes one toast, or every open toast when no id is given. */
 export const dismissToast = (id?: string): void => {
   toastManager.close(id);
 };
@@ -110,7 +97,6 @@ function ToastList() {
   return toasts.map((item) => <ToastItem key={item.id} toast={item} />);
 }
 
-/** Renders the toast viewport. Mount once, near the app root. */
 export function Toaster() {
   return (
     <Toast.Provider limit={3} timeout={0} toastManager={toastManager}>

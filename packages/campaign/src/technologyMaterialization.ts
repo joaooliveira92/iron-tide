@@ -1,7 +1,3 @@
-// DESIGN-03 §6 technology-variation materialization: turn canonical technology
-// definitions plus a validated variation profile into a deterministic
-// CampaignTechnologyManifest. The profile/manifest contracts and their
-// validation live in ./technologyVariation.js; this module owns the algorithm.
 import { sha256Hex } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
@@ -45,7 +41,6 @@ interface TechnologyVariationContext {
   rulesetHash: string;
 }
 
-// Deep-clone the caller's definitions so materialization never mutates input.
 function cloneTechnologyDefinitions(techs: TechnologyDefinition[]): TechnologyDefinition[] {
   return techs.map((t) => ({
     ...t,
@@ -62,7 +57,6 @@ function cloneTechnologyDefinitions(techs: TechnologyDefinition[]): TechnologyDe
   }));
 }
 
-// Apply ineligible defaults for incomplete metadata and reject invalid delays.
 function normalizeAndValidateTechnologyMetadata(
   technologies: TechnologyDefinition[],
   c: DiagnosticCollector,
@@ -115,7 +109,6 @@ function normalizeAndValidateTechnologyMetadata(
   return true;
 }
 
-// Deterministic Kahn topological order; undefined on a prerequisite cycle.
 function topologicalTechnologyOrder(
   technologies: TechnologyDefinition[],
   c: DiagnosticCollector,
@@ -169,7 +162,6 @@ function topologicalTechnologyOrder(
   return order;
 }
 
-// §6.6: derive one technology's date shift and effectiveness multiplier.
 function deriveTechnologyVariation(
   t: TechnologyDefinition,
   profile: TechnologyVariationProfile,
@@ -234,7 +226,6 @@ function deriveTechnologyVariation(
   return { shift, mult };
 }
 
-// One technology's varied availability/effectiveness decision + manifest entry.
 function materializeTechnologyEntry(
   t: TechnologyDefinition,
   context: TechnologyVariationContext,
@@ -257,9 +248,6 @@ function materializeTechnologyEntry(
       t.effectivenessVariationEligible &&
       t.variationEligible
     ) {
-      // §6.6: variedEffectValue = roundTowardZero(canonicalEffectValue * multiplierBp / 10_000).
-      // BigInt division truncates toward zero, matching round-toward-zero for signed values
-      // and floor for unsigned values.
       varied[k] = Number((BigInt(v) * BigInt(mult)) / BigInt(10000));
     } else varied[k] = v;
   }
@@ -299,8 +287,6 @@ function materializeTechnologyEntry(
   return { entry, finalAvailabilityMonth: clamped };
 }
 
-// §6 prerequisite propagation: a successor may not become available before its
-// predecessor plus the declared delay.
 function propagatePrerequisiteAvailability(
   order: string[],
   byId: Map<string, TechnologyDefinition>,

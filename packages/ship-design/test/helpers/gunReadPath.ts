@@ -19,8 +19,6 @@ import {
   readReferenceDesignEntries,
 } from "./earlyContext.js";
 
-/** The fixture shared by the ship-part-model read-path suites (tickets 03–04). */
-
 const GUN = new Set(["MAIN_GUN", "SECONDARY_GUN", "DUAL_PURPOSE_GUN", "AA_WEAPON"]);
 
 export interface Design {
@@ -61,7 +59,6 @@ export const compatibility = buildCompatibilitySlots({ hullForms: hullRecords })
 
 export const where = (row: GunPlacement): string => `${row.design.id}:${row.placement.instanceId}`;
 
-/** A value the test requires, or a failure naming what was missing. */
 export function present<T>(value: T | null | undefined, what: string): T {
   if (value === null || value === undefined) throw new Error(`expected ${what}`);
   return value;

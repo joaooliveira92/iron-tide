@@ -41,7 +41,6 @@ describe("revision preview", () => {
       stationPermille: 100,
     } as never;
     expect(changeKinds([hull], start, start, cat)).toEqual(["STRUCTURE"]);
-    // A brief edit is not a build change: it alone never produces a revision.
     const brief = { kind: "set_requirement", patch: { category: "CL" } } as const;
     expect(changeKinds([brief], start, start, cat)).toEqual([]);
     expect(changeKinds([brief, hull], start, start, cat)).toEqual(["STRUCTURE"]);
@@ -121,7 +120,6 @@ describe("progress read from work packages (ADR-0077)", () => {
   });
 
   it("a launched ship previews as reconstruction, where the single figure would call it a small free change", () => {
-    // A hull that is a small share of the work: launched, yet only 2.4% of the project's total work is done.
     const packages = [
       pkg("hull", "HULL", "slipway", 10, 10),
       pkg("launch", "LAUNCH", "slipway", 2, 2, ["hull"]),

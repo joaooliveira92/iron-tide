@@ -3,11 +3,6 @@ import { compileDesign, type DesignDraft } from "../src/index.js";
 import { earlyContext, readReferenceDesignEntries } from "./helpers/earlyContext.js";
 import { renderExplanation } from "./helpers/explanation.js";
 
-/**
- * The historical reference designs (starting points in the Drawing Board). Every design must be a valid,
- * buildable ship at its own month, using only technology that exists then — this is what makes it a legal
- * starting point for the campaign. Source: docs/research/ship-building-1880-ships-by-nation.md.
- */
 const designs = readReferenceDesignEntries() as {
   id: string;
   name: string;

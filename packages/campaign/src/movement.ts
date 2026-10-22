@@ -1,10 +1,5 @@
 import { isShipOperational, type CampaignSnapshot } from "./state.js";
 
-/**
- * Fleet movement rule (ADR-0062): a fleet sails one route hop per month, to an area
- * directly connected to where it is (routes are two-way), never onto land.
- * Pure, so the command validator and the month's apply step share one verdict.
- */
 export interface FleetMoveProblem {
   readonly code:
     | "INVALID_NATION_ID"
@@ -27,7 +22,6 @@ export function fleetMoveProblem(
   const fleet = nation.fleets.find((f) => f.id === fleetId);
   if (!fleet)
     return { code: "INVALID_COMMAND_PAYLOAD", message: `Fleet ${fleetId} is not ${nationId}'s` };
-  // S-5 (spec #73 R9): the month routes a foreign-station ship itself; a manual order is refused until the assignment is cleared.
   const stationed = fleet.ships.find((s) => s.stationAssignment !== undefined);
   if (stationed !== undefined)
     return {
@@ -39,7 +33,6 @@ export function fleetMoveProblem(
       code: "SHIP_NOT_OPERATIONAL",
       message: `Fleet ${fleet.name} has no commissioned ship`,
     };
-  // A ship under rebuild or conversion cannot move (DESIGN-23 section 20): the fleet cannot sail with it aboard.
   const unavailable = fleet.ships.find((s) => s.availability === "UNAVAILABLE");
   if (unavailable !== undefined)
     return {

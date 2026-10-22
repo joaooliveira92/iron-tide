@@ -30,7 +30,6 @@ describe("buildAreaOverview", () => {
       divisions: ["Home Fleet"],
       neighbours: ["Malta"],
     });
-    // Borders are symmetric even though the edge is stored one way.
     expect(rows[2]?.neighbours).toEqual(["English Home Waters"]);
   });
 

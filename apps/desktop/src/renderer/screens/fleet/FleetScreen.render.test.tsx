@@ -23,7 +23,6 @@ vi.mock("./hooks/useFleetScreen.js", () => ({
     cancel: () => undefined,
   }),
 }));
-// The heavy children have their own tests; here only the screen's composition is under test.
 vi.mock("../../components/world-map/WorldMapPanel.js", () => ({
   WorldMapPanel: () => <div data-testid="map-stub" />,
 }));

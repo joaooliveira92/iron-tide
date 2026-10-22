@@ -1,8 +1,3 @@
-/**
- * Exact integer fixed-point helpers for the armament resolver (ADR-0002, ADR-0093). Basis points
- * (bp) are integers with 10_000 = 1.0. Multipliers compose as an exact bigint product, rounded once
- * (half up) at the end; no intermediate float ever touches the result.
- */
 import { BluewaveError } from "@bluewave/contracts";
 
 export const ARMAMENT_BP_ONE = 10_000 as const;
@@ -18,10 +13,6 @@ function toSafeInt(value: bigint, label: string): number {
   return Number(value);
 }
 
-/**
- * Compose n basis-point multipliers into one: `Π factors / 10_000^(n-1)`, rounded half up once.
- * Zero factors compose to the neutral 10_000. Callers must pass non-negative integers.
- */
 export function composeBpMultipliers(factors: readonly number[]): number {
   if (factors.length === 0) return ARMAMENT_BP_ONE;
   let numerator = 1n;
@@ -38,10 +29,6 @@ export function composeBpMultipliers(factors: readonly number[]): number {
   return toSafeInt(rounded, "composeBpMultipliers");
 }
 
-/**
- * Scale a non-negative integer value by a basis-point factor (which may exceed 10_000), rounded half
- * up once: `value * factorBp / 10_000`.
- */
 export function scaleByBp(value: number, factorBp: number): number {
   if (!Number.isSafeInteger(value) || value < 0) {
     throw new BluewaveError("armament scale value must be a non-negative safe integer", { value });

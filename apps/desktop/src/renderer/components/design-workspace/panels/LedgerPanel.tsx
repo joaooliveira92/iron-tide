@@ -8,7 +8,6 @@ export function LedgerPanel({ view }: { readonly view: WorkshopView }) {
   const tonnes = (kg: number) => format.measurement(kg, "mass", { maximumFractionDigits: 0 });
   return (
     <Panel title="Weight summary">
-      {/* Hover detail only: the table below carries the same figures for assistive tech. */}
       <div className="flex h-3 w-full overflow-hidden rounded bg-muted" aria-hidden="true">
         {view.ledger.map((r, i) => (
           <HoverCard key={r.category}>

@@ -1,10 +1,3 @@
-/**
- * A compact isometric drawing core for the ship anatomy figure. World units are metres; x runs from the bow
- * (0) to the stern (+x), y is athwartships and z is up from the keel. It keeps the parts of `iso-kit` the
- * figure needs — projection, extrusion, lofting between shaped rings, fitting and screen-space widths — while
- * leaving out the page and plate machinery the desktop app already owns.
- */
-
 export type Flat = [number, number];
 export type Plane = [number, number];
 export type Point3 = [number, number, number];
@@ -16,7 +9,6 @@ export interface Projection {
   readonly scale: number;
   readonly azimuth: number;
   readonly elevation: number;
-  /** Display exaggeration of vertical distances; the ship is a model, not a lines plan. */
   readonly zScale: number;
 }
 
@@ -31,7 +23,6 @@ export interface SolidPaths {
 const RADIANS = Math.PI / 180;
 const UNIT = Math.sqrt(1.6);
 const tenth = (value: number) => {
-  // A value already rounded to a tenth prints its shortest form ("12", "12.5"); -0 prints as "0".
   const text = String(Math.round(value * 10) / 10);
   return text === "-0" ? "0" : text;
 };
@@ -181,7 +172,6 @@ function shadeBuckets(ring: readonly Plane[], projection: Projection): number[] 
   });
 }
 
-/** Extrudes a plan ring straight up; the deck/bridge/box workhorse. */
 export function extrude(
   ring: readonly Plane[],
   z: number,
@@ -193,10 +183,6 @@ export function extrude(
   return loft(top, bottom, projection);
 }
 
-/**
- * Lofts between two matching rings of world points. The top ring may follow a sheer, so hull deck edges and
- * tapered funnels share one routine.
- */
 export function loft(
   givenTop: readonly Point3[],
   givenBottom: readonly Point3[],

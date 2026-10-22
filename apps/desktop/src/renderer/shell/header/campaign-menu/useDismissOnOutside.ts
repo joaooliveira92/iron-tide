@@ -1,9 +1,5 @@
 import { useEffect, type RefObject } from "react";
 
-/**
- * Dismisses an open disclosure when the pointer lands outside `rootRef` or Escape is pressed.
- * Inert while `open` is false, so callers can leave it mounted unconditionally.
- */
 export function useDismissOnOutside(
   rootRef: RefObject<HTMLElement | null>,
   open: boolean,

@@ -1,8 +1,3 @@
-// DESIGN-03 §2, §3, §8 - campaign session state + preconditions (Normative)
-// Validates before RNG, enforces Scenario §1, Timeline §2, Configuration §3, Immutability §8.
-// Kept separate from state.ts (compiled world snapshot) - a session tracks configuration +
-// the strategic timeline for a single campaign run.
-
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
@@ -32,24 +27,17 @@ export function hashConfiguration(cfg: CampaignConfiguration): string {
   return sha256Hex(canonicalSerialize(cfg));
 }
 
-// Campaign Session State
-
 export interface CampaignSessionState {
   readonly configuration: CampaignConfiguration;
   readonly configurationHash: string;
   readonly scenarioId: CampaignConfiguration["scenarioId"];
   readonly currentYear: number;
-  readonly currentMonth: number; // 1..12
-  readonly turnNumber: number; // 0 = start turn
+  readonly currentMonth: number;
+  readonly turnNumber: number;
   readonly technologyManifest?: CampaignTechnologyManifest;
   readonly isTerminal: boolean;
 }
 
-/**
- * DESIGN-03 §3 + §9.3/9.4: Complete configuration MUST be validated before
- * campaign RNG streams are derived. Invalid -> INVALID_CAMPAIGN_CONFIGURATION
- * and MUST NOT create an active campaign. Runtime inference/fallback prohibited.
- */
 function validateScenariosInput(
   input: unknown,
   collector: DiagnosticCollector,
@@ -89,8 +77,6 @@ function validateResearchSpeedInput(input: unknown, collector: DiagnosticCollect
   return validateResearchSpeedSettings(input, collector) !== undefined;
 }
 
-// §3 + §1 cross-check: chosen ids must be supported by THE VALIDATED scenario
-// (not the canonical constant - compilation must honor the shipped content).
 function validateConfigurationSupportedByScenario(
   cfg: CampaignConfiguration,
   scen: ScenarioDefinition,
@@ -139,11 +125,9 @@ export function validateCampaignPreconditions(
     return false;
   }
 
-  // §1: canonical 5 scenarios, January check, INVALID_SCENARIO_DEFINITION - no fallback
   const validatedScenarios = validateScenariosInput(anyInput["scenarios"], collector);
   if (!validatedScenarios) return false;
 
-  // §3: campaignConfiguration mandatory - no omission
   const cfg = anyInput["campaignConfiguration"];
   if (cfg === undefined || cfg === null) {
     collector.addError(
@@ -155,14 +139,10 @@ export function validateCampaignPreconditions(
   }
   if (!validateCampaignConfiguration(cfg, collector)) return false;
 
-  // §4: fleetSizeSettings mandatory - exactly the canonical settings
   if (!validateFleetSizeInput(anyInput["fleetSizeSettings"], collector)) return false;
 
-  // §5: researchSpeedSettings mandatory - exactly the canonical settings
   if (!validateResearchSpeedInput(anyInput["researchSpeedSettings"], collector)) return false;
 
-  // §3 + §1 cross-check: chosen ids must be supported by THE VALIDATED INPUT scenario
-  // (not the canonical constant - compilation must honor the shipped content).
   const typedCfg = cfg as CampaignConfiguration;
   const scen = validatedScenarios.find((s) => s.scenarioId === typedCfg.scenarioId);
   if (
@@ -190,7 +170,6 @@ export function createInitialCampaignState(
     );
     return undefined;
   }
-  // supported* cross-check also on direct creation
   if (!validateConfigurationSupportedByScenario(configuration, scen, "campaign-state", collector)) {
     return undefined;
   }
@@ -200,18 +179,12 @@ export function createInitialCampaignState(
     configurationHash: hashConfiguration(configuration),
     scenarioId: configuration.scenarioId,
     currentYear: scen.startYear,
-    currentMonth: scen.startMonth, // 1 = January per §1
+    currentMonth: scen.startMonth,
     turnNumber: 0,
     isTerminal: false,
   };
 }
 
-/**
- * DESIGN-03 §2: Simulation end = completion of December 1970.
- * Must: 1) complete every phase of Dec 1970, 2) produce MonthClosingSnapshot Dec 1970,
- * 3) terminal evaluation, 4) final career evaluation, 5) reject Jan 1971 with SIMULATION_END_REACHED.
- * Month advancement MUST use integer calendar-month arithmetic.
- */
 export function canAdvanceCampaign(state: CampaignSessionState): boolean {
   return (
     !state.isTerminal &&
@@ -252,7 +225,6 @@ export function advanceCampaignMonth(
   };
 }
 
-/** Verify technology manifest hash after creation - §6.7 TECHNOLOGY_MANIFEST_MISMATCH */
 export function verifyCampaignTechnologyManifest(
   manifest: CampaignTechnologyManifest,
   collector: DiagnosticCollector,
@@ -260,7 +232,6 @@ export function verifyCampaignTechnologyManifest(
   return verifyTechnologyManifest(manifest, collector);
 }
 
-/** Guard §8 post-save mutation: compares hash, fails silent change */
 export function assertCampaignStateImmutability(
   saved: CampaignSessionState,
   nextConfig: CampaignConfiguration,

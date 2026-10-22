@@ -1,6 +1,3 @@
-// D-1: resolveAircraftDevelopment — campaign-level aircraft development phase
-// resolver. Phase order 72 (after resolve_research, before battle_generation).
-// Strict no-op when no nation has aviation tech.
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import type { AircraftNationState } from "@bluewave/combat";
 import {
@@ -180,9 +177,6 @@ export function resolveAircraftDevelopment(
   };
 }
 
-// D-1: campaign-level aircraft development pipeline (DESIGN-43 §§4-12), ordered
-// after resolve_research (order 70) and before battle_generation (order 75).
-// Strict no-op when no nation has aviation tech.
 export const aircraftDevelopmentPhase: PhaseDescriptor = {
   id: "resolve_aircraft_development",
   name: "Aircraft Development Resolution",

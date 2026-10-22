@@ -1,5 +1,3 @@
-// Tests for fire resolution constants (DESIGN-41 §20-25).
-// Verifies policy IDs are stable, band arrays are complete, and constants are non-negative.
 import { describe, it, expect } from "vite-plus/test";
 import {
   firePolicyId,
@@ -54,15 +52,12 @@ describe("fireConstants: all constants are non-negative", () => {
 
 describe("fireConstants: band arrays are complete", () => {
   it("FIRE_ROF_PENALTY_BANDS covers 1..10_000 with no gaps", () => {
-    // Check adjacent bands: band N's maxIntensity + 1 should equal band N+1's minIntensity
     for (let i = 0; i < FIRE_ROF_PENALTY_BANDS.length - 1; i++) {
       const current = FIRE_ROF_PENALTY_BANDS[i]!;
       const next = FIRE_ROF_PENALTY_BANDS[i + 1]!;
       expect(current.maxIntensity + 1).toBe(next.minIntensity);
     }
-    // First band starts at 1
     expect(FIRE_ROF_PENALTY_BANDS[0]!.minIntensity).toBe(1);
-    // Last band ends at 10_000
     expect(FIRE_ROF_PENALTY_BANDS[FIRE_ROF_PENALTY_BANDS.length - 1]!.maxIntensity).toBe(10_000);
   });
 
@@ -72,9 +67,7 @@ describe("fireConstants: band arrays are complete", () => {
       const next = FIRE_NIGHT_SIGNATURE_BANDS[i + 1]!;
       expect(current.maxIntensity + 1).toBe(next.minIntensity);
     }
-    // First band starts at 0
     expect(FIRE_NIGHT_SIGNATURE_BANDS[0]!.minIntensity).toBe(0);
-    // Last band ends at 10_000
     expect(FIRE_NIGHT_SIGNATURE_BANDS[FIRE_NIGHT_SIGNATURE_BANDS.length - 1]!.maxIntensity).toBe(
       10_000,
     );

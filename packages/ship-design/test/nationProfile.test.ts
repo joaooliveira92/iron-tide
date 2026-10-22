@@ -100,13 +100,10 @@ describe("shared families with national models", () => {
     const neutral = shipBuildingContent.environmentFor("1880-01").ctx.catalogue;
     const ukSel = catalogueForNation(components, uk, "1880-01");
     const frSel = catalogueForNation(components, france, "1880-01");
-    // France cannot obtain the British-specific heavies; the UK cannot obtain the French 27 cm.
     expect(frSel.catalogue.map((c) => c.id)).not.toContain("gun_bl_135in_30");
     expect(ukSel.catalogue.map((c) => c.id)).not.toContain("gun_bl_274mm_m1875");
-    // Neither catalogue ever exceeds the shared one.
     expect(ukSel.catalogue.length).toBeLessThanOrEqual(neutral.length);
     expect(frSel.catalogue.length).toBeLessThanOrEqual(neutral.length);
-    // National models are recorded, and the output is sorted (determinism).
     expect(Object.values(ukSel.appliedModels)).toContain("uk_bl_12in_25_mk1");
     expect(Object.values(frSel.appliedModels)).toContain("fr_canon_1647mm_mle1887");
     expect(ukSel.catalogue.map((c) => c.id)).toEqual(ukSel.catalogue.map((c) => c.id).sort());
@@ -114,7 +111,7 @@ describe("shared families with national models", () => {
   it("applying a national model changes the field values, not the family id", () => {
     const frSel = catalogueForNation(components, france, "1880-01");
     const gun = frSel.catalogue.find((c) => c.id === "gun_qf_6in_40")!;
-    expect(gun.attributes!.shellMassG).toBe("54900"); // Canon de 164,7 mm
+    expect(gun.attributes!.shellMassG).toBe("54900");
     const ukSel = catalogueForNation(components, uk, "1880-01");
     expect(ukSel.catalogue.find((c) => c.id === "gun_qf_6in_40")!.attributes!.shellMassG).toBe(
       "45300",
@@ -160,7 +157,6 @@ describe("role-specific national design scoring", () => {
     const ukScore = scoreDesign(effectiveDesignWeights(uk, "CL"), facts);
     const frScore = scoreDesign(effectiveDesignWeights(france, "CL"), facts);
     expect(ukScore).not.toBe(frScore);
-    // The long-range, well-armed cruiser is worth more to the global-power UK than to Jeune-École France.
     expect(ukScore).toBeGreaterThan(frScore);
   });
   it("ranking is deterministic and orders by score then id", () => {
@@ -190,7 +186,6 @@ describe("AI procurement policy", () => {
     const ukPlan = planProcurement(uk, candidates, 400);
     const frPlan = planProcurement(france, candidates, 400);
     expect(ukPlan.order).not.toEqual(frPlan.order);
-    // UK leads with the cruiser (its stated priority); France's order starts with torpedo craft.
     expect(uk.procurementPolicy.buildOrder[0]).toBe("CL");
     expect(france.procurementPolicy.buildOrder[0]).toBe("DD");
   });
@@ -210,7 +205,6 @@ describe("comparative differentiation", () => {
   it("the two profiles differ on many axes (a fleet is recognisable without names or flags)", () => {
     const d = fingerprintDistance(profileFingerprint(uk), profileFingerprint(france));
     expect(d).toBeGreaterThanOrEqual(4);
-    // Grounded, directional differences.
     expect(france.industrialProfile.buildTimeMultiplierBp).toBeGreaterThan(
       uk.industrialProfile.buildTimeMultiplierBp,
     );
@@ -230,7 +224,6 @@ describe("player-facing brief", () => {
     const frBrief = nationProfileBrief(france);
     expect(ukBrief.industrialStrengths.length).toBeGreaterThan(0);
     expect(frBrief.industrialLimitations.length).toBeGreaterThan(0);
-    // The UK is faster/lower-variance; France is experimental/higher-variance.
     expect(ukBrief.industrialStrengths.join(" ")).toMatch(/faster/);
     expect(frBrief.industrialLimitations.join(" ")).toMatch(/experimental|varies/);
     expect(ukBrief.preferredComponents.some((c) => c.includes("12-in"))).toBe(true);
@@ -270,7 +263,6 @@ describe("national starters", () => {
   });
 });
 
-// Nation × Ship Type × Year × Budget validation matrix (docs/ships-nation-orientation.md §9): 2 × 6 × 3 × 3 = 108 cells.
 describe("Nation × Ship Type × Year × Budget matrix", () => {
   const YEARS = ["1880-01", "1885-01", "1890-01"] as const;
   const BUDGETS = { low: 250, standard: 700, high: 1800 } as const;
@@ -342,7 +334,6 @@ describe("Nation × Ship Type × Year × Budget matrix", () => {
         for (const t of low) expect(std.has(t)).toBe(true);
         for (const t of std) expect(high.has(t)).toBe(true);
         expect(high.size).toBe(OPENING.length);
-        // At least an escort or colonial vessel is affordable at the low band.
         expect([...low].some((t) => t === "DD" || t === "KE" || t === "AMC")).toBe(true);
       }
   });
@@ -351,7 +342,6 @@ describe("Nation × Ship Type × Year × Budget matrix", () => {
     const frCells = cells.filter((c) => c.nation === "france");
     const ukTotal = ukCells.reduce((a, c) => a + c.costUnits, 0);
     const frTotal = frCells.reduce((a, c) => a + c.costUnits, 0);
-    // Different industrial multipliers and design choices give different cost totals.
     expect(ukTotal).not.toBe(frTotal);
   });
 });

@@ -77,7 +77,6 @@ const translated: readonly { row: TubeRow; t: TubePlacementTranslation }[] = tub
   (row) => ({ row, t: present(translate(row).translation, whereTube(row)) }),
 );
 
-/** The legacy value through the nation's catalogue, as the legacy compile evaluates it. */
 function legacyValue(row: TubeRow, field: "weightKg" | "costMicro"): number {
   const nation = profileOf(row.design.draft.nationId);
   const def = present(
@@ -127,7 +126,6 @@ describe("torpedo launchers through the read path (ship-part-model 04)", () => {
       expect(totalOf(t.quantities, "costMicro"), `${whereTube(row)} cost`).toBe(
         legacyValue(row, "costMicro"),
       );
-      // Single-tube launchers: every quantity is per part unit, with no fixed term.
       for (const q of t.quantities) {
         expect(q.basis, `${whereTube(row)} ${q.id}`).toBe("PER_PART_UNIT");
         expect(q.multiplier).toBe(t.mountCount);
@@ -228,7 +226,6 @@ describe("torpedo launchers through the read path (ship-part-model 04)", () => {
       expect(partById(id).spec.boreDiameterUm, id).toBe(356_000);
       expect(partById(id).legacyExceptions, id).toBeUndefined();
     }
-    // Labelled "350 mm", but France's structured diameter is 380 mm.
     expect(partById("fr_tube_350mm_sub").name).toContain("350 mm");
     expect(partById("fr_tube_350mm_sub").spec.boreDiameterUm).toBe(380_000);
   });

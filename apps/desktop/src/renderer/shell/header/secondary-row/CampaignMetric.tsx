@@ -17,7 +17,6 @@ export interface CampaignMetricProps {
   readonly metric: HeaderMetric;
 }
 
-/** A single campaign readout. Placeholders are styled and explained, never silently blank. */
 export function CampaignMetric({ metric }: CampaignMetricProps) {
   const Icon = METRIC_ICONS[metric.icon];
 

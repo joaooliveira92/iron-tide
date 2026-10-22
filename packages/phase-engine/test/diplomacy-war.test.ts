@@ -229,8 +229,6 @@ describe("B10c diplomacy & war acceptance (criteria 1-14)", () => {
     expect(war!.status).toBe("DECLARED_NOT_ACTIVE");
     expect(war!.attackerId).toBe("GBR");
     expect(war!.defenderId).toBe("FRA");
-    // campaignMonth is derived from the snapshot start (1880-01) + turn 1 ->
-    // 1880-02 (B-6/ADR-0025); war ids embed the month id.
     expect(war!.id).toBe("war_GBR_FRA_1880-02");
 
     const rel = findRelation(result.finalSnapshot, "GBR", "FRA")!;
@@ -271,19 +269,16 @@ describe("B10c diplomacy & war acceptance (criteria 1-14)", () => {
     const result = new MonthExecutor().execute(snapshot, [], "seed", new DiagnosticCollector());
     const war = result.finalSnapshot.wars.wars[0]!;
     expect(war.status).toBe("ACTIVE");
-    // GBR overwhelming strength wins -> positive attacker score, negative defender score
     expect((war.attackerWarScore as number) > 0).toBe(true);
     expect((war.defenderWarScore as number) < 0).toBe(true);
   });
 
   it("C4: alliance auto-entry adds GER (ally of FRA) to defender side", () => {
-    // FRA is the playable slot so it can issue FormAlliance
     let snapshot = makeSnapshot([
       ["FRA", makeNation("FRA", { treasury: SafeInt(10000) })],
       ["GBR", makeNation("GBR", { treasury: SafeInt(10000) })],
       ["GER", makeNation("GER", { treasury: SafeInt(10000) })],
     ]);
-    // Form alliance FRA <-> GER first turn
     const formCmd = makeCommand(snapshot, {
       type: "FormAlliance",
       nationId: "FRA",
@@ -296,7 +291,6 @@ describe("B10c diplomacy & war acceptance (criteria 1-14)", () => {
       new DiagnosticCollector(),
     ).finalSnapshot;
 
-    // GBR declares war on FRA and a battle occurs
     snapshot = {
       ...snapshot,
       turnNumber: SafeInt(1),
@@ -362,7 +356,6 @@ describe("B10c diplomacy & war acceptance (criteria 1-14)", () => {
       ["FRA", makeNation("FRA", { ships: 1, firepower: SafeInt(1), hitPoints: SafeInt(20) })],
       ["GER", makeNation("GER")],
     ]);
-    // Set GBR war score high; a decisive win (+10) crosses the 80 threshold.
     snapshot = withWar(snapshot, {
       attackerId: "GBR",
       defenderId: "FRA",
@@ -400,7 +393,6 @@ describe("B10c diplomacy & war acceptance (criteria 1-14)", () => {
       ["RUS", makeNation("RUS")],
       ["AUS", makeNation("AUS")],
     ]);
-    // GBR at war with 3 nations
     for (const target of ["FRA", "GER", "ITA"]) {
       snapshot = withWar(snapshot, { attackerId: "GBR", defenderId: target });
     }
@@ -443,7 +435,6 @@ describe("B10c diplomacy & war acceptance (criteria 1-14)", () => {
       targetNationId: "FRA",
       areaId: "eng_ch",
     });
-    // Turn 1 establishes the blockade; turn 2's resolve_diplomacy adds +2.
     const after1 = new MonthExecutor().execute(snapshot, [cmd], "seed", new DiagnosticCollector());
     const blockade = after1.finalSnapshot.wars.blockadeState[0]!;
     expect(blockade.blockaderId).toBe("GBR");
@@ -451,7 +442,6 @@ describe("B10c diplomacy & war acceptance (criteria 1-14)", () => {
 
     let snap2 = { ...after1.finalSnapshot };
     const warId = snap2.wars.wars[0]!.id;
-    // run a second month where resolve_diplomacy is called on the existing blockade
     snap2 = {
       ...snap2,
       turnNumber: SafeInt(2),

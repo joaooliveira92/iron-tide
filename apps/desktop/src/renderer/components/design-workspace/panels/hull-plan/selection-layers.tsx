@@ -1,10 +1,6 @@
 import { DASH, LABEL_FONT, NON_SCALING, STROKE } from "./drafting.js";
 import { PLAN_MID, type PlanFrame } from "./geometry.js";
 
-/**
- * How a section is lit, weakest first. Each differs in line pattern as well as fill, so the states read without
- * colour: preview (hover card open) dashed; linked from a form, dotted with no fill; selected, solid and filled.
- */
 export type SectionHighlight = "preview" | "linked" | "selected";
 
 const HIGHLIGHT: Record<
@@ -21,10 +17,6 @@ const HIGHLIGHT: Record<
   selected: { fill: 0.16, width: 2.2, dash: undefined, testId: "section-selected" },
 };
 
-/**
- * Marks a section. Drawn above the hull fill and under everything else, so fittings, arcs, boundaries and the
- * superstructure stay visible through it.
- */
 export function SectionHighlightLayer({
   frame,
   zone,
@@ -57,7 +49,6 @@ export function SectionHighlightLayer({
   );
 }
 
-/** A machinery room's station (rooms have no drawn extent in the model): a bar across the hull marked "M". */
 export function MachineryRoomMarker({
   frame,
   stationPermille,

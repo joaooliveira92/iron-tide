@@ -51,7 +51,6 @@ describe("currency-display request vs effective (ADR-0211)", () => {
       const request: CurrencyDisplayMode = "nationalHistorical";
       const result = resolveEffectiveCurrencyDisplayMode(request, availability);
       expect(result).toEqual({ mode: "navalCredits", fallbackReason });
-      // The request value is never mutated by resolution.
       expect(request).toBe("nationalHistorical");
     }
   });

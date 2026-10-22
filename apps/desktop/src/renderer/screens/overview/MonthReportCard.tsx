@@ -6,12 +6,6 @@ import { humanizeId } from "../../lib/humanize-id.js";
 import { monthLabel } from "./month-report-format.js";
 import { MonthlyReportView } from "./components/MonthlyReportView.js";
 
-/**
- * What happened when you last advanced the month, plus the earlier months
- * stored for this campaign in the `monthly-reports.json` sidecar (spec §16
- * "Report history"; read-only). The report data is derived in main from the
- * real `CommitMonthResponse`; the card only renders it.
- */
 export function MonthReportCard({
   reports,
   areaName = humanizeId,
@@ -19,7 +13,6 @@ export function MonthReportCard({
 }: {
   readonly reports: readonly MonthlyReportEntry[];
   readonly areaName?: (id: string) => string;
-  /** Render only the body (a host panel supplies the chrome and title). */
   readonly embedded?: boolean;
 }) {
   const [latest, ...earlier] = reports;

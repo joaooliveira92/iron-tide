@@ -17,15 +17,11 @@ test("Starting-fleet method: three cards in a deck, a detail panel that follows 
   await expect(manual).toBeVisible();
   await expect(curated).toBeVisible();
 
-  // Default selection is `generated` (Inherit) with its detail panel.
   await expect(inherit).toHaveAttribute("aria-selected", "true");
   const panel = e2e.page.getByRole("region", { name: "Fleet method details" });
   await expect(panel.getByText(/operational-but-aging navy/)).toBeVisible();
   await expect(panel.getByText(/Detailed fleet construction isn't available yet/)).toHaveCount(0);
 
-  // The deck's cards overlap, so a centre-click lands on the top card. Step the
-  // listbox to the manual-build card and confirm with Enter, as the archetype
-  // step does; the detail panel then follows the applied method.
   await listbox.press("ArrowRight");
   await listbox.press("Enter");
   await expect(manual).toHaveAttribute("aria-selected", "true");
@@ -34,6 +30,5 @@ test("Starting-fleet method: three cards in a deck, a detail panel that follows 
   await expect(e2e.page.getByText(/operational-but-aging navy/)).toHaveCount(0);
   await expect(panel.getByText(/Detailed fleet construction isn't available yet/)).toBeVisible();
 
-  // The status line shows the current method.
   await expect(e2e.page.getByRole("status")).toContainText("Build the Legacy Fleet Manually");
 });

@@ -12,14 +12,12 @@ import {
 import type { BoardFinding } from "../validation/boardFindings.js";
 import type { ShipEntity } from "./store.js";
 
-/** What the selection facts read: the live design, its compile, the catalogue and the hull form's zones. */
 export interface EntityContext {
   readonly draft: DesignDraft;
   readonly view: WorkshopView;
   readonly content: DrawingBoardContent;
   readonly zones: readonly ZoneRange[];
   readonly batteries: readonly BatteryCard[];
-  /** The design's findings as the board shows them (`boardFindings`), computed once per compile. */
   readonly findings: readonly BoardFinding[];
 }
 
@@ -30,27 +28,22 @@ export function sectionOfZone(zoneId: string): SectionId | undefined {
 export interface FittingFacts {
   readonly instanceId: string;
   readonly name: string;
-  /** Catalogue category in words, e.g. "main gun". */
   readonly category: string;
   readonly kind: FittingKind;
   readonly section: SectionId | undefined;
   readonly stationPermille: number;
   readonly side: MountSide;
-  /** Battery heading and conventional mount name (A, B, X...), for guns and tubes. */
   readonly battery:
     | { readonly title: string; readonly key: string; readonly mount: string }
     | undefined;
   readonly weightKg: number | undefined;
-  /** The magazine this mount draws from, when the design names one. */
   readonly magazine: { readonly instanceId: string; readonly name: string } | undefined;
   readonly arcDeg: number | undefined;
-  /** Protection margin against the design threat, bp; magazines only. */
   readonly protectionBp: number | undefined;
 }
 
 const words = (s: string) => s.replaceAll("_", " ").toLowerCase();
 
-/** Everything the inspector shows for one placed fitting, or null if the design no longer has it. */
 export function fittingFacts(instanceId: string, ctx: EntityContext): FittingFacts | null {
   const p = ctx.draft.placements.find((x) => x.instanceId === instanceId);
   if (!p) return null;
@@ -87,7 +80,6 @@ export function fittingFacts(instanceId: string, ctx: EntityContext): FittingFac
   };
 }
 
-/** The machinery rooms as the design states them; one implicit room when it lists none. */
 export function machineryRooms(
   draft: DesignDraft,
 ): readonly { zoneId: string; stationPermille: number; shareBp: number }[] {
@@ -95,7 +87,6 @@ export function machineryRooms(
   return m.rooms ?? [{ zoneId: m.zoneId, stationPermille: m.stationPermille, shareBp: 10_000 }];
 }
 
-/** Whether the current design still contains the entity (selections of removed things are dropped). */
 export function entityExists(
   entity: ShipEntity,
   draft: DesignDraft,

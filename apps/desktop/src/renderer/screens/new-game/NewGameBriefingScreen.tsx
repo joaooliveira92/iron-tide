@@ -18,7 +18,6 @@ import { OPENING_BRIEFING_PAGE_TITLES, canGoBack } from "./new-game-briefing-scr
 import { useBriefingPager } from "./useBriefingPager.js";
 import { useOpeningBriefing, type LoadOpeningBriefing } from "./useOpeningBriefing.js";
 
-/** The zero-based index of the Foreign Intelligence (World Situation) page. */
 const FOREIGN_INTELLIGENCE_PAGE_INDEX = 3;
 
 export interface NewGameBriefingScreenProps {

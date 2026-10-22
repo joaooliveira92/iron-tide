@@ -63,7 +63,6 @@ describe("AiPlanner", () => {
       new CommandIdempotencyMap(),
     );
     expect(r1.envelopes.map((e) => e.body)).toEqual(r2.envelopes.map((e) => e.body));
-    // legal sorted => with same seed, chosen project is deterministic regardless of insertion order
     const snapReversed = snap({
       nations: new Map([
         [
@@ -181,7 +180,7 @@ describe("AiPlanner", () => {
       new CommandIdempotencyMap(),
     );
     expect(res.accepted.length).toBe(0);
-    expect(res.diagnostics.length).toBe(2); // budget + research both rejected
+    expect(res.diagnostics.length).toBe(2);
   });
 
   it("stream key encodes nationId with colon", () => {
@@ -205,7 +204,6 @@ describe("AiPlanner", () => {
         ],
       ]),
     });
-    // nationId with colon should be encoded
     planner.generate(
       s,
       engine,
@@ -270,7 +268,6 @@ describe("AiPlanner", () => {
       (e) => (e.body as { type?: string }).type === "SetResearchPriority",
     )!;
     const fp = (research.body as { fieldPriorities: Record<string, number> }).fieldPriorities;
-    // Only 1 and 2 are used by the neutral fallback (HIGH is 4 but the fallback uses MEDIUM for the rest).
     expect(Object.values(fp).every((v) => v === 4 || v === 2)).toBe(true);
   });
 });

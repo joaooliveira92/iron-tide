@@ -1,5 +1,4 @@
 "use client";
-// beui.dev/components/motion/sortable-list
 
 import { GripVertical, Undo2 } from "lucide-react";
 import { type HTMLMotionProps, Reorder, useDragControls, useReducedMotion } from "motion/react";
@@ -45,7 +44,6 @@ function useListContext(part: string) {
   return context;
 }
 
-/** Shared ordering and undo actions for custom list controls. */
 export function useSortableList() {
   const context = useListContext("useSortableList");
   return {
@@ -61,20 +59,16 @@ export interface SortableListProps<T extends { id: string }> {
   items?: T[];
   defaultItems?: T[];
   onItemsChange?: (items: T[]) => void;
-  /** Convenience row contents when children are omitted. */
   renderItem?: (item: T, index: number) => ReactNode;
   getItemLabel: (item: T) => string;
-  /** Compose parts; the render function receives items in their current order. */
   children?: ReactNode | ((items: T[]) => ReactNode);
   label?: string;
   disabled?: boolean;
-  /** Show the automatic undo button in the convenience composition. */
   showUndo?: boolean;
   className?: string;
   itemClassName?: string;
 }
 
-/** Stable item ids keep focus and content attached to their row during sorting. */
 export function SortableList<T extends { id: string }>({
   items: controlledItems,
   defaultItems = [],
@@ -124,7 +118,6 @@ export function SortableList<T extends { id: string }>({
       const item = byId.get(id);
       return item ? [item] : [];
     });
-    // Consumers can remove rows during a drag. Only publish a full permutation.
     if (next.length === live.current.length && new Set(nextIds).size === next.length) change(next);
   };
   const move = (id: string, direction: MoveDirection) => {
@@ -223,7 +216,6 @@ export interface SortableListGroupProps extends Omit<HTMLMotionProps<"ul">, "chi
   children?: ReactNode;
 }
 
-/** The ordered rows; keep headers and footer controls outside this group. */
 export function SortableListGroup({ className, ...props }: SortableListGroupProps) {
   const context = useListContext("SortableListGroup");
   return (
@@ -242,7 +234,6 @@ export interface SortableListItemProps extends Omit<
   HTMLMotionProps<"li">,
   "id" | "value" | "children"
 > {
-  /** Identity of an item supplied to the root. Use it as the React key too. */
   id: string;
   children?: ReactNode;
 }

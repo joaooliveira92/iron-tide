@@ -114,12 +114,6 @@ import { SessionIdPayloadSchema } from "../shared/campaignCommandSchemas.js";
 
 const CommandNameSchema = Schema.Literals(CAMPAIGN_COMMAND_NAMES);
 
-/**
- * Every `campaign:execute` command as a native Effect program (ADR-0159). The
- * dispatcher decodes the command name, runs the program on the managed runtime,
- * and projects the `Exit` to the frozen `BridgeResult` envelope — there is no
- * legacy handler path.
- */
 export const commandPrograms: Record<CampaignCommandName, CommandProgram> = {
   listNewGameOptions: payloadless(() => listNewGameOptionsProgram),
   compileCampaign: compileCampaignProgram,
@@ -198,12 +192,6 @@ export const commandPrograms: Record<CampaignCommandName, CommandProgram> = {
   seedCampaignBattleDrill: seedCampaignBattleDrillProgram,
 };
 
-/**
- * Builds the `campaign:execute` dispatcher over the program map. Decodes the
- * command name, runs the program on the injected runtime, and projects the
- * `Exit` to the wire envelope. Depends on the program map and runtime seams
- * (DIP) so tests can inject both.
- */
 export function createCampaignCommandDispatcher(
   programs: Partial<Record<CampaignCommandName, CommandProgram>>,
   getRuntime: () => ManagedRuntime.ManagedRuntime<CommandEnv, never>,
@@ -228,11 +216,6 @@ export function createCampaignCommandDispatcher(
 
 let commandRuntimeSingleton: ManagedRuntime.ManagedRuntime<CommandEnv, never> | undefined;
 
-/**
- * The process-wide default runtime for the dispatcher. The Electron main process
- * builds and owns its own runtime (disposed on quit); this lazy singleton serves
- * tests and any non-Electron caller of {@link dispatchCampaignCommand}.
- */
 export function getDefaultCommandRuntime(): ManagedRuntime.ManagedRuntime<CommandEnv, never> {
   commandRuntimeSingleton ??= ManagedRuntime.make(desktopMainLayer());
   return commandRuntimeSingleton;

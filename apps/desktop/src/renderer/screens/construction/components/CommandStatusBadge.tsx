@@ -21,7 +21,6 @@ export interface CommandStatusBadgeProps {
   readonly status: ConstructionCommandStatus;
 }
 
-/** A construction command's status, as an icon + label badge. */
 export function CommandStatusBadge({ status }: CommandStatusBadgeProps) {
   const StatusIcon = STATUS_ICON[status];
   return (

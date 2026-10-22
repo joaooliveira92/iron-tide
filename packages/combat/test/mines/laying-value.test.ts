@@ -1,9 +1,3 @@
-// AC-4 (INC-2): DESIGN-35 §4 mine-laying value — the exact six-multiplier
-// product is retained as one integer rational and rounded ONCE with FLOOR (no
-// per-factor rounding); the shipped generic multiplier table
-// (mine_laying_multipliers_v1) carries DESIGN-35's exact integers; inventory
-// consumption equals the declared quantity exactly; insufficient inventory
-// fails with MINE_INVENTORY_INSUFFICIENT.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import {
@@ -43,7 +37,6 @@ describe("AC-4: exact §4 formula — one exact product, one FLOOR", () => {
     expect(res.rounding.denominator).toBe(MINE_LAYING_DENOMINATOR.toString());
   });
 
-  // numerator = 100 * 7_500^3 * 5_000 * 10_000^2 = 2.109375e25; / 1e24 = 21.09375 -> 21.
   it("floors a fractional exact rational exactly once (21.09375 -> 21)", () => {
     const res = computeEffectiveLayingValue(100, {
       technologyMultiplierBp: 7_500,

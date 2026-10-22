@@ -3,13 +3,11 @@ import type { DiplomacyScreenProjection } from "../../../shared/diplomacy-contra
 import type { DiplomacyScreenState } from "./diplomacy-screen-state.js";
 import {
   diplomacyBeginAction,
-  diplomacyBeginLoading,
   diplomacyBeginPeace,
   diplomacyBeginSubmit,
   diplomacyCanSubmit,
   diplomacyClearDraft,
   diplomacyDraftToCommand,
-  diplomacyLoadFailure,
   diplomacyLoadSuccess,
   diplomacySetBlockadeArea,
   diplomacySubmitRejected,
@@ -81,38 +79,19 @@ function fixtureProjection(
 }
 
 function loadedState(): DiplomacyScreenState {
-  return diplomacyLoadSuccess({ kind: "loading", revision: 0 }, fixtureProjection());
+  return diplomacyLoadSuccess(fixtureProjection());
 }
 
 describe("diplomacy screen state", () => {
-  it("starts idle and moves through the load lifecycle", () => {
+  it("starts idle and adopts the first projection", () => {
     expect(initialDiplomacyScreenState()).toEqual({ kind: "idle", revision: 0 });
-    expect(diplomacyBeginLoading(initialDiplomacyScreenState())).toEqual({
-      kind: "loading",
-      revision: 0,
-    });
-    const loaded = diplomacyLoadSuccess(
-      diplomacyBeginLoading(initialDiplomacyScreenState()),
-      fixtureProjection(),
-    );
+    const loaded = diplomacyLoadSuccess(fixtureProjection());
     expect(loaded.kind).toBe("loaded");
     if (loaded.kind !== "loaded") return;
     expect(loaded.revision).toBe(0);
     expect(loaded.projection.playerNationId).toBe("uk");
     expect(loaded.draftCommand).toBeNull();
     expect(loaded.notice).toBeNull();
-  });
-
-  it("load failures move to load-failed with the message and keep the revision", () => {
-    const failed = diplomacyLoadFailure(
-      { kind: "loading", revision: 3 },
-      "SESSION_NOT_FOUND: no session",
-    );
-    expect(failed).toEqual({
-      kind: "load-failed",
-      revision: 3,
-      message: "SESSION_NOT_FOUND: no session",
-    });
   });
 
   it("walks loaded -> submitting -> submitted with an honest queue notice", () => {
@@ -203,7 +182,6 @@ describe("diplomacy screen state", () => {
       warId: "war_uk_fra",
     });
 
-    // ENDED wars do not draft.
     const ended = diplomacyBeginPeace(loaded, { ...war, status: "ENDED" });
     expect(ended.kind).toBe("loaded");
     if (ended.kind !== "loaded") return;
@@ -263,7 +241,6 @@ describe("diplomacy screen state", () => {
       targetNationId: "france",
       areaId: "med_gibraltar",
     });
-    // Incomplete pieces yield null (never a fabricated command).
     expect(diplomacyDraftToCommand({ kind: "AcceptPeace", partnerNationId: "france" })).toBeNull();
     expect(
       diplomacyDraftToCommand({ kind: "DeclareBlockade", partnerNationId: "france" }),
@@ -275,20 +252,14 @@ describe("diplomacy screen state", () => {
       kind: "idle",
       revision: 0,
     });
-    expect(diplomacyBeginSubmit({ kind: "loading", revision: 0 }, "req-1")).toEqual({
-      kind: "loading",
-      revision: 0,
-    });
     const loaded = loadedState();
     if (loaded.kind !== "loaded") return;
-    // No draft -> cannot submit.
     expect(diplomacyBeginSubmit(loaded, "req-1")).toEqual(loaded);
     expect(diplomacyCanSubmit(loaded)).toBe(false);
 
     const drafted = diplomacyBeginAction(loaded, "france", "DeclareWar");
     if (drafted.kind !== "loaded") return;
     expect(diplomacyCanSubmit(drafted)).toBe(true);
-    // A cleared draft goes back to non-submittable.
     const cleared = diplomacyClearDraft(drafted);
     if (cleared.kind !== "loaded") return;
     expect(cleared.draftCommand).toBeNull();

@@ -1,5 +1,3 @@
-// AC-4: Heavy AA protects own ship + 5nm protected radius (DESIGN-45 §7).
-
 import { describe, it, expect } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -284,7 +282,6 @@ describe("AC-4: heavy AA eligibility (§7)", () => {
         radarAvailable: true,
         ammunitionAvailable: true,
       });
-      // MEDIUM_ASM is absent from the HEAVY_AA row of the §18 matrix → layerAllowsAttackType false.
       expect(result.eligible).toBe(false);
       expect(result.reason).toBe(AIR_DEFENSE_TARGET_INELIGIBLE);
     });

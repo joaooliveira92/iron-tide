@@ -2,12 +2,6 @@ import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { useDrawingBoardContentSource } from "./useDrawingBoardContent.js";
 
-/**
- * The content seam is injected by the main process over IPC in production, so
- * these tests mock the seam module (fresh, un-injected state) and drive the
- * hook with a fake bridge global. `Object.defineProperty` avoids an
- * `as unknown` bridge cast (see `scripts/verify-no-unknown-casts.mjs`).
- */
 const contentMock = vi.hoisted(() => ({ has: false, setDrawingBoardContent: vi.fn() }));
 vi.mock("./content.js", () => ({
   hasDrawingBoardContent: () => contentMock.has,

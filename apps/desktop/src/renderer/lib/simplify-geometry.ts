@@ -1,9 +1,3 @@
-/**
- * Douglas–Peucker simplification for flat coordinate rings
- * ([x0, y0, x1, y1, ...]) — the LOD tier generator for the Canvas map
- * (ADR-0055). Pure and deterministic; tolerance is in the ring's own units.
- */
-
 export type FlatRing = readonly number[];
 export type FlatPolygon = readonly FlatRing[];
 
@@ -60,7 +54,6 @@ export function simplifyRing(ring: FlatRing, tolerance: number): number[] {
   return out;
 }
 
-/** Simplifies every ring; drops rings (and polygons) that collapse below a triangle. */
 export function simplifyPolygons(
   polygons: readonly FlatPolygon[],
   tolerance: number,

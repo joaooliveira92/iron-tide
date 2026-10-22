@@ -19,8 +19,6 @@ const TARGETING_BEZEL = (
 );
 
 export function GlobePanel({ focusedSlotId, onNationClick }: GlobePanelProps): JSX.Element {
-  // Fades the interactive globe in on mount so the viewport settles rather than
-  // snapping in at full opacity.
   const globeVisible = useArmedAfterMount(true);
 
   return (

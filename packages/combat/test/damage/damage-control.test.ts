@@ -1,6 +1,3 @@
-// INC-7 — Damage-control resource allocation and priority scheduling (DESIGN-41 §§27-28).
-// Proves: priority ordering, resource allocation, severity-based distribution,
-// effective capacity computations, and full allocation cycles.
 import { describe, it, expect } from "vite-plus/test";
 import {
   allocateDamageControl,
@@ -31,7 +28,6 @@ function makeFlood(
   return { compartmentId, rateKgMin, cause };
 }
 
-/** Default resource pool for tests. */
 const defaultResources = createDefaultControlResource();
 
 function createDefaultControlResource() {
@@ -47,8 +43,6 @@ function createDefaultControlResource() {
   };
 }
 
-// getFirePriorityCategory
-
 describe("INC-7: getFirePriorityCategory", () => {
   it("intensity >= 5_000 returns UNCONTROLLED_MAJOR_FIRE", () => {
     expect(getFirePriorityCategory(5_000)).toBe("UNCONTROLLED_MAJOR_FIRE");
@@ -62,8 +56,6 @@ describe("INC-7: getFirePriorityCategory", () => {
     expect(getFirePriorityCategory(4_999)).toBe("WEAPON_RESTORATION");
   });
 });
-
-// getFloodingPriorityCategory
 
 describe("INC-7: getFloodingPriorityCategory", () => {
   it("CRITICAL returns CRITICAL_FLOODING", () => {
@@ -83,8 +75,6 @@ describe("INC-7: getFloodingPriorityCategory", () => {
   });
 });
 
-// createDefaultDamageControlResource
-
 describe("INC-7: createDefaultDamageControlResource", () => {
   it("has correct default values", () => {
     const r = createDefaultDamageControlResource();
@@ -98,8 +88,6 @@ describe("INC-7: createDefaultDamageControlResource", () => {
     expect(r.compartmentAccess).toEqual([]);
   });
 });
-
-// getEffectivePumping
 
 describe("INC-7: getEffectivePumping", () => {
   it("sums pumping from allocations", () => {
@@ -129,8 +117,6 @@ describe("INC-7: getEffectivePumping", () => {
   });
 });
 
-// getEffectiveFirefighting
-
 describe("INC-7: getEffectiveFirefighting", () => {
   it("sums firefighting from allocations", () => {
     const allocs: DamageControlAllocation[] = [
@@ -159,8 +145,6 @@ describe("INC-7: getEffectiveFirefighting", () => {
   });
 });
 
-// getEffectiveRepairReduction
-
 describe("INC-7: getEffectiveRepairReduction", () => {
   it("sums repair reduction as 50 per allocated team", () => {
     const allocs: DamageControlAllocation[] = [
@@ -181,7 +165,6 @@ describe("INC-7: getEffectiveRepairReduction", () => {
         severity: "intensity_7000",
       },
     ];
-    // 3 teams × 50 = 150
     expect(getEffectiveRepairReduction(allocs)).toBe(150);
   });
 
@@ -189,8 +172,6 @@ describe("INC-7: getEffectiveRepairReduction", () => {
     expect(getEffectiveRepairReduction([])).toBe(0);
   });
 });
-
-// allocateDamageControl — no sources
 
 describe("INC-7: allocateDamageControl — no sources", () => {
   it("returns empty allocations when no fire or flooding sources", () => {
@@ -202,23 +183,11 @@ describe("INC-7: allocateDamageControl — no sources", () => {
   });
 });
 
-// allocateDamageControl — priority ordering
-
 describe("INC-7: allocateDamageControl — priority ordering", () => {
   it("magazine hazard (high-intensity fire) gets priority", () => {
-    const fires: FireSourceRecord[] = [
-      makeFire("MAG-1", 8_000), // UNCONTROLLED_MAJOR_FIRE (index 2)
-    ];
-    const floods: FloodingSourceRecord[] = [
-      makeFlood("COMP-1", 300), // CRITICAL_FLOODING at flooded water 3000bp (index 1)
-    ];
-    const result = allocateDamageControl(
-      defaultResources,
-      fires,
-      floods,
-      3_000, // CRITICAL flooding
-    );
-    // Priorities: CRITICAL_FLOODING (idx 1) before UNCONTROLLED_MAJOR_FIRE (idx 2)
+    const fires: FireSourceRecord[] = [makeFire("MAG-1", 8_000)];
+    const floods: FloodingSourceRecord[] = [makeFlood("COMP-1", 300)];
+    const result = allocateDamageControl(defaultResources, fires, floods, 3_000);
     expect(result.allocations).toHaveLength(2);
     expect(result.allocations[0]!.priority).toBe("CRITICAL_FLOODING");
     expect(result.allocations[0]!.targetId).toBe("COMP-1");
@@ -227,12 +196,8 @@ describe("INC-7: allocateDamageControl — priority ordering", () => {
   });
 
   it("CRITICAL_FLOODING gets priority over UNCONTROLLED_MAJOR_FIRE", () => {
-    const fires: FireSourceRecord[] = [
-      makeFire("FIRE-1", 7_500), // UNCONTROLLED_MAJOR_FIRE (idx 2)
-    ];
-    const floods: FloodingSourceRecord[] = [
-      makeFlood("FLOOD-1", 500), // CRITICAL_FLOODING (idx 1)
-    ];
+    const fires: FireSourceRecord[] = [makeFire("FIRE-1", 7_500)];
+    const floods: FloodingSourceRecord[] = [makeFlood("FLOOD-1", 500)];
     const result = allocateDamageControl(defaultResources, fires, floods, 3_000);
     expect(result.allocations).toHaveLength(2);
     expect(result.allocations[0]!.priority).toBe("CRITICAL_FLOODING");
@@ -242,12 +207,7 @@ describe("INC-7: allocateDamageControl — priority ordering", () => {
   it("fire and flood both allocated when both present", () => {
     const fires: FireSourceRecord[] = [makeFire("FIRE-1", 6_000)];
     const floods: FloodingSourceRecord[] = [makeFlood("FLOOD-1", 400)];
-    const result = allocateDamageControl(
-      defaultResources,
-      fires,
-      floods,
-      2_000, // MAJOR → CRITICAL_FLOODING
-    );
+    const result = allocateDamageControl(defaultResources, fires, floods, 2_000);
     expect(result.allocations.length).toBeGreaterThanOrEqual(2);
     const priorities = result.allocations.map((a) => a.priority);
     expect(priorities).toContain("CRITICAL_FLOODING");
@@ -256,16 +216,13 @@ describe("INC-7: allocateDamageControl — priority ordering", () => {
 
   it("higher severity (intensity) gets resources first within same priority", () => {
     const fires: FireSourceRecord[] = [
-      makeFire("FIRE-LOW", 3_000), // WEAPON_RESTORATION (idx 6)
-      makeFire("FIRE-HIGH", 6_000), // UNCONTROLLED_MAJOR_FIRE (idx 2)
-      makeFire("FIRE-MID", 8_000), // UNCONTROLLED_MAJOR_FIRE (idx 2)
+      makeFire("FIRE-LOW", 3_000),
+      makeFire("FIRE-HIGH", 6_000),
+      makeFire("FIRE-MID", 8_000),
     ];
     const result = allocateDamageControl(createDefaultControlResource(), fires, [], 0);
-    // First two allocations should be UNCONTROLLED_MAJOR_FIRE (idx 2), sorted by intensity descending
     expect(result.allocations[0]!.priority).toBe("UNCONTROLLED_MAJOR_FIRE");
     expect(result.allocations[1]!.priority).toBe("UNCONTROLLED_MAJOR_FIRE");
-    // 8_000 before 6_000
-    // FIRE-MID (8000) before FIRE-HIGH (6000)
     expect(result.allocations[0]!.targetId).toBe("FIRE-MID");
     expect(result.allocations[1]!.targetId).toBe("FIRE-HIGH");
   });
@@ -274,13 +231,10 @@ describe("INC-7: allocateDamageControl — priority ordering", () => {
     const fires: FireSourceRecord[] = [makeFire("B-FIRE", 6_000), makeFire("A-FIRE", 6_000)];
     const result = allocateDamageControl(createDefaultControlResource(), fires, [], 0);
     expect(result.allocations).toHaveLength(2);
-    // Same intensity, so sorted by id ascending
     expect(result.allocations[0]!.targetId).toBe("A-FIRE");
     expect(result.allocations[1]!.targetId).toBe("B-FIRE");
   });
 });
-
-// allocateDamageControl — resource tracking
 
 describe("INC-7: allocateDamageControl — resource tracking", () => {
   it("resources tracked correctly (no double allocation)", () => {
@@ -289,22 +243,18 @@ describe("INC-7: allocateDamageControl — resource tracking", () => {
     const floods: FloodingSourceRecord[] = [makeFlood("FLOOD-1", 500), makeFlood("FLOOD-2", 400)];
     const result = allocateDamageControl(resources, fires, floods, 3_000);
 
-    // 4 allocations (2 fires + 2 floods), each with 1 team
     expect(result.allocations).toHaveLength(4);
 
-    // Team allocation
     const totalTeams = result.allocations
       .map((a) => a.allocatedTeams)
       .reduce((sum, v) => sum + v, 0);
     expect(totalTeams).toBe(4);
     expect(result.remainingResources.teamCount).toBe(0);
 
-    // Pumping capacity from 2 flood allocations: 200 + 200 = 400
     const totalPumping = getEffectivePumping(result.allocations);
     expect(totalPumping).toBe(400);
     expect(result.remainingResources.pumpingCapacity).toBe(400);
 
-    // Firefighting capacity from 2 fire allocations: 125 + 125 = 250
     const totalFirefighting = getEffectiveFirefighting(result.allocations);
     expect(totalFirefighting).toBe(250);
     expect(result.remainingResources.firefightingCapacity).toBe(250);
@@ -318,7 +268,7 @@ describe("INC-7: allocateDamageControl — resource tracking", () => {
     expect(result.allocations).toHaveLength(1);
     expect(result.remainingResources.teamCount).toBe(3);
     expect(result.remainingResources.pumpingCapacity).toBe(800);
-    expect(result.remainingResources.firefightingCapacity).toBe(375); // 500 - 125
+    expect(result.remainingResources.firefightingCapacity).toBe(375);
     expect(result.remainingResources.emergencyPower).toBe(false);
     expect(result.remainingResources.availableCrew).toBe(200);
     expect(result.remainingResources.specialists).toBe(8);
@@ -335,48 +285,28 @@ describe("INC-7: allocateDamageControl — resource tracking", () => {
     ];
     const result = allocateDamageControl(limitedResources, fires, [], 0);
 
-    // Only 1 team available, so only 1 allocation
     expect(result.allocations).toHaveLength(1);
     expect(result.remainingResources.teamCount).toBe(0);
-    // The highest intensity fire should have been allocated first
     expect(result.allocations[0]!.targetId).toBe("FIRE-3");
   });
 });
 
-// allocateDamageControl — full cycles
-
 describe("INC-7: allocateDamageControl — full cycles", () => {
   it("full allocation cycle with 2 fires + 1 flood", () => {
-    const fires: FireSourceRecord[] = [
-      makeFire("ENGINE-ROOM", 8_000), // UNCONTROLLED_MAJOR_FIRE
-      makeFire("GALLEY", 2_000), // WEAPON_RESTORATION
-    ];
-    const floods: FloodingSourceRecord[] = [
-      makeFlood("HULL-1", 600), // CRITICAL_FLOODING at CRITICAL level
-    ];
-    const result = allocateDamageControl(
-      createDefaultControlResource(),
-      fires,
-      floods,
-      3_500, // CRITICAL
-    );
+    const fires: FireSourceRecord[] = [makeFire("ENGINE-ROOM", 8_000), makeFire("GALLEY", 2_000)];
+    const floods: FloodingSourceRecord[] = [makeFlood("HULL-1", 600)];
+    const result = allocateDamageControl(createDefaultControlResource(), fires, floods, 3_500);
 
-    // 3 allocations (all within 4 teams)
     expect(result.allocations).toHaveLength(3);
 
-    // Priority order: CRITICAL_FLOODING (idx 1), UNCONTROLLED_MAJOR_FIRE (idx 2), WEAPON_RESTORATION (idx 6)
     expect(result.allocations[0]!.priority).toBe("CRITICAL_FLOODING");
     expect(result.allocations[1]!.priority).toBe("UNCONTROLLED_MAJOR_FIRE");
     expect(result.allocations[2]!.priority).toBe("WEAPON_RESTORATION");
 
-    // 1 team remaining
     expect(result.remainingResources.teamCount).toBe(1);
   });
 
   it("all 9 priority levels represented in output structure", () => {
-    // We can't easily trigger all 9 in one call, but we can verify that
-    // DAMAGE_CONTROL_PRIORITIES has exactly 9 levels and that allocation
-    // outputs contain the expected priorities.
     expect(DAMAGE_CONTROL_PRIORITIES).toHaveLength(9);
     expect(DAMAGE_CONTROL_PRIORITIES[0]).toBe("MAGAZINE_TORPEDO_AVIATION_REACTOR");
     expect(DAMAGE_CONTROL_PRIORITIES[1]).toBe("CRITICAL_FLOODING");
@@ -390,19 +320,16 @@ describe("INC-7: allocateDamageControl — full cycles", () => {
   });
 
   it("all resources fully consumed (stress test)", () => {
-    // 4 teams available, 4+ sources to consume all
     const fires: FireSourceRecord[] = [
       makeFire("FIRE-A", 9_000),
       makeFire("FIRE-B", 8_500),
-      makeFire("FIRE-C", 1_000), // lower intensity → WEAPON_RESTORATION
+      makeFire("FIRE-C", 1_000),
       makeFire("FIRE-D", 7_500),
     ];
     const result = allocateDamageControl(createDefaultControlResource(), fires, [], 0);
-    // 4 teams, 4 fires → all allocated
     expect(result.allocations).toHaveLength(4);
     expect(result.remainingResources.teamCount).toBe(0);
     expect(result.remainingResources.firefightingCapacity).toBe(0);
-    // Pumping shouldn't have been touched
     expect(result.remainingResources.pumpingCapacity).toBe(800);
   });
 
@@ -412,20 +339,13 @@ describe("INC-7: allocateDamageControl — full cycles", () => {
       makeFlood("COMP-2", 200),
       makeFlood("COMP-3", 100),
     ];
-    const result = allocateDamageControl(
-      createDefaultControlResource(),
-      [],
-      floods,
-      1_000, // SERIOUS → NON_CRITICAL_DEWATERING
-    );
+    const result = allocateDamageControl(createDefaultControlResource(), [], floods, 1_000);
 
-    // 3 allocations × 200 kg/min each = 600
     expect(result.allocations).toHaveLength(3);
     expect(getEffectivePumping(result.allocations)).toBe(600);
     expect(result.remainingResources.pumpingCapacity).toBe(200);
     expect(result.remainingResources.teamCount).toBe(1);
 
-    // All should be NON_CRITICAL_DEWATERING (SERIOUS flooding)
     for (const alloc of result.allocations) {
       expect(alloc.priority).toBe("NON_CRITICAL_DEWATERING");
     }
@@ -440,58 +360,39 @@ describe("INC-7: allocateDamageControl — full cycles", () => {
     ];
     const result = allocateDamageControl(createDefaultControlResource(), fires, [], 0);
 
-    // All 4 fires allocated, sorted by intensity descending
     expect(result.allocations).toHaveLength(4);
-    expect(result.allocations[0]!.targetId).toBe("TURRET-4"); // 8000
-    expect(result.allocations[1]!.targetId).toBe("TURRET-2"); // 7000
-    expect(result.allocations[2]!.targetId).toBe("TURRET-1"); // 6000
-    expect(result.allocations[3]!.targetId).toBe("TURRET-3"); // 5500
+    expect(result.allocations[0]!.targetId).toBe("TURRET-4");
+    expect(result.allocations[1]!.targetId).toBe("TURRET-2");
+    expect(result.allocations[2]!.targetId).toBe("TURRET-1");
+    expect(result.allocations[3]!.targetId).toBe("TURRET-3");
 
-    // All UNCONTROLLED_MAJOR_FIRE
     for (const alloc of result.allocations) {
       expect(alloc.priority).toBe("UNCONTROLLED_MAJOR_FIRE");
     }
 
-    // Firefighting fully consumed: 4 × 125 = 500
     expect(result.remainingResources.firefightingCapacity).toBe(0);
     expect(result.remainingResources.teamCount).toBe(0);
   });
 
   it("mixed severities: CRITICAL vs MINOR flood priority", () => {
-    // CRITICAL flood severity → all flooding sources get CRITICAL_FLOODING priority
     const floods: FloodingSourceRecord[] = [makeFlood("COMP-1", 100), makeFlood("COMP-2", 500)];
-    const resultCritical = allocateDamageControl(
-      createDefaultControlResource(),
-      [],
-      floods,
-      3_000, // CRITICAL overall
-    );
-    // Both sources map to CRITICAL_FLOODING (idx 1), sorted by id ascending
+    const resultCritical = allocateDamageControl(createDefaultControlResource(), [], floods, 3_000);
     expect(resultCritical.allocations).toHaveLength(2);
     expect(resultCritical.allocations[0]!.targetId).toBe("COMP-1");
     expect(resultCritical.allocations[0]!.priority).toBe("CRITICAL_FLOODING");
     expect(resultCritical.allocations[1]!.targetId).toBe("COMP-2");
     expect(resultCritical.allocations[1]!.priority).toBe("CRITICAL_FLOODING");
 
-    // MINOR flood severity → all flooding sources get NON_CRITICAL_DEWATERING priority
-    const resultMinor = allocateDamageControl(
-      createDefaultControlResource(),
-      [],
-      floods,
-      100, // MINOR
-    );
+    const resultMinor = allocateDamageControl(createDefaultControlResource(), [], floods, 100);
     expect(resultMinor.allocations).toHaveLength(2);
     expect(resultMinor.allocations[0]!.priority).toBe("NON_CRITICAL_DEWATERING");
     expect(resultMinor.allocations[1]!.priority).toBe("NON_CRITICAL_DEWATERING");
   });
 
   it("low-intensity fire allocated after all higher priorities", () => {
-    const fires: FireSourceRecord[] = [
-      makeFire("FIRE-LOW", 500), // WEAPON_RESTORATION (idx 6)
-    ];
+    const fires: FireSourceRecord[] = [makeFire("FIRE-LOW", 500)];
     const floods: FloodingSourceRecord[] = [makeFlood("FLOOD-1", 400)];
     const result = allocateDamageControl(createDefaultControlResource(), fires, floods, 3_000);
-    // Floods (CRITICAL_FLOODING, idx 1) first, then fire (WEAPON_RESTORATION, idx 6)
     expect(result.allocations).toHaveLength(2);
     expect(result.allocations[0]!.priority).toBe("CRITICAL_FLOODING");
     expect(result.allocations[1]!.priority).toBe("WEAPON_RESTORATION");
@@ -501,11 +402,9 @@ describe("INC-7: allocateDamageControl — full cycles", () => {
     const fires: FireSourceRecord[] = [makeFire("DECK-1", 6_000)];
     const result = allocateDamageControl(defaultResources, fires, [], 0);
 
-    // Verify AllocationResult structure
     expect(result).toHaveProperty("allocations");
     expect(result).toHaveProperty("remainingResources");
 
-    // Verify DamageControlAllocation structure
     const alloc = result.allocations[0]!;
     expect(alloc).toHaveProperty("priority");
     expect(alloc).toHaveProperty("allocatedTeams");
@@ -514,7 +413,6 @@ describe("INC-7: allocateDamageControl — full cycles", () => {
     expect(alloc).toHaveProperty("targetId");
     expect(alloc).toHaveProperty("severity");
 
-    // Verify types
     expect(alloc.allocatedTeams).toBe(1);
     expect(alloc.allocatedPumping).toBe(0);
     expect(alloc.allocatedFirefighting).toBe(125);

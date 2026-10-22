@@ -3,20 +3,6 @@ import { compareCodePoints } from "@bluewave/deterministic";
 
 import type { ContentBundle } from "./index.js";
 
-/**
- * Machine-checked provenance reporting (CAH-PROV-2). The compiler validates a
- * `provenance`/`confidence` record on authored values; `content:check` uses this
- * report to tell a designer, per collection, how many values sit at each
- * confidence level, so what is still estimated or placeholder is visible
- * without reading YAML comments.
- *
- * One structural walk finds every provenance record in the bundle —
- * a record-level `provenance` and any nested one (a naval profile's industrial
- * profile, a component access entry, a dock, and so on) — and both the
- * confidence report and the placeholder release gate (`releaseGate.ts`) read it,
- * so the two can never disagree about what a bundle contains.
- */
-
 export { CONFIDENCE_LEVELS };
 export type ConfidenceLevel = (typeof CONFIDENCE_LEVELS)[number];
 
@@ -24,7 +10,6 @@ export interface ConfidenceCounts {
   readonly HIGH: number;
   readonly MEDIUM: number;
   readonly LOW: number;
-  /** Total provenance records found in the collection. */
   readonly total: number;
 }
 
@@ -38,29 +23,20 @@ export interface ConfidenceReport {
   readonly total: ConfidenceCounts;
 }
 
-/** One provenance record found in the bundle, with its owning collection and path. */
 export interface ProvenanceLocation {
   readonly collection: string;
   readonly recordId: string;
-  /** Field path within the record, e.g. `industrialProfile.provenance`. */
   readonly field: string;
   readonly confidence?: string;
   readonly sourceStatus?: string;
 }
 
-/** One bundle collection that can carry provenance, with its record id field. */
 export interface BundleCollectionSpec {
   readonly name: string;
   readonly idField: string;
   readonly of: (bundle: ContentBundle) => unknown;
 }
 
-/**
- * The bundle collections that can carry provenance, in fixed report order. The
- * ship-building `balance` mapping is opaque authored data (its provenance is not
- * a `ProvenanceSchema` record) and the manifest is loading metadata, so neither
- * is a confidence collection.
- */
 export const BUNDLE_COLLECTIONS: readonly BundleCollectionSpec[] = [
   { name: "rulesets", idField: "id", of: (b) => b.rulesets },
   { name: "nations", idField: "id", of: (b) => b.nations },
@@ -137,7 +113,6 @@ export const BUNDLE_COLLECTIONS: readonly BundleCollectionSpec[] = [
   { name: "campaign.diplomacy", idField: "id", of: (b) => b.campaign?.diplomacy },
 ];
 
-/** Every provenance record in the bundle, tagged with its collection, record and field. */
 export function collectProvenanceLocations(bundle: ContentBundle): ProvenanceLocation[] {
   const out: ProvenanceLocation[] = [];
   for (const spec of BUNDLE_COLLECTIONS) {
@@ -159,10 +134,6 @@ function recordIdOf(record: unknown, idField: string): string {
   return "";
 }
 
-/**
- * Recursively collects every object carrying a `provenance` record, tracking the
- * field path from the record root so a diagnostic can name where the value sits.
- */
 function walkProvenance(
   value: unknown,
   collection: string,
@@ -178,9 +149,6 @@ function walkProvenance(
   }
   if (!isRecord(value)) return;
   const provenance = value["provenance"];
-  // Only a CAH-PROV-1 record (which always carries `sourceStatus`/`confidence`) is a
-  // provenance location. A reference design's per-value provenance (ticket 39) uses a
-  // different shape under the same key, so it is skipped rather than mislabelled blank.
   if (
     isRecord(provenance) &&
     (typeof provenance["sourceStatus"] === "string" || typeof provenance["confidence"] === "string")
@@ -204,7 +172,6 @@ function walkProvenance(
   }
 }
 
-/** Counts each confidence level per collection and across the whole bundle. */
 export function countConfidence(bundle: ContentBundle): ConfidenceReport {
   const locations = collectProvenanceLocations(bundle);
   const collections: CollectionConfidence[] = [];

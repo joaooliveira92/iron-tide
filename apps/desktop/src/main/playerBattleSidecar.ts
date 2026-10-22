@@ -2,13 +2,6 @@ import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "nod
 import { join } from "node:path";
 import { Result, Schema } from "effect";
 
-/**
- * The mid-battle save sidecar (T-2, issue #221). A player-fought battle is a pure
- * function of its committed manifest and the ordered standing orders the player
- * gave, so the save is just that order log: resuming re-creates the session and
- * replays it. Like `pending-turn.json` it is never authoritative and never part
- * of a save envelope; a record for another turn or battle is ignored.
- */
 export const PLAYER_BATTLE_FILENAME = "player-battle.json";
 
 const nonEmpty = Schema.String.check(Schema.isMinLength(1));
@@ -37,7 +30,6 @@ export const PlayerBattleSaveSchema = Schema.Struct({
 export type PlayerBattleSave = typeof PlayerBattleSaveSchema.Type;
 export type PlayerBattleStep = typeof StepSchema.Type;
 
-/** Tolerant read: missing, corrupt or for another turn/battle -> null. */
 export function loadPlayerBattleSave(
   saveDir: string,
   expected: { readonly turnId: string; readonly battleId: string },
@@ -56,7 +48,6 @@ export function loadPlayerBattleSave(
   }
 }
 
-/** Atomic write (tmp file -> rename). */
 export function savePlayerBattle(saveDir: string, save: PlayerBattleSave): void {
   const path = join(saveDir, PLAYER_BATTLE_FILENAME);
   const tmpPath = `${path}.tmp`;

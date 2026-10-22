@@ -1,21 +1,3 @@
-/**
- * The P1 gun read path (ship-part-model SPM-R6, R13, R14, R16, R19, R20; proposal §9.2).
- * Additive and in memory only: production content, saves, visual YAML and every golden are
- * untouched, and the production pipeline stays on the legacy path.
- *
- * A reference design's gun placement becomes one **loadout entry** (the strict
- * `LoadoutEntrySchema` shape) in its zone's compatibility slot, with a nested `guns` entry —
- * `mountCount × gunsPerMount` = the legacy barrel count — and its quantities compile through
- * their declared basis (`partQuantities.ts`). The parts (`gunPartAdapter.ts`) are then turned
- * back into armament inputs for the existing `@bluewave/armament` resolver, so
- * `ResolvedArmament` and the compiled weapon contract equal the legacy path's for every
- * placement except the nine D17 identity paths (`mountType`, `mountId`).
- *
- * A placement that does not resolve is never dropped: it carries an `UnresolvedGunPlacement`
- * naming the design, placement, nation, family, parts and the reason. Today that is the
- * compatibility path — a nation with no first-class armament content resolves nothing in the
- * legacy compile either — and `useFirstClassArmament` carries that gate so P2 can drop it.
- */
 import {
   armamentNationId,
   armamentTechnologyId,
@@ -53,41 +35,26 @@ import { compatibilitySlotId } from "./partCompatibility.js";
 import { retirementMonthFromAvailableUntil } from "./partLifecycle.js";
 import { quantityLines, type QuantityLine } from "./partQuantities.js";
 
-/** One gun placement rendered in the new model (SPM-R6, R13, R14, R16). */
 export interface GunPlacementTranslation {
   readonly designId: string;
   readonly instanceId: string;
   readonly nationId: string;
   readonly familyId: string;
-  /** The legacy placement's barrels (its `params.barrels`, default 1). */
   readonly legacyBarrels: number;
-  /** The legacy resolved mount type, before any D17 reclassification. */
   readonly legacyResolvedMountType: GunMountType;
-  /** The legacy mount record id (the D18 old `mountId`). */
   readonly legacyMountId: string;
-  /** The canonical translated mount type. */
   readonly mountType: GunMountType;
   readonly mountCount: number;
   readonly gunsPerMount: number;
-  /** `mountCount × gunsPerMount` = the legacy barrel count. */
   readonly containedUnits: number;
-  /** Migration provenance only; never written to a part or an entry. */
   readonly disposition: TranslationDisposition | null;
   readonly mountPart: FlattenedGunMountPart;
   readonly gunPart: FlattenedGunPart;
-  /** The placement's one loadout entry: the mount in its zone slot, the guns nested. */
   readonly entry: LoadoutEntryData;
-  /** Every quantity component compiled at this entry's counts. */
   readonly quantities: readonly QuantityLine[];
-  /** The family's crew, volume or footprint formulas the part model could not carry (none today). */
   readonly quantityIssues: readonly QuantityReadIssue[];
 }
 
-/**
- * Translate one gun placement into its loadout entry (SPM-R20, §9.2). The mount type is the
- * one the legacy compile resolves (the model's first supported type, else `DECK_OPEN`).
- * Returns `null` when the family has no mount of that type.
- */
 export function translateGunPlacement(input: {
   readonly designId: string;
   readonly placement: PlacementSpec;
@@ -140,7 +107,6 @@ export function translateGunPlacement(input: {
       stationPermille: placement.stationPermille,
       ...(placement.side !== undefined ? { side: placement.side } : {}),
       ...(placement.magazineRef !== undefined ? { magazineEntry: placement.magazineRef } : {}),
-      // A nested entry's part units are its parent's contained units (SPM-R13).
       entries: {
         guns: [
           {
@@ -158,8 +124,6 @@ export function translateGunPlacement(input: {
     quantityIssues: mount.quantityIssues,
   };
 }
-
-// Compiling the entry back through the existing armament resolver (SPM-R16)
 
 function armamentGunModelFromPart(gun: GunPartRecord): ArmamentGunModel {
   const { part } = gun;
@@ -191,8 +155,6 @@ function armamentGunModelFromPart(gun: GunPartRecord): ArmamentGunModel {
     introductionMonth: part.lifecycle.availableFrom,
     retirementMonth: retirementMonthFromAvailableUntil(part.lifecycle.availableUntil),
     requiredTechnologyIds: (part.lifecycle.requires ?? []).map(armamentTechnologyId),
-    // `supportedMountTypes` is intentionally absent: the mount type belongs to the mount
-    // part and its slot, not the gun, so a D17 battery resolves cleanly.
     provenance: part.provenance,
   };
 }
@@ -240,31 +202,21 @@ function armamentMountFromPart(
   };
 }
 
-/** Why a gun placement produced no `ResolvedArmament`. */
 export type UnresolvedGunPlacementCode =
-  /** No gun model (national or family-derived) for the nation and family. */
   | "PART_READ_PATH_NO_GUN_MODEL"
-  /** The family has no mount of the type the legacy compile resolves. */
   | "PART_READ_PATH_NO_MOUNT"
-  /** The nation has no first-class armament content; the legacy compile resolves none either. */
   | "PART_READ_PATH_NO_FIRST_CLASS_ARMAMENT"
-  /** The nation has first-class content but no ammunition pattern for the family. */
   | "PART_READ_PATH_NO_AMMUNITION"
-  /** The armament resolver returned BLOCKING findings. */
   | "PART_READ_PATH_RESOLVER_BLOCKED";
 
-/** A deterministic, actionable record of one placement that did not resolve. */
 export interface UnresolvedGunPlacement {
   readonly designId: string;
   readonly instanceId: string;
   readonly nationId: string;
   readonly familyId: string;
-  /** The gun part read for the placement, when one was. */
   readonly gunPart: string | null;
-  /** The mount part translated for the placement, when one was. */
   readonly mountPart: string | null;
   readonly code: UnresolvedGunPlacementCode;
-  /** The BLOCKING resolver finding codes, codepoint-ordered (only for `RESOLVER_BLOCKED`). */
   readonly blockingCodes: readonly string[];
   readonly message: string;
 }
@@ -280,11 +232,9 @@ export interface ResolveGunPlacementInput {
   readonly month: string;
   readonly unlockedTechnologyIds: ReadonlySet<string>;
   readonly componentAccess: Readonly<Record<string, ArmamentAccessStatus>>;
-  /** The legacy gate: a nation with no first-class armament resolves nothing (P1 only). */
   readonly useFirstClassArmament: boolean;
 }
 
-/** Exactly one of `resolved` and `unresolved` is non-null. */
 export interface ResolvedGunPlacement {
   readonly translation: GunPlacementTranslation | null;
   readonly resolved: ResolvedArmament | null;
@@ -293,12 +243,6 @@ export interface ResolvedGunPlacement {
   readonly unresolved: UnresolvedGunPlacement | null;
 }
 
-/**
- * Compile one gun placement through its loadout entry and the existing armament resolver
- * (SPM-R16). The armament inputs are rebuilt from the parts — the gun model from the `gun`
- * part, the mount from the `gun_mount` part at the translated gun count — so the result
- * matches the legacy resolver for every placement except the nine D17 identity paths.
- */
 export function resolveGunPlacementThroughParts(
   input: ResolveGunPlacementInput,
 ): ResolvedGunPlacement {
@@ -406,7 +350,6 @@ export function resolveGunPlacementThroughParts(
   };
 }
 
-/** Unresolved placements in a stable order: design, then placement (codepoint). */
 export function sortUnresolvedGunPlacements(
   list: readonly UnresolvedGunPlacement[],
 ): UnresolvedGunPlacement[] {

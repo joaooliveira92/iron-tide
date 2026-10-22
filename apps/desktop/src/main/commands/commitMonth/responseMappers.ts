@@ -7,12 +7,6 @@ import type { DomainEventBody, DomainEventEnvelope } from "@bluewave/events";
 import type { LedgerTransaction } from "@bluewave/phase-engine";
 import type { RandomDecision } from "@bluewave/random";
 
-/**
- * Pure adapters from the engine's month-result ledgers to the flat, wire-safe
- * shapes `CommitMonthResponse` exposes to the renderer. No engine state is
- * read or mutated here — each function just projects its argument.
- */
-
 export function sumByCategory(
   entries: readonly LedgerTransaction[],
   categoryIds: readonly string[],
@@ -31,7 +25,6 @@ export function toFinancialLedgerEntries(
     phase: entry.phaseId,
     amount: Number(entry.newBalance) - Number(entry.previousBalance),
     runningBalance: Number(entry.newBalance),
-    // Outflows carry what was asked for and what was left unpaid (spec #138); the paid figure is the debit.
     ...(entry.requested === undefined
       ? {}
       : { requested: Number(entry.requested), shortfall: Number(entry.shortfall ?? 0) }),

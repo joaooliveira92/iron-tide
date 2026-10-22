@@ -1,5 +1,3 @@
-// SB-3/INC-5c (ADR-0135): a nation's materialised dock limits survive the save/load boundary. The dock enters
-// campaign state so dock expansion can mutate it; this pins the round-trip through the real SaveStore.
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

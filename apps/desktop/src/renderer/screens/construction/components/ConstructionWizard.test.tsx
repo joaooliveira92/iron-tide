@@ -45,27 +45,21 @@ describe("ConstructionWizard", () => {
         onConfirm: () => {},
       }),
     );
-    // design summary: className, shipType, year, mass, speed, machineryType
     expect(html).toContain("Majestic");
     expect(html).toContain("battleship");
     expect(html).toContain("1894");
     expect(html).toContain("16,000");
     expect(html).toContain("kt");
     expect(html).toContain("coal_vte");
-    // dock requirement
     expect(html).toContain("capacity units required");
     expect(html).toContain("16");
-    // total projected cost: construction_order_v1, 16000/100 = 160
     expect(html).toContain("160");
     expect(html).toContain("construction_order_v1");
-    // reservation impact
     expect(html).toContain("Treasury reserved");
     expect(html).toContain("Capacity reserved");
-    // no ship naming, no completion time
     expect(html.toLowerCase()).not.toContain("ship-name");
     expect(html.toLowerCase()).not.toContain("completion time");
     expect(html.toLowerCase()).not.toContain("months to complete");
-    // confirm button
     expect(html).toContain("Confirm order");
   });
 
@@ -97,7 +91,6 @@ describe("ConstructionWizard", () => {
     expect(html).toMatch(/>11 NC(<!-- -->)? treasury units/);
     expect(html).toContain("priced by the ship-design cost model");
     expect(html).not.toContain("construction_order_v1");
-    // not the displacement formula (2,037 t / 100 = 20)
     expect(html).not.toMatch(/>20 NC(<!-- -->)? treasury units/);
   });
 

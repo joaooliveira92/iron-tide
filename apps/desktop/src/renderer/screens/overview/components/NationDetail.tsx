@@ -1,9 +1,5 @@
 import type { NationRailRow } from "../nation-rail-state.js";
 
-/**
- * The selected nation's relation detail, shown inline under the rail's list
- * (there is no nation drawer; see NationRail's selection note).
- */
 export function NationDetail({ selected }: { readonly selected: NationRailRow }) {
   return (
     <div className="rounded-md border px-3 py-2" data-testid="nation-rail-detail">

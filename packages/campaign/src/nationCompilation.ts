@@ -1,6 +1,3 @@
-// Campaign-compile stage: materialize nation aggregates (identity, economy,
-// fleets/ships, research, construction projects, officer roster) plus the
-// playable/AI slot list, from the content pack + authored campaign files.
 import type { ContentPack } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -51,11 +48,6 @@ function isNationPlayable(
   return flag;
 }
 
-/**
- * Read a nation's authored starting prestige against the ruleset bounds. A missing, non-integer,
- * unsafe or out-of-range value is a named diagnostic naming the nation, never a default. On error
- * the returned value is a placeholder: the raised error stops the compile, so it is never output.
- */
 function readNationPrestige(
   nationId: string,
   authored: unknown,
@@ -100,14 +92,12 @@ function readNationPrestige(
 }
 
 interface EconomyRow {
-  /** False when the row was missing or invalid: the error is already raised, so downstream diagnostics are skipped. */
   valid: boolean;
   treasury: SafeInt;
   income: SafeInt;
   expenses: SafeInt;
 }
 
-/** Read a nation's authored economy row; a missing row or an invalid value is an error, never a silent default. */
 function readEconomyRow(
   economiesData: unknown[],
   nationId: string,
@@ -142,11 +132,6 @@ function readEconomyRow(
   };
 }
 
-/**
- * Issue #142: the derived gross monthly revenue at the start rate must be at least one treasury unit. At the 2000 bp start
- * rate it equals the validated `income` (>= 1), so this guards the start-rate / base derivation against a future change. It reads
- * the canonical integer calculator, ignores outflows and the nation's name, and is a compile-time rule, never a runtime one.
- */
 export function checkStartRevenue(
   nationId: string,
   base: SafeInt,
@@ -329,7 +314,6 @@ export function buildNationStates(
   const nations = new Map<string, NationState>();
   let structuralDeficits = 0;
 
-  // sort nations by canonical id for deterministic Map insertion / rawHash
   const sortedNations = [...(pack.nations ?? [])].sort((a, b) => {
     const aId = toStr((a as Record<string, unknown>)["id"], "");
     const bId = toStr((b as Record<string, unknown>)["id"], "");
@@ -356,7 +340,6 @@ export function buildNationStates(
     const economy = readEconomyRow(economiesData, id, collector);
     const { treasury, income, expenses, valid: economyValid } = economy;
     const startRate = SafeInt(START_APPROPRIATION_RATE_BP);
-    // Spec #138: the economic base is a derived annual stock set once here; authored income is a start-state input only.
     const baseFits = incomeFitsEconomicBase(income);
     if (income > 0 && !baseFits) {
       collector.addError(
@@ -455,7 +438,6 @@ export function buildSlots(nations: Map<string, NationState>): CampaignSlot[] {
   for (const [id, nation] of nations) {
     slots.push({ nationId: id, type: nation.isPlayable ? "playable" : "ai" });
   }
-  // deterministic: alphabetical nationId order regardless of file insertion order
   slots.sort((a, b) => a.nationId.localeCompare(b.nationId));
   return slots;
 }

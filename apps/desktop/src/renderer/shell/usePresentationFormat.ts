@@ -7,13 +7,6 @@ import {
 import { useCurrencyDisplayMode, usePreferences } from "../lib/preferences-context.js";
 import { useActiveCampaignCurrencyContext } from "./CampaignShellContext.js";
 
-/**
- * The presentation format bound to the player's preferences and the active
- * campaign's effective currency mode (ADR-0218). Components and pure view models
- * render through the returned `PresentationFormat`; nothing formats money or a
- * number by hand. Used outside a campaign (tests, previews) it resolves to the
- * defaults and Naval Credits, exactly as the shell would with no nation open.
- */
 export function usePresentationFormat(): PresentationFormat {
   const { preferences } = usePreferences();
   const context = useActiveCampaignCurrencyContext();

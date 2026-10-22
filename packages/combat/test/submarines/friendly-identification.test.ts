@@ -46,7 +46,6 @@ describe("AC-16: friendly identification (§23)", () => {
       fatigueModifierBp: SafeInt(500),
       identificationQualityBp: SafeInt(0),
     });
-    // 500 + 9000 + 1000 + 500 + 500 - 0 = 11_500, clamped to 10_000
     expect(result).toBe(10_000);
   });
 

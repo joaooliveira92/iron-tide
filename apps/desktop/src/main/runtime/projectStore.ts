@@ -1,6 +1,3 @@
-// The campaign save package (`SaveStore`) + the app-owned session sidecar, as one
-// service (INC-3; ADR-0159). Owns every persistence seam: save/load/list/
-// integrity, the per-save month input, and the session sidecar.
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
 import { createEnvelope } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -32,7 +29,6 @@ function failure(reason: string, error: unknown): CommandFailed {
   });
 }
 
-/** Atomic (`tmp` + rename) sidecar write, matching `SaveStore`'s pointer publish. */
 function writeSessionMetadata(saveDir: string, metadata: SessionMetadata): void {
   const target = join(saveDir, SESSION_METADATA_FILENAME);
   const tmp = `${target}.tmp`;
@@ -40,7 +36,6 @@ function writeSessionMetadata(saveDir: string, metadata: SessionMetadata): void 
   renameSync(tmp, target);
 }
 
-/** `null` when the sidecar is missing or fails schema/structure validation. */
 function readSessionMetadata(saveDir: string): SessionMetadata | null {
   const target = join(saveDir, SESSION_METADATA_FILENAME);
   if (!existsSync(target)) return null;
@@ -64,10 +59,6 @@ export interface CopyTargetProblem {
   readonly message: string;
 }
 
-/**
- * `path` resolved the way the filesystem will see it: symlinks followed on the part that
- * exists, so two spellings of one folder compare equal and a symlink cannot hide a nested path.
- */
 function canonicalPath(path: string): string {
   let existing = resolve(path);
   const rest: string[] = [];
@@ -80,11 +71,6 @@ function canonicalPath(path: string): string {
   return join(existsSync(existing) ? realpathSync(existing) : existing, ...rest);
 }
 
-/**
- * Why `target` is not a safe place for a copy of the package at `source`, or null
- * when it is (a copy must land in a new/empty folder, never inside/around the
- * source, never on another campaign's package).
- */
 function assessCopyTarget(source: string, target: string): CopyTargetProblem | null {
   const from = canonicalPath(source);
   const to = canonicalPath(target);
@@ -128,11 +114,6 @@ export class ProjectStore extends Context.Service<
       state: CampaignState,
       saveDir: string,
     ) => Effect.Effect<boolean, CommandFailed>;
-    /**
-     * The full `SaveStore.save` surface: optional `extras` carry the month
-     * input beside the save, and the resulting `SaveMetadata` (save id +
-     * timestamp) is returned so callers can build the derived monthly report.
-     */
     readonly save: (
       state: CampaignState,
       saveDir: string,
@@ -162,18 +143,10 @@ export class ProjectStore extends Context.Service<
       saveDir: string,
       metadata: SessionMetadata,
     ) => Effect.Effect<void, CommandFailed>;
-    /** Why `target` is unsafe for a copy of the package at `source`, or `null`. */
     readonly assessCopyTarget: (
       source: string,
       target: string,
     ) => Effect.Effect<CopyTargetProblem | null, CommandFailed>;
-    /**
-     * The authoritative construction-mutation seam: apply `mutate` to the
-     * session's snapshot, recompute the envelope + save hash, persist via the
-     * `SaveStore`, and return the next `CampaignState` for the caller to
-     * re-register. A save failure yields `SAVE_FAILED` with the session
-     * untouched (`commitMonth`'s exact pattern).
-     */
     readonly persistConstructionSnapshot: (
       record: CampaignSessionRecord,
       mutate: (snapshot: CampaignSnapshot) => CampaignSnapshot,

@@ -124,12 +124,6 @@ export function getFireModeDefinition(mode: FireMode): FireModeDefinition {
   return FIRE_MODE_DEFINITIONS[mode];
 }
 
-// AC-2 firing guard. Holds the state invariant, then evaluates the mode's
-// eligibility. Deferred predicates (RAPID / AA_TRACKING / AA_BARRAGE) are REPORTED
-// via GUNNERY_ELIGIBILITY_PREDICATE_DEFERRED — never fabricated. Implemented surface
-// modes require a fire-control solution at/above SURFACE_FIRE_CONTROL_MINIMUM_BP
-// (GUNNERY_FIRE_CONTROL_SOLUTION_INSUFFICIENT). CEASE_FIRE is intentionally a
-// no-fire mode and passes trivially.
 export function assertFireModeEligible(mode: FireMode, state: GunneryState): void {
   assertFixedPointGunnery(state);
   assertFireModeClosed(mode);

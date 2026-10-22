@@ -12,7 +12,6 @@ interface DomainEventsSectionProps {
   readonly events: readonly DomainEvent[];
 }
 
-/** The month's domain events, straight from the commit response. */
 export function DomainEventsSection({ events }: DomainEventsSectionProps) {
   return (
     <AccordionItem value="events">

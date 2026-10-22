@@ -1,12 +1,3 @@
-// B-6 INC-3 (AC-8): the battle_resolution phase (month.ts order 8) routes
-// manifest-carrying battles through @bluewave/combat's deterministic
-// `resolveBattleAuto` (INC-2) and applies the result to the campaign — the
-// UNCHANGED A-3 `applyBattleResult` on the decided path, per-ship damage/loss,
-// reservation clearing, and `BattleInstance.result` recording. Manifest-less
-// battles keep the M1 `BattleResolver` strength path exactly as today.
-// Fail-closed: missing manifest / missing committed weather -> stable
-// diagnostic; never a crash, never a partial mutation.
-
 import type { CampaignSnapshot, Ship } from "@bluewave/campaign";
 import {
   BATTLE_AUTO_RESOLUTION_FAILED,
@@ -29,8 +20,7 @@ import {
   makeShip,
 } from "./battle-fixtures.js";
 
-const MONTH = "1880-02"; // start 1880-01 + turn 1 (DESIGN-03 §2)
-// The manifest `resolveBattleAuto` consumes (combat generation shape).
+const MONTH = "1880-02";
 type AutoResolutionManifest = Parameters<typeof resolveBattleAuto>[0]["manifest"];
 
 function runMonth(snapshot: CampaignSnapshot) {
@@ -39,8 +29,6 @@ function runMonth(snapshot: CampaignSnapshot) {
   return { collector, result };
 }
 
-/** Re-run the exact tactical auto-resolution the phase must have used, with
- *  the committed manifest + weather and the pristine input nations. */
 function directAutoResult(snapshot: CampaignSnapshot, final: CampaignSnapshot) {
   const manifest = final.wars.battleManifests[0]!;
   const weather = (final.strategicWeather ?? []).find((s) => s.areaId === manifest.areaId)!;
@@ -90,8 +78,6 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
     expect(battle.phase).toBe("resolved");
     expect(battle.manifestHash).toBeTruthy();
 
-    // The phase must have used exactly the deterministic tactical result
-    // (same manifest + committed weather + pristine input ships).
     const direct = directAutoResult(snapshot, result.finalSnapshot);
     expect(battle.result).toBeDefined();
     expect(battle.result!.winnerId).toBe(direct.winnerId);
@@ -101,8 +87,6 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
     expect(battle.result!.defenderLosses).toEqual([...direct.defenderSunkIds].sort());
 
     if (direct.winnerId !== null && direct.loserId !== null) {
-      // Decided path: A-3 applyBattleResult semantics (ADR-0010) — the winner
-      // side gains war score, the loser side loses it.
       const scores = warScores(result.finalSnapshot);
       const winnerSide = direct.winnerId === battle.attackerId ? "attacker" : "defender";
       const winnerScore = winnerSide === "attacker" ? scores.attacker : scores.defender;
@@ -110,7 +94,6 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
       expect(winnerScore).toBeGreaterThan(0);
       expect(loserScore).toBeLessThan(0);
     } else {
-      // (Not expected for the armed fixture, but the tie path must be silent.)
       const scores = warScores(result.finalSnapshot);
       expect(scores.attacker).toBe(0);
       expect(scores.defender).toBe(0);
@@ -119,10 +102,6 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
   });
 
   it("a time_limit / tie battle (no viable elimination): NO war score change, damage applied (clamped), result recorded with null winner, reservations cleared", () => {
-    // Unarmed ships (no main battery -> nothing lethal): the deterministic
-    // auto-resolution runs the full 360-minute duration to `time_limit` with
-    // null winner/loser (ADR-0026 §7). inBattleId is pre-set on every ship
-    // (the B-1 reservation contract) and must be cleared by the phase.
     const unarmed = makeDesign("dv-unarmed", ATTACKER_NATION, { guns: 0, caliberUm: 0 });
     const attackerShips = [
       makeShip("g1", "dv-unarmed", ATTACKER_NATION, { firepower: 0, inBattleId: "battle-tl" }),
@@ -152,13 +131,10 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
     expect(battle.result!.winnerId).toBeNull();
     expect(battle.result!.loserId).toBeNull();
 
-    // No victory classification / no contribution: war score untouched.
     const scores = warScores(result.finalSnapshot);
     expect(scores.attacker).toBe(0);
     expect(scores.defender).toBe(0);
 
-    // Damage application ran (zero loss -> hp unchanged), no sunk removals,
-    // and every reservation is cleared after the battle.
     for (const ship of allShips(result.finalSnapshot)) {
       expect(ship.hitPoints).toBe(SafeInt(100));
       expect(ship.inBattleId).toBeUndefined();
@@ -184,7 +160,7 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
       attackerShips,
       defenderShips,
       designs: new Map(),
-      battles: [makeBattle({ id: "battle-m1" })], // no manifestHash
+      battles: [makeBattle({ id: "battle-m1" })],
       manifests: [],
     });
 
@@ -194,18 +170,8 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
     const battle = result.finalSnapshot.wars.battles.find((b) => b.id === "battle-m1")!;
     expect(battle.phase).toBe("resolved");
     expect(battle.result).toBeDefined();
-    // The M1 strength resolver always decides.
     expect(battle.result!.winnerId).toBeTruthy();
     expect(battle.result!.loserId).toBeTruthy();
-    // Fixed-point lock (BW-DET-001, map D4/D5). Two identical 480-strength
-    // fleets (fp 200, armour 12, hp 100 each). Through the month-executor seam the
-    // keyed campaign seed `CAMPAIGN_SEED` draws attacker 14 / defender 71 on the
-    // domain `combat:resolve:battle-m1`, i.e. factors 6400 bp / 12100 bp and
-    // W = 5_808_000 >= L = 3_072_000. The exact damage ratio is
-    // (W-L)/(2W) = 2_736_000/11_616_000 = 0.2355…: floor(100·ratio) = 23 damage
-    // per loser ship, and the ~23.55% sink threshold: g1's roll 25 survives, g2's
-    // roll 9 sinks. All integer/bigint arithmetic, so these values are exact and
-    // stable; any float regression or unit drift moves them visibly.
     expect(battle.result!.winnerId).toBe(DEFENDER_NATION);
     expect(battle.result!.loserId).toBe(ATTACKER_NATION);
     expect(battle.result!.defenderLosses).toEqual([]);
@@ -233,12 +199,10 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
 
     const { collector, result } = runMonth(snapshot);
 
-    // Stable diagnostic; the battle is NOT resolved (no partial/silent result).
     expect(collector.errors.some((d) => d.code === BATTLE_AUTO_RESOLUTION_FAILED)).toBe(true);
     const battle = result.finalSnapshot.wars.battles.find((b) => b.id === "battle-ghost")!;
     expect(battle.phase).toBe("pending");
     expect(battle.result).toBeUndefined();
-    // Nothing else mutated: war score untouched, ships untouched (hp + reservation).
     expect(warScores(result.finalSnapshot)).toEqual({ attacker: 0, defender: 0 });
     expect(result.finalSnapshot.wars.wars).toEqual(snapshot.wars.wars);
     expect(allShips(result.finalSnapshot)).toEqual(allShips(snapshot));
@@ -257,8 +221,6 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
       battleId: "battle-nw",
       persistentAssets: ["g1", "g2", "f1", "f2"],
     });
-    // The battle area is NOT in the world -> weather_generation commits nothing
-    // for it -> the auto path fails closed at the weather gate.
     const snapshot = makeBattleSnapshot({
       attackerShips,
       defenderShips,
@@ -272,8 +234,6 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
     expect(collector.errors.some((d) => d.code === INVALID_BATTLE_WEATHER_INITIALIZATION)).toBe(
       true,
     );
-    // The battle resolves COMPLETELY via the accepted legacy path (never a
-    // partial tactical application): result present, decided, war score moved.
     const battle = result.finalSnapshot.wars.battles.find((b) => b.id === "battle-nw")!;
     expect(battle.phase).toBe("resolved");
     expect(battle.result).toBeDefined();
@@ -281,8 +241,6 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
     expect(battle.result!.loserId).toBeTruthy();
     const scores = warScores(result.finalSnapshot);
     expect(scores.attacker !== 0 || scores.defender !== 0).toBe(true);
-    // No tactical mutation leaked in: legacy resolution does not damage/remove
-    // ships and does not clear reservations (M1 path unchanged).
     for (const ship of allShips(result.finalSnapshot)) {
       expect(ship.hitPoints).toBe(SafeInt(100));
       expect(ship.inBattleId).toBe("battle-nw");
@@ -290,12 +248,6 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
   });
 
   it("a mid-try auto-resolution THROW fails closed: stable machine code + complete M1 legacy fallback (no partial tactical mutation)", () => {
-    // The manifest is present AND the battle area has committed weather, so the
-    // phase reaches the `resolveBattleAuto` try block. But the promoted ships'
-    // designs are MISSING from the snapshot -> projectBattle throws
-    // TACTICAL_UNIT_PROMOTION_INVALID (a stable context code) inside the try.
-    // The phase must fall back COMPLETELY to the M1 strength path and emit the
-    // real machine code, never a partial tactical mutation.
     const attackerShips = [
       makeShip("g1", "dv-missing-att", ATTACKER_NATION, {
         firepower: 200,
@@ -320,7 +272,6 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
       battleId: "battle-mid",
       persistentAssets: ["g1", "g2", "f1", "f2"],
     });
-    // designs map omits dv-missing-* -> promotion throws inside the try.
     const snapshot = makeBattleSnapshot({
       attackerShips,
       defenderShips,
@@ -331,15 +282,9 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
 
     const { collector, result } = runMonth(snapshot);
 
-    // The emitted code must be the real machine code from the error context
-    // (not a freeform message), with BATTLE_AUTO_RESOLUTION_FAILED only as a
-    // last resort — proving the reviewer-fixed code path.
     expect(collector.errors.some((d) => d.code === "TACTICAL_UNIT_PROMOTION_INVALID")).toBe(true);
     expect(collector.errors.some((d) => d.code === BATTLE_AUTO_RESOLUTION_FAILED)).toBe(false);
 
-    // COMPLETE legacy fallback: battle resolved (decided), no partial tactical
-    // mutation (legacy path never damages/removes ships nor clears
-    // reservations).
     const battle = result.finalSnapshot.wars.battles.find((b) => b.id === "battle-mid")!;
     expect(battle.phase).toBe("resolved");
     expect(battle.result).toBeDefined();

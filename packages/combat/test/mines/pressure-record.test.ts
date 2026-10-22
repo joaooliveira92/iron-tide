@@ -1,8 +1,3 @@
-// AC-1 (INC-2): DESIGN-35 §1 AreaMinePressureRecord — the full §1 field set
-// round-trips, zero pressure is PRESENCE-OF-NO-RECORD (isActivePressure), the
-// record hash is deterministic (same input -> same 64-hex hash, changes when
-// any field changes), and an invalid pressure (0, 1_000_001, negative,
-// non-integer) fails with INVALID_MINE_PRESSURE_STATE.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import {

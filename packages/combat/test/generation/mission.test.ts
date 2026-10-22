@@ -65,9 +65,6 @@ describe("mission registry (AC-4)", () => {
   });
 
   it("deferred mission types have registered definitions but are unreachable (AC-14)", () => {
-    // Every non-reachable type is registered (no UNSUPPORTED_CONTENT_REACHABLE
-    // possible because its opportunity predicate references an absent owning
-    // mechanic => deterministic successful-empty records).
     const reachable = REACHABLE_MISSION_SUBSET_V1;
     const all = new Set(BATTLE_MISSION_TYPES);
     const deferred = [...all].filter((t) => !reachable.has(t));

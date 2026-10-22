@@ -21,7 +21,6 @@ interface SubmarinePoolsSectionProps {
   readonly pools: readonly SubmarinePool[];
 }
 
-/** Submarine deployments available per nation for the current theater. */
 export function SubmarinePoolsSection({ pools }: SubmarinePoolsSectionProps) {
   return (
     <AccordionItem value="subs">

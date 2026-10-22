@@ -1,18 +1,3 @@
-/**
- * The production draft cut-over (ship-part-model ticket 17a, SPM-R18/R20/R24/R25/R26).
- *
- * A player design is persisted as a `DesignDraft` only — it carries no committed loadout. This
- * module is the forward adapter that turns such a draft into the parts representation
- * (`DesignHeaderData` + `LoadoutData` + mount-count ranges + the referenced parts), reusing the
- * read-path adapters, and the production entry point that compiles it through the same parts
- * barrier as the reference designs (`compileDesignFromLoadout`). Nothing here reads
- * `ctx.catalogue` for a placement: the catalogue is legacy and the parts are authoritative.
- *
- * The loadout references the pack's complete parts, looked up by the id each adapter resolves;
- * the adapters only decide *which* part a placement uses, never what it contains. The
- * round-trip test proves a draft compiles byte-identically through this barrier and through the
- * legacy `compileDesign`.
- */
 import type {
   DesignHeaderData,
   FlattenedPart,
@@ -56,50 +41,31 @@ const WEAPON_GUN: ReadonlySet<string> = new Set([
   "AA_WEAPON",
 ]);
 
-/**
- * Everything the forward adapter reads, passed in so the adapter performs no I/O. A production
- * pack exposes one through `ShipBuildingContent.draftCompileContent`; a fixture builds one from
- * the same inputs the equivalence harness uses.
- */
 export interface DraftCompileContent {
   readonly components: readonly ComponentDef[];
   readonly plants: readonly PropulsionPlant[];
   readonly navalProfiles: readonly NationNavalProfile[];
   readonly armament: AuthoredArmamentContent;
   readonly armour: Pick<ArmourBalance, "materialEffBp" | "materialAvailability">;
-  /** The compatibility slots the design's placements file into. */
   readonly compatibility: CompatibilityModel;
-  /** The structured diameter (µm) of a torpedo model, for the launcher read path. */
   readonly torpedoDiameterUm: (torpedoModelId: string) => number | undefined;
-  /** The pack's complete parts: the loadout references these, not the adapters' records. */
   readonly parts: readonly FlattenedPart[];
 }
 
-/** A placement or design fact that could not be translated to a part, with its reason. */
 export interface DraftTranslationIssue {
   readonly code: string;
-  /** `<design>[.<placement-or-fact>][.<field>]`. */
   readonly path: string;
   readonly message: string;
 }
 
-/** A draft's parts representation: the header, the loadout, its count ranges and referenced parts. */
 export interface DraftLoadout {
   readonly header: DesignHeaderData;
   readonly loadout: LoadoutData;
   readonly mountCountRanges: FitMountCountRanges;
-  /** The distinct parts the loadout references, codepoint-ordered by id. */
   readonly parts: readonly FlattenedPart[];
-  /** Empty when every placement translated; otherwise the typed failures (never a silent drop). */
   readonly untranslated: readonly DraftTranslationIssue[];
 }
 
-/**
- * Turn a design draft into its parts loadout: one entry per placement, machinery plan and armour
- * region, with the mount-count ranges the legacy count parameters carry and the distinct parts
- * the entries reference. A placement the adapters cannot translate is recorded in `untranslated`;
- * the loadout only carries the entries that did translate.
- */
 export function draftToLoadout(input: {
   readonly designId: string;
   readonly draft: DesignDraft;
@@ -142,7 +108,6 @@ export function draftToLoadout(input: {
   const untranslated: DraftTranslationIssue[] = [];
   const at = (instanceId: string, field: string) =>
     `${designId}.${instanceId}${field === "" ? "" : `.${field}`}`;
-  /** The pack's complete part an adapter resolved, or a typed missing-part issue. */
   const reference = (id: string, path: string): FlattenedPart | null => {
     const part = production.get(id);
     if (part === undefined) {
@@ -178,8 +143,6 @@ export function draftToLoadout(input: {
       }
       const launcher = reference(r.translation.launcherPart.id, at(placement.instanceId, "part"));
       if (launcher === null) continue;
-      // The resolver compiles the torpedo a launcher loads, so the loadout depends on that part
-      // even though no entry references it directly.
       const loaded =
         launcher.family === "torpedo_launcher" ? launcher.spec.loadsTorpedo : undefined;
       if (loaded !== undefined && reference(loaded, at(placement.instanceId, "torpedo")) === null) {
@@ -214,8 +177,6 @@ export function draftToLoadout(input: {
         });
         continue;
       }
-      // A central battery is already canonical; every other multi-gun mount is cut from its
-      // legacy record by gun count, exactly as the part catalogue names it.
       const mountId =
         t.disposition !== null ? t.mountPart.id : mountPartIdFor(t.legacyMountId, t.gunsPerMount);
       const mount = reference(mountId, at(placement.instanceId, "part"));
@@ -279,7 +240,6 @@ export function draftToLoadout(input: {
   };
 }
 
-/** The production compile outcome of one draft: the same three states the barrier has, plus translation. */
 export type DraftCompileResult =
   | {
       readonly status: "ACCEPTED";
@@ -311,16 +271,6 @@ function blocking(id: string, message: string, path: string): Finding {
   };
 }
 
-/**
- * Compile a draft through the parts barrier: `draft → loadout → compileDesignFromLoadout`. A
- * placement the forward adapter cannot translate yields `UNTRANSLATED` with blocking diagnostics;
- * otherwise the fit decides whether `compileDesign` runs, and an `ACCEPTED` result carries the
- * same `CompiledDesign` the legacy path would (including its own findings and `valid` flag).
- *
- * The technology set defaults to `input.ctx.unlockedTechs` (the legacy `compileDesign` gate), so
- * the barrier is never looser than the legacy path on the technology axis; an explicit
- * `unlockedTechnologies` still wins.
- */
 export function compileDraftFromParts(input: {
   readonly designId: string;
   readonly draft: DesignDraft;
@@ -375,13 +325,6 @@ export function compileDraftFromParts(input: {
   return result;
 }
 
-/**
- * The legacy `compileDesign` view of a barrier result, so a call site that branched on
- * `compiled.valid` / `compiled.findings` keeps reading the same way. `valid` is the *compiled
- * design's* validity, not the fit's verdict: the barrier accepting a loadout does not make a
- * design buildable (displacement and stability still reject one). An `UNTRANSLATED` result is a
- * rejection with its diagnostics, never a silent pass.
- */
 export type LegacyCompileView =
   | {
       readonly valid: true;

@@ -107,7 +107,6 @@ function main(argv: readonly string[]): number {
   }
   if (command === "verify" && target !== undefined) {
     const text = readFileSync(resolve(target), "utf8");
-    // Straight-through and save/load/continue must both reproduce the recorded checkpoints.
     for (const [label, options] of [
       ["", {}],
       [" (save/load round trip)", { roundTrip: {} }],

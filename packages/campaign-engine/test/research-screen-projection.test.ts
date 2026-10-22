@@ -74,9 +74,6 @@ describe("buildResearchScreenProjection", () => {
   });
 
   it("exposes the canonical DESIGN-20 research-field registry for the desktop slice", () => {
-    // The engine's SetResearchPriority validation requires every canonical
-    // field present with one of the DESIGN-20 weights, so the desktop payload
-    // must validate against the same authoritative source (DESIGN-20 §1/§5).
     expect(CANONICAL_RESEARCH_FIELD_IDS).toContain("HULL_CONSTRUCTION");
     expect(CANONICAL_RESEARCH_FIELD_IDS.length).toBeGreaterThan(10);
     expect(RESEARCH_FIELD_PRIORITY_WEIGHTS).toEqual({ HIGH: 4, MEDIUM: 2, LOW: 1 });

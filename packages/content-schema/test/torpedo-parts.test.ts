@@ -3,11 +3,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { FlattenedPartSchema, PartSchema } from "../src/index.js";
 import { decodeIssue, decodeOk } from "./decode-helpers.js";
 
-/**
- * The torpedo part contract (ship-part-model ticket 13a, SPM-R17). The expectations come from
- * the proposed field list and the closed vocabularies, not from the schema code.
- */
-
 const provenance = {
   sourceStatus: "VERIFIED",
   confidence: "HIGH",

@@ -7,7 +7,7 @@ const bal: TertiaryBalance = {
   shellNanoKgPerMm3: 20_000,
   bearingBp: 5_000,
 };
-const SIX_PDR = 57_000; // micrometres
+const SIX_PDR = 57_000;
 const THREE_IN = 76_200;
 
 describe("expandTertiary (#168 step 4b, ADR-0233)", () => {
@@ -38,9 +38,7 @@ describe("expandTertiary (#168 step 4b, ADR-0233)", () => {
     expect(big.broadsideKg).toBeGreaterThan(small.broadsideKg);
   });
   it("matches a hand calculation for a 57 mm gun (balance-target coefficients)", () => {
-    // 57^3 = 185_193 mm3 -> 185_193 * 1_500_000 / 1e9 = 277.79 kg -> 278 (rounded up)
     expect(expandTertiary({ caliberUm: SIX_PDR, count: 1 }, bal).weightKg).toBe(278);
-    // 57^2 = 3_249 mm2 * 400_000 / 1000 = 1_299_600 mm2 (about 1.3 m2 with crew space)
     expect(expandTertiary({ caliberUm: SIX_PDR, count: 1 }, bal).footprintMm2).toBe(1_299_600);
   });
   it("only the bearing share of the guns counts toward one broadside", () => {

@@ -1,11 +1,3 @@
-/**
- * The production derivation barrier (ship-part-model I-10, ticket 11a).
- *
- * `compileResolved` is the derivation itself: stages that turn a resolved design into its
- * metrics. This wrapper decides whether that derivation may run at all. The fit stage runs
- * first and `deriveAfterFit` is the only path to `derive`, so a rejected or non-evaluable
- * loadout yields fit findings and no derived metric of any kind.
- */
 import { compileDesign } from "./compile.js";
 import type { CompiledDesign, DesignDraft, ShipContext } from "./compileShared.js";
 import type { Finding } from "./findings.js";
@@ -17,7 +9,6 @@ export type FitCheckedCompile =
   | {
       readonly status: "REJECTED" | "NOT_EVALUABLE";
       readonly fit: FitResult;
-      /** Blocking findings projected from the fit result; no derived value exists. */
       readonly findings: readonly Finding[];
     };
 
@@ -44,11 +35,6 @@ function fitFindings(fit: FitResult): Finding[] {
   ];
 }
 
-/**
- * Run the fit check, then derive only when it is `ACCEPTED`. `check` and `derive` are
- * injected so the caller owns what is fitted and what is derived; production fits a parts
- * loadout and derives from its one resolution, while the reference path fits a draft.
- */
 export function compileThroughFit(
   check: () => FitResult,
   derive: () => CompiledDesign,
@@ -64,11 +50,6 @@ export function compileThroughFit(
   };
 }
 
-/**
- * Run the fit check, then derive only when it is `ACCEPTED`. `check` and `derive` are
- * injected so the caller owns how a draft becomes a loadout; `derive` defaults to
- * `compileDesign`.
- */
 export function compileDesignThroughFit(
   draft: DesignDraft,
   ctx: ShipContext,

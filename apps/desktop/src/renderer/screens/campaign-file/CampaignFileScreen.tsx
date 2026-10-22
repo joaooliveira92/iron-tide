@@ -36,7 +36,6 @@ export function CampaignFileScreen({ onOpenCampaign, onStartNewGame }: CampaignF
         onOpenCampaign={openCampaign}
         onStartNewGame={onStartNewGame}
       />
-      {/* Options is reachable from the main menu, before any campaign is open (U-4). */}
       <Button type="button" variant="outline" onClick={() => setShowOptions((open) => !open)}>
         Options
       </Button>

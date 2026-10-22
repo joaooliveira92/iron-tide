@@ -1,21 +1,3 @@
-// D-4 M4 Aviation: Air Defense — INC-6 (AC-18).
-// resolveAirDefense stage (step 7.8) in the minute-advance pipeline: after air combat
-// (7.7), before sensors/spotting (8). Strict no-op when no defender or no attack is present.
-//
-// Composition (ADR-0042 decision 21):
-//   - defenders in codepoint defenderId order; per defender, resolveDefenseLayers runs the
-//     §1 layer order (HEAVY → MEDIUM → LIGHT → CIWS) with systems in codepoint systemId order;
-//   - every ELIGIBLE (system, attack) candidate resolves one keyed engagement
-//     (resolveEngagement) and the defender state (ammunition) threads to the next candidate;
-//   - every INELIGIBLE candidate with a §28 reason emits an INELIGIBLE record (no draw);
-//   - §19 multipliers: director = directorState.scalingBp, radar =
-//     radarState.diminishingReturnsBp, crew = state.crewQuality, saturation = the §16 CIWS
-//     factor over the layer's eligible CIWS count (neutral elsewhere); targetProfile/weather
-//     are caller-supplied (neutral default). ammunition/damage are state-authoritative
-//     inside resolveEngagement.
-//
-// Pure/deterministic: no ambient I/O/clock; every random decision is keyed by
-// airDefenseEngagementStreamId.
 import { SafeInt } from "@bluewave/contracts";
 import type { RandomEngine } from "@bluewave/random";
 import type { AirDefenseAttack } from "./attack.js";
@@ -36,55 +18,39 @@ import { canonicallySortedAirDefenseRecords } from "./ordering.js";
 import { AIR_DEFENSE_FORMULA_VERSION, AIR_DEFENSE_MODEL_VERSION } from "./constants.js";
 import { AIR_ATTACK_ABORTED, AIR_ATTACK_DISRUPTED } from "./reasonCodes.js";
 
-/** Substep at which the air-defense stage resolves (mirrors AIR_COMBAT_ENGAGEMENT_SUBSTEP). */
 export const AIR_DEFENSE_ENGAGEMENT_SUBSTEP = 1 as const;
 
 const NEUTRAL_BP = SafeInt(10_000);
 
-// Context and result types
-
 export interface AirDefenseDefenderContext {
-  /** Authoritative per-defender air-defense state (systems, ammunition, director/radar). */
   state: AirDefenseState;
   operability: AirDefenseOperability;
   directorAvailable: boolean;
   radarAvailable: boolean;
-  /** attacked ship id → distance from this defender (heavy-AA protected radius, §10). */
   protectedShipDistanceM?: ReadonlyMap<string, SafeInt>;
-  /** systemId → engagement channel free. Absent → channel free. */
   channelAvailableBySystem?: ReadonlyMap<string, boolean>;
-  /** §19 target-profile factor (bp). Absent → neutral 10_000. */
   targetProfileBp?: SafeInt;
-  /** §19 weather factor (bp). Absent → neutral 10_000. */
   weatherBp?: SafeInt;
 }
 
 export interface AirDefenseContext {
   defenders: ReadonlyArray<AirDefenseDefenderContext>;
   attacks: ReadonlyArray<AirDefenseAttack>;
-  /** Keyed RNG for engagement draws. */
   engine: RandomEngine;
 }
 
 export interface AirDefenseStageResult {
-  /** defenderId → next state (ammunition consumed). Empty on the no-op path. */
   nextStates: Readonly<Record<string, AirDefenseState>>;
-  /** §27-ordered records emitted this minute. */
   records: AirDefenseEngagementRecord[];
-  /** True when at least one engagement was drawn. */
   active: boolean;
   summary: { engagements: number; kills: number; aborts: number; disruptions: number };
 }
-
-// resolveAirDefense — per-minute air-defense stage
 
 function compareIds(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
 function reasonCodeForOutcome(outcome: AirDefenseRecordOutcome): string {
-  // §28 ships codes only for the abort/disruption attack-resolution boundaries; KILL /
-  // DAMAGE / NO_EFFECT carry their outcome literal (no §28 code is invented, decision 21).
   if (outcome === "ABORT") return AIR_ATTACK_ABORTED;
   if (outcome === "DISRUPTION") return AIR_ATTACK_DISRUPTED;
   return outcome;
@@ -96,7 +62,6 @@ export function resolveAirDefense(
   minute: number,
 ): AirDefenseStageResult {
   const summary = { engagements: 0, kills: 0, aborts: 0, disruptions: 0 };
-  // ---- Strict no-op: no defenders or no attacks → empty result ----
   if (context.defenders.length === 0 || context.attacks.length === 0) {
     return { nextStates: {}, records: [], active: false, summary };
   }
@@ -198,8 +163,8 @@ export function resolveAirDefense(
           directorBp: directorFactorBp,
           radarBp: radarFactorBp,
           crewBp: state.crewQuality,
-          damageBp: NEUTRAL_BP, // state-authoritative (overridden in resolveEngagement)
-          ammunitionBp: NEUTRAL_BP, // state-authoritative (overridden in resolveEngagement)
+          damageBp: NEUTRAL_BP,
+          ammunitionBp: NEUTRAL_BP,
           targetProfileBp: defender.targetProfileBp ?? NEUTRAL_BP,
           weatherBp: defender.weatherBp ?? NEUTRAL_BP,
           saturationBp,

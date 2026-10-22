@@ -1,8 +1,3 @@
-// B-6/ADR-0025: the shipped canonical default climate profile
-// `defaultClimateProfile_v1` validates against the generation guard, maps all
-// 12 calendar months (over the whole canonical simulation span), declares only
-// canonical-legal ranges, and generates a state for any in-span campaign month
-// (no WEATHER_PROFILE_INCOMPLETE).
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -13,7 +8,6 @@ import { WEATHER_CLIMATE_VERSION } from "../../src/weather/constants.js";
 import { generateStrategicWeather } from "../../src/weather/climate.js";
 import { WEATHER_PROFILE_INCOMPLETE } from "../../src/weather/reasonCodes.js";
 
-// Canonical simulation span (DESIGN-03 §1/§2): 1880-01 .. 1970-12.
 const SPAN_START = toLinearMonth(1880, 1);
 const SPAN_END = toLinearMonth(1970, 12);
 function toLinearMonth(year: number, month: number): number {
@@ -38,13 +32,12 @@ describe("defaultClimateProfile_v1 (B-6/ADR-0025)", () => {
       const monthId = monthIdOf(linear);
       const season = defaultClimateProfile_v1.seasonAssignment[monthId];
       expect(season).toBeDefined();
-      expect(`${monthId} -> ${season}`).toBeTruthy(); // readable failure
+      expect(`${monthId} -> ${season}`).toBeTruthy();
       expect(seasonIds.has(season!)).toBe(true);
     }
   });
 
   it("seasonAssignment covers all 12 calendar months (winter/spring/summer/autumn)", () => {
-    // The shipped profile is 4-season; every month-of-year appears in-span.
     const monthsOfYear = new Set<string>();
     for (const monthId of Object.keys(defaultClimateProfile_v1.seasonAssignment)) {
       monthsOfYear.add(monthId.slice(5, 7));
@@ -54,11 +47,9 @@ describe("defaultClimateProfile_v1 (B-6/ADR-0025)", () => {
 
   it("declares ranges that are canonical-legal (sea-state 0..9, bp 0..10_000, wind 0..359, vis > 0)", () => {
     for (const season of defaultClimateProfile_v1.seasons) {
-      // Sea state
       expect(season.seaStateRange.min).toBeGreaterThanOrEqual(0);
       expect(season.seaStateRange.max).toBeLessThanOrEqual(9);
       expect(season.seaStateRange.min).toBeLessThanOrEqual(season.seaStateRange.max);
-      // Wind bands: integer direction 0..359, integer weight >= 1
       for (const band of season.windBands) {
         expect(Number.isInteger(band.directionDeg)).toBe(true);
         expect(band.directionDeg).toBeGreaterThanOrEqual(0);
@@ -66,12 +57,10 @@ describe("defaultClimateProfile_v1 (B-6/ADR-0025)", () => {
         expect(Number.isInteger(band.weight)).toBe(true);
         expect(band.weight).toBeGreaterThanOrEqual(1);
       }
-      // Wind speed range: non-negative, ascending
       expect(season.windSpeedRangeUmPerSec.min).toBeGreaterThanOrEqual(0);
       expect(season.windSpeedRangeUmPerSec.min).toBeLessThanOrEqual(
         season.windSpeedRangeUmPerSec.max,
       );
-      // Precipitation options: canonical types, weights >= 1, bp ranges 0..10_000
       expect(season.precipitationOptions.length).toBeGreaterThan(0);
       for (const opt of season.precipitationOptions) {
         expect(["NONE", "RAIN", "SNOW"]).toContain(opt.type);
@@ -81,28 +70,21 @@ describe("defaultClimateProfile_v1 (B-6/ADR-0025)", () => {
         expect(opt.intensityRangeBp.max).toBeLessThanOrEqual(10_000);
         expect(opt.intensityRangeBp.min).toBeLessThanOrEqual(opt.intensityRangeBp.max);
       }
-      // Fog / cloud in basis points 0..10_000
       expect(season.fogMistDensityRangeBp.min).toBeGreaterThanOrEqual(0);
       expect(season.fogMistDensityRangeBp.max).toBeLessThanOrEqual(10_000);
       expect(season.cloudCoverRangeBp.min).toBeGreaterThanOrEqual(0);
       expect(season.cloudCoverRangeBp.max).toBeLessThanOrEqual(10_000);
-      // Base visibility strictly positive (DESIGN-42 §5 product needs > 0)
       expect(season.baseVisibilityRangeUm.min).toBeGreaterThan(0);
       expect(season.baseVisibilityRangeUm.min).toBeLessThanOrEqual(
         season.baseVisibilityRangeUm.max,
       );
-      // Non-empty string daylight profile id
       expect(season.daylightProfileId.length).toBeGreaterThan(0);
-      // No transition tables declared (absent = explicit no-transition policy)
       expect(season.windTransitions).toBeUndefined();
       expect(season.precipitationTransitions).toBeUndefined();
     }
   });
 
   it("generates a valid StrategicWeatherState for a sample of every season (no WEATHER_PROFILE_INCOMPLETE)", () => {
-    // January (winter) of 1880, April (spring), July (summer), October
-    // (autumn), and December (winter) of a later year (1935-12) to prove
-    // year-independence inside the span.
     for (const month of ["1880-01", "1880-04", "1880-07", "1880-10", "1935-12"]) {
       const state = generateStrategicWeather({
         areaId: "area-test",

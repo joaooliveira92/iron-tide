@@ -18,11 +18,6 @@ export interface PageHeaderProps {
   readonly className?: string;
 }
 
-/**
- * Standard page-level header for screens/, sat below the app shell's
- * SiteHeader. Screens own everything below this line; the shell owns
- * global nav (back/forward, sidebar, window controls) above it.
- */
 export const PageHeader = memo(function PageHeader({
   icon: Icon,
   title,

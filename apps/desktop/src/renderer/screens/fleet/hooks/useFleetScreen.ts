@@ -7,7 +7,10 @@ import type {
   FleetScreenProjection,
   MovementCommandOutcome,
 } from "../../../../shared/fleet-contract.js";
-import { useCommandScreenWorkflow } from "../../../lib/command-screen-workflow.js";
+import {
+  requestLifecycleAdapter,
+  useCommandScreenWorkflow,
+} from "../../../lib/command-screen-workflow.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
 import type { FleetScreenState } from "../fleet-screen-state.js";
 import {
@@ -49,7 +52,7 @@ export function useFleetScreen(sessionId: string): UseFleetScreenReturn {
     FleetScreenProjection,
     MovementCommandOutcome
   >(
-    {
+    requestLifecycleAdapter({
       initialState: initialFleetScreenState,
       load: () =>
         bridge
@@ -61,7 +64,7 @@ export function useFleetScreen(sessionId: string): UseFleetScreenReturn {
         setSelectedDivisionId((current) => nextDivisionSelection(current, projection.divisions));
         setDestinationAreaId((current) => current ?? projection.areas[0]?.id ?? null);
       },
-    },
+    }),
     { refreshKey: campaignRevision },
   );
   const { state, execute, loadScreen, loadError, request } = workflow;
@@ -79,7 +82,6 @@ export function useFleetScreen(sessionId: string): UseFleetScreenReturn {
     [state.areas, state.areaEdges, selectedDivision],
   );
 
-  // The chosen destination if it is one hop away, otherwise the first reachable area.
   const effectiveDestinationAreaId = useMemo(
     () =>
       reachable.some((area) => area.id === destinationAreaId)
@@ -96,7 +98,6 @@ export function useFleetScreen(sessionId: string): UseFleetScreenReturn {
     [state.movementCommands, selectedDivisionId],
   );
 
-  // The destination both route commands share; null when an order cannot be sent.
   const routeTarget = useMemo(() => {
     if (selectedDivision === null || effectiveDestinationAreaId === null) return null;
     return {
@@ -106,8 +107,6 @@ export function useFleetScreen(sessionId: string): UseFleetScreenReturn {
     };
   }, [selectedDivision, effectiveDestinationAreaId]);
 
-  // The three order senders go through the shared movement-orders path, so the
-  // map screen and this screen issue byte-identical MoveFleet commands.
   const orders = useMovementOrders(sessionId, execute);
 
   const submit = useCallback(() => {

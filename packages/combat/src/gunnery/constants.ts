@@ -1,37 +1,20 @@
-// Versioned authoritative gunnery base constants (DESIGN-39 §§1-2) shipped as a
-// `gunnery_v1` policy + `SHIPPED_GUNNERY_CONTRACT` + `validateGunneryContract`,
-// mirroring packages/combat/src/movement/constants.ts. Fail-closed on mismatch.
-// Grounded in docs/research/b3-m2-gunnery.md and recorded in the B-3 ADR (INC-5).
 import { BluewaveError } from "@bluewave/contracts";
 import { GUNNERY_RATE_FACTOR_MISSING, GUNNERY_STATE_INVARIANT_FAILED } from "./reasonCodes.js";
 
 export const gunneryPolicyId = "gunnery_v1" as const;
 
-// fixed-point scale shared by every basis-point quantity in this subsystem.
 export const BASIS_POINTS_PER_UNIT = 10_000 as const;
 
-// DESIGN-39 §1 acquisition progress and fire-control solution quality are basis
-// points restricted to [0, 10_000] (integer).
 export const ACQUISITION_PROGRESS_MIN_BP = 0 as const;
 export const ACQUISITION_PROGRESS_MAX_BP = 10_000 as const;
 export const FIRE_CONTROL_SOLUTION_MIN_BP = 0 as const;
 export const FIRE_CONTROL_SOLUTION_MAX_BP = 10_000 as const;
 
-// Surface-mode firing guard: a battery MUST have a fire-control solution quality at
-// or above this basis-point threshold to fire in a surface mode (DESIGN-39 §1
-// fire-control solution quality; reason code GUNNERY_FIRE_CONTROL_SOLUTION_INSUFFICIENT,
-// spec §1.4). This is a versioned-ruleset constant recorded in ADR-0020 (INC-5);
-// authored, not runtime-inferred. RAPID/AA eligibility predicates are deferred
-// (modes.ts) and are not gated here.
 export const SURFACE_FIRE_CONTROL_MINIMUM_BP = 2_000 as const;
 
-// Canonial ammunition types tracked by exact integer count (DESIGN-39 §28). Seed
-// set for this slice; a future ammunition slice may extend under a new version.
 export const AMMUNITION_TYPES = ["ARMOR_PIERCING", "COMMON", "HIGH_EXPLOSIVE"] as const;
 export type AmmunitionType = (typeof AMMUNITION_TYPES)[number];
 
-// The seven canonical fire modes (DESIGN-39 §2). Closed union; see modes.ts for the
-// per-mode records.
 export const FIRE_MODES = [
   "CEASE_FIRE",
   "RANGING",
@@ -43,21 +26,11 @@ export const FIRE_MODES = [
 ] as const;
 export type FireMode = (typeof FIRE_MODES)[number];
 
-// ruleset + formula versions pinned by the gunnery_v1 contract.
 export const GUNNERY_RULESET_VERSION = "gunnery_ruleset_v1" as const;
 export const GUNNERY_FORMULA_VERSION = "gunnery_formula_v1" as const;
 
-// DESIGN-39 §3 Accuracy factor manifest (INC-2). The 16 multiplier factors form
-// the exact basis-point product below baseAccuracyBp, divided once by 10_000^16
-// and floored once (not truncated) at the final accuracy check. Every factor
-// MUST be explicit + versioned; a missing/undefined factor fails with
-// GUNNERY_ACCURACY_FACTOR_MISSING (never a silent 10_000 fallback). Non-slice
-// factors (range/visibility/radar/etc.) are pinned to neutral 10_000 as authored
-// constants until their owning modifier track lands — not invented behavior.
 export const gunneryAccuracyPolicyId = "gunnery_accuracy_v1" as const;
 
-// Ordered canonical multiplier factor manifest (DESIGN-39 §3 order, 16 factors,
-// excluding base accuracy). base + these 16 = 17 named factors overall.
 export const GUNNERY_ACCURACY_FACTOR_KEYS = [
   "fireControl",
   "crew",
@@ -78,17 +51,13 @@ export const GUNNERY_ACCURACY_FACTOR_KEYS = [
 ] as const;
 export type GunneryAccuracyFactorKey = (typeof GUNNERY_ACCURACY_FACTOR_KEYS)[number];
 
-// Neutral multiplier for every factor in this slice (1.0 basis-point scale).
 export const NEUTRAL_ACCURACY_MULTIPLIER_BP = 10_000 as const;
 
-// Final accuracy bounds (basis points) and the §3 exponent (16 multipliers).
 export const GUNNERY_ACCURACY_FINAL_MIN_BP = 0 as const;
 export const GUNNERY_ACCURACY_FINAL_MAX_BP = 10_000 as const;
 export const GUNNERY_ACCURACY_SCALE_EXPONENT = 16 as const;
 export const GUNNERY_ACCURACY_ROUNDING = "floor" as const;
 
-// Authored neutral constants for the non-slice factors pinned until their owning
-// modifier track lands. Explicit names (not invented behavior); all neutral 10_000.
 export const GUNNERY_ACCURACY_NEUTRAL_FACTORS: Record<GunneryAccuracyFactorKey, number> = {
   fireControl: NEUTRAL_ACCURACY_MULTIPLIER_BP,
   crew: NEUTRAL_ACCURACY_MULTIPLIER_BP,
@@ -175,9 +144,6 @@ export function validateGunneryContract(
     throwMismatch(c, "gunnery_v1 fire modes");
 }
 
-// DESIGN-39 §3 accuracy manifest contract (INC-2). Ships *_v1 policy id +
-// factor manifest + scale bounds + rounding, fail-closed on any drift, mirroring
-// the SHIPPED_*_CONTRACT + validate guard pattern above.
 export interface GunneryAccuracyContract {
   policyId: string;
   basisPointsPerUnit: number;
@@ -237,20 +203,8 @@ export function validateGunneryAccuracyContract(
     throwAccuracyMismatch(c, "gunnery_accuracy_v1 ruleset/formula versions");
 }
 
-// DESIGN-39 §4 Rate-of-fire factor manifest (INC-3). The 11 multiplier factors
-// apply in the §4 order 1-11 (gun-quality → mount → autoloader → crew →
-// technology → turn-state → sea-state → smoke → damage → range/fire-control-cycle
-// → ammunition-state). effectiveReloadMs = ceil(baseReloadMs * 10_000^n /
-// Π rateMultipliersBp) where n = number of applied rate multipliers. Every factor
-// MUST be explicit + versioned; a missing/undefined factor (other than gun-quality,
-// which a definition MAY legally omit via a no-rate-effect declaration, DESIGN-39
-// §5) fails with GUNNERY_RATE_FACTOR_MISSING (never a silent 10_000 fallback).
-// Deferred factors (mount/autoloader/turn-state/sea-state/smoke/damage/
-// range-cycle/ammunition-state) are pinned to neutral 10_000 as authored constants
-// until their owning modifier track lands — not invented behavior.
 export const gunneryRatePolicyId = "gunnery_rate_v1" as const;
 
-// Ordered canonical rate multiplier factor manifest (DESIGN-39 §4 order 1-11).
 export const GUNNERY_RATE_FACTOR_KEYS = [
   "gunQuality",
   "mount",
@@ -266,16 +220,11 @@ export const GUNNERY_RATE_FACTOR_KEYS = [
 ] as const;
 export type GunneryRateFactorKey = (typeof GUNNERY_RATE_FACTOR_KEYS)[number];
 
-// Neutral multiplier for each factor (1.0 basis-point scale).
 export const NEUTRAL_RATE_MULTIPLIER_BP = 10_000 as const;
 
-// The §4 exponent (11 multipliers) and rounding mode (CEIL, contrasting accuracy's FLOOR).
 export const GUNNERY_RATE_SCALE_EXPONENT = 11 as const;
 export const GUNNERY_RATE_ROUNDING = "ceil" as const;
 
-// Authored neutral constants for the deferred factors pinned until their owning
-// modifier track lands. All neural 10_000; gun-quality and crew/technology are the
-// shipped real surface exercised by rateOfFire.ts.
 export const GUNNERY_RATE_NEUTRAL_FACTORS: Record<GunneryRateFactorKey, number> = {
   gunQuality: NEUTRAL_RATE_MULTIPLIER_BP,
   mount: NEUTRAL_RATE_MULTIPLIER_BP,
@@ -295,8 +244,8 @@ export interface GunneryRateContract {
   basisPointsPerUnit: number;
   factorKeys: readonly GunneryRateFactorKey[];
   neutralMultiplierBp: number;
-  scaleExponent: number; // 11 = number of rate multipliers in the §4 product
-  rounding: string; // "ceil"
+  scaleExponent: number;
+  rounding: string;
   rulesetVersion: string;
   formulaVersion: string;
 }
@@ -339,12 +288,6 @@ export function validateGunneryRateContract(
     throwRateMismatch(c, "gunnery_rate_v1 ruleset/formula versions");
 }
 
-// DESIGN-39 §5 Gun quality (INC-3). Integer -3..+2 inclusive, each with shipped
-// range/penetration/rate multipliers in basis points (§5): -3 → 8_500, -2 →
-// 9_000, -1 → 9_500, 0 → 10_000, +1 → 10_500, +2 → 11_000. Out-of-range quality
-// fails with GUN_QUALITY_OUT_OF_RANGE. A gun/mount definition MAY declare quality
-// does not affect rate of fire (the rate multiplier is then omitted from the §4
-// product; rateOfFire.ts handles that).
 export const gunneryGunQualityPolicyId = "gun_quality_v1" as const;
 
 export const GUN_QUALITY_MIN = -3 as const;
@@ -356,7 +299,6 @@ export interface GunQualityMultipliers {
   rateBp: number;
 }
 
-// Shipped §5 table keyed by integer gun quality.
 export const GUN_QUALITY_TABLE = {
   "-3": { rangeBp: 8_500, penetrationBp: 8_500, rateBp: 8_500 },
   "-2": { rangeBp: 9_000, penetrationBp: 9_000, rateBp: 9_000 },
@@ -370,7 +312,6 @@ export interface GunQualityContract {
   policyId: string;
   minQuality: number;
   maxQuality: number;
-  // Serialized body: table entries keyed by integer quality string.
   table: Record<string, Readonly<GunQualityMultipliers>>;
   rulesetVersion: string;
   formulaVersion: string;
@@ -427,14 +368,6 @@ export function validateGunQualityContract(
     throwGunQualityMismatch(c, "gun_quality_v1 ruleset/formula versions");
 }
 
-// Naval gun ballistics constant set (INC-5 content deliverable). baseReloadMs
-// by broad caliber, research-grounded in docs/research/b3-m2-gunnery.md §1
-// (NavWeaps-compiled per-gun cyclic-rate figures). Six calibers are directly
-// grounded; the 1880s RML heavy-gun caliber has no primary-sourced precise
-// integer (source: "1-5 min/round", no single table pins one figure) and is
-// authored as an explicit BALANCE TARGET at the midpoint of the research-
-// recommended 120_000-300_000 ms range — recorded in ADR-0020, never silently
-// invented (ENGINEERING-CONTRACT failure policy).
 export const gunneryBallisticsPolicyId = "gunnery_ballistics_v1" as const;
 
 export const GUNNERY_CALIBERS = [
@@ -448,7 +381,6 @@ export const GUNNERY_CALIBERS = [
 ] as const;
 export type GunneryCaliber = (typeof GUNNERY_CALIBERS)[number];
 
-// DESIGN-39 §4 baseReloadMilliseconds by broad caliber (research doc §1 table).
 export const BASE_RELOAD_MS_BY_CALIBER: Record<GunneryCaliber, number> = {
   CAL_6IN_152MM: 7_000,
   CAL_8IN_203MM: 18_000,
@@ -456,9 +388,6 @@ export const BASE_RELOAD_MS_BY_CALIBER: Record<GunneryCaliber, number> = {
   CAL_14IN_356MM: 36_000,
   CAL_15IN_381MM: 35_000,
   CAL_16IN_406MM: 40_000,
-  // BALANCE TARGET (ADR-0020): 1880s scen_1880 muzzle-loading heavy guns have no
-  // primary-sourced precise integer; authored at the midpoint of the grounded
-  // 120_000-300_000 ms (2-5 min/round) range.
   CAL_RML_HEAVY_1880: 210_000,
 };
 
@@ -510,9 +439,6 @@ export function validateGunneryBallisticsContract(
     throwBallisticsMismatch(c, "gunnery_ballistics_v1 ruleset/formula versions");
 }
 
-// Fail-closed lookup: baseReloadMilliseconds for a shipped caliber. An unknown
-// caliber fails with GUNNERY_RATE_FACTOR_MISSING (never a silent default),
-// mirroring the "no silent fallback" policy for every other §4 rate factor.
 export function baseReloadMsForCaliber(caliber: string): number {
   if (!(GUNNERY_CALIBERS as readonly string[]).includes(caliber)) {
     throw new BluewaveError(GUNNERY_RATE_FACTOR_MISSING, {

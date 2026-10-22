@@ -5,9 +5,6 @@ import { fileURLToPath } from "node:url";
 import { TACTICAL_REASON_CODES } from "../src/tactical/reasonCodes.js";
 import { REASON_CODES } from "../src/reasonCodes.js";
 
-// DESIGN-38 §36 subset relevant to B-2 (movement/spotting/contact). These four
-// codes pre-exist in the combat catalog; B-2 ships exactly this subset and
-// introduces no new codes (a new code would require a versioned-ruleset ADR).
 const B2_SUBSET = [
   "TACTICAL_STATE_INVARIANT_FAILED",
   "TACTICAL_FOG_OF_WAR_VIOLATION",
@@ -15,7 +12,6 @@ const B2_SUBSET = [
   "INVALID_TACTICAL_TIME_CONTRACT",
 ] as const;
 
-// DESIGN-38 §36 authoritative reason codes.
 const DESIGN38_S36 = [
   "INVALID_TACTICAL_TIME_CONTRACT",
   "INVALID_TACTICAL_CLOCK",
@@ -38,8 +34,6 @@ const DESIGN38_S36 = [
   "TACTICAL_STATE_INVARIANT_FAILED",
 ] as const;
 
-// DESIGN-26 §28 division reason codes (B-1): the tactical-division catalog is
-// disjoint from DESIGN-38 §36; locked here so any additive change forces review.
 const DESIGN26_S28 = [
   "DIVISION_SIZE_LIMIT_EXCEEDED",
   "DIVISION_SHIP_TYPE_INCOMPATIBLE",
@@ -81,7 +75,6 @@ describe("AC-14 reason-code surface (exact DESIGN-38 §36 subset + existing cata
     for (const code of B2_SUBSET) {
       expect(all.has(code)).toBe(true);
     }
-    // every code, across both catalogs, is a known DESIGN-38 §36 or DESIGN-26 §28 code.
     const known: string[] = [...DESIGN38_S36, ...DESIGN26_S28];
     for (const code of all) {
       expect(known).toContain(code);

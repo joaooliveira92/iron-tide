@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { BoardFinding } from "./validation/boardFindings.js";
 
-/** The severities that stop a design being built or put it at serious risk: the ones a choice must be warned about. */
 const SERIOUS = new Set(["BLOCKING", "CRITICAL"]);
 
-/** What a choice caused: the field the player changed, what they chose, and the findings it introduced. */
 export interface ChoiceProblem {
   readonly field: string;
   readonly choice: string;
@@ -17,7 +15,6 @@ interface Pending {
   readonly base: readonly BoardFinding[];
 }
 
-/** The findings that are serious and were not in `before`. Pure, so it is tested without React. */
 export function introducedProblems(
   before: readonly BoardFinding[],
   after: readonly BoardFinding[],
@@ -26,11 +23,6 @@ export function introducedProblems(
   return after.filter((f) => SERIOUS.has(f.severity) && !known.has(f.key));
 }
 
-/**
- * Watches the findings after a field is changed. When the change introduced a blocking or critical finding, it
- * reports it (to open an explanation) and keeps it attached to that field, so the field stays marked invalid
- * for as long as the finding remains.
- */
 export function useChoiceCheck(findings: readonly BoardFinding[]) {
   const pending = useRef<Pending | null>(null);
   const latest = useRef(findings);
@@ -48,7 +40,6 @@ export function useChoiceCheck(findings: readonly BoardFinding[]) {
     setOpen(true);
   }, [findings]);
 
-  /** Applies a change to `field`, then checks what it did to the findings. */
   const guard = useCallback((field: string, choice: string, apply: () => void) => {
     pending.current = { field, choice, base: latest.current };
     apply();
@@ -56,7 +47,6 @@ export function useChoiceCheck(findings: readonly BoardFinding[]) {
 
   const stillBroken =
     problem === null ? [] : problem.findings.filter((f) => findings.some((g) => g.key === f.key));
-  /** The inline message for `field`, while the finding its change caused is still present. */
   const errorFor = (field: string): string | undefined =>
     problem?.field === field && stillBroken.length > 0 ? stillBroken[0]?.title : undefined;
 

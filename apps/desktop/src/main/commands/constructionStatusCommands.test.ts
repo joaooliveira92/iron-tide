@@ -46,11 +46,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-// One shared runtime for every steering command; the services delegate to the
-// same in-memory session/queue registries the tests populate directly.
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-/** Runs a command program through the desktop service graph and projects its wire envelope. */
 async function runProgram<A>(program: CommandProgram, payload: unknown): Promise<BridgeResult<A>> {
   return projectCommandExit(await runtime.runPromiseExit(program(payload))) as BridgeResult<A>;
 }
@@ -75,11 +72,6 @@ const commitMonth = (payload: {
   transportRequestId: string;
 }) => runProgram<CommitMonthResponse>(commitMonthProgram, payload);
 
-/**
- * End-to-end reachability proof for the construction steering commands (SB3-R5/R8/R11/R16): each issues a real engine
- * command envelope against the production pack and applies ONLY through `commitMonth`'s `command_collection`, so the
- * engine — not the desktop — is the sole mutator. Deleting the command wiring makes these fail.
- */
 describe("construction status commands (end-to-end)", () => {
   let saveRoot: string;
 
@@ -141,7 +133,6 @@ describe("construction status commands (end-to-end)", () => {
       const uk = snapshot.nations.get("uk");
       if (!uk || uk.constructionProjects.length === 0)
         throw new Error("production pack has no uk construction project");
-      // ACTIVE is a state production reaches routinely (`PLANNED -> ACTIVE`).
       uk.constructionProjects[0]!.status = "ACTIVE";
     });
     const record = getCampaignSession(sessionId)!;
@@ -157,7 +148,6 @@ describe("construction status commands (end-to-end)", () => {
     if (issued.outcome !== "success") return;
     expect(issued.value.bodyType).toBe("HaltConstruction");
 
-    // The command is queued, not yet applied.
     const queued = pendingEnvelopesForExecution(sessionId, record.state.snapshot);
     expect(queued.map((e) => e.body.type)).toContain("HaltConstruction");
 
@@ -286,7 +276,6 @@ describe("construction status commands (end-to-end)", () => {
     if (issued.outcome !== "success") return;
     expect(issued.value.bodyType).toBe("CancelConstructionProject");
 
-    // Queued, not yet applied.
     const queued = pendingEnvelopesForExecution(sessionId, record.state.snapshot);
     expect(queued.map((e) => e.body.type)).toContain("CancelConstructionProject");
 
@@ -336,8 +325,6 @@ describe("construction status commands (end-to-end)", () => {
       designVersionId: "des_gbr_inflexible",
       builderNationId: "france",
       quantity: 1,
-      // The renderer must never supply contract terms: `withStrictSchema` rejects
-      // the excess key at the IPC boundary before any service is resolved.
       terms: { price: 1 },
     });
     expect(result.outcome).toBe("error");

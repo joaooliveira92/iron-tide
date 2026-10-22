@@ -1,9 +1,3 @@
-// AC-3 (INC-2): DESIGN-35 §3 mine sources + eligibility predicate. All six
-// canonical source kinds lay when every axis passes; a source missing required
-// technology, inventory, access, control, or mission fails with
-// MINE_LAYING_SOURCE_INELIGIBLE (field-tagged) — never a silent default.
-// The mine type's technology prerequisites + eligible source kinds come from
-// the shipped INC-1 definitions (mineTypeDefinitionById).
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import {

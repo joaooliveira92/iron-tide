@@ -2,12 +2,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { quantity } from "@bluewave/ship-design";
 import { formatExplanation, formatExplanationValue } from "./explanation-text.js";
 
-/**
- * The structured-explanation renderer (ADR-0221): literal parts pass through,
- * display-value tokens render the canonical value with the unit code's symbol.
- * The rendered strings match the former domain `toFixed` output exactly for the
- * default locale, so the display is unchanged.
- */
 describe("formatExplanation", () => {
   it("passes a plain string through", () => {
     expect(formatExplanation("The ship has no propulsion.")).toBe("The ship has no propulsion.");

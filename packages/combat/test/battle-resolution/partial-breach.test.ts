@@ -1,11 +1,3 @@
-// ADR-0098: bounded partial-penetration breach consequences + partial flooding.
-//
-// After the ADR-0094 caliber unit correction, the dominant belt hit at
-// production scale is a PARTIAL penetration. ADR-0098 gives it a BOUNDED
-// progressive consequence (a near-penetration waterline breach with a reduced
-// flotation loss and flooding chance), never the full-penetration value, so the
-// outcome ordering stays monotone. These tests pin the boundary, the monotonic
-// properties and the absence of nation-id conditionals.
 import { describe, expect, it } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -27,7 +19,7 @@ import { makeGunneryHitRecord } from "./damage-hit.js";
 const salvo = makeGunneryHitRecord({ batteryId: "a1:MAIN", targetContactId: "b1:d1" });
 
 function beltImpact(caliberUm: number, beltUm: number) {
-  const zone = autoZonesForBelt(beltUm)[0]!; // BELT (waterline)
+  const zone = autoZonesForBelt(beltUm)[0]!;
   return synthesizeImpact({
     salvo,
     targetShipId: "d1",
@@ -40,13 +32,10 @@ function beltImpact(caliberUm: number, beltUm: number) {
 
 describe("ADR-0098: bounded partial-penetration breach", () => {
   it("a near-penetration partial opens a bounded waterline breach", () => {
-    // 343 mm (261 366 µm capability) vs a 305 mm belt (304 950 µm resistance)
-    // = 85.7% -> partial, near penetration -> bounded breach.
     const impact = beltImpact(343_000, 305_000);
     expect(impact.penetrationOutcome).toBe("PARTIAL_PENETRATION");
     expect(impact.hullBreach).toBe(true);
     expect(impact.flotationDamage).toBeGreaterThan(0);
-    // Bounded: strictly less than the full-penetration ratio would give.
     const fullRatioValue = Math.floor((impact.structuralDamage * FLOAT_LOSS_RATIO_BP) / 10_000);
     expect(impact.flotationDamage).toBeLessThan(fullRatioValue);
     expect(impact.flotationDamage).toBe(
@@ -55,7 +44,6 @@ describe("ADR-0098: bounded partial-penetration breach", () => {
   });
 
   it("a glancing partial against a very thick belt does not breach", () => {
-    // 343 mm vs a 508 mm belt (457 200 µm resistance) = 57.2% < 65% threshold.
     const impact = beltImpact(343_000, 508_000);
     expect(impact.penetrationOutcome).toBe("PARTIAL_PENETRATION");
     expect(impact.hullBreach).toBe(false);
@@ -117,11 +105,9 @@ describe("ADR-0098: partial flooding creation chance", () => {
   });
 
   it("a bounded partial floods at the lower 30% chance", () => {
-    // 0.5 >= 0.3 -> no flood (a full-penetration chance would have flooded).
     expect(
       evaluateFloodingCreation({ ...base, penetrationOutcome: "PARTIAL_PENETRATION" }, () => 0.5),
     ).toBeNull();
-    // 0.2 < 0.3 -> floods.
     expect(
       evaluateFloodingCreation({ ...base, penetrationOutcome: "PARTIAL_PENETRATION" }, () => 0.2),
     ).not.toBeNull();
@@ -149,7 +135,6 @@ describe("ADR-0098: partial flooding creation chance", () => {
   });
 
   it("capability-vs-resistance monotonicity is preserved at the seam", () => {
-    // Equal inputs -> equal outcome; more armor never improves penetration.
     const cap = shellPenetrationUm(343_000, 762);
     const r1 = effectiveResistanceUm({ thicknessUm: 305_000 });
     const r2 = effectiveResistanceUm({ thicknessUm: 406_400 });

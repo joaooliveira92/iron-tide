@@ -29,15 +29,10 @@ const STATE_CLASS: Record<PackageState, string> = {
 
 export interface ProjectsCardProps {
   readonly rows: readonly ProjectRow[];
-  /** Halt a project (DESIGN-23 section 7); absent disables the control. */
   readonly onHalt?: (projectId: string) => void;
-  /** Resume a halted or delayed project. */
   readonly onResume?: (projectId: string) => void;
-  /** Toggle engine-side acceleration (DESIGN-23 section 8): `true` enables, `false` disables. */
   readonly onAccelerate?: (projectId: string, accelerated: boolean) => void;
-  /** Cancel a committed project and settle it (DESIGN-23 section 23): work already done is forfeited and a rebuild's ship is released. */
   readonly onCancelProject?: (projectId: string) => void;
-  /** True while a steering command for this project is in flight, so the controls disable. */
   readonly pendingProjectId?: string | null;
 }
 
@@ -50,7 +45,6 @@ const STATUS_LABEL: Readonly<Record<string, string>> = {
   IMPOUNDED: "impounded",
 };
 
-/** The halt/resume/accelerate controls for one project row, keyed off its DESIGN-23 section 2 status. */
 function SteeringControls({
   row,
   pending,
@@ -68,8 +62,6 @@ function SteeringControls({
 }) {
   const isHeld =
     row.status === "HALTED" || row.status === "DELAYED" || row.status === "AWAITING_CAPACITY";
-  // A foreign-contract project's work is driven by its instalment schedule, not by halt/resume, so it offers no
-  // steering controls (the status badge still shows its state).
   const steerable =
     !row.isForeign &&
     (row.status === "ACTIVE" ||
@@ -141,7 +133,6 @@ function SteeringControls({
   );
 }
 
-/** Ships under construction: overall progress, the yard, each work package's state, and the steering controls. */
 export const ProjectsCard = memo(function ProjectsCard({
   rows,
   onHalt,

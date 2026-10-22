@@ -1,15 +1,3 @@
-/**
- * Archetype selection lets the player weight a new campaign across three
- * dimensions with a fixed point budget. Formulas here are pinned by
- * pre-existing application tests
- * (`apps/desktop/src/renderer/screens/new-game/archetype-consequence.test.ts`,
- * `new-game-archetype-screen-state.test.ts`) that predate this package —
- * reverse-engineered from their exact expected values, not invented.
- * Whether `archetypeEffects`' multipliers get applied when `compileCampaign`
- * builds the starting `CampaignConfiguration` is a decision for the ticket
- * implementing that command, not this module.
- */
-
 import { canonicalSerialize } from "@bluewave/deterministic";
 
 export type ArchetypeDimension = "economy" | "industry" | "combat";
@@ -40,9 +28,6 @@ export const ARCHETYPE_DIMENSIONS: readonly ArchetypeDimension[] = [
 
 export const ARCHETYPE_POINT_TOTAL = 20;
 
-// Not directly pinned by an existing test; chosen to keep every known
-// preset and the balanced baseline valid. Revisit if a hidden expectation
-// surfaces during ticket 12.
 export const ARCHETYPE_DIMENSION_MIN = 2;
 export const ARCHETYPE_DIMENSION_MAX = 12;
 
@@ -118,14 +103,9 @@ export function validateArchetypeAllocation(allocation: ArchetypeAllocation): {
   return { ok: diagnostics.length === 0, diagnostics };
 }
 
-/** Percentage-point shift applied to the economy dimension's multipliers, per point of delta from balanced. */
 const ECONOMY_MULTIPLIER_STEP = 0.08;
-/** Percentage-point shift applied to the industry dimension's multiplier, per point of delta from balanced. */
 const INDUSTRY_MULTIPLIER_STEP = 0.08;
-/** Flat bonus applied per point of combat delta from balanced. */
 const COMMANDER_BONUS_STEP = 5;
-/** Flat bonus applied per point of combat delta from balanced — distinct
- * from the commander step so the two don't coincidentally collide. */
 const DOCTRINE_BONUS_STEP = 4;
 
 export interface ArchetypeEffects {
@@ -152,7 +132,5 @@ export function defaultArchetypeSelection(): ArchetypeSelection {
 }
 
 export function serializeArchetypeSelection(selection: ArchetypeSelection): string {
-  // Canonical serialization, not insertion order: the byte shape is defined by
-  // the versioned serializer's key ordering (RULES.md "Determinism").
   return canonicalSerialize(selection);
 }

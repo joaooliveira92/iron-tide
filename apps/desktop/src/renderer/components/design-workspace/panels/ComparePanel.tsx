@@ -39,7 +39,6 @@ function rowsOf(baseline: WorkshopView, view: WorkshopView, format: Presentation
   return rows;
 }
 
-/** "Developed from": what changed against the starting design, compiled under the same rules. Unchanged rows are hidden. */
 export function ComparePanel({
   baseline,
   view,

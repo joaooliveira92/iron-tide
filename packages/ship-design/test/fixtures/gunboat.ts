@@ -413,7 +413,6 @@ export const ctx: ShipContext = {
 export const draft: DesignDraft = {
   nationId: "uk",
   requirement: {
-    // A registered type: an unregistered category is a blocking SHIP_TYPE_UNREGISTERED finding (ADR-0088).
     category: "DD",
     requiredSpeedMilliKnots: 20_000,
     cruiseSpeedMilliKnots: 10_000,
@@ -660,7 +659,6 @@ export const constructionBalance: ConstructionBalance = {
       [15_000, 36],
     ],
   },
-  // Test fixture only: invented numbers, so every point is an ESTIMATE.
   buildMonthsProvenance: [
     { status: "ESTIMATE", source: "test fixture" },
     { status: "ESTIMATE", source: "test fixture" },
@@ -671,10 +669,8 @@ export const constructionBalance: ConstructionBalance = {
   buildTimeEraProvenance: [{ status: "ESTIMATE", source: "test fixture" }],
   efficientIndustryBp: 6_700,
   accelerationTimeBp: 9_000,
-  // Test fixture only: invented base (PLACEHOLDER in production), the manual's half rule is the same.
   mothballedMaintenancePerMonthMicro: 40_000_000_000,
   preservationCostBp: 5_000,
-  // SB3-R18/R19 fixture values (production values are PLACEHOLDER BALANCE TARGETs in balance.yaml).
   shipyardCapacityMultipleBp: 30_000,
   amcCapacityExemptionBp: 8_000,
   smallCorvetteMaxDisplacementKg: 1_000_000,

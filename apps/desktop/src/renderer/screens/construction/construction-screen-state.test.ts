@@ -9,7 +9,7 @@ import {
   describeRejection,
   prepareCommand,
 } from "../../lib/command-screen-workflow.js";
-import type { PreparedCommand, RequestKind } from "../../lib/command-screen-workflow.js";
+import type { PendingRequest, RequestKind } from "../../lib/command-screen-workflow.js";
 import type { ConstructionScreenState } from "./construction-screen-state.js";
 import {
   acceptConstructionCommand,
@@ -86,12 +86,8 @@ function loadedState(): ConstructionScreenState {
   );
 }
 
-function prepared(kind: RequestKind, transportRequestId: string): PreparedCommand<unknown> {
-  return {
-    kind,
-    context: { expectedRevision: 0, transportRequestId },
-    send: async () => ({ outcome: "success", value: undefined, diagnostics: [] }),
-  };
+function prepared(kind: RequestKind, transportRequestId: string): PendingRequest {
+  return { kind, transportRequestId };
 }
 
 describe("construction screen state", () => {
@@ -272,7 +268,6 @@ describe("expectedConstructionCompletions", () => {
       { status: "IN_PROGRESS", totalWork: 100, completedWork: 90 },
       { status: "QUEUED", totalWork: 100, completedWork: 95 },
       { status: "IN_PROGRESS", totalWork: 100, completedWork: 89 },
-      // A finished project never counts, even though its work ratio is 1.
       { status: "COMPLETED", totalWork: 100, completedWork: 100 },
     ];
 

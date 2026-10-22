@@ -1,14 +1,7 @@
-/**
- * What `pnpm snap --strict` fails on. Problems are always collected; only strict mode turns them
- * into a non-zero exit. Reports about the same subject (one control that could not be clicked)
- * share a key so the run reports the final, most specific cause once instead of every step.
- */
 export interface ProblemLog {
-  /** Record a problem. A later report with the same `key` replaces the earlier one. */
   readonly record: (message: string, key?: string) => void;
   readonly list: () => readonly string[];
   readonly exitCode: (strict: boolean) => 0 | 1;
-  /** The strict-mode failure text, or `undefined` when there is nothing to report. */
   readonly summary: () => string | undefined;
 }
 

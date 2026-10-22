@@ -9,7 +9,6 @@ const ref = (id: string, month: string): ReferenceDesign => ({
   draft: {} as ReferenceDesign["draft"],
 });
 
-/** File order is the tie-break; two designs share 1880-01. */
 const refs = [
   ref("old_1895", "1895-06"),
   ref("new_1896", "1896-01"),
@@ -48,7 +47,6 @@ describe("selectInitialReference", () => {
   });
 
   it("does not match every design on a malformed date", () => {
-    // Without a format guard, "1895-06" <= "not-a-month" is true for every design and the newest would win.
     expect(selectInitialReference(refs, "not-a-month")!.id).toBe("old_1895");
   });
 });

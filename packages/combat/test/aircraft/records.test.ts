@@ -1,4 +1,3 @@
-// AC-23 (INC-7): Aircraft records — creation, hash, verification.
 import { describe, expect, it } from "vite-plus/test";
 import { createAircraftRecord, verifyAircraftRecordHash } from "../../src/aircraft/records.js";
 

@@ -1,9 +1,3 @@
-// T-2 (issue #221): a player-driven tactical battle session. It reuses the
-// same deterministic projection, weather, stage pipeline, damage and battle-end
-// rules as `resolveBattleAuto`; the only difference is that the player supplies
-// per-division standing orders (stance, speed) instead of the ADR-0046 pursuit
-// doctrine. No ambient input: the battle seed, manifest and committed campaign
-// assets are the whole input.
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine } from "@bluewave/random";
 import type { GunneryBattery } from "../gunnery/resolve.js";
@@ -43,10 +37,8 @@ import { headingToward } from "./engagement.js";
 export const PLAYER_BATTLE_STANCES = ["ENGAGE", "HOLD", "WITHDRAW"] as const;
 export type PlayerBattleStance = (typeof PLAYER_BATTLE_STANCES)[number];
 
-/** One standing order for a tactical division (a division is the player's unit of command). */
 export interface PlayerBattleDivisionOrder {
   readonly stance: PlayerBattleStance;
-  /** Percent of the division's designed speed, integer 0..100. */
   readonly speedPercent: number;
 }
 
@@ -419,10 +411,6 @@ function resultOf(session: PlayerBattleSession): PlayerBattleResult {
   };
 }
 
-/**
- * Resolve one tactical minute under the supplied division orders. Pure: the
- * input session is never mutated; a completed battle returns itself unchanged.
- */
 export function advancePlayerBattleMinute(
   session: PlayerBattleSession,
   orders: PlayerBattleOrders,
@@ -573,7 +561,6 @@ export function advancePlayerBattleMinute(
   return { ...ended, result: resultOf(ended) };
 }
 
-/** Resolve every remaining minute under the same standing orders. */
 export function runPlayerBattleToEnd(
   session: PlayerBattleSession,
   orders: PlayerBattleOrders,

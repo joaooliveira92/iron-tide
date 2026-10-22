@@ -1,7 +1,3 @@
-// S-2 (prestige and career, spec #74 R3): a nation's prestige and the campaign's prestige value
-// set survive a SaveStore save -> load round trip exactly, move the stored snapshot hash when they
-// change, and a save stamped with the previous compatibility version is refused before decode.
-
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

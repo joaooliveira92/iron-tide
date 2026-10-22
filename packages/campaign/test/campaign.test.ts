@@ -38,12 +38,6 @@ function writeContentFixture(fixturePath: string): void {
   writeFile(fixturePath, "research.yaml", FIXTURE.research);
 }
 
-/**
- * The full-surface `CompilerInput` for the standard fixture layout. CAH-LEG-1:
- * the campaign compiler consumes only a verified bundle, so every test builds
- * one from these explicit file lists (`buildContentBundleArtifact`) before
- * compiling the campaign — the same producer path the CLI uses.
- */
 function baseInput(fixturePath: string): CompilerInput {
   return {
     manifestPath: resolve(fixturePath, "pack.json"),
@@ -107,7 +101,6 @@ const FIXTURE = {
 
   rulesets: FIXTURE_RULESETS_YAML,
 
-  // canonical strict-NationSchema-compliant nations
   countries: nationsYaml([
     { id: "uk", tag: "GBR", name: "United Kingdom", isPlayable: true, homeArea: "lon" },
     { id: "france", tag: "FRA", name: "France", homeArea: "par" },
@@ -287,20 +280,16 @@ describe("CampaignCompiler", () => {
       expect(output!.state.rawHash).toHaveLength(64);
       expect(output!.state.snapshot.turnNumber).toBe(0);
       expect(output!.state.snapshot.slots).toHaveLength(2);
-      // slots sorted by nation id: france (ai) before uk (playable)
       expect(output!.state.snapshot.slots[0]?.nationId).toBe("france");
       expect(output!.state.snapshot.slots[0]?.type).toBe("ai");
       expect(output!.state.snapshot.slots[1]?.nationId).toBe("uk");
       expect(output!.state.snapshot.slots[1]?.type).toBe("playable");
 
-      // Verify world state
       expect(output!.state.snapshot.world.areas).toHaveLength(3);
       expect(output!.state.snapshot.world.routes).toHaveLength(3);
       expect(output!.state.snapshot.world.ports).toHaveLength(2);
-      // Port nation identity maps to the canonical nation id
       expect(output!.state.snapshot.world.ports[0]?.nationId).toBe("uk");
 
-      // Verify nation states
       const nations = output!.state.snapshot.nations;
       expect(nations.size).toBe(2);
 
@@ -326,15 +315,12 @@ describe("CampaignCompiler", () => {
       expect(fra!.isPlayable).toBe(false);
       expect(fra!.isAI).toBe(true);
 
-      // Verify political state
       expect(output!.state.snapshot.politics.relations).toHaveLength(1);
       expect(output!.state.snapshot.politics.relations[0]!.relation).toBe("neutral");
 
-      // Verify war state is empty initially
       expect(output!.state.snapshot.wars.wars).toHaveLength(0);
       expect(output!.state.snapshot.wars.battles).toHaveLength(0);
 
-      // Verify intelligence shell
       expect(output!.state.snapshot.intelligence.shells).toEqual({});
     } finally {
       fixture.cleanup();
@@ -420,8 +406,6 @@ describe("CampaignCompiler", () => {
           files: { countries: ["countries.yaml"] },
         }),
       );
-      // isPlayable (and other mandatory NationSchema fields) are missing -> content
-      // validation MUST reject the pack rather than fall back to inferred defaults.
       writeFile(
         fixture.path,
         "countries.yaml",
@@ -597,16 +581,13 @@ describe("CampaignCompiler", () => {
       expect(dreadnought.className).toBe("Dreadnought-class");
       expect(dreadnought.hullType).toBe("battleship");
       expect(dreadnought.normalizedDisplacementKg).toBe(18000);
-      // ADR-0037: authored knots/mm are normalized to canonical µm/µm·s⁻¹.
       expect(dreadnought.normalizedSpeedUms).toBe(11 * 514_444);
       expect(dreadnought.normalizedArmorUm).toBe(300 * 1000);
       expect(dreadnought.mainGunsCaliber).toBe(305 * 1000);
       expect(dreadnought.mainGunsCount).toBe(10);
       expect(dreadnought.hitPoints).toBe(120);
-      // Deterministic compiled hash, not authored.
       expect(dreadnought.compiledHash).toHaveLength(64);
 
-      // Immutability keyed by designVersionId.
       expect(designs.get("fra-courbet-v1")!.nationId).toBe("france");
     } finally {
       fixture.cleanup();
@@ -732,7 +713,6 @@ ${extra}`,
 
       const uk = output!.state.snapshot.nations.get("uk")!;
       const ship = uk.fleets[0]!.ships[0]!;
-      // Links to the compiled design.
       expect(ship.designVersionId).toBe("uk-dreadnought-v1");
       expect(output!.state.snapshot.designs.has("uk-dreadnought-v1")).toBe(true);
     } finally {
@@ -775,7 +755,6 @@ describe("CampaignCompiler decoded-bundle path (ticket 07 / CAH-LEG-1)", () => {
       expect(decoded).toBeDefined();
       expect(decoded!.contentHash).toBe("a".repeat(64));
       expect(decoded!.state.snapshot.nations.size).toBe(2);
-      // Identical inputs produce identical snapshot hashes (determinism).
       const again = new CampaignCompiler().compile(
         {
           contentBundle: bundle,
@@ -799,7 +778,6 @@ describe("CampaignCompiler decoded-bundle path (ticket 07 / CAH-LEG-1)", () => {
       const bundle = buildFixtureBundle(fixture.path);
       const signal = new AbortController().signal;
 
-      // Corrupt the raw campaign files on disk after the bundle was built.
       writeFile(fixture.path, "fleets.yaml", '- id: "bogus"\n  nationId: "uk"\n');
       writeFile(fixture.path, "economies.yaml", "[]\n");
 
@@ -816,7 +794,6 @@ describe("CampaignCompiler decoded-bundle path (ticket 07 / CAH-LEG-1)", () => {
 
       expect(decoded).toBeDefined();
       const uk = decoded!.state.snapshot.nations.get("uk")!;
-      // The bundle's fleet (2 ships), not the corrupted raw file, is executed.
       expect(uk.fleets[0]?.ships).toHaveLength(2);
       expect(decoded!.state.snapshot.nations.get("uk")!.income).toBe(150);
     } finally {

@@ -80,10 +80,6 @@ import {
 } from "../../../components/design-workspace/index.js";
 import { useCampaignMonthId } from "../../../shell/CampaignShellContext.js";
 
-/**
- * Tabs with icons (ReUI c-tabs-6): the board is split by what the player is doing, so nothing needs a long scroll.
- * The hull plan is not a tab's content: it stays in the workspace's ship view whichever tab is open.
- */
 const TABS: readonly { value: BoardTab; label: string; Icon: LucideIcon }[] = [
   { value: "hull", label: "Hull and machinery", Icon: Ship },
   { value: "arrangement", label: "Arrangement", Icon: LayoutGrid },
@@ -91,13 +87,8 @@ const TABS: readonly { value: BoardTab; label: string; Icon: LucideIcon }[] = [
   { value: "build", label: "Build", Icon: Hammer },
   { value: "tools", label: "History and files", Icon: Wrench },
 ];
-/** Two columns once the tab pane (not the window) is wide enough: the pane shares the window with the ship view. */
 const TAB_GRID = "grid grid-cols-1 items-start gap-4 @4xl:grid-cols-2";
 
-/**
- * Component-level ship designer (SB-18 v1). Local to the renderer: edits an undoable draft and shows the live
- * compile result. Submitting a design to the engine arrives with the command wiring (SB-14).
- */
 export function DrawingBoard({
   sessionId,
   projects = [],
@@ -128,24 +119,18 @@ export function DrawingBoard({
     restore: actions.restore,
   });
   const [tab, setTabState] = useState<BoardTab>("hull");
-  // A tab's panels mount the first time it is opened and then stay mounted (typed values and scroll survive a switch).
-  // Mounting all five up front made the board's DOM five times larger than what the player sees.
   const [visited, setVisited] = useState<ReadonlySet<BoardTab>>(() => new Set(["hull"]));
   const setTab = useCallback((next: BoardTab) => {
     setTabState(next);
     setVisited((v) => (v.has(next) ? v : new Set(v).add(next)));
   }, []);
-  // Switched from the toolbar, used by the drawing: the one tool state survives tab changes with the ship view.
   const [planTool, setPlanTool] = useState<PlanTool>(IDLE_TOOL);
-  // Plan display preferences live in the toolbar too, so the drawing and its controls share one source.
   const [showArcs, setShowArcs] = useState(true);
   const [findingsView, setFindingsView] = useFindingsView();
   const shownFindings = useMemo(
     () => findings.filter((f) => passesFilter(f.severity, findingsView.filter)),
     [findings, findingsView.filter],
   );
-  // The toolbar owns the plan tool (its pickers and Auto-place live in the menus), so the drawing's model and editing
-  // session are built here and shared: a notice from the menu and one from a click on the drawing agree.
   const planModelData = useMemo(
     () => planModel(draft, content, view, state.month, findings),
     [draft, content, view, state.month, findings],
@@ -169,7 +154,6 @@ export function DrawingBoard({
     selection.clear();
     if (was && rootRef.current) findDrawingControl(rootRef.current, was)?.focus();
   };
-  // A restored draft is announced as a bottom-right toast (not a page banner) carrying the same two choices.
   useRestoredDraftToast({
     restored: autosave.restored,
     dismiss: autosave.dismiss,
@@ -183,9 +167,6 @@ export function DrawingBoard({
         data-testid="drawing-board"
         onKeyDown={(e) => handleUndoShortcut(e, { ...state, ...actions })}
         onKeyDownCapture={(e) => {
-          // Escape, one step per press, from the drawing or the inspector: an open preview (hover card or
-          // finding marker) closes itself first; then the opened finding; then the pinned entity; only then does
-          // the dialog get the key. Capture phase, so a control's own key handling cannot swallow it first.
           if (e.key !== "Escape") return;
           const s = selection.get();
           if (s.selected === null || s.preview !== null || s.markerPreview) return;
@@ -196,8 +177,6 @@ export function DrawingBoard({
           else clearSelection();
         }}
       >
-        {/* Toolbar and status share one border: the status band is attached directly beneath the
-            controls, the way the header's secondary row sits under its primary row. */}
         <div className="flex flex-col overflow-hidden rounded-lg border">
           <div
             role="group"
@@ -212,8 +191,6 @@ export function DrawingBoard({
               value={state.preset.id}
               options={content.references.map((r) => {
                 const Icon = shipTypeIcon(r.draft.requirement.category);
-                // In a campaign the rules date is fixed: a design whose technology does not exist yet cannot be built,
-                // so it is offered but disabled with the reason instead of letting the player select a doomed start.
                 const notYet = campaignMonth !== null && r.month > campaignMonth;
                 return {
                   value: r.id,
@@ -228,7 +205,6 @@ export function DrawingBoard({
               onChange={requestPreset}
             />
             {campaignMonth !== null ? (
-              // In a campaign the rules date is the campaign month (the engine uses the same), so it is shown, not chosen.
               <HoverCard>
                 <HoverCardTrigger
                   render={<button type="button" />}
@@ -364,7 +340,6 @@ export function DrawingBoard({
           }
         >
           <div
-            // Form-to-drawing linking: focus in a form group about ship elements lights them on the drawing.
             onFocus={(e) => selection.setLinked(linkedEntities(e.target, entityCtx))}
             onBlur={(e) => {
               if (!(e.relatedTarget instanceof Node && e.currentTarget.contains(e.relatedTarget)))

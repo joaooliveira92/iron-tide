@@ -194,9 +194,7 @@ describe("AC-1: ShipDamageState invariant (assertFixedPointDamage)", () => {
     const before = JSON.stringify(s);
     try {
       assertFixedPointDamage(s);
-    } catch {
-      // expected
-    }
+    } catch {}
     expect(JSON.stringify(s)).toBe(before);
   });
 });

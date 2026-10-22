@@ -22,7 +22,7 @@ describe("buildPlayerProjection", () => {
       treasury: SafeInt(50_000),
       income: SafeInt(1_000),
       baseResources: baseFor(1_000),
-      navalAppropriationRateBp: SafeInt(2_000), // 20%
+      navalAppropriationRateBp: SafeInt(2_000),
       fleets: [
         {
           id: "fleet-1",
@@ -120,11 +120,8 @@ describe("buildPlayerProjection", () => {
     expect(projection.month).toEqual({ month: 3, year: 1900 });
     expect(projection.playerNationId).toBe("uk");
 
-    // Economy: treasury is direct, monthlyAppropriation is the monthly revenue the month executor credits
-    // (floor(60_000 x 2000bp / 120_000) = 1000).
     expect(projection.economy.treasury).toBe(50_000);
     expect(projection.economy.monthlyAppropriation).toBe(1000);
-    // shipyardCapacity is the sum of the nation's own ports' levels (30 + 20).
     expect(projection.economy.shipyardCapacity).toBe(50);
 
     expect(projection.ports).toEqual([
@@ -227,7 +224,6 @@ describe("buildPlayerProjection — S-1 readiness in the fleet projection (ticke
     });
     const [known, unknown] = projection?.fleet[0]?.divisions[0]?.ships ?? [];
     expect(known?.displacementTons).toBe(11_880);
-    // An unresolved design is absent, never zero: a zero would read as a real (empty) ship.
     expect(unknown).toBeDefined();
     expect(unknown !== undefined && "displacementTons" in unknown).toBe(false);
   });
@@ -303,7 +299,6 @@ describe("buildPlayerProjection — S-1 readiness in the fleet projection (ticke
   });
 
   it("lists the player's presence areas with required, present and shortfall once configured (S-5 05)", () => {
-    // FIXTURE-CLASS rules: mechanics only, never a production value.
     const rules = {
       requiredTonsPerPossessionWeight: 100,
       noPortValueWeight: 2,
@@ -353,7 +348,6 @@ describe("buildPlayerProjection — S-1 readiness in the fleet projection (ticke
   });
 
   it("shows the exemption notice and no shortfall while at war and blockaded, and the shortfall again after it lifts (S-5 06)", () => {
-    // FIXTURE-CLASS rules: mechanics only, never a production value.
     const rules = {
       requiredTonsPerPossessionWeight: 100,
       noPortValueWeight: 2,
@@ -429,7 +423,6 @@ describe("buildPlayerProjection — S-1 readiness in the fleet projection (ticke
         },
       ],
     });
-    // The maintenance phase's own output: ACTIVE 10 + RESERVE 7 = 17.
     uk.maintenanceCost = SafeInt(17);
     const projection = buildPlayerProjection(fixtureState(fixtureSnapshot([uk])), "uk", {
       month: 1,

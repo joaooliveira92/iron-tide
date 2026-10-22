@@ -1,29 +1,3 @@
-// DESIGN-40 §19 machinery damage (INC-6, AC-17). A torpedo hit in a machinery
-// space evaluates propulsion-unit / shaft / boiler / electrical / steering /
-// fuel-system damage through a KEYED weighted selection over the shipped
-// severity weights:
-//   NO_EFFECT 1_000 / DEGRADED_PROPULSION 4_000 / MAJOR_PROPULSION_LOSS 3_000 /
-//   DEAD_IN_WATER 1_500 / CATASTROPHIC_MACHINERY_LOSS 500   (total exactly 10_000)
-// A non-machinery impact uses the reduced eligibility multiplier 2_500 bp:
-// every non-NO_EFFECT weight scales by floor(w × 2_500 / 10_000) and NO_EFFECT
-// absorbs the freed mass — the machinery-effect bucket shrinks to 25% of its
-// zone value (the exact "reduced eligibility" semantics; the scaled weights
-// also total exactly 10_000). §19 "in or adjacent to machinery spaces": the
-// zone-derived eligibility is handled entirely by the shipped
-// torpedoMachineryEligibilityBp table (MACHINERY -> full, otherwise reduced).
-//
-// The selected severity writes into the B-4 ComponentOutcome vocabulary via
-// the pinned mapping (seam verdict: "writing into ComponentOutcome-style
-// results"): NO_EFFECT -> UNAFFECTED, DEGRADED_PROPULSION -> DEGRADED,
-// MAJOR_PROPULSION_LOSS -> DISABLED, DEAD_IN_WATER -> DISABLED (all propulsive
-// power lost), CATASTROPHIC_MACHINERY_LOSS -> DESTROYED. A non-NO_EFFECT
-// selection records the in-slice cause TORPEDO_MACHINERY_DAMAGE_CREATED.
-//
-// Determinism: exactly ONE keyed draw on the hierarchical stream
-//   battle/torpedo/damage/machinery:<battleId>:<impactMinute>:<impactSubstep>:<trackId>
-// All attached machinery components receive the same outcome (the machinery
-// space is hit as a whole; the blast conduit is the ship's propulsion plant).
-// Pure/deterministic: no ambient I/O/clock/random.
 import { BluewaveError } from "@bluewave/contracts";
 import {
   TORPEDO_MACHINERY_SEVERITIES,
@@ -50,10 +24,6 @@ function isInt(v: unknown): v is number {
   return typeof v === "number" && Number.isInteger(v) && Number.isSafeInteger(v);
 }
 
-// AC-17: the selection weights for a hit zone. Machinery space -> the shipped
-// weights verbatim (total exactly 10_000); non-machinery -> every effect
-// weight scaled by floor(w × 2_500 / 10_000) with NO_EFFECT absorbing the
-// remainder (also total exactly 10_000). Proof-shaped export for the tests.
 export function machinerySelectionWeightsBp(
   isMachinerySpace: boolean,
 ): Record<TorpedoMachinerySeverity, number> {
@@ -73,11 +43,10 @@ export function machinerySelectionWeightsBp(
     weights[severity] = w;
     effectMass += w;
   }
-  weights["NO_EFFECT"] = TORPEDO_BASIS_POINTS_PER_UNIT - effectMass; // absorb the remainder
+  weights["NO_EFFECT"] = TORPEDO_BASIS_POINTS_PER_UNIT - effectMass;
   return weights;
 }
 
-// §19 -> B-4 ComponentOutcome mapping (the pinned seam vocabulary).
 export function machinerySeverityToComponentOutcome(
   severity: TorpedoMachinerySeverity,
 ): ComponentOutcome {
@@ -97,8 +66,6 @@ export function machinerySeverityToComponentOutcome(
   }
 }
 
-// The deterministic cumulative selection: drawBp < the first cumulative weight
-// selects that severity bucket; the residual mass lands in NO_EFFECT.
 export function selectMachinerySeverity(
   weights: Record<TorpedoMachinerySeverity, number>,
   drawBp: number,
@@ -114,13 +81,9 @@ export function selectMachinerySeverity(
     cumulative += weights[severity];
     if (drawBp < cumulative) return severity;
   }
-  // The weights total exactly 10_000, so a drawBp < 10_000 always lands in a
-  // bucket; the fall-through is unreachable — fail closed defensively rather
-  // than return a silent default.
   invariant("weights", weights, "machinery weights must total exactly 10_000");
 }
 
-// The deterministic AC-17 stream identity (hierarchical + domain-separated).
 export function torpedoMachineryStreamId(o: {
   battleId: string;
   impactMinute: number;
@@ -143,23 +106,18 @@ export function torpedoMachineryStreamId(o: {
 
 export interface TorpedoMachineryEffect {
   severity: TorpedoMachinerySeverity;
-  // B-4 ComponentOutcome-style effects, one per attached machinery component
-  // in the supplied stable component-id order (seam verdict vocabulary).
   componentEffects: readonly { componentId: string; outcome: ComponentOutcome }[];
   decision: { streamId: string; draw: number; drawBp: number };
-  reasonCode: string | null; // TORPEDO_MACHINERY_DAMAGE_CREATED on a real effect
+  reasonCode: string | null;
 }
 
-// AC-17: the keyed weighted machinery evaluation. The machinery components are
-// an input from the layout layer (the ship's propulsion plant inside the blast
-// influence); the zone decides the eligibility surface.
 export function evaluateTorpedoMachineryDamage(o: {
   battleId: string;
   impactMinute: number;
   impactSubstep: number;
   torpedoTrackId: string;
-  zone: TorpedoImpactZone; // $17 zone — decides full vs reduced eligibility
-  machineryComponents: readonly string[]; // stable component ids
+  zone: TorpedoImpactZone;
+  machineryComponents: readonly string[];
   keyedRng: (stream: string) => number;
 }): TorpedoMachineryEffect {
   if (!Array.isArray(o.machineryComponents))
@@ -175,8 +133,6 @@ export function evaluateTorpedoMachineryDamage(o: {
   if (typeof o.keyedRng !== "function")
     invariant("keyedRng", o.keyedRng, "a deterministic keyed RNG stream function is required");
 
-  // Zone -> eligibility (fail-closed on a non-canonical zone via the shipped
-  // lookup in damageConstants.ts).
   const eligibilityBp = torpedoMachineryEligibilityBp(o.zone);
   const weights = machinerySelectionWeightsBp(eligibilityBp === TORPEDO_BASIS_POINTS_PER_UNIT);
 

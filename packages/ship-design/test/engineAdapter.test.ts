@@ -33,7 +33,7 @@ describe("toEngineDesign", () => {
     expect(e.nationId).toBe("uk");
   });
   it("derives guns, crew, hit points and torpedo mounts from the real components", () => {
-    expect(e.mainGunsCaliber).toBe(119_380); // largest secondary gun when no main gun is fitted
+    expect(e.mainGunsCaliber).toBe(119_380);
     expect(e.mainGunsCount).toBe(2);
     expect(e.crewComplement).toBe(c.systems!.crewRequired);
     expect(e.hitPoints).toBe(Math.floor(c.totalKg / 4_000));
@@ -51,7 +51,6 @@ describe("toEngineDesign", () => {
           ...draft.armour.regions,
           {
             region: "BELT_MAIN" as const,
-            // Splinter plating, below the 2-inch qualifying armour a destroyer may not carry.
             thicknessUm: 50_000,
             lengthMm: 20_000,
             heightMm: 1_500,

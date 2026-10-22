@@ -7,7 +7,6 @@ import {
 } from "../../../../shared/preferences-contract.js";
 import { useBridge } from "../../../lib/bridge-context.js";
 
-/** The legacy localStorage key, migrated once into the campaign-scope sidecar. */
 const LEGACY_STORAGE_KEY = "bluewave-display-preferences";
 
 function readLegacy(): CampaignPreferences | null {
@@ -20,22 +19,12 @@ function readLegacy(): CampaignPreferences | null {
 }
 
 export interface UseDisplayPreferencesReturn {
-  /** The resolved value: `session ?? campaign ?? default` (D3). */
   readonly displayPrefs: CampaignPreferences;
-  /** Toggle a per-campaign preference; persists to the campaign-scope sidecar. */
   readonly togglePref: (key: keyof CampaignPreferences) => void;
-  /** Set an in-memory session override; never persisted (D3). */
   readonly setSessionOverride: (key: keyof CampaignPreferences, value: boolean) => void;
-  /** Drop every session override (a session close discards them anyway). */
   readonly clearSessionOverrides: () => void;
 }
 
-/**
- * Campaign-scope display preferences (U-2 ticket 05, D3). They persist in the
- * campaign sidecar beside the per-campaign files (never in the save snapshot),
- * resolve ahead of the app scope and behind an in-memory session override, and no
- * longer write `localStorage` (the legacy key is migrated once).
- */
 export function useDisplayPreferences(sessionId?: string): UseDisplayPreferencesReturn {
   const bridge = useBridge();
   const [campaign, setCampaign] = useState<CampaignPreferences | undefined>(undefined);

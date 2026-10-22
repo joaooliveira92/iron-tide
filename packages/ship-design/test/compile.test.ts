@@ -117,7 +117,7 @@ describe("compileDesign: invalid designs", () => {
     ).toContain("TREATY_LIMIT_DISPLACEMENT");
     expect(
       ids(compileDesign(draft, withCtx({ treaty: { maxMainGunCaliberUm: 100_000 } }))),
-    ).not.toContain("TREATY_LIMIT_CALIBRE"); // secondary guns only
+    ).not.toContain("TREATY_LIMIT_CALIBRE");
     expect(
       ids(compileDesign(draft, withCtx({ treaty: { forbiddenCategories: ["DD"] } }))),
     ).toContain("TREATY_LIMIT_CATEGORY");
@@ -185,8 +185,6 @@ describe("compileDesign: invalid designs", () => {
     expect(() =>
       compileDesign(withDraft({ machinery: { ...draft.machinery, plantId: "nope" } }), ctx),
     ).toThrow();
-    // An unregistered ship type is a design error, not corrupt context: it is a blocking finding (ADR-0088),
-    // so a crafted command cannot make the month executor throw.
     const unknownType = compileDesign(
       withDraft({ requirement: { ...draft.requirement, category: "nope" } }),
       ctx,
@@ -351,7 +349,6 @@ describe("compileDesign: aluminium superstructure (ADR-0252)", () => {
 });
 
 describe("compileDesign: AA fit (ADR-0252)", () => {
-  // Fixture values, not game values.
   const section = {
     fromMonth: "1880-01",
     lightGunWeightKg: 100,

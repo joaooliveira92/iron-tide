@@ -14,7 +14,6 @@ export type EffectDirection = (typeof EFFECT_DIRECTIONS)[number];
 export const EFFECT_MAGNITUDES = ["minor", "moderate", "major"] as const;
 export type EffectMagnitude = (typeof EFFECT_MAGNITUDES)[number];
 
-/** A qualitative, non-revealing consequence hint for one decision option. */
 export const EffectHintSchema = Schema.Struct({
   target: EntityReferenceSchema,
   attribute: nonEmptyString,
@@ -28,7 +27,6 @@ export interface EffectHint {
   readonly magnitude: EffectMagnitude;
 }
 
-/** A declared, deterministic effect one option applies to authoritative state. */
 export const DecisionEffectSchema = Schema.Struct({
   nationId: nonEmptyString,
   attribute: Schema.Literal("treasury"),
@@ -55,7 +53,6 @@ export interface DecisionOption {
   readonly effects: readonly DecisionEffect[];
 }
 
-/** An authored decision offer (S-4 supplies the content; this is the port). */
 export interface PendingDecision {
   readonly phase: TurnPhase;
   readonly subjectKey: string;
@@ -108,29 +105,17 @@ export type OfferEstimateModel = (typeof OFFER_ESTIMATE_MODELS)[number];
 export const OFFER_SIDES = ["ATTACKER", "DEFENDER"] as const;
 export type OfferSide = (typeof OFFER_SIDES)[number];
 
-/** One of the player's own ships in the offered force (the player's own identities are not withheld). */
 export interface OfferForceShip {
   readonly shipId: string;
   readonly name: string;
   readonly classId: string;
 }
 
-/**
- * The enemy-strength estimate shown on an offer (spec #109 R5): the model that produced it and one integer strength.
- * The true strength, the enemy ship identities and the perturbation draw are never carried.
- */
 export interface OfferEstimate {
   readonly model: OfferEstimateModel;
   readonly strength: number;
 }
 
-/**
- * A battle offer (spec #109 R3/R4, ticket #112): raised at `battle_resolution` for a pending battle that involves the
- * player's nation. It carries the mission type and acceptance class, the area, the two sides, the player's own selected
- * force, the enemy-strength estimate, a support-force indicator and the message keys for the qualitative decline
- * statement. It never carries the enemy's ship identities or names, the battle seed, the manifest or input hashes, or any
- * draw, and it is identical on every re-execution of the same suspended month.
- */
 export interface OfferRequest {
   readonly kind: "offer";
   readonly turnId: string;
@@ -151,12 +136,10 @@ export interface OfferRequest {
   readonly playerForce: readonly OfferForceShip[];
   readonly estimate: OfferEstimate;
   readonly supportForcePresent: boolean;
-  /** T-1 08: the nations whose ships form the support force, sorted; present only when a support force is. Never ship identities. */
   readonly supportNationIds?: readonly string[];
   readonly declineStatementKeys: readonly string[];
 }
 
-/** A player-supplied battle outcome. Null winner/loser represents a tie. */
 export interface BattleResultInput {
   readonly interruptionId: string;
   readonly battleId: string;
@@ -170,10 +153,6 @@ export interface BattleResultInput {
 export const OFFER_RESPONSES = ["accept", "decline", "delegate"] as const;
 export type OfferResponse = (typeof OFFER_RESPONSES)[number];
 
-/**
- * A player-supplied answer to a battle offer (spec #109 R3): accept, decline, or delegate the battle to the automatic
- * resolution. Additive beside {@link BattleResultInput}, which is unchanged.
- */
 export interface OfferResponseInput {
   readonly interruptionId: string;
   readonly battleId: string;
@@ -183,7 +162,6 @@ export interface OfferResponseInput {
 export type InterruptionRequest = DecisionRequest | BattleRequest | OfferRequest;
 export type InterruptionPayload = DecisionAnswer | BattleResultInput | OfferResponseInput;
 
-/** A recorded external input, consumed strictly by ordinal on re-execution. */
 export interface RecordedInput {
   readonly ordinal: number;
   readonly kind: InterruptionKind;
@@ -192,23 +170,17 @@ export interface RecordedInput {
   readonly inputHash: string;
 }
 
-/** The pause point returned by a suspended turn. */
 export interface SuspendedTurn {
   readonly turnId: string;
   readonly request: InterruptionRequest | null;
   readonly nextInterruptionOrdinal: number;
   readonly reason: SuspensionReason;
-  /**
-   * The stable `_tag` of the typed refusal that left an offer pending (T-1 03, spec #109 R6); absent for every other
-   * suspension. Additive: a suspension without it decodes exactly as before.
-   */
   readonly refusalTag?: string;
 }
 
 export const SUSPENSION_REASONS = ["awaiting-input", "invalid-input"] as const;
 export type SuspensionReason = (typeof SUSPENSION_REASONS)[number];
 
-/** Deterministic turn identity: a function of the pre-turn state and inputs. */
 export function computeTurnId(parts: {
   readonly campaignId: string;
   readonly startingRevision: number;
@@ -218,7 +190,6 @@ export function computeTurnId(parts: {
   return hashWithContext(canonicalSerialize(parts), "bluewave/turn-id");
 }
 
-/** Deterministic hash over the recorded inputs in canonical ordinal order. */
 export function computeOrderedInputsHash(inputs: readonly RecordedInput[]): string {
   const projected = [...inputs]
     .sort((a, b) => a.ordinal - b.ordinal)
@@ -231,7 +202,6 @@ export function computeOrderedInputsHash(inputs: readonly RecordedInput[]): stri
   return hashWithContext(canonicalSerialize(projected), "bluewave/turn-inputs");
 }
 
-/** Deterministic interruption identity: a function of the turn, phase, ordinal and subject. */
 export function computeInterruptionId(parts: {
   readonly turnId: string;
   readonly phase: TurnPhase;
@@ -241,7 +211,6 @@ export function computeInterruptionId(parts: {
   return hashWithContext(canonicalSerialize(parts), "bluewave/interruption-id");
 }
 
-/** Deterministic hash of one recorded input's identity and payload. */
 export function computeInputHash(input: {
   readonly ordinal: number;
   readonly kind: InterruptionKind;
@@ -259,7 +228,6 @@ export function computeInputHash(input: {
   );
 }
 
-/** Build a fully-identified recorded input, hashing its payload in place. */
 export function makeRecordedInput(input: {
   readonly ordinal: number;
   readonly kind: InterruptionKind;
@@ -400,7 +368,6 @@ export const decodeRecordedInputs = decode<readonly RecordedInput[]>(
   Schema.Array(RecordedInputSchema),
 );
 
-/** Decode an input payload for a known kind, rejecting excess keys. */
 export function decodeInterruptionPayload(
   kind: InterruptionKind,
   input: unknown,

@@ -8,12 +8,6 @@ import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
 import { researchOf, technologiesOf } from "./helpers/campaignRecords.js";
 
-/**
- * 1880 research activity (N-1 ticket 09): no funded nation starts idle. Every
- * nation with a research budget above zero opens with an active project whose
- * prerequisites are met, so turn 1 already has research movement.
- */
-
 const here = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = resolve(here, "..", "..", "..");
 const contentDir = resolve(repoRoot, "content", "production", "1880");

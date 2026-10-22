@@ -18,11 +18,6 @@ import {
 } from "../src/index.js";
 import { decodeIssue, decodeOk } from "./decode-helpers.js";
 
-/**
- * The ship part model contract (ship-part-model ticket 01, SPM-R1–R7). Expectations come
- * from the proposal's closed vocabularies (§3.8, §3.9, §8.1), not from the schema code.
- */
-
 const provenance = {
   sourceStatus: "VERIFIED",
   confidence: "HIGH",
@@ -30,7 +25,6 @@ const provenance = {
   sources: [{ title: "test source" }],
 };
 
-/** One minimal, valid record per part family (proposal §3.4 shapes). */
 const PARTS = {
   gun: {
     id: "bl_12in_25",
@@ -221,7 +215,6 @@ function expectRejected(schema: ContentSchema, data: unknown): void {
   expect(decodeOk(schema, data)).toBe(false);
 }
 
-/** The `SCHEMA` diagnostics the compiler's strict validator emits for one record. */
 function diagnose(schema: ContentSchema, data: unknown, sourcePath: string) {
   const collector = new DiagnosticCollector();
   const result = validateAgainstSchema(data, schema, "Part", sourcePath, collector);

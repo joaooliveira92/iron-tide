@@ -59,13 +59,9 @@ export function checkFleetSizeTacticalViolation(formulaId: string) {
     });
 }
 export function scaleValue(unscaled: number, multiplierBp: number): SafeInt {
-  // §4.4: multiplication MUST use a wide integer before division so no overflow
-  // or precision loss. Unscaled values are integer quantities (money, counts);
-  // a non-integer is an authoring error and must fail loudly, not round silently.
   if (!Number.isSafeInteger(unscaled)) {
     throw new TypeError(`scaleValue expects an integer unscaled value, got ${unscaled}`);
   }
-  // BigInt division truncates toward zero, which equals floor for non-negative values.
   const scaled = (BigInt(unscaled) * BigInt(multiplierBp)) / BigInt(10000);
   return SafeInt(Number(scaled));
 }
@@ -88,7 +84,6 @@ export function allocateIndivisible(
     const id = floors[i % floors.length]!.id;
     out.set(id, (out.get(id) ?? 0) + 1);
   }
-  // reorder deterministic by id
   const sorted = new Map([...out.entries()].sort((a, b) => a[0].localeCompare(b[0])));
   return sorted;
 }
@@ -147,7 +142,6 @@ export function validateFleetSizeSettings(settings: unknown, c: DiagnosticCollec
   }
   let ok = true;
   for (const s of settings) if (!validateFleetSizeSetting(s, c)) ok = false;
-  // §4.1: the active ruleset MUST define exactly the canonical settings.
   if (settings.length !== FLEET_SIZE_IDS.length) {
     c.addError(
       "MISSING_FLEET_SIZE_MULTIPLIER",
@@ -170,7 +164,6 @@ export function validateFleetSizeSettings(settings: unknown, c: DiagnosticCollec
       }
     }
   }
-  // canonical shipped values check
   for (const s of settings as FleetSizeSetting[]) {
     const exp = FLEET_SIZE_BPS[s.settingId as FleetSizeId];
     if (
@@ -180,7 +173,6 @@ export function validateFleetSizeSettings(settings: unknown, c: DiagnosticCollec
         s.aiForceTargetMultiplierBp !== exp ||
         s.generatedLegacyFleetScaleMultiplierBp !== exp)
     ) {
-      // only enforce for canonical rulesetVersion "1.0"
       if (s.rulesetVersion === "1.0") {
         c.addError(
           "FLEET_SIZE_MULTIPLIER_OUT_OF_RANGE",

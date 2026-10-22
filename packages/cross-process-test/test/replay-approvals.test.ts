@@ -75,7 +75,6 @@ describe("replay approvals guard", () => {
   it("consumes an approval: it cannot cover the same change again", () => {
     const approvals = proposed(base, changed);
     const merged = state(changed.replays.get(NAME)!, approvals);
-    // Later the replay moves back and then forward again to the same checkpoint.
     const reused = unwrap(
       checkReplayApprovals(
         state(RECORDED, approvals),
@@ -83,7 +82,6 @@ describe("replay approvals guard", () => {
       ),
     );
     expect(reused.failures.map((f) => f._tag)).toEqual(["ReusedApproval"]);
-    // A later unrelated change is not covered either.
     const later = state(perturbed(changed.replays.get(NAME)!, 1), approvals);
     expect(tags(merged, later)).toEqual(["UnapprovedDelta"]);
   });

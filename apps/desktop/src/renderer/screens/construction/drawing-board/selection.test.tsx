@@ -109,7 +109,6 @@ describe("selecting sections", () => {
     expect(pressed()).toEqual([]);
     expect(inspector()).toBeNull();
     expect(selectedZone()).toBeUndefined();
-    // With a preview card open, Escape belongs to the card: the pin survives it.
     fireEvent.click(label("Quarterdeck"));
     fireEvent.keyDown(document.body, { key: "Tab" });
     act(() => label("Aft service").focus());
@@ -164,7 +163,6 @@ describe("selecting fittings", () => {
     expect(within(box).getByText(/Forecastle · 40‰ · centreline/)).toBeTruthy();
     expect(within(box).getByText(/\(mag_fwd\)/)).toBeTruthy();
     expect(document.querySelectorAll("[data-arc]").length).toBe(arcs);
-    // Selecting another fitting replaces it.
     fireEvent.click(target("mag_fwd"));
     expect(target("gun_12pdr").getAttribute("aria-pressed")).toBe("false");
     expect(within(inspector()!).getByText("Protection margin")).toBeTruthy();
@@ -315,7 +313,6 @@ describe("drawing-to-form navigation", () => {
     const panel = screen.getByRole("region", { name: "Machinery, fuel and range" });
     expect(panel.contains(document.activeElement)).toBe(true);
     expect(panel.dataset["navFlash"]).toBe("true");
-    // The selection survives the jump.
     expect(pressed()).toEqual(["Central machinery"]);
   });
 

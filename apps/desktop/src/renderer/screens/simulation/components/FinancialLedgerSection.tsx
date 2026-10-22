@@ -20,7 +20,6 @@ interface FinancialLedgerSectionProps {
   readonly entries: readonly FinancialLedgerEntry[];
 }
 
-/** The month's balanced financial ledger: phase, description, amount, running balance. */
 export function FinancialLedgerSection({ entries }: FinancialLedgerSectionProps) {
   return (
     <AccordionItem value="ledger">

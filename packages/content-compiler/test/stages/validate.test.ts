@@ -3,12 +3,6 @@ import { ValidateStage } from "@bluewave/content-compiler";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { ParseOutput } from "../../src/stages/parse.js";
 
-/**
- * ValidateStage operates on the parsed surface (`ParseOutput`); these tests build
- * that surface directly so the stage is exercised in isolation — no filesystem,
- * no ParseStage, no schema-package parsing. Every collection item is a minimal
- * schema-valid document for its collection.
- */
 function makeInput(overrides: Partial<ParseOutput> = {}): ParseOutput {
   return {
     manifest: { name: "test-pack", version: "0.1.0", type: "fixture", files: {} },
@@ -32,7 +26,6 @@ function collection(
   };
 }
 
-/** A minimal schema-valid TechnologyPrerequisiteChain document. */
 function tech(id: string, prerequisiteIds: readonly string[] = []): unknown {
   return {
     id,
@@ -45,7 +38,6 @@ function tech(id: string, prerequisiteIds: readonly string[] = []): unknown {
   };
 }
 
-/** A minimal schema-valid ShipComponent document with the given upgrade edges. */
 function component(id: string, upgradePath: readonly string[] = []): unknown {
   return {
     id,

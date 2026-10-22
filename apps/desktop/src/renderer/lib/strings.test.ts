@@ -9,12 +9,6 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-/**
- * `translate` is a compatibility alias for the one resolver (`content/uiCatalogue.ts`).
- * These tests pin the delegation: the compiled pack wins, the in-repo en-US
- * catalogue answers only what the pack does not author, and a total miss warns
- * once through the shared sink and renders a safe fallback.
- */
 describe("string resolver alias (U-4 ticket 06)", () => {
   it("resolves an in-repo en-US key through the one resolver", () => {
     expect(translate("settings.title")).toBe("Options");

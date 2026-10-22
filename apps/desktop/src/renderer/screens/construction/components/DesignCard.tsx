@@ -17,7 +17,6 @@ export interface DesignCardProps {
   readonly design: CompiledDesignVersion;
 }
 
-/** One selectable approved-design card in the catalog. */
 export function DesignCard({ design }: DesignCardProps) {
   const format = usePresentationFormat();
   const Icon = shipTypeIcon(design.shipType);

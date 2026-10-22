@@ -119,12 +119,6 @@ function compileCampaign(fixtureDir: string): { state: CampaignState; contentHas
   return { state: output.state, contentHash: output.contentHash };
 }
 
-/**
- * Hashes the full-surface content bundle the compiler produces (the compiler's
- * canonical order, plus any ship-building/campaign surface the manifest
- * declares). Part of the cross-process determinism proof so a locale-dependent
- * ordering in the compiler surfaces as a two-process mismatch (CAH-DET-1).
- */
 function contentBundleHash(fixtureDir: string): string {
   const collector = new DiagnosticCollector();
   const surfaceInput = buildFullSurfaceInput(resolve(fixtureDir, "pack.json"), fixtureDir);
@@ -149,9 +143,6 @@ function snapshotToHashable(snapshot: CampaignSnapshot): unknown {
     version: snapshot.version,
     turnNumber: snapshot.turnNumber,
     campaignId: snapshot.campaignId,
-    // B-6/ADR-0025: canonical start date + current-month per-area weather are
-    // part of the authoritative snapshot surface (golden keys must prove the
-    // schema carries them — hash parity with ReplayVerifier's subset hash).
     startYear: snapshot.startYear,
     startMonth: snapshot.startMonth,
     strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),
@@ -202,9 +193,6 @@ function makeBudgetCommand(
   };
 }
 
-// Deterministic battle-generation scenario: co-located opposing active-war
-// surface presence (ADR B-1-7) produces a manifest + battle seed. Hash the
-// resulting seeds to prove cross-process byte-identical generation.
 function battleGenerationHash(snapshot: CampaignSnapshot): string {
   const nations = new Map<string, NationState>();
   for (const [id, nation] of snapshot.nations) {
@@ -331,7 +319,6 @@ function run(): void {
     const generatedBattleHash = battleGenerationHash(snapshot);
     const generatedContentBundleHash = contentBundleHash(fixtureDir);
 
-    // Output all hashes as JSON
     const output = {
       contentArtifactHash,
       contentBundleHash: generatedContentBundleHash,
@@ -353,14 +340,6 @@ function run(): void {
   }
 }
 
-/**
- * N-2 acceptance (#31): command-free 12-month production smoke run over all
- * fourteen committed nations. The compiled production pack is advanced a full
- * game year with the same per-month seed the desktop turn transaction derives,
- * so the run reaches the known S-1 Portugal/Netherlands treasury event. Two
- * in-process passes prove repeatability; the caller compares two fresh
- * processes for the cross-process byte-identity proof.
- */
 const PRODUCTION_SMOKE_MONTHS = 12;
 const PRODUCTION_SMOKE_SEED = "ten-nation-smoke-1880";
 const PRODUCTION_TEN_YEAR_MONTHS = 120;
@@ -399,14 +378,8 @@ interface ProductionRun {
   readonly closingSnapshotHash: string;
   readonly success: boolean;
   readonly diagnostics: SmokeDiagnostic[];
-  /** Per nation, the first month (1-based) that recorded an outflow shortfall; absent nations never fell short. */
   readonly firstShortfallMonth: Record<string, number>;
-  /**
-   * Per nation, the first month (1-based) whose requested monthly flows left a negative net before construction
-   * (revenue less requested maintenance, obligation and research); absent nations never ran a deficit.
-   */
   readonly firstDeficitMonth: Record<string, number>;
-  /** Months where a nation's treasury change did not equal the sum of its paid ledger postings (must stay empty). */
   readonly ledgerIdentityBreaks: string[];
   readonly hullCounts: Record<string, number>;
 }

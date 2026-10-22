@@ -11,11 +11,6 @@ interface FleetNationCardProps {
   listboxId: string;
 }
 
-/**
- * A single Fleet Dispatch nation card's *content*. The stack owns positioning,
- * scale, depth shading and drag physics; this component only paints one card,
- * so it fills whatever box the shared `CardDeck` gives it.
- */
 export function FleetNationCard({
   countryId,
   palette,
@@ -36,8 +31,6 @@ export function FleetNationCard({
       aria-label={countryName}
       aria-selected={active}
       style={{
-        // Per-nation cover gradient stays invariant: it is only ever visible
-        // behind missing ship artwork, and is documented as decorative data.
         background: palette.background,
         borderColor: active ? "var(--color-admiralty-accent)" : palette.border,
       }}
@@ -69,8 +62,6 @@ export function FleetNationCard({
         </div>
       )}
 
-      {/* Photo scrim: follows the active theme so the ink below stays legible
-          on the (invariant) photographic artwork. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-gradient-to-b from-admiralty-surface/75 via-admiralty-surface/5 to-admiralty-surface/85"
@@ -92,19 +83,13 @@ export function FleetNationCard({
         aria-hidden="true"
         className="absolute inset-x-0 top-0 z-10 h-1.5"
         style={{
-          // Per-nation identity stripe (decorative data), invariant across themes.
           backgroundColor: palette.accent,
           boxShadow: active ? `0 0 18px ${palette.accent}` : undefined,
         }}
       />
 
-      {/* Active-nation emphasis: mounted only while active, so its animation
-          replays on every selection change (see globals.css). */}
       {active ? <span aria-hidden="true" className="fleet-dispatch-activate-glow" /> : null}
 
-      {/* Bottom information shelf overlays the ship cover. The frosted blur is
-          reserved for the active card — running it on every stacked card is a
-          large per-frame paint cost during the selection transition. */}
       <div
         className={`absolute inset-x-0 bottom-0 z-20 min-h-[4.8rem] border-t border-admiralty-ink/20 px-5 py-3 text-admiralty-ink ${
           active ? "bg-admiralty-surface/35 backdrop-blur-md" : "bg-admiralty-surface/55"

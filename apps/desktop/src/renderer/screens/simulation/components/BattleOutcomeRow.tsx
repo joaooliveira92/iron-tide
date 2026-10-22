@@ -3,12 +3,6 @@ import type { BattleOutcome } from "@bluewave/campaign-engine";
 import { Badge } from "../../../components/ui/badge.js";
 import { cn } from "../../../lib/utils.js";
 
-/**
- * One resolved battle, straight from the projection — raw engine ids, never
- * invented display names. A battle with `winnerId`/`loserId` both null is
- * genuinely undecided (tie / time limit) and is shown as such: no fabricated
- * winner, no fabricated war score.
- */
 export function BattleOutcomeRow({ battle }: { readonly battle: BattleOutcome }) {
   const decided = battle.winnerId !== null && battle.loserId !== null;
 
@@ -64,7 +58,6 @@ export function BattleOutcomeRow({ battle }: { readonly battle: BattleOutcome })
   );
 }
 
-/** Ship-loss row: count + the raw ship ids, or an honest empty marker. */
 function ShipLossSummary({
   label,
   losses,

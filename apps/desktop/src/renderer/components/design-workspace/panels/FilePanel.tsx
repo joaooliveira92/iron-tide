@@ -17,7 +17,6 @@ import { ConfirmAction } from "../ConfirmAction.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 
-/** Save the working design to a `.bwdesign` file, or open one as the working design (history resets). */
 export function FilePanel({
   draft,
   view,

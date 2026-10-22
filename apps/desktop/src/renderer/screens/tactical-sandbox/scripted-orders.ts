@@ -1,6 +1,5 @@
 import type { RawScriptedForceOrder } from "@bluewave/campaign-engine";
 
-/** The sample order the sandbox starts with, so the resolver is runnable out of the box. */
 const DEFAULT_SCRIPTED_ORDERS: readonly RawScriptedForceOrder[] = [
   {
     issueTurn: 1,
@@ -10,19 +9,12 @@ const DEFAULT_SCRIPTED_ORDERS: readonly RawScriptedForceOrder[] = [
   },
 ];
 
-/** The default order list rendered into the textarea on first load. */
 export const DEFAULT_SCRIPTED_ORDERS_TEXT = JSON.stringify(DEFAULT_SCRIPTED_ORDERS, null, 2);
 
 export type ParseScriptedOrdersResult =
   | { readonly ok: true; readonly orders: readonly RawScriptedForceOrder[] }
   | { readonly ok: false; readonly error: string };
 
-/**
- * Parse the textarea's JSON into scripted force orders. This is a transport
- * boundary: the resolver still validates orders semantically, so this only
- * guarantees the shape (an array of entries carrying the required fields) and
- * reports a human-readable reason otherwise.
- */
 export function parseScriptedOrders(text: string): ParseScriptedOrdersResult {
   let parsed: unknown;
   try {

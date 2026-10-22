@@ -1,6 +1,3 @@
-// STAGES 1-3 of the per-minute DESIGN-40 torpedo resolution (launch → advance →
-// hit resolution + detonation). Run state lives in ./torpedoRun.js; STAGE 4
-// (damage) and the assembly live there too.
 import { SUBSTEPS_PER_MINUTE } from "../movement/constants.js";
 import type { Position } from "../spotting/detection.js";
 import { advanceTorpedoTrack, type TorpedoTrack } from "./track.js";
@@ -34,7 +31,6 @@ import {
 import { recordExhaustion, type TorpedoAdvance, type TorpedoRun } from "./torpedoRun.js";
 import type { TorpedoTargetContext } from "./resolve.js";
 
-// STAGE 1 — LAUNCH (substep 4).
 export function runLaunchStage(run: TorpedoRun): void {
   const { input, battleId, minute, sideOf, launcherById, keyedRng } = run;
   const commandOrder = [...input.context.commands].sort((a, b) =>
@@ -65,17 +61,13 @@ export function runLaunchStage(run: TorpedoRun): void {
       invariant("firingSubstep", firingSubstep, "firing substep must be within [1, 60)");
     const offset = wiring.launchPointOffsetUm ?? [0, 0];
     const launchPosition: Position = [position[0] + offset[0], position[1] + offset[1]];
-    const launchHeadingMdeg = headingDeg * 1_000; // §13 milli-degrees
-    // §13 guidance invariant: while running, a gyro-guided torpedo's ordered
-    // course must equal its launch heading — the default (unset) gyro is the
-    // straight run along the ship's heading.
+    const launchHeadingMdeg = headingDeg * 1_000;
     const gyro = cmd.orderedGyroAngleMdeg ?? launchHeadingMdeg;
     const depthM = cmd.depthSettingM ?? TORPEDO_RESOLUTION_DEFAULT_DEPTH_M;
     if (!isSafeInt(gyro) || !isSafeInt(depthM) || depthM < 0)
       invariant("depth/gyro", { gyro, depthM }, "ordered gyro/depth must be safely integer");
     const legalContact = cmd.targetContactId === NO_TARGET_CONTACT ? null : cmd.targetContactId;
 
-    // ---- §7/§8 checkpoint 2 (an illegal launch consumes NO torpedo) ---------
     if (!speedVerdict.allowed) {
       const tubes = [...cmd.tubeIndexes].sort((a, b) => a - b);
       const firstTube = tubes[0]!;
@@ -101,8 +93,7 @@ export function runLaunchStage(run: TorpedoRun): void {
       continue;
     }
 
-    // ---- atomic §11 reservation, launch, per-tube records, track creation ---
-    const reservation = reserveSalvoTorpedoes(wiring.launcher, cmd.tubeIndexes); // §3, atomic
+    const reservation = reserveSalvoTorpedoes(wiring.launcher, cmd.tubeIndexes);
     const accountByTube = new Map(reservation.accounts.map((a) => [a.tubeIndex, a]));
     const salvoTubes = [...cmd.tubeIndexes].sort((a, b) => a - b);
     const salvoModelId = accountByTube.get(salvoTubes[0]!)!.modelId;
@@ -132,7 +123,6 @@ export function runLaunchStage(run: TorpedoRun): void {
       keyedRng,
     });
 
-    // every attempted tube is recorded separately (§12)
     for (const attempt of launched.attempts) {
       const account = accountByTube.get(attempt.tubeId);
       const ammoModel = account?.modelId ?? null;
@@ -172,7 +162,6 @@ export function runLaunchStage(run: TorpedoRun): void {
       );
     }
 
-    // each successful launch created an authoritative track (§13)
     for (const track of launched.tracks) {
       run.runningTracks.push(track);
       run.records.push(
@@ -207,7 +196,6 @@ export function runLaunchStage(run: TorpedoRun): void {
   }
 }
 
-// STAGE 2 — ADVANCE (whole-minute).
 export function runAdvanceStage(run: TorpedoRun): TorpedoAdvance {
   const { minute } = run;
   const toEvaluate: TorpedoTrack[] = [];
@@ -224,7 +212,6 @@ export function runAdvanceStage(run: TorpedoRun): TorpedoAdvance {
     }
     const advanced = advanceTorpedoTrack(track, dtMs);
     if (advanced.terminalResult === "EXHAUSTION") {
-      // last running point: 1 m short of the run's end
       const remainingUm = track.maxRunDistanceM * 1_000_000 - track.distanceTraveledUm - 1_000_000;
       const speedUmS = torpedoSpeedBpKnotsToUmS(track.speedKnotsBp);
       const msToEnd = remainingUm > 0 ? Math.floor((remainingUm * 1_000) / speedUmS) : 0;
@@ -238,7 +225,7 @@ export function runAdvanceStage(run: TorpedoRun): TorpedoAdvance {
         }
       }
       recordExhaustion(run, track);
-      continue; // terminal — no hit evaluation this minute
+      continue;
     }
     sweptFrom.set(advanced.torpedoTrackId, track.currentPosition);
     toEvaluate.push(advanced);
@@ -246,7 +233,6 @@ export function runAdvanceStage(run: TorpedoRun): TorpedoAdvance {
   return { toEvaluate, sweptFrom, exhaustOnMiss };
 }
 
-// STAGE 3 — HIT RESOLUTION + DETONATION (substep 56).
 export function runHitDetonationStage(
   run: TorpedoRun,
   advance: TorpedoAdvance,
@@ -260,8 +246,6 @@ export function runHitDetonationStage(
   const damageQueue: { track: TorpedoTrack; target: TorpedoTargetContext }[] = [];
 
   for (const track of toEvaluate) {
-    // §14(6): the impact instant must lie strictly after the launch instant —
-    // a torpedo launched at/after the evaluation substep continues next minute.
     if (track.launchMinute === minute && track.launchSubstep >= TORPEDO_RESOLVE_IMPACT_SUBSTEP) {
       continuedTracks.push(track);
       continue;
@@ -314,7 +298,6 @@ export function runHitDetonationStage(
       continue;
     }
 
-    // ---- a RESOLVED hit proceeds to detonation (§15) ---------------------
     const detonation = resolveTorpedoDetonation({
       track,
       hit,
@@ -353,7 +336,6 @@ export function runHitDetonationStage(
 
     const terminalTrack = applyTorpedoDetonationToTrack({ track, outcome: detonation.outcome });
     if (terminalTrack.terminalResult === null) {
-      // NO_CONTACT keeps the torpedo authoritative; it continues to run.
       continuedTracks.push(terminalTrack);
       continue;
     }

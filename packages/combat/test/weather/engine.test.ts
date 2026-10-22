@@ -1,8 +1,3 @@
-// H1 regression + record-level hash semantics for resolveWeather:
-// every returned components object must carry a stateHash equal to the
-// authoritative re-computation of ITS OWN surface, and every event record's
-// pre/postStateHash must be the components hash at that stage — never a stale
-// pre-TOD hash (reviewer H1, MUST FIX).
 import { describe, it, expect } from "vite-plus/test";
 import { resolveWeather, type WeatherEngineContext } from "../../src/weather/engine.js";
 import {
@@ -13,8 +8,6 @@ import {
 import type { ClimateProfile } from "../../src/weather/climate.js";
 import type { DaylightProfile } from "../../src/weather/night-twilight.js";
 
-// Daylight: NIGHT until minute 150, DAY from minute 150 (start battle at minute
-// 150 -> currentMinute 150 -> frac 0.5 -> DAY, a genuine TOD change at minute 0).
 function daylightProfile(): DaylightProfile {
   return {
     daylightProfileId: "test_daylight_v1",
@@ -103,14 +96,12 @@ function ctx(overrides: Partial<WeatherEngineContext> = {}): WeatherEngineContex
     daylightProfile: daylightProfile(),
     climateProfile: bareClimate(),
     seasonId: "all",
-    battleStartMinutes: 150, // TOD changes at minute 0 (NIGHT -> DAY at frac 0.5)
+    battleStartMinutes: 150,
     battleSeed: "seed-001",
     ...overrides,
   };
 }
 
-// Climate WITH declared transition tables + drift ranges, so a progression
-// minute actually consumes per-interval draws and rehashes a changed surface.
 function transitionClimate(): ClimateProfile {
   return {
     climateProfileId: "transition_sea_v1",
@@ -201,10 +192,7 @@ describe("H1: resolveWeather canonical state-hash discipline", () => {
     const res = resolveWeather({ context: ctx(), battleId: "b1", minute: 0 });
     const tod = res.weatherRecords.find((r) => r.eventType === "weather_time_of_day");
     expect(tod).toBeDefined();
-    // pre is the hash of the components the TOD update departed from...
     expect(tod!.preStateHash).toBe(initial.stateHash);
-    // ...and post is the authoritative hash of the POST-TOD surface (which is
-    // the nextComponents surface at this non-progression minute).
     expect(tod!.postStateHash).toBe(res.nextComponents.stateHash);
     expect(tod!.preStateHash).not.toBe(tod!.postStateHash);
   });
@@ -218,10 +206,6 @@ describe("H1: resolveWeather canonical state-hash discipline", () => {
   });
 
   it("progression minute: nextComponents.stateHash == recomputed hash", () => {
-    // Minute 30 is a progression boundary (30 % 30 === 0). With the transition
-    // climate the engine consumes per-interval draws and returns the
-    // post-progression surface; its stateHash must equal the authoritative
-    // recompute of that final surface (H1), never a stale pre-progression hash.
     const res = resolveWeather({
       context: ctx({ climateProfile: transitionClimate(), seasonId: "summer" }),
       battleId: "b1",

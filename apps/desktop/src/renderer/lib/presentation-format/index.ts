@@ -1,8 +1,3 @@
-/**
- * The single presentation formatting/conversion home (U-3 map D2). Import from
- * here; do not call `Intl`/`toLocaleString`/`toFixed` or divide by a unit
- * literal anywhere else (the D6 gate).
- */
 export {
   MEASUREMENT_CATEGORIES,
   assertMeasurementSelection,

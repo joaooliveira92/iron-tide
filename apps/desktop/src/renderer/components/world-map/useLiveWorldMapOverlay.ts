@@ -1,11 +1,3 @@
-/**
- * Fetching and joining the live campaign overlay is its own concern, separate
- * from the map's interaction state machine. This hook owns the bridge calls,
- * their cancellation, and the player-nation resolution; it returns the overlay
- * the chart should draw (or the empty fixture fallback when there is no
- * session, or the bridge/inspection fails).
- */
-
 import { useEffect, useMemo, useState } from "react";
 import { useBridge } from "../../lib/bridge-context.js";
 import { EMPTY_LIVE_OVERLAY, joinWorldMap, type LiveWorldMapOverlay } from "./campaign-map-join.js";

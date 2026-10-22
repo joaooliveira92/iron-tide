@@ -1,9 +1,3 @@
-// The crash-support boundary as a service (INC-4; ADR-0159). Wraps
-// `crashSupport.ts`'s local-only support-bundle helpers so the crash path
-// resolves `CrashReporter` + `AppPaths` + `Clock` from the Layer instead of
-// reading `app.getPath`/`homedir`/`new Date` at module load. The raw
-// `node:fs` bundle write stays inside `captureCrash`; process-level handler
-// *registration* is exposed here but performed by the edge (`index.ts`).
 import { Context, Effect, Layer } from "effect";
 import {
   captureCrash,
@@ -26,31 +20,21 @@ import { AppPaths, Clock } from "./platform.js";
 export class CrashReporter extends Context.Service<
   CrashReporter,
   {
-    /** Builds and writes one support bundle; `null` when suppressed or failed. */
     readonly capture: (
       source: CrashSource,
       kind: CrashKind,
       details: CrashDetails,
     ) => Effect.Effect<string | null, CommandFailed>;
-    /** Decodes a renderer crash payload; `null` when it is not the expected shape. */
     readonly parseRendererInput: (value: unknown) => Effect.Effect<RendererCrashInput | null>;
-    /**
-     * Installs the main-process crash handlers, returning an uninstall
-     * function. The registration is the edge's call; the handler body resolves
-     * the context through this service.
-     */
     readonly installProcessHandlers: (
       onFatal: (error: unknown, bundlePath: string | null) => void,
       emitter?: CrashEmitter,
     ) => Effect.Effect<() => void, CommandFailed>;
-    /** A fresh write limiter with the supplied windows. */
     readonly createLimiter: (options: CrashLimiterOptions) => Effect.Effect<CrashLimiter>;
-    /** A best-effort `{message, stack}` from anything a crash handler can receive. */
     readonly detailsFromError: (error: unknown) => Effect.Effect<CrashDetails>;
   }
 >()("bluewave/desktop/CrashReporter") {}
 
-/** Builds the `CrashContext` from the platform services, lazily per call. */
 function crashContext(
   paths: AppPaths["Service"],
   clock: Clock["Service"],
@@ -81,8 +65,6 @@ export function crashReporterLayer(): Layer.Layer<CrashReporter, never, AppPaths
     Effect.gen(function* () {
       const paths = yield* AppPaths;
       const clock = yield* Clock;
-      // One limiter for the process lifetime: a render loop can emit thousands
-      // of identical errors, so writes are capped and deduped (ADR-0133).
       const limiter = createCrashLimiter({
         maxPerWindow: 5,
         windowMs: 60_000,

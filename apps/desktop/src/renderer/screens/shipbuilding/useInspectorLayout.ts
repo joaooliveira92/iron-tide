@@ -9,10 +9,8 @@ import {
   type InspectorLayout,
 } from "./inspector-layout.js";
 
-/** How long a change waits before it is written, so a drag does not hammer the sidecar. */
 const PERSIST_DEBOUNCE_MS = 300;
 
-/** The stored inspector layout, or null when there is nothing (or no bridge) to read. */
 async function readInspectorLayout(
   bridge: BluewaveDesktopBridge,
   sessionId: string,
@@ -25,17 +23,10 @@ async function readInspectorLayout(
 
 export interface UseInspectorLayoutResult {
   readonly layout: InspectorLayout;
-  /** Sets the pane width, clamped to the supported range and remembered. */
   setWidth: (px: number) => void;
-  /** Folds the pane away, or restores it, and remembers the choice. */
   toggleCollapsed: () => void;
 }
 
-/**
- * The shipbuilding inspector's width and collapsed state, remembered per campaign through the
- * renderer-owned `ui-state.json` sidecar (ADR-0038) — presentation only, never authoritative. Outside
- * a campaign session, or without a bridge, the choice still applies for the session but is not stored.
- */
 export function useInspectorLayout(sessionId?: string): UseInspectorLayoutResult {
   const bridge = useBridge();
   const [layout, setLayout] = useState<InspectorLayout>(DEFAULT_INSPECTOR_LAYOUT);
@@ -48,7 +39,6 @@ export function useInspectorLayout(sessionId?: string): UseInspectorLayoutResult
     latest.current = layout;
   }, [layout]);
 
-  // Read the remembered layout, unless the player has already changed it while the read was in flight.
   useEffect(() => {
     if (bridge === undefined || sessionId === undefined) return;
     let cancelled = false;
@@ -61,7 +51,6 @@ export function useInspectorLayout(sessionId?: string): UseInspectorLayoutResult
     };
   }, [bridge, sessionId]);
 
-  // Closing the dialog unmounts the hook; flush any debounced write so a last-moment resize is remembered.
   useEffect(
     () => () => {
       if (timer.current === null) return;

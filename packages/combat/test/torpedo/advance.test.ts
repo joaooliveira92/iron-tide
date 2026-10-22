@@ -1,15 +1,3 @@
-// INC-7 — the torpedo engine stage + strict no-op (AC-22).
-//   - absent torpedo context ⇒ minute hashes byte-identical to the committed
-//     B-2..B-6 baseline (hardcoded literals captured BEFORE the INC-7 change —
-//     do NOT regenerate them);
-//   - present context that resolves nothing ⇒ the same byte-identical
-//     guarantee;
-//   - a resolved minute emits §27 records via the torpedo stage after the
-//     damage stage, threads torpedoStates/torpedoTracks, and drives the full
-//     launch → track → hit → detonation → damage chain.
-// ALSO the shared torpedo-scene builders the other INC-7 test files import
-// (the buildTestState precedent — advance.test.ts re-exported by
-// pipeline-order.test.ts).
 import { describe, expect, it } from "vite-plus/test";
 import { RandomEngine } from "@bluewave/random";
 import { SafeInt } from "@bluewave/contracts";
@@ -31,8 +19,6 @@ import {
   type TorpedoTargetContext,
 } from "../../src/torpedoes/index.js";
 import { COMPILED_TORPEDOES } from "../fixtures/compiledTorpedoes.js";
-
-// shared scene builders (exported for the other INC-7 test files)
 
 export const TORPEDO_BATTLE_ID = "b1-torpedo-inc7";
 
@@ -73,8 +59,6 @@ export function torpedoUnit(
   };
 }
 
-/** The baseline battle state (mirrors the B-2 advance.test.ts builder — the
- *  same inputs that produced the committed no-context baseline hashes). */
 export function buildTorpedoBattleState(
   overrides: Partial<TacticalBattleState> = {},
 ): TacticalBattleState {
@@ -112,10 +96,6 @@ export function buildTorpedoBattleState(
   };
 }
 
-/** The Inc-7 stationary-shooter scene: the attacker holds position at the west
- *  edge heading EAST (heading 0 — the authored movement direction table); the
- *  defender sits ~1000 m dead ahead inside the 35 kn torpedo's first-minute
- *  run. Returns the battle state + a legal contact + the torpedo context. */
 export function buildTorpedoScene(): {
   state: TacticalBattleState;
   contact: TacticalContact;
@@ -290,21 +270,6 @@ export function torpedoContext(overrides: Partial<TorpedoContext> = {}): Torpedo
 
 export const TORPEDO_SCENE_ORDERS = { a1: { orderedHeading: 0, orderedSpeedBp: 0 } };
 
-// ---- The committed B-2..B-6 no-context baseline hashes -------------------
-// Captured from the PRE-INC-7 engine (3 minutes of the baseline builder with
-// battleId "baseline-b1" and orders a1 heading90/speed20) and re-confirmed
-// byte-identical after the INC-7 engine change. These literals MUST NOT be
-// regenerated except through the ADR-0007 process (done once: ticket 08, below) — the
-// strict no-op tests below pin them.
-// ADR-0007 re-pin (P-1 ticket 08, spawn heading 90/270 -> 0/180 so the spawn
-// convention matches movement's directionBp). Verified heading-only: forcing the old
-// 90/270 headings onto the new spawn reproduces the OLD hashes exactly. OLD -> NEW:
-//   abdcc6016ddee44ea6846492d39fd2358bb466d5e6d6f39e8e163a28db7bffc2 ->
-//   776d173937a5adf1d8ba5be6ae49ae95a818d6988e3a8fc23176c6dc378990c3
-//   492b9696bae8d386f6622f9f924bb76e342998ebb313ccbd23e6ba5c07a5bfd1 ->
-//   ff4e9f63172d29c4d6a61faf313a46518c47c1bab7a31edc78dbe36a10c2bcf4
-//   84291ea770b87bce659b456f3471f0511c383cd01699d30bde9e68a5763dc5ce ->
-//   341169fb6b084c0758348088849d7a4a70636d9610c9735f71c2802a51f70718
 export const BASELINE_NO_CONTEXT_HASHES = [
   "776d173937a5adf1d8ba5be6ae49ae95a818d6988e3a8fc23176c6dc378990c3",
   "ff4e9f63172d29c4d6a61faf313a46518c47c1bab7a31edc78dbe36a10c2bcf4",
@@ -373,7 +338,6 @@ describe("AC-22 — torpedo stage in the minute-advance (strict no-op + firing)"
     expect(types.has("torpedo_detonation")).toBe(true);
     expect(types.has("torpedo_damage")).toBe(true);
     expect(res.torpedoRecords!.length).toBeGreaterThanOrEqual(6);
-    // the consuming torpedo leaves the tube (ammunition account)
     expect(res.torpedoStates!["LCH-1"].loadedPerTube[0]).toBe(EMPTY_TUBE);
     expect(res.minuteHash).toMatch(/^[0-9a-f]{64}$/);
   });
@@ -394,8 +358,8 @@ describe("AC-22 — torpedo stage in the minute-advance (strict no-op + firing)"
     const launch = res.torpedoRecords!.find((r) => r.kind === "LAUNCH")!;
     expect(launch.battleMinute).toBe(1);
     expect(launch.substep).toBe(TORPEDO_LAUNCH_SUBSTEP);
-    expect(launch.speedLimitValidation.allowed).toBe(true); // 0 kn underwater
-    expect(launch.speedLimitValidation.applicable).toBe(true); // underwater mount
+    expect(launch.speedLimitValidation.allowed).toBe(true);
+    expect(launch.speedLimitValidation.applicable).toBe(true);
     expect(launch.ammunitionChange).not.toBeNull();
     expect(launch.speedLimitValidation.allowed || launch.ammunitionChange).toBeDefined();
   });

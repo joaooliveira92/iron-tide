@@ -9,10 +9,6 @@ import { makeAutoInput } from "./fixtures.js";
 
 describe("AC-7: winner/loser viability rule", () => {
   it("withdrawing side loses: winner is the other nation, loser keeps its survivors (ADR-0073)", () => {
-    // ADR-0098: the default fixture now resolves by fleet-strength withdrawal
-    // (post caliber correction + lethality rebalance). This seed withdraws with
-    // no ship sunk, so the winner/loser rule is exercised in isolation. The
-    // winner/loser rule under test is unchanged.
     const input = { ...makeAutoInput(), campaignSeed: "cause-1" };
     const result = resolveBattleAuto(input);
     expect(result.battleEndReason).toBe("withdrawal_complete");
@@ -35,7 +31,6 @@ describe("AC-7: winner/loser viability rule", () => {
   });
 
   it("eliminated side = non-viable; winner formation is a pure function of the seed", () => {
-    // same input twice -> same winner/loser, byte-identical
     const a = resolveBattleAuto(makeAutoInput());
     const b = resolveBattleAuto(makeAutoInput());
     expect(a.winnerId).toBe(b.winnerId);

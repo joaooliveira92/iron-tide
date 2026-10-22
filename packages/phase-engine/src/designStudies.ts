@@ -19,13 +19,8 @@ import {
 import { budgetChangedEvent, makeLedgerEntry } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
 
-/** Ledger category of study payments (treasury screens group spending by category). */
 export const DESIGN_STUDY_CATEGORY = "DESIGN_STUDY";
 
-/**
- * The baseline a candidate in `designFamilyId` is derived from (DESIGN-21 section 8): the family's newest member that still
- * has its source draft, so it can be compared under today's rules. Null for a new family, or one with no comparable member.
- */
 function baselineOf(
   snapshot: CampaignSnapshot,
   designFamilyId: string,
@@ -40,12 +35,6 @@ function baselineOf(
   return null;
 }
 
-/**
- * The study that would approve `design` (ADR-0085), without opening it: the Drawing Board shows these terms before the
- * player submits, and `startDesignStudy` opens exactly this study. A design in an existing family is compared with the
- * family's newest member: similar earns the derived-design discount and stays in the family; not similar becomes a new
- * family (section 17) named after the design. Pure.
- */
 export function planDesignStudy(
   snapshot: CampaignSnapshot,
   nationId: string,
@@ -69,7 +58,6 @@ export function planDesignStudy(
     failed = [...a.failed];
   }
   const existingFamily = snapshot["designFamilies"].has(design.designFamilyId);
-  // Section 17: a design that is not similar to its family's baseline starts a new family.
   const designFamilyId =
     existingFamily && !derived
       ? `fam_${design.designVersionId.replace(/^des_/, "")}`.slice(0, 64)
@@ -105,7 +93,6 @@ export function planDesignStudy(
   return entry;
 }
 
-/** Opens the study `planDesignStudy` describes, on the nation's study list. Pure. */
 export function startDesignStudy(
   snapshot: CampaignSnapshot,
   nationId: string,
@@ -121,7 +108,6 @@ export function startDesignStudy(
   return { ...snapshot, nations };
 }
 
-/** True when some nation already has a study (in progress or done) for this design version id. */
 export function studyExists(snapshot: CampaignSnapshot, designVersionId: string): boolean {
   for (const n of snapshot["nations"].values())
     if ((n.designStudies ?? []).some((s) => s.design.designVersionId === designVersionId))
@@ -129,7 +115,6 @@ export function studyExists(snapshot: CampaignSnapshot, designVersionId: string)
   return false;
 }
 
-/** The approved design and its family enter the snapshot (the same shape `SubmitDesign` produced before studies). */
 function approve(snapshot: CampaignSnapshot, s: DesignStudy, month: string): CampaignSnapshot {
   const design = s.design;
   const existing = snapshot["designFamilies"].get(s.designFamilyId);
@@ -152,11 +137,6 @@ function approve(snapshot: CampaignSnapshot, s: DesignStudy, month: string): Cam
   };
 }
 
-/**
- * Pays this month's study work, nation by nation and study by study (id order), before construction is funded. A study
- * advances one month of work when `ceil(remaining cost / remaining months)` is affordable from the treasury above its
- * expense reserve; otherwise it makes no progress this month (DESIGN-21 section 3). A study finishing approves its design.
- */
 export function fundDesignStudies(ctx: MonthContext): void {
   const { campaignMonth, eventLedger, financialLedger, nextSeq } = ctx;
   for (const [nationId, start] of ctx.currentSnapshot["nations"]) {

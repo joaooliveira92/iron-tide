@@ -21,7 +21,6 @@ function writeFixture(base: string, rel: string, content: string): string {
   return full;
 }
 
-/** A strict-NationSchema-compliant nation as a single YAML list item. */
 function nationYaml(
   id: string,
   tag: string,
@@ -79,12 +78,10 @@ function nationYaml(
 `;
 }
 
-/** A strict-ShipComponentSchema-compliant component as one `components` array item. */
 function componentYaml(id: string): string {
   return componentYamlWith(id, []);
 }
 
-/** A strict-ShipComponentSchema-compliant component with explicit upgrade edges. */
 function componentYamlWith(id: string, upgradePath: readonly string[]): string {
   return `
   - id: "${id}"
@@ -111,7 +108,6 @@ function shipBuildingInput(fixturePath: string): Record<string, string[]> {
   };
 }
 
-/** A strict-ReferenceDesignSchema-compliant design with the given dangling references. */
 function referenceDesignYaml(id: string, hullFormId: string, plantId: string): string {
   return `
 designs:

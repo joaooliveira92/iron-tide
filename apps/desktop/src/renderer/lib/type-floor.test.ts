@@ -2,11 +2,6 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 
-/**
- * Type floor (spec V-1): player-facing text is never smaller than 12 px. Use the
- * `text-xs` token instead of an arbitrary `text-[11px]`. Debug-only and
- * developer-only screens are exempt: they are not shipped to players.
- */
 const RENDERER_ROOT = resolve(process.cwd(), "src/renderer");
 const EXEMPT = [
   "screens/debugging/",

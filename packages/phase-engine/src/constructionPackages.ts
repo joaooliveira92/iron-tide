@@ -1,12 +1,5 @@
 import type { ConstructionProject } from "@bluewave/campaign";
 
-/**
- * Consistency problems of a project's per-package progress (ADR-0077), as readable messages; empty when the project has no
- * packages (the single-figure model) or they are all consistent. Pure.
- *
- * A project with packages must satisfy: unique package ids; every dependency names a package; each package's done work is
- * within 0..total; the totals add up to the project's `totalWork`; and the done work adds up to its `completedWork`.
- */
 export function constructionPackageProblems(project: ConstructionProject): string[] {
   const packages = project["packages"];
   if (packages === undefined) return [];

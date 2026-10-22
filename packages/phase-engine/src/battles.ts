@@ -23,17 +23,8 @@ import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { countActiveWarsFor, settleWar } from "./diplomacy.js";
 
-// B-6 INC-3: the battle manifest shape `resolveBattleAuto` consumes. The
-// snapshot stores manifests structurally (campaign-side mirror); the combat
-// generation manifest is the authoritative runtime shape — the phase casts at
-// the single lookup seam (never a deep cross-package import).
 type AutoResolutionManifest = Parameters<typeof resolveBattleAuto>[0]["manifest"];
 
-/**
- * The ship type battle generation assigns to every ship. The campaign carries no authoritative per-ship battle type, so
- * generation and the support force share this one resolver rather than each hard-coding it; giving ships real types is a
- * gameplay decision and is not made here.
- */
 export function resolveGenerationShipType(): string {
   return "BB";
 }
@@ -48,11 +39,6 @@ export function resolveShipStrength(snapshot: CampaignSnapshot, shipId: string):
   return 0;
 }
 
-/**
- * S-1 D5: the battle-readiness value combat's generation consumes for a ship —
- * its real crew quality (`0..100`). A ship absent from the snapshot fails closed
- * to `0` so it cannot be gathered. Replaces the former hard-coded `80` (ADR-0223).
- */
 export function resolveCampaignBattleReadiness(snapshot: CampaignSnapshot, shipId: string): number {
   for (const [, nation] of snapshot["nations"]) {
     for (const fleet of nation["fleets"]) {
@@ -63,10 +49,8 @@ export function resolveCampaignBattleReadiness(snapshot: CampaignSnapshot, shipI
   return 0;
 }
 
-/** The war-score clamp every war-score change shares (the score scale is -100..100). */
 const clampWarScore = (value: number): number => Math.max(-100, Math.min(100, value));
 
-/** The surrender check every war-score change shares: a side at or above the surrender score settles the war. */
 function settleOnSurrender(
   snapshot: CampaignSnapshot,
   war: {
@@ -81,10 +65,6 @@ function settleOnSurrender(
     : snapshot;
 }
 
-/**
- * Move a war's score by a signed amount per side through the one war-score seam (T-1 04, spec #109 R8): the same clamp and
- * surrender check as a decided battle. A war that is not in the snapshot is left untouched.
- */
 export function applyWarScoreDelta(
   snapshot: CampaignSnapshot,
   warId: string,
@@ -121,7 +101,6 @@ export function applyBattleResult(
   let wars = snapshot["wars"]["wars"];
   let participantMemberships = snapshot["wars"]["participantMemberships"];
 
-  // Find and promote the involved war.
   const warIdx = wars.findIndex(
     (w) =>
       (w["attackerId"] === battle["attackerId"] && w["defenderId"] === battle["defenderId"]) ||
@@ -135,7 +114,6 @@ export function applyBattleResult(
     war = { ...war, status: "ACTIVE" as const };
   }
 
-  // Alliance / mutual-defense auto-entry for defender & attacker sides.
   let attackerSideMembers = [...war["attackerSideMembers"]];
   let defenderSideMembers = [...war["defenderSideMembers"]];
 
@@ -156,7 +134,6 @@ export function applyBattleResult(
         if (targetMembers.includes(ally) || sideMembers.includes(ally)) continue;
         if (sideMembers.length + targetMembers.length >= MAXIMUM_CONCURRENT_WARS * 2) continue;
         if (countActiveWarsFor(snapshot, ally) >= MAXIMUM_CONCURRENT_WARS) continue;
-        // add to the current side
         const warId = war["id"];
         if (sideMembers === defenderSideMembers) {
           defenderSideMembers = [...defenderSideMembers, ally];
@@ -186,7 +163,6 @@ export function applyBattleResult(
     status: war["status"],
   };
 
-  // Victory classification + war score.
   const loserId = result["loserId"];
   const attackerWins = result["winnerId"] === battle["attackerId"];
   const loserIsAttacker = loserId === battle["attackerId"];
@@ -233,7 +209,6 @@ export function applyBattleResult(
     defenderWarScore: winnerSide === "defender" ? newWinnerScore : newLoserScore,
   };
 
-  // nationalContributionPoints for participating nations on the winning side.
   const contributionDelta = Math.floor(lossHp / 1000);
   const winnerMembers =
     winnerSide === "attacker" ? war["attackerSideMembers"] : war["defenderSideMembers"];
@@ -256,22 +231,9 @@ export function applyBattleResult(
     wars: { ...snapshot["wars"], wars, participantMemberships },
   };
 
-  // Surrender auto-check.
   return settleOnSurrender(next, war, campaignMonth);
 }
 
-// B-6 INC-3: battle_resolution phase helpers (AC-8/AC-9). The tactical
-// auto-resolution result (@bluewave/combat resolveBattleAuto, INC-2) is
-// applied to the campaign through these pure, deterministic helpers. Never
-// mutate a ship in place; every transition builds a new snapshot.
-
-/**
- * Locate the accepted battle manifest for a battle instance. The canonical
- * match is by `manifestHash` (the battle's pre-seed content hash — DESIGN-37
- * §32); a battle with a `manifestHash` for which the snapshot carries NO
- * matching manifest is a corrupted/inconsistent state and fails closed (the
- * caller records a stable diagnostic and applies NO mutation).
- */
 export function resolveBattleManifest(
   snapshot: CampaignSnapshot,
   battle: BattleInstance,
@@ -279,21 +241,9 @@ export function resolveBattleManifest(
   if (battle["manifestHash"] === undefined) return null;
   const manifests = snapshot["wars"]["battleManifests"] ?? [];
   const found = manifests.find((m) => m["manifestHash"] === battle["manifestHash"]);
-  // The snapshot's manifests are produced by @bluewave/combat's generateBattles
-  // (structurally identical); the cast only reconciles the campaign-side mirror
-  // type with the combat manifest type at this single lookup seam.
   return found ? (found as unknown as AutoResolutionManifest) : null;
 }
 
-/**
- * Apply the tactical battle outcome to the campaign (AC-9): per-ship
- * accumulated battle hp loss (ADR-0026 damageReport mapping) applied to
- * `fleets[].ships[].hitPoints` clamped >= 0; terminal ships (in the result's
- * sunk lists OR derived hp == 0) REMOVED from their fleet; `inBattleId`
- * reservations cleared on every ship that fought (the battle's fleets).
- * Deterministic: ships iterate in fleet order (canonical id-sorted in the
- * battle generation); untouched ships keep their object identity.
- */
 export function applyBattleConsequences(
   snapshot: CampaignSnapshot,
   battle: BattleInstance,
@@ -315,17 +265,14 @@ export function applyBattleConsequences(
         const newHp = Math.max(0, (ship["hitPoints"] as number) - loss);
         const isSunk = sunkIds.has(ship["id"]) || newHp <= 0;
         if (isSunk) {
-          // Authoritative loss (DESIGN-37 §19/§20): the ship is gone from its
-          // fleet; survivors keep their damage (readiness harm is real).
           fleetChanged = true;
           continue;
         }
         if (newHp === (ship["hitPoints"] as number) && ship["inBattleId"] === undefined) {
-          ships.push(ship); // untouched
+          ships.push(ship);
           continue;
         }
         fleetChanged = true;
-        // Clear the battle reservation; hitPoints carry the clamped loss.
         const { inBattleId: _reservation, ...rest } = ship;
         ships.push({ ...rest, hitPoints: SafeInt(newHp) });
       }
@@ -343,12 +290,6 @@ export function applyBattleConsequences(
   return changed ? { ...snapshot, nations: updatedNations } : snapshot;
 }
 
-/**
- * Map the tactical auto-resolution result onto the campaign `BattleResult`
- * shape (the shape `applyBattleResult` consumes for the DECIDED path and the
- * shape persisted on `BattleInstance.result`). Ties / time-limit battles carry
- * null winner/loser (ADR-0026 §7); sunk ids are canonical id-sorted.
- */
 export function toCampaignBattleResult(
   auto: BattleResolutionResult,
   lostShips: LostShipRecord[] = [],
@@ -366,12 +307,6 @@ export function toCampaignBattleResult(
   };
 }
 
-/**
- * The details of every ship the battle destroys (ADR-0061), taken BEFORE
- * `applyBattleConsequences` removes them from their fleets. Mirrors that function's
- * rule (in the sunk lists OR damage takes hp to 0) and fleet order, so the ledger
- * and the fleets can never disagree.
- */
 export function collectLostShips(
   snapshot: CampaignSnapshot,
   battle: BattleInstance,
@@ -406,8 +341,6 @@ export function collectLostShips(
   return lost;
 }
 
-/** Mark a battle resolved with its recorded campaign result (battles keep
- *  their canonical snapshot order — the array is mapped in place). */
 export function recordResolvedBattle(
   snapshot: CampaignSnapshot,
   battle: BattleInstance,
@@ -419,12 +352,6 @@ export function recordResolvedBattle(
   return { ...snapshot, wars: { ...snapshot["wars"], battles } };
 }
 
-/**
- * The M1 legacy battle-resolution path (strength-based, UNCHANGED): resolves
- * the battle via `BattleResolver`, feeds the A-3 `applyBattleResult`
- * (war score / ADR-0010 victory classification / nationalContributionPoints),
- * and records the legacy `BattleResult` with phase "resolved".
- */
 export function resolveLegacyBattle(
   snapshot: CampaignSnapshot,
   battle: BattleInstance,
@@ -436,10 +363,6 @@ export function resolveLegacyBattle(
   collector: DiagnosticCollector,
 ): CampaignSnapshot {
   const result = resolver.resolve(battle, attacker, defender, randomEngine);
-  // The M1 BattleResolver ALWAYS decides (winner/loser non-null) — the A-3
-  // war-score path keeps its exact `{ winnerId: string; loserId: string }`
-  // contract; the nullable campaign BattleResult fields only carry null on the
-  // auto-resolution tie/time-limit path.
   let next = applyBattleResult(
     snapshot,
     battle,

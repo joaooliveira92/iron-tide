@@ -8,12 +8,6 @@ import type {
   RelevanceTier,
 } from "./world-situation.js";
 
-/**
- * Player-facing copy for the World Situation Briefing. Every string is a whole
- * sentence or label under a stable key, with `{named}` placeholders a translator
- * can reorder — nothing is assembled from fragments. The table is the seam the
- * UI catalogue (ADR-0209) will absorb; until then it lives beside the screen.
- */
 const MESSAGES = {
   "world.eyebrow": "Foreign Intelligence",
   "world.title": "World Situation Briefing",
@@ -149,7 +143,6 @@ const MESSAGES = {
 
 export type WorldMessageKey = keyof typeof MESSAGES;
 
-/** Resolves a briefing message, interpolating `{named}` placeholders. */
 export function worldText(
   key: WorldMessageKey,
   params: Readonly<Record<string, string | number | boolean>> = {},
@@ -178,7 +171,6 @@ export interface ReasonParams {
   readonly theaterCount: number;
 }
 
-/** The one-sentence "why this matters" for a power's placement. */
 export function reasonText(reason: RelevanceReason, params: ReasonParams): string {
   switch (reason) {
     case "at_war":

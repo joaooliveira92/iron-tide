@@ -15,20 +15,14 @@ import type { TertiaryBattery } from "./tertiary.js";
 import type { HullSpec } from "./hull.js";
 import { SEVERITY_ORDER, type Severity } from "./findings.js";
 
-/** The atomic, undoable edits a player or the AI can make to a draft (spec §17). */
 export type DraftEdit =
   | { readonly kind: "set_hull"; readonly patch: Partial<HullSpec> }
   | { readonly kind: "set_machinery"; readonly patch: Partial<MachineryPlan> }
   | { readonly kind: "set_fire_control"; readonly positions: number }
-  /** Fit or unfit colonial service (S-5, manual p.42). Unfitting removes the flag, restoring the pre-S-5 draft shape. */
   | { readonly kind: "set_colonial_service"; readonly fitted: boolean }
-  /** Ask for or drop an aluminium superstructure (manual p.45). Dropping removes the flag, restoring the prior draft shape. */
   | { readonly kind: "set_aluminium_superstructure"; readonly fitted: boolean }
-  /** The AA fit: light and medium AA guns and AA directors, as counts; `null` or all zeros removes it (manual p.43). */
   | { readonly kind: "set_anti_aircraft"; readonly antiAircraft: AntiAircraftFit | null }
-  /** The tertiary battery: a count of one chosen gun; `null` removes it. */
   | { readonly kind: "set_tertiary"; readonly tertiary: TertiaryBattery | null }
-  /** The design brief: ship type, required speed and range, crew and accommodation. A brief is not a build change. */
   | { readonly kind: "set_requirement"; readonly patch: Partial<DesignRequirement> }
   | { readonly kind: "add_placement"; readonly placement: PlacementSpec }
   | { readonly kind: "remove_placement"; readonly instanceId: string }
@@ -46,13 +40,9 @@ export type DraftEdit =
     }
   | { readonly kind: "set_armour_region"; readonly region: ArmourRegion }
   | { readonly kind: "remove_armour_region"; readonly region: ArmourRegion["region"] }
-  /** Which side a mount fires from (centreline, port or starboard); it sets its arc and obstruction. */
   | { readonly kind: "set_side"; readonly instanceId: string; readonly side: MountSide }
-  /** Several edits as one undoable step, applied in order; if any fails none is applied. Batches do not nest. */
   | { readonly kind: "batch"; readonly edits: readonly Exclude<DraftEdit, { kind: "batch" }>[] }
-  /** Replaces every armour region at once (an armour scheme), as one undoable step. Order is kept. */
   | { readonly kind: "set_armour_regions"; readonly regions: readonly ArmourRegion[] }
-  /** Applies a named armour scheme (ADR-0232): the regions it produced and its label, as one undoable step. */
   | {
       readonly kind: "set_armour_scheme";
       readonly schemeId: ArmourSchemeId;
@@ -60,9 +50,7 @@ export type DraftEdit =
     };
 
 export class EditError extends Error {
-  /** Stable discriminator (RULES.md "Errors"): recover by `_tag`, not `instanceof`. */
   readonly _tag = "EditError";
-  /** `_tag`-based narrowing without `instanceof`. */
   static is(value: unknown): value is EditError {
     return (
       typeof value === "object" &&
@@ -82,8 +70,6 @@ const need = (draft: DesignDraft, id: string): PlacementSpec => {
   return p;
 };
 
-/** Pure: returns a new draft; the input is never mutated. Throws EditError for edits that reference nothing. */
-/** The armour plan with new regions and no scheme label: a manual edit leaves a named scheme for "Custom". */
 function customArmour(
   armour: DesignDraft["armour"],
   regions: ArmourRegion[],
@@ -236,9 +222,7 @@ export function applyEdit(draft: DesignDraft, e: DraftEdit): DesignDraft {
 export interface EditPreview {
   readonly draft: DesignDraft;
   readonly result: CompiledDesign;
-  /** Finding ids present before and gone after. */
   readonly resolved: readonly string[];
-  /** Finding ids absent before and present after. */
   readonly introduced: readonly string[];
   readonly countsBefore: Readonly<Record<Severity, number>>;
   readonly countsAfter: Readonly<Record<Severity, number>>;
@@ -251,7 +235,6 @@ const counts = (r: CompiledDesign): Record<Severity, number> => {
   return c;
 };
 
-/** What would this edit do? Full recompile in preview mode; nothing is persisted. */
 export function previewEdit(
   draft: DesignDraft,
   ctx: ShipContext,
@@ -276,7 +259,6 @@ export function previewEdit(
   };
 }
 
-/** True if the edit strictly improves the worst severity present, or keeps it and reduces the count at that level. */
 export function improves(p: EditPreview): boolean {
   for (const s of SEVERITY_ORDER) {
     if (p.countsAfter[s] !== p.countsBefore[s]) return p.countsAfter[s] < p.countsBefore[s];

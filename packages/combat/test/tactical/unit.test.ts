@@ -11,9 +11,9 @@ describe("TacticalShipUnit promotion (AC-1)", () => {
     const opts = { sideId: "ATTACKER", preBattleStateHash: "state" };
     const u1 = promoteTacticalUnit(ship, design, opts);
     const u2 = promoteTacticalUnit(ship, design, opts);
-    expect(u1).toEqual(u2); // purity + determinism
+    expect(u1).toEqual(u2);
     expect(u1.campaignShipId).toBe(ship.id);
-    expect(u1.shipType).toBe(classifyShip(design)); // canonical ship type
+    expect(u1.shipType).toBe(classifyShip(design));
     expect(u1.armorBeltUm).toBe(design.normalizedArmorUm);
     expect(u1.mainGunsCaliberUm).toBe(design.mainGunsCaliber);
     expect(u1.mainGunsCount).toBe(design.mainGunsCount);
@@ -36,7 +36,7 @@ describe("TacticalShipUnit promotion (AC-1)", () => {
 
   it("fails loudly on missing design reference", () => {
     const ship = makeShip({}, { designVersionId: "des_missing" });
-    const design = makeDesign(); // mismatched
+    const design = makeDesign();
     expect(() =>
       promoteTacticalUnit(ship, design, { sideId: "ATTACKER", preBattleStateHash: "s" }),
     ).toThrow(BluewaveError);

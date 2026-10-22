@@ -5,7 +5,6 @@ import type { PartDraft } from "./anatomy-types.js";
 import type { Reach } from "./anatomy-types.js";
 import type { AnatomyShipScene } from "./anatomy-scene.js";
 
-/** Deck: margin, planking, hatches, breakwater, capstans and bollards. */
 export function drawDeck(scene: AnatomyShipScene): void {
   const { near, L, B, D, halfAt, deckZ, P, add, DECK_REACH, ring } = scene;
   const part: PartDraft = {
@@ -37,7 +36,6 @@ export function drawDeck(scene: AnatomyShipScene): void {
     ),
     tone: "faint",
   });
-  // Planking: lanes run fore and aft and stop at the deck edge; butt joints are staggered lane by lane.
   const laneWidth = 0.075 * B;
   const lanes = Math.floor((halfAt(0.5) * 0.97) / laneWidth);
   for (let lane = -lanes; lane <= lanes; lane++) {
@@ -64,7 +62,6 @@ export function drawDeck(scene: AnatomyShipScene): void {
     }
     if (butts.length > 0) part.lines.push({ d: lineOf(butts, P), tone: "faint" });
   }
-  // The rail along the deck edge: a line a little above the plating with stanchions on the near side.
   const railReach: Reach = { bow: DECK_REACH.bow * 0.985, stern: DECK_REACH.stern * 0.985 };
   part.lines.push({
     d: lineOf(

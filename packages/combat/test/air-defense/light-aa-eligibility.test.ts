@@ -1,5 +1,3 @@
-// AC-6: Light AA windows per attack profile + speed bands (DESIGN-45 §9).
-
 import { describe, it, expect } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -61,7 +59,7 @@ function attack(overrides: AtkOverrides = {}) {
     formationId: "frm_light_001",
     targetId: "ship_001",
     attackType: AttackType.AIRCRAFT_LEVEL_BOMBING,
-    speedKnots: SafeInt(150), // < 200 knots → 10_000 bp
+    speedKnots: SafeInt(150),
     speedMps: SafeInt(77),
     currentRangeM: SafeInt(2_000),
     currentAltitudeM: SafeInt(1_000),
@@ -96,7 +94,6 @@ describe("AC-6: light AA windows (§9)", () => {
       const result = evaluate(attack({ attackType: AttackType.AIRCRAFT_LEVEL_BOMBING }));
       expect(result.profile).toBe("LEVEL");
       expect(Number(result.baseWindowMilliseconds)).toBe(120_000);
-      // speed 150 knots → 10_000 bp → effective = 120_000 ms
       expect(Number(result.effectiveWindowMilliseconds)).toBe(120_000);
     });
 
@@ -169,7 +166,6 @@ describe("AC-6: light AA windows (§9)", () => {
   describe("effective window formula (§9 line 178)", () => {
     it("effective = floor(base * bp / 10_000) for level bombing at 5_000 bp", () => {
       const result = evaluate(attack({ speedKnots: SafeInt(400) }));
-      // 120_000 * 5_000 / 10_000 = 60_000
       expect(Number(result.effectiveWindowMilliseconds)).toBe(60_000);
     });
 
@@ -177,7 +173,6 @@ describe("AC-6: light AA windows (§9)", () => {
       const result = evaluate(
         attack({ attackType: AttackType.AIRCRAFT_ROCKET_ATTACK, speedKnots: SafeInt(550) }),
       );
-      // 60_000 * 2_500 / 10_000 = 15_000 (no clamp needed) — use a very fast speed band on the 60s window.
       expect(Number(result.effectiveWindowMilliseconds)).toBe(15_000);
     });
   });
@@ -187,7 +182,6 @@ describe("AC-6: light AA windows (§9)", () => {
       const result = evaluate(
         attack({ speedKnots: SafeInt(400), timeToImpactMs: SafeInt(60_000) }),
       );
-      // level at 5_000 bp → 60_000 ms effective; tti 60_000 <= 60_000
       expect(result.windowOpen).toBe(true);
       expect(result.withinEnvelope).toBe(true);
       expect(result.eligible).toBe(true);

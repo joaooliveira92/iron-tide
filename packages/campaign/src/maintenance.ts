@@ -1,38 +1,16 @@
-// S-1 (ship readiness and maintenance): the single, versioned per-ship
-// maintenance formula and its readiness-state multipliers (ADR-0223, decision
-// request 0007-A). The formula and its constants live here so the maintenance
-// phase, the opening briefing and the player projection all read one source.
-//
-// Grounding: repair ≈ 2× active and mothballing halts repair (manual p.51);
-// mothballed maintenance is half (manual p.30). The reserve and working-up
-// multipliers have no manual source and are admitted balance choices (ADR-0213,
-// `balance_adjustment`) — tune them here, never inside a phase.
-//
-// `campaign` is renderer-reachable, so this stays plain TypeScript (no `effect`).
 import { SafeInt } from "@bluewave/contracts";
 import type { ShipReadinessState } from "./readiness.js";
 
 export const MAINTENANCE_FORMULA_ID = "maintenance_v2";
 export const MAINTENANCE_FORMULA_VERSION = "2.0.0";
 
-/** Active maintenance is the base rate (multiplier 1.00). */
 export const MAINTENANCE_ACTIVE_MULTIPLIER_BP = SafeInt(10_000);
-/** Working-up ships are in commission at the base rate (balance_adjustment, ADR-0213). */
 export const MAINTENANCE_WORKING_UP_MULTIPLIER_BP = SafeInt(10_000);
-/** Reserve is cheaper than active (balance_adjustment, ADR-0213). */
 export const MAINTENANCE_RESERVE_MULTIPLIER_BP = SafeInt(7_500);
-/** Mothballed = half active (manual p.30; grounded). */
 export const MAINTENANCE_MOTHBALLED_MULTIPLIER_BP = SafeInt(5_000);
-/** Repair ≈ 2× active (manual p.51; grounded). */
 export const MAINTENANCE_REPAIR_MULTIPLIER_BP = SafeInt(20_000);
-/**
- * Wartime raises active maintenance by this factor (manual p.52: "In wartime,
- * maintenance costs will rise sharply", no figure given; balance_adjustment,
- * ADR-0213). Applied to active-status ships only.
- */
 export const MAINTENANCE_WARTIME_MULTIPLIER_BP = SafeInt(12_500);
 
-/** The readiness state's maintenance multiplier, in basis points. */
 const MULTIPLIER_BP: Record<ShipReadinessState, SafeInt> = {
   ACTIVE: MAINTENANCE_ACTIVE_MULTIPLIER_BP,
   WORKING_UP: MAINTENANCE_WORKING_UP_MULTIPLIER_BP,
@@ -45,11 +23,6 @@ export function maintenanceMultiplierBp(readiness: ShipReadinessState): SafeInt 
   return MULTIPLIER_BP[readiness];
 }
 
-/**
- * The one shared per-ship maintenance formula (ADR-0223): the base rate
- * (`floor(hitPoints * 10 / 100)`) scaled by the readiness state's multiplier,
- * with one explicit floor rounding. Integer-only and deterministic.
- */
 export function shipMaintenanceCost(hitPoints: SafeInt, readiness: ShipReadinessState): SafeInt {
   const base = SafeInt.div(SafeInt.mul(hitPoints, SafeInt(10)), SafeInt(100), "floor");
   return SafeInt.div(
@@ -59,14 +32,12 @@ export function shipMaintenanceCost(hitPoints: SafeInt, readiness: ShipReadiness
   );
 }
 
-/** A war party as the maintenance seam needs it: the parties and the war's status. */
 export interface WarPartyRecord {
   readonly status: string;
   readonly attackerSideMembers: readonly string[];
   readonly defenderSideMembers: readonly string[];
 }
 
-/** Whether a nation is a party to any live war (`ACTIVE` or `DECLARED_NOT_ACTIVE`). */
 export function nationIsAtWar(wars: readonly WarPartyRecord[], nationId: string): boolean {
   return wars.some(
     (war) =>
@@ -75,11 +46,6 @@ export function nationIsAtWar(wars: readonly WarPartyRecord[], nationId: string)
   );
 }
 
-/**
- * The per-ship maintenance the phase charges for a month: the state-scaled base
- * cost, with the wartime multiplier applied to active-status ships while the
- * nation is at war (manual p.52; S-1 D6). Integer-only and deterministic.
- */
 export function shipMonthlyMaintenanceCost(
   hitPoints: SafeInt,
   readiness: ShipReadinessState,
@@ -92,7 +58,6 @@ export function shipMonthlyMaintenanceCost(
       ? cost
       : SafeInt.div(SafeInt.mul(cost, MAINTENANCE_WARTIME_MULTIPLIER_BP), SafeInt(10_000), "floor");
   if (overBaseAdderBp === undefined) return monthly;
-  // S-5 08 (spec #73 R10): an over-base ship pays the ruleset's adder on top, with one more floor rounding.
   return SafeInt.div(
     SafeInt.mul(monthly, SafeInt.add(SafeInt(10_000), overBaseAdderBp)),
     SafeInt(10_000),
@@ -100,20 +65,14 @@ export function shipMonthlyMaintenanceCost(
   );
 }
 
-/** The ships of a nation's fleets, as the monthly maintenance total needs them. */
 export interface MaintainedFleet {
   readonly ships: readonly {
     readonly hitPoints: SafeInt;
     readonly readiness: ShipReadinessState;
-    /** S-5 08: present while the ship is over its area's base limit; carries the ruleset's maintenance adder. */
     readonly overBase?: { readonly maintenanceAdderBp: SafeInt };
   }[];
 }
 
-/**
- * A nation's total monthly maintenance requested: the sum of `shipMonthlyMaintenanceCost` over every ship of every fleet.
- * The maintenance phase and every projection call this one function (spec #138), so the figure cannot drift between them.
- */
 export function nationMonthlyMaintenance(
   fleets: readonly MaintainedFleet[],
   atWar: boolean,

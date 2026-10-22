@@ -8,7 +8,6 @@ import { profileFrame } from "./profile-geometry.js";
 import { SectionDrawing } from "./SectionDrawing.js";
 import { sectionFacts, type SectionFitting, type SectionId, type ZoneRange } from "./sections.js";
 
-/** What every section card reads: the live design and the main drawing's frames. */
 export interface SectionCardContext {
   readonly draft: DesignDraft;
   readonly view: WorkshopView;
@@ -18,7 +17,6 @@ export interface SectionCardContext {
   readonly sheerBp: number;
 }
 
-/** At most this many fittings are listed; the drawing numbers them all. */
 const LIST_MAX = 6;
 
 const SIDE = { CENTRE: "centreline", PORT: "port", STBD: "starboard" } as const;
@@ -35,11 +33,6 @@ function fittingLine(f: SectionFitting, format: PresentationFormat): string {
   return parts.join(" · ");
 }
 
-/**
- * Hover-card body for one section. On a wide card the drawing sits beside the text, so the card reads wide and
- * shallow rather than a tall narrow column; on a narrow card it stacks (drawing over text). Read-only: nothing
- * here edits the design, which is why a hover card (not a popover) is the right container.
- */
 export function SectionCard({
   id,
   ctx,

@@ -1,4 +1,3 @@
-// AC-12 (INC-5): Air-launched torpedo attack resolution.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import { RandomEngine } from "@bluewave/random";
@@ -24,11 +23,11 @@ function defaultInput(): AirTorpedoAttackInput {
   return {
     attackerSquadronId: "sqn_attack_01",
     targetShipId: "target_ship_01",
-    dropSpeedMps: SafeInt(150), // well above min 50
-    dropAltitudeM: SafeInt(50), // between 10 and 300
-    distanceToTargetM: SafeInt(1000), // well above min 200
-    targetSpeedBp: SafeInt(10_000), // no evasion
-    targetSizeBp: SafeInt(10_000), // battleship size
+    dropSpeedMps: SafeInt(150),
+    dropAltitudeM: SafeInt(50),
+    distanceToTargetM: SafeInt(1000),
+    targetSpeedBp: SafeInt(10_000),
+    targetSizeBp: SafeInt(10_000),
   };
 }
 
@@ -77,18 +76,11 @@ describe("AC-12: Air-launched torpedo attack", () => {
 
   describe("resolveAirTorpedoAttack — hit probability computation", () => {
     it("computes hit probability correctly with standard parameters", () => {
-      // Standard: baseHitBp=5000, airLaunchBonus=12500, targetSize=10000, targetSpeed=10000
-      // step1 = 5000 * 12500 / 10000 = 6250
-      // step2 = 6250 * 10000 / 10000 = 6250
-      // step3 = 6250 * 10000 / 10000 = 6250
-      // clamped to [1000, 10000] = 6250
       const result = resolveAirTorpedoAttack(defaultInput(), makeRng());
       expect(Number(result.hitProbabilityBp)).toBe(6_250);
     });
 
     it("air launch bonus (12500bp = +25% vs base 5000) produces 6250bp base", () => {
-      // Hit probability step-by-step:
-      // baseHitBp * airLaunchBonus / 10000 = 5000 * 12500 / 10000 = 6250
       const step1 = Math.floor(
         (AIR_COMBAT_TORPEDO_BASE_HIT_BP * AIR_COMBAT_TORPEDO_AIR_LAUNCH_HIT_BONUS_BP) / 10_000,
       );
@@ -96,11 +88,6 @@ describe("AC-12: Air-launched torpedo attack", () => {
     });
 
     it("target speed reduces hit probability", () => {
-      // Fast target: targetSpeedBp = 15000
-      // step1 = 5000 * 12500 / 10000 = 6250
-      // step2 = 6250 * 10000 / 10000 = 6250
-      // step3 = 6250 * 10000 / 15000 = 4166
-      // clamped to [1000, 10000] = 4166
       const input: AirTorpedoAttackInput = {
         ...defaultInput(),
         targetSpeedBp: SafeInt(15_000),
@@ -110,10 +97,6 @@ describe("AC-12: Air-launched torpedo attack", () => {
     });
 
     it("target size reduces hit probability for smaller targets", () => {
-      // Small target: targetSizeBp = 5000 (destroyer)
-      // step1 = 5000 * 12500 / 10000 = 6250
-      // step2 = 6250 * 5000 / 10000 = 3125
-      // step3 = 3125 * 10000 / 10000 = 3125
       const input: AirTorpedoAttackInput = {
         ...defaultInput(),
         targetSizeBp: SafeInt(5_000),
@@ -123,7 +106,6 @@ describe("AC-12: Air-launched torpedo attack", () => {
     });
 
     it("hit probability is clamped to a minimum of 1000bp", () => {
-      // Very fast, very small target
       const input: AirTorpedoAttackInput = {
         ...defaultInput(),
         targetSpeedBp: SafeInt(50_000),
@@ -134,14 +116,9 @@ describe("AC-12: Air-launched torpedo attack", () => {
     });
 
     it("hit probability is clamped to a maximum of 10000bp", () => {
-      // Maximum hit probability
-      // Large target + slow speed
-      // step1 = 5000 * 12500 / 10000 = 6250
-      // step2 = 6250 * 10000 / 10000 = 6250
-      // step3 = 6250 * 10000 / 1 = 62500000... but clamped to 10000
       const input: AirTorpedoAttackInput = {
         ...defaultInput(),
-        targetSpeedBp: SafeInt(1), // minimum speed denominator
+        targetSpeedBp: SafeInt(1),
       };
       const result = resolveAirTorpedoAttack(input, makeRng());
       expect(Number(result.hitProbabilityBp)).toBe(10_000);
@@ -150,17 +127,13 @@ describe("AC-12: Air-launched torpedo attack", () => {
 
   describe("resolveAirTorpedoAttack — RNG hit/miss", () => {
     it("produces a hit when RNG draw is below hit probability (deterministic seed)", () => {
-      // Use a seed that produces a draw below 6250 to guarantee a hit
-      // With "test-torpedo-hit" we can verify deterministically
       const rng = new RandomEngine("test-torpedo-hit");
       const result = resolveAirTorpedoAttack(defaultInput(), rng);
-      // We don't know the exact draw, but hit must be either true or false
       expect(typeof result.hit).toBe("boolean");
       expect(result.hit).toBe(true);
     });
 
     it("produces a miss when RNG draw is above hit probability", () => {
-      // Use a seed that produces a draw above 6250
       const rng = new RandomEngine("test-torpedo-miss");
       const result = resolveAirTorpedoAttack(defaultInput(), rng);
       expect(typeof result.hit).toBe("boolean");
@@ -178,7 +151,6 @@ describe("AC-12: Air-launched torpedo attack", () => {
 
   describe("resolveAirTorpedoAttack — damage package", () => {
     it("on hit: damage package returned with correct structural damage value", () => {
-      // Use a seed that produces a hit (with 6250bp hit prob, many seeds will hit)
       const rng = new RandomEngine("test-torpedo-hit");
       const result = resolveAirTorpedoAttack(defaultInput(), rng);
       if (result.hit && result.damagePackage) {

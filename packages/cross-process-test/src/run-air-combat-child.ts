@@ -1,7 +1,3 @@
-// D-3 / INC-8: Air-combat cross-process determinism child (AC-21).
-// Creates a minimal TacticalBattleState with ships, CAP patrol states, and
-// strike mission states, then runs advanceMinutes with the air-combat context.
-// Outputs all hashes as JSON to stdout for cross-process byte-comparison.
 import { RandomEngine } from "@bluewave/random";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -82,7 +78,6 @@ function run(): void {
   try {
     const state = buildAirCombatBattleState();
 
-    // Create CAP patrol states (INC-1 pattern)
     const capPatrol1 = createCapPatrolState(
       "sq-cap-1",
       ["CAP"],
@@ -91,14 +86,12 @@ function run(): void {
       SafeInt(60),
       [0, 0],
     );
-    // Setting engagement state to active for recording
     const activeCapPatrol = {
       ...capPatrol1,
       engagementState: "PATROLLING" as const,
       interceptTargetId: "strike-1",
     };
 
-    // Create a second CAP
     const capPatrol2 = createCapPatrolState(
       "sq-cap-2",
       ["CAP"],
@@ -108,7 +101,6 @@ function run(): void {
       [5000, 0],
     );
 
-    // Create a strike mission state (INC-3 pattern)
     const strike = createStrikeMissionState(
       "mission-strike-1",
       "strike-1",
@@ -119,7 +111,6 @@ function run(): void {
       SafeInt(45),
     );
 
-    // Run 3 minutes of simulation with air-combat context
     const result = advanceMinutes({
       state,
       minutes: 3,
@@ -134,7 +125,6 @@ function run(): void {
       },
     });
 
-    // Hash the air-combat surface across all minutes
     const airCombatSurface = result.results.map((r) => ({
       minute: r.minute,
       ...(r.airCombatRecords && r.airCombatRecords.length > 0
@@ -153,14 +143,12 @@ function run(): void {
     }));
     const resolveAirCombatHash = sha256Hex(canonicalSerialize(airCombatSurface));
 
-    // Hash the full minute results for broader determinism proof
     const minuteSnapshot = result.results.map((r) => ({
       minute: r.minute,
       minuteHash: r.minuteHash,
     }));
     const closingSnapshotHash = sha256Hex(canonicalSerialize(minuteSnapshot));
 
-    // Hash events as well
     const eventLedgerHash = sha256Hex(
       canonicalSerialize(result.results.flatMap((r) => r.events.map((e) => e.eventId).sort())),
     );

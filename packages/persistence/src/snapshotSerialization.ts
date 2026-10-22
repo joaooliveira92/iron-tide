@@ -6,14 +6,6 @@ import type {
   ResearchState,
 } from "@bluewave/campaign";
 
-/**
- * `CampaignSnapshot` carries `Map`-valued fields (`nations`, `designs`,
- * `designFamilies`, and each nation's `research.activeCandidates`). JSON has no
- * Map type — writing a real Map through JSON.stringify silently serializes it
- * as `{}`. These types/functions convert Maps to plain, JSON-safe Records for
- * on-disk storage and back, so a save/load round trip preserves the data.
- */
-
 type StorableResearchState = Omit<ResearchState, "activeCandidates"> & {
   activeCandidates: Record<string, string>;
 };
@@ -32,9 +24,6 @@ export type StorableCampaignSnapshot = Omit<
 };
 
 function mapToRecord<V>(map: Map<string, V>): Record<string, V> {
-  // Object.fromEntries creates own data properties (define-property semantics),
-  // so special keys like "__proto__", "constructor", "prototype" cannot poison
-  // the prototype of the resulting record (TODO #10).
   return Object.fromEntries(map);
 }
 

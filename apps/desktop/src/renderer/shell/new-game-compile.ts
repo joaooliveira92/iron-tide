@@ -6,11 +6,6 @@ import type { LaunchableDraft, NewGameDraft } from "./new-game-draft.js";
 
 type NewGameBridge = Pick<BluewaveDesktopBridge, "campaign">;
 
-/**
- * The one `compileCampaign` rejection reason that isn't a failure (spec §7)
- * — the player hit Cancel on the native save-location dialog. Handled
- * silently: back to the review screen, selections intact, no error banner.
- */
 const SAVE_LOCATION_CANCELLED = "SAVE_LOCATION_CANCELLED";
 
 export type NewGameCompileResult =
@@ -18,16 +13,10 @@ export type NewGameCompileResult =
   | { readonly kind: "cancelled" }
   | { readonly kind: "failed"; readonly message: string };
 
-/** True once the wizard has the nation's preferences and fleet method the compiler needs. */
 export function isLaunchableDraft(draft: NewGameDraft | null): draft is LaunchableDraft {
   return draft !== null && draft.preferences !== null && draft.fleetMethod !== null;
 }
 
-/**
- * Turns the wizard draft into a `compileCampaign` request and runs it, mapping
- * the transport outcome to a closed union. Owns archetype serialization and
- * config assembly so the flow hook only navigates on the result.
- */
 export async function compileNewGame(
   bridge: NewGameBridge,
   draft: LaunchableDraft,

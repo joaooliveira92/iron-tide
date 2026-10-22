@@ -1,4 +1,3 @@
-// AC-8 (INC-3): Strike mission state machine with valid transitions.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -157,19 +156,16 @@ describe("AC-8: Strike mission state machine", () => {
       const onTarget = transitionStrikeState(initial, "ON_TARGET");
       const firstAttack = transitionStrikeState(onTarget, "ATTACKING");
 
-      // Re-attack: go back to ON_TARGET
       const reTarget = transitionStrikeState(firstAttack, "ON_TARGET");
       expect(reTarget.phase).toBe("ON_TARGET");
       expect(Number(reTarget.attackCount)).toBe(1);
       expect(reTarget.isFirstPass).toBe(false);
 
-      // Second attack pass
       const secondAttack = transitionStrikeState(reTarget, "ATTACKING");
       expect(secondAttack.phase).toBe("ATTACKING");
       expect(Number(secondAttack.attackCount)).toBe(1);
       expect(secondAttack.isFirstPass).toBe(false);
 
-      // Go to egress
       const egress = transitionStrikeState(secondAttack, "EGRESSING");
       expect(egress.phase).toBe("EGRESSING");
     });

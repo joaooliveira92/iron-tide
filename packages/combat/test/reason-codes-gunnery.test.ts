@@ -1,15 +1,7 @@
-// AC-10: DESIGN-39 §32 reason-code set-equality for the B-3 core surface gunnery
-// slice. The gunnery package ships exactly the in-slice §32 codes recorded in
-// ADR-0020 (spec §1.4) plus the reused existing combat-catalog codes; every §32
-// code owned by a later slice/track is recorded as deferred, never shipped here
-// silently. This guard fails the build if a code is added to GUNNERY_REASON_CODES
-// without a matching update to this test (and, per policy, an ADR entry).
 import { describe, expect, it } from "vite-plus/test";
 import { GUNNERY_REASON_CODES } from "../src/gunnery/reasonCodes.js";
 import { REASON_CODES } from "../src/reasonCodes.js";
 
-// DESIGN-39 §32 "Required Reason Codes" — the full authoritative list for the
-// gunnery subsystem (docs/rules/gunnery.md §32).
 const DESIGN_39_SECTION_32_CODES = [
   "INVALID_GUNNERY_STATE",
   "GUNNERY_ACCURACY_FACTOR_MISSING",
@@ -32,8 +24,6 @@ const DESIGN_39_SECTION_32_CODES = [
   "GUNNERY_STATE_INVARIANT_FAILED",
 ] as const;
 
-// Spec §1.4 in-slice subset (owned by B-3, recorded in ADR-0020) — a proper
-// subset of §32.
 const IN_SLICE_SECTION_32_CODES = [
   "INVALID_GUNNERY_STATE",
   "GUNNERY_ACCURACY_FACTOR_MISSING",
@@ -44,7 +34,6 @@ const IN_SLICE_SECTION_32_CODES = [
   "GUNNERY_STATE_INVARIANT_FAILED",
 ] as const;
 
-// Spec §1.4 deferred subset — owned by later slices/tracks; recorded, not shipped.
 const DEFERRED_SECTION_32_CODES = [
   "AUTOLOADER_TECHNOLOGY_UNAVAILABLE",
   "AUTOLOADER_MOUNT_INELIGIBLE",
@@ -60,7 +49,6 @@ const DEFERRED_SECTION_32_CODES = [
   "GUNNERY_STRADDLE_INVALID",
 ] as const;
 
-// Spec §1.4 reused existing combat-catalog codes (no new record needed).
 const REUSED_COMBAT_CATALOG_CODES = [
   "TACTICAL_STATE_INVARIANT_FAILED",
   "TACTICAL_FOG_OF_WAR_VIOLATION",
@@ -68,9 +56,6 @@ const REUSED_COMBAT_CATALOG_CODES = [
   "INVALID_TACTICAL_TIME_CONTRACT",
 ] as const;
 
-// The one in-slice code that is NOT a §32 code: the deferred-eligibility-predicate
-// marker (RAPID/AA_TRACKING/AA_BARRAGE eligibility predicates are deferred, spec
-// §1.4 / ADR-0020) — a firing guard reports this rather than fabricating a §32 code.
 const NON_SECTION_32_IN_SLICE_MARKER = "GUNNERY_ELIGIBILITY_PREDICATE_DEFERRED";
 
 describe("AC-10: gunnery reason-code set-equality vs DESIGN-39 §32 + existing catalog", () => {

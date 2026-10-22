@@ -10,13 +10,6 @@ import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
-/**
- * Corruption fuzz: a save file is attacker/mutation-controlled input. For a deterministic,
- * offline game the whole point of the persistence integrity contract (ADR-0032) is that a
- * tampered or truncated save is *rejected*, never executed and never crashes the loader.
- * This drives a fixed set of hostile mutations through the real store and asserts load()
- * always fails closed — a typed null + diagnostics — and never throws.
- */
 function createFixtureState(): CampaignState {
   const snapshot: CampaignSnapshot = {
     version: "1.0.0",
@@ -48,7 +41,6 @@ function createFixtureState(): CampaignState {
   return { snapshot, envelope, rawHash };
 }
 
-/** [name, mutate, expectReject] — expectReject is false only where a mutation might legitimately survive. */
 type Mutation = readonly [string, (s: string) => string, boolean];
 
 describe("SaveStore — corruption fuzz", () => {
@@ -99,7 +91,6 @@ describe("SaveStore — corruption fuzz", () => {
       true,
     ],
     ["duplicated top-level keys", (s) => s.replace("{", '{"snapshot":{},"snapshot":{},'), true],
-    // A padded unknown key may legitimately be stripped and load; it must still never throw.
     ["giant padded value", (s) => s.replace("{", `{"__pad":"${"A".repeat(200_000)}",`), false],
   ];
 
@@ -114,7 +105,6 @@ describe("SaveStore — corruption fuzz", () => {
       }, `mutation: ${name}`).not.toThrow();
 
       if (expectReject) {
-        // The integrity contract: a mutated body is rejected, never returned as authoritative state.
         expect(loaded ?? null, `mutation: ${name} should be rejected`).toBeNull();
         expect(diagnostics.hasErrors, `mutation: ${name} should report an error`).toBe(true);
       }

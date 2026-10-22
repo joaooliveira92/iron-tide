@@ -1,8 +1,3 @@
-/**
- * The 11b schema homes (ship-part-model ticket 11b, ADR-0154 §19): engineering, capabilities,
- * metadata tags, entry units, the rounds/magazineRef homes, the design header and the reusable
- * quantity kinds. Expectations are the directed boundaries, not the schema code.
- */
 import { describe, expect, it } from "vite-plus/test";
 
 import {
@@ -96,7 +91,6 @@ describe("engineering (physical, power, cooling)", () => {
     expect(
       decodeOk(EngineeringSchema, { power: { generation: parts.generation, consumption } }),
     ).toBe(true);
-    // An empty power block means nothing, and a negative value is a sign, not a direction.
     expect(decodeIssue(EngineeringSchema, { power: {} })).not.toBe("");
     expect(
       decodeIssue(EngineeringSchema, {

@@ -41,9 +41,6 @@ const TacticalSandboxScreen = lazy(() =>
     default: module.TacticalSandboxScreen,
   })),
 );
-// PROTOTYPE — throwaway, ticket 06. Dev-only; see
-// screens/map-prototype/README.md. Delete this and its folder once the
-// rendering-technology question is settled.
 const MapPrototypeScreen = lazy(() =>
   import("../screens/map-prototype/MapPrototypeScreen.js").then((module) => ({
     default: module.MapPrototypeScreen,
@@ -87,11 +84,6 @@ function DiplomacyRoute({ sessionId }: CampaignScreenRouteProps) {
   return <DiplomacyScreen sessionId={sessionId} />;
 }
 
-/**
- * Treasury — the read-only projection screen (INC-4). Replaces INC-14's
- * stub slot: the sidebar entry/search target were already final, only the
- * route was a placeholder.
- */
 function TreasuryRoute({ sessionId }: CampaignScreenRouteProps) {
   return <TreasuryScreen sessionId={sessionId} />;
 }
@@ -119,8 +111,6 @@ function OptionsRoute() {
   return <OptionsScreen />;
 }
 
-/** One route component per registered screen. Kept apart from the metadata
- * table so a new screen is a metadata entry plus a route, not an edit to both. */
 export const CAMPAIGN_SCREEN_ROUTES: Readonly<Record<CampaignScreen, CampaignScreenRoute>> = {
   overview: OverviewRoute,
   construction: ConstructionRoute,

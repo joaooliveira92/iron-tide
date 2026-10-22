@@ -1,12 +1,3 @@
-// Compile-time seeding of the 1880 initial divisions (N-1 ticket 07, DESIGN-26,
-// ADR-0224). The authored `divisions` collection names a nation, an ordered ship
-// list and a command; this module resolves those references against the nation's
-// compiled fleets and officer roster and builds the authoritative
-// `PermanentDivision` records. A malformed record is a `_tag`-discriminated
-// `DivisionSeedFailure` diagnostic, never a silent default.
-//
-// `campaign` is renderer-reachable, so the failure stays a plain tagged class
-// (`readonly _tag`), never `Data.TaggedError` (ADR-0128 §1, MIG-EXCL-1).
 import { SafeInt } from "@bluewave/contracts";
 import { compareCodePoints } from "@bluewave/deterministic";
 import type { Diagnostic, DiagnosticCode, DiagnosticCollector } from "@bluewave/diagnostics";
@@ -25,7 +16,6 @@ import {
 import type { Officer } from "./officers.js";
 import type { FleetState } from "./state.js";
 
-/** Compile-boundary diagnostic codes for a malformed authored division record. */
 export const DIVISION_SEED_CODES = {
   ship: "CAMPAIGN-DIVISION-SHIP" as DiagnosticCode,
   location: "CAMPAIGN-DIVISION-LOCATION" as DiagnosticCode,
@@ -35,11 +25,6 @@ export const DIVISION_SEED_CODES = {
   formation: "CAMPAIGN-DIVISION-FORMATION" as DiagnosticCode,
 } as const;
 
-/**
- * A compile-boundary failure for a malformed authored division. A stable `_tag`
- * discriminates it for callers; `code` is the diagnostic code the collector
- * records.
- */
 export class DivisionSeedFailure {
   readonly _tag = "DivisionSeedFailure";
   constructor(
@@ -65,19 +50,10 @@ export interface DivisionSeedContext {
   readonly nationId: string;
   readonly fleets: readonly FleetState[];
   readonly officers: readonly Officer[];
-  /** The compiled snapshot's ruleset version, stamped onto each division. */
   readonly rulesetVersion: string;
-  /** The campaign start month id (`YYYY-MM`) the divisions are created in. */
   readonly creationMonth: string;
 }
 
-/**
- * Resolves one nation's authored division records into authoritative
- * `PermanentDivision` records, recording a `DivisionSeedFailure` diagnostic for
- * each record that cannot be built. Returns the valid records in canonical id
- * order. A malformed record is skipped (never defaulted); the caller's
- * `collector.hasErrors` then fails the whole compile.
- */
 export function buildSeededDivisions(
   records: readonly unknown[],
   context: DivisionSeedContext,

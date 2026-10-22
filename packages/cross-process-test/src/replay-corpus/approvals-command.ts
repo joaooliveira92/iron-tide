@@ -7,7 +7,6 @@ import {
   type CorpusState,
 } from "./approvals.js";
 
-/** The IO the approvals command needs; the process entrypoint binds it to git and the filesystem. */
 export interface ApprovalsIo {
   readBase(): CorpusState;
   readHead(): CorpusState;
@@ -21,14 +20,9 @@ function option(argv: readonly string[], name: string): string | undefined {
   return value === undefined || value.startsWith("--") ? undefined : value;
 }
 
-/** True when the environment says a CI runner is executing us. */
 const inCi = (env: Readonly<Record<string, string | undefined>>): boolean =>
   env["CI"] !== undefined && env["CI"] !== "" && env["CI"] !== "false" && env["CI"] !== "0";
 
-/**
- * `check` verifies the corpus delta against the approvals (exit 1 on any failure) and is safe
- * everywhere. `propose` writes entries from the real diff and refuses to run in CI (exit 2).
- */
 export function approvalsCommand(
   argv: readonly string[],
   env: Readonly<Record<string, string | undefined>>,

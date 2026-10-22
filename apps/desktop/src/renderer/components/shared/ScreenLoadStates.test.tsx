@@ -4,13 +4,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { ScreenLoadErrorState, ScreenLoadingState } from "./ScreenLoadStates.js";
 
-/**
- * Contract test for the shared screen load states: they render the common frame
- * (`data-guided-target` + header), the error message verbatim with a working
- * Retry, and the loading skeleton grid — so each screen no longer re-implements
- * the same chrome.
- */
-
 afterEach(cleanup);
 
 const header = {

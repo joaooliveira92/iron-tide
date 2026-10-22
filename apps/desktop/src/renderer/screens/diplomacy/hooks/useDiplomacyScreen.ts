@@ -1,30 +1,31 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import { useBridge } from "../../../lib/bridge-context.js";
 
-import type { DiplomacyCommandOutcome } from "../../../../shared/diplomacy-contract.js";
-import {
-  createTransportRequestId,
-  foldCommandResult,
-} from "../../../lib/command-screen-workflow.js";
+import type {
+  DiplomacyCommandOutcome,
+  DiplomacyScreenProjection,
+} from "../../../../shared/diplomacy-contract.js";
+import { useCommandScreenWorkflow } from "../../../lib/command-screen-workflow.js";
+import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
 import type { DiplomacyScreenState } from "../diplomacy-screen-state.js";
 import {
   diplomacyBeginAction,
-  diplomacyBeginLoading,
   diplomacyBeginPeace,
   diplomacyBeginSubmit,
   diplomacyClearDraft,
   diplomacyDraftToCommand,
-  diplomacyLoadFailure,
   diplomacyLoadSuccess,
   diplomacySetBlockadeArea,
   diplomacySubmitRejected,
   diplomacySubmitSuccess,
   diplomacyTransportFailure,
+  initialDiplomacyScreenState,
   type DiplomacyActionKind,
 } from "../diplomacy-screen-state.js";
 
 export interface UseDiplomacyScreenReturn {
   readonly state: DiplomacyScreenState;
+  readonly loadError: string | null;
   readonly setRowAction: (partnerNationId: string, kind: DiplomacyActionKind) => void;
   readonly setPeaceAction: (warId: string) => void;
   readonly setBlockadeArea: (areaId: string) => void;
@@ -35,71 +36,61 @@ export interface UseDiplomacyScreenReturn {
 }
 
 export function useDiplomacyScreen(sessionId: string): UseDiplomacyScreenReturn {
-  const [state, setState] = useState<DiplomacyScreenState>({ kind: "idle", revision: 0 });
   const bridge = useBridge();
+  const campaignRevision = useCampaignRevision();
+  const workflow = useCommandScreenWorkflow<
+    DiplomacyScreenState,
+    DiplomacyScreenProjection,
+    DiplomacyCommandOutcome
+  >(
+    {
+      initialState: initialDiplomacyScreenState,
+      load: () =>
+        bridge
+          ? bridge.campaign.execute("inspectDiplomacyScreen", sessionId)
+          : Promise.reject(new Error("Bluewave bridge not available")),
+      project: (_state, projection) => diplomacyLoadSuccess(projection),
+      begin: (state, pending) => diplomacyBeginSubmit(state, pending.transportRequestId),
+      reject: diplomacySubmitRejected,
+      transportFailure: diplomacyTransportFailure,
+      accept: diplomacySubmitSuccess,
+      requiresRefresh: (state) => state.kind === "rejected-with-revision",
+    },
+    { refreshKey: campaignRevision },
+  );
+  const { state, execute, loadScreen, updateState } = workflow;
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  const reload = useCallback(async () => {
-    setState((current) => diplomacyBeginLoading(current));
-    if (!bridge) {
-      setState((current) => diplomacyLoadFailure(current, "Bluewave bridge not available"));
-      return;
-    }
-    try {
-      const result = await bridge.campaign.execute("inspectDiplomacyScreen", sessionId);
-      if (result.outcome !== "success") {
-        setState((current) =>
-          diplomacyLoadFailure(
-            current,
-            result.outcome === "rejected"
-              ? `${result.reason}: ${result.diagnostics.join("; ")}`
-              : result.reason,
-          ),
-        );
-        return;
-      }
-      setState((current) => diplomacyLoadSuccess(current, result.value));
-    } catch (error) {
-      setState((current) =>
-        diplomacyLoadFailure(
-          current,
-          `TRANSPORT_FAILURE: ${error instanceof Error ? error.message : "unknown transport error"}`,
-        ),
-      );
-    }
-  }, [bridge, sessionId]);
+  const setRowAction = useCallback(
+    (partnerNationId: string, kind: DiplomacyActionKind) => {
+      updateState((current) => diplomacyBeginAction(current, partnerNationId, kind));
+    },
+    [updateState],
+  );
 
-  useEffect(() => {
-    void reload();
-  }, [reload]);
+  const setPeaceAction = useCallback(
+    (warId: string) => {
+      updateState((current) => {
+        if (current.kind !== "loaded" && current.kind !== "submitted") return current;
+        const war = current.projection.wars.find((w) => w.warId === warId);
+        if (!war) return current;
+        return diplomacyBeginPeace(current, war);
+      });
+    },
+    [updateState],
+  );
 
-  // A stale-revision rejection (REVISION_MISMATCH with a currentRevision from
-  // the engine) must refresh the projection before the player retries.
-  useEffect(() => {
-    if (state.kind === "rejected-with-revision") void reload();
-  }, [state.kind, reload]);
-
-  const setRowAction = useCallback((partnerNationId: string, kind: DiplomacyActionKind) => {
-    setState((current) => diplomacyBeginAction(current, partnerNationId, kind));
-  }, []);
-
-  const setPeaceAction = useCallback((warId: string) => {
-    setState((current) => {
-      if (current.kind !== "loaded" && current.kind !== "submitted") return current;
-      const war = current.projection.wars.find((w) => w.warId === warId);
-      if (!war) return current;
-      return diplomacyBeginPeace(current, war);
-    });
-  }, []);
-
-  const setBlockadeArea = useCallback((areaId: string) => {
-    setState((current) => diplomacySetBlockadeArea(current, areaId));
-  }, []);
+  const setBlockadeArea = useCallback(
+    (areaId: string) => {
+      updateState((current) => diplomacySetBlockadeArea(current, areaId));
+    },
+    [updateState],
+  );
 
   const clearDraft = useCallback(() => {
-    setState((current) => diplomacyClearDraft(current));
-  }, []);
+    updateState((current) => diplomacyClearDraft(current));
+  }, [updateState]);
 
   const submit = useCallback(() => {
     const current = stateRef.current;
@@ -108,34 +99,15 @@ export function useDiplomacyScreen(sessionId: string): UseDiplomacyScreenReturn 
     if (!draft || !bridge) return;
     const command = diplomacyDraftToCommand(draft);
     if (command === null) return;
-    const expectedRevision = current.revision;
-    const transportRequestId = createTransportRequestId("diplo");
-    setState((prev) => diplomacyBeginSubmit(prev, transportRequestId));
-    void bridge.campaign
-      .execute("submitDiplomacyCommand", {
+    void execute("submit", ({ expectedRevision, transportRequestId }) =>
+      bridge.campaign.execute("submitDiplomacyCommand", {
         sessionId,
         expectedRevision,
         transportRequestId,
         command,
-      })
-      .then((result) => {
-        setState(
-          foldCommandResult<DiplomacyScreenState, DiplomacyCommandOutcome>(result, {
-            success: diplomacySubmitSuccess,
-            rejected: diplomacySubmitRejected,
-            transportFailure: diplomacyTransportFailure,
-          }),
-        );
-      })
-      .catch((error: unknown) => {
-        setState((prev) =>
-          diplomacyTransportFailure(
-            prev,
-            error instanceof Error ? error.message : "unknown transport error",
-          ),
-        );
-      });
-  }, [bridge, sessionId]);
+      }),
+    );
+  }, [bridge, execute, sessionId]);
 
   const canSubmit =
     state.kind === "loaded" &&
@@ -144,12 +116,13 @@ export function useDiplomacyScreen(sessionId: string): UseDiplomacyScreenReturn 
 
   return {
     state,
+    loadError: workflow.loadError,
     setRowAction,
     setPeaceAction,
     setBlockadeArea,
     clearDraft,
     submit,
-    reload,
+    reload: loadScreen,
     canSubmit,
   };
 }

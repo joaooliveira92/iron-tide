@@ -141,7 +141,7 @@ describe("barHeight compact", () => {
 
 describe("compactGlyphs", () => {
   it("is on only for a laid-out map shorter than the compact threshold", () => {
-    expect(compactGlyphs(0)).toBe(false); // not laid out yet
+    expect(compactGlyphs(0)).toBe(false);
     expect(compactGlyphs(COMPACT_BELOW_PX - 1)).toBe(true);
     expect(compactGlyphs(COMPACT_BELOW_PX)).toBe(false);
     expect(compactGlyphs(900)).toBe(false);

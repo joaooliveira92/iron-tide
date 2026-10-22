@@ -17,19 +17,9 @@ import { constructionWorkStatus } from "./constructionAcceleration.js";
 
 export interface FundingResult {
   readonly project: ConstructionProject;
-  /** Work actually applied (treasury units), at most the funds offered; 0 when capacity or dependencies leave nothing to do. */
   readonly applied: number;
 }
 
-/**
- * Applies `funds` (treasury units) to a project that has work packages (ADR-0077): work goes to packages whose dependencies
- * were complete at the start of the month, limited by the month's draw (`monthlyAbsorbable`: remaining work, packages,
- * month usage, build time and acceleration) and by the funds offered. `completedWork` becomes the sum of the packages'
- * done work and `paidWork` grows by what was applied, so money that could not be used is not spent. Pure and
- * deterministic; the caller charges the treasury `applied`.
- *
- * A project without packages is returned unchanged with `applied` 0: the caller keeps the single-figure arithmetic.
- */
 export function fundConstructionProject(
   project: ConstructionProject,
   capacityUnits: Readonly<Record<string, number>> | undefined,

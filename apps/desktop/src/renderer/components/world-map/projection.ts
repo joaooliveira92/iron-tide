@@ -1,27 +1,3 @@
-/**
- * Pure geometry. No React, no DOM. This is the part of the prototype most
- * likely to survive into real code, so it is kept honest.
- *
- * Two decisions are encoded here and both are ticket 06 questions:
- *
- * 1. **Projection is applied at render time, not author time.** The baked
- *    coastline is unprojected lon/lat, so switching projection is a `useMemo`
- *    recompute over ~5k points rather than a rebuild. That only works because
- *    TopoJSON made the source small enough; at 10m resolution it would not.
- *
- * 2. **The antimeridian is handled by drawing the world three times** — at
- *    -1, 0 and +1 turns — and letting the SVG viewport clip. No polygon
- *    clipping code, no RFC 7946 splitting, and rings may be authored in
- *    continuous longitude past 180.
- *
- *    Every layer gets all three copies, markers and labels included. Drawing
- *    the polygons three times and the labels once was the first thing this
- *    prototype got wrong, and it looked exactly like a projection bug. The
- *    cost of doing it properly is a 3x element count — about 760 nodes for
- *    this world, an order of magnitude under the ~8,000 where ticket 13's
- *    research saw SVG start to degrade.
- */
-
 export type Point = readonly [number, number];
 
 export type ProjectionId = "equirectangular" | "miller";
@@ -30,7 +6,6 @@ export interface Projection {
   readonly id: ProjectionId;
   readonly name: string;
   readonly note: string;
-  /** World-space width. Height falls out of the projection's own y-extent. */
   readonly width: number;
   readonly height: number;
   readonly project: (lon: number, lat: number) => Point;
@@ -44,7 +19,6 @@ function asinh(value: number): number {
   return Math.log(value + Math.sqrt(value * value + 1));
 }
 
-/** Miller's y, in radians of the unit sphere. */
 function millerY(latDegrees: number): number {
   return 1.25 * asinh(Math.tan(0.8 * latDegrees * DEGREES));
 }
@@ -78,17 +52,10 @@ export function projectionById(id: ProjectionId): Projection {
   return PROJECTIONS.find((p) => p.id === id) ?? (PROJECTIONS[0] as Projection);
 }
 
-/** Wraps a longitude into [-180, 180) after rotating the map by `centre`. */
 export function wrapLongitude(lon: number, centre: number): number {
   return ((((lon - centre + 180) % 360) + 360) % 360) - 180;
 }
 
-/**
- * Rotates a ring and keeps it geometrically continuous: each vertex is nudged
- * by whole turns so no segment ever jumps more than half the world. The result
- * can sit outside [-180, 180); the three-copy draw below is what puts it back
- * on screen.
- */
 export function continuousRing(ring: readonly Point[], centre: number): readonly Point[] {
   const out: Point[] = [];
   let previous: number | null = null;
@@ -115,23 +82,16 @@ export function ringToPath(ring: readonly Point[], projection: Projection): stri
   return `${path}Z`;
 }
 
-/**
- * Whole-turn offsets, in world widths. A variant renders its entire content
- * once per entry inside a translated <g>, which is what makes the seam vanish.
- */
 export const WORLD_WRAP_TURNS: readonly number[] = [-1, 0, 1];
 
 export interface ProjectedArea {
   readonly id: string;
   readonly path: string;
-  /** Wrapped-into-range anchor for the hand-placed label. */
   readonly label: Point;
-  /** Wrapped-into-range anchor computed from the ring, for comparison. */
   readonly centroid: Point;
   readonly bounds: { readonly width: number; readonly height: number };
 }
 
-/** Area-weighted polygon centroid; falls back to the mean for degenerate rings. */
 export function ringCentroid(ring: readonly Point[]): Point {
   let twiceArea = 0;
   let x = 0;
@@ -185,11 +145,6 @@ export function projectPoint(point: Point, projection: Projection, centre: numbe
   return projection.project(wrapLongitude(point[0], centre), point[1]);
 }
 
-/**
- * Great-circle distance in nautical miles. Here so the route ruler can report
- * a real number, which is how ticket 01's "one edge is one ~3,000 nm leg"
- * claim gets checked against an actual graph instead of asserted.
- */
 export function nauticalMiles(from: Point, to: Point): number {
   const [lon1, lat1] = from;
   const [lon2, lat2] = to;

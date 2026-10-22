@@ -1,13 +1,3 @@
-// ADR-0098 §8: the bounded one-hop-per-resolution-step fire-spread rule.
-//
-// Proves the fire-spread implementation is bounded and deterministic:
-//  - one originating fire spreads at most one hop per resolution step;
-//  - a fire created by spread does not recursively spread in the same step (and
-//    never recursively thereafter — the ADR-0094 blow-up bound);
-//  - an originating fire may still spread in a later eligible step;
-//  - already-burning locations do not receive duplicate fire instances;
-//  - ordering is deterministic and iteration order does not change the outcome;
-//  - fire still progresses (decays, spreads, produces smoke) under the bound.
 import { describe, expect, it } from "vite-plus/test";
 import {
   resolveFireProgression,
@@ -42,15 +32,11 @@ describe("ADR-0098: bounded fire spread", () => {
   });
 
   it("a spread-created fire cannot recursively spread in the same step", () => {
-    // BELT spreads to BELT_adj; BELT_adj is returned as new, never re-iterated,
-    // so no BELT_adj_adj is produced in the same step.
     const { newFires } = resolveFireProgression([origin], "ORDINARY", rngAlways(0.0));
     expect(newFires.map((f) => f.locationId)).toEqual(["BELT_adj"]);
   });
 
   it("a spread-created fire never recursively spreads (bounded depth)", () => {
-    // A BELT_adj fire (cause FIRE_SPREAD_CREATED) is inert for spread forever:
-    // no unbounded BELT_adj_adj_adj chain (the ADR-0094 heap blow-up).
     const adj: FireRecord = {
       locationId: "BELT_adj",
       intensityBp: 3_000,
@@ -61,19 +47,14 @@ describe("ADR-0098: bounded fire spread", () => {
   });
 
   it("an originating fire may spread again in a later eligible step", () => {
-    // Step 1: BELT -> BELT_adj. Step 2: the original BELT fire (persisted) is
-    // still an originating fire and spreads again.
     const step1 = resolveFireProgression([origin], "ORDINARY", rngAlways(0.0));
     expect(step1.newFires).toHaveLength(1);
-    // The originating fire is unchanged by spread; feed it again next step.
     const step2 = resolveFireProgression([origin], "ORDINARY", rngAlways(0.0));
     expect(step2.newFires).toHaveLength(1);
     expect(step2.newFires[0]!.locationId).toBe("BELT_adj");
   });
 
   it("already-burning locations do not receive duplicate fire instances", () => {
-    // Two spread events to the same location (e.g. two originating fires whose
-    // _adj collides) must not create two records for one location.
     const state = initialDamageState("s1");
     const withFire = persistCreatedSources(state, [
       {
@@ -107,7 +88,7 @@ describe("ADR-0098: bounded fire spread", () => {
     ]);
     const belt = merged.fireRecords.filter((f) => f.locationId === "BELT");
     expect(belt).toHaveLength(1);
-    expect(belt[0]!.intensityBp).toBe(5_000); // the higher intensity is kept
+    expect(belt[0]!.intensityBp).toBe(5_000);
   });
 
   it("is deterministic and independent of fire-record iteration order", () => {
@@ -121,18 +102,14 @@ describe("ADR-0098: bounded fire spread", () => {
     const key = (r: { newFires: readonly FireRecord[] }) =>
       r.newFires.map((f) => f.locationId).sort();
     expect(key(forward)).toEqual(key(reversed));
-    // Repeats are byte-identical.
     expect(resolveFireProgression(fires, "ORDINARY", rng)).toEqual(forward);
   });
 
   it("fire still progresses: decay, spread and smoke under the bound", () => {
-    // Decay.
     const decayed = resolveFireProgression([origin], "ORDINARY", null);
     expect(decayed.fireRecords[0]!.intensityBp).toBe(4_800);
-    // Spread under the bound.
     const spread = resolveFireProgression([origin], "ORDINARY", rngAlways(0.0));
     expect(spread.newFires).toHaveLength(1);
-    // Meaningful progressive effect: an active fire produces smoke.
     expect(computeFireSmokeStrength(spread.newFires[0]!.intensityBp, "COAL")).toBeGreaterThan(0);
   });
 });

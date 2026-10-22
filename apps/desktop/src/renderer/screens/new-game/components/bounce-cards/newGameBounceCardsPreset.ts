@@ -1,14 +1,5 @@
 import type { BounceCardsProps } from "./BounceCards.js";
 
-/**
- * Shared BounceCards tuning for the new-game flow's card pickers (the preset
- * picker in §2 and the Starting-fleet method picker in §5b). Kept in one place
- * so the two screens cannot drift; callers spread it and add their own
- * `images`/`activeIndex`/`onCardClick`.
- *
- * The cards are 3:2 (`cardAspect`), matching the picker artwork, so each
- * painting is shown whole instead of cropped to a square.
- */
 export const NEW_GAME_BOUNCE_CARDS_PROPS = {
   containerWidth: 620,
   containerHeight: 280,

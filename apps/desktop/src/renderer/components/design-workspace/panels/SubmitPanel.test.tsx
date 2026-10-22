@@ -42,7 +42,7 @@ describe("SubmitPanel", () => {
       expectedRevision: 3,
       className: "Arethusa",
     });
-    name("Arethusa II"); // a different class is a new submission
+    name("Arethusa II");
     expect(
       (screen.getByRole("button", { name: "Submit design" }) as HTMLButtonElement).disabled,
     ).toBe(false);

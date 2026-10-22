@@ -3,8 +3,6 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { InterruptionRequestDto } from "../../../shared/campaign-command-contract.js";
 import { OfferDialog } from "./OfferDialog.js";
 
-// T-1 03 (#112, spec #109 R14): the offer dialog. Its strings live in the renderer's en-US catalogue, so the test
-// asserts the resolved text, never a raw key.
 afterEach(cleanup);
 
 const offer: InterruptionRequestDto = {

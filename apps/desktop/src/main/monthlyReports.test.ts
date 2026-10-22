@@ -39,7 +39,6 @@ const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-/** Runs a command program through the desktop service graph and projects its wire envelope. */
 async function runProgram(
   program: CommandProgram,
   payload: unknown,
@@ -47,7 +46,6 @@ async function runProgram(
   return projectCommandExit(await runtime.runPromiseExit(program(payload)));
 }
 
-/** Runs the commit-month program through the desktop service graph. */
 const commitMonth = (payload: {
   sessionId: string;
   expectedRevision: number;
@@ -89,7 +87,6 @@ describe("monthly-reports sidecar", () => {
     clearCampaignSessionsForTest();
   });
 
-  /** Register a fresh production session (turn 0) in `saveDir`. */
   function registerProductionSession(sessionId: string, saveDir: string) {
     const signal = new AbortController().signal;
     const collector = new DiagnosticCollector();
@@ -176,7 +173,6 @@ describe("monthly-reports sidecar", () => {
     expect(() => loadMonthlyReports(saveDir)).not.toThrow();
     expect(loadMonthlyReports(saveDir)).toEqual({ reports: [] });
 
-    // Valid JSON, wrong shape (missing every section field).
     writeFileSync(path, JSON.stringify({ reports: [{ turn: 1 }] }), "utf8");
     expect(loadMonthlyReports(saveDir)).toEqual({ reports: [] });
 
@@ -221,7 +217,6 @@ describe("monthly-reports sidecar", () => {
     expect(reports).toHaveLength(1);
 
     const report = reports[0]!;
-    // The real response, section by section.
     expect(report.reportId).toBeTruthy();
     expect(report.campaignId).toBe(getCampaignSession("session-real")!.state.snapshot.campaignId);
     expect(report.turn).toBe(1);
@@ -239,7 +234,6 @@ describe("monthly-reports sidecar", () => {
     expect(report.battleOutcomes).toEqual(result.value.closingSnapshot.battleOutcomes);
     expect(report.fleet.totalActiveShips).toBeGreaterThan(0);
 
-    // generatedAt is the REAL save metadata timestamp, not a wall-clock read here.
     const saveId = new SaveStore().getActiveSaveId(saveDir);
     expect(saveId).not.toBeNull();
     const metadata = JSON.parse(readFileSync(join(saveDir, saveId!, "metadata.json"), "utf8")) as {
@@ -247,18 +241,15 @@ describe("monthly-reports sidecar", () => {
     };
     expect(report.generatedAt).toBe(metadata.timestamp);
 
-    // priorities is the INC-2 projection over the post-month snapshot.
     const expectedFingerprints = buildPrioritiesProjection(
       getCampaignSession("session-real")!.state.snapshot,
       "uk",
     ).map((priority) => priority.fingerprint);
     expect(report.priorities.map((priority) => priority.fingerprint)).toEqual(expectedFingerprints);
 
-    // The sidecar is a sibling of the save ids — never inside the authoritative envelope.
     expect(existsSync(join(saveDir, MONTHLY_REPORTS_FILENAME))).toBe(true);
     expect(existsSync(join(saveDir, saveId!, MONTHLY_REPORTS_FILENAME))).toBe(false);
 
-    // A fresh session bound to the same saveDir (a reloaded campaign) still sees it.
     registerCampaignSession({
       sessionId: "session-reloaded",
       saveDir,
@@ -295,7 +286,6 @@ describe("monthly-reports sidecar", () => {
     if (read.outcome !== "success") return;
     const reports = (read.value as ReadMonthlyReportsResult).reports;
     expect(reports.map((report) => report.turn)).toEqual([2, 1]);
-    // Newest first, with the previous report intact as the baseline for priorities.
     expect(reports[1]?.priorities.map((priority) => priority.fingerprint)).toBeDefined();
   });
 
@@ -304,7 +294,6 @@ describe("monthly-reports sidecar", () => {
     const saveDirB = join(saveRoot, "engine-b");
     registerProductionSession("session-engine-a", saveDirA);
     registerProductionSession("session-engine-b", saveDirB);
-    // A divergent pre-existing sidecar must not change anything authoritative.
     saveMonthlyReports(saveDirB, { reports: [entry(1)] });
 
     const runA = await commitMonth({

@@ -12,7 +12,6 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** A stand-in for flag art: an image the tests can find, decorative so it never joins the accessible name. */
 const Flag = ({ code }: { readonly code: string }) => (
   <img data-testid={`flag-${code}`} src={`flag:${code}`} alt="" />
 );

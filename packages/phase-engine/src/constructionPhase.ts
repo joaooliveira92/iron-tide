@@ -1,5 +1,3 @@
-// Phase 7: construction_processing — advance construction projects, complete
-// finished projects into fleet ships, and emit construction-progressed events.
 import {
   KNOTS_TO_UMS,
   LAID_UP_CREW_CEILING,
@@ -37,9 +35,6 @@ export const constructionProcessingPhase: PhaseDescriptor = {
   id: "construction_processing",
   name: "Construction Processing",
   order: 60,
-  // SB3-R16: advances dock-expansion elapsed months and raises the nation's
-  // dock limits on completion, so it reads/writes the nations resource (dock
-  // limits) as well as constructions/fleets.
   readPermissions: ["constructions", "fleets", "nations"],
   writePermissions: ["constructions", "fleets", "nations"],
   rngAllowed: false,
@@ -84,10 +79,6 @@ function applyConstructionToNation(ctx: MonthContext, nationId: string, nation: 
       hasChanges = true;
     }
 
-    // Dock expansion (DESIGN-16 section 5, SB3-R16): an ACTIVE month advances the elapsed-active-month counter; a
-    // halted or delayed month contributes zero. The project completes only when BOTH that counter reaches the stored
-    // duration AND paid work reaches total work, and only then does it raise the nation's dock limits by the locked
-    // era step. It never spawns a ship and never increases dock size on elapsed time alone.
     if (
       isDockExpansionProject(project) &&
       project["status"] !== "COMPLETED" &&
@@ -130,8 +121,6 @@ function applyConstructionToNation(ctx: MonthContext, nationId: string, nation: 
       }
     }
 
-    // Check for completion. Only new construction completes into a new ship; a finished REBUILD is handled by the rebuild
-    // completion step (ADR-0078), so it must not spawn a second ship here.
     if (
       project["projectType"] === "NEW_CONSTRUCTION" &&
       project["status"] !== "COMPLETED" &&
@@ -162,9 +151,6 @@ function applyConstructionToNation(ctx: MonthContext, nationId: string, nation: 
       (clampedWork as number) >= (project["totalWork"] as number) &&
       (project["totalWork"] as number) > 0
     ) {
-      // DESIGN-22 section 22 / DESIGN-23 section 22: re-run intended/natural classification on the rebuilt design
-      // BEFORE any mutation. A failure leaves the project unfinished, the ship on its old design and no ShipRebuilt
-      // event; because nothing in `updatedProjects`/`updatedFleets` is touched, the whole completion is atomic.
       const classification = checkRebuildClassification(
         ctx.currentSnapshot["designs"]?.get(project["designVersionId"]),
         ctx.engineOptions?.shipBuilding,
@@ -239,7 +225,6 @@ function applyConstructionToNation(ctx: MonthContext, nationId: string, nation: 
   }
 }
 
-// Find the nation's fleet, creating a placeholder fleet when it has none.
 function ensureNationFleet(
   fleets: FleetState[],
   nationId: string,
@@ -257,13 +242,10 @@ function ensureNationFleet(
   return { fleet: newFleet, fleets: [...fleets, newFleet] };
 }
 
-/** The abstracted Ship stats a compiled design resolves to (ADR-0037): shared by new construction and a finished rebuild. */
 function shipStatsFromDesign(design: CompiledDesignVersion) {
   return {
     hitPoints: design["hitPoints"],
     maxHitPoints: design["hitPoints"],
-    // ADR-0037: compiled design fields are canonical µm / µm·s⁻¹; the abstracted Ship stats are knots / mm (+ a coarse
-    // firepower heuristic).
     speed: SafeInt.div(design["normalizedSpeedUms"], SafeInt(KNOTS_TO_UMS), "floor"),
     firepower: SafeInt.mul(
       design["mainGunsCount"],
@@ -274,8 +256,6 @@ function shipStatsFromDesign(design: CompiledDesignVersion) {
   };
 }
 
-// Build the commissioned ship for a completed project, resolving compiled design
-// stats back to the abstracted Ship units (ADR-0037).
 function buildCompletedShip(
   ctx: MonthContext,
   project: NationState["constructionProjects"][number],
@@ -299,9 +279,6 @@ function buildCompletedShip(
     ? ctx.currentSnapshot["designs"]?.get(designVersionId)?.colonialServiceFitted === true
     : false;
 
-  // A batch lays down several ships of one design; two completing in the same month would otherwise share
-  // `ship-<design>-<turn>` (SB3-R11 "stable ship identifiers"). A batch project's stable, ordinaled id keeps each hull
-  // distinct; a single order keeps the historical id so existing save hashes and replays do not move.
   const shipId =
     project["batchOrdinal"] !== undefined
       ? `ship-${project["id"]}`
@@ -322,18 +299,12 @@ function buildCompletedShip(
     isUnderConstruction: false,
     constructionProgress: project["totalWork"],
     constructionTotalWork: project["totalWork"],
-    // S-1: a hull leaving the slipway launches into working up (manual p.51).
     readiness: "WORKING_UP",
     crewQuality: LAID_UP_CREW_CEILING,
     ...(fitted ? { colonialServiceFitted: true as const } : {}),
   };
 }
 
-/**
- * A finished rebuild (ADR-0078, DESIGN-23 section 22): the target ship atomically becomes the new design version, with the
- * new design's stats and full hit points (the rebuild repairs it), and is released (no longer unavailable). The old design
- * version stays in the snapshot. Returns the updated fleets and the transition, or null if the ship or design is missing.
- */
 function completeRebuild(
   ctx: MonthContext,
   project: NationState["constructionProjects"][number],
@@ -342,7 +313,6 @@ function completeRebuild(
   fleets: FleetState[];
   shipId: string;
   fromDesignVersionId: string;
-  /** False when the new design is missing: the ship is released unchanged and the caller reports it. */
   rebuilt: boolean;
 } | null {
   const targetId = project["targetShipId"];
@@ -351,9 +321,7 @@ function completeRebuild(
   const ship = fleet?.["ships"].find((s) => s["id"] === targetId);
   if (!fleet || !ship) return null;
   const design = ctx.currentSnapshot["designs"]?.get(project["designVersionId"]);
-  // A ship must never stay unavailable for a project that is over: without the design it is released as it was.
   const { availability: _availability, availabilityProjectId: _reason, ...rest } = ship;
-  // The rebuilt ship takes the new design's fitting, so the old design's flag is dropped before it is applied.
   const { colonialServiceFitted: _oldFitting, ...restWithoutFitting } = rest;
   const stats = design ? shipStatsFromDesign(design) : undefined;
   const rebuilt: Ship =

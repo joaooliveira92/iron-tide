@@ -7,9 +7,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { buildNationStates, checkStartRevenue } from "../src/nationCompilation.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
-// Spec #138 / issue #142: ZERO_MONTHLY_REVENUE guards the start-rate derivation. With the 2000 bp start rate it cannot fire
-// (revenue == income >= 1), so the check is exercised through its seam with inputs that round to zero, and the compiler
-// is exercised to prove it never fires (or cascades) for rows that are valid, deficit, invalid, missing or overflowing.
 const ZERO = "ZERO_MONTHLY_REVENUE";
 const codes = (c: DiagnosticCollector): string[] => c.all.map((d) => d.code as string);
 
@@ -42,7 +39,6 @@ const one = (id: string, row: Omit<Economy, "nationId">): DiagnosticCollector =>
 describe("ZERO_MONTHLY_REVENUE seam", () => {
   it("is an error naming the nation when gross revenue at the start rate is exactly zero", () => {
     const collector = new DiagnosticCollector();
-    // base 59 x 2000 / 120000 = 0.98 -> floor 0
     checkStartRevenue("zz", SafeInt(59), SafeInt(2000), collector);
     expect(collector.all).toHaveLength(1);
     const d = collector.all[0]!;
@@ -58,7 +54,7 @@ describe("ZERO_MONTHLY_REVENUE seam", () => {
   it("fires for a zero base and for a rate that rounds a positive base to zero", () => {
     for (const [base, rate] of [
       [0, 2000],
-      [60, 1999], // 60 x 1999 / 120000 = 0.99 -> floor 0
+      [60, 1999],
     ] as const) {
       const collector = new DiagnosticCollector();
       checkStartRevenue("a", SafeInt(base), SafeInt(rate), collector);

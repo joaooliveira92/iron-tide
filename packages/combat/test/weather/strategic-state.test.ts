@@ -1,7 +1,3 @@
-// AC-1: StrategicWeatherState invariant — authoritative integer
-// StrategicWeatherState with correct fields and bounds; non-integers and
-// out-of-range values rejected with INVALID_STRATEGIC_WEATHER_STATE or
-// WEATHER_STATE_INVARIANT_FAILED.
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
 import {
@@ -11,7 +7,6 @@ import {
 } from "../../src/weather/strategic-state.js";
 import { INVALID_STRATEGIC_WEATHER_STATE } from "../../src/weather/reasonCodes.js";
 
-// Helper — minimal valid state seed (all fields canonical-integer)
 function seed(overrides: Partial<StrategicWeatherState> = {}): StrategicWeatherState {
   return {
     areaId: "area-eng-ch",
@@ -57,7 +52,6 @@ describe("AC-1: StrategicWeatherState invariant", () => {
   it("accepts a valid state through withStrategicWeatherStateHash", () => {
     const s = withStrategicWeatherStateHash(seed());
     expect(s.stateHash).toMatch(/^[0-9a-f]{64}$/);
-    // Hash is deterministic: second call yields identical hash
     const s2 = withStrategicWeatherStateHash(seed());
     expect(s2.stateHash).toBe(s.stateHash);
   });
@@ -79,7 +73,6 @@ describe("AC-1: StrategicWeatherState invariant", () => {
     expect(() => assertFixedPointStrategicWeather(s)).not.toThrow();
   });
 
-  // ---- Non-integer type violations (INVALID_STRATEGIC_WEATHER_STATE) ----
   it("rejects non-integer seaState with INVALID_STRATEGIC_WEATHER_STATE", () => {
     const s = seed({ seaState: 3.5 } as unknown as StrategicWeatherState);
     expect(() => assertFixedPointStrategicWeather(s)).toThrow(BluewaveError);
@@ -108,7 +101,6 @@ describe("AC-1: StrategicWeatherState invariant", () => {
     expect(codeOf(() => assertFixedPointStrategicWeather(s))).toBe(INVALID_STRATEGIC_WEATHER_STATE);
   });
 
-  // ---- Range violations (WEATHER_STATE_INVARIANT_FAILED) ----
   it("rejects seaState 10 (out of 0..9) with WEATHER_STATE_INVARIANT_FAILED", () => {
     expect(() => withStrategicWeatherStateHash(seed({ seaState: 10 }))).toThrow(BluewaveError);
   });

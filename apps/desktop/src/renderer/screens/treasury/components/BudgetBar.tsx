@@ -2,11 +2,6 @@ import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { buildBudgetBar } from "../budget-bar.js";
 import type { TreasuryBreakdown } from "../treasury-summary.js";
 
-/**
- * Income against stacked expenditure on one scale. Never colour alone: the legend
- * names every segment with its value and share, and the whole bar has a text label.
- * All geometry, labels, and colours come from `buildBudgetBar`; this only renders.
- */
 export function BudgetBar({ breakdown }: { readonly breakdown: TreasuryBreakdown }) {
   const format = usePresentationFormat();
   const bar = buildBudgetBar(breakdown);
@@ -27,7 +22,6 @@ export function BudgetBar({ breakdown }: { readonly breakdown: TreasuryBreakdown
             />
           ))}
         </div>
-        {/* Income marker: spending beyond this line is a deficit. */}
         <div
           aria-hidden="true"
           className="absolute -top-1 h-6 w-0.5 bg-foreground"

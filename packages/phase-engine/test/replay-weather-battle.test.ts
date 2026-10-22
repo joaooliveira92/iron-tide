@@ -1,11 +1,3 @@
-// B-6 INC-3 (AC-11): save -> load -> replay round-trips the new snapshot
-// surface — the resolved battle result (`BattleInstance.result` incl. the
-// damageReport and a null-winner tie), the current-month strategic weather,
-// the war score, and the per-ship consequences — and replay reproduces the
-// same closing hash. Mirrors the cross-process child's save/load/replay flow
-// (SaveStore + ReplayVerifier) with a war-carrying campaign whose battle
-// resolves through the tactical auto-resolution path.
-
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -26,8 +18,6 @@ import {
   makeShip,
 } from "./battle-fixtures.js";
 
-// Deterministic subset hash over the authoritative snapshot surface — parity
-// with ReplayVerifier / the cross-process child (run-child.ts).
 function hashSnapshot(snapshot: CampaignSnapshot): string {
   const nations: Record<string, NationState> = {};
   for (const [id, nation] of snapshot.nations) nations[id] = nation;
@@ -64,9 +54,6 @@ function hashSnapshot(snapshot: CampaignSnapshot): string {
   );
 }
 
-/** Build a saveable CampaignState for a snapshot (same convention as the
- *  cross-process child: rawHash over { snapshot, envelope } — rawHash itself
- *  excluded, because load() recomputes it over the reconstituted state). */
 function toSaveableState(snapshot: CampaignSnapshot): CampaignState {
   const envelope = createEnvelope("campaign-snapshot", snapshot.compatibilityVersion, snapshot);
   const state: CampaignState = { snapshot, envelope, rawHash: "" };
@@ -74,9 +61,6 @@ function toSaveableState(snapshot: CampaignSnapshot): CampaignState {
   return { ...state, rawHash: sha256Hex(canonicalSerialize(stateForHash)) };
 }
 
-/** A time-limit (tie) campaign: unarmed ships -> no lethality -> the
- *  deterministic auto-resolution runs the full 360 minutes to `time_limit`
- *  with null winner/loser (ADR-0026 §7). */
 function makeTieSnapshot(): CampaignSnapshot {
   const unarmed = makeDesign("dv-unarmed", ATTACKER_NATION, { guns: 0, caliberUm: 0 });
   const attackerShips = [
@@ -104,8 +88,6 @@ describe("replay: save/load/replay a war campaign with resolved battles + weathe
   it("round-trips the resolved battle result, weather, war score, and ship consequences; replay reproduces the same closing hash", () => {
     const saveDir = mkdtempSync(join(tmpdir(), "bw-replay-battle-"));
     try {
-      // Month 1: battle_generation accepts a battle, battle_resolution
-      // auto-resolves it deterministically, weather is committed.
       const snapshot0 = makeBattleSnapshot();
       const executor = new MonthExecutor();
       const collector = new DiagnosticCollector();
@@ -114,13 +96,11 @@ describe("replay: save/load/replay a war campaign with resolved battles + weathe
       const snapshot1 = month1.finalSnapshot;
       const closingHash = hashSnapshot(snapshot1);
 
-      // The closing snapshot carries the new surface.
       expect(snapshot1.wars.battles.length).toBe(1);
       expect(snapshot1.wars.battles[0]!.phase).toBe("resolved");
       expect(snapshot1.wars.battles[0]!.result).toBeDefined();
       expect((snapshot1.strategicWeather ?? []).length).toBeGreaterThan(0);
 
-      // ---- save -> load the POST-month snapshot (resolved battle + weather) ----
       const store = new SaveStore();
       store.save(toSaveableState(snapshot1), saveDir);
       const loadDiag = new DiagnosticCollector();
@@ -128,10 +108,6 @@ describe("replay: save/load/replay a war campaign with resolved battles + weathe
       expect(loaded).not.toBeNull();
       expect(loadDiag.hasErrors).toBe(false);
 
-      // Round-tripped surface is identical (battle result, weather, war score,
-      // per-ship damage/removal — plain data; Maps reconstituted by the store;
-      // the on-disk record key order is canonical-sorted, so compare ships by
-      // id rather than Map iteration order).
       expect(loaded!.snapshot.wars.battles).toEqual(snapshot1.wars.battles);
       expect(loaded!.snapshot.strategicWeather).toEqual(snapshot1.strategicWeather);
       expect(loaded!.snapshot.wars.wars).toEqual(snapshot1.wars.wars);
@@ -141,7 +117,6 @@ describe("replay: save/load/replay a war campaign with resolved battles + weathe
           .sort((a, b) => a.id.localeCompare(b.id));
       expect(shipsOf(loaded!.snapshot)).toEqual(shipsOf(snapshot1));
 
-      // ---- the same month from the loaded state reproduces the same closing hash ----
       const directAgain = new MonthExecutor().execute(
         snapshot1,
         [],
@@ -156,8 +131,6 @@ describe("replay: save/load/replay a war campaign with resolved battles + weathe
       );
       expect(hashSnapshot(loadedAgain.finalSnapshot)).toBe(hashSnapshot(directAgain.finalSnapshot));
 
-      // ---- replay (the child's convention: verify the ORIGINAL month from the
-      // loaded pre-month state) reproduces the same closing hash ----
       const replay = new ReplayVerifier().verify(
         snapshot0,
         [],
@@ -192,7 +165,6 @@ describe("replay: save/load/replay a war campaign with resolved battles + weathe
       expect(loaded).not.toBeNull();
       expect(loaded!.snapshot.wars.battles[0]!.result!.winnerId).toBeNull();
       expect(loaded!.snapshot.wars.battles[0]!.result!.loserId).toBeNull();
-      // And the null-winner result does not disturb a subsequent month.
       const next = new MonthExecutor().execute(
         loaded!.snapshot,
         [],

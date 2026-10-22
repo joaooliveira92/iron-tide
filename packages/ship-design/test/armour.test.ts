@@ -72,7 +72,6 @@ const input = (o: Partial<ArmourInput> = {}): ArmourInput => ({
 
 describe("armour weight", () => {
   it("matches hand calculation: 60m x 2.4m x 305mm steel", () => {
-    // 144 m2 * 0.305 m * 7850 = 344,... kg; *1.1*1.05
     const raw = 144 * 0.305 * 7850;
     expect(regionWeightKg(belt(), bal)).toBe(Math.ceil(raw * 1.1 * 1.05));
   });
@@ -117,14 +116,12 @@ describe("compileArmour", () => {
   });
   it("reports effective thickness from material and obliquity", () => {
     const r = compileArmour(input(), bal);
-    // 305 mm of compound (10_000 eff) hit flat-on is 305 mm effective.
     expect(r.effectiveThicknessByRegionUm.BELT_MAIN).toBe(305_000);
     expect(r.effectiveThicknessByRegionUm.DECK_MAIN).toBe(50_000);
     const sloped = compileArmour(
       input({ regions: [belt({ materialId: "face_hardened", cosObliquityBp: 8_660 })] }),
       bal,
     );
-    // 305 mm x 14_000/10_000 x 8_660/10_000 = 369.782 mm.
     expect(sloped.effectiveThicknessByRegionUm.BELT_MAIN).toBe(369_782);
   });
   it("short belt gives CITADEL_INCOMPLETE (warning then critical)", () => {

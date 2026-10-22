@@ -120,7 +120,6 @@ describe("B10a economy & construction acceptance (criteria 1-7)", () => {
     expect(result.success).toBe(true);
     expect(collector.hasErrors).toBe(false);
 
-    // All three nations recorded revenue (NAVAL_APPROPRIATION) postings.
     for (const nationId of ["GBR", "FRA", "GER"]) {
       const revenueEntries = result.financialLedger.all.filter(
         (e) => e.nationId === nationId && e.categoryId === "NAVAL_APPROPRIATION",
@@ -135,7 +134,7 @@ describe("B10a economy & construction acceptance (criteria 1-7)", () => {
     const gbr = makeNation("GBR", {
       treasury: SafeInt(10000),
       baseResources: SafeInt(120000),
-      ships: 1, // maintenance = floor(100*10/100) = 10
+      ships: 1,
       projects: [
         {
           id: "proj-1",
@@ -159,7 +158,6 @@ describe("B10a economy & construction acceptance (criteria 1-7)", () => {
 
     expect(result.success).toBe(true);
     const gbrEntries = result.financialLedger.all.filter((e) => e.nationId === "GBR");
-    // Revenue, appropriation, maintenance postings present and balanced.
     expect(gbrEntries.length).toBeGreaterThanOrEqual(2);
     for (const entry of gbrEntries) {
       expect(entry.debit as number).toBe(entry.credit as number);
@@ -204,7 +202,6 @@ describe("B10a economy & construction acceptance (criteria 1-7)", () => {
     );
 
     expect(result.success).toBe(true);
-    // ACTIVE 10 + RESERVE 7 + MOTHBALLED 5 + REPAIR 20 = 42.
     expect(result.finalSnapshot.nations.get("GBR")!.maintenanceCost as number).toBe(42);
     expect(result.finalSnapshot.nations.get("GBR")!.treasury as number).toBe(10000 - 42);
   });
@@ -242,7 +239,7 @@ describe("B10a economy & construction acceptance (criteria 1-7)", () => {
 
   it("C4: construction progresses only when funded; zero payment => zero progress", () => {
     const noFunds = makeNation("GBR", {
-      treasury: SafeInt(50), // only the obligation reserve -> nothing left to appropriate
+      treasury: SafeInt(50),
       baseResources: SafeInt(0),
       projects: [
         {

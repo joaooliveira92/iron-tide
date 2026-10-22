@@ -6,7 +6,6 @@ export interface PortsLayerProps {
   readonly strokeFor: (nation: string) => string;
 }
 
-/** Possession dots; clustered marks show a count instead of a single name. */
 export function PortsLayer({ marks, strokeFor }: PortsLayerProps) {
   return (
     <>

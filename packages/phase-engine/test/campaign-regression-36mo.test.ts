@@ -1,23 +1,3 @@
-// campaign-regression-harness ticket 01 (ADR-0099): a fixed-seed 36-month
-// campaign regression net.
-//
-// Drives the REAL `MonthExecutor` — the same entry point `turn:execute` and the
-// desktop `commitMonth` use — for 36 months over a 2-nation war snapshot,
-// generating and auto-resolving whatever battles it produces, and asserts:
-//
-//  - zero unhandled exceptions across the whole matrix;
-//  - every produced battle resolves to a §32 end reason (nothing left pending);
-//  - the ADR-0094 failure mode does not return: battles do not mostly grind to
-//    the time-limit cap;
-//  - invariants: ship hp stays in [0, max], total fleet hp never rises,
-//    `turnNumber` advances one per month, treasuries stay finite;
-//  - determinism: the same seed replays byte-identically (per-month ledger and
-//    snapshot hashes); distinct seeds diverge.
-//
-// Cross-process determinism of the shared campaign path is covered by
-// `@bluewave/cross-process-test` (determinism.yml); this harness adds the
-// multi-month dimension in-process. It is a regression net, not gameplay: it
-// asserts bands/invariants, never brittle exact outcomes.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import { campaignMonthId, type CampaignSnapshot } from "@bluewave/campaign";
@@ -31,7 +11,6 @@ const MONTHS = 36;
 const SEEDS = ["regression-a", "regression-b"] as const;
 const REASONS: ReadonlySet<string> = new Set(BATTLE_END_PRECEDENCE);
 const AUTO_RESOLVED = /^auto-resolved \(([a-z_]+)\) after \d+ battle minutes$/;
-/** A battles-grind-to-the-cap regression is a time-limit share above this. */
 const TIME_LIMIT_SHARE_MAX = 0.5;
 
 interface MonthObservation {
@@ -96,7 +75,6 @@ function observe(
   }
   const badReasons: string[] = [];
   const reasons: string[] = [];
-  // Only the battles appended this month (the array accumulates across months).
   const thisMonth = final.wars.battles.slice(sinceIndex);
   for (const battle of thisMonth) {
     if (battle.phase === "resolved") {
@@ -156,19 +134,12 @@ function run36(seed: string): MonthObservation[] {
         sinceIndex,
       ),
     );
-    // The engine does not advance turnNumber; feed the final snapshot back in
-    // with turnNumber incremented so the calendar progresses (the desktop
-    // commitMonth rule).
     snapshot = { ...final, turnNumber: SafeInt((final.turnNumber as number) + 1) };
   }
   return observations;
 }
 
 describe("campaign regression: fixed-seed 36-month loop", () => {
-  // Cache per-seed runs so the invariants and divergence tests share one run
-  // each instead of recomputing the 36-month loop. The determinism test still
-  // runs fresh pairs. This keeps the harness cheap enough to run alongside the
-  // rest of the package on a 2-core CI runner.
   const runs = new Map<string, MonthObservation[]>();
   const runCached = (seed: string): MonthObservation[] => {
     let run = runs.get(seed);
@@ -194,11 +165,8 @@ describe("campaign regression: fixed-seed 36-month loop", () => {
         expect(month.negativeHp, `${seed} month ${String(index)} negative hp`).toBe(false);
         expect(month.overMaxHp, `${seed} month ${String(index)} hp above max`).toBe(false);
         expect(month.treasuryFinite, `${seed} month ${String(index)} treasury`).toBe(true);
-        // No battle may be left mid-flight when the month closes.
         expect(month.unresolved, `${seed} month ${String(index)} unresolved battles`).toBe(0);
-        // Every recorded battle carries a valid §32 end reason.
         expect(month.badReasons, `${seed} month ${String(index)} battle end reasons`).toEqual([]);
-        // Fleet hp is destroyed, never created: the total never rises.
         expect(month.totalHp).toBeLessThanOrEqual(previousHp);
         previousHp = month.totalHp;
         resolvedTotal += month.resolved;
@@ -206,10 +174,8 @@ describe("campaign regression: fixed-seed 36-month loop", () => {
         battlesTotal += month.battlesThisMonth;
       });
 
-      // The harness must actually exercise combat, not vacuously pass.
       expect(resolvedTotal, `${seed} resolved at least one battle`).toBeGreaterThan(0);
       expect(battlesTotal, `${seed} produced at least one battle`).toBeGreaterThan(0);
-      // ADR-0094 regression guard: engagements must not mostly grind to the cap.
       expect(timeLimitBattles / battlesTotal, `${seed} time_limit share`).toBeLessThanOrEqual(
         TIME_LIMIT_SHARE_MAX,
       );

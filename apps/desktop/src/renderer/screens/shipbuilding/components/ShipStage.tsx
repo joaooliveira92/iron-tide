@@ -1,12 +1,10 @@
 import type { ReactNode } from "react";
 
 export interface ShipStageProps {
-  /** View selector and overlay toggles, above the drawing. */
   readonly toolbar?: ReactNode;
   readonly children: ReactNode;
 }
 
-/** The central workspace: the ship is the primary interaction surface, never a narrow preview column. */
 export function ShipStage({ toolbar, children }: ShipStageProps) {
   return (
     <section aria-label="Ship view" className="flex h-full min-h-0 min-w-0 flex-col">

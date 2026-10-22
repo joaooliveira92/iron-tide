@@ -1,19 +1,3 @@
-// DESIGN-34 engine-versioned constant-set contracts (C-3 spec §1.3) — the
-// "content deliverable" of this sprint: every shipped `*_v1` policy id +
-// `SHIPPED_*_CONTRACT` + a fail-closed `validate*Contract` guard. Mirrors
-// packages/combat/src/mines/constants.ts (which shipped
-// mine_type_definitions_v1) and mines/contracts.ts (the INC-8 rollup).
-//
-// INC-1 ships the three §1.3 contracts that the strategic-representation /
-// types / policies slice exercises:
-//   submarine_strategic_asset_v1   (DESIGN-34 §1)
-//   submarine_types_v1             (DESIGN-34 §4 + §6 vocab + §9/§10 tables)
-//   submarine_policies_v1          (DESIGN-34 §5)
-// Each ships DESIGN-34's own exact integers (ticket 06 — no research catalog).
-//
-// Pure/deterministic; fail-closed: any tampered contract throws
-// (INVALID_SUBMARINE_REPRESENTATION for the §1 guard, SUBMARINE_STATE_INVARIANT_FAILED
-// for the type/policy definition guards) and never silently passes.
 import { SUBMARINE_ASW_VULNERABILITY_BP } from "../model.js";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -68,11 +52,8 @@ export function validateSubmarineStrategicAssetContract(
     throwStrategicMismatch(c, "submarine_strategic_asset_v1 basis-point scale");
   if (!c.representations || !arrayEquals(c.representations, STRATEGIC_REPRESENTATIONS))
     throwStrategicMismatch(c, "submarine_strategic_asset_v1 §1 closed representation enum");
-  // restore the typed value after guard (the throw path returns never)
   void c;
 }
-
-// submarine_types_v1 (§4 + §6 vocab + §9/§10 tables)
 
 export interface SubmarineTypesContract {
   policyId: string;
@@ -145,8 +126,6 @@ export function validateSubmarineTypesContract(
   void c;
 }
 
-// submarine_policies_v1 (§5)
-
 export interface SubmarinePoliciesContract {
   policyId: string;
   rulesetVersion: string;
@@ -161,10 +140,6 @@ export interface SubmarinePoliciesContract {
   shippedPolicyIds: readonly string[];
 }
 
-// §5 target weights derive from the single shipped constants copy
-// (SUBMARINE_POLICY_TARGET_WEIGHTS_BP in constants.ts) — the contract never
-// hand-copies the DESIGN-34 integers a second time, so the shipped set, the
-// policy definitions, and this contract cannot drift apart.
 const TARGET_WEIGHTS: SubmarinePoliciesContract["targetWeightsBp"] =
   SUBMARINE_POLICY_TARGET_WEIGHTS_BP;
 
@@ -223,5 +198,3 @@ export function validateSubmarinePoliciesContract(
     mismatch(c, "submarine_policies_v1 shipped policy id list");
   void c;
 }
-
-// submarine_missions_v1 (§6 + §26.4)

@@ -1,18 +1,10 @@
 import { useCallback, useRef } from "react";
 
 export interface FrameMeter {
-  /** Record one frame delta; periodically writes the p50/p95 readout. */
   readonly sample: () => void;
-  /** Drop the collected samples (new drag, or a reset view). */
   readonly reset: () => void;
 }
 
-/**
- * A throwaway performance readout: it samples frame deltas and writes p50/p95
- * straight into a span, so producing the number cannot perturb the number. It
- * is deliberately kept out of React state — the whole point is to measure the
- * camera without re-rendering. A profiling concern, separate from the camera.
- */
 export function useFrameMeter(meterRef: React.RefObject<HTMLSpanElement | null>): FrameMeter {
   const samples = useRef<number[]>([]);
   const lastFrame = useRef(0);

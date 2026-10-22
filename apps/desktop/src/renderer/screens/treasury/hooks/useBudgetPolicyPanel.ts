@@ -5,7 +5,10 @@ import type {
   BudgetScreenProjection,
 } from "../../../../shared/budget-contract.js";
 import { useBridge } from "../../../lib/bridge-context.js";
-import { useCommandScreenWorkflow } from "../../../lib/command-screen-workflow.js";
+import {
+  requestLifecycleAdapter,
+  useCommandScreenWorkflow,
+} from "../../../lib/command-screen-workflow.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
 import {
   emptyDraft,
@@ -24,21 +27,13 @@ import {
 export interface BudgetPolicyPanelController {
   readonly state: BudgetPolicyState;
   readonly loadError: string | null;
-  /** The player's effective rate: their draft, or the engine value with no draft. */
   readonly rate: number;
-  /** The player's effective research budget: their draft, or the engine value. */
   readonly research: number;
   readonly setRate: (value: number) => void;
   readonly setResearch: (value: number) => void;
   readonly apply: () => void;
 }
 
-/**
- * Owns the budget-allocation command lifecycle (F-12, ADR-0060): the engine
- * projection, the player's uncommitted slider draft, and the submit that queues
- * the change for the next month advance. The panel component renders only what
- * this returns.
- */
 export function useBudgetPolicyPanel(sessionId: string): BudgetPolicyPanelController {
   const bridge = useBridge();
   const campaignRevision = useCampaignRevision();
@@ -47,7 +42,7 @@ export function useBudgetPolicyPanel(sessionId: string): BudgetPolicyPanelContro
     BudgetScreenProjection,
     BudgetCommandOutcome
   >(
-    {
+    requestLifecycleAdapter({
       initialState: initialBudgetPolicyState,
       load: () =>
         bridge
@@ -55,7 +50,7 @@ export function useBudgetPolicyPanel(sessionId: string): BudgetPolicyPanelContro
           : Promise.reject(new Error("Bluewave bridge not available")),
       project: projectBudgetPolicy,
       accept: acceptBudgetAllocation,
-    },
+    }),
     { refreshKey: campaignRevision },
   );
   const { state } = workflow;

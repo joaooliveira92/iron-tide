@@ -30,16 +30,12 @@ export const ARCHETYPE_IDS: readonly ArchetypeId[] = [
   "UPGRADE",
 ];
 
-/** Doctrine-level objective data. The AI changes what it optimises, never the rules (spec §18.3). */
 export interface ArchetypeSpec {
   readonly weights: CveWeights;
   readonly warningPenaltyBp: number;
   readonly criticalPenaltyBp: number;
-  /** Penalty weight on cost / budget. */
   readonly costWeightBp: number;
-  /** If set, reward growth reserve up to this share of displacement, bp. */
   readonly reserveTargetBp: number | null;
-  /** Design margin the archetype starts from, bp. */
   readonly designMarginBp: number;
 }
 
@@ -49,7 +45,6 @@ export interface AiEnvironment {
   readonly costCtx: CostContext;
   readonly cveBalance: CveBalance;
   readonly archetypes: Readonly<Record<ArchetypeId, ArchetypeSpec>>;
-  /** Money the nation can commit to one ship, or null for unconstrained. */
   readonly budgetMicro: number | null;
 }
 
@@ -57,7 +52,6 @@ export interface AiRequest {
   readonly base: DesignDraft;
   readonly seed: string;
   readonly nationKey: string;
-  /** How many distinct candidates to return. */
   readonly candidates: number;
   readonly compilesPerArchetype: number;
   readonly archetypes?: readonly ArchetypeId[];
@@ -85,10 +79,7 @@ const pick = <T>(s: RandomStream, xs: readonly T[]): T | undefined =>
   xs.length === 0 ? undefined : xs[int(s, 0, xs.length - 1)];
 const scale = (v: number, pct: number) => Math.max(1, Math.floor((v * (100 + pct)) / 100));
 
-/** One random neighbouring edit. Pure function of the stream and inputs. */
 function propose(s: RandomStream, d: DesignDraft, ctx: ShipContext): DraftEdit | null {
-  // Candidate generation must not select armament that does not resolve: filter guns to the families the
-  // authoritative resolver accepts for this nation at this month, technology and access (ADR-0093 Step 3).
   const resolvable = resolvableWeaponFamilies(ctx, d.nationId);
   const available = ctx.catalogue.filter(
     (c) =>
@@ -210,10 +201,6 @@ function distance(a: number[], b: number[]): number {
   return d;
 }
 
-/**
- * Generates meaningfully different, fully validated candidates. Uses the same compile, cost and CVE code as the player.
- * Threshold-accepting hill climb per archetype; a final farthest-first pass picks diverse valid candidates.
- */
 export function generateCandidates(env: AiEnvironment, req: AiRequest): AiResult {
   const engine = new RandomEngine(req.seed);
   const ledger = new RandomLedger();
@@ -292,7 +279,7 @@ export function generateCandidates(env: AiEnvironment, req: AiRequest): AiResult
       try {
         cand = evaluate(arch, next);
       } catch {
-        continue; // unusable edit (e.g. unknown id after a removal); never an illegal ship
+        continue;
       }
       const threshold = Math.floor((1_500 * (steps - k)) / steps);
       if (cand.objective >= cur.objective - threshold) cur = cand;
@@ -315,7 +302,6 @@ export function generateCandidates(env: AiEnvironment, req: AiRequest): AiResult
     });
   }
 
-  // Never return an illegal ship: only candidates with zero BLOCKING findings are eligible.
   const valid = pool.filter((c) => c.compiled.valid);
   const chosen: Candidate[] = [];
   const rest = [...valid].sort(

@@ -27,7 +27,6 @@ afterEach(() => {
   for (const dir of scratchDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-/** A private copy of the generated artifact so a test can tamper without touching the shared build. */
 function copyArtifact(): string {
   const source = resolveGeneratedContentDir();
   const dir = mkdtempSync(join(tmpdir(), "bw-artifact-"));
@@ -119,8 +118,6 @@ describe("compiled content artifact loader (ticket 03)", () => {
     const nations = bundle.nations as Record<string, unknown>[];
     nations[0] = { ...nations[0], __schemaDrift: true };
 
-    // Re-pin the manifest to the tampered bundle so the hash check passes and
-    // only the schema decode can catch the drift (CAH-SCH-3).
     const envelope = createEnvelope(
       CONTENT_BUNDLE_ARTIFACT_KIND,
       CONTENT_BUNDLE_COMPATIBILITY_VERSION,
@@ -159,7 +156,6 @@ describe("campaign compile from the verified artifact (ticket 07)", () => {
     );
     expect(collector.hasErrors).toBe(false);
     expect(output).toBeDefined();
-    // Identity is exactly the verified artifact body hash, never raw file bytes.
     expect(output!.contentHash).toBe(manifest.bodyHash);
     expect(output!.state.snapshot.nations.size).toBeGreaterThan(0);
   });

@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { BattleOutcome, ClosingSnapshotSummary } from "../src/simulation.js";
 
-/**
- * Type/canary test for the web-facing flat `BattleOutcome` surface added to
- * `ClosingSnapshotSummary` (INC-1). It does not exercise any authoritative
- * engine behavior — it only proves the type's shape constructs and surfaces
- * correctly for vanilla-safe (renderer) consumption.
- */
 describe("BattleOutcome type surface (INC-1)", () => {
   it("constructs a ClosingSnapshotSummary carrying a flat BattleOutcome array", () => {
     const battleOutcome: BattleOutcome = {
@@ -42,7 +36,6 @@ describe("BattleOutcome type surface (INC-1)", () => {
     expect(surfaced.warScoreDelta).toBe(5);
     expect(surfaced.attackerLosses).toEqual(["ship_hms_vanguard"]);
     expect(surfaced.defenderLosses).toEqual(["ship_sms_hohenzollern"]);
-    // activeWars stays intact for backward compatibility.
     expect(summary.activeWars).toEqual([]);
   });
 

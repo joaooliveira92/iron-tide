@@ -6,7 +6,7 @@ export type PathKind = "flag" | "lamp" | "early_radio" | "mature_radio" | "data_
 
 export interface CommunicationPath {
   kind: PathKind;
-  maxRangeNm: number; // battle-wide = Infinity
+  maxRangeNm: number;
   requiresVisibility: boolean;
   requiresLineOfSight: boolean;
   technologyRequirement?: string;
@@ -99,7 +99,6 @@ export function evaluateTransmission(opts: {
   const stream = opts.engine.stream(
     `battle/command/path/transmission:${opts.battleId}:${opts.commandId}:${opts.path}:${opts.attempt}`,
   );
-  // drawUniform 0..9999 inclusive -> fail if roll < probability
   const roll = Math.floor(stream.next() * 10_000);
   const failed = roll < opts.failureProbabilityBp;
   if (failed)

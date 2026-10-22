@@ -1,6 +1,3 @@
-// D-4 M4 Aviation: Air Defense — AirDefenseSystemDefinition interface
-// per DESIGN-45 §3. Strict validation at construction boundaries, fail-closed guards.
-
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { Result, Schema } from "effect";
 import { formatContractIssues } from "../schema-issues.js";
@@ -8,13 +5,6 @@ import { AIR_DEFENSE_MODEL_VERSION, INVALID_AIR_DEFENSE_SYSTEM_DEFINITION } from
 
 export const AIR_DEFENSE_RULESET_VERSION = "air_defense_v1" as const;
 
-/**
- * The AirDefenseSystemDefinition schema field keys in strict schema declaration order
- * (§3). Contracted verbatim by air_defense_v1 so a versioned contract pins the exact
- * system-definition schema surface (ADR-0042 decision 12 consequence). Derived from the
- * schema below — the list is asserted by the air_defense_v1 contract test to equal
- * Object.keys(AirDefenseSystemDefinitionSchema.fields).
- */
 export const AIR_DEFENSE_SYSTEM_DEFINITION_FIELD_KEYS = [
   "systemId",
   "layer",
@@ -62,8 +52,6 @@ export const Category = {
 
 export type CategoryId = (typeof Category)[keyof typeof Category];
 
-// ---- Literal types for strict validation ----
-
 const LayerLiteral = Schema.Literals([
   "HEAVY_AA",
   "MEDIUM_AA",
@@ -77,11 +65,6 @@ const CategoryLiteral = Schema.Literals([
   "CIWS_TERMINAL_DEFENSE",
 ]);
 
-/**
- * Standard SafeInt schema: accept a number, validate integer + safe range. The
- * `message` is surfaced verbatim on failure, matching the previous Zod custom
- * schema's `{ message }` behavior.
- */
 function safeIntSchema(
   message: string,
   opts?: { min?: number; max?: number; nonNegative?: boolean; positive?: boolean },
@@ -102,18 +85,18 @@ export interface AirDefenseSystemDefinition {
   systemId: string;
   layer: LayerId;
   category: CategoryId;
-  mountCount: SafeInt; // non-negative integer
-  barrels: SafeInt; // positive integer
+  mountCount: SafeInt;
+  barrels: SafeInt;
   rangeMinM: SafeInt;
-  rangeMaxM: SafeInt; // positive integer
+  rangeMaxM: SafeInt;
   altitudeMinM: SafeInt;
   altitudeMaxM: SafeInt;
   targetSpeedLimitMps: SafeInt;
-  arcDegreesMax: SafeInt; // 0-360 degrees; maximum angular offset (bearing) the mount can engage
+  arcDegreesMax: SafeInt;
   profileEligibility: ReadonlySet<string>;
   fireControl: {
     trackingRangeM: SafeInt;
-    maxElevationDegrees: SafeInt; // 0-90 degrees
+    maxElevationDegrees: SafeInt;
     updateRateHz: SafeInt;
   };
   radar: {
@@ -127,16 +110,14 @@ export interface AirDefenseSystemDefinition {
   baseDamageBp: SafeInt;
   baseAbortBp: SafeInt;
   baseDisruptionBp: SafeInt;
-  rate: SafeInt; // rounds per minute / engagement rate
-  roundsPerEngagement: SafeInt; // §20 "rounds or missiles per engagement" (positive)
-  magazineCapacity: SafeInt; // §20 "magazine or ready-service capacity" (positive)
-  localControlSupported: boolean; // §21: system may use local control (5_000 bp) when its director is unavailable
-  saturationGroup: SafeInt; // group ID for saturation calculations
+  rate: SafeInt;
+  roundsPerEngagement: SafeInt;
+  magazineCapacity: SafeInt;
+  localControlSupported: boolean;
+  saturationGroup: SafeInt;
   contentVersion: string;
   contentHash: string;
 }
-
-// ---- Effect Schema for AirDefenseSystemDefinition (strict: unknown fields rejected) ----
 
 const AirDefenseSystemDefinitionSchema = Schema.Struct({
   systemId: Schema.String.check(
@@ -229,16 +210,7 @@ const AirDefenseSystemDefinitionSchema = Schema.Struct({
   ),
 });
 
-/**
- * Strict + collect-all options: unmodeled keys are rejected and every failing
- * field is reported, matching the previous Zod `.strict().safeParse()` which
- * surfaced the full `issue` list. `onExcessProperty` is a parse-time option in
- * Effect v4 (it cannot be embedded in the schema AST), so decoding is
- * centralized through `validateAirDefenseSystemDefinition`.
- */
 const parseOptions = { onExcessProperty: "error", errors: "all" } as const;
-
-// ---- fail-closed guard: rejects unknown fields ----
 
 export function validateAirDefenseSystemDefinition(value: unknown): AirDefenseSystemDefinition {
   const result = Schema.decodeUnknownResult(AirDefenseSystemDefinitionSchema, parseOptions)(value);
@@ -252,18 +224,9 @@ export function validateAirDefenseSystemDefinition(value: unknown): AirDefenseSy
       { code: INVALID_AIR_DEFENSE_SYSTEM_DEFINITION, errors },
     );
   }
-  // Accepted narrowing (ticket INC-3): the schema marks the defaultable fields
-  // (`baseKillBp` … `saturationGroup`) optional — `createAirDefenseSystemDefinition`
-  // fills them before validating — while the interface is total.
   return result.success as AirDefenseSystemDefinition;
 }
 
-/**
- * Only `undefined` selects a default. The pre-migration Zod `.partial()` pass
- * accepted `undefined` for an omitted field but rejected a supplied `null`;
- * using `??` would silently turn `null` into the default, so a supplied `null`
- * must flow to the schema and fail closed like any other invalid value.
- */
 function withDefault<T>(value: T | undefined, fallback: T): T {
   return value === undefined ? fallback : value;
 }
@@ -271,13 +234,8 @@ function withDefault<T>(value: T | undefined, fallback: T): T {
 export function createAirDefenseSystemDefinition(
   params: Partial<AirDefenseSystemDefinition>,
 ): AirDefenseSystemDefinition {
-  // `params` is typed non-null but JS callers can pass `undefined`; normalizing to `{}`
-  // keeps the unknown-field scan below from throwing a raw TypeError, so an empty input
-  // fails closed through the merged-schema validation as a BluewaveError (12-F2 parity).
   const input = params ?? {};
 
-  // Fail-closed on unknown fields: the defaults merge below only carries known
-  // keys, so unknown input keys are rejected here rather than silently dropped.
   const knownKeys = new Set(Object.keys(AirDefenseSystemDefinitionSchema.fields));
   for (const key of Object.keys(input)) {
     if (!knownKeys.has(key)) {
@@ -329,7 +287,6 @@ export function createAirDefenseSystemDefinition(
     ),
   };
 
-  // Validate the merged result with the strict schema.
   return validateAirDefenseSystemDefinition(merged);
 }
 

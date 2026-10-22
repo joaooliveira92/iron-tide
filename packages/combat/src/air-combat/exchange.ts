@@ -1,7 +1,3 @@
-// D-3 M4 Aviation: CAP & Strikes — INC-2 (AC-5): air-to-air exchange formula.
-// 6-factor squadron-quality exchange with integer bp arithmetic, floor-once,
-// bigint intermediate, keyed RNG draw.
-
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { type RandomEngine, drawUniform } from "@bluewave/random";
 import {
@@ -23,15 +19,15 @@ import {
 } from "./reasonCodes.js";
 
 export interface ExchangeInput {
-  attackerCombatIndex: SafeInt; // 0-100
-  defenderCombatIndex: SafeInt; // 0-100
+  attackerCombatIndex: SafeInt;
+  defenderCombatIndex: SafeInt;
   attackerCount: SafeInt;
   defenderCount: SafeInt;
   attackerAltitude: "HIGH" | "MEDIUM" | "LOW";
   defenderAltitude: "HIGH" | "MEDIUM" | "LOW";
-  isFirstPass: boolean; // surprise modifier
-  defenderToughness: SafeInt; // 0-100
-  escortModifierBp: SafeInt; // 10_000 = full (no escort), lower = escort reduces CAP effect
+  isFirstPass: boolean;
+  defenderToughness: SafeInt;
+  escortModifierBp: SafeInt;
 }
 
 export interface ExchangeResult {
@@ -48,10 +44,6 @@ const ALTITUDE_ORDER: Record<string, number> = {
   LOW: 1,
 };
 
-/**
- * Compute the quality factor in basis points.
- * qualityBp = clamp(0, 10_000, attackerCombatIndex * 10_000 / max(1, defenderCombatIndex))
- */
 function computeQualityBp(attackerCombatIndex: SafeInt, defenderCombatIndex: SafeInt): SafeInt {
   const denom = Number(defenderCombatIndex) < 1 ? SafeInt.ONE : defenderCombatIndex;
   const raw = SafeInt.div(
@@ -66,10 +58,6 @@ function computeQualityBp(attackerCombatIndex: SafeInt, defenderCombatIndex: Saf
   return SafeInt(clamped);
 }
 
-/**
- * Compute the numerical advantage factor in basis points.
- * numericalAdvantageBp = clamp(500, 10_000, attackerCount * 10_000 / max(1, defenderCount))
- */
 function computeNumericalAdvantageBp(attackerCount: SafeInt, defenderCount: SafeInt): SafeInt {
   const denom = Number(defenderCount) < 1 ? SafeInt.ONE : defenderCount;
   const raw = SafeInt.div(
@@ -84,12 +72,6 @@ function computeNumericalAdvantageBp(attackerCount: SafeInt, defenderCount: Safe
   return SafeInt(clamped);
 }
 
-/**
- * Compute the altitude factor in basis points based on relative altitude.
- * Attacker above defender → 12_500
- * Same altitude → 10_000
- * Attacker below defender → 8_500
- */
 function computeAltitudeBp(
   attackerAltitude: "HIGH" | "MEDIUM" | "LOW",
   defenderAltitude: "HIGH" | "MEDIUM" | "LOW",
@@ -106,20 +88,12 @@ function computeAltitudeBp(
   return SafeInt(AIR_COMBAT_ALTITUDE_DISADVANTAGE_BP);
 }
 
-/**
- * Compute the surprise factor in basis points.
- * First pass → 12_500, subsequent → 10_000
- */
 function computeSurpriseBp(isFirstPass: boolean): SafeInt {
   return isFirstPass
     ? SafeInt(AIR_COMBAT_SURPRISE_FIRST_PASS_BP)
     : SafeInt(AIR_COMBAT_SURPRISE_SUBSEQUENT_BP);
 }
 
-/**
- * Compute the defender survival factor in basis points.
- * survivalBp = 9_000 + floor(toughness * 1_000 / 100), clamped to [9_000, 10_000]
- */
 function computeDefenderSurvivalBp(toughness: SafeInt): SafeInt {
   const bonus = SafeInt.div(SafeInt.mul(toughness, SafeInt(1_000)), SafeInt(100), "floor");
   const raw = SafeInt.add(SafeInt(9_000), bonus);
@@ -127,22 +101,6 @@ function computeDefenderSurvivalBp(toughness: SafeInt): SafeInt {
   return SafeInt(clamped);
 }
 
-/**
- * Executes the 6-factor air-to-air exchange formula.
- *
- * 1. Validates inputs (combat index ranges, non-zero counts).
- * 2. Computes 6 factors (quality, numericalAdvantage, altitude, surprise,
- *    defenderSurvival, escort).
- * 3. Computes kill probability via bigint: floor(baseBp * Π factorBp / 10_000^6).
- * 4. Computes losses = floor(killProbBp * defenderCount / 10_000).
- * 5. Computes damaged = floor(losses * destroyedDamageRatio / 10_000).
- * 6. Draws one keyed RNG value; if draw < killProbBp, losses/damaged apply.
- *
- * @param input - Exchange input parameters.
- * @param rngEngine - RandomEngine for keyed draw (domain: "air-combat/exchange").
- * @returns ExchangeResult with kill probability, losses, and factor contributions.
- * @throws BluewaveError on invalid input.
- */
 export function computeExchange(input: ExchangeInput, rngEngine: RandomEngine): ExchangeResult {
   const attackerCI = Number(input.attackerCombatIndex);
   const defenderCI = Number(input.defenderCombatIndex);
@@ -182,8 +140,6 @@ export function computeExchange(input: ExchangeInput, rngEngine: RandomEngine): 
     });
   }
 
-  // ---- Compute 6 factors ----
-
   const qualityBp = computeQualityBp(input.attackerCombatIndex, input.defenderCombatIndex);
   const numericalAdvantageBp = computeNumericalAdvantageBp(
     input.attackerCount,
@@ -203,9 +159,6 @@ export function computeExchange(input: ExchangeInput, rngEngine: RandomEngine): 
     escort: escortBp,
   };
 
-  // ---- Kill probability (bigint arithmetic) ----
-  // numerator = 10_000 * quality * numericalAdvantage * altitude * surprise * defenderSurvival * escort
-  // denominator = 10_000^6
   const denominator = BigInt(AIR_COMBAT_BASIS_POINTS) ** 6n;
 
   let numerator: bigint = BigInt(AIR_COMBAT_BASIS_POINTS);
@@ -223,7 +176,6 @@ export function computeExchange(input: ExchangeInput, rngEngine: RandomEngine): 
 
   const killProbNum = Number(killProbabilityBp);
   const rawLosses = Math.floor((killProbNum * defenderCount) / AIR_COMBAT_BASIS_POINTS);
-  // Minimum 1 loss if kill probability > 0, cap at defenderCount
   const cappedLosses = Math.min(defenderCount, killProbNum > 0 ? Math.max(1, rawLosses) : 0);
   const losses = SafeInt(cappedLosses);
 
@@ -246,16 +198,6 @@ export function computeExchange(input: ExchangeInput, rngEngine: RandomEngine): 
   };
 }
 
-/**
- * Computes a single combat index from aircraft performance scores.
- * combatIndex = floor((speed + firepower + maneuverability) / 3)
- * Must return 0-100 range.
- *
- * @param speed - Aircraft speed score (SafeInt, 0-100).
- * @param firepower - Aircraft firepower score (SafeInt, 0-100).
- * @param maneuverability - Aircraft maneuverability score (SafeInt, 0-100).
- * @returns Combat index (SafeInt, 0-100).
- */
 export function computeCombatIndex(
   speed: SafeInt,
   firepower: SafeInt,
@@ -263,17 +205,9 @@ export function computeCombatIndex(
 ): SafeInt {
   const sum = SafeInt.add(SafeInt.add(speed, firepower), maneuverability);
   const index = SafeInt.div(sum, SafeInt(3), "floor");
-  // Clamp to [0, 100]
   return SafeInt(Math.min(100, Math.max(0, Number(index))));
 }
 
-/**
- * Computes the defender survival factor in basis points.
- * survivalBp = 9_000 + floor(toughness * 1_000 / 100), clamped to [9_000, 10_000]
- *
- * @param toughness - Defender toughness score (SafeInt, 0-100).
- * @returns Survival factor in basis points (SafeInt, 9_000-10_000).
- */
 export function computeDefenderSurvivalFactorBp(toughness: SafeInt): SafeInt {
   return computeDefenderSurvivalBp(toughness);
 }

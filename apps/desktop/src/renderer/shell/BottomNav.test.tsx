@@ -20,7 +20,6 @@ describe("BottomNav (proof of concept)", () => {
     const labels = within(nav)
       .getAllByRole("button")
       .map((button) => button.textContent);
-    // The sidebar's screens, then the Shipbuilding modal trigger (not a screen).
     expect(labels).toEqual([
       ...CAMPAIGN_NAVIGATION_SECTIONS.flatMap((section) =>
         section.items.map((item) => item.shortLabel),

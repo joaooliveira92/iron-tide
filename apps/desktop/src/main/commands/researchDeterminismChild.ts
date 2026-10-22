@@ -19,22 +19,6 @@ import { toSaveableState } from "../saveHelpers.js";
 import { commitMonthProgram } from "./commitMonth.js";
 import { setResearchPriorityCommandProgram } from "./researchCommands.js";
 
-/**
- * Determinism child for the research-command path (desktop-engine-feature-gate
- * INC-2, AC-5): a plain-Node process (no Electron, no vitest, no env/locale/
- * clock reads) that compiles the production pack, issues a real
- * `SetResearchPriorityCommand`, commits one month through the real
- * `MonthExecutor`, verifies the engine applied the priorities (so a no-op
- * would fail loudly), and prints TWO stable hashes on stdout:
- *
- *   `rawHash`     — the persisted state's envelope+SHA-256 from `SaveStore`
- *   `serialized`  — `sha256Hex(canonicalSerialize(snapshot))`
- *
- * The orchestrator test runs this file twice (spawned processes) and requires
- * byte-identical output — proving the desktop slice adds no ambient
- * determinism leak to an already cross-process-proven authoritative chain.
- */
-
 function fullPriorities(): Record<string, number> {
   const all: Record<string, number> = {};
   for (const field of CANONICAL_RESEARCH_FIELD_IDS)

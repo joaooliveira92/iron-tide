@@ -6,11 +6,9 @@ import { translate } from "../../lib/strings.js";
 export interface HeaderAdvanceMonthProps {
   readonly onAdvance: () => void;
   readonly advancing: boolean;
-  /** Disabled while a blocking interruption (decision/battle/recovery) is open. */
   readonly disabled?: boolean;
 }
 
-/** The single Turn control: resolves the current strategic month. */
 export function HeaderAdvanceMonth({
   onAdvance,
   advancing,

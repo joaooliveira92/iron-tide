@@ -3,16 +3,8 @@ import { RESEARCH_FIELD_PRIORITY_WEIGHTS } from "@bluewave/campaign-engine";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { ResearchScreen } from "./ResearchScreen.js";
-import { initialResearchScreenState, researchLoadSuccess } from "./research-screen-state.js";
+import { researchLoadSuccess } from "./research-screen-state.js";
 import type { ResearchScreenState } from "./research-screen-state.js";
-
-/**
- * Render test for the Research & Technology screen
- * (desktop-engine-feature-gate INC-3, spec Testing → renderer screen test).
- * The hook is mocked so the test asserts PURE rendering: the projection data
- * is actually shown (budget / priorities / progress / discovered), and the
- * submit control is gated by validity — never fabricated success copy.
- */
 
 const fixtureProjection = {
   nationId: "uk",
@@ -33,8 +25,7 @@ const fixtureProjection = {
 };
 
 function makeLoaded(): ResearchScreenState {
-  const base = initialResearchScreenState();
-  return researchLoadSuccess(base, fixtureProjection as never);
+  return researchLoadSuccess(fixtureProjection as never);
 }
 
 const hookMocks = vi.hoisted(() => {
@@ -46,8 +37,6 @@ const hookMocks = vi.hoisted(() => {
   return { stateFn, setFieldWeight, submit, reload, canSubmit };
 });
 
-// `GlassCard` (liquid-glass.tsx) measures its element with ResizeObserver —
-// jsdom doesn't ship it; a no-op shim is enough for a pure render test.
 const ResizeObserverMock = vi.hoisted(
   () =>
     class implements ResizeObserver {
@@ -61,6 +50,7 @@ vi.stubGlobal("ResizeObserver", ResizeObserverMock);
 vi.mock("./hooks/useResearchScreen.js", () => ({
   useResearchScreen: (_sessionId: string) => ({
     state: hookMocks.stateFn(),
+    loadError: null,
     setFieldWeight: hookMocks.setFieldWeight,
     submit: hookMocks.submit,
     reload: hookMocks.reload,
@@ -78,20 +68,15 @@ describe("ResearchScreen", () => {
   it("renders the real projection: budget, priorities, in-progress techs, discovered techs", () => {
     render(<ResearchScreen sessionId="ses-1" />);
 
-    // Budget + honest copy about when it applies.
     expect(screen.getByText("60")).not.toBeNull();
 
-    // Field priorities render with their weight labels.
     expect(screen.getByText("Gunnery")).not.toBeNull();
     expect(screen.getByText("Machinery")).not.toBeNull();
     expect(screen.getByText("Infrastructure")).not.toBeNull();
 
-    // Discovered techs are shown as badges.
     expect(screen.getByText("Basic steam")).not.toBeNull();
-    // `gunnery_rifled` appears as a discovered badge AND an in-progress row.
     expect(screen.getAllByText("Gunnery rifled").length).toBeGreaterThanOrEqual(2);
 
-    // In-progress technology work with invested points + current-project tag.
     expect(screen.getByText("24 pts")).not.toBeNull();
   });
 
@@ -104,7 +89,7 @@ describe("ResearchScreen", () => {
       currentProjectTechId: null,
       fieldPriorities: {},
     };
-    const emptyState = researchLoadSuccess(initialResearchScreenState(), emptyProjection as never);
+    const emptyState = researchLoadSuccess(emptyProjection as never);
     hookMocks.stateFn.mockReturnValue(emptyState);
 
     render(<ResearchScreen sessionId="ses-1" />);

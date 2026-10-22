@@ -1,6 +1,3 @@
-// S-5 08 (#82, spec #73 R10/R11/R13): the month-end base-limit step. Ships beyond the area's limit are flagged and suffer the
-// S-1 consequences only after the month's battles; the flag clears the month after the fleet is back within the limit.
-// EVERY RULESET NUMBER BELOW IS FIXTURE-CLASS: it exercises the mechanics and is never a production value (R11, R14).
 import {
   nationMonthlyMaintenance,
   type CampaignSnapshot,
@@ -67,7 +64,6 @@ const port = (level: number, areaId = BATTLE_AREA, nationId = ATTACKER_NATION): 
   level: SafeInt(level),
 });
 
-/** Peace, GBR with `count` ships in a-1, optional ports. */
 function peace(count: number, ports: PortData[] = [], loc = BATTLE_AREA): CampaignSnapshot {
   const ships = Array.from({ length: count }, (_, i) =>
     makeShip(`g${i + 1}`, "dv-att-a", ATTACKER_NATION, { loc }),
@@ -81,7 +77,6 @@ const gbrShips = (r: { finalSnapshot: CampaignSnapshot }): Ship[] =>
 
 describe("S-5 08: base limits at month end", () => {
   it("flags the ships beyond a small-base area's limit and applies the S-1 crew consequence", () => {
-    // level 1 port -> limit 2; four ships deployed.
     const ships = gbrShips(run(peace(4, [port(1)]), true));
     expect(
       ships.map((s) => [s.id, s.overBase?.maintenanceAdderBp ?? null, Number(s.crewQuality)]),
@@ -105,13 +100,11 @@ describe("S-5 08: base limits at month end", () => {
   });
 
   it("a fleet fights in an over-base area the month it arrives: the battle is identical and ships suffer afterwards", () => {
-    // Default fixture: GBR and FRA each field two armed ships in a-1 at war, so a battle runs this month. No ports -> limit 1.
     const from = makeBattleSnapshot();
     const without = run(from, false);
     const withLimits = run(from, true);
     expect(withLimits.finalSnapshot.wars.battles).toEqual(without.finalSnapshot.wars.battles);
     expect(withLimits.finalSnapshot.wars.battles.some((b) => b.result !== undefined)).toBe(true);
-    // The consequences land on the battle's survivors only after it.
     for (const nationId of [ATTACKER_NATION, DEFENDER_NATION]) {
       const survivors = (r: typeof without) =>
         r.finalSnapshot.nations.get(nationId)!.fleets.flatMap((f) => f.ships);
@@ -173,7 +166,6 @@ describe("S-5 08: base limits at month end", () => {
       Number(nationMonthlyMaintenance(plain, false)),
     );
 
-    // The fleet returns: the flagged ships move to a-2 (limit 10). The next month check clears flags and keeps ramp recovery.
     const nations = new Map(first.finalSnapshot.nations);
     const gbr = nations.get(ATTACKER_NATION)!;
     nations.set(ATTACKER_NATION, {
@@ -191,7 +183,6 @@ describe("S-5 08: base limits at month end", () => {
     const second = run(run(peace(3, [port(1)]), true).finalSnapshot, true);
     const g3 = gbrShips(second).find((s) => s.id === "g3")!;
     expect(g3.overBase).toBeDefined();
-    // 100 - 25 at month 1, +5 ramp, -25 at month 2.
     expect(Number(g3.crewQuality)).toBe(55);
   });
 

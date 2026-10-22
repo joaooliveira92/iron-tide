@@ -4,7 +4,6 @@ import { economyOutlook } from "../src/economyOutlook.js";
 import type { CampaignSnapshot, ConstructionProject, NationState } from "../src/state.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
-// Economy spec #138 slice 6: the outlook is the one place every screen reads the month ahead from.
 function ship(hitPoints: number) {
   return {
     id: `s-${String(hitPoints)}`,
@@ -194,8 +193,6 @@ describe("economyOutlook", () => {
       ),
       "n",
     )!;
-    // a and b have no package schedule, so they absorb their remaining work (40 + 2); f is accelerated, so its slipway
-    // throughput is floor(10 x 11_000 / 10_000) = 11; c, d and e are excluded.
     expect(o.plannedConstruction).toBe(53);
     expect(o.monthEndTreasury).toBe(500 + 41 - 53);
   });
@@ -213,10 +210,8 @@ describe("economyOutlook", () => {
       ),
       "n",
     )!;
-    // revenue floor(180 x 2000 / 120000) = 3; maintenance 2; obligations 2; net -1; treasury 1 lasts 1 month.
     expect(o).toMatchObject({ revenue: 3, maintenance: 2, obligations: 2, projectedNet: -1 });
     expect(o.runwayMonths).toBe(1);
-    // funds 1 + 3 = 4: maintenance 2 and obligations 2 are paid; nothing left, no shortfall yet.
     expect(o.shortfall).toBe(0);
     expect(o.monthEndTreasury).toBe(0);
   });

@@ -56,8 +56,6 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const GENERATED_ARTIFACT = resolve(__dirname, "../../../../..", "content", "generated", "1880");
 
-// A fake `NativeDialog` (the copy prompt) merged over the real graph. It answers
-// from these test-scoped variables, so the real electron dialog is never touched.
 let chooseCopyDirectoryAnswer: string | null = null;
 let chooseCopyDirectoryCalls = 0;
 
@@ -95,7 +93,6 @@ const inspectDivisionScreen = (sessionId: string) =>
 const submitDivisionCommand = (payload: unknown) =>
   runProgram<DivisionCommandOutcome>(submitDivisionCommandProgram, payload);
 
-/** Fixture sidecar write, mirroring the `ProjectStore` implementation. */
 function writeSessionMetadata(saveDir: string, metadata: unknown): void {
   writeFileSync(
     join(saveDir, SESSION_METADATA_FILENAME),
@@ -191,7 +188,6 @@ describe("session commands (save / close / copy)", () => {
 
     it("notices a package that differs from the live state within the SAME turn, and fixes it once", async () => {
       const { saveDir, state } = register("s4");
-      // Same turn, different content: the package was altered after the session opened.
       const altered = structuredClone(state.snapshot);
       const uk = altered.nations.get("uk")!;
       altered.nations.set("uk", {
@@ -213,7 +209,6 @@ describe("session commands (save / close / copy)", () => {
         value: { revision: 0 },
       });
       expect(savesIn(saveDir)).toBe(3);
-      // Now the package matches the live state again: further clicks write nothing.
       await saveCampaign("s4");
       expect(savesIn(saveDir)).toBe(3);
     });
@@ -238,7 +233,6 @@ describe("session commands (save / close / copy)", () => {
   describe("closeCampaign", () => {
     it("removes the session and drops its queued, uncommitted commands", async () => {
       register("c1");
-      // Queue a real command so there is something to discard.
       const view = await inspectDivisionScreen("c1");
       if (view.outcome !== "success") throw new Error("inspect failed");
       expect(view.value.divisions.length).toBeGreaterThan(0);

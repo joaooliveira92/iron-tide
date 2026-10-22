@@ -1,4 +1,3 @@
-// AC-22 (INC-5): Inventory allocation — deterministic §35 priority.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -26,7 +25,6 @@ describe("AC-22: inventory allocation priority", () => {
     ];
     const available = new Map<string, SafeInt>([["model_a", SafeInt(15)]]);
     const result = allocateInventory(demands, available);
-    // Battle gets 10, expansion gets 5, training gets 0
     expect(Number(result.allocated.get("model_a:sq_battle") ?? SafeInt.ZERO)).toBe(10);
     expect(Number(result.allocated.get("model_a:sq_expansion") ?? SafeInt.ZERO)).toBe(5);
     expect(result.allocated.has("model_a:sq_training")).toBe(false);
@@ -39,7 +37,6 @@ describe("AC-22: inventory allocation priority", () => {
     ];
     const available = new Map<string, SafeInt>([["model_a", SafeInt(3)]]);
     const result = allocateInventory(demands, available);
-    // sq_a gets 3 (first due to squadron sort), sq_b gets 0
     expect(Number(result.allocated.get("model_a:sq_a") ?? SafeInt.ZERO)).toBe(3);
     expect(result.allocated.has("model_a:sq_b")).toBe(false);
   });

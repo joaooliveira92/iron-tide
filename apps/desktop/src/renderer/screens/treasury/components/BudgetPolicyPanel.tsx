@@ -10,12 +10,6 @@ export interface BudgetPolicyPanelProps {
   readonly sessionId: string;
 }
 
-/**
- * Player budget allocation (F-12, ADR-0060): the naval appropriation rate and a
- * standing monthly research budget. Bounds come from the engine; the engine
- * re-validates on submit and applies the change when the month is advanced.
- * The command lifecycle lives in `useBudgetPolicyPanel`; this only renders.
- */
 export function BudgetPolicyPanel({ sessionId }: BudgetPolicyPanelProps) {
   const controller = useBudgetPolicyPanel(sessionId);
   const format = usePresentationFormat();

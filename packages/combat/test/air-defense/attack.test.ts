@@ -1,6 +1,3 @@
-// AC-4 groundwork (§4): AirDefenseAttack construction, strict/fail-closed validation,
-// safe-int rejection, bearing 0..360, unknown-field rejection.
-
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, SafeInt, isBluewaveError } from "@bluewave/contracts";
 import {
@@ -274,8 +271,6 @@ describe("AirDefenseAttack", () => {
   });
 });
 
-// Characterization of the default-merging behavior that replaced the previous
-// Zod `.partial().safeParse(params)` pre-validation pass.
 describe("AirDefenseAttack default-merging parity", () => {
   const required = {
     attackId: "atk_merge",

@@ -6,8 +6,6 @@ import {
   decodeApprovedDiffs,
 } from "@bluewave/ship-design";
 import { describe, expect, it } from "vite-plus/test";
-// The authoritative equivalence harness, unchanged by 11c: the codemod adds no production
-// wiring, so staging content must leave every equivalence total exactly where 11b left it.
 import { runEquivalence } from "../../ship-design/test/helpers/equivalenceRun.js";
 
 const report = runEquivalence();

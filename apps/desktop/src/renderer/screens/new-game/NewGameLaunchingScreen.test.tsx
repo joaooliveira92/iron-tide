@@ -43,7 +43,6 @@ describe("NewGameLaunchingScreen", () => {
       expect(screen.getByText(CHECKLIST_LINES[revealed]!)).toBeTruthy();
     }
 
-    // Holds on the final line — advancing further reveals nothing new.
     act(() => {
       vi.advanceTimersByTime(CHECKLIST_REVEAL_INTERVAL_MS * 3);
     });

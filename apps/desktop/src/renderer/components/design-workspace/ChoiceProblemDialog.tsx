@@ -14,10 +14,6 @@ import { Badge } from "../ui/badge.js";
 import type { ChoiceProblem } from "./useChoiceCheck.js";
 import { SEVERITY_STYLE } from "./validation/severity.js";
 
-/**
- * Explains, right after a choice, why it stops the design working: what failed, why, what it would mean in play,
- * and how to put it right. The player may undo the choice or keep it and fix it another way.
- */
 export function ChoiceProblemDialog({
   problem,
   open,

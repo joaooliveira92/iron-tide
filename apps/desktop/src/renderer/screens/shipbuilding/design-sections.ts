@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { COMPONENT_CATEGORIES, type ComponentCategory } from "@bluewave/ship-design";
 
-/** The design map's sections, in navigation order: navigate by ship system. */
 export const DESIGN_SECTIONS = [
   "overview",
   "hull",
@@ -31,7 +30,6 @@ export interface DesignSection {
   readonly id: DesignSectionId;
   readonly label: string;
   readonly icon: LucideIcon;
-  /** Sibling concepts inside the section (2 to 4); the inspector shows them as its only tab row. */
   readonly tabs: readonly LocalTab[];
 }
 
@@ -107,19 +105,13 @@ export const SECTIONS: { readonly [K in DesignSectionId]: DesignSection & { read
   },
 };
 
-/** Sections in display order. */
 export const SECTION_ORDER: readonly DesignSection[] = DESIGN_SECTIONS.map((id) => SECTIONS[id]);
 
-/** Where the inspector is: a section and one of its local tabs. */
 export interface InspectorPlace {
   readonly section: DesignSectionId;
   readonly tab: string;
 }
 
-/**
- * The inspector tab that holds each kind of fitting: a fitting is listed, added and judged there. Exhaustive over
- * the domain's categories, so every fitting a design can carry stays reachable from exactly one tab.
- */
 export const CATEGORY_PLACE: { readonly [K in ComponentCategory]: InspectorPlace } = {
   HULL_FORM: { section: "hull", tab: "dimensions" },
   MATERIAL: { section: "hull", tab: "dimensions" },
@@ -152,7 +144,6 @@ export const CATEGORY_PLACE: { readonly [K in ComponentCategory]: InspectorPlace
   SPECIAL_EQUIPMENT: { section: "systems", tab: "accommodation" },
 };
 
-/** The fitting categories a tab holds; empty for tabs that hold no fittings. */
 export function categoriesOf(place: InspectorPlace): ReadonlySet<ComponentCategory> {
   return new Set(
     COMPONENT_CATEGORIES.filter(
@@ -161,7 +152,6 @@ export function categoriesOf(place: InspectorPlace): ReadonlySet<ComponentCatego
   );
 }
 
-/** The section's first local tab: where selecting a section in the map lands. */
 export function placeOf(section: DesignSectionId, tab?: string): InspectorPlace {
   const tabs = SECTIONS[section].tabs;
   return { section, tab: tabs.some((t) => t.id === tab) ? tab! : tabs[0]!.id };

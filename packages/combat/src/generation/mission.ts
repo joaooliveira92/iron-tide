@@ -4,7 +4,6 @@ import {
   BATTLE_MISSION_PRIORITY_INVALID,
 } from "./reasonCodes.js";
 
-// DESIGN-37 §2 canonical mission types.
 export const BATTLE_MISSION_TYPES = [
   "FLEET_BATTLE",
   "CRUISER_BATTLE",
@@ -19,7 +18,6 @@ export const BATTLE_MISSION_TYPES = [
 
 export type BattleMissionType = (typeof BATTLE_MISSION_TYPES)[number];
 
-// DESIGN-37 §3 shipped priorities (lower number first).
 export const MISSION_PRIORITIES: Record<BattleMissionType, number> = {
   INVASION: 1,
   BLOCKADE_BREAKOUT: 2,
@@ -32,15 +30,11 @@ export const MISSION_PRIORITIES: Record<BattleMissionType, number> = {
   CRUISER_BATTLE: 9,
 };
 
-// ADR B-1-3: versioned reachable subset. Only FLEET_BATTLE and CRUISER_BATTLE
-// are reachable from M1 campaign state; the rest are registered but prove
-// unreachable (successful empty records).
 export const REACHABLE_MISSION_SUBSET_V1: ReadonlySet<BattleMissionType> = new Set([
   "FLEET_BATTLE",
   "CRUISER_BATTLE",
 ]);
 
-// DESIGN-37 §2 minimum eligible combat strength.
 export const FLEET_BATTLE_MIN_STRENGTH = 300;
 export const CRUISER_BATTLE_MIN_STRENGTH = 150;
 

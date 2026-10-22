@@ -1,7 +1,3 @@
-// INC-4 / SB3-R9: cross-process determinism child for engine-side acceleration. Builds a minimal campaign with one
-// accelerated project whose demand puts its construction pool far above the capacity-pressure threshold, runs one
-// month with a keyed acceleration-pressure decision, and prints the snapshot hash, the random-decision ledger hash
-// and the decisions themselves as JSON for byte-for-byte comparison across two clean processes.
 import type {
   CampaignSnapshot,
   CompiledDesignVersion,
@@ -114,9 +110,6 @@ function snapshot(): CampaignSnapshot {
     startYear: 1880,
     startMonth: 1,
     strategicWeather: [],
-    // GBR-only fixture: the cross-process golden hashes intentionally do NOT
-    // depend on production roster membership (ADR-0007), so promoting a nation
-    // to the production playable roster must leave `golden/hashes.json` unchanged.
     slots: [{ nationId: "GBR", type: "playable" }],
     world: { areas: [], routes: [], ports: [] },
     nations: new Map([["GBR", nation()]]),

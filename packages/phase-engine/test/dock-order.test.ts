@@ -1,4 +1,3 @@
-// DESIGN-16 section 4, ADR-0135: the national dock ceiling gates domestic construction orders.
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
@@ -9,7 +8,6 @@ import { productionShipBuildingContent } from "./helpers/contentFiles.js";
 type Design = CampaignSnapshot["designs"] extends Map<string, infer D> ? D : never;
 
 const MONTH = { year: 1880, month: 1 };
-// The content with the authored naval profiles, so the national dock ceiling (ADR-0135) can be exercised.
 const profileContent = productionShipBuildingContent({ navalProfiles: true });
 
 const ukDesign = (displacementKg: number): Design => ({

@@ -3,7 +3,6 @@ import { enemyDeclineDrawDeclines, enemyDeclinePredicateHolds } from "../../src/
 
 describe("enemyDeclinePredicateHolds (T-1 07)", () => {
   it("compares enemy/player in basis points exactly, with the stated strictness", () => {
-    // 320 / 800 = exactly 4000 bp.
     expect(enemyDeclinePredicateHolds("LESS_THAN", 4_000, 320, 800)).toBe(false);
     expect(enemyDeclinePredicateHolds("LESS_OR_EQUAL", 4_000, 320, 800)).toBe(true);
     expect(enemyDeclinePredicateHolds("LESS_THAN", 4_000, 319, 800)).toBe(true);

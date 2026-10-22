@@ -57,13 +57,11 @@ describe("fleet assessment", () => {
   });
   it("computes deficits from the national shares and chooses the first build-order role with a deficit", () => {
     const emptyFleet: FleetShipView[] = [];
-    // Only the B share of the target is met; CL is still short.
     const withOneCL: FleetShipView[] = [{ shipType: "CL", status: "ACTIVE" }];
     const ukDefEmpty = computeFleetDeficits(uk, assessFleet(emptyFleet));
     const frDefEmpty = computeFleetDeficits(france, assessFleet(emptyFleet));
-    expect(chooseProcurementRole(uk, ukDefEmpty)).toBe("CL"); // UK build order leads with cruisers
-    expect(chooseProcurementRole(france, frDefEmpty)).toBe("DD"); // France leads with torpedo craft
-    // A met type drops out; UK still finds a deficit elsewhere.
+    expect(chooseProcurementRole(uk, ukDefEmpty)).toBe("CL");
+    expect(chooseProcurementRole(france, frDefEmpty)).toBe("DD");
     const ukDefSome = computeFleetDeficits(uk, assessFleet(withOneCL));
     expect(chooseProcurementRole(uk, ukDefSome)).not.toBeNull();
   });
@@ -108,7 +106,6 @@ describe("procurement decision", () => {
   });
 });
 
-// Nation × seeds × budget bands × 24 months. The two nations must build recognisably different fleets.
 describe("AI procurement simulation (2 nations × 3 seeds × 3 budgets × 24 months)", () => {
   const SEEDS = ["alpha", "bravo", "charlie"] as const;
   const BUDGETS = { low: 30, standard: 90, high: 400 } as const;
@@ -120,7 +117,7 @@ describe("AI procurement simulation (2 nations × 3 seeds × 3 budgets × 24 mon
     readonly decisions: number;
     readonly declines: number;
     readonly finalFleet: Readonly<Record<string, number>>;
-    readonly timeline: string; // a compact fingerprint of orders over time, for determinism comparison
+    readonly timeline: string;
   }
 
   function simulate(profile: typeof uk, seed: string, budget: number): SimResult {
@@ -147,7 +144,6 @@ describe("AI procurement simulation (2 nations × 3 seeds × 3 budgets × 24 mon
       if (decision.selectedDraft !== null && decision.role !== null) {
         orders[decision.role] = (orders[decision.role] ?? 0) + 1;
         totalCost += decision.costUnits ?? 0;
-        // The timeline records the role AND the chosen design, so seed-level variation is observable.
         timeline += `${decision.role}:${(decision.selectedDesignId ?? "").slice(-6)}|`;
         fleet.push({ type: decision.role, status: "BUILDING", monthsLeft: 3 });
       } else {
@@ -166,7 +162,6 @@ describe("AI procurement simulation (2 nations × 3 seeds × 3 budgets × 24 mon
         const r = simulate(profile, seed, BUDGETS.low);
         expect(r.decisions).toBe(MONTHS);
         expect(r.orders).toBeDefined();
-        // The low budget cannot buy capital ships, so there are declines with reasons.
         expect(r.declines).toBeGreaterThan(0);
       }
   });
@@ -192,7 +187,6 @@ describe("AI procurement simulation (2 nations × 3 seeds × 3 budgets × 24 mon
     const frRun = simulate(france, "alpha", BUDGETS.high);
     const dd = (r: SimResult) => r.orders.DD ?? 0;
     const big = (r: SimResult) => (r.orders.B ?? 0) + (r.orders.CA ?? 0) + (r.orders.CL ?? 0);
-    // France leans torpedo craft; the UK leans the battle line and cruisers.
     expect(dd(frRun)).toBeGreaterThan(dd(ukRun));
     expect(big(ukRun)).toBeGreaterThan(big(frRun));
   });

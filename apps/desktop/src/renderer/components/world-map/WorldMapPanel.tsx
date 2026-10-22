@@ -8,8 +8,6 @@ import { fixtureAreaId } from "../../content/presentationContent.js";
 import { useWorldMapController } from "./useWorldMapController.js";
 import { cn } from "../../lib/utils.js";
 
-// The map (Canvas renderer + 2 MB coastline) is the heaviest thing on the home
-// screen, so it loads lazily and never delays the rest of Overview.
 const WorldMapChart = lazy(() =>
   import("./WorldMapChart.js").then((module) => ({
     default: module.WorldMapChart,
@@ -28,16 +26,10 @@ export interface WorldMapPanelProps {
   readonly sessionId: string;
   readonly title?: string;
   readonly defaultSize?: MapPanelSize;
-  /** A campaign area id to select on the map (e.g. the selected division's area). */
   readonly focusAreaId?: string | null;
   readonly testId?: string;
 }
 
-/**
- * The live world map as an embedded panel: Overview's primary panel (spec M-1)
- * and Fleet's position view. Sized to taste; F1 still opens the same map
- * in a larger side panel from any screen.
- */
 export function WorldMapPanel({
   sessionId,
   title = "World map",
@@ -50,7 +42,6 @@ export function WorldMapPanel({
   const active = MAP_PANEL_SIZES.find((option) => option.id === size) ?? MAP_PANEL_SIZES[0];
   const { onSelect } = map;
 
-  // Keep the map's selection in step with the host screen (e.g. the chosen division).
   useEffect(() => {
     if (focusAreaId === null) return;
     const fixture = fixtureAreaId(focusAreaId);

@@ -174,7 +174,6 @@ describe("bunker volume", () => {
     ).bunkerVolumeLitre;
   it("is fuel mass times litres per kg, in bp", () => {
     expect(vol(175_000, 10_000)).toBe(175_000);
-    // Welsh coal: 40 ft3 per long ton, 11_148 bp (1.1148 L/kg), so 60 t of coal needs about 66.9 m3.
     expect(vol(60_000, 11_148)).toBe(66_888);
   });
   it("rounds up, so a fraction of a litre is never lost", () => {

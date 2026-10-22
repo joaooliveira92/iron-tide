@@ -34,7 +34,6 @@ describe("AC-5 formation stations", () => {
       leadPosition: lead,
       leadHeading: 0,
     });
-    // trailing by 2 * column interval, heading east (course 0)
     expect(station.heading).toBe(0);
     expect(station.position[0]).toBe(-2 * LINE_AHEAD_COLUMN_INTERVAL_UM);
     expect(station.position[1]).toBe(0);
@@ -48,7 +47,6 @@ describe("AC-5 formation stations", () => {
       leadHeading: 0,
     });
     expect(station.position[0]).toBe(0);
-    // abeam (port/starboard) offset perpendicular to heading
     expect(Math.abs(station.position[1])).toBeGreaterThan(0);
   });
 
@@ -66,7 +64,7 @@ describe("AC-5 formation stations", () => {
   });
 
   it("reports on-station within tolerance", () => {
-    const s = state({ position: [10_000, 0] }); // 10 mm drift
+    const s = state({ position: [10_000, 0] });
     const desired = {
       position: [0, 0] as [number, number],
       heading: 0,

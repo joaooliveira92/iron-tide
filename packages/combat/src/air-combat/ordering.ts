@@ -1,5 +1,3 @@
-// D-3 M4 Aviation: CAP & Strikes — AC-18 canonical ordering per DESIGN-43 §39 + DESIGN-38 §29.
-// Parallel to aircraft/ordering.ts pattern.
 import type { AirCombatRecord } from "./records.js";
 
 export function compareStrings(a: string, b: string): number {
@@ -9,7 +7,6 @@ export function compareStrings(a: string, b: string): number {
   return a.length - b.length;
 }
 
-// DESIGN-43 §39 + DESIGN-38 §29: battles → squadrons → engagements by minute+step+attacker+defender → losses by squadron+aircraft+timestamp
 export function compareAirCombatRecords(a: AirCombatRecord, b: AirCombatRecord): number {
   const byMinute = Number(a.minute) - Number(b.minute);
   if (byMinute !== 0) return byMinute;

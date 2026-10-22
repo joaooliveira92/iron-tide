@@ -1,10 +1,5 @@
 import { Button } from "../../../components/ui/button.js";
 
-/**
- * The page footer: Back, plus an optional line saying what the page is and where
- * the global continue action leads. The continue control itself is the shell's
- * single primary action, so there is exactly one.
- */
 export function BriefingActions({
   backLabel,
   canGoBack,

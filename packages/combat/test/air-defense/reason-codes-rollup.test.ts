@@ -1,5 +1,3 @@
-// AC-16 (INC-5): §28 reason-code set-equality — exactly 20 shipped + 6 SAM deferred markers
-// + 1 boundary code. Verbatim names and order pinned to DESIGN-45 §28 lines 459-478.
 import { describe, expect, it } from "vite-plus/test";
 import {
   AIR_DEFENSE_REASON_CODE_SET,
@@ -16,7 +14,6 @@ import {
   AIR_ATTACK_ABORTED,
 } from "../../src/air-defense/index.js";
 
-// DESIGN-45 §28 lines 459-478, verbatim and in document order.
 const SHIPPED_SPEC_CODES = [
   "INVALID_AIR_DEFENSE_STATE",
   "INVALID_AIR_DEFENSE_SYSTEM_DEFINITION",
@@ -40,7 +37,6 @@ const SHIPPED_SPEC_CODES = [
   "AIR_DEFENSE_INVARIANT_FAILED",
 ] as const;
 
-// Ticket 05 deferred SAM markers, verbatim.
 const DEFERRED_SPEC_CODES = [
   "HEAVY_SAM_ENGAGEMENT_DEFERRED",
   "HEAVY_SAM_ELIGIBILITY_DEFERRED",
@@ -50,7 +46,6 @@ const DEFERRED_SPEC_CODES = [
   "LIGHT_SAM_ELIGIBILITY_DEFERRED",
 ] as const;
 
-// Codes shipped before INC-5 (13 in reasonCodes.ts + 2 boundary codes in constants.ts).
 const PRIOR_SHIPPED_CODES = [
   "AIR_DEFENSE_TARGET_INELIGIBLE",
   "AIR_DEFENSE_CHANNEL_UNAVAILABLE",

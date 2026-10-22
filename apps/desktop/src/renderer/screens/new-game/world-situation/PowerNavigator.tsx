@@ -26,7 +26,6 @@ const DENSITY_BY_TIER: Readonly<Record<RelevanceTier, CardDensity>> = {
   distant: "dense",
 };
 
-/** Tiers whose list starts collapsed behind a disclosure. */
 const COLLAPSIBLE_TIERS: ReadonlySet<RelevanceTier> = new Set<RelevanceTier>(["distant"]);
 
 export interface PowerSummaryCardProps {
@@ -39,7 +38,6 @@ export interface PowerSummaryCardProps {
   readonly buttonRef: (element: HTMLButtonElement | null) => void;
 }
 
-/** One power in the navigator; weight follows the tier it sits in. */
 export function PowerSummaryCard({
   power,
   density,
@@ -100,15 +98,9 @@ export interface PowerNavigatorProps {
   readonly groups: readonly PowerGroupModel[];
   readonly selectedId: string | null;
   readonly onSelect: (nationId: string) => void;
-  /** Rendered directly beneath the selected power's card. */
   readonly renderDossier: (power: PowerBrief) => ReactNode;
 }
 
-/**
- * The prioritised list of foreign powers. Selection is one roving tab stop:
- * arrows, Home and End move the selection (and focus) through the powers that
- * are on screen. The lowest tier folds away until asked for.
- */
 export function PowerNavigator({
   groups,
   selectedId,

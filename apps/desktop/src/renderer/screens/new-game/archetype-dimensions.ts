@@ -37,7 +37,6 @@ const DESCRIPTORS: Readonly<Record<ArchetypeDimension, ArchetypeDimensionDescrip
   },
 };
 
-/** Every dimension the engine knows about, in the engine's canonical order. */
 export const ARCHETYPE_DIMENSION_DESCRIPTORS: readonly ArchetypeDimensionDescriptor[] =
   ARCHETYPE_DIMENSIONS.map(archetypeDimensionDescriptor);
 

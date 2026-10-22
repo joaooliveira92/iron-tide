@@ -1,4 +1,3 @@
-// AC-24 (INC-8): Reason-code set-equality vs DESIGN-43 §40.
 import { describe, expect, it } from "vite-plus/test";
 import {
   AIRCRAFT_REASON_CODES,

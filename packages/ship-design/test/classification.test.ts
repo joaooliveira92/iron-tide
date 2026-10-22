@@ -41,10 +41,10 @@ describe("DESIGN-22 boundaries (strict versus inclusive)", () => {
     expect(pass("DD", facts({}))).toBe(true);
     expect(pass("DD", facts({ displacementKg: 1_999_999 }))).toBe(true);
     expect(pass("DD", facts({ displacementKg: 2_000_000 }))).toBe(false);
-    expect(pass("DD", facts({ speedUms: 9_774_436 }))).toBe(false); // exactly 19 kn
+    expect(pass("DD", facts({ speedUms: 9_774_436 }))).toBe(false);
     expect(pass("DD", facts({ speedUms: 9_774_437 }))).toBe(true);
     expect(pass("DD", facts({ torpedoTubes: 0 }))).toBe(false);
-    expect(pass("DD", facts({ anyQualifyingArmourUm: 50_799 }))).toBe(true); // splinter plating
+    expect(pass("DD", facts({ anyQualifyingArmourUm: 50_799 }))).toBe(true);
     expect(pass("DD", facts({ anyQualifyingArmourUm: 50_800 }))).toBe(false);
   });
   it("CL: 2,000-8,000 t, over 16 kn, guns up to and including 6 inches", () => {
@@ -109,7 +109,6 @@ describe("DESIGN-22 boundaries (strict versus inclusive)", () => {
     expect(pass("KE", { ...ke, beltUm: 2 * UM_PER_INCH + 1 })).toBe(false);
     expect(pass("KE", { ...ke, maxGunUm: 6 * UM_PER_INCH + 1 })).toBe(false);
     expect(pass("KE", { ...ke, torpedoTubes: 1 })).toBe(false);
-    // KE reads the largest gun of ANY role, so a big secondary disqualifies it (ADR-0088).
     expect(pass("KE", { ...ke, maxGunUm: 0, maxMainGunUm: 0 })).toBe(true);
     expect(pass("KE", { ...ke, maxGunUm: 0, maxMainGunUm: 8 * UM_PER_INCH })).toBe(true);
   });
@@ -119,19 +118,16 @@ describe("DESIGN-22 boundaries (strict versus inclusive)", () => {
     expect(pass("AMC", { ...amc, displacementKg: 1_700_000 })).toBe(false);
     expect(pass("AMC", { ...amc, merchantHull: false })).toBe(false);
     expect(pass("AMC", { ...amc, anyQualifyingArmourUm: 2 * UM_PER_INCH })).toBe(false);
-    // AMC reads the largest gun of any role too.
     expect(pass("AMC", { ...amc, maxGunUm: 6 * UM_PER_INCH })).toBe(true);
     expect(pass("AMC", { ...amc, maxGunUm: 6 * UM_PER_INCH + 1 })).toBe(false);
   });
   it("fills the manual's 2000 t gap: exactly 2000 t is naturally a light cruiser", () => {
-    // The manual leaves 2000 t in neither DD (< 2000) nor CL (> 2000); DESIGN-22 §9 makes CL inclusive.
     const twoThousand = facts({ displacementKg: 2_000_000 });
     expect(pass("DD", twoThousand)).toBe(false);
     expect(pass("CL", twoThousand)).toBe(true);
     expect(naturalClass(twoThousand, R)).toBe("CL");
   });
   it("keeps the locked types unclassifiable: a battlecruiser-like design is a BB, never a BC", () => {
-    // BC/CV/CVL/AV/SS/MTB/TR have no natural-classification predicate in the EARLY band (ADR-0088 §4).
     const battlecruiserLike = facts({
       displacementKg: 20_000_000,
       speedUms: 26 * UM_PER_KNOT,
@@ -343,7 +339,6 @@ describe("classCode", () => {
     expect(
       classCode("BB", [gun(305_000, 2), gun(305_000, 2), gun(305_000, 2), gun(305_000, 2)]),
     ).toBe("BB4X2");
-    // A mixed battery: the largest calibre sets the barrels; every main mount counts.
     expect(classCode("CA", [gun(203_000, 1), gun(152_000, 2), gun(203_000, 2)])).toBe("CA3X2");
   });
   it("defaults to one barrel and is deterministic", () => {

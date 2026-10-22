@@ -1,7 +1,6 @@
 import { NON_SCALING, STROKE } from "./drafting.js";
 import { CARD_FONT, PAD_X, SCALE_Y, SECTION_W, type SectionLayout } from "./section-drawing.js";
 
-/** The card's station scale: tick marks on the documented step, the drawn extent of the section, and its ends. */
 export function SectionScale({ layout }: { readonly layout: SectionLayout }) {
   return (
     <>

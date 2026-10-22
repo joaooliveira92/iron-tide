@@ -7,22 +7,14 @@ import type { PresetDefinition } from "../../rules-of-the-naval-age-presets.js";
 export interface PresetCardProps {
   readonly preset: PresetDefinition;
   readonly palette: CardPalette;
-  /** Whether this preset's bundle is the one currently applied to the draft. */
   readonly applied: boolean;
   readonly listboxId: string;
 }
 
-/** DOM id of a preset's option element; the listbox points `aria-activedescendant` at it. */
 export function presetOptionId(listboxId: string, presetId: string): string {
   return `${listboxId}-option-${presetId}`;
 }
 
-/**
- * One preset card's *content*. The deck owns position, depth and drag physics;
- * this only paints a single card, so it fills whatever box the deck gives it.
- * `aria-selected` marks the applied preset (what a commit changes), while the
- * listbox's `aria-activedescendant` marks the focused one (what is previewed).
- */
 export const PresetCard = memo(function PresetCard({
   preset,
   palette,
@@ -37,7 +29,6 @@ export const PresetCard = memo(function PresetCard({
       aria-label={preset.name}
       aria-selected={applied}
       style={{
-        // Cover gradient is decorative data: only visible behind missing artwork.
         background: palette.background,
         borderColor: applied ? "var(--color-admiralty-accent)" : palette.border,
       }}

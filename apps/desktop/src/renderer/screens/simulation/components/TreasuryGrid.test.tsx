@@ -4,7 +4,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { TreasuryGrid } from "./TreasuryGrid.js";
 
-/** The month report's four treasury cells, with costs shown as negative spend. */
 const report: MonthReport = {
   month: { month: 2, year: 1880 },
   openingTreasury: 1000,

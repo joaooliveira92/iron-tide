@@ -27,7 +27,6 @@ describe("integerRoot", () => {
 
 describe("powRational", () => {
   it("computes displacement^(2/3) in fixed point", () => {
-    // 705 t scaled by 1e6 each side: (705e6)^(2/3) = 705^(2/3) * 1e4 ≈ 79.2 * 1e4
     const v = powRational(705_000_000n, 2, 3);
     expect(Number(v) / 1e4).toBeGreaterThan(79.0);
     expect(Number(v) / 1e4).toBeLessThan(79.5);

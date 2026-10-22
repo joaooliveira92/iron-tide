@@ -5,7 +5,6 @@ import { buildAreaTree, type AreaTreeMode, type AreaTreeRow } from "./area-tree.
 
 export interface AreaTreePanelProps {
   readonly rows: readonly AreaTreeRow[];
-  /** Called with the clicked row; the host selects it on the map and brings it into view. */
   readonly onSelectArea: (row: AreaTreeRow) => void;
   readonly className?: string;
 }
@@ -20,10 +19,6 @@ function rowDetail(row: AreaTreeRow, mode: AreaTreeMode): string {
   return row.owner ?? "Unclaimed";
 }
 
-/**
- * Areas grouped under expandable regions with a Ships / Possessions lens (CC-4). Self-contained:
- * the host supplies rows (see `campaignTreeRows`) and decides what a selection does.
- */
 export function AreaTreePanel({ rows, onSelectArea, className }: AreaTreePanelProps) {
   const [mode, setMode] = useState<AreaTreeMode>("ships");
   const [query, setQuery] = useState("");

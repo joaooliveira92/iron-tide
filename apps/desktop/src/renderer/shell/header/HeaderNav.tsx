@@ -5,7 +5,6 @@ import { ButtonGroup } from "../../components/ui/button-group.js";
 import { translate } from "../../lib/strings.js";
 import { NO_DRAG } from "./drag-region.js";
 
-/** A header navigation control. The button is always visible, but may be disabled. */
 export interface NavAction {
   readonly disabled: boolean;
   readonly onTrigger: () => void;

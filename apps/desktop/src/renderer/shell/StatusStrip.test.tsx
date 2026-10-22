@@ -13,7 +13,6 @@ import { buildTrend, type TrendReport } from "./status-strip-trend.js";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 import { createPresentationFormat } from "../lib/presentation-format/index.js";
 
-/** The default presentation (en-US, Naval Credits) the strip's figures render under. */
 const FORMAT = createPresentationFormat({
   locale: "en-US",
   numberScale: "full",
@@ -79,7 +78,6 @@ async function renderStrip(
       </PreferencesProvider>
     </BridgeProvider>,
   );
-  // Flush the provider's async read so its state update lands inside `act`.
   await act(async () => {});
   return result;
 }
@@ -273,7 +271,6 @@ describe("StatusStripView", () => {
       act(() => {
         label.blur();
       });
-      // A pinned card ignores hover-out and blur.
       await act(async () => {
         await new Promise((resolve) => setTimeout(resolve, 250));
       });
@@ -437,7 +434,6 @@ describe("StatusStripView", () => {
       const delta = outlook.querySelector("[data-trend-delta]");
       expect(delta?.getAttribute("data-trend-delta")).toBe("down");
       expect(delta?.textContent).toContain("-20 NC");
-      // The direction is spelled out for screen readers, not left to the arrow or its colour.
       expect(delta?.textContent).toMatch(/down on Feb 1880/);
     });
 

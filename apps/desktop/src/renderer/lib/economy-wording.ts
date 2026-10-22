@@ -2,7 +2,6 @@ import type { EconomyStatus, ResearchUnfundedReason } from "@bluewave/campaign-e
 
 import { formatCount } from "./presentation-format/index.js";
 
-/** The one label for a treasury status band; the Treasury screen and the status strip both read it. */
 export function economyStatusLabel(status: EconomyStatus): string {
   switch (status) {
     case "healthy":
@@ -16,10 +15,6 @@ export function economyStatusLabel(status: EconomyStatus): string {
   }
 }
 
-/**
- * Why a standing research budget is not (fully) paid, or why there is none to pay — always stated, never a silent zero.
- * Returns null when nothing needs saying.
- */
 export function researchNote(breakdown: {
   readonly researchCap: number;
   readonly researchRequested: number;

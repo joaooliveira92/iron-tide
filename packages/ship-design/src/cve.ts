@@ -2,7 +2,6 @@ import type { CompiledDesign, DesignDraft } from "./compile.js";
 import { evaluate, type LookupTable } from "./formula/eval.js";
 import { parseFormula } from "./formula/parse.js";
 
-/** Every CVE value and surface must carry this label; it is a development metric, never a combat result (spec §21). */
 export const CVE_LABEL = "DEV METRIC: not a combat result";
 
 export interface CveWeights {
@@ -14,13 +13,9 @@ export interface CveWeights {
 }
 
 export interface CveBalance {
-  /** Per ship category; each weight set sums to 10_000. */
   readonly weightsByCategory: Readonly<Record<string, CveWeights>>;
-  /** Sustained shell kg per minute x accuracy -> offence bp. */
   readonly offence: LookupTable;
-  /** Torpedo tubes: tube count -> bp, added to offence (capped at 10_000). */
   readonly torpedoOffence: LookupTable;
-  /** Speed (milli-knots) -> bp and range (nm) -> bp. */
   readonly speed: LookupTable;
   readonly range: LookupTable;
   readonly warningPenaltyBp: number;
@@ -41,7 +36,6 @@ const look = (t: LookupTable, x: number) =>
   evaluate(parseFormula("lookup(t, x)"), { vars: { x }, tables: { t } });
 const clamp = (v: number) => Math.max(0, Math.min(10_000, v));
 
-/** Deterministic development score from compiled results. Never read by combat. */
 export function computeCve(
   c: CompiledDesign,
   d: DesignDraft,

@@ -8,7 +8,6 @@ vi.mock("@bluewave/content-schema", async (importOriginal) => ({
 import { parseYamlSafe } from "@bluewave/content-schema";
 import { ParseStage } from "@bluewave/content-compiler";
 
-/** A `CompilerInput` carrying an in-memory name→text map (no filesystem). */
 function inputWith(files: Record<string, string>, extra: Record<string, unknown> = {}) {
   return {
     contentDir: "/content",

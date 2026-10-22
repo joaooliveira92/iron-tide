@@ -4,12 +4,6 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { BattleManifestView } from "./BattleManifestView.js";
 
-/**
- * Render tests for the battle manifest readout. Each side's display name is
- * derived from its own canonical `nationId`, and the `(Player)`/`(AI)` role
- * from the session player nation id — never from column order or a hardcoded
- * nation. These fail against the old hardcoded UK/Germany literals.
- */
 function manifestWith(attackerNationId: string, defenderNationId: string): BattleManifest {
   return {
     battleId: "battle_1",

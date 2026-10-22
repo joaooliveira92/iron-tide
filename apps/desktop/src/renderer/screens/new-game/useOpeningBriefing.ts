@@ -4,7 +4,6 @@ import type { OpeningBriefingProjection } from "@bluewave/campaign-engine";
 import type { InspectOpeningBriefingResult } from "../../../shared/campaign-command-contract.js";
 import type { BridgeResult } from "../../../shared/bridge-contract.js";
 
-/** How the briefing is fetched; injected so the screen stays transport-agnostic. */
 export type LoadOpeningBriefing = (
   sessionId: string,
 ) => Promise<BridgeResult<InspectOpeningBriefingResult>>;
@@ -14,7 +13,6 @@ export interface OpeningBriefing {
   readonly error: string | null;
 }
 
-/** Loads the Opening Strategic Briefing projection for a session, cancelling on change. */
 export function useOpeningBriefing(sessionId: string, load: LoadOpeningBriefing): OpeningBriefing {
   const [projection, setProjection] = useState<OpeningBriefingProjection | null>(null);
   const [error, setError] = useState<string | null>(null);

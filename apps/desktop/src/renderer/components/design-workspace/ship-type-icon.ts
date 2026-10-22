@@ -13,7 +13,6 @@ const SHIP_TYPE_ICONS: Record<string, LucideIcon> = {
   "armed merchant cruiser": Ship,
   submarine: Waves,
   carrier: Plane,
-  // The early-band class codes (DESIGN-22 `ClassifiedShipType`), so the design brief shows the same vocabulary.
   BB: Anchor,
   B: Anchor,
   CA: Ship,
@@ -23,7 +22,6 @@ const SHIP_TYPE_ICONS: Record<string, LucideIcon> = {
   AMC: Ship,
 };
 
-/** The catalog icon for a ship type, defaulting to a generic ship. */
 export function shipTypeIcon(shipType: string): LucideIcon {
   return SHIP_TYPE_ICONS[shipType] ?? Ship;
 }

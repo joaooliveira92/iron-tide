@@ -1,15 +1,3 @@
-/**
- * The world map's data source: the one abstraction the view model depends on.
- *
- * The chart can draw two worlds — the hand-authored fixture and a live campaign
- * overlay merged over it. Historically that choice was re-tested
- * (`overlay.source === "campaign"`) in every deriver of `useWorldMapModel`,
- * so a third source meant editing all of them. Here each source is a strategy
- * that resolves ownership, ports, fleets, possession counts, area summaries and
- * nation identity once; `useWorldMapModel` consumes the interface and never
- * learns which world it is drawing.
- */
-
 import {
   AREAS,
   FLEETS,
@@ -34,25 +22,14 @@ import {
   type LiveWorldMapOverlay,
 } from "./campaign-map-join.js";
 
-/** Everything the model needs to draw and describe a world, source-agnostically. */
 export interface WorldMapSource {
-  /** True when the source is a live campaign rather than the static fixture. */
   readonly live: boolean;
   readonly playerNationId: string | null;
-  /** Campaign-granularity areas for the tree, or null when the fixture is drawn. */
   readonly campaignAreas: readonly CampaignAreaEntry[] | null;
-  /** fixture area id -> controlling nation (null = unclaimed). */
   readonly control: ReadonlyMap<AreaId, AreaControl>;
-  /** Possessions to draw, already anchored to a fixture area's label. */
   readonly ports: readonly PossessionPlacement[];
-  /** Fleets to draw, already anchored to a fixture area. */
   readonly fleets: readonly FleetPlacement[];
-  /** Possessions per fixture area, for the area list's lens and badges. */
   readonly possessionCounts: ReadonlyMap<AreaId, number>;
-  /**
-   * Areas a live campaign never mentions. They stay on the chart for orientation, but their
-   * ownership is the static fixture's, not the campaign's, so they are drawn as having no data.
-   */
   readonly unavailable: ReadonlySet<AreaId>;
   fillFor(nation: NationId | null, alpha: number): string;
   strokeFor(nation: NationId | null): string;
@@ -82,7 +59,6 @@ function fixtureFleets(): FleetPlacement[] {
   }));
 }
 
-/** The static prototype fixture: owns its own geometry and nation ramp. */
 export function fixtureWorldMapSource(): WorldMapSource {
   const control = areaControl();
   const possessionCounts = new Map<AreaId, number>();
@@ -104,10 +80,6 @@ export function fixtureWorldMapSource(): WorldMapSource {
   };
 }
 
-/**
- * A live campaign merged over the fixture: ownership and nation identity come
- * from the overlay, areas the campaign never mentions fall back to the fixture.
- */
 export function campaignWorldMapSource(overlay: LiveWorldMapOverlay): WorldMapSource {
   const control = new Map<AreaId, AreaControl>(areaControl());
   for (const [area, owner] of overlay.ownership) {

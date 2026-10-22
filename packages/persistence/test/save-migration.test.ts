@@ -1,12 +1,3 @@
-// Save migration (ship-part-model SPM-R21, ticket 11d). The migration is an
-// offline, version-keyed transform, not a runtime load path: the product refuses
-// a mismatched save (ADR-0113), and the developer tool brings fixtures forward.
-// These tests prove the load and migration behaviour the version bump requires:
-// explicit source detection, deterministic migration of every supported prior
-// version, refusal of unsupported/future saves, preserved player identity, no
-// guessed defaults, validation before publication, atomic recoverable writes and
-// idempotency.
-
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
@@ -56,12 +47,6 @@ function fixtureState(compatibilityVersion: string): CampaignState {
   return { snapshot, envelope, rawHash };
 }
 
-/** Write a save directory at `version` and return the save-id directory. */
-/**
- * S-2 (4.0.0) ships NO registered migration: bringing an older save forward would mean inventing a
- * prestige and a value set, which have no default. These tests inject a synthetic step so the atomic,
- * backed-up migration machinery stays exercised; the shipped table itself is asserted empty below.
- */
 const INJECTED_STEPS: readonly SaveMigrationStep[] = [
   { from: "1.2.0", to: CURRENT_COMPATIBILITY_VERSION },
 ];

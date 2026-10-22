@@ -1,9 +1,3 @@
-// DESIGN-42 §30 — immutable SmokeEventRecord with deterministic hash.
-// Each record captures a single smoke lifecycle event: drift/decay, intersection,
-// funnel emission, smokescreen generation, float deployment, generator activation,
-// source merge, or source removal.
-// Pure/deterministic: hash via @bluewave/deterministic createEnvelope
-// with domain "smoke-event" and version "smoke_v1".
 import { BluewaveError } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import {
@@ -13,8 +7,6 @@ import {
   type SmokeSourceType,
 } from "./constants.js";
 import { SMOKE_RESOLUTION_DEFERRED } from "./reasonCodes.js";
-
-// SmokeRecordKind — the canonical §30 record kinds
 
 export const SMOKE_RECORD_KINDS = [
   "DRIFT_DECAY",
@@ -31,8 +23,6 @@ export type SmokeRecordKind = (typeof SMOKE_RECORD_KINDS)[number];
 export function isSmokeRecordKind(v: string): v is SmokeRecordKind {
   return (SMOKE_RECORD_KINDS as readonly string[]).includes(v);
 }
-
-// SmokeEventRecord — the authoritative record surface
 
 export interface SmokeEventRecord {
   readonly recordId: string;
@@ -123,8 +113,6 @@ export function assertSmokeEventRecordSurface(r: SmokeEventRecord): void {
     invariant(id, "rulesetVersion", r.rulesetVersion, "rulesetVersion must be a non-empty string");
 }
 
-// Deterministic record ID
-
 export function smokeEventRecordId(o: {
   battleMinute: number;
   substep: number;
@@ -151,8 +139,6 @@ function deepFreeze<T>(value: T): T {
   }
   return value;
 }
-
-// Factory — build an immutable (deeply-frozen) SmokeEventRecord
 
 export function createSmokeEventRecord(params: {
   kind: SmokeRecordKind;
@@ -190,7 +176,6 @@ export function createSmokeEventRecord(params: {
     rulesetVersion: SMOKE_RULESET_VERSION,
   };
 
-  // Validate surface (before hash computation)
   const tempRecord: SmokeEventRecord = { ...body, recordHash: "" };
   assertSmokeEventRecordSurface(tempRecord);
 

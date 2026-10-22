@@ -1,11 +1,10 @@
-// P-1 / ADR-0046: §14(1) swept-segment hit geometry + short-run (sub-minute) torpedoes.
 import { describe, it, expect } from "vite-plus/test";
 import {
   intersectsCollisionGeometry,
   sweptPathIntersectsCollisionGeometry,
 } from "../../src/torpedoes/hit-resolution.js";
 
-const M = 1_000_000; // µm per metre
+const M = 1_000_000;
 
 describe("sweptPathIntersectsCollisionGeometry (ADR-0046)", () => {
   it("hits a target crossed mid-segment that the end-point test misses", () => {

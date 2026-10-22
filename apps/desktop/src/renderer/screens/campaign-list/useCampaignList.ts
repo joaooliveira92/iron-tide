@@ -6,16 +6,6 @@ import {
   initialCampaignListScreenState,
 } from "./campaign-list-screen-state.js";
 
-/**
- * Loads the real `SaveStore.list()` records via the `listCampaigns` command
- * (main process prompts for the package directory). Read-only over the
- * engine — no state is mutated and no session is registered here; the actual
- * load goes through `loadCampaign`.
- *
- * The list is NOT loaded automatically on mount — doing so would open a
- * native file dialog (`dialog.showOpenDialog`) at startup, which is
- * undesirable. The caller must trigger `reload` explicitly.
- */
 export function useCampaignList() {
   const bridge = useBridge();
   const [state, setState] = useState(initialCampaignListScreenState);

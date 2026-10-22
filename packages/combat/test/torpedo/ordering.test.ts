@@ -1,10 +1,3 @@
-// AC-20 — DESIGN-40 §28 canonical ordering: sides → firing ships by id →
-// launchers by id → tubes by id → tracks by (launch minute, substep, track id)
-// → contacts by target id → damage packages by (impact minute, substep,
-// package id) → flooding sources by (compartment, source id) → system effects
-// by stable system id. DB/UI/insertion order must NEVER affect outcomes: the
-// resolvers process every collection through the §28 comparators, so shuffled
-// input collections produce identical records, events, and hashes.
 import { describe, expect, it } from "vite-plus/test";
 import { RandomEngine } from "@bluewave/random";
 import {
@@ -190,7 +183,6 @@ describe("AC-20 — full-record ordering + insertion-order invariance", () => {
     );
     expect(first.records.map((r) => r.recordId)).toEqual(second.records.map((r) => r.recordId));
     expect(first.eventIds).toEqual(second.eventIds);
-    // the emitted tube order is ascending within the launch level (§28 level 4)
     const tubes = first.records
       .filter((r) => r.kind === "LAUNCH")
       .sort(torpedoRecordOrder)

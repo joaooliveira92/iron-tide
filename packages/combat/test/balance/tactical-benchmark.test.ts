@@ -1,20 +1,3 @@
-// P-1 tactical balance benchmark (ADR-0098, post-ADR-0094 caliber correction).
-//
-// A deterministic, fixed-seed scenario matrix over `resolveBattleAuto` that
-// records the full engagement metric set (duration, salvos, rounds, hits, hit
-// rate, penetration distribution, fires/flooding/magazine events, withdrawals
-// with structured reasons, sinkings, end reason, winner, per-ship loss) and
-// asserts the ADR-0053/ADR-0098 duration and lethality target bands.
-//
-// The scenario parameters are the production national gun calibers and belt
-// armors (343 mm UK, 305 mm France, 263 mm Germany, 234 mm armoured cruiser,
-// 152 mm protected cruiser). The designs are fixture designs (no first-class
-// `armament` snapshot) except the MIXED matchup, which proves a legacy and a
-// first-class-armed fleet fight in the same battle.
-//
-// Set BALANCE_BENCH_WRITE=1 to (re)write docs/research/p1-tactical-benchmark.md.
-// Statistical assertions are over fixed deterministic seed sets and bounded
-// ranges only; no broad snapshots.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -51,8 +34,6 @@ const DEFENDER = "n-fr";
 
 type Side = "attacker" | "defender";
 
-// Scenario design parameters (production national guns/armor).
-
 interface HullSpec {
   hullType: string;
   guns: number;
@@ -60,7 +41,6 @@ interface HullSpec {
   armorUm: number;
   speedKnots: number;
   displacementKg: number;
-  /** Optional first-class armament snapshot (proves the mixed-identity path). */
   armament?: readonly CompiledArmamentMount[];
 }
 
@@ -105,7 +85,6 @@ const UK_PC: HullSpec = {
   displacementKg: 4_000_000,
 };
 
-/** A minimal first-class snapshot for the UK 13.5 in gun (identity only). */
 const UK_BB_ARMAMENT: readonly CompiledArmamentMount[] = [
   {
     instanceId: "a1:MAIN:1",
@@ -186,8 +165,6 @@ const SCENARIOS: Scenario[] = [
     name: "mixed legacy + first-class fleet",
     category: "mixed",
     build: () => {
-      // The attacker carries a first-class `armament` snapshot; the defender is
-      // a legacy design with none. Both must fight in the same battle.
       const withSnap = applyHull(makeNations({ attackerGuns: [10, 10] }), "attacker", {
         ...UK_BB,
         armament: UK_BB_ARMAMENT,
@@ -196,9 +173,6 @@ const SCENARIOS: Scenario[] = [
     },
   },
 ];
-
-// Analytic penetration-outcome distribution (range-invariant model; a pure
-// function of the design caliber and belt, weighted by the hit-zone weights).
 
 function penetrationDistribution(
   caliberUm: number,
@@ -221,8 +195,6 @@ function penetrationDistribution(
   }
   return dist;
 }
-
-// Battle run + aggregation.
 
 interface BattleSample {
   result: BattleResolutionResult;
@@ -389,35 +361,26 @@ describe("ADR-0098 tactical balance benchmark", () => {
     }
 
     for (const r of reports) {
-      // Every scenario terminates within the cap, never instantaneously.
       expect(r.lens[0]).toBeGreaterThanOrEqual(1);
       expect(r.lens[r.lens.length - 1]).toBeLessThanOrEqual(360);
-      // win shares partition the seed set.
       expect(r.attackerWin + r.defenderWin + r.noWinner).toBeCloseTo(1, 9);
-      // time-limit endings bounded (ADR-0053/ADR-0098 target: below 10-15%).
       expect(r.timeLimitShare).toBeLessThanOrEqual(0.2);
-      // every sinking has exactly one attributed cause.
       const sunk = Object.values(r.causes).reduce((a, v) => a + v, 0);
       expect(sunk).toBeCloseTo(r.sinkMean * SEEDS, 6);
     }
 
-    // Decisive fleet engagements (capital) land in the ADR-0053 30-90 min band,
-    // with a bounded 90th percentile.
     for (const r of reports.filter((x) => x.scenario.category === "capital")) {
       expect(r.median).toBeGreaterThanOrEqual(30);
       expect(r.median).toBeLessThanOrEqual(90);
       expect(r.p90).toBeLessThanOrEqual(180);
     }
 
-    // Cruiser and asymmetric engagements also resolve inside the band.
     for (const r of reports.filter((x) => x.scenario.category !== "capital")) {
       expect(r.median).toBeGreaterThanOrEqual(20);
       expect(r.median).toBeLessThanOrEqual(90);
       expect(r.p90).toBeLessThanOrEqual(180);
     }
 
-    // Heavy-gun engagements must be lethal: a repeatable non-zero sinking
-    // incidence across the fixed seed set.
     const heavy = reports.filter((r) =>
       [
         "UK BB vs France BB",
@@ -430,21 +393,17 @@ describe("ADR-0098 tactical balance benchmark", () => {
     );
     const heavySinkings = heavy.reduce((a, r) => a + r.sinkingBattles, 0);
     expect(heavySinkings).toBeGreaterThan(0);
-    // At least one capital-vs-capital scenario sinks a ship across the matrix.
     const capitalSinkings = reports
       .filter((r) => r.scenario.category === "capital")
       .reduce((a, r) => a + r.sinkingBattles, 0);
     expect(capitalSinkings).toBeGreaterThan(0);
 
-    // The larger fleet must not lose to the smaller one in the asymmetric case.
     const bbVsPc = byName("capital vs protected cruiser");
     expect(bbVsPc.attackerWin).toBeGreaterThanOrEqual(bbVsPc.defenderWin);
 
-    // The mixed legacy/first-class fleet resolves normally.
     const mixed = byName("mixed legacy + first-class fleet");
     expect(mixed.lens[0]).toBeGreaterThanOrEqual(1);
 
-    // Determinism: the same scenario+seed replays byte-identically.
     const a = runBattle(SCENARIOS[0]!.build(), "bench-0").result;
     const b = runBattle(SCENARIOS[0]!.build(), "bench-0").result;
     expect(a.resultHash).toBe(b.resultHash);

@@ -1,12 +1,6 @@
 import type { CompiledContentBundle, Provenance } from "@bluewave/content-schema";
 import { compareCodePoints } from "@bluewave/deterministic";
 
-/**
- * N-3 progression ledger (spec #47 R1–R2): a read-only derivation over the
- * compiled content bundle. An availability event is a technology whose global
- * designer `year` has begun, or a part/component introduction month. The
- * ledger lists declared dates; it never restates or reinterprets them.
- */
 export type ProgressionEventKind = "component" | "part" | "technology";
 
 export interface ProgressionEvent {
@@ -52,7 +46,6 @@ function compareEvents(a: ProgressionEvent, b: ProgressionEvent): number {
   );
 }
 
-/** Build the canonical ledger for the requested calendar years (default 1880–1889). */
 export function buildProgressionLedger(
   bundle: CompiledContentBundle,
   years: readonly number[] = N3_LEDGER_YEARS,
@@ -100,10 +93,6 @@ export function buildProgressionLedger(
     });
   }
 
-  // A generated part and its legacy component can share an id and month (for
-  // example the fitting entries copied from components.yaml). They are one
-  // availability fact; keep the part, which is the authoritative record, and
-  // drop the component duplicate. A different month stays a separate event.
   const unique = new Map<string, ProgressionEvent>();
   for (const event of events) {
     const key = `${event.id}|${event.month}`;
@@ -124,7 +113,6 @@ export function progressionEventsForYear(
   return ledger.events.filter((event) => event.year === year);
 }
 
-/** The requested years that carry no availability event, ascending. */
 export function idleYears(
   ledger: ProgressionLedger,
   years: readonly number[] = ledger.years,
@@ -144,7 +132,6 @@ export class IdleProgressionYearError extends Error {
   }
 }
 
-/** Fail with the idle years named; used by the acceptance test gate. */
 export function assertNoIdleYears(
   ledger: ProgressionLedger,
   years: readonly number[] = ledger.years,

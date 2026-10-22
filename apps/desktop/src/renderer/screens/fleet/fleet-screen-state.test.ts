@@ -19,7 +19,7 @@ import {
   applyTransportFailure,
   beginRequest,
 } from "../../lib/command-screen-workflow.js";
-import type { PreparedCommand, RequestKind } from "../../lib/command-screen-workflow.js";
+import type { PendingRequest, RequestKind } from "../../lib/command-screen-workflow.js";
 
 const movementCommand = {
   commandId: "mcmd_1",
@@ -80,12 +80,8 @@ function loaded(): FleetScreenState {
   return applyProjection(initialFleetScreenState(), projection, projectFleetScreen(projection));
 }
 
-function prepared(kind: RequestKind, transportRequestId: string): PreparedCommand<unknown> {
-  return {
-    kind,
-    context: { expectedRevision: 0, transportRequestId },
-    send: async () => ({ outcome: "success", value: undefined, diagnostics: [] }),
-  };
+function prepared(kind: RequestKind, transportRequestId: string): PendingRequest {
+  return { kind, transportRequestId };
 }
 
 describe("fleet screen state", () => {
@@ -160,7 +156,7 @@ describe("fleet screen state", () => {
     expect(state.movementCommands).toEqual([movementCommand]);
     expect(state.pendingRequest).toBeNull();
     expect(state.notice).toContain("Order queued");
-    expect(state.notice).not.toContain("mcmd_1"); // engine ids stay out of the release UI
+    expect(state.notice).not.toContain("mcmd_1");
   });
 
   it("shows the engine reason code and diagnostics for an illegal route", () => {

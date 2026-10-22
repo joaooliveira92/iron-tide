@@ -1,11 +1,5 @@
 import type { CorpusScenario } from "./coverage.js";
 
-/**
- * The scenarios checked in under `golden/replays/`, one file per id. All are command-free runs of
- * the committed 1880 production pack (replay format v1 records no commands), so they differ in
- * seed and length. Each `purpose` states what that replay adds; `pnpm replay:coverage` shows which
- * subsystems each one actually exercises and which none do.
- */
 export const REPLAY_SCENARIOS: readonly CorpusScenario[] = [
   {
     id: "production-1880-1m",

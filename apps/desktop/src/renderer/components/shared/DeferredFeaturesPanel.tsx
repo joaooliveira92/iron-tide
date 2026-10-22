@@ -10,11 +10,6 @@ export interface DeferredFeaturesPanelProps {
   readonly title?: string;
 }
 
-/**
- * Features the original game has that the engine cannot supply yet, each with
- * the reason. Deliberately plain text: no numbers, no controls, nothing that
- * looks real (AGENTS.md: deferred work is recorded, never fabricated).
- */
 export function DeferredFeaturesPanel({
   items,
   testId,

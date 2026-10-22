@@ -8,7 +8,6 @@ import {
 import { earlyContext } from "./helpers/earlyContext.js";
 import { majestic } from "./helpers/references.js";
 
-/** The shipped armour availability (ticket 25), checked against the real EARLY-band balance and tech tree. */
 const region = (materialId: string): ArmourRegion => ({
   region: "BELT_MAIN",
   thicknessUm: 100_000,

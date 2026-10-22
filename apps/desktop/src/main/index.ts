@@ -18,41 +18,19 @@ import {
 
 const isDev = process.env.NODE_ENV === "development" || process.argv.includes("--dev");
 
-/**
- * React DevTools install into the app when debug mode is on, or when explicitly
- * requested with `VITE_BLUEWAVE_DEVTOOLS=true` (`pnpm dev:devtools`) — so the
- * panel is available without also enabling the debug screens (ADR-0118).
- */
 const reactDevToolsRequested =
   isDebugModeEnabled() || process.env.VITE_BLUEWAVE_DEVTOOLS === "true";
 
-/** A quit waits this long for the renderer to flush pending work before proceeding anyway. */
 const QUIT_FLUSH_TIMEOUT_MS = 1_500;
 
-/** Set once a quit is underway, so recovery/close handlers stop fighting it. */
 let quitting = false;
 
-/**
- * Surface an unrecoverable failure and exit — never leave a blank window behind
- * (ADR-0121).
- */
 function hardFail(message: string): void {
   dialog.showErrorBox("Bluewave", message);
   quitting = true;
   app.quit();
 }
 
-// Crash handlers are installed at `whenReady` through the `CrashReporter`
-// service (ADR-0133/ADR-0159); the support bundle path and clock come from the
-// `AppPaths`/`Clock` services rather than module-load `app.getPath`/`new Date`.
-
-/**
- * Keep the window recoverable (ADR-0121): a crashed renderer, an unresponsive
- * window or a failed main-frame load reloads at most once; past that the shell
- * gives up instead of leaving a blank window. In development a failed
- * main-frame load means the Vite dev server is gone, so quit rather than
- * reloading into nothing.
- */
 function attachFailureRecovery(win: BrowserWindow): void {
   let recoveries = 0;
 
@@ -88,12 +66,6 @@ function attachFailureRecovery(win: BrowserWindow): void {
   });
 }
 
-/**
- * React DevTools' page hook is installed by the extension's background worker,
- * which can land after the first navigation — leaving React already initialised
- * and unregistered, so the panel shows "this page doesn't have React". Reload
- * once so the hook runs at `document_start` ahead of React (ADR-0118).
- */
 function attachDevToolsPageHook(win: BrowserWindow): void {
   let reloaded = false;
   win.webContents.on("did-finish-load", () => {
@@ -153,7 +125,6 @@ function createWindow(): BrowserWindow {
   return win;
 }
 
-/** The desktop main runtime, providing the Layer's services (INC-1; ADR-0159). */
 type DesktopMainRuntime = ManagedRuntime.ManagedRuntime<CommandEnv, never>;
 
 function registerIpc(runtime: DesktopMainRuntime): void {
@@ -162,14 +133,9 @@ function registerIpc(runtime: DesktopMainRuntime): void {
     dispatchCampaignCommand(command, payload),
   );
 
-  // The dedicated app-scope preferences capability (D6): `read` returns the
-  // decoded snapshot (defaults when the file is missing/corrupt); `write`
-  // decodes the payload strictly at the boundary before persisting atomically.
   const preferences = createPreferencesBridge(() => runtime);
   ipcMain.handle("preferences:read", () => preferences.read());
   ipcMain.handle("preferences:write", (_event, payload: unknown) => preferences.write(payload));
-  // Campaign-scope preferences live in a per-campaign sidecar (D3); the active
-  // campaign is resolved from the session id.
   ipcMain.handle("preferences:read-campaign", (_event, sessionId: string) =>
     preferences.readCampaign(sessionId),
   );
@@ -177,9 +143,6 @@ function registerIpc(runtime: DesktopMainRuntime): void {
     preferences.writeCampaign(sessionId, payload),
   );
 
-  // Renderer crash capture (ADR-0133): validate the renderer's payload at the
-  // boundary, then write the local-only support bundle through the CrashReporter
-  // service. A malformed payload is dropped rather than trusted.
   ipcMain.on("support:report-crash", (_event, payload: unknown) => {
     void runtime.runPromise(
       Effect.gen(function* () {
@@ -217,11 +180,6 @@ function registerIpc(runtime: DesktopMainRuntime): void {
   });
 }
 
-/**
- * Bounded shutdown (ADR-0121): ask the renderer to flush pending work (the
- * drawing-board draft autosave, ADR-0082), then proceed even if it never
- * answers — a quit must never hang on an unresponsive renderer.
- */
 function installBoundedShutdown(runtime: DesktopMainRuntime): void {
   app.on("before-quit", (event) => {
     if (quitting) return;
@@ -237,9 +195,6 @@ function installBoundedShutdown(runtime: DesktopMainRuntime): void {
       settled = true;
       clearTimeout(timer);
       ipcMain.removeListener("app:quit-flush-complete", proceed);
-      // Dispose the runtime (runs the Layer scope's finalizers) before quitting.
-      // app.quit() proceeds whether or not disposal resolves, so a hung finalizer
-      // cannot block the quit (ADR-0159).
       void runtime.dispose().then(
         () => app.quit(),
         () => app.quit(),
@@ -252,8 +207,6 @@ function installBoundedShutdown(runtime: DesktopMainRuntime): void {
   });
 }
 
-// Single-instance (ADR-0121): a second launch focuses the running window
-// instead of starting a rival instance.
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
@@ -267,8 +220,6 @@ if (!app.requestSingleInstanceLock()) {
   void app.whenReady().then(async () => {
     const runtime = ManagedRuntime.make(desktopMainLayer());
 
-    // Install the main-process crash handlers through the CrashReporter service
-    // (ADR-0133), resolved from the composed graph.
     await runtime.runPromise(
       Effect.gen(function* () {
         const crash = yield* CrashReporter;
@@ -301,9 +252,6 @@ if (!app.requestSingleInstanceLock()) {
     registerIpc(runtime);
     installBoundedShutdown(runtime);
 
-    // The app runs only on compiled, validated content (ticket 03). Verify the
-    // artifact before any window exists; a missing/tampered artifact fails
-    // closed with an explicit error rather than silently running raw content.
     try {
       loadContentArtifact();
     } catch (error) {
@@ -329,9 +277,6 @@ if (!app.requestSingleInstanceLock()) {
     app.quit();
   });
 
-  // A stopping dev run (Ctrl+C in the terminal) signals SIGINT/SIGTERM to the
-  // process group; without an explicit quit the Electron window is left
-  // orphaned, pointing at the now-dead dev server and rendering blank.
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
     process.on(signal, () => app.quit());
   }

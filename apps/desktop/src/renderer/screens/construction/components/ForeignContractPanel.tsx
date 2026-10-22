@@ -11,17 +11,8 @@ import {
 } from "../../../components/ui/card.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
-/**
- * The foreign construction contract panel (SB3-R20/R23/R34; INC-9b). Presentational: every figure is the engine's
- * compiled preview (dock ceiling, free `NEW_CONSTRUCTION` capacity, capability verdict, tension-scaled impoundment risk,
- * delivery guarantee, contract terms and payment schedule). It authors no number and invents no reason code.
- *
- * The delivery guarantee is always "none" today: INC-10 recorded that no treaty/contract-clause source exists yet, so
- * the panel states the guarantee is absent rather than fabricating one.
- */
 export interface ForeignContractPanelProps {
   readonly preview: ForeignConstructionPreview;
-  /** The chosen builder nation id; the panel reads its candidate and the contract terms from the preview. */
   readonly builderNationId: string;
 }
 

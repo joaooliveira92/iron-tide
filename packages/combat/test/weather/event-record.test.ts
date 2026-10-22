@@ -1,7 +1,3 @@
-// AC-11: WeatherEventRecord completeness — every weather transition/visibility
-// result produces §28 fields: minute/substep, source/affected participants,
-// canonical inputs, formulas/multipliers, RNG decisions, pre/post state hashes,
-// version IDs, record hash.
 import { describe, it, expect } from "vite-plus/test";
 import { makeWeatherEventRecord, weatherEventId } from "../../src/weather/event-record.js";
 

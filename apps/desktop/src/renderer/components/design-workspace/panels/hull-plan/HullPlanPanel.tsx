@@ -47,16 +47,6 @@ import type { BoardFinding } from "../../validation/boardFindings.js";
 import type { PlanTool } from "./plan-tool.js";
 import type { Edit } from "../types.js";
 
-/**
- * Top-down plan of the hull, composed of layers: outline, zones, topside, gun arcs, fittings; plus a side profile.
- *
- * SCHEMATIC GEOMETRY: the outline is a parametric waterline scaled to length and beam. Its area follows the
- * hull form's waterplane coefficient and its bow/stern fullness follows the form's LCB, but it is not the
- * form's real lines, and centreline fittings are nudged apart vertically so overlapping dots stay
- * visible (the nudge carries no meaning). Arc wedges have a fixed drawn radius (range is not shown). Only
- * the station (x), the port/starboard side and the arc width are data. Do not treat this as an
- * authoritative hull-form visualisation.
- */
 export function HullPlanPanel({
   draft,
   content,
@@ -81,33 +71,20 @@ export function HullPlanPanel({
   readonly view: WorkshopView;
   readonly month: string;
   readonly edit: Edit;
-  /** The board's findings (`boardFindings`); derived here only when the plan is shown on its own. */
   readonly findings?: readonly BoardFinding[];
-  /** The board's derived plan model; built here only when the plan is shown on its own. */
   readonly model?: PlanModel;
-  /** The board's plan-editing (tool, notice, click/drag handlers); the plan keeps its own only when shown on its own. */
   readonly editing?: HullPlanEditing;
-  /** The plan tool, switched from the board toolbar; the plan keeps its own only when it is shown on its own. */
   readonly tool?: PlanTool;
   readonly onTool?: (next: PlanTool) => void;
-  /** Whether the gun arcs are drawn; the board toolbar owns it, the plan only when shown on its own. */
   readonly showArcs?: boolean;
   readonly onShowArcs?: (next: boolean) => void;
-  /** Which findings show on the plan; the board toolbar owns it, the plan only when shown on its own. */
   readonly findingsView?: FindingsView;
   readonly onFindingsView?: (next: FindingsView) => void;
-  /**
-   * The view the workspace switches between (ticket 04). Omitted, the drawing behaves as the Drawing Board's
-   * single top view: every layer is drawn and the gun arcs follow `showArcs`.
-   */
   readonly shipView?: ShipView;
-  /** The overlays switched on. Omitted, every layer is drawn (the Drawing Board's behaviour). */
   readonly overlays?: ReadonlySet<ShipOverlay>;
-  /** The armour region the Protection editor has selected, highlighted on the plan (presentation only). */
   readonly armourHighlight?: ArmourRegionId | null;
 }) {
   const format = usePresentationFormat();
-  // Display preferences are lifted to the board toolbar; the plan falls back to its own state when shown on its own.
   const [localShowArcs, setLocalShowArcs] = useState(true);
   const [localFindingsView, setLocalFindingsView] = useFindingsView();
   const showArcs = givenShowArcs ?? localShowArcs;
@@ -119,7 +96,6 @@ export function HullPlanPanel({
   const planRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const model = givenModel ?? planModel(draft, content, view, month, given);
-  // The board owns the plan tool when its toolbar (with the pickers) is shown; the plan keeps its own when alone.
   const ownEditing = useHullPlanEditing({
     draft,
     content,
@@ -135,7 +111,6 @@ export function HullPlanPanel({
   const { tool, notice, ghost, planHandlers, onNudge, onSide } = editing;
   const { frame, zones, form, facts, superstructure, placedFunnels, mounts, targets } = model;
   const shown = model.findings.filter((f) => passesFilter(f.severity, findingsView.filter));
-  // View and overlays are the workspace's; without them the drawing is the Drawing Board's single top view.
   const viewDef = SHIP_VIEW_DEFS[givenShipView ?? DEFAULT_VIEW];
   const overlaysGiven = givenOverlays !== undefined;
   const on = (overlay: ShipOverlay) => givenOverlays === undefined || givenOverlays.has(overlay);
@@ -171,7 +146,6 @@ export function HullPlanPanel({
   return (
     <Panel
       title="Hull plan"
-      // In the workspace the view toolbar already names the drawing; on its own the panel keeps its heading.
       compact={givenShipView !== undefined}
       className="rounded-none border-0 bg-transparent"
     >

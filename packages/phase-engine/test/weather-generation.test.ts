@@ -1,13 +1,3 @@
-// B-6/ADR-0025 (DESIGN-42 §1): the weather_generation phase (registry order
-// 0.5) runs RIGHT AFTER opening_validation — per-area current-month
-// StrategicWeatherState from the canonical default climate profile
-// (keyed stream campaign/weather/<areaId>/<month>) committed into the snapshot
-// BEFORE command_collection. Proves: committed per-area mesh, canonical
-// ordering, campaign-month ids, randomLedger recording, missing-profile
-// WEATHER_PROFILE_INCOMPLETE (fail-closed), determinism, prior-state linkage,
-// battle_generation being unaffected (no battles in a no-war month), and
-// replay reproduction of the identical strategicWeather on the closed snapshot.
-
 import type { CampaignSnapshot, CampaignWeatherState, NationState } from "@bluewave/campaign";
 import type { ClimateProfile } from "@bluewave/combat";
 import {
@@ -102,7 +92,6 @@ describe("weather_generation phase (B-6 INC-1)", () => {
     expect(weather.length).toBe(3);
     expect(stateIds(weather)).toEqual(["alpha", "mid", "zeta"]);
     for (const state of weather) {
-      // start 1880-01 + turn 1 -> 1880-02 (DESIGN-03 §2 / ADR-0025)
       expect(state.month).toBe("1880-02");
       expect(state.generatedAtPhase).toBe(WEATHER_GENERATION_PHASE);
       expect(state.stateHash).toMatch(/^[0-9a-f]{64}$/);
@@ -118,7 +107,7 @@ describe("weather_generation phase (B-6 INC-1)", () => {
       new DiagnosticCollector(),
     );
     const decisions = [...result.randomLedger.all];
-    expect(decisions.length).toBe(2 * 8); // 8 drawn fields per area
+    expect(decisions.length).toBe(2 * 8);
     for (const d of decisions) {
       expect(d.streamId.startsWith("campaign/weather/")).toBe(true);
       expect(d.streamId.endsWith("/1880-02")).toBe(true);
@@ -148,8 +137,6 @@ describe("weather_generation phase (B-6 INC-1)", () => {
     const first = new MonthExecutor().execute(input, [], "seed-1", new DiagnosticCollector());
     expect(first.finalSnapshot.strategicWeather[0]!.persistentWeatherStateId).toBe("");
 
-    // A second month execution against the first month's closing snapshot
-    // links the prior committed state hash (no prior for the first month).
     const second = new MonthExecutor().execute(
       first.finalSnapshot,
       [],
@@ -162,10 +149,6 @@ describe("weather_generation phase (B-6 INC-1)", () => {
   });
 
   it("a missing area climate profile fails closed with WEATHER_PROFILE_INCOMPLETE (never crashes, never silent)", () => {
-    // Explicit per-area profile map covering only beta + gamma: alpha is
-    // missing -> stable diagnostic, NO committed state for alpha, and the
-    // month reports failure (fail-closed). Deterministic order: alpha (missing)
-    // diagnostic first, sorted before the generated areas.
     const profiles = new Map<string, ClimateProfile>();
     profiles.set("beta", defaultClimateProfile_v1);
     profiles.set("gamma", defaultClimateProfile_v1);
@@ -180,7 +163,6 @@ describe("weather_generation phase (B-6 INC-1)", () => {
     const missing = collector.errors.find((d) => d.code === WEATHER_PROFILE_INCOMPLETE)!;
     expect(missing.stage).toBe("weather_generation");
     expect(missing.entityId).toBe("alpha");
-    // Fail-closed: the month result reports failure, not silent success.
     expect(result.success).toBe(false);
   });
 
@@ -193,8 +175,6 @@ describe("weather_generation phase (B-6 INC-1)", () => {
       "seed-2",
       new DiagnosticCollector(),
     );
-    // The second execution's closing snapshot still carries the committed
-    // state (deep-cloned, not shared) for the same area.
     expect(second.finalSnapshot.strategicWeather.map((s) => s.areaId)).toEqual(["alpha"]);
     expect(second.finalSnapshot.startYear).toBe(1880);
     expect(second.finalSnapshot.startMonth).toBe(1);
@@ -234,8 +214,6 @@ describe("weather_generation phase (B-6 INC-1)", () => {
   });
 });
 
-// Deterministic subset hash over the authoritative snapshot surface
-// (parity with run-child / ReplayVerifier).
 function hashSnapshot(snapshot: CampaignSnapshot): string {
   const nations: Record<string, NationState> = {};
   for (const [id, nation] of snapshot.nations) nations[id] = nation;

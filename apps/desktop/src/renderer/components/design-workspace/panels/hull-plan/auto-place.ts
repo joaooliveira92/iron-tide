@@ -9,22 +9,11 @@ import {
 import { placeEdit, type PlanEdit } from "./placement-edits.js";
 import { zoneAtStation, type ZoneSpan } from "./plan-targeting.js";
 
-/**
- * Auto-placement (ADR-0084): pick the legal station that leaves the ship most level. This is the only placement
- * concern that compiles candidate drafts, so it is kept apart from the pure edit builders in `placement-edits`.
- */
-
-/** Stations auto-place tries: every 10 permille, keeping clear of the very ends. */
 export const AUTO_PLACE_STATIONS: readonly number[] = Array.from(
   { length: 97 },
   (_, i) => 20 + i * 10,
 );
 
-/**
- * Auto-place (ADR-0084): of every station the component may legally go (same zone rules as a click, centreline), the one
- * that leaves the ship most level (smallest |trim|) without adding a blocking finding; a tie goes to the lowest station.
- * Pure and deterministic: it compiles each candidate with the board's own rules. Refused when no station qualifies.
- */
 export function autoPlace(
   entry: PartCatalogueEntry,
   draft: DesignDraft,

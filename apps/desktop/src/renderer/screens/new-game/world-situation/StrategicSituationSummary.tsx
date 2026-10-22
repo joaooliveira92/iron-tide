@@ -54,11 +54,6 @@ function TheaterList({ entries }: { readonly entries: WorldSituation["theaterBoa
   );
 }
 
-/**
- * The opening overview: who the player is, the authored assessment, the
- * posture in words (formal standing and outlook counted separately), and a
- * schematic of which theatres hold which powers.
- */
 export function StrategicSituationSummary({ situation }: { readonly situation: WorldSituation }) {
   const { player, posture } = situation;
   const standing = RELATION_KINDS.filter((kind) => posture.byStatus[kind] > 0);
@@ -129,7 +124,6 @@ export function StrategicSituationSummary({ situation }: { readonly situation: W
   );
 }
 
-/** A schematic of which theatres hold which powers; abstract by design, never a chart. */
 export function TheaterBoard({ situation }: { readonly situation: WorldSituation }) {
   const { player, theaterBoard } = situation;
   const primary = player.theaters[0];

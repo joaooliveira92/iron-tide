@@ -1,10 +1,3 @@
-// AC-19: friendly-fire danger sector (DESIGN-40 §24) — pure, deterministic,
-// INTEGER-only geometry. Sector half-angle = spread half-angle + uncertainty
-// angle (floor(uncertaintyM * 57_296 / max(rangeM, 1)) mdeg); a CONFIRMED
-// friendly inside the sector with predicted minimum separation (cross-track
-// floor(rangeM * diffMdeg / 57_296)) below 1_000 m PROHIBITS the launch — and
-// manual launch does NOT waive it. An unidentified or low-confidence contact
-// inside the sector raises the §10 minimum via raisesMinimumSolutionQuality.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -43,7 +36,6 @@ function inputs(overrides: Partial<FriendlyFireRiskInputs> = {}): FriendlyFireRi
 
 describe("AC-19: danger-sector geometry", () => {
   it("computes the uncertainty half-angle with the authored small-angle approximation", () => {
-    // floor(1_000 m * 57_296 / 5_000 m) = floor(11_459.2) = 11_459 mdeg
     const assessment = assessFriendlyFireRisk(
       inputs({ solutionUncertaintyM: 1_000, spreadHalfAngleMdeg: 500 }),
     );
@@ -55,12 +47,11 @@ describe("AC-19: danger-sector geometry", () => {
     const assessment = assessFriendlyFireRisk(
       inputs({ targetEstimatedRangeM: 0, solutionUncertaintyM: 5_000 }),
     );
-    expect(assessment.uncertaintyHalfAngleMdeg).toBe(286_480_000); // 5_000 * 57_296 / 1
+    expect(assessment.uncertaintyHalfAngleMdeg).toBe(286_480_000);
     expect(assessment.dangerHalfAngleMdeg).toBe(286_480_000);
   });
 
   it("handles bearing wraparound across ±180_000 mdeg", () => {
-    // Target at 179_000 mdeg, track at -179_000 mdeg: true diff 2_000 mdeg.
     const assessment = assessFriendlyFireRisk(
       inputs({
         targetRelativeBearingMdeg: 179_000,
@@ -98,8 +89,6 @@ describe("AC-19: §24 prohibition (confirmed friendly below 1_000 m predicted se
   });
 
   it("the 1_000 m separation boundary is inclusive: 999 m prohibits, 1_000 m does not", () => {
-    // cross-track = floor(rangeM * 5_000 / 57_296): range 11_459 -> 999 m,
-    // range 11_460 -> 1_000 m.
     const below = assessFriendlyFireRisk(
       inputs({
         spreadHalfAngleMdeg: 6_000,
@@ -114,7 +103,7 @@ describe("AC-19: §24 prohibition (confirmed friendly below 1_000 m predicted se
       }),
     );
     expect(at.prohibited).toBe(false);
-    expect(at.raisesMinimumSolutionQuality).toBe(true); // still raises the §10 minimum
+    expect(at.raisesMinimumSolutionQuality).toBe(true);
   });
 
   it("manual launch is echoed but NEVER waives the prohibition", () => {
@@ -156,7 +145,7 @@ describe("AC-19/§24: the §10 quality raise for unidentified or low-confidence 
     );
     expect(assessment.raisesMinimumSolutionQuality).toBe(true);
     expect(assessment.unidentifiedOrLowConfidenceInSector).toBe(true);
-    expect(assessment.prohibited).toBe(false); // not a CONFIRMED friendly
+    expect(assessment.prohibited).toBe(false);
   });
 
   it("a low-confidence non-friendly contact inside the sector raises the minimum", () => {
@@ -166,7 +155,7 @@ describe("AC-19/§24: the §10 quality raise for unidentified or low-confidence 
         friendlyTracks: [
           track({
             contactId: "LOWCONF-1",
-            estimatedIdentity: "ger_ca_admiral_hipper", // enemy identity
+            estimatedIdentity: "ger_ca_admiral_hipper",
             relativeBearingMdeg: 500,
             confidenceBp: TORPEDO_FRIENDLY_FIRE_LOW_CONFIDENCE_BP - 1,
           }),

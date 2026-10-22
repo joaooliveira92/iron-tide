@@ -19,7 +19,6 @@ import {
 import { GUN_QUALITY_OUT_OF_RANGE } from "../../src/gunnery/index.js";
 
 describe("AC-6 gun quality (DESIGN-39 §5, INC-3)", () => {
-  // Table exactness: all 6 qualities x 3 shipped basis-point multipliers.
   it("ships the exact §5 table for every quality -3..+2 (18 values)", () => {
     expect(GUN_QUALITY_MIN).toBe(-3);
     expect(GUN_QUALITY_MAX).toBe(2);
@@ -31,8 +30,6 @@ describe("AC-6 gun quality (DESIGN-39 §5, INC-3)", () => {
       "1": [10_500, 10_500, 10_500],
       "2": [11_000, 11_000, 11_000],
     };
-    // The table's key SET covers exactly all six canonical qualities (-3..+2).
-    // Object integer-key ordering is not canonical, so compare the sorted set.
     expect(Object.keys(GUN_QUALITY_TABLE).sort()).toEqual(["-3", "-2", "-1", "0", "1", "2"].sort());
     for (let q = GUN_QUALITY_MIN; q <= GUN_QUALITY_MAX; q++) {
       const m = gunQualityMultipliers(q);
@@ -65,14 +62,10 @@ describe("AC-6 gun quality (DESIGN-39 §5, INC-3)", () => {
   });
 
   it("the no-rate-effect declaration omits the rate multiplier from the §4 product", () => {
-    // With quality affecting rate at -3 (rate 8_500), reload lengthens to
-    // ceil(1000 * 8500 / 10_000) = 850.
     const withQuality = neutralRateFactors();
-    withQuality.gunQuality = gunQualityRateMultiplierBp(-3); // 8_500
+    withQuality.gunQuality = gunQualityRateMultiplierBp(-3);
     expect(computeEffectiveReloadMs(1_000, withQuality).effectiveReloadMs).toBe(850);
 
-    // Declaring that quality does NOT affect rate of fire omits the gun-quality
-    // factor entirely: n drops to 10 and the all-neutral result equals base exactly.
     const withoutQuality = neutralRateFactors() as GunneryRateFactors & {
       gunQuality?: number;
     };

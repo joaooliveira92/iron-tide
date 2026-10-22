@@ -21,7 +21,6 @@ export interface GlobalSearchProps {
   readonly onNavigate: (id: string) => void;
 }
 
-/** Jumps to any campaign screen by name via a Ctrl/Cmd+F command palette. Renders nothing when there is nowhere to search. */
 export function GlobalSearch({ className, targets, onNavigate }: GlobalSearchProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");

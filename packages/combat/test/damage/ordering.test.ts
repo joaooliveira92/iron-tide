@@ -1,6 +1,3 @@
-// INC-4 — Canonical ordering (DESIGN-41 §46).
-// Proves: ordering comparator sorts by (minute, substep, sourceId, targetShipId,
-// causalWeaponId, hitLocation, recordHash).
 import { describe, it, expect } from "vite-plus/test";
 import {
   damageEventOrder,
@@ -34,8 +31,6 @@ function makeRecord(overrides: Partial<DamageEventRecord> = {}): DamageEventReco
     ...overrides,
   });
 }
-
-// §46 — Canonical ordering
 
 describe("AC-4: Canonical ordering (§46)", () => {
   it("orders by battleMinute ascending", () => {
@@ -135,10 +130,8 @@ describe("AC-4: Canonical ordering (§46)", () => {
       hitLocation: "BELT-1",
       componentEffects: [{ componentId: "TURRET-2", outcome: "DESTROYED", locationId: "TURRET-2" }],
     });
-    // Different component effects → different hashes → hash tiebreaker
     const order = damageEventOrder(a, b);
     expect(order).not.toBe(0);
-    // Verify it's the hash ordering by direct comparison
     expect(a.recordHash.localeCompare(b.recordHash)).toBe(order);
   });
 

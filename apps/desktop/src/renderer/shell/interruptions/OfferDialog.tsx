@@ -12,20 +12,10 @@ import {
 import { Button } from "../../components/ui/button.js";
 import { offerText } from "./offer-text.js";
 
-/** The answers a battle offer accepts: fight it, let staff fight it, or decline it (which costs victory points). */
 export type OfferChoice = "accept" | "delegate" | "decline";
 
-/** The acceptance class whose battles cannot be declined (the engine refuses the answer with a typed reason). */
 const UNAVOIDABLE_CLASS = "OPERATIONALLY_UNAVOIDABLE";
 
-/**
- * The battle-offer modal (T-1 03, spec #109 R14). It shows the mission and acceptance class, the area, the two sides, the
- * player's own selected force, the enemy-strength estimate (worded as an estimate, never the true strength) and whether a
- * friendly support force is present, all as text with no colour-only meaning. It is a labelled, described, modal alert
- * dialog: focus moves into it and stays inside, and Escape does not dismiss it, because a missing answer holds the month
- * and is never defaulted. It owns no authoritative state; choosing reports back to the shell, which records the answer.
- * Every string resolves through the UI catalogue.
- */
 export function OfferDialog({
   request,
   onChoose,

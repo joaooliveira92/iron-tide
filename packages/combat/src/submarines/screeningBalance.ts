@@ -1,20 +1,3 @@
-// DESIGN-34 §18 heavy-ship-to-destroyer screening balance (AC-13, INC-6) + §19
-// attack-opportunity selection value-only (AC-14, INC-6).
-//
-// §18:
-//   screenRatioBp = floor(eligibleDestroyerAndEscortStrength * 10_000 /
-//     max(1, eligibleHeavyShipStrength))
-//   Heavy ships: BB, BC, B, CV, CVL, CA
-//   Escorts: DD, KE, ASW-capable CL
-//   Opportunity multiplier: ratio <2_500→15_000, 2_500–4_999→12_500,
-//     5_000–7_499→10_000, 7_500–9_999→8_500, ≥10_000→7_500
-//
-// §19: strategic attack-opportunity selection (value-only). Uses policy weights,
-//   target availability, intelligence, regional protection, mission strength.
-//   Keyed stream: submarine/month/war/area/attack_opportunity.
-//   Creates SUBMARINE_ATTACK_OPPORTUNITY_CREATED record. MUST NOT apply loss.
-//
-// Pure/deterministic: no I/O/clock/random.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { SUBMARINE_BASIS_POINTS_PER_UNIT, type SubmarinePolicy } from "./constants.js";
 import {
@@ -22,18 +5,10 @@ import {
   SUBMARINE_STATE_INVARIANT_FAILED,
 } from "./reasonCodes.js";
 
-// §18 heavy-ship types and escort types
-
 export const SUBMARINE_HEAVY_SHIP_TYPES = ["BB", "BC", "B", "CV", "CVL", "CA"] as const;
 export type SubmarineHeavyShipType = (typeof SUBMARINE_HEAVY_SHIP_TYPES)[number];
 
 export const SUBMARINE_ELIGIBLE_ESCORT_TYPES = ["DD", "KE", "CL"] as const;
-// DESIGN-34 §18: escorts are eligible DD, KE, and ASW-capable CL. The CL
-// ASW-capability distinction is a campaign-world predicate (not modelled here);
-// the type set ships the three canonical escort hull types, and the caller
-// supplies the ASW-qualified CL filter.
-
-// §18 screen ratio formula
 
 export function computeScreenRatioBp(
   eligibleEscortStrength: SafeInt,
@@ -59,7 +34,6 @@ export function computeScreenRatioBp(
   );
 }
 
-// §18 opportunity multiplier bands (exact shipped values).
 const SCREENING_OPPORTUNITY_BANDS: ReadonlyArray<{
   minRatio: number;
   maxRatio: number;
@@ -92,8 +66,6 @@ export function screeningOpportunityMultiplierBp(screenRatioBp: SafeInt): SafeIn
   });
 }
 
-// §19 attack-opportunity selection (value-only)
-
 export interface AttackOpportunityInput {
   policyWeightBp: number;
   targetAvailabilityFactorBp: number;
@@ -123,8 +95,6 @@ export function computeAttackOpportunityValue(input: AttackOpportunityInput): Sa
     });
   }
 
-  // value = floor(policyWeight × targetAvailability × intelligence ×
-  //          regionalProtection × missionStrength / 10_000^4)
   const product = BigInt(w) * BigInt(t) * BigInt(i) * BigInt(r) * BigInt(m);
   const denominator = BigInt(SUBMARINE_BASIS_POINTS_PER_UNIT ** 4);
   return SafeInt(Number(product / denominator));
@@ -136,7 +106,6 @@ function isNonNegativeBp(v: unknown): v is number {
   );
 }
 
-// Opportunity record (value-only — no loss application).
 export interface SubmarineAttackOpportunityRecord {
   opportunityId: string;
   warId: string;
@@ -179,7 +148,6 @@ export function createAttackOpportunityRecord(
   };
 }
 
-// Shipped screening-opportunity bands (for contracts).
 export const SHIPPED_SCREENING_OPPORTUNITY_BANDS: ReadonlyArray<{
   minRatio: number;
   maxRatio: number;

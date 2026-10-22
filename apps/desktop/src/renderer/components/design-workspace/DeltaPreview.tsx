@@ -1,9 +1,5 @@
 import type { Delta } from "./optionDelta.js";
 
-/**
- * A compact, read-only list of what an option would change (see `optionDelta`). Presentation only: it previews a
- * consequence and never commits it.
- */
 export function DeltaPreview({
   deltas,
   label = "Change",

@@ -107,7 +107,6 @@ describe("PermanentDivision aggregate (AC-2)", () => {
     expect(() => assertDivisionInvariants(d, [asset("a", "BB"), asset("b", "DD")])).toThrow(
       new RegExp(DIVISION_SHIP_TYPE_INCOMPATIBLE),
     );
-    // BB+B mix is legal
     expect(() => assertDivisionInvariants(d, [asset("a", "BB"), asset("b", "B")])).not.toThrow();
   });
 
@@ -219,8 +218,6 @@ describe("PermanentDivision aggregate (AC-2)", () => {
   });
 });
 
-// N-1 ticket 07 (ADR-0224): authored 1880 divisions are resolved into
-// authoritative PermanentDivision records at compile.
 function makeShip(id: string, nationId: string, locationAreaId: string): Ship {
   return {
     id,

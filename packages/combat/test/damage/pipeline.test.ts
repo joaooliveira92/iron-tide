@@ -93,7 +93,6 @@ describe("AC-3: Empty stage produces successful empty record (no-skip rule)", ()
   it("each stage in the default runner returns ok = true", () => {
     const result = orchestrateDamagePipeline(baseState(), defaultContext());
     expect(result.success).toBe(true);
-    // Every stage must have produced an effect
     for (const stage of DAMAGE_PIPELINE_STAGES) {
       expect(result.stageEffects[stage]).toBeDefined();
       expect(result.stageEffects[stage]!.ok).toBe(true);
@@ -140,7 +139,6 @@ describe("AC-3: Empty stage produces successful empty record (no-skip rule)", ()
         stage === "STRUCTURE_FLOTATION"
       )
         continue;
-      // Wired stages in INC-5 produce descriptions that start with the stage purpose
       expect(result.stageEffects[stage]).toBeDefined();
       expect(result.stageEffects[stage]!.ok).toBe(true);
     }
@@ -159,7 +157,6 @@ describe("AC-3: Stage failure rolls back the transaction", () => {
 
     const result = orchestrateDamagePipeline(originalState, defaultContext(), failingRunner);
     expect(result.success).toBe(false);
-    // State must be the original (rollback)
     expect(result.state).toBe(originalState);
     expect(result.state.structuralIntegrity).toBe(99_999);
   });
@@ -193,7 +190,6 @@ describe("AC-3: Stage failure rolls back the transaction", () => {
 
     const result = orchestrateDamagePipeline(baseState(), defaultContext(), failingRunner);
     expect(result.success).toBe(false);
-    // Should have stopped at STRUCTURE_FLOTATION — only visited up to that point
     const expectedVisited = [
       "HIT_LOCATION",
       "PROTECTION_INTERACTION",
@@ -232,7 +228,6 @@ describe("AC-3: wrapSimpleRunner preserves backward compat", () => {
   });
 });
 
-// INC-3: Stages 1-2 produce real results when inputs are provided
 const PIPE_COMPARTMENTS: readonly CompartmentDef[] = [
   {
     id: "COMP-1",
@@ -302,9 +297,6 @@ describe("INC-3: Stages 1-2 produce real results", () => {
   });
 
   it("pipeline context carries hit and protection results to later stages", () => {
-    // When HIT_LOCATION and PROTECTION_INTERACTION run with inputs, they
-    // populate context fields that downstream stages (e.g. LOCAL_COMPONENT_DAMAGE)
-    // consume. Verify the event record captures the resolved values.
     const result = orchestrateDamagePipeline(baseState(), contextWithInputs());
     expect(result.success).toBe(true);
     expect(result.eventRecord).toBeDefined();
@@ -313,7 +305,7 @@ describe("INC-3: Stages 1-2 produce real results", () => {
   });
 
   it("HIT_LOCATION with no hit input falls back to no-op", () => {
-    const ctx = defaultContext(); // no hitInput
+    const ctx = defaultContext();
     const result = orchestrateDamagePipeline(baseState(), ctx);
     expect(result.success).toBe(true);
     const stage = result.stageEffects["HIT_LOCATION"];
@@ -321,7 +313,7 @@ describe("INC-3: Stages 1-2 produce real results", () => {
   });
 
   it("PROTECTION_INTERACTION with no protection input falls back to no-op", () => {
-    const ctx = defaultContext(); // no protectionInput
+    const ctx = defaultContext();
     const result = orchestrateDamagePipeline(baseState(), ctx);
     expect(result.success).toBe(true);
     const stage = result.stageEffects["PROTECTION_INTERACTION"];

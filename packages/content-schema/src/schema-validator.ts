@@ -6,12 +6,6 @@ import type { ContentSchema } from "./decode.js";
 const parseOptions = { onExcessProperty: "error", errors: "all" } as const;
 const formatter = SchemaIssue.makeFormatterStandardSchemaV1();
 
-/**
- * Decode untrusted `data` against an Effect `Schema` boundary and project every
- * issue onto a `SCHEMA` diagnostic. Closed-by-default: unknown/excess fields are
- * rejected (`onExcessProperty: "error"`), matching the previous Zod `.strict()`
- * behavior. Returns `undefined` (and emits diagnostics) on failure.
- */
 export function validateAgainstSchema<A>(
   data: unknown,
   schema: ContentSchema<A>,

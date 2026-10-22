@@ -12,7 +12,6 @@ const content = loadDrawingBoardContent();
 const draft = content.references[0]!.draft;
 
 const execute = vi.fn();
-/** The preload global as the panel reads it, without an `as unknown` bridge in the test. */
 const testWindow = window as { bluewave?: unknown };
 beforeEach(() => {
   execute.mockReset();

@@ -1,6 +1,3 @@
-// S-5 04 (spec #73, R4/R11): the colonial-service fitting on a design. The proportion of displacement it takes is
-// a ruleset value that no source supplies, so every proportion below is a FIXTURE-CLASS value for exercising the
-// arithmetic; it is never a production number.
 import { describe, expect, it } from "vite-plus/test";
 import {
   applyEdit,

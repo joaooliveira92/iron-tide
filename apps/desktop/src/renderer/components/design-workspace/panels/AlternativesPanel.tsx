@@ -22,7 +22,6 @@ export function AlternativesPanel({
 }: {
   readonly generate: () => Candidate[];
   readonly onLoad: (d: DesignDraft) => void;
-  /** True when the working design has edits that loading a candidate would discard. */
   readonly dirty: boolean;
 }) {
   const format = usePresentationFormat();
@@ -32,7 +31,6 @@ export function AlternativesPanel({
   }>({ status: "idle", list: [] });
   const run = () => {
     setState({ status: "working", list: [] });
-    // Let the "working" state paint before the synchronous search starts.
     setTimeout(() => setState({ status: "done", list: generate() }), 20);
   };
   return (

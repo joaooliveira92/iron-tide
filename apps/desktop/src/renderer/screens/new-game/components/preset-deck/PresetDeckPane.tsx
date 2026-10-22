@@ -8,20 +8,12 @@ import {
 import { PresetCard, presetOptionId } from "./PresetCard.js";
 
 export interface PresetDeckPaneProps {
-  /** The preset whose bundle is currently applied, or `custom`. */
   readonly activePreset: ActivePresetId;
-  /** Index into `PRESET_DEFINITIONS` of the previewed card. */
   readonly focusedIndex: number;
-  /** Focus moved (arrows, wheel, drag-to-fling): previews, commits nothing. */
   readonly onFocusIndex: (index: number) => void;
-  /** Enter or a tap: applies the preset. */
   readonly onSelectPreset: (presetId: PresetId) => void;
 }
 
-/**
- * The master pane of the Rules-of-the-Naval-Age screen: the four preset bundles
- * as a deck. Moving focus only previews; Enter or a tap applies the preset.
- */
 export const PresetDeckPane = memo(function PresetDeckPane({
   activePreset,
   focusedIndex,

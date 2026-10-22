@@ -43,16 +43,41 @@ export interface PreparedCommand<Value> {
   readonly send: CommandSender<Value>;
 }
 
+/** The rejected arm of the bridge envelope, as the workflow folds it. */
+export type CommandRejection = Extract<BridgeResult<unknown>, { readonly outcome: "rejected" }>;
+
+/**
+ * The narrow contract a screen implements to join the shared command-screen
+ * lifecycle. The module owns revision capture, transport identity, pending
+ * state, idempotent retry, rejection folding, and stale-projection refresh;
+ * the adapter only maps those transitions onto the screen's own state shape.
+ * Field-based screens can use `requestLifecycleAdapter` for the common case.
+ */
 export interface CommandScreenAdapter<
+  State extends { readonly revision: number },
+  Projection extends { readonly revision: number },
+  Value,
+> {
+  readonly initialState: () => State;
+  readonly load: () => Promise<BridgeResult<Projection>>;
+  readonly project: (state: State, projection: Projection) => State;
+  readonly begin: (state: State, pending: PendingRequest) => State;
+  readonly reject: (state: State, rejection: CommandRejection) => State;
+  readonly transportFailure: (state: State, message: string) => State;
+  readonly accept: (state: State, value: Value) => State;
+  /** Whether this state must reload its projection before the player retries. */
+  readonly requiresRefresh: (state: State) => boolean;
+  readonly onProjection?: (projection: Projection) => void;
+}
+
+export interface RequestLifecycleAdapterConfig<
   State extends RequestLifecycle,
   Projection extends { readonly revision: number },
   Value,
 > {
   readonly initialState: () => State;
   readonly load: () => Promise<BridgeResult<Projection>>;
-  /** Map a projection's domain fields into the state; lifecycle is handled by the module. */
   readonly project: (projection: Projection) => Partial<State>;
-  /** Map an accepted command's domain fields and produce the resulting notice. */
   readonly accept: (value: Value) => {
     readonly patch: Partial<State>;
     readonly notice: string;
@@ -60,10 +85,34 @@ export interface CommandScreenAdapter<
   readonly onProjection?: (projection: Projection) => void;
 }
 
+/** Adapt a field-based `RequestLifecycle` screen to the shared adapter contract. */
+export function requestLifecycleAdapter<
+  State extends RequestLifecycle,
+  Projection extends { readonly revision: number },
+  Value,
+>(
+  config: RequestLifecycleAdapterConfig<State, Projection, Value>,
+): CommandScreenAdapter<State, Projection, Value> {
+  return {
+    initialState: config.initialState,
+    load: config.load,
+    project: (state, projection) => applyProjection(state, projection, config.project(projection)),
+    begin: beginRequest,
+    reject: applyRejection,
+    transportFailure: applyTransportFailure,
+    accept: (state, value) => {
+      const { patch, notice } = config.accept(value);
+      return acceptCommand(state, patch, notice);
+    },
+    requiresRefresh: (state) => state.requiresRefresh,
+    ...(config.onProjection === undefined ? {} : { onProjection: config.onProjection }),
+  };
+}
+
 /** How a submitted command settled, so a caller can react without re-reading state. */
 export type CommandOutcome = "accepted" | "rejected" | "transport-failure";
 
-export interface CommandScreenWorkflow<State extends RequestLifecycle, Value> {
+export interface CommandScreenWorkflow<State extends { readonly revision: number }, Value> {
   readonly state: State;
   readonly loadError: string | null;
   readonly request: {
@@ -71,6 +120,8 @@ export interface CommandScreenWorkflow<State extends RequestLifecycle, Value> {
     readonly retry: () => void;
   };
   readonly loadScreen: () => Promise<void>;
+  /** Apply a screen-local pure transition (draft edits) without touching transport state. */
+  readonly updateState: (fold: (state: State) => State) => void;
   readonly execute: (kind: RequestKind, send: CommandSender<Value>) => Promise<CommandOutcome>;
 }
 
@@ -92,21 +143,18 @@ export function describeRejection(
 
 export function beginRequest<State extends RequestLifecycle>(
   state: State,
-  command: PreparedCommand<unknown>,
+  pending: PendingRequest,
 ): State {
   return {
     ...state,
-    pendingRequest: {
-      kind: command.kind,
-      transportRequestId: command.context.transportRequestId,
-    },
+    pendingRequest: pending,
     notice: null,
   };
 }
 
 export function applyRejection<State extends RequestLifecycle>(
   state: State,
-  rejection: Extract<BridgeResult<unknown>, { outcome: "rejected" }>,
+  rejection: CommandRejection,
 ): State {
   return {
     ...state,
@@ -124,10 +172,6 @@ export function applyTransportFailure<State extends RequestLifecycle>(
   return { ...state, notice: `TRANSPORT_FAILURE: ${message}` };
 }
 
-/**
- * Fold a fresh projection into the state: adopt the engine revision and clear
- * every pending/refresh/notice marker in one place.
- */
 export function applyProjection<
   State extends RequestLifecycle,
   Projection extends { readonly revision: number },
@@ -142,7 +186,6 @@ export function applyProjection<
   };
 }
 
-/** Fold an accepted command result into the state: clear pending and set its notice. */
 export function acceptCommand<State extends RequestLifecycle>(
   state: State,
   patch: Partial<State>,
@@ -157,7 +200,6 @@ export function acceptCommand<State extends RequestLifecycle>(
   };
 }
 
-/** The uniform notice text both command screens show after an accepted command. */
 export function commandNotice(command: {
   readonly commandId: string;
   readonly status: string;
@@ -165,58 +207,13 @@ export function commandNotice(command: {
   return `Command ${command.commandId} is ${command.status}`;
 }
 
-/**
- * Folds a submit's transport result into a screen state, given that screen's
- * own phase transitions. The one place the three-outcome envelope is mapped:
- * `success` -> accepted, `rejected` (with its optional stale revision) ->
- * rejected, anything else -> a transport failure. Lets a screen keep its
- * discriminated-union state while sharing the transport bookkeeping.
- */
-export function foldCommandResult<State, Value>(
-  result: BridgeResult<Value>,
-  folds: {
-    readonly success: (state: State, value: Value) => State;
-    readonly rejected: (
-      state: State,
-      rejection: {
-        readonly reason: string;
-        readonly diagnostics: readonly string[];
-        readonly currentRevision?: number;
-      },
-    ) => State;
-    readonly transportFailure: (state: State, message: string) => State;
-  },
-): (state: State) => State {
-  return (state) => {
-    if (result.outcome === "success") return folds.success(state, result.value);
-    if (result.outcome === "rejected") {
-      return folds.rejected(state, {
-        reason: result.reason,
-        diagnostics: result.diagnostics,
-        currentRevision: result.currentRevision,
-      });
-    }
-    return folds.transportFailure(state, `${result.reason}: ${result.diagnostics.join("; ")}`);
-  };
-}
-
 let commandCounter = 0;
 
-/**
- * Renderer-side transport identity for the optimistic-concurrency flow
- * (`expectedRevision` / `transportRequestId` triple). The single generator for
- * every command screen, so the id shape cannot drift between them.
- */
 export function createTransportRequestId(prefix: string): string {
   commandCounter++;
   return `${prefix}-${Date.now().toString(36)}-${commandCounter}`;
 }
 
-/**
- * Captures the command's concurrency and idempotency context exactly once.
- * Re-running this prepared command therefore retries the same transport request
- * against the same expected revision instead of accidentally issuing new work.
- */
 export function prepareCommand<Value>(
   kind: RequestKind,
   expectedRevision: number,
@@ -230,23 +227,12 @@ export function prepareCommand<Value>(
   };
 }
 
-/**
- * Deep command-screen module. Callers describe only the domain operation they
- * want to send. Revision capture, transport identity, pending state,
- * idempotent retry, rejection adoption, and stale-projection refresh remain
- * behind this interface.
- */
 export interface CommandScreenWorkflowOptions {
-  /**
-   * When this value changes after mount, the screen reloads its projection. Pass the
-   * campaign revision so a month advanced from elsewhere (the header's Advance Month)
-   * does not leave this screen showing pre-advance data.
-   */
   readonly refreshKey?: number | null;
 }
 
 export function useCommandScreenWorkflow<
-  State extends RequestLifecycle,
+  State extends { readonly revision: number },
   Projection extends { readonly revision: number },
   Value,
 >(
@@ -281,9 +267,7 @@ export function useCommandScreenWorkflow<
         return;
       }
       setLoadError(null);
-      setState((currentState) =>
-        applyProjection(currentState, result.value, current.project(result.value)),
-      );
+      setState((currentState) => current.project(currentState, result.value));
       current.onProjection?.(result.value);
     } catch (error) {
       if (generation !== loadGeneration.current) return;
@@ -298,19 +282,24 @@ export function useCommandScreenWorkflow<
     activeExecution.current = executionId;
     unresolvedCommand.current = command;
     setOutcomeUnknown(false);
-    setState((currentState) => beginRequest(currentState, command));
+    setState((currentState) =>
+      adapterRef.current.begin(currentState, {
+        kind: command.kind,
+        transportRequestId: executionId,
+      }),
+    );
     try {
       const result = await command.send(command.context);
       if (activeExecution.current !== executionId) return "transport-failure";
       activeExecution.current = null;
       unresolvedCommand.current = null;
       if (result.outcome === "rejected") {
-        setState((currentState) => applyRejection(currentState, result));
+        setState((currentState) => adapterRef.current.reject(currentState, result));
         return "rejected";
       } else if (result.outcome === "error") {
         setOutcomeUnknown(false);
         setState((currentState) =>
-          applyRejection(currentState, {
+          adapterRef.current.reject(currentState, {
             outcome: "rejected",
             reason: result.reason,
             diagnostics: result.diagnostics,
@@ -318,15 +307,14 @@ export function useCommandScreenWorkflow<
         );
         return "rejected";
       } else {
-        const { patch, notice } = adapterRef.current.accept(result.value);
-        setState((currentState) => acceptCommand(currentState, patch, notice));
+        setState((currentState) => adapterRef.current.accept(currentState, result.value));
         return "accepted";
       }
     } catch (error) {
       if (activeExecution.current !== executionId) return "transport-failure";
       setOutcomeUnknown(true);
       setState((currentState) =>
-        applyTransportFailure(
+        adapterRef.current.transportFailure(
           currentState,
           error instanceof Error ? error.message : "unknown transport error",
         ),
@@ -340,8 +328,6 @@ export function useCommandScreenWorkflow<
     if (command !== null) void run(command);
   }, [run]);
 
-  // Memoized so a screen can safely use it as a dependency of its own callbacks —
-  // otherwise every command handler a screen hands a memo() child changes each render.
   const execute = useCallback(
     (kind: RequestKind, send: CommandSender<Value>): Promise<CommandOutcome> =>
       run(prepareCommand(kind, revisionRef.current, send)),
@@ -352,12 +338,11 @@ export function useCommandScreenWorkflow<
     void loadScreen();
   }, [loadScreen]);
 
+  const needsRefresh = adapter.requiresRefresh(state);
   useEffect(() => {
-    if (state.requiresRefresh) void loadScreen();
-  }, [state.requiresRefresh, loadScreen]);
+    if (needsRefresh) void loadScreen();
+  }, [needsRefresh, loadScreen]);
 
-  // Reload when the campaign moved on elsewhere. The mount load above already
-  // covers the first render, so the initial key is remembered, not acted on.
   const seenRefreshKey = useRef(options.refreshKey);
   useEffect(() => {
     if (seenRefreshKey.current === options.refreshKey) return;
@@ -370,6 +355,7 @@ export function useCommandScreenWorkflow<
     loadError,
     request: { outcomeUnknown, retry },
     loadScreen,
+    updateState: setState,
     execute,
   };
 }

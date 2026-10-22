@@ -18,12 +18,11 @@ the operator explicitly asks to edit. You never commit on `dev`/`main`.
 
 - The **`poteto-mode`** skill. Adopt its reply rules and principles for the whole
   run. In your final reply, name the principles that shaped the plan.
-- The **`no-comments`** skill. It defines the DELETE / REFACTOR / KEEP rubric you
+- The **`no-comments`** skill. It defines the DELETE / REFACTOR / TOOL rubric you
   will hand to the workers.
-- `RULES.md`, `.ai/ENGINEERING-CONTRACT.md` (skim), and this file's
-  `comment-sicko` subagent. The plan must respect determinism, canonical-content,
-  and traceability rules: a comment that encodes a `DESIGN-*`/`ADR-*`/`BW-*`
-  reason or a `TODO #N` ticket id is a `KEEP`, not noise.
+- `RULES.md`, `.ai/ENGINEERING-CONTRACT.md` (skim), ADR-0268, and this file's
+  `comment-sicko` subagent. Code carries no comments, so a citation of
+  `DESIGN-*`, `ADR-*`, `BW-*`, or a ticket id is a `DELETE`, not a `KEEP`.
 
 ## Run
 
@@ -49,7 +48,7 @@ the operator explicitly asks to edit. You never commit on `dev`/`main`.
    - **Delete outright** — pure noise. Bundle as mechanical sweep(s).
    - **Refactor first** — comments that are symptoms of a smell. Name the
      root-cause fix, and whether the fix is in scope now or deferred.
-   - **Keep** — with the constraint/doc/ticket each encodes.
+   - **Tool** — comments a tool reads, each naming that tool.
 6. **Report** in the `poteto-mode` reply style. Name the buckets, the counts
    (labelled measured/inferred), the 5-10 highest-value actions, and the open
    questions.
@@ -57,6 +56,7 @@ the operator explicitly asks to edit. You never commit on `dev`/`main`.
 ## Do not
 
 - Do not edit, commit, or push. Do not widen a worker's slice by hand.
-- Do not propose deleting a comment that carries a doc/ticket/constraint reason.
-- Do not treat a suppression as automatically deletable; it is a `REFACTOR`
-  candidate with a named cause, or a `KEEP` with a stated external reason.
+- Do not treat a suppression as automatically deletable. It is a `REFACTOR`
+  candidate with a named cause, or a `TOOL` comment with the tool named.
+- Do not delete a comment's constraint silently. Offer the type, test, or ADR
+  that encodes it first.

@@ -5,11 +5,6 @@ import { profileFrame } from "./profile-geometry.js";
 import { sectionLayout } from "./section-drawing.js";
 import { type SectionId, type ZoneRange, sectionFacts } from "./sections.js";
 
-/**
- * Shared setup for the hull-plan tests: one parse of the drawing content and the derived reference ship,
- * its compile, and the plan/profile frames. Importing tests share one object; keep this file free of tests
- * (the name deliberately avoids the `.test.` infix so the runner does not pick it up).
- */
 export const content = loadDrawingBoardContent();
 export const reference = content.references[0]!;
 export const hullForm = content.hullForms.find((f) => f.id === reference.draft.hull.hullFormId)!;

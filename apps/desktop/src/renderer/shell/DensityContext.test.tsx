@@ -49,7 +49,6 @@ describe("density", () => {
     await waitFor(() => expect(stub.writes).toHaveLength(1));
     expect(stub.writes[0]?.app.interfaceDensity).toBe("compact");
     expect(stub.current().app.interfaceDensity).toBe("compact");
-    // The legacy localStorage key is no longer written.
     expect(localStorage.getItem("bluewave-density")).toBeNull();
   });
 

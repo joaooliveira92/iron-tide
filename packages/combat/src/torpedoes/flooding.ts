@@ -1,27 +1,3 @@
-// DESIGN-40 §18 progressive-flooding CREATION (INC-6, AC-16). A damaging
-// underwater hit creates zero or more FloodingSource records; each source
-// carries the computed torpedo rate:
-//   floodingRateKgMin = floor(baseBreachRate * seaPressureMultiplierBp *
-//     hullDamageMultiplierBp * compartmentMultiplierBp * isolationMultiplierBp
-//     / 10_000^4)
-// with the shipped isolation multipliers INTACT 5_000 / DEGRADED 10_000 /
-// FAILED 15_000. The baseBreachRate is derived from the hull-breach area with
-// the authored BALANCE TARGET rate constant (damageConstants.ts);
-// sea-pressure / hull-damage / compartment multipliers are caller-supplied
-// integer bp values (neutral 10_000 when the layout layer has no deeper model
-// — never a silent skip). A computed rate of 0 kg/min creates NO source (a
-// sealed/tiny breach contributes nothing). Per-minute RESOLUTION (ticking the
-// source against the ship) is C-5's increment — this module is creation-only,
-// exactly as the seam verdict records.
-//
-// The §21 severe tube-hit extra source is also created here: ONE additional
-// source at the shipped rate multiplier 15_000 bp over the ongoing progressive
-// rate, cause UNDERWATER_TUBE_SEVERE_FLOODING (owned by the tube-hazard
-// slice).
-//
-// The created records re-enter the B-4 state surface unchanged (the
-// FloodingSourceRecord shape from damage/state.ts — same-package import, no
-// re-implementation). Pure/deterministic: no I/O/clock/random.
 import { BluewaveError } from "@bluewave/contracts";
 import type { FloodingSourceRecord } from "../damage/state.js";
 import {
@@ -52,9 +28,6 @@ function isInt(v: unknown): v is number {
   return typeof v === "number" && Number.isInteger(v) && Number.isSafeInteger(v);
 }
 
-// AC-16: the §18 baseBreachRate from the hull-breach area (integer m²) — the
-// authored breach-rate constant; an area of 0 m² yields a 0 base rate (hence
-// no source is created downstream).
 export function computeBaseBreachRateKgMin(hullBreachAreaM2: number): number {
   if (!isInt(hullBreachAreaM2) || hullBreachAreaM2 < 0)
     invariant(
@@ -65,12 +38,8 @@ export function computeBaseBreachRateKgMin(hullBreachAreaM2: number): number {
   return Math.floor(hullBreachAreaM2 * TORPEDO_BASE_BREACH_RATE_KG_MIN_PER_M2);
 }
 
-// AC-16: the exact §18 rate formula. Isolation may be passed as the canonical
-// state (the shipped table is authoritative) or as a raw integer bp; the three
-// untabled factors default to the neutral 10_000 bp (callers supply refined
-// values).
 export function computeTorpedoFloodingRateKgMin(o: {
-  baseBreachRateKgMin: number; // integer, non-negative
+  baseBreachRateKgMin: number;
   seaPressureMultiplierBp?: number;
   hullDamageMultiplierBp?: number;
   compartmentMultiplierBp?: number;
@@ -114,16 +83,10 @@ export function computeTorpedoFloodingRateKgMin(o: {
     BigInt(o.baseBreachRateKgMin) * BigInt(sea) * BigInt(hull) * BigInt(comp) * BigInt(isol);
   const denominator =
     BigInt(TORPEDO_BASIS_POINTS_PER_UNIT) ** BigInt(TORPEDO_FLOODING_SCALE_EXPONENT);
-  const raw = Number(numerator / denominator); // bigint division floors
+  const raw = Number(numerator / denominator);
   return Math.max(0, raw);
 }
 
-// AC-16: creation — zero or more FloodingSource records, one per compartment
-// input, each carrying the computed §18 rate and the cause
-// TORPEDO_PROGRESSIVE_FLOODING_CREATED. A compartment whose computed rate is
-// 0 contributes NO source. The result is an immutable (frozen) list in the
-// caller's compartment order (§28 source ordering is the engine's INC-7
-// seam). Creation-only: nothing ticks the source forward.
 export function resolveTorpedoFloodingCreation(o: {
   compartments: readonly {
     compartmentId: string;
@@ -149,7 +112,7 @@ export function resolveTorpedoFloodingCreation(o: {
       isolationState: c.isolationState,
       isolationMultiplierBp: c.isolationMultiplierBp,
     });
-    if (rateKgMin <= 0) continue; // no source for a sealed/zero-rate breach
+    if (rateKgMin <= 0) continue;
     sources.push(
       Object.freeze({
         compartmentId: c.compartmentId,
@@ -161,9 +124,6 @@ export function resolveTorpedoFloodingCreation(o: {
   return Object.freeze(sources);
 }
 
-// §21 severe-tube-flood extra source — creation-only: ONE additional source at
-// the shipped rate multiplier (15_000 bp) over the ongoing progressive rate,
-// carrying the AZ code UNDERWATER_TUBE_SEVERE_FLOODING.
 export function createSevereTubeFloodingSource(o: {
   compartmentId: string;
   baseProgressiveRateKgMin: number;

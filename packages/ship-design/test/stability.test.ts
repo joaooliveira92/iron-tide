@@ -17,7 +17,6 @@ const zones: ZoneDef[] = ZONE_IDS.map((id, i) => ({
   volumeBp: [500, 1400, 1100, 2800, 1200, 1100, 1000, 700, 200][i]!,
   deckAreaBp: [1200, 900, 900, 1500, 1500, 900, 900, 1500, 700][i]!,
 }));
-// Buoyancy share per zone follows zone length (MISSION carries none).
 const buoy = [800, 1000, 1000, 2400, 1200, 1200, 1400, 1000, 0].map((v) => v);
 const bal: StabilityBalance = {
   kbBp: 5_300,
@@ -51,7 +50,6 @@ const item = (
   zoneId: WeightItem["zoneId"],
 ): WeightItem => ({ label, kg, zMm, stationPermille: st, zoneId });
 
-// Evenly distributed ship matching the buoyancy shares exactly.
 const even = (zMul = 1): WeightItem[] =>
   ZONE_IDS.filter((z) => z !== "MISSION").map((z, i) =>
     item(

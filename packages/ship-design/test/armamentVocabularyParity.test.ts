@@ -1,8 +1,3 @@
-// Preserved from the deleted `armamentAdapter.test.ts` (ship-part-model ticket 15): it guards a
-// cross-package invariant of the canonical vocabularies, not any adapter behaviour. The adapter
-// that motivated the pairing is gone, but `@bluewave/armament` must keep the same closed
-// source-status/confidence/provenance vocabularies as the national-profile model until the
-// armament and part models converge (ticket 17).
 import { describe, expect, it } from "vite-plus/test";
 import {
   ARMAMENT_CONFIDENCE_LEVELS,

@@ -1,12 +1,3 @@
-/**
- * ADR-0094 — behavioral properties of the corrected armament-to-combat caliber contract.
- *
- * Bounded matrix / property tests over the live auto-resolution penetration path
- * (`shellPenetrationUm` + `effectiveResistanceUm` + `determinePenetrationOutcome` and the
- * `synthesizeImpact` damage seam). These prove the correction is monotone, integer-exact,
- * deterministic, mutation-free and free of nation-id conditionals; they do NOT assert historical
- * penetration accuracy (the ADR-0021 linear model is retained unchanged).
- */
 import { describe, it, expect } from "vite-plus/test";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -28,7 +19,6 @@ import { makeGunneryHitRecord } from "./damage-hit.js";
 
 const V = SHELL_MUZZLE_VELOCITY_MS;
 
-// Ordinal strength of each outcome (higher = more penetrating). Used to prove monotonicity.
 const OUTCOME_RANK: Record<PenetrationOutcome, number> = {
   NO_EFFECT: 0,
   DUD: 0,
@@ -103,7 +93,7 @@ describe("ADR-0094: penetrating vs non-penetrating consequences", () => {
   const salvo = makeGunneryHitRecord({ batteryId: "a1:MAIN", targetContactId: "b1:d1" });
 
   const impactFor = (caliberUm: number, beltUm: number) => {
-    const zone = autoZonesForBelt(beltUm)[0]!; // BELT
+    const zone = autoZonesForBelt(beltUm)[0]!;
     return synthesizeImpact({
       salvo,
       targetShipId: "d1",

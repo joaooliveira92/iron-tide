@@ -167,7 +167,6 @@ describe("DrawingBoard", () => {
     expect(within(list).getAllByRole("listitem").length).toBeGreaterThan(0);
     expect(list.textContent).toMatch(/blocking \d+ → \d+/);
     fireEvent.click(within(list).getAllByRole("button", { name: /apply/i })[0]!);
-    // the suggestion list belongs to the old design and disappears
     expect(within(validation).queryByRole("list", { name: /suggested fixes/i })).toBeNull();
     expect(within(validation).getByRole("status").textContent).toMatch(/\d+ blocking/);
   });
@@ -184,7 +183,6 @@ describe("DrawingBoard", () => {
     expect(list.textContent).toContain("development metric");
     commit(/installed power/i, "3400");
     fireEvent.click(within(items[0]!).getByRole("button", { name: /load design/i }));
-    // the working design has an edit, so loading a candidate asks first
     fireEvent.click(await screen.findByRole("button", { name: "Replace my design" }));
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
     expect(within(region("Validation")).getByRole("status").textContent).toContain(
@@ -192,7 +190,7 @@ describe("DrawingBoard", () => {
     );
     expect((screen.getByRole("button", { name: /undo/i }) as HTMLButtonElement).disabled).toBe(
       true,
-    ); // history reset
+    );
   }, 40_000);
 
   it("adds a component from the grouped menu and removes it", async () => {
@@ -269,14 +267,11 @@ describe("DrawingBoard", () => {
       within(region("Cost and construction forecast")).getByText("Build time").nextElementSibling!
         .textContent!;
     render(<DrawingBoard />);
-    // ticket 22 sourced the low (330 t) displacement point and the 1886 era point, so the default hull is no longer provisional
     expect(text()).toContain("historical build time");
     expect(text()).not.toMatch(/provisional/i);
-    // A keel laid 1887-1894 is still bracketed by the 1890 era point, a derived (SECONDARY) class mean.
     chooseOption("Starting design", "Torpedo cruiser (1880, CL)");
     chooseOption("Technology as of", "1890-01");
     expect(text()).toMatch(/historical build time.*provisional/);
-    // A Majestic-size 1895 hull is bracketed by VERIFIED displacement and era points.
     chooseOption("Starting design", "Majestic-like battleship (1895)");
     chooseOption("Technology as of", "1895-06");
     expect(text()).toContain("historical build time");

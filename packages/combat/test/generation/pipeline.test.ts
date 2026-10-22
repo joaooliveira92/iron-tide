@@ -38,12 +38,10 @@ describe("BattleGenerator / generateBattles (AC-12 / INC-5)", () => {
     expect(manifest.manifestHash).toBeTruthy();
     expect(manifest.battleSeed).toBeTruthy();
     expect(manifest.sides.map((s) => s.sideId)).toEqual(["ATTACKER", "DEFENDER"]);
-    // Real composition: co-located ships are gathered, CORE-assigned, and reserved.
     expect(manifest.persistentAssets.length).toBeGreaterThan(0);
     expect(manifest.persistentAssets.length).toBeLessThanOrEqual(5);
     expect(result.records[0]!.recordHash).toBeTruthy();
     expect(result.records[0]!.reservations).toEqual(manifest.persistentAssets);
-    // At least the mandatory CORE assets were selected for each side.
     const mandatory = result.records[0]!.mandatorySelections;
     expect(mandatory.length).toBeGreaterThanOrEqual(1);
   });
@@ -75,18 +73,12 @@ describe("BattleGenerator / generateBattles (AC-12 / INC-5)", () => {
 
   it("rejected (limit-exceeded) opportunities are excluded without seed", () => {
     const result = generateBattles(inputs(defaultTwoNationFixture()));
-    // 2 opportunities in one area; the monthly limit rejects the second.
     expect(result.rejections.length).toBeGreaterThanOrEqual(1);
   });
 
-  // docs/rules/battle-generation.md §6.1/§10: the strength floor applies PER SIDE
-  // ("minimum eligible combat strength of 300 points per side"). The pipeline used
-  // to sum BOTH sides' assets and test that total against each side's floor, so a
-  // weak side was carried by a strong opponent.
   describe("strength floor is enforced per side (rules §6.1, §10)", () => {
     const strengthBySide = (attacker: number, defender: number) => ({
       ...inputs(defaultTwoNationFixture()),
-      // GBR ships are the attacker, FRA the defender in the fixture war.
       resolveStrength: (shipId: string) => (shipId.startsWith("gb_") ? attacker : defender),
     });
 

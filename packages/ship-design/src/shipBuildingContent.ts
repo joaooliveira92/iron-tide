@@ -36,28 +36,18 @@ import {
 } from "./partCompatibility.js";
 import { rebuildDraft } from "./partCatalogueReaders.js";
 
-// Re-exported so the desktop main process can type a reference design's provenance without importing the
-// content-schema package directly (its content loaders must not pull in the schema; a main-process test pins that).
 export type { ReferenceDesignProvenance, ReferenceValueProvenance } from "@bluewave/content-schema";
 
-/** A raw reference-design entry as authored in `reference-designs.yaml` (its `starterFor` is optional). */
 export interface RawReferenceDesign {
   readonly id: string;
   readonly name: string;
   readonly month: string;
   readonly starterFor?: string;
-  /**
-   * True when the design reconstructs a documented real ship (ticket 39); carried
-   * through from content so the Drawing Board and the AI can tell a historical
-   * reconstruction from a doctrine template without reading YAML comments.
-   */
   readonly historical?: boolean;
-  /** Machine-readable provenance of every reconstructed fact (historical designs only, ticket 39). */
   readonly provenance?: ReferenceDesignProvenance;
   readonly draft: DesignDraft;
 }
 
-/** Parsed (not yet interpreted) ship-building data: the YAML files of content/production/<scenario>/ship-building. */
 export interface ShipBuildingData {
   readonly components: readonly ComponentDef[];
   readonly plants: readonly PropulsionPlant[];
@@ -68,56 +58,32 @@ export interface ShipBuildingData {
     readonly construction: ConstructionBalance;
     readonly cve: CveBalance;
     readonly ai?: Readonly<Record<ArchetypeId, ArchetypeSpec>>;
-    /** Revision-tier thresholds (spec 15.4); absent in older packs, in which case revisions are refused. */
     readonly revision?: RevisionBalance;
-    /** Retained-hull limits of a rebuild (DESIGN-23 section 21); absent in older packs, in which case rebuilds are refused. */
     readonly rebuild?: RebuildBalance;
-    /** Design studies (DESIGN-21 sections 3 and 18, ADR-0085); absent in older packs, in which case designs need no study. */
     readonly study?: StudyBalance;
     readonly environment: {
       readonly threats: readonly ThreatProfile[];
       readonly facilities: readonly Facility[];
-      /** Work micro-units per month per line per tonne of a yard's maxDisplacement (ADR-0067 section 6). */
       readonly yardWorkPerTonneMonth: number;
       readonly kgPerHitPoint: number;
-      /** Micro-pounds per treasury unit (campaign treasury and project work are counted in these units). */
       readonly treasuryUnitMicro: number;
     };
   };
-  /** Technology id and the year it becomes available, from the scenario's technology list. */
   readonly technologies: readonly { readonly id: string; readonly year: number }[];
-  /** National naval profiles (optional): when present, a nation's catalogue and capabilities are derived from them. */
   readonly navalProfiles?: readonly NationNavalProfile[];
-  /** First-class armament content (optional, ADR-0093 Step 3): drives authoritative weapon resolution. */
   readonly armament?: AuthoredArmamentContent;
-  /** Reference designs (optional): the starter designs the AI may base a procurement candidate on. */
   readonly referenceDesigns?: readonly RawReferenceDesign[];
-  /**
-   * The compiled part model and the authoritative reference-design loadouts
-   * (ship-part-model ticket 11d). When both are present, reference designs are
-   * rebuilt from their loadouts — the parts are authoritative and the legacy
-   * `referenceDesigns` array is the harness baseline only.
-   */
   readonly partModel?: CompiledPartModel;
   readonly designLoadouts?: readonly ReferenceDesignLoadoutData[];
-  /**
-   * The values of the optional S-5 ruleset section (ADR-0242), when the pack authors one. Absent = dormant: the
-   * context carries no colonial fitting rule and a fitting is recorded but costs nothing.
-   */
   readonly presence?: PresenceRuleValues;
 }
 
-/**
- * The decoded values of the optional S-5 ruleset section (ADR-0242, ADR-0247). The design compile reads only the colonial
- * fitting; the presence measurement reads the rest through `ShipBuildingContent.presence`.
- */
 export interface PresenceRuleValues {
   readonly colonialServiceDisplacementBp: number;
   readonly requiredTonsPerPossessionWeight: number;
   readonly noPortValueWeight: number;
   readonly crampedOrShortRangeCountBp: number;
   readonly penaltyRequests?: true;
-  /** The optional base-limit block (spec #73 R10, ADR-0250); absent = base limits dormant. */
   readonly baseLimits?: {
     readonly limitByBaseLevel: readonly number[];
     readonly noBaseLimit: number;
@@ -133,49 +99,26 @@ export interface PresenceRuleValues {
   };
 }
 
-/** Everything a caller needs, built once. `environmentFor(month)` is pure: same data and month, same environment. */
 export interface ShipBuildingContent {
   readonly components: readonly ComponentDef[];
   readonly plants: readonly PropulsionPlant[];
   readonly hullForms: readonly HullFormRecord[];
-  /** `environmentFor(month)` is nation-neutral; passing a nationId derives that nation's catalogue and capabilities. */
   readonly environmentFor: (month: string, nationId?: string) => WorkshopEnvironment;
-  /** Ruleset constant for the engine projection (displacement per hit point). */
   readonly kgPerHitPoint: number;
-  /** Micro-pounds per treasury unit, to turn the cost model's pounds into the engine's units. */
   readonly treasuryUnitMicro: number;
   readonly aiEnvironmentFor: (month: string, nationId?: string) => AiEnvironment;
-  /** Revision-tier thresholds, or null when the pack has none. */
   readonly revision: RevisionBalance | null;
-  /** The S-5 ruleset section's values when the pack authors one; absent = dormant (ADR-0247). */
   readonly presence?: PresenceRuleValues;
-  /** Retained-hull limits of a rebuild, or null when the pack has none. */
   readonly rebuild: RebuildBalance | null;
-  /** Design-study rules, or null when the pack has none (designs are then approved without a study). */
   readonly study: StudyBalance | null;
-  /** National naval profiles, or empty when the pack has none. */
   readonly navalProfiles: readonly NationNavalProfile[];
-  /** First-class armament content, or null when the pack has none (the compatibility path). */
   readonly armament: AuthoredArmamentContent | null;
-  /** The profile active for a nation at a month, or null. */
   readonly navalProfileFor: (nationId: string, month: string) => NationNavalProfile | null;
-  /** Starter designs (a reference design with a `starterFor`), for AI procurement candidate generation. */
   readonly starterDesigns: readonly StarterDesign[];
-  /**
-   * The compiled part model, when the pack carries parts content (ticket 13b). Callers that build a
-   * design's torpedo mounts into the neutral compiled record (combat reads it) resolve the torpedo
-   * part from `partIndex.byId`; a parts-less pack leaves it absent and combat fails closed.
-   */
   readonly partModel?: CompiledPartModel;
-  /**
-   * The forward-adapter content for the production parts barrier (ticket 17a), present when the
-   * pack carries first-class armament. A player draft is compiled through the parts, never the
-   * legacy catalogue, from exactly the content this pack validated.
-   */
   readonly draftCompileContent?: DraftCompileContent;
 }
 
-/** Technology is available once its year has begun; month ids are YYYY-MM. */
 export function unlockedTechIds(
   techs: ShipBuildingData["technologies"],
   month: string,
@@ -184,12 +127,6 @@ export function unlockedTechIds(
   return new Set(techs.filter((t) => t.year <= year).map((t) => t.id));
 }
 
-/**
- * Rebuild the authoritative reference designs from their parts loadouts (ticket 11d). The
- * inverse readers reconstruct each legacy `DesignDraft` from the part model, so the catalogues
- * and the AI read exactly the activated parts content. A loadout that cannot rebuild is a
- * content error, never a silently dropped design.
- */
 export function referenceDesignsFromLoadouts(
   loadouts: readonly ReferenceDesignLoadoutData[],
   model: CompiledPartModel,
@@ -200,9 +137,6 @@ export function referenceDesignsFromLoadouts(
     slotTemplates: model.slotTemplates,
     platforms: model.platforms,
   });
-  // Ticket 39: the loadout carries only the mechanical facts (a `historical`/`provenance`
-  // passthrough would duplicate it). The authored catalogue entry is the source for those
-  // metadata fields, joined back by id so the read path is not a dead end.
   const authoredById = new Map((authored ?? []).map((design) => [design.id, design] as const));
   return loadouts.map((loadout) => {
     const slots = platformSlots(production.compatibility, loadout.loadout.platform) ?? [];
@@ -230,7 +164,6 @@ export function referenceDesignsFromLoadouts(
 }
 
 export function buildShipBuildingContent(data: ShipBuildingData): ShipBuildingContent {
-  // A pack that has a study section must have all of it (DERIVED_DESIGN_DISCOUNT_CONTRACT_MISSING otherwise).
   const study = data.balance.study === undefined ? null : checkStudyBalance(data.balance.study);
   if (data.balance.rebuild !== undefined) {
     const problems = checkRebuildBalance(data.balance.rebuild);
@@ -249,14 +182,10 @@ export function buildShipBuildingContent(data: ShipBuildingData): ShipBuildingCo
     data.balance.environment.yardWorkPerTonneMonth,
   );
   const profiles = data.navalProfiles ?? [];
-  // The forward adapter (ticket 17a) reads the same compatibility slots the pack compiled; a pack
-  // without a compiled part model still derives them from its hull forms, as the read path does.
   const compatibility: CompatibilityModel =
     data.partModel !== undefined
       ? { slotTemplates: data.partModel.slotTemplates, platforms: data.partModel.platforms }
       : buildCompatibilitySlots({ hullForms: data.hullForms });
-  // A launcher's bore is the structured diameter of the torpedo it loads; the compiled torpedo
-  // parts are the authority (the codemod read the same model ids).
   const torpedoDiameterUm = (torpedoModelId: string): number | undefined => {
     const part = data.partModel?.partIndex.byId[torpedoModelId];
     if (part === undefined || part.family !== "torpedo") return undefined;
@@ -277,8 +206,6 @@ export function buildShipBuildingContent(data: ShipBuildingData): ShipBuildingCo
             compareCodePoints(a.id, b.id),
           ),
         };
-  // The authoritative source of reference designs is the parts loadouts when the pack carries
-  // them; the legacy `referenceDesigns` array remains the equivalence-harness baseline.
   const referenceDesigns =
     data.partModel !== undefined && data.designLoadouts !== undefined
       ? referenceDesignsFromLoadouts(data.designLoadouts, data.partModel, data.referenceDesigns)
@@ -297,11 +224,7 @@ export function buildShipBuildingContent(data: ShipBuildingData): ShipBuildingCo
       treaty: null,
       balance: ship,
       armamentContent: data.armament ?? null,
-      // Classification, availability and the fit requirements read the compiled ship-type registry
-      // (ADR-0156, ticket 12b) when the pack carries one; a pack without parts content falls back
-      // to the code registry, whose values the 12a regression pins equal.
       ...(data.partModel === undefined ? {} : { shipTypes: data.partModel.partIndex.shipTypes }),
-      // SPM-R18 (ticket 14): a refit evaluates slot acceptance from the parts when the pack carries them.
       ...(data.partModel === undefined ? {} : { partModel: data.partModel }),
       ...(data.presence === undefined
         ? {}

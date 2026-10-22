@@ -28,7 +28,6 @@ import { useBridge } from "./bridge-context.js";
 
 export type PreferencesStatus = "loading" | "ready" | "error";
 
-/** The narrow capability this provider consumes off the preload bridge (D6). */
 interface PreferencesCapability {
   read(): Promise<BridgeResult<PreferencesSnapshot>>;
   write(request: WriteAppPreferencesRequest): Promise<BridgeResult<PreferencesSnapshot>>;
@@ -40,12 +39,6 @@ export interface PreferencesContextValue {
   readonly setApp: (patch: Partial<AppPreferences>) => void;
 }
 
-/**
- * The safe fallback for a tree with no `PreferencesProvider` (bare component
- * tests): the central defaults and a no-op writer. The app tree always wraps the
- * shell in a provider (see `main.tsx`), so the renderer reads one validated
- * source.
- */
 const DEFAULT_CONTEXT_VALUE: PreferencesContextValue = {
   preferences: DEFAULT_APP_PREFERENCES,
   status: "ready",
@@ -54,11 +47,6 @@ const DEFAULT_CONTEXT_VALUE: PreferencesContextValue = {
 
 const PreferencesContext = createContext<PreferencesContextValue>(DEFAULT_CONTEXT_VALUE);
 
-/**
- * Reads the app-scope preferences through the preload capability on mount
- * (defaults while loading) and writes optimistic merges back through it. Imports
- * no `effect` and never touches `localStorage` (ADR-0159/D6).
- */
 export function PreferencesProvider({ children }: { readonly children: ReactNode }) {
   const bridge = useBridge();
   const capability: PreferencesCapability | undefined = bridge?.preferences;
@@ -66,12 +54,8 @@ export function PreferencesProvider({ children }: { readonly children: ReactNode
   const [status, setStatus] = useState<PreferencesStatus>(
     capability === undefined ? "ready" : "loading",
   );
-  // Latest preferences, read synchronously by `setApp` so a merge never races
-  // React's state batching (the write is a side effect, not a reducer).
   const preferencesRef = useRef(preferences);
   preferencesRef.current = preferences;
-  // Monotonic guard: an older in-flight read or write must never clobber a newer
-  // local choice (a fast toggle must not be reverted by a slow earlier response).
   const writeSeqRef = useRef(0);
 
   useEffect(() => {
@@ -119,9 +103,7 @@ export function PreferencesProvider({ children }: { readonly children: ReactNode
             setPreferences(result.value.app);
           }
         })
-        .catch(() => {
-          // A failed write leaves the optimistic value in place for this session.
-        });
+        .catch(() => {});
     },
     [capability],
   );
@@ -138,26 +120,12 @@ export function usePreferences(): PreferencesContextValue {
 }
 
 export interface CurrencyDisplayModeSelection {
-  /** The stored request, never rewritten by a fallback (ADR-0211). */
   readonly requested: CurrencyDisplayMode;
-  /** The derived effective mode (Naval Credits when the request cannot be honoured). */
   readonly effective: CurrencyDisplayMode;
-  /** Present only when the effective mode differs from the request. */
   readonly fallbackReason?: CurrencyFallbackReason;
-  /** Persist a new request through the capability. */
   readonly setRequested: (mode: CurrencyDisplayMode) => void;
 }
 
-/**
- * The currency-display request (stored app-scope, ADR-0211) and the derived
- * effective mode, exposed separately so the UI can show the effective mode
- * truthfully without rewriting the request. The active campaign's nation and
- * year (from the campaign shell) and the validated National Historical source
- * are supplied by the caller; U-3's `computeNationalCurrencyAvailability`
- * derives the availability, so the effective mode and its reason come from real
- * state rather than a static default. With no active campaign the effective mode
- * is Naval Credits and the reason is `noActiveNation`.
- */
 export function useCurrencyDisplayMode(
   context: ActiveCampaignCurrencyContext = {},
   source: NationalCurrencySource = NO_NATIONAL_CURRENCY_CONFIGURATIONS,

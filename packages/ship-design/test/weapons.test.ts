@@ -49,7 +49,6 @@ const funnel: ArcObstacle = {
 describe("compileWeapons", () => {
   it("computes ammunition mass/volume with rounding up", () => {
     const r = compileWeapons([gun()], [], 10_000, bal);
-    // 2*60=120 rounds * 400kg * 1.3 = 62400 kg ; 120*120*1.2 = 17280 L
     expect(r.ammoMassKg).toBe(62_400);
     expect(r.ammoVolumeLitre).toBe(17_280);
   });
@@ -114,10 +113,10 @@ describe("small-bore weapons use grams and millilitres", () => {
       beamArcDeg: 90,
     });
     const r = compileWeapons([maxim], [], 10_000, bal);
-    expect(r.ammoMassKg).toBe(18); // 1000 * 14 g * 1.2143 = 17,000.2 g, rounded up to the next kg
-    expect(r.ammoVolumeLitre).toBe(36); // 1000 * 30 mL * 1.2 = 36 L
-    expect(r.broadsidePortKg).toBe(0); // 14 g salvo rounds to 0 kg but the gun still fires
-    expect(r.sustainedPerMinX100).toBe(Math.floor((14 * 25_000) / 1000)); // grams*rpm*100/1000
+    expect(r.ammoMassKg).toBe(18);
+    expect(r.ammoVolumeLitre).toBe(36);
+    expect(r.broadsidePortKg).toBe(0);
+    expect(r.sustainedPerMinX100).toBe(Math.floor((14 * 25_000) / 1000));
     expect(r.mounts[0]!.countsToBroadside).toBe(true);
   });
 });

@@ -26,12 +26,6 @@ import {
 } from "./preferencesErrors.js";
 import { PREFERENCES_FILENAME, preferencesStoreLayer } from "./preferencesStore.js";
 
-/**
- * `desktopMainLayer()` closes over the real `AppPaths` when it builds its own
- * store (via `Layer.provideMerge`), so an outer `Layer.succeed(AppPaths, fake)`
- * cannot reach it. Compose the real `preferencesStoreLayer()` over a fake
- * `AppPaths` and merge it last, so the bridge resolves the temp-dir-backed store.
- */
 function fakeAppPathsLayer(userDataDir: string): Layer.Layer<AppPaths> {
   const shape: AppPathsShape = {
     supportDir: () => Effect.succeed(join(userDataDir, "support")),
@@ -45,7 +39,6 @@ function fakeAppPathsLayer(userDataDir: string): Layer.Layer<AppPaths> {
   return Layer.succeed(AppPaths, shape);
 }
 
-/** The real preferences IPC composition over a temp app-data directory. */
 function makeRuntime(userDataDir: string): ManagedRuntime.ManagedRuntime<CommandEnv, never> {
   return ManagedRuntime.make(
     Layer.mergeAll(

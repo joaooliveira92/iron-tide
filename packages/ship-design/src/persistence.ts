@@ -9,16 +9,10 @@ import { ARMOUR_REGIONS } from "./armour.js";
 import { ARMOUR_SCHEME_IDS } from "./armourSchemes.js";
 
 export const DESIGN_FILE_FORMAT = "bwdesign";
-/**
- * 2: armour regions follow the manual's nine universal fields (ADR-0232): `TURRET_FACE` is renamed `TURRET` and
- * `BARBETTE` is folded into it; `DECK_EXTENDED`, `TURRET_TOP` and `SECONDARY_GUN` are new (absent = not fitted).
- */
 export const DESIGN_SCHEMA_VERSION = 2;
 
 export class PersistenceError extends Error {
-  /** Stable discriminator (RULES.md "Errors"): recover by `_tag`, not `instanceof`. */
   readonly _tag = "PersistenceError";
-  /** `_tag`-based narrowing without `instanceof`. */
   static is(value: unknown): value is PersistenceError {
     return (
       typeof value === "object" &&
@@ -42,7 +36,6 @@ export class PersistenceError extends Error {
   }
 }
 
-/** Every persisted number is an integer (money, mass, bp...). A float anywhere is corruption. */
 export function assertNoFloats(value: unknown, path = "$"): void {
   if (typeof value === "number") {
     if (!Number.isSafeInteger(value))
@@ -60,7 +53,6 @@ export interface DesignFile {
   readonly format: typeof DESIGN_FILE_FORMAT;
   readonly schemaVersion: number;
   readonly draft: DesignDraft;
-  /** Hash of each component definition the draft uses, to detect content drift on import. */
   readonly componentHashes: Readonly<Record<string, string>>;
   readonly compiledHash: string | null;
 }
@@ -68,7 +60,6 @@ export interface DesignFile {
 const isObj = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === "object" && !Array.isArray(v);
 
-/** Structural validation of the parts of a draft the compiler indexes into. Returns problems; empty = ok. */
 export function validateDraftShape(raw: unknown): string[] {
   const p: string[] = [];
   if (!isObj(raw)) return ["draft is not an object"];
@@ -189,12 +180,6 @@ type RawRegion = Record<string, unknown>;
 const LEGACY_TURRET_REGIONS: ReadonlySet<unknown> = new Set(["TURRET_FACE", "BARBETTE"]);
 const numOr0 = (v: unknown): number => (typeof v === "number" ? v : 0);
 
-/**
- * v1 -> v2 armour fold: the legacy turret face and barbette become the single `TURRET` region. A lone source is
- * renamed. Both: length, height and thickness take the per-field maximum; material and incline come together from
- * the thicker source (equal thickness: the lexicographically smaller material id). The result takes the first
- * source's position. Pure; non-legacy regions pass through untouched.
- */
 export function foldLegacyTurretRegions(regions: readonly unknown[]): unknown[] {
   const legacy = regions.filter(
     (r): r is RawRegion => isObj(r) && LEGACY_TURRET_REGIONS.has(r.region),
@@ -232,7 +217,6 @@ function foldDraftArmour(draft: unknown): unknown {
   };
 }
 
-/** Built-in forward migrations, keyed by the version they upgrade from. Caller-supplied migrations may extend them. */
 const BUILT_IN_MIGRATIONS: Readonly<Record<number, Migration>> = {
   1: (raw) => ({ ...raw, schemaVersion: 2, draft: foldDraftArmour(raw.draft) }),
 };
@@ -241,12 +225,10 @@ export interface DecodedDesign {
   readonly draft: DesignDraft;
   readonly schemaVersion: number;
   readonly migratedFrom: number | null;
-  /** Component ids whose definition changed or vanished since the file was written. A recompile is required. */
   readonly contentDrift: readonly string[];
   readonly compiledHash: string | null;
 }
 
-/** Forward-only migrations; unknown future versions are an error, never a silent downgrade. */
 export function decodeDesignFile(
   text: string,
   catalogue: readonly ComponentDef[],
@@ -295,7 +277,6 @@ export function decodeDesignFile(
   };
 }
 
-/** Recomputes the hash of a compiled design and compares it with the stored one. */
 export function verifyCompiledHash(c: CompiledDesign): boolean {
   const { hash, ...body } = c;
   return sha256Hex(canonicalSerialize(withoutSubjects(body))) === hash;
@@ -315,13 +296,9 @@ export function decodeCompiled(text: string): CompiledDesign {
   return c;
 }
 
-// ---- Undo / redo edit log --------------------------------------------------------------------
-
 export interface EditLog {
-  /** The draft the log starts from (after compaction, the oldest retained state). */
   readonly base: DesignDraft;
   readonly edits: readonly DraftEdit[];
-  /** Number of edits currently applied (0..edits.length). */
   readonly cursor: number;
 }
 
@@ -333,7 +310,6 @@ export function currentDraft(log: EditLog): DesignDraft {
   return d;
 }
 
-/** A new edit discards any redo tail. The edit is validated by applying it now (throws EditError if it references nothing). */
 export function pushEdit(log: EditLog, e: DraftEdit, cap = 500): EditLog {
   applyEdit(currentDraft(log), e);
   const next: EditLog = {
@@ -350,7 +326,6 @@ export const redo = (log: EditLog): EditLog =>
 export const canUndo = (log: EditLog) => log.cursor > 0;
 export const canRedo = (log: EditLog) => log.cursor < log.edits.length;
 
-/** Folds the oldest edits into the base so at most `cap` remain; the current draft is unchanged. */
 export function compact(log: EditLog, cap: number): EditLog {
   const drop = Math.max(0, Math.min(log.cursor, log.edits.length - cap));
   let base = log.base;
@@ -358,10 +333,6 @@ export function compact(log: EditLog, cap: number): EditLog {
   return { base, edits: log.edits.slice(drop), cursor: log.cursor - drop };
 }
 
-/**
- * v1 -> v2 log: edits that name `BARBETTE`/`TURRET_FACE` cannot be replayed against the folded region, so the v1
- * history is replayed to the cursor and folded; the log restarts from that draft (undo history is not carried over).
- */
 function migrateLogV1(rawLog: Record<string, unknown>): EditLog {
   const edits = Array.isArray(rawLog.edits) ? (rawLog.edits as DraftEdit[]) : [];
   const cursor = rawLog.cursor;

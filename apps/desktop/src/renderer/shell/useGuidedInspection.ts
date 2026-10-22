@@ -81,10 +81,8 @@ export function useGuidedInspection(
       } else if (stored.status === "not_started") {
         setInspection(stored);
         setStepIndex(0);
-        // Auto-open only on not_started per spec
         setVisible(shouldAutoOpen(stored));
       } else {
-        // in_progress — resume from lastCompletedStep + 1
         setInspection(stored);
         setStepIndex(resumeStepIndex(stored));
         setVisible(true);
@@ -102,19 +100,15 @@ export function useGuidedInspection(
       const current = inspection ?? emptyInspection();
       const next = nextInspectionState(current, currentIndex);
       const isLast = currentIndex >= GUIDED_STEP_COUNT - 1;
-      // If completing on last step, hide immediately
       if (isLast) {
         const persisted = await writeInspection(bridge, sessionId, next);
         setInspection(persisted ?? next);
         setVisible(false);
         return;
       }
-      // Otherwise advance to next step and persist lastCompletedStep
       const persisted = await writeInspection(bridge, sessionId, next);
       setInspection(persisted ?? next);
       setStepIndex(currentIndex + 1);
-      // Spec §17: autosave is the writeUiState itself (renderer-owned sidecar, not authoritative)
-      // No additional saveCampaign needed.
     },
     [bridge, sessionId, inspection],
   );

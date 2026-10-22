@@ -1,6 +1,3 @@
-// AC-24 (INC-8): the FULL `*_v1` contracts rollup. Every required policy id
-// exists with its SHIPPED_*_CONTRACT + validate guard; validateAllMineContracts()
-// passes on the shipped set; any tampering fails the rollup.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -114,9 +111,6 @@ describe("AC-24: full *_v1 contracts rollup (INC-8)", () => {
   });
 
   it("tampering ANY one shipped contract makes the rollup gate fail", () => {
-    // validateAllMineContracts() runs EVERY entry's guard against its shipped
-    // contract AND a tampered copy (policy id) — so a tampered shipped surface
-    // can never pass the rollup. Prove the mirror directly:
     const guards: Array<{ shipped: object; validate: (c: object) => void }> = [
       {
         shipped: SHIPPED_MINE_TYPE_DEFINITIONS_CONTRACT,
@@ -148,11 +142,8 @@ describe("AC-24: full *_v1 contracts rollup (INC-8)", () => {
       },
     ];
     for (const { shipped, validate } of guards) {
-      // the un-tampered shipped surface passes
       expect(() => validate(shipped)).not.toThrow();
-      // the SAME surface with a tampered policy id fails the guard
       expect(() => validate({ ...shipped, policyId: "tampered" })).toThrow(BluewaveError);
-      // a null/missing contract fails too
       expect(() => validate(null as unknown as object)).toThrow(BluewaveError);
     }
   });

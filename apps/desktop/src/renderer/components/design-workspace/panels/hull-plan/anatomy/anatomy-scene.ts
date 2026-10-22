@@ -15,10 +15,6 @@ export type FunnelMetric = PlanModel["placedFunnels"][number] & {
   readonly rake: number;
 };
 
-/**
- * The shared geometry of one ship plate: hull dimensions, station curves, deckhouse and funnel layout, the fitted
- * projection, and the collections each drawing module appends its parts, anchors and facts to.
- */
 export interface AnatomyShipScene {
   readonly draft: DesignDraft;
   readonly model: AnatomyInput["model"];
@@ -78,7 +74,6 @@ export interface AnatomyShipScene {
   readonly regionOf: (region: string) => DesignDraft["armour"]["regions"][number] | undefined;
   readonly compiled: ReadonlyMap<string, WorkshopView["compiled"]["components"][number]>;
   readonly visual: ReadonlyMap<string, PlanModel["visualMounts"][number]>;
-  /** Placements already drawn by an earlier module, so the fitting pass skips them. */
   readonly drawn: Set<string>;
 }
 
@@ -212,8 +207,6 @@ export function createAnatomyShipScene(input: AnatomyInput): AnatomyShipScene {
     radius: anchorRad,
   });
 
-  // How far a level's outline reaches past the waterline ends: the stem rakes forward at the deck and falls
-  // back at the forefoot, and the stern overhangs by its style. Positive reaches go outboard along x.
   const bowRake = model.frame.bow === "plumb" ? 0.008 : model.frame.bow === "spoon" ? 0.03 : 0.014;
   const sternRake =
     model.frame.stern === "counter" ? 0.034 : model.frame.stern === "round" ? 0.026 : 0.01;
@@ -232,7 +225,6 @@ export function createAnatomyShipScene(input: AnatomyInput): AnatomyShipScene {
       const t = step / steps;
       points.push([stemX(t), halfAt(t) * scale, zOf(t)]);
     }
-    // The stern closes in a rounded arc, so a counter or round stern is no longer a flat cut-off.
     const half = halfAt(1) * scale;
     const arc = 6;
     for (let step = 1; step < arc; step++) {

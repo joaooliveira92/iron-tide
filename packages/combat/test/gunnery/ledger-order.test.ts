@@ -69,14 +69,12 @@ describe("AC-9 gunnery events via BattleLedger + canonicalEventOrder (INC-4)", (
     const events = out.events as BattleEvent[];
     expect(events.length).toBe(2);
 
-    // Insert in REVERSE order (simulating a DB/UI that returned them scrambled).
     const ledger = new BattleLedger();
     for (const e of [...events].reverse()) ledger.append(e);
 
     const sorted = ledger.sorted();
     expect(sorted[0]!.actorId).toBe("BAT-A");
     expect(sorted[1]!.actorId).toBe("BAT-B");
-    // all canonically sorted
     expect(sorted).toEqual([...sorted].sort(canonicalEventOrder));
     for (const e of sorted) {
       expect(e.eventType).toBe("gunnery_salvo");
@@ -102,13 +100,11 @@ describe("AC-9 gunnery events via BattleLedger + canonicalEventOrder (INC-4)", (
       expect(e.battleId).toBe(BATTLE_ID);
       expect(e.minute).toBe(1);
       expect(e.substep).toBe(2);
-      // canonically ordered within the minute's full event list
     }
     expect(minute.events).toEqual([...minute.events].sort(canonicalEventOrder));
   });
 });
 
-// --- local builder for a B-2-style TacticalBattleState with a pre-seeded contact ---
 function unit(id: string, sideId: "ATTACKER" | "DEFENDER", className: string): TacticalShipUnit {
   return {
     assetId: id,

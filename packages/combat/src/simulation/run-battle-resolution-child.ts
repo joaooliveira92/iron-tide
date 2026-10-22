@@ -1,9 +1,3 @@
-// Deterministic child-process script for the B-6 battle auto-resolution
-// orchestrator. Spawned TWICE by test/battle-resolution/determinism.test.ts and
-// byte-compared (AC-10: two-process OS-independence genuinely exercised).
-// Uses only fixed inputs; the sole randomness is the domain-separated keyed
-// streams derived from the battle seed (derived from the fixed campaign seed) —
-// no ambient clock/random/env/fs order.
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
 import type { CompiledTorpedo } from "@bluewave/armament";
@@ -16,8 +10,6 @@ import type { AutoResolverNation } from "../battleResolution/project.js";
 const ATTACKER = "n-uk";
 const DEFENDER = "n-fr";
 
-// The 14-inch Whitehead resolved at its effective (latest, 1884-01) revision — the retired
-// combat constants reproduced as the neutral contract (27 kg warhead).
 const WHITEHEAD_14IN: CompiledTorpedo = {
   partId: "whitehead_14in_1886",
   revision: "1884-01",
@@ -159,8 +151,6 @@ const input: ResolveBattleAutoInput = {
   rngVersion: "rng_v1",
 };
 
-// P-1 AC-8: the same battle with 1880-scale, torpedo-armed ironclads (ADR-0046) —
-// launches/hits and hashes must be byte-identical across processes.
 function armedIronclads(designs: Map<string, CompiledDesignVersion>) {
   return new Map(
     [...designs].map(([id, d]) => [

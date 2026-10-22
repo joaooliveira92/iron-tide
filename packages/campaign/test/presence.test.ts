@@ -9,7 +9,6 @@ import { buildWorldState } from "../src/worldCompilation.js";
 import { presenceAreaIds } from "../src/presence.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
-// S-5 02 (#76, spec #73 R3/R13): presence areas are the distinct areas of a nation's currently owned possessions.
 const CONTENT = resolve(import.meta.dirname, "../../../content/production/1880");
 const load = (file: string): Record<string, unknown>[] =>
   parse(readFileSync(resolve(CONTENT, file), "utf8")) as Record<string, unknown>[];
@@ -43,7 +42,6 @@ describe("presenceAreaIds", () => {
 
   it("changes when a possession changes hands", () => {
     const ceded = possessions.map((p) => (p.id === "p3" ? { ...p, nationId: "france" } : p));
-    // p2 still holds Malta for the UK: the area stays until the last possession there is gone.
     expect(presenceAreaIds(ceded, "uk")).toEqual(["eng_home_coast", "med_malta"]);
     const both = ceded.map((p) => (p.id === "p2" ? { ...p, nationId: "france" } : p));
     expect(presenceAreaIds(both, "uk")).toEqual(["eng_home_coast"]);

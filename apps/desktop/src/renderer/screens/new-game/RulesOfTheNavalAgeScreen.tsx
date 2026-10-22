@@ -34,9 +34,6 @@ export function RulesOfTheNavalAgeScreen({
   const { state, options, preferences, ready, activePreset, setPreference, selectPreset } =
     useNavalAgePreferences(recommendedPreset);
 
-  // The preset the player has previewed but not applied. The primary action
-  // applies it, unless a setting is edited by hand first: a hand edit takes
-  // precedence, so a previewed card never overwrites it.
   const [pendingPresetId, setPendingPresetId] = useState<PresetId | null>(null);
 
   const handlePreferenceChange = useCallback(
@@ -65,9 +62,6 @@ export function RulesOfTheNavalAgeScreen({
     [setPreference],
   );
 
-  // Which deck card is previewed. Presentation state only, and never the draft:
-  // until the player moves focus it simply shows the applied preset (or the
-  // first card while the settings are Custom); moving focus overrides it.
   const [focusOverride, setFocusOverride] = useState<number | null>(null);
   const appliedIndex = PRESET_DEFINITIONS.findIndex((preset) => preset.id === activePreset);
   const focusedIndex = focusOverride ?? Math.max(0, appliedIndex);

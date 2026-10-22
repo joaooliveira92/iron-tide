@@ -8,15 +8,12 @@ import {
   GUNNERY_ACCURACY_FINAL_MAX_BP,
 } from "../../src/gunnery/index.js";
 
-const HIT_DRAW_MAX = GUNNERY_ACCURACY_FINAL_MAX_BP - 1; // 9_999
+const HIT_DRAW_MAX = GUNNERY_ACCURACY_FINAL_MAX_BP - 1;
 
 describe("AC-4 hit-check draw semantics (DESIGN-39 §3, INC-2)", () => {
   it("succeeds exactly when draw < finalAccuracyBp", () => {
-    // boundary: draw == finalAccuracyBp is a MISS.
     expect(isHit(5_000, 5_000)).toBe(false);
-    // draw == finalAccuracyBp - 1 is a HIT.
     expect(isHit(5_000, 4_999)).toBe(true);
-    // below and above
     expect(isHit(5_000, 0)).toBe(true);
     expect(isHit(5_000, 9_999)).toBe(false);
   });

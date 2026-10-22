@@ -8,17 +8,11 @@ import type {
   TacticalBattleOutcome,
 } from "@bluewave/campaign-engine";
 
-/**
- * The simulation screen's single source of truth. Every entry point folds its
- * result through `reduceSimulationScreen`, so loading flags, revision adoption,
- * and battle-output resets stay in one place rather than scattered setters.
- */
 export interface SimulationScreenState {
   readonly loading: boolean;
   readonly error: string | null;
   readonly activeTab: string;
   readonly revision: number;
-  /** The session's player nation id, captured from the projection; never guessed from side order. */
   readonly playerNationId: string | null;
   readonly submarinePools: readonly SubmarinePool[];
   readonly minePressure: readonly MinePressure[];

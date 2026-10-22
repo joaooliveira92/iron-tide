@@ -42,11 +42,6 @@ import { validateStationAssignment } from "./stationAssignmentValidation.js";
 import type { LifecycleStepResult } from "./types.js";
 import { rejectValidation } from "./validation.js";
 
-/**
- * Issue-time payload rules for every command type, dispatched on `body.type`.
- * Envelope-level checks (version, expected snapshot hash) stay in
- * `CommandLifecycle.validate`; this function owns the per-command rules only.
- */
 export function validatePayloadRules(
   envelope: CommandEnvelope<CommandBody>,
   snapshot: CampaignSnapshot,
@@ -130,14 +125,8 @@ export function validatePayloadRules(
 
 const DOCKYARD_STATUS_TRANSITION_REJECTION = "INVALID_DOCKYARD_PROJECT_TRANSITION";
 const DOCKYARD_PROJECT_REJECTION = "INVALID_DOCKYARD_PROJECT";
-/** DESIGN-16 section 13.4: a foreign-contract project is funded by its instalment schedule, not by domestic commands. */
 const FOREIGN_CONTRACT_FUNDED_BY_SCHEDULE = "FOREIGN_CONTRACT_FUNDED_BY_SCHEDULE";
 
-/**
- * Issue-time rules for `HaltConstruction` / `ResumeConstruction` (DESIGN-23 section 7): the project must exist, belong
- * to the issuing nation, and not be terminal; the requested status move must be legal in the one shared transition
- * table. A same-status halt/resume is a no-op and is accepted.
- */
 function validateDockyardStatusCommand(
   envelope: CommandEnvelope<CommandBody>,
   snapshot: CampaignSnapshot,
@@ -182,13 +171,6 @@ function validateDockyardStatusCommand(
 
 const ACCELERATION_NOT_ALLOWED = "ACCELERATION_NOT_ALLOWED";
 
-/**
- * Issue-time rules for `SetAcceleration` (DESIGN-23 section 8; DESIGN-13 section 11.3): the project must exist, belong
- * to the issuing nation, allow its type to be accelerated, and be `ACTIVE` or already `ACCELERATED`. Only
- * `ACTIVE` <-> `ACCELERATED` is legal, so a terminal, halted, delayed, awaiting-capacity or impounded project is
- * refused with a stable code before anything is charged. The one-time premium is applied when the month runs the
- * command, never at issue time.
- */
 function validateSetAcceleration(
   envelope: CommandEnvelope<CommandBody>,
   snapshot: CampaignSnapshot,
@@ -233,12 +215,6 @@ const CONSTRUCTION_BATCH_MIN_QUANTITY = 1;
 const CONSTRUCTION_BATCH_MAX_QUANTITY = 12;
 const CONSTRUCTION_BATCH_LIMIT_EXCEEDED = "CONSTRUCTION_BATCH_LIMIT_EXCEEDED";
 
-/**
- * Issue-time rules for `CancelConstructionProject` (DESIGN-23 section 23; DESIGN-11 settlement contract): the project
- * must exist, belong to the issuing nation, and not be terminal; a cancelled project receives no further work. A
- * foreign-contract project's cancellation is a contract outcome (DESIGN-16), so it is refused here with the same stable
- * reason the other domestic construction commands use. The settlement itself is applied when the month runs the command.
- */
 function validateCancelConstructionProject(
   envelope: CommandEnvelope<CommandBody>,
   snapshot: CampaignSnapshot,
@@ -267,12 +243,6 @@ function validateCancelConstructionProject(
   return { ok: true };
 }
 
-/**
- * Issue-time rules for `OrderConstruction` (DESIGN-23 sections 3-5, SB3-R11..R14): the nation must exist, the design
- * must exist in the compiled snapshot and belong to that nation, and the quantity must be an integer in `1..12`. The
- * full authorization policy (revalidation, auxiliary limits, dock ceiling, national concurrency cap, batch reservation)
- * is the engine-side `placeConstructionBatch`, applied when the month runs the command.
- */
 function validateOrderConstruction(
   envelope: CommandEnvelope<CommandBody>,
   snapshot: CampaignSnapshot,
@@ -303,11 +273,6 @@ function validateOrderConstruction(
   return { ok: true };
 }
 
-/**
- * Issue-time rules for `AuthorizeDockExpansion` (DESIGN-16 sections 5-6, SB3-R16): the nation must exist and the
- * possession id must be a non-empty string. The applicable era step and duration are resolved by the engine-side
- * `authorizeDockExpansion` at apply time (a month with no era step fails with `NO_ERA_STEP`).
- */
 function validateAuthorizeDockExpansion(
   envelope: CommandEnvelope<CommandBody>,
   snapshot: CampaignSnapshot,
@@ -324,13 +289,6 @@ function validateAuthorizeDockExpansion(
   return { ok: true };
 }
 
-/**
- * Issue-time rules for `OrderForeignConstruction` (DESIGN-16 sections 13.1-13.4; SB3-R20..R22): the ordering nation and
- * the design must exist and belong together, the builder must be a distinct real nation, and `quantity` must be an
- * integer in 1..12. The engine derives the contract `terms` and `capability` from authoritative content; the complete
- * gate, the builder-capability predicates and the capacity admission are the engine's `placeForeignConstructionOrder`,
- * applied when the month runs the command.
- */
 function validateOrderForeignConstruction(
   envelope: CommandEnvelope<CommandBody>,
   snapshot: CampaignSnapshot,
@@ -450,8 +408,6 @@ function validateSetBudgetAllocation(
       "INVALID_COMMAND_PAYLOAD",
       `researchBudget must be an integer in ${String(RESEARCH_BUDGET_MIN)}..${String(RESEARCH_BUDGET_MAX)}`,
     );
-  // Spec #138: the standing spend may not exceed 12% of the monthly revenue at the commanded rate, so an unpayable budget
-  // is refused here, at issue time, with the cap in the message. The engine enforces the same rule when it applies it.
   const cap = researchCap(
     monthlyRevenue(snapshot.nations.get(body.nationId)!.baseResources, body.appropriationRateBp),
   ) as number;

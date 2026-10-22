@@ -1,6 +1,3 @@
-// SB3-R18/R19 (DESIGN-16 sections 7-9): the compiled capacity utilisation readout splits the non-exempt mass that
-// competes with the cap from the exempt AMC/small-corvette share layered outside it. Every number is derived — never
-// authored by a UI.
 import type { CampaignSnapshot, ConstructionProject } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { HULL_TYPE_FOR_SHIP_TYPE } from "@bluewave/ship-design";
@@ -59,7 +56,6 @@ const capacity = (
 ): NationalConstructionCapacity =>
   nationalConstructionCapacity(content.environmentFor(MONTH_ID).constructionBalance, dockMaxMassKg);
 
-/** Content whose construction balance is overridden, so the exemption split can be exercised directly. */
 function withCapacityBalance(overrides: { amcCapacityExemptionBp?: number }) {
   const base = profileContent;
   return {
@@ -73,24 +69,19 @@ function withCapacityBalance(overrides: { amcCapacityExemptionBp?: number }) {
 
 describe("constructionCapacityUtilization (SB3-R18/R19)", () => {
   it("splits committed normal-pool mass from the exempt AMC share", () => {
-    // The shipped AMC exemption is 80%: a 10,000,000 kg AMC reserves 2,000,000 normal and leaves 8,000,000 exempt.
     const snap = snapshot(
       [
         design("dv-amc", HULL_TYPE_FOR_SHIP_TYPE.AMC, 10_000_000),
         design("dv-b", "pre_dreadnought", 5_000_000),
       ],
       [
-        // The stored reservation (1,500,000) deliberately differs from the design-derived AMC reservation
-        // (2,000,000), so the committed share proves it reads the STORED value while the exempt share recomputes.
         project("con-amc", "dv-amc", { newConstructionReservedMassKg: 1_500_000 }),
         project("con-b", "dv-b", { newConstructionReservedMassKg: 5_000_000 }),
       ],
     );
     const util = constructionCapacityUtilization(snap, "uk", capacity());
     expect(util.maxConcurrentMassKg).toBe(capacity().maxConcurrentMassKg);
-    // 1,500,000 (stored AMC reservation) + 5,000,000 (ordinary) compete with the cap.
     expect(util.committedMassKg).toBe(6_500_000);
-    // 8,000,000 (AMC exempt share) sits outside it.
     expect(util.exemptMassKg).toBe(8_000_000);
   });
 
@@ -146,8 +137,6 @@ describe("constructionCapacityUtilization (SB3-R18/R19)", () => {
   });
 
   it("never counts a foreign-contract project against the ordering nation's shares", () => {
-    // A foreign project is built and funded by its builder (DESIGN-16 section 13.3); its displacement must not appear
-    // in the ordering nation's exemption readout even though its status is `NEW_CONSTRUCTION`.
     const snap = snapshot(
       [design("dv-amc", HULL_TYPE_FOR_SHIP_TYPE.AMC, 10_000_000)],
       [

@@ -19,8 +19,6 @@ import { nationalContext, shipTypes } from "./helpers/earlyContext.js";
 
 const report = runEquivalence();
 
-// `scripts/verify-equivalence-determinism.mjs` runs this file in fresh processes and compares
-// the hash in the test title below, so byte-identity is proven across processes.
 const reportSha = sha256Hex(serializeEquivalenceReport(report));
 
 const withDesign = (
@@ -54,9 +52,6 @@ describe("equivalence harness over current content (ticket 08)", () => {
   });
 
   it("reads the compiled ship-type registry from content, so the report is not vacuous (ticket 12b)", () => {
-    // The report only exercises the content-sourced classification/availability/fit paths if the
-    // harness context carries `shipTypes`. If threading is dropped, every read silently falls back
-    // to the code registry and the P3 report stops covering the change.
     expect(shipTypes).toHaveLength(14);
     expect(nationalContext("1880-01", "uk").shipTypes).toEqual(shipTypes);
   });
@@ -101,10 +96,6 @@ describe("equivalence harness over current content (ticket 08)", () => {
   });
 
   it("keeps data quality separate with independent armament, magazine and waiver counts", () => {
-    // Three independent counts, verified 2026-10-14 (ticket 11c): 162 unresolved armament or
-    // gun placements, zero unresolved FIT_MAGAZINE_* relationships, zero applied waivers.
-    // Earlier reporting labelled the 162 as magazine relationships; that was wrong, and this
-    // test pins each count separately so the classification cannot drift behind a zero-diff.
     expect(report.dataQuality.unresolvedGunPlacements).toHaveLength(162);
     expect(
       report.dataQuality.unresolvedGunPlacements.every(

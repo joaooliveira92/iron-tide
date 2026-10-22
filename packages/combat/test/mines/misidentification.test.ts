@@ -1,11 +1,3 @@
-// AC-14 (INC-6): Mine/Torpedo misidentification classifier (§20). Exact base
-// weights (mine 6_000, torpedo 3_000, unknown 1_000) + exact modifiers (hostile
-// mine pressure +2_000→mine; observed torpedo track +5_000→torpedo; no submarine
-// contact -1_000→torpedo floor 0; port/choke-point +1_000→mine), weights never
-// negative, normalized + selected via the keyed stream
-// `mine_warfare/report/underwater_explosion` (exact literal), recorded
-// RandomDecision for audit, and the FALSE-TORPEDO guarantee: a TORPEDO_ATTACK
-// classification is knowledge-state only (never a real submarine asset/attack).
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import { RandomEngine, RandomLedger } from "@bluewave/random";
@@ -39,10 +31,6 @@ function ctx(overrides: Partial<UnderwaterExplosionContext> = {}): UnderwaterExp
   };
 }
 
-// Deterministic seed search: returns the first master seed in [0, limit) whose
-// classifier (single draw) lands on the requested label under `base` context.
-// Used so the false-torpedo / band tests run against a REAL TORPEDO_ATTACK draw
-// without any hardcoded seed — still fully deterministic/reproducible.
 function firstSeedFor(
   label: string,
   overrides: Partial<UnderwaterExplosionContext>,
@@ -90,7 +78,7 @@ describe("AC-14: misidentification classifier (INC-6, §20)", () => {
       ctx({ noSubmarineContact: true, portOrChokePointLocation: true }),
     );
     expect(w.exactWeights.MINE_STRIKE).toBe(7_000);
-    expect(w.exactWeights.TORPEDO_ATTACK).toBe(2_000); // 3_000 - 1_000 (floor 0, never negative)
+    expect(w.exactWeights.TORPEDO_ATTACK).toBe(2_000);
     expect(w.exactWeights.UNDERWATER_EXPLOSION_UNKNOWN).toBe(1_000);
   });
 
@@ -113,7 +101,6 @@ describe("AC-14: misidentification classifier (INC-6, §20)", () => {
             }
             expect(w.total).toBeGreaterThan(0);
           }
-    // normalized share always sums to exactly 10_000 basis points
     const normW = computeUnderwaterExplosionWeights(
       ctx({ knownHostileMinePressure: true, observedTorpedoTrack: true }),
     );
@@ -139,7 +126,6 @@ describe("AC-14: misidentification classifier (INC-6, §20)", () => {
     expect(d.draw).toBeGreaterThanOrEqual(0);
     expect(d.draw).toBeLessThan(result.total);
     expect(d.outcome).toBe(result.classification);
-    // with shipped bases every label keeps positive weight → the guess is never certain
     expect(d.reasonCode).toBe(MINE_REPORT_CAUSE_UNCERTAIN);
     expect(result.decision).toEqual(d);
   });
@@ -160,7 +146,7 @@ describe("AC-14: misidentification classifier (INC-6, §20)", () => {
     );
     expect(flagged.multipleSimultaneousExplosionsRecognizedUnimplemented).toBe(true);
     expect(base.multipleSimultaneousExplosionsRecognizedUnimplemented).toBe(false);
-    expect(flagged.exactWeights).toEqual(base.exactWeights); // NO weight applied
+    expect(flagged.exactWeights).toEqual(base.exactWeights);
     expect(flagged.total).toBe(base.total);
     expect(UNDERWATER_EXPLOSION_MODIFIER_KEYS).toContain("multipleSimultaneousExplosions");
   });
@@ -232,7 +218,6 @@ describe("AC-14: misidentification classifier (INC-6, §20)", () => {
 
   it("FALSE-TORPEDO SAFETY: a TORPEDO_ATTACK classification is knowledge-state only — never a real asset/attack", () => {
     expect(torpedoClassificationIsKnowledgeOnly()).toBe(true);
-    // Find a real TORPEDO_ATTACK draw and prove the output carries no asset/attack.
     const torpedoSeed = firstSeedFor(TORPEDO_ATTACK, { observedTorpedoTrack: true });
     const result = classifyUnderwaterExplosion(
       ctx({ observedTorpedoTrack: true }),
@@ -244,11 +229,10 @@ describe("AC-14: misidentification classifier (INC-6, §20)", () => {
     expect(keys).not.toContain("attack");
     expect(keys).not.toContain("torpedoId");
     expect(keys).not.toContain("submarineId");
-    expect(result.classification).toBe(TORPEDO_ATTACK); // label only
+    expect(result.classification).toBe(TORPEDO_ATTACK);
   });
 
   it("classification is always one of the three §20 labels (never undefined)", () => {
-    // Deterministic probes across several seeds + the hostile-pressure context.
     for (const seed of ["p1", "p2", "p3", "p4", "p5", "p6"]) {
       const r = classifyUnderwaterExplosion(
         ctx({ knownHostileMinePressure: true }),

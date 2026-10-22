@@ -5,26 +5,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui
 import type { LocalTab } from "../design-sections.js";
 
 export interface InspectorProps {
-  /** The active section's name, e.g. "Armament". */
   readonly title: string;
-  /** Where the player is, e.g. "Armament / Main battery / A". */
   readonly breadcrumb: readonly string[];
-  /** The section's local tabs: sibling concepts in one flat row, never nested. */
   readonly tabs: readonly LocalTab[];
   readonly tab: string;
   readonly onTab: (tab: string) => void;
-  /** Whether the pane is folded down to its restore strip. */
   readonly collapsed?: boolean;
-  /** Folds the pane away, or restores it. */
   readonly onToggleCollapsed?: () => void;
-  /** The active tab's content. */
   readonly children: ReactNode;
 }
 
-/** The shortcut that folds and restores the inspector, advertised on both toggles. */
 const TOGGLE_SHORTCUT = "Meta+B Control+B";
 
-/** The right inspector: the active section's local tabs, and the active tab's editors scrolling in their own pane. */
 export function Inspector({
   title,
   breadcrumb,

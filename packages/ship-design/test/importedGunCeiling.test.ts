@@ -1,11 +1,3 @@
-/**
- * ADR-0114: the domestic gun-calibre ceiling and the largest obtainable imported calibre are separate.
- *
- * Before this change `hardCapabilities.maxGunCaliberUm` was enforced as an absolute cap for every family
- * (componentVariants.ts), so a nation could not obtain an imported gun above its domestic ceiling without
- * inflating that one field. These tests pin the split: an IMPORTED family may reach the import ceiling, a
- * DOMESTIC family is still capped by the domestic ceiling, and no domestic ceiling is widened.
- */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
@@ -42,7 +34,6 @@ const validationCtx = {
 const MONTH = "1880-01";
 const base = navalProfiles.find((p) => p.nationId === "netherlands")!;
 
-/** A copy of the Netherlands profile with a small domestic ceiling and a chosen import ceiling. */
 function profileWith(
   domesticUm: number,
   importedUm: number | undefined,
@@ -66,7 +57,6 @@ const idsIn = (p: NationNavalProfile): string[] =>
   catalogueForNation(components, p, MONTH).catalogue.map((c) => c.id);
 
 describe("domestic vs imported gun ceiling (ADR-0114)", () => {
-  // The 279 mm Armstrong RML is the Netherlands' imported main gun; 203 mm is the domestic ceiling.
   const access = {
     gun_rml_11in_25ton: imported("Armstrong"),
     gun_rml_8in_9ton: imported("Krupp"),
@@ -80,7 +70,6 @@ describe("domestic vs imported gun ceiling (ADR-0114)", () => {
 
   it("admits an imported family above the domestic ceiling up to the import ceiling", () => {
     const ids = idsIn(profileWith(203000, 305000, access));
-    // This is the behavior the split adds; it fails against the pre-ADR-0114 single-ceiling logic.
     expect(ids).toContain("gun_rml_11in_25ton");
     expect(ids).toContain("gun_rml_8in_9ton");
   });

@@ -7,7 +7,6 @@ interface DossierFieldRowProps {
   value: ReactNode;
 }
 
-/** Fixed label column, so every row's value starts at the same x across a section. */
 function DossierFieldRow({ label, value }: DossierFieldRowProps): JSX.Element {
   return (
     <div className="grid grid-cols-[7.5rem_1fr] items-baseline gap-x-3 border-t border-admiralty-border/40 py-2 first:border-t-0 first:pt-0 last:pb-0">
@@ -19,7 +18,6 @@ function DossierFieldRow({ label, value }: DossierFieldRowProps): JSX.Element {
   );
 }
 
-/** Five pips plus the figure itself; the pips are decoration, the text carries the value. */
 function DifficultyValue({ difficulty }: { difficulty: number }): JSX.Element {
   return (
     <span className="inline-flex items-center gap-2">
@@ -46,11 +44,6 @@ export interface DossierTabs {
   readonly diplomacy: ReactNode;
 }
 
-/**
- * Composes the nation's authored flavor paragraphs and dossier fields (both
- * compiled into the presentation corpus and served over the content IPC) into
- * the existing three-section accordion (spec §1) — no 4th section.
- */
 export function buildDossierTabs(
   countryId: PlayableSlotCountryId,
   flavor: PresentationFlavorDto,

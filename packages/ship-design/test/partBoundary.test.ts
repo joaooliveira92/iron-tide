@@ -118,7 +118,6 @@ describe("hull zones to compatibility slots", () => {
     id,
     zones: zones.map((z) => ({ id: z })),
   });
-  /** Guns (03), launchers (04), machinery, sensors and ship-system fittings (05). */
   const ZONE_INTERFACES = [
     "gun_mount",
     "torpedo_launcher",

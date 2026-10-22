@@ -73,7 +73,6 @@ const loads = (extra: Partial<Record<(typeof LEDGER_CATEGORIES)[number], number>
 
 describe("hull physics", () => {
   it("F-H1 buoyant displacement matches hand calculation", () => {
-    // 70*8.4*2.6*0.45*1.025 t = 705.159 t
     expect(buoyantDisplacement(hull, balance)).toBe(705_159);
   });
   it("F-H2 hull weight is monotone in length and positive", () => {

@@ -1,11 +1,6 @@
 import { translate, type MessageKey } from "../lib/strings.js";
 import type { CampaignScreen } from "./campaign-screen-registry.js";
 
-/**
- * How the sidebar groups the campaign screens (spec N-2): by the job the player is doing, not by
- * the order screens were built. The map is exhaustive on `CampaignScreen`, so adding a screen
- * without deciding where it lives is a compile error — the sidebar can never silently drop one.
- */
 export type SidebarSectionId =
   | "admiralty"
   | "operations"
@@ -53,11 +48,6 @@ export interface SidebarSection<Item extends { readonly id: CampaignScreen }> {
   readonly items: readonly Item[];
 }
 
-/**
- * The registered screens grouped into non-empty sections, in the fixed section order. Within a
- * section, screens keep their registry order. Sections with no registered screen (for example
- * "Developer" in a release build) are omitted.
- */
 export function buildSidebarSections<Item extends { readonly id: CampaignScreen }>(
   screens: readonly Item[],
 ): SidebarSection<Item>[] {

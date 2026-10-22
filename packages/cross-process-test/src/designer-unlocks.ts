@@ -3,11 +3,6 @@ import { lifecycleStatus, shiftMonth, unlockedTechIds } from "@bluewave/ship-des
 
 import type { ProgressionLedger } from "./progression-ledger.js";
 
-/**
- * N-3 named unlocks (spec #47 R3): the plan's named progression points, read
- * from content and checked against the designer's month-based availability.
- * The ids only select records; the dates always come from the compiled pack.
- */
 export type NamedUnlockKind = "part" | "technology";
 
 export interface NamedUnlock {
@@ -75,7 +70,6 @@ function designerAvailable(
   return part !== undefined && lifecycleStatus(part.lifecycle, month) === "AVAILABLE";
 }
 
-/** Each named unlock's ledger date beside the designer's own availability month. */
 export function inspectNamedUnlocks(
   bundle: CompiledContentBundle,
   ledger: ProgressionLedger,
@@ -106,11 +100,6 @@ export function inspectNamedUnlocks(
   });
 }
 
-/**
- * Fail when the ledger and the designer disagree about an unlock's month, or
- * when the unlock is not unavailable-before/available-at its declared date.
- * The diagnostic names the id and both months.
- */
 export function assertNamedUnlocks(bundle: CompiledContentBundle, ledger: ProgressionLedger): void {
   for (const state of inspectNamedUnlocks(bundle, ledger)) {
     const { unlock, ledgerMonth, designerMonth, beforeMonth, availableBefore, availableAt } = state;

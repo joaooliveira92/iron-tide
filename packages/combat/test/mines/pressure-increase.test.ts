@@ -1,8 +1,3 @@
-// AC-5 (INC-2): DESIGN-35 §5 mine-pressure increase / reinforcement.
-// addedPressure = min(1_000_000 - currentPressure, effectiveLayingValue);
-// saturation at 1_000_000 blocks further addition until decay/sweep; a
-// reinforcement updates source composition + freshness through the §5 weighted
-// integer law (never resets all pressure to full freshness); hash recomputed.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import {
@@ -91,9 +86,6 @@ describe("AC-5: addedPressure = min(1_000_000 - currentPressure, effectiveLaying
 });
 
 describe("AC-5: reinforcePressureRecord — weighted-integer freshness law (§5)", () => {
-  // (older 400_000 * 5_000 + added 100_000 * 10_000) / 500_000 = 6_000 bp —
-  // the old member keeps its own (decayed) freshness; the addition enters at
-  // full freshness. The result is strictly below full 10_000: never a reset.
   it("mixed reinforcement lands at the exact weighted freshness 6_000", () => {
     const before = recordWith(400_000, 5_000);
     const after = reinforcePressureRecord(before, SafeInt(100_000), "port_soroka", SafeInt(40), [
@@ -108,7 +100,6 @@ describe("AC-5: reinforcePressureRecord — weighted-integer freshness law (§5)
     const after = reinforcePressureRecord(before, SafeInt(10_000), "port_soroka", SafeInt(41), [
       "u002",
     ]);
-    // (100_000 * 2_000 + 10_000 * 10_000) / 110_000 = 300_000_000 / 110_000 = 2727.27… -> 2_727
     expect(after.freshnessBp).toBe(SafeInt(2_727));
     expect(after.freshnessBp).toBeGreaterThanOrEqual(before.freshnessBp);
     expect(after.freshnessBp).toBeLessThanOrEqual(SafeInt(MINE_FULL_FRESHNESS_BP));
@@ -219,9 +210,6 @@ describe("AC-5: reinforcePressureRecord — pressure, composition, months, hash"
   });
 
   it("a tampered record below the §1 pressure band fails the post-condition guard", () => {
-    // A record whose pressure is out of the §1 band (here negative, e.g. from a
-    // forged/internally-inconsistent input) must throw INVALID_MINE_PRESSURE_STATE
-    // — never silently proceed.
     const forged: AreaMinePressureRecord = {
       ...validRecord(),
       pressure: SafeInt(-1_000),

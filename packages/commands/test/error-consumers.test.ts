@@ -1,8 +1,3 @@
-// Regression tests for the migrated CommandError throws: a real consumer that
-// catches the throw and reads `error.code` / `error.message` must observe
-// exactly what it did before the plain-`Error` → `Data.TaggedError` conversion
-// (MIG-WIRE-3, MIG-RUNTIME-1). These drive the public command APIs only.
-
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import {

@@ -1,7 +1,3 @@
-// The in-memory campaign-session registry as a service (INC-3; ADR-0159). The
-// process-local session + construction-workspace state (no persistence of its
-// own — the authoritative record is the `SaveStore` package) is resolved through
-// the Layer rather than by importing the module-level Maps.
 import { Context, Effect, Layer } from "effect";
 import {
   getCampaignSession,

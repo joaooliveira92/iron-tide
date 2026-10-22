@@ -15,15 +15,6 @@ import {
 } from "@bluewave/ship-design";
 import { schemeDiagram, type SchemeDiagram } from "./scheme-diagram.js";
 
-/**
- * The Protection section's armour view model. Pure: it groups the design's armour regions spatially and turns each
- * one into the readouts the editor shows (thickness, coverage, weight, protected area, effectiveness), plus the
- * inputs the editor needs to edit them (the region object, the default material, the hull sizing). Nothing here
- * edits the design, and every value comes from the draft or the compile — never invented. Values the model does not
- * carry are named in `notes` rather than faked.
- */
-
-/** The spatial groups the armour layout is read in, in the order the editor shows them. */
 export const PROTECTION_GROUPS = [
   { id: "belt", label: "Belt" },
   { id: "deck", label: "Deck" },
@@ -33,11 +24,6 @@ export const PROTECTION_GROUPS = [
 ] as const;
 export type ProtectionGroupId = (typeof PROTECTION_GROUPS)[number]["id"];
 
-/**
- * Each region's display label and spatial group. A presentation convention: the model has no grouping of its own.
- * Splinter plating sits with the belt (it is hull side plating, not armament); the magazine box sits with the
- * underwater group as the brief lists magazine protection there.
- */
 const REGION_META: {
   readonly [K in ArmourRegionId]: { readonly label: string; readonly group: ProtectionGroupId };
 } = {
@@ -57,7 +43,6 @@ const REGION_META: {
   TORPEDO_BELT: { label: "Torpedo belt", group: "underwater" },
 };
 
-/** cos(30 degrees) in bp: the "inclined" setting. A flat-on plate is 10_000. */
 const INCLINED_COS_BP = 8_660;
 const FLAT_COS_BP = 10_000;
 
@@ -71,7 +56,6 @@ export function protectionGroupOf(region: ArmourRegionId): ProtectionGroupId {
   return REGION_META[region].group;
 }
 
-/** The material choices for a select, one per material, marking the unavailable ones (except the current choice). */
 export function armourMaterialChoices(
   materials: readonly ArmourMaterialOption[],
   current: string,
@@ -86,24 +70,18 @@ export function armourMaterialChoices(
 export interface ProtectionField {
   readonly region: ArmourRegionId;
   readonly label: string;
-  /** The draft region itself, so the editor can edit it without reaching back into the draft. */
   readonly armour: ArmourRegion;
-  /** The region as a fresh one would be sized, so a field can reset to the recommended starting plate. */
   readonly recommended: ArmourRegion;
   readonly thicknessMm: number;
   readonly lengthMm: number;
   readonly heightMm: number;
-  /** Fore-aft extent as a share of the waterline, permille. */
   readonly coveragePermille: number;
   readonly weightKg: number;
-  /** Plate area, m^2. */
   readonly protectedAreaM2: number;
   readonly materialId: string;
   readonly materialLabel: string;
   readonly inclined: boolean;
-  /** Effective thickness against a flat hit, mm: thickness x material effectiveness x cos obliquity. */
   readonly effectiveThicknessMm: number;
-  /** Penetration margin against the design threat, bp; null when the region is not in the compile. */
   readonly marginBp: number | null;
   readonly defeatsDesignThreat: boolean;
 }
@@ -114,13 +92,11 @@ export interface ProtectionGroup {
   readonly fields: readonly ProtectionField[];
 }
 
-/** One armour scheme as the selector shows it. */
 export interface SchemeChoice {
   readonly id: ArmourSchemeId;
   readonly label: string;
   readonly citation: string;
   readonly locked: boolean;
-  /** "Unlocks in 1905" when locked, else null. */
   readonly lockedReason: string | null;
   readonly active: boolean;
   readonly regions: readonly ArmourRegion[];
@@ -137,22 +113,16 @@ export interface ProtectionModel {
   readonly designThreatId: string;
   readonly designThreatLabel: string;
   readonly protectionGoal: "NONE" | "STANDARD";
-  /** The hull and citadel measurements a new region's starting size is taken from. */
   readonly regionSizing: RegionSizing;
-  /** The material a newly added region starts with: the first fitted region's, else the first available. */
   readonly defaultMaterialId: string;
-  /** The named armour schemes, in catalogue order, with their lock state against the calendar year. */
   readonly schemes: readonly SchemeChoice[];
-  /** The scheme the regions were last set from, or "Custom" after any manual region edit. */
   readonly schemeLabel: string;
-  /** Things the model does not yet carry, said plainly rather than faked. */
   readonly notes: readonly string[];
 }
 
 const materialLabel = (m: ArmourMaterialOption | undefined, id: string): string =>
   m === undefined ? words(id) : `${words(m.id)}${m.available ? "" : ` (${m.unavailableReason})`}`;
 
-/** The protection model for a draft: the design's armour regions grouped spatially, with their compiled readouts. */
 export function protectionModel(
   draft: DesignDraft,
   view: WorkshopView,
@@ -245,10 +215,6 @@ export function protectionModel(
 
 export { INCLINED_COS_BP, FLAT_COS_BP };
 
-/**
- * The edit that applies a scheme as one undoable step, or null when the scheme is locked. The regions are the ones the
- * model already computed for it, so the edit is exactly what the selector showed.
- */
 export function schemeEdit(
   model: ProtectionModel,
   id: ArmourSchemeId,

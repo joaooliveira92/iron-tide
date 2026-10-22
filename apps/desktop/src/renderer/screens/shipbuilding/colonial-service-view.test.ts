@@ -1,4 +1,3 @@
-// S-5 04 (spec #73 R4/R12): the designer's colonial-service readout. The proportion below is a FIXTURE-CLASS value.
 import { describe, expect, it } from "vite-plus/test";
 import { buildWorkshopView } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "../../components/design-workspace/index.js";
@@ -9,7 +8,6 @@ const content = loadDrawingBoardContent();
 const ref = content.references[0]!;
 const env = content.environmentFor(ref.month, ref.draft.nationId);
 const fitted = { ...ref.draft, colonialServiceFitted: true };
-// The production pack now authors the section (ADR-0266), so the dormant state is a context without a fitting.
 const { colonialFitting: _live, ...dormantCtx } = env.ctx;
 const dormant = { ...env, ctx: dormantCtx };
 const configured = {

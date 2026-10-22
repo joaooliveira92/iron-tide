@@ -91,13 +91,11 @@ describe("FleetOrganizationView", () => {
     );
     expect(screen.getByText(/No divisions yet/)).toBeTruthy();
     expect(screen.getByText("Create a division")).toBeTruthy();
-    // Flagship choices are grouped by where the ships are.
     const flagship = screen.getByLabelText("Flagship") as HTMLSelectElement;
     expect([...flagship.querySelectorAll("optgroup")].map((g) => g.label)).toEqual([
       "English Home Waters",
       "Malta",
     ]);
-    // The cost of starting is stated up front.
     expect(screen.getByText(/starts at 20 experience and 30 cohesion/)).toBeTruthy();
   });
 
@@ -164,7 +162,6 @@ describe("FleetOrganizationView", () => {
         ],
       }),
     );
-    // The flagship is pinned: it has no drag handle.
     expect(screen.queryByRole("button", { name: "Reorder HMS Alexandra" })).toBeNull();
 
     fireEvent.keyDown(screen.getByRole("button", { name: "Reorder HMS Dreadnought" }), {
@@ -177,7 +174,6 @@ describe("FleetOrganizationView", () => {
       divisionId: "div_1",
       shipOrder: ["alex", "warspite", "dread"],
     });
-    // A second click cannot queue the same order twice.
     expect(
       (screen.getByRole("button", { name: "Reorder queued" }) as HTMLButtonElement).disabled,
     ).toBe(true);

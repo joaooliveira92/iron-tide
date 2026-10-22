@@ -46,8 +46,6 @@ describe("dispatchCampaignCommand", () => {
   it("answers valid Tactical Sandbox commands with DEBUG_ONLY outside a debug build (R4)", async () => {
     for (const [command, payload] of [
       ["generateBattle", { sessionId: "s", warId: "w" }],
-      // `warId` is optional: the Simulation Battle Arena omits it and lets the
-      // command auto-select the player's active war.
       ["generateBattle", { sessionId: "s" }],
       ["resolveBattle", { sessionId: "s", battleId: "b" }],
       [
@@ -349,7 +347,7 @@ describe("dispatchCampaignCommand", () => {
         sessionId: "s",
         expectedRevision: 0,
         transportRequestId: "r",
-        command: { type: "DeclareWar" }, // missing targetNationId
+        command: { type: "DeclareWar" },
       },
       {
         sessionId: "s",
@@ -361,7 +359,7 @@ describe("dispatchCampaignCommand", () => {
         sessionId: "s",
         expectedRevision: 0,
         transportRequestId: "r",
-        command: { type: "DeclareBlockade", targetNationId: "fra" }, // missing areaId
+        command: { type: "DeclareBlockade", targetNationId: "fra" },
       },
     ]) {
       const result = await dispatchCampaignCommand("submitDiplomacyCommand", payload);
@@ -445,30 +443,30 @@ describe("dispatchCampaignCommand", () => {
     const longFingerprint = "f".repeat(257);
     const oversizedArray = Array.from({ length: 65 }, (_, i) => `fp-${i}`);
     for (const payload of [
-      { sessionId: "s" }, // missing dismissedFingerprints
-      { sessionId: "s", dismissedFingerprints: "high" }, // not an array
-      { sessionId: "s", dismissedFingerprints: [123] }, // non-string fingerprint
-      { sessionId: "s", dismissedFingerprints: [longFingerprint] }, // fingerprint > 256 chars
-      { sessionId: "s", dismissedFingerprints: oversizedArray }, // array > 64 entries
+      { sessionId: "s" },
+      { sessionId: "s", dismissedFingerprints: "high" },
+      { sessionId: "s", dismissedFingerprints: [123] },
+      { sessionId: "s", dismissedFingerprints: [longFingerprint] },
+      { sessionId: "s", dismissedFingerprints: oversizedArray },
       {
         sessionId: "s",
         dismissedFingerprints: [],
-        firstMonthInspection: { status: "in_progress" }, // missing lastCompletedStep
+        firstMonthInspection: { status: "in_progress" },
       },
       {
         sessionId: "s",
         dismissedFingerprints: [],
-        firstMonthInspection: { status: "paused", lastCompletedStep: 0 }, // unknown status
+        firstMonthInspection: { status: "paused", lastCompletedStep: 0 },
       },
       {
         sessionId: "s",
         dismissedFingerprints: [],
-        firstMonthInspection: { status: "completed", lastCompletedStep: 7 }, // > 6 steps
+        firstMonthInspection: { status: "completed", lastCompletedStep: 7 },
       },
       {
         sessionId: "s",
         dismissedFingerprints: [],
-        firstMonthInspection: { status: "completed", lastCompletedStep: -1 }, // negative
+        firstMonthInspection: { status: "completed", lastCompletedStep: -1 },
       },
     ]) {
       const result = await dispatchCampaignCommand("writeUiState", payload);

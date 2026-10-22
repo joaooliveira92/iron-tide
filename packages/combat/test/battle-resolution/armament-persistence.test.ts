@@ -1,11 +1,3 @@
-/**
- * ADR-0094 — caliber unit persistence + projection compatibility.
- *
- * The canonical caliber unit (micrometres) is carried unchanged across the armament -> compiled-design ->
- * campaign-persisted -> combat boundary. These tests prove: a first-class `CompiledArmamentMount` snapshot
- * and a legacy design without one project to the SAME canonical micrometre caliber and armour; the legacy
- * compatibility path still projects; and the persisted snapshot is not mutated in place.
- */
 import { describe, it, expect } from "vite-plus/test";
 import type { CompiledArmamentMount } from "@bluewave/armament";
 import { projectBattle } from "../../src/battleResolution/project.js";
@@ -61,13 +53,11 @@ describe("ADR-0094: canonical caliber persistence + projection", () => {
 
     const legacyTarget = legacyOut.damage.targets["a1"]!;
     const firstClassTarget = firstClassOut.damage.targets["a1"]!;
-    // Canonical unit (µm) is identical on both paths; only identity provenance differs.
     expect(legacyTarget.mainGunsCaliberUm).toBe(343_000);
     expect(firstClassTarget.mainGunsCaliberUm).toBe(343_000);
     expect(legacyTarget.beltArmorUm).toBe(305_000);
     expect(firstClassTarget.beltArmorUm).toBe(305_000);
 
-    // Identity: the snapshot surfaces the real gun model; the legacy path stays synthetic.
     const firstBattery = firstClassOut.batteries.find((b) => b.ownerShipId === "a1")!;
     const legacyBattery = legacyOut.batteries.find((b) => b.ownerShipId === "a1")!;
     expect(firstBattery.state.gunDefinitionId).toBe("uk_bl_135in_30_mk1");
@@ -76,7 +66,6 @@ describe("ADR-0094: canonical caliber persistence + projection", () => {
 
   it("keeps a legacy design playable on the compatibility path", () => {
     const out = project(makeNations());
-    // Every promoted ship still gets a battery + a canonical-µm damage target.
     for (const id of ["a1", "a2", "d1", "d2"]) {
       expect(out.batteries.find((b) => b.ownerShipId === id)).toBeDefined();
       expect(out.damage.targets[id]!.mainGunsCaliberUm).toBe(343_000);

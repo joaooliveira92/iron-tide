@@ -4,12 +4,6 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { ResearchFieldRow } from "../research-view-model.js";
 import { FieldPriorityRow } from "./FieldPriorityRow.js";
 
-/**
- * Focused contract test for the extracted field row: it renders one field and
- * owns the INC-5 "5-High cap" affordance, but delegates the draft change to the
- * parent via `onSetWeight`.
- */
-
 afterEach(cleanup);
 
 const field = (over: Partial<ResearchFieldRow> = {}): ResearchFieldRow => ({

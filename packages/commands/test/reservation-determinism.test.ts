@@ -30,9 +30,6 @@ function makeCommand(commandId: string): CommandRecord {
 
 describe("ReservationManager canonical ordering", () => {
   it("orders requirements by UTF-16 codepoint, not host locale (regression: localeCompare)", () => {
-    // "STORE:B" precedes "STORE:a" by codepoint ('B' = 66 < 'a' = 97), but the
-    // 'en' locale orders "a" before "B". The manager must produce the
-    // deterministic order so reservation records never depend on host locale.
     const manager = new ReservationManager();
     manager.registerPool({
       resourceTypeId: "STORE",

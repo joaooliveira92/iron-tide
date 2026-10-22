@@ -8,7 +8,6 @@ export interface AreaInspectorProps {
   readonly onSelect: (area: string | null) => void;
 }
 
-/** The selected-area inspector, floating over the chart. */
 export function AreaInspector({ className, summary, nameFor, onSelect }: AreaInspectorProps) {
   return (
     <div

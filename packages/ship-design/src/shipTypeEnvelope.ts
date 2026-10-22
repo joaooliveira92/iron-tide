@@ -1,24 +1,18 @@
-// The player-facing numeric envelope of a ship type, read from the classification rules.
 import type { ClassificationRules } from "./classification.js";
 import type { ShipTypeId } from "./shipTypes.js";
 import { UM_PER_KNOT } from "./units.js";
 
-/** A closed numeric range for display, in the units named by the field. */
 export interface Range {
   readonly min: number | null;
   readonly max: number | null;
-  /** Whether each bound is itself legal (`>=` / `<=`) or excluded (`>` / `<`). */
   readonly minInclusive: boolean;
   readonly maxInclusive: boolean;
 }
 
 export interface ShipTypeEnvelope {
   readonly displacementKg: Range;
-  /** Designed speed, knots. */
   readonly speedKn: Range;
-  /** Main belt, inches. */
   readonly beltIn: Range;
-  /** Largest main gun, inches. */
   readonly mainGunIn: Range;
 }
 
@@ -32,10 +26,6 @@ const NONE = range(null, null, true, true);
 const inch = (um: number): number => um / 25_400;
 const knots = (ums: number): number => ums / UM_PER_KNOT;
 
-/**
- * The boundaries of a type as the player-facing envelope, read from `ClassificationRules` so the roster, the
- * Brief panel and the validator cannot disagree. Only the opening types carry numeric bounds.
- */
 export function shipTypeEnvelope(id: ShipTypeId, r: ClassificationRules): ShipTypeEnvelope {
   switch (id) {
     case "B":

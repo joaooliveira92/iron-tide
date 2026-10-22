@@ -6,13 +6,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { buildFullSurfaceInput } from "../src/index.js";
 import { PROVENANCE, baseInput, compile, createFixture } from "./partModelFixture.js";
 
-/**
- * The ship part model at the content compile seam (ship-part-model ticket 01). Part,
- * slot-template and platform files are declared in the pack manifest, decoded strictly,
- * and duplicate-id checked. The flatten stage (ticket 02, `partIndex.test.ts`) carries
- * them into the bundle; a pack without them compiles to the same artifact as before.
- */
-
 const GUN_PARTS = `parts:
   - id: bl_12in_25
     family: gun
@@ -55,7 +48,6 @@ const provenance = {
 };
 const lifecycle = { availableFrom: "1880-01" };
 
-/** One minimal part of every family, written as JSON (a YAML subset). */
 const ONE_PER_FAMILY = JSON.stringify({
   parts: [
     {
@@ -194,7 +186,6 @@ describe("ship part collections at the content compile seam", () => {
       expect(a.output?.bundle.shipBuilding?.partModel).toBeDefined();
       expect(b.output?.bundle.shipBuilding).toBeDefined();
       expect(b.output?.bundle.shipBuilding).not.toHaveProperty("partModel");
-      // The content-pack subset hash never covered the ship-building catalogue.
       expect(a.output!.rawHash).toBe(b.output!.rawHash);
     } finally {
       withParts.cleanup();

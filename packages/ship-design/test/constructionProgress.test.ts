@@ -24,7 +24,6 @@ const pk = (
   totalWork: number,
   dependsOn: string[] = [],
 ): WorkPackage => ({ id, kind, line, totalWork, dependsOn });
-/** A small plan with the real package shape and dependencies. */
 const plan: ConstructionPlan = (() => {
   const packages = [
     pk("hull", "HULL", "slipway", 100),
@@ -57,7 +56,6 @@ describe("advanceConstructionMonth", () => {
     const m1 = advanceConstructionMonth(plan, emptyProgress(plan), capacity(1_000), null);
     expect(m1.applied).toEqual({ hull: 100, machinery: 40, armour: 60, ordnance: 30 });
     expect([...m1.completed].sort()).toEqual(["armour", "hull", "machinery", "ordnance"]);
-    // Launch could not start in the same month hull finished: dependencies are read at the month's start.
     expect(m1.progress["launch"]).toBe(0);
   });
 
@@ -72,7 +70,7 @@ describe("advanceConstructionMonth", () => {
     ]);
     const poor = advanceConstructionMonth(plan, emptyProgress(plan), capacity(1_000), 50);
     expect(Object.values(poor.applied).reduce((a, b) => a + b, 0)).toBe(50);
-    expect(poor.applied["hull"]).toBe(50); // contended funds go to packages in canonical order
+    expect(poor.applied["hull"]).toBe(50);
     for (const p of plan.packages) expect(poor.progress[p.id]!).toBeLessThanOrEqual(p.totalWork);
   });
 
@@ -96,7 +94,6 @@ describe("funding one month in several steps", () => {
   it("with the month-start progress as the dependency state, two half-funded steps equal one whole step", () => {
     const start = emptyProgress(plan);
     const whole = advanceConstructionMonth(plan, start, capacity(1_000), null);
-    // Month 1: the first call finishes the hull; the second must not start launch (it depends on hull).
     const first = advanceConstructionMonth(plan, start, capacity(1_000), 100, start);
     const second = advanceConstructionMonth(plan, first.progress, capacity(1_000), null, start);
     expect(second.progress["launch"]).toBe(0);
@@ -171,7 +168,7 @@ describe("progressFromSingleFigure (saves made before per-package progress)", ()
     expect(totalDone(plan, full)).toBe(plan.totalWork);
   });
   it("pours work into the hull first, so a partly built ship reads as hull work only", () => {
-    const part = progressFromSingleFigure(plan, 250, 1_000); // 25% of 315 = 78
+    const part = progressFromSingleFigure(plan, 250, 1_000);
     expect(part["hull"]).toBe(78);
     expect(part["machinery"]).toBe(0);
     const bp = buildProgressOf(plan, part);
@@ -213,7 +210,6 @@ describe("scalePlanToUnits", () => {
       packages: [pk("b", "HULL", "slipway", 1), pk("a", "MACHINERY", "machinery", 1)],
       totalWork: 2,
     };
-    // 3 units over two equal packages: the extra unit goes to "a" (tie broken by id).
     expect(scalePlanToUnits(even, 3).packages.map((p) => [p.id, p.totalWork])).toEqual([
       ["b", 1],
       ["a", 2],
@@ -235,12 +231,12 @@ describe("scalePlanToUnits", () => {
 describe("capacityInUnits", () => {
   const micro = { ...capacity(0), slipway: 1_000, quay: 31, trials: 0 } as Record<LineId, number>;
   it("scales with the same ratio as the plan, at least 1 for a line that has capacity", () => {
-    const units = capacityInUnits(micro, plan, plan.totalWork); // ratio 1
+    const units = capacityInUnits(micro, plan, plan.totalWork);
     expect(units.slipway).toBe(1_000);
     expect(units.quay).toBe(31);
     expect(units.trials).toBe(0);
     const small = capacityInUnits(micro, plan, 3);
-    expect(small.quay).toBe(1); // floor(31 * 3 / 315) = 0, raised to 1
+    expect(small.quay).toBe(1);
     expect(small.trials).toBe(0);
     expect(small.armour_plate).toBe(0);
   });
@@ -250,21 +246,19 @@ describe("capacityInUnits", () => {
 });
 
 describe("packages with no work (a very small ship)", () => {
-  // Scaled to 3 units, "launch" and others round to zero.
   const tiny = scalePlanToUnits(plan, 3);
   const workOf = (id: string) => tiny.packages.find((p) => p.id === id)!.totalWork;
 
   it("a package with no work is complete only once its dependencies are", () => {
     expect(workOf("launch")).toBe(0);
     const start = emptyProgress(tiny);
-    expect(isPackageComplete(tiny, start, "launch")).toBe(false); // hull not built yet
+    expect(isPackageComplete(tiny, start, "launch")).toBe(false);
     const hullDone = { ...start, hull: workOf("hull") };
     expect(isPackageComplete(tiny, hullDone, "launch")).toBe(true);
   });
 
   it("dependents of a zero-work package wait for its dependencies, not for nothing", () => {
     const month = advanceConstructionMonth(tiny, emptyProgress(tiny), capacity(1_000), null);
-    // The hull may be finished this month, but fit-out (after launch, after hull) cannot start in the same month.
     expect(month.progress["fit_out"]).toBe(0);
     let progress: PackageProgress = month.progress;
     let months = 1;

@@ -1,4 +1,3 @@
-// DESIGN-03 §3 + §8
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { FLEET_SIZE_IDS } from "./fleetSize.js";
 import { RESEARCH_IDS } from "./researchSpeed.js";
@@ -31,7 +30,7 @@ export type CampaignConfiguration = {
   legacyFleetModeId: string;
   tacticalRealismModeId: string;
   difficultyProfileId: string;
-  campaignSeed: string; // 32 lower hex = u128
+  campaignSeed: string;
   configurationSchemaVersion: string;
 };
 
@@ -74,7 +73,6 @@ export function validateCampaignConfiguration(cfg: unknown, c: DiagnosticCollect
     }
   }
   if (!ok) return false;
-  // seed is separate code per spec
   if (!validateCampaignSeed(r["campaignSeed"], c)) ok = false;
 
   if (!CANONICAL_SCENARIO_IDS.includes(r["scenarioId"] as any)) {
@@ -115,7 +113,6 @@ export function validateCampaignConfiguration(cfg: unknown, c: DiagnosticCollect
     );
     ok = false;
   }
-  // historicalBudgetOptionId etc must be explicit disabled/not_applicable when not supported - we enforce non-empty already; no inferred defaults
   return ok;
 }
 

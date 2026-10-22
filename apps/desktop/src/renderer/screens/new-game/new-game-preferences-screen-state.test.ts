@@ -106,7 +106,6 @@ describe("new-game-preferences-screen-state", () => {
     );
     expect(loaded.preferences.fleetSize).toBe("standard");
     expect(loaded.preferences.difficulty).toBe("normal");
-    // Non-preset fields still fall back to the first supported value.
     expect(loaded.preferences.scenarioId).toBe("scen_1900");
   });
 });

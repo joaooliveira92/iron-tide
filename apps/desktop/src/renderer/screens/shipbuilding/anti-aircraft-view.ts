@@ -8,16 +8,10 @@ import {
 } from "@bluewave/ship-design";
 import { formatTonnes } from "../../lib/presentation-format/index.js";
 
-/**
- * The Armament "Other" tab's AA readout (manual p.43, ADR-0252). Pure: it reads what the compile decided. The control is
- * offered only once the ruleset makes the fit available for the design date, or while a design already asks for one, so
- * an 1880 design is never shown a feature its era lacks. Battle does not read the fit yet, and the text says so.
- */
 export type AntiAircraftStatus = "empty" | "fitted" | "unavailable";
 
 export interface AntiAircraftModel {
   readonly offered: boolean;
-  /** The counts now on the design (all zero when none). */
   readonly fit: AntiAircraftFit;
   readonly maxDirectors: number;
   readonly status: AntiAircraftStatus;

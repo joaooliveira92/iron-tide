@@ -9,10 +9,6 @@ export type PrioritiesState =
   | { readonly status: "ready"; readonly priorities: readonly StrategicPriority[] }
   | { readonly status: "unavailable" };
 
-/**
- * The engine's strategic priorities for the player, severity-sorted by the engine.
- * Reloads when the campaign revision changes (the month advanced elsewhere).
- */
 export function usePriorities(sessionId: string): PrioritiesState {
   const revision = useCampaignRevision();
   const state = useBridgeQuery(

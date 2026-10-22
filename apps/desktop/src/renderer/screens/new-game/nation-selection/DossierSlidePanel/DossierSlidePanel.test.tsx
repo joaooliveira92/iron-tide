@@ -60,7 +60,6 @@ describe("DossierSlidePanel", () => {
     const flavor = nationFlavor(countryId);
     const fields = nationDossier(countryId);
 
-    // Economy is the default intelligence card.
     fireEvent.click(screen.getByRole("button", { name: "Economy" }));
     expect(screen.getByText(flavor.economy)).toBeTruthy();
     expect(screen.getByText(new RegExp(fields.budgetCategory))).toBeTruthy();

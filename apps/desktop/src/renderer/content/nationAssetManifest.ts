@@ -19,9 +19,6 @@ import japanFlag from "../assets/flags/japan_rising_sun.png";
 import qingFlag from "../assets/flags/qing_dragon_flag.png";
 import russianFlag from "../assets/flags/russia_imperial_flag.png";
 import spanishFlag from "../assets/flags/spain_flag_1880.png";
-// The bundler owns the emitted URLs; these imports are the *only* place asset
-// filenames appear. Components reach art through `resolveNationAsset`, keyed by
-// stable id, so renaming a file can never break a screen.
 import ukEnsign from "../assets/flags/uk_white_ensign_1880.png";
 import usFlag from "../assets/flags/us_flag_44_stars.png";
 import usShip from "../assets/ships/1880-naval-american-ship.png";
@@ -38,11 +35,6 @@ import spanishShip from "../assets/ships/1880-naval-spanish-ship.png";
 import type { MediaAsset } from "./mediaAsset.js";
 import type { NationAssetManifest } from "./resolveNationAsset.js";
 
-/**
- * The country-identity id of each canonical playable slot, in CONTEXT.md §4
- * order. These are stable *content* ids, not the slots themselves — a slot is a
- * selection identity, while art binds to the identity layers (ADR-0003).
- */
 export const PLAYABLE_SLOT_COUNTRY_IDS = [
   "gb",
   "de",
@@ -58,19 +50,10 @@ export const PLAYABLE_SLOT_COUNTRY_IDS = [
 
 export type PlayableSlotCountryId = (typeof PLAYABLE_SLOT_COUNTRY_IDS)[number];
 
-/** Terse constructor keeping the manifest table readable. */
 function asset(assetId: string, kind: MediaAsset["kind"], url: string, label: string): MediaAsset {
   return { assetId, kind, url, label, provenance: "CANONICAL_CONTENT" };
 }
 
-/**
- * The 1880 content pack's nation art. Only the country layer is populated for
- * now: every playable slot's national colours plus its symbolic ship. Later
- * scenarios add regime/instance overrides without touching callers.
- *
- * The United Kingdom carries a `nation_ensign` (the white ensign) rather than a
- * `nation_flag` — a deliberate kind distinction, not an omission.
- */
 export const NATION_ASSET_MANIFEST: NationAssetManifest = {
   countries: {
     gb: {

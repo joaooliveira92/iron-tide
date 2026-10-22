@@ -1,8 +1,3 @@
-// Deterministic child-process script for the B-2 minute-advance simulation.
-// Prints a single canonically-serialized JSON line to stdout so a parent test
-// can spawn two clean Node processes and byte-compare (AC-13: two-process
-// OS-independence is genuinely exercised). Uses only fixed inputs; no ambient
-// clock, random, environment, or filesystem order.
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
 import type { TacticalBattleState, TacticalShipUnit } from "../tactical/index.js";
@@ -81,7 +76,7 @@ const state: TacticalBattleState = {
 
 const orders = {
   a1: { orderedHeading: 90, orderedSpeedBp: 20_000 },
-  a2: { orderedHeading: 37, orderedSpeedBp: 20_000 }, // non-cardinal -> exercises direction table
+  a2: { orderedHeading: 37, orderedSpeedBp: 20_000 },
   d1: { orderedHeading: 270, orderedSpeedBp: 20_000 },
   d2: { orderedHeading: 123, orderedSpeedBp: 20_000 },
 };

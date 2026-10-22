@@ -2,7 +2,6 @@ import { topsideLoad, type Finding, type Severity, type WorkshopView } from "@bl
 import { passesFilter } from "../../components/design-workspace/validation/severity.js";
 import { formatExplanation, type PresentationFormat } from "../../lib/presentation-format/index.js";
 
-/** How a strip value is coloured: neutral when normal, amber near a constraint, red when invalid. */
 export type ReadoutTone = "neutral" | "warn" | "bad";
 
 export interface ReadoutRow {
@@ -10,17 +9,13 @@ export interface ReadoutRow {
   readonly value: string;
 }
 
-/** A readout's click-through detail: the lines behind the number, and the findings that flag it. */
 export interface ReadoutBreakdown {
   readonly title: string;
   readonly rows: readonly ReadoutRow[];
-  /** Totals shown under the rows (weight only). */
   readonly footer?: readonly ReadoutRow[];
-  /** Plain-language causes, shown under the rows (stability only). */
   readonly causes: readonly string[];
 }
 
-/** A readout's hover detail: extra figures that explain the value without a click. */
 export interface ReadoutHint {
   readonly title: string;
   readonly lines: readonly ReadoutRow[];
@@ -49,22 +44,16 @@ const TONE_RANK: Readonly<Record<ReadoutTone, number>> = { neutral: 0, warn: 1, 
 const worst = (tones: readonly ReadoutTone[]): ReadoutTone =>
   tones.reduce((a, b) => (TONE_RANK[b] > TONE_RANK[a] ? b : a), "neutral");
 
-/** Unresolved findings (blocking/critical) go red; warnings and advisories go amber; none stay neutral. */
 const toneOfSeverity = (severity: Severity): ReadoutTone =>
   passesFilter(severity, "serious") ? "bad" : "warn";
 
 const toneOf = (findings: readonly Finding[], ids: readonly string[]): ReadoutTone =>
   worst(findings.filter((f) => ids.includes(f.id)).map((f) => toneOfSeverity(f.severity)));
 
-/** The findings that bear on initial stability (GM), the readout's subject. */
 const STABILITY_CAUSE = /^STABILITY_/;
 
 const title = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-/**
- * Whole tonnes for each weight line, adjusted by the largest remainders so the displayed groups add up to the
- * displayed current displacement (the criterion the strip's breakdown has to meet).
- */
 function splitTonnes(
   parts: readonly { readonly label: string; readonly kg: number }[],
   totalTonnes: number,
@@ -88,11 +77,6 @@ function splitTonnes(
   }));
 }
 
-/**
- * The engineering strip's values, all read from the compiled design: displacement current over capacity, cost,
- * speed, range, stability, topside load, available weight and the warning count. Tones say where the design
- * stands; breakdowns and hints say where each number comes from. Pure: same view, same readouts.
- */
 export function engineeringStatus(
   view: WorkshopView,
   format: PresentationFormat,
@@ -102,7 +86,6 @@ export function engineeringStatus(
   const reserveKg = view.ledger.find((r) => r.category === "reserve")?.kg ?? 0;
   const remainingKg = view.buoyantKg - view.totalKg;
 
-  // A hull heavier than it floats is invalid first; findings then colour a design that is merely close.
   const weightTone = worst([
     view.totalKg > view.buoyantKg ? "bad" : "neutral",
     toneOf(findings, ["OVERWEIGHT_LIMIT", "OVERWEIGHT_UNRECOVERABLE", "HULL_BUOYANCY_MISMATCH"]),

@@ -22,12 +22,6 @@ import {
   type ProtectionModel,
 } from "../protection-view.js";
 
-/**
- * The Protection section's armour editor: the design's armour regions grouped spatially (belt, deck, conning tower,
- * armament, underwater), each field showing its compiled consequences and editing the draft. Advanced settings
- * (material, inclination) sit behind a disclosure. Selecting a field highlights that armour on the ship plan.
- * Presentation only: every readout and edit input comes from the view model, and every control is a draft edit.
- */
 export function ProtectionEditor({
   model,
   edit,
@@ -37,9 +31,7 @@ export function ProtectionEditor({
 }: {
   readonly model: ProtectionModel;
   readonly edit: (e: DraftEdit) => void;
-  /** The inline message for an edit, filed as `set_armour_region:<region>` (see `editField`), while it breaks the design. */
   readonly errorFor?: (field: string) => string | undefined;
-  /** Pins the region for the ship-plan highlight; null clears it. */
   readonly onSelectRegion?: (region: ArmourRegionId | null) => void;
   readonly selectedRegion?: ArmourRegionId | null;
 }) {
@@ -146,7 +138,6 @@ function ProtectionFieldRow({
   readonly field: ProtectionField;
   readonly materials: ProtectionModel["materials"];
   readonly selected: boolean;
-  /** Why this region breaks the design, while it does. */
   readonly error?: string | undefined;
   readonly onSelect: () => void;
   readonly onPatch: (region: ArmourRegion, change: Partial<ArmourRegion>) => void;
@@ -270,11 +261,6 @@ function Readout({ label, children }: { readonly label: string; readonly childre
   );
 }
 
-/**
- * RTW3's "Magazine box" as one choice. It is the existing `MAGAZINE_BOX` armour region (ADR-0252), so there is no
- * separate setting: ticking adds the region with its starting convention, unticking removes it, and the region's own
- * thickness, length and material stay editable in the list below like any other.
- */
 function MagazineBoxToggle({
   model,
   edit,

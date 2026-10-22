@@ -15,13 +15,6 @@ import { buildContentBundleArtifact, buildFullSurfaceInput } from "@bluewave/con
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 
-// N-2 acceptance (#31): the ten-playable contract, starting-ship legality and
-// classifiability, post-1880 unreachability at the 1880 start, and a
-// command-free deterministic 12-month smoke run over all fourteen committed
-// nations. The run itself lives in `run-child.ts` (`production-ten-nation`
-// mode) so two fresh processes prove byte-identical closing hashes; this file
-// owns the static gate and the allowlist.
-
 const thisDir = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(thisDir, "..", "..", "..");
 const PRODUCTION_PACK = resolve(REPO_ROOT, "content", "production", "1880");
@@ -163,7 +156,6 @@ describe("N-2 deterministic ten-nation smoke run", () => {
     const first = runSmokeChild();
     const second = runSmokeChild();
 
-    // Byte-identical across two fresh processes (the cross-process proof).
     expect(first.stdout).toBe(second.stdout);
     expect(first.output.inProcessRepeatMatches).toBe(true);
     expect(first.output.months).toBe(12);
@@ -171,15 +163,11 @@ describe("N-2 deterministic ten-nation smoke run", () => {
     expect(first.output.monthlySuccess).toHaveLength(12);
     expect(first.output.closingSnapshotHash).toHaveLength(64);
 
-    // Coherence: no nation loses its fleet during the run.
     expect(Object.keys(first.output.hullCounts)).toHaveLength(14);
     for (const [nationId, hulls] of Object.entries(first.output.hullCounts)) {
       expect(hulls, `nation '${nationId}' fields no hulls after 12 months`).toBeGreaterThan(0);
     }
 
-    // Economy spec #138: no allowlist. A pack that credits its appropriation raises no error diagnostic in the first
-    // year, so any diagnostic at all (and any failed month) is a defect, not a baseline to tolerate. Portugal's
-    // structural deficit first realises a shortfall at month 41, outside this window.
     expect(first.output.diagnostics).toEqual([]);
     expect(first.output.monthlySuccess.every(Boolean)).toBe(true);
     expect(first.output.success).toBe(first.output.monthlySuccess.every(Boolean));

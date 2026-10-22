@@ -12,13 +12,22 @@
 // The classification is a pure function of the file text, so two runs on the
 // same tree are byte-identical and a second run is a no-op (idempotent).
 //
-// Dry runs by default; pass `--apply` to write. This is a manual tool: it is
-// not wired into `pnpm check` or `preflight`.
+// The bare invocation is a non-writing inspection. Any write goes through the
+// reviewed-report workflow below. This is a manual tool: it is not wired into
+// `pnpm check` or `preflight`.
 //
-// Usage: pnpm sweep:comments [--apply]
-import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
+// Usage: pnpm sweep:comments
+//
+// Report-first mode (any of --apply, --scope, --rule, --report, --format,
+// --review, --decision, --id, --fail-on-candidate) routes to
+// sweep-comments-engine.mjs. It classifies candidates into a deterministic JSON
+// report, and --apply acts only on an explicitly reviewed report. Exit codes:
+// 0 ok, 1 validation, 2 usage, 3 I/O.
+import { readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { NEW_FLAGS, runCli } from "./sweep-comments-engine.mjs";
 
 const ROOTS = ["packages", "apps", "scripts"];
 const EXTS = new Set([".ts", ".tsx", ".mjs", ".cjs"]);
@@ -110,7 +119,12 @@ function walk(dir, out) {
 }
 
 function main() {
-  const apply = process.argv.includes("--apply");
+  const argv = process.argv.slice(2);
+  if (argv.some((a) => NEW_FLAGS.includes(a))) {
+    const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+    process.exitCode = runCli(argv, { repoRoot: root });
+    return;
+  }
   const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const files = [];
   for (const root of ROOTS) walk(path.join(repoRoot, root), files);
@@ -120,23 +134,32 @@ function main() {
   let touched = 0;
   for (const file of files) {
     const src = readFileSync(file, "utf8");
-    const { removals, out } = sweepSource(src);
+    const { removals } = sweepSource(src);
     if (removals.length === 0) continue;
     touched++;
     for (const r of removals) {
       counts[r.kind]++;
       console.log(`${r.kind}\t${path.relative(repoRoot, file)}:${r.line}\t${r.text.trim()}`);
     }
-    if (apply) writeFileSync(file, out);
   }
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const detail = Object.entries(counts)
     .filter(([, n]) => n > 0)
     .map(([k, n]) => `${k}=${n}`)
     .join(" ");
-  console.error(
-    `\n${apply ? "APPLIED" : "DRY RUN"}: files=${touched} total=${total} ${detail}`.trimEnd(),
-  );
+  console.error(`\nDRY RUN: files=${touched} total=${total} ${detail}`.trimEnd());
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) main();
+/** True when this module is the process entry point, comparing canonical paths on both sides. */
+function isEntryPoint() {
+  if (!process.argv[1]) return false;
+  try {
+    return (
+      realpathSync(fileURLToPath(import.meta.url)) === realpathSync(path.resolve(process.argv[1]))
+    );
+  } catch {
+    return false;
+  }
+}
+
+if (isEntryPoint()) main();

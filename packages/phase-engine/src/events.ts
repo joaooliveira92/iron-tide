@@ -20,10 +20,6 @@ export function budgetChangedEvent(
     aggregateType: "nation",
     aggregateId: nationId,
     eventType: "NationBudgetChanged",
-    // ADR-0035: domain events carry a deterministic ISO-8601 timestamp derived
-    // from the campaign month (the validated DomainEventEnvelope schema
-    // requires z.string().datetime). The first day of the month at UTC keeps
-    // it wall-clock/locale-free and turn-distinct.
     timestamp: `${campaignMonth}-01T00:00:00.000Z`,
     body: {
       kind: "NationBudgetChanged",
@@ -80,7 +76,6 @@ export function constructionProgressedEvent(
     aggregateType: "construction",
     aggregateId: projectId,
     eventType: "ConstructionProgressed",
-    // ADR-0035: deterministic ISO-8601 timestamp from the campaign month.
     timestamp: `${campaignMonth}-01T00:00:00.000Z`,
     body: {
       kind: "ConstructionProgressed",
@@ -94,10 +89,6 @@ export function constructionProgressedEvent(
   };
 }
 
-/**
- * The cancellation record of a dockyard project (DESIGN-23 section 23; DESIGN-11 settlement contract): the explicit
- * consumed/refunded/lost/salvageable settlement and the stable reason. Deterministic timestamp from the campaign month.
- */
 export function constructionProjectCancelledEvent(
   projectId: string,
   nationId: string,
@@ -132,10 +123,6 @@ export function constructionProjectCancelledEvent(
   };
 }
 
-/**
- * The one explicit record of a construction month that was delayed (DESIGN-23 section 7): the project advanced no work
- * and paid no ordinary charge this month. Deterministic timestamp from the campaign month, like every other domain event.
- */
 export function constructionDelayedEvent(
   projectId: string,
   nationId: string,
@@ -175,7 +162,6 @@ export function researchProgressedEvent(
     aggregateType: "research",
     aggregateId: techId,
     eventType: "ResearchProgressed",
-    // ADR-0035: deterministic ISO-8601 timestamp from the campaign month.
     timestamp: `${campaignMonth}-01T00:00:00.000Z`,
     body: {
       kind: "ResearchProgressed",
@@ -188,11 +174,6 @@ export function researchProgressedEvent(
   };
 }
 
-/**
- * The readiness transition of a ship (S-1): the monthly crew ramp promoted a
- * working-up ship to active, or a repair countdown released a ship. Deterministic
- * timestamp from the campaign month, like every other domain event.
- */
 export function shipReadinessChangedEvent(
   shipId: string,
   nationId: string,
@@ -223,10 +204,6 @@ export function shipReadinessChangedEvent(
   };
 }
 
-/**
- * S-5: a ship's foreign-station assignment changed (assigned, cleared by command, or cleared because its readiness left
- * ACTIVE). Deterministic timestamp from the campaign month, like every other domain event.
- */
 export function shipStationAssignmentChangedEvent(
   shipId: string,
   nationId: string,
@@ -255,10 +232,6 @@ export function shipStationAssignmentChangedEvent(
   };
 }
 
-/**
- * T-1 03: the player answered a battle offer by accepting it or delegating it to staff. Both resolve through the
- * unchanged auto-resolution path, so this event is the durable record of the answer (and of the delegate intent).
- */
 export function battleOfferAnsweredEvent(
   nationId: string,
   battleId: string,
@@ -286,10 +259,6 @@ export function battleOfferAnsweredEvent(
   };
 }
 
-/**
- * T-1 04: the player declined a battle offer. One event per declined battle, carrying the war-score cost and credit that
- * were applied through the war-score seam, so scoring is auditable without reading presentation.
- */
 export function battleDeclinedEvent(
   nationId: string,
   battleId: string,
@@ -323,9 +292,6 @@ export function battleDeclinedEvent(
   };
 }
 
-/**
- * T-1 07: the enemy declined a battle the player would have fought. The event never carries the draw or the enemy force.
- */
 export function enemyDeclinedBattleEvent(
   nationId: string,
   enemyNationId: string,
@@ -357,10 +323,6 @@ export function enemyDeclinedBattleEvent(
   };
 }
 
-/**
- * S-2 04: a nation's prestige changed through one source's rule. Built only for a non-zero applied change (the caller
- * checks); `delta` is `after - before`. Mirrors the S-2 `PrestigeChange` plus the source and ruleset identity.
- */
 export function prestigeChangedEvent(
   nationId: string,
   reasonCode: PrestigeChangedBody["reasonCode"],
@@ -391,10 +353,6 @@ export function prestigeChangedEvent(
   };
 }
 
-/**
- * T-1 05: a decline made the player's declined-battle count reach the ruleset threshold. One event per such decline,
- * appended right after the decline's own `BattleDeclined`. It has no effect here; the prestige ticket consumes it.
- */
 export function declineThresholdReachedEvent(
   nationId: string,
   battleId: string,
@@ -425,10 +383,6 @@ export function declineThresholdReachedEvent(
   };
 }
 
-/**
- * S-5: a nation's effective present tonnage in an area fell short of its requirement at month end. One event per
- * nation-area with a positive shortfall; emitted in (nation, area) order.
- */
 export function presenceShortfallEvent(
   nationId: string,
   areaId: string,
@@ -457,10 +411,6 @@ export function presenceShortfallEvent(
   };
 }
 
-/**
- * S-5: a typed request for S-2 (`PrestigeLossRequested`) or S-3 (`RevoltPressureRequested`) naming one nation-area
- * shortfall. Integer tons only; the consumer resolves any magnitude. Emitted right after the shortfall event.
- */
 export function presencePenaltyRequestEvent(
   kind: "PrestigeLossRequested" | "RevoltPressureRequested",
   nationId: string,
@@ -507,7 +457,6 @@ function shipRoutingEvent(
   };
 }
 
-/** S-5 07 (ADR-0249): typed events of the foreign-station deployment, one event per fact. */
 export const foreignStationEvents = {
   detached: (
     nationId: string,

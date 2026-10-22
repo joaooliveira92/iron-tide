@@ -2,19 +2,8 @@ import { Schema } from "effect";
 
 import { ProvenanceSchema } from "./provenance.js";
 
-/**
- * The ship-visual part catalog (ADR-0148): authored, presentation-only drawings of gun mounts and masts keyed by
- * nation style × visual era × size × mount class × gun count. Lives in `content/ship-visual/parts.yaml`, OUTSIDE every
- * content pack: it is never compiled into an artifact, a campaign snapshot or a golden hash. `@bluewave/ship-visual`
- * generates its runtime module from this schema's decode and pins its own types to it.
- *
- * Drawings are SVG path data in metres at the 12-inch reference (manual p142), origin at the seat centre, y down,
- * bow to the left.
- */
-
 const positive = Schema.Finite.check(Schema.isGreaterThan(0));
 
-/** SVG path data: commands and numbers only (no markup can ride along). */
 const PathDataSchema = Schema.String.check(
   Schema.isPattern(/^[MmLlHhVvCcSsQqTtAaZz0-9.,\s-]+$/),
 ).annotate({ description: "SVG path data in metres at the 12-inch reference" });

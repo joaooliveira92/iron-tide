@@ -1,5 +1,3 @@
-// SB3-R23 / DESIGN-16 §13.6-13.7: the settlement money a war outcome moves. A refund effect returns the cumulative
-// paid amount from the builder to the ordering nation; a zero-paid forfeiture moves nothing.
 import type { CampaignSnapshot, ForeignConstructionContract } from "@bluewave/campaign";
 import { bp, money, SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -115,7 +113,6 @@ describe("foreignWarSettlementPostings (SB3-R23 §13.6/13.7)", () => {
       ledger.append(entry);
     expect(ledger.all).toHaveLength(2);
     expect(ledger.all.every((t) => t.debit === t.credit)).toBe(true);
-    // Builder pays out, ordering nation is paid.
     expect(ledger.all.find((t) => t.nationId === BUILDER)).toMatchObject({
       previousBalance: 1_000,
       newBalance: 500,
@@ -126,8 +123,6 @@ describe("foreignWarSettlementPostings (SB3-R23 §13.6/13.7)", () => {
     });
   });
 });
-
-// Monthly integration: a paid contract impounded at war returns the paid money
 
 describe("the monthly war step posts the settlement (SB3-R23)", () => {
   function snapshot(builderTreasury = 10_000): CampaignSnapshot {
@@ -189,7 +184,6 @@ describe("the monthly war step posts the settlement (SB3-R23)", () => {
       content,
     );
     if (!placed.ok) throw new Error(`order failed: ${placed.reason}`);
-    // Record the first instalment as already paid (the settlement returns it), keeping the project live.
     const ordering = placed.snapshot.nations.get(ORDERING)!;
     return {
       ...placed.snapshot,
@@ -202,7 +196,6 @@ describe("the monthly war step posts the settlement (SB3-R23)", () => {
     };
   };
 
-  /** Run hostile months until an impound lands, returning the result; throws if none in 12 seeds. */
   const impoundOnce = (builderTreasury = 10_000) => {
     for (let i = 0; i < 12; i++) {
       const result = new MonthExecutor().execute(
@@ -223,7 +216,6 @@ describe("the monthly war step posts the settlement (SB3-R23)", () => {
 
   it("credits the ordering nation and debits the builder when an impounded contract had paid instalments", () => {
     const { result, seed } = impoundOnce();
-    // The builder returned the 500 already paid: ordering 10,000 -> 10,500, builder 10,000 -> 9,500.
     expect(result.finalSnapshot.nations.get(ORDERING)!.treasury as number).toBe(10_500);
     expect(result.finalSnapshot.nations.get(BUILDER)!.treasury as number).toBe(9_500);
     const settlement = result.financialLedger.all.filter(
@@ -234,13 +226,9 @@ describe("the monthly war step posts the settlement (SB3-R23)", () => {
     expect(
       settlement.every((e) => (e.debit as number) === 500 && (e.credit as number) === 500),
     ).toBe(true);
-    // The ledger's settled balance is the committed treasury.
     expect(settlement.find((e) => e.nationId === ORDERING)!.newBalance as number).toBe(10_500);
     expect(settlement.find((e) => e.nationId === BUILDER)!.newBalance as number).toBe(9_500);
 
-    // The settlement is posted exactly once. The next month is given a NON-ZERO construction cap (baseResources),
-    // so the ordinary appropriation WOULD fund and reactivate the hull if the IMPOUNDED terminal skip were missing;
-    // it must instead stay in custody and move no money.
     const next = new MonthExecutor().execute(
       {
         ...result.finalSnapshot,
@@ -268,7 +256,6 @@ describe("the monthly war step posts the settlement (SB3-R23)", () => {
   });
 
   it("clamps the compensation to the builder's means and never writes a negative balance", () => {
-    // Builder holds only 100 of the 500 paid: it returns 100, the rest is forfeited; ordering 10,000 -> 10,100.
     const partial = impoundOnce(100);
     expect(partial.result.finalSnapshot.nations.get(ORDERING)!.treasury as number).toBe(10_100);
     expect(partial.result.finalSnapshot.nations.get(BUILDER)!.treasury as number).toBe(0);
@@ -279,7 +266,6 @@ describe("the monthly war step posts the settlement (SB3-R23)", () => {
       partialEntries.every((e) => (e.debit as number) === 100 && (e.credit as number) === 100),
     ).toBe(true);
 
-    // A penniless builder returns nothing: no settlement entries, no negative treasury, ordering unchanged.
     const none = impoundOnce(0);
     expect(none.result.finalSnapshot.nations.get(ORDERING)!.treasury as number).toBe(10_000);
     expect(none.result.finalSnapshot.nations.get(BUILDER)!.treasury as number).toBe(0);

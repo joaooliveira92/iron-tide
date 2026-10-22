@@ -1,5 +1,3 @@
-// S-5 04 (#78, spec #73 R4/R13): the colonial-service fitting on a compiled design version and on a built ship survives
-// the save/load boundary, and an unfitted design or ship (anything that predates the fitting) loads with no flag.
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

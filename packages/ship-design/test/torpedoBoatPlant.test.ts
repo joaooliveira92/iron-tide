@@ -7,15 +7,6 @@ import {
   readReferenceDesignEntries,
 } from "./helpers/earlyContext.js";
 
-/**
- * Ticket 37: the lightweight locomotive-boiler/compound plant, and the HMS TB2 reference design it makes
- * possible. The only 1880 plant before this (compound_cylindrical, 195 kg/kW, 300 kW minimum) weighs ~58 t at
- * its minimum — more than a whole first-class torpedo boat — so small torpedo craft could not be modelled.
- * Sources: docs/research/ship-building-content-sourcing.md section 3 (White 1894 machinery table p.562: the
- * single large locomotive boiler, first-class torpedo boat row, 70-80 lb/ihp = 43-49 kg/kW) and
- * docs/research/ship-building-1880-ships-by-nation.md section 1 (HMS TB2 class, 1878-79).
- */
-
 const PLANT_ID = "compound_locomotive_tb";
 
 const entries = readReferenceDesignEntries() as { id: string; month: string; draft: DesignDraft }[];
@@ -29,8 +20,6 @@ describe("compound_locomotive_tb: a light plant for ~25-80 t torpedo craft (tick
     expect(plant.introduction?.fromMonth).toBe("1880-01");
     expect(plant.introduction?.obsoleteMonth).toBeNull();
     expect(plant.requires).toEqual(["mac_compound_engine"]);
-    // The complete-machinery figure (engines + boilers + water; balance auxWeightBp is 0 because White
-    // already covers the lot) sits inside the sourced 43-49 kg/kW band (White 1894 p.562).
     expect(plant.weightMilliKgPerKw).toBeGreaterThanOrEqual(43_000);
     expect(plant.weightMilliKgPerKw).toBeLessThanOrEqual(49_000);
   });
@@ -39,7 +28,6 @@ describe("compound_locomotive_tb: a light plant for ~25-80 t torpedo craft (tick
     expect(earlyContext("1880-01").plants.map((p) => p.id)).toContain(PLANT_ID);
     expect(plant.minKw).toBeLessThanOrEqual(343);
     expect(plant.maxKw).toBeGreaterThanOrEqual(343);
-    // Small max power keeps it out of larger classes: a battleship cannot buy cheap power from it.
     expect(plant.maxKw).toBeLessThanOrEqual(600);
   });
 
@@ -61,8 +49,6 @@ describe("compound_locomotive_tb: a light plant for ~25-80 t torpedo craft (tick
 
   it("counts the complete propelling machinery (auxWeightBp 0), not just engines", () => {
     const r = compileDesign(tb2.draft, earlyContext("1880-01"));
-    // 343 kW x 46 kg/kW = 15,778 kg is the whole machinery line: no separate piping/aux is added, because
-    // the plant's kg/kW already is White 1894's complete-machinery figure.
     expect(r.ledger.machinery).toBe(15_778);
     expect(earlyContext("1880-01").balance.machinery.auxWeightBp).toBe(0);
   });
@@ -76,8 +62,6 @@ describe("tb2_1879: the HMS TB2 class reference design (ticket 37)", () => {
     ).toEqual([]);
     expect(r.valid).toBe(true);
     expect(r.naturalClass).toBe("DD");
-    // The ledger total clears the overweight tolerance around the 28,000 kg target (hull.ts `overTargetTolBp`)
-    // and is the known 28,771 kg after the deliberately omitted dyn/vent/funnel fittings (margin 838 kg).
     const overTargetTolBp = earlyContext("1880-01").balance.hull.overTargetTolBp;
     const targetCeiling = Math.floor((28_000 * (10_000 + overTargetTolBp)) / 10_000);
     expect(r.totalKg).toBeGreaterThan(0);
@@ -99,8 +83,8 @@ describe("tb2_1879: the HMS TB2 class reference design (ticket 37)", () => {
     const r = compileDesign(tb2.draft, earlyContext("1880-01"));
     expect(tb2.draft.hull.hullFormId).toBe("torpedo_boat_form");
     expect(tb2.draft.machinery.plantId).toBe(PLANT_ID);
-    expect(tb2.draft.machinery.installedKw).toBe(343); // 460 ihp
-    expect(tb2.draft.requirement.requiredSpeedMilliKnots).toBe(20_000); // 20 kn
-    expect(r.machinery!.maxSpeedMilliKnots).toBeGreaterThan(19_000); // clears the DD 19-knot rule
+    expect(tb2.draft.machinery.installedKw).toBe(343);
+    expect(tb2.draft.requirement.requiredSpeedMilliKnots).toBe(20_000);
+    expect(r.machinery!.maxSpeedMilliKnots).toBeGreaterThan(19_000);
   });
 });

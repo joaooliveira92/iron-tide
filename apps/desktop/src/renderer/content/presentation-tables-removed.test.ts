@@ -4,13 +4,6 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vite-plus/test";
 
-/**
- * Architecture guard (CAH-PRES-3/CAH-PRES-5, ticket 13): the renderer no longer
- * owns a duplicated hand-authored presentation table. Everything the player
- * sees is read from the decoded presentation corpus served over the content IPC
- * (`presentationContent.ts`). This scan proves no renderer module imports the
- * removed tables — a presentation change is a single content edit.
- */
 const rendererDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const REMOVED: readonly { readonly pattern: RegExp; readonly label: string }[] = [

@@ -4,15 +4,6 @@ import { useEffect, useMemo, useRef } from "react";
 import { cn } from "../../lib/utils.js";
 import { createShaderProgram } from "./shader-program.js";
 
-/**
- * Port of the React Bits `PatternWaves` background (https://reactbits.dev/backgrounds/pattern-waves)
- * to this repo's raw-WebGL convention (see `nebulore.tsx`). Upstream ships on `ogl` + WebGL2; the
- * three-pass pipeline (heightfield -> mark compositor, plus an optional pointer ripple) is preserved
- * verbatim but driven with hand-rolled programs, framebuffers and textures so no extra dependency is
- * needed. The field/mark passes use `#version 300 es` for `texelFetch`/`textureGrad`, so this
- * component requires a WebGL2 context and bails out (leaving the flat background) when it is absent.
- */
-
 type SurfacePreset = "silk" | "ocean" | "pond" | "lines" | "terminal" | "mesh";
 type PatternKind = "dot" | "square" | "plus" | "line" | "glyph";
 type WaveKind = "silk" | "swell" | "ripple";
@@ -180,7 +171,6 @@ const luminance = (rgba: Rgba) => 0.2126 * rgba[0] + 0.7152 * rgba[1] + 0.0722 *
 
 const HEX_COLOR = /^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 
-/** Parses a hex or `rgb()`/`rgba()` string into normalized RGBA, falling back on invalid input. */
 export function parseColor(value: string, fallback: Rgba): Rgba {
   const trimmed = value.trim();
 
@@ -222,7 +212,6 @@ export function parseColor(value: string, fallback: Rgba): Rgba {
   return fallback;
 }
 
-/** Resolves a preset plus every prop override into the concrete values the render loop reads. */
 export function resolveSettings(overrides: PresetOverrides): ResolvedSettings {
   const base = SURFACE_PRESETS[overrides.preset ?? "silk"] ?? SURFACE_PRESETS.silk;
   const presetValues: Partial<PresetValues> = overrides;

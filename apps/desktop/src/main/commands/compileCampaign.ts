@@ -11,34 +11,6 @@ import { IdGenerator, NativeDialog } from "../runtime/platform.js";
 import { ProjectStore } from "../runtime/projectStore.js";
 import { toSaveableState } from "../saveHelpers.js";
 
-/**
- * `compileCampaign(configuration) -> { sessionId }` (ticket 08/12) as a native
- * `CommandProgram` (INC-5; ADR-0159): validates the configuration, compiles
- * `content/production/1880` through the `ContentArtifact` service, rejects an
- * unsupported/zero-content player slot, prompts for a save location through
- * `NativeDialog`, writes the initial save + `session.json` sidecar through
- * `ProjectStore` (so there's always something recoverable), and registers the
- * live session through `CampaignSessionStore` so `inspectCampaign` can serve
- * it. Every reason (`INVALID_CAMPAIGN_CONFIGURATION`, `COMPILE_FAILED`,
- * `UNKNOWN_PLAYER_SLOT`, `PLAYER_SLOT_NOT_SUPPORTED`,
- * `SAVE_LOCATION_CANCELLED`, `SAVE_FAILED`) is modelled on the typed channel:
- * business refusals as `CommandRejected`, service failures as `CommandFailed`.
- *
- * Judgment call (ticket 12): `configuration` is validated and its session
- * bookkeeping (start year/month, turn number) is derived via
- * `createInitialCampaignState` — but is *not* threaded into
- * `CampaignCompiler.compile()`'s `campaignConfiguration` input. That input
- * triggers a stricter DESIGN-03 precondition gate requiring the full
- * canonical scenario/fleet-size/research-speed catalogs to be supplied
- * alongside it; nothing in the compiler actually *consumes*
- * `campaignConfiguration` to parameterize the compiled snapshot (it's a
- * precondition gate, not an input to snapshot construction) — fleets,
- * economies, designs, etc. come entirely from the content pack's YAML.
- * `packages/cross-process-test/src/run-child.ts` (the one proven
- * compile->advance->save/load reference loop in the repo) does the same:
- * compiles without `campaignConfiguration`. Matching that precedent avoids
- * a validation path nothing in the actual compile step depends on.
- */
 export const compileCampaignProgram = withSchema(
   CampaignConfigurationPayloadSchema,
   (configuration) =>
@@ -59,9 +31,6 @@ export const compileCampaignProgram = withSchema(
         };
       }
 
-      // B-6/ADR-0025: thread the scenario's start calendar date into the compile
-      // so the snapshot stamps authoritative startYear/startMonth (the month ids
-      // every later campaign month — incl. the weather stream — derive from).
       const output = yield* content.compileProductionCampaign({
         startYear: session.currentYear,
         startMonth: session.currentMonth,
@@ -92,27 +61,10 @@ export const compileCampaignProgram = withSchema(
         return { outcome: "rejected", reason: "SAVE_LOCATION_CANCELLED", diagnostics: [] };
       }
 
-      // `CampaignCompiler.compile()`'s `rawHash` is computed over `snapshot`
-      // alone, but `SaveStore.save`/`load` verify a hash computed over the whole
-      // state (`{snapshot, envelope}`) — the two don't agree, so saving the
-      // compiler's own `rawHash` as-is fails `SaveStore.load`'s integrity check.
-      // `packages/cross-process-test/src/run-child.ts` (the one proven
-      // compile->save/load loop in the repo) already recomputes `rawHash` this
-      // same way immediately before calling `store.save`; this repeats that
-      // precedent rather than inventing a new hashing convention.
       const saveableState = toSaveableState(output.state);
 
       yield* projects.save(saveableState, saveDir);
 
-      // Ticket 16: the continuance sidecar. `SaveStore`'s package stores the
-      // authoritative `CampaignState`, but a session restored on load also needs
-      // the player's slot, seed, and scenario — none of which live in the
-      // snapshot. This app-owned file (invisible to SaveStore, outside its
-      // integrity envelope) is what makes a later `loadCampaign`/
-      // `replayCampaign` able to restore the real campaign instead of a hollow
-      // shell. `ProjectStore.writeSessionMetadata` is atomic (tmp+rename); a
-      // failure here means the package is incomplete and the command reports
-      // SAVE_FAILED.
       yield* projects
         .writeSessionMetadata(saveDir, {
           schemaVersion: "session_meta_v1",

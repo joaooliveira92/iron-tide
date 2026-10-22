@@ -1,4 +1,3 @@
-// ADR-0066: SubmitDesign - authoritative component-level design compile at month application.
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { CommandLifecycle } from "@bluewave/commands";
@@ -14,8 +13,6 @@ import {
   readReferenceDesignEntries,
 } from "./helpers/contentFiles.js";
 
-// Without study rules a submitted design is approved the same month, which these tests rely on; studies themselves are
-// covered in design-study.test.ts (ADR-0085).
 const content = productionShipBuildingContent();
 const reference = readReferenceDesignEntries();
 const havockDraft: Record<string, unknown> = {
@@ -83,7 +80,6 @@ describe("SubmitDesign through the month", () => {
     const { designs } = run(snapshot, [submit(snapshot)]);
     const d = designs.get("des_test_destroyer")!;
     expect(d.sourceDraft).toEqual(havockDraft);
-    // a copy, not the caller's object
     expect(d.sourceDraft).not.toBe(havockDraft);
   });
 
@@ -95,7 +91,6 @@ describe("SubmitDesign through the month", () => {
     expect((withFit.sourceDraft as Record<string, unknown>)["colonialServiceFitted"]).toBe(true);
     const plain = run(snapshot, [submit(snapshot)]).designs.get("des_test_destroyer")!;
     expect("colonialServiceFitted" in plain).toBe(false);
-    // Dormant production ruleset: the fitting is recorded but takes no displacement.
     expect(withFit.normalizedDisplacementKg).toBe(plain.normalizedDisplacementKg);
   });
 
@@ -206,7 +201,6 @@ describe("construction price of a designed ship (ADR-0074)", () => {
     const snapshot = snapshotIn(1895);
     const { designs } = run(snapshot, [submit(snapshot)]);
     const d = designs.get("des_test_destroyer")!;
-    // the month the command is applied in (the engine runs the month after the snapshot's start)
     const env = content.environmentFor("1895-07");
     const forecast = buildWorkshopView(havockDraft as unknown as DesignDraft, env).forecast
       .costMicro;

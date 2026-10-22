@@ -57,7 +57,6 @@ describe("ProfileWaterlineLayer", () => {
     expect(waterline.getAttribute("x1")).toBe(String(frame.x(0) - 12));
     const lcb = container.querySelector("[data-testid='profile-lcb']")!;
     expect(Number(lcb.querySelector("circle")!.getAttribute("cx"))).toBeCloseTo(frame.x(520), 6);
-    // Bow and stern perpendicular ticks, vertical at the waterline ends.
     const ticks = Array.from(container.querySelectorAll("line")).filter(
       (l) => l.getAttribute("x1") === l.getAttribute("x2"),
     );

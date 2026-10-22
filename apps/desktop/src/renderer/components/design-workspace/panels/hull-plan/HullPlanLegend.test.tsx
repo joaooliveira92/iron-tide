@@ -5,7 +5,6 @@ import type { DrawingFacts } from "./describe.js";
 import { HullPlanLegend } from "./HullPlanLegend.js";
 import { legendEntries } from "./legend.js";
 
-/** The default presentation: en-US, full scale, imperial, Naval Credits. */
 const FORMAT = createPresentationFormat({
   locale: "en-US",
   numberScale: "full",

@@ -5,19 +5,12 @@ import type { ResearchFieldRow } from "../research-view-model.js";
 
 export interface FieldPriorityRowProps {
   readonly field: ResearchFieldRow;
-  /** True when no additional field may be raised to High (the INC-5 cap). */
   readonly highCapReached: boolean;
-  /** The engine's maximum number of High fields, for the affordance copy. */
   readonly highCap: number;
   readonly busy: boolean;
   readonly onSetWeight: (weight: FieldWeightOption) => void;
 }
 
-/**
- * One canonical research field: its label, projected next-month points, and the
- * High/Med/Low weight picker. Purely presentational — the parent owns the draft
- * and the cap decision.
- */
 export function FieldPriorityRow({
   field,
   highCapReached,

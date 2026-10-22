@@ -1,7 +1,3 @@
-// Decorative per-card cover palettes (indexed for visual variety, not tied to
-// the card's subject). Intentionally invariant across light/dark: they sit
-// *behind* the photographic cover, so they are only visible as a fallback when
-// the artwork is missing, plus the accent stripe along each card's top edge.
 export const CARD_PALETTES = [
   {
     background: "linear-gradient(145deg, #243a31 0%, #152820 48%, #0c1713 100%)",
@@ -37,7 +33,6 @@ export const CARD_PALETTES = [
 
 export type CardPalette = (typeof CARD_PALETTES)[number];
 
-/** The palette for the card at `index`, cycling when there are more cards than palettes. */
 export function paletteForIndex(index: number): CardPalette {
   return CARD_PALETTES[index % CARD_PALETTES.length] as CardPalette;
 }

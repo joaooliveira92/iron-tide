@@ -5,7 +5,6 @@ import { Button } from "../../../components/ui/button.js";
 import { schemeEdit, type ProtectionModel, type SchemeChoice } from "../protection-view.js";
 import type { SchemeDiagram } from "../scheme-diagram.js";
 
-/** A rough side view of the scheme's plates on a stylised hull. Decorative: the choice is named in text beside it. */
 function SchemeDiagramView({ diagram }: { readonly diagram: SchemeDiagram }) {
   return (
     <svg
@@ -34,11 +33,6 @@ function SchemeDiagramView({ diagram }: { readonly diagram: SchemeDiagram }) {
   );
 }
 
-/**
- * The armour-scheme selector: the named schemes with lock badges for the ones not yet unlocked, a rough diagram of
- * the highlighted one, and a single Apply that sets the regions as one undoable edit. The per-region editor below is the
- * "Custom" view; any manual edit there returns the label to Custom.
- */
 export function ArmourSchemeSelector({
   model,
   edit,

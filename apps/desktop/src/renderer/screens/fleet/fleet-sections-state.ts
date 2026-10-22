@@ -18,16 +18,11 @@ export interface LossRow {
   readonly key: string;
   readonly name: string;
   readonly classLabel: string;
-  /** Human cause when the tactical report named one, else null (never invented). */
   readonly cause: string | null;
   readonly month: string;
   readonly areaName: string;
 }
 
-/**
- * The player's sunk ships from the battle history (ADR-0061), newest first.
- * Enemy losses are not listed here; scrapping is not recorded by the engine.
- */
 export function playerLossRows(battles: readonly BattleHistoryEntry[]): readonly LossRow[] {
   const rows: (LossRow & { readonly sequence: number })[] = [];
   for (const battle of battles) {
@@ -54,19 +49,11 @@ export type PlayerLossesView =
   | { readonly status: "error"; readonly message: string }
   | { readonly status: "ready"; readonly rows: readonly LossRow[] };
 
-/**
- * The shape of the battle-history query this view consumes. Structural (not the hook's own
- * union) so this state module owns no dependency on a renderer hook.
- */
 export type LossesInput =
   | { readonly status: "loading" }
   | { readonly status: "error"; readonly message: string }
   | { readonly status: "ready"; readonly history: BattleHistoryView };
 
-/**
- * The player's losses as a view model, derived once so the section summary and the list
- * below it read from the exact same rows.
- */
 export function playerLossesView(state: LossesInput): PlayerLossesView {
   if (state.status === "loading") return { status: "loading" };
   if (state.status === "error") return { status: "error", message: state.message };
@@ -81,7 +68,6 @@ export interface OfficerRow {
   readonly skill: number | null;
 }
 
-/** One row per division: its commander, or null fields while the command is vacant. */
 export function officerRows(divisions: readonly DivisionView[]): readonly OfficerRow[] {
   return divisions.map((division) => ({
     divisionId: division.divisionId,
@@ -92,7 +78,6 @@ export function officerRows(divisions: readonly DivisionView[]): readonly Office
   }));
 }
 
-/** Fleet-screen items the engine cannot supply yet (engine-surface note, sections D and E). */
 export const DEFERRED_FLEET_ITEMS: readonly DeferredFeature[] = [
   ...DEFERRED_SUBMARINE_ITEMS,
   {

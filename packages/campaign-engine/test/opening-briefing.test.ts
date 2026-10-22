@@ -152,26 +152,17 @@ describe("buildOpeningBriefingProjection", () => {
     expect(projection).toBeDefined();
     if (!projection) return;
 
-    // Tallied by hullType-derived label; the two light cruisers (one of them
-    // under construction) both count toward the inventory.
     expect(projection.stateOfTheNavy.shipClassCounts).toEqual([
       { label: "battleship", count: 1 },
       { label: "cruiser", count: 2 },
     ]);
-    // Ships under construction: only the non-completed ship project counts
-    // (the completed one and the fleet's under-construction ship are not in
-    // the construction PROJECT queue).
     expect(projection.stateOfTheNavy.shipsUnderConstruction).toBe(1);
-    // Most expensive active class: battleship (15000000 kg -> 150 cost) beats
-    // the cruisers (60 cost).
     expect(projection.stateOfTheNavy.mostExpensiveActiveClass).toEqual({
       className: "Majestic class",
       projectedCost: 150,
     });
-    // Largest available dock = max port level (30).
     expect(projection.stateOfTheNavy.largestDockCapacity).toBe(30);
     expect(projection.stateOfTheNavy.totalMaintenance).toBe(20);
-    // Construction committed = total paidWork across projects (300 + 100).
     expect(projection.stateOfTheNavy.constructionCommitted).toBe(400);
   });
 
@@ -179,9 +170,9 @@ describe("buildOpeningBriefingProjection", () => {
     const uk = fixtureNation({
       id: "uk",
       income: SafeInt(10_000),
-      baseResources: baseFor(2_000), // revenue 2000 at the 2000 bp start rate
+      baseResources: baseFor(2_000),
       expenses: SafeInt(400),
-      navalAppropriationRateBp: SafeInt(2_000), // 20%
+      navalAppropriationRateBp: SafeInt(2_000),
       research: {
         nationId: "uk",
         technologies: [],
@@ -237,16 +228,12 @@ describe("buildOpeningBriefingProjection", () => {
     expect(projection).toBeDefined();
     if (!projection) return;
 
-    // governmentAllocation is the monthly revenue: floor(120_000 x 2000bp / 120_000) = 2000.
     expect(projection.treasury.governmentAllocation).toBe(2_000);
-    // fleetMaintenance derived from the single 7000-HP ship: floor(7000/10)=700.
     expect(projection.treasury.fleetMaintenance).toBe(700);
     expect(projection.treasury.constructionCommitted).toBe(400);
     expect(projection.treasury.researchExpenditure).toBe(500);
-    // Construction committed is a stock, so the surplus is revenue less obligations, maintenance and research.
     expect(projection.treasury.obligations).toBe(400);
     expect(projection.treasury.projectedSurplus).toBe(2_000 - 400 - 700 - 500);
-    // Surplus 400 is < 25% of 2000 (healthy threshold) but >= 0 -> narrow.
     expect(projection.treasury.status).toBe("narrow");
   });
 
@@ -290,7 +277,6 @@ describe("buildOpeningBriefingProjection", () => {
       month: 1,
       year: 1880,
     });
-    // Maintenance 2100 -> surplus 2000 - 2100 = -100, within [-200, 0) -> deficit.
     expect(projection?.treasury.status).toBe("deficit");
   });
 
@@ -381,13 +367,13 @@ describe("buildOpeningBriefingProjection", () => {
       id: "uk",
       income: SafeInt(10_000),
       baseResources: baseFor(2_000),
-      expenses: SafeInt(2_500), // obligations above the 2000 revenue drive the projected surplus negative
+      expenses: SafeInt(2_500),
       navalAppropriationRateBp: SafeInt(2_000),
       research: {
         nationId: "uk",
         technologies: [],
         fieldPriorities: {},
-        researchBudget: SafeInt(50), // < 10% of 2000 allocation
+        researchBudget: SafeInt(50),
         activeCandidates: new Map(),
         discoveredTechs: [],
       },
@@ -397,8 +383,8 @@ describe("buildOpeningBriefingProjection", () => {
           type: "ship",
           designVersionId: "design-cl",
           totalWork: SafeInt(100),
-          completedWork: SafeInt(95), // >= 90% -> near-complete
-          paidWork: SafeInt(2_000), // a stock: it no longer enters the monthly net
+          completedWork: SafeInt(95),
+          paidWork: SafeInt(2_000),
           status: "ACTIVE",
         }),
       ],

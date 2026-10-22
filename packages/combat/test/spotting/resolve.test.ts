@@ -38,7 +38,7 @@ describe("AC-9 spotting resolution", () => {
 
   it("does not leak a hidden (undetected) asset as a contact", () => {
     const input = base();
-    input.assets[0]!.position = [RANGE_UM * 5, 0]; // far beyond range
+    input.assets[0]!.position = [RANGE_UM * 5, 0];
     const contacts = resolveSensorsSpotting(input);
     expect(contacts).toHaveLength(0);
   });

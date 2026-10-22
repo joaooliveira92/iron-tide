@@ -81,7 +81,6 @@ describe("hashWithContext", () => {
 
 describe("compareCodePoints", () => {
   it("orders by codepoint, not by the host locale", () => {
-    // "Z" (90) before "a" (97): `localeCompare` would reverse these in most locales.
     expect(compareCodePoints("Z", "a")).toBeLessThan(0);
     expect(["Z", "a", "A", "z"].sort(compareCodePoints)).toEqual(["A", "Z", "a", "z"]);
   });

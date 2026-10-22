@@ -3,9 +3,7 @@ import { splitLargestRemainder } from "../src/economyPhases.js";
 
 describe("splitLargestRemainder (map D4/D5)", () => {
   it("sums exactly to the total, giving the remainder to the largest fractional parts", () => {
-    // 100 over three equal weights: 33 each, one unit left over -> first index (tie broken by index).
     expect(splitLargestRemainder(100, [1, 1, 1])).toEqual([34, 33, 33]);
-    // 10 over [1, 2]: ideals 3.33 and 6.67 -> [3, 7]; the larger fraction wins the leftover unit.
     expect(splitLargestRemainder(10, [1, 2])).toEqual([3, 7]);
   });
 

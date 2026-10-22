@@ -160,7 +160,6 @@ const snapshotOf = (
     compatibilityVersion: "0.1.0",
   }) as unknown as CampaignSnapshot;
 
-/** Runs months through the real executor until the project completes (or `max` months). */
 function runUntilComplete(snapshot: CampaignSnapshot, max = 60) {
   let current = snapshot;
   const history: ConstructionProject[] = [];
@@ -169,7 +168,6 @@ function runUntilComplete(snapshot: CampaignSnapshot, max = 60) {
     const collector = new DiagnosticCollector();
     const result = new MonthExecutor().execute(current, [], `seed-${m}`, collector);
     expect(result.success).toBe(true);
-    // The caller (the campaign layer) advances the calendar between months; the executor does not.
     current = {
       ...result.finalSnapshot,
       turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt(1)),
@@ -210,7 +208,6 @@ describe("per-package construction through the month executor (ADR-0077)", () =>
       const paid = p.paidWork as number;
       expect(paid).toBeGreaterThanOrEqual(paidBefore);
       paidBefore = paid;
-      // Treasury fell by no more than the work paid for (revenue may add to it).
       expect(treasury[i]! - treasury[i + 1]!).toBeLessThanOrEqual(
         paid - (i === 0 ? 0 : (history[i - 1]!.paidWork as number)),
       );
@@ -269,7 +266,7 @@ describe("budget_project on a project with work packages (ADR-0077)", () => {
     const snap = snapshotOf([project(true)], 20);
     const { next } = budget(snap, 10_000, "1880-02");
     const p = gbr(next).constructionProjects[0]!;
-    expect(p.completedWork).toBe(80); // 20 units on each of the four first lines
+    expect(p.completedWork).toBe(80);
     expect(p.paidWork).toBe(80);
     expect(gbr(snap).treasury - gbr(next).treasury).toBe(80);
   });
@@ -279,7 +276,6 @@ describe("budget_project on a project with work packages (ADR-0077)", () => {
     const second = budget(first, 10_000, "1880-02");
     expect(second.codes).toContain("PROJECT_CAPACITY_EXHAUSTED");
     expect(second.next).toBe(first);
-    // The next month there is capacity again.
     const later = budget(first, 10_000, "1880-03").next;
     expect(gbr(later).constructionProjects[0]!.completedWork as number).toBeGreaterThan(80);
   });

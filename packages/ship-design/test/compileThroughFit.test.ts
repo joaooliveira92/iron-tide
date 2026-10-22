@@ -7,9 +7,6 @@ import {
   type ShipContext,
 } from "../src/index.js";
 
-// Ticket 11a seam: the production derivation barrier. The derive callback must not run for
-// a rejected or non-evaluable loadout, and the outcome then carries fit findings only.
-
 const fit = (status: FitResult["status"]): FitResult => ({
   status,
   platform: "p",

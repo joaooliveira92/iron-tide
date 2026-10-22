@@ -1,7 +1,6 @@
 import type { NationRailRow } from "../nation-rail-state.js";
 import { NationSwatch } from "./NationSwatch.js";
 
-/** One nation in the rail: flag/hue swatch, name, relation words and war score while at war. */
 export function NationRailItem({
   row,
   selected,

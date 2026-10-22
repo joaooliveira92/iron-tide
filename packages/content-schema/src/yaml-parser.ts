@@ -10,14 +10,6 @@ export const YAML_POLICY_VERSION = 1;
 export const MAX_YAML_BYTES = 10 * 1024 * 1024;
 export const MAX_YAML_NESTING = 64;
 
-/**
- * Maximum number of alias nodes (`*name`) accepted in one document. Documents
- * with at most this many aliases are accepted; the (MAX_YAML_ALIAS_COUNT + 1)th
- * alias is rejected with `YAML-ALIAS-LIMIT`. `toJS` is additionally bounded by
- * MAX_YAML_ALIAS_COUNT + 1 because the library seeds its per-anchor counter with
- * the anchor definition itself, so this sum admits exactly MAX_YAML_ALIAS_COUNT
- * resolutions of a flat anchor while still guarding alias expansion.
- */
 export const MAX_YAML_ALIAS_COUNT = 100;
 
 const SUPPORTED_YAML_TAGS: ReadonlySet<string> = new Set([

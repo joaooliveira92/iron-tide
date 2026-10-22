@@ -66,10 +66,6 @@ interface SelectOptionRecord {
   id: string;
   value: string;
   label: string;
-  /**
-   * Optional leading visual for the option and its trigger (a lucide icon or a flag image). Captured when the option
-   * registers; pass a stable element per value.
-   */
   icon?: ReactNode;
   disabled: boolean;
   ref: RefObject<HTMLElement | null>;
@@ -191,7 +187,6 @@ export interface SelectProps {
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
 
-  /** Called whenever the highlighted (hovered or keyboard-active) option changes; null when none is highlighted. */
   onActiveValueChange?: (value: SelectValue) => void;
 
   name?: string;
@@ -636,7 +631,6 @@ export function Select({
     };
   }, []);
 
-  // The highlighted option, so a host can preview a choice before it is committed.
   useEffect(() => {
     onActiveValueChange?.(activeValue);
   }, [activeValue, onActiveValueChange]);
@@ -1169,9 +1163,7 @@ export function SelectContent({
 export interface SelectItemProps {
   value: string;
   textValue?: string;
-  /** Optional leading visual shown before the item text and on the trigger when selected (a lucide icon or a flag). */
   icon?: ReactNode;
-  /** Optional secondary line under the item label (ReUI "select with description text per option"). */
   description?: ReactNode;
   disabled?: boolean;
   className?: string;
@@ -1250,10 +1242,6 @@ export function SelectItem({
       data-disabled={effectivelyDisabled ? "" : undefined}
       {...(context.reduceMotion ? {} : { variants: ITEM_VARIANTS })}
       onPointerDown={(event) => {
-        /*
-         * Keep DOM focus on the combobox trigger. The active option
-         * is exposed with aria-activedescendant.
-         */
         event.preventDefault();
       }}
       onPointerMove={(event) => {

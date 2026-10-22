@@ -33,7 +33,6 @@ function withState(patch: Partial<MapPrototypeState>): MapPrototypeState {
   return { ...initialMapPrototypeState, ...patch };
 }
 
-/** The home copy of a decorative layer (the chart draws one copy per world turn). */
 function homeLayer(container: HTMLElement, layer: string): Element | null {
   return container.querySelector(`[data-layer="${layer}"]`);
 }
@@ -84,7 +83,6 @@ describe("strategic map: sea lanes", () => {
     const { container } = render(chart({ state, route }));
     const routeLines = container.querySelectorAll('path[stroke-dasharray="10 6"]');
     expect(routeLines.length).toBeGreaterThan(0);
-    // No lane carries the route's styling, and no route line lives inside the lane layer.
     const lanes = homeLayer(container, "lanes");
     expect(lanes?.getAttribute("stroke-dasharray")).not.toBe("10 6");
     expect(lanes?.querySelector('path[stroke-dasharray="10 6"]')).toBeNull();
@@ -100,7 +98,7 @@ describe("strategic map: sea lanes", () => {
       playerNationId: null,
       lanes: [
         { a: "area_north_sea", b: "area_western_approaches" },
-        { a: "area_baltic", b: "area_north_sea" }, // the Danish straits: gated in the fixture
+        { a: "area_baltic", b: "area_north_sea" },
       ],
     };
     const { container } = render(chart({ overlay }));
@@ -204,7 +202,6 @@ describe("strategic map: regional strength", () => {
     expect(label).toMatch(new RegExp(`strength ${region?.total} ships? \\(`));
     for (const entry of region?.nations ?? [])
       expect(label).toContain(`${entry.name} ${entry.ships}`);
-    // Areas without ships carry no strength sentence.
     const quiet = labels.filter((text) => !text?.includes("strength"));
     expect(quiet.length).toBe(AREAS.length - expected.length);
   });

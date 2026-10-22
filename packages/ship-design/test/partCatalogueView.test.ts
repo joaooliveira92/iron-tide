@@ -1,14 +1,3 @@
-/**
- * The family-level catalogue view (ship-part-model ticket 17b-1).
- *
- * The designer's read-only displays now read a projection of the compiled parts. This test is
- * the behaviour-preserving proof: for the shipped 1880 artifact, `buildPartCatalogueView` equals
- * the direct projection of the legacy `data.components` for every legacy id and every field the
- * view carries. It also pins the selection (45 family-level entries; national gun models and
- * launcher variants excluded) so the menu cannot grow.
- *
- * Expected values come from the legacy component records, not recomputed the way the view is.
- */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -35,7 +24,6 @@ const artifactPath = join(
   "content-artifact.json",
 );
 
-/** The artifact is an untrusted file read; split it and decode each slice strictly (never cast). */
 const artifact: unknown = JSON.parse(readFileSync(artifactPath, "utf8"));
 const shipBuilding = (artifact as { readonly shipBuilding: unknown }).shipBuilding;
 const slice = (key: string): unknown => (shipBuilding as Readonly<Record<string, unknown>>)[key];
@@ -44,7 +32,6 @@ const components = decodeStrict(ShipComponentCatalogueSchema, {
   components: slice("components"),
 }).components;
 
-/** The view's fields in a stable order, so a deep compare reads the whole entry. */
 const key = (e: PartCatalogueEntry) =>
   JSON.stringify({
     id: e.id,
@@ -78,11 +65,9 @@ describe("family-level catalogue view (17b-1)", () => {
 
   it("excludes national gun models, prototypes and mounts (the menu does not grow)", () => {
     const ids = new Set(buildPartCatalogueView(model).map((e) => e.id));
-    // A first-class national model, a catalogue-only model and every mount part must be absent.
     expect(ids.has("standard_gun_bl_12in_25")).toBe(false);
     expect(ids.has("uk_bl_12in_25_mk1")).toBe(false);
     expect(ids.has("gun_bl_12in_25_turret")).toBe(false);
-    // A launcher base is present; its national variants are not.
     expect(ids.has("tube_14in_above_water")).toBe(true);
     expect(ids.has("uk_tube_14in_aw_mk4")).toBe(false);
   });

@@ -1,6 +1,5 @@
 import type { NationStyle, VisualEra } from "@bluewave/ship-visual";
 
-/** The manual's national turret styles (p140), named for the legend. */
 export const STYLE_NAME: Readonly<Record<NationStyle, string>> = {
   A: "Austro-Hungarian",
   B: "British",
@@ -22,5 +21,4 @@ const ERA_NAME: Readonly<Record<VisualEra, string>> = {
   LATE_DREADNOUGHT: "Late dreadnought (1936 on)",
 };
 
-/** A visual era with its year span (ship-visual-era/1). */
 export const eraName = (era: VisualEra): string => ERA_NAME[era];

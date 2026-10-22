@@ -235,7 +235,6 @@ describe("MonthReportCard", () => {
     );
     const card = screen.getByTestId("month-report-card");
     expect(card.textContent).toContain("Britain defeated France in Malta");
-    // No raw ids leak into the narrative.
     expect(card.textContent).not.toMatch(/med_malta|b1/);
   });
 

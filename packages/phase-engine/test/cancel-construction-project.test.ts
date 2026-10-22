@@ -1,6 +1,3 @@
-// Cancellation with settlement (DESIGN-23 section 23; DESIGN-11 settlement contract). Drives the real
-// `CancelConstructionProject` command through `MonthExecutor.execute` so the dispatch, the availability release and the
-// `ConstructionProjectCancelled` record are all exercised end to end, plus unit checks of the pure applier/refusal paths.
 import type { CampaignSnapshot, ConstructionProject, NationState, Ship } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
@@ -204,8 +201,8 @@ describe("a rebuild cancelled mid-work settles, releases the ship and records th
     const s = nation.fleets.flatMap((f) => f.ships)[0]!;
     expect("availability" in s).toBe(false);
     expect("availabilityProjectId" in s).toBe(false);
-    expect(s.designVersionId).toBe("d1"); // cancellation never applies a new design
-    expect(nation.fleets.flatMap((f) => f.ships)).toHaveLength(1); // no ship spawned
+    expect(s.designVersionId).toBe("d1");
+    expect(nation.fleets.flatMap((f) => f.ships)).toHaveLength(1);
   });
 
   it("records one ConstructionProjectCancelled event with the explicit settlement", () => {

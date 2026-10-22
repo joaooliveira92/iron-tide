@@ -1,5 +1,3 @@
-// Deterministic initial-position/ordering helper derived from manifest area
-// geometry (bounding box in micrometres). No ambient randomness.
 import type { MovementState } from "../movement.js";
 import type { TacticalSideId } from "../tactical/state.js";
 
@@ -18,10 +16,6 @@ export interface SpawnUnit {
   turningRateMdegS: number;
 }
 
-// Heading convention (P-1 ticket 08): movement's `directionBp` uses 0 = +X (east),
-// 180 = -X (west). Place ATTACKER ships along the west edge heading east (0) and
-// DEFENDER ships along the east edge heading west (180), spread deterministically by index.
-// Positions are integer micrometres within the area bbox.
 export function computeInitialMovementStates(
   bbox: AreaBBox,
   units: SpawnUnit[],

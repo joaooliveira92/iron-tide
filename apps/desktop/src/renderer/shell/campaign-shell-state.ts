@@ -7,19 +7,12 @@ import type { NavigationHistory } from "./navigation-history.js";
 import { currentEntry, initialHistory, visit } from "./navigation-history.js";
 import type { Screen } from "./campaign-screen-registry.js";
 
-/** The active turn interruption the player must resolve before advancing. */
 export interface ShellInterruption {
   readonly request: InterruptionRequestDto | null;
   readonly pending: PendingTurnDto | null;
-  /** True when a stored pending turn could not be trusted (resumption declined). */
   readonly unavailable: boolean;
 }
 
-/**
- * Why a month commit — or an interruption answer that resolves the turn — failed.
- * A tagged value the shell stores and the UI switches on, so presentation never
- * has to string-match a prose message to decide what to show.
- */
 export type MonthCommitFailure =
   | {
       readonly _tag: "Rejected";
@@ -28,12 +21,10 @@ export type MonthCommitFailure =
     }
   | { readonly _tag: "TransportFailure"; readonly message: string };
 
-/** Appends the engine's diagnostics, if any, to a rejection line. */
 export function diagnosticsSuffix(diagnostics: readonly string[]): string {
   return diagnostics.length > 0 ? ` ${diagnostics.join("; ")}` : "";
 }
 
-/** The human line a failure presents, derived from the tagged failure. */
 export function describeMonthCommitFailure(failure: MonthCommitFailure): string {
   switch (failure._tag) {
     case "Rejected":
@@ -46,36 +37,12 @@ export function describeMonthCommitFailure(failure: MonthCommitFailure): string 
 export interface CampaignOverview {
   readonly month: { readonly year: number; readonly month: number };
   readonly treasury: number;
-  /** The snapshot's optimistic-concurrency revision (turn number). */
   readonly revision: number;
   readonly sessionId: string;
-  /** The player nation's name — INC-1's `PlayerProjection.nationName`. */
   readonly nationName: string;
-  /**
-   * The player nation's id — INC-1's `PlayerProjection.playerNationId`. Optional
-   * so pre-existing shell fixtures stay valid; production always stamps it. Used
-   * by presentation to resolve the active nation (e.g. currency availability)
-   * without guessing from the display name.
-   */
   readonly playerNationId?: string;
-  /**
-   * Projected monthly surplus/deficit — INC-1's
-   * `PlayerProjection.projectedSurplusDeficit`. After a month commit the
-   * `CommitMonthResponse` carries no projection surface, so the shell keeps
-   * the last-known value until the next `inspectCampaign` refreshes it.
-   */
   readonly projectedSurplusDeficit: number;
-  /**
-   * Active-alerts count slot, forward-wired to the INC-2 priorities
-   * projection: `null` until INC-2 lands, so the header renders an explicit
-   * placeholder rather than a fabricated count.
-   */
   readonly activeAlertsCount: number | null;
-  /**
-   * True when the player nation is at war with at least one nation
-   * (`PlayerProjection.knownEnemyNations` is non-empty); drives the header
-   * status. Refreshed from `inspectCampaign` after every month advance.
-   */
   readonly atWar: boolean;
 }
 
@@ -88,9 +55,7 @@ export interface CampaignShellState {
   readonly saveMessage: string | null;
   readonly primaryAction: PrimaryAction | null;
   readonly committing: boolean;
-  /** The active interruption (decision/battle/recovery), or null when advancing is unblocked. */
   readonly interruption: ShellInterruption | null;
-  /** The tagged failure of the last month commit, or null when none is outstanding. */
   readonly commitFailure: MonthCommitFailure | null;
 }
 
@@ -176,11 +141,6 @@ export function initialCampaignShellState(): CampaignShellState {
   };
 }
 
-/**
- * One state transition interface for the campaign shell. Related invariants
- * move together: opening a campaign clears errors and enters Overview; closing
- * it clears campaign-specific navigation, notices, and primary actions.
- */
 export function reduceCampaignShell(
   state: CampaignShellState,
   event: CampaignShellEvent,
@@ -234,7 +194,6 @@ export function reduceCampaignShell(
         commitFailure: null,
       };
     case "campaign-refreshed":
-      // A late refresh must not resurrect a closed campaign or replace a different one.
       if (state.campaign === null || state.campaign.sessionId !== event.campaign.sessionId) {
         return state;
       }
@@ -257,11 +216,6 @@ export function currentShellScreen(state: CampaignShellState): Screen {
   return currentEntry(state.history);
 }
 
-/**
- * Collapses the shell's related fields into one explicit UI variant. Consumers
- * switch on `kind` instead of interpreting combinations of campaign, loading,
- * error, and route state independently.
- */
 export function campaignShellMode(state: CampaignShellState): CampaignShellMode {
   const screen = currentShellScreen(state);
   if (state.loading) return { kind: "opening", screen };

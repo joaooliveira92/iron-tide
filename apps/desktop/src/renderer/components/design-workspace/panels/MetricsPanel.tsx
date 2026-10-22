@@ -18,7 +18,6 @@ const verdict: Record<Metric["tone"], string | null> = {
   neutral: null,
 };
 
-/** What each measure means for the ship, shown when the row is hovered. */
 const explain: Record<string, string> = {
   displacement:
     "Total weight of the ship as designed. It must stay within what the hull floats at its design draught.",

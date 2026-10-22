@@ -3,41 +3,20 @@ import { CardDeck } from "./CardDeck.js";
 import { createWheelStepper, normalizeIndex } from "./deckNavigation.js";
 
 export interface DeckMasterPaneProps {
-  /** Stable id for the listbox; the heading and instructions ids derive from it. */
   readonly listboxId: string;
   readonly heading: string;
-  /** Small overline above the heading (hidden on the narrowest screens). */
   readonly eyebrow?: string;
-  /** Spoken as the listbox description and shown under the heading. */
   readonly instructions: string;
-  /** The listbox's accessible name. */
   readonly ariaLabel: string;
-  /** Short gesture legend pinned to the bottom of the deck. */
   readonly hint: string;
   readonly emptyMessage: string;
-  /** One element per card, each carrying its own `role="option"` and id. */
   readonly cards: readonly ReactNode[];
-  /** DOM id of each card's option element, parallel to `cards`. */
   readonly optionIds: readonly string[];
-  /** The focused card; any integer, wrapped into range. */
   readonly focusedIndex: number;
-  /** Focus moved (arrows, wheel, drag-to-fling). Previews; commits nothing. */
   readonly onFocusIndex: (index: number) => void;
-  /** A card was tapped. */
   readonly onActivateIndex: (index: number) => void;
-  /** Enter pressed on the focused card. Without it Enter is left to `onKeyDown`. */
   readonly onConfirmIndex?: (index: number) => void;
-  /**
-   * Parent-owned key handling, run before the built-in arrow/Enter handling. A
-   * handler that calls `preventDefault()` claims the key and skips the built-in.
-   */
   readonly onKeyDown?: (event: KeyboardEvent<HTMLDivElement>) => void;
-  /**
-   * Optional content rendered below the deck, inside the aside. When set, the
-   * deck area gets a bounded height and the footer fills the remaining
-   * flex-column space — used to host the nation dossier below the card stack
-   * instead of overlaying the globe.
-   */
   readonly footerChildren?: ReactNode;
 }
 
@@ -51,16 +30,6 @@ const DECK_SETTINGS = {
   speed: 1.1,
 } as const;
 
-/**
- * The master pane shared by every deck-browsing surface (Fleet Dispatch, the
- * Rules-of-the-Naval-Age preset deck): a headed aside holding one listbox of
- * controlled cards. It owns listbox semantics (`aria-activedescendant`), arrow
- * wrapping, the wheel stepper, focus-on-mount and tap routing, so the surfaces
- * differ only by the cards they render and the callbacks they wire.
- *
- * It is presentation-only: it holds no selection state and reads nothing
- * authoritative.
- */
 export function DeckMasterPane({
   listboxId,
   heading,
@@ -95,9 +64,6 @@ export function DeckMasterPane({
     [count, normalizedFocusedIndex, onFocusIndex],
   );
 
-  // The wheel listener is registered once per mount of the listbox and reaches
-  // the latest `step` through a ref, so a re-render mid-gesture never resets the
-  // stepper's accumulation or cooldown.
   const stepRef = useRef(step);
   stepRef.current = step;
   const countRef = useRef(count);
@@ -110,8 +76,6 @@ export function DeckMasterPane({
 
     const stepper = createWheelStepper((direction) => stepRef.current(direction));
     const handleWheel = (event: WheelEvent): void => {
-      // A single card is nothing to step through, and a sideways gesture is not
-      // ours: both fall through to the page.
       if (countRef.current <= 1 || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
       event.preventDefault();
       stepper.push(event.deltaY, event.deltaMode);

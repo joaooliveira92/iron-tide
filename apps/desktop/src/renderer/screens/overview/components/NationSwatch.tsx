@@ -1,7 +1,6 @@
 import { campaignNationHue } from "../../../content/presentationContent.js";
 import type { NationRailRow } from "../nation-rail-state.js";
 
-/** The nation's flag art, or a letter on its nation hue when it has none yet. */
 export function NationSwatch({ row }: { readonly row: NationRailRow }) {
   const url = row.flagUrl;
   if (url !== null) {

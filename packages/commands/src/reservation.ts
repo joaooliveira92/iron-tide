@@ -5,7 +5,7 @@ export interface ResourcePool {
   resourceTypeId: string;
   resourceId: string;
   available: number;
-  reserved: Map<string, number>; // commandId -> quantity
+  reserved: Map<string, number>;
 }
 
 export class ReservationManager {
@@ -15,7 +15,6 @@ export class ReservationManager {
     this.pools.set(`${pool.resourceTypeId}:${pool.resourceId}`, pool);
   }
 
-  // Atomic across all required resources. If any fails, none remain.
   reserve(
     command: CommandRecord,
     requirements: Array<{
@@ -29,7 +28,6 @@ export class ReservationManager {
   ):
     | { ok: true; records: CommandReservationRecord[] }
     | { ok: false; reasonCode: string; failedResource: string } {
-    // Check all first in canonical (codepoint) order — never localeCompare.
     const sorted = [...requirements].sort((a, b) =>
       compareCodePoints(
         `${a.resourceTypeId}:${a.resourceId}`,
@@ -51,7 +49,6 @@ export class ReservationManager {
         return { ok: false, reasonCode: domainReason, failedResource: key };
       }
     }
-    // All checks passed, now atomically reserve
     const records: CommandReservationRecord[] = [];
     for (const req of sorted) {
       const key = `${req.resourceTypeId}:${req.resourceId}`;

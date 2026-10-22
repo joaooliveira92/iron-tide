@@ -1,29 +1,15 @@
-/**
- * Per-variant chrome layout. The chart draws the same world in three shells:
- * the full F1 sheet, the embedded Overview panel, and the full-bleed command
- * home. Every difference between them — framed or not, docks or floating
- * panels, which readouts collapse when idle — is data here rather than
- * conditionals scattered through the JSX. A new shell is a new entry, not an
- * edit to `WorldMapChart`.
- */
-
 import { cn } from "../../lib/utils.js";
 
 export type MapVariant = "full" | "panel" | "command";
 
 export interface MapVariantLayout {
-  /** Classes appended after the shared root classes (empty for the full-bleed shell). */
   readonly root: string;
-  /** The "Layers & areas" disclosure button, or null when controls are always open. */
   readonly layersButton: string | null;
   readonly controlsPanel: string;
-  /** Idle controls are hidden behind the disclosure until opened. */
   readonly controlsHideWhenClosed: boolean;
-  /** The shell stacks panels into pointer-transparent left/right docks. */
   readonly docked: boolean;
   readonly leftDock: string;
   readonly rightDock: string;
-  /** The area list is nested inline (full/panel) rather than a collapsible dock panel. */
   readonly inlineAreas: boolean;
   readonly inspector: string;
   readonly inspectorHideWhenEmpty: boolean;

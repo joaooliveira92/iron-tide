@@ -1,9 +1,3 @@
-// MIG-WIRE-1: the PERSISTENCE_* codes survive the migration as in-process
-// `Data.TaggedError`s. The DiagnosticCollector contract is retained (adoption
-// ticket 06): the tagged errors ADD a typed vocabulary, they do not replace the
-// collector. `toDiagnostic()` must project onto exactly the `Diagnostic` the
-// collector's `addError`/`addWarning` already produced.
-
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import {

@@ -45,11 +45,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-// One shared runtime for every diplomacy program; the services delegate to the
-// same in-memory session/queue registries the tests populate directly.
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-/** Runs a command program through the desktop service graph and projects its wire envelope. */
 async function runProgram<A>(program: CommandProgram, payload: unknown): Promise<BridgeResult<A>> {
   return projectCommandExit(await runtime.runPromiseExit(program(payload))) as BridgeResult<A>;
 }
@@ -76,17 +73,6 @@ const DIPLOMACY_TYPES = new Set<string>([
   "DeclareBlockade",
 ]);
 
-/**
- * desktop-diplomacy-war INC-1 + INC-2 acceptance tests (spec AC-1..AC-5):
- * projection + engine-authoritative command issue against the real production
- * pack. `submitDiplomacyCommand` validates with the ENGINE's own
- * `CommandLifecycle.validate()` and queues a real envelope; envelopes are
- * applied ONLY by `MonthExecutor`'s command_collection via `commitMonth` —
- * these tests never mutate politics/wars/blockades directly (the `patch`
- * fixtures below construct synthetic diplomacy states for the scenarios the
- * engine requires — ACTIVE war, allied pair, NAP, at-war pair — never the
- * production code path).
- */
 describe("diplomacy commands", () => {
   let saveRoot: string;
 
@@ -100,9 +86,6 @@ describe("diplomacy commands", () => {
     clearPendingWorkspacesForTest();
   });
 
-  /** Register a session from the compiled production pack; `patch` MAY mutate
-   * a deep copy of the snapshot (test-fixture only) to construct the targeted
-   * diplomacy states the scenarios need. */
   function registerProductionSession(
     sessionId: string,
     saveDir: string,
@@ -171,7 +154,6 @@ describe("diplomacy commands", () => {
     };
   }
 
-  /** The session's queued diplomacy-family envelopes (hash refreshed). */
   function queuedDiplomacy(sessionId: string): CommandEnvelope<CommandBody>[] {
     const state = requireSessionState(sessionId);
     return pendingEnvelopesForExecution(sessionId, state.snapshot).filter((envelope) =>
@@ -210,7 +192,6 @@ describe("diplomacy commands", () => {
       expect(value.month).toEqual({ month: 1, year: 1880 });
       expect(value.playerNationId).toBe("uk");
 
-      // Every OTHER nation (no uk), sorted by id — 14 nations in the pack.
       expect(value.knownNations.length).toBe(state.snapshot.nations.size - 1);
       const ids = value.knownNations.map((n) => n.nationId);
       expect([...ids].sort()).toEqual(ids);
@@ -218,12 +199,10 @@ describe("diplomacy commands", () => {
       const france = value.knownNations.find((n) => n.nationId === "france");
       expect(france?.name).toBe(state.snapshot.nations.get("france")!.name);
 
-      // The compiled pair registry fills EVERY pair — all uk pairs project.
       expect(value.relations.length).toBeGreaterThanOrEqual(state.snapshot.nations.size - 1);
       expect(value.relations.every((r) => r.partnerNationId !== "uk")).toBe(true);
       expect(value.relations.every((r) => r.nationAId === "uk" || r.nationBId === "uk")).toBe(true);
 
-      // The compiled pack starts with zero wars/blockades — honest empty reads.
       expect(value.wars).toEqual([]);
       expect(value.blockades).toEqual([]);
       expect(value.areas.length).toBeGreaterThan(0);
@@ -516,8 +495,6 @@ describe("diplomacy commands", () => {
       expect(vsGermany.outcome).toBe("success");
       if (vsFrance.outcome !== "success" || vsGermany.outcome !== "success") return;
 
-      // The AI scheme keys on type only — that would collide two same-type
-      // commands in one turn; the diplomacy discriminator resolves it.
       expect(vsFrance.value.commandId).not.toBe(vsGermany.value.commandId);
       expect(queuedDiplomacy("distinct-session")).toHaveLength(2);
     });
@@ -617,8 +594,6 @@ describe("diplomacy commands", () => {
         MACHINERY: 2,
         HULL_CONSTRUCTION: 2,
       };
-      // The engine's SetResearchPriority validation requires EVERY canonical
-      // field present with a {1,2,4} weight — pad the record to the full set.
       for (const field of CANONICAL_RESEARCH_FIELD_IDS) {
         if (priorities[field] === undefined) priorities[field] = 1;
       }
@@ -635,7 +610,6 @@ describe("diplomacy commands", () => {
       );
       expect(diplomacy.outcome).toBe("success");
 
-      // BOTH families sit in the shared queue pre-commit.
       expect(
         pendingEnvelopesForExecution("mixed-session", requireSessionState("mixed-session").snapshot)
           .map((e) => e.body.type)
@@ -650,7 +624,6 @@ describe("diplomacy commands", () => {
       expect(committed.outcome).toBe("success");
       if (committed.outcome !== "success") return;
 
-      // Engine applied both: priorities recorded AND the war exists.
       const after = requireSessionState("mixed-session");
       expect(after.snapshot.nations.get("uk")!.research.fieldPriorities.GUNNERY).toBe(4);
       expect(

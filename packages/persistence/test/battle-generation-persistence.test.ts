@@ -10,8 +10,6 @@ import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
-// Builds a snapshot carrying the new B-1 snapshot fields (battleManifests,
-// divisions, manifestHash) so save/load round-trips them (AC-13).
 function makeManifestSnapshot(): CampaignSnapshot {
   return {
     version: "0.1.0",

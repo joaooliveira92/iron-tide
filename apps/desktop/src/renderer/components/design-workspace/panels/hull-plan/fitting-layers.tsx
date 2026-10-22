@@ -5,12 +5,6 @@ import { LABEL_FONT, NON_SCALING, STROKE } from "./drafting.js";
 import { fittingPoint, type PlanFrame } from "./geometry.js";
 import type { PlanSymbolSpec } from "./plan-symbols.js";
 
-/**
- * One fitting's plan symbol, centred on (x, y). Guns are a mount ring per its class with one barrel per gun, pointing
- * toward the bow forward of amidships and toward the stern aft of it (as the guide's plan diagrams draw them); torpedo
- * tubes lie across the beam; spaces below the deck are faint dashed marks. The element carrying `data-fitting` is
- * always a circle at (x, y).
- */
 function PlanSymbol({
   spec,
   x,
@@ -37,8 +31,6 @@ function PlanSymbol({
         { length: spec.barrels },
         (_, i) => (spec.barrels === 1 ? 0 : (i / (spec.barrels - 1) - 0.5) * 2) * spread,
       );
-      // A wing mount fires across the beam, outward on its own side (starboard is the upper side of the drawing); a
-      // centreline mount points along the hull. The barrel is a vector (dx, dy) from the mount, spread perpendicular.
       const wing = side === "STBD" ? -1 : side === "PORT" ? 1 : 0;
       const barrels = offsets.map((o) =>
         wing === 0
@@ -138,7 +130,6 @@ function PlanSymbol({
   }
 }
 
-/** A fitting's symbol, or the plain dot when it has none. */
 function PlanMark(props: {
   readonly spec: PlanSymbolSpec | undefined;
   readonly x: number;
@@ -153,7 +144,6 @@ function PlanMark(props: {
   return <PlanSymbol spec={spec} x={x} y={y} id={id} aft={aft} side={side} />;
 }
 
-/** The fittings' markers. Names, hover and selection are on the `FittingTargets` overlay above the drawing. */
 export function HullFittingLayer({
   frame,
   draft,
@@ -162,9 +152,7 @@ export function HullFittingLayer({
 }: {
   readonly frame: PlanFrame;
   readonly draft: DesignDraft;
-  /** Fitting to ring (the one being moved from the plan tools). */
   readonly selectedId?: string;
-  /** The symbol a placement is drawn with; omitted, or undefined for a placement, it is a plain dot. */
   readonly symbolOf?: (placement: DesignDraft["placements"][number]) => PlanSymbolSpec | undefined;
 }) {
   return (
@@ -199,9 +187,7 @@ export function HullFittingLayer({
   );
 }
 
-/** Schematic radius of an arc wedge, px. Range is not data. The section card draws its own (26) under magnification; do not unify them. */
 const ARC_R = 30;
-/** The larger radius the Firing arcs view draws, where the arcs are the subject and carry their width. */
 export const ARC_R_FOCUS = 48;
 
 export function GunArcLayer({
@@ -214,13 +200,10 @@ export function GunArcLayer({
   readonly frame: PlanFrame;
   readonly draft: DesignDraft;
   readonly mounts: readonly { instanceId: string; effectiveBeamArcDeg: number }[];
-  /** Drawn radius of each wedge, SVG units. */
   readonly radius?: number;
-  /** Write each wedge's width in degrees on it. */
   readonly labelled?: boolean;
 }) {
   const arcByInstance = new Map(mounts.map((m) => [m.instanceId, m.effectiveBeamArcDeg]));
-  // A selected mount's arcs read strongest: the coverage it can actually bear on its own drawing.
   const selected = useShipSelection((s) => s.selected);
   const highlightId = selected?.kind === "fitting" ? selected.instanceId : undefined;
   return (

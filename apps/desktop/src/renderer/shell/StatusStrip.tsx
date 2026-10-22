@@ -44,16 +44,11 @@ import {
   type StripTone,
 } from "./status-strip-state.js";
 
-/** Shared pill shell for the compact summary row (collapsed strip). */
 const CHIP =
   "inline-flex items-center gap-1.5 rounded-md border bg-muted/40 px-2 py-0.5 text-xs outline-none transition-colors hover:bg-muted focus-visible:ring-1 focus-visible:ring-ring";
 
 const LABEL_FIELD = "flex min-w-0 items-center gap-1 text-xs leading-4 text-muted-foreground";
 
-/**
- * Plain-English explanation for readouts whose engine note is empty. The rest carry their own note
- * (a caveat) from the view model, and deferred rows carry their reason.
- */
 const DESCRIPTIONS: Record<string, string> = {
   treasury: "Cash on hand at the start of the month.",
   maintenance: "Fleet upkeep charged every month.",
@@ -66,10 +61,7 @@ function descriptionFor(row: StripRow): string {
   return row.note !== "" ? row.note : (DESCRIPTIONS[row.id] ?? "");
 }
 
-/** A surplus/deficit stamp. The word is always present, so colour is never the only signal. */
 function StatusBadge({ status, tone }: { readonly status: string; readonly tone: StripTone }) {
-  // The text stays body-coloured: the red and green text tokens miss 4.5:1 on their own tints.
-  // Colour rides on the border, tint and icon, and the word carries the meaning.
   const Icon = tone === "alert" ? CircleAlert : CircleCheck;
   return (
     <Badge
@@ -90,10 +82,6 @@ function StatusBadge({ status, tone }: { readonly status: string; readonly tone:
   );
 }
 
-/**
- * A hover card that a click pins open (see `usePinnableCard`). It owns the trigger element and the
- * card; `triggerProps` carries the trigger's own attributes (aria-label, data-*, style).
- */
 function PinnableCard({
   trigger,
   triggerClassName,
@@ -115,7 +103,6 @@ function PinnableCard({
   readonly align?: "start" | "center" | "end";
   readonly delay?: number;
   readonly onActive?: (open: boolean) => void;
-  /** A trigger that is not a real button needs Enter and Space to pin. */
   readonly labelled?: boolean;
 }) {
   const pin = usePinnableCard(onActive);
@@ -148,11 +135,6 @@ function PinnableCard({
   );
 }
 
-/**
- * A readout label that explains itself on hover or keyboard focus. `card` replaces the one-line
- * explanation with a full panel; `onOpenChange` lets a caller link the card to something else
- * on the band (the budget bar highlights the line being described).
- */
 function ReadoutLabel({
   row,
   wrap = false,
@@ -167,7 +149,6 @@ function ReadoutLabel({
   readonly onOpenChange?: (open: boolean) => void;
 }) {
   const description = descriptionFor(row);
-  // Wrapped labels keep their full text; truncating "Shipyard capacity (port levels)" hid meaning.
   const fit = wrap ? "break-words" : "truncate";
   if (description === "" && card === undefined) {
     return <span className={cn(LABEL_FIELD, fit, className)}>{row.label}</span>;
@@ -202,7 +183,6 @@ function rowById(rows: readonly StripRow[], id: string): StripRow | undefined {
   return rows.find((row) => row.id === id);
 }
 
-/** A titled card holding one group of readouts. */
 function Panel({
   name,
   aside,
@@ -235,7 +215,6 @@ function Panel({
   );
 }
 
-/** One headline figure: a small label over a large tabular value. */
 function StatTile({ row, card }: { readonly row: StripRow; readonly card?: ReactNode }) {
   return (
     <div
@@ -250,7 +229,6 @@ function StatTile({ row, card }: { readonly row: StripRow; readonly card?: React
   );
 }
 
-/** A plain label-and-value line, for the small supporting figures. */
 function LedgerLine({
   row,
   card,
@@ -283,10 +261,6 @@ function LedgerLine({
   );
 }
 
-/**
- * The appropriation as one bar; the empty track is what is left after the committed lines. Each
- * segment opens the same card as its legend row, and `active` dims the rest so the two read as one.
- */
 function AllocationBar({
   allocation,
   active,
@@ -320,7 +294,6 @@ function AllocationBar({
             triggerProps={{
               "data-segment": segment.id,
               "data-active": active === segment.id,
-              // A tiny but real line keeps a visible sliver; the legend carries its exact share.
               style: { width: `${String(Math.round(segment.fraction * 1000) / 10)}%` },
             }}
             triggerClassName={cn(
@@ -531,11 +504,6 @@ function NationPanel({ model }: { readonly model: StatusStripModel }) {
   );
 }
 
-/**
- * Every deferred readout, each with the reason the campaign does not model it yet, behind one
- * popover grouped by where the readout would sit. Kept off the band so the panel stays short and
- * the placeholder is never a number.
- */
 function DeferredPopover({ model }: { readonly model: StatusStripModel }) {
   const { deferredRows: rows } = model;
   if (rows.length === 0) return null;
@@ -601,7 +569,6 @@ function DeferredPopover({ model }: { readonly model: StatusStripModel }) {
   );
 }
 
-/** Collapsed one-liner: balance, treasury and alerts as hoverable chips. */
 function BalanceChip({
   model,
   trend,
@@ -693,20 +660,11 @@ function AlertsChip({ alerts }: { readonly alerts: string }) {
   );
 }
 
-/**
- * The collapsible bottom status strip. Collapsed (the default in compact density) it is one line
- * of hoverable summary chips: balance (with a budget hover card), treasury and alerts. Expanded it
- * shows three cards: Nation (headline figures), Budget (the appropriation as a stacked bar with each
- * line's share) and Outlook (balance, treasury, runway). Every label explains itself in a tooltip, and the deferred lines live in one
- * "Not yet modelled" popover, so the band stays short. Deficits are always spelled out in text,
- * never conveyed by colour alone.
- */
 export function StatusStripView({
   model,
   trend = null,
 }: {
   readonly model: StatusStripModel;
-  /** Month-over-month history from the stored reports; null until a month has been advanced. */
   readonly trend?: TrendDetail | null;
 }) {
   const { density } = useDensity();
@@ -766,11 +724,9 @@ export function StatusStripView({
 }
 
 export interface StatusStripProps {
-  /** The active campaign's reads, fetched once by the shell. */
   readonly reads: CampaignReads;
 }
 
-/** Renders the engine views the shell already read; renders nothing while the campaign read is unavailable. */
 export function StatusStrip({ reads }: StatusStripProps) {
   const { projection, areas, reports } = reads;
   const format = usePresentationFormat();

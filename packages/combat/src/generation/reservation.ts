@@ -1,7 +1,6 @@
 import { BluewaveError } from "@bluewave/contracts";
 import { BATTLE_ASSET_RESERVATION_CONFLICT } from "./reasonCodes.js";
 
-// DESIGN-37 §41: shipped maximum participation per persistent ship per month is exactly 1.
 export const MAX_BATTLE_PARTICIPATION_PER_SHIP_PER_MONTH = 1;
 
 export interface Reservation {
@@ -10,7 +9,6 @@ export interface Reservation {
   reservationId: string;
 }
 
-// Reserve every participating persistent asset; duplicate -> BATTLE_ASSET_RESERVATION_CONFLICT.
 export function reserveAssets(
   battleId: string,
   assetIds: string[],

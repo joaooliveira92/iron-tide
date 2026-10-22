@@ -1,50 +1,3 @@
-// DESIGN-40 §21 underwater-tube hit hazard (INC-6, AC-18). A hit on a
-// compartment containing loaded underwater torpedo tubes MUST evaluate
-// `underwater_tube_hit_hazard_v1`:
-//   severeFloodingProbabilityBp = clamp(0, 10_000,
-//     floor(5_000 * loadedTubeMultiplierBp * torpedoPropellantMultiplierBp *
-//       isolationMultiplierBp * protectionMultiplierBp / 10_000^4))
-// with the shipped tables — loaded tubes 2_500/10_000/12_500; propulsion
-// ordinary air/wet-heater 10_000 / oxygen 15_000 / electric 7_500;
-// isolation intact/degraded/failed 7_500/10_000/15_000; protection
-// none/standard/improved 12_500/10_000/7_500 — and base 5_000 bp. A SEVERE
-// result (one keyed draw below the composed probability) MUST create:
-//   1. immediate additional flooding = 5_000 bp of the remaining flotation
-//      reserve, capped by the reserve;
-//   2. ONE additional flooding source at the shipped rate multiplier
-//      15_000 bp over the ongoing progressive rate (creation-only);
-//   3. launcher damage state DESTROYED;
-//   4. a §22 loaded-torpedo chain-reaction check per loaded tube;
-//   5. crew-casualty + nearby-system-shock checks.
-// The severe result records the in-slice cause UNDERWATER_TUBE_SEVERE_FLOODING.
-// A non-severe result creates none of those effects and consumes NO draw (the
-// hazard draw layout is deterministic: AT MOST ONE hazard draw; the casualty
-// and shock draws only exist inside the severe branch).
-//
-// INTERPRETATION (reviewer MEDIUM-1, DESIGN-40 §16/§17): the §21 "immediate
-// additional flooding" (item 1) is FLOTATION-RESERVE loss per §16/§17
-// semantics — it is immediate flotation loss, NOT a progressive-flooding
-// accumulation. The SEPARATE progressive source is item 2 (the 15_000 bp
-// extra source), a C-5 progressive source. The caller (damagePackage.ts)
-// applies the immediate flooding as flotation-reserve loss (floor-at-0, capped
-// by the reserve) so evaluateTerminalSeam can still see a SINKING/SUNK boundary;
-// the caller does NOT add item 1 into progressiveFloodingTotal.
-//
-// The constant surface ships under the spec-named `underwater_tube_hit_hazard_v1`
-// policy as SHIPPED_UNDERWATER_TUBE_HIT_HAZARD_CONTRACT + a fail-closed guard
-// (AC-24), mirroring the detonation-contract precedent.
-//
-// Crew casualty + shock checks: §21 lists them without pinned numbers;
-// INC-6 ships authored BALANCE TARGET bases (recorded for ADR-0029 in
-// damageConstants.ts): the casualty check rolls against 5_000 bp and a
-// successful roll applies TORPEDO_TUBE_CREW_CASUALTY_SHARE_BP (2_500 bp =
-// 25%) of the at-risk crew (integer input) as casualties; the nearby-system
-// shock check is performed by the caller through the §20 evaluator
-// (evaluateTorpedoSystemShock, systemShock.ts) over the systems the layout
-// classifies around the tube bay — this module returns the compounded
-// processed inputs.
-//
-// Pure/deterministic: no ambient I/O/clock/random.
 import { BluewaveError } from "@bluewave/contracts";
 import {
   FLOODING_ISOLATION_STATES,
@@ -81,12 +34,10 @@ function isInt(v: unknown): v is number {
   return typeof v === "number" && Number.isInteger(v) && Number.isSafeInteger(v);
 }
 
-// §21 shipped constant surface under the spec-named policy id.
 export const underwaterTubeHitHazardPolicyId = "underwater_tube_hit_hazard_v1" as const;
 export const TORPEDO_TUBE_HAZARD_BASE_BP = 5_000 as const;
-export const TORPEDO_TUBE_HAZARD_SCALE_EXPONENT = 4 as const; // 10_000^4
+export const TORPEDO_TUBE_HAZARD_SCALE_EXPONENT = 4 as const;
 
-// §21 loaded-tube multipliers (no loaded / one loaded / two or more).
 export const TORPEDO_TUBE_LOADED_MULTIPLIER_BP = Object.freeze({
   NO_LOADED_TORPEDO: 2_500,
   ONE_LOADED_TUBE: 10_000,
@@ -101,14 +52,12 @@ export function loadedTubeMultiplierBp(loadedCount: number): number {
   return TORPEDO_TUBE_LOADED_MULTIPLIER_BP.TWO_OR_MORE_LOADED_TUBES;
 }
 
-// §21 isolation multipliers (tube-bay section — distinct from the §18 table).
 export const TORPEDO_TUBE_ISOLATION_MULTIPLIER_BP: Record<FloodingIsolationState, number> = {
   INTACT: 7_500,
   DEGRADED: 10_000,
   FAILED: 15_000,
 };
 
-// §21 tube-bay protection levels (no dedicated / standard / improved).
 export const TORPEDO_TUBE_PROTECTION_LEVELS = ["NONE", "STANDARD", "IMPROVED"] as const;
 export type TorpedoTubeProtectionLevel = (typeof TORPEDO_TUBE_PROTECTION_LEVELS)[number];
 export const TORPEDO_TUBE_PROTECTION_MULTIPLIER_BP: Record<TorpedoTubeProtectionLevel, number> = {
@@ -117,7 +66,6 @@ export const TORPEDO_TUBE_PROTECTION_MULTIPLIER_BP: Record<TorpedoTubeProtection
   IMPROVED: 7_500,
 };
 
-// UnderwaterTubeHitHazardContract — the §21 name-branded fail-closed surface.
 export interface UnderwaterTubeHitHazardContract {
   policyId: string;
   baseSevereFloodingBp: number;
@@ -180,16 +128,9 @@ export function validateUnderwaterTubeHitHazardContract(
     throwMismatch(c, "§21 protection multipliers");
 }
 
-// Probability composition.
-
-// AC-18: the exact §21 severe-flooding probability composition. Propulsion may
-// be passed as the multiplier or the canonical propulsion type (the §21
-// authoritative table in oxygen.ts); isolation as the canonical state or a raw
-// bp; protection as the canonical level or a raw bp; loaded tubes as the
-// multiplier or the loaded count.
 export function computeUnderwaterTubeSevereFloodingBp(o: {
   loadedTubeMultiplierBp?: number;
-  loadedCount?: number; // convenience: 0/1/2+ -> the shipped table
+  loadedCount?: number;
   propulsionType?: TorpedoPropulsionType;
   propulsionMultiplierBp?: number;
   isolationState?: FloodingIsolationState;
@@ -260,8 +201,6 @@ export function computeUnderwaterTubeSevereFloodingBp(o: {
   return Math.min(TORPEDO_BASIS_POINTS_PER_UNIT, Math.max(0, raw));
 }
 
-// The severe-branch budget: 5_000 bp of the remaining flotation reserve,
-// capped by the reserve — the exact §21 immediate additional flooding.
 export function computeSevereImmediateFloodingKg(remainingFlotationReserve: number): number {
   if (!isInt(remainingFlotationReserve) || remainingFlotationReserve < 0)
     invariant(
@@ -273,10 +212,8 @@ export function computeSevereImmediateFloodingKg(remainingFlotationReserve: numb
     (remainingFlotationReserve * TORPEDO_TUBE_SEVERE_FLOODING_BUDGET_BP) /
       TORPEDO_BASIS_POINTS_PER_UNIT,
   );
-  return Math.min(budget, remainingFlotationReserve); // capped by the reserve
+  return Math.min(budget, remainingFlotationReserve);
 }
-
-// The full §21 evaluation.
 
 export interface TubeHazardChainProbe {
   tubeIndex: number;
@@ -287,26 +224,16 @@ export interface TorpedoTubeHazardResult {
   severe: boolean;
   severeFloodingProbabilityBp: number;
   decision: { streamId: string; draw: number; drawBp: number } | null;
-  immediateAdditionalFloodingKg: number; // 0 when not severe
-  extraFloodingSource: FloodingSourceRecord | null; // the 15_000 bp extra source
-  launcherDamageState: LauncherDamageState; // "DESTROYED" when severe
-  chainChecks: readonly TubeHazardChainProbe[]; // per loaded tube (§22 probes)
-  crewCasualties: number; // 0 when not severe
+  immediateAdditionalFloodingKg: number;
+  extraFloodingSource: FloodingSourceRecord | null;
+  launcherDamageState: LauncherDamageState;
+  chainChecks: readonly TubeHazardChainProbe[];
+  crewCasualties: number;
   crewCasualtyRoll: { streamId: string; draw: number; drawBp: number } | null;
-  shockCandidates: readonly SystemShockCandidate[]; // the §20 pool (severe only)
-  reasonCode: string | null; // UNDERWATER_TUBE_SEVERE_FLOODING on severe
+  shockCandidates: readonly SystemShockCandidate[];
+  reasonCode: string | null;
 }
 
-// AC-18: the complete §21 evaluation. identity: battle/minute/substep/launcher
-// + track make the keyed streams unique. loadedTubeCount + loadedChecks are
-// the SAME launcher's loaded surface (loadedTubeCount drives the §21 loaded
-// group; loadedChecks are the per-tube §22 probes). The tube bay's
-// progressive-flooding base rate (the rate the main hit created, in kg/min)
-// feeds the extra source; the ship's remaining flotation reserve feeds the
-// immediate-flooding budget. The severe branch consumes THREE keyed draws in
-// this fixed order (hazard -> casualty); the shock pool is RETURNED for the
-// caller to resolve through the §20 evaluator (the plant draws are staged by
-// the caller — damagePackage.ts documents the full composite layout).
 export function resolveUnderwaterTubeHitHazard(o: {
   battleId: string;
   impactMinute: number;
@@ -318,7 +245,7 @@ export function resolveUnderwaterTubeHitHazard(o: {
   loadedChecks: readonly TubeHazardChainProbe[];
   baseProgressiveRateKgMin: number;
   remainingFlotationReserve: number;
-  crewAtRisk: number; // integer crew present at the tube bay (casualty pool)
+  crewAtRisk: number;
   shockCandidates: readonly SystemShockCandidate[];
   keyedRng: (stream: string) => number;
   targetCompartmentId: string;
@@ -405,8 +332,6 @@ export function resolveUnderwaterTubeHitHazard(o: {
     });
   }
 
-  // (1) immediate additional flooding — 5_000 bp of the remaining reserve,
-  // capped by the reserve; (2) the one extra source at 15_000 bp.
   const immediateAdditionalFloodingKg = computeSevereImmediateFloodingKg(
     o.remainingFlotationReserve,
   );
@@ -415,8 +340,6 @@ export function resolveUnderwaterTubeHitHazard(o: {
     baseProgressiveRateKgMin: o.baseProgressiveRateKgMin,
   });
 
-  // (5) crew-casualty check — one keyed draw vs the authored base; on success
-  // a 2_500-bp share of the at-risk crew is lost.
   const casualtyStream = `battle/torpedo/tube-hazard/casualty:${o.battleId}:${o.impactMinute}:${o.impactSubstep}:${o.torpedoTrackId}:${o.launcherId}`;
   const casualtyDraw = o.keyedRng(casualtyStream);
   if (typeof casualtyDraw !== "number" || casualtyDraw < 0 || casualtyDraw >= 1)

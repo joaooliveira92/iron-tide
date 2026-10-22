@@ -1,15 +1,8 @@
-// D-4 M4 Aviation: Air Defense — AirDefenseAttack incoming attack model per DESIGN-45 §4.
-// Every attack declares release range, release altitude, speed profile, terminal profile,
-// formation size, cohesion, defensive susceptibility, and target identifier (§4 line 84).
-// Strict validation at construction boundaries, fail-closed guards.
-
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { Result, Schema } from "effect";
 import { formatContractIssues } from "../schema-issues.js";
 import { AIR_DEFENSE_MODEL_VERSION } from "./constants.js";
 import { INVALID_AIR_DEFENSE_ATTACK } from "./reasonCodes.js";
-
-// ---- Canonical attack types (§4) ----
 
 export const AttackType = {
   AIRCRAFT_LEVEL_BOMBING: "AIRCRAFT_LEVEL_BOMBING" as const,
@@ -27,7 +20,6 @@ export const AttackType = {
 
 export type AttackTypeId = (typeof AttackType)[keyof typeof AttackType];
 
-/** All 11 canonical attack types, in §4 canonical order. */
 export const ATTACK_TYPES: readonly AttackTypeId[] = [
   AttackType.AIRCRAFT_LEVEL_BOMBING,
   AttackType.AIRCRAFT_DIVE_BOMBING,
@@ -56,18 +48,6 @@ const AttackTypeLiteral = Schema.Literals([
   "SPECIAL_EXPLICIT_ATTACK",
 ]);
 
-/**
- * Standard SafeInt schema: accept a number, validate integer + safe range. The
- * `message` is surfaced verbatim on failure, matching the previous Zod custom
- * schema's `{ message }` behavior.
- *
- * The decoded value carries the `@bluewave/contracts` `SafeInt` brand at the
- * schema seam. `Schema.brand` mints Effect's own brand (`Brand.Brand<"SafeInt">`,
- * a `[BrandTypeId]` symbol), which is not the contracts brand
- * (`{ readonly __brand: "SafeInt" }`), so the nominal type is annotated here
- * instead — the runtime contract is unchanged (a validated integer; `Encoded`
- * stays `number`) and no call site needs a narrowing cast (ticket INC-3).
- */
 function safeIntSchema(
   message: string,
   opts?: { min?: number; max?: number; nonNegative?: boolean; positive?: boolean },
@@ -84,31 +64,27 @@ function safeIntSchema(
   ) as Schema.Codec<SafeInt, number>;
 }
 
-// ---- AirDefenseAttack interface (§4) ----
-
 export interface AirDefenseAttack {
   attackId: string;
-  formationId: string; // attacking formation identifier (must be provided)
-  targetId: string; // defended ship identifier under attack
+  formationId: string;
+  targetId: string;
   attackType: AttackTypeId;
   speedKnots: SafeInt;
   speedMps: SafeInt;
-  currentRangeM: SafeInt; // range to the defended ship / closest approach
+  currentRangeM: SafeInt;
   currentAltitudeM: SafeInt;
-  bearingDegrees: SafeInt; // 0..360 angular offset from the defender-facing line (arc predicate)
+  bearingDegrees: SafeInt;
   releaseRangeM: SafeInt;
   releaseAltitudeM: SafeInt;
-  isReleased: boolean; // weapons released from the aircraft? (§8 pre-release vs post-release)
-  fireControlSolutionBp: SafeInt; // current fire-control solution in basis points (§8 gate)
-  timeToImpactMs: SafeInt; // time to impact / closest approach (light-AA window §9)
-  formationSize: SafeInt; // positive
+  isReleased: boolean;
+  fireControlSolutionBp: SafeInt;
+  timeToImpactMs: SafeInt;
+  formationSize: SafeInt;
   cohesionBp: SafeInt;
   defensiveSusceptibilityBp: SafeInt;
   contentVersion: string;
   contentHash: string;
 }
-
-// ---- Effect Schema for AirDefenseAttack (strict: unknown fields rejected) ----
 
 const AirDefenseAttackSchema = Schema.Struct({
   attackId: Schema.String.check(
@@ -179,16 +155,7 @@ const AirDefenseAttackSchema = Schema.Struct({
   ),
 });
 
-/**
- * Strict + collect-all options: unmodeled keys are rejected and every failing
- * field is reported, matching the previous Zod `.strict().safeParse()` which
- * surfaced the full `issue` list. `onExcessProperty` is a parse-time option in
- * Effect v4 (it cannot be embedded in the schema AST), so decoding is
- * centralized through `validateAirDefenseAttack`.
- */
 const parseOptions = { onExcessProperty: "error", errors: "all" } as const;
-
-// ---- fail-closed guard: rejects unknown fields ----
 
 export function validateAirDefenseAttack(value: unknown): AirDefenseAttack {
   const result = Schema.decodeUnknownResult(AirDefenseAttackSchema, parseOptions)(value);
@@ -208,24 +175,13 @@ export function validateAirDefenseAttack(value: unknown): AirDefenseAttack {
   return result.success;
 }
 
-/**
- * Only `undefined` selects a default. The pre-migration Zod `.partial()` pass
- * accepted `undefined` for an omitted field but rejected a supplied `null`;
- * using `??` would silently turn `null` into the default, so a supplied `null`
- * must flow to the schema and fail closed like any other invalid value.
- */
 function withDefault<T>(value: T | undefined, fallback: T): T {
   return value === undefined ? fallback : value;
 }
 
 export function createAirDefenseAttack(params: Partial<AirDefenseAttack>): AirDefenseAttack {
-  // `params` is typed non-null but JS callers can pass `undefined`; normalizing to `{}`
-  // keeps the unknown-field scan below from throwing a raw TypeError, so an empty input
-  // fails closed through `validateAirDefenseAttack` as a BluewaveError (12-F2 parity).
   const input = params ?? {};
 
-  // Fail-closed on unknown fields: the defaults merge below only carries known
-  // keys, so unknown input keys are rejected here rather than silently dropped.
   const knownKeys = new Set(Object.keys(AirDefenseAttackSchema.fields));
   for (const key of Object.keys(input)) {
     if (!knownKeys.has(key)) {
@@ -261,7 +217,6 @@ export function createAirDefenseAttack(params: Partial<AirDefenseAttack>): AirDe
     ),
   };
 
-  // Validate the merged result with the strict schema.
   return validateAirDefenseAttack(merged);
 }
 

@@ -70,7 +70,6 @@ function battery(id: string, ship: string, targetAsset: string): GunneryBattery 
 
 describe("AC-9 gunnery canonical ordering (DESIGN-39 §31, INC-4)", () => {
   it("sorts by shooting ship id, then battery id, then target contact (§31 2-5)", () => {
-    // Declared in a deliberately scrambled order to prove insertion order is irrelevant.
     const batteries = [
       battery("BAT-B", "SHIP-ZULU", "d1"),
       battery("BAT-A", "SHIP-ALPHA", "d2"),
@@ -87,7 +86,6 @@ describe("AC-9 gunnery canonical ordering (DESIGN-39 §31, INC-4)", () => {
     expect(out.salvos).toHaveLength(4);
     const sorted = [...out.salvos].sort(gunneryEventOrder);
     const keys = sorted.map((r) => [r.shooterId, r.batteryId, r.targetContactId]);
-    // SHIP-ALPHA (BAT-A, BAT-C) < SHIP-MIKE (BAT-D) < SHIP-ZULU (BAT-B)
     expect(keys[0]).toEqual(["SHIP-ALPHA", "BAT-A", `${BATTLE_ID}:d2`]);
     expect(keys[1]).toEqual(["SHIP-ALPHA", "BAT-C", `${BATTLE_ID}:d1`]);
     expect(keys[2]).toEqual(["SHIP-MIKE", "BAT-D", `${BATTLE_ID}:d0`]);
@@ -131,6 +129,6 @@ describe("AC-9 gunnery canonical ordering (DESIGN-39 §31, INC-4)", () => {
       contacts: [contact("d1")],
       engine: new RandomEngine("ss"),
     }).salvos[0]!;
-    expect(gunneryEventOrder(ra, rb)).toBeGreaterThan(0); // minute 2 sorts after minute 1
+    expect(gunneryEventOrder(ra, rb)).toBeGreaterThan(0);
   });
 });

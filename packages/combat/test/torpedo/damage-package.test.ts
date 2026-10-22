@@ -1,14 +1,3 @@
-// AC-15 (DESIGN-40 §16): the TorpedoDamagePackage — all §16 fields + package
-// hash — applied ATOMICALLY through the tactical damage contract: the package
-// factory computes the §17 flotation budget (exact shipped formula + tables)
-// and the creation-only §18 progressive rate; applyTorpedoDamagePackage runs
-// the reused B-4 seams (resolveStructureFlotation -> floor-at-0,
-// evaluateTerminalSeam -> SINKING when the reserve is exhausted, §18 flooding
-// creation, §19 machinery + §20 system-shock keyed evaluations, the optional
-// §21 tube hazard) and assembles ONE authoritative state + a frozen event
-// record. Proves the §17 "never exceeds the remaining reserve without a
-// sinking/sunk transition" bound, the rollback invariant (a stage throw
-// leaves the input state untouched), determinism, and frozen outputs.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import type { ShipDamageState } from "../../src/damage/index.js";
@@ -25,7 +14,6 @@ import {
 } from "../../src/torpedoes/index.js";
 import { compiledTorpedoOf } from "../fixtures/compiledTorpedoes.js";
 
-// ---- fixture state (the B-4 shape proven by damage/state.test.ts) ----------
 function baseState(overrides: Partial<ShipDamageState> = {}): ShipDamageState {
   return {
     shipId: "SHIP-TAU",
@@ -46,7 +34,6 @@ function baseState(overrides: Partial<ShipDamageState> = {}): ShipDamageState {
   };
 }
 
-// A Type-93-scale package on a STANDARD-protected hull (MACHINERY zone).
 function type93Package(battleId = "B1"): TorpedoDamagePackage {
   const model = compiledTorpedoOf("jpn_61cm_type93_1935");
   return createTorpedoDamagePackage({
@@ -59,7 +46,7 @@ function type93Package(battleId = "B1"): TorpedoDamagePackage {
     impactZone: "MACHINERY",
     impactSide: "PORT",
     longitudinalPositionM: 150,
-    warheadExplosiveEquivalentMassKg: model.warheadExplosiveEquivalentMassKg, // 490
+    warheadExplosiveEquivalentMassKg: model.warheadExplosiveEquivalentMassKg,
     detonationDepthM: 5,
     protectionLevel: "STANDARD",
     hullBreachAreaM2: 30,
@@ -79,31 +66,24 @@ function type93Package(battleId = "B1"): TorpedoDamagePackage {
 describe("AC-15 §16: the package factory (all §16 fields + hash)", () => {
   it("builds a package with every §16 field + a deterministic package hash", () => {
     const pkg = type93Package();
-    // target + impact surface
     expect(pkg.targetShipId).toBe("TARGET-SHIP");
     expect(pkg.impactZone).toBe("MACHINERY");
     expect(pkg.impactSide).toBe("PORT");
     expect(pkg.longitudinalPositionM).toBe(150);
-    // warhead + geometry
     expect(pkg.warheadExplosiveEquivalentMassKg).toBe(490);
     expect(pkg.detonationDepthM).toBe(5);
     expect(pkg.protectionLevel).toBe("STANDARD");
     expect(pkg.hullBreachAreaM2).toBe(30);
-    // the computed damage budget: 490 kg × 16 = 7_840 base flotation; with
-    // the STANDARD leak (10_000) × MACHINERY zone (12_500) and the neutral
-    // existing term: floor(7_840 × 10_000 × 12_500 × 10_000 / 10_000^3) = 9_800
     expect(Math.floor((7_840 * 10_000 * 12_500 * 10_000) / 10_000 ** 3)).toBe(9_800);
     expect(pkg.flotationDamage).toBe(9_800);
-    expect(pkg.structuralDamage).toBe(490 * 48); // 23_520 (BALANCE TARGET rate)
-    expect(pkg.immediateFloodingKg).toBeGreaterThan(0); // breach-volume estimate
-    expect(pkg.progressiveFloodingRateKgMin).toBe(15_000); // 30 m² × 1_000 × INTACT 5_000 ÷ 10_000
-    // the resolved machinery/shock/fire/casualty/damage-control inputs
+    expect(pkg.structuralDamage).toBe(490 * 48);
+    expect(pkg.immediateFloodingKg).toBeGreaterThan(0);
+    expect(pkg.progressiveFloodingRateKgMin).toBe(15_000);
     expect(pkg.machinery.severity).toBe("MAJOR_PROPULSION_LOSS");
     expect(pkg.nearbySystemShock.affectedSystemId).toBe("TURRET-1");
     expect(pkg.fireProbabilityBp).toBe(2_500);
     expect(pkg.crewCasualties).toBe(120);
     expect(pkg.damageControlAccessibility).toBe("RESTRICTED");
-    // the authoritative hash
     expect(pkg.packageHash).toMatch(/^[0-9a-f]{64}$/);
     expect(() => assertAuthoritativeTorpedoDamagePackage(pkg)).not.toThrow();
     expect(verifyTorpedoDamagePackageHash(pkg)).toBe(true);
@@ -120,7 +100,7 @@ describe("AC-15 §16: the package factory (all §16 fields + hash)", () => {
     expect(() => assertTorpedoDamagePackageSurface(null as never)).toThrow(BluewaveError);
     expect(() =>
       createTorpedoDamagePackage({
-        battleId: "", // invalid battle id -> fail closed at the factory
+        battleId: "",
         battleMinute: 6,
         substep: 4,
         torpedoTrackId: "not-there",
@@ -150,7 +130,7 @@ describe("AC-15 §16: the package factory (all §16 fields + hash)", () => {
 
 describe("AC-15/AC-16: atomic application through the tactical damage contract", () => {
   it("applies structure/flotation + creates flooding sources + no terminal transition on a survivable hit", () => {
-    const state = baseState(); // reserve 50_000 — the Type-93 budget stays afloat
+    const state = baseState();
     const pkg = type93Package();
     const result = applyTorpedoDamagePackage({
       state,
@@ -160,12 +140,11 @@ describe("AC-15/AC-16: atomic application through the tactical damage contract",
       ],
       designFlotationReserve: 50_000,
       designStabilityScore: 8_000,
-      keyedRng: () => 0.9, // unused on this scene (no machinery/shock ctx)
+      keyedRng: () => 0.9,
     });
-    // structure/flotation applied through the reused seam (floor-at-0)
     expect(result.newState.structuralIntegrity).toBe(100_000 - 23_520);
     expect(result.newState.flotationReserve).toBe(50_000 - 9_800);
-    expect(result.newState.progressiveFloodingTotal).toBe(0); // creation does NOT tick
+    expect(result.newState.progressiveFloodingTotal).toBe(0);
     expect(result.createdFloodingSources).toEqual([
       {
         compartmentId: "ENG-ROOM-A",
@@ -184,7 +163,7 @@ describe("AC-15/AC-16: atomic application through the tactical damage contract",
   });
 
   it("an exhaustive hit transitions to SINKING — the §17 never-exceeds-reserve bound", () => {
-    const state = baseState({ flotationReserve: 2_000 }); // smaller than 9_800
+    const state = baseState({ flotationReserve: 2_000 });
     const result = applyTorpedoDamagePackage({
       state,
       pkg: type93Package(),
@@ -210,7 +189,6 @@ describe("AC-15/AC-16: atomic application through the tactical damage contract",
       designStabilityScore: 8_000,
       keyedRng: () => 0.9,
     });
-    // 100 - 23_520 <= 0 AND 1_000 - 9_800 <= 0 -> FOUNDERED
     expect(result.structureFlotation.structuralIntegrityAfter).toBe(0);
     expect(result.terminalResult.transition).toBe("FOUNDERED");
     expect(result.newState.terminalStatus).toBe("FOUNDERED");
@@ -236,7 +214,6 @@ describe("AC-15/AC-16: atomic application through the tactical damage contract",
     expect(calls[1]).toMatch(/^battle\/torpedo\/damage\/system-shock:/);
     expect(result.machineryEffect).not.toBeNull();
     expect(result.systemShockResult).not.toBeNull();
-    // a machinery-space hit at drawBp 5_000 selects MAJOR_PROPULSION_LOSS
     expect(result.machineryEffect!.severity).toBe("MAJOR_PROPULSION_LOSS");
   });
 
@@ -249,7 +226,7 @@ describe("AC-15/AC-16: atomic application through the tactical damage contract",
         flooding: [],
         tubeHazard: {
           launcherId: "LCH-1",
-          propulsionType: "WET_HEATER" as never, // valid propulsion; isolation left off
+          propulsionType: "WET_HEATER" as never,
           loadedCount: 2,
           loadedChecks: [],
           isolationState: undefined as never,
@@ -309,7 +286,7 @@ describe("AC-15/AC-18: tube-hazard + §22 chain integration inside the atomic pa
       },
       designFlotationReserve: 50_000,
       designStabilityScore: 8_000,
-      keyedRng: () => 0.001, // severe hazard + casualty strike
+      keyedRng: () => 0.001,
     });
     expect(result.tubeHazardResult?.severe).toBe(true);
     expect(result.tubeHazardResult?.reasonCode).toBe(UNDERWATER_TUBE_SEVERE_FLOODING);
@@ -318,28 +295,17 @@ describe("AC-15/AC-18: tube-hazard + §22 chain integration inside the atomic pa
     expect(
       result.newState.floodingRecords.some((s) => s.cause === UNDERWATER_TUBE_SEVERE_FLOODING),
     ).toBe(true);
-    // §17 flotation damage already reduced the reserve to 50_000 - 5_600 = 44_400.
     expect(result.structureFlotation.flotationReserveAfter).toBe(44_400);
-    // the §21 severe immediate flooding is FLOTATION-RESERVE loss (§16/§17
-    // semantics): 5_000 bp of the remaining reserve = floor(44_400 × 0.5) =
-    // 22_200, so the final reserve falls to 44_400 - 22_200 = 22_200.
     expect(result.tubeHazardResult!.immediateAdditionalFloodingKg).toBe(22_200);
     expect(result.newState.flotationReserve).toBe(22_200);
     expect(result.newState.flotationReserve).toBeLessThan(
       result.structureFlotation.flotationReserveAfter,
     );
-    // the §21 immediate burst is NOT a progressive total (the 15_000 bp extra
-    // source is the separate C-5 progressive source — recorded as a source, not
-    // accumulated into progressiveFloodingTotal).
     expect(result.newState.progressiveFloodingTotal).toBe(0);
-    expect(result.terminalResult.transition).toBe("NONE"); // 22_200 > 0 stays afloat
+    expect(result.terminalResult.transition).toBe("NONE");
   });
 
   it("a small reserve after §17 — the §21 severe flooding reduces the reserve toward the SINKING boundary (floor-at-0, terminal seam sees the reduced reserve)", () => {
-    // TUBE_BAY pkg flotation = 5_600; pick a reserve that leaves only 2 after §17
-    // (NOT sunk by §17), then the §21 severe burst (5_000 bp → 1 kg) drops it to
-    // 1 — one unit above the SINKING boundary, proving the reserve reduction
-    // flows through the terminal seam.
     const pkg = createTorpedoDamagePackage({
       battleId: "B1",
       battleMinute: 6,
@@ -362,7 +328,7 @@ describe("AC-15/AC-18: tube-hazard + §22 chain integration inside the atomic pa
       damageControlAccessibility: "ACCESSIBLE",
     });
     const result = applyTorpedoDamagePackage({
-      state: baseState({ flotationReserve: 5_602 }), // 5_602 - 5_600 = 2 after §17
+      state: baseState({ flotationReserve: 5_602 }),
       pkg,
       flooding: [],
       tubeHazard: {
@@ -378,12 +344,12 @@ describe("AC-15/AC-18: tube-hazard + §22 chain integration inside the atomic pa
       },
       designFlotationReserve: 50_000,
       designStabilityScore: 8_000,
-      keyedRng: () => 0.001, // severe hazard
+      keyedRng: () => 0.001,
     });
-    expect(result.structureFlotation.flotationReserveAfter).toBe(2); // §17 only
-    expect(result.tubeHazardResult?.immediateAdditionalFloodingKg).toBe(1); // floor(2×0.5)
-    expect(result.newState.flotationReserve).toBe(1); // reduced, not sunk
-    expect(result.terminalResult.transition).toBe("NONE"); // 1 > 0 — just above SINKING
+    expect(result.structureFlotation.flotationReserveAfter).toBe(2);
+    expect(result.tubeHazardResult?.immediateAdditionalFloodingKg).toBe(1);
+    expect(result.newState.flotationReserve).toBe(1);
+    expect(result.terminalResult.transition).toBe("NONE");
     expect(
       result.newState.floodingRecords.some((s) => s.cause === UNDERWATER_TUBE_SEVERE_FLOODING),
     ).toBe(true);
@@ -404,7 +370,7 @@ describe("AC-15: rollback invariant + determinism", () => {
         keyedRng: () => 0.5,
       }),
     ).toThrow(BluewaveError);
-    expect(state).toEqual(snapshot); // the input object was never touched
+    expect(state).toEqual(snapshot);
   });
 
   it("identical inputs + identical keyed draws -> identical frozen results", () => {

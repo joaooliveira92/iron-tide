@@ -1,7 +1,3 @@
-// AC-18 (INC-7): DESIGN-35 §24 mine knowledge. Separate per-participant knowledge
-// assertions (a DISTINCT record type from AreaMinePressureRecord, never a
-// partial view); TRUE pressure never exposed unless a source policy permits it;
-// sweeping improves knowledge only via explicit sweep-observation records.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -118,7 +114,6 @@ describe("AC-18: TRUE pressure must NOT be exposed without a source policy", () 
     const v = assertPressureNotExposed(r, k, false);
     expect(v.exposedTruePressure).toBeNull();
     expect(v.exactValueExposed).toBe(false);
-    // The TRUE 400_000 never leaks through either estimate channel.
     expect(v.estimatedPressureIntervalBp[1]).not.toBe(400_000);
   });
 
@@ -177,7 +172,6 @@ describe("AC-18: sweeping improves knowledge ONLY through explicit sweep-observa
       estimatedMineType: "UNKNOWN",
       suspectedLayingParticipantId: "UNKNOWN",
     });
-    // Each participant's assertion is independent — P2 has no knowledge of P1's lanes.
     expect(p1.participantId).not.toBe(p2.participantId);
     expect([...p1.knownClearedLanes]).toEqual(["lane_1"]);
     expect([...p2.knownClearedLanes]).toEqual([]);

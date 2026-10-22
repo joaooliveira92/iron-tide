@@ -49,11 +49,9 @@ const content = productionShipBuildingContent();
 const capacity = (perLine: number): Record<string, SafeInt> =>
   Object.fromEntries(LINE_IDS.map((line) => [line, SafeInt(perLine)]));
 
-/** The production ship-building environment, so balance-constant checks stay honest. */
 const environment = content.environmentFor("1880-02");
 const productionBalance = environment.constructionBalance;
 
-/** A six-package project, one package per production line, 100 work each (600 total). */
 function packages(): ConstructionPackage[] {
   return LINE_IDS.map((line, index) => ({
     id: `pkg-${String(index)}`,
@@ -201,9 +199,6 @@ describe("acceleration arithmetic (SB3-R8)", () => {
   });
 
   it("agrees with the forecast's 10% / +5% constants", () => {
-    // The forecast applies `accelerationTimeBp: 9000` (10% shorter) and `accelerationCostBp: 500` (5% dearer);
-    // the engine's 11_000 rate and 10_500 premium are the reciprocal/forward forms of the same trade (rounding to
-    // whole units is the only difference, and the forecast's own table is displacement-rounded too).
     expect(productionBalance.accelerationTimeBp).toBe(9_000);
     expect(environment.costBalance.accelerationCostBp).toBe(500);
     expect(accelerateCapacityUnits({ slipway: 10 }).slipway).toBe(11);
@@ -214,7 +209,7 @@ describe("acceleration arithmetic (SB3-R8)", () => {
     const start = project({ totalWork: 100, completedWork: 20 });
     const first = applyAccelerationPremium(start);
     expect(first.charged).toBe(true);
-    expect(first.premiumWork).toBe(4); // ceil(80 * 1.05) = 84
+    expect(first.premiumWork).toBe(4);
     expect(Number(first.project.totalWork)).toBe(104);
     expect(Number(first.project.completedWork)).toBe(20);
     expect(accelerationPremiumAlreadyApplied(first.project)).toBe(true);
@@ -223,16 +218,15 @@ describe("acceleration arithmetic (SB3-R8)", () => {
     expect(again.charged).toBe(false);
     expect(Number(again.project.totalWork)).toBe(104);
 
-    // Progressing work starts a new segment, so the next enable prices the new remaining work.
     const progressed = { ...first.project, completedWork: SafeInt(24) };
     const second = applyAccelerationPremium(progressed);
     expect(second.charged).toBe(true);
-    expect(second.premiumWork).toBe(4); // ceil(80 * 1.05) = 84, minus 80
+    expect(second.premiumWork).toBe(4);
     expect(Number(second.project.totalWork)).toBe(108);
   });
 
   it("distributes the package premium so the project's total is still the sum of its packages", () => {
-    const start = project({ withPackages: true }); // 6 x 100 = 600
+    const start = project({ withPackages: true });
     const applied = applyAccelerationPremium(start);
     expect(Number(applied.project.totalWork)).toBe(630);
     const packageTotal = applied.project.packages!.reduce((sum, p) => sum + Number(p.totalWork), 0);
@@ -381,7 +375,6 @@ describe("a paid accelerated month uses the 11_000 bp capacity rate (SB3-R8)", (
 });
 
 describe("annual/monthly integration of acceleration pressure (SB3-R9)", () => {
-  /** A seed whose keyed draw for the project triggers a delay at the maximum probability. */
   function seedThatDelays(base: CampaignSnapshot, projectId: string): string {
     const nationId = "GBR";
     const campaignMonth = campaignMonthId(
@@ -413,8 +406,6 @@ describe("annual/monthly integration of acceleration pressure (SB3-R9)", () => {
   const pressureSnapshot = () =>
     snapshot(
       [
-        // The premium has already been charged (as `SetAcceleration` would have), so a pressure delay must preserve
-        // it: totalWork stays 630 after the delayed month.
         transitionConstructionProject(
           applyAccelerationPremium(
             project({
@@ -428,7 +419,7 @@ describe("annual/monthly integration of acceleration pressure (SB3-R9)", () => {
         ),
       ],
       new Map([["d1", design()]]),
-      1_200, // construction cap 1 => pressure far above the 9_000 bp threshold
+      1_200,
     );
 
   it("delays the accelerated project for one month with a random-decision record and zero work/charge", () => {
@@ -439,9 +430,7 @@ describe("annual/monthly integration of acceleration pressure (SB3-R9)", () => {
     expect(p.status).toBe("DELAYED");
     expect(Number(p.completedWork)).toBe(0);
     expect(Number(p.paidWork)).toBe(0);
-    // The one-time premium is preserved across the delay (totalWork stays 630).
     expect(Number(p.totalWork)).toBe(630);
-    // Zero ordinary charge: no appropriation posting and no applied work this month.
     expect(result.financialLedger.all.some((e) => e.categoryId === "APPROPRIATION")).toBe(false);
     const delay = result.eventLedger.all.find((e) => e.eventType === "ConstructionDelayed");
     expect(delay?.body).toMatchObject({

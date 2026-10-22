@@ -6,6 +6,7 @@ import type {
 import { useBridge } from "../../../lib/bridge-context.js";
 import {
   type CommandOutcome,
+  requestLifecycleAdapter,
   useCommandScreenWorkflow,
 } from "../../../lib/command-screen-workflow.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
@@ -22,11 +23,9 @@ export interface UseDivisionOrganizationReturn {
   readonly busy: boolean;
   readonly request: { readonly outcomeUnknown: boolean; readonly retry: () => void };
   readonly loadScreen: () => Promise<void>;
-  /** Queue one engine division command; the engine validates it and applies it next month. */
   readonly send: (command: DivisionCommandBody) => Promise<CommandOutcome>;
 }
 
-/** Fleet-organization data + command queueing, on the shared command-screen workflow. */
 export function useDivisionOrganization(sessionId: string): UseDivisionOrganizationReturn {
   const bridge = useBridge();
   const campaignRevision = useCampaignRevision();
@@ -35,7 +34,7 @@ export function useDivisionOrganization(sessionId: string): UseDivisionOrganizat
     DivisionScreenProjection,
     DivisionCommandOutcome
   >(
-    {
+    requestLifecycleAdapter({
       initialState: initialDivisionOrganizationState,
       load: () =>
         bridge
@@ -43,7 +42,7 @@ export function useDivisionOrganization(sessionId: string): UseDivisionOrganizat
           : Promise.reject(new Error("Bluewave bridge not available")),
       project: projectDivisionOrganization,
       accept: acceptDivisionCommand,
-    },
+    }),
     { refreshKey: campaignRevision },
   );
 

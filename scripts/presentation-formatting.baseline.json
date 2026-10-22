@@ -1,14 +1,14 @@
 [
-  "apps/desktop/src/renderer/components/design-workspace/fields.tsx:66:toFixed:const stepBy = step ?? (decimals > 0 ? Number((1 / 10 ** decimals).toFixed(decimals)) : 1);",
-  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/arcs.ts:53:toFixed:const f = (n: number) => n.toFixed(2);",
-  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/describe.ts:41:toFixed:const dims = (m: number, digits: number) => (Number.isFinite(m) ? m.toFixed(digits) : \"unknown\");",
-  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/path.ts:18:toFixed:const fmt = (n: number) => n.toFixed(2);",
-  "apps/desktop/src/renderer/components/design-workspace/useRestoredDraftToast.ts:30:toLocaleString:).toLocaleString()}). Changes are saved as you work.`,",
-  "apps/desktop/src/renderer/components/world-map/MapMinimap.tsx:24:toFixed:d += `${k === 0 ? \"M\" : \"L\"}${x.toFixed(0)} ${y.toFixed(0)}`;",
-  "apps/desktop/src/renderer/components/world-map/bake-coastline.ts:170:toFixed:flat.push(Number(x.toFixed(decimals)), Number(y.toFixed(decimals)));",
-  "apps/desktop/src/renderer/components/world-map/projection.ts:113:toFixed:path += `${i === 0 ? \"M\" : \"L\"}${x.toFixed(1)} ${y.toFixed(1)}`;",
-  "apps/desktop/src/renderer/components/world-map/useFrameMeter.ts:37:toFixed:: `p50 ${p50.toFixed(1)} ms · p95 ${p95.toFixed(1)} ms · n=${sorted.length}`;",
-  "apps/desktop/src/renderer/screens/campaign-preferences/hooks/useDisplayPreferences.ts:15:localStorage:const raw = localStorage.getItem(LEGACY_STORAGE_KEY);",
-  "apps/desktop/src/renderer/screens/campaign-preferences/hooks/useDisplayPreferences.ts:50:localStorage:localStorage.removeItem(LEGACY_STORAGE_KEY);",
-  "apps/desktop/src/renderer/screens/new-game/components/bounce-cards/BounceCards.tsx:308:toFixed:el.style.transform = `translate(-50%, -50%) translate3d(${card.x.toFixed(2)}px, ${card.y.toFixed(2)}px, 0) rotate(${card.rotate.toFixed(3)}deg) scale(${Math.max(0, card.scale).toFixed(4)})`;"
+  "apps/desktop/src/renderer/components/design-workspace/fields.tsx:53:toFixed:const stepBy = step ?? (decimals > 0 ? Number((1 / 10 ** decimals).toFixed(decimals)) : 1);",
+  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/arcs.ts:40:toFixed:const f = (n: number) => n.toFixed(2);",
+  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/describe.ts:40:toFixed:const dims = (m: number, digits: number) => (Number.isFinite(m) ? m.toFixed(digits) : \"unknown\");",
+  "apps/desktop/src/renderer/components/design-workspace/panels/hull-plan/path.ts:12:toFixed:const fmt = (n: number) => n.toFixed(2);",
+  "apps/desktop/src/renderer/components/design-workspace/useRestoredDraftToast.ts:24:toLocaleString:).toLocaleString()}). Changes are saved as you work.`,",
+  "apps/desktop/src/renderer/components/world-map/MapMinimap.tsx:23:toFixed:d += `${k === 0 ? \"M\" : \"L\"}${x.toFixed(0)} ${y.toFixed(0)}`;",
+  "apps/desktop/src/renderer/components/world-map/bake-coastline.ts:122:toFixed:flat.push(Number(x.toFixed(decimals)), Number(y.toFixed(decimals)));",
+  "apps/desktop/src/renderer/components/world-map/projection.ts:80:toFixed:path += `${i === 0 ? \"M\" : \"L\"}${x.toFixed(1)} ${y.toFixed(1)}`;",
+  "apps/desktop/src/renderer/components/world-map/useFrameMeter.ts:29:toFixed:: `p50 ${p50.toFixed(1)} ms · p95 ${p95.toFixed(1)} ms · n=${sorted.length}`;",
+  "apps/desktop/src/renderer/screens/campaign-preferences/hooks/useDisplayPreferences.ts:14:localStorage:const raw = localStorage.getItem(LEGACY_STORAGE_KEY);",
+  "apps/desktop/src/renderer/screens/campaign-preferences/hooks/useDisplayPreferences.ts:39:localStorage:localStorage.removeItem(LEGACY_STORAGE_KEY);",
+  "apps/desktop/src/renderer/screens/new-game/components/bounce-cards/BounceCards.tsx:279:toFixed:el.style.transform = `translate(-50%, -50%) translate3d(${card.x.toFixed(2)}px, ${card.y.toFixed(2)}px, 0) rotate(${card.rotate.toFixed(3)}deg) scale(${Math.max(0, card.scale).toFixed(4)})`;"
 ]

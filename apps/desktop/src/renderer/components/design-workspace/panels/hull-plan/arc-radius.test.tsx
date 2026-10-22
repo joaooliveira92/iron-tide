@@ -7,12 +7,6 @@ import { SectionFittingOverlay } from "./SectionFittingOverlay.js";
 import { SECTION_IDS } from "./sections.js";
 import { frame, sectionFactsFor, sectionLayoutFor } from "./test-fixtures.js";
 
-/**
- * The plan and the magnified card deliberately draw gun arcs at different schematic radii — the card enlarges
- * the plan, so sharing one radius would change the drawing. The code comments warn not to unify them; this test
- * makes that a contract. Radii are read from the rendered paths (`A r r ...`), since each is a module-private
- * constant.
- */
 const radiusOf = (path: Element) => {
   const m = /A (\d+(?:\.\d+)?) /.exec(path.getAttribute("d") ?? "");
   if (m === null) throw new Error("no arc command in path");

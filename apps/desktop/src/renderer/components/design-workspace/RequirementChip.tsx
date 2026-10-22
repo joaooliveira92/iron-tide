@@ -8,7 +8,6 @@ import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 
 const words = (s: string) => s.replaceAll("_", " ").toLowerCase();
 
-/** The design brief as a compact chip; opening it shows every requirement the design is judged against. */
 export function RequirementChip({
   requirement: r,
   className,

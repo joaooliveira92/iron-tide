@@ -40,7 +40,6 @@ export function projectBudgetPolicy(
   };
 }
 
-/** The engine applies the allocation when the month is committed, never immediately. */
 export function acceptBudgetAllocation(_value: BudgetCommandOutcome): {
   readonly patch: Partial<BudgetPolicyState>;
   readonly notice: string;

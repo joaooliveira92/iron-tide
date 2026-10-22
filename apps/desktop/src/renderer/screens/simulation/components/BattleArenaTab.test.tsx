@@ -4,11 +4,6 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { BattleArenaTab } from "./BattleArenaTab.js";
 
-/**
- * Render tests for the Battle Arena tab: the generate/resolve controls, their
- * disabled states, the loading/error/empty readouts, and the manifest handoff.
- * Handlers are spied so the wiring is asserted without a live bridge.
- */
 const manifest = {
   battleId: "battle_1",
   missionType: "surface_action",

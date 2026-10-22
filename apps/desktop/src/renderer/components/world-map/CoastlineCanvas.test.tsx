@@ -36,7 +36,6 @@ describe("CoastlineCanvas lifecycle", () => {
     const { rerender } = render(<CoastlineCanvas camera={fakeCamera(subscribe)} {...props} />);
     expect(subscribe).toHaveBeenCalledTimes(1);
 
-    // The zoom-band state change re-renders the chart; useMapCamera hands back a new object.
     rerender(<CoastlineCanvas camera={fakeCamera(subscribe)} {...props} />);
     rerender(<CoastlineCanvas camera={fakeCamera(subscribe)} {...props} />);
     expect(subscribe).toHaveBeenCalledTimes(1);

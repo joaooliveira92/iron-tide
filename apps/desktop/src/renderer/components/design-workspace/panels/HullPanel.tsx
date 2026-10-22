@@ -13,7 +13,6 @@ export function HullPanel({
   readonly draft: DesignDraft;
   readonly content: DrawingBoardContent;
   readonly edit: Edit;
-  /** The inline message for a setting, filed as `set_hull:<setting>` (see `editField`), while it breaks the design. */
   readonly errorFor: (field: string) => string | undefined;
 }) {
   const h = draft.hull;

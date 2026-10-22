@@ -27,10 +27,8 @@ describe("resolveArmament — valid resolution", () => {
     expect(resolved.gunCount).toBe(2);
     expect(resolved.caliberUm).toBe(152_000);
     expect(resolved.shellMassG).toBe(45_000);
-    // charge 4800 bp of shell mass -> one round weighs 45000 * 1.48 = 66600 g.
     expect(resolved.ammunitionUnitMassG).toBe(66_600);
     expect(resolved.mechanicalRateOfFireRoundsPerMinuteX100).toBe(400);
-    // 2 guns x 5000 kg + (1800 base + 7600/gun x 2) = 10000 + 17000 = 27000 kg.
     expect(resolved.mountInstallationMassKg).toBe(17_000);
     expect(resolved.totalInstallationMassKg).toBe(27_000);
     expect(resolved.accessStatus).toBe("DOMESTIC");
@@ -185,7 +183,6 @@ describe("resolveArmament — expected errors return findings, never throw", () 
     );
     expect(codes(r)).toContain("ARMAMENT_ID_INVALID");
     expect(codes(r)).toContain("ARMAMENT_MONTH_INVALID");
-    // A malformed month must not produce spurious date-band findings.
     expect(codes(r)).not.toContain("ARMAMENT_BEFORE_INTRODUCTION");
   });
 
@@ -211,7 +208,6 @@ describe("resolveArmament — modifier composition and exact rounding", () => {
       technologyContext(),
       accessContext(),
     );
-    // 11000 * 9000 * 8000 / 10000^2 = 7920 exactly.
     expect(r.resolved!.resolvedRateOfFireModifierBp).toBe(7_920);
     expect(r.resolved!.appliedModifiers).toEqual([
       { source: "mount.rateOfFireModifierBp", valueBp: 11_000 },
@@ -228,7 +224,6 @@ describe("resolveArmament — modifier composition and exact rounding", () => {
       technologyContext(),
       accessContext(),
     );
-    // 3333 * 3333 / 10000 = 1110.8889 -> 1111.
     expect(r.resolved!.resolvedRateOfFireModifierBp).toBe(1_111);
   });
 });

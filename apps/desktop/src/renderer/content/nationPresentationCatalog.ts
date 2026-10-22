@@ -35,13 +35,6 @@ export type NationPresentationResult =
   | { status: "resolved"; nation: NationPresentation }
   | { status: "unavailable"; countryId: string };
 
-/**
- * Resolves one complete nation presentation record. The authored presentation
- * fields (name, code, coordinates, flavor, marker colour) come from the decoded
- * presentation corpus served over the content IPC (CAH-PRES-3, DESIGN-57); only
- * the media-asset layer is resolved renderer-side (ADR-0003). Identity-layer
- * overrides currently apply to Media Assets.
- */
 export function resolveNationPresentation(
   request: NationAssetRequest,
   manifest?: NationAssetManifest,

@@ -1,4 +1,3 @@
-// AC-11 (INC-3): AircraftProposal creation, acceptance, rejection, expiry.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import { RandomEngine } from "@bluewave/random";

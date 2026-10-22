@@ -2,7 +2,6 @@ import { describe, it, expect } from "vite-plus/test";
 import { resolveArmament, type ArmamentResolutionResult } from "../src/index.js";
 import { accessContext, ammunition, gunModel, mount, technologyContext } from "./fixtures.js";
 
-/** Deterministic mulberry32 PRNG: reproducible bounded fixtures without a new dependency. */
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
@@ -17,7 +16,6 @@ function mulberry32(seed: number): () => number {
 const pick = <T>(rng: () => number, values: readonly T[]): T =>
   values[Math.floor(rng() * values.length)]!;
 
-/** Reference composition of n bp multipliers, rounded half up once (independent of the resolver). */
 function referenceCompose(factors: readonly number[]): number {
   if (factors.length === 0) return 10_000;
   let num = 1n;

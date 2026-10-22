@@ -1,6 +1,3 @@
-// DESIGN-43 §§3, 6, 10, 13, 14, 20/32 aircraft state model types.
-// INC-2: AircraftNationState, inventory, development project, proposal,
-// squadron, basing types.
 import { SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import {
@@ -11,8 +8,6 @@ import {
   type SquadronReequipmentState,
 } from "./constants.js";
 import type { AircraftModelDefinition } from "./model.js";
-
-// ---- AircraftNationState (§3) ----
 
 export interface AircraftNationState {
   models: Record<string, AircraftModelDefinition>;
@@ -25,8 +20,6 @@ export interface AircraftNationState {
   rulesetVersion: string;
   stateHash: string;
 }
-
-// ---- AircraftDevelopmentProject (§6) ----
 
 export interface AircraftDevelopmentProject {
   developmentProjectId: string;
@@ -47,8 +40,6 @@ export interface AircraftDevelopmentProject {
   projectHash: string;
 }
 
-// ---- AircraftProposal (§10) ----
-
 export interface AircraftProposal {
   proposalId: string;
   sourceProjectId: string;
@@ -66,8 +57,6 @@ export interface AircraftProposal {
   formulaVersion: string;
   proposalHash: string;
 }
-
-// ---- SquadronState (§14) ----
 
 export interface SquadronState {
   squadronId: string;
@@ -90,8 +79,6 @@ export interface SquadronState {
   stateHash: string;
 }
 
-// ---- BasingSlot (§20/§32) ----
-
 export interface BasingSlot {
   slotId: string;
   hostId: string;
@@ -100,8 +87,6 @@ export interface BasingSlot {
   condition: AircraftInventoryState;
   allocatedAt: string;
 }
-
-// ---- Inventory record (§13) ----
 
 export interface AircraftInventoryRecord {
   modelId: string;

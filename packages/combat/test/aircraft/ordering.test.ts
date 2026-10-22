@@ -1,4 +1,3 @@
-// AC-23 (INC-7): Aircraft canonical ordering (§39).
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -153,7 +152,6 @@ describe("AC-23: aircraft canonical ordering", () => {
       stateHash: "",
     };
     const b: SquadronState = { ...a, squadronId: "sq_a" };
-    // Deterministic: same inputs always same order
     expect(compareSquadrons(a, b)).toBeGreaterThan(0);
     expect(compareSquadrons(b, a)).toBeLessThan(0);
   });

@@ -1,5 +1,4 @@
 "use client";
-// beui.dev/components/motion/shader-background
 
 import {
   ColorPanels,
@@ -109,10 +108,6 @@ export const SHADER_BACKGROUND_VARIANTS = Object.keys(
   VARIANT_COMPONENTS,
 ) as ShaderBackgroundVariant[];
 
-/**
- * Not every variant animates (e.g. dot-grid is a static pattern), so `speed`
- * is only frozen for reduced motion when the variant actually exposes it.
- */
 export function ShaderBackground({ variant, className, ...rest }: ShaderBackgroundProps) {
   const reducedMotion = useReducedMotion();
   const Shader = VARIANT_COMPONENTS[variant] as ComponentType<Record<string, unknown>>;

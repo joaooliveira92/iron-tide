@@ -1,10 +1,3 @@
-// AC-8 (INC-3): DESIGN-35 §8 dual ASW/mine equipment — the exact five shipped
-// modes of dual_asw_mine_equipment_v1, the fail-closed contract guard, and the
-// §8 mode resolution (locked mission/equipment command selected BEFORE
-// resolution; dual-purpose-declared missing mode defaults to balanced ONLY;
-// single-purpose equipment sweeps full without balanced default; never full
-// ASW + full sweeping simultaneously; other missing configurations throw
-// DUAL_EQUIPMENT_MODE_MISSING).
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -83,7 +76,6 @@ describe("AC-8: exact five-mode §8 table (dual_asw_mine_equipment_v1)", () => {
       validateDualAswMineEquipmentContract(SHIPPED_DUAL_ASW_MINE_EQUIPMENT_CONTRACT),
     ).not.toThrow();
 
-    // a tampered pair (balanced -> 10_000/10_000 full-both) must fail closed
     expect(() =>
       validateDualAswMineEquipmentContract({
         ...SHIPPED_DUAL_ASW_MINE_EQUIPMENT_CONTRACT,
@@ -94,7 +86,6 @@ describe("AC-8: exact five-mode §8 table (dual_asw_mine_equipment_v1)", () => {
       }),
     ).toThrow(BluewaveError);
 
-    // tampered mode set
     expect(() =>
       validateDualAswMineEquipmentContract({
         ...SHIPPED_DUAL_ASW_MINE_EQUIPMENT_CONTRACT,
@@ -102,7 +93,6 @@ describe("AC-8: exact five-mode §8 table (dual_asw_mine_equipment_v1)", () => {
       }),
     ).toThrow(BluewaveError);
 
-    // tampered marker
     expect(() =>
       validateDualAswMineEquipmentContract({
         ...SHIPPED_DUAL_ASW_MINE_EQUIPMENT_CONTRACT,
@@ -110,7 +100,6 @@ describe("AC-8: exact five-mode §8 table (dual_asw_mine_equipment_v1)", () => {
       }),
     ).toThrow(BluewaveError);
 
-    // null/missing
     expect(() => validateDualAswMineEquipmentContract(null)).toThrow(BluewaveError);
   });
 });
@@ -119,7 +108,7 @@ describe("AC-8: mode resolution — never dual-equipment default on single purpo
   it("single-purpose equipment sweeps FULL (ASW 0, sweeping 10_000) with no mode", () => {
     const r = resolveDualEquipmentMode(false, undefined);
     expect(r.equipmentIsDualPurpose).toBe(false);
-    expect(r.mode).toBe("DEDICATED_SWEEPING"); // full sweep, ASW ignored
+    expect(r.mode).toBe("DEDICATED_SWEEPING");
     expect(r.aswMultiplierBp).toBe(0);
     expect(r.sweepMultiplierBp).toBe(10_000);
   });

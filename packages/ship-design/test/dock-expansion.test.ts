@@ -66,7 +66,6 @@ describe("dock_expansion_v1 policy (SB3-R16)", () => {
     expect(dockExpansionFinalDurationMonths(12, 1_000)).toBe(
       DOCK_EXPANSION_CLAMP_MIN_DURATION_MONTHS,
     );
-    // ceiling(9 * 12_001 / 10_000) = ceiling(10.8009) = 11, well inside the clamp.
     expect(dockExpansionFinalDurationMonths(9, 12_001)).toBe(11);
   });
 });

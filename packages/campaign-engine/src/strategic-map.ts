@@ -1,18 +1,6 @@
 import { fleetMoveProblem, type CampaignSnapshot, type FleetMoveProblem } from "@bluewave/campaign";
 import { buildWorldMapView, type WorldMapView } from "./world-map.js";
 
-/**
- * Viewer-scoped strategic map projection (F-1, decision request 0037 Option B):
- * the viewer's own fleets in full, public facts for the rest — foreign fleets
- * are withheld because intelligence (W-3) does not exist yet. Per-fleet legal
- * destinations come from the engine's own movement rule (`fleetMoveProblem`),
- * never a renderer copy of it; blockades are the rows the viewer is party to.
- *
- * Same contract as `buildWorldMapView`: a pure, deterministic derivation over
- * the immutable snapshot, flat plain objects only (it crosses the Electron IPC
- * boundary), everything ordered by stable id comparison.
- */
-
 export interface StrategicMapBlockedReason {
   readonly code: Extract<
     FleetMoveProblem["code"],
@@ -26,7 +14,6 @@ export interface StrategicMapFleetOrdersView {
   readonly fleetName: string;
   readonly areaId: string;
   readonly shipCount: number;
-  /** Areas one sea hop away that `fleetMoveProblem` accepts, in area-id order. */
   readonly legalDestinations: readonly string[];
   readonly blockedReason: StrategicMapBlockedReason | null;
 }
@@ -39,7 +26,6 @@ export interface StrategicMapBlockadeView {
 }
 
 export interface StrategicMapView {
-  /** The full-world view with `fleets` filtered down to the viewer's own. */
   readonly world: WorldMapView;
   readonly playerFleets: readonly StrategicMapFleetOrdersView[];
   readonly blockades: readonly StrategicMapBlockadeView[];
@@ -57,17 +43,6 @@ function isFleetLevelCode(
   return (FLEET_LEVEL_CODES as readonly string[]).includes(code);
 }
 
-/**
- * Builds the strategic map view for `viewerNationId`.
- * - `world`: `buildWorldMapView` with `fleets` reduced to the viewer's own, in
- *   the same nation-then-fleet id order.
- * - `playerFleets`: one row per own fleet in fleet-id order; destinations are
- *   the non-land areas joined by one sea route that the movement rule accepts,
- *   and a fleet-level verdict (foreign station, no operational ship, rebuild)
- *   is surfaced verbatim as `blockedReason` with no destinations.
- * - `blockades`: the blockade rows where the viewer blockades or is blockaded,
- *   ordered by area id, then blockaded nation, then blockader.
- */
 export function buildStrategicMapView(
   snapshot: CampaignSnapshot,
   viewerNationId: string,

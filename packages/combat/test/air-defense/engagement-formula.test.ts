@@ -1,7 +1,3 @@
-// AC-11: Engagement formula: effectiveDefenseBp = 9-factor product, floor-once (§19).
-// Plus the §5 mutually exclusive outcome table, the keyed-draw reproducibility, and the
-// resolveEngagement entry point (§19/§20/§21).
-
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, SafeInt, isBluewaveError } from "@bluewave/contracts";
 import { RandomEngine, RandomStream } from "@bluewave/random";
@@ -38,7 +34,6 @@ function neutralMultipliers(): EngagementMultipliers {
   };
 }
 
-/** Deterministic stub engine: every stream yields the fixed float value (combat.test.ts idiom). */
 class FixedStreamEngine extends RandomEngine {
   constructor(private readonly value: number) {
     super("fake-master");
@@ -87,9 +82,6 @@ function makeState(
     },
     crewQuality: SafeInt(10_000),
     damageBp: SafeInt.ZERO,
-    // Healthy default: OPERATIONAL at full power, so the §21 damage factor is the neutral
-    // 10_000 (resolveEngagement derives it from state, Repair MEDIUM-2). Tests simulating a
-    // destroyed/unpowered system override these via `overrides`.
     powerBp: SafeInt(10_000),
     ammunitionByType: new Map(ammo),
     targetAllocations: new Map<string, string>(),
@@ -144,7 +136,6 @@ describe("AC-11: engagement formula (§19)", () => {
   });
 
   it("mixed factors produce the exact floored rational (one FLOOR)", () => {
-    // 101 × 2_500 × 7_500 / 10_000^2 = 1_893_750_000 / 100_000_000 = 18.9375 → floor 18
     const m = {
       ...neutralMultipliers(),
       directorBp: SafeInt(2_500),
@@ -154,7 +145,6 @@ describe("AC-11: engagement formula (§19)", () => {
   });
 
   it("the bigint path produces the exact floored result for a sub-safe numerator case", () => {
-    // 9_999^9 / 10_000^8 — numerator 9_999^9 ≈ 9.99e35 >> MAX_SAFE_INTEGER (bigint necessary).
     const m = {
       directorBp: SafeInt(9_999),
       radarBp: SafeInt(9_999),
@@ -171,7 +161,6 @@ describe("AC-11: engagement formula (§19)", () => {
 
   it("documents the bound analysis: the raw numerator exceeds MAX_SAFE_INTEGER", () => {
     expect(ENGAGEMENT_FORMULA_DENOMINATOR).toBe(10_000n ** 8n);
-    // 31_000 (shipped 4-director factor) × 10_000^8 ≈ 3.1e37 > MAX_SAFE_INTEGER.
     const maxNumerator = 31_000n * 10_000n ** 8n;
     expect(maxNumerator > BigInt(Number.MAX_SAFE_INTEGER)).toBe(true);
   });
@@ -212,14 +201,11 @@ describe("AC-11: engagement formula (§19)", () => {
 
   it("accepts a factor of exactly MAX_ENGAGEMENT_FACTOR_BP (31_000, §12)", () => {
     expect(MAX_ENGAGEMENT_FACTOR_BP).toBe(31_000);
-    // 10_000 (base) × 31_000 (director) / 10_000 = 31_000 exactly.
     const m = { ...neutralMultipliers(), directorBp: SafeInt(31_000) };
     expect(computeEffectiveDefenseBp(SafeInt(10_000), m)).toBe(31_000);
   });
 
   it("rejects a NORMAL-class factor above MAX_ENGAGEMENT_FACTOR_BP (31_001 director) fail-closed", () => {
-    // INC-4 repair: the 31_000 cap applies to the NORMAL-class slots (base, director, crew,
-    // damage, ammunition, targetProfile, weather). A director factor above it still throws.
     let caught: unknown;
     try {
       computeEffectiveDefenseBp(SafeInt(100), {
@@ -235,9 +221,6 @@ describe("AC-11: engagement formula (§19)", () => {
   });
 
   it("the returned value never exceeds 31_000 under the shipped factor bounds", () => {
-    // Shipped worst case: base at the 10_000 bp ceiling with the 31_000 director factor and
-    // every other multiplier at the 10_000 ceiling → exactly 31_000; a 31_000 base with all
-    // neutral multipliers is also exactly 31_000.
     expect(
       computeEffectiveDefenseBp(SafeInt(10_000), {
         ...neutralMultipliers(),
@@ -249,20 +232,7 @@ describe("AC-11: engagement formula (§19)", () => {
 });
 
 describe("AC-11: two-class factor bound policy (INC-4 repair, §14/§16 saturation aggregates)", () => {
-  // Before INC-4 every factor was capped at 31_000 on the premise that "the director factor
-  // reaching 31_000 is the largest shipped factor". That premise is WRONG per §14/§16: the
-  // UNDIVIDED radar aggregate over 4 radar-directed medium-AA groups is 40_000 and the CIWS
-  // redundancy aggregate over 4 systems is 40_000 — both > 31_000. The repaired policy:
-  //   1. base + the six NORMAL-class multipliers (director, crew, damage, ammunition,
-  //      targetProfile, weather) ≤ MAX_ENGAGEMENT_FACTOR_BP (31_000) — unchanged, still
-  //      fail-closed above it;
-  //   2. radar and saturation are SATURATION-class SafeInt aggregates accepted WITHOUT the
-  //      31_000 limit (structural bound at the caller: sum over the ship's actual group /
-  //      system count, each marginal ≤ 10_000);
-  //   3. the defensive rawFloored > MAX_SAFE_INTEGER throw is retained.
   it("(a) §14 rational embedding: base 100, all other factors neutral, radarBp=40_000 (4 groups) → 400", () => {
-    // effectiveRadarMediumAaGroups = Σ/10_000 = 40_000/10_000 = 4.0 exactly; §19 keeps the
-    // undivided sum in the numerator and rounds ONCE: floor(100 × 4.0) = 400.
     const m = { ...neutralMultipliers(), radarBp: SafeInt(40_000) };
     expect(computeEffectiveDefenseBp(SafeInt(100), m)).toBe(400);
   });
@@ -273,7 +243,6 @@ describe("AC-11: two-class factor bound policy (INC-4 repair, §14/§16 saturati
   });
 
   it("(c) mixed with the director factor: base 100, directorBp=18_000 (2 directors), radarBp=40_000 → 720", () => {
-    // 100 × 18_000 × 40_000 / 10_000^2 = 100 × 1.8 × 4.0 = 720 (all other factors neutral).
     const m = { ...neutralMultipliers(), directorBp: SafeInt(18_000), radarBp: SafeInt(40_000) };
     expect(computeEffectiveDefenseBp(SafeInt(100), m)).toBe(720);
   });
@@ -289,16 +258,13 @@ describe("AC-11: two-class factor bound policy (INC-4 repair, §14/§16 saturati
   });
 
   it("SATURATION-class slots accept a value just above the 31_000 NORMAL cap (radarBp=31_001)", () => {
-    // The class distinction boundary: 31_001 is rejected for NORMAL-class slots but is a
-    // legal non-negative safe integer for the saturation-class slots.
     const m = { ...neutralMultipliers(), radarBp: 31_001 as SafeInt };
-    expect(computeEffectiveDefenseBp(SafeInt(100), m)).toBe(310); // floor(100 × 3.1001)
+    expect(computeEffectiveDefenseBp(SafeInt(100), m)).toBe(310);
     const s = { ...neutralMultipliers(), saturationBp: 31_001 as SafeInt };
     expect(computeEffectiveDefenseBp(SafeInt(100), s)).toBe(310);
   });
 
   it("a saturation aggregate beyond the shipped optimum is still exact: max-valid 4/4-scale, radar 4 groups + saturation 4 systems + director 4", () => {
-    // base 10_000 × 31_000 × 40_000 × 40_000 / 10_000^4 = 10_000 × 3.1 × 4.0 × 4.0 = 496_000.
     const m = {
       ...neutralMultipliers(),
       directorBp: SafeInt(31_000),
@@ -309,9 +275,6 @@ describe("AC-11: two-class factor bound policy (INC-4 repair, §14/§16 saturati
   });
 
   it("the defensive rawFloored > MAX_SAFE_INTEGER throw still guards pathological saturation inputs", () => {
-    // Two MAX_SAFE_INTEGER saturation slots: rawFloored ≈ 100 × (9.0e15)² / 10_000² ≈ 8.1e25
-    // > MAX_SAFE_INTEGER — the defensive throw fires even though both slots passed the
-    // non-negative safe-integer boundary.
     let caught: unknown;
     try {
       computeEffectiveDefenseBp(SafeInt(100), {
@@ -449,9 +412,6 @@ describe("AC-11: keyed engagement draw", () => {
     const drawC = drawAirDefenseOutcome(engine, airDefenseEngagementStreamId(IDENTITY));
     expect(Number(drawA)).toBeGreaterThanOrEqual(0);
     expect(Number(drawA)).toBeLessThanOrEqual(9_999);
-    // The domain-separated streams are independent: re-requesting stream A reproduces A,
-    // and B is a distinct stream (draw differs with overwhelming probability; we assert
-    // only the reproducibility property, which is deterministic).
     expect(drawC).toBe(drawA);
     void drawB;
   });
@@ -459,7 +419,6 @@ describe("AC-11: keyed engagement draw", () => {
 
 describe("AC-11: resolveEngagement entry point (§19/§20)", () => {
   it("consumes roundsPerEngagement on a drawn engagement (KILL band)", () => {
-    // baseKillBp 10_000 under neutral multipliers → effective kill 10_000 → draw < 10_000 → KILL always.
     const system = makeSystem({ baseKillBp: SafeInt(10_000) });
     const state = makeState(system, [["sys_001", SafeInt(100)]]);
     const result = resolveEngagement({
@@ -489,7 +448,6 @@ describe("AC-11: resolveEngagement entry point (§19/§20)", () => {
       baseDisruptionBp: SafeInt(3),
     });
     const state = makeState(system, [["sys_001", SafeInt(100)]]);
-    // Fixed engine draw floor(0.5 × 10_000) = 5_000 ≥ total 48 → drawn NO_EFFECT.
     const result = resolveEngagement({
       system,
       attack: makeAttack(),
@@ -508,9 +466,6 @@ describe("AC-11: resolveEngagement entry point (§19/§20)", () => {
   });
 
   it("a drawn NO_EFFECT engagement still consumes rounds (§20 line 334)", () => {
-    // Regression: "Every engagement MUST reserve and consume exact ammunition" — a fired
-    // resolution that lands on NO_EFFECT is still an engagement and must consume
-    // roundsPerEngagement. The zero-contribution path (no draw) is the ONLY non-consuming one.
     const system = makeSystem({
       baseKillBp: SafeInt(1),
       baseDamageBp: SafeInt(1),
@@ -519,7 +474,6 @@ describe("AC-11: resolveEngagement entry point (§19/§20)", () => {
       roundsPerEngagement: SafeInt(7),
     });
     const state = makeState(system, [["sys_001", SafeInt(20)]]);
-    // Fixed engine draw floor(0.9 × 10_000) = 9_000 ≥ total 4 → drawn NO_EFFECT.
     const result = resolveEngagement({
       system,
       attack: makeAttack(),
@@ -553,7 +507,7 @@ describe("AC-11: resolveEngagement entry point (§19/§20)", () => {
     expect(Number(result.effectiveBp.damage)).toBe(0);
     expect(Number(result.effectiveBp.abort)).toBe(0);
     expect(Number(result.effectiveBp.disruption)).toBe(0);
-    expect(Number(result.draw)).toBe(0); // documented sentinel: no draw taken
+    expect(Number(result.draw)).toBe(0);
     expect(result.state.stateHash).toBe(state.stateHash);
   });
 
@@ -600,9 +554,6 @@ describe("AC-11: resolveEngagement entry point (§19/§20)", () => {
   });
 
   it("a DESTROYED system (damageBp >= 10_000) contributes zero even when the caller passes neutral damageBp 10_000", () => {
-    // Repair MEDIUM-2: the damage factor is state-authoritative (effectiveDamageMultiplierBp
-    // of state.damageBp × state.powerBp) — a DESTROYED system cannot be re-enabled by the
-    // caller's multiplier.
     const system = makeSystem({ baseKillBp: SafeInt(10_000) });
     const state = makeState(system, [["sys_001", SafeInt(100)]], {
       damageBp: SafeInt(10_000),
@@ -612,14 +563,14 @@ describe("AC-11: resolveEngagement entry point (§19/§20)", () => {
       system,
       attack: makeAttack(),
       state,
-      multipliers: neutralMultipliers(), // caller still supplies damageBp 10_000
+      multipliers: neutralMultipliers(),
       engine: new RandomEngine("engagement-destroyed-seed"),
       identity: IDENTITY,
     });
 
     expect(result.outcome).toBe("NO_EFFECT");
     expect(Number(result.consumedRounds)).toBe(0);
-    expect(Number(result.draw)).toBe(0); // zero-contribution path: no draw taken
+    expect(Number(result.draw)).toBe(0);
     expect(Number(result.effectiveBp.kill)).toBe(0);
     expect(Number(result.effectiveBp.damage)).toBe(0);
     expect(Number(result.effectiveBp.abort)).toBe(0);
@@ -628,7 +579,6 @@ describe("AC-11: resolveEngagement entry point (§19/§20)", () => {
   });
 
   it("an unpowered system (powerBp 0) contributes zero even when the caller passes neutral damageBp 10_000", () => {
-    // Repair MEDIUM-2: powerBp <= 0 → power multiplier 0 → damage factor 0 → contributes zero.
     const system = makeSystem({ baseKillBp: SafeInt(10_000) });
     const state = makeState(system, [["sys_001", SafeInt(100)]], { powerBp: SafeInt.ZERO });
     const result = resolveEngagement({

@@ -42,11 +42,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-// One shared runtime for every fleet program; the services delegate to the same
-// in-memory session/queue registries the tests populate directly.
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-/** Runs a command program through the desktop service graph and projects its wire envelope. */
 async function runProgram<A>(program: CommandProgram, payload: unknown): Promise<BridgeResult<A>> {
   return projectCommandExit(await runtime.runPromiseExit(program(payload))) as BridgeResult<A>;
 }
@@ -67,11 +64,6 @@ const commitMonth = (payload: {
   transportRequestId: string;
 }) => runProgram<CommitMonthResponse>(commitMonthProgram, payload);
 
-/**
- * Desktop-mvp ticket 15 acceptance tests: the fleet commands as native Effect
- * programs against the real production pack (uk has authored fleets + ports and
- * a compiled fleet/ship spread).
- */
 describe("fleet commands (Effect programs)", () => {
   let saveRoot: string;
 
@@ -85,8 +77,6 @@ describe("fleet commands (Effect programs)", () => {
     clearPendingWorkspacesForTest();
   });
 
-  /** Compile the production pack once per fixture and register a session for
-   * `playerSlotId` (cost pattern mirrors constructionCommands.test.ts). */
   function registerProductionSession(
     sessionId: string,
     saveDir: string,
@@ -173,9 +163,6 @@ describe("fleet commands (Effect programs)", () => {
     expect(projection.month).toEqual({ month: 1, year: 1880 });
     expect(projection.playerNationId).toBe("uk");
 
-    // Real compiled fleet data: one division per compiled `FleetState`, each
-    // carrying its real ships — cross-checked against the independently
-    // compiled snapshot, not hardcoded.
     const uk = state.snapshot.nations.get("uk")!;
     expect(projection.divisions).toHaveLength(uk.fleets.length);
     expect(uk.fleets.length).toBeGreaterThan(0);
@@ -184,13 +171,10 @@ describe("fleet commands (Effect programs)", () => {
     expect(homeFleet).toBeDefined();
     const homeView = projection.divisions.find((d) => d.divisionId === "fleet_gbr_home");
     expect(homeView).toBeDefined();
-    expect(homeView!.fleetName).toBe(homeFleet!.name); // "Home Fleet"
+    expect(homeView!.fleetName).toBe(homeFleet!.name);
     expect(homeView!.areaId).toBe(homeFleet!.locationAreaId);
     expect(homeView!.ships).toHaveLength(homeFleet!.ships.length);
 
-    // Real compiled ship names/designs, with status derived from the real
-    // readiness state (S-1 ticket 07): HMS Inflexible is under construction and
-    // working up in the production pack; HMS Dreadnought/Alexandra are active.
     const inflexible = homeView!.ships.find((s) => s.name === "HMS Inflexible");
     expect(inflexible).toBeDefined();
     const compiledInflexible = homeFleet!.ships.find((s) => s.id === "gbr_inflexible")!;
@@ -201,16 +185,13 @@ describe("fleet commands (Effect programs)", () => {
     expect(dreadnought).toBeDefined();
     expect(dreadnought!.status).toBe("active");
 
-    // No movement command can exist yet — honest empty list.
     expect(projection.movementCommands).toEqual([]);
 
-    // Real world areas + the compiled routes as directed area edges.
     expect(projection.areas).toHaveLength(state.snapshot.world.areas.length);
     expect(projection.areas.length).toBeGreaterThan(0);
     expect(projection.areaEdges).toHaveLength(state.snapshot.world.routes.length);
     expect(projection.areaEdges.length).toBeGreaterThan(0);
 
-    // Real player ports with capacity = authored level.
     const ukPorts = state.snapshot.world.ports.filter((p) => p.nationId === "uk");
     expect(projection.ports).toHaveLength(ukPorts.length);
     expect(ukPorts.length).toBeGreaterThan(0);
@@ -236,7 +217,6 @@ describe("fleet commands (Effect programs)", () => {
     expect(presence.exempt).toBe(false);
     expect(presence.areas.length).toBeGreaterThan(0);
     for (const area of presence.areas) {
-      // 150 tons per possession weight (ADR-0266), so every requirement is a positive multiple of 150.
       expect(area.requiredTons).toBeGreaterThan(0);
       expect(area.requiredTons % 150).toBe(0);
       expect(area.shortfallTons).toBe(Math.max(0, area.requiredTons - area.presentTons));
@@ -319,13 +299,11 @@ describe("fleet commands (Effect programs)", () => {
     expect(projection.playerNationId).toBe("france");
 
     const france = state.snapshot.nations.get("france")!;
-    // Only France's own compiled fleets appear as divisions.
     const frenchFleetIds = new Set(france.fleets.map((f) => f.id));
     expect(projection.divisions).toHaveLength(france.fleets.length);
     for (const division of projection.divisions) {
       expect(frenchFleetIds.has(division.divisionId)).toBe(true);
     }
-    // No UK ships can leak in through a French division.
     const ukShipNames = new Set(
       [...state.snapshot.nations.get("uk")!.fleets].flatMap((f) => f.ships.map((s) => s.name)),
     );
@@ -335,7 +313,6 @@ describe("fleet commands (Effect programs)", () => {
       }
     }
 
-    // Only France's own ports, sorted by id.
     const frenchPortIds = new Set(
       state.snapshot.world.ports.filter((p) => p.nationId === "france").map((p) => p.id),
     );
@@ -380,7 +357,6 @@ describe("fleet commands (Effect programs)", () => {
           status: "submitted",
         }),
       ]);
-      // Queued only: nothing moved yet.
       const before = getCampaignSession("mv")!.state.snapshot.nations.get("uk")!;
       expect(before.fleets.find((f) => f.id === "fleet_gbr_home")!.locationAreaId).toBe(
         "eng_home_coast",
@@ -417,14 +393,12 @@ describe("fleet commands (Effect programs)", () => {
       registerProductionSession("mv", resolve(saveRoot, "mv"), "uk");
       const first = await submit();
       expect(first.outcome).toBe("success");
-      // Same transportRequestId + same body replays.
       const replay = await submit();
       expect(replay).toMatchObject({ outcome: "success" });
       if (first.outcome === "success" && replay.outcome === "success") {
         expect(replay.value.command.commandId).toBe(first.value.command.commandId);
       }
       expect(await listed()).toHaveLength(1);
-      // Same transportRequestId + different body is a conflict.
       const conflict = await submit({ toAreaId: "sea_north_sea" });
       expect(conflict).toMatchObject({ outcome: "rejected", reason: "IDEMPOTENCY_CONFLICT" });
       expect(await listed()).toHaveLength(1);

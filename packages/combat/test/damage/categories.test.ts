@@ -95,8 +95,6 @@ describe("AC-2: Damage categories produce correctly typed packages", () => {
   });
 
   it("narrative/description never appears in the authoritative package fields", () => {
-    // Verify that none of the package types carry a narrative/description field.
-    // This check enforces that narrative is NEVER part of the authoritative package.
     const checkNoNarrative = (obj: Record<string, unknown>) => {
       const keys = Object.keys(obj);
       expect(keys).not.toContain("narrative");

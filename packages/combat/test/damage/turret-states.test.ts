@@ -1,5 +1,3 @@
-// INC-4 — Turret states (DESIGN-41 §7).
-// Proves: 5 states, jam duration, no elapsed-time restoration.
 import { describe, it, expect } from "vite-plus/test";
 import { applyTurretDamage, type TurretComponent } from "../../src/damage/index.js";
 import { type ComponentOutcome } from "../../src/damage/index.js";
@@ -23,8 +21,6 @@ function destroyed(id = "TURRET-1"): TurretComponent {
 function burnedOut(id = "TURRET-1"): TurretComponent {
   return { id, state: "BURNED_OUT" };
 }
-
-// §7 — Five turret states
 
 describe("AC-4: Five turret states (§7)", () => {
   it("OPERATIONAL: UNAFFECTED outcome keeps turret operational", () => {
@@ -59,8 +55,6 @@ describe("AC-4: Five turret states (§7)", () => {
   });
 });
 
-// §7 — Jam duration
-
 describe("AC-4: Jam duration (§7)", () => {
   it("JAMMED sets jamDurationMinutes to 5 by default", () => {
     const result = applyTurretDamage(operational(), "JAMMED");
@@ -70,7 +64,6 @@ describe("AC-4: Jam duration (§7)", () => {
   it("JAMMED always resets jamDurationMinutes to 5 (new jam event)", () => {
     const turret: TurretComponent = { id: "TURRET-1", state: "OPERATIONAL", jamDurationMinutes: 3 };
     const result = applyTurretDamage(turret, "JAMMED");
-    // New jam event resets to default 5
     expect(result.jamDurationMinutes).toBe(5);
   });
 
@@ -84,8 +77,6 @@ describe("AC-4: Jam duration (§7)", () => {
     expect(result.jamDurationMinutes).toBeUndefined();
   });
 });
-
-// §7 — No elapsed-time restoration (AC-6)
 
 describe("AC-4: No elapsed-time restoration (§7, AC-6)", () => {
   it("FLOODED maps to DISABLED (no auto-restoration)", () => {
@@ -140,8 +131,6 @@ describe("AC-4: No elapsed-time restoration (§7, AC-6)", () => {
     expect(result.state).toBe("BURNED_OUT");
   });
 });
-
-// Edge cases
 
 describe("AC-4: Edge cases", () => {
   it("turret id is preserved through transitions", () => {

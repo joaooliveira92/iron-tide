@@ -20,18 +20,12 @@ export interface NationFixtureSpec {
   name: string;
   isPlayable?: boolean;
   homeArea?: string;
-  /** The authored starting prestige; defaults to `FIXTURE_NATION_PRESTIGE`. Any value, so boundary tests can break it. */
   prestige?: unknown;
-  /** Leave `prestige` off the nation entirely (to test the missing-value boundary). */
   omitPrestige?: boolean;
 }
 
-// S-2 fixtures. These numbers exist only to exercise the prestige compile boundary in tests; they
-// are NOT prestige values and must never reach production content (a campaign test asserts it).
-/** A fixture nation's starting prestige: inside the fixture bounds. */
 export const FIXTURE_NATION_PRESTIGE = 20;
 
-/** A complete fixture prestige value set, in the authored (YAML/JSON) shape. */
 export const FIXTURE_PRESTIGE_VALUE_SET = {
   lowerBound: 0,
   upperBound: 100,
@@ -44,10 +38,6 @@ export const FIXTURE_PRESTIGE_VALUE_SET = {
   },
 } as const;
 
-/**
- * The fixture value set as the branded in-memory shape a `CampaignSnapshot.prestigeRules` carries,
- * for tests that build snapshots directly. Test-only: it is not a prestige value (see above).
- */
 export const FIXTURE_PRESTIGE_RULES = {
   lowerBound: SafeInt(FIXTURE_PRESTIGE_VALUE_SET.lowerBound),
   upperBound: SafeInt(FIXTURE_PRESTIGE_VALUE_SET.upperBound),
@@ -69,17 +59,12 @@ export const FIXTURE_PRESTIGE_RULES = {
   },
 };
 
-/**
- * A fixture `rulesets.yaml`: one core ruleset carrying the fixture prestige value set. Pass
- * `prestige: "omit"` to leave the value set off, or any other value to test a malformed one.
- */
 export function rulesetsYaml(options: { prestige?: unknown } = {}): string {
   const prestige = "prestige" in options ? options.prestige : FIXTURE_PRESTIGE_VALUE_SET;
   const block = prestige === "omit" ? "" : `\n  prestige: ${JSON.stringify(prestige)}`;
   return `- id: "core"\n  name: "Core Rules"\n  version: "1.0"${block}\n`;
 }
 
-/** The standard fixture rulesets file. */
 export const FIXTURE_RULESETS_YAML = rulesetsYaml();
 
 export function createFixtureDir(basePath: string): FixtureDir {
@@ -99,7 +84,6 @@ export function writeFixture(basePath: string, relativePath: string, content: st
   return fullPath;
 }
 
-/** A single valid, strict-NationSchema-compliant nation as a YAML list item. */
 export function nationYaml(spec: NationFixtureSpec): string {
   const { id, tag, name, isPlayable = false, homeArea } = spec;
   const prestigeLine = spec.omitPrestige
@@ -219,7 +203,6 @@ export const VALID_ROUTES_YAML = `
   distance: 800
 `;
 
-/** The standard valid rulesets file; it carries the fixture prestige value set (S-2, test-only). */
 export const VALID_RULESETS_YAML = `\n${FIXTURE_RULESETS_YAML}`;
 
 export const VALID_POSSESSIONS_YAML = `
@@ -361,12 +344,6 @@ export function createInvalidFixture(basePath: string, name: string): FixtureDir
   return fixture;
 }
 
-/**
- * Builds a verified `ContentBundle` from an explicit full-surface `CompilerInput`
- * — the producer path `CampaignCompiler` consumes (CAH-LEG-1). Tests that drive
- * the campaign compiler over a fixture call this first; `CampaignCompiler` has no
- * raw-input branch, so the bundle is the only way in.
- */
 export function buildFixtureContentBundle(
   input: CompilerInput,
   signal: AbortSignal,
@@ -381,10 +358,6 @@ export function buildFixtureContentBundle(
   return { bundle: artifact.bundle, contentHash: artifact.envelope.bodyHash };
 }
 
-// T-1 fixtures (spec #109 R1). FIXTURE-CLASS values for exercising the battle-offer mechanics in tests. They are NOT the
-// ADR-0254 balance targets and not sourced values, and must never reach the production pack (a cross-process test asserts the
-// pack's battleOffers section is the ADR-0254 set and shares no field with this one).
-/** A complete fixture-class `battleOffers` section: a perturbing estimate model, so the recorded-draw path is exercised. */
 export const FIXTURE_BATTLE_OFFER_RULES: BattleOfferRules = {
   sectionVersion: 1,
   estimateModel: {
@@ -411,7 +384,6 @@ export const FIXTURE_BATTLE_OFFER_RULES: BattleOfferRules = {
   },
 };
 
-/** The fixture section with a different estimate model (EXACT, BANDED or a differently-bounded PERTURBED). */
 export function fixtureBattleOfferRules(
   estimateModel: BattleOfferRules["estimateModel"],
 ): BattleOfferRules {

@@ -1,8 +1,3 @@
-// T-1 04 (spec #109 R8, ticket #113): declining a battle offer. A decline is a terminal declined record: the battle is
-// never resolved or fought, its ship reservations are released with no damage or loss, and the decliner's war score falls
-// by the ruleset's decline rule through the one war-score seam (same clamp, same surrender check). All arithmetic is
-// integer with the stated rounding; no value here is a default - a mission the ruleset does not price, or a distance
-// modifier whose measure the engine does not define, refuses the decline instead of making it free.
 import type {
   BattleInstance,
   CampaignSnapshot,
@@ -21,22 +16,15 @@ import type { MonthContext } from "./monthContext.js";
 import type { OfferRefusal } from "./interruption.js";
 import { applyPrestigeChange } from "./prestigeApplication.js";
 
-/** The stable reason a decline was applied (the combat vocabulary's code for a decline that costs). */
 export const BATTLE_DECLINED_REASON = "BATTLE_DECLINED_WITH_CONSEQUENCES";
 
-/** The decline of a mission the ruleset does not price, or priced by a measure the engine does not define. */
 export const OFFER_DECLINE_UNPRICED = "OfferDeclineUnpriced";
 
-/** The war-score cost to the decliner and the credit to the opponent, in whole points. */
 export interface DeclinePrice {
   readonly cost: number;
   readonly credit: number;
 }
 
-/**
- * Price a decline from the ruleset: the mission's points (G2), no distance modifier (its measure is an opaque id the engine
- * does not define), and the opponent credit shape (G3). `null` = the decline cannot be priced and is refused.
- */
 export function priceDecline(rules: BattleOfferRules, missionType: string): DeclinePrice | null {
   const rule = rules.declineVictoryPoints;
   const points = Object.hasOwn(rule.pointsByMission, missionType)
@@ -57,10 +45,6 @@ export function priceDecline(rules: BattleOfferRules, missionType: string): Decl
   }
 }
 
-/**
- * Whether the player may decline this offer: an OPERATIONALLY_UNAVOIDABLE mission refuses with the existing typed refusal
- * (`BATTLE_DECLINE_NOT_ALLOWED`), and an unpriceable decline refuses rather than being free. `null` = allowed.
- */
 export function declineRefusal(
   content: OfferContent,
   rules: BattleOfferRules,
@@ -97,12 +81,6 @@ function releaseReservations(
   return { ...snapshot, nations };
 }
 
-/**
- * Apply an accepted decline exactly once. The battle becomes `declined` (it never reaches `resolved`), the ships the
- * battle reserved are released untouched, the decliner's war score changes through the war-score seam, and one terminal
- * record and one event are written. A battle that already has a record is left alone (a duplicate is never scored twice).
- * Returns false only for that duplicate.
- */
 export function applyDecline(
   ctx: MonthContext,
   battle: BattleInstance,
@@ -134,7 +112,6 @@ export function applyDecline(
   }
   next = releaseReservations(next, new Set(manifest["persistentAssets"]));
 
-  // The tally of the player nation's declines (R9): applied with the record, so a duplicate (returned above) never counts.
   const tally = tallyDecline(next["wars"]["declineCounters"], {
     rules: rules.declineCounter,
     repeatEachDecline: rules.declinedBattlePrestige?.repeat === "EACH_FURTHER_DECLINE",
@@ -192,7 +169,6 @@ export function applyDecline(
         ctx.campaignMonth,
       ),
     );
-    // R10: the crossing costs the PLAYER prestige, only through the S-2 seam and only when the ruleset authors the rule.
     const prestige = rules.declinedBattlePrestige;
     if (prestige !== undefined && decliner === ctx.playerNationId) {
       applyPrestigeChange(

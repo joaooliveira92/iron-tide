@@ -1,13 +1,3 @@
-// AC-3 (INC-1): Submarine policies (DESIGN-34 §5). Three policies
-// (FLEET_SUPPORT/PRIZE_RULES/UNRESTRICTED) with exact target weights
-// (warship attack / merchant attack / neutral-incident multiplier). The two
-// complementary ALLOCATION weights (warship + merchant) sum to exactly 10_000
-// per policy; the neutral-incident multiplier is an independent scalar
-// (5_000/10_000/20_000). A policy whose allocation weights do not sum to
-// exactly 10_000 fails closed (SUBMARINE_STATE_INVARIANT_FAILED). Policy change
-// requires an ACCEPTED COMMAND (acceptSubmarinePolicyChange) and becomes
-// effective at the NEXT TRADE-WARFARE RESOLUTION (command/IPC layer deferred —
-// recorded, not built).
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -96,7 +86,6 @@ describe("AC-3: allocation weights sum to exactly 10_000 per policy", () => {
       expect(err!.message).toBe(SUBMARINE_STATE_INVARIANT_FAILED);
       expect(err!.context.field).toBe("allocationWeights");
     }
-    // a weight outside the basis-point range fails on that individual field
     let outOfRange: BluewaveError | undefined;
     try {
       validateSubmarinePolicyDefinition(creator(10_001, -1));

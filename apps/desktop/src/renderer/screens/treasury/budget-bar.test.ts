@@ -46,7 +46,6 @@ describe("buildBudgetBar", () => {
       }),
     );
     expect(bar.overBudget).toBe(true);
-    // The scale becomes the spend (100): income sits at the halfway line.
     expect(bar.incomeMarker).toBe(0.5);
     expect(bar.overBudgetBy).toBe(50);
     expect(bar.segments.reduce((sum, s) => sum + s.width, 0)).toBeCloseTo(1, 10);

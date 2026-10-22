@@ -1,4 +1,3 @@
-// DESIGN-26 §28 (17 reason codes). The two provenance codes live in provenance.ts.
 export const DIVISION_SIZE_LIMIT_EXCEEDED = "DIVISION_SIZE_LIMIT_EXCEEDED" as const;
 export const DIVISION_SHIP_TYPE_INCOMPATIBLE = "DIVISION_SHIP_TYPE_INCOMPATIBLE" as const;
 export const CA_BC_DIVISION_MIX_INELIGIBLE = "CA_BC_DIVISION_MIX_INELIGIBLE" as const;

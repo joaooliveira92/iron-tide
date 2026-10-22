@@ -1,18 +1,3 @@
-/**
- * PROTOTYPE — throwaway. See ./README.md.
- *
- * Host for ticket 06's three map variants.
- *
- * "Three variants of the strategic map screen, switchable via `?variant=`,
- * mounted as a dev-only campaign screen because no map screen exists yet."
- *
- * The host owns the *data* — selection, ruler, layers, projection — and hands
- * it to whichever variant is showing. It owns no layout: each variant draws
- * the whole page, including its own chrome, because layout is the thing being
- * compared. Switching variant preserves state, which is the point: the same
- * selected area and the same laid ruler render three different ways.
- */
-
 import { useCallback, useState } from "react";
 import { PageHeader } from "../../components/shared/PageHeader.js";
 import {

@@ -169,11 +169,6 @@ const loadCommandsFile = (
     }
   });
 
-/**
- * The synchronous CLI dispatch, as one Effect program resolving the CLI
- * services from the environment. `parseOptions` and the output modes stay at
- * this edge; every `run*` is itself an Effect program.
- */
 const runCli = (args: string[]): Effect.Effect<ExitCategory, never, CliEnv> =>
   Effect.gen(function* () {
     const console = yield* CliConsole;
@@ -185,9 +180,6 @@ const runCli = (args: string[]): Effect.Effect<ExitCategory, never, CliEnv> =>
     if (!ALL_COMMANDS.includes(command)) {
       yield* console.err(`Unknown command: ${command}\n`);
       yield* console.err(USAGE);
-      // Legacy contract: the pre-migration dispatch returned the literal exit
-      // code 1 (the `validation-error` slot) for an unknown command, so the
-      // exact exit code is preserved even though the command is unrecognised.
       return "validation-error";
     }
     if (BATTLE_ADVANCE_MINUTE_COMMANDS.includes(command)) {
@@ -254,14 +246,6 @@ const runCli = (args: string[]): Effect.Effect<ExitCategory, never, CliEnv> =>
     }
   });
 
-/**
- * The CLI entrypoint facade (INC-6; ADR-0159). Builds the one `ManagedRuntime`
- * from the CLI layer, runs the dispatch program, maps the `ExitCategory` to the
- * six-code contract via `exitCodes`, disposes the runtime, then exits. A defect
- * (a thrown engine/`safePath` error) keeps the pre-migration behaviour: print
- * the stack to stderr and exit `validation-error`. `Runtime.makeRunMain`
- * defaults are deliberately not adopted.
- */
 function main(): void {
   const runtime = ManagedRuntime.make(cliLayer);
   const program = runCli(process.argv.slice(2));
@@ -282,7 +266,6 @@ function main(): void {
   );
 }
 
-// prevent auto-run when imported in vitest
 if (!process.env.VITEST) {
   main();
 }

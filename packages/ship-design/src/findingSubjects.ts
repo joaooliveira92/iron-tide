@@ -1,6 +1,3 @@
-// Per-rule subject metadata: where each rule's failing value is set, which way its limit points, and its unit.
-// Entity targets come from the producers (they hold the instance and zone ids); this table adds what a rule
-// means, keyed by rule code and formula id, never by wording.
 import {
   shipTarget,
   type Finding,
@@ -11,14 +8,11 @@ import {
 
 interface RuleMeta {
   readonly settings: SettingGroup;
-  /** True when the rule is about the ship as a whole (no producer target is expected). */
   readonly ship?: boolean;
-  /** Fixed bound, or "violated" when it follows from which side of the limit the value fell. */
   readonly bound?: "min" | "max" | "violated";
   readonly unit?: string;
 }
 
-/** Rules whose meaning depends on the formula that fired them (one code, several checks). */
 const BY_FORMULA: Readonly<Record<string, Readonly<Record<string, Partial<RuleMeta>>>>> = {
   STABILITY_MARGIN_THIN: {
     "F-S5": { bound: "max", unit: "bp" },
@@ -34,9 +28,7 @@ const BY_FORMULA: Readonly<Record<string, Readonly<Record<string, Partial<RuleMe
   },
 };
 
-/** Every rule code the compile emits. Unlisted codes keep only their producer targets. */
 const RULES: Readonly<Record<string, RuleMeta>> = {
-  // Arrangement (targets from the producer).
   "ARR-DUPLICATE-INSTANCE": { settings: "arrangement" },
   "ARR-STATION-OUT-OF-ZONE": { settings: "arrangement", unit: "‰" },
   "ARR-ZONE-NOT-ALLOWED": { settings: "arrangement" },
@@ -53,7 +45,6 @@ const RULES: Readonly<Record<string, RuleMeta>> = {
   PARAM_RANGE: { settings: "arrangement" },
   TECH_UNAVAILABLE: { settings: "arrangement" },
   MAGAZINE_UNPROTECTED: { settings: "armour", bound: "min", unit: "bp" },
-  // Ship-level.
   POWER_SHORTFALL: { settings: "arrangement", ship: true, bound: "max", unit: "kW" },
   COOLING_SHORTFALL: { settings: "arrangement", ship: true, bound: "max", unit: "kW" },
   ACCOMMODATION_SHORT: { settings: "arrangement", ship: true, bound: "max", unit: "crew" },
@@ -89,7 +80,6 @@ const RULES: Readonly<Record<string, RuleMeta>> = {
   TREATY_LIMIT_DISPLACEMENT: { settings: "hull", ship: true },
   TREATY_LIMIT_CALIBRE: { settings: "arrangement", ship: true },
   TREATY_LIMIT_CATEGORY: { settings: "brief", ship: true },
-  // Armament resolution (ADR-0093 Step 3): the placement is the target; weapons live in the arrangement.
   ARMAMENT_ID_INVALID: { settings: "arrangement" },
   ARMAMENT_ID_DUPLICATE: { settings: "arrangement" },
   ARMAMENT_MONTH_INVALID: { settings: "arrangement" },
@@ -113,13 +103,8 @@ const RULES: Readonly<Record<string, RuleMeta>> = {
   ARMAMENT_COMPAT_DRIFT: { settings: "arrangement" },
 };
 
-/** Rule codes with metadata, for tests and docs. */
 export const KNOWN_RULES: readonly string[] = Object.keys(RULES);
 
-/**
- * The finding with its rule metadata merged into its subject. Producer targets win; a ship-level rule with no
- * producer target is about the whole ship; an unknown rule is returned unchanged (no relationship invented).
- */
 export function withRuleSubject(f: Finding): Finding {
   const base = RULES[f.id];
   if (!base) return f;

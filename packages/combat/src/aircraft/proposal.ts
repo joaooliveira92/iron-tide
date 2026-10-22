@@ -1,6 +1,3 @@
-// DESIGN-43 §§10-12 proposal model, acceptance/rejection, expiry.
-// INC-3: AircraftProposal creation (from RNG-generated attributes),
-// acceptance → model creation, rejection.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import type { RandomStream } from "@bluewave/random";

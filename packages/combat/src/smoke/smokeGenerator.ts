@@ -1,5 +1,3 @@
-// DESIGN-42 §§20-22: smoke generator activation logic.
-
 import { createEnvelope } from "@bluewave/deterministic";
 import {
   SMOKE_GENERATOR_COOLDOWN_MINUTES,
@@ -40,27 +38,22 @@ export interface CanActivateSmokeGeneratorResult {
 export function canActivateSmokeGenerator(
   params: CanActivateSmokeGeneratorParams,
 ): CanActivateSmokeGeneratorResult {
-  // smoke_float_operations technology discovered
   if (!params.generatorTechnologyDiscovered) {
     return { eligible: false, reason: SMOKE_GENERATOR_TECHNOLOGY_UNAVAILABLE };
   }
 
-  // Generator installed and operational
   if (!params.generatorInstalledAndOperational) {
     return { eligible: false, reason: "GENERATOR_NOT_INSTALLED" };
   }
 
-  // At least 1 charge remaining
   if (params.remainingCharges < 1) {
     return { eligible: false, reason: SMOKE_GENERATOR_CHARGES_EMPTY };
   }
 
-  // No cooldown active
   if (params.cooldownActive) {
     return { eligible: false, reason: SMOKESCREEN_COOLDOWN_ACTIVE };
   }
 
-  // Doctrine adopted
   if (params.doctrineAdoptedMonths < SMOKE_DOCTRINE_ADOPTION_MONTHS) {
     return { eligible: false, reason: SMOKE_GENERATOR_TECHNOLOGY_UNAVAILABLE };
   }
@@ -82,7 +75,6 @@ export function activateSmokeGenerator(
   sourceId: string,
   owner: string,
 ): ActivateSmokeGeneratorResult {
-  // Place generator cloud at the ship's position (no stern offset)
   const genId = createEnvelope("smoke/generator", SMOKE_RULESET_VERSION, {
     sourceId,
     minute: currentMinute,

@@ -42,8 +42,6 @@ export interface MandatoryRoleCandidate {
   assetIdentifier: string;
 }
 
-// DESIGN-37 §14: assign mandatory roles deterministically. Candidate ordering:
-// role score → strength → readiness → commander suitability → identifier.
 export function assignMandatoryRoles(
   candidates: MandatoryRoleCandidate[],
   _role: TacticalRole,

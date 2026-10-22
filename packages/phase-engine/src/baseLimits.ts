@@ -1,9 +1,3 @@
-// S-5 08 (spec #73 R10/R11, ADR-0250): the month-end base-limit step. It runs last in the month - after movement, battle
-// resolution, presence measurement and foreign-station routing - so a fleet that arrived this month has already fought at
-// full strength and ships suffer only now. Ships beyond their area's limit are flagged (`*`) and take the over-base crew-
-// quality consequence through the S-1 readiness seam; the flag carries the maintenance adder the S-1 maintenance seam
-// charges from next month. A ship back within its limit loses the flag. It reads no war or blockade (base limits are not
-// exempt, ADR-0248), draws no randomness and, with the ruleset block absent, does nothing.
 import {
   measureBaseLimits,
   reduceCrewQuality,

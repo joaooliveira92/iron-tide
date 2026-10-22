@@ -1,7 +1,6 @@
 import { LABEL_FONT, NON_SCALING, OPACITY, STATION_STEP_PERMILLE, STROKE } from "./drafting.js";
 import type { ProfileFrame } from "./profile-geometry.js";
 
-/** Datum offsets, px. */
 const BASELINE_DROP = 4;
 const STATION_TICK = 3;
 const MAJOR_STATION_TICK = 5;
@@ -14,7 +13,6 @@ const STATIONS = Array.from(
   (_, i) => i * STATION_STEP_PERMILLE,
 );
 
-/** Reference geometry under the hull: baseline, station ticks, draught and depth marks. */
 export function ProfileReferenceLayer({ frame }: { readonly frame: ProfileFrame }) {
   const baselineY = frame.keelBaseY + BASELINE_DROP;
   const bowX = frame.x(0);

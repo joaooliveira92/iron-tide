@@ -1,4 +1,3 @@
-// AC-18 (INC-5): Squadron expansion — ratio formula, penalty bands, same-month aggregation.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -42,13 +41,11 @@ function makeSquadron(overrides: Partial<SquadronState> = {}): SquadronState {
 describe("expansion ratio formula", () => {
   it("computes ratio = floor(added * 10000 / max(1, prior))", () => {
     const ratio = computeExpansionRatioBp(SafeInt(6), SafeInt(18));
-    // 6 * 10000 / 18 = 60000 / 18 = 3333.33... floor = 3333
     expect(Number(ratio)).toBe(3333);
   });
 
   it("handles prior strength of 0 (uses 1)", () => {
     const ratio = computeExpansionRatioBp(SafeInt(10), SafeInt(0));
-    // 10 * 10000 / 1 = 100000
     expect(Number(ratio)).toBe(100000);
   });
 });

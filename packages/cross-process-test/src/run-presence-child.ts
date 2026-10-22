@@ -1,8 +1,3 @@
-// S-5 05 (#79, spec #73 R15): cross-process determinism child for the month-end presence step. Compiles the production
-// pack, runs one strategic month twice - once with the presence section dormant and once with a FIXTURE-CLASS section -
-// and prints the hashes and the typed shortfall events as JSON for byte-for-byte comparison across two clean processes.
-//
-// EVERY RULESET NUMBER BELOW IS FIXTURE-CLASS: it exercises the mechanics and never reaches the production pack.
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { CampaignSnapshot } from "@bluewave/campaign";
@@ -16,7 +11,6 @@ const FIXTURE_PRESENCE = {
   crampedOrShortRangeCountBp: 5_000,
 };
 
-// FIXTURE-CLASS base-limit block (S-5 08): a tight limit everywhere so the production fleets exceed it somewhere.
 const FIXTURE_BASE_LIMITS = {
   limitByBaseLevel: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   noBaseLimit: 1,
@@ -55,7 +49,6 @@ function run(): void {
     const penalised = execute(true, true);
     const requestsOf = (r: typeof penalised, kind: string) =>
       r.eventLedger.all.filter((e) => e.body.kind === kind).map((e) => e.body);
-    // Put the first under-covered nation at war and under blockade: it must drop out of every output.
     const exemptNation = shortfalls[0]!.nationId;
     const blockadedSnapshot: CampaignSnapshot = {
       ...state.snapshot,
@@ -95,7 +88,6 @@ function run(): void {
             e.body.kind === "RevoltPressureRequested") &&
           e.body.nationId === exemptNation,
       ).length;
-    // S-5 07: assign one active ship outside its nation's shortfall areas to foreign station; the month routes it.
     const shortAreas = new Set(shortfalls.map((e) => `${e.nationId}/${e.areaId}`));
     let stationed: CampaignSnapshot | undefined;
     let stationedShipId = "";
@@ -139,7 +131,6 @@ function run(): void {
         : deployed.eventLedger.all
             .filter((e) => deploymentKinds.includes(e.body.kind))
             .map((e) => e.body);
-    // S-5 08: the same month with the fixture base-limit block flags ships beyond the limits and applies the consequences.
     const baseLimited = new MonthExecutor().execute(
       state.snapshot,
       [],

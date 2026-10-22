@@ -67,16 +67,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-// The programs resolve `NativeDialog` from the Layer; the fake answers from
-// these test-scoped variables, so the real electron dialog is never touched.
 let chooseSaveDirectoryAnswer: string | null = null;
 let choosePackageDirectoryAnswer: string | null = null;
-// The approved-package list lives under the app's user-data dir; tests point it at a temp dir.
 const userDataRoot = mkdtempSync(resolve(tmpdir(), "bw-desktop-userdata-"));
 
-// Session ids are injected (production-hardening ticket 04): a deterministic,
-// per-call counter proves compile/load take the id from the `IdGenerator`
-// service rather than an ambient `randomUUID()`.
 let idCounter = 0;
 const nextTestId = () => `test-session-${String(idCounter++)}`;
 
@@ -133,14 +127,6 @@ const setResearchPriorityCommand = (payload: unknown) =>
 const submitConstructionCommand = (payload: unknown) =>
   runProgram<unknown>(submitConstructionCommandProgram, payload);
 
-/**
- * Desktop-mvp ticket 16 acceptance tests. Every test drives the real
- * production pack through the full vertical slice — the actual commands,
- * not stubs: compile -> save -> commit a month -> "close and reopen the
- * app" (main-process in-memory state cleared, the disk package untouched)
- * -> load / verify / replay / recover against the package on disk.
- */
-
 function baseConfiguration(overrides: Partial<CampaignConfiguration> = {}): CampaignConfiguration {
   return {
     scenarioId: "scen_1880",
@@ -181,13 +167,10 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     return `req-${nextSessionOrdinal++}-${Math.random().toString(36).slice(2)}`;
   }
 
-  /** Points the fake package dialog at `saveDir` (or a cancel when null). */
   function packageAt(saveDir: string | null): void {
     choosePackageDirectoryAnswer = saveDir;
   }
 
-  /** Compile the real production pack through the real `compileCampaign`
-   * program (writes the SaveStore package + session.json sidecar). */
   async function compileAndSave(saveDir: string): Promise<string> {
     chooseSaveDirectoryAnswer = saveDir;
     const result = await compileCampaign(baseConfiguration());
@@ -206,30 +189,17 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     if (result.outcome !== "success") throw new Error("fixture commitMonth failed");
   }
 
-  /** Simulates closing and reopening the app: in-memory session/workspace
-   *  state is wiped; the package on disk is untouched. */
   function restartApp(): void {
     clearCampaignSessionsForTest();
     clearConstructionWorkspacesForTest();
     clearPendingWorkspacesForTest();
   }
 
-  /** The 1880 torpedo cruiser reference draft, valid at the campaign start. */
   function torpedoCruiserDraft(): Record<string, unknown> {
     const ref = readReferenceDesigns().find((d) => d.id === "torpedo_cruiser_1880")!;
     return { ...ref.draft, nationId: "uk" };
   }
 
-  /**
-   * Deliberately corrupt a save's `campaign.json`. The tamper targets a
-   * hash-covered scalar (`campaignId`) because `SaveStore`'s own integrity
-   * envelope hashes with `canonicalSerialize`, which collapses runtime
-   * Maps to `{}` — values inside Map-backed fields like `nations`
-   * (`treasury` etc.) are NOT covered by the package hash today (flagged to
-   * the orchestrator in this ticket's report; ticket 05's replay helper
-   * *does* cover them, so the replay tests below additionally tamper a
-   * treasury to prove replay catches what load can't).
-   */
   function corruptActiveSave(saveDir: string): void {
     const pointer = JSON.parse(readFileSync(join(saveDir, "pointer.json"), "utf8")) as {
       activeSaveId: string;
@@ -245,8 +215,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     writeFileSync(campaignPath, JSON.stringify(parsed));
   }
 
-  /** Corrupts a value inside a Map-backed field (a treasury) — today only
-   *  replay's Map-aware subset-hash catches this, SaveStore's load does not. */
   function corruptNationTreasury(saveDir: string): void {
     const pointer = JSON.parse(readFileSync(join(saveDir, "pointer.json"), "utf8")) as {
       activeSaveId: string;
@@ -263,8 +231,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     writeFileSync(campaignPath, JSON.stringify(parsed));
   }
 
-  // Acceptance 1: load restores real state after closing and reopening
-
   it("closing and reopening the app, then loading the saved package, restores real state (not a fresh/empty campaign)", async () => {
     const saveDir = resolve(saveRoot, "save-a");
     const compileSessionId = await compileAndSave(saveDir);
@@ -272,11 +238,8 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     const compiled = getCampaignSession(compileSessionId)!;
     const initialTreasury = Number(compiled.state.snapshot.nations.get("uk")!.treasury);
 
-    // Advance one strategic month so the saved package is no longer in its
-    // initial state — this is the "real state" a restart must restore.
     await advanceOneMonth(compileSessionId, 0);
 
-    // Close and reopen the app.
     restartApp();
 
     packageAt(saveDir);
@@ -287,8 +250,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(load.value.activeRevision).toBe(1);
     expect(load.value.campaignIdentity.length).toBeGreaterThan(0);
 
-    // Opening the restored session shows real post-commit state — a changed
-    // treasury, the advanced month, a real fleet — not a fresh campaign.
     const open = await inspectCampaign(load.value.sessionId);
     expect(open.outcome).toBe("success");
     if (open.outcome !== "success") return;
@@ -301,8 +262,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     );
     expect(projection.fleet.length).toBeGreaterThan(0);
 
-    // And the restored session is genuinely continuable: the next month
-    // commits against the restored revision/seed.
     await advanceOneMonth(load.value.sessionId, 1);
     const after = getCampaignSession(load.value.sessionId)!;
     expect(Number(after.state.snapshot.turnNumber)).toBe(2);
@@ -311,7 +270,7 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
 
   it("takes the loaded session id from the injected IdGenerator (deterministic in tests)", async () => {
     const saveDir = resolve(saveRoot, "save-id");
-    await compileAndSave(saveDir); // consumes test-session-0
+    await compileAndSave(saveDir);
     restartApp();
     packageAt(saveDir);
     const load = await loadCampaign();
@@ -324,9 +283,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     const saveDir = resolve(saveRoot, "save-incompat");
     await compileAndSave(saveDir);
 
-    // Rewrite ONLY the stored compatibility version to a prior release. The
-    // compatibility check is stage 1 of the load (before the structural/hash
-    // checks), so the failure must be the stable diagnostic, not corruption.
     const pointer = JSON.parse(readFileSync(join(saveDir, "pointer.json"), "utf8")) as {
       activeSaveId: string;
     };
@@ -344,9 +300,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(result.outcome).toBe("error");
     if (result.outcome !== "error") return;
     expect(result.reason).toBe("LOAD_FAILED");
-    // `useCampaignFiles.openCampaign` renders
-    // `Load failed: <reason> — <diagnostics joined by "; ">`, so the message
-    // reaching this bridge result is exactly what the player reads.
     expect(result.diagnostics.some((m) => m.includes('Save compatibility version "1.0.0"'))).toBe(
       true,
     );
@@ -354,8 +307,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
       result.diagnostics.some((m) => m.includes("does not match current engine version")),
     ).toBe(true);
   });
-
-  // Acceptance 2: verify reports a real pass/fail against hash/envelope
 
   it("verify reports a real pass on a good package and a real fail on a corrupted one", async () => {
     const saveDir = resolve(saveRoot, "save-b");
@@ -378,12 +329,8 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     if (bad.outcome !== "success") return;
     expect(bad.value.valid).toBe(false);
     expect(bad.value.issues.length).toBeGreaterThan(0);
-    // Still identifiable via the package's own metadata.json even though the
-    // state envelope failed.
     expect(bad.value.campaignIdentity.length).toBeGreaterThan(0);
   });
-
-  // Acceptance 3: replay reconstructs the command history deterministically
 
   it("replay reconstructs the executed months and confirms a matching deterministic hash", async () => {
     const saveDir = resolve(saveRoot, "save-c");
@@ -455,7 +402,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(replay.value.revisions.map((r) => r.matched)).toEqual([true]);
   });
 
-  /** Rewrites the newest save's month input, keeping its metadata hash consistent (a save made under other rules). */
   function rewriteMonthInput(
     saveDir: string,
     change: (input: Record<string, unknown>) => void,
@@ -536,7 +482,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     if (load.outcome !== "success") throw new Error("load failed");
     const designVersionId = (queued.value as { designVersionId: string }).designVersionId;
     await advanceOneMonth(load.value.sessionId, 0);
-    // The queued command was applied: it opened a design study (ADR-0085). Advance until the study approves it.
     for (let i = 0; i < 8; i++) {
       const current = getCampaignSession(load.value.sessionId)!;
       if (current.state.snapshot.designs.has(designVersionId)) break;
@@ -572,9 +517,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
 
     restartApp();
 
-    // Replay's Map-aware subset hash catches a treasury tamper that
-    // `SaveStore.load`'s own envelope can't see (Maps collapse to `{}`
-    // under canonicalSerialize) — replay reports a mismatch all the same.
     corruptNationTreasury(saveDir);
 
     packageAt(saveDir);
@@ -603,11 +545,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     const saveDir = resolve(saveRoot, "save-f6");
     const compileSessionId = await compileAndSave(saveDir);
 
-    // An extra same-revision save: queue a construction order after compile —
-    // both are revision 0, so the NEWER one must be the pre-month snapshot
-    // for the month that follows. Replaying against the compile save would
-    // report a false mismatch, because the order's queued project would be
-    // missing from the replayed closing state.
     const submit = await submitConstructionCommand({
       sessionId: compileSessionId,
       designId: "des_gbr_inflexible",
@@ -617,9 +554,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(submit.outcome).toBe("success");
     if (submit.outcome !== "success") return;
 
-    // Force both revision-0 saves onto the same millisecond so the pick
-    // rests solely on the deterministic ordering (timestamp -> save chain ->
-    // saveId), never on the OS directory listing order.
     const sharedTimestamp = "1970-01-01T00:00:00.000Z";
     const turnZeroSaves = new SaveStore().list(saveDir).filter((m) => m.turnNumber === 0);
     expect(turnZeroSaves.length).toBe(2);
@@ -643,8 +577,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(replay.value.revisions[0]!.matched).toBe(true);
   });
 
-  // Acceptance 4: recover runs against a deliberately corrupted save
-
   it("recover reverts a deliberately corrupted active save to its predecessor and reports the real outcome", async () => {
     const saveDir = resolve(saveRoot, "save-f");
     const compileSessionId = await compileAndSave(saveDir);
@@ -654,7 +586,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
 
     corruptActiveSave(saveDir);
 
-    // Loading the corrupt package honestly fails before recovery.
     packageAt(saveDir);
     const failed = await loadCampaign();
     expect(failed.outcome).toBe("error");
@@ -668,8 +599,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(rec.value.activeRevision).toBe(0);
     expect(rec.value.notes.length).toBeGreaterThan(0);
 
-    // The reverted package loads cleanly and restores the pre-corruption
-    // (initial) state.
     packageAt(saveDir);
     const loaded = await loadCampaign();
     expect(loaded.outcome).toBe("success");
@@ -694,7 +623,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(rec.value.activeRevision).toBe(0);
     expect(rec.value.notes.some((n) => n.includes("no recovery"))).toBe(true);
 
-    // The untouched package still loads at its full state.
     packageAt(saveDir);
     const load = await loadCampaign();
     expect(load.outcome).toBe("success");
@@ -710,7 +638,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     const first = await loadCampaign();
     expect(first.outcome).toBe("success");
 
-    // No dialog answer is set: only the approved list can supply the path.
     choosePackageDirectoryAnswer = null;
     const again = await loadRecentCampaign(saveDir);
     expect(again.outcome).toBe("success");
@@ -801,7 +728,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
   it("loads a read-only package even when it holds a stale pending-commands file", async () => {
     const saveDir = resolve(saveRoot, "save-readonly");
     await compileAndSave(saveDir);
-    // A malformed queue file is normally removed on load; that cleanup must not fail the load.
     writeFileSync(resolve(saveDir, PENDING_COMMANDS_FILENAME), "{ not json", "utf8");
     chmodSync(saveDir, 0o555);
     try {
@@ -813,8 +739,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     }
   });
 
-  // Edge cases: cancellation and missing sidecar metadata
-
   it("every command reports PACKAGE_SELECTION_CANCELLED when the dialog is cancelled", async () => {
     for (const run of [loadCampaign, verifyCampaign, replayCampaign, recoverCampaign]) {
       packageAt(null);
@@ -825,9 +749,6 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
   });
 
   it("rejects a package with no session.json sidecar (cannot restore a real session)", async () => {
-    // A valid SaveStore package WITHOUT the sidecar — how packages existed
-    // before the continuance work. load/replay refuse because the player
-    // slot / seed / scenario cannot be reconstructed.
     const saveDir = resolve(saveRoot, "save-h");
     const collector = new DiagnosticCollector();
     const output = compileProductionCampaignFromArtifact(
@@ -881,7 +802,6 @@ describe("listCampaigns (campaign-list screen backing query)", () => {
     const record = list.value[0];
     expect(record).toBeDefined();
     if (record === undefined) return;
-    // The save-time population of the INC-13 additive fields (no fabrication).
     expect(record.campaignName).toBeTypeOf("string");
     expect(record.nationId).toBeTypeOf("string");
     expect(record.campaignDate).toEqual(

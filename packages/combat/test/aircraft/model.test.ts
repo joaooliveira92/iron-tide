@@ -1,7 +1,3 @@
-// AC-1 (INC-1): Aircraft type enum (12 canonical types). AC-2 (INC-1):
-// AircraftModelDefinition with all §2 fields, scores 0-100, integer
-// fixed-point payload/range/cost/work, contract validation. Missing/invalid
-// field fails closed with INVALID_AIRCRAFT_MODEL_DEFINITION.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import {

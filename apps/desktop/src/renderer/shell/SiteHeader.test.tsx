@@ -77,7 +77,6 @@ describe("SiteHeader", () => {
         </PreferencesProvider>
       </BridgeProvider>,
     );
-    // Flush the provider's async read so its state update lands inside `act`.
     await act(async () => {});
     return result;
   }
@@ -204,8 +203,6 @@ describe("SiteHeader", () => {
   it("omits the alert-count slot until the INC-2 projection lands", async () => {
     await renderHeader("linux", { activeView: "playing", campaign });
 
-    // The forward-wired slot is null: it is not shown at all (no "Alerts: —"
-    // placeholder, and certainly no fabricated count).
     expect(screen.queryByText("Alerts:")).toBeNull();
     expect(screen.queryByText(/^[0-9]+$/)).toBeNull();
   });

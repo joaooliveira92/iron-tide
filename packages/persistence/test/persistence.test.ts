@@ -98,9 +98,6 @@ describe("SaveStore", () => {
     const state = createFixtureState();
     const saveResult = store.save(state, tmpDir);
 
-    // The three additive, optional fields are populated at save time from the
-    // real snapshot (no fabrication): campaign name is the campaign id, nation
-    // is the playable slot, campaign date is derived from start + turn.
     expect(saveResult.metadata.campaignName).toBe("test-campaign-001");
     expect(saveResult.metadata.nationId).toBe("nation-a");
     expect(saveResult.metadata.campaignDate).toEqual({ year: 1880, month: 2 });
@@ -162,11 +159,9 @@ describe("SaveStore", () => {
     it("sees a change that only touches a Map-valued nation field (rawHash cannot)", () => {
       const a = withTreasury(1000);
       const b = withTreasury(1001);
-      // The in-memory state hash is blind to the Map contents...
       expect(sha256Hex(canonicalSerialize({ ...a, rawHash: undefined }))).toBe(
         sha256Hex(canonicalSerialize({ ...b, rawHash: undefined })),
       );
-      // ...but the package comparison is not.
       store.save(a, tmpDir);
       expect(store.isCurrent(a, tmpDir)).toBe(true);
       expect(store.isCurrent(b, tmpDir)).toBe(false);
@@ -297,10 +292,6 @@ describe("SaveStore", () => {
     const secondSaveId = store.getActiveSaveId(tmpDir)!;
     expect(firstSaveId).not.toBe(secondSaveId);
 
-    // Force both saves onto an identical millisecond so the only remaining
-    // ordering signal is the pointer chain (the second save is the active /
-    // truly-newest one). Without the tie-break, `list()` would fall back to
-    // `readdirSync` order, which is platform-dependent.
     const sharedTimestamp = "1970-01-01T00:00:00.000Z";
     for (const saveId of [firstSaveId, secondSaveId]) {
       const metaPath = join(tmpDir, saveId, "metadata.json");
@@ -311,7 +302,6 @@ describe("SaveStore", () => {
 
     const saves = store.list(tmpDir);
     expect(saves).toHaveLength(2);
-    // Newest first, deterministically: the second save is the active one.
     expect(saves[0]!.saveId).toBe(secondSaveId);
     expect(saves[0]!.timestamp).toBe(sharedTimestamp);
     expect(saves[1]!.saveId).toBe(firstSaveId);

@@ -8,28 +8,8 @@ import {
   type TensionLabel,
 } from "@bluewave/campaign-engine";
 
-/**
- * World Situation Briefing view-model (Opening Strategic Briefing, Foreign
- * Intelligence page). Pure and deterministic: it folds the engine's
- * `OpeningBriefingProjection` plus an injected, already-decoded presentation
- * source into the grouped, interpreted shape the screen renders. It reads no
- * global, mutates no input, and never branches on a nation's name — placement
- * comes from who controls which world area and how areas group into theatres.
- *
- * Four distinct concepts are kept apart on every power and are never derived
- * from one another's display strings:
- *  - `status`   — the formal diplomatic standing (the engine's relation kind);
- *  - `attitude` — the bilateral disposition, the engine's tension band;
- *  - `tension`  — the 0..10 score behind the attitude (higher = closer to war);
- *  - `outlook`  — whether the pairing is likely to turn into a flashpoint,
- *                 which also weighs whether the two powers share a theatre;
- *  - `confidence` — how well the intelligence is known; `null` when the
- *                 campaign carries no grading (nothing is invented).
- */
-
 export type RelationKind = OpeningBriefingRelationsRow["relation"];
 
-/** Every formal status, in the order the posture summary lists them. */
 export const RELATION_KINDS: readonly RelationKind[] = [
   "allied",
   "trade_agreement",
@@ -37,12 +17,10 @@ export const RELATION_KINDS: readonly RelationKind[] = [
   "at_war",
 ];
 
-/** How much a power matters to the player's opening position, most relevant first. */
 export type RelevanceTier = "immediate" | "wide_reach" | "distant";
 
 export const RELEVANCE_TIERS: readonly RelevanceTier[] = ["immediate", "wide_reach", "distant"];
 
-/** Why a power sits in its tier. Copy is chosen per code, never assembled from fragments. */
 export type RelevanceReason =
   | "at_war"
   | "high_tension"
@@ -50,24 +28,16 @@ export type RelevanceReason =
   | "overseas_reach"
   | "no_contact";
 
-/** Whether the pairing is stable, uncertain, or a likely flashpoint. Worst first. */
 export type PowerOutlook = "flashpoint" | "uncertain" | "stable";
 
 export const POWER_OUTLOOKS: readonly PowerOutlook[] = ["flashpoint", "uncertain", "stable"];
 
-/** Reserved for intelligence grading; the opening campaign carries none yet. */
 export type IntelligenceConfidenceLevel = "confirmed" | "estimated" | "uncertain";
 
-/**
- * A power holding areas in at least this many distinct theatres has reach across
- * the wider world rather than a single region.
- */
 export const OVERSEAS_REACH_MIN_THEATERS = 3;
 
-/** The tension band from which a shared theatre turns a strained relation into a flashpoint. */
 const FLASHPOINT_BAND: TensionLabel = "strained";
 
-/** The lowest tension at which a shared theatre makes an otherwise calm pairing uncertain. */
 const UNCERTAIN_MIN_TENSION = lowerBound("neutral");
 
 function lowerBound(label: TensionLabel): number {
@@ -83,7 +53,6 @@ export interface TheaterRef {
   readonly label: string;
 }
 
-/** The authored, decoded presentation facts about one nation (any may be absent). */
 export interface NationProfileSource {
   readonly officialName: string;
   readonly diplomacy: string;
@@ -96,16 +65,11 @@ export interface NationProfileSource {
   readonly likelyRivals: readonly string[];
 }
 
-/** Everything the view-model needs beyond the engine projection, injected by the caller. */
 export interface WorldSituationSource {
   readonly projection: OpeningBriefingProjection;
-  /** Display regions (theatres), in display order. */
   readonly theaters: readonly TheaterRef[];
-  /** World area id → theatre id. */
   readonly areaTheater: Readonly<Record<string, string>>;
-  /** The player's home-waters area id, or null when unknown. */
   readonly homeAreaId: string | null;
-  /** Authored profile for a campaign nation id, or null when none exists. */
   readonly profileFor: (nationId: string) => NationProfileSource | null;
 }
 
@@ -126,14 +90,10 @@ export interface PowerBrief {
   readonly tension: number;
   readonly attitude: TensionLabel;
   readonly outlook: PowerOutlook;
-  /** Holdings inside the player's own theatres. */
   readonly sharedHoldings: readonly TheaterHolding[];
-  /** How many distinct theatres the power holds areas in (0 when none are known). */
   readonly theaterCount: number;
-  /** `null` — the opening campaign carries no intelligence grading. */
   readonly confidence: IntelligenceConfidenceLevel | null;
   readonly profile: NationProfileSource | null;
-  /** True when the power's authored rivals name the player's nation. */
   readonly regardsPlayerAsRival: boolean;
 }
 
@@ -152,23 +112,17 @@ export interface WorldSituation {
   readonly player: {
     readonly nationId: string;
     readonly name: string;
-    /** The authored diplomatic situation of the player's nation, when it exists. */
     readonly assessment: string | null;
-    /** Theatres the player holds areas in; the first is the primary theatre. */
     readonly theaters: readonly TheaterRef[];
   };
   readonly month: OpeningBriefingProjection["month"];
-  /** Non-empty tiers only, in relevance order. */
   readonly groups: readonly PowerGroup[];
-  /** Every power in on-screen order; the keyboard order of the navigator. */
   readonly ordered: readonly PowerBrief[];
   readonly posture: {
     readonly byStatus: Readonly<Record<RelationKind, number>>;
     readonly byOutlook: Readonly<Record<PowerOutlook, number>>;
   };
-  /** Theatres where at least one power is present, the player's own first. */
   readonly theaterBoard: readonly TheaterEntry[];
-  /** The power selected before the player chooses one: the most pressing. */
   readonly defaultSelectionId: string | null;
 }
 
@@ -178,7 +132,6 @@ const OUTLOOK_RANK: Readonly<Record<PowerOutlook, number>> = {
   stable: 2,
 };
 
-/** Outlook for one pairing; exhaustive over status and band, deterministic. */
 export function deriveOutlook(
   status: RelationKind,
   tension: number,
@@ -230,7 +183,6 @@ function playerIsNamedIn(rivals: readonly string[], playerNames: readonly string
   });
 }
 
-/** Folds the engine projection and presentation source into the briefing view-model. */
 export function buildWorldSituation(source: WorldSituationSource): WorldSituation {
   const { projection, theaters, areaTheater, profileFor } = source;
   const theaterById = new Map(theaters.map((theater) => [theater.id, theater] as const));
@@ -240,9 +192,6 @@ export function buildWorldSituation(source: WorldSituationSource): WorldSituatio
     return id === undefined ? null : (theaterById.get(id) ?? null);
   };
 
-  // The player's theatres, the busiest first. The primary theatre anchors "shares
-  // your waters": the one holding the player's home waters, else the busiest. A
-  // far-flung power would otherwise share waters with everyone.
   const playerCounts = new Map<string, number>();
   for (const area of projection.foreignIntelligence.playerAreas) {
     const theater = theaterOf(area.areaId);
@@ -320,7 +269,6 @@ export function buildWorldSituation(source: WorldSituationSource): WorldSituatio
     byOutlook[power.outlook] += 1;
   }
 
-  // Theatre board: every theatre where a known power holds an area, the player's own first.
   const presence = new Map<string, Map<string, string>>();
   for (const row of projection.foreignIntelligence.relations) {
     for (const area of row.controlledAreas) {
@@ -362,7 +310,6 @@ export function buildWorldSituation(source: WorldSituationSource): WorldSituatio
   };
 }
 
-/** The ordered power list's neighbour in `step` direction, wrapping never (clamped). */
 export function adjacentPowerId(
   ordered: readonly { readonly nationId: string }[],
   currentId: string | null,

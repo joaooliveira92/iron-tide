@@ -1,8 +1,3 @@
-// Phase 3.6: ai_procurement — the live AI naval procurement lifecycle (ADR-0091). For each AI nation with a
-// NationNavalProfile it plans a procurement decision, submits it as a design study through the same command/study
-// boundaries the player uses, and — once the study approves the design — places an order through the authoritative
-// placeConstructionOrder policy. It never writes designs, studies or projects directly, and it never duplicates a
-// study or an order for the same unresolved deficit.
 import type { CampaignSnapshot, NationState, ProcurementIntent } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -30,13 +25,9 @@ import type { MonthContext } from "./monthContext.js";
 import { PhaseResource } from "./phase-resource.js";
 import type { PhaseDescriptor } from "./registry.js";
 
-/** Named, configurable procurement policy constants (ADR-0091 §5, §6, §7). */
 export const AI_PROCUREMENT = {
-  /** Keep this share of the treasury in reserve when computing a planning affordability ceiling. */
   RESERVE_BP: 2000,
-  /** Bounded retries after a rejected study submission. */
   MAX_ATTEMPTS: 3,
-  /** An approved-but-unaffordable intent expires after this many months. */
   APPROVED_EXPIRY_MONTHS: 12,
 } as const;
 
@@ -50,7 +41,6 @@ const ACTIVE_STATUSES: readonly ProcurementIntent["status"][] = [
 
 const monthIndex = (m: string): number => Number(m.slice(0, 4)) * 12 + (Number(m.slice(5, 7)) - 1);
 
-/** The fleet as the assessment sees it, including AI commitments so deficits are not double-procured. */
 export function fleetViewForNation(
   snapshot: CampaignSnapshot,
   nation: NationState,
@@ -74,7 +64,6 @@ export function fleetViewForNation(
     const type = typeOfDesign(project.designVersionId);
     if (type !== null) view.push({ shipType: type, status: "BUILDING" });
   }
-  // Open procurement intents are commitments: an approved design awaiting an order or a study in flight.
   for (const intent of nation.procurementIntents ?? [])
     if (ACTIVE_STATUSES.includes(intent.status))
       view.push({ shipType: intent.role as ShipTypeId, status: "BUILDING" });
@@ -98,14 +87,10 @@ const freshGenerator = (ctx: MonthContext): AiCommandGenerator =>
     expectedSnapshotHash: sha256Hex(canonicalSerialize(ctx.currentSnapshot)),
   });
 
-/**
- * Run one month of AI procurement for every AI nation that has a naval profile. Deterministic and idempotent:
- * re-running it for the same snapshot and seed produces the same intents, studies and orders.
- */
 export function runAiProcurementPhase(ctx: MonthContext): void {
   const content = ctx.engineOptions?.shipBuilding;
   if (content === undefined || content.navalProfiles.length === 0) return;
-  if (ctx.phaseGuard.rng("ai_procurement", ctx.randomSeed) === null) return; // fail closed without an RNG
+  if (ctx.phaseGuard.rng("ai_procurement", ctx.randomSeed) === null) return;
 
   const idempotency = new CommandIdempotencyMap();
   const nations = [...ctx.currentSnapshot["nations"].values()].sort((a, b) =>
@@ -114,8 +99,6 @@ export function runAiProcurementPhase(ctx: MonthContext): void {
   for (const nation of nations) {
     if (!nation.isAI) continue;
     if (content.navalProfileFor(nation.id, ctx.campaignMonth) === null) continue;
-    // Procurement is best-effort and must never abort a month: any unexpected error is recorded as a structured
-    // deferral so the rest of the month pipeline (and the app) keeps running.
     try {
       processNation(ctx, nation.id, ctx.campaignMonth, content, idempotency);
     } catch (e) {
@@ -145,13 +128,11 @@ function processNation(
   if (start === undefined) return;
   const advanced: ProcurementIntent[] = [];
   for (const intent of start.procurementIntents ?? []) {
-    // Re-fetch the nation each iteration: an earlier intent may have mutated the snapshot.
     const nation = ctx.currentSnapshot["nations"].get(nationId)!;
     advanced.push(advanceIntent(ctx, intent, content, month, nation));
   }
   let intents = advanced;
 
-  // Plan a new intent only when no active intent occupies its role group and deficits remain.
   const current = ctx.currentSnapshot["nations"].get(nationId)!;
   const fleet = fleetViewForNation(ctx.currentSnapshot, current);
   const deficits = computeFleetDeficits(profile, assessFleet(fleet));
@@ -170,7 +151,6 @@ function processNation(
   setNation(ctx, nationId, { ...latest, procurementIntents: [...intents] });
 }
 
-/** Update one intent for the current month. */
 function advanceIntent(
   ctx: MonthContext,
   initial: ProcurementIntent,
@@ -191,7 +171,6 @@ function advanceIntent(
         `${intent.role} study approved (${study.designStudyId})`,
         nation.id,
       );
-      // Fall through to the order path: approval and ordering may happen in the same month.
       intent = { ...intent, status: "APPROVED", lastUpdatedAtMonth: month, reason: null };
     } else if (study === undefined && design === undefined) {
       info(ctx, "AI_PROCUREMENT_EXPIRED", `${intent.role} study missing after reload`, nation.id);
@@ -286,7 +265,6 @@ function advanceIntent(
   return { ...intent, lastUpdatedAtMonth: month, reason: `deferred:${result.reason}` };
 }
 
-/** Plan and submit a new design study for a role; returns the intent, or null when nothing was submitted. */
 function planNewIntent(
   ctx: MonthContext,
   nationId: string,
@@ -347,7 +325,6 @@ function planNewIntent(
     machineryType: draft.machinery.plantId,
     draft,
   });
-  // Same boundary the player uses: validate the command, then apply it through the shared applier.
   const slot = ctx.slots.find((s) => s["nationId"] === nationId)!;
   const outcome = ctx.lifecycle.process(command, ctx.currentSnapshot, slot, idempotency);
   if (outcome.type !== "success") {
@@ -436,10 +413,6 @@ function rejectedIntent(
   };
 }
 
-// Phase 3.6: ai_procurement — the live AI naval procurement lifecycle (ADR-0091),
-// ordered after ai_planning and before appropriation. Plans and submits design
-// studies and places construction orders for AI nations only; never writes
-// designs/studies/projects directly.
 export const aiProcurementPhase: PhaseDescriptor = {
   id: "ai_procurement",
   name: "AI Procurement",

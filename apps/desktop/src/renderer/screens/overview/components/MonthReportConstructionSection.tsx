@@ -1,12 +1,6 @@
 import type { MonthlyReportConstruction } from "../../../../shared/campaign-command-contract.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
-/**
- * The report's Construction section (spec §16): per-project progress from the
- * real `ConstructionProgressed` events, completed ships and newly active
- * projects from the pre→post deltas. There is no "stalled projects" signal
- * (CUT) and nothing is fabricated when a month is quiet.
- */
 export function MonthReportConstructionSection({
   construction,
 }: {

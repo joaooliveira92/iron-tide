@@ -87,7 +87,6 @@ describe("guided-inspection-state", () => {
     const next = nextInspectionState(before, 3);
     expect(next.lastCompletedStep).toBe(3);
     expect(next.status).toBe("in_progress");
-    // No domain mutation: only status/lastCompletedStep change
     expect(Object.keys(next)).toEqual(["status", "lastCompletedStep"]);
   });
 });
