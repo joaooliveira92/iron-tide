@@ -27,6 +27,7 @@ Direction lives in [`ROADMAP.md`](ROADMAP.md); the backlog in
 <!-- worktrees:begin -->
 | Slug | Branch | Scope | Owner | Status | Base | Created | PR |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| package-agents-md | feat/package-agents-md | package-agents-md | unknown | active | dev | — | — |
-| snap-hardening | feat/snap-hardening | snap-hardening | unknown | active | dev | — | — |
+| campaign-readouts | feat/campaign-readouts | campaign-readouts | unknown | active | dev | — | — |
+| f1-spec | feat/f1-spec | f1-spec | unknown | active | dev | — | — |
+| s5-go-live | feat/s5-10-go-live | s5-go-live | unknown | active | dev | — | — |
 <!-- worktrees:end -->
