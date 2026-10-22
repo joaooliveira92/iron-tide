@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { BluewaveDesktopBridge } from "../../../preload/index.js";
 import { useBridge } from "../../lib/bridge-context.js";
-import { writeUiStatePatch } from "../../lib/uiStateSidecar.js";
+import { readUiState, writeUiStatePatch } from "../../lib/uiStateSidecar.js";
 import {
   DEFAULT_INSPECTOR_LAYOUT,
   clampInspectorWidth,
@@ -15,9 +15,8 @@ async function readInspectorLayout(
   bridge: BluewaveDesktopBridge,
   sessionId: string,
 ): Promise<InspectorLayout | null> {
-  const result = await bridge.campaign.execute("readUiState", sessionId);
-  if (result.outcome !== "success") return null;
-  const raw = result.value.uiState.inspector;
+  const uiState = await readUiState(bridge, sessionId);
+  const raw = uiState?.inspector;
   return raw === undefined ? null : normalizeInspectorLayout(raw);
 }
 
