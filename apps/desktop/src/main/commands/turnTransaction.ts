@@ -1,4 +1,4 @@
-import type { CampaignState } from "@bluewave/campaign";
+import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
 import { advanceMonth, canAdvance } from "@bluewave/campaign";
 import type { CommitMonthResponse } from "@bluewave/campaign-engine";
 import { SafeInt } from "@bluewave/contracts";
@@ -52,6 +52,13 @@ export type TurnTransactionOutcome =
       readonly kind: "suspended";
       readonly request: InterruptionRequest | null;
       readonly pendingTurn: PendingTurnRecord;
+      /**
+       * The deterministic intermediate snapshot at the suspension point. It is
+       * NEVER persisted as authoritative; a caller that needs it (the player
+       * battle session) may rebuild the battle from it, and a resume re-executes
+       * the month from the pre-turn save regardless.
+       */
+      readonly snapshot: CampaignSnapshot;
       readonly diagnostics: readonly string[];
     }
   | { readonly kind: "unavailable"; readonly diagnostics: readonly string[] }
@@ -222,6 +229,7 @@ export const runTurnTransaction = (
         kind: "suspended",
         request: result.suspended?.request ?? null,
         pendingTurn,
+        snapshot: result.finalSnapshot,
         diagnostics: collector.all.map((d) => d.message),
       };
     }

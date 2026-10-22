@@ -376,6 +376,7 @@ function runChild(): void {
       acceptedSnapshotHash: hashSnapshot(accepted.finalSnapshot),
       delegatedSnapshotHash: hashSnapshot(delegated.finalSnapshot),
       acceptedOutcome: accepted.outcome,
+      acceptedBattleKind: accepted.suspended?.request?.kind ?? null,
       delegatedOutcome: delegated.outcome,
       acceptedWars: sha256Hex(canonicalSerialize(accepted.finalSnapshot.wars.wars)),
       nonOfferedWars: sha256Hex(canonicalSerialize(nonOffered.finalSnapshot.wars.wars)),

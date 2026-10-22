@@ -102,6 +102,11 @@ import {
   submitBattleResultProgram,
   submitOfferResponseProgram,
 } from "./commands/resolveTurn.js";
+import {
+  advancePlayerBattleProgram,
+  finishPlayerBattleProgram,
+  startPlayerBattleProgram,
+} from "./commands/playerBattle.js";
 import { readUiStateProgram, writeUiStateProgram } from "./uiState.js";
 import { payloadless, withSchema, type CommandProgram } from "./runtime/commandProgram.js";
 import { NotImplemented, UnknownCommand } from "./runtime/commandError.js";
@@ -174,6 +179,9 @@ export const commandPrograms: Partial<Record<CampaignCommandName, CommandProgram
   resolveTurn: resolveTurnProgram,
   answerDecision: answerDecisionProgram,
   submitBattleResult: submitBattleResultProgram,
+  startPlayerBattle: startPlayerBattleProgram,
+  advancePlayerBattle: advancePlayerBattleProgram,
+  finishPlayerBattle: finishPlayerBattleProgram,
   submitOfferResponse: submitOfferResponseProgram,
   abandonPendingTurn: abandonPendingTurnProgram,
   readPendingTurn: readPendingTurnProgram,

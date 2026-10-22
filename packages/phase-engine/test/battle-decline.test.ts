@@ -263,10 +263,12 @@ describe("OPERATIONALLY_UNAVOIDABLE missions (R13)", () => {
     expect(scores(refused)).toEqual([[0, 0]]);
   });
 
-  it("still accepts the same battle", () => {
+  it("still accepts the same battle, now as a player-fought battle", () => {
     const snapshot = unavoidable();
     const request = offerOf(run(snapshot));
-    expect(run(snapshot, { inputs: [answer(request, "accept")] }).outcome).toBe("completed");
+    const accepted = run(snapshot, { inputs: [answer(request, "accept")] });
+    expect(accepted.outcome).toBe("suspended");
+    expect(accepted.suspended?.request?.kind).toBe("battle");
   });
 });
 
@@ -293,12 +295,12 @@ describe("several offers in one month (R8, R15)", () => {
     expect(midMonth.suspended?.request?.kind).toBe("offer");
   });
 
-  it("answers a mix of decline and accept; suspend-resume equals one run with every response", () => {
+  it("answers a mix of decline and delegate; suspend-resume equals one run with every response", () => {
     const snapshot = twoAreaSnapshot();
     const first = offerOf(run(snapshot));
     const inputs = [answer(first, "decline")];
     const second = offerOf(run(snapshot, { inputs }));
-    inputs.push(answer(second, "accept"));
+    inputs.push(answer(second, "delegate"));
     const resumed = run(snapshot, { inputs });
     const single = run(snapshot, { inputs: [...inputs] });
     expect(resumed.outcome).toBe("completed");

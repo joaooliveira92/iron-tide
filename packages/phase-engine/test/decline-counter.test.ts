@@ -265,10 +265,10 @@ const thresholdEvents = (result: MonthResult) =>
   result.eventLedger.all.filter((e) => e.body.kind === "DeclineThresholdReached");
 
 describe("the tally in a compiled month (R9)", () => {
-  it("is absent before the first decline and while the player only accepts", () => {
+  it("is absent before the first decline and while the player never declines", () => {
     const suspended = run(twoAreaSnapshot());
     expect(suspended.finalSnapshot.wars.declineCounters).toBeUndefined();
-    const accepted = script(twoAreaSnapshot(), ["accept", "accept"]);
+    const accepted = script(twoAreaSnapshot(), ["delegate", "delegate"]);
     expect(accepted.outcome).toBe("completed");
     expect("declineCounters" in accepted.finalSnapshot.wars).toBe(false);
     expect(thresholdEvents(accepted)).toHaveLength(0);

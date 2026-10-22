@@ -184,9 +184,11 @@ function resolveBattle(
 ): void {
   const { collector } = ctx;
 
-  // T-1 03 (spec #109 R3): with a channel, the player nation and the battle-offer ruleset section, a pending battle that
-  // involves the player is a player-facing offer. An absent or refused answer suspends the month; an accept or delegate
-  // falls through to the unchanged auto-resolution below. Every other battle auto-resolves unchanged.
+  // T-1 03 / T-2 01 (spec #109 R3, #221): with a channel, the player nation and the battle-offer ruleset section, a
+  // pending battle that involves the player is a player-facing offer. An absent or refused answer suspends the month.
+  // "delegate" falls through to auto-resolution; "accept" hands the battle to the player, who must record a result at
+  // the next ordinal. Without that result the month suspends on the battle request; every other battle
+  // auto-resolves unchanged.
   if (
     ctx.interruption !== undefined &&
     ctx.playerNationId !== undefined &&
@@ -229,6 +231,14 @@ function resolveBattle(
             ctx.campaignMonth,
           ),
         );
+        if (answered.response === "accept") {
+          const recorded = consumeBattleResult(ctx, battle);
+          if (ctx.interruption.suspended !== undefined) return;
+          if (recorded !== null) {
+            applyRecordedBattleResult(ctx, battle, recorded);
+            return;
+          }
+        }
       }
     }
   } else if (ctx.interruption !== undefined) {

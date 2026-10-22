@@ -372,6 +372,7 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     acceptedSnapshotHash: string;
     delegatedSnapshotHash: string;
     acceptedOutcome: string;
+    acceptedBattleKind: string | null;
     delegatedOutcome: string;
     acceptedWars: string;
     nonOfferedWars: string;
@@ -470,14 +471,14 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     expect(r1.draws[0]?.reasonCode).toBe("BATTLE_OFFER_ESTIMATE_PERTURBED");
   });
 
-  it("never leaks an enemy ship, and accept and delegate end with the state of the non-offered run", () => {
+  it("never leaks an enemy ship; accept waits for a player battle and delegate matches the non-offered run", () => {
     const r = runOfferChild();
     expect(r.requestLeaksEnemyShip).toBe(false);
-    expect(r.acceptedOutcome).toBe("completed");
+    expect(r.acceptedOutcome).toBe("suspended");
+    expect(r.acceptedBattleKind).toBe("battle");
     expect(r.delegatedOutcome).toBe("completed");
-    expect(r.acceptedSnapshotHash).toBe(r.nonOfferedSnapshotHash);
     expect(r.delegatedSnapshotHash).toBe(r.nonOfferedSnapshotHash);
-    expect(r.acceptedWars).toBe(r.nonOfferedWars);
+    expect(r.acceptedSnapshotHash).not.toBe("");
   });
 
   it("a decline is byte-identical across two clean processes: one record, a lowered score, released ships", () => {
@@ -590,7 +591,7 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     // Declining or accepting leaves the support ships unreserved and undamaged.
     expect(s.declinedAllyReserved).toBe(0);
     expect(s.declinedAllyUndamaged).toBe(true);
-    expect(s.acceptedOutcome).toBe("completed");
+    expect(s.acceptedOutcome).toBe("suspended");
     expect(s.acceptedAllyReserved).toBe(0);
     expect(s.acceptedAllyUndamaged).toBe(true);
     // The complementary draw and the no-candidate month.

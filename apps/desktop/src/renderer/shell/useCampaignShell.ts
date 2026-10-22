@@ -4,6 +4,7 @@ import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type {
   InterruptionRequestDto,
+  PlayerBattleResultDto,
   ResolveTurnResult,
 } from "../../shared/campaign-command-contract.js";
 import { resolveMessage } from "../content/uiCatalogue.js";
@@ -350,6 +351,43 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     [bridge, state.campaign, state.interruption, applyResolveResult, collectMessage],
   );
 
+  /** Submit a completed player-fought battle through the battle-result interruption (T-2). */
+  const submitPlayerBattleOutcome = useCallback(
+    async (outcome: PlayerBattleResultDto) => {
+      const request = state.interruption?.request;
+      if (
+        bridge === undefined ||
+        state.campaign === null ||
+        request === null ||
+        request === undefined ||
+        request.kind !== "battle"
+      ) {
+        return;
+      }
+      const sessionId = state.campaign.sessionId;
+      dispatch({ type: "month-commit-started" });
+      const result = await bridge.campaign.execute("submitBattleResult", {
+        sessionId,
+        expectedRevision: state.campaign.revision,
+        transportRequestId: crypto.randomUUID(),
+        interruptionId: request.interruptionId,
+        battleId: outcome.battleId,
+        winnerId: outcome.winnerId,
+        loserId: outcome.loserId,
+        attackerLosses: outcome.attackerLosses,
+        defenderLosses: outcome.defenderLosses,
+        damageReport: outcome.damageReport,
+      });
+      applyResolveResult(result, sessionId);
+      collectMessage(
+        outcome.winnerId === null
+          ? `Battle ${request.battleId ?? ""} ended without a decision.`
+          : `Battle ${request.battleId ?? ""} resolved: ${outcome.winnerId} won.`,
+      );
+    },
+    [bridge, state.campaign, state.interruption, applyResolveResult, collectMessage],
+  );
+
   /**
    * Submit the player's answer to a battle offer (T-1 03, T-1 04). It is a typed accept, delegate or decline response, never a battle
    * outcome: a tie is a result, not an answer to an offer (spec #109 decision C). A refused answer leaves the offer open.
@@ -449,6 +487,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       advanceMonth,
       answerDecision,
       submitBattleResult,
+      submitPlayerBattleOutcome,
       submitOfferResponse,
       abandonPendingTurn,
       refreshCampaign,
@@ -466,6 +505,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       advanceMonth,
       answerDecision,
       submitBattleResult,
+      submitPlayerBattleOutcome,
       submitOfferResponse,
       abandonPendingTurn,
       refreshCampaign,

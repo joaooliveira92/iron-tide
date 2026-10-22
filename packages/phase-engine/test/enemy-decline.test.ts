@@ -146,8 +146,9 @@ describe("the enemy declines (R11)", () => {
     const request = offerOf(kept);
     expect(request.kind).toBe("offer");
     const accepted = run(strongPlayer, rules({ probabilityBp: 0 }), [answer(request, "accept")]);
-    expect(accepted.outcome).toBe("completed");
+    expect(accepted.outcome).toBe("suspended");
     expect(accepted.finalSnapshot.wars.battles).toHaveLength(1);
+    expect(accepted.suspended?.request?.kind).toBe("battle");
   });
 
   it("on the complementary draw the offer and the accepted month equal those of a month whose predicate does not hold", () => {

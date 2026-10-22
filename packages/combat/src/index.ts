@@ -1,5 +1,6 @@
 export { BattleResolver } from "./resolver.js";
 export type { BattleManifest } from "./resolver.js";
+export type { BattleManifest as TacticalBattleManifest } from "./generation/manifest.js";
 export { StrengthCalculator } from "./strength.js";
 export * from "./errors.js";
 

@@ -356,6 +356,7 @@ function createShell(overrides: Record<string, unknown> = {}) {
     refreshCampaign: vi.fn(),
     answerDecision: vi.fn(async () => undefined),
     submitBattleResult: vi.fn(async () => undefined),
+    submitPlayerBattleOutcome: vi.fn(async () => undefined),
     submitOfferResponse: vi.fn(async () => undefined),
     abandonPendingTurn: vi.fn(async () => undefined),
     selectScreen: vi.fn(),

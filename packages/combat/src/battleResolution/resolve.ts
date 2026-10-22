@@ -181,7 +181,7 @@ function squaredDistance(
 
 /** Assign each battery its target contact id this minute: nearest viable enemy
  *  with a legal contact track; NO_TARGET when none. */
-function assignTargetContactIds(
+export function assignTargetContactIds(
   batteries: readonly GunneryBattery[],
   battleState: TacticalBattleState,
   damage: DamageContext,
@@ -212,7 +212,7 @@ function assignTargetContactIds(
 }
 
 /** Thread the post-minute damage states back into the context targets. */
-function mergeTargetStates(
+export function mergeTargetStates(
   targets: Record<string, DamageTargetContext>,
   states: Record<string, ShipDamageState>,
 ): Record<string, DamageTargetContext> {
@@ -229,7 +229,7 @@ function mergeTargetStates(
 // shipId, draw ordinal) so every ship resolves from its own deterministic
 // streams — mirrors damage.ts scopedRng (ADR-0026 §random).
 
-function buildDamageControlContexts(input: {
+export function buildDamageControlContexts(input: {
   battleId: string;
   minute: number;
   units: readonly TacticalShipUnit[];
