@@ -2,7 +2,6 @@
  * View-model for the area tree panel (CC-4): production areas grouped under display
  * regions, with the Ships / Possessions lens. Pure: no React, no bridge.
  */
-import type { WorldMapView } from "@bluewave/campaign-engine";
 import {
   areaRegion,
   fixtureAreaId,
@@ -39,11 +38,6 @@ export interface AreaTreeGroup {
 }
 
 export const OTHER_GROUP_ID = "other";
-
-/** The player's nation id: the nation whose display name the projection reports. */
-export function resolvePlayerNationId(world: WorldMapView, nationName: string): string | null {
-  return world.nations.find((nation) => nation.name === nationName)?.id ?? null;
-}
 
 /** One row per campaign area, with the player's ships and holdings resolved. */
 export function campaignTreeRows(

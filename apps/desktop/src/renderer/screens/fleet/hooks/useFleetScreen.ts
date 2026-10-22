@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import type { MovementCommand } from "@bluewave/campaign-engine";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { useMovementOrders } from "../../../lib/movement-orders.js";
 import type {
   FleetDivisionView,
   FleetScreenProjection,
@@ -105,53 +106,28 @@ export function useFleetScreen(sessionId: string): UseFleetScreenReturn {
     };
   }, [selectedDivision, effectiveDestinationAreaId]);
 
+  // The three order senders go through the shared movement-orders path, so the
+  // map screen and this screen issue byte-identical MoveFleet commands.
+  const orders = useMovementOrders(sessionId, execute);
+
   const submit = useCallback(() => {
-    if (!bridge || routeTarget === null) return;
-    const { divisionId, fromAreaId, toAreaId } = routeTarget;
-    void execute("submit", ({ expectedRevision, transportRequestId }) =>
-      bridge.campaign.execute("submitMovementCommand", {
-        sessionId,
-        divisionId,
-        fromAreaId,
-        toAreaId,
-        expectedRevision,
-        transportRequestId,
-      }),
-    );
-  }, [bridge, execute, routeTarget, sessionId]);
+    if (routeTarget === null) return;
+    void orders.submit(routeTarget);
+  }, [orders, routeTarget]);
 
   const replace = useCallback(
     (commandId: string) => {
-      if (!bridge || routeTarget === null) return;
-      const { divisionId, fromAreaId, toAreaId } = routeTarget;
-      void execute("replace", ({ expectedRevision, transportRequestId }) =>
-        bridge.campaign.execute("replaceMovementCommand", {
-          sessionId,
-          commandId,
-          divisionId,
-          fromAreaId,
-          toAreaId,
-          expectedRevision,
-          transportRequestId,
-        }),
-      );
+      if (routeTarget === null) return;
+      void orders.replace(routeTarget, commandId);
     },
-    [bridge, execute, routeTarget, sessionId],
+    [orders, routeTarget],
   );
 
   const cancel = useCallback(
     (commandId: string) => {
-      if (!bridge) return;
-      void execute("cancel", ({ expectedRevision, transportRequestId }) =>
-        bridge.campaign.execute("cancelMovementCommand", {
-          sessionId,
-          commandId,
-          expectedRevision,
-          transportRequestId,
-        }),
-      );
+      void orders.cancel(commandId);
     },
-    [bridge, execute, sessionId],
+    [orders],
   );
 
   return {
