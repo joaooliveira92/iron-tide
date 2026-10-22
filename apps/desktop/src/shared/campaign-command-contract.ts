@@ -2,100 +2,19 @@ import type {
   BattleManifest,
   BattleOutcome,
   BattleResolution,
-  CampaignConfiguration,
-  CommitMonthResponse,
-  InspectPrioritiesResult,
   LedgerReconciliation,
   OpeningBriefingProjection,
   PlayerProjection,
   RandomDecisionRecord,
-  RawScriptedForceOrder,
-  ReplayBattleBoundaryResponse,
   StrategicPriority,
   TacticalBattleOutcome,
 } from "@bluewave/campaign-engine";
 import type { BattleHistoryView, StrategicMapView } from "@bluewave/campaign-engine";
 import type { PlayerBattleView } from "@bluewave/combat";
-import type { SaveMetadata } from "@bluewave/persistence";
-import type { BridgeResult, CommandEnvelope } from "./bridge-contract.js";
-import type {
-  DesignCommandOutcome,
-  LoadProjectDraftPayload,
-  ReadDrawingBoardDraftResult,
-  WriteDrawingBoardDraftPayload,
-  LoadShipDraftPayload,
-  ProjectDraftView,
-  RebuildableShipView,
-  RebuildCheckPayload,
-  RebuildCheckView,
-  RebuildCommandOutcome,
-  ReviseCommandOutcome,
-  ReviseProjectCommandPayload,
-  ShipDraftView,
-  StartRebuildCommandPayload,
-  SubmitDesignCommandPayload,
-} from "./design-contract.js";
-import type {
-  LoadCampaignResponse,
-  RecentCampaignEntry,
-  RecoverCampaignResponse,
-  ReplayCampaignResponse,
-  VerifyCampaignResponse,
-} from "./continuity-contract.js";
-import type { NewGameOptions } from "./new-game-contract.js";
-import type {
-  AuthorizeDockExpansionCommandPayload,
-  CancelConstructionCommandPayload,
-  ConstructionBatchPreviewOutcome,
-  ConstructionCommandOutcome,
-  ConstructionCommandQueuedOutcome,
-  ConstructionScreenProjection,
-  CancelConstructionProjectCommandPayload,
-  ForeignConstructionPreviewOutcome,
-  HaltConstructionCommandPayload,
-  OrderConstructionBatchCommandPayload,
-  PlaceForeignConstructionCommandPayload,
-  PreviewConstructionBatchCommandPayload,
-  PreviewForeignConstructionCommandPayload,
-  ReplaceConstructionCommandPayload,
-  ResumeConstructionCommandPayload,
-  SetAccelerationCommandPayload,
-  SubmitConstructionCommandPayload,
-} from "./construction-contract.js";
-import type {
-  DrawingBoardContentDto,
-  PresentationContentDto,
-  UiCatalogueDto,
-} from "./content-contract.js";
-import type {
-  CancelMovementCommandPayload,
-  FleetScreenProjection,
-  MovementCommandOutcome,
-  StationAssignmentOutcome,
-  SubmitStationAssignmentPayload,
-  ReplaceMovementCommandPayload,
-  SubmitMovementCommandPayload,
-} from "./fleet-contract.js";
-import type {
-  BudgetCommandOutcome,
-  BudgetScreenProjection,
-  SubmitBudgetAllocationPayload,
-} from "./budget-contract.js";
-import type {
-  DiplomacyCommandOutcome,
-  DiplomacyScreenProjection,
-  SubmitDiplomacyCommandPayload,
-} from "./diplomacy-contract.js";
-import type {
-  DivisionCommandOutcome,
-  DivisionScreenProjection,
-  SubmitDivisionCommandPayload,
-} from "./division-contract.js";
-import type {
-  ResearchPriorityOutcome,
-  ResearchScreenProjection,
-  SetResearchPriorityCommandPayload,
-} from "./research-contract.js";
+import type { BridgeResult } from "./bridge-contract.js";
+import type { CampaignCommandMap, CampaignCommandName } from "./campaign-command-descriptors.js";
+
+export type { CampaignCommandMap, CampaignCommandName } from "./campaign-command-descriptors.js";
 
 /**
  * Request payloads for the simulation domain (battle-related types live in
@@ -103,47 +22,18 @@ import type {
  * screen usage per ticket 09's addendum).
  */
 
-export type CommitMonthPayload = CommandEnvelope;
-
-export interface GenerateBattlePayload {
-  readonly sessionId: string;
-  /**
-   * The war to generate an engagement for. Omitted by the Simulation Battle
-   * Arena, which lets the command auto-select the player's first active war; the
-   * Tactical Sandbox passes the war id typed into its setup form.
-   */
-  readonly warId?: string;
-}
-
 export interface GenerateBattleResult {
   readonly manifest: BattleManifest;
   readonly randomDecisions: readonly RandomDecisionRecord[];
-}
-
-export interface ResolveBattlePayload {
-  readonly sessionId: string;
-  readonly battleId: string;
 }
 
 export interface ResolveBattleResult {
   readonly resolution: BattleResolution;
 }
 
-export interface ResolveTacticalBattlePayload {
-  readonly sessionId: string;
-  readonly battleId: string;
-  readonly turnCount: number;
-  readonly scriptedOrders: readonly RawScriptedForceOrder[];
-}
-
 export interface ResolveTacticalBattleResult {
   readonly outcome: TacticalBattleOutcome;
   readonly randomDecisions?: readonly RandomDecisionRecord[];
-}
-
-export interface ReplayBattleBoundaryPayload {
-  readonly sessionId: string;
-  readonly battleId: string;
 }
 
 /**
@@ -155,12 +45,6 @@ export interface ReplayBattleBoundaryPayload {
  * live session state. Gated by `isBattleSandboxEnabled()` (DEBUG_ONLY otherwise)
  * and validated at the IPC boundary.
  */
-export interface SeedCampaignBattleDrillPayload {
-  readonly sessionId: string;
-  /** The war to stage. Omitted → the player's first active war (deterministic). */
-  readonly warId?: string;
-}
-
 export interface SeedCampaignBattleDrillResult {
   readonly warId: string;
   readonly areaId: string;
@@ -270,16 +154,6 @@ export interface ReadUiStateResult {
  * inspection progress and vice-versa). An explicit inspection reset is
  * available by sending `{ status: "not_started", lastCompletedStep: 0 }`.
  */
-export interface WriteUiStatePayload {
-  readonly sessionId: string;
-  readonly dismissedFingerprints: readonly string[];
-  readonly firstMonthInspection?: UiStateFirstMonthInspection;
-  /** Shipbuilding inspector layout; absent means carried forward from the stored sidecar. */
-  readonly inspector?: UiStateInspectorLayout;
-  /** Turn-summary pin/read state; absent means carried forward from the stored sidecar. */
-  readonly turnMessages?: UiStateTurnMessages;
-}
-
 export interface WriteUiStateResult {
   readonly uiState: UiState;
 }
@@ -419,302 +293,24 @@ export interface ReadMonthlyReportsResult {
 }
 
 /**
- * Single source of truth for the command name set — `campaignBridge.ts`'s
- * runtime registry derives from this instead of hand-duplicating the list.
- * Keep its entries in sync with {@link CampaignCommandMap}.
+ * Payload aliases derived from the single descriptor table in
+ * `campaign-command-descriptors.ts`. They stay exported for call sites that name
+ * a payload explicitly; the values themselves live only in the table.
  */
-export const CAMPAIGN_COMMAND_NAMES = [
-  "listNewGameOptions",
-  "compileCampaign",
-  "inspectCampaign",
-  "inspectOpeningBriefing",
-  "inspectMap",
-  "inspectBattleHistory",
-  "inspectPriorities",
-  "inspectDrawingBoardContent",
-  "inspectPresentationContent",
-  "inspectUiCatalogue",
-  "closeCampaign",
-  "saveCampaign",
-  "copyCampaign",
-  "commitMonth",
-  "generateBattle",
-  "resolveBattle",
-  "resolveTacticalBattle",
-  "replayBattleBoundary",
-  "seedCampaignBattleDrill",
-  "loadCampaign",
-  "loadRecentCampaign",
-  "listRecentCampaigns",
-  "removeRecentCampaign",
-  "listCampaigns",
-  "verifyCampaign",
-  "replayCampaign",
-  "recoverCampaign",
-  "inspectConstructionScreen",
-  "submitConstructionCommand",
-  "replaceConstructionCommand",
-  "cancelConstructionCommand",
-  "haltConstructionCommand",
-  "resumeConstructionCommand",
-  "setAccelerationCommand",
-  "cancelConstructionProjectCommand",
-  "orderConstructionBatchCommand",
-  "previewConstructionBatchCommand",
-  "authorizeDockExpansionCommand",
-  "placeForeignConstructionCommand",
-  "previewForeignConstructionCommand",
-  "inspectFleetScreen",
-  "submitMovementCommand",
-  "submitStationAssignment",
-  "replaceMovementCommand",
-  "cancelMovementCommand",
-  "submitDesignCommand",
-  "reviseProjectCommand",
-  "loadProjectDraft",
-  "readDrawingBoardDraft",
-  "writeDrawingBoardDraft",
-  "listRebuildableShips",
-  "loadShipDraft",
-  "checkRebuild",
-  "startRebuildCommand",
-  "inspectResearchScreen",
-  "setResearchPriorityCommand",
-  "inspectDiplomacyScreen",
-  "inspectDivisionScreen",
-  "submitDivisionCommand",
-  "inspectBudgetScreen",
-  "submitBudgetAllocation",
-  "submitDiplomacyCommand",
-  "readUiState",
-  "writeUiState",
-  "readMonthlyReports",
-  "readTurnSummaries",
-  "resolveTurn",
-  "answerDecision",
-  "submitBattleResult",
-  "startPlayerBattle",
-  "advancePlayerBattle",
-  "finishPlayerBattle",
-  "submitOfferResponse",
-  "abandonPendingTurn",
-  "readPendingTurn",
-] as const;
-
-/**
- * The command-descriptor registry: one entry per command, mapping each name to
- * its payload and result types. Adding a command is one line here, plus one
- * entry in {@link CAMPAIGN_COMMAND_NAMES} and its handler module — no overload
- * to write.
- */
-export interface CampaignCommandMap {
-  listNewGameOptions: { readonly payload: undefined; readonly result: NewGameOptions };
-  compileCampaign: {
-    readonly payload: CampaignConfiguration;
-    readonly result: CompileCampaignResult;
-  };
-  inspectCampaign: { readonly payload: string; readonly result: InspectCampaignResult };
-  inspectOpeningBriefing: {
-    readonly payload: string;
-    readonly result: InspectOpeningBriefingResult;
-  };
-  inspectMap: { readonly payload: string; readonly result: InspectMapResult };
-  inspectBattleHistory: { readonly payload: string; readonly result: InspectBattleHistoryResult };
-  inspectPriorities: { readonly payload: string; readonly result: InspectPrioritiesResult };
-  inspectDrawingBoardContent: {
-    readonly payload: undefined;
-    readonly result: DrawingBoardContentDto;
-  };
-  inspectPresentationContent: {
-    readonly payload: undefined;
-    readonly result: PresentationContentDto;
-  };
-  inspectUiCatalogue: { readonly payload: undefined; readonly result: UiCatalogueDto };
-  closeCampaign: { readonly payload: string; readonly result: unknown };
-  saveCampaign: { readonly payload: string; readonly result: SaveCampaignResult };
-  copyCampaign: { readonly payload: string; readonly result: CopyCampaignResult };
-  commitMonth: { readonly payload: CommitMonthPayload; readonly result: CommitMonthResponse };
-  generateBattle: {
-    readonly payload: GenerateBattlePayload;
-    readonly result: GenerateBattleResult;
-  };
-  resolveBattle: { readonly payload: ResolveBattlePayload; readonly result: ResolveBattleResult };
-  resolveTacticalBattle: {
-    readonly payload: ResolveTacticalBattlePayload;
-    readonly result: ResolveTacticalBattleResult;
-  };
-  replayBattleBoundary: {
-    readonly payload: ReplayBattleBoundaryPayload;
-    readonly result: ReplayBattleBoundaryResponse;
-  };
-  seedCampaignBattleDrill: {
-    readonly payload: SeedCampaignBattleDrillPayload;
-    readonly result: SeedCampaignBattleDrillResult;
-  };
-  loadCampaign: { readonly payload: undefined; readonly result: LoadCampaignResponse };
-  listRecentCampaigns: {
-    readonly payload: undefined;
-    readonly result: readonly RecentCampaignEntry[];
-  };
-  removeRecentCampaign: {
-    readonly payload: { readonly packagePath: string };
-    readonly result: readonly RecentCampaignEntry[];
-  };
-  loadRecentCampaign: {
-    readonly payload: { readonly packagePath: string };
-    readonly result: LoadCampaignResponse;
-  };
-  listCampaigns: { readonly payload: undefined; readonly result: readonly SaveMetadata[] };
-  verifyCampaign: { readonly payload: undefined; readonly result: VerifyCampaignResponse };
-  replayCampaign: { readonly payload: undefined; readonly result: ReplayCampaignResponse };
-  recoverCampaign: { readonly payload: undefined; readonly result: RecoverCampaignResponse };
-  inspectConstructionScreen: {
-    readonly payload: string;
-    readonly result: ConstructionScreenProjection;
-  };
-  submitConstructionCommand: {
-    readonly payload: SubmitConstructionCommandPayload;
-    readonly result: ConstructionCommandOutcome;
-  };
-  replaceConstructionCommand: {
-    readonly payload: ReplaceConstructionCommandPayload;
-    readonly result: ConstructionCommandOutcome;
-  };
-  cancelConstructionCommand: {
-    readonly payload: CancelConstructionCommandPayload;
-    readonly result: ConstructionCommandOutcome;
-  };
-  haltConstructionCommand: {
-    readonly payload: HaltConstructionCommandPayload;
-    readonly result: ConstructionCommandQueuedOutcome;
-  };
-  resumeConstructionCommand: {
-    readonly payload: ResumeConstructionCommandPayload;
-    readonly result: ConstructionCommandQueuedOutcome;
-  };
-  setAccelerationCommand: {
-    readonly payload: SetAccelerationCommandPayload;
-    readonly result: ConstructionCommandQueuedOutcome;
-  };
-  cancelConstructionProjectCommand: {
-    readonly payload: CancelConstructionProjectCommandPayload;
-    readonly result: ConstructionCommandQueuedOutcome;
-  };
-  orderConstructionBatchCommand: {
-    readonly payload: OrderConstructionBatchCommandPayload;
-    readonly result: ConstructionCommandQueuedOutcome;
-  };
-  previewConstructionBatchCommand: {
-    readonly payload: PreviewConstructionBatchCommandPayload;
-    readonly result: ConstructionBatchPreviewOutcome;
-  };
-  authorizeDockExpansionCommand: {
-    readonly payload: AuthorizeDockExpansionCommandPayload;
-    readonly result: ConstructionCommandQueuedOutcome;
-  };
-  placeForeignConstructionCommand: {
-    readonly payload: PlaceForeignConstructionCommandPayload;
-    readonly result: ConstructionCommandQueuedOutcome;
-  };
-  previewForeignConstructionCommand: {
-    readonly payload: PreviewForeignConstructionCommandPayload;
-    readonly result: ForeignConstructionPreviewOutcome;
-  };
-  inspectFleetScreen: { readonly payload: string; readonly result: FleetScreenProjection };
-  submitMovementCommand: {
-    readonly payload: SubmitMovementCommandPayload;
-    readonly result: MovementCommandOutcome;
-  };
-  submitStationAssignment: {
-    readonly payload: SubmitStationAssignmentPayload;
-    readonly result: StationAssignmentOutcome;
-  };
-  replaceMovementCommand: {
-    readonly payload: ReplaceMovementCommandPayload;
-    readonly result: MovementCommandOutcome;
-  };
-  submitDesignCommand: {
-    readonly payload: SubmitDesignCommandPayload;
-    readonly result: DesignCommandOutcome;
-  };
-  reviseProjectCommand: {
-    readonly payload: ReviseProjectCommandPayload;
-    readonly result: ReviseCommandOutcome;
-  };
-  loadProjectDraft: {
-    readonly payload: LoadProjectDraftPayload;
-    readonly result: ProjectDraftView;
-  };
-  readDrawingBoardDraft: { readonly payload: string; readonly result: ReadDrawingBoardDraftResult };
-  writeDrawingBoardDraft: {
-    readonly payload: WriteDrawingBoardDraftPayload;
-    readonly result: { readonly saved: boolean };
-  };
-  listRebuildableShips: {
-    readonly payload: string;
-    readonly result: readonly RebuildableShipView[];
-  };
-  loadShipDraft: { readonly payload: LoadShipDraftPayload; readonly result: ShipDraftView };
-  checkRebuild: { readonly payload: RebuildCheckPayload; readonly result: RebuildCheckView };
-  startRebuildCommand: {
-    readonly payload: StartRebuildCommandPayload;
-    readonly result: RebuildCommandOutcome;
-  };
-  cancelMovementCommand: {
-    readonly payload: CancelMovementCommandPayload;
-    readonly result: MovementCommandOutcome;
-  };
-  inspectResearchScreen: { readonly payload: string; readonly result: ResearchScreenProjection };
-  setResearchPriorityCommand: {
-    readonly payload: SetResearchPriorityCommandPayload;
-    readonly result: ResearchPriorityOutcome;
-  };
-  inspectDiplomacyScreen: { readonly payload: string; readonly result: DiplomacyScreenProjection };
-  submitDiplomacyCommand: {
-    readonly payload: SubmitDiplomacyCommandPayload;
-    readonly result: DiplomacyCommandOutcome;
-  };
-  inspectDivisionScreen: { readonly payload: string; readonly result: DivisionScreenProjection };
-  submitDivisionCommand: {
-    readonly payload: SubmitDivisionCommandPayload;
-    readonly result: DivisionCommandOutcome;
-  };
-  inspectBudgetScreen: { readonly payload: string; readonly result: BudgetScreenProjection };
-  submitBudgetAllocation: {
-    readonly payload: SubmitBudgetAllocationPayload;
-    readonly result: BudgetCommandOutcome;
-  };
-  readUiState: { readonly payload: string; readonly result: ReadUiStateResult };
-  writeUiState: { readonly payload: WriteUiStatePayload; readonly result: WriteUiStateResult };
-  readMonthlyReports: { readonly payload: string; readonly result: ReadMonthlyReportsResult };
-  readTurnSummaries: { readonly payload: string; readonly result: ReadTurnSummariesResult };
-  resolveTurn: { readonly payload: CommitMonthPayload; readonly result: ResolveTurnResult };
-  answerDecision: { readonly payload: AnswerDecisionPayload; readonly result: ResolveTurnResult };
-  submitBattleResult: {
-    readonly payload: SubmitBattleResultPayload;
-    readonly result: ResolveTurnResult;
-  };
-  startPlayerBattle: {
-    readonly payload: StartPlayerBattlePayload;
-    readonly result: StartPlayerBattleResult;
-  };
-  advancePlayerBattle: {
-    readonly payload: AdvancePlayerBattlePayload;
-    readonly result: AdvancePlayerBattleResult;
-  };
-  finishPlayerBattle: {
-    readonly payload: FinishPlayerBattlePayload;
-    readonly result: FinishPlayerBattleResult;
-  };
-  submitOfferResponse: {
-    readonly payload: SubmitOfferResponsePayload;
-    readonly result: ResolveTurnResult;
-  };
-  abandonPendingTurn: { readonly payload: string; readonly result: AbandonPendingTurnResult };
-  readPendingTurn: { readonly payload: string; readonly result: ReadPendingTurnResult };
-}
-
-export type CampaignCommandName = keyof CampaignCommandMap;
+export type CommitMonthPayload = CampaignCommandMap["commitMonth"]["payload"];
+export type GenerateBattlePayload = CampaignCommandMap["generateBattle"]["payload"];
+export type ResolveBattlePayload = CampaignCommandMap["resolveBattle"]["payload"];
+export type ResolveTacticalBattlePayload = CampaignCommandMap["resolveTacticalBattle"]["payload"];
+export type ReplayBattleBoundaryPayload = CampaignCommandMap["replayBattleBoundary"]["payload"];
+export type SeedCampaignBattleDrillPayload =
+  CampaignCommandMap["seedCampaignBattleDrill"]["payload"];
+export type WriteUiStatePayload = CampaignCommandMap["writeUiState"]["payload"];
+export type AnswerDecisionPayload = CampaignCommandMap["answerDecision"]["payload"];
+export type SubmitBattleResultPayload = CampaignCommandMap["submitBattleResult"]["payload"];
+export type StartPlayerBattlePayload = CampaignCommandMap["startPlayerBattle"]["payload"];
+export type AdvancePlayerBattlePayload = CampaignCommandMap["advancePlayerBattle"]["payload"];
+export type FinishPlayerBattlePayload = CampaignCommandMap["finishPlayerBattle"]["payload"];
+export type SubmitOfferResponsePayload = CampaignCommandMap["submitOfferResponse"]["payload"];
 
 /**
  * The full `bridge.campaign` surface — a single generic `execute` whose
@@ -901,50 +497,10 @@ export interface ReadPendingTurnResult {
   readonly valid: boolean;
 }
 
-export interface AnswerDecisionPayload {
-  readonly sessionId: string;
-  readonly expectedRevision: number;
-  readonly transportRequestId: string;
-  readonly interruptionId: string;
-  readonly decisionId: string;
-  readonly optionId: string;
-}
-
-export interface SubmitBattleResultPayload {
-  readonly sessionId: string;
-  readonly expectedRevision: number;
-  readonly transportRequestId: string;
-  readonly interruptionId: string;
-  readonly battleId: string;
-  readonly winnerId: string | null;
-  readonly loserId: string | null;
-  readonly attackerLosses: readonly string[];
-  readonly defenderLosses: readonly string[];
-  readonly damageReport: Readonly<Record<string, number>>;
-}
-
-/** T-2 (issue #221): the player-fought battle surface for an accepted offer. */
-export interface StartPlayerBattlePayload {
-  readonly sessionId: string;
-  readonly battleId: string;
-}
-
 export interface PlayerBattleDivisionOrderDto {
   readonly divisionId: string;
   readonly stance: "ENGAGE" | "HOLD" | "WITHDRAW";
   readonly speedPercent: number;
-}
-
-export interface AdvancePlayerBattlePayload {
-  readonly sessionId: string;
-  readonly battleId: string;
-  readonly mode: "minute" | "to_end";
-  readonly divisions: readonly PlayerBattleDivisionOrderDto[];
-}
-
-export interface FinishPlayerBattlePayload {
-  readonly sessionId: string;
-  readonly battleId: string;
 }
 
 export interface PlayerBattleResultDto {
@@ -973,16 +529,6 @@ export interface AdvancePlayerBattleResult {
 
 export interface FinishPlayerBattleResult {
   readonly result: PlayerBattleResultDto;
-}
-
-/** The player's answer to a battle offer (T-1 03, T-1 04): accept, delegate to staff, or decline. */
-export interface SubmitOfferResponsePayload {
-  readonly sessionId: string;
-  readonly expectedRevision: number;
-  readonly transportRequestId: string;
-  readonly interruptionId: string;
-  readonly battleId: string;
-  readonly response: "accept" | "delegate" | "decline";
 }
 
 export interface AbandonPendingTurnResult {

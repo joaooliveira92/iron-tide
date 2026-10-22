@@ -1,5 +1,5 @@
 import { BATTLE_DECLINE_NOT_ALLOWED } from "@bluewave/combat";
-import { Effect, Schema } from "effect";
+import { Effect } from "effect";
 import {
   computeInterruptionId,
   computeOrderedInputsHash,
@@ -19,7 +19,13 @@ import type {
   ReadPendingTurnResult,
   ResolveTurnResult,
 } from "../../shared/campaign-command-contract.js";
-import { CommandEnvelopePayloadSchema, SessionIdPayloadSchema } from "../campaignCommandSchemas.js";
+import {
+  AnswerDecisionPayloadSchema,
+  CommandEnvelopePayloadSchema,
+  SessionIdPayloadSchema,
+  SubmitBattleResultPayloadSchema,
+  SubmitOfferResponsePayloadSchema,
+} from "../../shared/campaignCommandSchemas.js";
 import {
   clearPendingTurn,
   isPendingTurnValid,
@@ -33,33 +39,6 @@ import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { DecisionSource } from "../runtime/decisionSource.js";
 import { withSchema, withStrictSchema } from "../runtime/commandProgram.js";
 import { runTurnTransaction } from "./turnTransaction.js";
-
-const nonEmpty = Schema.String.check(Schema.isMinLength(1));
-
-const AnswerDecisionPayloadSchema = Schema.Struct({
-  ...CommandEnvelopePayloadSchema.fields,
-  interruptionId: nonEmpty,
-  decisionId: nonEmpty,
-  optionId: nonEmpty,
-});
-
-const SubmitBattleResultPayloadSchema = Schema.Struct({
-  ...CommandEnvelopePayloadSchema.fields,
-  interruptionId: nonEmpty,
-  battleId: nonEmpty,
-  winnerId: Schema.NullOr(nonEmpty),
-  loserId: Schema.NullOr(nonEmpty),
-  attackerLosses: Schema.Array(nonEmpty),
-  defenderLosses: Schema.Array(nonEmpty),
-  damageReport: Schema.Record(Schema.String, Schema.Number),
-});
-
-const SubmitOfferResponsePayloadSchema = Schema.Struct({
-  ...CommandEnvelopePayloadSchema.fields,
-  interruptionId: nonEmpty,
-  battleId: nonEmpty,
-  response: Schema.Literals(["accept", "decline", "delegate"]),
-});
 
 function toPendingTurnDto(record: PendingTurnRecord): PendingTurnDto {
   return {

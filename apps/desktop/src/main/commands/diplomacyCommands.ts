@@ -8,7 +8,7 @@ import type {
 import {
   SessionIdPayloadSchema,
   SubmitDiplomacyCommandPayloadSchema,
-} from "../campaignCommandSchemas.js";
+} from "../../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
 import { withSchema } from "../runtime/commandProgram.js";

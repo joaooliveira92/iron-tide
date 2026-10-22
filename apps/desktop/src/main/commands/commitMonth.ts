@@ -1,6 +1,6 @@
 import type { CommitMonthResponse } from "@bluewave/campaign-engine";
 import { Effect } from "effect";
-import { CommandEnvelopePayloadSchema } from "../campaignCommandSchemas.js";
+import { CommandEnvelopePayloadSchema } from "../../shared/campaignCommandSchemas.js";
 import { withSchema } from "../runtime/commandProgram.js";
 import { runTurnTransaction } from "./turnTransaction.js";
 

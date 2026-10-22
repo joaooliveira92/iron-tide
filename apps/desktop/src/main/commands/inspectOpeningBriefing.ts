@@ -1,6 +1,6 @@
 import { buildOpeningBriefingProjection } from "@bluewave/campaign-engine";
 import { Effect } from "effect";
-import { SessionIdPayloadSchema } from "../campaignCommandSchemas.js";
+import { SessionIdPayloadSchema } from "../../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
 import { withSchema } from "../runtime/commandProgram.js";

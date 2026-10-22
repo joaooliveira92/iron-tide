@@ -17,7 +17,7 @@ import {
   GenerateBattlePayloadSchema,
   ResolveTacticalBattlePayloadSchema,
   SeedCampaignBattleDrillPayloadSchema,
-} from "../campaignCommandSchemas.js";
+} from "../../shared/campaignCommandSchemas.js";
 import { isBattleSandboxEnabled } from "../debugGate.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { withSchema } from "../runtime/commandProgram.js";

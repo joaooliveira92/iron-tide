@@ -6,7 +6,7 @@ import {
   SessionIdPayloadSchema,
   UiStateSchema,
   WriteUiStatePayloadSchema,
-} from "./campaignCommandSchemas.js";
+} from "../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
 import { withSchema } from "./runtime/commandProgram.js";
 import { UiStateStore } from "./runtime/sidecarStores.js";

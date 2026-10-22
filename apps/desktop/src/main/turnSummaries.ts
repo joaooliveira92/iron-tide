@@ -9,7 +9,7 @@ import type {
 } from "../shared/campaign-command-contract.js";
 import type { DomainEventEnvelope } from "@bluewave/events";
 import type { CampaignSnapshot } from "@bluewave/campaign";
-import { SessionIdPayloadSchema } from "./campaignCommandSchemas.js";
+import { SessionIdPayloadSchema } from "../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
 import { withSchema } from "./runtime/commandProgram.js";
 import { TurnSummariesStore } from "./runtime/sidecarStores.js";

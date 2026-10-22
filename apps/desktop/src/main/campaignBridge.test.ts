@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
 import { describe, expect, it, beforeEach, afterEach } from "vite-plus/test";
-import { CAMPAIGN_COMMAND_NAMES } from "../shared/campaign-command-contract.js";
 import type {
   ConstructionBatchPreviewOutcome,
   ForeignConstructionPreviewOutcome,
@@ -19,101 +18,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-const IMPLEMENTED_COMMANDS = new Set([
-  // Tactical Sandbox (ADR-0057): routed, but debug-gated inside the handler.
-  "generateBattle",
-  "resolveBattle",
-  "resolveTacticalBattle",
-  "replayBattleBoundary",
-  "seedCampaignBattleDrill",
-  "listNewGameOptions",
-  "compileCampaign",
-  "inspectCampaign",
-  "inspectOpeningBriefing",
-  "inspectMap",
-  "inspectBattleHistory",
-  "inspectPriorities",
-  "inspectDrawingBoardContent",
-  "inspectPresentationContent",
-  "inspectUiCatalogue",
-  "readTurnSummaries",
-  "resolveTurn",
-  "answerDecision",
-  "submitBattleResult",
-  "submitOfferResponse",
-  "startPlayerBattle",
-  "advancePlayerBattle",
-  "finishPlayerBattle",
-  "abandonPendingTurn",
-  "readPendingTurn",
-  "commitMonth",
-  "inspectConstructionScreen",
-  "submitConstructionCommand",
-  "replaceConstructionCommand",
-  "cancelConstructionCommand",
-  "haltConstructionCommand",
-  "resumeConstructionCommand",
-  "setAccelerationCommand",
-  "cancelConstructionProjectCommand",
-  "orderConstructionBatchCommand",
-  "previewConstructionBatchCommand",
-  "authorizeDockExpansionCommand",
-  "placeForeignConstructionCommand",
-  "previewForeignConstructionCommand",
-  "inspectFleetScreen",
-  "inspectResearchScreen",
-  "setResearchPriorityCommand",
-  "inspectDiplomacyScreen",
-  "inspectDivisionScreen",
-  "copyCampaign",
-  "saveCampaign",
-  "closeCampaign",
-  "submitDivisionCommand",
-  "submitStationAssignment",
-  "inspectBudgetScreen",
-  "submitMovementCommand",
-  "replaceMovementCommand",
-  "cancelMovementCommand",
-  "submitBudgetAllocation",
-  "submitDesignCommand",
-  "reviseProjectCommand",
-  "loadProjectDraft",
-  "readDrawingBoardDraft",
-  "writeDrawingBoardDraft",
-  "listRebuildableShips",
-  "loadShipDraft",
-  "checkRebuild",
-  "startRebuildCommand",
-  "submitDiplomacyCommand",
-  "readUiState",
-  "writeUiState",
-  "readMonthlyReports",
-  "loadCampaign",
-  "loadRecentCampaign",
-  "listRecentCampaigns",
-  "removeRecentCampaign",
-  "listCampaigns",
-  "verifyCampaign",
-  "replayCampaign",
-  "recoverCampaign",
-]);
-
 describe("dispatchCampaignCommand", () => {
   it("rejects an unknown command name", async () => {
     const result = await dispatchCampaignCommand("notARealCommand", undefined);
     expect(result.outcome).toBe("error");
     if (result.outcome !== "error") return;
     expect(result.reason).toBe("UNKNOWN_COMMAND");
-  });
-
-  it("still returns NOT_IMPLEMENTED for every command outside the implemented set", async () => {
-    const outOfScope = CAMPAIGN_COMMAND_NAMES.filter((name) => !IMPLEMENTED_COMMANDS.has(name));
-    for (const command of outOfScope) {
-      const result = await dispatchCampaignCommand(command, undefined);
-      expect(result.outcome).toBe("error");
-      if (result.outcome !== "error") continue;
-      expect(result.reason).toBe("NOT_IMPLEMENTED");
-    }
   });
 
   it("rejects malformed Tactical Sandbox payloads before touching the engine", async () => {

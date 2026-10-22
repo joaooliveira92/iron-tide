@@ -18,7 +18,7 @@ import {
   SubmitDesignCommandPayloadSchema,
   UiStateSchema,
   WriteUiStatePayloadSchema,
-} from "./campaignCommandSchemas.js";
+} from "../shared/campaignCommandSchemas.js";
 import { LoadSaveResultSchema } from "./campaignSaveSchema.js";
 import { SessionMetadataSchema } from "./campaignSessionMetadata.js";
 import { parseMonthInput } from "./monthInput.js";
