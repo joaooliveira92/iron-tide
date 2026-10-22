@@ -8,7 +8,7 @@
   "apps/README.md": 125,
   "content/README.md": 150,
   "packages/README.md": 325,
-  "scripts/README.md": 590,
+  "scripts/README.md": 610,
   "docs/adr/AMENDMENTS.md": 425,
   "docs/agents/adding-a-nation.md": 325,
   "docs/agents/desktop-snap.md": 400,
@@ -44,5 +44,6 @@
   "packages/persistence/AGENTS.md": 125,
   "packages/content-compiler/AGENTS.md": 100,
   "packages/ship-visual/AGENTS.md": 100,
-  "scripts/data/reachability-ledger.json": 1800
+  "scripts/data/reachability-ledger.json": 2100,
+  "docs/reachability-report.md": 950
 }
