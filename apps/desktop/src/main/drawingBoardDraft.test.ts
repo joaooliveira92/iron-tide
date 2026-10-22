@@ -15,7 +15,7 @@ import {
 } from "./drawingBoardDraft.js";
 import { readReferenceDesigns } from "./referenceDesigns.js";
 import { projectCommandExit } from "./runtime/bridgeResult.js";
-import type { CommandProgram } from "./runtime/commandProgram.js";
+import { programFor, type AnyCommandHandler } from "./commandProgramFixtures.js";
 import { desktopMainLayer } from "./runtime/desktopMainLayer.js";
 
 const reference = readReferenceDesigns().find((d) => d.id === "torpedo_cruiser_1880")!;
@@ -23,10 +23,10 @@ const reference = readReferenceDesigns().find((d) => d.id === "torpedo_cruiser_1
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
 async function runProgram(
-  program: CommandProgram,
+  program: AnyCommandHandler,
   payload: unknown,
 ): Promise<BridgeResult<unknown>> {
-  return projectCommandExit(await runtime.runPromiseExit(program(payload)));
+  return projectCommandExit(await runtime.runPromiseExit(programFor(program)(payload)));
 }
 
 describe("Drawing Board draft sidecar", () => {

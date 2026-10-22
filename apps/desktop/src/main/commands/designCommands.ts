@@ -33,18 +33,9 @@ import type {
   RebuildCheckView,
   RebuildFindingView,
 } from "../../shared/design-contract.js";
-import {
-  LoadProjectDraftPayloadSchema,
-  LoadShipDraftPayloadSchema,
-  RebuildCheckPayloadSchema,
-  ReviseProjectCommandPayloadSchema,
-  SessionIdPayloadSchema,
-  StartRebuildCommandPayloadSchema,
-  SubmitDesignCommandPayloadSchema,
-} from "../../shared/campaignCommandSchemas.js";
 import type { CampaignSessionRecord } from "../campaignSessions.js";
 import { CommandFailed, CommandRejected } from "../runtime/commandError.js";
-import { withSchema } from "../runtime/commandProgram.js";
+import type { CommandHandler } from "../runtime/commandProgram.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { submitPlayerCommand } from "./playerCommandSupport.js";
@@ -57,7 +48,7 @@ function slug(name: string): string {
   return s.length >= 2 ? s.slice(0, 40) : "design";
 }
 
-export const submitDesignCommandProgram = withSchema(SubmitDesignCommandPayloadSchema, (payload) =>
+export const submitDesignCommandProgram: CommandHandler<"submitDesignCommand"> = (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const contentArtifact = yield* ContentArtifact;
@@ -198,8 +189,7 @@ export const submitDesignCommandProgram = withSchema(SubmitDesignCommandPayloadS
       },
       diagnostics: [],
     };
-  }),
-);
+  });
 
 function projectWithDraft(record: CampaignSessionRecord, projectId: string) {
   const snapshot = record.state.snapshot;
@@ -220,7 +210,7 @@ function projectWithDraft(record: CampaignSessionRecord, projectId: string) {
   } as const;
 }
 
-export const loadProjectDraftProgram = withSchema(LoadProjectDraftPayloadSchema, (payload) =>
+export const loadProjectDraftProgram: CommandHandler<"loadProjectDraft"> = (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(payload.sessionId);
@@ -239,127 +229,123 @@ export const loadProjectDraftProgram = withSchema(LoadProjectDraftPayloadSchema,
       },
       diagnostics: [],
     };
-  }),
-);
+  });
 
-export const reviseProjectCommandProgram = withSchema(
-  ReviseProjectCommandPayloadSchema,
-  (payload) =>
-    Effect.gen(function* () {
-      const sessions = yield* CampaignSessionStore;
-      const contentArtifact = yield* ContentArtifact;
-      const record = yield* sessions.get(payload.sessionId);
-      const found = projectWithDraft(record, payload.projectId);
-      if (!found.ok) {
-        return yield* new CommandRejected({
-          reason: "PROJECT_NOT_REVISABLE",
-          diagnostics: [found.error],
-        });
-      }
-      const shape = validateDraftShape(payload.draft);
-      if (shape.length > 0) {
-        return yield* new CommandRejected({
-          reason: "INVALID_COMMAND_PAYLOAD",
-          diagnostics: shape,
-        });
-      }
-      const content = yield* contentArtifact.loadShipBuildingContent();
-      if (content.revision === null) {
-        return yield* new CommandRejected({
-          reason: "REVISION_RULES_MISSING",
-          diagnostics: ["The ship-building content has no revision rules"],
-        });
-      }
-      const draft = { ...(payload.draft as unknown as DesignDraft), nationId: record.playerSlotId };
-      const monthId = `${record.month.year}-${String(record.month.month).padStart(2, "0")}`;
-      const partsContent = content.draftCompileContent;
-      if (partsContent === undefined) {
-        return yield* new CommandRejected({
-          reason: "REVISION_REJECTED",
-          diagnostics: ["The ship-building content carries no parts to compile a design from"],
-        });
-      }
-      let compiledView: LegacyCompileView;
-      try {
-        compiledView = toLegacyCompileView(
-          compileDraftFromParts({
-            designId: found.design.designVersionId,
-            draft,
-            month: monthId,
-            content: partsContent,
-            ctx: content.environmentFor(monthId).ctx,
-            nation: { nationId: record.playerSlotId },
-          }),
-        );
-      } catch (e) {
-        return yield* new CommandRejected({
-          reason: "REVISION_REJECTED",
-          diagnostics: [e instanceof Error ? e.message : String(e)],
-        });
-      }
-      if (!compiledView.valid) {
-        return yield* new CommandRejected({
-          reason: "REVISION_REJECTED",
-          diagnostics: compiledView.findings
-            .filter((f) => f.severity === "BLOCKING")
-            .map((f) => `${formatExplanation(f.what)} ${formatExplanation(f.why)}`),
-        });
-      }
-      const categories = new Map(content.components.map((c) => [c.id, c.category]));
-      const kinds = draftChangeKinds(found.draft, draft, (id) => categories.get(id));
-      if (kinds.length === 0) {
-        return yield* new CommandRejected({
-          reason: "REVISION_REJECTED",
-          diagnostics: ["The revision changes nothing"],
-        });
-      }
-      const decision = classifyRevision(
-        kinds,
-        progressFromWork(Number(found.project.completedWork), Number(found.project.totalWork)),
-        content.revision,
-      );
-      if (decision.requiresRebuildProject || decision.tier === "T3_RECONSTRUCTION") {
-        return yield* new CommandRejected({
-          reason: "REVISION_REQUIRES_REBUILD",
-          diagnostics: [
-            `The ship is ${(decision.progressBp / 100).toFixed(1)}% built: it is too far along to revise, and rebuilding is not available yet. Finish it as designed, then submit this version as a new class and order it separately`,
-          ],
-        });
-      }
-      const turn = Number(record.state.snapshot.turnNumber);
-      const newDesignVersionId =
-        `${found.design.designVersionId.replace(/_r\d+$/, "")}_r${turn}`.slice(0, 64);
-      const result = yield* submitPlayerCommand({
-        sessionId: payload.sessionId,
-        expectedRevision: payload.expectedRevision,
-        transportRequestId: payload.transportRequestId,
-        build: (rec) => ({
-          body: {
-            type: "ReviseProject",
-            nationId: rec.playerSlotId,
-            projectId: payload.projectId,
-            newDesignVersionId,
-            draft: { ...draft, nationId: rec.playerSlotId },
-          },
-          discriminator: `${payload.projectId}/${newDesignVersionId}`,
-        }),
+export const reviseProjectCommandProgram: CommandHandler<"reviseProjectCommand"> = (payload) =>
+  Effect.gen(function* () {
+    const sessions = yield* CampaignSessionStore;
+    const contentArtifact = yield* ContentArtifact;
+    const record = yield* sessions.get(payload.sessionId);
+    const found = projectWithDraft(record, payload.projectId);
+    if (!found.ok) {
+      return yield* new CommandRejected({
+        reason: "PROJECT_NOT_REVISABLE",
+        diagnostics: [found.error],
       });
-      if (result.outcome !== "success") return result;
-      return {
-        outcome: "success" as const,
-        value: {
-          commandId: result.value.commandId,
+    }
+    const shape = validateDraftShape(payload.draft);
+    if (shape.length > 0) {
+      return yield* new CommandRejected({
+        reason: "INVALID_COMMAND_PAYLOAD",
+        diagnostics: shape,
+      });
+    }
+    const content = yield* contentArtifact.loadShipBuildingContent();
+    if (content.revision === null) {
+      return yield* new CommandRejected({
+        reason: "REVISION_RULES_MISSING",
+        diagnostics: ["The ship-building content has no revision rules"],
+      });
+    }
+    const draft = { ...(payload.draft as unknown as DesignDraft), nationId: record.playerSlotId };
+    const monthId = `${record.month.year}-${String(record.month.month).padStart(2, "0")}`;
+    const partsContent = content.draftCompileContent;
+    if (partsContent === undefined) {
+      return yield* new CommandRejected({
+        reason: "REVISION_REJECTED",
+        diagnostics: ["The ship-building content carries no parts to compile a design from"],
+      });
+    }
+    let compiledView: LegacyCompileView;
+    try {
+      compiledView = toLegacyCompileView(
+        compileDraftFromParts({
+          designId: found.design.designVersionId,
+          draft,
+          month: monthId,
+          content: partsContent,
+          ctx: content.environmentFor(monthId).ctx,
+          nation: { nationId: record.playerSlotId },
+        }),
+      );
+    } catch (e) {
+      return yield* new CommandRejected({
+        reason: "REVISION_REJECTED",
+        diagnostics: [e instanceof Error ? e.message : String(e)],
+      });
+    }
+    if (!compiledView.valid) {
+      return yield* new CommandRejected({
+        reason: "REVISION_REJECTED",
+        diagnostics: compiledView.findings
+          .filter((f) => f.severity === "BLOCKING")
+          .map((f) => `${formatExplanation(f.what)} ${formatExplanation(f.why)}`),
+      });
+    }
+    const categories = new Map(content.components.map((c) => [c.id, c.category]));
+    const kinds = draftChangeKinds(found.draft, draft, (id) => categories.get(id));
+    if (kinds.length === 0) {
+      return yield* new CommandRejected({
+        reason: "REVISION_REJECTED",
+        diagnostics: ["The revision changes nothing"],
+      });
+    }
+    const decision = classifyRevision(
+      kinds,
+      progressFromWork(Number(found.project.completedWork), Number(found.project.totalWork)),
+      content.revision,
+    );
+    if (decision.requiresRebuildProject || decision.tier === "T3_RECONSTRUCTION") {
+      return yield* new CommandRejected({
+        reason: "REVISION_REQUIRES_REBUILD",
+        diagnostics: [
+          `The ship is ${(decision.progressBp / 100).toFixed(1)}% built: it is too far along to revise, and rebuilding is not available yet. Finish it as designed, then submit this version as a new class and order it separately`,
+        ],
+      });
+    }
+    const turn = Number(record.state.snapshot.turnNumber);
+    const newDesignVersionId =
+      `${found.design.designVersionId.replace(/_r\d+$/, "")}_r${turn}`.slice(0, 64);
+    const result = yield* submitPlayerCommand({
+      sessionId: payload.sessionId,
+      expectedRevision: payload.expectedRevision,
+      transportRequestId: payload.transportRequestId,
+      build: (rec) => ({
+        body: {
+          type: "ReviseProject",
+          nationId: rec.playerSlotId,
+          projectId: payload.projectId,
           newDesignVersionId,
-          tier: decision.tier,
-          progressBp: decision.progressBp,
-          reworkWork: decision.reworkWorkMicro,
-          reasonCodes: decision.reasonCodes,
-          appliedOnNextTurn: true as const,
+          draft: { ...draft, nationId: rec.playerSlotId },
         },
-        diagnostics: [],
-      };
-    }),
-);
+        discriminator: `${payload.projectId}/${newDesignVersionId}`,
+      }),
+    });
+    if (result.outcome !== "success") return result;
+    return {
+      outcome: "success" as const,
+      value: {
+        commandId: result.value.commandId,
+        newDesignVersionId,
+        tier: decision.tier,
+        progressBp: decision.progressBp,
+        reworkWork: decision.reworkWorkMicro,
+        reasonCodes: decision.reasonCodes,
+        appliedOnNextTurn: true as const,
+      },
+      diagnostics: [],
+    };
+  });
 
 function rebuildableShip(record: CampaignSessionRecord, shipId: string) {
   const snapshot = record.state.snapshot;
@@ -383,7 +369,7 @@ function rebuildableShip(record: CampaignSessionRecord, shipId: string) {
 const monthIdOf = (record: CampaignSessionRecord) =>
   `${record.month.year}-${String(record.month.month).padStart(2, "0")}`;
 
-export const listRebuildableShipsProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const listRebuildableShipsProgram: CommandHandler<"listRebuildableShips"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
@@ -405,10 +391,9 @@ export const listRebuildableShipsProgram = withSchema(SessionIdPayloadSchema, (s
       })
       .sort((a, b) => (a.shipId < b.shipId ? -1 : a.shipId > b.shipId ? 1 : 0));
     return { outcome: "success" as const, value: ships, diagnostics: [] };
-  }),
-);
+  });
 
-export const loadShipDraftProgram = withSchema(LoadShipDraftPayloadSchema, (payload) =>
+export const loadShipDraftProgram: CommandHandler<"loadShipDraft"> = (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(payload.sessionId);
@@ -427,8 +412,7 @@ export const loadShipDraftProgram = withSchema(LoadShipDraftPayloadSchema, (payl
       },
       diagnostics: [],
     };
-  }),
-);
+  });
 
 const findingView = (f: Finding): RebuildFindingView => ({
   id: f.id,
@@ -594,15 +578,14 @@ function rebuildCheck(
   });
 }
 
-export const checkRebuildProgram = withSchema(RebuildCheckPayloadSchema, (payload) =>
+export const checkRebuildProgram: CommandHandler<"checkRebuild"> = (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(payload.sessionId);
     const result = yield* rebuildCheck(record, payload.shipId, payload.draft, payload.rebuildKind);
     if (result.outcome !== "success") return result;
     return { outcome: "success" as const, value: result.value.view, diagnostics: [] };
-  }),
-);
+  });
 
 const idPart = (s: string) =>
   s
@@ -610,7 +593,7 @@ const idPart = (s: string) =>
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
 
-export const startRebuildCommandProgram = withSchema(StartRebuildCommandPayloadSchema, (payload) =>
+export const startRebuildCommandProgram: CommandHandler<"startRebuildCommand"> = (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(payload.sessionId);
@@ -666,5 +649,4 @@ export const startRebuildCommandProgram = withSchema(StartRebuildCommandPayloadS
       },
       diagnostics: [],
     };
-  }),
-);
+  });

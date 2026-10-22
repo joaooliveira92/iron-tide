@@ -1,11 +1,12 @@
 import { buildOpeningBriefingProjection } from "@bluewave/campaign-engine";
 import { Effect } from "effect";
-import { SessionIdPayloadSchema } from "../../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
-import { withSchema } from "../runtime/commandProgram.js";
+import type { CommandHandler } from "../runtime/commandProgram.js";
 
-export const inspectOpeningBriefingProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const inspectOpeningBriefingProgram: CommandHandler<"inspectOpeningBriefing"> = (
+  sessionId,
+) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
@@ -23,5 +24,4 @@ export const inspectOpeningBriefingProgram = withSchema(SessionIdPayloadSchema, 
     }
 
     return { outcome: "success" as const, value: { projection }, diagnostics: [] };
-  }),
-);
+  });

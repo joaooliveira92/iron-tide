@@ -48,7 +48,7 @@ const AREAS = [
   {
     name: "Preferences & interfaces",
     blurb: "The versioned preferences domain behind the Options screen.",
-    nums: [203],
+    nums: [203, 270],
   },
   {
     name: "Repository authority & re-baselining",

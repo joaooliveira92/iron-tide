@@ -20,13 +20,6 @@ import type {
   ResolveTurnResult,
 } from "../../shared/campaign-command-contract.js";
 import {
-  AnswerDecisionPayloadSchema,
-  CommandEnvelopePayloadSchema,
-  SessionIdPayloadSchema,
-  SubmitBattleResultPayloadSchema,
-  SubmitOfferResponsePayloadSchema,
-} from "../../shared/campaignCommandSchemas.js";
-import {
   clearPendingTurn,
   isPendingTurnValid,
   loadPendingTurn,
@@ -37,7 +30,7 @@ import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { DecisionSource } from "../runtime/decisionSource.js";
-import { withSchema, withStrictSchema } from "../runtime/commandProgram.js";
+import type { CommandHandler } from "../runtime/commandProgram.js";
 import { runTurnTransaction } from "./turnTransaction.js";
 
 function toPendingTurnDto(record: PendingTurnRecord): PendingTurnDto {
@@ -173,7 +166,7 @@ function outstandingInterruption(pending: PendingTurnRecord): {
   };
 }
 
-export const resolveTurnProgram = withSchema(CommandEnvelopePayloadSchema, (payload) =>
+export const resolveTurnProgram: CommandHandler<"resolveTurn"> = (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(payload.sessionId);
@@ -198,8 +191,7 @@ export const resolveTurnProgram = withSchema(CommandEnvelopePayloadSchema, (payl
       recordedInputs,
       pendingDecisions,
     });
-  }),
-);
+  });
 
 const finishTransaction = (input: {
   readonly sessionId: string;
@@ -277,7 +269,7 @@ const finishTransaction = (input: {
     }
   });
 
-export const answerDecisionProgram = withSchema(AnswerDecisionPayloadSchema, (payload) =>
+export const answerDecisionProgram: CommandHandler<"answerDecision"> = (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(payload.sessionId);
@@ -327,10 +319,9 @@ export const answerDecisionProgram = withSchema(AnswerDecisionPayloadSchema, (pa
       recordedInputs: [...pending.recordedInputs, recorded],
       pendingDecisions,
     });
-  }),
-);
+  });
 
-export const submitBattleResultProgram = withSchema(SubmitBattleResultPayloadSchema, (payload) =>
+export const submitBattleResultProgram: CommandHandler<"submitBattleResult"> = (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(payload.sessionId);
@@ -384,81 +375,77 @@ export const submitBattleResultProgram = withSchema(SubmitBattleResultPayloadSch
       recordedInputs: [...pending.recordedInputs, recorded],
       pendingDecisions,
     });
-  }),
-);
+  });
 
-export const submitOfferResponseProgram = withStrictSchema(
-  SubmitOfferResponsePayloadSchema,
-  (payload) =>
-    Effect.gen(function* () {
-      const sessions = yield* CampaignSessionStore;
-      const record = yield* sessions.get(payload.sessionId);
-      const pending = loadPendingTurn(record.saveDir);
-      if (pending === null) {
-        return {
-          outcome: "error" as const,
-          reason: "NO_PENDING_TURN",
-          diagnostics: [`No pending turn for session ${payload.sessionId}`],
-        };
-      }
-      const outstanding = outstandingInterruption(pending);
-      if (outstanding === null || outstanding.kind !== "offer") {
-        return {
-          outcome: "error" as const,
-          reason: "OfferResponseStale",
-          diagnostics: [`Session ${payload.sessionId} is not awaiting a battle offer answer`],
-        };
-      }
-      if (payload.interruptionId !== outstanding.interruptionId) {
-        return {
-          outcome: "error" as const,
-          reason: "OfferResponseStale",
-          diagnostics: [
-            `Offer answer for session ${payload.sessionId} does not match the outstanding interruption`,
-          ],
-        };
-      }
-      if (payload.battleId !== pending.outstanding?.subjectKey) {
-        return {
-          outcome: "error" as const,
-          reason: "OfferResponseWrongBattle",
-          diagnostics: [`Offer answer for session ${payload.sessionId} names another battle`],
-        };
-      }
-      if (
-        payload.response === "decline" &&
-        pending.outstanding?.acceptanceClass === "OPERATIONALLY_UNAVOIDABLE"
-      ) {
-        return {
-          outcome: "error" as const,
-          reason: BATTLE_DECLINE_NOT_ALLOWED,
-          diagnostics: [
-            `Battle ${payload.battleId} is operationally unavoidable and cannot be declined; the offer stays pending`,
-          ],
-        };
-      }
-      const answer: OfferResponseInput = {
-        interruptionId: payload.interruptionId,
-        battleId: payload.battleId,
-        response: payload.response,
+export const submitOfferResponseProgram: CommandHandler<"submitOfferResponse"> = (payload) =>
+  Effect.gen(function* () {
+    const sessions = yield* CampaignSessionStore;
+    const record = yield* sessions.get(payload.sessionId);
+    const pending = loadPendingTurn(record.saveDir);
+    if (pending === null) {
+      return {
+        outcome: "error" as const,
+        reason: "NO_PENDING_TURN",
+        diagnostics: [`No pending turn for session ${payload.sessionId}`],
       };
-      const recorded = makeRecordedInput({
-        ordinal: pending.nextInterruptionOrdinal,
-        kind: "offer",
-        interruptionId: payload.interruptionId,
-        payload: answer,
-      });
-      yield* recordInput(record.saveDir, pending, recorded);
-      const decisionSource = yield* DecisionSource;
-      const pendingDecisions = yield* decisionSource.pendingDecisions(payload.sessionId);
-      return yield* finishTransaction({
-        sessionId: payload.sessionId,
-        expectedRevision: payload.expectedRevision,
-        recordedInputs: [...pending.recordedInputs, recorded],
-        pendingDecisions,
-      });
-    }),
-);
+    }
+    const outstanding = outstandingInterruption(pending);
+    if (outstanding === null || outstanding.kind !== "offer") {
+      return {
+        outcome: "error" as const,
+        reason: "OfferResponseStale",
+        diagnostics: [`Session ${payload.sessionId} is not awaiting a battle offer answer`],
+      };
+    }
+    if (payload.interruptionId !== outstanding.interruptionId) {
+      return {
+        outcome: "error" as const,
+        reason: "OfferResponseStale",
+        diagnostics: [
+          `Offer answer for session ${payload.sessionId} does not match the outstanding interruption`,
+        ],
+      };
+    }
+    if (payload.battleId !== pending.outstanding?.subjectKey) {
+      return {
+        outcome: "error" as const,
+        reason: "OfferResponseWrongBattle",
+        diagnostics: [`Offer answer for session ${payload.sessionId} names another battle`],
+      };
+    }
+    if (
+      payload.response === "decline" &&
+      pending.outstanding?.acceptanceClass === "OPERATIONALLY_UNAVOIDABLE"
+    ) {
+      return {
+        outcome: "error" as const,
+        reason: BATTLE_DECLINE_NOT_ALLOWED,
+        diagnostics: [
+          `Battle ${payload.battleId} is operationally unavoidable and cannot be declined; the offer stays pending`,
+        ],
+      };
+    }
+    const answer: OfferResponseInput = {
+      interruptionId: payload.interruptionId,
+      battleId: payload.battleId,
+      response: payload.response,
+    };
+    const recorded = makeRecordedInput({
+      ordinal: pending.nextInterruptionOrdinal,
+      kind: "offer",
+      interruptionId: payload.interruptionId,
+      payload: answer,
+    });
+    yield* recordInput(record.saveDir, pending, recorded);
+    const decisionSource = yield* DecisionSource;
+    const pendingDecisions = yield* decisionSource.pendingDecisions(payload.sessionId);
+    return yield* finishTransaction({
+      sessionId: payload.sessionId,
+      expectedRevision: payload.expectedRevision,
+      recordedInputs: [...pending.recordedInputs, recorded],
+      pendingDecisions,
+    });
+  });
 
 const recordInput = (
   saveDir: string,
@@ -479,7 +466,7 @@ const recordInput = (
       }),
   });
 
-export const readPendingTurnProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const readPendingTurnProgram: CommandHandler<"readPendingTurn"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
@@ -494,10 +481,9 @@ export const readPendingTurnProgram = withSchema(SessionIdPayloadSchema, (sessio
       valid: validatePending(pending, record.state, hashes) !== null,
     };
     return { outcome: "success" as const, value, diagnostics: [] };
-  }),
-);
+  });
 
-export const abandonPendingTurnProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const abandonPendingTurnProgram: CommandHandler<"abandonPendingTurn"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
@@ -513,5 +499,4 @@ export const abandonPendingTurnProgram = withSchema(SessionIdPayloadSchema, (ses
         }),
     });
     return { outcome: "success" as const, value, diagnostics: [] };
-  }),
-);
+  });

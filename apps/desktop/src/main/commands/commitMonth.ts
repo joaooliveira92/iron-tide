@@ -1,10 +1,9 @@
 import type { CommitMonthResponse } from "@bluewave/campaign-engine";
 import { Effect } from "effect";
-import { CommandEnvelopePayloadSchema } from "../../shared/campaignCommandSchemas.js";
-import { withSchema } from "../runtime/commandProgram.js";
+import type { CommandHandler } from "../runtime/commandProgram.js";
 import { runTurnTransaction } from "./turnTransaction.js";
 
-export const commitMonthProgram = withSchema(CommandEnvelopePayloadSchema, (payload) =>
+export const commitMonthProgram: CommandHandler<"commitMonth"> = (payload) =>
   Effect.gen(function* () {
     const outcome = yield* runTurnTransaction({
       sessionId: payload.sessionId,
@@ -41,5 +40,4 @@ export const commitMonthProgram = withSchema(CommandEnvelopePayloadSchema, (payl
           diagnostics: ["A no-interruption commit must not suspend."],
         };
     }
-  }),
-);
+  });

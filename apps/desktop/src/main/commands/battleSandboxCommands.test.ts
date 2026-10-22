@@ -22,7 +22,7 @@ import {
 } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
-import type { CommandProgram } from "../runtime/commandProgram.js";
+import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { toSaveableState } from "../saveHelpers.js";
 import {
@@ -44,8 +44,13 @@ const WAR_ID = "war_uk_france_1880-01";
 
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-async function runProgram<A>(program: CommandProgram, payload: unknown): Promise<BridgeResult<A>> {
-  return projectCommandExit(await runtime.runPromiseExit(program(payload))) as BridgeResult<A>;
+async function runProgram<A>(
+  program: AnyCommandHandler,
+  payload: unknown,
+): Promise<BridgeResult<A>> {
+  return projectCommandExit(
+    await runtime.runPromiseExit(programFor(program)(payload)),
+  ) as BridgeResult<A>;
 }
 
 function setDebugEnabled(enabled: boolean): void {

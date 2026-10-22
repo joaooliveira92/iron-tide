@@ -1,8 +1,8 @@
 import { Effect } from "effect";
 import type { MonthlyReportEntry, MonthlyReports } from "../shared/campaign-command-contract.js";
-import { MonthlyReportsSchema, SessionIdPayloadSchema } from "../shared/campaignCommandSchemas.js";
+import { MonthlyReportsSchema } from "../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
-import { withSchema } from "./runtime/commandProgram.js";
+import type { CommandHandler } from "./runtime/commandProgram.js";
 import { defineSidecar, prependBounded } from "./runtime/sidecar.js";
 import { ReportsStore } from "./runtime/sidecarStores.js";
 
@@ -43,7 +43,7 @@ export function appendMonthlyReport(
   };
 }
 
-export const readMonthlyReportsProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const readMonthlyReportsProgram: CommandHandler<"readMonthlyReports"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
@@ -51,10 +51,5 @@ export const readMonthlyReportsProgram = withSchema(SessionIdPayloadSchema, (ses
     const reports = yield* ReportsStore;
     const data = yield* reports.load(record.saveDir);
 
-    return {
-      outcome: "success" as const,
-      value: { reports: data.reports },
-      diagnostics: [],
-    };
-  }),
-);
+    return { outcome: "success" as const, value: { reports: data.reports }, diagnostics: [] };
+  });

@@ -20,7 +20,7 @@ import {
 } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
-import type { CommandProgram } from "../runtime/commandProgram.js";
+import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { toSaveableState } from "../saveHelpers.js";
 import {
@@ -48,10 +48,10 @@ const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
 async function runProgram(
-  program: CommandProgram,
+  program: AnyCommandHandler,
   payload: unknown,
 ): Promise<BridgeResult<unknown>> {
-  return projectCommandExit(await runtime.runPromiseExit(program(payload)));
+  return projectCommandExit(await runtime.runPromiseExit(programFor(program)(payload)));
 }
 
 describe("turn transaction commands", () => {

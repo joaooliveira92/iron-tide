@@ -3,7 +3,6 @@ import { CommandLedger } from "@bluewave/commands";
 import { DiagnosticCollector, type DiagnosticCode } from "@bluewave/diagnostics";
 import type { SaveMetadata } from "@bluewave/persistence";
 import { Effect } from "effect";
-import { RecentPackagePayloadSchema } from "../../shared/campaignCommandSchemas.js";
 import type { ReplayedRevision } from "../../shared/continuity-contract.js";
 import {
   isApprovedPackage,
@@ -16,7 +15,7 @@ import { ledgerOf, parseMonthInput } from "../monthInput.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandQueueStore } from "../runtime/commandQueueStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
-import { payloadless, withStrictSchema } from "../runtime/commandProgram.js";
+import type { CommandHandler } from "../runtime/commandProgram.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { AppPaths, Clock, IdGenerator, NativeDialog } from "../runtime/platform.js";
 import { ProjectStore } from "../runtime/projectStore.js";
@@ -30,7 +29,7 @@ function cancelled() {
   };
 }
 
-export const loadCampaignProgram = payloadless(() =>
+export const loadCampaignProgram: CommandHandler<"loadCampaign"> = () =>
   Effect.gen(function* () {
     const dialogs = yield* NativeDialog;
 
@@ -38,10 +37,9 @@ export const loadCampaignProgram = payloadless(() =>
     if (saveDir === null) return cancelled();
 
     return yield* loadPackageAt(saveDir);
-  }),
-);
+  });
 
-export const listRecentCampaignsProgram = payloadless(() =>
+export const listRecentCampaignsProgram: CommandHandler<"listRecentCampaigns"> = () =>
   Effect.gen(function* () {
     const paths = yield* AppPaths;
     const userDataDir = yield* paths.userDataDir();
@@ -50,52 +48,45 @@ export const listRecentCampaignsProgram = payloadless(() =>
       value: listRecentPackages(userDataDir),
       diagnostics: [],
     };
-  }),
-);
+  });
 
-export const removeRecentCampaignProgram = withStrictSchema(
-  RecentPackagePayloadSchema,
-  ({ packagePath }) =>
-    Effect.gen(function* () {
-      const paths = yield* AppPaths;
-      const userDataDir = yield* paths.userDataDir();
-      removeRecentPackage(userDataDir, packagePath);
-      return {
-        outcome: "success" as const,
-        value: listRecentPackages(userDataDir),
-        diagnostics: [],
-      };
-    }),
-);
+export const removeRecentCampaignProgram: CommandHandler<"removeRecentCampaign"> = ({
+  packagePath,
+}) =>
+  Effect.gen(function* () {
+    const paths = yield* AppPaths;
+    const userDataDir = yield* paths.userDataDir();
+    removeRecentPackage(userDataDir, packagePath);
+    return {
+      outcome: "success" as const,
+      value: listRecentPackages(userDataDir),
+      diagnostics: [],
+    };
+  });
 
-export const loadRecentCampaignProgram = withStrictSchema(
-  RecentPackagePayloadSchema,
-  ({ packagePath }) =>
-    Effect.gen(function* () {
-      const paths = yield* AppPaths;
-      const userDataDir = yield* paths.userDataDir();
-      const approved = isApprovedPackage(userDataDir, packagePath);
-      if (approved === null) {
-        const listed = listRecentPackages(userDataDir).some(
-          (entry) => entry.packagePath === packagePath,
-        );
-        return listed && !isPackageDirectory(packagePath)
-          ? {
-              outcome: "error" as const,
-              reason: "PACKAGE_MISSING",
-              diagnostics: [`${packagePath} no longer exists. It may have been moved or deleted.`],
-            }
-          : {
-              outcome: "error" as const,
-              reason: "PACKAGE_NOT_APPROVED",
-              diagnostics: [
-                "This package was not opened through the file dialog; choose it again.",
-              ],
-            };
-      }
-      return yield* loadPackageAt(approved);
-    }),
-);
+export const loadRecentCampaignProgram: CommandHandler<"loadRecentCampaign"> = ({ packagePath }) =>
+  Effect.gen(function* () {
+    const paths = yield* AppPaths;
+    const userDataDir = yield* paths.userDataDir();
+    const approved = isApprovedPackage(userDataDir, packagePath);
+    if (approved === null) {
+      const listed = listRecentPackages(userDataDir).some(
+        (entry) => entry.packagePath === packagePath,
+      );
+      return listed && !isPackageDirectory(packagePath)
+        ? {
+            outcome: "error" as const,
+            reason: "PACKAGE_MISSING",
+            diagnostics: [`${packagePath} no longer exists. It may have been moved or deleted.`],
+          }
+        : {
+            outcome: "error" as const,
+            reason: "PACKAGE_NOT_APPROVED",
+            diagnostics: ["This package was not opened through the file dialog; choose it again."],
+          };
+    }
+    return yield* loadPackageAt(approved);
+  });
 
 const loadPackageAt = (saveDir: string) =>
   Effect.gen(function* () {
@@ -187,7 +178,7 @@ const loadPackageAt = (saveDir: string) =>
     };
   });
 
-export const listCampaignsProgram = payloadless(() =>
+export const listCampaignsProgram: CommandHandler<"listCampaigns"> = () =>
   Effect.gen(function* () {
     const dialogs = yield* NativeDialog;
     const projects = yield* ProjectStore;
@@ -197,10 +188,9 @@ export const listCampaignsProgram = payloadless(() =>
 
     const value = yield* projects.list(saveDir);
     return { outcome: "success", value: [...value], diagnostics: [] };
-  }),
-);
+  });
 
-export const verifyCampaignProgram = payloadless(() =>
+export const verifyCampaignProgram: CommandHandler<"verifyCampaign"> = () =>
   Effect.gen(function* () {
     const dialogs = yield* NativeDialog;
     const projects = yield* ProjectStore;
@@ -233,10 +223,9 @@ export const verifyCampaignProgram = payloadless(() =>
       },
       diagnostics: [],
     };
-  }),
-);
+  });
 
-export const replayCampaignProgram = payloadless(() =>
+export const replayCampaignProgram: CommandHandler<"replayCampaign"> = () =>
   Effect.gen(function* () {
     const dialogs = yield* NativeDialog;
     const projects = yield* ProjectStore;
@@ -403,8 +392,7 @@ export const replayCampaignProgram = payloadless(() =>
       value: { matched: allMatched, revisions },
       diagnostics: collector.all.map((d) => d.message),
     };
-  }),
-);
+  });
 
 function loadSaveForTurn(
   projects: ProjectStore["Service"],
@@ -417,7 +405,7 @@ function loadSaveForTurn(
   return projects.loadById(saveDir, meta.saveId, new DiagnosticCollector());
 }
 
-export const recoverCampaignProgram = payloadless(() =>
+export const recoverCampaignProgram: CommandHandler<"recoverCampaign"> = () =>
   Effect.gen(function* () {
     const dialogs = yield* NativeDialog;
     const projects = yield* ProjectStore;
@@ -506,5 +494,4 @@ export const recoverCampaignProgram = payloadless(() =>
       },
       diagnostics: [],
     };
-  }),
-);
+  });

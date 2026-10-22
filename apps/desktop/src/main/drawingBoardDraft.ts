@@ -5,14 +5,13 @@ import { Effect, Schema } from "effect";
 import type { DrawingBoardDraftRecord } from "../shared/design-contract.js";
 import {
   MAX_DRAWING_BOARD_LOG_CHARS,
-  SessionIdPayloadSchema,
   WriteDrawingBoardDraftPayloadSchema,
 } from "../shared/campaignCommandSchemas.js";
 
 export { WriteDrawingBoardDraftPayloadSchema };
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
 import { CommandRejected } from "./runtime/commandError.js";
-import { withSchema } from "./runtime/commandProgram.js";
+import type { CommandHandler } from "./runtime/commandProgram.js";
 import { defineSidecar } from "./runtime/sidecar.js";
 import { Clock } from "./runtime/platform.js";
 import { DraftStore } from "./runtime/sidecarStores.js";
@@ -75,7 +74,7 @@ export function removeDrawingBoardDraft(saveDir: string): void {
   rmSync(sidecar.pathIn(saveDir), { force: true });
 }
 
-export const readDrawingBoardDraftProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
+export const readDrawingBoardDraftProgram: CommandHandler<"readDrawingBoardDraft"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
@@ -84,44 +83,32 @@ export const readDrawingBoardDraftProgram = withSchema(SessionIdPayloadSchema, (
     const draft = yield* drafts.load(record.saveDir);
 
     return { outcome: "success" as const, value: { draft }, diagnostics: [] };
-  }),
-);
+  });
 
-export const writeDrawingBoardDraftProgram = withSchema(
-  WriteDrawingBoardDraftPayloadSchema,
-  (payload) =>
-    Effect.gen(function* () {
-      const sessions = yield* CampaignSessionStore;
-      const record = yield* sessions.get(payload.sessionId);
-      const drafts = yield* DraftStore;
+export const writeDrawingBoardDraftProgram: CommandHandler<"writeDrawingBoardDraft"> = (payload) =>
+  Effect.gen(function* () {
+    const sessions = yield* CampaignSessionStore;
+    const record = yield* sessions.get(payload.sessionId);
+    const drafts = yield* DraftStore;
 
-      const draft = payload.draft;
-      if (draft === null) {
-        yield* drafts.remove(record.saveDir);
-        return {
-          outcome: "success" as const,
-          value: { saved: false },
-          diagnostics: [],
-        };
-      }
+    const draft = payload.draft;
+    if (draft === null) {
+      yield* drafts.remove(record.saveDir);
+      return { outcome: "success" as const, value: { saved: false }, diagnostics: [] };
+    }
 
-      yield* Effect.try({
-        try: () => decodeLog(draft.log),
-        catch: (error) =>
-          new CommandRejected({
-            reason: "INVALID_COMMAND_PAYLOAD",
-            diagnostics: [PersistenceError.is(error) ? error.message : "not an edit log"],
-          }),
-      });
+    yield* Effect.try({
+      try: () => decodeLog(draft.log),
+      catch: (error) =>
+        new CommandRejected({
+          reason: "INVALID_COMMAND_PAYLOAD",
+          diagnostics: [PersistenceError.is(error) ? error.message : "not an edit log"],
+        }),
+    });
 
-      const clock = yield* Clock;
-      const savedAt = (yield* clock.now()).toISOString();
-      yield* drafts.save(record.saveDir, draft, savedAt);
+    const clock = yield* Clock;
+    const savedAt = (yield* clock.now()).toISOString();
+    yield* drafts.save(record.saveDir, draft, savedAt);
 
-      return {
-        outcome: "success" as const,
-        value: { saved: true },
-        diagnostics: [],
-      };
-    }),
-);
+    return { outcome: "success" as const, value: { saved: true }, diagnostics: [] };
+  });

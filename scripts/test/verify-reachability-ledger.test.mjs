@@ -15,7 +15,7 @@ import {
   validateLedgerShape,
 } from "../verify-reachability-ledger.mjs";
 
-const CONTRACT = `export const campaignCommandShapes = {\n  alpha: command(NO_PAYLOAD, resultType<A>()),\n  beta: command(NO_PAYLOAD, resultType<B>()),\n} satisfies CommandShapeMap;\n`;
+const CONTRACT = `export const campaignCommandShapes = {\n  alpha: command(NO_PAYLOAD, resultType<A>()),\n  beta: command(NO_PAYLOAD, resultType<B>()),\n} as const;\n`;
 const BRIDGE = `export const commandPrograms = {\n  alpha: alphaProgram,\n  beta: betaProgram,\n};\n`;
 const REGISTRY = `const DBG: X = { id: "dbg-screen" };
 const MAP: X = { id: "proto" };

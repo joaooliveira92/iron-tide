@@ -36,7 +36,7 @@ import { SESSION_METADATA_FILENAME } from "../campaignSessionMetadata.js";
 import { clearPendingWorkspacesForTest, pendingEnvelopesForExecution } from "../pendingCommands.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
-import type { CommandProgram } from "../runtime/commandProgram.js";
+import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { NativeDialog } from "../runtime/platform.js";
 import { ProjectStore } from "../runtime/projectStore.js";
 import { toSaveableState } from "../saveHelpers.js";
@@ -73,8 +73,13 @@ const runtime = ManagedRuntime.make(
   ),
 );
 
-async function runProgram<A>(program: CommandProgram, payload: unknown): Promise<BridgeResult<A>> {
-  return projectCommandExit(await runtime.runPromiseExit(program(payload))) as BridgeResult<A>;
+async function runProgram<A>(
+  program: AnyCommandHandler,
+  payload: unknown,
+): Promise<BridgeResult<A>> {
+  return projectCommandExit(
+    await runtime.runPromiseExit(programFor(program)(payload)),
+  ) as BridgeResult<A>;
 }
 
 const saveCampaign = (sessionId: string) =>

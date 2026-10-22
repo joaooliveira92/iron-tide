@@ -20,7 +20,7 @@ import {
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { loadPendingTurn, PENDING_TURN_FILENAME, savePendingTurn } from "../pendingTurn.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
-import type { CommandProgram } from "../runtime/commandProgram.js";
+import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { ContentArtifact, contentArtifactLayer } from "../runtime/contentArtifact.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { toSaveableState } from "../saveHelpers.js";
@@ -65,10 +65,10 @@ const productionRuntime = ManagedRuntime.make(desktopMainLayer());
 
 async function run(
   runtime: typeof offerRuntime,
-  program: CommandProgram,
+  program: AnyCommandHandler,
   payload: unknown,
 ): Promise<BridgeResult<unknown>> {
-  return projectCommandExit(await runtime.runPromiseExit(program(payload)));
+  return projectCommandExit(await runtime.runPromiseExit(programFor(program)(payload)));
 }
 
 function warSnapshot(base: CampaignSnapshot): CampaignSnapshot {

@@ -24,7 +24,7 @@ import {
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { pendingEnvelopesForExecution, clearPendingWorkspacesForTest } from "../pendingCommands.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
-import type { CommandProgram } from "../runtime/commandProgram.js";
+import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { toSaveableState } from "../saveHelpers.js";
 import { commitMonthProgram } from "./commitMonth.js";
@@ -47,8 +47,13 @@ const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-async function runProgram<A>(program: CommandProgram, payload: unknown): Promise<BridgeResult<A>> {
-  return projectCommandExit(await runtime.runPromiseExit(program(payload))) as BridgeResult<A>;
+async function runProgram<A>(
+  program: AnyCommandHandler,
+  payload: unknown,
+): Promise<BridgeResult<A>> {
+  return projectCommandExit(
+    await runtime.runPromiseExit(programFor(program)(payload)),
+  ) as BridgeResult<A>;
 }
 
 const inspectDiplomacyScreen = (sessionId: string) =>

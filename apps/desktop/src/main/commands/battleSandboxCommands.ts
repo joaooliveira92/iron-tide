@@ -12,15 +12,9 @@ import type {
   ResolveBattleResult,
   SeedCampaignBattleDrillResult,
 } from "../../shared/campaign-command-contract.js";
-import {
-  BattleIdPayloadSchema,
-  GenerateBattlePayloadSchema,
-  ResolveTacticalBattlePayloadSchema,
-  SeedCampaignBattleDrillPayloadSchema,
-} from "../../shared/campaignCommandSchemas.js";
 import { isBattleSandboxEnabled } from "../debugGate.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
-import { withSchema } from "../runtime/commandProgram.js";
+import type { CommandHandler } from "../runtime/commandProgram.js";
 import { toSaveableState } from "../saveHelpers.js";
 
 type CombatManifest = ReturnType<typeof generateBattles>["manifests"][number];
@@ -259,7 +253,7 @@ function pickPlayerActiveWar(
     .sort((a, b) => a.id.localeCompare(b.id))[0];
 }
 
-export const generateBattleProgram = withSchema(GenerateBattlePayloadSchema, (payload) =>
+export const generateBattleProgram: CommandHandler<"generateBattle"> = (payload) =>
   Effect.gen(function* () {
     const blocked = debugOnly();
     if (blocked) return blocked;
@@ -367,10 +361,9 @@ export const generateBattleProgram = withSchema(GenerateBattlePayloadSchema, (pa
           : []),
       ],
     };
-  }),
-);
+  });
 
-export const resolveBattleProgram = withSchema(BattleIdPayloadSchema, (payload) =>
+export const resolveBattleProgram: CommandHandler<"resolveBattle"> = (payload) =>
   Effect.gen(function* () {
     const blocked = debugOnly();
     if (blocked) return blocked;
@@ -454,101 +447,96 @@ export const resolveBattleProgram = withSchema(BattleIdPayloadSchema, (payload) 
         "Sandbox result: no campaign state was changed, so war score change is reported as 0.",
       ],
     };
-  }),
-);
+  });
 
-export const seedCampaignBattleDrillProgram = withSchema(
-  SeedCampaignBattleDrillPayloadSchema,
-  (payload) =>
-    Effect.gen(function* () {
-      const blocked = debugOnly();
-      if (blocked) return blocked;
+export const seedCampaignBattleDrillProgram: CommandHandler<"seedCampaignBattleDrill"> = (
+  payload,
+) =>
+  Effect.gen(function* () {
+    const blocked = debugOnly();
+    if (blocked) return blocked;
 
-      const sessions = yield* CampaignSessionStore;
-      const record = yield* sessions.get(payload.sessionId);
+    const sessions = yield* CampaignSessionStore;
+    const record = yield* sessions.get(payload.sessionId);
 
-      const snapshot = record.state.snapshot;
-      const war =
+    const snapshot = record.state.snapshot;
+    const war =
+      payload.warId !== undefined
+        ? snapshot.wars.wars.find((w) => w.id === payload.warId)
+        : pickPlayerActiveWar(snapshot.wars.wars, record.playerSlotId);
+    if (!war) {
+      return rejected(
+        "WAR_NOT_FOUND",
         payload.warId !== undefined
-          ? snapshot.wars.wars.find((w) => w.id === payload.warId)
-          : pickPlayerActiveWar(snapshot.wars.wars, record.playerSlotId);
-      if (!war) {
-        return rejected(
-          "WAR_NOT_FOUND",
-          payload.warId !== undefined
-            ? `No war ${payload.warId} in this campaign.`
-            : `No active war for ${record.playerSlotId}.`,
-        );
-      }
-      if (war.status !== "ACTIVE" && war.status !== "DECLARED_NOT_ACTIVE") {
-        return rejected("WAR_NOT_ACTIVE", `War ${war.id} is ${war.status}.`);
-      }
-
-      const designed = excludeUndesignedShips(snapshot);
-      const colocated = colocateWarSides(
-        designed.snapshot,
-        war.attackerId,
-        war.defenderId,
-        undefined,
+          ? `No war ${payload.warId} in this campaign.`
+          : `No active war for ${record.playerSlotId}.`,
       );
-      if ("error" in colocated) return rejected(colocated.error, colocated.detail);
+    }
+    if (war.status !== "ACTIVE" && war.status !== "DECLARED_NOT_ACTIVE") {
+      return rejected("WAR_NOT_ACTIVE", `War ${war.id} is ${war.status}.`);
+    }
 
-      const prepared = scaleBelligerentFirepower(
-        colocated.snapshot,
-        [war.attackerId, war.defenderId],
-        colocated.areaId,
-        DRILL_STRENGTH_SCALE,
-      );
+    const designed = excludeUndesignedShips(snapshot);
+    const colocated = colocateWarSides(
+      designed.snapshot,
+      war.attackerId,
+      war.defenderId,
+      undefined,
+    );
+    if ("error" in colocated) return rejected(colocated.error, colocated.detail);
 
-      const envelope = createEnvelope("campaign-snapshot", prepared.compatibilityVersion, prepared);
-      const nextState = toSaveableState({
-        snapshot: prepared,
-        envelope,
-        rawHash: record.state.rawHash,
-      });
-      yield* sessions.register({ ...record, state: nextState });
+    const prepared = scaleBelligerentFirepower(
+      colocated.snapshot,
+      [war.attackerId, war.defenderId],
+      colocated.areaId,
+      DRILL_STRENGTH_SCALE,
+    );
 
-      const value: SeedCampaignBattleDrillResult = {
-        warId: war.id,
-        areaId: colocated.areaId,
-        strengthScale: DRILL_STRENGTH_SCALE,
-        moved: colocated.moved,
-        excludedShipIds: designed.excluded,
-      };
-      return {
-        outcome: "success" as const,
-        value,
-        diagnostics: [
-          ...(colocated.moved
-            ? [
-                `Drill: ${war.attackerId}'s completed fleets were placed in ${colocated.areaId} (movement is not implemented).`,
-              ]
-            : []),
-          ...(designed.excluded.length > 0
-            ? [
-                `Drill: ${designed.excluded.join(", ")} treated as unavailable — no compiled design (content data defect).`,
-              ]
-            : []),
-          `Drill: belligerent firepower scaled x${DRILL_STRENGTH_SCALE} for the engine's eligibility floors only (real turns cannot reach them with current content).`,
-        ],
-      };
-    }),
-);
+    const envelope = createEnvelope("campaign-snapshot", prepared.compatibilityVersion, prepared);
+    const nextState = toSaveableState({
+      snapshot: prepared,
+      envelope,
+      rawHash: record.state.rawHash,
+    });
+    yield* sessions.register({ ...record, state: nextState });
 
-export const resolveTacticalBattleProgram = withSchema(
-  ResolveTacticalBattlePayloadSchema,
-  (_payload) =>
-    Effect.sync(
-      () =>
-        debugOnly() ??
-        rejected(
-          "TACTICAL_RESOLUTION_UNAVAILABLE",
-          "Scripted tactical resolution needs the engine's tactical-loop orchestrator (B-6), which does not exist yet. Use auto-resolve.",
-        ),
-    ),
-);
+    const value: SeedCampaignBattleDrillResult = {
+      warId: war.id,
+      areaId: colocated.areaId,
+      strengthScale: DRILL_STRENGTH_SCALE,
+      moved: colocated.moved,
+      excludedShipIds: designed.excluded,
+    };
+    return {
+      outcome: "success" as const,
+      value,
+      diagnostics: [
+        ...(colocated.moved
+          ? [
+              `Drill: ${war.attackerId}'s completed fleets were placed in ${colocated.areaId} (movement is not implemented).`,
+            ]
+          : []),
+        ...(designed.excluded.length > 0
+          ? [
+              `Drill: ${designed.excluded.join(", ")} treated as unavailable — no compiled design (content data defect).`,
+            ]
+          : []),
+        `Drill: belligerent firepower scaled x${DRILL_STRENGTH_SCALE} for the engine's eligibility floors only (real turns cannot reach them with current content).`,
+      ],
+    };
+  });
 
-export const replayBattleBoundaryProgram = withSchema(BattleIdPayloadSchema, (_payload) =>
+export const resolveTacticalBattleProgram: CommandHandler<"resolveTacticalBattle"> = (_payload) =>
+  Effect.sync(
+    () =>
+      debugOnly() ??
+      rejected(
+        "TACTICAL_RESOLUTION_UNAVAILABLE",
+        "Scripted tactical resolution needs the engine's tactical-loop orchestrator (B-6), which does not exist yet. Use auto-resolve.",
+      ),
+  );
+
+export const replayBattleBoundaryProgram: CommandHandler<"replayBattleBoundary"> = (_payload) =>
   Effect.sync(
     () =>
       debugOnly() ??
@@ -556,5 +544,4 @@ export const replayBattleBoundaryProgram = withSchema(BattleIdPayloadSchema, (_p
         "BOUNDARY_REPLAY_UNAVAILABLE",
         "Battle-boundary replay depends on the tactical-loop orchestrator (B-6), which does not exist yet.",
       ),
-  ),
-);
+  );
