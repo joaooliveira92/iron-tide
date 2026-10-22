@@ -1,6 +1,6 @@
-# Working in Bluewave (agent guide)
+# Working in Bluewave
 
-Bluewave is a deterministic 1880s naval strategy/tactical game: an engine, a
+Bluewave is a deterministic naval strategy/tactical game: an engine, a
 content compiler, and an Electron desktop app in one TypeScript monorepo. This
 file is how an agent works here. It does not restate the binding authorities — it
 points at them and adds the working conventions.
@@ -22,17 +22,12 @@ contract → ADRs → milestone brief → local conventions. On a genuine confli
 
 ## Repository rules
 
-- Check `git status` and the remote branch before mutating; `git pull --rebase`
-  and run `pnpm preflight` at session start; rebase before every push.
-- Never overwrite, revert, or reformat another contributor's work. Keep commits
-  narrow and Conventional.
+- Check `git status` and the remote branch before mutating; `git pull --rebase` and run `pnpm preflight` at session start; rebase before every push.
+- Never overwrite, revert, or reformat another contributor's work. Keep commits narrow and Conventional.
 - Work in the main checkout on a short-lived local branch. Up to 5 worktrees
-  (main checkout included) may exist at once, created with `pnpm worktrees new
-  <slug>` (ADR-0237, which amends ADR-0236 and ADR-0234). One session per checkout.
-- Review agents are read-only: they must not edit code, tests, commits, branches,
-  or PR state.
-- Standing standards docs carry a word ceiling in
-  `scripts/doc-budgets.manifest.json`; ratchet down, justify any raise, and add
+  (main checkout included) may exist at once, created with `pnpm worktrees new <slug>` (ADR-0237, which amends ADR-0236 and ADR-0234). One session per checkout.
+- Review agents are read-only: they must not edit code, tests, commits, branches, or PR state.
+- Standing standards docs carry a word ceiling in `scripts/doc-budgets.manifest.json`; ratchet down, justify any raise, and add
   new standing docs to the manifest.
 - Record decisions that constrain architecture, determinism, compatibility,
   persistence, security, or replacement cost as ADRs; regenerate the index with
