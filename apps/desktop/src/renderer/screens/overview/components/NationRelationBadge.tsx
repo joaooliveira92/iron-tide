@@ -47,20 +47,28 @@ const RELATION_STYLE: Readonly<
   },
 };
 
-export function NationRelationBadge({ row }: { readonly row: NationRailRow }) {
+export function NationRelationBadge({
+  row,
+  iconOnly = false,
+}: {
+  readonly row: NationRailRow;
+  readonly iconOnly?: boolean;
+}) {
   const style = RELATION_STYLE[row.relation];
   const Icon = style.icon;
   return (
     <Badge
       variant="outline"
       data-relation={row.relation}
+      data-icon-only={iconOnly}
+      title={row.relationLabel}
       className={cn(
-        "shrink-0 gap-1 px-1.5 py-0 text-xs font-semibold uppercase tracking-wide text-foreground",
+        "min-w-0 max-w-full shrink gap-1 px-1.5 py-0 text-xs font-semibold uppercase text-foreground",
         style.badge,
       )}
     >
-      <Icon className={cn("size-3", style.tint)} aria-hidden="true" />
-      {row.relationLabel}
+      <Icon className={cn("size-3 shrink-0", style.tint)} aria-hidden="true" />
+      <span className={iconOnly ? "sr-only" : "truncate"}>{row.relationLabel}</span>
     </Badge>
   );
 }

@@ -2,6 +2,8 @@ export { NationDeferredIntel } from "./NationDeferredIntel.js";
 export { NationDetail } from "./NationDetail.js";
 export { NationRailItem } from "./NationRailItem.js";
 export { NationRailList } from "./NationRailList.js";
+export { NationRailControls } from "./NationRailControls.js";
+export { NationRelationBadge } from "./NationRelationBadge.js";
 export { NationSwatch } from "./NationSwatch.js";
 export { MonthReportBattleOutcomesSection } from "./MonthReportBattleOutcomesSection.js";
 export { MonthReportConstructionSection } from "./MonthReportConstructionSection.js";

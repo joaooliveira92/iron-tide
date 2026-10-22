@@ -64,7 +64,7 @@ describe("NationRail", () => {
         onNavigate={() => undefined}
       />,
     );
-    const items = within(screen.getByRole("list", { name: "Major powers" })).getAllByRole(
+    const items = within(screen.getByRole("group", { name: "Major powers" })).getAllByRole(
       "listitem",
     );
     expect(items.map((i) => i.textContent)).toEqual(["BritainYou", "FranceWar5:2", "GermanyPeace"]);
@@ -102,7 +102,7 @@ describe("NationRail", () => {
     expect(container.querySelectorAll("img")).toHaveLength(powers.length + 1);
   });
 
-  it("selects a nation and shows its detail inline", () => {
+  it("shows a nation's detail in a hover card on focus", async () => {
     render(
       <NationRail
         state={{ status: "ready", projection }}
@@ -110,8 +110,49 @@ describe("NationRail", () => {
         onNavigate={() => undefined}
       />,
     );
+    fireEvent.focus(screen.getByRole("button", { name: /France/ }));
+    const detail = await screen.findByTestId("nation-rail-detail");
+    expect(detail.textContent).toContain("Tension10/10");
+  });
+
+  it("opens Diplomacy when a nation row is clicked", () => {
+    const onNavigate = vi.fn();
+    render(
+      <NationRail
+        state={{ status: "ready", projection }}
+        playerName="Britain"
+        onNavigate={onNavigate}
+      />,
+    );
     fireEvent.click(screen.getByRole("button", { name: /France/ }));
-    expect(screen.getByTestId("nation-rail-detail").textContent).toContain("Tension10/10");
+    expect(onNavigate).toHaveBeenCalledWith("diplomacy");
+  });
+
+  it("groups nations by stance and shows a tension meter", () => {
+    render(
+      <NationRail
+        state={{ status: "ready", projection }}
+        playerName="Britain"
+        onNavigate={() => undefined}
+      />,
+    );
+    expect(screen.getByRole("region", { name: "Enemies" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Neutral" })).toBeTruthy();
+    expect(screen.getByRole("meter", { name: "Tension 10 of 10" })).toBeTruthy();
+  });
+
+  it("filters to nations at war and keeps the player", () => {
+    render(
+      <NationRail
+        state={{ status: "ready", projection }}
+        playerName="Britain"
+        onNavigate={() => undefined}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^At war/ }));
+    expect(screen.getByRole("button", { name: /Britain/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /France/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Germany/ })).toBeNull();
   });
 
   it("collapses deferred intel items into one disclosure with no bars", () => {
