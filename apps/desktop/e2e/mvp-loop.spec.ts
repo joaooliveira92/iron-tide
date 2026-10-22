@@ -86,7 +86,7 @@ test("Fleet and Diplomacy & War render the honest compiled state", async ({
   await expect(page.getByText(/Trade protection/)).toBeVisible();
 });
 
-test("a ship is assigned to and cleared from foreign station, and the presence readout is dormant", async ({
+test("a ship is assigned to and cleared from foreign station, and the presence readout is live", async ({
   e2e,
   campaignTemplate,
 }) => {
@@ -98,8 +98,9 @@ test("a ship is assigned to and cleared from foreign station, and the presence r
   await expect(
     section.getByRole("heading", { name: "Ships and foreign-station status" }),
   ).toBeVisible();
-  // The production pack authors no presence section: stated, never a number.
-  await expect(section.getByTestId("fleet-presence-not-configured")).toBeVisible();
+  // The production pack authors the S-5 presence section: the readout is live, not "not configured".
+  await expect(section.getByTestId("fleet-presence")).toBeVisible();
+  await expect(section.getByTestId("fleet-presence-not-configured")).toHaveCount(0);
   const row = section.getByTestId("fleet-station-row-gbr_dreadnought");
   await expect(row.getByText("Active fleet")).toBeVisible();
 
