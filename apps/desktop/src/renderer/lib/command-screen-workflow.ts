@@ -43,16 +43,8 @@ export interface PreparedCommand<Value> {
   readonly send: CommandSender<Value>;
 }
 
-/** The rejected arm of the bridge envelope, as the workflow folds it. */
 export type CommandRejection = Extract<BridgeResult<unknown>, { readonly outcome: "rejected" }>;
 
-/**
- * The narrow contract a screen implements to join the shared command-screen
- * lifecycle. The module owns revision capture, transport identity, pending
- * state, idempotent retry, rejection folding, and stale-projection refresh;
- * the adapter only maps those transitions onto the screen's own state shape.
- * Field-based screens can use `requestLifecycleAdapter` for the common case.
- */
 export interface CommandScreenAdapter<
   State extends { readonly revision: number },
   Projection extends { readonly revision: number },
@@ -65,7 +57,6 @@ export interface CommandScreenAdapter<
   readonly reject: (state: State, rejection: CommandRejection) => State;
   readonly transportFailure: (state: State, message: string) => State;
   readonly accept: (state: State, value: Value) => State;
-  /** Whether this state must reload its projection before the player retries. */
   readonly requiresRefresh: (state: State) => boolean;
   readonly onProjection?: (projection: Projection) => void;
 }
@@ -85,7 +76,6 @@ export interface RequestLifecycleAdapterConfig<
   readonly onProjection?: (projection: Projection) => void;
 }
 
-/** Adapt a field-based `RequestLifecycle` screen to the shared adapter contract. */
 export function requestLifecycleAdapter<
   State extends RequestLifecycle,
   Projection extends { readonly revision: number },
@@ -109,7 +99,6 @@ export function requestLifecycleAdapter<
   };
 }
 
-/** How a submitted command settled, so a caller can react without re-reading state. */
 export type CommandOutcome = "accepted" | "rejected" | "transport-failure";
 
 export interface CommandScreenWorkflow<State extends { readonly revision: number }, Value> {
@@ -120,7 +109,6 @@ export interface CommandScreenWorkflow<State extends { readonly revision: number
     readonly retry: () => void;
   };
   readonly loadScreen: () => Promise<void>;
-  /** Apply a screen-local pure transition (draft edits) without touching transport state. */
   readonly updateState: (fold: (state: State) => State) => void;
   readonly execute: (kind: RequestKind, send: CommandSender<Value>) => Promise<CommandOutcome>;
 }

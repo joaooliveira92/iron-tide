@@ -5,16 +5,6 @@ import type {
 import { describeRejection } from "../../lib/command-screen-workflow.js";
 import { type FieldWeightsDraft, seedDraft } from "./research-field-priorities.js";
 
-/**
- * Pure presentation state for the Research & Technology screen
- * (desktop-engine-feature-gate INC-3). A discriminated union over the
- * screen's phases — idle / loaded / submitting / submitted /
- * rejected-with-revision. Transport bookkeeping (load failures, pending
- * identity, stale-revision refresh) lives in the shared command-screen
- * workflow; these transitions only shape the screen's own domain data. All
- * numbers come from the engine projection; the screen never computes
- * authoritative values.
- */
 export type ResearchScreenState =
   | ResearchScreenIdle
   | ResearchScreenLoaded
@@ -67,9 +57,6 @@ export function researchLoadSuccess(projection: ResearchScreenProjection): Resea
   };
 }
 
-/** Begin a priority submission — the pure machine side of the submit flow.
- * `transportRequestId` comes from the shell (idempotency context), never from
- * the reducer. Only reachable from `loaded`/`submitted`. */
 export function researchBeginSubmit(
   state: ResearchScreenState,
   transportRequestId: string,

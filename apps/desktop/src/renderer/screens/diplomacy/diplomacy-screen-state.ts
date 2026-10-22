@@ -4,21 +4,6 @@ import type {
 } from "../../../shared/diplomacy-contract.js";
 import { describeRejection } from "../../lib/command-screen-workflow.js";
 
-/**
- * Pure presentation state for the Diplomacy & War screen
- * (desktop-diplomacy-war INC-3). A discriminated union over the screen's
- * phases — idle / loaded / submitting / submitted / rejected-with-revision.
- * Transport bookkeeping (load failures, pending identity, stale-revision
- * refresh) lives in the shared command-screen workflow; these transitions
- * only shape the screen's own domain data. All numbers come from the engine
- * projection; the screen never computes authoritative values.
- *
- * The screen issues ONE engine command at a time (spec D2) — the reducer
- * holds a single `draftCommand` and legal-action derivation per relation row.
- * The derivation is UI affordance ONLY (which chips to show), never a
- * re-implementation of the engine's validators — the engine is the authority
- * at issue time via `submitDiplomacyCommand`.
- */
 export type DiplomacyScreenState =
   | DiplomacyScreenIdle
   | DiplomacyScreenLoaded
@@ -31,7 +16,6 @@ export interface DiplomacyScreenIdle {
   readonly revision: number;
 }
 
-/** Shared payload of every data-bearing phase. */
 export interface DiplomacyScreenActiveData {
   readonly revision: number;
   readonly month: DiplomacyScreenProjection["month"];
@@ -88,8 +72,6 @@ export function diplomacyLoadSuccess(projection: DiplomacyScreenProjection): Dip
   };
 }
 
-/** Begin drafting a pair action on a relations row. Only reachable from a
- * data-bearing phase; replaces any prior draft. */
 export function diplomacyBeginAction(
   state: DiplomacyScreenState,
   partnerNationId: string,
