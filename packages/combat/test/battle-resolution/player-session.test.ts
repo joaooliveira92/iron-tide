@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import {
-  resolveBattleAuto,
-  type BattleResolutionResult,
-} from "../../src/battleResolution/resolve.js";
+import { resolveBattleAuto, type BattleResolutionResult } from "@bluewave/combat/battleResolution";
 import {
   advancePlayerBattleMinute,
   createPlayerBattleSession,
@@ -11,7 +8,7 @@ import {
   playerBattleView,
   runPlayerBattleToEnd,
   type PlayerBattleOrders,
-} from "../../src/battleResolution/playerSession.js";
+} from "@bluewave/combat/battleResolution";
 import { ATTACKER_NATION, makeAutoInput, makeNations } from "./fixtures.js";
 import type { PermanentDivision } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";

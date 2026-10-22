@@ -12,7 +12,7 @@ import {
   TORPEDO_STATE_INVARIANT_FAILED,
   type TorpedoLauncherState,
   withTorpedoLauncherStateHash,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 import { COMPILED_TORPEDOES } from "../fixtures/compiledTorpedoes.js";
 
 const G7A = "ger_533mm_g7a_1934";

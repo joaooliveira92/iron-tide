@@ -8,7 +8,7 @@ import {
   createEgressState,
   AIR_COMBAT_STRIKE_FUEL_INSUFFICIENT,
   type StrikeMissionState,
-} from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
 
 function createAttackState(fuelMinutes: number = 10): StrikeMissionState {
   const initial = createStrikeMissionState(

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vite-plus/test";
-import { advanceMinutes } from "../../src/simulation/engine.js";
+import { advanceMinutes } from "@bluewave/combat/simulation";
 import { buildTestState } from "./advance.test.js";
-import { canonicalEventOrder } from "../../src/battleLedger.js";
+import { canonicalEventOrder } from "@bluewave/combat/battleResolution";
 
 describe("AC-12 DESIGN-38 pipeline order (steps 4-8)", () => {
   const STEP_ORDER = [

@@ -103,6 +103,11 @@ const AREAS = [
     blurb: "How the presentation-only strategic map's baked geography is produced.",
     nums: [244],
   },
+  {
+    name: "Engine architecture",
+    blurb: "Package interfaces, seams and module depth across the engine.",
+    nums: [271],
+  },
 ];
 
 // Records kept as historical provenance only: moved to docs/adr/archive/ and

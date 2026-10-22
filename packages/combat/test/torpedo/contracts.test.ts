@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
-import { REASON_CODES } from "../../src/reasonCodes.js";
+import { REASON_CODES } from "@bluewave/combat/core";
 import {
   ABOVE_WATER_FIXED_MAX_LAUNCH_SPEED_KNOTS,
   ABOVE_WATER_TRAINABLE_MAX_LAUNCH_SPEED_KNOTS,
@@ -62,7 +62,7 @@ import {
   TORPEDO_TUBE_CREW_CASUALTY_SHARE_BP,
   TORPEDO_SEAWATER_DENSITY_KG_PER_M3,
   TORPEDO_IMMEDIATE_FLOODING_MIN_DEPTH_M,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 
 describe("AC-24: torpedo_v1 contract + validate guard (fail closed)", () => {
   it("ships the *_v1 policy id and SHIPPED_TORPEDO_CONTRACT", () => {

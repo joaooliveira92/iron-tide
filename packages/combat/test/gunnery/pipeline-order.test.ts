@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vite-plus/test";
 import { RandomEngine } from "@bluewave/random";
-import { canonicalEventOrder } from "../../src/battleLedger.js";
+import { canonicalEventOrder } from "@bluewave/combat/battleResolution";
 import {
   neutralAccuracyFactors,
   neutralRateFactors,
   withGunneryStateHash,
   type GunneryBattery,
-} from "../../src/gunnery/index.js";
-import { advanceMinutes } from "../../src/simulation/engine.js";
+} from "@bluewave/combat/gunnery";
+import { advanceMinutes } from "@bluewave/combat/simulation";
 import { buildGunneryState } from "./ledger-order.test.js";
 
 const BATTLE_ID = "battle-9";

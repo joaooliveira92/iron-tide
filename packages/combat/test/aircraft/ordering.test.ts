@@ -5,13 +5,13 @@ import {
   compareProposals,
   compareSquadrons,
   compareBasingSlots,
-} from "../../src/aircraft/ordering.js";
+} from "@bluewave/combat/aircraft";
 import type {
   AircraftDevelopmentProject,
   AircraftProposal,
   SquadronState,
   BasingSlot,
-} from "../../src/aircraft/state.js";
+} from "@bluewave/combat/aircraft";
 
 describe("AC-23: aircraft canonical ordering", () => {
   it("orders development projects by startMonth then projectId", () => {

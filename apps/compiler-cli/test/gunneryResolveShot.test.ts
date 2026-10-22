@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vite-plus/test"
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { neutralAccuracyFactors, type GunneryAccuracyFactors } from "@bluewave/combat";
+import { neutralAccuracyFactors, type GunneryAccuracyFactors } from "@bluewave/combat/gunnery";
 import { runGunneryResolveShot, type GunneryResolveShotCliOptions } from "../src/commands.js";
 import { runCli } from "./runCli.js";
 

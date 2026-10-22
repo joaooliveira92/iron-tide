@@ -11,7 +11,7 @@ import {
   disruptionSeverityMultiplier,
   disruptionSeverityRank,
   resolveLayerDisruption,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 function record(severity: DisruptionSeverityType, layer: LayerId): DisruptionRecord {
   return { severity, bp: SafeInt(0), timestampMs: SafeInt(0), layer };

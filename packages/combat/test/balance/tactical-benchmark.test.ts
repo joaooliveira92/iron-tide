@@ -6,21 +6,15 @@ import { SafeInt } from "@bluewave/contracts";
 import { RandomLedger } from "@bluewave/random";
 import type { CompiledDesignVersion } from "@bluewave/campaign";
 import type { CompiledArmamentMount } from "@bluewave/armament";
-import {
-  resolveBattleAuto,
-  type BattleResolutionResult,
-} from "../../src/battleResolution/resolve.js";
-import { effectiveResistanceUm, shellPenetrationUm } from "../../src/battleResolution/damage.js";
+import { resolveBattleAuto, type BattleResolutionResult } from "@bluewave/combat/battleResolution";
+import { effectiveResistanceUm, shellPenetrationUm } from "@bluewave/combat/battleResolution";
 import {
   autoZonesForBelt,
   SHELL_MUZZLE_VELOCITY_MS,
   ZONE_HIT_WEIGHT_BP,
   type AutoResolutionZoneId,
-} from "../../src/battleResolution/constants.js";
-import {
-  determinePenetrationOutcome,
-  type PenetrationOutcome,
-} from "../../src/damage/armorModel.js";
+} from "@bluewave/combat/battleResolution";
+import { determinePenetrationOutcome, type PenetrationOutcome } from "@bluewave/combat/damage";
 import {
   makeAutoInput,
   makeNations,

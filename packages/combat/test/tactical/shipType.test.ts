@@ -5,7 +5,7 @@ import {
   CANONICAL_SHIP_TYPES,
   SHIP_TYPE_CLASSIFIER_VERSION,
   InvalidShipType,
-} from "../../src/tactical/shipType.js";
+} from "@bluewave/combat/tactical";
 import type { CompiledDesignVersion } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { makeDesign } from "../fixtures/unit-fixture.js";

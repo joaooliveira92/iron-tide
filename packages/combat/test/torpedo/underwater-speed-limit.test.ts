@@ -10,7 +10,7 @@ import {
   validateUnderwaterTubeSpeedLimitCommand,
   validateUnderwaterTubeSpeedLimitFiringSubstep,
   type TorpedoLaunchOutcome,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 
 const EXACT_25_KN = 12_861_100;
 const ABOVE_25_KN = 12_861_101;

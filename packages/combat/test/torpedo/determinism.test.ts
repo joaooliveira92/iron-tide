@@ -2,7 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { execFileSync } from "node:child_process";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { FLOAT_UNIT } from "../../src/battleResolution/constants.js";
+import { FLOAT_UNIT } from "@bluewave/combat/battleResolution";
 
 const thisDir = dirname(fileURLToPath(import.meta.url));
 const childScript = resolve(thisDir, "..", "..", "dist", "simulation", "run-torpedo-child.js");

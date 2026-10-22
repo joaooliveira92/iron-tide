@@ -5,7 +5,7 @@ import {
   AirCombatPolicy_v1,
   validateAirCombatContract,
   validateAllAirCombatContracts,
-} from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
 import {
   AIR_COMBAT_BASIS_POINTS,
   AIR_COMBAT_EXCHANGE_FACTOR_KEYS,
@@ -19,7 +19,7 @@ import {
   AIR_COMBAT_SURPRISE_SUBSEQUENT_BP,
   AIR_COMBAT_NUMERICAL_MIN_BP,
   AIR_COMBAT_DESTROYED_DAMAGE_RATIO_BP,
-} from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
 
 function parses(schema: Schema.ConstraintDecoder<unknown, never>, value: unknown): boolean {
   return Result.isSuccess(Schema.decodeUnknownResult(schema)(value));

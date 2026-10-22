@@ -4,10 +4,10 @@ import {
   assertDispositionValidity,
   applyDispositionToSlot,
   type DispositionResult,
-} from "../../src/aircraft/damaged-disposition.js";
-import { DAMAGED_AIRCRAFT_DISPOSITION_REQUIRED } from "../../src/aircraft/reasonCodes.js";
-import { AIRCRAFT_DAMAGED_DISPOSITIONS } from "../../src/aircraft/constants.js";
-import type { BasingSlot } from "../../src/aircraft/state.js";
+} from "@bluewave/combat/aircraft";
+import { DAMAGED_AIRCRAFT_DISPOSITION_REQUIRED } from "@bluewave/combat/aircraft";
+import { AIRCRAFT_DAMAGED_DISPOSITIONS } from "@bluewave/combat/aircraft";
+import type { BasingSlot } from "@bluewave/combat/aircraft";
 import type { BluewaveError } from "@bluewave/contracts";
 
 function damagedSlot(): BasingSlot {

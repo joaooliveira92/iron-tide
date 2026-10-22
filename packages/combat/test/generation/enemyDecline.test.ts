@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { enemyDeclineDrawDeclines, enemyDeclinePredicateHolds } from "../../src/index.js";
+import { enemyDeclineDrawDeclines, enemyDeclinePredicateHolds } from "@bluewave/combat/generation";
 
 describe("enemyDeclinePredicateHolds (T-1 07)", () => {
   it("compares enemy/player in basis points exactly, with the stated strictness", () => {

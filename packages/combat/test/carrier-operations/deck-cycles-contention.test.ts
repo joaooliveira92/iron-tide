@@ -18,7 +18,7 @@ import {
   validateCarrierDeckCycleStateContract,
   validateCarrierDeckContentionContract,
   SHIPPED_CARRIER_OPERATIONS_CONTRACTS,
-} from "../../src/carrier-operations/index.js";
+} from "@bluewave/combat/carrier-operations";
 
 function neutralPredicates(overrides: Partial<ContentionPredicates> = {}): ContentionPredicates {
   return {

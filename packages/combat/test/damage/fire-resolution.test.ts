@@ -4,8 +4,8 @@ import {
   getFireNightSignatureBp,
   computeFireSmokeStrength,
   resolveFireProgression,
-} from "../../src/damage/fireResolution.js";
-import { FIRE_SPREAD_CREATED } from "../../src/damage/reasonCodes.js";
+} from "@bluewave/combat/damage";
+import { FIRE_SPREAD_CREATED } from "@bluewave/combat/damage";
 
 function rngThat(returnValues: Record<string, number>): (stream: string) => number {
   return (stream: string) => returnValues[stream] ?? 0.5;

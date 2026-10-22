@@ -11,7 +11,7 @@ import {
   orderFriendlyFireChecksById,
   withSubmarineOperationsRecordHash,
   computeSubmarineOperationsRecordHash,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 describe("AC-17: §26 canonical ordering", () => {
   it("orderWarsById: deterministic ascending", () => {

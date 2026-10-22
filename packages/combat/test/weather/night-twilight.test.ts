@@ -6,9 +6,9 @@ import {
   daylightIdentificationMultiplierBp,
   DAYLIGHT_POLICY_TABLE,
   type DaylightProfile,
-} from "../../src/weather/night-twilight.js";
-import { WEATHER_PROFILE_INCOMPLETE } from "../../src/weather/reasonCodes.js";
-import { TIME_OF_DAY_STATES } from "../../src/weather/constants.js";
+} from "@bluewave/combat/weather";
+import { WEATHER_PROFILE_INCOMPLETE } from "@bluewave/combat/weather";
+import { TIME_OF_DAY_STATES } from "@bluewave/combat/weather";
 
 const testProfile: DaylightProfile = {
   daylightProfileId: "summer_solstice_51N_v1",

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import type { CompiledDesignVersion } from "@bluewave/campaign";
-import { resolveBattleAuto } from "../../src/battleResolution/resolve.js";
+import { resolveBattleAuto } from "@bluewave/combat/battleResolution";
 import { makeAutoInput, makeNations, type FixtureNationSet } from "./fixtures.js";
 
 const SEEDS = ["fid-a", "fid-b", "fid-c", "fid-d", "fid-e"];

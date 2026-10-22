@@ -1,21 +1,21 @@
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, SafeInt, isBluewaveError } from "@bluewave/contracts";
-import { advanceMinute, advanceMinutes } from "../../src/simulation/engine.js";
-import type { DamageContext, DamageTargetContext } from "../../src/battleResolution/damage.js";
-import { hpOfState, initialDamageState } from "../../src/battleResolution/damage.js";
-import { INVALID_SHIP_DAMAGE_STATE } from "../../src/damage/reasonCodes.js";
-import { FLOAT_UNIT, STABILITY_INITIAL_BP } from "../../src/battleResolution/constants.js";
-import type { ShipDamageState } from "../../src/damage/state.js";
-import { withDamageStateHash } from "../../src/damage/state.js";
+import { advanceMinute, advanceMinutes } from "@bluewave/combat/simulation";
+import type { DamageContext, DamageTargetContext } from "@bluewave/combat/battleResolution";
+import { hpOfState, initialDamageState } from "@bluewave/combat/battleResolution";
+import { INVALID_SHIP_DAMAGE_STATE } from "@bluewave/combat/damage";
+import { FLOAT_UNIT, STABILITY_INITIAL_BP } from "@bluewave/combat/battleResolution";
+import type { ShipDamageState } from "@bluewave/combat/damage";
+import { withDamageStateHash } from "@bluewave/combat/damage";
 import {
   applyDamageControlToState,
   requireDamageDesignSurface,
   resolveDamageControl,
   type DamageControlContext,
   type DamageControlStageResult,
-} from "../../src/damage/damageControlEngineWiring.js";
-import { createDefaultDamageControlResource } from "../../src/damage/damageControl.js";
-import type { FireRecord, FloodingSourceRecord } from "../../src/damage/state.js";
+} from "@bluewave/combat/damage";
+import { createDefaultDamageControlResource } from "@bluewave/combat/damage";
+import type { FireRecord, FloodingSourceRecord } from "@bluewave/combat/damage";
 import { buildTestState } from "../simulation/advance.test.js";
 
 function makeFire(locationId: string, intensityBp: number, cause = "gunnery"): FireRecord {

@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0271).
+highest existing number + 1 (the next number is ADR-0272).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -166,6 +166,14 @@ How the presentation-only strategic map's baked geography is produced.
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
 | 0244 | [ADR-0244-nation-borders-are-clipped-to-the-map-coastline.md](ADR-0244-nation-borders-are-clipped-to-the-map-coastline.md) | Nation borders are baked clipped to the map's coastline | accepted | — |
+
+## Engine architecture
+
+Package interfaces, seams and module depth across the engine.
+
+| # | File | Title | Status | Superseded by |
+| --- | --- | --- | --- | --- |
+| 0271 | [ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md](ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md) | The combat package exposes three verbs and subsystem seams | accepted | — |
 
 ## Archive
 

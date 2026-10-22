@@ -3,8 +3,8 @@ import {
   evaluateTerminalSeam,
   computeSinkingDuration,
   type TerminalInput,
-} from "../../src/damage/index.js";
-import { SHIP_SINKING, SHIP_FOUNDERED } from "../../src/damage/reasonCodes.js";
+} from "@bluewave/combat/damage";
+import { SHIP_SINKING, SHIP_FOUNDERED } from "@bluewave/combat/damage";
 
 function baseTerminalInput(overrides: Partial<TerminalInput> = {}): TerminalInput {
   return {

@@ -22,7 +22,7 @@ import {
   SUBMARINE_SEA_STATE_MAX,
   SUBMARINE_SEA_STATE_OPTIMUM_MIN,
   SUBMARINE_SEA_STATE_OPTIMUM_MAX,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 describe("AC-11: sea-state scale (§13)", () => {
   it("shipped range min is 0 and max is 9", () => {

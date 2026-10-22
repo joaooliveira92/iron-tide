@@ -23,7 +23,7 @@ import {
   validateCarrierNightRecoveryContract,
   validateCarrierWeatherSuspensionContract,
   SHIPPED_CARRIER_OPERATIONS_CONTRACTS,
-} from "../../src/carrier-operations/index.js";
+} from "@bluewave/combat/carrier-operations";
 
 function defaultHazardInputs(overrides: Partial<HazardExposureInputs> = {}): HazardExposureInputs {
   return {

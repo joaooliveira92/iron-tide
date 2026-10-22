@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
-import {
-  generateBattles,
-  GENERATION_STAGES,
-  BattleGenerator,
-} from "../../src/generation/pipeline.js";
+import { generateBattles, GENERATION_STAGES } from "@bluewave/combat/generation";
 import { defaultTwoNationFixture } from "../fixtures/generation-fixture.js";
 
 function inputs(snapshot: ReturnType<typeof defaultTwoNationFixture>) {
@@ -62,13 +58,6 @@ describe("BattleGenerator / generateBattles (AC-12 / INC-5)", () => {
     expect(result.records).toEqual([]);
     expect(result.manifests).toEqual([]);
     expect(result.rejections).toEqual([]);
-  });
-
-  it("BattleGenerator facade matches the pure entry point", () => {
-    const generator = new BattleGenerator();
-    const a = generator.generate(inputs(defaultTwoNationFixture()));
-    const b = generateBattles(inputs(defaultTwoNationFixture()));
-    expect(a.manifests[0]!.battleSeed).toBe(b.manifests[0]!.battleSeed);
   });
 
   it("rejected (limit-exceeded) opportunities are excluded without seed", () => {

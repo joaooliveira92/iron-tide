@@ -5,11 +5,11 @@ import {
   isShipNonViable,
   sideEliminated,
   type ShipViability,
-} from "../../src/battleResolution/viability.js";
-import { evaluateBattleEnd, DEFAULT_MAX_BATTLE_MINUTES } from "../../src/battleEnd.js";
-import { initialDamageState } from "../../src/battleResolution/damage.js";
-import { TACTICAL_STATE_INVARIANT_FAILED } from "../../src/reasonCodes.js";
-import type { ShipDamageState } from "../../src/damage/state.js";
+} from "@bluewave/combat/battleResolution";
+import { evaluateBattleEnd, DEFAULT_MAX_BATTLE_MINUTES } from "@bluewave/combat/battleResolution";
+import { initialDamageState } from "@bluewave/combat/battleResolution";
+import { TACTICAL_STATE_INVARIANT_FAILED } from "@bluewave/combat/core";
+import type { ShipDamageState } from "@bluewave/combat/damage";
 
 function viable(sideId: "ATTACKER" | "DEFENDER", assetId: string): ShipViability {
   return { assetId, sideId, damageState: initialDamageState(assetId) };

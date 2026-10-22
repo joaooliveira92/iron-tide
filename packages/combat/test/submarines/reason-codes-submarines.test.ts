@@ -16,7 +16,7 @@ import {
   SUBMARINE_ASSET_DOUBLE_ALLOCATED,
   SUBMARINE_PROVENANCE_INVALID,
   SUBMARINE_STATE_INVARIANT_FAILED,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 describe("AC-18: reason-code set-equality vs DESIGN-34 §27", () => {
   const shippedCodes = Object.values(SUBMARINE_REASON_CODES).filter(

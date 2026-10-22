@@ -11,7 +11,7 @@ import {
   type AreaMinePressureRecord,
   applySweptPressure,
   withAreaMinePressureRecordHash,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 function activeRecord(overrides: Partial<AreaMinePressureRecord> = {}): AreaMinePressureRecord {
   const base = {

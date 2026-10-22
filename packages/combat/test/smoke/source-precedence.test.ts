@@ -3,7 +3,7 @@ import {
   validateSmokeSourcePrecedence,
   computeSourcePrecedenceInfo,
   SMOKE_EQUIPMENT_MODE_CONFLICT,
-} from "../../src/smoke/index.js";
+} from "@bluewave/combat/smoke";
 
 describe("validateSmokeSourcePrecedence", () => {
   it("funnel + smokescreen OK", () => {

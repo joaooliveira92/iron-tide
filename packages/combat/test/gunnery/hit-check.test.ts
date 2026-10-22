@@ -6,7 +6,7 @@ import {
   gunneryHitStreamId,
   GUNNERY_ACCURACY_FINAL_MIN_BP,
   GUNNERY_ACCURACY_FINAL_MAX_BP,
-} from "../../src/gunnery/index.js";
+} from "@bluewave/combat/gunnery";
 
 const HIT_DRAW_MAX = GUNNERY_ACCURACY_FINAL_MAX_BP - 1;
 

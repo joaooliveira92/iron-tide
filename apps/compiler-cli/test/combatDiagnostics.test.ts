@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
-import { CombatInvariantError } from "@bluewave/combat";
+import { CombatInvariantError } from "@bluewave/combat/core";
 import { BluewaveError } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { reportBluewaveError, runCombatOperation } from "../src/combatDiagnostics.js";

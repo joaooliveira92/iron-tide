@@ -6,8 +6,8 @@ import {
   smokeEventRecordId,
   SMOKE_RECORD_KINDS,
   type SmokeEventRecord,
-} from "../../src/smoke/smokeRecords.js";
-import { SMOKE_RULESET_VERSION, SMOKE_FORMULA_VERSION } from "../../src/smoke/constants.js";
+} from "@bluewave/combat/smoke";
+import { SMOKE_RULESET_VERSION, SMOKE_FORMULA_VERSION } from "@bluewave/combat/smoke";
 
 describe("smokeEventRecordId", () => {
   it("produces deterministic id from fields", () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
 import type { CompiledArmamentMount } from "@bluewave/armament";
-import { projectBattle } from "../../src/battleResolution/project.js";
+import { projectBattle } from "@bluewave/combat/battleResolution";
 import {
   AREA_ID,
   CAMPAIGN_MONTH,

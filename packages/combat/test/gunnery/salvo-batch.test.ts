@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
-import { salvoBatchAccuracyBp, SALVO_BATCH_VERSION } from "../../src/gunnery/index.js";
-import { INVALID_GUNNERY_STATE } from "../../src/gunnery/reasonCodes.js";
+import { salvoBatchAccuracyBp, SALVO_BATCH_VERSION } from "@bluewave/combat/gunnery";
+import { INVALID_GUNNERY_STATE } from "@bluewave/combat/gunnery";
 
 describe("gunnery_salvo_batch_v1 (P-1 ticket 06) — salvo count sensitivity", () => {
   it("identity: N = 1 returns the per-round probability; N = 0 returns 0", () => {

@@ -12,7 +12,7 @@ import {
   FIRE_SPREAD_BASE_PROBABILITY_BP,
   FIRE_INTENSITY_DECAY_PER_MINUTE,
   FIRE_SPREAD_BASE_INTENSITY_BP,
-} from "../../src/damage/fireConstants.js";
+} from "@bluewave/combat/damage";
 
 describe("fireConstants: policy IDs", () => {
   it("firePolicyId is stable", () => {

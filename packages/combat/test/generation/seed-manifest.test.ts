@@ -3,13 +3,13 @@ import {
   buildManifest,
   computeManifestHash,
   canonicalizeManifest,
-} from "../../src/generation/manifest.js";
-import { BATTLE_MANIFEST_INVALID } from "../../src/generation/reasonCodes.js";
+} from "@bluewave/combat/generation";
+import { BATTLE_MANIFEST_INVALID } from "@bluewave/combat/generation";
 import {
   deriveBattleSeed,
   BATTLE_SEED_FAMILY,
   GENERATION_SEED_FORMULA_VERSION,
-} from "../../src/generation/seed.js";
+} from "@bluewave/combat/generation";
 
 function baseManifest() {
   return {

@@ -15,7 +15,7 @@ import {
   supplyMultiplierBp,
   technologyMultiplierBp,
   type MineLayingMultipliers,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 function multipliers(overrides: Partial<MineLayingMultipliers> = {}): MineLayingMultipliers {
   return {

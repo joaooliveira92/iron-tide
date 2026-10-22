@@ -8,7 +8,7 @@ import {
   NEUTRAL_VISIBILITY_MULTIPLIER_BP,
   validateSpottingSensorContract,
   SHIPPED_SPOTTING_SENSOR_CONTRACT,
-} from "../../src/spotting/index.js";
+} from "@bluewave/combat/spotting";
 
 const RANGE_UM = VISUAL_DETECTION_RANGE_NMI * NAUTICAL_MILE_UM;
 

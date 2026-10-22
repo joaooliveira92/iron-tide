@@ -6,7 +6,7 @@ import {
   validateSubmarineFriendlyIdentificationContract,
   computeMisidentificationProbability,
   SUBMARINE_FRIENDLY_IDENTIFICATION_BASE_BP,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 describe("AC-16: friendly identification (§23)", () => {
   it("base probability is 500 bp", () => {

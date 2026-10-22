@@ -5,8 +5,8 @@ import {
   generateStrategicWeather,
   type ClimateProfile,
   type StrategicWeatherGenerationInput,
-} from "../../src/weather/climate.js";
-import { WEATHER_GENERATION_PHASE, WEATHER_RULESET_VERSION } from "../../src/weather/constants.js";
+} from "@bluewave/combat/weather";
+import { WEATHER_GENERATION_PHASE, WEATHER_RULESET_VERSION } from "@bluewave/combat/weather";
 
 function temperateClimate(): ClimateProfile {
   const winterSeason = {

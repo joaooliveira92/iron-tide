@@ -11,7 +11,7 @@ import {
   SURFACE_FIRE_CONTROL_MINIMUM_BP,
   type FireMode,
   type GunneryState,
-} from "../../src/gunnery/index.js";
+} from "@bluewave/combat/gunnery";
 
 const SEVEN = [
   "CEASE_FIRE",

@@ -1,12 +1,13 @@
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
-import type { AutoResolverNation, TacticalBattleManifest } from "@bluewave/combat";
+import type { BattleManifest } from "@bluewave/combat";
 import {
   createPlayerBattleSession,
   playerBattleResult,
   playerBattleSessionHash,
   playerBattleView,
   runPlayerBattleToEnd,
-} from "@bluewave/combat";
+  type AutoResolverNation,
+} from "@bluewave/combat/battleResolution";
 import { battleOffersFromRulesets } from "@bluewave/content-compiler";
 import type { BattleOfferRules } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
@@ -175,7 +176,7 @@ export function runT2Acceptance(): T2Observation {
   if (strategicWeather === undefined) throw new Error("missing strategic weather");
 
   const session = createPlayerBattleSession({
-    manifest: manifest as TacticalBattleManifest,
+    manifest: manifest as BattleManifest,
     areaId: manifest.areaId,
     campaignMonth: "1880-01",
     attacker: nationOf(suspended, manifest.attackerId),

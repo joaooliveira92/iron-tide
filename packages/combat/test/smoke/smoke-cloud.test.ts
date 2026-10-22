@@ -6,7 +6,7 @@ import {
   SMOKE_SOURCE_TYPES,
   SMOKE_RULESET_VERSION,
   SMOKE_FORMULA_VERSION,
-} from "../../src/smoke/index.js";
+} from "@bluewave/combat/smoke";
 
 function validFunnelCloudParams() {
   return {

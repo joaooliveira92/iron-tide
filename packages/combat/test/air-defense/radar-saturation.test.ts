@@ -8,7 +8,7 @@ import {
   RADAR_MEDIUM_AA_REDUNDANT_GROUP_ACTIVE,
   radarMediumAaMarginalMultiplierBp,
   radarSaturationMarkers,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 const ALL_REQUIRED = {
   layer: "MEDIUM_AA" as const,

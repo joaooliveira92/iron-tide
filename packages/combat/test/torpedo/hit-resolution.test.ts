@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
-import type { ContactTrack } from "../../src/targeting.js";
+import type { ContactTrack } from "@bluewave/combat/tactical";
 import {
   advanceTorpedoTrack,
   assertTargetHitProfile,
@@ -22,7 +22,7 @@ import {
   type TargetHitProfile,
   type TorpedoContactBlocker,
   type TorpedoTrack,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 import type { CompiledTorpedoSpeedSetting } from "@bluewave/armament";
 
 const G7A = "ger_533mm_g7a_1934";

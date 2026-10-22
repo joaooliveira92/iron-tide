@@ -12,7 +12,7 @@ import {
   hasAmmunition,
   INVALID_AIR_DEFENSE_STATE,
   roundsForSystem,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 function directorState() {
   return {

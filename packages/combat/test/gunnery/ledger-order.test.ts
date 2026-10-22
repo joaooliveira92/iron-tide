@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import { RandomEngine } from "@bluewave/random";
-import { BattleLedger, canonicalEventOrder, type BattleEvent } from "../../src/battleLedger.js";
+import {
+  BattleLedger,
+  canonicalEventOrder,
+  type BattleEvent,
+} from "@bluewave/combat/battleResolution";
 import {
   resolveGunnery,
   GUNNERY_EVENT_PRIORITY,
@@ -9,12 +13,12 @@ import {
   neutralRateFactors,
   withGunneryStateHash,
   type GunneryBattery,
-} from "../../src/gunnery/index.js";
-import type { TacticalContact } from "../../src/contact/lifecycle.js";
-import { advanceMinutes } from "../../src/simulation/engine.js";
-import type { TacticalBattleState, TacticalShipUnit } from "../../src/tactical/index.js";
-import type { MovementState } from "../../src/movement.js";
-import { computeInitialMovementStates } from "../../src/simulation/spawn.js";
+} from "@bluewave/combat/gunnery";
+import type { TacticalContact } from "@bluewave/combat/contact";
+import { advanceMinutes } from "@bluewave/combat/simulation";
+import type { TacticalBattleState, TacticalShipUnit } from "@bluewave/combat/tactical";
+import type { MovementState } from "@bluewave/combat/movement";
+import { computeInitialMovementStates } from "@bluewave/combat/simulation";
 
 const BATTLE_ID = "battle-9";
 

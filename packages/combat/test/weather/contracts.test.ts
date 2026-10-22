@@ -13,11 +13,8 @@ import {
   SHIPPED_WEATHER_ENVIRONMENT_CONTRACT,
   validateWeatherEnvironmentContract,
   weatherEnvironmentPolicyId,
-} from "../../src/weather/constants.js";
-import {
-  WEATHER_V1_CONTRACTS,
-  validateAllWeatherContracts,
-} from "../../src/weather/contractRollup.js";
+} from "@bluewave/combat/weather";
+import { WEATHER_V1_CONTRACTS, validateAllWeatherContracts } from "@bluewave/combat/weather";
 
 describe("AC-15: weather contracts (*_v1 + SHIPPED + validate guard)", () => {
   it("weather_v1 contract ships *_v1 policy and validates", () => {

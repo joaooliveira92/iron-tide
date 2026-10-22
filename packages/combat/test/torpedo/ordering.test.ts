@@ -9,11 +9,11 @@ import {
   compareSystemEffects,
   compareTrackRunOrder,
   torpedoRecordOrder,
-} from "../../src/torpedoes/ordering.js";
-import { makeTorpedoRecord, torpedoRecordId } from "../../src/torpedoes/records.js";
-import { resolveTorpedoes } from "../../src/torpedoes/resolve.js";
-import type { TorpedoRecord, TorpedoRecordKind } from "../../src/torpedoes/records.js";
-import type { TorpedoContext } from "../../src/torpedoes/resolve.js";
+} from "@bluewave/combat/torpedoes";
+import { makeTorpedoRecord, torpedoRecordId } from "@bluewave/combat/torpedoes";
+import { resolveTorpedoes } from "@bluewave/combat/torpedoes";
+import type { TorpedoRecord, TorpedoRecordKind } from "@bluewave/combat/torpedoes";
+import type { TorpedoContext } from "@bluewave/combat/torpedoes";
 import {
   buildTorpedoScene,
   torpedoContext,

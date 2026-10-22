@@ -7,7 +7,7 @@ import {
   SHIPPED_GUNNERY_RATE_CONTRACT,
   validateGunneryRateContract,
   GUNNERY_STATE_INVARIANT_FAILED,
-} from "../../src/gunnery/index.js";
+} from "@bluewave/combat/gunnery";
 import {
   computeEffectiveReloadMs,
   neutralRateFactors,
@@ -16,8 +16,8 @@ import {
   resetReloadProgress,
   GUNNERY_RATE_DENOMINATOR,
   type GunneryRateFactors,
-} from "../../src/gunnery/index.js";
-import { GUNNERY_RATE_FACTOR_MISSING } from "../../src/gunnery/index.js";
+} from "@bluewave/combat/gunnery";
+import { GUNNERY_RATE_FACTOR_MISSING } from "@bluewave/combat/gunnery";
 
 describe("AC-5 rate-of-fire / reload (DESIGN-39 §4, INC-3)", () => {
   it("all-neutral factors (n=11) yield effectiveReloadMs === baseReloadMs exactly", () => {

@@ -1,13 +1,10 @@
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
-import {
-  resolveProtectionInteraction,
-  type ProtectionInput,
-} from "../../src/damage/protectionInteraction.js";
+import { resolveProtectionInteraction, type ProtectionInput } from "@bluewave/combat/damage";
 import {
   ARMOR_THICKNESS_LIMIT_EXCEEDED,
   ARMOR_QUALITY_MULTIPLIER_MISSING,
-} from "../../src/damage/reasonCodes.js";
+} from "@bluewave/combat/damage";
 
 const BELT_BASELINE: ProtectionInput = {
   projectileCaliberUm: 304_800,

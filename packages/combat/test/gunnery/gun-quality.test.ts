@@ -8,15 +8,15 @@ import {
   SHIPPED_GUN_QUALITY_CONTRACT,
   validateGunQualityContract,
   GUNNERY_STATE_INVARIANT_FAILED,
-} from "../../src/gunnery/index.js";
+} from "@bluewave/combat/gunnery";
 import {
   gunQualityMultipliers,
   gunQualityRateMultiplierBp,
   computeEffectiveReloadMs,
   neutralRateFactors,
   type GunneryRateFactors,
-} from "../../src/gunnery/index.js";
-import { GUN_QUALITY_OUT_OF_RANGE } from "../../src/gunnery/index.js";
+} from "@bluewave/combat/gunnery";
+import { GUN_QUALITY_OUT_OF_RANGE } from "@bluewave/combat/gunnery";
 
 describe("AC-6 gun quality (DESIGN-39 §5, INC-3)", () => {
   it("ships the exact §5 table for every quality -3..+2 (18 values)", () => {

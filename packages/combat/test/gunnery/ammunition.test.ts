@@ -5,7 +5,7 @@ import {
   GUNNERY_AMMUNITION_UNAVAILABLE,
   type GunneryState,
   type AmmunitionType,
-} from "../../src/gunnery/index.js";
+} from "@bluewave/combat/gunnery";
 
 function ammo(
   overrides: Partial<Record<AmmunitionType, number>> = {},

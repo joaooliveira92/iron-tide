@@ -2,12 +2,12 @@ import { describe, it, expect } from "vite-plus/test";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { BattleResolver } from "../../src/resolver.js";
-import { StrengthCalculator } from "../../src/strength.js";
-import { advanceMinutes } from "../../src/simulation/engine.js";
-import { resolveAirCombat } from "../../src/air-combat/engineWiring.js";
-import { createCapPatrolState } from "../../src/air-combat/cap-patrol.js";
-import { createStrikeMissionState } from "../../src/air-combat/strike-state.js";
+import { BattleResolver } from "@bluewave/combat/battleResolution";
+import { StrengthCalculator } from "@bluewave/combat/battleResolution";
+import { advanceMinutes } from "@bluewave/combat/simulation";
+import { resolveAirCombat } from "@bluewave/combat/air-combat";
+import { createCapPatrolState } from "@bluewave/combat/air-combat";
+import { createStrikeMissionState } from "@bluewave/combat/air-combat";
 import { SafeInt } from "@bluewave/contracts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

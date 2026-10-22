@@ -6,7 +6,7 @@ import {
   createCarrierOperationRecord,
   recordComparator,
   sortRecords,
-} from "../../src/carrier-operations/index.js";
+} from "@bluewave/combat/carrier-operations";
 
 describe("AC-31: Carrier operation records", () => {
   it("createCarrierOperationRecord builds a valid record", () => {

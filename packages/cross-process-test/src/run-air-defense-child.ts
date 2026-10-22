@@ -5,13 +5,13 @@ import {
   AttackType,
   Category,
   Layer,
-  advanceMinutes,
   computeAirDefenseStateHash,
   createAirDefenseAttack,
   createAirDefenseSystemDefinition,
   type AirDefenseState,
-  type TacticalBattleState,
-} from "@bluewave/combat";
+} from "@bluewave/combat/air-defense";
+import { advanceMinutes } from "@bluewave/combat/simulation";
+import type { TacticalBattleState } from "@bluewave/combat/tactical";
 
 function buildDefenderState(): AirDefenseState {
   const system = createAirDefenseSystemDefinition({

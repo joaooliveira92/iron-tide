@@ -6,9 +6,9 @@ import {
   computeAirCombatRecordHash,
   verifyAirCombatRecordHash,
   type AirCombatRecord,
-} from "../../src/air-combat/index.js";
-import { AIR_COMBAT_RULESET_VERSION } from "../../src/air-combat/index.js";
-import { CombatInvariantError } from "../../src/errors.js";
+} from "@bluewave/combat/air-combat";
+import { AIR_COMBAT_RULESET_VERSION } from "@bluewave/combat/air-combat";
+import { CombatInvariantError } from "@bluewave/combat/core";
 
 function makeDefaultRecordParams() {
   return {

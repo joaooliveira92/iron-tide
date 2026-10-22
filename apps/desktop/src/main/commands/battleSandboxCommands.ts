@@ -1,7 +1,7 @@
 import { campaignMonthId } from "@bluewave/campaign";
 import type { CampaignSnapshot, NationState, WarDeclaration } from "@bluewave/campaign";
 import type { BattleManifest, BattleResolution } from "@bluewave/campaign-engine";
-import { generateBattles, resolveBattleAuto } from "@bluewave/combat";
+import { generate, resolve } from "@bluewave/combat";
 import { SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import { resolveCampaignBattleReadiness, resolveShipStrength } from "@bluewave/phase-engine";
@@ -17,7 +17,7 @@ import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import type { CommandHandler } from "../runtime/commandProgram.js";
 import { toSaveableState } from "../saveHelpers.js";
 
-type CombatManifest = ReturnType<typeof generateBattles>["manifests"][number];
+type CombatManifest = ReturnType<typeof generate>["manifests"][number];
 
 interface StoredBattle {
   readonly sessionId: string;
@@ -300,7 +300,7 @@ export const generateBattleProgram: CommandHandler<"generateBattle"> = (payload)
     const working = colocated.snapshot;
     const strengthScale = payload.strengthScale ?? SANDBOX_DEFAULT_STRENGTH_SCALE;
 
-    const generation = generateBattles({
+    const generation = generate({
       snapshot: working,
       campaignMonth,
       campaignSeed: seed,
@@ -393,9 +393,9 @@ export const resolveBattleProgram: CommandHandler<"resolveBattle"> = (payload) =
       );
     }
 
-    let result: ReturnType<typeof resolveBattleAuto>;
+    let result: ReturnType<typeof resolve>;
     try {
-      result = resolveBattleAuto({
+      result = resolve({
         battleId: manifest.battleId,
         areaId: manifest.areaId,
         campaignMonth: entry.campaignMonth,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
-import { canonicalEventOrder } from "../../src/battleLedger.js";
+import { canonicalEventOrder } from "@bluewave/combat/battleResolution";
 
 function base(overrides: Record<string, unknown> = {}) {
   return {

@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vite-plus/test";
-import { resolveWeather, type WeatherEngineContext } from "../../src/weather/engine.js";
+import { resolveWeather, type WeatherEngineContext } from "@bluewave/combat/weather";
 import {
   withTacticalWeatherComponentsHash,
   computeTacticalWeatherComponentsHash,
   type BattleWeatherComponents,
-} from "../../src/weather/components.js";
-import type { ClimateProfile } from "../../src/weather/climate.js";
-import type { DaylightProfile } from "../../src/weather/night-twilight.js";
+} from "@bluewave/combat/weather";
+import type { ClimateProfile } from "@bluewave/combat/weather";
+import type { DaylightProfile } from "@bluewave/combat/weather";
 
 function daylightProfile(): DaylightProfile {
   return {

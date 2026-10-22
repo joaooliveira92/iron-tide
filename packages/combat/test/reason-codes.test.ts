@@ -2,8 +2,8 @@ import { describe, it, expect } from "vite-plus/test";
 import { readFileSync, globSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { TACTICAL_REASON_CODES } from "../src/tactical/reasonCodes.js";
-import { REASON_CODES } from "../src/reasonCodes.js";
+import { TACTICAL_REASON_CODES } from "@bluewave/combat/tactical";
+import { REASON_CODES } from "@bluewave/combat/core";
 
 const B2_SUBSET = [
   "TACTICAL_STATE_INVARIANT_FAILED",

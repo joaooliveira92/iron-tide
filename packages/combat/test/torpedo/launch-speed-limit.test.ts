@@ -10,7 +10,7 @@ import {
   UNDERWATER_TUBE_SPEED_LIMIT_EXCEEDED,
   validateAboveWaterLaunchSpeedLimit,
   type TorpedoLauncherDefinition,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 
 const FIXED_30_KN = 15_433_320;
 const TRAINABLE_35_KN = 18_005_540;

@@ -19,7 +19,7 @@ import {
   assertWindOverDeckSufficient,
   validateCarrierWindOverDeckContract,
   SHIPPED_CARRIER_OPERATIONS_CONTRACTS,
-} from "../../src/carrier-operations/index.js";
+} from "@bluewave/combat/carrier-operations";
 
 function headwindWindVector(overrides: Partial<WindVector> = {}): WindVector {
   return {

@@ -5,7 +5,7 @@ import {
   COASTAL_BATTERY_ERA_BANDS,
   createCoastalBatteryDefinition,
   batteryContentHash,
-} from "../../src/coastal-defense/index.js";
+} from "@bluewave/combat/coastal-defense";
 
 function validBatteryParams() {
   return {

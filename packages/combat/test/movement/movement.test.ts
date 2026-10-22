@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
-import { assertFixedPointMovement, type MovementState } from "../../src/movement/index.js";
+import { assertFixedPointMovement, type MovementState } from "@bluewave/combat/movement";
 
 function base(): MovementState {
   return {

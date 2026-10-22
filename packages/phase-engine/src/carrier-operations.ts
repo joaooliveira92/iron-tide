@@ -1,6 +1,5 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
-import type { CarrierOperationsState, CarrierOperationRecord } from "@bluewave/combat";
 import {
   CVL_MIN_CAPACITY,
   carrierClassification,
@@ -8,7 +7,9 @@ import {
   assertCarrierOperationsState,
   createCarrierOperationRecord,
   recordComparator,
-} from "@bluewave/combat";
+  type CarrierOperationsState,
+  type CarrierOperationRecord,
+} from "@bluewave/combat/carrier-operations";
 import type { RandomStream } from "@bluewave/random";
 import type { PhaseDescriptor } from "./registry.js";
 import { PhaseResource } from "./phase-resource.js";

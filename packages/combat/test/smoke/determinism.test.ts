@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
-import { resolveSmoke, type SmokeContext } from "../../src/smoke/engineWiring.js";
-import { createSmokeCloud } from "../../src/smoke/model.js";
-import type { SmokeCloud } from "../../src/smoke/model.js";
+import { resolveSmoke, type SmokeContext } from "@bluewave/combat/smoke";
+import { createSmokeCloud } from "@bluewave/combat/smoke";
+import type { SmokeCloud } from "@bluewave/combat/smoke";
 
 function makeCloud(overrides: Partial<SmokeCloud> & { smokeCloudId: string }): SmokeCloud {
   return createSmokeCloud({

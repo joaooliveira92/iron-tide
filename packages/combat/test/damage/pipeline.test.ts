@@ -10,8 +10,8 @@ import {
   type PipelineContext,
   wrapSimpleRunner,
   type SimpleStageRunner,
-} from "../../src/damage/index.js";
-import { type CompartmentDef, type ArmorZoneDef } from "../../src/damage/shipLayout.js";
+} from "@bluewave/combat/damage";
+import { type CompartmentDef, type ArmorZoneDef } from "@bluewave/combat/damage";
 
 function baseState(overrides: Partial<ShipDamageState> = {}): ShipDamageState {
   return {

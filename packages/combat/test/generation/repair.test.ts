@@ -7,8 +7,8 @@ import {
   REPAIR_MIN_PASSES,
   REPAIR_MAX_RANGE,
   BATTLE_COMPOSITION_REPAIR_V1,
-} from "../../src/generation/repair.js";
-import { BATTLE_COMPOSITION_IRREPARABLE } from "../../src/generation/reasonCodes.js";
+} from "@bluewave/combat/generation";
+import { BATTLE_COMPOSITION_IRREPARABLE } from "@bluewave/combat/generation";
 
 describe("composition repair (AC-9)", () => {
   it("uses only permitted ops and at most 3 passes", () => {

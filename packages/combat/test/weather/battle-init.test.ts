@@ -5,13 +5,13 @@ import {
   initializeBattleWeather,
   sameStrategicWeatherSource,
   type BattleWeatherInitializationSeed,
-} from "../../src/weather/battle-init.js";
-import { withStrategicWeatherStateHash } from "../../src/weather/strategic-state.js";
+} from "@bluewave/combat/weather";
+import { withStrategicWeatherStateHash } from "@bluewave/combat/weather";
 import {
   LOCAL_VARIATION_POLICY_NONE,
   LOCAL_VARIATION_POLICY_LIGHT,
-} from "../../src/weather/constants.js";
-import { INVALID_BATTLE_WEATHER_INITIALIZATION } from "../../src/weather/reasonCodes.js";
+} from "@bluewave/combat/weather";
+import { INVALID_BATTLE_WEATHER_INITIALIZATION } from "@bluewave/combat/weather";
 
 function strategicState(overrides: Record<string, unknown> = {}) {
   return withStrategicWeatherStateHash({

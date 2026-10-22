@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
-import type { TacticalBattleState, TacticalShipUnit } from "../../src/tactical/index.js";
-import type { MovementState } from "../../src/movement.js";
-import { advanceMinutes, advanceMinute } from "../../src/simulation/engine.js";
-import { computeInitialMovementStates } from "../../src/simulation/spawn.js";
-import { SUBSTEPS_PER_MINUTE } from "../../src/movement/constants.js";
+import type { TacticalBattleState, TacticalShipUnit } from "@bluewave/combat/tactical";
+import type { MovementState } from "@bluewave/combat/movement";
+import { advanceMinutes, advanceMinute } from "@bluewave/combat/simulation";
+import { computeInitialMovementStates } from "@bluewave/combat/simulation";
+import { SUBSTEPS_PER_MINUTE } from "@bluewave/combat/movement";
 
 function unit(id: string, sideId: "ATTACKER" | "DEFENDER", className: string): TacticalShipUnit {
   return {

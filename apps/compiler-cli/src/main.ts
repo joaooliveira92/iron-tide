@@ -78,13 +78,13 @@ General options:
 battle:generate options:
   --campaign-month <string>   Month to generate battles for (default: the
                                loaded snapshot's turnNumber)
-  --ruleset-version <string>  Ruleset version passed to generateBattles
+  --ruleset-version <string>  Ruleset version passed to generate
                                (default: the loaded snapshot's rulesetVersion)
-  --rng-version <string>      RNG version passed to generateBattles
+  --rng-version <string>      RNG version passed to generate
                                (default: "1", matching turn:execute)
-  --formula-version <string>  Formula version passed to generateBattles
+  --formula-version <string>  Formula version passed to generate
                                (default: "1", matching turn:execute)
-  --content-version <string>  Content version passed to generateBattles
+  --content-version <string>  Content version passed to generate
                                (default: "0.1.0", matching turn:execute)
 battle:advance-minute options:
   --state <path>              Required. Path to a JSON file with shape

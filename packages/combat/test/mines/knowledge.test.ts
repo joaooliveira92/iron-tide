@@ -13,7 +13,7 @@ import {
   visiblePressureTo,
   withAreaMinePressureRecordHash,
   withMineKnowledgeAssertionHash,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 function pressureRecord(): AreaMinePressureRecord {
   return withAreaMinePressureRecordHash({

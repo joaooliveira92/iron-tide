@@ -10,7 +10,7 @@ import type {
   TacticalBattleOutcome,
 } from "@bluewave/campaign-engine";
 import type { BattleHistoryView, StrategicMapView } from "@bluewave/campaign-engine";
-import type { PlayerBattleView } from "@bluewave/combat";
+import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
 import type { BridgeResult } from "./bridge-contract.js";
 import type { CampaignCommandMap, CampaignCommandName } from "./campaign-command-descriptors.js";
 

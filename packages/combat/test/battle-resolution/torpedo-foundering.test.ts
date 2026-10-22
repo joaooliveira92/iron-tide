@@ -2,7 +2,7 @@ import { describe, it, expect } from "vite-plus/test";
 import { compiledTorpedoOf } from "../fixtures/compiledTorpedoes.js";
 import { SafeInt } from "@bluewave/contracts";
 import type { CompiledDesignVersion } from "@bluewave/campaign";
-import { resolveBattleAuto } from "../../src/battleResolution/resolve.js";
+import { resolveBattleAuto } from "@bluewave/combat/battleResolution";
 import { makeAutoInput, makeNations, type FixtureNationSet } from "./fixtures.js";
 
 const WHITEHEAD = "whitehead_14in_1886";

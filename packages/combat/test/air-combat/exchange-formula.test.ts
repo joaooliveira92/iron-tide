@@ -6,7 +6,7 @@ import {
   computeCombatIndex,
   computeDefenderSurvivalFactorBp,
   type ExchangeInput,
-} from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
 import {
   AIR_COMBAT_BASIS_POINTS,
   AIR_COMBAT_QUALITY_OUT_OF_RANGE,
@@ -18,7 +18,7 @@ import {
   AIR_COMBAT_SURPRISE_FIRST_PASS_BP,
   AIR_COMBAT_SURPRISE_SUBSEQUENT_BP,
   AIR_COMBAT_DESTROYED_DAMAGE_RATIO_BP,
-} from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
 
 function makeRng(): RandomEngine {
   return new RandomEngine("test-exchange-seed");

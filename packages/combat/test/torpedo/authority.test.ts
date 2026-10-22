@@ -11,7 +11,7 @@ import {
   validateTorpedoLaunchAuthorityContract,
   verifyAuthorityGrant,
   type AuthorityGrant,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 
 function grant(overrides: Partial<AuthorityGrant> = {}): AuthorityGrant {
   return {

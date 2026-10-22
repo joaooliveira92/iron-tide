@@ -3,21 +3,21 @@ import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { RandomEngine } from "@bluewave/random";
-import { advanceMinute } from "../../src/simulation/engine.js";
-import type { ShipDamageState } from "../../src/damage/state.js";
-import { initialDamageState, type DamageContext } from "../../src/battleResolution/damage.js";
-import { autoZonesForBelt } from "../../src/battleResolution/constants.js";
+import { advanceMinute } from "@bluewave/combat/simulation";
+import type { ShipDamageState } from "@bluewave/combat/damage";
+import { initialDamageState, type DamageContext } from "@bluewave/combat/battleResolution";
+import { autoZonesForBelt } from "@bluewave/combat/battleResolution";
 import {
   withGunneryStateHash,
   neutralAccuracyFactors,
   neutralRateFactors,
   type GunneryBattery,
-} from "../../src/gunnery/index.js";
+} from "@bluewave/combat/gunnery";
 import {
   EMPTY_TUBE,
   TORPEDO_AMMUNITION_UNAVAILABLE,
   type TorpedoContext,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 import {
   buildTorpedoScene,
   torpedoContext,

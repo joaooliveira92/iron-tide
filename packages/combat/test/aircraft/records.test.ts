@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { createAircraftRecord, verifyAircraftRecordHash } from "../../src/aircraft/records.js";
+import { createAircraftRecord, verifyAircraftRecordHash } from "@bluewave/combat/aircraft";
 
 describe("AC-23: aircraft records", () => {
   it("creates a record with deterministic hash", () => {

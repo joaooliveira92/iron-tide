@@ -4,7 +4,7 @@ import {
   selectCoastalDefensePositions,
   validatePlacementZone,
   type CoastalDefenseZone,
-} from "../../src/coastal-defense/index.js";
+} from "@bluewave/combat/coastal-defense";
 
 const sampleZones: readonly CoastalDefenseZone[] = [
   {

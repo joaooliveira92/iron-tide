@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
-import { TORPEDO_REASON_CODES } from "../src/torpedoes/reasonCodes.js";
-import { REASON_CODES } from "../src/reasonCodes.js";
-import { DAMAGE_REASON_CODES } from "../src/damage/reasonCodes.js";
+import { TORPEDO_REASON_CODES } from "@bluewave/combat/torpedoes";
+import { REASON_CODES } from "@bluewave/combat/core";
+import { DAMAGE_REASON_CODES } from "@bluewave/combat/damage";
 
 const DESIGN_40_SECTION_29_CODES = [
   "INVALID_TORPEDO_MODEL_DEFINITION",

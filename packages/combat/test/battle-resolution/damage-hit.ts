@@ -1,6 +1,6 @@
-import type { GunneryEventRecord } from "../../src/gunnery/event.js";
-import { neutralAccuracyFactors } from "../../src/gunnery/accuracy.js";
-import { neutralRateFactors } from "../../src/gunnery/rateOfFire.js";
+import type { GunneryEventRecord } from "@bluewave/combat/gunnery";
+import { neutralAccuracyFactors } from "@bluewave/combat/gunnery";
+import { neutralRateFactors } from "@bluewave/combat/gunnery";
 
 export function makeGunneryHitRecord(opts: {
   battleId?: string;

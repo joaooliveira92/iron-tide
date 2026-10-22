@@ -10,7 +10,7 @@ import {
   type BombingAttackInput,
   type AirTorpedoAttackInput,
   type AirAttackDamagePackage,
-} from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
 
 function makeRng(): RandomEngine {
   return new RandomEngine("test-damage-integration");

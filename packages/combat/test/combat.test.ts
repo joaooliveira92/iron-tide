@@ -2,8 +2,8 @@
 import { SafeInt, BluewaveError, BP_ONE } from "@bluewave/contracts";
 import { RandomEngine, RandomStream } from "@bluewave/random";
 import type { BattleInstance, FleetState, NationState, Ship } from "@bluewave/campaign";
-import { BattleResolver } from "../src/resolver.js";
-import { StrengthCalculator } from "../src/strength.js";
+import { BattleResolver } from "@bluewave/combat/battleResolution";
+import { StrengthCalculator } from "@bluewave/combat/battleResolution";
 
 function makeShip(overrides: Partial<Ship> & { id: string }): Ship {
   return {

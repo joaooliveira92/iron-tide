@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
-import { resolveSmokeDriftDecay, getWindRetentionMultiplier } from "../../src/smoke/driftDecay.js";
+import { resolveSmokeDriftDecay, getWindRetentionMultiplier } from "@bluewave/combat/smoke";
 import {
   WIND_RETENTION_LT_5_BP,
   WIND_RETENTION_5_TO_15_BP,
   WIND_RETENTION_15_TO_25_BP,
   WIND_RETENTION_GE_25_BP,
-} from "../../src/smoke/constants.js";
-import { createSmokeCloud } from "../../src/smoke/model.js";
-import type { SmokeCloud } from "../../src/smoke/model.js";
+} from "@bluewave/combat/smoke";
+import { createSmokeCloud } from "@bluewave/combat/smoke";
+import type { SmokeCloud } from "@bluewave/combat/smoke";
 
 function makeCloud(overrides: Partial<SmokeCloud> & { smokeCloudId: string }): SmokeCloud {
   return createSmokeCloud({

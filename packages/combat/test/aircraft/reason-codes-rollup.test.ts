@@ -3,7 +3,7 @@ import {
   AIRCRAFT_REASON_CODES,
   AIRCRAFT_MISSION_ROLE_DEFERRED,
   RESOLVED_AIRCRAFT_DEVELOPMENT,
-} from "../../src/aircraft/reasonCodes.js";
+} from "@bluewave/combat/aircraft";
 
 const SHIPPED_SECTION_40_CODES = [
   "INVALID_AIRCRAFT_MODEL_DEFINITION",

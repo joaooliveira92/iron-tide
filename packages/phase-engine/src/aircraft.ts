@@ -1,5 +1,4 @@
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
-import type { AircraftNationState } from "@bluewave/combat";
 import {
   advanceAircraftDevelopment,
   computeDevelopmentProjectHash,
@@ -10,8 +9,9 @@ import {
   compareSquadrons,
   compareBasingSlots,
   createAircraftRecord,
+  type AircraftNationState,
   type AircraftRecord,
-} from "@bluewave/combat";
+} from "@bluewave/combat/aircraft";
 import type { RandomStream } from "@bluewave/random";
 import type { PhaseDescriptor } from "./registry.js";
 import { PhaseResource } from "./phase-resource.js";

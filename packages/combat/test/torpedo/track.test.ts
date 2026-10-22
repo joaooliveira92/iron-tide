@@ -17,7 +17,7 @@ import {
   torpedoTrackId,
   verifyTorpedoTrackHash,
   type TorpedoTrack,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 import type { CompiledTorpedoSpeedSetting } from "@bluewave/armament";
 
 const G7A = "ger_533mm_g7a_1934";

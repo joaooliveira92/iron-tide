@@ -16,7 +16,7 @@ import {
   type SweepingAllocationCandidate,
   sweepingAllocationOrder,
   validateMineRouteRiskContract,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 function risk(pressure: number, freshness: number, exposure: number, susceptibility: number) {
   return computeRouteRiskBp(SafeInt(pressure), SafeInt(freshness), exposure, susceptibility);

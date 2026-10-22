@@ -1,11 +1,7 @@
 import type { BattleInstance, CampaignWeatherState, NationState } from "@bluewave/campaign";
-import {
-  BATTLE_AUTO_RESOLUTION_FAILED,
-  BattleResolver,
-  generateBattles,
-  INVALID_BATTLE_WEATHER_INITIALIZATION,
-  resolveBattleAuto,
-} from "@bluewave/combat";
+import { generate, resolve } from "@bluewave/combat";
+import { BATTLE_AUTO_RESOLUTION_FAILED, BattleResolver } from "@bluewave/combat/battleResolution";
+import { INVALID_BATTLE_WEATHER_INITIALIZATION } from "@bluewave/combat/weather";
 import { isBluewaveError } from "@bluewave/contracts";
 import type { RandomEngine } from "@bluewave/random";
 import {
@@ -33,7 +29,7 @@ import type { MonthContext } from "./monthContext.js";
 import type { PhaseDescriptor } from "./registry.js";
 import { PhaseResource } from "./phase-resource.js";
 
-type AutoResolutionManifest = Parameters<typeof resolveBattleAuto>[0]["manifest"];
+type AutoResolutionManifest = Parameters<typeof resolve>[0]["manifest"];
 
 export function runBattleGenerationPhase(ctx: MonthContext): void {
   const { campaignMonth, randomSeed } = ctx;
@@ -43,7 +39,7 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
   );
   if (!hadWars) return;
 
-  const generated = generateBattles({
+  const generated = generate({
     snapshot: ctx.currentSnapshot,
     campaignMonth,
     campaignSeed: randomSeed,
@@ -279,7 +275,7 @@ function resolveViaTacticalAuto(
   const { campaignMonth, collector, randomSeed, randomLedger } = ctx;
 
   try {
-    const autoResult = resolveBattleAuto({
+    const autoResult = resolve({
       battleId: battle["id"],
       areaId: battle["areaId"],
       campaignMonth,

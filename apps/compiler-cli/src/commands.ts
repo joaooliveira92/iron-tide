@@ -45,22 +45,24 @@ import {
   resolveShipStrength,
 } from "@bluewave/phase-engine";
 import {
+  advance,
+  generate,
+  type BattleGenerationResult,
+  type MinuteResult,
+} from "@bluewave/combat";
+import {
   AMMUNITION_TYPES,
-  generateBattles,
-  advanceMinute,
   resolveAccuracy,
   resolveHit,
   reserveAndConsumeAmmunition,
-  type BattleGenerationResult,
-  type MinuteResult,
-  type TacticalBattleState,
-  type UnitOrders,
-  type GunneryAccuracyFactors,
-  type AmmunitionType,
   type AccuracyResolution,
-  type KeyedHitDraw,
   type AmmunitionReserve,
-} from "@bluewave/combat";
+  type AmmunitionType,
+  type GunneryAccuracyFactors,
+  type KeyedHitDraw,
+} from "@bluewave/combat/gunnery";
+import type { UnitOrders } from "@bluewave/combat/simulation";
+import type { TacticalBattleState } from "@bluewave/combat/tactical";
 import { RandomEngine } from "@bluewave/random";
 import { runCombatOperation } from "./combatDiagnostics.js";
 import { safePath } from "./safePath.js";
@@ -409,7 +411,7 @@ const UnitOrdersSchema = Schema.Struct({
 const TacticalBattleStateSchema: Schema.declare<TacticalBattleState> =
   Schema.declare<TacticalBattleState>(
     (value): value is TacticalBattleState => isUnknownRecord(value),
-    { expected: "tactical battle state (validated by advanceMinute)" },
+    { expected: "tactical battle state (validated by advance)" },
   );
 
 const BattleAdvanceMinuteFileSchema = Schema.Struct({
@@ -620,7 +622,7 @@ export const runBattleGenerate = (
     const rulesetVersion = options.rulesetVersion ?? snapshot.rulesetVersion;
     const result = runCombatOperation(
       () =>
-        generateBattles({
+        generate({
           snapshot,
           campaignMonth,
           campaignSeed: options.seed,
@@ -703,7 +705,7 @@ export const runBattleAdvanceMinute = (
     }
     const result = runCombatOperation(
       () =>
-        advanceMinute({
+        advance({
           state: parsed.state,
           minute: options.minute,
           observationTime: options.observationTime,

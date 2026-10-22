@@ -1,25 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
-import { BATTLE_RESOLUTION_REASON_CODES } from "../src/battleResolution/reasonCodes.js";
-import { REASON_CODES } from "../src/reasonCodes.js";
-import { GENERATION_REASON_CODES } from "../src/generation/reasonCodes.js";
+import { BATTLE_RESOLUTION_REASON_CODES } from "@bluewave/combat/battleResolution";
+import { REASON_CODES } from "@bluewave/combat/core";
+import { GENERATION_REASON_CODES } from "@bluewave/combat/generation";
 
 const DESIGN_38_SECTION_36_CODES = [
   "INVALID_TACTICAL_TIME_CONTRACT",
   "INVALID_TACTICAL_CLOCK",
-  "TACTICAL_COMMAND_AFTER_CUTOFF",
-  "INVALID_TACTICAL_COMMAND_TRANSITION",
-  "TACTICAL_COMMAND_AUTHORITY_DENIED",
-  "TACTICAL_COMMAND_OUT_OF_REACH",
-  "TACTICAL_COMMAND_TRANSMISSION_FAILED",
-  "TACTICAL_REALISM_COMMAND_PROHIBITED",
-  "TACTICAL_REALISM_EVALUATION_CONTRACT_MISSING",
   "TACTICAL_FOG_OF_WAR_VIOLATION",
-  "BATTLE_TURN_AWAY_TECHNOLOGY_UNAVAILABLE",
-  "BATTLE_TURN_AWAY_INELIGIBLE",
-  "BATTLE_TURN_AWAY_CONFUSION",
-  "BATTLE_TURN_AWAY_ABORTED",
-  "BATTLE_WITHDRAWAL_INCOMPLETE",
-  "BATTLE_EXIT_ZONE_INELIGIBLE",
   "AUTO_RESOLUTION_UNAVAILABLE",
   "AUTO_RESOLUTION_VALIDATION_FAILED",
   "TACTICAL_STATE_INVARIANT_FAILED",
@@ -38,7 +25,7 @@ const IN_SLICE_MARKERS = [
 ] as const;
 
 describe("AC-13: battle-resolution reason-code set-equality", () => {
-  it("every DESIGN-38 §36 code is already shipped by the shared + generation catalogs (nothing silently missing)", () => {
+  it("every surviving DESIGN-38 §36 code is shipped by the shared + generation catalogs", () => {
     const shared = new Set<string>([
       ...Object.values(REASON_CODES),
       ...Object.values(GENERATION_REASON_CODES),

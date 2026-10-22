@@ -16,8 +16,8 @@ import {
   underwaterExplosionReportStreamId,
   validateUnderwaterExplosionIdentificationContract,
   type UnderwaterExplosionContext,
-} from "../../src/mines/index.js";
-import { MINE_REPORT_CAUSE_UNCERTAIN } from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
+import { MINE_REPORT_CAUSE_UNCERTAIN } from "@bluewave/combat/mines";
 
 function ctx(overrides: Partial<UnderwaterExplosionContext> = {}): UnderwaterExplosionContext {
   return {

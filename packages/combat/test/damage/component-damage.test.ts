@@ -4,7 +4,7 @@ import {
   type ArmorZoneType,
   type ComponentState,
   type ComponentOutcome,
-} from "../../src/damage/index.js";
+} from "@bluewave/combat/damage";
 
 function makeComponent(
   id: string,

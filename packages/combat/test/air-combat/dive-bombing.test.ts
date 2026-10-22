@@ -4,7 +4,7 @@ import {
   computePenetrationMultiplier,
   AIR_COMBAT_DIVE_BOMBING_PENETRATION_MULTIPLIER_BP,
   AIR_COMBAT_LEVEL_BOMBING_PENETRATION_MULTIPLIER_BP,
-} from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
 
 describe("AC-11: Dive-bombing penetration", () => {
   describe("computeBombDamageMultiplier", () => {

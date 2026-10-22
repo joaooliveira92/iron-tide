@@ -8,9 +8,9 @@ import {
   TORPEDO_RECORD_KINDS,
   type TorpedoRecord,
   type TorpedoRecordBody,
-} from "../../src/torpedoes/records.js";
-import { TORPEDO_FORMULA_VERSION, TORPEDO_RULESET_VERSION } from "../../src/torpedoes/constants.js";
-import { resolveTorpedoes } from "../../src/torpedoes/resolve.js";
+} from "@bluewave/combat/torpedoes";
+import { TORPEDO_FORMULA_VERSION, TORPEDO_RULESET_VERSION } from "@bluewave/combat/torpedoes";
+import { resolveTorpedoes } from "@bluewave/combat/torpedoes";
 import {
   buildTorpedoScene,
   torpedoContext,

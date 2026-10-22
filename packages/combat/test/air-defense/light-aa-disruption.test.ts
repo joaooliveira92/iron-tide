@@ -13,8 +13,8 @@ import {
   AIR_DEFENSE_INVARIANT_FAILED,
   AIR_DEFENSE_TARGET_INELIGIBLE,
   LIGHT_AA_DISRUPTION_OPPORTUNITY_CREATED,
-} from "../../src/air-defense/index.js";
-import type { LightAaEligibilityResult } from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
+import type { LightAaEligibilityResult } from "@bluewave/combat/air-defense";
 
 const OPERABLE = {
   defenderSunk: false,

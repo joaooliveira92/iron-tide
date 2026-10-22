@@ -1,5 +1,5 @@
 import type { CampaignSnapshot, PresenceMeasurementRules } from "@bluewave/campaign";
-import type { ClimateProfile } from "@bluewave/combat";
+import type { ClimateProfile } from "@bluewave/combat/weather";
 import type { BattleOfferRules } from "@bluewave/content-schema";
 import type {
   CommandBody,

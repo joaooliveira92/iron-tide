@@ -8,8 +8,8 @@ import {
   GUNNERY_BASE_RELOAD_MS,
   SHIPPED_BATTLE_AUTO_RESOLUTION_V1,
   validateBattleAutoResolutionContract,
-} from "../../src/battleResolution/constants.js";
-import { DEFAULT_MAX_BATTLE_MINUTES } from "../../src/battleEnd.js";
+} from "@bluewave/combat/battleResolution";
+import { DEFAULT_MAX_BATTLE_MINUTES } from "@bluewave/combat/battleResolution";
 
 describe("AC-13: battle_auto_resolution_v1 contract + validate guard (fail-closed)", () => {
   it("ships *_v1 policy id and validates", () => {

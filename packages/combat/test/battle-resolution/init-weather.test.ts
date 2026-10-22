@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
-import { buildBattleWeather } from "../../src/battleResolution/weather.js";
+import { buildBattleWeather } from "@bluewave/combat/battleResolution";
 import {
   INVALID_BATTLE_WEATHER_INITIALIZATION,
   WEATHER_PROFILE_INCOMPLETE,
-} from "../../src/weather/reasonCodes.js";
-import { LOCAL_VARIATION_POLICY_NONE } from "../../src/weather/constants.js";
+} from "@bluewave/combat/weather";
+import { LOCAL_VARIATION_POLICY_NONE } from "@bluewave/combat/weather";
 import { makeAutoInput } from "./fixtures.js";
 
 describe("AC-3: battle weather initialization from the committed strategic state", () => {

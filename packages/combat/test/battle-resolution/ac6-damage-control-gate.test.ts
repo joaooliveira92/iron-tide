@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 import { RandomLedger } from "@bluewave/random";
-import { projectBattle } from "../../src/battleResolution/project.js";
-import { resolveBattleAuto } from "../../src/battleResolution/resolve.js";
-import { getFireRiskBp } from "../../src/damage/immediateFireFlooding.js";
+import { projectBattle } from "@bluewave/combat/battleResolution";
+import { resolveBattleAuto } from "@bluewave/combat/battleResolution";
+import { getFireRiskBp } from "@bluewave/combat/damage";
 import { makeAutoInput, makeNations } from "./fixtures.js";
 
 const FIRE_BASELINE_INPUT = makeAutoInput({

@@ -4,8 +4,8 @@ import {
   withStrategicWeatherStateHash,
   assertFixedPointStrategicWeather,
   type StrategicWeatherState,
-} from "../../src/weather/strategic-state.js";
-import { INVALID_STRATEGIC_WEATHER_STATE } from "../../src/weather/reasonCodes.js";
+} from "@bluewave/combat/weather";
+import { INVALID_STRATEGIC_WEATHER_STATE } from "@bluewave/combat/weather";
 
 function seed(overrides: Partial<StrategicWeatherState> = {}): StrategicWeatherState {
   return {

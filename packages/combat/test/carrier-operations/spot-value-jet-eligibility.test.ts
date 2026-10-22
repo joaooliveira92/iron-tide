@@ -31,7 +31,7 @@ import {
   HEAVY_JET_MIN_DISPLACEMENT_KG,
   LIGHT_JET_TECHNOLOGY,
   HEAVY_JET_TECHNOLOGY,
-} from "../../src/carrier-operations/index.js";
+} from "@bluewave/combat/carrier-operations";
 
 function defaultSpotInputs(overrides: Partial<SpotMultiplierInputs> = {}): SpotMultiplierInputs {
   return {

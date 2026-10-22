@@ -9,7 +9,7 @@ import {
   LIGHT_AA_SPEED_BANDS,
   lightAASpeedMultiplierBp,
   effectiveLightAAWindowMilliseconds,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 describe("AirDefense constants (DESIGN-45)", () => {
   describe("DIRECTOR_SCALING_TABLE (§12)", () => {

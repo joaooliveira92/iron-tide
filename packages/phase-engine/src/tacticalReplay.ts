@@ -5,11 +5,12 @@ import type {
   NationState,
 } from "@bluewave/campaign";
 import { campaignMonthId } from "@bluewave/campaign";
-import { computeManifestHash, resolveBattleAuto } from "@bluewave/combat";
+import { resolve } from "@bluewave/combat";
+import { computeManifestHash } from "@bluewave/combat/generation";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { RandomLedger } from "@bluewave/random";
 
-type AutoResolutionManifest = Parameters<typeof resolveBattleAuto>[0]["manifest"];
+type AutoResolutionManifest = Parameters<typeof resolve>[0]["manifest"];
 
 type RecordedBattleSurface = Pick<
   BattleResult,
@@ -148,9 +149,9 @@ export class TacticalReplayVerifier {
       };
     }
 
-    let auto: ReturnType<typeof resolveBattleAuto>;
+    let auto: ReturnType<typeof resolve>;
     try {
-      auto = resolveBattleAuto({
+      auto = resolve({
         battleId: battle["id"],
         areaId: battle["areaId"],
         campaignMonth,

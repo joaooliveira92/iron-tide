@@ -9,9 +9,9 @@ import {
   EXPANSION_PENALTY_BAND_1,
   EXPANSION_PENALTY_BAND_2,
   EXPANSION_PENALTY_BAND_3,
-} from "../../src/aircraft/expansion.js";
-import { SQUADRON_EXPANSION_INELIGIBLE } from "../../src/aircraft/reasonCodes.js";
-import type { SquadronState } from "../../src/aircraft/state.js";
+} from "@bluewave/combat/aircraft";
+import { SQUADRON_EXPANSION_INELIGIBLE } from "@bluewave/combat/aircraft";
+import type { SquadronState } from "@bluewave/combat/aircraft";
 import type { BluewaveError } from "@bluewave/contracts";
 
 function makeSquadron(overrides: Partial<SquadronState> = {}): SquadronState {

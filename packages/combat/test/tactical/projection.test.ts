@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import type { PermanentDivision } from "@bluewave/campaign";
-import { projectPermanentDivision } from "../../src/tactical/division.js";
-import { promoteTacticalUnit } from "../../src/tactical/unit.js";
+import { projectPermanentDivision } from "@bluewave/combat/tactical";
+import { promoteTacticalUnit } from "@bluewave/combat/tactical";
 import { makeDesign, makeShip } from "../fixtures/unit-fixture.js";
 
 function unitsFor(shipIds: string[]) {

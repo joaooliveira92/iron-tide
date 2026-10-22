@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
-import { promoteTacticalUnit, TACTICAL_UNIT_PROMOTION_INVALID } from "../../src/tactical/unit.js";
-import { classifyShip } from "../../src/tactical/shipType.js";
+import { promoteTacticalUnit, TACTICAL_UNIT_PROMOTION_INVALID } from "@bluewave/combat/tactical";
+import { classifyShip } from "@bluewave/combat/tactical";
 import { makeDesign, makeShip } from "../fixtures/unit-fixture.js";
 
 describe("TacticalShipUnit promotion (AC-1)", () => {

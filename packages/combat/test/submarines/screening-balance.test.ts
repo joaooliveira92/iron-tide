@@ -11,7 +11,7 @@ import {
   SUBMARINE_ELIGIBLE_ESCORT_TYPES,
   computeAttackOpportunityValue,
   createAttackOpportunityRecord,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 describe("AC-13: screening balance (§18)", () => {
   it("heavy ship types are BB, BC, B, CV, CVL, CA", () => {

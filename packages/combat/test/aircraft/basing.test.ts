@@ -8,10 +8,10 @@ import {
   allocateBasingSlot,
   releaseBasingSlot,
   removeBasingSlot,
-} from "../../src/aircraft/basing.js";
-import { AIRCRAFT_BASING_CAPACITY_INSUFFICIENT } from "../../src/aircraft/reasonCodes.js";
-import { AIRCRAFT_BASING_CLASSES } from "../../src/aircraft/constants.js";
-import type { BasingSlot } from "../../src/aircraft/state.js";
+} from "@bluewave/combat/aircraft";
+import { AIRCRAFT_BASING_CAPACITY_INSUFFICIENT } from "@bluewave/combat/aircraft";
+import { AIRCRAFT_BASING_CLASSES } from "@bluewave/combat/aircraft";
+import type { BasingSlot } from "@bluewave/combat/aircraft";
 import type { BluewaveError } from "@bluewave/contracts";
 
 describe("AC-21: basing classes enum", () => {

@@ -6,8 +6,8 @@ import {
   createDevelopmentProject,
   advanceAircraftDevelopment,
   computeDevelopmentProjectHash,
-} from "../../src/aircraft/index.js";
-import type { AircraftDevelopmentProject } from "../../src/aircraft/index.js";
+} from "@bluewave/combat/aircraft";
+import type { AircraftDevelopmentProject } from "@bluewave/combat/aircraft";
 
 function baseProject(
   overrides: Partial<AircraftDevelopmentProject> = {},

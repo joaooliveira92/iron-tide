@@ -12,7 +12,7 @@ import {
   type SubmarinePolicyDefinition,
   withSubmarinePolicyContentHash,
   verifySubmarinePolicyContentHash,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 describe("AC-3: three canonical policies with exact §5 target weights", () => {
   it("ships exactly the three canonical §5 policies with content hash", () => {

@@ -1,4 +1,5 @@
 import type { CampaignSnapshot } from "@bluewave/campaign";
+import type { BattleManifest } from "@bluewave/combat";
 import {
   advancePlayerBattleMinute,
   createPlayerBattleSession,
@@ -10,8 +11,7 @@ import {
   type PlayerBattleOrders,
   type PlayerBattleSession,
   type PlayerBattleStance,
-} from "@bluewave/combat";
-import type { TacticalBattleManifest } from "@bluewave/combat";
+} from "@bluewave/combat/battleResolution";
 import { Effect } from "effect";
 import type {
   AdvancePlayerBattleResult,
@@ -157,7 +157,7 @@ export const startPlayerBattleProgram: CommandHandler<"startPlayerBattle"> = (pa
     let session: PlayerBattleSession;
     try {
       session = createPlayerBattleSession({
-        manifest: manifest as TacticalBattleManifest,
+        manifest: manifest as BattleManifest,
         areaId: manifest.areaId,
         campaignMonth: pending.createdAt,
         attacker: nationOf(snapshot, manifest.attackerId, snapshot.designs),

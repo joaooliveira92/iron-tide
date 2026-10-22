@@ -9,7 +9,7 @@ import {
   MINE_SWEEP_RESISTANCE_MISSING,
   MINESWEEPING_SHIP_INELIGIBLE,
   type EffectiveSweepingMultipliers,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 function multipliers(
   overrides: Partial<EffectiveSweepingMultipliers> = {},

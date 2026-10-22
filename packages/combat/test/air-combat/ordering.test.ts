@@ -4,9 +4,9 @@ import {
   compareAirCombatRecords,
   canonicallySortedRecords,
   compareStrings,
-} from "../../src/air-combat/index.js";
-import { AIR_COMBAT_RULESET_VERSION } from "../../src/air-combat/index.js";
-import type { AirCombatRecord } from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
+import { AIR_COMBAT_RULESET_VERSION } from "@bluewave/combat/air-combat";
+import type { AirCombatRecord } from "@bluewave/combat/air-combat";
 
 function makeRecord(overrides: Partial<AirCombatRecord> = {}): AirCombatRecord {
   return {

@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
-import { resolveBattleAuto } from "../../src/battleResolution/resolve.js";
-import { BATTLE_END_PRECEDENCE, DEFAULT_MAX_BATTLE_MINUTES } from "../../src/battleEnd.js";
-import { AUTO_RESOLUTION_UNAVAILABLE } from "../../src/generation/reasonCodes.js";
-import { computeManifestHash } from "../../src/generation/manifest.js";
+import { resolveBattleAuto } from "@bluewave/combat/battleResolution";
+import {
+  BATTLE_END_PRECEDENCE,
+  DEFAULT_MAX_BATTLE_MINUTES,
+} from "@bluewave/combat/battleResolution";
+import { AUTO_RESOLUTION_UNAVAILABLE } from "@bluewave/combat/generation";
+import { computeManifestHash } from "@bluewave/combat/generation";
 import { makeAutoInput, makeManifest, makeNations } from "./fixtures.js";
 
 const SECTION_32_REASONS = [...BATTLE_END_PRECEDENCE];

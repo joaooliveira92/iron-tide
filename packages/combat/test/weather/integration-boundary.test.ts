@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
-import { BattleResolver, StrengthCalculator } from "../../src/index.js";
-import { advanceMinutes } from "../../src/simulation/engine.js";
+import { BattleResolver, StrengthCalculator } from "@bluewave/combat/battleResolution";
+import { advanceMinutes } from "@bluewave/combat/simulation";
 import { buildTestState } from "../simulation/advance.test.js";
 
 const ORDER = { a1: { orderedHeading: 90, orderedSpeedBp: 20_000 } };

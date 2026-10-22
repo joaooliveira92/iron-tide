@@ -14,7 +14,7 @@ import {
   isShipOperational,
   VACANT,
 } from "@bluewave/campaign";
-import { classifyShip } from "@bluewave/combat";
+import { classifyShip } from "@bluewave/combat/tactical";
 import type {
   AddShipToDivisionCommand,
   ChangeDivisionFlagshipCommand,

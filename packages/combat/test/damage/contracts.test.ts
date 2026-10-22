@@ -10,7 +10,7 @@ import {
   validateDamageContract,
   DAMAGE_STATE_INVARIANT_FAILED,
   type DamagePolicyContract,
-} from "../../src/damage/index.js";
+} from "@bluewave/combat/damage";
 
 describe("AC-15: damage_v1 base contract + validate guard (fail closed)", () => {
   it("ships the damage_v1 policy id and SHIPPED_DAMAGE_CONTRACT", () => {

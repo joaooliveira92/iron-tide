@@ -3,7 +3,7 @@ import { SafeInt } from "@bluewave/contracts";
 import {
   coastalArtilleryEffectivenessBp,
   type CoastalArtilleryEffectivenessInput,
-} from "../../src/coastal-defense/index.js";
+} from "@bluewave/combat/coastal-defense";
 
 function baseInput(
   overrides: Partial<CoastalArtilleryEffectivenessInput> = {},

@@ -4,7 +4,7 @@ import {
   computeFunnelSmokeDensity,
   FUNNEL_SMOKE_BASE_DENSITY,
   WEATHER_SMOKE_STATE_INVARIANT_FAILED,
-} from "../../src/smoke/index.js";
+} from "@bluewave/combat/smoke";
 
 function expectedDensity(fuelBp: number, powerBp: number, machCondBp: number): number {
   const raw = Math.floor(

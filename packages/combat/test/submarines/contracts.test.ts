@@ -15,7 +15,7 @@ import {
   SUBMARINE_TYPES,
   SUBMARINE_POLICIES,
   STRATEGIC_REPRESENTATIONS,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 describe("AC-21: submarine_strategic_asset_v1 contract + guard (fail closed)", () => {
   it("ships the *_v1 policy id and validates the shipped contract", () => {

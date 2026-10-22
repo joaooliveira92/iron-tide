@@ -7,7 +7,7 @@ import {
   type EligibleMineLayingSource,
   type MineLayingAction,
   type MineSource,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 function validSource(overrides: Partial<MineSource> = {}): MineSource {
   return {

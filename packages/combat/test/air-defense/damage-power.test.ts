@@ -9,7 +9,7 @@ import {
   effectiveDamageMultiplierBp,
   localControlMultiplierBp,
   powerMultiplierBp,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 function makeSystem(overrides: Record<string, unknown> = {}) {
   return createAirDefenseSystemDefinition({

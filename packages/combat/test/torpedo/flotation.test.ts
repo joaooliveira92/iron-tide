@@ -6,7 +6,7 @@ import {
   TORPEDO_FLOTATION_SCALE_EXPONENT,
   TORPEDO_IMPACT_ZONE_FLOTATION_MULTIPLIER_BP,
   TORPEDO_PROTECTION_LEAK_MULTIPLIER_BP,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 
 describe("AC-16: §17 base warhead flotation damage", () => {
   it("computes floor(eqMass × shipped rate) for the model team", () => {

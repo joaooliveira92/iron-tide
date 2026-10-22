@@ -41,16 +41,6 @@ function halfUpRatio(a: number, b: number, d: number): number {
   return toSafe("combat:resolver:halfUp", (2n * numerator + denominator) / (2n * denominator));
 }
 
-export interface BattleManifest {
-  id: string;
-  attackerId: string;
-  defenderId: string;
-  areaId: string;
-  attackerFleetIds: string[];
-  defenderFleetIds: string[];
-  timestamp: string;
-}
-
 export class BattleResolver {
   resolve(
     battle: BattleInstance,

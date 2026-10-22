@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
 import { Result, Schema } from "effect";
-import { formatContractIssues } from "../src/schema-issues.js";
-import { validateAirDefenseSystemDefinition } from "../src/air-defense/index.js";
+import { formatContractIssues } from "@bluewave/combat/core";
+import { validateAirDefenseSystemDefinition } from "@bluewave/combat/air-defense";
 
 const strict = { onExcessProperty: "error" } as const;
 

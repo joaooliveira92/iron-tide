@@ -17,7 +17,7 @@ import {
   submarineAswVulnerabilityBp,
   submarineNeutralAswVulnerabilityBp,
   registeredAswVulnerabilityBp,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 describe("AC-6: base proximity bands (§8)", () => {
   it("LOCAL band: distance 0 and 1", () => {

@@ -69,10 +69,10 @@ Rules and statuses: ADR-0267.
 | design-studies | Design study bookkeeping | - |
 | foreign-contract-monthly | Monthly foreign-contract, insight and war-policy steps | - |
 | phase-engine-infrastructure | Errors, ledger, phase guard, registry and replay verification | - |
-| combat-tactical-core | Tactical simulation loop, clock, targeting, command quantization, realism and battle generation | - |
-| combat-battle-resolution | Battle resolution, auto-resolution, endings, withdrawal and ledger | - |
+| combat-tactical-core | Tactical simulation loop, clock, targeting and battle generation | - |
+| combat-battle-resolution | Battle resolution, auto-resolution, endings and ledger | - |
 | combat-aircraft-model | Aircraft data model shared by air combat and carriers | - |
-| combat-shared-support | Error, reason-code and schema helpers | - |
+| combat-shared-support | Interface contract, error, reason-code and schema helpers | - |
 | read-content-catalogues | Read drawing-board, presentation and UI catalogue content | `inspectDrawingBoardContent`, `inspectPresentationContent`, `inspectUiCatalogue` |
 | debug-battle-drill-seed | Seed a campaign battle drill for end-to-end tests | `seedCampaignBattleDrill` |
 

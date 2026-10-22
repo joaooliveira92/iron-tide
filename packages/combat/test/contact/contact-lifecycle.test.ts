@@ -6,7 +6,7 @@ import {
   isStale,
   CONTACT_CONFIDENCE_DECAY_BP_PER_MINUTE,
   CONTACT_STALE_THRESHOLD_BP,
-} from "../../src/contact/index.js";
+} from "@bluewave/combat/contact";
 
 function fresh(overrides: Partial<Parameters<typeof createContactTrack>[0]> = {}) {
   return createContactTrack({

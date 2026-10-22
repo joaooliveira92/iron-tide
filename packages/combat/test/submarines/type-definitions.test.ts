@@ -11,7 +11,7 @@ import {
   verifySubmarineTypeDefinitionContentHash,
   withSubmarineTypeDefinitionContentHash,
   strategicRepresentationForType,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 function validDefinition(
   overrides: Partial<SubmarineTypeDefinition> = {},

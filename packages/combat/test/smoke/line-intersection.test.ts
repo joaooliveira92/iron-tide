@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
-import { computeLineSmokeIntersection } from "../../src/smoke/lineIntersection.js";
-import { SMOKESCREEN_REFERENCE_WIDTH_M, SMOKE_OPTICAL_MIN } from "../../src/smoke/constants.js";
-import { createSmokeCloud } from "../../src/smoke/model.js";
-import type { SmokeCloud } from "../../src/smoke/model.js";
+import { computeLineSmokeIntersection } from "@bluewave/combat/smoke";
+import { SMOKESCREEN_REFERENCE_WIDTH_M, SMOKE_OPTICAL_MIN } from "@bluewave/combat/smoke";
+import { createSmokeCloud } from "@bluewave/combat/smoke";
+import type { SmokeCloud } from "@bluewave/combat/smoke";
 
 const _CLOUD_RADIUS = SMOKESCREEN_REFERENCE_WIDTH_M / 2;
 

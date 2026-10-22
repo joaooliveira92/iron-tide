@@ -8,9 +8,9 @@ import {
   startReequipment,
   completeReequipment,
   REEQUIPMENT_DURATION_MONTHS,
-} from "../../src/aircraft/reequipment.js";
-import { SQUADRON_REEQUIPMENT_INELIGIBLE } from "../../src/aircraft/reasonCodes.js";
-import type { SquadronState } from "../../src/aircraft/state.js";
+} from "@bluewave/combat/aircraft";
+import { SQUADRON_REEQUIPMENT_INELIGIBLE } from "@bluewave/combat/aircraft";
+import type { SquadronState } from "@bluewave/combat/aircraft";
 import type { BluewaveError } from "@bluewave/contracts";
 
 function makeSquadron(overrides: Partial<SquadronState> = {}): SquadronState {

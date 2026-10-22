@@ -15,7 +15,7 @@ import {
   SUBMARINE_RELIABILITY_LOW_OPERATIONS,
   SUBMARINE_OPERATION_CLASSES,
   type SubmarineReliabilityVerdict,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 describe("AC-5: §7 exact multiplier table — all six bands + boundaries", () => {
   it("band 0..19 -> 4_000 at both edges", () => {

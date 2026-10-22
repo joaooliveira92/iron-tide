@@ -6,7 +6,7 @@ import {
   UNIDENTIFIED_CONTACT_IDENTITY,
   type FriendlyFireRiskInputs,
   type FriendlyTrack,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 
 const FRIENDLY = ["rn_cl_arethusa", "rn_dd_amazon"];
 

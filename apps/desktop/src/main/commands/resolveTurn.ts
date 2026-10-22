@@ -1,4 +1,4 @@
-import { BATTLE_DECLINE_NOT_ALLOWED } from "@bluewave/combat";
+import { BATTLE_DECLINE_NOT_ALLOWED } from "@bluewave/combat/generation";
 import { Effect } from "effect";
 import {
   computeInterruptionId,

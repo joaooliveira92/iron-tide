@@ -8,7 +8,7 @@ import {
   type GunneryCaliber,
   SHIPPED_GUNNERY_BALLISTICS_CONTRACT,
   validateGunneryBallisticsContract,
-} from "../../src/gunnery/index.js";
+} from "@bluewave/combat/gunnery";
 
 const RESEARCHED_BASE_RELOAD_MS_BY_CALIBER: Partial<Record<GunneryCaliber, number>> = {
   CAL_6IN_152MM: 7_000,

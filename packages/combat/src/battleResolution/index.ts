@@ -6,6 +6,12 @@ export * from "./viability.js";
 export * from "./weather.js";
 export * from "./project.js";
 export * from "./resolve.js";
-export type { LossCause } from "./causeOfLoss.js";
+export * from "./capabilities.js";
+export * from "./causeOfLoss.js";
 
 export * from "./playerSession.js";
+export * from "../autoResolution.js";
+export * from "../battleEnd.js";
+export * from "../battleLedger.js";
+export * from "../resolver.js";
+export * from "../strength.js";

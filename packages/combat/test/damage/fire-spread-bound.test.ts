@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
-import {
-  resolveFireProgression,
-  computeFireSmokeStrength,
-} from "../../src/damage/fireResolution.js";
-import { persistCreatedSources } from "../../src/battleResolution/damage.js";
-import { initialDamageState } from "../../src/battleResolution/damage.js";
-import { FIRE_SPREAD_CREATED } from "../../src/damage/reasonCodes.js";
-import type { FireRecord } from "../../src/damage/state.js";
+import { resolveFireProgression, computeFireSmokeStrength } from "@bluewave/combat/damage";
+import { persistCreatedSources } from "@bluewave/combat/battleResolution";
+import { initialDamageState } from "@bluewave/combat/battleResolution";
+import { FIRE_SPREAD_CREATED } from "@bluewave/combat/damage";
+import type { FireRecord } from "@bluewave/combat/damage";
 
 function rngAlways(v: number): (stream: string) => number {
   return () => v;

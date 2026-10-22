@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
-import { createCapPatrolState, type CapPatrolState } from "../../src/air-combat/index.js";
-import { AIR_COMBAT_INVALID_STATE } from "../../src/air-combat/index.js";
+import { createCapPatrolState, type CapPatrolState } from "@bluewave/combat/air-combat";
+import { AIR_COMBAT_INVALID_STATE } from "@bluewave/combat/air-combat";
 
 function validParams() {
   return {

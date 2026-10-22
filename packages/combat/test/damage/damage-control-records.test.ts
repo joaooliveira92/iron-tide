@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
-import {
-  resolveDamageControl,
-  type DamageControlContext,
-} from "../../src/damage/damageControlEngineWiring.js";
-import type { FireRecord, FloodingSourceRecord } from "../../src/damage/state.js";
-import { createDefaultDamageControlResource } from "../../src/damage/damageControl.js";
-import type { DamageControlResource } from "../../src/damage/damageControlConstants.js";
+import { resolveDamageControl, type DamageControlContext } from "@bluewave/combat/damage";
+import type { FireRecord, FloodingSourceRecord } from "@bluewave/combat/damage";
+import { createDefaultDamageControlResource } from "@bluewave/combat/damage";
+import type { DamageControlResource } from "@bluewave/combat/damage";
 
 function makeDefaultResource(): DamageControlResource {
   return createDefaultDamageControlResource();

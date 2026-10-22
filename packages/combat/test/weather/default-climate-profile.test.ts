@@ -1,12 +1,9 @@
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
-import {
-  defaultClimateProfile_v1,
-  DEFAULT_CLIMATE_PROFILE_ID,
-} from "../../src/weather/default-climate-profile.js";
-import { WEATHER_CLIMATE_VERSION } from "../../src/weather/constants.js";
-import { generateStrategicWeather } from "../../src/weather/climate.js";
-import { WEATHER_PROFILE_INCOMPLETE } from "../../src/weather/reasonCodes.js";
+import { defaultClimateProfile_v1, DEFAULT_CLIMATE_PROFILE_ID } from "@bluewave/combat/weather";
+import { WEATHER_CLIMATE_VERSION } from "@bluewave/combat/weather";
+import { generateStrategicWeather } from "@bluewave/combat/weather";
+import { WEATHER_PROFILE_INCOMPLETE } from "@bluewave/combat/weather";
 
 const SPAN_START = toLinearMonth(1880, 1);
 const SPAN_END = toLinearMonth(1970, 12);

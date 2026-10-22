@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import { assertDeclineAllowed, isDeclineAllowed } from "../../src/generation/acceptance.js";
-import { BATTLE_DECLINE_NOT_ALLOWED } from "../../src/generation/reasonCodes.js";
+import { assertDeclineAllowed, isDeclineAllowed } from "@bluewave/combat/generation";
+import { BATTLE_DECLINE_NOT_ALLOWED } from "@bluewave/combat/generation";
 
 describe("declining by acceptance class", () => {
   it("allows every class but the operationally unavoidable one, without throwing", () => {

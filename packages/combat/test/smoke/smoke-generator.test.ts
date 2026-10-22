@@ -9,7 +9,7 @@ import {
   SMOKE_GENERATOR_TECHNOLOGY_UNAVAILABLE,
   SMOKE_GENERATOR_CHARGES_EMPTY,
   SMOKESCREEN_COOLDOWN_ACTIVE,
-} from "../../src/smoke/index.js";
+} from "@bluewave/combat/smoke";
 
 function validActivateParams() {
   return {

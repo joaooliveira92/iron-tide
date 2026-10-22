@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vite-plus/test";
-import { advanceMinutes } from "../../src/simulation/engine.js";
-import { BattleLedger, canonicalEventOrder, type BattleEvent } from "../../src/battleLedger.js";
+import { advanceMinutes } from "@bluewave/combat/simulation";
+import {
+  BattleLedger,
+  canonicalEventOrder,
+  type BattleEvent,
+} from "@bluewave/combat/battleResolution";
 import { buildTestState } from "./advance.test.js";
 
 describe("AC-12 battle ledger ordering (DESIGN-38 §35)", () => {

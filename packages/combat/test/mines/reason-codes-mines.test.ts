@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { REASON_CODES } from "../../src/reasonCodes.js";
+import { REASON_CODES } from "@bluewave/combat/core";
 import {
   CONTROLLED_MINE_TRANSFER_DISPOSITION_MISSING,
   DUAL_EQUIPMENT_MODE_MISSING,
@@ -18,7 +18,7 @@ import {
   MINEFIELD_CLEARED,
   MINESWEEPING_SHIP_INELIGIBLE,
   MINE_SWEEP_RESISTANCE_MISSING,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 const DESIGN_30_CODES: readonly string[] = [
   "INVALID_MINE_TYPE_DEFINITION",

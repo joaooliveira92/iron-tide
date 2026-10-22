@@ -4,10 +4,10 @@ import {
   buildGenerationSnapshot,
   buildShip,
 } from "../fixtures/generation-fixture.js";
-import { determineMissionOpportunities } from "../../src/generation/opportunity.js";
-import { MAX_BATTLES_PER_AREA_PER_MONTH } from "../../src/generation/opportunity.js";
-import { BATTLE_MONTHLY_LIMIT_REACHED } from "../../src/generation/reasonCodes.js";
-import { assertOpportunityEligible } from "../../src/generation/opportunity.js";
+import { determineMissionOpportunities } from "@bluewave/combat/generation";
+import { MAX_BATTLES_PER_AREA_PER_MONTH } from "@bluewave/combat/generation";
+import { BATTLE_MONTHLY_LIMIT_REACHED } from "@bluewave/combat/generation";
+import { assertOpportunityEligible } from "@bluewave/combat/generation";
 
 describe("opportunity determination (AC-5)", () => {
   it("two co-located active-war sides produce opportunities ordered by war/area/priority/id", () => {

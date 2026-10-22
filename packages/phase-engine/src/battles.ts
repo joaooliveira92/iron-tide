@@ -17,13 +17,13 @@ import {
   WAR_SCORE_MAJOR,
   WAR_SCORE_MINOR,
 } from "@bluewave/campaign";
-import type { BattleResolutionResult } from "@bluewave/combat";
-import { BattleResolver, resolveBattleAuto } from "@bluewave/combat";
+import { resolve, type BattleResolutionResult } from "@bluewave/combat";
+import { BattleResolver } from "@bluewave/combat/battleResolution";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { countActiveWarsFor, settleWar } from "./diplomacy.js";
 
-type AutoResolutionManifest = Parameters<typeof resolveBattleAuto>[0]["manifest"];
+type AutoResolutionManifest = Parameters<typeof resolve>[0]["manifest"];
 
 export function resolveGenerationShipType(): string {
   return "BB";

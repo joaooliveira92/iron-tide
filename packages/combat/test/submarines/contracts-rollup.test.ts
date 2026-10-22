@@ -26,7 +26,7 @@ import {
   validateSubmarineScreeningBalanceContract,
   validateSubmarineMineLayingContract,
   validateSubmarineFriendlyIdentificationContract,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 describe("AC-21: contracts rollup — every shipped contract self-validates", () => {
   const contracts: [string, unknown, (c: never) => asserts c is never][] = [

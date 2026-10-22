@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
-import { projectBattle } from "../../src/battleResolution/project.js";
-import { BATTLE_AUTO_RESOLUTION_FAILED } from "../../src/battleResolution/reasonCodes.js";
-import { TACTICAL_UNIT_PROMOTION_INVALID } from "../../src/tactical/unit.js";
+import { projectBattle } from "@bluewave/combat/battleResolution";
+import { BATTLE_AUTO_RESOLUTION_FAILED } from "@bluewave/combat/battleResolution";
+import { TACTICAL_UNIT_PROMOTION_INVALID } from "@bluewave/combat/tactical";
 import { AREA_ID, CAMPAIGN_MONTH, makeNations, makeProjectionManifest } from "./fixtures.js";
 
 const RULESET = "b6_ruleset_v1";

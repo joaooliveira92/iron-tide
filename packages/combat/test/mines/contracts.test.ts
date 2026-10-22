@@ -8,7 +8,7 @@ import {
   SHIPPED_MINE_TYPE_DEFINITIONS,
   SHIPPED_MINE_TYPE_DEFINITIONS_CONTRACT,
   validateMineTypeDefinitionsContract,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 describe("AC-24: mine_type_definitions_v1 contract + validate guard (fail closed)", () => {
   it("ships the *_v1 policy id and SHIPPED_MINE_TYPE_DEFINITIONS_CONTRACT", () => {

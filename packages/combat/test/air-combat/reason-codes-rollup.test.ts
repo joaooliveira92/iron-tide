@@ -3,7 +3,7 @@ import {
   AIR_COMBAT_REASON_CODES_SHIPPED,
   AIR_COMBAT_REASON_CODES_DEFERRED,
   AIR_COMBAT_REASON_CODE_SET,
-} from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
 
 const SHIPPED_SPEC_CODES = [
   "AIR_COMBAT_INVALID_STATE",

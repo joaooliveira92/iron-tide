@@ -4,8 +4,11 @@ import type {
   DeclinedBattleRecord,
   NationState,
 } from "@bluewave/campaign";
-import { BATTLE_DECLINE_NOT_ALLOWED, isDeclineAllowed } from "@bluewave/combat";
-import type { AcceptanceClass } from "@bluewave/combat";
+import {
+  BATTLE_DECLINE_NOT_ALLOWED,
+  isDeclineAllowed,
+  type AcceptanceClass,
+} from "@bluewave/combat/generation";
 import type { BattleOfferRules } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { applyWarScoreDelta, type resolveBattleManifest } from "./battles.js";

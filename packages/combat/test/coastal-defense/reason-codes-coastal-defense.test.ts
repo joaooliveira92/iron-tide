@@ -8,7 +8,7 @@ import {
   COASTAL_DEFENSE_EFFECTIVENESS_FORMULA_MISSING,
   COASTAL_DEFENSE_INVARIANT_FAILED,
   COASTAL_DEFENSE_RESOLUTION_DEFERRED,
-} from "../../src/coastal-defense/index.js";
+} from "@bluewave/combat/coastal-defense";
 
 const SHIPPED_IN_SLICE_CODES = [
   "INVALID_COASTAL_BATTERY_DEFINITION",

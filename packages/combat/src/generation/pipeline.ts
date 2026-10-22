@@ -619,9 +619,3 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
 
   return { records, manifests, battleIds, rejections };
 }
-
-export class BattleGenerator {
-  generate(inputs: BattleGenerationInputs): BattleGenerationResult {
-    return generateBattles(inputs);
-  }
-}

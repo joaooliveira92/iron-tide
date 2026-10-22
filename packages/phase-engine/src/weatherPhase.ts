@@ -4,7 +4,7 @@ import {
   defaultClimateProfile_v1,
   generateStrategicWeather,
   WEATHER_PROFILE_INCOMPLETE,
-} from "@bluewave/combat";
+} from "@bluewave/combat/weather";
 import type { MonthContext } from "./monthContext.js";
 import type { PhaseDescriptor } from "./registry.js";
 import { PhaseResource } from "./phase-resource.js";

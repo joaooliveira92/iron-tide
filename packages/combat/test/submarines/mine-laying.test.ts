@@ -7,7 +7,7 @@ import {
   validateSubmarineMineLayingContract,
   isMinelayingCapable,
   evaluateMineLayingEligibility,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 describe("AC-15: submarine mine laying (§20)", () => {
   it("isMinelayingCapable: MINELAYING and MISSILE are capable", () => {

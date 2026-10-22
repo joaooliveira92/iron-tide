@@ -17,7 +17,7 @@ import {
   validateCarrierRecoveryPriorityContract,
   validateCarrierOrdnanceStateContract,
   SHIPPED_CARRIER_OPERATIONS_CONTRACTS,
-} from "../../src/carrier-operations/index.js";
+} from "@bluewave/combat/carrier-operations";
 
 describe("AC-28: Recovery priority", () => {
   it("has 7 priority levels in correct order", () => {
