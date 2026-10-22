@@ -2,7 +2,12 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved (2026-10-22) by the owner: **Option A**. The F-1 spec is [.ai/briefs/f-1-strategic-map.md](../briefs/f-1-strategic-map.md).
+It raised three narrower requests, which gate #222 until decided:
+[0037](0037-f-1-fog-of-war-information-tiers.md),
+[0038](0038-f-1-map-destination-granularity.md) and
+[0039](0039-f-1-scope-split-passage-gating-and-invasion-range.md).
+Note: the Evidence below predates ADR-0266, which resolved 0017-0023 and 0026; only the production authoring (#85) is open.
 
 ## Trigger
 
