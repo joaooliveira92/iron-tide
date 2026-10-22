@@ -1,6 +1,5 @@
 import { NON_SCALING, STROKE } from "./drafting.js";
 
-/** Warning glyph (triangle with a bar): the "selected with warning" state is shape, not just colour. */
 export function WarningGlyph({ x, y }: { readonly x: number; readonly y: number }) {
   return (
     <g data-testid="selection-warning" aria-hidden="true">

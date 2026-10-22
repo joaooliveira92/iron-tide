@@ -3,11 +3,6 @@ import * as React from "react";
 
 import { cn } from "../../lib/utils.js";
 
-/**
- * ReUI alert (https://reui.io/components/alert). With a leading icon it lays out as
- * icon | title + description | action; without one it stays a plain block so callers
- * that pass bare text keep flowing normally.
- */
 const alertVariants = cva(
   [
     "relative w-full rounded-lg border px-3 py-2.5 text-sm [&>svg:not([class*=size-])]:size-4",
@@ -85,7 +80,6 @@ interface AlertActionProps extends React.HTMLAttributes<HTMLDivElement> {
   ref?: React.Ref<HTMLDivElement> | undefined;
 }
 
-/** Buttons beside the alert text (right-aligned in the third grid column). */
 const AlertAction = ({ className, ref, ...props }: AlertActionProps) => (
   <div
     ref={ref}

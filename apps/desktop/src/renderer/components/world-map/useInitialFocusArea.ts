@@ -4,13 +4,8 @@ import { BORDERS_1880 } from "./borders-1880-data.js";
 import { homeFocusPoint } from "./campaign-map-join.js";
 import type { Projection } from "./projection.js";
 
-/**
- * How far the camera zooms in when the chart opens centred on a nation's home
- * waters. Matches the area tree's own "focus an area" scale (`WorldMapChart.focusArea`).
- */
 export const HOME_FOCUS_SCALE = 3.5;
 
-/** A nation whose home landmass spans more than this many degrees is a continent: the sea label alone is used. */
 const MAX_LAND_SPAN_DEGREES = 30;
 
 function outerBox(polygon: FlatPolygon): readonly [number, number, number, number] {
@@ -30,12 +25,6 @@ function outerBox(polygon: FlatPolygon): readonly [number, number, number, numbe
   return [minX, maxX, minY, maxY];
 }
 
-/**
- * Where to look for a nation: the middle of its main landmass together with its home waters, so
- * the player sees their own country and the sea they defend rather than the sea label alone
- * (Germany's North Sea label sits a long way west of Germany). A continent-sized landmass, or a
- * nation with no baked land, falls back to the waters' anchor.
- */
 export function nationFocusPoint(
   anchor: readonly [number, number],
   nationId: string | null,
@@ -63,17 +52,10 @@ export function nationFocusPoint(
   ];
 }
 
-/** The only camera capability this hook needs (keeps it unit-testable without a DOM). */
 export interface FocusableCamera {
   readonly focusOn: (x: number, y: number, scale?: number) => void;
 }
 
-/**
- * Centres the camera on a nation's home-waters campaign area once per mount —
- * the Overview opens on the player's own waters. A null/unknown area, or one
- * whose fixture polygon has no geometry, leaves the camera untouched (it stays
- * at "fit world") rather than guessing.
- */
 export function useInitialFocusArea(
   camera: FocusableCamera,
   campaignAreaId: string | null,
@@ -85,10 +67,8 @@ export function useInitialFocusArea(
     const point = homeFocusPoint(campaignAreaId);
     if (point === null) return;
     const target = nationFocusPoint(point, nationId);
-    // The anchor is lon/lat; the camera works in projected world units (as the coastline does).
     const [x, y] = projection.project(target[0] - centre, target[1]);
     camera.focusOn(x, y, HOME_FOCUS_SCALE);
-    // `camera` is a stable bundle of refs; only a different area should re-focus.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaignAreaId, nationId]);
 }

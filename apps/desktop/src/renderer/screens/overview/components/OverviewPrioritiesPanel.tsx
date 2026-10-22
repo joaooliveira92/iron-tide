@@ -3,11 +3,6 @@ import type { Screen } from "../../../shell/campaign-screen-registry.js";
 import { PrioritiesCard } from "../PrioritiesCard.js";
 import type { PrioritiesState } from "../usePriorities.js";
 
-/**
- * The home screen's "Immediate priorities" panel: a collapsible host that owns
- * only the panel chrome (title, urgency badge and default openness). The card
- * owns the content and the screen decides placement (CC-1, CC-2).
- */
 export function OverviewPrioritiesPanel({
   state,
   priorityCount,

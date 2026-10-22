@@ -13,20 +13,12 @@ import {
 
 export interface ViewToolbarProps {
   readonly view: ShipView;
-  /** Switches the drawing; the chosen view's overlays are turned on and the others off. */
   readonly onView: (view: ShipView) => void;
   readonly overlays: ReadonlySet<ShipOverlay>;
-  /** Switches one overlay, leaving every other exactly as it was. */
   readonly onToggleOverlay: (overlay: ShipOverlay) => void;
 }
 
-/**
- * The central workspace's controls: the view selector above the drawing and the independent overlay toggles
- * beside it. Presentation only; the drawing reads their values.
- */
 export function ViewToolbar({ view, onView, overlays, onToggleOverlay }: ViewToolbarProps) {
-  // The views are one segmented group; Layers stands apart so the toolbar can wrap it onto the next line in a narrow
-  // stage instead of spilling out of the column.
   return (
     <>
       <ButtonGroup aria-label="Ship view">

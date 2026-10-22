@@ -14,23 +14,6 @@ import { CommandFailed } from "../runtime/commandError.js";
 import { withSchema } from "../runtime/commandProgram.js";
 import { currentRevision, submitPlayerCommand } from "./playerCommandSupport.js";
 
-/**
- * The Diplomacy & War screen's two bridge commands
- * (desktop-diplomacy-war INC-1/INC-2), as native `CommandProgram`s (INC-5;
- * ADR-0159). Session lookup (`SESSION_NOT_FOUND`), `expectedRevision` against
- * `snapshot.turnNumber` (`REVISION_MISMATCH` with the session untouched),
- * deterministic envelope construction, and `transportRequestId` idempotency —
- * the same conventions every player-command family follows.
- *
- * Authority (spec D1): the desktop ONLY queues a real engine envelope
- * through the shared per-session command queue (`CommandQueueStore`, drained
- * by `commitMonth`); the engine (`MonthExecutor` command_collection, order
- * 6.5 diplomacy phase) is the sole mutator of politics/wars/blockades.
- * Issue-time validity is the ENGINE's own `CommandLifecycle.validate()` —
- * never a hand-mirror — so an invalid request surfaces the engine's stable
- * code + message verbatim (e.g. `ALREADY_AT_WAR`, `DECLARE_WAR_INVALID_TARGET`,
- * `BLOCKADE_NOT_AT_WAR`) and leaves the session/queue untouched.
- */
 export const inspectDiplomacyScreenProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -73,12 +56,6 @@ interface DiplomacyCommandPlan {
   readonly discriminator: string;
 }
 
-/**
- * The per-command descriptor: its idempotency discriminator (the nontrivial
- * operand — target / partner / war / area) and its engine body. Keeping BOTH in
- * one entry (rather than two switches over the same union) means a new
- * diplomacy command is a single addition — the two can no longer drift apart.
- */
 interface DiplomacyCommandDescriptor<T extends DiplomacyCommandBody> {
   readonly discriminator: (command: T) => string;
   readonly toEngineBody: (
@@ -92,13 +69,6 @@ type DiplomacyCommandPlanner = (
   playerSlotId: string,
 ) => DiplomacyCommandPlan;
 
-/**
- * Adapts a descriptor for one union member into a uniform planner. The table is
- * keyed by the discriminant and only ever entered via {@link planDiplomacyCommand}'s
- * `command.type` lookup, so asserting that `command` is member `T` is sound;
- * TypeScript cannot express that correlation across an indexed lookup (same
- * registry discipline as `campaignBridge.ts`).
- */
 function planWith<T extends DiplomacyCommandBody["type"]>(
   descriptor: DiplomacyCommandDescriptor<Extract<DiplomacyCommandBody, { type: T }>>,
 ): DiplomacyCommandPlanner {
@@ -111,8 +81,6 @@ function planWith<T extends DiplomacyCommandBody["type"]>(
   };
 }
 
-/** One entry per wire command: its engine body and idempotency discriminator.
- * `nationId` is always the session's player slot, never on the wire. */
 const DIPLOMACY_COMMANDS: {
   readonly [K in DiplomacyCommandBody["type"]]: DiplomacyCommandPlanner;
 } = {
@@ -176,8 +144,6 @@ const DIPLOMACY_COMMANDS: {
   }),
 };
 
-/** Maps the wire command onto the engine's own `CommandBody` and its
- * idempotency discriminator; `nationId` is always the session's player slot. */
 function planDiplomacyCommand(
   command: DiplomacyCommandBody,
   playerSlotId: string,

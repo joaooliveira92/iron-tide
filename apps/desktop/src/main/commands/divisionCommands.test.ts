@@ -37,11 +37,8 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const GENERATED_ARTIFACT = resolve(__dirname, "../../../../..", "content", "generated", "1880");
 
-// One shared runtime for every division program; the services delegate to the
-// same in-memory session/queue registries the tests populate directly.
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-/** Runs a command program through the desktop service graph and projects its wire envelope. */
 async function runProgram<A>(program: CommandProgram, payload: unknown): Promise<BridgeResult<A>> {
   return projectCommandExit(await runtime.runPromiseExit(program(payload))) as BridgeResult<A>;
 }
@@ -65,11 +62,6 @@ const DIVISION_TYPES = new Set([
   "DissolveDivision",
 ]);
 
-/**
- * Fleet-organization bridge tests against the real production pack: the engine's
- * own validator decides legality at issue time, the queue holds a real envelope,
- * and only `commitMonth` mutates divisions.
- */
 describe("division commands", () => {
   let saveRoot: string;
 
@@ -137,7 +129,6 @@ describe("division commands", () => {
     );
   }
 
-  /** The player's real unassigned ships, grouped by area (production UK fleets). */
   async function shipsByArea(sessionId: string) {
     const v = await view(sessionId);
     const byArea = new Map<string, string[]>();
@@ -147,11 +138,6 @@ describe("division commands", () => {
     return { v, byArea };
   }
 
-  /**
-   * Dissolves the production start's seeded divisions so a scenario can found
-   * new ones from the freed ships. Each dissolve is a real command applied by a
-   * month commit, so the session advances one turn per division.
-   */
   async function freeSeededDivisions(sessionId: string): Promise<DivisionScreenProjection> {
     let current = await view(sessionId);
     while (current.divisions.length > 0) {
@@ -238,7 +224,6 @@ describe("division commands", () => {
         preferredFormation: "LINE_AHEAD",
       });
       expect(body["divisionId"]).toBe(newDivisionId("uk", freed.revision, flagship));
-      // The authoritative state is untouched until the month is committed.
       expect(getCampaignSession("create")!.state.snapshot.nations.get("uk")!.divisions).toEqual([]);
     });
 
@@ -418,10 +403,6 @@ describe("division commands", () => {
       );
       expect(add.outcome).toBe("success");
       await commit("cross", rev);
-      // DESIGN-26 lists DIVISION_LOCATION_CONFLICT, but the engine's add path does not
-      // apply it: the division now spans two areas. The Fleet UI therefore offers only
-      // same-area ships; if the engine starts enforcing the rule, this test should flip
-      // to a rejection (see docs/research/rtw3-parity-engine-roadmap.md).
       const now = await view("cross");
       expect(now.divisions[0]!.ships.map((s) => s.shipId)).toEqual([homeShip, farShip]);
     });
@@ -430,9 +411,6 @@ describe("division commands", () => {
       registerSession("reorder");
       const freed = await freeSeededDivisions("reorder");
       const { v, byArea } = await shipsByArea("reorder");
-      // At least two ships share an area; the engine does not enforce the
-      // same-area rule on AddShipToDivision (pinned above), so a third may come
-      // from elsewhere to give the division something to reorder.
       const pair = [...byArea.values()].find((ids) => ids.length >= 2)!;
       const flagship = pair[0]!;
       const second = pair[1]!;

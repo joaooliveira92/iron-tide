@@ -1,16 +1,3 @@
-/**
- * The chart's view model: every piece of data the SVG and chrome draw, derived
- * once from the interaction state, the active world source, the camera and the
- * palette. This is the one place that knows how a marker/label ends up
- * positioned, so `WorldMapChart` itself stays a composition root rather than a
- * second body of logic.
- *
- * Which world is drawn — the fixture or a live campaign — is no longer decided
- * here: it is a `WorldMapSource` (see `world-map-source.ts`) selected once up
- * front. Every deriver below consumes that interface, so a new source is a new
- * implementation rather than an edit to each of them.
- */
-
 import { useEffect, useMemo, useState } from "react";
 import { AREAS, AREAS_BY_ID, EDGES, PASSAGES_BY_ID, type AreaControl } from "./fixture-world.js";
 import { EMPTY_LIVE_OVERLAY, type LiveWorldMapOverlay } from "./campaign-map-join.js";
@@ -55,7 +42,6 @@ import {
   type WorldMapSource,
 } from "./world-map-source.js";
 
-/** A passage badge and the edge it gates, projected for the current centre. */
 export interface PassageMark {
   readonly id: string;
   readonly from: readonly [number, number];
@@ -76,15 +62,10 @@ export interface WorldMapModel {
   readonly portMarks: readonly PortMark[];
   readonly fleetMarks: readonly FleetMark[];
   readonly passageMarks: readonly PassageMark[];
-  /** Passive sea lanes from the same graph the route reading searches. */
   readonly lanes: readonly LaneMark[];
-  /** Regions that hold ships, strongest bars normalised across the whole map. */
   readonly strengths: readonly RegionStrength[];
-  /** Sideways shift in screen px per region id, so neighbouring glyphs do not overlap. */
   readonly glyphOffsets: ReadonlyMap<string, number>;
-  /** Whether the map is small enough that glyph bars use the compact scale. */
   readonly compactGlyphs: boolean;
-  /** Areas a live campaign has no data for. */
   readonly unavailable: ReadonlySet<string>;
   readonly anchorOf: (areaId: string) => readonly [number, number] | undefined;
   readonly placedLabels: readonly PlacedLabel[];
@@ -109,7 +90,6 @@ export interface WorldMapModelInput {
   readonly projection: Projection;
   readonly palette: MapPalette;
   readonly camera: MapCamera;
-  /** The chart root, scanned for floating chrome that labels must avoid. */
   readonly rootRef: React.RefObject<HTMLDivElement | null>;
 }
 
@@ -122,7 +102,6 @@ export function useWorldMapModel({
   camera,
   rootRef,
 }: WorldMapModelInput): WorldMapModel {
-  /** The one branch on which world is drawn; everything below is source-agnostic. */
   const source = useMemo<WorldMapSource>(
     () =>
       overlay.source === "campaign" ? campaignWorldMapSource(overlay) : fixtureWorldMapSource(),
@@ -135,7 +114,6 @@ export function useWorldMapModel({
   );
   const areasById = useMemo(() => new Map(areas.map((area) => [area.id, area])), [areas]);
 
-  /** The baked 1880 borders of the major powers, tinted by nation and themed. */
   const borderSets = useMemo<BorderSet[]>(
     () =>
       state.layers.borders
@@ -152,8 +130,6 @@ export function useWorldMapModel({
     [palette, state.layers.borders],
   );
 
-  // Bumped once the camera settles (and on mount), so label placement tracks
-  // the real view without running per frame.
   const [viewVersion, setViewVersion] = useState(0);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -173,7 +149,6 @@ export function useWorldMapModel({
     const singles = portSingles(source.ports, projection, state.centre);
     const factor = camera.getTransform().scale * camera.getPixelsPerUnit();
     return buildPortMarks(singles, camera.zoomBand === 0, factor);
-    // `viewVersion` is the settled-camera signal (see placedLabels).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camera.zoomBand, source.ports, projection, state.centre, viewVersion]);
 
@@ -182,7 +157,6 @@ export function useWorldMapModel({
     const singles = fleetSingles(source.fleets, anchors);
     const factor = camera.getTransform().scale * camera.getPixelsPerUnit();
     return buildFleetMarks(singles, camera.zoomBand === 0, factor, portMarks);
-    // `viewVersion` is the settled-camera signal (see placedLabels).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [areasById, camera.zoomBand, source.fleets, portMarks, viewVersion]);
 
@@ -208,10 +182,8 @@ export function useWorldMapModel({
     () => new Map(strengths.map((region) => [region.areaId, region])),
     [strengths],
   );
-  // Read at the settled-camera signal, like labels, so a window resize re-scales the glyphs.
   const compact = useMemo(
     () => compactGlyphs(camera.svgRef.current?.clientHeight ?? 0),
-    // `viewVersion` is the settled-camera signal (see placedLabels).
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [viewVersion],
   );
@@ -234,7 +206,6 @@ export function useWorldMapModel({
       }),
       factor,
     );
-    // `viewVersion` is the settled-camera signal (see placedLabels).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [strengths, areasById, compact, viewVersion]);
   const anchorOf = useMemo(() => (areaId: string) => areasById.get(areaId)?.label, [areasById]);
@@ -296,7 +267,6 @@ export function useWorldMapModel({
       svg,
       root: rootRef.current,
     });
-    // `viewVersion` is the settled-camera signal; the camera object itself is a stable bundle of refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     areas,
@@ -341,13 +311,11 @@ export function useWorldMapModel({
 
   const routeSet = useMemo(() => new Set(route?.path ?? []), [route]);
 
-  /** Selected-area inspector: the source's own view of the area, or null. */
   const summary = useMemo(
     () => (state.selected === null ? null : source.summarise(state.selected)),
     [source, state.selected],
   );
 
-  /** The area tree's rows: campaign areas when live, else the fixture areas (no regions). */
   const treeRows = useMemo<AreaTreeRow[]>(() => {
     if (source.campaignAreas !== null) {
       return campaignTreeRows(

@@ -61,7 +61,6 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
     [state.designs, selectedDesignId],
   );
 
-  // Stable handlers so the memo()'d catalog and wizard only re-render on real changes.
   const openWizard = useCallback(() => setWizardOpen(true), []);
   const closeWizard = useCallback(() => setWizardOpen(false), []);
   const openBatch = useCallback(() => {
@@ -77,8 +76,6 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
     closeWizard();
   }, [submit, closeWizard]);
 
-  // The batch dialog previews the engine's names/dock fit for the current design and quantity (SB3-R30/R33). The
-  // wire schema only carries a positive quantity; the engine decides `1..12` and reports its own reason otherwise.
   useEffect(() => {
     if (
       !batchOpen ||
@@ -102,8 +99,6 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
     };
   }, [batchOpen, batchBuilderNationId, selectedDesignId, batchQuantity, previewBatch]);
 
-  // The foreign builder list and (when one is chosen) the contract terms (SB3-R20/R34). Fetched whenever the dialog is
-  // open so the builder selector can offer foreign yards; the engine derives every figure, including the refusal.
   useEffect(() => {
     if (
       !batchOpen ||

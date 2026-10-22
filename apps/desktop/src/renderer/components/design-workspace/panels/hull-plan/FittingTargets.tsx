@@ -9,29 +9,20 @@ import { NON_SCALING, STROKE } from "./drafting.js";
 import { fittingPoint, PLAN_H, PLAN_W, type PlanFrame } from "./geometry.js";
 import { WarningGlyph } from "./WarningGlyph.js";
 
-/** The anatomy plate for each broadside, so a port fitting is never drawn on the far side of the hull. */
 export interface AnatomyViews {
   readonly starboard: AnatomyShip;
   readonly port: AnatomyShip;
 }
 
 const SIDE = { CENTRE: "centreline", PORT: "port", STBD: "starboard" } as const;
-/** Hit radius around a fitting marker, plan units: larger than the 4-unit dot so it is easy to click. */
 const HIT_R = 8;
 
 export interface FittingTarget {
   readonly instanceId: string;
   readonly name: string;
-  /** Conventional mount name (A, B, X...) for guns and tubes. */
   readonly mount: string | undefined;
 }
 
-/**
- * The fittings as selectable targets: a transparent overlay on the plan (same viewBox, same `fittingPoint`
- * geometry) so the drawing stays one image. A toolbar of toggle buttons: one tab stop, arrow keys walk the
- * fittings bow to stern, Enter or Space selects (`aria-pressed`). While a plan tool is placing or moving, the overlay steps aside (unavailable state) so the tool's
- * click layer gets the clicks.
- */
 export function FittingTargets({
   frame,
   draft,
@@ -44,9 +35,7 @@ export function FittingTargets({
   readonly draft: DesignDraft;
   readonly targets: ReadonlyMap<string, FittingTarget>;
   readonly disabled: boolean;
-  /** Whether the selected fitting has findings above advisory. */
   readonly warns: (instanceId: string) => boolean;
-  /** The isometric anatomy plates. Omitted, the hover card keeps its plain name. */
   readonly anatomy?: AnatomyViews;
 }) {
   const store = useSelectionStore();
@@ -118,7 +107,6 @@ export function FittingTargets({
                 />
               }
             >
-              {/* Hover and keyboard focus: a thin ring. */}
               <circle
                 cx={x}
                 cy={y}

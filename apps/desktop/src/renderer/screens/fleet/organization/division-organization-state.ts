@@ -65,7 +65,6 @@ const COMMAND_LABELS: Record<DivisionCommandOutcome["bodyType"], string> = {
   DissolveDivision: "Dissolve division",
 };
 
-/** The engine applies queued commands when the month is committed, never immediately. */
 export function acceptDivisionCommand(value: DivisionCommandOutcome): {
   readonly patch: Partial<DivisionOrganizationState>;
   readonly notice: string;
@@ -84,16 +83,10 @@ export function formationLabel(formation: string): string {
   return humanizeId(formation);
 }
 
-/** A readable title for a division: its role and flagship (divisions have no authored names). */
 export function divisionTitle(division: Pick<DivisionView, "role" | "flagshipName">): string {
   return `${roleLabel(division.role)} division — ${division.flagshipName}`;
 }
 
-/**
- * Unassigned ships a division may be offered. The engine accepts a ship from another
- * area at commit time without complaint (a known gap, see the engine roadmap), so the
- * UI only offers ships that are where the division is.
- */
 export function shipsAvailableToAdd(
   division: Pick<DivisionView, "areaId" | "ships">,
   unassigned: readonly UnassignedShipView[],
@@ -109,7 +102,6 @@ export interface AreaGroup {
   readonly ships: readonly UnassignedShipView[];
 }
 
-/** Unassigned ships grouped by where they are, areas sorted by name. */
 export function groupUnassignedByArea(unassigned: readonly UnassignedShipView[]): AreaGroup[] {
   const groups = new Map<string, { areaName: string; ships: UnassignedShipView[] }>();
   for (const ship of unassigned) {
@@ -122,7 +114,6 @@ export function groupUnassignedByArea(unassigned: readonly UnassignedShipView[])
     .sort((a, b) => a.areaName.localeCompare(b.areaName));
 }
 
-/** "costs 5 experience and 10 cohesion" — an honest cost line, omitting zero parts. */
 export function costText(cost: DivisionPenalty): string {
   const parts: string[] = [];
   if (cost.experience > 0) parts.push(`${cost.experience} experience`);
@@ -131,6 +122,5 @@ export function costText(cost: DivisionPenalty): string {
 }
 
 export function canRemoveShip(division: Pick<DivisionView, "ships">): boolean {
-  // Removing the last ship would leave no division; that is what Dissolve is for.
   return division.ships.length > 1;
 }

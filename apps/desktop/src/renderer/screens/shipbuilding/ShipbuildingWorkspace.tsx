@@ -105,24 +105,17 @@ import { sectionStatuses } from "./section-status.js";
 import { focusEntityControl, placeForEntity } from "./selection.js";
 import { useInspectorLayout } from "./useInspectorLayout.js";
 
-/** Stable id so validating again updates the toast instead of stacking another. */
 const VALIDATION_TOAST_ID = "shipbuilding-validation";
 const VALIDATION_TOAST_MS = 4000;
 
 type OverflowDialog = "start" | "file" | "history" | "alternatives" | "names";
 
-/** The battery each Armament tab shows; "other" holds no battery. */
 const TAB_BATTERY: { readonly [tab: string]: BatteryRole } = {
   main: "MAIN",
   secondary: "SECONDARY",
   torpedoes: "TORPEDO",
 };
 
-/**
- * The Shipbuilding workspace: navigate by ship system (the design map), edit through a contextual inspector, and
- * watch the consequences without losing sight of the ship. It hosts the same designer as the Drawing Board (the
- * shared design-workspace layer) and the same campaign working design, under a different layout.
- */
 export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: string }) {
   const campaignMonth = useCampaignMonthId();
   const format = usePresentationFormat();
@@ -187,23 +180,18 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
   const [place, setPlace] = useState<InspectorPlace>(() => placeOf("overview"));
   const openSection = (section: DesignSectionId, tab?: string) => setPlace(placeOf(section, tab));
   const [shipClassName, setShipClassName] = useState("");
-  // Design priorities are the player's recorded intent: presentation-only, never written to the design.
   const [priorities, setPriorities] =
     useState<Readonly<Record<PriorityId, PriorityLevel>>>(DEFAULT_PRIORITIES);
   const setPriority = (id: PriorityId, level: PriorityLevel) =>
     setPriorities((p) => ({ ...p, [id]: level }));
-  // The Systems "show unavailable technology" filter is off by default: an early design is not overwhelmed.
   const [showSystemsUnavailable, setShowSystemsUnavailable] = useState(false);
-  // The armour region the Protection editor has selected, highlighted on the plan (presentation only).
   const [armourHighlight, setArmourHighlight] = useState<ArmourRegionId | null>(null);
   const selectArmourRegion = (region: ArmourRegionId | null) => {
     setArmourHighlight(region);
-    // Reveal the armour zones so the highlight is visible even from the default top view.
     if (region !== null) setOverlays((current) => new Set(current).add("armour"));
   };
   const [dialog, setDialog] = useState<OverflowDialog | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
-  // Suggest walks the nation's name list for this ship type; the position is only presentation state.
   const [nameCursor, setNameCursor] = useState(0);
 
   useRestoredDraftToast({
@@ -213,7 +201,6 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
   });
 
   const findingCounts = `${view.counts.BLOCKING} blocking · ${view.counts.CRITICAL} critical · ${plural(view.counts.WARNING, "warning")}`;
-  // Submission needs a class name, so inside a campaign an unnamed design is not yet ready to finish.
   const needsName = sessionId !== undefined && shipClassName.trim() === "";
   const status =
     view.valid && needsName
@@ -250,9 +237,6 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
   }, [draft, content]);
   const statuses = useMemo(() => sectionStatuses(findings, fittings), [findings, fittings]);
 
-  // The nation-aware environment (the session's own is nation-agnostic): it carries the designing nation's naval
-  // profile, so the plant comparison, class-name lists and reference-design browser all read it. Each plant preview is
-  // compiled against it only while the Machinery section is open (each preview is a full compile).
   const nationEnv = useMemo(
     () => content.environmentFor(state.month, draft.nationId),
     [content, state.month, draft.nationId],
@@ -273,8 +257,6 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
     batteries,
     findings,
   };
-  // Drawing → inspector: pinning a ship element opens the section/tab that edits it and focuses its control.
-  // Only a change of the pinned entity navigates: linked/finding churn from focus must not steal focus back.
   const lastPinned = useRef<ShipEntity | null>(null);
   useEffect(() => {
     const unsubscribe = selection.subscribe(() => {
@@ -285,7 +267,6 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
       if (pinned === null) return;
       const at = placeForEntity(pinned, { draft, content });
       if (at === null) return;
-      // The new place must render before its control exists to focus, so flush that one update synchronously.
       flushSync(() => setPlace(at));
       focusEntityControl(inspectorBodyRef.current ?? document, pinned);
     });
@@ -297,7 +278,6 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
   const tab = section.tabs.find((t) => t.id === place.tab) ?? section.tabs[0]!;
   const body = tabBody(place);
 
-  /** The tab's own fittings (listed, edited and added there); null when the tab holds none and none exist. */
   function fittingsPanel(at: InspectorPlace): ReactNode {
     const categories = categoriesOf(at);
     const hasFittings =
@@ -320,7 +300,6 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
     );
   }
 
-  /** A tab made only of fittings: the fittings, or a plain not-available note when there are none to fit. */
   function fittingsOnly(at: InspectorPlace): ReactNode {
     return (
       fittingsPanel(at) ?? (
@@ -502,13 +481,11 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
         className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border bg-background"
         onKeyDown={(e) => handleUndoShortcut(e, { ...state, ...actions })}
         onKeyDownCapture={(e) => {
-          // ⌘/Ctrl+B folds the inspector away and restores it, wherever focus is on the screen.
           if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "b") {
             e.preventDefault();
             toggleInspector();
             return;
           }
-          // Escape clears a pinned ship element from the drawing or the inspector, one step per press.
           if (e.key !== "Escape") return;
           const s = selection.get();
           if (s.selected === null || s.preview !== null || s.markerPreview) return;
@@ -648,7 +625,6 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
                 ref={inspectorBodyRef}
                 data-selection-scope=""
                 className="space-y-3"
-                // Inspector → drawing: focus in a form group about ship elements lights them on the drawing.
                 onFocus={(e) => selection.setLinked(linkedEntities(e.target, entityCtx))}
                 onBlur={(e) => {
                   if (

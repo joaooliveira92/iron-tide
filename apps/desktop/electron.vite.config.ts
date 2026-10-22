@@ -6,7 +6,6 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],
-    // Same flag as the renderer's debug gate (ADR-0029); see src/main/debugGate.ts.
     define: {
       __BLUEWAVE_DEBUG__: JSON.stringify(process.env.VITE_BLUEWAVE_DEBUG === "true"),
     },

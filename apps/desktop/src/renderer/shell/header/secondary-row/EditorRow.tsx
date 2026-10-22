@@ -10,7 +10,6 @@ export interface EditorRowProps {
   readonly onActionClick?: ((actionCode: string) => void) | undefined;
 }
 
-/** The scenario-editor bar: the active scenario on the left, its commands on the right. */
 export function EditorRow({ row, onActionClick }: EditorRowProps) {
   return (
     <div className="flex w-full items-center justify-between px-1 text-xs text-muted-foreground">

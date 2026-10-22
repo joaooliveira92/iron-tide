@@ -36,7 +36,6 @@ describe("HullFittingLayer", () => {
     const ring = container.querySelector("[data-testid='plan-selected-ring']")!;
     expect(ring).not.toBeNull();
     expect(container.querySelectorAll("[data-testid='plan-selected-ring']")).toHaveLength(1);
-    // The ring sits on b's dot, which is below the centreline (port).
     const dot = container.querySelector("[data-fitting='b']")!;
     expect(ring.getAttribute("cx")).toBe(dot.getAttribute("cx"));
     expect(ring.getAttribute("cy")).toBe(dot.getAttribute("cy"));
@@ -62,7 +61,6 @@ describe("GunArcLayer", () => {
       "mount:PORT",
     ]);
     expect(arcs[0]!.querySelector("title")!.textContent).toMatch(/120° starboard beam arc/);
-    // The main plan's schematic arc radius is 30 plan units (the section card draws its own at 26).
     expect(arcs[0]!.getAttribute("d")).toMatch(/A 30 30/);
   });
 
@@ -135,14 +133,12 @@ describe("HullFittingLayer symbols", () => {
     const [stbd, port] = Array.from(container.querySelectorAll("[data-kind='gun']"));
     for (const barrel of Array.from(stbd!.querySelectorAll("line"))) {
       expect(barrel.getAttribute("x2")).toBe(barrel.getAttribute("x1"));
-      // Starboard is the upper side of the drawing (smaller y).
       expect(Number(barrel.getAttribute("y2"))).toBeLessThan(Number(barrel.getAttribute("y1")));
     }
     for (const barrel of Array.from(port!.querySelectorAll("line"))) {
       expect(barrel.getAttribute("x2")).toBe(barrel.getAttribute("x1"));
       expect(Number(barrel.getAttribute("y2"))).toBeGreaterThan(Number(barrel.getAttribute("y1")));
     }
-    // Two barrels spread along the hull, not across it.
     expect(
       new Set(Array.from(stbd!.querySelectorAll("line")).map((l) => l.getAttribute("x1"))).size,
     ).toBe(2);

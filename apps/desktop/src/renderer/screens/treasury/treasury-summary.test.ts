@@ -54,7 +54,6 @@ describe("treasury-summary", () => {
     expect(t.obligations).toBe(100);
     expect(t.fleetMaintenance).toBe(200);
     expect(t.researchSpend).toBe(300);
-    // Committed flows only: construction is an "up to" bound and is not in the total.
     expect(t.totalExpenditure).toBe(600);
     expect(t.plannedConstruction).toBe(500);
     expect(t.projectedSurplusDeficit).toBe(3400);

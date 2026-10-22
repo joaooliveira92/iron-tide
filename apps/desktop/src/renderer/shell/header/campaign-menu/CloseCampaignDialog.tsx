@@ -16,7 +16,6 @@ export interface CloseCampaignDialogProps {
   readonly onConfirm: () => void;
 }
 
-/** Confirms leaving the campaign. Presentational: it reports the choice, it does not close. */
 export function CloseCampaignDialog({ open, onOpenChange, onConfirm }: CloseCampaignDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

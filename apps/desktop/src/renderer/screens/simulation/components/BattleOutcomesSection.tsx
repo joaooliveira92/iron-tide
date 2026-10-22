@@ -14,7 +14,6 @@ interface BattleOutcomesSectionProps {
   readonly outcomes: readonly BattleOutcome[];
 }
 
-/** The month's resolved battles, or an honest empty state when none resolved. */
 export function BattleOutcomesSection({ outcomes }: BattleOutcomesSectionProps) {
   return (
     <AccordionItem value="battle-outcomes">

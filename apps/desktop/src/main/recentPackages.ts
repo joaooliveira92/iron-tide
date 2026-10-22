@@ -4,14 +4,6 @@ import { Result, Schema } from "effect";
 import type { RecentCampaignEntry } from "../shared/continuity-contract.js";
 import { atomicWrite } from "./runtime/atomicWrite.js";
 
-/**
- * The main-process list of campaign packages the user opened through the
- * native dialog. It is the single source of truth for "Recent Campaigns" and
- * the allow-list for `loadRecentCampaign`: the renderer may only name a path
- * that is already here, so it is never trusted to point at an arbitrary
- * directory. Paths are stored canonical (`realpath`) so symlinks and trailing
- * separators cannot create duplicate or bypassing entries.
- */
 export const RECENT_PACKAGES_FILENAME = "recent-packages.json";
 export const MAX_RECENT_PACKAGES = 10;
 
@@ -28,7 +20,6 @@ const RecentPackagesSchema = Schema.Struct({
 
 type StoredEntry = typeof StoredEntrySchema.Type;
 
-/** Canonical form of a package path, or `null` when it cannot be resolved. */
 export function canonicalPackagePath(path: string): string | null {
   try {
     return realpathSync(path);
@@ -65,7 +56,6 @@ function writeStored(userDataDir: string, entries: readonly StoredEntry[]): void
   );
 }
 
-/** Newest-first entries, each flagged with whether its directory still exists. */
 export function listRecentPackages(userDataDir: string): readonly RecentCampaignEntry[] {
   return [...readStored(userDataDir)]
     .sort((a, b) => b.lastOpened - a.lastOpened)
@@ -78,7 +68,6 @@ export function listRecentPackages(userDataDir: string): readonly RecentCampaign
     }));
 }
 
-/** Whether `packagePath` (canonicalised) is a package the user previously picked. */
 export function isApprovedPackage(userDataDir: string, packagePath: string): string | null {
   const canonical = canonicalPackagePath(packagePath);
   if (canonical === null) return null;

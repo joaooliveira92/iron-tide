@@ -2,7 +2,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { createPresentationFormat } from "../../lib/presentation-format/index.js";
 import { formatNauticalMiles, niceScaleBar, pixelsPerNauticalMile } from "./map-scale.js";
 
-/** The default presentation (en-US, Naval Credits) the scale bar renders under. */
 const FORMAT = createPresentationFormat({
   locale: "en-US",
   numberScale: "full",
@@ -13,7 +12,6 @@ const FORMAT = createPresentationFormat({
 
 describe("pixelsPerNauticalMile", () => {
   it("is 360 deg x 60 nm across the world width at scale 1", () => {
-    // 2160-unit world drawn 1:1 => 21,600 nm across 2160 px => 0.1 px/nm.
     expect(pixelsPerNauticalMile(1, 1, 2160)).toBeCloseTo(0.1, 10);
   });
 

@@ -34,13 +34,6 @@ import { buildMonthlyReportEntry } from "./commitMonth/reportEntry.js";
 import { promotePlayerSlotForExecution } from "./commitMonth/snapshot.js";
 import type { TurnSummaryEntry } from "../../shared/campaign-command-contract.js";
 
-/**
- * The shared turn transaction (ticket 05; D-05/D-17 stage 4). Both `commitMonth`
- * (no interruptions — its byte-identical fast path) and `resolveTurn` run
- * through this one Effect: it executes the month, and on suspension returns the
- * pause point + a `pending-turn.json` record; on completion it persists the save,
- * registers the session, projects the summary, and appends both sidecars.
- */
 export type TurnTransactionOutcome =
   | {
       readonly kind: "completed";
@@ -52,12 +45,6 @@ export type TurnTransactionOutcome =
       readonly kind: "suspended";
       readonly request: InterruptionRequest | null;
       readonly pendingTurn: PendingTurnRecord;
-      /**
-       * The deterministic intermediate snapshot at the suspension point. It is
-       * NEVER persisted as authoritative; a caller that needs it (the player
-       * battle session) may rebuild the battle from it, and a resume re-executes
-       * the month from the pre-turn save regardless.
-       */
       readonly snapshot: CampaignSnapshot;
       readonly diagnostics: readonly string[];
     }
@@ -73,11 +60,8 @@ export type TurnTransactionOutcome =
 export interface TurnTransactionInput {
   readonly sessionId: string;
   readonly expectedRevision: number;
-  /** Recorded external inputs already gathered for this turn (resume path). */
   readonly recordedInputs?: readonly RecordedInput[];
-  /** Authored decisions supplied by S-4 for this turn (empty in the first increment). */
   readonly pendingDecisions?: readonly PendingDecision[];
-  /** Whether an interruption channel should be active (resolveTurn) or not (commitMonth). */
   readonly allowInterruptions: boolean;
 }
 
@@ -145,17 +129,9 @@ export const runTurnTransaction = (
     );
     const pendingCommands = yield* queue.forExecution(input.sessionId, executionSnapshot);
     const shipBuilding = yield* contentArtifact.loadShipBuildingContent();
-    // T-1 (spec #109 R1): absent section = dormant, so a month without it never sees the player nation or an offer.
     const battleOffers = yield* contentArtifact.loadBattleOfferRules();
 
     const recordedInputs = input.recordedInputs ?? [];
-    // `turnId` is a function of the pre-turn state and the committed orders — all
-    // known before execution, so a suspended turn's interruption identities are
-    // reproduced byte-for-byte on resume. The `orderedInputsHash` term therefore
-    // hashes the turn's PRE-execution input set (empty for a fresh turn), never
-    // the inputs accumulated while suspended: hashing the accumulators would
-    // change every interruption's id on each resume and defeat exactly-once
-    // resume (D-12 "stable identity under re-execution").
     const committedOrderHash = sha256Hex(canonicalSerialize(pendingCommands));
     const orderedInputsHash = computeOrderedInputsHash([]);
     const turnId = computeTurnId({
@@ -193,9 +169,6 @@ export const runTurnTransaction = (
 
     if (result.outcome === "suspended") {
       const request = result.suspended?.request ?? null;
-      // The minimum identity of the outstanding interruption, so the answer/
-      // submit boundary can match it (T7). A trailing-input suspension has no
-      // request and therefore no outstanding interruption.
       const outstanding =
         request === null
           ? undefined

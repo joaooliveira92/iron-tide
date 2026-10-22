@@ -26,21 +26,6 @@ import { CommandQueueStore } from "../runtime/commandQueueStore.js";
 import { ProjectStore } from "../runtime/projectStore.js";
 import { currentRevision, deterministicTimestamp, verifyEnvelope } from "./commandEnvelope.js";
 
-/**
- * The Research & Technology screen's two bridge commands
- * (desktop-engine-feature-gate INC-1/INC-2), as native `CommandProgram`s
- * (INC-5; ADR-0159): session lookup (`SESSION_NOT_FOUND`), `expectedRevision`
- * against `snapshot.turnNumber` (`REVISION_MISMATCH` with the session
- * untouched), deterministic envelope construction, and `transportRequestId`
- * idempotency.
- *
- * Authority (spec D1): the desktop ONLY queues a real engine envelope through
- * the shared per-session queue (`CommandQueueStore`). The engine
- * (`MonthExecutor` command_collection via `commitMonth`) is the sole mutator of
- * `nation.research`. Every session/queue read and the autosave go through the
- * desktop service graph (`CampaignSessionStore`, `CommandQueueStore`,
- * `ProjectStore`), never the module singletons or `SaveStore` directly.
- */
 export const inspectResearchScreenProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -79,10 +64,6 @@ export const setResearchPriorityCommandProgram = withSchema(
       const verified = verifyEnvelope(record, payload.expectedRevision);
       if (verified.outcome !== "success") return verified;
 
-      // Issue-time constraint validation mirroring the engine's
-      // `validateSetResearchPriority` (lifecycle.ts) — same stable codes, so
-      // INVALID field sets are surfaced as engine diagnostics, never a fabricated
-      // desktop message (spec D4). The engine re-validates at commitMonth anyway.
       const violations = validateResearchPriorities(payload.fieldPriorities);
       if (violations.length > 0) {
         return yield* new CommandRejected({
@@ -91,12 +72,6 @@ export const setResearchPriorityCommandProgram = withSchema(
         });
       }
 
-      // `exactTechId` is ALWAYS rejected by the engine lifecycle at drain
-      // (`EXACT_TECHNOLOGY_SELECTION_PROHIBITED`, lifecycle.ts), so a command
-      // carrying one would queue, then silently fail to apply after the month
-      // (the rejected command does not fail the month and the queue is cleared).
-      // Reject it at issue with the engine's exact code and keep the session
-      // untouched — same stable-code posture as the validations above.
       if (payload.exactTechId !== undefined) {
         return yield* new CommandRejected({
           reason: "EXACT_TECHNOLOGY_SELECTION_PROHIBITED",
@@ -109,12 +84,6 @@ export const setResearchPriorityCommandProgram = withSchema(
       });
       const exactTechId = payload.exactTechId;
 
-      // Build the deterministic envelope first: the idempotency comparison then
-      // runs on the shared canonical body fingerprint (CommandQueueStore), so
-      // re-issuing the same transportRequestId with the same payload replays the
-      // prior outcome while a different payload under the same id is an
-      // IDEMPOTENCY_CONFLICT — the research slice's exact behavior (INC-2
-      // generalization; no per-family payload equality anymore).
       const envelope = buildResearchEnvelope(record, frozenPriorities, exactTechId);
       const prior = yield* queue.lookup(payload.sessionId, payload.transportRequestId);
       if (prior) {
@@ -135,12 +104,6 @@ export const setResearchPriorityCommandProgram = withSchema(
         payloadFingerprint: queue.fingerprintOfBody(envelope.body),
       });
 
-      // INC-5 autosave: a successful SetResearchPriority is not successful until
-      // its persistence contract succeeds (spec §17). The queued command is
-      // in-memory, so we persist the current authoritative state through
-      // `ProjectStore`. If the save fails, roll back the queued envelope and
-      // surface SAVE_FAILED — no partial in-memory state remains (construction
-      // slice pattern).
       yield* projects
         .save(record.state, record.saveDir)
         .pipe(Effect.tapError(() => queue.delete(payload.sessionId, payload.transportRequestId)));
@@ -148,8 +111,6 @@ export const setResearchPriorityCommandProgram = withSchema(
       return { outcome: "success" as const, value: outcomeFor(envelope), diagnostics: [] };
     }),
 );
-
-// envelope construction (deterministic, mirrors AiCommandGenerator's pattern)
 
 const PLAYER_ENVELOPE_VERSION = "0.1.0" as const;
 
@@ -165,11 +126,6 @@ function buildResearchEnvelope(
     encodeURIComponent(record.playerSlotId),
     "SetResearchPriority",
   ].join("/");
-  // Domain-separated hash over the same key the AI generator uses (ai/v0
-  // scheme), with a distinct `player-` prefix so player and AI command ids
-  // never collide. The idempotency key itself matches the AI pattern exactly
-  // (campaignId/turn/nationId/commandType); the player's nation is never an
-  // AI slot, so no cross-issuer key collision is possible.
   const commandId = `player-${sha256Hex(`v0:${idempotencyKey}`).slice(0, 40)}`;
 
   const priorities: Record<string, SafeInt> = {};
@@ -197,9 +153,6 @@ function buildResearchEnvelope(
   };
 }
 
-/** Engine-mirror validation (lifecycle `validateSetResearchPriority`):
- * every canonical field present, each weight in {1,2,4}, highCount 1..MAX,
- * no unknown fields, no non-integer values. Returns diagnostics ([] = valid). */
 function validateResearchPriorities(fieldPriorities: Readonly<Record<string, number>>): string[] {
   const diagnostics: string[] = [];
   for (const [field, weight] of Object.entries(fieldPriorities)) {
@@ -256,8 +209,6 @@ function outcomeFor(envelope: {
 }
 
 function replayOutcome(prior: PendingCommandEntry): BridgeResult<ResearchPriorityOutcome> {
-  // The fingerprint match above guarantees this entry is our own
-  // `SetResearchPriority` envelope, so the narrowing is sound.
   return {
     outcome: "success",
     value: outcomeFor({

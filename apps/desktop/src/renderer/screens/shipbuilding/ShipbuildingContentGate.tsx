@@ -1,7 +1,6 @@
 import { useDrawingBoardContentSource } from "../../components/design-workspace/index.js";
 import { ShipbuildingWorkspace } from "./ShipbuildingWorkspace.js";
 
-/** The catalogue is decoded in main and fetched over IPC; the workspace renders only once it is ready. */
 export function ShipbuildingContentGate({ sessionId }: { readonly sessionId?: string }) {
   const contentStatus = useDrawingBoardContentSource();
   return (

@@ -5,7 +5,6 @@ export interface MapLegendProps {
   readonly showFleets: boolean;
 }
 
-/** The ports/fleets key that sits with the scale bar. */
 export function MapLegend({ showPossessions, showFleets }: MapLegendProps) {
   if (!showPossessions && !showFleets) return null;
   return (

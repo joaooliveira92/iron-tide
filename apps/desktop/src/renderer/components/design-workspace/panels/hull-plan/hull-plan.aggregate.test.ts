@@ -1,7 +1,3 @@
-/**
- * Aggregate test for the plan drawing primitives (arcs, geometry, waterplane, bow/stern character), which share
- * fixtures and assertions. Per-module tests live beside each module; add focused cases there, not here.
- */
 import { describe, expect, it } from "vite-plus/test";
 import { arcSectors, bearingVector, normaliseDeg, sectorPath } from "./arcs.js";
 import {

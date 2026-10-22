@@ -49,12 +49,10 @@ describe("useCommandScreenWorkflow refreshKey", () => {
     expect(load).toHaveBeenCalledTimes(1);
     expect(result.current.state.items).toEqual(["rev 0"]);
 
-    // Re-rendering with the same key must not reload.
     rerender({ key: 0 });
     await act(async () => {});
     expect(load).toHaveBeenCalledTimes(1);
 
-    // The campaign advanced: the screen reloads and shows the new data.
     revision = 1;
     rerender({ key: 1 });
     await act(async () => {});

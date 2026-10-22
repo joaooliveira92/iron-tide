@@ -35,7 +35,6 @@ export const MOUNT_LABEL: Readonly<Record<MountClass, string>> = {
   CASEMATE: "casemate",
 };
 
-/** What the hull form says about the ship: how many masts it carries and how many boats it hoists. */
 export interface ShipProfile {
   readonly name: string;
   readonly masts: 1 | 2;

@@ -10,7 +10,6 @@ const LEVELS = [
   { value: "HIGH", label: "High" },
 ] as const;
 
-/** A priority level; presentation only, never written to the design. */
 export type PriorityLevel = "LOW" | "NORMAL" | "HIGH";
 export const DEFAULT_PRIORITIES: Readonly<Record<PriorityId, PriorityLevel>> = {
   speed: "NORMAL",
@@ -20,10 +19,6 @@ export const DEFAULT_PRIORITIES: Readonly<Record<PriorityId, PriorityLevel>> = {
   cost: "NORMAL",
 };
 
-/**
- * The Overview section: a design summary read from the compiled design, the design warnings the Review section
- * also raises, and the player's recorded design priorities. Priorities never modify the design.
- */
 export function OverviewPanel({
   model,
   priorities,

@@ -21,8 +21,6 @@ const modern: SaveMetadata = {
   campaignDate: { year: 1880, month: 2 },
 };
 
-// A legacy/degraded record (the `list()` signature-file fallback shape) that
-// omits the additive INC-13 fields entirely.
 const legacy: SaveMetadata = {
   saveId: "save-2",
   timestamp: "",

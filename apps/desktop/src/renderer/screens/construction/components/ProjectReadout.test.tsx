@@ -37,7 +37,6 @@ describe("ProjectReadout", () => {
     expect(screen.getByText("640 NC")).toBeTruthy();
     expect(screen.getByText("Launch")).toBeTruthy();
     expect(screen.getByText("1880-07")).toBeTruthy();
-    // A non-halted project has no carrying cost.
     expect(screen.queryByText("Carrying cost")).toBeNull();
   });
 
@@ -61,7 +60,6 @@ describe("ProjectReadout", () => {
     expect(screen.getByText("not building (halted)")).toBeTruthy();
     expect(screen.getByText("Carrying cost")).toBeTruthy();
     expect(screen.getByText("3 NC/mo")).toBeTruthy();
-    // A held row must not claim an instalment or a launch.
     expect(screen.queryByText("Instalment")).toBeNull();
     expect(screen.queryByText("Launch")).toBeNull();
     expect(screen.queryByText("complete")).toBeNull();

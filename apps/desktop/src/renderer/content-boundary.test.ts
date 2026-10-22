@@ -4,13 +4,6 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vite-plus/test";
 
-/**
- * The renderer is a presentational consumer of decoded content: it never parses
- * YAML, reads the filesystem, or bundles the content-schema/Effect validation
- * runtime (ADR-0105 `MIG-EXCL-1`, ticket 04 / CRI-IPC-3/5). This source scan is
- * the fast guard; the built-bundle tripwire lives in
- * `scripts/check-renderer-bundle.mjs` and runs after every renderer build.
- */
 const rendererDir = dirname(fileURLToPath(import.meta.url));
 
 const FORBIDDEN: readonly { readonly pattern: RegExp; readonly label: string }[] = [
@@ -34,9 +27,6 @@ describe("renderer content boundary (CRI-IPC-3/5)", () => {
           /\.(?:ts|tsx)$/u.test(file) &&
           !file.endsWith(".test.ts") &&
           !file.endsWith(".test.tsx") &&
-          // Build-time data generators run under node, not in the app bundle.
-          // Match either separator: `readdirSync(..., { recursive: true })`
-          // returns backslash-joined paths on Windows.
           !/(?:^|[\\/])bake-[^\\/]+\.ts$/u.test(file),
       );
     expect(files.length).toBeGreaterThan(0);

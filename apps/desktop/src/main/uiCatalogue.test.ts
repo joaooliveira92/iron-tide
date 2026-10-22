@@ -15,7 +15,6 @@ interface AuthoredCatalogue {
 
 const authored = parse(readFileSync(CATALOGUE_PATH, "utf8")) as AuthoredCatalogue;
 
-/** Every key the turn-message projection can emit (parity with @bluewave/messages policy). */
 const REQUIRED_KEYS = [
   "messages.finance.budgetChanged.title",
   "messages.finance.budgetChanged.body",
@@ -45,7 +44,6 @@ const REQUIRED_KEYS = [
   "messages.battle.resolved.body",
   "messages.battle.request.title",
   "messages.battle.request.body",
-  // T-1 battle offers (T-1 09, ADR-0254): the offer dialog, its decline statements and the turn messages.
   "messages.offer.request.title",
   "messages.offer.request.body",
   "messages.battle.declined.title",
@@ -66,7 +64,6 @@ const REQUIRED_KEYS = [
   "messages.system.unknown.title",
   "messages.system.unknown.body",
   "messages.generic.body",
-  // Player-facing chrome (T1, ADR-0209): the summary panel.
   "ui.turnSummary.title",
   "ui.turnSummary.loading",
   "ui.turnSummary.empty",
@@ -100,7 +97,6 @@ const REQUIRED_KEYS = [
   "ui.turnSummary.severity.NORMAL",
   "ui.turnSummary.severity.LOW",
   "ui.turnSummary.severity.TRACE",
-  // Player-facing chrome (T1, ADR-0209): the interruption dialogs.
   "ui.decision.choose",
   "ui.decision.hint",
   "ui.decision.result",

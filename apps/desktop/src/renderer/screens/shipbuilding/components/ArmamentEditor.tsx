@@ -42,11 +42,6 @@ const SIDE_OPTIONS = [
   { value: "STBD", label: "Starboard" },
 ] as const;
 
-/**
- * The Armament master-detail editor: a mount list grouped by battery, and the selected mount's editor with its
- * editable properties, placement actions and conflicts. Pure presentation: every value comes from the compiled
- * design, every control produces a draft edit.
- */
 export function ArmamentEditor({
   entries,
   draft,
@@ -63,9 +58,7 @@ export function ArmamentEditor({
   readonly findings: readonly BoardFinding[];
   readonly month: string;
   readonly edit: (e: DraftEdit) => void;
-  /** When given, selecting a mount pins it in the drawing's selection. */
   readonly onSelect?: (entity: ShipEntity) => void;
-  /** The mount the drawing has pinned, so its row shows its pressed state and its editor opens. */
   readonly selectedInstanceId?: string | null;
 }) {
   const format = usePresentationFormat();

@@ -3,7 +3,6 @@ import { clamp, solid } from "./anatomy-helpers.js";
 import type { PartDraft } from "./anatomy-types.js";
 import type { AnatomyShipScene } from "./anatomy-scene.js";
 
-/** Masts: the ship type sets how many, the era sets the rig (yards, fighting top or tripod). */
 export function drawMasts(scene: AnatomyShipScene): void {
   const {
     L,
@@ -56,7 +55,6 @@ export function drawMasts(scene: AnatomyShipScene): void {
         ),
       );
       if (tripod) {
-        // Legs rake aft and out to the deck, bracing the tall tower mast.
         for (const side of [-1, 1]) {
           part.lines.push({
             d: lineOf(
@@ -77,7 +75,6 @@ export function drawMasts(scene: AnatomyShipScene): void {
         solid(cylinder(x, 0, nestR, nestZ, 0.025 * D, P, 16), "mid", { crease: "faint" }),
       );
       if (tripod) {
-        // Fire-control top above the platform.
         part.solids.push(
           solid(cylinder(x, 0, nestR * 0.6, nestZ + 0.05 * D, 0.04 * D, P, 12), "hi", {
             crease: "lo",
@@ -116,7 +113,6 @@ export function drawMasts(scene: AnatomyShipScene): void {
           part.dots.push({ x: px, y: py, r: 0.75, tone: "mid" });
         }
       }
-      // Standing rigging: full stays in the sailing era, a single light stay once steam took over.
       const stays = era === "VICTORIAN" ? [0.02, 0.98] : index === 0 ? [0.02] : [0.98];
       for (const end of stays) {
         part.lines.push({

@@ -42,7 +42,6 @@ describe("engineeringStatus", () => {
     const v = viewOf();
     const value = readout(v, "displacement").value;
     expect(value).toBe(`${t(v.totalKg)} / ${t(v.buoyantKg)}`);
-    // Current and capacity each carry exactly one unit; a stray second unit must not slip through.
     expect(value).toMatch(/^[\d,]+ t \/ [\d,]+ t$/);
   });
 
@@ -85,7 +84,6 @@ describe("engineeringStatus", () => {
     expect(rows["KG"]).toBe(metres(s.kgMm));
     for (const term of ["GM", "KB", "BM", "KG"]) expect(rows[term]).toMatch(/^-?\d+\.\d{2} m$/);
 
-    // A design the compiler flags as over-stiff turns the readout amber and names the cause.
     const stiffRef = content.references.find((r) =>
       buildWorkshopView(
         r.draft,

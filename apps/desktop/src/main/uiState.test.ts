@@ -37,11 +37,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-// One shared runtime for both programs; the services delegate to the same
-// in-memory session registry the tests populate directly.
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-/** Runs a command program through the desktop service graph and projects its wire envelope. */
 async function runProgram(
   program: CommandProgram,
   payload: unknown,
@@ -49,7 +46,6 @@ async function runProgram(
   return projectCommandExit(await runtime.runPromiseExit(program(payload)));
 }
 
-/** Runs the commit-month program through the desktop service graph. */
 const commitMonth = (payload: {
   sessionId: string;
   expectedRevision: number;
@@ -68,7 +64,6 @@ describe("ui-state sidecar", () => {
     clearCampaignSessionsForTest();
   });
 
-  /** Register a fresh production session (turn 0) in `saveDir`. */
   function registerProductionSession(sessionId: string, saveDir: string) {
     const signal = new AbortController().signal;
     const collector = new DiagnosticCollector();
@@ -100,10 +95,8 @@ describe("ui-state sidecar", () => {
       firstMonthInspection: { status: "in_progress", lastCompletedStep: 2 },
     };
 
-    // Same turn: dismissals honored, inspection intact.
     expect(resolveUiState(stored, 0)).toEqual(stored);
 
-    // Turn advanced: dismissals expire, inspection persists.
     const advanced = resolveUiState(stored, 1);
     expect(advanced.dismissedFingerprints).toEqual([]);
     expect(advanced.firstMonthInspection).toEqual({
@@ -167,7 +160,6 @@ describe("ui-state sidecar", () => {
     const saveDir = join(saveRoot, "merge");
     registerProductionSession("session-merge", saveDir);
 
-    // First writer (inspection): combined state.
     const combined = await runProgram(writeUiStateProgram, {
       sessionId: "session-merge",
       dismissedFingerprints: ["fp-a"],
@@ -176,7 +168,6 @@ describe("ui-state sidecar", () => {
     expect(combined.outcome).toBe("success");
     if (combined.outcome !== "success") return;
 
-    // Second writer (dismissal-only): sends no firstMonthInspection.
     const dismissalOnly = await runProgram(writeUiStateProgram, {
       sessionId: "session-merge",
       dismissedFingerprints: ["fp-b", "fp-c"],
@@ -184,7 +175,6 @@ describe("ui-state sidecar", () => {
     expect(dismissalOnly.outcome).toBe("success");
     if (dismissalOnly.outcome !== "success") return;
 
-    // The inspection object is carried forward, not dropped.
     expect((dismissalOnly.value as WriteUiStateResult).uiState).toEqual({
       turnNumber: 0,
       dismissedFingerprints: ["fp-b", "fp-c"],
@@ -214,7 +204,6 @@ describe("ui-state sidecar", () => {
       collapsed: true,
     });
 
-    // A later writer that carries no inspector (a dismissal-only write) must not erase it.
     const dismissalOnly = await runProgram(writeUiStateProgram, {
       sessionId: "session-inspector",
       dismissedFingerprints: ["fp-a"],
@@ -263,7 +252,6 @@ describe("ui-state sidecar", () => {
   it("reports a write failure as UI_STATE_WRITE_FAILED and leaves no partial artifact", async () => {
     const saveDir = join(saveRoot, "does-not-exist");
     registerProductionSession("session-write-fail", saveDir);
-    // Remove the directory after registration so the atomic write cannot land.
     rmSync(saveDir, { recursive: true, force: true });
     expect(existsSync(saveDir)).toBe(false);
 
@@ -294,7 +282,6 @@ describe("ui-state sidecar", () => {
       outcome: "error",
       reason: "INVALID_PAYLOAD",
     });
-    // `dismissedFingerprints` is required.
     expect(await runProgram(writeUiStateProgram, { sessionId: "s" })).toMatchObject({
       outcome: "error",
       reason: "INVALID_PAYLOAD",
@@ -318,16 +305,13 @@ describe("ui-state sidecar", () => {
     registerProductionSession("session-corrupt", saveDir);
     const path = join(saveDir, UI_STATE_FILENAME);
 
-    // Invalid JSON.
     writeFileSync(path, "{not json", "utf8");
     expect(() => loadUiState(saveDir, 0)).not.toThrow();
     expect(loadUiState(saveDir, 0)).toEqual({ turnNumber: 0, dismissedFingerprints: [] });
 
-    // Valid JSON, wrong shape.
     writeFileSync(path, JSON.stringify({ foo: 1 }), "utf8");
     expect(loadUiState(saveDir, 0)).toEqual({ turnNumber: 0, dismissedFingerprints: [] });
 
-    // The program is likewise tolerant.
     const read = await runProgram(readUiStateProgram, "session-corrupt");
     expect(read.outcome).toBe("success");
     if (read.outcome !== "success") return;
@@ -349,7 +333,6 @@ describe("ui-state sidecar", () => {
     expect(write.outcome).toBe("success");
     if (write.outcome !== "success") return;
 
-    // Same turn: honored.
     const before = await runProgram(readUiStateProgram, "session-expiry");
     expect(before.outcome).toBe("success");
     if (before.outcome !== "success") return;
@@ -358,7 +341,6 @@ describe("ui-state sidecar", () => {
       "fp-b",
     ]);
 
-    // Advance the real month (turn 0 -> 1): dismissals expire, inspection persists.
     const advance = await commitMonth({
       sessionId: "session-expiry",
       expectedRevision: 0,
@@ -391,8 +373,6 @@ describe("ui-state sidecar", () => {
     expect(write.outcome).toBe("success");
     if (write.outcome !== "success") return;
 
-    // The sidecar is a sibling of the save ids — never inside the SaveStore
-    // directory that makes up the authoritative envelope.
     const path = join(saveDir, UI_STATE_FILENAME);
     expect(existsSync(path)).toBe(true);
     const saveId = new SaveStore().getActiveSaveId(saveDir);
@@ -400,8 +380,6 @@ describe("ui-state sidecar", () => {
     expect(existsSync(join(saveDir, saveId!, UI_STATE_FILENAME))).toBe(false);
     expect(existsSync(join(saveDir, saveId!, "campaign.json"))).toBe(true);
 
-    // Full save/load cycle: a fresh session bound to the same saveDir (as a
-    // reloaded campaign would be) still sees the sidecar.
     const store = new SaveStore();
     const collector = new DiagnosticCollector();
     const reloaded = store.load(saveDir, collector);
@@ -425,16 +403,11 @@ describe("ui-state sidecar", () => {
   });
 
   it("never affects the authoritative envelope/hash or MonthExecutor output", async () => {
-    // Two identical sessions (same pack, same seed, same turn); only one has a
-    // populated sidecar. Their post-commit authoritative hashes must match.
     const saveDirA = join(saveRoot, "engine-a");
     const saveDirB = join(saveRoot, "engine-b");
     registerProductionSession("session-engine-a", saveDirA);
     registerProductionSession("session-engine-b", saveDirB);
 
-    // `toSaveableState`'s rawHash is computed over {snapshot, envelope} only —
-    // the sidecar write never touches CampaignState, so the in-memory state's
-    // authoritative hash is identical whether or not a sidecar exists.
     const before = getCampaignSession("session-engine-a")!.state.rawHash;
     const write = await runProgram(writeUiStateProgram, {
       sessionId: "session-engine-a",
@@ -457,8 +430,6 @@ describe("ui-state sidecar", () => {
     expect(runA.outcome).toBe("success");
     expect(runB.outcome).toBe("success");
 
-    // Identical MonthExecutor result -> identical persisted authoritative state
-    // (revision, turnNumber, rawHash) despite the sidecar difference.
     const stateA = getCampaignSession("session-engine-a")!.state;
     const stateB = getCampaignSession("session-engine-b")!.state;
     expect(stateA.rawHash).toBe(stateB.rawHash);

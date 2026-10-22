@@ -11,9 +11,6 @@ import { ReadoutValue } from "./ReadoutValue.js";
 const TRIGGER =
   "-mx-1 flex items-baseline gap-1.5 rounded px-1 outline-none hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring";
 
-/**
- * One strip readout: a plain value, or a trigger that opens its breakdown on click or its hint on hover.
- */
 export function ReadoutItem({ readout: r }: { readonly readout: EngineeringReadout }) {
   const value = <ReadoutValue label={r.label} value={r.value} tone={r.tone} />;
   if (r.breakdown !== undefined) {

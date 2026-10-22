@@ -3,7 +3,6 @@ import { clamp, round1, solid, ribbon } from "./anatomy-helpers.js";
 import type { PartDraft } from "./anatomy-types.js";
 import type { AnatomyShipScene } from "./anatomy-scene.js";
 
-/** Armour: main belt, armoured deck and citadel bounds. */
 export function drawArmour(scene: AnatomyShipScene): void {
   const {
     draft,
@@ -66,7 +65,6 @@ export function drawArmour(scene: AnatomyShipScene): void {
       dots: [],
     };
     part.lines.push({ d: pathOf(top, false), tone: "mid", heavy: true });
-    // A thick belt reads as a second, lower edge: one extra rule per 100 mm beyond 150 mm, up to three.
     for (let rule = 1; rule <= clamp(Math.floor((beltMm - 150) / 100), 0, 3); rule++) {
       const zr = z0 + ((z1 - z0) * rule) / 5;
       part.lines.push({

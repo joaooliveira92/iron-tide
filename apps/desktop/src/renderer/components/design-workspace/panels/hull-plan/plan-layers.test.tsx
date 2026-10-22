@@ -5,7 +5,6 @@ import { PLAN_MID, planFrame } from "./geometry.js";
 import { HullDeckLayer, HullOutlineLayer, HullShapeLayer, HullZoneLayer } from "./plan-layers.js";
 import { hullForm as form, reference } from "./test-fixtures.js";
 
-/** A ram frame: the layer's ram beak only draws for a ram bow, which the reference ship is not. */
 const frame = planFrame(reference.draft.hull, {
   waterplaneCoeffBp: form.waterplaneCoeffBp,
   lcbPermille: form.lcbPermille,
@@ -97,7 +96,6 @@ describe("HullDeckLayer", () => {
     const band = container.querySelector("[data-testid='hull-side-band']")!;
     expect(band.getAttribute("class")).toMatch(/pointer-events-none/);
     expect(band.getAttribute("fill-rule")).toBe("evenodd");
-    // Two closed sub-paths: the outer plating edge and the inner deck edge.
     expect(band.getAttribute("d")!.match(/M/g)).toHaveLength(2);
   });
 });

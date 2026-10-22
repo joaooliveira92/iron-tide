@@ -1,7 +1,6 @@
 import { AnatomyShipFigure } from "./AnatomyShipFigure.js";
 import type { AnatomyShip } from "./ship-anatomy.js";
 
-/** Shared hover-card body: the adaptive ship plate with the hovered part lit, its name and its fact. */
 export function AnatomyCardContent({
   plate,
   highlight,

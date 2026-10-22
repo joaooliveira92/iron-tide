@@ -78,7 +78,6 @@ describe("presentation-format: measurements (U-3 ticket 01)", () => {
         selections: { calibre: "millimetres" },
       }),
     ).toBe("25.4 mm");
-    // A malformed selection never throws on the render path; it falls back.
     expect(
       formatMeasurement(UM_PER_INCH, {
         locale: LOCALE,
@@ -97,7 +96,6 @@ describe("presentation-format: measurements (U-3 ticket 01)", () => {
   });
 
   it("converts millimetres to canonical micrometres consistently", () => {
-    // 305 mm is 12 inches (a 12-inch gun).
     expect(
       formatMeasurement(12 * UM_PER_INCH, { locale: LOCALE, category: "calibre", preset: METRIC }),
     ).toBe("304.8 mm");

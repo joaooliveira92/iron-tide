@@ -2,10 +2,6 @@ import * as React from "react";
 
 import { cn } from "../../lib/utils.js";
 
-/**
- * Joins adjacent buttons into one control: inner radii and duplicated borders
- * are collapsed so the group reads as a single segmented widget.
- */
 interface ButtonGroupProps extends React.HTMLAttributes<HTMLDivElement> {
   ref?: React.Ref<HTMLDivElement> | undefined;
 }

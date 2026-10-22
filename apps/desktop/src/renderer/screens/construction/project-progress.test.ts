@@ -65,14 +65,14 @@ describe("projectRow", () => {
     expect(states(withPackages({ hull: 25 }))).toEqual({
       hull: "active",
       machinery: "ready",
-      launch: "waiting", // the hull is not done
+      launch: "waiting",
       fit_out: "waiting",
     });
     expect(states(withPackages({ hull: 50, machinery: 20 }))).toEqual({
       hull: "done",
       machinery: "done",
       launch: "ready",
-      fit_out: "waiting", // launch is not done
+      fit_out: "waiting",
     });
     expect(states(withPackages({ hull: 50, machinery: 20, launch: 10, fit_out: 20 }))).toEqual({
       hull: "done",
@@ -94,7 +94,7 @@ describe("projectRow", () => {
     });
     const row = projectRow(e);
     expect(row.packages.map((p) => p.id)).toEqual(["hull", "fit_out"]);
-    expect(row.packages.find((p) => p.id === "fit_out")!.state).toBe("waiting"); // hull not done
+    expect(row.packages.find((p) => p.id === "fit_out")!.state).toBe("waiting");
   });
 
   it("falls back to a readable label for an unknown kind, and survives bad numbers", () => {

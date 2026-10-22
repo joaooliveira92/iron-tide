@@ -69,12 +69,6 @@ function RosterRow({
   );
 }
 
-/**
- * The ship-type roster: the types the campaign allows now, grouped by category, comparable at a glance with the
- * rule detail one step away. Locked future types are not listed (the application convention is to omit what is
- * unavailable); a single line says more arrive with later eras. Every number is read from the domain registry and
- * the compile, never restated here.
- */
 export function ShipTypePanel({
   env,
   starters,

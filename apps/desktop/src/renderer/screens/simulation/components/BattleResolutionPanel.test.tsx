@@ -4,11 +4,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { BattleResolutionPanel } from "./BattleResolutionPanel.js";
 
-/**
- * Render tests for the collapsible resolver results. The panel shows whichever
- * resolver outputs exist this session, renders nothing when neither has run,
- * and shows the tactical turn ceiling from the shared constant.
- */
 const autoResolution = {
   battleId: "battle_1",
   missionOutcome: { winner: "attacker", outcomeKind: "decisive" },

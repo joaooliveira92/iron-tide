@@ -3,10 +3,6 @@ import { Checkbox } from "../../../components/ui/checkbox.js";
 import { Panel } from "../../../components/design-workspace/panels/Panel.js";
 import type { ColonialServiceModel } from "../colonial-service-view.js";
 
-/**
- * Colonial service (manual p.42): the fitting trades displacement for the stores and marine contingent a foreign
- * station needs, and earns the `c` marker on the ship list. The readout states what the compile decided.
- */
 export function ColonialServicePanel({
   model,
   edit,

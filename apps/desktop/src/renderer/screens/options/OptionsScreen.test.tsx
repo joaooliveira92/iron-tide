@@ -14,7 +14,6 @@ import { ThemeProvider } from "../../shell/ThemeContext.js";
 import { OptionsScreen } from "./OptionsScreen.js";
 
 beforeEach(() => {
-  // jsdom has no matchMedia; ThemeContext and DisplayPreferencesProvider read it.
   window.matchMedia = ((query: string) => ({
     matches: false,
     media: query,

@@ -49,7 +49,6 @@ export function useAstInspector(sessionId: string): UseAstInspectorReturn {
     };
   }, [bridge, sessionId]);
 
-  // "/" focuses the AST search box, unless the user is already typing somewhere.
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.key !== "/") return;

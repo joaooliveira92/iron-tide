@@ -1,7 +1,6 @@
 import { cn } from "../../../lib/utils.js";
 import type { ReadoutRow } from "../engineering-status.js";
 
-/** A label/value list; `strong` marks a total. */
 export function ReadoutRows({
   rows,
   strong,

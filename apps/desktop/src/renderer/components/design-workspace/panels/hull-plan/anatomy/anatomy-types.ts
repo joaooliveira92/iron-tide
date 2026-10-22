@@ -76,7 +76,6 @@ export interface AnatomyInput {
   readonly height?: number;
 }
 
-/** How far a level's outline reaches past the waterline ends. */
 export interface Reach {
   readonly bow: number;
   readonly stern: number;

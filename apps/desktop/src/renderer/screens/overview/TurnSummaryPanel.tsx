@@ -26,15 +26,12 @@ const SEVERITY_CLASS: Readonly<Record<string, string>> = {
   TRACE: "bg-muted text-muted-foreground",
 };
 
-/** Filter options: every severity except developer-only TRACE, plus "ALL". */
 const SEVERITIES = ["ALL", ...SEVERITY_ORDER.filter((severity) => severity !== "TRACE")] as const;
 
-/** The catalogue key for a message category's display label. */
 function categoryLabelKey(category: string): string {
   return `ui.turnSummary.category.${category}`;
 }
 
-/** The catalogue key for a severity's display label. */
 function severityLabelKey(severity: string): string {
   return `ui.turnSummary.severity.${severity}`;
 }
@@ -46,18 +43,10 @@ export interface TurnSummaryPanelProps {
   readonly turnMessages: UiStateTurnMessages;
   readonly onTogglePinned: (id: string) => void;
   readonly onToggleRead: (id: string) => void;
-  /** Navigate to the entity a message concerns; unavailable entities open read-only in place. */
   readonly onOpenEntity?: (ref: EntityReferenceDto) => void;
-  /**
-   * Whether an entity still exists in the current campaign. When it does not
-   * (sunk, scrapped, or otherwise gone), the link opens the message's stored
-   * historical record in place instead of navigating (ticket 06/T5). Defaults
-   * to "available" so links are unchanged without a signal.
-   */
   readonly isEntityAvailable?: (ref: EntityReferenceDto) => boolean;
 }
 
-/** A read-only historical record for an entity a message concerns but which is no longer present. */
 function EntityHistoricalRecord({
   message,
   ref,
@@ -214,14 +203,6 @@ function MessageRow({
   );
 }
 
-/**
- * The grouped, filterable turn-summary panel (ticket 06). It renders only
- * validated `TurnSummaryEntry` DTOs — never authoritative state — grouping by
- * category, filtering by category/severity, searching, and restricting to
- * actionable items. Routine aggregates expand to their references and effect
- * deltas; every message links to the entities it concerns. Pin/read state is
- * presentation-only and never deletes history.
- */
 export function TurnSummaryPanel({
   summaries,
   loading,

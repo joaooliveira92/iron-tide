@@ -20,13 +20,8 @@ import {
   useSvgGlobe,
 } from "./useSvgGlobe.js";
 
-// Old WebGL clamp was OrbitControls' minPolarAngle/maxPolarAngle (π*0.1 to
-// π*0.55), preventing the camera from looking straight over a pole or
-// flipping upside-down. d3-geo's rotate() uses a different parameterization
-// (rotation of the sphere, not camera polar angle), so this is a translation
-// of that *intent*, not a literal unit conversion.
 const CLICK_DISTANCE_PX = 5;
-const MAX_ZOOM_MULTIPLIER = 4; // whole-globe-fit ... continent/country level
+const MAX_ZOOM_MULTIPLIER = 4;
 const ROTATE_SENSITIVITY = 0.25;
 
 export interface InteractiveGlobeProps {
@@ -34,10 +29,6 @@ export interface InteractiveGlobeProps {
   readonly onNationClick?: (countryId: string) => void;
 }
 
-// The nation-selection globe: pins, the selection ring, and full pointer
-// interaction — d3-drag rotation, d3-zoom, click-to-select, and a spin toward
-// the focused nation. Composes those behaviours on top of the shared sphere
-// (useSvgGlobe + GlobeShell).
 export function InteractiveGlobe({
   focusedCountryId,
   onNationClick,
@@ -53,8 +44,6 @@ export function InteractiveGlobe({
     onNationClickRef.current = onNationClick;
   }, [onNationClick]);
 
-  // Wire up pins, ring, drag, zoom and click. Runs once — the shared sphere
-  // effect (inside useSvgGlobe) has already created the projection/refs.
   useEffect(() => {
     const svgEl = globe.svgRef.current;
     const projection = globe.projection();
@@ -72,7 +61,6 @@ export function InteractiveGlobe({
     const extentWidth = globe.containerRef.current?.clientWidth ?? 800;
     const extentHeight = globe.containerRef.current?.clientHeight ?? 600;
 
-    // Draw pins and the selection ring into the shared sphere every frame.
     const unregisterRenderer = globe.registerFrameRenderer(() => {
       const pixelRadius = PIN_BASE_RADIUS_PX;
       pinSel
@@ -81,8 +69,6 @@ export function InteractiveGlobe({
         .join(
           (enter) => {
             const g = enter.append("g").attr("class", "svg-globe-pin");
-            // Invisible, generously-sized hit target — the visible crosshair
-            // is thin and easy to miss, especially at PIN_BASE_RADIUS_PX.
             g.append("circle")
               .attr("class", "pin-hit-target")
               .attr("fill", "transparent")
@@ -156,10 +142,6 @@ export function InteractiveGlobe({
     const drag = d3Drag
       .drag<SVGSVGElement, unknown>()
       .clickDistance(CLICK_DISTANCE_PX)
-      // d3-drag's default filter accepts all touch events (TouchEvent has
-      // no .button), so a 2-finger pinch would otherwise also kick off a
-      // rotation drag on one of the two touch points, fighting d3-zoom's
-      // pinch handling below. Multi-touch starts are zoom's job only.
       .filter(
         (event: Event) => event.type !== "touchstart" || (event as TouchEvent).touches.length === 1,
       )
@@ -179,13 +161,9 @@ export function InteractiveGlobe({
         globe.setDragging(false);
       });
 
-    // Zoom handles wheel + pinch scale only — mouse/single-touch drag stays
-    // exclusively with d3-drag's rotation handler above (bound separately).
     const zoom = d3Zoom
       .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([baseScale, baseScale * MAX_ZOOM_MULTIPLIER]) // min = whole-globe-fit, max = continent/country level
-      // Explicit extent avoids d3-zoom's default DOM-geometry lookup
-      // (SVG viewBox/width baseVal), which jsdom doesn't implement.
+      .scaleExtent([baseScale, baseScale * MAX_ZOOM_MULTIPLIER])
       .extent([
         [0, 0],
         [extentWidth, extentHeight],
@@ -210,10 +188,6 @@ export function InteractiveGlobe({
       }
     });
 
-    // Keep d3-zoom in sync when the shared sphere resizes (routes the scale
-    // through zoom.transform so the next wheel/pinch computes its delta from
-    // the current scale rather than a stale pre-resize one — otherwise the
-    // globe jumps).
     const unregisterResize = globe.registerResizeHandler(
       ({ width, height, baseScale: newBase, projection: proj }: SvgGlobeResizeContext) => {
         zoom.scaleExtent([newBase, newBase * MAX_ZOOM_MULTIPLIER]).extent([
@@ -233,14 +207,9 @@ export function InteractiveGlobe({
       unregisterRenderer();
       unregisterResize();
     };
-    // Runs once; per-frame deps (focusedCountryId/onNationClick) are read
-    // through refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Spin the globe to the newly selected nation (runs after the mount effects
-  // above, which create the projection) — mirrors the old WebGL globe's
-  // animated pointOfView() on selection change.
   useEffect(() => {
     if (!focusedCountryId) return;
     const projection = globe.projection();
@@ -251,7 +220,6 @@ export function InteractiveGlobe({
     const [fromLambda, fromPhi] = projection.rotate();
     const toLambdaRaw = -target.lng;
     const toPhi = Math.max(MIN_PHI_DEG, Math.min(MAX_PHI_DEG, -target.lat));
-    // Take the shorter way around rather than always spinning eastward.
     const toLambda = fromLambda + normalizeDeg(toLambdaRaw - fromLambda);
 
     const anim: RotationAnim = {
@@ -262,9 +230,6 @@ export function InteractiveGlobe({
       start: performance.now(),
     };
     globe.rotationAnimRef.current = anim;
-    // Dependency list is intentionally only focusedCountryId — globe is a per-
-    // render handle object whose members all wrap stable refs, so depending on
-    // it would re-run (and re-spin) on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusedCountryId]);
 

@@ -62,7 +62,6 @@ describe("armament view model", () => {
       expect(m.weightKg).toBeGreaterThan(0);
       expect(m.costMicro).toBeGreaterThan(0);
       expect(m.layout).toContain(m.name);
-      // Barrels and rounds come from the compiled parameters, never invented.
       const summary = view.compiled.components.find((c) => c.instanceId === m.instanceId)!;
       expect(m.barrels).toBe(summary.params.barrels ?? summary.params.tubes ?? 1);
     }

@@ -1,7 +1,3 @@
-/**
- * View-model for the area tree panel (CC-4): production areas grouped under display
- * regions, with the Ships / Possessions lens. Pure: no React, no bridge.
- */
 import {
   areaRegion,
   fixtureAreaId,
@@ -11,19 +7,14 @@ import type { CampaignAreaEntry } from "./campaign-map-join.js";
 
 export type AreaTreeMode = "ships" | "possessions";
 
-/** Area ids with no region sit under this label rather than vanishing (fixture fallback, future areas). */
 export const OTHER_REGION_LABEL = "Other waters";
 
 export interface AreaTreeRow {
   readonly id: string;
   readonly name: string;
-  /** Controlling nation's display name, or null when unclaimed. */
   readonly owner: string | null;
-  /** The player's ships in this area. */
   readonly ships: number;
-  /** True when the player controls this area. */
   readonly possessed: boolean;
-  /** The map area a click selects and focuses, or null when the area has no geometry. */
   readonly mapAreaId: string | null;
   readonly selected: boolean;
 }
@@ -32,14 +23,12 @@ export interface AreaTreeGroup {
   readonly id: string;
   readonly label: string;
   readonly rows: readonly AreaTreeRow[];
-  /** Header badge: ship count in Ships mode, area count in Possessions mode. */
   readonly badge: number;
   readonly expanded: boolean;
 }
 
 export const OTHER_GROUP_ID = "other";
 
-/** One row per campaign area, with the player's ships and holdings resolved. */
 export function campaignTreeRows(
   areas: readonly CampaignAreaEntry[],
   playerNationId: string | null,
@@ -76,15 +65,9 @@ export interface BuildAreaTreeInput {
   readonly rows: readonly AreaTreeRow[];
   readonly mode: AreaTreeMode;
   readonly query: string;
-  /** Group ids the player opened (or closed) explicitly. */
   readonly toggled: ReadonlySet<string>;
 }
 
-/**
- * Regions in display order, each holding the rows that pass the lens and the filter.
- * Empty regions are dropped. A group is open when it holds the selected row or any filter
- * match, unless the player toggled it, which flips that default.
- */
 export function buildAreaTree(input: BuildAreaTreeInput): AreaTreeGroup[] {
   const needle = input.query.trim().toLowerCase();
   const regionsByArea = areaRegion();

@@ -21,29 +21,13 @@ interface Topology<T> {
 
 import worldTopology from "@/content/world-110m.json";
 
-// Shared drawing piece behind the interactive globe — the D3 (d3-geo) SVG
-// orthographic sphere ("Blueprint" style, wayfinder #152). InteractiveGlobe
-// drives this hook, which owns the projection, the rAF spin/render loop, and
-// the suspend-on-hidden/resize lifecycle. Everything that differs per variant —
-// pins, the selection ring, drag/zoom/click — is layered on by the consuming
-// component through the returned handles.
-
 export const MIN_PHI_DEG = -75;
 export const MAX_PHI_DEG = 40;
-const AUTOROTATE_DEG_PER_MS = 360 / 150_000; // one revolution per 150s
+const AUTOROTATE_DEG_PER_MS = 360 / 150_000;
 export const FOCUS_SPIN_MS = 1000;
-// Re-projecting the whole world geometry (orthographic geoPath for every
-// country) is the globe's dominant per-frame cost; at 60fps it churns enough
-// short-lived path strings to trigger GC pauses that hitch the Fleet Dispatch
-// stack's selection transition. Direct manipulation (drag) renders every frame
-// for a 1:1 feel, while autorotate and the selection spin are capped to ~40fps —
-// imperceptible at one revolution per 150s / a 1s eased spin, but far cheaper.
 const GLOBE_RENDER_INTERVAL_MS = 1000 / 40;
-// Pin/ring size is intentionally *not* scaled by projection.scale() — they
-// stay a constant screen-pixel size at any zoom level, never ballooning (or
-// shrinking) as the globe zooms (wayfinder #150).
 export const PIN_BASE_RADIUS_PX = 6;
-export const PIN_HIT_RADIUS_PX = 16; // generous invisible tap/click target, mouse and touch
+export const PIN_HIT_RADIUS_PX = 16;
 export const RING_BASE_HALF_PX = 11;
 
 const worldTopologyTyped = worldTopology as unknown as Topology<{
@@ -195,8 +179,6 @@ export function useSvgGlobe(): SvgGlobeHandles {
         const [lambda, phi] = projection.rotate();
         projection.rotate([lambda + AUTOROTATE_DEG_PER_MS * dt, phi]);
       }
-      // Direct drag renders every frame; autorotate and the selection spin are
-      // capped to keep the main thread free for the stack's transition.
       if (dragging || now - lastRenderAt >= GLOBE_RENDER_INTERVAL_MS) {
         renderFrame();
         lastRenderAt = now;
@@ -211,8 +193,6 @@ export function useSvgGlobe(): SvgGlobeHandles {
       if (suspended) {
         cancelAnimationFrame(rafId);
       } else {
-        // Reset the clock so the paused interval doesn't register as one huge
-        // dt (which would autorotate/animate a big jump on the next frame).
         lastFrameAt = performance.now();
         rafId = requestAnimationFrame(tick);
       }
@@ -257,8 +237,6 @@ export function useSvgGlobe(): SvgGlobeHandles {
       intersectionObserver.disconnect();
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-    // Intentionally runs once — per-frame state is reached through refs and
-    // per-variant behaviour is layered on via the registered handlers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

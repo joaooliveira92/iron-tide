@@ -172,9 +172,6 @@ describe("production roster is the manual's nine playable nations plus the promo
       .map((nation) => nation.id)
       .sort();
 
-    // Manual p.18 gives the base nine (Great Britain, Germany, France,
-    // Austria-Hungary, Russia, Italy, Japan, China, Spain) plus the USA, which
-    // DR-014 / ADR-0214 promotes from AI-only to playable.
     expect(playable).toEqual([
       "austria_hungary",
       "france",
@@ -208,14 +205,12 @@ describe("content:verify over the production pack (CAH-LOCK)", () => {
     const lockPath = resolve(dir, "content-lock.json");
     const lock = JSON.parse(readFileSync(lockPath, "utf8")) as { bodyHash: string };
 
-    // Drift an authored collection without touching the lock.
     const areasPath = resolve(dir, "areas.yaml");
     writeFileSync(
       areasPath,
       `${readFileSync(areasPath, "utf8")}\n- id: "cah_drift_area"\n  name: "Drift Area"\n  type: "land"\n`,
       "utf8",
     );
-    // Keep the drift valid under the presentation-coverage invariant (CAH-PRES-2).
     const presentationPath = resolve(dir, "presentation.yaml");
     writeFileSync(
       presentationPath,
@@ -239,7 +234,6 @@ describe("content:verify over the production pack (CAH-LOCK)", () => {
       ),
     ).toBe("validation-error");
 
-    // Refresh the lock to the rebuilt hash: verification succeeds.
     const fresh = tempDir();
     await runCli(
       runContentBuild({

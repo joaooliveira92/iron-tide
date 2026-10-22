@@ -12,7 +12,6 @@ import type { ShipEntity } from "./store.js";
 import { useSelectionStore, useShipSelection } from "./useShipSelection.js";
 
 const SIDE = { CENTRE: "centreline", PORT: "port", STBD: "starboard" } as const;
-/** Shown wherever the design model has no value: explicit, never blank or guessed. */
 const UNAVAILABLE = "Not available for this design";
 
 function Facts({ rows }: { readonly rows: readonly (readonly [string, ReactNode | undefined])[] }) {
@@ -28,7 +27,6 @@ function Facts({ rows }: { readonly rows: readonly (readonly [string, ReactNode 
   );
 }
 
-/** A selectable item in the inspector's lists: the keyboard route to fittings and rooms of a section. */
 function SelectLink({
   entity,
   children,
@@ -212,10 +210,6 @@ function bodyFor(entity: ShipEntity, ctx: EntityContext, format: PresentationFor
   }
 }
 
-/**
- * Compact facts about the pinned ship element, above the active tab. Read-only: the full controls stay in the
- * forms, reached with the "Go to … settings" action.
- */
 export function SelectionInspector({
   ctx,
   onGoTo,

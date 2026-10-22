@@ -6,7 +6,6 @@ import { signed } from "../month-report-format.js";
 
 const n = formatCount;
 
-/** `opening 10 + revenue 3 − construction 4 …= closing 0`; a line that is zero is left out, `other` only when it moved. */
 function reconciliationText(
   r: NonNullable<MonthlyReportTreasury["reconciliation"]>,
   format: PresentationFormat,
@@ -25,11 +24,6 @@ function reconciliationText(
   return `Reconciliation: opening ${n(r.opening)} + revenue ${n(r.revenue)}${spent.join("")}${other} = closing ${n(r.closing)}`;
 }
 
-/**
- * The report's Treasury section (spec §16): the real `MonthReport` plus the two
- * ledger-derived lines and the real ledger rows — no invented balancing row.
- * There is no per-ship maintenance effect (CUT).
- */
 export function MonthReportTreasurySection({
   treasury,
 }: {

@@ -13,7 +13,6 @@ import type { ProfileFrame } from "./profile-geometry.js";
 import type { HouseMasses } from "./profile-structures.js";
 import type { VisualLook } from "./visualMounts.js";
 
-/** Catalog tones on the drawing's theme tokens, so parts follow light and dark themes with the hull. */
 export const TONE_CLASS: Readonly<Record<Tone, string>> = {
   structure: "fill-muted stroke-foreground",
   gun: "fill-foreground stroke-foreground",
@@ -28,10 +27,8 @@ const CLASS_NAME: Readonly<Record<MountClass, string>> = {
   CASEMATE: "Casemate",
 };
 
-/** CONVENTION: far-side (port) mounts are seen through the ship, so they draw muted. */
 const FAR_OPACITY = 0.5;
 
-/** The gun mounts of a design seated in the profile (station, house top or deck, calibre scale). */
 export function profileMounts(
   inputs: readonly VisualMountInput[],
   look: VisualLook,
@@ -64,7 +61,6 @@ export function ShapePath({ shape }: { readonly shape: Shape }) {
   );
 }
 
-/** Gun mounts drawn from the part catalog, in front of the superstructure (manual p137 layering). */
 export function ProfileMountLayer({ placed }: { readonly placed: readonly PlacedMount[] }) {
   if (placed.length === 0) return null;
   return (
@@ -85,7 +81,6 @@ export function ProfileMountLayer({ placed }: { readonly placed: readonly Placed
             <title>{mountTitle(m)}</title>
             {m.symbols.map((s, i) => (
               <g key={i} transform={`translate(${s.x} ${s.y}) scale(${flip * s.scale} ${s.scale})`}>
-                {/* The barrel first, so its breech end tucks behind the body. */}
                 <rect
                   x={barrel.x - barrel.lengthM}
                   y={barrel.y - barrel.boreM / 2}

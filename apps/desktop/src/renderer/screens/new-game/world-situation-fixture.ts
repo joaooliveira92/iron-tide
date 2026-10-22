@@ -4,7 +4,6 @@ import type {
   OpeningBriefingRelationsRow,
 } from "@bluewave/campaign-engine";
 
-/** Test fixture: Japan's opening foreign relations, with the real 1880 area ids. */
 const area = (areaId: string, name: string): OpeningBriefingArea => ({ areaId, name });
 
 function row(

@@ -12,13 +12,6 @@ import type {
 } from "../../../shared/campaign-command-contract.js";
 import { sumByCategory } from "./responseMappers.js";
 
-/**
- * Pure derivations behind the stored monthly report (spec §16 "Report data
- * model"). Each reads only the engine's own month output / pre-post snapshots
- * and invents nothing, so a section can be unit-tested in isolation.
- */
-
-/** The fleet fields the completed-ship derivation reads. */
 export interface FleetSnapshot {
   readonly fleets: readonly {
     readonly ships: readonly {
@@ -29,12 +22,10 @@ export interface FleetSnapshot {
   }[];
 }
 
-/** The construction-project fields the newly-active derivation reads. */
 export interface ProjectSnapshot {
   readonly constructionProjects: readonly { readonly id: string; readonly status: string }[];
 }
 
-/** Ships that left `isUnderConstruction` this month (pre→post fleet delta). */
 export function completedShips(
   before: FleetSnapshot,
   after: FleetSnapshot,
@@ -46,7 +37,6 @@ export function completedShips(
     .map((ship) => ({ shipId: ship.id, name: ship.name }));
 }
 
-/** Projects whose status became `ACTIVE` this month (pre→post delta). */
 export function newlyActiveProjectIds(
   before: ProjectSnapshot,
   after: ProjectSnapshot,
@@ -59,7 +49,6 @@ export function newlyActiveProjectIds(
     .map((project) => project.id);
 }
 
-/** Per-project work progress from the real `ConstructionProgressed` events. */
 export function constructionProgressFromEvents(
   events: readonly DomainEventEnvelope[],
   nationId: string,
@@ -78,7 +67,6 @@ export function constructionProgressFromEvents(
   });
 }
 
-/** Per-tech progress from the real `ResearchProgressed` events. */
 export function researchProgressFromEvents(
   events: readonly DomainEventEnvelope[],
   nationId: string,
@@ -97,7 +85,6 @@ export function researchProgressFromEvents(
   });
 }
 
-/** Discoveries from the real `TechnologyDiscovered` events. */
 export function discoveriesFromEvents(
   events: readonly DomainEventEnvelope[],
   nationId: string,
@@ -110,39 +97,24 @@ export function discoveriesFromEvents(
   });
 }
 
-/** The registered player's active (non-under-construction) ship total. */
 export function activeShipCount(nation: FleetSnapshot): number {
   return nation.fleets.flatMap((fleet) => fleet.ships).filter((ship) => !ship.isUnderConstruction)
     .length;
 }
 
-/**
- * Builds the thin, real-fields-only derived view of one committed month (spec
- * §16). Pure: it reads the engine's own month result and the pre/post
- * snapshots, never mutates anything, and invents no field. The CUT sections
- * are deliberately absent (see `MonthlyReportEntry`).
- */
 export interface MonthlyReportEntryInput {
   readonly response: CommitMonthResponse;
-  /** The resolved month (`record.month`). */
   readonly month: { readonly year: number; readonly month: number };
-  /** The new month (`advanceMonth`). */
   readonly nextMonth: { readonly year: number; readonly month: number };
-  /** The post-month snapshot revision (`nextTurnNumber`). */
   readonly turn: number;
-  /** The month's save identity (`SaveMetadata.saveId`). */
   readonly reportId: string;
-  /** Real persistence metadata (`SaveMetadata.timestamp`). */
   readonly generatedAt: string;
   readonly campaignId: string;
   readonly playerNationId: string;
   readonly playerNationBefore: NationState;
   readonly playerNationAfter: NationState;
-  /** The post-month snapshot (`result.finalSnapshot`) — the priorities projection's basis. */
   readonly postSnapshot: CampaignSnapshot;
-  /** The player's raw ledger transactions for the month. */
   readonly ledgerEntries: readonly LedgerTransaction[];
-  /** The month's raw domain-event envelopes. */
   readonly domainEvents: readonly DomainEventEnvelope[];
 }
 
@@ -202,7 +174,6 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
       totalActiveShips: activeShipCount(playerNationAfter),
     },
     priorities: [...buildPrioritiesProjection(postSnapshot, playerNationId)],
-    // Plain copies so the stored sidecar never aliases an engine array.
     battleOutcomes: response.closingSnapshot.battleOutcomes.map((outcome) => ({
       battleId: outcome.battleId,
       areaId: outcome.areaId,

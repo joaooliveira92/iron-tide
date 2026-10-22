@@ -16,7 +16,5 @@ export const ACCENT_STYLES = {
   },
 } as const;
 
-/** Rest before a dossier section card opens, so sweeping the pointer across the tabs opens nothing (ms). */
 export const DOSSIER_OPEN_DELAY = 140;
-/** Grace before a card closes, long enough to move the pointer from a tab into its card (ms). */
 export const DOSSIER_CLOSE_DELAY = 220;

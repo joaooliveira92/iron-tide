@@ -9,7 +9,6 @@ import {
 } from "../../content/presentationContent.js";
 import type { NationProfileSource, WorldSituationSource } from "./world-situation.js";
 
-/** The authored profile of a campaign nation id, or null when none is injected or authored. */
 function profileFor(nationId: string): NationProfileSource | null {
   if (!hasPresentationContent()) return null;
   const countryId = nationIdToCountryId(nationId);
@@ -29,11 +28,6 @@ function profileFor(nationId: string): NationProfileSource | null {
   };
 }
 
-/**
- * Binds the engine projection to the decoded presentation content (theatre
- * grouping and authored nation profiles). Without injected content the briefing
- * degrades to relationship-only placement rather than failing.
- */
 export function worldSituationSource(projection: OpeningBriefingProjection): WorldSituationSource {
   const loaded = hasPresentationContent();
   return {

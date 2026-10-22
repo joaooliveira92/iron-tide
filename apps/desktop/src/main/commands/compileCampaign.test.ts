@@ -13,14 +13,9 @@ import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { IdGenerator, NativeDialog } from "../runtime/platform.js";
 import { compileCampaignProgram } from "./compileCampaign.js";
 
-// The programs resolve `NativeDialog` from the Layer; the fake answers from
-// these test-scoped variables, so the real electron dialog is never touched.
 let chooseSaveDirectoryAnswer: string | null = null;
 let chooseSaveDirectoryCalls = 0;
 
-// The session id is injected (production-hardening ticket 04): a deterministic,
-// per-call counter proves the program takes it from the `IdGenerator` service
-// rather than an ambient `randomUUID()`.
 let idCounter = 0;
 const nextTestId = () => `test-session-${String(idCounter++)}`;
 
@@ -39,7 +34,6 @@ const runtime = ManagedRuntime.make(
   ),
 );
 
-/** Runs the compile program through the desktop service graph and projects its wire envelope. */
 async function compileCampaign(
   configuration: CampaignConfiguration,
 ): Promise<BridgeResult<CompileCampaignResult>> {
@@ -118,7 +112,6 @@ describe("compileCampaign", () => {
     expect(loaded.snapshot.designFamilies).toBeInstanceOf(Map);
     expect(loaded.snapshot.designFamilies.size).toBeGreaterThan(0);
 
-    // Nested Map (research.activeCandidates) also round-trips.
     expect(loaded.snapshot.nations.get("uk")?.research.activeCandidates).toBeInstanceOf(Map);
   });
 

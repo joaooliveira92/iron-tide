@@ -2,16 +2,10 @@ import { expect, test } from "./fixtures.js";
 import { writeAppPreferences } from "./preferences-fixture.js";
 import type { Page } from "@playwright/test";
 
-// Regression guard for "the Fleet Dispatch surface follows the active theme":
-// its command surface, the globe's panel frame, and the globe ocean must all
-// resolve to the `.dark` palette when the theme is dark, and the light palette
-// when it is light. The theme is written to the app-scope preferences file
-// before reload, exactly as the preferences domain persists it.
-
-const LIGHT_SURFACE = "rgb(238, 243, 248)"; // --color-admiralty-surface (light)
-const DARK_SURFACE = "rgb(3, 5, 9)"; // --color-admiralty-surface (dark)
-const LIGHT_OCEAN = "rgb(234, 244, 253)"; // --globe-ocean-inner (light)
-const DARK_OCEAN = "rgb(14, 22, 34)"; // --globe-ocean-inner (dark)
+const LIGHT_SURFACE = "rgb(238, 243, 248)";
+const DARK_SURFACE = "rgb(3, 5, 9)";
+const LIGHT_OCEAN = "rgb(234, 244, 253)";
+const DARK_OCEAN = "rgb(14, 22, 34)";
 
 async function openFleetDispatchInTheme(
   page: Page,
@@ -53,16 +47,13 @@ test("Fleet Dispatch surface, globe frame, and globe ocean follow the active the
   const darkGlobePanel = await background(page, "globe-panel");
   const darkOcean = await oceanInner(page);
 
-  // The whole surface inverts...
   expect(lightSurface).toBe(LIGHT_SURFACE);
   expect(darkSurface).toBe(DARK_SURFACE);
   expect(lightSurface).not.toBe(darkSurface);
 
-  // ...the globe's frame shares the same active theme as the surface...
   expect(lightGlobePanel).toBe(lightSurface);
   expect(darkGlobePanel).toBe(darkSurface);
 
-  // ...and the globe sphere itself follows the theme too.
   expect(lightOcean).toBe(LIGHT_OCEAN);
   expect(darkOcean).toBe(DARK_OCEAN);
 });

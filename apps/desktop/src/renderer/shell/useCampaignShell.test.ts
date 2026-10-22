@@ -86,7 +86,6 @@ describe("useCampaignShell", () => {
       playerNationId: "uk",
       projectedSurplusDeficit: 1_250_000,
       atWar: false,
-      // Forward-wired INC-2 slot: empty until the priorities projection lands.
       activeAlertsCount: null,
     });
   });
@@ -113,8 +112,6 @@ describe("useCampaignShell", () => {
   });
 
   it("refreshes the header from the engine after a month commit, including war status", async () => {
-    // Before the commit nobody is at war; the post-commit projection shows a war
-    // and a new month/revision/balance (as the engine would after a declaration).
     const afterCommit: PlayerProjection = {
       ...projection,
       revision: 4,
@@ -145,8 +142,6 @@ describe("useCampaignShell", () => {
       "resolveTurn",
       expect.objectContaining({ sessionId: "ses-1", expectedRevision: 3 }),
     );
-    // Commit response alone has no projection surface, so the shell re-reads it:
-    // projected balance and war status are no longer stale after the advance.
     expect(result.current.campaign).toEqual({
       month: { year: 1900, month: 2 },
       treasury: 22_900_000,
@@ -574,7 +569,7 @@ describe("useCampaignShell", () => {
         if (command === "inspectPriorities") return ok({ priorities: [] });
         if (command !== "inspectCampaign") return ok({});
         inspectCalls += 1;
-        if (inspectCalls === 1) return ok({ projection: withMonth(1) }); // open
+        if (inspectCalls === 1) return ok({ projection: withMonth(1) });
         return inspectCalls === 2 ? slow.promise : fast.promise;
       }) as unknown as CampaignExecute;
       const { result } = setup(execute);
@@ -587,11 +582,11 @@ describe("useCampaignShell", () => {
         second = result.current.refreshCampaign("ses-1");
       });
       await act(async () => {
-        fast.resolve(ok({ projection: withMonth(3) })); // the newer refresh answers first
+        fast.resolve(ok({ projection: withMonth(3) }));
         await second;
       });
       await act(async () => {
-        slow.resolve(ok({ projection: withMonth(2) })); // the older one answers late
+        slow.resolve(ok({ projection: withMonth(2) }));
         await first;
       });
       expect(result.current.campaign?.month).toEqual({ year: 1900, month: 3 });
@@ -658,7 +653,7 @@ describe("useCampaignShell", () => {
 
       copy = { outcome: "rejected", reason: "SAVE_LOCATION_CANCELLED", diagnostics: [] };
       await act(() => result.current.copyCampaign());
-      expect(result.current.saveMessage).toBeNull(); // cancelling is silent
+      expect(result.current.saveMessage).toBeNull();
 
       copy = {
         outcome: "rejected",

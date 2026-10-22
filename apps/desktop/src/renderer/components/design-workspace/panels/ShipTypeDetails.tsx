@@ -4,18 +4,15 @@ import { plural } from "../plural.js";
 import { describeRange } from "../shipTypes.js";
 import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 
-/** A relative 1-5 ordinal as text, so it never relies on a bar's colour or length alone. */
 const LEVEL = ["Very low", "Low", "Moderate", "High", "Very high"] as const;
 const level = (n: number): string => LEVEL[n - 1] ?? "Moderate";
 
-/** The starter design's forecast build time as text. */
 function months(n: number | null, format: PresentationFormat): string {
   return n === null ? "not forecast" : plural(n, "month", undefined, undefined, format);
 }
 
 const role = (r: string) => r.replaceAll("_", " ").toLowerCase();
 
-/** A ship type's comparable facts: relative cost and build time, displacement and speed envelopes. */
 export function ShipTypeFacts({
   entry,
   className = "grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-4",
@@ -51,7 +48,6 @@ export function ShipTypeFacts({
   );
 }
 
-/** A ship type's rule detail: description, armour, armament, weaknesses, roles and the torpedo rule. */
 export function ShipTypeDetails({
   entry,
   className = "space-y-1 text-xs",

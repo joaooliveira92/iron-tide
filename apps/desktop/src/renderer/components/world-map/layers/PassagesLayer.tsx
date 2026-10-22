@@ -2,7 +2,6 @@ import { pinned } from "../map-svg.js";
 import type { MapPalette } from "../map-palette.js";
 import type { PassageMark } from "../useWorldMapModel.js";
 
-/** Passage badges, drawn at the midpoint of the edge they gate. */
 export function PassagesLayer({
   marks,
   palette,

@@ -4,16 +4,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { TurnReportTab } from "./TurnReportTab.js";
 
-/**
- * Render tests for the Turn Report's Battle Outcomes section
- * (desktop-battle-outcomes INC-3, spec AC-4/AC-5). The component is rendered
- * directly with a fixture response so the tests assert PURE presentation over
- * the read-only `commitResult.closingSnapshot.battleOutcomes`: exactly what
- * the engine emitted (raw ids, winner/loser, delta, losses) — and an honest
- * empty state when the month resolved no battle. Nothing here mutates state
- * or touches authoritative code.
- */
-
 function makeCommitResult(
   battleOutcomes: CommitMonthResponse["closingSnapshot"]["battleOutcomes"],
 ): CommitMonthResponse {
@@ -40,9 +30,6 @@ function makeCommitResult(
   };
 }
 
-// `ScrollArea` (@base-ui/react) measures its element with ResizeObserver —
-// jsdom doesn't ship it; a no-op shim is enough for a pure render test
-// (mirrors the research/diplomacy screen tests).
 const ResizeObserverMock = vi.hoisted(
   () =>
     class implements ResizeObserver {

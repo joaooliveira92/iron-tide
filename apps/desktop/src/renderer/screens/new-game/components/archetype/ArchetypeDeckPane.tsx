@@ -5,10 +5,6 @@ import { memo, useId, useMemo } from "react";
 import { ArchetypeCard, archetypeOptionId } from "./ArchetypeCard.js";
 import { ArchetypeCustomDeckCard, customArchetypeOptionId } from "./ArchetypeCustomDeckCard.js";
 
-/**
- * The deck's four slots in display order: the three preset archetypes, then the
- * custom-build slot. Index 3 is always the custom slot.
- */
 export const ARCHETYPE_DECK_ENTRIES: readonly (
   | { readonly kind: "preset"; readonly id: string }
   | { readonly kind: "custom" }
@@ -17,7 +13,6 @@ export const ARCHETYPE_DECK_ENTRIES: readonly (
   { kind: "custom" as const },
 ];
 
-/** Maps a deck index to its option element's DOM id. */
 export function archetypeDeckOptionId(listboxId: string, index: number): string {
   const entry = ARCHETYPE_DECK_ENTRIES[index];
   if (entry === undefined) return "";
@@ -27,20 +22,11 @@ export function archetypeDeckOptionId(listboxId: string, index: number): string 
 }
 
 export interface ArchetypeDeckPaneProps {
-  /** Index into `ARCHETYPE_DECK_ENTRIES` of the previewed card. */
   readonly focusedIndex: number;
-  /** Focus moved (arrows, wheel, drag-to-fling): previews, commits nothing. */
   readonly onFocusIndex: (index: number) => void;
-  /**
-   * A card was activated (tap or Enter). The screen resolves the index: a
-   * preset slot applies it, the custom slot opens the allocator.
-   */
   readonly onActivateIndex: (index: number) => void;
-  /** The preset id currently applied, or null when not in preset mode. */
   readonly appliedPresetId: string | null;
-  /** Whether a custom build is the currently applied selection. */
   readonly customApplied: boolean;
-  /** The committed custom allocation, or null when nothing has been built yet. */
   readonly customAllocation: {
     readonly economy: number;
     readonly industry: number;
@@ -48,12 +34,6 @@ export interface ArchetypeDeckPaneProps {
   } | null;
 }
 
-/**
- * The master pane of the Choose-your-archetype screen: the three named archetype
- * presets plus the custom-build slot as a deck. Moving focus only previews;
- * Enter or a tap activates the card (applying a preset or opening the
- * allocator for the custom slot).
- */
 export const ArchetypeDeckPane = memo(function ArchetypeDeckPane({
   focusedIndex,
   onFocusIndex,

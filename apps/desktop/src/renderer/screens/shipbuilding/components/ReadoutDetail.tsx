@@ -1,7 +1,6 @@
 import type { ReadoutRow } from "../engineering-status.js";
 import { ReadoutRows } from "./ReadoutRows.js";
 
-/** A readout's detail: its title, the lines behind the number, any causes, and an optional total. */
 export function ReadoutDetail({
   title,
   rows,

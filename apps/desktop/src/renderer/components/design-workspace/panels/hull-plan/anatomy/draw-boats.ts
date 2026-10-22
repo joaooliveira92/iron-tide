@@ -4,7 +4,6 @@ import { solid } from "./anatomy-helpers.js";
 import type { PartDraft } from "./anatomy-types.js";
 import type { AnatomyShipScene } from "./anatomy-scene.js";
 
-/** Boats on the deckhouse: the ship type sets how many clinker hulls ride the cradles. */
 export function drawBoats(scene: AnatomyShipScene): void {
   const { near, L, D, profile, hasHouse, houseT0, houseT1, houseHalf, lowerTop, P, add } = scene;
   if (hasHouse && profile.boats > 0) {

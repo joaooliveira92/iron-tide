@@ -18,9 +18,7 @@ export function MachineryPanel({
   readonly draft: DesignDraft;
   readonly content: DrawingBoardContent;
   readonly edit: Edit;
-  /** The inline message for a setting, filed as `<edit kind>:<setting>` (see `editField`), while it breaks the design. */
   readonly errorFor?: (field: string) => string | undefined;
-  /** The ruleset's kW-per-shp constant, so installed power can be read in horsepower too. */
   readonly kwPerShpBp?: number;
 }) {
   const format = usePresentationFormat();

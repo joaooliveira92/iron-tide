@@ -5,11 +5,6 @@ import type { MapCamera } from "./useMapCamera.js";
 
 const MAX_BAR_PX = 140;
 
-/**
- * Live scale bar. Follows the camera by subscription and writes straight to the
- * DOM, so panning and zooming never cost a React render (same rule as the
- * camera itself).
- */
 export function MapScaleBar({
   camera,
   worldWidth,

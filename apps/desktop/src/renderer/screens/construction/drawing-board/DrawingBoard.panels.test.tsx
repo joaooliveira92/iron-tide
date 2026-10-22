@@ -12,15 +12,12 @@ import { armMove, armPlace, chooseOption, openTab, planMenu, region } from "./te
 
 afterEach(cleanup);
 
-/** The fittings' remove buttons, by their aria-label: a whole-board role-and-name query is slow in jsdom on a battleship. */
 const removeButtons = () => document.querySelectorAll('button[aria-label^="Remove "]').length;
-/** Label queries are scoped to `scope` when given: whole-board label lookups are slow in jsdom on a battleship. */
 const commit = (label: string | RegExp, value: string, scope: HTMLElement = document.body) => {
   const input = within(scope).getByLabelText(label) as HTMLInputElement;
   fireEvent.change(input, { target: { value } });
   fireEvent.blur(input);
 };
-/** The ship-building parity panels (SB-2): brief, yards, armour, batteries, plan tools, plan and profile drawings. */
 describe("DrawingBoard panels", () => {
   it("edits armour regions: size, plate, slope, and adds a new region from the hull", () => {
     render(<DrawingBoard />);
@@ -33,11 +30,9 @@ describe("DrawingBoard panels", () => {
     expect(
       within(region("Edit history")).getByText(/Armour: set belt main \(.* 10\.0 m ×/),
     ).toBeTruthy();
-    // Inclined plate: the checkbox sets cos(30 degrees).
     fireEvent.click(within(protection()).getAllByRole("checkbox")[0]!);
     openTab("History");
     expect(within(region("Edit history")).getByText(/Armour: set .*, inclined\)/)).toBeTruthy();
-    // Add a region that is not yet fitted: the list grows by one.
     fireEvent.click(within(protection()).getByRole("button", { name: "Add region" }));
     expect(within(protection()).getAllByRole("listitem").length).toBe(regionsBefore + 1);
   });
@@ -51,7 +46,6 @@ describe("DrawingBoard panels", () => {
     const values = options.map((o) => o.getAttribute("data-value"));
     expect(values.length).toBeGreaterThan(1);
     expect(values.indexOf("wrought_iron")).toBeLessThan(values.indexOf("harvey"));
-    // The 1896 battleship cannot make Krupp plate yet (technology year 1900): offered, disabled, with the reason.
     const krupp = options.find((o) => o.getAttribute("data-value") === "krupp")!;
     expect(krupp.getAttribute("aria-disabled")).toBe("true");
     expect(krupp.textContent).toMatch(/needs hc_krupp_cemented_armor/);
@@ -66,8 +60,6 @@ describe("DrawingBoard panels", () => {
     const main = within(batteries()).getAllByRole("listitem")[0]!;
     expect(main.textContent).toMatch(/Main battery, \d+\.\d-inch/);
     expect(within(batteries()).getAllByText(/^A · /).length).toBeGreaterThan(0);
-    // Set a mount to port: its badge changes and the history says so.
-    // Scoped to the panel: a whole-board label query is quadratic in jsdom on a battleship's many mounts.
     const side = region("Components and arrangement").querySelector<HTMLElement>(
       '[aria-label^="Side of "]',
     )!;
@@ -75,7 +67,6 @@ describe("DrawingBoard panels", () => {
     fireEvent.click(screen.getByRole("option", { name: "Port" }));
     openTab("History");
     expect(within(region("Edit history")).getByText(/ to port$/)).toBeTruthy();
-    // Clear the first battery: one confirmation, one history entry, one undo restores everything.
     openTab("Arrangement");
     const before = removeButtons();
     fireEvent.click(
@@ -89,7 +80,6 @@ describe("DrawingBoard panels", () => {
 
   describe("plan tools", () => {
     const content = loadDrawingBoardContent();
-    // The destroyer's hull puts station 300 in the central machinery zone.
     const placeable = content.components.find(
       (c) =>
         c.introduction.fromMonth <= "1895-06" &&
@@ -172,18 +162,16 @@ describe("DrawingBoard panels", () => {
       };
       expect(dot).not.toBeNull();
       const first = target();
-      // Click on it: it becomes the fitting to move.
       fireEvent.click(layer, { clientX: first.x, clientY: first.y });
       expect(within(panel).getByRole("status").textContent).toMatch(
         new RegExp(`^Picked ${first.id}`),
       );
-      // Drag it 20 permille sternward along its own line (inside its zone): one move edit, a ghost while dragging.
       const toX = first.x + (stationX(20) - stationX(0));
       fireEvent.pointerDown(layer, { clientX: first.x, clientY: first.y, pointerId: 1 });
       fireEvent.pointerMove(layer, { clientX: toX, clientY: first.y, pointerId: 1 });
       expect(screen.getByTestId("plan-drag-ghost")).toBeTruthy();
       fireEvent.pointerUp(layer, { clientX: toX, clientY: first.y, pointerId: 1 });
-      fireEvent.click(layer, { clientX: toX, clientY: first.y }); // the drop's own click must not act again
+      fireEvent.click(layer, { clientX: toX, clientY: first.y });
       expect(screen.queryByTestId("plan-drag-ghost")).toBeNull();
       expect(within(panel).getByRole("status").textContent).toMatch(
         new RegExp(`^Moved ${first.id} to \\d+‰`),
@@ -195,7 +183,6 @@ describe("DrawingBoard panels", () => {
     it("auto-places a chosen component where the ship stays most level, as one edit", async () => {
       render(<DrawingBoard />);
       const panel = region("Hull plan");
-      // Auto-place waits for a component.
       fireEvent.contextMenu(screen.getByRole("group", { name: /^Ship plan/ }));
       const idle = await screen.findByRole("menuitem", { name: "Auto-place" });
       expect(idle.getAttribute("aria-disabled")).toBe("true");
@@ -240,7 +227,6 @@ describe("DrawingBoard panels", () => {
       const panel = region("Hull plan");
       expect(within(panel).queryByLabelText("Show gun arcs")).toBeNull();
       expect(within(panel).queryByLabelText("Findings to show")).toBeNull();
-      // The toolbar's display popover holds them, and its checkbox drives the drawing.
       fireEvent.click(within(toolbar).getByRole("button", { name: "Plan display" }));
       const display = screen.getByRole("dialog", { name: "Plan display" });
       expect(within(display).getByLabelText("Findings to show")).toBeTruthy();
@@ -271,7 +257,6 @@ describe("DrawingBoard panels", () => {
     expect((screen.getByLabelText(/Required range/) as HTMLInputElement).value).toBe("4321");
     chooseOption("Ship type", "CL · Protected cruiser");
     expect(screen.getByLabelText("Ship type").textContent).toContain("Protected cruiser");
-    // Declaring a type the destroyer does not qualify for is blocked by DESIGN-22, and the history says why.
     openTab("History");
     expect(within(region("Edit history")).getByText(/Brief: category → CL/)).toBeTruthy();
   });
@@ -281,7 +266,6 @@ describe("DrawingBoard panels", () => {
     region("Design brief");
     fireEvent.click(screen.getByLabelText("Ship type"));
     const options = screen.getAllByRole("option");
-    // The six opening types (B, CA, CL, DD, KE, AMC); BB and the later types are not offered (ADR-0088).
     expect(options).toHaveLength(6);
     expect(screen.queryByRole("option", { name: /Dreadnought|Battlecruiser/ })).toBeNull();
     for (const option of options) {

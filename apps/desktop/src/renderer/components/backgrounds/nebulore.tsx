@@ -320,9 +320,6 @@ const Nebulore = ({
       canvas.removeEventListener("webglcontextlost", handleContextLost);
       canvas.removeEventListener("webglcontextrestored", handleContextRestored);
       destroyResources();
-      // Deliberately do NOT lose the context here: this cleanup also runs when the palette changes
-      // on a theme switch, and a lost context is never restored, so the rebuilt program would fail
-      // to compile and the backdrop would vanish. Guarded by e2e/backgrounds.spec.ts.
     };
   }, [settings]);
 

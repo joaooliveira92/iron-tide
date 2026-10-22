@@ -1,10 +1,3 @@
-/**
- * The state the three variants share. Deliberately only *data* is shared —
- * selection, the ruler, layer toggles, the derived route. Layout, information
- * hierarchy, and every visual decision belong to the variants, because that is
- * the thing being compared.
- */
-
 import {
   AREAS,
   AREAS_BY_ID,
@@ -75,7 +68,6 @@ export function selectArea(state: MapPrototypeState, area: AreaId | null): MapPr
   return { ...state, selected: state.selected === area ? null : area };
 }
 
-/** Clicking with the ruler active sets `from`, then `to`, then starts over. */
 export function pushRuler(state: MapPrototypeState, area: AreaId): MapPrototypeState {
   if (state.rulerFrom === null || state.rulerTo !== null) {
     return { ...state, rulerFrom: area, rulerTo: null };
@@ -96,7 +88,6 @@ export interface RouteReading {
   readonly nauticalMiles: number;
   readonly perHop: number;
   readonly passages: readonly string[];
-  /** Months at ticket 12's measured 3,100 nm rate of advance. */
   readonly months: number;
 }
 
@@ -200,7 +191,6 @@ export function summariseArea(id: AreaId): AreaSummary | null {
   };
 }
 
-/** One ramp for every nation, so the fills read as a set rather than a rainbow. */
 export function nationFill(nation: NationId | null, alpha: number): string {
   if (nation === null) return `oklch(0.55 0 0 / ${alpha * 0.35})`;
   const hue = NATIONS_BY_ID.get(nation)?.hue ?? 0;

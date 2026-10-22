@@ -3,18 +3,6 @@ import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { readContentArtifact, type LoadedContentArtifact } from "./contentArtifact.js";
 
-/**
- * Compiles the production campaign from the verified compiled content artifact
- * (ticket 07, CRI-MAIN-2): the content-pack collections and the campaign-file
- * collections come from the bundle exactly as CI validated them — no campaign
- * YAML is read or parsed at runtime. A missing, tampered, or version-mismatched
- * artifact fails closed with a stable diagnostic (never a silent fallback).
- *
- * CAH-LEG-1: this is the only campaign-compile entry point in the main process.
- * The legacy raw-input helper (`runCompilation`/`compileProductionCampaign`) was
- * deleted once every caller migrated to the artifact path; the campaign compiler
- * itself no longer carries a raw-input branch.
- */
 export function compileProductionCampaignFromArtifact(
   artifactDir: string,
   signal: AbortSignal,
@@ -47,7 +35,6 @@ export function compileProductionCampaignFromArtifact(
   return new CampaignCompiler().compile(
     {
       contentBundle: loaded.bundle,
-      // Artifact-derived identity (ADR-0123): the manifest's SHA-256 body hash.
       contentHash: loaded.manifest.bodyHash,
       rulesetVersion: "1.0",
       compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,

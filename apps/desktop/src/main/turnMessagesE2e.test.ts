@@ -88,9 +88,6 @@ describe("turn-messages end-to-end acceptance", () => {
       transportRequestId: `req-${String(expectedRevision)}`,
     }) as Promise<BridgeResult<ResolveTurnResult>>;
 
-  // The T6 seam: a test-only DecisionSource raises one authored decision so the
-  // desktop transaction really suspends, and a battle is injected into the
-  // session snapshot (no `manifestHash`) so battle_resolution suspends too.
   const TEST_DECISION: PendingDecision = {
     phase: "appropriation",
     subjectKey: "uk",
@@ -118,10 +115,6 @@ describe("turn-messages end-to-end acceptance", () => {
   const BATTLE_ID = "test-pending-battle";
   const DECISION_SEED = "e2e-decision-battle-seed-0123456789";
 
-  // This acceptance exercises the pre-existing battle request (a hand-made pending battle with no manifest). With the
-  // production battle-offer section configured (T-1 09) such a battle is auto-resolved rather than raised, so the artifact
-  // is supplied without the section: the dormant behaviour the section's removal restores. The offer path itself is covered
-  // by battleOfferCommands.test.ts.
   const withoutBattleOffers = Layer.effect(
     ContentArtifact,
     Effect.gen(function* () {
@@ -149,7 +142,6 @@ describe("turn-messages end-to-end acceptance", () => {
     ) as BridgeResult<T>;
   }
 
-  /** Register a production session whose pre-turn snapshot carries a pending battle. */
   function registerBattleSession(sessionId: string, saveDir: string) {
     const signal = new AbortController().signal;
     const collector = new DiagnosticCollector();
@@ -186,7 +178,6 @@ describe("turn-messages end-to-end acceptance", () => {
     });
   }
 
-  /** Re-register a session from its on-disk save, as an app reload would. */
   function reloadSessionFromDisk(sessionId: string, saveDir: string) {
     const loaded = new SaveStore().load(saveDir, new DiagnosticCollector());
     if (!loaded) throw new Error("save failed to reload");
@@ -245,7 +236,6 @@ describe("turn-messages end-to-end acceptance", () => {
     expect(existsSync(join(saveDir, TURN_SUMMARIES_FILENAME))).toBe(true);
     expect(existsSync(join(saveDir, PENDING_TURN_FILENAME))).toBe(false);
 
-    // The authoritative save round-trips at the advanced revision.
     const loaded = new SaveStore().load(saveDir, new DiagnosticCollector());
     expect(loaded).not.toBeNull();
     expect(Number(loaded?.snapshot.turnNumber)).toBe(3);
@@ -289,7 +279,6 @@ describe("turn-messages end-to-end acceptance", () => {
     const saveDir = join(saveRoot, "suspended");
     registerBattleSession("session-susp", saveDir);
 
-    // 1. The turn suspends on the injected decision.
     const first = await runDecisionProgram<ResolveTurnResult>(resolveTurnProgram, {
       sessionId: "session-susp",
       expectedRevision: 0,
@@ -304,7 +293,6 @@ describe("turn-messages end-to-end acceptance", () => {
     const decisionRequest = first.value.request;
     expect(existsSync(join(saveDir, PENDING_TURN_FILENAME))).toBe(true);
 
-    // 2. Answering the decision resumes and immediately suspends on the battle.
     const second = await runDecisionProgram<ResolveTurnResult>(answerDecisionProgram, {
       sessionId: "session-susp",
       expectedRevision: 0,
@@ -321,12 +309,10 @@ describe("turn-messages end-to-end acceptance", () => {
     if (second.value.request?.kind !== "battle") return;
     const battleRequest = second.value.request;
 
-    // 3. Simulate a reload: drop the live session and re-register it from disk.
     removeCampaignSession("session-susp");
     expect(getCampaignSession("session-susp")).toBeUndefined();
     reloadSessionFromDisk("session-susp", saveDir);
 
-    // 4. Submitting the battle result completes the month and clears the sidecar.
     const third = await runDecisionProgram<ResolveTurnResult>(submitBattleResultProgram, {
       sessionId: "session-susp",
       expectedRevision: 0,
@@ -355,8 +341,6 @@ describe("turn-messages end-to-end acceptance", () => {
     if (summaries.outcome !== "success") return;
     expect((summaries.value as ReadTurnSummariesResult).summaries).toHaveLength(1);
 
-    // 5. Re-execution parity: the same pre-turn state with all inputs supplied
-    // at once produces byte-identical authoritative state.
     const parityDir = join(saveRoot, "parity");
     registerBattleSession("session-parity", parityDir);
     const decisionInput = makeRecordedInput({

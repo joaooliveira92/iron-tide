@@ -18,7 +18,6 @@ const BAR: Record<TopsideStatus, string> = {
   exceeded: "bg-red-600",
 };
 
-/** Deck-area load of the placed fittings. All numbers come from the domain `topsideLoad`; this only displays them. */
 export function TopsidePanel({ view }: { readonly view: WorkshopView }) {
   const format = usePresentationFormat();
   const m2 = (mm2: number) => format.number(mm2 / 1_000_000, { maximumFractionDigits: 1 });

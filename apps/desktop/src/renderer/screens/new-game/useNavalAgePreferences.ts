@@ -21,7 +21,6 @@ import {
 } from "./rules-of-the-naval-age-presets.js";
 import { defaultCampaignSeed } from "./utils/campaign-seed.js";
 
-/** The narrow transport the step needs; injectable so the screen can be tested headlessly. */
 export type NewGameOptionsPort = Pick<BluewaveDesktopBridge, "campaign">;
 
 export interface UseNavalAgePreferencesReturn {
@@ -38,11 +37,6 @@ export interface UseNavalAgePreferencesReturn {
   readonly selectPreset: (presetId: PresetId) => void;
 }
 
-/**
- * Loads the campaign options and owns the Rules-of-the-Naval-Age draft. The
- * recommended preset is captured once on mount (a later prop change must not
- * clobber the player's edits) and only seeds the initial draft.
- */
 export function useNavalAgePreferences(
   recommendedPreset: AdmiralPresetValues | null,
   portOption?: NewGameOptionsPort,

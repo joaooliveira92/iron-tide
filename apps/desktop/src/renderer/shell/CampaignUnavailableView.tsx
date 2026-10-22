@@ -20,11 +20,6 @@ import type { CampaignShellMode } from "./campaign-shell-state.js";
 import type { PrimaryAction } from "./primary-action.js";
 import { type NewGameFlow, type NewGameNavigation, useNewGameFlow } from "./useNewGameFlow.js";
 
-/**
- * The non-campaign variants whose screens belong to the new-campaign workflow.
- * Derived from the shell's own discriminated union, so a new workflow step is a
- * compile error here until it is registered below.
- */
 type NewGameMode = Exclude<
   CampaignShellMode,
   { kind: "campaign" | "opening" | "open-error" | "file" }
@@ -41,12 +36,6 @@ interface NewGameStepContext {
 
 type NewGameStepRenderer = (ctx: NewGameStepContext) => ReactNode;
 
-/**
- * One renderer per new-game step, keyed by the mode's `kind`. Every renderer
- * shares one narrow context (ISP): the workflow flow and the two shell
- * capabilities it actually needs — not the shell's whole surface. Adding a step
- * is a new union member plus one entry here, with no edit to the dispatcher.
- */
 const NEW_GAME_STEP_RENDERERS: Record<NewGameMode["kind"], NewGameStepRenderer> = {
   "new-game-nation": ({ flow, onPrimaryActionChange }) => (
     <NewGameNationScreen
@@ -134,12 +123,6 @@ const NEW_GAME_STEP_RENDERERS: Record<NewGameMode["kind"], NewGameStepRenderer> 
     ),
 };
 
-/**
- * Every non-campaign shell variant: campaign-file selection, its loading/open
- * error states, and the full new-campaign workflow. Owns the workflow hook and
- * reads the shell from context, so the application shell no longer threads an
- * 18-field callback bag down to it (SRP + ISP + DIP).
- */
 export function CampaignUnavailableView({
   bridge,
 }: {
@@ -154,8 +137,6 @@ export function CampaignUnavailableView({
   );
   const flow = useNewGameFlow(bridge, navigation);
 
-  // Stable identity: the briefing screen re-runs its load effect whenever this
-  // changes, and its own primary-action update re-renders the tree.
   const inspectOpeningBriefing = useCallback(
     async (sessionId: string) => {
       if (bridge === undefined) {

@@ -1,14 +1,8 @@
-/**
- * SVG path and numeric primitives shared by the plan and profile drawings. No domain types, no drawing policy:
- * just the small, reusable building blocks the geometry modules compose.
- */
-
 export interface Point {
   readonly x: number;
   readonly y: number;
 }
 
-/** A closed-path building block; serialised by `serializePath`. */
 export type PathSegment =
   | { readonly kind: "M" | "L"; readonly to: Point }
   | { readonly kind: "Q"; readonly control: Point; readonly to: Point }
@@ -36,7 +30,6 @@ export function serializePath(segments: readonly PathSegment[]): string {
     .join(" ");
 }
 
-/** Every vertex and control point of a path (for bounds and finiteness checks). */
 export function pathPoints(segments: readonly PathSegment[]): Point[] {
   return segments.flatMap((s): Point[] => {
     switch (s.kind) {
@@ -58,7 +51,6 @@ export const lerp = (a: Point, b: Point, t: number): Point => ({
   y: a.y + (b.y - a.y) * t,
 });
 
-/** The path flattened to a polyline (`steps` points per curved segment), in order. */
 export function samplePath(segments: readonly PathSegment[], steps = 24): Point[] {
   const out: Point[] = [];
   let cursor: Point | undefined;

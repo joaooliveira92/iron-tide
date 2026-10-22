@@ -4,10 +4,6 @@ import { Checkbox } from "../../../components/ui/checkbox.js";
 import { Panel } from "../../../components/design-workspace/panels/Panel.js";
 import type { SystemGroup } from "../systems-view.js";
 
-/**
- * The Systems section: the installations relevant to the design year and technology, grouped into local tabs.
- * Locked technology is shown disabled with a reason behind an opt-in "show unavailable technology" filter.
- */
 export function SystemsPanel({
   groups,
   showUnavailable,

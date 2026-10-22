@@ -6,12 +6,6 @@ import { FLOATING_LAYER } from "./menu-styles.js";
 
 const HoverCard = HoverCardPrimitive.Root;
 
-/**
- * The trigger opens the card on hover or focus. ReUI's examples use a short
- * symmetric delay; we default to the same so hover cards feel immediate while
- * avoiding flicker when the pointer sweeps across a row of triggers. Callers
- * can override `delay`/`closeDelay` per trigger.
- */
 const HoverCardTrigger = ({
   delay = 100,
   closeDelay = 100,
@@ -21,10 +15,8 @@ const HoverCardTrigger = ({
 );
 HoverCardTrigger.displayName = "HoverCardTrigger";
 
-/** One card shared by several detached triggers: moving between them swaps the content instead of re-opening. */
 const createHoverCardHandle = HoverCardPrimitive.createHandle;
 
-/** A shared card handle: pass the same one to a `HoverCard` and its detached `HoverCardTrigger`s. */
 type HoverCardHandle<Payload> = HoverCardPrimitive.Handle<Payload>;
 
 interface HoverCardContentProps extends React.ComponentPropsWithoutRef<
@@ -34,20 +26,13 @@ interface HoverCardContentProps extends React.ComponentPropsWithoutRef<
   alignOffset?: number;
   side?: React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Positioner>["side"];
   sideOffset?: number;
-  /** Space kept between the card and the viewport edges when it flips or shifts to fit. */
   collisionPadding?: React.ComponentPropsWithoutRef<
     typeof HoverCardPrimitive.Positioner
   >["collisionPadding"];
-  /** Element to position against instead of the trigger (e.g. the drawing a set of triggers describes). */
   anchor?: React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Positioner>["anchor"];
   ref?: React.Ref<React.ComponentRef<typeof HoverCardPrimitive.Popup>> | undefined;
 }
 
-/**
- * ReUI/shadcn hover-card geometry: a `w-64` popover on the base tokens, anchored
- * with `origin-(--transform-origin)` and a side-aware slide-in, so every hover
- * popover in the app opens from the edge it is placed on.
- */
 const HoverCardContent = ({
   className,
   align = "center",

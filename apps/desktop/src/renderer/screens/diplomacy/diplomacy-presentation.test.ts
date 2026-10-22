@@ -49,7 +49,6 @@ describe("tensionBadgeLabel", () => {
   it("drops the badge only where it would repeat the relation badge (neutral/neutral)", () => {
     expect(tensionBadgeLabel("neutral", 3)).toBeNull();
     expect(tensionBadgeLabel("neutral", 5)).toBeNull();
-    // Same band word under a different relation is still informative.
     expect(tensionBadgeLabel("allied", 4)).toBe("Neutral");
   });
 });

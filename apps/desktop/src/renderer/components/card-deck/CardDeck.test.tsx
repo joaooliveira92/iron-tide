@@ -14,7 +14,6 @@ function cards() {
   ));
 }
 
-/** The label of whichever card the deck currently has on top. */
 function topLabel(container: HTMLElement): string | null {
   return container.querySelector("[data-top]")?.textContent ?? null;
 }
@@ -47,8 +46,6 @@ describe("CardDeck", () => {
   });
 
   it("never reports a parent-driven change back, even when the parent steps again in the same commit", () => {
-    // A parent that follows the deck's own onChange (as the listbox surfaces do) and, as keys arrive quickly,
-    // moves on to the next card while the deck is still bringing the previous one forward.
     const reported: number[] = [];
     function Parent() {
       const [index, setIndex] = useState(0);
@@ -69,7 +66,6 @@ describe("CardDeck", () => {
             topIndex={index}
             onChange={(i) => {
               reported.push(i);
-              // Bounded, so a deck that keeps reporting fails the assertion below instead of looping forever.
               if (reported.length <= 3) setIndex(i);
             }}
           />

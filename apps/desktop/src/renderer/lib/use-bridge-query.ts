@@ -10,24 +10,14 @@ export type BridgeQueryState<Value> =
   | { readonly status: "error"; readonly message: string };
 
 export interface UseBridgeQueryOptions {
-  /** Skips the read entirely while false; the state stays `loading`. Defaults to true. */
   readonly enabled?: boolean;
-  /** Shown when `window.bluewave` is unavailable; defaults to a generic line. */
   readonly bridgeUnavailableMessage?: string;
-  /** Shown when the command throws a non-Error; defaults to a generic line. */
   readonly transportFailureMessage?: string;
 }
 
 const DEFAULT_UNAVAILABLE_MESSAGE = "Bluewave bridge not available";
 const DEFAULT_TRANSPORT_FAILURE_MESSAGE = "The request failed.";
 
-/**
- * Runs one read-only bridge command for the current `sessionId`/`revision` and
- * folds it into a `loading | ready | error` union. The command thunk is read
- * from a ref, so it always sees the latest closure without re-running on every
- * render; re-runs are governed by `sessionId`/`revision` alone, and a stale
- * in-flight result is discarded once either changes.
- */
 export function useBridgeQuery<Value>(
   sessionId: string,
   revision: number | null,

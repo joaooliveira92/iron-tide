@@ -62,7 +62,6 @@ describe("MapMinimap", () => {
       (rect) => rect.getAttribute("visibility") === "visible",
     );
     expect(visible).toHaveLength(1);
-    // scale 2 => half the world on each axis.
     expect(Number(visible[0]?.getAttribute("width"))).toBeCloseTo(projection.width / 2, 5);
   });
 

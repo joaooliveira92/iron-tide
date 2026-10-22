@@ -13,31 +13,21 @@ import type { VisualMountInput } from "@bluewave/ship-visual";
 import { type VisualLook, visualLook, visualMountInputs } from "./visualMounts.js";
 import { type MastSummary, mastSummary } from "./profile-masts.js";
 
-/**
- * Everything the hull-plan view renders, derived once from the draft, its compile and the catalogue. Pure and
- * read-only: the drawing shows this and nothing invents values. `findings` may be supplied by the board so the
- * plan and the board agree on one findings list; otherwise it is derived here for the plan shown on its own.
- */
 export interface PlanModel {
   readonly form: DrawingBoardContent["hullForms"][number] | undefined;
   readonly frame: PlanFrame;
   readonly zones: readonly ZoneRange[];
-  /** The parts-derived catalogue lookup for the edit and read-only paths. */
   readonly entryOf: (componentId: string) => PartCatalogueEntry | undefined;
-  /** Family-level catalogue entries that can be fitted this month. */
   readonly available: readonly PartCatalogueEntry[];
   readonly mounts: readonly { instanceId: string; effectiveBeamArcDeg: number }[];
   readonly batteries: readonly BatteryCard[];
   readonly mountNames: ReadonlyMap<string, string>;
   readonly findings: readonly BoardFinding[];
-  /** Per-fitting identity for the overlay: display name and conventional mount name. */
   readonly targets: ReadonlyMap<string, FittingTarget>;
   readonly superstructure: ZoneRange | undefined;
   readonly placedFunnels: readonly FunnelInput[];
-  /** The compiled placements as the ship-visual catalog reads them, and the look they are drawn in. */
   readonly visualMounts: readonly VisualMountInput[];
   readonly look: VisualLook;
-  /** The masts the profile draws, for the legend; undefined when none is. */
   readonly masts: MastSummary | undefined;
   readonly facts: DrawingFacts;
   readonly warns: (entity: ShipEntity) => boolean;

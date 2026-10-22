@@ -3,24 +3,15 @@ import { stationX } from "./geometry.js";
 import { type PathSegment, type Point, lerp } from "./path.js";
 import { X_BOW, X_STERN, along } from "./profile-constants.js";
 
-/** CONVENTION: forefoot length (how far aft the keel starts curving up), as a fraction of waterline length. */
 const FOREFOOT_LENGTH: Record<BowStyle, number> = { ram: 0.17, spoon: 0.2, plumb: 0.12 };
 
-/** Named anchor points of the silhouette (for tests, labels and fitted structures). */
 export interface ProfileAnchors {
-  /** Top of the stem at the deck. */
   readonly head: Point;
-  /** Foremost point of a ram bow; absent for other bows. */
   readonly ramTip?: Point;
-  /** Where the stem meets the forefoot (lowest point of the stem curve). */
   readonly stemFoot: Point;
-  /** Where the flat keel begins to curve up toward the stem. */
   readonly keelFore: Point;
-  /** Where the flat keel begins to curve up toward the stern. */
   readonly keelAft: Point;
-  /** Heel of the sternpost / bottom of the stern cut-up. */
   readonly sternPost: Point;
-  /** Aftmost top corner of the deck. */
   readonly deckStern: Point;
 }
 
@@ -33,7 +24,6 @@ interface OutlineInput {
 }
 
 interface BowResult {
-  /** Segments from the start of the forefoot (the fore end of the flat keel) up to the stem head. */
   readonly segments: PathSegment[];
   readonly head: Point;
   readonly ramTip?: Point;
@@ -52,7 +42,6 @@ function buildBow(input: OutlineInput): BowResult {
   });
 
   if (bow === "ram") {
-    // The ram: a restrained beak just below the waterline; the upper stem returns aft toward the forecastle.
     const ramTip: Point = { x: X_BOW - along(0.018), y: waterlineY + 0.1 * draughtPx };
     const head: Point = { x: X_BOW + along(0.012), y: deckBowY };
     return {
@@ -78,7 +67,6 @@ function buildBow(input: OutlineInput): BowResult {
   }
 
   if (bow === "spoon") {
-    // Fine entry: a stem that curves up and forward, leaving the forefoot with no corner.
     const stemFoot: Point = { x: X_BOW + along(0.006), y: waterlineY + 0.2 * draughtPx };
     const head: Point = { x: X_BOW - along(0.025), y: deckBowY };
     const forefootC2: Point = {
@@ -108,7 +96,6 @@ function buildBow(input: OutlineInput): BowResult {
     };
   }
 
-  // Plumb: an upright stem down to a rounded forefoot.
   const head: Point = { x: X_BOW, y: deckBowY };
   const stemFoot: Point = { x: X_BOW, y: keelBaseY - 0.45 * draughtPx };
   return {
@@ -128,18 +115,12 @@ function buildBow(input: OutlineInput): BowResult {
 }
 
 interface SternResult {
-  /** Segments from the aft end of the deck down to the sternpost heel. */
   readonly segments: PathSegment[];
   readonly deckStern: Point;
   readonly sternPost: Point;
-  /** The last control point before the heel, so the rising keel can leave it with a matching tangent. */
   readonly exitControl: Point;
 }
 
-/**
- * A control point continuing the direction `from -> joint` past `joint` by up to `length` px, shortened so it
- * never goes below `floorY` (so a curve leaving a sternpost cannot dip under the keel line).
- */
 function continueTangent(from: Point, joint: Point, length: number, floorY: number): Point {
   const dx = joint.x - from.x;
   const dy = joint.y - from.y;
@@ -155,7 +136,6 @@ function buildStern(input: OutlineInput): SternResult {
   const deckStern: Point = { x: X_STERN, y: input.deckY(1) };
 
   if (stern === "transom") {
-    // A flat transom down to a rounded heel.
     const transomFoot: Point = { x: X_STERN, y: waterlineY + 0.45 * draughtPx };
     const sternPost: Point = { x: X_STERN - along(0.035), y: waterlineY + 0.85 * draughtPx };
     return {
@@ -175,7 +155,6 @@ function buildStern(input: OutlineInput): SternResult {
   }
 
   if (stern === "round") {
-    // A rounded fantail curving under in one sweep.
     const sternPost: Point = { x: X_STERN - along(0.05), y: waterlineY + 0.55 * draughtPx };
     return {
       segments: [
@@ -198,7 +177,6 @@ function buildStern(input: OutlineInput): SternResult {
     };
   }
 
-  // Counter: the deck overhangs; the counter curves under to the waterline, then a raked sternpost.
   const counterFoot: Point = { x: X_STERN - along(0.03), y: waterlineY };
   const sternPost: Point = { x: X_STERN - along(0.055), y: waterlineY + 0.45 * draughtPx };
   const counterC2: Point = {
@@ -235,10 +213,6 @@ function buildStern(input: OutlineInput): SternResult {
   };
 }
 
-/**
- * The closed silhouette, clockwise on screen: stem head, sheer line (two parabolic Béziers meeting at midships
- * with a horizontal tangent), stern, sternpost heel, rising keel, flat keel, forefoot, stem, close.
- */
 export function buildOutline(input: OutlineInput): {
   outline: PathSegment[];
   anchors: ProfileAnchors;

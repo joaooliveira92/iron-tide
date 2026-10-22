@@ -28,11 +28,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-/**
- * SB3-R33: the construction economy projection carries the compiled dock/capacity readouts. Every value is
- * cross-checked against the engine function it must come from (not a hardcoded number), so a fabricated constant in the
- * desktop layer fails the test.
- */
 describe("constructionEconomy dock/capacity readouts", () => {
   let saveRoot: string;
 

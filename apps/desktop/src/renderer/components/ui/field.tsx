@@ -57,7 +57,6 @@ interface FieldErrorProps extends React.HTMLAttributes<HTMLParagraphElement> {
   ref?: React.Ref<HTMLParagraphElement> | undefined;
 }
 
-/** The inline message under an `aria-invalid` control (ReUI "input with error message"). */
 const FieldError = ({ className, ref, ...props }: FieldErrorProps) => (
   <p ref={ref} role="alert" className={cn("text-xs text-destructive", className)} {...props} />
 );

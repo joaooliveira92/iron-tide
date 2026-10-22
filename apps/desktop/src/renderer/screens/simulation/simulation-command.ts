@@ -12,10 +12,6 @@ export interface SimulationCommandEvent {
   readonly diagnostics: readonly string[];
 }
 
-/**
- * The telemetry/audit sink, injected at the hook boundary so the simulation
- * screen can be exercised without the `window`-backed singleton utilities.
- */
 export interface SimulationTelemetryPort {
   emit(event: SimulationCommandEvent): void;
   audit(action: string, input: EngineAuditInput): void;
@@ -45,16 +41,10 @@ export interface RunSimulationCommandOptions<Value> {
   readonly sessionId: string;
   readonly telemetry: SimulationTelemetryPort;
   readonly run: () => Promise<BridgeResult<Value>>;
-  /** Engine audit trail derived from a successful result, when the command records one. */
   readonly audit?: (value: Value) => EngineAuditInput;
   readonly transportErrorFallback: string;
 }
 
-/**
- * Runs one bridge command behind a single guarded pipeline: timing, exactly one
- * wide event, an optional engine-audit record, and a normalized outcome. New
- * screen commands compose this instead of re-implementing the sandwich.
- */
 export async function runSimulationCommand<Value>(
   options: RunSimulationCommandOptions<Value>,
 ): Promise<SimulationCommandResult<Value>> {
@@ -101,7 +91,6 @@ export async function runSimulationCommand<Value>(
   }
 }
 
-/** Formats a failed command into the screen's player-facing error string. */
 export function commandFailureMessage(
   result: SimulationCommandFailure,
   prefix: string,
@@ -114,7 +103,6 @@ export function commandFailureMessage(
   return `${prefix}: ${result.reason}.${suffix}`;
 }
 
-/** The production adapter binding the port to the app's telemetry singletons. */
 export function createDesktopSimulationTelemetry(): SimulationTelemetryPort {
   return {
     emit: (event) => {

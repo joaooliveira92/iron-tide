@@ -36,16 +36,9 @@ import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { DecisionSource } from "../runtime/decisionSource.js";
 import { runTurnTransaction } from "./turnTransaction.js";
 
-/**
- * Process-local player-battle sessions. They are NOT authoritative and never
- * persisted: the pending turn remains the source of truth, so restarting the app
- * re-creates the battle from the recorded offer answer. Keyed by session+battle.
- */
 const sessions = new Map<string, PlayerBattleSession>();
-/** The ordered steps taken in each live session: the mid-battle save (see playerBattleSidecar.ts). */
 const stepLogs = new Map<string, readonly PlayerBattleStep[]>();
 
-/** Test seam: forget the process-local sessions, as an app restart does. */
 export function dropPlayerBattleSessionsForTest(): void {
   sessions.clear();
   stepLogs.clear();
@@ -104,12 +97,6 @@ function ordersOf(
   return { divisions: out };
 }
 
-/**
- * T-2 (issue #221): start the player-fought battle for the outstanding battle
- * request. Re-executes the suspended month (deterministically) to recover the
- * committed manifest/weather/reservations at the suspension point, then projects
- * the same tactical battle the auto-resolver would have fought.
- */
 export const startPlayerBattleProgram = withStrictSchema(
   StartPlayerBattlePayloadSchema,
   (payload) =>
@@ -197,7 +184,6 @@ export const startPlayerBattleProgram = withStrictSchema(
         };
       }
 
-      // Mid-battle resume: replay the saved standing orders over the fresh session.
       const saved = loadPlayerBattleSave(record.saveDir, {
         turnId: pending.turnId,
         battleId: payload.battleId,

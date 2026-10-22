@@ -12,7 +12,6 @@ describe("visibleWorldRects", () => {
   });
 
   it("shrinks with zoom and follows the pan", () => {
-    // 4x zoom: view is 250x125 world units. Panned so world (400,100) is top-left.
     expect(visibleWorldRects({ scale: 4, x: -1600, y: -400 }, VIEW, WORLD)).toEqual([
       { x: 400, y: 100, width: 250, height: 125 },
     ]);
@@ -29,7 +28,7 @@ describe("visibleWorldRects", () => {
   it("wraps negative pans into the world and keeps the rectangle inside vertically", () => {
     const [rect] = visibleWorldRects({ scale: 2, x: 200, y: -9999 }, VIEW, WORLD);
     expect(rect?.x).toBe(900);
-    expect(rect?.y).toBe(250); // clamped to world.height - height
+    expect(rect?.y).toBe(250);
   });
 });
 

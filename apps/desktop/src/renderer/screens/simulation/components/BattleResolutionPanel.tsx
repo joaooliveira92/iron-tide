@@ -9,7 +9,6 @@ interface BattleResolutionPanelProps {
   readonly tacticalOutcome: TacticalBattleOutcome | null;
 }
 
-/** Collapsible results of whichever battle resolvers have run this session. */
 export function BattleResolutionPanel({
   autoResolution,
   tacticalOutcome,

@@ -2,9 +2,6 @@ import type { Locator } from "@playwright/test";
 import { test, expect, openCampaign } from "./fixtures.js";
 import { advanceMonths } from "./flows.js";
 
-// The expanded status strip: Nation, Budget and Outlook cards over the real campaign projection.
-// Deterministic seed; asserts what the player sees (cards, budget wording, the deferred popover)
-// and that nothing overflows the window at its minimum supported width.
 test("the status strip expands into Nation, Budget and Outlook cards that fit the minimum window", async ({
   e2e,
   campaignTemplate,
@@ -27,7 +24,6 @@ test("the status strip expands into Nation, Budget and Outlook cards that fit th
     strip.getByRole("group", { name: "Outlook" }).getByText(/^(Healthy|Narrow|Deficit|Critical)$/),
   ).toBeVisible();
 
-  // The deferred readouts live behind one popover and are never shown as numbers.
   await expect(strip.getByText("Prestige")).toHaveCount(0);
   await strip.getByRole("button", { name: /Not yet modelled \(\d+\)/ }).click();
   const popover = page.getByRole("dialog", { name: "Not yet modelled" });
@@ -35,7 +31,6 @@ test("the status strip expands into Nation, Budget and Outlook cards that fit th
   await page.keyboard.press("Escape");
   await expect(popover).toBeHidden();
 
-  // Minimum supported window: the strip must stay inside the viewport.
   await e2e.app.evaluate(({ BrowserWindow }) => {
     const [window] = BrowserWindow.getAllWindows();
     window?.setContentSize(960, 640);
@@ -56,8 +51,6 @@ test("the status strip expands into Nation, Budget and Outlook cards that fit th
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-// The hover cards are portalled and placed against the viewport, so at the smallest supported
-// window each one must still open fully on screen, from both the expanded and collapsed strip.
 test("every status strip hover card opens inside the minimum window", async ({
   e2e,
   campaignTemplate,
@@ -80,7 +73,6 @@ test("every status strip hover card opens inside the minimum window", async ({
     await trigger.hover();
     const card = page.locator("[data-open][data-side][tabindex='-1']").filter({ hasText: heading });
     await expect(card).toBeVisible();
-    // The open animation scales the card, so wait until its box stops moving.
     await expect
       .poll(async () => {
         const a = await card.boundingBox();
@@ -136,8 +128,6 @@ test("every status strip hover card opens inside the minimum window", async ({
   );
 });
 
-// Pinning needs a real pointer: a click keeps a card open while the mouse moves on, a second card
-// can be pinned beside it to compare, and a press away from every pinned card lets go of both.
 test("a clicked status strip card stays pinned, two can be compared, and a click away closes them", async ({
   e2e,
   campaignTemplate,
@@ -155,35 +145,28 @@ test("a clicked status strip card stays pinned, two can be compared, and a click
   await maintenance.click();
   await expect(popup("Over a year")).toBeVisible();
 
-  // Moving the pointer away would close an unpinned card.
   await page.mouse.move(5, 5);
   await page.waitForTimeout(400);
   await expect(popup("Over a year")).toBeVisible();
   await expect(popup("Over a year").getByText(/Pinned\. Press Esc/)).toBeVisible();
 
-  // A second card pins beside the first; the first stays.
   await strip.getByText("Monthly balance (projected)", { exact: true }).click();
   await expect(popup("Balance breakdown")).toBeVisible();
   await expect(popup("Over a year")).toBeVisible();
 
-  // A press inside a pinned card does not unpin the other one.
   await popup("Balance breakdown").getByText("Monthly balance", { exact: true }).click();
   await expect(popup("Over a year")).toBeVisible();
 
-  // A press away from every pinned card lets go of both.
   await page.mouse.click(5, 300);
   await expect(popup("Over a year")).toBeHidden();
   await expect(popup("Balance breakdown")).toBeHidden();
 
-  // Escape lets go too.
   await maintenance.click();
   await expect(popup("Over a year")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(popup("Over a year")).toBeHidden();
 });
 
-// The trend reads the stored monthly reports, so it only exists once a month has really been
-// advanced: a new campaign shows none, and the next month draws it from that month's own report.
 test("the status strip shows a treasury trend only after a month has been advanced", async ({
   e2e,
   campaignTemplate,
@@ -204,7 +187,6 @@ test("the status strip shows a treasury trend only after a month has been advanc
     .locator("[data-open][data-side][tabindex='-1']")
     .filter({ hasText: "Next month end" });
   await expect(card.locator("[data-trend=treasury]")).toBeVisible();
-  // One advanced month: opening and closing treasury, so two points.
   await expect(
     card.getByRole("img", { name: /^Treasury: 2 points from Jan 1880 to Feb 1880/ }),
   ).toBeVisible();

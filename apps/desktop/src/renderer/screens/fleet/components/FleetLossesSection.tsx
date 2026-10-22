@@ -1,6 +1,5 @@
 import type { PlayerLossesView } from "../fleet-sections-state.js";
 
-/** Ships the player has lost, from the engine's recorded battle results (ADR-0061). */
 export function FleetLossesSection({ losses }: { readonly losses: PlayerLossesView }) {
   if (losses.status === "loading") {
     return <p className="text-sm text-muted-foreground">Loading losses…</p>;

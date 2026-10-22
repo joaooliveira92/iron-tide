@@ -36,10 +36,6 @@ export function CommandQueueBar({
 }: CommandQueueBarProps) {
   const declaringWar = draft?.kind === "DeclareWar";
   return (
-    // Pinned to the bottom of the viewport so a drafted action is visible the
-    // moment it is created, however far down the relations list it was clicked.
-    // The sticky element must be this plain wrapper: GlassCard nests its own
-    // overflow-hidden container, which would confine `sticky` to the card.
     <div className="sticky bottom-4 z-10 rounded-xl bg-background shadow-lg">
       <GlassCard glassVariant="liquid-refract">
         <CardHeader className="pb-3">

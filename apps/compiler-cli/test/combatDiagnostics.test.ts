@@ -63,10 +63,6 @@ describe("runCombatOperation", () => {
   });
 
   it("routes a tagged CombatInvariantError to internal-error (it is not a BluewaveError)", () => {
-    // Ticket 26 converted the residual combat invariant throws to
-    // `CombatInvariantError` (a `Data.TaggedError`). The CLI adapter keys on the
-    // `BluewaveError` `_tag`, so a tagged invariant failure must keep the
-    // same internal-error routing the previous plain `Error` had.
     const collector = new DiagnosticCollector();
     const result = runCombatOperation(
       () => {
@@ -88,8 +84,6 @@ describe("runCombatOperation", () => {
     const collector = new DiagnosticCollector();
     const result = runCombatOperation(
       () => {
-        // Deliberately throw a non-Error value to prove runCombatOperation reports
-        // it as an internal-error outcome.
         // eslint-disable-next-line @typescript-eslint/no-throw-literal
         throw "not an Error instance";
       },

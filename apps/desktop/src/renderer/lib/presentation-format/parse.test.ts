@@ -8,9 +8,7 @@ const METRIC = "metric" as const;
 
 describe("presentation-format: parse-once input (U-3 ticket 06)", () => {
   it("parses a display-unit value into the canonical integer once", () => {
-    // 12 inches → 304,800 µm.
     expect(parseMeasurement("12", { category: "calibre", preset: IMPERIAL })).toBe(304_800);
-    // 305 mm → 305,000 µm.
     expect(parseMeasurement("305 mm", { category: "calibre", preset: METRIC })).toBe(305_000);
   });
 
@@ -23,7 +21,6 @@ describe("presentation-format: parse-once input (U-3 ticket 06)", () => {
   });
 
   it("honours a per-category selection on parse", () => {
-    // "1" in a millimetre selection under imperial.
     expect(
       parseMeasurement("1", {
         category: "calibre",

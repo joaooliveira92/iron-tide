@@ -17,13 +17,11 @@ import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 import type { Edit } from "./types.js";
 
-/** cos(30 degrees) in bp: the "inclined" setting. A flat-on plate is 10_000. */
 const INCLINED_COS_BP = 8_660;
 const FLAT_COS_BP = 10_000;
 
 const words = (s: string) => s.replaceAll("_", " ").toLowerCase();
 
-/** Everything about protection: coverage, every region's size and plate, the armour scheme. All numbers are draft or compiled values. */
 export function ArmourPanel({
   draft,
   view,
@@ -35,7 +33,6 @@ export function ArmourPanel({
   readonly view: WorkshopView;
   readonly materials: readonly ArmourMaterialOption[];
   readonly edit: Edit;
-  /** The inline message for an edit, filed as `set_armour_region:<region>` (see `editField`), while it breaks the design. */
   readonly errorFor?: (field: string) => string | undefined;
 }) {
   const format = usePresentationFormat();

@@ -1,4 +1,3 @@
-// ADR-0088: the ship-type roster, the Brief selector and starter designs on the Drawing Board (campaign date 1880-01).
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { DrawingBoard } from "./DrawingBoard.js";
@@ -71,7 +70,6 @@ describe("ship-type roster", () => {
     expect(dd.textContent).toMatch(/Relative cost\s*Very low/);
     expect(dd.textContent).toMatch(/Speed\s*over 19 kn/);
     expect(dd.textContent).toMatch(/Displacement\s*under 2,000 t/);
-    // The envelope follows the scenario ruleset (ADR-0116): the 1880 B band is 1,500 t / under 18 kn.
     const b = row(/Pre-dreadnought battleship/).textContent ?? "";
     expect(b).toMatch(/Speed\s*under 18 kn/);
     expect(b).toMatch(/Displacement\s*1,500 t or more/);
@@ -114,7 +112,6 @@ describe("ship-type roster", () => {
     expect((start as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(start);
     expect(classCode().textContent).toMatch(code);
-    // No blocking finding about the type, and the natural class is the declared one.
     expect(within(region("Design brief")).queryByText(/^Blocking:/)).toBeNull();
     expect(row(new RegExp(name)).getAttribute("aria-current")).toBe("true");
   });
@@ -132,7 +129,6 @@ describe("ship-type roster", () => {
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
     expect(screen.getByText("1 edit")).toBeTruthy();
     expect(classCode().textContent).not.toMatch(/^KE/);
-    // Confirming replaces it and clears the edit history.
     fireEvent.click(within(row(/Corvette/)).getByRole("button", { name: /^Start from/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Replace my design" }));
     await waitFor(() => expect(classCode().textContent).toMatch(/^KE/));
@@ -142,7 +138,6 @@ describe("ship-type roster", () => {
   it("shows a type's rule failures next to the brief when the design stops qualifying", () => {
     render(<DrawingBoard />);
     fireEvent.click(within(row(/Corvette/)).getByRole("button", { name: /^Start from/ }));
-    // Declare it a battle-line ship: it fails the B rules, and the brief says so inline.
     chooseOption(/^Ship type$/, "B · Pre-dreadnought battleship");
     const findings = within(region("Design brief")).getByRole("list", {
       name: "Findings about the ship type",

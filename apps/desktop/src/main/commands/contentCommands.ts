@@ -8,13 +8,6 @@ import type {
 import type { CommandError } from "../runtime/commandError.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
 
-/**
- * The narrow content-query capability the drawing board uses, as an Effect
- * program (INC-2; ADR-0159): main decodes the ship-building catalogue from the
- * verified artifact through the `ContentArtifact` service and ships the
- * data-only DTO over IPC. It exposes no file path, no generic file read, and no
- * YAML parsing — only already-decoded game content (ADR-0008/0105, `MIG-EXCL-1`).
- */
 export const inspectDrawingBoardContentProgram: Effect.Effect<
   BridgeResult<DrawingBoardContentDto>,
   CommandError,
@@ -25,10 +18,6 @@ export const inspectDrawingBoardContentProgram: Effect.Effect<
   return { outcome: "success", value: { catalogue }, diagnostics: [] };
 });
 
-/**
- * Serves the decoded presentation corpus over the narrow content-query IPC
- * (INC-2; CAH-PRES-3). Same fail-closed behaviour as the drawing-board path.
- */
 export const inspectPresentationContentProgram: Effect.Effect<
   BridgeResult<PresentationContentDto>,
   CommandError,
@@ -39,10 +28,6 @@ export const inspectPresentationContentProgram: Effect.Effect<
   return { outcome: "success", value, diagnostics: [] };
 });
 
-/**
- * Serves the decoded UI-string catalogue over the narrow content-query IPC
- * (ADR-0209). Same fail-closed behaviour as the presentation path.
- */
 export const inspectUiCatalogueProgram: Effect.Effect<
   BridgeResult<UiCatalogueDto>,
   CommandError,

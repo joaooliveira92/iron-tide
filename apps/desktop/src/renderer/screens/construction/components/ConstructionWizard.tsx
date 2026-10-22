@@ -56,7 +56,6 @@ export const ConstructionWizard = memo(function ConstructionWizard({
     );
   }
 
-  // The engine computes what an order costs and ships it with the design; the screen only displays it.
   const view = constructionWizardView(design, economy, workspace);
 
   return (

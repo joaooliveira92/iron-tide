@@ -3,7 +3,6 @@ export interface SearchTarget {
   readonly label: string;
 }
 
-/** Case-insensitive substring match over target labels. An empty query matches nothing. */
 export function filterSearchTargets(
   targets: readonly SearchTarget[],
   query: string,

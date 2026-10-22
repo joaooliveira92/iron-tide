@@ -4,7 +4,6 @@ import { labelPlacement } from "./SectionLabels.js";
 describe("labelPlacement", () => {
   it("centres a label on its section but holds the stern end inside the row", () => {
     const { left, width } = labelPlacement({ leftPct: 90, widthPct: 10 });
-    // Centre at 95%, but never closer than the label's half-room to the right edge.
     expect(left).toBe("min(95%, calc(100% - max(5%, 3.25rem)))");
     expect(width).toBe("max(10%, 2.75rem)");
   });

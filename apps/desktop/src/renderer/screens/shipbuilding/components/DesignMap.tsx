@@ -8,11 +8,9 @@ export interface DesignMapProps {
   readonly active: DesignSectionId;
   readonly statuses: { readonly [K in DesignSectionId]: SectionStatus };
   readonly onSelect: (section: DesignSectionId) => void;
-  /** Pinned to the foot of the rail: the design-wide date and status. */
   readonly footer?: ReactNode;
 }
 
-/** The status mark (✓ valid, ! warning, a count of unresolved issues, – not configured) and its spoken meaning. */
 function statusMark(status: SectionStatus): {
   readonly mark: string;
   readonly meaning: string;
@@ -34,10 +32,6 @@ function statusMark(status: SectionStatus): {
   }
 }
 
-/**
- * The left rail: the ship's systems as a map, not a wizard. Experienced players jump straight to any section, and
- * each section shows where the design stands. Below extra-large widths the rail collapses to icons with their marks.
- */
 export function DesignMap({ active, statuses, onSelect, footer }: DesignMapProps) {
   return (
     <nav aria-label="Design map" className="flex h-full flex-col gap-1 border-r p-1.5 xl:p-2">

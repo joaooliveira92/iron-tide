@@ -99,8 +99,6 @@ describe("NewGameIdentityScreen", () => {
 
   it("the three enum fields never block progress since they carry a valid default", () => {
     const { onPrimaryActionChange } = setupUi();
-    // Names are still empty, so Next stays disabled — but the enum fields
-    // themselves are already at a valid default and never the blocker.
     const identity = defaultCampaignIdentity();
     expect(identity.namingConvention).toBe("historical");
     expect(identity.shipNameReuse).toBe("disabled");

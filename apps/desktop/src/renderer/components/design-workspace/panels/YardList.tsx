@@ -4,7 +4,6 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-ca
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { yardRows } from "./yardRows.js";
 
-/** Which shipyards could build this design, and why the others cannot. The order is built at the quickest fitting yard. */
 export function YardList({ yards }: { readonly yards: readonly YardOption[] }) {
   const format = usePresentationFormat();
   if (yards.length === 0) return null;

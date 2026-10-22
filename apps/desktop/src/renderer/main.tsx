@@ -17,10 +17,8 @@ if (!container) {
   throw new Error("Root element #root not found");
 }
 
-// Answer the shell's bounded-quit flush request (ADR-0121) before first paint.
 installAppFlushListener();
 
-// Capture renderer crashes into a local support bundle, never silently (ADR-0133).
 installRendererCrashHandlers();
 
 createRoot(container).render(

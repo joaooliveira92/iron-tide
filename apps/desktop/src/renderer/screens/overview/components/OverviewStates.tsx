@@ -2,7 +2,6 @@ import { GlassCard } from "@/components/ui/glass-card.js";
 import { CardContent } from "../../../components/ui/card.js";
 import { Skeleton } from "../../../components/ui/skeleton.js";
 
-/** Shown when the base campaign read fails: the whole screen is the error. */
 export function OverviewLoadErrorState({ message }: { readonly message: string }) {
   return (
     <div data-guided-target="overview" className="p-8">
@@ -15,7 +14,6 @@ export function OverviewLoadErrorState({ message }: { readonly message: string }
   );
 }
 
-/** Shown while the base campaign projection is still loading. */
 export function OverviewLoadingState() {
   return (
     <div data-guided-target="overview" className="h-full min-h-[28rem] p-3">

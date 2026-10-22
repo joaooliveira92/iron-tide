@@ -10,7 +10,6 @@ export interface CampaignMenuItemsProps {
   readonly onCloseRequest: () => void;
 }
 
-/** The Campaign menu's dropdown panel. Presentational: every item reports back through a handler. */
 export function CampaignMenuItems({
   saving,
   onSave,

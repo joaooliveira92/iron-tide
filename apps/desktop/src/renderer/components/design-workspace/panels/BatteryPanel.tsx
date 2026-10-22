@@ -13,14 +13,11 @@ import type { Edit } from "./types.js";
 import { batteryAttrs, shipLinkAttrs } from "../selection/navigation.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
-/** "gun"/"guns", "tube"/"tubes". */
 const unitWord = (role: string, n: number) =>
   `${role === "TORPEDO" ? "tube" : "gun"}${n === 1 ? "" : "s"}`;
-/** Light-gun calibres a tertiary battery can carry, micrometres (3-pdr, 6-pdr and 3-inch classes). */
 const TERTIARY_CALIBRES_UM = [47_000, 57_000, 76_200] as const;
 const sideText = { CENTRE: "centreline", PORT: "port", STBD: "starboard" } as const;
 
-/** The guns and tubes grouped as batteries: named mounts, totals, rounds per gun, and clearing a whole battery. */
 export function BatteryPanel({
   cards,
   draft,
@@ -33,9 +30,7 @@ export function BatteryPanel({
   readonly draft: DesignDraft;
   readonly content: DrawingBoardContent;
   readonly edit: Edit;
-  /** When given, each mount is a control that pins it in the drawing's selection. */
   readonly onSelect?: (entity: ShipEntity) => void;
-  /** The mount the drawing has pinned, so the control shows its pressed state. */
   readonly selectedInstanceId?: string | null;
 }) {
   const format = usePresentationFormat();

@@ -35,7 +35,6 @@ describe("Shipbuilding workspace shell", () => {
 
   it("keeps ordinary ship parameters out of the command bar", () => {
     render(<ShipbuildingWorkspace />);
-    // Design-level commands only: the class name is the bar's only text input.
     const inputs = within(commands()).queryAllByRole("textbox");
     expect(inputs.map((i) => i.getAttribute("aria-label"))).toEqual(["Class name"]);
     expect(within(commands()).queryAllByRole("spinbutton")).toEqual([]);
@@ -156,7 +155,6 @@ describe("Design map and inspector routing", () => {
 
   it("lists the seven sections, each announcing its status", () => {
     render(<ShipbuildingWorkspace />);
-    // The class-name helpers share the rail's foot but are not sections.
     const names = within(map())
       .getAllByRole("button")
       .map((b) => b.getAttribute("aria-label") ?? "")
@@ -204,7 +202,6 @@ describe("Design map and inspector routing", () => {
   });
 
   it("lists only the tab's own fittings under Armament", () => {
-    // The starting design (a Havock-like destroyer) carries three light guns, tubes, magazines and auxiliaries.
     render(<ShipbuildingWorkspace />);
     openMap("Armament");
     const rows = () =>
@@ -252,7 +249,6 @@ describe("Design map and inspector routing", () => {
     render(<ShipbuildingWorkspace />);
     openMap("Review");
     openTab("Rebuild");
-    // Without a campaign there is nowhere to rebuild; the panel says so rather than failing or vanishing.
     expect(within(inspector()).getByText(/open a campaign to rebuild/i)).toBeTruthy();
   });
 
@@ -269,7 +265,6 @@ describe("Design map and inspector routing", () => {
 describe("Central ship workspace views and overlays", () => {
   const ship = () => screen.getByRole("region", { name: "Ship view" });
   const viewGroup = () => within(ship()).getByRole("group", { name: "Ship view" });
-  // The overlay toggles live in the Layers popover, which renders in a portal.
   const openLayers = () => {
     if (!screen.queryByRole("group", { name: "Overlays" }))
       fireEvent.click(within(ship()).getByRole("button", { name: /^Layers/ }));
@@ -287,7 +282,6 @@ describe("Central ship workspace views and overlays", () => {
     for (const name of ["Top", "Side", "Armour", "Compartments", "Firing arcs"])
       expect(viewButton(name)).toBeTruthy();
     expect(viewButton("Top").getAttribute("aria-pressed")).toBe("true");
-    // Side shows the profile and hides the plan.
     fireEvent.click(viewButton("Side"));
     expect(plan()).toBeNull();
     expect(screen.getByRole("img", { name: /^Side profile/ })).toBeTruthy();
@@ -337,7 +331,6 @@ describe("Central ship workspace views and overlays", () => {
   it("points an empty battery at controls this workspace has, not at a panel it lacks", () => {
     render(<ShipbuildingWorkspace />);
     openMap("Armament");
-    // The starting torpedo gunboat carries no main battery.
     const inspector = screen.getByRole("complementary", { name: /^Inspector/ });
     expect(within(inspector).getByText(/right-click the ship plan and choose Place/)).toBeTruthy();
     expect(within(inspector).queryByText(/Components and arrangement/)).toBeNull();
@@ -357,7 +350,6 @@ describe("Central ship workspace views and overlays", () => {
     const hadBox = box().getAttribute("aria-checked") === "true";
     fireEvent.click(box());
     expect(box().getAttribute("aria-checked")).toBe(String(!hadBox));
-    // A fitted box is a region in the list, with its own editable thickness.
     const region = screen.queryByLabelText(/Thickness of MAGAZINE_BOX/);
     expect(region !== null).toBe(!hadBox);
     fireEvent.click(box());
@@ -384,7 +376,6 @@ describe("Central ship workspace views and overlays", () => {
     expect(overlay("Armour zones").getAttribute("aria-checked")).toBe("false");
     expect(overlay("Centre of mass").getAttribute("aria-checked")).toBe("false");
 
-    // Turning one overlay on leaves the others exactly as they were.
     fireEvent.click(overlay("Centre of mass"));
     expect(overlay("Centre of mass").getAttribute("aria-checked")).toBe("true");
     expect(overlay("Turret arcs").getAttribute("aria-checked")).toBe("true");
@@ -392,12 +383,10 @@ describe("Central ship workspace views and overlays", () => {
 
     fireEvent.click(overlay("Turret arcs"));
     expect(plan()!.querySelectorAll("[data-arc]")).toHaveLength(0);
-    // ...and switching view presets its own overlays.
     fireEvent.click(viewButton("Armour"));
     expect(overlay("Armour zones").getAttribute("aria-checked")).toBe("true");
     expect(overlay("Turret arcs").getAttribute("aria-checked")).toBe("false");
 
-    // The overlays group is a toggle list, never all-on at once.
     const boxes = within(overlays()).getAllByRole("checkbox");
     expect(boxes.filter((b) => b.getAttribute("aria-checked") === "true").length).toBeLessThan(
       boxes.length,
@@ -423,7 +412,6 @@ describe("Selection synchronization", () => {
       within(localTabs()).getByRole("tab", { name: "Secondary" }).getAttribute("aria-selected"),
     ).toBe("true");
     expect(screen.getByTestId("selection-banner").textContent).toMatch(/Selected on ship/);
-    // The mount's own control takes focus.
     expect((document.activeElement as HTMLElement).getAttribute("aria-label")).toMatch(
       /^Select mount /,
     );
@@ -458,7 +446,6 @@ describe("Selection synchronization", () => {
     expect(fittingTarget("gun_12pdr").getAttribute("aria-pressed")).toBe("true");
     expect(fittingTarget("gun_12pdr").getAttribute("data-state")).toBe("selected");
     expect(fittings().querySelector("[data-testid='fitting-selected-ring']")).not.toBeNull();
-    // The selected mount's firing arcs read strongest.
     expect(plan()!.querySelectorAll("[data-highlight]").length).toBeGreaterThan(0);
   });
 
@@ -486,14 +473,11 @@ describe("Armament master-detail editor", () => {
     const chosen = mountButtons()[0]!;
     fireEvent.click(chosen);
     expect(chosen.getAttribute("aria-pressed")).toBe("true");
-    // Editable: barrel count, ammunition per gun, zone, station and side (scoped to the editor, not the
-    // fittings table below, which repeats the station field).
     expect(within(battery()).getByLabelText(/^Barrel count/)).toBeTruthy();
     expect(within(battery()).getByLabelText(/^Ammunition per gun/)).toBeTruthy();
     expect(within(battery()).getByLabelText(/^Zone/)).toBeTruthy();
     expect(within(battery()).getByLabelText(/^Station/)).toBeTruthy();
     expect(within(battery()).getByLabelText(/^Side/)).toBeTruthy();
-    // Readouts came from the compiled design.
     expect(within(battery()).getByText("Mount type")).toBeTruthy();
     expect(within(battery()).getByText(/Placement conflicts/)).toBeTruthy();
   });
@@ -544,7 +528,6 @@ describe("Systems section", () => {
     expect(filter.getAttribute("aria-checked") ?? filter.getAttribute("data-state")).toMatch(
       /false|unchecked/,
     );
-    // An available installation is offered for fitting.
     expect(within(panel()).getAllByRole("button", { name: /^Add / }).length).toBeGreaterThan(0);
   });
 
@@ -555,7 +538,6 @@ describe("Systems section", () => {
     const before = statusOf("displacement");
     fireEvent.click(within(colonial()).getByRole("checkbox", { name: "Fit for colonial service" }));
     expect(within(colonial()).getByText(/15\.00%/)).toBeTruthy();
-    // The production ruleset authors the section: the fitting now costs displacement.
     expect(statusOf("displacement")).not.toBe(before);
     fireEvent.click(within(commands()).getByRole("button", { name: "Undo" }));
     expect(within(colonial()).getByText("Not fitted for colonial service.")).toBeTruthy();
@@ -574,7 +556,6 @@ describe("Systems section", () => {
   it("reveals locked technology with a reason when the filter is turned on", () => {
     render(<ShipbuildingWorkspace />);
     openSystemTab("Fire control");
-    // At 1880 the optical rangefinder is not yet available; it is hidden until the filter is on.
     const filter = within(panel()).getByRole("checkbox", { name: "Show unavailable technology" });
     expect(within(panel()).queryAllByText(/Unavailable until/)).toHaveLength(0);
     fireEvent.click(filter);
@@ -591,7 +572,6 @@ describe("Review section", () => {
     const classes = ["Blocking errors", "Warnings", "Advisory observations"];
     const present = classes.filter((n) => within(validation()).queryByRole("region", { name: n }));
     expect(present.length).toBeGreaterThan(0);
-    // Every finding shown sits inside a class region, and none sits outside them.
     const all = validation().querySelectorAll("[data-finding-key]").length;
     const grouped = classes.reduce(
       (n, name) =>
@@ -644,7 +624,6 @@ describe("Overview summary section", () => {
     openMap("Overview");
     const before = statusOf("displacement");
     const priorities = within(panel()).getByRole("region", { name: "Design priorities" });
-    // All five priorities are settable and displayed, defaulting to Normal.
     for (const label of ["Speed", "Protection", "Firepower", "Range", "Cost"])
       expect(within(priorities).getByLabelText(`${label} priority`)).toBeTruthy();
     expect(within(priorities).getAllByText("Normal").length).toBe(5);
@@ -661,7 +640,6 @@ describe("Machinery outcomes-first section", () => {
     openMap("Machinery");
     const config = within(panel()).getByRole("region", { name: "Propulsion configuration" });
     const results = within(panel()).getByRole("region", { name: "Calculated results" });
-    // Inputs are editable.
     for (const label of [
       /^Target speed/,
       /^Cruising speed/,
@@ -670,7 +648,6 @@ describe("Machinery outcomes-first section", () => {
       /^Fuel capacity/,
     ])
       expect(within(config).getByLabelText(label)).toBeTruthy();
-    // Results are outputs, never editable controls.
     expect(within(results).queryAllByRole("spinbutton")).toHaveLength(0);
     const outputs = within(results).getByTestId("machinery-outputs").textContent ?? "";
     expect(outputs).toMatch(/Power required at target speed/);
@@ -680,7 +657,6 @@ describe("Machinery outcomes-first section", () => {
 
   it("previews what an alternative plant would change, without committing it", () => {
     render(<ShipbuildingWorkspace />);
-    // Move to a date where another plant exists, so there is an alternative to preview.
     fireEvent.click(screen.getByRole("combobox", { name: "Technology as of" }));
     fireEvent.click(screen.getByRole("option", { name: "1885-01" }));
     openMap("Machinery");
@@ -694,7 +670,6 @@ describe("Machinery outcomes-first section", () => {
     expect(preview.textContent).toMatch(/Reliability/);
     expect(preview.textContent).toMatch(/Required/);
     expect(preview.textContent).toMatch(/1885-01/);
-    // Hovering previews only: nothing is committed.
     expect(statusOf("displacement")).toBe(before);
   });
 
@@ -712,7 +687,6 @@ describe("Machinery outcomes-first section", () => {
     openMap("Machinery");
     const speed = () => screen.getByLabelText(/^Target speed/) as HTMLInputElement;
     const original = speed().value;
-    // No reset is offered while the value is the recommended one.
     expect(
       within(panel()).queryByRole("button", { name: "Reset Target speed to recommended" }),
     ).toBeNull();
@@ -743,7 +717,6 @@ describe("Engineering status strip", () => {
       "warnings",
     ])
       expect(item(id)).toBeTruthy();
-    // A sound design stays neutral; only the warning count turns amber.
     expect(item("displacement").getAttribute("data-tone")).toBe("neutral");
     expect(item("warnings").getAttribute("data-tone")).toBe("warn");
   });
@@ -840,10 +813,8 @@ describe("Protection armour section", () => {
   it("groups a fitted region spatially and shows its compiled readouts", () => {
     render(<ShipbuildingWorkspace />);
     openMap("Protection");
-    // The starting design carries no armour: the section says so and offers to add a region.
     expect(within(panel()).getByText(/No armour fitted/)).toBeTruthy();
     fireEvent.click(within(panel()).getByRole("button", { name: "Add region" }));
-    // The added region (the first free one) is grouped under its spatial heading and shows its readouts.
     expect(within(panel()).getByRole("region", { name: "Belt" })).toBeTruthy();
     expect(
       within(panel()).getByRole("button", { name: "Select Main belt on the ship" }),
@@ -885,7 +856,6 @@ describe("Protection armour section", () => {
     fireEvent.click(within(panel()).getByRole("button", { name: "Add region" }));
     const details = within(panel()).getByText("Advanced").closest("details") as HTMLDetailsElement;
     expect(details.open).toBe(false);
-    // The specialist material control is reachable inside the disclosure.
     expect(within(details).getByLabelText(/^Material of/)).toBeTruthy();
   });
 

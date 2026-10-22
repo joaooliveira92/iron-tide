@@ -12,16 +12,6 @@ import {
 import { useResearchScreen } from "./hooks/useResearchScreen.js";
 import { buildResearchViewModel } from "./research-view-model.js";
 
-/**
- * Research & Technology screen (desktop-engine-feature-gate INC-3). Renders
- * ONLY data from the engine's `ResearchScreenProjection` — research budget,
- * field priorities (editable), in-progress technology work with invested
- * points, and discovered technologies. Submitting `setResearchPriorityCommand`
- * uses the shell's `expectedRevision` / `transportRequestId`
- * optimistic-concurrency flow (same as the Construction screen); the engine
- * applies the queued priorities on the NEXT turn advance (spec D1) — the
- * screen says exactly that, never that they are already in effect.
- */
 export function ResearchScreen({ sessionId }: { readonly sessionId: string }) {
   const { state, setFieldWeight, submit, reload, canSubmit } = useResearchScreen(sessionId);
 

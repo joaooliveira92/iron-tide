@@ -7,11 +7,6 @@ export interface NationArchetypeSynergy {
   readonly note: string;
 }
 
-/**
- * Presentational (non-authoritative) affinity notes between a nation and each
- * playstyle. This is flavour content shown on the nation-selection step; it never
- * changes campaign authority. Keyed by stable nation id like `uk`.
- */
 const NATION_ARCHETYPE_SYNERGY: Record<string, Partial<Record<string, NationArchetypeSynergy>>> = {
   uk: {
     merchant_prince: {

@@ -1,7 +1,6 @@
 import type { FleetScreenProjection } from "../../../../shared/fleet-contract.js";
 import type { RequestLifecycle } from "../../../lib/command-screen-workflow.js";
 
-/** What the foreign-station section holds of the engine's fleet projection. */
 export interface FleetStationState extends RequestLifecycle {
   readonly divisions: FleetScreenProjection["divisions"];
   readonly areas: FleetScreenProjection["areas"];

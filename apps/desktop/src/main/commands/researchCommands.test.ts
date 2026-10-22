@@ -49,11 +49,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-// One shared runtime for every research program; the services delegate to the
-// same in-memory session/queue registries the tests populate directly.
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-/** Runs a command program through the desktop service graph and projects its wire envelope. */
 async function runProgram<A>(program: CommandProgram, payload: unknown): Promise<BridgeResult<A>> {
   return projectCommandExit(await runtime.runPromiseExit(program(payload))) as BridgeResult<A>;
 }
@@ -69,15 +66,6 @@ const commitMonth = (payload: {
   expectedRevision: number;
   transportRequestId: string;
 }) => runProgram<CommitMonthResponse>(commitMonthProgram, payload);
-
-/**
- * desktop-engine-feature-gate INC-2 acceptance tests (spec AC-1..AC-5):
- * projection + engine-authoritative priority issue against the real
- * production pack (uk has authored research with budget 60 and three field
- * priorities). `SetResearchPriorityCommand` envelopes are applied ONLY by
- * `MonthExecutor`'s command_collection via `commitMonth` — these tests never
- * mutate `nation.research` directly.
- */
 
 describe("research commands", () => {
   let saveRoot: string;
@@ -126,8 +114,6 @@ describe("research commands", () => {
     return record.state;
   }
 
-  /** A complete, engine-valid priority record: every canonical field present,
-   * each weight in {1,2,4}, exactly `GUNNERY` at HIGH (1..5 required). */
   function fullPriorities(): Record<string, number> {
     const all: Record<string, number> = {};
     for (const field of CANONICAL_RESEARCH_FIELD_IDS) {
@@ -170,7 +156,6 @@ describe("research commands", () => {
       expect(result.value.revision).toBe(0);
       expect(result.value.month).toEqual({ month: 1, year: 1880 });
       expect(result.value.nationId).toBe("uk");
-      // One-to-one with the compiled snapshot (spec D3 — never invented).
       expect(result.value.researchBudget).toBe(Number(ukResearch.researchBudget));
       expect(result.value.fieldPriorities).toEqual(ukFieldPriorities(state));
       expect(result.value.discoveredTechIds).toEqual(
@@ -234,10 +219,7 @@ describe("research commands", () => {
       expect(queued.body.exactTechId).toBeUndefined();
       expect(queued.issuerClass).toBe("PLAYER");
       expect(queued.issuerParticipantId).toBe("uk");
-      // `expectedSnapshotHash` is EXACTLY the value the engine's lifecycle
-      // `validate()` recomputes (lifecycle.ts:142 — sha256Hex(canonicalSerialize(snapshot))).
       expect(queued.expectedSnapshotHash).toBe(sha256Hex(canonicalSerialize(session.snapshot)));
-      // Issued at revision 0 (turnNumber 0), AI-pattern key.
       expect(queued.idempotencyKey).toContain("/0/uk/SetResearchPriority");
       expect(queued.timestamp).toBe("1910-01-01T00:00:00.000Z");
     });
@@ -259,14 +241,12 @@ describe("research commands", () => {
       if (committed.outcome !== "success") return;
 
       const after = requireSessionState("apply-session");
-      // The engine applied the whole record authoritatively.
       expect(ukFieldPriorities(after)).toEqual(priorities);
 
       const inspected = await inspectResearchScreen("apply-session");
       expect(inspected.outcome).toBe("success");
       if (inspected.outcome !== "success") return;
       expect(inspected.value.fieldPriorities).toEqual(priorities);
-      // The queue was drained — nothing is left to re-deliver.
       expect(researchEnvelopesForExecution("apply-session", after.snapshot)).toEqual([]);
     });
 
@@ -275,22 +255,16 @@ describe("research commands", () => {
       registerProductionSession("invalid-session", saveDir);
       const pristine = ukFieldPriorities(requireSessionState("invalid-session"));
 
-      // An unknown field that pushes the record past the canonical field set is
-      // refused at the wire boundary before any service is resolved.
       const overCap = await setResearchPriorityCommand(
         priorityPayload("invalid-session", { ...fullPriorities(), NUCLEAR_FUSION: 2 }),
       );
       expect(overCap).toMatchObject({ outcome: "error", reason: "INVALID_PAYLOAD" });
 
-      // A non-integer weight also never reaches the handler mirror: the wire
-      // schema rejects it as INVALID_PAYLOAD.
       const nonInteger = await setResearchPriorityCommand(
         priorityPayload("invalid-session", { ...fullPriorities(), GUNNERY: 1.5 }),
       );
       expect(nonInteger).toMatchObject({ outcome: "error", reason: "INVALID_PAYLOAD" });
 
-      // A missing-field record passes the wire shape and is surfaced by the
-      // engine-mirror validation with its stable code.
       const partial = await setResearchPriorityCommand(
         priorityPayload("invalid-session", { GUNNERY: 4, MACHINERY: 2 }),
       );
@@ -299,8 +273,6 @@ describe("research commands", () => {
         reason: "RESEARCH_PRIORITY_CONSTRAINT_VIOLATED",
       });
 
-      // A same-size unknown field (one canonical field replaced) also reaches
-      // the mirror, which reports the unknown id.
       const sameSizeUnknown = fullPriorities();
       delete sameSizeUnknown[CANONICAL_RESEARCH_FIELD_IDS[0]!];
       sameSizeUnknown.NUCLEAR_FUSION = 2;
@@ -312,7 +284,6 @@ describe("research commands", () => {
       expect(unknown.reason).toBe("RESEARCH_PRIORITY_CONSTRAINT_VIOLATED");
       expect(unknown.diagnostics.join(" ")).toContain("NUCLEAR_FUSION");
 
-      // Session + queue untouched by every rejection.
       const session = requireSessionState("invalid-session");
       expect(researchEnvelopesForExecution("invalid-session", session.snapshot)).toEqual([]);
       expect(ukFieldPriorities(session)).toEqual(pristine);
@@ -328,12 +299,6 @@ describe("research commands", () => {
       );
       expect(result.outcome).toBe("rejected");
       if (result.outcome !== "rejected") return;
-      // Same stable machine code the engine's lifecycle emits at drain
-      // (lifecycle.ts `EXACT_TECHNOLOGY_SELECTION_PROHIBITED`) — the wire may
-      // carry the field, but the engine permanently prohibits it, so the
-      // desktop refuses at issue instead of silently dropping it after the
-      // month (no queued command to "apply on next turn" that would then
-      // never take effect).
       expect(result.reason).toBe("EXACT_TECHNOLOGY_SELECTION_PROHIBITED");
 
       const session = requireSessionState("exact-tech-session");
@@ -361,7 +326,6 @@ describe("research commands", () => {
       );
 
       const session = requireSessionState("idempotent-session");
-      // Still ONE queued envelope — no double-enqueue.
       expect(researchEnvelopesForExecution("idempotent-session", session.snapshot)).toHaveLength(1);
 
       const conflicting = await setResearchPriorityCommand(
@@ -440,7 +404,6 @@ describe("research commands", () => {
       expect(issuedB.outcome).toBe("success");
       if (issuedA.outcome !== "success" || issuedB.outcome !== "success") return;
 
-      // Deterministic envelope identity across independent sessions.
       expect(issuedA.value.commandId).toBe(issuedB.value.commandId);
       expect(issuedA.value.priorities).toEqual(issuedB.value.priorities);
 
@@ -464,11 +427,6 @@ describe("research commands", () => {
     });
 
     it("two OS child processes produce byte-identical output (issue + commitMonth)", () => {
-      // The slice's authoritative chain is already cross-process proven
-      // (packages/cross-process-test); this child proves the desktop issue +
-      // drain path adds no ambient leak. Its compiled emission is created by
-      // `tsc -b` (turbo `typecheck`), which the orchestrator's gate runs before
-      // tests — if it's absent, fail with a clear message rather than pretend.
       const childPath = resolve(
         __dirname,
         "../../../dist",
@@ -508,12 +466,6 @@ describe("research commands", () => {
       expect(construction.outcome).toBe("success");
 
       const after = requireSessionState("interleave-session");
-      // The construction persist advanced the snapshot -> the execution copy
-      // must refresh its hash or the engine's validate() would stale-reject it.
-      // (`researchEnvelopesForExecution` rehashes against the copy it is given;
-      // commitMonth passes the player-slot-first execution snapshot, which is
-      // what the engine validates. The final commit assertion below — success
-      // + priorities applied — proves the drain-through-seam path itself.)
       const [envelope] = researchEnvelopesForExecution("interleave-session", after.snapshot);
       expect(envelope).toBeDefined();
       if (!envelope) return;

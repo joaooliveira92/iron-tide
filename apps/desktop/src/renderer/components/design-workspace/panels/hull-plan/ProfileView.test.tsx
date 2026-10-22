@@ -59,7 +59,6 @@ describe("ProfileView", () => {
       mounts.map((m) => m.getAttribute("data-instance") ?? "").sort((a, b) => a.localeCompare(b)),
     ).toEqual(guns);
     for (const m of mounts) {
-      // A British 1895 design has no national open mount, so it draws the universal Victorian one.
       expect(m.getAttribute("data-part")).toBe("x-victorian-open");
       expect(m.querySelector("title")?.textContent).toMatch(/Open mount, 1 × [23] in/);
     }
@@ -113,7 +112,6 @@ describe("ProfileView", () => {
     const preDreadnought = partsIn("1898-01");
     expect(victorian).toContain("gun_12pdr=x-victorian-open");
     expect(preDreadnought).toContain("gun_12pdr=x-pre-dreadnought-open");
-    // Same mounts, same instances: only the drawing changed.
     expect(preDreadnought.map((s) => s.split("=")[0])).toEqual(
       victorian.map((s) => s.split("=")[0]),
     );
@@ -128,7 +126,6 @@ describe("ProfileView", () => {
     expect(stations[0]).toBeGreaterThan(zone.startPermille);
     expect(stations[0]).toBeLessThan(zone.endPermille);
     expect(stations[1]).toBe(zone.endPermille);
-    // A British 1895 design: the universal Victorian mast.
     expect(masts.map((m) => m.getAttribute("data-part"))).toEqual([
       "x-victorian-mast",
       "x-victorian-mast",

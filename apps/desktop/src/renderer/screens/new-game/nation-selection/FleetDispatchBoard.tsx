@@ -13,12 +13,6 @@ interface FleetDispatchBoardProps {
   footerChildren?: ReactNode;
 }
 
-/**
- * The Fleet Dispatch master pane: the nation cards as a configuration of the
- * shared `DeckMasterPane`. Every focus change and tap selects; keyboard input is
- * owned by the parent screen (it also handles Enter/Escape and plays the UI
- * sounds), so it is forwarded untouched.
- */
 export function FleetDispatchBoard({
   slots,
   focusedIndex,

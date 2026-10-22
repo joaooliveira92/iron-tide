@@ -46,7 +46,6 @@ export function useCampaignFiles({
   const showResult = useCallback((nextResult: OperationResult) => {
     setResult(nextResult);
     if (resultTimerRef.current !== null) clearTimeout(resultTimerRef.current);
-    // Errors stay until dismissed; only success summaries expire.
     resultTimerRef.current =
       nextResult.kind === "error" ? null : setTimeout(() => setResult(null), 15_000);
   }, []);
@@ -94,7 +93,6 @@ export function useCampaignFiles({
         return;
       }
       if (loadResult.reason === "PACKAGE_NOT_APPROVED") {
-        // Not a package the main process remembers: ask the user to pick it.
         await openCampaign();
         return;
       }

@@ -6,7 +6,6 @@ test("Electron boots hermetically, renders the shell landing, and rejects debug-
   expect(e2e.page.url()).not.toContain("localhost");
   await expect(e2e.page.getByText("Bluewave Naval Staff")).toBeVisible();
 
-  // The debug-only Tactical Sandbox commands are rejected in a normal build.
   const reason = await e2e.page.evaluate(async () => {
     const bridge = (
       window as unknown as {

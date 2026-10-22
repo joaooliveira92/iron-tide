@@ -7,7 +7,6 @@ import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { humanizeId } from "../../lib/humanize-id.js";
 import { monthLabel, signed } from "./month-report-format.js";
 
-/** Prose summary for a single month, flowing as narrative text. */
 export function narrativeMonthSummary(
   month: MonthlyReportEntry,
   previousMonth: MonthlyReportEntry | undefined,
@@ -40,7 +39,6 @@ export function narrativeMonthSummary(
   return parts.join(" ") + narrativeClosing(month);
 }
 
-/** Narrative for Treasury section: finance flow per ledger row. */
 function narrativeTreasurySection(
   treasury: MonthlyReportEntry["treasury"],
   battles: MonthlyReportEntry["battleOutcomes"],
@@ -68,7 +66,6 @@ function narrativeTreasurySection(
   return lines.join("; ") + ".";
 }
 
-/** Narrative for Construction section: projects, completed ships, new starts. */
 function narrativeConstructionSection(
   construction: MonthlyReportEntry["construction"],
   format: PresentationFormat,
@@ -101,7 +98,6 @@ function narrativeConstructionSection(
   return parts.join(". ") + ".";
 }
 
-/** Narrative for Research section: tech progress and discoveries. */
 function narrativeResearchSection(research: MonthlyReportEntry["research"]): string {
   if (research.progress.length === 0 && research.discoveries.length === 0) {
     return "No research activity this month — focus shifted elsewhere.";
@@ -120,7 +116,6 @@ function narrativeResearchSection(research: MonthlyReportEntry["research"]): str
   return parts.join(". ") + ".";
 }
 
-/** Narrative for Fleet section: commissioned ships and total strength. */
 function narrativeFleetSection(
   fleet: MonthlyReportEntry["fleet"],
   construction: MonthlyReportEntry["construction"],
@@ -142,7 +137,6 @@ function narrativeFleetSection(
   return parts.join(". ") + ".";
 }
 
-/** Narrative for Priorities section: new / resolved / continuing changes. */
 function narrativePrioritiesSection(
   current: MonthlyReportEntry["priorities"],
   previous: MonthlyReportEntry["priorities"] | undefined,
@@ -186,7 +180,6 @@ function narrativePrioritiesSection(
   return parts.join(" ");
 }
 
-/** Narrative for Battle Outcomes section: who won where, by how much. */
 function narrativeBattleSection(
   battles: MonthlyReportEntry["battleOutcomes"],
   areaName: (id: string) => string,
@@ -227,7 +220,6 @@ function narrativeBattleSection(
   return parts.join(". ") + ".";
 }
 
-/** Closing narrative: one-line summary of the month's character. */
 function narrativeClosing(month: MonthlyReportEntry): string {
   const ledgerActive = month.treasury.ledgerRows.length > 0;
   const constructionActive =
@@ -255,7 +247,6 @@ function narrativeClosing(month: MonthlyReportEntry): string {
   return "Several critical developments across treasury, operations and strategy defined this month.";
 }
 
-/** React component: renders each event as a distinct row with entity links. */
 export function NarrativeMonthSummary({
   reports,
   areaName,

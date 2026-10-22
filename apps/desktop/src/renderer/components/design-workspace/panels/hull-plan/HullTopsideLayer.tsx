@@ -5,13 +5,11 @@ import { PLAN_MID, type PlanFrame } from "./geometry.js";
 
 type Zone = { readonly startPermille: number; readonly endPermille: number };
 
-/** Bridge starts a fifth along the superstructure and ends two thirds along it, as the profile's upper mass does. */
 const BRIDGE_START = 0.2;
 const BRIDGE_END = 0.65;
 
 const along = (z: Zone, t: number) => z.startPermille + (z.endPermille - z.startPermille) * t;
 
-/** CONVENTION, as in the profile: a foremast at the bridge and a mainmast at the aft end of the superstructure. */
 function mastStations(z: Zone): number[] {
   return [Math.round(along(z, BRIDGE_START)), z.endPermille];
 }
@@ -32,7 +30,6 @@ function bridgePoints(frame: PlanFrame, z: Zone, half: number): string {
     .join(" ");
 }
 
-/** Superstructure block (over its zone) and funnel ovals, in plan. Footprints are schematic: no data gives their width. */
 export function HullTopsideLayer({
   frame,
   draft,
@@ -75,8 +72,6 @@ export function HullTopsideLayer({
       {sup && supHalf > 1 && (
         <g className="pointer-events-none" data-testid="hull-bridge">
           <polygon
-            // Bridge house: from a fifth to two thirds along the block (the profile's upper mass), pointed forward as
-            // the guide's plan diagrams draw it.
             points={bridgePoints(frame, sup, supHalf)}
             className="fill-muted stroke-muted-foreground"
             strokeWidth={0.8}
@@ -112,7 +107,6 @@ export function HullTopsideLayer({
             <title>{`Funnel @ ${f.stationPermille}‰ (schematic footprint)`}</title>
           </ellipse>
           <ellipse
-            // The uptake opening, dark inside the rim.
             cx={frame.x(f.stationPermille)}
             cy={PLAN_MID}
             rx={Math.max(1.6, ry * 0.7 * 0.62)}

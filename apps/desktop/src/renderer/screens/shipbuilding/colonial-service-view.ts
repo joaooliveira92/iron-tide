@@ -4,17 +4,11 @@ import {
   formatFittingTonnes,
 } from "../../lib/presentation-format/colonial-service.js";
 
-/**
- * The designer's colonial-service readout (S-5 04, spec #73 R4/R12). Pure: it reads what the compile already decided,
- * so the number shown is exactly the displacement the fitting uses. While the ruleset does not configure the
- * proportion the fitting is shown as 'not configured' and no figure is offered, never a default.
- */
 export type ColonialServiceStatus = "unfitted" | "not-configured" | "configured";
 
 export interface ColonialServiceModel {
   readonly fitted: boolean;
   readonly status: ColonialServiceStatus;
-  /** One sentence the readout shows; states the status in words, not by colour. */
   readonly text: string;
 }
 

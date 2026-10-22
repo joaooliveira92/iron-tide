@@ -1,12 +1,6 @@
 import type { MonthlyReportResearch } from "../../../../shared/campaign-command-contract.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
-/**
- * The report's Research section (spec §16): per-tech progress from the real
- * `ResearchProgressed` events and discoveries from the real
- * `TechnologyDiscovered` events. Research budget-effectiveness and
- * settings-effect copy are CUT (no formula or explainable effect surface).
- */
 export function MonthReportResearchSection({
   research,
 }: {

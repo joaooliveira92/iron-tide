@@ -17,27 +17,14 @@ import type {
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { ForeignContractPanel } from "./ForeignContractPanel.js";
 
-/**
- * The class-order build dialog (DESIGN-23 sections 3-5; SB3-R30/R33; SB3-R20/R34). Presentational: the screen computes
- * the engine `preview` (names, name pool, dock ceiling and fit) through the read-only bridge command; this card renders
- * it and issues the batch command on confirm. It authors no figure and invents no reason code — a refused batch shows
- * the engine's own `reason` (e.g. `CONSTRUCTION_BATCH_LIMIT_EXCEEDED`).
- *
- * A builder selector offers the nation's own yards (the default) or any candidate foreign builder (SB3-R34). A foreign
- * selection swaps the domestic fit readout for the `ForeignContractPanel`, which renders the engine's derived contract
- * terms, capability verdict, impoundment risk and delivery-guarantee status.
- */
 export interface BatchBuildDialogProps {
   readonly designs: readonly CompiledDesignVersion[];
   readonly selectedDesignId: string | null;
   readonly onSelectDesign: (designId: string) => void;
   readonly quantity: number;
   readonly onQuantityChange: (quantity: number) => void;
-  /** The engine domestic preview, `null` while it is being fetched. */
   readonly preview: ConstructionBatchPreviewOutcome | null;
-  /** The engine foreign preview (candidate builders + contract terms), `null` while it is being fetched. */
   readonly foreignPreview: ForeignConstructionPreviewOutcome | null;
-  /** The chosen builder nation id, or `null` for the nation's own yards. */
   readonly builderNationId: string | null;
   readonly onSelectBuilder: (nationId: string | null) => void;
   readonly busy: boolean;

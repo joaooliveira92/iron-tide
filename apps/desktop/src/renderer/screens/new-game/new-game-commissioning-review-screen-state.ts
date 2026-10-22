@@ -26,14 +26,6 @@ import {
 } from "./rules-of-the-naval-age-content.js";
 import { detectActivePreset, PRESET_DEFINITIONS } from "./rules-of-the-naval-age-presets.js";
 
-/**
- * Final commissioning review screen (spec §6) — reuses the exact settled
- * vocabulary from §1/§2/§3/§5 verbatim rather than re-inventing labels. Pure
- * functions here are the summary table's/forecast panel's templating logic,
- * kept separate from `NewGameCommissioningReviewScreen.tsx` so they're
- * testable without rendering.
- */
-
 export interface CommissioningReviewInput {
   readonly nationId: string;
   readonly options: NewGameOptions | null;
@@ -43,14 +35,8 @@ export interface CommissioningReviewInput {
   readonly fleetMethod: FleetMethodDraft;
 }
 
-/** The three scannable blocks the 15 summary rows fold into, in reading order. */
 export type SummaryGroup = "command" | "uncertainty" | "identity";
 
-/**
- * A semantic icon key per row — the presentation layer maps each to a lucide
- * glyph (see `components/commissioning-review-icons.ts`), keeping React out of
- * this pure templating module.
- */
 export type SummaryRowIcon =
   | "nation"
   | "era"
@@ -82,11 +68,6 @@ function identityLabel<V extends string>(
   return options.find((option) => option.value === value)?.label ?? value;
 }
 
-/**
- * The draft carries the campaign's nation-record id (`uk`, `germany`, …); the
- * presentation catalog keys art and names by stable country id (`gb`, `de`, …).
- * Accept either so callers holding a country id (tests, diplomacy) still work.
- */
 function resolveCountryId(nationId: string): PlayableSlotCountryId | null {
   if (isPlayableSlotCountryId(nationId)) return nationId;
   const countryId = nationIdToCountryId(nationId);
@@ -113,7 +94,6 @@ function archetypeLabel(archetype: ArchetypeSelection): string {
   return findPreset(archetype.id)?.name ?? archetype.id;
 }
 
-/** Builds the summary table's 15 rows (spec §6), top to bottom, verbatim order. */
 export function buildSummaryRows(input: CommissioningReviewInput): readonly SummaryRow[] {
   const { nationId, options, preferences, archetype, identity, fleetMethod } = input;
   const uncertaintyRows: SummaryRow[] = UNCERTAINTY_FIELDS.map((field) => ({
@@ -172,7 +152,6 @@ export function buildSummaryRows(input: CommissioningReviewInput): readonly Summ
   ];
 }
 
-/** "Rules of the Naval Age: <preset>" annotation, or "Custom" if none active (spec §6). */
 export function activePresetAnnotation(preferences: DraftPreferences): string {
   const activeId = detectActivePreset(preferences);
   if (activeId === "custom") return "Custom";
@@ -196,11 +175,6 @@ const SIX_SETTING_FIELDS = [
   "difficulty",
 ] as const;
 
-/**
- * Templated strategic forecast (spec §6) — constant part from §1's per-nation
- * dossier fields, "Expected pressures" mechanically keyed off the chosen
- * settings, reusing §2's qualitative blurbs. No per-nation×era authoring.
- */
 export function buildStrategicForecast(
   nationId: string,
   preferences: DraftPreferences,

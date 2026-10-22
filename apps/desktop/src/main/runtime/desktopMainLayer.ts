@@ -1,7 +1,3 @@
-// The desktop main service graph (INC-1..INC-4; ADR-0159). One Layer composed of
-// every service a command program may require; grows as slices add services. The
-// Electron main process builds one `ManagedRuntime` from this and disposes it on
-// quit.
 import { Layer } from "effect";
 import { PreferencesStore, preferencesStoreLayer } from "../preferences/preferencesStore.js";
 import {
@@ -33,7 +29,6 @@ import {
   sidecarStoresLayer,
 } from "./sidecarStores.js";
 
-/** Every service the desktop command programs may require. */
 export type CommandEnv =
   | ContentArtifact
   | ProjectStore
@@ -53,11 +48,6 @@ export type CommandEnv =
   | Clock
   | IdGenerator;
 
-/**
- * The desktop main service graph. `CrashReporter` resolves its `AppPaths` +
- * `Clock` config through the same graph via `Layer.provideMerge`, so the layer
- * keeps a closed `never` requirement (one `ManagedRuntime`).
- */
 export function desktopMainLayer(): Layer.Layer<CommandEnv> {
   const platform = Layer.mergeAll(appPathsLayer(), clockLayer());
   return Layer.mergeAll(

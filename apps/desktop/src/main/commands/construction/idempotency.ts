@@ -4,12 +4,6 @@ import { workspaceView } from "../../construction/view.js";
 import type { ConstructionWorkspace } from "../../construction/workspaceState.js";
 import { uiStatusFor } from "./command-status.js";
 
-/**
- * Idempotent-retry lookup for construction commands. The client's
- * `transportRequestId` doubles as the idempotency key, so a retry of the same
- * request replays its outcome instead of double-ordering; reusing the key for a
- * different command is an `IDEMPOTENCY_CONFLICT`.
- */
 export function replayIdempotent(
   workspace: ConstructionWorkspace,
   transportRequestId: string,

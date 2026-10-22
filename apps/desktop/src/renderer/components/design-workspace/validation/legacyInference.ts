@@ -6,11 +6,6 @@ import type { ShipEntity } from "../selection/store.js";
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const naming = (token: string) => new RegExp(`(^|[^A-Za-z0-9_])${escape(token)}([^A-Za-z0-9_]|$)`);
 
-/**
- * COMPATIBILITY FALLBACK, the only place that reads finding wording: for a finding whose rule has no structured
- * subject yet, the fittings and sections its text names as whole words. Results are marked "inferred" by the
- * caller and never presented as authoritative. Remove a rule from here by giving its producer targets.
- */
 export function inferEntities(f: Finding, draft: DesignDraft): ShipEntity[] {
   const text = `${formatExplanation(f.what)} ${formatExplanation(f.why)}`;
   const fittings: ShipEntity[] = draft.placements

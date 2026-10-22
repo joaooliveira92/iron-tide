@@ -52,7 +52,6 @@ function FleetScreen({ sessionId }: { readonly sessionId: string }) {
     [state.areas, state.areaEdges, state.ports, state.divisions],
   );
 
-  // Stable resolvers: a new function each render would defeat every memo() in this subtree.
   const areaName = useCallback(
     (areaId: string) => areaNameMap.get(areaId) ?? areaId,
     [areaNameMap],
@@ -62,7 +61,6 @@ function FleetScreen({ sessionId }: { readonly sessionId: string }) {
     [divisionNameMap],
   );
 
-  // One projection per leaf: leaves render resolved view models, not raw ids.
   const divisionRows = useMemo(
     () => divisionPickerRows(state.divisions, areaName),
     [state.divisions, areaName],

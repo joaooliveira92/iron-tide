@@ -1,10 +1,3 @@
-/**
- * The in-repo English (en-US) catalogue (U-4 map D6, ADR-0209) — the complete
- * fallback the single resolver (`content/uiCatalogue.ts`) answers a key with when
- * the compiled pack does not author it. Data only: resolution, the injection seam,
- * and the missing-key sink live in the resolver.
- */
-/** The English (en-US) catalogue — the complete fallback. */
 export const EN_US_MESSAGES = {
   "settings.title": "Options",
   "settings.description": "Appearance, display, measurements, currency and accessibility.",

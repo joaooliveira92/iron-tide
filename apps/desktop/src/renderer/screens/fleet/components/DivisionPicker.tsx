@@ -49,7 +49,6 @@ export const DivisionPicker = memo(function DivisionPicker({
                         className="inline-flex items-center gap-1 rounded-sm bg-accent px-1.5 py-0.5 text-xs text-accent-foreground"
                       >
                         {ship.name}
-                        {/* S-1: the ship's readiness state, so the fleet screen shows it. */}
                         <span className="text-[0.65rem] text-muted-foreground">{ship.status}</span>
                       </span>
                     ))}

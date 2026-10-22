@@ -15,16 +15,6 @@ interface DossierAccordionProps {
 const isSectionId = (value: string | undefined): value is DossierSectionId =>
   value === "economy" || value === "military" || value === "diplomacy";
 
-/**
- * The dossier's three intelligence sections as a hover strip. Each tab opens one shared card
- * (Base UI's detached-handle preview card) rather than expanding a fixed-height inline panel, so
- * moving between sections swaps the card's content and nothing ever needs to be scrolled. Hover,
- * keyboard focus and a click/tap all open it; Escape or a press outside closes it.
- *
- * Base UI owns whether the card is open and for which tab. `active` only mirrors that for the
- * tabs' ARIA state: feeding it back as a controlled `open`/`triggerId` raced the hover delays and
- * left the wrong card (or none) showing.
- */
 export function DossierAccordion({
   economy,
   military,
@@ -93,8 +83,6 @@ export function DossierAccordion({
             details.trigger instanceof HTMLElement
               ? details.trigger.dataset["dossierSection"]
               : undefined;
-          // The tab just left still has its close timer running when the pointer lands on the
-          // next one; that stale hover-close must not take down the card the new tab opened.
           if (
             !open &&
             details.reason === "trigger-hover" &&

@@ -16,17 +16,6 @@ import { buildDiplomacyViewModel } from "./diplomacy-view-model.js";
 import { useBattleHistory } from "./hooks/useBattleHistory.js";
 import { useDiplomacyScreen } from "./hooks/useDiplomacyScreen.js";
 
-/**
- * Diplomacy & War screen (desktop-diplomacy-war INC-3). Renders ONLY data
- * from the engine's `DiplomacyScreenProjection` — relations, wars, blockades,
- * world areas — with per-row action affordances derived from the projected
- * relation/nap state (spec: UI affordance only; the engine is the authority
- * at issue time). Submitting `submitDiplomacyCommand` uses the shell's
- * `expectedRevision` / `transportRequestId` optimistic-concurrency flow; the
- * engine applies the queued envelope on the NEXT turn advance (spec D1) — the
- * screen says exactly that, and engine rejection notices carry the engine's
- * code verbatim (never fabricated copy).
- */
 export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
   const {
     state,

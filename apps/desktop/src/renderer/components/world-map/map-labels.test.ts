@@ -13,7 +13,6 @@ describe("labelPresentation", () => {
   it("reveals ports as you zoom in, major before minor", () => {
     expect(labelPresentation("port", 3.7, { major: true })).not.toBeNull();
     expect(labelPresentation("port", 3.7, { major: false })).toBeNull();
-    // Never drawn as a faint ghost mid-fade.
     expect(labelPresentation("port", 3.1, { major: true })).toBeNull();
     expect(labelPresentation("port", 7, { major: false })).not.toBeNull();
   });

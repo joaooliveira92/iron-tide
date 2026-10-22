@@ -21,11 +21,6 @@ import {
 import { foldSandboxResult } from "./sandbox-command.js";
 import type { SandboxActions, SandboxBridge, SandboxContextValue } from "./sandbox-context.js";
 
-/**
- * Owns the sandbox's transport interaction: the screen state, the guarded
- * command sandwich, and the actions the UI dispatches. The provider only wires
- * this into context, so the bridge details stay out of the component tree.
- */
 export function useSandboxController(
   sessionId: string,
   bridgeOption?: SandboxBridge,
@@ -34,11 +29,6 @@ export function useSandboxController(
   const bridge = bridgeOption ?? contextBridge;
   const [state, setState] = useState(initialTacticalSandboxScreenState);
 
-  /**
-   * Runs one guarded sandbox command: marks the sandbox busy, dispatches the
-   * success or failure fold, and normalizes a thrown transport error. New
-   * sandbox commands compose this instead of repeating the sandwich.
-   */
   const runCommand = useCallback(
     async <Value>(
       run: () => Promise<BridgeResult<Value>>,

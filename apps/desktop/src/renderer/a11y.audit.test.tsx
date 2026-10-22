@@ -28,11 +28,6 @@ import { DensityProvider } from "./shell/DensityContext.js";
 import { FontProvider } from "./shell/FontContext.js";
 import { ThemeProvider } from "./shell/ThemeContext.js";
 
-/**
- * Automated accessibility audit (axe-core) over the screens and components built for the RTW3
- * parity work. It catches structural problems — missing names, bad roles, duplicate ids,
- * invalid ARIA — not visual ones; colour contrast is checked separately in the real app.
- */
 const noop = () => undefined;
 
 const division: DivisionView = {
@@ -264,8 +259,6 @@ describe("accessibility audit (axe-core)", () => {
     await audit(<WorldMapChart {...props} variant="panel" />);
   });
 
-  // The Drawing Board keeps every tab mounted, so each axe pass scans a large DOM. Each state is its own test with its
-  // own timeout, so one slow pass under full-suite load cannot leave a run pending for the next test.
   const BOARD_TIMEOUT_MS = 120_000;
   const openBattleship = () => {
     const rendered = render(<DrawingBoard />);
@@ -298,7 +291,6 @@ describe("accessibility audit (axe-core)", () => {
       const container = openBattleship();
       fireEvent.contextMenu(screen.getByRole("group", { name: /^Ship plan/ }));
       await screen.findByRole("menuitem", { name: "Place" });
-      // The menu is a portal, so the whole document is audited; it has no page landmarks, so "region" does not apply.
       expect(
         (await axeViolations(document.body)).filter((v) => !v.startsWith("region ")),
         "context menu",
@@ -320,7 +312,6 @@ describe("accessibility audit (axe-core)", () => {
       openBattleship();
       fireEvent.click(screen.getByRole("button", { name: /^Sheer \(Sheer/ }));
       await screen.findByText("Data + convention");
-      // Auditing the whole body has no page landmarks, so the page-level "region" rule does not apply here.
       expect((await axeViolations(document.body)).filter((v) => !v.startsWith("region "))).toEqual(
         [],
       );

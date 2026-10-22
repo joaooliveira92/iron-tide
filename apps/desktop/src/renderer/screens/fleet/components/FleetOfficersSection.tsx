@@ -1,7 +1,6 @@
 import type { DivisionView } from "@bluewave/campaign-engine";
 import { officerRows } from "../fleet-sections-state.js";
 
-/** Division commanders (ADR-0065). Assigning officers is not offered here yet. */
 export function FleetOfficersSection({
   divisions,
 }: {

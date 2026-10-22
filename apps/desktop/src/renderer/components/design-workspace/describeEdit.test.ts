@@ -2,7 +2,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { createPresentationFormat } from "../../lib/presentation-format/index.js";
 import { describeEdit } from "./describeEdit.js";
 
-/** The default presentation: en-US, full scale, imperial, Naval Credits. */
 const FORMAT = createPresentationFormat({
   locale: "en-US",
   numberScale: "full",

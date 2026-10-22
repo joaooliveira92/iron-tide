@@ -2,11 +2,6 @@ import { useEffect, useState } from "react";
 import { decodeCoastline } from "../../lib/coastline-codec.js";
 import type { FlatPolygon } from "../../lib/simplify-geometry.js";
 
-/**
- * Decodes the baked coastline (coastline-data.ts, see bake-coastline.ts) once
- * and shares it across every map instance. Synchronous work is deferred to an
- * effect so the map shell paints first.
- */
 let decoded: readonly FlatPolygon[] | null = null;
 
 function load(): Promise<readonly FlatPolygon[]> {

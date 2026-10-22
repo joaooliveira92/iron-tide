@@ -1,19 +1,6 @@
 import { ReservationManager, type CommandRecord, type ResourcePool } from "@bluewave/commands";
 import { reservationRequirementsFor } from "./reservationRequirements.js";
 
-/**
- * The construction workspace's reservation ledger: the two TREASURY/CAPACITY
- * pools, the `ReservationManager` that holds against them, and the affordability
- * arithmetic (hold, release, replacement preflight, snapshot sync).
- *
- * It is deliberately the *only* place that knows the shape of a `ResourcePool`
- * (its `available`/`reserved` internals) and the reservation requirements an
- * order commits. The workspace composes it and delegates, so the command
- * bookkeeping never reaches into pool state — the two reasons to change
- * (reservation policy vs. command bookkeeping) stay in separate modules.
- */
-
-/** The projected treasury + capacity one order commits. */
 export interface ProjectedCosts {
   readonly projectedCost: number;
   readonly projectedCapacityUnits: number;
@@ -29,7 +16,6 @@ export type ReserveOrderResult =
   | { readonly ok: true; readonly recordIds: string[] }
   | ReservationFailure;
 
-/** The phaseId recorded on every construction reservation. */
 const CONSTRUCTION_RESERVATION_PHASE = "construction_submission";
 
 export class ConstructionReservations {
@@ -48,7 +34,6 @@ export class ConstructionReservations {
     this.manager.registerPool(this.capacityPool);
   }
 
-  /** Hold the projected treasury + capacity for a freshly accepted order. */
   reserve(record: CommandRecord, costs: ProjectedCosts): ReserveOrderResult {
     const result = this.manager.reserve(
       record,
@@ -73,13 +58,6 @@ export class ConstructionReservations {
     this.manager.release(commandId);
   }
 
-  /**
-   * F2 preflight: would the replacement's reservation fit once the original's
-   * supersession releases its hold? Mirrors `ReservationManager.reserve`'s own
-   * affordability check (`pool.available - totalReserved >= quantity`), run
-   * against the CURRENT pools with the original's released hold counted as
-   * available — so a rejected replace never mutates or persists anything.
-   */
   canReserveReplacement(
     originalCommandId: string,
     costs: ProjectedCosts,
@@ -115,13 +93,6 @@ export class ConstructionReservations {
     return { ok: true };
   }
 
-  /**
-   * Re-point both pools at the session's current real numbers before a command
-   * (`nation.treasury`, shipyard capacity), so reservations can never outrun
-   * the current snapshot even after `commitMonth` moved them. The pool objects
-   * are held by reference by `ReservationManager`, so the in-place `available`
-   * update preserves existing reservations.
-   */
   sync(treasury: number, capacity: number): void {
     this.treasuryPool.available = treasury;
     this.capacityPool.available = capacity;

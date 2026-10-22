@@ -65,7 +65,6 @@ function ComponentHover({
   readonly entry: PartCatalogueEntry | undefined;
   readonly placement: PlacementSpec;
   readonly view: WorkshopView;
-  /** When given, the name is a control that pins this fitting in the drawing's selection. */
   readonly onSelect?: () => void;
   readonly selected?: boolean;
 }) {
@@ -147,16 +146,11 @@ export function PlacementsPanel({
   readonly content: DrawingBoardContent;
   readonly month: string;
   readonly view: WorkshopView;
-  /** Conventional mount names (A, B, X, Y...) by instance id; guns and tubes only. */
   readonly names: ReadonlyMap<string, string>;
   readonly edit: Edit;
-  /** Only fittings of these categories are listed and offered; all of them when omitted. */
   readonly categories?: ReadonlySet<ComponentCategory>;
-  /** The panel's heading and region name. */
   readonly title?: string;
-  /** When given, each row's name is a control that pins that fitting in the drawing's selection. */
   readonly onSelect?: (instanceId: string) => void;
-  /** The fitting the drawing has pinned, so its row shows its pressed state. */
   readonly selectedInstanceId?: string | null;
 }) {
   const catalogueById = new Map(content.catalogue.map((e) => [e.id, e]));
@@ -198,8 +192,6 @@ export function PlacementsPanel({
 
   return (
     <Panel title={title}>
-      {/* A narrow inspector stacks each fitting's fields instead of squeezing five columns; explicit roles keep the table
-          semantics when the layout stops being a table. */}
       <div className="@container overflow-x-auto">
         <table role="table" className="w-full table-fixed text-sm @max-xl:block">
           <thead role="rowgroup" className="@max-xl:sr-only">

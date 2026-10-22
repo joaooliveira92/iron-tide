@@ -1,7 +1,3 @@
-/**
- * Aggregate test for the section strip and card (metadata, derived facts, labels, card), which all read one
- * fixture. Per-module tests live beside each module; add focused cases there, not here.
- */
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { buildWorkshopView, type DesignDraft, type WorkshopView } from "@bluewave/ship-design";
@@ -31,14 +27,6 @@ import {
   sectionSpan,
 } from "../../../components/design-workspace/panels/hull-plan/sections.js";
 
-/**
- * The hull-plan section strip uses base-ui's hover card, whose open/close runs on
- * a timer and whose floating-ui positioner repositions on rAF. Under real timers
- * those callbacks fire after the tests' synchronous events, so React warns that
- * updates were not wrapped in `act` (hundreds of lines per run). Fake timers make
- * the flush deterministic: hover interactions advance the delay inside `act`, and
- * any stragglers are drained in `afterEach` before unmount (test-hygiene INC-1).
- */
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "requestAnimationFrame"] });
 });
@@ -82,7 +70,6 @@ const strip = () => screen.getByRole("group", { name: "Hull sections" });
 const label = (name: string) => within(strip()).getByRole("button", { name });
 const card = () => document.querySelector<HTMLElement>("[data-testid='section-card']");
 const highlight = () => document.querySelector("[data-testid='section-highlight']");
-/** Keyboard focus as a user tabbing in produces it, flushed through the hover open delay inside `act`. */
 const tabTo = async (el: HTMLElement) => {
   fireEvent.keyDown(document.body, { key: "Tab" });
   await act(async () => {
@@ -178,7 +165,6 @@ describe("section labels on the hull plan", () => {
     });
   });
 
-  /** The section-centred position inside a label's min(centre, limit): what alignment is measured against. */
   const centreOf = (left: string) => parseFloat(/^min\(([\d.]+)%, /.exec(left)![1]!);
 
   it("aligns each label with its section's span of the drawing", () => {
@@ -233,8 +219,6 @@ describe("section labels on the hull plan", () => {
   it("gives tap and click users the same details without hover, in the inspector", () => {
     render(<DrawingBoard />);
     fireEvent.click(label("Quarterdeck"));
-    // A tap pins the section: the plan shows the selected state and the inspector holds the details, so the
-    // preview card is closed rather than left covering them.
     expect(
       document.querySelector("[data-testid='section-selected']")?.getAttribute("data-zone"),
     ).toBe("QUARTERDECK");
@@ -256,7 +240,6 @@ describe("section labels on the hull plan", () => {
     const drawing = screen.getByRole("img", { name: /Top-down plan/ });
     openPlanDisplay();
     fireEvent.click(screen.getByLabelText("Show gun arcs"));
-    // Close the display popover (it hands focus back to its trigger) before tabbing to a label.
     fireEvent.click(screen.getByRole("button", { name: "Plan display" }));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(SECTION_OPEN_DELAY + 1);

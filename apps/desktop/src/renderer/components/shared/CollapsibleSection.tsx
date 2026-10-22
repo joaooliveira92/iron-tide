@@ -3,13 +3,11 @@ import type { ReactNode } from "react";
 export interface CollapsibleSectionProps {
   readonly title: string;
   readonly testId: string;
-  /** Short count or status shown beside the title, e.g. "3 lost". */
   readonly summary?: string;
   readonly defaultOpen?: boolean;
   readonly children: ReactNode;
 }
 
-/** A native <details> section: keyboard-accessible and keeps long screens scannable. */
 export function CollapsibleSection({
   title,
   testId,

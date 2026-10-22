@@ -16,14 +16,6 @@ export interface NewGameNationScreenProps {
   readonly onPrimaryActionChange: SetPrimaryAction;
 }
 
-/**
- * The commissioning flow's first step: confirm a nation before any other
- * preference exists yet. Nation dossier content (the decoded presentation
- * corpus served over the content IPC) is
- * presentation-only and keyed by country id, so this screen needs no
- * `NewGameOptions`/scenario data — that's fetched later, in the Rules of the
- * Naval Age step.
- */
 export function NewGameNationScreen({
   error,
   onCancel,

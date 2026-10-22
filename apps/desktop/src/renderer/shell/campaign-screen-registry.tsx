@@ -21,8 +21,6 @@ import { DEBUG_MODE } from "./debug-flag.js";
 
 export type { CampaignScreen, Screen } from "./campaign-screen-types.js";
 
-// PROTOTYPE — throwaway, ticket 06. Never registered in a production build, so
-// a stray merge cannot ship a fixture world to players.
 const MAP_PROTOTYPE_SCREEN: CampaignScreenDefinition = {
   id: "map-prototype",
   label: translate("nav.screen.map-prototype.label"),
@@ -32,10 +30,6 @@ const MAP_PROTOTYPE_SCREEN: CampaignScreenDefinition = {
   searchable: true,
   route: CAMPAIGN_SCREEN_ROUTES["map-prototype"],
 };
-
-// Debug-only screens below are gated by DEBUG_MODE (shell/debug-flag.ts, ADR-0029):
-// a plain `pnpm dev` does not enable them, so they (and their lazy chunks) stay
-// out of the sidebar unless debug mode is explicitly requested (`pnpm dev:debug`).
 
 const SIMULATION_SCREEN: CampaignScreenDefinition = {
   id: "simulation",
@@ -65,8 +59,6 @@ const DEBUGGING_SCREEN: CampaignScreenDefinition = {
   route: CAMPAIGN_SCREEN_ROUTES.debugging,
 };
 
-// Sixth campaign section (spec §5) — always registered, like the five real
-// screens.
 const TREASURY_SCREEN: CampaignScreenDefinition = {
   id: "treasury",
   label: translate("nav.screen.treasury.label"),

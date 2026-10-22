@@ -1,4 +1,3 @@
-//
 export {
   runValidate,
   runCompile,

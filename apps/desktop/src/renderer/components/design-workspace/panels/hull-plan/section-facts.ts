@@ -7,12 +7,6 @@ import type {
 import type { DrawingBoardContent } from "../../content.js";
 import { SECTIONS, type SectionId, type SectionMeta, type ZoneRange } from "./section-meta.js";
 
-/**
- * What one section card shows, derived from the draft, its compile and the catalogue. No invented data and no
- * metadata: the names and copy live in `section-meta.ts`.
- */
-
-/** Coarse drawing symbol for a fitting; the card's list names the actual component. */
 export type FittingKind = "gun" | "torpedo" | "magazine" | "machinery" | "funnel" | "other";
 
 const GUN: readonly ComponentCategory[] = [
@@ -39,35 +33,27 @@ export function fittingKind(category: ComponentCategory, tags: readonly string[]
 }
 
 export interface SectionFitting {
-  /** 1-based callout number shared by the drawing and the list. */
   readonly n: number;
   readonly instanceId: string;
   readonly name: string;
   readonly kind: FittingKind;
   readonly stationPermille: number;
   readonly side: MountSide;
-  /** Index in `draft.placements`, so the drawing places it exactly where the main plan does. */
   readonly placementIndex: number;
   readonly weightKg: number | undefined;
-  /** Effective beam arc for gun mounts, degrees. */
   readonly arcDeg: number | undefined;
-  /** Magazine protection against the design threat, bp, for magazines. */
   readonly protectionBp: number | undefined;
 }
 
 export interface SectionFacts {
   readonly id: SectionId;
   readonly meta: SectionMeta;
-  /** The hull form's zone, or undefined when the hull form defines no such section. */
   readonly zone: ZoneRange | undefined;
   readonly lengthM: number;
   readonly fromBowM: number;
   readonly fittings: readonly SectionFitting[];
-  /** Machinery rooms in this section and their share of the plant, bp. */
   readonly machineryRooms: readonly { stationPermille: number; shareBp: number }[];
-  /** Station of the fuel stowage, when the bunkers are in this section. */
   readonly fuelStationPermille: number | undefined;
-  /** Compiled arrangement for the zone, or undefined when the compiler produced none. */
   readonly load:
     | {
         readonly weightKg: number;
@@ -79,7 +65,6 @@ export interface SectionFacts {
     | undefined;
 }
 
-/** Everything the card shows for one section, read from the draft, its compile and the catalogue. No invented data. */
 export function sectionFacts(
   id: SectionId,
   {

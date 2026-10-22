@@ -17,7 +17,6 @@ import type { AnatomyShipScene } from "./anatomy-scene.js";
 import { mountClassOf } from "@bluewave/ship-visual";
 import { CATEGORY_LABEL, MOUNT_LABEL } from "./ship-profile.js";
 
-/** Weapons and torpedo tubes from the compiled placements. */
 export function drawWeapons(scene: AnatomyShipScene): void {
   const {
     draft,
@@ -80,7 +79,6 @@ export function drawWeapons(scene: AnatomyShipScene): void {
     const t = clamp(placement.stationPermille / 1000, 0.02, 0.98);
     const x = t * L;
     const side = placement.side ?? "CENTRE";
-    // A centreline secondary would sit inside the main turret; nudge it to the near side like the plan does.
     const y =
       side === "PORT"
         ? -halfAt(t) * 0.62

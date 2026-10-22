@@ -17,7 +17,6 @@ export interface FleetOrganizationViewProps {
   readonly send: (command: DivisionCommandBody) => Promise<CommandOutcome>;
 }
 
-/** Presentational Fleet organization: divisions, the create form, and honest status. */
 export function FleetOrganizationView({
   state,
   loadError,
@@ -92,7 +91,6 @@ export function FleetOrganizationView({
   );
 }
 
-/** Fleet organization wired to the session: loads the view and queues engine commands. */
 export function FleetOrganizationSection({ sessionId }: { readonly sessionId: string }) {
   const organization = useDivisionOrganization(sessionId);
   return (

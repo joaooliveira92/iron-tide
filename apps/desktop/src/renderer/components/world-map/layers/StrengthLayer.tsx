@@ -2,22 +2,15 @@ import { pinned, screenText } from "../map-svg.js";
 import { barHeight, type NationStrength, type RegionStrength } from "../map-strength.js";
 import type { MapPalette } from "../map-palette.js";
 
-/** Screen-pixel geometry of one glyph, relative to the area's label anchor. Shared with label layout. */
 export const STRENGTH_GLYPH = {
   flagWidth: 15,
   flagHeight: 10,
   flagGap: 2,
   barWidth: 7,
-  /**
-   * Bottom of the flag row. It sits above the area name's first nudge slot (which reaches about
-   * 36 px above the anchor), so a sea keeps its name beside its glyph.
-   */
   flagsBottom: -38,
-  /** Space for the ship count above the bar. */
   countRoom: 12,
 } as const;
 
-/** Vertical extent of a glyph above the anchor, for label avoidance. */
 export function strengthExtent(
   region: RegionStrength,
   compact = false,
@@ -30,7 +23,6 @@ export function strengthExtent(
   };
 }
 
-/** Half the glyph's width, for label avoidance. */
 export function strengthHalfWidth(region: RegionStrength): number {
   const slots = region.flags.length + (region.overflow > 0 ? 1 : 0);
   const { flagWidth, flagGap } = STRENGTH_GLYPH;
@@ -39,23 +31,13 @@ export function strengthHalfWidth(region: RegionStrength): number {
 
 export interface StrengthLayerProps {
   readonly regions: readonly RegionStrength[];
-  /** Region id -> projected label anchor. */
   readonly anchorOf: (areaId: string) => readonly [number, number] | undefined;
   readonly strokeFor: (nation: string | null) => string;
   readonly palette: MapPalette;
-  /** Shorter bars, for a small map (see `compactGlyphs`). */
   readonly compact?: boolean;
-  /** Sideways shift in screen px per region (see `separateGlyphs`); absent means none. */
   readonly offsets?: ReadonlyMap<string, number>;
 }
 
-/**
- * Regional naval strength: a bar (height = ships relative to the strongest
- * region) over a short row of national flags, strongest first. Decorative and
- * transparent to the pointer: the same facts reach assistive tech through each
- * area's own label (`describeStrength`), so nothing here depends on colour,
- * bar height or flag art.
- */
 export function StrengthLayer({
   regions,
   anchorOf,

@@ -34,7 +34,6 @@ function fleetMethodOption(title: string): HTMLElement {
   return within(fleetMethodListbox()).getByRole("option", { name: title });
 }
 
-/** The focused-card detail panel is the region named after the card's title. */
 function detailPanel(title: string): HTMLElement {
   return screen.getByRole("region", { name: title });
 }

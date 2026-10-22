@@ -2,7 +2,6 @@ import * as React from "react";
 
 const MOBILE_BREAKPOINT = 768;
 
-/** True while the viewport is narrower than the mobile breakpoint. */
 export function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = React.useState(false);
 

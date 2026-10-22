@@ -10,14 +10,9 @@ import { ShipbuildingContentGate } from "./ShipbuildingContentGate.js";
 export interface ShipbuildingDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  /** The campaign session, so the working design is kept on disk; absent outside a campaign. */
   readonly sessionId?: string;
 }
 
-/**
- * The ship design workspace opens from the bottom bar in a near full-screen modal, over whichever screen is current.
- * It is the app's only designer; the Construction screen's Drawing Board tab was removed (ADR-0153).
- */
 export function ShipbuildingDialog({ open, onOpenChange, sessionId }: ShipbuildingDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -1,20 +1,11 @@
-/**
- * Text alternatives for the chart. Ownership is drawn as colour; this is the
- * same information as words, for screen readers and colour-blind players.
- */
-
 export interface AreaOwnershipRow {
   readonly id: string;
   readonly name: string;
-  /** Controlling nation's display name, or null when unclaimed. */
   readonly owner: string | null;
   readonly fleets: number;
-  /** Ports and other possessions in the area. */
   readonly possessions: number;
   readonly selected: boolean;
-  /** The region's strength in words (see `describeStrength`), or null when no ships are present. */
   readonly strength: string | null;
-  /** True when a live campaign has no data for the area. */
   readonly unavailable: boolean;
 }
 
@@ -50,7 +41,6 @@ export function buildOwnershipRows(
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Case-insensitive match on area name or owner; an empty query keeps every row. */
 export function filterAreaRows(
   rows: readonly AreaOwnershipRow[],
   query: string,
@@ -66,7 +56,6 @@ export function filterAreaRows(
 
 export type AreaMetric = "ships" | "possessions";
 
-/** The count an area-list row shows for the chosen metric, with its label ("2 ships", "1 possession"). */
 export function areaMetricText(row: AreaOwnershipRow, metric: AreaMetric): string | null {
   const count = metric === "ships" ? row.fleets : row.possessions;
   if (count === 0) return null;

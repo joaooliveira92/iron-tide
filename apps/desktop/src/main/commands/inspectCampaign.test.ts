@@ -33,11 +33,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-// One shared runtime for every inspect program; the services delegate to the
-// same in-memory session registry the tests populate directly.
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-/** Runs a command program through the desktop service graph and projects its wire envelope. */
 async function runProgram(
   program: CommandProgram,
   payload: unknown,
@@ -118,9 +115,6 @@ describe("inspect commands (Effect programs)", () => {
 
       const { projection } = result.value as InspectCampaignResult;
 
-      // Cross-checked directly against the independently compiled snapshot,
-      // not hardcoded expected numbers — proves the projection reflects real
-      // compiled data rather than placeholders.
       expect(projection.campaignIdentity).toBe(snapshot.campaignId);
       expect(projection.economy.treasury).toBe(Number(ukNation.treasury));
       expect(projection.month).toEqual({ month: 1, year: 1880 });

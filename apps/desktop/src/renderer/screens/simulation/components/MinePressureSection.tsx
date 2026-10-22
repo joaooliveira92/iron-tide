@@ -13,7 +13,6 @@ interface MinePressureSectionProps {
   readonly pressure: readonly MinePressure[];
 }
 
-/** Mine pressure per sea zone: freshness and detection confidence. */
 export function MinePressureSection({ pressure }: MinePressureSectionProps) {
   return (
     <AccordionItem value="mines">

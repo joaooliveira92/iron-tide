@@ -9,10 +9,6 @@ export type BattleHistoryState =
   | { readonly status: "ready"; readonly history: BattleHistoryView }
   | { readonly status: "error"; readonly message: string };
 
-/**
- * Loads the read-only battle history for the session. Reloads when `revision`
- * changes (a committed month may have resolved new battles).
- */
 export function useBattleHistory(sessionId: string, revision: number): BattleHistoryState {
   const state = useBridgeQuery(
     sessionId,

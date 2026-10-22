@@ -52,9 +52,6 @@ export function ArchetypeConsequencePanel({
   consequence: ArchetypeConsequence;
   compact?: boolean;
 }) {
-  // The preview sits in columns of very different widths (the full detail pane, or
-  // half of it beside the inline allocator), so its grids respond to the width of
-  // the panel itself, not the viewport.
   return (
     <div className="@container">
       <GlassCard glassVariant="liquid-refract">

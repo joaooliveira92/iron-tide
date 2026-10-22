@@ -12,7 +12,6 @@ import {
 } from "../../../components/ui/table.js";
 import type { MovementCommandRow } from "../fleet-screen-state.js";
 
-/** Badge presentation for a movement command's engine status. */
 export function movementStatusVariant(
   status: MovementCommandRow["status"],
 ): "default" | "secondary" | "outline" {

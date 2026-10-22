@@ -14,7 +14,6 @@ export interface CommandRowProps {
   readonly onCancel: (commandId: string) => void;
 }
 
-/** One construction command in the ledger: its design, status, cost, and actions. */
 export function CommandRow({
   command,
   busy,

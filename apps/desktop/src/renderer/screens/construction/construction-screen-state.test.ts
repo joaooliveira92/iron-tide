@@ -272,7 +272,6 @@ describe("expectedConstructionCompletions", () => {
       { status: "IN_PROGRESS", totalWork: 100, completedWork: 90 },
       { status: "QUEUED", totalWork: 100, completedWork: 95 },
       { status: "IN_PROGRESS", totalWork: 100, completedWork: 89 },
-      // A finished project never counts, even though its work ratio is 1.
       { status: "COMPLETED", totalWork: 100, completedWork: 100 },
     ];
 

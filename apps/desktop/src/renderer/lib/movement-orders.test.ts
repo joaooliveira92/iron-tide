@@ -51,7 +51,6 @@ function bridgeWith(execute: (name: string, payload: unknown) => unknown): void 
   window.bluewave = { campaign: { execute } } as BluewaveDesktopBridge;
 }
 
-/** A fake workflow execute that drives the sender with a fixed context. */
 function fakeExecute() {
   return vi.fn(async (kind: RequestKind, send: CommandSender<MovementCommandOutcome>) => {
     await send(context);

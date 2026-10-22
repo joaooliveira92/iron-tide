@@ -2,12 +2,6 @@ import { CANONICAL_SCENARIOS } from "@bluewave/campaign";
 import { describe, expect, it } from "vite-plus/test";
 import { FLEET_METHOD_ARTWORK } from "./fleetMethodArtworkManifest.js";
 
-/**
- * The artwork manifest's ids are hand-copied from the engine's validated
- * `legacyFleetModeId`s (`packages/campaign/src/scenario.ts`). This guard fails
- * if the engine gains or renames a mode the manifest does not answer for (or
- * vice versa), so the picker can never render a blank card.
- */
 describe("fleet method artwork manifest", () => {
   it("answers for exactly the engine's supported legacy fleet mode ids", () => {
     const manifestIds = new Set(Object.keys(FLEET_METHOD_ARTWORK));

@@ -12,13 +12,6 @@ import {
   type WriteCampaignPreferencesRequest,
 } from "../../shared/preferences-contract.js";
 
-/**
- * A test double for the preload bridge's `preferences` capability (D6): `read`
- * resolves an in-memory snapshot, `write` records every request and adopts the
- * written object. `readCampaign`/`writeCampaign` do the same per session id.
- * Other bridge members are unused by the preferences consumers, so the object is
- * cast to the bridge shape for the test.
- */
 export interface PreferencesBridgeStub {
   readonly bridge: BluewaveDesktopBridge;
   readonly writes: readonly WriteAppPreferencesRequest[];

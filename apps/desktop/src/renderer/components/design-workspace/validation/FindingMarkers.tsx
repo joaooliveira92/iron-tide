@@ -18,15 +18,12 @@ import type { BoardFinding } from "./boardFindings.js";
 import { valueLine } from "./format.js";
 import { SEVERITY_STYLE, severityRank, type MarkerShape } from "./severity.js";
 
-/** Marker radius and the step used to move a marker off a neighbour, plan units. */
 const R = 6;
 const STEP = 2 * R + 1;
-/** Offset from a fitting's centre: clear of its 8-unit hit target, up and to the right. */
 const FITTING_OFFSET = 11;
 
 export interface MarkerGroup {
   readonly entity: Exclude<ShipEntity, { kind: "ship" }>;
-  /** Most severe first, then by rule code. */
   readonly findings: readonly BoardFinding[];
   readonly x: number;
   readonly y: number;
@@ -41,12 +38,6 @@ const entityKey = (e: ShipEntity) =>
         ? `r:${e.index}`
         : "ship";
 
-/**
- * One marker per drawable entity with findings, anchored with the drawing's own geometry: beside the fitting's
- * marker (`fittingPoint`), or on a row under the hull at the section's midpoint or the room's station
- * (`frame.x`). Markers that would touch are nudged apart (fittings upward, the under-hull row sideways), so
- * none is stacked on another. Ship-level findings have no position; they live in the plan header.
- */
 export function layoutMarkers(
   findings: readonly BoardFinding[],
   frame: PlanFrame,
@@ -123,18 +114,12 @@ function shapePath(shape: MarkerShape, x: number, y: number): string {
   }
 }
 
-/**
- * Validation markers on the plan, as a toolbar: one tab stop, arrow keys between markers, Enter or Space (or a
- * click or tap) pins the entity and opens its findings in the inspector. Hover and focus preview the most
- * severe finding. Hidden while a plan tool is placing or moving, so they never block the tool.
- */
 export function FindingMarkers({
   groups,
   names,
   hidden,
 }: {
   readonly groups: readonly MarkerGroup[];
-  /** Readable name of each entity, for accessible names. */
   readonly names: (entity: ShipEntity) => string;
   readonly hidden: boolean;
 }) {

@@ -26,13 +26,6 @@ export interface WorldMapController {
   readonly onToggleClosedPassages: () => void;
 }
 
-/**
- * Everything a world-map host needs: the interaction state, the route reading,
- * and the live campaign overlay. Shared by the F1 sheet and the Overview panel
- * so both draw the same world the same way. Falls back to the static fixture
- * when there is no session (or the bridge/inspection fails) so the map still
- * renders.
- */
 export function useWorldMapController(sessionId: string | null): WorldMapController {
   const [state, setState] = useState(initialMapPrototypeState);
   const overlay = useLiveWorldMapOverlay(sessionId);

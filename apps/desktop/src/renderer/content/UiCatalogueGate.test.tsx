@@ -3,11 +3,6 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { CampaignCommandClient } from "../../shared/campaign-command-contract.js";
 
-/**
- * The running app must inject the compiled UI-string catalogue before any surface
- * resolves a message; otherwise every offer/turn string renders the generic fallback.
- * Fresh modules model the app (no pre-seeded catalogue, unlike the test setup).
- */
 describe("UiCatalogueGate", () => {
   afterEach(() => {
     cleanup();
@@ -17,7 +12,6 @@ describe("UiCatalogueGate", () => {
 
   it("fetches the catalogue over IPC and renders children only once it is injected", async () => {
     vi.resetModules();
-    // The test setup pre-seeds the real seam; model the app's empty one.
     vi.doMock("./uiCatalogue.js", () => {
       let injected: { strings: Record<string, string> } | null = null;
       return {

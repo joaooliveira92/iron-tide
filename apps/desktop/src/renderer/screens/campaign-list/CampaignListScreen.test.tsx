@@ -6,13 +6,6 @@ import type { SaveMetadata } from "@bluewave/persistence";
 import { applyListLoaded, initialCampaignListScreenState } from "./campaign-list-screen-state.js";
 import { CampaignListScreen } from "./CampaignListScreen.js";
 
-/**
- * Render test for the campaign-list screen. The hook is mocked so the test
- * asserts PURE rendering: real `SaveMetadata` rows (the six columns), the
- * honest "—" for legacy/degraded records, and the empty state — never
- * fabricated values.
- */
-
 const modern: SaveMetadata = {
   saveId: "save-1",
   timestamp: "2026-08-01T00:00:00.000Z",
@@ -75,16 +68,12 @@ describe("CampaignListScreen", () => {
     expect(screen.getByText("Admiralty Board")).not.toBeNull();
     expect(screen.getByText("uk")).not.toBeNull();
     expect(screen.getByText("1880-02")).not.toBeNull();
-    // Both rows carry the real string-typed compatibility version.
     expect(screen.getAllByText("1.1.0").length).toBeGreaterThanOrEqual(2);
   });
 
   it("renders an honest — for legacy/degraded records without fabricated values", () => {
     render(<CampaignListScreen />);
 
-    // The legacy record's missing additive fields render as "—" (six dashes:
-    // name, nation, date fallback is the honest turn, empty last-saved, and
-    // the status column which is not derivable from SaveMetadata).
     expect(screen.getByText("Turn 0")).not.toBeNull();
     expect(screen.getAllByText("—").length).toBeGreaterThanOrEqual(2);
   });

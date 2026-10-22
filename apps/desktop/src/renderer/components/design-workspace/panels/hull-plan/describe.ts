@@ -1,6 +1,5 @@
 import type { BowStyle, SternStyle } from "./geometry.js";
 
-/** What the drawings are generated from, for the accessible names. */
 export interface DrawingFacts {
   readonly hullFormId: string | undefined;
   readonly lengthM: number;
@@ -40,12 +39,10 @@ const houseLabel = (s: DrawingFacts["superstructure"]) =>
 
 const dims = (m: number, digits: number) => (Number.isFinite(m) ? m.toFixed(digits) : "unknown");
 
-/** Accessible name of the plan image. Starts with "Top-down plan" so the two images stay distinguishable. */
 export function planLabel(f: DrawingFacts): string {
   return `Top-down plan, ${dims(f.lengthM, 0)} m by ${dims(f.beamM, 1)} m, ${formLabel(f.hullFormId)}, ${BOW_LABEL[f.bow]}, ${STERN_LABEL[f.stern]}, ${f.fittings} fittings placed, ${funnelLabel(f.funnels)}, ${houseLabel(f.superstructure)}; ${SCHEMATIC}`;
 }
 
-/** Accessible name of the profile image. Starts with "Side profile". */
 export function profileLabel(f: DrawingFacts): string {
   return `Side profile, depth ${dims(f.depthM, 1)} m, draught ${dims(f.draughtM, 1)} m, ${formLabel(f.hullFormId)}, ${BOW_LABEL[f.bow]}, ${STERN_LABEL[f.stern]}, ${funnelLabel(f.funnels)}, ${houseLabel(f.superstructure)}; ${SCHEMATIC}`;
 }

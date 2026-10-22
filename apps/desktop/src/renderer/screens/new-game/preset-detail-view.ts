@@ -29,12 +29,6 @@ function rowFor(field: SixSettingField, valueId: string): PresetSettingRow {
   };
 }
 
-/**
- * The six engine settings a preset bundle fixes, as the labelled rows the
- * focused-preset panel shows. Uses the same plain-language labels and value
- * copy as the Era & Scale and Historical Uncertainty forms, so a preset's
- * summary can never disagree with the controls it fills in.
- */
 export function presetSettingRows(bundle: SixSettingBundle): readonly PresetSettingRow[] {
   return SIX_SETTING_FIELDS.map((field) => rowFor(field, bundle[field]));
 }

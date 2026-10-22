@@ -14,11 +14,6 @@ export type CampaignReadResult<T> =
   | { readonly status: "ready"; readonly value: T }
   | { readonly status: "unavailable"; readonly reason: string };
 
-/**
- * The campaign views every readout needs, fetched once per open/refresh. A
- * failed optional view degrades on its own; only the projection is required to
- * render the shell.
- */
 export interface CampaignReads {
   readonly projection: CampaignReadResult<PlayerProjection>;
   readonly areas: CampaignReadResult<StatusStripAreas>;
@@ -68,7 +63,6 @@ export async function readCampaign(
   };
 }
 
-/** Warnings and criticals from the same priorities read the strip shows. */
 export function activeAlertsCount(reads: CampaignReads): number | null {
   if (reads.priorities.status !== "ready") return null;
   return Array.isArray(reads.priorities.value) ? countActiveAlerts(reads.priorities.value) : null;

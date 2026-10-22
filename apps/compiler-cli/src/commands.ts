@@ -86,26 +86,13 @@ export interface CliOptions {
   outputMode: OutputMode;
 }
 
-// Boundary schemas (RULES.md "Schema and boundaries").
-//
-// Every external file this entry point reads is decoded with an Effect Schema
-// rather than asserted; ADR-0105's strict policy (`onExcessProperty: "error"`)
-// is applied where the file is a closed, tool-owned format. Where the format is
-// a hand-authored debug fixture whose *contents* the combat engine owns and
-// rejects downstream, the deep payload is carried as a typed
-// `Schema.declare` trust class (the repo's established idiom for a shape whose
-// semantic validation lives elsewhere — see `safe-int-schema.ts` and
-// `campaignCommandSchemas.ts`), while the file's outer shape is still decoded.
-
 const STRICT_DECODE_OPTIONS = { onExcessProperty: "error" } as const;
 
-/** Non-null, non-array object — the guard every `Schema.declare` trust class starts from. */
 const isUnknownRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 const schemaFormatter = SchemaIssue.makeFormatterStandardSchemaV1();
 
-/** Flattens an Effect `SchemaError` into the CLI's one-line "path: message" error style. */
 const describeSchemaFailure = (error: Schema.SchemaError): string =>
   schemaFormatter(error.issue)
     .issues.map((issue) => {
@@ -138,13 +125,11 @@ const CanonicalEnvelopeSchema: Schema.declare<CanonicalEnvelope> =
     { expected: "canonical envelope carrying a string bodyHash" },
   );
 
-/** A `@bluewave/commands` `CommandBody`; the engine's `CommandLifecycle` owns its semantics. */
 const CommandBodySchema: Schema.declare<CommandBody> = Schema.declare<CommandBody>(
   (value): value is CommandBody => isUnknownRecord(value),
   { expected: "command body object (validated by CommandLifecycle)" },
 );
 
-/** One `CommandEnvelope<CommandBody>` in a `commands.json` ledger. */
 const CommandEnvelopeSchema = Schema.Struct({
   commandId: Schema.String,
   version: Schema.String,
@@ -158,8 +143,6 @@ const CommandEnvelopeSchema = Schema.Struct({
 });
 
 const CommandEnvelopeListSchema = Schema.Array(CommandEnvelopeSchema);
-
-// Effects shared by every program (ports only — no raw I/O here).
 
 const printDiagnostics = (
   collector: DiagnosticCollector,
@@ -181,12 +164,6 @@ const printResult = (message: string): Effect.Effect<void, never, CliConsole> =>
     yield* console.out(message + "\n");
   });
 
-/**
- * Runs a filesystem write block, removing `temps` afterwards either way (the
- * pre-migration `try/finally`). A write failure is a defect — the Effect
- * equivalent of the previously-uncaught exception — so it propagates to `main`
- * unchanged (stack on stderr, exit code 1, the `validation-error` slot).
- */
 const runWriteBlock = (
   fs: CliFileSystemShape,
   temps: ReadonlyArray<string>,
@@ -194,7 +171,6 @@ const runWriteBlock = (
 ): Effect.Effect<void> =>
   write.pipe(Effect.ensuring(Effect.forEach(temps, (path) => fs.remove(path), { discard: true })));
 
-/** Reads a file, returning `undefined` on any filesystem failure. */
 const readFileOption = (fs: CliFileSystemShape, path: string): Effect.Effect<string | undefined> =>
   fs.readFile(path).pipe(Effect.catchTag("CliFileSystemError", () => Effect.succeed(undefined)));
 
@@ -267,7 +243,6 @@ interface ArtifactInspect {
   readonly valid: boolean;
 }
 
-/** Parses the on-disk artifact/envelope pair; a JSON or schema error becomes `ok: false`. */
 const parseArtifactPair = (
   artifactJson: string,
   envelopeJson: string,
@@ -419,32 +394,12 @@ export interface BattleAdvanceMinuteCliOptions {
   observationTime: string;
 }
 
-/**
- * File shape read from `--state <path>` for `battle:advance-minute`: the
- * hand-authored TacticalBattleState plus the two optional AdvanceMinuteInput
- * fields (`orders`, `attackRangeUm`) that are keyed/structured enough to
- * belong in the JSON rather than on the command line. `minute` and
- * `observationTime` are simple scalars and live as CLI flags instead, so a
- * caller can re-run the same state file at different minutes without
- * editing it. `engine`/`gunnery` are intentionally unsupported in v1 — this
- * command exercises movement/spotting only, matching the map's scope
- * (gunnery gets its own bundled `gunnery:resolve-shot` command).
- */
 interface BattleAdvanceMinuteFile {
   state: TacticalBattleState;
   orders?: Record<string, UnitOrders>;
   attackRangeUm?: number;
 }
 
-/**
- * The boundary schema for {@link BattleAdvanceMinuteFile}. The outer file shape
- * (the `state` object plus the optional `orders`/`attackRangeUm` fields the CLI
- * forwards to `advanceMinute`) is decoded strictly; the `state` payload itself is
- * a typed `Schema.declare` trust class because `advanceMinute` owns its deep
- * tactical invariants — the debug suite drives a non-integer `position` through
- * the port and expects `TACTICAL_STATE_INVARIANT_FAILED` from the engine, not a
- * decode rejection (ADR-0151 §2). `orders` is small and closed, so it is modelled.
- */
 const UnitOrdersSchema = Schema.Struct({
   orderedHeading: Schema.Finite,
   orderedSpeedBp: Schema.Finite,
@@ -469,16 +424,6 @@ export interface GunneryResolveShotCliOptions {
   seed: string;
 }
 
-/**
- * File shape read from `--input <path>` for `gunnery:resolve-shot`. Gunnery
- * has no single `resolveGunnery` entry point — only composable primitives —
- * so this bundles the "what happens on one shot" subset (§3 accuracy, §3
- * hit check, §28 ammunition) into one scenario file. `identity` (battle/
- * battery/minute/substep) is nested here rather than split across CLI flags
- * since it's one cohesive object the keyed hit-draw stream id is derived
- * from; only `--seed` (the RandomEngine master seed) is a flag, mirroring
- * this CLI's existing `--seed` convention.
- */
 interface GunneryResolveShotFile {
   identity: { battleId: string; batteryId: string; minute: number; substep: number };
   accuracyFactors: GunneryAccuracyFactors;
@@ -490,13 +435,6 @@ interface GunneryResolveShotFile {
   };
 }
 
-/**
- * The boundary schema for {@link GunneryResolveShotFile}. `identity` and `salvo`
- * are closed shapes and decoded strictly. `accuracyFactors` is a typed
- * `Schema.declare` trust class because `resolveAccuracy` owns the factor manifest:
- * the debug suite deletes one factor and expects `GUNNERY_ACCURACY_FACTOR_MISSING`
- * from the engine, not a decode rejection (ADR-0151 §2).
- */
 const GunneryIdentitySchema = Schema.Struct({
   battleId: Schema.String,
   batteryId: Schema.String,
@@ -531,9 +469,6 @@ export const runCampaignCompile = (
   Effect.gen(function* () {
     const fs = yield* CliFileSystem;
     const collector = new DiagnosticCollector();
-    // The decoded-bundle path (CAH-LEG-1): build the verified content bundle and
-    // hand it to the campaign compiler, so the CLI campaign compile reads no raw
-    // campaign YAML at runtime.
     const input = yield* buildContentSurfaceInput(options, collector);
     if (!input) return "usage-error";
     const artifact = buildContentBundleArtifact(input, new AbortController().signal, collector);
@@ -555,13 +490,6 @@ export const runCampaignCompile = (
     if (!output) return "compile-error";
     const outDir = resolve(options.outputDir);
     yield* fs.makeDirectory(outDir);
-    // canonicalSerialize (JSON.stringify) silently drops Map-typed fields
-    // (nations/designs/designFamilies) to `{}`, so they are converted to plain
-    // objects before anything is hashed or written. @bluewave/persistence's
-    // SaveStore also treats a save as corrupt unless
-    // rawHash === sha256(canonicalSerialize({snapshot, envelope})); the campaign
-    // compiler's own rawHash covers `snapshot` only, so both are recomputed here
-    // against the persistable snapshot to match what SaveStore verifies on load.
     const persistableSnapshot = serializeCampaignSnapshot(output.state.snapshot);
     const envelope = createEnvelope(
       "campaign-snapshot",
@@ -598,15 +526,6 @@ export const runCampaignCompile = (
     return "success";
   });
 
-/**
- * Narrows a schema-decoded storable snapshot to `StorableCampaignSnapshot` so
- * `fromStorableSnapshot` can revive its Map-valued fields. The schema models the
- * record fields as `Record<string, unknown>` on purpose (it does not mirror the
- * fast-evolving `@bluewave/campaign` types), so the decoded snapshot is not
- * structurally assignable to the domain type — the same narrow
- * `packages/persistence/src/store.ts` carries before calling
- * `fromStorableSnapshot`. The value has already been validated by the schema.
- */
 function asStorableSnapshot(snapshot: unknown): StorableCampaignSnapshot {
   return snapshot as StorableCampaignSnapshot;
 }
@@ -684,15 +603,6 @@ export const runCampaignLoad = (
     return "success";
   });
 
-/**
- * Runs `generateBattles` (`@bluewave/combat`) against a saved campaign
- * snapshot in isolation, without running a full turn — useful for debugging
- * mission-opportunity/eligibility/reachability/manifest-hashing logic
- * without economy/research/diplomacy noise from `turn:execute`. The
- * resolver callbacks and version defaults mirror
- * `phase-engine/src/month.ts`'s battle_generation phase exactly, so results
- * here match what a real turn would produce for the same snapshot/month.
- */
 export const runBattleGenerate = (
   options: BattleGenerateCliOptions,
   saveDir: string,
@@ -753,14 +663,6 @@ const printBattleGenerationResult = (
     }
   });
 
-/**
- * Runs one `advanceMinute` call (`@bluewave/combat`'s DESIGN-38 §3 tactical
- * minute-advance engine — steps 4-8: contact aging, movement intent,
- * propulsion/turning/position, collision stub, spotting) against a
- * hand-authored `TacticalBattleState` — the tactical layer has no CLI reach
- * at all today, and no fixture builder exists to scaffold one, so v1
- * requires the state file to be hand-authored (see `--help`).
- */
 export const runBattleAdvanceMinute = (
   options: BattleAdvanceMinuteCliOptions,
 ): Effect.Effect<ExitCategory, never, CliEnv> =>
@@ -848,16 +750,6 @@ const printMinuteResult = (
     }
   });
 
-/**
- * Sequences the "what happens on one shot" gunnery primitives
- * (`@bluewave/combat`) the way a real salvo resolves: §3 accuracy
- * (`resolveAccuracy`) -> keyed hit draw (`resolveHit`) -> §28 ammunition
- * consumption (`reserveAndConsumeAmmunition`) — surfacing each stage's
- * result, not just hit/miss, so a caller can see *why* (which factor drove
- * the accuracy number, what the draw was against what threshold). Gunnery
- * has no single `resolveGunnery` entry point; this bundles the curated
- * subset rather than exposing one command per primitive.
- */
 export const runGunneryResolveShot = (
   options: GunneryResolveShotCliOptions,
 ): Effect.Effect<ExitCategory, never, CliEnv> =>
@@ -946,15 +838,6 @@ const printGunneryResolveShotResult = (
     );
   });
 
-/**
- * `generateBattles`/`BattleResolver` already run inside `turn:execute`'s
- * MonthExecutor pipeline (battle_generation + battle_resolution phases,
- * packages/phase-engine/src/month.ts) and persist their output straight onto
- * the snapshot (`wars.battleManifests`, `wars.battles[].result`) — no new
- * combat call is needed here, just surfacing data that already exists.
- * Returns undefined when no battles occurred this turn/replay, so callers
- * can omit the section entirely rather than print an empty one.
- */
 function extractBattleSummary(
   snapshot: CampaignSnapshot,
 ): { manifests: BattleManifest[]; battles: BattleInstance[] } | undefined {
@@ -1020,9 +903,6 @@ export const runTurnExecute = (
     yield* printDiagnostics(collector, options.outputMode);
     if (collector.hasErrors) return "compile-error";
     if (!result.success) return "compile-error";
-    // ReplayVerifier independently recomputes this exact hash (Map-aware) from
-    // the live post-execution snapshot, so it must be captured before the
-    // Map->plain-object conversion below.
     const finalSnapshotHash = snapshotHash(result.finalSnapshot);
     const battles = extractBattleSummary(result.finalSnapshot);
     const persistableSnapshot = serializeCampaignSnapshot(result.finalSnapshot);
@@ -1107,10 +987,6 @@ export const runReplay = (
       yield* printResult(`No active save found in ${saveDir}`);
       return "validation-error";
     }
-    // commands.json/ledger/final-hash in the active save's directory describe
-    // the turn that produced *that* save; replaying them must start from the
-    // snapshot they were originally applied to — the *previous* save — not the
-    // active (already post-turn) one.
     const previousSaveId = store.getPreviousSaveId(saveDir);
     if (!previousSaveId) {
       yield* printResult(
@@ -1183,14 +1059,6 @@ export const runReplay = (
       collector,
     );
     yield* printDiagnostics(collector, options.outputMode);
-    // ReplayVerifier.verify's finalSnapshot is the replayed post-execution
-    // snapshot (already computed internally to derive replayedFinalHash) —
-    // same battle data surfaced from turn:execute, extracted here rather than
-    // dumped wholesale: finalSnapshot.nations is a Map, and JSON.stringify-ing
-    // it directly (as the old `JSON.stringify(replayResult, ...)` would) would
-    // silently collapse it to `{}` (the same Map-serialization gap documented
-    // elsewhere in this file), plus bloat routine replay output with the full
-    // snapshot on every call.
     const battles = replayResult.finalSnapshot
       ? extractBattleSummary(replayResult.finalSnapshot)
       : undefined;
@@ -1295,11 +1163,6 @@ export const buildContentSurfaceInput = (
     }
   });
 
-/**
- * `content:check` — the designer-facing alias over the existing compiler that
- * validates the **whole** authored surface (content-pack collections plus the
- * ship-building catalogue) and writes nothing (BW-CLI-001, BW-CMP-001).
- */
 export const runContentCheck = (options: CliOptions): Effect.Effect<ExitCategory, never, CliEnv> =>
   Effect.gen(function* () {
     const collector = new DiagnosticCollector();
@@ -1333,10 +1196,6 @@ export const runContentCheck = (options: CliOptions): Effect.Effect<ExitCategory
     return "success";
   });
 
-/**
- * The per-collection confidence report (CAH-PROV-2). Collections with at least
- * one provenance record are listed; the total covers the whole bundle.
- */
 const printConfidenceReport = (
   collections: ReadonlyArray<{ collection: string; counts: ConfidenceCounts }>,
   total: ConfidenceCounts,
@@ -1352,28 +1211,12 @@ const printConfidenceReport = (
     yield* printResult(`    (total: HIGH ${total.HIGH}, MEDIUM ${total.MEDIUM}, LOW ${total.LOW})`);
   });
 
-/**
- * The committed placeholder allowlist read by `content:gate` (CAH-PROV-3): a
- * small JSON file naming each admitted placeholder and why. Absent file = empty
- * allowlist.
- */
 export const CONTENT_PLACEHOLDER_ALLOWLIST_FILENAME = "placeholder-allowlist.json";
 
-/**
- * The allowlist file's outer shape: an optional `allow` array whose entries stay
- * `unknown` so `checkPlaceholderGate` keeps owning entry-level validation (an
- * entry without a justification is reported, not rejected at decode time).
- */
 const PlaceholderAllowlistFileSchema = Schema.Struct({
   allow: Schema.optional(Schema.Array(Schema.Unknown)),
 });
 
-/**
- * `content:gate` — the release gate (CAH-PROV-3). Rebuilds the whole authored
- * surface and fails a shipping (production) pack that still carries an
- * unresolved `PLACEHOLDER` value, unless the exact collection/record/field is on
- * the recorded, justified allowlist. Non-production packs are skipped.
- */
 export const runContentGate = (options: CliOptions): Effect.Effect<ExitCategory, never, CliEnv> =>
   Effect.gen(function* () {
     const fs = yield* CliFileSystem;
@@ -1462,12 +1305,6 @@ export const runContentGate = (options: CliOptions): Effect.Effect<ExitCategory,
     return "success";
   });
 
-/**
- * `content:build` — validates the whole surface and emits the generated
- * content artifact + manifest (semantic content version + SHA-256 body hash).
- * The artifact is inert JSON carrying a do-not-edit marker; two builds over
- * unchanged content are byte-identical (BW-CMP-002, BW-DET-003).
- */
 export const runContentBuild = (options: CliOptions): Effect.Effect<ExitCategory, never, CliEnv> =>
   Effect.gen(function* () {
     const collector = new DiagnosticCollector();
@@ -1500,12 +1337,6 @@ export const runContentBuild = (options: CliOptions): Effect.Effect<ExitCategory
     return "success";
   });
 
-/**
- * `content:verify` — rebuilds the whole authored surface in memory and fails
- * when the artifact diverges from the committed content lock (content drift or
- * tamper), naming the two hashes (CAH-LOCK-2). Part of the preflight/CI gate so
- * local green implies CI green (CAH-LOCK-3).
- */
 export const runContentVerify = (options: CliOptions): Effect.Effect<ExitCategory, never, CliEnv> =>
   Effect.gen(function* () {
     const fs = yield* CliFileSystem;
@@ -1603,12 +1434,6 @@ export function snapshotHash(snapshot: CampaignSnapshot): string {
   return sha256Hex(canonicalSerialize(hashable));
 }
 
-/**
- * Matches @bluewave/persistence's SaveStore self-consistency check, which
- * hashes the full persisted state minus `rawHash` (i.e. `{snapshot, envelope}`
- * verbatim). A `rawHash` computed any other way (e.g. over `snapshot` alone)
- * is flagged PERSISTENCE_CORRUPT_SAVE on the very next load.
- */
 export function persistedStateHash(
   snapshot: CampaignSnapshot,
   envelope: ReturnType<typeof createEnvelope>,
@@ -1616,13 +1441,6 @@ export function persistedStateHash(
   return sha256Hex(canonicalSerialize({ snapshot, envelope }));
 }
 
-/**
- * @bluewave/persistence stores state as JSON, so `Map`-typed CampaignSnapshot
- * fields (nations, designs, designFamilies, and each nation's
- * research.activeCandidates) come back from SaveStore.load() as plain objects,
- * not Maps — @bluewave/phase-engine requires real Map instances. Revives them
- * before handing a loaded snapshot to MonthExecutor/ReplayVerifier.
- */
 export function reviveCampaignSnapshot(snapshot: CampaignSnapshot): CampaignSnapshot {
   const nations = toMap<NationState>(snapshot.nations).entries();
   const revivedNations = new Map(
@@ -1653,11 +1471,6 @@ function toMap<V>(value: Map<string, V> | Record<string, V> | undefined): Map<st
   return new Map(Object.entries(value));
 }
 
-/**
- * Inverse of {@link reviveCampaignSnapshot}: converts Map-typed fields to
- * plain objects so canonicalSerialize (plain JSON.stringify) can actually
- * persist their contents instead of silently collapsing them to `{}`.
- */
 export function serializeCampaignSnapshot(snapshot: CampaignSnapshot): CampaignSnapshot {
   const nations: Record<string, NationState> = {};
   for (const [id, nation] of snapshot.nations) {

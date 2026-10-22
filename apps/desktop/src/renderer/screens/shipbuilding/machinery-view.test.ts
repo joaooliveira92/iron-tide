@@ -57,7 +57,6 @@ describe("machinery view model", () => {
 
   it("keeps no value both an input and an output, and states what is not modelled", () => {
     const model = machineryModel(ref.draft, view, env, format);
-    // Input labels and output labels are disjoint: no pair silently overrides the other.
     const inputLabels = new Set([
       "Target speed",
       "Cruising speed",
@@ -117,7 +116,6 @@ describe("plant deltas", () => {
     expect(reliability!.direction).toBe(
       alternative.reliabilityBp > current.reliabilityBp ? "up" : "down",
     );
-    // Every other plant has a different introduction date, so the required year is previewed too.
     const year = deltas.find((d) => d.id === "year");
     if (alternative.introduction?.fromMonth !== current.introduction?.fromMonth) {
       expect(year).toBeDefined();

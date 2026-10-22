@@ -119,10 +119,6 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
     [bridge, execute, sessionId],
   );
 
-  // DESIGN-23 sections 7-8: halt, resume and the acceleration toggle queue a real engine envelope that applies on the
-  // next `commitMonth`; the current month's readouts stay the engine's own compiled values until then.
-  // DESIGN-23 section 23: cancel a committed project and settle it in the engine; the ship of a cancelled rebuild is
-  // released on the next `commitMonth`.
   const cancelProject = useCallback(
     (projectId: string) => {
       if (!bridge) return;
@@ -184,8 +180,6 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
     [bridge, execute, sessionId],
   );
 
-  // DESIGN-23 sections 3-5 (SB3-R11/R30): order `1..12` ships of one approved compiled design in a single engine
-  // command (mirrors `halt`); the engine reserves the whole batch on the next `commitMonth`.
   const orderBatch = useCallback(
     (designVersionId: string, quantity: number) => {
       if (!bridge) return;
@@ -202,8 +196,6 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
     [bridge, execute, sessionId],
   );
 
-  // SB3-R30/R33: the build dialog's read-only preview, straight from the engine through the bridge. A refused batch
-  // comes back with the engine's own reason (never a UI-invented code); a transport failure is surfaced the same way.
   const previewBatch = useCallback(
     async (
       designVersionId: string,
@@ -219,17 +211,12 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
         if (result.outcome === "success") return result.value;
         return { ok: false, reason: result.reason, diagnostics: result.diagnostics };
       } catch (error) {
-        // A rejected bridge call must not leave the dialog stuck busy: surface it as a refusal.
         return { ok: false, reason: "PREVIEW_FAILED", diagnostics: [String(error)] };
       }
     },
     [bridge, sessionId],
   );
 
-  // SB3-R20/R34: the foreign-order preview, straight from the engine through the bridge. It lists candidate builders
-  // (dock ceiling, free capacity, capability verdict, impoundment risk, delivery guarantee) and, when a builder is
-  // chosen, the contract terms. A refusal carries the engine's own reason (never a UI-invented code); a transport
-  // failure is surfaced the same way.
   const previewForeign = useCallback(
     async (
       designVersionId: string,
@@ -253,8 +240,6 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
     [bridge, sessionId],
   );
 
-  // SB3-R20: order a hull from a foreign yard. The engine derives the contract server-side (INC-17); the payload carries
-  // only the player's choices, and the command applies on the next `commitMonth` like the other steering commands.
   const placeForeignOrder = useCallback(
     (designVersionId: string, builderNationId: string, quantity: number) => {
       if (!bridge) return;
@@ -272,8 +257,6 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
     [bridge, execute, sessionId],
   );
 
-  // DESIGN-16 sections 5-6 (SB3-R16): the dock-expansion authorization queues a real engine envelope that applies on the
-  // next `commitMonth`; the era step is locked by the engine at authorization time.
   const authorizeDockExpansion = useCallback(
     (possessionId: string) => {
       if (!bridge) return;

@@ -4,7 +4,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../components/ui/s
 import { useWorldMapController } from "../components/world-map/useWorldMapController.js";
 import { useCampaignShellContext } from "./CampaignShellContext.js";
 
-/** Global F1 shortcut that opens the world map in a side sheet. */
 export function MapSheet() {
   const [open, setOpen] = useState(false);
   const { state: shell } = useCampaignShellContext();

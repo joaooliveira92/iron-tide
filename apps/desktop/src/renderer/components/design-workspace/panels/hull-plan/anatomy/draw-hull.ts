@@ -4,7 +4,6 @@ import { round1, solid, ribbon } from "./anatomy-helpers.js";
 import type { PartDraft } from "./anatomy-types.js";
 import type { AnatomyShipScene } from "./anatomy-scene.js";
 
-/** Hull: shaped shell, waterline, boot topping, plating seams, portholes, stern gear. */
 export function drawHull(scene: AnatomyShipScene): void {
   const {
     model,
@@ -130,7 +129,6 @@ export function drawHull(scene: AnatomyShipScene): void {
     dotted: true,
   });
   {
-    // A stocked anchor catted at the hawse: shank, stock across the head and the curved arms.
     const ax = 0.052 * L;
     const ay = near * (halfAtZ(0.052, hawseZ) + 0.012 * B);
     const top = hawseZ - 0.03 * D;

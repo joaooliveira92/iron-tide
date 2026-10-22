@@ -203,7 +203,6 @@ describe("diplomacy screen state", () => {
       warId: "war_uk_fra",
     });
 
-    // ENDED wars do not draft.
     const ended = diplomacyBeginPeace(loaded, { ...war, status: "ENDED" });
     expect(ended.kind).toBe("loaded");
     if (ended.kind !== "loaded") return;
@@ -263,7 +262,6 @@ describe("diplomacy screen state", () => {
       targetNationId: "france",
       areaId: "med_gibraltar",
     });
-    // Incomplete pieces yield null (never a fabricated command).
     expect(diplomacyDraftToCommand({ kind: "AcceptPeace", partnerNationId: "france" })).toBeNull();
     expect(
       diplomacyDraftToCommand({ kind: "DeclareBlockade", partnerNationId: "france" }),
@@ -281,14 +279,12 @@ describe("diplomacy screen state", () => {
     });
     const loaded = loadedState();
     if (loaded.kind !== "loaded") return;
-    // No draft -> cannot submit.
     expect(diplomacyBeginSubmit(loaded, "req-1")).toEqual(loaded);
     expect(diplomacyCanSubmit(loaded)).toBe(false);
 
     const drafted = diplomacyBeginAction(loaded, "france", "DeclareWar");
     if (drafted.kind !== "loaded") return;
     expect(diplomacyCanSubmit(drafted)).toBe(true);
-    // A cleared draft goes back to non-submittable.
     const cleared = diplomacyClearDraft(drafted);
     if (cleared.kind !== "loaded") return;
     expect(cleared.draftCommand).toBeNull();

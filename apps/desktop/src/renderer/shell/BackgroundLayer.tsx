@@ -22,12 +22,6 @@ export interface BackgroundLayerProps {
   readonly resolvedTheme: ResolvedTheme;
 }
 
-/**
- * One renderer per selectable background, keyed by the `BackgroundStyle` union.
- * Adding a background is a new palette entry and a new `BackgroundStyle` member —
- * this component never changes. The theme is passed in so each renderer picks
- * its own light/dark palette rather than the component branching on style.
- */
 type BackgroundRenderer = (resolvedTheme: ResolvedTheme) => ReactNode;
 
 const BACKGROUND_RENDERERS: Record<BackgroundStyle, BackgroundRenderer> = {

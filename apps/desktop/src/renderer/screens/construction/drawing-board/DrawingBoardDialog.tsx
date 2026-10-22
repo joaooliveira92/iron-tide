@@ -14,16 +14,11 @@ import {
   type RevisionProject,
 } from "../../../components/design-workspace/index.js";
 
-/**
- * The ship designer opens in a near full-screen modal so the plan, panels and findings get the whole window. The
- * board fills the modal's height and scrolls inside its own panes, so the ship view never scrolls out of sight.
- */
 export function DrawingBoardDialog({
   sessionId,
   projects,
 }: { readonly sessionId?: string; readonly projects?: readonly RevisionProject[] } = {}) {
   const [open, setOpen] = useState(false);
-  // The catalogue is decoded in main and fetched over IPC; the board renders only once it is ready.
   const contentStatus = useDrawingBoardContentSource();
   return (
     <Dialog open={open} onOpenChange={setOpen}>

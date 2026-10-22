@@ -9,24 +9,16 @@ import type { BoardFinding } from "./boardFindings.js";
 import { valueLine } from "./format.js";
 import { SEVERITY_STYLE } from "./severity.js";
 
-/** How long a "resolved" note stays in the inspector (ms). */
 export const RESOLVED_NOTE_MS = 5000;
 
-/**
- * The selected entity's findings in the inspector: severity, title, explanation, values, and how to fix each.
- * When a finding of this entity disappears after a change, a short "resolved" note replaces it (announced once,
- * politely); switching to another entity never counts as resolving.
- */
 export function FindingList({
   entityKey,
   findings,
   focused,
   onGoTo,
 }: {
-  /** Identity of the selected entity, so a change of selection is not mistaken for a fix. */
   readonly entityKey: string;
   readonly findings: readonly BoardFinding[];
-  /** The finding opened from a marker or the Analysis tab. */
   readonly focused: string | null;
   readonly onGoTo: (d: Destination) => void;
 }) {
@@ -51,7 +43,6 @@ export function FindingList({
     setResolved(gone);
     const t = window.setTimeout(() => setResolved([]), RESOLVED_NOTE_MS);
     return () => window.clearTimeout(t);
-    // `keys` stands for the finding set: re-run only when its identity changes, not on every recompile.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityKey, keys]);
 

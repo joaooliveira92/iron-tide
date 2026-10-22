@@ -18,7 +18,6 @@ function compileShader(gl: AnyWebGlContext, type: number, source: string): WebGL
   return null;
 }
 
-/** Compiles, links, and owns one WebGL program and both of its shaders. */
 export function createShaderProgram(
   gl: AnyWebGlContext,
   vertexSource: string,

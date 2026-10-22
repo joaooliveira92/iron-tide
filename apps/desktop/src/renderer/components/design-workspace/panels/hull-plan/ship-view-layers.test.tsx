@@ -142,7 +142,6 @@ describe("CompartmentLayer", () => {
       .trim()
       .split(/\s+/)
       .map((p) => Number(p.split(",")[1]));
-    // The forecastle's forward edge is the stem, so the band narrows to the hull there, not the full beam.
     expect(Math.max(...ys) - Math.min(...ys)).toBeLessThanOrEqual(frame.maxHalf * 2);
     expect(Math.min(...ys)).toBeGreaterThan(PLAN_MID - frame.maxHalf);
   });

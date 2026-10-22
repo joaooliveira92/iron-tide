@@ -31,13 +31,12 @@ describe("WorldMapChart", () => {
     const map = screen.getByRole("application");
     expect(map.getAttribute("tabindex")).toBe("0");
     for (const key of ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "+", "-", "0"]) {
-      expect(fireEvent.keyDown(map, { key })).toBe(false); // preventDefault called
+      expect(fireEvent.keyDown(map, { key })).toBe(false);
     }
-    expect(fireEvent.keyDown(map, { key: "x" })).toBe(true); // other keys untouched
+    expect(fireEvent.keyDown(map, { key: "x" })).toBe(true);
   });
 
   it("tells the player when canvas drawing is unavailable instead of drawing nothing", async () => {
-    // jsdom has no canvas implementation: getContext returns null.
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     vi.stubGlobal("Path2D", class {});
     renderChart();
@@ -67,7 +66,7 @@ describe("WorldMapChart", () => {
       />,
     );
     const areas = [...container.querySelectorAll('path[role="button"]')];
-    expect(areas.length).toBe(36); // one reachable copy per area, not one per wrap turn
+    expect(areas.length).toBe(36);
     for (const area of areas) {
       expect(area.getAttribute("aria-label")).toMatch(
         /: (held by .+|unclaimed), (no fleets|\d+ fleets?)(, strength \d+ ships? \(.+\))?$/,
@@ -168,7 +167,6 @@ describe("WorldMapChart", () => {
       expect(within(dock).getByTestId("area-list")).toBeTruthy();
       expect(within(dock).getByText("Left panel")).toBeTruthy();
       expect(within(screen.getByTestId("map-right-dock")).getByText("Right panel")).toBeTruthy();
-      // The tree is no longer inside the (collapsed) layers block.
       expect(screen.getByTestId("area-list").closest(".hidden")).toBeNull();
     });
 

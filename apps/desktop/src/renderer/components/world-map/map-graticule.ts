@@ -1,8 +1,3 @@
-/**
- * The parallels and meridians drawn behind every layer. Pure geometry (no
- * React, no DOM), so it can be memoised independently of the chart body.
- */
-
 import type { Projection } from "./projection.js";
 
 export function buildGraticule(projection: Projection): string {

@@ -1,5 +1,3 @@
-// Renderer crash capture (release-readiness ticket 02, ADR-0133): the renderer
-// logs a failure and forwards it to main; it never swallows the error.
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import {
   installRendererCrashHandlers,

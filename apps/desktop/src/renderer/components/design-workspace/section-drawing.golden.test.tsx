@@ -8,11 +8,6 @@ import { planModel } from "./panels/hull-plan/planModel.js";
 import { ProfileView } from "./panels/hull-plan/ProfileView.js";
 import { SectionCard, type SectionCardContext } from "./panels/hull-plan/SectionCard.js";
 
-/**
- * Golden drawings: the plan/profile/section SVG markup, with the `useId` clip ids normalised. These lock the
- * exact rendered output of the hull-plan drawing components, so a refactor that moves markup between files can
- * prove it changed nothing the player sees.
- */
 afterEach(cleanup);
 
 const content = loadDrawingBoardContent();

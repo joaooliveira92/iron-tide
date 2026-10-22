@@ -7,7 +7,6 @@ import {
   DialogTitle,
 } from "../../../components/ui/dialog.js";
 
-/** A whole-design tool opened from the overflow menu (comparison, import, history): not routine editing. */
 export function WorkspaceDialog({
   open,
   onClose,
@@ -20,7 +19,6 @@ export function WorkspaceDialog({
   readonly onClose: () => void;
   readonly title: string;
   readonly description: string;
-  /** A wide, tall dialog for a master/detail browser; the body owns its own scrolling. */
   readonly wide?: boolean;
   readonly children: ReactNode;
 }) {

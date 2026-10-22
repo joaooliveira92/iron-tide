@@ -12,7 +12,6 @@ const THEME_ICONS: Record<Theme, typeof Sun> = {
   highContrast: Contrast,
 };
 
-/** The header's theme control: shows the current theme and advances it on click. */
 export function HeaderChrome() {
   const { theme, setTheme } = useTheme();
   const Icon = THEME_ICONS[theme];

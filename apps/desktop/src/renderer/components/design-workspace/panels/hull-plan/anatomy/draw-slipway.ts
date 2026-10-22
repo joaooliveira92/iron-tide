@@ -4,7 +4,6 @@ import { solid } from "./anatomy-helpers.js";
 import type { PartDraft } from "./anatomy-types.js";
 import type { AnatomyShipScene } from "./anatomy-scene.js";
 
-/** The slipway: a low base, keel blocks, two shores, a rule strip and a label plate. */
 export function drawSlipway(scene: AnatomyShipScene): void {
   const { near, L, B, D, halfAt, keelZ, wayHalf, wayBase, way, P, add, ring } = scene;
   const part: PartDraft = {

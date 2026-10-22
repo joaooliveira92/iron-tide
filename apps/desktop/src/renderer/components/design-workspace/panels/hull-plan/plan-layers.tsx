@@ -13,18 +13,12 @@ import { type Point, polygonPoints } from "./path.js";
 
 const PLAN_FONT = LABEL_FONT;
 
-/** Length of the drawn ram beak, px (into the left padding). */
 const RAM_LEN = 10;
 
-/** How far a rounded end reaches past its end station, as a multiple of the end's half-width. */
 const STERN_CAP: Record<PlanFrame["stern"], number> = { counter: 1.6, round: 1.2, transom: 0 };
 const BOW_CAP: Record<PlanFrame["bow"], number> = { ram: 0, spoon: 1.5, plumb: 0 };
 const CAP_STEPS = 6;
 
-/**
- * Points of a half-ellipse closing the hull at one end, from the upper side round to the lower. `dir` is +1 at the
- * stern (reaching right) and -1 at the bow (reaching left); no depth is a flat end.
- */
 function capPoints(endX: number, half: number, depth: number, dir: 1 | -1): Point[] {
   if (depth <= 0 || half <= 0) return [];
   const reach = half * depth;
@@ -34,10 +28,6 @@ function capPoints(endX: number, half: number, depth: number, dir: 1 | -1): Poin
   });
 }
 
-/**
- * Closed outline polygon points for the hull scaled by `scale` about the centreline. The stern and spoon bow close
- * in a rounded cap (a drawing convention per hull form); a transom, a plumb bow and a ram stay flat.
- */
 function outlinePoints(frame: PlanFrame, scale: number): string {
   const at = (i: number, side: 1 | -1): Point => ({
     x: frame.x(i * 25),
@@ -51,7 +41,6 @@ function outlinePoints(frame: PlanFrame, scale: number): string {
   return polygonPoints(pts);
 }
 
-/** Hull waterline, ram and deck edge: the hull's shape alone, also drawn magnified in the section cards. */
 export function HullShapeLayer({ frame }: { readonly frame: PlanFrame }) {
   return (
     <>
@@ -82,18 +71,11 @@ export function HullShapeLayer({ frame }: { readonly frame: PlanFrame }) {
   );
 }
 
-/** Where the plating band starts, as a share of the hull's half-width: just inside the outline stroke. */
 const SIDE_BAND_OUTER = 0.985;
-/** The deck edge, shared by the deck fill, the band's inner edge and the dashed deck-edge line. */
 const DECK_EDGE = 0.9;
 
 const closedPath = (points: string) => `M${points.trim().split(/\s+/).join(" L")} Z`;
 
-/**
- * The weather deck as a filled surface inside the hull plating, so the plan reads as a ship seen from above (dark
- * plating band, lighter deck, as the guide's plan diagrams draw it) rather than an empty outline. Drawn under the
- * section, armour and fitting layers.
- */
 export function HullDeckLayer({ frame }: { readonly frame: PlanFrame }) {
   return (
     <>
@@ -187,7 +169,6 @@ export function HullOutlineLayer({ frame }: { readonly frame: PlanFrame }) {
   );
 }
 
-/** Section boundaries. The section names are the interactive strip under the drawing (`SectionLabels`). */
 export function HullZoneLayer({
   frame,
   zones,

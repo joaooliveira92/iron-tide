@@ -108,7 +108,6 @@ describe("layoutLabels", () => {
     const clear = layoutLabels(request(base)).find((entry) => entry.spec.text === "North Sea");
     expect(clear).toMatchObject({ dx: 0, dy: 0 });
 
-    // A glyph that sits right over the name pushes it off...
     const covering = layoutLabels(
       request({
         ...base,
@@ -117,7 +116,6 @@ describe("layoutLabels", () => {
     ).find((entry) => entry.spec.text === "North Sea");
     expect(covering === undefined || covering.dx !== 0 || covering.dy !== 0).toBe(true);
 
-    // ...while the glyph's real footprint (above the name's first nudge) leaves the name in place.
     const above = layoutLabels(
       request({
         ...base,
@@ -128,7 +126,6 @@ describe("layoutLabels", () => {
   });
 
   it("does not let a port's name sit on a strength glyph pinned at the same point", () => {
-    // Campaign ports are placed on their area's anchor, where the glyph is also pinned.
     const port: PortMark = {
       id: "p1",
       name: "Algiers",
@@ -143,7 +140,6 @@ describe("layoutLabels", () => {
       request({ portMarks: [port], strengthMarks: [glyph], minScale: 0.25 }),
     );
     const name = labels.find((entry) => entry.spec.text === "Algiers");
-    // Named only where it clears the glyph: nudged away, or not at all.
     expect(name === undefined || Math.abs(name.dx) >= 40 || Math.abs(name.dy) >= 30).toBe(true);
   });
 

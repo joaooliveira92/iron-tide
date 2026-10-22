@@ -27,9 +27,7 @@ import {
 } from "lucide-react";
 
 export interface ComponentCategoryMeta {
-  /** The lucide icon that stands for the category. */
   readonly icon: LucideIcon;
-  /** One line explaining what the category is, for a select option's secondary text. */
   readonly description: string;
 }
 
@@ -67,7 +65,6 @@ const CATEGORY_META = {
 
 const FALLBACK: ComponentCategoryMeta = { icon: Package, description: "Ship component." };
 
-/** The icon and one-line description for a component's category; an unknown category falls back. */
 export function componentCategoryMeta(category: string): ComponentCategoryMeta {
   return (CATEGORY_META as Record<string, ComponentCategoryMeta>)[category] ?? FALLBACK;
 }

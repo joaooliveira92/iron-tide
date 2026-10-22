@@ -6,7 +6,6 @@ import { cn } from "../../lib/utils.js";
 
 const Tabs = TabsPrimitive.Root;
 
-/** `default` is the filled pill bar; `line` is a transparent list whose active tab carries an accent bar. */
 const tabsListVariants = cva(
   "group/tabs-list inline-flex items-center justify-center text-muted-foreground",
   {

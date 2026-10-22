@@ -24,21 +24,13 @@ import {
 export interface BudgetPolicyPanelController {
   readonly state: BudgetPolicyState;
   readonly loadError: string | null;
-  /** The player's effective rate: their draft, or the engine value with no draft. */
   readonly rate: number;
-  /** The player's effective research budget: their draft, or the engine value. */
   readonly research: number;
   readonly setRate: (value: number) => void;
   readonly setResearch: (value: number) => void;
   readonly apply: () => void;
 }
 
-/**
- * Owns the budget-allocation command lifecycle (F-12, ADR-0060): the engine
- * projection, the player's uncommitted slider draft, and the submit that queues
- * the change for the next month advance. The panel component renders only what
- * this returns.
- */
 export function useBudgetPolicyPanel(sessionId: string): BudgetPolicyPanelController {
   const bridge = useBridge();
   const campaignRevision = useCampaignRevision();

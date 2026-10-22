@@ -4,10 +4,6 @@ import * as React from "react";
 import { cn } from "../../lib/utils.js";
 import { Button } from "./button.js";
 
-/**
- * A compact "file chip": media (icon or image), a title and description, optional actions. Adapted from the shadcn/ui
- * Attachment component. Here it presents saved design files and the ship designs they describe.
- */
 const attachmentVariants = cva(
   "group/attachment relative flex w-fit max-w-full min-w-0 shrink-0 flex-wrap rounded-xl border bg-card text-card-foreground transition-colors focus-within:ring-1 focus-within:ring-ring/50 has-[>a,>button]:hover:bg-muted/50 data-[state=error]:border-destructive/30 data-[state=idle]:border-dashed",
   {
@@ -130,7 +126,6 @@ const AttachmentAction = ({
   />
 );
 
-/** Makes the whole chip one button; place it first so actions stay clickable above it. */
 const AttachmentTrigger = ({ className, type, ...props }: React.ComponentProps<"button">) => (
   <button
     data-slot="attachment-trigger"

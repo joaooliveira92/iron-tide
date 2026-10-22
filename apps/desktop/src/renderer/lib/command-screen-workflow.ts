@@ -50,9 +50,7 @@ export interface CommandScreenAdapter<
 > {
   readonly initialState: () => State;
   readonly load: () => Promise<BridgeResult<Projection>>;
-  /** Map a projection's domain fields into the state; lifecycle is handled by the module. */
   readonly project: (projection: Projection) => Partial<State>;
-  /** Map an accepted command's domain fields and produce the resulting notice. */
   readonly accept: (value: Value) => {
     readonly patch: Partial<State>;
     readonly notice: string;
@@ -60,7 +58,6 @@ export interface CommandScreenAdapter<
   readonly onProjection?: (projection: Projection) => void;
 }
 
-/** How a submitted command settled, so a caller can react without re-reading state. */
 export type CommandOutcome = "accepted" | "rejected" | "transport-failure";
 
 export interface CommandScreenWorkflow<State extends RequestLifecycle, Value> {
@@ -124,10 +121,6 @@ export function applyTransportFailure<State extends RequestLifecycle>(
   return { ...state, notice: `TRANSPORT_FAILURE: ${message}` };
 }
 
-/**
- * Fold a fresh projection into the state: adopt the engine revision and clear
- * every pending/refresh/notice marker in one place.
- */
 export function applyProjection<
   State extends RequestLifecycle,
   Projection extends { readonly revision: number },
@@ -142,7 +135,6 @@ export function applyProjection<
   };
 }
 
-/** Fold an accepted command result into the state: clear pending and set its notice. */
 export function acceptCommand<State extends RequestLifecycle>(
   state: State,
   patch: Partial<State>,
@@ -157,7 +149,6 @@ export function acceptCommand<State extends RequestLifecycle>(
   };
 }
 
-/** The uniform notice text both command screens show after an accepted command. */
 export function commandNotice(command: {
   readonly commandId: string;
   readonly status: string;
@@ -165,13 +156,6 @@ export function commandNotice(command: {
   return `Command ${command.commandId} is ${command.status}`;
 }
 
-/**
- * Folds a submit's transport result into a screen state, given that screen's
- * own phase transitions. The one place the three-outcome envelope is mapped:
- * `success` -> accepted, `rejected` (with its optional stale revision) ->
- * rejected, anything else -> a transport failure. Lets a screen keep its
- * discriminated-union state while sharing the transport bookkeeping.
- */
 export function foldCommandResult<State, Value>(
   result: BridgeResult<Value>,
   folds: {
@@ -202,21 +186,11 @@ export function foldCommandResult<State, Value>(
 
 let commandCounter = 0;
 
-/**
- * Renderer-side transport identity for the optimistic-concurrency flow
- * (`expectedRevision` / `transportRequestId` triple). The single generator for
- * every command screen, so the id shape cannot drift between them.
- */
 export function createTransportRequestId(prefix: string): string {
   commandCounter++;
   return `${prefix}-${Date.now().toString(36)}-${commandCounter}`;
 }
 
-/**
- * Captures the command's concurrency and idempotency context exactly once.
- * Re-running this prepared command therefore retries the same transport request
- * against the same expected revision instead of accidentally issuing new work.
- */
 export function prepareCommand<Value>(
   kind: RequestKind,
   expectedRevision: number,
@@ -230,18 +204,7 @@ export function prepareCommand<Value>(
   };
 }
 
-/**
- * Deep command-screen module. Callers describe only the domain operation they
- * want to send. Revision capture, transport identity, pending state,
- * idempotent retry, rejection adoption, and stale-projection refresh remain
- * behind this interface.
- */
 export interface CommandScreenWorkflowOptions {
-  /**
-   * When this value changes after mount, the screen reloads its projection. Pass the
-   * campaign revision so a month advanced from elsewhere (the header's Advance Month)
-   * does not leave this screen showing pre-advance data.
-   */
   readonly refreshKey?: number | null;
 }
 
@@ -340,8 +303,6 @@ export function useCommandScreenWorkflow<
     if (command !== null) void run(command);
   }, [run]);
 
-  // Memoized so a screen can safely use it as a dependency of its own callbacks —
-  // otherwise every command handler a screen hands a memo() child changes each render.
   const execute = useCallback(
     (kind: RequestKind, send: CommandSender<Value>): Promise<CommandOutcome> =>
       run(prepareCommand(kind, revisionRef.current, send)),
@@ -356,8 +317,6 @@ export function useCommandScreenWorkflow<
     if (state.requiresRefresh) void loadScreen();
   }, [state.requiresRefresh, loadScreen]);
 
-  // Reload when the campaign moved on elsewhere. The mount load above already
-  // covers the first render, so the initial key is remembered, not acted on.
   const seenRefreshKey = useRef(options.refreshKey);
   useEffect(() => {
     if (seenRefreshKey.current === options.refreshKey) return;

@@ -1,52 +1,3 @@
-/**
- * Agent-facing "eyes and hands" for the desktop app. Launches the built Electron
- * app through the hermetic E2E harness, optionally drives it, then captures what
- * is on screen. Not a test — nothing here asserts.
- *
- *   pnpm --filter @bluewave/desktop snap [--out DIR] [--click TEXT]... [--fill LABEL=VALUE]...
- *                                        [--hover TEXT]... [--click-at X,Y]... [--scroll DX,DY[@X,Y]]...
- *                                        [--shot NAME]... [--strict] [--freeze]
- *                                        [--press KEY]... [--wait MS] [--eval JS]
- *                                        [--save PACKAGE_DIR] [--selector CSS]
- *                                        [--advance N] [--settle MS] [--tour]
- *                                        [--make-save DIR] [--size WxH] [--theme light|dark]
- *
- * --click "TEXT @last" / "TEXT @N" clicks the last / Nth (0-based) match instead of the first.
- * --hover TEXT   hovers a control (same matching and "@last"/"@N" suffixes as --click).
- * --click-at X,Y  clicks at window coordinates (canvas content such as the map has no controls).
- * --scroll DX,DY[@X,Y]  mouse-wheel scroll, after moving the pointer to X,Y when given.
- * --shot NAME     saves a mid-flow screenshot as NAME.png, in order with the other actions.
- * --freeze        steadier captures: reduced-motion media, CSS animations/transitions disabled in
- *                 screenshots, and the static "none" backdrop unless --background says otherwise.
- *                 WebGL/canvas content (the globe, shaders) keeps animating and is not frozen.
- * --strict        exit 1 when anything went wrong: page errors, console errors, a click that had
- *                 to fall back (no accessible match, never stabilised), or an idle render loop.
- *                 Without it these are only written to console.log.
- * --advance   clicks "Advance Month" N times, in order with the other actions (repeatable).
- * --wait MS   minimum pause after each action (default 300); then it waits for the DOM to go
- *             structurally quiet (200ms of no added/removed nodes or text changes).
- * --wait-max MS  ceiling for that quiet wait (default 5000); past it the capture goes ahead and
- *             console.log says the screen was still changing.
- * --settle    extra wait (ms) once, right before capture (--wait is per action).
- * --tour      leave the first-month guided tour overlay alone (default: dismiss it).
- * --make-save runs the new-game flow, compiles a campaign into DIR (so it can be
- *             passed to --save later) and waits for the Overview. DIR must not exist
- *             or be empty.
- * --save      copies a compiled campaign package to a temp dir, opens it via
- *             "Open Campaign", and starts from there (the source is never touched).
- * --size     resizes the window (CSS pixels, e.g. 900x700) before the first action.
- * --theme     "light" or "dark": starts the app in that theme (via the app-scope preferences file).
- * --background starts the app with that animated backdrop, e.g. "auralis" (via the app-scope preferences file).
- * --selector  screenshots only the first element matching the CSS selector.
- *
- * Actions run in the order given. Output (default `.dev-data/view`, git-ignored):
- *   screenshot.png  full-window screenshot
- *   aria.yaml       accessibility tree (roles, names, states) — best for locating controls
- *   text.txt        visible text
- *   console.log     renderer console messages + page errors
- *
- * Requires a built app: `pnpm --filter @bluewave/desktop build`.
- */
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -57,9 +8,7 @@ import { waitForQuiet } from "./snap-quiet.ts";
 import { createProblemLog } from "./snap-problems.ts";
 import { parseSnapArgs, SnapUsageError, type SnapAction, type SnapOptions } from "./snap-args.ts";
 
-// Idle structural DOM mutations per second above which a screen is reported as churning.
 const CHURN_THRESHOLD = 500;
-// Structural DOM silence, in ms, that counts as "the screen has settled".
 const QUIET_MS = 200;
 
 let opts: SnapOptions;
@@ -86,7 +35,6 @@ if (opts.save) {
 const makeSave = opts.makeSave ? resolve(opts.makeSave) : undefined;
 const h = await launchHarness({ saveDir: saveDir ?? makeSave });
 const log: string[] = [];
-// What --strict fails on. Always logged; only fatal under --strict.
 const problems = createProblemLog();
 const problem = (message: string, key?: string) => {
   problems.record(message, key);
@@ -103,8 +51,6 @@ h.page.on("pageerror", (e) => {
 
 const shotOptions = opts.freeze ? ({ animations: "disabled" } as const) : {};
 
-// After an action: at least --wait, then until the DOM stops changing structurally (up to
-// --wait-max), so a slow screen is captured settled and a fast one is not padded with idle time.
 async function settle(extraMs = 0): Promise<void> {
   await h.page.waitForTimeout(opts.waitMs + extraMs);
   const { settled } = await h.page.evaluate(waitForQuiet, {
@@ -114,8 +60,6 @@ async function settle(extraMs = 0): Promise<void> {
   if (!settled) log.push(`[snap] screen still changing after ${opts.waitMaxMs}ms (--wait-max)`);
 }
 
-// Accessible role/name match (waits for it to render, e.g. after a compile). "TEXT @last" /
-// "TEXT @N" target the last / Nth (0-based) match instead of the first.
 function controlLocator(arg: string) {
   const suffix = /^(.*) @(last|\d+)$/.exec(arg);
   const label = suffix ? (suffix[1] as string) : arg;
@@ -142,7 +86,6 @@ async function resolveControl(arg: string) {
     .then(() => true)
     .catch(() => false);
   if (appeared) return byRole;
-  // Not found by role: a bare text match can hit the wrong element, so it is a reportable fallback.
   problem(
     `"${arg}" matched no accessible control; fell back to a visible-text match`,
     `control:${arg}`,
@@ -160,8 +103,6 @@ async function runAction(action: SnapAction): Promise<void> {
         await target.hover({ timeout: 5_000 });
         break;
       }
-      // An element that keeps re-mounting never becomes "stable"; fall back to a
-      // direct DOM click and note it (a churning screen is itself worth knowing).
       await target.click({ timeout: 5_000 }).catch(async () => {
         problem(`"${arg}" never stabilised; used dispatchEvent click`, `control:${arg}`);
         await target.dispatchEvent("click");
@@ -193,9 +134,6 @@ async function runAction(action: SnapAction): Promise<void> {
 
 try {
   if (opts.theme || opts.background) {
-    // Seed the app-scope preferences file, before anything is opened, so the
-    // theme provider (and everything keyed off it) starts in the requested theme
-    // rather than having a class flipped under it.
     writeAppPreferences(h.userDataDir, {
       ...(opts.theme ? { theme: opts.theme } : {}),
       ...(opts.background ? { background: opts.background } : {}),
@@ -229,13 +167,11 @@ try {
     );
     await settle();
   }
-  // The tour mounts shortly after the Overview, so only the first check waits.
   const tidy = async (waitMs = 0) => {
     if (!opts.tour) await dismissTour(h.page, waitMs || 1);
   };
   await tidy(1500);
   for (const action of opts.actions) {
-    // A failed action must not lose the capture: the screen it failed on is the evidence.
     await runAction(action).catch((e: unknown) =>
       problem(
         `${action.kind} failed: ${(e instanceof Error ? e.message : String(e)).split("\n")[0]}`,
@@ -250,10 +186,6 @@ try {
   }
   await settle(opts.settleMs);
 
-  // Churn probe: a render loop (e.g. an unstable effect dependency) keeps adding and
-  // removing nodes; a calm screen changes a few dozen per second. Only structural
-  // mutations count — continuous animation (the globe, shaders) rewrites attributes
-  // every frame and is not a loop.
   const { structural, attributes } = await h.page.evaluate(
     () =>
       new Promise<{ structural: number; attributes: number }>((done) => {

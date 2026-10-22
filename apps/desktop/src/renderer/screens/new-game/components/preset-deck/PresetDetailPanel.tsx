@@ -7,21 +7,11 @@ import { presetSettingRows } from "../../preset-detail-view.js";
 import type { PresetDefinition } from "../../rules-of-the-naval-age-presets.js";
 
 export interface PresetDetailPanelProps {
-  /** The previewed preset. */
   readonly preset: PresetDefinition;
-  /** Whether the previewed preset's bundle is the one currently applied. */
   readonly applied: boolean;
-  /** Previewed and not yet applied: the step's primary action will apply it. */
   readonly pending: boolean;
 }
 
-/**
- * The detail pane's focused-preset slide panel: name, tagline and the six
- * engine settings the bundle fixes, with an Active state, or a note that the
- * step's primary action will apply it. The panel has no control of its own:
- * applying is Enter, a tap on the card, or the primary action. Keyed by
- * preset in the caller, so it eases in again each time focus moves.
- */
 export const PresetDetailPanel = memo(function PresetDetailPanel({
   preset,
   applied,

@@ -2,7 +2,6 @@ import type { DiplomacyScreenProjection } from "../../../shared/diplomacy-contra
 import { warScoreSplit } from "../diplomacy/diplomacy-presentation.js";
 import { nationFlagUrl } from "../../content/nation-flag.js";
 
-/** The relation of a nation to the player, as the rail states it in words. */
 export type NationRailRelation = "self" | "peace" | "pact" | "alliance" | "war" | "trade";
 
 export interface NationRailRow {
@@ -10,14 +9,11 @@ export interface NationRailRow {
   readonly name: string;
   readonly isPlayer: boolean;
   readonly relation: NationRailRelation;
-  /** Words only: the relation is never carried by colour alone. */
   readonly relationLabel: string;
   readonly blockade: boolean;
-  /** Present only while the player is in an active war against this nation. */
   readonly warScore: { readonly yours: number; readonly enemy: number } | null;
   readonly tension: number | null;
   readonly since: string | null;
-  /** Resolved flag art URL, or null when the power has none — the view renders a value, not a lookup. */
   readonly flagUrl: string | null;
 }
 
@@ -39,10 +35,6 @@ const RELATION_BY_DIPLOMACY: Readonly<Record<DiplomacyRelation, NationRailRelati
   trade_agreement: "trade",
 };
 
-/**
- * Engine precedence, preserved: war > alliance > non-aggression pact > trade
- * agreement > peace. A pact overrides a trade agreement but never a war or alliance.
- */
 function relationFor(
   row: DiplomacyScreenProjection["relations"][number] | undefined,
 ): NationRailRelation {
@@ -51,11 +43,6 @@ function relationFor(
   return RELATION_BY_DIPLOMACY[row.relation];
 }
 
-/**
- * Pure view-model for the nation rail, derived from the Diplomacy & War
- * projection (the same `inspectDiplomacyScreen` view the Diplomacy screen
- * reads). The player is pinned first; the rest follow by name.
- */
 export function buildNationRail(
   projection: DiplomacyScreenProjection,
   playerName: string,

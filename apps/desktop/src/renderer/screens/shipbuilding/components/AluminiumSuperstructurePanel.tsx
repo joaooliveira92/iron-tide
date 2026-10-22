@@ -3,10 +3,6 @@ import { Checkbox } from "../../../components/ui/checkbox.js";
 import { Panel } from "../../../components/design-workspace/panels/Panel.js";
 import type { AluminiumModel } from "../aluminium-view.js";
 
-/**
- * Aluminium superstructure (manual p.45): a lighter hull for a higher fire risk, offered once the ruleset makes it
- * available. The readout states what the compile decided.
- */
 export function AluminiumSuperstructurePanel({
   model,
   edit,

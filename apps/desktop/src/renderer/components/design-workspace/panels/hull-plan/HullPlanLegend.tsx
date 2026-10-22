@@ -9,7 +9,6 @@ const SOURCE_LABEL: Record<LegendSource, string> = {
   mixed: "Data + convention",
 };
 
-/** One keyboard-reachable chip: hover or focus shows a one-line tooltip, activating it opens the details. */
 function LegendChip({ entry }: { readonly entry: LegendEntry }) {
   return (
     <Popover>
@@ -54,7 +53,6 @@ function LegendChip({ entry }: { readonly entry: LegendEntry }) {
   );
 }
 
-/** What each part of the drawings means, and whether it is data or a drawing convention. */
 export function HullPlanLegend({ entries }: { readonly entries: readonly LegendEntry[] }) {
   return (
     <div className="flex flex-wrap gap-1.5" role="group" aria-label="Drawing legend">

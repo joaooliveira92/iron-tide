@@ -19,24 +19,6 @@ import {
 } from "react";
 import "./CardDeck.css";
 
-/**
- * `CardDeck` is Bluewave's local port of the React Bits `<Stack />` card stack,
- * shared by every master/detail surface that browses options as a deck (Fleet
- * Dispatch nations, Rules-of-the-Naval-Age presets).
- *
- * It keeps the upstream physics (fan / cascade / deck / pile placement,
- * drag-to-fling, depth shading) and adds two things the selectors need:
- *
- * - `topIndex` (controlled): the parent owns "which card is focused"; when it
- *   changes, the matching card is brought smoothly to the front.
- * - `onCardActivate`: a tap on *any* visible card selects it. Upstream
- *   `<Stack />` only lets the top card receive pointer input, which is exactly
- *   why "click a card to select it" never registered there.
- *
- * Keyboard and listbox semantics stay with the parent, so this component never
- * owns focus or `role`.
- */
-
 const DEFAULT_IMAGES = [
   "https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?q=80&w=500&auto=format",
   "https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=500&auto=format",
@@ -211,14 +193,8 @@ export interface CardDeckProps {
   autoplay?: boolean;
   autoplayDelay?: number;
   pauseOnHover?: boolean;
-  /**
-   * Called with the index of the new top card when the stack moves itself (a fling, a drag, autoplay). Never called
-   * for a change the parent drove through `topIndex`: echoing those back races the parent's next step.
-   */
   onChange?: (index: number) => void;
-  /** Controlled top card. When it changes the card is brought to the front. */
   topIndex?: number;
-  /** Called when a card is tapped (without a drag); the tap selects it. */
   onCardActivate?: (index: number) => void;
   className?: string;
   style?: CSSProperties;
@@ -553,9 +529,7 @@ export function CardDeck({
       drag.originY = values.y.get() - dy;
       try {
         drag.element.setPointerCapture(drag.id);
-      } catch {
-        // Pointer capture is optional; dragging still works without it.
-      }
+      } catch {}
       setDragging(true);
     }
     values.x.set(drag.originX + dx);
@@ -592,9 +566,7 @@ export function CardDeck({
     window.removeEventListener("pointercancel", listeners.up);
     try {
       drag.element.releasePointerCapture(drag.id);
-    } catch {
-      // Pointer capture may already have been released.
-    }
+    } catch {}
     const s = settingsRef.current as Settings;
     if (!drag.moved) {
       if (event.type === "pointerup") {
@@ -625,9 +597,6 @@ export function CardDeck({
   const onDown = (event: ReactPointerEvent<HTMLDivElement>, index: number): void => {
     if (event.button !== 0 || dragRef.current) return;
     if (flyingRef.current.has(index)) return;
-    // Only the top card can be dragged; any other visible card is a tap that
-    // brings it to the front. Upstream `<Stack />` ignored these taps entirely,
-    // which is why clicking a card never changed the selection.
     if (orderRef.current[0] !== index) {
       event.preventDefault();
       onCardActivateRef.current?.(index);
@@ -681,9 +650,6 @@ export function CardDeck({
     mountedRef.current = true;
   }, [order, shape, visible, spread, depth, speed, count]);
 
-  // Reconcile the parent-owned focus with the internal order: when `topIndex`
-  // is set, bring that card to the front while preserving the relative order of
-  // everything else.
   useEffect(() => {
     if (topIndex === undefined || topIndex < 0 || topIndex >= count) return;
     const current = orderRef.current;

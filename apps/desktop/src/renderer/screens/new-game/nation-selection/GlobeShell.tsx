@@ -6,8 +6,6 @@ export interface GlobeShellProps {
   readonly refs: SvgGlobeRefs;
 }
 
-// The static D3 globe `<svg>` skeleton shared by both variants. The rAF loop
-// (owned by useSvgGlobe) draws into the refs' element groups each frame.
 export function GlobeShell({ refs }: GlobeShellProps): JSX.Element {
   return (
     <div ref={refs.containerRef} className="absolute inset-0 overflow-hidden">

@@ -8,7 +8,6 @@ export function ForecastPanel({
   treasuryUnitMicro,
 }: {
   readonly view: WorkshopView;
-  /** Micro-pounds per treasury unit (ruleset constant). */
   readonly treasuryUnitMicro: number;
 }) {
   const format = usePresentationFormat();

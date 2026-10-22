@@ -17,10 +17,6 @@ export interface FleetReportSectionsViewProps {
   readonly divisions: readonly DivisionView[];
 }
 
-/**
- * Fleet's report sections (CC-8): Losses, Officers and the not-yet-modelled list. All collapsed by
- * default so Fleet stays a working screen, not a wall; each is one click from the Fleet screen.
- */
 export function FleetReportSectionsView({ history, divisions }: FleetReportSectionsViewProps) {
   const losses = playerLossesView(history);
   const lossCount = losses.status === "ready" ? losses.rows.length : null;
@@ -55,7 +51,6 @@ export function FleetReportSectionsView({ history, divisions }: FleetReportSecti
   );
 }
 
-/** Fleet report sections wired to the session: loads battle history and division organization. */
 export function FleetReportSections({ sessionId }: { readonly sessionId: string }) {
   const revision = useCampaignRevision();
   const history = useBattleHistory(sessionId, revision ?? 0);

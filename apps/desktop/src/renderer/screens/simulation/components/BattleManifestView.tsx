@@ -8,17 +8,11 @@ interface BattleManifestViewProps {
   readonly playerNationId: string | null;
 }
 
-/** `(Player)`/`(AI)` from the player nation id; omitted entirely when it is unknown. */
 function roleSuffix(nationId: string, playerNationId: string | null): string {
   if (playerNationId === null) return "";
   return nationId === playerNationId ? " (Player)" : " (AI)";
 }
 
-/**
- * The side for a given role, keyed off `sideId` so the columns cannot silently
- * swap if the manifest ever reorders its sides. Falls back to the historical
- * positional order when a side does not carry the expected id.
- */
 function sideFor(
   sides: readonly BattleSide[],
   sideId: "attacker" | "defender",

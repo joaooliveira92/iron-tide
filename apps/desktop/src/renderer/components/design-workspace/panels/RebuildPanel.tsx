@@ -22,7 +22,6 @@ import { Panel } from "./Panel.js";
 
 let rebuildCounter = 0;
 
-/** The rebuild actions the early band offers. CV/CVL conversion and BC→BB reclassification stay deferred. */
 type RebuildAction = "STANDARD" | "REARMAMENT" | "BULGE";
 
 const REBUILD_ACTIONS: readonly { readonly value: RebuildAction; readonly label: string }[] = [
@@ -31,12 +30,6 @@ const REBUILD_ACTIONS: readonly { readonly value: RebuildAction; readonly label:
   { value: "BULGE", label: "Bulge (add torpedo blister)" },
 ];
 
-/**
- * Rebuild a completed ship with a changed design (ADR-0078, DESIGN-23 sections 17-22). Pick one of your ships, load its real
- * design into the board, change it, and this panel checks the change as a rebuild: the retained-hull limits beside the
- * change you made, and why a refusal is a refusal. Starting the rebuild makes the ship unavailable (it cannot sail, train or
- * fight) until the work is done. The check is the engine's own rule, run on the board's current design.
- */
 export function RebuildPanel({
   sessionId,
   draft,
@@ -63,8 +56,6 @@ export function RebuildPanel({
   const [blisterMassKg, setBlisterMassKg] = useState(0);
   const ship = ships.find((s) => s.shipId === chosen) ?? ships[0];
   const shipId = ship?.shipId;
-  // A bulge is added hull mass (ADR-0130 section 2): the chosen blister grows the draft's target
-  // displacement, so the compile re-derives displacement, stability and the achievable speed.
   const bulgeMassKg = action === "BULGE" ? Math.max(0, Math.floor(blisterMassKg)) : 0;
   const checkedDraft: DesignDraft =
     bulgeMassKg > 0
@@ -91,8 +82,6 @@ export function RebuildPanel({
     };
   }, [bridge, sessionId]);
 
-  // The check runs on the board's current design whenever it changes, once this ship's design has been loaded. A bulge
-  // is checked on the bulged draft, so its measures are the compiled displacement and speed the blister produces.
   useEffect(() => {
     setCheck(null);
     if (!bridge || sessionId === undefined || shipId === undefined) return;

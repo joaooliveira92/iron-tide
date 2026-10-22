@@ -4,10 +4,6 @@ import type { ProfileFrame } from "./profile-geometry.js";
 import { CARD_FONT, PAD_X, SECTION_W, type SectionLayout } from "./section-drawing.js";
 import type { SectionFacts } from "./sections.js";
 
-/**
- * The section card's profile band: the main profile's hull and fitted structures under the card transform, over
- * the waterline, with the section's machinery rooms, fuel stowage and fitting callout ticks.
- */
 export function SectionProfileBand({
   layout,
   profile,

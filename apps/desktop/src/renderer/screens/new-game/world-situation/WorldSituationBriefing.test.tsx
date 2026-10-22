@@ -56,7 +56,6 @@ describe("WorldSituationBriefing", () => {
     expect(document.activeElement).toBe(screen.getByRole("button", { name: /United Kingdom/ }));
     fireEvent.keyDown(document.activeElement as Element, { key: "ArrowUp" });
     expect(dossierHeading()).toBe("Qing Dynasty");
-    // The folded tier is not in the order, so End stops at the last visible power.
     fireEvent.keyDown(document.activeElement as Element, { key: "End" });
     expect(dossierHeading()).toBe("French Republic");
     fireEvent.keyDown(document.activeElement as Element, { key: "Home" });
@@ -79,7 +78,6 @@ describe("WorldSituationBriefing", () => {
     const germany = screen.getByRole("button", { name: /German Empire/ });
     fireEvent.click(germany);
     expect(dossierHeading()).toBe("German Empire");
-    // Hiding the tier that holds the selection hands it back to a visible power.
     fireEvent.click(screen.getByRole("button", { name: /Hide these powers/ }));
     expect(dossierHeading()).toBe("Qing Dynasty");
   });

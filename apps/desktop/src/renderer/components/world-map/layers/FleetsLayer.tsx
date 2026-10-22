@@ -8,7 +8,6 @@ export interface FleetsLayerProps {
   readonly playerNationId: string | null;
 }
 
-/** Fleet badges; a clustered mark sums its ships, and foreign ones dim. */
 export function FleetsLayer({ marks, strokeFor, live, playerNationId }: FleetsLayerProps) {
   return (
     <>

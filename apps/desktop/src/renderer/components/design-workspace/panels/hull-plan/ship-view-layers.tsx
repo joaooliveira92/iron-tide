@@ -9,12 +9,6 @@ import { armourShape, BELT_INNER, BELT_OUTER, regionPath, stripPath } from "./ar
 import { PLAN_MID, type PlanFrame } from "./geometry.js";
 import { SECTION_IDS, SECTIONS } from "./section-meta.js";
 
-/**
- * The overlays the central workspace can lay over its drawings. Each reads only the design (draft and compile
- * through the caller) and draws a schematic: geometry that is a convention is named as one in the title, so no
- * drawing is mistaken for authoritative.
- */
-
 const beltLengthMm = (draft: DesignDraft): number =>
   draft.armour.regions
     .filter((r) => r.region === "BELT_MAIN")
@@ -25,7 +19,6 @@ const permilleOf = (lengthMm: number, lengthWlMm: number): number => {
   return Math.max(0, Math.min(1000, (lengthMm * 1000) / lengthWlMm));
 };
 
-/** A hoverable armour zone: the anatomy plate opens on the belt or citadel only. */
 function ArmourHover({
   anatomy,
   id,
@@ -58,10 +51,6 @@ function ArmourHover({
   );
 }
 
-/**
- * The citadel and the armoured belt. SCHEMATIC: the belt and citadel lengths are real, but the design model gives
- * no station for either, so both are drawn amidships — a convention, not a position from the design.
- */
 export function ArmourZoneLayer({
   frame,
   draft,
@@ -70,9 +59,7 @@ export function ArmourZoneLayer({
 }: {
   readonly frame: PlanFrame;
   readonly draft: DesignDraft;
-  /** The region the Protection editor has selected, highlighted over the scheme (presentation only). */
   readonly highlight?: ArmourRegionId | null;
-  /** The isometric plate the belt and citadel hover cards show. Omitted, the zones stay inert. */
   readonly anatomy?: AnatomyShip;
 }) {
   const lengthWlMm = Number(draft.hull.lengthWl);
@@ -185,7 +172,6 @@ export function ArmourZoneLayer({
 
 type CompartmentKind = "magazine" | "machinery" | "other";
 
-/** Tint class per kind of section: magazines read warm, the machinery spaces take the accent. */
 const COMPARTMENT_TINT: {
   readonly [K in CompartmentKind]: { readonly className: string; readonly opacity: number };
 } = {
@@ -201,16 +187,11 @@ const compartmentKind = (zoneId: string): CompartmentKind =>
       ? "machinery"
       : "other";
 
-/** Section number, bow to stern, for the eight sections under the plan; undefined for any other zone. */
 const sectionNumber = (zoneId: string): number | undefined => {
   const i = SECTION_IDS.findIndex((id) => SECTIONS[id].zoneId === zoneId);
   return i < 0 ? undefined : i + 1;
 };
 
-/**
- * The hull's internal subdivision: each section as a band that follows the hull, tinted by what the section is
- * (magazine, machinery, other) and numbered to match the strip under the drawing.
- */
 export function CompartmentLayer({
   frame,
   zones,
@@ -261,7 +242,6 @@ export function CompartmentLayer({
   );
 }
 
-/** The machinery spaces as the design states them: a bar across the hull at each room's station, labelled. */
 export function MachineryLayoutLayer({
   frame,
   draft,
@@ -304,7 +284,6 @@ export function MachineryLayoutLayer({
   );
 }
 
-/** The longitudinal centre of gravity (real, from the compile), against the centre of buoyancy already drawn. */
 export function MassMarkersLayer({
   frame,
   lcgPermille,

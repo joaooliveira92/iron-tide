@@ -127,7 +127,7 @@ describe("runGunneryResolveShot", () => {
   it("routes GUNNERY_ACCURACY_FACTOR_MISSING through the ticket-01 adapter as validation-error", async () => {
     const inputPath = join(dir, "input.json");
     const factors = neutralAccuracyFactors(5_000) as any;
-    delete factors.range; // missing factor -> GUNNERY_ACCURACY_FACTOR_MISSING
+    delete factors.range;
     writeFileSync(inputPath, JSON.stringify(scenario(factors)), "utf8");
     const spy = stdoutSpy();
     const result = await runCli(runGunneryResolveShot(baseOptions(inputPath)));

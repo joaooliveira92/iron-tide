@@ -117,8 +117,6 @@ function hashSnapshot(snapshot: CampaignSnapshot): string {
     version: snapshot.version,
     turnNumber: snapshot.turnNumber,
     campaignId: snapshot.campaignId,
-    // B-6/ADR-0025: start date + per-area weather are part of the
-    // authoritative snapshot surface (parity with ReplayVerifier's subset).
     startYear: snapshot.startYear,
     startMonth: snapshot.startMonth,
     strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),

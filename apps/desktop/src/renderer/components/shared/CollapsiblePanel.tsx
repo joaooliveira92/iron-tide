@@ -4,24 +4,15 @@ import { cn } from "../../lib/utils.js";
 import { readPanelOpen, writePanelOpen } from "./panel-memory.js";
 
 export interface CollapsiblePanelProps {
-  /** Stable id: the open/closed choice is remembered under it for the session. */
   readonly panelId: string;
   readonly title: string;
-  /** Used until the player has chosen; compact density passes false. */
   readonly defaultOpen: boolean;
   readonly children: ReactNode;
-  /** Short text beside the title that stays visible when collapsed (e.g. a count). */
   readonly badge?: ReactNode;
   readonly className?: string;
   readonly testId?: string;
 }
 
-/**
- * A map-overlay panel with a title bar that collapses its body. Uses theme surface colours so the embedded cards' muted/destructive text stays legible.
- * The wrapper takes pointer events itself, so a parent dock can be `pointer-events-none` and let the
- * map underneath keep panning and zooming. The body stays mounted when collapsed (just hidden), so
- * panels keep their selection and their data.
- */
 export function CollapsiblePanel({
   panelId,
   title,

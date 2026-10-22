@@ -3,10 +3,6 @@ import type { AnatomyShip } from "./ship-anatomy.js";
 
 const d = (value: string) => (value.length > 0 ? value : undefined);
 
-/**
- * The isometric ship plate. Parts are plain data from `buildAnatomyShip`; the one matching `highlight` is lit and
- * ringed, while every other part keeps its normal tone.
- */
 export function AnatomyShipFigure({
   ship,
   highlight,

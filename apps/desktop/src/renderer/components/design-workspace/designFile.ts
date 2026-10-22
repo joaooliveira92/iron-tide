@@ -19,7 +19,6 @@ export function exportDesign(
   return encodeDesignFile(draft, catalogue, compiled);
 }
 
-/** Never throws: a bad file is a message for the player, not a crash. */
 export function importDesign(text: string, catalogue: readonly ComponentDef[]): ImportResult {
   try {
     const d = decodeDesignFile(text, catalogue);

@@ -11,16 +11,13 @@ import {
 
 import { resolveGeneratedContentDir } from "./contentPack.js";
 
-/** Stable, actionable failure codes for the runtime content trust boundary. */
 export type ContentArtifactErrorCode =
   | "CONTENT_ARTIFACT_MISSING"
   | "CONTENT_ARTIFACT_UNREADABLE"
   | "CONTENT_ARTIFACT_INVALID";
 
 export class ContentArtifactError extends Error {
-  /** Stable discriminator (RULES.md "Errors"): recover by `_tag`, not `instanceof`. */
   readonly _tag = "ContentArtifactError";
-  /** `_tag`-based narrowing without `instanceof`. */
   static is(value: unknown): value is ContentArtifactError {
     return (
       typeof value === "object" &&
@@ -29,7 +26,6 @@ export class ContentArtifactError extends Error {
     );
   }
   readonly code: ContentArtifactErrorCode;
-  /** The specific verification failure code, when `code` is `CONTENT_ARTIFACT_INVALID`. */
   readonly reason?: string;
 
   constructor(code: ContentArtifactErrorCode, message: string, reason?: string) {
@@ -45,13 +41,6 @@ export interface LoadedContentArtifact {
   readonly manifest: ContentBundleManifest;
 }
 
-/**
- * Reads and verifies the compiled content artifact (ADR-0122) from a generated
- * directory. The main process runs on exactly the content the compiler
- * validated: the manifest's recorded kind/version/marker and SHA-256 body hash
- * must all match the artifact, otherwise this throws `ContentArtifactError` and
- * the app fails closed rather than running unvalidated content.
- */
 export function readContentArtifact(dir: string): LoadedContentArtifact {
   const artifactPath = join(dir, CONTENT_ARTIFACT_FILENAME);
   const manifestPath = join(dir, CONTENT_MANIFEST_FILENAME);
@@ -88,7 +77,6 @@ export function readContentArtifact(dir: string): LoadedContentArtifact {
   return { bundle: verification.bundle, manifest: verification.manifest };
 }
 
-/** Reads and verifies the shipped production artifact from its canonical location. */
 export function loadContentArtifact(): LoadedContentArtifact {
   return readContentArtifact(resolveGeneratedContentDir());
 }
