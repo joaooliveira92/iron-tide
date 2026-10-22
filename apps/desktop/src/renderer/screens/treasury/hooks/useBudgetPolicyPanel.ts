@@ -5,6 +5,7 @@ import type {
   BudgetScreenProjection,
 } from "../../../../shared/budget-contract.js";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { loadThroughBridge } from "../../../lib/bridge-read.js";
 import {
   requestLifecycleAdapter,
   useCommandScreenWorkflow,
@@ -45,9 +46,7 @@ export function useBudgetPolicyPanel(sessionId: string): BudgetPolicyPanelContro
     requestLifecycleAdapter({
       initialState: initialBudgetPolicyState,
       load: () =>
-        bridge
-          ? bridge.campaign.execute("inspectBudgetScreen", sessionId)
-          : Promise.reject(new Error("Bluewave bridge not available")),
+        loadThroughBridge(bridge, (b) => b.campaign.execute("inspectBudgetScreen", sessionId)),
       project: projectBudgetPolicy,
       accept: acceptBudgetAllocation,
     }),

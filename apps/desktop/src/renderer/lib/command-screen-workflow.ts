@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { BridgeResult } from "../../shared/bridge-contract.js";
+import { describeTransportFailure } from "./bridge-read.js";
 
 export type RequestKind =
   | "submit"
@@ -259,9 +260,7 @@ export function useCommandScreenWorkflow<
       current.onProjection?.(result.value);
     } catch (error) {
       if (generation !== loadGeneration.current) return;
-      setLoadError(
-        `TRANSPORT_FAILURE: ${error instanceof Error ? error.message : "unknown transport error"}`,
-      );
+      setLoadError(`TRANSPORT_FAILURE: ${describeTransportFailure(error)}`);
     }
   }, []);
 
@@ -302,10 +301,7 @@ export function useCommandScreenWorkflow<
       if (activeExecution.current !== executionId) return "transport-failure";
       setOutcomeUnknown(true);
       setState((currentState) =>
-        adapterRef.current.transportFailure(
-          currentState,
-          error instanceof Error ? error.message : "unknown transport error",
-        ),
+        adapterRef.current.transportFailure(currentState, describeTransportFailure(error)),
       );
       return "transport-failure";
     }

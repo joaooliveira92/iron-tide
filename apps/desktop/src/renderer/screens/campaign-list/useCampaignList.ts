@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useBridge } from "../../lib/bridge-context.js";
+import { readBridge } from "../../lib/bridge-read.js";
 import {
   applyListLoaded,
   applyLoadFailed,
@@ -11,16 +12,12 @@ export function useCampaignList() {
   const [state, setState] = useState(initialCampaignListScreenState);
 
   const reload = useCallback(async () => {
-    if (bridge === undefined) {
-      setState((current) => applyLoadFailed(current, "Bluewave bridge not available"));
-      return;
-    }
-    const result = await bridge.campaign.execute("listCampaigns", undefined);
-    if (result.outcome !== "success") {
-      setState((current) => applyLoadFailed(current, result.reason));
-      return;
-    }
-    setState((current) => applyListLoaded(current, result.value));
+    const read = await readBridge(bridge, (b) => b.campaign.execute("listCampaigns", undefined));
+    setState((current) =>
+      read.status === "ready"
+        ? applyListLoaded(current, read.value)
+        : applyLoadFailed(current, read.reason),
+    );
   }, [bridge]);
 
   return { state, reload };

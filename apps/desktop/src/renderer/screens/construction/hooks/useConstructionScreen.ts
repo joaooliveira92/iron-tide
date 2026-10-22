@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { loadThroughBridge } from "../../../lib/bridge-read.js";
 import type {
   ConstructionBatchPreviewOutcome,
   ConstructionCommandOutcome,
@@ -67,9 +68,9 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
     requestLifecycleAdapter({
       initialState: initialConstructionScreenState,
       load: () =>
-        bridge
-          ? bridge.campaign.execute("inspectConstructionScreen", sessionId)
-          : Promise.reject(new Error("Bluewave bridge not available")),
+        loadThroughBridge(bridge, (b) =>
+          b.campaign.execute("inspectConstructionScreen", sessionId),
+        ),
       project: projectConstructionScreen,
       accept: acceptConstructionCommand,
       onProjection: (projection) =>

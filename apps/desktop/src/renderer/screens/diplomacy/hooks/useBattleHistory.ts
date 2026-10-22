@@ -15,10 +15,6 @@ export function useBattleHistory(sessionId: string, revision: number): BattleHis
     revision,
     (bridge, id): Promise<BridgeResult<InspectBattleHistoryResult>> =>
       bridge.campaign.execute("inspectBattleHistory", id),
-    {
-      bridgeUnavailableMessage: "The desktop bridge is unavailable.",
-      transportFailureMessage: "Battle history failed to load.",
-    },
   );
 
   if (state.status === "ready") return { status: "ready", history: state.value.history };

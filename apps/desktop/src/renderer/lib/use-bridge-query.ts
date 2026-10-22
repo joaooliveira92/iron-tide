@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import { useBridge } from "./bridge-context.js";
+import { readBridge } from "./bridge-read.js";
 
 export type BridgeQueryState<Value> =
   | { readonly status: "loading" }
@@ -11,12 +12,7 @@ export type BridgeQueryState<Value> =
 
 export interface UseBridgeQueryOptions {
   readonly enabled?: boolean;
-  readonly bridgeUnavailableMessage?: string;
-  readonly transportFailureMessage?: string;
 }
-
-const DEFAULT_UNAVAILABLE_MESSAGE = "Bluewave bridge not available";
-const DEFAULT_TRANSPORT_FAILURE_MESSAGE = "The request failed.";
 
 export function useBridgeQuery<Value>(
   sessionId: string,
@@ -29,38 +25,22 @@ export function useBridgeQuery<Value>(
   const runRef = useRef(run);
   runRef.current = run;
   const enabled = options.enabled ?? true;
-  const unavailableMessage = options.bridgeUnavailableMessage ?? DEFAULT_UNAVAILABLE_MESSAGE;
-  const transportFailureMessage =
-    options.transportFailureMessage ?? DEFAULT_TRANSPORT_FAILURE_MESSAGE;
 
   useEffect(() => {
     if (!enabled) return;
-    if (bridge === undefined) {
-      setState({ status: "error", message: unavailableMessage });
-      return;
-    }
     let active = true;
-    runRef
-      .current(bridge, sessionId)
-      .then((result) => {
-        if (!active) return;
-        setState(
-          result.outcome === "success"
-            ? { status: "ready", value: result.value }
-            : { status: "error", message: result.reason },
-        );
-      })
-      .catch((error: unknown) => {
-        if (!active) return;
-        setState({
-          status: "error",
-          message: error instanceof Error ? error.message : transportFailureMessage,
-        });
-      });
+    void readBridge(bridge, (current) => runRef.current(current, sessionId)).then((read) => {
+      if (!active) return;
+      setState(
+        read.status === "ready"
+          ? { status: "ready", value: read.value }
+          : { status: "error", message: read.reason },
+      );
+    });
     return () => {
       active = false;
     };
-  }, [bridge, sessionId, revision, enabled, unavailableMessage, transportFailureMessage]);
+  }, [bridge, sessionId, revision, enabled]);
 
   return state;
 }

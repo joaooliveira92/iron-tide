@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
+import { BRIDGE_UNAVAILABLE_MESSAGE, TRANSPORT_FAILURE_MESSAGE } from "./bridge-read.js";
 import { useBridgeQuery } from "./use-bridge-query.js";
 
 const originalBridge = window.bluewave;
@@ -60,30 +61,28 @@ describe("useBridgeQuery", () => {
     await waitFor(() => expect(result.current).toEqual({ status: "error", message: "boom" }));
   });
 
-  it("falls back to the configured transport-failure message for a non-Error throw", async () => {
+  it("falls back to the shared transport-failure message for a non-Error throw", async () => {
     bridgeWith(vi.fn());
     const run = vi.fn(async (): Promise<BridgeResult<number>> => {
       throw "not an error";
     });
 
-    const { result } = renderHook(() =>
-      useBridgeQuery("s1", 0, run, { transportFailureMessage: "could not load" }),
-    );
+    const { result } = renderHook(() => useBridgeQuery("s1", 0, run));
 
     await waitFor(() =>
-      expect(result.current).toEqual({ status: "error", message: "could not load" }),
+      expect(result.current).toEqual({ status: "error", message: TRANSPORT_FAILURE_MESSAGE }),
     );
   });
 
-  it("reports the configured message and never calls the command when the bridge is absent", async () => {
+  it("reports the shared unavailable message and never calls the command when the bridge is absent", async () => {
     delete window.bluewave;
     const run = vi.fn();
 
-    const { result } = renderHook(() =>
-      useBridgeQuery("s1", 0, run, { bridgeUnavailableMessage: "no bridge" }),
-    );
+    const { result } = renderHook(() => useBridgeQuery("s1", 0, run));
 
-    await waitFor(() => expect(result.current).toEqual({ status: "error", message: "no bridge" }));
+    await waitFor(() =>
+      expect(result.current).toEqual({ status: "error", message: BRIDGE_UNAVAILABLE_MESSAGE }),
+    );
     expect(run).not.toHaveBeenCalled();
   });
 

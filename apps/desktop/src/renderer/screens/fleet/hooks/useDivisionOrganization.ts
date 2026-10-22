@@ -4,6 +4,7 @@ import type {
   DivisionScreenProjection,
 } from "../../../../shared/division-contract.js";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { loadThroughBridge } from "../../../lib/bridge-read.js";
 import {
   type CommandOutcome,
   requestLifecycleAdapter,
@@ -37,9 +38,7 @@ export function useDivisionOrganization(sessionId: string): UseDivisionOrganizat
     requestLifecycleAdapter({
       initialState: initialDivisionOrganizationState,
       load: () =>
-        bridge
-          ? bridge.campaign.execute("inspectDivisionScreen", sessionId)
-          : Promise.reject(new Error("Bluewave bridge not available")),
+        loadThroughBridge(bridge, (b) => b.campaign.execute("inspectDivisionScreen", sessionId)),
       project: projectDivisionOrganization,
       accept: acceptDivisionCommand,
     }),

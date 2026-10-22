@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { loadThroughBridge } from "../../../lib/bridge-read.js";
 
 import type {
   DiplomacyCommandOutcome,
@@ -46,9 +47,7 @@ export function useDiplomacyScreen(sessionId: string): UseDiplomacyScreenReturn 
     {
       initialState: initialDiplomacyScreenState,
       load: () =>
-        bridge
-          ? bridge.campaign.execute("inspectDiplomacyScreen", sessionId)
-          : Promise.reject(new Error("Bluewave bridge not available")),
+        loadThroughBridge(bridge, (b) => b.campaign.execute("inspectDiplomacyScreen", sessionId)),
       project: (_state, projection) => diplomacyLoadSuccess(projection),
       begin: (state, pending) => diplomacyBeginSubmit(state, pending.transportRequestId),
       reject: diplomacySubmitRejected,

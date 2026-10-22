@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import type { MovementCommand } from "@bluewave/campaign-engine";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { loadThroughBridge } from "../../../lib/bridge-read.js";
 import { useMovementOrders } from "../../../lib/movement-orders.js";
 import type {
   FleetDivisionView,
@@ -55,9 +56,7 @@ export function useFleetScreen(sessionId: string): UseFleetScreenReturn {
     requestLifecycleAdapter({
       initialState: initialFleetScreenState,
       load: () =>
-        bridge
-          ? bridge.campaign.execute("inspectFleetScreen", sessionId)
-          : Promise.reject(new Error("Bluewave bridge not available")),
+        loadThroughBridge(bridge, (b) => b.campaign.execute("inspectFleetScreen", sessionId)),
       project: projectFleetScreen,
       accept: acceptMovementCommand,
       onProjection: (projection) => {

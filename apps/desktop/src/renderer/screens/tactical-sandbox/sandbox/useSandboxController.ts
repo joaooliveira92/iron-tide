@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import type { BridgeResult } from "../../../../shared/bridge-contract.js";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { describeTransportFailure } from "../../../lib/bridge-read.js";
 import { parseScriptedOrders } from "../scripted-orders.js";
 import {
   applyAutoResolution,
@@ -44,9 +45,7 @@ export function useSandboxController(
         const result = await run();
         setState(foldSandboxResult(result, { success: applySuccess, failure: applyFailure }));
       } catch (error) {
-        setState((current) =>
-          applyFailure(current, error instanceof Error ? error.message : "unknown transport error"),
-        );
+        setState((current) => applyFailure(current, describeTransportFailure(error)));
       }
     },
     [bridge],
