@@ -1,6 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
-import type { FleetState, Ship } from "@bluewave/campaign";
+import type { CampaignSnapshot, FleetState, Ship } from "@bluewave/campaign";
 import { buildStrategicMapView } from "../src/strategic-map.js";
 import { fixtureNation, fixtureSnapshot } from "./fixtures.js";
 
@@ -43,7 +43,7 @@ function makeFleet(
   return { id, nationId, name, ships, locationAreaId };
 }
 
-const homeWorld = {
+const homeWorld: Partial<CampaignSnapshot> = {
   world: {
     areas: [
       { id: "eng_home_coast", name: "English Home Waters", type: "coastal", controller: "uk" },
