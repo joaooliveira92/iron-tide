@@ -16,7 +16,7 @@ Where to start reading, by task. Every link here is a living entry point.
 | Check requirements | [`.ai/REQUIREMENTS.md`](../../.ai/REQUIREMENTS.md) |
 | Pick up the backlog | [`.ai/SPRINT-PLAN.md`](../../.ai/SPRINT-PLAN.md) |
 | Run the pipeline | [`.ai/ORCHESTRATION.md`](../../.ai/ORCHESTRATION.md) |
-| Work several efforts at once | [`.ai/WORKTREES.md`](../../.ai/WORKTREES.md) |
+| Work several efforts at once | [`.opencode/command/worktrees.md`](../../.opencode/command/worktrees.md) |
 | Record a decision | [`docs/adr/README.md`](../adr/README.md) |
 
 `engine-suite.md` and `.ai/ROADMAP.md` are historical (superseded); keep them only
