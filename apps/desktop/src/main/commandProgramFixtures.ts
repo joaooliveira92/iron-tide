@@ -1,10 +1,10 @@
-import type { CampaignCommandName } from "../../shared/campaign-command-descriptors.js";
-import { commandHandlers } from "../campaignBridge.js";
+import type { CampaignCommandName } from "../shared/campaign-command-descriptors.js";
+import { commandHandlers } from "./campaignBridge.js";
 import {
   runCommandHandler,
   type CommandBodyEffect,
   type CommandProgram,
-} from "./commandProgram.js";
+} from "./runtime/commandProgram.js";
 
 export type AnyCommandHandler = (payload: never) => CommandBodyEffect;
 

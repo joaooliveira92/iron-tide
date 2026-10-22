@@ -19,7 +19,7 @@ import { clearCampaignSessionsForTest, registerCampaignSession } from "../campai
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { clearPendingWorkspacesForTest } from "../pendingCommands.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
-import { programFor, type AnyCommandHandler } from "../runtime/registeredProgram.js";
+import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { toSaveableState } from "../saveHelpers.js";
 import { commitMonthProgram } from "./commitMonth.js";

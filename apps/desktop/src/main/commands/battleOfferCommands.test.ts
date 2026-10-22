@@ -20,7 +20,7 @@ import {
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { loadPendingTurn, PENDING_TURN_FILENAME, savePendingTurn } from "../pendingTurn.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
-import { programFor, type AnyCommandHandler } from "../runtime/registeredProgram.js";
+import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { ContentArtifact, contentArtifactLayer } from "../runtime/contentArtifact.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { toSaveableState } from "../saveHelpers.js";

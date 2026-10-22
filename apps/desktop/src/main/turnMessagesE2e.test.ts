@@ -31,7 +31,7 @@ import {
 import { runTurnTransaction } from "./commands/turnTransaction.js";
 import { PENDING_TURN_FILENAME } from "./pendingTurn.js";
 import { projectCommandExit } from "./runtime/bridgeResult.js";
-import { programFor, type AnyCommandHandler } from "./runtime/registeredProgram.js";
+import { programFor, type AnyCommandHandler } from "./commandProgramFixtures.js";
 import { DecisionSource } from "./runtime/decisionSource.js";
 import { ContentArtifact, contentArtifactLayer } from "./runtime/contentArtifact.js";
 import { desktopMainLayer } from "./runtime/desktopMainLayer.js";

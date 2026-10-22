@@ -15,7 +15,7 @@ import {
 } from "./drawingBoardDraft.js";
 import { readReferenceDesigns } from "./referenceDesigns.js";
 import { projectCommandExit } from "./runtime/bridgeResult.js";
-import { programFor, type AnyCommandHandler } from "./runtime/registeredProgram.js";
+import { programFor, type AnyCommandHandler } from "./commandProgramFixtures.js";
 import { desktopMainLayer } from "./runtime/desktopMainLayer.js";
 
 const reference = readReferenceDesigns().find((d) => d.id === "torpedo_cruiser_1880")!;

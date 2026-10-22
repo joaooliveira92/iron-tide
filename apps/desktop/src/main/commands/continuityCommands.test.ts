@@ -60,7 +60,7 @@ import { clearPendingWorkspacesForTest, PENDING_COMMANDS_FILENAME } from "../pen
 import { readReferenceDesigns } from "../referenceDesigns.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
-import { programFor, type AnyCommandHandler } from "../runtime/registeredProgram.js";
+import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { AppPaths, IdGenerator, NativeDialog } from "../runtime/platform.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
