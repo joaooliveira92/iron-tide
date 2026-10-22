@@ -1,41 +1,20 @@
 import type { PlayerProjection, StrategicPriority } from "@bluewave/campaign-engine";
 
-import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type {
   CampaignCommandClient,
   MonthlyReportEntry,
 } from "../../shared/campaign-command-contract.js";
+import { readBridge, type BridgeRead } from "../lib/bridge-read.js";
 import { countActiveAlerts } from "../lib/priorities.js";
 import type { StatusStripAreas } from "./status-strip-state.js";
 
-const TRANSPORT_FAILURE_MESSAGE = "The request failed.";
-
-export type CampaignReadResult<T> =
-  | { readonly status: "ready"; readonly value: T }
-  | { readonly status: "unavailable"; readonly reason: string };
+export type CampaignReadResult<T> = BridgeRead<T>;
 
 export interface CampaignReads {
   readonly projection: CampaignReadResult<PlayerProjection>;
   readonly areas: CampaignReadResult<StatusStripAreas>;
   readonly reports: CampaignReadResult<readonly MonthlyReportEntry[]>;
   readonly priorities: CampaignReadResult<readonly StrategicPriority[]>;
-}
-
-function fold<T>(result: BridgeResult<T>): CampaignReadResult<T> {
-  return result.outcome === "success"
-    ? { status: "ready", value: result.value }
-    : { status: "unavailable", reason: result.reason };
-}
-
-async function read<T>(run: () => Promise<BridgeResult<T>>): Promise<CampaignReadResult<T>> {
-  try {
-    return fold(await run());
-  } catch (error) {
-    return {
-      status: "unavailable",
-      reason: error instanceof Error ? error.message : TRANSPORT_FAILURE_MESSAGE,
-    };
-  }
 }
 
 function view<T, Value>(
@@ -50,10 +29,10 @@ export async function readCampaign(
   sessionId: string,
 ): Promise<CampaignReads> {
   const [campaign, map, reports, priorities] = await Promise.all([
-    read(() => client.execute("inspectCampaign", sessionId)),
-    read(() => client.execute("inspectMap", sessionId)),
-    read(() => client.execute("readMonthlyReports", sessionId)),
-    read(() => client.execute("inspectPriorities", sessionId)),
+    readBridge(client, (c) => c.execute("inspectCampaign", sessionId)),
+    readBridge(client, (c) => c.execute("inspectMap", sessionId)),
+    readBridge(client, (c) => c.execute("readMonthlyReports", sessionId)),
+    readBridge(client, (c) => c.execute("inspectPriorities", sessionId)),
   ]);
   return {
     projection: view(campaign, (value) => value.projection),

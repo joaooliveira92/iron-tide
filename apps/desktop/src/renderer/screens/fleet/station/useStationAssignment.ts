@@ -5,6 +5,7 @@ import type {
   StationAssignmentOutcome,
 } from "../../../../shared/fleet-contract.js";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { loadThroughBridge } from "../../../lib/bridge-read.js";
 import {
   type CommandOutcome,
   requestLifecycleAdapter,
@@ -50,9 +51,7 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
     requestLifecycleAdapter({
       initialState: initialFleetStationState,
       load: () =>
-        bridge
-          ? bridge.campaign.execute("inspectFleetScreen", sessionId)
-          : Promise.reject(new Error("Bluewave bridge not available")),
+        loadThroughBridge(bridge, (b) => b.campaign.execute("inspectFleetScreen", sessionId)),
       project: projectFleetStation,
       accept: (value) => ({
         patch: {},

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { BluewaveDesktopBridge } from "../../../preload/index.js";
 import { useBridge } from "../../lib/bridge-context.js";
+import { readBridge } from "../../lib/bridge-read.js";
 import type { NewGameOptions } from "../../../shared/new-game-contract.js";
 import type { AdmiralPresetValues } from "./admiral-preset.js";
 import {
@@ -50,19 +51,17 @@ export function useNavalAgePreferences(
 
   useEffect(() => {
     async function loadOptions(): Promise<void> {
-      if (port === undefined) {
-        setState((current) => applyOptionsFailed(current, "Bluewave bridge not available"));
-        return;
-      }
-      const result = await port.campaign.execute("listNewGameOptions", undefined);
-      if (result.outcome !== "success") {
-        setState((current) => applyOptionsFailed(current, result.reason));
+      const read = await readBridge(port, (p) =>
+        p.campaign.execute("listNewGameOptions", undefined),
+      );
+      if (read.status !== "ready") {
+        setState((current) => applyOptionsFailed(current, read.reason));
         return;
       }
       setState((current) =>
         applyOptionsLoaded(
           current,
-          result.value,
+          read.value,
           defaultCampaignSeed(),
           recommendedPresetRef.current,
         ),

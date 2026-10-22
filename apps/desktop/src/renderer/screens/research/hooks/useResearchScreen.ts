@@ -1,5 +1,6 @@
 import { useCallback, useRef } from "react";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { loadThroughBridge } from "../../../lib/bridge-read.js";
 
 import type {
   ResearchPriorityOutcome,
@@ -43,9 +44,7 @@ export function useResearchScreen(sessionId: string): UseResearchScreenReturn {
     {
       initialState: initialResearchScreenState,
       load: () =>
-        bridge
-          ? bridge.campaign.execute("inspectResearchScreen", sessionId)
-          : Promise.reject(new Error("Bluewave bridge not available")),
+        loadThroughBridge(bridge, (b) => b.campaign.execute("inspectResearchScreen", sessionId)),
       project: (_state, projection) => researchLoadSuccess(projection),
       begin: (state, pending) => researchBeginSubmit(state, pending.transportRequestId),
       reject: researchSubmitRejected,

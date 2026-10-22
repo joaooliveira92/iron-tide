@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { readBridge } from "../../../lib/bridge-read.js";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
 export interface UseCampaignProjectionReturn {
@@ -14,16 +15,12 @@ export function useCampaignProjection(sessionId: string): UseCampaignProjectionR
   const bridge = useBridge();
 
   const loadProjection = useCallback(async () => {
-    if (bridge === undefined) {
-      setLoadError("Bluewave bridge not available");
+    const read = await readBridge(bridge, (b) => b.campaign.execute("inspectCampaign", sessionId));
+    if (read.status !== "ready") {
+      setLoadError(read.reason);
       return;
     }
-    const result = await bridge.campaign.execute("inspectCampaign", sessionId);
-    if (result.outcome !== "success") {
-      setLoadError(result.reason);
-      return;
-    }
-    setProjection(result.value.projection);
+    setProjection(read.value.projection);
   }, [bridge, sessionId]);
 
   useEffect(() => {
