@@ -2,7 +2,17 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved (2026-10-22) — owner chose Option A (write the F-1 spec first).
+
+## Resolution
+
+Option A. #222 is not implemented until the F-1 spec exists: a wayfinder map and
+a `Spec: F-1` GitHub issue settling fog-of-war rules, drag-to-move legality and
+semantics, the overlays, and what is explicitly deferred (presence values are
+dormant per decisions 0017-0023/0026; invasion range belongs to W-5). The spec
+must also confirm whether `fixture-world.ts` is imported by production-adjacent
+paths and define the no-fixture-data-in-production test. Implementation of #222
+then follows the spec and the orchestration pipeline.
 
 ## Trigger
 
