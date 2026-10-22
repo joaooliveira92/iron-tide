@@ -28,6 +28,7 @@ import { useBackground } from "./BackgroundContext.js";
 import { CampaignUnavailableView } from "./CampaignUnavailableView.js";
 import { CampaignShellProvider, useCampaignShellContext } from "./CampaignShellContext.js";
 import { GuidedInspectionOverlay } from "./GuidedInspectionOverlay.js";
+import { UiCatalogueGate } from "../content/UiCatalogueGate.js";
 import { PlayerBattleScreen } from "../screens/battle/PlayerBattleScreen.js";
 import { OfferDialog } from "./interruptions/OfferDialog.js";
 import { DecisionDialog } from "./interruptions/DecisionDialog.js";
@@ -308,9 +309,11 @@ export function App({
   return (
     <BridgeProvider bridge={bridge}>
       <PresentationContentGate>
-        <CampaignShellProvider bridge={bridge}>
-          <CampaignShellApplication bridge={bridge} />
-        </CampaignShellProvider>
+        <UiCatalogueGate>
+          <CampaignShellProvider bridge={bridge}>
+            <CampaignShellApplication bridge={bridge} />
+          </CampaignShellProvider>
+        </UiCatalogueGate>
       </PresentationContentGate>
     </BridgeProvider>
   );

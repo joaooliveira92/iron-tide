@@ -956,6 +956,10 @@ export interface PlayerBattleResultDto {
 export interface StartPlayerBattleResult {
   readonly view: PlayerBattleView;
   readonly sessionHash: string;
+  /** True when the battle was resumed from a mid-battle save (its orders replayed). */
+  readonly resumed: boolean;
+  /** The standing orders in force at the resume point (empty for a fresh battle). */
+  readonly lastOrders: readonly PlayerBattleDivisionOrderDto[];
 }
 
 export interface AdvancePlayerBattleResult {
