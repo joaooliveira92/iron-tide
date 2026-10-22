@@ -1,20 +1,24 @@
 import { describe, it, expect } from "vite-plus/test";
 import {
   classPredicates,
+  CLASSIFIED_SHIP_TYPES,
+  type ClassFacts,
+} from "../src/classificationRules.js";
+import {
   naturalClass,
   classificationFindings,
   classificationRejected,
   classFacts,
   classCode,
+} from "../src/classification.js";
+import {
   compileDesign,
-  checkFindingShape,
   CLASSIFICATION_REJECTION_IDS,
-  CLASSIFIED_SHIP_TYPES,
   DESIGN_22_EARLY,
   UM_PER_INCH,
-  UM_PER_KNOT,
-  type ClassFacts,
 } from "../src/index.js";
+import { checkFindingShape } from "../src/findings.js";
+import { UM_PER_KNOT } from "../src/units.js";
 import { ctx, draft } from "./fixtures/gunboat.js";
 
 const R = DESIGN_22_EARLY;

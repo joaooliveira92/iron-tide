@@ -14,13 +14,9 @@ import {
 } from "@bluewave/content-schema";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  partCatalogue,
-  compileDesign,
-  compileDesignFromLoadout,
-  type ProductionCompile,
-  type PartCatalogue,
-} from "../src/index.js";
+import { partCatalogue, compileDesign } from "../src/index.js";
+import { compileDesignFromLoadout, type ProductionCompile } from "../src/compile.js";
+import { type PartCatalogue } from "../src/partQueries.js";
 import { nationalContext, readReferenceDesignEntries } from "./helpers/earlyContext.js";
 
 const shipBuilding = join(

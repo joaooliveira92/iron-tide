@@ -10,7 +10,6 @@ import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
 import {
   ARMOUR_REGIONS,
-  buildAmmunitionPartModel,
   buildArmourPartModel,
   buildFittingPartModel,
   buildLauncherPartModel,
@@ -18,15 +17,16 @@ import {
   catalogueForNation,
   compileDesign,
   platformSlots,
-  retirementMonthFromAvailableUntil,
   translateArmourRegion,
   translateFittingPlacement,
   translateMachinery,
   translateTubePlacement,
-  validateLoadoutFit,
   type FitMountCountRanges,
-  type FitResult,
 } from "../src/index.js";
+import { buildAmmunitionPartModel } from "../src/ammunitionPartAdapter.js";
+import { retirementMonthFromAvailableUntil } from "../src/partLifecycle.js";
+import { validateLoadoutFit } from "../src/partFit.js";
+import { type FitResult } from "../src/partFitTypes.js";
 import {
   armamentContent,
   components,

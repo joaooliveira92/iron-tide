@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
 import {
   compileDesign,
-  resolveConstructionModifiers,
   resolveNavalProfile,
-  starterFor,
   validateDraftShape,
   type DesignDraft,
   type StarterDesign,
 } from "../src/index.js";
+import { resolveConstructionModifiers } from "../src/nationProfile.js";
+import { starterFor } from "../src/shipTypeRoster.js";
 import {
   components,
   navalProfiles,

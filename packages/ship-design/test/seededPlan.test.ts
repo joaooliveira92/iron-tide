@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import { historicalBuildMonths, seededConstructionPlan } from "../src/index.js";
+import { historicalBuildMonths } from "../src/construction.js";
+import { seededConstructionPlan } from "../src/index.js";
 import { constructionBalance } from "./helpers/earlyContext.js";
 
 const input = {

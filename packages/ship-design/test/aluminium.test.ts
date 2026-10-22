@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import {
-  aluminiumAvailable,
-  aluminiumBalanceProblem,
-  aluminiumFindings,
-  aluminiumFitting,
-  type AluminiumBalance,
-} from "../src/index.js";
+import { aluminiumAvailable, type AluminiumBalance } from "../src/index.js";
+import { aluminiumBalanceProblem, aluminiumFindings, aluminiumFitting } from "../src/aluminium.js";
 
 const balance: AluminiumBalance = { fromMonth: "1930-01", hullWeightSavingBp: 1_000 };
 

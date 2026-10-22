@@ -13,14 +13,13 @@ import {
   type SlotTemplateData,
 } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
+import { FIT_FINDING_CODES, type FitResult } from "../src/partFitTypes.js";
 import {
-  FIT_FINDING_CODES,
   deriveAfterFit,
   validateLoadoutFit,
   type FitConditions,
   type FitInput,
-  type FitResult,
-} from "../src/index.js";
+} from "../src/partFit.js";
 
 const PROVENANCE = {
   sourceStatus: "PLACEHOLDER",

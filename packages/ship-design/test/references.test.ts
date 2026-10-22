@@ -2,14 +2,14 @@ import { describe, it, expect } from "vite-plus/test";
 import {
   compileDesign,
   computeCost,
-  computeCve,
-  planConstruction,
   simulateConstruction,
   toEngineDesign,
   LINE_IDS,
   type DesignDraft,
   type LineId,
 } from "../src/index.js";
+import { computeCve } from "../src/cve.js";
+import { planConstruction } from "../src/construction.js";
 import {
   constructionBalance,
   cveBalance,

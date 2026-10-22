@@ -2,18 +2,13 @@ import { describe, it, expect } from "vite-plus/test";
 import { RandomEngine, RandomLedger } from "@bluewave/random";
 import {
   compileDesign,
-  runTrials,
-  trialsStreamId,
   classifyRevision,
-  changeKindOf,
-  checkRevisionBalance,
   inPlaceRevisionFindings,
   type BuildProgress,
   type RevisionBalance,
-  type RevisionFacts,
-  type TrialsBalance,
-  type TrialsInput,
 } from "../src/index.js";
+import { runTrials, trialsStreamId, type TrialsBalance, type TrialsInput } from "../src/trials.js";
+import { changeKindOf, checkRevisionBalance, type RevisionFacts } from "../src/revision.js";
 import { ctx, draft, plant } from "./fixtures/gunboat.js";
 
 const compiled = compileDesign(draft, ctx);

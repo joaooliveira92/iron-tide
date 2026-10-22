@@ -21,7 +21,6 @@ import {
   type ComponentDef,
   type ConstructionBalance,
   type CostBalance,
-  type CveBalance,
   type HullFormRecord,
   type NationNavalProfile,
   type PropulsionPlant,
@@ -29,6 +28,7 @@ import {
   type ShipBuildingData,
   type ShipContext,
 } from "../../src/index.js";
+import { type CveBalance } from "../../src/cve.js";
 
 const root = join(__dirname, "..", "..", "..", "..", "content", "production", "1880");
 const sbDir = join(root, "ship-building");

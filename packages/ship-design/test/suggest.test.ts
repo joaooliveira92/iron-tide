@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
-import { applyEdit, compileDesign, suggestFixes, candidateEdits } from "../src/index.js";
+import { applyEdit, compileDesign, suggestFixes } from "../src/index.js";
+import { candidateEdits } from "../src/suggest.js";
 import { earlyContext } from "./helpers/earlyContext.js";
 import { havock, majestic } from "./helpers/references.js";
 

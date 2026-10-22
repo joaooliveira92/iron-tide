@@ -7,24 +7,27 @@ import {
   catalogueForNation,
   compileDesign,
   computeCost,
-  effectiveDesignWeights,
-  fingerprintDistance,
-  lintNavalArms,
-  planProcurement,
-  preferredAmmunition,
-  profileFingerprint,
-  rankCandidatesForNation,
   nationProfileBrief,
-  resolveConstructionModifiers,
   resolveNavalProfile,
-  scoreDesign,
-  starterFor,
   treasuryCostUnits,
-  validateNavalProfiles,
-  varyDesignWeights,
-  type ProfileIssue,
   type StarterDesign,
 } from "../src/index.js";
+import {
+  effectiveDesignWeights,
+  planProcurement,
+  rankCandidatesForNation,
+  scoreDesign,
+  varyDesignWeights,
+} from "../src/nationalDesignPolicy.js";
+import {
+  fingerprintDistance,
+  profileFingerprint,
+  resolveConstructionModifiers,
+  validateNavalProfiles,
+  type ProfileIssue,
+} from "../src/nationProfile.js";
+import { lintNavalArms, preferredAmmunition } from "../src/componentVariants.js";
+import { starterFor } from "../src/shipTypeRoster.js";
 import { renderExplanation } from "./helpers/explanation.js";
 import {
   components,

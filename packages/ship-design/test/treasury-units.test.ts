@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vite-plus/test";
 import { isUnitError } from "@bluewave/contracts";
-import { TREASURY_UNITS_ROUNDING, UnitError, treasuryCostUnits } from "../src/index.js";
+import { TREASURY_UNITS_ROUNDING } from "../src/cost.js";
+import { UnitError } from "../src/units.js";
+import { treasuryCostUnits } from "../src/index.js";
 
 describe("treasuryCostUnits", () => {
   it("rounds up so a ship is never priced below its cost", () => {

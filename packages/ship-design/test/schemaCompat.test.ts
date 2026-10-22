@@ -12,15 +12,15 @@ import {
 } from "@bluewave/content-schema";
 import {
   ARMOUR_REGIONS,
-  ARMOUR_SCHEME_IDS,
   COMPONENT_CATEGORIES,
   ZONE_IDS,
-  lintCatalogue,
-  type AccommodationStandard,
   type ComponentDef,
   type MountSide,
   type PropulsionPlant,
 } from "../src/index.js";
+import { ARMOUR_SCHEME_IDS } from "../src/armourSchemes.js";
+import { lintCatalogue } from "../src/component.js";
+import { type AccommodationStandard } from "../src/systems.js";
 import { catalogue, plant } from "./fixtures/gunboat.js";
 
 describe("content-schema stays in lock-step with ship-design", () => {

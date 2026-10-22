@@ -7,7 +7,9 @@ import {
   type FlattenedPart,
 } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
-import { partCatalogue, validateLoadoutFit, type PartCatalogue } from "../src/index.js";
+import { partCatalogue } from "../src/index.js";
+import { validateLoadoutFit } from "../src/partFit.js";
+import { type PartCatalogue } from "../src/partQueries.js";
 
 const PROVENANCE = {
   sourceStatus: "PLACEHOLDER",

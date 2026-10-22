@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
-import {
-  MAX_HIGH_FIELDS,
-  PRIORITY,
-  RESEARCH_FIELDS,
-  researchPriorityAllocation,
-} from "../src/index.js";
+import { MAX_HIGH_FIELDS, PRIORITY, RESEARCH_FIELDS } from "../src/nationalResearch.js";
+import { researchPriorityAllocation } from "../src/index.js";
 import { navalProfiles } from "./helpers/earlyContext.js";
 
 const uk = navalProfiles.find((p) => p.nationId === "uk")!;

@@ -5,11 +5,7 @@ import {
   applyEdit,
   EditError,
   decodeDesignFile,
-  decodeCompiled,
-  verifyCompiledHash,
   compileDesign,
-  componentHash,
-  assertNoFloats,
   PersistenceError,
   newLog,
   pushEdit,
@@ -18,14 +14,20 @@ import {
   canUndo,
   canRedo,
   currentDraft,
-  compact,
   encodeLog,
   decodeLog,
   DESIGN_SCHEMA_VERSION,
   type ArmourRegion,
   type DraftEdit,
-  type Migration,
 } from "../src/index.js";
+import {
+  decodeCompiled,
+  verifyCompiledHash,
+  componentHash,
+  assertNoFloats,
+  compact,
+  type Migration,
+} from "../src/persistence.js";
 import { ctx, draft } from "./fixtures/gunboat.js";
 
 const compiled = compileDesign(draft, ctx);

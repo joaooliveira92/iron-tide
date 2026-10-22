@@ -8,13 +8,11 @@ import {
   buildLauncherPartModel,
   buildPartCatalogue,
   buildPlantPartModel,
-  readMachineryPlan,
-  readPlacements,
-  rebuildDraft,
-  type BuiltPartCatalogue,
   type ComponentDef,
   type SourceCatalogue,
 } from "../src/index.js";
+import { readMachineryPlan, readPlacements, rebuildDraft } from "../src/partCatalogueReaders.js";
+import { type BuiltPartCatalogue } from "../src/partCatalogue.js";
 import { PART_SOURCE_FIELDS } from "../src/partCatalogue.js";
 import {
   armamentContent,

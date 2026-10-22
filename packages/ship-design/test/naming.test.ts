@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import { allocateShipNames, PLACEHOLDER_NAME_POOL_ID, type ShipNamePool } from "../src/index.js";
+import { allocateShipNames, PLACEHOLDER_NAME_POOL_ID } from "../src/index.js";
+import { type ShipNamePool } from "../src/naming.js";
 
 const pool = (stems: readonly string[]): ShipNamePool => ({ poolId: "name_pool:uk:B", stems });
 

@@ -5,14 +5,10 @@ import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
 import {
   availableUntilFromRetirementMonth,
-  basisMultiplier,
-  buildCompatibilitySlots,
-  platformSlots,
-  quantityLines,
   retirementMonthFromAvailableUntil,
-  totalOf,
-  type ZoneId,
-} from "../src/index.js";
+} from "../src/partLifecycle.js";
+import { basisMultiplier, quantityLines, totalOf } from "../src/partQuantities.js";
+import { buildCompatibilitySlots, platformSlots, type ZoneId } from "../src/index.js";
 import { hullRecords } from "./helpers/earlyContext.js";
 
 describe("availability boundary (retirementMonth inclusive, availableUntil exclusive)", () => {

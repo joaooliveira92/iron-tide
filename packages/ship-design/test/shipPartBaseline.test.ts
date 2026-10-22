@@ -2,14 +2,15 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vite-plus/test";
 import {
   APPROVED_DIFFS_SCHEMA,
-  checkEquivalenceReport,
   checkWithApprovedDiffs,
   decodeApprovedDiffs,
-  type ApprovedDiff,
-  type ApprovedDiffsFile,
+} from "../src/index.js";
+import {
+  checkEquivalenceReport,
   type EquivalenceReport,
   type MetricRow,
-} from "../src/index.js";
+} from "../src/equivalenceReport.js";
+import { type ApprovedDiff, type ApprovedDiffsFile } from "../src/approvedDiffs.js";
 import { D17_ROWS, TORPEDO_ROWS } from "./fixtures/shipPartBaselineRows.js";
 import { runEquivalence } from "./helpers/equivalenceRun.js";
 

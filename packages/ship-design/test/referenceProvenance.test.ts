@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { REFERENCE_PROVENANCE_FIELDS, REFERENCE_VALUE_STATUSES } from "@bluewave/content-schema";
 
-import type { RawReferenceDesign } from "../src/index.js";
+import { type RawReferenceDesign } from "../src/index.js";
 import { readReferenceDesignEntries } from "./helpers/earlyContext.js";
 import { REFERENCE_DESIGN_CLASSIFICATIONS } from "./helpers/referenceClassifications.js";
 

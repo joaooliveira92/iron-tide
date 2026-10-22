@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vite-plus/test";
 import {
   compileStability,
-  ZONE_IDS,
-  checkFindingShape,
   type StabilityBalance,
   type StabilityInput,
   type WeightItem,
-  type ZoneDef,
-} from "../src/index.js";
+} from "../src/stability.js";
+import { ZONE_IDS } from "../src/index.js";
+import { checkFindingShape } from "../src/findings.js";
+import { type ZoneDef } from "../src/arrangement.js";
 
 const edges = [0, 80, 180, 280, 520, 640, 760, 900, 1000];
 const zones: ZoneDef[] = ZONE_IDS.map((id, i) => ({

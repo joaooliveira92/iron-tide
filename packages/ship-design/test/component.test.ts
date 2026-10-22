@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
-import { lintCatalogue, type ComponentDef } from "../src/index.js";
+import { lintCatalogue } from "../src/component.js";
+import { type ComponentDef } from "../src/index.js";
 
 const base: ComponentDef = {
   id: "gun_bl_12in",

@@ -1,11 +1,7 @@
 import { describe, it, expect } from "vite-plus/test";
-import {
-  compileDesign,
-  toEngineDesign,
-  EngineAdapterError,
-  UM_PER_KNOT,
-  type EngineAdapterOptions,
-} from "../src/index.js";
+import { compileDesign, toEngineDesign, type EngineAdapterOptions } from "../src/index.js";
+import { EngineAdapterError } from "../src/engineAdapter.js";
+import { UM_PER_KNOT } from "../src/units.js";
 import { ctx, draft } from "./fixtures/gunboat.js";
 
 const opts: EngineAdapterOptions = {

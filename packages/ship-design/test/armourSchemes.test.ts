@@ -4,7 +4,6 @@ import {
   allOrNothingRegions,
   applyArmourScheme,
   applyEdit,
-  changeKindOf,
   currentDraft,
   decodeDesignFile,
   newLog,
@@ -17,6 +16,7 @@ import {
   type ArmourSchemeId,
   type RegionSizing,
 } from "../src/index.js";
+import { changeKindOf } from "../src/revision.js";
 import { ctx, draft } from "./fixtures/gunboat.js";
 
 const size: RegionSizing = {

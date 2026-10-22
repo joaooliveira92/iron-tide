@@ -12,26 +12,19 @@ import { num, type Resolved } from "../src/compileShared.js";
 import { resolveDesignComponents } from "../src/compile/stages.js";
 import {
   ammunitionPatternFromPart,
-  armourAvailabilityFindings,
-  armourBalanceFromParts,
-  armourMaterialOptions,
-  armourRegionFromEntry,
   buildAmmunitionPartModel,
-  buildArmamentCatalogue,
+} from "../src/ammunitionPartAdapter.js";
+import { armourAvailabilityFindings } from "../src/armour.js";
+import { armourBalanceFromParts, armourRegionFromEntry } from "../src/armourPartAdapter.js";
+import {
+  armourMaterialOptions,
   buildArmourPartModel,
   buildFittingPartModel,
-  buildGunMountPart,
   buildLauncherPartModel,
   buildPlantPartModel,
   catalogueForNation,
   compileDesign,
-  fittingPlacementValues,
-  machineryPlanFromEntry,
   platformSlots,
-  propulsionPlantFromPart,
-  quantityLines,
-  readComponentQuantities,
-  totalOf,
   translateArmourRegion,
   translateFittingPlacement,
   translateMachinery,
@@ -40,10 +33,17 @@ import {
   type ArmourRegion,
   type ComponentDef,
   type DesignDraft,
-  type FittingPlacementTranslation,
   type PropulsionPlant,
-  type QuantityLine,
 } from "../src/index.js";
+import { buildArmamentCatalogue } from "../src/armamentContent.js";
+import { buildGunMountPart } from "../src/gunPartAdapter.js";
+import {
+  fittingPlacementValues,
+  type FittingPlacementTranslation,
+} from "../src/fittingPartAdapter.js";
+import { machineryPlanFromEntry, propulsionPlantFromPart } from "../src/plantPartAdapter.js";
+import { quantityLines, totalOf, type QuantityLine } from "../src/partQuantities.js";
+import { readComponentQuantities } from "../src/legacyComponentQuantities.js";
 import {
   armamentContent,
   components,

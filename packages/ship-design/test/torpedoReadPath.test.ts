@@ -12,15 +12,17 @@ import {
   buildLauncherPartModel,
   catalogueForNation,
   platformSlots,
-  totalOf,
   translateTubePlacement,
   type ComponentDef,
-  type FlattenedLauncherPart,
-  type LauncherPartModel,
   type NationNavalProfile,
   type PlacementSpec,
-  type TubePlacementTranslation,
 } from "../src/index.js";
+import { totalOf } from "../src/partQuantities.js";
+import {
+  type FlattenedLauncherPart,
+  type LauncherPartModel,
+  type TubePlacementTranslation,
+} from "../src/torpedoPartAdapter.js";
 import { components, navalProfiles } from "./helpers/earlyContext.js";
 import {
   compatibility,

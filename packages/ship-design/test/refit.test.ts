@@ -1,16 +1,14 @@
 import { describe, it, expect } from "vite-plus/test";
+import { evaluateRefit, type RefitPlan, type ShipState } from "../src/refit.js";
 import {
-  evaluateRefit,
   compileDesign,
-  checkFindingShape,
   armamentChangeFindings,
   type ArmourRegion,
   type ComponentDef,
   type GunChange,
-  type RefitPlan,
   type ShipContext,
-  type ShipState,
 } from "../src/index.js";
+import { checkFindingShape } from "../src/findings.js";
 import { ctx as baseCtx, draft, costBalance, refitBalance } from "./fixtures/gunboat.js";
 import { armamentContent } from "./helpers/armamentContext.js";
 

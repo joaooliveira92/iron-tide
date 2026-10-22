@@ -1,12 +1,7 @@
 import { describe, it, expect } from "vite-plus/test";
-import {
-  buildYards,
-  yardCapacityFor,
-  yardFits,
-  yardMisfits,
-  LINE_IDS,
-  type Facility,
-} from "../src/index.js";
+import { buildYards, yardCapacityFor, yardFits, yardMisfits } from "../src/yards.js";
+import { LINE_IDS } from "../src/index.js";
+import { type Facility } from "../src/compileShared.js";
 import { shipBuildingContent } from "./helpers/earlyContext.js";
 
 const fac = (id: string, tonnes: number): Facility => ({

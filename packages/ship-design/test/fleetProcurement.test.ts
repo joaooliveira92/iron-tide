@@ -4,12 +4,11 @@ import {
   chooseProcurementRole,
   computeFleetDeficits,
   planProcurementDecision,
-  PROCUREMENT_TYPES,
   shipTypeForHullType,
   type FleetShipView,
-  type ProcurementDecision,
   type StarterDesign,
 } from "../src/index.js";
+import { PROCUREMENT_TYPES, type ProcurementDecision } from "../src/fleetProcurement.js";
 import {
   navalProfiles,
   readReferenceDesignEntries,

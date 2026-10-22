@@ -2,15 +2,17 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   classificationRulesFromRecord,
   CLASSIFICATION_RULE_KEYS,
-  compileDesign,
-  DESIGN_22_EARLY,
-  naturalClass,
-  UM_PER_KNOT,
   type ClassFacts,
   type ClassificationRules,
+} from "../src/classificationRules.js";
+import {
+  compileDesign,
+  DESIGN_22_EARLY,
   type DesignDraft,
   type ShipContext,
 } from "../src/index.js";
+import { naturalClass } from "../src/classification.js";
+import { UM_PER_KNOT } from "../src/units.js";
 import { earlyContext, readReferenceDesignEntries, shipBalance } from "./helpers/earlyContext.js";
 
 const OPENING_MONTH = "1880-01";

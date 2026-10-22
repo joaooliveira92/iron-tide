@@ -4,18 +4,13 @@ import {
   buoyantDisplacement,
   hullStructureWeight,
   reserveBuoyancyBp,
-  emptyLedger,
-  withLine,
-  ledgerTotal,
-  checkFindingShape,
-  kg,
-  mm,
-  bp,
-  LEDGER_CATEGORIES,
   type HullBalance,
   type HullForm,
   type HullSpec,
-} from "../src/index.js";
+} from "../src/hull.js";
+import { emptyLedger, withLine, ledgerTotal, LEDGER_CATEGORIES } from "../src/ledger.js";
+import { checkFindingShape } from "../src/findings.js";
+import { kg, mm, bp } from "../src/index.js";
 
 const balance: HullBalance = {
   hullCoeffMilliKg: 9_900,

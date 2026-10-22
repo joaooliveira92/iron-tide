@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
+import { checkFindingShape } from "../src/findings.js";
+import { checkRebuildBalance, type RebuildFacts } from "../src/rebuild.js";
 import {
-  checkFindingShape,
-  checkRebuildBalance,
   compileDesign,
   rebuildFactsOf,
   rebuildPackages,
   validateRebuild,
   yardDemandOf,
   type RebuildBalance,
-  type RebuildFacts,
 } from "../src/index.js";
 import { earlyContext, shipBuildingContent } from "./helpers/earlyContext.js";
 import { havock, majestic } from "./helpers/references.js";

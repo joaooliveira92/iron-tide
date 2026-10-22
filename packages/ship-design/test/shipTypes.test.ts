@@ -1,32 +1,31 @@
 import { describe, expect, it } from "vite-plus/test";
+import { availabilityMessage, AVAILABILITY_REASON_CODES } from "../src/shipTypeAvailability.js";
 import {
-  availabilityMessage,
-  AVAILABILITY_REASON_CODES,
   buildShipTypeRoster,
-  checkFindingShape,
-  CLASSIFIED_SHIP_TYPES,
-  classRuleFailures,
-  colonialServiceEligibility,
   compileDesign,
   DESIGN_22_EARLY,
-  eraBandOf,
   evaluateAmcFleetLimit,
   evaluateShipTypeAvailability,
   HULL_TYPE_FOR_SHIP_TYPE,
   isShipTypeId,
-  naturalClass,
-  OPENING_SHIP_TYPES,
-  SHIP_TYPE_IDS,
   SHIP_TYPES,
-  shipTypeEnvelope,
-  starterFor,
   UM_PER_INCH,
-  UM_PER_KNOT,
   validateDraftShape,
-  type ClassFacts,
   type DesignDraft,
   type StarterDesign,
 } from "../src/index.js";
+import { checkFindingShape } from "../src/findings.js";
+import {
+  CLASSIFIED_SHIP_TYPES,
+  classRuleFailures,
+  type ClassFacts,
+} from "../src/classificationRules.js";
+import { colonialServiceEligibility } from "../src/colonialService.js";
+import { eraBandOf, OPENING_SHIP_TYPES, SHIP_TYPE_IDS } from "../src/shipTypes.js";
+import { naturalClass } from "../src/classification.js";
+import { shipTypeEnvelope } from "../src/shipTypeEnvelope.js";
+import { starterFor } from "../src/shipTypeRoster.js";
+import { UM_PER_KNOT } from "../src/units.js";
 import {
   earlyContext,
   readReferenceDesignEntries,

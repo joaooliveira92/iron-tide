@@ -8,21 +8,19 @@ import {
   ShipHullFormCatalogueSchema,
   decodeStrict,
 } from "@bluewave/content-schema";
+import { lintCatalogue } from "../src/component.js";
+import { hullFormsFromRecords, ContentError } from "../src/contextBuilder.js";
 import {
-  lintCatalogue,
-  hullFormsFromRecords,
   shipBalanceFromRecord,
-  hullStructureWeight,
-  requiredKw,
   bp,
   kg,
   mm,
-  ContentError,
   type ComponentDef,
   type HullFormRecord,
-  type MachineryInput,
   type PropulsionPlant,
 } from "../src/index.js";
+import { hullStructureWeight } from "../src/hull.js";
+import { requiredKw, type MachineryInput } from "../src/machinery.js";
 
 const root = join(__dirname, "..", "..", "..", "content", "production", "1880");
 const load = (rel: string) =>

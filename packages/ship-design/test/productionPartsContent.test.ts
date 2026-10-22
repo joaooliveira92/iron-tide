@@ -17,12 +17,8 @@ import {
 } from "@bluewave/content-schema";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  partCatalogue,
-  compileDesign,
-  compileDesignFromLoadout,
-  compileTorpedo,
-} from "../src/index.js";
+import { partCatalogue, compileDesign, compileTorpedo } from "../src/index.js";
+import { compileDesignFromLoadout } from "../src/compile.js";
 import { nationalContext, readReferenceDesignEntries } from "./helpers/earlyContext.js";
 
 const root = join(import.meta.dirname, "..", "..", "..", "content", "production", "1880");

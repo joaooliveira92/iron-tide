@@ -6,10 +6,10 @@ import {
   type ComponentDef,
   type DesignDraft,
   type PropulsionPlant,
-  type ShipBalance,
   type ShipContext,
-  type ZoneDef,
 } from "../../src/index.js";
+import { type ShipBalance } from "../../src/compileShared.js";
+import { type ZoneDef } from "../../src/arrangement.js";
 
 const edges = [0, 80, 180, 280, 520, 640, 760, 900, 1000];
 export const zones: ZoneDef[] = ZONE_IDS.map((id, i) => ({
@@ -573,7 +573,7 @@ export const draft: DesignDraft = {
   ],
 };
 
-import type { ConstructionBalance, CostBalance } from "../../src/index.js";
+import { type ConstructionBalance, type CostBalance } from "../../src/index.js";
 
 export const costBalance: CostBalance = {
   hullCostPerTonneMicro: { iron: 75_000_000, mild_steel: 100_000_000, high_tensile: 135_000_000 },
@@ -676,7 +676,7 @@ export const constructionBalance: ConstructionBalance = {
   smallCorvetteMaxDisplacementKg: 1_000_000,
 };
 
-import type { CveBalance } from "../../src/index.js";
+import { type CveBalance } from "../../src/cve.js";
 
 export const cveBalance: CveBalance = {
   weightsByCategory: {
@@ -723,7 +723,7 @@ export const cveBalance: CveBalance = {
   criticalPenaltyBp: 1_000,
 };
 
-import type { AiEnvironment } from "../../src/index.js";
+import { type AiEnvironment } from "../../src/ai.js";
 
 export const aiEnv: AiEnvironment = {
   ctx,
@@ -819,7 +819,7 @@ export const aiEnv: AiEnvironment = {
   },
 };
 
-import type { RefitBalance, RefitKind, RefitKindRule } from "../../src/index.js";
+import { type RefitBalance, type RefitKind, type RefitKindRule } from "../../src/refit.js";
 
 const rule = (o: Partial<RefitKindRule>): RefitKindRule => ({
   projectType: "EQUIPMENT_INSTALLATION",

@@ -9,16 +9,10 @@ import {
   type FlattenedPart,
 } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  SEVERITY_ORDER,
-  evaluateRefit,
-  validateLoadoutFit,
-  type ComponentDef,
-  type FitResult,
-  type RefitPlan,
-  type ShipContext,
-  type ShipState,
-} from "../src/index.js";
+import { SEVERITY_ORDER, type ComponentDef, type ShipContext } from "../src/index.js";
+import { evaluateRefit, type RefitPlan, type ShipState } from "../src/refit.js";
+import { validateLoadoutFit } from "../src/partFit.js";
+import { type FitResult } from "../src/partFitTypes.js";
 import { ctx as baseCtx, costBalance, draft, refitBalance } from "./fixtures/gunboat.js";
 
 const PROVENANCE = {

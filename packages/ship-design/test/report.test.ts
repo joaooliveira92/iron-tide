@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
-import { balanceRows } from "../src/index.js";
+import { balanceRows } from "../src/report.js";
 import { formatBalanceTable } from "./support/balanceTable.js";
 import { ctx, draft, costBalance, cveBalance } from "./fixtures/gunboat.js";
 

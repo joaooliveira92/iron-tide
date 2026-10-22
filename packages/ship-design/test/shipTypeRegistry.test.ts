@@ -10,19 +10,17 @@ import {
 } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
 
+import { CLASSIFIED_SHIP_TYPES, type ClassFacts } from "../src/classificationRules.js";
 import {
-  CLASSIFIED_SHIP_TYPES,
   DESIGN_22_EARLY,
   SHIP_TYPES,
-  SHIP_TYPE_IDS,
   SHIP_TYPE_LIST,
-  UM_PER_KNOT,
   evaluateShipTypeAvailability,
-  naturalClass,
-  shipTypeRegistryFromRecords,
-  shipTypeRequirementsFor,
-  type ClassFacts,
 } from "../src/index.js";
+import { SHIP_TYPE_IDS } from "../src/shipTypes.js";
+import { UM_PER_KNOT } from "../src/units.js";
+import { naturalClass } from "../src/classification.js";
+import { shipTypeRegistryFromRecords, shipTypeRequirementsFor } from "../src/shipTypeRegistry.js";
 
 const path = join(
   import.meta.dirname,

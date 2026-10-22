@@ -3,8 +3,10 @@ import {
   DOCK_LIMIT_MISSING,
   SHIP_EXCEEDS_DOMESTIC_DOCK_LIMIT,
   dockDimensionMisfits,
-  dockRecordFromDefinition,
   missingDockLimits,
+} from "../src/dock.js";
+import {
+  dockRecordFromDefinition,
   newConstructionDockEligibility,
   type YardDemand,
 } from "../src/index.js";

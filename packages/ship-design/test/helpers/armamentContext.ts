@@ -8,14 +8,14 @@ import {
   GunMountCatalogueSchema,
   decodeStrict,
 } from "@bluewave/content-schema";
+import { starterFor } from "../../src/shipTypeRoster.js";
 import {
-  starterFor,
   type AuthoredArmamentContent,
-  type ArmamentStarter,
   type ComponentDef,
   type NationNavalProfile,
   type StarterDesign,
 } from "../../src/index.js";
+import { type ArmamentStarter } from "../../src/armamentContent.js";
 import {
   components,
   navalProfiles,

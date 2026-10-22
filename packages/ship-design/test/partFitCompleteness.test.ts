@@ -9,7 +9,7 @@ import {
   type NestedLoadoutEntry,
 } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
-import { validateLoadoutFit, type FitInput } from "../src/index.js";
+import { validateLoadoutFit, type FitInput } from "../src/partFit.js";
 
 const PROVENANCE = {
   sourceStatus: "PLACEHOLDER",

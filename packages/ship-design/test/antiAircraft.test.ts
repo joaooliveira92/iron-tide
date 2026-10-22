@@ -5,9 +5,8 @@ import {
   antiAircraftFitProblem,
   antiAircraftResult,
   expandAntiAircraft,
-  MAX_AA_DIRECTORS,
-  type AntiAircraftBalance,
-} from "../src/index.js";
+} from "../src/antiAircraft.js";
+import { MAX_AA_DIRECTORS, type AntiAircraftBalance } from "../src/index.js";
 
 const balance: AntiAircraftBalance = {
   fromMonth: "1915-01",

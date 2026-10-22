@@ -2,20 +2,20 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   advanceConstructionMonth,
   buildProgressOf,
-  emptyProgress,
-  isConstructionComplete,
-  isPackageComplete,
   LINE_IDS,
-  capacityInUnits,
-  progressFromSingleFigure,
-  scalePlanToUnits,
   simulateConstruction,
-  totalDone,
   type ConstructionPlan,
   type LineId,
   type PackageProgress,
   type WorkPackage,
 } from "../src/index.js";
+import { emptyProgress, isConstructionComplete, isPackageComplete } from "../src/construction.js";
+import {
+  capacityInUnits,
+  progressFromSingleFigure,
+  scalePlanToUnits,
+  totalDone,
+} from "../src/constructionProgress.js";
 
 const pk = (
   id: string,

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
+import { chooseYard } from "../src/yardChoice.js";
 import {
-  chooseYard,
   compileDesign,
   computeCost,
   constructionOrderPlan,
-  planConstruction,
   yardDemandOf,
   type Yard,
 } from "../src/index.js";
+import { planConstruction } from "../src/construction.js";
 import { constructionBalance, earlyContext, shipBuildingContent } from "./helpers/earlyContext.js";
 import { havock, majestic } from "./helpers/references.js";
 

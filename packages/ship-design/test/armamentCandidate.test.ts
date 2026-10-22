@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import { generateCandidates, resolvableWeaponFamilies } from "../src/index.js";
+import { generateCandidates } from "../src/index.js";
+import { resolvableWeaponFamilies } from "../src/armamentCompile.js";
 import { WEAPON_CATEGORIES } from "../src/compileShared.js";
 import { shipBuildingContent } from "./helpers/earlyContext.js";
 

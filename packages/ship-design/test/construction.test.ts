@@ -2,17 +2,19 @@ import { describe, it, expect } from "vite-plus/test";
 import {
   compileDesign,
   computeCost,
-  planConstruction,
   simulateConstruction,
+  LINE_IDS,
+  type LineId,
+  type ConstructionPlan,
+} from "../src/index.js";
+import {
+  planConstruction,
   historicalBuildMonths,
   buildTimeEraBp,
   buildTimeIsProvisional,
   checkPlan,
   ConstructionPlanError,
-  LINE_IDS,
-  type LineId,
-  type ConstructionPlan,
-} from "../src/index.js";
+} from "../src/construction.js";
 import { ctx, draft, costBalance, constructionBalance } from "./fixtures/gunboat.js";
 import { constructionBalance as earlyConstruction } from "./helpers/earlyContext.js";
 

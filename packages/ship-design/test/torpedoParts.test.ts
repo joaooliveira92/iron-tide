@@ -11,15 +11,14 @@ import {
   buildCompatibilitySlots,
   buildLauncherPartModel,
   buildPartCatalogue,
-  buildTorpedoPartModel,
   compileTorpedo,
   partCatalogue,
   platformSlots,
-  TORPEDO_SOURCE_FIELDS,
-  validateLoadoutFit,
-  type PartCatalogue,
   type SourceCatalogue,
 } from "../src/index.js";
+import { buildTorpedoPartModel, TORPEDO_SOURCE_FIELDS } from "../src/torpedoPartBuilder.js";
+import { validateLoadoutFit } from "../src/partFit.js";
+import { type PartCatalogue } from "../src/partQueries.js";
 import {
   armamentContent,
   components,

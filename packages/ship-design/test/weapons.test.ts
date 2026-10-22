@@ -1,15 +1,15 @@
 import { describe, it, expect } from "vite-plus/test";
 import {
   compileWeapons,
-  checkFindingShape,
-  lintCatalogue,
-  evaluate,
-  parseFormula,
   type ArcObstacle,
-  type ComponentDef,
   type GunMount,
   type WeaponBalance,
-} from "../src/index.js";
+} from "../src/weapons.js";
+import { checkFindingShape } from "../src/findings.js";
+import { lintCatalogue } from "../src/component.js";
+import { evaluate } from "../src/formula/eval.js";
+import { parseFormula } from "../src/formula/parse.js";
+import { type ComponentDef } from "../src/index.js";
 
 const bal: WeaponBalance = {
   feedFactor: {

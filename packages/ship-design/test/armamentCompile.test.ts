@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { ArmamentResolutionFinding } from "@bluewave/armament";
+import { buildArmamentCatalogue, resolveInstalledWeapon } from "../src/armamentContent.js";
 import {
-  buildArmamentCatalogue,
   buildShipBuildingContent,
   compileDesign,
-  mapArmamentFinding,
-  mapArmamentFindings,
   nationHasArmamentContent,
-  resolveInstalledWeapon,
-  toCompiledWeaponArmament,
   type DesignDraft,
 } from "../src/index.js";
+import {
+  mapArmamentFinding,
+  mapArmamentFindings,
+  toCompiledWeaponArmament,
+} from "../src/armamentCompile.js";
 import {
   armamentContent,
   components,

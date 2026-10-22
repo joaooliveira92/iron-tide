@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
-import { topsideLoad, topsideStatus, type ArrangementResult } from "../src/index.js";
+import { topsideLoad } from "../src/index.js";
+import { topsideStatus } from "../src/topside.js";
+import { type ArrangementResult } from "../src/arrangement.js";
 
 const arr = (zones: [number, number][]): ArrangementResult =>
   ({
