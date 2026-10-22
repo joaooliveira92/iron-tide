@@ -2,17 +2,14 @@
 
 ## Status
 
-Resolved (2026-10-22) — owner chose Option A (write the F-1 spec first).
-
-## Resolution
-
-Option A. #222 is not implemented until the F-1 spec exists: a wayfinder map and
-a `Spec: F-1` GitHub issue settling fog-of-war rules, drag-to-move legality and
-semantics, the overlays, and what is explicitly deferred (presence values are
-dormant per decisions 0017-0023/0026; invasion range belongs to W-5). The spec
-must also confirm whether `fixture-world.ts` is imported by production-adjacent
-paths and define the no-fixture-data-in-production test. Implementation of #222
-then follows the spec and the orchestration pipeline.
+Resolved (2026-10-22) by the owner: **Option A**. The F-1 spec is [.ai/briefs/f-1-strategic-map.md](../briefs/f-1-strategic-map.md).
+It raised three narrower requests, which gate #222 until decided:
+[0037](0037-f-1-fog-of-war-information-tiers.md),
+[0038](0038-f-1-map-destination-granularity.md) and
+[0039](0039-f-1-scope-split-passage-gating-and-invasion-range.md).
+The spec must also confirm whether `fixture-world.ts` is imported by
+production-adjacent paths and define the no-fixture-data-in-production test.
+Note: the Evidence below predates ADR-0266, which resolved 0017-0023 and 0026; only the production authoring (#85) is open.
 
 ## Trigger
 
