@@ -212,8 +212,7 @@ function CampaignShellApplication({
       <BackgroundLayer background={background} resolvedTheme={resolvedTheme} />
       <AppFrame
         campaignSessionId={shell.state.campaign?.sessionId ?? null}
-        campaignRevision={shell.state.campaign?.revision ?? null}
-        activeAlertsCount={shell.state.campaign?.activeAlertsCount ?? null}
+        campaignReads={shell.state.reads}
         screen={shell.state.screen}
         saveMessage={shell.state.saveMessage}
         header={header}

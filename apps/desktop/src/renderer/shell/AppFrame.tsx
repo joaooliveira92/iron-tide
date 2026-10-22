@@ -3,12 +3,12 @@ import { Alert, AlertDescription } from "../components/ui/alert.js";
 import { SidebarInset, SidebarProvider } from "../components/ui/sidebar.js";
 import { BottomNav } from "./BottomNav.js";
 import type { Screen } from "./campaign-screen-registry.js";
+import type { CampaignReads } from "./campaign-reads.js";
 import { StatusStrip } from "./StatusStrip.js";
 
 export interface AppFrameProps {
   readonly campaignSessionId: string | null;
-  readonly campaignRevision: number | null;
-  readonly activeAlertsCount: number | null;
+  readonly campaignReads: CampaignReads | null;
   readonly screen: Screen;
   readonly saveMessage: string | null;
   readonly header: ReactNode;
@@ -23,8 +23,7 @@ export interface AppFrameProps {
  */
 export function AppFrame({
   campaignSessionId,
-  campaignRevision,
-  activeAlertsCount,
+  campaignReads,
   screen,
   saveMessage,
   header,
@@ -85,12 +84,8 @@ export function AppFrame({
         data-underlay={underlay}
         className="group/chrome relative z-[45] mt-auto shrink-0"
       >
-        {campaignSessionId !== null && campaignRevision !== null && (
-          <StatusStrip
-            sessionId={campaignSessionId}
-            revision={campaignRevision}
-            alertsCount={activeAlertsCount}
-          />
+        {campaignSessionId !== null && campaignReads !== null && (
+          <StatusStrip reads={campaignReads} />
         )}
         {campaignSessionId !== null && (
           <BottomNav

@@ -19,8 +19,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popove
 import { Toggle } from "../components/ui/toggle.js";
 import { PinnedHint, usePinnableCard } from "./pinnable-card.js";
 import { buildTrend, type TrendDetail } from "./status-strip-trend.js";
+import { activeAlertsCount, type CampaignReads } from "./campaign-reads.js";
 import { cn } from "../lib/utils.js";
-import { useBridgeQuery } from "../lib/use-bridge-query.js";
 import { useDensity } from "./DensityContext.js";
 import {
   BalanceCard,
@@ -765,34 +765,21 @@ export function StatusStripView({
 }
 
 export interface StatusStripProps {
-  readonly sessionId: string;
-  /** Changes whenever the campaign advances, so the strip re-reads the engine. */
-  readonly revision: number;
-  readonly alertsCount: number | null;
+  /** The active campaign's reads, fetched once by the shell. */
+  readonly reads: CampaignReads;
 }
 
-/** Reads the engine views the strip needs and renders it; renders nothing until they load. */
-export function StatusStrip({ sessionId, revision, alertsCount }: StatusStripProps) {
-  const campaign = useBridgeQuery(sessionId, revision, (bridge, id) =>
-    bridge.campaign.execute("inspectCampaign", id),
-  );
-  const map = useBridgeQuery(sessionId, revision, (bridge, id) =>
-    bridge.campaign.execute("inspectMap", id),
-  );
-
-  // History is a bonus: while it loads, or if it cannot be read, the strip simply has no trend.
-  const reports = useBridgeQuery(sessionId, revision, (bridge, id) =>
-    bridge.campaign.execute("readMonthlyReports", id),
-  );
-
-  if (campaign.status !== "ready") return null;
+/** Renders the engine views the shell already read; renders nothing while the campaign read is unavailable. */
+export function StatusStrip({ reads }: StatusStripProps) {
+  const { projection, areas, reports } = reads;
+  if (projection.status !== "ready") return null;
   return (
     <StatusStripView
-      trend={buildTrend(reports.status === "ready" ? reports.value.reports : null)}
+      trend={buildTrend(reports.status === "ready" ? reports.value : null)}
       model={buildStatusStrip({
-        projection: campaign.value.projection,
-        areas: map.status === "ready" ? map.value.strategic.world.areas : null,
-        alertsCount,
+        projection: projection.value,
+        areas: areas.status === "ready" ? areas.value : null,
+        alertsCount: activeAlertsCount(reads),
       })}
     />
   );

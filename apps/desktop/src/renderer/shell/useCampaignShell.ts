@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import { createTransportRequestId } from "../lib/command-screen-workflow.js";
 import { emitWideEvent } from "../lib/telemetry.js";
 import type { Screen } from "./campaign-screen-registry.js";
-import { loadActiveAlertsCount, overviewFromProjection } from "./campaign-overview.js";
+import { overviewFromProjection } from "./campaign-overview.js";
+import { activeAlertsCount, readCampaign, type CampaignReads } from "./campaign-reads.js";
 import {
   campaignShellMode,
   currentShellScreen,
@@ -33,6 +34,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
   // Bumped whenever the campaign is closed or a newer refresh starts, so a response that
   // arrives late (out of order, or after Close) is dropped instead of overwriting newer state.
   const refreshGenerationRef = useRef(0);
+  const [reads, setReads] = useState<CampaignReads | null>(null);
 
   /** Show a transient status message in the header; null just ends the "saving" state silently. */
   const collectMessage = useCallback((message: string | null): void => {
@@ -50,22 +52,28 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       dispatch({ type: "campaign-opening" });
       const started = performance.now();
       try {
-        const result = await bridge.campaign.execute("inspectCampaign", sessionId);
+        const campaignReads = await readCampaign(bridge.campaign, sessionId);
         const duration = Math.round(performance.now() - started);
-        if (result.outcome !== "success") {
-          emitWideEvent("campaign_open", sessionId, duration, "rejected", [result.reason]);
+        if (campaignReads.projection.status !== "ready") {
+          emitWideEvent("campaign_open", sessionId, duration, "rejected", [
+            campaignReads.projection.reason,
+          ]);
           dispatch({
             type: "campaign-open-failed",
-            message: `Inspection failed: ${result.reason}`,
+            message: `Inspection failed: ${campaignReads.projection.reason}`,
           });
           return;
         }
         emitWideEvent("campaign_open", sessionId, duration, "success");
-        const alerts = await loadActiveAlertsCount(bridge, sessionId);
         dispatch({
           type: "campaign-opened",
-          campaign: overviewFromProjection(sessionId, result.value.projection, alerts),
+          campaign: overviewFromProjection(
+            sessionId,
+            campaignReads.projection.value,
+            activeAlertsCount(campaignReads),
+          ),
         });
+        setReads(campaignReads);
         // A campaign holding a suspended turn prompts the player to resume it.
         // Fire-and-forget: the pending read never delays or fails opening.
         void bridge.campaign
@@ -103,6 +111,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     if (result.outcome === "success" || result.reason === "SESSION_NOT_FOUND") {
       emitWideEvent("campaign_close", state.campaign.sessionId, duration, "success");
       refreshGenerationRef.current += 1;
+      setReads(null);
       dispatch({ type: "campaign-closed" });
       return;
     }
@@ -159,15 +168,19 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       const sessionId = sessionIdOverride ?? state.campaign?.sessionId;
       if (bridge === undefined || sessionId === undefined) return;
       const generation = ++refreshGenerationRef.current;
-      const result = await bridge.campaign.execute("inspectCampaign", sessionId);
-      if (result.outcome !== "success") return;
-      const alerts = await loadActiveAlertsCount(bridge, sessionId);
+      const campaignReads = await readCampaign(bridge.campaign, sessionId);
+      if (campaignReads.projection.status !== "ready") return;
       // A newer refresh started, or the campaign was closed, while we waited: drop this one.
       if (generation !== refreshGenerationRef.current) return;
       dispatch({
         type: "campaign-refreshed",
-        campaign: overviewFromProjection(sessionId, result.value.projection, alerts),
+        campaign: overviewFromProjection(
+          sessionId,
+          campaignReads.projection.value,
+          activeAlertsCount(campaignReads),
+        ),
       });
+      setReads(campaignReads);
     },
     [bridge, state.campaign?.sessionId],
   );
@@ -319,6 +332,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       committing: state.committing,
       interruption: state.interruption,
       commitFailure: state.commitFailure,
+      reads,
       mode: campaignShellMode(state),
       screen: currentShellScreen(state),
       canGoBack: canGoBack(state.history),
@@ -338,6 +352,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     }),
     [
       state,
+      reads,
       openCampaign,
       closeCampaign,
       saveCampaign,

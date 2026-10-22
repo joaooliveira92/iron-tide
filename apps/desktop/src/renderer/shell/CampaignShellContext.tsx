@@ -18,6 +18,7 @@ export interface CampaignShellContextValue {
     | "committing"
     | "interruption"
     | "commitFailure"
+    | "reads"
     | "mode"
     | "screen"
     | "canGoBack"
@@ -65,6 +66,7 @@ export function CampaignShellProvider({
         committing: shell.committing,
         interruption: shell.interruption,
         commitFailure: shell.commitFailure,
+        reads: shell.reads,
         mode: shell.mode,
         screen: shell.screen,
         canGoBack: shell.canGoBack,

@@ -23,6 +23,7 @@ const shell = {
   committing: false,
   interruption: null,
   commitFailure: null,
+  reads: null,
   mode: { kind: "file", screen: "file" } as const,
   screen: "file" as const,
   canGoBack: false,

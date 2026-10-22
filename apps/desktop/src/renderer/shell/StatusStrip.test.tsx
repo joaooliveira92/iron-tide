@@ -6,13 +6,20 @@ import { PreferencesProvider } from "../lib/preferences-context.js";
 import { createPreferencesBridgeStub } from "../lib/preferences-test-bridge.js";
 import { DensityProvider } from "./DensityContext.js";
 import { axeViolations } from "../lib/axe.js";
-import { StatusStripView } from "./StatusStrip.js";
+import { StatusStrip, StatusStripView } from "./StatusStrip.js";
+import type { CampaignReads } from "./campaign-reads.js";
 import { buildStatusStrip } from "./status-strip-state.js";
 import { buildTrend, type TrendReport } from "./status-strip-trend.js";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
-function model(balance: number) {
-  const projection = {
+function projectionFor(balance: number): PlayerProjection {
+  return {
+    campaignIdentity: "campaign_1",
+    snapshotHash: "hash_abc",
+    revision: 4,
+    month: { year: 1900, month: 2 },
+    playerNationId: "uk",
+    nationName: "Britain",
     projectedSurplusDeficit: balance,
     economy: {
       treasury: 50000,
@@ -30,12 +37,17 @@ function model(balance: number) {
       status: balance < 0 ? "deficit" : "healthy",
       monthEndTreasury: 50000 + balance,
     },
-    nationName: "Britain",
+    knownTechnologyIds: [],
     fleet: [],
     strategicAreas: [],
     ports: [],
-  } as unknown as PlayerProjection;
-  return buildStatusStrip({ projection, areas: [], alertsCount: 2 });
+    knownEnemyNations: [],
+    commandWorkspace: { commands: [], movementCommands: [] },
+  };
+}
+
+function model(balance: number) {
+  return buildStatusStrip({ projection: projectionFor(balance), areas: [], alertsCount: 2 });
 }
 
 async function renderStrip(
@@ -478,5 +490,54 @@ describe("StatusStripView", () => {
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
     fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
     await waitFor(() => expect(trigger.getAttribute("aria-expanded")).toBe("false"));
+  });
+});
+
+describe("StatusStrip", () => {
+  function reads(overrides: Partial<CampaignReads> = {}): CampaignReads {
+    return {
+      projection: { status: "ready", value: projectionFor(1200) },
+      areas: { status: "ready", value: [] },
+      reports: { status: "ready", value: [] },
+      priorities: { status: "ready", value: [] },
+      ...overrides,
+    };
+  }
+
+  async function renderReads(value: CampaignReads) {
+    render(
+      <DensityProvider>
+        <StatusStrip reads={value} />
+      </DensityProvider>,
+    );
+    await act(async () => {});
+  }
+
+  it("renders the strip from the one reads interface, with no bridge calls", async () => {
+    await renderReads(reads());
+    const region = screen.getByRole("region", { name: "Status strip" });
+    expect(within(region).getAllByText("Britain").length).toBeGreaterThan(0);
+    expect(region.textContent).toContain("£50,000");
+    fireEvent.click(screen.getByRole("button", { name: /collapse/i }));
+    expect(region.textContent).toContain("0 alerts");
+  });
+
+  it("degrades a missing map and report history without failing the strip", async () => {
+    await renderReads(
+      reads({
+        areas: { status: "unavailable", reason: "MAP_FAILED" },
+        reports: { status: "unavailable", reason: "REPORTS_FAILED" },
+      }),
+    );
+    expect(screen.getByRole("button", { name: /Not yet modelled \(\d+\)/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /collapse/i }));
+    expect(screen.getByRole("region", { name: "Status strip" }).textContent).toContain("0 alerts");
+  });
+
+  it("renders nothing while the campaign read is unavailable", async () => {
+    await renderReads(
+      reads({ projection: { status: "unavailable", reason: "INSPECTION_FAILED" } }),
+    );
+    expect(screen.queryByRole("region", { name: "Status strip" })).toBeNull();
   });
 });

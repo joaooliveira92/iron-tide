@@ -1,7 +1,5 @@
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
-import type { BluewaveDesktopBridge } from "../../preload/index.js";
-import { countActiveAlerts } from "../lib/priorities.js";
 import type { CampaignOverview } from "./campaign-shell-state.js";
 
 /** The shape of a committed month the header needs, kept structural to avoid
@@ -60,17 +58,4 @@ export function overviewAfterCommit(
     // Last month's count would be wrong for this month; the refresh below fills it in.
     activeAlertsCount: null,
   };
-}
-
-/** The number of warnings/criticals the engine reports, or null if unavailable. */
-export async function loadActiveAlertsCount(
-  bridge: BluewaveDesktopBridge,
-  sessionId: string,
-): Promise<number | null> {
-  try {
-    const result = await bridge.campaign.execute("inspectPriorities", sessionId);
-    return result.outcome === "success" ? countActiveAlerts(result.value.priorities) : null;
-  } catch {
-    return null;
-  }
 }

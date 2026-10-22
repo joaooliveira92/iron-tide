@@ -372,6 +372,7 @@ function createShell(overrides: Record<string, unknown> = {}) {
     committing: false,
     interruption: null,
     commitFailure: null,
+    reads: null,
     screen: "file" as Screen,
     canGoBack: false,
     canGoForward: false,

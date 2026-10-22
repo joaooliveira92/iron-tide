@@ -91,6 +91,27 @@ describe("useCampaignShell", () => {
     });
   });
 
+  it("reads the campaign views once per open, and once more per refresh", async () => {
+    const ok = <T>(value: T) => ({ outcome: "success" as const, value, diagnostics: [] });
+    const execute = vi.fn(async (command: string) =>
+      command === "inspectCampaign" ? ok({ projection }) : ok({}),
+    );
+    const { result } = setup(execute);
+
+    await act(() => result.current.openCampaign("ses-1"));
+    await act(() => result.current.refreshCampaign("ses-1"));
+
+    for (const command of [
+      "inspectCampaign",
+      "inspectMap",
+      "readMonthlyReports",
+      "inspectPriorities",
+    ]) {
+      expect(execute.mock.calls.filter(([name]) => name === command)).toHaveLength(2);
+    }
+    expect(result.current.reads?.projection.status).toBe("ready");
+  });
+
   it("refreshes the header from the engine after a month commit, including war status", async () => {
     // Before the commit nobody is at war; the post-commit projection shows a war
     // and a new month/revision/balance (as the engine would after a declaration).
@@ -551,6 +572,7 @@ describe("useCampaignShell", () => {
       let inspectCalls = 0;
       const execute = vi.fn(async (command: string) => {
         if (command === "inspectPriorities") return ok({ priorities: [] });
+        if (command !== "inspectCampaign") return ok({});
         inspectCalls += 1;
         if (inspectCalls === 1) return ok({ projection: withMonth(1) }); // open
         return inspectCalls === 2 ? slow.promise : fast.promise;
@@ -581,6 +603,7 @@ describe("useCampaignShell", () => {
       const execute = vi.fn(async (command: string) => {
         if (command === "closeCampaign") return ok({ closed: true });
         if (command === "inspectPriorities") return ok({ priorities: [] });
+        if (command !== "inspectCampaign") return ok({});
         inspectCalls += 1;
         return inspectCalls === 1 ? ok({ projection }) : late.promise;
       }) as unknown as CampaignExecute;
