@@ -18,7 +18,7 @@ import {
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
 import {
-  buildProductionPartModel,
+  partCatalogue,
   compileDesign,
   compileDesignFromLoadout,
   compileTorpedo,
@@ -72,7 +72,7 @@ const shipTypeRecords: ShipTypeRecord[] = (
   readYaml(join(shipBuilding, "ship-types.yaml"))["shipTypes"] as unknown[]
 ).map((record) => decodeStrict(ShipTypeRecordSchema, record));
 
-const model = buildProductionPartModel({ parts, slotTemplates, platforms });
+const catalogue = partCatalogue({ parts, slotTemplates, platforms });
 const legacyById = new Map(readReferenceDesignEntries().map((d) => [d.id, d] as const));
 
 describe("production parts content → compile (ticket 11d)", () => {
@@ -134,7 +134,7 @@ describe("production parts content → compile (ticket 11d)", () => {
         designId: loadout.id,
         header: loadout.header,
         loadout: loadout.loadout,
-        model,
+        catalogue,
         month: loadout.month,
         nation: { nationId: loadout.header.nation },
         ctx: nationalContext(loadout.month, loadout.header.nation),
@@ -177,7 +177,7 @@ describe("production parts content → compile (ticket 11d)", () => {
         designId: loadout.id,
         header: loadout.header,
         loadout: loadout.loadout,
-        model,
+        catalogue,
         month: loadout.month,
         nation: { nationId: loadout.header.nation },
         ctx: nationalContext(loadout.month, loadout.header.nation),
@@ -200,7 +200,7 @@ describe("production parts content → compile (ticket 11d)", () => {
       designId: loadout.id,
       header: loadout.header,
       loadout: broken,
-      model,
+      catalogue,
       month: loadout.month,
       nation: { nationId: loadout.header.nation },
       ctx: nationalContext(loadout.month, loadout.header.nation),
@@ -227,7 +227,7 @@ describe("production parts content → compile (ticket 11d)", () => {
       designId: loadout.id,
       header: loadout.header,
       loadout: loadout.loadout,
-      model,
+      catalogue,
       month: loadout.month,
       nation: { nationId: loadout.header.nation },
       ctx: { ...nationalContext(loadout.month, loadout.header.nation), shipTypes },

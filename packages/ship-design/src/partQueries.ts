@@ -8,13 +8,14 @@ import type {
   SlotData,
   SlotTemplateData,
 } from "@bluewave/content-schema";
+import { platformSlots, type CompatibilityModel } from "./partCompatibility.js";
 import { validateLoadoutFit, type FitInput } from "./partFit.js";
 import { evaluateConstraints, specAt, type ResolvedSpec } from "./partFitConstraints.js";
 import type { FitDataIssue, FitNationInput, FitResult } from "./partFitTypes.js";
 import { isMonth, lifecycleStatus, shiftMonth, type LifecycleStatus } from "./partLifecycle.js";
 import { quantityLines, type QuantityLine } from "./partQuantities.js";
 
-export interface PartCatalogue {
+interface CatalogueData {
   readonly parts: readonly FlattenedPart[];
   readonly slotTemplates: readonly SlotTemplateData[];
   readonly platforms: readonly PlatformData[];
@@ -27,7 +28,7 @@ function assertMonth(month: string, query: string): void {
 const byId = (a: { readonly id: string }, b: { readonly id: string }): number =>
   compareCodePoints(a.id, b.id);
 
-function findPart(catalogue: PartCatalogue, id: string): FlattenedPart | undefined {
+function findPart(catalogue: CatalogueData, id: string): FlattenedPart | undefined {
   return catalogue.parts.find((p) => p.id === id);
 }
 
@@ -51,11 +52,7 @@ export interface ResolvedPart {
   readonly supersededBy: readonly string[];
 }
 
-export function resolvePart(
-  catalogue: PartCatalogue,
-  id: string,
-  month: string,
-): ResolvedPart | null {
+function resolvePart(catalogue: CatalogueData, id: string, month: string): ResolvedPart | null {
   assertMonth(month, "resolvePart");
   const part = findPart(catalogue, id);
   if (part === undefined) return null;
@@ -71,15 +68,15 @@ export function resolvePart(
   };
 }
 
-function successorsOf(catalogue: PartCatalogue, id: string): string[] {
+function successorsOf(catalogue: CatalogueData, id: string): string[] {
   return catalogue.parts
     .filter((p) => p.lifecycle.supersedes?.includes(id) === true)
     .map((p) => p.id)
     .sort(compareCodePoints);
 }
 
-export interface AvailablePartsInput {
-  readonly catalogue: PartCatalogue;
+interface AvailablePartsInput {
+  readonly catalogue: CatalogueData;
   readonly month: string;
   readonly nation?: FitNationInput;
   readonly unlockedTechnologies?: readonly string[];
@@ -128,7 +125,7 @@ function fittable(
   return unlocked === undefined || (part.lifecycle.requires ?? []).every((t) => unlocked.has(t));
 }
 
-export function availableParts(input: AvailablePartsInput): AvailableParts {
+function availableParts(input: AvailablePartsInput): AvailableParts {
   const { catalogue, month, nation } = input;
   assertMonth(month, "availableParts");
   const unlocked = input.unlockedTechnologies && new Set(input.unlockedTechnologies);
@@ -163,8 +160,8 @@ export function availableParts(input: AvailablePartsInput): AvailableParts {
 
 export type SlotOwner = { readonly platform: string } | { readonly part: string };
 
-export interface PartsForSlotInput {
-  readonly catalogue: PartCatalogue;
+interface PartsForSlotInput {
+  readonly catalogue: CatalogueData;
   readonly owner: SlotOwner;
   readonly slot: string;
   readonly month: string;
@@ -189,7 +186,7 @@ function resolveOwnSlot(slots: readonly SlotData[], id: string): SlotData | unde
   return sibling === undefined ? undefined : { ...sibling, id };
 }
 
-export function partsForSlot(input: PartsForSlotInput): PartsForSlot {
+function partsForSlot(input: PartsForSlotInput): PartsForSlot {
   const { catalogue, owner, month } = input;
   assertMonth(month, "partsForSlot");
   let slots: readonly SlotData[];
@@ -270,7 +267,7 @@ function closure(start: readonly string[], next: (id: string) => readonly string
   return out;
 }
 
-export function lineage(catalogue: PartCatalogue, id: string): PartLineage | null {
+function lineage(catalogue: CatalogueData, id: string): PartLineage | null {
   const part = findPart(catalogue, id);
   if (part === undefined) return null;
   const supersedesOf = (p: string): readonly string[] =>
@@ -295,8 +292,8 @@ export function lineage(catalogue: PartCatalogue, id: string): PartLineage | nul
   };
 }
 
-export interface ValidateLoadoutInput {
-  readonly catalogue: PartCatalogue;
+interface ValidateLoadoutInput {
+  readonly catalogue: CatalogueData;
   readonly loadout: LoadoutData;
   readonly month: string;
   readonly nation?: FitNationInput;
@@ -305,7 +302,7 @@ export interface ValidateLoadoutInput {
   readonly mountCountRanges?: FitInput["mountCountRanges"];
 }
 
-export function validateLoadout(input: ValidateLoadoutInput): FitResult {
+function validateLoadout(input: ValidateLoadoutInput): FitResult {
   const { catalogue } = input;
   return validateLoadoutFit({
     parts: catalogue.parts,
@@ -337,8 +334,8 @@ export interface LoadoutCost {
   readonly dataIssues: readonly FitDataIssue[];
 }
 
-export function loadoutCost(input: {
-  readonly catalogue: PartCatalogue;
+function loadoutCost(input: {
+  readonly catalogue: CatalogueData;
   readonly loadout: LoadoutData;
   readonly month: string;
 }): LoadoutCost {
@@ -406,5 +403,49 @@ export function loadoutCost(input: {
     lines: sorted,
     totals: orderedTotals,
     dataIssues: dataIssues.sort((a, b) => compareCodePoints(a.path, b.path)),
+  };
+}
+
+export interface PartCatalogue extends CatalogueData {
+  readonly compatibility: CompatibilityModel;
+  readonly partOf: (id: string) => FlattenedPart | undefined;
+  readonly slotLookup: (platform: string) => (slotId: string) => SlotData | undefined;
+  readonly resolve: (id: string, month: string) => ResolvedPart | null;
+  readonly available: (input: Omit<AvailablePartsInput, "catalogue">) => AvailableParts;
+  readonly forSlot: (input: Omit<PartsForSlotInput, "catalogue">) => PartsForSlot;
+  readonly lineage: (id: string) => PartLineage | null;
+  readonly validate: (input: Omit<ValidateLoadoutInput, "catalogue">) => FitResult;
+  readonly cost: (input: { readonly loadout: LoadoutData; readonly month: string }) => LoadoutCost;
+}
+
+export function partCatalogue(input: {
+  readonly parts: readonly FlattenedPart[];
+  readonly slotTemplates?: readonly SlotTemplateData[];
+  readonly platforms?: readonly PlatformData[];
+}): PartCatalogue {
+  const data: CatalogueData = {
+    parts: input.parts,
+    slotTemplates: input.slotTemplates ?? [],
+    platforms: input.platforms ?? [],
+  };
+  const compatibility: CompatibilityModel = {
+    slotTemplates: data.slotTemplates,
+    platforms: data.platforms,
+  };
+  const byPartId = new Map(data.parts.map((part) => [part.id, part] as const));
+  return {
+    ...data,
+    compatibility,
+    partOf: (id) => byPartId.get(id),
+    slotLookup: (platform) => {
+      const slots = platformSlots(compatibility, platform) ?? [];
+      return (slotId) => slots.find((slot) => slot.id === slotId);
+    },
+    resolve: (id, month) => resolvePart(data, id, month),
+    available: (query) => availableParts({ ...query, catalogue: data }),
+    forSlot: (query) => partsForSlot({ ...query, catalogue: data }),
+    lineage: (id) => lineage(data, id),
+    validate: (query) => validateLoadout({ ...query, catalogue: data }),
+    cost: (query) => loadoutCost({ ...query, catalogue: data }),
   };
 }

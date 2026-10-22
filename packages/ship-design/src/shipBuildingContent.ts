@@ -27,13 +27,9 @@ import type {
   ReferenceDesignLoadoutData,
   ReferenceDesignProvenance,
 } from "@bluewave/content-schema";
-import { buildProductionPartModel } from "./compileProduction.js";
+import { partCatalogue } from "./partQueries.js";
 import type { DraftCompileContent } from "./compileDraft.js";
-import {
-  buildCompatibilitySlots,
-  platformSlots,
-  type CompatibilityModel,
-} from "./partCompatibility.js";
+import { buildCompatibilitySlots, type CompatibilityModel } from "./partCompatibility.js";
 import { rebuildDraft } from "./partCatalogueReaders.js";
 
 export type { ReferenceDesignProvenance, ReferenceValueProvenance } from "@bluewave/content-schema";
@@ -132,20 +128,19 @@ export function referenceDesignsFromLoadouts(
   model: CompiledPartModel,
   authored?: readonly RawReferenceDesign[],
 ): RawReferenceDesign[] {
-  const production = buildProductionPartModel({
+  const production = partCatalogue({
     parts: Object.values(model.partIndex.byId),
     slotTemplates: model.slotTemplates,
     platforms: model.platforms,
   });
   const authoredById = new Map((authored ?? []).map((design) => [design.id, design] as const));
   return loadouts.map((loadout) => {
-    const slots = platformSlots(production.compatibility, loadout.loadout.platform) ?? [];
     const rebuilt = rebuildDraft({
       designId: loadout.id,
       header: loadout.header,
       loadout: loadout.loadout,
       partOf: production.partOf,
-      slotOf: (slotId) => slots.find((slot) => slot.id === slotId),
+      slotOf: production.slotLookup(loadout.loadout.platform),
     });
     if (rebuilt.draft === null || rebuilt.issues.length > 0) {
       throw new Error(`reference design '${loadout.id}' does not rebuild from its parts loadout`);

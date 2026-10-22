@@ -10,11 +10,7 @@ import type { ArmourBalance } from "./armour.js";
 import { buildArmourPartModel, translateArmourRegion } from "./armourPartAdapter.js";
 import type { ComponentDef } from "./component.js";
 import type { CompiledDesign, DesignDraft, ShipContext } from "./compileShared.js";
-import {
-  buildProductionPartModel,
-  compileDesignFromLoadout,
-  type ProductionCompile,
-} from "./compileProduction.js";
+import { compileDesignFromLoadout, type ProductionCompile } from "./compileProduction.js";
 import { catalogueForNation } from "./componentVariants.js";
 import type { Finding } from "./findings.js";
 import { buildFittingPartModel, translateFittingPlacement } from "./fittingPartAdapter.js";
@@ -23,6 +19,7 @@ import type { PropulsionPlant } from "./machinery.js";
 import type { NationNavalProfile } from "./nationProfile.js";
 import type { CompatibilityModel } from "./partCompatibility.js";
 import { mountPartIdFor } from "./partCatalogue.js";
+import { partCatalogue } from "./partQueries.js";
 import { headerFromDraft } from "./partCatalogueReaders.js";
 import type {
   FitAmmunitionCompatibility,
@@ -296,7 +293,7 @@ export function compileDraftFromParts(input: {
       ),
     };
   }
-  const model = buildProductionPartModel({
+  const catalogue = partCatalogue({
     parts: forward.parts,
     slotTemplates: input.content.compatibility.slotTemplates,
     platforms: input.content.compatibility.platforms,
@@ -305,7 +302,7 @@ export function compileDraftFromParts(input: {
     designId: input.designId,
     header: forward.header,
     loadout: forward.loadout,
-    model,
+    catalogue,
     month: input.month,
     ctx: input.ctx,
     ...(input.nation === undefined ? {} : { nation: input.nation }),
