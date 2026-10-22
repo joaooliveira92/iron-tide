@@ -15,6 +15,7 @@ import type {
   TacticalBattleOutcome,
 } from "@bluewave/campaign-engine";
 import type { BattleHistoryView, WorldMapView } from "@bluewave/campaign-engine";
+import type { PlayerBattleView } from "@bluewave/combat";
 import type { SaveMetadata } from "@bluewave/persistence";
 import type { BridgeResult, CommandEnvelope } from "./bridge-contract.js";
 import type {
@@ -489,6 +490,9 @@ export const CAMPAIGN_COMMAND_NAMES = [
   "resolveTurn",
   "answerDecision",
   "submitBattleResult",
+  "startPlayerBattle",
+  "advancePlayerBattle",
+  "finishPlayerBattle",
   "submitOfferResponse",
   "abandonPendingTurn",
   "readPendingTurn",
@@ -686,6 +690,18 @@ export interface CampaignCommandMap {
   submitBattleResult: {
     readonly payload: SubmitBattleResultPayload;
     readonly result: ResolveTurnResult;
+  };
+  startPlayerBattle: {
+    readonly payload: StartPlayerBattlePayload;
+    readonly result: StartPlayerBattleResult;
+  };
+  advancePlayerBattle: {
+    readonly payload: AdvancePlayerBattlePayload;
+    readonly result: AdvancePlayerBattleResult;
+  };
+  finishPlayerBattle: {
+    readonly payload: FinishPlayerBattlePayload;
+    readonly result: FinishPlayerBattleResult;
   };
   submitOfferResponse: {
     readonly payload: SubmitOfferResponsePayload;
@@ -902,6 +918,54 @@ export interface SubmitBattleResultPayload {
   readonly attackerLosses: readonly string[];
   readonly defenderLosses: readonly string[];
   readonly damageReport: Readonly<Record<string, number>>;
+}
+
+/** T-2 (issue #221): the player-fought battle surface for an accepted offer. */
+export interface StartPlayerBattlePayload {
+  readonly sessionId: string;
+  readonly battleId: string;
+}
+
+export interface PlayerBattleDivisionOrderDto {
+  readonly divisionId: string;
+  readonly stance: "ENGAGE" | "HOLD" | "WITHDRAW";
+  readonly speedPercent: number;
+}
+
+export interface AdvancePlayerBattlePayload {
+  readonly sessionId: string;
+  readonly battleId: string;
+  readonly mode: "minute" | "to_end";
+  readonly divisions: readonly PlayerBattleDivisionOrderDto[];
+}
+
+export interface FinishPlayerBattlePayload {
+  readonly sessionId: string;
+  readonly battleId: string;
+}
+
+export interface PlayerBattleResultDto {
+  readonly battleId: string;
+  readonly winnerId: string | null;
+  readonly loserId: string | null;
+  readonly attackerLosses: readonly string[];
+  readonly defenderLosses: readonly string[];
+  readonly damageReport: Readonly<Record<string, number>>;
+}
+
+export interface StartPlayerBattleResult {
+  readonly view: PlayerBattleView;
+  readonly sessionHash: string;
+}
+
+export interface AdvancePlayerBattleResult {
+  readonly view: PlayerBattleView;
+  readonly sessionHash: string;
+  readonly result: PlayerBattleResultDto | null;
+}
+
+export interface FinishPlayerBattleResult {
+  readonly result: PlayerBattleResultDto;
 }
 
 /** The player's answer to a battle offer (T-1 03, T-1 04): accept, delegate to staff, or decline. */

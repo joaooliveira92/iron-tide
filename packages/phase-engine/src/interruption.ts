@@ -6,7 +6,12 @@
 // result exactly once. It is NOT a `PhaseResource`, draws no randomness, and adds
 // no domain-event kind, so the phase registry/footprints and the frozen event
 // wire format are untouched.
-import { applyBattleConsequences, applyBattleResult, recordResolvedBattle } from "./battles.js";
+import {
+  applyBattleConsequences,
+  applyBattleResult,
+  collectLostShips,
+  recordResolvedBattle,
+} from "./battles.js";
 import type { BattleInstance, NationState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { compareCodePoints } from "@bluewave/deterministic";
@@ -440,6 +445,18 @@ export function applyRecordedBattleResult(
       ctx.collector,
     );
   }
+  // ADR-0061: capture who was lost BEFORE the ships leave their fleets so the
+  // recorded battle result keeps the same provenance as the auto path.
+  const lostShips = collectLostShips(
+    ctx.currentSnapshot,
+    battle,
+    {
+      damageReport: report,
+      attackerSunkIds: [...result.attackerLosses],
+      defenderSunkIds: [...result.defenderLosses],
+    },
+    ctx.campaignMonth,
+  );
   ctx.currentSnapshot = applyBattleConsequences(ctx.currentSnapshot, battle, {
     damageReport: report,
     attackerSunkIds: [...result.attackerLosses],
@@ -452,6 +469,7 @@ export function applyRecordedBattleResult(
     defenderLosses: [...result.defenderLosses].sort(),
     damageReport: report,
     explanation: ["player-resolved"],
+    ...(lostShips.length > 0 ? { lostShips } : {}),
   });
 }
 

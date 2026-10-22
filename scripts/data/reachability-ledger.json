@@ -228,10 +228,13 @@
         "answerDecision",
         "submitBattleResult",
         "submitOfferResponse",
+        "startPlayerBattle",
+        "advancePlayerBattle",
+        "finishPlayerBattle",
         "abandonPendingTurn",
         "readPendingTurn"
       ],
-      "renderer_screen": "shell/",
+      "renderer_screen": "screens/battle/PlayerBattleScreen.tsx",
       "status": "reachable"
     },
     {

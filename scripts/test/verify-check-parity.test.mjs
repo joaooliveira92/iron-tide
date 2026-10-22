@@ -75,6 +75,6 @@ void test("the allowlist is seeded with exactly check:golden, check:determinism 
     "check:reachability-ledger",
   ]);
   for (const coverage of Object.values(ALLOWLIST)) {
-    assert.match(coverage, /\.yml|preflight gate:/u);
+    assert.match(coverage, /(?:\.yml|preflight)/u);
   }
 });

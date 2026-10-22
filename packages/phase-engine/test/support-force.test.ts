@@ -260,7 +260,7 @@ describe("the support force (R12)", () => {
     const before = ships(run(withCandidates, present), ALLY).map((s) => ({ ...s }));
     for (const response of ["decline", "accept", "delegate"] as const) {
       const done = run(withCandidates, present, [answer(request, response)]);
-      expect(done.outcome).toBe("completed");
+      expect(done.outcome).toBe(response === "accept" ? "suspended" : "completed");
       expect(ships(done, ALLY)).toEqual(before);
       expect(ships(done, ALLY).filter((s) => s.inBattleId !== undefined)).toEqual([]);
     }
@@ -268,10 +268,10 @@ describe("the support force (R12)", () => {
     expect(ships(declined, ATTACKER_NATION).every((s) => s.inBattleId === undefined)).toBe(true);
   });
 
-  it("fights an accepted battle through the unchanged auto-resolution without a failure diagnostic", () => {
+  it("fights a delegated battle through the unchanged auto-resolution without a failure diagnostic", () => {
     const request = offerOf(run(withCandidates, present));
     const collector = new DiagnosticCollector();
-    const accepted = run(withCandidates, present, [answer(request, "accept")], collector);
+    const accepted = run(withCandidates, present, [answer(request, "delegate")], collector);
     expect(accepted.finalSnapshot.wars.battles[0]?.phase).toBe("resolved");
     expect(collector.hasErrors).toBe(false);
   });
