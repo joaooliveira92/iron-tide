@@ -12,10 +12,10 @@
 // barrier) never read `lifecycle.supersedes` at all.
 //
 // Guarded file list (`SCANNED_FILES`): refit.ts, partFit.ts, partFitConstraints.ts, partQueries.ts,
-// partCompatibility.ts, compileProduction.ts, compileThroughFit.ts, compileShared.ts,
+// partCompatibility.ts, compileProduction.ts, compileShared.ts,
 // shipBuildingContent.ts, partCatalogueReaders.ts, phase-engine/src/startRebuild.ts and
 // apps/desktop/src/main/commands/designCommands.ts. The `supersedes` subset
-// (`SUPERSESSION_FORBIDDEN_FILES`) is refit.ts, compileProduction.ts and compileThroughFit.ts;
+// (`SUPERSESSION_FORBIDDEN_FILES`) is refit.ts and compileProduction.ts;
 // partFit/partQueries read `supersedes` only for the informational `supersededBy`/lineage output.
 //
 // "Supersession never implies compatibility" is proven behaviourally by
@@ -43,7 +43,6 @@ export const SCANNED_FILES = [
   "packages/ship-design/src/partQueries.ts",
   "packages/ship-design/src/partCompatibility.ts",
   "packages/ship-design/src/compileProduction.ts",
-  "packages/ship-design/src/compileThroughFit.ts",
   "packages/ship-design/src/compileShared.ts",
   "packages/ship-design/src/shipBuildingContent.ts",
   "packages/ship-design/src/partCatalogueReaders.ts",
@@ -63,7 +62,6 @@ export const FORBIDDEN_TOKEN = "upgradePath";
 export const SUPERSESSION_FORBIDDEN_FILES = [
   "packages/ship-design/src/refit.ts",
   "packages/ship-design/src/compileProduction.ts",
-  "packages/ship-design/src/compileThroughFit.ts",
 ];
 export const SUPERSESSION_TOKEN = "supersedes";
 

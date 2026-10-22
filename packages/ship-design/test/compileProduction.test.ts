@@ -126,6 +126,23 @@ describe("production compile from a parts loadout (ticket 11d)", () => {
     expect("compiled" in result).toBe(false);
   });
 
+  it("reports a loadout the fit cannot evaluate as blocking findings with nothing derived", () => {
+    const loadout = loadouts[0]!;
+    const result = compileDesignFromLoadout({
+      designId: loadout.id,
+      header: loadout.header,
+      loadout: loadout.loadout,
+      model,
+      month: "not-a-month",
+      ctx: nationalContext(loadout.month, loadout.header.nation),
+    });
+    expect(result.status).toBe("NOT_EVALUABLE");
+    if (result.status !== "NOT_EVALUABLE") return;
+    expect(result.findings.map((f) => f.id)).toContain("FIT_DATA_BAD_MONTH");
+    expect(result.findings.every((f) => f.severity === "BLOCKING")).toBe(true);
+    expect("compiled" in result).toBe(false);
+  });
+
   it("refuses a loadout whose part the resolver cannot read", () => {
     const loadout = loadouts[0]!;
     const unknown = {

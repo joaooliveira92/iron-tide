@@ -9,12 +9,11 @@ import type {
 import { armourBalanceFromParts } from "./armourPartAdapter.js";
 import { compileResolved } from "./compile.js";
 import type { CompiledDesign, ShipContext } from "./compileShared.js";
-import { compileThroughFit } from "./compileThroughFit.js";
 import type { Finding } from "./findings.js";
 import { resolveLoadout, type LoadoutResolutionIssue } from "./loadoutResolution.js";
 import type { CompatibilityModel } from "./partCompatibility.js";
 import { platformSlots } from "./partCompatibility.js";
-import { validateLoadoutFit } from "./partFit.js";
+import { deriveAfterFit, validateLoadoutFit } from "./partFit.js";
 import { shipTypeRequirementsFor } from "./shipTypeRegistry.js";
 import type {
   FitAmmunitionCompatibility,
@@ -83,6 +82,29 @@ export interface CompileDesignFromLoadoutInput {
   readonly ammunitionCompatibility?: FitAmmunitionCompatibility;
 }
 
+function fitFindings(fit: FitResult): Finding[] {
+  const blocking = (id: string, what: string, parameters: Record<string, string>): Finding => ({
+    id,
+    severity: "BLOCKING",
+    what,
+    why: what,
+    consequence: "The design cannot be built until the loadout fits.",
+    remedies: [],
+    evidence: { formulaId: id, inputs: {}, threshold: 0, value: 0 },
+    parameters,
+  });
+  return [
+    ...fit.findings.map((f) =>
+      blocking(f.code, f.message, {
+        path: f.path,
+        slot: f.slot,
+        ...(f.part ? { part: f.part } : {}),
+      }),
+    ),
+    ...fit.dataIssues.map((d) => blocking(d.code, d.message, { path: d.path })),
+  ];
+}
+
 export function compileDesignFromLoadout(input: CompileDesignFromLoadoutInput): ProductionCompile {
   const slots = platformSlots(input.model.compatibility, input.loadout.platform) ?? [];
   const resolution = resolveLoadout({
@@ -116,7 +138,7 @@ export function compileDesignFromLoadout(input: CompileDesignFromLoadoutInput): 
       ...(requirements.length === 0 ? {} : { shipTypeRequirements: requirements }),
     });
 
-  return compileThroughFit(check, () => {
+  const outcome = deriveAfterFit(check(), () => {
     const findings: Finding[] = [];
     const balance = {
       ...input.ctx.balance,
@@ -131,4 +153,12 @@ export function compileDesignFromLoadout(input: CompileDesignFromLoadoutInput): 
       { balance },
     );
   });
+  if (outcome.derived) {
+    return { status: "ACCEPTED", fit: outcome.fit, compiled: outcome.value };
+  }
+  return {
+    status: outcome.fit.status === "NOT_EVALUABLE" ? "NOT_EVALUABLE" : "REJECTED",
+    fit: outcome.fit,
+    findings: fitFindings(outcome.fit),
+  };
 }
