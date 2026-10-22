@@ -57,15 +57,17 @@ const VIEW: PlayerBattleView = {
 };
 
 const REQUEST: InterruptionRequestDto = {
-  interruptionId: "i1",
   kind: "battle",
   turnId: "t1",
-  phase: "battle_resolution",
+  interruptionId: "i1",
   ordinal: 0,
-  subjectKey: "b1",
+  phase: "battle_resolution",
+  titleKey: "t",
+  bodyKey: "b",
+  interpolation: {},
   battleId: "b1",
   areaId: "channel",
-} as InterruptionRequestDto;
+};
 
 function startReply(view: PlayerBattleView, resumed: boolean, lastOrders: unknown[]) {
   return Promise.resolve({
