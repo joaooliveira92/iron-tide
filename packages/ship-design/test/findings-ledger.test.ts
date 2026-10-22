@@ -1,15 +1,7 @@
 import { describe, it, expect } from "vite-plus/test";
-import {
-  checkFindingShape,
-  sortFindings,
-  hasBlocking,
-  emptyLedger,
-  ledgerTotal,
-  withLine,
-  kg,
-  LEDGER_CATEGORIES,
-  type Finding,
-} from "../src/index.js";
+import { checkFindingShape, sortFindings, hasBlocking } from "../src/findings.js";
+import { emptyLedger, ledgerTotal, withLine, LEDGER_CATEGORIES } from "../src/ledger.js";
+import { kg, type Finding } from "../src/index.js";
 
 const f = (id: string, severity: Finding["severity"], remedies = 3): Finding => ({
   id,

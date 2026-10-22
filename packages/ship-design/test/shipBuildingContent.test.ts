@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
-import {
-  buildShipBuildingContent,
-  checkRevisionBalance,
-  unlockedTechIds,
-  compileDesign,
-} from "../src/index.js";
+import { buildShipBuildingContent, unlockedTechIds, compileDesign } from "../src/index.js";
+import { checkRevisionBalance } from "../src/revision.js";
 import { shipBuildingData, shipBuildingContent } from "./helpers/earlyContext.js";
 import { havock } from "./helpers/references.js";
 

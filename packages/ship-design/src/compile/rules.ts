@@ -3,9 +3,9 @@ import {
   NO_TERTIARY_BALANCE,
   TERTIARY_STATION_PERMILLE,
   TERTIARY_ZONE,
-} from "./tertiary.js";
-import { ZONE_IDS, type ZoneId } from "./arrangement.js";
-import type { ArmourResult } from "./armour.js";
+} from "../tertiary.js";
+import { ZONE_IDS, type ZoneId } from "../arrangement.js";
+import type { ArmourResult } from "../armour.js";
 import {
   f,
   type DesignIntent,
@@ -13,13 +13,13 @@ import {
   type Resolved,
   type ShipBalance,
   type ShipContext,
-} from "./compileShared.js";
-import type { Finding } from "./findings.js";
-import type { AntiAircraftExpansion } from "./antiAircraft.js";
-import type { HullResult, HullSpec } from "./hull.js";
-import type { MachineryResult } from "./machinery.js";
-import type { WeightItem } from "./stability.js";
-import type { WeaponsResult } from "./weapons.js";
+} from "../compileShared.js";
+import type { Finding } from "../findings.js";
+import type { AntiAircraftExpansion } from "../antiAircraft.js";
+import type { HullResult, HullSpec } from "../hull.js";
+import type { MachineryResult } from "../machinery.js";
+import type { WeightItem } from "../stability.js";
+import type { WeaponsResult } from "../weapons.js";
 
 type AmmoMount = WeaponsResult["mounts"][number];
 

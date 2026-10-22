@@ -7,16 +7,9 @@ import {
   type FlattenedPart,
 } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  availableParts,
-  lineage,
-  loadoutCost,
-  partsForSlot,
-  resolvePart,
-  validateLoadout,
-  validateLoadoutFit,
-  type PartCatalogue,
-} from "../src/index.js";
+import { partCatalogue } from "../src/index.js";
+import { validateLoadoutFit } from "../src/partFit.js";
+import { type PartCatalogue } from "../src/partQueries.js";
 
 const PROVENANCE = {
   sourceStatus: "PLACEHOLDER",
@@ -187,16 +180,13 @@ const BASE_PARTS = [
   GUN,
   MAGAZINE,
 ];
-const catalogue = (parts: readonly FlattenedPart[] = BASE_PARTS): PartCatalogue => ({
-  parts,
-  slotTemplates: [TEMPLATE],
-  platforms: [PLATFORM],
-});
+const catalogue = (parts: readonly FlattenedPart[] = BASE_PARTS): PartCatalogue =>
+  partCatalogue({ parts, slotTemplates: [TEMPLATE], platforms: [PLATFORM] });
 
 describe("resolvePart", () => {
   it("applies the 1884 revision from its month and not before", () => {
-    const before = resolvePart(catalogue(), "whitehead_14in", "1883-12");
-    const after = resolvePart(catalogue(), "whitehead_14in", "1884-01");
+    const before = catalogue().resolve("whitehead_14in", "1883-12");
+    const after = catalogue().resolve("whitehead_14in", "1884-01");
     expect(before).toMatchObject({ revision: "base", status: "AVAILABLE" });
     expect(before?.spec["warheadExplosiveMassKg"]).toBe(12);
     expect(after).toMatchObject({ revision: "1884-01", status: "AVAILABLE" });
@@ -204,21 +194,20 @@ describe("resolvePart", () => {
   });
 
   it("reports lifecycle status and successors", () => {
-    expect(resolvePart(catalogue(), "whitehead_14in", "1879-12")?.status).toBe("NOT_YET_AVAILABLE");
-    const retired = resolvePart(catalogue(), "whitehead_14in", "1890-01");
+    expect(catalogue().resolve("whitehead_14in", "1879-12")?.status).toBe("NOT_YET_AVAILABLE");
+    const retired = catalogue().resolve("whitehead_14in", "1890-01");
     expect(retired?.status).toBe("UNAVAILABLE");
     expect(retired?.supersededBy).toEqual(["whitehead_mk2"]);
   });
 
   it("returns null for an unknown part and throws for a malformed month", () => {
-    expect(resolvePart(catalogue(), "nope", "1884-01")).toBeNull();
-    expect(() => resolvePart(catalogue(), "g12", "1884")).toThrow();
+    expect(catalogue().resolve("nope", "1884-01")).toBeNull();
+    expect(() => catalogue().resolve("g12", "1884")).toThrow();
   });
 });
 
 describe("availableParts", () => {
-  const at = (month: string, extra = {}) =>
-    availableParts({ catalogue: catalogue(), month, ...extra });
+  const at = (month: string, extra = {}) => catalogue().available({ month, ...extra });
 
   it("reports the 1884 Whitehead revision as a change in that month only", () => {
     expect(at("1884-01").changes).toEqual([
@@ -282,7 +271,7 @@ describe("partsForSlot", () => {
     parts: readonly FlattenedPart[],
     slot: string,
     owner = { platform: "fixture_hull" },
-  ) => partsForSlot({ catalogue: catalogue(parts), owner, slot, month: "1890-01" });
+  ) => catalogue(parts).forSlot({ owner, slot, month: "1890-01" });
 
   it("returns exactly the parts whose interface and constraints the slot accepts", () => {
     expect(forSlot(BASE_PARTS, "fwd_main").parts).toEqual(["m_turret"]);
@@ -344,7 +333,7 @@ describe("partsForSlot", () => {
 
 describe("lineage", () => {
   it("walks supersession ancestry and successors transitively", () => {
-    expect(lineage(catalogue(), "whitehead_mk2")).toEqual({
+    expect(catalogue().lineage("whitehead_mk2")).toEqual({
       part: "whitehead_mk2",
       prototype: null,
       variants: [],
@@ -353,20 +342,20 @@ describe("lineage", () => {
       ancestors: ["whitehead_14in"],
       successors: ["whitehead_mk3"],
     });
-    expect(lineage(catalogue(), "whitehead_14in")?.successors).toEqual([
+    expect(catalogue().lineage("whitehead_14in")?.successors).toEqual([
       "whitehead_mk2",
       "whitehead_mk3",
     ]);
-    expect(lineage(catalogue(), "whitehead_mk3")?.ancestors).toEqual([
+    expect(catalogue().lineage("whitehead_mk3")?.ancestors).toEqual([
       "whitehead_mk2",
       "whitehead_14in",
     ]);
   });
 
   it("reports variants and prototype, and null for an unknown part", () => {
-    expect(lineage(catalogue(), "whitehead_14in")?.variants).toEqual(["whitehead_fiume"]);
-    expect(lineage(catalogue(), "whitehead_fiume")?.prototype).toBe("whitehead_14in");
-    expect(lineage(catalogue(), "nope")).toBeNull();
+    expect(catalogue().lineage("whitehead_14in")?.variants).toEqual(["whitehead_fiume"]);
+    expect(catalogue().lineage("whitehead_fiume")?.prototype).toBe("whitehead_14in");
+    expect(catalogue().lineage("nope")).toBeNull();
   });
 });
 
@@ -385,13 +374,9 @@ describe("validateLoadout", () => {
 
   it("is validateLoadoutFit over the catalogue", () => {
     const cat = catalogue();
-    expect(
-      validateLoadout({ catalogue: cat, loadout: loadout(entries), month: "1890-01" }),
-    ).toEqual(
+    expect(cat.validate({ loadout: loadout(entries), month: "1890-01" })).toEqual(
       validateLoadoutFit({
-        parts: cat.parts,
-        slotTemplates: cat.slotTemplates,
-        platforms: cat.platforms,
+        catalogue: cat,
         loadout: loadout(entries),
         month: "1890-01",
       }),
@@ -406,16 +391,20 @@ describe("validateLoadout", () => {
         entries: { torpedo: [{ part: "whitehead_mk2" }] },
       },
     ];
-    const base = { catalogue: catalogue(), loadout: loadout(tubes), month: "1895-01" };
-    expect(validateLoadout(base).status).toBe("ACCEPTED");
-    const locked = validateLoadout({ ...base, unlockedTechnologies: [] });
+    const base = { loadout: loadout(tubes), month: "1895-01" };
+    const validate = catalogue().validate;
+    expect(validate(base).status).toBe("ACCEPTED");
+    const locked = validate({ ...base, conditions: { unlockedTechnologies: [] } });
     expect(locked.status).toBe("REJECTED");
     expect(locked.findings.map((f) => [f.code, f.part, f.detail])).toEqual([
       ["FIT_TECHNOLOGY_LOCKED", "whitehead_mk2", { missing: ["torpedo_heater"] }],
     ]);
-    expect(validateLoadout({ ...base, unlockedTechnologies: ["torpedo_heater"] }).status).toBe(
-      "ACCEPTED",
-    );
+    expect(
+      validate({
+        ...base,
+        conditions: { unlockedTechnologies: ["torpedo_heater"] },
+      }).status,
+    ).toBe("ACCEPTED");
   });
 });
 
@@ -429,7 +418,7 @@ describe("loadoutCost", () => {
       entries: { guns: [{ part: "g12", mountCount: 2 }] },
     },
   ];
-  const cost = loadoutCost({ catalogue: catalogue(), loadout: loadout(entries), month: "1890-01" });
+  const cost = catalogue().cost({ loadout: loadout(entries), month: "1890-01" });
 
   it("lists each component's value, basis, multiplier and contribution", () => {
     expect(
@@ -448,14 +437,12 @@ describe("loadoutCost", () => {
   });
 
   it("is independent of entry order, and reports an unknown part as a data issue", () => {
-    const shuffled = loadoutCost({
-      catalogue: catalogue(),
+    const shuffled = catalogue().cost({
       loadout: loadout([...entries].reverse()),
       month: "1890-01",
     });
     expect(shuffled).toEqual(cost);
-    const unknown = loadoutCost({
-      catalogue: catalogue(),
+    const unknown = catalogue().cost({
       loadout: loadout([{ slot: "magazine", part: "ghost" }]),
       month: "1890-01",
     });
@@ -468,14 +455,13 @@ describe("determinism", () => {
   it("returns identical results for permuted catalogues", () => {
     const reversed = [...BASE_PARTS].reverse();
     const run = (parts: readonly FlattenedPart[]) => ({
-      avail: availableParts({ catalogue: catalogue(parts), month: "1890-01" }),
-      slot: partsForSlot({
-        catalogue: catalogue(parts),
+      avail: catalogue(parts).available({ month: "1890-01" }),
+      slot: catalogue(parts).forSlot({
         owner: { platform: "fixture_hull" },
         slot: "side_port",
         month: "1890-01",
       }),
-      lineage: lineage(catalogue(parts), "whitehead_mk3"),
+      lineage: catalogue(parts).lineage("whitehead_mk3"),
     });
     expect(run(reversed)).toEqual(run(BASE_PARTS));
   });

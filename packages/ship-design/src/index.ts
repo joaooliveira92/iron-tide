@@ -1,94 +1,232 @@
-export * from "./units.js";
-export * from "./explanation.js";
-export * from "./findings.js";
-export * from "./ledger.js";
-export * from "./component.js";
-export { FormulaError, FUNCTIONS, type Expr } from "./formula/ast.js";
-export { parseFormula, freeVariables } from "./formula/parse.js";
-export { evaluate, type EvalEnv, type LookupTable } from "./formula/eval.js";
-export * from "./hull.js";
-export * from "./machinery.js";
-export * from "./arrangement.js";
-export * from "./topside.js";
-export * from "./revisionDiff.js";
-export * from "./weapons.js";
-export * from "./armourSchemes.js";
-export * from "./tertiary.js";
-export * from "./aluminium.js";
-export * from "./antiAircraft.js";
-export * from "./armour.js";
-export * from "./stability.js";
-export * from "./systems.js";
-export * from "./compile.js";
-export * from "./edits.js";
-export * from "./cost.js";
-export * from "./construction.js";
-export * from "./constructionCapacity.js";
-export * from "./trials.js";
-export * from "./revision.js";
-export * from "./cve.js";
-export * from "./ai.js";
-export * from "./refit.js";
-export * from "./persistence.js";
-export * from "./engineAdapter.js";
-export * from "./report.js";
-export * from "./contextBuilder.js";
-export * from "./classification.js";
-export * from "./workshop.js";
-export * from "./yards.js";
-export * from "./dock.js";
-export * from "./dockExpansion.js";
-export * from "./foreignConstruction.js";
-export * from "./suggest.js";
-export * from "./shipBuildingContent.js";
-export * from "./batteries.js";
-export * from "./constructionProgress.js";
-export * from "./yardChoice.js";
-export * from "./seededPlan.js";
-export * from "./rebuild.js";
-export * from "./findingSubjects.js";
-export * from "./study.js";
-export * from "./shipTypes.js";
-export * from "./shipTypeRegistry.js";
-export * from "./shipTypeAvailability.js";
-export * from "./colonialService.js";
-export * from "./shipTypeRoster.js";
-export * from "./shipTypeEnvelope.js";
-export * from "./nationProfile.js";
-export * from "./naming.js";
-export * from "./componentVariants.js";
-export * from "./armamentContent.js";
-export * from "./armamentCompile.js";
-export * from "./gunPartAdapter.js";
-export * from "./partCompatibility.js";
-export * from "./partLifecycle.js";
-export * from "./partFitTypes.js";
-export * from "./partFit.js";
-export * from "./compileThroughFit.js";
-export * from "./compileProduction.js";
-export * from "./compileDraft.js";
-export * from "./partQueries.js";
-export * from "./partQuantities.js";
-export * from "./partReadPath.js";
-export * from "./torpedoPartAdapter.js";
-export * from "./torpedoPartBuilder.js";
-export * from "./compileTorpedo.js";
-export * from "./equivalenceCandidate.js";
-export * from "./equivalenceMetrics.js";
-export * from "./equivalenceReport.js";
-export * from "./legacyComponentQuantities.js";
-export * from "./fittingPartAdapter.js";
-export * from "./plantPartAdapter.js";
-export * from "./armourPartAdapter.js";
-export * from "./ammunitionPartAdapter.js";
-export * from "./nationalDesignPolicy.js";
-export * from "./nationalConstruction.js";
-export * from "./fleetProcurement.js";
-export * from "./nationalResearch.js";
-export * from "./nationCompleteness.js";
-export * from "./approvedDiffs.js";
-export * from "./partCatalogue.js";
-export * from "./partCatalogueFormulas.js";
-export * from "./partCatalogueReaders.js";
-export * from "./partCatalogueView.js";
-export * from "./partCategory.js";
+export { type Candidate, generateCandidates } from "./ai.js";
+export { aluminiumAvailable, type AluminiumBalance } from "./aluminium.js";
+export {
+  antiAircraftAvailable,
+  type AntiAircraftBalance,
+  type AntiAircraftFit,
+  MAX_AA_DIRECTORS,
+} from "./antiAircraft.js";
+export {
+  APPROVED_DIFFS_SCHEMA,
+  checkWithApprovedDiffs,
+  decodeApprovedDiffs,
+  readsAsBroadApproval,
+} from "./approvedDiffs.js";
+export { type AuthoredArmamentContent, nationHasArmamentContent } from "./armamentContent.js";
+export {
+  allOrNothingRegions,
+  ARMOUR_REGIONS,
+  type ArmourBalance,
+  type ArmourMaterialOption,
+  armourMaterialOptions,
+  type ArmourRegion,
+  type ArmourRegionId,
+  newArmourRegion,
+  type RegionSizing,
+} from "./armour.js";
+export {
+  applyArmourScheme,
+  ARMOUR_SCHEMES,
+  armourSchemeAvailable,
+  type ArmourSchemeDef,
+  type ArmourSchemeId,
+} from "./armourSchemes.js";
+export { ZONE_IDS, type ZoneId } from "./arrangement.js";
+export { type BatteryRole, type BatteryRow, batterySummary, mountNames } from "./batteries.js";
+export { CLASSIFICATION_REJECTION_IDS } from "./classification.js";
+export { DESIGN_22_EARLY } from "./classificationRules.js";
+export { compileDesign } from "./compile.js";
+export {
+  compileDraftFromParts,
+  type DraftCompileContent,
+  type DraftCompileResult,
+  draftToLoadout,
+  type DraftTranslationIssue,
+  type LegacyCompileView,
+  toLegacyCompileView,
+} from "./compileDraft.js";
+export {
+  type CompiledDesign,
+  type ComponentSummary,
+  type DesignDraft,
+  type DesignRequirement,
+  type PlacementSpec,
+  type ShipContext,
+} from "./compileShared.js";
+export { compileTorpedo } from "./compileTorpedo.js";
+export { COMPONENT_CATEGORIES, type ComponentCategory, type ComponentDef } from "./component.js";
+export {
+  advanceConstructionMonth,
+  type ConstructionBalance,
+  type ConstructionPlan,
+  LINE_IDS,
+  type LineId,
+  PACKAGE_ORDER,
+  type PackageKind,
+  type PackageProgress,
+  preservationCostPerMonthMicro,
+  simulateConstruction,
+  type WorkPackage,
+} from "./construction.js";
+export {
+  type ConstructionCapacityBalance,
+  type ConstructionCapacityExemptionDefinition,
+  constructionPoolForProjectKind,
+  INSUFFICIENT_PROJECT_CAPACITY,
+  maxConcurrentConstructionMassKg,
+  reservedNewConstructionMassKg,
+  shippedConstructionCapacityExemptions,
+} from "./constructionCapacity.js";
+export { buildProgressOf } from "./constructionProgress.js";
+export { type HullFormRecord, shipBalanceFromRecord } from "./contextBuilder.js";
+export { computeCost, type CostBalance, type CostContext, treasuryCostUnits } from "./cost.js";
+export {
+  type DockRecord,
+  dockRecordFor,
+  dockRecordFromDefinition,
+  newConstructionDockEligibility,
+} from "./dock.js";
+export {
+  DOCK_EXPANSION_BASE_DURATION_MONTHS,
+  DOCK_EXPANSION_NEUTRAL_DURATION_MULTIPLIER_BP,
+  dockExpansionEraStepForMonth,
+  dockExpansionFinalDurationMonths,
+  type DockMassLimits,
+  raiseDockLimitsByStep,
+} from "./dockExpansion.js";
+export { applyEdit, type DraftEdit, EditError } from "./edits.js";
+export { type EngineAdapterOptions, toEngineDesign } from "./engineAdapter.js";
+export {
+  type ExplanationPart,
+  type ExplanationText,
+  type ExplanationUnit,
+  type ExplanationValue,
+  quantity,
+} from "./explanation.js";
+export {
+  type Finding,
+  findingKey,
+  type FindingTarget,
+  type SettingGroup,
+  type Severity,
+  SEVERITY_ORDER,
+} from "./findings.js";
+export {
+  assessFleet,
+  chooseProcurementRole,
+  computeFleetDeficits,
+  type FleetShipView,
+  planProcurementDecision,
+  type RoleGroup,
+  roleGroupOf,
+  shipTypeForHullType,
+} from "./fleetProcurement.js";
+export {
+  capabilityFailureCode,
+  FOREIGN_BUILDER_CAPABILITY_INSUFFICIENT,
+  FOREIGN_BUILDER_CAPACITY_UNAVAILABLE,
+  FOREIGN_BUILDER_NATION_INVALID,
+  FOREIGN_CONSTRUCTION_CONTRACT_REQUIRED,
+  FOREIGN_CONTRACT_PAYMENT_DEFAULT,
+  FOREIGN_PAYMENT_DEFAULT_DELAYED,
+  FOREIGN_PAYMENT_GRACE_MONTHS,
+  type ForeignBuilderCapabilityCheck,
+  type ForeignBuilderCapabilityInput,
+  validateForeignBuilderCapability,
+} from "./foreignConstruction.js";
+export { type PropulsionPlant } from "./machinery.js";
+export { allocateShipNames, PLACEHOLDER_NAME_POOL_ID, type ShipNameAllocation } from "./naming.js";
+export {
+  type NationNavalProfile,
+  nationProfileBrief,
+  type NationProfileBrief,
+  resolveNavalProfile,
+} from "./nationProfile.js";
+export { resolveNationalConstruction } from "./nationalConstruction.js";
+export { researchPriorityAllocation } from "./nationalResearch.js";
+export { buildPartCatalogue, PART_SOURCE_FIELDS, type SourceCatalogue } from "./partCatalogue.js";
+export {
+  buildPartCatalogueView,
+  legacyCatalogueView,
+  type PartCatalogueEntry,
+} from "./partCatalogueView.js";
+export { buildCompatibilitySlots } from "./partCompatibility.js";
+export { lifecycleStatus, shiftMonth } from "./partLifecycle.js";
+export { partCatalogue } from "./partQueries.js";
+export {
+  canRedo,
+  canUndo,
+  currentDraft,
+  decodeDesignFile,
+  decodeLog,
+  DESIGN_SCHEMA_VERSION,
+  type EditLog,
+  encodeDesignFile,
+  encodeLog,
+  newLog,
+  PersistenceError,
+  pushEdit,
+  redo,
+  undo,
+  validateDraftShape,
+} from "./persistence.js";
+export {
+  type RebuildBalance,
+  rebuildFactsOf,
+  rebuildPackages,
+  validateRebuild,
+} from "./rebuild.js";
+export { armamentChangeFindings, type GunChange } from "./refit.js";
+export {
+  type BuildProgress,
+  type ChangeKind,
+  changeKindsOf,
+  classifyRevision,
+  inPlaceRevisionFindings,
+  type RevisionBalance,
+  type RevisionDecision,
+  revisionFactsOf,
+} from "./revision.js";
+export { draftChangeKinds, progressFromWork } from "./revisionDiff.js";
+export { seededConstructionPlan } from "./seededPlan.js";
+export {
+  buildShipBuildingContent,
+  type RawReferenceDesign,
+  type ReferenceDesignProvenance,
+  referenceDesignsFromLoadouts,
+  type ShipBuildingContent,
+  type ShipBuildingData,
+  unlockedTechIds,
+} from "./shipBuildingContent.js";
+export {
+  type AvailabilityReason,
+  evaluateAmcFleetLimit,
+  evaluateShipTypeAvailability,
+} from "./shipTypeAvailability.js";
+export { type Range } from "./shipTypeEnvelope.js";
+export { buildShipTypeRoster, type RosterEntry, type StarterDesign } from "./shipTypeRoster.js";
+export {
+  HULL_TYPE_FOR_SHIP_TYPE,
+  isShipTypeId,
+  SHIP_TYPE_CATEGORIES,
+  SHIP_TYPE_LIST,
+  SHIP_TYPES,
+  type ShipTypeCategory,
+  type ShipTypeId,
+  UNSIMULATED_ROLES,
+} from "./shipTypes.js";
+export { assessSimilarity, similarityProfile, studyTerms } from "./study.js";
+export { type SuggestedFix, suggestFixes } from "./suggest.js";
+export { TOPSIDE_WARN_BP, topsideLoad, type TopsideStatus } from "./topside.js";
+export { type TorpedoModelSource } from "./torpedoPartBuilder.js";
+export { bp, kg, mm, UM_PER_INCH } from "./units.js";
+export { type MountSide } from "./weapons.js";
+export {
+  buildWorkshopView,
+  type Metric,
+  type WorkshopEnvironment,
+  type WorkshopView,
+  type YardOption,
+} from "./workshop.js";
+export { constructionOrderPlan, yardDemandOf } from "./yardChoice.js";
+export { type Yard, type YardDemand, type YardLimit } from "./yards.js";

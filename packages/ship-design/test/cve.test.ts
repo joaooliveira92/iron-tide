@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vite-plus/test";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { compileDesign, computeCve, CVE_LABEL, type DesignDraft } from "../src/index.js";
+import { compileDesign, type DesignDraft } from "../src/index.js";
+import { computeCve, CVE_LABEL } from "../src/cve.js";
 import { ctx, draft, plant, cveBalance } from "./fixtures/gunboat.js";
 
 const score = (d: DesignDraft, c = ctx) =>

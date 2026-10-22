@@ -8,25 +8,18 @@ import {
 } from "@bluewave/content-schema";
 import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  ARMOUR_REGIONS,
-  buildAmmunitionPartModel,
-  buildArmourPartModel,
-  buildFittingPartModel,
-  buildLauncherPartModel,
-  buildPlantPartModel,
-  catalogueForNation,
-  compileDesign,
-  platformSlots,
-  retirementMonthFromAvailableUntil,
-  translateArmourRegion,
-  translateFittingPlacement,
-  translateMachinery,
-  translateTubePlacement,
-  validateLoadoutFit,
-  type FitMountCountRanges,
-  type FitResult,
-} from "../src/index.js";
+import { ARMOUR_REGIONS, compileDesign } from "../src/index.js";
+import { buildArmourPartModel, translateArmourRegion } from "../src/armourPartAdapter.js";
+import { buildFittingPartModel, translateFittingPlacement } from "../src/fittingPartAdapter.js";
+import { buildLauncherPartModel, translateTubePlacement } from "../src/torpedoPartAdapter.js";
+import { buildPlantPartModel, translateMachinery } from "../src/plantPartAdapter.js";
+import { catalogueForNation } from "../src/componentVariants.js";
+import { platformSlots } from "../src/partCompatibility.js";
+import { type FitMountCountRanges } from "../src/partFitTypes.js";
+import { buildAmmunitionPartModel } from "../src/ammunitionPartAdapter.js";
+import { retirementMonthFromAvailableUntil } from "../src/partLifecycle.js";
+import { validateLoadoutFit } from "../src/partFit.js";
+import { type FitResult } from "../src/partFitTypes.js";
 import {
   armamentContent,
   components,
@@ -200,15 +193,19 @@ function fitDesign(d: DesignFit, options: { nation?: boolean; ranges?: boolean }
     entries: d.entries,
   });
   return validateLoadoutFit({
-    parts: uniqueParts(d.parts),
-    slotTemplates: compatibility.slotTemplates,
-    platforms: compatibility.platforms,
+    catalogue: {
+      parts: uniqueParts(d.parts),
+      slotTemplates: compatibility.slotTemplates,
+      platforms: compatibility.platforms,
+    },
     loadout,
     month: d.design.month,
-    ...(options.nation === true ? { nation: { nationId: d.design.draft.nationId } } : {}),
-    ...(options.ranges === true
-      ? { mountCountRanges: d.ranges satisfies FitMountCountRanges }
-      : {}),
+    conditions: {
+      ...(options.nation === true ? { nation: { nationId: d.design.draft.nationId } } : {}),
+      ...(options.ranges === true
+        ? { mountCountRanges: d.ranges satisfies FitMountCountRanges }
+        : {}),
+    },
   });
 }
 
@@ -250,9 +247,11 @@ describe("fit over production launchers (ticket 04 hand-over)", () => {
       ],
     });
     return validateLoadoutFit({
-      parts: [part, fixtureTorpedo(torpedoId)],
-      slotTemplates: compatibility.slotTemplates,
-      platforms: compatibility.platforms,
+      catalogue: {
+        parts: [part, fixtureTorpedo(torpedoId)],
+        slotTemplates: compatibility.slotTemplates,
+        platforms: compatibility.platforms,
+      },
       loadout,
       month,
     });
@@ -372,9 +371,11 @@ function fitEntries(
   month: string,
 ): FitResult {
   return validateLoadoutFit({
-    parts,
-    slotTemplates: compatibility.slotTemplates,
-    platforms: compatibility.platforms,
+    catalogue: {
+      parts,
+      slotTemplates: compatibility.slotTemplates,
+      platforms: compatibility.platforms,
+    },
     loadout: decodeStrict(LoadoutSchema, { platform, entries }),
     month,
   });

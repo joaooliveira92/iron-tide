@@ -4,11 +4,11 @@ import {
   requiredKw,
   maxSpeed,
   speedLengthRatioX1000,
-  checkFindingShape,
   type MachineryBalance,
   type MachineryInput,
-  type PropulsionPlant,
-} from "../src/index.js";
+} from "../src/machinery.js";
+import { checkFindingShape } from "../src/findings.js";
+import { type PropulsionPlant } from "../src/index.js";
 
 const balance: MachineryBalance = {
   cFormX100: { fine_light: 17_500, full_heavy: 14_000 },

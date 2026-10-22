@@ -1,4 +1,4 @@
-import type { DesignDraft } from "../../src/index.js";
+import { type DesignDraft } from "../../src/index.js";
 import { readReferenceDesignEntries } from "./earlyContext.js";
 
 const designs = readReferenceDesignEntries() as {

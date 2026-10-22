@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import {
-  armourAvailabilityFindings,
-  armourMaterialOptions,
-  compileDesign,
-  type ArmourRegion,
-} from "../src/index.js";
+import { armourAvailabilityFindings } from "../src/armour.js";
+import { armourMaterialOptions, compileDesign, type ArmourRegion } from "../src/index.js";
 import { earlyContext } from "./helpers/earlyContext.js";
 import { majestic } from "./helpers/references.js";
 

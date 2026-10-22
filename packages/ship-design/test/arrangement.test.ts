@@ -2,13 +2,13 @@ import { describe, it, expect } from "vite-plus/test";
 import {
   analyseArrangement,
   checkZoneSet,
-  ZONE_IDS,
-  checkFindingShape,
   type ArrangementBalance,
   type HullEnvelope,
   type ResolvedPlacement,
   type ZoneDef,
-} from "../src/index.js";
+} from "../src/arrangement.js";
+import { ZONE_IDS } from "../src/index.js";
+import { checkFindingShape } from "../src/findings.js";
 
 const edges = [0, 80, 180, 280, 520, 640, 760, 900, 1000];
 const zones: ZoneDef[] = ZONE_IDS.map((id, i) => ({

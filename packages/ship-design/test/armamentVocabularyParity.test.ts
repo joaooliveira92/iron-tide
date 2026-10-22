@@ -4,7 +4,7 @@ import {
   ARMAMENT_PROVENANCE_KINDS,
   ARMAMENT_SOURCE_STATUSES,
 } from "@bluewave/armament";
-import { CONFIDENCE_LEVELS, PROVENANCE_KINDS, SOURCE_STATUSES } from "../src/index.js";
+import { CONFIDENCE_LEVELS, PROVENANCE_KINDS, SOURCE_STATUSES } from "../src/nationProfile.js";
 
 describe("armament provenance vocabulary parity", () => {
   it("keeps the armament package vocabulary identical to the canonical national-profile vocabulary", () => {

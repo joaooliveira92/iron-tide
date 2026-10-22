@@ -17,12 +17,8 @@ import {
 } from "@bluewave/content-schema";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  buildProductionPartModel,
-  compileDesign,
-  compileDesignFromLoadout,
-  compileTorpedo,
-} from "../src/index.js";
+import { partCatalogue, compileDesign, compileTorpedo } from "../src/index.js";
+import { compileDesignFromLoadout } from "../src/compile.js";
 import { nationalContext, readReferenceDesignEntries } from "./helpers/earlyContext.js";
 
 const root = join(import.meta.dirname, "..", "..", "..", "content", "production", "1880");
@@ -72,7 +68,7 @@ const shipTypeRecords: ShipTypeRecord[] = (
   readYaml(join(shipBuilding, "ship-types.yaml"))["shipTypes"] as unknown[]
 ).map((record) => decodeStrict(ShipTypeRecordSchema, record));
 
-const model = buildProductionPartModel({ parts, slotTemplates, platforms });
+const catalogue = partCatalogue({ parts, slotTemplates, platforms });
 const legacyById = new Map(readReferenceDesignEntries().map((d) => [d.id, d] as const));
 
 describe("production parts content → compile (ticket 11d)", () => {
@@ -134,9 +130,9 @@ describe("production parts content → compile (ticket 11d)", () => {
         designId: loadout.id,
         header: loadout.header,
         loadout: loadout.loadout,
-        model,
+        catalogue,
         month: loadout.month,
-        nation: { nationId: loadout.header.nation },
+        conditions: { nation: { nationId: loadout.header.nation } },
         ctx: nationalContext(loadout.month, loadout.header.nation),
       });
       expect(result.status, loadout.id).toBe("ACCEPTED");
@@ -177,9 +173,9 @@ describe("production parts content → compile (ticket 11d)", () => {
         designId: loadout.id,
         header: loadout.header,
         loadout: loadout.loadout,
-        model,
+        catalogue,
         month: loadout.month,
-        nation: { nationId: loadout.header.nation },
+        conditions: { nation: { nationId: loadout.header.nation } },
         ctx: nationalContext(loadout.month, loadout.header.nation),
       });
       expect(result.status, loadout.id).toBe("ACCEPTED");
@@ -200,9 +196,9 @@ describe("production parts content → compile (ticket 11d)", () => {
       designId: loadout.id,
       header: loadout.header,
       loadout: broken,
-      model,
+      catalogue,
       month: loadout.month,
-      nation: { nationId: loadout.header.nation },
+      conditions: { nation: { nationId: loadout.header.nation } },
       ctx: nationalContext(loadout.month, loadout.header.nation),
     });
     expect(result.status).toBe("REJECTED");
@@ -227,9 +223,9 @@ describe("production parts content → compile (ticket 11d)", () => {
       designId: loadout.id,
       header: loadout.header,
       loadout: loadout.loadout,
-      model,
+      catalogue,
       month: loadout.month,
-      nation: { nationId: loadout.header.nation },
+      conditions: { nation: { nationId: loadout.header.nation } },
       ctx: { ...nationalContext(loadout.month, loadout.header.nation), shipTypes },
     });
     expect(result.status).toBe("REJECTED");

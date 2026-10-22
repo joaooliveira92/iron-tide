@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { expandTertiary, type TertiaryBalance } from "../src/index.js";
+import { expandTertiary, type TertiaryBalance } from "../src/tertiary.js";
 
 const bal: TertiaryBalance = {
   gunWeightNanoKgPerMm3: 1_500_000,

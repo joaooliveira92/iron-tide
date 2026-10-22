@@ -1,11 +1,7 @@
 import { describe, it, expect } from "vite-plus/test";
-import {
-  buildWorkshopView,
-  applyEdit,
-  LEDGER_CATEGORIES,
-  CVE_LABEL,
-  type WorkshopEnvironment,
-} from "../src/index.js";
+import { buildWorkshopView, applyEdit, type WorkshopEnvironment } from "../src/index.js";
+import { LEDGER_CATEGORIES } from "../src/ledger.js";
+import { CVE_LABEL } from "../src/cve.js";
 import {
   constructionBalance,
   costBalance,

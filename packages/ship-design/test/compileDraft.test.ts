@@ -4,13 +4,8 @@ import { FlattenedPartSchema, decodeStrict, type FlattenedPart } from "@bluewave
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { parse } from "yaml";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  compileDesign,
-  compileDraftFromParts,
-  draftToLoadout,
-  toLegacyCompileView,
-  type DraftCompileContent,
-} from "../src/index.js";
+import { compileDesign, compileDraftFromParts, toLegacyCompileView } from "../src/index.js";
+import { draftToLoadout, type DraftCompileContent } from "../src/compileDraft.js";
 import {
   armamentContent,
   components,

@@ -5,11 +5,13 @@ import {
   compareCapacityReservations,
   effectiveExemptCapacityBp,
   externalPoolConsumption,
-  maxConcurrentConstructionMassKg,
   normalPoolConsumption,
+  type CapacityReservation,
+} from "../src/constructionCapacity.js";
+import {
+  maxConcurrentConstructionMassKg,
   reservedNewConstructionMassKg,
   shippedConstructionCapacityExemptions,
-  type CapacityReservation,
   type ConstructionCapacityExemptionDefinition,
 } from "../src/index.js";
 import { constructionBalance } from "./helpers/earlyContext.js";

@@ -10,20 +10,14 @@ import {
 import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
 import { num } from "../src/compileShared.js";
-import {
-  armamentMountFor,
-  buildGunPartModel,
-  componentAccessOf,
-  nationHasArmamentContent,
-  platformSlots,
-  resolveInstalledWeapon,
-  sortUnresolvedGunPlacements,
-  toCompiledWeaponArmament,
-  totalOf,
-  type AuthoredArmamentContent,
-  type GunPlacementTranslation,
-  type UnresolvedGunPlacement,
-} from "../src/index.js";
+import { armamentMountFor, resolveInstalledWeapon } from "../src/armamentContent.js";
+import { buildGunPartModel } from "../src/gunPartAdapter.js";
+import { nationHasArmamentContent, type AuthoredArmamentContent } from "../src/index.js";
+import { platformSlots } from "../src/partCompatibility.js";
+import { type GunPlacementTranslation } from "../src/partReadPath.js";
+import { componentAccessOf, toCompiledWeaponArmament } from "../src/armamentCompile.js";
+import { sortUnresolvedGunPlacements, type UnresolvedGunPlacement } from "../src/partReadPath.js";
+import { totalOf } from "../src/partQuantities.js";
 import { armamentContent, components, earlyContext } from "./helpers/earlyContext.js";
 import {
   compatibility,

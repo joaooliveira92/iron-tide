@@ -1,14 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
-import {
-  applyEdit,
-  previewEdit,
-  improves,
-  EditError,
-  compileDesign,
-  bp,
-  kg,
-  type DraftEdit,
-} from "../src/index.js";
+import { applyEdit, EditError, compileDesign, bp, kg, type DraftEdit } from "../src/index.js";
+import { previewEdit, improves } from "../src/edits.js";
 import { ctx, draft } from "./fixtures/gunboat.js";
 
 describe("applyEdit", () => {

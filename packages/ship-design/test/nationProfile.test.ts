@@ -3,28 +3,31 @@ import { join } from "node:path";
 import { parse } from "yaml";
 import { describe, it, expect } from "vite-plus/test";
 import { CANONICAL_RESEARCH_FIELD_IDS } from "@bluewave/content-schema";
+import { catalogueForNation } from "../src/componentVariants.js";
 import {
-  catalogueForNation,
   compileDesign,
   computeCost,
-  effectiveDesignWeights,
-  fingerprintDistance,
-  lintNavalArms,
-  planProcurement,
-  preferredAmmunition,
-  profileFingerprint,
-  rankCandidatesForNation,
   nationProfileBrief,
-  resolveConstructionModifiers,
   resolveNavalProfile,
-  scoreDesign,
-  starterFor,
   treasuryCostUnits,
-  validateNavalProfiles,
-  varyDesignWeights,
-  type ProfileIssue,
   type StarterDesign,
 } from "../src/index.js";
+import {
+  effectiveDesignWeights,
+  planProcurement,
+  rankCandidatesForNation,
+  scoreDesign,
+  varyDesignWeights,
+} from "../src/nationalDesignPolicy.js";
+import {
+  fingerprintDistance,
+  profileFingerprint,
+  resolveConstructionModifiers,
+  validateNavalProfiles,
+  type ProfileIssue,
+} from "../src/nationProfile.js";
+import { lintNavalArms, preferredAmmunition } from "../src/componentVariants.js";
+import { starterFor } from "../src/shipTypeRoster.js";
 import { renderExplanation } from "./helpers/explanation.js";
 import {
   components,

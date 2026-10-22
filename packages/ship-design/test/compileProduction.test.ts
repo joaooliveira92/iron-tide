@@ -14,13 +14,9 @@ import {
 } from "@bluewave/content-schema";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  buildProductionPartModel,
-  compileDesign,
-  compileDesignFromLoadout,
-  type ProductionCompile,
-  type ProductionPartModel,
-} from "../src/index.js";
+import { partCatalogue, compileDesign } from "../src/index.js";
+import { compileDesignFromLoadout, type ProductionCompile } from "../src/compile.js";
+import { type PartCatalogue } from "../src/partQueries.js";
 import { nationalContext, readReferenceDesignEntries } from "./helpers/earlyContext.js";
 
 const shipBuilding = join(
@@ -62,7 +58,7 @@ const loadouts: ReferenceDesignLoadoutData[] = readdirSync(join(shipBuilding, "d
     ),
   );
 
-const model = buildProductionPartModel({ parts, slotTemplates, platforms });
+const catalogue = partCatalogue({ parts, slotTemplates, platforms });
 const legacyById = new Map(readReferenceDesignEntries().map((d) => [d.id, d] as const));
 
 function stripCompiledTorpedo(value: unknown): unknown {
@@ -80,15 +76,15 @@ function stripCompiledTorpedo(value: unknown): unknown {
 
 const compile = (
   loadout: ReferenceDesignLoadoutData,
-  partModel: ProductionPartModel = model,
+  partModel: PartCatalogue = catalogue,
 ): ProductionCompile =>
   compileDesignFromLoadout({
     designId: loadout.id,
     header: loadout.header,
     loadout: loadout.loadout,
-    model: partModel,
+    catalogue: partModel,
     month: loadout.month,
-    nation: { nationId: loadout.header.nation },
+    conditions: { nation: { nationId: loadout.header.nation } },
     ctx: nationalContext(loadout.month, loadout.header.nation),
   });
 
@@ -126,6 +122,23 @@ describe("production compile from a parts loadout (ticket 11d)", () => {
     expect("compiled" in result).toBe(false);
   });
 
+  it("reports a loadout the fit cannot evaluate as blocking findings with nothing derived", () => {
+    const loadout = loadouts[0]!;
+    const result = compileDesignFromLoadout({
+      designId: loadout.id,
+      header: loadout.header,
+      loadout: loadout.loadout,
+      catalogue,
+      month: "not-a-month",
+      ctx: nationalContext(loadout.month, loadout.header.nation),
+    });
+    expect(result.status).toBe("NOT_EVALUABLE");
+    if (result.status !== "NOT_EVALUABLE") return;
+    expect(result.findings.map((f) => f.id)).toContain("FIT_DATA_BAD_MONTH");
+    expect(result.findings.every((f) => f.severity === "BLOCKING")).toBe(true);
+    expect("compiled" in result).toBe(false);
+  });
+
   it("refuses a loadout whose part the resolver cannot read", () => {
     const loadout = loadouts[0]!;
     const unknown = {
@@ -156,10 +169,7 @@ describe("production compile from a parts loadout (ticket 11d)", () => {
           }
         : part,
     );
-    const result = compile(
-      loadout,
-      buildProductionPartModel({ parts: withVisual, slotTemplates, platforms }),
-    );
+    const result = compile(loadout, partCatalogue({ parts: withVisual, slotTemplates, platforms }));
     expect(result.status).toBe("ACCEPTED");
     if (result.status !== "ACCEPTED") return;
     expect(canonicalSerialize(result.compiled)).toBe(canonicalSerialize(baseline.compiled));
@@ -172,12 +182,12 @@ describe("production compile from a parts loadout (ticket 11d)", () => {
     if (baseline.status !== "ACCEPTED") return;
     const entry = loadout.loadout.entries.find((e) => {
       if ((e.mountCount ?? 1) !== 1) return false;
-      const part = model.partOf(e.part);
+      const part = catalogue.partOf(e.part);
       return part?.quantities.some((q) => q.kind === "massKg" && q.basis === "PER_PART_UNIT");
     });
     expect(entry, "a singly-mounted part with a mass quantity").toBeDefined();
     if (entry === undefined) return;
-    const part = model.partOf(entry.part)!;
+    const part = catalogue.partOf(entry.part)!;
     const deltaKg = 1234;
     const heavier = parts.map((p) =>
       p.id === part.id
@@ -191,10 +201,7 @@ describe("production compile from a parts loadout (ticket 11d)", () => {
           }
         : p,
     );
-    const result = compile(
-      loadout,
-      buildProductionPartModel({ parts: heavier, slotTemplates, platforms }),
-    );
+    const result = compile(loadout, partCatalogue({ parts: heavier, slotTemplates, platforms }));
     expect(result.status).toBe("ACCEPTED");
     if (result.status !== "ACCEPTED") return;
     const before = baseline.compiled.components.find((c) => c.instanceId === entry.id)!;
@@ -212,7 +219,7 @@ describe("production compile from a parts loadout (ticket 11d)", () => {
     );
     const result = compile(
       loadout,
-      buildProductionPartModel({ parts: unavailable, slotTemplates, platforms }),
+      partCatalogue({ parts: unavailable, slotTemplates, platforms }),
     );
     expect(result.status).toBe("REJECTED");
     if (result.status !== "REJECTED") return;

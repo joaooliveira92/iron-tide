@@ -1,3 +1,10 @@
+import type { DesignHeaderData, LoadoutData } from "@bluewave/content-schema";
+import { armourBalanceFromParts } from "./armourPartAdapter.js";
+import { resolveLoadout, type LoadoutResolutionIssue } from "./loadoutResolution.js";
+import { deriveAfterFit, type FitConditions } from "./partFit.js";
+import type { FitResult } from "./partFitTypes.js";
+import type { PartCatalogue } from "./partQueries.js";
+import { shipTypeRequirementsFor } from "./shipTypeRegistry.js";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import {
   classFacts,
@@ -37,8 +44,8 @@ import {
   compileSystemsAndMachinery,
   compileWeaponSet,
   resolveDesignComponents,
-} from "./compileStages.js";
-import { buildStabilityLumps, collectDockTreatyModernizationFindings } from "./compileRules.js";
+} from "./compile/stages.js";
+import { buildStabilityLumps, collectDockTreatyModernizationFindings } from "./compile/rules.js";
 
 export type {
   PlacementSpec,
@@ -57,7 +64,7 @@ export type {
   ResolvedTorpedoMount,
 } from "./compileShared.js";
 
-export interface CompileResolvedOptions {
+interface CompileResolvedOptions {
   readonly balance?: ShipBalance;
 }
 
@@ -73,7 +80,7 @@ export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDes
   return compileResolved(draft, plant, resolved, ctx, findings);
 }
 
-export function compileResolved(
+function compileResolved(
   intent: DesignIntent,
   plant: PropulsionPlant,
   resolved: readonly Resolved[],
@@ -277,4 +284,101 @@ export function compileResolved(
     valid: !hasBlocking(sorted),
   };
   return { ...body, hash: sha256Hex(canonicalSerialize(withoutSubjects(body))) };
+}
+
+export type ProductionCompile =
+  | {
+      readonly status: "ACCEPTED";
+      readonly fit: FitResult;
+      readonly compiled: CompiledDesign;
+    }
+  | {
+      readonly status: "REJECTED" | "NOT_EVALUABLE";
+      readonly fit: FitResult;
+      readonly findings: readonly Finding[];
+    }
+  | {
+      readonly status: "UNTRANSLATED";
+      readonly issues: readonly LoadoutResolutionIssue[];
+    };
+
+export interface CompileDesignFromLoadoutInput {
+  readonly designId: string;
+  readonly header: DesignHeaderData;
+  readonly loadout: LoadoutData;
+  readonly catalogue: PartCatalogue;
+  readonly month: string;
+  readonly ctx: ShipContext;
+  readonly conditions?: FitConditions;
+}
+
+function fitFindings(fit: FitResult): Finding[] {
+  const blocking = (id: string, what: string, parameters: Record<string, string>): Finding => ({
+    id,
+    severity: "BLOCKING",
+    what,
+    why: what,
+    consequence: "The design cannot be built until the loadout fits.",
+    remedies: [],
+    evidence: { formulaId: id, inputs: {}, threshold: 0, value: 0 },
+    parameters,
+  });
+  return [
+    ...fit.findings.map((f) =>
+      blocking(f.code, f.message, {
+        path: f.path,
+        slot: f.slot,
+        ...(f.part ? { part: f.part } : {}),
+      }),
+    ),
+    ...fit.dataIssues.map((d) => blocking(d.code, d.message, { path: d.path })),
+  ];
+}
+
+export function compileDesignFromLoadout(input: CompileDesignFromLoadoutInput): ProductionCompile {
+  const resolution = resolveLoadout({
+    designId: input.designId,
+    header: input.header,
+    loadout: input.loadout,
+    partOf: input.catalogue.partOf,
+    slotOf: input.catalogue.slotLookup(input.loadout.platform),
+  });
+  if (resolution.status === "UNRESOLVED") {
+    return { status: "UNTRANSLATED", issues: resolution.issues };
+  }
+
+  const requirements = shipTypeRequirementsFor(input.ctx, input.header.requirement.category);
+
+  const fit = input.catalogue.validate({
+    loadout: input.loadout,
+    month: input.month,
+    conditions: {
+      ...input.conditions,
+      ...(requirements.length === 0 ? {} : { shipTypeRequirements: requirements }),
+    },
+  });
+
+  const outcome = deriveAfterFit(fit, () => {
+    const findings: Finding[] = [];
+    const balance = {
+      ...input.ctx.balance,
+      armour: armourBalanceFromParts(input.ctx.balance.armour, resolution.armourParts),
+    };
+    return compileResolved(
+      resolution.intent,
+      resolution.plant,
+      resolution.resolved,
+      input.ctx,
+      findings,
+      { balance },
+    );
+  });
+  if (outcome.derived) {
+    return { status: "ACCEPTED", fit: outcome.fit, compiled: outcome.value };
+  }
+  return {
+    status: outcome.fit.status === "NOT_EVALUABLE" ? "NOT_EVALUABLE" : "REJECTED",
+    fit: outcome.fit,
+    findings: fitFindings(outcome.fit),
+  };
 }

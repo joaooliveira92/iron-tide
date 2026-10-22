@@ -9,8 +9,8 @@ import {
   buildArmamentCatalogue,
   buildArmamentUsageManifest,
   lintArmamentContent,
-  type AuthoredArmamentContent,
-} from "../src/index.js";
+} from "../src/armamentContent.js";
+import { type AuthoredArmamentContent } from "../src/index.js";
 import {
   armamentContent,
   armamentCoverageInput,

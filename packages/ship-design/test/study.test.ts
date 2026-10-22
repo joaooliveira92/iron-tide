@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import {
-  assessSimilarity,
-  checkStudyBalance,
-  StudyContractError,
-  studyTerms,
-  type SimilarityProfile,
-} from "../src/index.js";
+import { assessSimilarity, studyTerms } from "../src/index.js";
+import { checkStudyBalance, StudyContractError, type SimilarityProfile } from "../src/study.js";
 
 const base: SimilarityProfile = {
   hullCategory: "SURFACE_COMBATANT",

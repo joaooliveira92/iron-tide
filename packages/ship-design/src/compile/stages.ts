@@ -4,20 +4,20 @@ import {
   type ArrangementResult,
   type ResolvedPlacement,
   type ZoneId,
-} from "./arrangement.js";
+} from "../arrangement.js";
 import {
   armourAvailabilityFindings,
   compileArmour,
   type ArmourInput,
   type ArmourResult,
-} from "./armour.js";
-import type { ComponentDef } from "./component.js";
-import { resolveInstalledWeapon, nationHasArmamentContent } from "./armamentContent.js";
+} from "../armour.js";
+import type { ComponentDef } from "../component.js";
+import { resolveInstalledWeapon, nationHasArmamentContent } from "../armamentContent.js";
 import {
   componentAccessOf,
   mapArmamentFindings,
   toCompiledWeaponArmament,
-} from "./armamentCompile.js";
+} from "../armamentCompile.js";
 import {
   cmpStr,
   f,
@@ -30,23 +30,23 @@ import {
   type Resolved,
   type ShipBalance,
   type ShipContext,
-} from "./compileShared.js";
-import type { Finding } from "./findings.js";
-import { about, placementTarget, type FindingTarget } from "./findings.js";
-import { compileHull, type HullResult } from "./hull.js";
-import { aluminiumFitting } from "./aluminium.js";
-import type { AntiAircraftExpansion } from "./antiAircraft.js";
-import { colonialFitting } from "./colonialService.js";
-import { emptyLedger, withLine, type LedgerCategory } from "./ledger.js";
-import { compileMachinery, type MachineryResult, type PropulsionPlant } from "./machinery.js";
-import { compileSystems, type SystemsResult } from "./systems.js";
+} from "../compileShared.js";
+import type { Finding } from "../findings.js";
+import { about, placementTarget, type FindingTarget } from "../findings.js";
+import { compileHull, type HullResult } from "../hull.js";
+import { aluminiumFitting } from "../aluminium.js";
+import type { AntiAircraftExpansion } from "../antiAircraft.js";
+import { colonialFitting } from "../colonialService.js";
+import { emptyLedger, withLine, type LedgerCategory } from "../ledger.js";
+import { compileMachinery, type MachineryResult, type PropulsionPlant } from "../machinery.js";
+import { compileSystems, type SystemsResult } from "../systems.js";
 import {
   expandTertiary,
   NO_TERTIARY_BALANCE,
   TERTIARY_STATION_PERMILLE,
   TERTIARY_ZONE,
-} from "./tertiary.js";
-import { compileWeapons, type ArcObstacle, type GunMount, type WeaponsResult } from "./weapons.js";
+} from "../tertiary.js";
+import { compileWeapons, type ArcObstacle, type GunMount, type WeaponsResult } from "../weapons.js";
 
 type AmmoMount = WeaponsResult["mounts"][number];
 

@@ -13,13 +13,13 @@ import {
   type SlotTemplateData,
 } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
+import { FIT_FINDING_CODES, type FitResult } from "../src/partFitTypes.js";
 import {
-  FIT_FINDING_CODES,
   deriveAfterFit,
   validateLoadoutFit,
+  type FitConditions,
   type FitInput,
-  type FitResult,
-} from "../src/index.js";
+} from "../src/partFit.js";
 
 const PROVENANCE = {
   sourceStatus: "PLACEHOLDER",
@@ -234,24 +234,24 @@ const PARTS: readonly FlattenedPart[] = [
 const entry = (value: LoadoutEntryData): LoadoutEntryData => value;
 const gunsOf = (id: string, n: number) => ({ guns: [{ part: id, mountCount: n }] });
 
-function fit(
-  entries: readonly LoadoutEntryData[],
-  options: Partial<Omit<FitInput, "loadout" | "parts">> & { parts?: readonly FlattenedPart[] } = {},
-): FitResult {
-  const loadout = decodeStrict(LoadoutSchema, { platform: "fixture_hull", entries });
+type FitOptions = FitConditions & {
+  readonly parts?: readonly FlattenedPart[];
+  readonly slotTemplates?: FitInput["catalogue"]["slotTemplates"];
+  readonly platforms?: FitInput["catalogue"]["platforms"];
+  readonly month?: string;
+};
+
+function fit(entries: readonly LoadoutEntryData[], options: FitOptions = {}): FitResult {
+  const { parts, slotTemplates, platforms, month, ...conditions } = options;
   return validateLoadoutFit({
-    parts: options.parts ?? PARTS,
-    slotTemplates: options.slotTemplates ?? [TEMPLATE],
-    platforms: options.platforms ?? [PLATFORM],
-    loadout,
-    month: options.month ?? "1890-01",
-    ...(options.nation !== undefined ? { nation: options.nation } : {}),
-    ...(options.ammunitionCompatibility !== undefined
-      ? { ammunitionCompatibility: options.ammunitionCompatibility }
-      : {}),
-    ...(options.shipTypeRequirements !== undefined
-      ? { shipTypeRequirements: options.shipTypeRequirements }
-      : {}),
+    catalogue: {
+      parts: parts ?? PARTS,
+      slotTemplates: slotTemplates ?? [TEMPLATE],
+      platforms: platforms ?? [PLATFORM],
+    },
+    loadout: decodeStrict(LoadoutSchema, { platform: "fixture_hull", entries }),
+    month: month ?? "1890-01",
+    conditions,
   });
 }
 
@@ -543,20 +543,20 @@ describe("fit: data that cannot be evaluated is not an incompatibility", () => {
   it("an unknown platform, template and duplicate part or slot are data issues", () => {
     const loadout = decodeStrict(LoadoutSchema, { platform: "missing", entries: [] });
     const r = validateLoadoutFit({
-      parts: PARTS,
-      slotTemplates: [TEMPLATE],
-      platforms: [PLATFORM],
+      catalogue: { parts: PARTS, slotTemplates: [TEMPLATE], platforms: [PLATFORM] },
       loadout,
       month: "1890-01",
     });
     expect(dataCodes(r)).toEqual(["FIT_DATA_UNKNOWN_PLATFORM"]);
 
     const dup = validateLoadoutFit({
-      parts: [...PARTS, gun("g12", 1)],
-      slotTemplates: [],
-      platforms: [
-        { ...PLATFORM, slotTemplates: ["nope"], slots: [slot({ id: "a", accepts: ["gun"] })] },
-      ],
+      catalogue: {
+        parts: [...PARTS, gun("g12", 1)],
+        slotTemplates: [],
+        platforms: [
+          { ...PLATFORM, slotTemplates: ["nope"], slots: [slot({ id: "a", accepts: ["gun"] })] },
+        ],
+      },
       loadout: decodeStrict(LoadoutSchema, { platform: "fixture_hull", entries: [] }),
       month: "1890-01",
     });

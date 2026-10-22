@@ -3,17 +3,19 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
 import {
   APPROVED_DIFFS_SCHEMA,
+  checkWithApprovedDiffs,
+  decodeApprovedDiffs,
+} from "../src/index.js";
+import {
   EQUIVALENCE_REPORT_SCHEMA,
   PINNED_COVERAGE,
   checkEquivalenceReport,
-  checkWithApprovedDiffs,
   compareMetrics,
-  decodeApprovedDiffs,
   serializeEquivalenceReport,
   type DesignReport,
   type EquivalenceReport,
   type MetricRow,
-} from "../src/index.js";
+} from "../src/equivalenceReport.js";
 import { runEquivalence } from "./helpers/equivalenceRun.js";
 import { nationalContext, shipTypes } from "./helpers/earlyContext.js";
 

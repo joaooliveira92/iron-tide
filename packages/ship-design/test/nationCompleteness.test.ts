@@ -1,14 +1,11 @@
 import { describe, it, expect } from "vite-plus/test";
+import { fingerprintDistance, profileFingerprint, type Provenance } from "../src/nationProfile.js";
 import {
-  fingerprintDistance,
-  profileFingerprint,
   validateAllNations,
   validateArmamentContent,
   validateNationCompleteness,
-  type NationNavalProfile,
-  type Provenance,
-  type StarterDesign,
-} from "../src/index.js";
+} from "../src/nationCompleteness.js";
+import { type NationNavalProfile, type StarterDesign } from "../src/index.js";
 import {
   components,
   navalProfiles,

@@ -15,7 +15,8 @@ import type { GunPartModel } from "./gunPartAdapter.js";
 import type { NationNavalProfile } from "./nationProfile.js";
 import { platformSlots } from "./partCompatibility.js";
 import type { CompatibilityModel } from "./partCompatibility.js";
-import { deriveAfterFit, validateLoadoutFit } from "./partFit.js";
+import { deriveAfterFit } from "./partFit.js";
+import { partCatalogue } from "./partQueries.js";
 import type { FitMountCountRanges, FitResult } from "./partFitTypes.js";
 import { resolveGunPlacementThroughParts } from "./partReadPath.js";
 import type { UnresolvedGunPlacement } from "./partReadPath.js";
@@ -316,15 +317,18 @@ export function runCandidateDesign(
   }
 
   const requirements = shipTypeRequirementsFor(ctx, draft.requirement.category);
-  const fit = validateLoadoutFit({
+  const fit = partCatalogue({
     parts: uniqueParts(parts),
     slotTemplates: env.compatibility.slotTemplates,
     platforms: env.compatibility.platforms,
+  }).validate({
     loadout: { platform: draft.hull.hullFormId, entries },
     month: design.month,
-    nation: { nationId },
-    mountCountRanges: ranges satisfies FitMountCountRanges,
-    ...(requirements.length === 0 ? {} : { shipTypeRequirements: requirements }),
+    conditions: {
+      nation: { nationId },
+      mountCountRanges: ranges satisfies FitMountCountRanges,
+      ...(requirements.length === 0 ? {} : { shipTypeRequirements: requirements }),
+    },
   });
 
   const partById = new Map(uniqueParts(parts).map((p) => [p.id, p] as const));

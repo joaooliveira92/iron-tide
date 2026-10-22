@@ -2,7 +2,6 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   applyEdit,
   batterySummary,
-  changeKindOf,
   changeKindsOf,
   compileDesign,
   EditError,
@@ -10,6 +9,7 @@ import {
   type ComponentSummary,
   type PlacementSpec,
 } from "../src/index.js";
+import { changeKindOf } from "../src/revision.js";
 import { ctx, draft } from "./fixtures/gunboat.js";
 
 const comp = (

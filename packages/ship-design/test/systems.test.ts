@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
-import {
-  compileSystems,
-  checkFindingShape,
-  type SystemsBalance,
-  type SystemsInput,
-} from "../src/index.js";
+import { compileSystems, type SystemsBalance, type SystemsInput } from "../src/systems.js";
+import { checkFindingShape } from "../src/findings.js";
 
 const bal: SystemsBalance = {
   caseProfileBp: {

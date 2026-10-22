@@ -1,15 +1,9 @@
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  compileDesign,
-  findingKey,
-  KNOWN_RULES,
-  verifyCompiledHash,
-  withRuleSubject,
-  withoutSubjects,
-  type DesignDraft,
-  type Finding,
-} from "../src/index.js";
+import { compileDesign, findingKey, type DesignDraft, type Finding } from "../src/index.js";
+import { KNOWN_RULES, withRuleSubject } from "../src/findingSubjects.js";
+import { verifyCompiledHash } from "../src/persistence.js";
+import { withoutSubjects } from "../src/findings.js";
 import { earlyContext } from "./helpers/earlyContext.js";
 import { havock, majestic } from "./helpers/references.js";
 

@@ -3,13 +3,12 @@ import {
   compileDesign,
   applyEdit,
   EditError,
-  changeKindOf,
-  checkFindingShape,
-  LEDGER_CATEGORIES,
-  ledgerTotal,
   type DesignDraft,
   type ShipContext,
 } from "../src/index.js";
+import { changeKindOf } from "../src/revision.js";
+import { checkFindingShape } from "../src/findings.js";
+import { LEDGER_CATEGORIES, ledgerTotal } from "../src/ledger.js";
 import { ctx, draft } from "./fixtures/gunboat.js";
 
 const ids = (r: ReturnType<typeof compileDesign>) => r.findings.map((f) => f.id);

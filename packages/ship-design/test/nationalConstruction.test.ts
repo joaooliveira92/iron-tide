@@ -4,9 +4,9 @@ import {
   accessEffect,
   applyNationalConstructionEconomics,
   DEFAULT_ACCESS_POLICY,
-  resolveNationalConstruction,
   type ComponentAccessPolicy,
-} from "../src/index.js";
+} from "../src/nationalConstruction.js";
+import { resolveNationalConstruction } from "../src/index.js";
 import { navalProfiles } from "./helpers/earlyContext.js";
 
 const uk = navalProfiles.find((p) => p.nationId === "uk")!;

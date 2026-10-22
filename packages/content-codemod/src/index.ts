@@ -18,5 +18,5 @@ export {
 export { fromYaml, sortKeysDeep, toYaml } from "./yaml.js";
 export { validateStagingDir, type StagingPathOptions } from "./paths.js";
 export { publishMigration, type PublishOptions, type PublishResult } from "./publish.js";
-export { canonicalMountId, planFromLegacy, planFromStaged } from "./plan.js";
+export { planFromLegacy, planFromStaged } from "./plan.js";
 export { loadLegacySource, readStagedSource, type LoadOptions } from "./load.js";

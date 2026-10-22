@@ -32,17 +32,25 @@ import { isMonth } from "./partLifecycle.js";
 
 const DEFAULT_ENTRY_MOUNT_COUNT = 1;
 
-export interface FitInput {
+export interface FitCatalogue {
   readonly parts: readonly FlattenedPart[];
   readonly slotTemplates: readonly SlotTemplateData[];
   readonly platforms: readonly PlatformData[];
-  readonly loadout: LoadoutData;
-  readonly month: string;
+}
+
+export interface FitConditions {
   readonly nation?: FitNationInput;
   readonly ammunitionCompatibility?: FitAmmunitionCompatibility;
   readonly mountCountRanges?: FitMountCountRanges;
   readonly unlockedTechnologies?: readonly string[];
   readonly shipTypeRequirements?: readonly ShipTypeRequirement[];
+}
+
+export interface FitInput {
+  readonly catalogue: FitCatalogue;
+  readonly loadout: LoadoutData;
+  readonly month: string;
+  readonly conditions?: FitConditions;
 }
 
 type Entry = NestedLoadoutEntry;
@@ -769,6 +777,7 @@ function entryIdentityHolds(
 }
 
 export function validateLoadoutFit(input: FitInput): FitResult {
+  const conditions = input.conditions ?? {};
   const out = new Collector();
   const finish = (platform: string): FitResult => {
     const findings = [...out.findings].sort(compareFindings);
@@ -800,7 +809,7 @@ export function validateLoadoutFit(input: FitInput): FitResult {
     );
   }
   const parts = new Map<string, FlattenedPart>();
-  for (const part of input.parts) {
+  for (const part of input.catalogue.parts) {
     if (parts.has(part.id)) {
       out.data(
         "FIT_DATA_DUPLICATE_PART",
@@ -812,7 +821,7 @@ export function validateLoadoutFit(input: FitInput): FitResult {
       parts.set(part.id, part);
     }
   }
-  const platform = input.platforms.find((p) => p.id === input.loadout.platform);
+  const platform = input.catalogue.platforms.find((p) => p.id === input.loadout.platform);
   if (platform === undefined) {
     out.data(
       "FIT_DATA_UNKNOWN_PLATFORM",
@@ -851,7 +860,7 @@ export function validateLoadoutFit(input: FitInput): FitResult {
   if (!entryIdentityHolds(input.loadout.entries, out)) return finish(platform.id);
   const rawSlots: SlotData[] = [];
   for (const templateId of platform.slotTemplates) {
-    const template = input.slotTemplates.find((t) => t.id === templateId);
+    const template = input.catalogue.slotTemplates.find((t) => t.id === templateId);
     if (template === undefined) {
       out.data(
         "FIT_DATA_UNKNOWN_TEMPLATE",
@@ -871,10 +880,10 @@ export function validateLoadoutFit(input: FitInput): FitResult {
     monthOk,
     platform: platform.id,
     platformSlots,
-    nation: input.nation,
-    ammo: input.ammunitionCompatibility,
-    countRanges: input.mountCountRanges,
-    unlocked: input.unlockedTechnologies && new Set(input.unlockedTechnologies),
+    nation: conditions.nation,
+    ammo: conditions.ammunitionCompatibility,
+    countRanges: conditions.mountCountRanges,
+    unlocked: conditions.unlockedTechnologies && new Set(conditions.unlockedTechnologies),
     out,
   };
   const placed: PlacedEntry[] = [];
@@ -887,7 +896,7 @@ export function validateLoadoutFit(input: FitInput): FitResult {
     placed,
   );
   magazineRelationships(ctx, placed);
-  evaluateTypeRequirements(ctx, input.loadout.entries, input.shipTypeRequirements ?? []);
+  evaluateTypeRequirements(ctx, input.loadout.entries, conditions.shipTypeRequirements ?? []);
   return finish(platform.id);
 }
 

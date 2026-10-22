@@ -6,10 +6,10 @@ import {
   decodeDesignFile,
   EditError,
   encodeDesignFile,
-  headerFromDraft,
   validateDraftShape,
   type DesignDraft,
 } from "../src/index.js";
+import { headerFromDraft } from "../src/partCatalogueReaders.js";
 import {
   earlyContext,
   readReferenceDesignEntries,

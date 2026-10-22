@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
-import { kg, bp, mulBp, ceilDiv, knotsToUmPerSec, UnitError } from "../src/index.js";
+import { kg, bp } from "../src/index.js";
+import { mulBp, ceilDiv, knotsToUmPerSec, UnitError } from "../src/units.js";
 
 describe("units", () => {
   it("rejects non-integers, unsafe integers and negatives", () => {

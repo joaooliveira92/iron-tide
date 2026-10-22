@@ -1,4 +1,4 @@
-import type { ReferenceDesignClass } from "../../src/index.js";
+import { type ReferenceDesignClass } from "../../src/nationCompleteness.js";
 
 export const REFERENCE_DESIGN_CLASSIFICATIONS: Record<string, ReferenceDesignClass> = {
   alexandra_1877: "HISTORICAL_RECONSTRUCTION",

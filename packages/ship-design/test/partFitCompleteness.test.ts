@@ -9,7 +9,7 @@ import {
   type NestedLoadoutEntry,
 } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
-import { validateLoadoutFit, type FitInput } from "../src/index.js";
+import { validateLoadoutFit, type FitInput } from "../src/partFit.js";
 
 const PROVENANCE = {
   sourceStatus: "PLACEHOLDER",
@@ -46,9 +46,7 @@ const input = (
   platformExtra: Record<string, unknown> = {},
   month = "1885-06",
 ): FitInput => ({
-  parts: [part()],
-  slotTemplates: [template],
-  platforms: [platform(platformExtra)],
+  catalogue: { parts: [part()], slotTemplates: [template], platforms: [platform(platformExtra)] },
   loadout: decodeStrict(LoadoutSchema, { platform: "p", entries }),
   month,
 });
@@ -121,9 +119,17 @@ describe("unlocked-technology requirements", () => {
       lifecycle: { availableFrom: "1880-01", requires: ["tech_x"] },
     });
     const base = input([entry()]);
-    const locked = validateLoadoutFit({ ...base, parts: [gated], unlockedTechnologies: [] });
+    const locked = validateLoadoutFit({
+      ...base,
+      catalogue: { ...base.catalogue, parts: [gated] },
+      conditions: { unlockedTechnologies: [] },
+    });
     expect(locked.findings.map((f) => f.code)).toEqual(["FIT_TECHNOLOGY_LOCKED"]);
-    const open = validateLoadoutFit({ ...base, parts: [gated], unlockedTechnologies: ["tech_x"] });
+    const open = validateLoadoutFit({
+      ...base,
+      catalogue: { ...base.catalogue, parts: [gated] },
+      conditions: { unlockedTechnologies: ["tech_x"] },
+    });
     expect(open.status).toBe("ACCEPTED");
   });
 });

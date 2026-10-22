@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vite-plus/test";
-import { parseFormula, evaluate, freeVariables, FormulaError } from "../src/index.js";
+import { parseFormula, freeVariables } from "../src/formula/parse.js";
+import { evaluate } from "../src/formula/eval.js";
+import { FormulaError } from "../src/formula/ast.js";
 
 const run = (src: string, vars: Record<string, number> = {}, tables = {}) =>
   evaluate(parseFormula(src), { vars, tables });

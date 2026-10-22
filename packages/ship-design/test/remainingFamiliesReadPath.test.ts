@@ -9,41 +9,37 @@ import {
 import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
 import { num, type Resolved } from "../src/compileShared.js";
-import { resolveDesignComponents } from "../src/compileStages.js";
+import { resolveDesignComponents } from "../src/compile/stages.js";
 import {
   ammunitionPatternFromPart,
-  armourAvailabilityFindings,
-  armourBalanceFromParts,
-  armourMaterialOptions,
-  armourRegionFromEntry,
   buildAmmunitionPartModel,
-  buildArmamentCatalogue,
-  buildArmourPartModel,
-  buildFittingPartModel,
-  buildGunMountPart,
-  buildLauncherPartModel,
-  buildPlantPartModel,
-  catalogueForNation,
+} from "../src/ammunitionPartAdapter.js";
+import { armourAvailabilityFindings } from "../src/armour.js";
+import { armourBalanceFromParts, armourRegionFromEntry } from "../src/armourPartAdapter.js";
+import {
+  armourMaterialOptions,
   compileDesign,
-  fittingPlacementValues,
-  machineryPlanFromEntry,
-  platformSlots,
-  propulsionPlantFromPart,
-  quantityLines,
-  readComponentQuantities,
-  totalOf,
-  translateArmourRegion,
-  translateFittingPlacement,
-  translateMachinery,
-  translateTubePlacement,
   type ArmourBalance,
   type ArmourRegion,
   type ComponentDef,
   type DesignDraft,
-  type FittingPlacementTranslation,
   type PropulsionPlant,
-  type QuantityLine,
 } from "../src/index.js";
+import { buildArmourPartModel, translateArmourRegion } from "../src/armourPartAdapter.js";
+import { buildFittingPartModel, translateFittingPlacement } from "../src/fittingPartAdapter.js";
+import { buildLauncherPartModel, translateTubePlacement } from "../src/torpedoPartAdapter.js";
+import { buildPlantPartModel, translateMachinery } from "../src/plantPartAdapter.js";
+import { catalogueForNation } from "../src/componentVariants.js";
+import { platformSlots } from "../src/partCompatibility.js";
+import { buildArmamentCatalogue } from "../src/armamentContent.js";
+import { buildGunMountPart } from "../src/gunPartAdapter.js";
+import {
+  fittingPlacementValues,
+  type FittingPlacementTranslation,
+} from "../src/fittingPartAdapter.js";
+import { machineryPlanFromEntry, propulsionPlantFromPart } from "../src/plantPartAdapter.js";
+import { quantityLines, totalOf, type QuantityLine } from "../src/partQuantities.js";
+import { readComponentQuantities } from "../src/legacyComponentQuantities.js";
 import {
   armamentContent,
   components,

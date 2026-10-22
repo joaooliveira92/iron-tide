@@ -2,20 +2,22 @@ import { describe, it, expect } from "vite-plus/test";
 import { draft } from "./fixtures/gunboat.js";
 import {
   compileArmour,
+  regionWeightKg,
+  penetrationMarginBp,
+  type ArmourInput,
+  type ThreatProfile,
+} from "../src/armour.js";
+import {
   armourMaterialOptions,
   newArmourRegion,
   allOrNothingRegions,
   applyEdit,
   EditError,
-  changeKindOf,
-  regionWeightKg,
-  penetrationMarginBp,
-  checkFindingShape,
   type ArmourBalance,
-  type ArmourInput,
   type ArmourRegion,
-  type ThreatProfile,
 } from "../src/index.js";
+import { changeKindOf } from "../src/revision.js";
+import { checkFindingShape } from "../src/findings.js";
 
 const bal: ArmourBalance = {
   steelKgPerM3: 7_850,

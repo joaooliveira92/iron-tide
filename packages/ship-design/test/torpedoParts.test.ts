@@ -9,18 +9,16 @@ import { canonicalSerialize } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
 import {
   buildCompatibilitySlots,
-  buildLauncherPartModel,
   buildPartCatalogue,
-  buildTorpedoPartModel,
   compileTorpedo,
-  partsForSlot,
-  platformSlots,
-  resolvePart,
-  TORPEDO_SOURCE_FIELDS,
-  validateLoadoutFit,
-  type PartCatalogue,
+  partCatalogue,
   type SourceCatalogue,
 } from "../src/index.js";
+import { buildLauncherPartModel } from "../src/torpedoPartAdapter.js";
+import { platformSlots } from "../src/partCompatibility.js";
+import { buildTorpedoPartModel, TORPEDO_SOURCE_FIELDS } from "../src/torpedoPartBuilder.js";
+import { validateLoadoutFit } from "../src/partFit.js";
+import { type PartCatalogue } from "../src/partQueries.js";
 import {
   armamentContent,
   components,
@@ -45,7 +43,7 @@ const source: SourceCatalogue = {
 const built = buildPartCatalogue(source);
 const partById = new Map(built.parts.map((p) => [p.id, p] as const));
 const torpedoParts = built.parts.filter((p) => p.family === "torpedo");
-const catalogue: PartCatalogue = { parts: built.parts, slotTemplates: [], platforms: [] };
+const catalogue: PartCatalogue = partCatalogue({ parts: built.parts });
 const launcherModel = buildLauncherPartModel({
   components,
   profiles: navalProfiles,
@@ -120,8 +118,8 @@ describe("the torpedo catalogue (13a)", () => {
 
 describe("the 1884 Whitehead revision (13a, ticket AC 4)", () => {
   it("resolves before and after the 1884 revision from the compiled production part", () => {
-    const before = resolvePart(catalogue, WHITEHEAD, "1883-12");
-    const after = resolvePart(catalogue, WHITEHEAD, "1884-01");
+    const before = catalogue.resolve(WHITEHEAD, "1883-12");
+    const after = catalogue.resolve(WHITEHEAD, "1884-01");
     expect(before?.revision).toBe("base");
     expect(before?.spec["warheadExplosiveMassKg"]).toBe(12);
     expect(after?.revision).toBe("1884-01");
@@ -255,8 +253,7 @@ describe("the compiled torpedo contract (SPM-R17)", () => {
 
 describe("launcher compatibility and waivers with first-class torpedo parts", () => {
   const launcherSlotParts = (launcherId: string, month: string): readonly string[] => {
-    const result = partsForSlot({
-      catalogue,
+    const result = catalogue.forSlot({
       owner: { part: launcherId },
       slot: "torpedo",
       month,
@@ -315,9 +312,11 @@ function launcherFit(
     ],
   });
   return validateLoadoutFit({
-    parts: [partWithWaivers, torpedo],
-    slotTemplates: compatibility.slotTemplates,
-    platforms: compatibility.platforms,
+    catalogue: {
+      parts: [partWithWaivers, torpedo],
+      slotTemplates: compatibility.slotTemplates,
+      platforms: compatibility.platforms,
+    },
     loadout,
     month,
   });

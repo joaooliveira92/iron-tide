@@ -14,16 +14,9 @@ import {
 } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
 
-import {
-  CLASSIFIED_SHIP_TYPES,
-  ERA_BANDS,
-  SHIP_ROLES,
-  SHIP_TYPES,
-  SHIP_TYPE_CATEGORIES,
-  SHIP_TYPE_IDS,
-  type ShipTypeDefinition,
-  type ShipTypeId,
-} from "../src/index.js";
+import { CLASSIFIED_SHIP_TYPES } from "../src/classificationRules.js";
+import { ERA_BANDS, SHIP_ROLES, SHIP_TYPE_IDS, type ShipTypeDefinition } from "../src/shipTypes.js";
+import { SHIP_TYPES, SHIP_TYPE_CATEGORIES, type ShipTypeId } from "../src/index.js";
 
 const path = join(
   import.meta.dirname,

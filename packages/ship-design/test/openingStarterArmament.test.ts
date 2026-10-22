@@ -5,9 +5,9 @@ import {
   toEngineDesign,
   type CompiledDesign,
   type EngineAdapterOptions,
-  type EngineDesignFields,
   type StarterDesign,
 } from "../src/index.js";
+import { type EngineDesignFields } from "../src/engineAdapter.js";
 import { armamentContent, nationalContext, shipBuildingContent } from "./helpers/earlyContext.js";
 
 const OPENING_MONTH = "1880-01";

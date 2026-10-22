@@ -7,7 +7,7 @@ import {
   type FlattenedPart,
 } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
-import { partCategory, partCategoryOrThrow } from "../src/index.js";
+import { partCategory, partCategoryOrThrow } from "../src/partCategory.js";
 
 const root = join(import.meta.dirname, "..", "..", "..", "content", "production", "1880");
 const shipBuilding = join(root, "ship-building");

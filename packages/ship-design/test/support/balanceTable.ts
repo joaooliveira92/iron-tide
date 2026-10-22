@@ -1,4 +1,5 @@
-import { CVE_LABEL, type BalanceRow } from "../../src/index.js";
+import { CVE_LABEL } from "../../src/cve.js";
+import { type BalanceRow } from "../../src/report.js";
 
 const pct = (bp: number) => `${(bp / 100).toFixed(1)}%`;
 

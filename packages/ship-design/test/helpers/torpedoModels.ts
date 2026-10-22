@@ -1,5 +1,5 @@
 import type { Provenance } from "@bluewave/content-schema";
-import type { TorpedoModelSource } from "../../src/index.js";
+import { type TorpedoModelSource } from "../../src/index.js";
 
 const TORPEDO_AVAILABLE_FROM: Readonly<Record<string, string>> = {
   whitehead_14in_1886: "1880-01",

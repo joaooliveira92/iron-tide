@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
-import { generateCandidates, compileDesign, ARCHETYPE_IDS, type AiRequest } from "../src/index.js";
+import { generateCandidates, compileDesign } from "../src/index.js";
+import { ARCHETYPE_IDS, type AiRequest } from "../src/ai.js";
 import { aiEnv, ctx, draft } from "./fixtures/gunboat.js";
 
 const req = (seed: string, o: Partial<AiRequest> = {}): AiRequest => ({
