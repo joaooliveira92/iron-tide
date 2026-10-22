@@ -18,23 +18,19 @@ import { armourAvailabilityFindings } from "../src/armour.js";
 import { armourBalanceFromParts, armourRegionFromEntry } from "../src/armourPartAdapter.js";
 import {
   armourMaterialOptions,
-  buildArmourPartModel,
-  buildFittingPartModel,
-  buildLauncherPartModel,
-  buildPlantPartModel,
-  catalogueForNation,
   compileDesign,
-  platformSlots,
-  translateArmourRegion,
-  translateFittingPlacement,
-  translateMachinery,
-  translateTubePlacement,
   type ArmourBalance,
   type ArmourRegion,
   type ComponentDef,
   type DesignDraft,
   type PropulsionPlant,
 } from "../src/index.js";
+import { buildArmourPartModel, translateArmourRegion } from "../src/armourPartAdapter.js";
+import { buildFittingPartModel, translateFittingPlacement } from "../src/fittingPartAdapter.js";
+import { buildLauncherPartModel, translateTubePlacement } from "../src/torpedoPartAdapter.js";
+import { buildPlantPartModel, translateMachinery } from "../src/plantPartAdapter.js";
+import { catalogueForNation } from "../src/componentVariants.js";
+import { platformSlots } from "../src/partCompatibility.js";
 import { buildArmamentCatalogue } from "../src/armamentContent.js";
 import { buildGunMountPart } from "../src/gunPartAdapter.js";
 import {

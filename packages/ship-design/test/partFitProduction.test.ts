@@ -8,21 +8,14 @@ import {
 } from "@bluewave/content-schema";
 import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  ARMOUR_REGIONS,
-  buildArmourPartModel,
-  buildFittingPartModel,
-  buildLauncherPartModel,
-  buildPlantPartModel,
-  catalogueForNation,
-  compileDesign,
-  platformSlots,
-  translateArmourRegion,
-  translateFittingPlacement,
-  translateMachinery,
-  translateTubePlacement,
-  type FitMountCountRanges,
-} from "../src/index.js";
+import { ARMOUR_REGIONS, compileDesign } from "../src/index.js";
+import { buildArmourPartModel, translateArmourRegion } from "../src/armourPartAdapter.js";
+import { buildFittingPartModel, translateFittingPlacement } from "../src/fittingPartAdapter.js";
+import { buildLauncherPartModel, translateTubePlacement } from "../src/torpedoPartAdapter.js";
+import { buildPlantPartModel, translateMachinery } from "../src/plantPartAdapter.js";
+import { catalogueForNation } from "../src/componentVariants.js";
+import { platformSlots } from "../src/partCompatibility.js";
+import { type FitMountCountRanges } from "../src/partFitTypes.js";
 import { buildAmmunitionPartModel } from "../src/ammunitionPartAdapter.js";
 import { retirementMonthFromAvailableUntil } from "../src/partLifecycle.js";
 import { validateLoadoutFit } from "../src/partFit.js";

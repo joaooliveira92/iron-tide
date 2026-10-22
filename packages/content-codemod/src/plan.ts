@@ -11,35 +11,18 @@ import type {
   DesignHeaderData,
   FlattenedPart,
   LoadoutData,
-  LoadoutEntryData,
   PlatformData,
   SlotTemplateData,
 } from "@bluewave/content-schema";
 import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
 import {
-  buildArmourPartModel,
   buildCompatibilitySlots,
-  buildFittingPartModel,
-  buildGunPartModel,
-  buildLauncherPartModel,
   buildPartCatalogue,
-  buildPlantPartModel,
-  catalogueForNation,
-  gunKey,
-  headerFromDraft,
-  isSingleGunMount,
-  mountPartIdFor,
+  draftToLoadout,
   nationHasArmamentContent,
-  platformSlots,
-  translateArmourRegion,
-  translateFittingPlacement,
-  translateGunPlacement,
-  translateMachinery,
-  translateTubePlacement,
   partCatalogue,
-  type FitMountCountRanges,
-  type GunPartRequest,
-  type GunPlacementTranslation,
+  type DraftCompileContent,
+  type DraftTranslationIssue,
   type SourceCatalogue,
 } from "@bluewave/ship-design";
 import { fromYaml, toYaml } from "./yaml.js";
@@ -72,21 +55,6 @@ const sortRefs = (refs: readonly SourceFileRef[]): SourceFileRef[] =>
 
 const refsHash = (refs: readonly SourceFileRef[]): string =>
   sha256Hex(canonicalSerialize(sortRefs(refs)));
-
-export function canonicalMountId(t: GunPlacementTranslation): string {
-  if (t.disposition !== null || isSingleGunMount(t.legacyResolvedMountType)) {
-    return t.mountPart.id;
-  }
-  return mountPartIdFor(t.legacyMountId, t.gunsPerMount);
-}
-
-interface CatalogueModels {
-  readonly compatibility: ReturnType<typeof buildCompatibilitySlots>;
-  readonly plants: ReturnType<typeof buildPlantPartModel>;
-  readonly armour: ReturnType<typeof buildArmourPartModel>;
-  readonly fittings: ReturnType<typeof buildFittingPartModel>;
-  readonly launchers: ReturnType<typeof buildLauncherPartModel>;
-}
 
 function pinnedDataQuality(
   parts: readonly FlattenedPart[],
@@ -211,180 +179,46 @@ interface DesignLoadoutResult {
   readonly waivers: number;
 }
 
+function translationFailure(issue: DraftTranslationIssue): MigrationFailure {
+  if (
+    issue.code === "PART_READ_PATH_MISSING_PART" ||
+    issue.code === "PART_READ_PATH_NO_GUN_MODEL"
+  ) {
+    return migrationFailure("CODEMOD_MISSING_PART", issue.path, issue.message);
+  }
+  return migrationFailure(
+    "CODEMOD_UNTRANSLATED_PLACEMENT",
+    issue.path,
+    `${issue.code}: ${issue.message}`,
+  );
+}
+
 function designLoadout(input: {
-  readonly source: LegacySource;
   readonly design: LegacySource["designs"][number];
-  readonly models: CatalogueModels;
-  readonly gunModel: ReturnType<typeof buildGunPartModel>;
-  readonly partOf: (id: string) => FlattenedPart | undefined;
+  readonly content: DraftCompileContent;
   readonly failures: MigrationFailure[];
 }): DesignLoadoutResult | null {
-  const { source, design, models, gunModel, partOf, failures } = input;
+  const { design, content, failures } = input;
   const draft = design.draft;
-  const nationId = draft.nationId;
-  const profile = source.profiles.find((p) => p.nationId === nationId);
-  const applied =
-    profile === undefined
-      ? {}
-      : catalogueForNation(source.components, profile, design.month).appliedModels;
-  const entries: LoadoutEntryData[] = [];
-  const referenced = new Map<string, FlattenedPart>();
-  const ranges: Record<string, { min: number; max: number; step: number }> = {};
-  let gunPlacements = 0;
-  let tubePlacements = 0;
-  let fittingPlacements = 0;
-  const at = (instanceId: string, field: string) =>
-    `${design.id}.${instanceId}${field === "" ? "" : `.${field}`}`;
-
-  const reference = (id: string, path: string): FlattenedPart | null => {
-    const part = partOf(id);
-    if (part === undefined) {
-      failures.push(
-        migrationFailure("CODEMOD_MISSING_PART", path, `generated catalogue has no part '${id}'.`),
-      );
-      return null;
-    }
-    referenced.set(id, part);
-    return part;
-  };
-
-  for (const placement of draft.placements) {
-    const category = source.components.find((c) => c.id === placement.componentId)?.category;
-    if (category === "TORPEDO_TUBE") {
-      const r = translateTubePlacement({
-        designId: design.id,
-        placement,
-        nationId,
-        model: models.launchers,
-        appliedModels: applied,
-      });
-      if (r.translation === null) {
-        failures.push(
-          migrationFailure(
-            "CODEMOD_UNTRANSLATED_PLACEMENT",
-            at(placement.instanceId, ""),
-            `${r.untranslated.code}: ${r.untranslated.message}`,
-          ),
-        );
-        continue;
-      }
-      if (reference(r.translation.launcherPart.id, at(placement.instanceId, "part")) === null) {
-        continue;
-      }
-      const tubes = source.components.find((c) => c.id === placement.componentId)?.parameters[
-        "tubes"
-      ];
-      if (tubes !== undefined) ranges[r.translation.launcherPart.id] = tubes;
-      entries.push(r.translation.entry);
-      tubePlacements += 1;
-    } else if (category !== undefined && WEAPON_GUN.has(category)) {
-      const gun = gunModel.byRequest.get(gunKey(nationId, placement.componentId));
-      if (gun === undefined) {
-        failures.push(
-          migrationFailure(
-            "CODEMOD_MISSING_PART",
-            at(placement.instanceId, "gun"),
-            `no gun part for family '${placement.componentId}' of '${nationId}'.`,
-          ),
-        );
-        continue;
-      }
-      const t = translateGunPlacement({
-        designId: design.id,
-        placement,
-        nationId,
-        gun,
-        content: source.armament,
-        components: source.components,
-      });
-      if (t === null) {
-        failures.push(
-          migrationFailure(
-            "CODEMOD_UNTRANSLATED_PLACEMENT",
-            at(placement.instanceId, ""),
-            `no ${gun.resolvedMountType} mount for family '${placement.componentId}'.`,
-          ),
-        );
-        continue;
-      }
-      const mountId = canonicalMountId(t);
-      if (reference(mountId, at(placement.instanceId, "part")) === null) continue;
-      if (reference(t.gunPart.id, at(placement.instanceId, "gun")) === null) continue;
-      entries.push({ ...t.entry, part: mountId });
-      gunPlacements += 1;
-    } else {
-      const r = translateFittingPlacement({
-        designId: design.id,
-        placement,
-        model: models.fittings,
-      });
-      if (r.translation === null) {
-        failures.push(
-          migrationFailure(
-            "CODEMOD_UNTRANSLATED_PLACEMENT",
-            at(placement.instanceId, ""),
-            `${r.untranslated.code}: ${r.untranslated.message}`,
-          ),
-        );
-        continue;
-      }
-      if (reference(r.translation.record.part.id, at(placement.instanceId, "part")) === null) {
-        continue;
-      }
-      const counted = r.translation.record.countParameter;
-      if (counted !== null) {
-        const range = r.translation.record.legacy.parameters[counted];
-        if (range !== undefined) ranges[r.translation.record.part.id] = range;
-      }
-      entries.push(r.translation.entry);
-      fittingPlacements += 1;
-    }
-  }
-
-  const machinery = translateMachinery({
+  const forward = draftToLoadout({
     designId: design.id,
-    machinery: draft.machinery,
-    model: models.plants,
+    draft,
+    month: design.month,
+    content,
   });
-  if (machinery.translation === null) {
-    failures.push(
-      migrationFailure(
-        "CODEMOD_UNTRANSLATED_PLACEMENT",
-        `${design.id}.machinery`,
-        `${machinery.untranslated.code}: ${machinery.untranslated.message}`,
-      ),
-    );
+  if (forward.untranslated.length > 0) {
+    failures.push(...forward.untranslated.map(translationFailure));
     return null;
   }
-  if (reference(machinery.translation.plantPart.id, `${design.id}.machinery.part`) === null) {
-    return null;
-  }
-  entries.push(machinery.translation.entry);
 
-  for (const [index, region] of draft.armour.regions.entries()) {
-    const r = translateArmourRegion({ designId: design.id, index, region, model: models.armour });
-    if (r.translation === null) {
-      failures.push(
-        migrationFailure(
-          "CODEMOD_UNTRANSLATED_PLACEMENT",
-          `${design.id}.armour[${String(index)}]`,
-          `${r.untranslated.code}: ${r.untranslated.message}`,
-        ),
-      );
-      return null;
-    }
-    if (
-      reference(r.translation.materialPart.id, `${design.id}.armour[${String(index)}].part`) ===
-      null
-    ) {
-      return null;
-    }
-    entries.push(r.translation.entry);
-  }
-
-  const slots = platformSlots(models.compatibility, draft.hull.hullFormId) ?? [];
-  for (const entry of entries) {
-    if (!slots.some((s) => s.id === entry.slot)) {
+  const catalogue = partCatalogue({
+    parts: forward.parts,
+    slotTemplates: content.compatibility.slotTemplates,
+    platforms: content.compatibility.platforms,
+  });
+  const slotOf = catalogue.slotLookup(draft.hull.hullFormId);
+  for (const entry of forward.loadout.entries) {
+    if (slotOf(entry.slot) === undefined) {
       failures.push(
         migrationFailure(
           "CODEMOD_MISSING_SLOT",
@@ -396,17 +230,15 @@ function designLoadout(input: {
     }
   }
 
-  const loadout: LoadoutData = { platform: draft.hull.hullFormId, entries };
-  const fit = partCatalogue({
-    parts: [...referenced.values()].sort(byId),
-    slotTemplates: models.compatibility.slotTemplates,
-    platforms: models.compatibility.platforms,
-  }).validate({
+  const { header, loadout } = forward;
+  const fit = catalogue.validate({
     loadout,
     month: design.month,
-    conditions: { nation: { nationId }, mountCountRanges: ranges satisfies FitMountCountRanges },
+    conditions: {
+      nation: { nationId: draft.nationId },
+      mountCountRanges: forward.mountCountRanges,
+    },
   });
-  const header = headerFromDraft(draft);
   const staged: StagedDesign = {
     id: design.id,
     name: design.name,
@@ -422,9 +254,9 @@ function designLoadout(input: {
   }
   return {
     design: staged,
-    gunPlacements,
-    tubePlacements,
-    fittingPlacements,
+    gunPlacements: forward.placements.guns,
+    tubePlacements: forward.placements.tubes,
+    fittingPlacements: forward.placements.fittings,
     unresolvedMagazines: fit.unresolved.length,
     waivers: fit.waivers.length,
   };
@@ -567,31 +399,16 @@ export function planFromLegacy(source: LegacySource): MigrationResult<MigrationP
   }
   const partById = new Map(built.parts.map((p) => [p.id, p] as const));
   const compatibility = buildCompatibilitySlots({ hullForms: source.hullForms });
-  const models: CatalogueModels = {
-    compatibility,
-    plants: buildPlantPartModel({ plants: source.plants }),
-    armour: buildArmourPartModel({ armour: source.armour }),
-    fittings: buildFittingPartModel({ components: source.components }),
-    launchers: buildLauncherPartModel({
-      components: source.components,
-      profiles: source.profiles,
-      torpedoDiameterUm: source.torpedoDiameterUm,
-    }),
-  };
-  const requests: GunPartRequest[] = [];
-  for (const design of source.designs) {
-    for (const placement of design.draft.placements) {
-      const category = source.components.find((c) => c.id === placement.componentId)?.category;
-      if (category !== undefined && WEAPON_GUN.has(category)) {
-        requests.push({ nationId: design.draft.nationId, familyId: placement.componentId });
-      }
-    }
-  }
-  const gunModel = buildGunPartModel({
-    content: source.armament,
+  const content: DraftCompileContent = {
     components: source.components,
-    requests,
-  });
+    plants: source.plants,
+    navalProfiles: source.profiles,
+    armament: source.armament,
+    armour: source.armour,
+    compatibility,
+    torpedoDiameterUm: source.torpedoDiameterUm,
+    parts: built.parts,
+  };
 
   const failures: MigrationFailure[] = [];
   const designs: StagedDesign[] = [];
@@ -602,14 +419,7 @@ export function planFromLegacy(source: LegacySource): MigrationResult<MigrationP
   let waivers = 0;
   for (const design of [...source.designs].sort(byId)) {
     const before = failures.length;
-    const result = designLoadout({
-      source,
-      design,
-      models,
-      gunModel,
-      partOf: (id) => partById.get(id),
-      failures,
-    });
+    const result = designLoadout({ design, content, failures });
     if (failures.length > before || result === null) continue;
     designs.push(result.design);
     gunPlacements += result.gunPlacements;

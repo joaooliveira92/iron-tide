@@ -24,7 +24,6 @@ export {
   newArmourRegion,
   type RegionSizing,
 } from "./armour.js";
-export { buildArmourPartModel, translateArmourRegion } from "./armourPartAdapter.js";
 export {
   applyArmourScheme,
   ARMOUR_SCHEMES,
@@ -39,7 +38,10 @@ export { DESIGN_22_EARLY } from "./classificationRules.js";
 export { compileDesign } from "./compile.js";
 export {
   compileDraftFromParts,
+  type DraftCompileContent,
   type DraftCompileResult,
+  draftToLoadout,
+  type DraftTranslationIssue,
   type LegacyCompileView,
   toLegacyCompileView,
 } from "./compileDraft.js";
@@ -53,7 +55,6 @@ export {
 } from "./compileShared.js";
 export { compileTorpedo } from "./compileTorpedo.js";
 export { COMPONENT_CATEGORIES, type ComponentCategory, type ComponentDef } from "./component.js";
-export { catalogueForNation } from "./componentVariants.js";
 export {
   advanceConstructionMonth,
   type ConstructionBalance,
@@ -110,7 +111,6 @@ export {
   type Severity,
   SEVERITY_ORDER,
 } from "./findings.js";
-export { buildFittingPartModel, translateFittingPlacement } from "./fittingPartAdapter.js";
 export {
   assessFleet,
   chooseProcurementRole,
@@ -134,12 +134,6 @@ export {
   type ForeignBuilderCapabilityInput,
   validateForeignBuilderCapability,
 } from "./foreignConstruction.js";
-export {
-  buildGunPartModel,
-  gunKey,
-  type GunPartRequest,
-  isSingleGunMount,
-} from "./gunPartAdapter.js";
 export { type PropulsionPlant } from "./machinery.js";
 export { allocateShipNames, PLACEHOLDER_NAME_POOL_ID, type ShipNameAllocation } from "./naming.js";
 export {
@@ -150,23 +144,15 @@ export {
 } from "./nationProfile.js";
 export { resolveNationalConstruction } from "./nationalConstruction.js";
 export { researchPriorityAllocation } from "./nationalResearch.js";
-export {
-  buildPartCatalogue,
-  mountPartIdFor,
-  PART_SOURCE_FIELDS,
-  type SourceCatalogue,
-} from "./partCatalogue.js";
-export { headerFromDraft } from "./partCatalogueReaders.js";
+export { buildPartCatalogue, PART_SOURCE_FIELDS, type SourceCatalogue } from "./partCatalogue.js";
 export {
   buildPartCatalogueView,
   legacyCatalogueView,
   type PartCatalogueEntry,
 } from "./partCatalogueView.js";
-export { buildCompatibilitySlots, platformSlots } from "./partCompatibility.js";
-export { type FitMountCountRanges } from "./partFitTypes.js";
+export { buildCompatibilitySlots } from "./partCompatibility.js";
 export { lifecycleStatus, shiftMonth } from "./partLifecycle.js";
 export { partCatalogue } from "./partQueries.js";
-export { type GunPlacementTranslation, translateGunPlacement } from "./partReadPath.js";
 export {
   canRedo,
   canUndo,
@@ -184,7 +170,6 @@ export {
   undo,
   validateDraftShape,
 } from "./persistence.js";
-export { buildPlantPartModel, translateMachinery } from "./plantPartAdapter.js";
 export {
   type RebuildBalance,
   rebuildFactsOf,
@@ -233,7 +218,6 @@ export {
 export { assessSimilarity, similarityProfile, studyTerms } from "./study.js";
 export { type SuggestedFix, suggestFixes } from "./suggest.js";
 export { TOPSIDE_WARN_BP, topsideLoad, type TopsideStatus } from "./topside.js";
-export { buildLauncherPartModel, translateTubePlacement } from "./torpedoPartAdapter.js";
 export { type TorpedoModelSource } from "./torpedoPartBuilder.js";
 export { bp, kg, mm, UM_PER_INCH } from "./units.js";
 export { type MountSide } from "./weapons.js";

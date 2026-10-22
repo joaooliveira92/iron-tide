@@ -8,15 +8,10 @@ import {
 import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
 import { num } from "../src/compileShared.js";
-import {
-  buildLauncherPartModel,
-  catalogueForNation,
-  platformSlots,
-  translateTubePlacement,
-  type ComponentDef,
-  type NationNavalProfile,
-  type PlacementSpec,
-} from "../src/index.js";
+import { buildLauncherPartModel, translateTubePlacement } from "../src/torpedoPartAdapter.js";
+import { catalogueForNation } from "../src/componentVariants.js";
+import { platformSlots } from "../src/partCompatibility.js";
+import { type ComponentDef, type NationNavalProfile, type PlacementSpec } from "../src/index.js";
 import { totalOf } from "../src/partQuantities.js";
 import {
   type FlattenedLauncherPart,

@@ -14,7 +14,12 @@ import { compileDesignFromLoadout, type ProductionCompile } from "./compile.js";
 import { catalogueForNation } from "./componentVariants.js";
 import type { Finding } from "./findings.js";
 import { buildFittingPartModel, translateFittingPlacement } from "./fittingPartAdapter.js";
-import { buildGunPartModel, gunKey, type GunPartRequest } from "./gunPartAdapter.js";
+import {
+  buildGunPartModel,
+  gunKey,
+  isSingleGunMount,
+  type GunPartRequest,
+} from "./gunPartAdapter.js";
 import type { PropulsionPlant } from "./machinery.js";
 import type { NationNavalProfile } from "./nationProfile.js";
 import type { CompatibilityModel } from "./partCompatibility.js";
@@ -61,6 +66,11 @@ export interface DraftLoadout {
   readonly mountCountRanges: FitMountCountRanges;
   readonly parts: readonly FlattenedPart[];
   readonly untranslated: readonly DraftTranslationIssue[];
+  readonly placements: {
+    readonly guns: number;
+    readonly tubes: number;
+    readonly fittings: number;
+  };
 }
 
 export function draftToLoadout(input: {
@@ -103,6 +113,7 @@ export function draftToLoadout(input: {
   const referenced = new Map<string, FlattenedPart>();
   const ranges: Record<string, { min: number; max: number; step: number }> = {};
   const untranslated: DraftTranslationIssue[] = [];
+  const placements = { guns: 0, tubes: 0, fittings: 0 };
   const at = (instanceId: string, field: string) =>
     `${designId}.${instanceId}${field === "" ? "" : `.${field}`}`;
   const reference = (id: string, path: string): FlattenedPart | null => {
@@ -148,6 +159,7 @@ export function draftToLoadout(input: {
       entries.push(r.translation.entry);
       const tubes = launcher.entryUnits ?? component?.parameters["tubes"];
       if (tubes !== undefined) ranges[launcher.id] = tubes;
+      placements.tubes += 1;
     } else if (category !== undefined && WEAPON_GUN.has(category)) {
       const gun = gunModel.byRequest.get(gunKey(nationId, placement.componentId));
       if (gun === undefined) {
@@ -175,11 +187,14 @@ export function draftToLoadout(input: {
         continue;
       }
       const mountId =
-        t.disposition !== null ? t.mountPart.id : mountPartIdFor(t.legacyMountId, t.gunsPerMount);
+        t.disposition !== null || isSingleGunMount(t.legacyResolvedMountType)
+          ? t.mountPart.id
+          : mountPartIdFor(t.legacyMountId, t.gunsPerMount);
       const mount = reference(mountId, at(placement.instanceId, "part"));
       const gunPart = reference(t.gunPart.id, at(placement.instanceId, "gun"));
       if (mount === null || gunPart === null) continue;
       entries.push({ ...t.entry, part: mount.id });
+      placements.guns += 1;
     } else {
       const r = translateFittingPlacement({ designId, placement, model: fittingModel });
       if (r.translation === null) {
@@ -198,6 +213,7 @@ export function draftToLoadout(input: {
         fitting.entryUnits ??
         (counted === null ? undefined : r.translation.record.legacy.parameters[counted]);
       if (range !== undefined) ranges[fitting.id] = range;
+      placements.fittings += 1;
     }
   }
 
@@ -234,6 +250,7 @@ export function draftToLoadout(input: {
     mountCountRanges: ranges,
     parts,
     untranslated,
+    placements,
   };
 }
 

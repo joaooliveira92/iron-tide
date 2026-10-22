@@ -2,15 +2,11 @@ import { FlattenedPartSchema, PART_TAGS, decodeStrict } from "@bluewave/content-
 import type { FlattenedPart, SlotData } from "@bluewave/content-schema";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
-import {
-  buildArmourPartModel,
-  buildFittingPartModel,
-  buildLauncherPartModel,
-  buildPartCatalogue,
-  buildPlantPartModel,
-  type ComponentDef,
-  type SourceCatalogue,
-} from "../src/index.js";
+import { buildArmourPartModel } from "../src/armourPartAdapter.js";
+import { buildFittingPartModel } from "../src/fittingPartAdapter.js";
+import { buildLauncherPartModel } from "../src/torpedoPartAdapter.js";
+import { buildPartCatalogue, type ComponentDef, type SourceCatalogue } from "../src/index.js";
+import { buildPlantPartModel } from "../src/plantPartAdapter.js";
 import { readMachineryPlan, readPlacements, rebuildDraft } from "../src/partCatalogueReaders.js";
 import { type BuiltPartCatalogue } from "../src/partCatalogue.js";
 import { PART_SOURCE_FIELDS } from "../src/partCatalogue.js";

@@ -1,11 +1,9 @@
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
-import {
-  buildArmourPartModel,
-  buildFittingPartModel,
-  buildLauncherPartModel,
-  buildPlantPartModel,
-  compileDesign,
-} from "../../src/index.js";
+import { buildArmourPartModel } from "../../src/armourPartAdapter.js";
+import { buildFittingPartModel } from "../../src/fittingPartAdapter.js";
+import { buildLauncherPartModel } from "../../src/torpedoPartAdapter.js";
+import { buildPlantPartModel } from "../../src/plantPartAdapter.js";
+import { compileDesign } from "../../src/index.js";
 import {
   buildEquivalenceReport,
   type DesignComparison,

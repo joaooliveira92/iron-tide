@@ -3,8 +3,8 @@ import { join } from "node:path";
 import { parse } from "yaml";
 import { describe, it, expect } from "vite-plus/test";
 import { CANONICAL_RESEARCH_FIELD_IDS } from "@bluewave/content-schema";
+import { catalogueForNation } from "../src/componentVariants.js";
 import {
-  catalogueForNation,
   compileDesign,
   computeCost,
   nationProfileBrief,

@@ -1,12 +1,11 @@
 import {
   buildCompatibilitySlots,
-  buildGunPartModel,
   nationHasArmamentContent,
   type AuthoredArmamentContent,
   type DesignDraft,
-  type GunPartRequest,
   type PlacementSpec,
 } from "../../src/index.js";
+import { buildGunPartModel, type GunPartRequest } from "../../src/gunPartAdapter.js";
 import { componentAccessOf } from "../../src/armamentCompile.js";
 import {
   resolveGunPlacementThroughParts,

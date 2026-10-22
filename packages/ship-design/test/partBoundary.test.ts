@@ -8,7 +8,8 @@ import {
   retirementMonthFromAvailableUntil,
 } from "../src/partLifecycle.js";
 import { basisMultiplier, quantityLines, totalOf } from "../src/partQuantities.js";
-import { buildCompatibilitySlots, platformSlots, type ZoneId } from "../src/index.js";
+import { buildCompatibilitySlots, type ZoneId } from "../src/index.js";
+import { platformSlots } from "../src/partCompatibility.js";
 import { hullRecords } from "./helpers/earlyContext.js";
 
 describe("availability boundary (retirementMonth inclusive, availableUntil exclusive)", () => {
