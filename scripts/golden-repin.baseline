@@ -136,4 +136,13 @@
 # repin would be misleading. opening-briefing.ts stays gated (no path is exempted,
 # REFERENCE_RUN_EXEMPTIONS is unchanged) and every commit after 56ccb83 must still re-pin or
 # carry the trailer.
-56ccb83cf738d0980d89e66cbf7ba24a8652a34d
+ae33756c41843e3c5e8efe4dae7987c0d80a550a
+#
+# The baseline is advanced again to ae33756c41843e3c5e8efe4dae7987c0d80a550a, the flagged
+# commit itself, during the S-5 go-live. ae33756c ("Merge branch 'feat/t1-battle-offer' into
+# dev") changed battle-offer sources in content-compiler, events and phase-engine, golden-sensitive
+# paths, without re-pinning golden/hashes.json or carrying a `Golden-Repin: not-needed` trailer.
+# It is already on dev, and rewriting shared history would violate the repository history policy.
+# `pnpm check:golden` reports all 11 hashes match the committed golden and `check:determinism`
+# is byte-identical, so no reference hash moved and a repin would be misleading. No path is
+# exempted, and every commit after ae33756c must still re-pin or carry the trailer.
