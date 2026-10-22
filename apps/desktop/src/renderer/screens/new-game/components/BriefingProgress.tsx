@@ -1,9 +1,5 @@
 import { cn } from "../../../lib/utils.js";
 
-/**
- * The briefing's page sequence as an ordered list: segments for sight, the page
- * titles as text for everyone, and `aria-current="step"` on the current page.
- */
 export function BriefingProgress({
   titles,
   currentIndex,

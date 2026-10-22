@@ -27,7 +27,6 @@ const root = join(__dirname, "..", "..", "..", "..", "content", "production", "1
 const armamentDir = join(root, "ship-building", "armament");
 const read = (rel: string) => parse(readFileSync(join(armamentDir, rel), "utf8"));
 
-/** The authored armament content, schema-validated exactly as the release gate sees it. */
 export const armamentContent: AuthoredArmamentContent = {
   gunFamilies: decodeStrict(GunFamilyCatalogueSchema, read("gun-families.yaml")).gunFamilies,
   gunModels: decodeStrict(GunModelCatalogueSchema, read("gun-models.yaml")).gunModels,
@@ -42,7 +41,6 @@ const designs = readReferenceDesignEntries();
 
 const starters = designs.filter((d) => d.starterFor !== undefined) as StarterDesign[];
 
-/** The 18 opening reference designs: six per nation (B, CA, CL, DD, KE, AMC) at January 1880. */
 export const OPENING_MONTH = "1880-01";
 const OPENING_NATIONS = ["uk", "france", "germany"] as const;
 const OPENING_TYPES = ["B", "CA", "CL", "DD", "KE", "AMC"] as const;

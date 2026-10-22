@@ -26,10 +26,9 @@ describe("AC-3: battle weather initialization from the committed strategic state
     expect(bw.initialization.components.baseVisibilityUm).toBe(
       input.strategicWeather.baseVisibilityUm,
     );
-    expect(bw.initialization.components.timeOfDay).toBe("DAY"); // 06:00 start, canonical profile
+    expect(bw.initialization.components.timeOfDay).toBe("DAY");
     expect(bw.initialization.initializationHash).toMatch(/^[0-9a-f]{64}$/);
 
-    // engine context consumes the initialization components
     expect(bw.context.components.stateHash).toBe(bw.initialization.components.stateHash);
     expect(bw.context.seasonId).toBe(input.strategicWeather.seasonId);
     expect(bw.context.battleStartMinutes).toBe(360);
@@ -100,8 +99,6 @@ describe("AC-3: battle weather initialization from the committed strategic state
 
   it("the orchestrator input path resolves the shipped profile ids", () => {
     const input = makeAutoInput();
-    // strategicWeather.climateProfileId "default" + daylightProfileId
-    // "default_daylight_v1" are the shipped ids — resolution must not throw.
     const bw = buildBattleWeather({
       battleId: input.manifest.battleId,
       areaId: input.areaId,

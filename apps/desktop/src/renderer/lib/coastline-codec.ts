@@ -1,14 +1,6 @@
-/**
- * Compact binary format for the baked coastline (ADR-0055). Little-endian:
- *   u32 magic "BWCL", u32 polygonCount
- *   per polygon: u16 ringCount, then per ring: u32 pointCount, i16[2*n] (lon, lat)
- * Coordinates are stored in hundredths of a degree — the bake already quantises
- * to 0.01°, so the round trip is lossless. Replaces a 6 MB TypeScript literal.
- */
-
 import type { FlatPolygon } from "./simplify-geometry.js";
 
-const MAGIC = 0x4c435742; // "BWCL"
+const MAGIC = 0x4c435742;
 const SCALE = 100;
 
 export function encodeCoastline(polygons: readonly FlatPolygon[]): Uint8Array {

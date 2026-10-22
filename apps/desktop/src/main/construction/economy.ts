@@ -13,20 +13,6 @@ import type { CampaignSessionRecord } from "../campaignSessions.js";
 import { loadShipBuildingContent } from "../shipBuildingContent.js";
 import { campaignMonthKey } from "./commandRecord.js";
 
-/**
- * The derived construction economy — treasury, monthly appropriation (real
- * basis-point formula) and shipyard capacity (the nation's port levels' sum)
- * — read once from the engine's own player projection. Kept apart from the
- * workspace lifecycle so both the reservation sync and the screen projection
- * share one authoritative derivation.
- *
- * The dock/capacity readouts (SB3-R15..R19/R33) are compiled the same way:
- * the dock size comes from the nation's materialised dock or its authored naval
- * profile (ADR-0135 — never `maxPracticalDisplacementKg`, which is a production
- * figure), the cap from `nationalConstructionCapacity`, the utilisation split
- * from `constructionCapacityUtilization`, and the expansion duration/era step
- * from the shipped `@bluewave/phase-engine` constants. No value is authored here.
- */
 export function constructionEconomy(
   record: CampaignSessionRecord,
 ): ConstructionScreenProjection["economy"] {
@@ -40,8 +26,6 @@ export function constructionEconomy(
   const content = loadShipBuildingContent();
   const monthId = campaignMonthKey(record);
 
-  // The dock is the nation's materialised record when present, else its authored naval profile (ADR-0135). Neither
-  // resolving means no compiled dock, so the size is honestly `null` — the UI says "no dock", never a fabricated zero.
   const dock = builderDockRecord(snapshot, record.playerSlotId, content, monthId);
   const dockMaxBuildDisplacementKg = dock?.maximumNewConstructionMassKg ?? null;
 

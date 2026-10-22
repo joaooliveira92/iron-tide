@@ -1,4 +1,3 @@
-// ADR-0070: ReviseProject - revision tiers applied to a real construction project.
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
@@ -18,12 +17,9 @@ import {
   readReferenceDesignEntries,
 } from "./helpers/contentFiles.js";
 
-// Without study rules a submitted design is approved the same month, which these tests rely on; studies themselves are
-// covered in design-study.test.ts (ADR-0085).
 const content = productionShipBuildingContent();
 const reference = readReferenceDesignEntries();
 
-// A cruiser, so project work (cost units, displacement / 100,000 kg) is large enough for meaningful percentages.
 const baseDraft: Record<string, unknown> = {
   ...reference.find((d) => d.id === "torpedo_cruiser_1880")!.draft,
   nationId: ATTACKER_NATION,
@@ -64,7 +60,6 @@ function execute(
   return { snapshot: result.finalSnapshot, collector };
 }
 
-/** A snapshot holding a submitted design and a construction project on it with `done` work units complete. */
 function withProject(done: number): CampaignSnapshot {
   const start = base();
   const submit = envelope(
@@ -75,7 +70,7 @@ function withProject(done: number): CampaignSnapshot {
       designVersionId: "des_rev_base",
       designFamilyId: "fam_rev",
       className: "Rev class",
-      hullType: "protected_cruiser", // the CL draft's own hull type (ADR-0088 checks the pair)
+      hullType: "protected_cruiser",
       machineryType: "locomotive_boiler",
       draft: baseDraft,
     },
@@ -103,7 +98,6 @@ function withProject(done: number): CampaignSnapshot {
     ...snapshot,
     nations: new Map([
       ...snapshot.nations,
-      // Only the obligation reserve: these tests exercise the project's own state, not monthly appropriation.
       [ATTACKER_NATION, { ...nation, treasury: nation.expenses, constructionProjects: [project] }],
     ]),
   };
@@ -233,10 +227,6 @@ describe("ReviseProject through the month", () => {
   });
 });
 
-/**
- * A snapshot holding a submitted design and a project built from that design's construction plan (ADR-0077), with each
- * package `fractions[id]` (0..1, default 0) done.
- */
 function withPackageProject(fractions: Record<string, number>): CampaignSnapshot {
   const start = withProject(0);
   const nation = start.nations.get(ATTACKER_NATION)!;
@@ -284,7 +274,6 @@ describe("ReviseProject on a project with work packages (ADR-0077)", () => {
     expect(p.yardId).toBe(snapshot.designs.get("des_rev_2")!.constructionPlan!.yardId);
     const hullBefore = projectOf(before).packages!.find((x) => x.id === "hull")!;
     const hullAfter = p.packages!.find((x) => x.id === "hull")!;
-    // Same share of the hull is done (within one unit of rounding).
     const shareBefore = Number(hullBefore.doneWork) / Number(hullBefore.totalWork);
     const shareAfter = Number(hullAfter.doneWork) / Number(hullAfter.totalWork);
     expect(Math.abs(shareAfter - shareBefore)).toBeLessThan(1 / Number(hullAfter.totalWork) + 1e-9);
@@ -298,9 +287,7 @@ describe("ReviseProject on a project with work packages (ADR-0077)", () => {
   });
 
   it("the same hull progress classifies differently once machinery work has really started", () => {
-    // Little hull work (the free band) but machinery already under way: a machinery change is no longer free.
     const idle = withPackageProject({ hull: 0.02 });
-    // The cruiser is a small project (machinery is 2 units), so a whole package is the smallest meaningful amount.
     const started = withPackageProject({ hull: 0.02, machinery: 1 });
     const free = revise(idle, machineryChange);
     const costly = revise(started, machineryChange);
@@ -336,7 +323,6 @@ describe("ReviseProject on a project with work packages (ADR-0077)", () => {
   });
 });
 
-/** A snapshot where the attacker's first ship was built to the submitted design (so it carries its source draft). */
 function withBuiltShip(): { snapshot: CampaignSnapshot; shipId: string } {
   const start = withProject(0);
   const nation = start.nations.get(ATTACKER_NATION)!;
@@ -406,7 +392,6 @@ describe("StartRebuild through the month (ADR-0078)", () => {
     expect(packageInvariantsHold(project)).toBe(true);
     expect(Number(project.totalWork)).toBeGreaterThan(0);
     expect(project.yardId).toBe(after.designs.get("des_reb_2")!.constructionPlan!.yardId);
-    // The old design is kept; the ship still points at it until the rebuild completes.
     expect(after.designs.has("des_rev_base")).toBe(true);
     expect(ship.designVersionId).toBe("des_rev_base");
   });
@@ -451,7 +436,6 @@ describe("StartRebuild through the month (ADR-0078)", () => {
   it("runs the whole life cycle: funded month by month, it completes, the ship becomes the new design and is released", () => {
     const { snapshot, shipId } = withBuiltShip();
     const nation = snapshot.nations.get(ATTACKER_NATION)!;
-    // Plenty of money, so the yard's capacity (not the treasury) paces the rebuild.
     const rich: CampaignSnapshot = {
       ...snapshot,
       nations: new Map([
@@ -484,7 +468,6 @@ describe("StartRebuild through the month (ADR-0078)", () => {
         .get(ATTACKER_NATION)!
         .constructionProjects.find((x) => x.id === "con_rebuild")!;
       status.push(p.status);
-      // While it is under way the ship stays unavailable on its old design.
       if (p.status !== "COMPLETED") {
         expect(shipOf(current, shipId).availability).toBe("UNAVAILABLE");
         expect(shipOf(current, shipId).designVersionId).toBe("des_rev_base");
@@ -495,7 +478,6 @@ describe("StartRebuild through the month (ADR-0078)", () => {
     const ship = shipOf(current, shipId);
     expect(ship.designVersionId).toBe("des_reb_2");
     expect(ship.availability).toBeUndefined();
-    // No second ship appeared, and both design versions are still on record.
     const ids = current.nations
       .get(ATTACKER_NATION)!
       .fleets.flatMap((f) => f.ships)
@@ -512,7 +494,6 @@ describe("StartRebuild through the month (ADR-0078)", () => {
   });
 });
 
-// The month executor applies commands in the month after the snapshot's start month (1880-01).
 const APPLIED_MONTH = "1880-02";
 
 describe("revision hold", () => {

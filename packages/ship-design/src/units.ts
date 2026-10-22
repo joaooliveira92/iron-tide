@@ -1,9 +1,5 @@
 import { UnitError, type Brand } from "@bluewave/contracts";
 
-// Canonical units are declared **once** in `@bluewave/contracts` (ADR-0202, map
-// D2) and re-exported here so existing ship-design importers keep working (the
-// migrate+contract steps keep a single definition). Authoring (millimetres) and
-// sub-unit money (micro) brands are not canonical and stay local.
 export {
   BP_ONE,
   KNOTS_TO_UMS,
@@ -32,9 +28,7 @@ export {
   type UmPerSec,
 } from "@bluewave/contracts";
 
-/** Authoring unit: millimetres (length/calibre/armour are canonical in µm). */
 export type Mm = Brand<number, "Mm">;
-/** Sub-unit money for the cost model; reaches campaign state only through the treasury bridge (map D3). */
 export type BudgetMicro = Brand<number, "BudgetMicro">;
 export type WorkMicro = Brand<number, "WorkMicro">;
 

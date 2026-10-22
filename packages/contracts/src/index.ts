@@ -55,13 +55,6 @@ export namespace SafeInt {
 }
 
 export class BluewaveError extends Error {
-  /**
-   * Stable discriminator (RULES.md "Errors"): callers recover by `_tag`, never
-   * `instanceof`. `contracts` is renderer-reachable, so the class stays plain
-   * TypeScript with a `readonly _tag` field rather than a `Data.TaggedError`
-   * (which would risk bundling the `effect` runtime into the renderer;
-   * MIG-EXCL-1, ADR-0128 §1).
-   */
   readonly _tag = "BluewaveError";
   constructor(
     message: string,
@@ -72,11 +65,6 @@ export class BluewaveError extends Error {
   }
 }
 
-/**
- * `_tag`-based narrowing for an unknown thrown value (RULES.md "Errors":
- * discriminate with `_tag`, never `instanceof`). A plain TS guard, not an
- * Effect failure-channel helper.
- */
 export function isBluewaveError(value: unknown): value is BluewaveError {
   return (
     typeof value === "object" &&

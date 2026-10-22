@@ -1,12 +1,3 @@
-// AC-8: Director assignment order + scaling table values (DESIGN-45 §11, §12).
-// §11 total order: (1) defense layer priority; (2) threat score DESCENDING — realized from
-// the §17 Simultaneous Threats ordering (released first, closer-to-impact first, defended
-// ship first, formationSize descending, targetId ascending); (3) time to impact ascending;
-// (4) target identifier ascending; (5) director identifier ascending. One director per
-// engagement (§11 line 196/206). §12: 0→5_000, 1→10_000, 2→18_000, 3→25_000, 4→31_000, 5+
-// stays 31_000 with AA_DIRECTOR_NORMAL_SCALING_CAP_REACHED. Deterministic: pure functions,
-// no randomness, clock, env, or locale — string keys use codepoint comparisons only.
-
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, SafeInt, isBluewaveError } from "@bluewave/contracts";
 import {
@@ -94,8 +85,6 @@ describe("AC-8: §12 director scaling table", () => {
   });
 
   it("caps at the shipped normal-scaling cap 4: 5+ stays 31_000 with no additional directed-fire value", () => {
-    // §12 lines 218-222: directors above the fourth contribute only to channel availability;
-    // they do not increase aggregate directed-fire value under the shipped policy.
     expect(computeDirectorFactorBp(5)).toBe(31_000);
     expect(computeDirectorFactorBp(6)).toBe(31_000);
     expect(computeDirectorFactorBp(9)).toBe(31_000);
@@ -144,7 +133,6 @@ describe("AC-8: §11 defense layer priority (key 1)", () => {
     const attack = atk("atk_001");
     const result = assignAADirectors(
       makeInput({
-        // Input order deliberately scrambled: LIGHT/CIWS first.
         systems: [light, ciws, heavy, medium],
         attacks: [attack],
         candidates: [
@@ -202,8 +190,6 @@ describe("AC-8: §11 defense layer priority (key 1)", () => {
 });
 
 describe("AC-8: §11 threat score descending (key 2, the §17 comparator)", () => {
-  // All scenarios use one MEDIUM_AA system with two attacks and a single director: the
-  // winner of the threat comparator is the one assigned.
   it("key (1): a released threat is assigned before an unreleased threat even when it is farther from impact (§17.1)", () => {
     const system = aaSystem(Layer.MEDIUM_AA, { systemId: "sys_medium" });
     const released = atk("atk_released", { isReleased: true, timeToImpactMs: SafeInt(90_000) });
@@ -329,8 +315,6 @@ describe("AC-8: §11 threat score descending (key 2, the §17 comparator)", () =
     expect(compareThreatPriority(lowTarget, highTarget, defenderId)).toBeLessThan(0);
     expect(compareThreatPriority(highTarget, lowTarget, defenderId)).toBeGreaterThan(0);
 
-    // Fully tied attacks compare 0 (attackId is not a §17 key — the §11 candidate chain
-    // breaks the tie via the deterministic residue).
     const twinA = atk("atk_a");
     const twinB = atk("atk_b");
     expect(compareThreatPriority(twinA, twinB, defenderId)).toBe(0);
@@ -349,15 +333,12 @@ describe("AC-8: §11 one channel per director (line 196 / line 206)", () => {
           systemId: "sys_ciws",
           attackId,
         })),
-        // Same layer, same target, same time to impact, same formation size → full threat
-        // tie broken by the deterministic attackId-ascending residue.
         directorChannels: [
           { directorId: "dir_b", operational: true },
           { directorId: "dir_a", operational: true },
         ],
       }),
     );
-    // §11 key 5: directors are allocated in identifier ascending order (dir_a, then dir_b).
     expect(result.assignments.map((entry) => entry.attackId)).toEqual([
       "atk_001",
       "atk_002",
@@ -370,12 +351,10 @@ describe("AC-8: §11 one channel per director (line 196 / line 206)", () => {
       null,
       null,
     ]);
-    // A director never provides its full modifier to two simultaneous groups (§11 line 206).
     const assigned = result.assignments
       .map((entry) => entry.directorId)
       .filter((id): id is string => id !== null);
     expect(new Set(assigned).size).toBe(assigned.length);
-    // Excess threats remain unengaged for the current opportunity (§17 line 305).
     expect(result.assignments[2]!.reason).toBe(AIR_DEFENSE_DIRECTOR_UNAVAILABLE);
     expect(result.assignments[3]!.reason).toBe(AIR_DEFENSE_DIRECTOR_UNAVAILABLE);
   });
@@ -424,7 +403,6 @@ describe("AC-8: §11 one channel per director (line 196 / line 206)", () => {
     expect(
       result.assignments.every((entry) => entry.reason === AIR_DEFENSE_DIRECTOR_UNAVAILABLE),
     ).toBe(true);
-    // Availability/factor still reflect the ship's operational directors (3 → §12 25_000).
     expect(result.operationalDirectorCount).toBe(3);
     expect(result.directorFactorBp).toBe(25_000);
   });

@@ -1,12 +1,8 @@
-// Versioned contact/knowledge constants (DESIGN-38 §19, §3 step 4).
 import { BluewaveError } from "@bluewave/contracts";
 
 export const contactLifecyclePolicyId = "contact_lifecycle_v1" as const;
-// confidence is stored in basis points; a fresh contact is max-confidence.
 export const CONTACT_CONFIDENCE_MAX_BP = 10_000 as const;
-// per-minute confidence decay slope (bp/minute).
 export const CONTACT_CONFIDENCE_DECAY_BP_PER_MINUTE = 50 as const;
-// staleness threshold (bp) — at/below this the contact is stale.
 export const CONTACT_STALE_THRESHOLD_BP = 2_000 as const;
 
 export interface ContactLifecycleContract {

@@ -1,7 +1,3 @@
-// Campaign-compile stage (spec #138 slice 4): materialise the construction projects the campaign starts with on the slips.
-// An authored project is a single figure with no work packages and its design carries no construction plan, so without this
-// stage it would be unbounded by any yard. Capacity comes from ship-building content (historical build time of the hull,
-// national build speed) and never from the economic base.
 import { SafeInt } from "@bluewave/contracts";
 import type { ShipBuildingCatalogue } from "@bluewave/content-compiler";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -19,10 +15,6 @@ import type {
   NationState,
 } from "./state.js";
 
-/**
- * The compiled catalogue was schema-validated when the pack compiled; this narrows its untyped entries to the profile shape the
- * resolver reads without asserting the whole array.
- */
 function isNavalProfile(value: unknown): value is NationNavalProfile {
   if (typeof value !== "object" || value === null) return false;
   const candidate = value as {
@@ -118,11 +110,6 @@ function seedProject(
   };
 }
 
-/**
- * Gives every seeded new-construction project its work packages and its own monthly capacity. A pack with no ship-building
- * catalogue keeps the single-figure path (test fixtures only); a pack that has one and cannot plan a project fails with
- * `SEEDED_PROJECT_WITHOUT_CAPACITY`. Returns the nations unchanged when nothing needs seeding.
- */
 export function materialiseSeededConstructions(
   nations: Map<string, NationState>,
   designs: Map<string, CompiledDesignVersion>,

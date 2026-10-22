@@ -28,11 +28,8 @@ import { inspectBudgetScreenProgram, submitBudgetAllocationProgram } from "./bud
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const GENERATED_ARTIFACT = resolve(__dirname, "../../../../..", "content", "generated", "1880");
 
-// One shared runtime for every budget program; the services delegate to the same
-// in-memory session/queue registries the tests populate directly.
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-/** Runs a command program through the desktop service graph and projects its wire envelope. */
 async function runProgram<A>(program: CommandProgram, payload: unknown): Promise<BridgeResult<A>> {
   return projectCommandExit(await runtime.runPromiseExit(program(payload))) as BridgeResult<A>;
 }
@@ -47,11 +44,6 @@ const commitMonth = (payload: {
   transportRequestId: string;
 }) => runProgram<CommitMonthResponse>(commitMonthProgram, payload);
 
-/**
- * Budget allocation (ADR-0060) against the real production pack, as native
- * Effect programs: the engine's own validator decides at issue time and only
- * `commitMonth` mutates the nation.
- */
 describe("budget allocation", () => {
   let saveRoot: string;
 
@@ -154,7 +146,6 @@ describe("budget allocation", () => {
 
   it("queues a valid allocation and the engine applies it when the month is committed", async () => {
     registerSession("b");
-    // UK: revenue 150 at 3000 bp, so the 12% research cap is 18.
     const queued = await submitBudgetAllocation(pay(3000, 15));
     expect(queued).toMatchObject({
       outcome: "success",
@@ -184,7 +175,7 @@ describe("budget allocation", () => {
     if (view.outcome !== "success") throw new Error(view.reason);
     const caps = new Map(view.value.researchCaps.map((c) => [c.rateBp, c.cap]));
     expect(view.value.researchCaps).toHaveLength(91);
-    expect(caps.get(2000)).toBe(12); // UK: revenue 100 at the start rate
+    expect(caps.get(2000)).toBe(12);
     expect(caps.get(3000)).toBe(18);
     expect(caps.get(500)).toBe(3);
   });

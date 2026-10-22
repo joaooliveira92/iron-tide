@@ -1,4 +1,3 @@
-// DESIGN-43 §38 aircraft operation records.
 import { createEnvelope } from "@bluewave/deterministic";
 
 export const AIRCRAFT_RECORD_POLICY_ID = "aircraft_record_v1" as const;

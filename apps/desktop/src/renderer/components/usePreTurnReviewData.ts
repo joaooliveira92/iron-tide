@@ -23,12 +23,6 @@ const EMPTY_PRE_TURN_REVIEW: PreTurnReviewData = {
   loading: false,
 };
 
-/**
- * Loads the pre-turn review's three read-only projections through the shared
- * `useBridgeQuery` convention and folds them into the view's shape. The reads
- * are gated on `open` — a closed dialog asks the bridge for nothing — and reload
- * when the campaign revision changes.
- */
 export function usePreTurnReviewData(sessionId: string, open: boolean): PreTurnReviewData {
   const revision = useCampaignRevision();
   const options = { enabled: open };

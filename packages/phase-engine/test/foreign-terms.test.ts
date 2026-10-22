@@ -1,6 +1,3 @@
-// INC-17: the foreign-order command must derive contract terms and builder capability server-side from authoritative
-// content, and must refuse a payload that still carries renderer-supplied `terms`/`capability`. These exercise the pure
-// derivation helpers and the `applyOrderForeignConstruction` command boundary directly.
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -76,14 +73,12 @@ describe("deriveForeignContractTerms (INC-17)", () => {
     expect(terms.builderShipyardId).toBe(`yard:${BUILDER}`);
     expect(terms.quantity).toBe(2);
     expect(terms.totalWorkPerUnit).toBeGreaterThan(0);
-    // The order's whole price scales with quantity; work stays per unit.
     expect(terms.totalPriceUnits).toBe(terms.totalWorkPerUnit * 2);
     expect(terms.paymentSchedule).toHaveLength(FOREIGN_INSTALMENT_COUNT);
     expect(terms.paymentSchedule.reduce((sum, i) => sum + i.amountUnits, 0)).toBe(
       terms.totalPriceUnits,
     );
     expect(terms.paymentSchedule.reduce((sum, i) => sum + i.workShareBp, 0)).toBe(10_000);
-    // Monthly instalments start at the authorization month; keel is the authorization month.
     expect(terms.paymentSchedule.map((i) => i.dueMonth)).toEqual([
       "1880-01",
       "1880-02",
@@ -93,7 +88,6 @@ describe("deriveForeignContractTerms (INC-17)", () => {
       "1880-06",
     ]);
     expect(terms.plannedKeelMonth).toBe(MONTH_ID);
-    // No caller delivery month: the default is authorization + (count - 1) = the last due month.
     expect(terms.plannedDeliveryMonth).toBe("1880-06");
   });
 
@@ -108,7 +102,6 @@ describe("deriveForeignContractTerms (INC-17)", () => {
     expect(
       deriveForeignContractTerms({ ...base, plannedDeliveryMonth: "1880-09" }).plannedDeliveryMonth,
     ).toBe("1880-09");
-    // Earlier than the last due month, or malformed, falls back to the default.
     expect(
       deriveForeignContractTerms({ ...base, plannedDeliveryMonth: "1880-02" }).plannedDeliveryMonth,
     ).toBe("1880-06");
@@ -169,7 +162,6 @@ describe("applyOrderForeignConstruction refuses a fabricated contract (INC-17)",
 
   it("fails capability with FOREIGN_BUILDER_CAPABILITY_INSUFFICIENT when ordering and builder are at war", () => {
     const before = hostileSnapshot();
-    // The pure derivation reports the hostile relation, and the command boundary refuses the order.
     const conditions = resolveForeignBuilderCapability(before, content, {
       orderingNationId: ORDERING,
       builderNationId: BUILDER,
@@ -202,9 +194,6 @@ describe("applyOrderForeignConstruction refuses a fabricated contract (INC-17)",
   });
 
   it("fails closed (no throw) when the builder cannot obtain its armament or armour plate (MAJOR)", () => {
-    // A builder whose heavy-gun production is UNAVAILABLE makes `resolveNationalConstruction` throw; the order path must
-    // refuse with a capability reason, never abort the month. No shipped profile has UNAVAILABLE supply, so the real
-    // content's `navalProfileFor` is overridden to return an UNAVAILABLE-supply profile for france.
     const profile = content.navalProfileFor(BUILDER, MONTH_ID);
     if (profile === null) throw new Error("expected a france naval profile");
     const unavailable: ShipBuildingContent = {

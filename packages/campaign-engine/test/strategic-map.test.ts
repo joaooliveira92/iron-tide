@@ -4,13 +4,6 @@ import type { CampaignSnapshot, FleetState, Ship } from "@bluewave/campaign";
 import { buildStrategicMapView } from "../src/strategic-map.js";
 import { fixtureNation, fixtureSnapshot } from "./fixtures.js";
 
-/**
- * Pure projection tests for the viewer-scoped strategic map view (F-1, DR-0037
- * Option B): own fleets in full, public facts for the rest, foreign fleets
- * withheld; per-fleet legal destinations derived from the engine's own
- * `fleetMoveProblem`; blockades the viewer is party to.
- */
-
 function makeShip(id: string, name: string, overrides: Partial<Ship> = {}): Ship {
   return {
     id,

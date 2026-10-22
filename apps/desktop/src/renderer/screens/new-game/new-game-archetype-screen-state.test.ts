@@ -41,7 +41,6 @@ describe("new-game archetype screen state", () => {
     const editor = customizeSelection(state());
     expect(editor.mode).toBe("custom");
     expect(editor.allocation).toEqual(ARCHETYPE_PRESETS[0]!.allocation);
-    // Edits are now possible in custom mode.
     const edited = setDimension(editor, "economy", 9);
     expect(edited.allocation.economy).toBe(9);
   });
@@ -61,7 +60,6 @@ describe("new-game archetype screen state", () => {
     let editor = customizeSelection(state());
     editor = setDimension(editor, "combat", 10);
     editor = setDimension(editor, "industry", 3);
-    // economy stays 10 -> 10 + 3 + 10 = 23, invalid
     expect(isAllocationValid(editor)).toBe(false);
     expect(allocationErrors(editor).length).toBeGreaterThan(0);
   });

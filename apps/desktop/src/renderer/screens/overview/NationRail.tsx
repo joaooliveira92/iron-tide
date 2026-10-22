@@ -13,18 +13,9 @@ export interface NationRailProps {
   readonly state: NationRailLoad;
   readonly playerName: string;
   readonly onNavigate: (screen: Screen) => void;
-  /** Render only the body (a host panel supplies the chrome and the "Nations" title). */
   readonly embedded?: boolean;
 }
 
-/**
- * Right-rail nation list (CC-5): the player first, then the other powers with
- * their relation to the player in words and the war score while at war.
- *
- * Selection: there is no nation drawer, and the Diplomacy & War screen takes no
- * nation parameter (navigation is by screen id only), so selecting a nation
- * only selects it and shows its relation detail inline under the list.
- */
 export function NationRail({ state, playerName, onNavigate, embedded = false }: NationRailProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const rows = useMemo(

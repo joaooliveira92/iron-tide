@@ -77,7 +77,6 @@ function cloneNation(n: NationState): NationState {
   };
 }
 
-// deterministic stub engine for flip tests - avoids flaky seed loops
 class FakeEngine extends RandomEngine {
   private idx = 0;
   constructor(private draws: number[]) {
@@ -121,7 +120,6 @@ describe("combat (narrow) - preserved", () => {
     expect(result.winnerId).toBe("ATK");
     expect(result.loserId).toBe("DEF");
     expect(result.explanation.length).toBeGreaterThanOrEqual(1);
-    // new invariants
     expect(Object.keys(result.damageReport).sort()).toEqual(["def-ship-1", "def-ship-2"]);
     expect(result.attackerLosses).toEqual([]);
     for (const v of Object.values(result.damageReport)) {
@@ -159,10 +157,8 @@ describe("combat (narrow) - preserved", () => {
     const totalLoserShips = result.winnerId === "ATK" ? defenderShips.length : attackerShips.length;
     const totalLosses = result.attackerLosses.length + result.defenderLosses.length;
     expect(totalLosses).toBeLessThan(totalLoserShips);
-    // every loser ship has damage entry
     const loserIds = (result.winnerId === "ATK" ? defenderShips : attackerShips).map((s) => s.id);
     expect(Object.keys(result.damageReport).sort()).toEqual(loserIds.sort());
-    // losses subset
     for (const id of [...result.attackerLosses, ...result.defenderLosses]) {
       expect(loserIds).toContain(id);
     }
@@ -225,7 +221,6 @@ describe("combat (narrow) - preserved", () => {
     expect(explanationStr).toContain("attackerEffectiveStrength");
     expect(explanationStr).toContain("defenderEffectiveStrength");
     expect(explanationStr).toContain("battle:losses");
-    // winnerEff is result line
     expect(explanationStr).toMatch(/battle:resolve v1\.0\.0 = \d+/);
   });
 
@@ -280,10 +275,9 @@ describe("combat (narrow) - preserved", () => {
       attackerFleetIds: ["rsfa"],
       defenderFleetIds: ["rsfd"],
     };
-    // f=0.99 -> roll 99 -> factor 1.49 , f=0.01 -> roll 1 -> 0.51
     const atkNation1 = makeNation("ATK", [fA], { tag: "ATK" });
     const defNation1 = makeNation("DEF", [fD], { tag: "DEF" });
-    const engineFavAtk = new FakeEngine([0.99, 0.01, 0.5]); // attacker high, defender low, damage roll mid
+    const engineFavAtk = new FakeEngine([0.99, 0.01, 0.5]);
     const rFavAtk = resolver.resolve(
       battle,
       cloneNation(atkNation1),
@@ -356,8 +350,6 @@ describe("combat (narrow) - preserved", () => {
     };
     const engine = new RandomEngine("iso-seed");
     const r1 = resolver.resolve(b1, cloneNation(atk), cloneNation(def), engine);
-    // with per-battle domain they are independent, not sequential draws of same stream
-    // at least they both succeed and are deterministic if replayed with fresh engine
     const engine2 = new RandomEngine("iso-seed");
     const r1b = resolver.resolve(b1, cloneNation(atk), cloneNation(def), engine2);
     expect(r1.winnerId).toBe(r1b.winnerId);
@@ -404,13 +396,13 @@ describe("StrengthCalculator", () => {
     const ships = [makeShip({ id: "s1", firepower: SafeInt(10), armor: SafeInt(20) })];
     const fleet = makeFleet({ id: "f", ships });
     const dp = StrengthCalculator.damagePotential(fleet);
-    expect(dp).toBe(20); // 10 * (20/10) = 20
+    expect(dp).toBe(20);
   });
 
   it("survivability returns current/max HP as basis points", () => {
     const ships = [makeShip({ id: "s1", hitPoints: SafeInt(50), maxHitPoints: SafeInt(100) })];
     const fleet = makeFleet({ id: "f", ships });
-    expect(StrengthCalculator.survivability(fleet)).toBe(BP_ONE / 2); // 50/100 = 0.5
+    expect(StrengthCalculator.survivability(fleet)).toBe(BP_ONE / 2);
   });
 
   it("empty fleet => 0 for all", () => {
@@ -442,7 +434,7 @@ describe("StrengthCalculator", () => {
     });
     const fleet = makeFleet({ id: "f", ships: [active, building] });
     expect(StrengthCalculator.totalFirepower(fleet)).toBe(100 as SafeInt);
-    expect(StrengthCalculator.damagePotential(fleet)).toBe(200); // 100 * (20/10)
+    expect(StrengthCalculator.damagePotential(fleet)).toBe(200);
     expect(StrengthCalculator.survivability(fleet)).toBe(BP_ONE);
     expect(StrengthCalculator.strength(fleet)).toBe(200);
   });
@@ -451,19 +443,12 @@ describe("StrengthCalculator", () => {
     const s1 = makeShip({ id: "s1", firepower: SafeInt(10), armor: SafeInt(10) });
     const s2 = makeShip({ id: "s2", firepower: SafeInt(10), armor: SafeInt(15) });
     const fleet = makeFleet({ id: "f", ships: [s1, s2] });
-    // averageArmor rounds halfUp to 13, but damagePotential and strength compose
-    // the exact rational 20 * 25 / (10 * 2) = 25 — rounding the average first
-    // would give 26, the wrong kind of delta.
     expect(StrengthCalculator.averageArmor(fleet)).toBe(13 as SafeInt);
     expect(StrengthCalculator.damagePotential(fleet)).toBe(25);
     expect(StrengthCalculator.strength(fleet)).toBe(25);
   });
 
   it("strength composes damagePotential and survivability exactly, rounding once", () => {
-    // firepower 1, armor 12, hp 5 / maxHp 6: exact strength =
-    // 1 * 12 * 5 / (10 * 1 * 6) = 1. Multiplying the two rounded projections
-    // (floor(dp) = 1 times survivability 8333 bp) would give 0 — the
-    // double-round this combined form avoids.
     const ships = [
       makeShip({
         id: "s1",
@@ -482,7 +467,7 @@ describe("StrengthCalculator", () => {
   it("survivability capped at one whole and 0 when maxHp 0", () => {
     const over = makeShip({ id: "o", hitPoints: SafeInt(150), maxHitPoints: SafeInt(100) });
     expect(StrengthCalculator.survivability(makeFleet({ id: "f", ships: [over] }))).toBe(BP_ONE);
-    expect(StrengthCalculator.strength(makeFleet({ id: "f", ships: [over] }))).toBe(10); // capped at full hp
+    expect(StrengthCalculator.strength(makeFleet({ id: "f", ships: [over] }))).toBe(10);
     const zero = makeShip({ id: "z", hitPoints: SafeInt(0), maxHitPoints: SafeInt(0) });
     expect(StrengthCalculator.survivability(makeFleet({ id: "f2", ships: [zero] }))).toBe(0);
     expect(StrengthCalculator.strength(makeFleet({ id: "f2", ships: [zero] }))).toBe(0);

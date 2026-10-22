@@ -4,24 +4,11 @@ import { Button } from "../../ui/button.js";
 import { SplitDivider } from "./SplitDivider.js";
 import { TAB_PANE_MIN, useSplitWidth } from "./useSplitWidth.js";
 
-/**
- * The Drawing Board's two-pane layout: the ship drawing on the left, the active tab on the right, each scrolling
- * on its own so the ship stays in view while a long tab is read. Below `lg` the panes stack and the ship view
- * can be folded away; it is hidden with CSS, never unmounted, so its tools and toggles keep their state.
- *
- * The ship pane takes the stored share of the width but never squeezes the tab pane under `TAB_PANE_MIN`; both
- * are CSS, so the split follows window and dialog resizes without JavaScript. The 1.25rem reserved beside the
- * minimum is the divider track (0.75rem) and the two column gaps (0.25rem each).
- *
- * Layout only: it holds no design state, and `ship` and `children` are rendered exactly once.
- */
 export function ShipWorkspace({
   ship,
   children,
 }: {
-  /** The persistent ship visualisation. */
   readonly ship: ReactNode;
-  /** The tab strip and the active tab's content. */
   readonly children: ReactNode;
 }) {
   const shipId = useId();

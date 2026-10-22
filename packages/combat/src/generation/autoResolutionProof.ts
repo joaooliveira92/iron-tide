@@ -5,7 +5,6 @@ import { assertAutoResolvable } from "../autoResolution.js";
 
 export const AUTO_RESOLUTION_DECLARED_SURFACE_V1 = "auto_resolution_declared_surface_v1" as const;
 
-// ADR B-1-6: the declared resolver surface that B-1 manifests may exercise.
 export const RESOLVER_SUPPORTED_ASSET_TYPES = new Set(["Ship"]);
 export const RESOLVER_SUPPORTED_FEATURES = new Set([
   "persistent_surface_ships",
@@ -27,8 +26,6 @@ export function shippedResolverCapabilities(): ResolverCapabilities {
   };
 }
 
-// Prove the manifest only exercises the resolver's declared surface; missing
-// support rejects with AUTO_RESOLUTION_UNAVAILABLE (DESIGN-37 §42).
 export function proveAutoResolvable(
   manifest: BattleManifest,
   capabilities: ResolverCapabilities,
@@ -52,8 +49,6 @@ export function proveAutoResolvable(
       ...context,
     });
   }
-  // B-1 manifests may not carry mechanics the resolver does not implement
-  // (withdrawal/surrender/objectives land in B-2/B-6).
   if (manifest.missionObjectives.length > 0) {
     if (!capabilities.supportedFeatures.has("objectives")) {
       throw new BluewaveError(AUTO_RESOLUTION_UNAVAILABLE, {

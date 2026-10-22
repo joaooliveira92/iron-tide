@@ -1,8 +1,3 @@
-/**
- * Argument parsing for `scripts/view.ts` (`pnpm snap`). Pure: it only turns argv into a validated,
- * ordered description of what to do, so the order-sensitive and validating parts are testable
- * without launching Electron.
- */
 import { parseArgs } from "node:util";
 import {
   BACKGROUND_PREFERENCES,
@@ -102,7 +97,6 @@ function toAction(flag: string, value: string): SnapAction {
       return { kind: "clickAt", x, y };
     }
     default: {
-      // scroll: "DX,DY" or "DX,DY@X,Y" (move the pointer to X,Y first)
       const [delta = "", at, ...rest] = value.split("@");
       if (rest.length > 0) return fail(`--scroll expects DX,DY[@X,Y], got "${value}"`);
       const { x: dx, y: dy } = toPoint("--scroll", delta);
@@ -152,8 +146,6 @@ export function parseSnapArgs(argv: readonly string[]): SnapOptions {
   }
   const { values, tokens } = parsed;
 
-  // Tokens carry the command-line position, so order survives `--flag=value` and values that
-  // happen to look like flags.
   const actions: SnapAction[] = [];
   for (const t of tokens) {
     if (t.kind === "option" && ACTION_FLAGS.includes(t.name)) {
@@ -185,7 +177,6 @@ export function parseSnapArgs(argv: readonly string[]): SnapOptions {
     ...(values.theme !== undefined
       ? { theme: oneOf("--theme", values.theme, THEME_PREFERENCES) }
       : {}),
-    // A frozen capture should not depend on an animated backdrop.
     ...(values.background !== undefined
       ? { background: oneOf("--background", values.background, BACKGROUND_PREFERENCES) }
       : values.freeze

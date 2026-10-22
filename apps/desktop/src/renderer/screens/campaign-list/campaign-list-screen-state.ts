@@ -23,11 +23,6 @@ export function applyLoadFailed(
   return { ...state, loadError: error };
 }
 
-/**
- * The campaign-list "Current date" column. Uses the additive
- * `campaignDate` field when the save wrote it, else the honest `turnNumber`
- * fallback — never a fabricated value (spec §17.4).
- */
 export function campaignDateLabel(metadata: SaveMetadata): string {
   if (metadata.campaignDate !== undefined) {
     const month = String(metadata.campaignDate.month).padStart(2, "0");

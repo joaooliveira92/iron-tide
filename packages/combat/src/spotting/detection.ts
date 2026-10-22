@@ -1,6 +1,3 @@
-// DESIGN-38 §3 step 8: deterministic detection model over fixed-point positions.
-// Baseline clear daylight only; random scatter (if any) is via domain-separated
-// keyed streams. No ambient I/O, clock, or Math.random().
 import type { RandomEngine } from "@bluewave/random";
 import type { ContactTrack } from "../targeting.js";
 import {
@@ -11,12 +8,6 @@ import {
 
 export type Position = [number, number];
 
-// Detection geometry is compared in a 1-metre quantum (positions are integer
-// micrometres). Bound analysis (DESIGN-07): coordinates are bounded by realistic
-// tactical areas (<= ~1e11 µm), so metre-scaled deltas stay <= ~1e5; their
-// squared sum (<~1e10) is far below Number.MAX_SAFE_INTEGER (9.007e15). This
-// keeps the authoritative range comparison exact fixed-point integer, avoiding
-// the ~1e21 unsafe-integer squared-distance of raw micrometres.
 export const DETECTION_GEOMETRY_METRE_UM = 1_000_000 as const;
 
 export function distanceSq(a: Position, b: Position): number {
@@ -29,19 +20,11 @@ export function distanceSq(a: Position, b: Position): number {
   return dx * dx + dy * dy;
 }
 
-// AC-8: pure flat-open-sea line-of-sight predicate. Baseline returns true for
-// any two points on the flat sea; the seam accepts an optional geometry resolver
-// for later baths/landmasses. Deterministic, no I/O.
 export type LosResolver = (a: Position, b: Position) => boolean;
 export function hasLineOfSight(a: Position, b: Position, los: LosResolver = () => true): boolean {
   return los(a, b);
 }
 
-// AC-7: detection when target within sensor range (scaled by the neutral
-// visibility multiplier) AND line-of-sight. Deterministic. The optional keyed
-// engine/stream seam reserves a deterministic confirmation draw for later
-// weather/smoke modifiers (B-5); the shipped baseline retention probability
-// is 100% under clear daylight, so unseeded calls are exactly range+LOS.
 export interface DetectionContext {
   observer: Position;
   target: Position;
@@ -62,15 +45,10 @@ export function isDetected(
   const inRange = distanceSq(ctx.observer, ctx.target) <= effectiveRangeM * effectiveRangeM;
   if (!inRange) return false;
   if (!engine || !streamId) return true;
-  // keyed confirmation draw: baseline retention 10_000 bp = always detected;
-  // B-5 lowers the constant while keeping the seam deterministic.
   const stream = engine.stream(streamId);
   return stream.next() < DETECTION_RETENTION_BP / VISIBILITY_BP_SCALE;
 }
 
-// AC-9: resolve_sensors_spotting produces contact tracks ONLY from detected true
-// assets, recording reason/source; never a hidden-identity leak. Each detected
-// asset yields one deduped ContactTrack keyed by a deterministic contact id.
 export interface TrueAsset {
   assetId: string;
   sideId: string;
@@ -102,10 +80,9 @@ export interface SpottingContact extends ContactTrack {
 export function resolveSensorsSpotting(input: ResolveSpottingInput): SpottingContact[] {
   const rangeUm = input.contractRangeUm ?? VISUAL_DETECTION_RANGE_UM;
   const contacts: SpottingContact[] = [];
-  // deterministic iteration in observer then asset declared order.
   for (const observer of input.observers) {
     for (const asset of input.assets) {
-      if (observer.sideId === asset.sideId) continue; // friendly assets are not "contacts"
+      if (observer.sideId === asset.sideId) continue;
       if (!isDetected({ observer: observer.position, target: asset.position, rangeUm })) {
         continue;
       }
@@ -119,7 +96,7 @@ export function resolveSensorsSpotting(input: ResolveSpottingInput): SpottingCon
         position: asset.position,
         course: asset.heading,
         speed: asset.speedBpKnots,
-        confidence: 10_000, // fresh, high-confidence baseline contact
+        confidence: 10_000,
         observationTime: input.observationTime,
         source: "visual",
         uncertainty: 0,

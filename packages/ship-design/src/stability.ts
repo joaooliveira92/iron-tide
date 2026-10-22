@@ -5,7 +5,6 @@ import { parseFormula } from "./formula/parse.js";
 import { ZONE_IDS, type ZoneDef, type ZoneId } from "./arrangement.js";
 import { toSafe } from "./units.js";
 
-/** One lump of the displacement for centre-of-gravity and trim work. */
 export interface WeightItem {
   readonly label: string;
   readonly kg: number;
@@ -15,27 +14,19 @@ export interface WeightItem {
 }
 
 export interface StabilityWindow {
-  /** Below this GM (mm) the ship is judged unsafe in service. */
   readonly gmMinMm: number;
-  /** Below this GM (mm) the ship will capsize; BLOCKING. */
   readonly gmCapsizeMm: number;
-  /** Above this GM (mm) the ship is stiff and rolls violently. */
   readonly gmMaxMm: number;
 }
 
 export interface StabilityBalance {
-  /** KB as bp of draught. */
   readonly kbBp: number;
-  /** Waterplane inertia coefficient, bp: I = cI * L * B^3. */
   readonly inertiaBp: number;
   readonly trimToleranceBp: number;
-  /** Fraction of the hull-weight-based allowable bending moment, bp. */
   readonly sectionModulusBp: number;
   readonly stressCriticalBp: number;
   readonly stressBlockingBp: number;
-  /** Freeboard/length permille -> seakeeping bp. */
   readonly seakeepingFreeboard: LookupTable;
-  /** GM mm -> seakeeping multiplier bp. */
   readonly seakeepingGm: LookupTable;
   readonly thinMarginBp: number;
 }
@@ -47,9 +38,7 @@ export interface StabilityInput {
   readonly draughtMm: number;
   readonly depthMm: number;
   readonly blockCoeffBp: number;
-  /** Longitudinal centre of buoyancy, permille from bow. */
   readonly lcbPermille: number;
-  /** Share of buoyancy carried by each zone, bp, in canonical zone order (sums to 10_000). */
   readonly buoyancyByZoneBp: readonly number[];
   readonly hullWeightKg: number;
   readonly window: StabilityWindow;
@@ -63,7 +52,6 @@ export interface StabilityResult {
   readonly gmMm: number;
   readonly lcgPermille: number;
   readonly trimBp: number;
-  /** Positive = hogging (ends heavy), negative = sagging. */
   readonly peakBendingMomentKgMm: number;
   readonly stressBp: number;
   readonly seakeepingBp: number;
@@ -160,7 +148,6 @@ export function compileStability(
     });
   }
 
-  // Trim (F-S5)
   const lcg = toSafe(
     "lcg",
     i.items.reduce((a, it) => a + BigInt(it.kg) * BigInt(it.stationPermille), 0n) / W,
@@ -197,15 +184,11 @@ export function compileStability(
     });
   }
 
-  // Structural stress (F-S6): discretise into the nine zones, rectangle-rule integration of shear.
   const zoneWeight = new Map<ZoneId, bigint>();
   for (const it of i.items)
     zoneWeight.set(it.zoneId, (zoneWeight.get(it.zoneId) ?? 0n) + BigInt(it.kg));
-  // MISSION overlays other zones; fold its weight and buoyancy out of the line-of-hull integration.
   const line = zones.filter((z) => z.id !== "MISSION");
   const missionW = zoneWeight.get("MISSION") ?? 0n;
-  // Trapezoid integration of shear to bending moment at each zone boundary, then remove the closing error
-  // linearly (the free ship trims until moments balance). Gameplay approximation, see spec F-S6.
   let shear = 0n;
   const moments: bigint[] = [];
   const cum: bigint[] = [];
@@ -215,7 +198,7 @@ export function compileStability(
     const idx = ZONE_IDS.indexOf(z.id);
     const buoy = (W * BigInt(i.buoyancyByZoneBp[idx]!)) / BP;
     let wz = zoneWeight.get(z.id) ?? 0n;
-    if (z.id === "SUPERSTRUCTURE") wz += missionW; // keep the load on the line of the hull
+    if (z.id === "SUPERSTRUCTURE") wz += missionW;
     const prev = shear;
     shear += wz - buoy;
     const segMm = (BigInt(i.lengthMm) * BigInt(z.endPermille - z.startPermille)) / 1000n;
@@ -231,7 +214,6 @@ export function compileStability(
     const corrected = moments[k]! - (closing * cum[k]!) / totalLen;
     if ((corrected < 0n ? -corrected : corrected) > (peak < 0n ? -peak : peak)) peak = corrected;
   }
-  // Mission zone buoyancy share is carried by the neighbouring zones; fold it so equilibrium holds.
   const allowed = (BigInt(i.hullWeightKg) * BigInt(i.depthMm) * BigInt(b.sectionModulusBp)) / BP;
   const stressBp =
     allowed <= 0n ? 1_000_000 : toSafe("stress", ((peak < 0n ? -peak : peak) * BP) / allowed);
@@ -271,7 +253,6 @@ export function compileStability(
     });
   }
 
-  // Seakeeping (F-S7)
   const fbPermille = Math.floor(((i.depthMm - i.draughtMm) * 1000) / i.lengthMm);
   const sFb = evaluate(parseFormula("lookup(t, x)"), {
     vars: { x: fbPermille },

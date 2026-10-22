@@ -1,5 +1,3 @@
-// AC-5, AC-6, AC-7 (INC-3): Development request command, proposal slot,
-// project lifecycle.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {

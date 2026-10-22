@@ -1,11 +1,3 @@
-/**
- * Hand-authored copy for the Starting-fleet method cards (spec §5a/§5b) —
- * maps the engine's validated `legacyFleetModeId`s onto player-facing
- * framing. No engine data backs this text; same authoring pattern as the
- * Rules of the Naval Age uncertainty copy. Note the naming trap: `historical`
- * is the curated-generation option, not the manual-build one — that's
- * `disabled`.
- */
 import type { FleetMethodArtworkId } from "../../content/fleetMethodArtworkManifest.js";
 
 export interface FleetMethodCardContent {

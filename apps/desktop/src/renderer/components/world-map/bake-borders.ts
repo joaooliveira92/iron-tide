@@ -1,37 +1,9 @@
-/**
- * Author-time bake for the 1880 political borders of the playable nations.
- *
- * Reads `world_1880.geojson` from aourednik/historical-basemaps
- * (https://github.com/aourednik/historical-basemaps, GPL-3.0; its own caveat is
- * that the maps are "work in progress" and borders at world scale), keeps the
- * features that belong to a playable nation (the nation itself plus the
- * territories it held) and clips them to the map's own coastline
- * (`coastline-data.ts`, Natural Earth 1:10m). The 1880 source is far coarser than
- * the coast, so a plain copy leaves its coastal edge a few kilometres off the
- * real shore; clipping makes the coast of each nation the coast the map draws,
- * and only the inland frontiers stay as coarse as the source.
- *
- * For each nation the result is
- *   (coarse ∩ land)  ∪  ((coarse grown by COAST_REACH ∩ land) − every other 1880 polygon)
- * The second term takes back the strip of real land that the coarse polygon
- * stops short of at the coast, without moving any frontier with a neighbour.
- * Nothing is fetched at runtime and the clipper is not a project dependency.
- *
- * Run (the GeoJSON is untrusted input: pass it by path, from a directory of its own;
- * the clipper is `polygon-clipping`, installed in a scratch directory outside the repo):
- *   /path/to/node_modules/.bin/tsx apps/desktop/src/renderer/components/world-map/bake-borders.ts \
- *     /path/to/world_1880.geojson /path/to/node_modules/polygon-clipping/dist/polygon-clipping.esm.js
- *
- * See docs/adr/ for the provenance and licensing note that goes with this data.
- */
-
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { decodeCoastline, encodeCoastline } from "../../lib/coastline-codec.js";
 import { COASTLINE_BASE64 } from "./coastline-data.js";
 
-/** Playable campaign nation id -> dataset features to include (by SUBJECTO or NAME). */
 const NATIONS: Readonly<Record<string, { subjects: string[]; names?: string[] }>> = {
   uk: {
     subjects: ["United Kingdom of Great Britain and Ireland", "United Kingdom", "Great Britain"],
@@ -47,9 +19,7 @@ const NATIONS: Readonly<Record<string, { subjects: string[]; names?: string[] }>
   qing: { subjects: ["Manchu Empire"], names: ["Taiwan"] },
 };
 
-/** Degrees a coarse polygon may be grown seaward-to-landward to reach the real coast. */
 const COAST_REACH = 0.3;
-/** The 8 compass directions the polygon is shifted in to grow it (a square Minkowski sum). */
 const SHIFTS: readonly (readonly [number, number])[] = [
   [1, 0],
   [-1, 0],
@@ -99,12 +69,6 @@ const snap = (geoms: PcMulti[], step: number): PcMulti[] =>
     ),
   );
 
-/**
- * polygon-clipping is exact in theory and occasionally trips on floating-point noise where two
- * edges almost coincide (the intersection points of an earlier step are off-grid). Retrying with
- * the inputs snapped to a progressively coarser grid (down to 0.001°, a tenth of the 0.01° output
- * grid) is deterministic and invisible.
- */
 const SNAP_STEPS = [1e-6, 1e-5, 1e-4, 1e-3] as const;
 
 function guarded(op: keyof Clipper): (...geoms: PcMulti[]) => PcMulti {
@@ -205,7 +169,6 @@ for (const [nation, rule] of Object.entries(NATIONS)) {
     .filter(({ feature, box }) => !ownSet.has(feature) && touches(box, reach))
     .map(({ multi }) => multi);
 
-  // Land polygons never overlap, so they are clipped one by one rather than unioned first.
   const reachable = nearbyLand.flatMap((piece) => clipper.intersection(grown, piece));
   const region = clipper.union(
     clipper.intersection(coarse, reachable),
@@ -218,7 +181,6 @@ for (const [nation, rule] of Object.entries(NATIONS)) {
       .map((ring) => {
         const flat: number[] = [];
         let previous: string | null = null;
-        // Drop the closing duplicate and any point the 0.01 quantisation collapses onto its neighbour.
         for (const [x, y] of ring.slice(0, -1)) {
           const key = `${round(x)},${round(y)}`;
           if (key === previous) continue;

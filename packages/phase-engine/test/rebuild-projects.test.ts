@@ -44,7 +44,6 @@ const nationWith = (ships: Ship[], projects: ConstructionProject[]): NationState
     id: "GBR",
     name: "GBR",
     tag: "GBR",
-    // Empty: these tests exercise the rebuild's own state; a funded treasury would also pay for the unfinished project.
     treasury: SafeInt(0),
     income: SafeInt(0),
     expenses: SafeInt(0),
@@ -117,11 +116,9 @@ describe("rebuildProjectProblems", () => {
     ).toMatch(/is new construction but names target ship s1/);
   });
   it("treats a CANCELLED rebuild as terminal: it holds no ship either way", () => {
-    // Cancellation releases the ship (DESIGN-23 section 23), so the released ship is consistent...
     expect(
       rebuildProjectProblems(nationWith([ship("s1")], [project({ status: "CANCELLED" })])),
     ).toEqual([]);
-    // ...and a cancelled rebuild is not judged even while its ship is still unavailable.
     expect(
       rebuildProjectProblems(nationWith([unavailable()], [project({ status: "CANCELLED" })])),
     ).toEqual([]);
@@ -218,7 +215,7 @@ describe("a finished REBUILD completes into the new design (ADR-0078, DESIGN-23 
     );
     expect(collector.errors).toEqual([]);
     const ships = nation.fleets.flatMap((f) => f.ships);
-    expect(ships.map((s) => s.id)).toEqual(["s1"]); // no second ship
+    expect(ships.map((s) => s.id)).toEqual(["s1"]);
     const s = ships[0]!;
     expect(s).toMatchObject({
       designVersionId: "d_new",
@@ -292,8 +289,6 @@ describe("a finished REBUILD completes into the new design (ADR-0078, DESIGN-23 
   });
 
   it("releases a rebuilt ship without losing its readiness or crew (S-1 D2)", () => {
-    // Seed the reserve crew at its ceiling so the month's readiness ramp is a
-    // no-op and this test isolates the rebuild-release path (S-1 ticket 03).
     const target = ship("s1", {
       availability: "UNAVAILABLE",
       availabilityProjectId: "proj-r",
@@ -342,7 +337,7 @@ describe("a finished REBUILD completes into the new design (ADR-0078, DESIGN-23 
     const ships = nation.fleets.flatMap((f) => f.ships);
     expect(ships.map((s) => s.id)).toEqual(["s1"]);
     expect(ships[0]!.availability).toBeUndefined();
-    expect(ships[0]!.designVersionId).toBe("d1"); // unchanged
+    expect(ships[0]!.designVersionId).toBe("d1");
     expect(result.eventLedger.all.some((e) => e.eventType === "ShipRebuilt")).toBe(false);
   });
 

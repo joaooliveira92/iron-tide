@@ -4,8 +4,6 @@ import { MonthExecutor } from "@bluewave/phase-engine";
 import { describe, expect, it } from "vite-plus/test";
 import { compileProductionCampaign } from "./economy-scenarios.helper.js";
 
-// Economy spec #138 slice 7: the player projection and the opening briefing are read before any month runs, so they must agree
-// line by line with the first month the engine then executes. Differential tests catch drift between the two automatically.
 const { state } = compileProductionCampaign();
 const result = new MonthExecutor().execute(
   state.snapshot,

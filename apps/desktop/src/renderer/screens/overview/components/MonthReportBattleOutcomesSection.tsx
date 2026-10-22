@@ -2,11 +2,6 @@ import type { BattleOutcome } from "@bluewave/campaign-engine";
 import { campaignNationLabel } from "../../../content/presentationContent.js";
 import { describeBattle } from "../month-report-format.js";
 
-/**
- * The report's dedicated Battle Outcomes subsection (spec §16): the real
- * `closingSnapshot.battleOutcomes` as plain text losses/outcomes. Kept distinct
- * from Fleet; no tactical UI.
- */
 export function MonthReportBattleOutcomesSection({
   battles,
   areaName,

@@ -1,9 +1,4 @@
 /// <reference types="vite-plus/client" />
-/**
- * Wide Event Telemetry Utility following Wide Event principles.
- * Emits exactly one canonical, structured wide event per key user/system action,
- * with correlated session/campaign IDs and diagnostics.
- */
 
 export interface WideTelemetryEvent {
   readonly action: string;

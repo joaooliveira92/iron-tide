@@ -86,7 +86,6 @@ describe("AC-13: screening balance (§18)", () => {
 
 describe("AC-14: attack-opportunity value-only (§19)", () => {
   it("computeAttackOpportunityValue: all 10_000 factors gives value = input", () => {
-    // 5_000 * 10_000^4 / 10_000^4 = 5_000
     const result = computeAttackOpportunityValue({
       policyWeightBp: 5_000,
       targetAvailabilityFactorBp: 10_000,

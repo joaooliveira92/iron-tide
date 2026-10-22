@@ -1,5 +1,3 @@
-// DESIGN-42 §8: smoke drift and decay per minute.
-
 import {
   WIND_RETENTION_LT_5_BP,
   WIND_RETENTION_5_TO_15_BP,
@@ -86,7 +84,6 @@ export function resolveSmokeDriftDecay(
     });
   }
 
-  // Step 4: merge clouds with same owner and position proximity
   const merged = mergeCloudsByProximity(survivors);
 
   const nextClouds: SmokeCloud[] = [];
@@ -145,7 +142,6 @@ function mergeCloudsByProximity(clouds: SmokeCloud[]): SmokeCloud[] {
       }
       const dist = distanceBetween([mergedPosX, mergedPosY], b.centroidPosition);
       if (dist < SMOKE_MERGE_PROXIMITY_M) {
-        // Merge: weighted average position, summed density capped at 10_000
         const totalWeight = mergedDensityBp + b.densityBp;
         const w1 = totalWeight > 0 ? mergedDensityBp / totalWeight : 0.5;
         const w2 = totalWeight > 0 ? b.densityBp / totalWeight : 0.5;

@@ -1,15 +1,7 @@
-/**
- * Presentation state for the application toolbar. The toolbar renders whatever
- * this module describes — it never reads engine data directly and never decides
- * what a number means. Metrics the engine does not yet expose are returned as
- * explicit placeholders rather than invented values.
- */
-
 import { monthName } from "../lib/campaign-month.js";
 import type { PresentationFormat } from "../lib/presentation-format/index.js";
 import { translate } from "../lib/strings.js";
 
-/** Which shell the toolbar is decorating. Drives the adaptive second row. */
 export type ActiveView = "menu" | "new_game" | "playing" | "options" | "editor";
 
 export interface CampaignMonth {
@@ -17,24 +9,12 @@ export interface CampaignMonth {
   readonly month: number;
 }
 
-/** The slice of the campaign projection the toolbar consumes. */
 export interface HeaderCampaign {
   readonly month: CampaignMonth;
   readonly treasury: number;
-  /** The player nation's name — INC-1's `PlayerProjection.nationName`. */
   readonly nationName: string;
-  /**
-   * Projected monthly surplus/deficit — INC-1's
-   * `PlayerProjection.projectedSurplusDeficit`.
-   */
   readonly projectedSurplusDeficit: number;
-  /** True when the player nation is at war with anyone. */
   readonly atWar: boolean;
-  /**
-   * Forward-wired active-alerts count slot: `null` until the INC-2
-   * priorities projection lands, so the toolbar shows an explicit
-   * placeholder — never a fabricated count.
-   */
   readonly activeAlertsCount: number | null;
 }
 
@@ -44,7 +24,6 @@ export interface HeaderMetric {
   readonly icon: MetricIcon;
   readonly label: string;
   readonly value: string;
-  /** True when the value is not backed by engine data yet. */
   readonly placeholder: boolean;
 }
 
@@ -77,25 +56,17 @@ export type SecondaryRow =
       readonly detail: string;
     };
 
-/** The concrete member of the `SecondaryRow` union each focused presenter renders. */
 export type StatusRowModel = Extract<SecondaryRow, { kind: "status" }>;
 export type CampaignRowModel = Extract<SecondaryRow, { kind: "campaign" }>;
 export type EditorRowModel = Extract<SecondaryRow, { kind: "editor" }>;
 export type WizardRowModel = Extract<SecondaryRow, { kind: "wizard" }>;
 
-/** A new-game step's own heading and hint, replacing the generic setup-assistant copy. */
 export type WizardStepCopy = Pick<WizardRowModel, "heading" | "hint">;
 export type PreferencesRowModel = Extract<SecondaryRow, { kind: "preferences" }>;
 
 const NO_VALUE = "—";
 const THOUSAND = 1000;
 
-/**
- * Sums of a thousand or more are shown in thousands, truncated so the toolbar
- * never reports more money than the treasury holds. The figure and its currency
- * unit come from the one presentation format, so the header honours the player's
- * effective currency and locale (ADR-0218).
- */
 export function formatTreasury(treasury: number, format: PresentationFormat): string {
   if (!Number.isFinite(treasury)) return NO_VALUE;
 
@@ -204,7 +175,6 @@ function campaignMetrics(
           : String(campaign.activeAlertsCount),
       placeholder: campaign === null || campaign.activeAlertsCount === null,
     },
-    // Prestige and world tension are not part of the player projection yet.
     {
       icon: "prestige",
       label: translate("shell.header.metric.prestige"),

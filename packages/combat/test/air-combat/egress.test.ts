@@ -1,4 +1,3 @@
-// AC-14 (INC-6): Strike egress and fuel check.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -54,7 +53,6 @@ describe("AC-14: Strike egress and fuel check", () => {
     });
 
     it("strike with less than 1 min (e.g., 0.5 not possible with SafeInt) but 0 works", () => {
-      // SafeInt is integer-based, so 0 is the only value < 1
       const state = createAttackState(0);
       const result = checkStrikeFuel(state);
       expect(result.sufficient).toBe(false);
@@ -63,38 +61,28 @@ describe("AC-14: Strike egress and fuel check", () => {
 
   describe("computeEgressPosition", () => {
     it("moves toward start position", () => {
-      // State at [1000, 800], start = [100, 200], speed = 150 mps
-      // Distance per minute = 150 * 60 = 9000m
-      // Distance to start = sqrt((1000-100)^2 + (800-200)^2) = sqrt(810000 + 360000) = sqrt(1170000) ≈ 1081
-      // So we'll reach start in one minute
       const state = createAttackState(10);
       const newPos = computeEgressPosition(state);
-      // Should move toward [100, 200]
-      // Since speed*60 >= distance, should clamp to start
       expect(newPos[0]).toBe(100);
       expect(newPos[1]).toBe(200);
     });
 
     it("does not overshoot start position", () => {
-      // State at [1000, 800], start = [100, 200], speed is very high
-      // Distance per minute >> distance to start
       const state = createAttackState(10);
       const newPos = computeEgressPosition(state);
       expect(newPos[0]).toBeLessThanOrEqual(state.startPosition[0]);
-      // Should equal since speed is high enough to reach
       expect(newPos[0]).toBe(100);
       expect(newPos[1]).toBe(200);
     });
 
     it("moves toward start by correct amount when not reaching", () => {
-      // Position far from start, low speed so not reaching in one minute
       const initial = createStrikeMissionState(
         "mission_02",
         "strike_02",
         ["sqn_002"],
         "target_ship_02",
         [0, 0] as [number, number],
-        SafeInt(10), // slow: 10 mps
+        SafeInt(10),
         SafeInt(30),
       );
       const enRoute = transitionStrikeState(initial, "ON_TARGET", {
@@ -105,9 +93,6 @@ describe("AC-14: Strike egress and fuel check", () => {
       });
 
       const newPos = computeEgressPosition(attacking);
-      // Speed = 10 mps → 600m per minute
-      // Toward [0, 0] from [10000, 0]
-      // Should move by 600m toward start: new x = 10000 - 600 = 9400
       expect(newPos[0]).toBeCloseTo(9_400, 0);
       expect(newPos[1]).toBeCloseTo(0, 0);
     });
@@ -152,7 +137,6 @@ describe("AC-14: Strike egress and fuel check", () => {
     it("updates position toward start", () => {
       const state = createAttackState(10);
       const egressState = createEgressState(state);
-      // Position should be closer to start [100, 200] than original [1000, 800]
       const origDist = Math.sqrt(
         (state.position[0] - state.startPosition[0]) ** 2 +
           (state.position[1] - state.startPosition[1]) ** 2,
@@ -174,7 +158,6 @@ describe("AC-14: Strike egress and fuel check", () => {
         SafeInt(150),
         SafeInt(30),
       );
-      // State is in EN_ROUTE, cannot transition directly to EGRESSING
       expect(() => createEgressState(initial)).toThrow();
     });
 

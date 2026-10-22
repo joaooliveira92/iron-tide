@@ -1,11 +1,3 @@
-// Per-version save-compatibility corpus (release-readiness WS3 / ADR-0113 §5):
-// every released compatibility version contributes a frozen save under
-// `test/fixtures/save-corpus/<version>/`. Loading it is the regression net for
-// the next format bump — a future change to the on-disk schema, the envelope,
-// the canonical serializer or the compatibility gate must keep every released
-// save either loadable (migration) or rejected with the *stable* mismatch
-// diagnostic, never a generic corruption code.
-
 import { readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";

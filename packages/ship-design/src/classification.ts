@@ -14,7 +14,6 @@ import { UM_PER_KNOT } from "./units.js";
 
 export * from "./classificationRules.js";
 
-/** Which group of design settings fixes a rule of each field (the UI maps a group to its controls). */
 const FIELD_SETTING: Readonly<Record<ClassRuleField, SettingGroup>> = {
   displacement: "hull",
   speed: "machinery",
@@ -29,7 +28,6 @@ const FIELD_SETTING: Readonly<Record<ClassRuleField, SettingGroup>> = {
 
 const GUN_CATEGORIES: readonly string[] = ["MAIN_GUN", "SECONDARY_GUN", "DUAL_PURPOSE_GUN"];
 
-/** Reads the facts out of a compiled design. Main-gun turret count is the number of main-gun mounts fitted. */
 export function classFacts(
   c: Pick<CompiledDesign, "totalKg" | "machinery" | "components">,
   d: DesignIntent,
@@ -78,12 +76,6 @@ export function classFacts(
   };
 }
 
-/**
- * First type, in precedence order, whose predicates all pass; null if none. `order` comes from the
- * compiled ship-type registry when content supplies it; absent means the code-owned
- * `CLASSIFIED_SHIP_TYPES` order (the 12a regression pins the two equal). The predicate functions
- * themselves are always the closed code record `classPredicates`.
- */
 export function naturalClass(
   f: ClassFacts,
   r: ClassificationRules,
@@ -93,7 +85,6 @@ export function naturalClass(
   return null;
 }
 
-/** DESIGN-22 section 5 mismatch policy. All three rejections are BLOCKING (DESIGN-21 section 25). */
 export function classificationFindings(
   f: ClassFacts,
   intended: ClassifiedShipType,
@@ -138,7 +129,6 @@ export function classificationFindings(
           ),
           evidence: ev(failures.length),
         },
-        // One finding per failed rule, so each reads next to the control that fixes it.
         ...ruleFailures.map((x): Finding => ({
           id: x.code,
           severity: "BLOCKING",
@@ -198,11 +188,6 @@ export function classificationFindings(
   return { natural, findings: [] };
 }
 
-/**
- * The class code shown beside the ship type: the type, then the number of main-gun mounts and the most barrels in a mount
- * of the largest main calibre, e.g. `BB4X2`. A design with no main guns is just its type. Pure; mounts are read from the
- * compiled components (MAIN_GUN category, `caliberUm` attribute, `barrels` parameter, default 1).
- */
 export function classCode(
   type: string,
   components: readonly Pick<CompiledDesign["components"][number], "category" | "attr" | "params">[],
@@ -216,32 +201,18 @@ export function classCode(
   return `${type}${guns.length}X${barrels}`;
 }
 
-/**
- * The blocking finding ids `classificationFindings` emits when the shipped DESIGN-22 section 5 mismatch policy
- * rejects a design: the intended type is illegal, the natural type differs, or no natural type matches. A rebuild
- * completion re-runs classification and refuses on any of these (DESIGN-22 section 22).
- */
 export const CLASSIFICATION_REJECTION_IDS: readonly string[] = [
   "INTENDED_CLASSIFICATION_ILLEGAL",
   "NATURAL_CLASSIFICATION_MISMATCH",
   "NO_NATURAL_CLASSIFICATION_MATCH",
 ];
 
-/**
- * True when compiled-design findings carry a blocking intended/natural classification rejection. Callers that
- * re-run classification (e.g. a completed rebuild, DESIGN-22 section 22) use this to tell a classification
- * failure from an unrelated blocking finding.
- */
 export function classificationRejected(findings: readonly Finding[]): boolean {
   return findings.some(
     (f) => f.severity === "BLOCKING" && CLASSIFICATION_REJECTION_IDS.includes(f.id),
   );
 }
 
-/**
- * Non-blocking guidance for a design that passes its intended type: a WARNING is a real weakness the player should
- * weigh, an ADVISORY is context. Neither can make a design unbuildable (ADR-0088).
- */
 export function typeAdvisories(intended: ClassifiedShipType, f: ClassFacts): Finding[] {
   const note = (
     id: string,

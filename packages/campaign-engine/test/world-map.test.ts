@@ -4,11 +4,6 @@ import type { FleetState, Ship } from "@bluewave/campaign";
 import { buildWorldMapView } from "../src/world-map.js";
 import { fixtureNation, fixtureSnapshot } from "./fixtures.js";
 
-/**
- * Pure projection tests for the full-world map view, mirroring
- * `fleet.test.ts`'s fixture pattern: hand-built snapshots, no compiler run.
- */
-
 function makeShip(id: string, name: string): Ship {
   return {
     id,

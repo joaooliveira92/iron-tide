@@ -9,7 +9,6 @@ import {
   zoomMetersPerPixel,
 } from "./tacticalScale.js";
 
-/** The default presentation (en-US, Naval Credits) the scale readout renders under. */
 const FORMAT = createPresentationFormat({
   locale: "en-US",
   numberScale: "full",

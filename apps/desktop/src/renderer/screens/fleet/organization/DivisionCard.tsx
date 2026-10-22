@@ -56,7 +56,6 @@ function Meter({ label, value }: { readonly label: string; readonly value: numbe
 
 const SELECT_CLASS = "h-8 min-w-0 rounded-md border bg-background px-2 text-sm disabled:opacity-50";
 
-/** One permanent division: its stats, ships and the five engine operations. */
 export function DivisionCard({ division, state, busy, send }: DivisionCardProps) {
   const addable = shipsAvailableToAdd(division, state.unassignedShips, state.maxShips);
   const [toAdd, setToAdd] = useState("");
@@ -65,8 +64,6 @@ export function DivisionCard({ division, state, busy, send }: DivisionCardProps)
     : (addable[0]?.shipId ?? "");
   const title = divisionTitle(division);
 
-  // The flagship (canonical first ship, DESIGN-26 §8) is pinned; the remaining
-  // ships are reorderable. A reorder is a local draft sent as one engine command.
   const flagship = division.ships.find((ship) => ship.shipId === division.flagshipShipId);
   const shipName = new Map(division.ships.map((ship) => [ship.shipId, ship.name]));
   const authoritativeRest = division.ships
@@ -221,8 +218,6 @@ export function DivisionCard({ division, state, busy, send }: DivisionCardProps)
                   size="sm"
                   disabled={!reorderDirty || reorderSubmitted || busy}
                   onClick={() => {
-                    // Mark queued immediately (blocks a double submit), then clear it
-                    // unless the engine actually accepted the command.
                     setSubmittedRestKey(draftKey);
                     void send({
                       type: "ReorderDivisionShips",

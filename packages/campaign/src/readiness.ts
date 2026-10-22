@@ -1,16 +1,6 @@
-// S-1 (ship readiness and maintenance): the per-ship readiness vocabulary and
-// crew quality band. Values are derived at compile from existing content — an
-// under-construction hull works up, every other ship is active at its ceiling —
-// with optional authored overrides validated at the compile boundary. The crew
-// ceilings are fixture-class until decision request 0007 (S-1 map D4/D7).
-//
-// `campaign` is renderer-reachable, so its compile-boundary failure stays a
-// plain tagged class (`readonly _tag`), never `Data.TaggedError` (ADR-0128 §1,
-// MIG-EXCL-1: importing the Effect `Data` runtime would bundle `effect`).
 import { SafeInt } from "@bluewave/contracts";
 import type { Diagnostic, DiagnosticCode } from "@bluewave/diagnostics";
 
-/** The canonical readiness vocabulary (manual `AF`/`RF`/`MB`/`WU`, pp.48/51; `REPAIR` per S-1 D6). */
 export const SHIP_READINESS_STATES = [
   "ACTIVE",
   "RESERVE",
@@ -21,7 +11,6 @@ export const SHIP_READINESS_STATES = [
 
 export type ShipReadinessState = (typeof SHIP_READINESS_STATES)[number];
 
-/** Compile-boundary diagnostic codes for a malformed ship readiness/crew seed. */
 export const SHIP_READINESS_CODES = {
   unknownState: "CAMPAIGN-SHIP-READINESS" as DiagnosticCode,
   crewQuality: "CAMPAIGN-SHIP-CREW-QUALITY" as DiagnosticCode,
@@ -32,30 +21,16 @@ export const SHIP_READINESS_CODES = {
 export const CREW_QUALITY_MIN = 0;
 export const CREW_QUALITY_MAX = 100;
 
-/** The largest remaining-months counter a `REPAIR` ship may carry (balance_adjustment, ADR-0213). */
 export const REPAIR_MONTHS_MAX = SafeInt(120);
 
-// S-1 crew-quality ceilings and ramp (ADR-0223, decision request 0007-A). The
-// manual gives no ramp schedule and no grades (p.51): it says active crews are
-// "best trained", reservists take "time", mothballed crews "substantial time",
-// and working-up ends at "decent crew quality". Every magnitude here is an
-// admitted `balance_adjustment` (ADR-0213) unless noted, never a manual fact.
-/** A fully worked-up active crew (balance_adjustment, ADR-0213). */
 export const ACTIVE_CREW_CEILING = SafeInt(100);
-/** A laid-up or newly launched hull starts with no worked-up crew. */
 export const LAID_UP_CREW_CEILING = SafeInt(0);
-/** Working-up ships ramp to the active standard before they join the fleet. */
 export const WORKING_UP_CREW_CEILING = SafeInt(100);
-/** Reserve crews never reach the active standard (balance_adjustment, ADR-0213). */
 export const RESERVE_CREW_CEILING = SafeInt(70);
-/** Mothballed crews are barely trained (balance_adjustment, ADR-0213). */
 export const MOTHBALLED_CREW_CEILING = SafeInt(30);
-/** Under repair a ship keeps its crew, so the ceiling is the active standard. */
 export const REPAIR_CREW_CEILING = SafeInt(100);
 
-/** Crew quality points a ship gains or loses toward its ceiling each month (balance_adjustment). */
 export const CREW_QUALITY_RAMP_PER_MONTH = SafeInt(5);
-/** The crew quality at which a working-up ship leaves working up (manual p.51 "decent"; balance_adjustment). */
 export const WORKING_UP_DECENT_THRESHOLD = SafeInt(60);
 
 const CREW_CEILING_BY_STATE: Record<ShipReadinessState, SafeInt> = {
@@ -66,16 +41,10 @@ const CREW_CEILING_BY_STATE: Record<ShipReadinessState, SafeInt> = {
   REPAIR: REPAIR_CREW_CEILING,
 };
 
-/** The crew-quality ceiling a readiness state ramps toward. */
 export function crewCeilingFor(readiness: ShipReadinessState): SafeInt {
   return CREW_CEILING_BY_STATE[readiness];
 }
 
-/**
- * Move a ship's crew quality one month toward its readiness state's ceiling by
- * `CREW_QUALITY_RAMP_PER_MONTH`, clamped to the ceiling and to `0..100`. Pure and
- * integer-only: the ramp consumes no randomness (S-1 D4).
- */
 export function rampCrewQuality(current: SafeInt, readiness: ShipReadinessState): SafeInt {
   const ceiling = crewCeilingFor(readiness);
   if (current < ceiling) {
@@ -89,20 +58,11 @@ export function rampCrewQuality(current: SafeInt, readiness: ShipReadinessState)
   return current;
 }
 
-/**
- * S-5 08 (spec #73 R10): the over-base crew-quality consequence. Subtract the ruleset's `points` from a ship's crew quality,
- * floored at `CREW_QUALITY_MIN`. The magnitude is a ruleset value; this seam owns only the arithmetic. Integer-only.
- */
 export function reduceCrewQuality(current: SafeInt, points: SafeInt): SafeInt {
   const next = SafeInt.sub(current, points);
   return next < CREW_QUALITY_MIN ? SafeInt(CREW_QUALITY_MIN) : next;
 }
 
-/**
- * The readiness state after a month's ramp: a working-up ship that has reached the
- * "decent" crew threshold becomes active. Working up is entry-only (manual p.51,
- * "but not back"), so this never returns a ship to working up.
- */
 export function readinessAfterCrewRamp(
   readiness: ShipReadinessState,
   crewAfterRamp: SafeInt,
@@ -111,17 +71,10 @@ export function readinessAfterCrewRamp(
   return readiness;
 }
 
-/**
- * The battle-readiness value the combat battle-generation input consumes for a
- * ship (`0..100`): its crew quality (S-1 D4/D5). A working-up ship is excluded
- * before this is read; a low value keeps the combat `FUEL_BATTLE_INELIGIBLE`
- * floor path.
- */
 export function battleReadiness(crewQuality: SafeInt): number {
   return Number(crewQuality);
 }
 
-/** Crew quality in combat's torpedo-model basis-point band (`0..10_000`). */
 export function crewQualityBp(crewQuality: SafeInt): number {
   return Number(crewQuality) * 100;
 }
@@ -130,21 +83,14 @@ export function isShipReadinessState(value: unknown): value is ShipReadinessStat
   return typeof value === "string" && (SHIP_READINESS_STATES as readonly string[]).includes(value);
 }
 
-/** The readiness a ship takes when none is authored: laid down hulls work up, all else are active. */
 export function deriveReadiness(isUnderConstruction: boolean): ShipReadinessState {
   return isUnderConstruction ? "WORKING_UP" : "ACTIVE";
 }
 
-/** The crew quality a ship seeds at for its readiness state when none is authored. */
 export function deriveCrewQuality(readiness: ShipReadinessState): SafeInt {
   return readiness === "ACTIVE" ? ACTIVE_CREW_CEILING : LAID_UP_CREW_CEILING;
 }
 
-/**
- * A compile-boundary failure for a malformed ship readiness/crew seed. A stable
- * `_tag` discriminates it for callers; `code` is the diagnostic code the
- * collector records.
- */
 export class ShipReadinessFailure {
   readonly _tag = "ShipReadinessFailure";
   constructor(
@@ -172,12 +118,6 @@ export interface ShipReadinessSeed {
   readonly repairMonthsRemaining?: SafeInt;
 }
 
-/**
- * Resolve a ship's readiness and crew quality from a compiled fleet-ship record.
- * Absent fields are derived; present fields are validated. A malformed value or
- * an unknown key is a `_tag`-discriminated `ShipReadinessFailure`
- * (`SHIP_READINESS_CODES`), never a silent default.
- */
 export function resolveShipReadinessSeed(
   record: Record<string, unknown>,
   shipId: string,
@@ -272,7 +212,6 @@ export function resolveShipReadinessSeed(
   };
 }
 
-/** Keys a compiled fleet-ship record may carry, in addition to the optional readiness/crew seed. */
 const ALLOWED_SHIP_INPUT_KEYS = new Set([
   "id",
   "name",

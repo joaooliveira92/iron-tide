@@ -1,8 +1,3 @@
-// Combat-test fixtures for the neutral CompiledTorpedo contract (ship-part-model ticket 13b).
-//
-// The eight records mirror the retired `SHIPPED_TORPEDO_MODELS` values verbatim (the Whitehead
-// 14-inch carries its effective/post-1884 27 kg warhead, the value combat resolves at the model's
-// latest revision). Tests key them by torpedo part id, exactly as combat's registry does.
 import type { CompiledTorpedo } from "@bluewave/armament";
 
 export const COMPILED_TORPEDOES: Readonly<Record<string, CompiledTorpedo>> = {
@@ -163,14 +158,12 @@ export const COMPILED_TORPEDOES: Readonly<Record<string, CompiledTorpedo>> = {
   },
 };
 
-/** Fail-closed fixture lookup (mirrors combat's `compiledTorpedoOf`). */
 export function compiledTorpedoOf(partId: string): CompiledTorpedo {
   const record = COMPILED_TORPEDOES[partId];
   if (record === undefined) throw new Error(`no compiled torpedo fixture for '${partId}'`);
   return record;
 }
 
-/** A copy of a fixture with overrides (for predicate tests that mutate one field). */
 export function withCompiledTorpedo(
   base: CompiledTorpedo,
   overrides: Partial<CompiledTorpedo>,

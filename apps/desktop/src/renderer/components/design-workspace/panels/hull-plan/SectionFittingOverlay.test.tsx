@@ -6,7 +6,6 @@ import { SECTION_IDS, type SectionId } from "./sections.js";
 import { frame, sectionFactsFor, sectionLayoutFor } from "./test-fixtures.js";
 
 const factsFor = (id: SectionId) => sectionFactsFor(id);
-/** A section that actually has fittings to draw. */
 const FITTED = SECTION_IDS.find((id) => factsFor(id).fittings.length > 0)!;
 
 const draw = (id: SectionId) => {
@@ -50,7 +49,6 @@ describe("SectionFittingOverlay", () => {
     const { container } = draw(withArc.id);
     const group = container.querySelector(`[data-fitting='${withArc.f.instanceId}']`)!;
     expect(group.querySelectorAll("path")).toHaveLength(expected);
-    // The card magnifies the plan, so its schematic arc radius is its own (26, vs the main plan's 30).
     expect(group.querySelector("path")!.getAttribute("d")).toMatch(/A 26 26/);
   });
 });

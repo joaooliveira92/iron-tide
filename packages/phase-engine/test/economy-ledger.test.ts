@@ -7,8 +7,6 @@ import { applySetBudgetAllocation } from "../src/commands.js";
 import { TEST_RESEARCH_CATALOGUE } from "./research-catalogue.helper.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
-// Economy spec #138 slice 5: every outflow is recorded as requested, paid and shortfall, the ledger identity closes on
-// paid, and a shortfall is a legal recorded state, not an error.
 function nation(
   over: Partial<NationState> & { ships?: number; researchBudget?: SafeInt },
 ): NationState {
@@ -214,7 +212,6 @@ describe("economy ledger identity and shortfall", () => {
   });
 
   it("pays research from the pack catalogue and warns about progress beyond a technology's cost", () => {
-    // basic_steam costs 100 and has 98 invested: of 5 points paid, 2 finish it and 3 cannot be applied.
     const { result, collector } = run(
       nation({
         researchBudget: SafeInt(5),
@@ -243,7 +240,7 @@ describe("economy ledger identity and shortfall", () => {
       stage: "resolve_research",
       entityId: "n",
     });
-    expect(unspent?.message).toBe("Nation n paid 3 research points beyond the cost of basic_steam"); // stable wording: the same run reports the same text
+    expect(unspent?.message).toBe("Nation n paid 3 research points beyond the cost of basic_steam");
     expect(result.finalSnapshot.nations.get("n")!.research.discoveredTechs).toContain(
       "basic_steam",
     );
@@ -276,8 +273,6 @@ describe("economy ledger identity and shortfall", () => {
 });
 
 describe("research cap on apply (defence in depth)", () => {
-  // The lifecycle refuses an over-cap budget at validation; the apply step enforces the same rule, so a command that reaches it
-  // by any other path cannot bypass the cap.
   const body = (rate: number, research: number) => ({
     type: "SetBudgetAllocation" as const,
     nationId: "n",
@@ -286,7 +281,7 @@ describe("research cap on apply (defence in depth)", () => {
   });
 
   it("applies a budget at the cap and refuses one above it, leaving the snapshot untouched", () => {
-    const snap = snapshot(nation({})); // base 6000: revenue 150 at 3000 bp => cap 18
+    const snap = snapshot(nation({}));
     const ok = new DiagnosticCollector();
     const applied = applySetBudgetAllocation(snap, body(3000, 18), ok);
     expect(ok.hasErrors).toBe(false);

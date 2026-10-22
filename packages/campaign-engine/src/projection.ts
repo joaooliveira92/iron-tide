@@ -14,51 +14,22 @@ export type { EconomyStatus, ResearchUnfundedReason } from "@bluewave/campaign";
 
 const KILOGRAMS_PER_TON = 1_000;
 
-/**
- * One nation's slice of `CampaignSnapshot`, flattened for UI convenience.
- * Shape confirmed in the desktop-mvp map, ticket 07 (Q15), with fields
- * grounded in `overview-screen-state.test.ts` and `OverviewScreen.tsx`.
- */
 export interface PlayerProjectionEconomy {
   readonly treasury: number;
-  /** The monthly gross naval appropriation credited to the treasury: `floor(base x rate / 120000)`. */
   readonly monthlyAppropriation: number;
   readonly shipyardCapacity: number;
-  /**
-   * The nation's total committed work across its construction projects — the
-   * cumulative `sum(Number(project.paidWork))`. A stock, not a monthly flow: it
-   * feeds no net figure (the monthly bound is `plannedConstruction`).
-   */
   readonly constructionSpend: number;
-  /**
-   * The research the engine will actually draw next month: the standing budget when a field can take it, else 0 (see
-   * `researchUnfundedReason`).
-   */
   readonly researchSpend: number;
-  /**
-   * The nation's fleet maintenance next month, war-aware — the maintenance phase's own calculator over its ships, never the
-   * raw `nation.maintenanceCost` (0 before the first `commitMonth`).
-   */
   readonly maintenanceCost: number;
-  /** Fixed monthly obligations (`NationState.expenses`). */
   readonly obligations: number;
-  /** The standing monthly research budget as set, whether or not the engine will pay it. */
   readonly researchRequested: number;
-  /** The most research the nation may fund: `floor(12% x monthly revenue)`. */
   readonly researchCap: number;
-  /** Why a standing research budget is not paid next month; absent when it is, or when none is set. */
   readonly researchUnfundedReason?: ResearchUnfundedReason;
-  /** An upper bound on next month's construction work: what the yards can absorb, before the treasury limits it. */
   readonly plannedConstruction: number;
-  /** Revenue less obligations, maintenance and planned research: the net before construction. */
   readonly projectedNet: number;
-  /** Unpaid obligations, maintenance and research if next month ran with construction at its upper bound. */
   readonly shortfall: number;
-  /** The band of `projectedNet` against the monthly revenue; the one status every surface shows. */
   readonly status: EconomyStatus;
-  /** The treasury after next month at that upper bound (never negative: a shortfall is not carried). */
   readonly monthEndTreasury: number;
-  /** Whole months the treasury lasts at a negative net; absent when the net is not negative. */
   readonly runwayMonths?: number;
 }
 
@@ -72,20 +43,11 @@ export interface PlayerProjectionPort {
 export interface PlayerProjectionShip {
   readonly name: string;
   readonly designId: string;
-  /** Readiness state (S-1 ticket 07): active/reserve/mothballed/working_up/repair. */
   readonly readiness: string;
-  /** Worked-up crew quality `0..100` (S-1 ticket 07). */
   readonly crewQuality: number;
-  /** The authoritative station assignment (S-5 03); absent when the ship has none. */
   readonly stationAssignment?: "FOREIGN_STATION";
-  /** Whether the ship's design is fitted for colonial service (S-5 04); absent when unfitted. */
   readonly colonialServiceFitted?: true;
-  /** Beyond the area's base limit as of the last month end (S-5 08, manual p.48 `*`); absent when within it or dormant. */
   readonly overBase?: true;
-  /**
-   * The ship's displacement in metric tons, from its compiled design's `normalizedDisplacementKg`
-   * (rounded). Absent when the design is not in the snapshot: an unknown tonnage is never zero.
-   */
   readonly displacementTons?: number;
 }
 
@@ -105,7 +67,6 @@ export interface PlayerProjectionStrategicArea {
   readonly name: string;
 }
 
-/** One presence area of the player's nation: required, present and shortfall in whole tons (S-5 05). */
 export interface PlayerProjectionPresenceArea {
   readonly areaId: string;
   readonly requiredTons: number;
@@ -113,18 +74,10 @@ export interface PlayerProjectionPresenceArea {
   readonly shortfallTons: number;
 }
 
-/**
- * The player's presence readout (spec #73 R5/R6/R12). `configured: false` means the pack authors no presence ruleset
- * section: no requirement exists and the screen says 'not configured' instead of showing any number.
- */
 export type PlayerProjectionPresence =
   | { readonly configured: false }
   | {
       readonly configured: true;
-      /**
-       * The blockade exemption notice (spec #73 R7, manual p.46): `true` while the nation is at war and blockaded. The
-       * requirement is then suspended in every area: each row's shortfall is 0 and no shortfall is charged.
-       */
       readonly exempt: boolean;
       readonly areas: readonly PlayerProjectionPresenceArea[];
     };
@@ -144,19 +97,8 @@ export interface PlayerProjection {
   readonly snapshotHash: string;
   readonly revision: number;
   readonly month: PlayerProjectionMonth;
-  /**
-   * The nation id of the player slot this projection was built for. Derived,
-   * read-only projection data (never authoritative state and never persisted):
-   * it lets presentation tell the player's side from the AI's without guessing
-   * from ordering or nation identity.
-   */
   readonly playerNationId: string;
   readonly nationName: string;
-  /**
-   * Projected monthly surplus/deficit for the nation: the net before construction, from the same calculators the month
-   * executor uses (`economyOutlook`) — revenue less obligations, war-aware maintenance and the research the engine will
-   * pay. Purely derived over the immutable snapshot.
-   */
   readonly projectedSurplusDeficit: number;
   readonly economy: PlayerProjectionEconomy;
   readonly fleet: readonly PlayerProjectionFleet[];
@@ -164,16 +106,10 @@ export interface PlayerProjection {
   readonly knownTechnologyIds: readonly string[];
   readonly strategicAreas: readonly PlayerProjectionStrategicArea[];
   readonly knownEnemyNations: readonly string[];
-  /** The nation's presence per area, or `{ configured: false }` while the ruleset section is dormant (S-5 05); absent reads as not configured. */
   readonly presence?: PlayerProjectionPresence;
   readonly commandWorkspace: PlayerProjectionCommandWorkspace;
 }
 
-/**
- * The player's presence readout (S-5, spec #73 R5-R7): the measured rows for `nationId`, the blockade exemption notice and,
- * while exempt, a zero shortfall per row. Without rules the section is dormant: `{ configured: false }`. Shared by the
- * player projection and the fleet screen so both read one derivation.
- */
 export function buildPresenceReadout(
   snapshot: Parameters<typeof measurePresence>[0] & Parameters<typeof isPresenceExempt>[0],
   nationId: string,
@@ -196,38 +132,6 @@ export function buildPresenceReadout(
   };
 }
 
-/**
- * Builds a `PlayerProjection` for `playerSlotId` from a real compiled
- * `CampaignState` — the function ticket 12 found missing (only the type
- * existed). Every field is derived from real snapshot data, not
- * placeholders:
- *
- * - every `economy` flow comes from `@bluewave/campaign`'s `economyOutlook`, the
- *   calculators the month executor itself uses (spec #138), so the screen
- *   cannot contradict the ledger the month then produces.
- * - `economy.shipyardCapacity` and each port's `capacity` are the nation's
- *   own ports' authored `level` — there is no dedicated "shipyard capacity"
- *   concept elsewhere in the engine yet, so port level is the closest real,
- *   non-fabricated proxy (documented judgment call, ticket 12).
- * - `economy.constructionSpend` is the cumulative committed construction work
- *   (`sum(paidWork)`, a stock); the monthly bound is `economy.plannedConstruction`.
- * - `nationName` is `NationState.name`; `projectedSurplusDeficit` is the outlook's
- *   projected net before construction.
- * - `fleet` flattens each compiled `FleetState` into one division carrying
- *   all of its ships — the compiled snapshot has no separate division
- *   grouping under a fleet (see `commandWorkspace`, deliberately left empty:
- *   real command listings are tickets 09/10's concern, not this one).
- * - `strategicAreas` are the world areas this nation controls.
- * - `knownTechnologyIds` is the nation's `research.discoveredTechs`.
- * - `knownEnemyNations` are derived from `politics.relations` where the
- *   relation is `at_war` and this nation is a party.
- *
- * - `presence` is the S-5 readout from `measurePresence` when the caller passes the pack's presence rules, else
- *   `{ configured: false }` (dormant).
- *
- * Returns `undefined` if `playerSlotId` doesn't resolve to a nation in the
- * snapshot.
- */
 export function buildPlayerProjection(
   state: CampaignState,
   playerSlotId: string,
@@ -250,7 +154,6 @@ export function buildPlayerProjection(
 
   const shipyardCapacity = ports.reduce((sum, port) => sum + port.capacity, 0);
   const outlook = economyOutlook(snapshot, playerSlotId)!;
-  // Construction committed so far: a stock shown for context, never a monthly flow.
   const constructionSpend = totalPaidWork(nation);
 
   const fleet: PlayerProjectionFleet[] = nation.fleets.map((f) => ({

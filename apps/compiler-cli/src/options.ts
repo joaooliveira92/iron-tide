@@ -1,8 +1,3 @@
-// Pure CLI option parsing + exit-code mapping, split out of main.ts so unit
-// tests can import them WITHOUT pulling in the engine module graph that
-// `commands.js` (and therefore `main.js`) cold-loads. The only import here is a
-// type-only import, which is erased at compile time — this module has no runtime
-// dependency on the engine, so `test/options.test.ts` imports a small graph.
 import type {
   CliOptions,
   CampaignCliOptions,
@@ -73,10 +68,6 @@ export function parseOptions(
         rulesetVersion = argv[++i] ?? rulesetVersion;
         break;
       case "--content-version":
-        // Retained deliberately: consumed only by `battle:generate` (it is passed
-        // to `generateBattles`). The content commands derive the version from the
-        // manifest, so the flag is not part of their `CliOptions` and is ignored
-        // for them (CAH-LEG-1).
         contentVersion = argv[++i] ?? contentVersion;
         break;
       case "--json":

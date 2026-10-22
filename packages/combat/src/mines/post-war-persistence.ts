@@ -1,16 +1,3 @@
-// DESIGN-35 §22 post-war persistence (INC-7). War termination MUST NOT remove
-// mine pressure automatically: target-belligerent sets are preserved historically,
-// minefields remain active hazards, decay continues monthly, clearance missions
-// remain available, and NEW laying requires a separate legal policy. This module
-// models the post-war disposition as DATA — an idempotent bookkeeping disposition
-// — and never fabricates clearance or deletes/zeroes pressure.
-//
-// A peace settlement MAY alter target sets, access lanes, disclosure, or clearance
-// obligations ONLY through typed terms (§22). The typed-terms union is CLOSED;
-// an unknown/absent term FAILS CLOSED (throw), never a silent no-op.
-//
-// Pure/deterministic: no I/O/clock/random; pressure is never mutated by any
-// function in this module.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import {
   MINE_PRESSURE_MAX,
@@ -20,34 +7,22 @@ import {
 } from "./pressure-record.js";
 import { MINE_WARFARE_INVARIANT_FAILED } from "./reasonCodes.js";
 
-// The one and only post-war disposition modelled for mine-pressure records. War
-// termination leaves every active record computing through decay/clearance but
-// does NOT change the record itself; PERSISTS_ACTIVE is the idempotent
-// bookkeeping disposition (§22: "minefields remain active hazards"). There is NO
-// auto-clearance disposition — clearance is a separate explicit §27 action.
 export type PostWarRecordDisposition = "PERSISTS_ACTIVE";
 
 export const POST_WAR_RECORD_DISPOSITION: readonly PostWarRecordDisposition[] = [
   "PERSISTS_ACTIVE",
 ] as const;
 
-// AC-16: the disposition a record receives when assessed after war termination.
 export interface PostWarAssessmentItem {
   record: AreaMinePressureRecord;
-  /** The record's post-war disposition — always PERSISTS_ACTIVE (§22). */
   disposition: PostWarRecordDisposition;
-  /** The original (historically preserved) target-belligerent set, unchanged. */
   preservedTargetBelligerents: readonly string[];
 }
 
 export interface PostWarAssessmentResult {
-  /** The unchanged active records, each with its persisted disposition. */
   records: readonly PostWarAssessmentItem[];
-  /** True when the caller declared war terminated. */
   warTerminated: boolean;
-  /** True: new laying requires a separate legal policy (§22) — never granted here. */
   newLayingRequiresSeparatePolicy: boolean;
-  /** Note string documenting the §22 persistence posture (data, not a mechanic). */
   note: string;
 }
 
@@ -65,10 +40,6 @@ function assertActiveRecord(record: AreaMinePressureRecord): void {
   }
 }
 
-// AC-16: pure assessment. When warTerminated=true it returns the UNCHANGED active
-// records + a note that they persist; it MUST NOT delete or zero pressure. When
-// warTerminated=false the caller is simply reporting an in-war state — records still
-// pass through unchanged (persistence is irrelevant but never harmful). Deterministic.
 export function assessPostWarDisposition(
   records: readonly AreaMinePressureRecord[],
   warTerminated: boolean,
@@ -92,10 +63,6 @@ export function assessPostWarDisposition(
   };
 }
 
-// AC-16: a pure validator/assessor that asserts the §22 hard invariant — a post-war
-// disposition can NEVER remove pressure. Returns `true` alignment when every active
-// record persists; throws the canonical persistence invariant otherwise. Kept as a
-// thin, documented guard so callers cannot accidentally clear/delete a legacy record.
 export function assertPostWarPersistence(
   records: readonly AreaMinePressureRecord[],
   warTerminated: boolean,
@@ -113,32 +80,18 @@ export function assertPostWarPersistence(
   return result;
 }
 
-// ---- §22 typed peace-settlement terms (CLOSED union) ----
-
-// ADJUST_TARGET_SET: a settlement MAY narrow/change which belligerents a record
-// targets, via an explicit typed term. Replaced ordered target set (must stay
-// non-empty, matching §1's target-belligerent invariant).
 export interface AdjustTargetSetTerm {
   kind: "ADJUST_TARGET_SET";
   targetBelligerents: readonly string[];
 }
-// DISCLOSE_SAFE_LANES: marks known safe lanes disclosed (knowledge/meta only —
-// this module does not own the knowledge store; the term is a data marker a
-// settlement can record).
 export interface DiscloseSafeLanesTerm {
   kind: "DISCLOSE_SAFE_LANES";
 }
-// ASSIGN_CLEARANCE_OBLIGATION: a settlement assigns an explicit clearance
-// obligation to a participant.
 export interface AssignClearanceObligationTerm {
   kind: "ASSIGN_CLEARANCE_OBLIGATION";
   participantId: string;
 }
 
-// The complete closed union of supported typed peace-settlement terms (§22).
-// A settlement altering target sets / lanes / disclosure / clearance can only
-// do so through one of these shapes; ANY other/unknown/absent term is rejected
-// fail-closed (below).
 export type PeaceSettlementTerm =
   | AdjustTargetSetTerm
   | DiscloseSafeLanesTerm
@@ -147,13 +100,9 @@ export type PeaceSettlementTerm =
 export interface PeaceSettlementTermResult {
   record: AreaMinePressureRecord;
   termKind: PeaceSettlementTerm["kind"];
-  /** Adjusted target set after the term (unchanged unless ADJUST_TARGET_SET). */
   targetBelligerents: readonly string[];
-  /** True when the term disclosed safe lanes. */
   safeLanesDisclosed: boolean;
-  /** True when the term assigned an explicit clearance obligation. */
   clearanceObligationAssigned: boolean;
-  /** The participant an obligation was assigned to, if any. */
   clearanceObligationParticipantId: string | null;
 }
 
@@ -161,11 +110,6 @@ function isStringArray(v: unknown): v is readonly string[] {
   return Array.isArray(v) && v.every((x) => typeof x === "string" && x.length > 0);
 }
 
-// AC-16: apply a typed peace-settlement term to a mine-pressure record. Pressure
-// is NEVER altered (the §22 hard invariant). Only target-set (ordered), safe-lane
-// disclosure, or clearance-obligation fields may change — all OUR side fields;
-// the record's authoritative pressure/source/type identity is untouched.
-// An UNKNOWN or ABSENT term throws fail-closed (never a silent no-op).
 export function applyPeaceSettlementTerms(
   record: AreaMinePressureRecord,
   terms: readonly PeaceSettlementTerm[],
@@ -191,9 +135,6 @@ export function applyPeaceSettlementTerms(
           value: t.targetBelligerents,
         });
       }
-      // Target-set change is a record-surface mutation (like every other
-      // authoritative mutation): the record hash is recomputed over the changed
-      // surface so verifyAreaMinePressureRecordHash stays consistent.
       const updated: AreaMinePressureRecord = withAreaMinePressureRecordHash({
         ...working,
         targetBelligerents: [...t.targetBelligerents],
@@ -234,7 +175,6 @@ export function applyPeaceSettlementTerms(
         clearanceObligationParticipantId: t.participantId,
       });
     } else {
-      // Reject an unsupported/unknown/absent typed term — fail closed (§22).
       throw new BluewaveError(MINE_WARFARE_INVARIANT_FAILED, {
         code: MINE_WARFARE_INVARIANT_FAILED,
         reason:

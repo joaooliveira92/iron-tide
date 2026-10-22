@@ -1,7 +1,3 @@
-// Primitive coercions every campaign data builder uses when reading compiled
-// content records. The raw-file/parse boundary moved to the content compiler
-// (CAH-LEG-1): the campaign compiler now consumes only a verified, decoded
-// `ContentBundle`, so this module owns just the coercion contract.
 import { SafeInt } from "@bluewave/contracts";
 
 export function toSafeInt(value: unknown): SafeInt {
@@ -21,7 +17,6 @@ export function toStr(value: unknown, fallback = ""): string {
   return fallback;
 }
 
-/** Authored campaign data, each group flattened in declared file order. */
 export interface CampaignFileData {
   fleets: unknown[];
   economies: unknown[];

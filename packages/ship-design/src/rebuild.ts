@@ -4,23 +4,13 @@ import { quantity } from "./explanation.js";
 import type { Finding } from "./findings.js";
 import { yardFits, type Yard, type YardDemand } from "./yards.js";
 
-/**
- * `rebuild_validation_v1` (DESIGN-23 section 21): the retained-hull limits a rebuilt ship must stay within. A design that is
- * legal as new construction can still be illegal as a rebuild; the report says why, and a rebuild that fails changes nothing.
- * Shipped values are the rule's own (ADR-0078): displacement +20 %, speed +3 kn, length and beam +/-5 %, no change of hull form.
- */
 export interface RebuildBalance {
-  /** Largest standard-displacement increase, bp of the current displacement (2_000 = 20 %). */
   readonly maxDisplacementIncreaseBp: number;
-  /** Largest increase of designed speed, in milli-knots (3_000 = 3 kn). */
   readonly maxSpeedIncreaseMilliKnots: number;
-  /** Largest change of hull length, either way, bp of the current length (500 = 5 %). */
   readonly maxLengthChangeBp: number;
-  /** Largest change of hull beam, either way, bp of the current beam (500 = 5 %). */
   readonly maxBeamChangeBp: number;
 }
 
-/** Problems with a rebuild balance; empty when it is usable. */
 export function checkRebuildBalance(b: RebuildBalance): string[] {
   const problems: string[] = [];
   for (const [name, value] of Object.entries(b))
@@ -29,10 +19,8 @@ export function checkRebuildBalance(b: RebuildBalance): string[] {
   return problems;
 }
 
-/** What the rebuild limits compare: read from a compiled design and the draft it came from. */
 export interface RebuildFacts {
   readonly displacementKg: number;
-  /** Designed top speed, milli-knots. */
   readonly speedMilliKnots: number;
   readonly lengthMm: number;
   readonly beamMm: number;
@@ -50,7 +38,6 @@ export function rebuildFactsOf(compiled: CompiledDesign, draft: DesignDraft): Re
 }
 
 export interface RebuildMeasures {
-  /** Displacement change, bp of the current (negative = lighter), rounded toward zero. */
   readonly displacementChangeBp: number;
   readonly speedChangeMilliKnots: number;
   readonly lengthChangeBp: number;
@@ -64,15 +51,12 @@ export interface RebuildReport {
 }
 
 const BP = 10_000n;
-/** Signed change in bp of `from`, rounded toward zero; 0 when `from` is not positive. */
 function changeBp(from: number, to: number): number {
   if (from <= 0) return 0;
   return Number(((BigInt(to) - BigInt(from)) * BP) / BigInt(from));
 }
-/** True when `to` exceeds `from` by more than `limitBp` of `from` (exact, inclusive limit). */
 const exceeds = (from: number, to: number, limitBp: number): boolean =>
   BigInt(to) * BP > BigInt(from) * (BP + BigInt(limitBp));
-/** True when `to` differs from `from` by more than `limitBp` of `from`, in either direction. */
 const differsBeyond = (from: number, to: number, limitBp: number): boolean =>
   (BigInt(to) - BigInt(from) < 0n ? BigInt(from) - BigInt(to) : BigInt(to) - BigInt(from)) * BP >
   BigInt(from) * BigInt(limitBp);
@@ -100,11 +84,6 @@ const finding = (
 const pctChange = (bp: number) => quantity(bp, 100, 1, "percentSpaced");
 const knotsChange = (milli: number) => quantity(milli, 1000, 1, "knots");
 
-/**
- * Checks a rebuild of a ship from `source` to `target` against the retained-hull limits, and that some yard can hold the
- * rebuilt hull when `demand` and `yards` are given. Every limit is inclusive and exact (integer arithmetic). Pure and
- * deterministic; the findings are BLOCKING and well-formed, in a fixed order.
- */
 export function validateRebuild(
   source: RebuildFacts,
   target: RebuildFacts,
@@ -257,16 +236,8 @@ export function validateRebuild(
   return { legal: findings.length === 0, findings, measures };
 }
 
-/** Packages a rebuild does not repeat: the hull is retained and the ship is already launched (DESIGN-23 section 21). */
 const RETAINED_KINDS: readonly string[] = ["HULL", "LAUNCH"];
 
-/**
- * The work packages of a rebuild, from the new design's construction packages (in treasury units, as `constructionOrderPlan`
- * returns them): the retained hull and the launch are dropped, every dependency on a dropped package is removed, and the
- * rest keep their work. The removal of the old fittings is not modelled (recorded in ADR-0078). A rebuild always has work:
- * if everything left rounds to zero units, the last package that is still there takes one unit. Pure; ids, kinds and lines
- * are kept, so the engine's funding rules apply unchanged.
- */
 export function rebuildPackages<
   P extends {
     readonly id: string;
@@ -280,7 +251,6 @@ export function rebuildPackages<
     .filter((p) => !dropped.has(p.id))
     .map((p) => ({ ...p, dependsOn: p.dependsOn.filter((d) => !dropped.has(d)) }));
   if (kept.length === 0 || kept.some((p) => p.totalWork > 0)) return kept;
-  // Everything left rounds to zero: the last package in plan order takes one unit so the project has something to do.
   const last = kept.length - 1;
   return kept.map((p, i) => (i === last ? { ...p, totalWork: 1 } : p));
 }

@@ -8,7 +8,6 @@ import {
   type VisualEra,
 } from "./vocabulary.js";
 
-/** A fully specified mount to draw. */
 export interface MountQuery {
   readonly style: NationStyle;
   readonly era: VisualEra;
@@ -17,7 +16,6 @@ export interface MountQuery {
   readonly guns: number;
 }
 
-/** Which fallback step matched: 1 exact, 2 universal style, 3 own style in the default era, 4 universal default. */
 export type FallbackStep = 1 | 2 | 3 | 4;
 
 export interface Resolution<P> {
@@ -25,7 +23,6 @@ export interface Resolution<P> {
   readonly step: FallbackStep;
 }
 
-/** The (style, era) pairs tried in order (ADR-0148 §4). Duplicates are harmless: an earlier step already missed. */
 function chain(style: NationStyle, era: VisualEra): readonly (readonly [NationStyle, VisualEra])[] {
   return [
     [style, era],
@@ -35,7 +32,6 @@ function chain(style: NationStyle, era: VisualEra): readonly (readonly [NationSt
   ];
 }
 
-/** The first fallback step at which `pick` finds a part, with that step. */
 function firstInChain<P>(
   style: NationStyle,
   era: VisualEra,
@@ -49,11 +45,6 @@ function firstInChain<P>(
   return null;
 }
 
-/**
- * The drawing for a mount: the first fallback step with a match on size and class, where an entry for the exact gun
- * count beats a count-agnostic one. An entry serves every size band it lists; size and class never fall back. Null only when the catalog has no drawing at all
- * for this size and class (the catalog test forbids that for the universal default).
- */
 export function resolveMount(
   catalog: PartCatalog,
   query: MountQuery,
@@ -73,7 +64,6 @@ export function resolveMount(
   });
 }
 
-/** The drawing for a mast, by the same style/era chain. */
 export function resolveMast(
   catalog: PartCatalog,
   style: NationStyle,

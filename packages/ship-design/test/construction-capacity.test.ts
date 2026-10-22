@@ -1,5 +1,3 @@
-// SB3-R18/R19 (DESIGN-16 sections 7-9, 17): the concurrency cap, the AMC/small-corvette exemption split, and the
-// deterministic reservation ordering are pure, integer-only derivations.
 import { describe, expect, it } from "vite-plus/test";
 import {
   allocateConstructionReservations,
@@ -34,8 +32,7 @@ const exemption = (
 describe("maxConcurrentConstructionMassKg (SB3-R18)", () => {
   it("is floor(dockMaxMassKg * multipleBp / 10_000)", () => {
     expect(maxConcurrentConstructionMassKg(13_000_000, 30_000)).toBe(39_000_000);
-    // floor of an inexact product, never rounded up.
-    expect(maxConcurrentConstructionMassKg(100, 3_333)).toBe(33); // floor(333_300 / 10_000)
+    expect(maxConcurrentConstructionMassKg(100, 3_333)).toBe(33);
     expect(maxConcurrentConstructionMassKg(100, 10_000)).toBe(100);
   });
 
@@ -49,10 +46,9 @@ describe("maxConcurrentConstructionMassKg (SB3-R18)", () => {
 
 describe("the DESIGN-16 section 9 exemption split", () => {
   it("normalPoolConsumption ceilings the non-exempt share and externalPoolConsumption is the remainder", () => {
-    expect(normalPoolConsumption(1_000, 8_000)).toBe(200); // ceil(1000 * 2000 / 10000)
+    expect(normalPoolConsumption(1_000, 8_000)).toBe(200);
     expect(externalPoolConsumption(1_000, 8_000)).toBe(800);
-    // A ceiling that actually rounds up matters at the boundary.
-    expect(normalPoolConsumption(3, 6_667)).toBe(1); // ceil(3 * 3333 / 10000) = ceil(0.9999) = 1
+    expect(normalPoolConsumption(3, 6_667)).toBe(1);
     expect(externalPoolConsumption(3, 6_667)).toBe(2);
   });
 
@@ -196,7 +192,6 @@ describe("deterministic capacity allocation (DESIGN-16 section 17)", () => {
       reservation("con_b", "NEW_CONSTRUCTION", 40),
     ];
     const out = allocateConstructionReservations(reservations, 70);
-    // con_a (40) then con_b (40) would reach 80 > 70, so con_b is rejected and con_c (30) still fits: 70.
     expect(out.accepted).toEqual(["con_a", "con_c"]);
     expect(out.rejected).toEqual(["con_b"]);
     expect(out.allocatedMassKg).toBe(70);

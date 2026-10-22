@@ -3,14 +3,6 @@ import type { WorldMapView } from "@bluewave/campaign-engine";
 import { fixtureAreaId, nationHomeArea } from "../../content/presentationContent.js";
 import { fixtureAnchor, homeFocusPoint, joinWorldMap } from "./campaign-map-join.js";
 
-/**
- * Join tests: the campaign world (ids from the production pack) must land on the
- * fixture's 36-area geometry deterministically. The authored join itself is
- * validated at the artifact boundary (every production area has a region and a
- * fixture mapping; see the content compiler's presentation validation), so these
- * tests cover the runtime behaviour over the injected corpus.
- */
-
 const WORLD: WorldMapView = {
   nations: [{ id: "uk", name: "Britain", tag: "GBR", homeAreaId: null, presenceAreaIds: [] }],
   areas: [
@@ -108,7 +100,6 @@ describe("nationHomeArea", () => {
 
 describe("homeFocusPoint", () => {
   it("returns the mapped fixture anchor for a home area", () => {
-    // eng_home_coast is drawn on the North Sea polygon; its label is the focus point.
     expect(homeFocusPoint("eng_home_coast")).toEqual(fixtureAnchor("area_north_sea"));
     const point = homeFocusPoint("eng_home_coast");
     expect(point).not.toBeNull();
@@ -140,7 +131,6 @@ describe("joinWorldMap lanes", () => {
       routes: [route("r1", "sea_north_sea", "sea_english_channel")],
     });
     const wanted = [north as string, channel as string].sort();
-    // Several campaign areas can share one fixture polygon, in which case there is nothing to draw.
     expect(overlay.lanes).toEqual(wanted[0] === wanted[1] ? [] : [{ a: wanted[0], b: wanted[1] }]);
   });
 

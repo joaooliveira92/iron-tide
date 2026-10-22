@@ -1,6 +1,5 @@
 import type { RawScriptedForceOrder } from "@bluewave/campaign-engine";
 
-/** The fixed tactical rehearsal orders the Battle Arena submits (dev-tool path). */
 export const SCRIPTED_TACTICAL_ORDERS: readonly RawScriptedForceOrder[] = [
   {
     issueTurn: 1,

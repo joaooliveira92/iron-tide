@@ -1,8 +1,3 @@
-// AC-7 (INC-3): DESIGN-35 §7 sweeping base values — exact shipped integers
-// (150/100/80/100/60/50/120) keyed by the closed §7 equipment/type-key set;
-// every equipment definition identifies EXACTLY one base value; a ship
-// NAME/class description never grants a value; fail-closed lookup for unknown
-// keys; `mine_sweeping_v1` contract + fail-closed validate guard.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -40,7 +35,7 @@ describe("AC-7: exact §7 base sweeping values by equipment/type key", () => {
       expect(v).toBeGreaterThan(0);
     }
     const values = SWEEPING_BASE_VALUE_KEYS.map((k: SweepingBaseValueKey) => table[k]);
-    expect(new Set(values).size).toBe(new Set([150, 100, 80, 60, 50, 120]).size); // KE == coastal 100 is legal (§7), set must be the 6 literals
+    expect(new Set(values).size).toBe(new Set([150, 100, 80, 60, 50, 120]).size);
     expect([...new Set(values)].sort((a, b) => a - b)).toEqual([50, 60, 80, 100, 120, 150]);
   });
 });

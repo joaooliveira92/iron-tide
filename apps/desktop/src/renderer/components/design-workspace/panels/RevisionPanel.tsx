@@ -41,12 +41,6 @@ const TIER_BADGE: Record<RevisionDecision["tier"], "secondary" | "outline" | "de
 };
 let reviseCounter = 0;
 
-/**
- * What would these changes cost on a ship already being built, and (for ships whose design the engine kept) apply them.
- * For a revisable project the comparison is against that ship's real draft with the engine's own diff, so the preview
- * is exactly what the engine will decide. For an authored design there is no draft: the preview then counts the edits
- * made on the board and cannot be applied.
- */
 export function RevisionPanel({
   sessionId,
   projects,

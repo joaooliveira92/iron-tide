@@ -1,31 +1,3 @@
-// DESIGN-40 §11 salvo policy (INC-3): a DETERMINISTIC recommendation over the
-// nine §11 factors with authored constants — never random. The recommended
-// salvo SIZE is
-//   clamp(TORPEDO_SALVO_MIN_TUBES,
-//         floor(scoreBp / TORPEDO_SALVO_BP_PER_TUBE),
-//         maxTubes)
-// where scoreBp is the sum of the base-tubes term, the withdrawal modifier, and
-// seven floored weighted factor terms (each floor(bpInput * weightBp / 10_000)).
-//
-// Authored factor directions (documented BALANCE TARGET, constants.ts):
-//   targetCombatValue        +  high-value target -> guarantee the kill
-//   targetSize               +  larger hull -> more hits needed to sink
-//   rangePressure            +  longer range -> dispersion demands more tubes
-//   solutionQualityDeficit   +  poor (but legal) solution -> compensate
-//   ammoScarcity             -  few torpedoes left -> conserve (smaller salvo)
-//   friendlyCoveragePressure +  no friendly launchers -> this ship must cover
-//   overkill                 -  estimated overkill -> fewer tubes
-//   missionObjective         base tubes (ATTACK 2 / DEFENSE 1 / AREA_DENIAL 4 /
-//                             BREAKTHROUGH 3)
-//   withdrawalState          WITHDRAWING adds a parting-salvo tube
-//
-// The salvo also VALIDATES an explicit tube selection (exact tube identifiers,
-// unique, integer, within [0, tubeCount), never more tubes than the launcher
-// physically has -> TORPEDO_STATE_INVARIANT_FAILED on structural violation) and
-// enforces the launcher arc for every selected tube's launch bearing
-// (TORPEDO_LAUNCH_ARC_INVALID). Ammunition reservation is the INC-1 atomic
-// consumeForLaunch, exposed here as reserveSalvoTorpedoes (all-or-nothing: a
-// salvo that includes an EMPTY tube consumes NOTHING).
 import { BluewaveError } from "@bluewave/contracts";
 import {
   EMPTY_TUBE,
@@ -47,23 +19,21 @@ import { consumeForLaunch, type TorpedoConsumeResult } from "./ammunition.js";
 import { TORPEDO_LAUNCH_ARC_INVALID, TORPEDO_STATE_INVARIANT_FAILED } from "./reasonCodes.js";
 import type { TorpedoLauncherState } from "./state.js";
 
-// The nine §11 factors, decoupled from launcher state so the policy is purely
-// a function of the tactical situation. All numeric fields are integers.
 export interface TorpedoSalvoPolicyInputs {
   missionObjective: TorpedoMissionObjective;
   withdrawalState: TorpedoWithdrawalState;
-  targetCombatValueBp: number; // [0, 10_000] — combat value of the target
-  targetSizeBp: number; // [0, 10_000] — target size/displacement class
-  targetEstimatedRangeM: number; // integer metres (range-pressure band lookup)
-  solutionQualityBp: number; // [0, 10_000] — §10 solution quality (deficit term)
-  remainingTotalAmmunition: number; // integer count >= 0 — loaded + reserve torpedoes
-  friendlyLauncherCount: number; // integer count >= 0 — friendly launchers in range
-  overkillEstimateBp: number; // [0, 10_000] — estimated overkill (0 = none)
+  targetCombatValueBp: number;
+  targetSizeBp: number;
+  targetEstimatedRangeM: number;
+  solutionQualityBp: number;
+  remainingTotalAmmunition: number;
+  friendlyLauncherCount: number;
+  overkillEstimateBp: number;
 }
 
 export interface TorpedoSalvoPolicyResult {
-  recommendedSize: number; // integer tubes, clamped to [1, maxTubes]
-  scoreBp: number; // the exact integer basis-point score before the clamp
+  recommendedSize: number;
+  scoreBp: number;
   band: {
     rangePressureBp: number;
     ammoScarcityBp: number;
@@ -79,9 +49,6 @@ function invariant(value: unknown, reason: string): never {
   });
 }
 
-// Lookup helpers over the authored band tables (first band whose bound matches;
-// the final band covers Number.MAX_SAFE_INTEGER so the fallback is unreachable,
-// but it still fails closed instead of returning a silent value).
 function lastBand<T>(table: readonly T[]): T {
   const last = table[table.length - 1];
   if (last === undefined) invariant(undefined, "a salvo band table must not be empty");
@@ -109,20 +76,11 @@ function friendlyCoveragePressureBp(count: number): number {
   return lastBand(TORPEDO_SALVO_FRIENDLY_LAUNCHER_PRESSURE_BP_TABLE).pressureBp;
 }
 
-// Pure INTEGER floor of a weighted basis-point term: floor(valueBp * weightBp /
-// 10_000). Both operands are bounded (valueBp in [0, 10_000], weightBp <= 1_500,
-// so the product <= 1.5e7 — an exact double well below 2^53) and non-negative.
-// Written as integer math — (P - P % 10_000) / 10_000 — so no float rounding of
-// the division can ever nudge the floor across an integer boundary.
 function weighted(weightBp: number, valueBp: number): number {
-  const product = weightBp * valueBp; // exact integer double (bounded reduction)
-  return (product - (product % 10_000)) / 10_000; // integer division, exact
+  const product = weightBp * valueBp;
+  return (product - (product % 10_000)) / 10_000;
 }
 
-// Fail-closed policy-input guard (mirrors assertEligibilityInputs in
-// eligibility.ts): every numeric policy input must be an integer in its
-// authored range and the enums must be canonical members — a deserialized
-// garbage objective must never index the base-tube table into NaN.
 function assertSalvoPolicyInputs(policy: TorpedoSalvoPolicyInputs): void {
   if (!(TORPEDO_MISSION_OBJECTIVES as readonly string[]).includes(policy.missionObjective))
     invariant(policy.missionObjective, "missionObjective must be a canonical §11 objective");
@@ -158,9 +116,6 @@ function assertSalvoPolicyInputs(policy: TorpedoSalvoPolicyInputs): void {
     );
 }
 
-// AC-11: the deterministic salvo-size recommendation. The caller supplies
-// maxTubes = min(launcher tubeCount, loaded tubes) so the policy never
-// recommends a salvo the launcher cannot physically fire.
 export function recommendSalvoSize(
   policy: TorpedoSalvoPolicyInputs,
   maxTubes: number,
@@ -223,11 +178,6 @@ export function recommendSalvoSize(
   };
 }
 
-// AC-11: validate an explicit salvo tube selection — exact tube identifiers,
-// unique, integers within [0, tubeCount), and never more than the physical tube
-// count. A structural violation fails closed with TORPEDO_STATE_INVARIANT_FAILED
-// (the same guard consumeForLaunch applies; a command-layer salvo may not
-// invent tubes).
 export function validateSalvoTubeSelection(
   tubeIndexes: readonly number[],
   tubeCount: number,
@@ -246,10 +196,6 @@ export function validateSalvoTubeSelection(
     invariant(tubeIndexes, "each tube may be fired at most once per salvo (duplicate indexes)");
 }
 
-// AC-11: every selected tube's launch bearing must lie within the launcher
-// training limits (the §2 state models the arc at launcher level; per-tube
-// bearing offsets are not modeled — recorded seam). A selected tube outside the
-// arc fails with TORPEDO_LAUNCH_ARC_INVALID (never a silent skip).
 export function assertSalvoTubesWithinArc(
   state: TorpedoLauncherState,
   tubeIndexes: readonly number[],
@@ -269,9 +215,6 @@ export function assertSalvoTubesWithinArc(
   }
 }
 
-// AC-11: deterministic tube selection for a recommended/requested salvo size —
-// the canonical §12 ascending-tube-identifier order over LOADED tubes (an EMPTY
-// tube cannot fire). Returns exactly min(size, loadedCount) tube identifiers.
 export function selectSalvoTubes(state: TorpedoLauncherState, size: number): readonly number[] {
   if (!Number.isInteger(size) || size < 1) invariant(size, "salvo size must be a positive integer");
   const loaded: number[] = [];
@@ -284,11 +227,6 @@ export function selectSalvoTubes(state: TorpedoLauncherState, size: number): rea
   return loaded.slice(0, Math.min(size, loaded.length));
 }
 
-// AC-11: ATOMIC ammunition reservation for a salvo — the INC-1 consumeForLaunch
-// (all-or-nothing: a salvo including an EMPTY or invalid tube consumes NOTHING
-// and throws TORPEDO_AMMUNITION_UNAVAILABLE / TORPEDO_STATE_INVARIANT_FAILED).
-// This is the stable salvo-layer name INC-7 calls; the underlying atomicity is
-// proven by the ammunition tests + the salvo integration test.
 export function reserveSalvoTorpedoes(
   state: TorpedoLauncherState,
   tubeIndexes: readonly number[],

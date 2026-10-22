@@ -63,8 +63,6 @@ import {
 } from "./helpers/gunReadPath.js";
 import { torpedoDiameterUm } from "./helpers/torpedoModels.js";
 
-// Fixture
-
 const WEAPON = new Set([
   "MAIN_GUN",
   "SECONDARY_GUN",
@@ -98,7 +96,6 @@ const fittingRows: readonly FittingRow[] = designs.flatMap((design) =>
 );
 const whereFitting = (row: FittingRow) => `${row.design.id}:${row.t.instanceId}`;
 
-/** The legacy compile's resolved placements of one design: the oracle for every value. */
 function legacyResolved(design: Design): readonly Resolved[] {
   const ctx = nationalContext(design.month, design.draft.nationId);
   const plant = present(
@@ -132,7 +129,6 @@ const line = (lines: readonly QuantityLine[], id: string): QuantityLine =>
     `quantity ${id}`,
   );
 
-/** A component built for one test; only the named fields differ from a one-unit fitting. */
 function fixtureComponent(
   overrides: Partial<ComponentDef> & Pick<ComponentDef, "id">,
 ): ComponentDef {
@@ -162,7 +158,6 @@ const fixturePlacement = (componentId: string, params?: Record<string, number>) 
   ...(params !== undefined ? { params } : {}),
 });
 
-/** Every design's whole loadout through the read path: guns, tubes, fittings, machinery, armour. */
 function designLoadout(design: Design): { platform: string; entries: LoadoutEntryData[] } {
   const nationId = design.draft.nationId;
   const profile = present(
@@ -205,8 +200,6 @@ function designLoadout(design: Design): { platform: string; entries: LoadoutEntr
   });
   return { platform: design.draft.hull.hullFormId, entries };
 }
-
-// Fittings and sensors
 
 describe("fittings and sensors through the read path (ship-part-model 05)", () => {
   it("covers the 566 non-gun, non-tube placements; with 230 guns and 29 tubes that is all 825", () => {
@@ -322,7 +315,6 @@ describe("fittings and sensors through the read path (ship-part-model 05)", () =
         contribution: 720_000_000,
       });
       expect(line(t.quantities, "crew")).toMatchObject({ kind: "crew", value: 0, contribution: 0 });
-      // Authored "0" (inside the hull weight, ADR-0083): declared, not missing.
       expect(line(t.quantities, "mass")).toMatchObject({ kind: "massKg", value: 0 });
     });
 
@@ -419,7 +411,6 @@ describe("fittings and sensors through the read path (ship-part-model 05)", () =
         { id: "crew_fixed", kind: "crew", value: 7, basis: "PER_LOADOUT_ENTRY" },
         { id: "crew_perUnit", kind: "crew", value: 3, basis: "PER_CONTAINED_UNIT" },
       ]);
-      // 2 units holding 5 each: 7 × 1 + 3 × (2 × 5).
       const lines = quantityLines(read.quantities, "fitting", def.id, 2, 5);
       expect(lines.map((l) => [l.multiplier, l.contribution])).toEqual([
         [1, 7],
@@ -458,7 +449,6 @@ describe("fittings and sensors through the read path (ship-part-model 05)", () =
     it.each([
       ["a negative value", { crew: "0 - 5" }, "PART_READ_PATH_INVALID_QUANTITY"],
       ["a non-affine formula", { crew: "blocks * blocks" }, "PART_READ_PATH_NONLINEAR_QUANTITY"],
-      // The formula grammar floors division, so this steps 0, 1, 1, 2: not affine.
       ["a floored division", { volumeLitre: "blocks / 2" }, "PART_READ_PATH_NONLINEAR_QUANTITY"],
       [
         "a formula over another parameter",
@@ -628,7 +618,6 @@ describe("fittings and sensors through the read path (ship-part-model 05)", () =
       );
       return findings.some((f) => f.id === "COMPONENT_OBSOLETE");
     };
-    // Available (not obsolete) in 1889-12, obsolete from 1890-01, in both representations.
     expect(obsoleteAt("1889-12")).toBe(false);
     expect(obsoleteAt("1890-01")).toBe(true);
     const availableAt = (month: string) =>
@@ -645,8 +634,6 @@ describe("fittings and sensors through the read path (ship-part-model 05)", () =
   });
 });
 
-// Crew, volume and footprint of guns and launchers (regression over tickets 03–04)
-
 describe("gun and launcher crew, volume and footprint (ship-part-model 05 over 03–04)", () => {
   it("every gun placement's crew, volume and footprint equal the legacy resolved placement", () => {
     for (const row of gunPlacements) {
@@ -662,7 +649,6 @@ describe("gun and launcher crew, volume and footprint (ship-part-model 05 over 0
       expect(totalOf(t.quantities, "deckFootprintMm2"), `${where} footprint`).toBe(
         legacy.deckFootprintMm2,
       );
-      // The legacy ledger is unchanged too: mass and cost still equal the resolved placement.
       expect(totalOf(t.quantities, "massKg"), `${where} mass`).toBe(legacy.weightKg);
       expect(totalOf(t.quantities, "costMicro"), `${where} cost`).toBe(legacy.costMicro);
       for (const id of ["crew_per_gun", "volume_per_gun", "deck_footprint_per_gun"]) {
@@ -786,8 +772,6 @@ describe("gun and launcher crew, volume and footprint (ship-part-model 05 over 0
   });
 });
 
-// Propulsion plants
-
 describe("propulsion plants as parametric parts (ship-part-model 05)", () => {
   it("reads the five plants with installed power as their one parameter and no quantity components", () => {
     expect(plantModel.unread).toEqual([]);
@@ -876,8 +860,6 @@ describe("propulsion plants as parametric parts (ship-part-model 05)", () => {
     );
   });
 });
-
-// Armour materials
 
 describe("armour materials out of the balance tables (ship-part-model 05)", () => {
   it("reads the eight materials with efficiency, dates and technology from the balance", () => {
@@ -1033,8 +1015,6 @@ describe("armour materials out of the balance tables (ship-part-model 05)", () =
   });
 });
 
-// Ammunition
-
 describe("ammunition patterns as parts (ship-part-model 05)", () => {
   it("reads the six patterns as national ammunition parts", () => {
     expect(ammunitionModel.unread).toEqual([]);
@@ -1099,8 +1079,6 @@ describe("ammunition patterns as parts (ship-part-model 05)", () => {
     ]);
   });
 });
-
-// Whole designs
 
 describe("whole designs through the read path (ship-part-model 05)", () => {
   it("every design's full loadout decodes on its platform, one entry per placement, region and plant", () => {

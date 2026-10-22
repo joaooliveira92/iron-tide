@@ -38,11 +38,9 @@ describe("GuidedInspectionOverlay", () => {
   it("is non-blocking: overlay has pointer-events-none, card is interactive, no focus trap", () => {
     render(<GuidedInspectionOverlay stepIndex={0} onStepChange={vi.fn()} onDismiss={vi.fn()} />);
     const overlay = screen.getByTestId("guided-inspection-overlay");
-    // Overlay itself is non-blocking
     expect(overlay.className).toMatch(/pointer-events-none/);
     const card = screen.getByTestId("guided-inspection-card");
     expect(card.className).toMatch(/pointer-events-auto/);
-    // No focus trap attribute
     expect(card.getAttribute("aria-modal")).toBeNull();
   });
 
@@ -77,14 +75,12 @@ describe("GuidedInspectionOverlay", () => {
     expect(screen.getByTestId("guided-inspection-highlight").style.transition).toBe(
       "all 180ms ease-out",
     );
-    // Scroll events do not bubble; a capture-phase listener on window must catch them.
     fireEvent.scroll(window);
     expect(screen.getByTestId("guided-inspection-highlight").style.transition).toBe("none");
     target.remove();
   });
 
   it("respects prefers-reduced-motion: highlight renders without matchMedia", () => {
-    // Component should not crash when matchMedia is absent
     const original = (window as unknown as { matchMedia?: unknown }).matchMedia;
     (window as unknown as { matchMedia?: unknown }).matchMedia = undefined;
     const target = document.createElement("div");

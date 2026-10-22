@@ -1,7 +1,3 @@
-// D-1 INC-9: every shipped aircraft contract in a single typed registry, plus
-// a fail-closed validation guard that runs every contract's validation function.
-// Mirrors packages/combat/src/mines/contracts.ts and
-// packages/combat/src/weather/contractRollup.ts pattern.
 import { SHIPPED_AIRCRAFT_CONTRACT, validateAircraftModelDefinitionContract } from "./contracts.js";
 
 export interface AircraftContractEntry {

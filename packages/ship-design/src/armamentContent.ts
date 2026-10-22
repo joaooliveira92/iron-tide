@@ -1,16 +1,3 @@
-/**
- * First-class armament content and its release gate (ADR-0093, national armament integration Step 2).
- *
- * This module builds the authoritative `ArmamentCatalogue` from the authored armament content
- * (`ship-building/armament/*.yaml`), lints it as one release gate (`lintArmament` in
- * `@bluewave/armament` plus the legacy-compatibility drift checks), and proves that every armament
- * combination used by the opening reference designs resolves without blocking findings.
- *
- * It is additive: it never changes the legacy compile, construction, candidate generation, combat or
- * persistence. The legacy `components.yaml`/`naval-profiles/` representations remain authoritative
- * for runtime gameplay until the Step 3 ship-design cut-over; the consistency checks below stop the
- * two representations from drifting apart while they coexist.
- */
 import {
   ammunitionId,
   armamentNationId,
@@ -39,8 +26,6 @@ import {
 } from "@bluewave/armament";
 import type { ComponentDef } from "./component.js";
 import type { GunModelDef, NationNavalProfile, Provenance } from "./nationProfile.js";
-
-// Authored content (the parsed shape of ship-building/armament/*.yaml)
 
 export interface AuthoredGunFamily {
   readonly id: string;
@@ -123,8 +108,6 @@ export interface AuthoredArmamentContent {
   readonly gunMounts: readonly AuthoredGunMount[];
   readonly ammunition: readonly AuthoredAmmunition[];
 }
-
-// Building the authoritative catalogue
 
 const toArmamentProvenance = (p: Provenance): ArmamentProvenance => ({
   sourceStatus: p.sourceStatus,
@@ -241,7 +224,6 @@ function ammunitionToDomain(a: AuthoredAmmunition): ArmamentAmmunitionPattern {
   };
 }
 
-/** Build the authoritative domain catalogue from the authored content (no validation). */
 export function buildArmamentCatalogue(content: AuthoredArmamentContent): ArmamentCatalogue {
   return {
     families: content.gunFamilies.map(familyToDomain),
@@ -250,8 +232,6 @@ export function buildArmamentCatalogue(content: AuthoredArmamentContent): Armame
     ammunition: content.ammunition.map(ammunitionToDomain),
   };
 }
-
-// Starter armament usage (the 18 opening reference designs)
 
 export interface ArmamentWeapon {
   readonly instanceId: string;
@@ -300,11 +280,6 @@ function attrOf(def: ComponentDef, name: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-/**
- * The domain model for a nation/family: the authored national model when one exists, otherwise a
- * model derived from the shared family and its legacy component (the family used directly). The
- * derived model is never part of the catalogue, so it cannot collide with an authored id.
- */
 export function armamentModelFor(
   content: AuthoredArmamentContent,
   components: readonly ComponentDef[],
@@ -347,7 +322,6 @@ export function armamentModelFor(
   };
 }
 
-/** The mount for a family and mount type: authored when present, otherwise derived from the family. */
 export function armamentMountFor(
   content: AuthoredArmamentContent,
   components: readonly ComponentDef[],
@@ -389,7 +363,6 @@ export function armamentMountFor(
   return { ...base, gunCount };
 }
 
-/** The nation's ammunition for a family: the first authored pattern that declares the family compatible. */
 export function armamentAmmunitionFor(
   content: AuthoredArmamentContent,
   nationId: string,
@@ -429,10 +402,6 @@ function missingFinding(
   return { severity, code, entity, field, parameters, message };
 }
 
-/**
- * Build the armament usage for every weapon of every opening starter and resolve each combination.
- * Deterministic and pure: the same content and starters always yield the same manifest.
- */
 export function buildArmamentUsageManifest(input: ArmamentCoverageInput): readonly ArmamentUsage[] {
   const usages: ArmamentUsage[] = [];
   for (const starter of input.starters) {
@@ -495,17 +464,12 @@ export function buildArmamentUsageManifest(input: ArmamentCoverageInput): readon
   return usages;
 }
 
-// Runtime weapon resolution (ADR-0093 Step 3: the ship-design cut-over)
-
-/** One installed weapon resolved through the authoritative armament domain. */
 export interface InstalledWeaponResolution {
-  /** The resolved armament, present only when resolution produced no BLOCKING finding. */
   readonly resolved: ResolvedArmament | null;
   readonly model: ArmamentGunModel | null;
   readonly mount: ArmamentGunMountDef | null;
   readonly ammunition: ArmamentAmmunitionPattern | null;
   readonly mountType: ArmamentMountType;
-  /** Structured findings from the domain resolver plus any lookup failure, in deterministic order. */
   readonly findings: readonly ArmamentResolutionFinding[];
 }
 
@@ -515,19 +479,12 @@ export interface ResolveInstalledWeaponInput {
   readonly nationId: string;
   readonly familyId: string;
   readonly gunCount: number;
-  /** The mount type; when absent the model's first supported mount type is used. */
   readonly mountType?: ArmamentMountType;
   readonly month: string;
   readonly unlockedTechnologyIds: ReadonlySet<string>;
   readonly componentAccess: Readonly<Record<string, ArmamentAccessStatus>>;
 }
 
-/**
- * Resolve one installed weapon (a family id + gun count + nation + month/tech/access context) through
- * `resolveArmament`. Expected errors are returned as structured findings, never thrown: a missing
- * family/model/mount/ammunition becomes `ARMAMENT_REFERENCE_MISSING`; incompatibility, dates, technology
- * and access failures come from the domain resolver. Pure and deterministic.
- */
 export function resolveInstalledWeapon(
   input: ResolveInstalledWeaponInput,
 ): InstalledWeaponResolution {
@@ -618,11 +575,6 @@ export function resolveInstalledWeapon(
   };
 }
 
-/**
- * Whether a nation has any first-class armament content (an authored model or an ammunition pattern).
- * A nation with none (e.g. a non-release historical nation with no naval profile) compiles on the
- * documented compatibility path: the release gate requires armament content for every release nation.
- */
 export function nationHasArmamentContent(
   content: AuthoredArmamentContent,
   nationId: string,
@@ -632,8 +584,6 @@ export function nationHasArmamentContent(
     content.ammunition.some((a) => a.nationId === nationId)
   );
 }
-
-// The release gate
 
 function entityIdOf(finding: ArmamentResolutionFinding): string {
   return `${finding.entity.kind}:${finding.entity.id}`;
@@ -667,11 +617,6 @@ function profileModelFor(
   return undefined;
 }
 
-/**
- * The authoritative armament release gate. Runs the catalogue lint, the legacy-compatibility drift
- * checks, and the opening-design coverage check, and returns every finding in deterministic order.
- * A release fails on any BLOCKING finding; WARNING and ADVISORY findings stay visible.
- */
 export function lintArmamentContent(
   input: ArmamentCoverageInput,
 ): readonly ArmamentResolutionFinding[] {
@@ -694,7 +639,6 @@ export function lintArmamentContent(
     }),
   );
 
-  // --- legacy-compatibility drift -------------------------------------------
   for (const family of input.content.gunFamilies) {
     const entity: ArmamentEntityRef = { kind: "gunFamily", id: family.id };
     const component = componentById(input.components, family.id);
@@ -832,7 +776,6 @@ export function lintArmamentContent(
     }
   }
 
-  // Legacy national models with no armament counterpart (recorded, not blocking).
   for (const profile of input.profiles) {
     for (const model of profile.gunModels) {
       if (!input.content.gunModels.some((m) => m.id === model.id)) {
@@ -857,11 +800,9 @@ export function lintArmamentContent(
   return sortArmamentFindings(findings);
 }
 
-/** True when the armament content passes the release gate (no BLOCKING finding). */
 export function armamentContentLintOk(findings: readonly ArmamentResolutionFinding[]): boolean {
   return !findings.some((f) => f.severity === "BLOCKING");
 }
 
-/** The stable identity of a finding, for deterministic de-duplication and test assertions. */
 export const armamentFindingKey = (finding: ArmamentResolutionFinding): string =>
   `${finding.severity}|${finding.code}|${entityIdOf(finding)}|${finding.field}`;

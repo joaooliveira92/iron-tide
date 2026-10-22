@@ -1,13 +1,3 @@
-// MIG-WIRE-4: prove the save boundary's Effect Schema values survive
-// `canonicalSerialize` + envelope/rawHash hashing and reload loadably. This is
-// the risk this beachhead exists to resolve: a Schema decode that reorders,
-// drops or materializes non-JSON values would silently change the on-disk
-// artifact and break every existing save.
-//
-// The wire shape of `campaign.json` is FROZEN (ADR-0102/ADR-0032). These tests
-// decode the real on-disk bytes with the new Effect Schema and assert byte-level
-// canonical stability plus a full store reload.
-
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -81,11 +71,8 @@ describe("Effect Schema save-boundary serialization (MIG-WIRE-4)", () => {
 
     const decoded = Schema.decodeUnknownSync(StorableCampaignStateSchema)(parsed);
 
-    // The decoded value is structurally JSON-safe and canonicalizes byte-for-byte
-    // like the input object: Effect Schema must not reorder, drop or add fields.
     expect(canonicalSerialize(decoded)).toBe(canonicalSerialize(parsed));
 
-    // The loader's two integrity gates pass over the Schema-decoded value.
     const reconstituted = fromStorableSnapshot(
       decoded.snapshot as unknown as Parameters<typeof fromStorableSnapshot>[0],
     );
@@ -141,20 +128,16 @@ describe("Effect Schema save-boundary serialization (MIG-WIRE-4)", () => {
         bodyLength: 1,
       },
       rawHash: "x",
-      // An unmodeled top-level key: Zod's `z.object` default (not `.strict()`)
-      // strips it, and Effect v4 `Schema.Struct` does the same.
       __unmodeled: true,
     };
 
     const decoded = Schema.decodeUnknownSync(StorableCampaignStateSchema)(minimal);
 
-    // `.default([])` parity: absent arrays decode to empty arrays.
     expect(decoded.snapshot.slots).toEqual([]);
     expect(decoded.snapshot.world.areas).toEqual([]);
     expect(decoded.snapshot.world.routes).toEqual([]);
     expect(decoded.snapshot.world.ports).toEqual([]);
     expect(decoded.snapshot.strategicWeather).toEqual([]);
-    // Excess-key stripping parity with Zod's non-strict object default.
     expect("__unmodeled" in decoded).toBe(false);
   });
 

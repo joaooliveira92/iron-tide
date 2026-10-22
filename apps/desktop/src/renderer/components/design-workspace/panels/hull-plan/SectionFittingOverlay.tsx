@@ -4,14 +4,8 @@ import { fittingPoint, type PlanFrame } from "./geometry.js";
 import { CARD_FONT, type SectionLayout } from "./section-drawing.js";
 import type { SectionFacts } from "./sections.js";
 
-/** Drawn radius of a gun's arc wedge, px: schematic, range is not data. Deliberately smaller than the main plan's
- * 30 (`fitting-layers.tsx`) because the card magnifies the plan; unifying them would change the drawing. */
 const ARC_R = 26;
 
-/**
- * The section's fittings over everything else in the plan band: each placed exactly where the main plan puts it
- * (same `fittingPoint`), with its gun arc, symbol and callout number.
- */
 export function SectionFittingOverlay({
   layout,
   frame,

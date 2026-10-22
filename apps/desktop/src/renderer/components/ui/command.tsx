@@ -30,7 +30,6 @@ export interface CommandDialogProps extends Omit<
   readonly children?: React.ReactNode;
 }
 
-/** A command palette shown in a modal. Open state is controlled by the caller. */
 const CommandDialog = ({
   title = "Command menu",
   description = "Search for a screen or action…",

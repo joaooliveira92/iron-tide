@@ -2,13 +2,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { AreaSchema, DesignTemplateSchema, PortSchema, ShipComponentSchema } from "../src/index.js";
 import { decodeOk } from "./decode-helpers.js";
 
-/**
- * MIG-ZOD parity: remote content decoded through the Effect Schema boundary must
- * reject exactly what the previous Zod `.strict()`/`z.object` definitions rejected,
- * and keep accepting what they accepted. The strictness policy is a single
- * `onExcessProperty: "error"` option baked into `decodeStrict`/`decodeStrictResult`.
- */
-
 const designBase = {
   designId: "gbr-inflexible",
   nationId: "uk",

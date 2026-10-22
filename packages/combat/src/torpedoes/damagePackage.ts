@@ -1,60 +1,3 @@
-// DESIGN-40 §16 TorpedoDamagePackage (INC-6, AC-15) + the atomic application
-// through the tactical damage contract. A damaging detonation creates ONE
-// package carrying every §16 field (target + impact zone, warhead
-// explosive-equivalent mass, detonation depth, impact side + longitudinal
-// position, underwater-protection resistance, hull-breach area, immediate
-// flooding, progressive source rate, machinery, nearby turret + system shock,
-// fire probability, crew casualties, structural damage, flotation loss,
-// damage-control accessibility) + the domain-separated package hash
-// (createEnvelope "torpedo-damage-package" + torpedo_v1 + deepFreeze — the
-// seam-verdict record pattern).
-//
-// The factory computes the authoritative damage budget from the raw scene:
-//   - flotationDamage — the exact §17 formula over the base warhead flotation
-//     damage (warhead explosive-equivalent mass × shipped rate) with the
-//     shipped protection-leak + impact-zone tables (flotation.ts);
-//   - progressiveFloodingRateKgMin — the creation-only §18 rate over the base
-//     breach rate from the hull-breach area and the shipped isolation table
-//     (flooding.ts);
-//   - structuralDamage — floor(eqMass × authored rate, damageConstants.ts);
-//   - immediateFloodingKg — the breach-volume estimate
-//     floor(hullBreachAreaM2 × breachDepthM × TORPEDO_SEAWATER_DENSITY_KG_PER_M3)
-//     with breachDepth = the detonation depth floored at the shipped
-//     TORPEDO_IMMEDIATE_FLOODING_MIN_DEPTH_M — authored BALANCE TARGETs
-//     (ADR-0029), CONTRACT-PINNED in damageConstants.ts;
-//   - fireProbabilityBp / crewCasualties / machinery / shock / damageControl
-//     are the caller's resolved inputs (validated fail-closed).
-//
-// Damage applies ATOMICALLY through the reused B-4 seams (rollback invariant
-// intact): resolveStructureFlotation (floor-at-0; the §17 "never exceeds the
-// remaining reserve without a sinking/sunk transition" bound is enforced by
-// the terminal seam below), evaluateTerminalSeam (flotation 0 without
-// foundering -> SINKING with its duration), the §19 machinery evaluator
-// (ComponentOutcome vocabulary), the §20 shock evaluator + applyTurretDamage
-// on the caller's turret list, the §18 creation-only flooding resolver, and
-// the §21 tube hazard on a TUBE_BAY zone with a launcher context. A SEVERE §21
-// result applies its "immediate additional flooding" as FLOTATION-RESERVE loss
-// (per §16/§17 semantics — the same floor-at-0 reserve reduction as the §17
-// flotation damage), reducing the reserve before the terminal seam; the
-// separate 15_000 bp extraFloodingSource is a C-5 progressive source and is
-// NOT accumulated into progressiveFloodingTotal (the §21 immediate burst is
-// NOT a progressive total). §22 chain PROBES for the loaded rounds are
-// returned (the caller resolves them and applies each explosion package
-// through this same atomic path — the §22 "separate explosion damage package"
-// composition helper composeTorpedoChainReactionPackage /
-// applyTorpedoChainReactionPackage is wired below).
-//
-// Deterministic stage/draw layout (identical inputs consume identical draws):
-//   1. machinery    (battle/torpedo/damage/machinery:...)    iff machinery ctx
-//   2. system shock (battle/torpedo/damage/system-shock:...) iff shock candidates
-//   3. tube hazard  (battle/torpedo/tube-hazard:...)         iff tube-hazard ctx
-//   4. casualty     (battle/torpedo/tube-hazard/casualty:...) iff severe hazard
-//   §22 chain draws are NOT consumed here — the layout never shifts with the
-//   chain outcome (INC-5 LOW-4 stability note honored).
-//
-// Pure/deterministic: no ambient I/O/clock/random. Every output deep-frozen;
-// the authoritative ShipDamageState is assembled EXACTLY ONCE after all
-// stages pass (a stage throw leaves the input state untouched).
 import { BluewaveError } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import type { ShipDamageState, FloodingSourceRecord } from "../damage/state.js";
@@ -111,9 +54,8 @@ function isInt(v: unknown): v is number {
 export type TorpedoImpactSide = "PORT" | "STARBOARD";
 export type TorpedoDamageControlAccessibility = "ACCESSIBLE" | "RESTRICTED" | "INACCESSIBLE";
 
-// §16 TorpedoDamagePackage — every field of the §16 list + the package hash.
 export interface TorpedoDamagePackage {
-  packageId: string; // deterministic: <battleId>:<minute>:<substep>:torpedo-damage:<trackId>
+  packageId: string;
   battleMinute: number;
   substep: number;
   torpedoTrackId: string;
@@ -124,8 +66,8 @@ export interface TorpedoDamagePackage {
   longitudinalPositionM: number;
   warheadExplosiveEquivalentMassKg: number;
   detonationDepthM: number;
-  protectionLevel: TorpedoTargetProtectionLevel; // underwater-protection resistance
-  hullBreachAreaM2: number; // integer m²
+  protectionLevel: TorpedoTargetProtectionLevel;
+  hullBreachAreaM2: number;
   immediateFloodingKg: number;
   progressiveFloodingRateKgMin: number;
   machinery: TorpedoMachineryPackageField;
@@ -135,7 +77,7 @@ export interface TorpedoDamagePackage {
   structuralDamage: number;
   flotationDamage: number;
   damageControlAccessibility: TorpedoDamageControlAccessibility;
-  packageHash: string; // authoritative SHA-256 envelope
+  packageHash: string;
 }
 
 export interface TorpedoMachineryPackageField {
@@ -151,7 +93,6 @@ export interface TorpedoShockPackageField {
 
 export type TorpedoDamagePackageBody = Omit<TorpedoDamagePackage, "packageHash">;
 
-// The authoritative package hash — domain-separated with torpedo_v1.
 export function computeTorpedoDamagePackageHash(body: TorpedoDamagePackageBody): string {
   return createEnvelope("torpedo-damage-package", torpedoPolicyId, body).bodyHash;
 }
@@ -167,10 +108,6 @@ function deepFreeze<T>(value: T): T {
   return value;
 }
 
-// Fail-closed surface guard: every §16 field well-formed; a malformed package
-// fails with TORPEDO_STATE_INVARIANT_FAILED (the packageHash presence is
-// checked by assertAuthoritativeTorpedoDamagePackage — a hash-less body is
-// validated here before hashing).
 export function assertTorpedoDamagePackageSurface(p: TorpedoDamagePackage): void {
   if (typeof p !== "object" || p === null)
     invariant("package", p, "a torpedo damage package is required");
@@ -285,7 +222,6 @@ export function verifyTorpedoDamagePackageHash(p: TorpedoDamagePackage): boolean
   return computeTorpedoDamagePackageHash(body) === p.packageHash;
 }
 
-// The authoritative factory (computes the §17/§18 budget + the package hash).
 export interface TorpedoDamagePackageInput {
   battleId: string;
   battleMinute: number;
@@ -300,15 +236,12 @@ export interface TorpedoDamagePackageInput {
   detonationDepthM: number;
   protectionLevel: TorpedoTargetProtectionLevel;
   hullBreachAreaM2: number;
-  isolationState: FloodingIsolationState; // §18 rate table input
+  isolationState: FloodingIsolationState;
   machinery: TorpedoMachineryPackageField;
   nearbySystemShock: TorpedoShockPackageField;
   fireProbabilityBp: number;
   crewCasualties: number;
   damageControlAccessibility: TorpedoDamageControlAccessibility;
-  // outer-resolved override (the §22 chain explosion uses the summed mass —
-  // the factory re-runs the same §17 formula over that mass; the override
-  // bypasses only when a caller explicitly recomputed the budget).
   flotationDamageOverride?: number;
 }
 
@@ -325,7 +258,6 @@ export function createTorpedoDamagePackage(input: TorpedoDamagePackageInput): To
   )
     invariant("identity", input, "package identity inputs must be well-formed");
 
-  // §17 flotation: floor(base × leak × zone × existing / 10_000^3).
   const base = computeBaseWarheadFlotationDamage(input.warheadExplosiveEquivalentMassKg);
   const flotationDamage =
     input.flotationDamageOverride ??
@@ -334,15 +266,10 @@ export function createTorpedoDamagePackage(input: TorpedoDamagePackageInput): To
       protectionLevel: input.protectionLevel,
       impactZone: input.impactZone,
     });
-  // §18 progressive rate over the base breach rate + shipped isolation table.
   const progressiveFloodingRateKgMin = computeTorpedoFloodingRateKgMin({
     baseBreachRateKgMin: computeBaseBreachRateKgMin(input.hullBreachAreaM2),
     isolationState: input.isolationState,
   });
-  // immediate flooding — the breach-volume estimate (BALANCE TARGET: hole area
-  // × water depth at the strike; the detonation depth proxied, floored to the
-  // shipped minimum). The density + minimum-depth literals are CONTRACT-PINNED
-  // in damageConstants.ts (HIGH-1/LOW-2) — never inline a divergent value.
   const immediateFloodingKg = Math.floor(
     input.hullBreachAreaM2 *
       Math.max(input.detonationDepthM, TORPEDO_IMMEDIATE_FLOODING_MIN_DEPTH_M) *
@@ -380,20 +307,15 @@ export function createTorpedoDamagePackage(input: TorpedoDamagePackageInput): To
   return deepFreeze({ ...body, packageHash });
 }
 
-// The battle id lives inside the deterministic package id
-// (<battleId>:<minute>:<substep>:torpedo-damage:<trackId>).
 export function battleIdFromPackage(packageId: string): string {
   const separator = packageId.indexOf(":");
   if (separator <= 0) invariant("packageId", packageId, "packageId must embed the battle id");
   return packageId.slice(0, separator);
 }
 
-// Atomic application through the tactical damage contract (AC-15).
-
 export interface TorpedoDamageApplicationInput {
   state: ShipDamageState;
   pkg: TorpedoDamagePackage;
-  // §18 per-compartment creation inputs (creation-only — no per-minute tick).
   flooding: readonly {
     compartmentId: string;
     baseBreachRateKgMin: number;
@@ -403,34 +325,23 @@ export interface TorpedoDamageApplicationInput {
     isolationState?: FloodingIsolationState;
     isolationMultiplierBp?: number;
   }[];
-  // §19 machinery context (omit = no machinery evaluation / no draw).
   machinery?: { zone: TorpedoImpactZone; machineryComponents: readonly string[] };
-  // §20 nearby-system shock context (omit = no shock evaluation / no draw).
   shockCandidates?: readonly SystemShockCandidate[];
-  // Caller's current turret list — the applyTurretDamage seam on shocked turrets.
   turretComponents?: readonly TurretComponent[];
-  // §21 tube-hazard context (omit = no hazard — non-tube / no launcher scene).
   tubeHazard?: {
     launcherId: string;
     propulsionType: TorpedoPropulsionType;
-    loadedCount: number; // the launcher's non-EMPTY loaded tube count
+    loadedCount: number;
     loadedChecks: readonly { tubeIndex: number; torpedoModelId: string }[];
     isolationState: FloodingIsolationState;
     protectionLevel: TorpedoTubeProtectionLevel;
     crewAtRisk: number;
-    shockCandidates?: readonly SystemShockCandidate[]; // the shock-check pool
-    targetCompartmentId: string; // the breached compartment the tubes sit in
+    shockCandidates?: readonly SystemShockCandidate[];
+    targetCompartmentId: string;
   };
-  designFlotationReserve: number; // design (max) flotation reserve
-  designStabilityScore: number; // design stability bp
+  designFlotationReserve: number;
+  designStabilityScore: number;
   keyedRng: (stream: string) => number;
-  // MEDIUM-6 (reviewer): the engine pre-evaluates §19/§20 to populate the
-  // package fields; WITHOUT this option applyTorpedoDamagePackage re-evaluates
-  // the SAME keyed streams, which is only correct because `keyedRng` re-seeds
-  // per stream (a fragile invariant). When present, the caller's single
-  // evaluation is threaded in and the internal re-evaluation is skipped, so
-  // each stream draw is consumed EXACTLY once. Optional — the public API and the
-  // standalone call path (e.g. applyTorpedoChainReactionPackage) are unchanged.
   precomputedEffect?: {
     machinery: TorpedoMachineryEffect | null;
     systemShock: TorpedoSystemShockResult | null;
@@ -470,12 +381,6 @@ export interface TorpedoDamageApplicationResult {
   terminalResult: TerminalResult;
   eventRecord: TorpedoDamageEventRecord;
 }
-// AC-15/AC-16: the atomic application. All stages are pure computations over
-// local values; the authoritative ShipDamageState is assembled exactly once at
-// the end and validated through withDamageStateHash (a stage throw leaves the
-// input state untouched — the B-4 rollback invariant is preserved). The
-// returned state and records are deep-frozen; the state carries a fresh
-// authoritative hash.
 export function applyTorpedoDamagePackage(
   o: TorpedoDamageApplicationInput,
 ): TorpedoDamageApplicationResult {
@@ -498,7 +403,6 @@ export function applyTorpedoDamagePackage(
   if (!Array.isArray(o.flooding))
     invariant("flooding", o.flooding, "flooding compartments must be an array");
 
-  // ---- stage 1: STRUCTURE + FLOTATION (reused seam, floor-at-0) -----------
   const structureFlotation = resolveStructureFlotation({
     structuralDamage: o.pkg.structuralDamage,
     flotationDamage: o.pkg.flotationDamage,
@@ -506,14 +410,8 @@ export function applyTorpedoDamagePackage(
     currentFlotationReserve: o.state.flotationReserve,
   });
 
-  // ---- stage 2: §18 progressive-flooding CREATION (creation-only) ---------
   const createdFloodingSources = resolveTorpedoFloodingCreation({ compartments: o.flooding });
 
-  // ---- stage 3: §19 machinery (keyed weighted severity) -------------------
-  // MEDIUM-6: use the caller's single pre-computed evaluation when supplied
-  // (the engine pre-evaluates to populate the package fields) — otherwise
-  // evaluate here exactly as before. Either way the stream draw is consumed
-  // exactly once.
   const machineryEffect =
     o.precomputedEffect?.machinery !== undefined
       ? o.precomputedEffect.machinery
@@ -529,7 +427,6 @@ export function applyTorpedoDamagePackage(
           })
         : null;
 
-  // ---- stage 4: §20 nearby-system shock (keyed weighted selection) -------
   const systemShockResult =
     o.precomputedEffect?.systemShock !== undefined
       ? o.precomputedEffect.systemShock
@@ -543,7 +440,6 @@ export function applyTorpedoDamagePackage(
             keyedRng: o.keyedRng,
           })
         : null;
-  // The reuse seam: only the SELECTED (eligible) turret may transition.
   const appliedTurrets =
     o.turretComponents !== undefined
       ? Object.freeze(
@@ -555,15 +451,7 @@ export function applyTorpedoDamagePackage(
         )
       : Object.freeze([]);
 
-  // ---- stage 5: §21 underwater-tube hit hazard (TUBE_BAY + launcher ctx) --
   let tubeHazardResult: TorpedoTubeHazardResult | null = null;
-  // The §21 severe "immediate additional flooding" is FLOTATION-RESERVE loss per
-  // §16/§17 semantics (DESIGN-40 separates an immediate-flooding field from a
-  // progressive-flooding source rate — §21's "5_000 bp of remaining reserve" is
-  // immediate flotation loss; the SEPARATE progressive source is the 15_000 bp
-  // extraFloodingSource record, a C-5 progressive source). It is therefore NOT
-  // accumulated into progressiveFloodingTotal (that would mask the immediate
-  // reserve reduction and the evaluateTerminalSeam reserve read).
   let severeImmediateFloodingKg = 0;
   let floodingRecords: readonly FloodingSourceRecord[] = [
     ...o.state.floodingRecords,
@@ -593,25 +481,16 @@ export function applyTorpedoDamagePackage(
       targetCompartmentId: o.tubeHazard.targetCompartmentId,
     });
     if (tubeHazardResult.severe) {
-      // the extra 15_000 bp progressive source enters the ship state; the
-      // immediate flooding burst is applied as flotation-reserve loss below.
       floodingRecords = [...floodingRecords, tubeHazardResult.extraFloodingSource!];
       severeImmediateFloodingKg = tubeHazardResult.immediateAdditionalFloodingKg;
     }
   }
 
-  // ---- stage 5b: §21 severe immediate flooding -> flotation-reserve loss -----
-  // The §17 flotation damage already reduced the reserve through the reused
-  // resolveStructureFlotation seam; the §21 severe burst reduces it FURTHER —
-  // capped by the remaining reserve, floor-at-0, so evaluateTerminalSeam can
-  // still see a SINKING/SUNK boundary when the reserve is exhausted (the §17
-  // "never exceeds remaining reserve without a terminal transition" bound).
   const finalFlotationReserveAfter = Math.max(
     0,
     structureFlotation.flotationReserveAfter - severeImmediateFloodingKg,
   );
 
-  // ---- stage 6: terminal seam (reused §29-32 — the reserve-capping bound) --
   const flotationPct =
     finalFlotationReserveAfter > 0
       ? Math.floor((finalFlotationReserveAfter * 10_000) / o.designFlotationReserve)
@@ -633,7 +512,6 @@ export function applyTorpedoDamagePackage(
   const terminalTransition =
     terminalResult.transition === "NONE" ? null : terminalResult.transition;
 
-  // ---- assembly: ONE authoritative state construction + fresh hash --------
   const assembled = withDamageStateHash({
     ...o.state,
     structuralIntegrity: structureFlotation.structuralIntegrityAfter,
@@ -676,21 +554,8 @@ export function applyTorpedoDamagePackage(
   });
 }
 
-// §22 SEPARATE explosion damage package (MEDIUM-4): the composition helper.
-// The §22 chain detonation creates its OWN damage package (never a silent
-// alteration of the original): it carries the CONSUMED torpedoes' summed warhead
-// explosive-equivalent mass (totalConsumedWarheadEquivalentMassKg) and re-runs
-// the §17 flotation + §18 flooding budget over that mass through the SAME
-// factory (createTorpedoDamagePackage). The §22 chain draws are NOT consumed
-// here — they are separate probes resolved by resolveTorpedoChainReaction
-// (INC-5 LOW-4 rule). The package builder is pure; the atomic application is
-// wired through applyTorpedoDamagePackage below so a caller never has to
-// manually thread the consumed mass into the factory.
 export function composeTorpedoChainReactionPackage(o: {
   chain: TorpedoChainReactionResult;
-  // the package context (identity + geometry + resolved fields); the
-  // warheadExplosiveEquivalentMassKg is IGNORED and replaced by the consumed
-  // mass (the shipped helper owns that override — no caller convention).
   packageInput: Omit<TorpedoDamagePackageInput, "warheadExplosiveEquivalentMassKg">;
 }): TorpedoDamagePackage {
   if (
@@ -708,8 +573,6 @@ export function composeTorpedoChainReactionPackage(o: {
   });
 }
 
-// The §22 separate explosion applied ATOMICALLY (the same path as
-// applyTorpedoDamagePackage — a stage throw leaves the input state untouched).
 export function applyTorpedoChainReactionPackage(o: {
   chain: TorpedoChainReactionResult;
   packageContext: Omit<TorpedoDamagePackageInput, "warheadExplosiveEquivalentMassKg">;

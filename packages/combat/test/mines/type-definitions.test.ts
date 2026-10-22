@@ -1,9 +1,3 @@
-// AC-2/AC-21/AC-24 seeds (INC-1): MineTypeDefinition (DESIGN-35 §2). Every
-// field is required; a missing or invalid field fails with
-// INVALID_MINE_TYPE_DEFINITION. The definition carries a content version + a
-// deterministic content hash (canonical serializer + SHA-256 envelope — no
-// ambient randomness). §9/§15/§21 exact shipped constants are wired in per
-// ticket 04.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {

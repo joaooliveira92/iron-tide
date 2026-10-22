@@ -23,8 +23,6 @@ import {
   makeWar,
 } from "./battle-fixtures.js";
 
-// T-1 04 (#113, spec #109 R8, R13, R15): declining a battle offer. Every ruleset value is a FIXTURE-CLASS value from
-// @bluewave/test-support (FLEET_BATTLE costs 4, CRUISER_BATTLE 2, no credit); none reaches production.
 const SEED = "decline-seed";
 const TURN = "turn-decline";
 
@@ -72,7 +70,6 @@ function answer(request: OfferRequest, response: OfferResponse): RecordedInput {
   });
 }
 
-/** Decline the first offer of a month and resume. */
 function declined(snapshot: CampaignSnapshot, options: RunOptions = {}): MonthResult {
   const request = offerOf(run(snapshot, options));
   return run(snapshot, { ...options, inputs: [answer(request, "decline")] });
@@ -235,7 +232,6 @@ describe("the war-score seam (R8)", () => {
 });
 
 describe("OPERATIONALLY_UNAVOIDABLE missions (R13)", () => {
-  /** The suspended month's own snapshot, with its manifest reclassified; re-running it re-raises the same offer. */
   function unavoidable(): CampaignSnapshot {
     const suspended = run(warSnapshot()).finalSnapshot;
     return {
@@ -289,7 +285,6 @@ describe("several offers in one month (R8, R15)", () => {
       first.battleId,
       second.battleId,
     ]);
-    // The earlier decline's effect is already applied when the later offer is raised.
     const midMonth = run(snapshot, { inputs: [answer(first, "decline")] });
     expect(scores(midMonth)).toEqual([[-4, 0]]);
     expect(midMonth.suspended?.request?.kind).toBe("offer");

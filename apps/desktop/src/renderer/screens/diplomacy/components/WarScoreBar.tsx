@@ -6,7 +6,6 @@ export interface WarScoreBarProps {
   readonly enemyName: string;
 }
 
-/** Player vs enemy war score as a two-sided bar, with the numbers as text for everyone. */
 export function WarScoreBar({ war, yourName, enemyName }: WarScoreBarProps) {
   const { yours, enemy, yourShare } = warScoreSplit(war);
   return (

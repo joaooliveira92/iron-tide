@@ -122,7 +122,6 @@ describe("NationSchema", () => {
   it("treats military as optional", () => {
     const nation = corpusNations()[0]!;
     if (nation.military === undefined) {
-      // Ignore nations that already omit military.
       return;
     }
     const { military: _military, ...withoutMilitary } = nation;

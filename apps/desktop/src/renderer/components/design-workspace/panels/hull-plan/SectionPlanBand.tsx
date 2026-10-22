@@ -7,10 +7,6 @@ import { HullTopsideLayer } from "./HullTopsideLayer.js";
 import { PAD_X, SECTION_W, type SectionLayout } from "./section-drawing.js";
 import type { ZoneRange } from "./sections.js";
 
-/**
- * The section card's plan band: the main drawing's hull, deck houses and funnels under the card transform, so it
- * can never disagree with the plan, with a centreline over it.
- */
 export function SectionPlanBand({
   layout,
   frame,

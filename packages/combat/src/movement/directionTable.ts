@@ -1,13 +1,3 @@
-// Precomputed integer direction table: cos/sin in fixed-point (DIRECTION_FIXED =
-// 1e4) for every integer heading 0..359. Using an authored integer table (rather
-// than Math.cos/Math.sin at runtime) keeps displacement byte-identical across
-// engines/OS (DESIGN-07 fixed-point, AC-13 cross-process determinism).
-
-// Precomputed integer direction table: cos/sin in fixed-point
-// (DIRECTION_FIXED = 1e4) for every integer heading 0..359. Using an authored
-// integer table (rather than calling Math.cos/Math.sin at runtime) keeps
-// displacement byte-identical across engines/OS (DESIGN-07 fixed-point, AC-13
-// cross-process determinism).
 export const DIRECTION_TABLE: ReadonlyArray<readonly [number, number]> = [
   [10000, 0],
   [9998, 175],

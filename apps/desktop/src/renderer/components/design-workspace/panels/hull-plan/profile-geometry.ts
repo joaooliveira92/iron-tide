@@ -26,21 +26,6 @@ import {
   serializePath,
 } from "./path.js";
 
-/**
- * Side-profile frame. SCHEMATIC: a coherent preliminary silhouette, not a lines plan.
- *
- * Coordinates: SVG user units, origin top-left, x to the right (BOW AT THE LEFT, as in the plan), y DOWN.
- * Horizontal positions use `stationX` (permille of waterline length), the same scale and origin as the plan.
- * Vertical positions use one px-per-metre scale (`vScale`) so depth, draught and sheer are consistent.
- *
- * Each value is one of: PHYSICAL (from the hull record, metres), DISPLAY (a documented visual clamp or
- * amplification, never shown as data) or CONVENTION (a fixed drawing proportion per bow/stern style).
- * Raw hull values stay available on the frame (`raw`) for labels and descriptions.
- *
- * The path primitives live in `path.ts`, the silhouette builders in `profile-outline.ts` and the deck-mounted
- * structures in `profile-structures.ts`; they are re-exported here so `profile-geometry` stays the single
- * import for the profile drawing.
- */
 export { PROFILE_H, PROFILE_W };
 export { pathPoints, polygonPoints, samplePath, serializePath };
 export type { PathSegment, Point };
@@ -53,11 +38,6 @@ export {
   houseMasses,
 } from "./profile-structures.js";
 
-/**
- * DISPLAY treatment of sheer: the rise as a fraction of depth (`(sheerBp - 100%)`) is amplified so a modest
- * real sheer stays visible, then capped. Zero stays zero, the map is monotonic non-decreasing, and it is never
- * reported as data. `r + gain * r * knee / (knee + r)` has a strictly positive derivative before the cap.
- */
 export function displaySheerRise(sheerBp: number): number {
   const rise = Math.max(0, finiteOr((sheerBp - 10000) / 10000, 0));
   const amplified = rise + (SHEER_GAIN * rise * SHEER_KNEE) / (SHEER_KNEE + rise);
@@ -65,25 +45,18 @@ export function displaySheerRise(sheerBp: number): number {
 }
 
 export interface ProfileFrame {
-  /** Raw hull values (metres) for labels and descriptions; the drawing may use clamped display values. */
   readonly raw: { readonly lengthM: number; readonly depthM: number; readonly draughtM: number };
-  /** DISPLAY depth and draught (metres) after the visual clamps. */
   readonly depthM: number;
   readonly draughtM: number;
-  /** px per metre, vertical. */
   readonly vScale: number;
   readonly waterlineY: number;
-  /** Keel (baseline) y at midships. */
   readonly keelBaseY: number;
-  /** Deck-edge y at midships, the origin of the sheer. */
   readonly deckMidY: number;
   readonly x: (permille: number) => number;
-  /** Deck-edge y at a station fraction 0..1 (0 = bow). Single source for everything mounted on the deck. */
   readonly deckY: (t: number) => number;
   readonly bow: BowStyle;
   readonly stern: SternStyle;
   readonly anchors: ProfileAnchors;
-  /** The closed silhouette. */
   readonly outline: readonly PathSegment[];
 }
 
@@ -114,7 +87,6 @@ function hullMetrics(hull: DesignDraft["hull"]): HullMetrics {
   return { rawLengthM, rawDepthM, rawDraughtM, lengthM, depthM, draughtM };
 }
 
-/** Quadratic sheer parabola, flat at midships (zero slope, so no flat-to-curve kink); exactly representable as two Béziers. */
 function sheerDeckY(deckMidY: number, bowRisePx: number, t: number): number {
   const clamped = clamp(t, 0, 1);
   const u = Math.abs(2 * clamped - 1);

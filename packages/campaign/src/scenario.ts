@@ -1,5 +1,3 @@
-// DESIGN-03 §1 Supported Start Scenarios - Normative
-// Exactly 5 canonical scenarios, each January of identifier year, full 15-field contract.
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { FLEET_SIZE_IDS } from "./fleetSize.js";
 import { RESEARCH_IDS } from "./researchSpeed.js";
@@ -95,8 +93,6 @@ function hasRequiredScenarioFields(r: Record<string, unknown>, c: DiagnosticColl
   return ok;
 }
 
-// Validate the scenarioId and record it; undefined means the id is invalid and
-// the remaining checks for this scenario must be skipped.
 function registerScenarioId(
   r: Record<string, unknown>,
   seen: Set<string>,
@@ -150,7 +146,6 @@ function validateScenarioSupportedFields(
   c: DiagnosticCollector,
 ): boolean {
   let ok = true;
-  // supported* allowlist validation
   const checks: Array<[string, Set<string>]> = [
     ["supportedFleetSizeSettingIds", ALLOWED_FLEET],
     ["supportedResearchSpeedSettingIds", ALLOWED_RESEARCH],
@@ -173,7 +168,6 @@ function validateScenarioSupportedFields(
         }
     }
   }
-  // other supported* at least non-empty string array
   for (const field of [
     "supportedHistoricalBudgetOptionIds",
     "supportedLegacyFleetModeIds",

@@ -1,10 +1,3 @@
-/**
- * `@bluewave/content-codemod` — the deterministic content codemod of ship-part-model ticket 11c.
- *
- * The planner (`planFromLegacy`, `planFromStaged`) is pure; the loader (`loadLegacySource`,
- * `readStagedSource`) and publisher (`publishMigration`) own the filesystem. The writer stages
- * parts-based content and never activates production or changes a save/compatibility version.
- */
 export {
   migrationFailure,
   type MigrationFailure,

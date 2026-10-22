@@ -1,5 +1,3 @@
-// The one authoritative answer to "may this ship type be designed or built now, and if not, why". Pure: the same
-// context gives the same answer; the compile, the construction-order rule and the roster all call it.
 import type { ClassificationRules } from "./classification.js";
 import { shipTarget, type Finding } from "./findings.js";
 import {
@@ -10,11 +8,6 @@ import {
   type ShipTypeId,
 } from "./shipTypes.js";
 
-/**
- * Stable machine-readable reasons. `SHIP_TYPE_UNREGISTERED` and `AMC_FLEET_LIMIT_EXCEEDED` are DESIGN-22 section 26
- * codes; the rest are this policy's. Display text comes from `availabilityMessage` (the localisation seam: a
- * translation table keyed by code replaces it).
- */
 export const AVAILABILITY_REASON_CODES = [
   "SHIP_TYPE_UNREGISTERED",
   "SHIP_TYPE_ERA_NOT_REACHED",
@@ -27,10 +20,6 @@ export const AVAILABILITY_REASON_CODES = [
 ] as const;
 export type AvailabilityReasonCode = (typeof AVAILABILITY_REASON_CODES)[number];
 
-/**
- * English text per code. Deliberately generic for the locked future types: it names the kind of obstacle, never the
- * technology behind it (fog of war: an unresearched technology stays hidden).
- */
 const MESSAGES: Readonly<Record<AvailabilityReasonCode, string>> = {
   SHIP_TYPE_UNREGISTERED: "This ship type is not recognised by the ruleset.",
   SHIP_TYPE_ERA_NOT_REACHED: "This kind of ship does not exist yet in the current era.",
@@ -54,23 +43,14 @@ export interface AvailabilityReason {
 export interface ShipTypeAvailability {
   readonly type: string;
   readonly available: boolean;
-  /** Empty exactly when `available`. */
   readonly reasons: readonly AvailabilityReason[];
 }
 
 export interface AvailabilityContext {
-  /** Campaign month, YYYY-MM. */
   readonly month: string;
   readonly unlockedTechs: ReadonlySet<string>;
-  /** Nation capabilities granted by scenario or industry; absent = none. */
   readonly capabilities?: ReadonlySet<string> | undefined;
-  /** Types forbidden by a treaty or by scenario configuration. */
   readonly restrictedTypes?: readonly string[] | undefined;
-  /**
-   * The compiled ship-type definitions (ADR-0156, ticket 12b). When supplied, the availability
-   * facts are read from content; absent falls back to the code registry, whose values the 12a
-   * regression pins equal.
-   */
   readonly definitions?: ReadonlyMap<ShipTypeId, ShipTypeDefinition> | undefined;
 }
 
@@ -79,7 +59,6 @@ const reason = (code: AvailabilityReasonCode): AvailabilityReason => ({
   message: MESSAGES[code],
 });
 
-/** Whether `type` may be designed now. Unknown ids are `SHIP_TYPE_UNREGISTERED`, never available. */
 export function evaluateShipTypeAvailability(
   type: string,
   ctx: AvailabilityContext,
@@ -102,21 +81,12 @@ export function evaluateShipTypeAvailability(
   return { type, available: reasons.length === 0, reasons };
 }
 
-/** The fleet the auxiliary limits count against: commissioned plus in-construction ships of the issuing nation. */
 export interface AuxiliaryFleetCounts {
-  /** Active commissioned cruisers (CA and CL, including protected cruisers). */
   readonly cruisers: number;
-  /** Active AMC, commissioned and under construction. */
   readonly amc: number;
-  /** Of those, the fast ones (designed speed at or above the fast-AMC threshold). */
   readonly fastAmc: number;
 }
 
-/**
- * DESIGN-22 section 15 fleet authorisation for one more AMC. Not a mechanical classification rule: a design that
- * passes `classRuleFailures` still compiles; its construction order is what this rejects. Integer arithmetic,
- * counts floored, minimum allowances applied.
- */
 export function evaluateAmcFleetLimit(
   designedSpeedUms: number,
   fleet: AuxiliaryFleetCounts,
@@ -145,7 +115,6 @@ export function evaluateAmcFleetLimit(
   return { type: "AMC", available: reasons.length === 0, reasons };
 }
 
-/** The blocking findings for an unavailable type: one per reason, each with the three remedies a blocker needs. */
 export function availabilityFindings(a: ShipTypeAvailability): Finding[] {
   return a.reasons.map((r): Finding => ({
     id: r.code,

@@ -14,7 +14,6 @@ export interface HeaderCampaignMenuProps {
   readonly onCloseCampaign: () => void;
 }
 
-/** The header's Campaign menu (CC-6): file-level actions. Advance Month stays the only Turn control. */
 export function HeaderCampaignMenu({
   saving,
   onSave,

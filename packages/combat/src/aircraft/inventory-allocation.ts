@@ -1,4 +1,3 @@
-// DESIGN-43 §35 inventory allocation priority.
 import { SafeInt } from "@bluewave/contracts";
 
 export const ALLOCATION_PRIORITIES = [

@@ -4,10 +4,6 @@ import type { CardPalette } from "@/components/card-deck/index.js";
 import { getArchetypeArtwork } from "@/content/archetypeArtworkManifest.js";
 import { archetypeOptionId } from "./ArchetypeCard.js";
 
-/**
- * DOM id of the custom slot's option element; the deck's listbox points
- * `aria-activedescendant` at it. `custom` cannot collide with a preset id.
- */
 export const CUSTOM_ARCHETYPE_ID = "custom";
 
 export const customArchetypeOptionId = (listboxId: string): string =>
@@ -15,9 +11,7 @@ export const customArchetypeOptionId = (listboxId: string): string =>
 
 export interface ArchetypeCustomDeckCardProps {
   readonly palette: CardPalette;
-  /** Whether a custom build is the currently applied selection. */
   readonly applied: boolean;
-  /** A committed custom allocation, or null when nothing has been built yet. */
   readonly allocation: {
     readonly economy: number;
     readonly industry: number;
@@ -26,12 +20,6 @@ export interface ArchetypeCustomDeckCardProps {
   readonly listboxId: string;
 }
 
-/**
- * The deck's final, custom-build slot: not a named preset, so it carries no
- * artwork of its own beyond the palette fallback. Tapping or Entering it opens
- * the allocator; once a build is committed it reports the applied custom
- * allocation like a preset would.
- */
 export const ArchetypeCustomDeckCard = memo(function ArchetypeCustomDeckCard({
   palette,
   applied,

@@ -20,10 +20,8 @@ const words = (s: string) => {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 };
 
-/** Tall submenus scroll rather than run off the window. */
 const SCROLLING = "max-h-80 overflow-y-auto";
 
-/** The available components grouped by category, categories and components in name order. */
 function byCategory(available: readonly PartCatalogueEntry[]) {
   const groups = new Map<string, PartCatalogueEntry[]>();
   for (const entry of available)
@@ -37,11 +35,6 @@ function byCategory(available: readonly PartCatalogueEntry[]) {
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
-/**
- * The plan tools, reached by right-clicking the drawing (or its menu key): Place a component, Auto-place it, Move a
- * fitting, and stop the tool that is armed. Choosing here arms the tool; the click, drag and nudge handling on the
- * drawing is unchanged. Right-clicking on a fitting also offers to move that one directly.
- */
 export function PlanContextMenu({
   tool,
   onTool,
@@ -55,12 +48,9 @@ export function PlanContextMenu({
   readonly tool: PlanTool;
   readonly onTool: (next: PlanTool) => void;
   readonly draft: Pick<DesignDraft, "placements">;
-  /** Family-level catalogue entries that can be fitted this month. */
   readonly available: readonly PartCatalogueEntry[];
   readonly entryOf: (componentId: string) => PartCatalogueEntry | undefined;
-  /** Places the chosen component at the most level legal station. */
   readonly onAutoPlace: () => void;
-  /** The fitting drawn under a screen point, or null; asked when the menu is opened to offer moving it. */
   readonly fittingAt: (clientX: number, clientY: number) => string | null;
   readonly children: ReactNode;
 }) {

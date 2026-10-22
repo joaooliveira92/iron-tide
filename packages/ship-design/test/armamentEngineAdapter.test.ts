@@ -1,17 +1,8 @@
-/**
- * ADR-0093 Step 4 — ship-design persists first-class armament identity onto the engine design.
- *
- * The compile already resolves every installed weapon through `@bluewave/armament` (Step 3); this proves
- * the engine adapter (`toEngineDesign`) carries that identity forward, deterministically ordered, so it can
- * be persisted on the compiled design version and consumed by combat. It is additive: the legacy
- * compatibility path (no first-class armament content) carries no identity.
- */
 import { describe, it, expect } from "vite-plus/test";
 import { buildShipBuildingContent, compileDesign, toEngineDesign } from "../src/index.js";
 import { nationalContext, shipBuildingContent, shipBuildingData } from "./helpers/earlyContext.js";
 
 const OPENING_MONTH = "1880-01";
-/** The first-class armament content covers the original three nations; other nations use the legacy path. */
 const ARMAMENT_NATIONS = new Set(["uk", "france", "germany"]);
 const openingStarters = shipBuildingContent.starterDesigns.filter(
   (s) => s.month === OPENING_MONTH && ARMAMENT_NATIONS.has(s.draft.nationId),

@@ -6,9 +6,6 @@ import type { CampaignAssetProvenance } from "./provenance.js";
 
 export const TACTICAL_UNIT_PROMOTION_INVALID = "TACTICAL_UNIT_PROMOTION_INVALID" as const;
 
-// DESIGN-37 §1 / DESIGN-38 §8: a campaign Ship promoted to a reachable tactical
-// unit. Carries the armor/guns/crew/displacement/speed/HP the tactical layer
-// needs, plus canonical ship type and provenance.
 export interface TacticalShipUnit {
   assetId: string;
   campaignShipId: string;

@@ -1,5 +1,3 @@
-// INC-4 — Local component damage (DESIGN-41 §6).
-// Proves: component eligibility, all 8 outcomes, spatial ordering.
 import { describe, it, expect } from "vite-plus/test";
 import {
   resolveComponentDamage,
@@ -24,8 +22,6 @@ function makeComponent(
 
 const EXPOSED_ZONES = ["SUPERSTRUCTURE", "DECK", "CASEMATE", "SPLINTER_DECK"];
 
-// §6 — Component eligibility
-
 describe("AC-4: Component eligibility (§6)", () => {
   it("returns empty array when no components are in the hit zone", () => {
     const components = [makeComponent("TURRET-1", "TURRET", "TURRET-1")];
@@ -36,7 +32,7 @@ describe("AC-4: Component eligibility (§6)", () => {
   it("full penetration affects all in-zone components regardless of exposure", () => {
     const components = [
       makeComponent("DIRECTOR-1", "DIRECTOR", "SUPERSTRUCTURE-1", "SUPERSTRUCTURE"),
-      makeComponent("PUMP-1", "PUMP", "SUPERSTRUCTURE-1"), // internal, no armor zone
+      makeComponent("PUMP-1", "PUMP", "SUPERSTRUCTURE-1"),
     ];
     const result = resolveComponentDamage(
       components,
@@ -45,14 +41,13 @@ describe("AC-4: Component eligibility (§6)", () => {
       "LIGHT",
     );
     expect(result).toHaveLength(2);
-    // All components affected
     expect(result.map((r) => r.componentId).sort()).toEqual(["DIRECTOR-1", "PUMP-1"]);
   });
 
   it("non-penetrating hit only affects exposed components (superstructure)", () => {
     const components = [
       makeComponent("DIRECTOR-1", "DIRECTOR", "SUPERSTRUCTURE-1", "SUPERSTRUCTURE"),
-      makeComponent("PUMP-1", "PUMP", "SUPERSTRUCTURE-1"), // internal
+      makeComponent("PUMP-1", "PUMP", "SUPERSTRUCTURE-1"),
     ];
     const result = resolveComponentDamage(
       components,
@@ -65,9 +60,7 @@ describe("AC-4: Component eligibility (§6)", () => {
   });
 
   it("non-penetrating hit on internal-only zone returns empty", () => {
-    const components = [
-      makeComponent("ENGINE-1", "ENGINE", "ENGINE-1"), // no armor zone type
-    ];
+    const components = [makeComponent("ENGINE-1", "ENGINE", "ENGINE-1")];
     const result = resolveComponentDamage(components, "ENGINE-1", "SPLINTER_EFFECT", "HEAVY");
     expect(result).toHaveLength(0);
   });
@@ -81,8 +74,6 @@ describe("AC-4: Component eligibility (§6)", () => {
     }
   });
 });
-
-// §6 — All 8 outcomes
 
 describe("AC-4: Component outcomes (§6)", () => {
   it("UNAFFECTED: DUD penetration, any splinter level", () => {
@@ -135,12 +126,6 @@ describe("AC-4: Component outcomes (§6)", () => {
   });
 
   it("FLOODED outcome is reachable for penetrating hit on hull components", () => {
-    // FLOODED is assigned to flooding-related components on full penetration
-    // In our model, FLOODED is not directly in the table but can be returned
-    // by the component outcome logic for hull/underwater components.
-    // For now, with full penetration + NONE splinters, we get DEGRADED.
-    // FLOODED would be set by later stages for hull damage.
-    // Verify the type exists and is handled (it's part of ComponentOutcome).
     const outcome: ComponentOutcome = "FLOODED";
     expect(outcome).toBe("FLOODED");
   });
@@ -179,8 +164,6 @@ describe("AC-4: Component outcomes (§6)", () => {
   });
 });
 
-// §6 — Spatial ordering by stable component id
-
 describe("AC-4: Spatial ordering by stable component id (§6)", () => {
   it("returns results sorted by component id", () => {
     const components = [
@@ -207,8 +190,6 @@ describe("AC-4: Spatial ordering by stable component id (§6)", () => {
     expect(result[2].componentId).toBe("RANGEFINDER-2");
   });
 });
-
-// Edge cases
 
 describe("AC-4: Edge cases", () => {
   it("CRITICAL_PENETRATION behaves like full penetration for component damage", () => {

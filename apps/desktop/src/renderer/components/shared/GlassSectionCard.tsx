@@ -9,10 +9,6 @@ export interface GlassSectionCardProps {
   readonly children: ReactNode;
 }
 
-/**
- * A titled `GlassCard` section with an icon and optional description — the
- * shared chrome both the Research and Diplomacy screens used to duplicate.
- */
 export function GlassSectionCard({ icon, title, description, children }: GlassSectionCardProps) {
   return (
     <GlassCard glassVariant="liquid-refract">

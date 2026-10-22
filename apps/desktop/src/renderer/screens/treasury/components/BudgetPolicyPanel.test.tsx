@@ -16,7 +16,6 @@ const projection: BudgetScreenProjection = {
     researchBudgetMin: 0,
     researchBudgetMax: 1000,
   },
-  // base 120000: cap = floor(12% x floor(6000 x rate / 120000)), one entry per 50 bp step.
   researchCaps: Array.from({ length: 91 }, (_, i) => ({
     rateBp: 500 + i * 50,
     cap: Math.floor((Math.floor((120000 * (500 + i * 50)) / 120000) * 1200) / 10000),

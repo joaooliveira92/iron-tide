@@ -6,9 +6,6 @@ import { fileURLToPath } from "node:url";
 const thisDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(thisDir, "..", "..", "..");
 
-// ADR-0001 dependency direction. A package may only depend on packages in a
-// strictly lower layer, so the graph is acyclic by construction. Add a new
-// package here (and to ADR-0001) when one is introduced.
 const LAYER: Record<string, number> = {
   "@bluewave/contracts": 0,
   "@bluewave/diagnostics": 1,

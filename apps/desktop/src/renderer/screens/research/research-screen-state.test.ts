@@ -73,7 +73,6 @@ describe("research screen state", () => {
     expect(draft.MACHINERY).toBe(4);
     expect(draft.GUNNERY).toBe(2);
     expect(draft.HULL_CONSTRUCTION).toBe(2);
-    // Fields the compiled snapshot doesn't carry default to LOW for editing.
     expect(draft.SHIP_DESIGN).toBe(1);
     expect(draft.MISSILES).toBe(1);
   });
@@ -146,7 +145,6 @@ describe("research screen state", () => {
     const draft = seedDraft(fixtureProjection());
     const next = setDraftWeight(draft, "GUNNERY", 4);
     expect(next.GUNNERY).toBe(4);
-    // Immutability — the original draft is untouched.
     expect(draft.GUNNERY).toBe(2);
 
     const payload = draftToPriorities(next);

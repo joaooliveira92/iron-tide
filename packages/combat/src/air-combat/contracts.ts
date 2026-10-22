@@ -1,5 +1,3 @@
-// D-3 M4 Aviation: CAP & Strikes — AC-20 air_combat_v1 contract with 6-factor manifest.
-// Parallel to aircraft/contracts.ts pattern.
 import { BluewaveError } from "@bluewave/contracts";
 import { Result, Schema } from "effect";
 import {

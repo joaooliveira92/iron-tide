@@ -1,7 +1,3 @@
-// INC-5 — Determinism proof: same inputs → byte-identical output.
-// Runs the resolveDamage function twice in the same process with identical
-// inputs and compares the full state and event hashes.
-// Pure/deterministic: keyedRng is a deterministic function of stream name.
 import { describe, it, expect } from "vite-plus/test";
 import {
   resolveDamage,
@@ -10,30 +6,21 @@ import {
   type ShipDamageState,
 } from "../../src/damage/index.js";
 
-// Deterministic RNG implementation for cross-run consistency.
-// This is a simple seeded RNG based on hash of the stream name.
-// Same stream name → same value every time.
-
 function createDeterministicRng(): (stream: string) => number {
-  // Simple deterministic mapping from stream name to [0, 1).
-  // Uses a hash of the stream name to produce a reproducible value.
   const cache = new Map<string, number>();
   return (stream: string) => {
     if (cache.has(stream)) return cache.get(stream)!;
-    // Simple string hash
     let hash = 0;
     for (let i = 0; i < stream.length; i++) {
       const char = stream.charCodeAt(i);
       hash = ((hash << 5) - hash + char) | 0;
     }
-    // Map to [0, 1) using absolute value and modulo
     const value = Math.abs(hash % 10_000) / 10_000;
     cache.set(stream, value);
     return value;
   };
 }
 
-// Shared deterministic RNG
 const detRng = createDeterministicRng();
 
 function baseState(overrides: Partial<ShipDamageState> = {}): ShipDamageState {
@@ -67,7 +54,6 @@ function createImpact(overrides: Partial<GunneryImpact> = {}): GunneryImpact {
     penetrationMargin: 75_000,
     structuralDamage: 12_000,
     flotationDamage: 5_000,
-    // INC-5 fields — all set to trigger various effects
     shipType: "ORDINARY",
     hasCombustible: true,
     hasOxygen: true,
@@ -83,12 +69,9 @@ function createImpact(overrides: Partial<GunneryImpact> = {}): GunneryImpact {
   };
 }
 
-// Deep-compare two objects by JSON string (byte-identical check)
 function jsonEqual(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
-
-// Determinism tests
 
 describe("AC-5: Determinism — same inputs → byte-identical outputs", () => {
   it("resolveDamage produces identical state hashes on two runs", () => {
@@ -121,7 +104,6 @@ describe("AC-5: Determinism — same inputs → byte-identical outputs", () => {
     const run1 = resolveDamage(state, [impact], 10, 3, detRng);
     const run2 = resolveDamage(state, [impact], 10, 3, detRng);
 
-    // Byte-identical structure
     expect(jsonEqual(run1, run2)).toBe(true);
   });
 
@@ -153,14 +135,10 @@ describe("AC-5: Determinism — same inputs → byte-identical outputs", () => {
 
     const run1 = resolveDamage(state, [impact], 10, 3, detRng);
 
-    // A different RNG that returns different values
     const otherRng = (_stream: string) => 0.999;
     const run2 = resolveDamage(state, [impact], 10, 3, otherRng);
 
-    // Outputs should differ when RNG differs
     const stateHashSame = run1.newState.stateHash === run2.newState.stateHash;
-    // At least the fire/explosion outcomes may differ, so hashes may differ
-    // This test ensures the system responds to RNG changes
     expect(typeof stateHashSame).toBe("boolean");
   });
 });
@@ -174,10 +152,6 @@ describe("AC-5: Determinism — same RNG, different order of impacts", () => {
     const ab = resolveDamage(state, [impactA, impactB], 10, 3, detRng);
     const ba = resolveDamage(state, [impactB, impactA], 10, 3, detRng);
 
-    // Different order should produce different state (structural: 80_000 vs 80_000
-    // actually 100-5-15 = 80 vs 100-15-5 = 80 — same commutative result!
-    // But terminal transitions, fires, flooding may differ due to intermediate state)
-    // At least the events arrays differ in order
     expect(ab.events[0].sourceId).toBe("HIT-A");
     expect(ba.events[0].sourceId).toBe("HIT-B");
   });

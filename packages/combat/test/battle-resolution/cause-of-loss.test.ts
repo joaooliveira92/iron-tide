@@ -1,4 +1,3 @@
-// P-1 (ADR-0052): per-ship cause-of-loss is observational and deterministic.
 import { describe, expect, it } from "vite-plus/test";
 import { compiledTorpedoOf } from "../fixtures/compiledTorpedoes.js";
 import { SafeInt } from "@bluewave/contracts";
@@ -85,7 +84,7 @@ describe("CauseOfLossTracker (unit)", () => {
       st({ flotationReserve: 0, progressiveFloodingTotal: 400, terminalStatus: "SINKING" }),
       false,
     );
-    expect(t.causeOf("s1")).toBe("gunfire"); // 600 direct vs 400 flooding
+    expect(t.causeOf("s1")).toBe("gunfire");
   });
 });
 
@@ -127,7 +126,6 @@ function ironclads(armed: boolean, guns: number): FixtureNationSet {
   };
 }
 
-/** ADR-0094 fixture: a thin (6 in / 152 400 µm, the battleship family minimum) HARVEY belt so production shells breach. */
 function thinArmor(n: FixtureNationSet): FixtureNationSet {
   const map = (m: Map<string, CompiledDesignVersion>) =>
     new Map([...m].map(([id, d]) => [id, { ...d, normalizedArmorUm: SafeInt(152_400) }]));
@@ -152,10 +150,6 @@ describe("cause-of-loss in resolveBattleAuto", () => {
   });
 
   it("gun battle: causes are valid, cover exactly the sunk ships, and are not hashed", () => {
-    // ADR-0094: production-scale penetration against the default 305 mm belt is
-    // only PARTIAL (no hull breach), so gunfire alone no longer sinks ships. Use
-    // a thin-armour fixture so shell hits breach and flood, preserving the
-    // gunfire-cause-of-loss coverage this test owns.
     const r = resolveBattleAuto({
       ...makeAutoInput({ nations: thinArmor(makeNations()) }),
       campaignSeed: "cause-8",
@@ -164,7 +158,6 @@ describe("cause-of-loss in resolveBattleAuto", () => {
     expect(sunk.length).toBeGreaterThan(0);
     expect(Object.keys(r.causeOfLoss!).sort()).toEqual(sunk);
     for (const id of sunk) expect(["gunfire", "flooding", "fire"]).toContain(r.causeOfLoss![id]);
-    // observational: removing the field cannot be what the hash covered
     const { causeOfLoss: _c, ...rest } = r;
     expect(JSON.parse(JSON.stringify(rest))).not.toHaveProperty("causeOfLoss");
   });

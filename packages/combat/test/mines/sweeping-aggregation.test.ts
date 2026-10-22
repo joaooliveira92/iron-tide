@@ -1,17 +1,3 @@
-// AC-10 (INC-4): DESIGN-35 §10 regional sweeping aggregation + allocation.
-// Aggregation: sum of effective eligible-ship values in ASCENDING ship-id order
-// (order-independent — shuffled input yields the identical regional value and
-// sorted contribution list); ineligible ships contribute ZERO
-// (INELIGIBLE_SHIP_SWEEPING_CONTRIBUTION) and surface in `ineligible` for the
-// aggregate MINESWEEPING_SHIP_INELIGIBLE emit.
-// Allocation: typeAdjustedSweeping / sweptPressure / pressureAfter exact §10
-// formulas (swept clamped to current pressure; never below zero); ONE allocation
-// per record — a record never receives the full regional value alongside another
-// (shared budget, unreduced portion passes on); exact five-key §10 order
-// (controlled-defensive threat -> highest strike risk -> highest pressure ->
-// mine-type id -> mine-pressure id); MINE_PRESSURE_REDUCED emitted per record with
-// sweptPressure > 0; a record swept to 0 keeps pressureAfter = 0 and is NOT
-// deleted (output preserves the full record array).
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import {
@@ -55,15 +41,12 @@ function eligibleShip(overrides: Partial<MinesweepingShip> = {}): MinesweepingSh
   };
 }
 
-// Regional aggregation input: §7 base-key + §8 duel-equipment inputs + §9 five
-// non-equipment multipliers, all at neutral 10_000 by default so the effective
-// value collapses to the §7 base value unless overridden.
 function regionalShip(overrides: Partial<RegionalSweepingShip> = {}): RegionalSweepingShip {
   return {
     shipId: "hms-victoria-001",
     eligibility: eligibleShip({ shipId: "hms-victoria-001" }),
-    baseValueKey: "DEDICATED_FLEET_MINESWEEPER", // §7 base 150
-    equipmentIsDualPurpose: false, // single-purpose raises equipmentMode to full 10_000
+    baseValueKey: "DEDICATED_FLEET_MINESWEEPER",
+    equipmentIsDualPurpose: false,
     lockedMissionOrEquipmentCommand: null,
     technologyMultiplierBp: 10_000,
     crewMultiplierBp: 10_000,
@@ -112,15 +95,13 @@ function recordWithPressureAndType(
   });
 }
 
-// ---- AC-10 aggregation ----
-
 describe("AC-10: regional value = sum of effective eligible-ship values in ascending ship-id order", () => {
   it("sums only eligible ships and reports them sorted by shipId ascending", () => {
     const ships = [
-      regionalShip({ shipId: "hms-zulu-003" }), // base 150
+      regionalShip({ shipId: "hms-zulu-003" }),
       regionalShip({
         shipId: "hms-alpha-001",
-        baseValueKey: "DD_WITH_MINE_SWEEPING_EQUIPMENT", // base 80
+        baseValueKey: "DD_WITH_MINE_SWEEPING_EQUIPMENT",
         eligibility: eligibleShip({
           shipId: "hms-alpha-001",
           shipType: "DD_WITH_MINE_SWEEPING_EQUIPMENT",
@@ -139,12 +120,12 @@ describe("AC-10: regional value = sum of effective eligible-ship values in ascen
       regionalShip({ shipId: "c-ship" }),
       regionalShip({
         shipId: "a-ship",
-        baseValueKey: "CONVERTED_TR_MINESWEEPER", // base 120
+        baseValueKey: "CONVERTED_TR_MINESWEEPER",
         eligibility: eligibleShip({ shipId: "a-ship", shipType: "CONVERTED_TR_MINESWEEPER" }),
       }),
       regionalShip({
         shipId: "b-ship",
-        baseValueKey: "CL_WITH_MINE_SWEEPING_EQUIPMENT", // base 60
+        baseValueKey: "CL_WITH_MINE_SWEEPING_EQUIPMENT",
         eligibility: eligibleShip({
           shipId: "b-ship",
           shipType: "CL_WITH_MINE_SWEEPING_EQUIPMENT",
@@ -154,7 +135,7 @@ describe("AC-10: regional value = sum of effective eligible-ship values in ascen
     const forward = computeRegionalSweepingValue(ships);
     const shuffled = computeRegionalSweepingValue([ships[2]!, ships[0]!, ships[1]!]);
     expect(shuffled.regionalSweepingValue).toBe(forward.regionalSweepingValue);
-    expect(shuffled.regionalSweepingValue).toBe(SafeInt(330)); // 120 + 150 + 60
+    expect(shuffled.regionalSweepingValue).toBe(SafeInt(330));
     expect(shuffled.over.map((c) => c.shipId)).toEqual(["a-ship", "b-ship", "c-ship"]);
     expect(shuffled.over).toEqual(forward.over);
   });
@@ -162,11 +143,11 @@ describe("AC-10: regional value = sum of effective eligible-ship values in ascen
   it("an ineligible ship contributes ZERO and surfaces in the ineligible list for MINESWEEPING_SHIP_INELIGIBLE", () => {
     const bad = regionalShip({
       shipId: "hms-broken-009",
-      eligibility: eligibleShip({ shipId: "hms-broken-009", readiness: "MOBILIZING" }), // §6 fails
+      eligibility: eligibleShip({ shipId: "hms-broken-009", readiness: "MOBILIZING" }),
     });
     const good = regionalShip({ shipId: "hms-ok-001" });
     const result = computeRegionalSweepingValue([bad, good]);
-    expect(result.regionalSweepingValue).toBe(SafeInt(150)); // bad contributed 0
+    expect(result.regionalSweepingValue).toBe(SafeInt(150));
     expect(result.over).toHaveLength(1);
     expect(result.over[0]!.shipId).toBe("hms-ok-001");
     expect(result.ineligible).toHaveLength(1);
@@ -176,9 +157,6 @@ describe("AC-10: regional value = sum of effective eligible-ship values in ascen
   });
 
   it("threads §8 dual-equipment + §9 multipliers through the effective value (one FLOOR only)", () => {
-    // DD base 80 × SWEEPING_PRIORITY_DUAL sweep 9_000 × tech 10_000 × crew 12_000
-    // × readiness 10_000 × degraded damage 5_000 × support 10_000 =
-    // 4.32e25 / 10_000^6 = 43.2 -> 43 (exact rational, one end-FLOOR).
     const input = regionalShip({
       shipId: "hms-dual-001",
       baseValueKey: "DD_WITH_MINE_SWEEPING_EQUIPMENT",
@@ -187,15 +165,13 @@ describe("AC-10: regional value = sum of effective eligible-ship values in ascen
         shipType: "DD_WITH_MINE_SWEEPING_EQUIPMENT",
       }),
       equipmentIsDualPurpose: true,
-      lockedMissionOrEquipmentCommand: "SWEEPING_PRIORITY_DUAL", // sweep multiplier 9_000
+      lockedMissionOrEquipmentCommand: "SWEEPING_PRIORITY_DUAL",
       crewMultiplierBp: 12_000,
-      damageMultiplierBp: 5_000, // DEGRADED
+      damageMultiplierBp: 5_000,
     });
     expect(effectiveSweepingValueForShip(input)).toBe(SafeInt(43));
   });
 });
-
-// ---- AC-10 allocation order ----
 
 describe("AC-10: sweepingAllocationOrder — exact five-key §10 order", () => {
   function candidate(
@@ -224,7 +200,6 @@ describe("AC-10: sweepingAllocationOrder — exact five-key §10 order", () => {
         threatensSweepingSide: false,
       },
     );
-    // Deliberately scrambled input order -> comparator alone decides.
     expect(sweepingAllocationOrder(passive, threatening)).toBeGreaterThan(0);
     expect(
       [passive, threatening].sort(sweepingAllocationOrder).map((c) => c.record.minePressureId),
@@ -270,16 +245,12 @@ describe("AC-10: sweepingAllocationOrder — exact five-key §10 order", () => {
   });
 
   it("ids sort by codepoint, NEVER localeCompare (the no-locale determinism contract)", () => {
-    // Mixed-case and non-ASCII id pairs would reorder under ICU collation on
-    // some locales/OS (e.g. 'a' < 'A' is not guaranteed across locales). The
-    // authoritative order MUST be plain UTF-16 codepoint order, so we pin it.
     const upperA = candidate(recordWithPressureAndType("mp-A", 500, "CONTACT"), {
       strikeRiskPriority: 0,
     });
     const lowerA = candidate(recordWithPressureAndType("mp-a", 500, "CONTACT"), {
       strikeRiskPriority: 0,
     });
-    // 'A' (65) < 'a' (97) in codepoint order, regardless of host locale.
     expect(
       [lowerA, upperA].sort(sweepingAllocationOrder).map((c) => c.record.minePressureId),
     ).toEqual(["mp-A", "mp-a"]);
@@ -290,7 +261,6 @@ describe("AC-10: sweepingAllocationOrder — exact five-key §10 order", () => {
     const ascii = candidate(recordWithPressureAndType("mp-a", 500, "CONTACT"), {
       strikeRiskPriority: 0,
     });
-    // 'a' (97) < 'å' (229) in codepoint order; a locale collator could disagree.
     expect([sub, ascii].sort(sweepingAllocationOrder).map((c) => c.record.minePressureId)).toEqual([
       "mp-a",
       "mp-å",
@@ -311,17 +281,13 @@ describe("AC-10: sweepingAllocationOrder — exact five-key §10 order", () => {
   });
 });
 
-// ---- AC-10 allocation budget ----
-
 describe("AC-10: allocateSweeping — exact §10 formulas and shared-budget allocation", () => {
   const opts = {
     sweepingBelligerentId: "u002",
-    hasMatchingSweepCapability: () => true, // full capability for every type
+    hasMatchingSweepCapability: () => true,
   };
 
   it("typeAdjustedSweeping = floor(regional × resistance / 10_000); swept = min(pressure, typeAdjusted); pressureAfter exact", () => {
-    // regional 100_000, CONTACT resistance 10_000 -> typeAdjusted 100_000;
-    // pressure 40_000 -> swept 40_000, pressureAfter 0.
     const record = recordWithPressureAndType("mp-1", 40_000, "CONTACT");
     const out = allocateSweeping(SafeInt(100_000), [record], opts);
     expect(out.allocations).toHaveLength(1);
@@ -334,7 +300,6 @@ describe("AC-10: allocateSweeping — exact §10 formulas and shared-budget allo
   });
 
   it("sweptPressure is clamped to the current pressure (never below zero)", () => {
-    // regional smaller than pressure: typeAdjusted 30_000 < 40_000 pressure
     const record = recordWithPressureAndType("mp-1", 40_000, "CONTACT");
     const out = allocateSweeping(SafeInt(30_000), [record], opts);
     expect(out.allocations[0]!.typeAdjustedSweeping).toBe(SafeInt(30_000));
@@ -363,11 +328,6 @@ describe("AC-10: allocateSweeping — exact §10 formulas and shared-budget allo
   });
 
   it("the shared budget is consumed sequentially: unused value passes to the NEXT record; one allocation is never double-applied", () => {
-    // regional 100_000. The §10 risk accessor forces mp-a (pressure 20_000) to
-    // sort FIRST despite its lower pressure: typeAdjusted 100_000 -> swept 20_000,
-    // leaving 80_000. mp-b then receives ONLY the remaining type-adjusted budget
-    // 80_000, never the full regional 100_000 on both records (one allocation is
-    // never double-applied).
     const a = recordWithPressureAndType("mp-a", 20_000, "CONTACT");
     const b = recordWithPressureAndType("mp-b", 90_000, "CONTACT");
     const out = allocateSweeping(SafeInt(100_000), [a, b], {
@@ -383,7 +343,6 @@ describe("AC-10: allocateSweeping — exact §10 formulas and shared-budget allo
     expect(out.allocations[1]!.typeAdjustedSweeping).toBe(SafeInt(80_000));
     expect(out.allocations[1]!.sweptPressure).toBe(SafeInt(80_000));
     expect(out.allocations[1]!.pressureAfter).toBe(SafeInt(10_000));
-    // The sum of swept across records can never exceed the regional value.
     const totalSwept = out.allocations.reduce(
       (acc, x) => SafeInt.add(acc, x.sweptPressure),
       SafeInt.ZERO,
@@ -393,9 +352,6 @@ describe("AC-10: allocateSweeping — exact §10 formulas and shared-budget allo
   });
 
   it("unreducedAllocation carries the unabsorbed type-adjusted portion onward", () => {
-    // regional 100_000, mp-a pressure 20_000 processed first (via risk accessor):
-    // typeAdjusted 100_000, swept 20_000, unreduced = 80_000 which then reaches
-    // the next record as its reduced typeAdjusted budget.
     const a = recordWithPressureAndType("mp-a", 20_000, "CONTACT");
     const b = recordWithPressureAndType("mp-b", 90_000, "CONTACT");
     const out = allocateSweeping(SafeInt(100_000), [a, b], {
@@ -407,9 +363,6 @@ describe("AC-10: allocateSweeping — exact §10 formulas and shared-budget allo
   });
 
   it("depleted budget leaves later records swept to nothing, zero reduction code", () => {
-    // mp-b (pressure 100_000) sorts first on the pressure key and exhausts the
-    // regional 100_000; mp-a (pressure 80_000) then receives a depleted budget
-    // (typeAdjusted 0) -> swept 0, no MINE_PRESSURE_REDUCED.
     const a = recordWithPressureAndType("mp-a", 80_000, "CONTACT");
     const b = recordWithPressureAndType("mp-b", 100_000, "CONTACT");
     const out = allocateSweeping(SafeInt(100_000), [a, b], opts);
@@ -428,7 +381,7 @@ describe("AC-10: allocateSweeping — exact §10 formulas and shared-budget allo
     const a = recordWithPressureAndType("mp-a", 20_000, "CONTACT");
     const b = recordWithPressureAndType("mp-b", 900_000, "CONTACT");
     const out = allocateSweeping(SafeInt(1_000_000), [a, b], opts);
-    expect(out.allocations).toHaveLength(2); // array length unchanged -> not deleted
+    expect(out.allocations).toHaveLength(2);
     expect(out.allocations[0]!.pressureAfter).toBe(SafeInt(0));
     expect(out.allocations[1]!.pressureAfter).toBe(SafeInt(0));
   });
@@ -449,14 +402,11 @@ describe("AC-10: allocateSweeping — exact §10 formulas and shared-budget allo
       minePressureId: "mp-cd",
       mineTypeId: "CONTROLLED_DEFENSIVE",
       pressure: SafeInt(5_000),
-      // targets include the sweeping side u002 -> threatens it
     });
     const heavy = recordWithPressureAndType("mp-heavy", 500_000, "CONTACT");
     const out = allocateSweeping(SafeInt(60_000), [heavy, threatening], opts);
     expect(out.allocations[0]!.recordId).toBe("mp-cd");
     expect(out.allocations[1]!.recordId).toBe("mp-heavy");
-    // Threatening record with 5_000 pressure swept fully first; heavy contact
-    // then receives the remaining 55_000 of type-adjusted value.
     expect(out.allocations[0]!.sweptPressure).toBe(SafeInt(5_000));
     expect(out.allocations[1]!.typeAdjustedSweeping).toBe(SafeInt(55_000));
   });
@@ -473,8 +423,6 @@ describe("AC-10: allocateSweeping — exact §10 formulas and shared-budget allo
   });
 });
 
-// ---- AC-10 applySweptPressure ----
-
 describe("AC-10: applySweptPressure — exact reduction, month, hash; no deletion", () => {
   it("reduces pressure by exactly sweptPressure, sets lastSweptMonth, recomputes the hash", () => {
     const before = validRecord();
@@ -484,7 +432,7 @@ describe("AC-10: applySweptPressure — exact reduction, month, hash; no deletio
     expect(after.recordHash).not.toBe(before.recordHash);
     expect(after.recordHash).toMatch(/^[0-9a-f]{64}$/);
     const again = applySweptPressure(before, SafeInt(150_000), SafeInt(40));
-    expect(again.recordHash).toBe(after.recordHash); // deterministic
+    expect(again.recordHash).toBe(after.recordHash);
   });
 
   it("a zero-pressureAfter (cleared boundary) record is returned, NOT deleted — INC-7 owns clearance", () => {
@@ -521,8 +469,6 @@ describe("AC-10: applySweptPressure — exact reduction, month, hash; no deletio
     }
   });
 });
-
-// ---- helper sanity: comparator follows Array#sort contract ----
 
 describe("AC-10 determinism: comparators never depend on incidental order", () => {
   it("sweepingContributionOrder is a strict total order on shipId", () => {

@@ -6,13 +6,6 @@ import type {
 } from "../../../../shared/fleet-contract.js";
 import { hasAuthoredMessage, translate } from "../../../lib/strings.js";
 
-/**
- * Presentation state for the Fleet screen's foreign-station section (S-5 09). Everything is derived from the engine's
- * projection: the screen never decides whether a ship is eligible, how much presence is required, or whether a ship is
- * over its base limit. Every code is paired with a text label so no state rests on colour alone.
- */
-
-/** Substitutes `{name}` placeholders in a catalogue message. */
 export function format(key: string, vars: Readonly<Record<string, string | number>> = {}): string {
   return Object.entries(vars).reduce(
     (text, [name, value]) => text.replaceAll(`{${name}}`, String(value)),
@@ -29,7 +22,6 @@ export interface StationRow {
   readonly shipId: string;
   readonly name: string;
   readonly areaName: string;
-  /** The manual's status code: AF, RF, MB, WU, FS, or the repair month count. */
   readonly statusCode: string;
   readonly statusLabel: string;
   readonly overBase: boolean;
@@ -65,7 +57,6 @@ function flagsOf(ship: FleetShipView): StationFlag[] {
   return flags;
 }
 
-/** One row per ship of every division, in the projection's order. */
 export function stationRows(
   divisions: readonly FleetDivisionView[],
   areaName: (areaId: string) => string,
@@ -87,21 +78,15 @@ export function stationRows(
   );
 }
 
-/** Adds the ship if absent, removes it if present; insertion order is kept. */
 export function toggleSelection(selected: readonly string[], shipId: string): string[] {
   return selected.includes(shipId) ? selected.filter((id) => id !== shipId) : [...selected, shipId];
 }
 
-/** Drops ids that no longer exist after a refresh. */
 export function pruneSelection(selected: readonly string[], rows: readonly StationRow[]): string[] {
   const known = new Set(rows.map((row) => row.shipId));
   return selected.filter((id) => known.has(id));
 }
 
-/**
- * Turns the engine's rejection diagnostic (`... rejected: <shipId>=<REASON>, ...`) into one text line per ship, led by a
- * headline. Anything unparseable is shown verbatim, never hidden.
- */
 export function explainStationRejection(
   intent: "assign" | "clear",
   diagnostics: readonly string[],
@@ -150,7 +135,6 @@ export type PresenceReadoutView =
 
 const tons = (n: number) => format("fleet.presence.tons", { n });
 
-/** The presence readout, worded from the projection alone (no value is computed or defaulted here). */
 export function presenceReadout(
   presence: PlayerProjectionPresence,
   overBaseShips: readonly FleetOverBaseShip[],

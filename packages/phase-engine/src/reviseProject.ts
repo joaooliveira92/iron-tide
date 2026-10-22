@@ -17,28 +17,12 @@ import { projectBuildProgress, revisePackages } from "./constructionRevision.js"
 import { buildDesignVersion, pricingFor } from "./designVersion.js";
 import { FOREIGN_CONTRACT_FUNDED_BY_SCHEDULE } from "./foreignConstruction.js";
 
-/** `YYYY-MM` plus `n` months. */
 export function addMonths(month: string, n: number): string {
   const [y, m] = month.split("-").map(Number) as [number, number];
   const index = y * 12 + (m - 1) + n;
   return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
 }
 
-/**
- * Canonical application of a ReviseProject command (ADR-0070). The new draft is compiled authoritatively, the change is
- * classified against the project's work with the spec 15.4 rules, and the outcome is applied:
- *
- * - free change (T0): the project switches to the new design; work done is kept.
- * - revision (T1): as T0, plus rework added to the work still owed.
- * - redesign (T2): as T0, but completed work shrinks to the share the rules keep.
- * - reconstruction (T3): refused (REVISION_REQUIRES_REBUILD); it needs a rebuild project, which does not exist yet.
- *
- * T1 and T2 also put the project on hold for the rule's delay months (`holdUntilMonth`): it cannot be funded until then.
- * A project with work packages (ADR-0077) is classified from its real state, so a launched ship is T3, and its packages are
- * rescaled onto the new design (`revisePackages`). Not modelled (recorded in the ADR, not guessed): the T2 study cost
- * (design studies are not built), and armour/machinery-ordered or launched state for a project with one figure.
- * A rejected revision leaves the snapshot untouched.
- */
 export function applyReviseProject(
   currentSnapshot: CampaignSnapshot,
   body: ReviseProjectCommand,
@@ -54,8 +38,6 @@ export function applyReviseProject(
   if (!nation) return fail("INVALID_NATION_ID", `Nation ${body.nationId} not found`);
   const project = nation.constructionProjects.find((p) => p.id === body.projectId);
   if (!project) return fail("PROJECT_NOT_FOUND", `Project ${body.projectId} not found`);
-  // INC-9e MINOR-5: a foreign-contract project is funded by its contract schedule, so a revision (which would raise
-  // `totalWork` and unlock free progress for already-paid instalments) is refused like a domestic budget.
   if (project["foreignContractId"] !== undefined)
     return fail(
       FOREIGN_CONTRACT_FUNDED_BY_SCHEDULE,
@@ -93,8 +75,6 @@ export function applyReviseProject(
   const kinds = draftChangeKinds(oldDraft, draft, (id) => categories.get(id));
   if (kinds.length === 0) return fail("REVISION_REJECTED", "The revision changes nothing");
 
-  // A project with work packages is classified from its real state (armour or machinery started, launched); a project
-  // with one figure keeps the conservative reading of that figure (ADR-0077).
   const decision = classifyRevision(
     kinds,
     projectBuildProgress(project) ??
@@ -107,8 +87,6 @@ export function applyReviseProject(
       `Project ${project.id} cannot be revised: this change would need a rebuild project (${decision.reasonCodes.join(", ")}; progress ${decision.progressBp} bp)`,
     );
 
-  // The manual's in-place revision limits (printed p27; ADR-0132): a change beyond them is no longer a revision but a
-  // redesign or a rebuild. They bound the T0/T1 tiers only; a T2/T3 outcome is already the redesign/rebuild path.
   if (decision.tier === "T0_FREE" || decision.tier === "T1_REVISION") {
     const envCtx = content.environmentFor(month).ctx;
     const beforeCompiled = compileDesign(oldDraft, envCtx);
@@ -144,7 +122,6 @@ export function applyReviseProject(
   const total = newTotal + decision.reworkWorkMicro;
   const kept =
     decision.tier === "T2_REDESIGN" ? decision.hullDoneWorkAfter : Number(project.completedWork);
-  // Work packages follow the new design (ADR-0077). A design with no plan drops them: the project goes back to one figure.
   const { packages: _packages, yardId: _yardId, monthUsage: _monthUsage, ...single } = project;
   const revisedPackages = revisePackages(project, design.constructionPlan, decision, kinds);
   const hold =
@@ -156,7 +133,6 @@ export function applyReviseProject(
           designVersionId: design.designVersionId,
           totalWork: SafeInt(total),
           completedWork: SafeInt(Math.min(kept, total)),
-          // A hold from an earlier revision stays until it lapses; a new delay replaces it.
           ...hold,
         }
       : {

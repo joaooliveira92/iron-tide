@@ -7,21 +7,13 @@ export type LimitId = "displacement" | "speed" | "length" | "beam";
 export interface LimitRow {
   readonly id: LimitId;
   readonly label: string;
-  /** The change this design makes, signed, e.g. "+12.5 %" or "-1.0 kn". */
   readonly change: string;
-  /** What a rebuild may do, e.g. "up to +20.0 %" or "within ±5.0 %". */
   readonly limit: string;
-  /** True when the change is beyond the limit (the rebuild would be refused). */
   readonly over: boolean;
 }
 
 const sign = (n: number) => (n > 0 ? "+" : n < 0 ? "-" : "");
 
-/**
- * Each retained-hull limit beside the change the design makes against it (DESIGN-23 section 21). Pure: every number is the
- * check's own measure and the ruleset's own limit; nothing is recomputed here except the comparison that colours the row.
- * Every figure renders through the bound presentation format (ADR-0218).
- */
 export function limitRows(
   measures: RebuildMeasuresView,
   balance: RebuildBalance,

@@ -17,7 +17,6 @@ describe("normalizeDecimalMark", () => {
   });
 });
 
-/** A stateful host, so the field's controlled value round-trips through `onCommit` as it does in the app. */
 function Host({
   initial,
   scale,
@@ -64,11 +63,11 @@ describe("NumberField", () => {
     const input = screen.getByLabelText("Top speed (kn)") as HTMLInputElement;
     fireEvent.keyDown(input, { key: "ArrowUp" });
     expect(input.value).toBe("3");
-    fireEvent.keyDown(input, { key: "ArrowUp" }); // no further than max
+    fireEvent.keyDown(input, { key: "ArrowUp" });
     expect(input.value).toBe("3");
     fireEvent.change(input, { target: { value: "9" } });
     fireEvent.blur(input);
-    expect(input.value).toBe("3"); // clamped to max
+    expect(input.value).toBe("3");
   });
 
   it("offers a reset to the recommended value, and only when the value differs from it", () => {
@@ -76,7 +75,6 @@ describe("NumberField", () => {
     const reset = screen.getByRole("button", { name: "Reset Top speed to recommended" });
     fireEvent.click(reset);
     expect((screen.getByLabelText("Top speed (kn)") as HTMLInputElement).value).toBe("16.0");
-    // At the recommended value there is nothing to reset.
     expect(screen.queryByRole("button", { name: "Reset Top speed to recommended" })).toBeNull();
   });
 

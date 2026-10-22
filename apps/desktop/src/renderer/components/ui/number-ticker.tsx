@@ -1,5 +1,4 @@
 "use client";
-// beui.dev/components/motion/number
 
 import { animate, motion, useInView, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -9,23 +8,16 @@ import { formatCount } from "../../lib/presentation-format/index.js";
 
 export interface NumberTickerProps {
   value: number;
-  /** Digits to pad to (left). */
   pad?: number;
-  /** Per-digit roll duration in seconds. */
   duration?: number;
-  /** Stagger between digits. */
   stagger?: number;
-  /** Render only after the element enters the viewport. */
   startOnView?: boolean;
   prefix?: string;
   suffix?: string;
-  /** Add a small blur during digit rolls. */
   blur?: boolean;
   className?: string;
   digitClassName?: string;
-  /** Insert locale group separators (commas). Server-component safe. */
   locale?: boolean;
-  /** Custom formatter. Client-only — server components must use `locale` instead. */
   format?: (value: number) => string;
 }
 
@@ -61,17 +53,10 @@ export function NumberTicker({
   }, [value, pad, format, locale]);
   const glyphs = useMemo(() => {
     const chars = text.split("");
-    // Key by place value (position from the right): a changing digit keeps its
-    // identity and rolls to the new value instead of remounting and replaying
-    // from 0. Growing numbers add glyphs on the left without re-keying the
-    // ones, tens, hundreds already on screen.
     return chars.map((char, i) => ({ char, id: `g-${chars.length - 1 - i}` }));
   }, [text]);
   const readableText = `${prefix ?? ""}${text}${suffix ?? ""}`;
 
-  // Stagger is an entrance flourish. Once the reveal has played, value
-  // changes roll every digit immediately — a per-digit delay on live updates
-  // reads as lag.
   const [entered, setEntered] = useState(false);
   useEffect(() => {
     if (!armed || entered) return;

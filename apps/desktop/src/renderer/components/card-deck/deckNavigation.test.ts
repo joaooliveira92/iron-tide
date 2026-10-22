@@ -84,15 +84,15 @@ describe("createWheelStepper", () => {
 
   it("scales line-mode deltas by 16 and page-mode deltas by 100", () => {
     const lineStep = vi.fn();
-    createWheelStepper(lineStep).push(2, 1); // 2 lines = 32px
+    createWheelStepper(lineStep).push(2, 1);
     expect(lineStep).toHaveBeenCalledTimes(1);
 
     const pageStep = vi.fn();
-    createWheelStepper(pageStep).push(1, 2); // 1 page = 100px
+    createWheelStepper(pageStep).push(1, 2);
     expect(pageStep).toHaveBeenCalledTimes(1);
 
     const pixelStep = vi.fn();
-    createWheelStepper(pixelStep).push(2, 0); // 2px stays 2px
+    createWheelStepper(pixelStep).push(2, 0);
     expect(pixelStep).not.toHaveBeenCalled();
   });
 

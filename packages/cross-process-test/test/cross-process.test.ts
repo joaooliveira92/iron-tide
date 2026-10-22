@@ -55,7 +55,7 @@ describe("Cross-process determinism", () => {
   it("Hashes match golden reference", () => {
     const goldenPath = resolve(thisDir, "..", "..", "..", "golden", "hashes.json");
     if (!existsSync(goldenPath)) {
-      return; // Skip if golden file doesn't exist yet
+      return;
     }
 
     const r = runChild();
@@ -153,7 +153,7 @@ describe("Air-combat cross-process determinism", () => {
     expect(r.resolveAirCombatHash).not.toBe("");
     expect(r.resolveAirCombatHash).not.toBe(
       "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    ); // Not empty hash
+    );
   });
 });
 
@@ -311,7 +311,6 @@ describe("Presence measurement cross-process determinism (S-5 05)", () => {
     expect(r1.error).toBeUndefined();
     expect(r1.success).toBe(true);
     expect(r2).toEqual(r1);
-    // Dormant: nothing is measured. Configured: the step adds events only, so authoritative state is unchanged.
     expect(r1.dormantShortfallCount).toBe(0);
     expect(r1.configuredSnapshotHash).toBe(r1.dormantSnapshotHash);
     expect(r1.shortfalls.length).toBeGreaterThan(0);
@@ -329,7 +328,6 @@ describe("Presence measurement cross-process determinism (S-5 05)", () => {
       `${e.nationId}/${e.areaId}/${e.shortfallTons}`;
     expect(r1.prestigeRequests.map(key)).toEqual(r1.shortfalls.map(key));
     expect(r1.revoltRequests.map(key)).toEqual(r1.shortfalls.map(key));
-    // Requests are events only: authoritative state is unchanged.
     expect(r1.penaltySnapshotHash).toBe(r1.dormantSnapshotHash);
     expect(r1.exemptNationEventsUnblockaded).toBeGreaterThan(0);
     expect(r1.exemptNationEventsBlockaded).toBe(0);
@@ -342,7 +340,6 @@ describe("Presence measurement cross-process determinism (S-5 05)", () => {
     expect(r1.stationedShipId).not.toBe("");
     expect(r1.deploymentEvents.length).toBeGreaterThan(0);
     expect(r1.deploymentEvents.every((e) => e.shipId === r1.stationedShipId)).toBe(true);
-    // The routed ship changed the full authoritative snapshot (fleets and divisions), unlike the same month without it.
     expect(r1.deploymentSnapshotHash).not.toBe(r1.configuredFullSnapshotHash);
   });
 
@@ -352,7 +349,6 @@ describe("Presence measurement cross-process determinism (S-5 05)", () => {
     expect(r2).toEqual(r1);
     expect(r1.baseLimitFlagged.length).toBeGreaterThan(0);
     expect(r1.baseLimitFlagged).toEqual([...r1.baseLimitFlagged].sort());
-    // The block moves authoritative state (flags, crew); without it the presence run still equals the dormant one.
     expect(r1.baseLimitSnapshotHash).not.toBe(r1.configuredFullSnapshotHash);
     expect(r1.configuredSnapshotHash).toBe(r1.dormantSnapshotHash);
   });
@@ -559,7 +555,6 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
       phase: "battle_generation",
     });
     expect(d.inProcessEqual).toBe(true);
-    // The complementary draw: the normal offer, the draw still recorded once.
     expect(d.proceedsOutcome).toBe("suspended");
     expect(d.proceedsRequestKind).toBe("offer");
     expect(d.proceedsDraws).toHaveLength(1);
@@ -588,13 +583,11 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     expect(s.playerSideParticipants).toEqual(["italy", "uk"]);
     expect(s.manifestHash).toMatch(/^[0-9a-f]{64}$/);
     expect(s.inProcessEqual).toBe(true);
-    // Declining or accepting leaves the support ships unreserved and undamaged.
     expect(s.declinedAllyReserved).toBe(0);
     expect(s.declinedAllyUndamaged).toBe(true);
     expect(s.acceptedOutcome).toBe("suspended");
     expect(s.acceptedAllyReserved).toBe(0);
     expect(s.acceptedAllyUndamaged).toBe(true);
-    // The complementary draw and the no-candidate month.
     expect(s.absentDraws).toHaveLength(1);
     expect(s.absentDraws[0]?.outcome).toBe("ABSENT");
     expect(s.absentFlag).toBe(false);

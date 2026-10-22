@@ -1,4 +1,3 @@
-// D-3 M4 Aviation: CAP & Strikes — barrel export.
 export * from "./constants.js";
 export * from "./reasonCodes.js";
 export * from "./cap-patrol.js";

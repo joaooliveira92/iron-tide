@@ -12,7 +12,6 @@ import {
 
 const GUNS = [1, 2, 3, 4] as const;
 
-/** Every style × era × size × class × gun count, one line each: the part it resolves to and the fallback step. */
 function resolutionMatrix(): string {
   const lines: string[] = [];
   for (const style of NATION_STYLES)
@@ -28,7 +27,6 @@ function resolutionMatrix(): string {
   return `${lines.join("\n")}\n`;
 }
 
-/** Every catalog entry placed alone, per size it serves, at fixed dimensions: 2 guns forward on a flat 1 px/‰ deck. */
 function placementMatrix(): string {
   const caliberOf = { SMALL: 101_600, MEDIUM: 203_200, LARGE: 304_800 } as const;
   const mountTypeOf = {
@@ -116,7 +114,6 @@ describe("EARLY-band coverage (INC-2)", () => {
         mountClass: "BARBETTE",
       }),
     ).toMatchObject({ part: { id: "f-victorian-barbette" }, step: 1 });
-    // A nation without its own casemate draws the universal Victorian one.
     expect(
       resolveMount(PART_CATALOG, {
         ...large,

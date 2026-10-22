@@ -24,13 +24,6 @@ import { SessionMetadataSchema } from "./campaignSessionMetadata.js";
 import { parseMonthInput } from "./monthInput.js";
 import { WriteDrawingBoardDraftPayloadSchema } from "./drawingBoardDraft.js";
 
-/**
- * Characterization/parity tests for the desktop main-process IPC schemas after
- * the Zod → Effect Schema migration (ADR-0102). They pin the accept/reject
- * decisions and the strip/optional/refine semantics the wire boundary depends
- * on, independent of the dispatch tests that exercise the same schemas through
- * `campaignBridge`.
- */
 function decode<S extends Schema.ConstraintDecoder<unknown, never>>(schema: S, input: unknown) {
   return Schema.decodeUnknownResult(schema)(input);
 }
@@ -161,9 +154,6 @@ describe("SetResearchPriorityCommandPayloadSchema", () => {
   });
 
   it("rejects an empty-string field key instead of silently dropping it (13-F2)", () => {
-    // Pre-migration `z.record(z.string().min(1), …)` rejected `""`; the migrated
-    // `Schema.Record(nonEmptyString, …)` silently selected only matching keys and
-    // dropped the rest, so `{ "": 1, "a": 2 }` decoded to `{ "a": 2 }` (fail-open).
     expectFailure(SetResearchPriorityCommandPayloadSchema, {
       ...VALID_ENVELOPE,
       fieldPriorities: { "": 1, a: 2 },
@@ -287,9 +277,6 @@ describe("SubmitDesignCommandPayloadSchema (trim + object draft)", () => {
   });
 
   it("accepts an array/Date draft (pre-migration z.custom predicate parity, 13-F1)", () => {
-    // The removed Zod was `z.custom<Record<string, unknown>>((v) => typeof v ===
-    // "object" && v !== null)`, which accepted arrays and Date instances;
-    // `Schema.Record` rejects arrays, so a `Schema.declare` restores the predicate.
     expectSuccess(SubmitDesignCommandPayloadSchema, {
       ...VALID_ENVELOPE,
       className: "x",
@@ -329,7 +316,6 @@ describe("UiStateSchema / FirstMonthInspectionSchema", () => {
       dismissedFingerprints: [],
       inspector: { widthPx: "wide", collapsed: false },
     });
-    // Out of the supported range or non-integer is rejected at the boundary.
     expectFailure(UiStateSchema, {
       turnNumber: 1,
       dismissedFingerprints: [],
@@ -475,7 +461,6 @@ describe("MonthlyReportsSchema", () => {
   });
 
   it("keeps decoding a report stored before the economy model and accepts the additive fields (parity, #138)", () => {
-    // The pre-existing fixture is unchanged: it carries none of the new optional fields.
     expectSuccess(MonthlyReportsSchema, { reports: [VALID_MONTHLY_REPORT] });
     expectSuccess(MonthlyReportsSchema, {
       reports: [
@@ -651,10 +636,6 @@ describe("LoadSaveResultSchema (IPC response envelope)", () => {
   });
 });
 
-/**
- * The foreign-order wire schema must reject renderer-supplied `terms`/`capability`: the bridge decodes it with
- * `onExcessProperty: "error"` (INC-17), so any unmodeled key is an error rather than a silently-stripped value.
- */
 describe("PlaceForeignConstructionCommandPayloadSchema (strict, INC-17)", () => {
   const strictDecode = (input: unknown) =>
     Schema.decodeUnknownResult(PlaceForeignConstructionCommandPayloadSchema, {

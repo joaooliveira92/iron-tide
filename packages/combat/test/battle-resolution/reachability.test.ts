@@ -1,7 +1,3 @@
-// Ticket 03 (playable-loop reachability): the smoke (C-5), air-combat (D-3) and
-// air-defense (D-4) tactical stages are reachable through the production
-// `resolveBattleAuto` path from optional, authoritative manifest capability
-// declarations — and remain strict, valid no-ops when no capability is declared.
 import { describe, it, expect } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import { RandomEngine } from "@bluewave/random";
@@ -72,8 +68,6 @@ const AA_INSTALLATION: AirDefenseInstallationDeclaration = {
   systems: [heavySystem()],
 };
 
-/** Weather components identical to the fixture's committed strategic weather,
- *  used to unit-test the smoke projection without running a battle. */
 function fixtureComponents(): BattleWeatherComponents {
   return {
     battleId: BATTLE_ID,
@@ -105,7 +99,6 @@ describe("Ticket 03 — capability projection from authoritative manifest data",
     expect(context.clouds).toHaveLength(1);
     expect(context.clouds[0]!.smokeCloudId).toBe("sc-1");
     expect(context.clouds[0]!.sourceType).toBe("FUNNEL");
-    // 8_000_000 µm/s = 15 kn; wind direction / precipitation pass through.
     expect(context.windSpeedKnots).toBe(15);
     expect(context.windDirection).toBe(225);
     expect(context.precipitationIntensityBp).toBe(0);
@@ -145,7 +138,6 @@ describe("Ticket 03 — capability projection from authoritative manifest data",
     expect(context.defenders[0]!.state.defenderId).toBe("d1");
     expect(Number(context.defenders[0]!.state.powerBp)).toBe(10_000);
     expect(Number(context.defenders[0]!.state.ammunitionByType.get("sys_heavy_01"))).toBe(1_000);
-    // The ATTACKING strike becomes the enemy air attack the installation engages.
     expect(context.attacks).toHaveLength(1);
     expect(context.attacks[0]!.targetId).toBe("d1");
   });

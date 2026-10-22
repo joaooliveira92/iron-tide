@@ -3,14 +3,6 @@ import { join } from "node:path";
 import { Result, Schema } from "effect";
 import { RecordedInputSchema, TurnPhaseSchema, type RecordedInput } from "@bluewave/messages";
 
-/**
- * The per-campaign pending-turn sidecar (spec: `pending-turn.json`). It records
- * a suspended turn's deterministic identity and the external inputs gathered so
- * far, so a suspended month can be resumed by **re-executing** it from the
- * authoritative pre-turn snapshot. It is **never authoritative**: a sibling of
- * the save ids, never inside the envelope/hash, never read by `MonthExecutor`.
- * Missing is valid; a stale or mismatched record is never trusted or migrated.
- */
 export const PENDING_TURN_FILENAME = "pending-turn.json";
 
 const nonEmpty = Schema.String.check(Schema.isMinLength(1));
@@ -21,22 +13,11 @@ const ContentHashesSchema = Schema.Struct({
   contentArtifact: nonEmpty,
 });
 
-/**
- * The minimum identity of the interruption the suspended turn is waiting on, so
- * a boundary answer/submission can be matched against it (task T7). The
- * `interruptionId` is not stored directly — the command boundary recomputes it
- * from the (load-validated) `turnId` plus these fields, so a tampered record
- * cannot smuggle a matching id.
- */
 export const OutstandingRequestSchema = Schema.Struct({
   kind: Schema.Literals(["decision", "battle", "offer"]),
   phase: TurnPhaseSchema,
   ordinal: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
   subjectKey: nonEmpty,
-  /**
-   * Offer only (T-1 04): the offered battle's acceptance class, so the answer boundary can refuse a decline of an
-   * OPERATIONALLY_UNAVOIDABLE mission before recording anything. Advisory: the engine re-validates on re-execution.
-   */
   acceptanceClass: Schema.optional(nonEmpty),
 });
 
@@ -64,7 +45,6 @@ function createAbortError(): Error {
   return error;
 }
 
-/** Tolerant read: missing/corrupt/incompatible -> null, never crashes. */
 export function loadPendingTurn(saveDir: string): PendingTurnRecord | null {
   const path = join(saveDir, PENDING_TURN_FILENAME);
   if (!existsSync(path)) return null;
@@ -79,7 +59,6 @@ export function loadPendingTurn(saveDir: string): PendingTurnRecord | null {
   }
 }
 
-/** Atomic write (tmp file -> rename); a failed write removes the tmp artifact. */
 export function savePendingTurn(
   saveDir: string,
   record: PendingTurnRecord,
@@ -97,16 +76,10 @@ export function savePendingTurn(
   }
 }
 
-/** Clear the sidecar only — no authoritative save, pointer, envelope or version changes. */
 export function clearPendingTurn(saveDir: string): void {
   rmSync(join(saveDir, PENDING_TURN_FILENAME), { force: true });
 }
 
-/**
- * Whether a stored pending turn may be trusted for a save at this authoritative
- * revision. A mismatch is never migrated: the caller reports resumption
- * unavailable and leaves the authoritative state untouched.
- */
 export function isPendingTurnValid(
   record: PendingTurnRecord,
   expected: {
@@ -126,7 +99,6 @@ export function isPendingTurnValid(
   );
 }
 
-/** Build a record from a suspension, carrying the recorded inputs so far. */
 export function buildPendingTurn(input: {
   readonly projectionVersion: string;
   readonly turnId: string;

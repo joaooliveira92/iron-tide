@@ -42,7 +42,6 @@ const outOfZone = {
 };
 const outView = buildWorkshopView(outOfZone, env);
 
-/** A view whose findings are replaced, to test the adapter on findings the compile cannot produce today. */
 const withFindings = (fs: Finding[]): WorkshopView => ({
   ...view,
   findingsBySeverity: { BLOCKING: [], CRITICAL: [], WARNING: fs, ADVISORY: [] },
@@ -168,7 +167,6 @@ describe("marker layout", () => {
   it("follows the drawing's geometry, so the overlay scales with the panel", () => {
     const svg = () => screen.getByTestId("finding-markers");
     render(<DrawingBoard />);
-    // Same viewBox as the plan, stretched to the plan box: positions are in plan units, not pixels.
     expect(svg().getAttribute("viewBox")).toBe(
       screen.getByRole("img", { name: /Top-down plan/ }).getAttribute("viewBox"),
     );
@@ -245,7 +243,6 @@ describe("markers on the drawing", () => {
     const entry = document.activeElement!.closest("[data-finding-key]")!;
     expect(entry.getAttribute("data-finding-key")).toBe("MAGAZINE_UNPROTECTED|placement:mag_aft");
     expect(entry.getAttribute("data-nav-flash")).toBe("true");
-    // From the Analysis entry back to the drawing: the other magazine this time.
     fireEvent.click(
       within(screen.getByRole("region", { name: "Validation" })).getAllByRole("button", {
         name: /MAGAZINE|mag_fwd|Magazine mag_fwd/,
@@ -345,7 +342,6 @@ describe("display controls", () => {
   it("pins the whole ship from the ship-level findings button", () => {
     render(<DrawingBoard />);
     expect(document.querySelector("[data-ship-findings]")).toBeNull();
-    // Too little power: a ship-level finding (no part of the drawing carries it).
     commit(/installed power/i, "300");
     const ship = document.querySelector<HTMLButtonElement>("[data-ship-findings]")!;
     expect(ship.getAttribute("aria-label")).toMatch(/^Whole ship: \d+ finding/);

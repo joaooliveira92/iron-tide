@@ -5,7 +5,6 @@ import { minimapToWorld, visibleWorldRects } from "./map-viewport.js";
 import type { Projection } from "./projection.js";
 import type { MapCamera } from "./useMapCamera.js";
 
-/** Degrees; ~6.7k points for the whole world, plenty for a 176 px inset. */
 const MINIMAP_TOLERANCE = 0.25;
 const BATCH = 16;
 const MINIMAP_WIDTH_PX = 176;
@@ -42,10 +41,6 @@ export interface MapMinimapProps {
   readonly borderColor: string;
 }
 
-/**
- * Overview inset. The view rectangle follows the camera by subscription (no
- * React renders while panning); click or drag recentres the main view.
- */
 export function MapMinimap({
   camera,
   projection,

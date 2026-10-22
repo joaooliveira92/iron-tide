@@ -1,14 +1,3 @@
-// DESIGN-42 §4 tactical weather progression (INC-3/AC-5): exactly every 30
-// tactical minutes the engine MAY transition precipitation, fog, cloud cover,
-// wind, and visibility through the climate profile's declared transition tables
-// and a keyed per-interval stream `battle/weather/interval/<n>` (n = interval
-// index; ADR-0022 §8). Sea state changes by AT MOST 1 per interval regardless
-// of the authored drift range (§4). Wind direction changes by at most one
-// declared climate transition band. Each transition is recorded (INC-5/§28
-// WeatherTransitionRecord) and every keyed draw is recorded into the optional
-// RandomLedger port. A missing season or a malformed transition table fails
-// closed with WEATHER_PROFILE_INCOMPLETE (never a silent no-op). Pure/
-// deterministic: no ambient I/O/clock/random.
 import { BluewaveError } from "@bluewave/contracts";
 import { RandomEngine, drawUniform, type RandomLedger, type RandomStream } from "@bluewave/random";
 import { SafeInt } from "@bluewave/contracts";
@@ -36,13 +25,12 @@ import {
 } from "./climate.js";
 import { WEATHER_PROFILE_INCOMPLETE } from "./reasonCodes.js";
 
-// ---- Minimal transition record (INC-5 will upgrade to full §28 WeatherEventRecord) ----
 export interface WeatherTransitionRecord {
   tacticalMinute: number;
   intervalIndex: number;
   component: string;
-  preValue: string; // string representation of pre-transition value
-  postValue: string; // string representation of post-transition value
+  preValue: string;
+  postValue: string;
   reason: string;
 }
 
@@ -63,13 +51,6 @@ function clamp(value: number, min: number, max: number): number {
   return value < min ? min : value > max ? max : value;
 }
 
-/**
- * Apply a drift range: draw one uniform value in [min, max], add to base, clamp.
- * When `maxAbsDelta` is supplied, the authority clamps the drawn drift itself
- * (e.g. §4 sea state may change by at most exactly 1 level per interval) before
- * adding it — authoritative law beats any wider authored range. Returns the
- * applied value together with the raw drawn drift (for the RandomLedger).
- */
 function applyDrift(
   stream: RandomStream,
   base: number,
@@ -84,9 +65,6 @@ function applyDrift(
   return { value: clamp(base + delta, absMin, absMax), driftDraw: drift };
 }
 
-/** Draw a precipitation transition: next type, intensity drift, and both raw
- *  draws (type index + intensity drift) for the RandomLedger. Consumes 2 draws
- *  only when a table entry exists for the current type. */
 function applyPrecipTransition(
   stream: RandomStream,
   currentType: string,
@@ -127,7 +105,6 @@ function applyPrecipTransition(
   };
 }
 
-/** Draw a wind direction transition (plus the chosen band index for the ledger). */
 function applyWindTransition(
   stream: RandomStream,
   currentBandId: string,
@@ -153,11 +130,8 @@ export interface ProgressWeatherInput {
   components: BattleWeatherComponents;
   climateProfile: ClimateProfile;
   seasonId: string;
-  /** The tactical minute this interval boundary occurs at (e.g., 30, 60, 90...). */
   tacticalMinute: number;
-  /** Battle seed (derives the per-interval keyed stream). */
   battleSeed: string;
-  /** Optional ledger recording every keyed random decision (port pattern). */
   randomLedger?: RandomLedger;
 }
 
@@ -166,28 +140,12 @@ export interface ProgressWeatherResult {
   transitions: WeatherTransitionRecord[];
 }
 
-/**
- * Advance the tactical weather components forward by one 30-minute interval.
- * The component draws come from the per-interval keyed stream
- * `battle/weather/interval/<n>` (n = interval index), so different intervals
- * draw DIFFERENT sequences (M2) — never the same sequence replayed at every
- * boundary. Draw consumption is NOT fixed-size: each component consumes its
- * draw(s) only when a transition table / drift-range entry exists for it (an
- * absent entry is the explicit no-transition policy of ADR-0022 §8, not a
- * consumed-and-discarded draw). Sea state is additionally law-clamped to at
- * most ±1 per interval (§4, M4). The declared season must exist in the profile
- * and its transition tables must be well-formed, or the call fails with
- * WEATHER_PROFILE_INCOMPLETE (M3).
- */
 export function progressBattleWeatherComponents(
   input: ProgressWeatherInput,
 ): ProgressWeatherResult {
   const { components, climateProfile, seasonId, tacticalMinute, battleSeed } = input;
   const intervalIndex = Math.floor(tacticalMinute / TACTICAL_WEATHER_PROGRESSION_INTERVAL_MINUTES);
 
-  // Find the season profile. A missing season is a profile-incomplete failure
-  // (DESIGN-42 §1: "A missing climate or transition policy MUST fail with
-  // WEATHER_PROFILE_INCOMPLETE") — never a silent no-op.
   const season = climateProfile.seasons.find((s) => s.seasonId === seasonId) as
     | SeasonClimateProfile
     | undefined;
@@ -199,17 +157,11 @@ export function progressBattleWeatherComponents(
       reason: `season ${seasonId} not declared in climate profile`,
     });
   }
-  // Malformed transition tables fail closed at first use (M3).
   validateSeasonTransitionTables(season, climateProfile.climateProfileId, seasonId);
 
-  // Per-interval keyed stream (ADR-0022 §8): `battle/weather/interval/<n>`.
-  // Rooted in the battle seed so different battles produce different
-  // progression sequences, and suffixed with the interval index so every
-  // interval draws its own sequence instead of replaying interval 1's draws.
   const streamId = `battle/weather/interval/${String(intervalIndex)}`;
   const stream = new RandomEngine(battleSeed).stream(streamId);
 
-  // Deterministic record identity for the optional RandomLedger.
   const ledgerEntityKey = `${components.battleId}:${String(intervalIndex)}`;
   const inputHash = sha256Hex(
     canonicalSerialize({
@@ -236,9 +188,6 @@ export function progressBattleWeatherComponents(
     });
   };
 
-  // Fixed component draw order; per component the draw is consumed ONLY when
-  // the component's table/drift entry exists (see doc comment above).
-  // 1. Sea state drift — law-clamped to ±1 regardless of the authored range.
   let nextSeaState = components.seaState;
   if (season.seaStateDriftRange) {
     const driftResult = applyDrift(
@@ -247,14 +196,12 @@ export function progressBattleWeatherComponents(
       season.seaStateDriftRange,
       SEA_STATE_MIN,
       SEA_STATE_MAX,
-      /* maxAbsDelta */ 1 /* §4: at most one level per interval */,
+      1,
     );
     nextSeaState = driftResult.value;
     recordDraw(driftResult.driftDraw, `sea_state_${String(nextSeaState)}`, "SEA_STATE_DRIFT_DRAW");
   }
 
-  // 2. Precipitation type + intensity drift (2 draws only when a table entry
-  //    exists for the current type).
   let nextPrecipType = components.precipitationType;
   let nextPrecipIntensity = components.precipitationIntensityBp;
   if (season.precipitationTransitions) {
@@ -279,7 +226,6 @@ export function progressBattleWeatherComponents(
     }
   }
 
-  // 3. Wind direction band transition (1 draw when the current band has an entry).
   let nextWindDirectionDeg = components.windDirectionDeg;
   if (season.windTransitions) {
     const currentBand = season.windBands.find(
@@ -299,7 +245,6 @@ export function progressBattleWeatherComponents(
     }
   }
 
-  // 4. Wind speed drift.
   let nextWindSpeed = components.windSpeedUmPerSec;
   if (season.windSpeedDriftRangeUmPerSec) {
     const driftResult = applyDrift(
@@ -313,7 +258,6 @@ export function progressBattleWeatherComponents(
     recordDraw(driftResult.driftDraw, `wind_speed_ums_${String(nextWindSpeed)}`, "WIND_SPEED_DRAW");
   }
 
-  // 5. Fog density drift.
   let nextFog = components.fogMistDensityBp;
   if (season.fogDriftRangeBp) {
     const driftResult = applyDrift(
@@ -331,7 +275,6 @@ export function progressBattleWeatherComponents(
     );
   }
 
-  // 6. Cloud cover drift.
   let nextCloud = components.cloudCoverBp;
   if (season.cloudDriftRangeBp) {
     const driftResult = applyDrift(
@@ -345,7 +288,6 @@ export function progressBattleWeatherComponents(
     recordDraw(driftResult.driftDraw, `cloud_cover_bp_${String(nextCloud)}`, "CLOUD_COVER_DRAW");
   }
 
-  // 7. Base-visibility drift (consumed only when the season declares a range).
   let nextVisibility = components.baseVisibilityUm;
   if (season.visibilityDriftRangeUm) {
     const driftResult = applyDrift(
@@ -363,7 +305,6 @@ export function progressBattleWeatherComponents(
     );
   }
 
-  // Build the next components.
   const nextComponents = withTacticalWeatherComponentsHash({
     ...components,
     seaState: nextSeaState,
@@ -376,7 +317,6 @@ export function progressBattleWeatherComponents(
     baseVisibilityUm: nextVisibility,
   });
 
-  // Record transitions for changed components.
   const transitions: WeatherTransitionRecord[] = [];
   const recordTransition = (
     comp: string,

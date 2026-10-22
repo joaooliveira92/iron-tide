@@ -10,10 +10,6 @@ export { IDLE_TOOL, type PlanTool, type PlanToolMode } from "./plan-tool.js";
 
 const isMountSide = (v: string): v is MountSide => v === "CENTRE" || v === "PORT" || v === "STBD";
 
-/**
- * The keyboard-reachable actions of the active plan tool, shown on the drawing: the nudge and side controls (move
- * mode), plus the notice for the last click or drag. The picker and Auto-place live in the plan's context menu.
- */
 export function PlanToolOptions({
   tool,
   draft,
@@ -29,7 +25,6 @@ export function PlanToolOptions({
   readonly onNudge: (deltaPermille: number) => void;
   readonly onSide: (side: MountSide) => void;
   readonly notice: string | null;
-  /** Turns the active tool off (the "Done" button of the active-tool banner); omitted, no button is shown. */
   readonly onDone?: () => void;
 }) {
   const active = tool.mode !== "off";

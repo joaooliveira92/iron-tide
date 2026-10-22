@@ -1,9 +1,3 @@
-// AC-21 (INC-1 seeds): the three shipping `*_v1` contracts for the
-// strategic-representation / types / policies slice
-// (submarine_strategic_asset_v1, submarine_types_v1, submarine_policies_v1),
-// each with its SHIPPED_*_CONTRACT + a fail-closed validate*Contract guard
-// wiring DESIGN-34's own exact integers (ticket 06 — no research catalog).
-// Any tampered contract fails closed (never silently accepted).
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {

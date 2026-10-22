@@ -7,14 +7,10 @@ import { MonthExecutor } from "../src/index.js";
 import { TEST_RESEARCH_CATALOGUE } from "./research-catalogue.helper.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
-// Economy spec #138 / #140: the ledger identity, the shortfall accounting and the clamp, checked over many valid states
-// through the production month executor. Randomised cases use a fixed, printed seed (a failure names its seed and state);
-// the boundary states (zeros, exact-fit and one-short funds, the supported ceiling) are enumerated rather than sampled.
 const SEED = 0x140_0a11;
 const RANDOM_CASES = 600;
-const SHIP_MAINTENANCE = 10; // one "battleship" costs 10 a month in this ruleset; read back from the ledger, never assumed
+const SHIP_MAINTENANCE = 10;
 
-/** splitmix32: tiny, deterministic and platform-independent (no Math.random). */
 function rng(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
@@ -35,7 +31,7 @@ interface State {
   readonly ships: number;
   readonly research: number;
   readonly withCatalogue: boolean;
-  readonly projectWork: number; // total work of one active project; 0 = none
+  readonly projectWork: number;
 }
 
 const describeState = (s: State): string => JSON.stringify(s);
@@ -145,7 +141,6 @@ function run(state: State) {
 
 const sum = (xs: readonly number[]): number => xs.reduce((a, b) => a + b, 0);
 
-/** Check every ledger and shortfall invariant of one executed month; returns nothing, throws via expect with the state. */
 function checkMonth(state: State): void {
   const label = describeState(state);
   const { result, collector } = run(state);
@@ -153,7 +148,6 @@ function checkMonth(state: State): void {
   const closing = result.finalSnapshot.nations.get("n")!.treasury as number;
   const byCategory = (id: string) => entries.filter((e) => e.categoryId === id);
 
-  // Independent oracle for revenue: the legacy chained floors, not the calculator under test.
   const revenueExpected = Math.floor(Math.floor((state.base * state.rateBp) / 10_000) / 12);
   const revenue = sum(byCategory("NAVAL_APPROPRIATION").map((e) => e.credit as number));
   expect(revenue, label).toBe(revenueExpected);
@@ -165,26 +159,22 @@ function checkMonth(state: State): void {
   const obligation = paid("OBLIGATION");
   const research = paid("RESEARCH_EXPENDITURE");
 
-  // The identity, on paid amounts, in whole treasury units.
   expect(closing, label).toBe(
     state.treasury + revenue - construction - preservation - maintenance - obligation - research,
   );
   expect(Number.isSafeInteger(closing), label).toBe(true);
-  expect(closing >= 0, label).toBe(true); // the treasury never goes negative
+  expect(closing >= 0, label).toBe(true);
 
-  // The running balance each entry records is consistent with its own paid amount and never negative.
   for (const e of entries) {
     expect((e.newBalance as number) >= 0, `${label} ${e.categoryId}`).toBe(true);
     expect((e.previousBalance as number) >= 0, `${label} ${e.categoryId}`).toBe(true);
   }
 
-  // Obligations are requested exactly as authored; maintenance as ships x unit cost when the fleet is non-empty.
   const requestedOf = (id: string) => sum(byCategory(id).map((e) => (e.requested ?? 0) as number));
   expect(requestedOf("OBLIGATION"), label).toBe(state.expenses);
   if (state.ships > 0)
     expect(requestedOf("MAINTENANCE_EXPENDITURE"), label).toBe(state.ships * SHIP_MAINTENANCE);
 
-  // Each outflow: paid + shortfall = requested, paid never exceeds the funds the month had, shortfall is never negative.
   const available = state.treasury + revenue;
   const outflowIds = ["MAINTENANCE_EXPENDITURE", "OBLIGATION", "RESEARCH_EXPENDITURE"] as const;
   for (const id of outflowIds)
@@ -199,23 +189,19 @@ function checkMonth(state: State): void {
     label,
   ).toBe(true);
 
-  // Construction draws only from funds beyond the obligation reserve, and never beyond the project's work.
   expect(construction <= Math.max(0, available - state.expenses), label).toBe(true);
   expect(construction <= state.projectWork, label).toBe(true);
 
-  // An unpaid amount is reported exactly once: one OUTFLOW_SHORTFALL warning per outflow entry with a shortfall.
   const shortEntries = entries.filter(
     (e) => e.categoryId !== "APPROPRIATION" && ((e.shortfall ?? 0) as number) > 0,
   );
   const warnings = collector.warnings.filter((d) => d.code === "OUTFLOW_SHORTFALL");
   expect(warnings.length, label).toBe(shortEntries.length);
 
-  // Any real shortfall means the treasury ran dry: a shortfall implies a closing treasury of zero.
   if (shortEntries.length > 0) expect(closing, label).toBe(0);
 
   expect(collector.hasErrors, label).toBe(false);
 
-  // Deterministic: a second run yields the same ledger and the same diagnostics, in the same order.
   const again = run(state);
   expect(again.result.financialLedger.all, label).toEqual(entries);
   expect(
@@ -243,7 +229,6 @@ describe(`economy ledger invariants (seed 0x${SEED.toString(16)}, ${RANDOM_CASES
   });
 
   it("holds on the boundary states: zeros, exact fit, one short and one spare", () => {
-    // revenue at base 6000 / 2000 bp is exactly 50.
     const common = { base: 6000, rateBp: 2000, withCatalogue: true } as const;
     for (const treasury of [0, 1, 49, 50, 51, 99, 100, 101])
       for (const expenses of [0, 1, 50, 51, 100])
@@ -274,7 +259,6 @@ describe(`economy ledger invariants (seed 0x${SEED.toString(16)}, ${RANDOM_CASES
       withCatalogue: true,
       projectWork: 10,
     });
-    // Revenue 20,000 x 5000 / 120000 = 833 and a very large treasury: integer maths, nothing rounds or overflows.
     checkMonth({
       treasury: 1_000_000_000,
       base: 20_000,
@@ -288,9 +272,6 @@ describe(`economy ledger invariants (seed 0x${SEED.toString(16)}, ${RANDOM_CASES
   });
 });
 
-// Spec #138 / #143: the research cap is a rule of the engine. Enumerated, not sampled: the cap is revenue-bound, so for every
-// appropriation rate (a prime step plus both ends) and a base from nothing to the supported maximum the command is accepted
-// exactly when research <= floor(12% x revenue), and refused with the stable RESEARCH_ABOVE_CAP tag otherwise.
 describe("standing research never exceeds the cap (SetBudgetAllocation)", () => {
   const rates = [
     ...Array.from({ length: Math.ceil(4501 / 13) }, (_, i) => 500 + i * 13),
@@ -303,7 +284,6 @@ describe("standing research never exceeds the cap (SetBudgetAllocation)", () => 
     for (const base of bases)
       for (const rateBp of rates) {
         const revenue = Math.floor(Math.floor((base * rateBp) / 10_000) / 12);
-        // Independent integer oracle: research * 100 <= revenue * 12 is the same inequality as research <= floor(12% x revenue).
         const snapshot = build({
           treasury: 0,
           base,

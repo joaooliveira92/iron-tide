@@ -1,56 +1,21 @@
-// DESIGN-35 §24 mine knowledge (INC-7). Every participant HAS a SEPARATE,
-// DISTINCT knowledge assertion about an area — a different object type from the
-// authoritative `AreaMinePressureRecord` (§24's truth/knowledge separation). A
-// knowledge record is NEVER a partial/optional view of the pressure record.
-//
-//   - suspected area or route;
-//   - estimated pressure interval (a closed [min,max] basis-point range);
-//   - estimated mine type (MineType | "UNKNOWN");
-//   - suspected laying participant (id | "UNKNOWN");
-//   - known cleared lanes (ordered readonly string[]);
-//   - freshness estimate (basis points);
-//   - last observed or swept month (SafeInt).
-//
-// TRUE mine pressure MUST NOT be exposed unless a source policy permits it:
-// `visiblePressureTo` returns the participant's ESTIMATED interval (or an
-// explicit `true` expose only when sourcePolicyPermitsValue === true). Sweeping
-// improves knowledge ONLY through explicit sweep-observation records
-// (`recordSweepObservation`) — never from shadow/inferred values.
-//
-// The assertion carries a deterministic envelope hash (canonical serializer +
-// SHA-256, domain-separated with the mine_knowledge_assertion_v1 content
-// version) mirroring the AreaMinePressureRecord hash convention. Pure/
-// deterministic: no I/O/clock/random.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import { MINE_BASIS_POINTS_PER_UNIT, MINE_TYPES, type MineType } from "./constants.js";
 import type { AreaMinePressureRecord } from "./pressure-record.js";
 import { MINE_WARFARE_INVARIANT_FAILED } from "./reasonCodes.js";
 
-// Content version of the knowledge-assertion envelope (mine_knowledge_assertion_v1
-// naming convention; INC-8 formalizes the *_v1 contract lineage).
 export const mineKnowledgeAssertionContentVersion = "mine_knowledge_assertion_v1" as const;
 
 export interface MineKnowledgeAssertion {
-  /** Id of the area the assertion describes (knowledge is per area per participant). */
   areaId: string;
-  /** The participant whose assessment this is. */
   participantId: string;
-  /** Suspected area or route described by the assertion (§24). */
   suspectedAreaOrRoute: string;
-  /** Estimated pressure interval in basis points, closed [min,max]. */
   estimatedPressureIntervalBp: readonly [number, number];
-  /** Estimated mine type, or "UNKNOWN" (§24). */
   estimatedMineType: MineType | "UNKNOWN";
-  /** Suspected laying participant id, or "UNKNOWN" (§24). */
   suspectedLayingParticipantId: string;
-  /** Known cleared lanes, ordered (post-clearance knowledge). */
   knownClearedLanes: readonly string[];
-  /** Freshness estimate in basis points [0, 10_000]. */
   freshnessEstimateBp: number;
-  /** Last observed or swept month (SafeInt). */
   lastObservedOrSweptMonth: SafeInt;
-  /** Deterministic SHA-256 envelope over the non-hash surface. */
   knowledgeHash: string;
 }
 
@@ -58,8 +23,6 @@ function isInt(v: unknown): v is number {
   return typeof v === "number" && Number.isInteger(v) && Number.isSafeInteger(v);
 }
 
-// Closed [min,max] pressure-interval tuple helper (keeps every cast in one
-// place; the surface invariant is checked by assertMineKnowledgeAssertionSurface).
 function pressureInterval(min: number, max: number): readonly [number, number] {
   return [min, max] as readonly [number, number];
 }
@@ -73,9 +36,6 @@ function invariant(field: string, value: unknown, reason: string): never {
   });
 }
 
-// AC-18: reject any missing/invalid field of the MineKnowledgeAssertion
-// (fail closed). Validates the surface except the knowledge-hash presence, so a
-// hash-less surface can be validated before hashing.
 export function assertMineKnowledgeAssertionSurface(k: MineKnowledgeAssertion): void {
   if (typeof k.areaId !== "string" || k.areaId.length === 0)
     invariant("areaId", k.areaId, "knowledge assertion requires a non-empty area id");
@@ -153,15 +113,12 @@ export function assertMineKnowledgeAssertionSurface(k: MineKnowledgeAssertion): 
     );
 }
 
-// AC-18: full validation including the knowledge-hash presence requirement.
 export function validateMineKnowledgeAssertion(k: MineKnowledgeAssertion): void {
   assertMineKnowledgeAssertionSurface(k);
   if (typeof k.knowledgeHash !== "string" || k.knowledgeHash.length === 0)
     invariant("knowledgeHash", k.knowledgeHash, "knowledge hash must be a non-empty string");
 }
 
-// Deterministic knowledge-hash over the non-hash surface, domain-separated with
-// the mine_knowledge_assertion_v1 content version.
 export function computeMineKnowledgeAssertionHash(k: MineKnowledgeAssertion): string {
   const { knowledgeHash: _ignored, ...surface } = k;
   void _ignored;
@@ -169,7 +126,6 @@ export function computeMineKnowledgeAssertionHash(k: MineKnowledgeAssertion): st
     .bodyHash;
 }
 
-// Build a fully-validated assertion with its authoritative hash computed.
 export function withMineKnowledgeAssertionHash(
   k: Omit<MineKnowledgeAssertion, "knowledgeHash">,
 ): MineKnowledgeAssertion {
@@ -178,7 +134,6 @@ export function withMineKnowledgeAssertionHash(
   return { ...k, knowledgeHash: computeMineKnowledgeAssertionHash(full) };
 }
 
-// Fail-closed content-hash verification.
 export function verifyMineKnowledgeAssertionHash(k: MineKnowledgeAssertion): boolean {
   return computeMineKnowledgeAssertionHash(k) === k.knowledgeHash;
 }
@@ -195,10 +150,6 @@ export interface BuildMineKnowledgeAssertionInput {
   lastObservedOrSweptMonth?: SafeInt;
 }
 
-// AC-18: builder for a participant's knowledge assertion. `knownClearedLanes`
-// defaults to [] and `freshnessEstimateBp` defaults to 0 (no observation yet) and
-// `lastObservedOrSweptMonth` defaults to 0 (never observed) — explicit defaults
-// matching the §24 "unknown until observed first" posture.
 export function buildMineKnowledgeAssertion(
   input: BuildMineKnowledgeAssertionInput,
 ): MineKnowledgeAssertion {
@@ -218,8 +169,6 @@ export function buildMineKnowledgeAssertion(
   });
 }
 
-// AC-18: append a known cleared lane (ordered, deduplicated) — post-clearance
-// knowledge improvement.
 export function clearLaneInKnowledge(
   knowledge: MineKnowledgeAssertion,
   laneId: string,
@@ -232,22 +181,13 @@ export function clearLaneInKnowledge(
 }
 
 export interface SweepObservationRecord {
-  /** The campaign month of the sweep. */
   observedMonth: SafeInt;
-  /** Observed cleared lanes (additive to the assertion). */
   clearedLanes: readonly string[];
-  /** Observed (post-sweep) pressure interval in basis points. */
   observedPressureIntervalBp: readonly [number, number];
-  /** Observed mine type, or "UNKNOWN". */
   observedMineType: MineType | "UNKNOWN";
-  /** Observed freshness estimate in basis points. */
   observedFreshnessEstimateBp: number;
 }
 
-// AC-18: sweeping improves knowledge ONLY through an EXPLICIT sweep-observation
-// record (never a shadow/inferred value). Merges the observation into the
-// participant's assertion: cleared lanes appended, interval + mine type +
-// freshness updated, lastObservedOrSweptMonth set. Returns a NEW assertion.
 export function recordSweepObservation(
   knowledge: MineKnowledgeAssertion,
   sweepRecord: SweepObservationRecord,
@@ -305,19 +245,11 @@ export function recordSweepObservation(
 }
 
 export interface VisiblePressureResult {
-  /** The authoritative true pressure (only when sourcePolicyPermitsValue === true). */
   exposedTruePressure: SafeInt | null;
-  /** The participant's estimated pressure interval in basis points. */
   estimatedPressureIntervalBp: readonly [number, number];
-  /** True only when a source policy explicitly permits the exact value. */
   exactValueExposed: boolean;
 }
 
-// AC-18: TRUE mine pressure MUST NOT be exposed absent an explicit source policy
-// (§24). This guard returns the participant's ESTIMATED interval, and ONLY when
-// sourcePolicyPermitsValue === true returns the true authoritative pressure. The
-// true number never leaks when not permitted — the caller only ever sees the
-// estimate (never the exact value from `record.pressure` restated here).
 export function visiblePressureTo(
   record: AreaMinePressureRecord,
   knowledge: MineKnowledgeAssertion,
@@ -349,10 +281,6 @@ export function visiblePressureTo(
   };
 }
 
-// Fail-closed purity guard: assert that a pressure value that the caller intends
-// to expose is either the participant's own estimate or explicitly permitted —
-// never the raw authoritative pressure absent permission. Throws when not
-// permitted AND the exposed value would be the true pressure.
 export function assertPressureNotExposed(
   record: AreaMinePressureRecord,
   knowledge: MineKnowledgeAssertion,
@@ -360,9 +288,6 @@ export function assertPressureNotExposed(
 ): VisiblePressureResult {
   const result = visiblePressureTo(record, knowledge, sourcePolicyPermitsValue);
   if (!sourcePolicyPermitsValue) {
-    // The estimate (in basis points) is a DIFFERENT scale than the authoritative
-    // pressure; the guard ensures the caller never coerces the raw pressure out.
-    // We re-expose the interval and confirm exactValueExposed is false.
     if (result.exactValueExposed) {
       invariant(
         "exactValueExposed",

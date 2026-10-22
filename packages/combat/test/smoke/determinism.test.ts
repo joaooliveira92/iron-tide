@@ -59,7 +59,6 @@ describe("resolveSmoke determinism", () => {
     const result1 = resolveSmoke(ctx1, 1, 0);
     const result2 = resolveSmoke(ctx2, 1, 0);
 
-    // Different density should produce different drift-decay event hashes
     expect(result1.events.length).toBeGreaterThan(0);
     expect(result2.events.length).toBeGreaterThan(0);
     let hashesDiffer = false;
@@ -97,11 +96,8 @@ describe("resolveSmoke determinism", () => {
       precipitationIntensityBp: 10_000,
     };
 
-    // Run two cycles: the drift-decay changes cloud state, and the second
-    // cycle should produce deterministic results when given the same input.
     const result1 = resolveSmoke(ctx, 1, 0);
 
-    // Use the output clouds as input for a second minute
     const ctx2: SmokeContext = {
       clouds: result1.nextClouds,
       windSpeedKnots: 5,
@@ -133,22 +129,18 @@ describe("resolveSmoke determinism", () => {
     const result1 = resolveSmoke(ctx, 1, 0);
     const result2 = resolveSmoke(ctx, 1, 0);
 
-    // Same number of clouds
     expect(result1.nextClouds.length).toBe(result2.nextClouds.length);
 
-    // Same cloud hashes
     for (let i = 0; i < result1.nextClouds.length; i++) {
       expect(result1.nextClouds[i].cloudHash).toBe(result2.nextClouds[i].cloudHash);
     }
 
-    // Same record hashes
     for (let i = 0; i < result1.events.length; i++) {
       expect(result1.events[i].recordHash).toBe(result2.events[i].recordHash);
     }
   });
 
   it("cloud removal produces SMOKE_SOURCE_REMOVAL event", () => {
-    // A cloud with density 1 at high wind will decay to 0 and be removed
     const clouds = [makeCloud({ smokeCloudId: "c1", densityBp: 1 })];
     const ctx: SmokeContext = {
       clouds,
@@ -159,7 +151,6 @@ describe("resolveSmoke determinism", () => {
 
     const result = resolveSmoke(ctx, 1, 0);
 
-    // With density 1 and GE_25_BP retention (6_500), floor(1 * 6_500 / 10_000) = 0 < 1 → removed
     expect(result.nextClouds.length).toBe(0);
     expect(result.events.length).toBe(1);
     expect(result.events[0].kind).toBe("SMOKE_SOURCE_REMOVAL");
@@ -192,9 +183,6 @@ describe("resolveSmoke determinism", () => {
 
     const result = resolveSmoke(ctx, 1, 0);
 
-    // wind < 5 → retention = 9_500
-    // density after wind: floor(10_000 * 9_500 / 10_000) = 9_500
-    // density after precip: floor(9_500 * 5_000 / 10_000) = 4_750
     expect(result.nextClouds[0].densityBp).toBe(4_750);
   });
 });

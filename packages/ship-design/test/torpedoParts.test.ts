@@ -1,11 +1,3 @@
-/**
- * Torpedoes as first-class parts (ship-part-model ticket 13a, SPM-R17).
- *
- * The tests observe the highest seams: the whole-catalogue builder, the part queries, the
- * compiled torpedo contract and the fit stage, over the real production content. Expected
- * values come from the authoritative combat models and the research, never recomputed the
- * way the builder computes them.
- */
 import {
   FlattenedPartSchema,
   LoadoutSchema,
@@ -249,8 +241,6 @@ describe("the compiled torpedo contract (SPM-R17)", () => {
   });
 
   it("fails typed on an oxygen-state mismatch", () => {
-    // The schema admits the modifier (it is optional); the compiler is what rejects it on a
-    // non-OXYGEN model, so the value is never silently dropped.
     const whitehead = part(WHITEHEAD);
     const decoded = decodeStrict(FlattenedPartSchema, {
       ...whitehead,

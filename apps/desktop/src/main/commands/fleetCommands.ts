@@ -22,25 +22,6 @@ import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { CommandQueueStore } from "../runtime/commandQueueStore.js";
 import { currentRevision, submitPlayerCommand, verifyEnvelope } from "./playerCommandSupport.js";
 
-/**
- * Fleet screen queries and movement orders (ADR-0062), as native
- * `CommandProgram`s (INC-5; ADR-0159). `inspectFleetScreen` derives the player's
- * real fleets, geography and ports from the session's `CampaignState` (via
- * `@bluewave/campaign-engine`'s pure `buildFleetScreenView`) plus the movement
- * orders currently queued. A movement order is a real engine `MoveFleet`
- * envelope: the engine's own validator decides legality at issue time and
- * `commitMonth` is the sole mutator.
- *
- * One order per fleet: the command id is derived from the turn and the fleet, so
- * submitting again for the same fleet supersedes the earlier order (that is also
- * what "replace" does), and cancel drops it.
- *
- * Every session/queue read goes through the desktop service graph
- * (`CampaignSessionStore`, `CommandQueueStore`); the module-level singletons are
- * never touched directly.
- */
-
-/** The fields a movement submit/replace shares (replace carries an extra `commandId`). */
 interface MovementRequest {
   readonly sessionId: string;
   readonly expectedRevision: number;
@@ -49,7 +30,6 @@ interface MovementRequest {
   readonly toAreaId: string;
 }
 
-/** The `MoveFleet` orders waiting for the next month, as the Fleet screen lists them. */
 function queuedMovementCommands(
   record: CampaignSessionRecord,
   entries: readonly PendingCommandEntry[],
@@ -74,7 +54,6 @@ function queuedMovementCommands(
   return commands;
 }
 
-/** The one success shape a movement submit/replace/cancel returns. */
 function movementSuccess(
   record: CampaignSessionRecord,
   entries: readonly PendingCommandEntry[],
@@ -91,12 +70,6 @@ function movementSuccess(
   };
 }
 
-/**
- * Queues a `MoveFleet` and supersedes any earlier order for the same fleet
- * (same deterministic command id but a different request). Shares the
- * `playerCommandSupport` flow, so issue-time legality is the engine's own
- * validator and `expectedRevision` is checked against the snapshot turn.
- */
 function submitMovement(
   request: MovementRequest,
 ): Effect.Effect<
@@ -125,7 +98,6 @@ function submitMovement(
     });
     if (result.outcome !== "success") return result;
 
-    // One order per fleet: drop any earlier order for the same fleet (same command id).
     for (const entry of yield* queue.entries(request.sessionId)) {
       if (
         entry.envelope.commandId === result.value.commandId &&
@@ -246,12 +218,6 @@ export const cancelMovementCommandProgram = withSchema(
     }),
 );
 
-/**
- * Queues an `AssignForeignStation` / `ClearForeignStation` for the player's nation (S-5 09, spec #73 R2). The batch
- * is checked whole by the engine's own validator at issue time; a rejection surfaces the engine's stable code and the
- * per-ship reasons verbatim and queues nothing. The discriminator is the sorted ship set, so the same request replays
- * and a different selection never collides.
- */
 export const submitStationAssignmentProgram = withSchema(
   SubmitStationAssignmentPayloadSchema,
   (payload) =>

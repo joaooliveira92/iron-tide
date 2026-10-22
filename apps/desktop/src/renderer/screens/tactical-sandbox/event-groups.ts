@@ -5,10 +5,6 @@ export interface BattleEventGroup {
   readonly count: number;
 }
 
-/**
- * Group a battle's event ledger by event type for the summary badges, most
- * frequent first. Pure: the ledger is copied, never re-derived.
- */
 export function groupEventsByType(outcome: TacticalBattleOutcome): readonly BattleEventGroup[] {
   const counts = new Map<string, number>();
   for (const event of outcome.battleEventLedger.events) {

@@ -1,8 +1,3 @@
-// S-5 07 (spec #73 R9, ADR-0249): the month-end foreign-station deployment. A ship on FOREIGN_STATION that is not in a
-// shortfall area sails one sea-route hop toward the nation's area with the largest shortfall (ties by ascending area id).
-// Only that ship moves: it is detached into a single-ship fleet and out of any division, each with a typed event. No
-// shortfall (or an exempt nation, or the dormant section) means no demand and nothing moves; no sea path leaves the ship in
-// place with a typed event. It draws no randomness and owns no number: the demand is the presence step's own rows.
 import {
   applyDivisionCommand,
   assertDivisionInvariants,
@@ -18,17 +13,14 @@ import { divisionAssetsFor } from "./divisionCommands.js";
 import { foreignStationEvents } from "./events.js";
 import type { MonthContext } from "./monthContext.js";
 
-/** Reason code recorded when the deployment takes a ship out of a division. */
 export const DIVISION_LEFT_FOR_FOREIGN_STATION_REASON = "FOREIGN_STATION_DEPLOYMENT" as const;
 
 const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
-/** The single-ship fleet id a detached ship sails in: stable and unique per ship. */
 export function detachedFleetId(shipId: string): string {
   return `fleet-fs-${shipId}`;
 }
 
-/** Sea-route neighbours of every non-land area, each list ordered by area id. */
 function seaAdjacency(snapshot: CampaignSnapshot): Map<string, string[]> {
   const sea = new Set(snapshot.world.areas.filter((a) => a.type !== "land").map((a) => a.id));
   const adjacency = new Map<string, string[]>();
@@ -47,7 +39,6 @@ function seaAdjacency(snapshot: CampaignSnapshot): Map<string, string[]> {
   return adjacency;
 }
 
-/** Hop distance from `target` to every reachable area (breadth first). */
 function hopsFrom(target: string, adjacency: Map<string, string[]>): Map<string, number> {
   const distance = new Map<string, number>([[target, 0]]);
   const queue = [target];
@@ -62,7 +53,6 @@ function hopsFrom(target: string, adjacency: Map<string, string[]>): Map<string,
   return distance;
 }
 
-/** The next area on a shortest path from `from` to the target; ties by ascending area id. Null without a path. */
 export function nextHopToward(
   from: string,
   target: string,
@@ -74,7 +64,6 @@ export function nextHopToward(
   return (adjacency.get(from) ?? []).find((n) => distance.get(n) === here - 1) ?? null;
 }
 
-/** The largest-shortfall row of a nation (ties by ascending area id), or undefined without one. */
 function largestShortfall(rows: readonly PresenceAreaRow[]): PresenceAreaRow | undefined {
   let best: PresenceAreaRow | undefined;
   for (const row of rows) {
@@ -148,8 +137,6 @@ function deployShip(
     return;
   }
 
-  // Leave the division first: its invariants are checked against the snapshot as it stands, and a failure leaves the ship
-  // exactly where it was (no half-applied detachment).
   const division = nation.divisions.find((d) => d.shipOrder.includes(shipId));
   let divisions: PermanentDivision[] = nation.divisions;
   let dissolved = false;

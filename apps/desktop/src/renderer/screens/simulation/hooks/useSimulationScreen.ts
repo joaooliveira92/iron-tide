@@ -48,24 +48,15 @@ export interface UseSimulationScreenReturn {
   readonly handleTacticalResolve: () => Promise<void>;
 }
 
-/** The narrow transport the screen needs; keeps the hook decoupled from the bridge surface. */
 export type SimulationCommandPort = Pick<BluewaveDesktopBridge, "campaign">;
 
 export interface UseSimulationScreenOptions {
   readonly campaignRevision?: number;
   readonly onMonthCommitted?: () => void;
-  /** Override the transport (tests / embedding); defaults to the bridge port. */
   readonly bridge?: SimulationCommandPort;
-  /** Override the telemetry sink; defaults to the desktop wide-event adapter. */
   readonly telemetry?: SimulationTelemetryPort;
 }
 
-/**
- * Drives the Simulation screen: loads the session snapshot, commits months, and
- * runs the battle lifecycle. Domain transitions live in the pure
- * `simulation-screen-state` reducer; the guarded command pipeline lives in
- * `simulation-command`; this hook only wires them together.
- */
 export function useSimulationScreen(
   sessionId: string,
   options: UseSimulationScreenOptions = {},

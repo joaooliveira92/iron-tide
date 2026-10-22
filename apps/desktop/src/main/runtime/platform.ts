@@ -1,8 +1,3 @@
-// Platform edges as services (INC-4; ADR-0159): the native dialogs (the only
-// genuinely-async IO in main), the Electron app paths, the wall clock, and the
-// id generator (the desktop-main command programs' ambient-randomness seam).
-// The `electron` import stays dynamic inside the layer so a test layer can
-// substitute fakes and the main process keeps its lazy-import posture.
 import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -12,13 +7,10 @@ import { CommandFailed } from "./commandError.js";
 export class NativeDialog extends Context.Service<
   NativeDialog,
   {
-    /** Prompts for a save directory; `null` when cancelled. */
     readonly chooseSaveDirectory: (
       suggestedName: string,
     ) => Effect.Effect<string | null, CommandFailed>;
-    /** Prompts for an existing package directory; `null` when cancelled. */
     readonly choosePackageDirectory: () => Effect.Effect<string | null, CommandFailed>;
-    /** Prompts for a copy destination; `null` when cancelled. */
     readonly chooseCopyDirectory: (
       suggestedName: string,
     ) => Effect.Effect<string | null, CommandFailed>;
@@ -46,18 +38,9 @@ export class Clock extends Context.Service<
   }
 >()("bluewave/desktop/Clock") {}
 
-/**
- * The app's id source (production-hardening ticket 04). Campaign session ids
- * come from here rather than an inline `randomUUID()` inside a command program,
- * so the source is an explicit, injectable dependency: production resolves the
- * ambient-UUID layer, tests inject a deterministic one. This is app-shell
- * bookkeeping (a session handle), never an authoritative/hashed value — the
- * determinism rules keep ambient randomness off authoritative paths.
- */
 export class IdGenerator extends Context.Service<
   IdGenerator,
   {
-    /** A fresh, unique identifier. */
     readonly next: () => Effect.Effect<string>;
   }
 >()("bluewave/desktop/IdGenerator") {}

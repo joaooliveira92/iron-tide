@@ -9,21 +9,14 @@ import { cn } from "../../../../lib/utils.js";
 import { useSelectionStore, useShipSelection } from "../../selection/useShipSelection.js";
 import { SECTION_IDS, SECTIONS, sectionSpan, type SectionId, type ZoneRange } from "./sections.js";
 
-/** Rest before a card opens, so sweeping the pointer across the strip opens nothing (ms). */
 export const SECTION_OPEN_DELAY = 200;
-/** Grace before a card closes, long enough to move the pointer from a label into its card (ms). */
 export const SECTION_CLOSE_DELAY = 300;
 
 const isSectionId = (v: string | undefined): v is SectionId =>
   (SECTION_IDS as readonly string[]).includes(v ?? "");
 
-/** The least room right of a label's centre, so the name at the stern end is never pushed past the row. */
 const LABEL_EDGE_ROOM = "3.25rem";
 
-/**
- * Where a section's label sits: centred on the section but held inside the row's right edge, so the stern-most
- * name (its span is narrow and at the very edge) stays fully visible instead of overflowing and adding a scrollbar.
- */
 export function labelPlacement(span: { readonly leftPct: number; readonly widthPct: number }): {
   readonly left: string;
   readonly width: string;
@@ -36,14 +29,6 @@ export function labelPlacement(span: { readonly leftPct: number; readonly widthP
   };
 }
 
-/**
- * The section names under the plan, one button per section placed over that section's span, alternating
- * between two rows so neighbouring names never collide. All eight share one hover card: moving between labels
- * swaps its content instead of closing and re-opening it. Hover and keyboard focus open it (a preview). A click,
- * tap or Enter/Space selects and pins the section (`aria-pressed`) and closes the preview: the pinned section's
- * details are in the inspector above the tabs, so touch users never need hover. Both states live in the board's
- * selection store.
- */
 export function SectionLabels({
   zones,
   renderCard,
@@ -52,22 +37,14 @@ export function SectionLabels({
 }: {
   readonly zones: readonly ZoneRange[];
   readonly renderCard: (id: SectionId) => ReactNode;
-  /**
-   * What the card is placed beside: the whole drawing, so the open card never covers the plan, its highlight or
-   * the neighbouring labels (which the pointer may be heading for).
-   */
   readonly anchor?: RefObject<HTMLElement | null>;
-  /** Prefix each name with its bow-to-stern number, to match the numbers on the Compartments view. */
   readonly numbered?: boolean;
 }) {
   const [handle] = useState(() => createHoverCardHandle<SectionId>());
-  // The open card is the selection store's `preview`; a click or Enter/Space also pins the section (`selected`).
   const store = useSelectionStore();
   const active = useShipSelection((s) => s.preview);
   const selected = useShipSelection((s) => (s.selected?.kind === "section" ? s.selected.id : null));
   const onActiveChange = store.setPreview;
-  // The label just clicked: its hover open (already counting down when the click lands) is ignored until the
-  // pointer leaves it, so the card never reappears over the inspector that now shows the same section.
   const pinnedUnderPointer = useRef<SectionId | null>(null);
   const prefix = useId();
   const triggerId = (id: SectionId) => `${prefix}-section-${id}`;
@@ -75,7 +52,6 @@ export function SectionLabels({
     const zone = zones.find((z) => z.id === SECTIONS[id].zoneId);
     return { id, span: zone ? sectionSpan(zone) : undefined };
   });
-  // Without the hull form's zones there is no geometry to align to: lay the labels out evenly instead.
   const aligned = spans.every((s) => s.span !== undefined);
   return (
     <>
@@ -103,8 +79,6 @@ export function SectionLabels({
                   data-section={id}
                   aria-pressed={selected === id}
                   onClick={() => {
-                    // Pinning hands the details to the inspector beside the tabs; the preview card closes so
-                    // it never covers them. Hover and focus still preview.
                     store.select({ kind: "section", id });
                     pinnedUnderPointer.current = id;
                     onActiveChange(null);
@@ -125,7 +99,6 @@ export function SectionLabels({
                     "hover:bg-muted hover:text-foreground",
                     "outline-none focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring",
                     "data-popup-open:border-primary data-popup-open:bg-primary/10 data-popup-open:text-foreground",
-                    // Pinned: solid accent bar, bold and underlined (not colour alone).
                     "aria-pressed:border-primary aria-pressed:font-semibold aria-pressed:text-foreground aria-pressed:underline aria-pressed:decoration-2 aria-pressed:underline-offset-4",
                     aligned && "absolute -translate-x-1/2",
                   )}

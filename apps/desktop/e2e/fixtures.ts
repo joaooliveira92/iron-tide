@@ -42,9 +42,6 @@ export async function launchHarness(opts: { saveDir?: string } = {}): Promise<E2
     });
 
     await app.evaluate(({ dialog }, dir) => {
-      // Mutate methods, never replace the module. Save dialog (compile) returns
-      // `filePath`; open dialog (continuance) returns `filePaths`. Runs in the
-      // Electron main process — no outer helpers in scope.
       dialog.showSaveDialog = async () => ({ canceled: false, filePath: dir });
       dialog.showOpenDialog = async () => ({
         canceled: false,
@@ -77,7 +74,6 @@ export async function launchHarness(opts: { saveDir?: string } = {}): Promise<E2
         }, dir),
     };
   } catch (error) {
-    // Launch or boot failed mid-way — never leak the scratch tree.
     await rm(scratch, { recursive: true, force: true }).catch(() => {});
     throw error;
   }
@@ -91,22 +87,12 @@ export async function teardownHarness(h: E2EHarness): Promise<void> {
   }
 }
 
-/**
- * Copies a compiled SaveStore package into a fresh, disposable location so a
- * continuance spec never mutates its source (the master fixture package, or
- * the shipped tree). `sourceDir` is the package to copy; `scratchRoot` is
- * typically the per-test `e2e.scratch` tree.
- */
 export async function copyFixturePackage(sourceDir: string, scratchRoot: string): Promise<string> {
   const target = join(scratchRoot, "package");
   await cp(sourceDir, target, { recursive: true });
   return target;
 }
 
-/**
- * Opens an isolated copy of a compiled campaign package through the real Open Campaign flow
- * and waits for the Overview. Returns the copy's directory, for specs that reopen it.
- */
 export async function openCampaign(
   e2e: Pick<E2EHarness, "page" | "scratch" | "retargetDialog">,
   template: string,
@@ -123,15 +109,8 @@ export async function openCampaign(
 
 type HarnessFixtures = { e2e: E2EHarness };
 
-/**
- * Compiled-once campaign packages, built lazily per worker. A fresh compile costs
- * several seconds, so only the New Game spec compiles for real; every other spec
- * opens an isolated copy of one of these (see `openCampaign` in flows.ts).
- */
 type WorkerFixtures = {
-  /** Turn 0, seeded, the guided tour already dismissed. */
   campaignTemplate: string;
-  /** `campaignTemplate` plus one committed month (a predecessor save for Recover). */
   advancedCampaignTemplate: string;
 };
 
@@ -171,8 +150,6 @@ export const test = base.extend<HarnessFixtures, WorkerFixtures>({
     },
     { scope: "worker" },
   ],
-  // Playwright requires the object-destructuring form for a fixture's first
-  // argument; this fixture has no sibling dependencies to draw on.
   // eslint-disable-next-line no-empty-pattern
   e2e: async ({}, use) => {
     const harness = await launchHarness();

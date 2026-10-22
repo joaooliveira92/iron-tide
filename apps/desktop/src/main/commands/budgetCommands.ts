@@ -18,18 +18,8 @@ import { CommandFailed } from "../runtime/commandError.js";
 import { withSchema } from "../runtime/commandProgram.js";
 import { currentRevision, submitPlayerCommand } from "./playerCommandSupport.js";
 
-/**
- * Budget allocation (ADR-0060), as native `CommandProgram`s (INC-5; ADR-0159).
- * Same authority model as diplomacy: the desktop queues a real
- * `SetBudgetAllocation` envelope; the engine validates the bounds at issue time
- * and is the sole mutator when `commitMonth` applies it. Every session/queue
- * read goes through the desktop service graph (`CampaignSessionStore`,
- * `CommandQueueStore`), never the module singletons.
- */
-/** Selectable appropriation rates move in steps of this many basis points (the slider's step). */
 const RATE_STEP_BP = 50;
 
-/** The research cap at every selectable rate, from the engine's own calculators. */
 function researchCapsByRate(base: SafeInt): BudgetScreenProjection["researchCaps"] {
   const caps: { rateBp: number; cap: number }[] = [];
   for (

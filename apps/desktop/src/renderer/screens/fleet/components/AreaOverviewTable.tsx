@@ -13,7 +13,6 @@ import type { AreaOverviewRow } from "../fleet-screen-state.js";
 const NONE = <span className="text-muted-foreground">None</span>;
 const list = (items: readonly string[]) => (items.length === 0 ? NONE : items.join(", "));
 
-/** Per-area overview: what the player has there and what it borders. */
 export const AreaOverviewTable = memo(function AreaOverviewTable({
   rows,
 }: {

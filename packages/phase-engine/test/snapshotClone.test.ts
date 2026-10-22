@@ -125,7 +125,6 @@ describe("cloneSnapshot hardening", () => {
     expect(b.nations.get("n1")?.fleets[0].ships[0]).not.toBe(
       a.nations.get("n1")!.fleets[0].ships[0],
     );
-    // mutate clone does not affect original
     (b.nations.get("n1") as any).treasury = 999;
     expect(a.nations.get("n1")!.treasury).toBe(100);
     b.world.areas[0].name = "X";
@@ -149,7 +148,6 @@ describe("cloneSnapshot hardening", () => {
     const b = snapshotClone.cloneSnapshot(a);
     expect(b.wars.battleManifests).toBeUndefined();
     expect(b.strategicWeather).toBeUndefined();
-    // when present as empty array, stays empty array
     (a.wars as any).battleManifests = [];
     const c = snapshotClone.cloneSnapshot(a);
     expect(c.wars.battleManifests).toEqual([]);
@@ -188,7 +186,6 @@ describe("cloneSnapshot hardening", () => {
     expect(({} as any).polluted).toBeUndefined();
     expect(b.politics.shells.safe).toBe(1);
     expect(Object.prototype.hasOwnProperty.call(b.politics.shells, "__proto__")).toBe(false);
-    // clone's prototype not reassigned
     expect(Object.getPrototypeOf(b.politics.shells)).toBe(Object.prototype);
   });
 
@@ -229,7 +226,7 @@ describe("cloneSnapshot hardening", () => {
       "snapshot must be a non-null object",
     );
     const bad = minimalSnapshot() as any;
-    bad.nations = {}; // not a Map
+    bad.nations = {};
     expect(() => snapshotClone.cloneSnapshot(bad)).toThrow("nations must be a Map");
   });
 

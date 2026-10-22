@@ -1,4 +1,3 @@
-// ADR-0062: MoveFleet — one route hop per month, validated by the engine.
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { fleetMoveProblem } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
@@ -69,7 +68,6 @@ describe("fleetMoveProblem", () => {
 });
 
 describe("a ship under rebuild cannot sail (DESIGN-23 section 20, ADR-0078)", () => {
-  // The first fleet always has two ships here: its own, plus a copy that stays available unless `all` is set.
   const withAvailability = (all: boolean): CampaignSnapshot => {
     const s = world();
     const nation = s.nations.get(ATTACKER_NATION)!;

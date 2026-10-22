@@ -26,10 +26,8 @@ describe("buildWorldSituation", () => {
     expect(groups.map((group) => group.tier)).toEqual([...RELEVANCE_TIERS]);
     const names = (tier: string) =>
       groups.find((group) => group.tier === tier)?.powers.map((power) => power.nationId);
-    // Qing is strained next door (flashpoint), then the other powers holding east-Asian waters.
     expect(names("immediate")).toEqual(["qing", "uk", "russia"]);
     expect(names("wide_reach")).toEqual(["france"]);
-    // The United States holds ground in only two theatres, neither of them yours.
     expect(names("distant")).toEqual(["usa", "austria_hungary", "brazil", "germany"]);
   });
 
@@ -60,7 +58,6 @@ describe("buildWorldSituation", () => {
       outlook: "flashpoint",
       nonAggressionPact: false,
     });
-    // A neutral status at a neutral band are different concepts with different words.
     const uk = build().ordered.find((power) => power.nationId === "uk");
     expect(uk).toMatchObject({ status: "neutral", attitude: "neutral", outlook: "uncertain" });
   });

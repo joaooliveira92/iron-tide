@@ -4,13 +4,6 @@ import { parse } from "yaml";
 import { describe, expect, it } from "vite-plus/test";
 import { navalProfiles } from "./helpers/earlyContext.js";
 
-/**
- * Production nation-coverage release gate (ADR-0096, ADR-0110). Every nation the 1880 pack defines —
- * playable or not — MUST have an authored national naval profile, because a nation without identity
- * still resolves a generic ship-building environment in the campaign and in battle. There is no
- * allowlist: the gate fails on any scenario nation without a profile, and on any profile for a nation
- * outside the pack.
- */
 const root = join(__dirname, "..", "..", "..", "content", "production", "1880");
 
 const countries = parse(readFileSync(join(root, "countries.yaml"), "utf8")) as {
@@ -21,13 +14,6 @@ const nationIds = countries.map((c) => c.id);
 const profiled = new Set(navalProfiles.map((p) => p.nationId));
 
 describe("production nation coverage (release gate)", () => {
-  /**
-   * Anti-vacuity floor: the coverage checks below would pass trivially over an empty parse, so first pin the
-   * size of the data they consume. The 1880 first release commits 14 nations (10 playable per ADR-0214), each with
-   * an authored naval profile; a parse-to-zero or parse-to-few regression must fail loudly here rather than let
-   * the coverage assertions pass over nothing. These are floors, not the exact identity list (which would be
-   * brittle duplication of countries.yaml).
-   */
   it("loads the release scenario with its committed nation and profile floors", () => {
     expect(
       countries.length,

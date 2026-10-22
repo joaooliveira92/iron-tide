@@ -1,5 +1,3 @@
-// Fail-closed input validation for the DESIGN-40 §6 launch eligibility gate,
-// split out of ./eligibility.js (which consumes it before any predicate runs).
 import { BluewaveError } from "@bluewave/contracts";
 import { TORPEDO_LAUNCH_KINDS } from "./constants.js";
 import { validateTorpedoLauncherDefinition } from "./launcher.js";
@@ -7,9 +5,6 @@ import { TORPEDO_STATE_INVARIANT_FAILED } from "./reasonCodes.js";
 import { assertFixedPointTorpedo } from "./state.js";
 import type { LaunchEligibilityInputs } from "./eligibility.js";
 
-// B-5 weather integer sea-state scale (weather/constants.ts SEA_STATE_MIN 0 ..
-// SEA_STATE_MAX 9), mirrored locally so this gate stays decoupled from the B-5
-// module while validating the same canonical bounds.
 export const TORPEDO_SEA_STATE_MIN = 0 as const;
 export const TORPEDO_SEA_STATE_MAX = 9 as const;
 
@@ -22,8 +17,6 @@ export function invariant(field: string, value: unknown, reason: string): never 
   });
 }
 
-// Fail-closed input validation (ENGINEERING-CONTRACT: reject non-integers and
-// unsafe integers at boundaries). Runs before any predicate.
 export function assertEligibilityInputs(inputs: LaunchEligibilityInputs): void {
   const { state, definition } = inputs;
   assertFixedPointTorpedo(state);
@@ -44,16 +37,12 @@ export function assertEligibilityInputs(inputs: LaunchEligibilityInputs): void {
         `each tube index must be an integer within [0, ${state.tubeCount})`,
       );
   }
-  // F4 mirror (consumeForLaunch): a tube may be fired at most once per launch —
-  // duplicate indexes would double-count the same torpedo.
   if (new Set(inputs.tubeIndexes).size !== inputs.tubeIndexes.length)
     invariant(
       "tubeIndexes",
       inputs.tubeIndexes,
       "each tube may be fired at most once per launch (duplicate indexes)",
     );
-  // Shape guards (mirror the numeric guards — structured fail-closed, never a
-  // raw TypeError on a deserialized/mangled input surface).
   if (typeof inputs.contactId !== "string" || inputs.contactId.length === 0)
     invariant("contactId", inputs.contactId, "contactId must be a non-empty string");
   if (!(inputs.knownTracks instanceof Map) && !Array.isArray(inputs.knownTracks))

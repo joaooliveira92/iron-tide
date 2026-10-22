@@ -1,15 +1,8 @@
-/**
- * Exact integer root/power helpers for deterministic design formulas (ADR-0063).
- * Pure bigint arithmetic: no Math.pow, no floats, identical across processes.
- */
-
-/** floor(x^(1/n)) for x >= 0, n >= 1, by Newton iteration on bigint. */
 export function integerRoot(x: bigint, n: number): bigint {
   if (x < 0n) throw new RangeError("integerRoot: x must be >= 0");
   if (!Number.isInteger(n) || n < 1) throw new RangeError("integerRoot: n must be an integer >= 1");
   if (x < 2n || n === 1) return x;
   const nb = BigInt(n);
-  // Initial guess >= true root: 2^ceil(bits/n)
   const bits = x.toString(2).length;
   let r = 1n << BigInt(Math.ceil(bits / n));
   for (;;) {
@@ -19,10 +12,6 @@ export function integerRoot(x: bigint, n: number): bigint {
   }
 }
 
-/**
- * floor(x^(p/q)) for integer x >= 0, p >= 0, q >= 1, computed as floor(root_q(x^p)).
- * Exact for the floor of the real value. Inputs are bigint so callers choose their own scaling.
- */
 export function powRational(x: bigint, p: number, q: number): bigint {
   if (!Number.isInteger(p) || p < 0) throw new RangeError("powRational: p must be an integer >= 0");
   if (p === 0) return 1n;

@@ -1,6 +1,3 @@
-// AC-1: System definitions validate correctly
-// Tests for AirDefenseSystemDefinition with valid and invalid cases.
-
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, SafeInt, isBluewaveError } from "@bluewave/contracts";
 import {
@@ -313,9 +310,8 @@ describe("AirDefenseSystemDefinition", () => {
 
     it("should throw with detailed error for invalid object", () => {
       const raw = {
-        systemId: 123, // should be string
+        systemId: 123,
         layer: "HEAVY_AA",
-        // missing many required fields
       };
 
       expect(() => validateAirDefenseSystemDefinition(raw)).toThrow(
@@ -363,7 +359,7 @@ describe("AirDefenseSystemDefinition", () => {
   });
 
   describe("safe-integer validation parity", () => {
-    const UNSAFE = Number.MAX_SAFE_INTEGER + 1; // 2^53, not a safe integer
+    const UNSAFE = Number.MAX_SAFE_INTEGER + 1;
 
     it("should reject an unsafe integer for baseKillBp", () => {
       expect(() => {
@@ -467,8 +463,6 @@ describe("AirDefenseSystemDefinition", () => {
   });
 });
 
-// Characterization of the default-merging behavior that replaced the previous
-// Zod `.partial().safeParse(params)` pre-validation pass.
 describe("AirDefenseSystemDefinition default-merging parity", () => {
   it("rejects empty input (systemId defaults to empty and fails)", () => {
     expect(() => createAirDefenseSystemDefinition({})).toThrow(

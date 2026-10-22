@@ -23,12 +23,6 @@ export interface ConstructionWizardView {
   readonly capacityOver: boolean;
 }
 
-/**
- * The order-review figures: the engine's projected cost and capacity for the
- * design, the economy's totals, and where the workspace's reservations land once
- * this order is added. Pure — every number is the engine's own, and the screen
- * never re-derives costs or capacity.
- */
 export function constructionWizardView(
   design: CompiledDesignVersion,
   economy: ConstructionWizardEconomy | null,

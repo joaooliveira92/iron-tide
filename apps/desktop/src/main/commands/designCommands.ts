@@ -57,21 +57,6 @@ function slug(name: string): string {
   return s.length >= 2 ? s.slice(0, 40) : "design";
 }
 
-/**
- * The Design screen commands, as native `CommandProgram`s (INC-5; ADR-0159).
- *
- * `submitDesignCommand` compiles the draft here first so the player gets the
- * findings immediately (the engine still compiles it again when the month is
- * committed and is the only authority); a design with a blocking finding is
- * rejected without queuing anything. Every program resolves its session through
- * `CampaignSessionStore` and, where it queues, delegates the envelope flow to
- * `playerCommandSupport.submitPlayerCommand`; non-session failures are modelled
- * as `CommandRejected` on the typed error channel, preserving the frozen reason
- * codes.
- *
- * The draft is compiled through the parts barrier (ticket 17a) from the content
- * the pack validated; the legacy catalogue is no longer a compile path.
- */
 export const submitDesignCommandProgram = withSchema(SubmitDesignCommandPayloadSchema, (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -130,8 +115,6 @@ export const submitDesignCommandProgram = withSchema(SubmitDesignCommandPayloadS
       });
     }
     const compiled = compiledView.compiled;
-    // The hull type is the ship type's own (domain mapping); there is no fallback label, so a type the ruleset cannot
-    // map is refused rather than filed as something else (ADR-0088).
     const hullType = (HULL_TYPE_FOR_SHIP_TYPE as Readonly<Record<string, string | undefined>>)[
       draft.requirement.category
     ];
@@ -150,7 +133,6 @@ export const submitDesignCommandProgram = withSchema(SubmitDesignCommandPayloadS
         ],
       });
     }
-    // The study the engine will open for it, from the same rules, so the player sees its months and cost now (ADR-0085).
     let study: DesignStudyPreview | undefined;
     if (content.study !== null) {
       const planned = planDesignStudy(
@@ -219,7 +201,6 @@ export const submitDesignCommandProgram = withSchema(SubmitDesignCommandPayloadS
   }),
 );
 
-/** The player's own project and the draft its design was compiled from, or the reason it has none. */
 function projectWithDraft(record: CampaignSessionRecord, projectId: string) {
   const snapshot = record.state.snapshot;
   const nation = snapshot.nations.get(record.playerSlotId);
@@ -239,7 +220,6 @@ function projectWithDraft(record: CampaignSessionRecord, projectId: string) {
   } as const;
 }
 
-/** The draft a project is being built from, so the Drawing Board can edit the real design (ADR-0070). */
 export const loadProjectDraftProgram = withSchema(LoadProjectDraftPayloadSchema, (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -262,11 +242,6 @@ export const loadProjectDraftProgram = withSchema(LoadProjectDraftPayloadSchema,
   }),
 );
 
-/**
- * Queues a `ReviseProject` (ADR-0070). The same rules the engine applies are run here first (compile, change kinds,
- * revision tier) so the player gets the answer now; a design that cannot be built, changes nothing, or would need a
- * rebuild project is rejected without queuing. The engine remains the only authority when the month is committed.
- */
 export const reviseProjectCommandProgram = withSchema(
   ReviseProjectCommandPayloadSchema,
   (payload) =>
@@ -386,9 +361,6 @@ export const reviseProjectCommandProgram = withSchema(
     }),
 );
 
-// Rebuild (ADR-0078): list the ships that can be rebuilt, load one's draft, check a change, start the rebuild.
-
-/** The player's own ship, if it is commissioned, free (no battle) and its design kept a source draft; else why not. */
 function rebuildableShip(record: CampaignSessionRecord, shipId: string) {
   const snapshot = record.state.snapshot;
   const nation = snapshot.nations.get(record.playerSlotId);
@@ -411,7 +383,6 @@ function rebuildableShip(record: CampaignSessionRecord, shipId: string) {
 const monthIdOf = (record: CampaignSessionRecord) =>
   `${record.month.year}-${String(record.month.month).padStart(2, "0")}`;
 
-/** The player's ships that can be rebuilt, in ship id order. */
 export const listRebuildableShipsProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -437,7 +408,6 @@ export const listRebuildableShipsProgram = withSchema(SessionIdPayloadSchema, (s
   }),
 );
 
-/** The draft a ship was built from, so the Drawing Board can edit the real design for a rebuild. */
 export const loadShipDraftProgram = withSchema(LoadShipDraftPayloadSchema, (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -460,7 +430,6 @@ export const loadShipDraftProgram = withSchema(LoadShipDraftPayloadSchema, (payl
   }),
 );
 
-/** A `Finding` as the renderer's `RebuildFindingView`. */
 const findingView = (f: Finding): RebuildFindingView => ({
   id: f.id,
   what: formatExplanation(f.what),
@@ -469,7 +438,6 @@ const findingView = (f: Finding): RebuildFindingView => ({
   remedies: f.remedies.map((r) => formatExplanation(r.description)),
 });
 
-/** The bulge requirement as a view finding, using the phase engine's own reason code. */
 const bulgeRequiredView: RebuildFindingView = {
   id: REBUILD_BULGE_REQUIRED,
   what: "A bulge rebuild needs a blister.",
@@ -482,13 +450,6 @@ const bulgeRequiredView: RebuildFindingView = {
   ],
 };
 
-/**
- * The authored, versioned BULGE torpedo-protection gain (ADR-0130 section 3), read from the
- * already-parsed ship-building balance. The `refit` section is not yet part of the decoded
- * `ShipBuildingContent` (INC-12 authored it but did not plumb it through), so it is read through a
- * narrow lens and accepted only as a safe, non-negative integer; null simply hides the readout. The
- * value is never invented in the renderer.
- */
 function authoredBulgeProtectionGainBp(data: ShipBuildingData): number | null {
   const balance = data.balance as {
     refit?: { bulgeProtectionGainBp?: unknown };
@@ -497,12 +458,6 @@ function authoredBulgeProtectionGainBp(data: ShipBuildingData): number | null {
   return typeof gain === "number" && Number.isSafeInteger(gain) && gain >= 0 ? gain : null;
 }
 
-/**
- * Checks a changed design as a rebuild of `shipId`: compiles it, compares it with the ship's current design against the
- * retained-hull limits and the dock, and answers with the findings and how far each measure goes. Nothing is queued. The same
- * rules the engine applies when the month is committed (`applyStartRebuild`), so a legal check means the order will be
- * accepted unless the situation changes.
- */
 function rebuildCheck(
   record: CampaignSessionRecord,
   shipId: string,
@@ -575,9 +530,6 @@ function rebuildCheck(
       toLegacyCompileView(result)
         .findings.filter((f) => f.severity === "BLOCKING")
         .map((f) => `${formatExplanation(f.what)} ${formatExplanation(f.why)}`);
-    // The retained-hull comparison needs both designs' derived facts, so each must pass the barrier.
-    // A draft that does not is a normal "not allowed", never a bridge rejection: the panel renders a
-    // `success` view's `designProblems`, and an issue-less rejection would leave it stuck on "Checking…".
     if (currentResult.status !== "ACCEPTED" || compiledResult.status !== "ACCEPTED") {
       const designProblems = [
         ...(currentResult.status === "ACCEPTED"
@@ -617,8 +569,6 @@ function rebuildCheck(
       content.rebuild,
       { demand: yardDemandOf(compiled, draft), yards: env.yards },
     );
-    // The manual's armament-change conditions (SB3-R26), the exact rule set the engine applies; and the
-    // BULGE requirement (SB3-R25), checked only when the player chose a bulge rebuild.
     const armamentFindings = rebuildArmamentFindings(found.draft, draft, content, month).filter(
       (f) => f.severity === "BLOCKING" || f.severity === "CRITICAL",
     );
@@ -660,11 +610,6 @@ const idPart = (s: string) =>
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
 
-/**
- * Queues a `StartRebuild` (ADR-0078). The rebuild check runs first, so a design that cannot be built, changes nothing or
- * breaks a retained-hull limit is rejected here without queuing; the engine stays the only authority when the month is
- * committed.
- */
 export const startRebuildCommandProgram = withSchema(StartRebuildCommandPayloadSchema, (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;

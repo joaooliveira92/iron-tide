@@ -93,8 +93,6 @@ describe("PhaseRegistry", () => {
     );
     expect(PhaseRegistry.getById("resolve_diplomacy")!["order"]).toBe(65);
     expect(PhaseRegistry.getById("battle_generation")!["order"]).toBe(75);
-    // B-5/ADR-0022: weather_generation runs right after opening_validation and
-    // before command_collection (order 5).
     expect(PhaseRegistry.getById("weather_generation")!["order"]).toBe(5);
     expect(PhaseRegistry.getById("weather_generation")!["order"]).toBeGreaterThan(
       PhaseRegistry.getById("opening_validation")!["order"],
@@ -102,8 +100,6 @@ describe("PhaseRegistry", () => {
     expect(PhaseRegistry.getById("weather_generation")!["order"]).toBeLessThan(
       PhaseRegistry.getById("command_collection")!["order"],
     );
-    // Integer order ranks sort strictly ascending across the full pipeline,
-    // control checkpoint included (ADR-0007 golden-repin keeps it honest).
     for (let i = 0; i < PhaseRegistry.nodes.length - 1; i++) {
       expect(PhaseRegistry.nodes[i]!["order"]).toBeLessThan(PhaseRegistry.nodes[i + 1]!["order"]);
     }
@@ -166,12 +162,6 @@ describe("PhaseRegistry", () => {
 
 describe("Canonical phase order (the registry drives the runner)", () => {
   it("places command_collection before ai_planning and ai_procurement", () => {
-    // ADR-0246 records the authoritative runtime pipeline: opening validation,
-    // weather, revenue, command collection, AI planning and procurement, ...
-    // The runner iterates the registry, so the registry's declaration order is
-    // the canonical phase order; a registry entry that orders AI before player
-    // command collection is a discrepancy that would move authoritative
-    // outcomes (the golden pipeline runs commands first).
     const ids = PhaseRegistry.all.map((p) => p["id"]);
     expect(ids).toEqual([
       "opening_validation",
@@ -198,10 +188,6 @@ describe("Canonical phase order (the registry drives the runner)", () => {
   });
 
   it("pins the interruption checkpoint as a non-phase node between carrier operations and battle generation", () => {
-    // The checkpoint is control flow, not a phase (interruption.test.ts also
-    // asserts it never joins the registry). The runner consumes the node
-    // sequence, so its pinned position — after resolve_carrier_operations and
-    // before battle_generation — is part of what byte-identical replay pins.
     const kinds = PhaseRegistry.nodes.map((n) =>
       "kind" in n ? `checkpoint:${n.id}` : `phase:${n.id}`,
     );

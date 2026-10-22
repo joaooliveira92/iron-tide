@@ -11,10 +11,6 @@ const words = (s: string) =>
     .replaceAll("_", " ")
     .toLowerCase();
 
-/**
- * One-line, player-readable description of an edit for the history list. `nameOf` resolves a component id;
- * `format` renders the numbers under the player's presentation preferences (ADR-0218).
- */
 export function describeEdit(
   e: DraftEdit,
   nameOf: (componentId: string) => string,

@@ -1,5 +1,3 @@
-// S-5 02 (#76, spec #73 R3): the additive home area and possession ownership survive the save/load boundary
-// byte-for-byte, and a snapshot that predates them still loads (wire formats stay additive).
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

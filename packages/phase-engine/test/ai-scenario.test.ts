@@ -124,7 +124,6 @@ function runMonths(initial: CampaignSnapshot, executor: MonthExecutor, months: n
     const seed = `ai-scenario-seed-${String(m)}`;
     const collector = new DiagnosticCollector();
     const result = executor.execute(monthSnapshot, [], seed, collector);
-    // Turn must complete without crashing and without hard errors.
     if (!result.success) {
       throw new Error(
         `month ${String(m)} failed: ${collector.all.map((d) => d.message).join("; ")}`,
@@ -147,15 +146,10 @@ describe("AI scenario readiness (24-month smoke)", () => {
     const hash1 = sha256Hex(canonicalSerialize(final1));
     const hash2 = sha256Hex(canonicalSerialize(final2));
 
-    // Replay determinism: a second run from the same seed sequence must be
-    // byte-identical.
     expect(hash1).toBe(hash2);
 
-    // At least one month ticked the turn number forward.
     expect(final1.turnNumber as number).toBe(24);
 
-    // Each AI nation's research priorities took effect (SetResearchPriority
-    // is always legal, so it must have flowed through the lifecycle).
     for (const nationId of ["FRA", "GER"]) {
       const nation = final1.nations.get(nationId)!;
       const highCount = Object.values(nation.research.fieldPriorities).filter(
@@ -164,9 +158,6 @@ describe("AI scenario readiness (24-month smoke)", () => {
       expect(highCount).toBeGreaterThanOrEqual(1);
     }
 
-    // Some AI construction progress happened over 24 months, so the system
-    // was not a no-op: either a command reduced treasury (paidWork > 0) or
-    // appropriation did. The final snapshot differs from the initial one.
     const anyProgress = ["FRA", "GER"].some((nationId) => {
       const nation = final1.nations.get(nationId)!;
       return nation.constructionProjects.some((p) => (p.paidWork as number) > 0);

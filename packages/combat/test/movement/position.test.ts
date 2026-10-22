@@ -26,9 +26,8 @@ function base(): MovementState {
 
 describe("AC-2 position advance", () => {
   it("advances deterministically along heading 0 (east) at constant speed", () => {
-    const s = base(); // 10 knots, heading 0
+    const s = base();
     const pos = advancePosition({ state: s, dtSeconds: 60 });
-    // distance = 10 knots * 60s in µm = 10*514444*60 = 308,666,400 µm
     expect(Number.isInteger(pos[0])).toBe(true);
     expect(pos[1]).toBe(0);
     expect(pos[0]).toBe(10 * 514444 * 60);
@@ -63,9 +62,8 @@ describe("AC-2 position advance", () => {
 
 describe("AC-3 propulsion", () => {
   it("approaches orderedSpeed at bounded thrust acceleration", () => {
-    // ordered 20 knots (20000 bp), current 0, dt 60s, accel 40 bp/s
     const next = resolvePropulsion({ currentSpeed: 0, orderedSpeed: 20_000, dtSeconds: 60 });
-    expect(next).toBe(0 + 40 * 60); // 2400 bp
+    expect(next).toBe(0 + 40 * 60);
     expect(next).toBeLessThan(20_000);
   });
 
@@ -92,7 +90,6 @@ describe("AC-3 propulsion", () => {
 
 describe("AC-4 turning", () => {
   it("rate-limits heading toward orderedHeading", () => {
-    // from 0 to 90 at 1 deg/s over 10s -> 10 deg
     const next = resolveTurning({
       heading: 0,
       orderedHeading: 90,

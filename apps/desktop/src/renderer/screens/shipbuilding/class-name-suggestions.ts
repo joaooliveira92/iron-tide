@@ -6,23 +6,18 @@ import {
   type ShipTypeId,
 } from "@bluewave/ship-design";
 
-/** The part of a naval profile the name lists read. */
 export type NamingProfile = Pick<NationNavalProfile, "namingPolicy">;
 
-/** One ship type's authored names for the designing nation. */
 export interface NameGroup {
   readonly type: string;
-  /** e.g. "B · Battleship". */
   readonly label: string;
   readonly names: readonly string[];
-  /** True for the type of the design being edited. */
   readonly current: boolean;
 }
 
 const labelOf = (type: string) =>
   isShipTypeId(type) ? `${type} · ${SHIP_TYPES[type].name}` : type;
 
-/** The nation's authored name stems for a ship type, in authored order; empty when the profile is silent. */
 export function namePoolFor(
   profile: NamingProfile | undefined,
   shipType: string,
@@ -31,10 +26,6 @@ export function namePoolFor(
   return profile.namingPolicy.stems[shipType] ?? [];
 }
 
-/**
- * Every authored name the nation has, grouped by ship type: the design's own type first, then the others in the
- * registry's order. Types with no names are left out. Pure: the same profile always yields the same groups.
- */
 export function nameGroups(
   profile: NamingProfile | undefined,
   shipType: string,
@@ -54,11 +45,6 @@ export function nameGroups(
 
 const same = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
-/**
- * The next suggested class name from `pool`, starting at `cursor` and skipping the name already in the field, so
- * pressing Suggest always changes it. Deterministic: no randomness, the cursor is the only state. Null when the pool
- * is empty. `cursor` is the position to resume from the next time.
- */
 export function suggestClassName(
   pool: readonly string[],
   current: string,

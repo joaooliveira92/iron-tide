@@ -1,11 +1,7 @@
-// AC-13: Weather-in-minute-advance — resolveWeather runs as a pure engine stage
-// before spotting each minute (step after battle init, before B-2 step 5).
-// Strict no-op when no weather components change (B-2/B-3/B-4 hashes unchanged).
 import { describe, it, expect } from "vite-plus/test";
 import { advanceMinutes } from "../../src/simulation/engine.js";
 import { buildTestState } from "../simulation/advance.test.js";
 
-// Weather context fixture
 import {
   type WeatherEngineContext,
   type BattleWeatherComponents,
@@ -105,26 +101,12 @@ function weatherContext(overrides: Partial<WeatherEngineContext> = {}): WeatherE
     daylightProfile: noonProfile(),
     climateProfile: bareClimate(),
     seasonId: "all",
-    battleStartMinutes: 720, // noon
+    battleStartMinutes: 720,
     battleSeed: "battle-seed-001",
     ...overrides,
   };
 }
 
-// Pinned B-2/B-4 baseline minute hashes (3 minutes, buildTestState, a1 order).
-// The B-5 weather stage MUST be a strict no-op when no weather context is
-// supplied — zero events appended and minute hashes byte-identical to these
-// literals. Any B-2 movement/spotting change, or a stray weather event on the
-// no-context path, breaks this pin (L1).
-// ADR-0007 re-pin (P-1 ticket 08, spawn heading 90/270 -> 0/180 so the spawn
-// convention matches movement's directionBp). Verified heading-only: forcing the old
-// 90/270 headings onto the new spawn reproduces the OLD hashes exactly. OLD -> NEW:
-//   4fec82834e5434557526c71e075388880b627689084cb5866e85a25069fc693d ->
-//   9dad9e7afe95f50db01c5f320d98ae303f621ae8b3198cd026d49b58ccc1002b
-//   8d5a88b1bb8f43c9fe713900f8040c821b1984e11c66f13b25fedd87bac7c3d1 ->
-//   7364212a3a08d71ca5ef2727c11a009011f0be0e30b2d7f3f132bbf39272a17a
-//   eba05c9b89987d26e0e592c82071193c8a098b5018be7b3cd7b795bb9d3b0e49 ->
-//   c2001463797927b9f5dcb9424f472c17d2fe939d3e38282c1cbe667d6d8d8b20
 const BASELINE_MINUTE_HASHES = [
   "9dad9e7afe95f50db01c5f320d98ae303f621ae8b3198cd026d49b58ccc1002b",
   "7364212a3a08d71ca5ef2727c11a009011f0be0e30b2d7f3f132bbf39272a17a",
@@ -141,7 +123,6 @@ describe("AC-13: weather in minute-advance", () => {
       orders: { a1: { orderedHeading: 90, orderedSpeedBp: 20_000 } },
     });
     expect(res.hashes).toEqual([...BASELINE_MINUTE_HASHES]);
-    // And zero weather events are ever emitted on the no-context path.
     for (const r of res.results) {
       const weatherEvents = r.events.filter((e) => e.eventType.startsWith("weather_"));
       expect(weatherEvents).toHaveLength(0);
@@ -158,12 +139,10 @@ describe("AC-13: weather in minute-advance", () => {
       weather: weatherContext(),
     });
 
-    // Check that weather events appear in the results
     for (const r of res.results) {
       const weatherEvents = r.events.filter((e) => e.eventType.startsWith("weather_"));
       expect(weatherEvents.length).toBeGreaterThanOrEqual(1);
 
-      // Weather events have priority 7.5, between collision (7) and spotting (8)
       for (const we of weatherEvents) {
         expect(we.eventPriority).toBe(7.5);
       }
@@ -185,7 +164,6 @@ describe("AC-13: weather in minute-advance", () => {
     const spottingIdx = events.findIndex((e) => e.eventType === "resolve_sensors_spotting");
     expect(weatherIdx).toBeGreaterThan(-1);
     expect(spottingIdx).toBeGreaterThan(-1);
-    // Weather must sort before spotting
     expect(weatherIdx).toBeLessThan(spottingIdx);
   });
 
@@ -205,16 +183,11 @@ describe("AC-13: weather in minute-advance", () => {
       orders: { a1: { orderedHeading: 90, orderedSpeedBp: 20_000 } },
     });
 
-    // Without weather: zero weather events
     const noWeatherEvents = withoutWeather.results[0]!.events.filter((e) =>
       e.eventType.startsWith("weather_"),
     );
     expect(noWeatherEvents).toHaveLength(0);
 
-    // Minute hashes differ because weather adds events (AC-13 strict no-op
-    // means: when weather is absent, no weather events appended — the hash
-    // changes only when weather IS wired). So with/without weather have
-    // different hashes; without weather = B-2/B-3/B-4 baseline.
     expect(withWeather.results[0]!.events.length).toBeGreaterThan(
       withoutWeather.results[0]!.events.length,
     );

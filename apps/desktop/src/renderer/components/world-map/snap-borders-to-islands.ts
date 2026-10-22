@@ -1,16 +1,6 @@
-/**
- * The 1880 borders are far coarser than the coastline, so on a small landmass their straight edges
- * cut across the real island: the tint stops short of the coast and a border line runs through the
- * land. For island-sized landmasses we drop the coarse polygon and colour the real landmass whole.
- * Continents keep the coarse polygons (clipped to the land by the canvas), since a nation really does
- * own only part of those.
- */
-
 import type { FlatPolygon } from "../../lib/simplify-geometry.js";
 
-/** A landmass counts as an island when both its sides are under this many degrees. */
 const ISLAND_SPAN_DEGREES = 15;
-/** Share of each other's bounding box an island and a border polygon must cover for the polygon to be replaced. */
 const OWNERSHIP_SHARE = 0.6;
 
 interface Box {
@@ -25,7 +15,6 @@ function boxOf(polygon: FlatPolygon): Box {
   let maxX = -Infinity;
   let minY = Infinity;
   let maxY = -Infinity;
-  // The outer ring bounds the rest.
   const outer = polygon[0] ?? [];
   for (let k = 0; k < outer.length; k += 2) {
     const x = outer[k] as number;
@@ -46,7 +35,6 @@ function area(box: Box): number {
   return Math.max(0, box.maxX - box.minX) * Math.max(0, box.maxY - box.minY);
 }
 
-/** How well two boxes coincide: the smaller of each one's share covered by the other. */
 function mutualShare(a: Box, b: Box): number {
   return Math.min(overlapShare(a, b), overlapShare(b, a));
 }
@@ -63,10 +51,6 @@ export interface SnappedBorders {
   readonly polygons: readonly FlatPolygon[];
 }
 
-/**
- * Per set: the coarse polygons that are not replaced, plus the whole landmasses of the islands the
- * set owns. Set order is the tie-break when two sets cover an island equally.
- */
 export function snapBordersToIslands<T extends SnappedBorders>(
   sets: readonly T[],
   landmasses: readonly FlatPolygon[],
@@ -82,7 +66,6 @@ export function snapBordersToIslands<T extends SnappedBorders>(
     let owner = -1;
     boxes.forEach((setBoxes, s) => {
       for (const coarse of setBoxes) {
-        // A continental polygon is never replaced: it owns the islands inside its box only loosely.
         if (!isIslandSized(coarse)) continue;
         const share = mutualShare(box, coarse);
         if (share > best) {

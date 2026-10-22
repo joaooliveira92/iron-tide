@@ -1,23 +1,8 @@
-// DESIGN-35 §3 mine sources (INC-2). A laying action references exactly one
-// source kind + source id + declared inventory (or generated canonical scenario
-// allocation) + ordered target belligerents + area + campaign month + laying
-// policy. A source without required technology, inventory, access, control, or
-// mission fails with MINE_LAYING_SOURCE_INELIGIBLE — never a silent default.
-// Every source kind is a canonical §3 MineSourceKind (all six already shipped
-// in constants.ts); the eligibility predicate pulls the mine type's technology
-// prerequisites + eligible source kinds from mineTypeDefinitionById, so an
-// unknown mine type id still fails closed with INVALID_MINE_TYPE_DEFINITION.
-// Pure/deterministic: no I/O/clock/random.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { MINE_SOURCE_KINDS, type MineSourceKind } from "./constants.js";
 import { mineTypeDefinitionById, type MineTypeDefinition } from "./model.js";
 import { MINE_LAYING_SOURCE_INELIGIBLE } from "./reasonCodes.js";
 
-// Authoritative laying-inventory reference for an action: either the source
-// declares an exact mine count drawn from its own availableMineCount, or a
-// canonical scenario allocation (scenario-generated stock; authoritative on its
-// own, DESIGN-35 §3 "exact mine inventory or generated canonical scenario
-// allocation").
 export type MineLayingInventory =
   | { kind: "DECLARED"; quantity: SafeInt }
   | { kind: "SCENARIO_ALLOCATION"; quantity: SafeInt; allocationId: string };
@@ -26,42 +11,30 @@ export interface MineLayingAction {
   sourceKind: MineSourceKind;
   sourceId: string;
   inventory: MineLayingInventory;
-  /** Ordered target belligerent ids; MUST be non-empty (§3). */
   targetBelligerentIds: readonly string[];
   areaId: string;
-  /** Campaign month as an integer (SafeInt branded). */
   campaignMonth: SafeInt;
   layingPolicyId: string;
 }
 
-// DESIGN-35 §3 source record: the five eligibility axes a laying source must
-// satisfy (technology, inventory, access, control, mission). Inventory is the
-// exact on-hand mine count (declared-laying axis); scenario kinds carry
-// authoritative generated allocations instead (see mineLayingSourceEligible).
 export interface MineSource {
   sourceKind: MineSourceKind;
   sourceId: string;
   layingParticipantId: string;
-  /** Declared technology readiness (true when the source is tech-capable). */
   technologyReadiness: boolean;
-  /** Technology ids the source possesses (judged against the mine type's technologyPrerequisiteIds). */
   availableTechnologyIds: readonly string[];
-  /** Exact on-hand mine inventory (declared-laying axis). */
   availableMineCount: SafeInt;
   hasAccess: boolean;
   hasControl: boolean;
   hasMission: boolean;
 }
 
-// Normalized result of a successful §3 eligibility check; carries the exact
-// allocated quantity (declared or scenario) the laying layer must consume.
 export interface EligibleMineLayingSource {
   sourceKind: MineSourceKind;
   sourceId: string;
   layingParticipantId: string;
   mineTypeId: string;
   mineTypeDefinition: MineTypeDefinition;
-  /** Inventory quantity to be laid + consumed (declared or scenario allocation). */
   allocatedQuantity: SafeInt;
   allocationKind: MineLayingInventory["kind"];
   targetBelligerentIds: readonly string[];
@@ -91,16 +64,6 @@ function isPositiveSafeInt(v: unknown): v is SafeInt {
   return SafeInt.isSafeInt(v as number) && (v as number) > 0;
 }
 
-// AC-3: §3 eligibility predicate. Every axis must pass; the first failing axis
-// throws MINE_LAYING_SOURCE_INELIGIBLE (field-tagged, never a silent default).
-// - sourceKind: the action's kind must match the source and the mine type's
-//   eligibleLayingSourceKinds (fail-closed via mineTypeDefinitionById).
-// - technology: source declared ready AND holds every technologyPrerequisiteIds.
-// - inventory: declared quantity must be covered by availableMineCount; a
-//   scenario allocation must be present (non-empty allocationId) and positive
-//   (canonical generated stock — not drawn from availableMineCount).
-// - access / control / mission: booleans on the source record.
-// Returns the normalized EligibleMineLayingSource when every axis passes.
 export function mineLayingSourceEligible(
   source: MineSource,
   action: MineLayingAction,
@@ -116,7 +79,7 @@ export function mineLayingSourceEligible(
     );
   }
 
-  const mineType = mineTypeDefinitionById(mineTypeId); // fails closed on unknown id
+  const mineType = mineTypeDefinitionById(mineTypeId);
   if (!(mineType.eligibleLayingSourceKinds as readonly string[]).includes(action.sourceKind)) {
     ineligible(
       source,
@@ -234,6 +197,4 @@ export function mineLayingSourceEligible(
   };
 }
 
-// Convenience: the canonical §3 source kinds (closed vocabulary from
-// constants.ts), useful to callers iterating eligibility across kinds.
 export const CANONICAL_MINE_SOURCE_KINDS: readonly MineSourceKind[] = MINE_SOURCE_KINDS;

@@ -151,7 +151,6 @@ describe("useCurrencyDisplayMode", () => {
     await waitFor(() => expect(result.current.effective).toBe("nationalHistorical"));
     expect(result.current.requested).toBe("nationalHistorical");
     expect(result.current.fallbackReason).toBeUndefined();
-    // The fallback never rewrote the request, and the restoration wrote nothing.
     expect(stub.writes).toHaveLength(0);
     expect(stub.current().app.currencyDisplayMode).toBe("nationalHistorical");
   });

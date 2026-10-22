@@ -113,7 +113,6 @@ describe("buildDivisionScreenView", () => {
       "HMS Alexandra",
       "HMS Dreadnought",
     ]);
-    // Ships already in a division are not offered again.
     expect(view.unassignedShips).toEqual([]);
   });
 

@@ -7,19 +7,12 @@ import { NumberField, SelectField } from "../../../components/design-workspace/f
 import type { Delta } from "../../../components/design-workspace/optionDelta.js";
 import type { MachineryModel } from "../machinery-view.js";
 
-/** The starting design's targets, offered as a reset for a field the player has moved away from. */
 export interface MachineryRecommended {
   readonly targetSpeedMilliKnots: number;
   readonly cruiseSpeedMilliKnots: number;
   readonly rangeNm: number;
 }
 
-/**
- * The Machinery section, outcomes first: the editable performance targets and propulsion configuration on one
- * side, the calculated results they produce on the other. No value is both an input and an output. Fuel bunkerage
- * — a supporting detail rather than a target — sits behind an Advanced disclosure, and hovering a plant previews
- * what choosing it would change before it is committed.
- */
 export function MachineryEditor({
   model,
   edit,
@@ -29,9 +22,7 @@ export function MachineryEditor({
 }: {
   readonly model: MachineryModel;
   readonly edit: (e: DraftEdit) => void;
-  /** The inline message for a setting, filed as `<edit kind>:<setting>` (see `editField`), while it breaks the design. */
   readonly errorFor?: (field: string) => string | undefined;
-  /** Per plant, what choosing it would change; absent where no preview is available. */
   readonly previewDeltas?: ReadonlyMap<string, readonly Delta[]>;
   readonly recommended?: MachineryRecommended;
 }) {

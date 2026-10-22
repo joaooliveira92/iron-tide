@@ -49,10 +49,8 @@ describe("a choice that breaks the design", () => {
     );
     expect(length().getAttribute("aria-invalid")).toBe("true");
     expect(screen.getAllByRole("alert").length).toBeGreaterThan(0);
-    // Still broken by the same rule: the player has been told, so no second dialog.
     commitLength("121");
     expect(screen.queryByRole("alertdialog")).toBeNull();
-    // Fixing it clears the marker.
     commitLength(original);
     expect(length().getAttribute("aria-invalid")).toBeNull();
   });

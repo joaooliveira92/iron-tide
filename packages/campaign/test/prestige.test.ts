@@ -14,8 +14,6 @@ import {
   type PrestigeValueSet,
 } from "../src/prestige.js";
 
-// Test-only fixture ruleset. These numbers exist to exercise the rule layer; they are not
-// prestige values and must never appear in production content (asserted below).
 const FIXTURE: Record<string, unknown> = {
   lowerBound: 0,
   upperBound: 100,
@@ -42,7 +40,6 @@ describe("the closed vocabularies", () => {
       "BATTLE_WON",
       "DECLINED_BATTLE",
     ]);
-    // DECLINED_BATTLE is authored by the battle-offer section, never required of a value set (ADR-0261).
     expect([...REQUIRED_PRESTIGE_REASON_CODES]).toEqual([
       "UNPAID_FUNDS",
       "BATTLE_LOST",
@@ -123,7 +120,6 @@ describe("decodePrestigeValueSet", () => {
       const decoded = decodePrestigeValueSet({ ...FIXTURE, [field]: value });
       expect(decoded.ok, `${field}=${String(value)}`).toBe(false);
     }
-    // The bounds must be ordered, and the threshold must sit between them.
     expect(decodePrestigeValueSet({ ...FIXTURE, lowerBound: 100, upperBound: 100 }).ok).toBe(false);
     expect(decodePrestigeValueSet({ ...FIXTURE, lowerBound: 20, sackingThreshold: 10 }).ok).toBe(
       false,
@@ -174,16 +170,13 @@ describe("applyPrestigeRule: proportional loss", () => {
   });
 
   it("rounds a fractional loss up, so a loss is never rounded away", () => {
-    // 5% of 25 is 1.25, which rounds up to 2.
     const result = applyPrestigeRule(25, "UNPAID_FUNDS", set);
     expect(result.ok && result.value).toMatchObject({ before: 25, after: 23, delta: -2 });
-    // 5% of 1 is 0.05, which still costs 1.
     const tiny = applyPrestigeRule(1, "UNPAID_FUNDS", set);
     expect(tiny.ok && tiny.value).toMatchObject({ before: 1, after: 0, delta: -1 });
   });
 
   it("is exact at the .5 and whole-number boundaries", () => {
-    // 10% of 15 is exactly 1.5 -> 2; 10% of 10 is exactly 1 -> 1; 10% of 11 is 1.1 -> 2.
     const cases: [number, number][] = [
       [15, 2],
       [10, 1],
@@ -200,7 +193,6 @@ describe("applyPrestigeRule: proportional loss", () => {
   it("clamps to the lower bound and reports the delta actually applied", () => {
     const floorSet = fixtureSet({ lowerBound: 4, sackingThreshold: 10 });
     const result = applyPrestigeRule(5, "BATTLE_LOST", floorSet);
-    // 10% of 5 rounds up to 1, so 5 -> 4 is exactly at the floor.
     expect(result.ok && result.value).toMatchObject({ after: 4, delta: -1 });
     const heavy = fixtureSet({
       lowerBound: 4,

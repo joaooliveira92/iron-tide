@@ -1,4 +1,3 @@
-// AC-14/15 (INC-5): Auto-equip eligibility + deterministic selection.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {

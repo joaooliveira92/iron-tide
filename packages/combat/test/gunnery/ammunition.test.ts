@@ -60,8 +60,6 @@ describe("AC-7 atomic ammunition reserve + consume (DESIGN-39 §28)", () => {
 
   it("is atomic: never splits a salvo across types (fails if no single type holds it)", () => {
     const state = batteryState(ammo());
-    // ARMOR_PIERCING (120), COMMON (80), HIGH_EXPLOSIVE (40) are each insufficient
-    // for a 200-round salvo; atomic means it must fail rather than split across types.
     let err: BluewaveError | undefined;
     try {
       reserveAndConsumeAmmunition(state.ammunition, 200, "ARMOR_PIERCING");
@@ -80,7 +78,6 @@ describe("AC-7 atomic ammunition reserve + consume (DESIGN-39 §28)", () => {
       4,
       "ARMOR_PIERCING",
     );
-    // preferred ARMOR_PIERCING (2 < 4) insufficient -> picks COMMON (80 >= 4).
     expect(account.type).toBe("COMMON");
     expect(account.before).toBe(80);
     expect(account.after).toBe(76);
@@ -93,7 +90,6 @@ describe("AC-7 atomic ammunition reserve + consume (DESIGN-39 §28)", () => {
       "ARMOR_PIERCING",
       "HIGH_EXPLOSIVE",
     ]);
-    // COMMON is not permitted; with AP insufficient it must fall through to HE.
     expect(account.type).toBe("HIGH_EXPLOSIVE");
     expect(account.after).toBe(36);
   });
@@ -108,7 +104,6 @@ describe("AC-7 atomic ammunition reserve + consume (DESIGN-39 §28)", () => {
     }
     expect(err).toBeDefined();
     expect(err!.message).toBe(GUNNERY_AMMUNITION_UNAVAILABLE);
-    // Atomic: the original record must remain untouched (never partially consumed).
     expect(state.ammunition).toEqual(ammo({ ARMOR_PIERCING: 3, COMMON: 2, HIGH_EXPLOSIVE: 1 }));
   });
 
@@ -131,7 +126,6 @@ describe("AC-7 atomic ammunition reserve + consume (DESIGN-39 §28)", () => {
       totalAfter += ammunition[t];
       totalBefore += before[t];
     }
-    // exactly `count` rounds were consumed, no ammunition fabricated anywhere.
     expect(totalAfter).toBe(totalBefore - account.count);
     for (const t of ["ARMOR_PIERCING", "COMMON", "HIGH_EXPLOSIVE"] as AmmunitionType[]) {
       expect(ammunition[t]).toBeLessThanOrEqual(before[t]);

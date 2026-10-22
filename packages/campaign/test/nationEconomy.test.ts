@@ -6,7 +6,6 @@ import { MAX_ECONOMIC_BASE, monthlyRevenue } from "../src/economy.js";
 import { buildNationStates } from "../src/nationCompilation.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
-// Economy spec #138 slice 2: the compiler derives the economic base and seeds the standing research budget.
 function pack(ids: string[]): ContentPack {
   const nations = ids.map((id) => ({
     id,
@@ -54,14 +53,14 @@ describe("nation economy start state", () => {
     expect(gb.navalAppropriationRateBp).toBe(2000);
     expect(gb.research.researchBudget).toBe(5);
     expect(gb.research.standingResearchBudget).toBe(5);
-    expect(gb.research.annualResearchAllocation).toBe(65); // the authored annual figure is kept for display
+    expect(gb.research.annualResearchAllocation).toBe(65);
     expect(codes(collector, "error")).toEqual([]);
   });
 
   it("fails the pack for a missing economy row", () => {
     const { collector } = compile(["gb"], []);
     expect(codes(collector, "error")).toContain("ECONOMY_ROW_MISSING");
-    expect(codes(collector, "warning")).toEqual([]); // no cascade on top of the real error
+    expect(codes(collector, "warning")).toEqual([]);
   });
 
   it("fails the pack for non-positive income or negative values", () => {
@@ -86,7 +85,6 @@ describe("nation economy start state", () => {
   });
 
   describe("economic base overflow (ECONOMY_BASE_OVERFLOW)", () => {
-    // The largest income whose derived base (60 x income at the 2000 bp start rate) stays inside MAX_ECONOMIC_BASE.
     const lastFitting = Math.floor(MAX_ECONOMIC_BASE / 60);
     const overflowDiagnostics = (income: number) => {
       const { nations, collector } = compile(
@@ -101,7 +99,7 @@ describe("nation economy start state", () => {
         const { nations, found } = overflowDiagnostics(income);
         expect(found).toEqual([]);
         const base = nations!.get("a")!.baseResources as number;
-        expect(base).toBe(60 * income); // independent of deriveEconomicBase
+        expect(base).toBe(60 * income);
         expect(base <= MAX_ECONOMIC_BASE).toBe(true);
         expect(() => monthlyRevenue(nations!.get("a")!.baseResources, SafeInt(5000))).not.toThrow();
       }
@@ -120,7 +118,6 @@ describe("nation economy start state", () => {
         stage: "campaign-compile",
         entityId: "a",
       });
-      // The overflowing nation compiles to a zero base instead of an unsafe one, so nothing downstream sees a huge value.
       expect(result.nations!.get("a")!.baseResources).toBe(0);
     });
 
@@ -147,7 +144,6 @@ describe("nation economy start state", () => {
   });
 
   it("fails authored research above the 12% share of monthly revenue", () => {
-    // income 100 -> cap 12; annual 200 -> monthly 16
     const { collector } = compile(
       ["a", "b"],
       [
@@ -185,15 +181,12 @@ describe("nation economy start state", () => {
   });
 });
 
-// Spec #138 #142: one fixture per diagnostic code the compiler owns for the economy, each asserting severity and that the
-// pack outcome follows it (an error fails the pack, a warning does not), with no cascade from unrelated codes.
 describe("economy diagnostic fixtures", () => {
   const fixtures: {
     code: string;
     severity: "error" | "warning";
     economies: unknown[];
     ids?: string[];
-    /** Codes that necessarily accompany this one (a uniform deficit is, by definition, every nation's structural deficit). */
     with?: string[];
   }[] = [
     { code: "ECONOMY_ROW_MISSING", severity: "error", economies: [] },
@@ -237,7 +230,6 @@ describe("economy diagnostic fixtures", () => {
       expect(emitted.length).toBeGreaterThan(0);
       expect(emitted.every((d) => d.severity === f.severity)).toBe(true);
       expect(collector.hasErrors).toBe(f.severity === "error");
-      // The fixture triggers only its own economy code: nothing else in the economy family cascades from it.
       const family = collector.all
         .map((d) => d.code as string)
         .filter((c) => /^(ECONOMY_|STRUCTURAL_|RESEARCH_)/.test(c));
@@ -262,13 +254,10 @@ describe("economy diagnostic fixtures", () => {
         codes: collector.all.map((d) => `${d.code}:${d.severity}`).sort(),
       };
     };
-    // "zz-first"/"aa-last" invert the sort order and use names no content ever authored.
     expect(outcome((id) => (id === "a" ? "zz-first" : "aa-last"))).toEqual(outcome((id) => id));
   });
 });
 
-// Spec #138 / #143: the standing monthly research the compiler seeds is floor(annual / 12) and may never exceed the authored
-// share or the 12% cap. Enumerated over every income 1..120 and every annual allocation 0..1500 (180,000 compiled nations).
 describe("standing research share and cap (compiler)", () => {
   const seeded = (income: number, annual: number) => {
     const { nations, collector } = compile(
@@ -282,7 +271,7 @@ describe("standing research share and cap (compiler)", () => {
   it("seeds at most the authored monthly share and the cap, and flags exactly the allocations above the cap", () => {
     const failures: string[] = [];
     for (let income = 1; income <= 120; income += 1) {
-      const cap = Math.floor((income * 12) / 100); // revenue at the start rate is the income
+      const cap = Math.floor((income * 12) / 100);
       for (let annual = 0; annual <= 1500; annual += 1) {
         const { nation, collector } = seeded(income, annual);
         const standing = nation.research.standingResearchBudget as number;
@@ -305,15 +294,12 @@ describe("standing research share and cap (compiler)", () => {
   });
 
   it("is exact at the cap: equal passes, one allocation step above fails; zero income share and zero cap behave", () => {
-    // income 100 -> cap 12: annual 144..155 pays 12 a month (at the cap), annual 156 pays 13 (above it).
     expect(seeded(100, 144).nation.research.standingResearchBudget).toBe(12);
     expect(seeded(100, 155).nation.research.standingResearchBudget).toBe(12);
     expect(seeded(100, 155).collector.hasErrors).toBe(false);
     expect(seeded(100, 156).collector.all.map((d) => d.code)).toContain("RESEARCH_ABOVE_CAP");
-    // A zero share is always inside any cap, including a zero cap (income 8 -> cap 0).
     expect(seeded(8, 0).collector.hasErrors).toBe(false);
     expect(seeded(8, 0).nation.research.standingResearchBudget).toBe(0);
-    // Below one treasury unit a month the allocation is dropped and reported as info, not an error.
     const tiny = seeded(8, 11);
     expect(tiny.nation.research.standingResearchBudget).toBe(0);
     expect(tiny.collector.hasErrors).toBe(false);

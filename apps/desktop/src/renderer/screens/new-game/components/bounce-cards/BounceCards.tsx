@@ -13,13 +13,7 @@ export interface BounceCardsProps {
   images?: ReadonlyArray<string | BounceCardImage>;
   containerWidth?: number;
   containerHeight?: number;
-  /** Card width in CSS pixels. */
   cardSize?: number;
-  /**
-   * Card width-to-height ratio (`width / height`). Defaults to `1` (square).
-   * Set it to the artwork's own ratio (e.g. `1.5` for 3:2 paintings) so
-   * `object-fit: cover` has nothing left to crop.
-   */
   cardAspect?: number;
   spread?: number;
   rotation?: number;
@@ -34,34 +28,11 @@ export interface BounceCardsProps {
   borderColor?: string;
   radius?: number;
   shadow?: boolean;
-  /** Index of the selected card; adds `aria-pressed` and a selected outline. */
   activeIndex?: number;
-  /**
-   * Bring the selected card to the front of the deck when it is not being
-   * hovered: the active card takes the top layer and a raised, straightened
-   * transform so it reads as sitting on top of its siblings. Off by default so
-   * decks that do not want the selected card to lead keep the even fan.
-   */
   activeOnTop?: boolean;
-  /**
-   * Id of the element describing the selected card (e.g. a caption beside the
-   * deck). Applied as `aria-describedby` to the selected card only, so a screen
-   * reader announces the description alongside the card's name.
-   */
   activeDescriptionId?: string;
-  /**
-   * Optional body painted inside each card, above its image. Kept
-   * `pointer-events: none` by `.bounce-cards__overlay`, so hover/click still
-   * reach the card itself. Use it to give every option an identity shelf
-   * without a separate legend.
-   */
   cardOverlays?: ReadonlyArray<ReactNode>;
   onCardClick?: (index: number) => void;
-  /**
-   * Fires whenever the hovered/focused card changes, with `null` when the
-   * pointer leaves the deck. Lets a parent preview the option under the
-   * cursor before it is clicked.
-   */
   onCardHover?: (index: number | null) => void;
   transformStyles?: ReadonlyArray<string>;
   className?: string;

@@ -7,7 +7,6 @@ import { shipTypeChoices } from "../shipTypes.js";
 import { Panel } from "./Panel.js";
 import type { Edit } from "./types.js";
 
-/** The accommodation standards, each with the manual's name for it (RTW3 p.42: cramped, normal, spacious). */
 const ACCOMMODATION_OPTIONS = [
   {
     value: "SPARTAN",
@@ -18,7 +17,6 @@ const ACCOMMODATION_OPTIONS = [
   { value: "GENEROUS", label: "Generous", description: "Spacious: most crew space, heaviest." },
 ] as const;
 
-/** The design brief: the ship type the design must qualify as, and the speed and range it is judged against. */
 export function BriefPanel({
   draft,
   view,
@@ -29,9 +27,7 @@ export function BriefPanel({
   readonly draft: DesignDraft;
   readonly view: WorkshopView;
   readonly edit: Edit;
-  /** The inline message for a setting, filed as `<edit kind>:<setting>` (see `editField`), while it breaks the design. */
   readonly errorFor?: (field: string) => string | undefined;
-  /** The rules context of the board's month, for which ship types are offered. */
   readonly ctx: ShipContext;
 }) {
   const r = draft.requirement;
@@ -39,9 +35,7 @@ export function BriefPanel({
     const Icon = shipTypeIcon(t);
     return <Icon className="h-4 w-4" aria-hidden="true" />;
   };
-  // The finding next to an unavailable type explains why it cannot be built (see `shipTypeChoices`).
   const options = shipTypeChoices(ctx, r.category).map((c) => ({ ...c, icon: icon(c.value) }));
-  // Findings about the brief itself (type unavailable, classification) sit next to the control that fixes them.
   const briefFindings = [
     ...view.findingsBySeverity.BLOCKING,
     ...view.findingsBySeverity.CRITICAL,

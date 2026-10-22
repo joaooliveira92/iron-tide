@@ -6,21 +6,15 @@ export type DefectSeverity = "MINOR" | "MAJOR" | "CRITICAL";
 export type TrialOutcome = "ACCEPTED" | "ACCEPTED_WITH_DEFICIENCIES" | "REJECTED_REWORK";
 
 export interface TrialsBalance {
-  /** Base maximum speed shortfall at trials, bp of design top speed. */
   readonly baseSpeedShortfallBp: number;
-  /** Extra shortfall ceiling per bp of plant unreliability. */
   readonly unreliabilityToShortfallBp: number;
-  /** Extra shortfall ceiling per bp the ship is over its design target. */
   readonly overweightToShortfallBp: number;
   readonly firstOfClassShortfallBp: number;
-  /** Shortfall vs the REQUIRED speed tolerated for plain acceptance / for acceptance with deficiencies, bp. */
   readonly acceptToleranceBp: number;
   readonly deficiencyToleranceBp: number;
-  /** Chance (bp, out of 10_000) of any defect found at trials = base + unreliability * factor. */
   readonly baseDefectChanceBp: number;
   readonly unreliabilityToDefectChanceBp: number;
   readonly firstOfClassDefectChanceBp: number;
-  /** Cumulative severity thresholds out of 10_000: [minorUpTo, majorUpTo]; the rest is CRITICAL. */
   readonly severityCumulativeBp: readonly [number, number];
 }
 
@@ -45,13 +39,8 @@ export interface TrialsResult {
   readonly reasonCodes: readonly string[];
 }
 
-/** Stream id every trials draw uses (spec §15.5). */
 export const trialsStreamId = (projectId: string) => `shipbuilding.trials:${projectId}`;
 
-/**
- * Sea trials: the only randomness in ship building. Validation (`compileDesign`) never calls this and takes no RNG.
- * Every draw is appended to the ledger with stream, entity, phase, input hash, draw, outcome and reason code.
- */
 export function runTrials(
   c: CompiledDesign,
   i: TrialsInput,

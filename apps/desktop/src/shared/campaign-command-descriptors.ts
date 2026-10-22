@@ -159,27 +159,6 @@ import type {
   SetResearchPriorityCommandPayload,
 } from "./research-contract.js";
 
-/*
- * The command-descriptor table is the single runtime source of truth for the
- * campaign command surface. Each row pairs a command's payload schema (yielding
- * both the static request type and the runtime IPC decoder) with its result
- * type; the name set, the main-process program registry and the completeness
- * check are all derived from its keys. Adding a command is one row here plus its
- * handler in `main/campaignBridge.ts`.
- *
- * {@link CampaignCommandMap} is the renderer-facing type map. The `satisfies`
- * below pins every row to that map, so a row whose payload schema decodes to the
- * wrong shape, or a map entry with no row, fails to compile — the two cannot
- * drift. The map stays an explicit interface (rather than a mapped type over the
- * table) because TypeScript cannot resolve a conditional mapped type indexed by
- * a generic parameter, which the bridge client's generic `execute` needs.
- *
- * The handler program lives in main because it runs in the Electron main
- * process; this module imports no main-process code so the renderer can derive
- * its types from it without bundling the IPC implementation.
- */
-
-/** Marks a command that takes no payload. */
 export const NO_PAYLOAD = Symbol("campaign-command-no-payload");
 
 export interface ResultType<R> {
@@ -208,11 +187,6 @@ export function command(
   return { payload, result };
 }
 
-/**
- * The command-descriptor registry: one entry per command, mapping each name to
- * its payload and result types. Kept in sync with
- * {@link campaignCommandShapes} by a `satisfies` check.
- */
 export interface CampaignCommandMap {
   listNewGameOptions: { readonly payload: undefined; readonly result: NewGameOptions };
   compileCampaign: {
@@ -428,11 +402,6 @@ export interface CampaignCommandMap {
   readPendingTurn: { readonly payload: string; readonly result: ReadPendingTurnResult };
 }
 
-/**
- * Request payloads for the turn-interruption surface. The schemas in
- * `campaignCommandSchemas.ts` decode to these shapes and the `satisfies` below
- * pins them together.
- */
 export interface AnswerDecisionPayload {
   readonly sessionId: string;
   readonly expectedRevision: number;
@@ -455,7 +424,6 @@ export interface SubmitBattleResultPayload {
   readonly damageReport: Readonly<Record<string, number>>;
 }
 
-/** The player's answer to a battle offer (T-1 03, T-1 04): accept, delegate, or decline. */
 export interface SubmitOfferResponsePayload {
   readonly sessionId: string;
   readonly expectedRevision: number;

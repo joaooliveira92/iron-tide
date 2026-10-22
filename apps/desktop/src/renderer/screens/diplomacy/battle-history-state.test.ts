@@ -28,7 +28,6 @@ describe("summarizeBattleHistory", () => {
       entry({ outcomeForPlayer: "won", playerLossCount: 1, enemyLossCount: 3 }),
       entry({ outcomeForPlayer: "lost", playerLossCount: 4, enemyLossCount: 1 }),
       entry({ outcomeForPlayer: "undecided", playerLossCount: 0, enemyLossCount: 0 }),
-      // A third-party battle must not count towards anyone's totals.
       entry({ involvesPlayer: false, outcomeForPlayer: "not-involved", enemyLossCount: 9 }),
     ]);
     expect(summary).toEqual({

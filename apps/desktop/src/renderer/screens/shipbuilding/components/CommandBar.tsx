@@ -25,22 +25,16 @@ import { SHORTCUT_MOD, SHORTCUT_SHIFT } from "../../../components/design-workspa
 import { cn } from "../../../lib/utils.js";
 
 export interface DesignStatus {
-  /** "Can be submitted" or "Cannot be built". */
   readonly label: string;
   readonly tone: "ok" | "warn" | "bad";
-  /** e.g. "1 blocking · 2 warnings". */
   readonly detail: string;
 }
 
 export interface CommandBarProps {
-  /** The class the design will be built as; it names the design on submission. */
   readonly shipClassName: string;
   readonly onShipClassName: (name: string) => void;
-  /** Lets the host move focus to the class name, e.g. when finishing a design that has none. */
   readonly nameInputRef?: Ref<HTMLInputElement>;
-  /** Opens the "Start from a reference design" browser, which is how a design's ship type is chosen. */
   readonly onStartFromReference: () => void;
-  /** The design's current ship type, kept visible on the reference button: its code, full name and icon. */
   readonly shipType: string;
   readonly shipTypeLabel: string;
   readonly shipTypeIcon: ReactNode;
@@ -48,13 +42,10 @@ export interface CommandBarProps {
   readonly canRedo: boolean;
   readonly onUndo: () => void;
   readonly onRedo: () => void;
-  /** The "compared with the starting design" readout, shown in a popover. */
   readonly compare: ReactNode;
-  /** True when the design is autosaved (inside a campaign); the bar then says so instead of offering a save button. */
   readonly autosaved: boolean;
   readonly onValidate: () => void;
   readonly onFinish: () => void;
-  /** Whole-design actions kept out of the way, in labelled groups: import or export, history, reset. */
   readonly overflow: readonly {
     readonly label: string;
     readonly items: readonly {
@@ -65,10 +56,6 @@ export interface CommandBarProps {
   }[];
 }
 
-/**
- * The top bar answers "which design am I editing, and what can I do with the whole design?". It holds design-level
- * commands only: no ordinary ship parameter lives here.
- */
 export function CommandBar({
   shipClassName,
   onShipClassName,

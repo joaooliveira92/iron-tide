@@ -1,10 +1,3 @@
-// AC-21 — mine reason-code catalog set-equality (INC-8 partition).
-// Per spec §1.4 and DESIGN-35 §30, the mine module ships EXACTLY 16 codes:
-//   14 §30 direct/value codes + the documented NON-§30 in-slice marker
-//   MINE_STRIKE_RESOLUTION_DEFERRED + the §30 fail-closed invariant
-//   MINE_WARFARE_INVARIANT_FAILED (formalized into the shipped map by INC-8).
-// The set-equality check prevents silent addition: any new code requires an
-// explicit partition change + C-2 ADR record.
 import { describe, expect, it } from "vite-plus/test";
 import { REASON_CODES } from "../../src/reasonCodes.js";
 import {
@@ -27,7 +20,6 @@ import {
   MINE_SWEEP_RESISTANCE_MISSING,
 } from "../../src/mines/index.js";
 
-// DESIGN-35 §30's authoritative list of the subsystem's 18 required codes.
 const DESIGN_30_CODES: readonly string[] = [
   "INVALID_MINE_TYPE_DEFINITION",
   "INVALID_MINE_PRESSURE_STATE",
@@ -49,7 +41,6 @@ const DESIGN_30_CODES: readonly string[] = [
   "MINE_WARFARE_INVARIANT_FAILED",
 ];
 
-// The exact shipped 16-code set (INC-1..INC-8) — sorted for the deep equality.
 const SHIPPED_16: readonly string[] = [
   "CONTROLLED_MINE_TRANSFER_DISPOSITION_MISSING",
   "DUAL_EQUIPMENT_MODE_MISSING",
@@ -84,10 +75,8 @@ describe("AC-21: mine reason-code catalog set-equality (INC-8 partition vs DESIG
       "MINE_BATTLE_HAZARD_GENERATED",
       "MINE_STRIKE_OCCURRED",
     ]);
-    // the in-slice §30 partition: 15 shipped §30 codes (14 direct/value + INVARIANT)
     const shippedSection30 = DESIGN_30_CODES.filter((c) => shipped.has(c));
     expect(shippedSection30.length).toBe(15);
-    // the shipped set's ONLY non-§30 member is the documented marker
     const nonSection30 = [...shipped].filter((c) => !DESIGN_30_CODES.includes(c));
     expect(nonSection30).toEqual([MINE_STRIKE_RESOLUTION_DEFERRED]);
   });

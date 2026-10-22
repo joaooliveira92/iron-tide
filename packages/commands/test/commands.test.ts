@@ -213,7 +213,7 @@ describe("CommandLifecycle SetResearchPriority", () => {
 
   it("rejects a command with zero HIGH fields with RESEARCH_PRIORITY_CONSTRAINT_VIOLATED", () => {
     const priorities = validPriorities();
-    priorities["HULL_CONSTRUCTION"] = SafeInt(1); // demote to MEDIUM? no -> LOW
+    priorities["HULL_CONSTRUCTION"] = SafeInt(1);
     const lifecycle = new CommandLifecycle();
     const idempotencyMap = new CommandIdempotencyMap();
     const outcome = lifecycle.process(
@@ -284,7 +284,7 @@ describe("CommandLifecycle SetResearchPriority", () => {
 
   it("rejects a command with an invalid priority weight", () => {
     const priorities = validPriorities();
-    priorities["MACHINERY"] = SafeInt(3); // not in {4,2,1}
+    priorities["MACHINERY"] = SafeInt(3);
     const lifecycle = new CommandLifecycle();
     const idempotencyMap = new CommandIdempotencyMap();
     const outcome = lifecycle.process(
@@ -691,7 +691,6 @@ describe("StartRebuild validation (ADR-0078)", () => {
       new CommandIdempotencyMap(),
     );
   };
-  /** "CODE: message" of a rejection, or the outcome type when the command was accepted. */
   const reason = (o: ReturnType<typeof rebuild>) =>
     o.type === "rejected" ? `${o.diagnostic.code}: ${o.diagnostic.message}` : o.type;
 

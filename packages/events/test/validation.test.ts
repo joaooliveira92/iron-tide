@@ -31,8 +31,6 @@ describe("event validation", () => {
 
 describe("event validation parity (Zod → Effect Schema)", () => {
   it("serializes a decoded envelope byte-compatibly (field names + ordering)", () => {
-    // The literal is the exact JSON the previous Zod `.strict()` schema produced
-    // (schema key order), verified against Zod v4 before the migration.
     const parsed = parseDomainEventEnvelope(budgetEvent());
     expect(JSON.stringify(parsed)).toBe(
       '{"eventId":"evt-1","version":"1","aggregateType":"Nation","aggregateId":"nation-1",' +

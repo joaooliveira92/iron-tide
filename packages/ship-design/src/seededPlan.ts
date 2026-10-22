@@ -1,7 +1,6 @@
 import { historicalBuildMonths, type ConstructionBalance, type LineId } from "./construction.js";
 import { scalePlanToUnits } from "./constructionProgress.js";
 
-/** One package of a seeded project's plan, with the work already done when the campaign starts. */
 export interface SeededPackage {
   readonly id: string;
   readonly kind: "HULL" | "LAUNCH" | "FIT_OUT" | "TRIALS" | "ACCEPTANCE";
@@ -13,33 +12,20 @@ export interface SeededPackage {
 
 export interface SeededConstructionPlan {
   readonly packages: readonly SeededPackage[];
-  /** Monthly throughput per production line, in the project's treasury units; 0 for a line the plan does not use. */
   readonly capacityUnits: Readonly<Record<LineId, number>>;
 }
 
 export interface SeededPlanInput {
   readonly displacementKg: number;
-  /** The authored project size, in treasury units. */
   readonly totalUnits: number;
-  /** The authored work already done at the campaign start, in treasury units. */
   readonly completedUnits: number;
   readonly balance: ConstructionBalance;
-  /** Keel-laying month (`YYYY-MM`) for the era multiplier on the historical build time. */
   readonly month: string;
 }
 
 const BP = 10_000;
 const shareOf = (value: number, bp: number): number => Math.floor((value * bp) / BP);
 
-/**
- * The construction plan of a project the campaign starts with already on the slips (spec #138 slice 4). An authored
- * 1880 design carries no parts loadout, so the order-time planner (which prices a compiled design) cannot run for it.
- * This keeps the same package chain the planner produces for a hull — hull, launch, fit-out, trials, acceptance — sized
- * from the construction balance's own hull shares, and paces it at the historical keel-to-commissioning time for the
- * displacement (`buildMonthsByDisplacementT`, era-adjusted): every line works `ceil(totalUnits / months)` units a month,
- * so a full build takes the sourced historical time. National build speed is applied later, at funding, from the
- * project's `buildTimeMultiplierBp`. The completed work fills the chain in dependency order. Pure and deterministic.
- */
 export function seededConstructionPlan(input: SeededPlanInput): SeededConstructionPlan {
   const { balance } = input;
   if (!Number.isSafeInteger(input.totalUnits) || input.totalUnits <= 0)

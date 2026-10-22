@@ -83,7 +83,6 @@ describe("AC-12 fog-of-war targeting (DESIGN-39 §1 / DESIGN-38, INC-4)", () => 
   });
 
   it("a battery targeting a hidden/illegal true asset fails with TACTICAL_FOG_OF_WAR_VIOLATION", () => {
-    // target "battlex:d1" is NOT among the legal tracks.
     let err: BluewaveError | undefined;
     try {
       resolveGunnery({
@@ -126,7 +125,6 @@ describe("AC-12 fog-of-war targeting (DESIGN-39 §1 / DESIGN-38, INC-4)", () => 
       engine: new RandomEngine("none"),
     });
     expect(out.salvos).toHaveLength(0);
-    // ammo untouched for NO_TARGET
     expect(out.nextStates["BAT-1"]!.ammunition.ARMOR_PIERCING).toBe(120);
   });
 });

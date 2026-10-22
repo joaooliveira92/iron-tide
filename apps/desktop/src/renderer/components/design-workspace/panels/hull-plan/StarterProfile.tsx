@@ -8,11 +8,6 @@ import type { DrawingBoardContent } from "../../content.js";
 import { planModel } from "./planModel.js";
 import { ProfileView } from "./ProfileView.js";
 
-/**
- * A design's side profile as a picture (e.g. on a reference-design card): the same drawing as the workspace's
- * profile, with gun mounts and masts from the ship-visual catalog, compiled once per draft. Decorative: the card that
- * holds it names the design, so the drawing is hidden from assistive technology.
- */
 export function StarterProfile({
   draft,
   env,

@@ -19,18 +19,6 @@ import {
 import { withSchema, withStrictSchema } from "../runtime/commandProgram.js";
 import { submitPlayerCommand, type PlayerCommandRequest } from "./playerCommandSupport.js";
 
-/**
- * The Construction screen's steering commands (DESIGN-23 sections 3-8; SB3-R5/R8/R11/R16): halt, resume, accelerate,
- * the class-order batch and the dock-expansion authorization — as native `CommandProgram`s (INC-5; ADR-0159).
- *
- * These are the reachability wiring for the engine entry points that previously had no production caller. Each queues
- * a real engine command envelope through the shared `submitPlayerCommand` seam (issue-time validation is the engine's
- * own `CommandLifecycle.validate`), so the engine's `command_collection` phase — not the desktop — is the sole
- * mutator of authoritative state. `commitMonth` drains the queue and applies the commands. Each program decodes its
- * own wire payload and resolves `CampaignSessionStore`/`CommandQueueStore` through the Layer (via
- * `submitPlayerCommand`), never the module singletons.
- */
-
 export const haltConstructionCommandProgram = withSchema(
   HaltConstructionCommandPayloadSchema,
   (payload) => {

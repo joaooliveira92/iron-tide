@@ -12,15 +12,9 @@ export interface BottomNavProps {
   readonly screen: Screen;
   readonly onSelect: (screen: Screen) => void;
   readonly footer?: string;
-  /** The campaign session the Shipbuilding workspace saves its working design to. */
   readonly sessionId?: string;
 }
 
-/**
- * The campaign's primary navigation (it replaced the sidebar). It renders the sections of
- * `campaign-navigation.ts` and selects through the shell's `onSelect`. It is an in-flow footer of the app frame, so it never covers
- * page content, and it pads for display insets.
- */
 export function BottomNav({ screen, onSelect, footer, sessionId }: BottomNavProps) {
   const [shipbuildingOpen, setShipbuildingOpen] = useState(false);
   const tooltipDetail = useTooltipDetail();
@@ -56,7 +50,6 @@ export function BottomNav({ screen, onSelect, footer, sessionId }: BottomNavProp
             </li>
           );
         })}
-        {/* Not a screen: opens the Shipbuilding modal over whichever screen is current. */}
         <li className="min-w-16 flex-1">
           <button
             type="button"
@@ -81,7 +74,6 @@ export function BottomNav({ screen, onSelect, footer, sessionId }: BottomNavProp
         onOpenChange={setShipbuildingOpen}
         sessionId={sessionId}
       />
-      {/* The footer is the engine session id: debug builds only (ADR-0058). */}
       {DEBUG_MODE && footer !== undefined && (
         <span className="block truncate px-3 pb-1 font-mono text-[12px] text-muted-foreground">
           {footer}

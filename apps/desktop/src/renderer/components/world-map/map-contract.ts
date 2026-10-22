@@ -1,8 +1,3 @@
-/**
- * What the host hands every variant. Data only: no layout, no chrome, no
- * shared wrapper. A variant is free to throw out the whole page.
- */
-
 import type { ProjectionId } from "./projection.js";
 import type { LayerId, MapPrototypeState, RouteReading } from "./map-state.js";
 import type { AreaId } from "./fixture-world.js";

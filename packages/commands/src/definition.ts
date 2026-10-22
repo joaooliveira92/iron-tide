@@ -165,7 +165,6 @@ export function validateCommandTypeDefinition(
     for (const b of branches) {
       const branch = d.settlementPolicy[b];
       if (branch === null || branch === undefined) {
-        // defaults allowed for some branches per §15
         const allowedDefaults = new Set([
           "validationRejection",
           "authorizationRejection",

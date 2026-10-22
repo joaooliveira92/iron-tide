@@ -1,11 +1,3 @@
-/**
- * Browser-style back/forward history over screen names. Visiting a new screen
- * after going back discards the abandoned forward entries, so the toolbar's
- * arrows never offer a branch the player cannot reach.
- *
- * Every operation returns the same object when it would be a no-op, which lets
- * callers use it directly as React state without redundant re-renders.
- */
 export interface NavigationHistory<T> {
   readonly entries: readonly T[];
   readonly index: number;

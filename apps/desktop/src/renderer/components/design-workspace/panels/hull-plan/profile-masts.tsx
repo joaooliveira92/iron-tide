@@ -11,12 +11,10 @@ import type { HouseMasses } from "./profile-structures.js";
 import { ShapePath } from "./profile-mounts.js";
 import type { VisualLook } from "./visualMounts.js";
 
-/** CONVENTION: a superstructure carries a foremast at the bridge and a mainmast at its aft end; no superstructure, no masts. */
 export function mastStations(houses: HouseMasses | undefined): number[] {
   return houses ? [Math.round(houses.bridgeStartPermille), houses.endPermille] : [];
 }
 
-/** What the legend says about the masts: how many, and which drawing the design's look resolves to. */
 export interface MastSummary {
   readonly count: number;
   readonly style: VisualLook["style"];
@@ -25,14 +23,12 @@ export interface MastSummary {
   readonly step: FallbackStep;
 }
 
-/** The masts a design with (or without) a superstructure draws, for the legend. Undefined when none is drawn. */
 export function mastSummary(look: VisualLook, hasSuperstructure: boolean): MastSummary | undefined {
   const resolution = resolveMast(PART_CATALOG, look.style, look.era);
   if (!hasSuperstructure || resolution === null) return undefined;
   return { count: 2, ...look, partId: resolution.part.id, step: resolution.step };
 }
 
-/** The masts seated in the profile, squeezed in height to stay under the drawing's top pad. */
 export function profileMasts(
   look: VisualLook,
   frame: ProfileFrame,
@@ -50,7 +46,6 @@ export function profileMasts(
   });
 }
 
-/** Masts drawn behind the hull and the superstructure, so their feet sink into them (manual p137 layering). */
 export function ProfileMastLayer({ masts }: { readonly masts: readonly PlacedMast[] }) {
   if (masts.length === 0) return null;
   return (

@@ -35,7 +35,6 @@ function uniqueInOrder(values: readonly string[]): string[] {
   return [...new Set(values)];
 }
 
-/** The `Why this matters` sentence for a power, from its placement reason. */
 export function whyItMatters(power: PowerBrief): string {
   return reasonText(power.reason, {
     power: power.name,
@@ -46,10 +45,6 @@ export function whyItMatters(power: PowerBrief): string {
   });
 }
 
-/**
- * The full briefing for the selected power. Every line comes from the typed
- * view-model; sections whose data is missing say so rather than inventing it.
- */
 export function SelectedPowerDossier({ power }: { readonly power: PowerBrief | null }) {
   if (power === null) {
     return (
@@ -146,7 +141,6 @@ export function SelectedPowerDossier({ power }: { readonly power: PowerBrief | n
   );
 }
 
-/** Spoken summary when the dossier changes; one sentence, no markup. */
 export function dossierAnnouncement(
   power: PowerBrief,
   labels: { readonly status: string; readonly attitude: string; readonly outlook: string },

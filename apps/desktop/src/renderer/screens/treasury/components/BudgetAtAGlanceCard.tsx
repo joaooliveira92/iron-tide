@@ -3,7 +3,6 @@ import { GlassCard } from "../../../components/ui/glass-card.js";
 import type { TreasuryBreakdown } from "../treasury-summary.js";
 import { BudgetBar } from "./BudgetBar.js";
 
-/** The "budget at a glance" card: the income-vs-expenditure bar in a glass card. */
 export function BudgetAtAGlanceCard({ breakdown }: { readonly breakdown: TreasuryBreakdown }) {
   return (
     <GlassCard glassVariant="liquid-refract">

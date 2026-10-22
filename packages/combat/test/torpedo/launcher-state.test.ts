@@ -1,13 +1,3 @@
-// AC-2: authoritative integer TorpedoLauncherState (DESIGN-40 §2) — closed
-// mount-type enum with exactly five values, integer/fixed-point guards via
-// assertFixedPointTorpedo (TORPEDO_STATE_INVARIANT_FAILED), structural rejection
-// at the construction boundary (INVALID_TORPEDO_LAUNCHER_STATE), and an
-// authoritative deterministic state hash. The guard is split like model.ts: the
-// surface guard (assertTorpedoLauncherSurface) validates a hash-less state, the
-// full guard (assertFixedPointTorpedo) additionally requires the stateHash.
-// NOTE: a tampered surface throws the same TORPEDO_STATE_INVARIANT_FAILED from
-// assertFixedPointTorpedo — expectInvariant takes a THUNK so that throw is
-// caught and asserted here, not reported as an uncaught failure.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -24,8 +14,6 @@ import {
   withTorpedoLauncherStateHash,
 } from "../../src/torpedoes/index.js";
 
-// A hash-less, fully-valid state surface derived from the shipped launcher
-// surface. Tests tamper individual fields to prove the fail-closed guard.
 function surface(
   overrides: Partial<TorpedoLauncherState> = {},
 ): Omit<TorpedoLauncherState, "stateHash"> {
@@ -51,7 +39,6 @@ function surface(
   };
 }
 
-// A fully-invariant state with the authoritative hash computed.
 function validState(overrides: Partial<TorpedoLauncherState> = {}): TorpedoLauncherState {
   return withTorpedoLauncherStateHash(surface(overrides));
 }

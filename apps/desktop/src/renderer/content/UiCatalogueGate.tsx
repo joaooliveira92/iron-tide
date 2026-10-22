@@ -1,13 +1,6 @@
 import type { ReactNode } from "react";
 import { useUiCatalogueSource } from "./useUiCatalogue.js";
 
-/**
- * Loads the compiled UI-string catalogue from main before any surface that
- * resolves a message renders (ADR-0209/ADR-0218). Without it every offer, battle
- * and turn string would show the generic fallback. In tests the catalogue is
- * pre-seeded, so the gate is ready immediately; in the app it shows a brief
- * status and fails closed if the catalogue never arrives.
- */
 export function UiCatalogueGate({ children }: { readonly children: ReactNode }) {
   const status = useUiCatalogueSource();
   if (status === "ready") return <>{children}</>;

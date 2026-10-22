@@ -1,5 +1,3 @@
-// Shared stage constants, the §27 record builder, and helper guards for the
-// torpedo resolution stage. Split out of ./resolve.js.
 import { BluewaveError } from "@bluewave/contracts";
 import { RandomEngine } from "@bluewave/random";
 import { BattleEvent } from "../battleLedger.js";
@@ -24,18 +22,8 @@ import {
 import type { TorpedoLauncherWiring, TorpedoTargetContext } from "./resolve.js";
 
 export const TORPEDO_RESOLVE_IMPACT_SUBSTEP = 56 as const;
-/** The BattleLedger event priority for every torpedo stage record — after the
- *  B-4 damage priority 10 (the torpedo stage runs after the damage stage). */
 export const TORPEDO_RESOLUTION_EVENT_PRIORITY = 11 as const;
-/** Default torpedo depth setting (metres) when a command leaves it open.
- *
- *  ADR-0031 entry (reviewer HIGH-4): this 5 m default is an AUTHORED decision —
- *  DESIGN-40 §12 leaves the depth setting open; the stage defaults it to 5 m
- *  (a representative shallow-running depth for the 1880–1945 surface-launch
- *  slice). Invented default, not a DESIGN-40 literal — recorded in ADR-0031. */
 export const TORPEDO_RESOLUTION_DEFAULT_DEPTH_M = 5 as const;
-/** Default ordered gyro angle when a command leaves it open — the straight run
- *  along the ship's launch heading (see resolveTorpedoes). */
 export const TORPEDO_DEFAULT_ORDERED_GYRO_MDEG = 0 as const;
 
 export function invariant(field: string, value: unknown, reason: string): never {
@@ -51,8 +39,6 @@ export function isSafeInt(v: unknown): v is number {
   return typeof v === "number" && Number.isInteger(v) && Number.isSafeInteger(v);
 }
 
-/** The §28 level-4 tube marker ("tube" + zero-padded index — the string sort
- *  reproduces the canonical ascending tube order). */
 export function tubeMarker(tubeId: number): string {
   return `tube${String(tubeId).padStart(4, "0")}`;
 }
@@ -68,7 +54,6 @@ export function speedVerdictFor(
   if (mountType === "ABOVE_WATER_FIXED" || mountType === "ABOVE_WATER_TRAINABLE") {
     return validateAboveWaterLaunchSpeedLimit(speedUmS, aboveWaterMaxLaunchSpeedKnots ?? null);
   }
-  // SUBMARINE_INTERNAL → C-3 (submarine-launch mechanics deferred).
   return { applicable: false, allowed: true, reasonCode: null, speedUmS, limitUmS: null };
 }
 
@@ -90,8 +75,6 @@ export function commandSourceOf(
   return launcherById.get(track.launcherId)?.commandSource ?? "ENGINE_STAGE";
 }
 
-// the §27 record builder (single factory for every record the stage emits)
-
 export interface RecordSeed {
   kind: TorpedoRecordKind;
   battleMinute: number;
@@ -110,9 +93,6 @@ export interface RecordSeed {
   rngDecision?: TorpedoRecord["rngDecision"];
   damageEffects?: TorpedoRecord["damageEffects"];
   persists?: boolean;
-  /** Optional disambiguator appended to the record id (the §22 chain explosion
-   *  records share the primary package's source/target at the same instant —
-   *  see torpedoRecordId). */
   discriminator?: string;
 }
 
@@ -186,7 +166,7 @@ export function resolvedSettingForCommand(
   modelId: string,
   selectedSettingId: string | null | undefined,
 ): CompiledTorpedoSpeedSetting {
-  const model = compiledTorpedoOf(torpedoes, modelId); // fail-closed
+  const model = compiledTorpedoOf(torpedoes, modelId);
   if (selectedSettingId === null || selectedSettingId === undefined) {
     const first = model.speedSettings[0];
     if (!first) invariant("speedSettings", modelId, "a model must ship at least one setting");
@@ -229,19 +209,12 @@ export function torpedoEventFor(
     eventPriority: TORPEDO_RESOLUTION_EVENT_PRIORITY,
     actorId: record.sourceId,
     targetId: record.targetId,
-    // the §22 chain-explosion records share the primary package's actor/target
-    // at the same instant — append the discriminator so every eventId is unique
-    // (reviewer BLOCKER-1; the same suffix as the record id).
     eventId: discriminator ? `${base}:${discriminator}` : base,
     eventType: EVENT_TYPES[record.kind],
     eventHash: record.recordHash,
   };
 }
 
-/** AC-20 (reviewer BLOCKER-1): fail-closed assertion that every §27 record id
- *  emitted this minute is unique — even on the §22 chain path (whose explosion
- *  records share the primary package's source/target at the same instant and
- *  are disambiguated by the `chain` discriminator). Never weakened. */
 export function assertUniqueRecordIds(
   sortedRecords: readonly TorpedoRecord[],
   battleId: string,
@@ -272,14 +245,6 @@ export function damageRecordsFor(
 ): TorpedoRecord[] {
   const recs: TorpedoRecord[] = [];
   const event = result.eventRecord;
-  // Reviewer BLOCKER-1 — id/eventId uniqueness for the damage record family:
-  //   - DAMAGE / MACHINERY / SYSTEM_SHOCK / TUBE_HAZARD carry sourceId = the
-  //     torpedo track id, so they already differ across tracks; the §22 chain
-  //     explosion (same track, same instant) needs the `chain` discriminator.
-  //   - FLOODING_SOURCE carries sourceId = the COMPARTMENT (DESIGN-40 §28 level
-  //     8), so two torpedoes hitting the same compartment in one minute would
-  //     collide; its discriminator is scoped to the originating track (plus a
-  //     `:chain` marker on the §22 chain explosion) to keep every record unique.
   const otherDiscriminator = opts.chain ? "chain" : undefined;
   const floodDiscriminator = `${track.torpedoTrackId}${opts.chain ? ":chain" : ""}`;
   const register = (rec: TorpedoRecord, discriminator: string | undefined): TorpedoRecord => {

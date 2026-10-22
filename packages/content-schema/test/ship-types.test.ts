@@ -3,13 +3,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { ShipTypeRecordSchema, decodeStrictResult } from "../src/index.js";
 import { decodeIssue, decodeOk } from "./decode-helpers.js";
 
-/**
- * The ship-type-as-content contract (ADR-0156, ship-part-model ticket 12a). Every
- * vocabulary is closed and decoded strictly, so a content string cannot name an engine
- * behaviour class, display category, role, era, torpedo policy or classification
- * predicate that code does not own. Expectations come from ADR-0156, not the schema.
- */
-
 const provenance = {
   sourceStatus: "DERIVED",
   confidence: "HIGH",
@@ -47,7 +40,6 @@ const valid = {
   provenance,
 };
 
-/** The valid record with one fit-requirement predicate on its classification. */
 function withRequires(predicates: unknown[]): Record<string, unknown> {
   return { ...valid, classification: { precedence: 20, requires: predicates } };
 }
@@ -69,9 +61,6 @@ describe("a valid ship-type record decodes", () => {
   });
 
   it("accepts a dotted platform slot id in a classification predicate (ticket 12b)", () => {
-    // The platform slot ids every real loadout uses are dotted (`SlotSchema.id` and the
-    // loadout entries share the same `slotId` schema), so a requirement must be able to
-    // name one; a bare `stableId` would have made every authored requirement inert.
     expect(
       decodeOk(
         ShipTypeRecordSchema,

@@ -1,5 +1,3 @@
-// S-5 05 (#79, spec #73 R5/R6): presence measurement arithmetic and counting rules.
-// EVERY NUMBER BELOW IS FIXTURE-CLASS: it exercises the mechanics and is never a production value (R11, R14).
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import type {
@@ -183,15 +181,13 @@ describe("measurePresence", () => {
       { id: "y", name: "y", areaId: "india", nationId: "uk", level: SafeInt(5) },
       { id: "z", name: "z", areaId: "india", nationId: "fra", level: SafeInt(9) },
     ];
-    // two possessions x 100 x best level 5
     expect(row(snapshot([], { ports })).requiredTons).toBe(1_000);
-    // no port: two possessions x 100 x flat weight 2
     expect(row(snapshot([])).requiredTons).toBe(400);
     expect(requiredTonsInArea(snapshot([]), "uk", "nowhere", FIXTURE_RULES)).toBe(0);
   });
 
   it("never reports a negative shortfall, and a covered colony shows zero", () => {
-    const covered = row(snapshot([ship("a"), ship("b"), ship("c")])); // 6000 present vs 400
+    const covered = row(snapshot([ship("a"), ship("b"), ship("c")]));
     expect(covered.shortfallTons).toBe(0);
     const short = row(snapshot([]));
     expect(short).toEqual({
@@ -204,7 +200,6 @@ describe("measurePresence", () => {
   });
 
   it("adding an FS colonial-service ship reduces the shortfall by 1.5x its tonnage", () => {
-    // tonnage 1000: 1.5x = 1500 present; against a 3000 requirement the shortfall falls by exactly 1500.
     const big = snapshot([], {
       possessions: Array.from({ length: 15 }, (_, i) => ({
         id: `p${i}`,

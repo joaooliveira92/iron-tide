@@ -1,7 +1,3 @@
-// T-1 03 (spec #109 R3-R5, ticket #112): the battle offer's content. Everything here is pure: the enemy-strength
-// estimate is an integer function of the enemy force and the ruleset estimate model, and the offer carries only what
-// the player may see (R4). The one random input, a perturbation draw, comes from a domain-separated stream keyed by
-// battle and side and is recorded in the random ledger.
 import type { BattleInstance, CampaignSnapshot, Ship } from "@bluewave/campaign";
 import type { BattleMissionType } from "@bluewave/combat";
 import type { BattleOfferRules } from "@bluewave/content-schema";
@@ -11,7 +7,6 @@ import type { OfferEstimate, OfferForceShip, OfferSide } from "@bluewave/message
 import type { RandomEngine, RandomLedger } from "@bluewave/random";
 import { resolveBattleManifest, resolveShipStrength } from "./battles.js";
 
-/** The registry missions an offer is raised for (spec #109 R13); every other mission stays registered and unreachable. */
 export const OFFERED_MISSION_TYPES: readonly BattleMissionType[] = [
   "FLEET_BATTLE",
   "CRUISER_BATTLE",
@@ -21,7 +16,6 @@ export const BATTLE_OFFER_ESTIMATE_STREAM = "battle-offer/estimate";
 export const BATTLE_OFFER_ESTIMATE_PERTURBED = "BATTLE_OFFER_ESTIMATE_PERTURBED";
 export const BATTLE_OFFER_ESTIMATE_INVALID = "BATTLE_OFFER_ESTIMATE_INVALID";
 
-/** The message keys of the qualitative decline statement (manual p.67); the amount is never disclosed. */
 export const OFFER_DECLINE_STATEMENT_KEYS: readonly string[] = [
   "ui.offer.decline.costsVictoryPoints",
   "ui.offer.decline.mayCostPrestige",
@@ -50,7 +44,6 @@ function toSafeInteger(value: bigint): number {
   return Number(value);
 }
 
-/** Exact non-negative integer division with the stated rounding, from a bigint intermediate. */
 export function divide(numerator: bigint, denominator: bigint, rounding: Rounding): bigint {
   const quotient = numerator / denominator;
   const remainder = numerator % denominator;
@@ -59,11 +52,6 @@ export function divide(numerator: bigint, denominator: bigint, rounding: Roundin
   return remainder * 2n >= denominator ? quotient + 1n : quotient;
 }
 
-/**
- * The enemy-strength estimate shown on an offer: a pure integer function of the true strength and the ruleset model
- * (spec #109 R5). `perturbationBp` is the signed perturbation in basis points; only the PERTURBED model reads it, and
- * the caller supplies it from a recorded draw. Checked arithmetic, explicit rounding, never below zero.
- */
 export function estimateEnemyStrength(
   model: EstimateModel,
   trueStrength: number,
@@ -98,7 +86,6 @@ function shipsOf(snapshot: CampaignSnapshot, nationId: string): readonly Ship[] 
   return nation === undefined ? [] : nation["fleets"].flatMap((fleet) => fleet["ships"]);
 }
 
-/** The content of one offer, before it is wrapped in a request with its interruption identity. */
 export interface OfferContent {
   readonly battleId: string;
   readonly missionType: string;
@@ -110,12 +97,10 @@ export interface OfferContent {
   readonly playerForce: readonly OfferForceShip[];
   readonly estimate: OfferEstimate;
   readonly supportForcePresent: boolean;
-  /** The nations of the support force, sorted; absent when there is none (never ship identities). */
   readonly supportNationIds?: readonly string[];
   readonly declineStatementKeys: readonly string[];
 }
 
-/** Whether a battle is a player-involved, offered mission, and if so its manifest. `null` = not offered (R3, R13). */
 export function offeredManifestFor(
   snapshot: CampaignSnapshot,
   battle: BattleInstance,
@@ -130,11 +115,6 @@ export function offeredManifestFor(
   return OFFERED_MISSION_TYPES.some((offered) => offered === mission) ? manifest : null;
 }
 
-/**
- * Build the offer for a player-involved battle: the player's own selected force and an estimate of the enemy's. The enemy
- * force is read only to compute the estimate and is never copied into the content. A perturbing model draws from the
- * stream `battle-offer/estimate/<battle>/<enemy side>` and records the draw.
- */
 export function buildOfferContent(input: {
   readonly snapshot: CampaignSnapshot;
   readonly battle: BattleInstance;
@@ -190,7 +170,6 @@ export function buildOfferContent(input: {
     });
   }
 
-  // T-1 08 (R12): a support force is on the manifest as temporary assets, its nations beside the player's on the player's side.
   const support: readonly string[] =
     manifest["temporaryAssets"].length === 0
       ? []

@@ -20,23 +20,19 @@ import { LEDGER_CATEGORIES, type LedgerCategory } from "./ledger.js";
 import { chooseYard, yardDemandOf } from "./yardChoice.js";
 import { yardMisfits, type Yard, type YardLimit } from "./yards.js";
 
-/** Everything the workshop needs besides the draft. Built once per campaign from content and nation state. */
 export interface WorkshopEnvironment {
   readonly ctx: ShipContext;
   readonly costBalance: CostBalance;
   readonly costCtx: CostContext;
   readonly constructionBalance: ConstructionBalance;
   readonly cveBalance: CveBalance;
-  /** Shipyards (limits plus per-line capacity scaled to maxDisplacement), ascending capacity (ADR-0067 section 6). */
   readonly yards: readonly Yard[];
-  /** Shipbuilding-industry build-time multiplier, bp (10_000 or absent = neutral; ADR-0067 section 5). */
   readonly industryBp?: number;
 }
 
 export interface LedgerRow {
   readonly category: LedgerCategory;
   readonly kg: number;
-  /** Share of total displacement, bp. */
   readonly shareBp: number;
 }
 
@@ -44,29 +40,23 @@ export interface Metric {
   readonly id: string;
   readonly label: string;
   readonly value: ExplanationText;
-  /** "ok" | "warn" | "bad" lets the view colour the cell without knowing thresholds. */
   readonly tone: "ok" | "warn" | "bad" | "neutral";
 }
 
-/** What one shipyard would do with this design (informational: construction itself does not yet pick a yard). */
 export interface YardOption {
   readonly yardId: string;
   readonly maxLengthMm: number;
   readonly maxBeamMm: number;
   readonly maxDisplacementKg: number;
   readonly craneLiftKg: number;
-  /** Limits the hull exceeds; empty when the yard can hold it. */
   readonly exceeds: readonly YardLimit[];
-  /** Months to finish at this yard (max of historical and the capacity schedule); null when it cannot hold or finish the hull. */
   readonly months: number | null;
-  /** True for the yard the forecast assumes. */
   readonly chosen: boolean;
 }
 
 export interface WorkshopView {
   readonly valid: boolean;
   readonly naturalClass: string | null;
-  /** The declared type and main battery, e.g. `BB4X2` (see `classCode`). */
   readonly classCode: string;
   readonly totalKg: number;
   readonly buoyantKg: number;
@@ -77,19 +67,13 @@ export interface WorkshopView {
   readonly forecast: {
     readonly costMicro: number;
     readonly monthlyMaintenanceMicro: number;
-    /** Forecast build time: the larger of the historical table time (industry, acceleration applied) and the capacity schedule. */
     readonly months: number | null;
-    /** Historical keel-to-commissioning months for this displacement after industry and acceleration; null if not valid. */
     readonly historicalMonths: number | null;
-    /** True while any build-time table point bracketing this displacement is not VERIFIED (see `buildTimeIsProvisional`); false when no time is forecast. */
     readonly historicalProvisional: boolean;
     readonly bottleneck: LineId | null;
-    /** Id of the yard the forecast assumes (the fitting yard with the shortest schedule, smallest on a tie); null if none. */
     readonly yardId: string | null;
-    /** Every yard in ascending capacity: whether it can hold the hull and how long it would take. Empty until the design is valid. */
     readonly yards: readonly YardOption[];
     readonly note: string | null;
-    /** Line-by-line cost, so a readout can show where the total comes from without recomputing it. */
     readonly costBreakdown: CostBreakdown;
   };
   readonly cve: { readonly label: string; readonly cveBp: number };
@@ -98,10 +82,6 @@ export interface WorkshopView {
 
 const t = (kg: number) => groupedInteger(Math.round(kg / 1000));
 
-/**
- * The view model behind every Drawing Board panel. Pure: same inputs, same output. No formulas live in the UI; this is the
- * only place a number is turned into display text.
- */
 export function buildWorkshopView(draft: DesignDraft, env: WorkshopEnvironment): WorkshopView {
   const c = compileDesign(draft, env.ctx);
   const plant = env.ctx.plants.find((p) => p.id === draft.machinery.plantId);

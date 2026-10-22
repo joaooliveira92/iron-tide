@@ -37,7 +37,6 @@ export interface UseStationAssignmentReturn {
   readonly send: (intent: StationAssignmentIntent) => Promise<CommandOutcome>;
 }
 
-/** Foreign-station data, selection and assign/clear commands, on the shared command-screen workflow. */
 export function useStationAssignment(sessionId: string): UseStationAssignmentReturn {
   const bridge = useBridge();
   const campaignRevision = useCampaignRevision();
@@ -87,7 +86,6 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
         if (result.outcome !== "rejected" || result.reason !== "STATION_ASSIGNMENT_REJECTED") {
           return result;
         }
-        // Word the engine's per-ship reasons as text; the stable code stays the rejection reason.
         return {
           ...result,
           diagnostics: explainStationRejection(intent, result.diagnostics, rows),

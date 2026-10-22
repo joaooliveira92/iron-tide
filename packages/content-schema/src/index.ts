@@ -80,7 +80,6 @@ export type {
   StabilityProfile,
   StrategicObjectives,
 } from "./nation.js";
-// Canonical Nation entity.
 export {
   AiArchetypeSchema,
   AiRoleSchema,

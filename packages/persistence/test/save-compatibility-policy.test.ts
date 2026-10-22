@@ -1,10 +1,3 @@
-// Save-compatibility policy (release-readiness ticket 03 / ADR-0113): the
-// first release rejects a save whose compatibility version is not the locked
-// release constant, with the stable `PERSISTENCE_COMPATIBILITY_MISMATCH`
-// diagnostic rather than a generic corruption code. The round-trip here is the
-// seed of the per-version fixture corpus: a future bump must keep loading every
-// released version's snapshot.
-
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -73,15 +66,6 @@ describe("save-compatibility policy (ADR-0113)", () => {
   });
 
   it("locks CURRENT_COMPATIBILITY_VERSION to the current release constant", () => {
-    // A deliberate bump (see ADR-0113) must update this test, add a per-version
-    // fixture and register a migration or a documented rejection — never edit the
-    // constant silently. 2.0.0 -> 3.0.0 adds required per-ship readiness and
-    // crew-quality state (S-1 map D2); like the part-model bump, 2.0.0 saves are
-    // refused before decoding (no released save exists to migrate). 3.0.0 -> 3.1.0 is the 1880 economy model (#138):
-    // additive optional fields, and 3.0.0 saves are refused at the gate for the same reason.
-    // 3.1.0 -> 4.0.0 is S-2 prestige (ADR-0239): every nation gains a required prestige and the snapshot
-    // a required value set, neither with a default, so 3.1.0 saves are refused before decoding and no
-    // migration ships.
     expect(CURRENT_COMPATIBILITY_VERSION).toBe("4.0.0");
   });
 
@@ -104,11 +88,6 @@ describe("save-compatibility policy (ADR-0113)", () => {
     const state = createFixtureState();
     store.save(state, tmpDir);
 
-    // Mutate ONLY the stored compatibility version to a prior release. The
-    // minimal header still decodes (it is a string), so the failure can only be
-    // the stage-1 compatibility gate — not a generic corruption path. The
-    // signature/rawHash are deliberately left stale: the compatibility check
-    // runs before them, which is the point of the two-stage load.
     const saveId = store.getActiveSaveId(tmpDir);
     expect(saveId).not.toBeNull();
     const campaignPath = join(tmpDir, saveId!, "campaign.json");
@@ -123,8 +102,6 @@ describe("save-compatibility policy (ADR-0113)", () => {
 
     expect(loaded).toBeNull();
     expect(diagnostics.hasErrors).toBe(true);
-    // Exactly the stable mismatch diagnostic, and NOT a generic corruption code
-    // (ADR-0032 two-stage load / ADR-0113).
     expect(diagnostics.errors.map((d) => d.code)).toEqual([COMPATIBILITY_MISMATCH_CODE]);
     expect(diagnostics.errors.some((d) => d.code === CORRUPT_SAVE_CODE)).toBe(false);
     expect(diagnostics.errors[0]!.message).toContain('Save compatibility version "1.0.0"');

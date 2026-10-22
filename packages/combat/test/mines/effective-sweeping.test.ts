@@ -1,10 +1,3 @@
-// AC-9 (INC-3): DESIGN-35 §9 effective sweeping value — exact integer formula
-// (base × six multiplierBp / 10_000^6, one FLOOR via bigint, no per-factor
-// rounding); §9 mine-type resistance multipliers resolved from the shipped
-// MineTypeDefinition sweepResistance surface (FLAT / CAPABILITY_GATED /
-// DEFINITION_REQUIRED — reuse, not duplicate); computeTypeAdjustedSweeping
-// exact floor helper (§10 relationship); missing resistance data fails with
-// MINE_SWEEP_RESISTANCE_MISSING.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt, BluewaveError } from "@bluewave/contracts";
 import {
@@ -40,8 +33,6 @@ describe("AC-9: exact §9 formula — one exact product, one FLOOR", () => {
     expect(res.rounding.denominator).toBe(MINE_SWEEPING_DENOMINATOR.toString());
   });
 
-  // numerator = 100 * 7500 * 7500 * 7500 * 10000 * 5000 * 10000 = 2.109375e25;
-  // / 1e24 = 21.09375 -> 21 (identical rational to §4's reference vector).
   it("floors a fractional exact rational exactly once (21.09375 -> 21)", () => {
     const res = computeEffectiveSweepingValue(
       100,
@@ -58,9 +49,6 @@ describe("AC-9: exact §9 formula — one exact product, one FLOOR", () => {
     expect(res.rounding.numerator).toBe("21093750000000000000000000");
   });
 
-  // No per-factor rounding: 1 * 9000 * 12000 / 10_000^2 = 1.08 -> 1. Per-factor
-  // flooring would give floor(0.9)=0 then 0×1.2=0 — the single end-FLOOR is the
-  // ONLY rounding.
   it("one FLOOR, never per-factor rounding (1 × 0.9 × 1.2 = 1, not 0)", () => {
     const res = computeEffectiveSweepingValue(
       1,
@@ -168,9 +156,9 @@ describe("AC-9 helper: computeTypeAdjustedSweeping = floor(regional × resistanc
   });
 
   it("floors once (no per-factor); small products can floor to 0", () => {
-    expect(computeTypeAdjustedSweeping(SafeInt(3), 5_000)).toBe(1); // 1.5 -> floor 1
-    expect(computeTypeAdjustedSweeping(SafeInt(1), 5_000)).toBe(0); // 0.5 -> floor 0
-    expect(computeTypeAdjustedSweeping(SafeInt(1), 9_999)).toBe(0); // 0.9999 -> floor 0
+    expect(computeTypeAdjustedSweeping(SafeInt(3), 5_000)).toBe(1);
+    expect(computeTypeAdjustedSweeping(SafeInt(1), 5_000)).toBe(0);
+    expect(computeTypeAdjustedSweeping(SafeInt(1), 9_999)).toBe(0);
   });
 
   it("handles the 1_000_000 pressure ceiling without precision loss (bigint product)", () => {

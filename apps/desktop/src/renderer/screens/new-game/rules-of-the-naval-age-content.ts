@@ -1,24 +1,10 @@
-/**
- * Hand-authored copy for the "Rules of the Naval Age" screen (spec §2) —
- * plain-language labels and gameplay-consequence blurbs for the five
- * Historical Uncertainty settings, plus the qualitative fleet-size readout.
- * No engine data backs any of this text; it's presentation-only, same
- * authoring pattern as the nation dossier flavor copy.
- */
-
 import type { NewGameScenario } from "../../../shared/new-game-contract.js";
 import { monthName } from "../../lib/campaign-month.js";
 
-/**
- * The step's title and one-line brief. The shell header's secondary row shows
- * them (the screen itself does not repeat them), so they live with the step's
- * other copy rather than in the shell.
- */
 export const RULES_OF_THE_NAVAL_AGE_HEADING = "Rules of the Naval Age";
 export const RULES_OF_THE_NAVAL_AGE_HINT =
   "Set the era, scale, and historical uncertainty for this campaign.";
 
-/** The secondary line under a scenario in the Starting Era select: when it opens and how many nations it seats. */
 export function scenarioEraDescription(scenario: NewGameScenario): string {
   const month = monthName(scenario.startMonth) ?? String(scenario.startMonth);
   const nations = scenario.participantNationIds.length;
@@ -143,11 +129,6 @@ export function uncertaintyValueContent(
   return UNCERTAINTY_VALUE_CONTENT[field][valueId] ?? { label: valueId, blurb: "" };
 }
 
-/**
- * Qualitative "estimated starting navy" readout (spec §2) — derived from
- * `FLEET_SIZE_BPS`'s relative multiplier, not any numeric ship-count range
- * (no engine surface computes one).
- */
 export const FLEET_SIZE_READOUTS: Record<string, string> = {
   small: "Reduced fleet — faster turns, fewer ships to manage.",
   standard: "Recommended default — a balanced fleet for most players.",
@@ -155,7 +136,6 @@ export const FLEET_SIZE_READOUTS: Record<string, string> = {
   very_large: "Sprawling fleet — the most ships to manage, and the slowest turns.",
 };
 
-/** The field label for the fleet-size setting, shared by the form and the preset summary. */
 export const FLEET_SIZE_FIELD_LABEL = "Fleet Size";
 
 export const FLEET_SIZE_LABELS: Record<string, string> = {

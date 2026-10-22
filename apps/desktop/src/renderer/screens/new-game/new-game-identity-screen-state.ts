@@ -5,11 +5,9 @@ export type MeasurementSystem = "imperial" | "metric";
 export interface IdentityFieldOption<V extends string> {
   readonly value: V;
   readonly label: string;
-  /** Optional one-line explanation shown under the label in the Select list (ReUI select-27 pattern). */
   readonly description?: string;
 }
 
-/** Single settled source of the §4 identity enums' {value → label} vocabulary (spec §4/§6). */
 export const NAMING_CONVENTION_OPTIONS: ReadonlyArray<IdentityFieldOption<NamingConvention>> = [
   { value: "historical", label: "Historical", description: "Real names from the period" },
   { value: "generated", label: "Generated", description: "The Admiralty names your ships" },

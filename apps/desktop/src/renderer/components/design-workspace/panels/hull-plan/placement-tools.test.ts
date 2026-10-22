@@ -227,13 +227,12 @@ describe("fittingAt", () => {
   it("finds the fitting under the pointer, the nearest one, within the grab radius", () => {
     expect(fittingAt(frame, draft, at(0).x, at(0).y)).toBe("a");
     expect(fittingAt(frame, draft, at(1).x + 3, at(1).y - 3)).toBe("b");
-    expect(fittingAt(frame, draft, at(0).x + GRAB_RADIUS, at(0).y)).toBe("a"); // boundary: exactly on the radius
+    expect(fittingAt(frame, draft, at(0).x + GRAB_RADIUS, at(0).y)).toBe("a");
     expect(fittingAt(frame, draft, at(0).x + GRAB_RADIUS + 1, at(0).y)).toBeNull();
     expect(fittingAt(frame, { placements: [] }, 10, 10)).toBeNull();
   });
   it("breaks a tie toward the earlier placement", () => {
     const twin = { placements: [placement({ instanceId: "x" }), placement({ instanceId: "y" })] };
-    // Same station and side: index 0 and 1 get different cosmetic nudges, so aim between them.
     const p0 = fittingPoint(frame, 200, undefined, 0);
     const p1 = fittingPoint(frame, 200, undefined, 1);
     expect(fittingAt(frame, twin, p0.x, (p0.y + p1.y) / 2)).toBe("x");

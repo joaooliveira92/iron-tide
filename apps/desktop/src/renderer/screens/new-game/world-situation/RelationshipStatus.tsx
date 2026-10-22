@@ -13,7 +13,6 @@ import type { IntelligenceConfidenceLevel, PowerBrief, PowerOutlook } from "../w
 
 const TENSION_SCALE = 10;
 
-/** Outlook as icon + word, so the colour never carries the meaning alone. */
 export function OutlookBadge({
   outlook,
   className,
@@ -33,10 +32,6 @@ export function OutlookBadge({
   );
 }
 
-/**
- * The tension score as words and a number first; the segmented meter is a
- * decorative echo. The text states which way the scale runs.
- */
 export function TensionIndicator({ power }: { readonly power: PowerBrief }) {
   const filled = Math.max(0, Math.min(TENSION_SCALE, power.tension));
   return (
@@ -66,7 +61,6 @@ export function TensionIndicator({ power }: { readonly power: PowerBrief }) {
   );
 }
 
-/** Intelligence confidence; `null` is an honest "not graded", never a made-up grade. */
 export function IntelligenceConfidence({
   confidence,
 }: {
@@ -92,11 +86,6 @@ function Row({ label, children }: { readonly label: string; readonly children: R
   );
 }
 
-/**
- * The relationship block of a dossier: formal status, attitude, tension,
- * outlook and intelligence confidence as five separate, labelled facts, each
- * with a sentence saying what it means.
- */
 export function RelationshipStatus({ power }: { readonly power: PowerBrief }) {
   const StatusIcon = STATUS_ICON[power.status];
   return (

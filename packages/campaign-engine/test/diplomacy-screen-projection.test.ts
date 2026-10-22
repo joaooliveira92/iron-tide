@@ -66,7 +66,6 @@ describe("buildDiplomacyScreenProjection", () => {
       { nationId: "deu", name: "deu" },
       { nationId: "fra", name: "fra" },
     ]);
-    // The player's own nation (with the real authored name) is NOT listed.
     expect(projection.knownNations.some((n) => n.nationId === "uk")).toBe(false);
     expect(projection.knownNations[1]!.name).toBe("fra");
   });
@@ -84,7 +83,6 @@ describe("buildDiplomacyScreenProjection", () => {
           relations: [
             relation("uk", "fra", { relation: "at_war", tension: 9, since: "1880-03" }),
             relation("uk", "deu", { relation: "allied", tension: 1, nap: true }),
-            // A pair that does NOT involve the player must be excluded.
             relation("fra", "deu", { relation: "at_war", tension: 8 }),
           ],
           shells: {},
@@ -96,7 +94,6 @@ describe("buildDiplomacyScreenProjection", () => {
     if (!projection) return;
 
     expect(projection.relations).toHaveLength(2);
-    // Sorted by partnerNationId (deu before fra).
     expect(projection.relations[0]).toEqual({
       nationAId: "uk",
       nationBId: "deu",
@@ -129,7 +126,6 @@ describe("buildDiplomacyScreenProjection", () => {
               status: "ACTIVE",
               endDate: undefined,
             }),
-            // Player on the DEFENDING side of a multi-member war.
             war({
               id: "war_deu_uk",
               attackerSideMembers: ["deu"],
@@ -138,7 +134,6 @@ describe("buildDiplomacyScreenProjection", () => {
               defenderId: "uk",
               status: "DECLARED_NOT_ACTIVE",
             }),
-            // A war the player is NOT part of must be excluded.
             war({
               id: "war_fra_deu",
               attackerSideMembers: ["fra"],
@@ -184,7 +179,6 @@ describe("buildDiplomacyScreenProjection", () => {
           blockadeState: [
             blockade({ blockaderId: "uk", blockadedNationId: "fra", areaId: "med_gibraltar" }),
             blockade({ blockaderId: "deu", blockadedNationId: "uk", areaId: "north_sea" }),
-            // Not player-involved.
             blockade({ blockaderId: "fra", blockadedNationId: "deu", areaId: "med_malta" }),
           ],
           battleManifests: [],

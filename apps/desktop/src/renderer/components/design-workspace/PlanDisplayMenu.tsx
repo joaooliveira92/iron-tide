@@ -5,10 +5,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover.js";
 import { Separator } from "../ui/separator.js";
 import { FindingsViewOptions, type FindingsView } from "./validation/FindingsControl.js";
 
-/**
- * What the plan drawing shows (gun arcs, findings and their severities), behind one toolbar button: view preferences,
- * never design state, so they stay out of the way until asked for.
- */
 export function PlanDisplayMenu({
   showArcs,
   onShowArcs,

@@ -1,6 +1,5 @@
 import { resolveNationAsset } from "./resolveNationAsset.js";
 
-/** Campaign nation id -> the playable-slot country id its flag art is keyed by. */
 const FLAG_COUNTRY_ID: Readonly<Record<string, string>> = {
   uk: "gb",
   germany: "de",
@@ -12,7 +11,6 @@ const FLAG_COUNTRY_ID: Readonly<Record<string, string>> = {
   austria_hungary: "ah",
   spain: "es",
   qing: "qing",
-  // Non-playable powers: the manifest keys their flag art by the campaign id.
   brazil: "brazil",
   portugal: "portugal",
   netherlands: "netherlands",
@@ -28,10 +26,6 @@ const FLAG_COUNTRY_ID: Readonly<Record<string, string>> = {
   sweden_norway: "sweden_norway",
 };
 
-/**
- * The nation's flag (or ensign) URL, or null for powers without flag art yet.
- * Pure: maps a campaign nation id to the manifest's art; touches no campaign state.
- */
 export function nationFlagUrl(nationId: string): string | null {
   const countryId = FLAG_COUNTRY_ID[nationId];
   if (countryId === undefined) return null;

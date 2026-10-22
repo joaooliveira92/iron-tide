@@ -1,13 +1,9 @@
-// INC-2 — Armor model (DESIGN-39 §§16–24). Proves AC-5.
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
-  // Version
   armorPolicyId,
   ARMOR_RULESET_VERSION,
   ARMOR_FORMULA_VERSION,
-
-  // Zone
   ARMOR_ZONE_TYPES,
   ZONE_MAXIMUM_BELT_UM,
   ZONE_MAXIMUM_TURRET_FACE_BARBETTE_CONNING_TOWER_UM,
@@ -17,41 +13,26 @@ import {
   validateArmorThickness,
   ARMOR_ZONE_MAXIMUM_MISSING,
   ARMOR_THICKNESS_LIMIT_EXCEEDED,
-
-  // Manufacturing
   THICK_ARMOR_THRESHOLD_UM,
   THICK_ARMOR_EXCESS_BP,
   manufacturingEffectiveThickness,
-
-  // Quality
   ARMOR_QUALITY_FAMILIES,
   type ArmorQualityFamily,
   ARMOR_QUALITY_MULTIPLIERS_BP,
   lookupArmorQualityMultiplierBp,
   qualityAdjustedThickness,
   ARMOR_QUALITY_MULTIPLIER_MISSING,
-
-  // Obliquity
   obliquityFactorBp,
-
-  // Splinter
   SPLINTER_THRESHOLD_UM,
   SPLINTER_CLASSES,
   splinterProtectionLevel,
-
-  // Penetration outcomes
   PENETRATION_OUTCOMES,
   determinePenetrationOutcome,
-
-  // Contract
   SHIPPED_ARMOR_CONTRACT,
   validateArmorContract,
-
-  // Reason codes
   DAMAGE_STATE_INVARIANT_FAILED,
 } from "../../src/damage/index.js";
 
-// §17 — Zone maxima
 describe("AC-5: Zone maxima (§17)", () => {
   it("belt maximum is 508_000 µm (20 in)", () => {
     expect(ZONE_MAXIMUM_BELT_UM).toBe(508_000);
@@ -124,7 +105,6 @@ describe("AC-5: Zone maxima (§17)", () => {
   });
 });
 
-// §19 — Thick-armor manufacturing
 describe("AC-5: Thick-armor manufacturing (§18-19)", () => {
   it("threshold is 304_800 µm (12 in)", () => {
     expect(THICK_ARMOR_THRESHOLD_UM).toBe(304_800);
@@ -135,23 +115,14 @@ describe("AC-5: Thick-armor manufacturing (§18-19)", () => {
   });
 
   it("12 in (304_800µm) — at threshold, full thickness", () => {
-    // thinPortion = 304_800, excess = 0 → 304_800
     expect(manufacturingEffectiveThickness(304_800)).toBe(304_800);
   });
 
   it("16 in (406_400µm) — discount applied to excess", () => {
-    // thinPortion = min(406_400, 304_800) = 304_800
-    // excess = max(0, 406_400 - 304_800) = 101_600
-    // effective = 304_800 + floor(101_600 * 7500 / 10000)
-    //          = 304_800 + floor(76_200) = 304_800 + 76_200 = 381_000
     expect(manufacturingEffectiveThickness(406_400)).toBe(381_000);
   });
 
   it("20 in (508_000µm) — full belt max, discount applied", () => {
-    // thinPortion = min(508_000, 304_800) = 304_800
-    // excess = max(0, 508_000 - 304_800) = 203_200
-    // effective = 304_800 + floor(203_200 * 7500 / 10000)
-    //          = 304_800 + floor(152_400) = 304_800 + 152_400 = 457_200
     expect(manufacturingEffectiveThickness(508_000)).toBe(457_200);
   });
 
@@ -162,13 +133,10 @@ describe("AC-5: Thick-armor manufacturing (§18-19)", () => {
   });
 
   it("just above threshold — partial discount", () => {
-    // 5mm above threshold: thinPortion = 304_800, excess = 5_000
-    // effective = 304_800 + floor(5000 * 7500 / 10000) = 304_800 + floor(3750) = 308_550
     expect(manufacturingEffectiveThickness(309_800)).toBe(308_550);
   });
 });
 
-// §20 — Quality adjustment
 describe("AC-5: Armor quality adjustment (§20-21)", () => {
   it("ARMOR_QUALITY_FAMILIES has 5 families in order", () => {
     expect([...ARMOR_QUALITY_FAMILIES]).toEqual([
@@ -210,67 +178,55 @@ describe("AC-5: Armor quality adjustment (§20-21)", () => {
   });
 
   it("qualityAdjustedThickness: Harvey (10_000 bp) on 304_800µm = 304_800µm (no change)", () => {
-    // floor(304_800 * 10_000 / 10_000) = 304_800
     expect(qualityAdjustedThickness(304_800, 10_000)).toBe(304_800);
   });
 
   it("qualityAdjustedThickness: iron (8_000 bp) on 304_800µm = 243_840µm", () => {
-    // floor(304_800 * 8_000 / 10_000) = floor(243_840) = 243_840
     expect(qualityAdjustedThickness(304_800, 8_000)).toBe(243_840);
   });
 
   it("qualityAdjustedThickness: post-KC (11_000 bp) on 304_800µm = 335_280µm", () => {
-    // floor(304_800 * 11_000 / 10_000) = floor(335_280) = 335_280
     expect(qualityAdjustedThickness(304_800, 11_000)).toBe(335_280);
   });
 
   it("qualityAdjustedThickness: Krupp KC (10_500 bp) on 381_000µm (16in manufactured)", () => {
-    // floor(381_000 * 10_500 / 10_000) = floor(400_050) = 400_050
     expect(qualityAdjustedThickness(381_000, 10_500)).toBe(400_050);
   });
 });
 
-// §21 — Impact geometry / obliquity
 describe("AC-5: Impact geometry / obliquity (§21)", () => {
   it("normal impact (0°) on vertical armor (0° slope) → 10_000 bp", () => {
     expect(obliquityFactorBp(0, 0)).toBe(10_000);
   });
 
   it("45° impact on 0° slope → ~7_071 bp", () => {
-    // cos(45°) ≈ 0.7071, * 10_000 = 7_071
     const factor = obliquityFactorBp(45, 0);
     expect(factor).toBe(7_071);
   });
 
   it("impact angle fully offset by armor slope → 10_000 bp", () => {
-    // net angle = max(0, 10 - 10) = 0°, cos(0) = 1.0
     expect(obliquityFactorBp(10, 10)).toBe(10_000);
   });
 
   it("negative net angle clamped to 0 → 10_000 bp", () => {
-    // net angle = max(0, 10 - 20) = 0°, cos(0) = 1.0
     expect(obliquityFactorBp(10, 20)).toBe(10_000);
   });
 
   it("60° impact on 0° slope → 5_000 bp", () => {
-    // cos(60°) = 0.5, * 10_000 = 5_000
     expect(obliquityFactorBp(60, 0)).toBe(5_000);
   });
 
   it("90° impact (parallel) → 0 bp", () => {
-    // cos(90°) = 0, * 10_000 = 0
     expect(obliquityFactorBp(90, 0)).toBe(0);
   });
 
   it("factor clamped to [0, 10_000]", () => {
-    // Negative cos not possible for [0, 90] range, but test stability
     const factor = obliquityFactorBp(0, 0);
     expect(factor).toBeGreaterThanOrEqual(0);
     expect(factor).toBeLessThanOrEqual(10_000);
   });
 });
 
-// §22-23 — Splinter threshold
 describe("AC-5: Splinter threshold (§22-23)", () => {
   it("splinter threshold is 50_800 µm (2 in)", () => {
     expect(SPLINTER_THRESHOLD_UM).toBe(50_800);
@@ -298,7 +254,6 @@ describe("AC-5: Splinter threshold (§22-23)", () => {
   });
 });
 
-// §24 — Penetration outcomes
 describe("AC-5: Seven penetration outcomes (§24)", () => {
   it("PENETRATION_OUTCOMES has exactly 7 outcomes", () => {
     expect([...PENETRATION_OUTCOMES]).toEqual([
@@ -318,13 +273,11 @@ describe("AC-5: Seven penetration outcomes (§24)", () => {
   });
 
   it("SPLINTER_EFFECT: penetration between 25% and 50% of resistance", () => {
-    // 30 < 100 * 0.5 but >= 100 * 0.25
     const outcome = determinePenetrationOutcome(30, 100, 0, false);
     expect(outcome).toBe("SPLINTER_EFFECT");
   });
 
   it("PARTIAL_PENETRATION: penetration between 50% and 100% of resistance", () => {
-    // 75 >= 100 * 0.5 but < 100
     const outcome = determinePenetrationOutcome(75, 100, 0, false);
     expect(outcome).toBe("PARTIAL_PENETRATION");
   });
@@ -335,7 +288,6 @@ describe("AC-5: Seven penetration outcomes (§24)", () => {
   });
 
   it("FULL_PENETRATION: penetration slightly above resistance", () => {
-    // Not > 3x so not PASS_THROUGH
     const outcome = determinePenetrationOutcome(200, 100, 0, false);
     expect(outcome).toBe("FULL_PENETRATION");
   });
@@ -366,7 +318,6 @@ describe("AC-5: Seven penetration outcomes (§24)", () => {
   });
 });
 
-// Contract validation
 describe("AC-5: SHIPPED_ARMOR_CONTRACT + validate guard (fail closed)", () => {
   it("ships the armor_v1 policy id", () => {
     expect(armorPolicyId).toBe("armor_v1");

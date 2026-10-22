@@ -1,9 +1,3 @@
-/**
- * Coastline level-of-detail tiers for the Canvas map (ADR-0055). Tier 0 is the
- * coarsest, used when zoomed out; the last tier is the unsimplified 1:10m data.
- */
-
-/** Douglas–Peucker tolerance in degrees; 0 means "use the source as is". */
 export const COASTLINE_TIER_TOLERANCES: readonly number[] = [0.1, 0.02, 0];
 export type CoastlineTier = 0 | 1 | 2;
 

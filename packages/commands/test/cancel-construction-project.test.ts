@@ -1,5 +1,3 @@
-// Issue-time payload validation for `CancelConstructionProject` (DESIGN-23 section 23; DESIGN-11 settlement contract):
-// the project must exist, belong to the issuing nation, not be terminal, and not be a foreign-contract order.
 import type { CampaignSnapshot, CampaignSlot, ConstructionProject } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";

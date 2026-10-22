@@ -1,44 +1,3 @@
-// DESIGN-40 §13 TorpedoTrack (INC-4, part 1): every launched torpedo creates
-// ONE authoritative track carrying ALL §13 fields. A torpedo remains an
-// authoritative tactical entity until a terminal result is set (the shipped
-// closed union HIT / DETONATION / DUD / GROUNDING / EXHAUSTION / DESTRUCTION /
-// BATTLE_END); actual hit/detonation resolution is INC-5 — this slice ships
-// the entity type, the deterministic id + hash, the guard, and the lifecycle
-// state machine (advance + set-terminal) the engine threads across minutes in
-// INC-7 (GunneryState idiom, engine.ts).
-//
-// Track id: derived deterministically from (battleId + launcherId + tubeId +
-// launch minute + substep) — the contactKey/gunneryEventId stable-derivation
-// idiom. Collision-free: within one battle a tube fires at most once per
-// (launcher, minute, substep), so the tuple is unique.
-//
-// Track hash: SHA-256 domain-separated envelope (createEnvelope
-// "torpedo-track" + torpedo_v1) over the authoritative non-hash surface —
-// deepFreeze + envelope record pattern used across combat. Any authoritative
-// field change changes the hash; the guard fails closed.
-//
-// Lifecycle state machine:
-//   - createTorpedoTrack  -> terminalResult: null (running)
-//   - advanceTorpedoTrack -> pure motion: integer µm displacement along the
-//     launch heading (movement module's authored per-degree direction table,
-//     folded from milli-degrees), distance/arming accounting, and the
-//     deterministic EXHAUSTION transition when the run distance is consumed.
-//     Advancing a terminal track is illegal (TORPEDO_STATE_INVARIANT_FAILED).
-//   - setTorpedoTerminalResult -> validates the closed-union member and that
-//     the track is still running; the transition is one-way (a terminal track
-//     cannot be re-opened or re-terminalized).
-//
-// §13 guidance invariant: while the torpedo runs, its ordered course — the
-// guidanceState.orderedGyroAngleMdeg carried on the run — MUST equal the launch
-// heading it projects along (launchHeadingMdeg; a gyro-guided torpedo's ordered
-// course is its launch heading). The run projects along launchHeadingMdeg only,
-// so divergent fields would make the track internally inconsistent (an INC-5
-// hit-resolution seam). assertTorpedoTrackSurface fails closed
-// (TORPEDO_STATE_INVARIANT_FAILED) if the two ever diverge; the duplicate field
-// can never drift from the projection source.
-//
-// All arithmetic is integer fixed-point; no floating point, I/O, clock, or
-// ambient randomness.
 import { BluewaveError } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import { DIRECTION_FIXED } from "../movement/constants.js";
@@ -55,25 +14,15 @@ import { TORPEDO_STATE_INVARIANT_FAILED } from "./reasonCodes.js";
 import type { Position } from "../spotting/detection.js";
 import type { CompiledTorpedoSpeedSetting } from "@bluewave/armament";
 
-// §13 "reliability state": the per-roll reliability of the running torpedo,
-// normalized from the model's §1 reliabilityBp (100_000 scale) to the
-// 10_000 bp roll scale with floor(reliabilityBp / 10) — 1% = 100 bp, the §12
-// launch-failure roll scale (constants.ts note). INC-5 consumes it for the
-// detonation roll.
 export interface TorpedoReliabilityState {
-  reliabilityBp: number; // integer [0, 10_000] — normalized per-roll reliability
+  reliabilityBp: number;
 }
 
-// §13 "guidance state": the torpedo's guidance capability (from the model) and
-// the ordered gyro angle carried on the run.
 export interface TorpedoGuidanceState {
-  capabilityId: string; // the model's guidanceCapability ("gyro", "none", ...)
-  orderedGyroAngleMdeg: number; // integer milli-degrees, full circle 360_000
+  capabilityId: string;
+  orderedGyroAngleMdeg: number;
 }
 
-// §13 "detection state by participant": per participant id (ship/contact) the
-// detection status of THIS torpedo. Starts empty (no participant has detected
-// the torpedo at launch); the detection model populates it (INC-7 seam).
 export interface TorpedoDetectionState {
   detectedByParticipant: Record<string, { detected: boolean; confidenceBp: number }>;
 }
@@ -82,42 +31,36 @@ export function emptyTorpedoDetectionState(): TorpedoDetectionState {
   return { detectedByParticipant: {} };
 }
 
-// §13 authoritative TorpedoTrack. terminalResult null while the torpedo is a
-// running authoritative entity; INC-5+ set it through the lifecycle machine.
 export interface TorpedoTrack {
   torpedoTrackId: string;
   battleId: string;
   launcherId: string;
   firingShipId: string;
   firingSideId: string;
-  tubeId: number; // the tube that fired (part of the id derivation)
-  targetContactId: string; // contact id, or the §13 NO_TARGET_CONTACT marker for area fire
+  tubeId: number;
+  targetContactId: string;
   torpedoModelId: string;
-  selectedSettingId: string; // the salvo's selected §1 speed/range setting
+  selectedSettingId: string;
   launchMinute: number;
   launchSubstep: number;
-  launchPosition: Position; // integer micrometres
-  launchHeadingMdeg: number; // integer milli-degrees, full circle 360_000
-  orderedGyroAngleMdeg: number; // integer milli-degrees
-  speedKnotsBp: number; // integer basis-point knots (setting)
-  maxRunDistanceM: number; // integer metres (setting)
-  armingDistanceM: number; // integer metres (model minimum arming distance)
-  depthSettingM: number; // integer metres
+  launchPosition: Position;
+  launchHeadingMdeg: number;
+  orderedGyroAngleMdeg: number;
+  speedKnotsBp: number;
+  maxRunDistanceM: number;
+  armingDistanceM: number;
+  depthSettingM: number;
   reliabilityState: TorpedoReliabilityState;
   guidanceState: TorpedoGuidanceState;
   detectionState: TorpedoDetectionState;
-  currentPosition: Position; // integer micrometres
-  // Authoritative advance accounting (the INC-5/INC-7 seam): integer µm
-  // accumulated along the run, the remaining run distance in metres (metre
-  // quantum), and whether the arming distance has been traveled (§14).
+  currentPosition: Position;
   distanceTraveledUm: number;
   runDistanceRemainingM: number;
   armed: boolean;
-  terminalResult: TorpedoTerminalResult | null; // null while running
-  trackHash: string; // authoritative deterministic hash
+  terminalResult: TorpedoTerminalResult | null;
+  trackHash: string;
 }
 
-// AC-13: deterministic track id — mirror of contactKey/gunneryEventId.
 export function torpedoTrackId(o: {
   battleId: string;
   launcherId: string;
@@ -158,14 +101,10 @@ function isPosition(v: unknown): v is Position {
   return Array.isArray(v) && v.length === 2 && isInt(v[0]) && isInt(v[1]);
 }
 
-// Full-circle milli-degree fold: any integer -> [0, 360_000).
 export function foldMdeg(mdeg: number): number {
   return (((mdeg % 360_000) + 360_000) % 360_000) | 0;
 }
 
-// AC-13: surface guard — every §13 field well-formed; a malformed track fails
-// closed with TORPEDO_STATE_INVARIANT_FAILED (EXCEPT the trackHash presence, a
-// hash-less surface is validated before hashing). Reversible-to-invariant.
 export function assertTorpedoTrackSurface(t: TorpedoTrack): void {
   if (!isNonEmptyString(t.torpedoTrackId))
     invariant(t, "torpedoTrackId", t.torpedoTrackId, "torpedoTrackId must be a non-empty string");
@@ -180,7 +119,6 @@ export function assertTorpedoTrackSurface(t: TorpedoTrack): void {
   if (!isInt(t.tubeId) || t.tubeId < 0)
     invariant(t, "tubeId", t.tubeId, "tubeId must be a non-negative integer");
   if (t.targetContactId === NO_TARGET_CONTACT) {
-    // §13 area-fire marker — valid.
   } else if (!isNonEmptyString(t.targetContactId)) {
     invariant(
       t,
@@ -218,9 +156,6 @@ export function assertTorpedoTrackSurface(t: TorpedoTrack): void {
       t.orderedGyroAngleMdeg,
       "gyro angle must be integer milli-degrees",
     );
-  // §13 guidance invariant: while the torpedo runs its ordered gyro angle must
-  // equal the launch heading (the run projects along launchHeadingMdeg only) —
-  // fail closed rather than carry an internally inconsistent track.
   if (t.orderedGyroAngleMdeg !== t.launchHeadingMdeg)
     invariant(
       t,
@@ -333,15 +268,12 @@ export function assertTorpedoTrackSurface(t: TorpedoTrack): void {
     );
 }
 
-// AC-13: full guard incl. the trackHash presence requirement.
 export function assertAuthoritativeTorpedoTrack(t: TorpedoTrack): void {
   assertTorpedoTrackSurface(t);
   if (!isNonEmptyString(t.trackHash))
     invariant(t, "trackHash", t.trackHash, "trackHash must be a non-empty string");
 }
 
-// Authoritative track hash: domain-separated envelope over the non-hash
-// surface. Any authoritative field change changes the hash (tamper-proof).
 export function computeTorpedoTrackHash(t: TorpedoTrack): string {
   const surface = {
     torpedoTrackId: t.torpedoTrackId,
@@ -374,21 +306,18 @@ export function computeTorpedoTrackHash(t: TorpedoTrack): string {
   return createEnvelope("torpedo-track", torpedoPolicyId, surface).bodyHash;
 }
 
-// AC-13: build the authoritative track with its hash. The launch position and
-// current position are the same at launch; the track is running (terminalResult
-// null) until INC-5+ resolves it.
 export function createTorpedoTrack(o: {
   battleId: string;
   launcherId: string;
   firingShipId: string;
   firingSideId: string;
   tubeId: number;
-  targetContactId: string | null; // null -> the §13 NONE marker (area fire)
+  targetContactId: string | null;
   torpedoModelId: string;
-  reliabilityBp: number; // the model's §1 reliabilityBp (100_000 scale)
-  guidanceCapability: string; // the model's guidance capability id
-  selectedSetting: CompiledTorpedoSpeedSetting; // the salvo's selected speed/range setting
-  armingDistanceM: number; // the model's minimum arming distance
+  reliabilityBp: number;
+  guidanceCapability: string;
+  selectedSetting: CompiledTorpedoSpeedSetting;
+  armingDistanceM: number;
   launchMinute: number;
   launchSubstep: number;
   launchPosition: Position;
@@ -423,7 +352,7 @@ export function createTorpedoTrack(o: {
     armingDistanceM: o.armingDistanceM,
     depthSettingM: o.depthSettingM,
     reliabilityState: {
-      reliabilityBp: Math.floor(o.reliabilityBp / 10), // normalized to the 10_000 bp roll scale
+      reliabilityBp: Math.floor(o.reliabilityBp / 10),
     },
     guidanceState: {
       capabilityId: o.guidanceCapability,
@@ -443,17 +372,10 @@ export function createTorpedoTrack(o: {
   return Object.freeze(full);
 }
 
-// Fail-closed hash verification: recompute and compare. Any tampered field
-// produces a mismatch (never silently accepted).
 export function verifyTorpedoTrackHash(t: TorpedoTrack): boolean {
   return computeTorpedoTrackHash(t) === t.trackHash;
 }
 
-// Project an integer µm displacement along an integer milli-degree heading:
-// fold to the nearest-lower integer degree and reuse the movement module's
-// authored per-degree direction table (single source of truth; the cos/sin
-// components are on the module's DIRECTION_FIXED 10_000 scale). Explicit FLOOR
-// rounding on both components (the torpedo module's arithmetic convention).
 export function projectAlongHeading(
   origin: Position,
   headingMdeg: number,
@@ -468,12 +390,6 @@ export function projectAlongHeading(
   return [origin[0] + dX, origin[1] + dY];
 }
 
-// AC-13: pure minute-advance of a RUNNING track — integer µm displacement
-// along the launch heading, distance/arming accounting, and the deterministic
-// EXHAUSTION transition when the run distance is consumed. Advancing a
-// terminal track is illegal (the torpedo is no longer an advancing entity).
-// The engine (INC-7) threads tracks across minutes with this function
-// (GunneryState idiom).
 export function advanceTorpedoTrack(t: TorpedoTrack, dtMs: number): TorpedoTrack {
   assertAuthoritativeTorpedoTrack(t);
   if (!Number.isInteger(dtMs) || dtMs <= 0)
@@ -482,8 +398,6 @@ export function advanceTorpedoTrack(t: TorpedoTrack, dtMs: number): TorpedoTrack
     invariant(t, "terminalResult", t.terminalResult, "a terminal torpedo track cannot be advanced");
 
   const speedUmS = torpedoSpeedBpKnotsToUmS(t.speedKnotsBp);
-  // distanceUm = speed (µm/s) * dtMs / 1_000 — exact integer division (the
-  // torpedo speed scale makes the product exact for the shipped minute quantum).
   const distanceUm = Math.floor((speedUmS * dtMs) / 1_000);
   const currentPosition = projectAlongHeading(t.currentPosition, t.launchHeadingMdeg, distanceUm);
   const distanceTraveledUm = t.distanceTraveledUm + distanceUm;
@@ -504,11 +418,6 @@ export function advanceTorpedoTrack(t: TorpedoTrack, dtMs: number): TorpedoTrack
   return Object.freeze(full);
 }
 
-// AC-13: one-way lifecycle transition — set the closed-union terminal result on
-// a RUNNING track. A terminal track cannot be re-opened or re-terminalized
-// (TORPEDO_STATE_INVARIANT_FAILED); a non-canonical result fails closed. INC-5
-// (hit/detonation/dud), the engine (battle end), and the hazard resolvers
-// (grounding/destruction) call this.
 export function setTorpedoTerminalResult(
   t: TorpedoTrack,
   terminalResult: TorpedoTerminalResult,

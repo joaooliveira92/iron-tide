@@ -63,7 +63,6 @@ describe("ship overlays", () => {
     const base: ReadonlySet<ShipOverlay> = new Set<ShipOverlay>(["arcs", "footprint"]);
     expect([...toggleOverlay(base, "mass")].sort()).toEqual(["arcs", "footprint", "mass"]);
     expect(toggleOverlay(base, "arcs")).toEqual(new Set<ShipOverlay>(["footprint"]));
-    // The input is left as it was.
     expect(base).toEqual(new Set<ShipOverlay>(["arcs", "footprint"]));
   });
 });

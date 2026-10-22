@@ -1,9 +1,3 @@
-/**
- * Branded identifiers for the armament domain (ADR-0002/ADR-0093). The brands are compile-time
- * only: every constructor is a pure cast, and the resolver re-validates the canonical lower
- * snake_case shape at runtime so malformed content produces a structured finding rather than a
- * throw (expected-error policy, ADR-0093).
- */
 import type { Brand } from "@bluewave/contracts";
 
 export type GunFamilyId = Brand<string, "ArmamentGunFamilyId">;
@@ -13,7 +7,6 @@ export type AmmunitionId = Brand<string, "ArmamentAmmunitionId">;
 export type ArmamentTechnologyId = Brand<string, "ArmamentTechnologyId">;
 export type ArmamentNationId = Brand<string, "ArmamentNationId">;
 
-/** Canonical stable-id shape shared by every authored content id (components.yaml, naval-profiles/). */
 const ARMAMENT_ID_RE = /^[a-z][a-z0-9_]*$/;
 
 export const isArmamentId = (value: string): boolean => ARMAMENT_ID_RE.test(value);

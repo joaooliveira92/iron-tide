@@ -1,10 +1,3 @@
-// B-6 INC-3 shared test fixture: a small 2-nation war campaign whose battles
-// run through MonthExecutor's battle_resolution phase — either
-// battle_generation-driven (armed ships + committed strategic weather) or
-// hand-constructed (controlled manifests / manifest-less legacy battles /
-// broken-invariant failures). Deterministic; no ambient clock/random/env
-// (the only randomness is the keyed campaign seed).
-
 import type {
   BattleInstance,
   BattleManifest,
@@ -172,10 +165,6 @@ export function makeBattle(overrides: Partial<BattleInstance> = {}): BattleInsta
   };
 }
 
-/**
- * Build a battle manifest via @bluewave/combat's canonical builder (the same
- * seam battle_generation uses) and return it as a snapshot-storable manifest.
- */
 export function buildBattleManifest(
   overrides: Partial<Parameters<typeof buildManifest>[0]> = {},
 ): BattleManifest {
@@ -217,25 +206,16 @@ export function buildBattleManifest(
 }
 
 export interface BattleSnapshotOptions {
-  /** Ships per nation (default: 2 armed, in the battle area). */
   attackerShips?: Ship[];
   defenderShips?: Ship[];
   designs?: Map<string, CompiledDesignVersion>;
   wars?: WarDeclaration[];
   battles?: BattleInstance[];
   manifests?: BattleManifest[];
-  /** Areas in world.areas — weather_generation commits strategic weather only
-   *  for these (omit the battle area to exercise the missing-weather path). */
   areas?: string[];
   turnNumber?: number;
 }
 
-/**
- * Canonical 2-nation war snapshot for the battle_resolution phase tests.
- * Defaults: GBR/FRA each field 2 armed ships in `a-1` with compiled designs,
- * an ACTIVE war, an empty battle set (battle_generation fills it when the
- * ships are eligible), and `a-1` in the world so weather is committed.
- */
 export function makeBattleSnapshot(opts: BattleSnapshotOptions = {}): CampaignSnapshot {
   const attackerShips = opts.attackerShips ?? [
     makeShip("g1", "dv-att-a", ATTACKER_NATION, { firepower: 200 }),

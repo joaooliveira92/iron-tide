@@ -1,7 +1,6 @@
 import { TENSION_LABEL_BANDS } from "@bluewave/campaign-engine";
 import { attitudeLabel, worldText } from "../world-situation-copy.js";
 
-/** `0–2`, `3–5`… derived from the engine's own band bounds, never retyped. */
 function bandRanges() {
   const ascending = [...TENSION_LABEL_BANDS].sort((a, b) => a.min - b.min);
   return ascending.map((band, index) => {
@@ -14,11 +13,6 @@ function bandRanges() {
   });
 }
 
-/**
- * An always-available key to the four relationship concepts and the tension
- * scale. A native disclosure keeps it keyboard-operable and out of the way; none
- * of its content depends on hover.
- */
 export function DiplomaticLegend() {
   return (
     <details className="group rounded-md border border-border bg-background/40 px-4 py-3">

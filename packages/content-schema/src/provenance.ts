@@ -6,18 +6,6 @@ import {
   SOURCE_STATUSES_SCHEMA,
 } from "./naval-profile-vocab.js";
 
-/**
- * The machine-checked provenance/confidence record carried by authored content
- * (CAH-PROV-1). Extracted from the naval-profile schema so every authored
- * collection — core content-pack collections, the ship-building catalogue and
- * the campaign-file collections — can reuse the exact same shape rather than
- * carrying its provenance in YAML comments.
- *
- * `sources` may be empty when the value is an admitted estimate or balance
- * target; `note` records the human-readable reason. The shape is structural
- * only; the release gate (CAH-PROV-3) is what acts on `sourceStatus`.
- */
-
 const int = Schema.Finite.check(Schema.isInt());
 
 export const SourceReferenceSchema = Schema.Struct({

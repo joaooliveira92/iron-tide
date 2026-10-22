@@ -146,7 +146,6 @@ describe("tabbed layout", () => {
     expect(
       screen.getByRole("tab", { name: "Hull and machinery" }).getAttribute("aria-selected"),
     ).toBe("true");
-    // only the open tab's panels are on screen
     expect(screen.queryByRole("region", { name: "Validation" })).toBeNull();
     expect(screen.getByRole("region", { name: "Hull plan" })).toBeTruthy();
   });
@@ -181,7 +180,7 @@ describe("tabbed layout", () => {
     await waitFor(() =>
       expect(within(region("Design file")).getByLabelText("Last design file")).toBeTruthy(),
     );
-    region("Hull plan"); // leave the tab
+    region("Hull plan");
     expect(within(region("Design file")).getByLabelText("Last design file").textContent).toMatch(
       /bad\.bwdesign/,
     );

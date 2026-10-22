@@ -1,4 +1,3 @@
-// AC-20 (INC-6): Damaged aircraft disposition — 7 dispositions, cannibalization, no auto-clear.
 import { describe, expect, it } from "vite-plus/test";
 import {
   checkDispositionValidity,

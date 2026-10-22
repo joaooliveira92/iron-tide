@@ -1,4 +1,3 @@
-// Shared guards for the DESIGN-34 submarine contract validators.
 import { BluewaveError } from "@bluewave/contracts";
 import { INVALID_SUBMARINE_REPRESENTATION } from "../reasonCodes.js";
 

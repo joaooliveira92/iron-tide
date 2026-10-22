@@ -1,6 +1,3 @@
-// AC-15: Contracts + validate guards — every new weather/visibility constant
-// ships *_v1 + SHIPPED_WEATHER_CONTRACT + validate guard + validateAllWeatherContracts;
-// pinning fails closed.
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {

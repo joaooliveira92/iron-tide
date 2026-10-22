@@ -13,8 +13,6 @@ import { schemeDiagram } from "./scheme-diagram.js";
 import { ARMOUR_SCHEMES } from "@bluewave/ship-design";
 
 const content = loadDrawingBoardContent();
-// The first reference (a destroyer) carries no armour; use the armoured reference with the most regions so the
-// field readouts are exercised against a real scheme.
 const ref = [...content.references].sort(
   (a, b) => b.draft.armour.regions.length - a.draft.armour.regions.length,
 )[0]!;
@@ -88,7 +86,6 @@ describe("protection view model", () => {
     for (const field of model.fitted) {
       expect(field.effectiveThicknessMm).toBe((compiled[field.region] ?? 0) / 1000);
     }
-    // A materials table that disagrees with the compile cannot move the readout.
     const tampered = materials.map((m) => ({ ...m, effBp: 1 }));
     const tamperedModel = protectionModel(ref.draft, view, tampered, 1880);
     const byRegion = new Map(model.fitted.map((f) => [f.region, f.effectiveThicknessMm]));
@@ -107,7 +104,6 @@ describe("protection view model", () => {
     expect(fitted.size).toBeGreaterThan(0);
     const notes = model.notes.join(" ").toLowerCase();
     expect(notes).toMatch(/subdivision|double bottom/);
-    // The turret roof and secondary-gun armour are modelled now, so the notes no longer disclaim them.
     expect(notes).not.toMatch(/turret roof/);
   });
 

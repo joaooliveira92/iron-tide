@@ -1,5 +1,3 @@
-// INC-4 — Damage event record (DESIGN-41 §45).
-// Proves: record completeness, hash computation, immutability.
 import { describe, it, expect } from "vite-plus/test";
 import {
   createDamageEventRecord,
@@ -33,8 +31,6 @@ function sampleBody(overrides: Partial<DamageEventRecordBody> = {}): DamageEvent
     ...overrides,
   };
 }
-
-// §45 — Record completeness
 
 describe("AC-4: Record completeness (§45)", () => {
   it("creates a record with all required fields", () => {
@@ -104,8 +100,6 @@ describe("AC-4: Record completeness (§45)", () => {
   });
 });
 
-// §45 — Hash computation
-
 describe("AC-4: Hash computation (§45)", () => {
   it("computes a stable hash for identical records built independently", () => {
     const hash1 = computeDamageEventHash(sampleBody());
@@ -140,8 +134,6 @@ describe("AC-4: Hash computation (§45)", () => {
     expect(record.recordHash).toBe(computeDamageEventHash(body));
   });
 });
-
-// §45 — Immutability
 
 describe("AC-4: Immutability (§45)", () => {
   it("returned record is frozen", () => {

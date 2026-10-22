@@ -1,12 +1,3 @@
-/**
- * Marker geometry: the port dots and fleet badges placed on the chart. Pure
- * (no React, no DOM) and driven by an explicit zoom, so the clustering rules
- * can be reasoned about — and tested — without a camera or a browser.
- *
- * At the home zoom, marks within a dot's width of each other merge into one
- * counted mark at their weighted centre; zooming in separates them again.
- */
-
 import { projectPoint, type Point, type Projection } from "./projection.js";
 
 export interface PortMark {
@@ -28,7 +19,6 @@ export interface FleetMark {
   count: number;
 }
 
-/** A port/possession to place, before projection. */
 export interface PossessionPlacement {
   readonly id: string;
   readonly name: string;
@@ -37,7 +27,6 @@ export interface PossessionPlacement {
   readonly base: "major" | "minor";
 }
 
-/** A fleet to place, before projection. */
 export interface FleetPlacement {
   readonly id: string;
   readonly area: string;
@@ -45,13 +34,8 @@ export interface FleetPlacement {
   readonly owner: string | null;
 }
 
-/** The projected label anchor of each area, keyed by fixture area id. */
 export type AreaAnchors = ReadonlyMap<string, Point>;
 
-/**
- * Port dots, one per possession, before clustering. Marks within a dot's width
- * of each other are merged later (see `buildPortMarks`).
- */
 export function portSingles(
   possessions: readonly PossessionPlacement[],
   projection: Projection,
@@ -71,10 +55,6 @@ export function portSingles(
   });
 }
 
-/**
- * Fleet badges, fanned a little around their area's label anchor. Dots within
- * a badge's width of each other are merged later (see `buildFleetMarks`).
- */
 export function fleetSingles(fleets: readonly FleetPlacement[], anchors: AreaAnchors): FleetMark[] {
   const singles: FleetMark[] = [];
   fleets.forEach((fleet, index) => {
@@ -92,11 +72,6 @@ export function fleetSingles(fleets: readonly FleetPlacement[], anchors: AreaAnc
   return singles;
 }
 
-/**
- * Merge port dots that sit within 14 screen pixels of each other. `factor` is
- * screen pixels per world user unit (`scale * pixelsPerUnit`); `clustered` is
- * false above the home zoom band, where every dot stands alone.
- */
 export function buildPortMarks(
   singles: readonly PortMark[],
   clustered: boolean,
@@ -123,11 +98,6 @@ export function buildPortMarks(
   return clusters;
 }
 
-/**
- * Merge fleet badges within 34 screen pixels of each other, summing their
- * ships, then nudge every badge clear of the port dots it would otherwise sit
- * on.
- */
 export function buildFleetMarks(
   singles: readonly FleetMark[],
   clustered: boolean,
@@ -155,10 +125,6 @@ export function buildFleetMarks(
   return clearOfPorts(clusters, ports, factor);
 }
 
-/**
- * Pushes fleet badges down, a few pixels at a time, until none sits on a port
- * dot (`factor` is screen pixels per user unit).
- */
 export function clearOfPorts(
   fleets: readonly FleetMark[],
   ports: readonly PortMark[],

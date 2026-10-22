@@ -36,7 +36,6 @@ export type CampaignScreenRoute = ComponentType<CampaignScreenRouteProps>;
 export interface CampaignScreenDefinition {
   readonly id: CampaignScreen;
   readonly label: string;
-  /** Compact name for tight surfaces (the bottom bar); the full `label` is its tooltip. */
   readonly shortLabel: string;
   readonly icon: LucideIcon;
   readonly group: "campaign" | "settings";

@@ -19,10 +19,8 @@ describe("opportunity determination (AC-5)", () => {
       acceptedWarAreaPairs: new Set(),
     });
     expect(opps.length).toBeGreaterThan(0);
-    // FLEET_BATTLE has lower priority number than CRUISER_BATTLE (8 < 9) -> first
     const missions = opps.map((o) => o.missionType);
     expect(missions[0]).toBe("FLEET_BATTLE");
-    // Monthly limit 1/area rejects the second; the first is a CANDIDATE.
     const first = opps[0]!;
     expect(first.warId).toBe("war_1");
     expect(first.areaId).toBe("area_battle");
@@ -88,7 +86,6 @@ describe("opportunity determination (AC-5)", () => {
       acceptedOpportunityIds: new Set(),
       acceptedWarAreaPairs: new Set(),
     });
-    // Both FLEET + CRUISER in one area -> limit rejects the second
     expect(opps.length).toBe(2);
     const rejected = opps.filter((o) => o.status === "REJECTED");
     expect(rejected.length).toBe(1);

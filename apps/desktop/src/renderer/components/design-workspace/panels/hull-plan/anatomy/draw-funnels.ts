@@ -4,7 +4,6 @@ import { solid } from "./anatomy-helpers.js";
 import type { PartDraft } from "./anatomy-types.js";
 import type { AnatomyShipScene } from "./anatomy-scene.js";
 
-/** Funnels: tapered, raked, banded, with a dark mouth and a steam pipe. */
 export function drawFunnels(scene: AnatomyShipScene): void {
   const { near, L, D, funnelMetrics, P, facts, add, text } = scene;
   for (const funnel of funnelMetrics) {

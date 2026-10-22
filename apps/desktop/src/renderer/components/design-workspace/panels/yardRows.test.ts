@@ -3,7 +3,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { createPresentationFormat } from "../../../lib/presentation-format/index.js";
 import { yardRows } from "./yardRows.js";
 
-/** The default presentation: en-US, full scale, imperial, Naval Credits. */
 const FORMAT = createPresentationFormat({
   locale: "en-US",
   numberScale: "full",

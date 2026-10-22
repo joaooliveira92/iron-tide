@@ -4,13 +4,6 @@ import {
 } from "@bluewave/campaign-engine";
 import type { FieldWeightsDraft } from "./research-field-priorities.js";
 
-/** Pure largest-remainder proportional split over the draft weights, mirroring
- * `packages/phase-engine/src/research.ts:largestRemainderAllocation` (spec §10
- * "projected monthly progress"). `researchBudget` is the UI budget number; the
- * engine's `computeResearchResources` is the identity (BP 10_000), so the
- * budget is used directly as resources. Returns a per-field allocation that
- * sums exactly to `researchBudget` (when >0 and at least one weight-bearing
- * field). */
 export function deriveProjectedResearchAllocations(
   researchBudget: number,
   draft: FieldWeightsDraft,

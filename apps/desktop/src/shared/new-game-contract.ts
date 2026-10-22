@@ -16,13 +16,6 @@ export interface NewGameNation {
   readonly regimeType: string;
 }
 
-/**
- * Result of `listNewGameOptions`. `supportedValues.playerSlotId` excludes
- * zero-content nations (desktop-mvp map, Empty-Nation Content Gap ticket) —
- * the New Game nation-selection screen's existing two-gate filter
- * (`scenario.playableNationIds` ∩ `supportedValues.playerSlotId`) handles
- * the rest.
- */
 export interface NewGameOptions {
   readonly scenarios: readonly NewGameScenario[];
   readonly nations: readonly NewGameNation[];

@@ -1,11 +1,6 @@
 import type { PendingTurnDto } from "../../../shared/campaign-command-contract.js";
 import { resolveMessage } from "../../content/uiCatalogue.js";
 
-/**
- * The pending-turn recovery prompt (ticket 07). On load, a campaign that holds a
- * suspended turn prompts the player to resume it; an incompatible pending turn
- * is explained and resumption is declined **without altering the save**.
- */
 export function PendingTurnRecoveryPrompt({
   pending,
   unavailable,

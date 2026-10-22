@@ -1,9 +1,3 @@
-// AC-11: salvo policy (DESIGN-40 §11) — DETERMINISTIC recommendation over the
-// nine §11 factors with authored constants (never random), clamped to
-// [1, maxTubes]; exact-tube-id validation; launcher-arc enforcement
-// (TORPEDO_LAUNCH_ARC_INVALID); ascending-tube selection over LOADED tubes; and
-// ATOMIC ammunition reservation through the INC-1 consumeForLaunch (a salvo
-// including an EMPTY tube consumes NOTHING).
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -51,9 +45,6 @@ function launcher(overrides: Partial<TorpedoLauncherState> = {}): TorpedoLaunche
   return withTorpedoLauncherStateHash(surface);
 }
 
-// A tactically-neutral salvo situation: coverage pressure (>= 3 friendly
-// launchers -> 3_000 bp -> +300) is the only non-zero factor, so the
-// recommended size equals the base tubes for the mission objective.
 function neutralPolicy(
   overrides: Partial<TorpedoSalvoPolicyInputs> = {},
 ): TorpedoSalvoPolicyInputs {
@@ -105,26 +96,26 @@ describe("AC-11: deterministic salvo-size recommendation over the nine §11 fact
       neutralPolicy({
         targetCombatValueBp: 10_000,
         targetSizeBp: 10_000,
-        targetEstimatedRangeM: 15_000, // range-pressure 8_000 bp
-        solutionQualityBp: 0, // full quality deficit
+        targetEstimatedRangeM: 15_000,
+        solutionQualityBp: 0,
       }),
       4,
     ).recommendedSize;
     expect(pressured).toBeGreaterThan(neutral);
-    expect(pressured).toBe(4); // clamped at maxTubes
+    expect(pressured).toBe(4);
   });
 
   it("ammo scarcity, friendly coverage, and overkill push FEWER tubes", () => {
     const neutral = recommendSalvoSize(neutralPolicy(), 4).recommendedSize;
     const conserving = recommendSalvoSize(
       neutralPolicy({
-        remainingTotalAmmunition: 0, // scarcity 10_000 bp
+        remainingTotalAmmunition: 0,
         overkillEstimateBp: 10_000,
       }),
       4,
     ).recommendedSize;
     expect(conserving).toBeLessThan(neutral);
-    expect(conserving).toBe(1); // clamped at the minimum
+    expect(conserving).toBe(1);
   });
 
   it("clamps to [1, maxTubes]", () => {
@@ -145,9 +136,9 @@ describe("AC-11: deterministic salvo-size recommendation over the nine §11 fact
       }),
       4,
     );
-    expect(result.band.rangePressureBp).toBe(4_000); // 5_000 < 6_000 <= 8_000
-    expect(result.band.ammoScarcityBp).toBe(6_000); // 2 <= 3 < 4
-    expect(result.band.friendlyCoveragePressureBp).toBe(7_000); // 1 <= 1 < 2
+    expect(result.band.rangePressureBp).toBe(4_000);
+    expect(result.band.ammoScarcityBp).toBe(6_000);
+    expect(result.band.friendlyCoveragePressureBp).toBe(7_000);
   });
 
   it("rejects a non-positive maxTubes", () => {
@@ -156,7 +147,6 @@ describe("AC-11: deterministic salvo-size recommendation over the nine §11 fact
   });
 
   it("rejects out-of-range or non-integer policy inputs (structured invariant, never a silent NaN)", () => {
-    // basis-point fields must be integers within [0, 10_000]
     expect(() => recommendSalvoSize(neutralPolicy({ targetCombatValueBp: 10_001 }), 4)).toThrow(
       BluewaveError,
     );
@@ -175,7 +165,6 @@ describe("AC-11: deterministic salvo-size recommendation over the nine §11 fact
     expect(() => recommendSalvoSize(neutralPolicy({ overkillEstimateBp: 10_001 }), 4)).toThrow(
       BluewaveError,
     );
-    // counts must be non-negative integers
     expect(() => recommendSalvoSize(neutralPolicy({ remainingTotalAmmunition: -1 }), 4)).toThrow(
       BluewaveError,
     );
@@ -185,11 +174,9 @@ describe("AC-11: deterministic salvo-size recommendation over the nine §11 fact
     expect(() => recommendSalvoSize(neutralPolicy({ friendlyLauncherCount: -1 }), 4)).toThrow(
       BluewaveError,
     );
-    // range must be a non-negative integer
     expect(() => recommendSalvoSize(neutralPolicy({ targetEstimatedRangeM: 0.5 }), 4)).toThrow(
       BluewaveError,
     );
-    // a garbage objective/withdrawal must never index the tables into NaN
     expect(() =>
       recommendSalvoSize(neutralPolicy({ missionObjective: "RANDOM" as never }), 4),
     ).toThrow(BluewaveError);
@@ -211,14 +198,14 @@ describe("AC-11: exact tube selection + validation", () => {
   });
 
   it("selectSalvoTubes picks LOADED tubes in ascending tube-id order (§12 order)", () => {
-    const state = launcher(); // tubes: [G7A, G7A, EMPTY, G7A]
+    const state = launcher();
     expect(selectSalvoTubes(state, 2)).toEqual([0, 1]);
-    expect(selectSalvoTubes(state, 4)).toEqual([0, 1, 3]); // only 3 loaded tubes exist
+    expect(selectSalvoTubes(state, 4)).toEqual([0, 1, 3]);
     expect(selectSalvoTubes(state, 1)).toEqual([0]);
   });
 
   it("assertSalvoTubesWithinArc fails with TORPEDO_LAUNCH_ARC_INVALID outside the training limits", () => {
-    const state = launcher(); // training limits [-45_000, 45_000]
+    const state = launcher();
     expect(() => assertSalvoTubesWithinArc(state, [0, 1], 45_000)).not.toThrow();
     expect(() => assertSalvoTubesWithinArc(state, [0, 1], 45_001)).toThrow(BluewaveError);
     let err: BluewaveError | undefined;
@@ -240,12 +227,12 @@ describe("AC-11: atomic salvo ammunition reservation (reuses INC-1 consumeForLau
     expect(result.state.loadedPerTube).toEqual([EMPTY_TUBE, EMPTY_TUBE, EMPTY_TUBE, EMPTY_TUBE]);
     expect(result.accounts.map((a) => a.tubeIndex)).toEqual([0, 1, 3]);
     expect(result.accounts[0].after).toBe(EMPTY_TUBE);
-    expect(state.loadedPerTube[0]).toBe(G7A); // the input state is untouched (immutable)
+    expect(state.loadedPerTube[0]).toBe(G7A);
     expect(state.stateHash).toBe(before);
   });
 
   it("a salvo including an EMPTY tube is atomic: consumes NOTHING (TORPEDO_AMMUNITION_UNAVAILABLE)", () => {
-    const state = launcher(); // tube 2 is EMPTY
+    const state = launcher();
     const beforeHash = state.stateHash;
     let err: BluewaveError | undefined;
     try {
@@ -255,7 +242,7 @@ describe("AC-11: atomic salvo ammunition reservation (reuses INC-1 consumeForLau
     }
     expect(err).toBeDefined();
     expect(err!.message).toBe(TORPEDO_AMMUNITION_UNAVAILABLE);
-    expect(state.loadedPerTube).toEqual([G7A, G7A, EMPTY_TUBE, G7A]); // NOTHING consumed
+    expect(state.loadedPerTube).toEqual([G7A, G7A, EMPTY_TUBE, G7A]);
     expect(state.stateHash).toBe(beforeHash);
   });
 
@@ -282,8 +269,6 @@ describe("AC-11: atomic salvo ammunition reservation (reuses INC-1 consumeForLau
   });
 });
 
-// The eligibility aggregate accepts a salvo tube selection; a duplicate index
-// (which the salvo layer rejects) is also rejected by eligibility's input guard.
 describe("AC-11 seam: the eligibility aggregate validates the salvo tube indexes", () => {
   it("duplicate tube indexes in a launch fail closed", () => {
     expect(() =>

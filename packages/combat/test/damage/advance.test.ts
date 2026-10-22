@@ -1,5 +1,3 @@
-// INC-4 — resolveDamage integration + strict no-op path.
-// Tests the engineWiring entry point end-to-end.
 import { describe, it, expect } from "vite-plus/test";
 import {
   resolveDamage,
@@ -40,7 +38,6 @@ function sampleImpact(overrides: Partial<GunneryImpact> = {}): GunneryImpact {
     penetrationMargin: 50_000,
     structuralDamage: 5_000,
     flotationDamage: 2_000,
-    // INC-5 defaults
     shipType: "ORDINARY",
     hasCombustible: false,
     hasOxygen: false,
@@ -56,8 +53,6 @@ function sampleImpact(overrides: Partial<GunneryImpact> = {}): GunneryImpact {
   };
 }
 
-// resolveDamage integration
-
 describe("AC-4: resolveDamage integration", () => {
   it("processes a single impact and returns new state + events", () => {
     const state = baseState();
@@ -67,7 +62,6 @@ describe("AC-4: resolveDamage integration", () => {
     expect(newState.shipId).toBe("SHIP-001");
     expect(events).toHaveLength(1);
 
-    // Structure/flotation should be reduced
     expect(newState.structuralIntegrity).toBeLessThan(100_000);
     expect(newState.flotationReserve).toBeLessThan(50_000);
   });
@@ -96,7 +90,7 @@ describe("AC-4: resolveDamage integration", () => {
     const { newState, events } = resolveDamage(state, impacts, 10, 2);
 
     expect(events).toHaveLength(2);
-    expect(newState.structuralIntegrity).toBe(85_000); // 100_000 - 5_000 - 10_000
+    expect(newState.structuralIntegrity).toBe(85_000);
     expect(events[0].sourceId).toBe("HIT-1");
     expect(events[1].sourceId).toBe("HIT-2");
   });
@@ -107,8 +101,6 @@ describe("AC-4: resolveDamage integration", () => {
     const { events } = resolveDamage(state, [impact], 10, 2);
 
     const event = events[0];
-    // TURRET-1 is in zone TURRET-1 (same id)
-    // With full penetration, NONE splinters → DEGRADED
     expect(event.componentEffects.length).toBeGreaterThan(0);
     const turretEffect = event.componentEffects.find((ce) => ce.componentId === "TURRET-1");
     expect(turretEffect).toBeDefined();
@@ -142,7 +134,6 @@ describe("AC-4: resolveDamage integration", () => {
     const state = baseState({ flotationReserve: 2_000 });
     const { events } = resolveDamage(state, [sampleImpact({ flotationDamage: 2_000 })], 10, 2);
     expect(events[0].terminalTransition).toBe("SINKING");
-    // State should be terminal SINKING
   });
 
   it("state transitions to SINKING when flotation reserve drops to 0", () => {
@@ -164,16 +155,12 @@ describe("AC-4: resolveDamage integration", () => {
   });
 });
 
-// Strict no-op path
-
 describe("AC-4: Strict no-op path", () => {
   it("returns state unchanged when impacts array is empty", () => {
     const state = baseState();
     const { newState, events } = resolveDamage(state, [], 10, 2);
 
-    // Events array must be empty
     expect(events).toEqual([]);
-    // State should be the same (same reference when hash already matches)
     expect(newState.structuralIntegrity).toBe(state.structuralIntegrity);
     expect(newState.flotationReserve).toBe(state.flotationReserve);
   });
@@ -181,7 +168,6 @@ describe("AC-4: Strict no-op path", () => {
   it("no-op path preserves state hash", () => {
     const state = baseState();
     const { newState } = resolveDamage(state, [], 10, 2);
-    // State hash should be computed and valid
     expect(newState.stateHash).toMatch(/^[0-9a-f]{64}$/);
   });
 

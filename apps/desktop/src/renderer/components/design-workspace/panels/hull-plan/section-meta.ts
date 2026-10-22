@@ -1,10 +1,6 @@
 import type { ZoneId } from "@bluewave/ship-design";
 import { PLAN_W, stationX } from "./geometry.js";
 
-/**
- * The eight longitudinal sections under the plan, bow to stern (the MISSION overlay zone has no strip), and their
- * fixed names and copy. Presentation metadata only: what each section *shows* is derived in `section-facts.ts`.
- */
 export const SECTION_IDS = [
   "forecastle",
   "forward-magazine",
@@ -18,17 +14,12 @@ export const SECTION_IDS = [
 export type SectionId = (typeof SECTION_IDS)[number];
 
 export interface SectionMeta {
-  /** The hull-form zone this section draws. */
   readonly zoneId: Exclude<ZoneId, "MISSION">;
-  /** Full readable name: the trigger's accessible name and the card heading. */
   readonly name: string;
-  /** Visible label when the strip is narrow. */
   readonly shortLabel: string;
-  /** One line on what the section is for. General naval usage, not design data. */
   readonly purpose: string;
 }
 
-/** Single source of every section's names and copy; exhaustive over `SectionId`. */
 export const SECTIONS: { readonly [K in SectionId]: SectionMeta } = {
   forecastle: {
     zoneId: "FORECASTLE",
@@ -89,7 +80,6 @@ export interface ZoneRange {
   readonly deckAreaBp?: number;
 }
 
-/** Horizontal placement of a section in the plan, as percentages of the drawing width (so it scales with it). */
 export function sectionSpan(zone: ZoneRange): { leftPct: number; widthPct: number } {
   const left = stationX(zone.startPermille);
   return {

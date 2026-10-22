@@ -1,10 +1,3 @@
-// D-4 M4 Aviation: Air Defense — AC-17: every shipped air-defense contract in a single typed
-// registry, plus a fail-closed validation guard.
-// Parallel to air-combat/contractRollup.ts pattern.
-//
-// Registry order is the canonical contract order: the full ruleset manifest first, then the
-// three sub-contracts (director scaling §12, radar saturation §14, CIWS redundancy §16).
-
 import {
   AIR_DEFENSE_CIWS_REDUNDANCY_POLICY_ID,
   AIR_DEFENSE_CONTRACT_POLICY_ID,
@@ -49,7 +42,6 @@ export const SHIPPED_AIR_DEFENSE_CONTRACTS: readonly AirDefenseContractEntry[] =
   },
 ] as const;
 
-/** AC-17 gate: every shipped contract validates against its own pinned-literals schema. */
 export function validateAllAirDefenseContracts(): void {
   for (const entry of SHIPPED_AIR_DEFENSE_CONTRACTS) {
     entry.validate(entry.shippedContract);

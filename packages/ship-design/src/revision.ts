@@ -7,45 +7,26 @@ export type ChangeKind = "FITTINGS" | "MAIN_ARMAMENT" | "ARMOUR" | "MACHINERY" |
 export type RevisionTier = "T0_FREE" | "T1_REVISION" | "T2_REDESIGN" | "T3_RECONSTRUCTION";
 
 export interface RevisionBalance {
-  /** Hull progress thresholds, bp of total hull work. */
   readonly freeBelowBp: number;
   readonly revisionBelowBp: number;
   readonly redesignBelowBp: number;
-  /** T1: rework work = bp of work already done on the affected packages. */
   readonly reworkBp: number;
   readonly t1DelayMonths: number;
-  /** T2: study cost multiplier, hull progress kept, delay. */
   readonly redesignStudyCostBp: number;
   readonly redesignKeptBp: number;
   readonly t2DelayMonths: number;
-  /**
-   * The manual's in-place design-revision limits (printed p27; ADR-0132): the largest change that may still be made as a
-   * revision before it must become a redesign or a rebuild. Distinct from the retained-hull rebuild limits (DESIGN-23 §21).
-   */
   readonly inPlace: RevisionLimits;
 }
 
-/** The p27 in-place revision limits, all magnitudes (ADR-0132), in canonical units. */
 export interface RevisionLimits {
-  /** Largest displacement increase, bp of the current (1_000 = 10 %). */
   readonly displacementIncreaseBp: number;
-  /** Displacement may always rise by at least this much, kg (1_000_000 = 1_000 t), even below the percentage. */
   readonly displacementMinAllowanceKg: number;
-  /** Largest designed-speed change either way, milli-knots (1_000 = 1 kn). */
   readonly speedChangeMilliKnots: number;
-  /** Largest vertical (belt) armour change either way, micrometres (25_400 = 1 in). */
   readonly verticalArmourChangeUm: number;
-  /** Largest horizontal (deck) armour change either way, micrometres (12_700 = 0.5 in). */
   readonly horizontalArmourChangeUm: number;
-  /** Main-gun calibre at or below which the main battery may be re-chosen; above it, only a refresh is allowed. */
   readonly mainGunMaxUm: number;
 }
 
-/**
- * Structural checks on a revision balance, so a bad content value fails loudly when the content is built instead of
- * producing odd tiers in play. Besides ranges it enforces the order of harshness the rules rely on: a redesign never costs
- * less than a revision (in lost work or in delay), and thresholds ascend. Returns problems; empty means valid.
- */
 export function checkRevisionBalance(b: RevisionBalance): string[] {
   const problems: string[] = [];
   const bp = (name: string, v: number) => {
@@ -67,7 +48,7 @@ export function checkRevisionBalance(b: RevisionBalance): string[] {
     problems.push(
       `redesignStudyCostBp must be a non-negative integer, got ${String(b.redesignStudyCostBp)}`,
     );
-  months("t1DelayMonths", b.t1DelayMonths, 1); // spec 15.4: a revision delays at least a month
+  months("t1DelayMonths", b.t1DelayMonths, 1);
   months("t2DelayMonths", b.t2DelayMonths, 1);
   if (!(b.freeBelowBp < b.revisionBelowBp && b.revisionBelowBp < b.redesignBelowBp))
     problems.push("thresholds must ascend: freeBelowBp < revisionBelowBp < redesignBelowBp");
@@ -97,21 +78,15 @@ export function checkRevisionBalance(b: RevisionBalance): string[] {
   return problems;
 }
 
-/** The design facts the in-place revision limits compare (ADR-0132). */
 export interface RevisionFacts {
   readonly displacementKg: number;
   readonly speedMilliKnots: number;
-  /** Thickest vertical (belt) armour, micrometres (0 if none). */
   readonly verticalArmourUm: number;
-  /** Thickest horizontal (deck) armour, micrometres (0 if none). */
   readonly horizontalArmourUm: number;
-  /** Largest main-gun calibre, micrometres (0 if none). */
   readonly maxMainGunUm: number;
-  /** Largest secondary/dual-purpose gun calibre, micrometres (0 if none). */
   readonly maxSecondaryGunUm: number;
 }
 
-/** Read the revision facts from a compiled design and its draft. */
 export function revisionFactsOf(compiled: CompiledDesign, draft: DesignDraft): RevisionFacts {
   const belt = draft.armour.regions.filter((r) => r.region.startsWith("BELT_"));
   const deck = draft.armour.regions.filter((r) => r.region.startsWith("DECK_"));
@@ -151,11 +126,6 @@ const revFinding = (
   evidence: { formulaId: "DESIGN-21-27", inputs, threshold, value },
 });
 
-/**
- * The manual's in-place design-revision limits (printed p27; ADR-0132): a change beyond any of these is no longer a
- * revision but a redesign or rebuild. Pure and deterministic. The main-gun rule reads the largest main-gun calibre:
- * above the limit it may not change, at or below it it may.
- */
 export function inPlaceRevisionFindings(
   source: RevisionFacts,
   target: RevisionFacts,
@@ -253,7 +223,6 @@ export interface BuildProgress {
   readonly armourStarted: boolean;
   readonly machineryStarted: boolean;
   readonly launched: boolean;
-  /** Work already done on packages affected by a fittings change (for T1 rework). */
   readonly affectedDoneWork: number;
 }
 
@@ -263,9 +232,7 @@ export interface RevisionDecision {
   readonly reworkWorkMicro: number;
   readonly delayMonths: number;
   readonly studyCostMultiplierBp: number;
-  /** Hull work retained after the change (T2 reduces; T3 is handled by a rebuild project). */
   readonly hullDoneWorkAfter: number;
-  /** True when the change must become a REBUILD/CONVERSION/cancel decision (DESIGN-23 §20-23). */
   readonly requiresRebuildProject: boolean;
   readonly reasonCodes: readonly string[];
 }
@@ -283,10 +250,6 @@ export const STRUCTURE_KEYS: ReadonlySet<string> = new Set([
   "freeboardProfile",
 ]);
 
-/**
- * Maps a draft edit to the kind of change it is, or null when it changes the brief only (`set_requirement`: a brief is not
- * a build change, as in `draftChangeKinds`). `categoryOf` resolves a placement's component category.
- */
 export function changeKindOf(
   e: DraftEdit,
   categoryOf: (instanceId: string) => ComponentCategory | undefined,
@@ -295,8 +258,6 @@ export function changeKindOf(
     case "set_requirement":
       return null;
     case "batch":
-      // A batch has no single kind; use `changeKindsOf`. Reported as its first inner kind so callers that only know
-      // singles still see a build change.
       return e.edits.length === 0 ? null : changeKindOf(e.edits[0]!, categoryOf);
     case "set_side":
       return categoryOf(e.instanceId) === "MAIN_GUN" ? "MAIN_ARMAMENT" : "FITTINGS";
@@ -329,7 +290,6 @@ export function changeKindOf(
   }
 }
 
-/** Every kind of change an edit makes (a batch contributes each inner edit's kind; a brief-only edit contributes none). */
 export function changeKindsOf(
   e: DraftEdit,
   categoryOf: (instanceId: string) => ComponentCategory | undefined,
@@ -352,7 +312,6 @@ const TIER_RANK: Record<RevisionTier, number> = {
 const maxTier = (a: RevisionTier, b: RevisionTier): RevisionTier =>
   TIER_RANK[a] >= TIER_RANK[b] ? a : b;
 
-/** Spec §15.4: when changes stay cheap and when they become redesign or reconstruction. Pure. */
 export function classifyRevision(
   kinds: readonly ChangeKind[],
   p: BuildProgress,

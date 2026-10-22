@@ -1,12 +1,3 @@
-/**
- * Reading one legacy formula as `fixed + perUnit × count` (ship-part-model ticket 11b).
- *
- * The part model carries no formulas, so a legacy formula becomes numbers only when it is
- * affine in the component's one count parameter over that parameter's whole declared range,
- * with non-negative integer terms. This is the same rule `legacyComponentQuantities.ts`
- * applies to the five accounting fields; it is shared here so power, cooling and attribute
- * formulas follow it too. Anything else is a coded issue, never a guess.
- */
 import type { ComponentDef, ParameterRange } from "./component.js";
 import { evaluate } from "./formula/eval.js";
 import { freeVariables, parseFormula } from "./formula/parse.js";
@@ -23,9 +14,7 @@ export interface AffineIssue {
 }
 
 export interface AffineTerms {
-  /** Charged once per entry (the count-independent term). */
   readonly fixed: number;
-  /** Charged per counted unit. With no count parameter, the one constant. */
   readonly perUnit: number;
 }
 
@@ -41,10 +30,6 @@ function countValues(range: ParameterRange): number[] {
   return out;
 }
 
-/**
- * Read `src` against `def`'s constants and, when set, its `countParameter`. `label` names the
- * field in the issue text (`weightKg`, `attributes.genKw`).
- */
 export function readAffine(
   def: Pick<ComponentDef, "id" | "constants" | "parameters">,
   label: string,
@@ -115,7 +100,6 @@ export function readAffine(
   }
 }
 
-/** The formula text of `fixed + perUnit × countParameter`, with literals only. */
 export function affineFormula(terms: AffineTerms, countParameter: string | null): string {
   if (countParameter === null || terms.perUnit === 0) {
     return String(terms.fixed + (countParameter === null ? terms.perUnit : 0));

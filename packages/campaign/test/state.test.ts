@@ -138,7 +138,6 @@ describe("state: timeline advance (§2)", () => {
   it("canAdvance false at Dec 1970", () => {
     const c = collector();
     const s = createInitialCampaignState({ ...BASE_CFG, scenarioId: "scen_1960" } as any, c)!;
-    // advance Nov 1970 -> Dec 1970
     let cur = {
       ...s,
       currentYear: 1970,

@@ -1,8 +1,3 @@
-// AC-23 — two-process torpedo determinism. Spawns the run-torpedo-child script
-// TWICE as clean Node child processes and byte-compares their single
-// canonical-serialized JSON line: identical state+inputs+seed must produce
-// identical per-minute hashes + torpedo events + damage states. Mirrors the
-// B-2 simulation/determinism.test.ts child pattern.
 import { describe, expect, it } from "vite-plus/test";
 import { execFileSync } from "node:child_process";
 import { resolve, dirname } from "node:path";
@@ -45,7 +40,6 @@ describe("AC-23 cross-process torpedo determinism (two child processes)", () => 
     const parsed = JSON.parse(runChild().trim()) as ChildOutput;
     expect(parsed.hashes).toHaveLength(3);
     for (const h of parsed.hashes) expect(h).toMatch(/^[0-9a-f]{64}$/);
-    // the first minute resolves the salvo: launches + tracks + hits + damage
     expect(parsed.torpedoEventCounts[0]).toBeGreaterThanOrEqual(6);
     expect(parsed.recordIds.length).toBeGreaterThan(0);
     expect(parsed.recordIds.every((id) => id.startsWith("b7-torpedo-determinism:"))).toBe(true);
@@ -55,8 +49,6 @@ describe("AC-23 cross-process torpedo determinism (two child processes)", () => 
     const parsed = JSON.parse(runChild().trim()) as ChildOutput;
     const damaged = parsed.lastDamageStates.find((s) => s.shipId === "d1");
     expect(damaged).toBeDefined();
-    // the fixed seed functioned the warheads: structure/flotation degraded and
-    // progressive-flooding sources were created through the INC-6 seam.
     expect(damaged!.structuralIntegrity).toBeLessThan(100_000);
     expect(damaged!.flotationReserve).toBeLessThan(FLOAT_UNIT);
     expect(damaged!.floodingRecords).toBeGreaterThan(0);

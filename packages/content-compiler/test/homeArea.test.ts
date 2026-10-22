@@ -6,8 +6,6 @@ import { ValidateStage } from "@bluewave/content-compiler";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { ParseOutput } from "../src/stages/parse.js";
 
-// S-5 02 (#76, spec #73 R3): the home area is authoritative nation content, validated against the area set,
-// with the same values the presentation join already carries (nothing invented).
 const CONTENT = resolve(import.meta.dirname, "../../../content/production/1880");
 const read = (file: string): unknown =>
   parseYamlSafe(readFileSync(resolve(CONTENT, file), "utf8"), file, new DiagnosticCollector()).data;

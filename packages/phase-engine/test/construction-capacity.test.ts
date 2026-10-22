@@ -1,5 +1,3 @@
-// SB3-R18/R19 (DESIGN-16 sections 7-9): the national concurrency cap is enforced at order time and is kept strictly
-// separate from the work-micro-unit pools. Exemptions never create capacity from nothing.
 import type { CampaignSnapshot, ConstructionProject } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { HULL_TYPE_FOR_SHIP_TYPE, constructionPoolForProjectKind } from "@bluewave/ship-design";
@@ -43,7 +41,6 @@ const order = (
     content,
   );
 
-/** Content whose balance is overridden, so exemption boundaries can be exercised without a huge order loop. */
 function withCapacityBalance(overrides: {
   shipyardCapacityMultipleBp?: number;
   amcCapacityExemptionBp?: number;
@@ -77,14 +74,12 @@ describe("the national concurrency cap gates order-time reservation (SB3-R18)", 
       if (!r.ok) return;
       current = r.snapshot;
     }
-    // 3 x 13,000,000 == cap 39,000,000: exactly at the cap is allowed.
     const fourth = order(current, "dv-b", "c4");
     expect(fourth).toMatchObject({ ok: false, reason: "INSUFFICIENT_PROJECT_CAPACITY" });
   });
 
   it("skips the cap when there is no content or dock (nation-neutral order)", () => {
     const snap = snapshot([design("dv-b", "pre_dreadnought", UK_DOCK)]);
-    // No content means no dock and no balance: the order path keeps its nation-neutral behaviour.
     const r = placeConstructionOrder(
       snap,
       { nationId: "uk", commandId: "c1", designVersionId: "dv-b", month: MONTH },
@@ -117,7 +112,6 @@ describe("pool inclusions and exclusions (SB3-R19)", () => {
     const r = order(snap, "dv-b", "c1");
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    // Only the new order's own reservation counts; the rebuild's huge reservation is ignored.
     const orders = r.snapshot.nations
       .get("uk")!
       .constructionProjects.filter((p) => p.projectType === "NEW_CONSTRUCTION");
@@ -146,7 +140,7 @@ describe("pool inclusions and exclusions (SB3-R19)", () => {
     const r = order(snapshot([amc]), "dv-amc", "c1");
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.project.newConstructionReservedMassKg).toBe(2_000_000); // ceil(10,000,000 * 2,000 / 10,000)
+    expect(r.project.newConstructionReservedMassKg).toBe(2_000_000);
   });
 
   it("a small corvette reserves the non-exempt share, and one over the threshold reserves all of it", () => {
@@ -155,11 +149,11 @@ describe("pool inclusions and exclusions (SB3-R19)", () => {
     const r = order(snapshot([small]), "dv-ke", "c1");
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.project.newConstructionReservedMassKg).toBe(200_000); // 20 % of 1,000,000
+    expect(r.project.newConstructionReservedMassKg).toBe(200_000);
     const rBig = order(snapshot([big]), "dv-ke-big", "c2");
     expect(rBig.ok).toBe(true);
     if (!rBig.ok) return;
-    expect(rBig.project.newConstructionReservedMassKg).toBe(1_000_001); // not exempt
+    expect(rBig.project.newConstructionReservedMassKg).toBe(1_000_001);
   });
 
   it("a fully exempt ship consumes no normal capacity, and the external source carries the rest", () => {
@@ -178,7 +172,6 @@ describe("pool inclusions and exclusions (SB3-R19)", () => {
 
 describe("exemption reduces the tonnage reserved from the cap (SB3-R18/R19)", () => {
   it("fifteen 13,000 t corvettes land exactly on the cap because each reserves only 20 %", () => {
-    // Raise the small-corvette threshold so a dock-sized corvette still qualifies.
     const content = withCapacityBalance({ smallCorvetteMaxDisplacementKg: UK_DOCK });
     const snap = snapshot([design("dv-ke", HULL_TYPE_FOR_SHIP_TYPE.KE, UK_DOCK)]);
     let current = snap;
@@ -186,7 +179,7 @@ describe("exemption reduces the tonnage reserved from the cap (SB3-R18/R19)", ()
       const r = order(current, "dv-ke", `c${i}`, content);
       expect(r.ok).toBe(true);
       if (!r.ok) return;
-      expect(r.project.newConstructionReservedMassKg).toBe(2_600_000); // 20 % of 13,000,000
+      expect(r.project.newConstructionReservedMassKg).toBe(2_600_000);
       current = r.snapshot;
     }
     expect(order(current, "dv-ke", "c-extra", content)).toMatchObject({

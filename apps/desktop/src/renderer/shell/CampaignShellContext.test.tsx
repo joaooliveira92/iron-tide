@@ -130,7 +130,6 @@ describe("CampaignShellProvider", () => {
     );
     expect(screen.getByTestId("currency-context").textContent).toBe("{}");
     unmount();
-    // Outside the provider, the helper must not throw (isolation tests/previews).
     render(<CurrencyConsumer />);
     expect(screen.getByTestId("currency-context").textContent).toBe("{}");
   });

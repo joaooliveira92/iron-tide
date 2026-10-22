@@ -8,27 +8,12 @@ import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
 import { designsOf, fleetsOf } from "./helpers/campaignRecords.js";
 
-/**
- * Initial-fleet legality (N-1 ticket 01, resolved by ADR-0212). Every starting
- * ship in the 1880 scenario must either resolve to a design that existed by 1880
- * or carry an explicit, documented exemption. The chosen rule is the global 1880
- * tech set: research gates new construction, modernization and design, not
- * inherited service, so a ship is legal when its design predates 1880.
- */
-
 const here = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = resolve(here, "..", "..", "..");
 const contentDir = resolve(repoRoot, "content", "production", "1880");
 
 const SCENARIO_YEAR = 1880;
 
-/**
- * Starting ships with no modelled 1880 design, grandfathered under ADR-0212.
- * Each entry is a shipped historical hull the scenario opens with and whose
- * design is not yet authored, with the required reason. N-2 (tickets 29/30)
- * authored the last two (aut_custoza, gbr_temeraire), so the map is empty; it
- * remains the guard against a future design-less ship slipping in unreviewed.
- */
 const DESIGN_LESS_EXEMPTIONS: ReadonlyMap<string, string> = new Map();
 
 function buildProductionBundle(): ContentBundle {
@@ -40,7 +25,6 @@ function buildProductionBundle(): ContentBundle {
   return output!.bundle;
 }
 
-/** The four-digit year a design entered service, or `undefined` when unrecorded. */
 function designYear(familyCreationMonth: string | undefined): number | undefined {
   if (typeof familyCreationMonth !== "string") return undefined;
   const match = /^(\d{4})-/.exec(familyCreationMonth);

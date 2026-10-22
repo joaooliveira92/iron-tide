@@ -284,12 +284,6 @@ export function validateChangeDivisionFlagship(
   return { ok: true };
 }
 
-/**
- * DESIGN-26 §8/§12. A reorder MUST be a permutation of the division's current
- * members with the flagship (canonical first ship) unmoved; anything else is a
- * membership change or a flagship change and belongs to another command. An
- * unchanged order is rejected so a no-op can never be charged the cohesion cost.
- */
 export function validateReorderDivisionShips(
   envelope: CommandEnvelope<CommandBody>,
   snapshot: CampaignSnapshot,

@@ -23,32 +23,8 @@ import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { withSchema } from "../runtime/commandProgram.js";
 import { toSaveableState } from "../saveHelpers.js";
 
-/**
- * Debug-only Tactical Sandbox commands (ADR-0057), as native `CommandProgram`s
- * (INC-5; ADR-0159).
- *
- * The sandbox must be able to show a battle on demand, but a real campaign can
- * never reach contact: `generateBattles` only yields a mission when both sides
- * of a war have ships in the SAME area, and movement is not implemented in the
- * desktop app. So generation runs on an EPHEMERAL COPY of the session snapshot
- * in which the war's attacker fleets have been placed in a shared area. The
- * session's own snapshot, its hash, its saves and the pending-command queue are
- * never read for write or mutated (R3) — everything here is observational.
- *
- * Generation and auto-resolution call the SAME engine entry points, with the
- * same versions and seed shape, as the month executor's `battle_generation` /
- * `battle_resolution` phases (`phase-engine/src/month.ts`), so a sandbox result
- * matches what a real turn would produce for the same ships.
- *
- * The debug gate (`isBattleSandboxEnabled`) and every session read/register go
- * through the service graph; there is no injected `*Deps` object anymore.
- */
-
-// `@bluewave/combat`'s root re-exports the legacy resolver `BattleManifest` under this
-// name, shadowing the B-1 generation manifest, so derive the real one from its producer.
 type CombatManifest = ReturnType<typeof generateBattles>["manifests"][number];
 
-/** What the sandbox keeps between `generateBattle` and `resolveBattle`. */
 interface StoredBattle {
   readonly sessionId: string;
   readonly snapshot: CampaignSnapshot;
@@ -57,15 +33,6 @@ interface StoredBattle {
   readonly seed: string;
 }
 
-/**
- * The engine's eligibility floors (`FLEET_BATTLE_MIN_STRENGTH` 300 /
- * `CRUISER_BATTLE_MIN_STRENGTH` 150) are compared with summed `ship.firepower`,
- * which is ~16-24 per 1880 ship — so a real turn can never generate a battle
- * with today's content (finding in `.scratch/desktop-ui-audit`). The sandbox
- * multiplies strength by this factor for the ELIGIBILITY check only; the
- * resolution itself uses the ships unchanged. Pass `strengthScale: 1` to see
- * the real behaviour.
- */
 export const SANDBOX_DEFAULT_STRENGTH_SCALE = 100;
 
 const MAX_STORED_BATTLES = 32;
@@ -75,11 +42,6 @@ function storeKey(sessionId: string, battleId: string): string {
   return `${sessionId}::${battleId}`;
 }
 
-/**
- * Drops entries whose session has closed, then caps the store so a long debug
- * session cannot grow it without bound. Session liveness is read through the
- * service graph (`CampaignSessionStore`), never the module singleton.
- */
 function pruneStored(sessions: CampaignSessionStore["Service"]): Effect.Effect<void> {
   return Effect.gen(function* () {
     for (const [key, entry] of stored) {
@@ -111,8 +73,6 @@ function debugOnly(): BridgeResult<never> | null {
       };
 }
 
-// ephemeral co-location (pure)
-
 function liveAreas(nation: NationState | undefined): Set<string> {
   const areas = new Set<string>();
   for (const fleet of nation?.fleets ?? []) {
@@ -123,13 +83,6 @@ function liveAreas(nation: NationState | undefined): Set<string> {
   return areas;
 }
 
-/**
- * `resolveBattleAuto` fails closed on a committed ship with no compiled design,
- * and the engine's eligibility check never looks for one. Production data now
- * links every starting ship, but a save or future content can still carry a
- * design-less ship; on the temporary copy such ships are treated as unavailable,
- * and reported, rather than aborting the run.
- */
 export function excludeUndesignedShips(snapshot: CampaignSnapshot): {
   readonly snapshot: CampaignSnapshot;
   readonly excluded: readonly string[];
@@ -157,17 +110,9 @@ export function excludeUndesignedShips(snapshot: CampaignSnapshot): {
 export interface ColocationResult {
   readonly snapshot: CampaignSnapshot;
   readonly areaId: string;
-  /** True when the attacker had to be moved; false when both sides already shared the area. */
   readonly moved: boolean;
 }
 
-/**
- * Returns a snapshot in which the war's attacker and defender share an area.
- * If they already do, the input is returned unchanged. Otherwise every
- * completed attacker ship and fleet is relocated to `areaId` (default: the
- * first area, in sorted order, where the defender has ships). Never mutates
- * the input.
- */
 export function colocateWarSides(
   snapshot: CampaignSnapshot,
   attackerId: string,
@@ -185,7 +130,6 @@ export function colocateWarSides(
     return { error: "NO_DEFENDER_FORCES", detail: `${defenderId} has no completed ships.` };
   }
 
-  // Already in contact (and, if an area was asked for, in that area): nothing to move.
   const shared = [...attackerAreas].filter((a) => defenderAreas.has(a)).sort();
   if (shared.length > 0 && (requestedAreaId === undefined || shared.includes(requestedAreaId))) {
     return { snapshot, areaId: requestedAreaId ?? (shared[0] as string), moved: false };
@@ -213,21 +157,8 @@ export function colocateWarSides(
   return { snapshot: { ...snapshot, nations }, areaId: target, moved: true };
 }
 
-/**
- * The documented drill strength scale for the Campaign Battle Drill: mirrors
- * `SANDBOX_DEFAULT_STRENGTH_SCALE` (the engine's 300/150 eligibility floors
- * exceed what shipped 1880 ships sum to). It is applied to the belligerents'
- * committed `firepower` so the REAL `battle_generation` month phase admits a
- * battle; tactical auto-resolution reads ship designs, not `firepower`, so the
- * resolution itself is unchanged by the scale.
- */
 export const DRILL_STRENGTH_SCALE = SANDBOX_DEFAULT_STRENGTH_SCALE;
 
-/**
- * Multiplies the `firepower` of every completed belligerent ship in `areaId` by
- * `scale` (eligibility-only; see {@link DRILL_STRENGTH_SCALE}). Pure: never
- * mutates the input.
- */
 export function scaleBelligerentFirepower(
   snapshot: CampaignSnapshot,
   nationIds: readonly string[],
@@ -252,7 +183,6 @@ export function scaleBelligerentFirepower(
   return changed ? { ...snapshot, nations } : snapshot;
 }
 
-// mapping engine -> renderer shapes
 function toRendererManifest(
   snapshot: CampaignSnapshot,
   manifest: CombatManifest,
@@ -288,8 +218,6 @@ function toRendererManifest(
     areaId: manifest.areaId,
     month,
     sides: [sideFor("attacker", manifest.attackerId), sideFor("defender", manifest.defenderId)],
-    // Element instantiation (coastal/submarine/mine/air/...) is not evaluated by
-    // the desktop sandbox; labelled as such rather than shown as real zeros.
     elementInstantiation: {
       step: "instantiate",
       outcome: "noop",
@@ -317,12 +245,6 @@ function toRendererManifest(
   };
 }
 
-/**
- * The player's first active war, for callers that do not name one (the
- * Simulation Battle Arena). Deterministic: filtered to wars the player is a
- * party to and ordered by war id, so the same campaign always resolves the same
- * war.
- */
 function pickPlayerActiveWar(
   wars: readonly WarDeclaration[],
   playerSlotId: string,
@@ -337,13 +259,6 @@ function pickPlayerActiveWar(
     .sort((a, b) => a.id.localeCompare(b.id))[0];
 }
 
-/**
- * Generates an engagement on an ephemeral, co-located copy of the session's
- * snapshot (ADR-0057) as a native `CommandProgram`. Reachable-mission
- * generation draws no randomness (month.ts, B-1), so `randomDecisions` is empty,
- * and the campaign snapshot, its hash, its saves and the command queue are never
- * touched (R3).
- */
 export const generateBattleProgram = withSchema(GenerateBattlePayloadSchema, (payload) =>
   Effect.gen(function* () {
     const blocked = debugOnly();
@@ -429,7 +344,6 @@ export const generateBattleProgram = withSchema(GenerateBattlePayloadSchema, (pa
 
     const value: GenerateBattleResult = {
       manifest: toRendererManifest(working, manifest, record.month),
-      // Reachable-mission generation draws no randomness (month.ts, B-1).
       randomDecisions: [],
     };
     return {
@@ -456,11 +370,6 @@ export const generateBattleProgram = withSchema(GenerateBattlePayloadSchema, (pa
   }),
 );
 
-/**
- * Auto-resolves a previously generated battle into a partitioned, deterministic
- * result, as a native `CommandProgram`. The sandbox applies no campaign state,
- * so the reported war score change is always 0.
- */
 export const resolveBattleProgram = withSchema(BattleIdPayloadSchema, (payload) =>
   Effect.gen(function* () {
     const blocked = debugOnly();
@@ -517,7 +426,6 @@ export const resolveBattleProgram = withSchema(BattleIdPayloadSchema, (payload) 
         rngVersion: manifest.rngVersion,
       });
     } catch (error) {
-      // Engine failures are fail-closed with a stable code; surface it verbatim.
       const code =
         error !== null && typeof error === "object" && "code" in error
           ? String((error as { code: unknown }).code)
@@ -534,7 +442,6 @@ export const resolveBattleProgram = withSchema(BattleIdPayloadSchema, (payload) 
     const resolution: BattleResolution = {
       battleId: manifest.battleId,
       missionOutcome: { winner: result.winnerId, outcomeKind: result.battleEndReason },
-      // The sandbox applies no campaign state, so no war score is computed.
       warScoreChange: 0,
       attacker: shipsOf(result.attackerSurvivorIds, result.attackerSunkIds),
       defender: shipsOf(result.defenderSurvivorIds, result.defenderSunkIds),
@@ -550,31 +457,6 @@ export const resolveBattleProgram = withSchema(BattleIdPayloadSchema, (payload) 
   }),
 );
 
-/**
- * Debug-only Campaign Battle Drill (the desktop E2E acceptance slice), as a
- * native `CommandProgram`. Unlike the observational sandbox commands above,
- * this one INTENTIONALLY mutates the live session: it prepares the snapshot so
- * the REAL month phases (`battle_generation` order 7.5 + `battle_resolution`
- * order 8) generate and resolve a battle on the next month advance, applying
- * real consequences (war score, per-ship losses, battle history).
- *
- * It never fabricates a battle or its outcome: generation is left to the month's
- * own `generateBattles` call. The drill only does what a real turn cannot do with
- * today's content:
- *   - co-locates the war's completed fleets (`colocateWarSides`) — movement is
- *     not implemented in the desktop app;
- *   - scales the belligerents' committed `firepower` for the engine's 300/150
- *     eligibility floors (`DRILL_STRENGTH_SCALE`) — production ships sum below
- *     them;
- *   - marks ships with no compiled design as unavailable (the same
- *     `excludeUndesignedShips` used by the sandbox) so tactical auto-resolution
- *     can promote every participant.
- *
- * Gated by `isBattleSandboxEnabled()` and validated at the IPC boundary; a
- * normal build rejects with `DEBUG_ONLY`. The prepared snapshot is registered
- * as the live session state through `CampaignSessionStore`, never the module
- * singleton.
- */
 export const seedCampaignBattleDrillProgram = withSchema(
   SeedCampaignBattleDrillPayloadSchema,
   (payload) =>
@@ -618,9 +500,6 @@ export const seedCampaignBattleDrillProgram = withSchema(
         DRILL_STRENGTH_SCALE,
       );
 
-      // Persist the prepared snapshot as the live session state (re-hashing the
-      // envelope the same way `commitMonth` does), so the next real month advance
-      // executes against it.
       const envelope = createEnvelope("campaign-snapshot", prepared.compatibilityVersion, prepared);
       const nextState = toSaveableState({
         snapshot: prepared,
@@ -656,13 +535,6 @@ export const seedCampaignBattleDrillProgram = withSchema(
     }),
 );
 
-/**
- * The tactical minute-by-minute loop (generation -> movement -> gunnery ->
- * battle-end, driven by scripted orders) has no engine orchestrator yet: that
- * chaining is B-6's job (`.scratch/cli-battle-debug-surface/map.md`). Reject
- * honestly instead of fabricating an outcome. The payload's `scriptedOrders`
- * narrowing is the accepted INC-3 seam (a debug-gated boundary).
- */
 export const resolveTacticalBattleProgram = withSchema(
   ResolveTacticalBattlePayloadSchema,
   (_payload) =>

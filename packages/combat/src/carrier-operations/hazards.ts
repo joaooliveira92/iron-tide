@@ -5,7 +5,6 @@ import {
   CARRIER_OPERATIONS_SUSPENDED_BY_WEATHER,
 } from "./reasonCodes.js";
 
-// §21 Hazard exposure weights
 export const HAZARD_WEIGHTS = {
   FUELED_AIRCRAFT: 10,
   ARMED_AIRCRAFT: 10,
@@ -36,7 +35,6 @@ export function computeHazardExposure(inputs: HazardExposureInputs): SafeInt {
   return SafeInt(total);
 }
 
-// §22 Aviation fire / explosion probabilities
 export const BASE_HAZARD_PROBABILITIES = {
   FUELED_AIRCRAFT_IGNITION: 2_000,
   ARMED_AIRCRAFT_ORDNANCE_REACTION: 1_500,
@@ -132,7 +130,6 @@ export function assertNightRecoveryEligible(predicates: NightRecoveryPredicates)
   }
 }
 
-// §25 Weather suspension
 export interface WeatherSuspensionPredicates {
   currentSeaState: SafeInt;
   windOverDeckKnots: SafeInt;

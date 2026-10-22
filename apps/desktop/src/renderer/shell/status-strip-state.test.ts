@@ -7,7 +7,6 @@ import {
   type StatusStripInput,
 } from "./status-strip-state.js";
 
-/** The strip's figures under the default presentation (en-US, Naval Credits, imperial). */
 const FORMAT = createPresentationFormat({
   locale: "en-US",
   numberScale: "full",
@@ -96,14 +95,12 @@ describe("buildStatusStrip", () => {
     expect(rows["treasury"]?.value).toBe("50,000 NC");
     expect(rows["monthly-budget"]?.label).toBe("Monthly appropriation");
     expect(rows["monthly-budget"]?.value).toBe("5,000 NC");
-    // The old "revenue source is not yet confirmed" footnote is gone: the figure is the credited revenue.
     expect(rows["monthly-budget"]?.note).toBe("");
     expect(rows["obligations"]?.value).toBe("500 NC");
     expect(rows["maintenance"]?.value).toBe("2,000 NC");
     expect(rows["research"]?.value).toBe("800 NC");
     expect(rows["construction"]?.label).toBe("Construction (up to)");
     expect(rows["construction"]?.value).toBe("1,000 NC");
-    // Construction is a bound, not a commitment: it is not in the total.
     expect(rows["total-expenses"]?.value).toBe("3,300 NC");
     expect(rows["balance"]?.value).toBe("1,200 NC");
     expect(rows["balance"]?.status).toBe("Healthy");
@@ -156,7 +153,6 @@ describe("buildStatusStrip", () => {
   it("counts ships on foreign stations, excluding own and unclaimed areas", () => {
     const strip = buildStrip({ projection: projection(), areas, alertsCount: null });
     const row = strip.nation.find((r) => r.id === "foreign-stations");
-    // The fixture ships carry no displacement, so only the count is shown, never a made-up tonnage.
     expect(row?.value).toBe("1 ship");
     expect(row?.note).toMatch(/tonnage is shown when every one/i);
   });
@@ -290,7 +286,6 @@ describe("buildStatusStrip", () => {
   });
 
   it("judges over-commitment on committed lines only, never on the construction bound", () => {
-    // Committed 3,300 NC fits in 3,500 NC even though committed + construction (4,300 NC) does not.
     const a = withEconomy({ monthlyAppropriation: 3500 });
     expect(a.overCommitted).toBe(false);
   });
@@ -357,7 +352,6 @@ describe("buildStatusStrip hover detail", () => {
       ["research", "-800 NC", "1,700 NC"],
     ]);
     expect(outlook.balance.value).toBe("1,200 NC");
-    // 1,200 NC less the 1,000 NC construction bound.
     expect(outlook.afterConstruction).toEqual({ value: "200 NC", tone: "normal" });
     expect(outlook.monthEndTreasury).toBe("51,200 NC");
     expect(outlook.runway).toBeNull();
@@ -473,7 +467,6 @@ describe("buildStatusStrip foreign-station tonnage", () => {
   });
 
   it("omits the tonnage rather than sum a partial fleet when one ship has none", () => {
-    // The foreign ship is known but a home ship is not: the foreign sum is exact, the total is not.
     const strip = buildStrip({
       projection: withTons({ C: 11_880 }),
       areas: namedAreas,

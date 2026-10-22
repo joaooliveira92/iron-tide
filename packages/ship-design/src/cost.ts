@@ -6,29 +6,23 @@ import { speedLengthRatioX1000 } from "./machinery.js";
 import { toSafe, UnitError, money, type BudgetMicro, type Money } from "./units.js";
 
 export interface CostBalance {
-  /** Micro-units per tonne of hull structure, by hull material. */
   readonly hullCostPerTonneMicro: Readonly<Record<string, number>>;
   readonly formComplexityBp: Readonly<Record<string, number>>;
   readonly subdivisionComplexityBp: readonly [number, number, number, number, number];
-  /** Speed-length ratio x1000 at top speed -> hull complexity multiplier bp (10_000 = none). */
   readonly speedPremium: LookupTable;
   readonly armourCostPerKgMicro: Readonly<Record<string, number>>;
   readonly machineryCostPerKwMicro: Readonly<Record<string, number>>;
-  /** Technology maturity bp (0..10_000) -> component cost multiplier bp. Immature tech costs more. */
   readonly maturityCostBp: LookupTable;
   readonly overheadBp: number;
   readonly firstOfClassBp: number;
-  /** Extra cost of accelerated construction on subtotal + overheads, bp (RTW3 manual p. 31: +5 %). */
   readonly accelerationCostBp: number;
   readonly hullMonthlyMaintenanceBp: number;
   readonly plantMonthlyMaintenanceBp: number;
 }
 
 export interface CostContext {
-  /** Per-technology maturity for the building nation, bp. Missing = fully mature. */
   readonly maturityBpByTech: Readonly<Record<string, number>>;
   readonly firstOfClass: boolean;
-  /** Accelerated construction (ADR-0067 section 5): faster build for an extra cost. Absent = normal pace. */
   readonly accelerated?: boolean;
 }
 
@@ -48,7 +42,6 @@ export interface CostBreakdown {
 const BP = 10_000n;
 const mulBpB = (v: bigint, bpv: number | bigint) => (v * BigInt(bpv) + BP / 2n) / BP;
 
-/** F-C1. All integer budget micro-units; multipliers in bp with round-half-up. */
 export function computeCost(
   c: CompiledDesign,
   d: DesignDraft,
@@ -120,16 +113,8 @@ export function computeCost(
   };
 }
 
-/**
- * The single micro→unit rounding point (map D3). Ceil, so a ship is never priced below its cost, and never to zero.
- */
 export const TREASURY_UNITS_ROUNDING: RoundingMode = "ceil";
 
-/**
- * The one micro→unit bridge: turns a cost in micro-pounds into canonical treasury units (map D3). Rounds once, at
- * {@link TREASURY_UNITS_ROUNDING}, with an exact bigint intermediate. A negative/fractional/unsafe `costMicro` or a
- * non-positive/non-integer `unitMicro` is rejected at construction with a typed `UnitError`.
- */
 export function treasuryCostUnits(costMicro: number, unitMicro: number): Money {
   if (!Number.isSafeInteger(costMicro) || costMicro < 0)
     throw new UnitError(

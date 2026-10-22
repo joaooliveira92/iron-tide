@@ -16,7 +16,6 @@ import { monthLabel } from "./month-report-format.js";
 import { TurnSummaryPanel } from "./TurnSummaryPanel.js";
 import { useOverviewModel } from "./hooks/useOverviewModel.js";
 
-/** The screen an entity link opens (unavailable entities still open it read-only). */
 function screenForEntity(ref: EntityReferenceDto): Screen | null {
   switch (ref.type) {
     case "ship":
@@ -35,12 +34,6 @@ function screenForEntity(ref: EntityReferenceDto): Screen | null {
   }
 }
 
-/**
- * Whether an entity link still resolves in the current campaign, from the
- * projection the screen already loads. Only the entity kinds the projection
- * enumerates are adjudicated; the rest default to available so their links
- * behave as before (no fabricated availability, no new authoritative state).
- */
 function entityAvailability(projection: PlayerProjection): (ref: EntityReferenceDto) => boolean {
   return (ref) => {
     switch (ref.type) {
@@ -58,8 +51,6 @@ function entityAvailability(projection: PlayerProjection): (ref: EntityReference
   };
 }
 
-// The map (Canvas renderer + 2 MB coastline) is the heaviest thing on the home screen, so it loads
-// lazily and never delays the panels.
 const WorldMapChart = lazy(() =>
   import("../../components/world-map/WorldMapChart.js").then((module) => ({
     default: module.WorldMapChart,
@@ -71,12 +62,6 @@ export interface OverviewScreenProps {
   readonly onNavigate: (screen: Screen) => void;
 }
 
-/**
- * The campaign command screen (CC-1, CC-2): a full-bleed world map with collapsible panels floating
- * at its edges (areas and layers at the left, month report and priorities under them, the nation rail
- * at the right). Budget and nation figures live in the status strip. Under 1024 px the map comes
- * first and the same panels stack beneath it.
- */
 export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
   const {
     loadError,
@@ -104,7 +89,6 @@ export function OverviewScreen({ sessionId, onNavigate }: OverviewScreenProps) {
     return <OverviewLoadingState />;
   }
 
-  // The map opens centred on the player's own waters (their nation's home area).
   const homeAreaId = nationHomeArea(projection.playerNationId);
 
   const prioritiesPanel = (

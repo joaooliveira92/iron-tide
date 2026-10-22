@@ -1,20 +1,3 @@
-// B-6 INC-2 (AC-4): project the battle manifest + committed campaign ships
-// (B-1 promotions) + divisions into a deterministic `TacticalBattleState` with
-// realism-independent stats (DESIGN-38 §9, §33), the main-battery gunnery
-// surface, and the per-ship damage contexts.
-//
-// Rules (recorded in ADR-0026):
-//  - only ships on `manifest.persistentAssets` that are present in the owning
-//    nation's fleets and NOT under construction are promoted; unit assetId ==
-//    campaign ship id;
-//  - sides follow the manifest (ATTACKER nation / DEFENDER nation), units
-//    ordered by canonicalized persistentAssets;
-//  - a missing design for a promoted ship fails closed with the promotion
-//    guard's TACTICAL_UNIT_PROMOTION_INVALID (never a silent skip);
-//  - an asset on the manifest missing from both nations fails closed with
-//    BATTLE_AUTO_RESOLUTION_FAILED and a stable diagnostic (no partial result);
-//  - movement spawn uses the canonical default area bbox; initial headings
-//    from spawn.ts (attackers heading 0 = east, defenders 180 = west).
 import { sha256Hex } from "@bluewave/deterministic";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { BluewaveError } from "@bluewave/contracts";
@@ -65,7 +48,6 @@ export interface AutoResolverNation {
   ships: Ship[];
   designs: Map<string, CompiledDesignVersion>;
   divisions: PermanentDivision[];
-  /** The nation's officer corps; a division commander's skill adds to its ships' accuracy (ADR-0065). */
   officers?: Officer[];
 }
 
@@ -80,25 +62,14 @@ export interface ProjectBattleInput {
 
 export interface ProjectBattleOutput {
   state: TacticalBattleState;
-  /** Main-battery gunnery surface (engine/resolver thread the states). */
   batteries: GunneryBattery[];
-  /** Per-ship damage contexts (engine/resolver update states per minute). */
   damage: DamageContext;
-  /** Mission orders (spawn headings at full designed speed). */
   orders: Record<string, { orderedHeading: number; orderedSpeedBp: number }>;
-  /** Promoted units keyed by assetId. */
   units: TacticalShipUnit[];
-  /** Resolved designs for the promoted units (promotion-verified). */
   designs: Record<string, CompiledDesignVersion>;
-  /** P-1: torpedo launchers + targets; absent when no unit carries torpedo armament. */
   torpedoes?: TorpedoContext;
 }
 
-/**
- * Accuracy multiplier (bp) from the commander of the division a ship belongs to
- * (ADR-0065). Ships outside any division, and every nation without divisions, stay neutral;
- * a division with no commander (or an unknown one) takes the DESIGN-26 vacancy penalty.
- */
 function commanderAccuracyBp(
   unit: TacticalShipUnit,
   attacker: AutoResolverNation,
@@ -111,12 +82,6 @@ function commanderAccuracyBp(
   return officer ? officerAccuracyBp(Number(officer.skill)) : VACANT_COMMANDER_ACCURACY_BP;
 }
 
-/**
- * The main-battery armament installation of a compiled design (ADR-0093 Step 4): the deterministically
- * first installation whose caliber matches the design's aggregated main-gun caliber, else the first
- * installation by placement id. Absent when the design carries no first-class armament snapshot (a legacy
- * or authored design), which projects through the documented compatibility path.
- */
 function mainArmamentOf(design: CompiledDesignVersion): CompiledArmamentMount | undefined {
   const list = design.armament;
   if (!list || list.length === 0) return undefined;
@@ -130,7 +95,6 @@ function mainArmamentOf(design: CompiledDesignVersion): CompiledArmamentMount | 
 export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
   const { manifest, attacker, defender } = input;
 
-  // ---- Committed ships: manifest.persistentAssets only ---------------------
   const attackerByPid = new Map(attacker.ships.map((s) => [s.id, s]));
   const defenderByPid = new Map(defender.ships.map((s) => [s.id, s]));
   const assets = [...manifest.persistentAssets].sort();
@@ -148,14 +112,12 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
         reason: "manifest persistent asset not found in either nation's committed ships",
       });
     }
-    if (!isShipOperational(ship)) continue; // B-1: under-construction (or under-rebuild) ships cannot promote
+    if (!isShipOperational(ship)) continue;
 
     const sideId: "ATTACKER" | "DEFENDER" = attackerByPid.has(assetId) ? "ATTACKER" : "DEFENDER";
     const designs = sideId === "ATTACKER" ? attacker.designs : defender.designs;
     const design = designs.get(ship.designVersionId);
     if (!design) {
-      // Fail closed with the promotion guard's stable diagnostic — a design is
-      // REQUIRED for every committed ship (never a silent skip).
       throw new BluewaveError(TACTICAL_UNIT_PROMOTION_INVALID, {
         code: TACTICAL_UNIT_PROMOTION_INVALID,
         shipId: ship.id,
@@ -178,12 +140,10 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
     unitDesigns[unit.assetId] = design;
   }
 
-  // ---- sides/forces (attacker then defender, canonical asset order) --------
   const attackerUnits = promoted.filter((u) => u.sideId === "ATTACKER");
   const defenderUnits = promoted.filter((u) => u.sideId === "DEFENDER");
   const units = [...attackerUnits, ...defenderUnits];
 
-  // ---- movement spawn (canonical default area box) -------------------------
   const movement = computeInitialMovementStates(
     DEFAULT_AREA_BBOX,
     units.map((u) => ({
@@ -194,10 +154,6 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
       turningRateMdegS: 1_000,
     })),
   );
-
-  // P-1 ticket 08 (supersedes the ADR-0046 override): spawn.ts now follows movement's
-  // `directionBp` convention (0 = +X east, 180 = -X west), so ATTACKER 0 / DEFENDER 180
-  // closing headings come straight from `computeInitialMovementStates`.
 
   const divisions: TacticalDivision[] = [];
   const projectDivision = (
@@ -243,15 +199,6 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
     battleEventLedger: [],
   };
 
-  // ---- main-battery gunnery surface (one battery per armed ship) -----------
-  // ADR-0072: the side with the greater maximum designed speed is the RANGE
-  // CONTROLLER (standoff doctrine — it dictates the engagement band; see
-  // engagement.ts). The contesting side is denied the range initiative: it still
-  // charges straight under ADR-0046 pursuit. That denial is priced by an
-  // explicitly versioned BALANCE TARGET — the contesting side's DESIGN-39 §3
-  // `ownManeuver` factor is multiplied to RANGE_CONTEST_OWN_MANEUVER_BP — not by
-  // actual manoeuvring (the side performs none). Equal maximum speeds leave both
-  // sides neutral (controller = null, no penalty).
   const rangeControl = resolveRangeController(units);
   const contestedOwnManeuverBp =
     rangeControl.controller === null ? null : RANGE_CONTEST_OWN_MANEUVER_BP;
@@ -259,7 +206,7 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
   for (const u of units) {
     const design = unitDesigns[u.assetId]!;
     const mainGunsCount = design.mainGunsCount as number;
-    if (mainGunsCount <= 0) continue; // no main battery -> no gunnery (canonical)
+    if (mainGunsCount <= 0) continue;
     const batteryId = `${u.assetId}:MAIN`;
     const armament = mainArmamentOf(design);
     const isContesting = rangeControl.controller !== null && u.sideId !== rangeControl.controller;
@@ -323,7 +270,6 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
     };
   }
 
-  // ---- orders (keep spawn headings; steam at full designed speed) ----------
   const orders: Record<string, { orderedHeading: number; orderedSpeedBp: number }> = {};
   for (const u of units) {
     const m = movement[u.assetId]!;
@@ -351,7 +297,6 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
   };
 }
 
-/** Deterministic pre-battle state hash for a promoted ship (promotion seam). */
 function preBattleHash(battleId: string, areaId: string, month: string, shipId: string): string {
   return sha256Hex(canonicalSerialize({ battleId, areaId, month, shipId }));
 }

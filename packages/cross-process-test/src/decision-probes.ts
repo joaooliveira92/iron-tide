@@ -13,13 +13,6 @@ import {
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 
-/**
- * N-3 qualifying decisions (spec #47 R4): at each January of the ten-year run,
- * probe the player-facing command validation without committing state. At least
- * one accepted command is required in each family: research priority, a
- * construction order for a design buildable that year, and a design/refit
- * choice whose draft comes from a reference design available that year.
- */
 export type DecisionFamily = "construction" | "design" | "research";
 
 export interface DecisionProbeResult {
@@ -220,7 +213,6 @@ function designProbe(
   };
 }
 
-/** Probe all three families against a January snapshot without committing anything. */
 export function probeDecisions(
   snapshot: CampaignSnapshot,
   slot: CampaignSlot,
@@ -245,7 +237,6 @@ export function probeDecisions(
   return results;
 }
 
-/** Fail naming the year and family when a family has no accepted probe. */
 export function assertDecisionProbes(year: number, results: readonly DecisionProbeResult[]): void {
   for (const family of ["research", "construction", "design"] as const) {
     const result = results.find((candidate) => candidate.family === family);

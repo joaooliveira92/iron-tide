@@ -2,20 +2,6 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 
-/**
- * The domain presentation-leak guard (U-3 map D6, ADR-0218/ADR-0221: "no
- * authoritative package owns presentation text"). The precedent is
- * `packages/campaign-engine/test/priorities.test.ts`.
- *
- * Two levels:
- *  - **locale-formatting is banned outright.** `toLocaleString`/`Intl` is
- *    locale-dependent, so a domain string built with it can differ across
- *    OSes/locales.
- *  - **deterministic formatting is banned too.** The domain emits structured
- *    explanation data (`ExplanationText`) and the presentation boundary renders
- *    it, so `toFixed` no longer appears in an authoritative package; the count
- *    may only fall.
- */
 const REPO = join(import.meta.dirname, "..", "..", "..");
 const SCAN_DIRS = ["packages/ship-design/src", "packages/phase-engine/src"];
 

@@ -1,5 +1,3 @@
-// DESIGN-03 §6 Technology Variation - Normative
-
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
@@ -104,8 +102,6 @@ interface TechnologyManifestHashParts {
   formulaVersion: string;
 }
 
-// §6.7 canonical manifest hash recipe. Single source of truth shared by
-// materialization and post-creation verification so the two can never drift.
 export function computeTechnologyManifestHash(parts: TechnologyManifestHashParts): string {
   return sha256Hex(
     canonicalSerialize({
@@ -120,7 +116,6 @@ export function computeTechnologyManifestHash(parts: TechnologyManifestHashParts
 const ALLOWED_DATE_DIST = new Set(["constant_zero_v1", "symmetric_triangular_integer_v1"]);
 const ALLOWED_EFF_DIST = new Set(["constant_10000_v1", "symmetric_triangular_integer_v1"]);
 
-// §6.1 profile required-field set; presence only (values validated below).
 const REQUIRED_PROFILE_FIELDS = [
   "settingId",
   "earliestDateShiftMonths",
@@ -262,7 +257,6 @@ function validateProfileMetadata(r: Record<string, unknown>, c: DiagnosticCollec
   return ok;
 }
 
-// consistency: "none" must use the constant distributions
 function validateProfileNoneConsistency(
   r: Record<string, unknown>,
   c: DiagnosticCollector,
@@ -292,7 +286,6 @@ export function validateTechnologyVariationProfile(p: unknown, c: DiagnosticColl
   }
   if (!hasRequiredProfileFields(r, c)) return false;
 
-  // Every remaining check runs so the caller sees all defects at once.
   const results = [
     validateProfileSettingId(r, c),
     validateProfileDateBounds(r, c),
@@ -304,10 +297,6 @@ export function validateTechnologyVariationProfile(p: unknown, c: DiagnosticColl
   return results.every(Boolean);
 }
 
-/**
- * §6.1: the active ruleset MUST contain one TechnologyVariationProfile for each
- * canonical identifier: none, some, considerable. Exactly one profile per id.
- */
 export function validateTechnologyVariationProfiles(
   profiles: unknown,
   c: DiagnosticCollector,

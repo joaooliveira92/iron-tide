@@ -12,7 +12,6 @@ interface AutoResolutionSummaryProps {
   readonly resolution: BattleResolution;
 }
 
-/** The auto-resolver's result: winner, war-score change, and per-ship outcomes. */
 export function AutoResolutionSummary({ resolution }: AutoResolutionSummaryProps) {
   return (
     <AccordionItem value="auto">

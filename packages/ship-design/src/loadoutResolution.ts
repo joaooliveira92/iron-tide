@@ -1,18 +1,3 @@
-/**
- * One resolution of a parts loadout (ship-part-model ticket 11d, production path).
- *
- * A production design is a `DesignHeader` + `DesignLoadout`. This module turns it into the
- * compile's inputs — the design intent, the propulsion plant, the armour materials and one
- * `Resolved` record per placement — reading each part **once**. The compile, the fit barrier
- * and the ledger all consume these same records, so a mount's mass and cost have one source.
- *
- * It replaces the production round trip (`rebuildDraft` → legacy `DesignDraft` → component
- * formulas) that resolved every placement twice. The inverse readers remain for reference
- * designs and the equivalence harness, never for production.
- *
- * A value a part does not carry is a typed, path-specific failure, never a zero or a guess.
- * The resolver produces no partial result: one issue makes the whole resolution `UNRESOLVED`.
- */
 import type {
   DesignHeaderData,
   FlattenedPart,
@@ -57,10 +42,8 @@ export type LoadoutResolutionCode =
   | "RESOLVE_PLANT_PART_INVALID"
   | "RESOLVE_TORPEDO_UNRESOLVED";
 
-/** One typed, path-specific reason a loadout did not resolve. */
 export interface LoadoutResolutionIssue {
   readonly code: LoadoutResolutionCode;
-  /** `<design>.<entry>[.<field>]`, e.g. `havock_like.entries[gun_main].part`. */
   readonly path: string;
   readonly message: string;
 }
@@ -71,7 +54,6 @@ export type LoadoutResolution =
       readonly intent: DesignIntent;
       readonly plant: PropulsionPlant;
       readonly resolved: readonly Resolved[];
-      /** The armour materials the regions use, for the parts-based armour balance. */
       readonly armourParts: readonly FlattenedArmourPart[];
     }
   | { readonly status: "UNRESOLVED"; readonly issues: readonly LoadoutResolutionIssue[] };
@@ -90,7 +72,6 @@ const fail = (reader: Reader, code: LoadoutResolutionCode, path: string, message
   reader.issues.push({ code, path: `${reader.designId}.${path}`, message });
 };
 
-/** The armour-region category of each fitting interface the compile knows. */
 const FITTING_CATEGORY_BY_INTERFACE: Readonly<Record<string, Resolved["category"]>> = {
   magazine: "MAGAZINE",
   electrical_plant: "GENERATOR",
@@ -100,7 +81,6 @@ const FITTING_CATEGORY_BY_INTERFACE: Readonly<Record<string, Resolved["category"
   ventilation: "SPECIAL_EQUIPMENT",
 };
 
-/** `true` when `entry` fills its slot; the shared slot/zone guards every placement needs. */
 function placementSlot(
   reader: Reader,
   entry: LoadoutEntryData,
@@ -118,7 +98,6 @@ function placementSlot(
   return { slot, zone: slot.zone as ZoneId };
 }
 
-/** The one count parameter a part declares, or `null` when it declares none. */
 function countParameterOf(part: FlattenedPart): string | null {
   const names = Object.keys(part.parameters ?? {}).sort(compareCodePoints);
   return names[0] ?? null;
@@ -162,11 +141,6 @@ interface PartFacts {
   readonly coolingKw: number;
 }
 
-/**
- * Everything a `Resolved` inherits from its part, at an entry's counts: the five basis-driven
- * quantity kinds, the engineering consumption/demand, and the attributes the legacy compile
- * reads (spec attributes, capabilities, generation/supply and flammability).
- */
 function factsOf(
   part: FlattenedPart,
   lines: ReturnType<typeof quantityLines>,
@@ -250,7 +224,6 @@ function factsOf(
   };
 }
 
-/** A `Resolved` assembled from its part facts and the placement's identity. */
 function resolvedFrom(
   spec: PlacementSpec,
   componentId: string,
@@ -272,8 +245,6 @@ function resolvedFrom(
     ...(facts.fcClass === undefined ? {} : { fcClass: facts.fcClass }),
     fcClasses: facts.fcClasses,
     ...(part.allowedZones === undefined ? {} : { allowedZones: part.allowedZones }),
-    // A part's `forbidsCoLocation` names interfaces, not legacy categories; the compile's
-    // arrangement reads categories. Production content authors neither, so none is carried.
     forbidsCoLocation: [],
     critical,
     maintenanceMonthlyBp: facts.maintenanceMonthlyBp,
@@ -387,7 +358,6 @@ function readLauncherPlacement(
   const mountCount = entry.mountCount ?? 1;
   const params: Record<string, number> = { tubes: mountCount, ...entry.params };
   const lines = quantityLines(launcher.quantities, "launcher", launcher.id, mountCount, 1);
-  // A national launcher variant keeps its base launcher's component id as its prototype.
   const componentId = launcher.origin.prototype?.id ?? launcher.id;
   const torpedoMount = launcherTorpedoMount(reader, launcher, path);
   const spec = placementSpec(
@@ -411,11 +381,6 @@ function readLauncherPlacement(
   );
 }
 
-/**
- * The neutral torpedo contract a launcher carries. The launcher names the torpedo part it
- * loads; compiling it at a far-future month resolves its effective (latest) revision. A
- * launcher whose torpedo cannot be resolved is a typed issue, never a silent default.
- */
 function launcherTorpedoMount(
   reader: Reader,
   launcher: Extract<FlattenedPart, { readonly family: "torpedo_launcher" }>,
@@ -495,7 +460,6 @@ function readFittingPlacement(
   );
 }
 
-/** The parts a single loadout contributes: the resolved placements and the header facts. */
 interface EntryRead {
   readonly plant: {
     readonly part: FlattenedPlantPart;
@@ -588,7 +552,6 @@ function readEntry(reader: Reader, entry: LoadoutEntryData, read: EntryRead): En
   }
 }
 
-/** The machinery plan: the plant entry's facts plus the header's fuel, fouling and rooms. */
 function machineryPlan(
   header: DesignHeaderData,
   plant: {
@@ -616,11 +579,6 @@ function machineryPlan(
   };
 }
 
-/**
- * Resolve a design's header and loadout into the compile's inputs. Every part is read once;
- * the resulting `Resolved` records are codepoint-sorted by instance id, and the issues by
- * path then code. Any issue makes the whole result `UNRESOLVED`.
- */
 export function resolveLoadout(input: {
   readonly designId: string;
   readonly header: DesignHeaderData;

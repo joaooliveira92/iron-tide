@@ -1,30 +1,19 @@
-// DESIGN-39 §28 + AC-7: exact per-type ammunition accounting and ATOMIC reserve +
-// consume for a salvo. Reservations never partially consume: a salvo is committed
-// in full from a single permitted ammunition type, or fails entirely with
-// GUNNERY_AMMUNITION_UNAVAILABLE. Pure/deterministic: no I/O, clock, or random.
 import { BluewaveError } from "@bluewave/contracts";
 import { AMMUNITION_TYPES, type AmmunitionType } from "./constants.js";
 import { GUNNERY_AMMUNITION_UNAVAILABLE } from "./reasonCodes.js";
 
 export interface AmmunitionAccount {
   type: AmmunitionType;
-  count: number; // rounds reserved + consumed
-  before: number; // count in the type before the salvo
-  after: number; // count in the type after the salvo (never negative)
+  count: number;
+  before: number;
+  after: number;
 }
 
 export interface AmmunitionReserve {
-  ammunition: Record<AmmunitionType, number>; // the FULL new ammunition record
+  ammunition: Record<AmmunitionType, number>;
   account: AmmunitionAccount;
 }
 
-// AC-7: reserve and consume `count` rounds atomically from the battery's exact
-// per-type ammunition record. `preferredType` is tried first; failing that, the
-// other `permittedTypes` are tried in declaration order. The FULL count must be
-// available from a single permitted type — never split across types, never
-// partially consumed. When no permitted type holds enough, throws
-// GUNNERY_AMMUNITION_UNAVAILABLE. Returns the immutable new ammunition record +
-// the account for the committed type, WITHOUT mutating the caller's record.
 export function reserveAndConsumeAmmunition(
   ammunition: Record<AmmunitionType, number>,
   count: number,
@@ -39,7 +28,6 @@ export function reserveAndConsumeAmmunition(
     });
   }
 
-  // preferred first, then the other permitted types in declaration order.
   const ordered: AmmunitionType[] = [
     preferredType,
     ...permittedTypes.filter((t) => t !== preferredType),
@@ -49,7 +37,6 @@ export function reserveAndConsumeAmmunition(
   for (const type of ordered) {
     const before = ammunition[type];
     if (!Number.isInteger(before) || (before as number) < 0) {
-      // never trust a malformed authoritative count; abort before any commit.
       throw new BluewaveError(GUNNERY_AMMUNITION_UNAVAILABLE, {
         code: GUNNERY_AMMUNITION_UNAVAILABLE,
         type,

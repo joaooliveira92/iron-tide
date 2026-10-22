@@ -8,7 +8,6 @@ import { SEVERITY_LABELS, SEVERITY_VARIANT, destinationLabel } from "../../lib/p
 import type { Screen } from "../../shell/campaign-screen-registry.js";
 import type { PrioritiesState } from "./usePriorities.js";
 
-/** At most this many priorities are shown; the engine already sorts the most urgent first. */
 export const MAX_VISIBLE_PRIORITIES = 5;
 
 function PriorityRow({
@@ -43,7 +42,6 @@ function PriorityRow({
   );
 }
 
-/** The engine's strategic priorities, most urgent first, each linking to where it can be acted on. */
 export function PrioritiesCard({
   state,
   onNavigate,
@@ -51,7 +49,6 @@ export function PrioritiesCard({
 }: {
   readonly state: PrioritiesState;
   readonly onNavigate: (screen: Screen) => void;
-  /** Render only the body (a host panel supplies the chrome and title). */
   readonly embedded?: boolean;
 }) {
   const priorities = state.status === "ready" ? state.priorities : [];

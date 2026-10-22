@@ -18,7 +18,6 @@ const CAUSE_LABELS: Readonly<Record<string, string>> = {
   torpedo: "sunk by torpedo",
 };
 
-/** Resolved battles and the ships lost in them, from the engine's recorded results. */
 export function BattleHistorySection({ state }: { readonly state: BattleHistoryState }) {
   if (state.status === "loading") {
     return <p className="text-sm text-muted-foreground">Loading battle history…</p>;

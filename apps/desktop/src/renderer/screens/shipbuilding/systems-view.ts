@@ -7,19 +7,11 @@ import type {
 } from "@bluewave/ship-design";
 import type { DrawingBoardContent } from "../../components/design-workspace/content.js";
 
-/**
- * The Systems section's availability view model. Pure: each catalogue installation is offered only when the design
- * year and the nation's unlocked technology allow it, and locked ones are named with a reason. Nothing here edits
- * the design except `addSystemEdit`, which returns one ordinary draft edit.
- */
-
 export interface SystemItem {
   readonly componentId: string;
   readonly name: string;
   readonly available: boolean;
-  /** Why the installation is unavailable (introduction month or missing technology); null when available. */
   readonly reason: string | null;
-  /** How many of this component the design currently carries. */
   readonly fitted: number;
 }
 
@@ -31,7 +23,6 @@ export interface SystemGroup {
 
 const words = (s: string) => s.replaceAll("_", " ").toLowerCase();
 
-/** Whether a component may be fitted at `month` with `unlockedTechs`; null when available, else the reason. */
 export function unavailableReason(
   entry: PartCatalogueEntry,
   month: string,
@@ -44,10 +35,6 @@ export function unavailableReason(
   return null;
 }
 
-/**
- * The installations of the given categories, grouped by category. Unavailable ones are kept (disabled with a reason)
- * only when `showUnavailable` is set; they are hidden otherwise.
- */
 export function systemsModel(
   categories: ReadonlySet<ComponentCategory>,
   draft: DesignDraft,
@@ -85,7 +72,6 @@ function midStation(content: DrawingBoardContent, draft: DesignDraft, zoneId: st
   return z ? Math.floor((z.startPermille + z.endPermille) / 2) : 500;
 }
 
-/** One draft edit adding an installation in its first allowed zone (or the superstructure). Returns null if unknown. */
 export function addSystemEdit(
   componentId: string,
   draft: DesignDraft,

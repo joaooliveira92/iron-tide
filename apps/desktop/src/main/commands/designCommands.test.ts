@@ -49,11 +49,8 @@ import {
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-// One shared runtime for every design program; the services delegate to the same
-// in-memory session/queue registries the tests populate directly.
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-/** Runs a command program through the desktop service graph and projects its wire envelope. */
 async function runProgram<A>(program: CommandProgram, payload: unknown): Promise<BridgeResult<A>> {
   return projectCommandExit(await runtime.runPromiseExit(program(payload))) as BridgeResult<A>;
 }
@@ -78,11 +75,6 @@ const commitMonth = (payload: {
   transportRequestId: string;
 }) => runProgram<CommitMonthResponse>(commitMonthProgram, payload);
 
-/**
- * Commits months until `designVersionId`'s study completes and the design joins the catalog (ADR-0085), so the wiring
- * tests below can treat it as approved. The submission month already paid the first month of work; the production pack's
- * study is four months of work, so this is three more commits.
- */
 async function advanceUntilApproved(sessionId: string, designVersionId: string): Promise<void> {
   for (let i = 0; i < 8; i++) {
     const record = getCampaignSession(sessionId);
@@ -98,10 +90,6 @@ async function advanceUntilApproved(sessionId: string, designVersionId: string):
   throw new Error(`design ${designVersionId} was not approved within 8 months`);
 }
 
-/**
- * An 1880-era torpedo cruiser (class CL, about 2,200 t): compound plant, machine guns and four above-water 14-inch tubes.
- * In January 1880 only machine guns and torpedoes exist, and DESIGN-22 gives no destroyer class below 19 knots.
- */
 const cruiser = {
   nationId: "uk",
   requirement: {
@@ -253,9 +241,8 @@ describe("submitDesignCommand (ADR-0066)", () => {
     if (queued.outcome !== "success") return;
     const { designVersionId, study } = queued.value;
     expect(designVersionId).toMatch(/^des_uk_test_cruiser_t\d+$/);
-    // The production pack has study rules (ADR-0085): a new class is four months of work, not approved same-month.
     expect(study).toMatchObject({ months: 4, derived: false });
-    expect(getCampaignSession("ds")!.state.snapshot.designs.has(designVersionId)).toBe(false); // not before the month
+    expect(getCampaignSession("ds")!.state.snapshot.designs.has(designVersionId)).toBe(false);
 
     await advanceUntilApproved("ds", designVersionId);
     const design = getCampaignSession("ds")!.state.snapshot.designs.get(designVersionId)!;
@@ -263,7 +250,6 @@ describe("submitDesignCommand (ADR-0066)", () => {
     expect(design.nationId).toBe("uk");
     expect(design.className).toBe("Test Cruiser");
     expect(design.torpedoArmament?.[0]?.tubeCount).toBe(4);
-    // The hull type is the ship type's own (ADR-0088), never a fallback label.
     expect(design.hullType).toBe("protected_cruiser");
   });
 
@@ -310,8 +296,6 @@ describe("submitDesignCommand (ADR-0066)", () => {
     };
     const r = await submit({ draft: modern });
     expect(r).toMatchObject({ outcome: "rejected", reason: "DESIGN_REJECTED" });
-    // The parts barrier gates the plant's lifecycle technology against the context's unlocked set
-    // (the legacy `compileDesign` gate): the 1880 campaign lacks the water-tube plant's technology.
     if (r.outcome === "rejected")
       expect(r.diagnostics.join(" ")).toMatch(/requires technology .*not unlocked/i);
   });
@@ -373,7 +357,6 @@ describe("reviseProjectCommand and loadProjectDraft (ADR-0070)", () => {
 
   const revision = () => Number(getCampaignSession("rv")!.state.snapshot.turnNumber);
 
-  /** Submits the cruiser, commits the month, and puts a project on it with `done` work complete. */
   async function projectOn(done: number): Promise<string> {
     const queued = await submitDesign({
       sessionId: "rv",
@@ -441,7 +424,7 @@ describe("reviseProjectCommand and loadProjectDraft (ADR-0070)", () => {
   it("refuses to load an authored project that has no source draft", async () => {
     const snapshot = getCampaignSession("rv")!.state.snapshot;
     const authored = snapshot.nations.get("uk")!.constructionProjects[0];
-    if (!authored) return; // pack with no authored project: nothing to refuse
+    if (!authored) return;
     expect(await loadProjectDraft({ sessionId: "rv", projectId: authored.id })).toMatchObject({
       outcome: "rejected",
       reason: "PROJECT_NOT_REVISABLE",
@@ -538,7 +521,6 @@ describe("rebuilding a ship through the programs (ADR-0078)", () => {
 
   const revision = () => Number(getCampaignSession("rb")!.state.snapshot.turnNumber);
 
-  /** Submits the cruiser, commits the month, and puts a commissioned ship of that design in the player's first fleet. */
   async function builtShip(): Promise<{ shipId: string; designVersionId: string }> {
     const queued = await submitDesign({
       sessionId: "rb",
@@ -652,9 +634,6 @@ describe("rebuilding a ship through the programs (ADR-0078)", () => {
     expect(r).toMatchObject({ outcome: "success", value: { legal: false, changesNothing: true } });
   });
 
-  // A change that fails the parts barrier: the water-tube plant's technology is locked in 1880, so
-  // the changed draft is not buildable. The check must return a view, never a bridge rejection that
-  // would leave the panel stuck on "Checking…".
   const notBuildable = {
     ...cruiser,
     machinery: { ...cruiser.machinery, plantId: "triple_expansion_watertube" },
@@ -675,15 +654,11 @@ describe("rebuilding a ship through the programs (ADR-0078)", () => {
     expect(view.measures).toBeNull();
   });
 
-  // INC-13 (SB3-R26): the manual's armament-change rules run in the live check, not only in the engine.
   const illegalSwap = {
     ...cruiser,
     placements: cruiser.placements.map((p) =>
       p.instanceId === "mg_fwd"
-        ? // The nordenfelt's 1,000 rounds are outside the 7-inch gun's 40..200 range; the barrier
-          // (SPM-R12) would reject the swap for that alone, so the swap carries a valid loadout to
-          // exercise the armament-change rule.
-          { ...p, componentId: "gun_rml_7in_7ton", params: { barrels: 1, rounds: 100 } }
+        ? { ...p, componentId: "gun_rml_7in_7ton", params: { barrels: 1, rounds: 100 } }
         : p,
     ),
   };
@@ -698,7 +673,6 @@ describe("rebuilding a ship through the programs (ADR-0078)", () => {
     expect(view.legal).toBe(false);
   });
 
-  // INC-12 (SB3-R25): a BULGE rebuild must grow the hull, and the check reports the versioned gain.
   it("requires a blister on a BULGE rebuild whose hull did not grow", async () => {
     const { shipId } = await builtShip();
     const r = await checkRebuild({
@@ -734,7 +708,6 @@ describe("rebuilding a ship through the programs (ADR-0078)", () => {
     const project = nation.constructionProjects.find((p) => p.id === out.projectId)!;
     expect(project).toMatchObject({ projectType: "REBUILD", targetShipId: shipId });
     expect(snapshot.designs.has(out.newDesignVersionId)).toBe(true);
-    // Once it is being rebuilt it is no longer offered.
     expect(await listRebuildableShips("rb")).toMatchObject({ value: [] });
   });
 

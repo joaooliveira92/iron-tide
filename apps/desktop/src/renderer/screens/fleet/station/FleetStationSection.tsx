@@ -35,7 +35,6 @@ export interface FleetStationViewProps {
   readonly onReload: () => void;
 }
 
-/** The p.48 status as visible code plus text, so no state rests on colour alone. */
 function StatusCell({ row }: { readonly row: StationRow }) {
   return (
     <span className="inline-flex flex-wrap items-center gap-x-1.5">
@@ -135,7 +134,6 @@ function PresenceReadout({ readout }: { readonly readout: PresenceReadoutView })
   );
 }
 
-/** Presentational foreign-station section: status column, assign/clear, and the presence readout. */
 export function FleetStationView({
   state,
   rows,
@@ -291,7 +289,6 @@ export function FleetStationView({
   );
 }
 
-/** Foreign-station section wired to the session: loads the projection and queues assign/clear commands. */
 export function FleetStationSection({ sessionId }: { readonly sessionId: string }) {
   const station = useStationAssignment(sessionId);
   return (

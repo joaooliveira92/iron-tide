@@ -16,7 +16,6 @@ export interface FindingsView {
 
 const DEFAULT_VIEW: FindingsView = { visible: true, filter: "all" };
 
-/** The stored choice, or the default for anything missing or unrecognised. */
 export function readFindingsView(): FindingsView {
   try {
     const raw: unknown = JSON.parse(localStorage.getItem(FINDINGS_VIEW_KEY) ?? "null");
@@ -29,21 +28,17 @@ export function readFindingsView(): FindingsView {
   }
 }
 
-/** Whether findings show on the plan, and which: a local view preference like the split width, never design state. */
 export function useFindingsView(): readonly [FindingsView, (next: FindingsView) => void] {
   const [view, setView] = useState(readFindingsView);
   const set = (next: FindingsView) => {
     try {
       localStorage.setItem(FINDINGS_VIEW_KEY, JSON.stringify(next));
-    } catch {
-      // Storage unavailable: the choice still applies for this session.
-    }
+    } catch {}
     setView(next);
   };
   return [view, set];
 }
 
-/** Whether findings show on the plan, and which severities: the display half of the findings control. */
 export function FindingsViewOptions({
   view,
   onChange,
@@ -77,10 +72,6 @@ export function FindingsViewOptions({
   );
 }
 
-/**
- * The ship-level findings: they have no place on the drawing, so they sit beside it as one button that pins the whole
- * ship. Nothing renders when there are none or findings are hidden.
- */
 export function ShipFindingsButton({
   view,
   shipFindings,
@@ -114,7 +105,6 @@ export function ShipFindingsButton({
   );
 }
 
-/** The plan's validation control when the plan is shown on its own: the display options and the ship-level button. */
 export function FindingsControl({
   view,
   onChange,

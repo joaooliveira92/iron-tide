@@ -1,20 +1,3 @@
-// D-4 M4 Aviation: Air Defense — AC-15 AirDefenseEngagementRecord per DESIGN-45 §26/§27.
-// Parallel to air-combat/records.ts pattern.
-//
-// §26: every detection, threat assignment, director assignment, CAP interception, SAM
-// engagement, AA engagement, light-AA disruption opportunity, CIWS engagement, ammunition
-// use, jam, kill, damage, abort, and disruption MUST create an immutable record containing
-// battle timing, asset identifiers, attack type/profile, defense layer/system, state, timing
-// and channel allocation, scaling/saturation values, probability/random decisions, outcome
-// and persistence effects, formula/ruleset versions, and a record hash.
-//
-// §28 ships no dedicated record-integrity code; the canonical §28 invariant boundary
-// AIR_DEFENSE_INVARIANT_FAILED is used for record-hash failures (documented resolution,
-// ADR-0042 — no INVALID_AIR_DEFENSE_RECORD code is invented).
-//
-// The record body is deliberately JSON-serializable (primitives + null only): the hash is
-// taken over the canonicalized body so identical state produces identical hashes (§29.28).
-
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import type { AttackTypeId } from "./attack.js";
@@ -33,14 +16,8 @@ import {
 
 export const AIR_DEFENSE_RECORD_POLICY_ID = "air_defense_record_v1" as const;
 
-/** The full §1 defense-layer set, as the record's `layer` union. */
 export type AirDefenseRecordLayer = (typeof FULL_DEFENSE_LAYER_ORDER)[number];
 
-/**
- * Primary outcome of a record. The five §5 engagement outcomes plus the four §26
- * non-engagement outcomes: an ineligible attempt, an exhausted (CAP/SAM) attempt, a
- * director assignment, and the guaranteed light-AA disruption opportunity.
- */
 export type AirDefenseRecordOutcome =
   | EngagementOutcome
   | "OPPORTUNITY_CREATED"
@@ -48,7 +25,6 @@ export type AirDefenseRecordOutcome =
   | "EXHAUSTED"
   | "DIRECTOR_ASSIGNED";
 
-/** §26 record kinds (one per §26 bullet family). */
 export type AirDefenseRecordKind =
   | "ENGAGEMENT"
   | "CAP_INTERCEPTION_INELIGIBLE"
@@ -63,11 +39,11 @@ export interface AirDefenseEngagementRecord {
   minute: SafeInt;
   substep: SafeInt;
   defenderId: string;
-  attackerId: string; // attacking formation identifier
+  attackerId: string;
   attackId: string;
-  targetId: string; // defended ship identifier under attack
+  targetId: string;
   attackType: AttackTypeId;
-  attackProfile: string; // §9 light-AA profile key or the attack type when no profile applies
+  attackProfile: string;
   layer: AirDefenseRecordLayer;
   defenseSystemId: string;
   directorChannelId: string | null;
@@ -102,11 +78,6 @@ export interface AirDefenseEngagementRecord {
 
 type AirDefenseEngagementRecordBody = Omit<AirDefenseEngagementRecord, "recordHash">;
 
-// ---- §27.8 outcome-effect ordinal ----
-// Increasing effect strength: an ineligible attempt (0) < exhausted (1) < director assigned
-// (2) < disruption opportunity granted (3) < no effect (4) < disruption (5) < abort (6) <
-// damage (7) < kill (8). This is the ONLY canonical "outcome effect ordinal" — a monotone,
-// total order over every §26 outcome used by the §27.8 ordering key.
 export const AIR_DEFENSE_OUTCOME_ORDINALS: Readonly<Record<AirDefenseRecordOutcome, number>> = {
   INELIGIBLE: 0,
   EXHAUSTED: 1,
@@ -119,7 +90,6 @@ export const AIR_DEFENSE_OUTCOME_ORDINALS: Readonly<Record<AirDefenseRecordOutco
   KILL: 8,
 };
 
-/** §27.8 outcome-effect ordinal for a record outcome (fail-closed on unknown outcomes). */
 export function airDefenseOutcomeOrdinal(outcome: AirDefenseRecordOutcome): SafeInt {
   const ordinal = AIR_DEFENSE_OUTCOME_ORDINALS[outcome];
   if (ordinal === undefined) {
@@ -130,8 +100,6 @@ export function airDefenseOutcomeOrdinal(outcome: AirDefenseRecordOutcome): Safe
   }
   return SafeInt(ordinal);
 }
-
-// ---- Hash / create / verify / assert ----
 
 export function computeAirDefenseEngagementRecordHash(
   body: AirDefenseEngagementRecordBody,
@@ -147,7 +115,6 @@ export function createAirDefenseEngagementRecord(
     ...body,
     recordHash: computeAirDefenseEngagementRecordHash(body),
   };
-  // §26: records are immutable. Shallow freeze suffices — the body carries primitives only.
   return Object.freeze(record);
 }
 
@@ -156,7 +123,6 @@ export function verifyAirDefenseEngagementRecordHash(record: AirDefenseEngagemen
   return computeAirDefenseEngagementRecordHash(body) === recordHash;
 }
 
-/** §26 record integrity: a tampered or inconsistent record fails with AIR_DEFENSE_INVARIANT_FAILED. */
 export function assertAirDefenseEngagementRecordHash(record: AirDefenseEngagementRecord): void {
   if (!verifyAirDefenseEngagementRecordHash(record)) {
     throw new BluewaveError("assertAirDefenseEngagementRecordHash: record hash mismatch", {
@@ -166,10 +132,7 @@ export function assertAirDefenseEngagementRecordHash(record: AirDefenseEngagemen
   }
 }
 
-// ---- AC-7: guaranteed light-AA disruption opportunity record ----
-
 export interface LightAaDisruptionOpportunityRecordInput {
-  /** The AC-7 resolution — MUST be `opportunityCreated === true` (fail-closed). */
   opportunity: LightAaDisruptionOpportunityResult;
   recordId: string;
   defenderId: string;
@@ -199,13 +162,6 @@ export interface LightAaDisruptionOpportunityRecordInput {
   threatFormationSize: SafeInt;
 }
 
-/**
- * AC-7 (§26): builds the immutable record for a GRANTED light-AA disruption opportunity.
- * The opportunity guarantees ONLY the disruption check at one authoritative substep (§29.8);
- * it guarantees no ammunition, hit, damage, or abort (§29.9) — hence draw = 0 (no random
- * decision taken yet), roundsConsumed = 0 (nothing fired), and outcome = OPPORTUNITY_CREATED.
- * A not-created opportunity (or a non-matching checkSubstep) is an invariant violation.
- */
 export function createLightAaDisruptionOpportunityRecord(
   input: LightAaDisruptionOpportunityRecordInput,
 ): AirDefenseEngagementRecord {
@@ -237,7 +193,7 @@ export function createLightAaDisruptionOpportunityRecord(
     damageBp: input.damageBp,
     powerBp: input.powerBp,
     roundsRemaining: input.roundsRemaining,
-    roundsConsumed: SafeInt.ZERO, // §29.9: the opportunity does not fire ammunition
+    roundsConsumed: SafeInt.ZERO,
     ammunitionMultiplierBp: input.ammunitionMultiplierBp,
     timeToImpactMs: input.timeToImpactMs,
     windowMilliseconds: input.windowMilliseconds,
@@ -245,9 +201,9 @@ export function createLightAaDisruptionOpportunityRecord(
     effectiveDamageBp: input.effectiveDamageBp,
     effectiveAbortBp: input.effectiveAbortBp,
     effectiveDisruptionBp: input.effectiveDisruptionBp,
-    draw: SafeInt.ZERO, // §29.9: no random decision is taken by creating the opportunity
+    draw: SafeInt.ZERO,
     outcome: "OPPORTUNITY_CREATED",
-    disruptionSeverity: null, // the §6 disruption draw happens at attack resolution (INC-6)
+    disruptionSeverity: null,
     threatReleased: input.threatReleased,
     threatFormationSize: input.threatFormationSize,
     reasonCode: LIGHT_AA_DISRUPTION_OPPORTUNITY_CREATED,

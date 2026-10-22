@@ -1,4 +1,3 @@
-// ADR-0088: the construction-order policy (placeConstructionOrder) cannot be bypassed, and its AMC limits are exact.
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -17,8 +16,6 @@ import {
   readReferenceDesignEntries,
 } from "./helpers/contentFiles.js";
 
-// Without study rules a submitted design is approved the same month, which these tests rely on; studies themselves are
-// covered in design-study.test.ts (ADR-0085).
 const content = productionShipBuildingContent();
 const reference = readReferenceDesignEntries();
 const draftOf = (id: string): Record<string, unknown> => ({
@@ -92,7 +89,6 @@ function run(
 
 type Design = CampaignSnapshot["designs"] extends Map<string, infer D> ? D : never;
 
-/** A snapshot with the 1880 starter designs submitted and approved (no study rules, same month). */
 function withDesigns(): CampaignSnapshot {
   const snapshot = snapshotIn(1880, 1);
   let current = snapshot;
@@ -230,12 +226,10 @@ describe("placeConstructionOrder is the only way a new-ship project enters a sna
         familyCreationMonth: "1906-02",
       }),
     } as CampaignSnapshot;
-    // A 1906 design cannot be laid down in an 1880 month.
     expect(order(snapshot, "des_future")).toMatchObject({
       ok: false,
       reason: "DESIGN_NOT_YET_AVAILABLE",
     });
-    // The same design is orderable once the campaign reaches its service year.
     const atEra = placeConstructionOrder(
       snapshot,
       {
@@ -252,12 +246,10 @@ describe("placeConstructionOrder is the only way a new-ship project enters a sna
   it("limits AMC orders to 20 % of operational cruisers, minimum two, counting queued AMC", () => {
     const amc = base.designs.get("des_amc_5")!;
     expect(amc.hullType).toBe("armed_merchant_cruiser");
-    // No cruisers: two allowed (min allowance), counting those still in the queue.
     expect(order(withFleet(base, [], []), "des_amc_5").ok).toBe(true);
     expect(order(withFleet(base, [], [amcProject(0)]), "des_amc_5").ok).toBe(true);
     const third = order(withFleet(base, [], [amcProject(0), amcProject(1)]), "des_amc_5");
     expect(third).toMatchObject({ ok: false, reason: "AMC_FLEET_LIMIT_EXCEEDED" });
-    // A completed project is a ship, counted once as a ship and not again as a project.
     const launched = order(
       withFleet(base, [ship(1, "des_amc_5"), ship(2, "des_amc_5")], [amcProject(0, "COMPLETED")]),
       "des_amc_5",
@@ -268,21 +260,17 @@ describe("placeConstructionOrder is the only way a new-ship project enters a sna
   it("counts only commissioned, operational CA and CL toward the allowance", () => {
     const cl = "des_cl_2";
     const ca = "des_ca_1";
-    // 14 operational cruisers: floor(14 x 20 %) = 2, so a third AMC is refused...
     const fourteen = Array.from({ length: 14 }, (_, i) => ship(i, i % 2 === 0 ? cl : ca));
     const two = [ship(100, "des_amc_5"), ship(101, "des_amc_5")];
     expect(order(withFleet(base, [...fourteen, ...two]), "des_amc_5").ok).toBe(false);
-    // ...15 give three...
     const fifteen = [...fourteen, ship(14, cl)];
     expect(order(withFleet(base, [...fifteen, ...two]), "des_amc_5").ok).toBe(true);
-    // ...but a cruiser still building, or one made unavailable by a rebuild, does not count.
     const notActive = [
       ...fourteen,
       ship(14, cl, { isUnderConstruction: true }),
       ship(15, cl, { availability: "UNAVAILABLE" }),
     ];
     expect(order(withFleet(base, [...notActive, ...two]), "des_amc_5").ok).toBe(false);
-    // Destroyers, corvettes and pre-dreadnoughts are not cruisers.
     const others = [...fourteen, ship(20, "des_dd_3"), ship(21, "des_ke_4"), ship(22, "des_b_0")];
     expect(order(withFleet(base, [...others, ...two]), "des_amc_5").ok).toBe(false);
   });
@@ -295,7 +283,6 @@ describe("placeConstructionOrder is the only way a new-ship project enters a sna
       ok: false,
       reason: "AMC_FLEET_LIMIT_EXCEEDED",
     });
-    // Ordering anything that is not an AMC is unaffected by the auxiliary limit.
     expect(order(snapshot, "des_dd_3").ok).toBe(true);
   });
 
@@ -310,7 +297,6 @@ describe("placeConstructionOrder is the only way a new-ship project enters a sna
       designs: new Map(base.designs).set("des_amc_fast", fastDesign),
     } as CampaignSnapshot;
     const oneFast = [ship(1, "des_amc_fast")];
-    // One fast AMC already: a second fast one exceeds max(floor(25 % of 2), 1) = 1.
     expect(order(withFleet(snapshot, oneFast), "des_amc_fast")).toMatchObject({
       ok: false,
       reason: "AMC_FAST_LIMIT_EXCEEDED",
@@ -354,9 +340,7 @@ describe("placeConstructionOrder is the only way a new-ship project enters a sna
         { ...amcProject(1), id: constructionProjectIdForCommand("cmd-old-b") },
       ],
     );
-    // A third order is refused...
     expect(order(snapshot, "des_amc_5").ok).toBe(false);
-    // ...but replacing one of the two is the same count, and the replaced project leaves in the same step.
     const r = order(snapshot, "des_amc_5", { replacingCommandId: "cmd-old-a" });
     expect(r.ok).toBe(true);
     if (!r.ok) return;

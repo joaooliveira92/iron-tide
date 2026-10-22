@@ -33,7 +33,6 @@ import {
 } from "../validation/severity.js";
 import { plural } from "../plural.js";
 
-/** The rule id, with the computed evidence behind the finding on hover. */
 function RuleEvidence({ f }: { readonly f: Finding }) {
   const format = usePresentationFormat();
   const inputs = Object.entries(f.evidence.inputs);
@@ -136,7 +135,6 @@ function FindingItem({
   );
 }
 
-/** Findings grouped by class, most severe class first; each class is its own labelled region. */
 function FindingGroup({
   klass,
   items,
@@ -217,9 +215,7 @@ export function FindingsPanel({
   onShowOnShip,
 }: {
   readonly view: WorkshopView;
-  /** The board's findings: the same objects and identities the ship drawing shows. */
   readonly findings: readonly BoardFinding[];
-  /** Pins the finding's entity on the ship drawing. */
   readonly onShowOnShip: (f: BoardFinding) => void;
   readonly suggest: () => SuggestedFix[];
   readonly onApply: (e: DraftEdit) => void;
@@ -227,7 +223,6 @@ export function FindingsPanel({
   const order: readonly Severity[] = SEVERITY_ORDER;
   const total = order.reduce((a, s) => a + view.counts[s], 0);
   const serious = view.counts.BLOCKING + view.counts.CRITICAL + view.counts.WARNING > 0;
-  // Suggestions belong to one compiled design: they reset whenever the design changes.
   const [fixes, setFixes] = useState<{
     readonly forHash: string;
     readonly list: SuggestedFix[];

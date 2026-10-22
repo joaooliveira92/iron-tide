@@ -10,10 +10,6 @@ import {
 } from "../../../components/design-workspace/index.js";
 import type { ReferenceDeckEntry } from "../reference-deck.js";
 
-/**
- * The focused ship type in full: its category, recommended use, comparable facts, rule detail and the starter
- * design to start from. Keyed by type in the caller, so it eases in again each time focus moves.
- */
 export function ReferenceDeckDetail({
   entry,
   onStart,

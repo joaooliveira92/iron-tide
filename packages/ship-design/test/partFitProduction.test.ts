@@ -45,8 +45,6 @@ import {
 } from "./helpers/gunReadPath.js";
 import { torpedoDiameterUm, torpedoModels } from "./helpers/torpedoModels.js";
 
-// Production fixture: every design's whole loadout through the read path
-
 const WEAPON = new Set([
   "MAIN_GUN",
   "SECONDARY_GUN",
@@ -66,7 +64,6 @@ const launcherModel = buildLauncherPartModel({
   torpedoDiameterUm,
 });
 
-/** The loaded torpedo of each base launcher, by the legacy component's `torpedoModelId`. */
 const loadedTorpedoOf = (launcherId: string): string => {
   const part = present(
     launcherModel.parts.find((p) => p.id === launcherId),
@@ -79,10 +76,6 @@ const loadedTorpedoOf = (launcherId: string): string => {
   );
 };
 
-/**
- * A torpedo part carrying only the structured diameter. Real torpedo parts are ticket 13's;
- * this fixture exists to exercise the launcher's `diameterUmEqualsBore` slot.
- */
 function fixtureTorpedo(modelId: string): FlattenedPart {
   const diameterUm = present(torpedoDiameterUm(modelId), `diameter of ${modelId}`);
   return decodeStrict(FlattenedPartSchema, {
@@ -226,13 +219,10 @@ const fitOf = (id: string): DesignFit =>
     `design ${id}`,
   );
 
-// A. Launchers: the 17 production variants, the five waivers, the nine entries
-
 describe("fit over production launchers (ticket 04 hand-over)", () => {
   const launchers = launcherModel.parts;
   const variants = launchers.filter((p) => p.origin.prototype !== undefined);
 
-  /** A one-tube placement of a launcher with its loaded torpedo, on a hull that has the zone. */
   function launcherFit(
     launcherPart: FlattenedPart,
     torpedoId: string,
@@ -327,8 +317,6 @@ describe("fit over production launchers (ticket 04 hand-over)", () => {
       "a waived launcher",
     );
     const r = launcherFit(waived, loadedTorpedoOf(waived.id), true, "1700-01");
-    // The launcher and the fixture torpedo are both not yet available; the waiver still applies
-    // to the bore and hides neither finding.
     expect(r.findings.map((f) => [f.code, f.part])).toEqual(
       [
         ["FIT_NOT_YET_AVAILABLE", waived.id],
@@ -366,9 +354,6 @@ describe("fit over production launchers (ticket 04 hand-over)", () => {
   });
 });
 
-// B–D. Plants, armour regions and nested ammunition from the real adapters
-
-/** The first platform and the first slot of it that accepts `iface`. */
 function slotFor(iface: PartInterface): { platform: string; slot: string } {
   const platform = present(compatibility.platforms[0], "a platform");
   const slot = present(
@@ -504,8 +489,6 @@ describe("fit over production armour materials (ticket 05 hand-over)", () => {
 });
 
 describe("fit over production ammunition nested in a gun mount (ticket 05 hand-over)", () => {
-  // Today's mount parts declare only `guns`. The mount below is a real production mount plus
-  // an `ammunition` slot constructed here; production mount parts do not contain it.
   const row = present(
     fits.flatMap((d) => d.parts).find((p) => p.family === "gun_mount"),
     "a production gun mount",
@@ -562,8 +545,6 @@ describe("fit over production ammunition nested in a gun mount (ticket 05 hand-o
   });
 
   it("reports retired ammunition on both sides of its inclusive retirement month", () => {
-    // No production ammunition retires today, so the dated record is the real adapter's
-    // output for a production pattern given an explicit retirement month.
     const authored = present(armamentContent.ammunition[0], "an authored ammunition pattern");
     const dated = present(
       buildAmmunitionPartModel({
@@ -588,8 +569,6 @@ describe("fit over production ammunition nested in a gun mount (ticket 05 hand-o
   });
 });
 
-// Production characterization: every design's loadout on its generated platform
-
 describe("fit over every production design (characterization)", () => {
   const results = fits.map((d) => ({
     d,
@@ -609,9 +588,6 @@ describe("fit over every production design (characterization)", () => {
   });
 
   it("accepts every design: nothing is excluded, and nothing is rejected silently", () => {
-    // Every outcome is classified; there are no rejections to explain. The 162 gun placements
-    // the armament resolver cannot resolve (11 nations without first-class armament) are still
-    // fitted here: fit is a structural rule over the part model, not the resolver.
     const status = (s: FitResult["status"]) => results.filter((x) => x.r.status === s).length;
     expect([status("ACCEPTED"), status("REJECTED"), status("NOT_EVALUABLE")]).toEqual([92, 0, 0]);
     for (const { d, r } of results) {
@@ -622,10 +598,7 @@ describe("fit over every production design (characterization)", () => {
 
   it("states what it does not decide: no nested torpedo, ammunition or magazine data exists", () => {
     for (const { d, r } of results) {
-      // Tube placements carry no nested torpedo today (torpedo parts are ticket 13's), so
-      // no waiver is exercised by production loadouts; the launcher fixtures above do.
       expect(r.waivers, d.design.id).toEqual([]);
-      // Gun entries carry no rounds and no magazineRef, so no magazine relation is made.
       expect(r.unresolved, d.design.id).toEqual([]);
       for (const e of d.entries) {
         expect(Object.keys(e)).not.toContain("rounds");
@@ -635,10 +608,6 @@ describe("fit over every production design (characterization)", () => {
   });
 
   it("agrees with the legacy compile on the rules both express", () => {
-    // Legacy: TECH_UNAVAILABLE (introduction in the future), COMPONENT_OBSOLETE and
-    // PARAM_RANGE. Fit: FIT_NOT_YET_AVAILABLE, FIT_UNAVAILABLE and the mountCount range.
-    // Technology prerequisites (`requires`) have no fit rule yet, so only designs where the
-    // legacy rule is absent are claimed equal; none of the 92 designs raises one.
     for (const { d, r, legacy } of results) {
       const legacyRule = legacy.filter((id) =>
         ["TECH_UNAVAILABLE", "COMPONENT_OBSOLETE", "PARAM_RANGE"].includes(id),

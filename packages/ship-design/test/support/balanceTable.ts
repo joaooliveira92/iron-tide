@@ -1,10 +1,5 @@
 import { CVE_LABEL, type BalanceRow } from "../../src/index.js";
 
-/**
- * The fixed-width calibration table (relocated from `src/report.ts`, U-3 ticket
- * 06: a display-text artefact has no home in an authoritative package and only
- * tests consume it). The CVE column is labelled as the development metric it is.
- */
 const pct = (bp: number) => `${(bp / 100).toFixed(1)}%`;
 
 export function formatBalanceTable(rows: readonly BalanceRow[]): string {

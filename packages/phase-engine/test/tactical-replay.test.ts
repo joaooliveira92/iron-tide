@@ -1,13 +1,3 @@
-// Ticket 07 — tactical replay verification (ADR-0034 decision 2).
-// For every battle the snapshot records as resolved, re-resolve
-// `resolveBattleAuto` from the stored manifest + seed (+ committed strategic
-// weather + version pins) and compare the recomputed outcome against the
-// recorded `BattleInstance.result` (winner/loser, losses, damageReport).
-// A no-divergence replay reports a match; an altered result / wrong seed /
-// altered manifest reports a first-divergence mismatch with a stable
-// diagnostic. Battle replay is deterministic, and the tactical check composes
-// with the existing strategic `ReplayVerifier`.
-
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -20,8 +10,6 @@ import {
   makeBattleSnapshot,
 } from "./battle-fixtures.js";
 
-// Deterministic subset hash over the authoritative snapshot surface — parity
-// with ReplayVerifier / the cross-process child (run-child.ts).
 function hashSnapshot(snapshot: CampaignSnapshot): string {
   const nations: Record<string, NationState> = {};
   for (const [id, nation] of snapshot.nations) nations[id] = nation;
@@ -60,8 +48,6 @@ function hashSnapshot(snapshot: CampaignSnapshot): string {
 
 describe("TacticalReplayVerifier (ticket 07)", () => {
   it("reports a match when re-resolution from manifest + seed reproduces the recorded result", () => {
-    // The battle is generated and auto-resolved during a real month against the
-    // snapshot's full-HP committed ships.
     const s0 = makeBattleSnapshot();
     const month = new MonthExecutor().execute(s0, [], CAMPAIGN_SEED, new DiagnosticCollector());
     expect(month.success).toBe(true);
@@ -70,8 +56,6 @@ describe("TacticalReplayVerifier (ticket 07)", () => {
     expect(fs.wars.battles[0]!.phase).toBe("resolved");
     expect(fs.wars.battles[0]!.result).toBeDefined();
 
-    // The verification snapshot carries the same committed ships the battle was
-    // resolved against, plus the stored manifest and committed strategic weather.
     const verifySnap: CampaignSnapshot = {
       ...s0,
       strategicWeather: fs.strategicWeather,
@@ -174,7 +158,6 @@ describe("TacticalReplayVerifier (ticket 07)", () => {
         battleManifests: fs.wars.battleManifests,
       },
     };
-    // A content edit that does not update the manifestHash field is tamper.
     const altered: CampaignSnapshot = {
       ...verifySnap,
       wars: {
@@ -230,7 +213,6 @@ describe("TacticalReplayVerifier (ticket 07)", () => {
     const fs = month.finalSnapshot;
     const closingHash = hashSnapshot(fs);
 
-    // Strategic replay (existing, unchanged) reproduces the closing hash.
     const strategic = new ReplayVerifier().verify(
       s0,
       [],
@@ -241,7 +223,6 @@ describe("TacticalReplayVerifier (ticket 07)", () => {
     );
     expect(strategic.match).toBe(true);
 
-    // Tactical replay composes with it and is also green.
     const verifySnap: CampaignSnapshot = {
       ...s0,
       strategicWeather: fs.strategicWeather,

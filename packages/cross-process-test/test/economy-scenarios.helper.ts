@@ -6,7 +6,6 @@ import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 import { resolve } from "node:path";
 import { PRODUCTION_PACK_DIR } from "../src/production-pack.js";
 
-/** Compile the shipped 1880 pack to a campaign state and return every diagnostic raised on the way. */
 export function compileProductionCampaign(): {
   state: CampaignState;
   diagnostics: readonly Diagnostic[];

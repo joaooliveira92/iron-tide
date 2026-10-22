@@ -1,6 +1,3 @@
-// INC-15 (SB3-R29): a completed REBUILD re-runs DESIGN-22 intended/natural classification before it
-// commits, and fails atomically with REBUILD_CLASSIFICATION_INVALID when the intended type has become
-// illegal or no longer matches the natural type (DESIGN-22 section 22, DESIGN-23 section 22).
 import type {
   CampaignSnapshot,
   CompiledDesignVersion,
@@ -23,14 +20,11 @@ const content = productionShipBuildingContent();
 const reference = readReferenceDesignEntries();
 const MONTH = "1880-01";
 
-// A protected cruiser: naturally CL and legal as declared. Kept as a plain record so the source draft
-// stored on a design version is the same JSON shape the engine carries.
 const baseDraft: Record<string, unknown> = {
   ...reference.find((d) => d.id === "torpedo_cruiser_1880")!.draft,
   nationId: ATTACKER_NATION,
 };
 
-/** The same draft, but declaring an intended type the hull cannot be: the intended validator must fail. */
 const wrongIntendedDraft: Readonly<Record<string, unknown>> = {
   ...baseDraft,
   requirement: { ...(baseDraft["requirement"] as Record<string, unknown>), category: "DD" },
@@ -49,11 +43,6 @@ function submit(designVersionId: string): SubmitDesignCommand {
   };
 }
 
-/**
- * A snapshot holding two real, valid CL design versions (`des_old`, `des_new`) and a finished REBUILD
- * project on ship `s1` (unavailable because of it), about to complete into `des_new`. `tamper`, when
- * given, replaces `des_new` before the month runs, which is how a reclassification failure is injected.
- */
 function completedRebuildSnapshot(
   tamper?: (design: CompiledDesignVersion) => CompiledDesignVersion,
 ): CampaignSnapshot {
@@ -173,14 +162,12 @@ describe("a completed REBUILD re-runs classification (DESIGN-22 section 22, DESI
     const { result, collector, nation } = run(before);
 
     expect(codes(collector)).toContain("REBUILD_CLASSIFICATION_INVALID");
-    // No mutation: the project is still unfinished, the ship is untouched and still unavailable.
     expect(projectOf(result.finalSnapshot).status).toBe("ACTIVE");
     const ship = shipOf(result.finalSnapshot);
     expect(ship.designVersionId).toBe("des_old");
     expect(ship.availability).toBe("UNAVAILABLE");
     expect(ship.availabilityProjectId).toBe("proj-r");
     expect(result.eventLedger.all.some((e) => e.eventType === "ShipRebuilt")).toBe(false);
-    // The nation is otherwise unchanged too (no half-applied completion).
     expect(nation.constructionProjects[0]!.status).toBe("ACTIVE");
   });
 
@@ -196,7 +183,6 @@ describe("a completed REBUILD re-runs classification (DESIGN-22 section 22, DESI
     const ship = shipOf(result.finalSnapshot);
     expect(ship.designVersionId).toBe("des_new");
     expect(ship.availability).toBeUndefined();
-    // Boundary: the type is unchanged, so the ship keeps the existing class and no new design/class appears.
     expect(ship.classId).toBe(before.designs.get("des_new")!.className);
     expect(result.finalSnapshot.designs.size).toBe(designCountBefore);
 

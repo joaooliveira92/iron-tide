@@ -2,11 +2,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { presentationNations } from "@/content/presentationContent.js";
 import { countryIdToNationId, nationIdToCountryId } from "./slotBridge.js";
 
-// Content-pack nation ids (content/production/1880/countries.yaml) must resolve
-// to presentation country ids — a `nation_` mis-prefix here previously emptied
-// the nation-selection slot list ("No playable nations for this scenario"). The
-// mapping is authored with the presentation corpus and injected in tests from
-// the compiled artifact.
 describe("slotBridge", () => {
   it("maps every playable content-pack nation id to a presentation country id", () => {
     expect(nationIdToCountryId("uk")).toBe("gb");

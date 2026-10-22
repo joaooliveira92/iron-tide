@@ -1,12 +1,3 @@
-/**
- * The slot-constraint rules of fit validation (ship-part-model SPM-R3, SPM-R12 stage 2).
- * Every constraint key of `SlotConstraintsSchema` is evaluated here against the **resolved
- * spec** of the entry's part at the design month. A constraint the entry cannot answer
- * (a key that names a fact its family does not have) is a data issue, never a pass.
- *
- * Only the one waivable constraint, `diameterUmEqualsBore`, consults `legacyExceptions`,
- * and only on the parent launcher for exactly the child torpedo it names (SPM-R7, I-22).
- */
 import type { FlattenedPart, NestedLoadoutEntry, SlotData } from "@bluewave/content-schema";
 import { basisMultiplier } from "./partQuantities.js";
 import { UM_PER_INCH } from "./units.js";
@@ -14,11 +5,6 @@ import type { FitAppliedWaiver, FitDetail } from "./partFitTypes.js";
 
 export type ResolvedSpec = Readonly<Record<string, unknown>>;
 
-/**
- * The part's spec at `month`: every revision up to it applied in flattened order. This
- * mirrors content-schema `resolvePartRevision`, which a runtime-free package may not import
- * (ship-design imports `@bluewave/content-schema` as types only).
- */
 export function specAt(part: FlattenedPart, month: string): ResolvedSpec {
   let spec: Record<string, unknown> = { ...part.spec };
   for (const revision of part.revisions) {
@@ -38,13 +24,11 @@ function text(spec: ResolvedSpec, key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
-/** What a constraint check emits; the traversal turns these into findings and data issues. */
 export type ConstraintOutcome =
   | { readonly kind: "VIOLATED"; readonly constraint: string; readonly detail: FitDetail }
   | { readonly kind: "UNEVALUABLE"; readonly constraint: string; readonly detail: FitDetail }
   | { readonly kind: "WAIVED"; readonly waiver: Omit<FitAppliedWaiver, "path"> };
 
-/** A resolved part with its spec at the design month. */
 export interface ResolvedFitPart {
   readonly part: FlattenedPart;
   readonly spec: ResolvedSpec;
@@ -54,18 +38,14 @@ export interface ConstraintInput {
   readonly slot: SlotData;
   readonly subject: ResolvedFitPart;
   readonly mountCount: number;
-  /** The entry's parent part when it fills one of that part's own slots. */
   readonly parent: ResolvedFitPart | null;
-  /** The entry's nested `guns` children (for a gun mount's calibre), already resolved. */
   readonly nestedGuns: readonly ResolvedFitPart[];
 }
 
-/** Contained units per installed unit: a gun mount's `gunsPerMount`, otherwise one. */
 function containedPerUnit(subject: ResolvedFitPart): number {
   return subject.part.family === "gun_mount" ? (num(subject.spec, "gunsPerMount") ?? 1) : 1;
 }
 
-/** The mass of the entry's own part: each component at its basis multiplier (SPM-R13). */
 export function entryMassKg(subject: ResolvedFitPart, mountCount: number): number {
   const per = containedPerUnit(subject);
   return subject.part.quantities
@@ -89,7 +69,6 @@ function rangeOutcome(
   return null;
 }
 
-/** Evaluate every constraint the slot declares; outcomes are in the closed key order. */
 export function evaluateConstraints(input: ConstraintInput): readonly ConstraintOutcome[] {
   const c = input.slot.constraints;
   if (c === undefined) return [];
@@ -229,7 +208,6 @@ export function evaluateConstraints(input: ConstraintInput): readonly Constraint
   return out;
 }
 
-/** The nested `guns` children of an entry, for the calibre of a gun mount. */
 export function gunChildren(entry: NestedLoadoutEntry): readonly NestedLoadoutEntry[] {
   return entry.entries?.["guns"] ?? [];
 }

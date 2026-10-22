@@ -1,6 +1,3 @@
-// INC-12/INC-13 (SB3-R25..R27): the manual's armament-change conditions and the BULGE requirement,
-// wired into the live rebuild path (`applyStartRebuild`). These drive real `StartRebuild` commands
-// through `MonthExecutor` on real drafts from the production content, so deleting the wiring fails.
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -19,13 +16,11 @@ const content = productionShipBuildingContent();
 const reference = readReferenceDesignEntries();
 const MONTH = "1880-01";
 
-/** A real 1873 turret ironclad (two twin 12-in RML main turrets) available in the 1880 pack. */
 const baseDraft: Record<string, unknown> = {
   ...reference.find((d) => d.id === "devastator_1873")!.draft,
   nationId: ATTACKER_NATION,
 };
 
-/** A 1880 torpedo cruiser: only ≤6-in secondaries (machine guns), so a too-large secondary is testable. */
 const cruiserDraft: Record<string, unknown> = {
   ...reference.find((d) => d.id === "torpedo_cruiser_1880")!.draft,
   nationId: ATTACKER_NATION,
@@ -37,23 +32,19 @@ const revised = (patch: (d: Record<string, any>) => void): Record<string, unknow
   return d;
 };
 
-/** A gun swapped in place: the same instance id carrying a different component. */
 const swapGun = (instanceId: string, componentId: string): Record<string, unknown> =>
   revised((d) => {
     const p = d.placements.find((x: { instanceId: string }) => x.instanceId === instanceId);
     p.componentId = componentId;
   });
 
-/** A main turret deleted outright (no replacement). */
 const removeMainGun = (): Record<string, unknown> =>
   revised((d) => {
     d.placements = d.placements.filter((p: { instanceId: string }) => p.instanceId !== "main_fwd");
   });
 
-/** A same-calibre main refresh: 12-in RML 35-ton → 12-in RML 25-ton. */
 const sameCalibreRefresh = (): Record<string, unknown> => swapGun("main_fwd", "gun_rml_12in_25ton");
 
-/** A secondary changed to a gun above 6 inches (on the cruiser). */
 const tooLargeSecondary = (): Record<string, unknown> => {
   const d = structuredClone(cruiserDraft) as Record<string, any>;
   const p = d.placements.find((x: { instanceId: string }) => x.instanceId === "mg_fwd");
@@ -84,7 +75,6 @@ const envelope = (
   body,
 });
 
-/** A snapshot with a submitted real design (`des_base`) and an operational ship built to it. */
 function snapshotWithBuiltShip(): CampaignSnapshot {
   const start: CampaignSnapshot = {
     ...makeBattleSnapshot({ areas: ["a-1"], wars: [] }),

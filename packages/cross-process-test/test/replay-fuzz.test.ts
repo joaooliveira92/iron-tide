@@ -73,7 +73,6 @@ describe("fuzz properties", () => {
     expect(text).toContain(`seed ${SMALL.seed}`);
     expect(text).toContain("replay:fuzz run");
     expect(text).not.toContain("\r");
-    // The printed seed and length reproduce the identical failure.
     expect(
       checkFuzzCase({ seed: outcome.seed, months: outcome.months }, { secondRun: fault }),
     ).toEqual(outcome);

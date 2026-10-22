@@ -8,11 +8,6 @@ import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
 import { designsOf, fleetsOf } from "./helpers/campaignRecords.js";
 
-/**
- * 1880 data hygiene (N-1 ticket 08): design class names are unambiguous across
- * eras, and no authored id or class name carries a placeholder token.
- */
-
 const here = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = resolve(here, "..", "..", "..");
 const contentDir = resolve(repoRoot, "content", "production", "1880");

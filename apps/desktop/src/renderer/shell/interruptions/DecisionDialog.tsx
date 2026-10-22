@@ -1,13 +1,6 @@
 import type { InterruptionRequestDto } from "../../../shared/campaign-command-contract.js";
 import { resolveMessage } from "../../content/uiCatalogue.js";
 
-/**
- * The blocking decision modal (ticket 07): a mandatory choice appears over the
- * campaign and must be answered before advancing. Each option shows qualitative
- * consequence hints (direction and rough magnitude) — never hidden
- * calculations. The modal owns no authoritative state; choosing calls back to
- * the shell, which records the answer and resumes.
- */
 export function DecisionDialog({
   request,
   onAnswer,

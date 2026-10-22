@@ -3,14 +3,6 @@ import { join } from "node:path";
 
 import { safePath } from "./safePath.js";
 
-/**
- * Discovers the ship-building catalogue files that sit beside the content-pack
- * manifest (`content/production/<scenario>/ship-building/**`), by the same
- * convention the desktop main process uses (ADR-0109). The groups mirror the
- * compiler's full-surface input; a missing ship-building tree yields empty
- * groups, so `content:check`/`content:build` still cover a content-pack-only
- * pack. Every path is `safePath`-checked before it is handed to the compiler.
- */
 export interface ShipBuildingFileGroups {
   shipComponentFiles: string[];
   propulsionPlantFiles: string[];
@@ -29,7 +21,6 @@ export interface ShipBuildingFileGroups {
   designLoadoutFiles: string[];
 }
 
-/** Fixed ship-building catalogue files, one file per collection. */
 const FIXED_FILES: ReadonlyArray<readonly [keyof ShipBuildingFileGroups, string]> = [
   ["shipComponentFiles", "ship-building/components.yaml"],
   ["propulsionPlantFiles", "ship-building/plants.yaml"],
@@ -46,9 +37,7 @@ const FIXED_FILES: ReadonlyArray<readonly [keyof ShipBuildingFileGroups, string]
 
 const NAVAL_PROFILE_DIR = "ship-building/naval-profiles";
 const REFERENCE_DESIGN_DIR = "ship-building/reference-designs";
-/** The ship part catalogue (ship-part-model SPM-R1): any number of files, one family or theme each. */
 const PART_DIR = "ship-building/parts";
-/** Authoritative reference designs in the parts representation (ship-part-model ticket 11d). */
 const DESIGN_LOADOUT_DIR = "ship-building/design-loadouts";
 
 export function discoverShipBuildingFiles(contentDir: string): ShipBuildingFileGroups {
@@ -83,7 +72,6 @@ export function discoverShipBuildingFiles(contentDir: string): ShipBuildingFileG
   return groups;
 }
 
-/** Every `.yaml` file under a directory, recursively, in sorted (deterministic) order. */
 function listYamlFiles(contentDir: string, rel: string): string[] {
   const abs = join(contentDir, rel);
   if (!existsSync(abs)) return [];
@@ -98,13 +86,6 @@ function listYamlFiles(contentDir: string, rel: string): string[] {
     });
 }
 
-/**
- * Reference-design files, one directory per nation, UK first (ADR-0109
- * historical default). Within a nation the two conventional files lead in
- * `starters`-then-`historical` order (the runtime default), followed by any
- * other authored `.yaml` in sorted order so no reference design is silently
- * dropped from the compiled surface.
- */
 function listReferenceDesignFiles(contentDir: string): string[] {
   const base = join(contentDir, REFERENCE_DESIGN_DIR);
   if (!existsSync(base)) return [];

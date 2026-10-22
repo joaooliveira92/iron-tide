@@ -1,16 +1,3 @@
-// Deterministic child-process script for the C-2 mine-warfare slice (AC-23).
-// Spawned TWICE by test/mines/determinism.test.ts and byte-compared — two clean
-// Node processes must emit IDENTICAL canonical-serialized lines. Builds a
-// REPRESENTATIVE PURE monthly mine-warfare resolution from INC-1..INC-7
-// functions (pressure records, laying value + reinforcement, regional sweeping
-// + §10 allocation, defensive standoff, route risk, underwater-explosion
-// classification, decay, post-war persistence, ownership transition,
-// clearance) and assembles the ONE §28 MineWarfareResolutionRecord (INC-8).
-//
-// ONLY mines + contracts + deterministic + random APIs; NO torpedo imports;
-// a FIXED master seed (RandomEngine); no Date/env/fs-order. Prints ONE
-// canonical-serialized JSON line (canonicalSerialize) incl. a couple of
-// record hashes + the resolution record hash.
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
 import { RandomEngine, RandomLedger } from "@bluewave/random";
@@ -117,7 +104,6 @@ function main(): void {
     openingRecord("MP-2", "Helgoland", "GERMANY", "MAGNETIC", 300_000, 6_000),
   ];
 
-  // ---- §4 effective laying value (INC-2) ----
   const effectiveLaying = computeEffectiveLayingValue(100, {
     technologyMultiplierBp: 10_000,
     crewMultiplierBp: 10_000,
@@ -127,7 +113,6 @@ function main(): void {
     missionMultiplierBp: 10_000,
   }).effectiveLayingValue;
 
-  // ---- §5 reinforcement (INC-2) ----
   const reinforced0 = reinforcePressureRecord(
     records[0]!,
     effectiveLaying,
@@ -143,7 +128,6 @@ function main(): void {
     ["BRITAIN"],
   );
 
-  // ---- §10 regional sweeping + allocation (INC-3/INC-4) ----
   const regional = computeRegionalSweepingValue([eligibleSweepingShip("LON-WIDGEON")]);
   const allocation = allocateSweeping(regional.regionalSweepingValue, [reinforced0, reinforced1], {
     sweepingBelligerentId: "BRITAIN",
@@ -158,24 +142,18 @@ function main(): void {
   const swept0 = applySweptPressure(reinforced0, allocation0.sweptPressure, month41);
   const swept1 = applySweptPressure(reinforced1, allocation1.sweptPressure, month41);
 
-  // ---- §16 defensive standoff (INC-5) ----
   const standoff = computeDefensiveStandoff(swept0.pressure);
 
-  // ---- §13 route risk (INC-5) ----
   const routeRisk = computeRouteRiskBp(swept0.pressure, swept0.freshnessBp, 10_000, 8_000);
 
-  // ---- §22 post-war persistence (INC-7) ----
   const postWar = assessPostWarDisposition([swept0, swept1], true);
-  // ---- §23 ownership transition (INC-7) ----
   const ownership = applyOwnershipTransition(postWar.records[0]!.record, "PRESERVE_ACTIVE", {
     newLegalOwner: "UK-ADMINISTRATOR",
     newMilitaryController: "CONTROL-AUTHORITY",
     controlInfrastructureOperational: true,
   });
-  // ---- §21 decay (INC-7) ----
   const decayed = computeDecayedPressure(ownership.record, true);
 
-  // ---- §19 report + §20 classifier (INC-6) ----
   const explosionContext: UnderwaterExplosionContext = {
     reportId: "REP-41-A",
     knownHostileMinePressure: true,
@@ -205,11 +183,9 @@ function main(): void {
     reportSignaturePolicyId: MINE_REPORT_SIGNATURE_POLICY_ID,
   });
 
-  // ---- §27 clearance (INC-7): a swept-to-zero transitional record closes ----
   const zeroed = applySweptPressure(reinforced1, reinforced1.pressure, month41);
   const cleared = clearRecord(zeroed, "SWEEPING", month42);
 
-  // ---- §28 resolution record (INC-8 assembler) ----
   const assembleInput: MineWarfareResolutionAssemblerInput = {
     month: month42,
     areaAndWarContexts: [

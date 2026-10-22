@@ -4,7 +4,6 @@ import { humanizeId } from "../../lib/humanize-id.js";
 import type { DiplomacyScreenProjection } from "../../../shared/diplomacy-contract.js";
 import type { DiplomacyActionKind, DiplomacyDraftCommand } from "./diplomacy-screen-state.js";
 
-/** Labels for every relation kind the engine can project. */
 export const RELATION_LABELS: Readonly<Record<DiplomacyRelationKind, string>> = {
   neutral: "Neutral",
   allied: "Allied",
@@ -12,7 +11,6 @@ export const RELATION_LABELS: Readonly<Record<DiplomacyRelationKind, string>> = 
   trade_agreement: "Trade agreement",
 };
 
-/** Player-facing labels for the 7 draftable command kinds. */
 export const ACTION_LABELS: Readonly<Record<string, string>> = {
   DeclareWar: "Declare war",
   AcceptPeace: "Accept peace",
@@ -23,12 +21,6 @@ export const ACTION_LABELS: Readonly<Record<string, string>> = {
   DeclareBlockade: "Blockade",
 };
 
-/**
- * The tension-band badge shown next to a relation badge, or null when it would
- * only repeat it. The two vocabularies share exactly one word: a "neutral"
- * relation at a "neutral" tension band. Compared on the typed values, not on
- * display strings.
- */
 export function tensionBadgeLabel(relation: DiplomacyRelationKind, tension: number): string | null {
   const band = tensionLabel(tension);
   if (band === "neutral" && relation === "neutral") return null;
@@ -38,11 +30,9 @@ export function tensionBadgeLabel(relation: DiplomacyRelationKind, tension: numb
 export interface WarScoreSplit {
   readonly yours: number;
   readonly enemy: number;
-  /** Player's share of the combined score, 0..1 (0.5 when neither side has scored). */
   readonly yourShare: number;
 }
 
-/** The player's score against the enemy's, from the war's attacker/defender scores. */
 export function warScoreSplit(war: {
   readonly attackerWarScore: number;
   readonly defenderWarScore: number;
@@ -54,13 +44,6 @@ export function warScoreSplit(war: {
   return { yours, enemy, yourShare: total === 0 ? 0.5 : Math.max(0, yours) / total };
 }
 
-/**
- * Legal-action affordance for one relations row — derived from the projected
- * relation/nap state ONLY (`declareWar` enabled unless `at_war`, alliance/NAP
- * form/break on the matching relation). This drives which chips render; the
- * engine's own `CommandLifecycle.validate()` remains the authority at issue
- * time (spec D1) — nothing here re-implements it.
- */
 export function diplomacyLegalActions(row: {
   readonly relation: DiplomacyScreenProjection["relations"][number]["relation"];
   readonly nap: boolean;
@@ -93,7 +76,6 @@ export function areaName(projection: DiplomacyScreenProjection, areaId: string):
   return projection.areas.find((a) => a.areaId === areaId)?.name ?? areaId;
 }
 
-/** The human-readable description of the currently drafted command. */
 export function describeDraft(
   projection: DiplomacyScreenProjection,
   draft: DiplomacyDraftCommand,
@@ -109,11 +91,6 @@ export function describeDraft(
   }
 }
 
-/**
- * RTW3 war-panel items the engine cannot supply yet (docs/research/
- * rtw3-war-panel-engine-surface.md). Shown as an explicit "not modelled" list —
- * never as numbers or controls that look real.
- */
 export const DEFERRED_WAR_ITEMS: readonly DeferredFeature[] = [
   {
     id: "trade-protection",
@@ -137,11 +114,6 @@ export const DEFERRED_WAR_ITEMS: readonly DeferredFeature[] = [
   },
 ];
 
-/**
- * RTW3 intelligence items the engine cannot supply yet (docs/research/
- * rtw3-intel-and-submarines-engine-surface.md). Relations, tension and "likely
- * rival" are real and already shown above.
- */
 export const DEFERRED_INTEL_ITEMS: readonly DeferredFeature[] = [
   {
     id: "intel-levels",

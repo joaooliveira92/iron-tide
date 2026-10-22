@@ -1,11 +1,3 @@
-/**
- * Provenance carried by every authored armament value. This is a structural mirror of the canonical
- * national-profile vocabulary (`@bluewave/ship-design`'s `nationProfile.ts`, itself pinned to
- * `@bluewave/content-schema`'s `naval-profile-vocab.ts`). The armament package cannot import either
- * without inverting the dependency direction (ADR-0093), so the vocabulary is duplicated here and a
- * parity test in `@bluewave/ship-design` keeps the three lists identical.
- */
-
 export const ARMAMENT_SOURCE_STATUSES = [
   "VERIFIED",
   "DERIVED",

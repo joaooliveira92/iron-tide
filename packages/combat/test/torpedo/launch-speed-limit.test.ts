@@ -1,16 +1,3 @@
-// AC-8: above-water launch speed limits (DESIGN-40 §8). Every above-water
-// launcher family MUST declare an exact maximum launch speed: the shipped
-// defaults are 30 kn fixed / 35 kn trainable (30 kn = 15_433_320 µm/s,
-// 35 kn = 18_005_540 µm/s), and a launcher definition MAY declare a narrower
-// value (28 kn = 14_404_432 µm/s) which binds. §8 "The shipped default is …" +
-// "MAY supply a narrower explicit value": DEFAULTS APPLY WHEN UNSPECIFIED — an
-// above-water definition with a null declared value resolves to the shipped
-// default and is NOT missing metadata (hardening record, reviewer item 3).
-// TORPEDO_LAUNCH_SPEED_LIMIT_MISSING is the fail-closed outcome when the §8
-// gate is invoked with an UNRESOLVABLE resolved value (mangled/absent metadata
-// surface — e.g. the resolver's null for a non-above-water definition fed to
-// the gate); the gate NEVER falls back to a silent unlimited default. The limit
-// comparison is exact integer µm/s — == limit is legal, > limit is illegal.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -25,9 +12,9 @@ import {
   type TorpedoLauncherDefinition,
 } from "../../src/torpedoes/index.js";
 
-const FIXED_30_KN = 15_433_320; // 30 * 514_444
-const TRAINABLE_35_KN = 18_005_540; // 35 * 514_444
-const NARROW_28_KN = 14_404_432; // 28 * 514_444
+const FIXED_30_KN = 15_433_320;
+const TRAINABLE_35_KN = 18_005_540;
+const NARROW_28_KN = 14_404_432;
 
 function aboveWaterDefinition(
   overrides: Partial<TorpedoLauncherDefinition> = {},
@@ -71,7 +58,7 @@ describe("AC-8: §8 defaults — 30 kn fixed, 35 kn trainable", () => {
     expect(legal.limitUmS).toBe(TRAINABLE_35_KN);
     const illegal = validateAboveWaterLaunchSpeedLimit(TRAINABLE_35_KN + 1, 35);
     expect(illegal.allowed).toBe(false);
-    expect(illegal.reasonCode).toBe(UNDERWATER_TUBE_SPEED_LIMIT_EXCEEDED); // §29 best-fit reuse
+    expect(illegal.reasonCode).toBe(UNDERWATER_TUBE_SPEED_LIMIT_EXCEEDED);
     expect(illegal.speedUmS).toBe(TRAINABLE_35_KN + 1);
     expect(illegal.limitUmS).toBe(TRAINABLE_35_KN);
   });
@@ -103,7 +90,7 @@ describe("AC-8: a declared narrower limit binds", () => {
 
 describe("AC-8: §8 defaults apply when unspecified (reviewer item 3 reachability)", () => {
   it("null declared on an above-water mount resolves to the shipped default — NOT missing metadata", () => {
-    const d = aboveWaterDefinition(); // aboveWaterMaxLaunchSpeedKnots: null
+    const d = aboveWaterDefinition();
     expect(resolvedAboveWaterMaxLaunchSpeedKnots(d)).toBe(35);
     const verdict = validateAboveWaterLaunchSpeedLimit(
       TRAINABLE_35_KN,
@@ -114,9 +101,6 @@ describe("AC-8: §8 defaults apply when unspecified (reviewer item 3 reachabilit
   });
 
   it("an unresolvable resolved value never becomes a silent unlimited default", () => {
-    // A non-above-water definition's resolver returns null (it is not §8
-    // metadata) — feeding that null to the §8 gate must fail closed with
-    // MISSING rather than permitting the launch at any speed.
     const underwater = aboveWaterDefinition({
       launcherFamilyId: "533mm_underwater_trainable",
       mountType: "UNDERWATER_TRAINABLE",

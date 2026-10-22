@@ -11,7 +11,6 @@ import {
 } from "../ui/alert-dialog.js";
 import { Button, type ButtonProps } from "../ui/button.js";
 
-/** The confirmation dialog itself, for callers that decide when to open it. */
 export function ConfirmDialog({
   open,
   onOpenChange,
@@ -43,10 +42,6 @@ export function ConfirmDialog({
   );
 }
 
-/**
- * A button that asks first when the action would throw something away. With `confirm={false}` it is a plain button, so
- * the player is never asked about an action that loses nothing.
- */
 export function ConfirmAction({
   children,
   confirm,
@@ -57,7 +52,6 @@ export function ConfirmAction({
   ...buttonProps
 }: Omit<ButtonProps, "onClick" | "title"> & {
   readonly children: ReactNode;
-  /** Whether to ask before acting. */
   readonly confirm: boolean;
   readonly title: string;
   readonly description: string;

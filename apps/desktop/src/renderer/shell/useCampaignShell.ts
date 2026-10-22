@@ -31,12 +31,9 @@ const SAVE_MESSAGE_DURATION_MS = 8_000;
 export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
   const [state, dispatch] = useReducer(reduceCampaignShell, undefined, initialCampaignShellState);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Bumped whenever the campaign is closed or a newer refresh starts, so a response that
-  // arrives late (out of order, or after Close) is dropped instead of overwriting newer state.
   const refreshGenerationRef = useRef(0);
   const [reads, setReads] = useState<CampaignReads | null>(null);
 
-  /** Show a transient status message in the header; null just ends the "saving" state silently. */
   const collectMessage = useCallback((message: string | null): void => {
     dispatch({ type: "save-finished", message });
     if (saveTimerRef.current !== null) clearTimeout(saveTimerRef.current);
@@ -74,8 +71,6 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
           ),
         });
         setReads(campaignReads);
-        // A campaign holding a suspended turn prompts the player to resume it.
-        // Fire-and-forget: the pending read never delays or fails opening.
         void bridge.campaign
           .execute("readPendingTurn", sessionId)
           .then((pending) => {
@@ -85,8 +80,6 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
                 interruption: {
                   request: null,
                   pending: pending.value.pending,
-                  // A stored but incompatible record is reported unavailable on
-                  // load, so the prompt never offers a resume that would fail.
                   unavailable: !pending.value.valid,
                 },
               });
@@ -134,7 +127,6 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     );
   }, [bridge, state.campaign]);
 
-  /** "Save a copy…": the player picks a location; cancelling is silent, never an error. */
   const copyCampaign = useCallback(async () => {
     if (bridge === undefined || state.campaign === null) return;
     dispatch({ type: "save-started" });
@@ -157,12 +149,6 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
 
   const selectScreen = useCallback((screen: Screen) => dispatch({ type: "visit", screen }), []);
 
-  /**
-   * Re-reads the header's campaign summary (month, treasury, revision,
-   * projected balance, war status) from the engine. Called after every month
-   * advance — from the header or from the Simulation screen — so the header
-   * never shows a stale month or "Armed peace" during a war.
-   */
   const refreshCampaign = useCallback(
     async (sessionIdOverride?: string) => {
       const sessionId = sessionIdOverride ?? state.campaign?.sessionId;
@@ -170,7 +156,6 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       const generation = ++refreshGenerationRef.current;
       const campaignReads = await readCampaign(bridge.campaign, sessionId);
       if (campaignReads.projection.status !== "ready") return;
-      // A newer refresh started, or the campaign was closed, while we waited: drop this one.
       if (generation !== refreshGenerationRef.current) return;
       dispatch({
         type: "campaign-refreshed",
@@ -193,11 +178,6 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     );
   }, []);
 
-  /**
-   * Apply a folded `resolveTurn` outcome: a completed turn updates the header and
-   * clears the interruption; a suspended/unavailable turn opens its prompt; a
-   * failure records the tagged failure and shows it instead of any answer line.
-   */
   const applyResolveOutcome = useCallback(
     (outcome: ResolveOutcome, sessionId: string, answerMessage: string | null): void => {
       switch (outcome._tag) {
@@ -226,9 +206,6 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
 
   const advanceMonth = useCallback(async () => {
     if (bridge === undefined || state.campaign === null) return;
-    // A blocking decision or battle must be answered (or the turn abandoned)
-    // before the month can advance; a pending-turn recovery prompt (no request)
-    // legitimately resumes via this same path.
     if (state.interruption?.request != null) return;
     dispatch({ type: "month-commit-started" });
     const sessionId = state.campaign.sessionId;
@@ -262,11 +239,6 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     }
   }, [bridge, state.campaign, state.interruption, applyResolveOutcome]);
 
-  /**
-   * Answer the outstanding interruption with a typed answer. The plan assembles
-   * the envelope and transport identity, the fold maps the reply back, and the
-   * outcome is applied once — so every interruption kind shares this one path.
-   */
   const answerInterruption = useCallback(
     async (answer: InterruptionAnswer): Promise<InterruptionAnswerOutcome> => {
       const request = state.interruption?.request;

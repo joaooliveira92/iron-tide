@@ -42,21 +42,12 @@ const GENERATED_ARTIFACT = resolve(__dirname, "../../../../..", "content", "gene
 
 const WAR_ID = "war_uk_france_1880-01";
 
-// One shared runtime for every program; the services delegate to the same
-// in-memory session registry the tests populate directly.
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-/** Runs a command program through the desktop service graph and projects its wire envelope. */
 async function runProgram<A>(program: CommandProgram, payload: unknown): Promise<BridgeResult<A>> {
   return projectCommandExit(await runtime.runPromiseExit(program(payload))) as BridgeResult<A>;
 }
 
-/**
- * The Tactical Sandbox commands are debug-gated (ADR-0057) by the build-time
- * `__BLUEWAVE_DEBUG__` constant. Unit tests run outside the Electron build, so
- * the flag is stubbed on here; the `debug gate` block stubs it off to prove
- * `DEBUG_ONLY`.
- */
 function setDebugEnabled(enabled: boolean): void {
   vi.stubGlobal("__BLUEWAVE_DEBUG__", enabled);
 }
@@ -152,7 +143,6 @@ describe("battle sandbox commands (ADR-0057)", () => {
     snapshot.wars = { ...snapshot.wars, wars: [activeWar()] };
   };
 
-  /** A session with an ACTIVE UK-France war and one committed month (so strategic weather exists). */
   async function warSessionWithWeather(sessionId: string): Promise<void> {
     registerSession(sessionId, withWar);
     const committed = await commitMonth({
@@ -256,8 +246,6 @@ describe("battle sandbox commands (ADR-0057)", () => {
         new DiagnosticCollector(),
       );
       if (!output) throw new Error("compile failed");
-      // N-2 (tickets 29/30) closed the last production linkage gaps, so inject a
-      // design-less ship to exercise the guard.
       const base = output.state.snapshot;
       const uk = base.nations.get("uk")!;
       const target = uk.fleets
@@ -312,7 +300,6 @@ describe("battle sandbox commands (ADR-0057)", () => {
           if (!ship.isUnderConstruction) expect(ship.locationAreaId).toBe(result.areaId);
         }
       }
-      // Ships still under construction are not teleported.
       const original = snapshot.nations.get("uk")!;
       const building = original.fleets.flatMap((f) => f.ships).filter((s) => s.isUnderConstruction);
       for (const ship of building) {
@@ -349,7 +336,6 @@ describe("battle sandbox commands (ADR-0057)", () => {
       expect(manifest.sides.map((s) => s.nationId).sort()).toEqual(["france", "uk"]);
       expect(manifest.sides.every((s) => s.participants.length > 0)).toBe(true);
       expect(manifest.manifestHash).toMatch(/^[0-9a-f]{64}$/);
-      // The player is told the scenario is synthetic.
       expect(result.diagnostics.join(" ")).toMatch(/temporary copy/);
       expect(result.diagnostics.join(" ")).toMatch(/scaled x100/);
     });
@@ -444,7 +430,6 @@ describe("battle sandbox commands (ADR-0057)", () => {
       expect(resolution.battleId).toBe(manifest.battleId);
       expect([null, "uk", "france"]).toContain(resolution.missionOutcome.winner);
       expect(resolution.missionOutcome.outcomeKind.length).toBeGreaterThan(0);
-      // Every participating ship is reported exactly once, survived or sunk.
       const reported = [...resolution.attacker.ships, ...resolution.defender.ships].map(
         (s) => s.shipId,
       );
@@ -454,7 +439,6 @@ describe("battle sandbox commands (ADR-0057)", () => {
       for (const ship of [...resolution.attacker.ships, ...resolution.defender.ships]) {
         expect(["survived", "sunk"]).toContain(ship.outcome);
       }
-      // No campaign state is applied, and the result says so.
       expect(resolution.warScoreChange).toBe(0);
       expect(first.diagnostics.join(" ")).toMatch(/no campaign state was changed/);
 
@@ -491,7 +475,6 @@ describe("battle sandbox commands (ADR-0057)", () => {
     });
 
     it("stages the LIVE session so the next real month generates and resolves a battle", async () => {
-      // A committed month (turn 1) gives the war committed strategic weather.
       await warSessionWithWeather("s1");
       expect(getCampaignSession("s1")!.state.snapshot.wars.battles).toHaveLength(0);
 
@@ -501,12 +484,10 @@ describe("battle sandbox commands (ADR-0057)", () => {
       expect(drilled.value.warId).toBe(WAR_ID);
       expect(drilled.value.strengthScale).toBeGreaterThan(1);
 
-      // The drill staged the snapshot but did NOT inject a battle.
       const staged = getCampaignSession("s1")!;
       expect(Number(staged.state.snapshot.turnNumber)).toBe(1);
       expect(staged.state.snapshot.wars.battles).toHaveLength(0);
 
-      // The real month phases (battle_generation + battle_resolution) run here.
       const committed = await commitMonth({
         sessionId: "s1",
         expectedRevision: 1,

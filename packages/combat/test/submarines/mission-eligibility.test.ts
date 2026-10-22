@@ -1,12 +1,3 @@
-// AC-4 (INC-2): Design-34 §6 mission eligibility. Seven canonical missions
-// (FLEET_INTERDICTION/MERCHANT_RAIDING/MINE_LAYING/RECONNAISSANCE/
-// TACTICAL_BATTLE_SUPPORT/RETURNING_SHIP_INTERCEPTION/MISSILE_PATROL); the
-// eligibility predicate validates type, technology, range, base support,
-// readiness, damage, reliability, fuel, policy, area, and war state. Any
-// ineligible -> SUBMARINE_MISSION_INELIGIBLE (fail closed), except the
-// reliability guard which fires SUBMARINE_RELIABILITY_INSUFFICIENT (§7 floor).
-// §26.4's mission-priority field ships explicitly (needed by INC-8 ordering).
-// Also proves AC-21's submarine_missions_v1 contract + validate guard.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import {
@@ -58,16 +49,10 @@ function validAsset(overrides: Partial<SubmarineStrategicAsset> = {}): Submarine
   return withSubmarineStrategicAssetAggregateHash(baseAsset(overrides));
 }
 
-// An asset surface that SKIPS the §1 boundary hash-wrap, for tests that need an
-// intentionally-invalid state (unknown type, non-canonical policy, empty area)
-// which assertSubmarineStrategicAssetSurface would reject at construction.
-// The eligibility predicate (not the §1 boundary) is the boundary under test.
 function rawAsset(overrides: Partial<SubmarineStrategicAsset> = {}): SubmarineStrategicAsset {
   return baseAsset(overrides) as SubmarineStrategicAsset;
 }
 
-// COASTAL is eligible for FLEET_INTERDICTION, requires base support, has no
-// technology prerequisites; local band keeps §9 remote efficiency non-zero.
 function eligibleRequest(): SubmarineMissionRequest {
   return {
     missionId: "FLEET_INTERDICTION",
@@ -174,7 +159,6 @@ describe("AC-4 / §26.4: mission priority field (explicit, canonical order)", ()
     }
     const priorities = new Set(SHIPPED_SUBMARINE_MISSION_DEFINITIONS.map((m) => m.missionPriority));
     expect(priorities.size).toBe(SHIPPED_SUBMARINE_MISSION_DEFINITIONS.length);
-    // canonical ordering starts with the highest-priority mission (lowest number)
     expect(byPriority[0]!.missionId).toBe("MISSILE_PATROL");
   });
 
@@ -272,7 +256,7 @@ describe("AC-4: every §6 guard fails closed with SUBMARINE_MISSION_INELIGIBLE",
 
   it("technology guard: a missing §4 technology prerequisite is rejected", () => {
     const asset = validAsset({ submarineTypeId: "LONG_RANGE" });
-    const context = eligibleContext(); // empty technology set -> long-range tech missing
+    const context = eligibleContext();
     const verdict = isSubmarineMissionEligible(
       asset,
       {
@@ -283,7 +267,6 @@ describe("AC-4: every §6 guard fails closed with SUBMARINE_MISSION_INELIGIBLE",
       context,
     );
     expectRejected(verdict, "technology", SUBMARINE_MISSION_INELIGIBLE);
-    // the same asset WITH the prerequisite passes the technology guard
     const withTech: SubmarineMissionEligibilityContext = {
       ...context,
       availableTechnologyIds: new Set(["long_range_submarine_technology"]),
@@ -404,7 +387,6 @@ describe("AC-4: guard -> reason-code partition is the recorded INC-2 set", () =>
     expect([...codes].sort()).toEqual(
       [SUBMARINE_MISSION_INELIGIBLE, SUBMARINE_RELIABILITY_INSUFFICIENT].sort(),
     );
-    // the reliability guard is the only §7-code guard
     const reliabilityGuards = SUBMARINE_MISSION_ELIGIBILITY_GUARDS.filter(
       (g) => g.guard === "reliability",
     );
@@ -456,8 +438,8 @@ describe("AC-21: submarine_missions_v1 contract + guard (fail closed)", () => {
       validateSubmarineMissionsContract({
         ...SHIPPED_SUBMARINE_MISSIONS_CONTRACT,
         shippedMissionDefinitions:
-          SHIPPED_SUBMARINE_MISSIONS_CONTRACT.shippedMissionDefinitions.map(
-            (m, i) => (i === 1 ? { ...m, missionPriority: 1 } : m), // tie with MISSILE_PATROL
+          SHIPPED_SUBMARINE_MISSIONS_CONTRACT.shippedMissionDefinitions.map((m, i) =>
+            i === 1 ? { ...m, missionPriority: 1 } : m,
           ),
       }),
     ).toThrow(BluewaveError);

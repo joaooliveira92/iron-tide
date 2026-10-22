@@ -4,7 +4,6 @@ import { createPresentationFormat } from "../../lib/presentation-format/index.js
 import { loadDrawingBoardContent } from "./content.js";
 import { previewOptionDeltas, viewDeltas } from "./optionDelta.js";
 
-/** The default presentation: en-US, full scale, imperial, Naval Credits. */
 const FORMAT = createPresentationFormat({
   locale: "en-US",
   numberScale: "full",
@@ -29,7 +28,6 @@ describe("viewDeltas", () => {
     );
     const deltas = viewDeltas(view, after, FORMAT);
     const byId = Object.fromEntries(deltas.map((d) => [d.id, d]));
-    // Less installed power means a lighter (or equal) ship and a lower top speed.
     expect(byId.displacement).toBeDefined();
     expect(byId.displacement!.direction).toBe("down");
     expect(byId.displacement!.text).toMatch(/^-/);
@@ -59,7 +57,6 @@ describe("previewOptionDeltas", () => {
     );
     expect(deltas).not.toBeNull();
     expect(deltas!.some((d) => d.id === "displacement")).toBe(true);
-    // The draft is untouched by the preview.
     expect(ref.draft.machinery.installedKw).toBe(before);
 
     expect(

@@ -42,7 +42,6 @@ describe("useDisplayPreferences campaign scope (U-2 ticket 05)", () => {
     act(() => first.result.current.setSessionOverride("confirmBeforeTurn", false));
     expect(first.result.current.displayPrefs.confirmBeforeTurn).toBe(false);
     first.unmount();
-    // A fresh mount (the session closed) has no in-memory override.
     const second = renderHook(() => useDisplayPreferences(SESSION), { wrapper: wrapper(stub) });
     await waitFor(() => expect(second.result.current.displayPrefs.confirmBeforeTurn).toBe(true));
   });

@@ -40,7 +40,6 @@ export class CommandRegistry {
       });
   }
 
-  // §2 parity check
   assertIssuerParity(commandTypeId: string, issuerClass: string): void {
     const def = this.defs.get(commandTypeId);
     if (!def)

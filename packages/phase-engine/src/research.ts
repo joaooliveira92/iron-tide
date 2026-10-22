@@ -59,7 +59,6 @@ function largestRemainderAllocation(
   const totalWeight = weights.reduce((sum, [, w]) => SafeInt.add(sum, w), SafeInt.ZERO);
   if ((totalWeight as number) <= 0) return allocation;
 
-  // Proportional allocation with floor
   let allocated = SafeInt.ZERO;
   const remainders: [string, number][] = [];
 
@@ -72,7 +71,6 @@ function largestRemainderAllocation(
     remainders.push([fieldId, remainder]);
   }
 
-  // Distribute remaining by largest remainder
   let remaining = SafeInt.sub(resources, allocated);
   remainders.sort((a, b) => b[1] - a[1]);
 
@@ -105,7 +103,6 @@ export function resolveResearchPhase(
 
     const research = nation["research"];
 
-    // A standing budget no field can take is not drawn and so is neither paid nor short (the projection plans zero for it).
     const techs = research["technologies"];
     const eligibleFields = eligibleResearchFields(research, turnNumber, catalogue);
     if ((research["researchBudget"] as number) > 0 && eligibleFields.length === 0) {
@@ -117,15 +114,12 @@ export function resolveResearchPhase(
       continue;
     }
 
-    // Stage 1: Calculate paid research resources
     const settlement = settleOutflow(research["researchBudget"], nation["treasury"]);
     reportOutflowShortfall(collector, nationId, "research", settlement, "resolve_research");
     const actualPaidExpenditure = settlement.paid;
     const effectiveResources = computeResearchResources(actualPaidExpenditure);
 
     if ((effectiveResources as number) <= 0) {
-      // A request the treasury could not pay at all is still a ledger line (requested, paid 0, shortfall), so the month
-      // ledger and the OUTFLOW_SHORTFALL warning agree and the projection's requested research appears in the ledger.
       if ((settlement.shortfall as number) > 0)
         financialLedger.append(
           makeLedgerEntry(
@@ -144,10 +138,8 @@ export function resolveResearchPhase(
       continue;
     }
 
-    // Stage 2: Allocate by field priority
     const fieldAllocations = largestRemainderAllocation(effectiveResources, eligibleFields);
 
-    // Stage 3: Advance eligible technologies
     const activeCandidates = new Map(research["activeCandidates"]);
     const updatedTechs = [...techs];
     const monthDiscoveredTechs = new Set(research["discoveredTechs"]);
@@ -158,7 +150,6 @@ export function resolveResearchPhase(
       let activeTechId = activeCandidates.get(fieldId);
 
       if (!activeTechId) {
-        // Select eligible technology with highest discovery weight
         const fieldTechs = eligibleTechnologiesForField(
           fieldId,
           updatedTechs,
@@ -175,7 +166,6 @@ export function resolveResearchPhase(
           continue;
         }
 
-        // Deterministic weighted selection keyed by research/month/{nation}/{field}
         const stream = new RandomEngine(randomSeed).stream(`research/month/${nationId}/${fieldId}`);
         const weights: [string, SafeInt][] = fieldTechs.map(
           (t) =>
@@ -189,7 +179,6 @@ export function resolveResearchPhase(
             ] as [string, SafeInt],
         );
 
-        // Record this selection in the random ledger
         const inputHash = sha256Hex(
           canonicalSerialize({
             nationId,
@@ -215,10 +204,8 @@ export function resolveResearchPhase(
         activeCandidates.set(fieldId, activeTechId);
       }
 
-      // Stage 4: Add progress to active candidate
       let techIdx = updatedTechs.findIndex((t) => t["techId"] === activeTechId);
       if (techIdx < 0) {
-        // A catalogue technology no one has started yet gains its progress row on first funding.
         updatedTechs.push({ techId: activeTechId, investedPoints: SafeInt.ZERO, completed: false });
         techIdx = updatedTechs.length - 1;
       }
@@ -227,10 +214,8 @@ export function resolveResearchPhase(
       const newPoints = SafeInt.add(tech["investedPoints"], allocation);
       updatedTechs[techIdx] = { ...tech, investedPoints: newPoints };
 
-      // Calculate progress beyond cost
       const cost = findTechCost(catalogue, activeTechId);
       const clampedPoints = (newPoints as number) > (cost as number) ? cost : newPoints;
-      // Points beyond what the technology still needs were paid for but cannot be applied: reported, never silent.
       if ((newPoints as number) > (cost as number))
         collector.addWarning(
           "RESEARCH_UNSPENT",
@@ -250,9 +235,7 @@ export function resolveResearchPhase(
         ),
       );
 
-      // Stage 5: Check if discovered
       if ((clampedPoints as number) >= (cost as number)) {
-        // Stage 7: revalidate prerequisites and availability before discovery.
         const revalidated = eligibleTechnologiesForField(
           fieldId,
           updatedTechs,
@@ -269,7 +252,6 @@ export function resolveResearchPhase(
           continue;
         }
 
-        // Mark as completed
         updatedTechs[techIdx] = {
           ...updatedTechs[techIdx]!,
           completed: true,
@@ -277,11 +259,8 @@ export function resolveResearchPhase(
         };
         monthDiscoveredTechs.add(activeTechId);
 
-        // Remove from active candidates
         activeCandidates.delete(fieldId);
 
-        // Apply IMMEDIATE_KNOWLEDGE effects (only immediate-knowledge effects
-        // for B10b; adoption/production/refit branches are deferred).
         eventLedger.append({
           eventId: `TechnologyDiscovered-${nationId}-${activeTechId}-${String(nextSeq())}`,
           version: CURRENT_VERSION,
@@ -317,7 +296,6 @@ export function resolveResearchPhase(
     updatedNations.set(nationId, updatedNation);
     currentSnapshot = { ...currentSnapshot, nations: updatedNations };
 
-    // Record financial expenditure
     const previousBalance = nation["treasury"];
     const newBalance = SafeInt.sub(previousBalance, actualPaidExpenditure);
     const safeNewBalance = newBalance < SafeInt.ZERO ? SafeInt.ZERO : newBalance;
@@ -363,20 +341,6 @@ export function resolveResearchPhase(
   return currentSnapshot;
 }
 
-/**
- * DESIGN-20 §12.2 historical timing modifier. The modifier is applied to a
- * candidate's base discovery weight based on how far the current month is from
- * the technology's canonical historical availability. The final campaign
- * availability month (availabilityMonth) remains a hard eligibility boundary
- * enforced in findEligibleTechsForField; the modifier only distinguishes by
- * how many months past availability a technology is.
- *
- * Shipped basis points: 5_000 (25-60 months before), 8_000 (1-24 months
- * before), 10_000 (canonical through 60 months after), 12_500 (60+ months
- * after). Months before availability are ineligible in this codebase
- * (availabilityMonth is treated as the hard boundary), so pre-availability
- * bands are expressed dutyfully but are unreachable.
- */
 function applyHistoricalTimingModifier(
   baseWeight: SafeInt,
   availabilityMonth: SafeInt | undefined,
@@ -402,16 +366,9 @@ function applyHistoricalTimingModifier(
 }
 
 function findTechCost(catalogue: TechnologyCatalogue, techId: string): SafeInt {
-  // Only ever called for a technology picked from this catalogue, so the entry exists.
   return catalogue.get(techId)!["cost"];
 }
 
-/**
- * The research model's authoritative cost for a technology id, read from the snapshot's compiled catalogue, or
- * `undefined` when the catalogue carries none. Foreign insight reads this only to cap an award at the technology's
- * remaining requirement and never fabricates a cost it does not know: an unknown cost applies no per-technology cap
- * (the family cap still holds).
- */
 export function researchCostLookup(
   snapshot: CampaignSnapshot,
 ): (techId: string) => number | undefined {
@@ -426,8 +383,6 @@ export const researchPhase: PhaseDescriptor = {
   id: "resolve_research",
   name: "Research Resolution",
   order: 70,
-  // ADR-0036: resolve_research also spends the research budget from treasury,
-  // so it reads/writes treasury in addition to research.
   readPermissions: ["research", "treasury"],
   writePermissions: ["research", "treasury"],
   rngAllowed: true,

@@ -23,11 +23,6 @@ import {
 import { constructionOrderEligibility } from "./orderEligibility.js";
 import { builderDockRecord } from "./foreignConstruction.js";
 
-/**
- * The per-package state a new project starts with (ADR-0077), from the design's construction plan: every package with no
- * work done and the yard that builds it. Only when the plan's packages add up to the project's total work, so the project's
- * invariants hold from the start; otherwise the project keeps the single-figure model.
- */
 function packagesFor(
   plan: ConstructionPlanRecord | undefined,
   projectedCost: number,
@@ -48,7 +43,6 @@ function packagesFor(
   };
 }
 
-/** The queued new-construction project an order for `designId` starts as. Pure. */
 export function constructionProjectFor(
   commandId: string,
   designId: string,
@@ -79,15 +73,10 @@ export function constructionProjectFor(
   };
 }
 
-// Shared order-path guards and cost resolution (single order, batch, foreign order)
-
-/** The nation + design an order targets, or the stable refusal shared by every order path. */
 type OrderTargetResolution =
   | { readonly ok: true; readonly nation: NationState; readonly design: CompiledDesignVersion }
   | { readonly ok: false; readonly reason: string; readonly diagnostics: readonly string[] };
 
-/** The nation/design/ownership guard every order path shares (single order, batch, foreign order): the nation must
- * exist, the compiled design must exist, and it must belong to the ordering nation. Pure. */
 export function resolveOrderTargets(
   snapshot: CampaignSnapshot,
   nationId: string,
@@ -114,7 +103,6 @@ export function resolveOrderTargets(
   return { ok: true, nation, design };
 }
 
-/** The projected costs plus the persisted national modifiers, or `null` when the nation cannot obtain its supply. */
 interface ResolvedOrderCosts {
   readonly costs: ConstructionOrderCosts;
   readonly national:
@@ -126,11 +114,6 @@ interface ResolvedOrderCosts {
     | undefined;
 }
 
-/**
- * Resolve the nation's construction economics at order time (ADR-0090): cost/build-time multipliers are applied once
- * here and persisted on the project, so a later profile-content change never re-prices an existing order. Returns
- * `null` when the nation cannot obtain its main armament or armour under the current policy (fail closed).
- */
 function resolveOrderCosts(
   content: ShipBuildingContent | undefined,
   nationId: string,
@@ -161,7 +144,6 @@ export interface ConstructionOrderRequest {
   readonly commandId: string;
   readonly designVersionId: string;
   readonly month: { readonly month: number; readonly year: number };
-  /** The in-flight order this one replaces: its project leaves in the same step and does not count against limits. */
   readonly replacingCommandId?: string;
 }
 
@@ -175,17 +157,10 @@ export type ConstructionOrderResult =
     }
   | {
       readonly ok: false;
-      /** Stable reason code: `NATION_NOT_FOUND`, `UNKNOWN_DESIGN`, `DESIGN_NOT_FOR_PLAYER` or an order rejection code. */
       readonly reason: string;
       readonly diagnostics: readonly string[];
     };
 
-/**
- * The one way a construction project for a new ship enters a snapshot (ADR-0088). It checks that the design exists and
- * belongs to the nation, then the order eligibility policy (revalidation under today's rules, auxiliary fleet limits),
- * and only then returns the snapshot with the project. Platform-independent: a caller (the desktop main process, a
- * test, a future AI planner) cannot add a project without passing these checks.
- */
 export function placeConstructionOrder(
   snapshot: CampaignSnapshot,
   request: ConstructionOrderRequest,
@@ -229,8 +204,6 @@ export function placeConstructionOrder(
       design["constructionPlan"],
       costs.national,
     ),
-    // Persist the reservation the eligibility check computed, so the concurrency cap (SB3-R18) is enforced against
-    // the order-time value even if content later changes.
     ...(eligibility.newConstructionReservedMassKg !== undefined
       ? { newConstructionReservedMassKg: eligibility.newConstructionReservedMassKg }
       : {}),
@@ -243,20 +216,15 @@ export function placeConstructionOrder(
   return { ok: true, snapshot: { ...snapshot, nations }, project, design, costs: costs.costs };
 }
 
-// Class-order batch (DESIGN-23 sections 3-5, SB3-R11..R14)
-
-/** DESIGN-23 section 4: one command orders from `1` through exactly `12` ships of one approved compiled version. */
 export const CONSTRUCTION_BATCH_MIN_QUANTITY = 1;
 export const CONSTRUCTION_BATCH_MAX_QUANTITY = 12;
 
-/** DESIGN-23 section 4: a quantity above `12` (or below `1`, or non-integer) is rejected with this code. */
 export const CONSTRUCTION_BATCH_LIMIT_EXCEEDED = "CONSTRUCTION_BATCH_LIMIT_EXCEEDED" as const;
 
 export interface ConstructionBatchRequest {
   readonly nationId: string;
   readonly commandId: string;
   readonly designVersionId: string;
-  /** Ship count, an integer in `1..12` (DESIGN-23 section 4). */
   readonly quantity: number;
   readonly month: { readonly month: number; readonly year: number };
 }
@@ -265,18 +233,13 @@ export type ConstructionBatchResult =
   | {
       readonly ok: true;
       readonly snapshot: CampaignSnapshot;
-      /** The batch's projects, in canonical order: batch ordinal, then ship/project id. */
       readonly projects: readonly ConstructionProject[];
       readonly design: CompiledDesignVersion;
-      /** The per-ship projected cost; the batch reservation is `quantity` times as much. */
       readonly costs: ConstructionOrderCosts;
-      /** The deterministic name allocations, one per ship. */
       readonly names: readonly ShipNameAllocation[];
-      /** True when the name pool could not supply `quantity` distinct fresh base names (SB3-R13). */
       readonly namePoolExhausted: boolean;
       readonly batchId: string;
       readonly namedClassId: string;
-      /** The batch's stable canonical hash (design version, class, quantity, ships). */
       readonly batchHash: string;
     }
   | {
@@ -285,11 +248,6 @@ export type ConstructionBatchResult =
       readonly diagnostics: readonly string[];
     };
 
-/**
- * The names already spoken for by `nationId`: every commissioned ship's name, every design's class name, and every
- * in-flight project's already-allocated `shipName`. Handing this to the naming policy keeps a new batch from reusing a
- * name another order already claimed. Pure.
- */
 function takenShipNames(snapshot: CampaignSnapshot, nationId: string): string[] {
   const nation = snapshot["nations"].get(nationId);
   const names: string[] = [];
@@ -302,13 +260,6 @@ function takenShipNames(snapshot: CampaignSnapshot, nationId: string): string[] 
   return names;
 }
 
-/**
- * The one way a class-order batch (DESIGN-23 sections 3-5, SB3-R11..R14) enters a snapshot. It reuses the single-order
- * authorization policy (`constructionOrderEligibility`) for the design — revalidation, auxiliary limits, the dock
- * ceiling and the national concurrency cap (reserving the WHOLE batch) — and only then creates `quantity` projects that
- * share one `batchId`/`namedClassId`, carry deterministic per-ship names, and reference the same compiled design
- * version. A failed gate creates no project and no reservation. Platform-independent and deterministic.
- */
 export function placeConstructionBatch(
   snapshot: CampaignSnapshot,
   request: ConstructionBatchRequest,
@@ -329,11 +280,6 @@ export function placeConstructionBatch(
   const targets = resolveOrderTargets(snapshot, request.nationId, request.designVersionId);
   if (!targets.ok) return { ok: false, reason: targets.reason, diagnostics: targets.diagnostics };
   const { nation, design } = targets;
-  // DESIGN-23 section 5: a repeated order of an existing, already-approved compiled version needs no new study. A
-  // mechanically changed design cannot reach the order path at all — it is a new draft, compiled into a new immutable
-  // version that only the design-study path (`SubmitDesign` -> `planDesignStudy`) can approve. The manual-parity rule
-  // is therefore enforced structurally at the study boundary, not here; cosmetic-only changes keep the approved
-  // version's compiled hash and need no study.
   const monthId = `${String(request.month.year)}-${String(request.month.month).padStart(2, "0")}`;
   const eligibility = constructionOrderEligibility(
     snapshot,
@@ -441,16 +387,6 @@ export function placeConstructionBatch(
   };
 }
 
-// Read-only preview for the build dialog (SB3-R30/R33): names, dock fit and ceiling, no mutation, no reservation
-
-/**
- * What the build dialog shows before the player orders: the names the engine's naming policy would assign, whether
- * the name pool is exhausted, the ordering nation's dock ceiling, the design's displacement and whether it fits.
- *
- * `yardId` is the yard that would build the batch — the design's own `constructionPlan.yardId` (a domestic batch has
- * no separate builder field; explicit builder / per-ship allocation is deferred). It is added to the
- * otherwise-prompted shape so the dialog can name the yard in the per-yard fit readout.
- */
 export interface ConstructionBatchPreview {
   readonly designVersionId: string;
   readonly quantity: number;
@@ -466,13 +402,6 @@ export type ConstructionBatchPreviewResult =
   | { readonly ok: true; readonly preview: ConstructionBatchPreview }
   | { readonly ok: false; readonly reason: string; readonly diagnostics: readonly string[] };
 
-/**
- * Preview a class-order batch (DESIGN-23 sections 3-5, SB3-R30/R33) WITHOUT mutating the snapshot or reserving
- * anything: it reuses the same target guard and naming policy as `placeConstructionBatch`, reads the design's own
- * `normalizedDisplacementKg`, and resolves the ordering nation's dock ceiling from `builderDockRecord`. A quantity
- * outside `1..12` is refused with the same `CONSTRUCTION_BATCH_LIMIT_EXCEEDED` code the command path uses. Pure and
- * deterministic: the renderer's preview can never disagree with what the command would allocate.
- */
 export function previewConstructionBatch(
   snapshot: CampaignSnapshot,
   nationId: string,

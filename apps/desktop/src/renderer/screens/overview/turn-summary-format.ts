@@ -3,10 +3,8 @@ import type {
   TurnSummaryEntry,
 } from "../../../shared/campaign-command-contract.js";
 
-/** Canonical severity order, most severe first. */
 export const SEVERITY_ORDER = ["CRITICAL", "HIGH", "NORMAL", "LOW", "TRACE"] as const;
 
-/** Canonical category order for grouping. */
 export const CATEGORY_ORDER = [
   "DECISION",
   "DIPLOMACY",
@@ -19,13 +17,11 @@ export const CATEGORY_ORDER = [
   "SYSTEM",
 ] as const;
 
-/** The categories offered in the filter, in canonical order, deriving only those present. */
 export function categoriesPresent(messages: readonly TurnMessageDto[]): readonly string[] {
   const present = new Set(messages.map((message) => message.category));
   return CATEGORY_ORDER.filter((category) => present.has(category));
 }
 
-/** A message is actionable when it warns (high/critical), blocks, or needs acknowledgement. */
 export function isActionable(message: TurnMessageDto): boolean {
   return (
     message.severity === "CRITICAL" ||
@@ -56,7 +52,6 @@ function searchCorpus(message: TurnMessageDto): string {
   return parts.join(" ").toLowerCase();
 }
 
-/** Filter messages by category, severity, actionable-only, and free-text search. */
 export function filterTurnMessages(
   messages: readonly TurnMessageDto[],
   filters: TurnSummaryFilters,
@@ -76,7 +71,6 @@ export interface TurnMessageGroup {
   readonly messages: readonly TurnMessageDto[];
 }
 
-/** Group messages by category in canonical order, most-severe message first within a group. */
 export function groupTurnMessages(
   messages: readonly TurnMessageDto[],
 ): readonly TurnMessageGroup[] {
@@ -96,7 +90,6 @@ export function groupTurnMessages(
   return groups;
 }
 
-/** A short label for a turn (its campaign month, falling back to its id). */
 export function turnLabel(entry: TurnSummaryEntry): string {
   return entry.occurredAt.length > 0 ? entry.occurredAt : entry.turnId.slice(0, 8);
 }

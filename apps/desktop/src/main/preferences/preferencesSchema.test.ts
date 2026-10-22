@@ -14,9 +14,6 @@ import {
   type AppPreferencesDecoded,
 } from "./preferencesSchema.js";
 
-// Compile-time parity: each assignment fails to typecheck if the shared contract
-// and the schema's decoded type diverge in either direction (D2, RULES.md
-// §Schema). The test calls them so the functions are not dead code.
 function sharedToDecoded(value: AppPreferences): AppPreferencesDecoded {
   return value;
 }

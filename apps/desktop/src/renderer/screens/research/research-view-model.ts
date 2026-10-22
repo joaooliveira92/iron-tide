@@ -31,12 +31,9 @@ export interface ResearchTechBadge {
 }
 
 export interface ResearchViewModel {
-  /** The standing monthly spend. */
   readonly researchBudget: number;
-  /** The authored annual allocation it was derived from; null when there is none. */
   readonly annualAllocation: number | null;
   readonly researchCap: number;
-  /** Why the budget is unpaid or absent (cap of zero, no eligible field, above the cap); null when nothing needs saying. */
   readonly budgetNote: string | null;
   readonly currentProjectLabel: string | null;
   readonly discoveredTechs: readonly ResearchTechBadge[];
@@ -48,12 +45,6 @@ export interface ResearchViewModel {
   readonly dirty: boolean;
 }
 
-/**
- * Pure view-model for the Research & Technology screen: turns the engine
- * projection + editable draft into render-ready rows and scalars. Every number
- * still comes from the engine (or the documented largest-remainder split);
- * this module only humanizes ids and packages data for presentation.
- */
 export function buildResearchViewModel(state: ResearchScreenActiveData): ResearchViewModel {
   const { projection, draft } = state;
   const projected = deriveProjectedResearchAllocations(projection.researchBudget, draft);

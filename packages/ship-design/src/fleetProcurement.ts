@@ -1,12 +1,3 @@
-/**
- * National AI fleet assessment and procurement (docs/ships-nation-orientation.md §8-9). Pure and deterministic:
- * it assesses the fleet, computes capability deficits from the nation's procurement policy, picks a role, generates
- * and scores legal candidate designs through the authoritative pipeline, and returns a structured decision. The
- * caller (the phase engine) applies the chosen order through `placeConstructionOrder`; this module never mutates state.
- *
- * It is deliberately not a fixed historical build script: the role follows the nation's *shares* and the *current*
- * fleet, so different campaign conditions produce different orders.
- */
 import type { CompiledDesign } from "./compile.js";
 import { computeCost, treasuryCostUnits } from "./cost.js";
 import { generateCandidates, type AiEnvironment, type ArchetypeId, type Candidate } from "./ai.js";
@@ -28,29 +19,24 @@ import { HULL_TYPE_FOR_SHIP_TYPE, type ShipTypeId } from "./shipTypes.js";
 import { starterFor, type StarterDesign } from "./shipTypeRoster.js";
 import type { ShipBuildingContent } from "./shipBuildingContent.js";
 
-/** The opening types a national procurement decision may order (the AI does not chase future types here). */
 export const PROCUREMENT_TYPES: readonly ShipTypeId[] = ["B", "CA", "CL", "DD", "KE", "AMC"];
 
-/** The role groups one active procurement intent is limited to. */
 export type RoleGroup = "capital" | "cruiser" | "light" | "colonial";
 
-/** The role group a ship type belongs to. */
 export function roleGroupOf(type: ShipTypeId): RoleGroup {
   if (type === "B") return "capital";
   if (type === "CA" || type === "CL") return "cruiser";
   if (type === "DD") return "light";
-  return "colonial"; // KE, AMC
+  return "colonial";
 }
 
 export type ShipStatus = "ACTIVE" | "BUILDING" | "UNAVAILABLE";
 
-/** A fleet member as the assessment sees it: its ship type and its availability. */
 export interface FleetShipView {
   readonly shipType: ShipTypeId;
   readonly status: ShipStatus;
 }
 
-/** Map an engine hull type back to a DESIGN-22 ship type (inverse of HULL_TYPE_FOR_SHIP_TYPE). */
 export function shipTypeForHullType(hullType: string): ShipTypeId | null {
   for (const [type, hull] of Object.entries(HULL_TYPE_FOR_SHIP_TYPE))
     if (hull === hullType) return type as ShipTypeId;
@@ -66,7 +52,6 @@ export interface FleetAssessment {
 const zeroCounts = (): Record<ShipTypeId, number> =>
   Object.fromEntries(PROCUREMENT_TYPES.map((t) => [t, 0])) as Record<ShipTypeId, number>;
 
-/** Count the fleet by type and availability. Pure. */
 export function assessFleet(fleet: readonly FleetShipView[]): FleetAssessment {
   const active = zeroCounts();
   const building = zeroCounts();
@@ -80,7 +65,6 @@ export function assessFleet(fleet: readonly FleetShipView[]): FleetAssessment {
   return { active, building, unavailable };
 }
 
-/** Target counts per type from the profile's procurement shares, over a small notional fleet. */
 export function targetCounts(
   profile: NationNavalProfile,
   baseCount = 8,
@@ -93,7 +77,6 @@ export function targetCounts(
     DD: p.torpedoCraftShareBp,
     KE: p.colonialShareBp,
     AMC: p.colonialShareBp,
-    // Non-opening types never targeted here.
     BB: 0,
     BC: 0,
     CV: 0,
@@ -109,7 +92,6 @@ export function targetCounts(
   ) as Record<ShipTypeId, number>;
 }
 
-/** Per-type deficit: how many more of a type the nation wants (target minus owned, floored at 0). */
 export function computeFleetDeficits(
   profile: NationNavalProfile,
   assessment: FleetAssessment,
@@ -124,7 +106,6 @@ export function computeFleetDeficits(
   ) as Record<ShipTypeId, number>;
 }
 
-/** Choose the role to procure: the nation's build order, filtered to types with a positive deficit. */
 export function chooseProcurementRole(
   profile: NationNavalProfile,
   deficits: Readonly<Record<ShipTypeId, number>>,
@@ -134,10 +115,6 @@ export function chooseProcurementRole(
   return null;
 }
 
-/**
- * Doctrine → existing archetypes for a role: the profile's soft preferences select which design doctrines the
- * generator explores, so national character influences the candidate set itself, not just the final score.
- */
 export function archetypesForNation(
   profile: NationNavalProfile,
   type: ShipTypeId,
@@ -157,7 +134,6 @@ export function archetypesForNation(
   return picked;
 }
 
-/** Coarse role meters (0..~20000) derived from a compiled design; only the ordering across candidates matters. */
 export function designScoreFacts(
   compiled: CompiledDesign,
   costUnits: number,
@@ -204,7 +180,6 @@ export interface CandidateView {
   readonly rejection?: string;
 }
 
-/** A structured, explainable procurement decision (the §6 observability output). */
 export interface ProcurementDecision {
   readonly nationId: string;
   readonly month: string;
@@ -215,9 +190,7 @@ export interface ProcurementDecision {
   readonly selectedDesignId: string | null;
   readonly selectedDraft: Candidate["draft"] | null;
   readonly costUnits: number | null;
-  /** Access consequences recorded for the order (component-access effects, wartime supply). */
   readonly accessEffects: readonly string[];
-  /** Set when no legal, affordable design was chosen; the AI must not throw. */
   readonly noProcurementReason: string | null;
 }
 
@@ -225,30 +198,21 @@ export interface ProcurementInput {
   readonly profile: NationNavalProfile;
   readonly month: string;
   readonly seed: string;
-  /** Stable decision id (e.g. `${nationId}:${turn}`): combined with the seed for deterministic variation. */
   readonly decisionId: string;
   readonly budgetUnits: number;
   readonly fleet: readonly FleetShipView[];
   readonly content: ShipBuildingContent;
   readonly starters: readonly StarterDesign[];
-  /** Recently constructed class ids, to apply a diversity penalty. */
   readonly recentClassIds?: readonly string[];
   readonly accessPolicy?: ComponentAccessPolicy;
-  /** Candidate designs to generate per decision (bounded 12..30). */
   readonly candidateCount?: number;
-  /** Compiles explored per archetype (the search budget); defaults to 24. */
   readonly compilesPerArchetype?: number;
 }
 
 const clampCandidateCount = (n: number | undefined): number => Math.max(12, Math.min(30, n ?? 20));
 
-/** Diversity penalty (bp of the score) for a design whose class is among the recently constructed classes. */
 export const DIVERSITY_PENALTY_BP = 1500;
 
-/**
- * Plan one procurement decision. Deterministic for a given (seed, decisionId, month, fleet, budget). Never throws
- * for content reasons: an unaffordable or unbuildable situation returns a structured `noProcurementReason`.
- */
 export function planProcurementDecision(input: ProcurementInput): ProcurementDecision {
   const { profile, month, seed, decisionId, budgetUnits, content, starters } = input;
   const accessPolicy = input.accessPolicy ?? DEFAULT_ACCESS_POLICY;
@@ -411,7 +375,6 @@ export function planProcurementDecision(input: ProcurementInput): ProcurementDec
   };
 }
 
-/** A stable per-candidate ordinal from a candidate's structural features (avoids object identity). */
 function scoredIndex(candidate: Candidate): number {
   const d = candidate.draft;
   return d.hull.lengthWl + d.hull.beam * 3 + d.machinery.installedKw * 7 + d.placements.length * 11;

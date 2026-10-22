@@ -1,11 +1,3 @@
-// Ticket 30 (audit rescope) — the foundation `throw`s in snapshotClone
-// and financial-ledger are `PhaseEngineError` (a runtime-free
-// `Data.TaggedError`) instead of plain `Error` / `Object.assign(Error, {code})`.
-// These tests prove the tagged error carries the verbatim `message` and the
-// preserved `code`, so in-process callers that match on either are unaffected
-// (MIG-RUNTIME-1, MIG-DET-1). Each case drives a public API (`cloneSnapshot`,
-// `FinancialLedger.append`) with a typed fixture; no `as any` casts.
-
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import { FinancialLedger, PhaseEngineError } from "../src/index.js";

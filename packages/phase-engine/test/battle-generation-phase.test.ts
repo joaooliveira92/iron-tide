@@ -138,7 +138,6 @@ describe("battle_generation phase (AC-12)", () => {
     const result = executor.execute(snapshot, [], "seed", collector);
 
     const battles = result.finalSnapshot.wars.battles;
-    // One battle accepted (limit 1/area); battle_resolution resolves it.
     const pendingAfter = battles.filter((b) => b.phase === "pending").length;
     const resolved = battles.filter((b) => b.phase === "resolved").length;
     expect(battles.length).toBeGreaterThan(0);
@@ -216,7 +215,6 @@ describe("battle_generation phase (AC-12)", () => {
     const manifests = result.finalSnapshot.wars.battleManifests ?? [];
     const reservedIds = manifests.flatMap((m) => m.persistentAssets);
     expect(reservedIds).not.toContain("g_reserve");
-    // The reserve ship is still present in the fleet, unreserved.
     const reserve = result.finalSnapshot.nations
       .get("GBR")!
       .fleets.flatMap((f) => f.ships)

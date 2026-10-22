@@ -7,17 +7,10 @@ import { useWorldGenerationChecklist } from "./useWorldGenerationChecklist.js";
 import { CHECKLIST_LINES } from "./world-generation-presentation.js";
 
 export interface NewGameLaunchingScreenProps {
-  /** Set only for the five real failure reasons — `SAVE_LOCATION_CANCELLED` never reaches this screen with an error (spec §7: silent return to review). */
   readonly error: string | null;
   readonly onBackToReview: () => void;
 }
 
-/**
- * "Establishing the Naval Order" (spec §7) — replaces the plain disabled
- * "Starting…" button state while `compileCampaign` runs. Purely a client-side
- * cosmetic sequence: it has no knowledge of the real bridge call's progress,
- * only whether an error has arrived for it to show instead.
- */
 export function NewGameLaunchingScreen({ error, onBackToReview }: NewGameLaunchingScreenProps) {
   const { revealedCount, flavorText } = useWorldGenerationChecklist(error === null);
 

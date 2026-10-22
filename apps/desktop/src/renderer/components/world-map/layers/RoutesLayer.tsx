@@ -1,4 +1,3 @@
-/** The ruler route: a dark casing under a dashed highlight along its legs. */
 export function RoutesLayer({ d, stroke, casing }: { d: string; stroke: string; casing: string }) {
   if (d === "") return null;
   return (

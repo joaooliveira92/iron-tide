@@ -23,11 +23,6 @@ import {
 } from "../src/index.js";
 import { decodeOk } from "./decode-helpers.js";
 
-/**
- * `visual-traits/1` (D16, proposal §8.2): the seven traits, their defaults and the V1–V12
- * contradiction rules. Expectations come from the proposal's table, not the implementation.
- */
-
 const gunMount = (over: Partial<VisualTraitSource> = {}): VisualTraitSource => ({
   family: "gun_mount",
   provides: "gun_mount",

@@ -28,7 +28,6 @@ function tokenize(src: string): Tok[] {
   return out;
 }
 
-/** Parses the restricted integer grammar into a typed AST. Throws FormulaError on any violation. */
 export function parseFormula(src: string): Expr {
   const toks = tokenize(src);
   let p = 0;
@@ -118,7 +117,6 @@ export function freeVariables(e: Expr, acc = new Set<string>()): Set<string> {
       freeVariables(e.e, acc);
       break;
     case "call":
-      // lookup's first argument names a table, not a variable
       for (const [i, a] of e.args.entries()) {
         if (e.fn === "lookup" && i === 0 && a.k === "var") continue;
         freeVariables(a, acc);

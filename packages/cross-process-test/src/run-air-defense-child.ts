@@ -1,7 +1,3 @@
-// D-4 / INC-6: Air-defense cross-process determinism child (AC-19).
-// Runs advanceMinutes with an air-defense context (one heavy-AA defender, one level
-// bomber attack, keyed RNG) and prints the record/minute hashes as JSON on stdout for
-// cross-process byte-comparison.
 import { RandomEngine } from "@bluewave/random";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";

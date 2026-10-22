@@ -41,7 +41,6 @@ function archetypeOption(name: string): HTMLElement {
   return within(archetypeListbox()).getByRole("option", { name });
 }
 
-/** The focused-slot detail panel is the region named after the slot's title. */
 function detailPanel(name: string): HTMLElement {
   return screen.getByRole("region", { name });
 }
@@ -233,7 +232,6 @@ describe("NewGameArchetypeScreen", () => {
     const allocation = within(panel).getByText("Allocation").parentElement;
     expect(allocation?.textContent).toBe("AllocationEconomy5Industry5Combat10");
     expect(within(panel).getByText("Consequences")).toBeTruthy();
-    // Combat 10 against the balanced 6: the compact preview's dimension delta.
     expect(within(panel).getByText("+4", { exact: true })).toBeTruthy();
     expect(within(panel).queryByRole("button", { name: /select|apply/i })).toBeNull();
   });
@@ -305,7 +303,6 @@ describe("NewGameArchetypeScreen", () => {
   });
 
   describe("inline custom allocator", () => {
-    /** Focus the custom slot (the deck's last card, one step left of the first). */
     function focusCustomSlot(): void {
       fireEvent.keyDown(archetypeListbox(), { key: "ArrowLeft" });
     }

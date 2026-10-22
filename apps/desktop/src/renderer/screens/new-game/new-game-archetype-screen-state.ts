@@ -51,7 +51,6 @@ export function selectPreset(state: ArchetypeEditorState, presetId: string): Arc
   };
 }
 
-/** Copies the current selection into the custom editor, keeping the allocation editable. */
 export function customizeSelection(state: ArchetypeEditorState): ArchetypeEditorState {
   return {
     mode: "custom",
@@ -80,7 +79,6 @@ export function setDimension(
   };
 }
 
-/** Returns the custom editor to the neutral balanced baseline. */
 export function resetCustomAllocation(state: ArchetypeEditorState): ArchetypeEditorState {
   if (state.mode !== "custom") return state;
   return { ...state, allocation: { ...BALANCED_ALLOCATION } };

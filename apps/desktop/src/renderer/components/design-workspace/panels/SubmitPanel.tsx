@@ -12,7 +12,6 @@ import type { DesignStudyPreview } from "../../../../shared/design-contract.js";
 
 let submitCounter = 0;
 
-/** What the player is told when a design is queued: with study rules, its study's months and cost (ADR-0085). */
 export function queuedLines(
   name: string,
   study: DesignStudyPreview | undefined,
@@ -44,7 +43,6 @@ export function queuedLines(
   return lines;
 }
 
-/** What a refused submission means for the player; the engine's own lines follow it. */
 export function rejectionLead(reason: string): string {
   switch (reason) {
     case "DESIGN_REJECTED":
@@ -60,10 +58,6 @@ export function rejectionLead(reason: string): string {
   }
 }
 
-/**
- * Sends the working design to the engine (ADR-0066). The main process re-compiles it and queues a real `SubmitDesign`
- * command; the design appears in the Design Catalog when the month is committed.
- */
 export function SubmitPanel({
   sessionId,
   draft,
@@ -74,7 +68,6 @@ export function SubmitPanel({
   readonly sessionId: string;
   readonly draft: DesignDraft;
   readonly valid: boolean;
-  /** The class name, when a host owns it (the Shipbuilding top bar); the panel keeps its own otherwise. */
   readonly name?: string;
   readonly onNameChange?: (name: string) => void;
 }) {
@@ -89,7 +82,6 @@ export function SubmitPanel({
     readonly lines: readonly string[];
   } | null>(null);
   const [busy, setBusy] = useState(false);
-  // The exact design last queued this month, so the same one is not sent twice by a second click.
   const [queuedKey, setQueuedKey] = useState<string | null>(null);
   if (!bridge) return null;
   const key = `${revision ?? ""}|${className.trim()}|${JSON.stringify(draft)}`;

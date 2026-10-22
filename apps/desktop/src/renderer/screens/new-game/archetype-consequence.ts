@@ -57,10 +57,6 @@ function signedNumber(value: number): string {
   return `${sign}${value}`;
 }
 
-/**
- * Builds the concrete consequence preview for an allocation. Every numeric effect is
- * derived from the engine's authoritative calculators; React only renders it.
- */
 export function buildArchetypeConsequence(allocation: ArchetypeAllocation): ArchetypeConsequence {
   const effects = archetypeEffects(allocation);
   const difference = differenceFromBalanced(allocation);

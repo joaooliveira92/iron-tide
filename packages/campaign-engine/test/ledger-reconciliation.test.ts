@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { reconcileMonthLedger } from "../src/ledger-reconciliation.js";
 
-// Economy spec #138 slice 6: the month ledger shows one reconciliation line that closes.
 const row = (categoryId: string, debit: number, credit = debit) => ({ categoryId, debit, credit });
 
 describe("reconcileMonthLedger", () => {

@@ -1,6 +1,3 @@
-// Shared by the two battle_generation stages of the T-1 battle-offer feature (enemy decline, ticket #116, and the friendly
-// support force, ticket #117): who the enemy of an offered battle is, the strength a side commits to it, and the one recorded,
-// domain-separated draw both stages make. Kept in one place so the two stages cannot drift apart.
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { BattleGenerationResult } from "@bluewave/combat";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -11,7 +8,6 @@ import type { MonthContext } from "./monthContext.js";
 
 export type GeneratedManifest = BattleGenerationResult["manifests"][number];
 
-/** Whether the player is a party to this offered-mission manifest, and who the enemy is. */
 export function enemyOf(manifest: GeneratedManifest, playerNationId: string): string | null {
   if (!OFFERED_MISSION_TYPES.some((mission) => mission === manifest["missionType"])) return null;
   if (manifest["attackerId"] === playerNationId) return manifest["defenderId"];
@@ -19,7 +15,6 @@ export function enemyOf(manifest: GeneratedManifest, playerNationId: string): st
   return null;
 }
 
-/** The summed strength of a nation's committed ships. */
 export function committedStrength(
   snapshot: CampaignSnapshot,
   nationId: string,
@@ -36,10 +31,6 @@ export function committedStrength(
   return Number(total);
 }
 
-/**
- * Make the battle's one draw on `${streamId}/${battleId}` (an integer in `0..rangeBp-1`), let the caller classify it, and
- * record it in the random ledger with the hash of `inputs`. Returns the classification the caller made of the draw.
- */
 export function drawAndRecord<Classification extends { outcome: string; reasonCode: string }>(
   ctx: MonthContext,
   engine: RandomEngine,

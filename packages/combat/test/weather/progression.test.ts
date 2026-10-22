@@ -1,7 +1,3 @@
-// AC-5: Tactical weather progression — progression at exactly 30-min intervals
-// via climate profile transition tables and keyed stream `battle/weather/interval`.
-// Sea state ±1 max per interval. Wind direction per climate band. Each transition
-// creates a WeatherTransitionRecord.
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
 import { RandomLedger } from "@bluewave/random";
@@ -20,7 +16,6 @@ import {
 } from "../../src/weather/constants.js";
 import { WEATHER_PROFILE_INCOMPLETE } from "../../src/weather/reasonCodes.js";
 
-// Helper — valid battle components (spring/summer baseline)
 function components(overrides: Partial<BattleWeatherComponents> = {}): BattleWeatherComponents {
   return withTacticalWeatherComponentsHash({
     battleId: "battle-001",
@@ -43,7 +38,6 @@ function components(overrides: Partial<BattleWeatherComponents> = {}): BattleWea
   });
 }
 
-// Climate profile with transition tables for progression testing.
 function transitionProfile(): ClimateProfile {
   return {
     climateProfileId: "temperate_sea_v1",
@@ -126,13 +120,9 @@ function makeInput(overrides: Partial<ProgressWeatherInput> = {}): ProgressWeath
 
 describe("AC-5: tactical weather progression", () => {
   it("progresses at the 30-minute interval boundary", () => {
-    // The progression should fire at minute 30, 60, 90, etc.
     const result30 = progressBattleWeatherComponents(makeInput({ tacticalMinute: 30 }));
     expect(result30.nextComponents.stateHash).toMatch(/^[0-9a-f]{64}$/);
     expect(typeof result30.nextComponents.seaState).toBe("number");
-    // Draw consumption is VARIABLE, 0..8 per interval (ADR-0022 §8): each
-    // component consumes its draw(s) only when a table/drift entry exists for
-    // it; an absent entry consumes nothing.
     expect(result30.transitions.length).toBeGreaterThanOrEqual(0);
   });
 
@@ -173,12 +163,10 @@ describe("AC-5: tactical weather progression", () => {
   it("different battle seeds produce different outcomes", () => {
     const a = progressBattleWeatherComponents(makeInput({ battleSeed: "seed-x" }));
     const b = progressBattleWeatherComponents(makeInput({ battleSeed: "seed-y" }));
-    // Overwhelmingly likely the state differs
     const allEqual =
       a.nextComponents.seaState === b.nextComponents.seaState &&
       a.nextComponents.precipitationType === b.nextComponents.precipitationType &&
       a.nextComponents.fogMistDensityBp === b.nextComponents.fogMistDensityBp;
-    // Very low collision probability
     expect(allEqual).toBe(false);
   });
 
@@ -209,17 +197,10 @@ describe("AC-5: tactical weather progression", () => {
     expect(result.nextComponents.precipitationType).toBe("NONE");
     expect(result.nextComponents.fogMistDensityBp).toBe(1_200);
     expect(result.nextComponents.cloudCoverBp).toBe(5_500);
-    // ADR-0022 §8: table absence is an explicit no-transition policy — an
-    // absent entry consumes NO draw (per-interval draw count is variable
-    // 0..8), so a season declaring no tables produces no draws, no changes,
-    // and no transition records.
     expect(result.transitions).toHaveLength(0);
   });
 
-  // ---- M2: per-interval keyed stream ----
   it("each interval draws its OWN sequence (stream keyed by interval index)", () => {
-    // Same seed, four different 30-minute intervals. Before the M2 fix every
-    // interval replayed interval 1's draws, so all four results were identical.
     const results = [30, 60, 90, 120].map((m) =>
       progressBattleWeatherComponents(makeInput({ tacticalMinute: m })),
     );
@@ -234,7 +215,6 @@ describe("AC-5: tactical weather progression", () => {
     expect(a.transitions).toEqual(b.transitions);
   });
 
-  // ---- M3: malformed transition tables fail closed ----
   it("wind transition referencing an undeclared band fails with WEATHER_PROFILE_INCOMPLETE", () => {
     const profile = transitionProfile() as ClimateProfile;
     const season = profile.seasons[0]!;
@@ -279,7 +259,6 @@ describe("AC-5: tactical weather progression", () => {
     expect((caught as BluewaveError).message).toBe(WEATHER_PROFILE_INCOMPLETE);
   });
 
-  // ---- M4: sea state law-clamped to ±1 regardless of authored range ----
   it("authoritative law clamps sea-state drift to ±1 even when the profile declares a wider range", () => {
     const profile = transitionProfile() as ClimateProfile;
     profile.seasons[0]!.seaStateDriftRange = { min: -3, max: 3 };
@@ -292,7 +271,6 @@ describe("AC-5: tactical weather progression", () => {
     }
   });
 
-  // ---- M6: keyed draws recorded through the RandomLedger port ----
   it("every progression draw is recorded with the per-interval stream id", () => {
     const ledger = new RandomLedger();
     progressBattleWeatherComponents(makeInput({ randomLedger: ledger }));

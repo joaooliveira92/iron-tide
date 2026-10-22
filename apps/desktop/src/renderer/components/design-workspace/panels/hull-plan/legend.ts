@@ -5,16 +5,12 @@ import { displaySheerRise, type FunnelInput } from "./profile-geometry.js";
 import type { MastSummary } from "./profile-masts.js";
 import { STYLE_NAME, eraName } from "./visual-names.js";
 
-/** Where a drawn quantity comes from; shown as a badge so schematic conventions are never mistaken for data. */
 export type LegendSource = "data" | "convention" | "mixed";
 
 export interface LegendEntry {
   readonly id: string;
-  /** Chip text. */
   readonly label: string;
-  /** One line shown in the hover/focus tooltip. */
   readonly tooltip: string;
-  /** Popover heading. */
   readonly title: string;
   readonly source: LegendSource;
   readonly rows: readonly (readonly [string, string])[];
@@ -27,7 +23,6 @@ export interface LegendInput {
   readonly lcbPermille: number | undefined;
   readonly sheerBp: number | undefined;
   readonly funnels: readonly FunnelInput[];
-  /** The masts drawn in the profile; absent when none is. */
   readonly masts?: MastSummary;
 }
 
@@ -50,10 +45,6 @@ const STERN_NOTE: Record<SternStyle, string> = {
 
 const formName = (id: string | undefined) => (id ? id.replaceAll("_", " ") : "unknown");
 
-/**
- * The legend chips for the hull-plan drawings. Pure: the panel only renders these; every figure renders through
- * the bound presentation format (ADR-0218).
- */
 export function legendEntries(input: LegendInput, format: PresentationFormat): LegendEntry[] {
   const { facts } = input;
   const entries: LegendEntry[] = [];

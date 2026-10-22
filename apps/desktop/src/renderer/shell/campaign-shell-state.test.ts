@@ -44,8 +44,6 @@ describe("campaign shell state", () => {
       expect.objectContaining({
         nationName: "United Kingdom",
         projectedSurplusDeficit: 2_000,
-        // Forward-wired INC-2 slot: null (empty/placeholder) until the
-        // priorities projection lands.
         activeAlertsCount: null,
         atWar: false,
       }),

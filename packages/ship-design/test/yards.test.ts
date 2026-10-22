@@ -22,7 +22,6 @@ describe("yard capacity (ADR-0067 section 6)", () => {
     const c = yardCapacityFor(fac("a", 3_000), 700);
     for (const l of LINE_IDS) expect(c[l]).toBe(2_100_000);
     expect(yardCapacityFor(fac("b", 9_000), 700).slipway).toBe(6_300_000);
-    // Floors a fractional result (1,500 kg x 1 / 1000 = 1.5).
     expect(yardCapacityFor({ ...fac("c", 1), maxDisplacementKg: 1_500 }, 1).slipway).toBe(1);
   });
   it("rejects a non-positive or non-integer rate", () => {

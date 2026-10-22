@@ -1,26 +1,3 @@
-/**
- * A hand-authored 36-area world at ticket 01's fidelity, standing in for the
- * dataset that milestone 6 implementation will author. Nothing here is
- * canonical: the ids do not exist in any content pack, the ownerships are
- * roughly 1910 and roughly right, and the polygons are coarse by intent.
- *
- * Its job is to be *dense enough to judge* — 36 areas, 8 nations, 9 passages,
- * 34 possessions, 12 fleets, ~80 edges — because ticket 06's question ("how
- * does this look and feel") cannot be answered against the two-area fixture
- * the repo ships today.
- *
- * Three geometry representations sit side by side on purpose, because which
- * of them the real schema needs is one of the things this prototype is for:
- *
- *   ring   — a coarse lon/lat polygon, authored in *continuous* longitude so
- *            a ring may run past 180 (see `area_central_pacific`). Normalising
- *            happens at render time.
- *   label  — a hand-placed lon/lat label anchor. Variant C ignores it and uses
- *            a computed centroid instead, so the two can be compared directly.
- *   tile   — a column/row on a stylised board. Independent of the polygon; this
- *            is the "a second authored layout" cost, made visible.
- */
-
 export type AreaId = string;
 export type NationId = string;
 export type PassageId = string;
@@ -30,7 +7,6 @@ export type Climate = "arctic" | "temperate" | "subtropical" | "tropical";
 export interface PrototypeArea {
   readonly id: AreaId;
   readonly name: string;
-  /** Board-variant tile caption; the full name does not fit a tile. */
   readonly short: string;
   readonly ring: readonly (readonly [number, number])[];
   readonly label: readonly [number, number];
@@ -41,7 +17,6 @@ export interface PrototypeArea {
 export interface PrototypeNation {
   readonly id: NationId;
   readonly name: string;
-  /** Authored as an OKLCH hue so every nation shares one lightness/chroma ramp. */
   readonly hue: number;
 }
 
@@ -76,7 +51,6 @@ export interface PrototypeFleet {
   readonly area: AreaId;
   readonly owner: NationId;
   readonly ships: number;
-  /** Locked multi-turn route, per ticket 03. Empty means in station. */
   readonly route: readonly AreaId[];
 }
 
@@ -1240,12 +1214,6 @@ export const AREAS_BY_ID = new Map(AREAS.map((area) => [area.id, area]));
 export const NATIONS_BY_ID = new Map(NATIONS.map((nation) => [nation.id, nation]));
 export const PASSAGES_BY_ID = new Map(PASSAGES.map((passage) => [passage.id, passage]));
 
-/**
- * Ownership is derived, not authored: an area is "held" by whoever owns the
- * most possessions in it, and contested when two nations tie. Ticket 01 made
- * coastal-ness derived the same way, so this checks whether a derived fill is
- * legible before the schema commits to an authored one.
- */
 export interface AreaControl {
   readonly owner: NationId | null;
   readonly contested: boolean;
@@ -1280,7 +1248,6 @@ export function deriveAreaControl(): ReadonlyMap<AreaId, AreaControl> {
   return control;
 }
 
-/** Ticket 03's router, in miniature: BFS with a codepoint-ascending tie-break. */
 export function routeBetween(
   from: AreaId,
   to: AreaId,
@@ -1300,7 +1267,6 @@ export function routeBetween(
     neighbours.set(edge.b, backward);
   }
   for (const list of neighbours.values()) {
-    // Codepoint-ascending, never localeCompare — see ticket 03.
     list.sort((left, right) => (left.id < right.id ? -1 : 1));
   }
 

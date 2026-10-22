@@ -1,19 +1,3 @@
-// DESIGN-34 engine-versioned constant-set contracts (C-3 spec §1.3) — the
-// "content deliverable" of this sprint: every shipped `*_v1` policy id +
-// `SHIPPED_*_CONTRACT` + a fail-closed `validate*Contract` guard. Mirrors
-// packages/combat/src/mines/constants.ts (which shipped
-// mine_type_definitions_v1) and mines/contracts.ts (the INC-8 rollup).
-//
-// INC-1 ships the three §1.3 contracts that the strategic-representation /
-// types / policies slice exercises:
-//   submarine_strategic_asset_v1   (DESIGN-34 §1)
-//   submarine_types_v1             (DESIGN-34 §4 + §6 vocab + §9/§10 tables)
-//   submarine_policies_v1          (DESIGN-34 §5)
-// Each ships DESIGN-34's own exact integers (ticket 06 — no research catalog).
-//
-// Pure/deterministic; fail-closed: any tampered contract throws
-// (INVALID_SUBMARINE_REPRESENTATION for the §1 guard, SUBMARINE_STATE_INVARIANT_FAILED
-// for the type/policy definition guards) and never silently passes.
 import { BluewaveError } from "@bluewave/contracts";
 import {
   SUBMARINE_BASIS_POINTS_PER_UNIT,
@@ -124,8 +108,6 @@ export function validateSubmarineEffectivenessContract(
   void c;
 }
 
-// submarine_sea_state_v1 (§13–17)
-
 export interface SubmarineSeaStateContract {
   policyId: string;
   rulesetVersion: string;
@@ -227,8 +209,6 @@ export function validateSubmarineSeaStateContract(
   void c;
 }
 
-// submarine_screening_balance_v1 (§18)
-
 export interface SubmarineScreeningBalanceContract {
   policyId: string;
   rulesetVersion: string;
@@ -288,8 +268,6 @@ export function validateSubmarineScreeningBalanceContract(
   void c;
 }
 
-// submarine_mine_laying_v1 (§20)
-
 export interface SubmarineMineLayingContract {
   policyId: string;
   rulesetVersion: string;
@@ -338,8 +316,6 @@ export function validateSubmarineMineLayingContract(
     mismatch(c, "submarine_mine_laying_v1 §20 fuel floor 3_000 bp");
   void c;
 }
-
-// submarine_friendly_identification_v1 (§23)
 
 export interface SubmarineFriendlyIdentificationContract {
   policyId: string;

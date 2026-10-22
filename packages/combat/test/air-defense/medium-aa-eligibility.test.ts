@@ -1,5 +1,3 @@
-// AC-5: Medium AA pre-release window with 4_000bp fire-control solution (DESIGN-45 §8).
-
 import { describe, it, expect } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -150,16 +148,12 @@ describe("AC-5: medium AA eligibility + pre-release timing (§8)", () => {
       ammunitionAvailable: true,
       channelAvailable: true,
     });
-    // MEDIUM_ASM is absent from the MEDIUM_AA row of the §18 matrix.
     expect(result.eligible).toBe(false);
     expect(result.window).toBe("NOT_ELIGIBLE");
     expect(result.reason).toBe(AIR_DEFENSE_TARGET_INELIGIBLE);
   });
 
   it("reports NOT_ELIGIBLE for a LIGHT_ASM attack even when the medium-AA system lists it", () => {
-    // §18 line 313 lists light-ASM layers as CAP/MEDIUM_SAM/LIGHT_SAM/HEAVY_AA/LIGHT_AA/CIWS —
-    // MEDIUM_AA is deliberately absent, so §18 line 318 forbids engagement regardless of
-    // the system's authored profileEligibility.
     const system = mediumAaSystem({
       profileEligibility: new Set([...mediumAaSystem().profileEligibility, "LIGHT_ASM"]),
     });

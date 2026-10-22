@@ -1,12 +1,3 @@
-// Pins the raw `effect@4.0.2` mechanism behind ADR-0155 (per-schema excess-key
-// strictness): a plain `Schema.Struct` strips unmodeled keys on decode — string
-// *and* symbol — and rejection requires `{ onExcessProperty: "error" }`. The
-// boundary-level behaviour is covered elsewhere
-// (`schema-serialization.test.ts` locks the strip default;
-// `@bluewave/content-schema` and `@bluewave/combat` parity tests lock rejection);
-// this asserts the mechanism itself, independently of the docs and of any
-// boundary helper. Authority: the vendored byte-identical `effect@4.0.2`.
-
 import { Result, Schema } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 

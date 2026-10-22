@@ -21,8 +21,6 @@ import {
   makeShip,
 } from "./battle-fixtures.js";
 
-// T-1 06 (#115, spec #109 R10): the threshold crossing lowers the PLAYER's prestige through the S-2 seam. Every value is
-// FIXTURE-CLASS: threshold 2, a fixed 3-point loss, fixture nations at prestige 20 inside the fixture bounds 0..100.
 const SEED = "decline-prestige-seed";
 const TURN = "turn-decline-prestige";
 
@@ -83,7 +81,6 @@ function twoAreaSnapshot(): CampaignSnapshot {
   });
 }
 
-/** Answer each offer in order until the month completes or the responses run out. */
 function script(
   responses: readonly OfferResponse[],
   rules: Rules,

@@ -22,7 +22,6 @@ const reference = readReferenceDesigns().find((d) => d.id === "torpedo_cruiser_1
 
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-/** Runs a command program through the desktop service graph and projects its wire envelope. */
 async function runProgram(
   program: CommandProgram,
   payload: unknown,
@@ -34,8 +33,6 @@ describe("Drawing Board draft sidecar", () => {
   let saveDir: string;
   beforeEach(() => {
     saveDir = mkdtempSync(join(tmpdir(), "bw-draft-"));
-    // The draft programs only need the session's save directory; the campaign
-    // state is never read.
     registerCampaignSession({
       sessionId: "s",
       saveDir,
@@ -66,7 +63,6 @@ describe("Drawing Board draft sidecar", () => {
     });
     expect(w).toMatchObject({ outcome: "success", value: { saved: true } });
 
-    // The saved draft round-trips with a Clock-stamped ISO `savedAt`.
     const r = await runProgram(readDrawingBoardDraftProgram, "s");
     expect(r).toMatchObject({
       outcome: "success",
@@ -99,7 +95,6 @@ describe("Drawing Board draft sidecar", () => {
     });
     expect((await runProgram(readDrawingBoardDraftProgram, "nobody")).outcome).toBe("error");
 
-    // A payload that fails the wire schema is rejected before any IO.
     expect(
       await runProgram(writeDrawingBoardDraftProgram, { sessionId: "s", draft: { presetId: "x" } }),
     ).toMatchObject({ outcome: "error", reason: "INVALID_PAYLOAD" });
@@ -112,7 +107,6 @@ describe("Drawing Board draft sidecar", () => {
     });
     expect(missing).toMatchObject({ outcome: "error", reason: "SESSION_NOT_FOUND" });
 
-    // Point a session at a directory that does not exist: the atomic write fails.
     registerCampaignSession({
       sessionId: "s-gone",
       saveDir: join(saveDir, "gone"),
@@ -136,7 +130,6 @@ describe("Drawing Board draft sidecar", () => {
     const path = join(saveDir, DRAWING_BOARD_DRAFT_FILENAME);
     const before = readFileSync(path, "utf8");
 
-    // A draft written under the current 4.0.0 is not restored under another version.
     expect(loadDrawingBoardDraft(saveDir, "5.0.0")).toBeNull();
     expect(existsSync(path)).toBe(false);
     expect(readFileSync(`${path}.4.0.0`, "utf8")).toBe(before);
@@ -145,8 +138,6 @@ describe("Drawing Board draft sidecar", () => {
   it("treats an unstamped legacy draft as written under 1.2.0 (refused at the current version)", () => {
     const stored = { schema: "drawing_board_draft_v1", savedAt: "x", presetId: reference.id, log };
     writeFileSync(join(saveDir, DRAWING_BOARD_DRAFT_FILENAME), JSON.stringify(stored));
-    // The sidecar only restores a draft whose version matches the current engine
-    // version; the unstamped legacy draft is 1.2.0 and 4.0.0 is current.
     expect(loadDrawingBoardDraft(saveDir, "1.2.0")).toMatchObject({ presetId: reference.id });
     writeFileSync(join(saveDir, DRAWING_BOARD_DRAFT_FILENAME), JSON.stringify(stored));
     expect(loadDrawingBoardDraft(saveDir)).toBeNull();

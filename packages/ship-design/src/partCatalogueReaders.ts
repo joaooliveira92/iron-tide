@@ -1,16 +1,3 @@
-/**
- * The inverse readers (ship-part-model ticket 11b, ADR-0154 §19).
- *
- * The whole-catalogue builder (`partCatalogue.ts`) and the per-placement read-path adapters
- * (tickets 03–05) turn today's content into **parts**. These readers go the other way: given a
- * design's header and loadout — the parts representation — they rebuild the legacy runtime
- * shapes the compile reads (`PlacementSpec`, `MachineryPlan`, `ArmourRegion`, `DesignDraft`).
- *
- * They consume the generated parts, never the original legacy placements: a value the parts do
- * not carry is a typed, path-specific failure, never a zero, a `false`, an empty list or a
- * guess. The candidate pipeline (and the round-trip tests) prove that `source → parts → inverse`
- * preserves every represented value.
- */
 import type {
   DesignHeaderData,
   DesignLoadoutData,
@@ -34,9 +21,6 @@ import type {
 import { machineryPlanFromEntry, type MachineryTranslation } from "./plantPartAdapter.js";
 import type { HullSpec } from "./hull.js";
 
-// Failures
-
-/** One typed, path-specific reason a part could not rebuild a legacy runtime shape. */
 export type InverseReaderCode =
   | "READER_UNKNOWN_PART"
   | "READER_UNSUPPORTED_FAMILY"
@@ -53,20 +37,16 @@ export type InverseReaderCode =
 
 export interface InverseReaderIssue {
   readonly code: InverseReaderCode;
-  /** `<design>.<entry>[.<field>]`, e.g. `havock_like.gun_main.entries.guns`. */
   readonly path: string;
   readonly message: string;
 }
 
-/** The outcome of an inverse read: a value, or the issues that stopped it. */
 export interface InverseResult<T> {
   readonly value: T | null;
   readonly issues: readonly InverseReaderIssue[];
 }
 
-/** A part lookup by id (the whole-catalogue index, or a design's part map). */
 export type PartLookup = (id: string) => FlattenedPart | undefined;
-/** A slot lookup by id (a platform's slots). */
 export type SlotLookup = (id: string) => SlotData | undefined;
 
 interface Reader {
@@ -80,9 +60,6 @@ const fail = (reader: Reader, code: InverseReaderCode, path: string, message: st
   reader.issues.push({ code, path: `${reader.designId}.${path}`, message });
 };
 
-// Placements
-
-/** The families the placement reader rebuilds; plant and armour entries are read separately. */
 const SKIPPED_FAMILIES: ReadonlySet<string> = new Set(["propulsion_plant", "armour_material"]);
 
 function readGunPlacement(reader: Reader, entry: LoadoutEntryData): PlacementSpec | null {
@@ -183,20 +160,11 @@ function readUnitEntry(
   };
 }
 
-/** The one count parameter a part declares, or `null` when it declares none. */
 function countParameterOf(part: FlattenedPart): string | null {
   const names = Object.keys(part.parameters ?? {}).sort(compareCodePoints);
   return names[0] ?? null;
 }
 
-/**
- * Attach the launcher's compiled torpedo to its placement (ticket 13b). The launcher part names
- * the torpedo part it loads (`spec.loadsTorpedo`); compiling it at a far-future month resolves the
- * model's effective (latest) revision — the part's current authored spec. A launcher whose named
- * torpedo cannot be resolved (missing, not a torpedo, or a malformed spec) is reported as a typed
- * `READER_TORPEDO_UNRESOLVED` issue, never silently dropped: the placement is still built, but the
- * mount will carry no compiled torpedo and combat fails closed rather than defaulting.
- */
 function withCompiledTorpedo(
   reader: Reader,
   launcherPart: Extract<FlattenedPart, { readonly family: "torpedo_launcher" }>,
@@ -240,11 +208,6 @@ export interface ReadPlacementsResult {
   readonly issues: readonly InverseReaderIssue[];
 }
 
-/**
- * Rebuild the legacy placements from a design's entries. Gun mounts rebuild from their nested
- * gun; launchers and fittings rebuild from their part. A plant or armour entry is skipped: the
- * machinery plan and armour regions are read from the header (below), not as placements.
- */
 export function readPlacements(input: ReadPlacementsInput): ReadPlacementsResult {
   const reader: Reader = {
     partOf: input.partOf,
@@ -269,7 +232,6 @@ export function readPlacements(input: ReadPlacementsInput): ReadPlacementsResult
       const placement = readGunPlacement(reader, entry);
       if (placement !== null) placements.push(placement);
     } else if (part.family === "torpedo_launcher") {
-      // A national launcher variant keeps its base launcher's component id as its prototype.
       const componentId = part.origin.prototype?.id ?? part.id;
       const placement = readUnitEntry(reader, entry, componentId, "tubes", entry.mountCount ?? 1);
       if (placement !== null)
@@ -295,7 +257,6 @@ export function readPlacements(input: ReadPlacementsInput): ReadPlacementsResult
     }
   }
   return {
-    // Entry order is the loadout order, which the adapters build in placement order.
     placements,
     issues: [...reader.issues].sort(
       (a, b) => compareCodePoints(a.path, b.path) || compareCodePoints(a.code, b.code),
@@ -303,9 +264,6 @@ export function readPlacements(input: ReadPlacementsInput): ReadPlacementsResult
   };
 }
 
-// The design header: forward and inverse
-
-/** The header facts a design draft carries into the parts representation. */
 export function headerFromDraft(draft: DesignDraft): DesignHeaderData {
   return {
     nation: draft.nationId,
@@ -341,7 +299,6 @@ export function headerFromDraft(draft: DesignDraft): DesignHeaderData {
   };
 }
 
-/** The machinery plan rebuilt from the plant entry and the header's machinery facts. */
 export function readMachineryPlan(
   header: DesignHeaderData,
   entries: readonly LoadoutEntryData[],
@@ -409,7 +366,6 @@ export function readMachineryPlan(
   return { value: machineryPlanFromEntry(translation, slot.zone as ZoneId), issues: reader.issues };
 }
 
-/** The armour regions rebuilt from the armour entries and the header's protection figures. */
 export function readArmourRegions(
   header: DesignHeaderData,
   entries: readonly LoadoutEntryData[],
@@ -455,11 +411,6 @@ export interface RebuildDraftResult {
   readonly issues: readonly InverseReaderIssue[];
 }
 
-/**
- * Rebuild a whole `DesignDraft` from the parts representation: the header supplies the
- * requirement, hull, machinery residue and protection figures; the entries supply the
- * placements (guns, tubes, fittings), the plant and the armour regions.
- */
 export function rebuildDraft(input: {
   readonly designId: string;
   readonly header: DesignHeaderData;
@@ -528,10 +479,7 @@ export function rebuildDraft(input: {
   };
 }
 
-/** The compatibility slot a gun mount, launcher or fitting of `iface` in `zone` uses (forward). */
 export const zoneSlotId = compatibilitySlotId;
-/** The slot an armour region uses (forward). */
 export const armourSlotId = armourRegionSlotId;
 
-/** The loadout of a design as the parts representation (no reader: the adapters build it). */
 export type DesignLoadout = DesignLoadoutData;

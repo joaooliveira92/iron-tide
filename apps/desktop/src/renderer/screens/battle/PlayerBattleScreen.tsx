@@ -9,7 +9,6 @@ import type {
 import { usePreferences } from "../../lib/preferences-context.js";
 import { formatMeasurement, UM_PER_METRE } from "../../lib/presentation-format/index.js";
 
-/** Physical constant: metres in one nautical mile (the engine reports visibility in nm). */
 const METRES_PER_NAUTICAL_MILE = 1852;
 
 interface DivisionOrderState {
@@ -39,12 +38,6 @@ function ordersOf(
   return Object.entries(orders).map(([divisionId, order]) => ({ divisionId, ...order }));
 }
 
-/**
- * T-2 (issue #221): the production player-fought battle. The tactical session
- * lives in the desktop main process; this surface only reads its view, sends
- * per-division standing orders, and hands the final result to the existing
- * `submitBattleResult` interruption path. Nothing here re-derives combat.
- */
 export function PlayerBattleScreen({
   bridge,
   request,

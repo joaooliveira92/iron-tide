@@ -1,5 +1,3 @@
-// AC-15 (INC-5): canonical ordering per DESIGN-45 §27 — insertion/UI/rendering order never
-// affects results; only codepoint string comparisons (never localeCompare).
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -60,9 +58,6 @@ function makeRecord(overrides: Record<string, unknown> = {}): AirDefenseEngageme
   }) as AirDefenseEngagementRecord;
 }
 
-// A layer outside FULL_DEFENSE_LAYER_ORDER — a record that failed layer validation upstream
-// would never carry it, but the comparator's defensive "unknown layer sorts LAST" branch is
-// exercised with a cast.
 const UNKNOWN_LAYER = "UNKNOWN_LAYER" as AirDefenseRecordLayer;
 
 describe("AC-15: §27 canonical ordering", () => {
@@ -75,12 +70,11 @@ describe("AC-15: §27 canonical ordering", () => {
       expect(compareStrings("a", "b")).toBeLessThan(0);
       expect(compareStrings("b", "a")).toBeGreaterThan(0);
       expect(compareStrings("a", "a")).toBe(0);
-      expect(compareStrings("ab", "a")).toBeGreaterThan(0); // prefix is shorter
+      expect(compareStrings("ab", "a")).toBeGreaterThan(0);
       expect(compareStrings("a", "ab")).toBeLessThan(0);
     });
 
     it("differs from localeCompare for 'Z' vs 'a' (codepoint 90 < 97)", () => {
-      // localeCompare would sort 'a' before 'Z' in many locales; codepoint must not.
       expect(compareStrings("Z", "a")).toBeLessThan(0);
     });
   });
@@ -226,8 +220,8 @@ describe("AC-15: §27 canonical ordering", () => {
         makeRecord({ minute: SafeInt(5), substep: SafeInt(1), layer: "HEAVY_AA", recordId: "r2" }),
       ];
       const sorted = canonicallySortedAirDefenseRecords(records);
-      expect(sorted[0]?.recordId).toBe("r1"); // minute 3
-      expect(sorted[1]?.recordId).toBe("r2"); // minute 5, substep 1, HEAVY_AA before MEDIUM_AA
+      expect(sorted[0]?.recordId).toBe("r1");
+      expect(sorted[1]?.recordId).toBe("r2");
       expect(sorted[2]?.recordId).toBe("r2a");
       expect(sorted[3]?.recordId).toBe("r3");
     });

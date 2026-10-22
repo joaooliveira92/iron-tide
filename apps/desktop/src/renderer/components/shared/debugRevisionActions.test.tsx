@@ -2,7 +2,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { debugRevisionActions } from "./debugRevisionActions.js";
 
-// The vitest config turns the debug flag on globally; flip it per test.
 const debugFlag = vi.hoisted(() => ({ on: false }));
 vi.mock("../../shell/debug-flag.js", () => ({
   get DEBUG_MODE() {

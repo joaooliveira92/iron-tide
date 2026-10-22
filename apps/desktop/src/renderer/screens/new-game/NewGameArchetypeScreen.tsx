@@ -37,7 +37,6 @@ export interface NewGameArchetypeScreenProps {
   readonly onPrimaryActionChange: SetPrimaryAction;
 }
 
-/** The deck slot id an editor state has applied: a preset id, `custom`, or nothing yet. */
 function appliedSlotId(state: ArchetypeEditorState): string | null {
   return state.mode === "custom" ? CUSTOM_ARCHETYPE_ID : state.selectedPresetId;
 }
@@ -64,22 +63,15 @@ export function NewGameArchetypeScreen({
   onNext,
   onPrimaryActionChange,
 }: NewGameArchetypeScreenProps) {
-  // The applied selection: the only state that becomes `onNext`'s payload.
   const [state, setState] = useState<ArchetypeEditorState>(() =>
     restoreArchetypeEditorState(initialArchetype),
   );
-  // The custom slot's working allocation, edited inline. It becomes the
-  // selection only when the player applies it.
   const [draft, setDraft] = useState<ArchetypeEditorState>(() =>
     state.mode === "custom" ? state : createCustomArchetype(),
   );
 
-  // The slot the player has previewed but not applied. The primary action
-  // applies it. Presentation state only: never the selection, never persisted.
   const [pendingSlotId, setPendingSlotId] = useState<string | null>(null);
 
-  // Which deck card is previewed: until the player moves focus it is the
-  // applied slot (or the first card while nothing is applied).
   const [focusOverride, setFocusOverride] = useState<number | null>(null);
   const appliedId = appliedSlotId(state);
   const appliedIndex = ARCHETYPE_DECK_ENTRIES.findIndex((entry) =>
@@ -95,7 +87,6 @@ export function NewGameArchetypeScreen({
   const focusedSlotId = focusedIsCustom ? CUSTOM_ARCHETYPE_ID : (focusedPreset?.id ?? null);
 
   const customApplied = state.mode === "custom";
-  // An applied custom build whose working allocation has since been edited.
   const customDirty = customApplied && !sameAllocation(draft, state);
   const draftValid = isAllocationValid(draft);
 
@@ -110,8 +101,6 @@ export function NewGameArchetypeScreen({
       ? (ARCHETYPE_PRESETS.find((preset) => preset.id === state.selectedPresetId)?.name ?? "Custom")
       : "Custom";
 
-  // Enter or a tap on the custom card reveals the allocator and moves focus
-  // into it. The request is a counter so repeating it refocuses.
   const detailRef = useRef<HTMLElement | null>(null);
   const [allocatorFocusRequest, setAllocatorFocusRequest] = useState(0);
   useEffect(() => {

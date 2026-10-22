@@ -7,11 +7,6 @@ import { PLAN_MID, type PlanFrame } from "./geometry.js";
 import { MachineryRoomMarker, SectionHighlightLayer } from "./selection-layers.js";
 import { SECTIONS, type ZoneRange } from "./sections.js";
 
-/**
- * Section and machinery-room states on the plan: form-linked (dotted), hover-card preview (dashed), selected
- * (solid, with a warning glyph when the section has findings). Subscribes to the selection itself, so focus and
- * hover changes redraw only this layer. Fitting states live on the `FittingTargets` overlay.
- */
 export function SelectionLayer({
   frame,
   zones,

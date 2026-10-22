@@ -11,20 +11,11 @@ import {
 import type { TensionLabel } from "@bluewave/campaign-engine";
 import type { PowerOutlook, RelationKind } from "./world-situation.js";
 
-/**
- * Icon and colour vocabulary for the briefing. Colour and icon only reinforce
- * the words beside them (copy lives in `world-situation-copy.ts`); each record
- * is exhaustive so a new status, band or outlook cannot ship unstyled.
- */
 export interface Tone {
   readonly icon: LucideIcon;
-  /** Text colour that holds AA contrast on the briefing surfaces in both themes. */
   readonly text: string;
-  /** Meter / marker fill. */
   readonly fill: string;
-  /** Left rule on selected or emphasised cards. */
   readonly rule: string;
-  /** Top rule on the dossier panel. */
   readonly top: string;
 }
 
@@ -59,7 +50,6 @@ export const STATUS_ICON: Readonly<Record<RelationKind, LucideIcon>> = {
   at_war: Swords,
 };
 
-/** Meter colour per attitude band; the meter is decorative beside the numeric text. */
 export const ATTITUDE_FILL: Readonly<Record<TensionLabel, string>> = {
   cordial: "bg-sky-600 dark:bg-sky-400",
   neutral: "bg-slate-500 dark:bg-slate-400",

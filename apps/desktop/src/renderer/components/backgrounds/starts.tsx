@@ -72,9 +72,6 @@ function StarLayer({
   );
 }
 
-// Bigger/closer star layers shift more against the shared mouse offset than
-// smaller/farther ones, so the field reads as having depth instead of
-// panning as one flat plane.
 function ParallaxLayer({
   offsetX,
   offsetY,
@@ -126,10 +123,6 @@ function StarsBackground({
   const offsetX = useMotionValue(1);
   const offsetY = useMotionValue(1);
 
-  // Bound to `window` rather than this div's onMouseMove: the header sits on
-  // top (z-50, blurred) and would otherwise swallow the pointer, leaving the
-  // parallax dead whenever the cursor crosses it. A window listener still
-  // fires via bubbling no matter what's stacked on top.
   React.useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const centerX = window.innerWidth / 2;

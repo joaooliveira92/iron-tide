@@ -1,13 +1,6 @@
 import type { StrategicPriority } from "@bluewave/campaign-engine";
 import { comparePriorities } from "../month-report-format.js";
 
-/**
- * The report's Priorities section (spec §16): the INC-2 projection over the
- * post-month snapshot, split into new / resolved / continuing against the
- * previous report's stored fingerprints. This is also where the one real
- * diplomacy contribution (high foreign tension) surfaces — there is no
- * separate Diplomacy section.
- */
 export function MonthReportPrioritiesSection({
   priorities,
   previousPriorities,

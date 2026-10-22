@@ -15,15 +15,6 @@ import {
   researchOf,
 } from "./helpers/campaignRecords.js";
 
-/**
- * 1880 per-nation viability (N-1 ticket 06; N-2 static gate from #31).
- * No nation opens as a placeholder. Every nation has at least one ship afloat,
- * at least one own design, and a research programme; no fleet is empty without a
- * documented reason; every ship's design reference resolves; ten nations are
- * playable (ADR-0214); and no starting ship, construction, or division
- * references a post-1880 design.
- */
-
 const here = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = resolve(here, "..", "..", "..");
 const contentDir = resolve(repoRoot, "content", "production", "1880");
@@ -59,7 +50,6 @@ describe("1880 per-nation viability (N-1 ticket 06; N-2 static gate)", () => {
   }
   const researchNations = new Set(research.map((entry) => entry.nationId));
 
-  // ADR-0214: ten playable nations; the remaining four are AI-only.
   const PLAYABLE_NATION_IDS = [
     "uk",
     "germany",
@@ -73,8 +63,6 @@ describe("1880 per-nation viability (N-1 ticket 06; N-2 static gate)", () => {
     "usa",
   ] as const;
 
-  // The authored `familyCreationMonth` year is the design's vintage; the 1880
-  // start may only reference designs whose family existed by 1880.
   const designYearById = new Map(
     designs.map((design) => [
       design.designVersionId,

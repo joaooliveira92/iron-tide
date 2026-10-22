@@ -2,13 +2,6 @@ import { expect, test } from "./fixtures.js";
 import { writeAppPreferences } from "./preferences-fixture.js";
 import type { Page } from "@playwright/test";
 
-// Regression guard for "toggling the theme at runtime keeps the animated
-// backdrop alive". Auralis and Nebulore rebuild their WebGL program when the
-// theme changes (their palette is an effect dependency). The effect cleanup
-// must not lose the canvas context: a lost context is never restored, so the
-// rebuilt program fails to compile and the backdrop vanishes behind a blank
-// surface while the rest of the app inverts to the new theme.
-
 const ANIMATED_BACKGROUNDS = ["auralis", "nebulore"] as const;
 
 async function openWithBackground(
@@ -36,7 +29,6 @@ for (const background of ANIMATED_BACKGROUNDS) {
 
     await page.getByRole("button", { name: /Theme:/ }).click();
     await page.waitForFunction(() => document.documentElement.classList.contains("dark"));
-    // Let the rebuilt program run two frames, so a lost context has surfaced before it is read.
     await page.evaluate(
       () =>
         new Promise<void>((done) =>

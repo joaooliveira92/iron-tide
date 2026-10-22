@@ -1,6 +1,5 @@
 import { Schema } from "effect";
 
-/** Reject modeless integrity: every identifier/string field is non-empty. */
 const nonEmptyString = Schema.String.check(Schema.isMinLength(1));
 
 const campaignDatePattern = Schema.String.check(
@@ -27,7 +26,6 @@ export const MESSAGE_CATEGORIES = [
 export type MessageCategory = (typeof MESSAGE_CATEGORIES)[number];
 export const MessageCategorySchema = Schema.Literals(MESSAGE_CATEGORIES);
 
-/** The monthly phase identifiers a message can be attributed to. */
 export const TURN_PHASES = [
   "opening_validation",
   "weather_generation",
@@ -144,12 +142,10 @@ export type CampaignDate = string;
 
 const DECODE_OPTIONS = { onExcessProperty: "error" } as const;
 
-/** Strict decode of one message — excess keys are an error, not stripped. */
 export function decodeTurnMessage(input: unknown): TurnMessage {
   return Schema.decodeUnknownSync(TurnMessageSchema, DECODE_OPTIONS)(input) as TurnMessage;
 }
 
-/** Strict decode of a message list. */
 export function decodeTurnMessages(input: unknown): TurnMessage[] {
   return Schema.decodeUnknownSync(
     Schema.Array(TurnMessageSchema),

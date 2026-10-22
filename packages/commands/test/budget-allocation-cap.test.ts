@@ -5,7 +5,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { CommandLifecycle, type CommandBody, type CommandEnvelope } from "../src/index.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
-// Economy spec #138: the research cap is a rule of issue-time validation too, so a player cannot queue an unpayable budget.
 function snapshot(baseResources: number): CampaignSnapshot {
   return {
     prestigeRules: FIXTURE_PRESTIGE_RULES,
@@ -81,7 +80,6 @@ function allocation(s: CampaignSnapshot, rate: number, research: number) {
 }
 
 describe("SetBudgetAllocation research cap at issue time", () => {
-  // base 6000 at 3000 bp => revenue 150 => cap floor(12% x 150) = 18
   const s = snapshot(6000);
 
   it("accepts a budget at the cap", () => {
@@ -97,13 +95,12 @@ describe("SetBudgetAllocation research cap at issue time", () => {
   });
 
   it("judges the cap at the commanded rate, not the current one", () => {
-    // 1000 bp => revenue 50 => cap 6: a budget of 10 is fine at 3000 bp but not at 1000 bp.
     expect(allocation(s, 3000, 10).ok).toBe(true);
     expect(allocation(s, 1000, 10).ok).toBe(false);
   });
 
   it("allows only zero research for a nation whose appropriation is too small", () => {
-    const tiny = snapshot(60); // revenue 1 at 2000 bp => cap 0
+    const tiny = snapshot(60);
     expect(allocation(tiny, 2000, 0).ok).toBe(true);
     expect(allocation(tiny, 2000, 1).ok).toBe(false);
   });

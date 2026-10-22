@@ -1,9 +1,3 @@
-// T-1 10 (#119, spec #109 R16): acceptance scenario for the player battle offer on the compiled PRODUCTION pack. It reads
-// the authored ADR-0254 `battleOffers` section from the compiled rulesets exactly as the desktop main process does and
-// supplies no ruleset number: every cost, chance and threshold observed here is the authored production value.
-// Each path (offer, accept, delegate, decline, unavoidable refusal, enemy decline, support force, threshold, prestige) is
-// driven through the real month executor with a scripted interruption channel. The observation is plain JSON so that two
-// clean processes can be compared byte for byte.
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import { battleOffersFromRulesets } from "@bluewave/content-compiler";
 import type { BattleOfferRules } from "@bluewave/content-schema";
@@ -20,8 +14,6 @@ const ALLY = "italy";
 const AREA = "eng_home_coast";
 const TURN = "t-1-10-acceptance-turn";
 
-// Seeds found by search at authoring time (ticket #118) so that a recorded draw against the AUTHORED chance falls on each
-// side. A change in stream keying or in the authored chance fails the acceptance loudly.
 const SEED = "production-offer-seed";
 const ENEMY_WITHDRAWS_SEED = "seed-0";
 const ENEMY_PROCEEDS_SEED = "seed-2";

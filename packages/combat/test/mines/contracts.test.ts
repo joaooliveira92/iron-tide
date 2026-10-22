@@ -1,6 +1,3 @@
-// AC-24 seeds (INC-1): `mine_type_definitions_v1` SHIPPED_MINE_TYPE_DEFINITIONS_CONTRACT
-// + validate guard fail-closed on tampering; exact shipped §9/§15/§21 integers;
-// the shipped six-type set.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {

@@ -1,5 +1,3 @@
-// B-6 INC-2 (AC-13): battle_auto_resolution_v1 contract ships with a fail-closed
-// validate guard (mirrors weather/gunnery *_v1 contract tests).
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {

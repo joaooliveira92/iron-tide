@@ -1,8 +1,3 @@
-// T-2 (issue #221): cross-process acceptance of a player-fought battle on the
-// compiled production pack. Accepts a real offer, projects the same tactical
-// battle the auto-resolver would have fought, runs it to a battle-end decision,
-// submits the result through the battle-result interruption, and reports the
-// authoritative hashes for byte-for-byte comparison across clean processes.
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import type { AutoResolverNation, TacticalBattleManifest } from "@bluewave/combat";
 import {

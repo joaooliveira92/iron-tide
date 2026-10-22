@@ -16,7 +16,6 @@ const priority = (over: Partial<StrategicPriority> & { id: string }): StrategicP
 
 describe("PrioritiesCard", () => {
   beforeAll(() => {
-    // The glass card measures itself with a ResizeObserver, which jsdom lacks.
     vi.stubGlobal(
       "ResizeObserver",
       class {

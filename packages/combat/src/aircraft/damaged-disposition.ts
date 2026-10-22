@@ -1,4 +1,3 @@
-// DESIGN-43 §21 damaged aircraft disposition: 7 dispositions, cannibalization.
 import { BluewaveError } from "@bluewave/contracts";
 import { DAMAGED_AIRCRAFT_DISPOSITION_REQUIRED } from "./reasonCodes.js";
 import type { AircraftDamagedDisposition } from "./constants.js";

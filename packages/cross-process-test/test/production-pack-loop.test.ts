@@ -19,18 +19,6 @@ import { FIXTURE_BATTLE_OFFER_RULES, FIXTURE_PRESTIGE_RULES } from "@bluewave/te
 import { compileProductionCampaign } from "../src/production-pack.js";
 import { tmpdir } from "node:os";
 
-// Ticket 05 (.scratch/desktop-mvp/issues/05-verify-full-loop-against-production-pack.md):
-// no existing test compiled content/production/1880 and then advanced a
-// strategic month / saved / loaded it -- packages/cross-process-test/src/run-child.ts
-// exercises exactly that loop (compile -> MonthExecutor -> SaveStore ->
-// replay) but only against a synthetic inline 2-nation fixture. This test
-// runs the same loop directly against the canonical production pack.
-
-// Mirrors ReplayVerifier's internal `snapshotToHashable`/`hashSnapshot`
-// (packages/phase-engine/src/replay.ts, not exported) and run-child.ts's own
-// copy of the same shape: ReplayVerifier.verify() compares its replayed
-// snapshot hash against this exact subset-hash, not a full canonicalSerialize
-// of the raw snapshot.
 function snapshotToHashable(snapshot: CampaignSnapshot): unknown {
   const nations: Record<string, NationState> = {};
   for (const [id, nation] of snapshot.nations) {
@@ -40,8 +28,6 @@ function snapshotToHashable(snapshot: CampaignSnapshot): unknown {
     version: snapshot.version,
     turnNumber: snapshot.turnNumber,
     campaignId: snapshot.campaignId,
-    // B-6/ADR-0025: start date + current-month per-area weather are part of the
-    // authoritative snapshot surface (hash parity with ReplayVerifier).
     startYear: snapshot.startYear,
     startMonth: snapshot.startMonth,
     strategicWeather: (snapshot.strategicWeather ?? []).map((s) => ({ ...s })),
@@ -131,16 +117,12 @@ function makeBudgetCommand(
 
 describe("production pack (content/production/1880) full loop", () => {
   it("compiles, advances a strategic month, saves, loads, and replays deterministically", () => {
-    // Step 1: compile the canonical production pack (not a synthetic fixture).
     const { state: campaignState, contentHash: contentArtifactHash } = compileProductionPack();
     const snapshot = campaignState.snapshot;
 
     expect(contentArtifactHash).toBeDefined();
     expect(snapshot.nations.size).toBe(14);
 
-    // Step 2: advance one strategic month, issuing a real command against a
-    // real in-progress construction project authored in the pack
-    // (con_gbr_inflexible, nationId uk; content/production/1880/constructions.yaml).
     const executor = new MonthExecutor();
     const snapshotHash = sha256Hex(canonicalSerialize(snapshot));
     const cmd = makeBudgetCommand(snapshotHash, "uk", "con_gbr_inflexible", SafeInt(50));
@@ -174,8 +156,6 @@ describe("production pack (content/production/1880) full loop", () => {
         expect(loaded.snapshot.campaignId).toBe(snapshot.campaignId);
       }
 
-      // Step 5: replay the same command against the pre-month snapshot and
-      // confirm it reproduces the same closing state deterministically.
       const replayVerifier = new ReplayVerifier();
       const closingSnapshotHash = hashSnapshot(monthResult.finalSnapshot);
       const replayResult = replayVerifier.verify(
@@ -349,9 +329,6 @@ describe("P-1 AC-7: torpedoes reachable from a compiled production-pack battle",
 });
 
 describe("S-1 acceptance (ticket 09): readiness and maintenance on the production pack", () => {
-  // Build a scripted copy of the compiled production snapshot: four UK ships
-  // take one readiness state each, so every S-1 mechanic is observed at least
-  // once in a real production-pack month run.
   function s1Snapshot(): { snapshot: CampaignSnapshot; ids: string[] } {
     const snapshot = compileProductionPack().state.snapshot;
     const uk = snapshot.nations.get("uk")!;
@@ -388,18 +365,13 @@ describe("S-1 acceptance (ticket 09): readiness and maintenance on the productio
     const ships1 = peace1.finalSnapshot.nations.get("uk")!.fleets[0]!.ships;
     const byId = (id: string) => ships1.find((s) => s.id === id)!;
 
-    // Month 1: the working-up ship (crew 55 -> 60) is promoted to active.
     expect(byId(ids[0]!).readiness).toBe("ACTIVE");
-    // Reserve crew ramps toward its ceiling; mothballed is laid up.
     expect(byId(ids[1]!).readiness).toBe("RESERVE");
     expect(byId(ids[2]!).readiness).toBe("MOTHBALLED");
-    // The repairing ship counts down one month (2 -> 1) and stays in repair.
     expect(byId(ids[3]!).readiness).toBe("REPAIR");
     expect(byId(ids[3]!).repairMonthsRemaining as number).toBe(1);
-    // A readiness transition is recorded as a domain event.
     expect(peace1.eventLedger.all.some((e) => e.body.kind === "ShipReadinessChanged")).toBe(true);
 
-    // Month 2: the repair countdown reaches zero and releases the ship to active.
     const peace2 = new MonthExecutor().execute(
       peace1.finalSnapshot,
       [],
@@ -412,10 +384,6 @@ describe("S-1 acceptance (ticket 09): readiness and maintenance on the productio
     expect(released.readiness).toBe("ACTIVE");
     expect(released.repairMonthsRemaining).toBeUndefined();
 
-    // Wartime raises the nation's maintenance above peace for the same fleet.
-    // Compare a month run with and without a live war (a distant opponent, so no
-    // battle disturbs the maintenance snapshot); the month-1 promotion leaves an
-    // active ship for the multiplier to apply to.
     const warWars = {
       ...peace1.finalSnapshot.wars,
       wars: [
@@ -450,13 +418,10 @@ describe("S-1 acceptance (ticket 09): readiness and maintenance on the productio
     const warMaintenance = warMonth2.finalSnapshot.nations.get("uk")!.maintenanceCost as number;
     expect(warMaintenance).toBeGreaterThan(peaceMaintenance);
 
-    // Deterministic: identical inputs produce byte-identical closing snapshots.
     expect(hashSnapshot(run().finalSnapshot)).toBe(hashSnapshot(run().finalSnapshot));
   });
 });
 
-// S-2 ticket 03 (spec #74 R3): prestige on the production pack. Every value here traces to
-// ADR-0239 (decision request 0012, Option B); a fixture number must never be reachable.
 describe("S-2 ticket 03: prestige on the production pack (ADR-0239)", () => {
   const EXPECTED_RULES = {
     lowerBound: SafeInt(0),
@@ -513,8 +478,6 @@ describe("S-2 ticket 03: prestige on the production pack (ADR-0239)", () => {
     mkdirSync(dir, { recursive: true });
     try {
       const store = new SaveStore();
-      // As the full-loop test above does: a raw compile output carries its compile-time rawHash, so
-      // the saved state is given the hash the store verifies.
       const { rawHash: _rawHash, ...stateForSave } = state;
       store.save({ ...state, rawHash: sha256Hex(canonicalSerialize(stateForSave)) }, dir);
       const diagnostics = new DiagnosticCollector();
@@ -536,7 +499,6 @@ describe("T-1 09 (#118): the battle-offer section is configured on the productio
     "../../../content/production/1880",
   );
 
-  // The owner-authorized values of ADR-0254, restated independently of the pack so a drift in either side fails.
   const ADR_0254_VALUES = {
     sectionVersion: 1,
     estimateModel: {
@@ -619,8 +581,6 @@ describe("T-1 09 (#118): the battle-offer section is configured on the productio
 });
 
 describe("S-2 04 (#89): the unpaid-funds prestige source on the production pack (ADR-0239)", () => {
-  // A compiled production month driven into the shortfall: the player nation's treasury cannot cover its fixed
-  // expenses, so the obligation phase pays what it can and the authorized 300 bp proportional loss applies.
   function shortfallSnapshot(shortNationIds: readonly string[]): CampaignSnapshot {
     const { state } = compileProductionCampaign();
     const nations = new Map(state.snapshot.nations);

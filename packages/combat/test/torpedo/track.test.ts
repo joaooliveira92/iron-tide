@@ -1,17 +1,3 @@
-// AC-13 (part 1): TorpedoTrack (DESIGN-40 §13). Every launched torpedo creates
-// ONE authoritative track carrying all §13 fields; the track id is derived
-// deterministically from (battleId + launcherId + tubeId + launch minute +
-// substep); the track hash is a domain-separated SHA-256 over the authoritative
-// surface (tamper-proof); a torpedo remains an authoritative entity (terminalResult
-// null) until a terminal result is set through the one-way lifecycle state machine
-// (HIT / DETONATION / DUD / GROUNDING / EXHAUSTION / DESTRUCTION / BATTLE_END).
-// Motion is pure integer µm along the launch heading (the movement module's
-// authored per-degree direction table), advancing each minute.
-//
-// All arithmetic is exact integer fixed-point (basis points / µm); every assertion
-// is deterministic — no randomness at test level. The selected setting is the
-// shipped G7a 44-kn seed setting (speedKnotsBp 44_000, rangeM 6_000), matching the
-// launch-failure.test.ts fixture.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -34,20 +20,15 @@ import {
 } from "../../src/torpedoes/index.js";
 import type { CompiledTorpedoSpeedSetting } from "@bluewave/armament";
 
-const G7A = "ger_533mm_g7a_1934"; // reliabilityBp 96_000, guidance "gyro"
+const G7A = "ger_533mm_g7a_1934";
 const G7A_RELIABILITY_BP = 96_000;
-// The shipped G7a 44-kn speed/range setting (model.ts orderedSettings[0]; the
-// same fixture launch-failure.test.ts uses).
 const G7A_44KN_SETTING: CompiledTorpedoSpeedSetting = {
   settingId: "44kn",
-  speedMilliKnots: 44_000, // 44 kn
+  speedMilliKnots: 44_000,
   rangeM: 6_000,
 };
-const G7A_ARMING_M = 150; // model.ts minimumArmingDistanceM
+const G7A_ARMING_M = 150;
 
-// speedUmS = 44_000 * 514_444 / 1_000 = 22_635_536; per tactical minute (60_000 ms)
-// distanceUm = 22_635_536 * 60_000 / 1_000 = 1_358_132_160, so distanceTraveledM
-// after one minute = floor(1_358_132_160 / 1_000_000) = 1_358.
 const ONE_MINUTE_DISTANCE_UM = 1_358_132_160;
 const ONE_MINUTE_DISTANCE_M = 1_358;
 
@@ -69,7 +50,7 @@ function buildTrack(
     launchMinute: 5,
     launchSubstep: 4,
     launchPosition: [0, 0],
-    launchHeadingMdeg: 90_000, // 90° -> +Y (the mdeg convention: 0 = north, 90 = east)
+    launchHeadingMdeg: 90_000,
     orderedGyroAngleMdeg: 90_000,
     depthSettingM: 5,
     ...overrides,
@@ -97,8 +78,6 @@ describe("AC-13: every launched torpedo creates one authoritative track with all
     expect(t.maxRunDistanceM).toBe(G7A_44KN_SETTING.rangeM);
     expect(t.armingDistanceM).toBe(G7A_ARMING_M);
     expect(t.depthSettingM).toBe(5);
-    // reliability normalized from the model's 100_000 scale to the 10_000 bp roll
-    // scale: floor(96_000 / 10) = 9_600.
     expect(t.reliabilityState).toEqual({ reliabilityBp: 9_600 });
     expect(t.guidanceState).toEqual({ capabilityId: "gyro", orderedGyroAngleMdeg: 90_000 });
     expect(t.detectionState).toEqual({ detectedByParticipant: {} });
@@ -135,7 +114,6 @@ describe("AC-13: deterministic track id derivation", () => {
         launchSubstep: 4,
       }),
     ).toBe("B1:5:4:torpedo:LCH-1:tube0");
-    // same inputs -> same id
     const a = torpedoTrackId({
       battleId: "B1",
       launcherId: "LCH-1",
@@ -220,7 +198,7 @@ describe("AC-13: track hash — deterministic, tamper-proof, fail-closed guards"
     expect(computeTorpedoTrackHash(a)).toBe(a.trackHash);
     expect(verifyTorpedoTrackHash(a)).toBe(true);
     expect(computeTorpedoTrackHash(b)).toBe(b.trackHash);
-    expect(a.trackHash).toBe(b.trackHash); // identical inputs -> identical hash
+    expect(a.trackHash).toBe(b.trackHash);
   });
 
   it("tampering any authoritative field changes the hash and fails verification", () => {
@@ -311,15 +289,10 @@ describe("AC-13: track hash — deterministic, tamper-proof, fail-closed guards"
       expect(err!.message, `field ${field}`).toBe(TORPEDO_STATE_INVARIANT_FAILED);
       expect(err!.context.field, `field ${field}`).toBe(field);
     }
-    // a fully-formed track passes the surface guard
     expect(() => assertTorpedoTrackSurface(buildTrack())).not.toThrow();
   });
 
   it("assertTorpedoTrackSurface fails closed when orderedGyroAngleMdeg diverges from launchHeadingMdeg", () => {
-    // §13 guidance invariant: the run projects along launchHeadingMdeg only, so
-    // the ordered gyro angle must EQUAL the launch heading while the torpedo
-    // runs — a divergent pair is internally inconsistent (a latent INC-5
-    // hit-resolution seam) and must never be accepted.
     const divergent = { ...buildTrack(), orderedGyroAngleMdeg: 90_001 } as unknown as TorpedoTrack;
     let err: BluewaveError | undefined;
     try {
@@ -333,9 +306,6 @@ describe("AC-13: track hash — deterministic, tamper-proof, fail-closed guards"
     expect(err!.context.reason).toBe(
       "a gyro-guided torpedo's ordered course must equal its launch heading while running",
     );
-    // createTorpedoTrack sets both fields from the same launcher inputs: with
-    // equal launchHeading/gyro values it can never produce a divergent track
-    // (the shipped fixtures use 90_000/90_000), and the equality is invariant.
     const equal = buildTrack();
     expect(equal.launchHeadingMdeg).toBe(equal.orderedGyroAngleMdeg);
     expect(() => assertTorpedoTrackSurface(equal)).not.toThrow();
@@ -348,20 +318,18 @@ describe("AC-13: lifecycle state machine — advance + exhaustion + terminal one
   });
 
   it("advanceTorpedoTrack moves pure integer µm along the launch heading and accumulates accounting", () => {
-    const t = buildTrack(); // heading 90_000 mdeg = 90° -> +Y direction
+    const t = buildTrack();
     const advanced = advanceTorpedoTrack(t, TORPEDO_MINUTE_MS);
-    // pure integer motion along the heading via projectAlongHeading
     expect(advanced.currentPosition).toEqual(
       projectAlongHeading([0, 0], 90_000, ONE_MINUTE_DISTANCE_UM),
     );
     expect(advanced.currentPosition).toEqual([0, ONE_MINUTE_DISTANCE_UM]);
     expect(advanced.distanceTraveledUm).toBe(ONE_MINUTE_DISTANCE_UM);
-    expect(advanced.runDistanceRemainingM).toBe(6_000 - ONE_MINUTE_DISTANCE_M); // 4_642
-    expect(advanced.armed).toBe(true); // 1_358 >= 150
-    expect(advanced.terminalResult).toBeNull(); // 1_358 < 6_000, still running
+    expect(advanced.runDistanceRemainingM).toBe(6_000 - ONE_MINUTE_DISTANCE_M);
+    expect(advanced.armed).toBe(true);
+    expect(advanced.terminalResult).toBeNull();
     expect(advanced.trackHash).toMatch(/^[0-9a-f]{64}$/);
     expect(verifyTorpedoTrackHash(advanced)).toBe(true);
-    // the input track is unchanged (immutable)
     expect(t.distanceTraveledUm).toBe(0);
     expect(t.currentPosition).toEqual([0, 0]);
   });
@@ -400,14 +368,14 @@ describe("AC-13: lifecycle state machine — advance + exhaustion + terminal one
 
   it("stays unarmed until the arming distance is traveled", () => {
     const t = buildTrack({ armingDistanceM: 2_000 });
-    const advanced = advanceTorpedoTrack(t, TORPEDO_MINUTE_MS); // traveled 1_358 m
+    const advanced = advanceTorpedoTrack(t, TORPEDO_MINUTE_MS);
     expect(advanced.armed).toBe(false);
     expect(advanced.terminalResult).toBeNull();
   });
 
   it("transitions deterministically to EXHAUSTION when the run distance is consumed and cannot advance again", () => {
     const t = buildTrack({ selectedSetting: { ...G7A_44KN_SETTING, rangeM: 1_000 } });
-    const exhausted = advanceTorpedoTrack(t, TORPEDO_MINUTE_MS); // 1_358 >= 1_000
+    const exhausted = advanceTorpedoTrack(t, TORPEDO_MINUTE_MS);
     expect(exhausted.terminalResult).toBe("EXHAUSTION");
     expect(exhausted.runDistanceRemainingM).toBe(0);
     expect(exhausted.armed).toBe(true);
@@ -492,7 +460,6 @@ describe("AC-13: mdeg folding + heading projection (projectAlongHeading)", () =>
 
   it("an out-of-range angle folds to the same projection as its equivalent in-range angle", () => {
     const dist = 5_000_000;
-    // 450_000 mdeg = 90_000 mdeg (one full circle of 360_000); -90_000 = 270_000.
     expect(projectAlongHeading([0, 0], 450_000, dist)).toEqual(
       projectAlongHeading([0, 0], 90_000, dist),
     );

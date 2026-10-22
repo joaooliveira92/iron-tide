@@ -34,11 +34,6 @@ const PLACEHOLDER_AREA = `
     sources: []
 `;
 
-/**
- * Append the placeholder area to a copied pack and give it a display region and
- * a fixture mapping, so the pack stays valid under the presentation-coverage
- * invariant (CAH-PRES-2) and the gate reaches the placeholder check.
- */
 function addPlaceholderArea(dir: string): void {
   const areasPath = resolve(dir, "areas.yaml");
   writeFileSync(areasPath, `${readFileSync(areasPath, "utf8")}${PLACEHOLDER_AREA}`, "utf8");
@@ -120,7 +115,6 @@ describe("content:gate over the production pack (CAH-PROV-3)", () => {
     const dir = tempDir();
     cpSync(contentDir, dir, { recursive: true });
     addPlaceholderArea(dir);
-    // Keep the pack's own justified allowlist and add the new area entry.
     const allowlistPath = resolve(dir, "placeholder-allowlist.json");
     const existing = JSON.parse(readFileSync(allowlistPath, "utf8")) as { allow?: unknown[] };
     writeFileSync(

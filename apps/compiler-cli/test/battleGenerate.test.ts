@@ -196,11 +196,7 @@ describe("runBattleGenerate", () => {
     const output = spy.mock.calls.map((c) => c[0]).join("");
     const jsonLine = output.split("\n").find((line) => line.includes("battleIds"));
     const parsed = JSON.parse(jsonLine!);
-    // campaignMonth defaults to the snapshot's turnNumber ("1"), which shows
-    // up as the trailing month segment of the generated battle id.
     expect(parsed.battleIds[0]).toMatch(/_1$/);
-    // rulesetVersion defaults to the snapshot's rulesetVersion ("0.1.0"),
-    // which flows into every stage record.
     expect(parsed.records[0].stageRecords[0].rulesetVersion).toBe("0.1.0");
     spy.mockRestore();
   });

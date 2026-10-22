@@ -4,17 +4,6 @@ import { economyOutlook } from "@bluewave/campaign";
 import { HIGH_TENSION_THRESHOLD, isHighTension } from "./diplomacy.js";
 import { MIN_RESEARCH_SHARE_BP, NEAR_COMPLETION_WORK_RATIO } from "./priorityConstants.js";
 
-/**
- * Immediate Priorities projection — INC-2 (spec §7).
- *
- * Pure, read-only derivation over the immutable `CampaignSnapshot` for the
- * player nation. Never wired into `MonthExecutor`; goldens stay byte-identical.
- * `HIGH_TENSION_THRESHOLD` / `isHighTension` are imported from `diplomacy.ts`
- * and never re-declared (INC-2 invariant).
- */
-
-// Re-export the threshold for tests that want the single source of truth via this
-// module without importing diplomacy directly (the canonical export remains there).
 export { HIGH_TENSION_THRESHOLD, isHighTension } from "./diplomacy.js";
 
 export interface InspectPrioritiesResult {
@@ -57,16 +46,12 @@ export interface StrategicPriority {
   readonly fingerprint: string;
 }
 
-// A priority plus the two numeric sort keys that depend on data the display
-// fields do not expose (remaining work, tension). Captured at construction so
-// the comparator never re-parses `reason`.
 interface RankedPriority {
   readonly priority: StrategicPriority;
   readonly financialRisk: number;
   readonly timeToConsequence: number;
 }
 
-// Severity ordinal for the 5-key sort — higher is more urgent (critical first).
 const SEVERITY_RANK: Record<PrioritySeverity, number> = {
   critical: 3,
   warning: 2,
@@ -74,7 +59,6 @@ const SEVERITY_RANK: Record<PrioritySeverity, number> = {
   information: 0,
 };
 
-// Fixed type order for the 4th sort key (the schema order itself).
 const TYPE_ORDER: Record<StrategicPriorityType, number> = {
   monthly_deficit: 0,
   critical_cash_reserve: 1,
@@ -101,17 +85,6 @@ function destinationForType(type: StrategicPriorityType): StrategicDestinationSe
   }
 }
 
-/**
- * Pure priorities projection — 6 of 8 doc types (spec §7).
- *
- * Cut with recorded reasons (never re-added):
- * - `obsolete_active_class` — no obsolescence score, no design→tech mapping.
- * - `construction_stalled` — per-project month-over-month delta not persisted.
- *
- * `construction_near_completion` is adapted to the work-ratio proxy
- * (`completedWork / totalWork >= 0.9`) since `computeConstructionCap` /
- * months-to-completion is underivable (compiler hardcodes baseResources 0).
- */
 export function buildPrioritiesProjection(
   snapshot: CampaignSnapshot,
   playerNationId: string,
@@ -122,8 +95,6 @@ export function buildPrioritiesProjection(
   const ports = snapshot.world.ports.filter((p) => p.nationId === playerNationId);
   const shipyardCapacity = ports.reduce((sum, p) => sum + Number(p.level), 0);
 
-  // Spec #138: the monthly flows are the outlook's — the calculators the month executor itself uses. Committed construction
-  // is a stock, not a monthly flow, so it no longer enters the balance.
   const outlook = economyOutlook(snapshot, playerNationId)!;
   const monthlyAppropriation = outlook.revenue;
   const researchSpend = outlook.plannedResearch;
@@ -135,7 +106,6 @@ export function buildPrioritiesProjection(
 
   const ranked: RankedPriority[] = [];
 
-  // 1. monthly_deficit — projectedBalance < 0
   if (projectedBalance < 0) {
     const critical = treasury + projectedBalance < 0;
     const severity: PrioritySeverity = critical ? "critical" : "warning";
@@ -156,7 +126,6 @@ export function buildPrioritiesProjection(
     });
   }
 
-  // 2. critical_cash_reserve — treasury < max(totalMonthlyExpenditure, 1)
   {
     const threshold = Math.max(totalMonthlyExpenditure, 1);
     if (treasury < threshold) {
@@ -178,9 +147,7 @@ export function buildPrioritiesProjection(
     }
   }
 
-  // 3. low_research_spending — researchShare < 800bp when appropriation > 0
   if (monthlyAppropriation > 0) {
-    // Compare cross-multiplied to stay in integers: research*10_000 < appropriation*800
     if (researchSpend * 10_000 < monthlyAppropriation * MIN_RESEARCH_SHARE_BP) {
       const fingerprint = "low_research_spending";
       const expectedResearch = Math.floor((monthlyAppropriation * MIN_RESEARCH_SHARE_BP) / 10_000);
@@ -201,7 +168,6 @@ export function buildPrioritiesProjection(
     }
   }
 
-  // 4. construction_near_completion — per active project where completed/total >= 0.9
   for (const project of nation.constructionProjects) {
     if (project.status === "COMPLETED") continue;
     const total = Number(project.totalWork);
@@ -226,14 +192,12 @@ export function buildPrioritiesProjection(
     }
   }
 
-  // 5. high_foreign_tension — per relation where this nation is a party and tension >=8
   for (const rel of snapshot.politics.relations) {
     const isParty = rel.nationA === playerNationId || rel.nationB === playerNationId;
     if (!isParty) continue;
     if (!isHighTension(rel.tension)) continue;
     const partnerId = rel.nationA === playerNationId ? rel.nationB : rel.nationA;
     const fingerprint = `high_foreign_tension:${partnerId}`;
-    // Deduplicate by partner (the spec's condition identity is per partner nation)
     if (ranked.some((r) => r.priority.fingerprint === fingerprint)) continue;
     ranked.push({
       priority: {
@@ -251,7 +215,6 @@ export function buildPrioritiesProjection(
     });
   }
 
-  // 6. no_active_construction — zero active projects + capacity + eligible design
   {
     const activeCount = nation.constructionProjects.filter((p) => p.status !== "COMPLETED").length;
     if (activeCount === 0 && treasury > 0 && shipyardCapacity > 0) {
@@ -278,25 +241,19 @@ export function buildPrioritiesProjection(
     }
   }
 
-  // 5-key deterministic sort
   ranked.sort((a, b) => {
-    // 1. Severity (critical first)
     const sevDiff = SEVERITY_RANK[b.priority.severity] - SEVERITY_RANK[a.priority.severity];
     if (sevDiff !== 0) return sevDiff;
 
-    // 2. Direct financial risk — larger risk first
     if (a.financialRisk !== b.financialRisk) return b.financialRisk - a.financialRisk;
 
-    // 3. Shortest time to consequence — shorter time first
     if (a.timeToConsequence !== b.timeToConsequence) {
       return a.timeToConsequence - b.timeToConsequence;
     }
 
-    // 4. Stable type order
     const typeDiff = TYPE_ORDER[a.priority.type] - TYPE_ORDER[b.priority.type];
     if (typeDiff !== 0) return typeDiff;
 
-    // 5. Stable fingerprint
     return a.priority.fingerprint.localeCompare(b.priority.fingerprint);
   });
 

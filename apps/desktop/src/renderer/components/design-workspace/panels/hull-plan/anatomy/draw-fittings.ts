@@ -4,7 +4,6 @@ import type { PartDraft } from "./anatomy-types.js";
 import type { AnatomyShipScene } from "./anatomy-scene.js";
 import { CATEGORY_LABEL } from "./ship-profile.js";
 
-/** Anything still placed and not drawn as a weapon or deckhouse: a truthful deck fitting. */
 export function drawFittings(scene: AnatomyShipScene): void {
   const {
     draft,

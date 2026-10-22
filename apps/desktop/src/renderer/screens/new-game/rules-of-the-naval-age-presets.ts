@@ -1,10 +1,8 @@
 import type { AdmiralPresetValues } from "./admiral-preset.js";
 import type { DraftPreferences } from "./new-game-preferences-screen-state.js";
 
-/** Same six real engine setting ids as `AdmiralPresetValues` (spec §1/§2) — one preset among several here, not admiral-specific. */
 export type SixSettingBundle = AdmiralPresetValues;
 
-/** The six engine settings every preset bundle fixes, in display order. */
 export const SIX_SETTING_FIELDS = [
   "fleetSize",
   "researchSpeed",
@@ -26,10 +24,6 @@ export interface PresetDefinition {
   readonly bundle: SixSettingBundle;
 }
 
-/**
- * The "Rules of the Naval Age" preset picker's four named bundles (spec §2)
- * — exact real `packages/campaign` setting ids, in display order.
- */
 export const PRESET_DEFINITIONS: readonly PresetDefinition[] = [
   {
     id: "cadet",
@@ -85,12 +79,6 @@ export const PRESET_DEFINITIONS: readonly PresetDefinition[] = [
   },
 ];
 
-/**
- * Presets pre-fill, they don't lock (spec §2) — the active pill is derived
- * from whichever six values are currently set, not stored separately, so
- * editing any one of them after picking a preset silently reverts to
- * "Custom" with no extra state to keep in sync.
- */
 export function detectActivePreset(preferences: DraftPreferences): ActivePresetId {
   const match = PRESET_DEFINITIONS.find((preset) =>
     SIX_SETTING_FIELDS.every((field) => preferences[field] === preset.bundle[field]),

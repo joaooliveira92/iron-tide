@@ -2,16 +2,8 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 
-/** The renderer root (`.../src/renderer`); this test lives in its `shell/`. */
 const RENDERER = join(import.meta.dirname, "..");
 
-/**
- * Released-screen theme guard (U-4 ticket 07). Released screens and shell chrome
- * must consume the semantic theme tokens (so the high-contrast and dark themes
- * apply everywhere); a hard-coded colour literal that bypasses the tokens is a
- * regression. Decorative background/card palettes are intentionally theme-owned
- * art and are excluded, as are the debug/dev screens.
- */
 const EXCLUDED_SEGMENTS = [
   "/styles/",
   "/components/backgrounds/",
@@ -25,7 +17,6 @@ const EXCLUDED_SEGMENTS = [
   ".test.",
 ];
 
-/** Decorative card-art literals that are deliberately theme-independent. */
 const ALLOWLIST = new Set([
   "screens/new-game/components/bounce-cards/newGameBounceCardsPreset.ts",
   "screens/new-game/components/bounce-cards/BounceCards.tsx",

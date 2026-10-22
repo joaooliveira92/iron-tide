@@ -91,7 +91,6 @@ describe("manifest authority for the loaded surface", () => {
       expect(error!.sourceLocation?.path).toBe("ship-building/components.yaml");
       expect(error!.remediation).toContain("shipBuilding.shipComponents");
 
-      // Without a collector the same failure throws a descriptive error.
       expect(() => buildFullSurfaceInput(resolve(fixture.path, "pack.json"), fixture.path)).toThrow(
         /Undeclared/,
       );
@@ -129,8 +128,6 @@ describe("manifest authority for the loaded surface", () => {
   it("rejects a malformed manifest with a MANIFEST diagnostic naming the file", () => {
     const fixture = createFixtureDir();
     try {
-      // Missing the required `version`/`type` and carrying an excess key: the
-      // strict PackManifestSchema decode must reject it (never a cast).
       writeFixture(fixture.path, "pack.json", JSON.stringify({ name: "x", files: {}, extra: 1 }));
 
       const collector = new DiagnosticCollector();

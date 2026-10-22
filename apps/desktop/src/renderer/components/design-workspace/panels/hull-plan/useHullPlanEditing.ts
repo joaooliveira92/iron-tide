@@ -22,11 +22,6 @@ import {
   type ZoneSpan,
 } from "./placement-tools.js";
 
-/**
- * The stateful half of the hull plan: which tool is active, the transient notice, and the click/drag session on
- * the drawing. Every action produces the same undoable `DraftEdit` as the Arrangement panel, through
- * `placement-tools`. Kept apart from `HullPlanPanel` so the panel stays a composition of drawing and controls.
- */
 export interface UseHullPlanEditingOptions {
   readonly draft: DesignDraft;
   readonly content: DrawingBoardContent;
@@ -35,12 +30,10 @@ export interface UseHullPlanEditingOptions {
   readonly zones: readonly ZoneSpan[];
   readonly entryOf: (componentId: string) => PartCatalogueEntry | undefined;
   readonly edit: Edit;
-  /** The plan tool, switched from the board toolbar; the plan keeps its own only when shown on its own. */
   readonly givenTool?: PlanTool;
   readonly onTool?: (next: PlanTool) => void;
 }
 
-/** Pointer handlers for the invisible click layer over the plan; spread them onto its `<rect>`. */
 export interface PlanPointerHandlers {
   readonly onPointerDown: (e: ReactPointerEvent<SVGRectElement>) => void;
   readonly onPointerMove: (e: ReactPointerEvent<SVGRectElement>) => void;
@@ -53,10 +46,8 @@ export interface HullPlanEditing {
   readonly tool: PlanTool;
   readonly setTool: (next: PlanTool) => void;
   readonly notice: string | null;
-  /** Raise a notice belonging to the tool state it was raised under; any tool change clears it. */
   readonly setNotice: (text: string, under?: PlanTool) => void;
   readonly selected: PlacementSpec | undefined;
-  /** The in-flight drag position, drawn as a ghost; null when not dragging. */
   readonly ghost: { readonly x: number; readonly y: number } | null;
   readonly onPlanClick: (svgX: number, svgY: number) => void;
   readonly planHandlers: PlanPointerHandlers;
@@ -79,7 +70,6 @@ export function useHullPlanEditing({
   const [ownTool, setOwnTool] = useState<PlanTool>(IDLE_TOOL);
   const tool = givenTool ?? ownTool;
   const setTool = onTool ?? setOwnTool;
-  // A notice belongs to the tool state it was raised under: any tool change (here or in the toolbar) clears it.
   const [raised, setRaised] = useState<{ readonly tool: PlanTool; readonly text: string } | null>(
     null,
   );
@@ -103,7 +93,6 @@ export function useHullPlanEditing({
       under,
     );
   };
-  /** Makes `instanceId` the fitting to move; returns the new tool state so a notice can belong to it. */
   const pick = (instanceId: string): PlanTool => {
     if (instanceId === tool.instanceId) return tool;
     const next = { ...tool, instanceId };
@@ -118,7 +107,6 @@ export function useHullPlanEditing({
       else
         run(placeEdit(entry, target, draft), `Placed ${entry.displayName} at ${whereOf(target)}.`);
     } else if (tool.mode === "move") {
-      // A click on a fitting picks it; a click elsewhere moves the picked one there.
       const hit = fittingAt(frame, draft, svgX, svgY);
       if (hit !== null && hit !== tool.instanceId)
         setNotice(
@@ -130,7 +118,6 @@ export function useHullPlanEditing({
     }
   };
 
-  // Drag to move (Move mode): press on a fitting, drag, release. The same moveEdit as the buttons; one undoable edit.
   const drag = useRef<{ readonly id: string; readonly x: number; readonly y: number } | null>(null);
   const [ghost, setGhost] = useState<{ readonly x: number; readonly y: number } | null>(null);
   const suppressClick = useRef(false);
@@ -162,7 +149,6 @@ export function useHullPlanEditing({
       const d = drag.current;
       const point = d && planPointFromEvent(e);
       if (!d || !point) return;
-      // A few units of travel before it counts as a drag, so a shaky click stays a click.
       if (ghost !== null || Math.hypot(point.x - d.x, point.y - d.y) > 4) setGhost(point);
     },
     onPointerUp: (e) => {
@@ -172,7 +158,7 @@ export function useHullPlanEditing({
       if (d && ghost !== null && point) {
         const p = draft.placements.find((x) => x.instanceId === d.id);
         if (p) moveTo(p, point.x, point.y, pick(d.id));
-        suppressClick.current = true; // the click that follows this release is the drop, not a new click
+        suppressClick.current = true;
       }
       setGhost(null);
     },

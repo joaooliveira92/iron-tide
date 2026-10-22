@@ -1,5 +1,3 @@
-// AC-12 (INC-4): Private ventures — eligibility, cooldown, max limit,
-// PurchasePrivateAircraftProposalCommand, 12-month expiry.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import { RandomEngine } from "@bluewave/random";
@@ -92,7 +90,6 @@ describe("checkPrivateVentureEligibility", () => {
     const result = checkPrivateVentureEligibility(input);
     expect(result.eligible).toBe(true);
     if (result.eligible) {
-      // Sorted: AIRSHIP, DIVE_BOMBER, FIGHTER
       expect(result.eligibleRoles[0]).toBe("AIRSHIP");
       expect(result.eligibleRoles[1]).toBe("DIVE_BOMBER");
       expect(result.eligibleRoles[2]).toBe("FIGHTER");

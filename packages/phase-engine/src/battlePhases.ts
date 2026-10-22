@@ -1,4 +1,3 @@
-// Battle phases: battle_generation (order 75) and battle_resolution (order 80).
 import type { BattleInstance, CampaignWeatherState, NationState } from "@bluewave/campaign";
 import {
   BATTLE_AUTO_RESOLUTION_FAILED,
@@ -36,11 +35,6 @@ import { PhaseResource } from "./phase-resource.js";
 
 type AutoResolutionManifest = Parameters<typeof resolveBattleAuto>[0]["manifest"];
 
-// Phase 9.5: battle_generation (order 75). Generates BattleInstances + manifests
-// for reachable missions from committed post-construction state; feeds
-// battle_resolution (phase 10) unchanged. No-op path keeps the new collections
-// ABSENT so a no-war month's final-state hash is unchanged (AC-12 pin). Uses no
-// randomness for reachable missions in B-1.
 export function runBattleGenerationPhase(ctx: MonthContext): void {
   const { campaignMonth, randomSeed } = ctx;
 
@@ -49,8 +43,6 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
   );
   if (!hadWars) return;
 
-  // S-1 D5: supply each ship's real battle readiness (its crew quality, 0..100)
-  // instead of the former hard-coded 80 (ADR-0223).
   const generated = generateBattles({
     snapshot: ctx.currentSnapshot,
     campaignMonth,
@@ -64,11 +56,7 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
     resolveReadiness: (shipId) => resolveCampaignBattleReadiness(ctx.currentSnapshot, shipId),
   });
 
-  // T-1 07 (spec #109 R11): the enemy may decline a battle with the player before it exists. Dormant (the same object)
-  // without the battle-offer section and the player nation.
   const surviving = applyEnemyDeclines(ctx, generated);
-  // T-1 08 (spec #109 R12): a friendly AI support force may join the player's side of a battle that exists. Dormant (the
-  // same object) without the battle-offer section and the player nation.
   const generationResult = applySupportForces(ctx, surviving);
 
   if (generationResult.battleIds.length === 0) return;
@@ -95,7 +83,6 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
     };
   });
 
-  // Apply reservations: mark ships in battle.
   const reservedShipIds = new Set(generationResult.manifests.flatMap((m) => m["persistentAssets"]));
   const updatedNations = new Map<string, NationState>();
   for (const [nid, nation] of ctx.currentSnapshot["nations"]) {
@@ -126,21 +113,6 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
   };
 }
 
-// Phase 10: battle_resolution (registry order 8). B-6 INC-3 (AC-8):
-// manifest-carrying pending/resolving battles resolve deterministically via
-// `resolveBattleAuto` (@bluewave/combat, INC-2) with the campaign's committed
-// ships/divisions/weather for that battle; the result feeds the UNCHANGED A-3
-// `applyBattleResult` for DECIDED battles, applies per-ship damage/loss +
-// reservation clearing (AC-9), and records `BattleInstance.result` + phase
-// "resolved".
-//
-// - A battle WITHOUT a manifest keeps the M1 `BattleResolver` strength path.
-// - A manifest battle whose auto-resolution fails closed records the stable
-//   diagnostic and falls back to the same legacy path.
-// - A battle whose `manifestHash` matches NO stored manifest is a broken
-//   invariant: stable diagnostic + NO mutation (battle stays pending).
-// - Null winner/loser (ADR-0026 §7): `applyBattleResult` is called ONLY for
-//   decided battles; a tie still records damage/loss, the result, and clearing.
 export function runBattleResolutionPhase(ctx: MonthContext): void {
   const battles = ctx.currentSnapshot["wars"]["battles"].filter(
     (b) => b["phase"] === "pending" || b["phase"] === "resolving",
@@ -184,11 +156,6 @@ function resolveBattle(
 ): void {
   const { collector } = ctx;
 
-  // T-1 03 / T-2 01 (spec #109 R3, #221): with a channel, the player nation and the battle-offer ruleset section, a
-  // pending battle that involves the player is a player-facing offer. An absent or refused answer suspends the month.
-  // "delegate" falls through to auto-resolution; "accept" hands the battle to the player, who must record a result at
-  // the next ordinal. Without that result the month suspends on the battle request; every other battle
-  // auto-resolves unchanged.
   if (
     ctx.interruption !== undefined &&
     ctx.playerNationId !== undefined &&
@@ -208,7 +175,6 @@ function resolveBattle(
       const answered = consumeOffer(ctx, content);
       if (ctx.interruption.suspended !== undefined) return;
       if (answered !== null && answered.response === "decline") {
-        // A declined battle is terminal: it is never resolved or fought (spec #109 R8).
         applyDecline(
           ctx,
           battle,
@@ -242,10 +208,6 @@ function resolveBattle(
       }
     }
   } else if (ctx.interruption !== undefined) {
-    // Additive interruption seam: when a channel is active a pending battle is a
-    // player-facing request. A present, hash-valid recorded result is applied exactly
-    // once (never re-rolled); an absent one suspends the month. With no channel the
-    // pipeline auto-resolves exactly as before.
     const recorded = consumeBattleResult(ctx, battle);
     if (ctx.interruption.suspended !== undefined) return;
     if (recorded !== null) {
@@ -266,10 +228,6 @@ function resolveBattle(
   const manifest = resolveBattleManifest(ctx.currentSnapshot, battle);
   const hasManifestHash = battle["manifestHash"] !== undefined;
 
-  // Two fail-fast branches, then `manifest` is guaranteed non-null for the
-  // tactical auto-resolution path below (narrowed by the union):
-  //  - no manifestHash -> M1 legacy strength path, unchanged;
-  //  - manifestHash with NO matching stored manifest -> corrupted invariant.
   if (!hasManifestHash || manifest === null) {
     if (hasManifestHash) {
       collector.addError(
@@ -283,8 +241,6 @@ function resolveBattle(
     return;
   }
 
-  // Tactical auto-resolution (AC-3 fail-closed: the battle area MUST have
-  // committed strategic weather from the weather_generation phase).
   const strategicWeather = ctx.currentSnapshot["strategicWeather"].find(
     (s) => s["areaId"] === battle["areaId"],
   );
@@ -350,10 +306,6 @@ function resolveViaTacticalAuto(
       randomLedger,
     });
 
-    // A-3 war-score path, UNCHANGED — but only for DECIDED battles. A tie /
-    // time-limit end (both winnerId and loserId null, ADR-0026 §7) contributes
-    // NO war score, NO victory class, NO contribution delta; it still applies
-    // ship damage/loss, records the battle result, and clears reservations.
     if (autoResult.winnerId !== null && autoResult.loserId !== null) {
       ctx.currentSnapshot = applyBattleResult(
         ctx.currentSnapshot,
@@ -368,7 +320,6 @@ function resolveViaTacticalAuto(
       );
     }
 
-    // ADR-0061: record who was lost BEFORE the ships leave their fleets.
     const lostShips = collectLostShips(ctx.currentSnapshot, battle, autoResult, campaignMonth);
     ctx.currentSnapshot = applyBattleConsequences(ctx.currentSnapshot, battle, autoResult);
     ctx.currentSnapshot = recordResolvedBattle(
@@ -377,9 +328,6 @@ function resolveViaTacticalAuto(
       toCampaignBattleResult(autoResult, lostShips),
     );
   } catch (e) {
-    // Fail-closed auto-resolution: INC-2 throws a stable BluewaveError code
-    // BEFORE any consequence is applied. Record the diagnostic and resolve via
-    // the accepted M1 legacy path — never crash, never a partial mutation.
     const ctxCode =
       isBluewaveError(e) && typeof e.context?.["code"] === "string"
         ? (e.context["code"] as string)
@@ -398,9 +346,6 @@ export const battleGenerationPhase: PhaseDescriptor = {
   id: "battle_generation",
   name: "Battle Generation",
   order: 75,
-  // ADR-0036: battle_generation reads the nations map (ship strength/
-  // readiness) and writes wars (battles + manifests) plus nations (ship
-  // inBattleId reservations).
   readPermissions: ["wars", "fleets", "politics", "nations"],
   writePermissions: ["wars", "nations"],
   rngAllowed: true,
@@ -419,10 +364,6 @@ export const battleResolutionPhase: PhaseDescriptor = {
   id: "battle_resolution",
   name: "Battle Resolution",
   order: 80,
-  // ADR-0036: battle_resolution reads committed strategic weather + the
-  // nations map and writes wars + fleets + nations (per-ship damage/loss
-  // and reservation clearing). S-5: its month-end presence step also reads
-  // compiled designs (ship tonnage) and writes nothing but events.
   readPermissions: ["wars", "fleets", "nations", "strategicWeather", "designs"],
   writePermissions: ["wars", "fleets", "nations"],
   rngAllowed: true,
@@ -442,12 +383,6 @@ export const battleResolutionPhase: PhaseDescriptor = {
     if (ctx.interruption?.suspended !== undefined) {
       return { status: "finish", success: true };
     }
-    // S-5 month-end steps in the battle_resolution footprint: presence is
-    // measured after movement and battle resolution (spec #73 R5/R6), then
-    // foreign-station ships route one hop toward the largest shortfall, and
-    // base limits are checked last so battles this month saw the full fleet
-    // (spec #73 R10). Each is dormant (a strict no-op) unless the pack authors
-    // the presence ruleset section.
     runForeignStationDeploymentStep(ctx, runPresenceMeasurementStep(ctx));
     runBaseLimitStep(ctx);
     return { status: "continue" };

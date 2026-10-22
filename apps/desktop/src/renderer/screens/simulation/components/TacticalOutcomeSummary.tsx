@@ -14,7 +14,6 @@ interface TacticalOutcomeSummaryProps {
   readonly outcome: TacticalBattleOutcome;
 }
 
-/** The turn-by-turn tactical resolver's outcome: progress, end condition, event ledger. */
 export function TacticalOutcomeSummary({ outcome }: TacticalOutcomeSummaryProps) {
   return (
     <AccordionItem value="tactical">

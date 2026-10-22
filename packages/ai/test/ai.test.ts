@@ -153,13 +153,7 @@ describe("AiCommandGenerator", () => {
 describe("AiPlanner", () => {
   it("picks a legal project and a budget amount within bounds", () => {
     const snapshot = makeSnapshot([
-      [
-        "GBR",
-        makeNation("GBR", SafeInt(100), [
-          project("p1", 300, 0),
-          project("p2", 500, 400), // remaining 100
-        ]),
-      ],
+      ["GBR", makeNation("GBR", SafeInt(100), [project("p1", 300, 0), project("p2", 500, 400)])],
     ]);
     const planner = new AiPlanner();
     const lifecycle = new CommandLifecycle();
@@ -223,11 +217,6 @@ describe("AiPlanner", () => {
   });
 
   it("reports a diagnostic for a rejected command and does not accept it", () => {
-    // A nation with zero funds and no projects still generates a legal
-    // research priority, which must succeed; to force a rejection we use a
-    // stale snapshot hash by passing a mutated snapshot to process while the
-    // planner computed the hash from itself - instead just assert the planner
-    // tolerates an empty economy without crashing and yields no budget.
     const snapshot = makeSnapshot([["GBR", makeNation("GBR", SafeInt(0), [])]]);
     const planner = new AiPlanner();
     const idems = new CommandIdempotencyMap();

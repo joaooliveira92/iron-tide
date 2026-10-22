@@ -38,10 +38,6 @@ import {
   startPlayerBattleProgram,
 } from "./playerBattle.js";
 
-// T-1 03 (#112): the desktop command path of a battle offer, over the compiled production campaign with a war injected
-// into the session snapshot. The mechanics run under a FIXTURE-CLASS section supplied through the ContentArtifact test
-// seam, exactly as the DecisionSource seam supplies decisions; the production pack now authors its own section (T-1 09,
-// ADR-0254), which the "production" and "dormant" cases below exercise through the real and the section-less artifact.
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
@@ -75,7 +71,6 @@ async function run(
   return projectCommandExit(await runtime.runPromiseExit(program(payload)));
 }
 
-/** uk and france each field two 200-firepower ships in one area, at war. */
 function warSnapshot(base: CampaignSnapshot): CampaignSnapshot {
   const nations = new Map<string, NationState>(base.nations);
   for (const id of ["uk", "france"]) {
@@ -161,7 +156,6 @@ describe("battle offer commands", () => {
     });
   }
 
-  /** Re-register a session from its on-disk save, as an app reload would. */
   function reload(sessionId: string, saveDir: string) {
     const loaded = new SaveStore().load(saveDir, new DiagnosticCollector());
     if (!loaded) throw new Error("save failed to reload");
@@ -386,7 +380,6 @@ describe("battle offer commands", () => {
     const before = await advance();
     expect(before.view.minute).toBe(2);
 
-    // Simulate an app restart: the process-local session is gone, the sidecar remains.
     dropPlayerBattleSessionsForTest();
     const resumed = await run(offerRuntime, startPlayerBattleProgram, {
       sessionId: "s-mid",
@@ -451,7 +444,6 @@ describe("battle offer commands", () => {
     expect(existsSync(join(saveDir, PENDING_TURN_FILENAME))).toBe(false);
 
     const snapshot = getCampaignSession("s-decline")!.state.snapshot;
-    // The declined record, once, with the fixture rule's cost (FLEET_BATTLE 4) and no opponent credit.
     expect(snapshot.wars.declinedBattles).toHaveLength(1);
     expect(snapshot.wars.declinedBattles?.[0]).toMatchObject({
       battleId: request.battleId,
@@ -461,14 +453,12 @@ describe("battle offer commands", () => {
       victoryPointCost: 4,
       opponentCredit: 0,
     });
-    // The battle never resolved, the war score fell, and no ship stays reserved or damaged.
     expect(snapshot.wars.battles.map((b) => b.phase)).toEqual(["declined"]);
     expect(snapshot.wars.wars[0]).toMatchObject({ attackerWarScore: -4, defenderWarScore: 0 });
     const ships = [...snapshot.nations.values()].flatMap((n) => n.fleets.flatMap((f) => f.ships));
     expect(ships.some((ship) => ship.inBattleId !== undefined)).toBe(false);
     expect(ships.every((ship) => ship.hitPoints === ship.maxHitPoints)).toBe(true);
 
-    // The player-visible turn message reports the decline and its victory-point cost.
     if (value.status !== "completed") return;
     const message = value.summary.messages.find(
       (m) => m.bodyKey === "messages.battle.declined.body",
@@ -479,7 +469,6 @@ describe("battle offer commands", () => {
       victoryPointCost: 4,
     });
 
-    // The save restores the record exactly.
     const loaded = new SaveStore().load(saveDir, new DiagnosticCollector());
     expect(JSON.stringify(loaded?.snapshot.wars.declinedBattles)).toBe(
       JSON.stringify(snapshot.wars.declinedBattles),

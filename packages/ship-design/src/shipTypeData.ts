@@ -1,4 +1,3 @@
-// The authored registry entries. Numeric boundaries are not repeated here (see classificationRules.ts).
 import type {
   EraBand,
   ShipTypeAvailabilityRequirement,
@@ -30,13 +29,6 @@ const FUTURE_TEXT = {
   armamentProfile: "Not applicable.",
 } as const;
 
-/**
- * The registry. The six opening types are authored in full. The future types are registered (so they are
- * recognised, locked and explained rather than "unknown") with the facts that decide their availability: BB is the
- * dreadnought (all-big-gun) battleship, locked behind `sd_dreadnought_design`; BC behind `sd_battlecruiser_design`.
- * Aviation, submarine, motor-torpedo-boat and transport types are locked because their mechanics are not in the
- * game yet (`mechanicsImplemented: false`), not because of a technology.
- */
 export const SHIP_TYPES: Readonly<Record<ShipTypeId, ShipTypeDefinition>> = {
   B: {
     id: "B",
@@ -195,8 +187,6 @@ export const SHIP_TYPES: Readonly<Record<ShipTypeId, ShipTypeDefinition>> = {
     torpedoes: "OPTIONAL",
     auxiliary: false,
     requiredHullTrait: null,
-    // The BC predicate (DESIGN-22 section 12: era speed schedule, armour-index precedence) is not implemented in this
-    // designer, so a BC can never be validated: it stays locked even after its technology. See ADR-0088.
     availability: gated("PRE_WAR", "sd_battlecruiser_design", false),
     order: 120,
   },
@@ -266,7 +256,6 @@ export const SHIP_TYPES: Readonly<Record<ShipTypeId, ShipTypeDefinition>> = {
     torpedoes: "OPTIONAL",
     auxiliary: false,
     requiredHullTrait: null,
-    // sub_practical_military_design is year 1897: the submarine mechanics are a separate system, not this designer.
     availability: gated("EARLY", "sub_practical_military_design", false),
     order: 160,
   },

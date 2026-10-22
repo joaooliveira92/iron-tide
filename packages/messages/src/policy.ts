@@ -1,12 +1,6 @@
 import type { DomainEventBody } from "@bluewave/events";
 import type { MessageCategory, MessageSeverity, TurnPhase } from "./schema.js";
 
-/**
- * The pure, total, deterministic classification of one domain-event body: which
- * category and severity it projects to, which phase it is attributed to, the
- * localization keys, and its aggregation/deduplication identity. No ambient
- * state; a function of the body alone.
- */
 export interface MessageClassification {
   readonly category: MessageCategory;
   readonly severity: MessageSeverity;
@@ -22,11 +16,6 @@ function classification(base: Omit<MessageClassification, "playerVisible">): Mes
   return { ...base, playerVisible: base.severity !== "TRACE" };
 }
 
-/**
- * Classify a domain-event body. Total over the frozen `DomainEventBody` union;
- * an unrecognised body fails closed with a `TRACE`/`SYSTEM` classification so a
- * future event kind can never be silently shown as a material outcome.
- */
 export function classifyEventBody(body: DomainEventBody): MessageClassification {
   switch (body.kind) {
     case "NationBudgetChanged": {
@@ -169,8 +158,6 @@ export function classifyEventBody(body: DomainEventBody): MessageClassification 
         phase: "obligation",
         titleKey: "messages.prestige.changed.title",
         bodyKey: "messages.prestige.changed.body",
-        // A declined battle is its own event: two in one month are two outcomes, told apart by the step they took.
-        // Every other source keeps one message per nation and source.
         deduplicationKey:
           body.reasonCode === "DECLINED_BATTLE"
             ? `prestige:changed:${body.nationId}:${body.reasonCode}:${String(body.before)}:${String(body.after)}`
@@ -205,7 +192,6 @@ export function classifyEventBody(body: DomainEventBody): MessageClassification 
   }
 }
 
-/** Canonical severity rank — lower sorts first (most severe). */
 export const SEVERITY_RANK: Readonly<Record<MessageSeverity, number>> = {
   CRITICAL: 0,
   HIGH: 1,

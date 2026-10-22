@@ -10,7 +10,6 @@ export interface RouteReadoutProps {
   readonly onToggleClosedPassages: () => void;
 }
 
-/** The ruler readout along the bottom edge. */
 export function RouteReadout({
   className,
   route,

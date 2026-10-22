@@ -22,11 +22,9 @@ export interface UseDivisionOrganizationReturn {
   readonly busy: boolean;
   readonly request: { readonly outcomeUnknown: boolean; readonly retry: () => void };
   readonly loadScreen: () => Promise<void>;
-  /** Queue one engine division command; the engine validates it and applies it next month. */
   readonly send: (command: DivisionCommandBody) => Promise<CommandOutcome>;
 }
 
-/** Fleet-organization data + command queueing, on the shared command-screen workflow. */
 export function useDivisionOrganization(sessionId: string): UseDivisionOrganizationReturn {
   const bridge = useBridge();
   const campaignRevision = useCampaignRevision();

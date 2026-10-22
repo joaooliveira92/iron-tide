@@ -1,14 +1,3 @@
-/**
- * Place-name layout. Pure: given the projected geography, what is on screen,
- * and the camera's settled transform, it decides which names to draw and where
- * — or returns `[]` when the layer is off or the chart has no layout yet.
- *
- * Eligible names depend on zoom (see `labelPresentation`): big names when
- * zoomed out, smaller ones as you close in. They are placed in priority order,
- * one dropped if it would leave the view, sit under floating chrome, cover a
- * marker, or overlap one already placed; first it is nudged to nearby spots.
- */
-
 import {
   CONTINENTS,
   COUNTRIES,
@@ -25,10 +14,8 @@ export interface LabelSpec {
   readonly key: string;
   readonly kind: LabelKind;
   readonly text: string;
-  /** World user units. */
   readonly ux: number;
   readonly uy: number;
-  /** Tie-break within a rank: bigger first. */
   readonly weight: number;
   readonly anchor: "middle" | "start";
   readonly px: number;
@@ -55,7 +42,6 @@ function boxesOverlap(a: Box, b: Box): boolean {
   return a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
 }
 
-/** Label nudges to try, in screen pixels, nearest to the anchor first. */
 const NUDGES: readonly (readonly [number, number])[] = [
   [0, 0],
   [0, -18],
@@ -72,11 +58,9 @@ const NUDGES: readonly (readonly [number, number])[] = [
 
 export interface LabelLayoutRequest {
   readonly areas: readonly ProjectedArea[];
-  /** Display name for a fixture area id. */
   readonly areaName: (id: string) => string | undefined;
   readonly projection: Projection;
   readonly centre: number;
-  /** Which marker layers are on, so their positions become label obstacles. */
   readonly flags: {
     readonly possessions: boolean;
     readonly fleets: boolean;
@@ -84,12 +68,7 @@ export interface LabelLayoutRequest {
   };
   readonly portMarks: readonly PortMark[];
   readonly fleetMarks: readonly FleetMark[];
-  /** Passage badge midpoints, in world user units. */
   readonly passageAnchors: readonly Point[];
-  /**
-   * Regional strength glyphs, each pinned at a world-unit anchor; `top`/`bottom` are screen pixels
-   * relative to it (negative is up) and `hw` is half the glyph's width.
-   */
   readonly strengthMarks: readonly {
     readonly ux: number;
     readonly uy: number;
@@ -101,7 +80,6 @@ export interface LabelLayoutRequest {
   readonly minScale: number;
   readonly turns: readonly number[];
   readonly svg: SVGSVGElement;
-  /** The chart root, scanned for floating chrome that labels must avoid. */
   readonly root: HTMLElement | null;
 }
 
@@ -129,7 +107,6 @@ export function layoutLabels(request: LabelLayoutRequest): PlacedLabel[] {
   const frame = svg.getBoundingClientRect();
   const zoom = transform.scale / minScale;
 
-  // Everything that could be named, with its zoom-dependent look.
   const specs: LabelSpec[] = [];
   const consider = (spec: Omit<LabelSpec, "px" | "opacity" | "rank">, traits: LabelTraits = {}) => {
     const look = labelPresentation(spec.kind, zoom, traits);
@@ -176,7 +153,6 @@ export function layoutLabels(request: LabelLayoutRequest): PlacedLabel[] {
       anchor: "middle",
     });
   }
-  // A clustered port dot has no single name to show; singles do.
   for (const mark of portMarks) {
     if (mark.count !== 1) continue;
     consider(
@@ -194,7 +170,6 @@ export function layoutLabels(request: LabelLayoutRequest): PlacedLabel[] {
   }
   specs.sort((a, b) => a.rank - b.rank || b.weight - a.weight);
 
-  // Things a label must not sit on: floating panels, then markers.
   const obstacles: Box[] = [];
   if (root !== null) {
     for (const element of root.querySelectorAll("[data-map-obstacle], .pointer-events-auto")) {
@@ -214,7 +189,6 @@ export function layoutLabels(request: LabelLayoutRequest): PlacedLabel[] {
     hw: number;
     hh: number;
     oy?: number;
-    /** A port dot: the one marker its own name may sit beside. */
     port?: boolean;
   }[] = [];
   if (flags.possessions) {
@@ -256,7 +230,6 @@ export function layoutLabels(request: LabelLayoutRequest): PlacedLabel[] {
     const width = spec.text.length * (spec.px * (upper ? 0.62 : 0.56) + (upper ? 1.2 : 0)) + 8;
     for (const turn of turns) {
       const at = toScreen(spec.ux, spec.uy, turn);
-      // A port's own dot is not an obstacle to its own name.
       const markerBoxes: Box[] = markers
         .filter(
           (marker) =>

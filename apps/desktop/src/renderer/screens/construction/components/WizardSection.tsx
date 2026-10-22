@@ -7,7 +7,6 @@ export interface WizardSectionProps {
   readonly children: ReactNode;
 }
 
-/** A titled block of the order review (design summary, cost, reservations, …). */
 export function WizardSection({ title, testId, className, children }: WizardSectionProps) {
   return (
     <div data-testid={testId} className={className}>

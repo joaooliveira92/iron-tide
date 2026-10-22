@@ -1,10 +1,8 @@
 import type { ArmourRegionId, ArmourSchemeDef } from "@bluewave/ship-design";
 
-/** A rough side view of a scheme: where its plates sit on a stylised hull. Illustrative, not to scale. */
 export interface SchemeDiagram {
   readonly width: number;
   readonly height: number;
-  /** The hull outline, drawn as a polygon of points. */
   readonly hull: readonly (readonly [number, number])[];
   readonly plates: readonly SchemePlate[];
 }
@@ -27,10 +25,6 @@ const HULL: SchemeDiagram["hull"] = [
 ];
 const WATERLINE = 40;
 
-/**
- * The plates a scheme draws, one per region it fits. Amidships (the citadel) spans the middle; "ends" regions sit
- * fore and aft of it; an all-or-nothing scheme draws only the citadel. Pure and deterministic.
- */
 export function schemeDiagram(scheme: ArmourSchemeDef): SchemeDiagram {
   const citadel: readonly [number, number] = scheme.citadelOnly ? [60, 140] : [40, 160];
   const [c1, c2] = citadel;

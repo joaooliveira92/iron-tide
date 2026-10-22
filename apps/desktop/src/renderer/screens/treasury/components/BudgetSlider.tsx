@@ -5,7 +5,6 @@ export interface BudgetSliderProps {
   readonly onChange: (value: number) => void;
 }
 
-/** One bounded allocation slider: label, formatted value, and the range input. */
 export function BudgetSlider({ knob, onChange }: BudgetSliderProps) {
   return (
     <label className="block space-y-1 text-sm">

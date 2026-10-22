@@ -1,8 +1,3 @@
-/**
- * Named armour schemes (ADR-0232 section 3): a scheme is data (id, display name, citation, availability gate) plus a
- * deterministic transformation over the region list. It is a starting layout, not a parallel armour model: applying one
- * yields an ordinary region list the per-region editor ("Custom") then edits freely.
- */
 import {
   ARMOUR_REGIONS,
   allOrNothingRegions,
@@ -23,16 +18,9 @@ export type ArmourSchemeId = (typeof ARMOUR_SCHEME_IDS)[number];
 export interface ArmourSchemeDef {
   readonly id: ArmourSchemeId;
   readonly displayName: string;
-  /** Where the manual names the scheme. The layout itself is a BALANCE TARGET convention (ADR-0213). */
   readonly citation: string;
-  /**
-   * First calendar year the scheme is offered (the global designer unlock year, ADR-0229); null = in-era. The years of
-   * the gated schemes are BALANCE TARGETs, not sourced.
-   */
   readonly unlockYear: number | null;
-  /** The belt-and-deck regions this scheme fits; any other belt or deck region is removed. */
   readonly layout: readonly ArmourRegionId[];
-  /** Cut the layout to the citadel (all or nothing). */
   readonly citadelOnly: boolean;
 }
 
@@ -71,7 +59,6 @@ export const ARMOUR_SCHEMES: readonly ArmourSchemeDef[] = [
   },
 ];
 
-/** The belt-and-deck regions a scheme owns; every other region is the player's and survives a scheme change. */
 const SCHEME_FAMILY: ReadonlySet<ArmourRegionId> = new Set([
   "BELT_MAIN",
   "BELT_UPPER",
@@ -84,11 +71,6 @@ const SCHEME_FAMILY: ReadonlySet<ArmourRegionId> = new Set([
 export const armourSchemeAvailable = (scheme: ArmourSchemeDef, calendarYear: number): boolean =>
   scheme.unlockYear === null || calendarYear >= scheme.unlockYear;
 
-/**
- * Applies a scheme to a region list. Family regions the scheme fits keep the player's plate; ones it fits and the list
- * lacks start at the `newArmourRegion` convention; the rest of the family is removed; non-family regions are untouched.
- * Existing order is kept and additions follow in canonical order, so applying a scheme twice changes nothing. Pure.
- */
 export function applyArmourScheme(
   schemeId: ArmourSchemeId,
   regions: readonly ArmourRegion[],
@@ -104,7 +86,6 @@ export function applyArmourScheme(
     newArmourRegion(r, size, materialId),
   );
   const out = [...kept, ...added];
-  // An unset citadel (0) falls back to 60% of the waterline, as `newArmourRegion` does; never cut plates to zero length.
   const citadel =
     size.citadelLengthMm > 0 ? size.citadelLengthMm : Math.floor((size.lengthWlMm * 6) / 10);
   return scheme.citadelOnly ? allOrNothingRegions(out, citadel) : out;

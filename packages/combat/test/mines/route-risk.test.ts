@@ -1,12 +1,3 @@
-// AC-12 (INC-5): DESIGN-35 §13 strategic route risk (value-only). Exact formula
-// min(10_000, floor(currentPressure * freshnessBp * routeExposureMultiplierBp *
-// targetSusceptibilityMultiplierBp / 1_000_000 / 10_000 / 10_000)), bigint numerator
-// + ONE FLOOR + clamp (the intermediate exceeds Number.MAX_SAFE_INTEGER). Exact
-// shipped exposure multipliers. Emits MINE_ROUTE_RISK_CREATED iff routeRiskBp > 0.
-// NO movement-blocking behavior (DESIGN-25 blocks §14–15 route consumption). Also
-// proves the INC-4 ─ INC-5 allocation seam: routeRiskBpToAllocationPriority maps a
-// §13 value order-preservingly into INC-4's strike-risk priority (higher risk =
-// earlier) WITHOUT altering INC-4's comparator or default.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import {
@@ -43,27 +34,23 @@ describe("AC-12: exact §13 formula — bigint product, ONE FLOOR, clamp to 10_0
   });
 
   it("bigint bound: numerator 1e17 exceeds MAX_SAFE_INTEGER yet resolves exactly (10_000 × 10_000 × 1_000 = 1_000)", () => {
-    // numerator = 1_000_000 × 10_000 × 10_000 × 1_000 = 1e17 > 9.007e15. A Number
-    // product would round here; only the bigint numerator keeps it exact.
     const res = risk(1_000_000, 10_000, 10_000, 1_000);
     expect(res.routeRiskBp).toBe(SafeInt(1_000));
     expect(res.riskFlag).toBe(MINE_ROUTE_RISK_CREATED);
   });
 
   it("clamp: 15_000bp raw risk caps at 10_000", () => {
-    const res = risk(1_000_000, 10_000, 15_000, 10_000); // raw 15_000 -> clamp 10_000
+    const res = risk(1_000_000, 10_000, 15_000, 10_000);
     expect(res.routeRiskBp).toBe(SafeInt(10_000));
   });
 
   it("ONE FLOOR, never ceil: exact rational 1.5 -> 1 (not 2)", () => {
-    // 500_000 × 10_000 × 10_000 × 3 = 1.5e14; /1e14 = 1.5 -> floor 1.
     const res = risk(500_000, 10_000, 10_000, 3);
     expect(res.routeRiskBp).toBe(SafeInt(1));
     expect(res.riskFlag).toBe(MINE_ROUTE_RISK_CREATED);
   });
 
   it("fractional sub-1 risk floors to 0 and emits no flag", () => {
-    // 3 × 1 × 5_000 × 1 = 15_000; /1e14 = 0.00015 -> floor 0.
     const res = risk(3, 1, 5_000, 1);
     expect(res.routeRiskBp).toBe(SafeInt(0));
     expect(res.riskFlag).toBeNull();
@@ -115,15 +102,15 @@ describe("AC-12: exact shipped route-exposure multipliers", () => {
 describe("AC-12: invalid inputs are rejected fail-closed", () => {
   it("rejects out-of-range / non-integer inputs with INVALID_MINE_PRESSURE_STATE", () => {
     const bad: Array<() => unknown> = [
-      () => risk(-1, 5_000, 10_000, 10_000), // pressure below 0
-      () => risk(1_000_001, 5_000, 10_000, 10_000), // pressure above ceiling
-      () => risk(500_000, -1, 10_000, 10_000), // freshness below 0
-      () => risk(500_000, 10_001, 10_000, 10_000), // freshness above ceiling
-      () => risk(500_000, 5_000, -1, 10_000), // exposure below 0
-      () => risk(500_000, 5_000, 15_001, 10_000), // exposure above 15_000
-      () => risk(500_000, 5_000, 7_500.5, 10_000), // non-integer exposure
-      () => risk(500_000, 5_000, 10_000, -1), // susceptibility below 0
-      () => risk(500_000, 5_000, 10_000, 10_001), // susceptibility above 10_000
+      () => risk(-1, 5_000, 10_000, 10_000),
+      () => risk(1_000_001, 5_000, 10_000, 10_000),
+      () => risk(500_000, -1, 10_000, 10_000),
+      () => risk(500_000, 10_001, 10_000, 10_000),
+      () => risk(500_000, 5_000, -1, 10_000),
+      () => risk(500_000, 5_000, 15_001, 10_000),
+      () => risk(500_000, 5_000, 7_500.5, 10_000),
+      () => risk(500_000, 5_000, 10_000, -1),
+      () => risk(500_000, 5_000, 10_000, 10_001),
     ];
     for (const call of bad) {
       let err: BluewaveError | undefined;
@@ -195,15 +182,13 @@ describe("AC-12: INC-4 ─ INC-5 allocation seam (documented, INC-4 untouched)",
   });
 
   it("routeRiskBpToAllocationPriority maps a §13 value order-preservingly (higher risk = earlier)", () => {
-    const lower = risk(200_000, 9_000, 10_000, 10_000); // 1_800
-    const higher = risk(800_000, 9_000, 10_000, 10_000); // 7_200
+    const lower = risk(200_000, 9_000, 10_000, 10_000);
+    const higher = risk(800_000, 9_000, 10_000, 10_000);
     expect(Number(higher.routeRiskBp)).toBeGreaterThan(Number(lower.routeRiskBp));
 
     expect(routeRiskBpToAllocationPriority(Number(lower.routeRiskBp))).toBe(1_800);
     expect(routeRiskBpToAllocationPriority(Number(higher.routeRiskBp))).toBe(7_200);
 
-    // INC-4's comparator (unchanged) sorts the higher-risk record first when
-    // pressure + type tie, with the priority supplied via the ADC-5 adapter.
     const a = candidate(
       fakeRecord("mp-a"),
       routeRiskBpToAllocationPriority(Number(lower.routeRiskBp)),

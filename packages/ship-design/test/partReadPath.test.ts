@@ -42,7 +42,6 @@ const results = gunPlacements.map((row) => ({ row, got: resolveRow(row) }));
 const translationOf = (row: GunPlacement): GunPlacementTranslation =>
   present(resolveRow(row).translation, `a translation for ${where(row)}`);
 
-/** The legacy component's value for one placement, through the legacy formula evaluator. */
 function legacyComponentValue(row: GunPlacement, field: "weightKg" | "costMicro"): number {
   const def = present(
     components.find((c) => c.id === row.familyId),
@@ -108,7 +107,6 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
         const result = decodeStrictResult(FlattenedPartSchema, { ...t.gunPart, [field]: value });
         expect(result._tag, field).toBe("Failure");
       }
-      // An entry has no `barrels`: the only quantity field is mountCount (I-15).
       expect(decodeStrictResult(LoadoutEntrySchema, { ...t.entry, barrels: 2 })._tag).toBe(
         "Failure",
       );
@@ -133,7 +131,6 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
           ...(row.placement.magazineRef !== undefined
             ? { magazineEntry: row.placement.magazineRef }
             : {}),
-          // A nested entry's part units are its parent's contained units (SPM-R13).
           entries: {
             guns: [
               {
@@ -289,7 +286,6 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
         expect(gotCompiled, where(row)).toEqual(legacyCompiled);
         continue;
       }
-      // D18 R1: only mountType and mountId change, and only for the D17 entries.
       reclassified += 1;
       expect(String(legacy.resolved.mountId), where(row)).toBe(t.legacyMountId);
       expect(String(gotResolved.mountId), where(row)).toBe(t.mountPart.id);
@@ -302,9 +298,7 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
         mountType: gotCompiled.mountType,
       });
     }
-    // Only france/germany/uk carry first-class armament content.
     expect(resolved).toBe(68);
-    // Redoutable, Kaiser and Sachsen; the three Mesudiye entries are Ottoman (unresolved).
     expect(reclassified).toBe(6);
   });
 
@@ -398,7 +392,6 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
         expect(u.blockingCodes).toEqual([]);
         expect(u.message).toContain(u.nationId);
       }
-      // The three Mesudiye D17 placements are among them, still translated.
       expect(
         unresolved
           .filter((u) => u.designId === "mesudiye_1875")

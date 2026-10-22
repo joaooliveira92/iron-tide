@@ -1,7 +1,3 @@
-// AC-16 (INC-7): DESIGN-35 §22 post-war persistence. War termination never
-// auto-removes pressure; target sets preserved historically; decay/clearance
-// remain available; new laying requires a separate legal policy; peace
-// settlement alters target sets/lanes/disclosure/clearance only via typed terms.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt, BluewaveError } from "@bluewave/contracts";
 import {
@@ -71,15 +67,12 @@ describe("AC-16: §22 war termination does NOT auto-remove pressure", () => {
   it("decay continues monthly after the war", () => {
     const r = validRecord();
     const after = applyDecayedMonth(r, true, SafeInt(60));
-    // CONTACT * 9_750 -> 390_000; decay still applies post-war.
     expect(after.pressure).toBe(SafeInt(390_000));
     expect(after.lastDecayedMonth).toBe(SafeInt(60));
   });
 
   it("clearance remains available after the war (§22)", () => {
     const r = validRecord();
-    // Sweep the record down to the §27 cleared boundary, then clear it — postwar
-    // records remain clearable; war termination does not block §27.
     const swept = applySweptPressure(r, r.pressure, SafeInt(60));
     expect(swept.pressure).toBe(SafeInt(0));
     const cleared = clearRecord(swept, "SWEEPING", SafeInt(60));
@@ -117,7 +110,6 @@ describe("AC-16: §22 peace settlement alters state ONLY through typed terms", (
     expect(result.termKind).toBe("ADJUST_TARGET_SET");
     expect([...result.targetBelligerents]).toEqual(["u003", "u001"]);
     expect(result.record.pressure).toBe(r.pressure);
-    // Target-set change is an authoritative surface mutation: hash stays consistent.
     expect(verifyAreaMinePressureRecordHash(result.record)).toBe(true);
   });
 

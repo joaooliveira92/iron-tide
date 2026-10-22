@@ -1,8 +1,3 @@
-// AC-13: Ammunition consumption + empty system contributes zero (§20).
-// Verifies consume/decrement, the absent-entry → present assumption, the empty (0) → zero
-// multiplier, magazine seeding at state construction (Repair MEDIUM-1), fail-closed
-// insufficient-reserve consumption (Repair LOW-5), immutability, and state-hash recomputation.
-
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, SafeInt, isBluewaveError } from "@bluewave/contracts";
 import {
@@ -129,13 +124,10 @@ describe("AC-13: consumption (§20)", () => {
     expect(isBluewaveError(caught)).toBe(true);
     expect((caught as BluewaveError).context.code).toBe(INVALID_AIR_DEFENSE_STATE);
     expect((caught as BluewaveError).context).toMatchObject({ systemId: "sys_001" });
-    // The original state is untouched by the failed consumption.
     expect(Number(state.ammunitionByType.get("sys_001"))).toBe(3);
   });
 
   it("a 0-round (empty) explicit entry never consumes (zero-contribution path)", () => {
-    // An empty system contributes zero (§20 line 346): it does not fire, so it never
-    // reaches consumption. Consuming 0 from an empty reserve is a legal no-op (0 <= 0).
     const state = makeState(makeSystem(), [["sys_001", SafeInt.ZERO]]);
     const next = consumeAmmunition(state, "sys_001", SafeInt.ZERO);
     expect(Number(next.ammunitionByType.get("sys_001"))).toBe(0);
@@ -196,7 +188,6 @@ describe("AC-13: magazine seeding at state construction (Repair MEDIUM-1, §20/�
   });
 
   it("repeated engagements drain the seeded magazine to 0, then contribute zero", () => {
-    // magazineCapacity 15, roundsPerEngagement 5 → three exact engagements drain to 0.
     const system = makeSystem({
       magazineCapacity: SafeInt(15),
       roundsPerEngagement: SafeInt(5),
@@ -210,14 +201,13 @@ describe("AC-13: magazine seeding at state construction (Repair MEDIUM-1, §20/�
       SafeInt(10_000),
     );
 
-    state = consumeAmmunition(state, "sys_001"); // 15 → 10
+    state = consumeAmmunition(state, "sys_001");
     expect(Number(roundsForSystem(state, "sys_001"))).toBe(10);
-    state = consumeAmmunition(state, "sys_001"); // 10 → 5
+    state = consumeAmmunition(state, "sys_001");
     expect(Number(roundsForSystem(state, "sys_001"))).toBe(5);
-    state = consumeAmmunition(state, "sys_001"); // 5 → 0
+    state = consumeAmmunition(state, "sys_001");
     expect(Number(roundsForSystem(state, "sys_001"))).toBe(0);
 
-    // Empty system contributes zero (§20 line 346).
     expect(hasAmmunition(state, "sys_001")).toBe(false);
     expect(Number(ammunitionMultiplierBp(state, "sys_001"))).toBe(0);
   });

@@ -1,7 +1,3 @@
-// AC-2: Strategic weather generation — monthly weather_generation phase
-// generates per-area StrategicWeatherState from canonical climate profile,
-// calendar month, prior persistent state, and keyed RNG stream
-// `campaign/weather/<areaId>/<month>`; missing climate → WEATHER_PROFILE_INCOMPLETE.
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import { RandomLedger } from "@bluewave/random";
@@ -12,8 +8,6 @@ import {
 } from "../../src/weather/climate.js";
 import { WEATHER_GENERATION_PHASE, WEATHER_RULESET_VERSION } from "../../src/weather/constants.js";
 
-// Fixture climate profile — authored test surface (not production YAML;
-// CONTENT-track deferred)
 function temperateClimate(): ClimateProfile {
   const winterSeason = {
     seasonId: "winter",
@@ -115,29 +109,20 @@ describe("AC-2: strategic weather generation", () => {
   it("fields are within climate-profile declared ranges (summer)", () => {
     const state = generateStrategicWeather(makeInput());
 
-    // Summer ranges: seaState 1..5
     expect(state.seaState).toBeGreaterThanOrEqual(1);
     expect(state.seaState).toBeLessThanOrEqual(5);
-    // Wind bands: SW(225,3), W(270,3), N(0,1)
     expect([225, 270, 0]).toContain(state.windDirectionDeg);
-    // Wind speed 2_000_000..15_000_000
     expect(state.windSpeedUmPerSec).toBeGreaterThanOrEqual(2_000_000);
     expect(state.windSpeedUmPerSec).toBeLessThanOrEqual(15_000_000);
-    // Precipitation: NONE or RAIN
     expect(["NONE", "RAIN"]).toContain(state.precipitationType);
-    // Fog 100..3_000
     expect(state.fogMistDensityBp).toBeGreaterThanOrEqual(100);
     expect(state.fogMistDensityBp).toBeLessThanOrEqual(3_000);
-    // Cloud 2_000..7_000
     expect(state.cloudCoverBp).toBeGreaterThanOrEqual(2_000);
     expect(state.cloudCoverBp).toBeLessThanOrEqual(7_000);
-    // Visibility 30_000_000_000..100_000_000_000
     expect(state.baseVisibilityUm).toBeGreaterThanOrEqual(30_000_000_000);
     expect(state.baseVisibilityUm).toBeLessThanOrEqual(100_000_000_000);
-    // Summer: glareEligible = true
     expect(state.glareEligible).toBe(true);
 
-    // Winter test (glare not eligible)
     const winter = generateStrategicWeather(makeInput({ month: "1880-01" }));
     expect(winter.glareEligible).toBe(false);
   });
@@ -154,7 +139,6 @@ describe("AC-2: strategic weather generation", () => {
   it("different areaId produces different state (keyed RNG)", () => {
     const a = generateStrategicWeather(makeInput({ areaId: "area-eng-ch" }));
     const b = generateStrategicWeather(makeInput({ areaId: "area-north-sea" }));
-    // Keyed streams are domain-separated by areaId, so the states differ.
     expect(a.stateHash).not.toBe(b.stateHash);
   });
 
@@ -192,7 +176,6 @@ describe("AC-2: strategic weather generation", () => {
         },
       ],
     };
-    // This profile's season has empty wind bands
     expect(() => generateStrategicWeather(makeInput({ climateProfile: broken }))).toThrow(
       BluewaveError,
     );
@@ -225,7 +208,7 @@ describe("AC-2: strategic weather generation", () => {
 
   it("prior persistent state is recorded as persistentWeatherStateId", () => {
     const first = generateStrategicWeather(makeInput());
-    expect(first.persistentWeatherStateId).toBe(""); // no prior
+    expect(first.persistentWeatherStateId).toBe("");
 
     const second = generateStrategicWeather(makeInput({ priorState: first }));
     expect(second.persistentWeatherStateId).toBe(first.stateHash);
@@ -236,10 +219,9 @@ describe("AC-2: strategic weather generation", () => {
     generateStrategicWeather(makeInput({ randomLedger: ledger }));
 
     const decisions = [...ledger.all];
-    expect(decisions.length).toBeGreaterThanOrEqual(8); // 8 drawn fields
+    expect(decisions.length).toBeGreaterThanOrEqual(8);
     expect(decisions.length).toBeLessThanOrEqual(9);
 
-    // Every decision carries the correct stream id and phase
     for (const d of decisions) {
       expect(d.streamId).toBe("campaign/weather/area-eng-ch/1880-06");
       expect(d.phase).toBe(WEATHER_GENERATION_PHASE);
@@ -247,7 +229,6 @@ describe("AC-2: strategic weather generation", () => {
       expect(typeof d.draw).toBe("number");
     }
 
-    // Verify known outcomes: sea_state_* and wind_band_* first two records
     expect(decisions[0]!.outcome).toMatch(/^sea_state_\d+$/);
     expect(decisions[1]!.outcome).toMatch(/^wind_band_/);
     expect(decisions[2]!.outcome).toMatch(/^wind_speed_ums_\d+$/);

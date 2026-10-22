@@ -1,10 +1,6 @@
-// INC-4 — BattleLedger + canonicalEventOrder integration.
-// Tests that damage events integrate correctly with the BattleLedger.
 import { describe, it, expect } from "vite-plus/test";
 import { BattleLedger, canonicalEventOrder, type BattleEvent } from "../../src/battleLedger.js";
 import { damageEventOrder, createDamageEventRecord } from "../../src/damage/index.js";
-
-// BattleLedger integration
 
 describe("AC-4: BattleLedger integration", () => {
   it("damage events can be appended to BattleLedger via their metadata", () => {
@@ -38,7 +34,7 @@ describe("AC-4: BattleLedger integration", () => {
       battleId: "BATTLE-001",
       minute: damageRecord.battleMinute,
       substep: damageRecord.substep,
-      eventPriority: 8, // damage events sit after gunnery (9)
+      eventPriority: 8,
       actorId: damageRecord.sourceId,
       targetId: damageRecord.targetShipId,
       eventId: `damage:${damageRecord.sourceId}:${damageRecord.hitLocation}`,
@@ -86,8 +82,6 @@ describe("AC-4: BattleLedger integration", () => {
 
     const sorted = [...events].sort(canonicalEventOrder);
 
-    // Same minute and substep: eventPriority determines order (lower = earlier)
-    // substep 1,2,3 so they sort by substep
     expect(sorted[0].substep).toBe(1);
     expect(sorted[1].substep).toBe(2);
     expect(sorted[2].substep).toBe(3);
@@ -118,7 +112,6 @@ describe("AC-4: BattleLedger integration", () => {
     ];
 
     const sorted = [...events].sort(canonicalEventOrder);
-    // Lower priority (8) comes first
     expect(sorted[0].eventPriority).toBe(8);
     expect(sorted[1].eventPriority).toBe(9);
   });
@@ -171,7 +164,6 @@ describe("AC-4: BattleLedger integration", () => {
       terminalTransition: null,
     });
 
-    // damageEventOrder should give a non-zero result (hitLocation differs)
     expect(damageEventOrder(a, b)).not.toBe(0);
   });
 });

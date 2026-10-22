@@ -17,11 +17,6 @@ import { ProfileMountLayer, profileMounts } from "./profile-mounts.js";
 import { ProfileMastLayer, profileMasts } from "./profile-masts.js";
 import type { VisualLook } from "./visualMounts.js";
 
-/**
- * Side profile (bow left), drawn under the plan on the same horizontal scale. SCHEMATIC: see `profileFrame`;
- * armour is not drawn. Layers, back to front (manual p137): datums, masts, hull silhouette, superstructure and funnels,
- * gun mounts from the ship-visual part catalog, the waterline datum.
- */
 export function ProfileView({
   draft,
   content,
@@ -42,9 +37,7 @@ export function ProfileView({
   readonly lcbPermille: number;
   readonly superstructure: { startPermille: number; endPermille: number } | undefined;
   readonly facts: DrawingFacts;
-  /** The compiled placements to draw as gun mounts (`visualMountInputs`); omitted, none are drawn. */
   readonly mounts?: readonly VisualMountInput[];
-  /** The nation style and visual era the mounts are drawn in. */
   readonly look?: VisualLook;
 }) {
   const frame = profileFrame(draft.hull, sheerBp, bow, stern);

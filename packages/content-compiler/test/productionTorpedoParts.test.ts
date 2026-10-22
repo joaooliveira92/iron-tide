@@ -7,11 +7,6 @@ import type { ContentBundle } from "../src/index.js";
 import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
 
-/**
- * Production index propagation (ship-part-model ticket 13a): the compiled artifact carries the
- * torpedo parts and every `DQ-TORPEDO-001` `forPart` cross-reference resolves to a torpedo.
- */
-
 const here = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = resolve(here, "..", "..", "..");
 const contentDir = resolve(repoRoot, "content", "production", "1880");
@@ -59,8 +54,6 @@ describe("production part index carries the torpedo family (13a)", () => {
   it("pins the canonical 14-inch Whitehead id and keeps it connected to its references (#40)", () => {
     const byId = index?.byId ?? {};
     const whitehead = byId["whitehead_14in_1886"];
-    // The id is a canonical repository label with a retrospective vintage year, not a
-    // manufacturer or service designation: docs/research/n-2-whitehead-14in-identity.md §4-§5.
     expect(whitehead?.family).toBe("torpedo");
     expect(whitehead?.lifecycle?.availableFrom).toBe("1880-01");
     expect(whitehead?.revisions.map((r) => r.from)).toEqual(["1884-01"]);
@@ -73,8 +66,6 @@ describe("production part index carries the torpedo family (13a)", () => {
         ? []
         : [component.torpedoMount.torpedoModelId],
     );
-    // Every torpedo mount names an indexed torpedo part (no dangling model reference) and the
-    // 14-inch Whitehead is one of them (the id is not orphaned from the content).
     expect(mountedModelIds.length).toBeGreaterThan(0);
     for (const modelId of mountedModelIds) {
       expect(byId[modelId]?.family, modelId).toBe("torpedo");

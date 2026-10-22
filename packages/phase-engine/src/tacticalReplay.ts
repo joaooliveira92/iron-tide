@@ -9,28 +9,8 @@ import { computeManifestHash, resolveBattleAuto } from "@bluewave/combat";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { RandomLedger } from "@bluewave/random";
 
-// Tactical replay verification (ADR-0034 decision 2, ticket 07).
-//
-// A battle's minute-by-minute tactical state is DERIVED_REBUILDABLE: it is
-// deterministically re-resolved from the battle's manifest + seed rather than
-// persisted as a mid-battle checkpoint. This verifier turns that decision into
-// the actionable replay check that closes REL-1 §22 "replay at tactical
-// checkpoints": for every battle the snapshot records as resolved, re-run
-// `resolveBattleAuto` from the stored `BattleManifest` (whose canonical hash
-// drives the seed) + the snapshot's committed combatant state + the battle
-// area's committed strategic weather + the ruleset/formula/rng version pins,
-// and compare the recomputed outcome against the recorded `BattleInstance.result`
-// (winner/loser, per-side losses, damageReport).
-//
-// A divergence is reported deterministically (first diverging field, stable
-// structured diagnostic). `resultHash` is a transient field of
-// `BattleResolutionResult` and is NOT compared — only the persisted campaign
-// `BattleResult` surface (ADR-0034, ticket 07). Battle autosaves / minute
-// checkpoints are out of scope (deferred with the full save-package model).
-
 type AutoResolutionManifest = Parameters<typeof resolveBattleAuto>[0]["manifest"];
 
-/** The persisted `BattleResult` surface the verifier compares. */
 type RecordedBattleSurface = Pick<
   BattleResult,
   "winnerId" | "loserId" | "attackerLosses" | "defenderLosses" | "damageReport"
@@ -39,7 +19,6 @@ type RecordedBattleSurface = Pick<
 export type TacticalDivergenceField = keyof RecordedBattleSurface;
 
 export interface TacticalBattleDivergence {
-  /** First (canonical field order) recorded-vs-recomputed mismatch. */
   field: TacticalDivergenceField;
   recorded: unknown;
   recomputed: unknown;
@@ -49,13 +28,11 @@ export interface TacticalBattleVerification {
   battleId: string;
   match: boolean;
   divergence?: TacticalBattleDivergence;
-  /** Stable diagnostic code when the battle could not be re-resolved at all. */
   diagnostic?: string;
 }
 
 export interface TacticalReplayResult {
   match: boolean;
-  /** One entry per resolved battle, in canonical battle array order. */
   battles: TacticalBattleVerification[];
 }
 
@@ -67,7 +44,6 @@ const COMPARISON_FIELDS: TacticalDivergenceField[] = [
   "damageReport",
 ];
 
-/** Locate the stored manifest for a battle by its canonical `manifestHash`. */
 function resolveBattleManifest(
   snapshot: CampaignSnapshot,
   battle: BattleInstance,
@@ -92,8 +68,6 @@ function firstDivergence(
   return undefined;
 }
 
-/** The campaign `BattleResult` surface `resolveBattleAuto` recomputes, mirrored
- *  from the month pipeline's `toCampaignBattleResult` mapping. */
 function recomputedSurface(auto: {
   winnerId: string | null;
   loserId: string | null;
@@ -112,8 +86,6 @@ function recomputedSurface(auto: {
 
 export class TacticalReplayVerifier {
   verify(snapshot: CampaignSnapshot, campaignSeed: string): TacticalReplayResult {
-    // The authoritative campaign month id (same derivation as MonthExecutor):
-    // the battle was resolved at the month for the snapshot's turn number.
     const campaignMonth = campaignMonthId(
       snapshot["startYear"],
       snapshot["startMonth"],
@@ -147,10 +119,6 @@ export class TacticalReplayVerifier {
       };
     }
 
-    // The stored manifest must be internally consistent: its content hash must
-    // equal its own `manifestHash` field. A content edit that does not update
-    // the hash field (or a corrupted reference) is tamper — a stable
-    // diagnostic, not a silent re-resolution against altered inputs.
     if (computeManifestHash(manifest) !== manifest["manifestHash"]) {
       return {
         battleId: battle["id"],

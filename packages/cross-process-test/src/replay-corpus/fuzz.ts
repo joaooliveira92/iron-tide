@@ -37,16 +37,11 @@ import type { ReplayFile } from "./format.js";
 
 type MonthCheckpoint = ReplayFile["months"][number];
 
-/** A generated scenario is fully named by its seed and length. */
 export interface FuzzCase {
   readonly seed: string;
   readonly months: number;
 }
 
-/**
- * The fuzz corpus run by the test suite and pinned in `golden/replay-fuzz.json`. The budget is
- * bounded on purpose (a handful of short cases); a new case is added here and re-recorded locally.
- */
 export const FUZZ_CASES: readonly FuzzCase[] = [
   { seed: "fuzz-1880-a", months: 4 },
   { seed: "fuzz-1880-b", months: 4 },
@@ -62,7 +57,6 @@ const CASE_DIGEST_CONTEXT = "bluewave/replay-fuzz/case/v1";
 const MAX_COMMANDS_PER_MONTH = 3;
 const KINDS = ["SetBudgetAllocation", "SetResearchPriority", "OrderConstruction"] as const;
 
-/** Uniform integer in `lo..hi` from one draw of a domain-separated stream. */
 function pick(stream: RandomStream, lo: number, hi: number): number {
   return lo + Math.min(hi - lo, Math.floor(stream.next() * (hi - lo + 1)));
 }
@@ -112,11 +106,6 @@ function candidate(
   };
 }
 
-/**
- * The commands for the month about to run: a seeded draw from the engine's own command families
- * for the player nation, each kept only if the production `CommandLifecycle` accepts it against
- * this snapshot. The engine therefore defines validity; the generator never second-guesses it.
- */
 export function generateFuzzCommands(
   seed: string,
   snapshot: CampaignSnapshot,
@@ -151,14 +140,11 @@ export function generateFuzzCommands(
 
 export interface FuzzRun {
   readonly months: readonly MonthCheckpoint[];
-  /** Per-month digest of the full checkpoint; the unit a pinned manifest compares. */
   readonly monthDigests: readonly string[];
   readonly digest: string;
   readonly commandsIssued: number;
   readonly commandsAccepted: number;
-  /** Catalogue-ordered subsystems the run exercised. */
   readonly subsystems: readonly string[];
-  /** Present when the save/load round trip lost data; the run stops there. */
   readonly roundTripDivergence?: ReplayDivergence;
 }
 
@@ -167,7 +153,6 @@ export interface FuzzRunOptions {
   readonly roundTrip?: RoundTripOptions;
 }
 
-/** Run a fuzz case through the real month executor, optionally saving and loading between months. */
 export function runFuzzCase(fuzzCase: FuzzCase, options: FuzzRunOptions = {}): FuzzRun {
   let snapshot = productionStartSnapshot();
   const months: MonthCheckpoint[] = [];
@@ -227,7 +212,6 @@ function finish(
   };
 }
 
-/** Catalogue-ordered subsystems the fuzz corpus exercises; commands reach `command_collection`. */
 export function fuzzSubsystems(cases: readonly FuzzCase[] = FUZZ_CASES): readonly string[] {
   const seen = new Set(cases.flatMap((c) => runFuzzCase(c).subsystems));
   return SUBSYSTEMS.map((s) => s.id).filter((id) => seen.has(id));
@@ -251,10 +235,8 @@ export interface PinnedCase extends FuzzCase {
 }
 
 export interface CheckOptions {
-  /** Perturbs the second repeatability run only (mutation check). */
   readonly secondRun?: ExecutorPerturbation;
   readonly roundTrip?: RoundTripOptions;
-  /** When given, the run must also reproduce this checked-in digest (cross-OS equality). */
   readonly pinned?: PinnedCase;
 }
 
@@ -291,11 +273,6 @@ function firstDifference(
   return undefined;
 }
 
-/**
- * Check the three fuzz properties for one case: two runs agree (repeatability), a save/load run
- * agrees with the straight run (round trip), and the digest equals the checked-in pin, which is
- * what makes the same case agree across operating systems. A failure names the seed.
- */
 export function checkFuzzCase(fuzzCase: FuzzCase, options: CheckOptions = {}): FuzzOutcome {
   const fail = (property: FuzzProperty, divergence: ReplayDivergence): FuzzOutcome => ({
     ok: false,
@@ -340,7 +317,6 @@ export function checkFuzzCase(fuzzCase: FuzzCase, options: CheckOptions = {}): F
   return { ok: true, digest: first.digest };
 }
 
-/** Stable text with the seed and the command that reproduces the failure locally. */
 export function formatFuzzFailure(outcome: Extract<FuzzOutcome, { readonly ok: false }>): string {
   const d = outcome.divergence;
   const entry = d.entryIndex === undefined ? "" : ` entry ${String(d.entryIndex)}`;
@@ -353,8 +329,6 @@ export function formatFuzzFailure(outcome: Extract<FuzzOutcome, { readonly ok: f
     "",
   ].join("\n");
 }
-
-// ---- pinned manifest ----
 
 const Hash = Schema.String.check(Schema.isPattern(/^[0-9a-f]{64}$/));
 const FuzzManifestSchema = Schema.Struct({
@@ -379,7 +353,6 @@ const decodeManifest = Schema.decodeUnknownResult(FuzzManifestSchema, {
   errors: "all",
 });
 
-/** Decode manifest text strictly; throws `FuzzManifestError` on anything foreign or malformed. */
 export function decodeFuzzManifest(text: string): FuzzManifest {
   let raw: unknown;
   try {
@@ -394,7 +367,6 @@ export function decodeFuzzManifest(text: string): FuzzManifest {
   return decoded.success;
 }
 
-/** Canonical manifest text for `cases`; written only by the local record tool, never by CI. */
 export function recordFuzzManifest(cases: readonly FuzzCase[]): string {
   const manifest: FuzzManifest = {
     formatVersion: 1,

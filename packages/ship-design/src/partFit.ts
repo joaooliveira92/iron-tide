@@ -1,21 +1,3 @@
-/**
- * Fit validation before derivation (ship-part-model SPM-R12, ticket 06; ADR-0154 §16).
- *
- * `validateLoadoutFit` decides whether a strict loadout installs on a strict platform. It is
- * pure: no I/O, no clock, no thrown errors for expected failures. Stages, in order:
- * 1. the slot exists;
- * 2. interface match and every constraint, on the part's spec resolved at the design month;
- * 3. `mountCount` bounds, nested entries included (a nested slot's bounds are per installed
- *    parent unit, so a mount's `guns` slot {n,n} holds `n × mountCount` guns);
- * 4. lifecycle at the design month;
- * 5. national access and hard limits (a national cap and a platform cap are both checked, so
- *    the stricter always wins);
- * 6. placement.
- *
- * Findings are sorted by the contractual code order, then path. Entries are evaluated in a
- * canonical order, so shuffled input gives byte-identical output. Every failure is kept: the
- * stage never stops at the first one.
- */
 import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import type {
   FlattenedPart,
@@ -48,7 +30,6 @@ import {
 } from "./partFitTypes.js";
 import { isMonth } from "./partLifecycle.js";
 
-/** An entry with no `mountCount` installs one unit (content-schema `DEFAULT_MOUNT_COUNT`). */
 const DEFAULT_ENTRY_MOUNT_COUNT = 1;
 
 export interface FitInput {
@@ -56,27 +37,11 @@ export interface FitInput {
   readonly slotTemplates: readonly SlotTemplateData[];
   readonly platforms: readonly PlatformData[];
   readonly loadout: LoadoutData;
-  /** The design month, `YYYY-MM`. */
   readonly month: string;
   readonly nation?: FitNationInput;
   readonly ammunitionCompatibility?: FitAmmunitionCompatibility;
-  /**
-   * Legal `mountCount` values per part, for parts whose legacy count parameter is the
-   * entry's `mountCount` (launcher tubes, counted fittings). The range is an adapter-side
-   * fact (`ComponentDef.parameters`); it is the legacy `PARAM_RANGE` rule.
-   */
   readonly mountCountRanges?: FitMountCountRanges;
-  /**
-   * The technology ids the designing nation has unlocked at `month`. When given, a part whose
-   * `lifecycle.requires` is not covered is `FIT_TECHNOLOGY_LOCKED`; when absent, technology
-   * is not evaluated (the model has no unlock history of its own).
-   */
   readonly unlockedTechnologies?: readonly string[];
-  /**
-   * The intended ship type's fit requirements (`classification.requires`, ADR-0156 §4). Sourced
-   * from the compiled registry by the production paths; absent or empty emits no `TYPE_REQUIRES_*`
-   * finding, so a design whose type declares none is unchanged.
-   */
   readonly shipTypeRequirements?: readonly ShipTypeRequirement[];
 }
 
@@ -127,7 +92,6 @@ interface Ctx {
   readonly out: Collector;
 }
 
-/** A placed top-level entry, kept for the magazine-relationship pass. */
 interface PlacedEntry {
   readonly path: string;
   readonly slot: SlotData;
@@ -135,7 +99,6 @@ interface PlacedEntry {
   readonly part: FlattenedPart;
 }
 
-/** The slots a template list and own slots give, mirrors resolved one hop, ids unique. */
 function resolveSlots(
   raw: readonly SlotData[],
   owner: string,
@@ -187,7 +150,6 @@ function groupBySlot(
   return grouped;
 }
 
-/** Canonical order within one slot: part id, then the entry's full canonical form. */
 function canonicalEntries(entries: readonly Entry[]): readonly Entry[] {
   return entries
     .map((entry) => ({ entry, key: canonicalSerialize(entry) }))
@@ -205,7 +167,6 @@ interface Parent {
   readonly mountCount: number;
 }
 
-/** Evaluate every entry filed under a set of slots (platform level or one part's own slots). */
 function evaluateSlots(
   ctx: Ctx,
   slots: ReadonlyMap<string, SlotData>,
@@ -238,7 +199,6 @@ function evaluateSlots(
       }
       continue;
     }
-    // Stage 3: the slot's bounds over its entries (per installed parent unit when nested).
     const total = entries.reduce((sum, e) => sum + mountCountOf(e), 0);
     const range = slot.mountCount;
     if (range !== undefined) {
@@ -305,7 +265,6 @@ function evaluateEntry(
   const resolved: ResolvedFitPart = { part, spec: specAt(part, ctx.month) };
   placed?.push({ path, slot, entry, part });
 
-  // Stage 2: interface, then constraints (a mismatched part has no meaningful constraints).
   const accepts = slot.accepts ?? [];
   if (!accepts.includes(part.provides)) {
     out.finding(
@@ -349,7 +308,6 @@ function evaluateEntry(
         out.waivers.push({ path, ...outcome.waiver });
       }
     }
-    // Nested ammunition: the supplied compatibility facts, when the parent is a gun carrier.
     if (part.provides === "ammunition" && parent !== null) {
       checkAmmunition(ctx, path, slot, part, parent);
     }
@@ -387,7 +345,6 @@ function evaluateEntry(
     );
   }
 
-  // Nested entries fill the part's own slots.
   const ownSlots = resolveSlots(part.slots ?? [], `part '${part.id}'`, out);
   const nested = Object.entries(entry.entries ?? {}).flatMap(([childSlot, list]) =>
     list.map((child) => ({ slot: childSlot, entry: child })),
@@ -404,11 +361,6 @@ function evaluateEntry(
   }
 }
 
-/**
- * Ammunition nested in a carrier (a mount's `ammunition` slot, or a gun itself) must feed
- * every gun the carrier holds, by the caller-supplied compatibility facts. Without a fact
- * for the ammunition part no rule applies; no gun is guessed.
- */
 function checkAmmunition(
   ctx: Ctx,
   path: string,
@@ -629,7 +581,6 @@ function placement(
   }
 }
 
-/** Candidate magazines for entries that carry nested ammunition; never a guess. */
 function magazineRelationships(ctx: Ctx, placed: readonly PlacedEntry[]): void {
   const magazines = placed.filter((p) => p.slot.accepts?.includes("magazine") === true);
   for (const p of placed) {
@@ -657,7 +608,6 @@ function magazineRelationships(ctx: Ctx, placed: readonly PlacedEntry[]): void {
   }
 }
 
-/** A loadout entry with the slot it fills and its resolved part (parent, for nested entries). */
 interface WalkedEntry {
   readonly slot: string;
   readonly entry: Entry;
@@ -665,7 +615,6 @@ interface WalkedEntry {
   readonly parent: ResolvedFitPart | null;
 }
 
-/** Every entry of a loadout flattened in tree order, tagged with the slot id it fills. */
 function walkEntries(
   ctx: Ctx,
   roots: readonly (Entry & { readonly slot: string })[],
@@ -683,7 +632,6 @@ function walkEntries(
   return out;
 }
 
-/** True when an interface-matching candidate entry satisfies every constraint of the requirement. */
 function requirementHolds(
   ctx: Ctx,
   requirement: ShipTypeRequirement,
@@ -707,17 +655,9 @@ function requirementHolds(
     parent: candidate.parent,
     nestedGuns,
   });
-  // A constraint the requirement's candidate cannot answer is not a pass; only WAIVED counts.
   return outcomes.every((o) => o.kind !== "VIOLATED" && o.kind !== "UNEVALUABLE");
 }
 
-/**
- * The intended type's fit requirements (SPM-R12, ADR-0156 §4). Each requirement, in the authored
- * order, checks in turn that the loadout has an entry in its slot, that one provides the required
- * interface, that one satisfies the constraints, and that enough mount units qualify. At most one
- * finding is emitted per requirement; the caller's sort puts them in the contractual code order.
- * An empty requirement list emits nothing.
- */
 function evaluateTypeRequirements(
   ctx: Ctx,
   roots: readonly (Entry & { readonly slot: string })[],
@@ -786,13 +726,6 @@ function evaluateTypeRequirements(
   }
 }
 
-/** Validate a loadout's fit. Pure and total: expected failures are data in the result. */
-/**
- * Entry identity (ticket 11a). Ids are unique across the loadout; an entry that contains
- * itself would never terminate, so containment is walked with an on-path set. A decoded
- * loadout is a finite tree and cannot cycle; this guards in-memory construction.
- * Returns `false` when the loadout cannot be evaluated further.
- */
 function entryIdentityHolds(
   roots: readonly (Entry & { readonly slot?: string })[],
   out: Collector,
@@ -958,10 +891,6 @@ export function validateLoadoutFit(input: FitInput): FitResult {
   return finish(platform.id);
 }
 
-/**
- * The derivation barrier (I-10): `derive` runs only for an `ACCEPTED` fit. A rejected or
- * non-evaluable loadout yields its fit result and no derived value.
- */
 export function deriveAfterFit<T>(
   fit: FitResult,
   derive: () => T,

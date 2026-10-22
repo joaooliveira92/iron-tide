@@ -14,13 +14,6 @@ import type {
   StripTone,
 } from "./status-strip-state.js";
 
-/**
- * Bodies for the status strip's hover cards. Each is a small self-contained panel (a header, the
- * figures behind the readout, and a footnote) so a hover answers "where does this number come
- * from?" and not only "what is it called?". Every figure is formatted by the view model.
- */
-
-/** Fill for each stacked-bar segment; the legend swatch and the cards reuse it so they agree. */
 export const SEGMENT_FILL: Record<AllocationSegment["id"], string> = {
   obligations: "bg-muted-foreground/60",
   maintenance: "bg-primary/70",
@@ -33,7 +26,6 @@ const TONE_TEXT: Record<StripTone, string> = {
   alert: "font-semibold text-destructive",
 };
 
-/** The one-line explanation of each budget line, shown under its figures. */
 const LINE_MEANING: Record<AllocationSegment["id"], string> = {
   obligations: "Fixed monthly commitments that are charged before anything else.",
   maintenance: "Fleet upkeep, charged every month and higher in wartime.",
@@ -70,7 +62,6 @@ export function CardFoot({ children }: { readonly children: ReactNode }) {
   );
 }
 
-/** A thin proportional bar; `fraction` is clamped so an overshoot never leaves the track. */
 function Meter({
   fraction,
   fill,
@@ -117,7 +108,6 @@ const DIRECTION_WORD: Record<TrendDirection, string> = {
   flat: "unchanged",
 };
 
-/** An arrow and a signed amount: direction is stated in words and shape, never colour alone. */
 export function TrendDelta({
   series,
   className,
@@ -150,10 +140,6 @@ export function TrendDelta({
   );
 }
 
-/**
- * A small line of one series with its end point marked. The chart is decorative; the figures and
- * the first and last month are written out beside it, and the wrapper carries a text alternative.
- */
 export function TrendSpark({
   series,
   title,
@@ -161,14 +147,12 @@ export function TrendSpark({
 }: {
   readonly series: TrendSeries;
   readonly title: string;
-  /** Draw the zero baseline when the series crosses it (a net can be negative). */
   readonly zeroLine?: boolean;
 }) {
   const { values, labels } = series;
   const lo = Math.min(...values, ...(zeroLine ? [0] : []));
   const hi = Math.max(...values, ...(zeroLine ? [0] : []));
   const span = hi - lo;
-  // A single value or an unchanging series has no range: draw it level, mid-height.
   const x = (i: number) => (values.length === 1 ? 50 : (i / (values.length - 1)) * 100);
   const y = (v: number) => (span === 0 ? 50 : 88 - ((v - lo) / span) * 76);
   const points = values.map((v, i) => `${String(x(i))},${String(y(v))}`).join(" ");
@@ -224,7 +208,6 @@ export function TrendSpark({
     </div>
   );
 }
-/** One budget line: its amount, how much of the appropriation and of the committed total it takes. */
 export function BudgetLineCard({
   segment,
   allocation,
@@ -278,7 +261,6 @@ export function BudgetLineCard({
   );
 }
 
-/** The appropriation walked down, line by line, to the monthly balance. */
 export function BalanceCard({
   outlook,
   trend,
@@ -362,7 +344,6 @@ export function BalanceCard({
   );
 }
 
-/** Cash now, cash after next month at the construction upper bound, and how long it would last. */
 export function TreasuryCard({
   outlook,
   trend,
@@ -412,7 +393,6 @@ export function TreasuryCard({
   );
 }
 
-/** Where ships sit relative to areas held by other nations, with each ship named. */
 export function StationsCard({ stations }: { readonly stations: StationDetail }) {
   const format = usePresentationFormat();
   const byTonnage = stations.foreignTonsFraction !== null;
@@ -498,7 +478,6 @@ export function StationsCard({ stations }: { readonly stations: StationDetail })
   );
 }
 
-/** Port levels that add up to the shipyard capacity, largest first. */
 export function ShipyardCard({
   ports,
   total,

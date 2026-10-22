@@ -53,7 +53,6 @@ describe("separateGlyphs", () => {
   });
 
   it("works in screen pixels: world distance is scaled by the zoom factor", () => {
-    // 10 world units apart is 10 px at factor 1 (overlap), but 100 px at factor 10 (clear).
     const close = separateGlyphs([glyph("a", 0, 0, 2), glyph("b", 10, 0, 1)], 1);
     expect(close.get("b")).not.toBe(0);
     const apart = separateGlyphs([glyph("a", 0, 0, 2), glyph("b", 10, 0, 1)], 10);

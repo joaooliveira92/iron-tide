@@ -14,9 +14,9 @@ describe("units", () => {
   });
   it("mulBp rounds half up and survives large products", () => {
     expect(mulBp(10, 5000)).toBe(5);
-    expect(mulBp(3, 5000)).toBe(2); // 1.5 -> 2
+    expect(mulBp(3, 5000)).toBe(2);
     expect(mulBp(1, 4999)).toBe(0);
-    expect(mulBp(-3, 5000)).toBe(-1); // -1.5 -> -1 (half up)
+    expect(mulBp(-3, 5000)).toBe(-1);
     expect(mulBp(2_000_000_000_000, 12_500)).toBe(2_500_000_000_000);
   });
   it("ceilDiv", () => {

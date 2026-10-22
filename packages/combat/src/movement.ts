@@ -1,19 +1,13 @@
 import { BluewaveError } from "@bluewave/contracts";
 
-// DESIGN-38 §20 authoritative movement state. The numeric surface is integer
-// fixed-point under DESIGN-07: position in integer micrometres, speeds in
-// basis-point knots (knots * 1000), heading in integer degrees [0,359],
-// acceleration in micrometres/s^2, turning rate in milli-degrees/s, collision
-// radius in micrometres. The non-numeric enum/propulsion fields are excluded
-// from the fixed-point invariant (AC-1).
 export interface MovementState {
-  position: [number, number]; // integer micrometres
-  heading: number; // integer degrees 0..359
-  orderedSpeed: number; // basis-point knots (knots * 1000), integer
-  currentSpeed: number; // basis-point knots, integer
-  acceleration: number; // integer micrometres/s^2 (thrust/brake acceleration)
-  turningRate: number; // integer milli-degrees/s
-  collisionRadius: number; // integer micrometres
+  position: [number, number];
+  heading: number;
+  orderedSpeed: number;
+  currentSpeed: number;
+  acceleration: number;
+  turningRate: number;
+  collisionRadius: number;
   propulsionState: string;
   machineryReliability: number;
   fuelState: string;
@@ -22,9 +16,6 @@ export interface MovementState {
   collisionState?: string;
 }
 
-// AC-1: reject any non-integer in the numeric MovementState surface with
-// TACTICAL_STATE_INVARIANT_FAILED. Reversible-to-invariant: a failure leaves the
-// supplied state untouched (no partial mutation).
 export function assertFixedPointMovement(s: MovementState): void {
   const numeric: [string, number][] = [
     ["positionX", s.position[0]],

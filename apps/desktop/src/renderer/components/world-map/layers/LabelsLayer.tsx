@@ -7,7 +7,6 @@ export interface LabelsLayerProps {
   readonly labelHalo: string;
 }
 
-/** Place names, zoom-aware; positions come from `layoutLabels`. */
 export function LabelsLayer({ labels, labelInk, labelHalo }: LabelsLayerProps) {
   return (
     <>

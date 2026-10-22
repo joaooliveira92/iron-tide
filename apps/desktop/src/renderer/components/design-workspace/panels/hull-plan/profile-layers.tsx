@@ -3,14 +3,12 @@ import { type Point, polygonPoints, serializePath } from "./path.js";
 import type { ProfileFrame } from "./profile-geometry.js";
 import type { FunnelShape, HouseMasses } from "./profile-structures.js";
 
-/** Datum offsets, px. */
 const WATERLINE_OVERSHOOT = 12;
 const PERPENDICULAR_TICK = 5;
 const LCB_RADIUS = 3.5;
 const DECK_EDGE_INSET = 2.5;
 const FUNNEL_CAP_FRACTION = 0.12;
 
-/** The funnel's cap band: a line across the funnel just below its top, at the funnel's width there. */
 const capY = (f: FunnelShape) => f.topY + (f.baseY - f.topY) * FUNNEL_CAP_FRACTION;
 const capLeftX = (f: FunnelShape) =>
   f.polygon[3]!.x + (f.polygon[0]!.x - f.polygon[3]!.x) * FUNNEL_CAP_FRACTION;
@@ -98,7 +96,6 @@ export function ProfileFittingsLayer({
   );
 }
 
-/** The design waterline with its perpendiculars and the centre of buoyancy, drawn over the hull. */
 export function ProfileWaterlineLayer({
   frame,
   lcbPermille,

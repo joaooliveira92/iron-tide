@@ -41,7 +41,6 @@ const degrees = Schema.Finite.check(
   Schema.isLessThanOrEqualTo(360),
 );
 
-/** Parse a carrier-operations contract, failing closed with a stable BluewaveError. */
 function parseContract<A>(
   schema: Schema.ConstraintDecoder<A, never>,
   value: unknown,
@@ -497,10 +496,6 @@ export function validateCarrierOrdnanceStateContract(value: unknown): CarrierOrd
   return parseContract(CarrierOrdnanceState_v1, value, INVALID_CARRIER_OPERATIONS_STATE);
 }
 
-// Compile-time guard: the exported contracts must keep the nominal `SafeInt`
-// leaves the pre-migration `z.custom<SafeInt>` schemas produced. If any leaf
-// ever widens back to `number` this file stops compiling (mirrors
-// phase-engine's `_assert` pattern).
 type _AssertSafeInt<T> = T extends SafeInt ? true : never;
 const _assertSafeIntLeaves: [
   _AssertSafeInt<CarrierOperationsStateContract["physicalCapacityUnits"]>,

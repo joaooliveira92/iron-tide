@@ -1,11 +1,3 @@
-// Additive interruption seam (D-17 stage 1/2/3, R-21).
-//
-// A month can pause for a mandatory decision or a battle and later resume. This
-// module is deliberately small: it consumes recorded external inputs strictly by
-// ordinal, raises requests when an input is absent, and applies a recorded battle
-// result exactly once. It is NOT a `PhaseResource`, draws no randomness, and adds
-// no domain-event kind, so the phase registry/footprints and the frozen event
-// wire format are untouched.
 import {
   applyBattleConsequences,
   applyBattleResult,
@@ -36,18 +28,12 @@ import { declineRefusal } from "./battleDecline.js";
 import type { OfferContent } from "./battleOffer.js";
 import type { MonthContext } from "./monthContext.js";
 
-/**
- * External inputs supplied to a month execution. Present when the caller wants
- * interruption behaviour (the desktop app); absent/undefined keeps today's
- * uninterrupted, byte-identical pipeline.
- */
 export interface InterruptionChannel {
   readonly turnId: string;
   readonly recordedInputs: readonly RecordedInput[];
   readonly pendingDecisions?: readonly PendingDecision[];
 }
 
-/** Mutable per-execution interruption state — never serialized. */
 export interface InterruptionState {
   readonly turnId: string;
   readonly recordedInputs: readonly RecordedInput[];
@@ -93,11 +79,6 @@ interface DecisionResolution {
   readonly option: DecisionOption;
 }
 
-/**
- * Consume the recorded input for the next ordinal as a decision answer. Returns
- * the validated answer and its authored option, or `null` after suspending (the
- * input is absent, or present but mismatched — never guessed).
- */
 export function consumeDecision(
   ctx: MonthContext,
   pending: PendingDecision,
@@ -172,10 +153,6 @@ function applyDecisionEffects(ctx: MonthContext, option: DecisionOption): void {
   }
 }
 
-/**
- * Consume every pending decision in deterministic (phase, subject) order. Returns
- * `false` if the month suspended and must stop; `true` to continue the pipeline.
- */
 export function runInterruptionCheckpoint(ctx: MonthContext): boolean {
   const state = ctx.interruption;
   if (state === undefined) return true;
@@ -191,10 +168,6 @@ export function runInterruptionCheckpoint(ctx: MonthContext): boolean {
   return true;
 }
 
-/**
- * Consume the recorded input for the next ordinal as a battle result. Returns the
- * validated result, or `null` after suspending (absent or mismatched input).
- */
 export function consumeBattleResult(
   ctx: MonthContext,
   battle: BattleInstance,
@@ -259,10 +232,6 @@ export function consumeBattleResult(
   return result;
 }
 
-/**
- * The typed refusals of a recorded battle-offer response (spec #109 R6). Each leaves the offer pending and the ordinal
- * unadvanced; callers discriminate on `_tag`.
- */
 export type OfferRefusal =
   | { readonly _tag: "OfferResponseDuplicate" }
   | { readonly _tag: "OfferResponseOutOfOrder" }
@@ -273,7 +242,6 @@ export type OfferRefusal =
   | { readonly _tag: "BATTLE_DECLINE_NOT_ALLOWED" }
   | { readonly _tag: "OfferDeclineUnpriced" };
 
-/** The outcome of looking for a recorded battle-offer response at the next ordinal. */
 export type OfferResponseResolution =
   | { readonly status: "inactive" }
   | { readonly status: "awaiting"; readonly ordinal: number; readonly interruptionId: string }
@@ -286,17 +254,9 @@ export type OfferResponseResolution =
   | {
       readonly status: "resolved";
       readonly response: OfferResponseInput;
-      /** The hash of the recorded input that carried the response. */
       readonly inputHash: string;
     };
 
-/**
- * Consume the recorded input for the next ordinal as a battle-offer response (spec #109 R3, R6). Hash-validated and
- * consumed strictly by ordinal, like decisions and battle results. It reports `awaiting`/`invalid` rather than
- * suspending (the caller owns the request); the ordinal advances only on a valid, matching response. A refusal names its
- * reason by `_tag`: a duplicate or out-of-order response, a wrong input kind, a stale interruption id, a tampered payload,
- * or a response naming another battle.
- */
 export function consumeOfferResponse(
   state: InterruptionState | undefined,
   subject: { readonly battleId: string; readonly phase: TurnPhase },
@@ -339,16 +299,8 @@ export function consumeOfferResponse(
   return { status: "resolved", response, inputHash: recorded.inputHash };
 }
 
-/** A validated answer to an offer, with the hash of the recorded input that carried it. */
 export type AnsweredOffer = OfferResponseInput & { readonly inputHash: string };
 
-/**
- * Raise a battle offer and consume its answer (spec #109 R3, R6, R8, tickets #112, #113). Returns the validated accept,
- * delegate or decline response, or `null` after suspending: the answer is absent (`awaiting-input`) or refused with a
- * typed `_tag` (`invalid-input`, the offer stays pending and the ordinal unconsumed). A decline of an
- * OPERATIONALLY_UNAVOIDABLE mission (`BATTLE_DECLINE_NOT_ALLOWED`), or one the ruleset cannot price, is refused; the
- * player's answer is never defaulted, auto-declined or auto-accepted.
- */
 export function consumeOffer(ctx: MonthContext, content: OfferContent): AnsweredOffer | null {
   const state = ctx.interruption;
   if (state === undefined) return null;
@@ -406,7 +358,6 @@ export function consumeOffer(ctx: MonthContext, content: OfferContent): Answered
         const refusal =
           ctx.battleOffers === undefined ? null : declineRefusal(content, ctx.battleOffers);
         if (refusal !== null) {
-          // Leave the offer pending and the ordinal unconsumed.
           state.nextOrdinal = ordinal;
           suspend(state, request, "invalid-input", refusal._tag);
           return null;
@@ -425,11 +376,6 @@ function damageReport(result: BattleResultInput): Record<string, SafeInt> {
   return out;
 }
 
-/**
- * Apply a player-resolved battle outcome exactly once: war score (only for a
- * decided battle), per-ship damage and losses, and the recorded result. The
- * strategic resolver never re-rolls the battle.
- */
 export function applyRecordedBattleResult(
   ctx: MonthContext,
   battle: BattleInstance,
@@ -445,8 +391,6 @@ export function applyRecordedBattleResult(
       ctx.collector,
     );
   }
-  // ADR-0061: capture who was lost BEFORE the ships leave their fleets so the
-  // recorded battle result keeps the same provenance as the auto path.
   const lostShips = collectLostShips(
     ctx.currentSnapshot,
     battle,
@@ -473,10 +417,6 @@ export function applyRecordedBattleResult(
   });
 }
 
-/**
- * Detect inputs that were never consumed (extra/trailing). Any recorded input at
- * or beyond the next ordinal when the pipeline completes cleanly is invalid.
- */
 export function trailingInputSuspension(ctx: MonthContext): SuspendedTurn | undefined {
   const state = ctx.interruption;
   if (state === undefined || state.suspended !== undefined) return undefined;

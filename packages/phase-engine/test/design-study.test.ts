@@ -1,4 +1,3 @@
-// ADR-0066: SubmitDesign - authoritative component-level design compile at month application.
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -13,7 +12,6 @@ import {
   readReferenceDesignEntries,
 } from "./helpers/contentFiles.js";
 
-// The production content, with its study rules (ADR-0085).
 const content = productionShipBuildingContent({ withStudyRules: true });
 const reference = readReferenceDesignEntries();
 const havockDraft: Record<string, unknown> = {
@@ -52,7 +50,6 @@ function submit(
   };
 }
 
-/** Runs one month; the next month starts from its final snapshot one turn later, as commitMonth does. */
 function month(snapshot: CampaignSnapshot, commands: CommandEnvelope<CommandBody>[] = []) {
   const collector = new DiagnosticCollector();
   const result = new MonthExecutor().execute(
@@ -74,13 +71,11 @@ function month(snapshot: CampaignSnapshot, commands: CommandEnvelope<CommandBody
 const nation = (s: CampaignSnapshot) => s.nations.get(ATTACKER_NATION)!;
 const studyOf = (s: CampaignSnapshot, id: string) =>
   (nation(s).designStudies ?? []).find((x) => x.design.designVersionId === id)!;
-/** Holds back `reserve` of the treasury: appropriation spends only what is above the nation's expense reserve. */
 const withReserve = (s: CampaignSnapshot, reserve: number): CampaignSnapshot => {
   const nations = new Map(s.nations);
   nations.set(ATTACKER_NATION, { ...nation(s), expenses: SafeInt(reserve) });
   return { ...s, nations };
 };
-/** Months until the study for `id` completes (it must within `max`). */
 function runUntilApproved(
   s: CampaignSnapshot,
   id: string,
@@ -123,7 +118,7 @@ describe("design studies (DESIGN-21 section 3, ADR-0085)", () => {
   it("approves the design and creates its family when the last month of work is paid, having paid exactly the study cost", () => {
     const first = month(snapshot0, [submit(snapshot0, "des_a")]).next;
     const { s, months } = runUntilApproved(first, "des_a");
-    expect(months).toBe(3); // four months of work: the submission month and three more
+    expect(months).toBe(3);
     const st = studyOf(s, "des_a");
     expect(st.status).toBe("COMPLETED");
     expect(st.completionMonth).not.toBeNull();
@@ -165,7 +160,6 @@ describe("design studies (DESIGN-21 section 3, ADR-0085)", () => {
 
   it("a dissimilar design under the same name is not rejected: it starts a new family, with no discount", () => {
     const a = runUntilApproved(month(snapshot0, [submit(snapshot0, "des_a")]).next, "des_a").s;
-    // 70 % of the power: still a legal design, but more than a knot slower than the family's baseline.
     const machinery = havockDraft["machinery"] as Record<string, number>;
     const bigger = {
       ...havockDraft,

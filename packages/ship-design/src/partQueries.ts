@@ -1,21 +1,3 @@
-/**
- * Pure part queries for agents and the designer (ship-part-model SPM-R15, ticket 07).
- *
- * Every query reads a `PartCatalogue` (flattened parts, slot templates, platforms) and
- * returns plain, codepoint-ordered data: no I/O, no clock, no hidden state. A new part is
- * found by every slot whose interface and constraints it satisfies; there is no
- * compatibility list to maintain (story 2).
- *
- * - `resolvePart`: a part at a month, its revision applied;
- * - `availableParts`: what is fittable at a month, and what changed in it;
- * - `partsForSlot`: every part a slot accepts;
- * - `lineage`: supersession ancestry and successors;
- * - `validateLoadout`: `validateLoadoutFit` with the unlocked-technology input;
- * - `loadoutCost`: each quantity component's value, basis, multiplier and contribution.
- *
- * A malformed `month` is a caller error and throws (an invariant break); expected
- * outcomes (unknown ids, unknown slots) are data in the result.
- */
 import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import type {
   FlattenedPart,
@@ -32,7 +14,6 @@ import type { FitDataIssue, FitNationInput, FitResult } from "./partFitTypes.js"
 import { isMonth, lifecycleStatus, shiftMonth, type LifecycleStatus } from "./partLifecycle.js";
 import { quantityLines, type QuantityLine } from "./partQuantities.js";
 
-/** The catalogue every query reads. */
 export interface PartCatalogue {
   readonly parts: readonly FlattenedPart[];
   readonly slotTemplates: readonly SlotTemplateData[];
@@ -50,7 +31,6 @@ function findPart(catalogue: PartCatalogue, id: string): FlattenedPart | undefin
   return catalogue.parts.find((p) => p.id === id);
 }
 
-/** The revision in force at `month`: the last `from` not after it, or `"base"`. */
 export function revisionAt(part: FlattenedPart, month: string): string {
   let revision = "base";
   for (const r of part.revisions) {
@@ -60,22 +40,17 @@ export function revisionAt(part: FlattenedPart, month: string): string {
   return revision;
 }
 
-// resolvePart
-
 export interface ResolvedPart {
   readonly id: string;
   readonly family: FlattenedPart["family"];
   readonly provides: FlattenedPart["provides"];
   readonly month: string;
-  /** The `from` of the last revision applied, or `"base"`. */
   readonly revision: string;
   readonly spec: ResolvedSpec;
   readonly status: LifecycleStatus;
-  /** The parts whose lifecycle `supersedes` this one, id-ordered. */
   readonly supersededBy: readonly string[];
 }
 
-/** A part at a month with its revision applied; `null` when the id is not in the catalogue. */
 export function resolvePart(
   catalogue: PartCatalogue,
   id: string,
@@ -103,20 +78,11 @@ function successorsOf(catalogue: PartCatalogue, id: string): string[] {
     .sort(compareCodePoints);
 }
 
-// availableParts
-
 export interface AvailablePartsInput {
   readonly catalogue: PartCatalogue;
-  /** `YYYY-MM`. */
   readonly month: string;
-  /** National access, as for fit validation (a part's own `nation`, denials, calibre cap). */
   readonly nation?: FitNationInput;
-  /**
-   * Technology ids unlocked at `month`. When absent, technology prerequisites are not
-   * evaluated (the part model holds no unlock history).
-   */
   readonly unlockedTechnologies?: readonly string[];
-  /** Technology ids unlocked in the previous month; defaults to `unlockedTechnologies`. */
   readonly previouslyUnlockedTechnologies?: readonly string[];
 }
 
@@ -125,17 +91,13 @@ export type PartChangeKind = "INTRODUCED" | "REVISED" | "RETIRED";
 export interface PartChange {
   readonly part: string;
   readonly kind: PartChangeKind;
-  /** The month the change takes effect (always the query month). */
   readonly month: string;
 }
 
 export interface AvailableParts {
   readonly month: string;
-  /** Fittable parts at `month`, id-ordered. */
   readonly available: readonly string[];
-  /** Fittable at `month` and not fittable the month before, id-ordered. */
   readonly newlyFittable: readonly string[];
-  /** Lifecycle starts, re-ratings and retirements taking effect in `month`. */
   readonly changes: readonly PartChange[];
 }
 
@@ -166,7 +128,6 @@ function fittable(
   return unlocked === undefined || (part.lifecycle.requires ?? []).every((t) => unlocked.has(t));
 }
 
-/** What is fittable at a month for a nation, and what changed in that month (stories 17, 18). */
 export function availableParts(input: AvailablePartsInput): AvailableParts {
   const { catalogue, month, nation } = input;
   assertMonth(month, "availableParts");
@@ -200,34 +161,24 @@ export function availableParts(input: AvailablePartsInput): AvailableParts {
   };
 }
 
-// partsForSlot
-
 export type SlotOwner = { readonly platform: string } | { readonly part: string };
 
 export interface PartsForSlotInput {
   readonly catalogue: PartCatalogue;
-  /** The platform, or the part, that declares the slot. */
   readonly owner: SlotOwner;
   readonly slot: string;
-  /** The month whose revisions the constraints are evaluated against. */
   readonly month: string;
 }
 
 export interface UndecidedPart {
   readonly part: string;
-  /** The constraint that names a fact the candidate (alone) cannot answer. */
   readonly constraints: readonly string[];
 }
 
 export interface PartsForSlot {
   readonly status: "OK" | "UNKNOWN_OWNER" | "UNKNOWN_SLOT";
   readonly slot: string;
-  /** Parts whose interface and every evaluable constraint the slot accepts, id-ordered. */
   readonly parts: readonly string[];
-  /**
-   * Parts the slot's interface accepts but whose constraints need facts a lone part lacks
-   * (a mount's calibre needs its guns). They are neither accepted nor rejected here.
-   */
   readonly undecided: readonly UndecidedPart[];
 }
 
@@ -238,11 +189,6 @@ function resolveOwnSlot(slots: readonly SlotData[], id: string): SlotData | unde
   return sibling === undefined ? undefined : { ...sibling, id };
 }
 
-/**
- * Every part a slot accepts, by interface and constraints only. Lifecycle, nation and
- * technology are `availableParts` concerns; combine the two lists to get "fits and is
- * fittable". `massKgMax` is evaluated for one installed unit.
- */
 export function partsForSlot(input: PartsForSlotInput): PartsForSlot {
   const { catalogue, owner, month } = input;
   assertMonth(month, "partsForSlot");
@@ -297,18 +243,12 @@ export function partsForSlot(input: PartsForSlotInput): PartsForSlot {
   return { status: "OK", slot: input.slot, parts, undecided };
 }
 
-// lineage
-
 export interface PartLineage {
   readonly part: string;
-  /** The prototype a variant extends (its flatten origin). */
   readonly prototype: string | null;
-  /** Parts that extend this one, id-ordered. */
   readonly variants: readonly string[];
-  /** Direct supersession: parts this one succeeds / parts that succeed it. */
   readonly supersedes: readonly string[];
   readonly supersededBy: readonly string[];
-  /** Transitive supersession, nearest first within each generation, never repeating a part. */
   readonly ancestors: readonly string[];
   readonly successors: readonly string[];
 }
@@ -330,7 +270,6 @@ function closure(start: readonly string[], next: (id: string) => readonly string
   return out;
 }
 
-/** A part's supersession ancestry and successors; `null` when the id is unknown. */
 export function lineage(catalogue: PartCatalogue, id: string): PartLineage | null {
   const part = findPart(catalogue, id);
   if (part === undefined) return null;
@@ -356,20 +295,16 @@ export function lineage(catalogue: PartCatalogue, id: string): PartLineage | nul
   };
 }
 
-// validateLoadout
-
 export interface ValidateLoadoutInput {
   readonly catalogue: PartCatalogue;
   readonly loadout: LoadoutData;
   readonly month: string;
   readonly nation?: FitNationInput;
-  /** Unlocked technology ids; a part requiring others is `FIT_TECHNOLOGY_LOCKED`. */
   readonly unlockedTechnologies?: readonly string[];
   readonly ammunitionCompatibility?: FitInput["ammunitionCompatibility"];
   readonly mountCountRanges?: FitInput["mountCountRanges"];
 }
 
-/** The fit findings of a loadout (SPM-R12): `validateLoadoutFit` over a catalogue. */
 export function validateLoadout(input: ValidateLoadoutInput): FitResult {
   const { catalogue } = input;
   return validateLoadoutFit({
@@ -389,31 +324,19 @@ export function validateLoadout(input: ValidateLoadoutInput): FitResult {
   });
 }
 
-// loadoutCost
-
 export interface CostLine extends QuantityLine {
-  /** `entries/<slot>/<part>#<n>[/entries/…]`, the same address fit findings use. */
   readonly path: string;
-  /** The revision of the part applied at the query month. */
   readonly revision: string;
-  /** Installed units of the part: nested entries multiply by their parent's units (SPM-R13). */
   readonly units: number;
 }
 
 export interface LoadoutCost {
   readonly month: string;
   readonly lines: readonly CostLine[];
-  /** Sum of contributions per quantity kind, kind-ordered; kinds with no line are absent. */
   readonly totals: Readonly<Partial<Record<QuantityKind, number>>>;
   readonly dataIssues: readonly FitDataIssue[];
 }
 
-/**
- * The quantity components of every entry in a loadout, each with its value, basis,
- * multiplier and contribution (SPM-R13). Cost is computed from the loadout as given: run
- * `validateLoadout` first to know whether it fits. An entry naming an unknown part is a
- * data issue and contributes nothing.
- */
 export function loadoutCost(input: {
   readonly catalogue: PartCatalogue;
   readonly loadout: LoadoutData;
@@ -424,7 +347,6 @@ export function loadoutCost(input: {
   const lines: CostLine[] = [];
   const dataIssues: FitDataIssue[] = [];
 
-  /** Entries per slot in the canonical order fit validation uses, so `#n` is stable. */
   const visit = (
     bySlot: Readonly<Record<string, readonly NestedLoadoutEntry[]>>,
     basePath: string,

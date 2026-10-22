@@ -4,7 +4,6 @@ import { MAP_PANEL_SIZES, WorldMapPanel } from "./WorldMapPanel.js";
 
 describe("WorldMapPanel", () => {
   beforeAll(() => {
-    // jsdom has no ResizeObserver; the glass card measures itself with one.
     vi.stubGlobal(
       "ResizeObserver",
       class {
@@ -44,7 +43,6 @@ describe("WorldMapPanel", () => {
     );
     expect(screen.getByText("Fleet positions")).toBeTruthy();
     await screen.findByRole("application", { name: /World map/ });
-    // eng_home_coast is drawn on the North Sea polygon; that area is the pressed one.
     const pressed = container.querySelectorAll('path[role="button"][aria-pressed="true"]');
     expect(pressed).toHaveLength(1);
     expect(pressed[0]?.getAttribute("aria-label")).toMatch(/^North Sea:/);

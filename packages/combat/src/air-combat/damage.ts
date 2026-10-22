@@ -1,6 +1,3 @@
-// D-3 M4 Aviation: CAP & Strikes — INC-5 (AC-13): bomb damage resolution.
-// Simplified bomb damage package creation for the damage pipeline.
-// Pure deterministic functions — no I/O, no Date.
 import { type RandomEngine, drawUniform } from "@bluewave/random";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -12,18 +9,16 @@ import {
 } from "./constants.js";
 import type { GunneryImpact } from "../damage/engineWiring.js";
 
-// Reuses the GunneryImpact interface from damage pipeline.
-// This type alias makes the semantic intent clear.
 export type AirAttackDamagePackage = GunneryImpact;
 
 export interface BombingAttackInput {
   attackerSquadronId: string;
   targetShipId: string;
-  payloadCapacity: SafeInt; // from aircraft model
+  payloadCapacity: SafeInt;
   isDiveBomb: boolean;
-  accuracyBp: SafeInt; // from computeBombingAccuracy
-  disruptionBp: SafeInt; // current disruption
-  targetArmorZoneBp: SafeInt; // target armor effectiveness
+  accuracyBp: SafeInt;
+  disruptionBp: SafeInt;
+  targetArmorZoneBp: SafeInt;
 }
 
 export interface BombingAttackResult {
@@ -32,23 +27,6 @@ export interface BombingAttackResult {
   damagePackage: AirAttackDamagePackage | null;
 }
 
-/**
- * Resolves a bombing attack against a surface target.
- *
- * 1. Hit probability = accuracyBp (from computeBombingAccuracy), clamped [0, 10_000].
- * 2. RNG draw to determine hit/miss.
- * 3. On hit: constructs a GunneryImpact damage package.
- *
- * Bomb damage:
- * - structuralDamage = AIR_COMBAT_BOMB_BASE_STRUCTURAL_DAMAGE * payloadFactor
- * - payloadFactor = max(1, payloadCapacity / 10)
- * - flotationDamage = AIR_COMBAT_BOMB_BASE_FLOTATION_DAMAGE (bombs cause less flotation damage)
- * - Penetration: dive bombs use AIR_COMBAT_DIVE_BOMBING_PENETRATION_MULTIPLIER_BP
- *
- * @param input - Bombing attack input parameters.
- * @param rngEngine - RandomEngine for keyed RNG draw (domain: "air-combat/bombing-attack").
- * @returns BombingAttackResult with hit status and damage package.
- */
 export function resolveBombingAttack(
   input: BombingAttackInput,
   rngEngine: RandomEngine,
@@ -64,20 +42,16 @@ export function resolveBombingAttack(
   let damagePackage: AirAttackDamagePackage | null = null;
 
   if (isHit) {
-    // Payload factor: structural damage scales with payload
     const payloadCapacity = Number(input.payloadCapacity);
     const payloadFactor = Math.max(1, Math.floor(payloadCapacity / 10));
 
     const structuralDamage = AIR_COMBAT_BOMB_BASE_STRUCTURAL_DAMAGE * payloadFactor;
     const flotationDamage = AIR_COMBAT_BOMB_BASE_FLOTATION_DAMAGE;
 
-    // Penetration multiplier
     const penetrationMultiplierBp = input.isDiveBomb
       ? AIR_COMBAT_DIVE_BOMBING_PENETRATION_MULTIPLIER_BP
       : AIR_COMBAT_LEVEL_BOMBING_PENETRATION_MULTIPLIER_BP;
 
-    // Effective resistance: target armor * penetration multiplier (inverse)
-    // Higher penetration multiplier = easier to penetrate = lower effective resistance
     const effectiveResistanceUm = Math.floor(
       (Number(input.targetArmorZoneBp) * AIR_COMBAT_BASIS_POINTS) /
         Math.max(1, penetrationMultiplierBp),

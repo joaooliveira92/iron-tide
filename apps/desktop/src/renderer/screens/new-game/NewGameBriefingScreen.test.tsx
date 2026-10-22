@@ -63,7 +63,6 @@ beforeAll(() => {
   }
 });
 
-/** The briefing progress list's current step, by its accessible marker. */
 function currentStep(): string {
   return document.querySelector('[aria-current="step"]')?.textContent ?? "";
 }
@@ -105,10 +104,7 @@ describe("NewGameBriefingScreen", () => {
       screen.getByText(/You have been appointed First Sea Lord — United Kingdom/),
     ).toBeTruthy();
     expect(screen.getByText("Appointment confirmed · January 1880")).toBeTruthy();
-    // Page 1 keeps the flavorful forward label, not "Next". The label registers from an
-    // effect that runs after the page text appears, so wait for it rather than read it once.
     await waitFor(() => expect(primaryLabel()).toBe("Review Naval Estimates"));
-    // Back is not available on page 1.
     expect(screen.getByRole("button", { name: "Back" }).hasAttribute("disabled")).toBe(true);
   });
 
@@ -116,23 +112,19 @@ describe("NewGameBriefingScreen", () => {
     const onTakeCommand = vi.fn();
     const { primaryLabel, triggerPrimary } = renderScreen(fixtureProjection(), onTakeCommand);
     await screen.findByText("Opening Strategic Briefing");
-    // `triggerPrimary` is a silent no-op until the primary action has registered.
     await waitFor(() => expect(primaryLabel()).toBe("Review Naval Estimates"));
 
-    // Page 1 -> 2 via "Review Naval Estimates".
     triggerPrimary();
     expect(currentStep()).toContain("State of the Navy");
     expect(screen.getByText("Majestic class (150 NC)")).toBeTruthy();
     expect(screen.getByText("Ships under construction")).toBeTruthy();
 
-    // Page 2 -> 3.
     expect(primaryLabel()).toBe("Continue to Treasury Position");
     triggerPrimary();
     expect(currentStep()).toContain("Treasury Position");
     expect(screen.getByText("Projected surplus / deficit")).toBeTruthy();
     expect(screen.getByText("narrow")).toBeTruthy();
 
-    // Page 3 -> 4: the World Situation Briefing.
     expect(primaryLabel()).toBe("Continue to Foreign Intelligence");
     triggerPrimary();
     expect(
@@ -140,25 +132,21 @@ describe("NewGameBriefingScreen", () => {
     ).toBeTruthy();
     expect(screen.getByRole("heading", { level: 4, name: "German Empire" })).toBeTruthy();
 
-    // The page says it is review-only and where continuing leads.
     expect(
       screen.getByText(/Review only\. Nothing on this page changes your standing\./),
     ).toBeTruthy();
     expect(screen.getByText(/Continuing opens Immediate Concerns\./)).toBeTruthy();
 
-    // Page 4 -> 5: the action names its destination.
     expect(primaryLabel()).toBe("Continue to Immediate Concerns");
     triggerPrimary();
     expect(currentStep()).toContain("Immediate Concerns");
     expect(screen.getByText("The projected monthly budget runs a deficit.")).toBeTruthy();
 
-    // Back returns to page 4.
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(
       screen.getByRole("heading", { level: 2, name: "World Situation Briefing" }),
     ).toBeTruthy();
 
-    // Forward again then Take command.
     expect(primaryLabel()).toBe("Continue to Immediate Concerns");
     triggerPrimary();
     expect(primaryLabel()).toBe("Take command");

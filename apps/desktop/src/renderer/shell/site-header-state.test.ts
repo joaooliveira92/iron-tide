@@ -8,7 +8,6 @@ import {
 } from "./site-header-state.js";
 import { createPresentationFormat } from "../lib/presentation-format/index.js";
 
-/** The default presentation (en-US, Naval Credits) the header renders under. */
 const FORMAT = createPresentationFormat({
   locale: "en-US",
   numberScale: "full",
@@ -168,8 +167,6 @@ describe("describeSecondaryRow", () => {
     if (row.kind !== "campaign") throw new Error("expected a campaign row");
 
     const unbacked = row.metrics.filter((metric) => metric.placeholder);
-    // The alert slot is forward-wired (INC-2), so it is a placeholder while
-    // its projection is absent; prestige/tension are not projected at all.
     expect(unbacked.map((metric) => metric.icon)).toEqual(["alerts", "prestige", "tension"]);
   });
 

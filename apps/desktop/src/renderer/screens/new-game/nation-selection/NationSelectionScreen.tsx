@@ -8,7 +8,6 @@ import { FleetDispatchBoard } from "./FleetDispatchBoard.js";
 import { GlobePanel } from "./GlobePanel.js";
 import { TelemetryBar } from "./TelemetryBar.js";
 
-// Hoisted static formatting utilities to prevent inline recreation
 function formatCoord(decimal: number, posDir: string, negDir: string): string {
   const absolute = Math.abs(decimal);
   const deg = Math.floor(absolute);
@@ -17,15 +16,6 @@ function formatCoord(decimal: number, posDir: string, negDir: string): string {
   return `${deg}°${String(min).padStart(2, "0")}'${dir}`;
 }
 
-/**
- * The 1880 Admiralty nation-selection surface.
- *
- * Orchestrates four sub-components:
- * - TelemetryBar: coordinate display and keyboard hints
- * - FleetDispatchBoard: nation grid selector
- * - GlobePanel: clipped globe with dossier slide panel
- * - DossierSlidePanel: nation dossier drawer
- */
 export function NationSelectionScreen({
   slots,
   onConfirm,
@@ -51,7 +41,6 @@ export function NationSelectionScreen({
   const focusedSlotId = slots[normalizedFocusedIndex] as PlayableSlotCountryId;
   const coords = nationPresentationOrNull(focusedSlotId)?.coordinates;
 
-  // Stabilize external callbacks via Refs to prevent rendering stutters in child modules
   const onConfirmRef = useRef(onConfirm);
   const onCancelRef = useRef(onCancel);
   useEffect(() => {
@@ -157,7 +146,6 @@ export function NationSelectionScreen({
           aria-hidden="true"
         />
 
-        {/* Left Panel: Fleet Dispatch Board */}
         <FleetDispatchBoard
           slots={slots}
           focusedIndex={focusedIndex}
@@ -175,13 +163,8 @@ export function NationSelectionScreen({
           }
         />
 
-        {/* Right Panel: Globe */}
         <GlobePanel focusedSlotId={focusedSlotId} onNationClick={handleNationClick} />
 
-        {/* ── Failure Notice: surfaces a rejected campaign start (e.g. an
-            unsupported nation), which otherwise fails silently on this screen
-            — session.failure is only rendered back on CampaignLaunchGate's
-            menu/archives phases. ── */}
         {failure && (
           <div
             role="alert"

@@ -1,12 +1,3 @@
-/**
- * The ship-design armament cut-over (ADR-0093 Step 3).
- *
- * This module maps the authoritative armament domain into the ship-design finding model and the compiled
- * weapon contract. It preserves the stable armament rule code, the affected entity and field, the
- * machine-readable parameters and the deterministic order, so a content or user error surfaces as a
- * structured compilation finding rather than an exception. No nation-id conditional appears here: national
- * difference enters only through the access context data.
- */
 import type {
   ArmamentAccessStatus,
   ArmamentResolutionFinding,
@@ -51,10 +42,6 @@ function parameterInputs(
   return inputs;
 }
 
-/**
- * Map one armament resolution finding into the ship-design finding model. The finding id is the stable
- * armament rule code; the subject is the affected placement; parameters become numeric evidence inputs.
- */
 export function mapArmamentFinding(
   finding: ArmamentResolutionFinding,
   instanceId: string,
@@ -86,7 +73,6 @@ function describe(parameters: Readonly<Record<string, string | number | boolean>
   return parts.length === 0 ? "no parameters" : parts.join(", ");
 }
 
-/** Map every armament finding for one placement, preserving the resolver's deterministic order. */
 export function mapArmamentFindings(
   findings: readonly ArmamentResolutionFinding[],
   instanceId: string,
@@ -94,7 +80,6 @@ export function mapArmamentFindings(
   return findings.map((f) => mapArmamentFinding(f, instanceId));
 }
 
-/** Build the access context record from a nation's naval profile; absent profile = no overrides (all DOMESTIC). */
 export function componentAccessOf(
   profile: NationNavalProfile | undefined,
 ): Record<string, ArmamentAccessStatus> {
@@ -107,12 +92,6 @@ export function componentAccessOf(
 
 const resolvableCache = new WeakMap<ShipContext, Map<string, ReadonlySet<string>>>();
 
-/**
- * The set of gun-family component ids that resolve through `resolveArmament` for a nation's context at its
- * month, technology and access, or `null` when the context carries no armament content for that nation (no
- * filter applies). Deterministic and memoised per context: candidate generation selects only resolvable
- * armament, and never bypasses the authoritative resolver.
- */
 export function resolvableWeaponFamilies(
   ctx: ShipContext,
   nationId: string,
@@ -145,7 +124,6 @@ export function resolvableWeaponFamilies(
   return resolvable;
 }
 
-/** The compiled weapon contract for one resolved armament (see `@bluewave/armament`'s `CompiledArmamentMount`). */
 export function toCompiledWeaponArmament(
   resolved: ResolvedArmament,
   mountType: string,

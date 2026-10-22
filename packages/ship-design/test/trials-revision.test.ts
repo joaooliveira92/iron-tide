@@ -296,7 +296,6 @@ describe("in-place design-revision limits (manual p27, ADR-0132)", () => {
     expect(ids(facts(), facts({ displacementKg: 11_000_001 }))).toContain(
       "REVISION_DISPLACEMENT_EXCEEDED",
     );
-    // A small ship gets the 1000 t minimum allowance, not just its 10 %.
     expect(ids(facts({ displacementKg: 2_000_000 }), facts({ displacementKg: 3_000_000 }))).toEqual(
       [],
     );
@@ -326,7 +325,6 @@ describe("in-place design-revision limits (manual p27, ADR-0132)", () => {
     expect(ids(twelve, { ...twelve, maxMainGunUm: 11 * 25_400 })).toContain(
       "REVISION_MAIN_GUN_UNCHANGEABLE",
     );
-    // A ≤6 in main battery may be re-chosen.
     const six = facts({ maxMainGunUm: 6 * 25_400 });
     expect(ids(six, { ...six, maxMainGunUm: 5 * 25_400 })).toEqual([]);
   });

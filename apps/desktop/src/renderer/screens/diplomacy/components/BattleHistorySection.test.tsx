@@ -87,7 +87,6 @@ describe("BattleHistorySection", () => {
     expect(screen.getByTestId("battle-summary").textContent).toContain(
       "2 battles fought · 1 won · 1 lost · 0 undecided · you lost 5 ships, the enemy lost 4 ships",
     );
-    // A third-party battle shows only a neutral loss count, no win/loss framing.
     expect(screen.getByText("Not involved")).toBeTruthy();
     expect(screen.getByText("9 ships lost")).toBeTruthy();
   });

@@ -1,7 +1,3 @@
-// Deterministic child-process script for B-5 weather determinism (AC-14).
-// Spawned by determinism.test.ts; prints a single JSON line with per-minute
-// hashes including weather events. Canonical weather input is built in-process
-// from the B-2 fixture plus a minimal climate/daylight profile.
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
 import type { TacticalBattleState, TacticalShipUnit } from "../tactical/index.js";
@@ -92,7 +88,6 @@ const orders = {
   d2: { orderedHeading: 123, orderedSpeedBp: 20_000 },
 };
 
-// Minimal climate/daylight fixture (CONTENT-track deferred; test surface).
 const daylightProfile = {
   daylightProfileId: "test_daylight_v1",
   entries: [

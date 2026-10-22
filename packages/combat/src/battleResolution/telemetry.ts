@@ -1,18 +1,8 @@
-// ADR-0098: observational battle telemetry for the tactical balance benchmark.
-// Accumulated from the already-resolved minute surfaces (gunnery salvo records);
-// no RNG, no extra draws, integer-only. OBSERVATIONAL: excluded from
-// `BattleResolutionResult.resultHash` and never fed back into the simulation, so
-// enabling it cannot move a pinned baseline.
 export interface BattleTelemetry {
-  /** Gunnery salvoes fired (one per fired battery-minute). */
   salvosFired: number;
-  /** Shells expended across all fired salvoes (ammunition before - after). */
   roundsExpended: number;
-  /** Salvoes that resolved HIT. */
   hits: number;
-  /** Salvoes that resolved MISS. */
   misses: number;
-  /** hits / salvosFired in basis points (0 when no salvo fired). */
   hitRateBp: number;
 }
 

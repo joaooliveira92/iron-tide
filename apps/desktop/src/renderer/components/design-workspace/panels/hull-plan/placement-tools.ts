@@ -1,8 +1,3 @@
-/**
- * Public surface of the hull plan's placement tools. The logic lives in focused modules — `plan-targeting`
- * (point to station/zone/side), `placement-edits` (pure `DraftEdit` builders), `plan-pointer` (screen to plan)
- * and `auto-place` (the compile-backed search) — and is re-exported here so callers keep one import.
- */
 export {
   CENTRE_BAND,
   STATION_SNAP_PERMILLE,

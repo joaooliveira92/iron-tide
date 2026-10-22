@@ -11,15 +11,6 @@ export interface WorldGenerationChecklistState {
   readonly flavorText: string;
 }
 
-/**
- * Drives the "Establishing the Naval Order" cosmetic presentation (spec §7):
- * reveals the fixed checklist over a bounded pace and rotates flavor text on
- * its own independent interval. Purely cosmetic and decoupled from the real
- * `compileCampaign` call — once the checklist is fully revealed it just
- * holds on the final line (with flavor text still rotating) for as long as
- * `active` stays true, which is exactly the "hold until resolution" rough
- * edge the spec calls out.
- */
 export function useWorldGenerationChecklist(active: boolean): WorldGenerationChecklistState {
   const [revealedCount, setRevealedCount] = useState(1);
   const [flavorIndex, setFlavorIndex] = useState(0);

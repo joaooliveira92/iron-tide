@@ -56,11 +56,6 @@ declare global {
   }
 }
 
-/**
- * The shell variants that present the new-campaign workflow. Kept as data so a
- * new step only has to be added here (and to `CampaignUnavailableView`'s
- * renderer registry) rather than to an inline `||` chain.
- */
 const NEW_GAME_MODE_KINDS: ReadonlySet<CampaignShellMode["kind"]> = new Set([
   "new-game-nation",
   "new-game-preferences",
@@ -72,10 +67,6 @@ const NEW_GAME_MODE_KINDS: ReadonlySet<CampaignShellMode["kind"]> = new Set([
   "opening-briefing",
 ]);
 
-/**
- * New-game steps that name themselves in the header's secondary row instead of
- * the generic "Campaign setup assistant" copy. Steps absent here keep it.
- */
 const WIZARD_STEP_COPY: Partial<Record<CampaignShellMode["kind"], WizardStepCopy>> = {
   "new-game-preferences": {
     heading: RULES_OF_THE_NAVAL_AGE_HEADING,
@@ -94,7 +85,6 @@ function activeViewFor(mode: CampaignShellMode): ActiveView {
 
 function ActiveCampaignView({ screen }: { readonly screen: Screen }) {
   return (
-    // The Overview is the full-bleed command screen (CC-2): no page padding, so the map fills the space.
     <div className={screen === "overview" ? "h-full font-sans" : "p-8 font-sans"}>
       <CampaignScreenOutlet screen={screen} />
     </div>
@@ -118,9 +108,7 @@ function CampaignShellApplication({
       try {
         const state = await bridge.getWindowState();
         if (active) setWindowState(state);
-      } catch {
-        // Keep the platform-derived fallback when IPC is temporarily unavailable.
-      }
+      } catch {}
     }
     void loadWindowState();
     return () => {
@@ -227,7 +215,6 @@ function CampaignShellApplication({
           message={describeMonthCommitFailure(shell.state.commitFailure)}
           onReturn={() => shell.actions.selectScreen("overview")}
           onRetry={async () => {
-            // The tagged failure is cleared on the next commit attempt (month-commit-started).
             await shell.actions.advanceMonth();
           }}
         />

@@ -16,7 +16,6 @@ import {
   preferencesStoreLayer,
 } from "./preferencesStore.js";
 
-/** A fake `AppPaths` pinned to a per-test temp dir (the only external boundary). */
 function appPathsLayer(userDataDir: string): Layer.Layer<AppPaths> {
   const shape: AppPathsShape = {
     supportDir: () => Effect.succeed(join(userDataDir, "support")),
@@ -78,7 +77,6 @@ describe("preferences store", () => {
     writeFileSync(filePath(), "{ this is not json", "utf8");
     expect((await readStore(runtime)).app).toEqual(DEFAULT_APP_PREFERENCES);
 
-    // Well-formed JSON that fails the strict schema (unknown key) also recovers.
     writeFileSync(filePath(), JSON.stringify({ version: 1, app: { theme: "neon" } }), "utf8");
     expect((await readStore(runtime)).app).toEqual(DEFAULT_APP_PREFERENCES);
   });
@@ -101,8 +99,6 @@ describe("preferences store", () => {
   it("reports a failed write with a stable tag and leaves no partial artifact", async () => {
     const app: AppPreferences = { ...DEFAULT_APP_PREFERENCES, theme: "dark" };
     await writeStore(runtime, app);
-    // Remove the directory after a valid write so the next atomic write cannot
-    // land — the previous file (now gone with the dir) is never left partial.
     rmSync(root, { recursive: true, force: true });
 
     const error: unknown = await writeStore(runtime, { ...app, theme: "light" }).then(

@@ -10,26 +10,13 @@ const SIZE_CLASSES: Record<NewGameScreenSize, string> = {
 };
 
 export interface NewGameScreenLayoutProps {
-  /** Content width; defaults to the widest form column (`lg`). */
   readonly size?: NewGameScreenSize;
-  /** Center a short message (loading/failure states) both axes. */
   readonly centered?: boolean;
-  /**
-   * A master/detail step that owns the whole content area: no page padding and
-   * no centred column. At `lg`+ it is exactly the shell's height, so the shell
-   * never scrolls and each pane scrolls on its own; narrower, it grows with its
-   * content and the shell scrolls. `size` and `centered` do not apply.
-   */
   readonly fullBleed?: boolean;
   readonly className?: string;
   readonly children: ReactNode;
 }
 
-/**
- * The shared chrome for every new-campaign step: the padded, scrollable page
- * column the shell's content area provides, with the heading block and its
- * sections spaced consistently. Steps pass their own `ScreenHeader` + sections.
- */
 export function NewGameScreenLayout({
   size = "lg",
   centered = false,

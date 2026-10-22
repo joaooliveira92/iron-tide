@@ -1,5 +1,3 @@
-// INC-9 (SB3-R20/R22): a foreign construction contract and a foreign project survive the save/load boundary, and the
-// state hash is unchanged. Mirrors the nation-dock round-trip pattern (ADR-0135).
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

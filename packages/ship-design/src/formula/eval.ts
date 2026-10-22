@@ -2,7 +2,6 @@ import { powRational } from "@bluewave/deterministic";
 import { FormulaError, type Expr } from "./ast.js";
 import { BP_ONE, toSafe } from "../units.js";
 
-/** A lookup table: ascending x breakpoints with integer y; linear interpolation, floor, clamped at ends. */
 export interface LookupTable {
   readonly points: readonly (readonly [number, number])[];
 }
@@ -25,7 +24,6 @@ function interp(t: LookupTable, x: bigint): bigint {
       const [x0, y0] = pts[i - 1]!;
       const dx = BigInt(x1 - x0);
       const num = BigInt(y1 - y0) * (x - BigInt(x0));
-      // floor division, correct for negative slopes
       let q = num / dx;
       if (num % dx !== 0n && num < 0n) q -= 1n;
       return BigInt(y0) + q;
@@ -94,7 +92,6 @@ function ev(e: Expr, env: EvalEnv): bigint {
   }
 }
 
-/** Evaluates exactly in bigint; the result must fit a safe integer. Pure and deterministic. */
 export function evaluate(e: Expr, env: EvalEnv): number {
   return toSafe("formula", ev(e, env));
 }

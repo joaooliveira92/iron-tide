@@ -25,7 +25,6 @@ const CRUISER = hull(85, 7, 4.2);
 const BOWS: BowStyle[] = ["ram", "spoon", "plumb"];
 const STERNS: SternStyle[] = ["counter", "transom", "round"];
 
-/** Do two segments properly cross (touching at endpoints does not count)? */
 function crosses(a: Point, b: Point, c: Point, d: Point): boolean {
   const orient = (p: Point, q: Point, r: Point) =>
     (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
@@ -114,7 +113,6 @@ describe("sheer", () => {
     expect(low).toBeLessThan(medium);
     expect(medium).toBeLessThan(high);
     expect(displaySheerRise(100000)).toBeLessThanOrEqual(0.4);
-    // Amplified but not absurd: the sample 10% sheer reads as 10-25% of depth.
     expect(medium).toBeGreaterThan(0.1);
     expect(medium).toBeLessThan(0.25);
   });
@@ -135,8 +133,6 @@ describe("sheer", () => {
   it("is smooth at midships (no flat-to-curve kink)", () => {
     const f = profileFrame(CRUISER, 11000);
     const slope = (t: number) => (f.deckY(t + 0.001) - f.deckY(t - 0.001)) / 0.002;
-    // One-sided slopes vanish at midships (the bow and stern halves use different rises, so a centred
-    // difference would straddle them), and grow toward the ends.
     const forward = (f.deckY(0.5 + 1e-4) - f.deckY(0.5)) / 1e-4;
     const backward = (f.deckY(0.5) - f.deckY(0.5 - 1e-4)) / 1e-4;
     expect(Math.abs(forward)).toBeLessThan(0.01);
@@ -152,11 +148,11 @@ describe("bow and stern character", () => {
 
   it("spoon, plumb and ram produce measurably different stems", () => {
     const heads = BOWS.map((b) => frames[b].anchors.head.x - stationX(0));
-    expect(heads[1]!).toBeLessThan(0); // spoon: the head overhangs forward
-    expect(Math.abs(heads[2]!)).toBeLessThan(1e-9); // plumb: upright above the waterline stem
-    expect(heads[0]!).toBeGreaterThan(0); // ram: the upper stem returns aft
+    expect(heads[1]!).toBeLessThan(0);
+    expect(Math.abs(heads[2]!)).toBeLessThan(1e-9);
+    expect(heads[0]!).toBeGreaterThan(0);
     const foot = BOWS.map((b) => frames[b].anchors.stemFoot.y - frames[b].waterlineY);
-    expect(foot[2]!).toBeGreaterThan(foot[1]!); // plumb forefoot sits deeper than the spoon's
+    expect(foot[2]!).toBeGreaterThan(foot[1]!);
   });
 
   it("only a ram has a tip, and it is the foremost point without self-intersection", () => {
@@ -180,7 +176,6 @@ describe("bow and stern character", () => {
       expect(sternPost.y).toBeLessThan(f.keelBaseY);
       expect(sternPost.x).toBeLessThanOrEqual(deckStern.x);
       expect(sternPost.x).toBeGreaterThan(keelAft.x);
-      // The cut-up is an actual curve between the keel and the heel: its midpoint lies between them in y.
       const cutUp = samplePath(f.outline).filter(
         (p) => p.x > keelAft.x && p.x < sternPost.x && p.y > sternPost.y - 1e-6,
       );
@@ -239,7 +234,6 @@ describe("deck structures", () => {
     }
     for (const p of houses.lower) {
       const station = (p.x - stationX(0)) / (stationX(1000) - stationX(0));
-      // Never below the deck, never more than one house-height above it (the chamfered corner is within 1 px).
       expect(p.y).toBeLessThanOrEqual(frame.deckY(station) + 1e-6);
       expect(p.y).toBeGreaterThanOrEqual(houses.lowerTopY(station) - 1);
     }
@@ -286,7 +280,6 @@ describe("deck structures", () => {
       expect(s.topY).toBeGreaterThanOrEqual(0);
       for (const p of s.polygon) expect(Number.isFinite(p.x) && Number.isFinite(p.y)).toBe(true);
     }
-    // Neighbouring funnels 40 permille apart keep a visible gap.
     const [, a, b] = shapes;
     expect(b!.centreX - a!.centreX - (a!.widthPx / 2 + b!.widthPx / 2)).toBeGreaterThan(1);
   });

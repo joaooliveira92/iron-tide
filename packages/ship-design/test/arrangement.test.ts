@@ -199,7 +199,6 @@ describe("analyseArrangement", () => {
     const far = run([mag, { ...gun, maxFeedPermille: 50 }]).find((f) => f.id === "ARR-MAG-DIST")!;
     expect(far.severity).toBe("CRITICAL");
     expect(checkFindingShape(far)).toEqual([]);
-    // two guns sharing one magazine sum their demand
     const gun2 = { ...gun, instanceId: "g2" };
     expect(run([mag, gun, gun2]).some((f) => f.id === "ARR-MAG-VOLUME")).toBe(true);
   });

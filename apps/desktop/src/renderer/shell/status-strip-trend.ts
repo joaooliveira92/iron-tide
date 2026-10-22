@@ -1,40 +1,24 @@
 import { formatCampaignMonth } from "../lib/presentation-format/index.js";
 import type { PresentationFormat } from "../lib/presentation-format/index.js";
 
-/**
- * Month-over-month trend for the strip's treasury and balance cards, read from the stored monthly
- * reports (`readMonthlyReports`): each is the real record of a month the player already advanced.
- * Nothing here is projected or invented. With no stored month there is no trend, and the cards
- * say nothing about one rather than draw a flat line.
- */
-
-/** How many advanced months the trend looks back over. */
 export const TREND_MONTHS = 6;
 
 export type TrendDirection = "up" | "down" | "flat";
 
 export interface TrendSeries {
-  /** Oldest first. */
   readonly values: readonly number[];
-  /** One label per value, e.g. "Feb 1880". */
   readonly labels: readonly string[];
-  /** The latest value, formatted. */
   readonly current: string;
-  /** Change from the previous value as a signed amount; null with fewer than two values. */
   readonly delta: string | null;
   readonly direction: TrendDirection | null;
 }
 
 export interface TrendDetail {
-  /** Months of reports behind the trend. */
   readonly months: number;
-  /** Treasury at the start of the oldest month, then at the close of each month. */
   readonly treasury: TrendSeries;
-  /** What each month actually netted (closing less opening treasury), construction included. */
   readonly net: TrendSeries;
 }
 
-/** The part of a stored monthly report the trend reads. */
 export interface TrendReport {
   readonly period: {
     readonly from: { readonly year: number; readonly month: number };
@@ -69,17 +53,11 @@ function series(
   };
 }
 
-/**
- * @param reports stored monthly reports, newest first, or null when they could not be read
- * @param format the one presentation format (locale + effective currency mode)
- * @returns the trend, or null when there is no completed month to draw one from
- */
 export function buildTrend(
   reports: readonly TrendReport[] | null,
   format: PresentationFormat,
 ): TrendDetail | null {
   if (reports === null || reports.length === 0) return null;
-  // Newest first on the way in; the series read oldest to newest.
   const recent = reports.slice(0, TREND_MONTHS).toReversed();
   const oldest = recent[0];
   if (oldest === undefined) return null;

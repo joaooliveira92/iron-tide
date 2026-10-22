@@ -1,7 +1,5 @@
 import { PART_TAGS } from "@bluewave/content-schema";
 import { join } from "node:path";
-// The authoritative decoded content, shared with the equivalence harness so the codemod is
-// tested against exactly the inputs the 11b builders and the equivalence gate read.
 import {
   armamentContent,
   components,
@@ -32,7 +30,6 @@ export const contentDir = join(
 
 export { torpedoDiameterUm, torpedoModels };
 
-/** The in-memory legacy source (the same content the equivalence harness compiles). */
 export const legacySource: LegacySource = {
   components,
   plants,

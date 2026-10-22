@@ -15,12 +15,6 @@ export interface TurnMessageState {
   readonly toggleRead: (id: string) => void;
 }
 
-/**
- * The reader's pin/read state for turn-summary messages, persisted per campaign
- * in `ui-state.json` (non-authoritative). It never deletes a message — it only
- * records presentation state — and is carried forward by the shared
- * read-before-write merge so it never erases the other UI-state features.
- */
 export function useTurnMessageState(sessionId: string): TurnMessageState {
   const bridge = useBridge();
   const [turnMessages, setTurnMessages] = useState<UiStateTurnMessages>(EMPTY);

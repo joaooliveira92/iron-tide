@@ -14,25 +14,17 @@ import { sameEntity, type ShipEntity } from "../selection/store.js";
 import { inferEntities } from "./legacyInference.js";
 import { SEVERITY_ORDER, severityRank } from "./severity.js";
 
-/**
- * How a finding's ship entities were found: from the rule's structured subject, inferred from its wording (a
- * legacy fallback, shown as such), or not at all (the finding stays in the Analysis tab only).
- */
 export type Association = "structured" | "inferred" | "none";
 
-/** A compiled finding as the Drawing Board shows it. One per compiled finding; never copied or recomputed. */
 export interface BoardFinding {
-  /** Stable identity: rule and targets (`findingKey`), plus `#n` when the same rule and targets repeat. */
   readonly key: string;
   readonly finding: Finding;
   readonly severity: Severity;
   readonly rule: string;
   readonly title: string;
   readonly explanation: string;
-  /** The drawable entities it is about (`{kind:"ship"}` for ship-level rules). */
   readonly entities: readonly ShipEntity[];
   readonly association: Association;
-  /** Where its failing value is set, when one group of settings fixes it. */
   readonly settings: SettingGroup | undefined;
   readonly value: number;
   readonly limit: number;
@@ -66,7 +58,6 @@ function entitiesOf(
   }
 }
 
-/** The design's findings, most severe first, each with its stable key and drawable entities. */
 export function boardFindings(
   view: WorkshopView,
   draft: DesignDraft,
@@ -98,7 +89,6 @@ export function boardFindings(
   });
 }
 
-/** An entity's findings, most severe first, then by rule code. */
 export function findingsFor(
   entity: ShipEntity,
   findings: readonly BoardFinding[],
@@ -112,7 +102,6 @@ export function findingsFor(
     );
 }
 
-/** Whether an entity has findings above advisory: the "selected with warning" state. */
 export function entityWarns(entity: ShipEntity, findings: readonly BoardFinding[]): boolean {
   return findingsFor(entity, findings).some((f) => f.severity !== "ADVISORY");
 }

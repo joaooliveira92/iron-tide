@@ -1,13 +1,3 @@
-/**
- * Atomic staging publication (ship-part-model ticket 11c).
- *
- * A whole tree is written into a sibling temporary directory and then renamed into place, so a
- * failed or interrupted run never leaves a partially valid output tree: the destination is
- * either its previous state or the complete new tree. Temporary files are removed in every
- * path, and the destination may be refused (`"error"`) or republished (`"replace"`) when it
- * already exists — `"replace"` is a no-op when the existing tree has the same content hash, so
- * re-running the writer against its own result produces no diff.
- */
 import {
   existsSync,
   mkdirSync,
@@ -29,14 +19,12 @@ const BACKUP_SUFFIX = ".codemod-old";
 export interface PublishOptions {
   readonly stagingDir: string;
   readonly protectedRoots?: readonly string[];
-  /** `"error"` (default) refuses an existing destination; `"replace"` republishes it. */
   readonly ifExists?: "error" | "replace";
 }
 
 export interface PublishResult {
   readonly stagingDir: string;
   readonly files: number;
-  /** True when the destination already held this exact content and nothing was written. */
   readonly noop: boolean;
 }
 
@@ -51,7 +39,6 @@ const ioFailure = (path: string, error: unknown): MigrationResult<PublishResult>
   ],
 });
 
-/** Whether `stagingDir` already holds exactly the plan's files and bytes, and nothing else. */
 function treeMatches(stagingDir: string, plan: MigrationPlan): boolean {
   const expected = new Map(
     [...plan.files, plan.manifestFile].map((file) => [file.path, file.content]),
@@ -80,7 +67,6 @@ function treeMatches(stagingDir: string, plan: MigrationPlan): boolean {
   }
 }
 
-/** Publish a planned migration to an explicit staging directory, atomically. */
 export function publishMigration(
   plan: MigrationPlan,
   options: PublishOptions,

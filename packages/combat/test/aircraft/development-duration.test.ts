@@ -1,5 +1,3 @@
-// AC-8 (INC-3): Development duration formula.
-// Base 4 paid months, range 3-6, modifiers for complexity/technology/industry.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {

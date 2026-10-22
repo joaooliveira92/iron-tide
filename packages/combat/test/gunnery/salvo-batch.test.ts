@@ -1,8 +1,3 @@
-// P-1 ticket 06 — the salvo batch (binomial-equivalent) probability
-// `salvoBatchAccuracyBp(q, N) = 1 - (1 - q/10_000)^N` in exact integer bp:
-//   batchBp = 10_000 - ceil((10_000 - q)^N / 10_000^(N-1))
-// Applied to the single keyed hit draw so `salvoCount` changes hit outcomes
-// without changing the one-draw-per-battery-per-minute shape.
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
 import { salvoBatchAccuracyBp, SALVO_BATCH_VERSION } from "../../src/gunnery/index.js";
@@ -28,13 +23,10 @@ describe("gunnery_salvo_batch_v1 (P-1 ticket 06) — salvo count sensitivity", (
   });
 
   it("exact integer values (half-up ceil semantics, authoritative over floats)", () => {
-    // (0.99125)^4 = 0.965316 -> batch 3_466 (a float eval prints 3_466.8).
-    expect(salvoBatchAccuracyBp(875, 4)).toBe(3_066); // 1-(0.9125)^4 = 0.3066
-    // Documented deviation from naive float examples: 1-(0.85)^8 = 0.7274905...
-    // -> 7_275 (see module comment; some published examples say 7_275).
+    expect(salvoBatchAccuracyBp(875, 4)).toBe(3_066);
     expect(salvoBatchAccuracyBp(1_500, 8)).toBe(7_275);
-    expect(salvoBatchAccuracyBp(5_000, 2)).toBe(7_500); // 1-(0.5)^2
-    expect(salvoBatchAccuracyBp(3_000, 6)).toBe(8_823); // 1-(0.7)^6 = 0.882351...
+    expect(salvoBatchAccuracyBp(5_000, 2)).toBe(7_500);
+    expect(salvoBatchAccuracyBp(3_000, 6)).toBe(8_823);
   });
 
   it("monotone: more guns never lower the salvo chance; higher q never lowers it", () => {
@@ -45,7 +37,6 @@ describe("gunnery_salvo_batch_v1 (P-1 ticket 06) — salvo count sensitivity", (
     for (const n of [1, 2, 4, 8, 16]) {
       expect(salvoBatchAccuracyBp(875, n)).toBeGreaterThanOrEqual(salvoBatchAccuracyBp(875, 1));
     }
-    // converging toward 10_000, never reaching it for q < 10_000
     expect(salvoBatchAccuracyBp(875, 8)).toBeGreaterThan(salvoBatchAccuracyBp(875, 4));
     expect(salvoBatchAccuracyBp(875, 16)).toBeLessThan(10_000);
     expect(salvoBatchAccuracyBp(1_500, 64)).toBeLessThan(10_000);

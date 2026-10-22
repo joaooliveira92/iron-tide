@@ -1,8 +1,3 @@
-/**
- * Pinned rows from the ship-part-model proposal (§9.2 D17, §9.3 tube table). A content change
- * that moves them fails the baseline test until this fixture is deliberately updated.
- */
-// design, placement, gun part, barrels, mountCount, gunsPerMount, legacyResolvedMountType
 export const D17_ROWS: readonly (readonly [
   string,
   string,
@@ -23,7 +18,6 @@ export const D17_ROWS: readonly (readonly [
   ["mesudiye_1875", "sec", "gun_rml_7in_7ton", 3, 1, 3, "BARBETTE"],
 ];
 
-// design, placement, legacy component, tubes, mountCount
 export const TORPEDO_ROWS: readonly (readonly [string, string, string, number, number])[] = [
   ["starter_dd_austria_hungary_1880", "tubes", "tube_14in_above_water", 4, 4],
   ["starter_dd_brazil_1880", "tubes", "tube_14in_above_water", 4, 4],

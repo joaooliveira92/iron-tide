@@ -3,10 +3,6 @@ import type { CompiledWeaponArmament } from "./compileShared.js";
 import type { CompiledTorpedo } from "@bluewave/armament";
 import { UM_PER_KNOT } from "./units.js";
 
-/**
- * Structural match of `@bluewave/campaign`'s `CompiledDesignVersion` (ADR-0037 canonical units), kept here so this package
- * does not depend on the campaign engine. Plain numbers; the engine brands them at its boundary.
- */
 export interface EngineDesignFields {
   readonly designVersionId: string;
   readonly designFamilyId: string;
@@ -23,17 +19,11 @@ export interface EngineDesignFields {
   readonly crewComplement: number;
   readonly contentVersion: string;
   readonly compiledHash: string;
-  /**
-   * The immutable compiled armament identity of every installed gun placement (ADR-0093 Step 4), sorted
-   * by placement instance id for deterministic persistence. Absent when the design compiled on the legacy
-   * compatibility path (no first-class armament content).
-   */
   readonly armament?: readonly CompiledWeaponArmament[];
   readonly torpedoArmament?: readonly {
     mountType: string;
     tubeCount: number;
     torpedoModelId: string;
-    /** The neutral compiled torpedo contract the parts read path resolved (ticket 13b). */
     compiledTorpedo?: CompiledTorpedo;
   }[];
 }
@@ -45,12 +35,10 @@ export interface EngineAdapterOptions {
   readonly hullType: string;
   readonly machineryType: string;
   readonly contentVersion: string;
-  /** Displacement that equals one engine hit point (ruleset constant; authored 1880 designs average ~214,000 kg). */
   readonly kgPerHitPoint: number;
 }
 
 export class EngineAdapterError extends Error {
-  /** Stable discriminator (RULES.md "Errors"): recover by `_tag`, not `instanceof`. */
   readonly _tag = "EngineAdapterError";
   constructor(message: string) {
     super(message);
@@ -58,10 +46,6 @@ export class EngineAdapterError extends Error {
   }
 }
 
-/**
- * Projects a validated compiled design onto the fields combat and campaign already consume. Refuses invalid designs
- * (an invalid design can never enter the engine, invariant I3).
- */
 export function toEngineDesign(
   c: CompiledDesign,
   d: DesignDraft,
@@ -105,7 +89,6 @@ export function toEngineDesign(
         ? {
             ...cur,
             tubeCount: cur.tubeCount + tubes,
-            // First resolved record wins; the mount group shares one model.
             ...(cur.compiledTorpedo === undefined && k.torpedoMount.compiledTorpedo !== undefined
               ? { compiledTorpedo: k.torpedoMount.compiledTorpedo }
               : {}),
@@ -117,8 +100,6 @@ export function toEngineDesign(
     .sort((x, y) => (x[0] < y[0] ? -1 : 1))
     .map(([, v]) => v);
 
-  // ADR-0093 Step 4: carry every resolved gun installation's armament identity, deterministically ordered
-  // by placement instance id. Absent when the compile used the legacy compatibility path.
   const armament = c.components
     .map((k) => k.armament)
     .filter((a): a is CompiledWeaponArmament => a !== undefined)

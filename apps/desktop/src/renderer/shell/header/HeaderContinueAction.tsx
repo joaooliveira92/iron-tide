@@ -7,7 +7,6 @@ export interface HeaderContinueActionProps {
   readonly action: PrimaryAction;
 }
 
-/** The header's single global continue control; its label and meaning come from the active screen. */
 export function HeaderContinueAction({ action }: HeaderContinueActionProps) {
   return (
     <Button

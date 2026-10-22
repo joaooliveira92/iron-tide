@@ -85,8 +85,6 @@ describe("confidence report (CAH-PROV-2)", () => {
     );
     expect(navalProfiles?.counts.total).toBeGreaterThan(0);
 
-    // The ship-type registry carries provenance too and must not be invisible to the
-    // placeholder gate (ship-part-model ticket 12a, ADR-0156).
     const shipTypes = report.collections.find(
       (c) => c.collection === "shipBuilding.partModel.shipTypes",
     );

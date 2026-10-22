@@ -18,31 +18,7 @@ import type { CompilerStage } from "../index.js";
 import { canonicalContentPath } from "../contentPath.js";
 import type { PartModelSources, ValidateOutput } from "./validate.js";
 
-/**
- * The flatten stage (ship-part-model SPM-R10, SPM-R11). It runs after strict decoding
- * and before normalization:
- *
- * 1. checks the part model's cross-references (platform → slot template and hull form;
- *    part → `extends`, `supersedes`, legacy-exception `forPart`, technology `requires`);
- * 2. enforces the prototype rules (I-4, I-5, I-11) and the revision rules (I-2);
- * 3. rejects supersession cycles (I-5);
- * 4. flattens every part (I-3) and builds the part index.
- *
- * Every failure is an error diagnostic naming the source file and the field path. All
- * ordering is by codepoint (ADR-0146), so the index serializes to the same bytes in
- * every run and process.
- *
- * Prototype inheritance (ADR-0154 §14, proposal §3.7 "`spec` and `quantities` values
- * only"): a variant's `spec` is a delta over its prototype's base spec, and it may
- * override a quantity component's `value` (never its `kind` or `basis`, and it may not
- * add one). It inherits `slots`, `parameters`, `visual`, `entryUnits`, `engineering` and
- * `capabilities` and may not redefine them (ticket 11b added the last three). Its
- * identity, lifecycle, revisions, legacy exceptions, metadata and provenance are its own;
- * the prototype's revisions are never inherited.
- */
-
 export interface FlattenOutput extends ValidateOutput {
-  /** Present only when the pack declares part-model content. */
   partModel?: CompiledPartModel;
 }
 
@@ -102,10 +78,6 @@ interface PartModelContext {
   readonly sources: PartModelSources;
 }
 
-/**
- * Checks, flattens and indexes the part model. Returns `undefined` when any check
- * fails; every failure has been reported to `collector`.
- */
 export function compilePartModel(
   model: PartModelInput,
   context: PartModelContext,
@@ -125,8 +97,6 @@ export function compilePartModel(
   const flattened: FlattenedPart[] = [];
   for (const part of parts) {
     const sourceFile = context.sources.parts.get(part.id) ?? "parts.yaml";
-    // A record that already carries `origin` was flattened by the deterministic content
-    // codemod (ticket 11c); it is accepted as-is rather than re-inheriting a prototype.
     if (part.origin !== undefined) {
       const decoded = validateAgainstSchema(
         part,
@@ -160,8 +130,6 @@ export function compilePartModel(
   }
   if (collector.hasErrors) return undefined;
 
-  // The visual compile stage (I-26, D16): V1–V9 must hold on the effective traits of every
-  // flattened part, so a contradiction cannot ship. V10–V12 are enforced at decode.
   for (const part of flattened) {
     for (const violation of partVisualTraitViolations(part)) {
       report(
@@ -178,8 +146,6 @@ export function compilePartModel(
 
   const partIndex: PartIndex = {
     ...buildIndex(flattened, parts),
-    // The ship-type registry rides beside the index, id-codepoint-sorted so the array is
-    // the canonical order regardless of the order the content declared it in (ADR-0146).
     shipTypes: [...model.shipTypes].sort(compareById),
   };
   return {
@@ -188,8 +154,6 @@ export function compilePartModel(
     platforms: [...model.platforms].sort(compareById),
   };
 }
-
-// Diagnostics
 
 type RecordKind = "Part" | "Platform";
 
@@ -206,10 +170,6 @@ interface Reporter {
   failed(): boolean;
 }
 
-/**
- * Reports a part-model failure as `<Kind> '<id>'.<path>: <message>`, at the record's
- * source file, mirroring the strict decoder's `<Label>.<path>:` form.
- */
 function reporter(sources: PartModelSources, collector: DiagnosticCollector): Reporter {
   let failed = false;
   const files = {
@@ -240,8 +200,6 @@ function reporter(sources: PartModelSources, collector: DiagnosticCollector): Re
   };
   return Object.assign(report, { failed: () => failed });
 }
-
-// Checks
 
 function checkPlatformReferences(
   model: PartModelInput,
@@ -301,10 +259,6 @@ function checkPartReferences(
       "Name a technology declared in the pack's technologies",
     );
 
-  // `DQ-TORPEDO-001` names its counterpart torpedo part. Torpedo parts arrive in ship-part-model
-  // P4; until a pack declares any, the reference is a deferred cross-reference (the waiver is only
-  // evaluated against a nested torpedo entry, and no P2 loadout carries one). Once a pack declares
-  // torpedo parts, an unknown `forPart` is an error again.
   const hasTorpedoParts = parts.some((part) => part.family === "torpedo");
 
   for (const part of parts) {
@@ -336,7 +290,6 @@ function checkPartReferences(
   }
 }
 
-/** The prototype rules: no cycle, depth ≤ 1, same family and interface (I-4, I-5, I-11). */
 function checkPrototypes(
   parts: readonly PartData[],
   byId: ReadonlyMap<string, PartData>,
@@ -352,7 +305,6 @@ function checkPrototypes(
       current = current.extends === undefined ? undefined : byId.get(current.extends);
     }
     if (current === undefined || current.id !== part.id) continue;
-    // `part` is the codepoint-least member reached first, so each cycle reports once.
     for (const id of chain) inCycle.add(id);
     report(
       "PART_EXTENDS_CYCLE",
@@ -368,7 +320,6 @@ function checkPrototypes(
   for (const part of parts) {
     if (part.extends === undefined || inCycle.has(part.id)) continue;
     const prototype = byId.get(part.extends);
-    // An unknown prototype is a REF error; one inside a cycle is already reported.
     if (prototype === undefined || inCycle.has(prototype.id)) continue;
     if (prototype.extends !== undefined) {
       report(
@@ -386,7 +337,6 @@ function checkPrototypes(
   }
 }
 
-/** A variant may not change what its prototype is or what its numbers mean (I-11). */
 function checkVariant(part: PartData, prototype: PartData, report: Reporter): void {
   if (part.family !== prototype.family) {
     report(
@@ -471,7 +421,6 @@ function checkVariant(part: PartData, prototype: PartData, report: Reporter): vo
   });
 }
 
-/** One revision per `from` on a part (I-2). */
 function checkRevisions(parts: readonly PartData[], report: Reporter): void {
   for (const part of parts) {
     const seen = new Map<string, number>();
@@ -493,7 +442,6 @@ function checkRevisions(parts: readonly PartData[], report: Reporter): void {
   }
 }
 
-/** The supersession graph is acyclic, including a part superseding itself (I-5). */
 function checkSupersessionCycles(
   parts: readonly PartData[],
   byId: ReadonlyMap<string, PartData>,
@@ -532,12 +480,6 @@ function checkSupersessionCycles(
   }
 }
 
-// Flattening and the index
-
-/**
- * The flattened record of one part: no `extends`, the prototype's values merged under
- * the variant's, revisions sorted by `from` then declaration order, and its origin.
- */
 function flattenPart(
   part: PartData,
   sourceFile: string,
@@ -625,7 +567,6 @@ function buildIndex(
       supersededBy: sortedIds(supersededBy.get(part.id)),
     };
   }
-  // `flattened` and `authored` are id-ordered, so every id list above is already sorted.
   return { byId, byInterface, byFamily, lineage };
 }
 

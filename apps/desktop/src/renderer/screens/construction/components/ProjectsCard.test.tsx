@@ -122,7 +122,6 @@ describe("ProjectsCard steering controls (SB3-R5, SB3-R8)", () => {
     );
     const halt = screen.getByRole("button", { name: "Havock class halt" });
     const accelerate = screen.getByRole("button", { name: "Havock class accelerate" });
-    // The acceleration control discloses the 5% premium and the capacity-pressure risk (SB3-R32).
     expect(accelerate.getAttribute("title")).toMatch(/5% cost premium/);
     expect(accelerate.getAttribute("title")).toMatch(/delaying others/);
     halt.click();
@@ -157,7 +156,6 @@ describe("ProjectsCard steering controls (SB3-R5, SB3-R8)", () => {
     expect(screen.queryByRole("button", { name: "Havock class halt" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Havock class resume" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Havock class cancel project" })).toBeNull();
-    // The status badge still shows the project's state.
     expect(screen.getByText("active")).toBeTruthy();
   });
 
@@ -172,7 +170,6 @@ describe("ProjectsCard steering controls (SB3-R5, SB3-R8)", () => {
       />,
     );
     const cancel = screen.getByRole("button", { name: "Havock class cancel project" });
-    // The control discloses the non-refundable settlement and the ship release.
     expect(cancel.getAttribute("title")).toMatch(/forfeited and is not refunded/);
     expect(cancel.getAttribute("title")).toMatch(/releases its ship/);
     cancel.click();

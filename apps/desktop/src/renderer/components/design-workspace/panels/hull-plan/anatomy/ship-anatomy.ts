@@ -24,10 +24,6 @@ export type {
   AnatomySolid,
 } from "./anatomy-types.js";
 
-/**
- * Builds the isometric ship plate as plain data. The scene holds the shared geometry; each draw module appends
- * its parts in painter's order, so the call order below is the stacking order.
- */
 export function buildAnatomyShip(input: AnatomyInput): AnatomyShip {
   const scene = createAnatomyShipScene(input);
   drawSlipway(scene);

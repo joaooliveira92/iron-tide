@@ -1,49 +1,8 @@
-/**
- * Author-time bake for the world-map coastline (ADR-0055). Originally written
- * for the map-rendering prototype (ticket 06); now the production data source.
- *
- * One-off author-time bake for ticket 06's geometry-source question. Fetches
- * Natural Earth land (public domain), decodes it, and emits plain lon/lat
- * rings as a base64'd compact binary (see lib/coastline-codec.ts).
- *
- * Two things this deliberately proves, both claims from ticket 13's research:
- *
- * 1. The geometry pipeline runs entirely at author time and needs no runtime
- *    dependency — no d3-geo, no topojson-client, nothing added to
- *    apps/desktop/package.json. TopoJSON arc decoding is the ~40 lines below.
- * 2. TopoJSON's compaction is worth having, so the *projection* can stay at
- *    render time and the projection choice becomes a live toggle rather than a
- *    bake-time commitment.
- *
- * **Tier is the fidelity knob.** Natural Earth publishes three, and the number
- * is the map scale each is *drawn for*: 110m is a world thumbnail, 50m a
- * continent, 10m a coastline. The camera zooms to 14x (useMapCamera's
- * MAX_SCALE), which is roughly 1:1.5M at the equator — two whole tiers past
- * what 110m carries, which is why 110m goes visibly polygonal when you zoom
- * into the Aegean or the Danish straits. For a naval game the coast *is* the
- * subject, so 10m is the default here.
- *
- * Run:  pnpm tsx apps/desktop/src/renderer/components/world-map/bake-coastline.ts [110m|50m|10m]
- */
-
 import { writeFile } from "node:fs/promises";
 import { encodeCoastline } from "../../lib/coastline-codec.js";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-/**
- * Quantization is set per tier to just under the tier's own resolution, so it
- * only drops points the source never really resolved.
- *
- * `minExtentDegrees` is the speck cull, and it is the whole reason 10m is
- * affordable. 10m land is 5,848 polygons at full detail, which is within
- * sight of ticket 13's ~8,000-element SVG degradation threshold — but the
- * overwhelming majority are single uninhabited rocks. Culling by bounding-box
- * extent keeps the coastline resolution (the point of the tier) while
- * discarding subpaths that are sub-pixel at max zoom. 0.1° is ~11 km, which
- * still keeps every island this game names: Malta is ~0.25°, Gibraltar sits
- * on the Iberian polygon, Heligoland ~0.03° is gone and does not matter.
- */
 const TIERS = {
   "110m": {
     url: "https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json",
@@ -60,8 +19,6 @@ const TIERS = {
   "10m": {
     url: "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_land.geojson",
     format: "geojson",
-    // ~1.1 km at the equator, which is about one device pixel at MAX_SCALE.
-    // Finer than this is detail the camera can never show.
     quantize: 0.01,
     minExtentDegrees: 0.1,
   },
@@ -111,20 +68,17 @@ function decodeArcs(topology: Topology): Ring[] {
   });
 }
 
-/** TopoJSON's negative index convention: ~i means arc -i-1, traversed backwards. */
 function stitch(arcIndices: readonly number[], arcs: readonly Ring[]): Ring {
   const points: (readonly [number, number])[] = [];
   for (const index of arcIndices) {
     const arc = arcs[index < 0 ? -index - 1 : index];
     if (arc === undefined) continue;
     const oriented = index < 0 ? [...arc].reverse() : arc;
-    // The shared endpoint between consecutive arcs is duplicated by design.
     points.push(...(points.length === 0 ? oriented : oriented.slice(1)));
   }
   return points;
 }
 
-/** GeoJSON FeatureCollection of Polygon/MultiPolygon, as ne_10m_land ships it. */
 interface FeatureCollection {
   readonly features: readonly {
     readonly geometry: {
@@ -134,7 +88,6 @@ interface FeatureCollection {
   }[];
 }
 
-/** Both formats converge here: a flat list of polygons, each a list of rings. */
 function polygonsFromGeoJson(collection: FeatureCollection): Ring[][] {
   const polygons: Ring[][] = [];
   for (const feature of collection.features) {
@@ -151,7 +104,6 @@ function polygonsFromTopoJson(topology: Topology): Ring[][] {
   const arcs = decodeArcs(topology);
   const polygons: Ring[][] = [];
   for (const geometry of topology.objects.land.geometries) {
-    // land-*m is a single MultiPolygon: polygon -> rings -> arc indices.
     for (const polygon of geometry.arcs) {
       polygons.push(polygon.map((ring) => stitch(ring as unknown as readonly number[], arcs)));
     }
@@ -174,7 +126,6 @@ function quantize(ring: Ring, step: number, decimals: number): number[] {
   return flat;
 }
 
-/** Larger side of a flat ring's bounding box, in degrees. */
 function extentOf(flatRing: readonly number[]): number {
   let minX = Infinity;
   let maxX = -Infinity;
@@ -211,7 +162,6 @@ async function main(): Promise<void> {
   for (const ringsIn of raw) {
     const rings = ringsIn.map((ring) => quantize(ring, tier.quantize, decimals));
     const exterior = rings[0];
-    // Ring 0 is the exterior; a polygon too small to draw takes its holes with it.
     if (exterior === undefined || exterior.length < 6) continue;
     if (extentOf(exterior) < tier.minExtentDegrees) continue;
     polygons.push(rings);
@@ -222,8 +172,6 @@ async function main(): Promise<void> {
     0,
   );
 
-  // Compact binary, base64'd into a module: 4x smaller than the old number-array
-  // literal and far cheaper to parse (ADR-0055).
   const target = join(dirname(fileURLToPath(import.meta.url)), "coastline-data.ts");
   const base64 = Buffer.from(encodeCoastline(polygons)).toString("base64");
   const output = `/**

@@ -16,24 +16,15 @@ import {
 } from "./profile-constants.js";
 import type { ProfileFrame } from "./profile-geometry.js";
 
-/** Deck-mounted structures. */
 export interface HouseMasses {
-  /** Polygons, bottom edge exactly on the sampled deck (lower) or on the lower mass top (upper). */
   readonly lower: readonly Point[];
   readonly upper: readonly Point[];
   readonly startPermille: number;
   readonly endPermille: number;
-  /** Where the bridge (the upper mass) begins: the foremast stands here. */
   readonly bridgeStartPermille: number;
-  /** y of the structure's top at a station fraction, inside the lower mass; used to seat funnels. */
   readonly lowerTopY: (t: number) => number;
 }
 
-/**
- * The stepped superstructure over a zone. The zone is the longitudinal authority; it is kept inside
- * `HOUSE_LIMITS` so it never reaches the stem or stern. The lower mass follows the sheer; a shorter upper
- * mass (bridge) sits on it. Both are deterministic drawing conventions, not component data.
- */
 export function houseMasses(
   frame: ProfileFrame,
   zone: { readonly startPermille: number; readonly endPermille: number } | undefined,
@@ -65,7 +56,6 @@ export function houseMasses(
   const lower = [
     ...bottom,
     ...top.slice(0, -1),
-    // Forward end is chamfered: the top starts a little aft of the bottom.
     { x: first.x + chamfer, y: lowerTopY(start / 1000) },
   ];
   const upperStart = start + (end - start) * 0.2;
@@ -82,7 +72,6 @@ export function houseMasses(
   };
 }
 
-/** A placed funnel as the drawing sees it. */
 export interface FunnelInput {
   readonly instanceId: string;
   readonly stationPermille: number;
@@ -91,17 +80,13 @@ export interface FunnelInput {
 export interface FunnelShape {
   readonly instanceId: string;
   readonly stationPermille: number;
-  /** x of the funnel centre at its base. */
   readonly centreX: number;
-  /** Seat: the lower house top inside the superstructure, otherwise the deck. */
   readonly baseY: number;
   readonly topY: number;
   readonly widthPx: number;
-  /** Tapered, aft-raked trapezoid: base-left, base-right, top-right, top-left. */
   readonly polygon: readonly Point[];
 }
 
-/** Funnels in stable order (station, then id), each seated on the local house top or deck. */
 export function funnelShapes(
   frame: ProfileFrame,
   funnels: readonly FunnelInput[],

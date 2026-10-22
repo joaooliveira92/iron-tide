@@ -9,13 +9,9 @@ import {
 } from "./guided-inspection-state.js";
 
 export interface GuidedInspectionOverlayProps {
-  /** Current step index (0-based). */
   readonly stepIndex: number;
-  /** Called when the user advances one step (or completes on last step). */
   readonly onStepChange: (nextIndex: number, completed: boolean) => void;
-  /** Called when the user ends/dismisses the guide. */
   readonly onDismiss: (stepIndex: number) => void;
-  /** Called to navigate to a screen; overlay does not block navigation. */
   readonly onNavigate?: (screenId: string) => void;
 }
 
@@ -53,10 +49,6 @@ export function GuidedInspectionOverlay({
 
   useLayoutEffect(() => {
     recompute();
-    // The shell scrolls a nested `overflow-auto` element, not the window, and `scroll`
-    // does not bubble — so track it in the capture phase and keep the ring glued to the
-    // target instead of trailing it. Suppress the transition while scrolling so the ring
-    // does not animate lazily behind a moving target.
     const handleScroll = () => {
       recompute();
       setScrolling(true);
@@ -65,8 +57,6 @@ export function GuidedInspectionOverlay({
     };
     window.addEventListener("resize", recompute);
     window.addEventListener("scroll", handleScroll, true);
-    // Recompute on navigation/re-render — a short interval covers SPA re-mounts without
-    // needing a MutationObserver; the interval is cleaned up on unmount.
     const id = window.setInterval(recompute, 300);
     return () => {
       window.removeEventListener("resize", recompute);
@@ -76,10 +66,7 @@ export function GuidedInspectionOverlay({
     };
   }, [recompute]);
 
-  // Keep step card keyboard-reachable; no focus trap.
-  useEffect(() => {
-    // Announce step change to assistive tech via live region (handled by aria-live).
-  }, [clamped]);
+  useEffect(() => {}, [clamped]);
 
   const isLast = clamped === GUIDED_STEP_COUNT - 1;
 
@@ -93,8 +80,6 @@ export function GuidedInspectionOverlay({
     if (nextStep?.screenId !== undefined && nextStep.screenId !== null) {
       onNavigate?.(nextStep.screenId);
     }
-    // Persist lastCompletedStep as current, so resume lands on next.
-    // The caller maps this to the inspection state via nextInspectionState.
     onStepChange(clamped, false);
   };
 
@@ -112,8 +97,6 @@ export function GuidedInspectionOverlay({
     onDismiss(clamped);
   };
 
-  // Scrim + punch-out: four covering rects around the highlight; no pointer-events trap
-  // over the page except on the card itself. The highlight ring is pointer-events:none.
   const hasRect = rect !== null;
   const prefersReducedMotion =
     typeof window !== "undefined" &&
@@ -150,7 +133,6 @@ export function GuidedInspectionOverlay({
         />
       )}
 
-      {/* Step card — pointer-events auto so it is interactive; overlay itself is non-blocking. */}
       <div
         data-testid="guided-inspection-card"
         className="pointer-events-auto absolute max-w-sm rounded-lg border bg-card p-4 shadow-xl"
@@ -201,5 +183,4 @@ export function GuidedInspectionOverlay({
   );
 }
 
-// Re-export helpers for test convenience
 export { dismissedInspectionState, nextInspectionState };

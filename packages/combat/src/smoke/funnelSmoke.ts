@@ -1,4 +1,3 @@
-// DESIGN-42 §11: funnel smoke density formula.
 import { BluewaveError } from "@bluewave/contracts";
 import {
   FUNNEL_FUEL_MULTIPLIERS,
@@ -23,7 +22,6 @@ export function computeFunnelSmokeDensity(params: {
     });
   }
 
-  // Look up power band multiplier
   let powerMultiplierBp = 0;
   for (const band of FUNNEL_POWER_MULTIPLIERS) {
     if (params.powerSettingBp >= band.minBp && params.powerSettingBp <= band.maxBp) {
@@ -32,11 +30,9 @@ export function computeFunnelSmokeDensity(params: {
     }
   }
 
-  // floor(baseFunnelSmokeBp * fuelMultiplierBp * powerMultiplierBp * machineryConditionMultiplierBp / 10_000^3)
   const numerator = FUNNEL_SMOKE_BASE_DENSITY * fuelMultiplierBp * powerMultiplierBp * machCondBp;
   const denominator = 10_000 * 10_000 * 10_000;
   const raw = Math.floor(numerator / denominator);
 
-  // Cap at 10_000
   return Math.min(10_000, raw);
 }

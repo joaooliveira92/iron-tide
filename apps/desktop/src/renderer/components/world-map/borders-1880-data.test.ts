@@ -5,10 +5,8 @@ import { decodeCoastline } from "../../lib/coastline-codec.js";
 import { BORDERS_1880 } from "./borders-1880-data.js";
 import { COASTLINE_BASE64 } from "./coastline-data.js";
 
-// Package tests run with the package dir (apps/desktop) as cwd.
 const COUNTRIES_YAML = resolve(process.cwd(), "../../content/production/1880/countries.yaml");
 
-/** Nation id -> the production pack's isPlayable flag. */
 function nationPlayability(): Map<string, boolean> {
   const blocks = readFileSync(COUNTRIES_YAML, "utf8").split(/\n(?=- id: )/);
   const result = new Map<string, boolean>();
@@ -26,11 +24,8 @@ describe("1880 borders (baked from historical-basemaps)", () => {
     const playable = [...playability].filter(([, isPlayable]) => isPlayable).map(([id]) => id);
     const baked = Object.keys(BORDERS_1880);
 
-    // Every playable nation's territory is baked.
     for (const id of playable) expect(baked).toContain(id);
 
-    // Any extra baked nation is a real, AI-only nation: the USA is promoted to
-    // playable by DR-014 / ADR-0214 but is also a power drawn on the strategic map.
     for (const id of baked) {
       expect(playability.has(id), `${id} is not a production nation`).toBe(true);
       if (!playable.includes(id)) {
@@ -56,7 +51,6 @@ describe("1880 borders (baked from historical-basemaps)", () => {
   });
 
   it("is clipped to the coastline's own detail, not the coarse 1880 outline", () => {
-    // The coarse source holds ~220 points for Germany; clipped to the 1:10m coast it holds far more.
     const points = (BORDERS_1880.germany ?? []).reduce(
       (n, rings) => n + rings.reduce((m, ring) => m + ring.length / 2, 0),
       0,
@@ -82,7 +76,6 @@ describe("1880 borders (baked from historical-basemaps)", () => {
           }
         }
       }
-      // Measured 0.67–0.95 across the ten nations; a stale bake drops to ~0.
       expect(onCoast / total, nation).toBeGreaterThan(0.5);
     }
   });

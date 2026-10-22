@@ -39,7 +39,6 @@ describe("composeSupportForce (T-1 08)", () => {
       candidate("b", "AUS", 200),
       candidate("d", "ITA", 50),
     ];
-    // Ordering: strength desc, then nation, then asset: a(300) b(200) c(100) d(50).
     expect(composeSupportForce(pool, 550).map((x) => x.assetId)).toEqual(["a", "b", "d"]);
     expect(composeSupportForce(pool, 250).map((x) => x.assetId)).toEqual(["b", "d"]);
     expect(composeSupportForce(pool, 49)).toEqual([]);

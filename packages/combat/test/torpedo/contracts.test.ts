@@ -1,10 +1,3 @@
-// AC-24 seeds (INC-1 + INC-2 + INC-3): `torpedo_v1` SHIPPED_TORPEDO_CONTRACT +
-// validate guard fail-closed on tampering; exact shipped §7/§8/§10/§11/§23/§24
-// integers; the grounded seed model set; the in-slice reason-code catalog
-// (exactly the INC-1 + INC-2 + INC-3 §29 codes, disjoint from the top-level
-// combat catalog — the full §29 partition set-equality test is the INC-8
-// deliverable). The INC-2 DEFERRED marker is RETIRED in INC-3: no shipped
-// predicate reports it and it is absent from the catalog.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import { REASON_CODES } from "../../src/reasonCodes.js";
@@ -52,7 +45,6 @@ import {
   validateTorpedoLauncherDefinition,
   validateTorpedoLaunchAuthorityContract,
   type TorpedoLauncherDefinition,
-  // INC-6 (damage package): §16-§23 contracts + guards
   SHIPPED_TORPEDO_DAMAGE_CONTRACT,
   validateTorpedoDamageContract,
   SHIPPED_UNDERWATER_TUBE_HIT_HAZARD_CONTRACT,
@@ -204,7 +196,7 @@ describe("AC-24: torpedo_v1 contract + validate guard (fail closed)", () => {
         ...SHIPPED_TORPEDO_CONTRACT,
         salvoRangePressureBpTable: [...SHIPPED_TORPEDO_CONTRACT.salvoRangePressureBpTable],
       }),
-    ).not.toThrow(); // the unmodified copy still validates
+    ).not.toThrow();
     expect(() =>
       validateTorpedoContract({
         ...SHIPPED_TORPEDO_CONTRACT,
@@ -398,7 +390,7 @@ describe("AC-24: exact shipped constant surface", () => {
     expect(resolvedAboveWaterMaxLaunchSpeedKnots(fixed)).toBe(30);
     expect(resolvedAboveWaterMaxLaunchSpeedKnots(trainable)).toBe(35);
     expect(resolvedAboveWaterMaxLaunchSpeedKnots(narrower)).toBe(28);
-    expect(resolvedAboveWaterMaxLaunchSpeedKnots(underwater)).toBeNull(); // §7 governs
+    expect(resolvedAboveWaterMaxLaunchSpeedKnots(underwater)).toBeNull();
   });
 
   it("validateTorpedoLauncherDefinition rejects an invalid definition", () => {
@@ -420,9 +412,6 @@ describe("AC-24: exact shipped constant surface", () => {
 
   it("ships the research-grounded torpedo_models_v1 model-id list (8 models, 1880-1945)", () => {
     expect(SHIPPED_TORPEDO_CONTRACT.shippedModelIds).toEqual(SEED_TORPEDO_MODEL_IDS);
-    // The full research-grounded set (~6-8 models across 1880-1945,
-    // docs/research/c1-m3-torpedoes.md §4.1) — the id list is now the fuselage of the
-    // model->fuze map; the model DATA lives in the content parts (ticket 13b).
     expect(SEED_TORPEDO_MODEL_IDS.length).toBe(8);
     expect([...SEED_TORPEDO_MODEL_IDS]).toEqual([
       "whitehead_18in_1894",
@@ -437,7 +426,7 @@ describe("AC-24: exact shipped constant surface", () => {
   });
 
   it("speed conversion rejects non-integers and produces exact integers", () => {
-    expect(torpedoSpeedBpKnotsToUmS(44_000)).toBe(22_635_536); // 44 kn (G7a high)
+    expect(torpedoSpeedBpKnotsToUmS(44_000)).toBe(22_635_536);
     expect(() => torpedoSpeedBpKnotsToUmS(44_000.5)).toThrow(BluewaveError);
     expect(() => torpedoSpeedBpKnotsToUmS(0)).toThrow(BluewaveError);
   });
@@ -491,7 +480,6 @@ describe("AC-21 seeds: INC-1..INC-6 reason-code catalog shape", () => {
         "TORPEDO_STUCK_IN_TUBE",
         "TORPEDO_HIT_RESOLVED",
         "TORPEDO_DUD",
-        // INC-6 (damage package): the §16-§23 in-slice codes
         "TORPEDO_PROGRESSIVE_FLOODING_CREATED",
         "TORPEDO_MACHINERY_DAMAGE_CREATED",
         "TORPEDO_SYSTEM_SHOCK_DAMAGE_CREATED",
@@ -499,7 +487,6 @@ describe("AC-21 seeds: INC-1..INC-6 reason-code catalog shape", () => {
         "TORPEDO_CHAIN_REACTION",
       ].sort(),
     );
-    // the retired marker is gone from the catalog and no longer a shipped code
     expect(Object.values(TORPEDO_REASON_CODES)).not.toContain(
       "TORPEDO_ELIGIBILITY_PREDICATE_DEFERRED",
     );
@@ -524,7 +511,6 @@ describe("AC-21 seeds: INC-1..INC-6 reason-code catalog shape", () => {
 
   it("ships the INC-2 + INC-3 + INC-4 in-slice codes and does NOT ship §29 codes owned by other tracks", () => {
     const shipped: ReadonlySet<string> = new Set(Object.values(TORPEDO_REASON_CODES));
-    // the INC-2 launch-legality codes + the INC-3 fire-solution/friendly-fire codes
     for (const code of [
       "TORPEDO_MANUAL_LAUNCH_MODE_PROHIBITED",
       "TORPEDO_LAUNCH_AUTHORITY_DENIED",
@@ -538,17 +524,13 @@ describe("AC-21 seeds: INC-1..INC-6 reason-code catalog shape", () => {
     ]) {
       expect(shipped.has(code)).toBe(true);
     }
-    // the retired INC-2 marker must NOT be shipped (its §24 family code now is)
     expect(shipped.has("TORPEDO_ELIGIBILITY_PREDICATE_DEFERRED")).toBe(false);
-    // the INC-4 §12 launch-failure codes ARE shipped (INC-4 resolved them)
     for (const code of ["TORPEDO_LAUNCH_FAILURE", "TORPEDO_STUCK_IN_TUBE"]) {
       expect(shipped.has(code)).toBe(true);
     }
-    // the INC-5 §14/§15 codes ARE shipped (this increment resolved them)
     for (const code of ["TORPEDO_HIT_RESOLVED", "TORPEDO_DUD"]) {
       expect(shipped.has(code)).toBe(true);
     }
-    // the §16-§23 damage codes ARE shipped — INC-6 (this increment) owns them
     for (const code of [
       "TORPEDO_PROGRESSIVE_FLOODING_CREATED",
       "TORPEDO_MACHINERY_DAMAGE_CREATED",
@@ -558,10 +540,6 @@ describe("AC-21 seeds: INC-1..INC-6 reason-code catalog shape", () => {
     ]) {
       expect(shipped.has(code)).toBe(true);
     }
-    // every DESIGN-40 §29 in-slice code is now shipped; the remaining §29
-    // ownership (submarine launch, aerial tubes, supply, command layer) is
-    // OTHER-track code — none may be shipped here (INC-8's partition test).
-    // and the INC-1 codes themselves are present
     expect(shipped.has("INVALID_TORPEDO_MODEL_DEFINITION")).toBe(true);
     expect(shipped.has(INVALID_TORPEDO_MODEL_DEFINITION)).toBe(true);
     expect(shipped.has("TORPEDO_STATE_INVARIANT_FAILED")).toBe(true);
@@ -664,7 +642,7 @@ describe("AC-15/AC-16/AC-17/AC-24 (INC-6): torpedo damage constant contract + gu
       EXTREMITY: 7_500,
       MACHINERY: 12_500,
       MAGAZINE: 12_500,
-      TUBE_BAY: 12_500, // authored BALANCE TARGET (INC-6 record for ADR-0029)
+      TUBE_BAY: 12_500,
       CENTRAL: 10_000,
       BREACHED: 15_000,
     });
@@ -730,14 +708,12 @@ describe("AC-15/AC-16/AC-17/AC-24 (INC-6): torpedo damage constant contract + gu
   });
 
   it("CONTRACT-PINS the highest-leverage authored constants (HIGH-1: base flotation + structural rates, severe-tube casualty base + share, immediate-flooding density + depth)", () => {
-    // exact shipped values in the contract
     expect(SHIPPED_TORPEDO_DAMAGE_CONTRACT.baseFlotationDamagePerKgEq).toBe(16);
     expect(SHIPPED_TORPEDO_DAMAGE_CONTRACT.structuralDamagePerKgEq).toBe(48);
     expect(SHIPPED_TORPEDO_DAMAGE_CONTRACT.tubeCrewCasualtyBaseBp).toBe(5_000);
     expect(SHIPPED_TORPEDO_DAMAGE_CONTRACT.tubeCrewCasualtyShareBp).toBe(2_500);
     expect(SHIPPED_TORPEDO_DAMAGE_CONTRACT.seawaterDensityKgPerM3).toBe(1_000);
     expect(SHIPPED_TORPEDO_DAMAGE_CONTRACT.immediateFloodingMinDepthM).toBe(1);
-    // the shipped constants match the contract (no drift)
     expect(SHIPPED_TORPEDO_DAMAGE_CONTRACT.baseFlotationDamagePerKgEq).toBe(
       TORPEDO_BASE_FLOTATION_DAMAGE_PER_KG_EQ,
     );
@@ -775,7 +751,6 @@ describe("AC-15/AC-16/AC-17/AC-24 (INC-6): torpedo damage constant contract + gu
         }),
       ).toThrow(BluewaveError);
     }
-    // the intact contract still validates
     expect(() => validateTorpedoDamageContract(SHIPPED_TORPEDO_DAMAGE_CONTRACT)).not.toThrow();
   });
 });

@@ -1,15 +1,3 @@
-/**
- * The authoritative armament content lint (ADR-0093, national armament integration Step 2).
- *
- * `lintArmament` validates a whole authored armament catalogue — shared gun families, national gun
- * models, the mount catalogue and ammunition patterns — as one deterministic pass. It is the release
- * gate over the armament domain: at release every `BLOCKING` finding fails the gate; `WARNING` and
- * `ADVISORY` findings stay visible but are never silently promoted to blockers.
- *
- * Like the resolver, it is pure: it never mutates its input, never throws for expected content
- * errors, and returns findings in the same deterministic order as `resolveArmament`. It contains no
- * nation-id conditional — national difference enters only through the data it is given.
- */
 import { ARMAMENT_BP_ONE, isSafeInteger } from "./arithmetic.js";
 import {
   sortArmamentFindings,
@@ -29,7 +17,6 @@ import {
 } from "./model.js";
 import type { ArmamentProvenance } from "./provenance.js";
 
-/** The full authored armament catalogue the lint validates. */
 export interface ArmamentCatalogue {
   readonly families: readonly GunFamily[];
   readonly models: readonly GunModel[];
@@ -38,15 +25,10 @@ export interface ArmamentCatalogue {
 }
 
 export interface ArmamentLintOptions {
-  /** At release a PLACEHOLDER provenance is a blocker; a missing source reference is always a blocker. */
   readonly release: boolean;
-  /** Technology ids the scenario actually defines. */
   readonly knownTechnologyIds: ReadonlySet<string>;
-  /** Nation ids the scenario actually defines. */
   readonly knownNationIds?: ReadonlySet<string>;
-  /** model id → nation id, so national access and nation references can be checked. */
   readonly nationOfModel?: Readonly<Record<string, string>>;
-  /** ammunition id → nation id. */
   readonly nationOfAmmunition?: Readonly<Record<string, string>>;
 }
 
@@ -214,8 +196,6 @@ function checkProvenance(
       ),
     );
   }
-  // A verified measurement cannot be a pure balance choice, and a historical fact cannot be only a
-  // balance target; a derivation without an explanation is an unexplained unit conversion.
   if (provenance.kind === "balance_adjustment" && provenance.sourceStatus === "VERIFIED") {
     findings.push(
       finding(
@@ -278,7 +258,6 @@ function checkReferences(
   }
 }
 
-/** Validate a whole armament catalogue. Pure, deterministic, never throws on content errors. */
 export function lintArmament(
   catalogue: ArmamentCatalogue,
   options: ArmamentLintOptions,
@@ -663,7 +642,6 @@ export function lintArmament(
   return sortArmamentFindings(findings);
 }
 
-/** True when no finding blocks release. */
 export function armamentLintOk(findings: readonly ArmamentResolutionFinding[]): boolean {
   return !findings.some((f) => f.severity === "BLOCKING");
 }

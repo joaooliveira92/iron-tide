@@ -1,12 +1,3 @@
-// P-1 ticket 07 — a Whitehead hit, once damage control runs PER SHIP every
-// minute, FOUNDERS an 1880-like ironclad over time: the §18 progressive
-// flooding source drains flotation reserve to 0 -> terminal SINKING -> HP 0.
-//
-// Isolation: the fixture carries NO main battery (mainGunsCount 0 -> no gunnery
-// batteries are projected; project.ts rejects zero-gun batteries) and the plain
-// control run (unarmed) resolves to time_limit with ZERO sunk ships. Any ship
-// sunk in the armed run is therefore torpedo-flooding-driven — no other damage
-// source exists in the battle.
 import { describe, it, expect } from "vite-plus/test";
 import { compiledTorpedoOf } from "../fixtures/compiledTorpedoes.js";
 import { SafeInt } from "@bluewave/contracts";
@@ -48,7 +39,6 @@ function armAll(nations: FixtureNationSet): FixtureNationSet {
   };
 }
 
-// 14 kn, 11 000 t, NO main battery, torpedo armament only.
 function ironclads(armed: boolean): FixtureNationSet {
   const n = makeNations({ attackerGuns: [0, 0], defenderGuns: [0, 0] });
   const era = (m: Map<string, CompiledDesignVersion>) =>
@@ -86,20 +76,16 @@ describe("P-1 ticket 07: torpedo flooding founders ironclads over time", () => {
       expect(plain.attackerSunkIds.length + plain.defenderSunkIds.length).toBe(0);
       expect(plain.battleEndReason).toBe("time_limit");
 
-      // Every armed seed fires torpedoes, lands hits, and founders at least
-      // three ships before the 360-minute cap.
       expect(armed.torpedoSummary!.tubesFired).toBeGreaterThan(0);
       expect(armed.torpedoSummary!.hits).toBeGreaterThanOrEqual(3);
       const sunk = [...armed.attackerSunkIds, ...armed.defenderSunkIds];
       expect(sunk.length).toBeGreaterThanOrEqual(3);
       expect(armed.battleEndReason).toBe("no_viable_combatants");
       expect(armed.elapsedMinutes).toBeLessThan(360);
-      // A sunk ship has lost all HP (terminal transition -> hp 0).
       for (const id of sunk) expect(armed.damageReport[id]!.valueOf()).toBe(100);
 
       if (!founderingHashes) {
         founderingHashes = { minuteHashes: armed.minuteHashes, resultHash: armed.resultHash };
-        // Byte-replay determinism on the first foundering battle.
         const rerun = resolveBattleAuto({
           ...makeAutoInput({ nations: ironclads(true) }),
           campaignSeed: seed,

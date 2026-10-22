@@ -23,7 +23,6 @@ const detMocks = vi.hoisted(() => ({
   })),
   verifyEnvelope: vi.fn(() => true),
 }));
-// Partial mock: ship-design (loaded through commands and phase-engine) needs the real powRational at import time.
 vi.mock("@bluewave/deterministic", async (importOriginal) => ({
   ...(await importOriginal<object>()),
   ...detMocks,
@@ -137,12 +136,6 @@ const campaignSnapshot: any = {
   compatibilityVersion: "0.1.0",
 };
 
-/**
- * The on-disk `campaign-state.json` shape `runCampaignSave` reads: a
- * `StorableCampaignState` (the Map-valued snapshot fields written as records by
- * `campaign:compile`). `runCampaignSave` now decodes it with
- * `StorableCampaignStateSchema`, so the fixture must be structurally valid.
- */
 const storableCampaignState: any = {
   snapshot: {
     version: "0.1.0",
@@ -165,7 +158,6 @@ const storableCampaignState: any = {
     designs: {},
     designFamilies: {},
     strategicWeather: [],
-    // S-2: the required prestige value set (test-only fixture numbers, not prestige values).
     prestigeRules: {
       lowerBound: 0,
       upperBound: 100,
@@ -717,8 +709,6 @@ describe("Campaign", () => {
       expect.anything(),
       expect.anything(),
     );
-    // CAH-LEG-1: the campaign compile consumes the decoded bundle, reading no
-    // raw campaign YAML (no campaignFiles/compilerInput on the request).
     const request = campaignMocks.compile.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(request["contentBundle"]).toBeDefined();
     expect("campaignFiles" in request).toBe(false);

@@ -9,7 +9,6 @@ import { antiAircraftModel } from "./anti-aircraft-view.js";
 
 const content = loadDrawingBoardContent();
 const ref = content.references[0]!;
-// Fixture values, not game values.
 const balance: AntiAircraftBalance = {
   fromMonth: "1915-01",
   lightGunWeightKg: 100,

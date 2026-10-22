@@ -8,7 +8,6 @@ describe("DEFERRED_SUBMARINE_ITEMS", () => {
       "submarine-auto-build",
     ]);
     expect(DEFERRED_SUBMARINE_ITEMS.every((i) => i.reason.length > 20)).toBe(true);
-    // The era fact the roster verdict rests on stays stated.
     expect(DEFERRED_SUBMARINE_ITEMS[0]?.reason).toMatch(/1880/);
   });
 });

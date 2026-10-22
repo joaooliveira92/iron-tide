@@ -68,7 +68,6 @@ export function validateParticipationRecord(r: unknown, c: DiagnosticCollector) 
     });
     return false;
   }
-  // NONE semantics per status
   const status = rec["participationStatus"] as string;
   if (status === "ACTIVE" && rec["scenarioNationInstanceId"] === "NONE") {
     c.addError(
@@ -120,8 +119,6 @@ function findUniqueParticipationRecord(
   return matches[0];
 }
 
-// CONDITIONAL_ACTIVE is legal only under alternate_continuity_v1 and must name a
-// continuation that resolves to a playable-slot nation instance.
 function resolveConditionalActiveParticipation(
   rec: ScenarioParticipationRecord,
   playableSlotId: string,
@@ -173,7 +170,6 @@ function resolveConditionalActiveParticipation(
   return target;
 }
 
-// ACTIVE must be a real playable-slot nation instance and carry no continuation.
 function resolveActiveParticipation(
   rec: ScenarioParticipationRecord,
   playableSlotId: string,

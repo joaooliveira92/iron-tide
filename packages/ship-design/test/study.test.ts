@@ -37,41 +37,40 @@ describe("similarity (DESIGN-21 sections 10-16, acceptance 4-16)", () => {
     expect(sim({})).toEqual({ derived: true, failed: [] });
   });
   it("displacement: the greater of 10 % or 1,000 t, equality similar; a fall of more than 20 % breaks it", () => {
-    expect(sim({ displacementKg: 13_200_000 }).derived).toBe(true); // +10 % = 1,200 t, exactly
+    expect(sim({ displacementKg: 13_200_000 }).derived).toBe(true);
     expect(sim({ displacementKg: 13_200_001 }).failed).toEqual([
       "DERIVED_DESIGN_DISPLACEMENT_CHANGED",
     ]);
     const small = { ...base, displacementKg: 2_000_000 };
-    expect(assessSimilarity(small, { ...small, displacementKg: 3_000_000 }).derived).toBe(true); // 1,000 t floor
+    expect(assessSimilarity(small, { ...small, displacementKg: 3_000_000 }).derived).toBe(true);
     expect(assessSimilarity(small, { ...small, displacementKg: 3_000_001 }).derived).toBe(false);
-    expect(sim({ displacementKg: 9_600_000 }).derived).toBe(true); // exactly -20 %
+    expect(sim({ displacementKg: 9_600_000 }).derived).toBe(true);
     expect(sim({ displacementKg: 9_599_999 }).derived).toBe(false);
   });
   it("main battery: one inch, one turret, one barrel per turret, 25 % of barrels with a minimum of two", () => {
-    expect(sim({ mainCaliberUm: 330_200 }).derived).toBe(true); // +1 inch exactly
+    expect(sim({ mainCaliberUm: 330_200 }).derived).toBe(true);
     expect(sim({ mainCaliberUm: 330_201 }).failed).toEqual(["DERIVED_DESIGN_MAIN_BATTERY_CHANGED"]);
-    expect(sim({ mainMounts: 3, mainBarrels: 6 }).derived).toBe(true); // +1 turret, +2 barrels (minimum allowance)
+    expect(sim({ mainMounts: 3, mainBarrels: 6 }).derived).toBe(true);
     expect(sim({ mainMounts: 4 }).derived).toBe(false);
     expect(sim({ mainMaxBarrelsPerMount: 3, mainBarrels: 6 }).derived).toBe(true);
     expect(sim({ mainMaxBarrelsPerMount: 4 }).derived).toBe(false);
     expect(sim({ mainBarrels: 7 }).derived).toBe(false);
     const big = { ...base, mainBarrels: 12 };
-    expect(assessSimilarity(big, { ...big, mainBarrels: 15 }).derived).toBe(true); // 25 % of 12 = 3
+    expect(assessSimilarity(big, { ...big, mainBarrels: 15 }).derived).toBe(true);
     expect(assessSimilarity(big, { ...big, mainBarrels: 16 }).derived).toBe(false);
   });
   it("secondary: half inch, 33 % (min 4), 25 % weight, six-inch group, dual-purpose family, zero baseline", () => {
     const fiveInch = { ...base, secondaryMaxCaliberUm: 127_000 };
     expect(
       assessSimilarity(fiveInch, { ...fiveInch, secondaryMaxCaliberUm: 139_700 }).derived,
-    ).toBe(true); // +0.5 in
+    ).toBe(true);
     expect(
       assessSimilarity(fiveInch, { ...fiveInch, secondaryMaxCaliberUm: 139_701 }).derived,
     ).toBe(false);
-    // From exactly six inches, any rise adds a group above six inches: major even within half an inch.
     expect(sim({ secondaryMaxCaliberUm: 152_401 }).derived).toBe(false);
-    expect(sim({ secondaryBarrels: 16 }).derived).toBe(true); // 33 % of 12 = 3, minimum 4
+    expect(sim({ secondaryBarrels: 16 }).derived).toBe(true);
     expect(sim({ secondaryBarrels: 17 }).derived).toBe(false);
-    expect(sim({ secondaryWeightKg: 250_000 }).derived).toBe(true); // +25 % exactly
+    expect(sim({ secondaryWeightKg: 250_000 }).derived).toBe(true);
     expect(sim({ secondaryWeightKg: 250_001 }).derived).toBe(false);
     expect(sim({ secondaryDualPurpose: true }).failed).toEqual([
       "DERIVED_DESIGN_SECONDARY_BATTERY_CHANGED",
@@ -98,7 +97,6 @@ describe("similarity (DESIGN-21 sections 10-16, acceptance 4-16)", () => {
     expect(sim({ armourUm: { BELT_MAIN: 229_000, DECK_MAIN: 88_701 } }).failed).toEqual([
       "DERIVED_DESIGN_HORIZONTAL_ARMOR_CHANGED",
     ]);
-    // Adding a zone counts from zero.
     expect(sim({ armourUm: { ...base.armourUm, TURRET: 25_400 } }).derived).toBe(true);
     expect(sim({ armourUm: { ...base.armourUm, TURRET: 25_401 } }).derived).toBe(false);
   });
@@ -118,7 +116,7 @@ describe("study terms (sections 3 and 18)", () => {
   it("a new design pays the base; a derived one gets the discount, rounded up", () => {
     expect(studyTerms(125, false, balance)).toEqual({
       baseStudyWork: 4,
-      baseStudyCost: 4, // ceil(125 x 3 %) = ceil(3.75)
+      baseStudyCost: 4,
       discountBp: 0,
       finalStudyWork: 4,
       finalStudyCost: 4,
@@ -128,7 +126,7 @@ describe("study terms (sections 3 and 18)", () => {
       finalStudyWork: 3,
       finalStudyCost: 3,
     });
-    expect(studyTerms(0, true, balance)).toMatchObject({ finalStudyCost: 1, finalStudyWork: 3 }); // minimum 1
+    expect(studyTerms(0, true, balance)).toMatchObject({ finalStudyCost: 1, finalStudyWork: 3 });
   });
   it("refuses a missing or out-of-range discount contract", () => {
     expect(() => checkStudyBalance(undefined)).toThrow(StudyContractError);

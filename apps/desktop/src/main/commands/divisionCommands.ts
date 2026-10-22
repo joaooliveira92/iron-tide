@@ -15,14 +15,6 @@ import { CommandFailed } from "../runtime/commandError.js";
 import { withSchema } from "../runtime/commandProgram.js";
 import { currentRevision, submitPlayerCommand } from "./playerCommandSupport.js";
 
-/**
- * The Fleet-organization (division editor) bridge commands, as native
- * `CommandProgram`s (INC-5; ADR-0159). Same authority model as diplomacy
- * (`playerCommandSupport.ts`): the desktop only queues a real engine envelope;
- * the engine validates at issue time and is the sole mutator when `commitMonth`
- * applies it. Every session/queue read goes through the desktop service graph
- * (`CampaignSessionStore`, `CommandQueueStore`), never the module singletons.
- */
 export const inspectDivisionScreenProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
@@ -60,17 +52,11 @@ export const submitDivisionCommandProgram = withSchema(
     }),
 );
 
-/**
- * A deterministic division id from the nation, the turn and the founding ship: the
- * same request in the same turn replays the same id; a different flagship cannot
- * collide. The renderer never supplies ids for new divisions.
- */
 export function newDivisionId(nationId: string, turn: number, flagshipShipId: string): string {
   const digest = sha256Hex(`division:${nationId}:${turn}:${flagshipShipId}`);
   return `div_${nationId}_${digest.slice(0, 10)}`;
 }
 
-/** Everything one command's wire→engine mapping needs beyond the command itself. */
 interface DivisionCommandContext {
   readonly nationId: string;
   readonly turn: number;
@@ -81,12 +67,6 @@ interface DivisionCommandPlan {
   readonly discriminator: string;
 }
 
-/**
- * The per-command descriptor: its idempotency discriminator and its engine body.
- * Keeping BOTH in one entry (rather than a discriminator switch plus a body
- * switch) means a new division command is a single addition — the two can no
- * longer drift out of sync.
- */
 interface DivisionCommandDescriptor<T extends DivisionCommandBody> {
   readonly discriminator: (command: T, context: DivisionCommandContext) => string;
   readonly toEngineBody: (
@@ -100,13 +80,6 @@ type DivisionCommandPlanner = (
   context: DivisionCommandContext,
 ) => DivisionCommandPlan;
 
-/**
- * Adapts a descriptor for one union member into a uniform planner. The table is
- * keyed by the discriminant and only ever entered via {@link planDivisionCommand}'s
- * `command.type` lookup, so asserting that `command` is member `T` is sound;
- * TypeScript cannot express that correlation across an indexed lookup (same
- * registry discipline as `campaignBridge.ts`).
- */
 function planWith<T extends DivisionCommandBody["type"]>(
   descriptor: DivisionCommandDescriptor<Extract<DivisionCommandBody, { type: T }>>,
 ): DivisionCommandPlanner {
@@ -119,7 +92,6 @@ function planWith<T extends DivisionCommandBody["type"]>(
   };
 }
 
-/** One entry per wire command: its body mapping and idempotency discriminator. */
 const DIVISION_COMMANDS: {
   readonly [K in DivisionCommandBody["type"]]: DivisionCommandPlanner;
 } = {
@@ -130,8 +102,6 @@ const DIVISION_COMMANDS: {
       type: "CreateDivision",
       nationId: context.nationId,
       divisionId: newDivisionId(context.nationId, context.turn, command.flagshipShipId),
-      // The engine founds a division on exactly its first ship (the flagship);
-      // other ships join afterwards via AddShipToDivision.
       shipOrder: [command.flagshipShipId],
       divisionRole: command.role,
       preferredFormation: command.formation,
@@ -183,8 +153,6 @@ const DIVISION_COMMANDS: {
   }),
 };
 
-/** Maps the wire command onto the engine's `CommandBody` and its idempotency
- * discriminator; `nationId`/`turn` always come from the session, never the wire. */
 function planDivisionCommand(
   nationId: string,
   turn: number,

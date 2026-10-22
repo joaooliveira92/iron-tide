@@ -3,14 +3,6 @@ import { monthLabel } from "../month-report-format.js";
 import { NarrativeMonthSummary } from "../NarrativeMonthSummary.js";
 import { MonthReportTreasurySection } from "./MonthReportTreasurySection.js";
 
-/**
- * One stored month's Monthly Naval Estimates report (spec §16): presented as
- * a flowing narrative summary instead of individual sections. The narrative
- * provides one row per event with distinct text, entity links, "why this matters"
- * context, and a short closing summary. The Treasury section stays above it:
- * its reconciliation line and shortfall flags are the player's only view of
- * requested, paid and unpaid spending.
- */
 export function MonthlyReportView({
   report,
   previous,

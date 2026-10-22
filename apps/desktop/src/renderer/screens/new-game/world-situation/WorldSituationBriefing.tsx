@@ -8,12 +8,6 @@ import { PowerNavigator } from "./PowerNavigator.js";
 import { SelectedPowerDossier, dossierAnnouncement } from "./SelectedPowerDossier.js";
 import { StrategicSituationSummary, TheaterBoard } from "./StrategicSituationSummary.js";
 
-/**
- * The Foreign Intelligence page of the Opening Strategic Briefing: a layered
- * world-situation briefing centred on the player's nation. Summary first, then
- * the prioritised powers beside a dossier for the selected one. Informational
- * only — it makes no decision and changes no campaign state.
- */
 export function WorldSituationBriefing({
   projection,
 }: {

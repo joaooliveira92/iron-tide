@@ -1,9 +1,3 @@
-// DESIGN-35 §2 immutable MineTypeDefinition: every field required; a missing
-// or invalid field fails with INVALID_MINE_TYPE_DEFINITION. The definition
-// carries a deterministic content version + content hash (canonical serializer
-// + SHA-256 envelope, domain-separated with the mine_type_definitions_v1
-// compatibility version — no ambient randomness). Pure/deterministic: no
-// I/O/clock/random.
 import { BluewaveError } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import {
@@ -25,16 +19,8 @@ import {
 } from "./constants.js";
 import { INVALID_MINE_TYPE_DEFINITION } from "./reasonCodes.js";
 
-// Content version of the shipped six-canonical-type set (INC-1 ships all six;
-// there is no open catalog to roll up later, unlike torpedo models — ticket 06).
 export const mineTypeDefinitionsContentVersion = "mine_type_definitions_v1" as const;
 
-// §15 strike-profile data shape. DESIGN-35's base severity weights are a
-// single shared table (not per mine type — §15 only says type "MAY" modify
-// weights through an explicit formula, and no per-type modifier table is
-// shipped this sprint), so every MineTypeDefinition below carries the same
-// shipped base weights. Strike resolution itself is deferred (ticket 03); this
-// is a pure data shape.
 export interface MineStrikeProfile {
   baseSeverityWeightsBp: Readonly<
     Record<Exclude<MineStrikeOutcome, "IMMOBILIZED_FOR_TOW">, number>
@@ -43,9 +29,9 @@ export interface MineStrikeProfile {
 
 export interface MineTypeDefinition {
   mineTypeId: MineType;
-  technologyPrerequisiteIds: readonly string[]; // may be empty for baseline types
+  technologyPrerequisiteIds: readonly string[];
   eligibleLayingSourceKinds: readonly MineSourceKind[];
-  baseLayingValue: number; // integer > 0, §4 formula input
+  baseLayingValue: number;
   strikeProfile: MineStrikeProfile;
   targetEligibility: readonly MineTargetClass[];
   sweepResistance: MineSweepResistance;
@@ -54,7 +40,7 @@ export interface MineTypeDefinition {
   battleGenerationPolicyId: string;
   reportSignaturePolicyId: string;
   contentVersion: string;
-  contentHash: string; // deterministic SHA-256 over the non-hash surface
+  contentHash: string;
 }
 
 function invariant(m: MineTypeDefinition, field: string, value: unknown, reason: string): never {
@@ -78,9 +64,6 @@ function isBp(v: unknown): v is number {
   return isInt(v) && v >= 0 && v <= MINE_BASIS_POINTS_PER_UNIT;
 }
 
-// AC-1: reject any missing/invalid field of the MineTypeDefinition with
-// INVALID_MINE_TYPE_DEFINITION. Validates the full surface except the
-// content-hash presence (a hash-less surface is validated before hashing).
 export function assertMineTypeDefinitionSurface(m: MineTypeDefinition): void {
   if (!(MINE_TYPES as readonly string[]).includes(m.mineTypeId))
     invariant(m, "mineTypeId", m.mineTypeId, "mineTypeId must be a canonical §2 mine type");
@@ -277,15 +260,12 @@ function assertDecayPolicy(m: MineTypeDefinition): void {
   }
 }
 
-// AC-1: full validation incl. the content hash presence requirement.
 export function validateMineTypeDefinition(m: MineTypeDefinition): void {
   assertMineTypeDefinitionSurface(m);
   if (!isNonEmptyString(m.contentHash))
     invariant(m, "contentHash", m.contentHash, "content hash must be a non-empty string");
 }
 
-// Deterministic content hash over the non-hash surface, domain-separated with
-// the mine_type_definitions_v1 content version. Identical content -> identical hash.
 export function computeMineTypeDefinitionContentHash(
   m: Omit<MineTypeDefinition, "contentHash">,
 ): string {
@@ -294,7 +274,6 @@ export function computeMineTypeDefinitionContentHash(
     .bodyHash;
 }
 
-// Build a fully-validated definition with its authoritative content hash computed.
 export function withMineTypeDefinitionContentHash(
   m: Omit<MineTypeDefinition, "contentHash">,
 ): MineTypeDefinition {
@@ -303,28 +282,9 @@ export function withMineTypeDefinitionContentHash(
   return { ...m, contentHash: computeMineTypeDefinitionContentHash(m) };
 }
 
-// Fail-closed content-hash verification: recomputes the hash and compares.
-// Any tampered field produces a mismatch (never silently accepted).
 export function verifyMineTypeDefinitionContentHash(m: MineTypeDefinition): boolean {
   return computeMineTypeDefinitionContentHash(m) === m.contentHash;
 }
-
-// INC-1 shipped six canonical MineTypeDefinition instances (DESIGN-35 §2, with
-// §9/§15/§21 exact shipped constants wired in per ticket 04). There is no open
-// content catalog to roll up later (unlike torpedo models) — this is the full
-// set for the engine-scoping sprint.
-//
-// baseLayingValue is authored, not a DESIGN-35 literal (§4 pins only the
-// formula and generic multiplier table, not per-type base values — ticket
-// 04/06 confirm only §6-10/§15/§16/§21 carry DESIGN-35-exact numbers). BALANCE
-// TARGET: a uniform baseline unit is shipped; content-specific differentiation
-// is deferred to the production content pack, never silently invented here.
-//
-// eligibleLayingSourceKinds and targetEligibility are authored closed-set
-// membership judgments (DESIGN-35 §2/§3/§14 do not pin an exact per-type
-// source/target matrix); SUBMARINE_LAID maps only to MINELAYING_SUBMARINE
-// (ticket 01: submarine-laid ships as a data type only) and CONTROLLED_DEFENSIVE/
-// SCENARIO_SPECIAL are scoped to their definitionally-tied sources.
 
 function sharedStrikeProfile(): MineStrikeProfile {
   return { baseSeverityWeightsBp: MINE_STRIKE_BASE_SEVERITY_WEIGHTS_BP };
@@ -332,14 +292,8 @@ function sharedStrikeProfile(): MineStrikeProfile {
 
 const ALL_TARGET_CLASSES: readonly MineTargetClass[] = MINE_TARGET_CLASSES;
 
-// Offensive mine types (CONTACT/MAGNETIC/ACOUSTIC) can be laid by any capable
-// source; the more restrictive per-type source lists (CONTROLLED_DEFENSIVE,
-// SUBMARINE_LAID, SCENARIO_SPECIAL) are declared inline where they narrow it.
 const ALL_SOURCE_KINDS: readonly MineSourceKind[] = MINE_SOURCE_KINDS;
 
-// BALANCE TARGET: uniform authored baseline (§4 has no literal per-type
-// table); content-specific differentiation is deferred to the production
-// content pack, never silently invented here.
 const DEFAULT_BASE_LAYING_VALUE = 100;
 
 export const SHIPPED_MINE_TYPE_DEFINITIONS: readonly MineTypeDefinition[] = [
@@ -350,8 +304,8 @@ export const SHIPPED_MINE_TYPE_DEFINITIONS: readonly MineTypeDefinition[] = [
     baseLayingValue: DEFAULT_BASE_LAYING_VALUE,
     strikeProfile: sharedStrikeProfile(),
     targetEligibility: ALL_TARGET_CLASSES,
-    sweepResistance: { kind: "FLAT", valueBp: 10_000 }, // §9
-    decayPolicy: { kind: "FLAT", retentionBp: 9_750, freshnessRetentionBp: null }, // §21
+    sweepResistance: { kind: "FLAT", valueBp: 10_000 },
+    decayPolicy: { kind: "FLAT", retentionBp: 9_750, freshnessRetentionBp: null },
     friendlyFirePolicyId: MINE_FRIENDLY_FIRE_POLICY_ID,
     battleGenerationPolicyId: MINE_BATTLE_GENERATION_POLICY_ID,
     reportSignaturePolicyId: MINE_REPORT_SIGNATURE_POLICY_ID,
@@ -368,8 +322,8 @@ export const SHIPPED_MINE_TYPE_DEFINITIONS: readonly MineTypeDefinition[] = [
       kind: "CAPABILITY_GATED",
       withCapabilityBp: 10_000,
       withoutCapabilityBp: 7_500,
-    }, // §9
-    decayPolicy: { kind: "FLAT", retentionBp: 9_500, freshnessRetentionBp: null }, // §21
+    },
+    decayPolicy: { kind: "FLAT", retentionBp: 9_500, freshnessRetentionBp: null },
     friendlyFirePolicyId: MINE_FRIENDLY_FIRE_POLICY_ID,
     battleGenerationPolicyId: MINE_BATTLE_GENERATION_POLICY_ID,
     reportSignaturePolicyId: MINE_REPORT_SIGNATURE_POLICY_ID,
@@ -386,8 +340,8 @@ export const SHIPPED_MINE_TYPE_DEFINITIONS: readonly MineTypeDefinition[] = [
       kind: "CAPABILITY_GATED",
       withCapabilityBp: 10_000,
       withoutCapabilityBp: 7_500,
-    }, // §9
-    decayPolicy: { kind: "FLAT", retentionBp: 9_250, freshnessRetentionBp: null }, // §21
+    },
+    decayPolicy: { kind: "FLAT", retentionBp: 9_250, freshnessRetentionBp: null },
     friendlyFirePolicyId: MINE_FRIENDLY_FIRE_POLICY_ID,
     battleGenerationPolicyId: MINE_BATTLE_GENERATION_POLICY_ID,
     reportSignaturePolicyId: MINE_REPORT_SIGNATURE_POLICY_ID,
@@ -405,13 +359,13 @@ export const SHIPPED_MINE_TYPE_DEFINITIONS: readonly MineTypeDefinition[] = [
     baseLayingValue: DEFAULT_BASE_LAYING_VALUE,
     strikeProfile: sharedStrikeProfile(),
     targetEligibility: ALL_TARGET_CLASSES,
-    sweepResistance: { kind: "FLAT", valueBp: 5_000 }, // §9
+    sweepResistance: { kind: "FLAT", valueBp: 5_000 },
     decayPolicy: {
       kind: "INFRASTRUCTURE_GATED",
       operationalRetentionBp: 9_900,
       nonOperationalRetentionBp: 9_000,
       freshnessRetentionBp: null,
-    }, // §21
+    },
     friendlyFirePolicyId: MINE_FRIENDLY_FIRE_POLICY_ID,
     battleGenerationPolicyId: MINE_BATTLE_GENERATION_POLICY_ID,
     reportSignaturePolicyId: MINE_REPORT_SIGNATURE_POLICY_ID,
@@ -420,14 +374,12 @@ export const SHIPPED_MINE_TYPE_DEFINITIONS: readonly MineTypeDefinition[] = [
   withMineTypeDefinitionContentHash({
     mineTypeId: "SUBMARINE_LAID",
     technologyPrerequisiteIds: ["minelaying_submarine_technology"],
-    // Data type only this sprint — full submarine-mission integration is C-3's
-    // concern (ticket 01).
     eligibleLayingSourceKinds: ["MINELAYING_SUBMARINE"],
     baseLayingValue: DEFAULT_BASE_LAYING_VALUE,
     strikeProfile: sharedStrikeProfile(),
     targetEligibility: ALL_TARGET_CLASSES,
-    sweepResistance: { kind: "FLAT", valueBp: 9_000 }, // §9
-    decayPolicy: { kind: "FLAT", retentionBp: 9_500, freshnessRetentionBp: null }, // §21
+    sweepResistance: { kind: "FLAT", valueBp: 9_000 },
+    decayPolicy: { kind: "FLAT", retentionBp: 9_500, freshnessRetentionBp: null },
     friendlyFirePolicyId: MINE_FRIENDLY_FIRE_POLICY_ID,
     battleGenerationPolicyId: MINE_BATTLE_GENERATION_POLICY_ID,
     reportSignaturePolicyId: MINE_REPORT_SIGNATURE_POLICY_ID,
@@ -440,8 +392,8 @@ export const SHIPPED_MINE_TYPE_DEFINITIONS: readonly MineTypeDefinition[] = [
     baseLayingValue: DEFAULT_BASE_LAYING_VALUE,
     strikeProfile: sharedStrikeProfile(),
     targetEligibility: ALL_TARGET_CLASSES,
-    sweepResistance: { kind: "DEFINITION_REQUIRED" }, // §9 "definition-required"
-    decayPolicy: { kind: "DEFINITION_REQUIRED" }, // §21 "explicit definition required"
+    sweepResistance: { kind: "DEFINITION_REQUIRED" },
+    decayPolicy: { kind: "DEFINITION_REQUIRED" },
     friendlyFirePolicyId: MINE_FRIENDLY_FIRE_POLICY_ID,
     battleGenerationPolicyId: MINE_BATTLE_GENERATION_POLICY_ID,
     reportSignaturePolicyId: MINE_REPORT_SIGNATURE_POLICY_ID,
@@ -449,9 +401,6 @@ export const SHIPPED_MINE_TYPE_DEFINITIONS: readonly MineTypeDefinition[] = [
   }),
 ];
 
-// Fail-closed lookup: a shipped mine type by id. An unknown type id fails with
-// INVALID_MINE_TYPE_DEFINITION (never a silent default), mirroring
-// torpedoModelById.
 export function mineTypeDefinitionById(mineTypeId: string): MineTypeDefinition {
   const def = SHIPPED_MINE_TYPE_DEFINITIONS.find((d) => d.mineTypeId === mineTypeId);
   if (!def) {

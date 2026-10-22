@@ -37,8 +37,6 @@ import {
   toStorableSnapshot,
 } from "./snapshotSerialization.js";
 
-// The PERSISTENCE_* codes are defined in `errors.ts` (tagged-error vocabulary)
-// and re-exported here to keep the existing module import path working.
 export {
   CANCELLED_CODE,
   CORRUPT_SAVE_CODE,
@@ -54,40 +52,27 @@ export interface SaveResult {
   metadata: SaveMetadata;
 }
 
-// Save ids are created by `save()` as `<epochMs>-<uuid>`; treat any inbound id
-// as opaque and validate it before it touches the filesystem (TODO #3).
 const SAVE_ID_PATTERN = /^\d{13}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function isValidSaveId(saveId: string): boolean {
   return SAVE_ID_PATTERN.test(saveId);
 }
 
-// Defense-in-depth containment: the resolved save path must remain inside
-// `saveDir` so an ID like an absolute path or `..` can never escape it.
 function isContainedIn(parent: string, child: string): boolean {
   const rel = relative(parent, child);
   return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
 }
 
-// A cancellation that crosses an IPC/async boundary is detected by
-// `error.name === "AbortError"`; a bare `new Error("AbortError")` has name
-// "Error" and misses that check (TODO #13).
 function createAbortError(): Error {
   const error = new Error("Save operation was cancelled");
   error.name = "AbortError";
   return error;
 }
 
-/** Extra artifacts a save can carry beside the campaign state. */
 export interface SaveExtras {
-  /**
-   * What the month that produced this state executed on (the player's command envelopes, their outcomes, the content
-   * the engine was given), so a replay can run the same month again. Any JSON value; the caller owns its shape.
-   */
   readonly monthInput?: unknown;
 }
 
-/** Result of `loadMonthInput`: absent on saves that predate month inputs or do not close a month. */
 export type MonthInputLoad =
   | { readonly status: "absent" }
   | { readonly status: "present"; readonly value: unknown }
@@ -96,10 +81,6 @@ export type MonthInputLoad =
 const MONTH_INPUT_FILE = "month-input.json";
 
 export class SaveStore {
-  /**
-   * `currentCompatibilityVersion` defaults to the active release constant; tests
-   * inject another to exercise the refusal path (ship-part-model ticket 10).
-   */
   constructor(
     private readonly currentCompatibilityVersion: string = CURRENT_COMPATIBILITY_VERSION,
   ) {}
@@ -119,11 +100,6 @@ export class SaveStore {
     const tmpDir = join(saveDir, `.tmp_${saveId}`);
 
     const { rawHash: _rh, ...stateForHash } = state;
-    // Written form only: state's Map-valued snapshot fields (nations, designs,
-    // designFamilies, activeCandidates) convert to plain Records so they survive
-    // JSON.stringify. The stateHash below stays over the original `state`/
-    // `stateForHash` (real Maps) so it matches the rawHash the campaign compiler
-    // already computed and what load() recomputes after reconstituting Maps.
     const storableState = { ...state, snapshot: toStorableSnapshot(state.snapshot) };
     const serialized = canonicalSerialize(storableState);
     const stateHash = sha256Hex(canonicalSerialize(stateForHash));
@@ -146,10 +122,7 @@ export class SaveStore {
       campaignId: state.snapshot.campaignId,
       snapshotHash,
       compatibilityVersion: state.snapshot.compatibilityVersion,
-      // The hash of the serialized on-disk artifact, matching the name.
       contentArtifactHash: serializedHash,
-      // INC-13: additive optional campaign-list display fields (no migration;
-      // legacy saves simply omit them and the list renders "—").
       campaignName: state.snapshot.campaignId,
       nationId: (() => {
         const slot = state.snapshot.slots.find((s) => s.type === "playable");
@@ -164,9 +137,6 @@ export class SaveStore {
       ...(monthInput === undefined ? {} : { monthInputHash: sha256Hex(monthInput) }),
     };
 
-    // `published` guards the outer catch: once the directory has been renamed
-    // to savePath, tmpDir no longer exists (cleanup is a no-op) and a failure
-    // must remove the published-but-not-yet-active save instead.
     let published = false;
     try {
       mkdirSync(tmpDir, { recursive: true });
@@ -181,16 +151,10 @@ export class SaveStore {
         throw createAbortError();
       }
 
-      // Atomic publication as a complete unit (TODO #4): build every artifact
-      // inside tmpDir, then rename the whole directory. tmpDir and savePath
-      // share saveDir as parent, so the rename never crosses filesystems.
       renameSync(tmpDir, savePath);
       published = true;
 
       if (signal?.aborted) {
-        // The save is fully written but is not yet the active save. Remove it
-        // and leave the pointer untouched — never roll a pointer back that we
-        // never advanced (TODO #5/#6).
         rmSync(savePath, { recursive: true, force: true });
         throw createAbortError();
       }
@@ -260,15 +224,6 @@ export class SaveStore {
     return this.loadById(saveDir, pointer.activeSaveId, diagnostics, signal);
   }
 
-  /**
-   * Loads a specific save by id, bypassing the active pointer. Lets callers
-   * (e.g. replay verification) reach a save's *predecessor* — the snapshot a
-   * turn was executed against — rather than only ever the current active save.
-   */
-  /**
-   * The month input a save was written with (see `SaveExtras.monthInput`), checked against the hash in its metadata.
-   * "absent" when the save has none; "corrupt" (with a diagnostic) when the file is missing, unreadable or altered.
-   */
   loadMonthInput(
     saveDir: string,
     saveId: string,
@@ -330,8 +285,6 @@ export class SaveStore {
       return null;
     }
 
-    // Reject any id that could escape saveDir before a single fs operation
-    // (TODO #3).
     if (!isValidSaveId(saveId)) {
       diagnostics.addError(CORRUPT_SAVE_CODE, "Save id is not a valid identifier", {
         stage: "persistence.load",
@@ -388,11 +341,6 @@ export class SaveStore {
       return null;
     }
 
-    // Stage 1 — parse as `unknown` and validate only the minimal header, so the
-    // compatibility version can be checked BEFORE materializing the
-    // version-specific schema. This guarantees structurally-obsolete saves get
-    // the stable compatibility diagnostic rather than a mislabeled corruption
-    // diagnostic (TODO #14).
     let raw: unknown;
     try {
       raw = JSON.parse(campaignJson);
@@ -428,9 +376,6 @@ export class SaveStore {
       return null;
     }
 
-    // Stage 2 — runtime-structural validation of the accepted compatibility
-    // version (TODO #9). The deep value-fidelity is then enforced by the
-    // envelope + rawHash checks below.
     const parsedResult = Schema.decodeUnknownResult(StorableCampaignStateSchema)(raw);
     if (!Result.isSuccess(parsedResult)) {
       diagnostics.addError(CORRUPT_SAVE_CODE, "Save data is structurally invalid", {
@@ -446,20 +391,10 @@ export class SaveStore {
       return null;
     }
 
-    // Stage 3 — reconstitute the Records written by toStorableSnapshot back into
-    // real Maps (nations, designs, designFamilies, activeCandidates) before any
-    // hash/envelope verification below, so those checks run over the same shape
-    // (real Maps) the campaign compiler used when it originally computed
-    // rawHash/envelope.
     let state: CampaignState;
     try {
       state = {
         ...parsedResult.success,
-        // Accepted narrowing (ticket INC-3): `StorableSnapshotSchema` validates
-        // the snapshot's container shape only and leaves deeply-typed leaves
-        // permissive (schemas.ts NOTE); deep value-fidelity is enforced by the
-        // envelope + rawHash checks below, and `fromStorableSnapshot` reads the
-        // same shape `toStorableSnapshot` wrote, so this is the boundary seam.
         snapshot: fromStorableSnapshot(
           parsedResult.success.snapshot as unknown as StorableCampaignSnapshot,
         ),
@@ -478,7 +413,6 @@ export class SaveStore {
       return null;
     }
 
-    // Integrity gate A — semantic state hash must equal the persisted rawHash.
     const { rawHash: _rawHash, ...stateForHash } = state;
     const computedRawHash = sha256Hex(canonicalSerialize(stateForHash));
     if (computedRawHash !== state.rawHash) {
@@ -492,14 +426,6 @@ export class SaveStore {
       return null;
     }
 
-    // Integrity gate B — validate the signature file, never trust it blindly
-    // (TODO #1/#5). Returns false (with the diagnostic) when the load must be
-    // refused. A save with NO signature file is a legacy save written before the
-    // signature existed (or a turn-zero campaign): it is loaded with a warning,
-    // not rejected, so existing saves are not broken. Note this knowingly
-    // accepts signature *deletion* (indistinguishable from a true legacy save) —
-    // the independent-tamper guarantee holds for any save that still carries a
-    // signature (ADR-0032).
     if (!this.validateSignature(sigPath, sha256Hex(campaignJson), state, diagnostics)) {
       return null;
     }
@@ -518,13 +444,6 @@ export class SaveStore {
     return state;
   }
 
-  /**
-   * Integrity gate B — validates `campaign.sig.json` against the on-disk
-   * serialized bytes and the reconstituted semantic state. Returns `true` if the
-   * save may load. A save with no signature file is a legacy save: it emits a
-   * warning and loads (returning `true`). A present-but-invalid or mismatching
-   * signature hard-rejects (returning `false`, plus an error diagnostic).
-   */
   private validateSignature(
     sigPath: string,
     rawSerializedHash: string,
@@ -587,8 +506,6 @@ export class SaveStore {
       const metaPath = join(saveDir, dirName, "metadata.json");
       const sigPath = join(saveDir, dirName, "campaign.sig.json");
 
-      // Metadata and signature fallback are independent gates (TODO #11): a
-      // directory with no/invalid metadata but a valid signature still lists.
       if (existsSync(metaPath)) {
         try {
           const meta = Schema.decodeUnknownSync(SaveMetadataSchema)(
@@ -596,9 +513,7 @@ export class SaveStore {
           );
           saves.push(meta);
           continue;
-        } catch {
-          // Fall through to the signature fallback.
-        }
+        } catch {}
       }
 
       if (existsSync(sigPath)) {
@@ -611,30 +526,14 @@ export class SaveStore {
             timestamp: "",
             turnNumber: 0,
             campaignId: "",
-            // The signature file does not carry a snapshot hash (only the
-            // on-disk serialized hash and the whole-campaign state hash), so a
-            // degraded record that lacks metadata cannot honestly report one.
-            // Leave it empty rather than mislabel it with the state hash (the
-            // exact wrong value ticket 03 eliminated from the save path).
             snapshotHash: "",
             compatibilityVersion: sig.compatibilityVersion,
             contentArtifactHash: sig.serializedHash,
           });
-        } catch {
-          // Skip invalid save directories.
-        }
+        } catch {}
       }
     }
 
-    // Deterministic newest-first ordering. Primary key is the wall-clock
-    // timestamp, but equal timestamps (two saves written within the same
-    // millisecond — construction commands write extra saves at the same
-    // revision) must NOT fall back to the OS `readdirSync` order, which is
-    // platform-dependent. Tie-break by the save chain: the active save is
-    // the truly-newest, its (immediate) predecessor second, orphans last —
-    // then saveId descending as the final total order (saveId embeds the
-    // creation timestamp), so the result is identical on every platform for
-    // the same package (F6).
     const chainRank = new Map<string, number>();
     const activeSaveId = this.getActiveSaveId(saveDir);
     if (activeSaveId !== null) chainRank.set(activeSaveId, 0);
@@ -651,14 +550,6 @@ export class SaveStore {
     return saves;
   }
 
-  /**
-   * True when the ACTIVE save in `saveDir` holds exactly `state`. Compares the full
-   * serialized content hash (`contentArtifactHash`), which covers the Map-valued
-   * snapshot fields (nations, designs, …). The state's own `rawHash` does NOT: it is
-   * computed over the in-memory form, where those Maps contribute nothing, so two states
-   * that differ only in a nation's treasury share a `rawHash`. Never throws — an absent,
-   * unreadable or foreign package is simply "not current".
-   */
   isCurrent(state: CampaignState, saveDir: string): boolean {
     try {
       const activeId = this.getActiveSaveId(saveDir);
@@ -685,12 +576,6 @@ export class SaveStore {
     }
   }
 
-  /**
-   * The save id that was active immediately before the current one — i.e.
-   * the snapshot the active save's turn was executed against. `null` if the
-   * active save is the first save in this directory (no predecessor) or the
-   * pointer is missing/corrupt.
-   */
   getPreviousSaveId(saveDir: string): string | null {
     const pointerPath = join(saveDir, "pointer.json");
     if (!existsSync(pointerPath)) return null;
@@ -705,11 +590,6 @@ export class SaveStore {
   }
 }
 
-// `previousSaveId` is read once at the start of save() so that the pointer and
-// the save's own metadata record the same predecessor (TODO #7). The update is
-// a single write+atomic-rename; within a single synchronous process two saves
-// cannot interleave here. Cross-process safety is handled by the app-level
-// persistence owner (single IPC queue) per ADR-….
 function updatePointer(saveDir: string, activeSaveId: string, previousSaveId?: string): void {
   const pointerPath = join(saveDir, "pointer.json");
   const pointer: PointerFile = {

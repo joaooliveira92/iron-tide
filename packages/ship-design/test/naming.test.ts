@@ -1,4 +1,3 @@
-// SB3-R13 (DESIGN-23 section 4): the ship-name allocator is deterministic, pool-driven and ambient-randomness-free.
 import { describe, expect, it } from "vite-plus/test";
 import { allocateShipNames, PLACEHOLDER_NAME_POOL_ID, type ShipNamePool } from "../src/index.js";
 
@@ -41,7 +40,6 @@ describe("allocateShipNames is a deterministic pool allocator (SB3-R13)", () => 
     expect(result.allocations).toEqual([
       { name: "Devastation", pool: "name_pool:uk:B", ordinal: 1 },
       { name: "Thunderer", pool: "name_pool:uk:B", ordinal: 2 },
-      // Every base is taken: the earliest stem's first free numbered variant.
       { name: "Devastation 2", pool: "name_pool:uk:B", ordinal: 1 },
     ]);
   });

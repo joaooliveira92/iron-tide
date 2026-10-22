@@ -59,11 +59,6 @@ const SIX_SETTING_FIELDS = [
   "difficulty",
 ] as const satisfies readonly (keyof AdmiralPresetValues)[];
 
-/**
- * The six preset-covered fields (spec §2) each fall back from a recommended
- * preset to the first supported value, in that order — shared by every
- * field so the fallback shape isn't repeated six times inline.
- */
 function seedSixSettingFields(
   supported: SupportedConfigurationValues,
   recommendedPreset: AdmiralPresetValues | null,
@@ -75,12 +70,6 @@ function seedSixSettingFields(
   return result as unknown as AdmiralPresetValues;
 }
 
-/**
- * Seeds draft preferences from the loaded options. When a "Recommended
- * Setup" preset (spec §1) was applied on the nation-confirmation screen, its
- * six values pre-fill in place of the first supported value — still fully
- * editable, matching the preset picker's pre-fill-not-lock behavior (§2).
- */
 export function applyOptionsLoaded(
   state: NewGamePreferencesScreenState,
   options: NewGameOptions,

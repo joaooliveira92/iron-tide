@@ -4,12 +4,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { StrategicOverviewTab } from "./StrategicOverviewTab.js";
 
-/**
- * Pure-presentation render tests for the Strategic Overview tab. The three
- * theater sections render straight from their projected rows; the empty case
- * for each is stated plainly rather than hidden. Nothing here touches
- * authoritative state.
- */
 const pools: readonly SubmarinePool[] = [
   { poolId: "pool_1", nationId: "uk", submarineType: "Holland-class", available: 3 },
   { poolId: "pool_2", nationId: "germany", submarineType: "U-boat", available: 5 },

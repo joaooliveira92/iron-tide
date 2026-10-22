@@ -8,13 +8,6 @@ import {
 } from "../src/index.js";
 import { decodeOk } from "./decode-helpers.js";
 
-/**
- * The structural half of ticket 39 (CAH-SCH-1): the reference-design provenance
- * shape is strict (excess keys rejected), every value carries a known status and
- * at least one real source, and a historical design carries all six facts. The
- * content half — that every authored historical design actually fills them — is
- * pinned by `@bluewave/ship-design`'s `referenceProvenance.test.ts`.
- */
 const VALUE = {
   value: "9,387 t normal (Thunderer 9,390)",
   status: "DERIVED" as const,
@@ -98,7 +91,6 @@ describe("reference-design provenance shape", () => {
   it("accepts a non-historical design with no provenance", () => {
     const { provenance: _drop, ...nonHistorical } = DESIGN;
     expect(decodeOk(ReferenceDesignSchema, { ...nonHistorical, historical: false })).toBe(true);
-    // Unmarked is the same as false: the marker is optional, an absent key means non-historical.
     expect(decodeOk(ReferenceDesignSchema, nonHistorical)).toBe(true);
   });
 

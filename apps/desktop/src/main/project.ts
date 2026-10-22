@@ -24,7 +24,6 @@ export interface BluewaveProject {
 }
 
 export class ProjectFormatError extends Error {
-  /** Stable discriminator (RULES.md "Errors"): recover by `_tag`, not `instanceof`. */
   readonly _tag = "ProjectFormatError";
   constructor(message: string) {
     super(message);
@@ -163,9 +162,6 @@ function safeRelative(filename: string): void {
 }
 
 function isFileWithin(fullPath: string, contentDir: string): boolean {
-  // `relative` is separator-aware on every platform: the previous
-  // `startsWith(normalize(dir) + "/")` check never matched on Windows, where
-  // `normalize` yields backslashes, so every content file looked "not found".
   const rel = relative(contentDir, fullPath);
   return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
 }

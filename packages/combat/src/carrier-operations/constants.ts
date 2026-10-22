@@ -43,7 +43,6 @@ export const CARRIER_OPERATIONS_PHASE_ORDER = 7.3 as const;
 export const CARRIER_OPERATIONS_PHASE_ID = "resolve_carrier_operations" as const;
 
 export const carrierOperationsPolicyId = "carrier_operations_v1" as const;
-// ---- §6-7 Spot value constants ----
 export const SPOT_VALUE_SCALE_EXPONENT = 6 as const;
 export const SPOT_VALUE_DENOMINATOR: bigint =
   BigInt(CARRIER_OPERATIONS_BASIS_POINTS_PER_UNIT) ** BigInt(SPOT_VALUE_SCALE_EXPONENT);
@@ -70,7 +69,6 @@ export const SPOT_TECH_BASIC_BP = 10_000 as const;
 export const SPOT_TECH_IMPROVED_BP = 11_000 as const;
 export const SPOT_TECH_MODERN_BP = 12_000 as const;
 
-// ---- §8 Jet carrier capability ----
 export const JET_CARRIER_CAPABILITIES = [
   "NONE",
   "LIGHT_JET_CAPABLE",
@@ -86,11 +84,8 @@ export const HEAVY_JET_MIN_DISPLACEMENT_KG = 40_000_000 as const;
 export const LIGHT_JET_TECHNOLOGY = "early_jet_carrier_operations" as const;
 export const HEAVY_JET_TECHNOLOGY = "modern_jet_carrier_operations" as const;
 
-// Spot value floor(compiledAircraftCapacity / 2) uses integer division.
-// §7: finalSpotValue clamped 0..compiledAircraftCapacity.
-export const SPOT_VALUE_CLAMP_MAX = 0 as const; // used as sentinel; actual max is per-carrier capacity
+export const SPOT_VALUE_CLAMP_MAX = 0 as const;
 
-// ---- §20 Wind-over-deck requirements ----
 export const WOD_PISTON_LAUNCH_MIN_KNOTS = 20 as const;
 export const WOD_PISTON_RECOVERY_MIN_KNOTS = 18 as const;
 export const WOD_LIGHT_JET_LAUNCH_MIN_KNOTS = 25 as const;

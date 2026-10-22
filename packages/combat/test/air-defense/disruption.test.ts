@@ -1,8 +1,3 @@
-// AC-12: Disruption severity levels + stacking rules (§6).
-// Verifies the exact shipped severity multipliers, the LIGHT < MODERATE < SEVERE <
-// MISSION_ABORT ordering, per-layer highest-severity selection, and cross-layer
-// multiplication with one floor.
-
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, SafeInt, isBluewaveError } from "@bluewave/contracts";
 import {
@@ -111,9 +106,6 @@ describe("AC-12: cross-layer stacking with one floor (§6 line 125)", () => {
   });
 
   it("two layers multiply with one floor", () => {
-    // SEVERE(5_000/6_500) × LIGHT(9_000/9_500):
-    //   accuracy floor(5_000 × 9_000 / 10_000) = 4_500
-    //   cohesion floor(6_500 × 9_500 / 10_000) = 6_175
     const stacked = computeStackedDisruptionMultipliers([
       record(DisruptionSeverity.SEVERE, Layer.HEAVY_AA),
       record(DisruptionSeverity.LIGHT, Layer.LIGHT_AA),
@@ -123,8 +115,6 @@ describe("AC-12: cross-layer stacking with one floor (§6 line 125)", () => {
   });
 
   it("three layers multiply with one floor over 10_000^2", () => {
-    // SEVERE × MODERATE × LIGHT accuracy = floor(5_000×7_500×9_000 / 10_000^2) = 3_375
-    // SEVERE × MODERATE × LIGHT cohesion = floor(6_500×8_500×9_500 / 10_000^2) = 5_248
     const stacked = computeStackedDisruptionMultipliers([
       record(DisruptionSeverity.SEVERE, Layer.HEAVY_AA),
       record(DisruptionSeverity.MODERATE, Layer.MEDIUM_AA),
@@ -156,8 +146,6 @@ describe("AC-12: cross-layer stacking with one floor (§6 line 125)", () => {
   });
 
   it("rejects two representatives of the same defense layer (Repair LOW-7, §6 line 125)", () => {
-    // "only the highest severity from one defense layer applies" — one layer may contribute
-    // at most one representative; a duplicate is an invariant violation, never silently merged.
     let caught: unknown;
     try {
       computeStackedDisruptionMultipliers([

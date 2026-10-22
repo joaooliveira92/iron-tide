@@ -12,7 +12,6 @@ import { formatCalibreInches } from "../../lib/presentation-format/index.js";
 
 export interface BatteryMount {
   readonly instanceId: string;
-  /** Conventional name: A, B, X, Y for centreline mounts; "Port 1" for wings. */
   readonly name: string;
   readonly side: MountSide;
   readonly stationPermille: number;
@@ -32,14 +31,12 @@ const ROLE_TITLE = {
   TORPEDO: "Torpedo tubes",
 } as const;
 
-/** Battery heading: role and calibre in inches, e.g. "Main battery, 12.0-inch". Tubes have no calibre. */
 export function batteryTitle(row: BatteryRow): string {
   return row.role === "TORPEDO"
     ? ROLE_TITLE.TORPEDO
     : `${ROLE_TITLE[row.role]}, ${formatCalibreInches(row.caliberUm)}`;
 }
 
-/** The design's batteries with each mount named by the naval convention. Pure: reads only the compiled view and the draft. */
 export function batteryCards(view: WorkshopView, draft: DesignDraft): BatteryCard[] {
   const placed = new Map(draft.placements.map((p) => [p.instanceId, p]));
   return batterySummary(view.compiled.components, draft.placements).map((row) => {
@@ -62,10 +59,6 @@ export function batteryCards(view: WorkshopView, draft: DesignDraft): BatteryCar
   });
 }
 
-/**
- * Whether a battery's port and starboard mounts carry the same guns. Null when it has no wing mounts (centreline only),
- * so only a battery that could be lopsided says anything. Asymmetry is allowed; the badge makes it deliberate.
- */
 export function batterySymmetry(card: {
   readonly mounts: readonly { readonly side: MountSide; readonly componentId: string }[];
 }): "symmetric" | "asymmetric" | null {
@@ -79,14 +72,12 @@ export function batterySymmetry(card: {
   return wing("PORT") === wing("STBD") ? "symmetric" : "asymmetric";
 }
 
-/** instanceId -> mount name across every battery, for labelling rows and drawings. */
 export function mountNameMap(cards: readonly BatteryCard[]): Map<string, string> {
   return new Map(
     cards.flatMap((c) => c.mounts.map((m): [string, string] => [m.instanceId, m.name])),
   );
 }
 
-/** Removes every mount of the battery as one undoable edit; null for an empty battery. */
 export function clearBatteryEdit(row: BatteryRow): DraftEdit | null {
   return row.instanceIds.length === 0
     ? null
@@ -96,10 +87,6 @@ export function clearBatteryEdit(row: BatteryRow): DraftEdit | null {
       };
 }
 
-/**
- * Sets rounds per gun on every mount of the battery as one undoable edit, clamping each mount to its own allowed range
- * (`entryOf` resolves an instance to its catalogue entry). Mounts with no `rounds` parameter are left alone; null when nothing changes.
- */
 export function setRoundsEdit(
   row: BatteryRow,
   rounds: number,

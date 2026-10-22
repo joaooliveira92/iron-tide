@@ -14,16 +14,10 @@ import { StrengthLayer } from "./layers/StrengthLayer.js";
 export interface MapLayersProps {
   readonly model: WorldMapModel;
   readonly palette: MapPalette;
-  /** World height; the map draws one copy per turn at ±width. */
   readonly width: number;
   readonly onAreaClick: (id: string, shiftKey: boolean) => void;
 }
 
-/**
- * Every data layer, once per world copy. The whole antimeridian strategy is
- * these three translated copies — no clipping, no ring splitting — so markers
- * and labels wrap with the polygons they belong to.
- */
 export function MapLayers({ model, palette, width, onAreaClick }: MapLayersProps) {
   const { state } = model;
   return (

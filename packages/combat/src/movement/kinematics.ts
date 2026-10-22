@@ -1,7 +1,3 @@
-// DESIGN-38 §20/§3-steps-5-6 pure movement kinematics over MovementState.
-// All arithmetic is integer (fixed-point) under DESIGN-07; heading direction is
-// resolved through a fixed-point direction table so results are reproducible
-// integers. No ambient I/O, random, or clock.
 import { BluewaveError } from "@bluewave/contracts";
 import type { DivisionFormation } from "@bluewave/campaign";
 import type { MovementState } from "../movement.js";
@@ -24,24 +20,16 @@ function foldHeading(degrees: number): number {
   return (((degrees % 360) + 360) % 360) | 0;
 }
 
-// currentSpeed must be basis-point knots. Returns integer µm/s (fixed-point).
 export function speedBpKnotsToUmS(currentSpeedBpKnots: number): number {
   return Math.round((currentSpeedBpKnots * KNOTS_TO_UM_S) / SPEED_BP_SCALE);
 }
 
-// direction basis-points for a heading (fixed DIRECTION_FIXED scale), from the
-// authored integer table. Returns { cosBp, sinBp } for a folded [0,359] heading.
-// Exported so peer modules project along the same authored direction table
-// (INC-4 torpedo tracks reuse the single source of truth — no duplicated table).
 export function directionBp(heading: number): { cosBp: number; sinBp: number } {
   const h = foldHeading(heading);
   const entry = DIRECTION_TABLE[h % 360] ?? ([0, 0] as readonly [number, number]);
   return { cosBp: entry[0], sinBp: entry[1] };
 }
 
-// AC-2: advance position from heading + currentSpeed over dtSeconds integer
-// seconds. Returns an immutable advanced copy; the input is unchanged
-// (reversible-to-invariant).
 export interface AdvancePositionInput {
   state: MovementState;
   dtSeconds: number;
@@ -64,8 +52,6 @@ export function advancePosition(input: AdvancePositionInput): [number, number] {
   return [input.state.position[0] + dX, input.state.position[1] + dY];
 }
 
-// AC-3: currentSpeed approaches orderedSpeed at bounded thrust/brake
-// acceleration, clamped to [0, attainableMaxBpKnots]. Returns new currentSpeed.
 export interface PropulsionInput {
   currentSpeed: number;
   orderedSpeed: number;
@@ -101,9 +87,6 @@ export function resolvePropulsion(input: PropulsionInput): number {
   return next;
 }
 
-// AC-4: heading approaches orderedHeading at bounded turning rate (mdeg/s).
-// Returns new integer heading in [0,359]. Reuses the reciprocal-course
-// convention of battleTurnAway (180° reversal) via foldHeading semantics.
 export interface TurningInput {
   heading: number;
   orderedHeading: number;
@@ -128,27 +111,23 @@ export function resolveTurning(input: TurningInput): number {
   let diff = (to - from) % 360;
   if (diff > 180) diff -= 360;
   if (diff < -180) diff += 360;
-  const rate = input.turningRateMdegS ?? 1_000; // mdeg/s
+  const rate = input.turningRateMdegS ?? 1_000;
   const maxDeltaDeg = (rate * input.dtSeconds) / 1_000;
   let delta = Math.sign(diff) * Math.min(Math.abs(diff), maxDeltaDeg);
   delta = Math.round(delta);
   return foldHeading(from + delta);
 }
 
-// reciprocal course convenience (battleTurnAway §25 step 2).
 export function reciprocalCourse(heading: number): number {
   return foldHeading(heading + 180);
 }
 
-// AC-5: formation station geometry. Each unit computes a desired station from its
-// ordinal and the division lead. helm steers toward the station by adopting a
-// desired heading (derived from the station offset) when off-station.
 export interface FormationStationContext {
   formation: DivisionFormation;
-  ordinal: number; // 0 = lead
+  ordinal: number;
   leadPosition: [number, number];
   leadHeading: number;
-  divisionIndex?: number; // column index for multi-column SCREEN/SEARCH_LINE
+  divisionIndex?: number;
 }
 export interface DesiredStation {
   position: [number, number];
@@ -161,11 +140,9 @@ export function computeDesiredStation(ctx: FormationStationContext): DesiredStat
   let offsetAbeamUm = 0;
   switch (ctx.formation) {
     case "LINE_AHEAD":
-      // trailing ships follow in column behind the lead: interval * ordinal.
       offsetAheadUm = -ctx.ordinal * LINE_AHEAD_COLUMN_INTERVAL_UM;
       break;
     case "LINE_ABREAST":
-      // ships abeam of the lead: interval * ordinal perpendicular offset.
       offsetAbeamUm = ctx.ordinal * LINE_ABREAST_ABREAST_INTERVAL_UM;
       break;
     case "SEARCH_LINE":
@@ -179,7 +156,6 @@ export function computeDesiredStation(ctx: FormationStationContext): DesiredStat
     default:
       offsetAheadUm = -ctx.ordinal * LINE_AHEAD_COLUMN_INTERVAL_UM;
   }
-  // forward(ahead) and starboard(abeam) unit vectors in position space.
   const x =
     ctx.leadPosition[0] +
     (offsetAheadUm * cosBp) / DIRECTION_FIXED -
@@ -192,9 +168,6 @@ export function computeDesiredStation(ctx: FormationStationContext): DesiredStat
   return { position, heading: ctx.leadHeading, offStation: false };
 }
 
-// helm steering: given a computed desired station and current state, returns the
-// ordered heading that steers the ship back onto station (heading of the offset
-// vector), or keeps the formation heading when already on station.
 export function helmSteerToStation(
   state: MovementState,
   desired: DesiredStation,
@@ -210,9 +183,6 @@ export function helmSteerToStation(
   return { orderedHeading: headingDeg, offStation: true };
 }
 
-// station-bounded tolerance check (distance to the assigned station), reused by
-// turn-away completion predicates. Bearing misalignment is handled by helm
-// steering, not the on-station predicate.
 export function onStation(
   state: MovementState,
   desired: DesiredStation,
@@ -224,8 +194,6 @@ export function onStation(
   return distSq <= distanceToleranceUm * distanceToleranceUm;
 }
 
-// AC-6: collisions/grounding resolution emits a successful empty record; no
-// partial mutation (resolution deferred to B-6/M3).
 export interface CollisionGroundingResult {
   phase: "resolve_collisions_grounding";
   success: boolean;

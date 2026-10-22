@@ -1,5 +1,3 @@
-// Deterministic child-process script for C-3 submarines (AC-20, INC-8).
-// Spawned TWICE and byte-compared. Exercises all INC-4..INC-7 functions.
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
 import { RandomLedger } from "@bluewave/random";
@@ -28,14 +26,12 @@ const LEDGER = new RandomLedger();
 function main(): void {
   const month = SafeInt(42);
 
-  // §11 effectiveness
   const effectiveness = computeStrategicMissionEffectiveness({
     baseMissionStrength: SafeInt(10_000),
     typeRemoteEfficiencyBp: SafeInt(12_500),
     reliabilityMultiplierBp: SafeInt(11_000),
   });
 
-  // §12 coastal restriction
   const coastalRestriction = evaluateCoastalRestriction({
     submarineTypeId: "COASTAL",
     atWar: true,
@@ -46,18 +42,15 @@ function main(): void {
   });
   const localOnly = coastalLocalEfficiencyOnly("COASTAL", "LOCAL");
 
-  // §13-17 sea state
   const category = seaStateCategory(SafeInt(4));
   const detection = submarineDetectionMultiplierBp(SafeInt(3));
   const observation = submarineObservationMultiplierBp(SafeInt(7));
   const attack = submarineAttackMultiplierBp(SafeInt(9));
   const prohibited = isSeaStateOperationProhibited(SafeInt(8));
 
-  // §18 screening balance
   const screenRatio = computeScreenRatioBp(SafeInt(200), SafeInt(100));
   const oppMultiplier = screeningOpportunityMultiplierBp(SafeInt(5_000));
 
-  // §19 attack opportunity
   const oppValue = computeAttackOpportunityValue({
     policyWeightBp: 8_000,
     targetAvailabilityFactorBp: 10_000,
@@ -75,7 +68,6 @@ function main(): void {
     oppValue,
   );
 
-  // §20 mine laying
   const minelayingCapable = isMinelayingCapable("MINELAYING");
   const mineVerdict = evaluateMineLayingEligibility(
     "MINELAYING",
@@ -93,7 +85,6 @@ function main(): void {
     },
   );
 
-  // §23 friendly identification
   const misidProb = computeMisidentificationProbability({
     baseProbabilityBp: SafeInt(500),
     visibilityModifierBp: SafeInt(1_000),
@@ -103,7 +94,6 @@ function main(): void {
     identificationQualityBp: SafeInt(1_000),
   });
 
-  // §25 assembly + hash
   const record = withSubmarineOperationsRecordHash({
     month,
     warIds: ["war-GDW"],

@@ -18,7 +18,6 @@ import { usePresentationFormat } from "../shell/usePresentationFormat.js";
 import { formatMonth, formatOptional } from "./preTurnReviewFormat.js";
 import { usePreTurnReviewData, type PreTurnReviewData } from "./usePreTurnReviewData.js";
 
-/** The review shows this much of the campaign; only the fields it renders. */
 export interface PreTurnReviewCampaign {
   readonly month: { readonly year: number; readonly month: number };
   readonly treasury: number;
@@ -111,10 +110,6 @@ function ReviewFooter({
   );
 }
 
-/**
- * Presentational pre-turn review. Every figure arrives through props, so it can
- * be rendered and tested without a bridge or the data hook.
- */
 export function PreTurnReviewDialogView({
   open,
   onOpenChange,
@@ -192,10 +187,6 @@ export interface PreTurnReviewDialogProps extends Omit<PreTurnReviewDialogViewPr
   readonly sessionId: string;
 }
 
-/**
- * Composition root: loads the review data for the session and hands it to the
- * view, which depends only on its props.
- */
 export function PreTurnReviewDialog({ sessionId, open, ...viewProps }: PreTurnReviewDialogProps) {
   const data = usePreTurnReviewData(sessionId, open);
   return <PreTurnReviewDialogView open={open} data={data} {...viewProps} />;

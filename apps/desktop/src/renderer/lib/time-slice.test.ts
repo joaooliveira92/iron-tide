@@ -29,7 +29,7 @@ describe("runTimeSliced", () => {
     const h = harness(5);
     function* work() {
       for (let i = 0; i < 6; i++) {
-        h.tick(2); // each step costs 2 ms => 3 steps per 5 ms slice (2,4,6 >= 5)
+        h.tick(2);
         yield;
       }
       return "done";

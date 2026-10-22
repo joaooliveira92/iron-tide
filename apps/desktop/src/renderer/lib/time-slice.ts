@@ -1,15 +1,6 @@
-/**
- * Runs a generator in short slices so a long computation never blocks a frame.
- * Each `yield` is a safe pause point; the driver keeps stepping until the time
- * budget is spent, then hands control back via `schedule` and resumes later.
- * Used to build the coastline detail levels in the background (ADR-0055).
- */
-
 export interface TimeSliceOptions {
-  /** Milliseconds of work per slice. */
   readonly budgetMs: number;
   readonly now: () => number;
-  /** Runs `resume` later (setTimeout/requestIdleCallback in production). */
   readonly schedule: (resume: () => void) => void;
 }
 

@@ -4,7 +4,6 @@ import { round1, solid } from "./anatomy-helpers.js";
 import type { PartDraft } from "./anatomy-types.js";
 import type { AnatomyShipScene } from "./anatomy-scene.js";
 
-/** Superstructure: stepped deckhouse, bridge platform, windows, rails and ladders. */
 export function drawSuperstructure(scene: AnatomyShipScene): void {
   const {
     near,

@@ -4,7 +4,6 @@ import type { Finding } from "./findings.js";
 import { placementTarget, sortFindings, zoneTarget, type FindingTarget } from "./findings.js";
 import { toSafe } from "./units.js";
 
-/** The nine longitudinal zones (spec §8.1); order is bow to stern, MISSION overlays the upper decks. */
 export const ZONE_IDS = [
   "FORECASTLE",
   "FWD_MAGAZINE",
@@ -18,14 +17,11 @@ export const ZONE_IDS = [
 ] as const;
 export type ZoneId = (typeof ZONE_IDS)[number];
 
-/** Zone record from the hull form (data). Station range in permille of waterline length (0 = bow). */
 export interface ZoneDef {
   readonly id: ZoneId;
   readonly startPermille: number;
   readonly endPermille: number;
-  /** Share of total internal volume, bp; all zones sum to 10_000. */
   readonly volumeBp: number;
-  /** Share of total usable deck area, bp; all zones sum to 10_000. */
   readonly deckAreaBp: number;
 }
 
@@ -33,13 +29,10 @@ export interface HullEnvelope {
   readonly lengthMm: number;
   readonly beamMm: number;
   readonly depthMm: number;
-  /** Internal-volume fullness: fraction of L*B*D that is usable, bp. */
   readonly volumeFullnessBp: number;
-  /** Usable deck area as fraction of L*B, bp. */
   readonly deckFullnessBp: number;
 }
 
-/** A catalogue component resolved for one placement (computed upstream from ComponentDef + parameters). */
 export interface ResolvedPlacement {
   readonly instanceId: string;
   readonly componentId: string;
@@ -50,22 +43,17 @@ export interface ResolvedPlacement {
   readonly volumeLitre: number;
   readonly deckFootprintMm2: number;
   readonly heightMm: number;
-  /** Vertical centre of gravity above keel, mm. */
   readonly zCgMm: number;
   readonly allowedZones: readonly ZoneId[];
-  /** Categories that may not share a zone with this component (e.g. barbette trunk vs machinery). */
   readonly forbidsCoLocation: readonly ComponentCategory[];
   readonly critical: boolean;
-  /** Magazine capacity supplied (litres), for MAGAZINE components. */
   readonly magazineLitre?: number;
-  /** Ammunition stowage demanded (litres) and the magazine instance feeding it. */
   readonly ammoVolumeLitre?: number;
   readonly magazineRef?: string;
   readonly maxFeedPermille?: number;
 }
 
 export interface ArrangementBalance {
-  /** Share of critical systems (by count) in one zone above which concentration is flagged, bp. */
   readonly concentrationAdvisoryBp: number;
   readonly concentrationWarningBp: number;
 }
@@ -82,9 +70,7 @@ export interface ZoneSummary {
 export interface ArrangementResult {
   readonly zones: readonly ZoneSummary[];
   readonly totalWeightKg: number;
-  /** Longitudinal centre of gravity of placed components, permille from the bow (null if nothing placed). */
   readonly lcgPermille: number | null;
-  /** Sum of weight*z for the vertical-centre calculation (kg*mm). */
   readonly verticalMomentKgMm: number;
   readonly findings: readonly Finding[];
 }
@@ -92,7 +78,6 @@ export interface ArrangementResult {
 const BP = 10_000n;
 const fmt = (n: number) => groupedInteger(n);
 
-/** Structural checks on a zone set; returns problems (empty = valid). */
 export function checkZoneSet(zones: readonly ZoneDef[]): string[] {
   const problems: string[] = [];
   if (zones.length !== ZONE_IDS.length || ZONE_IDS.some((z, i) => zones[i]?.id !== z)) {
@@ -133,10 +118,6 @@ function mk(
   };
 }
 
-/**
- * Checks the arrangement rules of spec §8.3 (the volume/footprint, co-location, zone-compatibility, magazine and
- * concentration rules). Arc, flight-deck, power, cooling and crew rules land with their owning models.
- */
 export function analyseArrangement(
   placements: readonly ResolvedPlacement[],
   zones: readonly ZoneDef[],
@@ -153,7 +134,7 @@ export function analyseArrangement(
       BigInt(hull.depthMm) *
       BigInt(hull.volumeFullnessBp)) /
     BP /
-    1_000_000n; // litres (mm3 / 1e6)
+    1_000_000n;
   const totalDeck =
     (BigInt(hull.lengthMm) * BigInt(hull.beamMm) * BigInt(hull.deckFullnessBp)) / BP;
   const zoneMap = new Map(zones.map((z) => [z.id, z]));
@@ -287,7 +268,6 @@ export function analyseArrangement(
     return s;
   });
 
-  // Co-location (e.g. barbette over machinery).
   for (const p of sorted) {
     for (const q of sorted) {
       if (p === q || p.zoneId !== q.zoneId) continue;
@@ -312,7 +292,6 @@ export function analyseArrangement(
     }
   }
 
-  // Magazine capacity and feed distance.
   const byId = new Map(sorted.map((p) => [p.instanceId, p]));
   const demand = new Map<string, number>();
   for (const p of sorted) {
@@ -382,7 +361,6 @@ export function analyseArrangement(
     }
   }
 
-  // Critical-system concentration, by number of critical systems per zone (one engine room is not "concentration").
   const crit = sorted.filter((p) => p.critical);
   if (crit.length > 1) {
     for (const s of summaries) {

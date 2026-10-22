@@ -187,14 +187,12 @@ describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
   });
 
   it("rejects an excess key on a ship record", () => {
-    // The content boundary rejects the unknown key first (strict decode) ...
     const viaContent = compileFleets(
       fleetsYaml(shipYaml("ship-a", { extra: `      classQ: "x"\n` })),
     );
     expect(viaContent.output).toBeUndefined();
     expect(viaContent.collector.errors.map((e) => e.code)).toContain("SCHEMA");
 
-    // ... and the campaign compile boundary carries a `_tag`-discriminated backstop.
     const seed = resolveShipReadinessSeed(
       { id: "ship-a", isUnderConstruction: false, classQ: "x" },
       "ship-a",
@@ -209,11 +207,9 @@ describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
 
 describe("S-1 crew-quality ramp constants and helpers (ticket 03)", () => {
   it("ramps toward the state ceiling, clamped, and never leaves 0..100", () => {
-    // ACTIVE at ceiling stays; below ceiling climbs; above ceiling falls back.
     expect(rampCrewQuality(SafeInt(100), "ACTIVE") as number).toBe(100);
     expect(rampCrewQuality(SafeInt(55), "ACTIVE") as number).toBe(60);
     expect(rampCrewQuality(SafeInt(70), "MOTHBALLED" as const) as number).toBe(65);
-    // A laid-up crew climbs toward its lower ceiling and clamps there.
     expect(rampCrewQuality(SafeInt(28), "MOTHBALLED") as number).toBe(30);
     expect(crewCeilingFor("RESERVE") as number).toBe(70);
     expect(crewCeilingFor("MOTHBALLED") as number).toBe(30);

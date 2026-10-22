@@ -3,12 +3,6 @@ import { resolveMessage } from "../../content/uiCatalogue.js";
 
 export type BattleChoice = "accept" | "decline" | "delegate";
 
-/**
- * The battle-request modal (ticket 07, port only). The offer, accept/decline
- * rules, costs and force composition are T-1's policy; this substrate shows the
- * request and routes the player's choice back to the shell, which records a
- * validated battle result exactly once.
- */
 export function BattleRequestDialog({
   request,
   onChoose,

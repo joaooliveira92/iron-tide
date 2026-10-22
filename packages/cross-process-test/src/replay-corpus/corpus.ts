@@ -21,36 +21,24 @@ import {
   type ReplayFile,
 } from "./format.js";
 
-/** A command-free run of the committed production pack. */
 export interface ReplayScenario {
   readonly id: string;
   readonly seed: string;
   readonly months: number;
 }
 
-/** The first place a re-execution stopped agreeing with the recorded replay. */
 export interface ReplayDivergence {
-  /** 1-based month index; 0 for a mismatch found before any month ran. */
   readonly month: number;
   readonly turnNumber: number;
   readonly where: "content" | "initial" | "snapshot" | "roundtrip" | LedgerName;
-  /** Index of the first differing ledger entry; present only when `where` is a ledger. */
   readonly entryIndex?: number;
-  /** Recorded hash, or `(missing)` when the recorded ledger is shorter. */
   readonly expected: string;
-  /** Re-executed hash, or `(missing)` when the re-executed ledger is shorter. */
   readonly actual: string;
-  /** Ledger lengths; present only when `where` is a ledger. */
   readonly expectedCount?: number;
   readonly actualCount?: number;
-  /** Canonical text of the re-executed entry; absent when that ledger has no such entry. */
   readonly actualEntry?: string;
 }
 
-/**
- * Render a divergence as stable text: LF line endings, no paths, no timestamps,
- * so the same divergence prints identically on every OS.
- */
 export function formatDivergence(d: ReplayDivergence): string {
   const entry = d.entryIndex === undefined ? "" : ` entry ${String(d.entryIndex)}`;
   const lines = [
@@ -79,7 +67,6 @@ function production(): ReturnType<typeof compileProductionCampaign> {
   return productionCampaign;
 }
 
-/** The production pack's opening snapshot: where every replay and fuzz case starts. */
 export function productionStartSnapshot(): CampaignSnapshot {
   return production().state.snapshot;
 }
@@ -88,33 +75,15 @@ function monthSeed(seed: string, snapshot: CampaignSnapshot): string {
   return `${seed}:month:${String(snapshot.turnNumber)}`;
 }
 
-/**
- * A deliberate break of the executor's input, applied to one month during verification only.
- * Each hook sees the 1-based `month` and may return a changed value; an omitted hook leaves
- * that input alone. This proves the gate notices a real regression (mutation check).
- */
 export interface ExecutorPerturbation {
   readonly month: number;
   readonly snapshot?: (snapshot: CampaignSnapshot) => CampaignSnapshot;
   readonly seed?: (seed: string) => string;
   readonly commands?: (snapshot: CampaignSnapshot) => CommandEnvelope<CommandBody>[];
-  /**
-   * Alters the executed month in place before it is checkpointed, e.g. appending to a ledger to
-   * stand in for an engine that emits one entry too many. The financial and random ledgers
-   * cannot be isolated through input alone because the event ledger echoes them.
-   */
   readonly afterExecute?: (result: MonthResult) => void;
 }
 
-/**
- * Save and load the campaign through the production `SaveStore` after every month but the last,
- * and continue the replay from the loaded state, so persistence cannot silently change the run.
- */
 export interface RoundTripOptions {
-  /**
-   * Alters the snapshot handed to the store after `month` (1-based), standing in for a
-   * serializer that loses data. Its output is saved as if it were authoritative.
-   */
   readonly lossy?: (snapshot: CampaignSnapshot, month: number) => CampaignSnapshot;
 }
 
@@ -127,13 +96,10 @@ export type RoundTrip =
   | { readonly ok: true; readonly snapshot: CampaignSnapshot }
   | { readonly ok: false; readonly reason: string };
 
-/** Write `snapshot` with the production store, read it back, and return what came out. */
 export function saveAndLoad(snapshot: CampaignSnapshot): RoundTrip {
   const saveDir = mkdtempSync(join(tmpdir(), "bw-replay-roundtrip-"));
   try {
     const store = new SaveStore();
-    // Restamp over the snapshot as saved, as the production migration path does, so the
-    // store's own integrity gates pass and only a real fidelity loss can show.
     const state = restampState(
       { snapshot, envelope: undefined as never, rawHash: "" },
       snapshot.compatibilityVersion,
@@ -179,13 +145,11 @@ export function advance(
   };
 }
 
-/** One executed month of a scenario: the real engine result and the turn it ran at. */
 export interface ExecutedMonth {
   readonly turnNumber: number;
   readonly result: MonthResult;
 }
 
-/** Run `scenario` command-free through the real engine from the production pack, month by month. */
 export function* executeScenario(scenario: ReplayScenario): Generator<ExecutedMonth> {
   let snapshot = production().state.snapshot;
   for (let index = 0; index < scenario.months; index++) {
@@ -195,7 +159,6 @@ export function* executeScenario(scenario: ReplayScenario): Generator<ExecutedMo
   }
 }
 
-/** Record `scenario` through the real engine into canonical replay-file text. */
 export function recordReplay(scenario: ReplayScenario): string {
   const { state, contentHash } = production();
   const months: ReplayFile["months"][number][] = [];
@@ -237,10 +200,6 @@ export function firstLedgerDifference(
   return undefined;
 }
 
-/**
- * Re-execute a replay file through the real engine, checking each month against
- * its recorded checkpoint. A file that cannot be decoded fails with `ReplayFileError`.
- */
 export function verifyReplay(
   text: string,
   options: VerifyOptions = {},

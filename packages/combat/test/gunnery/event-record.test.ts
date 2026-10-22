@@ -97,7 +97,6 @@ describe("AC-8 GunneryEventRecord completeness (DESIGN-39 §30, INC-4)", () => {
         targetContactId: `${BATTLE_ID}:d1`,
       }),
     );
-    // §30 field presence
     expect(rec.battleId).toBe(BATTLE_ID);
     expect(rec.minute).toBe(7);
     expect(typeof rec.substep).toBe("number");
@@ -119,8 +118,8 @@ describe("AC-8 GunneryEventRecord completeness (DESIGN-39 §30, INC-4)", () => {
     expect(rec.randomDecisions[0]!.streamId).toContain("gunnery/accuracy/hit");
     expect(rec.randomDecisions[0]!.draw).toBeGreaterThanOrEqual(0);
     expect(rec.randomDecisions[0]!.draw).toBeLessThanOrEqual(9_999);
-    expect(rec.impactInputs).toBeNull(); // reserved this slice
-    expect(rec.damageEventRefs).toEqual([]); // reserved this slice
+    expect(rec.impactInputs).toBeNull();
+    expect(rec.damageEventRefs).toEqual([]);
     expect(["HIT", "MISS"]).toContain(rec.outcome);
     expect(rec.formulaVersion).toBe("gunnery_formula_v1");
     expect(rec.rulesetVersion).toBe("gunnery_ruleset_v1");
@@ -155,9 +154,8 @@ describe("AC-8 GunneryEventRecord completeness (DESIGN-39 §30, INC-4)", () => {
       contacts: [contact("d1")],
       engine: new RandomEngine("seed-hash"),
     }).salvos[0]!;
-    expect(recA.eventHash).toBe(recB.eventHash); // stable
+    expect(recA.eventHash).toBe(recB.eventHash);
 
-    // change salvoCount -> different ammunition rounds + next state -> hash changes
     const recC = resolveGunnery({
       battleId: BATTLE_ID,
       minute: 1,
@@ -167,7 +165,6 @@ describe("AC-8 GunneryEventRecord completeness (DESIGN-39 §30, INC-4)", () => {
     }).salvos[0]!;
     expect(recC.eventHash).not.toBe(recA.eventHash);
 
-    // change fire mode -> hash changes
     const recD = resolveGunnery({
       battleId: BATTLE_ID,
       minute: 1,

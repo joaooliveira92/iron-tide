@@ -1,32 +1,3 @@
-// AC-14: §15 detonation outcomes (DESIGN-40). The canonical CLOSED outcome set
-// is DUD / PARTIAL_DETONATION / FULL_DETONATION / PREMATURE_DETONATION /
-// MAGAZINE_OR_TUBE_CHAIN_REACTION / NO_CONTACT. Every outcome is selected
-// through an explicit deterministic predicate OR the single keyed reliability
-// draw on the
-//   battle/torpedo/detonation/reliability:<battleId>:<impactMinute>:
-//       <impactSubstep>:<trackId>
-// stream (drawBp = floor(draw * 10_000); drawBp < probabilityBp functions,
-// drawBp >= probabilityBp is a DUD with the TORPEDO_DUD reason code). The
-// result records ALL inputs, the composed probability, the random decision,
-// and provenance (ruleset/formula versions + input hash).
-//
-// Determinism: identical inputs + identical keyed draws -> identical result;
-// ALL randomness enters through the injected keyedRng seam (a throwing stub
-// proves the NO_CONTACT / PREMATURE paths consume NO draw). The seam with §14
-// (a resolved hit feeding this stage) and the §13 terminal mapping are proven
-// here, INCLUDING the explicit package proof that contact does NOT guarantee
-// detonation (a resolved HIT plus a dud draw -> DUD).
-//
-// The §15 fuze is pinned by the AUTHORITATIVE model->fuze mapping
-// (TORPEDO_MODEL_FUZE_POLICY, keyed by track.torpedoModelId) — the resolver
-// reads the fuze from the track's model and the reliability from the track's
-// §13 reliabilityState.reliabilityBp; there is NO caller-supplied weapon
-// input. CONTACT fixtures use whitehead_18in_1894; MAGNETIC fixtures use the
-// G7a/G7e/Type 93 models (HIGH-1 / MEDIUM-2).
-//
-// Fixtures mirror hit-resolution.test.ts: G7a, 44-kn one-minute advance on a
-// 90° heading (track position [0, 1_358_132_160], armed), track reliability
-// 9_600 = floor(96_000 / 10) on the 10_000 bp roll scale.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import type { ContactTrack } from "../../src/targeting.js";
@@ -64,18 +35,15 @@ import {
 } from "../../src/torpedoes/index.js";
 import type { CompiledTorpedoSpeedSetting } from "@bluewave/armament";
 
-// Model-id fixtures: the §15 fuze is pinned by the model->fuze mapping.
-const G7A = "ger_533mm_g7a_1934"; // MAGNETIC (Pi MZ pistols, Torpedokrise)
-const WHITEHEAD = "whitehead_18in_1894"; // CONTACT (contact pistol)
+const G7A = "ger_533mm_g7a_1934";
+const WHITEHEAD = "whitehead_18in_1894";
 const G7A_44KN_SETTING: CompiledTorpedoSpeedSetting = {
   settingId: "44kn",
   speedMilliKnots: 44_000,
   rangeM: 6_000,
 };
 const TRACK_ID = "B1:5:4:torpedo:LCH-1:tube0";
-// Track reliability: the model's 100_000-scale value floored /10 -> the
-// 10_000 bp roll scale (the §13 carrier the resolver reads).
-const RELIABILITY_BP = 9_600; // 96_000 / 10
+const RELIABILITY_BP = 9_600;
 
 function buildTorpedoTrack(
   depthSettingM = 5,
@@ -133,8 +101,6 @@ function targetProfile(): TargetHitProfile {
   };
 }
 
-// §14 verdict: a HIT (track on the contact, inside the circle, depth <= draft,
-// ordered impact (6,4) after launch (5,4)). The helper is deterministic.
 function hitVerdict(track: TorpedoTrack): ReturnType<typeof resolveTorpedoHit> {
   return resolveTorpedoHit({
     track,
@@ -146,7 +112,6 @@ function hitVerdict(track: TorpedoTrack): ReturnType<typeof resolveTorpedoHit> {
   });
 }
 
-// §14 verdict: a MISS (the contact sits far downrange -> GEOMETRY_MISS).
 function missVerdict(track: TorpedoTrack): ReturnType<typeof resolveTorpedoHit> {
   return resolveTorpedoHit({
     track,
@@ -158,13 +123,10 @@ function missVerdict(track: TorpedoTrack): ReturnType<typeof resolveTorpedoHit> 
   });
 }
 
-// §15 harness over a HIT scene (deterministic; keyedRng defaults to a
-// functioning draw 0.001). Override parameters per test. The fuze is pinned by
-// the model->fuze mapping via the selected track's torpedoModelId (HIGH-1).
 function resolveDetonation(
   o: {
     track?: TorpedoTrack;
-    modelId?: string; // the torpedo model (drives the fuze via the mapping)
+    modelId?: string;
     zone?: TorpedoImpactZone | null;
     deviationMdeg?: number;
     protection?: TorpedoTargetProtectionLevel | null;
@@ -230,23 +192,14 @@ describe("AC-14: the canonical §15 closed outcome set", () => {
 
 describe("HIGH-1: the authoritative model->fuze mapping pins the §15 fuze (never a caller value)", () => {
   it("ships a fuze policy for every shipped model id, grounded in the research note", () => {
-    // Whitehead 18-in (1894) contact pistol -> CONTACT (research §3.1 / §4.3)
     expect(TORPEDO_MODEL_FUZE_POLICY["whitehead_18in_1894"]).toBe("CONTACT");
-    // RN 21-in Mk IV (1916) WW1 British contact exploder -> CONTACT (§3.1)
     expect(TORPEDO_MODEL_FUZE_POLICY["rn_21in_mk_iv_1916"]).toBe("CONTACT");
-    // G7a Pi MZ magnetic pistols (Torpedokrise) -> MAGNETIC (§3.1/§3.6/§4.3)
     expect(TORPEDO_MODEL_FUZE_POLICY["ger_533mm_g7a_1934"]).toBe("MAGNETIC");
-    // G7e "same pistols" -> MAGNETIC (§3.1/§4.3)
     expect(TORPEDO_MODEL_FUZE_POLICY["ger_533mm_g7e_1936"]).toBe("MAGNETIC");
-    // Type 93 magnetic/oxygen premature-detonation issue -> MAGNETIC (§3.1/§3.6)
     expect(TORPEDO_MODEL_FUZE_POLICY["jpn_61cm_type93_1935"]).toBe("MAGNETIC");
-    // Whitehead 14-in (1886) contact pistol -> CONTACT (§3.1/§4.3)
     expect(TORPEDO_MODEL_FUZE_POLICY["whitehead_14in_1886"]).toBe("CONTACT");
-    // RN 21-in Mk VIII (1927) contact exploder family -> CONTACT (§3.1/§4.3)
     expect(TORPEDO_MODEL_FUZE_POLICY["rn_21in_mk_viii_1927"]).toBe("CONTACT");
-    // USN 21-in Mk 14 (1931) Mk 6 magnetic-influence exploder -> MAGNETIC (§3.1/§3.6)
     expect(TORPEDO_MODEL_FUZE_POLICY["usn_21in_mk14_1931"]).toBe("MAGNETIC");
-    // the mapping carries exactly the shipped model ids (ordered)
     expect(Object.keys(TORPEDO_MODEL_FUZE_POLICY)).toEqual([
       "whitehead_18in_1894",
       "rn_21in_mk_iv_1916",
@@ -260,21 +213,17 @@ describe("HIGH-1: the authoritative model->fuze mapping pins the §15 fuze (neve
   });
 
   it("the resolver honors the mapping per model id (fuze drives the premature + probability surface)", () => {
-    // a CONTACT model (whitehead) crossing the wake is NOT premature
     const contactWake = resolveDetonation({ wakeIntercept: true });
     expect(contactWake.outcome).toBe("FULL_DETONATION");
-    // a MAGNETIC model (G7a) crossing the wake IS premature
     const magneticWake = resolveDetonation({ modelId: G7A, wakeIntercept: true });
     expect(magneticWake.outcome).toBe("PREMATURE_DETONATION");
     expect(magneticWake.inputs.fuzePolicy).toBe("MAGNETIC");
-    // the MAGNETIC fuze lowers the composed probability (9_600 * 9000 / 10000)
     const magneticFull = resolveDetonation({ modelId: G7A });
     expect(magneticFull.detonationProbabilityBp).toBe(8_640);
   });
 
   it("an unknown model id fails closed (TORPEDO_STATE_INVARIANT_FAILED) — no silent default", () => {
     expect(() => fuzePolicyForModel("BOGUS_MODEL")).toThrow(BluewaveError);
-    // through the resolver: a track carrying an unsupported model id
     const track = buildTorpedoTrack(5, "BOGUS_MODEL");
     expect(() => resolveDetonation({ track })).toThrow(BluewaveError);
   });
@@ -282,18 +231,14 @@ describe("HIGH-1: the authoritative model->fuze mapping pins the §15 fuze (neve
 
 describe("MEDIUM-2: reliability is bound to the authoritative §13 track carrier", () => {
   it("reads reliability ONLY from the track's reliabilityState (no independent caller input)", () => {
-    const lowTrack = buildTorpedoTrack(5, WHITEHEAD, 80_000); // -> 8_000 on the 10_000 bp scale
-    const highTrack = buildTorpedoTrack(5, WHITEHEAD, 96_000); // -> RELIABILITY_BP (9_600)
+    const lowTrack = buildTorpedoTrack(5, WHITEHEAD, 80_000);
+    const highTrack = buildTorpedoTrack(5, WHITEHEAD, 96_000);
     const dLow = resolveDetonation({ track: lowTrack });
     const dHigh = resolveDetonation({ track: highTrack });
-    // the composed probability (neutral CONTACT surface) equals the carrier
     expect(dLow.detonationProbabilityBp).toBe(8_000);
     expect(dHigh.detonationProbabilityBp).toBe(RELIABILITY_BP);
     expect(dLow.inputs.reliabilityBp).toBe(8_000);
     expect(dHigh.inputs.reliabilityBp).toBe(RELIABILITY_BP);
-    // the resolver's input surface has NO independent reliability argument — a
-    // caller cannot inject a value that disagrees with the track carrier
-    // (the weapon input is gone from resolveTorpedoDetonation entirely).
   });
 });
 
@@ -311,7 +256,6 @@ describe("AC-14: the pure draw mapping (evaluateDetonationReliabilityDraw)", () 
       drawBp: 9_599,
       functions: true,
     });
-    // drawBp exactly ON the function boundary DOES NOT function (>= p -> dud)
     expect(evaluateDetonationReliabilityDraw({ probabilityBp: 9_600, draw: 0.96 })).toEqual({
       drawBp: 9_600,
       functions: false,
@@ -343,7 +287,6 @@ describe("AC-14: the pure draw mapping (evaluateDetonationReliabilityDraw)", () 
 
 describe("AC-14: composed detonation-function probability (exact integer basis points)", () => {
   it("reliability 9_600 with the neutral surface = 9_600; each modifier shifts it exactly", () => {
-    // CONTACT fuze (whitehead): the neutral surface = the raw reliability.
     expect(
       computeDetonationProbabilityBp({
         torpedoModelId: WHITEHEAD,
@@ -352,7 +295,6 @@ describe("AC-14: composed detonation-function probability (exact integer basis p
         damageStateIndicator: "CLEAN",
       }),
     ).toBe(9_600);
-    // MAGNETIC fuze (G7a, 9_000): 9600 * 9000 / 10000 = 8640
     expect(
       computeDetonationProbabilityBp({
         torpedoModelId: G7A,
@@ -361,7 +303,6 @@ describe("AC-14: composed detonation-function probability (exact integer basis p
         damageStateIndicator: "CLEAN",
       }),
     ).toBe(8_640);
-    // STRONG protection (8_500): 9600 * 8500 / 10000 = 8160
     expect(
       computeDetonationProbabilityBp({
         torpedoModelId: WHITEHEAD,
@@ -370,7 +311,6 @@ describe("AC-14: composed detonation-function probability (exact integer basis p
         damageStateIndicator: "CLEAN",
       }),
     ).toBe(8_160);
-    // DAMAGED (9_500): 9600 * 9500 / 10000 = 9120
     expect(
       computeDetonationProbabilityBp({
         torpedoModelId: WHITEHEAD,
@@ -379,9 +319,6 @@ describe("AC-14: composed detonation-function probability (exact integer basis p
         damageStateIndicator: "DAMAGED",
       }),
     ).toBe(9_120);
-    // all penalties stack with the exact floor division:
-    // 9600*9000 = 86_400_000 /10000 = 8640; *8000 = 69_120_000 /10000 = 6912;
-    // *9500 = 65_664_000 /10000 = 6566.4 -> floor 6_566
     expect(
       computeDetonationProbabilityBp({
         torpedoModelId: G7A,
@@ -401,7 +338,6 @@ describe("AC-14: composed detonation-function probability (exact integer basis p
         damageStateIndicator: "CLEAN",
       }),
     ).toThrow(BluewaveError);
-    // an unknown model id fails closed via the authoritative mapping (HIGH-1)
     expect(() =>
       computeDetonationProbabilityBp({
         torpedoModelId: "BOGUS_MODEL",
@@ -420,13 +356,13 @@ describe("AC-14: deterministic geometry-quality predicate (impactGeometryQuality
     );
     expect(impactGeometryQuality({ fuzePolicy: "CONTACT", depthM: 3, deviationMdeg: 60_000 })).toBe(
       "FULL",
-    ); // boundary inclusive
+    );
     expect(impactGeometryQuality({ fuzePolicy: "CONTACT", depthM: 2, deviationMdeg: 0 })).toBe(
       "PARTIAL",
-    ); // shallow
+    );
     expect(impactGeometryQuality({ fuzePolicy: "CONTACT", depthM: 5, deviationMdeg: 60_001 })).toBe(
       "PARTIAL",
-    ); // oblique
+    );
   });
 
   it("MAGNETIC: not angle-sensitive; only the shallow band reduces", () => {
@@ -441,7 +377,7 @@ describe("AC-14: deterministic geometry-quality predicate (impactGeometryQuality
 
 describe("AC-14: FULL_DETONATION / DUD through the keyed reliability block", () => {
   it("a functioning draw on a neutral scene = FULL (decision + probability recorded)", () => {
-    const d = resolveDetonation({}); // draw 0.001 -> drawBp 10 < 9_600
+    const d = resolveDetonation({});
     expect(d.outcome).toBe("FULL_DETONATION");
     expect(d.functioned).toBe(true);
     expect(d.reasonCode).toBeNull();
@@ -460,7 +396,7 @@ describe("AC-14: FULL_DETONATION / DUD through the keyed reliability block", () 
   });
 
   it("a draw at/above the function probability is a DUD with TORPEDO_DUD + the keyed decision record", () => {
-    const d = resolveDetonation({ drawProvidedBy: () => 0.9999 }); // 9_999 >= 9_600
+    const d = resolveDetonation({ drawProvidedBy: () => 0.9999 });
     expect(d.outcome).toBe("DUD");
     expect(d.functioned).toBe(false);
     expect(d.reasonCode).toBe(TORPEDO_DUD);
@@ -471,10 +407,8 @@ describe("AC-14: FULL_DETONATION / DUD through the keyed reliability block", () 
     expect(d.decision.draw).toBe(0.9999);
     expect(d.decision.drawBp).toBe(9_999);
 
-    // boundary: drawBp == probability IS a dud
     const boundaryDud = resolveDetonation({ drawProvidedBy: () => 0.96 });
     expect(boundaryDud.outcome).toBe("DUD");
-    // just below the boundary functions
     const boundaryFunction = resolveDetonation({ drawProvidedBy: () => 0.9599 });
     expect(boundaryFunction.outcome).toBe("FULL_DETONATION");
   });
@@ -521,7 +455,7 @@ describe("AC-14: each deterministic predicate selects its own canonical outcome"
 
   it("PREMATURE_DETONATION — MAGNETIC fuze + wake interception (deterministic; consumes NO draw)", () => {
     const d = resolveDetonation({
-      modelId: G7A, // MAGNETIC fuze via the model->fuze mapping
+      modelId: G7A,
       wakeIntercept: true,
       drawProvidedBy: () => {
         throw new Error("a premature must not consume a draw");
@@ -536,7 +470,7 @@ describe("AC-14: each deterministic predicate selects its own canonical outcome"
 
   it("a CONTACT fuze crossing the wake is NOT premature (no draw consumed)", () => {
     const d = resolveDetonation({ wakeIntercept: true });
-    expect(d.outcome).toBe("FULL_DETONATION"); // CONTACT + wake -> normal block
+    expect(d.outcome).toBe("FULL_DETONATION");
   });
 
   it("MAGAZINE_OR_TUBE_CHAIN_REACTION — functioning hit on an ordnance zone", () => {
@@ -549,12 +483,11 @@ describe("AC-14: each deterministic predicate selects its own canonical outcome"
   });
 
   it("PARTIAL_DETONATION — a shallow hit or an oblique CONTACT strike", () => {
-    const shallow = resolveDetonation({ track: buildTorpedoTrack(2) }); // depth 2 < 3
+    const shallow = resolveDetonation({ track: buildTorpedoTrack(2) });
     expect(shallow.outcome).toBe("PARTIAL_DETONATION");
     const oblique = resolveDetonation({ deviationMdeg: 70_000 });
     expect(oblique.outcome).toBe("PARTIAL_DETONATION");
     expect(oblique.decision.predicate).toBe("reduced-function-geometry");
-    // a MAGNETIC fuze at full depth stays FULL even at extreme obliquity
     const magneticOblique = resolveDetonation({ modelId: G7A, deviationMdeg: 90_000 });
     expect(magneticOblique.outcome).toBe("FULL_DETONATION");
   });
@@ -562,8 +495,8 @@ describe("AC-14: each deterministic predicate selects its own canonical outcome"
 
 describe("AC-14: the target-protection + damage-state inputs move the dud boundary", () => {
   it("STRONG protection records probability 8_160 and duds above it", () => {
-    const functioning = resolveDetonation({ protection: "STRONG" }); // draw 10 < 8_160
-    const dudAt = resolveDetonation({ protection: "STRONG", drawProvidedBy: () => 0.85 }); // 8_500 >= 8_160
+    const functioning = resolveDetonation({ protection: "STRONG" });
+    const dudAt = resolveDetonation({ protection: "STRONG", drawProvidedBy: () => 0.85 });
     expect(functioning.detonationProbabilityBp).toBe(8_160);
     expect(functioning.outcome).toBe("FULL_DETONATION");
     expect(dudAt.outcome).toBe("DUD");
@@ -603,8 +536,6 @@ describe("AC-14: determinism + fail-closed guards", () => {
   });
 
   it("a HIT with missing target geometry fails closed (TORPEDO_STATE_INVARIANT_FAILED)", () => {
-    // A real HIT must carry zone/protection/damage; dropping them is a caller
-    // bug -> fail closed, never a silent NO_CONTACT.
     const track = buildTorpedoTrack();
     const hit = hitVerdict(track);
     expect(hit.hit).toBe(true);
@@ -644,9 +575,7 @@ describe("AC-14: determinism + fail-closed guards", () => {
   });
 
   it("rejects non-integer/out-of-band inputs (deviation, flooding kg)", () => {
-    expect(
-      () => resolveDetonation({ deviationMdeg: 420_000 }), // out of [0, 360_000]
-    ).toThrow(BluewaveError);
+    expect(() => resolveDetonation({ deviationMdeg: 420_000 })).toThrow(BluewaveError);
     const track = buildTorpedoTrack();
     const hit = hitVerdict(track);
     expect(() =>
@@ -700,7 +629,7 @@ describe("AC-14: the §13 terminal-lifecycle mapping (detonation -> track)", () 
   it("NO_CONTACT leaves the SAME running track untouched (identity, still advancing)", () => {
     const track = buildTorpedoTrack();
     const after = applyTorpedoDetonationToTrack({ track, outcome: "NO_CONTACT" });
-    expect(after).toBe(track); // same frozen object — still RUNNING
+    expect(after).toBe(track);
     expect(after.terminalResult).toBeNull();
     expect(() => advanceTorpedoTrack(after, TORPEDO_MINUTE_MS)).not.toThrow();
   });

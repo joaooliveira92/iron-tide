@@ -1,6 +1,3 @@
-// SB3-R21 / DESIGN-16 section 13.3: the builder's contract-priority policy. Accepted foreign contracts rank after
-// legally mandatory domestic work and before new discretionary domestic projects; allocation is deterministic and
-// never sells the same capacity twice.
 import type { CampaignSnapshot, ForeignConstructionContract } from "@bluewave/campaign";
 import { bp, money, SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
@@ -22,7 +19,7 @@ const MONTH_ID = "1880-01";
 const UK = "uk";
 const FRANCE = "france";
 const UK_DOCK = 13_000_000;
-const UK_CAP = 39_000_000; // 3x the uk dock (shipyardCapacityMultipleBp 30000)
+const UK_CAP = 39_000_000;
 
 const claim = (
   id: string,
@@ -76,15 +73,12 @@ describe("allocateBuilderCapacity (SB3-R21 §13.3)", () => {
       foreign("fc-a", [FRANCE, "alpha", "1880-01", "fc-a"]),
       foreign("fc-b", [FRANCE, "alpha", "1880-01", "fc-b"]),
     ];
-    // builder nation, shipyard, authorization month, claim id: fc-a, fc-b, fc-c, fc-d.
     const forward = allocateBuilderCapacity(scrambled, 100).admitted;
     const reversed = allocateBuilderCapacity([...scrambled].reverse(), 100).admitted;
     expect(forward).toEqual(["fc-a", "fc-b", "fc-c", "fc-d"]);
     expect(reversed).toEqual(forward);
   });
 });
-
-// The committed foreign mass + the domestic order deferral
 
 function contractWith(
   builderNationId: string,
@@ -174,8 +168,6 @@ describe("a new discretionary domestic project yields to accepted foreign contra
   });
 
   it("defers a domestic order that would over-subscribe a builder holding foreign contracts", () => {
-    // 38,000,000 kg of accepted foreign contracts already hold the uk's capacity; a 5,000,000 kg domestic order
-    // would exceed the 39,000,000 kg cap, and the discretionary domestic rank yields to them.
     const snap = snapshotWithBuilderContract(38_000_000);
     const design = snap.designs.get("dv-1")!;
     const result = constructionOrderEligibility(snap, design, content, MONTH_ID);
@@ -198,8 +190,6 @@ describe("a new discretionary domestic project yields to accepted foreign contra
   });
 
   it("reports the capacity reason, not the priority, when the builder's own work is the binding constraint", () => {
-    // uk already has 38,000,000 kg of its OWN domestic work in flight and 1,000,000 kg of foreign contracts; a
-    // 5,000,000 kg domestic order exceeds the cap on domestic work alone, so the priority reason would misattribute.
     const base = makeBattleSnapshot({ areas: ["a-1"], wars: [] });
     const ukOwnProject = {
       id: "project-own",

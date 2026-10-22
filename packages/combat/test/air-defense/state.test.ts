@@ -1,6 +1,3 @@
-// AC-2: State model has all required fields + hash
-// Tests for AirDefenseState with all required fields and deterministic hash computation.
-
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, SafeInt, isBluewaveError } from "@bluewave/contracts";
 import {
@@ -48,7 +45,6 @@ describe("AirDefenseState", () => {
         SafeInt(10_000),
       );
 
-      // Verify all required fields exist
       expect(state.defenderId).toBe("ship_001");
       expect(state.scope).toBe("SHIP");
       expect(Array.isArray(state.systems)).toBe(true);
@@ -99,7 +95,6 @@ describe("AirDefenseState", () => {
         SafeInt(10_000),
       );
 
-      // Hash should be a 64-character hex string
       expect(state.stateHash).toHaveLength(64);
       expect(/^[a-fA-F0-9]{64}$/.test(state.stateHash)).toBe(true);
     });
@@ -185,7 +180,6 @@ describe("AirDefenseState", () => {
         SafeInt(10_000),
       );
 
-      // The stored hash should match recomputed hash
       const recomputedHash = computeAirDefenseStateHash(state);
       expect(state.stateHash).toBe(recomputedHash);
     });
@@ -316,7 +310,6 @@ describe("AirDefenseState", () => {
         stateHash: "",
       };
 
-      // Same content, ammunitionByType inserted in different order.
       const ammoOrdered = {
         ...base,
         ammunitionByType: new Map([
@@ -334,7 +327,6 @@ describe("AirDefenseState", () => {
         ]),
       };
 
-      // Same content, targetAllocations inserted in different order.
       const targetOrdered = {
         ...ammoOrdered,
         targetAllocations: new Map([
@@ -350,7 +342,6 @@ describe("AirDefenseState", () => {
         ]),
       };
 
-      // Same content, channelReservations inserted in different order.
       const chanOrdered = {
         ...targetOrdered,
         channelReservations: new Map([
@@ -387,7 +378,6 @@ describe("AirDefenseState", () => {
       const systemB = createAirDefenseSystemDefinition({
         systemId: "sys_001",
         layer: Layer.HEAVY_AA,
-        // Same members, different insertion order
         profileEligibility: new Set(["DD", "CV", "CA"]),
         engagementChannels: new Set(["ch003", "ch001", "ch002"]),
       });
@@ -635,10 +625,8 @@ describe("AirDefenseState", () => {
         SafeInt(10_000),
       );
 
-      // Repair MEDIUM-1: each system's magazine is seeded to its magazineCapacity (the
-      // initial ready load, §20/§29.21), so ammunitionByType is NOT empty at construction.
       expect(state.ammunitionByType.size).toBe(1);
-      expect(Number(state.ammunitionByType.get("sys_001"))).toBe(1_000); // default magazineCapacity
+      expect(Number(state.ammunitionByType.get("sys_001"))).toBe(1_000);
       expect(state.targetAllocations.size).toBe(0);
       expect(state.channelReservations.size).toBe(0);
     });

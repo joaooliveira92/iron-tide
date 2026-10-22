@@ -33,11 +33,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-// The commit program runs through the desktop service graph; the services
-// delegate to the same in-memory session registry the tests populate directly.
 const runtime = ManagedRuntime.make(desktopMainLayer());
 
-/** Runs the commit program and projects its wire envelope. */
 async function commitMonth(payload: {
   sessionId: string;
   expectedRevision: number;
@@ -108,14 +105,11 @@ describe("commitMonth", () => {
       const { report, financialLedger } = result.value;
       expect(report.month).toEqual({ month: 1, year: 1880 });
       expect(report.openingTreasury).toBe(Number(ukBefore.treasury));
-      // uk has real ships in the production pack, so real maintenance is owed.
       expect(report.maintenanceCost).toBeGreaterThan(0);
       expect(report.closingTreasury).not.toBe(report.openingTreasury);
 
       expect(financialLedger.length).toBeGreaterThan(0);
       expect(financialLedger.some((e) => e.phase === "maintenance")).toBe(true);
-      // Cross-check the report figure against the raw ledger it was
-      // derived from, rather than a hardcoded placeholder number.
       const maintenanceFromLedger = financialLedger
         .filter((e) => e.phase === "maintenance")
         .reduce((sum, e) => sum + Math.abs(e.amount), 0);
@@ -222,26 +216,9 @@ describe("commitMonth", () => {
       expect(result.outcome).toBe("success");
       if (result.outcome !== "success") return;
 
-      // The production pack compiles with zero active wars at turn 0, so no
-      // month ever emits a BattleResolved event here.
       expect(result.value.domainEvents.some((e) => e.kind === "BattleResolved")).toBe(false);
-      // Byte-identical to the pre-INC-2 seed (`battleOutcomes: []`).
       expect(result.value.closingSnapshot.battleOutcomes).toEqual([]);
-      // activeWars behaviour is preserved (still lists every non-ENDED war).
       const updated = getCampaignSession("session-nobattle")!;
-      // AC-3 "byte-identical": the persisted snapshot envelope + raw hash are
-      // the deterministic baseline for the production pack at turn 1 — adding
-      // `battleOutcomes` changed only the bridge response, never these
-      // authoritative hashes. Pinned so any accidental engine/snapshot change
-      // that should not happen here is caught as a hash drift. Re-pinned
-      // 2026-10-16 (S-1 + ADR-0214): per-ship readiness/crew fields join the
-      // compiled snapshot and the USA slot flips ai -> playable, so both
-      // authoritative hashes move with understood causes; re-pinned below. Re-pinned 2026-10-18 (economy #138,
-      // ADR-0230): the snapshot gains the research catalogue, seeded construction packages and capacity, the derived
-      // economic base and compatibility 3.1.0. Re-pinned 2026-10-18 (S-5 02, ADR-0231): the snapshot gains
-      // each nation's home area and the world possession ownership (+4498 bytes: 14 nations, 62 possessions).
-      // Re-pinned 2026-10-19 (S-2 03, ADR-0239): the snapshot gains the prestige value set and compatibility
-      // 4.0.0 (+280 bytes: exactly the serialized `prestigeRules` entry; nations are Maps and do not serialize here).
       expect(updated.state.envelope).toEqual({
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",
@@ -260,13 +237,6 @@ describe("commitMonth", () => {
   });
 
   describe("battle auto-resolution (synthetic fixture)", () => {
-    // The production pack's `buildWarState()` always compiles with zero
-    // active wars at turn 0 (`packages/campaign/src/compiler.ts:565`), so a
-    // real compile->commitMonth loop never exercises `MonthExecutor`'s
-    // battle-generation/resolution phases. This mirrors
-    // `packages/phase-engine/test/battle-generation-phase.test.ts`'s
-    // hand-authored two-nation, co-located, at-war fixture to prove the
-    // integration for real rather than leaving it merely plumbed.
     function makeNation(
       id: string,
       isPlayable: boolean,
@@ -294,10 +264,6 @@ describe("commitMonth", () => {
               classId: "battleship",
               nationId: id,
               locationAreaId: s.loc,
-              // B-6 INC-2 tactical auto-resolution promotes ships via their
-              // compiled design (matching `battle-fixtures.ts`); an empty
-              // designVersionId throws TACTICAL_UNIT_PROMOTION_INVALID and
-              // falls back to the legacy path, which the test does not want.
               designVersionId: `dv-${s.id}`,
               hitPoints: SafeInt(100),
               maxHitPoints: SafeInt(100),
@@ -345,11 +311,6 @@ describe("commitMonth", () => {
       );
       const slot: CampaignSlot = { nationId: "GBR", type: "playable" };
       const UMS_PER_KNOT = 514_444;
-      // Compiled designs for every promoted ship so the B-6 INC-2 tactical
-      // auto-resolution path succeeds (mirrors `battle-fixtures.ts`'s
-      // `makeDesign`); without these, promotion throws
-      // TACTICAL_UNIT_PROMOTION_INVALID and the battle falls back to the
-      // legacy strength path instead of exercising the tactical engine.
       const designs = new Map(
         ["g1", "g2", "f1", "f2"].map((shipId) => [
           `dv-${shipId}`,
@@ -381,9 +342,6 @@ describe("commitMonth", () => {
         startMonth: 1,
         strategicWeather: [],
         slots: [slot],
-        // `weather_generation` (B-6 INC-1) commits strategic weather only for
-        // areas present in `world.areas`; the battle's co-located area must be
-        // listed or the auto-resolution fail-closed guard trips.
         world: { areas: [{ id: "a-1", name: "a-1", type: "sea" }], routes: [], ports: [] },
         nations,
         wars: {
@@ -416,8 +374,6 @@ describe("commitMonth", () => {
       };
     }
 
-    // Seed whose auto-resolved battle sinks a loser ship before the ADR-0073
-    // withdrawal threshold is reached (the default seed now ends by break-off).
     const DECISIVE_SEED = "decisive-04-xxxxxxxxxxxxxxxxxxxx";
 
     function registerWarSession(
@@ -453,21 +409,14 @@ describe("commitMonth", () => {
       expect(result.outcome).toBe("success");
       if (result.outcome !== "success") return;
 
-      // The war is still reported (not silently dropped) and the month
-      // completed in one shot — nothing here waits for a separate
-      // generateBattle/resolveBattle/resolveTacticalBattle round-trip.
       expect(result.value.closingSnapshot.activeWars.length).toBeGreaterThan(0);
 
       const updated = getCampaignSession("session-war");
       expect(updated).toBeDefined();
       const battles = updated!.state.snapshot.wars.battles;
       expect(battles.length).toBeGreaterThan(0);
-      // No battle is left "pending"/"resolving" — every generated battle was
-      // resolved within this single commitMonth call.
       expect(battles.every((b) => b.phase === "resolved")).toBe(true);
 
-      // The resolution actually changed something authoritative: war score
-      // moved and/or a ship took damage/was lost — not a no-op stub.
       const war = updated!.state.snapshot.wars.wars.find((w) => w.id === "war_1")!;
       const scoreChanged = war.attackerWarScore !== 0 || war.defenderWarScore !== 0;
       expect(scoreChanged).toBe(true);
@@ -489,17 +438,10 @@ describe("commitMonth", () => {
       const resolved = postSnapshot.wars.battles.filter(
         (b) => b.phase === "resolved" && b.result !== undefined,
       );
-      // The war fixture co-locates two navies, so at least one battle resolves.
       expect(resolved.length).toBeGreaterThan(0);
-      // The INDEPENDENT oracle (engineAppliedWarScoreDelta) reads the whole-war
-      // pre→post delta, which only equals ONE battle's magnitude. So this
-      // assertion is valid only when the fixture resolves at most one battle per
-      // (attacker, defender) war pair — enforce that precondition rather than
-      // assume it (ADR-0028 §Consequences multi-battle cascade residual).
       const resolvedKeys = resolved.map((b) => `${b.attackerId}|${b.defenderId}`);
       expect(new Set(resolvedKeys).size).toBe(resolvedKeys.length);
 
-      // One accurate flat BattleOutcome per resolved battle this month.
       expect(result.value.closingSnapshot.battleOutcomes).toHaveLength(resolved.length);
       for (const battle of resolved) {
         const outcome = result.value.closingSnapshot.battleOutcomes.find(
@@ -508,7 +450,6 @@ describe("commitMonth", () => {
         expect(outcome).toBeDefined();
         if (!outcome) continue;
 
-        // Straight engine copies — sides, winner/loser, losses, explanation.
         expect(outcome.areaId).toBe(battle.areaId);
         expect(outcome.attackerId).toBe(battle.attackerId);
         expect(outcome.defenderId).toBe(battle.defenderId);
@@ -518,14 +459,6 @@ describe("commitMonth", () => {
         expect(outcome.defenderLosses).toEqual([...battle.result!.defenderLosses]);
         expect(outcome.explanation).toEqual([...battle.result!.explanation]);
 
-        // INDEPENDENT oracle — NOT a copy of the bridge formula. The engine's
-        // `applyBattleResult` (month.ts:1510-1552) literally ADDED a magnitude
-        // to the winning war's side score and subtracted it from the losing
-        // side's score on the snapshot. For a single decided battle with no
-        // ±100 clamping, that pre→post change in the winning war's
-        // `attackerWarScore`/`defenderWarScore` IS the delta the bridge must
-        // surface. Read the actual war for this battleid from the pre vs post
-        // snapshots and assert the bridge re-derives exactly that.
         expect(outcome.warScoreDelta).toBe(
           engineAppliedWarScoreDelta(battle, preSnapshot, postSnapshot),
         );
@@ -556,32 +489,17 @@ describe("commitMonth", () => {
       expect(outcome).toBeDefined();
       if (!outcome) return;
 
-      // ≥1 loser ship genuinely sank this month (decisive boundary).
       const loserIsAttacker = battle.result!.loserId === battle.attackerId;
       const loserLosses = loserIsAttacker
         ? battle.result!.attackerLosses
         : battle.result!.defenderLosses;
       expect(loserLosses.length).toBeGreaterThan(0);
 
-      // The engine wrote a decisive victory (±10) for this battle...
       expect(engineAppliedWarScoreDelta(battle, preSnapshot, postSnapshot)).toBe(10);
-      // ...and the bridge re-derives the SAME decisive magnitude OFF the
-      // pre-battle snapshot (the ships sunk this month still counted at full
-      // HP), not a recompute over the post-battle snapshot.
       expect(outcome.warScoreDelta).toBe(10);
     });
   });
 
-  /**
-   * INDEPENDENT oracle (INC-2 finding 2): the war-score magnitude the engine
-   * ACTUALLY applied, read solely from the engine's observable output — the
-   * winning war's `attackerWarScore`/`defenderWarScore` pre → post change
-   * (could not be written by a copy of the bridge's loss-fraction formula).
-   * `applyBattleResult` (month.ts:1510-1552, no-clamp case) adds `+magnitude`
-   * to one side and `-magnitude` to the other, so the max absolute side change
-   * equals the applied magnitude. Applies to a single decided battle with war
-   * scores safely inside [0,100]; non-decided battles contribute 0.
-   */
   function engineAppliedWarScoreDelta(
     battle: BattleInstance,
     preSnapshot: CampaignSnapshot,
@@ -602,15 +520,6 @@ describe("commitMonth", () => {
   }
 });
 
-// Focused unit tests for `mapBattleOutcome`'s PRE-battle-snapshot basis (the
-// HIGH finding). These hand-build a decided battle whose losing side, counted
-// OFF the pre-month snapshot (sunk ship still present, survivor at full HP),
-// crosses the DECISIVE threshold — while the SAME battle counted off the
-// post-month snapshot (sunk ship removed, survivor's HP reduced) would fall
-// into MAJOR. The engine (`applyBattleResult`, month.ts:1510-1552) computed the
-// class off the pre-battle snapshot, so the correct bridge value is the
-// decisive ±10. A post-snapshot re-derivation would fabricate a lower ±5, and
-// these assertions FAIL against such a regression.
 describe("mapBattleOutcome (pre-battle-snapshot war-score re-derivation, INC-2 finding 1)", () => {
   function makeNation(
     id: string,
@@ -736,7 +645,6 @@ describe("mapBattleOutcome (pre-battle-snapshot war-score re-derivation, INC-2 f
   }
 
   it("re-derives the engine's ±10 DECISIVE class off the PRE-battle snapshot (sunk ship + survivors at full HP)", () => {
-    // PRE: the losing attacker (GBR) has g1(100 HP) + g2(100 HP) intact.
     const preNations = new Map<string, import("@bluewave/campaign").NationState>();
     preNations.set(
       "GBR",
@@ -748,45 +656,31 @@ describe("mapBattleOutcome (pre-battle-snapshot war-score re-derivation, INC-2 f
     preNations.set("FRA", makeNation("FRA", "fleet-FRA", [{ id: "f1", hitPoints: 100 }]));
     const pre = makeSnapshot(preNations, 0, 0);
 
-    // POST: the engine's consequences removed the sunk g2 and reduced g1 to
-    // 70 HP; the war score already moved -10/+10 (the engine applied DECISIVE).
     const postNations = new Map<string, import("@bluewave/campaign").NationState>();
     postNations.set("GBR", makeNation("GBR", "fleet-GBR", [{ id: "g1", hitPoints: 70 }]));
     postNations.set("FRA", makeNation("FRA", "fleet-FRA", [{ id: "f1", hitPoints: 80 }]));
     const post = makeSnapshot(postNations, -10, 10);
     const battle = makeBattle();
 
-    // Engine basis: loser GBR ships g1+g2 (200 HP), damageReport 30+100=130 →
-    // lossFraction 0.65 >= 0.5 → DECISIVE = ±10. The bridge must agree with the
-    // engine (10), NOT with a post-snapshot recompute — which would see only
-    // the survivor g1 at 70 HP (lossFraction 30/70 ≈ 0.43 = MAJOR = 5).
     const outcome = mapBattleOutcome(battle, pre, post);
     expect(outcome.warScoreDelta).toBe(10);
 
-    // Prove this test discriminates: a post-battle re-derivation would report
-    // only a MAJOR ±5 (the exact bug reviewer finding 1 called out). Pinning it
-    // here documents that the fix's pre-battle basis is what makes the test
-    // pass, and any future move back to the post-snapshot basis fails.
     const postSurvivorHp = 70;
     const postLossHp = 30;
     const postFraction = postLossHp / postSurvivorHp;
     expect(postFraction >= 0.25 && postFraction < 0.5).toBe(true);
     expect(postFraction >= 0.5).toBe(false);
-    // Sanity: the war score the engine truly wrote is the decisive ±10.
     const preWar = pre.wars.wars.find((w) => w.id === "war_1")!;
     const postWar = post.wars.wars.find((w) => w.id === "war_1")!;
     expect(Math.abs(postWar.attackerWarScore - preWar.attackerWarScore)).toBe(10);
   });
 
   it("re-derives the engine's ±5 MAJOR class off the PRE-battle snapshot (distinct from a post-basis DECISIVE)", () => {
-    // Loser (GBR) has a single g1 @ 100 HP; damageReport 40 → lossFraction 0.40
-    // (>= 0.25, < 0.5) → the engine applies MAJOR = ±5.
     const preNations = new Map<string, import("@bluewave/campaign").NationState>();
     preNations.set("GBR", makeNation("GBR", "fleet-GBR", [{ id: "g1", hitPoints: 100 }]));
     preNations.set("FRA", makeNation("FRA", "fleet-FRA", [{ id: "f1", hitPoints: 100 }]));
     const pre = makeSnapshot(preNations, 0, 0);
 
-    // POST: consequences reduced g1 to 60 HP; engine applied MAJOR (±5).
     const postNations = new Map<string, import("@bluewave/campaign").NationState>();
     postNations.set("GBR", makeNation("GBR", "fleet-GBR", [{ id: "g1", hitPoints: 60 }]));
     postNations.set("FRA", makeNation("FRA", "fleet-FRA", [{ id: "f1", hitPoints: 80 }]));
@@ -803,9 +697,6 @@ describe("mapBattleOutcome (pre-battle-snapshot war-score re-derivation, INC-2 f
       },
     };
 
-    // Bridge pins the engine's MAJOR (±5), NOT a post-basis recompute which
-    // would see 40/60 ≈ 0.67 → DECISIVE (±10) — discriminating the minor/major
-    // boundary from the decisive boundary.
     const outcome = mapBattleOutcome(battle, pre, post);
     expect(outcome.warScoreDelta).toBe(5);
     const preWar = pre.wars.wars.find((w) => w.id === "war_1")!;
@@ -814,7 +705,6 @@ describe("mapBattleOutcome (pre-battle-snapshot war-score re-derivation, INC-2 f
   });
 
   it("an unavailable losing nation on the pre-month snapshot -> warScoreDelta 0 AND a recorded reason (never fabricated +10)", () => {
-    // The losing nation GBR is NOT in the pre-month nations map at all.
     const preNations = new Map<string, import("@bluewave/campaign").NationState>();
     preNations.set("FRA", makeNation("FRA", "fleet-FRA", [{ id: "f1", hitPoints: 100 }]));
     const pre = makeSnapshot(preNations, 0, 0);

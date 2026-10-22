@@ -1,5 +1,3 @@
-// SB-3/INC-5 (DESIGN-16 section 4, ADR-0135): the national dock's mass ceilings and dimension predicate, and the
-// new-construction eligibility they govern. Pure; composes with the per-yard fit.
 import { describe, expect, it } from "vite-plus/test";
 import {
   DOCK_LIMIT_MISSING,

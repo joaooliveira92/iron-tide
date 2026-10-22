@@ -1,20 +1,3 @@
-/**
- * The P1 gun adapter (ship-part-model SPM-R19, SPM-R20; proposal §9.2): today's gun
- * catalogue read as `gun` and `gun_mount` **parts** in the strict flattened shape of
- * `@bluewave/content-schema` (`FlattenedPartSchema`). Nothing simulation-facing is added to
- * a part: the legacy family id, the legacy resolved mount type and the D17 disposition stay
- * on the adapter's side records, which are migration provenance only.
- *
- * Sources: a nation's authored model (`ship-building/armament/gun-models.yaml`) or the
- * family-derived `standard_<family>` model (`components.yaml`); an authored mount
- * (`gun-mounts.yaml`) or the family-derived `<family>_<type>` mount (`components.yaml`).
- * Quantities follow §9.2: `gun_kg` and the per-gun cost → `PER_PART_UNIT` on the gun;
- * `mount_fixed_kg` → `PER_LOADOUT_ENTRY`; `mount_per_barrel_kg` and the per-barrel mount
- * cost → `PER_CONTAINED_UNIT` on the mount. The component's crew, volume and deck-footprint
- * formulas are per-barrel terms too, so they become `PER_CONTAINED_UNIT` on the mount through
- * the shared formula reader (`legacyComponentQuantities.ts`, ticket 05); a count-independent
- * term would be `PER_LOADOUT_ENTRY`.
- */
 import type {
   ArmamentMountType,
   ArmamentProvenance,
@@ -38,20 +21,16 @@ import { availableUntilFromRetirementMonth } from "./partLifecycle.js";
 
 export type FlattenedGunPart = Extract<FlattenedPart, { readonly family: "gun" }>;
 export type FlattenedGunMountPart = Extract<FlattenedPart, { readonly family: "gun_mount" }>;
-/** The six gun-mount types; the legacy enum's torpedo-tube values are not mount types. */
 export type GunMountType = FlattenedGunMountPart["spec"]["mountType"];
 
-/** Where the adapter read each record, relative to the content root (ADR-0147). */
 export const GUN_SOURCE_FILES = {
   authoredModel: "ship-building/armament/gun-models.yaml",
   authoredMount: "ship-building/armament/gun-mounts.yaml",
   component: "ship-building/components.yaml",
 } as const;
 
-/** The one disposition a translated D17 central-battery entry carries (proposal §9.2). */
 export type TranslationDisposition = "RECLASSIFIED_AS_CENTRAL_BATTERY";
 
-/** The mount types whose legacy `barrels` count single-gun mounts (§9.2 row 1). */
 const SINGLE_GUN_MOUNTS: ReadonlySet<string> = new Set<GunMountType>([
   "CASEMATE",
   "BROADSIDE_BATTERY",
@@ -59,7 +38,6 @@ const SINGLE_GUN_MOUNTS: ReadonlySet<string> = new Set<GunMountType>([
   "DECK_OPEN",
 ]);
 
-/** The rotating mount types whose 1–2 barrels share one mount (§9.2 row 2). */
 const MULTI_GUN_MOUNTS: ReadonlySet<string> = new Set<GunMountType>(["TURRET", "BARBETTE"]);
 
 export function isGunMountType(type: ArmamentMountType): type is GunMountType {
@@ -70,7 +48,6 @@ export function isSingleGunMount(type: GunMountType): boolean {
   return SINGLE_GUN_MOUNTS.has(type);
 }
 
-/** A number-valued component constant, or `undefined`. */
 function constantOf(def: ComponentDef | undefined, name: string): number | undefined {
   return def?.constants[name];
 }
@@ -84,7 +61,6 @@ function definedQuantity(
   return value === undefined ? [] : [{ id, kind, value, basis }];
 }
 
-/** A copy of the armament provenance in the content-schema record shape. */
 function provenanceOf(p: ArmamentProvenance): FlattenedGunPart["provenance"] {
   return {
     sourceStatus: p.sourceStatus,
@@ -96,14 +72,9 @@ function provenanceOf(p: ArmamentProvenance): FlattenedGunPart["provenance"] {
   };
 }
 
-// Gun parts
-
-/** One gun part with the adapter-side facts the translation needs (never in the part). */
 export interface GunPartRecord {
   readonly part: FlattenedGunPart;
-  /** The legacy armament family (`components.yaml` gun id). */
   readonly familyId: string;
-  /** The type the legacy compile resolves: the model's first supported type, else `DECK_OPEN`. */
   readonly resolvedMountType: ArmamentMountType;
 }
 
@@ -112,22 +83,17 @@ export interface GunPartRequest {
   readonly familyId: string;
 }
 
-/** A request the adapter could not read, with the reason (never dropped silently). */
 export interface UnreadGunPart extends GunPartRequest {
   readonly code: "PART_READ_PATH_NO_GUN_MODEL";
   readonly message: string;
 }
 
-/** The in-memory gun-part index: parts by id, and the part each nation uses per family. */
 export interface GunPartModel {
-  /** Every distinct gun part, codepoint-ordered by id. */
   readonly parts: readonly FlattenedGunPart[];
   readonly byRequest: ReadonlyMap<string, GunPartRecord>;
-  /** Requests with no model, codepoint-ordered by nation then family. */
   readonly unread: readonly UnreadGunPart[];
 }
 
-/** A stable key for one nation's use of one family. `\u0000` cannot appear in an id. */
 export function gunKey(nationId: string, familyId: string): string {
   return `${nationId}\u0000${familyId}`;
 }
@@ -154,7 +120,6 @@ function gunPartFromModel(
     family: "gun",
     provides: "gun",
     name: model.designation,
-    // The family-derived model is shared by every nation without an authored one.
     ...(authored ? { nation: nationId } : {}),
     lifecycle: {
       availableFrom: model.introductionMonth,
@@ -182,7 +147,6 @@ function gunPartFromModel(
       ...(model.roundVolumeMl !== undefined ? { roundVolumeMl: model.roundVolumeMl } : {}),
       ...(model.reliabilityBp !== undefined ? { reliabilityBp: model.reliabilityBp } : {}),
     },
-    // The stowage choice is a per-placement parameter: the range lives on the gun part.
     ...(rounds !== undefined
       ? { parameters: { rounds: { min: rounds.min, max: rounds.max, step: rounds.step } } }
       : {}),
@@ -203,12 +167,6 @@ function gunPartFromModel(
   };
 }
 
-/**
- * Build the in-memory gun-part index from today's content (SPM-R19). Each nation × family
- * request reads `armamentModelFor`, so a national model (or the family-derived fallback)
- * becomes one `gun` part; a request with no model is kept in `unread` with its reason.
- * The result does not depend on the request order.
- */
 export function buildGunPartModel(input: {
   readonly content: AuthoredArmamentContent;
   readonly components: readonly ComponentDef[];
@@ -249,8 +207,6 @@ export function buildGunPartModel(input: {
   };
 }
 
-// Gun-mount parts
-
 function mountPartFromLegacy(
   content: AuthoredArmamentContent,
   component: ComponentDef | undefined,
@@ -278,7 +234,6 @@ function mountPartFromLegacy(
       availableUntil: availableUntilFromRetirementMonth(legacy.retirementMonth),
       ...(requires.length > 0 ? { requires } : {}),
     },
-    // The mount's own `guns` slot holds `gunsPerMount` guns (SPM-R3).
     slots: [{ id: "guns", accepts: ["gun"], mountCount: { min: gunsPerMount, max: gunsPerMount } }],
     spec: {
       mountType,
@@ -332,17 +287,13 @@ function mountPartFromLegacy(
   };
 }
 
-/** The result of translating one gun placement's mount (§9.2, D17). */
 export interface GunMountTranslation {
   readonly part: FlattenedGunMountPart;
-  /** The legacy mount record the part was read from (its id is the D18 old value). */
   readonly legacyMountId: string;
   readonly disposition: TranslationDisposition | null;
-  /** Crew, volume or footprint formulas of the family the part model could not carry. */
   readonly quantityIssues: readonly QuantityReadIssue[];
 }
 
-/** The family component's crew, volume and deck footprint, per gun on the mount. */
 function perGunQuantities(component: ComponentDef | undefined): {
   readonly quantities: readonly QuantityComponentData[];
   readonly issues: readonly QuantityReadIssue[];
@@ -357,12 +308,6 @@ function perGunQuantities(component: ComponentDef | undefined): {
   });
 }
 
-/**
- * Build the mount part for one placement, applying the §9.2 translation. The legacy
- * resolved mount record supplies every value, so nothing calculated changes; a ≥3-barrel
- * turret or barbette becomes the D17 battery assembly (`BROADSIDE_BATTERY`, canonical id
- * `<family>_central_battery_<n>`). Returns `null` when no mount exists for the family.
- */
 export function buildGunMountPart(input: {
   readonly content: AuthoredArmamentContent;
   readonly components: readonly ComponentDef[];
@@ -401,7 +346,6 @@ export function buildGunMountPart(input: {
     };
   }
   if (input.barrels >= 3) {
-    // D17: the legacy resolved type and the disposition stay in migration provenance only.
     return {
       part: read(
         `${input.familyId}_central_battery_${input.barrels}`,

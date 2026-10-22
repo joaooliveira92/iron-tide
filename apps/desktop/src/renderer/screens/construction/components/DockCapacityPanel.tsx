@@ -9,26 +9,14 @@ import {
 } from "../../../components/ui/card.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
-/**
- * The dock/capacity readout and dock-expansion action (DESIGN-16 sections 4-6; SB3-R15..R19/R33). Presentational: every
- * figure is a compiled value handed in by the screen; the panel never reads authoritative state or authors a number.
- */
 export interface DockCapacityPanelProps {
-  /** The nation's compiled dock size — the largest new-construction displacement it may build; `null` when unresolvable. */
   readonly dockMaxBuildDisplacementKg: number | null;
-  /** The national concurrency cap. */
   readonly maxConcurrentConstructionMassKg: number;
-  /** Non-exempt new-construction mass already committed, competing with the cap. */
   readonly committedNewConstructionMassKg: number;
-  /** Exempt AMC / small-corvette mass under construction, outside the cap. */
   readonly exemptNewConstructionMassKg: number;
-  /** The shipped expansion duration, in months. */
   readonly dockExpansionDurationMonths: number;
-  /** The next era step an expansion would lock, or `null` when the month has no era step. */
   readonly dockExpansionNextStepKg: number | null;
-  /** The nation's ports, ascending by id — the expansion targets. */
   readonly dockPossessions: readonly { readonly id: string; readonly name: string }[];
-  /** True while an expansion command is in flight, so the action disables. */
   readonly pending: boolean;
   readonly onAuthorizeDockExpansion: (possessionId: string) => void;
 }

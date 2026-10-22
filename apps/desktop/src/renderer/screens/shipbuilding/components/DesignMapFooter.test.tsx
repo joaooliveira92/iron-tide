@@ -45,7 +45,6 @@ describe("DesignMapFooter", () => {
     const { rerender } = render(<DesignMapFooter {...props({ status })} />);
     expect(screen.queryByRole("button")).toBeNull();
     rerender(<DesignMapFooter {...props({ status, onStatusAction })} />);
-    // The status stays one live region, and the button has its own explicit name.
     expect(screen.getByRole("status")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /^Needs a class name.*Activate to fix$/ }));
     expect(onStatusAction).toHaveBeenCalledOnce();

@@ -1,7 +1,3 @@
-// SB3-R24 (DESIGN-16 section 13.5): foreign technology-insight milestones. Unit tests for each milestone, the
-// per-family cap, no direct grant / no prerequisite bypass / no availability move / no duplicate; boundary tests
-// for an already-known technology, exactly at the cap and exactly at 50% paid work; and integration through the
-// real order path and monthly pipeline. Engine slice; UI is split to a later ticket.
 import type {
   CampaignSnapshot,
   ForeignConstructionContract,
@@ -55,7 +51,6 @@ function researchState(over: Partial<ResearchState> = {}): ResearchState {
   };
 }
 
-/** Research with one active field candidate, the shape the resolver reads. */
 function researchWithCandidate(
   familyId: string,
   techId: string,
@@ -160,7 +155,6 @@ describe("foreign technology insight — milestones and cap (SB3-R24, DESIGN-16 
     }
     expect(record!.awardedByFamily["GUNNERY"]).toBe(FOREIGN_INSIGHT_PER_FAMILY_CAP_MICRO_POINTS);
     expect(research.technologies[0]!.investedPoints as number).toBe(3_000);
-    // A repeat of an already-awarded milestone adds nothing (no duplicate).
     const repeat = resolveForeignInsight({
       contract,
       milestone: "DELIVERY",
@@ -198,11 +192,9 @@ describe("foreign technology insight — milestones and cap (SB3-R24, DESIGN-16 
       research,
       remainingRequirementFor: costOf(1_500),
     });
-    // Exactly the remaining requirement, never beyond it.
     expect(resolution.awards[0]!.microPoints).toBe(1_500);
     const after = applyForeignInsightAwards(research, resolution.awards);
     expect(after.technologies[0]!.investedPoints as number).toBe(1_500);
-    // Discovery is the research phase's decision: nothing is granted directly, no prerequisite/availability moves.
     expect(after.technologies[0]!.completed).toBe(false);
     expect(after.discoveredTechs).toEqual([]);
     expect(after.activeCandidates).toEqual(research.activeCandidates);
@@ -223,7 +215,6 @@ describe("foreign technology insight — milestones and cap (SB3-R24, DESIGN-16 
       remainingRequirementFor: costOf(300),
     });
     expect(limited.awards[0]!.microPoints).toBe(300);
-    // A technology already at its cost has no remaining requirement and awards nothing.
     const exhausted = resolveForeignInsight({
       contract: insightContract(),
       milestone: "CONSTRUCTION_OBSERVATION",
@@ -283,8 +274,6 @@ describe("foreign technology insight — milestones and cap (SB3-R24, DESIGN-16 
   });
 
   it("uses the shipped policy's eligible-family list (the canonical research fields)", () => {
-    // The compiled design carries no family list and the contract cannot narrow the policy, so the shipped
-    // `FOREIGN_INSIGHT_ELIGIBLE_FAMILIES` list (the canonical research fields) is the authoritative eligible set.
     expect(FOREIGN_INSIGHT_ELIGIBLE_FAMILIES).toContain("HULL_CONSTRUCTION");
     expect(FOREIGN_INSIGHT_ELIGIBLE_FAMILIES).toContain("GUNNERY");
     const research = researchState({
@@ -300,14 +289,11 @@ describe("foreign technology insight — milestones and cap (SB3-R24, DESIGN-16 
       research,
       remainingRequirementFor: UNLIMITED,
     });
-    // Every eligible family that has an active candidate is awarded, in ascending family-id order.
     expect(resolution.awards.map((a) => a.familyId)).toEqual(["GUNNERY", "HULL_CONSTRUCTION"]);
     expect(resolution.awards.every((a) => a.microPoints === 500)).toBe(true);
   });
 
   it("awards nothing for an active candidate keyed by a non-field family id", () => {
-    // Only eligible families that are canonical research fields are read; a candidate under any other key (a
-    // corrupt or foreign id) is ignored and awards nothing.
     const research = researchState({
       technologies: [tech("basic_hull")],
       activeCandidates: new Map([["BASKET_WEAVING", "basic_hull"]]),
@@ -323,11 +309,6 @@ describe("foreign technology insight — milestones and cap (SB3-R24, DESIGN-16 
   });
 
   it("awards nothing for a compiled-campaign research state with no active candidates (reachability gap)", () => {
-    // A compiled campaign's nation starts with a `research.yaml`-derived `technologies` list but NO `activeCandidates`
-    // for content technologies: the engine's research phase only populates candidates for the stub
-    // `TECH_DEFINITIONS` ids, and the real content catalogue (`content/production/1880/technologies.yaml`) is never
-    // materialised into it. So a compiled campaign awards nothing until that integration lands. This test pins the
-    // current reachability gap so a future fix is deliberate.
     const compiled = researchState({
       technologies: [tech("hc_wrought_iron_hull"), tech("mac_compound_engine")],
       activeCandidates: new Map(),
@@ -357,9 +338,7 @@ describe("foreign technology insight — milestones and cap (SB3-R24, DESIGN-16 
   it("hashes deterministically and the award record never moves the contract hash", () => {
     const base = insightContract();
     expect(base.contractHash).toMatch(/^[0-9a-f]{64}$/);
-    // The insight award record lives on the nation, never on the contract, so an award never moves the contract hash.
     expect(insightContract().contractHash).toBe(base.contractHash);
-    // Rebuilding the same terms reproduces the exact hash.
     expect(
       buildForeignConstructionContract({
         contractId: base.contractId,
@@ -421,13 +400,7 @@ describe("foreign insight milestone gates (SB3-R24, DESIGN-16 section 13.5)", ()
   });
 });
 
-// Acceptance + monthly integration
-
 describe("foreign insight integration (SB3-R24, DESIGN-16 section 13.5)", () => {
-  // NOTE: every integration fixture below injects its `activeCandidates` entry directly. A real compiled campaign
-  // does not populate `activeCandidates` for content technologies (the engine's research phase only knows the stub
-  // `TECH_DEFINITIONS`), so these tests prove the order/month wiring end-to-end given an eligible candidate, not
-  // end-to-end reachability from compiled content. The reachability gap is pinned by the unit test of that name.
   function orderingSnapshot(research: ResearchState): CampaignSnapshot {
     const base = makeBattleSnapshot({ areas: ["a-1"], wars: [], turnNumber: 1 });
     return {
@@ -480,10 +453,8 @@ describe("foreign insight integration (SB3-R24, DESIGN-16 section 13.5)", () => 
         awardedByFamily: { HULL_CONSTRUCTION: 500 },
       },
     ]);
-    // The order path does not grant the technology it observed.
     const discovered = result.snapshot.nations.get(ORDERING)!.research.discoveredTechs;
     expect(discovered).toEqual([]);
-    // The input snapshot is untouched.
     expect(invested(before, "hc_wrought_iron_hull")).toBe(0);
   });
 
@@ -499,8 +470,6 @@ describe("foreign insight integration (SB3-R24, DESIGN-16 section 13.5)", () => 
   });
 
   it("posts construction-observation at 50% paid work and delivery through the monthly step", () => {
-    // Two 5,000 bp instalments due 1880-02 and 1880-07: the first unlocks half the work (observation), the second
-    // completes it (delivery). The treasury covers both instalments.
     const integrationTerms: ForeignContractTerms = {
       builderShipyardId: "yard-france-1",
       quantity: 1,
@@ -520,7 +489,6 @@ describe("foreign insight integration (SB3-R24, DESIGN-16 section 13.5)", () => 
     const ordered = order(base, { terms: integrationTerms });
     expect(ordered.ok).toBe(true);
     if (!ordered.ok) return;
-    // The acceptance milestone is already posted (500); the monthly step adds the other two.
     expect(invested(ordered.snapshot, "hc_wrought_iron_hull")).toBe(500);
     let snap: CampaignSnapshot = {
       ...ordered.snapshot,
@@ -539,7 +507,6 @@ describe("foreign insight integration (SB3-R24, DESIGN-16 section 13.5)", () => 
       turnNumber: SafeInt.add(s.turnNumber, SafeInt(1)),
     });
 
-    // Turn 1 is 1880-02: the first instalment is paid, half the work unlocks, and observation is posted.
     const turn1 = execute(snap);
     snap = turn1.finalSnapshot;
     expect(invested(snap, "hc_wrought_iron_hull")).toBe(1_500);
@@ -551,8 +518,6 @@ describe("foreign insight integration (SB3-R24, DESIGN-16 section 13.5)", () => 
       },
     ]);
 
-    // Advance to 1880-07 (turn 6): the second instalment is paid, the work completes, delivery is posted. The three
-    // milestones total exactly the 3,000 per-family cap.
     for (let turn = 2; turn <= 6; turn++) {
       snap = advance(snap);
       const result = execute(snap);

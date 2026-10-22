@@ -1,15 +1,7 @@
-/**
- * Scale-bar maths for the world map. Distances are measured along the equator
- * (1 degree of longitude = 60 nm), the reference every chart scale bar uses;
- * Miller/equirectangular stretch away from it, which the projection note in the
- * toolbar already tells the player.
- */
-
 import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 
 const NM_PER_DEGREE = 60;
 
-/** Screen pixels per nautical mile, given the SVG's px-per-user-unit and camera zoom. */
 export function pixelsPerNauticalMile(
   screenPixelsPerUnit: number,
   cameraScale: number,
@@ -23,7 +15,6 @@ export interface ScaleBar {
   readonly px: number;
 }
 
-/** Longest 1/2/5 x 10^n nm bar that fits within `maxPx`. */
 export function niceScaleBar(pxPerNm: number, maxPx: number): ScaleBar {
   if (!(pxPerNm > 0) || !Number.isFinite(pxPerNm)) return { nm: 0, px: 0 };
   const maxNm = maxPx / pxPerNm;

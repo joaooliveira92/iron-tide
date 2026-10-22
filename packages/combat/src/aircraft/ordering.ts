@@ -1,4 +1,3 @@
-// DESIGN-43 §39 canonical ordering for aircraft resolution.
 import type {
   AircraftDevelopmentProject,
   AircraftProposal,

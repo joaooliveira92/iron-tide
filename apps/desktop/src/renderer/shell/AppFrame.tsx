@@ -16,11 +16,6 @@ export interface AppFrameProps {
   readonly onSelectScreen: (screen: Screen) => void;
 }
 
-/**
- * The static chrome around every screen: sidebar shell, header slot, save
- * notice, status strip and bottom navigation. Pure layout — it owns no
- * campaign state and no routing decisions.
- */
 export function AppFrame({
   campaignSessionId,
   campaignReads,
@@ -30,8 +25,6 @@ export function AppFrame({
   children,
   onSelectScreen,
 }: AppFrameProps) {
-  // On the Overview the map runs behind the translucent top and bottom bars; the bars' measured
-  // heights are exposed as --chrome-top / --chrome-bottom so floating panels can clear them.
   const underlay = screen === "overview";
   const frameRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
@@ -77,8 +70,6 @@ export function AppFrame({
           {children}
         </SidebarInset>
       </div>
-      {/* The bottom chrome sits above the guided-inspection spotlight (z-40) so the status
-          strip and navigation are never dimmed by its scrim; still below dialogs (z-50). */}
       <div
         ref={bottomRef}
         data-underlay={underlay}

@@ -74,7 +74,6 @@ describe("presentation-format: requested→effective resolution (U-3 ticket 05)"
       mode: "navalCredits",
       fallbackReason: "nationalCurrencyNotConfigured",
     });
-    // The request value is unchanged (it is an argument, not mutated state).
     expect(request).toBe("nationalHistorical");
   });
 

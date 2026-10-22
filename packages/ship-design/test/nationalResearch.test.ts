@@ -40,7 +40,6 @@ describe("national research priorities", () => {
     const b = researchPriorityAllocation(uk, {}, "seed-1");
     const c = researchPriorityAllocation(uk, {}, "seed-2");
     expect(a).toEqual(b);
-    // At least one field differs across seeds (bounded variation), still within the priority set.
     expect(JSON.stringify(a.fieldPriorities)).not.toBe(JSON.stringify(c.fieldPriorities));
   });
   it("flattens under heavy budget pressure", () => {

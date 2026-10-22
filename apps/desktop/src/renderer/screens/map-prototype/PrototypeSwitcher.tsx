@@ -1,18 +1,3 @@
-/**
- * PROTOTYPE — throwaway. See ./README.md.
- *
- * The floating variant bar. Deliberately styled to look like it does not
- * belong to Bluewave, so nobody mistakes it for the design under evaluation.
- *
- * It lives in the prototype folder rather than components/shared/ on purpose:
- * this whole directory is one `rm -r` when the question is settled, and a
- * switcher stranded in shared/ would outlive the thing it switches.
- *
- * There is no router in this renderer — screens are Context state, not URLs —
- * so the variant key is kept in `window.location.search` via `replaceState`.
- * That is enough to make a variant reload-stable and pasteable in dev.
- */
-
 import { useEffect } from "react";
 
 export const VARIANT_PARAM = "variant";

@@ -2,8 +2,6 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { useConstructionScreen } from "./useConstructionScreen.js";
 
-// The hook's transport port is mocked; the fake bridge is a plain object literal returned from the (untyped) mock
-// factory, so no `as unknown` bridge cast is needed.
 const mocks = vi.hoisted(() => ({ execute: vi.fn() }));
 vi.mock("../../../lib/bridge-context.js", () => ({
   useBridge: () => ({ campaign: { execute: mocks.execute } }),
@@ -69,7 +67,6 @@ describe("useConstructionScreen dock expansion (SB3-R16)", () => {
         }),
       ),
     );
-    // The queued outcome is surfaced as the same "applies next month" notice as the other steering commands.
     await waitFor(() =>
       expect(result.current.state.notice).toMatch(/AuthorizeDockExpansion queued/),
     );

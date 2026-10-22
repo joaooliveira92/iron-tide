@@ -1,11 +1,6 @@
 import { nationFlagUrl } from "../../../content/nation-flag.js";
 import { cn } from "../../../lib/utils.js";
 
-/**
- * A nation's flag art, or its initial on a muted chip when none is authored.
- * Decorative: the nation's name always sits beside it, so the flag is never the
- * only identifier and screen readers hear the name once.
- */
 export function NationGlyph({
   nationId,
   name,

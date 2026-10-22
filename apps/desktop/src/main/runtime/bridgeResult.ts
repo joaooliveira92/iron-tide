@@ -1,6 +1,3 @@
-// Projects the Effect command error channel onto the frozen IPC `BridgeResult`
-// envelope at the wire edge (INC-1; ADR-0159). The envelope never throws across
-// IPC; a defect or an unrecognised throw collapses to an `INTERNAL` error.
 import { Cause, Exit } from "effect";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type { CommandError } from "./commandError.js";
@@ -14,7 +11,6 @@ const COMMAND_ERROR_TAGS: ReadonlySet<string> = new Set([
   "SessionNotFound",
 ]);
 
-/** Structural `_tag` guard (never `instanceof`; RULES.md §Errors). */
 export function isCommandError(value: unknown): value is CommandError {
   return (
     typeof value === "object" &&
@@ -25,7 +21,6 @@ export function isCommandError(value: unknown): value is CommandError {
   );
 }
 
-/** Maps one tagged command error to the plain wire envelope. */
 export function projectCommandError<A>(error: CommandError): BridgeResult<A> {
   switch (error._tag) {
     case "UnknownCommand":
@@ -55,7 +50,6 @@ export function projectCommandError<A>(error: CommandError): BridgeResult<A> {
   }
 }
 
-/** Total mapping from a completed command `Exit` to its wire envelope. */
 export function projectCommandExit<A>(
   exit: Exit.Exit<BridgeResult<A>, CommandError>,
 ): BridgeResult<A> {

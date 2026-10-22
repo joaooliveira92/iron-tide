@@ -3,22 +3,17 @@ import { Info, OctagonX, ShieldAlert, TriangleAlert, type LucideIcon } from "luc
 
 export { SEVERITY_ORDER };
 
-/** Marker outline per severity: each shape differs, so severity never rests on colour alone. */
 export type MarkerShape = "octagon" | "diamond" | "triangle" | "circle";
 
 export interface SeverityStyle {
-  /** Readable label, used in accessible names and text. */
   readonly label: string;
   readonly Icon: LucideIcon;
-  /** Text and icon colour (theme tokens). */
   readonly tone: string;
-  /** SVG fill and stroke classes for the marker. */
   readonly fill: string;
   readonly shape: MarkerShape;
   readonly badge: "destructive" | "secondary" | "outline";
 }
 
-/** The one definition of how each severity looks, shared by the drawing, the inspector and the Analysis tab. */
 export const SEVERITY_STYLE: { readonly [S in Severity]: SeverityStyle } = {
   BLOCKING: {
     label: "Blocking",
@@ -54,13 +49,8 @@ export const SEVERITY_STYLE: { readonly [S in Severity]: SeverityStyle } = {
   },
 };
 
-/** Lower is more severe. */
 export const severityRank = (s: Severity): number => SEVERITY_ORDER.indexOf(s);
 
-/**
- * The three classes findings are grouped into: blocking errors (BLOCKING and CRITICAL), warnings, and advisory
- * observations. Only blocking-class findings prevent submission.
- */
 export const FINDING_CLASSES = ["blocking", "warning", "advisory"] as const;
 export type FindingClass = (typeof FINDING_CLASSES)[number];
 
@@ -77,7 +67,6 @@ export const CLASS_LABEL: { readonly [C in FindingClass]: string } = {
   advisory: "Advisory observations",
 };
 
-/** Which severities the drawing shows. View state only. */
 export const SEVERITY_FILTERS = ["all", "serious", "warning", "advisory"] as const;
 export type SeverityFilter = (typeof SEVERITY_FILTERS)[number];
 

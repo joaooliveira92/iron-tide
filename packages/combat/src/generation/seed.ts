@@ -5,7 +5,6 @@ import { computeManifestHash } from "./manifest.js";
 
 export const BATTLE_SEED_FAMILY = "battle/battle_id/root" as const;
 export const BATTLE_SEED_FORMULA_VERSION = "battle_seed_v1" as const;
-/** The `battleGenerationFormulaVersion` the generation pipeline and the support force both feed the seed. Frozen wire value. */
 export const GENERATION_SEED_FORMULA_VERSION = "1" as const;
 
 export interface BattleSeedInputs {
@@ -19,8 +18,6 @@ export interface BattleSeedInputs {
   battleGenerationFormulaVersion: string;
 }
 
-// DESIGN-37 §32: the canonical battle-seed key components. The manifest hash is
-// derived from the canonicalized PRE-SEED manifest (ADR B-1-5).
 export function deriveBattleSeed(inputs: BattleSeedInputs, manifest: BattleManifest): string {
   const canonicalHash = computeManifestHash(manifest);
   const domain = [
@@ -36,7 +33,6 @@ export function deriveBattleSeed(inputs: BattleSeedInputs, manifest: BattleManif
     inputs.battleGenerationFormulaVersion,
   ].join("\u0000");
 
-  // Campaign-level root seed family; deterministic on every platform.
   const root = splitSeed(inputs.campaignSeed, BATTLE_SEED_FAMILY);
   return sha256Hex(`${domain}\u0000${root}`);
 }

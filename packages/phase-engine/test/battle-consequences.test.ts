@@ -1,10 +1,3 @@
-// B-6 INC-3 (AC-9): battle outcome consequences on the campaign side —
-// per-ship damage (clamped >= 0), terminal-ship removal (sunk list OR hp == 0),
-// survivor damage retention, reservation clearing, and deterministic ordering.
-// Proves the consequence application directly (unit) and through the phase on
-// a real deterministic tactical result (two identical runs -> byte-identical
-// closing snapshot hash).
-
 import type { CampaignSnapshot, Ship } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -43,8 +36,6 @@ describe("battle consequences (AC-9)", () => {
     const battle = makeBattle();
 
     const next = applyBattleConsequences(snapshot, battle, {
-      // g1 takes a loss far beyond its hp -> clamped to 0 (removed, not negative);
-      // f1 is on the sunk list -> removed; f2 keeps 40/100; g2 is untouched.
       damageReport: {
         g1: SafeInt(9_999),
         g2: SafeInt(0),
@@ -62,10 +53,8 @@ describe("battle consequences (AC-9)", () => {
     const g2 = allShips(next).find((s) => s.id === "g2")!;
     const f2 = allShips(next).find((s) => s.id === "f2")!;
     expect(g2.hitPoints).toBe(SafeInt(100));
-    expect(f2.hitPoints).toBe(SafeInt(40)); // survivor retains damage
-    // Reservations cleared on every ship that fought.
+    expect(f2.hitPoints).toBe(SafeInt(40));
     for (const ship of allShips(next)) expect(ship.inBattleId).toBeUndefined();
-    // Ships outside the battle fleets are untouched (same nation object).
     expect(next.nations).not.toBe(snapshot.nations);
   });
 
@@ -91,7 +80,6 @@ describe("battle consequences (AC-9)", () => {
     const b = applyBattleConsequences(snapshot, battle, result);
     expect(allShips(a).map((s) => s.id)).toEqual(allShips(b).map((s) => s.id));
     expect(sha256Hex(canonicalSerialize(a))).toBe(sha256Hex(canonicalSerialize(b)));
-    // Survivors keep their relative fleet order (canonical array order).
     const gbr = a.nations.get(ATTACKER_NATION)!;
     expect(gbr.fleets[0]!.ships.map((s) => s.id)).toEqual(["g2"]);
     const fra = a.nations.get(DEFENDER_NATION)!;
@@ -118,14 +106,11 @@ describe("battle consequences (AC-9)", () => {
     expect(result.winnerId).toBeTruthy();
     expect(result.loserId).toBeTruthy();
 
-    // The pristine input snapshot ships are the pre-battle state.
     const pristine = makeBattleSnapshot();
     const pristineById = new Map<string, Ship>();
     for (const n of pristine.nations.values())
       for (const f of n.fleets) for (const s of f.ships) pristineById.set(s.id, s);
 
-    // Sunk ships removed; survivors retain exactly the damageReport loss
-    // (clamped >= 0); reservations cleared everywhere after the battle.
     const sunk = new Set<string>([...result.attackerLosses, ...result.defenderLosses]);
     for (const ship of allShips(a.result.finalSnapshot)) {
       expect(sunk.has(ship.id)).toBe(false);
@@ -136,11 +121,10 @@ describe("battle consequences (AC-9)", () => {
     }
     const present = new Set(allShips(a.result.finalSnapshot).map((s) => s.id));
     for (const id of sunk) {
-      expect(pristineById.get(id)).toBeDefined(); // was a real pre-battle ship
-      expect(present.has(id)).toBe(false); // and is gone after the battle
+      expect(pristineById.get(id)).toBeDefined();
+      expect(present.has(id)).toBe(false);
     }
 
-    // Byte-identical closing snapshots + random ledgers across runs.
     expect(sha256Hex(canonicalSerialize(a.result.finalSnapshot))).toBe(
       sha256Hex(canonicalSerialize(b.result.finalSnapshot)),
     );
@@ -169,7 +153,6 @@ describe("collectLostShips (ADR-0061)", () => {
     };
     const lost = collectLostShips(snapshot, battle, result, "1880-03");
     const after = allShips(applyBattleConsequences(snapshot, battle, result)).map((x) => x.id);
-    // The ledger and the fleets agree: lost = before minus after.
     const before = allShips(snapshot).map((x) => x.id);
     expect(lost.map((l) => l.shipId).sort()).toEqual(
       before.filter((id) => !after.includes(id)).sort(),
@@ -177,7 +160,6 @@ describe("collectLostShips (ADR-0061)", () => {
     const f1 = lost.find((l) => l.shipId === "f1")!;
     expect(f1).toMatchObject({ nationId: DEFENDER_NATION, month: "1880-03", cause: "torpedo" });
     expect(f1.name.length).toBeGreaterThan(0);
-    // A ship lost only through hp==0 carries no cause (the tactical report named none).
     expect(lost.find((l) => l.shipId === "g1")!.cause).toBeUndefined();
   });
 });

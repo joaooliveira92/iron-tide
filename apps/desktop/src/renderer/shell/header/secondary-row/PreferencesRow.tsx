@@ -4,7 +4,6 @@ export interface PreferencesRowProps {
   readonly row: PreferencesRowModel;
 }
 
-/** The options bar: the active preferences area and its detail. */
 export function PreferencesRow({ row }: PreferencesRowProps) {
   return (
     <div className="flex w-full items-center px-1 text-xs text-muted-foreground">

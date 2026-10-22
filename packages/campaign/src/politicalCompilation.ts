@@ -1,5 +1,3 @@
-// Campaign-compile stage: materialize political state (diplomatic relations) and
-// the empty war-state shell. Enforces the canonical pairwise relation registry.
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { toStr } from "./campaignInput.js";
 import type { DiplomaticRelation, NationState, PoliticalState, WarState } from "./state.js";

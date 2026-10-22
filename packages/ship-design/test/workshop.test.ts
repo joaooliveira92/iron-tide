@@ -95,7 +95,6 @@ describe("buildWorkshopView", () => {
   });
   it("the forecast is provisional only while a bracketing build-time point is not VERIFIED (ticket 22)", () => {
     const e = env("1896-01");
-    // Majestic sits between the VERIFIED Canopus and Majestic-size points, so it is not provisional.
     expect(buildWorkshopView(majestic, e).forecast.historicalProvisional).toBe(false);
     const withStatus = (status: "VERIFIED" | "SECONDARY" | "ESTIMATE") => ({
       ...e,
@@ -134,7 +133,6 @@ describe("buildWorkshopView", () => {
     const large = big.yards.find((y) => y.yardId === "yard_large")!;
     expect(large.exceeds).toEqual([]);
     expect(large.months).toBe(big.months);
-    // A destroyer fits everywhere; the smallest yard is chosen and every fitting yard has a finish time.
     const dd = buildWorkshopView(havock, env("1895-06")).forecast;
     expect(dd.yards.every((y) => y.exceeds.length === 0 && y.months !== null)).toBe(true);
     expect(dd.yards.filter((y) => y.chosen).map((y) => y.yardId)).toEqual(["yard_small"]);

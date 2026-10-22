@@ -116,7 +116,6 @@ describe("campaignSave module", () => {
     expect(snapshot["nations"]).not.toBeInstanceOf(Map);
     expect(snapshot["designs"]).not.toBeInstanceOf(Map);
     expect(snapshot["designFamilies"]).not.toBeInstanceOf(Map);
-    // JSON.stringify must be able to render the whole snapshot without dropping data.
     expect(() => JSON.stringify(snapshot)).not.toThrow();
   });
 

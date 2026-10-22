@@ -4,22 +4,11 @@ import { DesignTemplateSchema } from "./design.js";
 import { ProvenanceSchema } from "./provenance.js";
 import { CANONICAL_RESEARCH_FIELD_IDS } from "./research-fields.js";
 
-/**
- * Authored campaign-file schemas (CAH-SCH-2). The six campaign-file collections
- * (`fleets`/`economies`/`constructions`/`research`/`designs`/`diplomacy`) are
- * compiled into the bundle's `campaign` section; before these schemas they were
- * only duplicate-id and cross-reference checked, so a structurally malformed
- * record could still compile. The shapes mirror what the campaign compiler's
- * builders consume (packages/campaign/src/{nationCompilation,designCompilation,
- * politicalCompilation}.ts) and the authored production content.
- */
-
 const month = Schema.String.check(
   Schema.isPattern(/^\d{4}-(0[1-9]|1[0-2])$/, { message: "must be YYYY-MM" }),
 );
 const nonNegativeInt = Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0));
 
-/** A design template plus the campaign-only version and family fields (CAH-SCH-2). */
 export const CampaignDesignSchema = Schema.Struct({
   ...DesignTemplateSchema.fields,
   designVersionId: Schema.NonEmptyString,
@@ -42,11 +31,6 @@ const FleetShipSchema = Schema.Struct({
   isUnderConstruction: Schema.Boolean,
   constructionProgress: nonNegativeInt,
   constructionTotalWork: nonNegativeInt,
-  // S-1: optional authored readiness/crew seed. Absent, the campaign compiler
-  // derives them (`isUnderConstruction` -> WORKING_UP, else ACTIVE at ceiling);
-  // present, the campaign compile boundary validates the vocabulary and the
-  // 0..100 integer band (S-1 D2). Kept structurally open here so a malformed
-  // value reaches that boundary as a `_tag`-discriminated diagnostic.
   readiness: Schema.optional(Schema.String),
   crewQuality: Schema.optional(Schema.Finite),
   inBattleId: Schema.optional(Schema.NonEmptyString),
@@ -89,7 +73,6 @@ const TechnologyProgressSchema = Schema.Struct({
   completed: Schema.Boolean,
 });
 
-/** Every canonical research field is an optional priority key; unknown keys are rejected. */
 const ResearchFieldPrioritiesSchema = Schema.Struct(
   Object.fromEntries(
     CANONICAL_RESEARCH_FIELD_IDS.map((id) => [id, Schema.optionalKey(nonNegativeInt)]),
@@ -119,12 +102,6 @@ export const CampaignDiplomacySchema = Schema.Struct({
   provenance: Schema.optional(ProvenanceSchema),
 });
 
-/**
- * The DESIGN-26 §13/§17 canonical division vocabulary (N-1 ticket 07). Declared
- * at the content boundary so the authored record is strictly typed; the campaign
- * engine re-exports the same values (`packages/campaign/src/division.ts`) so the
- * two cannot drift.
- */
 export const CAMPAIGN_DIVISION_ROLES = [
   "INDEPENDENT",
   "CORE",
@@ -140,14 +117,6 @@ export const CAMPAIGN_DIVISION_FORMATIONS = [
   "SCREEN",
 ] as const;
 
-/**
- * An authored initial division (N-1 ticket 07, DESIGN-26). `shipOrder` names the
- * member ships in canonical order (the first is the flagship); the campaign
- * compiler resolves their shared area, seeds the DESIGN-26 initial experience
- * and cohesion, and fills the rest. `commanderOfficerId` is a per-nation officer
- * id or omitted for a vacant command. The magnitudes are ADR-0213
- * `balance_adjustment` values (ADR-0224).
- */
 export const CampaignDivisionSchema = Schema.Struct({
   id: Schema.NonEmptyString,
   nationId: Schema.NonEmptyString,

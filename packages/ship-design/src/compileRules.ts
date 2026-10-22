@@ -1,5 +1,3 @@
-// Layout, stability and regulatory (dock/treaty/modernization) stages of the
-// design-compile pipeline.
 import {
   expandTertiary,
   NO_TERTIARY_BALANCE,

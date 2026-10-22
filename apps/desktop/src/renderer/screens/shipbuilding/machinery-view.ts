@@ -2,30 +2,19 @@ import type { DesignDraft, WorkshopEnvironment, WorkshopView } from "@bluewave/s
 import { previewOptionDeltas, type Delta } from "../../components/design-workspace/optionDelta.js";
 import { formatPowerBoth, type PresentationFormat } from "../../lib/presentation-format/index.js";
 
-/**
- * The Machinery section's outcomes-first view model. Pure: the editable performance targets and propulsion
- * configuration on one side, and the calculated results they produce on the other. Nothing here edits the design,
- * and no value appears both as an input and an output.
- */
-
 export interface PlantOption {
   readonly id: string;
   readonly label: string;
   readonly disabled: boolean;
-  /** Why the plant cannot be chosen (introduction date or missing technology); null when it can. */
   readonly reason: string | null;
 }
 
 export interface MachineryInputs {
-  /** Target speed, milli-knots (a design input). */
   readonly targetSpeedMilliKnots: number;
-  /** Cruising speed, milli-knots (a design input). */
   readonly cruiseSpeedMilliKnots: number;
-  /** Operational range, nautical miles (a design input). */
   readonly rangeNm: number;
   readonly plantId: string;
   readonly installedKw: number;
-  /** Installed power in both units, e.g. "3,300 kW (4,425 hp)". */
   readonly installedPowerText: string;
   readonly fuelCapacityKg: number;
   readonly plantOptions: readonly PlantOption[];
@@ -40,7 +29,6 @@ export interface MachineryOutput {
 export interface MachineryModel {
   readonly inputs: MachineryInputs;
   readonly outputs: readonly MachineryOutput[];
-  /** Things the model does not yet carry, said plainly rather than faked. */
   readonly notes: readonly string[];
 }
 
@@ -48,11 +36,6 @@ const words = (s: string) => s.replaceAll("_", " ").toLowerCase();
 const kn = (format: PresentationFormat, milliKnots: number) =>
   format.number(milliKnots / 1000, { maximumFractionDigits: 1 });
 
-/**
- * Comparison before commitment for the propulsion plant: per plant, what choosing it would change (the compiled
- * speed, displacement, cost and stability deltas, plus its reliability and the year it requires). Pure; the current
- * plant previews as no change. Computed on demand, so the many compiles this costs are never run per render.
- */
 export function plantDeltas(
   draft: DesignDraft,
   env: WorkshopEnvironment,
@@ -94,10 +77,6 @@ export function plantDeltas(
   return map;
 }
 
-/**
- * The propulsion configuration and the calculated results for a draft. The environment gates the plant choices and
- * converts power; `view` supplies every calculated value (never recomputed here).
- */
 export function machineryModel(
   draft: DesignDraft,
   view: WorkshopView,

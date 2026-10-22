@@ -3,7 +3,6 @@ import { createContext, use } from "react";
 import type { BluewaveDesktopBridge } from "../../../../preload/index.js";
 import type { TacticalSandboxScreenState } from "../tactical-sandbox-screen-state.js";
 
-/** The narrow transport the sandbox needs; injectable so the provider is testable. */
 export type SandboxBridge = Pick<BluewaveDesktopBridge, "campaign">;
 
 export interface SandboxActions {

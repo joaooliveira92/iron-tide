@@ -1,20 +1,8 @@
 import { Schema } from "effect";
 import { UM_PER_INCH } from "@bluewave/contracts";
 
-/**
- * `visual-traits/1` (D16, proposal §8.2): the closed visual vocabulary a design's parts are
- * drawn from. Seven traits, each with exactly one ownership class: **compiler-derived**
- * (computed from source fields; authoring it is a decode error) or **derived with an allowed
- * authored override** (computed by default; a part may author it with a `reason`).
- *
- * Presentation only (I-14): no trait changes fitting compatibility, mass, cost, crew, volume,
- * footprint, availability, AI behaviour or combat. `gunsPerMount` stays the simulation
- * authority for gun count; `barrel_arrangement` is a rendering-only derivation of it.
- */
-
 export const VISUAL_TRAIT_RULESET = "visual-traits/1";
 
-/** The seven traits, in table order. */
 export const VISUAL_TRAITS = [
   "presentation_form",
   "enclosure",
@@ -26,7 +14,6 @@ export const VISUAL_TRAITS = [
 ] as const;
 export type VisualTrait = (typeof VISUAL_TRAITS)[number];
 
-/** The two ownership classes; no trait is purely authored, so defaults stay total. */
 export const VISUAL_TRAIT_OWNERSHIP = {
   presentation_form: "derived_with_override",
   enclosure: "derived_with_override",
@@ -39,7 +26,6 @@ export const VISUAL_TRAIT_OWNERSHIP = {
 
 export type VisualTraitOwnership = (typeof VISUAL_TRAIT_OWNERSHIP)[VisualTrait];
 
-/** Traits a part may author on `visual.traits` (the override set). */
 export const OVERRIDABLE_TRAITS = [
   "presentation_form",
   "enclosure",
@@ -48,7 +34,6 @@ export const OVERRIDABLE_TRAITS = [
 ] as const;
 export type OverridableTrait = (typeof OVERRIDABLE_TRAITS)[number];
 
-/** Traits computed only from source fields; authoring one is a decode error (V10). */
 export const COMPILER_DERIVED_TRAITS = ["orientation", "size_class", "elevation_style"] as const;
 
 export const PRESENTATION_FORMS = [
@@ -80,7 +65,6 @@ export type SizeClass = (typeof SIZE_CLASSES)[number];
 export const ELEVATION_STYLES = ["main_deck", "superstructure_deck"] as const;
 export type ElevationStyle = (typeof ELEVATION_STYLES)[number];
 
-/** The closed values of each trait, for the code-owned vocabulary check (V12). */
 export const VISUAL_TRAIT_VALUES: Readonly<Record<VisualTrait, readonly string[]>> = {
   presentation_form: PRESENTATION_FORMS,
   enclosure: ENCLOSURES,
@@ -91,15 +75,9 @@ export const VISUAL_TRAIT_VALUES: Readonly<Record<VisualTrait, readonly string[]
   elevation_style: ELEVATION_STYLES,
 };
 
-/** A trait as an authored override: a closed value plus the non-empty reason it is exceptional (V11). */
 export const VisualTraitOverrideSchema = <const V extends readonly string[]>(values: V) =>
   Schema.Struct({ value: Schema.Literals(values), reason: Schema.NonEmptyString });
 
-/**
- * The authored `visual.traits` block: one entry per overridable trait, each carrying its own
- * `reason`. A compiler-derived trait here is an excess key and fails decoding (V10); a trait
- * outside `visual-traits/1` or a value outside its closed set also fails (V12).
- */
 export const PartVisualOverridesSchema = Schema.Struct({
   presentation_form: Schema.optional(VisualTraitOverrideSchema(PRESENTATION_FORMS)),
   enclosure: Schema.optional(VisualTraitOverrideSchema(ENCLOSURES)),
@@ -109,29 +87,18 @@ export const PartVisualOverridesSchema = Schema.Struct({
 
 export type PartVisualOverrides = typeof PartVisualOverridesSchema.Type;
 
-/** The source fields every default is a pure function of; the adapter supplies what it knows. */
 export interface VisualTraitSource {
-  /** The part family (`gun_mount`, `torpedo_launcher`, `fitting`, …). */
   readonly family: string;
-  /** The provided interface from `interfaces/1` (`gun_mount`, `funnel`, …). */
   readonly provides: string;
-  /** The gun mount's `spec.mountType`, when the part is a gun mount. */
   readonly mountType?: string | undefined;
-  /** The launcher's `spec.launchType`, when the part is a torpedo launcher. */
   readonly launchType?: string | undefined;
-  /** Guns in one mount (`spec.gunsPerMount`); the simulation authority for gun count. */
   readonly gunsPerMount?: number | undefined;
-  /** The contained gun's calibre in µm, when the adapter knows it (the render path does). */
   readonly calibreUm?: number | undefined;
-  /** The entry's fitted station, ‰ from the bow. */
   readonly stationPermille?: number | undefined;
-  /** The entry's fitted side. */
   readonly side?: "CENTRE" | "PORT" | "STBD" | undefined;
-  /** The entry's zone id (`SUPERSTRUCTURE`, …). */
   readonly zoneId?: string | undefined;
 }
 
-/** The seven effective trait values; a trait that does not apply is absent. */
 export interface VisualTraitValues {
   readonly presentation_form?: PresentationForm | undefined;
   readonly enclosure?: Enclosure | undefined;
@@ -142,12 +109,10 @@ export interface VisualTraitValues {
   readonly elevation_style?: ElevationStyle | undefined;
 }
 
-/** Calibre in whole inches, rounded half up: `floor((µm + 12 700) / 25 400)`. */
 export function wholeInchesOf(calibreUm: number): number {
   return Math.floor((calibreUm + UM_PER_INCH / 2) / UM_PER_INCH);
 }
 
-/** Small ≤ 5 in, medium 6–11 in, large ≥ 12 in (proposal §8.2). */
 export function sizeClassOf(calibreUm: number): SizeClass {
   const inches = wholeInchesOf(calibreUm);
   if (inches <= 5) return "small";
@@ -155,7 +120,6 @@ export function sizeClassOf(calibreUm: number): SizeClass {
   return "large";
 }
 
-/** The presentation form a source derives by default, or `undefined` when the part is not drawn. */
 export function defaultPresentationForm(source: VisualTraitSource): PresentationForm | undefined {
   if (source.family === "gun_mount" || source.provides === "gun_mount") {
     switch (source.mountType) {
@@ -247,7 +211,6 @@ function defaultElevationStyle(
   return source.zoneId === "SUPERSTRUCTURE" ? "superstructure_deck" : "main_deck";
 }
 
-/** The default traits a source derives, before any override. Absent values do not apply. */
 export function deriveVisualTraits(source: VisualTraitSource): VisualTraitValues {
   const presentation_form = defaultPresentationForm(source);
   const enclosure = defaultEnclosure(source, presentation_form);
@@ -270,7 +233,6 @@ export function deriveVisualTraits(source: VisualTraitSource): VisualTraitValues
   };
 }
 
-/** The effective traits after authored overrides replace derived values. */
 export function effectiveVisualTraits(
   source: VisualTraitSource,
   overrides: PartVisualOverrides | undefined,
@@ -292,16 +254,11 @@ export function effectiveVisualTraits(
   };
 }
 
-/** One contradiction rule violation (V1–V9), evaluated on the effective traits. */
 export interface VisualTraitViolation {
   readonly rule: "V1" | "V2" | "V3" | "V4" | "V5" | "V6" | "V7" | "V8" | "V9";
   readonly message: string;
 }
 
-/**
- * The V1–V9 contradiction rules (proposal §8.2), evaluated on the **effective** traits so an
- * override never suppresses validation. V10–V12 are enforced at decode, not here.
- */
 export function visualTraitViolations(
   traits: VisualTraitValues,
   source: VisualTraitSource,
@@ -359,7 +316,6 @@ export function visualTraitViolations(
   return out;
 }
 
-/** The structural part fields the content-time adapter reads to build a source. */
 export interface VisualTraitPartLike {
   readonly family: string;
   readonly provides: string;
@@ -375,7 +331,6 @@ function optionalNumber(value: unknown): number | undefined {
   return typeof value === "number" ? value : undefined;
 }
 
-/** The trait source a part record supplies at the content compile stage (no placement yet). */
 export function visualTraitSourceOfPart(part: VisualTraitPartLike): VisualTraitSource {
   const spec =
     part.spec !== null && typeof part.spec === "object"
@@ -391,10 +346,6 @@ export function visualTraitSourceOfPart(part: VisualTraitPartLike): VisualTraitS
   };
 }
 
-/**
- * The V1–V9 violations of one part at the content compile stage, evaluated on the effective
- * traits (authored overrides applied) so an override never suppresses validation (I-26).
- */
 export function partVisualTraitViolations(
   part: VisualTraitPartLike,
 ): readonly VisualTraitViolation[] {

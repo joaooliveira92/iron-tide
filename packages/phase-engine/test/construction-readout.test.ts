@@ -50,7 +50,6 @@ function project(over: ProjectOverrides = {}): ConstructionProject {
 const capacityUnits = (perLine: number): Record<string, SafeInt> =>
   Object.fromEntries(LINE_IDS.map((line) => [line, SafeInt(perLine)]));
 
-/** A compiled design whose construction plan grants `perLine` capacity on every line. */
 function design(perLine: number, id = "d1"): CompiledDesignVersion {
   return {
     designVersionId: id,
@@ -101,7 +100,6 @@ function nation(projects: ConstructionProject[]): NationState {
   };
 }
 
-/** A complete six-instalment foreign contract funded by its schedule, not yard capacity. */
 function foreignContract(): ForeignConstructionContract {
   return buildForeignConstructionContract({
     contractId: "fc-1",
@@ -169,7 +167,7 @@ describe("constructionProjectQueueWithReadouts (SB3-R31)", () => {
     const entry = entries.find((e) => e.projectId === "proj-1")!;
     expect(entry.readout).toEqual({
       totalCostUnits: 200,
-      monthlyInstalmentUnits: 200, // no package schedule: the remaining work is the draw
+      monthlyInstalmentUnits: 200,
       remainingMonths: 1,
       launchMonth: "1880-02",
       scheduleBasis: "YARD_CAPACITY",
@@ -231,7 +229,7 @@ describe("constructionProjectReadout status awareness (INC-3c, SB3-R31)", () => 
   it("reports a foreign project with no resolvable contract as unavailable, never yard capacity", () => {
     const readout = constructionProjectReadout(
       project({ designVersionId: "d1", foreignContractId: "fc-missing" }),
-      design(25), // yard capacity would be 150/mo — it must not be used
+      design(25),
       "1880-01",
     );
     expect(readout.scheduleBasis).toBe("UNAVAILABLE");
@@ -267,13 +265,13 @@ describe("constructionProjectReadout status awareness (INC-3c, SB3-R31)", () => 
   it("derives a foreign project's instalment and launch from its contract schedule, not yard capacity", () => {
     const readout = constructionProjectReadout(
       project({ designVersionId: "d1", foreignContractId: "fc-1" }),
-      design(25), // yard capacity is 150/mo — it must be ignored
+      design(25),
       "1880-02",
       { contract: foreignContract(), paidDueMonths: ["1880-01"] },
     );
     expect(readout.scheduleBasis).toBe("FOREIGN_CONTRACT");
     expect(readout.scheduleUnavailableReason).toBeNull();
-    expect(readout.monthlyInstalmentUnits).toBe(100); // the next unpaid instalment
+    expect(readout.monthlyInstalmentUnits).toBe(100);
     expect(readout.remainingMonths).toBe(5);
     expect(readout.launchMonth).toBe("1880-08");
   });

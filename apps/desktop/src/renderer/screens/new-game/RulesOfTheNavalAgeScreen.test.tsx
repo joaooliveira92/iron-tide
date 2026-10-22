@@ -68,8 +68,6 @@ async function setupUi(recommendedPreset: AdmiralPresetValues | null = null) {
       }}
     />,
   );
-  // The deck and the setting controls only render once the options have loaded through the
-  // bridge. Wait for them, or the tests below race the load on a busy machine.
   await screen.findByLabelText("Fleet Size");
   await screen.findByRole("listbox", { name: "Campaign presets" });
   return { ...utils, onCancel, onNext, getPrimary: () => primary };
@@ -78,7 +76,6 @@ async function setupUi(recommendedPreset: AdmiralPresetValues | null = null) {
 function openSelectAndPick(labelText: string, optionName: string) {
   const trigger = screen.getByLabelText(labelText);
   fireEvent.click(trigger);
-  // The panel is portaled to <body>, so reach it through the trigger's aria-controls.
   const listId = trigger.getAttribute("aria-controls");
   const list = listId ? document.getElementById(listId) : null;
   const option = within(list ?? document.body).getByRole("option", { name: optionName });
@@ -102,12 +99,10 @@ function presetOption(name: string): HTMLElement {
   return within(presetListbox()).getByRole("option", { name });
 }
 
-/** The focused-preset panel is the region named after whichever preset is previewed. */
 function detailPanel(presetName: string): HTMLElement {
   return screen.getByRole("region", { name: presetName });
 }
 
-/** The name the deck reports as currently applied: a preset, or "Custom". */
 function appliedSetup(): string {
   const text = screen.getByRole("status").textContent ?? "";
   return text.replace(/^Current setup:\s*/u, "");
@@ -122,7 +117,6 @@ describe("RulesOfTheNavalAgeScreen", () => {
     expect(master).not.toBeNull();
     expect(master?.parentElement).toBe(detail.parentElement);
     expect(master?.contains(detail)).toBe(false);
-    // The forms live in the detail column, not the deck.
     expect(within(detail).getByLabelText("Fleet Size")).toBeTruthy();
     expect(within(detail).getByLabelText("Difficulty")).toBeTruthy();
     expect(within(master as HTMLElement).queryByLabelText("Fleet Size")).toBeNull();
@@ -133,7 +127,6 @@ describe("RulesOfTheNavalAgeScreen", () => {
 
     expect(container.querySelector("svg[aria-label='World map']")).toBeNull();
     expect(screen.queryByTestId("preset-globe-band")).toBeNull();
-    // The shell header's secondary row shows these now; the screen no longer repeats them.
     expect(
       screen.queryByText("Set the era, scale, and historical uncertainty for this campaign."),
     ).toBeNull();
@@ -183,7 +176,6 @@ describe("RulesOfTheNavalAgeScreen", () => {
   it("says a previewed preset will be applied by Next, until it is applied", async () => {
     await setupUi();
 
-    // Looking at the default card promises nothing.
     expect(within(detailPanel("Cadet")).queryByText("Applies on Next")).toBeNull();
 
     fireEvent.keyDown(presetListbox(), { key: "ArrowRight" });
@@ -237,7 +229,6 @@ describe("RulesOfTheNavalAgeScreen", () => {
     fireEvent.keyDown(presetListbox(), { key: "ArrowRight" });
     expect(detailPanel("Admiral")).toBeTruthy();
 
-    // The loaded defaults differ from Cadet only in Research Pace.
     openSelectAndPick("Research Pace", "Standard");
 
     expect(appliedSetup()).toBe("Cadet");
@@ -383,7 +374,6 @@ describe("RulesOfTheNavalAgeScreen", () => {
 
     await waitFor(() => expect(onNext).toHaveBeenCalledTimes(1));
     const [preferences] = onNext.mock.calls[0] as [Record<string, string>, NewGameOptions];
-    // The loaded defaults, not Cadet's bundle (which differs in Research Pace).
     expect(preferences.researchSpeed).toBe("slow");
   });
 

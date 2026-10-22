@@ -22,31 +22,6 @@ import { AppPaths, Clock, IdGenerator, NativeDialog } from "../runtime/platform.
 import { ProjectStore } from "../runtime/projectStore.js";
 import { ReplayService } from "../runtime/replayService.js";
 
-/**
- * The four Campaign File continuance commands (desktop-mvp ticket 16), wired
- * for real through `@bluewave/persistence`'s `SaveStore` /
- * `RecoveryManager` and `@bluewave/phase-engine`'s `ReplayVerifier` per the
- * resolved New-Game & Continuity Contract, as native `CommandProgram`s
- * (INC-5; ADR-0159).
- *
- * "Package" here = `SaveStore`'s save directory (not the retired `.bluewave`
- * content-authoring format in `main/project.ts`). All four commands take an
- * `undefined` payload on the IPC boundary — grounded in
- * `useCampaignFiles.ts`, which calls them payload-less — so the program
- * prompts for the package directory itself through `NativeDialog` (ticket 08:
- * "the main process handles file/package selection (a native dialog)").
- *
- * The renderer's Campaign File screen runs these from a fresh app start
- * (its Package Operations buttons are its initial screen), so NOTHING here
- * depends on an already-registered session — every command re-reads the
- * picked package from disk, and `loadCampaign` alone registers the session
- * the in-campaign screens then operate on.
- *
- * Every reason code (`LOAD_FAILED`, `SESSION_METADATA_MISSING`,
- * `SESSION_METADATA_INVALID`, `UNKNOWN_PLAYER_SLOT`, `REPLAY_FAILED`,
- * `RECOVERY_FAILED`, `PACKAGE_SELECTION_CANCELLED`) is preserved.
- */
-
 function cancelled() {
   return {
     outcome: "rejected" as const,
@@ -55,20 +30,6 @@ function cancelled() {
   };
 }
 
-/**
- * `loadCampaign(undefined) -> LoadCampaignResponse` (ticket 08/16). Prompts
- * for a package save directory, loads it through `ProjectStore.load` (rawHash +
- * envelope + `CompatibilityChecker` integrity all pass before anything is
- * returned), and registers a full `CampaignSessionRecord` — real state, not
- * a fresh/empty campaign.
- *
- * The record's fields a snapshot alone can't supply come from the package's
- * `session.json` sidecar: `playerSlotId`, `campaignSeed` (the deterministic
- * root for future `commitMonth` seeds), and `scenarioId` (whose canonical
- * start date + `turnNumber` months yields the current calendar month —
- * `commitMonth` advances exactly one calendar month per turn, so
- * month(start) + N turns == month at revision N, exactly).
- */
 export const loadCampaignProgram = payloadless(() =>
   Effect.gen(function* () {
     const dialogs = yield* NativeDialog;
@@ -80,10 +41,6 @@ export const loadCampaignProgram = payloadless(() =>
   }),
 );
 
-/**
- * `listRecentCampaigns(undefined)` — the main-process recents, newest first,
- * each flagged `available: false` when its directory has gone missing.
- */
 export const listRecentCampaignsProgram = payloadless(() =>
   Effect.gen(function* () {
     const paths = yield* AppPaths;
@@ -96,7 +53,6 @@ export const listRecentCampaignsProgram = payloadless(() =>
   }),
 );
 
-/** `removeRecentCampaign({ packagePath })` — forgets one recent entry. */
 export const removeRecentCampaignProgram = withStrictSchema(
   RecentPackagePayloadSchema,
   ({ packagePath }) =>
@@ -112,13 +68,6 @@ export const removeRecentCampaignProgram = withStrictSchema(
     }),
 );
 
-/**
- * `loadRecentCampaign({ packagePath })` — reopens a package the user already
- * chose through the native dialog. The renderer's path is only a lookup key:
- * it must match the canonical path of an entry in the main-process recents,
- * otherwise the command fails with `PACKAGE_NOT_APPROVED`. A listed package
- * whose directory is gone fails with `PACKAGE_MISSING`.
- */
 export const loadRecentCampaignProgram = withStrictSchema(
   RecentPackagePayloadSchema,
   ({ packagePath }) =>
@@ -207,11 +156,8 @@ const loadPackageAt = (saveDir: string) =>
       month,
       state,
     });
-    // Commands the player queued for this month before the app closed are queued again.
     yield* queue.restore(sessionId);
 
-    // Remember the package for Recent Campaigns. Best-effort: failing to
-    // remember must never block opening.
     const appPaths = yield* AppPaths;
     const clock = yield* Clock;
     const now = yield* clock.now();
@@ -241,15 +187,6 @@ const loadPackageAt = (saveDir: string) =>
     };
   });
 
-/**
- * `listCampaigns(undefined) -> BridgeResult<SaveMetadata[]>` — the
- * campaign-list/load screen's backing query (§17.4). Prompts for the package
- * save directory via the same native dialog as `loadCampaign`, then returns
- * `ProjectStore.list(saveDir)`: the package's saves as real `SaveMetadata`
- * records, deterministically newest-first, skipping corrupt/incompatible
- * directories. No state is mutated and no session is registered — the actual
- * load still goes through `loadCampaign`/`CompatibilityChecker`.
- */
 export const listCampaignsProgram = payloadless(() =>
   Effect.gen(function* () {
     const dialogs = yield* NativeDialog;
@@ -263,18 +200,6 @@ export const listCampaignsProgram = payloadless(() =>
   }),
 );
 
-/**
- * `verifyCampaign(undefined) -> VerifyCampaignResponse` (ticket 08/16).
- * `ProjectStore.load` performs exactly the fast, package-local integrity
- * checks ticket 08's answer names — rawHash recomputed over the whole state,
- * `verifyEnvelope` over `{envelope, snapshot}`, and `CompatibilityChecker`
- * over the pinned compatibility version — so verify literally IS a
- * `ProjectStore.load` pass/fail. `issues` carries the load diagnostics
- * verbatim on failure. The claimed identity/revision fall back to the
- * package's `metadata.json` (written by `SaveStore`, not covered by the state
- * envelope) when the state itself fails integrity, so a corrupt package's
- * verify report is still identifiable.
- */
 export const verifyCampaignProgram = payloadless(() =>
   Effect.gen(function* () {
     const dialogs = yield* NativeDialog;
@@ -311,30 +236,6 @@ export const verifyCampaignProgram = payloadless(() =>
   }),
 );
 
-/**
- * `replayCampaign(undefined) -> ReplayCampaignResponse` (ticket 08/16): full
- * `ReplayVerifier`-based command-history replay. Walks the package's save
- * chain (every `SaveStore` save directory, grouped by revision —
- * construction commands write extra saves *at the same revision*, so the
- * newest save per revision is the state the next month executed against)
- * and, for each consecutive revision pair, replays that month
- * deterministically: same engine, same ruleset, same random seed
- * (`${campaignSeed}:month:<pre-turn>`, the exact derivation `commitMonth`
- * uses) against the pre-month snapshot, and confirms the replayed closing
- * hash matches the persisted post-month snapshot's deterministic
- * subset-hash — using `ReplayService.hash`, the exact function
- * `ReplayVerifier.verify()` compares with.
- *
- * Each month is replayed with the input it was executed with, stored beside
- * the save that closes it (`month-input.json`, see `monthInput.ts`): the
- * player's command envelopes, their original outcomes (compared step by
- * step) and the ship-building content hash. If that content has changed
- * since, the month is reported as not reproducible rather than replayed
- * against different rules. Saves written before month inputs existed carry
- * none and replay with no commands, as they always did. A campaign that has
- * never advanced has no executed months and trivially `matched` with zero
- * revisions.
- */
 export const replayCampaignProgram = payloadless(() =>
   Effect.gen(function* () {
     const dialogs = yield* NativeDialog;
@@ -365,11 +266,6 @@ export const replayCampaignProgram = payloadless(() =>
       };
     }
 
-    // list() is newest-first with a deterministic tie-break (timestamp, then
-    // the save chain, then saveId — never OS directory order, F6). A later
-    // save at the same revision supersedes an earlier one (construction saves
-    // never advance revision), so per-turn selection keeps the FIRST save seen
-    // — the newest — rather than overwriting it with an older one.
     const newestSavePerTurn = new Map<number, SaveMetadata>();
     for (const meta of listed) {
       if (!newestSavePerTurn.has(meta.turnNumber)) {
@@ -448,7 +344,6 @@ export const replayCampaignProgram = payloadless(() =>
         });
         continue;
       }
-      // Older saves carry no armament hash; only a recorded-and-different armament hash is a divergence (ADR-0093 Step 3).
       if (
         input !== null &&
         input.armamentContentHash !== undefined &&
@@ -468,12 +363,6 @@ export const replayCampaignProgram = payloadless(() =>
         });
         continue;
       }
-      // `commitMonth` advances `turnNumber` by one purely as session
-      // bookkeeping after execution; the engine's own final snapshot keeps the
-      // pre-turn label. Compare like with like by hashing the persisted
-      // post-month snapshot at the pre-turn number.
-      // commitMonth executes with the player's slot first (the engine authorizes human commands against slots[0]) and
-      // restores the compiled order before saving; replay does the same on both sides so the queued envelopes validate.
       const executed = yield* replay.promote(pre.snapshot, metadata.playerSlotId);
       const expectedHash = yield* replay.hash(
         yield* replay.promote(
@@ -528,18 +417,6 @@ function loadSaveForTurn(
   return projects.loadById(saveDir, meta.saveId, new DiagnosticCollector());
 }
 
-/**
- * `recoverCampaign(undefined) -> RecoverCampaignResponse` (ticket 08/16):
- * `RecoveryManager`'s existing corruption-recovery flow, honestly wrapped by
- * an integrity probe first. `ProjectStore.load`'s hash/envelope/compatibility
- * checks ARE the corruption detector: the active save is loaded with full
- * verification, and a failed load stands as the corruption verdict. A
- * corrupt active save is reverted to its predecessor via `ReplayService.revert`
- * (an atomic pointer flip), then re-verified via a fresh `ProjectStore.load`.
- * A healthy package is left untouched (`recovered: false` — reverting would
- * needlessly lose the newest state); a corrupt package with no predecessor
- * can't be recovered (`activeRevision: null`).
- */
 export const recoverCampaignProgram = payloadless(() =>
   Effect.gen(function* () {
     const dialogs = yield* NativeDialog;

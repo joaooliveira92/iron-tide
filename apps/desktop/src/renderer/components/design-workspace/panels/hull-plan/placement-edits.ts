@@ -7,20 +7,12 @@ import type {
 } from "@bluewave/ship-design";
 import { zoneAtStation, type PlanTarget, type ZoneSpan } from "./plan-targeting.js";
 
-/**
- * Pure builders for the undoable `DraftEdit`s that place, move and nudge fittings from the hull plan. Pointer
- * clicks and the keyboard-reachable toolbar both produce the same edits as the Arrangement panel, through these
- * functions. No compilation or React state here: every result is either an edit or a reason to refuse it.
- */
-
-/** Keyboard nudge, permille: a step and a larger step. */
 export const NUDGE_PERMILLE = { step: 10, large: 50 } as const;
 
 export type PlanEdit =
   | { readonly ok: true; readonly edit: DraftEdit }
   | { readonly ok: false; readonly reason: string };
 
-/** Categories whose mounts have a side (they fire to a beam). */
 const SIDED_CATEGORIES: readonly string[] = [
   "MAIN_GUN",
   "SECONDARY_GUN",
@@ -41,7 +33,6 @@ function zoneProblem(entry: PartCatalogueEntry | undefined, zoneId: ZoneId | nul
   return null;
 }
 
-/** An unused instance id for a component: `<componentId>_<n>`, the same scheme as the Arrangement panel. */
 export function nextInstanceId(
   draft: Pick<DesignDraft, "placements">,
   componentId: string,
@@ -51,7 +42,6 @@ export function nextInstanceId(
   return `${componentId}_${n}`;
 }
 
-/** Place a new fitting at a plan target: refused when no zone is there or the zone is not allowed for the component. */
 export function placeEdit(
   entry: PartCatalogueEntry,
   target: PlanTarget,
@@ -75,7 +65,6 @@ export function placeEdit(
   };
 }
 
-/** Move a fitting to a plan target, also setting its side when it has one, as one undoable edit. */
 export function moveEdit(
   placement: PlacementSpec,
   entry: PartCatalogueEntry | undefined,
@@ -102,7 +91,6 @@ export function moveEdit(
   };
 }
 
-/** Nudge a fitting along the hull by `deltaPermille` (clamped to the hull), following the zone it moves into. */
 export function nudgeEdit(
   placement: PlacementSpec,
   entry: PartCatalogueEntry | undefined,

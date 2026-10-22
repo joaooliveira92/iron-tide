@@ -44,19 +44,14 @@ describe("buildConstructionDesignCatalog", () => {
     );
     const [design] = buildConstructionDesignCatalog(snapshot, "uk", 1880);
     expect(design.className).toBe("Inflexible");
-    // No family authored → no vintage → never era-gated.
     expect(design.available).toBe(true);
     expect(design.shipType).toBe("ironclad");
-    // 11 880 t → mass 11 880, cost 119 (kg/100 000), capacity 12 (kt).
     expect(design.mass).toBe(11_880);
-    // ADR-0037: compiled speed is µm/s; catalog converts back to knots.
-    expect(design.speed).toBe(8); // 8 kt
+    expect(design.speed).toBe(8);
     expect(design.machineryType).toBe("reciprocating_compound");
-    // No authored tech links in the compiled content — honest empty list.
     expect(design.requiredTechnologyIds).toEqual([]);
     expect(design.costBasis).toBe("displacement_formula");
     expect(design.projectedCost).toBeGreaterThan(0);
-    // No family authored for this fixture → no fictional vintage.
     expect(design.year).toBe(0);
   });
 
@@ -74,9 +69,7 @@ describe("buildConstructionDesignCatalog", () => {
     });
     const [design] = buildConstructionDesignCatalog(snapshot, "uk", 1880);
     expect(design.year).toBe(1906);
-    // A 1906 design is not buildable in an 1880 campaign...
     expect(design.available).toBe(false);
-    // ...but is once the campaign reaches its era.
     expect(buildConstructionDesignCatalog(snapshot, "uk", 1906)[0]!.available).toBe(true);
   });
 });
@@ -130,7 +123,6 @@ describe("buildConstructionProjectQueue", () => {
 
     const entries = buildConstructionProjectQueue(snapshot, "uk");
     expect(entries).toHaveLength(2);
-    // Sorted by project id, so rendering is stable.
     expect(entries.map((e) => e.projectId)).toEqual([
       "con_gbr_inflexible",
       "project-req-1-a1b2c3d4",
@@ -142,19 +134,16 @@ describe("buildConstructionProjectQueue", () => {
     expect(authored.status).toBe("ACTIVE");
     expect(authored.totalWork).toBe(100);
     expect(authored.completedWork).toBe(60);
-    // No command record exists behind an authored start.
     expect(authored.commandId).toBeNull();
 
     const queued = entries.find((e) => e.projectId === "project-req-1-a1b2c3d4")!;
     expect(queued.status).toBe("PLANNED");
-    // The command-queued project resolves to its workspace command id.
     expect(queued.commandId).toBe("cmd-req-1-a1b2c3d4");
   });
 
   it("round-trips the project<->command id pairing used by the desktop commands", () => {
     expect(constructionProjectIdForCommand("cmd-tx-7-abcdef01")).toBe("project-tx-7-abcdef01");
     expect(constructionCommandIdForProject("project-tx-7-abcdef01")).toBe("cmd-tx-7-abcdef01");
-    // Authored starts carry no command linkage.
     expect(constructionCommandIdForProject("con_gbr_inflexible")).toBeNull();
   });
 

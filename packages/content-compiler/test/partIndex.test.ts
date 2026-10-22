@@ -11,20 +11,12 @@ import {
 } from "../src/index.js";
 import { PROVENANCE, baseInput, compile, createFixture, type Fixture } from "./partModelFixture.js";
 
-/**
- * The flatten stage and the part index at the content compile seam (ship-part-model
- * ticket 02, SPM-R10, SPM-R11, SPM-R14). Expected values are worked by hand from the
- * fixtures below, never recomputed the way the stage computes them.
- */
-
 const provenance = {
   sourceStatus: "VERIFIED",
   confidence: "HIGH",
   kind: "historical_fact",
   sources: [{ title: "test" }],
 };
-
-// The hand-worked fixture: a prototype in one file, a national variant in another
 
 const PROTOTYPE_FILE = "ship-building/parts/torpedoes.yaml";
 const VARIANT_FILE = "ship-building/parts/austria-hungary.yaml";
@@ -58,8 +50,6 @@ const PROTOTYPE = `parts:
     provenance: ${PROVENANCE}
 `;
 
-// The variant's revisions are declared out of order; the prototype's 1884 revision is
-// not inherited, so the variant's warhead stays 12 kg until its own 1885 re-rating.
 const VARIANT = `parts:
   - id: whitehead_14in_fiume
     family: torpedo
@@ -161,7 +151,6 @@ describe("a prototype, a variant and two revisions flatten to hand-worked values
         { id: "torpedo_cost", kind: "costMicro", value: 45000000, basis: "PER_PART_UNIT" },
       ]);
       expect(part?.revisions.map((r) => r.from)).toEqual(["1885-03", "1889-07"]);
-      // Each revision keeps its own provenance through flattening.
       expect(part?.revisions.map((r) => r.provenance.confidence)).toEqual(["LOW", "MEDIUM"]);
       expect(part?.lifecycle).toEqual({ availableFrom: "1881-01" });
       expect(part?.nation).toBe("austria_hungary");
@@ -280,9 +269,6 @@ describe("a prototype, a variant and two revisions flatten to hand-worked values
   });
 });
 
-// The ship-type registry beside the part index (ticket 12a)
-
-/** A minimal valid ship-type record, as a JSON record. */
 function shipType(id: string, overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id,
@@ -334,7 +320,6 @@ describe("the ship-type registry rides beside the part index, id-sorted", () => 
       expect(index?.shipTypes.map((record) => record.id)).toEqual(["AMC", "B", "KE"]);
       expect(index?.shipTypes.map((record) => record.name)).toEqual(["AMC", "B", "KE"]);
 
-      // A different declaration order flattens to the same id-sorted array.
       const second = compile(
         baseInput(fixture, {
           shipTypeFiles: [
@@ -367,9 +352,6 @@ describe("the ship-type registry rides beside the part index, id-sorted", () => 
   });
 });
 
-// Structured diagnostics
-
-/** A standalone part of `family`, as a JSON record. */
 function part(id: string, overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     id,
@@ -384,7 +366,6 @@ function part(id: string, overrides: Record<string, unknown> = {}): Record<strin
   };
 }
 
-/** A variant of `prototype` with an empty delta. */
 function variant(id: string, prototype: string, overrides: Record<string, unknown> = {}) {
   return part(id, { extends: prototype, spec: {}, quantities: undefined, ...overrides });
 }
@@ -575,9 +556,7 @@ describe("cross-references fail with the file and field path", () => {
     [
       "an unknown legacy-exception forPart",
       [
-        // The counterpart torpedo part is declared, so the `forPart` reference is checked.
         part("torpedo_14in", {}),
-        // A legacy exception is admissible on a launcher only (ADR-0154 §10).
         part("a", {
           family: "torpedo_launcher",
           provides: "torpedo_launcher",
@@ -607,8 +586,6 @@ describe("cross-references fail with the file and field path", () => {
   });
 });
 
-// Determinism, hash and lock
-
 function buildArtifact(input: CompilerInput) {
   const collector = new DiagnosticCollector();
   const artifact = buildContentBundleArtifact(input, new AbortController().signal, collector);
@@ -630,8 +607,6 @@ describe("the part index is deterministic and covered by the hash and lock", () 
         }),
       ),
     );
-    // Source files are recorded relative to the content root, so even the fixture
-    // directory, which differs per run, leaves no trace in the bytes.
     expect(again.artifactJson).toBe(first.artifactJson);
     expect(reordered.artifactJson).toBe(first.artifactJson);
   });

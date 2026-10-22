@@ -23,8 +23,6 @@ import {
   makeWar,
 } from "./battle-fixtures.js";
 
-// T-1 05 (#114, spec #109 R9): the declined-battle tally and the threshold event. Every ruleset value is a FIXTURE-CLASS
-// value (threshold 2 unless a test says otherwise); none reaches production.
 type Rules = typeof FIXTURE_BATTLE_OFFER_RULES;
 type Counter = Rules["declineCounter"];
 const WAR_1 = makeWar({ id: "war_1" });
@@ -43,7 +41,6 @@ interface Step {
   readonly month?: string;
 }
 
-/** One decline against the given tallies; the wars known to the snapshot are fixed. */
 function decline(entries: readonly DeclineCounterEntry[] | undefined, step: Step = {}) {
   return tallyDecline(entries, {
     rules: step.rules ?? counter(),
@@ -200,7 +197,6 @@ describe("tallyDecline (R9)", () => {
   });
 });
 
-// ----- through the month executor -------------------------------------------------------------------------------
 const SEED = "decline-counter-seed";
 const TURN = "turn-decline-counter";
 
@@ -250,7 +246,6 @@ function twoAreaSnapshot(): CampaignSnapshot {
   });
 }
 
-/** The scripted run: answer each offer in order until the month completes. */
 function script(snapshot: CampaignSnapshot, responses: readonly OfferResponse[]): MonthResult {
   const inputs: RecordedInput[] = [];
   let result = run(snapshot, inputs);

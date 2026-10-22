@@ -4,13 +4,7 @@ import { useSlideVisibility } from "./useSlideVisibility.js";
 
 export interface SlidePanelProps {
   readonly isOpen: boolean;
-  /**
-   * `overlay` pins the panel to the bottom of its positioned parent and slides
-   * it up (the nation dossier). `inline` keeps it in the page flow and eases it
-   * in with a short rise (the preset detail panel).
-   */
   readonly placement?: "overlay" | "inline";
-  /** Ease in on first render instead of appearing already entered. */
   readonly animateOnMount?: boolean;
   readonly "aria-labelledby": string;
   readonly className?: string;
@@ -35,11 +29,6 @@ const PLACEMENT: Record<
   },
 };
 
-/**
- * The shared appear/disappear chrome for a panel that slides in: it owns the
- * mount lifecycle and the transition, and nothing about what is inside. The
- * nation dossier and the preset detail panel both wrap their own bodies in it.
- */
 export function SlidePanel({
   isOpen,
   placement = "overlay",

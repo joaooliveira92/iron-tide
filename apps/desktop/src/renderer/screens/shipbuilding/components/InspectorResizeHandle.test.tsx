@@ -33,7 +33,6 @@ describe("InspectorResizeHandle", () => {
     const onChange = vi.fn();
     render(<InspectorResizeHandle widthPx={440} onChange={onChange} controls="inspector" />);
     const sep = handle();
-    // The grid's right edge is at x=1000; dragging the divider to x=520 asks for a 480px pane.
     const parent = sep.parentElement!;
     vi.spyOn(parent, "getBoundingClientRect").mockReturnValue({
       right: 1000,

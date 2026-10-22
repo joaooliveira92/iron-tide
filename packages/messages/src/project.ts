@@ -12,11 +12,6 @@ import { describeEventBody } from "./provenance.js";
 import type { TurnMessage } from "./schema.js";
 import { PROJECTION_VERSION } from "./version.js";
 
-/**
- * Everything the projection needs: the month's authoritative domain events, the
- * authoritative pre-turn snapshot (for the campaign date), and the version
- * descriptors carried into provenance. No renderer, locale, or ambient state.
- */
 export interface ProjectionInput {
   readonly turnId: string;
   readonly events: readonly DomainEventEnvelope[];
@@ -25,7 +20,6 @@ export interface ProjectionInput {
   readonly contentVersion: string;
 }
 
-/** The snapshot fields the projection reads (the campaign date anchor). */
 export type ProjectionSnapshot = Pick<CampaignSnapshot, "startYear" | "startMonth" | "turnNumber">;
 
 function draftFor(
@@ -60,12 +54,6 @@ function draftFor(
   };
 }
 
-/**
- * Project a turn's authoritative domain events into structured, deterministic
- * messages: classified, aggregated, deduplicated, canonically ordered, and
- * content-addressed. Pure and total — the same input always yields the same
- * output, including `TRACE` developer-only messages (`playerVisible: false`).
- */
 export function projectTurnMessages(input: ProjectionInput): TurnMessage[] {
   const occurredAt = campaignMonthId(
     input.snapshot.startYear,
@@ -79,7 +67,6 @@ export function projectTurnMessages(input: ProjectionInput): TurnMessage[] {
   return withIdentities(input.turnId, sortMessages(aggregated));
 }
 
-/** The player-facing subset — everything except developer-only `TRACE` messages. */
 export function playerVisibleMessages(messages: readonly TurnMessage[]): TurnMessage[] {
   return messages.filter((message) => message.playerVisible);
 }

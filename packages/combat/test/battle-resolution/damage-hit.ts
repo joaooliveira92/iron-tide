@@ -1,4 +1,3 @@
-// Minimal HIT GunneryEventRecord helper for the B-6 INC-2 damage-flow tests.
 import type { GunneryEventRecord } from "../../src/gunnery/event.js";
 import { neutralAccuracyFactors } from "../../src/gunnery/accuracy.js";
 import { neutralRateFactors } from "../../src/gunnery/rateOfFire.js";

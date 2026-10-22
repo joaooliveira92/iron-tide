@@ -1,25 +1,3 @@
-// DESIGN-40 §20 turret/system loss via underwater shock (INC-6, AC-17).
-// Underwater shock may damage a turret, magazine-handling system, fire-control
-// connection, radar, sonar, pumps, electrical system, steering, or another
-// nearby system ONLY when the system lies within the impact zone's declared
-// shock radius. Shipped base probabilities: within PRIMARY radius 3_000 bp,
-// within SECONDARY 1_000 bp, OUTSIDE 0. A successful check selects from the
-// ACTUAL nearby systems in ascending stable-id order through one keyed
-// weighted selection — each eligible system's weight is its radius band's base
-// probability; the residual mass of the 10_000 bp pool is the NO_DAMAGE
-// outcome. Systems OUTSIDE the declared radius are never in the pool (the
-// resolver never destroys a spatially ineligible system).
-//
-// Determinism: exactly ONE keyed draw on
-//   battle/torpedo/damage/system-shock:<battleId>:<impactMinute>:<impactSubstep>:<trackId>
-// and NO draw when the pool is empty (an empty pool is a deterministic
-// no-effect, so the draw layout is input-deterministic). A damaged system
-// records the in-slice cause TORPEDO_SYSTEM_SHOCK_DAMAGE_CREATED and the
-// B-4ComponentOutcome "DESTROYED" (the shock amplience is a loss outcome — §20
-// "Turret and System Loss"); turret application goes through the reused
-// applyTurretDamage seam in damagePackage.ts.
-//
-// Pure/deterministic: no ambient I/O/clock/random.
 import { BluewaveError } from "@bluewave/contracts";
 import {
   TORPEDO_SYSTEM_SHOCK_BANDS,
@@ -45,9 +23,6 @@ function isInt(v: unknown): v is number {
   return typeof v === "number" && Number.isInteger(v) && Number.isSafeInteger(v);
 }
 
-// §20 pools: a candidate system with its declared shock band. The layout layer
-// classifies each actual nearby system; OUTSIDE candidates never enter the
-// selection pool (spatial eligibility gate).
 export interface SystemShockCandidate {
   stableSystemId: string;
   band: TorpedoSystemShockBand;
@@ -63,15 +38,10 @@ function assertCandidate(c: unknown): asserts c is SystemShockCandidate {
     invariant("band", candidate.band, "band must be a canonical §20 shock-radius band");
 }
 
-/** Fail-closed candidate validator (exported for the tube-hazard seam). */
 export function assertSystemShockCandidate(c: unknown): asserts c is SystemShockCandidate {
   assertCandidate(c);
 }
 
-// AC-17: ordering + eligibility — the selection pool of ACTUAL nearby systems
-// in ascending stable-id order, excluding every spatially ineligible system.
-// The comparator is a plain string `<`/`>` (NO localeCompare — the no-locale-read
-// contract; plain comparison is fully deterministic across engines).
 export function eligibleShockSystems(
   candidates: readonly SystemShockCandidate[],
 ): readonly SystemShockCandidate[] {
@@ -87,14 +57,10 @@ export function eligibleShockSystems(
   );
 }
 
-// The deterministic pool weights: each eligible system's band base probability.
 export function shockSelectionWeights(pool: readonly SystemShockCandidate[]): readonly number[] {
   return pool.map((c) => TORPEDO_SYSTEM_SHOCK_BASE_BP[c.band]);
 }
 
-// AC-17: keyed weighted selection — drawBp < cumulative selects that system;
-// drawBp >= the pool mass selects NO_DAMAGE (the residual). The single draw
-// covers the whole 10_000 bp pool (base masses + no-damage mass).
 export function selectShockSystem(
   pool: readonly SystemShockCandidate[],
   drawBp: number,
@@ -110,27 +76,22 @@ export function selectShockSystem(
     cumulative += TORPEDO_SYSTEM_SHOCK_BASE_BP[candidate.band];
     if (drawBp < cumulative) return candidate;
   }
-  return null; // the residual NO_DAMAGE bucket — no system damaged
+  return null;
 }
 
 export interface TorpedoSystemShockResult {
-  affectedSystem: SystemShockCandidate | null; // null = NO_DAMAGE
-  // the full eligible pool (ascending stable-id) the selection ran over
+  affectedSystem: SystemShockCandidate | null;
   eligibleSystems: readonly SystemShockCandidate[];
-  decision: { streamId: string; draw: number; drawBp: number } | null; // null when no draw
-  // "DESTROYED" on a damaged system; null when no system was selected.
+  decision: { streamId: string; draw: number; drawBp: number } | null;
   componentOutcome: "DESTROYED" | null;
-  reasonCode: string | null; // TORPEDO_SYSTEM_SHOCK_DAMAGE_CREATED on a damaged system
+  reasonCode: string | null;
 }
 
-// AC-17: the complete system-shock evaluation. An empty pool (or a pool that
-// is entirely spatially ineligible) is a deterministic no-effect that consumes
-// NO draw; otherwise exactly ONE keyed draw over the eligible systems.
 export function evaluateTorpedoSystemShock(o: {
   battleId: string;
   impactMinute: number;
   impactSubstep: number;
-  entityId: string; // the track/launcher id this shock belongs to
+  entityId: string;
   candidates: readonly SystemShockCandidate[];
   keyedRng: (stream: string) => number;
 }): TorpedoSystemShockResult {

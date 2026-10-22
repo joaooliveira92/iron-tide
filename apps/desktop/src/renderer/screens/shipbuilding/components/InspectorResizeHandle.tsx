@@ -7,20 +7,12 @@ import {
 } from "../inspector-layout.js";
 
 export interface InspectorResizeHandleProps {
-  /** The inspector's current width, in pixels. */
   readonly widthPx: number;
-  /** Called with the proposed width as the player drags or nudges the handle. */
   readonly onChange: (px: number) => void;
-  /** Id of the inspector pane whose size this handle sets. */
   readonly controls: string;
   readonly className?: string;
 }
 
-/**
- * The draggable bar on the inspector's left edge (WAI-ARIA window splitter). Dragging sets the width
- * from the pointer's distance to the pane's right edge; arrow keys nudge it, Home/End jump to the
- * limits, Enter restores the default. It is presentation only — the screen holds the width.
- */
 export function InspectorResizeHandle({
   widthPx,
   onChange,

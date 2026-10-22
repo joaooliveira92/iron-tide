@@ -1,6 +1,3 @@
-// INC-5 — Per-minute fire resolution (DESIGN-41 §22-28).
-// Proves: ROF penalty bands, night signature bands, smoke strength formula,
-// intensity decay, fire extinguishment, and fire spread.
 import { describe, it, expect } from "vite-plus/test";
 import {
   getFireRofPenaltyBp,
@@ -10,12 +7,9 @@ import {
 } from "../../src/damage/fireResolution.js";
 import { FIRE_SPREAD_CREATED } from "../../src/damage/reasonCodes.js";
 
-// Deterministic RNG for testing — returns predictable values.
 function rngThat(returnValues: Record<string, number>): (stream: string) => number {
   return (stream: string) => returnValues[stream] ?? 0.5;
 }
-
-// getFireRofPenaltyBp
 
 describe("getFireRofPenaltyBp", () => {
   it("returns 9_500 for intensity 1..2_499", () => {
@@ -55,8 +49,6 @@ describe("getFireRofPenaltyBp", () => {
   });
 });
 
-// getFireNightSignatureBp
-
 describe("getFireNightSignatureBp", () => {
   it("returns 10_000 for intensity 0..999", () => {
     expect(getFireNightSignatureBp(0)).toBe(10_000);
@@ -92,19 +84,13 @@ describe("getFireNightSignatureBp", () => {
   });
 });
 
-// computeFireSmokeStrength
-
 describe("computeFireSmokeStrength", () => {
   it("computes smoke with ordinary fuel (8_000 bp)", () => {
-    // intensity=5_000, fuel=8_000, vent=10_000
-    // 5000 * 8000 * 10000 / 100000000 = 4000
     const result = computeFireSmokeStrength(5_000, "ORDINARY");
-    // 5_000 * 8_000 * 10_000 / 100_000_000 = 4_000
     expect(result).toBe(4_000);
   });
 
   it("computes smoke with oil fuel (12_000 bp) — higher than ordinary", () => {
-    // 5_000 * 12_000 * 10_000 / 100_000_000 = 6_000
     const oilResult = computeFireSmokeStrength(5_000, "OIL");
     const ordResult = computeFireSmokeStrength(5_000, "ORDINARY");
     expect(oilResult).toBeGreaterThan(ordResult);
@@ -112,7 +98,6 @@ describe("computeFireSmokeStrength", () => {
   });
 
   it("computes smoke with coal fuel (15_000 bp) — highest", () => {
-    // 5_000 * 15_000 * 10_000 / 100_000_000 = 7_500
     const coalResult = computeFireSmokeStrength(5_000, "COAL");
     const oilResult = computeFireSmokeStrength(5_000, "OIL");
     expect(coalResult).toBeGreaterThan(oilResult);
@@ -120,7 +105,6 @@ describe("computeFireSmokeStrength", () => {
   });
 
   it("computes smoke with mixed fuel (10_000 bp)", () => {
-    // 5_000 * 10_000 * 10_000 / 100_000_000 = 5_000
     const result = computeFireSmokeStrength(5_000, "MIXED");
     expect(result).toBe(5_000);
   });
@@ -131,7 +115,6 @@ describe("computeFireSmokeStrength", () => {
   });
 
   it("accepts custom ventilation multiplier", () => {
-    // 5_000 * 8_000 * 5_000 / 100_000_000 = 2_000
     const result = computeFireSmokeStrength(5_000, "ORDINARY", 5_000);
     expect(result).toBe(2_000);
   });
@@ -142,13 +125,10 @@ describe("computeFireSmokeStrength", () => {
   });
 
   it("handles very high intensity (10_000) correctly", () => {
-    // 10_000 * 8_000 * 10_000 / 100_000_000 = 8_000
     const result = computeFireSmokeStrength(10_000, "ORDINARY");
     expect(result).toBe(8_000);
   });
 });
-
-// resolveFireProgression
 
 describe("resolveFireProgression", () => {
   it("no-op when no fires", () => {
@@ -168,21 +148,18 @@ describe("resolveFireProgression", () => {
   it("fire removed when intensity < 1 after decay", () => {
     const fires = [{ locationId: "COMP-1", intensityBp: 150, cause: "FIRE_SOURCE_CREATED" }];
     const result = resolveFireProgression(fires, "ORDINARY", null);
-    // 150 - 200 = -50 < 1 → removed
     expect(result.fireRecords).toHaveLength(0);
   });
 
   it("fire removed when intensity exactly 0 after decay", () => {
     const fires = [{ locationId: "COMP-1", intensityBp: 200, cause: "FIRE_SOURCE_CREATED" }];
     const result = resolveFireProgression(fires, "ORDINARY", null);
-    // 200 - 200 = 0 < 1 → removed (intensity must be >= 1 to survive)
     expect(result.fireRecords).toHaveLength(0);
   });
 
   it("fire removed when intensity is 1 after decay (1 - 200 < 1)", () => {
     const fires = [{ locationId: "COMP-1", intensityBp: 1, cause: "FIRE_SOURCE_CREATED" }];
     const result = resolveFireProgression(fires, "ORDINARY", null);
-    // 1 - 200 = -199 < 1 → removed
     expect(result.fireRecords).toHaveLength(0);
   });
 
@@ -208,11 +185,8 @@ describe("resolveFireProgression", () => {
   });
 
   it("spread creates new fires when RNG is provided (ORDINARY = 10_000 bp fire risk)", () => {
-    // ORDINARY fire risk = 10_000 bp
-    // spreadChanceBp = 10_000 * 1_000 / 10_000 = 1_000 bp = 10%
-    // RNG < 0.1 → fire spreads
     const fires = [{ locationId: "COMP-1", intensityBp: 5_000, cause: "FIRE_SOURCE_CREATED" }];
-    const rng = rngThat({ "battle/ship/damage/fire_spread/COMP-1": 0.05 }); // 5% < 10% → spread
+    const rng = rngThat({ "battle/ship/damage/fire_spread/COMP-1": 0.05 });
     const result = resolveFireProgression(fires, "ORDINARY", rng);
     expect(result.fireRecords).toHaveLength(1);
     expect(result.newFires).toHaveLength(1);
@@ -222,8 +196,6 @@ describe("resolveFireProgression", () => {
   });
 
   it("no spread when RNG draw exceeds spread chance", () => {
-    // ORDINARY = 10_000 bp fire risk → spreadChanceBp = 1_000 bp
-    // RNG = 0.5 → drawBp = 5_000 >= 1_000 → no spread
     const fires = [{ locationId: "COMP-1", intensityBp: 5_000, cause: "FIRE_SOURCE_CREATED" }];
     const rng = rngThat({ "battle/ship/damage/fire_spread/COMP-1": 0.5 });
     const result = resolveFireProgression(fires, "ORDINARY", rng);
@@ -242,7 +214,7 @@ describe("resolveFireProgression", () => {
     const streams: string[] = [];
     const trackingRng = (stream: string) => {
       streams.push(stream);
-      return 0.05; // below spread chance
+      return 0.05;
     };
     const fires = [{ locationId: "COMP-1", intensityBp: 5_000, cause: "FIRE_SOURCE_CREATED" }];
     resolveFireProgression(fires, "ORDINARY", trackingRng);
@@ -250,8 +222,6 @@ describe("resolveFireProgression", () => {
   });
 
   it("spread uses ship type fire risk multiplier", () => {
-    // DESTROYER = 8_000 bp → spreadChanceBp = 8_000 * 1_000 / 10_000 = 800 bp = 8%
-    // RNG = 0.05 (5%) < 8% → spread occurs
     const fires = [{ locationId: "COMP-1", intensityBp: 5_000, cause: "FIRE_SOURCE_CREATED" }];
     const rng = rngThat({ "battle/ship/damage/fire_spread/COMP-1": 0.05 });
     const result = resolveFireProgression(fires, "DESTROYER", rng);
@@ -260,9 +230,8 @@ describe("resolveFireProgression", () => {
 
   it("does not spread extinguished fires", () => {
     const fires = [{ locationId: "COMP-1", intensityBp: 50, cause: "FIRE_SOURCE_CREATED" }];
-    const rng = rngThat({ "battle/ship/damage/fire_spread/COMP-1": 0.0 }); // would spread if fire survived
+    const rng = rngThat({ "battle/ship/damage/fire_spread/COMP-1": 0.0 });
     const result = resolveFireProgression(fires, "ORDINARY", rng);
-    // Fire extinguished (50 - 200 < 1) → no fire records, no spread
     expect(result.fireRecords).toHaveLength(0);
     expect(result.newFires).toHaveLength(0);
   });

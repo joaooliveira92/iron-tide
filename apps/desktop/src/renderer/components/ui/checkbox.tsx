@@ -8,7 +8,6 @@ interface CheckboxProps extends React.ComponentPropsWithoutRef<typeof CheckboxPr
   ref?: React.Ref<React.ComponentRef<typeof CheckboxPrimitive.Root>> | undefined;
 }
 
-/** A square checkbox; label it with `aria-label` or a surrounding `<label>`. */
 const Checkbox = ({ className, ref, ...props }: CheckboxProps) => (
   <CheckboxPrimitive.Root
     ref={ref}

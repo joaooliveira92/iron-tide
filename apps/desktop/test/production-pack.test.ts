@@ -24,7 +24,6 @@ describe("production pack (content/generated/1880 artifact)", () => {
     expect(nations.has("france")).toBe(true);
     expect(nations.has("qing")).toBe(true);
 
-    // Determinism: a second compile produces an identical snapshot hash.
     const secondCollector = new DiagnosticCollector();
     const second = compileProductionCampaignFromArtifact(
       resolveGeneratedContentDir(),

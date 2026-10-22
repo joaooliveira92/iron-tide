@@ -1,10 +1,5 @@
 import type { MonthlyReportFleet } from "../../../../shared/campaign-command-contract.js";
 
-/**
- * The report's Fleet section (spec §16): the month's additions and the active
- * ship total from the post-month snapshot. The per-ship "new maintenance
- * effect" is CUT — only the aggregate maintenance figure is modelled.
- */
 export function MonthReportFleetSection({ fleet }: { readonly fleet: MonthlyReportFleet }) {
   return (
     <section aria-label="Fleet" className="space-y-1">

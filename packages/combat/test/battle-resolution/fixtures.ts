@@ -1,8 +1,3 @@
-// Combat test fixture — B-6 INC-2 battle auto-resolution.
-// A small campaign scenario (2 nations, 2-3 ships each, compiled designs) plus
-// a battle manifest, a committed strategic weather state, and a builder for
-// the full resolveBattleAuto input. Everything deterministic; no ambient
-// random/clock/env.
 import { SafeInt } from "@bluewave/contracts";
 import type { CompiledDesignVersion, Ship } from "@bluewave/campaign";
 import { buildManifest, type BattleManifest } from "../../src/generation/manifest.js";
@@ -124,8 +119,6 @@ export interface FixtureNationSet {
   defenderShips: Ship[];
 }
 
-/** Build the two nations. By default attacker = 2 armed BBs, defender = 2
- *  armed BBs + 1 unarmed ship on each side (no main battery). */
 export function makeNations(
   opts: {
     attackerGuns?: number[];
@@ -166,8 +159,6 @@ export function makeNations(
   const attackerDesigns = new Map<string, CompiledDesignVersion>([
     [DESIGN_ATT_A, design(DESIGN_ATT_A, ATTACKER_NATION, { guns: attackerGuns[0] })],
     [DESIGN_ATT_B, design(DESIGN_ATT_B, ATTACKER_NATION, { guns: attackerGuns[1] })],
-    // Unarmed ship: a destroyer-hull design with no main battery (classifier's
-    // destroyer family imposes no caliber/armor bounds).
     [
       DESIGN_UNARMED,
       design(DESIGN_UNARMED, ATTACKER_NATION, { hullType: "destroyer", guns: 0, caliberUm: 0 }),
@@ -268,8 +259,6 @@ export function makeAutoInput(
   };
 }
 
-/** A manifest whose persistent assets include an under-construction ship + an
- *  unarmed ship; used by the projection tests. */
 export function makeProjectionManifest(assets: string[]): BattleManifest {
   return makeManifest({ persistentAssets: [...assets] });
 }

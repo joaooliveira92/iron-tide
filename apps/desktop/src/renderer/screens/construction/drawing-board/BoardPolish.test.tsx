@@ -43,7 +43,6 @@ describe("Drawing Board polish", () => {
 
   it("in a campaign, opens on the first design that exists at the campaign date", () => {
     render(<DrawingBoard />);
-    // Per-nation files (ADR-0109): the first design at or before the campaign date is the UK torpedo-gunboat starter.
     expect(screen.getByLabelText("Starting design").textContent).toMatch(
       /Torpedo gunboat \(starter, DD\)/,
     );
@@ -54,11 +53,9 @@ describe("Drawing Board polish", () => {
     fireEvent.click(screen.getByLabelText("Starting design"));
     const option = (value: string) =>
       screen.getAllByRole("option").find((o) => o.getAttribute("data-value") === value)!;
-    // The 1893/1895 designs need guns introduced in 1886+; at the 1880 campaign date they are shown but not selectable.
     const havock = option("havock_like");
     expect(havock.getAttribute("aria-disabled")).toBe("true");
     expect(havock.textContent).toMatch(/Not available until 1895-06/);
-    // The 1880 designs (the generic cruiser and the historical ironclads) exist at the campaign date.
     expect(option("torpedo_cruiser_1880").getAttribute("aria-disabled")).toBeNull();
     expect(option("devastator_1873").getAttribute("aria-disabled")).toBeNull();
   });

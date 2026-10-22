@@ -1,4 +1,3 @@
-// AC-18 (INC-7): canonical ordering per DESIGN-43 §39 + DESIGN-38 §29.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -103,7 +102,7 @@ describe("AC-18: canonical ordering", () => {
       targetId: "tgt-b",
       recordKind: "ENGAGEMENT",
     });
-    expect(compareAirCombatRecords(a, b)).toBeLessThan(0); // "ATTACK" < "ENGAGEMENT"
+    expect(compareAirCombatRecords(a, b)).toBeLessThan(0);
   });
 
   it("canonicallySortedRecords returns sorted copy", () => {
@@ -137,9 +136,9 @@ describe("AC-18: canonical ordering", () => {
       makeRecord({ minute: SafeInt(5), substep: SafeInt(2), actorId: "sqn-a", recordId: "r4" }),
     ];
     const sorted = canonicallySortedRecords(records);
-    expect(sorted[0].recordId).toBe("r1"); // minute 3
-    expect(sorted[1].recordId).toBe("r2"); // minute 5, substep 1, sqn-a
-    expect(sorted[2].recordId).toBe("r3"); // minute 5, substep 1, sqn-b
-    expect(sorted[3].recordId).toBe("r4"); // minute 5, substep 2, sqn-a
+    expect(sorted[0].recordId).toBe("r1");
+    expect(sorted[1].recordId).toBe("r2");
+    expect(sorted[2].recordId).toBe("r3");
+    expect(sorted[3].recordId).toBe("r4");
   });
 });

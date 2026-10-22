@@ -1,7 +1,6 @@
 import { NON_SCALING, STROKE } from "./drafting.js";
 import type { FittingKind } from "./sections.js";
 
-/** Coarse symbol per fitting kind, in card units (not scaled with the hull). */
 export function FittingSymbol({
   kind,
   x,

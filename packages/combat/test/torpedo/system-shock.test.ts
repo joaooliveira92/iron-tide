@@ -1,12 +1,3 @@
-// AC-17 (DESIGN-40 §20): turret/system loss via underwater shock. Base
-// probabilities: within PRIMARY radius 3_000 bp, within SECONDARY 1_000 bp,
-// OUTSIDE 0. A successful check selects from the ACTUAL nearby systems in
-// ascending stable-id order through ONE keyed weighted selection (each
-// eligible system's weight = its band's base probability; the residual of the
-// 10_000 bp pool is NO_DAMAGE). Systems OUTSIDE the declared radius never
-// enter the pool — the resolver never destroys a spatially ineligible system;
-// an entirely ineligible/empty pool is a deterministic no-effect consuming NO
-// draw. A damaged system records TORPEDO_SYSTEM_SHOCK_DAMAGE_CREATED.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -63,11 +54,11 @@ describe("AC-17 §20: keyed weighted selection over the pool", () => {
   it("each eligible system's weight is its band base; the residual is NO_DAMAGE", () => {
     const pool = eligibleShockSystems([candidate("A", "PRIMARY"), candidate("B", "SECONDARY")]);
     expect(shockSelectionWeights(pool)).toEqual([3_000, 1_000]);
-    expect(selectShockSystem(pool, 0)).toEqual(candidate("A", "PRIMARY")); // [0, 3_000)
+    expect(selectShockSystem(pool, 0)).toEqual(candidate("A", "PRIMARY"));
     expect(selectShockSystem(pool, 2_999)).toEqual(candidate("A", "PRIMARY"));
-    expect(selectShockSystem(pool, 3_000)).toEqual(candidate("B", "SECONDARY")); // [3_000, 4_000)
+    expect(selectShockSystem(pool, 3_000)).toEqual(candidate("B", "SECONDARY"));
     expect(selectShockSystem(pool, 3_999)).toEqual(candidate("B", "SECONDARY"));
-    expect(selectShockSystem(pool, 4_000)).toBeNull(); // [4_000, 10_000) NO_DAMAGE
+    expect(selectShockSystem(pool, 4_000)).toBeNull();
     expect(selectShockSystem(pool, 9_999)).toBeNull();
   });
 
@@ -90,7 +81,7 @@ describe("AC-17 §20: the evaluation record", () => {
     });
 
   it("a sub-base draw selects the eligible system + records the code + DESTROYED", () => {
-    const r = judge({ draw: 0.001 }); // drawBp 10 < 3_000
+    const r = judge({ draw: 0.001 });
     expect(r.affectedSystem).toEqual(candidate("TURRET-1", "PRIMARY"));
     expect(r.componentOutcome).toBe("DESTROYED");
     expect(r.reasonCode).toBe(TORPEDO_SYSTEM_SHOCK_DAMAGE_CREATED);
@@ -100,7 +91,7 @@ describe("AC-17 §20: the evaluation record", () => {
   });
 
   it("a draw at/above the pool mass damages nothing (NO_DAMAGE, no code)", () => {
-    const r = judge({ draw: 0.9 }); // drawBp 9_000 >= 3_000
+    const r = judge({ draw: 0.9 });
     expect(r.affectedSystem).toBeNull();
     expect(r.componentOutcome).toBeNull();
     expect(r.reasonCode).toBeNull();
@@ -108,8 +99,6 @@ describe("AC-17 §20: the evaluation record", () => {
   });
 
   it("never destroys an ineligible system — the OUTSIDE candidate is excluded", () => {
-    // only an OUTSIDE candidate present: the pool is empty -> deterministic
-    // no-effect and the resolver consumes NO draw.
     let calls = 0;
     const r = evaluateTorpedoSystemShock({
       battleId: "B1",
@@ -141,7 +130,7 @@ describe("AC-17 §20: the evaluation record", () => {
       ],
       keyedRng: () => {
         calls += 1;
-        return 0.35; // drawBp 3_500 -> B (pool [3_000, 4_000))
+        return 0.35;
       },
     });
     expect(r.affectedSystem?.stableSystemId).toBe("B");

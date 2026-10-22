@@ -5,13 +5,6 @@ import type { PlayerProjection } from "@bluewave/campaign-engine";
 
 import { TreasuryScreen } from "./TreasuryScreen.js";
 
-/**
- * Render test for the Treasury screen. The hook is mocked so the test
- * asserts PURE rendering: every figure comes from the projection (income /
- * expenditure rows / result), the allocation panel is hosted, and honest error /
- * loading states.
- */
-
 const projection: PlayerProjection = {
   campaignIdentity: "campaign_1",
   revision: 3 as PlayerProjection["revision"],
@@ -82,18 +75,15 @@ describe("TreasuryScreen", () => {
     render(<TreasuryScreen sessionId="ses-1" />);
 
     expect(screen.getByText("Monthly naval appropriation")).not.toBeNull();
-    // Income appears in its own card (and again in the budget bar legend): check the card.
     expect(
       within(
         screen.getByText("Monthly naval appropriation").parentElement as HTMLElement,
       ).getByText("4,000"),
     ).not.toBeNull();
 
-    // Named in the expenditure card and again in the budget bar legend.
     expect(screen.getAllByText("Fleet maintenance").length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText("Research").length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText("Fixed obligations").length).toBeGreaterThanOrEqual(1);
-    // Construction is an "up to" bound, shown apart from the committed total.
     expect(screen.getByText("Construction (up to)")).not.toBeNull();
     expect(screen.getByText("Committed expenditure")).not.toBeNull();
     expect(screen.getAllByText("500").length).toBeGreaterThanOrEqual(1);

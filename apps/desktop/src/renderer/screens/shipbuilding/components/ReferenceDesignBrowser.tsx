@@ -11,11 +11,6 @@ import { referenceDeck } from "../reference-deck.js";
 import { ReferenceDeckCard, referenceOptionId } from "./ReferenceDeckCard.js";
 import { ReferenceDeckDetail } from "./ReferenceDeckDetail.js";
 
-/**
- * "Start from a reference design" as a master/detail deck (the Presets pattern, ADR-0127): ship-type cards with their
- * starter design's profile on the left, the focused type in full on the right. Moving focus only previews; Enter or
- * the detail's action starts from that design, through the caller's replace-design confirmation.
- */
 export function ReferenceDesignBrowser({
   env,
   starters,

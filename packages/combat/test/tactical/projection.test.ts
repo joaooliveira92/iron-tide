@@ -43,7 +43,7 @@ describe("permanent division projection (AC-7)", () => {
     expect(r.tacticalDivisions).toHaveLength(1);
     const td = r.tacticalDivisions[0]!;
     expect(td.orderedTacticalUnitIds).toEqual(["s1", "s2"]);
-    expect(td.tacticalFlagshipId).toBe("s1"); // first in stored order
+    expect(td.tacticalFlagshipId).toBe("s1");
     expect(td.sourcePermanentDivisionIds).toEqual(["div_1"]);
     expect(td.initialExperience).toBe(SafeInt(20));
     expect(td.initialCohesion).toBe(SafeInt(30));
@@ -51,7 +51,7 @@ describe("permanent division projection (AC-7)", () => {
   });
 
   it("removes ineligible/missing ships with adjustment reasons (never mutates permanent)", () => {
-    const units = unitsFor(["s1"]); // s2 missing from tactical scope
+    const units = unitsFor(["s1"]);
     const r = projectPermanentDivision(div(), units, "b1", "ATTACKER", "1.0");
     expect(r.adjustments.length).toBeGreaterThan(0);
     expect(r.adjustments[0]!.shipId).toBe("s2");

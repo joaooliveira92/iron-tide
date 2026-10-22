@@ -60,7 +60,6 @@ describe("Revision preview for a revisable project", () => {
       sessionId: "s1",
       projectId: "con_x",
     });
-    // the board starts on the same reference design as the ship, so nothing differs yet
     expect(within(region("Revision preview")).getByText(/No changes yet/)).toBeTruthy();
     const input = screen.getByLabelText(/installed power/i) as HTMLInputElement;
     fireEvent.change(input, { target: { value: String(Number(input.value) + 100) } });
@@ -83,7 +82,6 @@ describe("Revision preview for a revisable project", () => {
     const apply = await screen.findByRole("button", { name: /apply revision/i });
     await waitFor(() => expect((apply as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(apply);
-    // irreversible-looking: the player confirms the tier before it is queued
     const dialog = await screen.findByRole("alertdialog");
     expect(dialog.textContent).toMatch(/hull progress/);
     expect(execute.mock.calls.some((c) => c[0] === "reviseProjectCommand")).toBe(false);
@@ -127,8 +125,6 @@ describe("Revision preview for a revisable project", () => {
     expect(screen.queryByRole("button", { name: /apply revision/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /load this ship/i })).toBeNull();
     expect(region("Revision preview").textContent).toMatch(/cannot be revised/);
-    // The Build tab keeps the rebuild panel mounted, so it lists rebuildable ships; the
-    // revision preview must not load or queue anything for this authored ship.
     expect(
       execute.mock.calls.some(
         (c) => c[0] === "loadProjectDraft" || c[0] === "reviseProjectCommand",

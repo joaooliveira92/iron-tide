@@ -1,7 +1,3 @@
-// The compiled-content boundary as a service (INC-1/INC-2; ADR-0159). Wraps the
-// raw synchronous content reads and the campaign compiler in `Effect` methods, so
-// command programs resolve content through the Layer rather than constructing it
-// inline. Raw `node:*` stays inside the service; no platform services are adopted.
 import type { BattleOfferRules } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { ShipBuildingContent, ShipBuildingData } from "@bluewave/ship-design";
@@ -29,7 +25,6 @@ export type CompiledCampaign = NonNullable<
   ReturnType<typeof compileProductionCampaignFromArtifact>
 >;
 
-/** Maps a thrown content-boundary error to a `CommandFailed`, preserving its code. */
 function contentUnavailable(error: unknown): CommandFailed {
   if (ContentArtifactError.is(error)) {
     return new CommandFailed({ reason: error.code, diagnostics: [error.message] });
@@ -43,39 +38,24 @@ function contentUnavailable(error: unknown): CommandFailed {
 export class ContentArtifact extends Context.Service<
   ContentArtifact,
   {
-    /**
-     * Compiles the production campaign, failing with `COMPILE_FAILED`
-     * diagnostics. `campaignStart` stamps the snapshot's authoritative
-     * start calendar (B-6/ADR-0025); omitted, the compiler's canonical default
-     * applies.
-     */
     readonly compileProductionCampaign: (campaignStart?: {
       readonly startYear: number;
       readonly startMonth: number;
     }) => Effect.Effect<CompiledCampaign, CommandFailed>;
-    /** Decodes the ship-building catalogue the drawing board reads (fail-closed). */
     readonly loadDrawingBoardCatalogue: () => Effect.Effect<
       DrawingBoardContentDto["catalogue"],
       CommandFailed
     >;
-    /** Builds the runtime ship-building content every month executes on (fail-closed). */
     readonly loadShipBuildingContent: () => Effect.Effect<ShipBuildingContent, CommandFailed>;
-    /** The optional battle-offer ruleset section; `undefined` = dormant (spec #109 R1). Fail-closed on a corrupt artifact. */
     readonly loadBattleOfferRules: () => Effect.Effect<BattleOfferRules | undefined, CommandFailed>;
-    /** Decodes the ship-building catalogue data a month input is built from (fail-closed). */
     readonly loadShipBuildingData: () => Effect.Effect<ShipBuildingData, CommandFailed>;
-    /** The artifact-derived ship-building content identity a month records (fail-closed). */
     readonly shipBuildingContentHash: () => Effect.Effect<string, CommandFailed>;
-    /** The artifact-derived armament content identity a month records (fail-closed). */
     readonly armamentContentHash: () => Effect.Effect<string, CommandFailed>;
-    /** Decodes the presentation corpus (fail-closed). */
     readonly loadPresentationContent: () => Effect.Effect<PresentationContentDto, CommandFailed>;
-    /** Decodes the UI-string catalogue (fail-closed). */
     readonly loadUiCatalogue: () => Effect.Effect<UiCatalogueDto, CommandFailed>;
   }
 >()("bluewave/desktop/ContentArtifact") {}
 
-/** The desktop main content-artifact layer; `artifactDir` defaults to the generated pack. */
 export function contentArtifactLayer(
   artifactDir: string = resolveGeneratedContentDir(),
 ): Layer.Layer<ContentArtifact> {

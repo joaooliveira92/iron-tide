@@ -19,7 +19,6 @@ export * from "./post-war-persistence.js";
 export * from "./ownership-transitions.js";
 export * from "./knowledge.js";
 export * from "./clearance.js";
-// INC-8: records/ordering/contracts-rollup (AC-20, AC-24).
 export * from "./ordering.js";
 export * from "./records.js";
 export * from "./contracts.js";

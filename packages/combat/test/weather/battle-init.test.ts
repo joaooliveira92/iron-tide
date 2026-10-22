@@ -1,9 +1,3 @@
-// AC-3: BattleWeatherInitialization — every battle creates one immutable
-// BattleWeatherInitialization from the area's committed strategic weather
-// state, battle date/time, location, mission template, local-variation policy,
-// battle seed, and weather policy version; same area+overlapping time uses the
-// same strategic weather source; local variation only via versioned keyed
-// decision (UI/autoresolve never rerolls weather).
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
 import { RandomLedger } from "@bluewave/random";
@@ -79,7 +73,6 @@ describe("AC-3: BattleWeatherInitialization", () => {
     expect(init.weatherPolicyVersion).toBe("weather_v1");
     expect(init.componentsVersion).toBe("weather_components_v1");
     expect(init.initializationHash).toMatch(/^[0-9a-f]{64}$/);
-    // Immutable
     expect(Object.isFrozen(init)).toBe(true);
     expect(Object.isFrozen(init.components)).toBe(true);
     expect(Object.isFrozen(init.location)).toBe(true);
@@ -93,8 +86,6 @@ describe("AC-3: BattleWeatherInitialization", () => {
   });
 
   it("same area + overlapping tactical time uses the same strategic weather source", () => {
-    // Two battles in the same area/month draw from the SAME committed strategic
-    // state; the initialization records that source by hash.
     const initA = initializeBattleWeather(makeSeed({ battleId: "battle-001", battleSeed: "s1" }));
     const initB = initializeBattleWeather(makeSeed({ battleId: "battle-002", battleSeed: "s2" }));
     expect(initA.strategicWeatherStateHash).toBe(initB.strategicWeatherStateHash);
@@ -126,11 +117,9 @@ describe("AC-3: BattleWeatherInitialization", () => {
     expect(c.fogMistDensityBp).toBe(500);
     expect(c.cloudCoverBp).toBe(5_000);
     expect(c.baseVisibilityUm).toBe(60_000_000_000);
-    // Solar geometry carried through from resolved geometry
     expect(c.timeOfDay).toBe("DAY");
     expect(c.solarBearingDeg).toBe(130);
     expect(c.solarElevationDeg).toBe(42);
-    // glare = 0: no resolved directional geometry at initialization
     expect(c.glareIntensityBp).toBe(0);
   });
 
@@ -139,12 +128,10 @@ describe("AC-3: BattleWeatherInitialization", () => {
       makeSeed({ localVariationPolicyId: LOCAL_VARIATION_POLICY_LIGHT }),
     );
     const c = init.components;
-    // Non-jittered fields stay exactly at strategic values
     expect(c.seaState).toBe(3);
     expect(c.windDirectionDeg).toBe(225);
     expect(c.precipitationType).toBe("NONE");
     expect(c.baseVisibilityUm).toBe(60_000_000_000);
-    // Jittered fields are within +/-500 bp of the strategic value (and canonical bounds)
     expect(Math.abs(c.precipitationIntensityBp - 0)).toBeLessThanOrEqual(500);
     expect(c.precipitationIntensityBp).toBeGreaterThanOrEqual(0);
     expect(c.precipitationIntensityBp).toBeLessThanOrEqual(10_000);
@@ -167,7 +154,6 @@ describe("AC-3: BattleWeatherInitialization", () => {
         battleSeed: "seed-y",
       }),
     );
-    // Different keyed stream -> (overwhelmingly likely) different jittered draws
     expect(a.components.stateHash).not.toBe(b.components.stateHash);
   });
 
@@ -209,7 +195,6 @@ describe("AC-3: BattleWeatherInitialization", () => {
     expect(init.componentsVersion).toBe("weather_components_v1");
   });
 
-  // ---- M5: initialization-boundary failures use INVALID_BATTLE_WEATHER_INITIALIZATION ----
   it("unknown local-variation policy fails with INVALID_BATTLE_WEATHER_INITIALIZATION", () => {
     let caught: unknown;
     try {
@@ -266,7 +251,6 @@ describe("AC-3: BattleWeatherInitialization", () => {
     expect((caught as BluewaveError).message).toBe(INVALID_BATTLE_WEATHER_INITIALIZATION);
   });
 
-  // ---- M6: local-variation jitter draws recorded through the RandomLedger port ----
   it("LIGHT local-variation jitter draws are recorded in the RandomLedger", () => {
     const ledger = new RandomLedger();
     initializeBattleWeather(

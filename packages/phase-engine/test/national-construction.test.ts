@@ -13,14 +13,13 @@ const month = { month: 1, year: 1880 };
 
 describe("national construction economics at order time", () => {
   it("scales the projected cost exactly once by the national multiplier", () => {
-    expect(projectedConstructionOrderCosts(design).projectedCost).toBe(200); // nation-neutral
+    expect(projectedConstructionOrderCosts(design).projectedCost).toBe(200);
     expect(projectedConstructionOrderCosts(design, 9_300).projectedCost).toBe(
       Math.ceil((200 * 9_300) / 10_000),
     );
     expect(projectedConstructionOrderCosts(design, 10_700).projectedCost).toBeGreaterThan(
       projectedConstructionOrderCosts(design, 9_300).projectedCost,
     );
-    // Physical capacity units are not scaled by cost.
     expect(projectedConstructionOrderCosts(design, 10_700).projectedCapacityUnits).toBe(2);
   });
 

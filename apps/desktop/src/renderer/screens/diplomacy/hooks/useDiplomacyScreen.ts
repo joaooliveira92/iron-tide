@@ -74,8 +74,6 @@ export function useDiplomacyScreen(sessionId: string): UseDiplomacyScreenReturn 
     void reload();
   }, [reload]);
 
-  // A stale-revision rejection (REVISION_MISMATCH with a currentRevision from
-  // the engine) must refresh the projection before the player retries.
   useEffect(() => {
     if (state.kind === "rejected-with-revision") void reload();
   }, [state.kind, reload]);

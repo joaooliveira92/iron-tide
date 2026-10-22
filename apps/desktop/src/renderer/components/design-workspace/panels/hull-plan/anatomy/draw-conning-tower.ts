@@ -3,7 +3,6 @@ import { clamp, solid } from "./anatomy-helpers.js";
 import type { PartDraft } from "./anatomy-types.js";
 import type { AnatomyShipScene } from "./anatomy-scene.js";
 
-/** Armoured conning tower, the citadel's forward eye. */
 export function drawConning(scene: AnatomyShipScene): void {
   const { L, B, D, hasHouse, houseT0, houseW, upperTop, P, facts, add, text, regionOf } = scene;
   const conning = regionOf("CONNING_TOWER");

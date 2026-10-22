@@ -4,9 +4,7 @@ import type { CommandRecord } from "./types.js";
 
 export function normalizeUnorderedSets(payload: unknown): unknown {
   if (Array.isArray(payload)) {
-    // If array of primitives or objects with stable id, sort ascending
     const copy = [...payload];
-    // detect stable identifier: objects with id field
     if (
       copy.length > 0 &&
       typeof copy[0] === "object" &&
@@ -36,8 +34,6 @@ export function convertPresentationUnits(
   payload: Record<string, unknown>,
 ): Record<string, unknown> {
   const out = { ...payload };
-  // Example: presentation tons -> canonical kg, presentation knots -> canonical ums etc.
-  // Keep generic: if payload has presentation fields, convert deterministically
   if ("displacementTons" in out && typeof out["displacementTons"] === "number") {
     out["displacementKg"] = Math.round((out["displacementTons"] as number) * 1000);
     delete out["displacementTons"];

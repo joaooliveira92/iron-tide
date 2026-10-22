@@ -1,12 +1,5 @@
 import type { ExplanationText, ExplanationUnit, ExplanationValue } from "../../src/explanation.js";
 
-/**
- * Test-only renderer for the structured explanation data (ADR-0221). Mirrors the
- * presentation boundary (`apps/desktop/src/shared/explanation-text.ts`) so a
- * domain test can keep asserting the exact rendered strings it always did
- * without importing the app. Kept deliberately small; the boundary's own test
- * pins the same output.
- */
 const SUFFIX: Readonly<Record<ExplanationUnit, string>> = {
   ratio: "",
   percent: "%",

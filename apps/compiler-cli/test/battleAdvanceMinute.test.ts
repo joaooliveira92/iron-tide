@@ -160,7 +160,7 @@ describe("runBattleAdvanceMinute", () => {
     const state = fixtureState();
     state.movementStates = {
       a1: {
-        position: [0.5, 0], // non-integer -> TACTICAL_STATE_INVARIANT_FAILED
+        position: [0.5, 0],
         heading: 0,
         orderedSpeed: 10_000,
         currentSpeed: 10_000,

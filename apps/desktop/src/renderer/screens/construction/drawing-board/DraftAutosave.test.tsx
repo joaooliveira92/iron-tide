@@ -11,7 +11,6 @@ vi.mock("../../../shell/CampaignShellContext.js", () => ({
   useActiveCampaignCurrencyContext: () => ({}),
 }));
 
-/** The board's restored-draft toast only renders when a Toaster is mounted (as the app root does). */
 const renderBoard = (props: Parameters<typeof DrawingBoard>[0] = {}): ReturnType<typeof render> =>
   render(
     <>
@@ -78,7 +77,7 @@ describe("Drawing Board autosave", () => {
     await waitFor(() => expect(stored).not.toBeNull(), { timeout: 3000 });
     expect(decodeLog(stored!.log).edits).toHaveLength(1);
     editPower(start.draft.machinery.installedKw + 500);
-    unmount(); // before the delay: the close must still save
+    unmount();
     expect(decodeLog(stored!.log).edits).toHaveLength(2);
   });
 

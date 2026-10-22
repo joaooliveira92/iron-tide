@@ -1,19 +1,3 @@
-/**
- * Authored torpedo model sources for the ship-part-model tests (ticket 13a; 13b removed the
- * dependency on combat's per-model constants).
- *
- * Each authoritative combat `TorpedoModelDefinition` becomes a `TorpedoModelSource` with the
- * content-side facts the engine model does not carry: availability, provenance, and the 1884
- * Whitehead Mk IV re-rating (1877 26 lb / 12 kg → the model's current charge). Availability is
- * the model's introduction year; the 14-inch Whitehead is the 1880 pattern the content's
- * `torp_whitehead_torpedo` technology introduces, so it is available `1880-01`. Its model id
- * `whitehead_14in_1886` is a canonical repository identifier whose trailing year is a
- * retrospective vintage label (the 14-in Fiume Mark IV, RN service ~1886), not a manufacturer or
- * service designation — see `docs/research/n-2-whitehead-14in-identity.md` §5.
- *
- * The eight models are hard-coded here (the values combat's `torpedo_models_v1` set shipped with)
- * so the codemod input no longer imports `@bluewave/combat` — the parts are the authority.
- */
 import type { Provenance } from "@bluewave/content-schema";
 import type { TorpedoModelSource } from "../../src/index.js";
 
@@ -61,7 +45,6 @@ export const WHITEHEAD_1884_RE_RATING: Provenance = {
   note: "The 1877 14-inch Whitehead carried a 26 lb (12 kg) wet-guncotton charge; the 1884 Mk IV re-rated it to the 58–70 lb (26–27 kg) charge the shipped model carries.",
 };
 
-/** The eight authoritative `torpedo_models_v1` models, verbatim (combat's shipped set). */
 const TORPEDO_MODELS: readonly Omit<
   TorpedoModelSource,
   "availableFrom" | "provenance" | "sourceFile" | "warheadFirstPattern"
@@ -273,14 +256,12 @@ const toTorpedoSource = (model: (typeof TORPEDO_MODELS)[number]): TorpedoModelSo
   };
 };
 
-/** Every torpedo model the buildable catalogue references. */
 export const torpedoModels: readonly TorpedoModelSource[] = TORPEDO_MODELS.map(
   toTorpedoSource,
 ).sort((a, b) =>
   a.torpedoModelId < b.torpedoModelId ? -1 : a.torpedoModelId > b.torpedoModelId ? 1 : 0,
 );
 
-/** The structured diameter (µm) of one torpedo model, for the launcher read path. */
 export const torpedoDiameterUm = (id: string): number | undefined => {
   const model = TORPEDO_MODELS.find((m) => String(m.torpedoModelId) === id);
   return model === undefined ? undefined : model.diameterMm * 1000;

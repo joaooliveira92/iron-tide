@@ -1,30 +1,12 @@
-/**
- * Passive sea lanes: a line between every pair of connected areas. Pure.
- *
- * The connections are the same `EDGES` graph the route reading searches
- * (`routeBetween`), so what the chart draws and what a route can follow are one
- * graph, not two. A lane is geometry only — it carries no route, distance or
- * hop count; a measured route is a separate layer.
- *
- * Gated edges (a strait or canal) are left to the passage layer, which styles
- * an open gate differently from a closed one.
- */
-
 import type { PrototypeEdge } from "./fixture-world.js";
 import type { Point } from "./projection.js";
 
 export interface LaneMark {
-  /** The two area ids in codepoint order, joined with `~`. */
   readonly id: string;
   readonly from: Point;
   readonly to: Point;
 }
 
-/**
- * The edges the lanes are drawn from: the campaign's own sea connectivity when one is loaded,
- * otherwise the fixture graph. A campaign pair that the fixture gates as a strait or canal keeps
- * its gate, so the passage layer — not the passive lane — keeps drawing it.
- */
 export function laneEdges(
   campaign: readonly { readonly a: string; readonly b: string }[] | null,
   fixture: readonly PrototypeEdge[],
@@ -40,12 +22,6 @@ export function laneEdges(
   });
 }
 
-/**
- * Lanes for every ungated edge whose two areas both have an anchor, ordered by
- * id. `worldWidth` lets a lane that crosses the antimeridian take the short way
- * round: the chart draws a copy of the world at ±width, so a line running past
- * the edge continues into the neighbouring copy.
- */
 export function buildLanes(
   edges: readonly PrototypeEdge[],
   anchorOf: ReadonlyMap<string, Point>,

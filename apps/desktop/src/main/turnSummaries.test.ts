@@ -140,7 +140,6 @@ describe("turn-summaries sidecar", () => {
     expect(summary.messages.every((m) => m.severity !== "TRACE")).toBe(true);
     expect(summary.messages.every((m) => m.turnId === summary.turnId)).toBe(true);
 
-    // The sidecar is a sibling of the save ids, never inside the envelope.
     const saveId = new SaveStore().getActiveSaveId(saveDir);
     expect(saveId).not.toBeNull();
     expect(existsSync(join(saveDir, TURN_SUMMARIES_FILENAME))).toBe(true);

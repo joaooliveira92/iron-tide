@@ -1,28 +1,3 @@
-/**
- * The camera, built exactly the way ticket 13's research says to build it, so
- * that the prototype tests the claim rather than restating it:
- *
- * - Pan and zoom live in a **ref**, never in React state, and are applied by
- *   writing `transform` straight onto one `<g>`. Dragging across the whole map
- *   must not render a single React component. The frame meter below is how you
- *   check that; if a variant re-renders on pointermove, its p95 collapses.
- *
- * - Wheel zoom uses a manual `addEventListener("wheel", …, { passive: false })`
- *   because React 19's `onWheel` is passive and cannot `preventDefault()`. In
- *   Electron a passive wheel handler means the whole app scrolls behind the map.
- *
- * - Zoom **bands** are the one thing that does reach React state, and they
- *   change a handful of times per session rather than per frame. That is the
- *   answer to the level-of-detail question: label density keys off the band,
- *   not off the scale.
- *
- * One trap worth recording because it cost time here: with a `viewBox`, the
- * `<g transform>` is in *user units* while pointer events are in *screen
- * pixels*, and `preserveAspectRatio` puts an arbitrary factor between them.
- * Every pointer delta below is converted through `getScreenCTM()` first. Skip
- * that and pan drifts against the cursor at every window size but one.
- */
-
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useFrameMeter } from "./useFrameMeter.js";
@@ -44,7 +19,6 @@ function bandFor(scale: number): ZoomBand {
 }
 
 const MIN_SCALE = 0.9;
-/** Raised from 14 (ADR-0055); beyond ~60x the 0.01° coastline data runs out. */
 const MAX_SCALE = 60;
 
 export interface MapCamera {
@@ -54,19 +28,13 @@ export interface MapCamera {
   readonly zoomBand: ZoomBand;
   readonly reset: () => void;
   readonly zoomBy: (factor: number) => void;
-  /** Pan by screen pixels (keyboard control). */
   readonly panBy: (dxPixels: number, dyPixels: number) => void;
-  /** Screen pixels per world user unit at camera scale 1. */
   readonly getPixelsPerUnit: () => number;
   readonly focusOn: (x: number, y: number, scale?: number) => void;
   readonly isDraggingRef: React.RefObject<boolean>;
-  /** False while the whole world fits the view, so only the home copy is drawn. */
   readonly isWrapping: () => boolean;
-  /** The zoom floor: the scale at which the whole world fits the view. */
   readonly getMinScale: () => number;
-  /** The viewport in camera user units (see `viewportUnits`). */
   readonly getViewport: () => Viewport;
-  /** Called after every transform change (pan, zoom, reset). Returns an unsubscribe. */
   readonly getTransform: () => Readonly<CameraTransform>;
   readonly subscribe: (listener: (transform: Readonly<CameraTransform>) => void) => () => void;
 }
@@ -79,16 +47,7 @@ export interface Viewport {
 }
 
 export interface CameraOptions {
-  /**
-   * A geographic map wraps east–west, so panning never runs out of world. A
-   * stylised board does not — its columns end. Variant B is where that
-   * difference stops being cosmetic.
-   */
   readonly wrapHorizontally: boolean;
-  /**
-   * Zoom floor covers the viewport instead of fitting the world, so a wide panel shows no empty
-   * bands above and below the map (the command screen runs it behind its translucent bars).
-   */
   readonly coverViewport?: boolean;
 }
 
@@ -102,20 +61,15 @@ export function useMapCamera(
   const worldRef = useRef<SVGGElement | null>(null);
   const meterRef = useRef<HTMLSpanElement | null>(null);
   const isDraggingRef = useRef(false);
-  /** True once the user (or a focus call) has moved the camera off the fitted view. */
   const touched = useRef(false);
-  /** Whether the east-west copies are in play (false while the world fits the view). */
   const wrapping = useRef(true);
   const camera = useRef<CameraTransform>({ scale: 1, x: 0, y: 0 });
   const [zoomBand, setZoomBand] = useState<ZoomBand>(0);
   const bandRef = useRef<ZoomBand>(0);
   const listeners = useRef(new Set<(transform: Readonly<CameraTransform>) => void>());
 
-  // Frame timing. Kept out of React entirely; the readout is written straight
-  // into a span so producing the number cannot perturb the number.
   const { sample: sampleFrame, reset: resetFrameMeter } = useFrameMeter(meterRef);
 
-  /** Screen pixels per user unit, or null before the SVG is laid out. */
   const pixelsPerUnit = useCallback((): number => {
     const ctm = svgRef.current?.getScreenCTM?.();
     return ctm === null || ctm === undefined || ctm.a === 0 ? 1 : ctm.a;
@@ -126,11 +80,7 @@ export function useMapCamera(
     if (world === null) return;
     const { scale, x, y } = camera.current;
     world.setAttribute("transform", `translate(${x} ${y}) scale(${scale})`);
-    // Markers and labels counter-scale with this so they hold their screen
-    // size in real pixels at any zoom and any viewBox scale (the world group
-    // scales everything inside it, and the viewBox scales the group).
     svgRef.current?.style.setProperty("--map-inv", String(1 / (scale * pixelsPerUnit())));
-    // The wrapped copies are only drawn while the world overflows the view.
     svgRef.current?.style.setProperty("--map-copies", wrapping.current ? "inline" : "none");
     for (const listener of listeners.current) listener(camera.current);
     const next = bandFor(scale);
@@ -140,12 +90,6 @@ export function useMapCamera(
     }
   }, [pixelsPerUnit]);
 
-  /**
-   * The viewport in the same user units as the camera. `left`/`top` are where
-   * its edges sit in user space: non-zero whenever `preserveAspectRatio`
-   * letterboxes the viewBox, which it does for any panel that is not the
-   * world's own shape.
-   */
   const viewportUnits = useCallback((): Viewport => {
     const svg = svgRef.current;
     const factor = pixelsPerUnit();
@@ -159,12 +103,6 @@ export function useMapCamera(
     };
   }, [pixelsPerUnit, worldHeight, worldWidth]);
 
-  /**
-   * The zoom floor: the whole world fits the viewport. When the panel is wider
-   * (or taller) than the world, the world is centred with empty margins and the
-   * wrapped copies are hidden (see `wrapping`), so there is never a second
-   * world beside the first. Falls back to MIN_SCALE before layout.
-   */
   const minScale = useCallback((): number => {
     const visible = viewportUnits();
     const ratios = [visible.width / worldWidth, visible.height / worldHeight];
@@ -178,13 +116,9 @@ export function useMapCamera(
     const span = worldWidth * current.scale;
     const visible = viewportUnits();
     if (wrapHorizontally && span > visible.width) {
-      // The map repeats, so x only ever needs one turn's worth. Wrapping into
-      // (-span, 0] rather than [-span, 0) is what keeps a fresh camera at 0.
       wrapping.current = true;
       current.x = -(((-current.x % span) + span) % span);
     } else {
-      // The world is narrower than the view (or the board does not wrap):
-      // centre it and stop at its edges.
       wrapping.current = false;
       current.x =
         span <= visible.width
@@ -199,10 +133,8 @@ export function useMapCamera(
   }, [minScale, viewportUnits, worldHeight, worldWidth, wrapHorizontally]);
 
   const reset = useCallback(() => {
-    // "Fit world": the clamp centres whatever margin is left over.
     const scale = minScale();
     const visible = viewportUnits();
-    // Centre vertically; the clamp does the same when the world is the shorter one.
     camera.current = { scale, x: 0, y: visible.top + (visible.height - worldHeight * scale) / 2 };
     touched.current = false;
     resetFrameMeter();
@@ -216,7 +148,6 @@ export function useMapCamera(
       if (svg === null) return;
       const rect = svg.getBoundingClientRect();
       const unitScale = pixelsPerUnit();
-      // The cursor, in the same user units the camera translate is written in.
       const origin = viewportUnits();
       const px = origin.left + (clientX - rect.left) / unitScale;
       const py = origin.top + (clientY - rect.top) / unitScale;
@@ -256,10 +187,6 @@ export function useMapCamera(
     [applyTransform, clamp, pixelsPerUnit],
   );
 
-  /**
-   * Height of the shell bars floating over a cover-viewport map (`--chrome-top` / `--chrome-bottom`,
-   * set by AppFrame), in camera user units. Zero for a map that is not under the bars.
-   */
   const chromeInsets = useCallback((): { top: number; bottom: number } => {
     const svg = svgRef.current;
     if (!coverViewport || svg === null) return { top: 0, bottom: 0 };
@@ -280,7 +207,6 @@ export function useMapCamera(
       const { top, bottom } = chromeInsets();
       current.scale = Math.min(MAX_SCALE, Math.max(minScale(), scale));
       current.x = visible.left + visible.width / 2 - x * current.scale;
-      // The point goes to the middle of what the bars leave free, not of the whole panel.
       current.y = visible.top + top + (visible.height - top - bottom) / 2 - y * current.scale;
       clamp();
       applyTransform();
@@ -292,7 +218,6 @@ export function useMapCamera(
     const svg = svgRef.current;
     if (svg === null) return;
 
-    // Non-passive on purpose. React's onWheel cannot do this.
     function onWheel(event: WheelEvent) {
       event.preventDefault();
       zoomAt(Math.exp(-event.deltaY * 0.0015), event.clientX, event.clientY);
@@ -333,7 +258,6 @@ export function useMapCamera(
       if (pointerId !== event.pointerId) return;
       pointerId = null;
       svg?.releasePointerCapture(event.pointerId);
-      // Cleared on the next tick so the click handler can still see it.
       setTimeout(() => {
         isDraggingRef.current = false;
       }, 0);
@@ -357,8 +281,6 @@ export function useMapCamera(
     reset();
   }, [reset]);
 
-  // The viewport changes size after mount (layout, window resize). Refit an
-  // untouched camera; otherwise just re-clamp so the zoom floor still holds.
   useEffect(() => {
     const svg = svgRef.current;
     if (svg === null || typeof ResizeObserver === "undefined") return;

@@ -32,7 +32,6 @@ describe("ship-building runtime content (ADR-0093 Step 3, ADR-0123)", () => {
     expect(legacy).toMatch(/^[0-9a-f]{64}$/);
     expect(armament).toMatch(/^[0-9a-f]{64}$/);
     expect(armament).not.toBe(legacy);
-    // Deterministic across repeated calls in the same process.
     expect(shipBuildingContentHash()).toBe(legacy);
     expect(armamentContentHash()).toBe(armament);
   });
@@ -52,8 +51,6 @@ describe("ship-building runtime content (ADR-0093 Step 3, ADR-0123)", () => {
     expect(content.starterDesigns.length).toBeGreaterThan(0);
     if (parts === undefined) return;
     const design = content.starterDesigns[0]!;
-    // The wiring under test is the production one: the `partModel`-derived compatibility slots and a
-    // `torpedoDiameterUm` that reads the compiled torpedo parts, both built by `buildShipBuildingContent`.
     const result = compileDraftFromParts({
       designId: design.id,
       draft: design.draft,
@@ -66,14 +63,12 @@ describe("ship-building runtime content (ADR-0093 Step 3, ADR-0123)", () => {
   });
 
   it("reads no raw ship-building or reference-design YAML in the main process", () => {
-    // No main-process module imports the raw `yaml` parser at runtime.
     const sources = readdirSync(mainDir, { recursive: true })
       .map(String)
       .filter((file) => file.endsWith(".ts") && !file.endsWith(".test.ts"));
     for (const file of sources) {
       expect(readFileSync(join(mainDir, file), "utf8"), file).not.toMatch(/from "yaml"/);
     }
-    // The content loaders read neither the filesystem nor the schema package.
     for (const file of ["./shipBuildingContent.ts", "./referenceDesigns.ts"]) {
       const source = readFileSync(new URL(file, import.meta.url), "utf8");
       expect(source).not.toMatch(/node:fs/);
@@ -83,7 +78,6 @@ describe("ship-building runtime content (ADR-0093 Step 3, ADR-0123)", () => {
 });
 
 describe("S-5 presence ruleset section reaching ship-building content (ADR-0242)", () => {
-  // FIXTURE-CLASS value: it exercises the plumbing and is never a production number.
   const fixture = {
     colonialServiceDisplacementBp: 137,
     requiredTonsPerPossessionWeight: 100,
@@ -115,7 +109,6 @@ describe("S-5 presence ruleset section reaching ship-building content (ADR-0242)
       noPortValueWeight: 1,
       crampedOrShortRangeCountBp: 5_000,
     });
-    // A corrupt section is an error, never silently dormant.
     expect(() => presenceFromRulesets([{ id: "core", presence: { provenance: {} } }])).toThrow(
       /presence section is invalid/,
     );

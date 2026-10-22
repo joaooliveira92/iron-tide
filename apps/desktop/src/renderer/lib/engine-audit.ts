@@ -1,14 +1,5 @@
 import type { EngineAuditInput, RandomDecisionRecord } from "@bluewave/campaign-engine";
 
-/**
- * Persists engine audit trails (the authoritative RandomDecisionRecord set
- * plus domain events and financial ledger returned at the campaign boundary)
- * so the Debugging screen can inspect them in isolation from the live
- * simulation. Follows the same local-storage pattern as `telemetry.ts`; the
- * stored payload is the raw engine record set (an `EngineAuditInput`), which
- * the shared engine formatter renders on demand.
- */
-
 export interface StoredEngineAudit {
   readonly action: string;
   readonly timestamp: string;

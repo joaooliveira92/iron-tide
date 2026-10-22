@@ -6,7 +6,6 @@ export interface WizardRowProps {
   readonly row: WizardRowModel;
 }
 
-/** The new-game bar: the setup assistant heading and its current instruction. */
 export function WizardRow({ row }: WizardRowProps) {
   return (
     <div className="flex w-full items-center justify-between px-1 text-xs text-muted-foreground">

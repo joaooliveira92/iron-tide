@@ -15,14 +15,6 @@ import type {
 import { CommandFailed, type CommandError } from "../runtime/commandError.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
 
-/**
- * `content/production/1880` is the only pack this MVP compiles against, and
- * it's authored for a single January-1880 start — so the only scenario that
- * actually has compiled content behind it is `scen_1880` (one of
- * `@bluewave/campaign`'s five canonical scenario ids). Listing the other
- * four canonical ids here would advertise scenarios with no backing content.
- * Revisit if a later ticket adds more content packs.
- */
 const CONTENT_PACK_SCENARIO_ID = "scen_1880";
 
 function humanizePoliticalSystem(id: string): string {
@@ -32,11 +24,6 @@ function humanizePoliticalSystem(id: string): string {
     .join(" ");
 }
 
-/**
- * `listNewGameOptions` as an Effect program (INC-1; ADR-0159): resolves the
- * `ContentArtifact` service from the Layer and compiles through it. The wire
- * result is byte-identical to the former direct implementation.
- */
 export const listNewGameOptionsProgram: Effect.Effect<
   BridgeResult<NewGameOptions>,
   CommandError,

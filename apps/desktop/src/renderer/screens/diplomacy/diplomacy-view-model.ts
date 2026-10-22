@@ -59,12 +59,6 @@ function likelyRivalNames(playerNationId: string): readonly string[] {
   return playerCountryId !== null ? nationDossier(playerCountryId).likelyRivals : [];
 }
 
-/**
- * Pure view-model for the Diplomacy & War screen: turns the engine projection
- * into render-ready relation/war/blockade rows with every display label and
- * affordance derived once. The engine remains the only authority; this module
- * only packages projected data for presentation.
- */
 export function buildDiplomacyViewModel(
   projection: Projection,
   draft: DiplomacyDraftCommand | null,

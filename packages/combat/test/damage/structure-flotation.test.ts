@@ -1,9 +1,5 @@
-// INC-4 — Structure & flotation damage (DESIGN-41 §8).
-// Proves: formula exactness, cap preservation, uncapped amount in record.
 import { describe, it, expect } from "vite-plus/test";
 import { resolveStructureFlotation } from "../../src/damage/index.js";
-
-// §8 — Formula exactness
 
 describe("AC-4: Structure/flotation formula (§8)", () => {
   it("structuralIntegrityAfter = max(0, before - structuralDamage)", () => {
@@ -37,8 +33,6 @@ describe("AC-4: Structure/flotation formula (§8)", () => {
     expect(result.flotationReserveAfter).toBe(40_000);
   });
 });
-
-// §8 — Cap preservation (floor at 0)
 
 describe("AC-4: Cap preservation (floor at 0)", () => {
   it("structuralIntegrity floors at 0 (cannot go negative)", () => {
@@ -84,8 +78,6 @@ describe("AC-4: Cap preservation (floor at 0)", () => {
   });
 });
 
-// §8 — Uncapped amount in record
-
 describe("AC-4: Uncapped amount in record (§8)", () => {
   it("uncappedStructuralDamage preserves raw damage even when capped", () => {
     const result = resolveStructureFlotation({
@@ -122,8 +114,6 @@ describe("AC-4: Uncapped amount in record (§8)", () => {
     expect(result.flotationReserveAfter).toBe(45_000);
   });
 });
-
-// Edge cases
 
 describe("AC-4: Edge cases", () => {
   it("zero damage leaves values unchanged", () => {

@@ -1,15 +1,3 @@
-// DESIGN-42 §1/§4 strategic weather generation (AC-2): per-area monthly
-// StrategicWeatherState generated from a canonical ClimateProfile, calendar
-// month, prior persistent state, and the versioned keyed RNG stream
-// `campaign/weather/<areaId>/<month>`. Pure/deterministic: no ambient I/O/clock/
-// random; the only randomness enters through the explicit campaign seed via the
-// keyed stream. A missing climate profile, missing month->season assignment, or
-// an incomplete declared transition policy fails closed with
-// WEATHER_PROFILE_INCOMPLETE (never a silent fallback).
-//
-// Production-pack climate-profile YAML is CONTENT-track (deferred); this module
-// defines the pure TypeScript surface that tests (and later the campaign layer)
-// author concrete profiles against.
 import { BluewaveError } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine, type RandomLedger } from "@bluewave/random";
@@ -30,52 +18,32 @@ export interface IntegerRange {
   max: number;
 }
 
-// Canonical angular wind band (DERIVED §4 direction bands). Bands are authored
-// with a relative weighted-draw weight; the nominal direction is the integer
-// canonical angular unit (degrees 0..359) a draw of this band yields.
 export interface WindBand {
   bandId: string;
-  /** Canonical nominal direction in integer degrees 0..359. */
   directionDeg: number;
-  /** Relative weighted-draw weight (integer >= 1). */
   weight: number;
 }
 
 export interface PrecipitationOption {
   type: PrecipitationType;
-  /** Relative weighted-draw weight (integer >= 1). */
   weight: number;
-  /** Intensity range in basis points 0..10_000 (per type). */
   intensityRangeBp: IntegerRange;
 }
 
 export interface SeasonClimateProfile {
   seasonId: string;
-  /** Sea-state range, integer 0..9. */
   seaStateRange: IntegerRange;
   windBands: readonly WindBand[];
-  /** Wind speed range in integer micrometres per second. */
   windSpeedRangeUmPerSec: IntegerRange;
   precipitationOptions: readonly PrecipitationOption[];
-  /** Fog/mist density range in basis points 0..10_000. */
   fogMistDensityRangeBp: IntegerRange;
-  /** Cloud-cover range in basis points 0..10_000. */
   cloudCoverRangeBp: IntegerRange;
   daylightProfileId: string;
-  /** Whether the season profile declares the area glare-eligible. */
   glareEligible: boolean;
-  /** Base visibility range in integer micrometres. */
   baseVisibilityRangeUm: IntegerRange;
-  // ---- INC-3/§4: tactical-weather transition tables (optional — when absent,
-  // the component stays unchanged in that interval, an explicit no-transition
-  // policy per DESIGN-42 §4). ----
-  /** Per-interval sea-state drift range in sea-state levels (±1 max per §4). */
   seaStateDriftRange?: IntegerRange;
-  /** Per-interval wind-speed drift range in µm/s. */
   windSpeedDriftRangeUmPerSec?: IntegerRange;
-  /** Per-band wind direction transitions: maps bandId → reachable bands + weights. */
   windTransitions?: Record<string, { reachableBandIds: string[]; weights: number[] }>;
-  /** Precipitation transitions per type: maps PrecipitationType-string → reachable options. */
   precipitationTransitions?: Record<
     string,
     readonly {
@@ -84,39 +52,26 @@ export interface SeasonClimateProfile {
       intensityDriftRangeBp: IntegerRange;
     }[]
   >;
-  /** Per-interval fog/mist density drift in basis points. */
   fogDriftRangeBp?: IntegerRange;
-  /** Per-interval cloud-cover drift in basis points. */
   cloudDriftRangeBp?: IntegerRange;
-  /** Per-interval base-visibility drift in micrometres. */
   visibilityDriftRangeUm?: IntegerRange;
 }
 
 export interface ClimateProfile {
   climateProfileId: string;
   climateVersion: string;
-  /** Month id -> season id. A month missing here fails with WEATHER_PROFILE_INCOMPLETE. */
   seasonAssignment: Record<string, string>;
   seasons: readonly SeasonClimateProfile[];
 }
 
 export interface StrategicWeatherGenerationInput {
   areaId: string;
-  /** Campaign month id (e.g. "1880-02"); the keyed stream domain includes it. */
   month: string;
-  /** Canonical climate profile; missing -> WEATHER_PROFILE_INCOMPLETE. */
   climateProfile: ClimateProfile | null | undefined;
-  /** Campaign seed; the keyed stream derives `campaign/weather/<areaId>/<month>` from it. */
   campaignSeed: string;
-  /** Prior persistent state (recorded as persistentWeatherStateId; distributional
-   *  persistence is not invented here — DESIGN-42 defines no monthly persistence
-   *  formula, so the linkage is explicit and versioned, see ADR-0022). */
   priorState?: StrategicWeatherState;
-  /** Optional ledger to record every keyed random decision (port pattern). */
   randomLedger?: RandomLedger;
 }
-
-// ---- Weighted-draw helper (deterministic; consumes exactly one stream draw) ----
 
 function drawWeightedId(
   stream: { next(): number },
@@ -151,16 +106,6 @@ function transitionError(climateProfileId: string, seasonId: string, reason: str
   });
 }
 
-// Validate the declared INC-3/§4 transition tables of one season so a malformed
-// policy fails closed (DESIGN-42 §1: "A missing climate or transition policy
-// MUST fail with WEATHER_PROFILE_INCOMPLETE") — never silently skipping a drawn
-// field at first use. Covers:
-//   - windTransitions keys/reachable bands referencing undeclared bands;
-//   - reachableBandIds/weights length mismatch or non-positive weights;
-//   - precipitation-transition option types outside the canonical types, or
-//     invalid weight / drift-range surfaces.
-// Shared by strategic generation (assertProfileComplete) and the tactical
-// progression engine (progressBattleWeatherComponents).
 export function validateSeasonTransitionTables(
   season: SeasonClimateProfile,
   climateProfileId: string,
@@ -259,10 +204,6 @@ export function validateSeasonTransitionTables(
   }
 }
 
-// Validate the declared transition policy surface of a profile/season so a
-// missing or malformed policy fails closed (DESIGN-42 §1: "A missing climate or
-// transition policy MUST fail with WEATHER_PROFILE_INCOMPLETE"), never silently
-// skipping a drawn field.
 function assertProfileComplete(input: StrategicWeatherGenerationInput, p: ClimateProfile): void {
   const seasonAssigned = p.seasonAssignment[input.month];
   if (seasonAssigned === undefined) {
@@ -271,8 +212,6 @@ function assertProfileComplete(input: StrategicWeatherGenerationInput, p: Climat
   if (p.seasons.length === 0) {
     profileError(input, "climate profile declares no seasons");
   }
-  // Guard the required surfaces once, for the assigned season: any missing
-  // declared table/policy element is a profile-incomplete failure.
   const season = p.seasons.find((s) => s.seasonId === seasonAssigned);
   if (!season) {
     profileError(input, `season ${seasonAssigned} not declared in climate profile`);
@@ -320,9 +259,6 @@ function assertProfileComplete(input: StrategicWeatherGenerationInput, p: Climat
       profileError(input, `season ${seasonAssigned} precipitation option intensity range invalid`);
     }
   }
-  // INC-3/§4 transition tables are part of the declared policy surface too:
-  // a malformed table (undeclared band reference, weight/reachable mismatch)
-  // fails closed at generation time as well as at first use (M3).
   validateSeasonTransitionTables(season, p.climateProfileId, season.seasonId);
 }
 
@@ -338,10 +274,6 @@ export function generateStrategicWeather(
   const seasonId = profile.seasonAssignment[input.month] as string;
   const season = profile.seasons.find((s) => s.seasonId === seasonId) as SeasonClimateProfile;
 
-  // Keyed, domain-separated stream (DESIGN-42 §1 / ADR-0022): campaign-level
-  // weather decisions derive from the campaign seed + area + month, so the same
-  // area/month always yields the same stream regardless of UI/battle/autoresolve
-  // order, and different areas/months are fully separated.
   const stream = new RandomEngine(input.campaignSeed).stream(
     `campaign/weather/${input.areaId}/${input.month}`,
   );
@@ -356,8 +288,6 @@ export function generateStrategicWeather(
     }),
   );
 
-  // Fixed, documented draw order (exactly one stream draw per drawn field) so
-  // generation is byte-identical across runs and processes.
   const seaState = drawUniform(
     stream,
     SafeInt(season.seaStateRange.min),
@@ -400,9 +330,6 @@ export function generateStrategicWeather(
     SafeInt(season.baseVisibilityRangeUm.max),
   );
 
-  // Record every keyed decision into the caller-provided ledger (port pattern;
-  // ENGINEERING-CONTRACT: every random outcome records stream id, entity key,
-  // phase, ruleset version, input hash, draw/derived value, outcome, reason).
   const ledger = input.randomLedger;
   if (ledger) {
     const record = (outcome: string, draw: number, entityKey: string, reasonCode: string) => {

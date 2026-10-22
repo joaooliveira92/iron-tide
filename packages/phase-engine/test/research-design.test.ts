@@ -183,9 +183,7 @@ describe("B10b research acceptance (criteria 1-10)", () => {
 
     for (const nationId of ["GBR", "FRA", "GER"]) {
       const final = result.finalSnapshot.nations.get(nationId)!;
-      // Research budget is zeroed after resolution for every nation that spent.
       expect(final.research.researchBudget as number).toBe(0);
-      // Every nation that paid recorded RESEARCH_EXPENDITURE postings.
       const spendEntries = result.financialLedger.all.filter(
         (e) => e.nationId === nationId && e.categoryId === "RESEARCH_EXPENDITURE",
       );
@@ -221,7 +219,6 @@ describe("B10b research acceptance (criteria 1-10)", () => {
   });
 
   it("C3: research resources are zero when paid expenditure is zero; positive expenditure is proportional to researchResourceConversionBp (10_000)", () => {
-    // Zero-expenditure nation gets zero progress (no resources).
     const gbrZero = makeResearchNation("GBR", {
       researchBudget: SafeInt(0),
       techs: [
@@ -243,8 +240,6 @@ describe("B10b research acceptance (criteria 1-10)", () => {
       ),
     ).toBe(false);
 
-    // Positive expenditure: 100 expense with 10_000 bp conversion == 100 resources.
-    // Single eligible field receives exactly the full resource amount.
     const gbrPos = makeResearchNation("GBR", {
       treasury: SafeInt(1000),
       researchBudget: SafeInt(100),
@@ -274,7 +269,6 @@ describe("B10b research acceptance (criteria 1-10)", () => {
     });
     const snapshot = makeSnapshot(new Map([["GBR", gbr]]));
 
-    // Shift to GUNNERY-high so the command's allocation target is verifiable.
     const newPriorities = defaultPriorities();
     newPriorities["GUNNERY"] = SafeInt(4);
     newPriorities["MACHINERY"] = SafeInt(1);
@@ -285,7 +279,6 @@ describe("B10b research acceptance (criteria 1-10)", () => {
     const final = result.finalSnapshot.nations.get("GBR")!;
     expect(final.research.fieldPriorities["GUNNERY"] as number).toBe(4);
     expect(final.research.fieldPriorities["MACHINERY"] as number).toBe(1);
-    // GUNNERY was high priority and received the largest allocation.
     const gunnery = final.research.technologies.find((t) => t.techId === "basic_gunnery")!;
     const machinery = final.research.technologies.find((t) => t.techId === "basic_steam")!;
     expect(gunnery.investedPoints as number).toBeGreaterThan(machinery.investedPoints as number);
@@ -309,11 +302,8 @@ describe("B10b research acceptance (criteria 1-10)", () => {
       (sum, t) => sum + (t.investedPoints as number),
       0,
     );
-    // 100 resources distributed exactly (single-month, nothing exceeded cost 100).
     expect(totalInvested).toBe(100);
 
-    // Weights 4 (MACHINERY) : 2 (HULL) : 1 (GUNNERY) => floor shares 57/28/14,
-    // remainder 1 to the largest fractional remainder (HULL 0.5714).
     const machinery = final.research.technologies.find((t) => t.techId === "basic_steam")!;
     const hull = final.research.technologies.find((t) => t.techId === "basic_hull")!;
     const gunnery = final.research.technologies.find((t) => t.techId === "basic_gunnery")!;
@@ -339,17 +329,13 @@ describe("B10b research acceptance (criteria 1-10)", () => {
     const { result } = runMonth(snapshot, []);
 
     const final = result.finalSnapshot.nations.get("GBR")!;
-    // HULL gets the majority allocation, but never exceeds cost 100.
     for (const tech of final.research.technologies) {
       expect(tech.investedPoints as number).toBeLessThanOrEqual(100);
     }
-    // At most one candidate per field: at most one HULL candidate got progress.
     const hullTechs = final.research.technologies.filter((t) =>
       ["basic_hull", "advanced_hull"].includes(t.techId),
     );
     const advanced = hullTechs.find((t) => t.techId === "advanced_hull")!;
-    // advanced_hull requires basic_hull discovered; basic_hull has not been
-    // discovered this month (99 + up-to-cost), so advanced_hull stays at 99.
     expect(advanced.investedPoints as number).toBe(99);
   });
 
@@ -357,10 +343,7 @@ describe("B10b research acceptance (criteria 1-10)", () => {
     const gbr = makeResearchNation("GBR", {
       treasury: SafeInt(1000),
       researchBudget: SafeInt(100),
-      techs: [
-        // basic_steam: cost 100, needs 100 progress; starts with 99 => discovery this month.
-        { techId: "basic_steam", investedPoints: SafeInt(99), completed: false },
-      ],
+      techs: [{ techId: "basic_steam", investedPoints: SafeInt(99), completed: false }],
       priorities: { MACHINERY: SafeInt(4) },
     });
     const snapshot = makeSnapshot(new Map([["GBR", gbr]]));
@@ -375,7 +358,6 @@ describe("B10b research acceptance (criteria 1-10)", () => {
     expect(steam.completed).toBe(true);
     expect(steam.investedPoints as number).toBe(100);
 
-    // IMMEDIATE_KNOWLEDGE recorded as a TechnologyDiscovered event.
     const discoveryEvents = result.eventLedger.all.filter(
       (e) => e.eventType === "TechnologyDiscovered" && e.aggregateId === "basic_steam",
     );
@@ -409,10 +391,7 @@ describe("B10b research acceptance (criteria 1-10)", () => {
   it("C10: a technology whose prerequisite is undiscovered stays ineligible; the budget goes to the prerequisite", () => {
     const gbr = makeResearchNation("GBR", {
       researchBudget: SafeInt(100),
-      techs: [
-        // advanced_steam requires basic_steam discovered; basic_steam is undiscovered.
-        { techId: "advanced_steam", investedPoints: SafeInt(0), completed: false },
-      ],
+      techs: [{ techId: "advanced_steam", investedPoints: SafeInt(0), completed: false }],
       priorities: {
         MACHINERY: SafeInt(4),
         HULL_CONSTRUCTION: SafeInt(0),
@@ -427,7 +406,6 @@ describe("B10b research acceptance (criteria 1-10)", () => {
     const final = result.finalSnapshot.nations.get("GBR")!;
     const advanced = final.research.technologies.find((t) => t.techId === "advanced_steam")!;
     expect(advanced.investedPoints as number).toBe(0);
-    // The catalogue technology nobody had started gains a progress row and takes the whole budget.
     const basic = final.research.technologies.find((t) => t.techId === "basic_steam")!;
     expect(basic.investedPoints as number).toBe(100);
   });
@@ -465,8 +443,6 @@ describe("B10b design acceptance (criteria 12-13)", () => {
       nationId: "GBR",
       hullType: "battleship",
       normalizedDisplacementKg: SafeInt(18000),
-      // ADR-0037: compiled designs carry canonical µm/µm·s⁻¹ (11 kt, 300 mm,
-      // 305 mm); month.ts converts back to the abstracted Ship stats.
       normalizedSpeedUms: SafeInt(11 * 514_444),
       normalizedArmorUm: SafeInt(300 * 1000),
       hitPoints: SafeInt(120),
@@ -508,7 +484,7 @@ describe("B10b design acceptance (criteria 12-13)", () => {
     expect(ship.hitPoints as number).toBe(120);
     expect(ship.speed as number).toBe(11);
     expect(ship.armor as number).toBe(300);
-    expect(ship.firepower as number).toBe(30); // count * floor(caliber/100) = 10 * 3
+    expect(ship.firepower as number).toBe(30);
     expect(ship.classId).toBe("Dreadnought-class");
     expect(ship.isUnderConstruction).toBe(false);
   });
@@ -557,7 +533,6 @@ describe("SetBudgetAllocation (ADR-0060)", () => {
   });
 
   it("refuses a research budget above 12% of the monthly revenue at the commanded rate", () => {
-    // base 120000 at 3000 bp => revenue 3000 => cap floor(12% x 3000) = 360
     const gbr = makeResearchNation("GBR", {
       treasury: SafeInt(1000),
       baseResources: SafeInt(120000),
@@ -569,7 +544,6 @@ describe("SetBudgetAllocation (ADR-0060)", () => {
     const refused = over.result.finalSnapshot.nations.get("GBR")!;
     expect(refused.navalAppropriationRateBp as number).toBe(2000);
     expect(refused.research.standingResearchBudget).toBeUndefined();
-    // The lifecycle refuses it at validation, with the stable code and the cap, before the engine would apply it.
     const ledger = JSON.stringify(over.result.commandLedger.all);
     expect(ledger).toContain("RESEARCH_ABOVE_CAP");
     expect(ledger).toContain("cap of 360");

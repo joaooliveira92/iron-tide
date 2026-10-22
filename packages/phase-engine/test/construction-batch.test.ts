@@ -1,6 +1,3 @@
-// SB3-R11..R14 (DESIGN-23 sections 3-5): a class-order batch is one command for 1..12 ships of one approved compiled
-// design version, gated exactly like a single order (reserving the whole batch), with deterministic automatic names,
-// a stable batch hash, and the repeat-order/design-study rule enforced at the order-path boundary.
 import type { CampaignSnapshot, ConstructionProject } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -19,7 +16,6 @@ const content = productionShipBuildingContent({ navalProfiles: true });
 
 type Design = CampaignSnapshot["designs"] extends Map<string, infer D> ? D : never;
 
-/** A UK pre-dreadnought (the B name pool) at a given displacement. */
 function design(id: string, displacementKg = 1_000_000, over: Partial<Design> = {}): Design {
   return {
     ...makeDesign(id, "uk"),
@@ -84,7 +80,6 @@ describe("placeConstructionBatch orders 1..12 ships of one design (SB3-R11)", ()
     if (!r.ok) return;
     expect(r.projects).toHaveLength(12);
     expect(r.namePoolExhausted).toBe(true);
-    // The authored UK B pool has 10 stems; the eleventh and twelfth get numbered variants.
     expect(r.names.slice(0, 10).map((n) => n.name)).toEqual([
       "Devastation",
       "Thunderer",
@@ -107,7 +102,6 @@ describe("placeConstructionBatch orders 1..12 ships of one design (SB3-R11)", ()
       pool: "name_pool:uk:B",
       ordinal: 1,
     });
-    // Every ship shares the batch's design version, class and batch id.
     for (const p of r.projects) {
       expect(p.designVersionId).toBe("dv-b");
       expect(p.batchId).toBe("batch-b1");
@@ -121,7 +115,6 @@ describe("placeConstructionBatch orders 1..12 ships of one design (SB3-R11)", ()
       const r = batch(snap, "dv-b", quantity);
       expect(r).toMatchObject({ ok: false, reason: CONSTRUCTION_BATCH_LIMIT_EXCEEDED });
       if (r.ok) return;
-      // A refused batch returns no snapshot and no projects, so nothing entered state.
       expect(r).not.toHaveProperty("snapshot");
       expect(r).not.toHaveProperty("projects");
     }
@@ -140,7 +133,6 @@ describe("placeConstructionBatch orders 1..12 ships of one design (SB3-R11)", ()
 
 describe("the batch gate reserves the whole batch before any project exists (SB3-R12)", () => {
   it("reserves exactly the batch against the national cap and refuses the next ship", () => {
-    // UK dock 13,000,000; the concurrency cap is 3x the dock = 39,000,000.
     const three = batch(snapshot([design("dv-b", 13_000_000)]), "dv-b", 3);
     expect(three.ok).toBe(true);
     if (!three.ok) return;
@@ -148,7 +140,7 @@ describe("the batch gate reserves the whole batch before any project exists (SB3
       (sum, p) => sum + (p.newConstructionReservedMassKg ?? 0),
       0,
     );
-    expect(reserved).toBe(39_000_000); // exactly the cap
+    expect(reserved).toBe(39_000_000);
     const four = batch(snapshot([design("dv-b", 13_000_000)]), "dv-b", 4);
     expect(four).toMatchObject({ ok: false, reason: "INSUFFICIENT_PROJECT_CAPACITY" });
     if (four.ok) return;
@@ -200,7 +192,6 @@ describe("the batch gate reserves the whole batch before any project exists (SB3
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.namePoolExhausted).toBe(true);
-    // The design's own class name is already taken, so the placeholder avoids it.
     expect(r.names).toEqual([
       { name: "Class dv-ss 2", pool: PLACEHOLDER_NAME_POOL_ID, ordinal: 0 },
       { name: "Class dv-ss 3", pool: PLACEHOLDER_NAME_POOL_ID, ordinal: 0 },
@@ -228,10 +219,6 @@ describe("the batch hash is stable and deterministic (SB3-R11)", () => {
 });
 
 describe("repeat orders and the design-study rule (SB3-R14, DESIGN-23 section 5)", () => {
-  // The manual's "a changed design needs a new study" is enforced structurally: the order path only accepts an
-  // existing, immutable, already-approved compiled version, and a mechanically changed design is a new draft compiled
-  // into a new version that only the design-study path (`SubmitDesign`) can approve. So the only order-path behaviour
-  // to pin is that a repeat order of the unchanged version needs no study.
   it("a repeat order of an unchanged compiled version needs no study", () => {
     const snap = snapshot([design("dv-b")]);
     const first = batch(snap, "dv-b", 2);

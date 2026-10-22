@@ -1,13 +1,8 @@
-// D-4 M4 Aviation: Air Defense — AirDefenseState interface
-// per DESIGN-45 §2. Deterministic state hash computation.
-// Parallel to strike-state.ts pattern.
-
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import { AIR_DEFENSE_MODEL_VERSION, INVALID_AIR_DEFENSE_STATE } from "./constants.js";
 import type { AirDefenseSystemDefinition, LayerId } from "./air-defense-system-definition.js";
 
-// Comparator for deterministic sorting of [key, value] map entries by key.
 function byEntryKey(a: readonly [string, unknown], b: readonly [string, unknown]): number {
   return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0;
 }
@@ -23,25 +18,23 @@ export type DisruptionSeverityType = (typeof DisruptionSeverity)[keyof typeof Di
 
 export interface DisruptionRecord {
   severity: DisruptionSeverityType;
-  bp: SafeInt; // basis points value associated with severity
-  timestampMs: SafeInt; // deterministic epoch-based value
+  bp: SafeInt;
+  timestampMs: SafeInt;
   layer: LayerId;
 }
-
-// ---- Director/Radar state ----
 
 export interface DirectorState {
   channelId: string;
   assignedLayer: LayerId;
   directorIndex: SafeInt;
-  scalingBp: SafeInt; // value from DIRECTOR_SCALING_TABLE
+  scalingBp: SafeInt;
 }
 
 export interface RadarState {
   channelId: string;
   assignedLayer: LayerId;
   saturationGroup: SafeInt;
-  diminishingReturnsBp: SafeInt; // from RADAR_SATURATION_TABLE
+  diminishingReturnsBp: SafeInt;
 }
 
 export interface AirDefenseState {
@@ -51,26 +44,18 @@ export interface AirDefenseState {
   directorState: DirectorState;
   radarState: RadarState;
   crewQuality: SafeInt;
-  damageBp: SafeInt; // cumulative damage in basis points
-  powerBp: SafeInt; // cumulative power in basis points
-  ammunitionByType: ReadonlyMap<string, SafeInt>; // type → rounds remaining
-  targetAllocations: ReadonlyMap<string, string>; // targetId → systemId
-  channelReservations: ReadonlyMap<string, string>; // channelId → systemId
+  damageBp: SafeInt;
+  powerBp: SafeInt;
+  ammunitionByType: ReadonlyMap<string, SafeInt>;
+  targetAllocations: ReadonlyMap<string, string>;
+  channelReservations: ReadonlyMap<string, string>;
   disruptionRecords: ReadonlyArray<DisruptionRecord>;
   stateHash: string;
 }
 
-/**
- * Computes a deterministic hash for an AirDefenseState.
- * Excludes the stateHash field itself from the hash computation.
- *
- * @param state - The air defense state to hash.
- * @returns Hex-encoded SHA-256 hash string.
- */
 export function computeAirDefenseStateHash(state: AirDefenseState): string {
   const { stateHash: _sh, ...rest } = state;
 
-  // Order keys deterministically for hashing
   const body = {
     defenderId: rest.defenderId,
     scope: rest.scope,
@@ -141,24 +126,6 @@ export function computeAirDefenseStateHash(state: AirDefenseState): string {
   return envelope.bodyHash;
 }
 
-/**
- * Creates a new AirDefenseState with initial defaults.
- *
- * @param defenderId - Unique identifier for the defender (ship ID).
- * @param scope - Scope: "SHIP", "FLEET", or "BASE".
- * @param systems - Ordered array of AirDefenseSystemDefinition.
- * @param directorState - Director state.
- * @param radarState - Radar state.
- * @param crewQuality - Crew quality basis points (0-10_000).
- * @returns A valid initial AirDefenseState with computed stateHash.
- *
- * Each defense system's magazine is seeded to its `magazineCapacity` (the initial ready
- * load, §20 "magazine or ready-service capacity"), so states built through this constructor
- * carry explicit, authoritative ammunition reserves by default ("Every engagement MUST
- * reserve and consume exact ammunition", §20 line 334; §29.21 "magazines are explicit and
- * authoritative"). Callers who construct states directly may omit entries — ammunition.ts
- * treats an absent entry as an explicit documented opt-in for the "present supply" model.
- */
 export function createAirDefenseState(
   defenderId: string,
   scope: "SHIP" | "FLEET" | "BASE",
@@ -167,7 +134,6 @@ export function createAirDefenseState(
   radarState: RadarState,
   crewQuality: SafeInt,
 ): AirDefenseState {
-  // Validate core fields
   if (typeof defenderId !== "string" || defenderId.length === 0) {
     throw new BluewaveError("defenderId must be a non-empty string", {
       code: INVALID_AIR_DEFENSE_STATE,
@@ -187,7 +153,6 @@ export function createAirDefenseState(
     });
   }
 
-  // Validate all systems
   for (const sys of systems) {
     validateAirDefenseSystemDefinition(sys);
   }
@@ -201,9 +166,6 @@ export function createAirDefenseState(
     crewQuality,
     damageBp: SafeInt.ZERO,
     powerBp: SafeInt.ZERO,
-    // Seed each system's magazine to its ready-service capacity (Repair MEDIUM-1): a
-    // defensive opportunity does not create ammunition (§20 line 346), so the initial load
-    // must be explicit and authoritative (§29.21).
     ammunitionByType: new Map<string, SafeInt>(
       systems.map((sys) => [sys.systemId, sys.magazineCapacity] as const),
     ),
@@ -213,7 +175,6 @@ export function createAirDefenseState(
     stateHash: "",
   };
 
-  // Compute deterministic state hash
   state.stateHash = computeAirDefenseStateHash(state);
   return state;
 }
@@ -227,7 +188,7 @@ export function addDisruptionRecord(
   const disruptionRecord: DisruptionRecord = {
     severity,
     bp,
-    timestampMs: SafeInt.ZERO, // Deterministic value set by caller
+    timestampMs: SafeInt.ZERO,
     layer,
   };
 
@@ -237,7 +198,6 @@ export function addDisruptionRecord(
     disruptionRecords: newDisruptionRecords,
   };
 
-  // Recompute hash after adding disruption
   newState.stateHash = computeAirDefenseStateHash(newState);
   return newState;
 }
@@ -246,6 +206,4 @@ export function isValidDisruptionSeverity(severity: string): severity is Disrupt
   return ["LIGHT", "MODERATE", "SEVERE", "MISSION_ABORT"].includes(severity);
 }
 
-// Re-export validateAirDefenseSystemDefinition from the system-definition module
-// to avoid circular dependencies
 import { validateAirDefenseSystemDefinition } from "./air-defense-system-definition.js";

@@ -19,7 +19,7 @@ describe("AC-8 line-of-sight", () => {
   });
 
   it("honours an injected geometry resolver through isDetected (seam)", () => {
-    const blockedLos = () => false; // no geometry ever visible
+    const blockedLos = () => false;
     expect(
       isDetected({
         observer: [0, 0],
@@ -57,13 +57,12 @@ describe("AC-7 detection model", () => {
   });
 
   it("detection comparison stays within safe-integer fixed-point (AC-7 / DESIGN-07)", () => {
-    const sq = distanceSq([0, 0], [40_000_000_000, 40_000_000_000]); // µm
+    const sq = distanceSq([0, 0], [40_000_000_000, 40_000_000_000]);
     expect(Number.isSafeInteger(sq)).toBe(true);
     expect(sq).toBeGreaterThan(0);
   });
 
   it("flips at the metre-quantized range boundary", () => {
-    // 1 metre inside is detected, 1 metre beyond is not, on the east axis.
     expect(
       isDetected({ observer: [0, 0], target: [RANGE_UM - 1_000_000, 0], rangeUm: RANGE_UM }),
     ).toBe(true);

@@ -1,7 +1,3 @@
-// Crash / error observability (release-readiness ticket 02, ADR-0133): the
-// local-only support bundle. Forces a crash through the installed handlers and
-// asserts a user-shareable bundle is produced; validates the renderer IPC
-// boundary.
 import { EventEmitter } from "node:events";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -59,13 +55,11 @@ describe("support bundle (ADR-0133)", () => {
     expect(report.appVersion).toBe("9.9.9");
     expect(report.processId).toBe(4242);
     expect(report.timestamp).toBe(FIXED.toISOString());
-    // Local-only: the report states no network reporting and points at the file.
     expect(report.note).toMatch(/no network/i);
   });
 
   it("returns null and logs (never throws) when the bundle cannot be written", () => {
     const bad: CrashContext = { ...context(), bundleDir: join(dir, "file-not-a-dir") };
-    // Make the target path a file so mkdirSync fails.
     writeFileSync(bad.bundleDir, "x");
     const path = captureCrash("main", "uncaughtException", { message: "x" }, bad);
     expect(path).toBeNull();
@@ -161,13 +155,10 @@ describe("privacy and bounded writes (ADR-0133 hardening)", () => {
       now: () => clock,
     });
     const ctx: CrashContext = { ...context(), limiter };
-    // Same key twice inside the dedup window: one bundle.
     expect(captureCrash("renderer", "window-error", { message: "loop" }, ctx)).not.toBeNull();
     expect(captureCrash("renderer", "window-error", { message: "loop" }, ctx)).toBeNull();
-    // A different key is allowed until the cap, then suppressed.
     expect(captureCrash("renderer", "window-error", { message: "other" }, ctx)).not.toBeNull();
     expect(captureCrash("renderer", "window-error", { message: "third" }, ctx)).toBeNull();
-    // A new window resets the cap.
     clock += 2_000;
     expect(captureCrash("renderer", "window-error", { message: "loop" }, ctx)).not.toBeNull();
   });

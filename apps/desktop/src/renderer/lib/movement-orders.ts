@@ -1,12 +1,3 @@
-/**
- * The one path both command screens take to issue fleet movement orders: the
- * MoveFleet body builders and the `useMovementOrders` hook that sends them
- * through the bridge. The identity rule (map and Fleet produce the same
- * `MoveFleet` body and `commandId` for the same fleet, destination and
- * revision) holds because both screens build payloads here, from their own
- * workflow's revision capture and transport id.
- */
-
 import { useCallback, useMemo } from "react";
 import type { CampaignCommandMap } from "../../shared/campaign-command-contract.js";
 import type {
@@ -23,7 +14,6 @@ import type {
   RequestKind,
 } from "./command-screen-workflow.js";
 
-/** The route a movement order names: the fleet, where it is, where it goes. */
 export interface MovementRouteTarget {
   readonly divisionId: string;
   readonly fromAreaId: string;
@@ -86,11 +76,6 @@ type MovementCommandName =
   | "replaceMovementCommand"
   | "cancelMovementCommand";
 
-/**
- * Sends movement orders through the caller's command workflow (`execute`) and
- * the shared bridge. Without a bridge the order resolves as a transport
- * failure and the workflow is never engaged, so no pending state appears.
- */
 export function useMovementOrders(sessionId: string, execute: MovementOrderSender): MovementOrders {
   const bridge = useBridge();
 

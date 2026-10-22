@@ -2,7 +2,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { historicalBuildMonths, seededConstructionPlan } from "../src/index.js";
 import { constructionBalance } from "./helpers/earlyContext.js";
 
-// Economy spec #138 slice 4: a project the campaign starts with already on the slips gets a package chain and capacity.
 const input = {
   displacementKg: 11_880_000,
   totalUnits: 100,

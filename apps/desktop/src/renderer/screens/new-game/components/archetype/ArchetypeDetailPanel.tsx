@@ -15,44 +15,23 @@ import { ARCHETYPE_DIMENSION_DESCRIPTORS } from "../../archetype-dimensions.js";
 import { ArchetypeConsequencePanel } from "../../ArchetypeConsequencePanel.js";
 import { ArchetypeAllocationEditor } from "./ArchetypeAllocationEditor.js";
 
-/** What the custom slot's panel needs to edit its allocation in place. */
 export interface ArchetypeDetailEditor {
-  /** Points the working allocation spends. */
   readonly points: number;
-  /** The engine validator's diagnostics; empty when the allocation is valid. */
   readonly errors: readonly string[];
   readonly onDimensionChange: (dimension: ArchetypeDimension, value: number) => void;
-  /** Return the working allocation to the balanced baseline. */
   readonly onReset: () => void;
 }
 
 export interface ArchetypeDetailPanelProps {
-  /** The focused slot: a named preset, or the custom-build slot. */
   readonly entry: {
     readonly preset?: ArchetypePreset;
   };
-  /** The allocation whose consequences are shown (the preset's or the custom build). */
   readonly allocation: ArchetypeAllocation;
-  /** Whether the previewed slot's selection is the one currently applied. */
   readonly applied: boolean;
-  /** Previewed and not yet applied: the step's primary action will apply it. */
   readonly pending: boolean;
-  /**
-   * Makes the custom slot's body the editable allocator instead of a read-only
-   * allocation. Ignored for preset slots.
-   */
   readonly editor?: ArchetypeDetailEditor;
 }
 
-/**
- * The detail pane's focused-archetype slide panel: name and tagline, the
- * three-dimension allocation, and the live consequence preview — with an Active
- * state, or a note that the step's primary action will apply it. The panel has
- * no control of its own: applying is Enter, a tap on the card, or the primary
- * action. Keyed by slot in the caller, so it eases in again each time focus
- * moves. The custom slot's body is the allocator itself when an `editor` is
- * given: the one editable detail slot, validated by the engine upstream.
- */
 export const ArchetypeDetailPanel = memo(function ArchetypeDetailPanel({
   entry,
   allocation,

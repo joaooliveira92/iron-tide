@@ -10,19 +10,6 @@ import {
 import type { CampaignSessionRecord } from "../../campaignSessions.js";
 import { uiStatusFor } from "./command-status.js";
 
-/**
- * The UI-facing shape of a construction command. Owns everything the
- * Construction screen sees about a command record — resolving the compiled
- * design behind a design id and shaping a `ConstructionCommand` row. The
- * status vocabulary it shares with the workspace lives in `command-status.ts`;
- * writing a row's status back is a `ConstructionWorkspace` operation.
- */
-
-/**
- * Resolve the UI-facing design for `designId`. Looks in the nation's compiled
- * catalog and falls back to a deterministic stub rather than crashing the
- * ledger if the design is no longer catalogued.
- */
 export function resolveUiDesign(
   record: CampaignSessionRecord,
   designId: string,
@@ -68,7 +55,6 @@ export interface UiCommandInput {
   readonly submittedAtRevision: number;
 }
 
-/** Shape one recorded command into the Construction screen's row. */
 export function toUiCommand(input: UiCommandInput): ConstructionCommand {
   return {
     commandId: input.recordRef.commandId,

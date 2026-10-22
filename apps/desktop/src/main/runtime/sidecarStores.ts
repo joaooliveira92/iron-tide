@@ -1,7 +1,3 @@
-// The three renderer-owned, non-authoritative sidecars as services (INC-4;
-// ADR-0159): UI state, monthly-report history, and the drawing-board draft.
-// Each is a sibling of the save ids in the campaign save directory, outside the
-// envelope and hash. Raw `node:*` stays inside the service.
 import { rmSync } from "node:fs";
 import { join } from "node:path";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";

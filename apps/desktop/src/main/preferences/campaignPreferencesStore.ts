@@ -1,8 +1,3 @@
-// The campaign-scope preferences store (D3). A JSON sidecar in the campaign save
-// directory (a sibling of the save ids, outside the envelope/hash), written
-// atomically and read tolerantly: a missing, unreadable or undecodable file
-// recovers to the central defaults. It is non-authoritative — it never touches a
-// save or a golden hash (D7).
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Context, Effect, Layer, Result, Schema } from "effect";
@@ -20,19 +15,16 @@ import {
 } from "./preferencesErrors.js";
 import { CampaignPreferencesFileSchema } from "./preferencesSchema.js";
 
-/** The campaign-scope sidecar name, a sibling of the save ids in the campaign dir. */
 export const CAMPAIGN_PREFERENCES_FILENAME = "campaign-preferences.json";
 
 function messageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-/** The tolerant read fallback (and the initial shape). */
 export function defaultCampaignPreferencesSnapshot(): CampaignPreferencesSnapshot {
   return { version: PREFERENCES_SCHEMA_VERSION, campaign: DEFAULT_CAMPAIGN_PREFERENCES };
 }
 
-/** The decoded snapshot, or the defaults for a missing/corrupt/undecodable file. */
 export function loadCampaignPreferencesFile(saveDir: string): CampaignPreferencesSnapshot {
   const path = join(saveDir, CAMPAIGN_PREFERENCES_FILENAME);
   if (!existsSync(path)) return defaultCampaignPreferencesSnapshot();

@@ -3,12 +3,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { SimulationScreen } from "./SimulationScreen.js";
 
-/**
- * Composition test for the Simulation screen. The hook is mocked so this
- * asserts PURE wiring: the three tabs render, the commit badge appears only
- * after a month is committed, load errors surface, and the primary action is
- * registered with the shell (label + disabled state).
- */
 const hook = vi.hoisted(() => ({ current: null as unknown }));
 vi.mock("./hooks/useSimulationScreen.js", () => ({
   useSimulationScreen: () => hook.current,

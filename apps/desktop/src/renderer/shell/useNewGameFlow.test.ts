@@ -57,7 +57,6 @@ const preferenceArchetype: ArchetypeSelection = {
   allocation: { ...ARCHETYPE_PRESETS[0]!.allocation },
 };
 
-/** Drives the flow forward to (but not through) the fleet-method step. */
 function advanceToFleetMethod(actions: ReturnType<typeof setup>["result"]["current"]["actions"]) {
   act(() => actions.confirmNation("nation_uk"));
   act(() => actions.acceptPreferences(preferences, options));
@@ -65,7 +64,6 @@ function advanceToFleetMethod(actions: ReturnType<typeof setup>["result"]["curre
   act(() => actions.acceptIdentity(defaultCampaignIdentity()));
 }
 
-/** Drives the flow forward through the fleet-method and review steps, ready to launch. */
 function advanceToReview(
   actions: ReturnType<typeof setup>["result"]["current"]["actions"],
   fleetMethod = defaultFleetMethod(),
@@ -150,7 +148,6 @@ describe("useNewGameFlow", () => {
     act(() => result.current.actions.backToNation());
     expect(selectScreen).toHaveBeenLastCalledWith("new-game-nation");
 
-    // Moving forward again keeps the already-chosen nation and archetype.
     act(() => result.current.actions.acceptPreferences(preferences, options));
     expect(result.current.state.draft?.nationId).toBe("nation_uk");
     expect(result.current.state.draft?.archetype).toEqual(preferenceArchetype);
@@ -180,8 +177,6 @@ describe("useNewGameFlow", () => {
         playerSlotId: "nation_uk",
       }),
     );
-    // World generation auto-advances into the briefing, not straight to the
-    // dashboard (spec §7 -> §8). The dashboard opens only on "Take command".
     expect(openCampaign).not.toHaveBeenCalled();
     expect(selectScreen).toHaveBeenLastCalledWith("opening-briefing");
     expect(result.current.state.briefingSessionId).toBe("ses-created");
@@ -252,7 +247,6 @@ describe("useNewGameFlow", () => {
     );
     expect(result.current.state.status).toBe("ready");
 
-    // Stays on the launching screen's error state until the player backs out.
     expect(selectScreen).toHaveBeenLastCalledWith("new-game-launching");
     act(() => result.current.actions.backToReviewFromLaunch());
     expect(selectScreen).toHaveBeenLastCalledWith("new-game-review");

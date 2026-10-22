@@ -1,24 +1,12 @@
-/**
- * The tertiary battery (ADR-0233, manual p.28): a count of one chosen gun with no per-mount placement, no fire arc and
- * no role. The compile expands it deterministically into the three things it contributes: weight, deck footprint (the
- * topside it occupies) and a bearing share of broadside shell mass. Integer arithmetic throughout; every coefficient
- * is a BALANCE TARGET (ADR-0213) authored in the ruleset, never sourced.
- */
-
 export interface TertiaryBattery {
-  /** Bore, micrometres. */
   readonly caliberUm: number;
   readonly count: number;
 }
 
 export interface TertiaryBalance {
-  /** Gun and mount weight, nano-kg per mm^3 of bore cube (bore^3 x this / 1e9 = kg). */
   readonly gunWeightNanoKgPerMm3: number;
-  /** Deck footprint, permille of the bore square (bore^2 x this / 1000 = mm^2), crew space included. */
   readonly footprintFactorPermille: number;
-  /** Shell mass, nano-kg per mm^3 of bore cube. */
   readonly shellNanoKgPerMm3: number;
-  /** Share of the guns that bear on one beam, bp. */
   readonly bearingBp: number;
 }
 
@@ -26,15 +14,12 @@ export interface TertiaryExpansion {
   readonly guns: number;
   readonly weightKg: number;
   readonly footprintMm2: number;
-  /** Shell mass of the battery's contribution to one broadside, kg. */
   readonly broadsideKg: number;
 }
 
-/** The battery has no placement; for the topside and the stability lump it sits amidships on the weather deck. */
 export const TERTIARY_ZONE = "SUPERSTRUCTURE" as const;
 export const TERTIARY_STATION_PERMILLE = 500;
 
-/** Used when the ruleset authors no tertiary coefficients: the battery then contributes nothing. */
 export const NO_TERTIARY_BALANCE: TertiaryBalance = {
   gunWeightNanoKgPerMm3: 0,
   footprintFactorPermille: 0,

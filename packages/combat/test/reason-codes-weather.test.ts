@@ -1,17 +1,7 @@
-// AC-16: Reason-code set-equality — the shipped WEATHER_REASON_CODES set must
-// exactly match the §30 weather-only subset plus the non-§30 in-slice markers
-// (INVALID_STRATEGIC_WEATHER_STATE, INVALID_TACTICAL_WEATHER_STATE,
-// WEATHER_STATE_INVARIANT_FAILED). Adding a code without updating this test
-// fails the guard. Every shipped code is a non-empty string literal; the shipped
-// set is disjoint from the shared combat catalog; deferred §30 smoke codes
-// (owned by M3/C-5) are never shipped here.
 import { describe, it, expect } from "vite-plus/test";
 import { WEATHER_REASON_CODES } from "../src/weather/reasonCodes.js";
 import { REASON_CODES } from "../src/reasonCodes.js";
 
-// Full authoritative list of in-slice weather codes per spec §1.4 + ADR-0022:
-// - 4 §30 weather-only codes (smoke codes deferred)
-// - 3 non-§30 in-slice markers (strategic/tactical construction + invariant guards)
 const IN_SLICE_CODES = [
   "WEATHER_PROFILE_INCOMPLETE",
   "INVALID_BATTLE_WEATHER_INITIALIZATION",
@@ -22,7 +12,6 @@ const IN_SLICE_CODES = [
   "WEATHER_STATE_INVARIANT_FAILED",
 ] as const;
 
-// Deferred §30 codes — owned by M3/C-5 smoke track, never shipped in B-5.
 const DEFERRED_SECTION_30_SMOKE_CODES = [
   "INVALID_SMOKE_CLOUD",
   "SMOKE_LINE_INTERSECTION_FAILED",
@@ -76,9 +65,6 @@ describe("AC-16: weather reason-code set-equality (§30 + non-§30 markers)", ()
 
   it("reused combat catalog codes are not in weather's set (weather owns its codes)", () => {
     const weatherSet = new Set(Object.values(WEATHER_REASON_CODES) as readonly string[]);
-    // Weather does not reuse any combat codes (all weather codes are new)
-    // Reused codes would be: TACTICAL_STATE_INVARIANT_FAILED, etc.
-    // Weather's invariant guard is WEATHER_STATE_INVARIANT_FAILED — a new code.
     expect(weatherSet.has("TACTICAL_STATE_INVARIANT_FAILED")).toBe(false);
   });
 

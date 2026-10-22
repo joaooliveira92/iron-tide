@@ -5,14 +5,9 @@ export interface PanelProps {
   readonly title: string;
   readonly children: ReactNode;
   readonly className?: string;
-  /**
-   * Drop the visible heading and tighten the padding, for a panel that sits under a toolbar already naming it. The
-   * region keeps its accessible name.
-   */
   readonly compact?: boolean;
 }
 
-/** The shared titled card chrome every design-workspace panel is built on. */
 export function Panel({ title, children, className, compact = false }: PanelProps) {
   return (
     <Card className={className} role="region" aria-label={title}>

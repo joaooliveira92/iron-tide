@@ -1,9 +1,3 @@
-// B-6/ADR-0025 (AC-1/AC-11): the new snapshot fields — startYear/startMonth and
-// the current-month per-area strategicWeather collection — survive SaveStore
-// save -> load -> replay round trips. strategicWeather is a plain canonically
-// ordered array (JSON-native, no Map/Record conversion needed), so the existing
-// storable snapshot shape carries it automatically.
-
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -127,11 +121,6 @@ describe("SaveStore round-trips the B-6 strategic-weather schema", () => {
 
   it("a snapshot WITHOUT the B-6 collection is rejected as incompatible (no silent continuation)", () => {
     const current = makeFixtureState().snapshot;
-    // Reject-on-mismatch stance (ADR-0025 / spec §1.4): a 1.0.0 build's save
-    // (no start fields, no weather) must NOT continue silently. Load rejects
-    // on the compatibility version. The envelope + rawHash are built over the
-    // SAME 1.0.0 body so the only failing gate is the compatibility check —
-    // proving the stable diagnostic fires rather than a generic corrupt path.
     const old: CampaignSnapshot = { ...current, compatibilityVersion: "1.0.0" };
     const envelope = createEnvelope("campaign-snapshot", "1.0.0", old);
     const state: CampaignState = {
@@ -142,8 +131,6 @@ describe("SaveStore round-trips the B-6 strategic-weather schema", () => {
     store.save(state, tmpDir);
     const diagnostics = new DiagnosticCollector();
     expect(store.load(tmpDir, diagnostics)).toBeNull();
-    // Rejection must surface the stable diagnostic code (spec §1.4 / ADR-0025),
-    // not merely fall through a generic corrupt-save path.
     expect(diagnostics.errors.some((d) => d.code === "PERSISTENCE_COMPATIBILITY_MISMATCH")).toBe(
       true,
     );

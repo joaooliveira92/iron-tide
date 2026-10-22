@@ -1,4 +1,3 @@
-// T-1 10 (#119): cross-process child for the T-1 acceptance scenario. Prints the observation as one JSON line.
 import { runT1Acceptance } from "./t1-acceptance.js";
 
 try {

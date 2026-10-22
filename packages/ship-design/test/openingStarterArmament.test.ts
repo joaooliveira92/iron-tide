@@ -1,18 +1,3 @@
-/**
- * Opening-starter armament coverage release gate (ADR-0093 Step 3, ADR-0108/0110/0111).
- *
- * Every production nation ships opening reference designs, and every one of them must compile through the real
- * pipeline exactly as the campaign and the UI do. This test closes two gaps the armament cut-over left open:
- *
- *  1. It covers EVERY production nation's 1880-01 starters, not just the three nations with explicitly authored
- *     armament. The nations without authored armament are the ones the legacy compatibility path exists for, and
- *     a regression there would otherwise go unnoticed until a player opened the design screen.
- *  2. It proves the two paths are distinct and clean: authored-armament nations carry a compiled armament
- *     identity onto the engine design, while the rest carry none and still compile and adapt without a throw.
- *
- * "Has authored armament" is derived from `nationHasArmamentContent` (the same predicate the compile uses), never
- * from a hardcoded nation list.
- */
 import { describe, expect, it } from "vite-plus/test";
 import {
   compileDesign,
@@ -27,13 +12,11 @@ import { armamentContent, nationalContext, shipBuildingContent } from "./helpers
 
 const OPENING_MONTH = "1880-01";
 
-/** Every production nation with a profile must ship a starter at the opening month. */
 const profiledNations = shipBuildingContent.navalProfiles.map((p) => p.nationId);
 const openingStarters: readonly StarterDesign[] = shipBuildingContent.starterDesigns.filter(
   (s) => s.month === OPENING_MONTH,
 );
 
-/** The same adapter options `armamentEngineAdapter.test.ts` uses: enough to project the design. */
 function engineOptions(id: string): EngineAdapterOptions {
   return {
     designVersionId: `dv_${id}`,
@@ -46,13 +29,11 @@ function engineOptions(id: string): EngineAdapterOptions {
   };
 }
 
-/** Compile once, remembering the result so re-entry (for a `not.toThrow` probe) never recompiles. */
 function compileOnce(s: StarterDesign): () => CompiledDesign {
   let cached: CompiledDesign | undefined;
   return () => (cached ??= compileDesign(s.draft, nationalContext(s.month, s.draft.nationId)));
 }
 
-/** Adapt once, remembering the result so re-entry (for a `not.toThrow` probe) never re-adapts. */
 function adaptOnce(s: StarterDesign, compiled: CompiledDesign): () => EngineDesignFields {
   let cached: EngineDesignFields | undefined;
   return () => (cached ??= toEngineDesign(compiled, s.draft, engineOptions(s.id)));

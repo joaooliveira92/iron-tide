@@ -9,7 +9,6 @@ import {
   type AntiAircraftBalance,
 } from "../src/index.js";
 
-// Fixture values, not game values: the tests assert the arithmetic, not any gameplay number.
 const balance: AntiAircraftBalance = {
   fromMonth: "1915-01",
   lightGunWeightKg: 100,
@@ -88,7 +87,6 @@ describe("antiAircraftResult and findings", () => {
 describe("antiAircraftBalanceProblem", () => {
   it("accepts a well-formed section and names what is wrong with a bad one", () => {
     expect(antiAircraftBalanceProblem(balance)).toBeNull();
-    // Weights and areas are not counts: they are not held to the count bound.
     expect(
       antiAircraftBalanceProblem({
         ...balance,

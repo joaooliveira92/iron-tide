@@ -19,6 +19,7 @@
     "check:dependencies": "node scripts/verify-package-dependencies.mjs",
     "change-scope": "node scripts/change-scope.mjs",
     "sweep:comments": "node scripts/sweep-comments.mjs",
+    "strip:comments": "node scripts/strip-comments.mjs",
     "save:migrate": "node tools/migrate-dev-saves/main.mjs",
     "check:balance-reports": "node scripts/check-balance-reports.cjs",
     "worktrees": "node scripts/worktree.mjs",

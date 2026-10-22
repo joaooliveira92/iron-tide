@@ -19,8 +19,6 @@ function systemPrefersDark(): boolean {
 
 export function resolveTheme(theme: Theme): "light" | "dark" {
   if (theme === "system") return systemPrefersDark() ? "dark" : "light";
-  // High contrast is a dark-based theme; the `.high-contrast` class strengthens
-  // the dark tokens (map D3).
   if (theme === "highContrast") return "dark";
   return theme;
 }
