@@ -7,6 +7,9 @@ on:
     branches: [dev, main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: quality-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -14,16 +17,18 @@ concurrency:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           # Full history so the golden-repin ratchet can resolve its baseline
           # commit and scan the range since it.
           fetch-depth: 0
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
           version: 11.21.0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24.18.0"
           cache: "pnpm"
@@ -33,7 +38,7 @@ jobs:
       # across runs. Both are content-addressed, so a restored entry is always
       # safe — changed modules simply miss and are recompiled. Without this the
       # compile cache would only pay its one-time serialization cost per run.
-      - uses: actions/cache@v6
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             node_modules/.vitest-cache
@@ -45,7 +50,7 @@ jobs:
       # unchanged package's build or suite replays instead of re-running. A
       # restored entry is always safe (automatic data tracking invalidates on any
       # input change).
-      - uses: actions/cache@v6
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: node_modules/.vite/task-cache
           key: ${{ runner.os }}-node24-vp-task-${{ hashFiles('pnpm-lock.yaml') }}
