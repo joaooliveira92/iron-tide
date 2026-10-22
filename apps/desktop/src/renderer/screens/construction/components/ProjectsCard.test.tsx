@@ -87,9 +87,9 @@ describe("ProjectsCard", () => {
       />,
     );
     const readout = screen.getByRole("list", { name: "Havock class cost and schedule" });
-    expect(within(readout).getByText("120/mo")).toBeTruthy();
+    expect(within(readout).getByText("120 NC/mo")).toBeTruthy();
     expect(within(readout).getByText("6")).toBeTruthy();
-    expect(within(readout).getByText("640")).toBeTruthy();
+    expect(within(readout).getByText("640 NC")).toBeTruthy();
     expect(within(readout).getByText("1880-07")).toBeTruthy();
   });
 

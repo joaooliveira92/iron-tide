@@ -1,4 +1,5 @@
 import type { MonthlyReportResearch } from "../../../../shared/campaign-command-contract.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
 /**
  * The report's Research section (spec §16): per-tech progress from the real
@@ -11,6 +12,7 @@ export function MonthReportResearchSection({
 }: {
   readonly research: MonthlyReportResearch;
 }) {
+  const format = usePresentationFormat();
   const quiet = research.progress.length === 0 && research.discoveries.length === 0;
   if (quiet) {
     return (
@@ -28,8 +30,7 @@ export function MonthReportResearchSection({
         <ul className="text-muted-foreground" aria-label="Research progress">
           {research.progress.map((entry) => (
             <li key={entry.techId}>
-              {entry.techId}: {entry.previousPoints.toLocaleString()} →{" "}
-              {entry.newPoints.toLocaleString()}
+              {entry.techId}: {format.count(entry.previousPoints)} → {format.count(entry.newPoints)}
             </li>
           ))}
         </ul>

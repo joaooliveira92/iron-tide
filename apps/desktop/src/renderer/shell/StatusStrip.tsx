@@ -22,6 +22,7 @@ import { buildTrend, type TrendDetail } from "./status-strip-trend.js";
 import { activeAlertsCount, type CampaignReads } from "./campaign-reads.js";
 import { cn } from "../lib/utils.js";
 import { useDensity } from "./DensityContext.js";
+import { usePresentationFormat } from "./usePresentationFormat.js";
 import {
   BalanceCard,
   BudgetLineCard,
@@ -772,14 +773,16 @@ export interface StatusStripProps {
 /** Renders the engine views the shell already read; renders nothing while the campaign read is unavailable. */
 export function StatusStrip({ reads }: StatusStripProps) {
   const { projection, areas, reports } = reads;
+  const format = usePresentationFormat();
   if (projection.status !== "ready") return null;
   return (
     <StatusStripView
-      trend={buildTrend(reports.status === "ready" ? reports.value : null)}
+      trend={buildTrend(reports.status === "ready" ? reports.value : null, format)}
       model={buildStatusStrip({
         projection: projection.value,
         areas: areas.status === "ready" ? areas.value : null,
         alertsCount: activeAlertsCount(reads),
+        format,
       })}
     />
   );

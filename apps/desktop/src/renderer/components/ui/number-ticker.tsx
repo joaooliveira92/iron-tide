@@ -5,6 +5,7 @@ import { animate, motion, useInView, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EASE_OUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
+import { formatCount } from "../../lib/presentation-format/index.js";
 
 export interface NumberTickerProps {
   value: number;
@@ -55,11 +56,7 @@ export function NumberTicker({
 
   const text = useMemo(() => {
     const rounded = Math.round(value);
-    const formatted = format
-      ? format(rounded)
-      : locale
-        ? rounded.toLocaleString()
-        : rounded.toString();
+    const formatted = format ? format(rounded) : locale ? formatCount(rounded) : rounded.toString();
     return pad ? formatted.padStart(pad, "0") : formatted;
   }, [value, pad, format, locale]);
   const glyphs = useMemo(() => {

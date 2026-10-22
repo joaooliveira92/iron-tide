@@ -23,6 +23,14 @@ export const NAVAL_CREDITS_LABEL = "NC";
 /** The label Budget Points renders with (an abstract unit). */
 export const BUDGET_POINTS_LABEL = "BP";
 
+/**
+ * Treasury micro-units in one canonical unit (1e6): ship-design costs are authored
+ * in micro-currency (ADR-0218's single conversion home). The content-driven
+ * `treasuryUnitMicro` is the authority where it is available; this constant is the
+ * default factor the economy surfaces already used.
+ */
+export const MICRO_PER_UNIT = 1_000_000;
+
 export interface FormatMoneyOptions {
   readonly locale: FormattingLocale;
   /** A bare mode or a resolved `EffectiveCurrencyDisplayMode`; both are accepted. */
@@ -35,6 +43,29 @@ export interface FormatMoneyOptions {
 
 function modeOf(mode: CurrencyDisplayMode | EffectiveCurrencyDisplayMode): CurrencyDisplayMode {
   return typeof mode === "string" ? mode : mode.mode;
+}
+
+/**
+ * The unit label the effective mode renders with ("NC", "BP", or the national
+ * symbol). A caller composing its own layout (a compact header readout) uses this
+ * instead of hard-coding a currency symbol.
+ */
+export function currencyUnitLabel(
+  mode: CurrencyDisplayMode | EffectiveCurrencyDisplayMode,
+  national?: NationalCurrencyConfiguration,
+): string {
+  const resolved = modeOf(mode);
+  if (resolved === "budgetPoints") return BUDGET_POINTS_LABEL;
+  if (resolved === "nationalHistorical" && national !== undefined) return national.symbol;
+  return NAVAL_CREDITS_LABEL;
+}
+
+function renderNavalCredits(amount: number, options: FormatMoneyOptions): string {
+  return `${formatNumber(amount, {
+    locale: options.locale,
+    numberScale: options.numberScale,
+    maximumFractionDigits: options.maximumFractionDigits ?? 0,
+  })} ${NAVAL_CREDITS_LABEL}`;
 }
 
 /** Format canonical money (treasury units) in the effective currency-display mode. */
@@ -58,12 +89,13 @@ export function formatMoney(value: Money | number, options: FormatMoneyOptions):
   return renderNavalCredits(amount, options);
 }
 
-function renderNavalCredits(amount: number, options: FormatMoneyOptions): string {
-  return `${formatNumber(amount, {
-    locale: options.locale,
-    numberScale: options.numberScale,
-    maximumFractionDigits: options.maximumFractionDigits ?? 0,
-  })} ${NAVAL_CREDITS_LABEL}`;
+/**
+ * Format a ship-design cost authored in micro-currency. The factor is the single
+ * conversion home's constant (`MICRO_PER_UNIT`); a surface with the content-driven
+ * `treasuryUnitMicro` converts to canonical money itself and calls `formatMoney`.
+ */
+export function formatMoneyFromMicro(micro: number, options: FormatMoneyOptions): string {
+  return formatMoney(micro / MICRO_PER_UNIT, options);
 }
 
 /** Apply the configuration's exact integer scale (relabel keeps the value). */

@@ -1,8 +1,18 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vite-plus/test";
+import { createPresentationFormat } from "../../../../lib/presentation-format/index.js";
 import type { DrawingFacts } from "./describe.js";
 import { HullPlanLegend } from "./HullPlanLegend.js";
 import { legendEntries } from "./legend.js";
+
+/** The default presentation: en-US, full scale, imperial, Naval Credits. */
+const FORMAT = createPresentationFormat({
+  locale: "en-US",
+  numberScale: "full",
+  measurementPreset: "imperial",
+  measurementSelections: {},
+  currency: { mode: "navalCredits" },
+});
 
 const facts: DrawingFacts = {
   hullFormId: "protected_cruiser_form",
@@ -16,13 +26,16 @@ const facts: DrawingFacts = {
   funnels: 2,
   superstructure: { startPermille: 520, endPermille: 640 },
 };
-const entries = legendEntries({
-  facts,
-  waterplaneCoeffBp: 7400,
-  lcbPermille: 500,
-  sheerBp: 11000,
-  funnels: [{ instanceId: "f1", stationPermille: 560 }],
-});
+const entries = legendEntries(
+  {
+    facts,
+    waterplaneCoeffBp: 7400,
+    lcbPermille: 500,
+    sheerBp: 11000,
+    funnels: [{ instanceId: "f1", stationPermille: 560 }],
+  },
+  FORMAT,
+);
 const draw = () => render(<HullPlanLegend entries={entries} />);
 
 describe("HullPlanLegend", () => {

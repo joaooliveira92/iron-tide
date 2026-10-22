@@ -4,6 +4,8 @@ import type { DesignDraft } from "@bluewave/ship-design";
 import { Alert } from "../../ui/alert.js";
 import { Button } from "../../ui/button.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
+import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 import { Panel } from "./Panel.js";
 import { plural } from "../plural.js";
 import type { DesignStudyPreview } from "../../../../shared/design-contract.js";
@@ -11,15 +13,19 @@ import type { DesignStudyPreview } from "../../../../shared/design-contract.js";
 let submitCounter = 0;
 
 /** What the player is told when a design is queued: with study rules, its study's months and cost (ADR-0085). */
-export function queuedLines(name: string, study: DesignStudyPreview | undefined): string[] {
+export function queuedLines(
+  name: string,
+  study: DesignStudyPreview | undefined,
+  format: PresentationFormat,
+): string[] {
   if (study === undefined)
     return [`Design queued. "${name}" joins the Design Catalog when the month is advanced.`];
   const lines = [
-    `Design queued. Its design study starts when the month is advanced: ${plural(study.months, "month")} and ${plural(study.cost, "treasury unit")}, paid month by month.`,
+    `Design queued. Its design study starts when the month is advanced: ${plural(study.months, "month", undefined, undefined, format)} and ${plural(study.cost, "treasury unit", undefined, undefined, format)}, paid month by month.`,
   ];
   if (study.derived && study.baselineClassName !== null)
     lines.push(
-      `A variant of ${study.baselineClassName}: the study is ${study.discountBp / 100}% shorter and cheaper.`,
+      `A variant of ${study.baselineClassName}: the study is ${format.percent(study.discountBp, 0)} shorter and cheaper.`,
     );
   else if (study.failedCriteria.length > 0)
     lines.push(
@@ -74,6 +80,7 @@ export function SubmitPanel({
 }) {
   const revision = useCampaignRevision();
   const bridge = useBridge();
+  const format = usePresentationFormat();
   const [ownName, setOwnName] = useState("");
   const className = name ?? ownName;
   const setClassName = onNameChange ?? setOwnName;
@@ -103,7 +110,7 @@ export function SubmitPanel({
       });
       if (r.outcome === "success") {
         setQueuedKey(key);
-        setResult({ tone: "ok", lines: queuedLines(className.trim(), r.value.study) });
+        setResult({ tone: "ok", lines: queuedLines(className.trim(), r.value.study, format) });
       } else {
         setResult({
           tone: "bad",

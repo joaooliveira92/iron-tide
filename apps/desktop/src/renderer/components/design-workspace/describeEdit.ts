@@ -1,16 +1,25 @@
 import type { DraftEdit } from "@bluewave/ship-design";
 
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
+
 const show = (v: unknown): string =>
   typeof v === "object" && v !== null ? JSON.stringify(v) : String(v);
 
 const words = (s: string) =>
   s
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/([a-z])([A-Z])/g, (_match, lower: string, upper: string) => `${lower} ${upper}`)
     .replaceAll("_", " ")
     .toLowerCase();
 
-/** One-line, player-readable description of an edit for the history list. `nameOf` resolves a component id. */
-export function describeEdit(e: DraftEdit, nameOf: (componentId: string) => string): string {
+/**
+ * One-line, player-readable description of an edit for the history list. `nameOf` resolves a component id;
+ * `format` renders the numbers under the player's presentation preferences (ADR-0218).
+ */
+export function describeEdit(
+  e: DraftEdit,
+  nameOf: (componentId: string) => string,
+  format: PresentationFormat,
+): string {
   switch (e.kind) {
     case "set_hull":
       return `Hull: ${Object.entries(e.patch)
@@ -25,13 +34,13 @@ export function describeEdit(e: DraftEdit, nameOf: (componentId: string) => stri
     case "set_tertiary":
       return e.tertiary === null
         ? "Remove the tertiary battery"
-        : `Tertiary battery: ${e.tertiary.count} × ${Math.round(e.tertiary.caliberUm / 1000)} mm`;
+        : `Tertiary battery: ${e.tertiary.count} × ${format.number(e.tertiary.caliberUm / 1000, { maximumFractionDigits: 0 })} mm`;
     case "set_side":
       return `Set ${e.instanceId} to ${e.side === "CENTRE" ? "the centreline" : e.side === "PORT" ? "port" : "starboard"}`;
     case "batch":
       return e.edits.length === 1
-        ? describeEdit(e.edits[0]!, nameOf)
-        : `${e.edits.length} changes: ${describeEdit(e.edits[0]!, nameOf)}, ...`;
+        ? describeEdit(e.edits[0]!, nameOf, format)
+        : `${e.edits.length} changes: ${describeEdit(e.edits[0]!, nameOf, format)}, ...`;
     case "set_requirement":
       return `Brief: ${Object.entries(e.patch)
         .map(([k, v]) => `${words(k)} → ${show(v)}`)
@@ -47,7 +56,7 @@ export function describeEdit(e: DraftEdit, nameOf: (componentId: string) => stri
     case "set_armour_region": {
       const r = e.region;
       const slope = r.cosObliquityBp < 10_000 ? ", inclined" : "";
-      return `Armour: set ${words(r.region)} (${(r.thicknessUm / 1000).toFixed(0)} mm ${words(r.materialId)}, ${(r.lengthMm / 1000).toFixed(1)} m × ${(r.heightMm / 1000).toFixed(1)} m${slope})`;
+      return `Armour: set ${words(r.region)} (${format.number(r.thicknessUm / 1000, { maximumFractionDigits: 0 })} mm ${words(r.materialId)}, ${format.number(r.lengthMm / 1000, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m × ${format.number(r.heightMm / 1000, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m${slope})`;
     }
     case "set_armour_scheme":
       return `Armour scheme: ${words(e.schemeId)}`;

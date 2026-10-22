@@ -5,20 +5,11 @@ export function formatMonth(month: { readonly year: number; readonly month: numb
   return formatMonthYear(month, "short");
 }
 
-/** "£1,234". */
-export function formatMoney(value: number): string {
-  return `£${value.toLocaleString()}`;
-}
-
-/** "1,234". */
-export function formatCount(value: number): string {
-  return value.toLocaleString();
-}
-
 /**
  * A figure the engine may not have supplied yet: the value once present, "…"
- * while loading, and "—" once the load has failed. The formatter is injected so
- * new figures reuse this pending rule instead of re-deriving it.
+ * while loading, and "—" once the load has failed. The formatter is injected
+ * (`PresentationFormat.money`/`.count`) so every figure reuses the one seam and
+ * never re-derives number or currency formatting here.
  */
 export function formatOptional(
   value: number | null,

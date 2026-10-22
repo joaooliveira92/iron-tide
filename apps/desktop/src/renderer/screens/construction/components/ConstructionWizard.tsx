@@ -11,6 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "../../../components/ui/card.js";
+import { KG_PER_TONNE } from "../../../lib/presentation-format/index.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { WizardSection } from "./WizardSection.js";
 import { constructionWizardView } from "./wizard-view.js";
 
@@ -41,6 +43,8 @@ export const ConstructionWizard = memo(function ConstructionWizard({
   onConfirm,
   onCancelWizard,
 }: ConstructionWizardProps) {
+  const format = usePresentationFormat();
+
   if (design === null) {
     return (
       <Card data-testid="construction-wizard-empty">
@@ -76,7 +80,7 @@ export const ConstructionWizard = memo(function ConstructionWizard({
               {design.year}
             </Badge>
             <Badge variant="outline" className="font-mono text-xs">
-              {design.mass.toLocaleString()}t
+              {format.measurement(design.mass * KG_PER_TONNE, "mass", { maximumFractionDigits: 0 })}
             </Badge>
             <Badge variant="outline" className="font-mono text-xs">
               {design.speed}kt
@@ -98,10 +102,10 @@ export const ConstructionWizard = memo(function ConstructionWizard({
           className="space-y-1"
         >
           <p className="font-mono text-sm">
-            {view.projectedCapacityUnits.toLocaleString()} capacity units required
+            {format.count(view.projectedCapacityUnits)} capacity units required
             <span className="text-muted-foreground">
               {" "}
-              · shipyard capacity {view.capacity.toLocaleString()}
+              · shipyard capacity {format.count(view.capacity)}
             </span>
           </p>
           {view.capacityOver && (
@@ -117,7 +121,7 @@ export const ConstructionWizard = memo(function ConstructionWizard({
           className="space-y-1"
         >
           <p className="font-mono text-sm">
-            {view.projectedCost.toLocaleString()} treasury units
+            {format.money(view.projectedCost)} treasury units
             <span className="text-muted-foreground"> · {COST_BASIS_TEXT[design.costBasis]}</span>
           </p>
         </WizardSection>
@@ -128,13 +132,13 @@ export const ConstructionWizard = memo(function ConstructionWizard({
           className="space-y-1"
         >
           <p className="font-mono text-xs">
-            Treasury reserved {view.reservedTreasury.toLocaleString()} →{" "}
-            {view.afterTreasury.toLocaleString()} / {view.treasury.toLocaleString()}
+            Treasury reserved {format.money(view.reservedTreasury)} →{" "}
+            {format.money(view.afterTreasury)} / {format.money(view.treasury)}
             {view.treasuryOver ? " · exceeds treasury" : ""}
           </p>
           <p className="font-mono text-xs">
-            Capacity reserved {view.reservedCapacity.toLocaleString()} →{" "}
-            {view.afterCapacity.toLocaleString()} / {view.capacity.toLocaleString()}
+            Capacity reserved {format.count(view.reservedCapacity)} →{" "}
+            {format.count(view.afterCapacity)} / {format.count(view.capacity)}
             {view.capacityOver ? " · exceeds capacity" : ""}
           </p>
           <p className="text-xs text-muted-foreground">

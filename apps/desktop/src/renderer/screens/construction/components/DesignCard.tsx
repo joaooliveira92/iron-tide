@@ -10,6 +10,8 @@ import {
   HoverCardTrigger,
 } from "../../../components/ui/hover-card.js";
 import { shipTypeIcon } from "../../../components/design-workspace/index.js";
+import { KG_PER_TONNE } from "../../../lib/presentation-format/index.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
 export interface DesignCardProps {
   readonly design: CompiledDesignVersion;
@@ -17,6 +19,7 @@ export interface DesignCardProps {
 
 /** One selectable approved-design card in the catalog. */
 export function DesignCard({ design }: DesignCardProps) {
+  const format = usePresentationFormat();
   const Icon = shipTypeIcon(design.shipType);
   return (
     <RadioGroupItem
@@ -52,7 +55,7 @@ export function DesignCard({ design }: DesignCardProps) {
             {design.year}
           </Badge>
           <Badge variant="outline" className="font-mono text-xs font-normal">
-            {design.mass.toLocaleString()}t
+            {format.measurement(design.mass * KG_PER_TONNE, "mass", { maximumFractionDigits: 0 })}
           </Badge>
           <Badge variant="outline" className="font-mono text-xs font-normal">
             {design.speed}kt

@@ -23,6 +23,7 @@
  */
 
 import { useMemo, useState } from "react";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Input } from "../../../components/ui/input.js";
 import { Button } from "../../../components/ui/button.js";
 import {
@@ -57,6 +58,7 @@ export function VariantCGraph({
   onRuler,
   onToggleClosedPassages,
 }: MapViewProps) {
+  const format = usePresentationFormat();
   const projection = projectionById(state.projection);
   const camera = useMapCamera(projection.width, projection.height);
   const control = areaControl();
@@ -332,11 +334,11 @@ export function VariantCGraph({
           ) : (
             <>
               <span>
-                <strong className="tabular-nums">{route.hops}</strong> hops
+                <strong className="tabular-nums">{format.count(route.hops)}</strong> hops
               </span>
               <span className="tabular-nums text-muted-foreground">
-                {route.nauticalMiles.toLocaleString()} nm · {route.perHop.toLocaleString()} nm/hop ·
-                ≈{route.months} months
+                {format.count(route.nauticalMiles)} nm · {format.count(route.perHop)} nm/hop · ≈
+                {format.number(route.months, { maximumFractionDigits: 1 })} months
               </span>
             </>
           )}

@@ -2,7 +2,8 @@
 
 import type { MonthlyReportEntry } from "../../../shared/campaign-command-contract.js";
 import { campaignNationLabel } from "../../content/presentationContent.js";
-import { formatNumber } from "../../lib/presentation-format/index.js";
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
+import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { humanizeId } from "../../lib/humanize-id.js";
 import { monthLabel, signed } from "./month-report-format.js";
 
@@ -11,13 +12,14 @@ export function narrativeMonthSummary(
   month: MonthlyReportEntry,
   previousMonth: MonthlyReportEntry | undefined,
   areaName: (id: string) => string,
+  format: PresentationFormat,
 ): string {
   const parts: string[] = [];
 
-  const treasurySentence = narrativeTreasurySection(month.treasury, month.battleOutcomes);
+  const treasurySentence = narrativeTreasurySection(month.treasury, month.battleOutcomes, format);
   if (treasurySentence) parts.push(treasurySentence);
 
-  const constructionSentence = narrativeConstructionSection(month.construction);
+  const constructionSentence = narrativeConstructionSection(month.construction, format);
   if (constructionSentence) parts.push(constructionSentence);
 
   const researchSentence = narrativeResearchSection(month.research);
@@ -42,20 +44,21 @@ export function narrativeMonthSummary(
 function narrativeTreasurySection(
   treasury: MonthlyReportEntry["treasury"],
   battles: MonthlyReportEntry["battleOutcomes"],
+  format: PresentationFormat,
 ): string {
   const lines: string[] = [];
 
   if (treasury.ledgerRows.length === 0 && battles.length === 0) {
-    return `The month ended with treasury ${signed(treasury.netChange)}`;
+    return `The month ended with treasury ${signed(treasury.netChange, format)}`;
   }
 
   for (const row of treasury.ledgerRows) {
     const direction = row.amount < 0 ? "lost" : "gained";
-    lines.push(`${row.description} ${direction} ${signed(row.amount)}`);
+    lines.push(`${row.description} ${direction} ${signed(row.amount, format)}`);
   }
 
   if (treasury.ledgerRows.length > 0) {
-    lines.push(`treasury moved ${signed(treasury.netChange)}`);
+    lines.push(`treasury moved ${signed(treasury.netChange, format)}`);
   }
 
   if (battles.length > 0) {
@@ -66,7 +69,10 @@ function narrativeTreasurySection(
 }
 
 /** Narrative for Construction section: projects, completed ships, new starts. */
-function narrativeConstructionSection(construction: MonthlyReportEntry["construction"]): string {
+function narrativeConstructionSection(
+  construction: MonthlyReportEntry["construction"],
+  format: PresentationFormat,
+): string {
   if (
     construction.projects.length === 0 &&
     construction.completedShips.length === 0 &&
@@ -78,7 +84,7 @@ function narrativeConstructionSection(construction: MonthlyReportEntry["construc
   const parts: string[] = [];
 
   for (const project of construction.projects) {
-    const num = (value: number) => formatNumber(value, { locale: "en-US" });
+    const num = (value: number) => format.number(value);
     parts.push(
       `construction on ${project.projectId}: work ${num(project.previousWork)}→${num(project.newWork)} (+${num(project.newWork - project.previousWork)})`,
     );
@@ -257,6 +263,7 @@ export function NarrativeMonthSummary({
   readonly reports: readonly MonthlyReportEntry[];
   readonly areaName?: (id: string) => string;
 }) {
+  const format = usePresentationFormat();
   const [latest, ...earlier] = reports;
   const description =
     latest === undefined
@@ -272,7 +279,7 @@ export function NarrativeMonthSummary({
     );
   }
 
-  const narrative = narrativeMonthSummary(latest, earlier[0], areaName ?? humanizeId);
+  const narrative = narrativeMonthSummary(latest, earlier[0], areaName ?? humanizeId, format);
 
   return (
     <div className="space-y-4 text-sm leading-relaxed">
@@ -291,7 +298,12 @@ export function NarrativeMonthSummary({
                 <li key={key} className="space-y-1">
                   <p className="font-medium text-xs">{monthLabel(report.period.from)}</p>
                   <p className="whitespace-pre-line text-xs text-muted-foreground">
-                    {narrativeMonthSummary(report, earlier[index + 1], areaName ?? humanizeId)}
+                    {narrativeMonthSummary(
+                      report,
+                      earlier[index + 1],
+                      areaName ?? humanizeId,
+                      format,
+                    )}
                   </p>
                 </li>
               );

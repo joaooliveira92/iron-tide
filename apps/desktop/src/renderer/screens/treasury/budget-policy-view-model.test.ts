@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vite-plus/test";
 
+import { createPresentationFormat } from "../../lib/presentation-format/index.js";
 import type { BudgetPolicyState } from "./budget-policy-state.js";
 import {
   buildBudgetPolicyViewModel,
   formatRate,
   type BudgetPolicyViewModelInput,
 } from "./budget-policy-view-model.js";
+
+const FORMAT = createPresentationFormat({
+  locale: "en-US",
+  numberScale: "full",
+  measurementPreset: "imperial",
+  measurementSelections: {},
+  currency: { mode: "navalCredits" },
+});
 
 const state: BudgetPolicyState = {
   revision: 4,
@@ -32,13 +41,14 @@ const input = (over: Partial<BudgetPolicyViewModelInput> = {}): BudgetPolicyView
   rate: 2000,
   research: 60,
   loadError: null,
+  format: FORMAT,
   ...over,
 });
 
 describe("formatRate", () => {
   it("renders basis points as a one-decimal percentage", () => {
-    expect(formatRate(2050)).toBe("20.5%");
-    expect(formatRate(0)).toBe("0.0%");
+    expect(formatRate(2050, FORMAT)).toBe("20.5%");
+    expect(formatRate(0, FORMAT)).toBe("0%");
   });
 });
 
@@ -47,7 +57,7 @@ describe("buildBudgetPolicyViewModel", () => {
     const vm = buildBudgetPolicyViewModel(input());
     expect(vm.loaded).toBe(true);
     expect(vm.knobs.map((k) => [k.id, k.value, k.display, k.min, k.max, k.step])).toEqual([
-      ["appropriation", 2000, "20.0%", 500, 5000, 50],
+      ["appropriation", 2000, "20%", 500, 5000, 50],
       // The research slider tops out at the cap for the chosen rate: 12% of 2000 = 240.
       ["research", 60, "60", 0, 240, 10],
     ]);

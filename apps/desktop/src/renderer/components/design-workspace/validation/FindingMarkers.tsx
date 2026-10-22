@@ -1,6 +1,7 @@
 import { type KeyboardEvent, useRef, useState } from "react";
 import type { DesignDraft } from "@bluewave/ship-design";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { NON_SCALING, STROKE } from "../panels/hull-plan/drafting.js";
 import {
   fittingPoint,
@@ -139,6 +140,7 @@ export function FindingMarkers({
 }) {
   const store = useSelectionStore();
   const selected = useShipSelection((s) => s.selected);
+  const format = usePresentationFormat();
   const [cursor, setCursor] = useState(0);
   const refs = useRef(new Map<string, SVGGElement>());
   if (hidden || groups.length === 0) return null;
@@ -165,7 +167,7 @@ export function FindingMarkers({
         const isSelected = sameEntity(selected, g.entity);
         const name = `${style.label}: ${top.title} (${names(g.entity)})${more > 0 ? `, ${g.findings.length} findings` : ""}`;
         const activate = () => store.select(g.entity, top.key);
-        const values = valueLine(top);
+        const values = valueLine(top, format);
         return (
           <HoverCard key={k} onOpenChange={(open) => store.setMarkerPreview(open)}>
             <HoverCardTrigger

@@ -1,6 +1,15 @@
 import type { BattleOutcome, StrategicPriority } from "@bluewave/campaign-engine";
 import { describe, expect, it } from "vite-plus/test";
+import { createPresentationFormat } from "../../lib/presentation-format/index.js";
 import { comparePriorities, describeBattle, monthLabel, signed } from "./month-report-format.js";
+
+const FORMAT = createPresentationFormat({
+  locale: "en-US",
+  numberScale: "full",
+  measurementPreset: "imperial",
+  measurementSelections: {},
+  currency: { mode: "navalCredits" },
+});
 
 const nation = (id: string) => ({ uk: "Britain", france: "France" })[id] ?? id;
 const area = (id: string) => ({ malta: "Malta" })[id] ?? id;
@@ -36,10 +45,10 @@ const priority = (
 
 describe("signed", () => {
   it("shows direction explicitly, with a real minus sign", () => {
-    expect(signed(20)).toBe("+20");
-    expect(signed(-56)).toBe("−56");
-    expect(signed(0)).toBe("0");
-    expect(signed(12345)).toBe("+12,345");
+    expect(signed(20, FORMAT)).toBe("+20");
+    expect(signed(-56, FORMAT)).toBe("−56");
+    expect(signed(0, FORMAT)).toBe("0");
+    expect(signed(12345, FORMAT)).toBe("+12,345");
   });
 });
 

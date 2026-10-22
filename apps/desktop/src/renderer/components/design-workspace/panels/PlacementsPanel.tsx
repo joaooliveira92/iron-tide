@@ -37,6 +37,8 @@ import {
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
 import { buttonVariants } from "../../ui/button.js";
 import { cn } from "../../../lib/utils.js";
+import { KG_PER_TONNE } from "../../../lib/presentation-format/index.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { componentFacts, componentsByCategory } from "../componentFacts.js";
 import type { DrawingBoardContent } from "../content.js";
 import { NumberField, SelectField } from "../fields.js";
@@ -67,6 +69,7 @@ function ComponentHover({
   readonly onSelect?: () => void;
   readonly selected?: boolean;
 }) {
+  const format = usePresentationFormat();
   if (!entry) return <span>{placement.componentId}</span>;
   const facts = componentFacts(
     entry,
@@ -112,12 +115,12 @@ function ComponentHover({
             <>
               <dt className="text-muted-foreground">Weight as fitted</dt>
               <dd className="text-right">
-                {facts.placed.weightT.toLocaleString("en-US", { maximumFractionDigits: 1 })} t
+                {format.measurement(facts.placed.weightT * KG_PER_TONNE, "mass", {
+                  maximumFractionDigits: 1,
+                })}
               </dd>
               <dt className="text-muted-foreground">Cost as fitted</dt>
-              <dd className="text-right">
-                £{Math.round(facts.placed.costGbp).toLocaleString("en-US")}
-              </dd>
+              <dd className="text-right">{format.money(facts.placed.costGbp)}</dd>
             </>
           )}
         </dl>

@@ -5,6 +5,7 @@ import { RebuildPanel } from "./RebuildPanel.js";
 
 vi.mock("../../../shell/CampaignShellContext.js", () => ({
   useCampaignRevision: () => 3,
+  useActiveCampaignCurrencyContext: () => ({}),
 }));
 
 const content = loadDrawingBoardContent();

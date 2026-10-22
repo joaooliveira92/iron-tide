@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vite-plus/test";
+import { createPresentationFormat } from "../../../../lib/presentation-format/index.js";
 import type { DrawingFacts } from "./describe.js";
 import { planLabel, profileLabel } from "./describe.js";
 import { legendEntries } from "./legend.js";
+
+/** The default presentation: en-US, full scale, imperial, Naval Credits. */
+const FORMAT = createPresentationFormat({
+  locale: "en-US",
+  numberScale: "full",
+  measurementPreset: "imperial",
+  measurementSelections: {},
+  currency: { mode: "navalCredits" },
+});
 
 const facts = (over: Partial<DrawingFacts> = {}): DrawingFacts => ({
   hullFormId: "protected_cruiser_form",
@@ -29,7 +39,7 @@ const base = (f: DrawingFacts) => ({
 
 describe("legendEntries", () => {
   it("separates data from drawing convention", () => {
-    const byId = Object.fromEntries(legendEntries(base(facts())).map((e) => [e.id, e]));
+    const byId = Object.fromEntries(legendEntries(base(facts()), FORMAT).map((e) => [e.id, e]));
     expect(byId["hull-lines"]!.source).toBe("data");
     expect(byId["bow"]!.source).toBe("convention");
     expect(byId["stern"]!.source).toBe("convention");
@@ -37,30 +47,36 @@ describe("legendEntries", () => {
   });
 
   it("lists funnels by real station in stable order, with metres from the bow", () => {
-    const funnels = legendEntries(base(facts())).find((e) => e.id === "funnels")!;
+    const funnels = legendEntries(base(facts()), FORMAT).find((e) => e.id === "funnels")!;
     expect(funnels.label).toBe("Funnels: 2");
     expect(funnels.rows.map((r) => r[0])).toEqual(["f1", "f2"]);
     expect(funnels.rows[0]![1]).toContain("56.0 m");
   });
 
   it("says plainly when there are no funnels or no superstructure zone", () => {
-    const none = legendEntries({
-      ...base(facts({ funnels: 0, superstructure: undefined })),
-      funnels: [],
-    });
+    const none = legendEntries(
+      {
+        ...base(facts({ funnels: 0, superstructure: undefined })),
+        funnels: [],
+      },
+      FORMAT,
+    );
     expect(none.find((e) => e.id === "funnels")!.rows).toEqual([]);
     expect(none.find((e) => e.id === "funnels")!.note).toMatch(/none is drawn/);
     expect(none.find((e) => e.id === "superstructure")!.label).toBe("Superstructure: none");
   });
 
   it("omits hull-form entries when the form is unknown", () => {
-    const entries = legendEntries({
-      facts: facts({ hullFormId: undefined }),
-      waterplaneCoeffBp: undefined,
-      lcbPermille: undefined,
-      sheerBp: undefined,
-      funnels: [],
-    });
+    const entries = legendEntries(
+      {
+        facts: facts({ hullFormId: undefined }),
+        waterplaneCoeffBp: undefined,
+        lcbPermille: undefined,
+        sheerBp: undefined,
+        funnels: [],
+      },
+      FORMAT,
+    );
     expect(entries.map((e) => e.id)).toEqual(["bow", "stern", "funnels", "superstructure"]);
   });
 });
@@ -88,10 +104,13 @@ describe("accessible names", () => {
   });
 
   it("explains masts as a drawing convention in the design's style and era", () => {
-    const masts = legendEntries({
-      ...base(facts()),
-      masts: { count: 2, style: "B", era: "VICTORIAN", partId: "x-victorian-mast", step: 2 },
-    }).find((e) => e.id === "masts")!;
+    const masts = legendEntries(
+      {
+        ...base(facts()),
+        masts: { count: 2, style: "B", era: "VICTORIAN", partId: "x-victorian-mast", step: 2 },
+      },
+      FORMAT,
+    ).find((e) => e.id === "masts")!;
     expect(masts.source).toBe("convention");
     expect(masts.label).toBe("Masts: 2");
     expect(masts.rows).toEqual([
@@ -103,6 +122,6 @@ describe("accessible names", () => {
   });
 
   it("omits the masts chip when none is drawn", () => {
-    expect(legendEntries(base(facts())).some((e) => e.id === "masts")).toBe(false);
+    expect(legendEntries(base(facts()), FORMAT).some((e) => e.id === "masts")).toBe(false);
   });
 });

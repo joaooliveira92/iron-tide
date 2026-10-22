@@ -122,7 +122,7 @@ describe("NewGameBriefingScreen", () => {
     // Page 1 -> 2 via "Review Naval Estimates".
     triggerPrimary();
     expect(currentStep()).toContain("State of the Navy");
-    expect(screen.getByText("Majestic class (£150)")).toBeTruthy();
+    expect(screen.getByText("Majestic class (150 NC)")).toBeTruthy();
     expect(screen.getByText("Ships under construction")).toBeTruthy();
 
     // Page 2 -> 3.

@@ -23,13 +23,11 @@ describe("DockCapacityPanel (SB3-R15/R16/R18/R19/R33)", () => {
     render(<DockCapacityPanel {...props()} />);
     const figures = screen.getByRole("list", { name: "Dock and capacity figures" });
     expect(figures.textContent).toContain("Dock size");
-    expect(screen.getByTestId("dock-size").textContent).toBe("13,000,000");
-    expect(screen.getByTestId("concurrency-cap").textContent).toBe("39,000,000");
-    expect(screen.getByTestId("capacity-in-use").textContent).toBe("2,000,000");
-    expect(screen.getByTestId("capacity-exempt").textContent).toBe("8,000,000");
-    expect(screen.getByTestId("dock-expansion").textContent).toBe(
-      "12 months · next step 1,000,000 kg",
-    );
+    expect(screen.getByTestId("dock-size").textContent).toBe("13,000 t");
+    expect(screen.getByTestId("concurrency-cap").textContent).toBe("39,000 t");
+    expect(screen.getByTestId("capacity-in-use").textContent).toBe("2,000 t");
+    expect(screen.getByTestId("capacity-exempt").textContent).toBe("8,000 t");
+    expect(screen.getByTestId("dock-expansion").textContent).toBe("12 months · next step 1,000 t");
   });
 
   it("discloses 'no era step' when the month has no era step", () => {

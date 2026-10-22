@@ -5,6 +5,8 @@
  * toolbar already tells the player.
  */
 
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
+
 const NM_PER_DEGREE = 60;
 
 /** Screen pixels per nautical mile, given the SVG's px-per-user-unit and camera zoom. */
@@ -34,7 +36,7 @@ export function niceScaleBar(pxPerNm: number, maxPx: number): ScaleBar {
   return { nm: base, px: base * pxPerNm };
 }
 
-export function formatNauticalMiles(nm: number): string {
-  if (nm >= 1) return `${nm.toLocaleString("en-US")} nm`;
-  return `${Number(nm.toPrecision(2))} nm`;
+export function formatNauticalMiles(nm: number, format: PresentationFormat): string {
+  if (nm >= 1) return `${format.number(nm, { maximumFractionDigits: 0 })} nm`;
+  return `${format.number(Number(nm.toPrecision(2)), { maximumFractionDigits: 2 })} nm`;
 }

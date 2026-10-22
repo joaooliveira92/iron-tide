@@ -3,6 +3,7 @@ import { ArrowRight, ListChecks } from "lucide-react";
 import { Badge } from "../../ui/badge.js";
 import { Button } from "../../ui/button.js";
 import { cn } from "../../../lib/utils.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { analysisDestination, fixDestination, type Destination } from "../selection/navigation.js";
 import type { BoardFinding } from "./boardFindings.js";
 import { valueLine } from "./format.js";
@@ -29,6 +30,7 @@ export function FindingList({
   readonly focused: string | null;
   readonly onGoTo: (d: Destination) => void;
 }) {
+  const format = usePresentationFormat();
   const previous = useRef<{ entityKey: string; findings: readonly BoardFinding[] }>({
     entityKey,
     findings,
@@ -70,7 +72,7 @@ export function FindingList({
           {findings.map((f) => {
             const style = SEVERITY_STYLE[f.severity];
             const fix = fixDestination(f);
-            const values = valueLine(f);
+            const values = valueLine(f, format);
             const isFocused = f.key === focused;
             return (
               <li

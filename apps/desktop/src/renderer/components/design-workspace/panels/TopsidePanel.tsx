@@ -4,9 +4,8 @@ import {
   type TopsideStatus,
   type WorkshopView,
 } from "@bluewave/ship-design";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
-
-const m2 = (mm2: number) => (mm2 / 1_000_000).toLocaleString("en-US", { maximumFractionDigits: 1 });
 
 const LABEL: Record<TopsideStatus, string> = {
   normal: "Within capacity",
@@ -21,6 +20,8 @@ const BAR: Record<TopsideStatus, string> = {
 
 /** Deck-area load of the placed fittings. All numbers come from the domain `topsideLoad`; this only displays them. */
 export function TopsidePanel({ view }: { readonly view: WorkshopView }) {
+  const format = usePresentationFormat();
+  const m2 = (mm2: number) => format.number(mm2 / 1_000_000, { maximumFractionDigits: 1 });
   const load = topsideLoad(view.compiled.arrangement);
   const pct = load.utilizationBp === null ? null : load.utilizationBp / 100;
   const full = load.zones.filter((z) => z.status === "exceeded");
@@ -42,8 +43,8 @@ export function TopsidePanel({ view }: { readonly view: WorkshopView }) {
       </div>
       <p className="text-sm tabular-nums">
         {m2(load.usedMm2)} of {m2(load.capacityMm2)} m² deck area
-        {pct !== null && ` (${pct.toFixed(1)}%)`} · {m2(Math.abs(load.remainingMm2))} m²{" "}
-        {load.remainingMm2 < 0 ? "over" : "spare"}
+        {load.utilizationBp !== null && ` (${format.percent(load.utilizationBp, 1)})`} ·{" "}
+        {m2(Math.abs(load.remainingMm2))} m² {load.remainingMm2 < 0 ? "over" : "spare"}
       </p>
       <p role="status" className="text-xs text-muted-foreground">
         {LABEL[load.status]}

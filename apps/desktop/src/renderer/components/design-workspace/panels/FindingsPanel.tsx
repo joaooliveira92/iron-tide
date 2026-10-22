@@ -19,6 +19,7 @@ import { Button } from "../../ui/button.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
 import { cn } from "../../../lib/utils.js";
 import { formatExplanation } from "../../../lib/presentation-format/index.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 import { findingAttrs } from "../selection/navigation.js";
 import type { BoardFinding } from "../validation/boardFindings.js";
@@ -34,6 +35,7 @@ import { plural } from "../plural.js";
 
 /** The rule id, with the computed evidence behind the finding on hover. */
 function RuleEvidence({ f }: { readonly f: Finding }) {
+  const format = usePresentationFormat();
   const inputs = Object.entries(f.evidence.inputs);
   return (
     <HoverCard>
@@ -51,18 +53,16 @@ function RuleEvidence({ f }: { readonly f: Finding }) {
           <dt className="text-muted-foreground">Formula</dt>
           <dd className="text-right font-mono">{f.evidence.formulaId}</dd>
           <dt className="text-muted-foreground">Computed value</dt>
-          <dd className="text-right tabular-nums">{f.evidence.value.toLocaleString("en-US")}</dd>
+          <dd className="text-right tabular-nums">{format.count(f.evidence.value)}</dd>
           <dt className="text-muted-foreground">Limit</dt>
-          <dd className="text-right tabular-nums">
-            {f.evidence.threshold.toLocaleString("en-US")}
-          </dd>
+          <dd className="text-right tabular-nums">{format.count(f.evidence.threshold)}</dd>
         </dl>
         {inputs.length > 0 && (
           <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 border-t pt-2 text-xs">
             {inputs.map(([k, v]) => (
               <div key={k} className="contents">
                 <dt className="font-mono text-muted-foreground">{k}</dt>
-                <dd className="text-right tabular-nums">{v.toLocaleString("en-US")}</dd>
+                <dd className="text-right tabular-nums">{format.count(v)}</dd>
               </div>
             ))}
           </dl>
@@ -168,6 +168,7 @@ function Verdict({
   readonly view: WorkshopView;
   readonly order: readonly Severity[];
 }) {
+  const format = usePresentationFormat();
   const flagged = view.counts.CRITICAL + view.counts.WARNING > 0;
   const variant = !view.valid ? "destructive" : flagged ? "warning" : "success";
   const Icon = !view.valid ? OctagonX : flagged ? TriangleAlert : CircleCheck;
@@ -183,7 +184,7 @@ function Verdict({
         {order
           .map((s) =>
             s === "WARNING" || s === "ADVISORY"
-              ? plural(view.counts[s], s.toLowerCase())
+              ? plural(view.counts[s], s.toLowerCase(), undefined, undefined, format)
               : `${view.counts[s]} ${s.toLowerCase()}`,
           )
           .join(", ")}
@@ -193,6 +194,7 @@ function Verdict({
 }
 
 function FixSummary({ f }: { readonly f: SuggestedFix }) {
+  const format = usePresentationFormat();
   return (
     <>
       Resolves{" "}
@@ -202,7 +204,7 @@ function FixSummary({ f }: { readonly f: SuggestedFix }) {
       · blocking {f.countsBefore.BLOCKING} → {f.countsAfter.BLOCKING}, critical{" "}
       {f.countsBefore.CRITICAL} → {f.countsAfter.CRITICAL}, warnings {f.countsBefore.WARNING} →{" "}
       {f.countsAfter.WARNING} · weight {f.totalKgDelta >= 0 ? "+" : ""}
-      {Math.round(f.totalKgDelta / 1000)} t
+      {format.measurement(f.totalKgDelta, "mass", { maximumFractionDigits: 0 })}
     </>
   );
 }

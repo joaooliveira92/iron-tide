@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+import { createPresentationFormat } from "../../lib/presentation-format/index.js";
 import {
   TACTICAL_MAX_M_PER_PX,
   TACTICAL_MIN_M_PER_PX,
@@ -7,6 +8,15 @@ import {
   lodBandFor,
   zoomMetersPerPixel,
 } from "./tacticalScale.js";
+
+/** The default presentation (en-US, Naval Credits) the scale readout renders under. */
+const FORMAT = createPresentationFormat({
+  locale: "en-US",
+  numberScale: "full",
+  measurementPreset: "imperial",
+  measurementSelections: {},
+  currency: { mode: "navalCredits" },
+});
 
 describe("tactical scale", () => {
   it("pins the documented limits: 1 px = 50 m .. 1,600 m (32x)", () => {
@@ -38,7 +48,7 @@ describe("tactical scale", () => {
   });
 
   it("formats the HUD scale", () => {
-    expect(formatScale(50)).toBe("1 px = 50 m");
-    expect(formatScale(1600)).toBe("1 px = 1,600 m");
+    expect(formatScale(50, FORMAT)).toBe("1 px = 50 m");
+    expect(formatScale(1600, FORMAT)).toBe("1 px = 1,600 m");
   });
 });

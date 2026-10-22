@@ -5,6 +5,7 @@ import { Panel } from "./Panel.js";
 import type { Edit } from "./types.js";
 import { plural } from "../plural.js";
 import { formatPowerBoth } from "../../../lib/presentation-format/index.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { enginePriorityTrade } from "./engine-priority.js";
 
 export function MachineryPanel({
@@ -22,6 +23,7 @@ export function MachineryPanel({
   /** The ruleset's kW-per-shp constant, so installed power can be read in horsepower too. */
   readonly kwPerShpBp?: number;
 }) {
+  const format = usePresentationFormat();
   const m = draft.machinery;
   return (
     <Panel title="Machinery, fuel and range">
@@ -69,9 +71,12 @@ export function MachineryPanel({
         {enginePriorityTrade(m.enginePriorityBp ?? 0)}
       </p>
       <p className="text-xs text-muted-foreground">
-        {plural(m.rooms?.length ?? 1, "machinery room")}. Cruise speed and range target come from
-        the requirement: {(draft.requirement.cruiseSpeedMilliKnots / 1000).toFixed(1)} kn,{" "}
-        {draft.requirement.requiredRangeNm.toLocaleString("en-US")} nm.
+        {plural(m.rooms?.length ?? 1, "machinery room", undefined, undefined, format)}. Cruise speed
+        and range target come from the requirement:{" "}
+        {format.number(draft.requirement.cruiseSpeedMilliKnots / 1000, {
+          maximumFractionDigits: 1,
+        })}{" "}
+        kn, {format.number(draft.requirement.requiredRangeNm)} nm.
       </p>
     </Panel>
   );

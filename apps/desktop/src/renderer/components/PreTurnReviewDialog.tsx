@@ -14,7 +14,8 @@ import {
 } from "./ui/dialog.js";
 import { Badge } from "./ui/badge.js";
 import { SEVERITY_VARIANT } from "../lib/priorities.js";
-import { formatCount, formatMoney, formatMonth, formatOptional } from "./preTurnReviewFormat.js";
+import { usePresentationFormat } from "../shell/usePresentationFormat.js";
+import { formatMonth, formatOptional } from "./preTurnReviewFormat.js";
 import { usePreTurnReviewData, type PreTurnReviewData } from "./usePreTurnReviewData.js";
 
 /** The review shows this much of the campaign; only the fields it renders. */
@@ -125,6 +126,7 @@ export function PreTurnReviewDialogView({
   onAdvance,
 }: PreTurnReviewDialogViewProps) {
   const { priorities, constructionCount, expectedCompletions, researchSpend, loading } = data;
+  const format = usePresentationFormat();
 
   const nextMonth = advanceMonth(campaign.month.year, campaign.month.month, 1);
   const advanceLabel = `Advance to ${formatMonth(nextMonth)}`;
@@ -133,22 +135,22 @@ export function PreTurnReviewDialogView({
   const stats: readonly ReviewStat[] = [
     { label: "Current date", value: formatMonth(campaign.month) },
     { label: "Next date", value: formatMonth(nextMonth) },
-    { label: "Available funds", value: formatMoney(campaign.treasury) },
+    { label: "Available funds", value: format.money(campaign.treasury) },
     {
       label: "Projected surplus / deficit",
-      value: formatMoney(campaign.projectedSurplusDeficit),
+      value: format.money(campaign.projectedSurplusDeficit),
     },
     {
       label: "Active construction projects",
-      value: formatOptional(constructionCount, loading, formatCount),
+      value: formatOptional(constructionCount, loading, format.count),
     },
     {
       label: "Expected completions",
-      value: formatOptional(expectedCompletions, loading, formatCount),
+      value: formatOptional(expectedCompletions, loading, format.count),
     },
     {
       label: "Current research spending",
-      value: formatOptional(researchSpend, loading, formatMoney),
+      value: formatOptional(researchSpend, loading, format.money),
     },
     { label: "Save status", value: saving ? "Saving…" : (saveMessage ?? "Saved") },
   ];

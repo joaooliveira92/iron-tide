@@ -14,6 +14,7 @@ import { ButtonGroup } from "../../ui/button-group.js";
 import type { DrawingBoardContent } from "../content.js";
 import { designFileName, exportDesign, importDesign } from "../designFile.js";
 import { ConfirmAction } from "../ConfirmAction.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 
 /** Save the working design to a `.bwdesign` file, or open one as the working design (history resets). */
@@ -32,6 +33,7 @@ export function FilePanel({
   readonly onLoad: (draft: DesignDraft) => void;
   readonly dirty: boolean;
 }) {
+  const format = usePresentationFormat();
   const input = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<{
     readonly name: string;
@@ -100,7 +102,7 @@ export function FilePanel({
             <AttachmentTitle>{file.name}</AttachmentTitle>
             <AttachmentDescription>
               {file.state === "error" ? "Could not be opened" : file.how} ·{" "}
-              {(file.bytes / 1024).toFixed(1)} KB
+              {format.number(file.bytes / 1024, { maximumFractionDigits: 1 })} KB
             </AttachmentDescription>
           </AttachmentContent>
         </Attachment>

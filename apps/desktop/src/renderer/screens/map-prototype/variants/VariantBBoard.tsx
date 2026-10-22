@@ -22,6 +22,7 @@
  */
 
 import { useMemo } from "react";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Badge } from "../../../components/ui/badge.js";
 import { Button } from "../../../components/ui/button.js";
 import {
@@ -78,6 +79,7 @@ export function VariantBBoard({
   onToggleLayer,
   onToggleClosedPassages,
 }: MapViewProps) {
+  const format = usePresentationFormat();
   const camera = useMapCamera(BOARD_WIDTH, BOARD_HEIGHT, {
     wrapHorizontally: false,
   });
@@ -432,16 +434,16 @@ export function VariantBBoard({
         ) : (
           <>
             <span>
-              <strong className="tabular-nums">{route.hops}</strong> hops
+              <strong className="tabular-nums">{format.count(route.hops)}</strong> hops
             </span>
             <span className="tabular-nums text-muted-foreground">
-              {route.nauticalMiles.toLocaleString()} nm
+              {format.count(route.nauticalMiles)} nm
             </span>
             <span className="tabular-nums text-muted-foreground">
-              {route.perHop.toLocaleString()} nm/hop
+              {format.count(route.perHop)} nm/hop
             </span>
             <span className="tabular-nums text-muted-foreground">
-              ≈{route.months} months at 3,100 nm/month
+              ≈{format.number(route.months, { maximumFractionDigits: 1 })} months at 3,100 nm/month
             </span>
             {route.passages.length > 0 && (
               <span className="text-muted-foreground">via {route.passages.join(", ")}</span>

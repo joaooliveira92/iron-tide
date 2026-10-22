@@ -5,6 +5,7 @@ import type {
   WizardStepCopy,
 } from "../site-header-state.js";
 import { describeSecondaryRow } from "../site-header-state.js";
+import { usePresentationFormat } from "../usePresentationFormat.js";
 import { CampaignRow } from "./secondary-row/CampaignRow.js";
 import { EditorRow } from "./secondary-row/EditorRow.js";
 import { PreferencesRow } from "./secondary-row/PreferencesRow.js";
@@ -34,9 +35,10 @@ export function HeaderSecondaryRow({
   wizardStep,
   onActionClick,
 }: HeaderSecondaryRowProps) {
+  const format = usePresentationFormat();
   return (
     <SecondaryRowView
-      row={describeSecondaryRow(activeView, campaign, wizardStep)}
+      row={describeSecondaryRow(activeView, campaign, format, wizardStep)}
       onActionClick={onActionClick}
     />
   );

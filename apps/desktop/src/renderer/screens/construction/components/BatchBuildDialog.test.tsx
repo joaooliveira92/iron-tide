@@ -71,8 +71,8 @@ describe("BatchBuildDialog (SB3-R30/R33)", () => {
     expect(names.textContent).toContain("Thunderer");
     const fit = screen.getByTestId("batch-fit");
     expect(fit.textContent).toContain("yard-uk-1");
-    expect(fit.textContent).toContain("11,880,000 kg");
-    expect(fit.textContent).toContain("13,000,000 kg dock ceiling");
+    expect(fit.textContent).toContain("11,880 t");
+    expect(fit.textContent).toContain("13,000 t dock ceiling");
     expect(fit.textContent).toContain("fits");
   });
 

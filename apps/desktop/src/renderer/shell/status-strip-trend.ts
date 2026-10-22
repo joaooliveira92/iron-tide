@@ -1,5 +1,5 @@
 import { formatCampaignMonth } from "../lib/presentation-format/index.js";
-import { formatMoney } from "./status-strip-state.js";
+import type { PresentationFormat } from "../lib/presentation-format/index.js";
 
 /**
  * Month-over-month trend for the strip's treasury and balance cards, read from the stored monthly
@@ -47,14 +47,15 @@ export interface TrendReport {
   };
 }
 
-function signedMoney(value: number): string {
-  return value > 0 ? `+${formatMoney(value)}` : formatMoney(value);
+function signedMoney(value: number, format: PresentationFormat): string {
+  return value > 0 ? `+${format.money(value)}` : format.money(value);
 }
 
 function series(
   values: readonly number[],
   labels: readonly string[],
   format: (value: number) => string,
+  signed: (value: number) => string,
 ): TrendSeries {
   const last = values[values.length - 1];
   const previous = values[values.length - 2];
@@ -63,35 +64,41 @@ function series(
     values,
     labels,
     current: last === undefined ? "—" : format(last),
-    delta: change === null ? null : signedMoney(change),
+    delta: change === null ? null : signed(change),
     direction: change === null ? null : change > 0 ? "up" : change < 0 ? "down" : "flat",
   };
 }
 
-const month = (m: { readonly year: number; readonly month: number }) =>
-  formatCampaignMonth(m, { locale: "en-US", style: "short" });
-
 /**
  * @param reports stored monthly reports, newest first, or null when they could not be read
+ * @param format the one presentation format (locale + effective currency mode)
  * @returns the trend, or null when there is no completed month to draw one from
  */
-export function buildTrend(reports: readonly TrendReport[] | null): TrendDetail | null {
+export function buildTrend(
+  reports: readonly TrendReport[] | null,
+  format: PresentationFormat,
+): TrendDetail | null {
   if (reports === null || reports.length === 0) return null;
   // Newest first on the way in; the series read oldest to newest.
   const recent = reports.slice(0, TREND_MONTHS).toReversed();
   const oldest = recent[0];
   if (oldest === undefined) return null;
+  const money = format.money;
+  const month = (m: { readonly year: number; readonly month: number }) =>
+    formatCampaignMonth(m, { locale: format.locale, style: "short" });
   return {
     months: recent.length,
     treasury: series(
       [oldest.treasury.openingTreasury, ...recent.map((r) => r.treasury.closingTreasury)],
       [month(oldest.period.from), ...recent.map((r) => month(r.period.to))],
-      formatMoney,
+      money,
+      (value) => signedMoney(value, format),
     ),
     net: series(
       recent.map((r) => r.treasury.netChange),
       recent.map((r) => month(r.period.from)),
-      signedMoney,
+      (value) => signedMoney(value, format),
+      (value) => signedMoney(value, format),
     ),
   };
 }

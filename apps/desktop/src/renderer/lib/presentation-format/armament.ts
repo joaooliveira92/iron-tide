@@ -12,8 +12,3 @@ export function formatCalibreInches(caliberUm: number): string {
 export function formatTonnes(kg: number): string {
   return grouped(kg / 1000, 1);
 }
-
-/** "£1,234": a cost in micro-pounds as whole pounds. Display only: never stored or hashed. */
-export function formatPoundsFromMicro(costMicro: number): string {
-  return `£${grouped(Math.round(costMicro / 1_000_000), 0)}`;
-}

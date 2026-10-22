@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../../../components/ui/card.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
 /**
  * The dock/capacity readout and dock-expansion action (DESIGN-16 sections 4-6; SB3-R15..R19/R33). Presentational: every
@@ -62,6 +63,7 @@ export const DockCapacityPanel = memo(function DockCapacityPanel({
   pending,
   onAuthorizeDockExpansion,
 }: DockCapacityPanelProps) {
+  const format = usePresentationFormat();
   const [chosenPossessionId, setChosenPossessionId] = useState<string | null>(null);
   const selectedPossessionId =
     chosenPossessionId !== null && dockPossessions.some((p) => p.id === chosenPossessionId)
@@ -70,8 +72,8 @@ export const DockCapacityPanel = memo(function DockCapacityPanel({
   const canExpand = dockExpansionNextStepKg !== null && selectedPossessionId !== undefined;
   const expansionValue =
     dockExpansionNextStepKg === null
-      ? `${dockExpansionDurationMonths} months · no era step`
-      : `${dockExpansionDurationMonths} months · next step ${dockExpansionNextStepKg.toLocaleString()} kg`;
+      ? `${format.count(dockExpansionDurationMonths)} months · no era step`
+      : `${format.count(dockExpansionDurationMonths)} months · next step ${format.measurement(dockExpansionNextStepKg, "mass", { maximumFractionDigits: 0 })}`;
 
   return (
     <Card>
@@ -93,23 +95,31 @@ export const DockCapacityPanel = memo(function DockCapacityPanel({
             value={
               dockMaxBuildDisplacementKg === null
                 ? "no dock"
-                : dockMaxBuildDisplacementKg.toLocaleString()
+                : format.measurement(dockMaxBuildDisplacementKg, "mass", {
+                    maximumFractionDigits: 0,
+                  })
             }
           />
           <Figure
             label="Concurrency cap"
             testId="concurrency-cap"
-            value={maxConcurrentConstructionMassKg.toLocaleString()}
+            value={format.measurement(maxConcurrentConstructionMassKg, "mass", {
+              maximumFractionDigits: 0,
+            })}
           />
           <Figure
             label="Capacity in use"
             testId="capacity-in-use"
-            value={committedNewConstructionMassKg.toLocaleString()}
+            value={format.measurement(committedNewConstructionMassKg, "mass", {
+              maximumFractionDigits: 0,
+            })}
           />
           <Figure
             label="Exempt (AMC / small corvette)"
             testId="capacity-exempt"
-            value={exemptNewConstructionMassKg.toLocaleString()}
+            value={format.measurement(exemptNewConstructionMassKg, "mass", {
+              maximumFractionDigits: 0,
+            })}
           />
           <Figure label="Expansion" testId="dock-expansion" value={expansionValue} />
         </ul>

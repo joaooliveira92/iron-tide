@@ -1,6 +1,7 @@
 import { Button } from "../../../components/ui/button.js";
 import { CardContent, CardHeader, CardTitle } from "../../../components/ui/card.js";
 import { GlassCard } from "../../../components/ui/glass-card.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { buildBudgetPolicyViewModel, type BudgetKnobId } from "../budget-policy-view-model.js";
 import { useBudgetPolicyPanel } from "../hooks/useBudgetPolicyPanel.js";
 import { BudgetSlider } from "./BudgetSlider.js";
@@ -17,11 +18,13 @@ export interface BudgetPolicyPanelProps {
  */
 export function BudgetPolicyPanel({ sessionId }: BudgetPolicyPanelProps) {
   const controller = useBudgetPolicyPanel(sessionId);
+  const format = usePresentationFormat();
   const vm = buildBudgetPolicyViewModel({
     state: controller.state,
     rate: controller.rate,
     research: controller.research,
     loadError: controller.loadError,
+    format,
   });
 
   function handleChange(id: BudgetKnobId, value: number): void {

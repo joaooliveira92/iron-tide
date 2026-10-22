@@ -59,7 +59,7 @@ describe("BudgetPolicyPanel", () => {
     expect(rate.value).toBe("2000");
     expect(rate.min).toBe("500");
     expect(rate.max).toBe("5000");
-    expect(screen.getByText("20.0%")).not.toBeNull();
+    expect(screen.getByText("20%")).not.toBeNull();
     expect(
       (screen.getByRole("button", { name: "Apply allocation" }) as HTMLButtonElement).disabled,
     ).toBe(true);

@@ -30,11 +30,11 @@ describe("ProjectReadout", () => {
   it("renders the compiled instalment, months left, total cost and launch month", () => {
     render(<ProjectReadout row={row()} />);
     expect(screen.getByText("Instalment")).toBeTruthy();
-    expect(screen.getByText("120/mo")).toBeTruthy();
+    expect(screen.getByText("120 NC/mo")).toBeTruthy();
     expect(screen.getByText("Months left")).toBeTruthy();
     expect(screen.getByText("6")).toBeTruthy();
     expect(screen.getByText("Total cost")).toBeTruthy();
-    expect(screen.getByText("640")).toBeTruthy();
+    expect(screen.getByText("640 NC")).toBeTruthy();
     expect(screen.getByText("Launch")).toBeTruthy();
     expect(screen.getByText("1880-07")).toBeTruthy();
     // A non-halted project has no carrying cost.
@@ -60,7 +60,7 @@ describe("ProjectReadout", () => {
     );
     expect(screen.getByText("not building (halted)")).toBeTruthy();
     expect(screen.getByText("Carrying cost")).toBeTruthy();
-    expect(screen.getByText("3/mo")).toBeTruthy();
+    expect(screen.getByText("3 NC/mo")).toBeTruthy();
     // A held row must not claim an instalment or a launch.
     expect(screen.queryByText("Instalment")).toBeNull();
     expect(screen.queryByText("Launch")).toBeNull();
@@ -127,7 +127,7 @@ describe("ProjectReadout", () => {
         })}
       />,
     );
-    expect(screen.getByText("100/mo")).toBeTruthy();
+    expect(screen.getByText("100 NC/mo")).toBeTruthy();
     expect(screen.getByText("5")).toBeTruthy();
     expect(screen.getByText("1880-08")).toBeTruthy();
   });

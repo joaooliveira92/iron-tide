@@ -1,6 +1,7 @@
 import { Beaker } from "lucide-react";
 import { Badge } from "../../../components/ui/badge.js";
 import { GlassSectionCard } from "../../../components/shared/GlassSectionCard.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { ResearchProgressRow } from "../research-view-model.js";
 
 export interface InProgressTechnologiesCardProps {
@@ -8,6 +9,7 @@ export interface InProgressTechnologiesCardProps {
 }
 
 export function InProgressTechnologiesCard({ technologies }: InProgressTechnologiesCardProps) {
+  const format = usePresentationFormat();
   return (
     <GlassSectionCard
       icon={<Beaker className="h-4 w-4 text-muted-foreground" />}
@@ -29,7 +31,7 @@ export function InProgressTechnologiesCard({ technologies }: InProgressTechnolog
                 {tech.isCurrentProject && <Badge variant="outline">current project</Badge>}
               </div>
               <span className="text-xs text-muted-foreground">
-                {tech.investedPoints.toLocaleString()} pts
+                {format.count(tech.investedPoints)} pts
               </span>
             </div>
           ))}

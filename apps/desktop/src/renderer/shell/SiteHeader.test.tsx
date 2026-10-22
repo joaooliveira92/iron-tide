@@ -189,7 +189,7 @@ describe("SiteHeader", () => {
     await renderHeader("linux", { activeView: "playing", campaign });
 
     expect(screen.getByText("Armed peace")).toBeTruthy();
-    expect(screen.getByText(/£24,500k/)).toBeTruthy();
+    expect(screen.getByText(/24,500k NC/)).toBeTruthy();
   });
 
   it("renders the INC-1 header fields: nation name and projected balance", async () => {
@@ -198,7 +198,7 @@ describe("SiteHeader", () => {
     expect(screen.getByText("Nation:")).toBeTruthy();
     expect(screen.getByText(/United Kingdom/)).toBeTruthy();
     expect(screen.getByText("Projected balance:")).toBeTruthy();
-    expect(screen.getByText(/£1,500k/)).toBeTruthy();
+    expect(screen.getByText(/1,500k NC/)).toBeTruthy();
   });
 
   it("omits the alert-count slot until the INC-2 projection lands", async () => {

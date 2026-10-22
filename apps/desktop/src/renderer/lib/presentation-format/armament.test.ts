@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { formatCalibreInches, formatPoundsFromMicro, formatTonnes } from "./armament.js";
+import { formatCalibreInches, formatTonnes } from "./armament.js";
 
 describe("armament readouts (the five sites moved out of ArmamentEditor and batteryView)", () => {
   it("shows a gun calibre in inches to one decimal", () => {
@@ -16,15 +16,7 @@ describe("armament readouts (the five sites moved out of ArmamentEditor and batt
     expect(formatTonnes(30_000)).toBe("30");
   });
 
-  it("shows a cost as whole pounds with grouping, rounding micro-pounds to the nearest pound", () => {
-    expect(formatPoundsFromMicro(0)).toBe("£0");
-    expect(formatPoundsFromMicro(236_551_000_000)).toBe("£236,551");
-    expect(formatPoundsFromMicro(1_499_999)).toBe("£1");
-    expect(formatPoundsFromMicro(1_500_000)).toBe("£2");
-  });
-
   it("is locale-independent: always en-US grouping, as the readouts it replaced", () => {
     expect(formatTonnes(12_345_000)).toBe("12,345");
-    expect(formatPoundsFromMicro(12_345_000_000)).toBe("£12,345");
   });
 });

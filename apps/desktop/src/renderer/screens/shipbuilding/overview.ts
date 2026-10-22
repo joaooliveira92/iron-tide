@@ -1,7 +1,7 @@
 import type { BatteryCard } from "../../components/design-workspace/batteryView.js";
 import type { DesignDraft, Severity, WorkshopView } from "@bluewave/ship-design";
 import { plural } from "../../components/design-workspace/plural.js";
-import { formatExplanation } from "../../lib/presentation-format/index.js";
+import { formatExplanation, type PresentationFormat } from "../../lib/presentation-format/index.js";
 
 /**
  * The Overview section's summary view model. Pure: every value is derived from the compiled design (never an
@@ -37,7 +37,6 @@ export interface OverviewModel {
   readonly warnings: readonly OverviewWarning[];
 }
 
-const t = (kg: number) => Math.round(kg / 1000).toLocaleString("en-US");
 const words = (s: string) => s.replaceAll("_", " ").toLowerCase();
 
 const metric = (view: WorkshopView, id: string): string =>
@@ -51,6 +50,7 @@ export function overviewModel(
   view: WorkshopView,
   batteries: readonly BatteryCard[],
   month: string,
+  format: PresentationFormat,
 ): OverviewModel {
   const armour = view.compiled.armour;
   const main = batteries.filter((b) => b.row.role === "MAIN");
@@ -68,12 +68,14 @@ export function overviewModel(
     {
       id: "displacement",
       label: "Displacement",
-      value: `${metric(view, "displacement")} of ${t(view.buoyantKg)} t capacity`,
+      value: `${metric(view, "displacement")} of ${format.measurement(view.buoyantKg, "mass", {
+        maximumFractionDigits: 0,
+      })} capacity`,
     },
     {
       id: "cost",
       label: "Cost",
-      value: `£${Math.round(view.forecast.costMicro / 1_000_000).toLocaleString("en-US")}`,
+      value: format.moneyFromMicro(view.forecast.costMicro),
     },
     { id: "speed", label: "Speed", value: metric(view, "speed") },
     { id: "range", label: "Range", value: metric(view, "range") },
@@ -83,7 +85,11 @@ export function overviewModel(
       value:
         armour === null
           ? "None"
-          : `${(armour.coverageBp / 100).toFixed(0)}% coverage · ${t(armour.totalWeightKg)} t`,
+          : `${format.percent(armour.coverageBp, 0)} coverage · ${format.measurement(
+              armour.totalWeightKg,
+              "mass",
+              { maximumFractionDigits: 0 },
+            )}`,
     },
     { id: "armament", label: "Main armament", value: mainSummary },
     { id: "crew", label: "Crew", value: metric(view, "crew") },

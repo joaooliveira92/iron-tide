@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../../../components/ui/card.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
 /**
  * The foreign construction contract panel (SB3-R20/R23/R34; INC-9b). Presentational: every figure is the engine's
@@ -35,6 +36,7 @@ export const ForeignContractPanel = memo(function ForeignContractPanel({
   preview,
   builderNationId,
 }: ForeignContractPanelProps) {
+  const format = usePresentationFormat();
   const builder = preview.builders.find((b) => b.nationId === builderNationId);
   const contract = preview.contract;
   if (builder === undefined) return null;
@@ -61,13 +63,17 @@ export const ForeignContractPanel = memo(function ForeignContractPanel({
             <span className="font-mono tabular-nums" data-testid="foreign-dock-ceiling">
               {builder.dockCeilingKg === null
                 ? "no dock"
-                : `${builder.dockCeilingKg.toLocaleString()} kg`}
+                : format.measurement(builder.dockCeilingKg, "mass", {
+                    maximumFractionDigits: 0,
+                  })}
             </span>
           </li>
           <li className="flex justify-between gap-2">
             <span className="text-muted-foreground">Free capacity</span>
             <span className="font-mono tabular-nums" data-testid="foreign-free-capacity">
-              {builder.availableNewConstructionMassKg.toLocaleString()} kg
+              {format.measurement(builder.availableNewConstructionMassKg, "mass", {
+                maximumFractionDigits: 0,
+              })}
             </span>
           </li>
           <li className="flex justify-between gap-2">
@@ -77,7 +83,7 @@ export const ForeignContractPanel = memo(function ForeignContractPanel({
           <li className="flex justify-between gap-2">
             <span className="text-muted-foreground">Impoundment risk</span>
             <span className="font-mono tabular-nums" data-testid="foreign-impoundment-risk">
-              {(builder.impoundmentRiskBp / 100).toFixed(1)} %
+              {format.percent(builder.impoundmentRiskBp, 1)}
             </span>
           </li>
           <li className="flex justify-between gap-2">
@@ -110,9 +116,9 @@ export const ForeignContractPanel = memo(function ForeignContractPanel({
         {contract !== null && (
           <div className="space-y-2" data-testid="foreign-contract-terms">
             <p className="text-xs text-muted-foreground">
-              {contract.quantity} × {contract.totalWorkPerUnit.toLocaleString()} ={" "}
+              {format.count(contract.quantity)} × {format.count(contract.totalWorkPerUnit)} ={" "}
               <span className="font-mono" data-testid="foreign-total-price">
-                {contract.totalPriceUnits.toLocaleString()}
+                {format.money(contract.totalPriceUnits)}
               </span>{" "}
               total · keel {contract.plannedKeelMonth} · delivery {contract.plannedDeliveryMonth}
             </p>
@@ -122,8 +128,11 @@ export const ForeignContractPanel = memo(function ForeignContractPanel({
                 data-testid="foreign-capacity-reservation"
                 className="text-xs text-muted-foreground"
               >
-                Reserves {reservation.reservedMassKg.toLocaleString()} kg of {reservation.pool}{" "}
-                capacity in {reservation.month}.
+                Reserves{" "}
+                {format.measurement(reservation.reservedMassKg, "mass", {
+                  maximumFractionDigits: 0,
+                })}{" "}
+                of {reservation.pool} capacity in {reservation.month}.
               </p>
             ))}
             <table className="w-full text-xs" aria-label="Foreign payment schedule">
@@ -139,10 +148,10 @@ export const ForeignContractPanel = memo(function ForeignContractPanel({
                   <tr key={installment.dueMonth} className="border-t">
                     <td className="py-1 font-mono">{installment.dueMonth}</td>
                     <td className="py-1 text-right font-mono tabular-nums">
-                      {installment.amountUnits.toLocaleString()}
+                      {format.money(installment.amountUnits)}
                     </td>
                     <td className="py-1 text-right font-mono tabular-nums">
-                      {(installment.workShareBp / 100).toFixed(0)} %
+                      {format.percent(installment.workShareBp, 0)}
                     </td>
                   </tr>
                 ))}
@@ -151,7 +160,7 @@ export const ForeignContractPanel = memo(function ForeignContractPanel({
             <p className="text-xs text-muted-foreground">
               {contract.paymentGraceMonths === 1
                 ? "One month"
-                : `${contract.paymentGraceMonths.toLocaleString()} months`}{" "}
+                : `${format.count(contract.paymentGraceMonths)} months`}{" "}
               of grace after each due date; an unpaid instalment holds the work at zero and, once
               the grace lapses, delays the contract (payment default).
             </p>
