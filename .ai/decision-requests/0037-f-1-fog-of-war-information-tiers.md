@@ -2,8 +2,15 @@
 
 ## Status
 
-Blocked pending owner decision. Blocks implementation of the F-1 map overlays for foreign entities (spec
-`.ai/briefs/f-1-strategic-map.md`, section Decisions required before #222).
+Resolved (2026-10-22): **Option B** (own forces plus public facts only). Ruled by the implementation agent under the
+owner's standing delegation of implementation decisions for the #220 run (2026-10-22); the owner reviews on merge.
+
+## Resolution
+
+Option B. The engine projection returns the player's fleets in full and, for other nations, public facts only: area
+controllers, ports (name, owner, level) and blockades the player is party to. Foreign fleets are not drawn and not
+listed; the legend carries the spec's fixed sentence. No detection mechanic is invented; W-3 later widens the
+projection without a screen-contract change. The spec's tier table and its tests are normative.
 
 ## Trigger
 

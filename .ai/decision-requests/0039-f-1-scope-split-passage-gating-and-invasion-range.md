@@ -2,8 +2,16 @@
 
 ## Status
 
-Blocked pending owner decision. The spec (`.ai/briefs/f-1-strategic-map.md`) proceeds on the recommendation but the F-1
-row in `.ai/SPRINT-PLAN.md` cannot be narrowed without the owner.
+Resolved (2026-10-22): **Option A** (defer gating and invasion range; ship blockade and presence as read-only
+overlays). Ruled by the implementation agent under the owner's standing delegation of implementation decisions for the
+#220 run (2026-10-22); the owner reviews on merge.
+
+## Resolution
+
+Option A. F-1 draws no passage gates and no invasion range; the legend states "not modelled yet". Blockades the
+player is party to and presence (when `configured: true`) ship as read-only overlays. The F-1 row in
+`.ai/SPRINT-PLAN.md` is amended accordingly on the F-1 spec branch. Passage rules can be chartered separately if the
+owner wants them.
 
 ## Trigger
 

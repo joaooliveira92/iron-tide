@@ -302,9 +302,7 @@ report updated; `pnpm snap` evidence; Conventional Commits.
 
 ## Reassessment
 
-Decision requests 0037 (fog of war), 0038 (drop-target granularity) and 0039 (scope split) are open, and #222 is blocked on
-them as follows. Unblocked now and implementable against this spec: the dedicated screen and registration, the shared
-`useMovementOrders` refactor, own-fleet selection, the legal-destination projection, pending/cancel/rejection UI,
-fixture removal and the no-fixture guard, camera and accessibility work, scale-bar formatting, prototype deletion. Blocked:
-the foreign-fleet layer and tooltips (0037), the drop flow of drag-to-move (0038) and the final F-1 row and legend (0039).
-Verdict: #222 is not fully implementable; with the three recommendations approved it is, with no further spec work.
+Decision requests 0037 (fog of war), 0038 (drop-target granularity) and 0039 (scope split) were resolved on
+2026-10-22 to their recommended options — B, A and A respectively — by the implementation agent under the owner's
+standing delegation of implementation decisions for the #220 run (the owner reviews on merge). #222 is fully
+implementable against this spec with no further spec work.

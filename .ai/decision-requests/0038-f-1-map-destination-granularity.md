@@ -2,8 +2,15 @@
 
 ## Status
 
-Blocked pending owner decision. Blocks implementation of drag-to-move in the F-1 spec
-(`.ai/briefs/f-1-strategic-map.md`, section Decisions required before #222).
+Resolved (2026-10-22): **Option A** (disambiguate at the drop). Ruled by the implementation agent under the owner's
+standing delegation of implementation decisions for the #220 run (2026-10-22); the owner reviews on merge.
+
+## Resolution
+
+Option A. A drop on a polygon resolves the engine-derived legal one-hop campaign areas inside it: one legal area is
+chosen automatically, several open a small keyboard-operable list, none shows the engine's reason. No content,
+geometry or hash change. Option B (authored per-area anchors) remains available as a later refinement if playtesting
+shows the second step is a nuisance.
 
 ## Trigger
 
