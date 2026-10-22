@@ -9,7 +9,7 @@ import {
   TORPEDO_FLOODING_ISOLATION_MULTIPLIER_BP,
   TORPEDO_PROGRESSIVE_FLOODING_CREATED,
   UNDERWATER_TUBE_SEVERE_FLOODING,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 
 describe("AC-16: base breach rate from the hull-breach area", () => {
   it("computes floor(areaM2 × shipped rate)", () => {

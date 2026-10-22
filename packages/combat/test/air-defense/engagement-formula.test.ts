@@ -19,7 +19,7 @@ import {
   INVALID_AIR_DEFENSE_STATE,
   resolveEngagement,
   resolveEngagementOutcome,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 function neutralMultipliers(): EngagementMultipliers {
   return {

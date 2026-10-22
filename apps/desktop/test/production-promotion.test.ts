@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { InvalidShipType, promoteTacticalUnit } from "@bluewave/combat";
+import { InvalidShipType, promoteTacticalUnit } from "@bluewave/combat/tactical";
 import { compileProductionCampaignFromArtifact } from "../src/main/compiler.js";
 import { resolveGeneratedContentDir } from "../src/main/contentPack.js";
 

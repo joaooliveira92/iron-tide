@@ -15,7 +15,7 @@ import {
   sweepingContributionOrder,
   type RegionalSweepingContribution,
   type SweepingAllocationCandidate,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 function shuffled<T>(items: readonly T[]): T[] {
   return items.length > 1

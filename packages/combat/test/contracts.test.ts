@@ -6,18 +6,18 @@ import {
   SHIPPED_FORMATION_STATION_CONTRACT,
   validateFormationStationContract,
   movementKinematicsPolicyId,
-} from "../src/movement/index.js";
+} from "@bluewave/combat/movement";
 import {
   SHIPPED_SPOTTING_SENSOR_CONTRACT,
   validateSpottingSensorContract,
   spottingSensorPolicyId,
   NAUTICAL_MILE_UM,
-} from "../src/spotting/index.js";
+} from "@bluewave/combat/spotting";
 import {
   SHIPPED_CONTACT_LIFECYCLE_CONTRACT,
   validateContactLifecycleContract,
   contactLifecyclePolicyId,
-} from "../src/contact/index.js";
+} from "@bluewave/combat/contact";
 
 describe("AC-14 versioned contracts ship *_v1 + SHIPPED_*_CONTRACT + validate guard", () => {
   it("movement kinematics contract ships *_v1 policy and validates", () => {

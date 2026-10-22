@@ -5,7 +5,7 @@ import {
   withDamageStateHash,
   assertFixedPointDamage,
   type ShipDamageState,
-} from "../../src/damage/index.js";
+} from "@bluewave/combat/damage";
 
 function baseState(overrides: Partial<ShipDamageState> = {}): ShipDamageState {
   return withDamageStateHash({

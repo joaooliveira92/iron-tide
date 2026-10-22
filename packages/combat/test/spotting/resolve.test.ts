@@ -4,7 +4,7 @@ import {
   type ResolveSpottingInput,
   NAUTICAL_MILE_UM,
   VISUAL_DETECTION_RANGE_NMI,
-} from "../../src/spotting/index.js";
+} from "@bluewave/combat/spotting";
 
 const RANGE_UM = VISUAL_DETECTION_RANGE_NMI * NAUTICAL_MILE_UM;
 

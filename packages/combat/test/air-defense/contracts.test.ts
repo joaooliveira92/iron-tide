@@ -27,7 +27,7 @@ import {
   AaDirectorScalingPolicy_v1,
   RadarSaturationPolicy_v1,
   CiwsRedundancyPolicy_v1,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 const AIR_DEFENSE_CONTRACTS_GOLDEN_HASH =
   "92d3008abba718f0198180411ebd410b2beebbf25209426bf0ad1396622679e9";

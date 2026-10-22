@@ -13,7 +13,7 @@ import {
   AIR_DEFENSE_RADAR_UNAVAILABLE,
   AIR_DEFENSE_TARGET_INELIGIBLE,
   HEAVY_AA_PROTECTED_RADIUS_EXCEEDED,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 const OPERABLE = {
   defenderSunk: false,

@@ -9,7 +9,7 @@ import {
   withSubmarineStrategicAssetAggregateHash,
   verifySubmarineStrategicAssetAggregateHash,
   strategicRepresentationForType,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 function baseAsset(
   overrides: Partial<SubmarineStrategicAsset> = {},

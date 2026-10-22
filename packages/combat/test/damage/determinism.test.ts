@@ -4,7 +4,7 @@ import {
   type GunneryImpact,
   withDamageStateHash,
   type ShipDamageState,
-} from "../../src/damage/index.js";
+} from "@bluewave/combat/damage";
 
 function createDeterministicRng(): (stream: string) => number {
   const cache = new Map<string, number>();

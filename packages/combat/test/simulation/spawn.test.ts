@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import { directionBp } from "../../src/movement/kinematics.js";
-import { computeInitialMovementStates } from "../../src/simulation/spawn.js";
+import { directionBp } from "@bluewave/combat/movement";
+import { computeInitialMovementStates } from "@bluewave/combat/simulation";
 
 describe("computeInitialMovementStates heading convention", () => {
   const out = computeInitialMovementStates(

@@ -10,7 +10,7 @@ import {
   designFamilyYear,
   isDesignBuildableByYear,
 } from "@bluewave/campaign-engine";
-import { classifyShip } from "@bluewave/combat";
+import { classifyShip } from "@bluewave/combat/tactical";
 import { buildContentBundleArtifact, buildFullSurfaceInput } from "@bluewave/content-compiler";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";

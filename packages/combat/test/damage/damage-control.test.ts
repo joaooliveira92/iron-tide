@@ -9,8 +9,8 @@ import {
   getFloodingPriorityCategory,
   type DamageControlAllocation,
   DAMAGE_CONTROL_PRIORITIES,
-} from "../../src/damage/index.js";
-import type { FireSourceRecord, FloodingSourceRecord } from "../../src/damage/state.js";
+} from "@bluewave/combat/damage";
+import type { FireSourceRecord, FloodingSourceRecord } from "@bluewave/combat/damage";
 
 function makeFire(
   locationId: string,

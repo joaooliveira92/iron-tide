@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/campaign";
 import { CampaignCompiler } from "@bluewave/campaign/compiler";
-import { generateBattles } from "@bluewave/combat";
+import { generate } from "@bluewave/combat";
 import type { BudgetProjectCommand, CommandEnvelope } from "@bluewave/commands";
 import { buildContentBundleArtifact, buildFullSurfaceInput } from "@bluewave/content-compiler";
 import { SafeInt } from "@bluewave/contracts";
@@ -228,7 +228,7 @@ function battleGenerationHash(snapshot: CampaignSnapshot): string {
       battleManifests: [],
     },
   };
-  const result = generateBattles({
+  const result = generate({
     snapshot: genSnapshot,
     campaignMonth: "1880-02",
     campaignSeed: "deterministic-seed",

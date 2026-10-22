@@ -9,7 +9,7 @@ import {
   resolveOxygenPerformanceEffects,
   SHIPPED_OXYGEN_EFFECTS,
   tubeHitPropulsionMultiplierBp,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 import { compiledTorpedoOf } from "../fixtures/compiledTorpedoes.js";
 
 const TYPE93 = "jpn_61cm_type93_1935";

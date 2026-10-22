@@ -25,7 +25,7 @@ import {
   validateCarrierStrikeStateContract,
   validateCarrierLaunchRateContract,
   SHIPPED_CARRIER_OPERATIONS_CONTRACTS,
-} from "../../src/carrier-operations/index.js";
+} from "@bluewave/combat/carrier-operations";
 
 function validStrikeState(overrides: Partial<CarrierStrikeState> = {}): CarrierStrikeState {
   return {

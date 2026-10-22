@@ -16,7 +16,7 @@ import {
   withTorpedoLauncherStateHash,
   type TorpedoLauncherState,
   type TorpedoSalvoPolicyInputs,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 import { COMPILED_TORPEDOES } from "../fixtures/compiledTorpedoes.js";
 
 const G7A = "ger_533mm_g7a_1934";

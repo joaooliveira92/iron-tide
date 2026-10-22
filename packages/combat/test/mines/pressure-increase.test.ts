@@ -10,7 +10,7 @@ import {
   reinforcePressureRecord,
   type AreaMinePressureRecord,
   withAreaMinePressureRecordHash,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 function validRecord(overrides: Partial<AreaMinePressureRecord> = {}): AreaMinePressureRecord {
   const base = {

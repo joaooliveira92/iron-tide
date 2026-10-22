@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
 import { RandomEngine } from "@bluewave/random";
-import type { TacticalContact } from "../../src/contact/lifecycle.js";
+import type { TacticalContact } from "@bluewave/combat/contact";
 import {
   battleLoss,
   hpOfState,
@@ -9,9 +9,9 @@ import {
   shellPenetrationUm,
   synthesizeImpact,
   type DamageTargetContext,
-} from "../../src/battleResolution/damage.js";
-import type { ShipDamageState } from "../../src/damage/state.js";
-import { autoZonesForBelt } from "../../src/battleResolution/constants.js";
+} from "@bluewave/combat/battleResolution";
+import type { ShipDamageState } from "@bluewave/combat/damage";
+import { autoZonesForBelt } from "@bluewave/combat/battleResolution";
 import { makeGunneryHitRecord } from "./damage-hit.js";
 
 function contact(contactId: string, assetId: string): TacticalContact {

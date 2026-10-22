@@ -6,13 +6,13 @@ import {
   SHELL_IMPACT_ANGLE_DEG,
   SHELL_MUZZLE_VELOCITY_MS,
   autoZonesForBelt,
-} from "../../src/battleResolution/constants.js";
+} from "@bluewave/combat/battleResolution";
 import {
   CALIBER_CANONICAL_UNIT,
   effectiveResistanceUm,
   shellPenetrationUm,
-} from "../../src/battleResolution/damage.js";
-import { determinePenetrationOutcome } from "../../src/damage/armorModel.js";
+} from "@bluewave/combat/battleResolution";
+import { determinePenetrationOutcome } from "@bluewave/combat/damage";
 
 interface ReferenceWeapon {
   readonly id: string;

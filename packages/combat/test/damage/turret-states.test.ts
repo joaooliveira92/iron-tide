@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
-import { applyTurretDamage, type TurretComponent } from "../../src/damage/index.js";
-import { type ComponentOutcome } from "../../src/damage/index.js";
+import { applyTurretDamage, type TurretComponent } from "@bluewave/combat/damage";
+import { type ComponentOutcome } from "@bluewave/combat/damage";
 
 function operational(id = "TURRET-1"): TurretComponent {
   return { id, state: "OPERATIONAL" };

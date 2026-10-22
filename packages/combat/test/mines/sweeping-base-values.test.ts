@@ -10,7 +10,7 @@ import {
   SWEEPING_BASE_VALUE_KEYS,
   type SweepingBaseValueKey,
   validateMineSweepingContract,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 describe("AC-7: exact §7 base sweeping values by equipment/type key", () => {
   it("dedicated fleet minesweeper 150, dedicated coastal minesweeper 100", () => {

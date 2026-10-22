@@ -8,7 +8,7 @@ import type {
   Ship,
   WarDeclaration,
 } from "@bluewave/campaign";
-import { buildManifest } from "@bluewave/combat";
+import { buildManifest } from "@bluewave/combat/generation";
 import { SafeInt } from "@bluewave/contracts";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";

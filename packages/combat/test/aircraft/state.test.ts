@@ -8,7 +8,7 @@ import {
   withAircraftInventoryRecordHash,
   verifyAircraftInventoryRecordHash,
   AIRCRAFT_INVENTORY_STATES,
-} from "../../src/aircraft/index.js";
+} from "@bluewave/combat/aircraft";
 
 describe("AC-3: AircraftNationState structure", () => {
   it("can construct a valid AircraftNationState with all fields", () => {

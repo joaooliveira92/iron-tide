@@ -8,7 +8,7 @@ import {
   torpedoMachineryStreamId,
   TORPEDO_MACHINERY_DAMAGE_CREATED,
   TORPEDO_MACHINERY_SEVERITY_WEIGHTS_BP,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 
 const TRACK_ID = "B1:6:4:torpedo:LCH-1:tube0";
 

@@ -16,7 +16,7 @@ import {
   directorScalingMarkers,
   INVALID_AIR_DEFENSE_STATE,
   Layer,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 const OPERABLE = {
   defenderSunk: false,

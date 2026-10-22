@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { allocateAttributes } from "../../src/aircraft/index.js";
+import { allocateAttributes } from "@bluewave/combat/aircraft";
 
 describe("AC-10: attribute allocation", () => {
   it("returns baseline values for FIGHTER with no effective emphasized traits", () => {

@@ -1,5 +1,5 @@
 import type { BattleInstance, CampaignSnapshot, Ship } from "@bluewave/campaign";
-import type { BattleMissionType } from "@bluewave/combat";
+import type { BattleMissionType } from "@bluewave/combat/generation";
 import type { BattleOfferRules } from "@bluewave/content-schema";
 import { BluewaveError } from "@bluewave/contracts";
 import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";

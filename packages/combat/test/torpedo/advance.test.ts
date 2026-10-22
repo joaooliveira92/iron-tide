@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
 import { RandomEngine } from "@bluewave/random";
 import { SafeInt } from "@bluewave/contracts";
-import type { TacticalBattleState, TacticalShipUnit } from "../../src/tactical/index.js";
-import type { MovementState } from "../../src/movement.js";
-import type { TacticalContact } from "../../src/contact/lifecycle.js";
-import { advanceMinute, advanceMinutes } from "../../src/simulation/engine.js";
-import { computeInitialMovementStates } from "../../src/simulation/spawn.js";
-import { initialDamageState } from "../../src/battleResolution/damage.js";
+import type { TacticalBattleState, TacticalShipUnit } from "@bluewave/combat/tactical";
+import type { MovementState } from "@bluewave/combat/movement";
+import type { TacticalContact } from "@bluewave/combat/contact";
+import { advanceMinute, advanceMinutes } from "@bluewave/combat/simulation";
+import { computeInitialMovementStates } from "@bluewave/combat/simulation";
+import { initialDamageState } from "@bluewave/combat/battleResolution";
 import {
   computeBaseBreachRateKgMin,
   EMPTY_TUBE,
@@ -17,7 +17,7 @@ import {
   type TorpedoLaunchCommand,
   type TorpedoLauncherState,
   type TorpedoTargetContext,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 import { COMPILED_TORPEDOES } from "../fixtures/compiledTorpedoes.js";
 
 export const TORPEDO_BATTLE_ID = "b1-torpedo-inc7";

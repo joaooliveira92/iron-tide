@@ -21,9 +21,17 @@ const REGISTRY = `const DBG: X = { id: "dbg-screen" };
 const MAP: X = { id: "proto" };
 export const R = [ { id: "live" }, ...(DEBUG_MODE ? [DBG] : []), ...(import.meta.env.DEV ? [MAP] : []) ];`;
 
+const combatPackage = (extra = []) =>
+  JSON.stringify({
+    exports: Object.fromEntries(
+      [".", "./gunnery", "./air", "./smoke", ...extra].map((key) => [key, {}]),
+    ),
+  });
+
 /** Base files for a tiny repository where "alpha" is genuinely reachable. */
 function baseFiles() {
   return {
+    "packages/combat/package.json": combatPackage(),
     "apps/desktop/src/shared/campaign-command-descriptors.ts": CONTRACT,
     "apps/desktop/src/main/campaignBridge.ts": BRIDGE,
     "apps/desktop/src/renderer/shell/campaign-screen-registry.tsx": REGISTRY,
@@ -147,8 +155,12 @@ void test("unclassified rows fail the gate", () => {
   assert.ok(has(r, "tbd") && has(r, "unclassified"));
 });
 
-void test("a new combat module that no row classifies fails", () => {
-  const r = run(goodLedger(), (f) => ({ ...f, "packages/combat/src/torpedoes/index.ts": "" }));
+void test("a new combat seam that no row classifies fails", () => {
+  const r = run(goodLedger(), (f) => ({
+    ...f,
+    "packages/combat/package.json": combatPackage(["./torpedoes"]),
+    "packages/combat/src/torpedoes/index.ts": "",
+  }));
   assert.ok(has(r, 'combat module "torpedoes"'));
 });
 

@@ -5,7 +5,7 @@ import {
   computeDamageStateHash,
   withDamageStateHash,
   type ShipDamageState,
-} from "../../src/damage/index.js";
+} from "@bluewave/combat/damage";
 
 function baseFireRecord() {
   return { locationId: "COMP-1", intensityBp: 3_000, cause: "hit" };

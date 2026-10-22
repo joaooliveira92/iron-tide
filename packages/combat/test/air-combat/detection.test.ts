@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
-import { computeDetection } from "../../src/air-combat/index.js";
+import { computeDetection } from "@bluewave/combat/air-combat";
 
 describe("AC-2: CAP detection of incoming strikes", () => {
   it("detects a strike within sensor range", () => {

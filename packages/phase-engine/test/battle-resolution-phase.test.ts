@@ -1,9 +1,7 @@
 import type { CampaignSnapshot, Ship } from "@bluewave/campaign";
-import {
-  BATTLE_AUTO_RESOLUTION_FAILED,
-  INVALID_BATTLE_WEATHER_INITIALIZATION,
-  resolveBattleAuto,
-} from "@bluewave/combat";
+import { resolve } from "@bluewave/combat";
+import { BATTLE_AUTO_RESOLUTION_FAILED } from "@bluewave/combat/battleResolution";
+import { INVALID_BATTLE_WEATHER_INITIALIZATION } from "@bluewave/combat/weather";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -21,7 +19,7 @@ import {
 } from "./battle-fixtures.js";
 
 const MONTH = "1880-02";
-type AutoResolutionManifest = Parameters<typeof resolveBattleAuto>[0]["manifest"];
+type AutoResolutionManifest = Parameters<typeof resolve>[0]["manifest"];
 
 function runMonth(snapshot: CampaignSnapshot) {
   const collector = new DiagnosticCollector();
@@ -33,7 +31,7 @@ function directAutoResult(snapshot: CampaignSnapshot, final: CampaignSnapshot) {
   const manifest = final.wars.battleManifests[0]!;
   const weather = (final.strategicWeather ?? []).find((s) => s.areaId === manifest.areaId)!;
   const nation = (id: string) => snapshot.nations.get(id)!;
-  return resolveBattleAuto({
+  return resolve({
     battleId: manifest.battleId,
     areaId: manifest.areaId,
     campaignMonth: MONTH,
@@ -68,7 +66,7 @@ function allShips(snapshot: CampaignSnapshot): Ship[] {
 }
 
 describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () => {
-  it("a generated manifest battle resolves via resolveBattleAuto: result recorded, winner/loser match the deterministic run, war score moves on the decided path", () => {
+  it("a generated manifest battle resolves via resolve: result recorded, winner/loser match the deterministic run, war score moves on the decided path", () => {
     const snapshot = makeBattleSnapshot();
     const { collector, result } = runMonth(snapshot);
 

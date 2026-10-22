@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
-import { computeInterceptionTime, convertSpeedToMps } from "../../src/air-combat/index.js";
+import { computeInterceptionTime, convertSpeedToMps } from "@bluewave/combat/air-combat";
 
 describe("AC-3: Interception timing", () => {
   describe("convertSpeedToMps", () => {

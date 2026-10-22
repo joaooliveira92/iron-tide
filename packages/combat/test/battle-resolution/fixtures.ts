@@ -1,12 +1,12 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { CompiledDesignVersion, Ship } from "@bluewave/campaign";
-import { buildManifest, type BattleManifest } from "../../src/generation/manifest.js";
+import { buildManifest, type BattleManifest } from "@bluewave/combat/generation";
 import {
   withStrategicWeatherStateHash,
   type StrategicWeatherState,
-} from "../../src/weather/strategic-state.js";
-import type { AutoResolverNation } from "../../src/battleResolution/project.js";
-import type { ResolveBattleAutoInput } from "../../src/battleResolution/resolve.js";
+} from "@bluewave/combat/weather";
+import type { AutoResolverNation } from "@bluewave/combat/battleResolution";
+import type { ResolveBattleAutoInput } from "@bluewave/combat/battleResolution";
 
 export const BATTLE_ID = "b6-inc2-battle-001";
 export const WAR_ID = "war-001";

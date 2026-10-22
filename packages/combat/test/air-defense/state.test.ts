@@ -9,7 +9,7 @@ import {
   Category,
   createAirDefenseSystemDefinition,
   INVALID_AIR_DEFENSE_STATE,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 describe("AirDefenseState", () => {
   describe("required fields presence", () => {

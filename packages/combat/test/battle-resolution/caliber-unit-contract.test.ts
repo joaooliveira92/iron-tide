@@ -4,11 +4,8 @@ import {
   CALIBER_CANONICAL_UNIT,
   MICROMETRES_PER_MILLIMETRE,
   shellPenetrationUm,
-} from "../../src/battleResolution/damage.js";
-import {
-  SHELL_MUZZLE_VELOCITY_MS,
-  autoZonesForBelt,
-} from "../../src/battleResolution/constants.js";
+} from "@bluewave/combat/battleResolution";
+import { SHELL_MUZZLE_VELOCITY_MS, autoZonesForBelt } from "@bluewave/combat/battleResolution";
 
 const UK_HEAVY_UM = 343_000;
 const FRENCH_HEAVY_UM = 305_000;

@@ -11,7 +11,7 @@ import {
   type SmokescreenEligibilityParams,
   type SmokescreenState,
   type SmokeCloud,
-} from "../../src/smoke/index.js";
+} from "@bluewave/combat/smoke";
 import {
   SMOKESCREEN_INITIAL_DENSITY,
   SMOKESCREEN_VERTICAL_EXTENT_M,
@@ -19,7 +19,7 @@ import {
   SMOKESCREEN_COOLDOWN_MINUTES,
   SMOKE_RULESET_VERSION,
   SMOKE_FORMULA_VERSION,
-} from "../../src/smoke/constants.js";
+} from "@bluewave/combat/smoke";
 
 function eligibleDDParams(
   overrides?: Partial<SmokescreenEligibilityParams>,

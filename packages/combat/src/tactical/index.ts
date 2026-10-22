@@ -4,3 +4,6 @@ export * from "./division.js";
 export * from "./provenance.js";
 export * from "./state.js";
 export * from "./reasonCodes.js";
+export * from "../tacticalClock.js";
+export * from "../tacticalTime.js";
+export * from "../targeting.js";

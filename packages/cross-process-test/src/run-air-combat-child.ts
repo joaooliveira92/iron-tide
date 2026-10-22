@@ -1,15 +1,10 @@
 import { RandomEngine } from "@bluewave/random";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
-import {
-  advanceMinutes,
-  createCapPatrolState,
-  createStrikeMissionState,
-  computeInitialMovementStates,
-  type TacticalBattleState,
-  type TacticalShipUnit,
-  type MovementState,
-} from "@bluewave/combat";
+import { createCapPatrolState, createStrikeMissionState } from "@bluewave/combat/air-combat";
+import type { MovementState } from "@bluewave/combat/movement";
+import { advanceMinutes, computeInitialMovementStates } from "@bluewave/combat/simulation";
+import type { TacticalBattleState, TacticalShipUnit } from "@bluewave/combat/tactical";
 
 const BATTLE_ID = "battle-air-combat-1";
 

@@ -31,7 +31,7 @@ import {
   SHIPPED_ARMOR_CONTRACT,
   validateArmorContract,
   DAMAGE_STATE_INVARIANT_FAILED,
-} from "../../src/damage/index.js";
+} from "@bluewave/combat/damage";
 
 describe("AC-5: Zone maxima (§17)", () => {
   it("belt maximum is 508_000 µm (20 in)", () => {

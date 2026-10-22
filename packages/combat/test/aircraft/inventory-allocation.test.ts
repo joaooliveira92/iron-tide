@@ -4,7 +4,7 @@ import {
   allocateInventory,
   type AllocationDemand,
   type AllocationPriority,
-} from "../../src/aircraft/inventory-allocation.js";
+} from "@bluewave/combat/aircraft";
 
 function demand(
   demandId: string,

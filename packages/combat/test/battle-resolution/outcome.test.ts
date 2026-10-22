@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vite-plus/test";
-import { resolveBattleAuto } from "../../src/battleResolution/resolve.js";
-import { decideBattleEnd, type ShipViability } from "../../src/battleResolution/viability.js";
-import { battleLoss, hpOfState } from "../../src/battleResolution/damage.js";
-import { initialDamageState } from "../../src/battleResolution/damage.js";
-import type { ShipDamageState } from "../../src/damage/state.js";
-import { DEFAULT_MAX_BATTLE_MINUTES } from "../../src/battleEnd.js";
+import { resolveBattleAuto } from "@bluewave/combat/battleResolution";
+import { decideBattleEnd, type ShipViability } from "@bluewave/combat/battleResolution";
+import { battleLoss, hpOfState } from "@bluewave/combat/battleResolution";
+import { initialDamageState } from "@bluewave/combat/battleResolution";
+import type { ShipDamageState } from "@bluewave/combat/damage";
+import { DEFAULT_MAX_BATTLE_MINUTES } from "@bluewave/combat/battleResolution";
 import { makeAutoInput } from "./fixtures.js";
 
 describe("AC-7: winner/loser viability rule", () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
-import { computeEffectiveVisibility } from "../../src/weather/visibility.js";
+import { computeEffectiveVisibility } from "@bluewave/combat/weather";
 
 describe("AC-6: visibility distance formula", () => {
   it("computes the effective visibility with all neutral multipliers (= base visibility)", () => {

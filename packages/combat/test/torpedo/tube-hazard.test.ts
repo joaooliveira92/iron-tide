@@ -11,7 +11,7 @@ import {
   TORPEDO_TUBE_PROTECTION_MULTIPLIER_BP,
   tubeHitPropulsionMultiplierBp,
   UNDERWATER_TUBE_SEVERE_FLOODING,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 
 describe("AC-18 §21: the shipped multiplier tables + base", () => {
   it("ships the 5_000 bp severe-flooding base", () => {

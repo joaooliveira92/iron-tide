@@ -9,9 +9,9 @@ import {
   RANGE_MULTIPLIER_REFERENCE_BASE_BP,
   BUORD_H_MIN_RANGE_YD,
   GUNNERY_RANGE_CURVE_VERSION,
-} from "../../src/gunnery/index.js";
-import { GUNNERY_ACCURACY_BASE_BP } from "../../src/battleResolution/constants.js";
-import { INVALID_GUNNERY_STATE } from "../../src/gunnery/reasonCodes.js";
+} from "@bluewave/combat/gunnery";
+import { GUNNERY_ACCURACY_BASE_BP } from "@bluewave/combat/battleResolution";
+import { INVALID_GUNNERY_STATE } from "@bluewave/combat/gunnery";
 
 const BANDS: ReadonlyArray<readonly [rangeUm: number, qBp: number, multiplierBp: number]> = [
   [3_000_000_000, 1_500, 3_750],

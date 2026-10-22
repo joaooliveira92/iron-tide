@@ -9,7 +9,7 @@ import {
   TORPEDO_SYSTEM_SHOCK_BASE_BP,
   TORPEDO_SYSTEM_SHOCK_DAMAGE_CREATED,
   type SystemShockCandidate,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 
 function candidate(id: string, band: SystemShockCandidate["band"]): SystemShockCandidate {
   return { stableSystemId: id, band };

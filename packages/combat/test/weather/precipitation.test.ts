@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
-import { computePrecipitationVisibilityMultiplierBp } from "../../src/weather/precipitation.js";
+import { computePrecipitationVisibilityMultiplierBp } from "@bluewave/combat/weather";
 
 describe("AC-9: precipitation visibility multipliers (§26)", () => {
   it("NONE type always returns 10_000 bp regardless of intensity", () => {

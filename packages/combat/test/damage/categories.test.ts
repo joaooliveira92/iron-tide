@@ -8,8 +8,8 @@ import type {
   FloodingPackage,
   SecondaryHazardPackage,
   NoEffectPackage,
-} from "../../src/damage/index.js";
-import { DAMAGE_CATEGORIES } from "../../src/damage/index.js";
+} from "@bluewave/combat/damage";
+import { DAMAGE_CATEGORIES } from "@bluewave/combat/damage";
 
 describe("AC-2: Damage categories produce correctly typed packages", () => {
   it("PENETRATION package has correct category and fields", () => {

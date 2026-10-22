@@ -6,7 +6,7 @@ import {
   designStreamKey,
   assertSufficientPayment,
   AIRCRAFT_DEVELOPMENT_MIN_MONTHS,
-} from "../../src/aircraft/index.js";
+} from "@bluewave/combat/aircraft";
 
 describe("AC-8: development duration formula", () => {
   it("returns base 4 months for nominal inputs", () => {

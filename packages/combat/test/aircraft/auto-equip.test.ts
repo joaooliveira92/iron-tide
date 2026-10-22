@@ -4,10 +4,10 @@ import {
   checkAutoEquipEligibility,
   selectAutoEquipModel,
   assertAutoEquipAvailable,
-} from "../../src/aircraft/auto-equip.js";
-import { SQUADRON_AUTO_EQUIP_UNAVAILABLE } from "../../src/aircraft/reasonCodes.js";
-import type { AircraftModelDefinition } from "../../src/aircraft/model.js";
-import type { SquadronState } from "../../src/aircraft/state.js";
+} from "@bluewave/combat/aircraft";
+import { SQUADRON_AUTO_EQUIP_UNAVAILABLE } from "@bluewave/combat/aircraft";
+import type { AircraftModelDefinition } from "@bluewave/combat/aircraft";
+import type { SquadronState } from "@bluewave/combat/aircraft";
 import type { BluewaveError } from "@bluewave/contracts";
 
 const FIGHTER_MODEL: AircraftModelDefinition = {

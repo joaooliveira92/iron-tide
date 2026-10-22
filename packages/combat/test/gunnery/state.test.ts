@@ -6,8 +6,8 @@ import {
   withGunneryStateHash,
   NO_TARGET,
   type GunneryState,
-} from "../../src/gunnery/index.js";
-import { AMMUNITION_TYPES } from "../../src/gunnery/index.js";
+} from "@bluewave/combat/gunnery";
+import { AMMUNITION_TYPES } from "@bluewave/combat/gunnery";
 
 function ammo(overrides: Partial<Record<string, number>> = {}): Record<string, number> {
   return {

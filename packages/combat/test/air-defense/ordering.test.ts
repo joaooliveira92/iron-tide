@@ -8,11 +8,11 @@ import {
   compareStrings,
   AIR_DEFENSE_FORMULA_VERSION,
   AIR_DEFENSE_MODEL_VERSION,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 import type {
   AirDefenseEngagementRecord,
   AirDefenseRecordLayer,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 function makeRecord(overrides: Record<string, unknown> = {}): AirDefenseEngagementRecord {
   return createAirDefenseEngagementRecord({

@@ -12,7 +12,7 @@ import {
   CAP_EXHAUSTED,
   AIR_ATTACK_DISRUPTED,
   AIR_ATTACK_ABORTED,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 const SHIPPED_SPEC_CODES = [
   "INVALID_AIR_DEFENSE_STATE",

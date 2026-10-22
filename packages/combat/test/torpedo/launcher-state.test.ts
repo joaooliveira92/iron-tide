@@ -12,7 +12,7 @@ import {
   type TorpedoLauncherState,
   verifyTorpedoLauncherStateHash,
   withTorpedoLauncherStateHash,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 
 function surface(
   overrides: Partial<TorpedoLauncherState> = {},

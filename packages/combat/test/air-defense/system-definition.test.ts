@@ -8,7 +8,7 @@ import {
   Layer,
   Category,
   INVALID_AIR_DEFENSE_SYSTEM_DEFINITION,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 describe("AirDefenseSystemDefinition", () => {
   describe("valid system definitions", () => {

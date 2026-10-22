@@ -6,8 +6,8 @@ import {
   SHIP_TYPE_FIRE_RISK_BP,
   type FireCreationInput,
   type FloodingCreationInput,
-} from "../../src/damage/index.js";
-import { FIRE_SOURCE_CREATED, FLOODING_SOURCE_CREATED } from "../../src/damage/reasonCodes.js";
+} from "@bluewave/combat/damage";
+import { FIRE_SOURCE_CREATED, FLOODING_SOURCE_CREATED } from "@bluewave/combat/damage";
 
 function rngThat(returnValues: Record<string, number>): (stream: string) => number {
   return (stream: string) => returnValues[stream] ?? 0.5;

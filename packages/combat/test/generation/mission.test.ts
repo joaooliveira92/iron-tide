@@ -9,8 +9,8 @@ import {
   FLEET_BATTLE_MIN_STRENGTH,
   CRUISER_BATTLE_MIN_STRENGTH,
   REACHABLE_MISSION_SUBSET_V1,
-} from "../../src/generation/mission.js";
-import { BATTLE_MISSION_TYPE_UNREGISTERED } from "../../src/generation/reasonCodes.js";
+} from "@bluewave/combat/generation";
+import { BATTLE_MISSION_TYPE_UNREGISTERED } from "@bluewave/combat/generation";
 
 describe("mission registry (AC-4)", () => {
   it("contains exactly the 9 canonical mission types", () => {

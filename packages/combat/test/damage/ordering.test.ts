@@ -3,7 +3,7 @@ import {
   damageEventOrder,
   createDamageEventRecord,
   type DamageEventRecord,
-} from "../../src/damage/index.js";
+} from "@bluewave/combat/damage";
 
 function makeRecord(overrides: Partial<DamageEventRecord> = {}): DamageEventRecord {
   return createDamageEventRecord({

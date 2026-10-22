@@ -35,11 +35,11 @@ import {
   validateCarrierOperationsStateContract,
   validateOversizedCarrierPolicyContract,
   SHIPPED_CARRIER_OPERATIONS_CONTRACTS,
-} from "../../src/carrier-operations/index.js";
+} from "@bluewave/combat/carrier-operations";
 import {
   CARRIER_OPERATIONS_RULESET_VERSION,
   CARRIER_OPERATIONS_BASIS_POINTS_PER_UNIT,
-} from "../../src/carrier-operations/constants.js";
+} from "@bluewave/combat/carrier-operations";
 
 function validState(overrides: Partial<CarrierOperationsState> = {}): CarrierOperationsState {
   return {

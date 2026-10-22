@@ -13,7 +13,7 @@ import {
   VACANT,
 } from "@bluewave/campaign";
 import { CampaignCompiler } from "@bluewave/campaign/compiler";
-import { classifyShip } from "@bluewave/combat";
+import { classifyShip } from "@bluewave/combat/tactical";
 import { buildContentBundleArtifact, buildFullSurfaceInput } from "@bluewave/content-compiler";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";

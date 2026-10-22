@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vite-plus/test"
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { TacticalBattleState, TacticalShipUnit } from "@bluewave/combat";
+import type { TacticalBattleState, TacticalShipUnit } from "@bluewave/combat/tactical";
 import { SafeInt } from "@bluewave/contracts";
 import { runBattleAdvanceMinute, type BattleAdvanceMinuteCliOptions } from "../src/commands.js";
 import { runCli } from "./runCli.js";

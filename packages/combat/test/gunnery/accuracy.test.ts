@@ -6,13 +6,13 @@ import {
   GUNNERY_ACCURACY_DENOMINATOR,
   GUNNERY_ACCURACY_FACTOR_KEYS,
   type GunneryAccuracyFactors,
-} from "../../src/gunnery/index.js";
+} from "@bluewave/combat/gunnery";
 import {
   SHIPPED_GUNNERY_ACCURACY_CONTRACT,
   validateGunneryAccuracyContract,
   gunneryAccuracyPolicyId,
-} from "../../src/gunnery/index.js";
-import { GUNNERY_ACCURACY_FACTOR_MISSING } from "../../src/gunnery/index.js";
+} from "@bluewave/combat/gunnery";
+import { GUNNERY_ACCURACY_FACTOR_MISSING } from "@bluewave/combat/gunnery";
 
 describe("AC-3 accuracy formula exactness (DESIGN-39 §3, INC-2)", () => {
   it("all-neutral factors yield finalAccuracyBp === baseAccuracyBp (exact)", () => {

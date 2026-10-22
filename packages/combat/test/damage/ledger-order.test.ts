@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vite-plus/test";
-import { BattleLedger, canonicalEventOrder, type BattleEvent } from "../../src/battleLedger.js";
-import { damageEventOrder, createDamageEventRecord } from "../../src/damage/index.js";
+import {
+  BattleLedger,
+  canonicalEventOrder,
+  type BattleEvent,
+} from "@bluewave/combat/battleResolution";
+import { damageEventOrder, createDamageEventRecord } from "@bluewave/combat/damage";
 
 describe("AC-4: BattleLedger integration", () => {
   it("damage events can be appended to BattleLedger via their metadata", () => {

@@ -1,19 +1,19 @@
 import { describe, expect, it } from "vite-plus/test";
 import { RandomEngine } from "@bluewave/random";
-import type { TacticalContact } from "../../src/contact/lifecycle.js";
+import type { TacticalContact } from "@bluewave/combat/contact";
 import {
   initialDamageState,
   persistCreatedSources,
   resolveMinuteDamage,
   type DamageContext,
   type DamageTargetContext,
-} from "../../src/battleResolution/damage.js";
-import { autoZonesForBelt } from "../../src/battleResolution/constants.js";
-import { resolveBattleAuto } from "../../src/battleResolution/resolve.js";
-import { advanceMinutes } from "../../src/simulation/engine.js";
-import { createDefaultDamageControlResource } from "../../src/damage/damageControl.js";
-import type { DamageControlContext } from "../../src/damage/damageControlEngineWiring.js";
-import { withDamageStateHash } from "../../src/damage/state.js";
+} from "@bluewave/combat/battleResolution";
+import { autoZonesForBelt } from "@bluewave/combat/battleResolution";
+import { resolveBattleAuto } from "@bluewave/combat/battleResolution";
+import { advanceMinutes } from "@bluewave/combat/simulation";
+import { createDefaultDamageControlResource } from "@bluewave/combat/damage";
+import type { DamageControlContext } from "@bluewave/combat/damage";
+import { withDamageStateHash } from "@bluewave/combat/damage";
 import { buildTestState } from "../simulation/advance.test.js";
 import { makeGunneryHitRecord } from "./damage-hit.js";
 import { makeAutoInput, makeNations } from "./fixtures.js";

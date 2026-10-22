@@ -4,8 +4,8 @@ import {
   createSquadronState,
   withSquadronStateHash,
   assertSquadronExperience,
-} from "../../src/aircraft/squadron.js";
-import { INVALID_AIRCRAFT_STATE } from "../../src/aircraft/reasonCodes.js";
+} from "@bluewave/combat/aircraft";
+import { INVALID_AIRCRAFT_STATE } from "@bluewave/combat/aircraft";
 import type { BluewaveError } from "@bluewave/contracts";
 
 describe("AC-13: SquadronState creation", () => {

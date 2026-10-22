@@ -16,7 +16,7 @@ import {
   treatyOrScenarioPermits,
   type TorpedoLauncherDefinition,
   type TorpedoPlatformCapabilities,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 import { compiledTorpedoOf, withCompiledTorpedo } from "../fixtures/compiledTorpedoes.js";
 
 const G7A = "ger_533mm_g7a_1934";

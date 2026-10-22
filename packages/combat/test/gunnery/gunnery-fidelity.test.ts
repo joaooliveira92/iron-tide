@@ -9,8 +9,8 @@ import {
   perRoundHitProbabilityBp,
   rangeMultiplierBp,
   type GunneryBattery,
-} from "../../src/gunnery/index.js";
-import type { TacticalContact } from "../../src/contact/lifecycle.js";
+} from "@bluewave/combat/gunnery";
+import type { TacticalContact } from "@bluewave/combat/contact";
 
 const BATTLE_ID = "battle-fidelity";
 const SEEDS = Array.from({ length: 12 }, (_, i) => `fidelity-seed-${i}`);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import { campaignMonthId, type CampaignSnapshot } from "@bluewave/campaign";
-import { BATTLE_END_PRECEDENCE } from "@bluewave/combat";
+import { BATTLE_END_PRECEDENCE } from "@bluewave/combat/battleResolution";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { MonthExecutor } from "../src/month.js";
 import { hashSnapshot } from "../src/replay.js";

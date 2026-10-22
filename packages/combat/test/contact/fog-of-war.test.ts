@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
-import { createContactTrack, resolveLegalTarget } from "../../src/contact/index.js";
+import { createContactTrack, resolveLegalTarget } from "@bluewave/combat/contact";
 
 function knownMap() {
   const a = createContactTrack({

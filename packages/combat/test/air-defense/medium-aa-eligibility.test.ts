@@ -14,7 +14,7 @@ import {
   AIR_DEFENSE_RADAR_UNAVAILABLE,
   AIR_DEFENSE_TARGET_INELIGIBLE,
   MEDIUM_AA_PRE_RELEASE_WINDOW_MISSED,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 const OPERABLE = {
   defenderSunk: false,

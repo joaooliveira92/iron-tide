@@ -9,7 +9,7 @@ import {
   SMOKE_FLOAT_INVENTORY_EMPTY,
   SMOKE_FLOAT_DEPLOYMENT_SPEED_EXCEEDED,
   SMOKE_EQUIPMENT_MODE_CONFLICT,
-} from "../../src/smoke/index.js";
+} from "@bluewave/combat/smoke";
 
 function validDeployParams() {
   return {

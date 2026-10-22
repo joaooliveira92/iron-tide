@@ -4,7 +4,7 @@ import {
   type CoastalDefenseAreaRecord,
   type CoastalDefensePositionRecord,
   type CoastalDefenseBatteryRecord,
-} from "../../src/coastal-defense/index.js";
+} from "@bluewave/combat/coastal-defense";
 
 function sampleBattery(
   overrides: Partial<CoastalDefenseBatteryRecord> = {},

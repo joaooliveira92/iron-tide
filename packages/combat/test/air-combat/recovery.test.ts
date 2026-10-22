@@ -7,7 +7,7 @@ import {
   computeReturnToBase,
   AIR_COMBAT_RECOVERY_DECK_UNAVAILABLE,
   type StrikeMissionState,
-} from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
 
 function createReturningState(): StrikeMissionState {
   const initial = createStrikeMissionState(

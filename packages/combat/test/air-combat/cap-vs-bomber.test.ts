@@ -5,11 +5,8 @@ import {
   computeCapAllocation,
   computeExchange,
   computeDisruption,
-} from "../../src/air-combat/index.js";
-import {
-  AIR_COMBAT_BASIS_POINTS,
-  AIR_COMBAT_DISRUPTION_MIN_BP,
-} from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
+import { AIR_COMBAT_BASIS_POINTS, AIR_COMBAT_DISRUPTION_MIN_BP } from "@bluewave/combat/air-combat";
 
 describe("AC-6: CAP vs bomber engagement", () => {
   it("remaining CAP after escort allocation engages bombers", () => {

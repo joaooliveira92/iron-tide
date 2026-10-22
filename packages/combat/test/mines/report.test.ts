@@ -17,7 +17,7 @@ import {
   verifyAreaMinePressureRecordHash,
   verifyMineIncidentReportHash,
   withAreaMinePressureRecordHash,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 type ReportInput = Omit<MineIncidentReport, "reportHash">;
 

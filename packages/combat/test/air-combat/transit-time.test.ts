@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
-import { computeTransitTimeMinutes } from "../../src/air-combat/index.js";
+import { computeTransitTimeMinutes } from "@bluewave/combat/air-combat";
 
 describe("AC-9: computeTransitTimeMinutes", () => {
   it("100000m distance, 270 mps → 7 minutes", () => {

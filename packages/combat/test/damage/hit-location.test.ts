@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
-import { resolveHitLocation, type HitInput } from "../../src/damage/hitLocation.js";
-import { DAMAGE_HIT_LOCATION_INVALID } from "../../src/damage/reasonCodes.js";
-import { type CompartmentDef, type ArmorZoneDef } from "../../src/damage/shipLayout.js";
+import { resolveHitLocation, type HitInput } from "@bluewave/combat/damage";
+import { DAMAGE_HIT_LOCATION_INVALID } from "@bluewave/combat/damage";
+import { type CompartmentDef, type ArmorZoneDef } from "@bluewave/combat/damage";
 
 const COMPARTMENTS: readonly CompartmentDef[] = [
   {

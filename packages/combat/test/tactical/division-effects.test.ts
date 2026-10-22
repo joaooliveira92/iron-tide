@@ -10,7 +10,7 @@ import {
   DD_SCOUT_DISPLACEMENT_KG_MIN,
   DD_SCOUT_SPEED_UMS_MIN,
   DD_SCOUT_READINESS_MIN,
-} from "../../src/tactical/division.js";
+} from "@bluewave/combat/tactical";
 
 describe("division effects + role/formation/scout predicates (DESIGN-26 §14/15/16/17)", () => {
   it("§16 division_effects_v1 formulas with exact clamps 7_500..12_500", () => {

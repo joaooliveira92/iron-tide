@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
-import { computeFogVisibilityMultiplierBp } from "../../src/weather/fog.js";
+import { computeFogVisibilityMultiplierBp } from "@bluewave/combat/weather";
 
 describe("AC-8: fog/mist visibility multipliers (§25)", () => {
   it("density 0..999 → 10_000 bp (no fog effect)", () => {

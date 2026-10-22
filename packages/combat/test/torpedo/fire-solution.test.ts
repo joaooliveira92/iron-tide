@@ -10,7 +10,7 @@ import {
   TORPEDO_SOLUTION_DENOMINATOR,
   TORPEDO_SOLUTION_FACTOR_KEYS,
   type TorpedoSolutionFactors,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 
 describe("AC-9: the §10 11-factor formula (exact integer rational, one FLOOR)", () => {
   it("fully-neutral factors reproduce the base solution quality exactly", () => {

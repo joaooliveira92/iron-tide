@@ -5,7 +5,7 @@ import {
   validateLandTargetType,
   createLandTarget,
   isTerminalDamageState,
-} from "../../src/coastal-defense/index.js";
+} from "@bluewave/combat/coastal-defense";
 
 describe("LandTargetType", () => {
   it("validates all 7 types", () => {

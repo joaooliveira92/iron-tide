@@ -21,7 +21,7 @@ import {
   type SubmarineMissionRequest,
   type SubmarineStrategicAsset,
   withSubmarineStrategicAssetAggregateHash,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 function baseAsset(
   overrides: Partial<SubmarineStrategicAsset> = {},

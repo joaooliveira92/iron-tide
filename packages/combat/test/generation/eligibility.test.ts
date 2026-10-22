@@ -4,14 +4,14 @@ import {
   gatherEligibleAssets,
   ORDINARY_ENGAGEMENT,
   SURPRISE_ATTACK_ENGAGEMENT,
-} from "../../src/generation/eligibility.js";
+} from "@bluewave/combat/generation";
 import {
   SHIP_WORKING_UP_BATTLE_INELIGIBLE,
   SHIP_LAID_UP_BATTLE_INELIGIBLE,
   SHIP_ALREADY_RESERVED_FOR_BATTLE,
   FUEL_BATTLE_INELIGIBLE,
   BATTLE_RANGE_INELIGIBLE,
-} from "../../src/generation/reasonCodes.js";
+} from "@bluewave/combat/generation";
 import { buildShip } from "../fixtures/generation-fixture.js";
 
 function input(

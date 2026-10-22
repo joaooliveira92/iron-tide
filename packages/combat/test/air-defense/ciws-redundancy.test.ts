@@ -8,7 +8,7 @@ import {
   computeCiwsSaturationFactorBp,
   INVALID_AIR_DEFENSE_STATE,
   isCiwsContributingSystem,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 describe("AC-10: §15 CIWS contribution predicate", () => {
   it("a fully healthy CIWS system contributes to the redundant set", () => {

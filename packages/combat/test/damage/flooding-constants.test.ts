@@ -12,7 +12,7 @@ import {
   BASE_PUMPING_RATE_KG_MIN,
   BASE_REPAIR_REDUCTION_KG_MIN,
   DEWATERING_RATE_KG_MIN,
-} from "../../src/damage/index.js";
+} from "@bluewave/combat/damage";
 
 describe("INC-6: Flooding resolution policy & version IDs", () => {
   it("policy ID is stable (flooding_resolution_v1)", () => {

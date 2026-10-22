@@ -4,12 +4,12 @@ import {
   withTacticalWeatherComponentsHash,
   assertFixedPointTacticalWeather,
   type BattleWeatherComponents,
-} from "../../src/weather/components.js";
+} from "@bluewave/combat/weather";
 import {
   INVALID_TACTICAL_WEATHER_STATE,
   WEATHER_STATE_INVARIANT_FAILED,
-} from "../../src/weather/reasonCodes.js";
-import { TIME_OF_DAY_STATES } from "../../src/weather/constants.js";
+} from "@bluewave/combat/weather";
+import { TIME_OF_DAY_STATES } from "@bluewave/combat/weather";
 
 function seed(overrides: Partial<BattleWeatherComponents> = {}): BattleWeatherComponents {
   return {

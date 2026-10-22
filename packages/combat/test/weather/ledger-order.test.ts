@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vite-plus/test";
-import { advanceMinutes } from "../../src/simulation/engine.js";
+import { advanceMinutes } from "@bluewave/combat/simulation";
 import { buildTestState } from "../simulation/advance.test.js";
-import { canonicalEventOrder } from "../../src/battleLedger.js";
+import { canonicalEventOrder } from "@bluewave/combat/battleResolution";
 import {
   withTacticalWeatherComponentsHash,
   type WeatherEngineContext,
-} from "../../src/weather/index.js";
+} from "@bluewave/combat/weather";
 
 const daylightProfile = {
   daylightProfileId: "test_daylight_v1",

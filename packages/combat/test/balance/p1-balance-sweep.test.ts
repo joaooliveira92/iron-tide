@@ -5,11 +5,8 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import type { CompiledDesignVersion } from "@bluewave/campaign";
-import type { LossCause } from "../../src/battleResolution/causeOfLoss.js";
-import {
-  resolveBattleAuto,
-  type BattleResolutionResult,
-} from "../../src/battleResolution/resolve.js";
+import type { LossCause } from "@bluewave/combat/battleResolution";
+import { resolveBattleAuto, type BattleResolutionResult } from "@bluewave/combat/battleResolution";
 import {
   ATTACKER_NATION,
   DEFENDER_NATION,

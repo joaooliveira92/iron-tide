@@ -212,9 +212,9 @@ export function evaluateLedger({ ledger, repo }) {
 /** @param {{ exists(p: string): boolean, read(p: string): string | undefined, list(dir: string): string[] }} repo */
 function readSurface(repo) {
   const combatModules = new Set(extractModuleKeys(repo.read("packages/combat/src/index.ts") ?? ""));
-  for (const file of repo.list("packages/combat/src")) {
-    const rest = file.slice("packages/combat/src/".length);
-    if (rest !== "index.ts" && isSource(file)) combatModules.add(moduleKey(rest));
+  const exports = JSON.parse(repo.read("packages/combat/package.json") ?? "{}").exports ?? {};
+  for (const key of Object.keys(exports)) {
+    if (key !== ".") combatModules.add(key.replace(/^\.\//, ""));
   }
   const phaseModules = extractModuleKeys(repo.read("packages/phase-engine/src/index.ts") ?? "");
   const phaseVerbs = new Set();

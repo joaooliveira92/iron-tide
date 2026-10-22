@@ -8,8 +8,8 @@ import {
   checkHighSpeedLoss,
   floodedWaterBpFromKg,
   resolveFloodingProgression,
-} from "../../src/damage/index.js";
-import type { FloodingSourceRecord } from "../../src/damage/state.js";
+} from "@bluewave/combat/damage";
+import type { FloodingSourceRecord } from "@bluewave/combat/damage";
 
 function fixedRng(value: number): (stream: string) => number {
   return () => value;

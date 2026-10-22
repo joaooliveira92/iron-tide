@@ -12,8 +12,8 @@ import {
   validateMineWarfareResolutionContract,
   verifyMineWarfareResolutionRecordHash,
   type MineWarfareResolutionAssemblerInput,
-} from "../../src/mines/index.js";
-import { withAreaMinePressureRecordHash } from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
+import { withAreaMinePressureRecordHash } from "@bluewave/combat/mines";
 
 function baseInput(
   overrides?: Partial<MineWarfareResolutionAssemblerInput>,

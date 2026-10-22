@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
-import { TACTICAL_FOG_OF_WAR_VIOLATION } from "../../src/reasonCodes.js";
+import { TACTICAL_FOG_OF_WAR_VIOLATION } from "@bluewave/combat/core";
 import {
   ammunitionReservationSucceeds,
   armingDistanceSatisfiable,
@@ -36,9 +36,9 @@ import {
   type LaunchEligibilityInputs,
   type TorpedoLauncherDefinition,
   type TorpedoLauncherState,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 import { COMPILED_TORPEDOES, compiledTorpedoOf } from "../fixtures/compiledTorpedoes.js";
-import type { ContactTrack } from "../../src/targeting.js";
+import type { ContactTrack } from "@bluewave/combat/tactical";
 
 const G7A = "ger_533mm_g7a_1934";
 const G7E = "ger_533mm_g7e_1936";

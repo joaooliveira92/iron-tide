@@ -25,7 +25,7 @@ import {
   validateMineSweepingContract,
   validateMineTypeDefinitionsContract,
   validateUnderwaterExplosionIdentificationContract,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 describe("AC-24: full *_v1 contracts rollup (INC-8)", () => {
   it("ships all 7 REQUIRED policy ids + their SHIPPED contracts + validate guards", () => {

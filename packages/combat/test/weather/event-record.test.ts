@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
-import { makeWeatherEventRecord, weatherEventId } from "../../src/weather/event-record.js";
+import { makeWeatherEventRecord, weatherEventId } from "@bluewave/combat/weather";
 
 describe("AC-11: WeatherEventRecord completeness (§28)", () => {
   const record = makeWeatherEventRecord({

@@ -8,7 +8,7 @@ import {
   applyLandTargetDamage,
   canDamage,
   INVALID_DAMAGE_STATE_TRANSITION,
-} from "../../src/coastal-defense/index.js";
+} from "@bluewave/combat/coastal-defense";
 
 describe("DamageState (INC-1)", () => {
   it("validates all 5 damage states", () => {

@@ -6,14 +6,14 @@ import {
   effectiveResistanceUm,
   shellPenetrationUm,
   synthesizeImpact,
-} from "../../src/battleResolution/damage.js";
+} from "@bluewave/combat/battleResolution";
 import {
   PARTIAL_BREACH_FLOAT_LOSS_RATIO_BP,
   PARTIAL_BREACH_MIN_RATIO_BP,
   autoZonesForBelt,
   FLOAT_LOSS_RATIO_BP,
-} from "../../src/battleResolution/constants.js";
-import { evaluateFloodingCreation } from "../../src/damage/immediateFireFlooding.js";
+} from "@bluewave/combat/battleResolution";
+import { evaluateFloodingCreation } from "@bluewave/combat/damage";
 import { makeGunneryHitRecord } from "./damage-hit.js";
 
 const salvo = makeGunneryHitRecord({ batteryId: "a1:MAIN", targetContactId: "b1:d1" });

@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vite-plus/test";
-import { advanceMinutes } from "../../src/simulation/engine.js";
+import { advanceMinutes } from "@bluewave/combat/simulation";
 import { buildTestState } from "../simulation/advance.test.js";
 
 import {
   type WeatherEngineContext,
   type BattleWeatherComponents,
   withTacticalWeatherComponentsHash,
-} from "../../src/weather/index.js";
+} from "@bluewave/combat/weather";
 
 function noonProfile() {
   return {

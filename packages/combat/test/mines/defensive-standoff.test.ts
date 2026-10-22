@@ -11,7 +11,7 @@ import {
   SHIPPED_MINE_DEFENSIVE_STANDOFF_CONTRACT,
   validateMineDefensiveStandoffContract,
   type DefensiveStandoffResult,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 function resultFor(pressure: number): DefensiveStandoffResult {
   return computeDefensiveStandoff(SafeInt(pressure));

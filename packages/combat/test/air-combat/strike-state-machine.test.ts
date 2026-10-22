@@ -9,7 +9,7 @@ import {
   AIR_COMBAT_INVALID_STRIKE_TRANSITION,
   type StrikeMissionState,
   type StrikeMissionPhase,
-} from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
 
 function validState(): StrikeMissionState {
   return createStrikeMissionState(

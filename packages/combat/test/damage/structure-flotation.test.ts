@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
-import { resolveStructureFlotation } from "../../src/damage/index.js";
+import { resolveStructureFlotation } from "@bluewave/combat/damage";
 
 describe("AC-4: Structure/flotation formula (§8)", () => {
   it("structuralIntegrityAfter = max(0, before - structuralDamage)", () => {

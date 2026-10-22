@@ -4,8 +4,8 @@ import {
   releaseProvisionalReservations,
   assertParticipationLimit,
   MAX_BATTLE_PARTICIPATION_PER_SHIP_PER_MONTH,
-} from "../../src/generation/reservation.js";
-import { BATTLE_ASSET_RESERVATION_CONFLICT } from "../../src/generation/reasonCodes.js";
+} from "@bluewave/combat/generation";
+import { BATTLE_ASSET_RESERVATION_CONFLICT } from "@bluewave/combat/generation";
 
 describe("reservations (AC-11)", () => {
   it("maximum participation is exactly 1 per ship per month", () => {

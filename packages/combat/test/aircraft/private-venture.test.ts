@@ -8,10 +8,10 @@ import {
   expirePrivateProposals,
   generatePrivateVentureProposal,
   PRIVATE_VENTURE_STREAM_KEY,
-} from "../../src/aircraft/private-venture.js";
-import type { PrivateVentureEligibilityInput } from "../../src/aircraft/private-venture.js";
-import { PRIVATE_VENTURE_MAX_UNEXPIRED } from "../../src/aircraft/constants.js";
-import type { AircraftProposal } from "../../src/aircraft/state.js";
+} from "@bluewave/combat/aircraft";
+import type { PrivateVentureEligibilityInput } from "@bluewave/combat/aircraft";
+import { PRIVATE_VENTURE_MAX_UNEXPIRED } from "@bluewave/combat/aircraft";
+import type { AircraftProposal } from "@bluewave/combat/aircraft";
 
 function eligibleInput(
   overrides: Partial<PrivateVentureEligibilityInput> = {},

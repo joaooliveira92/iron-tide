@@ -10,7 +10,7 @@ import {
   withAircraftModelDefinitionContentHash,
   verifyAircraftModelDefinitionContentHash,
   validateAircraftModelDefinitionContract,
-} from "../../src/aircraft/index.js";
+} from "@bluewave/combat/aircraft";
 
 function baseDef(
   overrides: Partial<Omit<AircraftModelDefinition, "contentHash">> = {},

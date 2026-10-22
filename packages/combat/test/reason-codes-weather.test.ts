@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
-import { WEATHER_REASON_CODES } from "../src/weather/reasonCodes.js";
-import { REASON_CODES } from "../src/reasonCodes.js";
+import { WEATHER_REASON_CODES } from "@bluewave/combat/weather";
+import { REASON_CODES } from "@bluewave/combat/core";
 
 const IN_SLICE_CODES = [
   "WEATHER_PROFILE_INCOMPLETE",

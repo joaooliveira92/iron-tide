@@ -4,17 +4,17 @@ import { RandomLedger } from "@bluewave/random";
 import {
   withTacticalWeatherComponentsHash,
   type BattleWeatherComponents,
-} from "../../src/weather/components.js";
+} from "@bluewave/combat/weather";
 import {
   progressBattleWeatherComponents,
   type ProgressWeatherInput,
-} from "../../src/weather/progression.js";
-import type { ClimateProfile } from "../../src/weather/climate.js";
+} from "@bluewave/combat/weather";
+import type { ClimateProfile } from "@bluewave/combat/weather";
 import {
   WEATHER_RULESET_VERSION,
   WEATHER_TACTICAL_PROGRESSION_PHASE,
-} from "../../src/weather/constants.js";
-import { WEATHER_PROFILE_INCOMPLETE } from "../../src/weather/reasonCodes.js";
+} from "@bluewave/combat/weather";
+import { WEATHER_PROFILE_INCOMPLETE } from "@bluewave/combat/weather";
 
 function components(overrides: Partial<BattleWeatherComponents> = {}): BattleWeatherComponents {
   return withTacticalWeatherComponentsHash({

@@ -13,3 +13,4 @@ export * from "./fog.js";
 export * from "./precipitation.js";
 export * from "./night-twilight.js";
 export * from "./engine.js";
+export * from "./event-record.js";

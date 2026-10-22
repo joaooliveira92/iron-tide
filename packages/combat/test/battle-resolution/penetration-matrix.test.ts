@@ -6,15 +6,9 @@ import {
   effectiveResistanceUm,
   shellPenetrationUm,
   synthesizeImpact,
-} from "../../src/battleResolution/damage.js";
-import {
-  SHELL_MUZZLE_VELOCITY_MS,
-  autoZonesForBelt,
-} from "../../src/battleResolution/constants.js";
-import {
-  determinePenetrationOutcome,
-  type PenetrationOutcome,
-} from "../../src/damage/armorModel.js";
+} from "@bluewave/combat/battleResolution";
+import { SHELL_MUZZLE_VELOCITY_MS, autoZonesForBelt } from "@bluewave/combat/battleResolution";
+import { determinePenetrationOutcome, type PenetrationOutcome } from "@bluewave/combat/damage";
 import { makeGunneryHitRecord } from "./damage-hit.js";
 
 const V = SHELL_MUZZLE_VELOCITY_MS;

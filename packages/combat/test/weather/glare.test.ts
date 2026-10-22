@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
-import { computeGlareMultiplierBp } from "../../src/weather/glare.js";
+import { computeGlareMultiplierBp } from "@bluewave/combat/weather";
 
 describe("AC-7: glare model (§24)", () => {
   it("returns neutral 10_000 when glareEligible is false", () => {

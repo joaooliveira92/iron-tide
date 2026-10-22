@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
-import { BattleResolver, StrengthCalculator } from "../../src/index.js";
+import { BattleResolver, StrengthCalculator } from "@bluewave/combat/battleResolution";
 
 describe("AC-4: BattleResolver unmodified boundary", () => {
   it("BattleResolver class exists and is constructable", () => {

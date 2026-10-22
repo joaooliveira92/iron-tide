@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
-import { computeDisruption } from "../../src/air-combat/index.js";
-import {
-  AIR_COMBAT_BASIS_POINTS,
-  AIR_COMBAT_DISRUPTION_MIN_BP,
-} from "../../src/air-combat/index.js";
+import { computeDisruption } from "@bluewave/combat/air-combat";
+import { AIR_COMBAT_BASIS_POINTS, AIR_COMBAT_DISRUPTION_MIN_BP } from "@bluewave/combat/air-combat";
 
 describe("AC-7: Strike disruption formula", () => {
   it("12 CAP vs 24 strike → disruptionBp = 9500", () => {

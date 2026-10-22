@@ -5,7 +5,7 @@ import {
   coastalArtilleryMinePressureHash,
   PER_BATTERY_MINE_PRESSURE_INCREMENT,
   COASTAL_ARTILLERY_MINE_PRESSURE_MISSING,
-} from "../../src/coastal-defense/index.js";
+} from "@bluewave/combat/coastal-defense";
 
 describe("calculateCoastalArtilleryMinePressure", () => {
   it("returns zero increment for zero batteries", () => {

@@ -4,10 +4,10 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SafeInt } from "@bluewave/contracts";
 import { RandomEngine } from "@bluewave/random";
-import { BattleResolver } from "../../src/resolver.js";
-import { StrengthCalculator } from "../../src/strength.js";
-import { advanceMinutes } from "../../src/simulation/engine.js";
-import type { TacticalBattleState } from "../../src/tactical/index.js";
+import { BattleResolver } from "@bluewave/combat/battleResolution";
+import { StrengthCalculator } from "@bluewave/combat/battleResolution";
+import { advanceMinutes } from "@bluewave/combat/simulation";
+import type { TacticalBattleState } from "@bluewave/combat/tactical";
 import {
   AttackType,
   Category,
@@ -19,8 +19,9 @@ import {
   verifyAirDefenseEngagementRecordHash,
   type AirDefenseContext,
   type AirDefenseState,
-} from "../../src/air-defense/index.js";
-import * as combatRoot from "../../src/index.js";
+} from "@bluewave/combat/air-defense";
+import { compareStrings } from "@bluewave/combat/air-combat";
+import { damageMultiplierBp } from "@bluewave/combat/mines";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -192,10 +193,10 @@ describe("AC-18 resolveAirDefense stage (step 7.8)", () => {
     expect(drawsA).not.toEqual(drawsC);
   });
 
-  it("is reachable from the @bluewave/combat package root", () => {
-    expect(typeof combatRoot.resolveAirDefense).toBe("function");
-    expect(typeof combatRoot.compareStrings).toBe("function");
-    expect(typeof combatRoot.damageMultiplierBp).toBe("function");
+  it("is reachable from its subsystem seams", () => {
+    expect(typeof resolveAirDefense).toBe("function");
+    expect(typeof compareStrings).toBe("function");
+    expect(typeof damageMultiplierBp).toBe("function");
   });
 });
 

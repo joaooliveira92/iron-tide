@@ -16,7 +16,7 @@ import {
   SUBMARINE_ENEMY_PROTECTION_MULTIPLIER_BP,
   SUBMARINE_BLOCKADE_MULTIPLIER_BP,
   SUBMARINE_INTELLIGENCE_MULTIPLIER_DEFERRED_MARKER,
-} from "../../src/submarines/index.js";
+} from "@bluewave/combat/submarines";
 
 describe("AC-9: strategic mission effectiveness (§11)", () => {
   it("computes effectiveness with all default multipliers", () => {

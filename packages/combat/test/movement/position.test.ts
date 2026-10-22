@@ -6,7 +6,7 @@ import {
   reciprocalCourse,
   resolveCollisionsGrounding,
   type MovementState,
-} from "../../src/movement/index.js";
+} from "@bluewave/combat/movement";
 
 function base(): MovementState {
   return {

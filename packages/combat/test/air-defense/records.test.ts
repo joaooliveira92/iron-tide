@@ -13,8 +13,8 @@ import {
   AIR_DEFENSE_MODEL_VERSION,
   AIR_DEFENSE_RECORD_POLICY_ID,
   LIGHT_AA_DISRUPTION_OPPORTUNITY_CREATED,
-} from "../../src/air-defense/index.js";
-import type { AirDefenseEngagementRecord } from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
+import type { AirDefenseEngagementRecord } from "@bluewave/combat/air-defense";
 
 function makeRecordParams(overrides: Record<string, unknown> = {}) {
   return {

@@ -17,7 +17,7 @@ import {
   sweepingAllocationOrder,
   sweepingContributionOrder,
   withAreaMinePressureRecordHash,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 function eligibleShip(overrides: Partial<MinesweepingShip> = {}): MinesweepingShip {
   return {

@@ -7,6 +7,86 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./dist/index.js"
+    },
+    "./air-combat": {
+      "types": "./src/air-combat/index.ts",
+      "default": "./dist/air-combat/index.js"
+    },
+    "./air-defense": {
+      "types": "./src/air-defense/index.ts",
+      "default": "./dist/air-defense/index.js"
+    },
+    "./aircraft": {
+      "types": "./src/aircraft/index.ts",
+      "default": "./dist/aircraft/index.js"
+    },
+    "./battleResolution": {
+      "types": "./src/battleResolution/index.ts",
+      "default": "./dist/battleResolution/index.js"
+    },
+    "./carrier-operations": {
+      "types": "./src/carrier-operations/index.ts",
+      "default": "./dist/carrier-operations/index.js"
+    },
+    "./coastal-defense": {
+      "types": "./src/coastal-defense/index.ts",
+      "default": "./dist/coastal-defense/index.js"
+    },
+    "./contact": {
+      "types": "./src/contact/index.ts",
+      "default": "./dist/contact/index.js"
+    },
+    "./core": {
+      "types": "./src/core/index.ts",
+      "default": "./dist/core/index.js"
+    },
+    "./damage": {
+      "types": "./src/damage/index.ts",
+      "default": "./dist/damage/index.js"
+    },
+    "./generation": {
+      "types": "./src/generation/index.ts",
+      "default": "./dist/generation/index.js"
+    },
+    "./gunnery": {
+      "types": "./src/gunnery/index.ts",
+      "default": "./dist/gunnery/index.js"
+    },
+    "./mines": {
+      "types": "./src/mines/index.ts",
+      "default": "./dist/mines/index.js"
+    },
+    "./movement": {
+      "types": "./src/movement/index.ts",
+      "default": "./dist/movement/index.js"
+    },
+    "./simulation": {
+      "types": "./src/simulation/index.ts",
+      "default": "./dist/simulation/index.js"
+    },
+    "./smoke": {
+      "types": "./src/smoke/index.ts",
+      "default": "./dist/smoke/index.js"
+    },
+    "./spotting": {
+      "types": "./src/spotting/index.ts",
+      "default": "./dist/spotting/index.js"
+    },
+    "./submarines": {
+      "types": "./src/submarines/index.ts",
+      "default": "./dist/submarines/index.js"
+    },
+    "./tactical": {
+      "types": "./src/tactical/index.ts",
+      "default": "./dist/tactical/index.js"
+    },
+    "./torpedoes": {
+      "types": "./src/torpedoes/index.ts",
+      "default": "./dist/torpedoes/index.js"
+    },
+    "./weather": {
+      "types": "./src/weather/index.ts",
+      "default": "./dist/weather/index.js"
     }
   },
   "dependencies": {

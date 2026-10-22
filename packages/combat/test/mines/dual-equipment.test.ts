@@ -10,7 +10,7 @@ import {
   SHIPPED_DUAL_ASW_MINE_EQUIPMENT_MULTIPLIERS,
   type DualAswMineEquipmentMode,
   validateDualAswMineEquipmentContract,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 function expectMissing(fn: () => unknown): BluewaveError {
   let err: BluewaveError | undefined;

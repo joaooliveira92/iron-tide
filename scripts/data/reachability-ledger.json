@@ -507,7 +507,7 @@
       "renderer_screen": null,
       "evidence_test": null,
       "adr_or_issue": "#225",
-      "note": "Not exported from the package index and not referenced outside the module."
+      "note": "Exported as a subpath seam but not referenced outside the module."
     },
     {
       "id": "combat-smoke",
@@ -524,23 +524,10 @@
     },
     {
       "id": "combat-tactical-core",
-      "player_verb": "Tactical simulation loop, clock, targeting, command quantization, realism and battle generation",
+      "player_verb": "Tactical simulation loop, clock, targeting and battle generation",
       "status": "internal",
       "engine_package": "combat",
-      "engine_modules": [
-        "simulation",
-        "tactical",
-        "tacticalClock",
-        "tacticalPipeline",
-        "tacticalTime",
-        "targeting",
-        "commandQuantization",
-        "commandRecord",
-        "commandReach",
-        "realism",
-        "generation",
-        "fullSpeedStress"
-      ],
+      "engine_modules": ["simulation", "tactical", "generation", "advance", "generate"],
       "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
@@ -549,19 +536,10 @@
     },
     {
       "id": "combat-battle-resolution",
-      "player_verb": "Battle resolution, auto-resolution, endings, withdrawal and ledger",
+      "player_verb": "Battle resolution, auto-resolution, endings and ledger",
       "status": "internal",
       "engine_package": "combat",
-      "engine_modules": [
-        "battleResolution",
-        "autoResolution",
-        "battleEnd",
-        "battleTurnAway",
-        "withdrawal",
-        "battleLedger",
-        "strength",
-        "resolver"
-      ],
+      "engine_modules": ["battleResolution", "resolve"],
       "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
@@ -582,10 +560,10 @@
     },
     {
       "id": "combat-shared-support",
-      "player_verb": "Error, reason-code and schema helpers",
+      "player_verb": "Interface contract, error, reason-code and schema helpers",
       "status": "internal",
       "engine_package": "combat",
-      "engine_modules": ["errors", "reasonCodes", "safe-int-schema", "schema-issues"],
+      "engine_modules": ["contract", "core"],
       "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,

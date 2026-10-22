@@ -13,7 +13,7 @@ import {
   AIR_COMBAT_TORPEDO_FLOTATION_DAMAGE,
   AIR_COMBAT_TORPEDO_ATTACK_INELIGIBLE,
   type AirTorpedoAttackInput,
-} from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
 
 function makeRng(): RandomEngine {
   return new RandomEngine("test-torpedo-seed");

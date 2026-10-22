@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
-import { SMOKE_REASON_CODES } from "../../src/smoke/reasonCodes.js";
-import { REASON_CODES } from "../../src/reasonCodes.js";
-import { DAMAGE_REASON_CODES } from "../../src/damage/reasonCodes.js";
+import { SMOKE_REASON_CODES } from "@bluewave/combat/smoke";
+import { REASON_CODES } from "@bluewave/combat/core";
+import { DAMAGE_REASON_CODES } from "@bluewave/combat/damage";
 
 const DESIGN_42_SECTION_30_CODES = [
   "INVALID_SMOKE_CLOUD",

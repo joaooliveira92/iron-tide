@@ -11,7 +11,7 @@ import {
   AIR_COMBAT_MANEUVER_AGILE_BP,
   AIR_COMBAT_BOMBING_PARAMETERS_INVALID,
   type BombingAccuracyParams,
-} from "../../src/air-combat/index.js";
+} from "@bluewave/combat/air-combat";
 
 describe("AC-10: computeBombingAccuracy", () => {
   it("level bombing at LOW altitude, clear visibility, stationary target, no disruption → ~10_000", () => {

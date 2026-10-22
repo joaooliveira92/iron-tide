@@ -5,7 +5,7 @@ import {
   onStation,
   type MovementState,
   LINE_AHEAD_COLUMN_INTERVAL_UM,
-} from "../../src/movement/index.js";
+} from "@bluewave/combat/movement";
 import type { DivisionFormation } from "@bluewave/campaign";
 
 function state(overrides: Partial<MovementState> = {}): MovementState {

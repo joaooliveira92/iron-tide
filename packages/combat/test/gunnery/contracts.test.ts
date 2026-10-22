@@ -27,7 +27,7 @@ import {
   validateGunneryContract,
   validateGunneryRateContract,
   validateGunQualityContract,
-} from "../../src/gunnery/index.js";
+} from "@bluewave/combat/gunnery";
 
 describe("AC-14: gunnery_v1 base contract + validate guard (fail closed)", () => {
   it("ships the *_v1 policy id and SHIPPED_GUNNERY_CONTRACT", () => {

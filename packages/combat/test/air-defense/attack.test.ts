@@ -7,7 +7,7 @@ import {
   validateAirDefenseAttack,
   INVALID_AIR_DEFENSE_ATTACK,
   type AirDefenseAttack,
-} from "../../src/air-defense/index.js";
+} from "@bluewave/combat/air-defense";
 
 function validAttack(overrides: Record<string, unknown> = {}) {
   return createAirDefenseAttack({

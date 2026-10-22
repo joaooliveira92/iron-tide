@@ -5,7 +5,7 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { HULL_TYPE_FOR_SHIP_TYPE } from "@bluewave/ship-design";
 import { describe, expect, it } from "vite-plus/test";
 import { constructionProjectIdForCommand } from "@bluewave/campaign-engine";
-import { classifyShip, roleEligibility } from "@bluewave/combat";
+import { classifyShip, roleEligibility } from "@bluewave/combat/tactical";
 import { SafeInt } from "@bluewave/contracts";
 import { DESIGN_22_EARLY } from "@bluewave/ship-design";
 import { MonthExecutor, placeConstructionOrder } from "../src/index.js";

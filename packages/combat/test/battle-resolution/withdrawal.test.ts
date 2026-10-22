@@ -6,16 +6,19 @@ import {
   sideStrengthBp,
   sideWithdraws,
   type ShipViability,
-} from "../../src/battleResolution/viability.js";
+} from "@bluewave/combat/battleResolution";
 import {
   FLOAT_UNIT,
   STRUCTURE_UNIT,
   WITHDRAWAL_STRENGTH_THRESHOLD_BP,
   SHIPPED_BATTLE_AUTO_RESOLUTION_V1,
   validateBattleAutoResolutionContract,
-} from "../../src/battleResolution/constants.js";
-import { initialDamageState } from "../../src/battleResolution/damage.js";
-import { DEFAULT_MAX_BATTLE_MINUTES, BATTLE_END_PRECEDENCE } from "../../src/battleEnd.js";
+} from "@bluewave/combat/battleResolution";
+import { initialDamageState } from "@bluewave/combat/battleResolution";
+import {
+  DEFAULT_MAX_BATTLE_MINUTES,
+  BATTLE_END_PRECEDENCE,
+} from "@bluewave/combat/battleResolution";
 
 function atBp(sideId: "ATTACKER" | "DEFENDER", assetId: string, bp: number): ShipViability {
   return {

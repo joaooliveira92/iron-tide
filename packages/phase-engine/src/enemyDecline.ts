@@ -5,7 +5,7 @@ import {
   enemyDeclineDrawDeclines,
   enemyDeclinePredicateHolds,
   type BattleGenerationResult,
-} from "@bluewave/combat";
+} from "@bluewave/combat/generation";
 import type { BattleOfferRules } from "@bluewave/content-schema";
 import { applyWarScoreDelta } from "./battles.js";
 import { enemyDeclinedBattleEvent } from "./events.js";

@@ -11,7 +11,7 @@ import {
   coastalBatteryPolicyId,
   landTargetTypePolicyId,
   landTargetDamageStatePolicyId,
-} from "../../src/coastal-defense/index.js";
+} from "@bluewave/combat/coastal-defense";
 
 describe("Contracts (INC-1 seed)", () => {
   it("coastal battery contract has correct policy id", () => {

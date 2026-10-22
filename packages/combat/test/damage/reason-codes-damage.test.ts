@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vite-plus/test";
-import { DAMAGE_REASON_CODES } from "../../src/damage/index.js";
-import { REASON_CODES } from "../../src/reasonCodes.js";
+import { DAMAGE_REASON_CODES } from "@bluewave/combat/damage";
+import { REASON_CODES } from "@bluewave/combat/core";
 
 const IN_SLICE_CODES = [
   "INVALID_SHIP_DAMAGE_STATE",

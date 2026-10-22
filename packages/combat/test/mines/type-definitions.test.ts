@@ -10,7 +10,7 @@ import {
   validateMineTypeDefinition,
   verifyMineTypeDefinitionContentHash,
   withMineTypeDefinitionContentHash,
-} from "../../src/mines/index.js";
+} from "@bluewave/combat/mines";
 
 function validDefinition(overrides: Partial<MineTypeDefinition> = {}): MineTypeDefinition {
   const contact = mineTypeDefinitionById("CONTACT");

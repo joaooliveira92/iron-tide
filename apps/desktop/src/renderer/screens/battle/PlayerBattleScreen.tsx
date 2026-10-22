@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { PlayerBattleView } from "@bluewave/combat";
+import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
 import type { BluewaveDesktopBridge } from "../../../preload/index.js";
 import type {
   InterruptionRequestDto,

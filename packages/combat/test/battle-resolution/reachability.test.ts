@@ -1,15 +1,15 @@
 import { describe, it, expect } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import { RandomEngine } from "@bluewave/random";
-import { Category, Layer, createAirDefenseSystemDefinition } from "../../src/air-defense/index.js";
+import { Category, Layer, createAirDefenseSystemDefinition } from "@bluewave/combat/air-defense";
 import {
   projectAirCombatContext,
   projectAirDefenseContext,
   projectSmokeContext,
-} from "../../src/battleResolution/capabilities.js";
-import { resolveBattleAuto } from "../../src/battleResolution/resolve.js";
-import type { BattleWeatherComponents } from "../../src/weather/components.js";
-import type { AirDefenseInstallationDeclaration } from "../../src/generation/capabilities.js";
+} from "@bluewave/combat/battleResolution";
+import { resolveBattleAuto } from "@bluewave/combat/battleResolution";
+import type { BattleWeatherComponents } from "@bluewave/combat/weather";
+import type { AirDefenseInstallationDeclaration } from "@bluewave/combat/generation";
 import { BATTLE_ID, makeAutoInput, makeManifest } from "./fixtures.js";
 
 function heavySystem() {

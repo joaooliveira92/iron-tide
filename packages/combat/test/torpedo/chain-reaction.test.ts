@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
-import type { ShipDamageState } from "../../src/damage/index.js";
+import type { ShipDamageState } from "@bluewave/combat/damage";
 import {
   chainReactionBaseBpForModel,
   computeBaseWarheadFlotationDamage,
@@ -15,7 +15,7 @@ import {
   OXYGEN_CHAIN_REACTION_BASE_BP,
   type TorpedoChainReactionModifierKey,
   type TorpedoDamagePackageInput,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 import { COMPILED_TORPEDOES } from "../fixtures/compiledTorpedoes.js";
 
 function neutralModifiers(): Record<TorpedoChainReactionModifierKey, number> {

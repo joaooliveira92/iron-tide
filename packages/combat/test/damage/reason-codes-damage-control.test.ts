@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import { DAMAGE_REASON_CODES } from "../../src/damage/reasonCodes.js";
-import { REASON_CODES } from "../../src/reasonCodes.js";
+import { DAMAGE_REASON_CODES } from "@bluewave/combat/damage";
+import { REASON_CODES } from "@bluewave/combat/core";
 
 const C5_DAMAGE_CONTROL_CODES = [
   "FIRE_SPREAD_CREATED",

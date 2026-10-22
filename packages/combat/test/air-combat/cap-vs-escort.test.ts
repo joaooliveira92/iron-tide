@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
-import { computeCapAllocation } from "../../src/air-combat/index.js";
+import { computeCapAllocation } from "@bluewave/combat/air-combat";
 
 describe("AC-4: CAP allocation vs escort", () => {
   it("10 CAP vs 0 escort → capToEscort = 0, all CAP to bombers", () => {

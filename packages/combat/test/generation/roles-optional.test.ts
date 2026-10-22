@@ -4,14 +4,14 @@ import {
   createForceRequirements,
   assignMandatoryRoles,
   assertMandatoryRoleFilled,
-} from "../../src/generation/force.js";
-import { BATTLE_MANDATORY_ROLE_UNFILLED } from "../../src/generation/reasonCodes.js";
+} from "@bluewave/combat/generation";
+import { BATTLE_MANDATORY_ROLE_UNFILLED } from "@bluewave/combat/generation";
 import {
   optionalAssetSelectionV1,
   selectionWeightV1,
   OPTIONAL_ASSET_STREAM,
   optionalAssetStreamKey,
-} from "../../src/generation/optional.js";
+} from "@bluewave/combat/generation";
 
 describe("mandatory role assignment (AC-8)", () => {
   it("fills deterministically by role-score then strength then readiness, no randomness", () => {

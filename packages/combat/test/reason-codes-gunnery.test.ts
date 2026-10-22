@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
-import { GUNNERY_REASON_CODES } from "../src/gunnery/reasonCodes.js";
-import { REASON_CODES } from "../src/reasonCodes.js";
+import { GUNNERY_REASON_CODES } from "@bluewave/combat/gunnery";
+import { REASON_CODES } from "@bluewave/combat/core";
 
 const DESIGN_39_SECTION_32_CODES = [
   "INVALID_GUNNERY_STATE",

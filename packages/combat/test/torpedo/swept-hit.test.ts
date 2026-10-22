@@ -2,7 +2,7 @@ import { describe, it, expect } from "vite-plus/test";
 import {
   intersectsCollisionGeometry,
   sweptPathIntersectsCollisionGeometry,
-} from "../../src/torpedoes/hit-resolution.js";
+} from "@bluewave/combat/torpedoes";
 
 const M = 1_000_000;
 

@@ -7,7 +7,7 @@ import {
   supportForceStrengthCap,
   withSupportForce,
   type AlliedCandidate,
-} from "../../src/index.js";
+} from "@bluewave/combat/generation";
 
 const candidate = (
   assetId: string,

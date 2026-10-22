@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
-import type { ShipDamageState } from "../../src/damage/index.js";
+import type { ShipDamageState } from "@bluewave/combat/damage";
 import {
   applyTorpedoDamagePackage,
   assertAuthoritativeTorpedoDamagePackage,
@@ -11,7 +11,7 @@ import {
   UNDERWATER_TUBE_SEVERE_FLOODING,
   verifyTorpedoDamagePackageHash,
   type TorpedoDamagePackage,
-} from "../../src/torpedoes/index.js";
+} from "@bluewave/combat/torpedoes";
 import { compiledTorpedoOf } from "../fixtures/compiledTorpedoes.js";
 
 function baseState(overrides: Partial<ShipDamageState> = {}): ShipDamageState {

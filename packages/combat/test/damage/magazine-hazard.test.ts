@@ -3,7 +3,7 @@ import {
   evaluateMagazineHazard,
   isMagazineZoneType,
   type MagazineHazardInput,
-} from "../../src/damage/index.js";
+} from "@bluewave/combat/damage";
 
 function rngThat(returnValues: Record<string, number>): (stream: string) => number {
   return (stream: string) => returnValues[stream] ?? 0.5;

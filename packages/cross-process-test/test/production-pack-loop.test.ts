@@ -219,8 +219,9 @@ describe("P-1 AC-3: 1880 roster torpedo armament (docs/research/p1-1880-torpedo-
 
 describe("P-1 AC-7: torpedoes reachable from a compiled production-pack battle", () => {
   it("an Italy vs Russia ironclad action built from compiled 1880 content fires torpedoes", async () => {
-    const { buildManifest, resolveBattleAuto, withStrategicWeatherStateHash } =
-      await import("@bluewave/combat");
+    const { resolve } = await import("@bluewave/combat");
+    const { buildManifest } = await import("@bluewave/combat/generation");
+    const { withStrategicWeatherStateHash } = await import("@bluewave/combat/weather");
     const { state } = compileProductionPack();
     const snap = state.snapshot;
     const nation = (id: string) => {
@@ -279,7 +280,7 @@ describe("P-1 AC-7: torpedoes reachable from a compiled production-pack battle",
         rngVersion: "rng_v1",
         contentVersion: "0.4.0",
       });
-      return resolveBattleAuto({
+      return resolve({
         battleId: manifest.battleId,
         areaId: "med_central",
         campaignMonth: "1880-06",
