@@ -1,5 +1,3 @@
-// AC-1 (INC-1): CAP patrol state creation.
-// Tests createCapPatrolState validation and default values.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import { createCapPatrolState, type CapPatrolState } from "../../src/air-combat/index.js";
@@ -38,7 +36,6 @@ describe("AC-1: CAP patrol state creation", () => {
   });
 
   it("computes fuelRemainingMinutes as rangeDistance / max(1, speedScore)", () => {
-    // rangeDistance=800, speedScore=72 → floor(800/72) = 11
     const p = validParams();
     const state = createCapPatrolState(
       p.squadronId,
@@ -61,7 +58,6 @@ describe("AC-1: CAP patrol state creation", () => {
       SafeInt(0),
       p.stationPosition,
     );
-    // floor(500/1) = 500
     expect(Number(state.fuelRemainingMinutes)).toBe(500);
   });
 

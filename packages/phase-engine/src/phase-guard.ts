@@ -4,38 +4,12 @@ import { PhaseRegistry, type PhaseDefinition } from "./registry.js";
 
 export { PhaseResource, type PhaseFootprint };
 
-/**
- * The authoritative runtime footprint of each phase — what a phase actually
- * touches. This is the "reality" side of the contract; the registry's
- * read/writePermissions + rngAllowed is the declared policy. The PhaseGuard
- * checks footprint ⊆ policy at runtime and fails closed on any overstep.
- *
- * ADR-0036: reconciled so every footprint sits within its phase's declared
- * permissions (no phase is denied in a well-formed run).
- *
- * Each footprint lives on the phase's own descriptor (one phase, one module,
- * one descriptor); this map is derived from the registry so the two cannot
- * drift.
- */
 export const PHASE_FOOTPRINTS: Readonly<Record<string, PhaseFootprint>> = Object.fromEntries(
   PhaseRegistry.PHASES.map((phase) => [phase.id, phase.footprint]),
 );
 
-/**
- * Stable diagnostic code emitted when a phase oversteps its declared registry
- * permissions (read, write, or RNG) at runtime.
- */
 export const PHASE_ACCESS_DENIED = "PHASE_ACCESS_DENIED" as const;
 
-/**
- * Runtime enforcement of the phase registry contract. For each phase it asserts
- * the phase's authoritative footprint against the registry-declared
- * read/writePermissions + rngAllowed. A violation is reported as a diagnostic;
- * the caller (MonthExecutor) fails the phase closed (does not execute it).
- *
- * An optional `overrides` map lets a caller substitute a phase definition
- * (used by tests to exercise the fail-closed path for a specific phase).
- */
 export class PhaseGuard {
   constructor(private readonly overrides?: ReadonlyMap<string, PhaseDefinition>) {}
 
@@ -43,11 +17,6 @@ export class PhaseGuard {
     return this.overrides?.get(phaseId) ?? PhaseRegistry.getById(phaseId);
   }
 
-  /**
-   * Assert `phaseId`'s declared footprint against the effective registry
-   * definition. Returns human-readable violation messages (empty = allowed).
-   * An unknown phase id is itself a violation (never throws).
-   */
   assert(phaseId: string, footprint: PhaseFootprint): string[] {
     const phase = this.resolve(phaseId);
     if (!phase) {
@@ -75,21 +44,10 @@ export class PhaseGuard {
     return violations;
   }
 
-  /**
-   * Whether the effective registry definition for `phaseId` allows randomness.
-   * Returns false for unknown phases (fail closed). This is the structural
-   * RNG gate: MonthExecutor obtains a RandomEngine only through `rng()`, which
-   * withholds the engine for any phase that is not `rngAllowed`.
-   */
   isRngAllowed(phaseId: string): boolean {
     return this.resolve(phaseId)?.["rngAllowed"] === true;
   }
 
-  /**
-   * Return a phase-scoped RandomEngine for `phaseId`, or null when the phase is
-   * not `rngAllowed` (or is unknown). Non-`rngAllowed` phases therefore cannot
-   * draw randomness: they are never handed an engine. ADR-0036.
-   */
   rng(phaseId: string, seed: string): RandomEngine | null {
     if (!this.isRngAllowed(phaseId)) return null;
     return new RandomEngine(seed);

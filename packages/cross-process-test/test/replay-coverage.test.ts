@@ -37,7 +37,6 @@ describe("replay coverage report", () => {
     const exercised = new Set(report.replays.flatMap((r) => r.subsystems));
     const known = SUBSYSTEMS.map((s) => s.id);
     expect(report.uncovered).toEqual(known.filter((id) => !exercised.has(id)));
-    // A command-free run never reaches battles, so the gap is visible and not assumed away.
     expect(report.uncovered).toContain("battle_resolution");
   });
 
@@ -101,7 +100,6 @@ describe("checked-in replay corpus", () => {
     const report = buildCoverageReport(REPLAY_SCENARIOS);
     const fuzzed = fuzzSubsystems();
     expect(fuzzed).toContain("command_collection");
-    // Pinned on purpose: seeded fuzz commands cover command collection; the rest stay open.
     expect(report.uncovered.filter((id) => !fuzzed.includes(id))).toEqual([
       "opening_validation",
       "ai_planning",
@@ -119,8 +117,6 @@ describe("checked-in replay corpus", () => {
     const report = buildCoverageReport(REPLAY_SCENARIOS);
     expect(report.replays).toHaveLength(REPLAY_SCENARIOS.length);
     expect(report.unattributedEventTypes).toEqual([]);
-    // Pinned on purpose: command-free replays reach none of these. When commands, AI or battle
-    // scenarios land this list must shrink in the same change, so a gap is never silent.
     expect(report.uncovered).toEqual([
       "opening_validation",
       "command_collection",

@@ -32,7 +32,6 @@ describe("AC-13 two-process gunnery determinism (two separate child processes)",
     for (const h of parsed.hashes) expect(h).toMatch(/^[0-9a-f]{64}$/);
     expect(parsed.gunneryEventCount).toBeGreaterThan(0);
     for (const h of parsed.gunneryEventHashes) expect(h).toMatch(/^[0-9a-f]{64}$/);
-    // ammunition was consumed deterministically across the advance
     expect(parsed.lastGunneryStates[0]!.ammunition.ARMOR_PIERCING).toBeLessThan(120);
   });
 });

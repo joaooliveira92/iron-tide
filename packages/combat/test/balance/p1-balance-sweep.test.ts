@@ -1,7 +1,3 @@
-// P-1 balance sweep (post tickets 06/09/10; ADR-0048/0049/0050).
-// Seeded, deterministic sweep of auto-resolved battles. Asserts only LOOSE
-// sanity bounds (regression tripwire, not a tuning pin). Set
-// BALANCE_SWEEP_WRITE=1 to (re)write docs/research/p1-balance-sweep.md.
 import { mkdirSync, writeFileSync } from "node:fs";
 import { compiledTorpedoOf } from "../fixtures/compiledTorpedoes.js";
 import { dirname, resolve } from "node:path";
@@ -63,7 +59,6 @@ const withTorps = (n: FixtureNationSet, side: "attacker" | "defender") =>
 
 interface Matchup {
   name: string;
-  /** "A" = attacker variant, "B" = defender variant. */
   aLabel: string;
   bLabel: string;
   build: () => FixtureNationSet;
@@ -89,9 +84,6 @@ const MATCHUPS: Matchup[] = [
     build: () => withSpeed(withSpeed(makeNations(), "attacker", 30), "defender", 14),
   },
   {
-    // Torpedoes are inert for 30 kn fleets in the fixture (doctrine needs close
-    // action), so this matchup uses the 1880-like ironclad scale of
-    // torpedo-auto.test.ts: 14 kn, 11 000 t, 4 guns, one side armed.
     name: "torpedoes vs unarmed (14kn/4-gun ironclads)",
     aLabel: "torp",
     bLabel: "no-torp",
@@ -120,7 +112,6 @@ interface Stats {
   aSinkMean: number;
   bSinkMean: number;
   noViableShare: number;
-  /** withdrawal_complete + mutual_disengagement (ADR-0073). */
   disengageShare: number;
   timeLimitShare: number;
   otherShare: number;
@@ -128,9 +119,7 @@ interface Stats {
   meanHpLossPerShip: number;
   tubesFiredMean: number;
   torpHitsMean: number;
-  /** Total ships lost per cause across all seeds (ADR-0052). */
   causes: Record<LossCause, number>;
-  /** Mean ships lost per cause per battle. */
   causeMean: Record<LossCause, number>;
 }
 
@@ -216,44 +205,28 @@ describe("P-1 balance sweep (loose tripwire)", () => {
     const rows = MATCHUPS.map((m) => ({ m, s: runMatchup(m) }));
     for (const { s } of rows) {
       expect(s.n).toBe(SEEDS);
-      // battles terminate and are not instantaneous
       expect(s.lenMin).toBeGreaterThanOrEqual(1);
       expect(s.lenMax).toBeLessThanOrEqual(360);
-      // ADR-0073: battles may now end by disengagement with no sinkings, but
-      // never with more ships lost than exist
       expect(s.sinkMean).toBeGreaterThanOrEqual(0);
       expect(s.sinkMean).toBeLessThanOrEqual(4);
       expect(s.aWin + s.bWin + s.noWinner).toBeCloseTo(1, 9);
-      // every lost ship has exactly one cause
       const lost = Object.values(s.causes).reduce((a, v) => a + v, 0);
       expect(lost).toBeCloseTo(s.sinkMean * s.n, 6);
     }
     const bySpec = (name: string) => rows.find((r) => r.m.name.startsWith(name))!.s;
-    // Gun count must matter: the 10-gun side must not do worse than the 4-gun side.
     const guns = bySpec("10-gun");
     expect(guns.aWin).toBeGreaterThanOrEqual(guns.bWin);
-    // Equal fleets: neither side wins virtually always.
     const equal = bySpec("equal");
     expect(Math.abs(equal.aWin - equal.bWin)).toBeLessThanOrEqual(0.7);
-    // ADR-0053 length target for equal fleets (mean battle minutes), restored by
-    // ADR-0098 after the ADR-0094 caliber unit-scale correction weakened
-    // production-scale penetration. Bounded to the target band, not relaxed.
     expect(equal.lenMean).toBeGreaterThanOrEqual(30);
     expect(equal.lenMean).toBeLessThanOrEqual(90);
-    // ADR-0073 (ticket 12): equal fleets must not always end in elimination.
     expect(equal.disengageShare + equal.timeLimitShare).toBeGreaterThanOrEqual(0.2);
     expect(equal.sinkMean).toBeLessThan(2.0);
-    // ADR-0072 (ticket 11): the faster fleet must win the equal-gun matchup.
-    // Still holds after the ADR-0094 correction (60% at pin time); the range
-    // controller must stay >= 50%.
     const speed = bySpec("30kn");
     expect(speed.aWin).toBeGreaterThanOrEqual(0.5);
-    // ADR-0072 must not break neighbouring matchups: the torpedo-armed side
-    // must not do worse than the unarmed side.
     const torp = bySpec("torpedoes");
     expect(torp.aWin).toBeGreaterThanOrEqual(torp.bWin);
 
-    // deterministic: re-running one matchup gives identical stats
     expect(runMatchup(MATCHUPS[1]!)).toEqual(guns);
 
     if (process.env["BALANCE_SWEEP_WRITE"] === "1") {

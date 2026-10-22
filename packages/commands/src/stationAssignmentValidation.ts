@@ -1,5 +1,3 @@
-// S-5 (spec #73 R2): validation of the foreign-station assign and clear commands. The batch is checked whole by the
-// shared campaign rule; any ineligible ship rejects the entire command and every reason is named in the diagnostic.
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { stationAssignmentProblems } from "@bluewave/campaign";
 import type {
@@ -11,7 +9,6 @@ import type {
 import type { LifecycleStepResult } from "./types.js";
 import { rejectValidation } from "./validation.js";
 
-/** Stable diagnostic code for a rejected assign or clear batch; the per-ship reasons are in the message. */
 export const STATION_ASSIGNMENT_REJECTED = "STATION_ASSIGNMENT_REJECTED";
 
 export function validateStationAssignment(

@@ -26,12 +26,11 @@ describe("AC-4: tactical projection (manifest + committed ships -> TacticalBattl
       { sideId: "DEFENDER", participantIds: ["d1", "d2"] },
     ]);
 
-    // every promoted unit's design resolved from the owning nation
     for (const u of out.units) {
       const design = out.designs[u.assetId];
       expect(design).toBeDefined();
       expect(design!.designVersionId).toBe(u.designVersionId);
-      expect(u.campaignShipId).toBe(u.assetId); // battle assetId == campaign ship id
+      expect(u.campaignShipId).toBe(u.assetId);
     }
   });
 
@@ -89,7 +88,6 @@ describe("AC-4: tactical projection (manifest + committed ships -> TacticalBattl
 
   it("missing design for a promoted ship fails with the promotion guard", () => {
     const nations = makeNations();
-    // drop the design for a1 from the nation's design map
     const attacker = {
       ...nations.attacker,
       designs: new Map([...nations.attacker.designs].filter(([id]) => id !== "dv-att-a")),
@@ -150,7 +148,6 @@ describe("AC-4: tactical projection (manifest + committed ships -> TacticalBattl
       expect(t!.state.structuralIntegrity).toBeGreaterThan(0);
       expect(t!.zones.length).toBeGreaterThan(0);
     }
-    // nations listed correctly per side
     expect(out.units.find((u) => u.sideId === "ATTACKER")!.assetId).toBe("a1");
     expect(out.units.find((u) => u.sideId === "DEFENDER")!.assetId).toBe("d1");
   });

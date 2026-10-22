@@ -1,7 +1,3 @@
-// INC-6: Full contract rollup for weather_v1 + weather_components_v1 +
-// weather_visibility_v1 + weather_environment_v1.
-// Exports a single frozen object and a combined validation function
-// that proves all shipped contracts pass their own validate guards.
 import {
   SHIPPED_WEATHER_CONTRACT,
   validateWeatherContract,

@@ -23,7 +23,6 @@ export const ARMOUR_REGIONS = [
 ] as const;
 export type ArmourRegionId = (typeof ARMOUR_REGIONS)[number];
 
-/** Regions that face plunging fire at reduced striking velocity (`ArmourBalance.deckPenetrationBp`). */
 const DECK_REGIONS: ReadonlySet<ArmourRegionId> = new Set([
   "DECK_MAIN",
   "DECK_SLOPE",
@@ -36,43 +35,32 @@ export interface ArmourRegion {
   readonly lengthMm: number;
   readonly heightMm: number;
   readonly materialId: string;
-  /** cos(obliquity) in bp: 10_000 for a flat-on hit, lower for sloped plate (more effective). */
   readonly cosObliquityBp: number;
 }
 
-/** What the design must resist: a reference shell class with its penetration at the intended range band. */
 export interface ThreatProfile {
   readonly id: string;
   readonly penetrationUm: number;
 }
 
-/** When an armour material may be fitted, and the thickest plate of it that can be made. All fields but `fromMonth` optional. */
 export interface ArmourMaterialAvailability {
   readonly requires?: readonly string[];
   readonly fromMonth: string;
   readonly obsoleteMonth?: string | null;
-  /** Thickest plate of this material that can be manufactured, um. */
   readonly maxThicknessUm?: number;
 }
 
 export interface ArmourBalance {
-  /**
-   * Optional availability per material. A material without an entry is unrestricted, so content that does not (yet)
-   * declare availability behaves as before.
-   */
   readonly materialAvailability?: Readonly<Record<string, ArmourMaterialAvailability>>;
   readonly steelKgPerM3: number;
   readonly backingBp: number;
   readonly fixingsBp: number;
-  /** Effective-thickness multiplier per armour material, bp. */
   readonly materialEffBp: Readonly<Record<string, number>>;
-  /** Deck armour faces plunging fire at reduced striking velocity: threat penetration x this / 10_000 for DECK_* regions. */
   readonly deckPenetrationBp: number;
   readonly coverageWarnBp: number;
   readonly coverageCriticalBp: number;
   readonly magazineWarnBp: number;
   readonly magazineCriticalBp: number;
-  /** Required torpedo-bulkhead depth (mm) versus warhead mass (kg). */
   readonly underwaterRequiredDepth: LookupTable;
   readonly floodBaseBp: readonly [number, number, number, number, number];
   readonly floodReserveWeightBp: number;
@@ -85,22 +73,20 @@ export interface ArmourBalance {
 const BP = 10_000n;
 const fmt = (n: number) => groupedInteger(n);
 
-/** F-A1: region plate weight in kg, rounded up. */
 export function regionWeightKg(r: ArmourRegion, b: ArmourBalance): number {
   if (r.thicknessUm < 0 || r.lengthMm < 0 || r.heightMm < 0)
     throw new Error("armour dimensions must be >= 0");
-  const area = BigInt(r.lengthMm) * BigInt(r.heightMm); // mm2
+  const area = BigInt(r.lengthMm) * BigInt(r.heightMm);
   const num =
     area *
     BigInt(r.thicknessUm) *
     BigInt(b.steelKgPerM3) *
     BigInt(b.backingBp) *
     BigInt(b.fixingsBp);
-  const den = 1000n * 1_000_000_000n * BP * BP; // um->mm, mm3->m3
+  const den = 1000n * 1_000_000_000n * BP * BP;
   return toSafe("regionWeight", (num + den - 1n) / den);
 }
 
-/** Effective thickness against a flat hit, um: thickness x material effectiveness x cos obliquity. */
 function effectiveThicknessUm(r: ArmourRegion, b: ArmourBalance): number {
   const eff = b.materialEffBp[r.materialId];
   if (eff === undefined) throw new Error(`unknown armour material '${r.materialId}'`);
@@ -110,7 +96,6 @@ function effectiveThicknessUm(r: ArmourRegion, b: ArmourBalance): number {
   );
 }
 
-/** F-A2: penetration margin in bp, clamped to [-10000, +10000]. Negative = the shell defeats the plate. */
 export function penetrationMarginBp(
   r: ArmourRegion,
   threat: ThreatProfile,
@@ -137,7 +122,6 @@ export interface MagazineProtectionInput {
 export interface ArmourInput {
   readonly regions: readonly ArmourRegion[];
   readonly threats: readonly ThreatProfile[];
-  /** The adversary the requirement expects (must be in `threats`). */
   readonly designThreatId: string;
   readonly citadelLengthMm: number;
   readonly magazines: readonly MagazineProtectionInput[];
@@ -146,16 +130,13 @@ export interface ArmourInput {
   readonly subdivisionGrade: 0 | 1 | 2 | 3 | 4;
   readonly reserveBuoyancyBp: number;
   readonly damageControlBp: number;
-  /** Fire-risk contributions (bp) of flammable stowages, already summed per tag by the caller. */
   readonly flammableBp: number;
 }
 
 export interface ArmourResult {
   readonly weightByRegionKg: Readonly<Record<string, number>>;
   readonly totalWeightKg: number;
-  /** Effective thickness against a flat hit per region, um: thickness x material effectiveness x cos obliquity. */
   readonly effectiveThicknessByRegionUm: Readonly<Record<string, number>>;
-  /** Margin in bp per region per threat id. */
   readonly marginBp: Readonly<Record<string, Readonly<Record<string, number>>>>;
   readonly coverageBp: number;
   readonly magazineProtectionBp: Readonly<Record<string, number>>;
@@ -183,7 +164,6 @@ export function compileArmour(input: ArmourInput, b: ArmourBalance): ArmourResul
   for (const r of regions) {
     weightByRegionKg[r.region] = (weightByRegionKg[r.region] ?? 0) + regionWeightKg(r, b);
     total += regionWeightKg(r, b);
-    // Duplicate regions are merged like the margin: the best plate at that region defends it.
     effectiveThicknessByRegionUm[r.region] = Math.max(
       effectiveThicknessByRegionUm[r.region] ?? 0,
       effectiveThicknessUm(r, b),
@@ -316,7 +296,6 @@ export function compileArmour(input: ArmourInput, b: ArmourBalance): ArmourResul
     }
   }
 
-  // F-A5 underwater: effective depth = bulkhead thickness-equivalent from the TORPEDO_BULKHEAD/BELT regions' heights plus bunkers.
   const tb = regions.filter((r) => r.region === "TORPEDO_BULKHEAD" || r.region === "TORPEDO_BELT");
   const depthMm = tb.reduce((a, r) => a + r.heightMm, 0);
   const required = Math.max(
@@ -332,7 +311,6 @@ export function compileArmour(input: ArmourInput, b: ArmourBalance): ArmourResul
   );
   const underwaterResistanceBp = clampBp(toSafe("uw", (BigInt(effDepth) * BP) / BigInt(required)));
 
-  // F-A6 flooding resistance, F-A7 fire risk
   const floodingResistanceBp = clampBp(
     b.floodBaseBp[input.subdivisionGrade] +
       toSafe("fr", (BigInt(input.reserveBuoyancyBp) * BigInt(b.floodReserveWeightBp)) / BP) +
@@ -374,11 +352,6 @@ const gateFinding = (
   evidence: { formulaId: "F-A-AVAIL", inputs: {}, threshold, value },
 });
 
-/**
- * The single armour tech gate, used by the design compile (all regions) and by refits (only the regions a refit installs).
- * Not yet introduced / missing tech / plate thicker than the material allows are BLOCKING; an obsolete material is ADVISORY,
- * as for components. Pure and order-stable (input order).
- */
 export function armourAvailabilityFindings(
   regions: readonly ArmourRegion[],
   b: ArmourBalance,
@@ -447,21 +420,15 @@ export function armourAvailabilityFindings(
   return out;
 }
 
-/** One armour material as the Drawing Board offers it for a month. */
 export interface ArmourMaterialOption {
   readonly id: string;
-  /** Effective-thickness multiplier, bp (higher = better plate). */
   readonly effBp: number;
-  /** False when the material is not yet introduced or its technology is missing. */
   readonly available: boolean;
-  /** Why it is unavailable, or null. */
   readonly unavailableReason: string | null;
-  /** Thickest plate that can be made, um, or null when unlimited. */
   readonly maxThicknessUm: number | null;
   readonly obsolete: boolean;
 }
 
-/** The armour materials of the balance, weakest first (then by id), with their availability for `month`. Pure. */
 export function armourMaterialOptions(
   b: ArmourBalance,
   month: string,
@@ -490,16 +457,13 @@ export function armourMaterialOptions(
     .sort((x, y) => x.effBp - y.effBp || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0));
 }
 
-/** The hull and citadel measurements a new region's starting size is taken from. */
 export interface RegionSizing {
   readonly lengthWlMm: number;
   readonly beamMm: number;
   readonly depthMm: number;
-  /** Citadel length; 0 means "not set", and the starting size falls back to 60% of the waterline length. */
   readonly citadelLengthMm: number;
 }
 
-/** Starting plate thickness for a new region, um. A convention to start from, not a recommendation. */
 const START_THICKNESS_UM: Readonly<Record<ArmourRegionId, number>> = {
   BELT_MAIN: 150_000,
   BELT_UPPER: 75_000,
@@ -517,11 +481,6 @@ const START_THICKNESS_UM: Readonly<Record<ArmourRegionId, number>> = {
   TORPEDO_BELT: 25_000,
 };
 
-/**
- * A new armour region with deterministic starting dimensions taken from the hull: belts and decks follow the citadel,
- * ends take the rest of the waterline, turrets/barbettes/tower are small fixed blocks. All of it is a starting convention
- * the player edits (`materialId` is the caller's choice, `cosObliquityBp` starts flat-on). Dimensions are floored at 0.
- */
 export function newArmourRegion(
   region: ArmourRegionId,
   size: RegionSizing,
@@ -558,10 +517,6 @@ export function newArmourRegion(
   };
 }
 
-/**
- * "All or nothing": armour only the citadel. Belts and decks are cut to the citadel length; the upper belt, the extended deck and
- * the unarmoured ends are dropped; everything else is kept as is. Pure. The caller supplies the citadel length.
- */
 export function allOrNothingRegions(
   regions: readonly ArmourRegion[],
   citadelLengthMm: number,

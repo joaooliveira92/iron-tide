@@ -1,5 +1,3 @@
-// D-4 / INC-6 — AC-18: resolveAirDefense stage at step 7.8, strict no-op.
-// AC-20: BattleResolver/StrengthCalculator unmodified.
 import { describe, it, expect } from "vite-plus/test";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -171,7 +169,6 @@ describe("AC-18 resolveAirDefense stage (step 7.8)", () => {
   });
 
   it("threads ammunition across minutes until the system is empty", () => {
-    // 10 rounds, 5 per engagement → two engagements, then zero contribution.
     const res = run(context(10), 3);
     const consumed = res.results.map((r) =>
       (r.airDefenseRecords ?? []).reduce((sum, rec) => sum + Number(rec.roundsConsumed), 0),

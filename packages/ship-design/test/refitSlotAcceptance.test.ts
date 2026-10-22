@@ -1,10 +1,3 @@
-// Refit compatibility from slot acceptance (ship-part-model SPM-R18, ticket 14; spec seam 2).
-//
-// AC1: a successor that violates a slot constraint is rejected and a non-successor the slot
-// accepts is allowed — supersession never implies compatibility (I-7). The first part exercises
-// the design-compile fit seam directly; the second exercises the refit evaluation against a
-// compiled part model, where legality comes from the slot and its constraints.
-
 import {
   CompiledPartModelSchema,
   FlattenedPartSchema,
@@ -35,8 +28,6 @@ const PROVENANCE = {
   sources: [],
   note: "ticket 14 fixture",
 } as const;
-
-// Part 1: the fit seam — a successor gets no compatibility from supersession
 
 const mountPart = (id: string, mountType: string, supersedes?: readonly string[]): FlattenedPart =>
   decodeStrict(FlattenedPartSchema, {
@@ -99,8 +90,6 @@ describe("refit compatibility is slot acceptance, never succession (SPM-R18, I-7
     expect(fitPart(mountPart("mount_ok", "TURRET", ["mount_old"])).status).toBe("ACCEPTED");
   });
 });
-
-// Part 2: the refit seam — a part model drives interface and slot acceptance
 
 const sensorPart = (id: string, massKg: number, supersedes?: readonly string[]): FlattenedPart =>
   decodeStrict(FlattenedPartSchema, {
@@ -278,8 +267,6 @@ describe("refit slot acceptance against the compiled part model (SPM-R18)", () =
   });
 });
 
-// Part 3: the part-model path and the legacy-category fallback agree on a gun
-
 const gunPlan = (kind: RefitPlan["kind"]): RefitPlan => ({
   kind,
   removeInstanceIds: [],
@@ -312,10 +299,7 @@ describe("a gun's refit-kind decision is the same with and without a part model 
   });
 });
 
-// Part 4: an interface with no part vocabulary is rejected, not silently allowed
-
 describe("AVIATION_CONVERSION (deferred: no aircraft-facility interface yet)", () => {
-  // Both contexts know the component; the rejection is because no interface exists for it.
   const legacyAviationCtx: ShipContext = {
     ...baseCtx,
     catalogue: [...baseCtx.catalogue, aviation],
@@ -342,20 +326,7 @@ describe("AVIATION_CONVERSION (deferred: no aircraft-facility interface yet)", (
   });
 });
 
-// Part 5: slot acceptance and constraints apply to incoming additions only
-//
-// A removal empties a slot; the part being removed was accepted when the ship
-// was built and is no longer a candidate for the slot, so removing it must not
-// be judged against the slot's incoming-part acceptance or constraints. The
-// fixture installs a part the slot would reject as an *incoming* part (its mass
-// exceeds the slot's `massKgMax`), so the removal-only case fails if the slot
-// check is run over removals. It is deliberately constrained content, not a
-// reliance on the production catalogue's absence of constraints.
-
 describe("slot acceptance applies to incoming additions only (ticket 14 follow-up)", () => {
-  // The ship's rangefinder slot is occupied by the given part, installed out-of-band as if
-  // grandfathered from build time: `sensor_next` (50 t) violates `superstructure.sensor`'s
-  // `massKgMax: 40_000`, which is exactly what an incoming part would be rejected for.
   const installedSensorShip = (componentId: string): ShipState => ({
     ...sensorShip,
     design: {
@@ -413,7 +384,6 @@ describe("slot acceptance applies to incoming additions only (ticket 14 follow-u
         },
       ],
     };
-    // Removing the heavy part must not add a second rejection: exactly the incoming part is judged.
     const r = run(plan, refitCtx, installedSensorShip("sensor_next"));
     expect(slotRejectionCount(r)).toBe(1);
     expect(r.legal).toBe(false);
@@ -435,7 +405,6 @@ describe("slot acceptance applies to incoming additions only (ticket 14 follow-u
     const first = run(plan, refitCtx, installedSensorShip("sensor_next"));
     const second = run(plan, refitCtx, installedSensorShip("sensor_next"));
     expect(ids(first)).toEqual(ids(second));
-    // `sortFindings` order: severity rank, then id, then evidence formula id.
     const rank = (s: string) => SEVERITY_ORDER.indexOf(s as (typeof SEVERITY_ORDER)[number]);
     const keys = first.findings.map((x) => [rank(x.severity), x.id, x.evidence.formulaId] as const);
     const le = (a: (typeof keys)[number], b: (typeof keys)[number]): boolean =>

@@ -1,9 +1,3 @@
-// AC-14: Two-process determinism — identical state+inputs produce identical
-// per-minute hashes + weather events across two separate child processes
-// (node-spawn ×2, byte-compared). The child script is executed from `dist/`
-// (packages/combat/dist/simulation/run-weather-child.js), so the package MUST
-// be rebuilt (`pnpm --filter @bluewave/combat build`) before this suite runs
-// (L2); a missing/stale dist is a build failure, not a skipped test.
 import { describe, it, expect } from "vite-plus/test";
 import { execFileSync } from "child_process";
 import { resolve } from "path";
@@ -33,7 +27,7 @@ describe("AC-14: cross-process weather determinism", () => {
   });
 
   it("each minute emits at least one weather event", () => {
-    const result = runChild(); // dist/ child MUST exist — never silently skipped
+    const result = runChild();
     for (const count of result.weatherEventCounts) {
       expect(count).toBeGreaterThanOrEqual(1);
     }

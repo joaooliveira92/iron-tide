@@ -42,7 +42,6 @@ export interface ParameterRange {
   readonly step: number;
 }
 
-/** Authored component definition (spec §6.1). Formulas are strings in the restricted grammar. */
 export interface ComponentDef {
   readonly id: string;
   readonly displayName: string;
@@ -58,31 +57,23 @@ export interface ComponentDef {
   readonly powerKw: string;
   readonly upgradePath: readonly string[];
   readonly tags: readonly string[];
-  /** Spatial and category-specific data. Formula fields default to "0" when absent. */
   readonly deckFootprintMm2?: string;
   readonly heightMm?: string;
   readonly zCgMm?: string;
   readonly coolingKw?: string;
-  /** Category-specific numeric attributes as formulas (e.g. shellMassG, magazineLitre, genKw). */
   readonly attributes?: Readonly<Record<string, string>>;
   readonly allowedZones?: readonly string[];
   readonly forbidsCoLocation?: readonly ComponentCategory[];
   readonly critical?: boolean;
-  /** Fire-control class of a gun, or classes a director supports. */
   readonly fcClass?: string;
   readonly fcClasses?: readonly string[];
-  /** For torpedo tubes: how the engine's tactical layer names the mount and its torpedo. */
   readonly torpedoMount?: {
     readonly mountType: string;
     readonly torpedoModelId: string;
-    /** The compiled torpedo contract when the parts read path resolved one (ticket 13b). */
     readonly compiledTorpedo?: CompiledTorpedo;
   };
-  /** Monthly maintenance as bp of the component's cost. */
   readonly maintenanceMonthlyBp?: number;
-  /** Build effort in work micro-units; defaults to a share of cost (balance). */
   readonly buildWorkMicro?: string;
-  /** Production line that manufactures it (e.g. heavy_gun, armour_plate); defaults by category (balance). */
   readonly productionLine?: string;
 }
 
@@ -104,7 +95,6 @@ const OPTIONAL_FORMULA_FIELDS = [
 ] as const;
 const NON_NEGATIVE = new Set<string>([...FORMULA_FIELDS, ...OPTIONAL_FORMULA_FIELDS]);
 
-/** Min / mid / max sample of each parameter, the cartesian product capped (spec §6.1 non-negativity sampling). */
 function* samples(
   params: Readonly<Record<string, ParameterRange>>,
 ): Generator<Record<string, number>> {
@@ -122,7 +112,6 @@ function* samples(
   }
 }
 
-/** Content lint for a catalogue. Deterministic order; never throws on content errors. */
 export function lintCatalogue(
   defs: readonly ComponentDef[],
   knownTechIds: ReadonlySet<string>,
@@ -190,7 +179,6 @@ export function lintCatalogue(
       }
     }
   }
-  // upgradePath cycles (DFS, deterministic)
   const byId = new Map(defs.map((d) => [d.id, d]));
   const state = new Map<string, 1 | 2>();
   const visit = (id: string, stack: string[]): void => {

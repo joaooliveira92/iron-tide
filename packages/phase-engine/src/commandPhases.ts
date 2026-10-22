@@ -1,4 +1,3 @@
-// Player command + AI planning phases: command_collection (15) and ai_planning (16).
 import { AiPhaseExecutor } from "@bluewave/ai";
 import { researchPriorityAllocation } from "@bluewave/ship-design";
 import { TENSION_ALLIANCE, TENSION_PEACE } from "@bluewave/campaign";
@@ -60,8 +59,6 @@ import { applyStationAssignmentCommand } from "./stationAssignment.js";
 import { applyCancelConstructionProject } from "./cancelConstructionProject.js";
 import { constructionProjectCancelledEvent } from "./events.js";
 
-// Phase 3: command_collection — process player commands in order, applying each
-// successful command body through the shared command appliers.
 export function runCommandCollectionPhase(ctx: MonthContext): void {
   const slot = ctx.slots[0];
   if (!slot) return;
@@ -80,8 +77,6 @@ export function runCommandCollectionPhase(ctx: MonthContext): void {
   }
 }
 
-// Dispatch a successfully-authorized player command to its applier. Body types
-// are disjoint, so the first matching group wins.
 function applyPlayerCommand(ctx: MonthContext, body: CommandBody, commandId: string): void {
   if (applyAdministrativeCommand(ctx, body)) return;
   if (applyDiplomacyCommand(ctx, body)) return;
@@ -373,19 +368,16 @@ function applyConstructionCommand(ctx: MonthContext, body: CommandBody, commandI
     return;
   }
 
-  ctx.currentSnapshot =
-    // Apply via the shared helper (kept inline in command_collection
-    // for exact parity with the AI path).
-    applyBudgetProject(
-      ctx.currentSnapshot,
-      body,
-      campaignMonth,
-      turnNumber,
-      ctx.nextSeq,
-      financialLedger,
-      eventLedger,
-      collector,
-    );
+  ctx.currentSnapshot = applyBudgetProject(
+    ctx.currentSnapshot,
+    body,
+    campaignMonth,
+    turnNumber,
+    ctx.nextSeq,
+    financialLedger,
+    eventLedger,
+    collector,
+  );
 }
 
 export function runAiPlanningPhase(ctx: MonthContext): void {
@@ -397,8 +389,6 @@ export function runAiPlanningPhase(ctx: MonthContext): void {
   const shipBuilding = ctx.engineOptions?.shipBuilding;
   for (const slot of ctx.slots) {
     if (slot["type"] !== "ai") continue;
-    // A nation with a naval profile researches by its doctrine (ADR-0090); the phase engine supplies the allocation,
-    // so the planner needs no dependency on ship-design. Nations without a profile keep the neutral fallback.
     const nationId = slot["nationId"];
     let researchAllocation: Record<string, number> | undefined;
     const profile = shipBuilding?.navalProfileFor(nationId, ctx.campaignMonth) ?? null;
@@ -453,8 +443,6 @@ export const commandCollectionPhase: PhaseDescriptor = {
   name: "Command Collection",
   order: 15,
   readPermissions: ["all"],
-  // ADR-0036: command_collection authoritatively applies player commands,
-  // mutating treasury/constructions/research/wars/politics/fleets.
   writePermissions: ["treasury", "constructions", "research", "wars", "politics", "fleets"],
   rngAllowed: false,
   footprint: {
@@ -480,8 +468,6 @@ export const aiPlanningPhase: PhaseDescriptor = {
   name: "AI Planning",
   order: 16,
   readPermissions: ["nations", "constructions", "research", "treasury"],
-  // ADR-0036: the AI path applies SetResearchPriority and budget_project,
-  // so it writes research/treasury/constructions.
   writePermissions: ["research", "treasury", "constructions"],
   rngAllowed: true,
   footprint: {

@@ -1,11 +1,3 @@
-/**
- * ADR-0093 Step 4 — combat armament identity.
- *
- * Combat receives stable gun-model, mount and ammunition identity from a compiled design's persisted
- * `CompiledArmamentMount` snapshot; legacy designs (no snapshot) project through the documented
- * compatibility path. Identity is additive provenance: the numeric firing/ammunition/damage model is
- * unchanged, so equivalent legacy and first-class inputs produce equivalent gameplay.
- */
 import { describe, it, expect } from "vite-plus/test";
 import type { CompiledArmamentMount } from "@bluewave/armament";
 import type { CompiledDesignVersion } from "@bluewave/campaign";
@@ -109,7 +101,6 @@ describe("Step 4: combat receives first-class armament identity", () => {
     expect(first.batteries.map((b) => b.state.stateHash)).toEqual(
       second.batteries.map((b) => b.state.stateHash),
     );
-    // a1 is first-class, a2/d1/d2 are legacy.
     expect(first.batteries.find((b) => b.ownerShipId === "a1")!.state.gunFamilyId).toBe(
       "gb_bl_13_5in",
     );
@@ -137,7 +128,6 @@ describe("Step 4: legacy/new combat equivalence", () => {
     const nations = nationsWithMainArmament();
     const identity = resolveBattleAuto(makeAutoInput({ nations }));
 
-    // Gameplay fields are unchanged: the snapshot only adds identity provenance.
     expect(identity.winnerId).toBe(legacy.winnerId);
     expect(identity.loserId).toBe(legacy.loserId);
     expect(identity.battleEndReason).toBe(legacy.battleEndReason);
@@ -148,7 +138,6 @@ describe("Step 4: legacy/new combat equivalence", () => {
     expect(identity.attackerSunkIds).toEqual(legacy.attackerSunkIds);
     expect(identity.defenderSunkIds).toEqual(legacy.defenderSunkIds);
 
-    // The identity path is a distinct, deterministic provenance surface, not a gameplay change.
     expect(identity.resultHash).not.toBe(legacy.resultHash);
     expect(identity.resultHash).toBe(resolveBattleAuto(makeAutoInput({ nations })).resultHash);
   });
@@ -159,14 +148,12 @@ describe("Step 4: legacy/new combat equivalence", () => {
     const result = resolveBattleAuto(input);
     expect(result.elapsedMinutes).toBeGreaterThan(0);
     expect(result.minuteHashes.length).toBe(result.elapsedMinutes);
-    // Deterministic across repeated runs.
     expect(resolveBattleAuto(makeAutoInput({ nations, maxMinutes: 3 })).resultHash).toBe(
       result.resultHash,
     );
   });
 
   it("projects a legacy design and an armament-carrying design to the same salvo schedule", () => {
-    // The one-battery-per-ship projection depends on mainGunsCount/caliber only; identity is additive.
     const legacyNations = makeNations();
     const legacyOut = projectBattle({
       manifest: makeProjectionManifest(["a1", "d1"]),

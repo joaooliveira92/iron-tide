@@ -108,7 +108,6 @@ describe("design hash", () => {
     const { hash, ...body } = c;
     expect(sha256Hex(canonicalSerialize(withoutSubjects(body)))).toBe(hash);
     expect(verifyCompiledHash(c)).toBe(true);
-    // A compile result stored before subjects existed still verifies.
     expect(verifyCompiledHash({ ...withoutSubjects(body), hash } as typeof c)).toBe(true);
   });
 });

@@ -64,7 +64,6 @@ export interface ValidateOutput {
   platforms?: unknown[];
   shipTypes?: unknown[];
   designLoadouts?: unknown[];
-  /** The source file of each part, slot template and platform, for the flatten stage. */
   partModelSources?: PartModelSources;
   fleets?: unknown[];
   economies?: unknown[];
@@ -77,9 +76,7 @@ export interface ValidateOutput {
   ui?: unknown;
 }
 
-/** The source file of each part-model record, by id, for the flatten stage. */
 export interface PartModelSources {
-  /** The content root: the artifact records source files relative to it. */
   readonly contentDir: string;
   readonly parts: ReadonlyMap<string, string>;
   readonly slotTemplates: ReadonlyMap<string, string>;
@@ -104,7 +101,6 @@ interface ShipBuildingCollection {
   idField: string;
 }
 
-/** The fully-populated ship-building catalogue section of a validated build. */
 interface ValidatedCatalogue {
   shipComponents: unknown[];
   propulsionPlants: unknown[];
@@ -123,12 +119,6 @@ interface ValidatedCatalogue {
   designLoadouts: unknown[];
 }
 
-/**
- * The ship-building catalogue collections and their structural schemas, in the
- * order they are validated. Every collection — reference designs included
- * (CAH-SCH-1) — is validated through the strict validator; duplicate ids and
- * cross-file references are checked afterwards.
- */
 const SHIP_BUILDING_COLLECTIONS: readonly ShipBuildingCollection[] = [
   { key: "shipComponents", schema: ShipComponentSchema, label: "ShipComponent", idField: "id" },
   {
@@ -166,11 +156,6 @@ const SHIP_BUILDING_COLLECTIONS: readonly ShipBuildingCollection[] = [
   },
 ];
 
-/**
- * The campaign-file collections, each validated by a content schema through the
- * strict validator (CAH-SCH-2) before it is duplicate-ID checked, cross-
- * referenced, and carried into the bundle.
- */
 const CAMPAIGN_COLLECTIONS: readonly CampaignCollection[] = [
   { key: "fleets", schema: CampaignFleetSchema, label: "Fleet", idField: "id" },
   { key: "economies", schema: CampaignEconomySchema, label: "Economy", idField: "nationId" },
@@ -309,12 +294,6 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
   }
 }
 
-/**
- * Structurally validates the presentation content (CAH-PRES-1/CAH-PRES-2)
- * through the strict validator. Absent from a pack is not a false positive: a
- * content-pack-only or presentation-less build skips it, keeping the artifact
- * byte-compatible.
- */
 function validatePresentation(input: ParseOutput, collector: DiagnosticCollector): unknown {
   const raw = input.objectDocs.get("presentation");
   if (raw === undefined) return undefined;
@@ -328,11 +307,6 @@ function validatePresentation(input: ParseOutput, collector: DiagnosticCollector
   );
 }
 
-/**
- * Structurally validates the UI-string catalogue (CAH-UI-1) through the strict
- * validator. Absent from a pack keeps the artifact byte-compatible; a malformed
- * catalogue (excess keys, non-string text) fails to compile.
- */
 function validateUi(input: ParseOutput, collector: DiagnosticCollector): unknown {
   const raw = input.objectDocs.get("ui");
   if (raw === undefined) return undefined;
@@ -340,17 +314,6 @@ function validateUi(input: ParseOutput, collector: DiagnosticCollector): unknown
   return validateAgainstSchema(raw, UiCatalogueSchema, "UiCatalogue", sourcePath, collector);
 }
 
-/**
- * Domain-validates the presentation corpus against the compiled content
- * (CAH-PRES-2). When the pack carries areas, every area must have a display
- * region and a fixture mapping, with no stale keys, and every region it names
- * must be declared (and used); when it carries countries, every country must
- * have a home-waters area that names a known area. A new area or nation can
- * therefore not silently miss a region, vanish from the map, or leave the
- * renderer to guess — the pack fails to compile until the authored presentation
- * corpus covers it. A presentation-only pack (no areas/countries) skips the
- * corresponding checks.
- */
 function validatePresentationRegions(
   core: Record<string, unknown[]>,
   presentation: unknown,
@@ -473,7 +436,6 @@ function validatePresentationRegions(
   }
 }
 
-/** The `id` values of a collection, as a set. */
 function idsOf(items: unknown[] | undefined): Set<string> {
   return new Set(
     (items ?? [])
@@ -482,17 +444,10 @@ function idsOf(items: unknown[] | undefined): Set<string> {
   );
 }
 
-/** A value as a string-keyed record, or an empty record. */
 function asRecord(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
 
-/**
- * Structurally validates each campaign-file collection through the strict
- * validator (CAH-SCH-2), duplicate-ID checks the raw records (naming the source
- * file), and validates their cross-file references (nation, technology, and
- * design-version links).
- */
 function validateCampaignCollections(
   core: Record<string, unknown[]>,
   input: ParseOutput,
@@ -539,12 +494,6 @@ function validateCampaignCollections(
   };
 }
 
-/**
- * Cross-file references within/between the campaign collections and the
- * content-pack collections. A reference is only checked when the referenced
- * collection is present, so a single-collection fixture is not a false
- * positive.
- */
 function validateCampaignReferences(
   core: Record<string, unknown[]>,
   campaign: Partial<Record<keyof ValidateOutput, unknown[]>>,
@@ -710,16 +659,10 @@ function validateCampaignReferences(
   }
 }
 
-/** A string field value, or `""` when the authored value is not a string. */
 function stringValue(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-/**
- * Structurally validates each ship-building catalogue collection that the input
- * actually carries. A content-pack-only input (no ship-building files) yields
- * empty collections, so the pack boundary is untouched.
- */
 function validateShipBuildingCatalogue(
   input: ParseOutput,
   collector: DiagnosticCollector,
@@ -759,11 +702,6 @@ function validateShipBuildingCatalogue(
   };
 }
 
-/**
- * Projects the validated ship-building collections onto a keyed map so the
- * generic duplicate/reference passes can iterate the collection specs without an
- * untyped cast.
- */
 function catalogueArrays(catalogue: ValidatedCatalogue): Record<string, unknown[]> {
   return {
     shipComponents: catalogue.shipComponents,
@@ -1025,12 +963,6 @@ function stringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 }
 
-/**
- * Source file per id, keyed from the raw parsed documents (which stay
- * index-aligned with `sourcePaths`). The validated arrays are schema-filtered,
- * so indexing them against `sourcePaths` would name the wrong file once an item
- * fails schema validation.
- */
 function sourceById(input: ParseOutput, key: string, idField: string): Map<string, string> {
   const docs = input.collectionDocs.get(key) ?? [];
   const sources = input.sourcePaths.get(key) ?? [];
@@ -1043,20 +975,12 @@ function sourceById(input: ParseOutput, key: string, idField: string): Map<strin
 }
 
 interface GraphInvariantSpec {
-  /** The cycle diagnostic code. */
   readonly code: string;
-  /** Human label used in messages ("Technology prerequisite", …). */
   readonly label: string;
-  /** The field that carries the edges, named in the self-reference message. */
   readonly edgeField: string;
   readonly fallbackSource: string;
 }
 
-/**
- * Shared graph invariant check: no node may list itself as an edge
- * (`SELF_REFERENCE`), and the edge graph must be acyclic (`spec.code`, naming
- * the concrete cycle members with their source files).
- */
 function validateGraphInvariant(
   items: readonly unknown[],
   idField: string,
@@ -1108,10 +1032,6 @@ function validateGraphInvariant(
   }
 }
 
-/**
- * Validates the technology prerequisite graph (DESIGN-20 §16): no technology may
- * list itself as a prerequisite, and the prerequisite graph must be acyclic.
- */
 function validateTechnologyGraph(
   validated: Record<string, unknown[]>,
   input: ParseOutput,
@@ -1138,10 +1058,6 @@ function validateTechnologyGraph(
   );
 }
 
-/**
- * Validates the ship-component upgrade graph: no component may upgrade from
- * itself, and the `upgradePath` graph must be acyclic.
- */
 function validateComponentUpgradeGraph(
   catalogue: ValidatedCatalogue,
   input: ParseOutput,
@@ -1162,12 +1078,6 @@ function validateComponentUpgradeGraph(
   );
 }
 
-/**
- * Finds one concrete cycle in a directed graph via depth-first search, returning
- * the cycle members in order (or `null` when the graph is acyclic). Edges to
- * nodes not in the graph are ignored (dangling references are reported
- * elsewhere).
- */
 function findCycle(adjacency: Map<string, string[]>): string[] | null {
   const WHITE = 0;
   const GRAY = 1;
@@ -1238,10 +1148,6 @@ function collectIds(validated: Record<string, unknown[]>): Map<string, Set<strin
   return idMap;
 }
 
-/**
- * S-5 (spec #73 R11, ADR-0242): a ruleset's optional presence section is dormant when absent and all-or-nothing when
- * present. A partial, mistyped or out-of-range section fails with `PRESENCE_RULES_INVALID` naming the field.
- */
 function validatePresenceRules(rulesets: readonly unknown[], collector: DiagnosticCollector): void {
   const carriers = rulesets.filter(
     (ruleset) => (ruleset as Record<string, unknown>)["presence"] !== undefined,
@@ -1270,10 +1176,6 @@ function validatePresenceRules(rulesets: readonly unknown[], collector: Diagnost
   }
 }
 
-/**
- * T-1 (spec #109 R1, ticket #111): a ruleset's optional `battleOffers` section is dormant when absent and all-or-nothing
- * when present. A partial, mistyped or out-of-range section fails with `BATTLE_OFFER_RULES_INVALID` naming the field.
- */
 function validateBattleOfferRules(
   rulesets: readonly unknown[],
   collector: DiagnosticCollector,
@@ -1320,7 +1222,6 @@ function validateMissingReferences(
   const nationIds = idMap.get("countries") ?? new Set();
   const areaIds = idMap.get("areas") ?? new Set();
 
-  // Not gated on the area set being non-empty: a pack with nations and no areas cannot resolve any home area.
   for (const nation of validated["countries"] ?? []) {
     const record = nation as Record<string, unknown>;
     const nationId = String(record["id"]);

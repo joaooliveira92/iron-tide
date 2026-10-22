@@ -126,7 +126,7 @@ describe("AI procurement lifecycle", () => {
     expect(n.procurementIntents?.length).toBe(1);
     expect(n.procurementIntents![0]!.status).toBe("STUDY_SUBMITTED");
     expect(n.designStudies?.length).toBe(1);
-    expect(n.constructionProjects.length).toBe(0); // no order before approval
+    expect(n.constructionProjects.length).toBe(0);
   });
 
   it("repeated planning does not duplicate the study", () => {
@@ -142,7 +142,6 @@ describe("AI procurement lifecycle", () => {
     const ctx = makeContext("1880-01");
     runAiProcurementPhase(ctx);
     const study = france(ctx).designStudies![0]!;
-    // Fund the study month by month (the real appropriation path) until it completes.
     let months = 0;
     while (
       france(ctx).designStudies!.find((s) => s.designStudyId === study.designStudyId)!.status !==
@@ -153,7 +152,6 @@ describe("AI procurement lifecycle", () => {
       expect(months).toBeLessThanOrEqual(10);
     }
     expect(months).toBeGreaterThanOrEqual(1);
-    // Next month's procurement sees the approved design and orders it.
     (ctx as { campaignMonth: string }).campaignMonth = "1880-06";
     runAiProcurementPhase(ctx);
     const n = france(ctx);
@@ -174,7 +172,6 @@ describe("AI procurement lifecycle", () => {
   it("another project satisfying the deficit cancels unnecessary procurement", () => {
     const ctx = makeContext("1880-01");
     runAiProcurementPhase(ctx);
-    // Force the study to approve, then satisfy the deficit with a completed project of the same role.
     const study = france(ctx).designStudies![0]!;
     while (
       france(ctx).designStudies!.find((s) => s.designStudyId === study.designStudyId)!.status !==
@@ -183,7 +180,6 @@ describe("AI procurement lifecycle", () => {
       fundDesignStudies(ctx);
     const n = france(ctx);
     const role = n.procurementIntents![0]!.role;
-    // Add enough active ships of the role to erase the deficit.
     const snapshot = ctx.currentSnapshot as unknown as {
       designs: Map<string, unknown>;
       nations: Map<string, { fleets: unknown[] }>;
@@ -218,7 +214,6 @@ describe("AI procurement lifecycle", () => {
     const ctx = makeContext("1880-01");
     (france(ctx) as { treasury: SafeInt }).treasury = SafeInt(0);
     expect(() => runAiProcurementPhase(ctx)).not.toThrow();
-    // No study and no order: the decision declined.
     expect(france(ctx).designStudies ?? []).toHaveLength(0);
     expect(france(ctx).procurementIntents ?? []).toHaveLength(0);
   });
@@ -274,9 +269,6 @@ describe("live AI procurement simulation (2 nations x 3 seeds x 3 budgets x 36 m
     return counts;
   }
 
-  // The 27-combination sweep is expensive; compute each combination once and
-  // share it across the two assertions below (both previously re-ran it), so a
-  // 2-core CI runner does not have to fit two full sweeps in one 30s budget.
   const cached = new Map<string, Result>();
   function runCached(nationId: string, seed: string, treasury: number): Result {
     const key = `${nationId}:${seed}:${String(treasury)}`;

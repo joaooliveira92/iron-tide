@@ -1,6 +1,3 @@
-// AC-3: Layers resolve in HEAVY_AA → MEDIUM_AA → LIGHT_AA → CIWS order (§1).
-// Plus per-layer candidate determinism, empty-layer empty results, and §18 matrix fidelity.
-
 import { describe, it, expect } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {

@@ -1,5 +1,3 @@
-// T-1 04 (#113, spec #109 R8, R15): the additive declined-battle record survives the save/load boundary byte for byte, a
-// save that predates it (or never declines) still loads with the collection absent, and a malformed record is refused.
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -150,8 +148,6 @@ describe("declined-battle record save/load parity", () => {
   });
 
   it("refuses, rather than silently loading, a state-bearing save whose new keys a reader without them would drop (R15)", () => {
-    // An older reader strips the keys it does not know; the semantic hash gate (rawHash over the decoded state) then no
-    // longer matches the stored one, so the save is refused instead of loaded with the declines forgotten.
     for (const dropped of ["declinedBattles", "declineCounters"] as const) {
       store.save(state([RECORD], [COUNTER]), tmpDir);
       tamper((wars) => {

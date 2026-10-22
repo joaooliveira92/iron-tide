@@ -5,27 +5,6 @@ import type { RawReferenceDesign } from "../src/index.js";
 import { readReferenceDesignEntries } from "./helpers/earlyContext.js";
 import { REFERENCE_DESIGN_CLASSIFICATIONS } from "./helpers/referenceClassifications.js";
 
-/**
- * Machine-readable provenance on reference designs (ticket 39). The exact rule,
- * enforced over every authored design:
- *
- *   1. A design with `historical: true` reconstructs a documented real ship and
- *      MUST carry all six provenance facts (`REFERENCE_PROVENANCE_FIELDS`), each
- *      with a non-empty value, a status in {VERIFIED, DERIVED, ESTIMATE}, and at
- *      least one real source.
- *   2. A design with `historical !== true` (absent or false) is non-historical
- *      and MUST NOT carry provenance.
- *   3. The designs the classification (`REFERENCE_DESIGN_CLASSIFICATIONS`) marks
- *      HISTORICAL_RECONSTRUCTION, plus the pre-1880 in-service ships in the
- *      `historical.yaml` files, are exactly the design set that must be
- *      `historical: true` — checked against the canonical list below so a new
- *      historical design cannot be added without provenance.
- *
- * The structural half (unknown status, missing fact, empty source) is pinned in
- * `@bluewave/content-schema`'s `reference-design-provenance.test.ts`.
- */
-
-/** The 18 historical reconstructions: the five pre-1880 in-service ships plus the 13 promoted national starters. */
 const HISTORICAL_IDS = [
   "devastator_1873",
   "dreadnought_1875",
@@ -47,7 +26,6 @@ const HISTORICAL_IDS = [
   "sete_de_setembro_1874",
 ] as const;
 
-/** Non-historical illustrative designs that must carry an explicit `historical: false` marker. */
 const EXPLICITLY_NON_HISTORICAL = ["havock_like", "majestic_like", "torpedo_cruiser_1880"] as const;
 
 const designs = readReferenceDesignEntries();
@@ -61,14 +39,12 @@ const byId = (id: string): RawReferenceDesign => {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-/** The structural facts a design presents to the rule (loose so a test can feed it a broken shape). */
 interface DesignLike {
   readonly id: string;
   readonly historical?: unknown;
   readonly provenance?: unknown;
 }
 
-/** Every way a design can violate the rule above; empty for a conforming design. */
 const provenanceIssues = (design: DesignLike): string[] => {
   const historical = design.historical === true;
   const provenance = design.provenance;
@@ -152,7 +128,6 @@ describe("reference-design provenance over the authored content (ticket 39)", ()
     }
   });
 
-  // Negative controls: the rule the test above enforces actually rejects the two failure modes.
   it("REGRESSION: a historical design missing provenance fails the rule", () => {
     const { provenance: _drop, ...withoutProvenance } = byId("devastator_1873");
     expect(provenanceIssues(withoutProvenance)).toEqual([

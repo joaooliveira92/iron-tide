@@ -1,5 +1,3 @@
-// Research eligibility (spec #138 slice 3): which technologies and fields can take research this month. The research phase
-// funds only eligible fields and every projection reports unfunded research from this same rule, so the two cannot drift.
 import { CANONICAL_RESEARCH_FIELD_IDS } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import type {
@@ -9,7 +7,6 @@ import type {
   TechnologyProgress,
 } from "./state.js";
 
-/** The compiled research catalogue by technology id. */
 export type TechnologyCatalogue = ReadonlyMap<string, TechnologyDefinitionData>;
 
 export function technologyCatalogueOf(snapshot: CampaignSnapshot): TechnologyCatalogue {
@@ -21,11 +18,6 @@ export interface EligibleTechnology extends TechnologyProgress {
   readonly availabilityMonth: SafeInt;
 }
 
-/**
- * The technologies of `fieldId` open to research: not yet discovered, every prerequisite discovered, and available by
- * `turnNumber`. A technology no nation has started carries zero invested points. Catalogue order is canonical (sorted by id at
- * compile time), so the result order is deterministic.
- */
 export function eligibleTechnologiesForField(
   fieldId: string,
   techs: readonly TechnologyProgress[],
@@ -53,7 +45,6 @@ export function eligibleTechnologiesForField(
   return eligible;
 }
 
-/** The fields that can take research this month, with their priority weight (a priority of 0 switches a field off). */
 export function eligibleResearchFields(
   research: ResearchState,
   turnNumber: SafeInt,

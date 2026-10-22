@@ -20,14 +20,11 @@ export const CANONICAL_RESEARCH_SPEED_SETTINGS: ResearchSpeedSetting[] = RESEARC
   rulesetVersion: "1.0",
 }));
 export function scaledResearchProgress(basePaid: number, mult: number): number {
-  // §5: scaledResearchProgress = floor(basePaidResearchProgress * researchSpeedMultiplierBp / 10_000).
-  // Wide integer before division; a non-integer base is an authoring error.
   if (!Number.isSafeInteger(basePaid)) {
     throw new TypeError(
       `scaledResearchProgress expects an integer basePaid value, got ${basePaid}`,
     );
   }
-  // BigInt division truncates toward zero, which equals floor for non-negative progress.
   return Number((BigInt(basePaid) * BigInt(mult)) / BigInt(10000));
 }
 export function validateResearchSpeedSettings(settings: unknown, c: DiagnosticCollector) {
@@ -57,7 +54,6 @@ export function validateResearchSpeedSettings(settings: unknown, c: DiagnosticCo
       ok = false;
     }
   }
-  // §5: the active ruleset MUST define exactly these canonical settings.
   if (settings.length !== RESEARCH_IDS.length) {
     c.addError(
       "INVALID_RESEARCH_SPEED_MULTIPLIER",

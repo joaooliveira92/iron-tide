@@ -2,11 +2,6 @@ import type { MonthResult } from "@bluewave/phase-engine";
 
 import { executeScenario, type ReplayScenario } from "./corpus.js";
 
-/**
- * The authoritative subsystems a replay can exercise: the month executor's phases, in execution
- * order (ADR-0246 Finding A). Using the phases keeps the catalogue tied to the engine's own
- * boundaries instead of a hand-kept list of gameplay features.
- */
 export const SUBSYSTEMS = [
   { id: "opening_validation", label: "Opening validation" },
   { id: "weather_generation", label: "Weather generation" },
@@ -27,10 +22,6 @@ export const SUBSYSTEMS = [
   { id: "closing_validation", label: "Closing validation" },
 ] as const;
 
-/**
- * Domain event types that identify the phase which emitted them. `NationBudgetChanged` is left
- * out on purpose: every spending phase emits it, and the financial ledger names the phase.
- */
 const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   ConstructionProgressed: "construction_processing",
   ConstructionDelayed: "construction_processing",
@@ -53,18 +44,11 @@ const NEUTRAL_EVENT_TYPES: ReadonlySet<string> = new Set(["NationBudgetChanged"]
 
 const KNOWN = new Set<string>(SUBSYSTEMS.map((s) => s.id));
 
-/** What one executed month left in the ledgers, attributed to subsystems. */
 export interface MonthCoverage {
   readonly subsystems: ReadonlySet<string>;
-  /** Event types that are neither attributed nor declared neutral: a gap in this mapping. */
   readonly unattributedEventTypes: ReadonlySet<string>;
 }
 
-/**
- * A subsystem is exercised when it leaves a trace: a financial transaction, a random draw, a
- * command, or an attributed event. A phase that ran but wrote nothing is reported uncovered,
- * because the corpus cannot tell a no-op from a skipped phase.
- */
 export function monthCoverage(result: MonthResult): MonthCoverage {
   const subsystems = new Set<string>();
   const unattributed = new Set<string>();
@@ -83,9 +67,7 @@ export function monthCoverage(result: MonthResult): MonthCoverage {
   return { subsystems, unattributedEventTypes: unattributed };
 }
 
-/** A corpus scenario: a command-free production run plus why it is in the corpus. */
 export interface CorpusScenario extends ReplayScenario {
-  /** One short sentence: what this replay protects that the others do not. */
   readonly purpose: string;
 }
 
@@ -93,18 +75,15 @@ export interface ReplayCoverage {
   readonly scenarioId: string;
   readonly purpose: string;
   readonly months: number;
-  /** Catalogue order. */
   readonly subsystems: readonly string[];
 }
 
 export interface CoverageReport {
   readonly replays: readonly ReplayCoverage[];
-  /** Catalogue subsystems no replay exercised, in catalogue order. */
   readonly uncovered: readonly string[];
   readonly unattributedEventTypes: readonly string[];
 }
 
-/** Re-execute each scenario through the real engine and report the subsystems it exercised. */
 export function buildCoverageReport(scenarios: readonly CorpusScenario[]): CoverageReport {
   const unattributed = new Set<string>();
   const replays = scenarios.map((scenario): ReplayCoverage => {
@@ -129,7 +108,6 @@ export function buildCoverageReport(scenarios: readonly CorpusScenario[]): Cover
   };
 }
 
-/** Stable text: LF endings, catalogue order, no paths or timestamps. */
 export function formatCoverageReport(report: CoverageReport): string {
   const lines: string[] = [];
   for (const replay of report.replays) {

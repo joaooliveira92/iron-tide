@@ -51,10 +51,6 @@ function encodeStreamPart(s: string): string {
   return encodeURIComponent(s);
 }
 
-/**
- * Generates legal, deterministic AI commands for a single AI nation and runs
- * each through the CommandLifecycle. Never mutates snapshot.
- */
 export class AiPlanner {
   generate(
     snapshot: CampaignSnapshot,
@@ -68,15 +64,12 @@ export class AiPlanner {
     const accepted: CommandEnvelope<CommandBody>[] = [];
     const diagnostics: Diagnostic[] = [];
 
-    // Fail-closed: slot must be AI
     const slotType = (slot as { type?: string }).type;
-    // Some CampaignSlot shapes use `kind` or `controller`; be permissive but guard
     if (
       slotType !== undefined &&
       slotType !== "AI" &&
       (slot as unknown as { controller?: string }).controller !== "AI"
     ) {
-      // If slot explicitly marks non-AI, do not plan
       if (slotType === "HUMAN" || slotType === "PLAYER") {
         return { envelopes, accepted, diagnostics };
       }
@@ -136,7 +129,6 @@ export class AiPlanner {
       return { envelopes, accepted, diagnostics };
     }
 
-    // Budget command — may be undefined if no legal options
     try {
       const budgetCommand = this.buildBudgetCommand(nationId, nation, engine, generator);
       if (budgetCommand) {
@@ -145,7 +137,6 @@ export class AiPlanner {
         if (outcome.type === "success") {
           accepted.push(budgetCommand);
         } else {
-          // Exhaustive: any non-success carries diagnostic per contract
           const diag = (outcome as { diagnostic?: Diagnostic }).diagnostic;
           if (diag) diagnostics.push(diag);
           else
@@ -168,7 +159,6 @@ export class AiPlanner {
       });
     }
 
-    // Research command — always legal if fields exist
     try {
       const researchCommand = this.buildResearchPriorityCommand(
         nationId,
@@ -247,13 +237,12 @@ export class AiPlanner {
         if (maxAmount < 1) continue;
         legal.push({ projectId: proj.id, maxAmount });
       } catch {
-        continue; // skip malformed project fail-closed
+        continue;
       }
     }
 
     if (legal.length === 0) return undefined;
 
-    // Deterministic canonical order — sort by projectId
     legal.sort((a, b) => (a.projectId < b.projectId ? -1 : a.projectId > b.projectId ? 1 : 0));
 
     let stream: ReturnType<RandomEngine["stream"]>;
@@ -281,8 +270,6 @@ export class AiPlanner {
     allocation?: Readonly<Record<string, number>>,
   ): CommandEnvelope<CommandBody> | undefined {
     const fields = CANONICAL_RESEARCH_FIELD_IDS;
-    // A national research allocation (from the NationNavalProfile) takes precedence when it covers every field with a
-    // valid priority: the AI then pursues its doctrine. Otherwise the planner falls back to its neutral randomisation.
     if (allocation !== undefined) {
       const priorities: Record<string, SafeInt> = {};
       let complete = true;
@@ -308,11 +295,9 @@ export class AiPlanner {
       return undefined;
     }
 
-    // highCount in [1, maxHighClamped] inclusive, integer
     const highCountSafe = drawUniform(stream, SafeInt.ONE, SafeInt(maxHighClamped));
     const highCount = highCountSafe;
 
-    // Partial Fisher-Yates using integer drawUniform (no floats)
     const shuffled: string[] = [...fields];
     for (let i = 0; i < highCount; i++) {
       const jSafe = drawUniform(stream, SafeInt(i), SafeInt(n - 1));

@@ -19,11 +19,9 @@ import {
   shipBuildingData,
 } from "./helpers/earlyContext.js";
 
-/** The same production content without first-class armament: the legacy compatibility path. */
 const legacyContent = buildShipBuildingContent({ ...shipBuildingData, armament: undefined });
 
 const OPENING_MONTH = "1880-01";
-/** The first-class armament content covers the original three nations; other nations use the legacy path. */
 const ARMAMENT_NATIONS = new Set(["uk", "france", "germany"]);
 const openingStarters = shipBuildingContent.starterDesigns.filter(
   (s) => s.month === OPENING_MONTH && ARMAMENT_NATIONS.has(s.draft.nationId),
@@ -36,7 +34,6 @@ const gunPlacements = (d: DesignDraft) =>
 
 describe("Step 3 armament cut-over: opening reference designs", () => {
   it("verifies the first-class armament catalogue scale (34/26/36/6)", () => {
-    // ADR-0119 added eight coast-defence/casemate gun families (+1 CASEMATE mount) but no authored models or ammunition.
     const catalogue = buildArmamentCatalogue(armamentContent);
     expect(catalogue.families).toHaveLength(34);
     expect(catalogue.models).toHaveLength(26);
@@ -100,7 +97,6 @@ describe("Step 3 armament cut-over: legacy/new equivalence", () => {
       expect(armament.weapons?.blastLoadKg, s.id).toBe(legacy.weapons?.blastLoadKg);
       expect(armament.stability?.gmMm, s.id).toBe(legacy.stability?.gmMm);
       expect(armament.stability?.displacementKg, s.id).toBe(legacy.stability?.displacementKg);
-      // Non-armament gameplay findings are identical; armament adds only non-blocking access advisories.
       const ids = (c: typeof armament) => c.findings.map((f) => f.id).sort();
       expect(
         ids(armament).filter((id) => !id.startsWith("ARMAMENT_")),
@@ -211,7 +207,6 @@ describe("Step 3 armament cut-over: structured findings", () => {
   });
 
   it("emits a structured finding for an incompatible ammunition instead of throwing", () => {
-    // A nation's pattern that declares no compatibility with the gun family is incompatible.
     const content = {
       ...armamentContent,
       ammunition: armamentContent.ammunition.map((a) =>

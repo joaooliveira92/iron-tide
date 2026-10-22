@@ -1,11 +1,3 @@
-// AC-5: launch authority policy (DESIGN-40 §5). `torpedo_launch_authority_v1`
-// defines exactly ADMIRAL / REAR_ADMIRAL / CAPTAIN; the legality guard prohibits
-// manual launch in ADMIRAL/REAR_ADMIRAL (TORPEDO_MANUAL_LAUNCH_MODE_PROHIBITED),
-// permits it in CAPTAIN, and fails closed on a missing/invalid grant
-// (TORPEDO_LAUNCH_AUTHORITY_DENIED). AI + player use the SAME guard — the only
-// inputs are the grant and the manual flag; there is no side parameter.
-// Structured verdict (not throw-only); the versioned contract pins the closed
-// mode enum + the prohibited-manual modes and fails closed on drift (AC-24).
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -56,14 +48,12 @@ describe("AC-5: torpedo_launch_authority_v1 contract pins the closed mode enum",
         policyId: "x",
       } as unknown as Partial<typeof SHIPPED_TORPEDO_LAUNCH_AUTHORITY_CONTRACT>),
     ).toThrow(BluewaveError);
-    // a fourth mode must never be accepted
     expect(() =>
       validateTorpedoLaunchAuthorityContract({
         ...SHIPPED_TORPEDO_LAUNCH_AUTHORITY_CONTRACT,
         modes: [...TORPEDO_LAUNCH_AUTHORITY_MODES, "COMMODORE"],
       } as Partial<typeof SHIPPED_TORPEDO_LAUNCH_AUTHORITY_CONTRACT>),
     ).toThrow(BluewaveError);
-    // CAPTAIN must never become a manual-prohibited mode
     expect(() =>
       validateTorpedoLaunchAuthorityContract({
         ...SHIPPED_TORPEDO_LAUNCH_AUTHORITY_CONTRACT,
@@ -134,8 +124,6 @@ describe("AC-5: the legality guard enforces the §5 modes", () => {
 
 describe("AC-5: AI and player use the SAME legality rules (§5.4)", () => {
   it("allows automated (non-manual) launches in EVERY mode — same function, no side branch", () => {
-    // §5.1/§5.2: in ADMIRAL/REAR_ADMIRAL the tactical AI selects launchers,
-    // targets, timing, and salvo size — automated launches remain legal.
     for (const mode of TORPEDO_LAUNCH_AUTHORITY_MODES) {
       const verdict = validateLaunchAuthority(grant({ mode }), false);
       expect(verdict.allowed).toBe(true);
@@ -145,8 +133,6 @@ describe("AC-5: AI and player use the SAME legality rules (§5.4)", () => {
   });
 
   it("returns the same verdict for the same inputs regardless of any player/AI flag", () => {
-    // The function signature carries NO side parameter — a caller can only
-    // express the manual flag; identity of the guard is structural.
     const automated = validateLaunchAuthority(grant({ mode: "ADMIRAL" }), false);
     const manual = validateLaunchAuthority(grant({ mode: "ADMIRAL" }), true);
     expect(automated.allowed).toBe(true);

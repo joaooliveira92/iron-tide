@@ -1,8 +1,3 @@
-// Boundary tests for the code-review remediation (TODO.md): directory-traversal
-// rejection, signature-file validation, snapshotHash correctness, atomic
-// publication, cancellation invariants, the list() signature fallback, and
-// predecessor preservation across saves/recovery.
-
 import {
   existsSync,
   mkdirSync,
@@ -130,10 +125,6 @@ describe("persistence remediation", () => {
     });
 
     it("rejects campaign.json whose hashes were recomputed but whose signature is stale", () => {
-      // The point of the signature file is that the attacker must update BOTH
-      // the in-file hashes AND the separately-written signature. Here they
-      // recompute rawHash + envelope so the in-file gates alone would pass;
-      // the untouched signature must still refuse the load.
       const state = fixture();
       store.save(state, tmpDir);
       const id = store.getActiveSaveId(tmpDir)!;
@@ -259,7 +250,6 @@ describe("persistence remediation", () => {
         const files = readdirSync(join(tmpDir, id)).sort();
         expect(files).toEqual(["campaign.json", "campaign.sig.json", "metadata.json"]);
       }
-      // A valid active save must always load (no partial publication is valid).
       expect(store.load(tmpDir, new DiagnosticCollector())).not.toBeNull();
     });
   });
@@ -306,9 +296,6 @@ describe("persistence remediation", () => {
 
       const saves = store.list(tmpDir);
       expect(saves).toHaveLength(1);
-      // The degraded fallback record cannot reconstruct a genuine snapshot hash
-      // (the sig file carries no such field), so it must be empty — not the
-      // whole-campaign state hash that ticket 03 removed from the save path.
       expect(saves[0]!.snapshotHash).toBe("");
       expect(saves[0]!.snapshotHash).not.toBe(sig.stateHash);
     });
@@ -326,7 +313,6 @@ describe("persistence remediation", () => {
 
       expect(RecoveryManager.revert(tmpDir, b)).toBe(true);
       expect(store.getActiveSaveId(tmpDir)).toBe(b);
-      // b's predecessor (a) is reconstructed from b's metadata, not lost.
       expect(store.getPreviousSaveId(tmpDir)).toBe(a);
       expect(store.getActiveSaveId(tmpDir)).not.toBe(c);
     });

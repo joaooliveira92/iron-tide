@@ -1,7 +1,3 @@
-// Reachability proof for the shipbuilding command surface: the `OrderConstruction` (class-order batch) and
-// `AuthorizeDockExpansion` command bodies are issued as real command envelopes and reach the engine through the same
-// `command_collection` dispatch a player's `commitMonth` uses. Unlike the pure-helper tests, these drive
-// `MonthExecutor.execute` end-to-end, so deleting the dispatch wiring makes them fail.
 import type { CampaignSnapshot, CompiledDesignVersion, NationState } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
@@ -134,14 +130,12 @@ describe("OrderConstruction reaches the engine through command_collection (SB3-R
 
   it("refuses a quantity above twelve without adding a project", () => {
     const from = snapshot([design("dv-b")]);
-    // The issue-time validator rejects the body before the month even runs.
     const result = executeMonth(from, [
       envelope(
         { type: "OrderConstruction", nationId: "uk", designVersionId: "dv-b", quantity: 13 },
         from,
       ),
     ]);
-    // A rejected command does not fail the month; it simply does not apply.
     expect(
       result.finalSnapshot.nations
         .get("uk")!
@@ -164,7 +158,6 @@ describe("AuthorizeDockExpansion reaches the engine through command_collection (
       targetId: "pos-1",
     });
     expect(projects[0]!.dockExpansionStepKg).toBeGreaterThan(0);
-    // The authorization does not raise the dock itself.
     expect(result.finalSnapshot.nations.get("uk")!.dock?.maximumNewConstructionMassKg ?? 0).toBe(0);
   });
 });
@@ -190,17 +183,14 @@ describe("OrderForeignConstruction reaches the engine through command_collection
     const project = uk.constructionProjects.find((p) => p.foreignContractId !== undefined);
     expect(project).toBeDefined();
     expect(project?.foreignBuilderNationId).toBe("france");
-    // The engine derived the price/work from the design's projected cost (1 work unit = 1 price unit).
     expect(contract.totalPriceUnits).toBeGreaterThan(0);
     expect(contract.totalWorkPerUnit).toBe(contract.totalPriceUnits);
     expect(contract.quantity).toBe(1);
-    // The versioned 6-instalment policy: amounts sum exactly to the price, shares exactly to 10,000 bp.
     expect(contract.paymentSchedule).toHaveLength(FOREIGN_INSTALMENT_COUNT);
     expect(contract.paymentSchedule.reduce((sum, i) => sum + i.amountUnits, 0)).toBe(
       contract.totalPriceUnits,
     );
     expect(contract.paymentSchedule.reduce((sum, i) => sum + i.workShareBp, 0)).toBe(10_000);
-    // The ordering nation's own concurrency pool is untouched (the builder's capacity is consumed).
     expect(project?.newConstructionReservedMassKg).toBe(0);
   });
 });

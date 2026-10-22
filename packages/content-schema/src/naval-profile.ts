@@ -7,13 +7,6 @@ import {
 } from "./naval-profile-vocab.js";
 import { ProvenanceSchema, SourceReferenceSchema } from "./provenance.js";
 
-/**
- * Content schema for `content/production/<scenario>/ship-building/naval-profiles/<nation>.yaml` (NationNavalProfile).
- * Structural authority only: cross-references (component families, plants, hull forms, nations) and semantic
- * rules are enforced by the domain validator `validateNavalProfiles` in `@bluewave/ship-design`, so a schema
- * change here cannot silently widen what a nation may build.
- */
-
 const nonNegativeInt = Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0));
 const positiveInt = Schema.Finite.check(Schema.isInt(), Schema.isGreaterThan(0));
 const bp = Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 0, maximum: 10_000 }));
@@ -37,7 +30,6 @@ const MOUNT_TYPE_VALUES = [
 ] as const;
 const AMMUNITION_PATTERN_VALUES = ["AP", "APC", "CPC", "SAP", "HE", "MELINITE"] as const;
 
-/** Overrides are a shallow map of scalar/list values; keys are checked by the domain linter. */
 const OverridesSchema = Schema.Record(
   Schema.String,
   Schema.Union([Schema.String, Schema.Finite, Schema.Array(Schema.String)]),
@@ -111,7 +103,6 @@ const DockDimensionsSchema = Schema.Struct({
   maxHeaviestComponentKg: positiveInt,
 });
 
-/** The nation's dock (DESIGN-16 section 4, ADR-0135): four authored mass limits, an optional dimension predicate. */
 const DockSchema = Schema.Struct({
   maximumNewConstructionMassKg: positiveInt,
   maximumMajorRepairMassKg: positiveInt,

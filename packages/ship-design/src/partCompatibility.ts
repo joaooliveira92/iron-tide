@@ -1,14 +1,3 @@
-/**
- * Today's hull forms read as part-model **platforms** with **compatibility slot templates**
- * (ship-part-model SPM-R3, SPM-R19). One slot per zone and interface, accepting whatever is
- * allowed there today; no component authors `allowedZones`, so every zone accepts every
- * read-path interface. Armour materials go in **armour-region slots** (`armour.<region>`),
- * one per region of the closed region list, shared by every hull (D9) — not mount points.
- * Real mount-point slots are P7 work.
- *
- * The records are the strict `@bluewave/content-schema` shapes (`SlotTemplateSchema`,
- * `PlatformSchema`); the read-path tests decode them through those schemas.
- */
 import { compareCodePoints } from "@bluewave/deterministic";
 import type {
   PartInterface,
@@ -19,10 +8,6 @@ import type {
 import { ARMOUR_REGIONS, type ArmourRegionId } from "./armour.js";
 import { ZONE_IDS, type ZoneId } from "./arrangement.js";
 
-/**
- * The interfaces the read path places in hull zones: guns (ticket 03), launchers (ticket 04),
- * and the machinery, sensor and ship-system fittings (ticket 05).
- */
 export const COMPATIBILITY_INTERFACES = [
   "gun_mount",
   "torpedo_launcher",
@@ -37,17 +22,14 @@ export const COMPATIBILITY_INTERFACES = [
 ] as const satisfies readonly PartInterface[];
 export type CompatibilityInterface = (typeof COMPATIBILITY_INTERFACES)[number];
 
-/** The shared template holding one interface's zone slots. */
 export function compatibilityTemplateId(iface: CompatibilityInterface | "armour_material"): string {
   return `compatibility_${iface}`;
 }
 
-/** The armour-region slot of one region: `armour.<region>`, lower snake. */
 export function armourRegionSlotId(region: ArmourRegionId): string {
   return `armour.${region.toLowerCase()}`;
 }
 
-/** Every hull's armour-region slots: one per region, accepting `armour_material` only. */
 function armourRegionTemplate(): SlotTemplateData {
   return {
     id: compatibilityTemplateId("armour_material"),
@@ -57,7 +39,6 @@ function armourRegionTemplate(): SlotTemplateData {
   };
 }
 
-/** The slot one interface occupies in one zone: `<zone>.<interface>`, lower snake. */
 export function compatibilitySlotId(zoneId: ZoneId, iface: CompatibilityInterface): string {
   return `${zoneId.toLowerCase()}.${iface}`;
 }
@@ -77,12 +58,6 @@ export interface CompatibilityModel {
   readonly platforms: readonly PlatformData[];
 }
 
-/**
- * Read hull forms as platforms. Each interface's template carries the zones every hull
- * shares; a zone only some hulls have becomes a slot on those platforms directly, so no
- * platform offers a zone it does not have. Templates, slots and platforms are in codepoint
- * order, so the result does not depend on the input order.
- */
 export function buildCompatibilitySlots(input: {
   readonly hullForms: readonly {
     readonly id: string;
@@ -134,7 +109,6 @@ export function buildCompatibilitySlots(input: {
   };
 }
 
-/** Every slot a platform offers: its templates' slots, then its own (SPM-R3). */
 export function platformSlots(
   model: CompatibilityModel,
   platformId: string,

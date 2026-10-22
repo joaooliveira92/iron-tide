@@ -39,7 +39,7 @@ describe("Havock-like destroyer on the real EARLY-band content", () => {
     expect(r.ledger.hull / r.totalKg).toBeGreaterThan(0.24);
     expect(r.ledger.hull / r.totalKg).toBeLessThan(0.36);
     expect(r.systems!.crewRequired).toBeGreaterThanOrEqual(20);
-    expect(r.systems!.crewRequired).toBeLessThanOrEqual(46); // Havock: 43-46
+    expect(r.systems!.crewRequired).toBeLessThanOrEqual(46);
   });
   it("is unavailable before its technology exists", () => {
     const early = compileDesign(havock, earlyContext("1885-06"));
@@ -93,8 +93,6 @@ describe("cost calibration against Brassey (1 GBP = 1,000,000 micro-units)", () 
     expect(gbp(cost.machinery)).toBeGreaterThan(18_674 * 0.9);
     expect(gbp(cost.machinery)).toBeLessThan(18_674 * 1.1);
   });
-  // Brassey quotes comparable battleships "excluding guns" (Renown 704,747; Royal Sovereign class 770,000) and does not say for
-  // Majestic; our total includes guns (~GBP 90k with mounts) and the 12 % overhead, so a 20 % band is the honest tolerance.
   it("Majestic-like battleship costs within 20 % of GBP 911,000 (Brassey 1897)", () => {
     const c = compileDesign(majestic, earlyContext("1896-01"));
     const total = gbp(computeCost(c, majestic, costBalance, mature).total);

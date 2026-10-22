@@ -2,16 +2,6 @@ import { Schema } from "effect";
 
 import { ProvenanceSchema } from "./provenance.js";
 
-/**
- * Presentation content (CAH-PRES-1/CAH-PRES-2): the nation-facing data the
- * player sees — nation coordinates, flavor text, dossier fields, the
- * nation-id → country-id slot mapping, the area → region grouping and the
- * campaign-map join. Authored as pack content and compiled into the artifact so
- * the renderer stops owning a duplicated hand-authored corpus (DESIGN-57,
- * ADR-0125). It carries no engine state and never feeds back into simulation
- * (ADR-0003).
- */
-
 const HexColorSchema = Schema.String.check(Schema.isPattern(/^#[0-9A-Fa-f]{6}$/)).annotate({
   description: "CSS hex color, e.g. #C8102E",
 });

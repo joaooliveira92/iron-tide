@@ -15,12 +15,6 @@ import {
   type GunMountDef,
 } from "@bluewave/armament";
 
-/**
- * Contract proof (ADR-0093): `@bluewave/combat` can consume the authoritative armament resolver
- * directly, without depending on `@bluewave/ship-design`. The only workspace import in this file is
- * `@bluewave/armament`.
- */
-
 const provenance: ArmamentProvenance = {
   sourceStatus: "VERIFIED",
   confidence: "HIGH",

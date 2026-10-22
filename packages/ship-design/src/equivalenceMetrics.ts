@@ -1,10 +1,3 @@
-/**
- * Pure derived-metric extraction (ship-part-model SPM-R22). One compiled design becomes a flat,
- * path-keyed map of scalar metrics: displacement and ledger, hull and classification,
- * machinery, speed and range, per-weapon armament and the full compiled weapon contract,
- * protection, stability and systems, cost and construction, the findings multiset and the
- * engine-facing outputs. No metric is dropped for being equal.
- */
 import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import { computeCost } from "./cost.js";
 import type { CostBalance } from "./cost.js";
@@ -15,7 +8,6 @@ import { toEngineDesign } from "./engineAdapter.js";
 import type { EngineAdapterOptions } from "./engineAdapter.js";
 
 export type MetricValue = number | string | boolean | null;
-/** Metric path → value, in codepoint path order. */
 export type MetricMap = Readonly<Record<string, MetricValue>>;
 
 export interface MetricInputs {
@@ -56,7 +48,6 @@ function flatten(value: unknown, path: string, out: Record<string, MetricValue>)
   }
 }
 
-/** The findings as a multiset (`findings.multiset[<canonical>]` = count) and their order. */
 function findingMetrics(findings: readonly unknown[], out: Record<string, MetricValue>): void {
   const keys = findings.map((f) => canonicalSerialize(f));
   const counts = new Map<string, number>();
@@ -66,10 +57,8 @@ function findingMetrics(findings: readonly unknown[], out: Record<string, Metric
   out["findings.order"] = keys.join("\n");
 }
 
-/** Paths whose *order* is not meaningful; equal multisets with different order are `orderingOnly`. */
 export const UNORDERED_METRIC_PATHS: readonly string[] = ["findings.order"];
 
-/** Extract every derived metric of one compiled design (SPM-R22). Pure and deterministic. */
 export function deriveMetrics(input: MetricInputs): MetricMap {
   const { compiled: c, draft } = input;
   const out: Record<string, MetricValue> = {};
@@ -114,7 +103,6 @@ export function deriveMetrics(input: MetricInputs): MetricMap {
   return sortMap(out);
 }
 
-/** A map with its keys in codepoint order, so serialisation is order-independent. */
 export function sortMap(map: Readonly<Record<string, MetricValue>>): MetricMap {
   const out: Record<string, MetricValue> = {};
   for (const key of Object.keys(map).sort(compareCodePoints)) out[key] = map[key] as MetricValue;

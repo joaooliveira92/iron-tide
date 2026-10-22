@@ -11,9 +11,6 @@ import {
 import { describe, expect, it } from "vite-plus/test";
 import { validateLoadoutFit, type FitInput } from "../src/index.js";
 
-// Ship-part-model ticket 11a: what ticket 06 could not evaluate. Every record is decoded
-// through the real strict schemas.
-
 const PROVENANCE = {
   sourceStatus: "PLACEHOLDER",
   confidence: "LOW",

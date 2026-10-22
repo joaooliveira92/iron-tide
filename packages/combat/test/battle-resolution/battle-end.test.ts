@@ -29,7 +29,6 @@ function terminal(
 
 describe("AC-6/AC-7: battle-end precedence + viability (DESIGN-38 §32)", () => {
   it("time-limit end when nothing lethal happens for the full duration (a)", () => {
-    // both sides fully viable at minute 360 -> precedence falls to time_limit
     const ships = [
       viable("ATTACKER", "a1"),
       viable("ATTACKER", "a2"),
@@ -73,9 +72,6 @@ describe("AC-6/AC-7: battle-end precedence + viability (DESIGN-38 §32)", () => 
   });
 
   it("terminating-minute effects count: a kill on the final minute ends with no_viable (d)", () => {
-    // both defenders become terminal IN the final minute (minute 360) -> §32
-    // precedence puts no_viable_combatants BEFORE time_limit; the ending
-    // minute's damage is part of the result.
     const ships = [
       viable("ATTACKER", "a1"),
       viable("ATTACKER", "a2"),

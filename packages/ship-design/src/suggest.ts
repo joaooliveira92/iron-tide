@@ -8,7 +8,6 @@ import { bp, mm } from "./units.js";
 
 export interface SuggestedFix {
   readonly edit: DraftEdit;
-  /** Plain-language description of the change, e.g. "Reduce coal bunkers to 120 t". */
   readonly description: ExplanationText;
   readonly resolved: readonly string[];
   readonly introduced: readonly string[];
@@ -21,7 +20,6 @@ const pct = (v: number, p: number) => Math.max(1, Math.floor((v * (100 + p)) / 1
 const t = (v: number) => `${groupedInteger(Math.round(v / 1000))} t`;
 const metres = (v: number) => quantity(v, 1000, 2, "metres");
 
-/** The fixed neighbourhood of simple, explainable edits. Pure function of the draft and context: no randomness. */
 export function candidateEdits(
   d: DesignDraft,
   ctx: ShipContext,
@@ -100,10 +98,6 @@ export function candidateEdits(
 
 const WEIGHTS: Severity[] = ["BLOCKING", "CRITICAL", "WARNING"];
 
-/**
- * Previews every candidate edit by recompiling and returns the best few that strictly reduce serious findings
- * without introducing a new blocking one. Best = most blocking resolved, then critical, then warnings, then least weight change.
- */
 export function suggestFixes(
   draft: DesignDraft,
   ctx: ShipContext,
@@ -127,7 +121,6 @@ export function suggestFixes(
     const newBlocker = p.introduced.some((x) => x.startsWith("BLOCKING:"));
     if (newBlocker) continue;
     const delta = WEIGHTS.map((s) => p.countsBefore[s] - p.countsAfter[s]);
-    // Strict improvement: first non-zero delta in severity order must be positive.
     const first = delta.find((v) => v !== 0);
     if (first === undefined || first < 0) continue;
     results.push({

@@ -14,7 +14,7 @@ describe("treasuryCostUnits", () => {
   });
   it("is exact for costs beyond double precision", () => {
     const unit = 10_000_000_000;
-    const cost = 9_007_199_254_740_000; // just under Number.MAX_SAFE_INTEGER
+    const cost = 9_007_199_254_740_000;
     expect(treasuryCostUnits(cost, unit)).toBe(
       Number((BigInt(cost) + BigInt(unit) - 1n) / BigInt(unit)),
     );

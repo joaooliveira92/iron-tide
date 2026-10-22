@@ -15,9 +15,6 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { compileProductionCampaign } from "../src/production-pack.js";
 
-// T-1 09 (#118, spec #109 R1, R2, R15, R16): scripted war months over the compiled PRODUCTION pack, with the production
-// battle-offer section (ADR-0254) read from the compiled rulesets exactly as the desktop main process reads it. No
-// ruleset number is supplied here: every cost, chance and threshold below is observed from the authored section.
 const PLAYER = "uk";
 const ENEMY = "france";
 const ALLY = "italy";
@@ -177,8 +174,6 @@ const streamDraws = (result: MonthResult, streamId: string) =>
   result.randomLedger.all.filter((d) => d.streamId === streamId);
 
 const SEED = "production-offer-seed";
-// Seeds found by search at authoring time that make a recorded draw against the AUTHORED chance fall on each side. The
-// draws are recorded, so a change in the stream keying or in the authored chance fails these scripted months loudly.
 const ENEMY_WITHDRAWS_SEED = "seed-0";
 const ENEMY_PROCEEDS_SEED = "seed-2";
 const SUPPORT_PRESENT_SEED = "seed-0";
@@ -282,7 +277,6 @@ describe("scripted production war months (ADR-0254 section)", () => {
     }
     const start = snapshot.nations.get(PLAYER)!.prestige as number;
     expect(thresholdCounts).toEqual([0, 0, 1, 1]);
-    // max(1, ceil(prestige * 300 / 10000)) points, from the S-2 loss arithmetic.
     expect(prestigeAfter[0]).toBe(start);
     expect(prestigeAfter[1]).toBe(start);
     expect(prestigeAfter[2]).toBe(start - Math.max(1, Math.ceil((start * 300) / 10_000)));

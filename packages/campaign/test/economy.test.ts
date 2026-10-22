@@ -17,13 +17,12 @@ import {
   settleOutflow,
 } from "../src/economy.js";
 
-// Economy spec #138 slice 1: one set of pure calculators shared by the month executor and every projection.
 describe("economy calculators", () => {
   it("derives the annual base as ceil(income * 120000 / startRate)", () => {
     expect(deriveEconomicBase(SafeInt(100), SafeInt(2000))).toBe(6000);
     expect(deriveEconomicBase(SafeInt(3), SafeInt(2000))).toBe(180);
     expect(deriveEconomicBase(SafeInt(7), SafeInt(3000))).toBe(280);
-    expect(deriveEconomicBase(SafeInt(1), SafeInt(7000))).toBe(18); // ceil(17.14)
+    expect(deriveEconomicBase(SafeInt(1), SafeInt(7000))).toBe(18);
   });
 
   it("credits authored income back at the start rate for every income", () => {
@@ -33,9 +32,6 @@ describe("economy calculators", () => {
     }
   });
 
-  // The state space is small enough to enumerate (about 90 million pairs, a couple of seconds), so this is exhaustive rather
-  // than sampled: no seed, and a failure names the exact (base, rate) pair. The oracle is the pre-#138 chained floors in
-  // plain number arithmetic, independent of the SafeInt calculator under test.
   it("equals the legacy chained floors for every base 0..20000 and every rate 500..5000", () => {
     const counterexamples: string[] = [];
     let pairs = 0;
@@ -57,8 +53,8 @@ describe("economy calculators", () => {
     for (const [base, rate, expected] of [
       [0, 500, 0],
       [0, 5000, 0],
-      [20_000, 500, 83], // floor(floor(10_000_000 / 10_000) / 12) = floor(1000 / 12)
-      [20_000, 5000, 833], // floor(floor(100_000_000 / 10_000) / 12) = floor(10000 / 12)
+      [20_000, 500, 83],
+      [20_000, 5000, 833],
     ] as const)
       expect(monthlyRevenue(SafeInt(base), SafeInt(rate))).toBe(expected);
   });
@@ -76,14 +72,11 @@ describe("economy calculators", () => {
     expect(ECONOMY_RATE_DENOMINATOR).toBe(120000);
     expect(MAX_ECONOMIC_BASE).toBe(Math.floor(Number.MAX_SAFE_INTEGER / MAX_APPROPRIATION_RATE_BP));
     const rate = SafeInt(MAX_APPROPRIATION_RATE_BP);
-    // At and below the ceiling the product is a safe integer, so the result is exact (compared in bigint).
     for (const base of [MAX_ECONOMIC_BASE - 1, MAX_ECONOMIC_BASE]) {
       const exact = (BigInt(base) * BigInt(MAX_APPROPRIATION_RATE_BP)) / 120_000n;
       expect(BigInt(monthlyRevenue(SafeInt(base), rate))).toBe(exact);
     }
-    // One above the ceiling the product leaves the safe range: the calculator refuses (checked arithmetic) instead of rounding.
     expect(() => monthlyRevenue(SafeInt(MAX_ECONOMIC_BASE + 1), rate)).toThrow();
-    // The ceiling is the largest such base: its successor is the first to overflow at the maximum rate.
     expect((MAX_ECONOMIC_BASE + 1) * MAX_APPROPRIATION_RATE_BP > Number.MAX_SAFE_INTEGER).toBe(
       true,
     );
@@ -129,11 +122,11 @@ describe("economy calculators", () => {
         const spendable = Math.max(0, available);
         expect(s.requested, label).toBe(requested);
         expect(s.paid, label).toBe(Math.min(requested, spendable));
-        expect(s.paid + s.shortfall, label).toBe(requested); // unpaid is reported once, never double-counted
+        expect(s.paid + s.shortfall, label).toBe(requested);
         expect(s.paid >= 0 && s.shortfall >= 0, label).toBe(true);
-        expect(s.paid <= spendable, label).toBe(true); // never pays more than the funds
+        expect(s.paid <= spendable, label).toBe(true);
         expect(s.shortfall > 0, label).toBe(requested > spendable);
-        expect(settleOutflow(SafeInt(requested), SafeInt(available)), label).toEqual(s); // deterministic
+        expect(settleOutflow(SafeInt(requested), SafeInt(available)), label).toEqual(s);
       }
     }
   });

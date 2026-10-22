@@ -1,17 +1,3 @@
-/**
- * The P1 ammunition read path (ship-part-model SPM-R1, SPM-R19, SPM-R20). Additive and in
- * memory only.
- *
- * Each first-class ammunition pattern (`ship-building/armament/ammunition.yaml`) becomes an
- * `ammunition` part of its nation. The shell data is the spec; a per-round cost, when
- * authored, is a `PER_PART_UNIT` cost component. Which gun families and models a pattern
- * fits is the legacy selection rule (`armamentAmmunitionFor`), not a part-model field, so it
- * stays on the adapter's `legacy` record. `ammunitionPatternFromPart` rebuilds the armament
- * resolver's input from the part, so the resolver reads the same pattern either way.
- *
- * Armament `retirementMonth` is inclusive and `availableUntil` exclusive: the conversion is
- * `partLifecycle.ts`'s.
- */
 import {
   ammunitionId,
   gunFamilyId,
@@ -32,7 +18,6 @@ export type FlattenedAmmunitionPart = Extract<FlattenedPart, { readonly family: 
 
 export const AMMUNITION_FILE = "ship-building/armament/ammunition.yaml";
 
-/** One ammunition part with the selection facts the part model has no field for. */
 export interface AmmunitionPartRecord {
   readonly part: FlattenedAmmunitionPart;
   readonly legacy: {
@@ -48,22 +33,18 @@ export interface UnreadAmmunition {
 }
 
 export interface AmmunitionPartModel {
-  /** Codepoint-ordered by part id. */
   readonly records: readonly AmmunitionPartRecord[];
   readonly unread: readonly UnreadAmmunition[];
 }
 
 const STABLE_ID = /^[a-z][a-z0-9_]*$/;
 
-/** Build the ammunition parts. Independent of the catalogue order. */
 export function buildAmmunitionPartModel(input: {
   readonly ammunition: readonly AuthoredAmmunition[];
 }): AmmunitionPartModel {
   const records: AmmunitionPartRecord[] = [];
   const unread: UnreadAmmunition[] = [];
   for (const a of input.ammunition) {
-    // The inclusive retirement month is checked as the exclusive end it becomes; a malformed
-    // one is passed through so the check names it.
     const until =
       a.retirementMonth != null && !isMonth(a.retirementMonth)
         ? a.retirementMonth
@@ -151,7 +132,6 @@ export function buildAmmunitionPartModel(input: {
   };
 }
 
-/** The armament resolver's ammunition input, rebuilt from the part and its selection facts. */
 export function ammunitionPatternFromPart(record: AmmunitionPartRecord): ArmamentAmmunitionPattern {
   const { part, legacy } = record;
   const { spec } = part;

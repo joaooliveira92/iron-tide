@@ -1,16 +1,8 @@
-// AC-13: reason-code set-equality for the B-6 battle auto-resolution slice
-// (DESIGN-38 §33/§36/§37; DESIGN-37 §44 auto-resolution codes are reused, not
-// redefined). Mirrors reason-codes-gunnery / reason-codes-damage /
-// reason-codes-weather. The guard fails the build if a code is added to
-// BATTLE_RESOLUTION_REASON_CODES without a matching update here (and, per
-// policy, an ADR-0026 entry).
 import { describe, expect, it } from "vite-plus/test";
 import { BATTLE_RESOLUTION_REASON_CODES } from "../src/battleResolution/reasonCodes.js";
 import { REASON_CODES } from "../src/reasonCodes.js";
 import { GENERATION_REASON_CODES } from "../src/generation/reasonCodes.js";
 
-// DESIGN-38 §36 "Required Reason Codes" — the full authoritative tactical
-// combat list (docs/rules/tactical-combat.md §36).
 const DESIGN_38_SECTION_36_CODES = [
   "INVALID_TACTICAL_TIME_CONTRACT",
   "INVALID_TACTICAL_CLOCK",
@@ -33,9 +25,6 @@ const DESIGN_38_SECTION_36_CODES = [
   "TACTICAL_STATE_INVARIANT_FAILED",
 ] as const;
 
-// The §36 auto-resolution codes are REUSED from the shared combat catalog and
-// the generation catalog (both already shipped) — the battle-resolution module
-// must NOT redefine them.
 const REUSED_AUTO_RESOLUTION_CODES = [
   "AUTO_RESOLUTION_UNAVAILABLE",
   "AUTO_RESOLUTION_VALIDATION_FAILED",
@@ -43,8 +32,6 @@ const REUSED_AUTO_RESOLUTION_CODES = [
 
 const REUSED_COMBAT_CATALOG_CODES = ["TACTICAL_STATE_INVARIANT_FAILED"] as const;
 
-// The two in-slice markers owned by this slice (non-§36, recorded in
-// ADR-0026): run-level failures and viability-predicate failures.
 const IN_SLICE_MARKERS = [
   "BATTLE_AUTO_RESOLUTION_FAILED",
   "BATTLE_VIABILITY_EVALUATION_FAILED",

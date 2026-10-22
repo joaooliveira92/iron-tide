@@ -251,7 +251,6 @@ describe("AC-14: gunnery_ballistics_v1 contract + validate guard (fail closed, I
       await import("../../src/gunnery/rateOfFire.js");
     const baseReloadMs = baseReloadMsForCaliber("CAL_16IN_406MM");
     const resolution = computeEffectiveReloadMs(baseReloadMs, neutralRateFactors());
-    // All-neutral factors (10_000 bp each) reproduce the base reload exactly.
     expect(resolution.effectiveReloadMs).toBe(baseReloadMs);
   });
 });

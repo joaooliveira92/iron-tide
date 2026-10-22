@@ -1,6 +1,3 @@
-// D-3 M4 Aviation: CAP & Strikes — INC-5 (AC-12): air-launched torpedo attack resolution.
-// Simplified hit resolution (does NOT call the C-1 geometric resolver).
-// Pure deterministic functions — no I/O, no Date.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { type RandomEngine, drawUniform } from "@bluewave/random";
 import {
@@ -22,30 +19,17 @@ export interface AirTorpedoAttackInput {
   targetShipId: string;
   dropSpeedMps: SafeInt;
   dropAltitudeM: SafeInt;
-  distanceToTargetM: SafeInt; // for min run check
-  targetSpeedBp: SafeInt; // target speed in bp (10_000 = no evasion)
-  targetSizeBp: SafeInt; // target size factor (10_000 = battleship, 5_000 = destroyer)
+  distanceToTargetM: SafeInt;
+  targetSpeedBp: SafeInt;
+  targetSizeBp: SafeInt;
 }
 
 export interface AirTorpedoAttackResult {
   hit: boolean;
   hitProbabilityBp: SafeInt;
-  damagePackage: GunneryImpact | null; // null if miss
+  damagePackage: GunneryImpact | null;
 }
 
-/**
- * Resolves an air-launched torpedo attack against a surface target.
- *
- * 1. Validates eligibility (drop speed, altitude, run distance).
- * 2. Computes hit probability from base hit, air launch bonus, target size, and target speed.
- * 3. Draws RNG to determine hit/miss.
- * 4. On hit: constructs a GunneryImpact damage package for the damage pipeline.
- *
- * @param input - Torpedo attack input parameters.
- * @param rngEngine - RandomEngine for keyed RNG draw (domain: "air-combat/torpedo-attack").
- * @returns AirTorpedoAttackResult with hit status and damage package.
- * @throws BluewaveError with AIR_COMBAT_TORPEDO_ATTACK_INELIGIBLE if parameters are invalid.
- */
 export function resolveAirTorpedoAttack(
   input: AirTorpedoAttackInput,
   rngEngine: RandomEngine,
@@ -94,29 +78,20 @@ export function resolveAirTorpedoAttack(
     });
   }
 
-  //
-  // hitProbabilityBp = baseHitBp * airLaunchBonus / 10_000 * targetSizeBp / 10_000 * 10_000 / max(1, targetSpeedBp)
-  //
-  // Using integer arithmetic step-by-step with SafeInt.
-
   const baseHitBp = SafeInt(AIR_COMBAT_TORPEDO_BASE_HIT_BP);
   const airLaunchBonus = SafeInt(AIR_COMBAT_TORPEDO_AIR_LAUNCH_HIT_BONUS_BP);
   const basisPoints = SafeInt(AIR_COMBAT_BASIS_POINTS);
 
-  // temp1 = baseHitBp * airLaunchBonus / 10_000
   const temp1 = SafeInt.mul(baseHitBp, airLaunchBonus);
   const step1 = SafeInt.div(temp1, basisPoints, "floor");
 
-  // step2 = step1 * targetSizeBp / 10_000
   const temp2 = SafeInt.mul(step1, input.targetSizeBp);
   const step2 = SafeInt.div(temp2, basisPoints, "floor");
 
-  // step3 = step2 * 10_000 / max(1, targetSpeedBp)
   const speedDenom = Number(input.targetSpeedBp) < 1 ? SafeInt.ONE : input.targetSpeedBp;
   const temp3 = SafeInt.mul(step2, basisPoints);
   const step3 = SafeInt.div(temp3, speedDenom, "floor");
 
-  // Clamp to [1_000, 10_000]
   const rawHitProb = Number(step3);
   const clampedHitProb = SafeInt(Math.max(1_000, Math.min(AIR_COMBAT_BASIS_POINTS, rawHitProb)));
 

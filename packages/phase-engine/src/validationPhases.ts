@@ -1,4 +1,3 @@
-// Boundary validation phases: opening_validation (1) and closing_validation (11).
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { PhaseDescriptor } from "./registry.js";
@@ -6,8 +5,6 @@ import { PhaseResource } from "./phase-resource.js";
 import { constructionPackageProblems } from "./constructionPackages.js";
 import { rebuildProjectProblems } from "./rebuildProjects.js";
 
-// Phase 1: opening_validation — reject an invalid starting snapshot before any
-// phase commits (negative treasury, construction overflow, ship in >1 battle).
 export function runOpeningValidationPhase(
   snapshot: CampaignSnapshot,
   collector: DiagnosticCollector,
@@ -63,9 +60,6 @@ export function runOpeningValidationPhase(
   return valid;
 }
 
-// Phase 11: closing_validation — assert closing invariants (non-negative
-// treasury, no construction overflow). Returns false if ANY error was recorded
-// this month (closing or earlier).
 export function runClosingValidationPhase(
   snapshot: CampaignSnapshot,
   collector: DiagnosticCollector,

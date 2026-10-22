@@ -14,9 +14,6 @@ export interface OptionalAssetCandidate {
   fatigueMultiplierBp: number;
 }
 
-// DESIGN-37 §15: selectionWeight integer formula. All inputs explicit integers.
-// The raw product can exceed 2^53 (10^20), so the integer division is evaluated
-// with BigInt then clamped to the safe-integer result range (max 10_000).
 export function selectionWeightV1(c: OptionalAssetCandidate): number {
   const product =
     BigInt(c.baseMissionWeight) *
@@ -26,12 +23,10 @@ export function selectionWeightV1(c: OptionalAssetCandidate): number {
     BigInt(c.objectiveMultiplierBp) *
     BigInt(c.fatigueMultiplierBp);
   const denominator = 10_000n ** 5n;
-  const weight = product / denominator; // floor for non-negative integers
+  const weight = product / denominator;
   return Math.max(1, Number(weight));
 }
 
-// Candidates enumerated by ascending stable identifier; weighted selection uses
-// the exact stream keyed by ordered candidate-set hash + optional role id.
 export function optionalAssetSelectionV1(
   candidates: OptionalAssetCandidate[],
   optionalRoleId: string,
@@ -39,8 +34,6 @@ export function optionalAssetSelectionV1(
   maxAssets: number,
 ): string[] {
   const ordered = [...candidates].sort((a, b) => a.assetId.localeCompare(b.assetId));
-  // stream identity (candidate-set hash + role id) is established by the caller
-  // when constructing the RandomStream key.
 
   const selected: string[] = [];
   const weights = ordered.map((c) => selectionWeightV1(c));
@@ -61,8 +54,6 @@ export function optionalAssetSelectionV1(
     selected.push(ordered[chosen]!.assetId);
   }
 
-  // key contract: candidate-set hash + role id are part of the key used by the
-  // caller when constructing the RandomStream.
   return selected;
 }
 

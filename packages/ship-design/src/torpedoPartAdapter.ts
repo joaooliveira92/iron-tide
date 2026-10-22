@@ -1,27 +1,3 @@
-/**
- * The P1 torpedo-launcher read path (ship-part-model SPM-R3, SPM-R7, SPM-R20; proposal
- * §9.3–9.4). Additive and in memory only, like the gun slice (`gunPartAdapter.ts`).
- *
- * - Each `TORPEDO_TUBE` component becomes a **single-tube launcher** part that keeps the
- *   legacy component id. Its bore is the structured diameter of the torpedo it loads
- *   (`torpedoMount.torpedoModelId`), and its own `torpedo` slot requires
- *   `diameterUmEqualsBore`.
- * - Each national `componentVariants` entry over a launcher becomes a flattened **variant**
- *   of that prototype: bore from the nation's structured `domesticTorpedoDiameterUm`,
- *   quantities from the overlaid legacy component. A display label ("35 cm") is a name
- *   only; no engineering value is read from it (I-25).
- * - A variant whose bore differs from the torpedo it loads carries the `DQ-TORPEDO-001`
- *   waiver on `diameterUmEqualsBore`, so the inherited relationship stays legal and is
- *   reported, not fixed (§9.4).
- * - A tube placement becomes one entry: `mountCount` = the legacy `tubes` (absent → 1;
- *   zero, negative, fractional or non-finite fails, I-23), of the launcher the nation's
- *   catalogue overlays today. Quantities are `PER_PART_UNIT` with no fixed term, and no
- *   multi-tube launcher is ever inferred (T4). Crew, volume and deck footprint are read from
- *   the component's per-tube formulas (`legacyComponentQuantities.ts`, ticket 05); a formula
- *   with a count-independent term is reported, never turned into a fixed term.
- *
- * Component `obsoleteMonth` is exclusive, like `availableUntil`, so it copies unchanged.
- */
 import type {
   FlattenedPart,
   LoadoutEntryData,
@@ -61,25 +37,19 @@ export function navalProfileFile(nationId: string): string {
   return `ship-building/naval-profiles/${nationId}.yaml`;
 }
 
-/** The one waiver code and constraint the read path writes (SPM-R7). */
 export const TORPEDO_WAIVER = { code: "DQ-TORPEDO-001", waives: "diameterUmEqualsBore" } as const;
 
-/** A launcher the adapter could not read, with the reason (never dropped silently). */
 export interface UnreadLauncher {
   readonly id: string;
   readonly code:
     | "PART_READ_PATH_NO_TORPEDO_DIAMETER"
     | "PART_READ_PATH_UNKNOWN_LAUNCH_TYPE"
-    /** A per-tube formula the part model cannot carry, or one with a fixed term (T2). */
     | "PART_READ_PATH_UNREADABLE_QUANTITY";
   readonly message: string;
 }
 
-/** The launcher index: base launchers, national variants and the read failures. */
 export interface LauncherPartModel {
-  /** Every launcher part (bases and variants), codepoint-ordered by id. */
   readonly parts: readonly FlattenedLauncherPart[];
-  /** Variant id → its nation (variants only). */
   readonly variantNation: ReadonlyMap<string, string>;
   readonly unread: readonly UnreadLauncher[];
 }
@@ -119,11 +89,6 @@ function launcherQuantities(def: ComponentDef): {
   };
 }
 
-/**
- * Build the launcher parts from today's content. `torpedoDiameterUm` reads the structured
- * diameter of a loaded torpedo model (today the combat torpedo catalogue); a launcher whose
- * torpedo has none is reported in `unread` instead of guessed.
- */
 export function buildLauncherPartModel(input: {
   readonly components: readonly ComponentDef[];
   readonly profiles: readonly NationNavalProfile[];
@@ -179,7 +144,6 @@ export function buildLauncherPartModel(input: {
       quantities: read.quantities,
       revisions: [],
       origin: { sourceFile: LAUNCHER_COMPONENT_FILE },
-      // Components carry no structured provenance; P2's codemod must author it (ticket 11).
       provenance: {
         sourceStatus: "PLACEHOLDER",
         confidence: "LOW",
@@ -257,27 +221,19 @@ export function buildLauncherPartModel(input: {
   };
 }
 
-// Tube placements → loadout entries (§9.3)
-
-/** One tube placement rendered in the new model. */
 export interface TubePlacementTranslation {
   readonly designId: string;
   readonly instanceId: string;
   readonly nationId: string;
-  /** The legacy component (the base launcher's id). */
   readonly componentId: string;
-  /** The legacy `tubes`, or `null` when the placement leaves it absent. */
   readonly legacyTubes: number | null;
-  /** True when an absent `tubes` translated to the documented default of 1 (T1). */
   readonly defaulted: boolean;
   readonly mountCount: number;
   readonly launcherPart: FlattenedLauncherPart;
-  /** The placement's one loadout entry (no fixed term, no inferred multi-tube launcher). */
   readonly entry: LoadoutEntryData;
   readonly quantities: readonly QuantityLine[];
 }
 
-/** A tube placement that cannot be translated, with its reason. */
 export interface UntranslatedTubePlacement {
   readonly designId: string;
   readonly instanceId: string;
@@ -291,10 +247,6 @@ export type TubePlacementResult =
   | { readonly translation: TubePlacementTranslation; readonly untranslated: null }
   | { readonly translation: null; readonly untranslated: UntranslatedTubePlacement };
 
-/**
- * Translate one tube placement (§9.3). The launcher is the one the nation's catalogue
- * overlays today (`appliedModels`, from `catalogueForNation`), else the base launcher.
- */
 export function translateTubePlacement(input: {
   readonly designId: string;
   readonly placement: PlacementSpec;

@@ -3,9 +3,6 @@ import { ValidateStage } from "@bluewave/content-compiler";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { ParseOutput } from "../src/stages/parse.js";
 
-// T-1 02 (#111, spec #109 R1): the optional battle-offer ruleset section. Absent = dormant; present it is strict and
-// all-or-nothing. Every number here is a FIXTURE-CLASS value for exercising the decoder; none is a sourced G1-G7 value
-// and none may reach the production pack.
 const FIXTURE_PROVENANCE = {
   sourceStatus: "BALANCE_TARGET",
   confidence: "LOW",

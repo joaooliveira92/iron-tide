@@ -29,7 +29,6 @@ describe("component access effects", () => {
     expect(accessEffect("IMPORTED", friendly).costMultiplierBp).toBeGreaterThan(
       accessEffect("IMPORTED", DEFAULT_ACCESS_POLICY).costMultiplierBp,
     );
-    // Domestic supply is never cut.
     expect(accessEffect("DOMESTIC", hostile).available).toBe(true);
   });
   it("captured/studied equipment stays available in war but cannot be refitted", () => {
@@ -44,10 +43,8 @@ describe("national construction modifiers", () => {
   it("composes industrial and access premiums into one multiplier (each factor once)", () => {
     const ukM = resolveNationalConstruction(uk, "1880-01");
     const frM = resolveNationalConstruction(france, "1880-01");
-    // UK cheaper and faster than France (grounded direction).
     expect(ukM.costMultiplierBp).toBeLessThan(frM.costMultiplierBp);
     expect(ukM.buildTimeMultiplierBp).toBeLessThan(frM.buildTimeMultiplierBp);
-    // The breakdown's product equals the combined multiplier.
     const product = ukM.costBreakdown.reduce(
       (acc, b) => Math.ceil((acc * b.costMultiplierBp) / 10_000),
       10_000,
@@ -64,8 +61,8 @@ describe("national construction modifiers", () => {
     expect(e.baseCostUnits).toBe(200);
     expect(e.costUnits).toBe(Math.ceil((200 * m.costMultiplierBp) / 10_000));
     expect(e.buildMonths).toBe(Math.ceil((24 * m.buildTimeMultiplierBp) / 10_000));
-    expect(e.costUnits).toBeLessThan(200); // UK builds below the 1894 baseline cost
-    expect(e.buildMonths).toBeLessThan(24); // and faster
+    expect(e.costUnits).toBeLessThan(200);
+    expect(e.buildMonths).toBeLessThan(24);
   });
   it("France costs and builds above the baseline; the two nations differ measurably", () => {
     const ukE = applyNationalConstructionEconomics(

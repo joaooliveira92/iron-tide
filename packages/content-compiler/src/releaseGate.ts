@@ -3,15 +3,6 @@ import { SOURCE_STATUSES } from "@bluewave/content-schema";
 import { collectProvenanceLocations } from "./confidence.js";
 import type { ContentBundle } from "./index.js";
 
-/**
- * The placeholder release gate (CAH-PROV-3). A shipping pack must not carry an
- * unresolved `PLACEHOLDER` value: the gate walks the compiled bundle's provenance
- * records (the same structural walk the confidence report uses) and fails unless
- * the exact collection/record/field is on a recorded, justified allowlist. This
- * turns the "replace before release" README lists into machinery.
- */
-
-/** The one flagged source status today; derived from the shared vocabulary. */
 export const PLACEHOLDER_SOURCE_STATUS: (typeof SOURCE_STATUSES)[number] = "PLACEHOLDER";
 
 export interface PlaceholderViolation {
@@ -29,18 +20,11 @@ export interface PlaceholderAllowlistEntry {
 
 export interface PlaceholderGateResult {
   readonly ok: boolean;
-  /** Unresolved placeholders not covered by a justified allowlist entry. */
   readonly violations: readonly PlaceholderViolation[];
-  /** Placeholders admitted by a justified allowlist entry. */
   readonly allowed: readonly PlaceholderViolation[];
-  /** Allowlist entries that are malformed or carry no justification. */
   readonly invalidAllowlist: readonly string[];
 }
 
-/**
- * Checks a bundle for unresolved placeholders. `ok` is true only when no
- * placeholder is unallowlisted and every allowlist entry is justified.
- */
 export function checkPlaceholderGate(
   bundle: ContentBundle,
   allowlist: readonly PlaceholderAllowlistEntry[],
@@ -83,7 +67,6 @@ export function checkPlaceholderGate(
   };
 }
 
-/** Every provenance record whose `sourceStatus` is `PLACEHOLDER`. */
 export function collectPlaceholders(bundle: ContentBundle): PlaceholderViolation[] {
   return collectProvenanceLocations(bundle)
     .filter((location) => location.sourceStatus === PLACEHOLDER_SOURCE_STATUS)

@@ -52,12 +52,6 @@ export class Compiler {
   }
 }
 
-/**
- * Read every source the first stage parses into an immutable name→text map, so
- * `ParseStage` performs no ambient filesystem I/O (ADR-0004). A caller that
- * already supplies `fileContents` (an in-memory input) is returned unchanged;
- * a missing path is left out of the map and the parse stage reports FILE-READ.
- */
 function withFileContents(input: CompilerInput): CompilerInput {
   if (input.fileContents !== undefined) return input;
   const fileContents: Record<string, string> = {};
@@ -99,9 +93,7 @@ function withFileContents(input: CompilerInput): CompilerInput {
     if (path in fileContents) continue;
     try {
       fileContents[path] = readFileSync(resolve(input.contentDir, path), "utf8");
-    } catch {
-      // ParseStage reports FILE-READ for any path absent from the map.
-    }
+    } catch {}
   }
   return { ...input, fileContents };
 }

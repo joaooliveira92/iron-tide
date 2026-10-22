@@ -1,5 +1,3 @@
-// S-5 08 (#82, spec #73 R10/R11): base-limit counting, flagging and the S-1 consequence seam.
-// EVERY NUMBER BELOW IS FIXTURE-CLASS: it exercises the mechanics and is never a production value (R11, R14).
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import {
@@ -109,7 +107,6 @@ describe("baseLimitInArea", () => {
 describe("measureBaseLimits", () => {
   it("flags the ships beyond the limit by ascending ship id and none within it", () => {
     const ships = ["s1", "s2", "s3", "s4", "s5"].map((id) => ship(id));
-    // level 2 -> limit 4
     const [row] = measureBaseLimits(snapshot(ships.reverse()), RULES);
     expect(row).toEqual({
       nationId: "uk",
@@ -154,7 +151,6 @@ describe("measureBaseLimits", () => {
   });
 
   it("is not exempted by a war or blockade (ADR-0248): it reads neither", () => {
-    // The snapshot subset has no `wars`, so the check cannot consult the presence exemption.
     expect(() => measureBaseLimits(snapshot([ship("a")]), RULES)).not.toThrow();
   });
 });

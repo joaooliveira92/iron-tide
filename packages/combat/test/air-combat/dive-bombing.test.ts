@@ -1,4 +1,3 @@
-// AC-11 (INC-4): Dive-bombing penetration multiplier.
 import { describe, expect, it } from "vite-plus/test";
 import {
   computeBombDamageMultiplier,
@@ -37,19 +36,15 @@ describe("AC-11: Dive-bombing penetration", () => {
   });
 
   it("dive bombing penetration is 8_500bp of equal-mass level bomb = 0.85x", () => {
-    // 8_500 / 10_000 = 0.85
     const divePen = Number(computePenetrationMultiplier(true));
     const levelPen = Number(computePenetrationMultiplier(false));
     expect(divePen / levelPen).toBe(0.85);
   });
 
   it("multiplier does NOT change bomb explosive mass (penetration modifier only)", () => {
-    // The function returns a pure multiplier — explosive mass is handled separately.
-    // This test verifies the multiplier is a constant, not a function of bomb mass.
     const diveResult = computePenetrationMultiplier(true);
     const levelResult = computePenetrationMultiplier(false);
 
-    // Both are constant values
     expect(Number(diveResult)).toBe(AIR_COMBAT_DIVE_BOMBING_PENETRATION_MULTIPLIER_BP);
     expect(Number(levelResult)).toBe(AIR_COMBAT_LEVEL_BOMBING_PENETRATION_MULTIPLIER_BP);
   });

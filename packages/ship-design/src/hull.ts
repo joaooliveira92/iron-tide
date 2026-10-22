@@ -12,7 +12,6 @@ import {
 } from "./ledger.js";
 import { kg, toSafe, type Bp, type Kg, type Mm } from "./units.js";
 
-/** Hull-form record (data). All ratios are basis points; L/B is x100 (e.g. 850 = 8.50). */
 export interface HullForm {
   readonly id: string;
   readonly lengthMinMm: number;
@@ -35,30 +34,23 @@ export interface HullSpec {
   readonly structuralSchemeId: string;
   readonly subdivisionGrade: 0 | 1 | 2 | 3 | 4;
   readonly targetDisplacementKg: Kg;
-  /** Treaty / policy / dock limit, or null. */
   readonly limitDisplacementKg: Kg | null;
   readonly designMarginBp: Bp;
   readonly growthReserveBp: Bp;
-  /** Freeboard preset (ADR-0233): `NORMAL` (default) keeps the derived freeboard; `LOW` applies the balance's cuts. */
   readonly freeboardProfile?: "NORMAL" | "LOW";
 }
 
-/** Balancing coefficients (spec §7). Authored in balance/hull.yaml, passed in; never defaulted in code. */
 export interface HullBalance {
   readonly hullCoeffMilliKg: number;
   readonly seawaterKgPerM3: number;
   readonly materialBp: Readonly<Record<string, number>>;
   readonly schemeBp: Readonly<Record<string, number>>;
   readonly subdivisionBp: readonly [number, number, number, number, number];
-  /** Allowed |ledger - buoyant| / buoyant before a mismatch is reported. */
   readonly buoyancyTolBp: number;
-  /** Overweight vs target tolerated before BLOCKING (DESIGN-21 §20 style). */
   readonly overTargetTolBp: number;
   readonly reserveBuoyancyWarnBp: number;
   readonly reserveBuoyancyCriticalBp: number;
-  /** Share of reserve buoyancy a LOW freeboard gives up, bp. BALANCE TARGET (ADR-0213); absent = 0. */
   readonly lowFreeboardReserveCutBp?: number;
-  /** Share of hull structure weight a LOW freeboard saves, bp. BALANCE TARGET; absent = 0. */
   readonly lowFreeboardHullWeightSavingBp?: number;
 }
 
@@ -73,10 +65,8 @@ export interface HullResult {
 
 const BP = 10_000n;
 const MM3_PER_M3 = 1_000_000_000n;
-// (1e9)^(63/50): converts (L*B*D in mm^3)^1.26 into (L*B*D in m^3)^1.26. A unit conversion, not a balance value.
 const MM3_TO_M3_POW_FACTOR = powRational(MM3_PER_M3, 63, 50);
 
-/** F-H1: buoyant displacement at the design draught, floor. */
 export function buoyantDisplacement(h: HullSpec, b: HullBalance): Kg {
   const v =
     (BigInt(h.lengthWl) *
@@ -88,21 +78,14 @@ export function buoyantDisplacement(h: HullSpec, b: HullBalance): Kg {
   return kg(toSafe("buoyantDisplacement", v));
 }
 
-/**
- * F-H2: hull weight (structure and fittings), rounded up to the next kg.
- * W = K * f_mat * f_scheme * f_sub * f_form * (L*B*D)^1.26 with L, B, D in metres.
- * The exponent and K are fitted to the hull-weight fractions of four sourced ships (docs/research/ship-building-early-band.md);
- * a power law in hull volume fits them to within about 3 % across a 70x range of size.
- */
 export function hullStructureWeight(h: HullSpec, form: HullForm, b: HullBalance): Kg {
   const mat = b.materialBp[h.materialId];
   const scheme = b.schemeBp[h.structuralSchemeId];
   if (mat === undefined || scheme === undefined)
     throw new Error("unknown material or structural scheme");
   const sub = b.subdivisionBp[h.subdivisionGrade];
-  const volume = BigInt(h.lengthWl) * BigInt(h.beam) * BigInt(h.depthToMainDeck); // mm^3
+  const volume = BigInt(h.lengthWl) * BigInt(h.beam) * BigInt(h.depthToMainDeck);
   const p = powRational(volume, 63, 50);
-  // coefficient (milli-kg) * four bp factors / (1000 * BP^4) * volume^1.26 / unit factor
   const num =
     BigInt(b.hullCoeffMilliKg) *
     BigInt(mat) *
@@ -116,7 +99,6 @@ export function hullStructureWeight(h: HullSpec, form: HullForm, b: HullBalance)
   return kg(toSafe("hullStructureWeight", (num * keepBp + den - 1n) / den));
 }
 
-/** F-H4: reserve buoyancy in bp = (D-T)/T * Cwp * sheer / Cb. */
 export function reserveBuoyancyBp(h: HullSpec, form: HullForm, b?: HullBalance): number {
   const fb = BigInt(h.depthToMainDeck) - BigInt(h.draught);
   if (fb <= 0n) return 0;
@@ -129,17 +111,11 @@ export function reserveBuoyancyBp(h: HullSpec, form: HullForm, b?: HullBalance):
 
 const fmt = (n: number) => groupedInteger(n);
 
-/**
- * Computes the hull line, margin and reserve, completes the ledger and validates displacement and hull geometry.
- * `others` carries the eight non-hull, non-margin, non-reserve lines already computed by other models.
- * Nothing is auto-corrected: every failure is reported with causes and remedies (spec pillar 3).
- */
 export function compileHull(
   hull: HullSpec,
   form: HullForm,
   balance: HullBalance,
   others: DisplacementLedger,
-  /** Share of the hull-structure weight saved by an aluminium superstructure, bp (ADR-0252); 0 = steel. */
   hullWeightSavingBp = 0,
 ): HullResult {
   const findings: Finding[] = [];
@@ -249,7 +225,6 @@ export function compileHull(
   const hullKg = kg(structureKg - Number((BigInt(structureKg) * BigInt(hullWeightSavingBp)) / BP));
   let ledger = withLine(others, "hull", hullKg);
 
-  // Margin and reserve are derived lines (F-H5): margin on the other ten, reserve on the target.
   let sub = 0;
   for (const c of LEDGER_CATEGORIES) if (c !== "margin" && c !== "reserve") sub += ledger[c];
   const marginKg = Number((BigInt(sub) * BigInt(hull.designMarginBp) + BP - 1n) / BP);

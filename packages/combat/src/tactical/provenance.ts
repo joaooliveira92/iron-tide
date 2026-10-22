@@ -3,7 +3,6 @@ import { BluewaveError } from "@bluewave/contracts";
 export const TACTICAL_PROVENANCE_INVALID = "TACTICAL_PROVENANCE_INVALID" as const;
 export const TEMPORARY_ASSET_PROVENANCE_INVALID = "TEMPORARY_ASSET_PROVENANCE_INVALID" as const;
 
-// DESIGN-26 §23 campaign asset provenance.
 export interface CampaignAssetProvenance {
   battleAssetId: string;
   campaignAssetId: string;
@@ -17,7 +16,6 @@ export interface CampaignAssetProvenance {
   provenanceHash: string;
 }
 
-// DESIGN-26 §24 temporary asset provenance.
 export interface TemporaryAssetProvenance {
   temporaryAssetId: string;
   generatorIdentifier: string;

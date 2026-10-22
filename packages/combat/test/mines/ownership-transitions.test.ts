@@ -1,9 +1,3 @@
-// AC-17 (INC-7): DESIGN-35 §23 ownership/control changes. Legal/military control
-// change never auto-deletes/neutralizes pressure; every transition declares
-// exactly one of six CLOSED dispositions; uncontrolled mines remain active until
-// decay/clearance; missing disposition for controlled-defensive ->
-// CONTROLLED_MINE_TRANSFER_DISPOSITION_MISSING. The §23 hard invariant: pressure
-// field UNCHANGED in every disposition.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt, BluewaveError } from "@bluewave/contracts";
 import {
@@ -125,7 +119,6 @@ describe("AC-17: disposition semantics on records", () => {
     const result = applyOwnershipTransition(r, "DEACTIVATE_CONTROLLED_MINES", CONTEXT);
     expect(result.controlInfrastructureOperational).toBe(false);
     expect(result.record.pressure).toBe(SafeInt(400_000));
-    // NONE of the ownership/controller fields are deleted by deactivation.
     expect(result.record.legalOwnerOfSourceFacilities).toBe("USSR");
     expect(result.record.militaryControllerOfSourceFacilities).toBe("USSR");
   });
@@ -159,7 +152,6 @@ describe("AC-17: disposition semantics on records", () => {
     );
     expect(result.declaredDestroyEffect).toBe("control-infrastructure-physically-destroyed");
     expect(result.controlInfrastructureOperational).toBe(false);
-    // §23: pressure persists; it simply flips to uncontrolled (no auto-delete).
     expect(result.record.pressure).toBe(SafeInt(400_000));
   });
 
@@ -203,11 +195,10 @@ describe("AC-17: missing disposition for controlled-defensive throws CONTROLLED_
   });
 
   it("uncontrolled mines (CONTACT) with NO disposition default to PRESERVE_ACTIVE (persist unchanged)", () => {
-    const r = validRecord(); // CONTACT
+    const r = validRecord();
     const result = applyOwnershipTransition(r, undefined, CONTEXT);
     expect(result.disposition).toBe("PRESERVE_ACTIVE");
     expect(result.record.pressure).toBe(SafeInt(400_000));
-    // Uncontrolled mines remain active until decay/clearance — ownership fields untouched.
     expect(result.record.legalOwnerOfSourceFacilities).toBe("USSR");
     expect(result.record.militaryControllerOfSourceFacilities).toBe("USSR");
   });

@@ -1,9 +1,3 @@
-// AC-20/§29 (INC-8): canonical ordering — wars by id → areas by id →
-// mine-pressure records by laying-participant/type/id → laying sources by
-// source id → sweeping ships by ship id → sweep allocation per §10 →
-// route/battle checks by target id → friendly-fire checks by ship id →
-// effects by declared ordinal. DB/UI/wall-clock order MUST NOT affect
-// outcomes; input-order independence proven by shuffled input.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {
@@ -24,8 +18,6 @@ import {
 } from "../../src/mines/index.js";
 
 function shuffled<T>(items: readonly T[]): T[] {
-  // Deterministic shuffle (fixed rotation) — proves input-order independence
-  // without a non-deterministic RNG in the test.
   return items.length > 1
     ? [items[items.length - 1]!, ...items.slice(0, items.length - 1)]
     : [...items];
@@ -146,7 +138,6 @@ describe("AC-20/§29: canonical mine-warfare ordering", () => {
       },
     ];
     const out = canonicallySorted(shuffled(candidates), compareSweepAllocation);
-    // key 1: threatening first (MP-2); then by risk desc (MP-3 over MP-1)
     expect(out.map((c) => String((c.record as { minePressureId: string }).minePressureId))).toEqual(
       ["MP-2", "MP-3", "MP-1"],
     );

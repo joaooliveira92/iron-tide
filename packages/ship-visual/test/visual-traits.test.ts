@@ -18,11 +18,6 @@ import {
 } from "../src/index.js";
 import { catalog, mount } from "./fixtures.js";
 
-/**
- * The `visual-traits/1` render adapter (D16, proposal §8.2): the value mirrors, the ADR-0148
- * translation map, and the drawing resolution order.
- */
-
 const universalDefault = mount("x-d-large-turret", {
   style: "X",
   era: "DREADNOUGHT",
@@ -143,9 +138,6 @@ describe("central and broadside batteries resolve to casemate-family drawings", 
   });
 });
 
-// The nine D17 central-battery placements carry the `BROADSIDE_BATTERY` mount type after
-// reclassification (equivalence inventory `centralBatteryPlacements: 9`); this chain proves each
-// resolves to a casemate-family drawing, never the generic glyph.
 describe("a broadside/central battery resolves to the casemate family (the nine)", () => {
   it("derives battery_port, which the translation map sends to CASEMATE", () => {
     const form = defaultPresentationForm({

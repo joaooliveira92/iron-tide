@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { battleOffersFromRulesets } from "../src/index.js";
 
-// T-1 03 (#112): the engine reads the battle-offer section from the compiled rulesets. Absent = dormant (undefined),
-// never a default; a corrupt section throws rather than being treated as dormant. FIXTURE-CLASS values only.
-// Inline (not @bluewave/test-support, which depends on this package).
 const FIXTURE_BATTLE_OFFER_RULES = {
   sectionVersion: 1,
   estimateModel: { kind: "EXACT", showComposition: false },

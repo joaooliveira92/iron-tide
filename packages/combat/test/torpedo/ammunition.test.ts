@@ -1,10 +1,3 @@
-// AC-3: ammunition + atomic consume (DESIGN-40 §3). Every launch consumes
-// exactly one loaded torpedo per fired tube; a reload reserves + consumes one
-// compatible reserve torpedo and the required reload time. The module NEVER
-// creates ammunition, substitutes an incompatible model, or exceeds physical
-// tube/magazine capacity; failures use TORPEDO_AMMUNITION_UNAVAILABLE or
-// TORPEDO_MODEL_INCOMPATIBLE (structural violations fail closed with
-// TORPEDO_STATE_INVARIANT_FAILED).
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -77,7 +70,6 @@ describe("AC-3: consumeForLaunch consumes exactly one torpedo per fired tube", (
     expect(accounts.every((a) => a.modelId === G7A)).toBe(true);
     expect(next.loadedPerTube).toEqual([EMPTY_TUBE, G7A, EMPTY_TUBE, EMPTY_TUBE]);
     expect(next.reserveAmmunition).toEqual({ [G7A]: 6, [G7E]: 3 });
-    // no creation: exactly two torpedoes left the loaded surface
     expect(totalInventory(next)).toBe(totalInventory(state) - 2);
   });
 
@@ -85,16 +77,13 @@ describe("AC-3: consumeForLaunch consumes exactly one torpedo per fired tube", (
     const state = baseLauncher();
     const err = expectCode(() => consumeForLaunch(state, [1, 2]), TORPEDO_AMMUNITION_UNAVAILABLE);
     expect(err.context.tubeIndex).toBe(2);
-    // the original state is untouched — tube 1 was never consumed
     expect(state.loadedPerTube).toEqual([G7A, G7A, EMPTY_TUBE, G7A]);
-    // concrete expected total: 3 loaded + 6 G7a + 3 G7e reserve = 12
     expect(totalInventory(state)).toBe(12);
   });
 
   it("rejects duplicate tube indexes in one salvo — a tube fires at most once (F4)", () => {
     const state = baseLauncher();
     expectCode(() => consumeForLaunch(state, [0, 0]), TORPEDO_STATE_INVARIANT_FAILED);
-    // atomic: nothing was consumed
     expect(state.loadedPerTube).toEqual([G7A, G7A, EMPTY_TUBE, G7A]);
     expect(state.reserveAmmunition).toEqual({ [G7A]: 6, [G7E]: 3 });
     expect(totalInventory(state)).toBe(12);
@@ -126,7 +115,7 @@ describe("AC-3: reserveForReload reserves + consumes one compatible reserve", ()
     });
     expect(account).toEqual({ modelId: G7A, before: 6, after: 5 });
     expect(next.reserveAmmunition[G7A]).toBe(5);
-    expect(next.loadedPerTube[2]).toBe(EMPTY_TUBE); // tube fills only on completion
+    expect(next.loadedPerTube[2]).toBe(EMPTY_TUBE);
     expect(next.reloadState).toEqual({
       status: "RELOAD_IN_PROGRESS",
       tubeIndex: 2,
@@ -151,7 +140,6 @@ describe("AC-3: reserveForReload reserves + consumes one compatible reserve", ()
       TORPEDO_MODEL_INCOMPATIBLE,
     );
     expect(err.context.modelId).toBe(G7E);
-    // atomic: nothing consumed
     expect(state.reserveAmmunition[G7E]).toBe(3);
     expect(state.loadedPerTube[2]).toBe(EMPTY_TUBE);
   });
@@ -191,15 +179,14 @@ describe("AC-3: reserveForReload reserves + consumes one compatible reserve", ()
       () =>
         reserveForReload(state, {
           tubeIndex: 2,
-          modelId: "ger_533mm_g7a_2040", // never shipped
+          modelId: "ger_533mm_g7a_2040",
           torpedoes: COMPILED_TORPEDOES,
-          compatible: true, // caller asserts compatibility — must still fail closed
+          compatible: true,
           requiredReloadTimeMs: RELOAD_MS,
         }),
       INVALID_TORPEDO_MODEL_DEFINITION,
     );
     expect(err.context.value).toBe("ger_533mm_g7a_2040");
-    // atomic: no reserve consumed, no reload record started
     expect(state.reserveAmmunition).toEqual({ [G7A]: 6, [G7E]: 3 });
     expect(state.loadedPerTube[2]).toBe(EMPTY_TUBE);
     expect(state.reloadState).toEqual(NO_RELOAD_IN_PROGRESS);
@@ -266,12 +253,11 @@ describe("AC-3: reload completion — no creation, no substitution", () => {
       torpedoes: COMPILED_TORPEDOES,
       compatible: true,
       requiredReloadTimeMs: RELOAD_MS,
-      progressMs: RELOAD_MS, // reload elapsed
+      progressMs: RELOAD_MS,
     });
     const completed = completeTorpedoReload(reserved.state);
-    expect(completed.loadedPerTube[2]).toBe(G7A); // the same model — no substitution
+    expect(completed.loadedPerTube[2]).toBe(G7A);
     expect(completed.reloadState).toEqual(NO_RELOAD_IN_PROGRESS);
-    // reserve -1, tube +1: no ammunition was created or destroyed across the cycle
     expect(totalInventory(completed)).toBe(totalInventory(state));
     expect(completed.reserveAmmunition[G7A]).toBe(5);
   });
@@ -294,11 +280,6 @@ describe("AC-3: reload completion — no creation, no substitution", () => {
 });
 
 describe("AC-3 (NF-1): a missing reloadState fails closed — never a raw TypeError", () => {
-  // The construction boundary (withTorpedoLauncherStateHash -> state.ts F3)
-  // already rejects a null reloadState; these tests exercise the ammunition
-  // module's own guards on a DESERIALIZED/engine-mutated state that bypassed
-  // construction (the NF-1 scenario) — the spread preserves the authoritative
-  // fields while nulling reloadState.
   it("reserveForReload rejects a null reloadState with TORPEDO_STATE_INVARIANT_FAILED", () => {
     const state = baseLauncher();
     const raw = { ...state, reloadState: null } as unknown as TorpedoLauncherState;
@@ -314,7 +295,6 @@ describe("AC-3 (NF-1): a missing reloadState fails closed — never a raw TypeEr
       TORPEDO_STATE_INVARIANT_FAILED,
     );
     expect(err.context.field).toBe("reloadState");
-    // atomic: nothing reserved, tube untouched
     expect(raw.reserveAmmunition[G7A]).toBe(6);
     expect(raw.loadedPerTube[2]).toBe(EMPTY_TUBE);
   });
@@ -324,7 +304,6 @@ describe("AC-3 (NF-1): a missing reloadState fails closed — never a raw TypeEr
     const raw = { ...state, reloadState: undefined } as unknown as TorpedoLauncherState;
     const err = expectCode(() => completeTorpedoReload(raw), TORPEDO_STATE_INVARIANT_FAILED);
     expect(err.context.field).toBe("reloadState");
-    // atomic: tube untouched
     expect(raw.loadedPerTube).toEqual([G7A, G7A, EMPTY_TUBE, G7A]);
   });
 });
@@ -333,10 +312,8 @@ describe("AC-3: inventory conservation across consume/reload cycles", () => {
   it("never creates ammunition: every transition either conserves or strictly decreases the total", () => {
     let state = baseLauncher();
     const start = totalInventory(state);
-    // fire two tubes
     state = consumeForLaunch(state, [0, 3]).state;
     expect(totalInventory(state)).toBe(start - 2);
-    // reload one empty tube (reserve consumed; tube still empty)
     state = reserveForReload(state, {
       tubeIndex: 0,
       modelId: G7A,
@@ -346,10 +323,8 @@ describe("AC-3: inventory conservation across consume/reload cycles", () => {
       progressMs: RELOAD_MS,
     }).state;
     expect(totalInventory(state)).toBe(start - 3);
-    // complete the reload (tube fills from the reserved stock)
     state = completeTorpedoReload(state);
     expect(totalInventory(state)).toBe(start - 2);
-    // nothing ever increased the total above a prior step
     for (const entry of state.loadedPerTube) {
       expect(entry === EMPTY_TUBE || typeof entry === "string").toBe(true);
     }

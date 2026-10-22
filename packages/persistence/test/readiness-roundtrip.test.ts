@@ -1,7 +1,3 @@
-// S-1 (readiness and maintenance, map D2): the required per-ship readiness state
-// and crew-quality value survive a SaveStore save -> load round trip exactly, so
-// a player's readiness orders and crew work are durable state, not recomputed.
-
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

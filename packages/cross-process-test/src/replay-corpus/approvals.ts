@@ -4,18 +4,8 @@ import { Data, Result, Schema, SchemaIssue } from "effect";
 
 import { decodeReplayFile, type ReplayFile } from "./format.js";
 
-/**
- * Hash-bound approvals for intended replay-corpus change (ADR-0246 decision 5).
- *
- * An entry binds one replay and month to the exact old and new checkpoint hashes. It is
- * consumed by the change it was written for: the file is append-only, so an entry already
- * present on the base side can never cover a later delta, and an entry that covers no delta
- * is orphaned. Prior art: the ship-part approved-diffs gate, whose "reads as a broad
- * approval" test is shared rather than copied.
- */
 export const REPLAY_APPROVALS_SCHEMA = "replay-approvals/1";
 
-/** Stands for a month that does not exist on one side of a diff. */
 const ABSENT = "absent";
 
 const CHECKPOINT_CONTEXT = "bluewave/replay-corpus/month-checkpoint/v1";
@@ -63,7 +53,6 @@ const ApprovalsFileSchema = Schema.Struct({
 export type ApprovalEntry = typeof ApprovalEntrySchema.Type;
 export type ApprovalsFile = typeof ApprovalsFileSchema.Type;
 
-/** The approvals file or a replay file in the corpus could not be read. */
 export class ApprovalsError extends Data.TaggedError("ApprovalsError")<{
   readonly message: string;
 }> {}
@@ -95,13 +84,11 @@ function decodeApprovals(text: string | undefined): Result.Result<ApprovalsFile,
   return Result.succeed(decoded.success);
 }
 
-/** The committed corpus on one side of a diff: replay file text by file name, and the approvals text. */
 export interface CorpusState {
   readonly replays: ReadonlyMap<string, string>;
   readonly approvals?: string;
 }
 
-/** Hash of one month's whole checkpoint: snapshot and every ledger entry. */
 export function checkpointHash(month: ReplayFile["months"][number]): string {
   return hashWithContext(canonicalSerialize(month), CHECKPOINT_CONTEXT);
 }
@@ -137,10 +124,6 @@ interface Delta {
   readonly newHash: string;
 }
 
-/**
- * Months of a base replay whose checkpoint changed or vanished. A replay or month that only
- * exists on the head side is an addition, proven by `verifyReplay` rather than approved here.
- */
 function corpusDeltas(
   base: ReadonlyMap<string, ReplayFile>,
   head: ReadonlyMap<string, ReplayFile>,
@@ -178,7 +161,6 @@ export interface ApprovalCheck {
   readonly failures: readonly ApprovalFailure[];
 }
 
-/** Render failures as stable LF text with no paths or timestamps. */
 export function formatApprovalFailures(failures: readonly ApprovalFailure[]): string {
   return failures
     .map((f) => `${f._tag} ${f.replayId} month ${String(f.month)}: ${f.detail}\n`)
@@ -187,10 +169,6 @@ export function formatApprovalFailures(failures: readonly ApprovalFailure[]): st
 
 const short = (hash: string): string => hash.slice(0, 12);
 
-/**
- * Judge the corpus delta from `base` to `head` against the head approvals file. Pure: the
- * caller supplies both sides, so CI only verifies and never writes.
- */
 export function checkReplayApprovals(
   base: CorpusState,
   head: CorpusState,
@@ -295,10 +273,6 @@ export interface ProposalInput {
   readonly migrationAssessment: string;
 }
 
-/**
- * Local tool: the head approvals text with one new entry per delta that has none yet, built
- * from the actual diff. The result is validated through the same strict decode as the guard.
- */
 export function proposeApprovals(
   base: CorpusState,
   head: CorpusState,

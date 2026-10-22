@@ -8,9 +8,6 @@ import { MonthExecutor } from "../src/index.js";
 import { applyPrestigeChange } from "../src/prestigeApplication.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
-// S-2 04 (#89): the unpaid-funds prestige source. The rule values come from the test-support fixture value set
-// (fixture class, not a prestige value): UNPAID_FUNDS is a 300 bp proportional loss.
-
 function makeNation(
   id: string,
   overrides: Partial<{
@@ -108,7 +105,6 @@ function makeSnapshot(nations: Array<[string, NationState]>): CampaignSnapshot {
   };
 }
 
-/** Treasury 10 against expenses 50 and no income: the obligation phase pays 10 and is 40 short. */
 const SHORT = { treasury: SafeInt(10), expenses: SafeInt(50), baseResources: SafeInt(0) } as const;
 const FLUSH = {
   treasury: SafeInt(1000),
@@ -136,7 +132,6 @@ describe("S-2 04: unpaid-funds prestige loss in the obligation phase", () => {
     const result = run(snapshot, "GBR");
 
     expect(result.success).toBe(true);
-    // 300 bp of 50 is 1.5, rounded up against the player to 2.
     expect(result.finalSnapshot.nations.get("GBR")!.prestige).toBe(48);
     const events = prestigeEvents(result);
     expect(events).toHaveLength(1);

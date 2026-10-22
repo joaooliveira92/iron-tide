@@ -1,4 +1,3 @@
-// ADR-0088: ship-type availability, hull-type consistency and construction-order limits at the engine boundary.
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -12,8 +11,6 @@ import {
   readReferenceDesignEntries,
 } from "./helpers/contentFiles.js";
 
-// Without study rules a submitted design is approved the same month, which these tests rely on; studies themselves are
-// covered in design-study.test.ts (ADR-0085).
 const content = productionShipBuildingContent();
 const reference = readReferenceDesignEntries();
 const draftOf = (id: string): Record<string, unknown> => ({
@@ -117,7 +114,6 @@ describe("ship-type enforcement at the engine boundary (ADR-0088)", () => {
     const snapshot = snapshotIn(1880, 1);
     const draft = withCategory("alexandra_1877", "SUPER_BATTLESHIP");
     const { designs, collector } = run(snapshot, [submit(snapshot, draft, "battleship")]);
-    // Refused at command issue by the draft-shape check (validateDraftShape), before any compile.
     expect(designs.has("des_test")).toBe(false);
     expect(rejectedWith(collector)).toEqual([]);
   });
@@ -141,11 +137,9 @@ describe("ship-type enforcement at the engine boundary (ADR-0088)", () => {
     expect(
       constructionOrderEligibility(result.finalSnapshot, design, content, "1880-01").eligible,
     ).toBe(true);
-    // Before the era the draft's ship type and components exist in: a stale design cannot reach the yard.
     const before = constructionOrderEligibility(result.finalSnapshot, design, content, "1870-01");
     expect(before.eligible).toBe(false);
     expect(before.rejections[0]?.code).toBe("DESIGN_REVALIDATION_FAILED");
-    // And without the content it cannot be revalidated at all.
     expect(
       constructionOrderEligibility(result.finalSnapshot, design, undefined, "1880-01").rejections[0]
         ?.code,
@@ -185,7 +179,6 @@ describe("ship-type enforcement at the engine boundary (ADR-0088)", () => {
         ],
       ]),
     });
-    // No cruisers: the minimum allowance of two applies.
     expect(constructionOrderEligibility(withProjects(0), design, content, "1880-01").eligible).toBe(
       true,
     );
@@ -195,7 +188,6 @@ describe("ship-type enforcement at the engine boundary (ADR-0088)", () => {
     const third = constructionOrderEligibility(withProjects(2), design, content, "1880-01");
     expect(third.eligible).toBe(false);
     expect(third.rejections.map((r) => r.code)).toContain("AMC_FLEET_LIMIT_EXCEEDED");
-    // Replacing one of the two in-flight orders does not count the replaced project against the limit.
     expect(
       constructionOrderEligibility(withProjects(2), design, content, "1880-01", "con_0").eligible,
     ).toBe(true);

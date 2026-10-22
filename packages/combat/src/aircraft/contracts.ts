@@ -1,6 +1,3 @@
-// DESIGN-43 §2 AircraftModelDefinition_v1 contract + fail-closed guard.
-// INC-1 ships the model-definition contract that the §2 boundary exercises.
-// Mirrors packages/combat/src/submarines/contracts.ts pattern.
 import { BluewaveError } from "@bluewave/contracts";
 import type { SafeInt } from "@bluewave/contracts";
 import { Result, Schema } from "effect";
@@ -48,10 +45,6 @@ export const AircraftModelDefinition_v1 = Schema.Struct({
 
 export type AircraftModelDefinitionContract = typeof AircraftModelDefinition_v1.Type;
 
-// Compile-time guard: the exported contract must keep the nominal `SafeInt`
-// leaves the pre-migration `z.infer` produced. `Schema.declare<SafeInt>` keeps
-// them; if any leaf ever widens back to `number` this file stops compiling
-// (mirrors phase-engine's `_assert` pattern).
 type _AssertSafeInt<T> = T extends SafeInt ? true : never;
 const _assertSafeIntLeaves: [
   _AssertSafeInt<AircraftModelDefinitionContract["speed"]>,

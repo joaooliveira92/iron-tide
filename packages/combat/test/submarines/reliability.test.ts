@@ -1,12 +1,3 @@
-// AC-5 (INC-2): Design-34 §7 reliability. Integer range 0..100 and the shipped
-// operational multiplier table (0..19:4_000, 20..39:6_000, 40..59:8_000,
-// 60..79:10_000, 80..94:11_000, 95..100:12_000 basis points). A reliability
-// score below 20 prohibits offensive deployment and permits only repair
-// transfer, training, or emergency defense -> SUBMARINE_RELIABILITY_INSUFFICIENT.
-// Out-of-§7-range lookups fail closed with SUBMARINE_STATE_INVARIANT_FAILED
-// (the module's ambient fail-closed carrier — the §7 integer-range contract,
-// not an INC-2 owning boundary). Also proves AC-21's submarine_reliability_v1
-// contract + validate guard (INC-2 ships the §7 contract).
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import {
@@ -136,7 +127,6 @@ describe("AC-5: reliability below 20 prohibits offensive deployment", () => {
         "TRAINING",
         "EMERGENCY_DEFENSE",
       ]);
-      // the shipped low-reliability operation list equals the §7 closed set
       expect([...SUBMARINE_RELIABILITY_LOW_OPERATIONS]).toEqual([
         "REPAIR_TRANSFER",
         "TRAINING",

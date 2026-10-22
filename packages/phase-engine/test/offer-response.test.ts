@@ -14,8 +14,6 @@ import {
 } from "../src/index.js";
 import { makeBattleSnapshot, makeBattle, ATTACKER_NATION } from "./battle-fixtures.js";
 
-// T-1 02 (#111): the offer-response handling is hash-validated and consumed strictly by ordinal, in the interruption
-// seam's vocabulary. Nothing raises an offer yet (#112), so it is exercised directly.
 const subject = { battleId: "battle-1", phase: "battle_generation" } as const;
 
 function expectedId(ordinal: number, turnId = "t-1"): string {

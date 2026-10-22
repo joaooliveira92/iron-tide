@@ -1,8 +1,3 @@
-// AC-23 (INC-8): two-process mine-warfare determinism. Spawns
-// dist/simulation/run-mines-child.js TWICE as clean Node child processes and
-// byte-compares their single canonical-serialized JSON line: identical state +
-// inputs + fixed seed must produce identical records + hashes (the
-// simulation/determinism.test.ts + torpedo/determinism.test.ts pattern).
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -56,7 +51,6 @@ describe("AC-23 cross-process mine-warfare determinism (two child processes)", (
     for (const h of parsed.reinforcedHashes) expect(h).toMatch(/^[0-9a-f]{64}$/);
     expect(parsed.reportHash).toMatch(/^[0-9a-f]{64}$/);
     expect(parsed.rngHash).toMatch(/^[0-9a-f]{64}$/);
-    // the fixed master seed produced a fixed classifier decision + draw
     expect(parsed.classificationDraw).toBeGreaterThanOrEqual(0);
   });
 

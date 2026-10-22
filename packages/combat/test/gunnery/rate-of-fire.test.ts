@@ -20,8 +20,6 @@ import {
 import { GUNNERY_RATE_FACTOR_MISSING } from "../../src/gunnery/index.js";
 
 describe("AC-5 rate-of-fire / reload (DESIGN-39 §4, INC-3)", () => {
-  // All 11 multipliers neutral (10_000) -> the 10_000^11 cancels exactly and the
-  // effective reload equals the base reload exactly (ceil of an integer).
   it("all-neutral factors (n=11) yield effectiveReloadMs === baseReloadMs exactly", () => {
     for (const base of [1, 1_000, 25_000]) {
       const res = computeEffectiveReloadMs(base, neutralRateFactors());
@@ -31,22 +29,12 @@ describe("AC-5 rate-of-fire / reload (DESIGN-39 §4, INC-3)", () => {
     }
   });
 
-  // A single non-neutral rate multiplier (30_003, above 1.0 -> faster reload) over
-  // an otherwise-neutral manifest reproduces the ticket's exact-fraction remainder
-  // 1000 * 10_000 / 3_333 = 3000.3 (the n=1 form is the formula's pedagogical shape;
-  // the full 11-factor manifest with factor 30_003 yields the same rational):
-  //   numerator = 1000 * 30_003 * 10_000^10, denominator = 10_000^11
-  //   ratio = 1000 * 30_003 / 10_000 = 3000.3 -> CEIL 3001 (truncation would be 3000).
   it("CEIL rounds the exact-fraction remainder up (not truncate): 3000.3 -> 3001", () => {
     const factors = neutralRateFactors();
     factors.mount = 30_003;
     const res = computeEffectiveReloadMs(1_000, factors);
     expect(res.effectiveReloadMs).toBe(3_001);
     expect(res.rounding.rawCeiledMs).toBe(3_001);
-    // Prove the exact rational retained and rounded ONCE with CEIL: the truncated
-    // (bigint integer) division is exactly 3000, the remainder is nonzero (so the
-    // rational is not an integer), and CEIL therefore lands on 3001 — truncation
-    // (floor) would have produced only 3000.
     const denom = BigInt(res.rounding.denominator);
     const numer = BigInt(res.rounding.numerator);
     const truncated = Number(numer / denom);
@@ -55,8 +43,6 @@ describe("AC-5 rate-of-fire / reload (DESIGN-39 §4, INC-3)", () => {
     expect(res.effectiveReloadMs).toBe(truncated + 1);
   });
 
-  // Sub-1.0 multiplier lengthens reload and still CEILs on the remainder:
-  // 1000 * 3_333 / 10_000 = 333.3 -> CEIL 334 (truncation 333).
   it("a below-neutral factor lengthens reload and CEILs the remainder (333.3 -> 334)", () => {
     const factors = neutralRateFactors();
     factors.crew = 3_333;
@@ -101,7 +87,6 @@ describe("AC-5 rate-of-fire / reload (DESIGN-39 §4, INC-3)", () => {
     b.mount = 12_000;
     const resB = computeEffectiveReloadMs(1_000, b);
     expect(resA.effectiveReloadMs).toBe(resB.effectiveReloadMs);
-    // but the applied order is the canonical §4 order regardless of insertion order.
     expect(resA.factorKeys).toEqual([...GUNNERY_RATE_FACTOR_KEYS]);
     expect(resB.factorKeys).toEqual([...GUNNERY_RATE_FACTOR_KEYS]);
   });
@@ -177,7 +162,7 @@ describe("AC-5 reload progress advances in exact ms and fires only at full progr
   });
 
   it("fires only when progress >= effectiveReloadMs (and not before)", () => {
-    const effective = computeEffectiveReloadMs(1_000, neutralRateFactors()).effectiveReloadMs; // 1000
+    const effective = computeEffectiveReloadMs(1_000, neutralRateFactors()).effectiveReloadMs;
     expect(isReloadComplete(effective - 1, effective)).toBe(false);
     expect(isReloadComplete(effective, effective)).toBe(true);
     expect(isReloadComplete(effective + 1, effective)).toBe(true);

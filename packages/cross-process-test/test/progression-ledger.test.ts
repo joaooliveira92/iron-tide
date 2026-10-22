@@ -50,8 +50,6 @@ describe("N-3 ledger: availability events by year", () => {
       expect(event.provenance.sourceStatus.length).toBeGreaterThan(0);
       expect(event.provenance.confidence.length).toBeGreaterThan(0);
     }
-    // The schema has no UNVERIFIED source status; ESTIMATE is the
-    // machine-readable flag for a date the content itself marks estimated.
     expect(ledger.events.some((event) => event.provenance?.sourceStatus === "ESTIMATE")).toBe(true);
   });
 

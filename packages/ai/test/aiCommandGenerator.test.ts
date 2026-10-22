@@ -34,7 +34,6 @@ describe("AiCommandGenerator determinism", () => {
     const e = g.buildBudgetCommand("n:a/b", "p", SafeInt(1) as SafeInt);
     expect(e.idempotencyKey).toContain(encodeURIComponent("a/b"));
     expect(e.idempotencyKey).toContain(encodeURIComponent("n:a/b"));
-    // raw slash count must be exactly 3 separators
     expect(e.idempotencyKey.split("/").length).toBe(4);
   });
 

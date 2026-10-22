@@ -1,6 +1,3 @@
-// AC-7 (INC-5): guaranteed light-AA disruption opportunity (DESIGN-45 §29.8-9) — every
-// eligible light-AA system receives at least one disruption check of one authoritative
-// substep; the opportunity does NOT guarantee ammunition, hit, damage, or abort.
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, SafeInt, isBluewaveError } from "@bluewave/contracts";
 import {
@@ -62,7 +59,7 @@ function attack(overrides: AtkOverrides = {}) {
     formationId: "frm_light_001",
     targetId: "ship_001",
     attackType: AttackType.AIRCRAFT_LEVEL_BOMBING,
-    speedKnots: SafeInt(150), // < 200 knots → 10_000 bp → effective window 120_000 ms
+    speedKnots: SafeInt(150),
     speedMps: SafeInt(77),
     currentRangeM: SafeInt(2_000),
     currentAltitudeM: SafeInt(1_000),
@@ -71,7 +68,7 @@ function attack(overrides: AtkOverrides = {}) {
     releaseAltitudeM: SafeInt(500),
     isReleased: false,
     fireControlSolutionBp: SafeInt(10_000),
-    timeToImpactMs: SafeInt(120_000), // <= 120_000 effective window → window open
+    timeToImpactMs: SafeInt(120_000),
     formationSize: SafeInt(2),
     cohesionBp: SafeInt(10_000),
     defensiveSusceptibilityBp: SafeInt(10_000),
@@ -150,12 +147,8 @@ describe("AC-7: guaranteed light-AA disruption opportunity (§29.8-9)", () => {
   });
 
   it("does NOT guarantee ammunition, hit, damage, or abort (§29.9)", () => {
-    // The opportunity is only a CHECK grant: no rounds are fired and no random decision is
-    // drawn at this stage (the disruption severity draw happens at attack resolution).
     const result = resolve(attack());
     expect(result.opportunityCreated).toBe(true);
-    // The record-level contract (AC-15) pins draw=0 and roundsConsumed=0 — asserted in
-    // records.test.ts against createLightAaDisruptionOpportunityRecord.
     expect(result.reasonCode).toBe(LIGHT_AA_DISRUPTION_OPPORTUNITY_CREATED);
   });
 
@@ -179,9 +172,7 @@ describe("AC-7: guaranteed light-AA disruption opportunity (§29.8-9)", () => {
     });
 
     it("attack out of the mount arc → AIR_DEFENSE_TARGET_INELIGIBLE (arc enforced here)", () => {
-      // The light-AA eligibility result (computed on the SAME out-of-arc attack) stays
-      // eligible — the arc is the resolver's own addition, so no contradiction fires.
-      const atk = attack({ bearingDegrees: SafeInt(200) }); // arcDegreesMax is 90
+      const atk = attack({ bearingDegrees: SafeInt(200) });
       expect(eligibilityFor(atk).eligible).toBe(true);
       const result = resolve(atk);
       expect(result.opportunityCreated).toBe(false);

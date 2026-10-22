@@ -1,6 +1,5 @@
 import type { ComponentSummary, PlacementSpec } from "./compileShared.js";
 
-/** Which battery a gun or tube belongs to, by component category. */
 export type BatteryRole = "MAIN" | "SECONDARY" | "TERTIARY" | "TORPEDO";
 
 const ROLE_OF: Readonly<Partial<Record<ComponentSummary["category"], BatteryRole>>> = {
@@ -12,18 +11,13 @@ const ROLE_OF: Readonly<Partial<Record<ComponentSummary["category"], BatteryRole
 };
 
 export interface BatteryRow {
-  /** Stable key: role and calibre (0 for tubes). */
   readonly key: string;
   readonly role: BatteryRole;
-  /** Calibre, micrometres; 0 for torpedo tubes. */
   readonly caliberUm: number;
   readonly mounts: number;
-  /** Total barrels (guns) or tubes across the mounts. */
   readonly barrels: number;
-  /** Rounds per gun when every mount carries the same amount; null when they differ or the battery has none. */
   readonly roundsPerGun: number | null;
   readonly weightKg: number;
-  /** Instance ids in station order (bow first), ties by id. */
   readonly instanceIds: readonly string[];
 }
 
@@ -34,11 +28,6 @@ const ROLE_ORDER: Readonly<Record<BatteryRole, number>> = {
   TORPEDO: 3,
 };
 
-/**
- * The guns and tubes of a design grouped into batteries: main and secondary guns by calibre, torpedo tubes together.
- * Pure and ordered (main, then secondary, then torpedo; largest calibre first), so the same design always reads the same.
- * `placements` supplies the stations used to order the instances.
- */
 export function batterySummary(
   components: readonly ComponentSummary[],
   placements: readonly Pick<PlacementSpec, "instanceId" | "stationPermille">[],
@@ -81,11 +70,6 @@ export function batterySummary(
 const FORE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const AFT_LETTERS = "YXWVUTSRQPONMLKJIHGFEDCBAZ";
 
-/**
- * Conventional turret names for the centreline mounts of a battery, bow to stern: the forward half is A, B, C, ... and the
- * after half counts back from the stern as Y, X, W, ... (the Royal Navy convention: A and B forward, X and Y aft). Wing mounts
- * are named by side and order ("Port 1", "Starboard 2"). Pure; `mounts` are the battery's placements.
- */
 export function mountNames(
   mounts: readonly Pick<PlacementSpec, "instanceId" | "stationPermille" | "side">[],
 ): Map<string, string> {

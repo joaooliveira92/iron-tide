@@ -1,9 +1,3 @@
-// Deterministic child-process script for the C-1 torpedo minute-advance stage
-// (AC-23). Spawned TWICE by test/torpedo/determinism.test.ts and byte-compared —
-// two clean Node processes must emit identical per-minute hashes + torpedo
-// records. Uses only fixed inputs; the sole randomness is the domain-separated
-// keyed streams of @bluewave/random seeded by a fixed master seed (no ambient
-// clock/random/env/fs order). Prints ONE canonically-serialized JSON line.
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
 import type { CompiledTorpedo } from "@bluewave/armament";
@@ -58,8 +52,6 @@ function unit(id: string, sideId: "ATTACKER" | "DEFENDER", className: string): T
 
 const BATTLE_ID = "b7-torpedo-determinism";
 
-// The compiled record for the launcher's torpedo (the retired rn_21in_mk_iv_1916 constants,
-// reproduced as the neutral contract; the determinism test only compares two runs).
 const TORPEDOES: Readonly<Record<string, CompiledTorpedo>> = {
   rn_21in_mk_iv_1916: {
     partId: "rn_21in_mk_iv_1916",
@@ -134,9 +126,6 @@ function mv(
 }
 
 const movementStates: Record<string, MovementState> = Object.fromEntries([
-  // heading 0 = EAST (the authored movement direction table); the shooter
-  // holds position so the torpedo geometry is static and predictable — the
-  // target sits ~1 000 m dead ahead, inside the 35 kn torpedo's run.
   mv("a1", 0, 0, 0),
   mv("d1", 1_000_000_000, 270, 0),
 ]);
@@ -179,8 +168,6 @@ const state: TacticalBattleState = {
 
 const dmg0 = initialDamageState("d1");
 
-/** The accepted-salvo command for one tube (per-minute commands — a launcher's
- *  ammunition is consumed exactly once per fired tube). */
 function childCommand(tubeIndex: number): TorpedoLaunchCommand {
   return {
     shipId: "a1",
@@ -264,11 +251,6 @@ async function main(): Promise<void> {
     contacts: state.contacts.map((c) => ({ ...c })),
     movementStates: { ...state.movementStates },
   };
-  // A torpedo launcher fires each tube ONCE (ammunition is consumed); the
-  // accepted-salvo commands must therefore vary per minute. The child drives
-  // advanceMinute directly with per-minute commands (minute 1 fires tubes 0
-  // and 1; minutes 2-3 only run the already-launched tracks) and threads the
-  // engine's minute-result surfaces exactly like advanceMinutes.
   let torpedo: TorpedoContext = { ...torpedoes, tracks: [] };
   const minuteCommands: readonly { tubeIndexes: readonly number[] }[] = [
     { tubeIndexes: [0, 1] },
@@ -293,7 +275,6 @@ async function main(): Promise<void> {
         Object.entries(res.movementStates).map(([k, v]) => [k, { ...v }]),
       ),
     };
-    // thread the torpedo stage surfaces (GunneryState idiom)
     if (res.torpedoStates) {
       torpedo = {
         ...torpedo,
@@ -320,8 +301,6 @@ async function main(): Promise<void> {
     ),
     recordIds: results.flatMap((r) => (r.torpedoRecords ?? []).map((rec) => rec.recordId)).sort(),
     trackCounts: results.map((r) => (r.torpedoTracks ?? []).length),
-    // the targets' damage state from the LAST minute that absorbed torpedo
-    // damage (a later minute may have only run live tracks).
     lastDamageStates: Object.entries(
       [...results].reverse().find((r) => r.damageStates && Object.keys(r.damageStates).length > 0)
         ?.damageStates ?? {},

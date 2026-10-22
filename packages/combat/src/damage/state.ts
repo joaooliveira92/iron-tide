@@ -1,60 +1,44 @@
-// DESIGN-41 §1 authoritative ShipDamageState: one per ship. The numeric surface is integer
-// fixed-point (DESIGN-07): structural-integrity score, flotation-reserve score, stability
-// score, progressive-flooding total. Non-integers are rejected at the construction boundary
-// with INVALID_SHIP_DAMAGE_STATE / DAMAGE_STATE_INVARIANT_FAILED. Pure/deterministic: no
-// ambient I/O/clock/random. A reversible-to-invariant guard never mutates its input.
 import { BluewaveError } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import { TERMINAL_STATUSES, type TerminalStatus } from "./constants.js";
 import { DAMAGE_STATE_INVARIANT_FAILED } from "./reasonCodes.js";
 
-// ---- Damage packages (DESIGN-41 §2: seven canonical categories) ----
-
-// Base fields shared by all non-NO_EFFECT packages.
 interface DamagePackageBase {
-  /** Stable-id of the impacted zone or compartment. */
   locationId: string;
 }
 
 export interface PenetrationPackage extends DamagePackageBase {
   category: "PENETRATION";
-  /** Penetration depth in integer micrometres. */
   penetrationDepthUm: number;
 }
 
 export interface NonPenetrationPackage extends DamagePackageBase {
   category: "NON_PENETRATION";
-  /** Impact energy absorbed in integer micrometres-equivalent. */
   impactEnergyUm: number;
 }
 
 export interface SplinterPackage extends DamagePackageBase {
   category: "SPLINTER";
-  /** Integer splinter count. */
   splinterCount: number;
 }
 
 export interface FirePackage extends DamagePackageBase {
   category: "FIRE";
-  /** Fire intensity in basis points [0, 10_000]. */
   fireIntensityBp: number;
 }
 
 export interface FloodingPackage extends DamagePackageBase {
   category: "FLOODING";
-  /** Flooding rate in integer kilograms per minute. */
   floodingRateKgMin: number;
 }
 
 export interface SecondaryHazardPackage extends DamagePackageBase {
   category: "SECONDARY_HAZARD";
-  /** Hazard type identifier. */
   hazardType: string;
 }
 
 export interface NoEffectPackage {
   category: "NO_EFFECT";
-  /** NO_EFFECT carries a reason string but this is explanatory, never authoritative state. */
   reason: string;
 }
 
@@ -67,57 +51,34 @@ export type DamagePackage =
   | SecondaryHazardPackage
   | NoEffectPackage;
 
-// ---- ShipDamageState (DESIGN-41 §1) ----
-
 export interface FireRecord {
-  /** Stable compartment/zone id where the fire burns. */
   locationId: string;
-  /** Fire intensity in basis points [0, 10_000]. */
   intensityBp: number;
-  /** Cause identifier. */
   cause: string;
 }
 
-/** Alias: FireSourceRecord matches FireRecord — used by immediateFireFlooding. */
 export type FireSourceRecord = FireRecord;
 
 export interface FloodingSourceRecord {
-  /** Stable compartment id where the flooding originates. */
   compartmentId: string;
-  /** Flooding rate in integer kilograms per minute. */
   rateKgMin: number;
-  /** Cause identifier. */
   cause: string;
 }
 
 export interface ShipDamageState {
-  /** Unique ship identifier. */
   shipId: string;
-  /** Ordered list of compartment stable-ids. */
   compartments: readonly string[];
-  /** Ordered list of component stable-ids. */
   components: readonly string[];
-  /** Structural-integrity score (integer, non-negative). */
   structuralIntegrity: number;
-  /** Flotation-reserve score (integer, non-negative). */
   flotationReserve: number;
-  /** Stability score in basis points [0, 10_000]. */
   stabilityScore: number;
-  /** Active fire records. */
   fireRecords: readonly FireRecord[];
-  /** Active flooding source records. */
   floodingRecords: readonly FloodingSourceRecord[];
-  /** Progressive-flooding total in integer kilograms. */
   progressiveFloodingTotal: number;
-  /** Current performance modifiers keyed by modifier id. */
   performanceModifiers: Record<string, number>;
-  /** Terminal status of the ship. */
   terminalStatus: TerminalStatus;
-  /** Ruleset version. */
   rulesetVersion: string;
-  /** Formula version. */
   formulaVersion: string;
-  /** Authoritative state hash (deterministic). */
   stateHash: string;
 }
 
@@ -131,9 +92,6 @@ function invariant(s: ShipDamageState, field: string, value: unknown, reason: st
   });
 }
 
-// AC-1: reject any non-integer / out-of-bound / malformed field in the authoritative
-// ShipDamageState surface with INVALID_SHIP_DAMAGE_STATE or DAMAGE_STATE_INVARIANT_FAILED.
-// Reversible-to-invariant: a failure leaves the supplied state untouched (no partial mutation).
 export function assertFixedPointDamage(s: ShipDamageState): void {
   if (typeof s.shipId !== "string" || s.shipId.length === 0)
     invariant(s, "shipId", s.shipId, "shipId must be a non-empty string");
@@ -237,9 +195,6 @@ export function assertFixedPointDamage(s: ShipDamageState): void {
     invariant(s, "formulaVersion", s.formulaVersion, "formulaVersion must be a non-empty string");
 }
 
-// Authoritative deterministic state hash: canonicalSerialize + sha256 over the non-hash
-// surface, domain-separated with the damage_v1 compatibility version.
-// Any provided stateHash is ignored so the hash depends only on the state fields.
 export function computeDamageStateHash(s: ShipDamageState): string {
   const surface = {
     shipId: s.shipId,
@@ -259,7 +214,6 @@ export function computeDamageStateHash(s: ShipDamageState): string {
   return createEnvelope("damage-state", "damage_v1", surface).bodyHash;
 }
 
-// Build a fully-invariant ShipDamageState with its authoritative hash computed.
 export function withDamageStateHash(s: Omit<ShipDamageState, "stateHash">): ShipDamageState {
   const full = s as ShipDamageState;
   assertFixedPointDamage(full);

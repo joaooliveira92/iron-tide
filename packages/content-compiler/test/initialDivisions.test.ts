@@ -8,14 +8,6 @@ import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
 import { divisionsOf, fleetsOf } from "./helpers/campaignRecords.js";
 
-/**
- * 1880 initial divisions (N-1 ticket 07, ADR-0224): the opening command
- * structure is authored from the ships already stationed in the era's
- * squadrons rather than the former empty baseline. The collection is compiled
- * content; each record documents its direction in provenance and marks its
- * composition an admitted ADR-0213 balance choice.
- */
-
 const here = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = resolve(here, "..", "..", "..");
 const contentDir = resolve(repoRoot, "content", "production", "1880");
@@ -44,8 +36,6 @@ describe("1880 divisions (N-1 ticket 07)", () => {
     for (const division of divisions) {
       byNation.set(division.nationId, (byNation.get(division.nationId) ?? 0) + 1);
     }
-    // The larger 1880 navies split their squadrons; the US and Qing squadrons
-    // were single ships still working up, so no division is seeded.
     expect(byNation.get("uk")).toBe(2);
     expect(byNation.get("netherlands")).toBe(2);
     expect(byNation.has("usa")).toBe(false);

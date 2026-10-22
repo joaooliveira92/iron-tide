@@ -1,10 +1,3 @@
-/**
- * Canonical research-field registry (DESIGN-20 §1) and priority weights
- * (DESIGN-20 §5). Placed in the leaf schema package so both @bluewave/commands
- * (priority-command validation) and @bluewave/phase-engine (research
- * resolution) share a single authoritative source instead of duplicating it.
- */
-
 export const CANONICAL_RESEARCH_FIELD_IDS = [
   "HULL_CONSTRUCTION",
   "MACHINERY",

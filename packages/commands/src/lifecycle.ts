@@ -16,7 +16,6 @@ import type {
 import { TERMINAL_STATUSES } from "./types.js";
 import { rejectValidation } from "./validation.js";
 
-// --- Permitted transitions per §5 ---
 export const PERMITTED_TRANSITIONS: Record<CommandStatus, CommandStatus[]> = {
   SUBMITTED: ["VALIDATED", "REJECTED", "CANCELLED"],
   VALIDATED: ["AUTHORIZED", "REJECTED", "CANCELLED"],
@@ -39,25 +38,13 @@ export function canTransition(
 ): boolean {
   const allowed = PERMITTED_TRANSITIONS[from] ?? [];
   if (!allowed.includes(to)) return false;
-  // LOCKED -> SUPERSEDED only when explicitly permitted
   if (from === "LOCKED" && to === "SUPERSEDED") {
     if (!def?.supersessionPolicy || def.supersessionPolicy.lockBoundaryBehavior !== "ALLOW_LOCKED")
       return false;
   }
-  // RESOLVING -> REJECTED only when no effect applied (caller must enforce)
-  // RESOLVING -> CANCELLED only before irreversible phase (caller must enforce)
   return true;
 }
 
-/**
- * Build a hash-chained status-transition record.
- *
- * `timestamp` is an explicit input, never the ambient clock: the record is
- * hashed, so an ambient `new Date()` here would make identical command inputs
- * hash differently across runs (RULES.md "Determinism"). Callers supply a
- * deterministic campaign-time value, exactly as the desktop construction
- * workspace and the phase-engine full-lifecycle path already do.
- */
 export function transitionRecord(
   rec: CommandRecord,
   to: CommandStatus,
@@ -97,10 +84,6 @@ export class CommandLifecycle {
   private currentVersion = "0.1.0" as const;
   private audit = new AuditChain();
 
-  /**
-   * Envelope-level checks (version, expected snapshot hash) followed by the
-   * per-command payload rules, which live in `payloadValidation.ts`.
-   */
   validate(
     envelope: CommandEnvelope<CommandBody>,
     snapshot: CampaignSnapshot,
@@ -442,9 +425,8 @@ export class CommandLedger {
   }
 }
 
-// Scoped idempotency per §4
 export class ScopedIdempotencyStore {
-  private store = new Map<string, CommandRecord>(); // scopeKey -> record
+  private store = new Map<string, CommandRecord>();
   private keyFor(def: CommandTypeDefinition, idempotencyKey: string): string {
     return `${def.idempotencyScope}:${def.commandTypeId}:${idempotencyKey}`;
   }
@@ -461,11 +443,10 @@ export class ScopedIdempotencyStore {
           message: `Idempotency key ${rec.idempotencyKey} already used by ${existing.commandId}`,
         });
       }
-      return; // idempotent return existing
+      return;
     }
     this.store.set(k, rec);
   }
-  // duplicate must return existing result and not submit second
   checkDuplicate(
     def: CommandTypeDefinition,
     idempotencyKey: string,

@@ -21,8 +21,6 @@ import {
   makeShip,
 } from "./battle-fixtures.js";
 
-// T-1 07 (#116, spec #109 R11): the enemy may decline a battle the player would fight. Every ruleset value is a
-// FIXTURE-CLASS value (predicate: enemy under 4000 bp of the player's force); none reaches production.
 type Rules = typeof FIXTURE_BATTLE_OFFER_RULES;
 const SEED = "enemy-decline-seed";
 const TURN = "turn-enemy-decline";
@@ -36,10 +34,6 @@ function rules(over: Partial<Rules["enemyDecline"]> = {}, extra: Partial<Rules> 
   };
 }
 
-/**
- * One ship a side (so the committed forces are exactly these, with no random optional selection): the player (GBR) at
- * playerFp against the enemy (FRA) at enemyFp, in one area.
- */
 function snapshotOf(playerFp: number, enemyFp: number): CampaignSnapshot {
   return makeBattleSnapshot({
     attackerShips: [makeShip("g1", "dv-att-a", ATTACKER_NATION, { firepower: playerFp })],
@@ -81,7 +75,7 @@ function answer(request: OfferRequest, response: OfferResponse): RecordedInput {
 }
 
 describe("the enemy declines (R11)", () => {
-  const strongPlayer = snapshotOf(800, 310); // 3875 bp, under 4000
+  const strongPlayer = snapshotOf(800, 310);
 
   it("with the predicate held and the draw succeeding, no battle, reservation, offer or score change exists", () => {
     const result = run(strongPlayer, rules({ probabilityBp: 10_000 }));
@@ -172,7 +166,7 @@ describe("the enemy declines (R11)", () => {
   });
 
   it("states the comparison exactly: equality holds only under LESS_OR_EQUAL", () => {
-    const equal = snapshotOf(800, 320); // exactly 4000 bp
+    const equal = snapshotOf(800, 320);
     expect(draws(run(equal, rules({ comparison: "LESS_THAN" })))).toHaveLength(0);
     expect(draws(run(equal, rules({ comparison: "LESS_OR_EQUAL" })))).toHaveLength(1);
   });
@@ -196,7 +190,6 @@ describe("the enemy declines (R11)", () => {
   it("charges the declining enemy only the cost the ruleset states", () => {
     const priced = run(strongPlayer, rules({ probabilityBp: 10_000, enemyCostPoints: 3 }));
     const war = priced.finalSnapshot.wars.wars[0]!;
-    // The enemy (FRA) is on the defender side of the fixture war.
     expect([war.attackerWarScore, war.defenderWarScore]).toEqual([0, -3]);
     expect(withdrawn(priced)[0]?.body).toMatchObject({ enemyVictoryPointCost: 3 });
     expect(priced.finalSnapshot.wars.battles).toEqual([]);

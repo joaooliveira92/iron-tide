@@ -1,4 +1,3 @@
-// AC-13 (INC-5): Bomb and torpedo damage integration with GunneryImpact shape.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import { RandomEngine } from "@bluewave/random";
@@ -76,8 +75,6 @@ describe("AC-13: Damage integration — bomb and torpedo", () => {
       const rng = new RandomEngine("test-bomb-hit-structural");
       const result = resolveBombingAttack(makeBombInput({ payloadCapacity: SafeInt(100) }), rng);
       if (result.hit && result.damagePackage) {
-        // payloadFactor = max(1, floor(100/10)) = 10
-        // structuralDamage = 100 * 10 = 1000
         expect(result.damagePackage.structuralDamage).toBe(1000);
       }
     });
@@ -86,8 +83,6 @@ describe("AC-13: Damage integration — bomb and torpedo", () => {
       const rng = new RandomEngine("test-bomb-hit-payload-small");
       const result = resolveBombingAttack(makeBombInput({ payloadCapacity: SafeInt(10) }), rng);
       if (result.hit && result.damagePackage) {
-        // payloadFactor = max(1, floor(10/10)) = 1
-        // structuralDamage = 100 * 1 = 100
         expect(result.damagePackage.structuralDamage).toBe(100);
       }
     });
@@ -122,7 +117,6 @@ describe("AC-13: Damage integration — bomb and torpedo", () => {
 
   describe("resolveBombingAttack — miss produces null damage package", () => {
     it("returns null damagePackage on miss", () => {
-      // Force miss by using accuracyBp = 0
       const rng = new RandomEngine("test-bomb-miss");
       const result = resolveBombingAttack(makeBombInput({ accuracyBp: SafeInt(0) }), rng);
       expect(result.hit).toBe(false);
@@ -151,8 +145,6 @@ describe("AC-13: Damage integration — bomb and torpedo", () => {
         makeTorpedoInput({ targetSpeedBp: SafeInt(50_000) }),
         rng,
       );
-      // With very high target speed, hit probability drops to 1000bp clamped, which is still > 0
-      // but the RNG draw might be above it
       if (!result.hit) {
         expect(result.damagePackage).toBeNull();
       }

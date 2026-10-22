@@ -1,5 +1,3 @@
-// SB3-R20..R22 (DESIGN-16 section 13): the foreign construction contract, the builder-capability gate, the builder's
-// capacity consumption and the payment schedule with its one-month grace. Pure engine slice; UI is split to INC-9b.
 import type {
   CampaignSnapshot,
   ConstructionProject,
@@ -54,7 +52,6 @@ const ORDERING = "uk";
 const BUILDER = "france";
 const MONTH = { year: 1880, month: 1 };
 const MONTH_ID = "1880-01";
-// france's authored dock is 12,000,000 kg and the balance's multiple is 30000 bp (3x), so its cap is 36,000,000 kg.
 const FRANCE_DOCK_KG = 12_000_000;
 const FRANCE_CAP_KG = 36_000_000;
 
@@ -118,7 +115,6 @@ const order = (snap: CampaignSnapshot, over: Record<string, unknown> = {}) =>
     content,
   );
 
-/** A complete contract, used by the payment tests independently of the order path. */
 function contractOf(over: Partial<ForeignContractTerms> = {}): ForeignConstructionContract {
   return buildForeignConstructionContract({
     contractId: "fc-1",
@@ -195,14 +191,12 @@ describe("ordering abroad creates one contract (SB3-R20, DESIGN-16 section 13.1)
     expect(r.contract.builderNationId).toBe(BUILDER);
     expect(r.contract.orderingNationId).toBe(ORDERING);
     expect(r.contract.contractHash).toMatch(/^[0-9a-f]{64}$/);
-    // The stored reservation is zero, so the ordering nation's pool is untouched.
     expect(r.project.newConstructionReservedMassKg).toBe(0);
     expect(r.project.foreignContractId).toBe("fc-1");
     expect(r.project.foreignBuilderNationId).toBe(BUILDER);
     const nation = r.snapshot.nations.get(ORDERING)!;
     expect(nation.foreignContracts).toHaveLength(1);
     expect(nation.foreignContracts![0]).toEqual(r.contract);
-    // The input snapshot is untouched (immutability).
     expect(before.nations.get(ORDERING)!.foreignContracts).toBeUndefined();
   });
 
@@ -242,7 +236,6 @@ describe("ordering abroad creates one contract (SB3-R20, DESIGN-16 section 13.1)
   });
 
   it("refuses a schedule whose first instalment is due after the authorization month (MEDIUM-5)", () => {
-    // A free-work window: nothing is owed at the start of the project. The contract is incomplete.
     const future = order(snapshot(), {
       terms: terms({
         authorizationMonth: "1880-01",
@@ -253,7 +246,6 @@ describe("ordering abroad creates one contract (SB3-R20, DESIGN-16 section 13.1)
       }),
     });
     expect(future).toMatchObject({ ok: false, reason: FOREIGN_CONSTRUCTION_CONTRACT_REQUIRED });
-    // An instalment due exactly at the authorization month is complete.
     expect(
       order(snapshot(), {
         terms: terms({
@@ -293,7 +285,6 @@ describe("foreign construction consumes the builder's capacity (SB3-R21, DESIGN-
   });
 
   it("admits reservations exactly at the builder's cap and rejects the double-sell", () => {
-    // 12,000,000 kg each, cap 36,000,000 kg: three contracts land exactly on the cap, a fourth is a double-sell.
     let current = snapshot(FRANCE_DOCK_KG);
     for (const commandId of ["cmd-1", "cmd-2", "cmd-3"]) {
       const r = order(current, { commandId });
@@ -398,7 +389,6 @@ describe("payment schedule and grace (SB3-R22, DESIGN-16 section 13.4)", () => {
     const delayed = applyForeignPaymentOutcome(active, outcome);
     expect(delayed.status).toBe("DELAYED");
     expect(delayed.delayReasonCode).toBe(FOREIGN_PAYMENT_DEFAULT_DELAYED);
-    // The default is held, not auto-resumed by the ordinary one-month capacity-delay rule.
     expect(isForeignPaymentDefaultProject(delayed)).toBe(true);
   });
 
@@ -427,11 +417,9 @@ describe("payment schedule and grace (SB3-R22, DESIGN-16 section 13.4)", () => {
   });
 
   it("unlocks work only for paid instalments' workShareBp, capped at 100% (MEDIUM-3)", () => {
-    // Two 5,000 bp instalments: unpaid unlocks nothing, one paid unlocks half, both paid unlock all.
     expect(foreignUnlockedWork(1000, contract, [])).toBe(0);
     expect(foreignUnlockedWork(1000, contract, ["1880-01"])).toBe(500);
     expect(foreignUnlockedWork(1000, contract, ["1880-01", "1880-04"])).toBe(1000);
-    // A duplicated/over-100% schedule never unlocks more than the total work.
     const over = buildForeignConstructionContract({
       contractId: "fc-over",
       orderingNationId: ORDERING,
@@ -513,10 +501,6 @@ describe("monthly revalidation seam (SB3-R20, DESIGN-16 section 13.2)", () => {
   });
 });
 
-// INC-9 rework: the payment/grace path is wired into the running monthly pipeline (M1/M2), the contract hash is
-// enforced where a stored contract is consumed (M3), a payment default blocks ResumeConstruction (M4), and an
-// unresolved builder balance fails the order (Med1).
-
 describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
   const INTEGRATION_MONTH = { year: 1880, month: 2 };
   const DUE = "1880-02";
@@ -554,8 +538,6 @@ describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
       quantity: 1,
       totalWorkPerUnit: TOTAL_WORK,
       totalPriceUnits: money(1_000),
-      // Two 5,000 bp instalments: paying the first unlocks half the work (MEDIUM-3 schedule-driven work), so the
-      // project cannot complete on one payment.
       paymentSchedule: [
         { dueMonth: DUE, amountUnits: money(500), workShareBp: bp(5_000) },
         { dueMonth: "1880-07", amountUnits: money(500), workShareBp: bp(5_000) },
@@ -589,7 +571,6 @@ describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
       shipBuilding: content,
     });
 
-  /** Advance the campaign one turn, optionally rewriting the ordering nation's treasury/base resources. */
   function advance(
     snap: CampaignSnapshot,
     over: { ukTreasury?: number; ukBaseResources?: number } = {},
@@ -615,10 +596,6 @@ describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
       .constructionProjects.find((p) => p.foreignContractId !== undefined)!;
 
   it("drives the real monthly phase into PAYMENT_DEFAULT_DELAYED (zero progress), then pays and resumes", () => {
-    // Turn 1 (1880-02, due) and turn 2 (1880-03, grace): the instalment is unpaid, so the project gets zero progress
-    // but is not yet delayed; turn 3 (1880-04) is after the shipped one-month grace and enters the default. Turn 1
-    // deliberately carries enough `baseResources` for a NON-ZERO construction cap, so the zero progress is the skip
-    // fund's doing, not an empty cap (MAJOR-2 falsifiability).
     const turn1 = execute(orderedSnapshot(100, 120_000));
     expect(foreignProject(turn1.finalSnapshot).status).toBe("ACTIVE");
     expect(foreignProject(turn1.finalSnapshot).completedWork as number).toBe(0);
@@ -637,9 +614,6 @@ describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
     expect(delayed.completedWork as number).toBe(0);
     expect(turn3.finalSnapshot.nations.get(ORDERING)!.treasury as number).toBe(100);
 
-    // Turn 4 (1880-05): the ordering treasury now covers the arrears. The instalment is paid, the builder is credited,
-    // the default clears, and the paid instalment's workShareBp unlocks half the project's work (INC-9d). No ordinary
-    // construction charge is taken on top of the instalment.
     const funded = advance(turn3.finalSnapshot, { ukTreasury: 10_000, ukBaseResources: 120_000 });
     const turn4 = execute(funded);
     const resumed = foreignProject(turn4.finalSnapshot);
@@ -656,29 +630,23 @@ describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
     expect(payments.every((e) => (e.debit as number) === 500 && (e.credit as number) === 500)).toBe(
       true,
     );
-    // No ordinary appropriation ledger line was charged for the foreign work.
     expect(
       turn4.financialLedger.all.some(
         (e) => e.categoryId === "APPROPRIATION" && e.nationId === ORDERING,
       ),
     ).toBe(false);
-    // The payment record survives so the same instalment is never charged twice.
     expect(turn4.finalSnapshot.nations.get(ORDERING)!.foreignContractPayments).toEqual([
       { contractId: "fc-int", paidDueMonths: [DUE] },
     ]);
   });
 
   it("keeps an unpaid foreign month at zero progress with a non-zero construction cap (MAJOR-2)", () => {
-    // The ordering nation's cap here is `floor(120_000 / 12 / 100) = 100` work units, and its treasury (100) cannot
-    // cover the 500 instalment. If the skip filter were removed the ordinary appropriation would fund 100 work, so
-    // the `completedWork === 0` assertion is falsifiable.
     const unpaid = execute(orderedSnapshot(100, 120_000));
     expect(foreignProject(unpaid.finalSnapshot).completedWork as number).toBe(0);
     expect(
       unpaid.financialLedger.all.some((e) => e.categoryId === FOREIGN_PAYMENT_CATEGORY_ID),
     ).toBe(false);
 
-    // An identical month whose treasury covers the instalment DOES progress, proving the difference is the payment.
     const paid = execute(orderedSnapshot(10_000, 120_000));
     expect(foreignProject(paid.finalSnapshot).completedWork as number).toBeGreaterThan(0);
     expect(
@@ -687,8 +655,6 @@ describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
   });
 
   it("holds a builder-capability failure in DELAYED through the same month's auto-resume (MAJOR-1)", () => {
-    // Order against france's content dock, then shrink the materialised dock so the builder is genuinely incapable
-    // on revalidation (the design's displacement exceeds the dock and its free capacity).
     const ordered = orderedSnapshot(100, 120_000);
     const france = ordered.nations.get(BUILDER)!;
     const shrunk: CampaignSnapshot = {
@@ -706,7 +672,6 @@ describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
     const collector = new DiagnosticCollector();
     const turn1 = execute(shrunk, collector);
     const held = foreignProject(turn1.finalSnapshot);
-    // Without the capability-delayed exclusion the same-month auto-resume would return this to ACTIVE.
     expect(held.status).toBe("DELAYED");
     expect(held.delayReasonCode).toBe(FOREIGN_BUILDER_CAPABILITY_INSUFFICIENT);
     expect(held.completedWork as number).toBe(0);
@@ -732,8 +697,6 @@ describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
     };
     const failed = execute(shrunk);
     expect(foreignProject(failed.finalSnapshot).status).toBe("DELAYED");
-    // Restore the builder's content-derived dock (remove the materialised override); the next month revalidates as
-    // capable, the capability delay lifts, and no stale reason is left on the ACTIVE project.
     const restored = advance(failed.finalSnapshot);
     const france2 = restored.nations.get(BUILDER)!;
     const { dock: _dock, ...withoutDock } = france2;
@@ -776,7 +739,6 @@ describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
     expect(resumed.status).toBe("ACTIVE");
     expect(resumed.delayReasonCode).toBeUndefined();
     expect("delayReasonCode" in resumed).toBe(false);
-    // A resumed project can be funded again; the resume target is the caller's, not hard-coded.
     const waiting = applyForeignPaymentOutcome(defaulted, paid, "AWAITING_CAPACITY");
     expect(waiting.status).toBe("AWAITING_CAPACITY");
   });
@@ -831,7 +793,6 @@ describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
   });
 
   it("refuses ResumeConstruction by the persisted default reason even after a halt changed the status (MINOR-6)", () => {
-    // `DELAYED -> HALTED` is legal, so a halt would otherwise hide the default (which keyed on `status === DELAYED`).
     const base = snapshot();
     const nation = base.nations.get(ORDERING)!;
     const project: ConstructionProject = {
@@ -914,7 +875,6 @@ describe("monthly step integration (M1/M2, DESIGN-16 section 13.4)", () => {
         },
       }),
     };
-    // No content: the builder's balance (and therefore its cap) cannot be resolved.
     const result = placeForeignConstructionOrder(
       withDock,
       {
@@ -986,8 +946,6 @@ describe("foreign war effects in the monthly phase (SB3-R23, INC-10)", () => {
   });
 
   it("impounds an unguranteed contract when the tension-scaled draw fires, recording the contract", () => {
-    // Tension 10 → a 9_000 bp impoundment probability; search the fixed seed space for a drawn outcome so the assertion
-    // is deterministic. At least one seed in this range must impound (P(no impound) = 0.1 per seed).
     let impounded = false;
     for (let i = 0; i < 8 && !impounded; i++) {
       const snap = hostileRelation(orderedSnapshot(), 10);

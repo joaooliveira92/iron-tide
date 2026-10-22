@@ -24,7 +24,6 @@ export * from "./mines/index.js";
 export * from "./submarines/index.js";
 export * from "./air-combat/index.js";
 export * from "./air-defense/index.js";
-// air-defense re-declares these names; the root keeps the pre-D-4 owners.
 export { compareStrings } from "./air-combat/index.js";
 export { damageMultiplierBp } from "./mines/index.js";
 export * from "./aircraft/index.js";

@@ -63,7 +63,6 @@ function project(over: ProjectOverrides = {}): ConstructionProject {
 const capacityUnits = (perLine: number): Record<string, SafeInt> =>
   Object.fromEntries(LINE_IDS.map((line) => [line, SafeInt(perLine)]));
 
-/** A compiled design whose construction plan grants `perLine` capacity on every line. */
 function design(perLine: number, id = "d1"): CompiledDesignVersion {
   return {
     designVersionId: id,
@@ -296,7 +295,6 @@ describe("a DELAYED month (SB3-R6)", () => {
       reason: PROJECT_DELAYED_ZERO_WORK,
       delayMonth: "1880-02",
     });
-    // The delay lasts exactly one month, so the project is active again after it.
     expect(p.status).toBe("ACTIVE");
   });
 
@@ -326,7 +324,7 @@ describe("constructionProjectReadout (SB3-R31)", () => {
       "1880-01",
     );
     expect(readout.totalCostUnits).toBe(600);
-    expect(readout.monthlyInstalmentUnits).toBe(600); // no package schedule: the remaining work is the draw
+    expect(readout.monthlyInstalmentUnits).toBe(600);
     expect(readout.remainingMonths).toBe(1);
     expect(readout.launchMonth).toBe("1880-02");
   });

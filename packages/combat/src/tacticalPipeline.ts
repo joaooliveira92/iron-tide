@@ -26,11 +26,10 @@ export interface PhaseRecord {
 export function executeBattleMinutePhases(work: Record<string, boolean>): PhaseRecord[] {
   return TACTICAL_PIPELINE_PHASES.map((ph) => {
     const hasWork = !!work[ph];
-    return { phase: ph, success: true, empty: !hasWork }; // §3 phase with no work MUST emit successful empty record
+    return { phase: ph, success: true, empty: !hasWork };
   });
 }
 
-// rendering isolation
 export function createImmutableProjection<T extends object>(authoritative: T): Readonly<T> {
   return Object.freeze(JSON.parse(JSON.stringify(authoritative)));
 }
@@ -38,6 +37,5 @@ export function interpolateRender(
   projection: Readonly<{ position: [number, number] }>,
   _alpha: number,
 ) {
-  // MUST NOT write to authoritative position/heading/speed/etc — return detached interpolated copy
   return { position: [...projection.position] as [number, number] };
 }

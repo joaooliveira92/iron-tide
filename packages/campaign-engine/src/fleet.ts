@@ -5,25 +5,6 @@ import {
   type PlayerProjectionPresence,
 } from "./projection.js";
 
-/**
- * Fleet-screen projections (desktop-mvp ticket 15). Everything here is a
- * pure, deterministic derivation over the compiled `CampaignSnapshot` — no
- * session state, no I/O, no randomness — so the desktop bridge can build the
- * shared `FleetScreenProjection`'s divisions/areas/edges/ports from the
- * exact same immutable snapshot every `inspectFleetScreen` call, and tests
- * can pin the derivation against fixture data.
- *
- * Divisions are the player nation's compiled `FleetState`s. The campaign
- * compiler also seeds `nation.divisions` from authored content (N-1 ticket 07);
- * this screen predates that command structure and keeps its established
- * convention that each compiled `FleetState` becomes one division view carrying
- * all of its ships (`buildPlayerProjection`, projection.ts, ticket 12).
- *
- * Ship `status` is a presentation derivation of the ship's authoritative
- * readiness state (S-1 ticket 07; the `READINESS_STATUS_LABEL` mapping), in the
- * same class as `constructionShipTypeLabel`'s display mapping.
- */
-
 export type MovementCommandStatus =
   | "submitted"
   | "accepted"
@@ -40,41 +21,24 @@ export interface MovementCommand {
   readonly submittedAtRevision: number;
 }
 
-/** One ship on the fleet screen — `designId` is the compiled `designVersionId`
- * (the production pack's ships all lack one today; the empty string is the
- * honest reflection of that pre-existing content gap). */
 export interface FleetShipView {
-  /** The ship's stable id: what the assign and clear commands name (S-5 09). */
   readonly shipId: string;
   readonly name: string;
   readonly designId: string;
-  /** Presentation status derived from the ship's readiness state (S-1 ticket 07). */
   readonly status: string;
-  /** The authoritative readiness state (S-1 ticket 07). */
   readonly readiness: string;
-  /** Worked-up crew quality `0..100` (S-1 ticket 07). */
   readonly crewQuality: number;
-  /** The authoritative station assignment (S-5 03); absent when the ship has none. */
   readonly stationAssignment?: "FOREIGN_STATION";
-  /** The manual's ship-list code for the assignment (p.48 `FS`); absent when the ship has none. */
   readonly stationCode?: "FS";
-  /** Whether the ship's design is fitted for colonial service (S-5 04); absent when unfitted. */
   readonly colonialServiceFitted?: true;
-  /** The manual's ship-list code for the fitting (p.48 `c`); absent when unfitted. */
   readonly colonialCode?: "c";
-  /** Months left in repair (S-1); shown as the number in the status column (manual p.48). Absent unless repairing. */
   readonly repairMonthsRemaining?: number;
-  /** The ship's design has cramped accommodation (S-5 05); its manual code (p.48 `a`). Absent when not classified. */
   readonly crampedCode?: "a";
-  /** The ship's design has short range (S-5 05); its manual code (p.48 `S`). Absent when not classified: `L` is never inferred. */
   readonly rangeCode?: "S";
-  /** The ship is beyond its area's base limit as of the last month end (S-5 08); absent otherwise. */
   readonly overBase?: true;
-  /** The manual's ship-list code for it (p.48 `*`); absent when within the limit. */
   readonly overBaseCode?: "*";
 }
 
-/** The readiness state's presentation label (S-1 ticket 07). */
 const READINESS_STATUS_LABEL: Readonly<Record<string, string>> = {
   ACTIVE: "active",
   RESERVE: "reserve",
@@ -83,7 +47,6 @@ const READINESS_STATUS_LABEL: Readonly<Record<string, string>> = {
   REPAIR: "repair",
 };
 
-/** One compiled `FleetState` as the Fleet screen sees it (see header note). */
 export interface FleetDivisionView {
   readonly divisionId: string;
   readonly fleetName: string;
@@ -96,7 +59,6 @@ export interface FleetArea {
   readonly name: string;
 }
 
-/** A directed adjacency between two areas, from the compiled world routes. */
 export interface FleetAreaEdge {
   readonly fromAreaId: string;
   readonly toAreaId: string;
@@ -109,44 +71,26 @@ export interface FleetPort {
   readonly capacity: number;
 }
 
-/** One ship beyond its area's base limit, for the presence readout's over-base list (S-5 09). */
 export interface FleetOverBaseShip {
   readonly shipId: string;
   readonly name: string;
   readonly areaId: string;
 }
 
-/** What the presence readout needs beyond the snapshot: the campaign month (for the blockade exemption) and the pack's rules. */
 export interface FleetPresenceInput {
   readonly month: PlayerProjectionMonth;
   readonly rules: PresenceMeasurementRules;
 }
 
-/** The pure snapshot-derived portion of the shared `FleetScreenProjection`. */
 export interface FleetScreenView {
   readonly divisions: readonly FleetDivisionView[];
   readonly areas: readonly FleetArea[];
   readonly areaEdges: readonly FleetAreaEdge[];
   readonly ports: readonly FleetPort[];
-  /** The nation's presence readout, or `{ configured: false }` while the ruleset section is dormant (S-5 09). */
   readonly presence: PlayerProjectionPresence;
-  /** The nation's ships flagged over-base, in ascending ship id (S-5 09). */
   readonly overBaseShips: readonly FleetOverBaseShip[];
 }
 
-/**
- * Builds the Fleet screen's divisions/areas/edges/ports for `playerSlotId`
- * from a real compiled `CampaignSnapshot`:
- * - `divisions`: one per compiled `FleetState` of the player nation (its
- *   ships in compiled order, `status` derived from the readiness state).
- * - `areas`: the full compiled world area map (`{id, name}`).
- * - `areaEdges`: the compiled world routes (`{from,to}`) as directed edges.
- * - `ports`: the player nation's own ports, `capacity` = authored `level`
- *   (the same port-level proxy `buildPlayerProjection` uses, ticket 12).
- * - `presence` / `overBaseShips`: the S-5 readout (`buildPresenceReadout`) and the flagged ships; with no `presence` input
- *   the readout is `{ configured: false }`, which the screen words as 'not configured'.
- * Returns an empty view when `playerSlotId` doesn't resolve to a nation.
- */
 export function buildFleetScreenView(
   snapshot: CampaignSnapshot,
   playerSlotId: string,

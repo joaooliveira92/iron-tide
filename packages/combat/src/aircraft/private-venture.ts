@@ -1,6 +1,3 @@
-// DESIGN-43 §§11-12 private ventures.
-// INC-4: typed event private_aircraft_venture_v1, 12-month cooldown,
-// max 3 unexpired, PurchasePrivateAircraftProposalCommand, 12-month expiry.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import type { RandomStream } from "@bluewave/random";
@@ -21,10 +18,7 @@ import { allocateAttributes } from "./attribute-allocation.js";
 import { withAircraftModelDefinitionContentHash } from "./model.js";
 import { createPrivateVentureEvent, type PrivateAircraftVenture_v1 } from "./event-types.js";
 
-// Stream key for the private-venture RNG — DESIGN-43 §11.
 export const PRIVATE_VENTURE_STREAM_KEY = "event/month/nation/private_aircraft_venture" as const;
-
-// ---- Eligibility predicates (§11) ----
 
 export interface PrivateVentureEligibilityInput {
   hasPrivateAviationIndustry: boolean;
@@ -67,7 +61,6 @@ export function checkPrivateVentureEligibility(
     return { eligible: false, reason: "MAX_UNEXPIRED_LIMIT_REACHED" };
   }
 
-  // Eligible roles ordered by role identifier per §11.
   const sortedRoles = [...input.permittedRoles].sort((a, b) => a.localeCompare(b));
   return { eligible: true, eligibleRoles: sortedRoles };
 }
@@ -84,12 +77,9 @@ export function generatePrivateVentureProposal(
 ): AircraftProposal {
   const { nationId, role, currentMonth, rngStream } = params;
 
-  // Use role baseline + RNG for attribute allocation. Private ventures use
-  // a simplified attribute model compared to national development.
   const emphasizedTraits: [string, string] = ["SPEED", "FIREPOWER"];
   const [speed, firepower, maneuverability, toughness] = allocateAttributes(role, emphasizedTraits);
 
-  // RNG-derived variation for production cost and work.
   const costVariation = Math.floor(rngStream.next() * 500);
   const workVariation = Math.floor(rngStream.next() * 300);
 
@@ -100,11 +90,9 @@ export function generatePrivateVentureProposal(
     toughness,
   };
 
-  // Private proposal purchase price includes a premium (§11).
   const purchasePrice = SafeInt(1200 + costVariation);
   const productionWork = SafeInt(400 + workVariation);
 
-  // Expiry is 12 months from current month.
   const expiryYear = Number(currentMonth.split("-")[0]) + 1;
   const expiryMonthPart = currentMonth.split("-")[1];
   const expiryMonth = `${expiryYear}-${expiryMonthPart}`;
@@ -210,11 +198,9 @@ export function resolvePrivateVenture(
     };
   }
 
-  // Use RNG to select a role from the sorted eligible roles.
   const roleIndex = Math.floor(input.rngStream.next() * eligibility.eligibleRoles.length);
   const selectedRole = eligibility.eligibleRoles[roleIndex]!;
 
-  // Generate a private venture proposal.
   const proposal = generatePrivateVentureProposal({
     nationId: input.nationId,
     role: selectedRole,
@@ -222,7 +208,6 @@ export function resolvePrivateVenture(
     rngStream: input.rngStream,
   });
 
-  // Compute the next eligible month (cooldown after current month).
   const nextYear = Number(input.currentMonth.split("-")[0]);
   const nextMonth = Number(input.currentMonth.split("-")[1]) + PRIVATE_VENTURE_COOLDOWN_MONTHS;
   const adjustedYear = nextYear + Math.floor((nextMonth - 1) / 12);
@@ -243,8 +228,6 @@ export function resolvePrivateVenture(
     updatedPrivateProposals: [...input.privateProposals, proposal],
   };
 }
-
-// ---- Purchase command (§11) ----
 
 export function purchasePrivateProposal(
   proposal: AircraftProposal,
@@ -298,8 +281,6 @@ export function purchasePrivateProposal(
     cost: proposal.productionCost,
   };
 }
-
-// ---- Expiry resolution (§12) ----
 
 export function expirePrivateProposals(
   proposals: readonly AircraftProposal[],

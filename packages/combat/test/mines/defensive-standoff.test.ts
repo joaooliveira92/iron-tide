@@ -1,12 +1,3 @@
-// AC-11 (INC-5): DESIGN-35 §16 defensive standoff (value-only). Exact thresholds
-// (<100_000 none, 100_000..249_999 level 1, 250_000..499_999 level 2,
-// 500_000..749_999 level 3, 750_000..1_000_000 level 4) and exact effect
-// multipliers (9_000/7_500/5_000/2_500). mine_defensive_standoff_v1 contract +
-// fail-closed guard. Emits MINE_DEFENSIVE_STANDOFF_ACTIVE when level > none; MUST
-// NOT auto-cancel any accepted operation (documentation obligation, no such
-// mechanic exists — verified behaviorally: the function returns a pure value and
-// never touches an operation). No consumer wired (amphibious/blockade contracts
-// don't exist yet — documented, not fabricated).
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import {
@@ -28,16 +19,16 @@ function resultFor(pressure: number): DefensiveStandoffResult {
 
 describe("AC-11: exact §16 level thresholds", () => {
   const boundaryCases: Array<[number, number | null, number | typeof MINE_STANDOFF_NONE_LEVEL]> = [
-    [0, null, "none"], // §1: 0 = no minefield -> none
-    [99_999, null, "none"], // 99_999 is the last sub-threshold pressure
-    [100_000, 9_000, 1], // first level-1 pressure
-    [249_999, 9_000, 1], // last level-1 pressure
-    [250_000, 7_500, 2], // first level-2 pressure
-    [499_999, 7_500, 2], // last level-2 pressure
-    [500_000, 5_000, 3], // first level-3 pressure
-    [749_999, 5_000, 3], // last level-3 pressure
-    [750_000, 2_500, 4], // first level-4 pressure
-    [1_000_000, 2_500, 4], // §1 ceiling -> level 4
+    [0, null, "none"],
+    [99_999, null, "none"],
+    [100_000, 9_000, 1],
+    [249_999, 9_000, 1],
+    [250_000, 7_500, 2],
+    [499_999, 7_500, 2],
+    [500_000, 5_000, 3],
+    [749_999, 5_000, 3],
+    [750_000, 2_500, 4],
+    [1_000_000, 2_500, 4],
   ];
   for (const [pressure, utility, level] of boundaryCases) {
     it(`pressure ${pressure} -> level ${level}${utility === null ? "" : `, utility ${utility}bp`}`, () => {
@@ -54,7 +45,6 @@ describe("AC-11: exact §16 level thresholds", () => {
   }
 
   it("exact shipped thresholds + effect multipliers are the authoritative tables", () => {
-    // Pin the exact shipped rows so any future drift fails here first.
     expect(MINE_DEFENSIVE_STANDOFF_LEVELS_AND_EFFECTS).toEqual([
       {
         level: 1,
@@ -93,8 +83,6 @@ describe("AC-11: exact §16 level thresholds", () => {
 
 describe("AC-11: no automatic operation cancellation + no consumer wired", () => {
   it("the function is value-only: returns level + multiplier + flag, never mutates or cancels anything", () => {
-    // §16: "MUST NOT automatically cancel an accepted operation" — there is no
-    // operation/cancel mechanic in this slice; the pure derivation cannot cancel.
     const active = resultFor(500_000);
     expect(active.level).toBe(3);
     expect(active).toEqual({
@@ -102,9 +90,7 @@ describe("AC-11: no automatic operation cancellation + no consumer wired", () =>
       utilityMultiplierBp: 5_000,
       standoffActiveCode: MINE_DEFENSIVE_STANDOFF_ACTIVE,
     });
-    // The flag is data, not a denial/cancel action.
     expect(active.standoffActiveCode).toBe(MINE_DEFENSIVE_STANDOFF_ACTIVE);
-    // Repeated calls are pure / deterministic (no clock/random/mutation).
     expect(resultFor(500_000)).toEqual(active);
   });
 });

@@ -1,11 +1,3 @@
-// AC-20 — DESIGN-40 §27 immutable torpedo records: every launch/track/hit/
-// detonation/damage/flooding/machinery/shock/hazard/chain-reaction carries the
-// §27 field groups (battle minute+substep, source+target ids, command source,
-// legal contact ref, model/launcher/setting, solution inputs+quality,
-// speed-limit validation, ammunition changes, RNG decisions, damage+
-// persistence effects, formula+ruleset versions) and a deterministic envelope
-// record hash. Records are deeply frozen; the hash is purely a function of the
-// body fields (repeated runs and child processes emit identical hashes).
 import { describe, expect, it } from "vite-plus/test";
 import { RandomEngine } from "@bluewave/random";
 import {
@@ -108,7 +100,6 @@ describe("AC-20 — §27 record surface + envelope hash", () => {
     const body = recordBody();
     const rec = makeTorpedoRecord(body);
     expect(rec.recordHash).toBe(computeTorpedoRecordHash(body));
-    // any body drift changes the hash
     const drifted = makeTorpedoRecord(recordBody({ solutionQualityBp: 7_999 }));
     expect(drifted.recordHash).not.toBe(rec.recordHash);
   });
@@ -194,13 +185,6 @@ describe("AC-20 — §27 record surface + envelope hash", () => {
   });
 
   it("BLOCKER-1 — a severe §21 tube hit that detonates a §22 chain emits UNIQUE recordIds and eventIds", () => {
-    // Build a stage fixture that exercises the §22 chain path: a TUBE_BAY impact
-    // with a loaded-tube hazard context whose severe draw and chain draws are
-    // forced below their thresholds (the deterministic keyedRng seams) so the
-    // chain explosion package is actually applied. The chain explosion shares
-    // the primary package's source (track) / target (ship) at the same instant,
-    // so WITHOUT the discriminator its DAMAGE/FLOODING_SOURCE/SYSTEM_SHOCK
-    // record ids and event ids would collide with the primary package's.
     const chainTarget = torpedoTargetContext({
       zone: "TUBE_BAY",
       tubeHazard: {
@@ -219,9 +203,6 @@ describe("AC-20 — §27 record surface + envelope hash", () => {
         targetCompartmentId: "MACHINERY",
       },
     });
-    // deterministic keyedRng: avoid a launch failure (0.9999), force every other
-    // draw to zero so the detonation functions, the tube hazard is SEVERE, and the
-    // §22 chain detonates — exercising the full chain-explosion record path.
     const forcedChainEngine = {
       masterSeed: "",
       stream: (domain: string) => ({
@@ -243,27 +224,18 @@ describe("AC-20 — §27 record surface + envelope hash", () => {
       shipSpeedsUmS: { a1: 0 },
       engine: forcedChainEngine,
     });
-    // the §22 chain path was actually exercised
     expect(res.records.some((r) => r.kind === "CHAIN_REACTION")).toBe(true);
-    // the chain explosion package AND the primary package both produced a DAMAGE record
     const damageCount = res.records.filter((r) => r.kind === "DAMAGE").length;
     expect(damageCount).toBe(2);
-    // every §27 recordId and every ledger eventId is unique (the BLOCKER-1 fix)
     const recordIds = res.records.map((r) => r.recordId);
     expect(new Set(recordIds).size).toBe(recordIds.length);
     const eventIds = res.events.map((e) => e.eventId);
     expect(new Set(eventIds).size).toBe(eventIds.length);
-    // the chain discriminator is present on the secondary damage records
     const damageRecordIds = res.records.filter((r) => r.kind === "DAMAGE").map((r) => r.recordId);
     expect(damageRecordIds.some((id) => id.includes(":chain"))).toBe(true);
   });
 
   it("MEDIUM-6 — machinery/shock draws are evaluated ONCE on the canonical keyed streams", () => {
-    // The engine pre-evaluates §19/§20 to populate the package fields and threads
-    // that single result into applyTorpedoDamagePackage (no re-evaluation). Pin
-    // the invariant: each machinery/shock stream draw is consumed exactly once on
-    // the canonical domain-separated stream, and repeated runs emit byte-identical
-    // records (the deterministic single-eval guarantee).
     const machineryShockTarget = torpedoTargetContext({
       zone: "MACHINERY",
       machinery: { zone: "MACHINERY", machineryComponents: ["ENGINE-1", "ENGINE-2"] },
@@ -282,9 +254,6 @@ describe("AC-20 — §27 record surface + envelope hash", () => {
         shipPositions: { a1: [0, 5_000_000_000] },
         shipHeadings: { a1: 0 },
         shipSpeedsUmS: { a1: 0 },
-        // force the machinery draw to a damaging severity (drawBp 2_000 ->
-        // DEGRADED_PROPULSION), the shock draw to a strike (0.0), and avoid a
-        // launch failure so the track runs and the damage package is applied.
         engine: {
           masterSeed: "",
           stream: (domain: string) => ({
@@ -296,16 +265,13 @@ describe("AC-20 — §27 record surface + envelope hash", () => {
       });
     const a = run();
     const b = run();
-    // single-eval determinism: two runs emit identical records
     expect(a.records.map((r) => r.recordId)).toEqual(b.records.map((r) => r.recordId));
     expect(a.records.map((r) => r.recordHash)).toEqual(b.records.map((r) => r.recordHash));
-    // the track id from the TRACK record's sourceId
     const trackId = a.records.find((r) => r.kind === "TRACK")!.sourceId;
     const machinery = a.records.find((r) => r.kind === "MACHINERY")!;
     const shock = a.records.find((r) => r.kind === "SYSTEM_SHOCK")!;
     expect(machinery).toBeDefined();
     expect(shock).toBeDefined();
-    // the single evaluation consumed the canonical domain-separated streams
     expect(machinery.rngDecision!.streamId).toBe(
       `battle/torpedo/damage/machinery:${TORPEDO_BATTLE_ID}:1:56:${trackId}`,
     );

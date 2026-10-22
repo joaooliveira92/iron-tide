@@ -8,13 +8,6 @@ import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
 import { constructionsOf, designsOf, fleetsOf } from "./helpers/campaignRecords.js";
 
-/**
- * Construction target/design consistency (N-1 ticket 03). A ship-building
- * project must build the class of the ship it targets: the design's class name
- * equals the target ship's class id. (The constructed design's *id* need not
- * equal the ship id — e.g. a class member built from its class design.)
- */
-
 const here = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = resolve(here, "..", "..", "..");
 const contentDir = resolve(repoRoot, "content", "production", "1880");

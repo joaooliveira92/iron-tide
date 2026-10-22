@@ -1,13 +1,3 @@
-// P-1 ticket 03 (AC-4): project compiled design torpedo armament into the
-// auto-resolver's TorpedoContext — one launcher wiring per authored mount and one
-// torpedo target context per promoted unit. Returns undefined when no promoted
-// unit carries torpedo armament, so unarmed battles stay a strict no-op (AC-6).
-//
-// Authored auto-resolution figures (ADR-0046) — the campaign design model has no
-// hull geometry, so collision radius / draft are derived from displacement:
-//   collisionRadiusM = clamp(round(cbrt(tonnes) * 2.5), 5, 150)   (≈ half length)
-//   draftM           = clamp(round(cbrt(tonnes) * 0.35), 1, 12)
-// The derivation is monotone in displacement and only feeds hit geometry.
 import type { CompiledDesignVersion } from "@bluewave/campaign";
 import type { CompiledTorpedo } from "@bluewave/armament";
 import type { TacticalShipUnit } from "../tactical/unit.js";
@@ -30,17 +20,9 @@ import { BluewaveError } from "@bluewave/contracts";
 import { AUTO_TORPEDO_CREW_QUALITY_BP } from "./constants.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 
-/**
- * Crew skill for the §12 launch-failure composition (neutral-competent crew).
- * Re-exported from the versioned auto-resolution constants (ADR-0223) so no
- * numeric gameplay constant is embedded in this module.
- */
 export { AUTO_TORPEDO_CREW_QUALITY_BP };
-/** Torpedo running depth ordered by the auto doctrine (metres). */
 export const AUTO_TORPEDO_DEPTH_M = 3;
-/** Hull breach figure fed to the §16 scene for every auto-resolved target (m²). */
 const AUTO_TORPEDO_BREACH_AREA_M2 = 20;
-/** Training arcs (relative bearing, milli-degrees; 0 = dead ahead). */
 const TRAINING_LIMITS_MDEG: Readonly<Record<TorpedoMountType, { min: number; max: number }>> = {
   UNDERWATER_FIXED: { min: -10_000, max: 10_000 },
   UNDERWATER_TRAINABLE: { min: -90_000, max: 90_000 },
@@ -120,7 +102,6 @@ export function projectTorpedoes(input: {
           mountType,
           tubeCount,
           loadedPerTube: Array.from({ length: tubeCount }, () => compiled.partId),
-          // One load per tube: no reloads are modelled in auto-resolution.
           reserveAmmunition: { [compiled.partId]: 0 },
           reloadState: NO_RELOAD_IN_PROGRESS,
           trainingLimitsMdeg: { ...TRAINING_LIMITS_MDEG[mountType] },
@@ -158,7 +139,6 @@ export function projectTorpedoes(input: {
         terminalStatus: "NORMAL",
       },
       zone: "MACHINERY",
-      // 1880-era hulls predate torpedo bulkheads / underwater protection systems.
       protectionLevel: "WEAK",
       scene: {
         impactSide: "STARBOARD",
@@ -185,7 +165,6 @@ export function projectTorpedoes(input: {
   return { launchers, commands: [], targets, tracks: [], torpedoes: registry };
 }
 
-/** True when a launcher still has a loaded tube; returns the lowest loaded index. */
 export function firstLoadedTube(wiring: TorpedoLauncherWiring): number | null {
   const idx = wiring.launcher.loadedPerTube.findIndex((t) => t !== EMPTY_TUBE);
   return idx === -1 ? null : idx;

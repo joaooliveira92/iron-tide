@@ -1,5 +1,3 @@
-// DESIGN-03 Campaign Configuration - Validation and Acceptance §9 1..21
-
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -68,7 +66,6 @@ function hasWarn(c: DiagnosticCollector, code: string) {
 const VALID_SEED = "a".repeat(32);
 const OTHER_SEED = "b".repeat(32);
 
-// §6 helper - minimal eligible tech
 function tech(
   id: string,
   canonMonth: number,
@@ -92,7 +89,6 @@ function tech(
   };
 }
 
-// §9.1 - five canonical scenarios, January
 describe("§9.1 canonical scenarios", () => {
   it("all five exist January of identifier year", () => {
     const c = collector();
@@ -125,7 +121,6 @@ describe("§9.1 canonical scenarios", () => {
   });
 });
 
-// §9.2 - cannot advance beyond Dec 1970
 describe("§9.2 timeline hard stop", () => {
   it("integer calendar arithmetic", () => {
     expect(toLinear(1970, 12)).toBe(1970 * 12 + 11);
@@ -151,7 +146,6 @@ describe("§9.2 timeline hard stop", () => {
   });
 });
 
-// §9.3/4/5/6 fleet-size
 describe("§9.3-9.8 fleet-size", () => {
   it("canonical 4 settings exist with 7500/10000/12500/15000", () => {
     expect(FLEET_SIZE_IDS).toEqual(["small", "standard", "large", "very_large"]);
@@ -198,34 +192,29 @@ describe("§9.3-9.8 fleet-size", () => {
     expect(() => checkFleetSizeTacticalViolation("navalAppropriation")).not.toThrow();
   });
   it("§9.7 same design unchanged across fleet sizes (number vs stats)", () => {
-    // scale changes quantity, not design version stats - simulate: design stats constant
     const design = { displacementKg: 18000, speedUms: 11 };
     for (const id of FLEET_SIZE_IDS) {
       const scaled = Number(scaleValue(100, FLEET_SIZE_BPS[id]));
-      expect(design.displacementKg).toBe(18000); // unchanged
+      expect(design.displacementKg).toBe(18000);
       expect(scaled).toBe(Math.floor((100 * FLEET_SIZE_BPS[id]) / 10000));
     }
   });
   it("§9.8 integer scaling wide-int floor + largest remainder deterministic", () => {
-    expect(Number(scaleValue(10, 7500))).toBe(7); // floor(7.5)
+    expect(Number(scaleValue(10, 7500))).toBe(7);
     expect(Number(scaleValue(1_000_000, 15000))).toBe(1_500_000);
-    // indivisible allocation total equals separately scaled aggregate
     const out = allocateIndivisible(10, 12500, [
       { id: "b", unscaled: 4 },
       { id: "a", unscaled: 6 },
     ]);
-    expect(out.get("a")! + out.get("b")!).toBe(Number(scaleValue(10, 12500))); // 12
-    // fractional remainder 0.5 each -> tie broken by ascending id -> a gets extra
+    expect(out.get("a")! + out.get("b")!).toBe(Number(scaleValue(10, 12500)));
     const tie = allocateIndivisible(1, 15000, [
       { id: "b", unscaled: 1 },
       { id: "a", unscaled: 0 },
     ]);
-    // aggregate 1, floors 1 and 0, remaining 0 -> deterministic by id sort
     expect([...tie.entries()].sort((a, b) => a[0].localeCompare(b[0]))).toEqual([...tie.entries()]);
   });
 });
 
-// §9.9 research-speed
 describe("§9.9 research-speed", () => {
   it("canonical 7500/10000/12500/15000 and range", () => {
     expect(RESEARCH_BPS).toEqual({ slow: 7500, standard: 10000, fast: 12500, very_fast: 15000 });
@@ -243,16 +232,13 @@ describe("§9.9 research-speed", () => {
     expect(hasCode(c, "INVALID_RESEARCH_SPEED_MULTIPLIER")).toBe(true);
   });
   it("does not modify prerequisites/availability/effects/weights/limits (unit test isolation)", () => {
-    // prerequisite check is independent of researchSpeedSettings validation
     const c = collector();
     const ok = validateResearchSpeedSettings(CANONICAL_RESEARCH_SPEED_SETTINGS, c);
     expect(ok).toBeDefined();
-    // no side effect on technologyVariation profile
     expect(CANONICAL_TECH_PROFILES[0]!.earliestDateShiftMonths).toBe(0);
   });
 });
 
-// §4.1 / §5 exact canonical set + §6.1 aggregate profile ruleset
 describe("§4.1/§5/§6.1 exact canonical set enforcement", () => {
   it("§5 rejects a partial research-speed ruleset even when every entry is valid", () => {
     const c = collector();
@@ -277,7 +263,6 @@ describe("§4.1/§5/§6.1 exact canonical set enforcement", () => {
   });
 });
 
-// §9.10-9.15 technology variation
 describe("§9.10-9.15 technology variation", () => {
   it("§9.10 none zero shift 10000", () => {
     const c = collector();
@@ -331,9 +316,8 @@ describe("§9.10-9.15 technology variation", () => {
   });
   it("§9.13 prerequisite order valid after variation (clamped then delay)", () => {
     const c = collector();
-    // b prereq a with delay 5, but a shifted earlier could violate - must be adjusted to a+5
     const a = tech("a", 100, [], 0, 50000, 0);
-    const b = tech("b", 101, ["a"], 0, 50000, 5); // canonical b = a+1, but after shift must be >= aFinal+5
+    const b = tech("b", 101, ["a"], 0, 50000, 5);
     const m = materializeTechnologyVariation(
       [a, b],
       CANONICAL_TECH_PROFILES[1]!,
@@ -364,8 +348,7 @@ describe("§9.10-9.15 technology variation", () => {
   });
   it("§9.13 clamping to earliest/latest", () => {
     const c = collector();
-    const t = tech("a", 10, [], 5, 15); // permitted 5..15
-    // force shift -72 but clamped to 5
+    const t = tech("a", 10, [], 5, 15);
     const m = materializeTechnologyVariation(
       [t],
       CANONICAL_TECH_PROFILES[2]!,
@@ -424,7 +407,6 @@ describe("§9.10-9.15 technology variation", () => {
     )!;
     expect(m1.manifestHash).toBe(m2.manifestHash);
     expect(m1.manifestHash).toHaveLength(64);
-    // different seed -> different
     const c3 = collector();
     const m3 = materializeTechnologyVariation(
       techs,
@@ -453,7 +435,6 @@ describe("§9.10-9.15 technology variation", () => {
     const c2 = collector();
     expect(verifyTechnologyManifest(tampered as any, c2)).toBe(false);
     expect(hasCode(c2, "TECHNOLOGY_MANIFEST_MISMATCH")).toBe(true);
-    // untampered verifies
     expect(verifyTechnologyManifest(m, collector())).toBe(true);
   });
   it("missing eligibility metadata -> ineligible + TECHNOLOGY_VARIATION_METADATA_MISSING", () => {
@@ -479,7 +460,7 @@ describe("§9.10-9.15 technology variation", () => {
   it("empty effect intersection fails INVALID_EFFECT_VARIATION_BOUNDS", () => {
     const c = collector();
     const t = tech("a", 100);
-    (t as any).effectVariationBounds = { firepower: { minBp: 9000, maxBp: 9100 } }; // profile some is 9500..10500 -> empty
+    (t as any).effectVariationBounds = { firepower: { minBp: 9000, maxBp: 9100 } };
     expect(
       materializeTechnologyVariation([t], CANONICAL_TECH_PROFILES[1]!, VALID_SEED, "ch", "rh", c),
     ).toBeUndefined();
@@ -487,14 +468,11 @@ describe("§9.10-9.15 technology variation", () => {
   });
   it("triangular half toward zero (Math.trunc)", () => {
     expect(Math.trunc(1 / 2)).toBe(0);
-    // -0.5 truncates toward zero: the result is -0, never -1 (floor).
     expect(Object.is(Math.trunc(-1 / 2), -0)).toBe(true);
     expect(Math.trunc(-1 / 2) === -1).toBe(false);
-    // -0 behaves as 0 under integer month arithmetic.
     expect(Math.trunc(-1 / 2) + 100).toBe(100);
   });
   it("effectiveness roundTowardZero signed", () => {
-    // -15 * 9500 /10000 = -14.25 -> trunc -14 not floor -15
     const c = collector();
     const t: TechnologyDefinition = {
       ...tech("a", 100),
@@ -517,7 +495,6 @@ describe("§9.10-9.15 technology variation", () => {
   });
 });
 
-// §9.17-9.20 continuity
 describe("§9.17-9.20 continuity", () => {
   const identities = new Map<string, NationIdentityDefinition>([
     [
@@ -635,8 +612,6 @@ describe("§9.17-9.20 continuity", () => {
   });
   it("§9.19 AI_ONLY_POWER cannot replace slot", () => {
     const c = collector();
-    // continuation definition whose target nation is an AI_ONLY_POWER + is not a
-    // PLAYABLE_SLOT_INSTANCE -> AI_POWER_PLAYABLE_SLOT_SUBSTITUTION
     const badConts = new Map<string, ContinuationDefinition>([
       [
         "cont_gbr",
@@ -717,13 +692,11 @@ describe("§9.17-9.20 continuity", () => {
     );
     expect(r1).toBe(r2);
     expect(r1).toBe("inst_gbr");
-    // duplicate
     const cdup = collector();
     expect(
       resolveParticipation("scen_1880", "gbr", "historical", [rec, rec], identities, conts, cdup),
     ).toBeUndefined();
     expect(hasCode(cdup, "INVALID_SCENARIO_PARTICIPATION_RECORD")).toBe(true);
-    // missing
     const cmiss = collector();
     expect(
       resolveParticipation("scen_1880", "gbr", "historical", [], identities, conts, cmiss),
@@ -732,12 +705,10 @@ describe("§9.17-9.20 continuity", () => {
   });
 });
 
-// §9.21 post-creation mutation rejected (state.ts)
 describe("§9.21 configuration immutability", () => {
   it("mutation rejected", async () => {
     const { validateCampaignConfiguration, assertConfigurationImmutability } =
       await import("../src/campaignConfiguration.js").catch(async () => {
-        // fallback: inline check via state.ts hash if campaignConfiguration not present
         const mod: any = await import("../src/state.js");
         return {
           validateCampaignConfiguration: mod.validateCampaignConfiguration,
@@ -767,7 +738,6 @@ describe("§9.21 configuration immutability", () => {
   });
 });
 
-// §3 campaignSeed & configuration explicitness
 describe("§3 campaignSeed & explicit config", () => {
   it("valid 32 lower hex passes, uppercase/short/long fails INVALID_CAMPAIGN_SEED", async () => {
     const { validateCampaignSeed } = await import("../src/campaignConfiguration.js").catch(
@@ -833,7 +803,6 @@ describe("§3 campaignSeed & explicit config", () => {
   });
 });
 
-// §9.3/9.4 - CampaignCompiler enforces DESIGN-03 configuration before RNG
 describe("CampaignCompiler DESIGN-03 configuration gate", () => {
   function writeMinimalPack(dir: string): void {
     mkdirSync(dir, { recursive: true });

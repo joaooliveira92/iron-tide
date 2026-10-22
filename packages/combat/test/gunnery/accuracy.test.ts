@@ -15,8 +15,6 @@ import {
 import { GUNNERY_ACCURACY_FACTOR_MISSING } from "../../src/gunnery/index.js";
 
 describe("AC-3 accuracy formula exactness (DESIGN-39 §3, INC-2)", () => {
-  // All 16 multipliers neutral (10_000) -> the 10_000^16 cancels exactly and the
-  // final accuracy equals the base accuracy exactly.
   it("all-neutral factors yield finalAccuracyBp === baseAccuracyBp (exact)", () => {
     expect(resolveAccuracy(neutralAccuracyFactors(7_500)).finalAccuracyBp).toBe(7_500);
     expect(resolveAccuracy(neutralAccuracyFactors(0)).finalAccuracyBp).toBe(0);
@@ -30,12 +28,6 @@ describe("AC-3 accuracy formula exactness (DESIGN-39 §3, INC-2)", () => {
     return { ...neutralAccuracyFactors(base), ...overrides } as GunneryAccuracyFactors;
   }
 
-  // Mixed-multiplier FLOOR-once/exactness case: retaining the exact rational and
-  // flooring ONCE at the end gives 370; truncating to a 10_000 division at each
-  // multiplier would give only 369 (accumulated loss). This proves the exact
-  // integer value is retained through all factors and rounded once.
-  // exact = floor(10_000 * 3_333^3 * 10_000^13 / 10_000^16) = floor(3_333^3 / 10_000^2)
-  //       = floor(37_025_927_037 / 100_000_000) = floor(370.259...) = 370.
   it("retains the exact rational through all factors and floors once (not per-step)", () => {
     const res = resolveAccuracy(
       factorsWith(10_000, { fireControl: 3_333, crew: 3_333, officer: 3_333 }),
@@ -43,14 +35,11 @@ describe("AC-3 accuracy formula exactness (DESIGN-39 §3, INC-2)", () => {
     expect(res.finalAccuracyBp).toBe(370);
     expect(res.rounding.rawFlooredBp).toBe(370);
     expect(res.rounding.mode).toBe("floor");
-    // cross-check against the exact bigint rational outlined in the return.
     const exactFloor = Number(BigInt(res.rounding.numerator) / BigInt(res.rounding.denominator));
     expect(res.rounding.rawFlooredBp).toBe(exactFloor);
     expect(GUNNERY_ACCURACY_DENOMINATOR.toString()).toBe(res.rounding.denominator);
   });
 
-  // FLOOR rounding (not nearest): 3*7_500 -> exact 4_218.75 -> floor 4_218 (half-up
-  // would be 4_219).
   it("rounds with FLOOR, not nearest/half-up", () => {
     const res = resolveAccuracy(
       factorsWith(10_000, { fireControl: 7_500, crew: 7_500, officer: 7_500 }),
@@ -60,7 +49,6 @@ describe("AC-3 accuracy formula exactness (DESIGN-39 §3, INC-2)", () => {
   });
 
   it("clamps at the 10_000 upper bound", () => {
-    // one factor above neutral pushes the floored result to 12_000 -> clamp 10_000.
     expect(resolveAccuracy(factorsWith(10_000, { fireControl: 12_000 })).finalAccuracyBp).toBe(
       10_000,
     );
@@ -68,7 +56,6 @@ describe("AC-3 accuracy formula exactness (DESIGN-39 §3, INC-2)", () => {
 
   it("clamps at the 0 lower bound", () => {
     expect(resolveAccuracy(neutralAccuracyFactors(0)).finalAccuracyBp).toBe(0);
-    // any factor at 0 makes the exact product 0.
     expect(resolveAccuracy(factorsWith(10_000, { range: 0 })).finalAccuracyBp).toBe(0);
   });
 

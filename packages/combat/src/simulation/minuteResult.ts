@@ -1,10 +1,7 @@
-// Assemble the immutable DESIGN-38 minute result: snapshot, minute hash, and the
-// optional resolved surfaces (torpedo/smoke/air-combat/air-defense/gunnery/...).
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { MinuteResult } from "./engine.js";
 import type { MinuteRun } from "./minuteStages.js";
 
-// Assemble the immutable minute result (snapshot + hash + optional surfaces).
 export function buildMinuteResult(run: MinuteRun): MinuteResult {
   const {
     battleId,
@@ -60,7 +57,6 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
       eventType: e.eventType,
       eventId: e.eventId,
     })),
-    // The torpedo minute-state surface (INC-7): present ONLY when the stage resolved state.
     ...(hasTorpedoSurface
       ? {
           torpedo: {
@@ -98,7 +94,6 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
           },
         }
       : {}),
-    // The smoke minute-state surface (C-5 / INC-8).
     ...(smokeRecords && smokeRecords.length > 0
       ? {
           smoke: {
@@ -110,7 +105,6 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
           },
         }
       : {}),
-    // The air-combat minute-state surface (D-3 / INC-8).
     ...(airCombatRecords && airCombatRecords.length > 0
       ? {
           airCombat: {
@@ -131,7 +125,6 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
           },
         }
       : {}),
-    // The air-defense minute-state surface (D-4 / INC-6).
     ...(airDefenseRecords && airDefenseRecords.length > 0
       ? {
           airDefense: {

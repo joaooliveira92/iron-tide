@@ -25,14 +25,6 @@ import {
   type ShipTypeId,
 } from "../src/index.js";
 
-/**
- * The authored 1880 ship-type content reproduces the code registry exactly (ADR-0156,
- * ship-part-model ticket 12a). This is the regression that lets ticket 12b flip the
- * classifier's source from `shipTypeData.ts` to the compiled registry: every field of
- * every one of the fourteen records must equal its `SHIP_TYPES` counterpart, and the
- * classification `precedence` must reproduce `CLASSIFIED_SHIP_TYPES` order.
- */
-
 const path = join(
   import.meta.dirname,
   "..",
@@ -56,7 +48,6 @@ function readShipTypeRecords(): ShipTypeRecord[] {
 const records = readShipTypeRecords();
 const byId = new Map(records.map((record) => [record.id, record] as const));
 
-/** The seven closed engine behaviour classes each canonical type maps to (ADR-0156 §2). */
 const ENGINE_CLASS: Readonly<Record<ShipTypeId, EngineBehaviourClass>> = {
   B: "capital_combatant",
   CA: "cruiser",
@@ -74,7 +65,6 @@ const ENGINE_CLASS: Readonly<Record<ShipTypeId, EngineBehaviourClass>> = {
   TR: "merchant_auxiliary",
 };
 
-/** The record fields that mirror a code-registry entry, in a comparable shape. */
 function fromRecord(record: ShipTypeRecord) {
   return {
     name: record.name,
@@ -159,15 +149,11 @@ describe("the 1880 ship-type content reproduces the code registry (ticket 12a)",
       if (!(CLASSIFIED_SHIP_TYPES as readonly string[]).includes(id)) {
         expect(record.classification.precedence, id).toBeGreaterThan(100);
       }
-      // Classification is still code-owned until 12b; every record's `requires` is empty.
       expect(record.classification.requires, id).toEqual([]);
     }
   });
 
   it("keeps the schema vocabularies in step with the domain vocabularies", () => {
-    // The schema package cannot depend on ship-design, so it restates the closed
-    // vocabularies. This pins them equal member-for-member so a new role, category or
-    // era band cannot drift between the two.
     expect([...SHIP_TYPE_ROLES]).toEqual([...SHIP_ROLES]);
     expect([...SHIP_TYPE_DISPLAY_CATEGORIES]).toEqual([...SHIP_TYPE_CATEGORIES]);
     expect([...SHIP_TYPE_ERA_BANDS]).toEqual([...ERA_BANDS]);

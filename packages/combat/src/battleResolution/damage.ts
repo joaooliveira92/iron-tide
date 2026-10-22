@@ -1,22 +1,3 @@
-// B-6 INC-2: damage wiring for the auto-resolution orchestrator (DESIGN-38 step
-// 10 after gunnery step 8.5/9; DESIGN-41 §3 pipeline via `resolveDamage`).
-//
-// This module closes the B-3/B-4 seam: every HIT GunneryEventRecord is
-// synthesized into a `GunneryImpact` (damage/engineWiring.ts) using the
-// target's canonical layout + the B-4 armor model (ADR-0021 linear
-// penetration: caliber * velocity / 1000), and `resolveDamage` updates the
-// target's `ShipDamageState`. It also defines the canonical ship->damage-state
-// construction and the hp mapping used by the damageReport (ADR-0026):
-//
-//   hp(state) = SINKING|FOUNDERED ? 0 :
-//               floor(maxHitPoints * (structureBp + flotationBp) / 20_000)
-//   where structureBp = clamp(floor(structuralIntegrity * 10_000 / STRUCTURE_UNIT),
-//                             0, 10_000) and flotationBp analogously.
-//   battleLoss = max(0, ship.hitPoints_at_battle_start - hp(state)).
-//
-// Pure/deterministic: the ONLY randomness is the keyed damage streams derived
-// from the battle seed via RandomEngine (hit-zone selection; fire/flooding/
-// magazine draws inside resolveDamage). No ambient I/O/clock/random.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine, RandomLedger, drawUniform } from "@bluewave/random";
@@ -59,59 +40,32 @@ import {
   ZONE_HIT_WEIGHT_BP,
 } from "./constants.js";
 
-// Damage runs between gunnery (substep 2) and nothing else in this slice:
-// DESIGN-38 §3 step 9 gun actions -> step 10 apply damage. Event priority sits
-// after gunnery (9).
 export const DAMAGE_SUBSTEP = 3 as const;
 export const DAMAGE_EVENT_PRIORITY = 10 as const;
 export const DAMAGE_EVENT_TYPE = "damage_impact" as const;
 
-// Per-target context (design-dependent surface the engine needs per ship)
-
 export interface DamageTargetContext {
   shipId: string;
-  /** Canonical armor zones in order (autoZonesForBelt). */
   zones: readonly AutoResolutionZone[];
-  /** Ordered compartment stable-ids (ShipDamageState surface). */
   compartments: readonly string[];
-  /** Ordered component stable-ids (ShipDamageState surface). */
   components: readonly string[];
-  /** Current authoritative ShipDamageState. */
   state: ShipDamageState;
-  /** Design (full) flotation reserve for terminal percentage calculations. */
   designFlotationReserve: number;
-  /** Design (full) stability score in basis points [0, 10_000]. */
   designStabilityScore: number;
-  /** Design displacement in integer kilograms — the denominator of the
-   *  bp-of-displacement flooding severity conversion (DESIGN-41 §14/§48 v12;
-   *  ADR-0047 decision 4). Threaded from the projected unit. */
   designDisplacementKg: number;
-  /** Belt armor thickness in µm (zone thickness source). */
   beltArmorUm: number;
-  /** Main gun caliber in µm (shell penetration source). */
   mainGunsCaliberUm: number;
-  /** Canonical ship type string (fire-risk multiplier surface). */
   shipType: string;
-  /** Campaign max hit points (hp mapping denominator). */
   maxHitPoints: number;
 }
 
 export interface DamageContext {
   battleId: string;
-  /** Per-ship damage context; resolveMinuteDamage threads the updated states
-   *  back into `targets` at the end of each resolved minute. */
   targets: Record<string, DamageTargetContext>;
-  /** Keyed deterministic RNG (battle seed). Optional: structural/flotation
-   *  losses still apply without it; fire/flooding/magazine/zone randomness is
-   *  then fixed (draw 0 / first zone). */
   engine?: RandomEngine;
-  /** Optional ledger recording every keyed draw (port pattern). */
   randomLedger?: RandomLedger;
 }
 
-// ShipDamageState construction + hp mapping (ADR-0026)
-
-/** Build the pristine battle-start ShipDamageState for one ship. */
 export function initialDamageState(shipId: string): ShipDamageState {
   return withDamageStateHash({
     shipId,
@@ -136,21 +90,15 @@ function clampBp(v: number): number {
   return v;
 }
 
-/**
- * Current battle hp of a ship, integer fixed-point in [0, maxHitPoints].
- * A terminal ship (SINKING/FOUNDERED) has 0 hp (it is lost).
- */
 export function hpOfState(state: ShipDamageState, maxHitPoints: number): SafeInt {
   if (state.terminalStatus !== "NORMAL") return SafeInt(0);
   const structuralBp = clampBp(Math.floor((state.structuralIntegrity * 10_000) / STRUCTURE_UNIT));
   const flotationBp = clampBp(Math.floor((state.flotationReserve * 10_000) / FLOAT_UNIT));
-  const fractionBp = Math.floor((structuralBp + flotationBp) / 2); // equal 50/50 weights
+  const fractionBp = Math.floor((structuralBp + flotationBp) / 2);
   const hp = Math.floor((maxHitPoints * fractionBp) / 10_000);
   return SafeInt(Math.max(0, Math.min(maxHitPoints, hp)));
 }
 
-/** Accumulated battle loss in hp: battle-start hp minus current derived hp
- *  (integer, clamped at 0 — a battle can never repair a ship). */
 export function battleLoss(
   battleStartHitPoints: number,
   state: ShipDamageState,
@@ -159,9 +107,6 @@ export function battleLoss(
   return SafeInt(Math.max(0, battleStartHitPoints - (hpOfState(state, maxHitPoints) as number)));
 }
 
-// Impact synthesis: GunneryEventRecord HIT -> GunneryImpact (B-4 seam)
-
-/** Canonical splinter intensity per penetration outcome (deterministic). */
 export function splinterIntensityForOutcome(outcome: PenetrationOutcome): SplinterIntensity {
   switch (outcome) {
     case "SPLINTER_EFFECT":
@@ -173,40 +118,12 @@ export function splinterIntensityForOutcome(outcome: PenetrationOutcome): Splint
   }
 }
 
-/** Effective armored resistance for a zone (manufacturing + quality, integer µm). */
 export function effectiveResistanceUm(zone: { thicknessUm: number }): number {
   const armored = manufacturingEffectiveThickness(zone.thicknessUm);
   const qualityBp = lookupArmorQualityMultiplierBp(ARMOR_QUALITY_FAMILY);
   return Math.floor((armored * qualityBp) / 10_000);
 }
 
-// Caliber unit contract (ADR-0094; corrects the ADR-0021 unit-scale defect).
-//
-// Source unit:    micrometres (µm). This is the single canonical caliber unit
-//                 across the armament-to-combat boundary: first-class armament
-//                 content authors it as `caliberUm` (343 mm = 343_000), ship
-//                 design stores it on `CompiledDesignVersion` as
-//                 `mainGunsCaliber` (µm), and combat reads it as
-//                 `DamageTargetContext.mainGunsCaliberUm` (µm). No conversion
-//                 happens on any of those hops; they all carry micrometres.
-// Formula input:  the ADR-0021 linear model reads caliber in millimetres:
-//                 `caliberMm = caliberUm / 1_000` — an exact rational, since a
-//                 caliber need not be a whole number of millimetres
-//                 (e.g. 119_380 µm = 119.38 mm).
-// Conversion:     capability_um = floor(caliberUm * velocityMS / 1_000).
-//                 Composing `caliberMm * velocity / 1_000` (mm of penetration)
-//                 then re-scaling mm -> µm (× 1_000) cancels the two 1_000
-//                 factors, so the µm-to-mm and mm-to-µm steps are one exact
-//                 integer expression.
-// Rounding:       exactly once, `Math.floor`, at the very end. Never round the
-//                 intermediate millimetre value (that would discard up to
-//                 999 µm of fractional penetration).
-// Safe range:     caliberUm ∈ (0, 660_400] (the largest armor-zone gun caliber),
-//                 velocityMS ∈ [0, ~1_000]. The product is ≤ ~6.6e8, far inside
-//                 Number.MAX_SAFE_INTEGER, so the floor is exact.
-// Overflow:       a non-finite or non-positive caliber/velocity fails
-//                 structurally (BATTLE_AUTO_RESOLUTION_FAILED) rather than
-//                 silently flooring to zero — the pre-fix defect.
 export const CALIBER_CANONICAL_UNIT = "micrometre" as const;
 export const MICROMETRES_PER_MILLIMETRE = 1_000 as const;
 
@@ -234,7 +151,6 @@ const HULL_BREACH_OUTCOMES: ReadonlySet<string> = new Set([
   "PASS_THROUGH",
 ]);
 
-/** Waterline zones: a breach here admits water. */
 const WATERLINE_ZONES: ReadonlySet<string> = new Set(["BELT", "MAGAZINE"]);
 
 export interface SynthesizeImpactInput {
@@ -246,15 +162,10 @@ export interface SynthesizeImpactInput {
   shipType: string;
 }
 
-/** Make a damage-facing GunneryImpact from a HIT salvo + the target's zone. */
 export function synthesizeImpact(input: SynthesizeImpactInput): GunneryImpact {
   const { salvo, targetShipId, zone, mainGunsCaliberUm, shipType } = input;
   const hitLocation = zone.id;
   const effectiveResistance = effectiveResistanceUm(zone);
-  // The auto-resolution model reads the shell caliber from the target's compiled main-battery
-  // caliber (ADR-0026). A target with no main battery (caliber 0) cannot present a penetrating
-  // main-gun shell: the capability is zero (NO_EFFECT), exactly as before. Never call the strict
-  // unit conversion with an absent caliber — that is the explicit branch, not a silent floor.
   const penetrationCapability =
     mainGunsCaliberUm > 0 ? shellPenetrationUm(mainGunsCaliberUm, SHELL_MUZZLE_VELOCITY_MS) : 0;
   const penetrationOutcome = determinePenetrationOutcome(
@@ -267,9 +178,6 @@ export function synthesizeImpact(input: SynthesizeImpactInput): GunneryImpact {
 
   const dmgBp = HIT_DAMAGE_OUTCOME_BP[penetrationOutcome] as number;
   const structuralDamage = Math.floor((HIT_STRUCTURAL_DAMAGE_BASE * dmgBp) / 10_000);
-  // ADR-0098: a waterline hit breaches on full penetration (unchanged) OR on a
-  // partial penetration, where the breach is BOUNDED (a smaller flotation-loss
-  // ratio). Non-waterline zones never breach (unchanged).
   const waterline = WATERLINE_ZONES.has(zone.id);
   const fullBreach = waterline && HULL_BREACH_OUTCOMES.has(penetrationOutcome);
   const nearPenetration =
@@ -307,8 +215,6 @@ export function synthesizeImpact(input: SynthesizeImpactInput): GunneryImpact {
   };
 }
 
-// resolveMinuteDamage — the step-10 stage the engine calls after gunnery.
-
 function assetIdForContact(contactId: string, contacts: readonly TacticalContact[]): string {
   for (const c of contacts) {
     if (c.contactId === contactId) return c.assetId;
@@ -327,22 +233,11 @@ export interface ResolveMinuteDamageInput {
 }
 
 export interface ResolveMinuteDamageOutput {
-  /** Ledger-ready BattleEvents (one per damage event record). */
   events: BattleEvent[];
-  /** Updated per-ship damage states (only ships that absorbed hits). */
   states: Record<string, ShipDamageState>;
-  /** Targets with the updated states threaded (next minute's context). */
   updatedTargets: Record<string, DamageTargetContext>;
 }
 
-/**
- * Resolve one minute of damage: for every HIT salvo pick the target's hit zone
- * (keyed draw; first zone without an engine), synthesize the impact, group by
- * ship, and run `resolveDamage` per ship (canonical shipId order). The keyedRng
- * passed into `resolveDamage` is scoped by (battleId, minute, substep, impact
- * ordinal), so the engine's per-impact stages (fire, flooding, magazine) draw
- * from distinct deterministic streams (ADR-0026 §random).
- */
 export function resolveMinuteDamage(input: ResolveMinuteDamageInput): ResolveMinuteDamageOutput {
   const { battleId, minute, salvos, contacts, targets, engine, randomLedger } = input;
   const events: BattleEvent[] = [];
@@ -355,7 +250,7 @@ export function resolveMinuteDamage(input: ResolveMinuteDamageInput): ResolveMin
     const targetShipId = assetIdForContact(salvo.targetContactId, contacts);
     if (!targetShipId) continue;
     const target = targets[targetShipId];
-    if (!target) continue; // every committed ship is in targets; defensive no-op
+    if (!target) continue;
 
     const zone = pickZone(engine, battleId, target, minute, salvo, randomLedger);
 
@@ -379,11 +274,6 @@ export function resolveMinuteDamage(input: ResolveMinuteDamageInput): ResolveMin
     if (impacts.length === 0) continue;
     const target = targets[shipId]!;
 
-    // One keyedRng per resolveDamage call: every draw invocation (one per
-    // impact stage: fire, flooding, magazine) consumes a distinct deterministic
-    // stream via a monotonically increasing call counter, so multi-impact
-    // minutes never reuse a stream (ADR-0026 §random). Order of calls is fixed
-    // by engineWiring's pipeline stage order.
     let drawCall = 0;
     const scopedRng = (stream: string): number => {
       const domain = `${stream}:${battleId}:${minute}:${DAMAGE_SUBSTEP}:${drawCall}`;
@@ -421,9 +311,6 @@ export function resolveMinuteDamage(input: ResolveMinuteDamageInput): ResolveMin
       scopedRng,
     );
 
-    // ADR-0050: persist shell-created fire/flooding sources into the state so
-    // the always-wired step 8.6 damage-control stage progresses them. Pure
-    // post-processing of the already-drawn event records: no extra draws.
     const newState = persistCreatedSources(resolvedState, damageEventRecords);
 
     for (const dmgEvent of damageEventRecords) {
@@ -447,15 +334,6 @@ export function resolveMinuteDamage(input: ResolveMinuteDamageInput): ResolveMin
   return { events, states, updatedTargets };
 }
 
-/**
- * Append the fire/flooding sources created by this ship's impacts (event
- * records, in impact order) to the state's records (ADR-0050). Flooding
- * sources append verbatim (torpedo-path convention, damagePackage.ts); a fire
- * at a location that already burns merges into the existing record at the
- * higher intensity (one record per location keeps smoke cloud/event ids
- * unique). Integer-only; returns the input state untouched (same hash) when
- * nothing was created.
- */
 export function persistCreatedSources(
   state: ShipDamageState,
   records: readonly {
@@ -486,12 +364,6 @@ export function persistCreatedSources(
   return withDamageStateHash({ ...state, fireRecords: fires, floodingRecords: floods });
 }
 
-/** Deterministic canonical zone pick — keyed stream when an engine is present,
- *  else the first zone ("BELT"). The stream is keyed by target ship AND salvo
- *  battery (each battery fires ≤1 salvo/minute, so batteryId is a stable,
- *  unique per-salvo ordinal): multi-impact minutes never reuse a stream, so
- *  every HIT draws its zone independently (ENGINEERING-CONTRACT domain
- *  separation; ADR-0026 §random). The draw is recorded in the random ledger. */
 function pickZone(
   engine: RandomEngine | undefined,
   battleId: string,
@@ -503,8 +375,6 @@ function pickZone(
   if (!engine || target.zones.length === 0) return target.zones[0]!;
   const streamId = `battle/damage/hit_zone:${battleId}:${minute}:${DAMAGE_SUBSTEP}:${target.shipId}:${salvo.batteryId}`;
   const stream = engine.stream(streamId);
-  // ADR-0053: weighted by ZONE_HIT_WEIGHT_BP (one uniform draw over the total;
-  // equal weights of 1 reduce exactly to the pre-ADR-0053 uniform draw).
   const weightOf = (z: AutoResolutionZone): number =>
     ZONE_HIT_WEIGHT_BP[z.id as AutoResolutionZoneId] ?? 0;
   const totalWeight = target.zones.reduce((a, z) => a + weightOf(z), 0);

@@ -5,11 +5,11 @@ import { canonicalEventOrder } from "../../src/battleLedger.js";
 
 describe("AC-12 DESIGN-38 pipeline order (steps 4-8)", () => {
   const STEP_ORDER = [
-    "update_contact_knowledge", // 4
-    "resolve_movement_intent", // 5
-    "resolve_propulsion_formation", // 6
-    "resolve_collisions_grounding", // 7
-    "resolve_sensors_spotting", // 8
+    "update_contact_knowledge",
+    "resolve_movement_intent",
+    "resolve_propulsion_formation",
+    "resolve_collisions_grounding",
+    "resolve_sensors_spotting",
   ];
 
   it("emits phase events in DESIGN-38 step order for each minute", () => {

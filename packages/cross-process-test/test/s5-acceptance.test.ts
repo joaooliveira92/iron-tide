@@ -5,8 +5,6 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { runS5Acceptance, type S5Observation } from "../src/s5-acceptance.js";
 
-// S-5 11 (#87, spec #73 R15): compiled-campaign-month acceptance for foreign stations and presence. The production
-// `presence` section is DORMANT (gated on decision requests 0017-0023, 0026); every number is FIXTURE-CLASS.
 const thisDir = dirname(fileURLToPath(import.meta.url));
 const childScript = resolve(thisDir, "..", "dist", "run-s5-acceptance-child.js");
 

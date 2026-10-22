@@ -1,12 +1,3 @@
-/**
- * Compile a strictly decoded torpedo part into the neutral `CompiledTorpedo` contract
- * (ship-part-model ticket 13a, SPM-R17).
- *
- * Pure and total: either the compiled record, or typed, path-specific failures. It reads the
- * part's spec resolved at `month` (base spec plus every revision up to it) and validates every
- * value it carries, so a missing or malformed field is a named failure, never a zero, `false`,
- * empty list or guess. It does not read combat and does not change combat behaviour (ticket 13b).
- */
 import type { FlattenedPart } from "@bluewave/content-schema";
 import type { CompiledTorpedo, CompiledTorpedoSpeedSetting } from "@bluewave/armament";
 import { specAt } from "./partFitConstraints.js";
@@ -104,7 +95,6 @@ function readStringList(
   return [...(value as string[])];
 }
 
-/** Like `readStringList`, but an empty list is valid (the technology-prerequisite field). */
 function readStringListAllowEmpty(
   spec: Readonly<Record<string, unknown>>,
   field: string,
@@ -175,10 +165,6 @@ function readSpeedSettings(
   return out.length === value.length ? out : undefined;
 }
 
-/**
- * Compile a torpedo part at `month`. Returns the typed compiled record, or the failures that
- * prevented it. A part of another family is a named failure, not a cast.
- */
 export function compileTorpedo(part: FlattenedPart, month: string): CompileTorpedoResult {
   if (part.family !== "torpedo") {
     return {

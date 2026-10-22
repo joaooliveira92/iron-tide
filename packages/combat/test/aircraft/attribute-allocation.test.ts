@@ -1,6 +1,3 @@
-// AC-10 (INC-3): Attribute allocation formula.
-// Start from role baseline, +10 per emphasised trait, -10 trade-off,
-// no attribute below role min or above 100.
 import { describe, expect, it } from "vite-plus/test";
 import { allocateAttributes } from "../../src/aircraft/index.js";
 
@@ -36,8 +33,6 @@ describe("AC-10: attribute allocation", () => {
 
   it("applies trade-off penalty to non-emphasised core attributes", () => {
     const [s, f, m, t] = allocateAttributes("FIGHTER", ["SPEED", "MANEUVERABILITY"]);
-    // Baseline [40,25,50,30] +10 SPEED → [50,25,50,30], +10 MAN → [50,25,60,30],
-    // trade-off penalty on non-emphasised [FIREPOWER, TOUGHNESS]: [50,20,60,25]
     expect(Number(s)).toBe(50);
     expect(Number(f)).toBe(20);
     expect(Number(m)).toBe(60);

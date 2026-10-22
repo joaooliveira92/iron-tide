@@ -1,8 +1,3 @@
-// D-4 M4 Aviation: Air Defense — AC-5 medium-AA eligibility + pre-release timing per §8.
-// Medium AA may engage only an attack profile explicitly marked mediumAaEligible, and
-// receives ONE pre-release engagement window when the attacker enters range before weapon
-// release. The window opens when every §8 predicate passes.
-
 import type { AirDefenseSystemDefinition } from "./air-defense-system-definition.js";
 import type { AirDefenseAttack } from "./attack.js";
 import { MEDIUM_AA_FIRE_CONTROL_MINIMUM_BP } from "./constants.js";
@@ -49,20 +44,6 @@ export interface MediumAaEligibilityResult {
   reason: MediumAaIneligibilityReason | null;
 }
 
-/**
- * Canonical medium-AA eligibility + timing predicate order (§8 lines 144-153). Fixed for
- * deterministic reason reporting:
- *   1. §18 matrix + system profileEligibility (NOT_ELIGIBLE);
- *   2. range/altitude/speed envelope (OUT_OF_ENVELOPE);
- *   3. pre-release vs post-release — a released attack missed its one pre-release window.
- *      Post-release engagement is a MAY only when the system definition explicitly supports
- *      the released weapon type; post-release modeling is deferred to INC-3+, so any released
- *      attack is reported as PRE_RELEASE_MISSED here (§8 line 154);
- *   4. fire-control solution >= 4_000 bp (NO_FIRE_CONTROL_SOLUTION);
- *   5. free channel then ammunition (RESOURCE_UNAVAILABLE);
- *   6. ship/system operability then director then radar (RESOURCE_UNAVAILABLE);
- *   7. PRE_RELEASE_OPEN.
- */
 export function isMediumAaEligible(input: MediumAaEligibilityInput): MediumAaEligibilityResult {
   const {
     system,

@@ -10,11 +10,6 @@ import {
   validateGunneryBallisticsContract,
 } from "../../src/gunnery/index.js";
 
-// Research table (docs/research/b3-m2-gunnery.md §1): broad caliber ->
-// chosen baseReloadMilliseconds. Locked so a drift in either the research note or
-// the shipped constant forces review. The 1880s RML heavy-gun caliber is NOT in
-// this table: it has no primary-sourced precise integer (sources: "1-5 min/round")
-// and ships as an explicit BALANCE TARGET (ADR-0020) — asserted separately.
 const RESEARCHED_BASE_RELOAD_MS_BY_CALIBER: Partial<Record<GunneryCaliber, number>> = {
   CAL_6IN_152MM: 7_000,
   CAL_8IN_203MM: 18_000,
@@ -32,13 +27,12 @@ describe("AC-5 grounding: research-grounded base-reload-by-caliber constants", (
 
   it("the shipped per-caliber values equal the researched table exactly", () => {
     for (const cal of GUNNERY_CALIBERS) {
-      if (cal === "CAL_RML_HEAVY_1880") continue; // balance target, asserted separately
+      if (cal === "CAL_RML_HEAVY_1880") continue;
       expect(BASE_RELOAD_MS_BY_CALIBER[cal]).toBe(RESEARCHED_BASE_RELOAD_MS_BY_CALIBER[cal]);
       expect(SHIPPED_GUNNERY_BALLISTICS_CONTRACT.baseReloadMsByCaliber[cal]).toBe(
         RESEARCHED_BASE_RELOAD_MS_BY_CALIBER[cal],
       );
     }
-    // the 1880s RML heavy-gun caliber is never silently pinned as a research fact
     expect(RESEARCHED_BASE_RELOAD_MS_BY_CALIBER.CAL_RML_HEAVY_1880).toBeUndefined();
   });
 
@@ -52,10 +46,6 @@ describe("AC-5 grounding: research-grounded base-reload-by-caliber constants", (
   });
 
   it("the 1880s RML heavy-gun balance target equals the ADR-0020 midpoint", () => {
-    // docs/research/b3-m2-gunnery.md §1: 1880s RML heavy guns are 1-5 min/round
-    // (120 000-300 000 ms), NOT fully grounded -> recorded as a BALANCE TARGET at
-    // the midpoint 210 000 ms (ADR-0020), never silently pinned as a primary fact
-    // (open content-owner decision).
     expect(BASE_RELOAD_MS_BY_CALIBER.CAL_RML_HEAVY_1880).toBe(210_000);
     expect(Number.isInteger(BASE_RELOAD_MS_BY_CALIBER.CAL_RML_HEAVY_1880)).toBe(true);
     expect(SHIPPED_GUNNERY_BALLISTICS_CONTRACT.baseReloadMsByCaliber.CAL_RML_HEAVY_1880).toBe(

@@ -41,7 +41,6 @@ describe("armament content — the release gate", () => {
 
   it("keeps non-blocking findings visible without promoting them", () => {
     const findings = lintArmamentContent(armamentCoverageInput);
-    // German Nordenfelt is IMPORTED: a WARNING, not a blocker.
     expect(findings.some((f) => f.severity === "WARNING")).toBe(true);
     expect(blocking(findings)).toEqual([]);
   });

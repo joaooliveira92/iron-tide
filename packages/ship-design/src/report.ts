@@ -21,7 +21,6 @@ export interface BalanceRow {
   readonly warning: number;
 }
 
-/** One row per design for calibration. Same compile path as the game; no side effects. */
 export function balanceRows(
   designs: readonly { readonly name: string; readonly draft: DesignDraft }[],
   ctx: ShipContext,

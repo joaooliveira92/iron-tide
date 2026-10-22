@@ -43,8 +43,6 @@ function target(shipId: string): DamageTargetContext {
     state: initialDamageState(shipId),
     designFlotationReserve: 50_000,
     designStabilityScore: 8_000,
-    // 30 000 t design displacement; severity of flooding converts kg -> bp
-    // against this denominator (ADR-0047 decision 4).
     designDisplacementKg: 30_000_000,
     beltArmorUm: 305_000,
     mainGunsCaliberUm: 343_000,
@@ -57,7 +55,7 @@ describe("AC: damage flow — HIT -> GunneryImpact -> resolveDamage -> damageRep
   it("a HIT salvo synthesizes an impact that reduces structure/flotation", () => {
     const state = initialDamageState("d1");
     const salvo = makeGunneryHitRecord({ batteryId: "a1:MAIN", targetContactId: "b1:d1" });
-    const zone = autoZonesForBelt(305_000)[0]!; // BELT
+    const zone = autoZonesForBelt(305_000)[0]!;
 
     const impact = synthesizeImpact({
       salvo,
@@ -89,7 +87,6 @@ describe("AC: damage flow — HIT -> GunneryImpact -> resolveDamage -> damageRep
     expect(out.events.length).toBeGreaterThan(0);
     expect(out.events[0]!.eventType).toBe("damage_impact");
 
-    // structural loss is reflected in the damageReport mapping (integer >= 0)
     const loss = battleLoss(100, ns, 100) as number;
     expect(loss).toBeGreaterThan(0);
     expect(Number.isInteger(loss)).toBe(true);
@@ -109,24 +106,15 @@ describe("AC: damage flow — HIT -> GunneryImpact -> resolveDamage -> damageRep
     const a = resolveMinuteDamage(input());
     const b = resolveMinuteDamage(input());
 
-    // same start state + same seed + same target -> identical resulting states
     expect(a.states["d1"]!.structuralIntegrity).toBe(b.states["d1"]!.structuralIntegrity);
     expect(a.states["d1"]!.flotationReserve).toBe(b.states["d1"]!.flotationReserve);
     expect(a.events).toHaveLength(b.events.length);
   });
 
   it("distinct targets draw zones from distinct keyed streams (domain separation)", () => {
-    // F1/ADR-0026: the hit-zone stream is keyed by target AND salvo battery, so
-    // two ships hit in the same minute never draw from the same stream. Repeat
-    // many times to show the two target keys are not correlated streams.
     const salvo1 = makeGunneryHitRecord({ batteryId: "a1:MAIN", targetContactId: "b1:d1" });
     const salvo2 = makeGunneryHitRecord({ batteryId: "a2:MAIN", targetContactId: "b1:d2" });
 
-    // d1 and d2 are hit in the same minute/battle: their zones must NOT be
-    // forced to be identical (that would prove the stream-key bug). At least
-    // one structural difference over several repeated runs is expected, but the
-    // strong invariant is that per-target streams yield independent draws —
-    // verify the two first-zone draws differ across enough repeats.
     let differed = 0;
     for (let i = 0; i < 20; i++) {
       const engine = new RandomEngine(`seed-${i}`);
@@ -152,7 +140,6 @@ describe("AC: damage flow — HIT -> GunneryImpact -> resolveDamage -> damageRep
   });
 
   it("linear penetration: shellPenetrationUm matches caliber*velocity/1000 at production scale", () => {
-    // caliber 305 mm (12"), velocity 762 m/s -> 305*762/1000 = 232.41 mm = 232_410 µm
     expect(shellPenetrationUm(305_000, 762)).toBe(232_410);
     expect(shellPenetrationUm(343_000, 762)).toBe(261_366);
   });

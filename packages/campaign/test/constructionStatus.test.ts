@@ -1,6 +1,3 @@
-// SB-3/INC-2 (ADR-0129): the DESIGN-23 section 2 dockyard-project status model. The status vocabulary is exactly
-// the ten documented states; the transition table is enforced in one place; a terminal status has no outgoing
-// transition and an illegal transition fails with INVALID_DOCKYARD_PROJECT_TRANSITION without changing state.
 import { describe, expect, it } from "vite-plus/test";
 import {
   CONSTRUCTION_PROJECT_STATUSES,
@@ -99,7 +96,6 @@ describe("dockyard project status model (DESIGN-23 section 2)", () => {
     const b = transitionConstructionProject(project, "HALTED");
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
     expect(project.status).toBe("ACTIVE");
-    // A transition to an unrelated project does not change another status's serialization of that project.
     expect(JSON.stringify(transitionConstructionProject(a, "ACTIVE"))).toBe(
       JSON.stringify(transitionConstructionProject(b, "ACTIVE")),
     );

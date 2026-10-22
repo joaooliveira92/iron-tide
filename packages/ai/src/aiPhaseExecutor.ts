@@ -14,11 +14,6 @@ export interface AiExecutionResult {
   readonly diagnostics: readonly Diagnostic[];
 }
 
-/**
- * Thin per-nation wrapper around AiPlanner so the phase engine can
- * drive a single AI slot without knowing planning details.
- * Stateless, deterministic, never mutates snapshot.
- */
 export class AiPhaseExecutor {
   private readonly planner: AiPlanner;
 
@@ -44,7 +39,6 @@ export class AiPhaseExecutor {
         idempotencyMap,
         researchAllocation,
       );
-      // Defensive copy + freeze to prevent caller mutation leaking back
       return {
         commands: Object.freeze([...result.accepted]),
         diagnostics: Object.freeze([...result.diagnostics]),

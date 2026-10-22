@@ -1,10 +1,3 @@
-// The production parts content compiles (ship-part-model ticket 11d). This reads the activated
-// authoritative content — the content codemod's parts, platforms, slot templates and design
-// loadouts, now declared in the 1880 pack — and compiles every reference design from its loadout
-// through `compileDesignFromLoadout` (the fit barrier), asserting the result equals the legacy
-// compile. It is the proof that production compiles from activated parts content, not from the
-// legacy placement lists.
-
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
@@ -35,12 +28,6 @@ import { nationalContext, readReferenceDesignEntries } from "./helpers/earlyCont
 const root = join(import.meta.dirname, "..", "..", "..", "content", "production", "1880");
 const shipBuilding = join(root, "ship-building");
 
-/**
- * Drop the compiled-torpedo contract (and the design hash that covers it) from a compiled design
- * before comparing it to the legacy compile (ticket 13b): the parts pipeline resolves the neutral
- * `CompiledTorpedo` onto each tube mount, and the legacy path has no parts to compile. Every other
- * field must still be identical; the equivalence harness proves the derived metrics are unchanged.
- */
 function stripCompiledTorpedo(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stripCompiledTorpedo);
   if (value !== null && typeof value === "object") {
@@ -162,7 +149,6 @@ describe("production parts content → compile (ticket 11d)", () => {
       expect(canonicalSerialize(stripCompiledTorpedo(result.compiled)), loadout.id).toBe(
         canonicalSerialize(stripCompiledTorpedo(legacyCompiled)),
       );
-      // The parts pipeline DID resolve the neutral contract onto every tube mount (ticket 13b).
       for (const component of result.compiled.components) {
         if (component.category !== "TORPEDO_TUBE" || component.torpedoMount === null) continue;
         expect(

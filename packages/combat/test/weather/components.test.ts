@@ -1,6 +1,3 @@
-// AC-4: 12 tactical weather components — all DESIGN-42 §3 components use
-// canonical integer units; non-integers rejected with
-// INVALID_TACTICAL_WEATHER_STATE; BattleWeatherComponents carries a state hash.
 import { describe, it, expect } from "vite-plus/test";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
 import {
@@ -53,49 +50,37 @@ function codeOf(fn: () => void): string | undefined {
 describe("AC-4: twelve tactical weather components", () => {
   it("carries all 12 canonical §3 components with integer units", () => {
     const c = withTacticalWeatherComponentsHash(seed());
-    // 1. sea state 0..9
     expect(Number.isInteger(c.seaState)).toBe(true);
     expect(c.seaState).toBeGreaterThanOrEqual(0);
     expect(c.seaState).toBeLessThanOrEqual(9);
-    // 2. wind direction (canonical angular units)
     expect(Number.isInteger(c.windDirectionDeg)).toBe(true);
     expect(c.windDirectionDeg).toBeGreaterThanOrEqual(0);
     expect(c.windDirectionDeg).toBeLessThanOrEqual(359);
-    // 3. wind speed µm/s
     expect(Number.isInteger(c.windSpeedUmPerSec)).toBe(true);
     expect(c.windSpeedUmPerSec).toBeGreaterThanOrEqual(0);
-    // 4. precipitation type
     expect(["NONE", "RAIN", "SNOW"]).toContain(c.precipitationType);
-    // 5. precipitation intensity 0..10_000 bp
     expect(Number.isInteger(c.precipitationIntensityBp)).toBe(true);
     expect(c.precipitationIntensityBp).toBeGreaterThanOrEqual(0);
     expect(c.precipitationIntensityBp).toBeLessThanOrEqual(10_000);
-    // 6. fog/mist density 0..10_000
     expect(Number.isInteger(c.fogMistDensityBp)).toBe(true);
     expect(c.fogMistDensityBp).toBeGreaterThanOrEqual(0);
     expect(c.fogMistDensityBp).toBeLessThanOrEqual(10_000);
-    // 7. cloud cover 0..10_000
     expect(Number.isInteger(c.cloudCoverBp)).toBe(true);
     expect(c.cloudCoverBp).toBeGreaterThanOrEqual(0);
     expect(c.cloudCoverBp).toBeLessThanOrEqual(10_000);
-    // 8. time of day (canonical five states)
     expect(TIME_OF_DAY_STATES).toContain(c.timeOfDay);
     expect(TIME_OF_DAY_STATES).toHaveLength(5);
-    // 9. solar bearing + elevation
     expect(Number.isInteger(c.solarBearingDeg)).toBe(true);
     expect(c.solarBearingDeg).toBeGreaterThanOrEqual(0);
     expect(c.solarBearingDeg).toBeLessThanOrEqual(359);
     expect(Number.isInteger(c.solarElevationDeg)).toBe(true);
     expect(c.solarElevationDeg).toBeGreaterThanOrEqual(0);
     expect(c.solarElevationDeg).toBeLessThanOrEqual(90);
-    // 10. glare intensity 0..10_000
     expect(Number.isInteger(c.glareIntensityBp)).toBe(true);
     expect(c.glareIntensityBp).toBeGreaterThanOrEqual(0);
     expect(c.glareIntensityBp).toBeLessThanOrEqual(10_000);
-    // 11. base visibility µm
     expect(Number.isInteger(c.baseVisibilityUm)).toBe(true);
     expect(c.baseVisibilityUm).toBeGreaterThanOrEqual(0);
-    // 12. local smoke fields (empty this slice; smoke deferred to M3)
     expect(Array.isArray(c.localSmokeFields)).toBe(true);
     expect(c.localSmokeFields).toHaveLength(0);
   });
@@ -119,7 +104,6 @@ describe("AC-4: twelve tactical weather components", () => {
     expect(c1.stateHash).toBe(c2.stateHash);
   });
 
-  // ---- Non-integer type violations (INVALID_TACTICAL_WEATHER_STATE) ----
   it("rejects non-integer seaState with INVALID_TACTICAL_WEATHER_STATE", () => {
     const c = seed({ seaState: 4.5 } as unknown as BattleWeatherComponents);
     expect(codeOf(() => assertFixedPointTacticalWeather(c))).toBe(INVALID_TACTICAL_WEATHER_STATE);
@@ -146,7 +130,6 @@ describe("AC-4: twelve tactical weather components", () => {
     expect(codeOf(() => assertFixedPointTacticalWeather(c))).toBe(INVALID_TACTICAL_WEATHER_STATE);
   });
 
-  // ---- Range violations (WEATHER_STATE_INVARIANT_FAILED) ----
   it("rejects out-of-range seaState 10", () => {
     expect(() => withTacticalWeatherComponentsHash(seed({ seaState: 10 }))).toThrow(
       WEATHER_STATE_INVARIANT_FAILED,

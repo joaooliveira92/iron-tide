@@ -124,8 +124,6 @@ describe("REARMAMENT armament-change conditions (RTW3 manual pp31-32)", () => {
     expect(r.findings.map((x) => x.id)).not.toContain("ARMAMENT_SECONDARY_CHANGE_NOT_ALLOWED");
   });
 
-  // ADR-0131 (amended): the mount style is the first-class armament content's `defaultMountType`, not the barrel
-  // count. A single-barrel turret above 6 in is refused; a casemate of the same calibre is allowed.
   describe("mount style from the authored armament content", () => {
     const base = baseCtx.catalogue.find((c) => c.id === "qf_47in")!;
     const bigSecondary: ComponentDef = {
@@ -382,7 +380,6 @@ describe("ARMOUR_MODIFICATION (RTW3 manual p. 32 rebuild list, ADR-0067 §3)", (
   });
   const armoured: ShipState = {
     ...ship,
-    // 1 in over the 24 m x 5 m deck is about 27.6 t, so the budget must be generous.
     growthBudgetKg: 40_000,
     design: {
       ...draft,
@@ -533,7 +530,6 @@ describe("ARMOUR_MODIFICATION tech gating (ticket 24; shares the compile gate)",
     expect(x.why).toContain("tech_nickel");
     expect(checkFindingShape(x)).toEqual([]);
     expect(r.nextState).toBe(big);
-    // with the tech unlocked it is legal
     const ok = run(plan({ materialId: "nickel_steel" }), big, {
       ...gated,
       month: "1895-01",
@@ -595,7 +591,6 @@ describe("ARMOUR_MODIFICATION tech gating (ticket 24; shares the compile gate)",
       gated,
     );
     expect(ids(r)).not.toContain("REFIT_ARMOUR_TECH_UNAVAILABLE");
-    // no availability table: nickel_steel is unrestricted, as before this ticket
     expect(run(plan({ materialId: "nickel_steel" }), big, ctx).legal).toBe(true);
     expect(run(upgrade(), ship, gated).legal).toBe(true);
   });

@@ -1,8 +1,3 @@
-// AC-6 (INC-3): DESIGN-35 §6 minesweeping eligibility — every §6 predicate is
-// enforced; each failure axis reports the stable reason + the failing
-// predicate through a structured verdict (never a throw); an ineligible ship
-// contributes ZERO sweeping value. Mirrors the launch-eligibility verdict
-// pattern (torpedo module) as shape reference only — no import from torpedoes.
 import { describe, expect, it } from "vite-plus/test";
 import {
   INELIGIBLE_SHIP_SWEEPING_CONTRIBUTION,
@@ -46,15 +41,13 @@ function expectIneligible(
   } catch {
     threw = true;
   }
-  expect(threw).toBe(false); // NEVER throws on ineligibility
+  expect(threw).toBe(false);
   expect(result).toBeDefined();
   if (result!.eligible) {
     throw new Error(`expected ineligible (predicate: ${predicate})`);
   }
   expect(result!.reason).toBe(MINESWEEPING_INELIGIBILITY_REASONS[predicate]);
   expect(result!.verdict.failingPredicate).toBe(predicate);
-  // contributor-of-zero semantics: the false branch carries no ship (there is
-  // no contributor to aggregate) — nothing downstream can sum a value for it.
   expect("ship" in result!).toBe(false);
   expect(INELIGIBLE_SHIP_SWEEPING_CONTRIBUTION).toBe(0);
 }

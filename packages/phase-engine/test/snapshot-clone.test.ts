@@ -48,17 +48,12 @@ const STATE_SOURCE = readFileSync(STATE_PATH, "utf8");
 const OFFICER_SOURCE = readFileSync(OFFICER_PATH, "utf8");
 const DIVISION_SOURCE = readFileSync(DIVISION_PATH, "utf8");
 
-// Type-source enumeration (the audit's ground truth: the campaign interfaces).
-// The campaign state model's interfaces are flat; every field is one
-// `name: Type;`-style line inside the interface block.
-
 function sourceForType(typeName: string): string {
   if (typeName === "PermanentDivision") return DIVISION_SOURCE;
   if (typeName === "Officer") return OFFICER_SOURCE;
   return STATE_SOURCE;
 }
 
-/** All fields of the top-level `export interface <name> { … }` declaration. */
 function interfaceFields(name: string): string[] {
   const source = sourceForType(name);
   const header = new RegExp(`export interface ${name}\\s*\\{`);
@@ -80,11 +75,8 @@ function interfaceFields(name: string): string[] {
   return fields;
 }
 
-//  Graph-isolation helpers (identity checks on reference values).
-
 type RefNode = object;
 
-/** Every reference value (object/array/Map) reachable from `root`. */
 function collectReferences(root: unknown, seen = new Set<RefNode>()): Set<RefNode> {
   if (root === null || root === undefined || typeof root !== "object" || seen.has(root))
     return seen;
@@ -112,9 +104,6 @@ function expectDisjointGraph(left: unknown, right: unknown, label = "object grap
   const r = shared(rightRefs, leftRefs);
   expect(l === undefined && r === undefined, `${label}: callers share a reference`).toBe(true);
 }
-
-//  Rich snapshot fixture: exercises every audited type with nested mutable
-//  values so the identity tests genuinely probe deep isolation.
 
 function makeRichSnapshot(): CampaignSnapshot {
   const ships: Ship[] = [
@@ -622,20 +611,16 @@ describe("snapshotClone — deep isolation (identity checks, not value equality)
     const cloneNation = clone.nations.get(ATTACKER_NATION)!;
     expect(cloneNation).not.toBe(inputNation);
 
-    // ship
     cloneNation.fleets[0]!.ships[0]!.hitPoints = SafeInt(1);
     expect(inputNation.fleets[0]!.ships[0]!.hitPoints).not.toBe(1);
-    // nation treasury
     cloneNation.treasury = SafeInt(-1);
     expect(inputNation.treasury as number).not.toBe(-1);
-    // research
     cloneNation.research.technologies[0]!.investedPoints = SafeInt(999);
     expect(inputNation.research.technologies[0]!.investedPoints as number).not.toBe(999);
     cloneNation.research.fieldPriorities["ADDED"] = SafeInt(1);
     expect(inputNation.research.fieldPriorities["ADDED"]).toBeUndefined();
     cloneNation.research.activeCandidates.set("extra", "x");
     expect(inputNation.research.activeCandidates.has("extra")).toBe(false);
-    // war
     const inputWar = input.wars.wars[0]!;
     const cloneWar = clone.wars.wars[0]!;
     expect(cloneWar).not.toBe(inputWar);
@@ -643,19 +628,16 @@ describe("snapshotClone — deep isolation (identity checks, not value equality)
     expect(inputWar.attackerWarScore).toBe(0);
     cloneWar.attackerSideMembers.push("XX");
     expect(inputWar.attackerSideMembers).toHaveLength(1);
-    // battle result damage map
     const inputBattleResult = input.wars.battles[0]!.result!;
     const cloneBattleResult = clone.wars.battles[0]!.result!;
     expect(cloneBattleResult).not.toBe(inputBattleResult);
     cloneBattleResult.damageReport["shield"] = SafeInt(999);
     expect(inputBattleResult.damageReport["shield"]).toBeUndefined();
-    // design family member array
     const inputFamily = input.designFamilies.get("family-a")!;
     const cloneFamily = clone.designFamilies.get("family-a")!;
     expect(cloneFamily).not.toBe(inputFamily);
     cloneFamily.memberDesignVersionIds.push("SHARED");
     expect(inputFamily.memberDesignVersionIds).toHaveLength(2);
-    // foreign insight award (nested record + per-family number map)
     const inputAwards = input.nations.get(ATTACKER_NATION)!.foreignInsightAwards!;
     const cloneAwards = cloneNation.foreignInsightAwards!;
     expect(cloneAwards[0]).not.toBe(inputAwards[0]);
@@ -663,19 +645,16 @@ describe("snapshotClone — deep isolation (identity checks, not value equality)
     expect(inputAwards[0]!.awardedByFamily["HULL_CONSTRUCTION"]).toBe(500);
     cloneAwards[0]!.milestones.push("DELIVERY");
     expect(inputAwards[0]!.milestones).toHaveLength(1);
-    // world route
     const inputRoute = input.world.routes[0]!;
     const cloneRoute = clone.world.routes[0]!;
     expect(cloneRoute).not.toBe(inputRoute);
     cloneRoute.distance = SafeInt(0);
     expect(inputRoute.distance as number).toBe(10);
-    // world possession
     const inputPossession = input.world.possessions![0]!;
     const clonePossession = clone.world.possessions![0]!;
     expect(clonePossession).not.toBe(inputPossession);
     clonePossession.nationId = "mutated";
     expect(inputPossession.nationId).toBe(ATTACKER_NATION);
-    // politics shell
     const inputShells = input.politics.shells;
     const cloneShells = clone.politics.shells;
     expect(cloneShells).not.toBe(inputShells);
@@ -700,12 +679,9 @@ describe("MonthExecutor — consecutive month executions", () => {
       new DiagnosticCollector(),
     );
 
-    // the caller's snapshot is never aliased by the engine working snapshot.
     expectDisjointGraph(input, month1.finalSnapshot, "input vs month-1");
-    // month 1's shipped objects are not aliased by month 2's working graph.
     expectDisjointGraph(month1.finalSnapshot, month2.finalSnapshot, "month-1 vs month-2");
 
-    // a mutation in month-2's output leaves month-1's shipped objects untouched.
     const month1Attacker = month1.finalSnapshot.nations.get(ATTACKER_NATION)!;
     const month2Attacker = month2.finalSnapshot.nations.get(ATTACKER_NATION)!;
     const shippedTreasury = month1Attacker.treasury as number;

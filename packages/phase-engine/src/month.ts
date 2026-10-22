@@ -1,7 +1,3 @@
-// MonthExecutor: the strategic month pipeline orchestrator. It owns the shared
-// run context and runs every phase by iterating the PhaseRegistry's canonical
-// order — it contains no per-phase code. Each phase's policy, footprint and
-// body are declared by its own module as one `PhaseDescriptor` (ADR-0036).
 import { type CampaignSnapshot, campaignMonthId } from "@bluewave/campaign";
 import {
   type CommandBody,
@@ -99,12 +95,6 @@ export class MonthExecutor {
     return this.runPhases(ctx);
   }
 
-  /**
-   * The runner: iterate the pipeline in canonical registry order, enforcing the
-   * ADR-0036 footprint contract and delegating each phase's work to its own
-   * descriptor. Control-flow nodes (the interruption checkpoint) gate between
-   * phases. Adding or gating a phase never touches this method.
-   */
   private runPhases(ctx: MonthContext): MonthResult {
     for (const node of PhaseRegistry.nodes) {
       if ("kind" in node) {
@@ -138,14 +128,6 @@ export class MonthExecutor {
     };
   }
 
-  /**
-   * ADR-0036: enforce the phase registry contract at runtime. Asserts the
-   * phase's authoritative footprint (from its own descriptor) against the
-   * effective registry definition (phaseOverrides may substitute a phase's
-   * declared permissions). On any violation, records a stable
-   * PHASE_ACCESS_DENIED diagnostic and returns false — the caller fails the
-   * phase closed (the phase body does not run).
-   */
   private assertPhase(
     guard: PhaseGuard,
     phase: PhaseDescriptor,

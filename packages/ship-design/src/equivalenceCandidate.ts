@@ -1,13 +1,3 @@
-/**
- * The candidate (parts) pipeline of the equivalence harness (ship-part-model SPM-R22, R23;
- * ticket 08). A reference design becomes one loadout through the read-path adapters, the
- * existing fit barrier (`validateLoadoutFit` → `deriveAfterFit`, I-10) decides whether anything
- * may be derived, and only an `ACCEPTED` loadout is compiled from its parts.
- *
- * It composes the adapters; it owns no fit rule and does not route `compileDesign` through the
- * barrier (ticket 11). Unresolved `FIT_MAGAZINE_*` relationships are carried to the report, not
- * decided here.
- */
 import type { FlattenedPart, LoadoutEntryData } from "@bluewave/content-schema";
 import { compareCodePoints } from "@bluewave/deterministic";
 import { armourBalanceFromParts, armourRegionFromEntry } from "./armourPartAdapter.js";
@@ -45,14 +35,12 @@ import type { LauncherPartModel } from "./torpedoPartAdapter.js";
 
 const WEAPON_GUN = new Set(["MAIN_GUN", "SECONDARY_GUN", "DUAL_PURPOSE_GUN", "AA_WEAPON"]);
 
-/** One reference design as the harness reads it. */
 export interface EquivalenceDesign {
   readonly id: string;
   readonly month: string;
   readonly draft: DesignDraft;
 }
 
-/** Everything the candidate pipeline reads, passed in so this module performs no I/O. */
 export interface CandidateEnvironment {
   readonly components: readonly ComponentDef[];
   readonly navalProfiles: readonly NationNavalProfile[];
@@ -65,20 +53,16 @@ export interface CandidateEnvironment {
     readonly launchers: LauncherPartModel;
     readonly guns: GunPartModel;
   };
-  /** The same national context production compiles in. */
   readonly contextFor: (month: string, nationId: string) => ShipContext;
 }
 
 export type EntryKind = "gun" | "tube" | "fitting";
 
-/** SPM-R23 per-entry detail. Nothing here is derived from the legacy value it is compared to. */
 export interface EntryDetail {
   readonly instanceId: string;
   readonly kind: EntryKind;
-  /** The legacy component id of the placement. */
   readonly legacyComponentId: string;
   readonly parts: readonly string[];
-  /** Legacy barrels (guns), tubes (launchers), or null (fittings carry no unit row). */
   readonly legacyUnits: number | null;
   readonly mountCount: number;
   readonly gunsPerMount: number | null;
@@ -89,17 +73,13 @@ export interface EntryDetail {
     readonly costMicro: number;
     readonly crew: number;
   };
-  /** Tubes only. */
   readonly launcherCount: number | null;
   readonly launcherMassKg: number | null;
-  /** Guns only: the mount type/id the legacy resolver chose, and the canonical ones. */
   readonly legacyMountType: string | null;
   readonly legacyMountId: string | null;
   readonly mountType: string | null;
   readonly mountId: string | null;
-  /** The nine only: the translation disposition (migration provenance). */
   readonly disposition: string | null;
-  /** Guns only: the legacy resolved mount record's fixed installation mass, when authored. */
   readonly legacyFixedInstallationKg: number | null;
 }
 
@@ -117,7 +97,6 @@ export interface CandidateDesign {
   readonly untranslated: readonly UntranslatedPlacement[];
   readonly unresolvedGuns: readonly UnresolvedGunPlacement[];
   readonly draft: DesignDraft | null;
-  /** `null` unless the fit was `ACCEPTED` and derivation ran. */
   readonly compiled: CompiledDesign | null;
 }
 
@@ -138,7 +117,6 @@ const totalsOf = (lines: readonly QuantityLine[]): EntryDetail["totals"] => ({
   crew: totalOf(lines, "crew"),
 });
 
-/** The candidate pipeline for one design: translate, fit, then derive only after `ACCEPTED`. */
 export function runCandidateDesign(
   design: EquivalenceDesign,
   env: CandidateEnvironment,
@@ -349,8 +327,6 @@ export function runCandidateDesign(
     ...(requirements.length === 0 ? {} : { shipTypeRequirements: requirements }),
   });
 
-  // The candidate compiles the placements its parts rebuild, never the original legacy
-  // placements (ticket 11b). An incomplete loadout is a typed failure, not a fallback.
   const partById = new Map(uniqueParts(parts).map((p) => [p.id, p] as const));
   const reconstructed = readPlacements({
     designId: design.id,
@@ -403,8 +379,6 @@ export function runCandidateDesign(
       },
     };
     const compiled = compileDesign(candidateDraft, candidateCtx);
-    // The weapon contract is the one the parts produced; a placement the parts did not
-    // resolve carries none, so a legacy armament is never copied across.
     const components = compiled.components.map((c) => {
       const { armament: _legacy, ...rest } = c;
       const fromParts = gunCompiled.get(c.instanceId);

@@ -69,7 +69,6 @@ export function applyDeclareWar(
   const attackerSideId = `side_${declarer}`;
   const defenderSideId = `side_${target}`;
 
-  // Non-aggression pact violation: deduct penalty from the violator's treasury.
   const pair = getPairRelation(snapshot, declarer, target);
   let napPenaltyNations = snapshot["nations"];
   if (pair && pair["nap"]) {

@@ -1,5 +1,3 @@
-// D-3 / INC-8 — AC-16: new resolveAirCombat stage, strict no-op.
-// AC-22: BattleResolver/StrengthCalculator unmodified.
 import { describe, it, expect } from "vite-plus/test";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -38,7 +36,6 @@ describe("AC-16 resolveAirCombat stage wiring", () => {
   });
 
   it("strict no-op in advanceMinutes: no air-combat field → hashes unchanged", () => {
-    // Run without airCombat — should not crash and produce consistent hashes
     const _cap = createCapPatrolState(
       "sq-1",
       ["CAP"],
@@ -224,7 +221,6 @@ describe("AC-22 integration boundary", () => {
     for (const file of allFiles) {
       const content = readFileSync(resolve(srcDir, file), "utf-8");
       if (content.includes("../air-combat") || content.includes("./air-combat")) {
-        // Only the combat index may re-export air-combat
         if (file !== "index.ts" && !file.startsWith("simulation/")) {
           throw new Error(
             `File ${file} outside air-combat/ directory references air-combat module`,
@@ -235,7 +231,6 @@ describe("AC-22 integration boundary", () => {
   });
 
   it("air-comcat records have valid hashes", () => {
-    // Verify record hash integrity for records created by resolveAirCombat
     const cap = createCapPatrolState(
       "sq-verify",
       ["CAP"],

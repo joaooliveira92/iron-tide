@@ -1,16 +1,3 @@
-// DESIGN-34 §20 submarine mine laying (AC-15, INC-7).
-//
-// Only MINELAYING submarines or explicitly capable types may execute MINE_LAYING.
-// The mission requires mine inventory, technology, legal route, target area,
-// readiness, reliability at least 40, and fuel.
-//
-// This slice ships the eligibility predicate + inventory consumption surface.
-// The actual AreaMinePressureRecord creation is deferred to the C-2 continuation
-// (mine-strike resolution + phase/snapshot wiring) which owns the C-2 model.
-// No mines/ module imports (concurrency boundary: mines/ is read-only as a
-// concurrent session's working set per the C-2/C-3 spec note).
-//
-// Pure/deterministic: no I/O/clock/random.
 import { SafeInt } from "@bluewave/contracts";
 import { type SubmarineType } from "./constants.js";
 import {

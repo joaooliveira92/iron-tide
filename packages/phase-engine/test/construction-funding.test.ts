@@ -94,11 +94,10 @@ describe("fundConstructionProject", () => {
   });
 
   it("a second funding call in the same month cannot reuse capacity or start a dependent early", () => {
-    const first = fundConstructionProject(projectOf(), capacity(1_000), 100, "1880-01"); // finishes the hull only
+    const first = fundConstructionProject(projectOf(), capacity(1_000), 100, "1880-01");
     expect(done(first.project)["hull"]).toBe(100);
     const second = fundConstructionProject(first.project, capacity(1_000), 1_000_000, "1880-01");
-    expect(done(second.project)["launch"]).toBe(0); // hull was not done at the month's start
-    // The next month, launch may start, and capacity is available again.
+    expect(done(second.project)["launch"]).toBe(0);
     const next = fundConstructionProject(second.project, capacity(1_000), 1_000_000, "1880-02");
     expect(done(next.project)["launch"]).toBe(20);
   });

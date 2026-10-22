@@ -1,6 +1,3 @@
-// INC-5 — Immediate fire & flooding creation (DESIGN-41 §9).
-// Proves: fire creation rules (ignition, combustible, oxygen, ship-type multiplier),
-// flooding creation rules (hull breach, water route), no-effect cases.
 import { describe, it, expect } from "vite-plus/test";
 import {
   evaluateFireCreation,
@@ -12,16 +9,11 @@ import {
 } from "../../src/damage/index.js";
 import { FIRE_SOURCE_CREATED, FLOODING_SOURCE_CREATED } from "../../src/damage/reasonCodes.js";
 
-// Deterministic RNG for testing — returns predictable values.
-// The stream name is logged but ignored; the value is controlled by the caller.
 function rngThat(returnValues: Record<string, number>): (stream: string) => number {
   return (stream: string) => returnValues[stream] ?? 0.5;
 }
 
-// Fire creation
-
 describe("AC-5: Fire creation (§9)", () => {
-  // Base valid fire input
   const validFireInput: FireCreationInput = {
     locationId: "COMP-1",
     penetrationOutcome: "FULL_PENETRATION",
@@ -32,7 +24,6 @@ describe("AC-5: Fire creation (§9)", () => {
   };
 
   it("creates fire with full penetration, combustible, oxygen, and RNG below threshold", () => {
-    // ORDINARY has 10_000 bp threshold = 100% — always fire
     const result = evaluateFireCreation(validFireInput, rngThat({}));
     expect(result).not.toBeNull();
     expect(result!.locationId).toBe("COMP-1");
@@ -45,7 +36,7 @@ describe("AC-5: Fire creation (§9)", () => {
     const streams: string[] = [];
     const trackingRng = (stream: string) => {
       streams.push(stream);
-      return 0.0; // always fire
+      return 0.0;
     };
     evaluateFireCreation(validFireInput, trackingRng);
     expect(streams).toContain("battle/ship/damage/fire_creation");
@@ -81,10 +72,6 @@ describe("AC-5: Fire creation (§9)", () => {
   });
 
   it("returns null when RNG draw exceeds ship-type fire risk", () => {
-    // ORDINARY = 10_000 bp. RNG = 0.99999 → drawBp = 9999 → 9999 < 10000 → fire starts
-    // To trigger no-fire, RNG must give drawBp >= 10000, but max drawBp is 9999 (floor(0.9999*10000) = 9999)
-    // So for ORDINARY (10_000 bp), fire always starts. Use a lower-risk type instead.
-    // DESTROYER = 8_000 bp. RNG = 0.9 → drawBp = 9000 ≥ 8000 → no fire
     const result = evaluateFireCreation(
       { ...validFireInput, shipType: "DESTROYER" },
       rngThat({ "battle/ship/damage/fire_creation": 0.9 }),
@@ -93,7 +80,6 @@ describe("AC-5: Fire creation (§9)", () => {
   });
 
   it("creates fire when RNG draw is below ship-type fire risk", () => {
-    // DESTROYER = 8_000 bp. RNG = 0.5 → drawBp = 5000 < 8000 → fire starts
     const result = evaluateFireCreation(
       { ...validFireInput, shipType: "DESTROYER" },
       rngThat({ "battle/ship/damage/fire_creation": 0.5 }),
@@ -109,8 +95,6 @@ describe("AC-5: Fire creation (§9)", () => {
     expect(result).not.toBeNull();
   });
 });
-
-// Ship-type fire risk multipliers
 
 describe("AC-5: Ship-type fire-risk multipliers (§20)", () => {
   it("ORDINARY has 10_000 bp fire risk", () => {
@@ -130,8 +114,6 @@ describe("AC-5: Ship-type fire-risk multipliers (§20)", () => {
   });
 });
 
-// Flooding creation
-
 describe("AC-5: Flooding creation (§9)", () => {
   const validFloodInput: FloodingCreationInput = {
     compartmentId: "COMP-1",
@@ -141,7 +123,6 @@ describe("AC-5: Flooding creation (§9)", () => {
   };
 
   it("creates flooding with hull breach, full penetration, water route, and RNG below threshold", () => {
-    // 80% base chance (8_000 bp). RNG = 0.0 → drawBp = 0 < 8000 → flooding starts
     const result = evaluateFloodingCreation(
       validFloodInput,
       rngThat({ "battle/ship/damage/flooding_creation": 0.0 }),
@@ -187,7 +168,6 @@ describe("AC-5: Flooding creation (§9)", () => {
   });
 
   it("returns null when RNG draw exceeds flooding chance", () => {
-    // 8_000 bp = 80%. RNG = 0.85 → drawBp = 8500 ≥ 8000 → no flooding
     const result = evaluateFloodingCreation(
       validFloodInput,
       rngThat({ "battle/ship/damage/flooding_creation": 0.85 }),
@@ -196,7 +176,6 @@ describe("AC-5: Flooding creation (§9)", () => {
   });
 
   it("creates flooding when RNG draw is below flooding chance threshold", () => {
-    // 8_000 bp = 80%. RNG = 0.5 → drawBp = 5000 < 8000 → flooding
     const result = evaluateFloodingCreation(
       validFloodInput,
       rngThat({ "battle/ship/damage/flooding_creation": 0.5 }),
@@ -213,11 +192,9 @@ describe("AC-5: Flooding creation (§9)", () => {
   });
 });
 
-// Both effects
-
 describe("AC-5: A hit may create neither, one, or both effects (§9)", () => {
   it("creates fire but not flooding when only fire conditions are met", () => {
-    const rng = rngThat({ "battle/ship/damage/fire_creation": 0.0 }); // always fire
+    const rng = rngThat({ "battle/ship/damage/fire_creation": 0.0 });
     const fireResult = evaluateFireCreation(
       {
         locationId: "COMP-1",
@@ -235,7 +212,7 @@ describe("AC-5: A hit may create neither, one, or both effects (§9)", () => {
       {
         compartmentId: "COMP-1",
         penetrationOutcome: "FULL_PENETRATION",
-        hullBreach: false, // no hull breach
+        hullBreach: false,
         hasWaterRoute: true,
       },
       rng,

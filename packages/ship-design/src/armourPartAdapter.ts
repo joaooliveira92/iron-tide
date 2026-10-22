@@ -1,21 +1,3 @@
-/**
- * The P1 armour-material read path (ship-part-model SPM-R1, SPM-R2, SPM-R19, SPM-R20;
- * story 10). Additive and in memory only.
- *
- * - Each armour material is taken out of the balance tables (`ship.armour.materialEffBp` and
- *   `materialAvailability`) and becomes an `armour_material` part: its efficiency is the
- *   spec, its dates and technology the lifecycle.
- * - A design's armour region becomes one entry in the hull's `armour.<region>` slot, which
- *   accepts `armour_material` only: the part is the material and the plate geometry is the
- *   entry's `shape`. The citadel length, the torpedo warhead and the bunker protection are
- *   design facts, not parts, and stay on the adapter side.
- * - The armour stage then reads efficiency and availability from the parts
- *   (`armourBalanceFromParts`), not from a balance-table key.
- *
- * Balance `obsoleteMonth` is exclusive (an ADVISORY from that month on), like
- * `availableUntil`, so it copies unchanged. A material with no availability entry is
- * unrestricted today; the part model has no undated lifecycle, so it is reported, not dated.
- */
 import type { FlattenedPart, LoadoutEntryData } from "@bluewave/content-schema";
 import { compareCodePoints } from "@bluewave/deterministic";
 import type { ArmourBalance, ArmourMaterialAvailability, ArmourRegion } from "./armour.js";
@@ -29,25 +11,19 @@ export const ARMOUR_BALANCE_FILE = "ship-building/balance.yaml";
 export interface UnreadArmourMaterial {
   readonly id: string;
   readonly code:
-    /** No availability entry: the legacy material is undated, the part lifecycle cannot be. */
     | "PART_READ_PATH_NO_MATERIAL_AVAILABILITY"
-    /** An availability entry for a material with no efficiency (legacy ignores it). */
     | "PART_READ_PATH_NO_MATERIAL_EFFICIENCY"
     | "PART_READ_PATH_INVALID_LIFECYCLE"
-    /** The efficiency is not a positive integer basis-point value. */
     | "PART_READ_PATH_INVALID_SPEC"
-    /** `maxThicknessUm` has no field in the part model yet; dropping it would widen access. */
     | "PART_READ_PATH_UNSUPPORTED_MAX_THICKNESS";
   readonly message: string;
 }
 
 export interface ArmourPartModel {
-  /** Codepoint-ordered by id. */
   readonly parts: readonly FlattenedArmourPart[];
   readonly unread: readonly UnreadArmourMaterial[];
 }
 
-/** Build the material parts from the armour balance. Independent of the table order. */
 export function buildArmourPartModel(input: {
   readonly armour: Pick<ArmourBalance, "materialEffBp" | "materialAvailability">;
 }): ArmourPartModel {
@@ -111,7 +87,6 @@ export function buildArmourPartModel(input: {
       quantities: [],
       revisions: [],
       origin: { sourceFile: ARMOUR_BALANCE_FILE },
-      // The balance cites its sources in comments only; P2's codemod must author them (ticket 11).
       provenance: {
         sourceStatus: "PLACEHOLDER",
         confidence: "LOW",
@@ -129,10 +104,6 @@ export function buildArmourPartModel(input: {
   };
 }
 
-/**
- * The armour balance with its material efficiency and availability taken from the parts
- * instead of the balance tables. Every other armour constant is unchanged.
- */
 export function armourBalanceFromParts(
   base: ArmourBalance,
   parts: readonly FlattenedArmourPart[],
@@ -151,14 +122,10 @@ export function armourBalanceFromParts(
   return { ...base, materialEffBp, materialAvailability };
 }
 
-// Armour regions → loadout entries
-
 export interface ArmourRegionTranslation {
   readonly designId: string;
-  /** The region's position in the design's armour list (the order the armour stage reads). */
   readonly index: number;
   readonly materialPart: FlattenedArmourPart;
-  /** The region's one entry: the material in its `armour.<region>` slot, with its plate shape. */
   readonly entry: LoadoutEntryData;
 }
 
@@ -177,7 +144,6 @@ export type ArmourRegionResult =
 
 const isPositiveInt = (v: number) => Number.isInteger(v) && v > 0;
 
-/** Translate one armour region (its index keeps the design's region order). */
 export function translateArmourRegion(input: {
   readonly designId: string;
   readonly index: number;
@@ -238,10 +204,6 @@ export function translateArmourRegion(input: {
   };
 }
 
-/**
- * The armour region the armour stage reads, rebuilt from the entry. `region` is the region of
- * the entry's slot (`SlotData.region` on the design's platform).
- */
 export function armourRegionFromEntry(
   entry: LoadoutEntryData,
   region: ArmourRegion["region"],

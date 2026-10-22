@@ -2,7 +2,6 @@ import { Schema } from "effect";
 
 import { ProvenanceSchema } from "./provenance.js";
 
-/** Mirrors `COMPONENT_CATEGORIES` in `@bluewave/ship-design` (a test keeps the two lists identical). */
 export const SHIP_COMPONENT_CATEGORIES = [
   "HULL_FORM",
   "MATERIAL",
@@ -71,7 +70,6 @@ const IntroductionSchema = Schema.Struct({
   obsoleteMonth: Schema.NullOr(month),
 });
 
-/** One catalogue component (spec §6.1). Formulas use the restricted grammar parsed by `@bluewave/ship-design`. */
 export const ShipComponentSchema = Schema.Struct({
   id: stableId,
   displayName: Schema.NonEmptyString,
@@ -165,7 +163,6 @@ export const ShipHullFormSchema = Schema.Struct({
     Schema.isBetween({ minimum: 1, maximum: 10_000 }),
   ),
   lcbPermille: Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 0, maximum: 1000 })),
-  /** What the hull form is for: `merchant_derived` hulls may be designed as armed merchant cruisers (DESIGN-22 section 15). */
   traits: Schema.optional(
     Schema.Array(Schema.Literals(SHIP_HULL_TRAITS)).check(Schema.isMaxLength(4)),
   ),

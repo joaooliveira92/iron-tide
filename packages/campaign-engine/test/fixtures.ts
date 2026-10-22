@@ -8,14 +8,6 @@ import type {
 } from "@bluewave/campaign";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
-/**
- * Hand-built fixtures for `campaign-engine`'s pure projection/configuration
- * helpers. These functions consume plain `CampaignSnapshot`/`CampaignState`
- * data — they don't need a real compiler run, so tests build the minimal
- * shape directly rather than paying for a full YAML-fixture compile.
- */
-
-/** One technology open to research from the start, so a standing research budget has a field to fund. */
 export const fixtureCatalogue: NonNullable<CampaignSnapshot["world"]["technologies"]> = [
   {
     techId: "gun_breech_rifled",
@@ -27,7 +19,6 @@ export const fixtureCatalogue: NonNullable<CampaignSnapshot["world"]["technologi
   },
 ];
 
-/** The derived economic base whose monthly revenue at the 2000 bp start rate equals `income`. */
 export const baseFor = (income: number): ReturnType<typeof SafeInt> => SafeInt(income * 60);
 
 export function fixtureNation(overrides: Partial<NationState> & { id: string }): NationState {

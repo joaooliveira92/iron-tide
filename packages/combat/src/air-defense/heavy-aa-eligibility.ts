@@ -1,9 +1,3 @@
-// D-4 M4 Aviation: Air Defense — AC-4 heavy-AA eligibility per DESIGN-45 §7.
-// Heavy AA may engage an aircraft formation attacking the defended ship or a nearby
-// protected ship within exactly 5 nautical miles (9_260 m) of the heavy-AA ship, when the
-// target lies within the system's range/altitude/speed/arc/director/radar/ammunition/power
-// limits and the firing ship is not sunk, abandoned, or unable to operate the system.
-
 import type { SafeInt } from "@bluewave/contracts";
 import type { AirDefenseSystemDefinition } from "./air-defense-system-definition.js";
 import type { AirDefenseAttack } from "./attack.js";
@@ -26,12 +20,7 @@ import {
 export interface HeavyAaEligibilityInput {
   system: AirDefenseSystemDefinition;
   attack: AirDefenseAttack;
-  /** The heavy-AA ship's id (the defender this heavy-AA mount belongs to). */
   defenderId: string;
-  /**
-   * Distance from the heavy-AA ship to the attacked ship when the attacked ship is NOT the
-   * defender; null when the attacked ship IS the defender (own-ship protection, §7).
-   */
   protectedShipDistanceM: SafeInt | null;
   operability: AirDefenseOperability;
   directorAvailable: boolean;
@@ -51,18 +40,6 @@ export interface HeavyAaEligibilityResult {
   reason: HeavyAaIneligibilityReason | null;
 }
 
-/**
- * Canonical heavy-AA eligibility predicate order (§7). Fixed for deterministic reason
- * reporting:
- *   1. attack type allowed by §18 matrix AND the system's profileEligibility;
- *   2. own ship vs protected nearby ship within exactly 5 nm (9_260 m) — a heavy-AA system
- *      MUST NOT engage an unrelated formation outside its protected radius (§7 line 138);
- *   3. range/altitude/speed envelope;
- *   4. bearing arc;
- *   5. director/radar/ammunition availability;
- *   6. ship not sunk/abandoned and system powered/operational;
- *   7. eligible.
- */
 export function isHeavyAaEligible(input: HeavyAaEligibilityInput): HeavyAaEligibilityResult {
   const {
     system,

@@ -55,8 +55,6 @@ describe("NormalizeStage", () => {
   it("orders by codepoint, not by the host locale (uppercase sorts before lowercase)", () => {
     const stage = new NormalizeStage();
 
-    // `localeCompare` orders "a" before "Z" in most locales; codepoint ordering
-    // must keep "Z" (90) before "a" (97). A future locale-dependent sort fails here.
     const result = stage.run(
       {
         manifest: { version: "1" },

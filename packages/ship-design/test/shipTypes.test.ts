@@ -1,4 +1,3 @@
-// ADR-0088: the ship-type registry, availability policy, opening-type rules and starter designs.
 import { describe, expect, it } from "vite-plus/test";
 import {
   availabilityMessage,
@@ -294,7 +293,6 @@ describe("AMC fleet limit (DESIGN-22 section 15)", () => {
     expect(at(2).reasons.map((r) => r.code)).toEqual(["AMC_FLEET_LIMIT_EXCEEDED"]);
   });
   it("scales at 20 % of the cruisers, rounded down", () => {
-    // 19 cruisers: floor(19 x 20 %) = 3 allowed; 20 cruisers: 4 allowed.
     expect(evaluateAmcFleetLimit(slow, { cruisers: 19, amc: 2, fastAmc: 0 }, R).available).toBe(
       true,
     );

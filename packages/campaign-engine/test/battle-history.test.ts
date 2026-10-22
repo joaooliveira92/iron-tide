@@ -131,7 +131,6 @@ describe("buildBattleHistory", () => {
       [1, "b1", true],
       [2, "b2", false],
     ]);
-    // Third parties get no win/loss framing from the player's point of view.
     expect(view.battles[1]?.outcomeForPlayer).toBe("not-involved");
   });
 

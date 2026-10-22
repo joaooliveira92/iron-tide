@@ -3,8 +3,6 @@ import { ValidateStage } from "@bluewave/content-compiler";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { ParseOutput } from "../src/stages/parse.js";
 
-// S-5 04 (#78, spec #73 R11): the optional S-5 ruleset section. Absent = dormant; present it is all-or-nothing and
-// strict. Every number here is a FIXTURE-CLASS value for exercising the decoder, never a production value.
 const FIXTURE_PROVENANCE = {
   sourceStatus: "BALANCE_TARGET",
   confidence: "LOW",
@@ -13,7 +11,6 @@ const FIXTURE_PROVENANCE = {
   note: "Fixture-class value for tests only.",
 };
 
-// FIXTURE-CLASS values for the three S-5 05 fields; never production numbers.
 const FIXTURE_MEASUREMENT = {
   requiredTonsPerPossessionWeight: 100,
   noPortValueWeight: 1,
@@ -123,7 +120,6 @@ describe("S-5 presence ruleset section", () => {
       );
     }
   });
-  // S-5 08 (#82): the optional base-limit block. FIXTURE-CLASS values only.
   const baseLimits = (extra: Record<string, unknown> = {}): Record<string, unknown> => ({
     limitByBaseLevel: [1, 1, 2, 2, 3, 3, 4, 4, 5, 5],
     noBaseLimit: 1,

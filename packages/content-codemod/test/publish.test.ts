@@ -101,7 +101,6 @@ describe("content codemod publisher (ticket 11c)", () => {
     });
     expect(republish.ok).toBe(true);
     if (republish.ok) expect(republish.value.noop).toBe(true);
-    // The tree is untouched: the same content hash the first run recorded.
     const reread = readStagedSource(stagingDir);
     expect(reread.ok && reread.value.designs.length).toBe(92);
   });
@@ -172,7 +171,6 @@ describe("content codemod publisher (ticket 11c)", () => {
     const loaded = loadLegacySource({ contentDir, torpedoDiameterUm, torpedoModels });
     expect(loaded.ok).toBe(true);
     if (!loaded.ok) return;
-    // 92 designs, 45 components, and a populated source identity.
     expect(loaded.value.designs).toHaveLength(92);
     expect(loaded.value.sourceFiles.length).toBeGreaterThan(10);
     const fromDisk = planFromLegacy(loaded.value);

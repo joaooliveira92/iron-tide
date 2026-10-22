@@ -101,7 +101,7 @@ describe("revisePackages", () => {
     const r = revisePackages(projectOf({ hull: 50, machinery: 20 }), planOf(2), free, [
       "FITTINGS",
     ])!;
-    expect(done(r)).toMatchObject({ hull: 100, machinery: 40, armour: 0 }); // 50% of 200, 50% of 80
+    expect(done(r)).toMatchObject({ hull: 100, machinery: 40, armour: 0 });
     expect(r.yardId).toBe("yard_large");
     expect(r.totalWork).toBe(totals(2).reduce((a, b) => a + b, 0));
     expect(r.completedWork).toBe(140);
@@ -132,7 +132,7 @@ describe("revisePackages", () => {
       { tier: "T1_REVISION", reworkWorkMicro: 12, hullDoneWorkAfter: 0 },
       ["FITTINGS", "ARMOUR"],
     )!;
-    expect(total(r)["armour"]).toBe(60 + 12); // armour outranks fittings
+    expect(total(r)["armour"]).toBe(60 + 12);
     expect(total(r)["fit_out"]).toBe(50);
     expect(r.totalWork - r.completedWork).toBe(
       (before.totalWork as number) - (before.completedWork as number) + 12,
@@ -164,7 +164,7 @@ describe("revisePackages", () => {
     const r = revisePackages(withUsage, planOf(2), free, ["FITTINGS"])!;
     expect(r.monthUsage!.month).toBe("1880-02");
     expect(r.monthUsage!.used["slipway"]).toBe(60);
-    expect(r.monthUsage!.startDone["hull"]).toBe(80); // 40 of 100 becomes 80 of 200
+    expect(r.monthUsage!.startDone["hull"]).toBe(80);
     expect(r.monthUsage!.startDone["hull"] as number).toBeLessThanOrEqual(done(r)["hull"]!);
     expect(revisePackages(base, planOf(1), free, ["FITTINGS"])!.monthUsage).toBeUndefined();
   });

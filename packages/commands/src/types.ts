@@ -57,8 +57,8 @@ export interface SupersessionPolicy {
 }
 
 export interface CommandSettlementBranch {
-  refundBasisPoints: number; // 0..10000
-  fixedNonRefundableAmount: number; // canonical integer
+  refundBasisPoints: number;
+  fixedNonRefundableAmount: number;
   consumedAmountFormulaId: string;
   releasedAmountFormulaId: string;
   recipientAccount: string;

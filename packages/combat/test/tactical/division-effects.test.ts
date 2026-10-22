@@ -14,15 +14,11 @@ import {
 
 describe("division effects + role/formation/scout predicates (DESIGN-26 §14/15/16/17)", () => {
   it("§16 division_effects_v1 formulas with exact clamps 7_500..12_500", () => {
-    // signaling = 8000 + exp*20
     expect(divisionEffectsV1({ experience: 20, cohesion: 30 }).signaling).toBe(8000 + 20 * 20);
-    // contactRetention = 8000 + exp*15 + coh*5
     expect(divisionEffectsV1({ experience: 20, cohesion: 30 }).contactRetention).toBe(
       8000 + 20 * 15 + 30 * 5,
     );
-    // formationCohesion = 7500 + coh*25
     expect(divisionEffectsV1({ experience: 0, cohesion: 0 }).formationCohesion).toBe(7500);
-    // clamps
     expect(divisionEffectsV1({ experience: 0, cohesion: 0 }).signaling).toBe(8000);
     expect(divisionEffectsV1({ experience: 500, cohesion: 500 }).signaling).toBe(EFFECT_CLAMP_MAX);
     expect(EFFECT_CLAMP_MIN).toBe(7_500);
@@ -49,7 +45,6 @@ describe("division effects + role/formation/scout predicates (DESIGN-26 §14/15/
         searchCapable: false,
       }),
     ).toBe(true);
-    // LINE_ABREAST: at most 5 ships (six-ship DD ineligible)
     expect(
       formationLegality("LINE_ABREAST", {
         role: "CORE",
@@ -66,7 +61,6 @@ describe("division effects + role/formation/scout predicates (DESIGN-26 §14/15/
         searchCapable: false,
       }),
     ).toBe(false);
-    // SEARCH_LINE: only SCOUT/PATROL with search capability
     expect(
       formationLegality("SEARCH_LINE", {
         role: "SCOUT",
@@ -83,7 +77,6 @@ describe("division effects + role/formation/scout predicates (DESIGN-26 §14/15/
         searchCapable: true,
       }),
     ).toBe(false);
-    // SCREEN: only SCREEN role
     expect(
       formationLegality("SCREEN", {
         role: "SCREEN",
@@ -114,7 +107,6 @@ describe("division effects + role/formation/scout predicates (DESIGN-26 §14/15/
         searchCapable: true,
       }),
     ).toBe(true);
-    // equality at threshold 1_500_000 kg is ineligible
     expect(
       isDdScoutEligible({
         displacementKg: 1_500_000,
@@ -123,7 +115,6 @@ describe("division effects + role/formation/scout predicates (DESIGN-26 §14/15/
         searchCapable: true,
       }),
     ).toBe(false);
-    // below 30 knots ineligible
     expect(
       isDdScoutEligible({
         displacementKg: 1_500_001,

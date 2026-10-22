@@ -1,5 +1,3 @@
-// D-3 M4 Aviation: CAP & Strikes — AC-17 AirCombatRecord per DESIGN-43 §38.
-// Parallel to aircraft/records.ts pattern.
 import { SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import { CombatInvariantError } from "../errors.js";
@@ -12,10 +10,10 @@ export interface AirCombatRecord {
   battleId: string;
   minute: SafeInt;
   substep: SafeInt;
-  recordKind: string; // "ENGAGEMENT" | "LOSS" | "ATTACK" | "STATE_TRANSITION"
-  actorId: string; // squadronId or strikeId
+  recordKind: string;
+  actorId: string;
   targetId: string | null;
-  description: string; // human-readable description
+  description: string;
   reasonCode: string;
   rulesetVersion: string;
   recordHash: string;

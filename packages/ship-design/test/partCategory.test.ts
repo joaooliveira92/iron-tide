@@ -1,7 +1,3 @@
-// The canonical-part → legacy `ComponentCategory` adapter (ship-part-model ticket 17a-2,
-// ADR-0163 §2). Reads the activated 1880 parts and asserts every supported mapping and every
-// failure mode, so the transitional boundary is pinned before the derive starts reading it.
-
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {

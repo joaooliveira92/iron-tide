@@ -1,6 +1,3 @@
-// The deterministic sub-stages of the DESIGN-38 tactical minute advance. Each
-// stage mutates the shared MinuteRun and appends to the minute ledger; the
-// MonthExecutor-equivalent orchestrator lives in ./engine.js.
 import type { MovementState } from "../movement.js";
 import {
   advancePosition,
@@ -51,23 +48,15 @@ import type { AirDefenseEngagementRecord } from "../air-defense/records.js";
 import type { AirDefenseState } from "../air-defense/air-defense-state.js";
 import type { AdvanceMinuteInput, UnitOrders } from "./engine.js";
 
-// Step 8.6 (C-5 / INC-8): the damage-control stage runs LAST in the minute —
-// after damage (substep 3) and after the torpedo impact evaluation (substep
-// 56). Its ledger events sort at the tail of the minute's canonical order.
 export const DAMAGE_CONTROL_SUBSTEP = 57 as const;
 
 type Unit = NonNullable<TacticalBattleState["units"]>[number];
 
-// atomic mutable snapshot used through one minute.
 export interface UnitRun {
   assetId: string;
   movement: MovementState;
 }
 
-/**
- * Mutable run state threaded through every minute stage. Each stage reads and
- * updates the fields it owns; the orchestrator creates it once per minute.
- */
 export interface MinuteRun {
   input: AdvanceMinuteInput;
   battleId: string;
@@ -99,9 +88,6 @@ export interface MinuteRun {
   torpedoRecords?: readonly TorpedoRecord[];
 }
 
-// Deterministic event identifier: derived solely from the event's canonical
-// fields, so repeated runs and child processes emit identical eventIds (no
-// module-level counter; ENGINEERING-CONTRACT determinism).
 export function evt(
   minute: number,
   substep: number,
@@ -151,7 +137,6 @@ export function resolveMovementIntent(run: MinuteRun): void {
   run.ledger.append(evt(run.minute, 0, "resolve_movement_intent", 5, "pipeline", run.battleId));
 }
 
-// Step 5.5 (C-5 / INC-8): resolve smoke — drift, decay, and lifecycle.
 export function resolveSmokeStage(run: MinuteRun): void {
   if (!run.input.smoke) return;
   const smokeResult = resolveSmoke(run.input.smoke, run.minute, 0);
@@ -173,7 +158,6 @@ export function resolveSmokeStage(run: MinuteRun): void {
   }
 }
 
-// Step 6: resolve propulsion, turning, and position (60 deterministic substeps).
 export function resolvePropulsionStage(run: MinuteRun): void {
   for (let sub = 0; sub < SUBSTEPS_PER_MINUTE; sub++) {
     for (const u of run.run) {
@@ -185,8 +169,6 @@ export function resolvePropulsionStage(run: MinuteRun): void {
         dtSeconds: 1,
         attainableMaxBpKnots: ord?.attainableMaxBp ?? m.orderedSpeed,
       });
-      // With no order, a unit holds its existing course (heading==orderedHeading
-      // yields zero turn), rather than inventing a magnetic-north bias (F4).
       m.heading = resolveTurning({
         heading: m.heading,
         orderedHeading: ord?.orderedHeading ?? m.heading,
@@ -205,7 +187,6 @@ export function resolvePropulsionStage(run: MinuteRun): void {
   );
 }
 
-// Step 7: collisions/grounding — successful empty record (deferred resolution).
 export function resolveCollisionsStage(run: MinuteRun): void {
   run.collisionRecord = resolveCollisionsGrounding();
   run.ledger.append(
@@ -213,7 +194,6 @@ export function resolveCollisionsStage(run: MinuteRun): void {
   );
 }
 
-// Step 7.5 (B-5 / INC-5): resolve weather — time-of-day, progression, visibility.
 export function resolveWeatherStage(run: MinuteRun): void {
   if (!run.input.weather) return;
   const weatherResult = resolveWeather({
@@ -225,7 +205,6 @@ export function resolveWeatherStage(run: MinuteRun): void {
   run.weatherComponents = weatherResult.nextComponents;
 }
 
-// Step 7.7 (D-3 / INC-8): resolve air combat — CAP interception & strike attack.
 export function resolveAirCombatStage(run: MinuteRun): void {
   if (!run.input.airCombat) return;
   const airResult = resolveAirCombat({
@@ -239,7 +218,6 @@ export function resolveAirCombatStage(run: MinuteRun): void {
   }
 }
 
-// Step 7.8 (D-4 / INC-6): resolve air defense — HEAVY → MEDIUM → LIGHT → CIWS.
 export function resolveAirDefenseStage(run: MinuteRun): void {
   if (!run.input.airDefense) return;
   const adResult = resolveAirDefense(run.input.airDefense, run.battleId, run.minute);
@@ -310,7 +288,6 @@ export function resolveSensorsStage(run: MinuteRun): void {
   run.ledger.append(evt(run.minute, 0, "resolve_sensors_spotting", 8, "pipeline", run.battleId));
 }
 
-// P-1 ticket 06: true post-movement ship positions (`assetId -> [x, y]`).
 export function buildShipPositions(run: MinuteRun): void {
   const shipPositions: Record<string, Position> = {};
   for (const u of run.units) {
@@ -321,7 +298,6 @@ export function buildShipPositions(run: MinuteRun): void {
   run.shipPositions = shipPositions;
 }
 
-// Step 8.5 (DESIGN-39 / B-3 INC-4): surface-gunnery resolution AFTER spotting.
 export function resolveGunneryStage(run: MinuteRun): void {
   const gunneryBatteries = run.input.gunnery ?? [];
   if (gunneryBatteries.length === 0) return;
@@ -338,7 +314,6 @@ export function resolveGunneryStage(run: MinuteRun): void {
   run.salvos = gres.salvos;
 }
 
-// Step 9-10 (DESIGN-38 §3 / B-4 / B-6 INC-2): apply damage from gunnery HITs.
 export function resolveDamageStage(run: MinuteRun): void {
   if (!run.input.damage) return;
   const dmgResult = resolveMinuteDamage({
@@ -354,7 +329,6 @@ export function resolveDamageStage(run: MinuteRun): void {
   if (Object.keys(dmgResult.states).length > 0) run.damageStates = dmgResult.states;
 }
 
-// Step 10.5 (DESIGN-40 / C-1 INC-7): torpedo fire resolution AFTER the damage stage.
 export function resolveTorpedoStage(run: MinuteRun): void {
   if (!run.input.torpedoes) return;
   const { battleId, minute, units, resolvedMovements, afterContacts, shipPositions } = run;
@@ -366,9 +340,6 @@ export function resolveTorpedoStage(run: MinuteRun): void {
     shipHeadings[u.assetId] = m.heading;
     shipSpeedsUmS[u.assetId] = m.currentSpeed;
   }
-  // AC-22 composition (reviewer BLOCKER-2): the torpedo stage runs AFTER the
-  // damage stage in the same minute, so it must resolve against the ship's
-  // POST-damage state — not the caller's PRE-damage target input.
   let torpedoContext = run.input.torpedoes;
   if (run.damageStates && Object.keys(run.damageStates).length > 0) {
     torpedoContext = { ...run.input.torpedoes, targets: { ...run.input.torpedoes.targets } };
@@ -393,13 +364,10 @@ export function resolveTorpedoStage(run: MinuteRun): void {
   run.torpedoTracks = torpedoResult.tracks.length > 0 ? torpedoResult.tracks : undefined;
   if (Object.keys(torpedoResult.launcherStates).length > 0)
     run.torpedoStates = torpedoResult.launcherStates;
-  // COMPOSE (AC-22): keep every pre-torpedo damage state and let the torpedo
-  // result overwrite ONLY the ships it damaged.
   if (Object.keys(torpedoResult.damageStates).length > 0)
     run.damageStates = { ...run.damageStates, ...torpedoResult.damageStates };
 }
 
-// Step 8.6 (C-5 / INC-8, P-1 ticket 07): resolve damage control PER SHIP.
 export function resolveDamageControlStage(run: MinuteRun): void {
   if (!run.input.damageControl) return;
   const damageControlMap = run.input.damageControl;
@@ -407,22 +375,19 @@ export function resolveDamageControlStage(run: MinuteRun): void {
   for (const shipId of dcShipIds) {
     const dcContext = damageControlMap[shipId]!;
     const baseState = run.damageStates?.[shipId] ?? run.input.damage?.targets[shipId]?.state;
-    if (!baseState) continue; // no authoritative state surface -> nothing to write back
+    if (!baseState) continue;
     const dcResult = resolveDamageControl(
       {
         ...dcContext,
         shipId,
         fireRecords: [...baseState.fireRecords],
         floodingRecords: [...baseState.floodingRecords],
-        // kg mass surface (progressiveFloodingTotal; ADR-0047 decision 4).
         floodedWaterBp: baseState.progressiveFloodingTotal,
       },
       run.minute,
       DAMAGE_CONTROL_SUBSTEP,
     );
     for (const _sr of dcResult.smokeEventRecords) {
-      // Ship-scoped actor + fire-location target keep eventIds unique across
-      // ships and across multiple fires on one ship.
       run.ledger.append(
         evt(
           run.minute,

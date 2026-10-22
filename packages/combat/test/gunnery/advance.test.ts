@@ -58,7 +58,7 @@ describe("AC-11 gunnery-in-minute-advance (INC-4)", () => {
   it("no-regression: no gunnery batteries -> zero gunnery events and a byte-identical minute hash (absent == empty)", () => {
     const absent = advanceMinutes({ ...input }).hashes;
     const empty = advanceMinutes({ ...input, gunnery: [] }).hashes;
-    expect(empty).toEqual(absent); // the gunnery stage is a strict no-op when empty
+    expect(empty).toEqual(absent);
     const res = advanceMinutes(input);
     const gunneryEvents = res.results[0]!.events.filter((e) => e.eventType === "gunnery_salvo");
     expect(gunneryEvents).toHaveLength(0);
@@ -79,7 +79,6 @@ describe("AC-11 gunnery-in-minute-advance (INC-4)", () => {
     expect(gunneryEvent.targetId).toBe(`${BATTLE_ID}:d1`);
     expect(gunneryEvent.substep).toBe(2);
 
-    // gunnery changes the authoritative minute hash vs the no-gunnery baseline.
     const noGun = advanceMinutes(input).hashes[0]!;
     const withGun = res.hashes[0]!;
     expect(noGun).not.toBe(withGun);
@@ -106,8 +105,8 @@ describe("AC-11 gunnery-in-minute-advance (INC-4)", () => {
       gunnery: [battery("d1")],
     });
     const m1 = res.results[0]!;
-    expect(m1.gunneryStates!["BAT-1"]!.ammunition.ARMOR_PIERCING).toBe(118); // 120 - 2
+    expect(m1.gunneryStates!["BAT-1"]!.ammunition.ARMOR_PIERCING).toBe(118);
     const m2 = res.results[1]!;
-    expect(m2.gunneryStates!["BAT-1"]!.ammunition.ARMOR_PIERCING).toBe(116); // persists across minutes
+    expect(m2.gunneryStates!["BAT-1"]!.ammunition.ARMOR_PIERCING).toBe(116);
   });
 });

@@ -1,18 +1,5 @@
-/**
- * National naval identity (docs/ships-nation-orientation.md): a platform-independent, date-banded profile that
- * separates **hard capability** (what a nation *can* build: technology, industry, facilities, licences) from
- * **soft doctrine** (what it *prefers*: speed vs armour, endurance, risk appetite). Hard capability may only
- * restrict what the global rules already allow; it can never widen them (ADR-0089). Soft doctrine guides templates,
- * AI design evaluation and procurement, and never blocks a legal design on its own.
- *
- * The model is pure domain data: no React, no Electron, no filesystem. Content authors the values in
- * `content/production/<scenario>/ship-building/naval-profiles/<nation>.yaml`; this module resolves and validates them.
- */
 import type { ShipTypeId } from "./shipTypes.js";
 
-// Provenance (the merchant-liner discipline, applied to national content)
-
-/** How a value came to be: sourced, derived, an estimate, a pure balance choice, or an unreplaced placeholder. */
 export const SOURCE_STATUSES = [
   "VERIFIED",
   "DERIVED",
@@ -25,7 +12,6 @@ export type SourceStatus = (typeof SOURCE_STATUSES)[number];
 export const CONFIDENCE_LEVELS = ["HIGH", "MEDIUM", "LOW"] as const;
 export type Confidence = (typeof CONFIDENCE_LEVELS)[number];
 
-/** Whether a number is a sourced fact, an arithmetic game conversion, or a gameplay balance choice. */
 export const PROVENANCE_KINDS = [
   "historical_fact",
   "game_conversion",
@@ -34,26 +20,22 @@ export const PROVENANCE_KINDS = [
 export type ProvenanceKind = (typeof PROVENANCE_KINDS)[number];
 
 export interface SourceReference {
-  /** Stable source id (e.g. "white-1894"), for cross-referencing research notes. */
   readonly sourceId?: string;
   readonly title: string;
   readonly author?: string;
   readonly year?: number;
   readonly page?: string;
-  /** Chapter/section where the page is unavailable. */
   readonly section?: string;
   readonly archiveOrUrl?: string;
   readonly accessedAt?: string;
 }
 
-/** The arithmetic that turns a sourced value into a game value (shown so a reviewer can re-do it). */
 export interface Derivation {
   readonly sourceValue: string;
   readonly sourceUnit: string;
   readonly conversion: string;
   readonly gameValue: string;
   readonly roundingRule?: string;
-  /** Optional explicit original/converted aliases. */
   readonly originalValue?: string;
   readonly originalUnit?: string;
   readonly convertedValue?: string;
@@ -66,13 +48,9 @@ export interface Provenance {
   readonly kind: ProvenanceKind;
   readonly sources: readonly SourceReference[];
   readonly derivation?: Derivation;
-  /** A short explanatory note (why an ESTIMATE/BALANCE_TARGET was chosen). */
   readonly note?: string;
 }
 
-// Doctrine / capability vocabularies
-
-/** DESIGN-22-style strategic postures. */
 export const NAVAL_POSTURES = [
   "battle_fleet_concentration",
   "commerce_defence",
@@ -85,7 +63,6 @@ export const NAVAL_POSTURES = [
 ] as const;
 export type NavalPosture = (typeof NAVAL_POSTURES)[number];
 
-/** How a nation obtains a component: domestic, licence-built, imported, studied, or unavailable. */
 export const COMPONENT_ACCESS_STATUSES = [
   "DOMESTIC",
   "LICENSE_BUILT",
@@ -97,12 +74,10 @@ export type ComponentAccessStatus = (typeof COMPONENT_ACCESS_STATUSES)[number];
 
 export interface ComponentAccess {
   readonly status: ComponentAccessStatus;
-  /** Domestic manufacturer, or the source/licensor for non-domestic access (e.g. "Elswick", "Canet"). */
   readonly producer?: string;
   readonly provenance?: Provenance;
 }
 
-/** The hierarchy of a gun's installation, kept separate from the gun model itself. */
 export const MOUNT_TYPES = [
   "TURRET",
   "BARBETTE",
@@ -115,34 +90,27 @@ export const MOUNT_TYPES = [
 ] as const;
 export type MountType = (typeof MOUNT_TYPES)[number];
 
-/** A national gun model overlaying a shared family (components.yaml id). */
 export interface GunModelDef {
   readonly id: string;
-  /** The shared catalogue component id this model overlays. */
   readonly familyId: string;
   readonly designation: string;
-  /** Field overrides applied to the base `ComponentDef` (e.g. weightKg, attributes.shellMassG). */
   readonly overrides: Readonly<Record<string, string | number | readonly string[]>>;
-  /** Mount types this model may be installed in (a compatibility view; the compile still reads the merged def). */
   readonly mounts: readonly MountType[];
   readonly introductionMonth?: string;
   readonly obsoleteMonth?: string | null;
   readonly provenance: Provenance;
 }
 
-/** AP vs HE family; doctrine picks the preference, the pattern carries the effect. */
 export const AMMUNITION_PATTERNS = ["AP", "APC", "CPC", "SAP", "HE", "MELINITE"] as const;
 export type AmmunitionPattern = (typeof AMMUNITION_PATTERNS)[number];
 
 export interface AmmunitionPatternDef {
   readonly id: string;
   readonly pattern: AmmunitionPattern;
-  /** Armour-piercing bias 0..10000: 10000 = pure AP, 0 = pure HE. */
   readonly penetrationBiasBp: number;
   readonly provenance: Provenance;
 }
 
-/** A generic (non-gun) component variant: a national model overlaying a shared family. */
 export interface ComponentVariantDef {
   readonly id: string;
   readonly familyId: string;
@@ -153,87 +121,48 @@ export interface ComponentVariantDef {
   readonly provenance: Provenance;
 }
 
-// Hard capability (restrictive only) and soft preference (guiding only)
-
-/**
- * Hard capabilities. Each field is a *ceiling* or *allow-list*: the effective capability is the intersection of
- * the profile's value with the global catalogue. A profile can only ever remove options (ADR-0089).
- */
 export interface HardCapabilities {
-  /** Largest gun calibre the domestic industry can produce, µm. */
   readonly maxGunCaliberUm: number;
-  /**
-   * Largest obtainable *imported* gun calibre, µm, when it exceeds the domestic ceiling (ADR-0114).
-   * Absent means imports are capped at `maxGunCaliberUm`. It can only ever admit an IMPORTED/LICENSED
-   * family above the domestic ceiling; it never raises the domestic ceiling itself.
-   */
   readonly maxImportedGunCaliberUm?: number;
-  /** Thickest armour plate the domestic industry can roll, µm. */
   readonly maxArmourThicknessUm: number;
-  /** Domestic torpedo bore, µm (a variant family may still import a different bore). */
   readonly domesticTorpedoDiameterUm: number;
-  /** Hull-form ids the nation may lay down. */
   readonly hullForms: readonly string[];
-  /** Plant ids the nation may install domestically. */
   readonly domesticPlants: readonly string[];
-  /** Ship types the nation forbids outright (a restrict-only list; never grants). */
   readonly restrictedShipTypes: readonly ShipTypeId[];
-  /** Capability ids granted to the nation (checked against a type's `requiresCapability`). */
   readonly grants: readonly string[];
 }
 
-/** Soft preferences. Never blocks a legal design; steers templates, AI scoring and procurement. */
 export interface SoftPreferences {
-  /** Speed vs armour: > 5000 favours speed, < 5000 favours protection (5000 = neutral). */
   readonly speedOverArmourBp: number;
-  /** Secondary-battery emphasis relative to a neutral design (10000 = neutral). */
   readonly secondaryBatteryWeightBp: number;
-  /** Endurance emphasis for station work (10000 = neutral). */
   readonly enduranceWeightBp: number;
-  /** Risk appetite: willingness to adopt unproven components (10000 = neutral). */
   readonly riskToleranceBp: number;
-  /** Value placed on colonial-service capability for KE/AMC (10000 = neutral). */
   readonly colonialServiceWeightBp: number;
-  /** Preference for torpedo armament on cruisers (10000 = neutral). */
   readonly torpedoOnCruisersBp: number;
   readonly accommodationStandard: "SPARTAN" | "STANDARD" | "GENEROUS";
 }
 
-// Industrial / construction
-
-/** A date-banded ceiling (e.g. max practical displacement per era). */
 export interface DatedValue {
   readonly fromMonth: string;
   readonly value: number;
 }
 
 export interface IndustrialProfile {
-  /** Relative build speed (10000 = the 1894 baseline; < 10000 builds faster). Within ±15% (ADR-0089). */
   readonly buildTimeMultiplierBp: number;
-  /** Relative hull cost (10000 = baseline). Within ±15%. */
   readonly costMultiplierBp: number;
-  /** Machinery reliability for the nation's plants (bp; 10000 = fully reliable). */
   readonly machineryReliabilityBp: number;
-  /** Spread of construction quality outcomes (bp std-dev proxy; larger = more variance). */
   readonly constructionQualityVarianceBp: number;
-  /** Max practical displacement by era (date-banded). */
   readonly maxPracticalDisplacementKg: readonly DatedValue[];
   readonly heavyGunProduction: ComponentAccessStatus;
   readonly armourPlateProduction: ComponentAccessStatus;
   readonly provenance: Provenance;
 }
 
-/**
- * The nation's dock (DESIGN-16 section 4): the largest hull it can build, repair, rebuild and convert. Distinct from
- * `IndustrialProfile.maxPracticalDisplacementKg`, which is a production/throughput figure and must not be used as a
- * dock limit (ADR-0135). Every limit is authored explicitly; a missing one fails rather than being copied.
- */
 export interface DockDefinition {
   readonly maximumNewConstructionMassKg: number;
   readonly maximumMajorRepairMassKg: number;
   readonly maximumRebuildMassKg: number;
   readonly maximumConversionMassKg: number;
-  /** Optional extra national dimension bound beyond the per-yard fit; absent = none. */
   readonly dimensions?: {
     readonly maxLengthMm: number;
     readonly maxBeamMm: number;
@@ -243,22 +172,17 @@ export interface DockDefinition {
 }
 
 export interface DoctrineProfile {
-  /** Preferred battle range, metres. */
   readonly engagementRangeM: number;
-  /** AP vs HE bias 0..10000 (10000 = pure AP). */
   readonly hePreferenceBp: number;
   readonly postures: readonly NavalPosture[];
   readonly provenance: Provenance;
 }
 
 export interface ResearchPreference {
-  /** Canonical research field id (content-schema research-fields.ts). */
   readonly field: string;
-  /** Priority 1..4 (HIGH = 4). */
   readonly priority: number;
 }
 
-/** Role-specific AI weights. Each is a bp multiplier around a neutral 10000. */
 export interface DesignWeights {
   readonly firepowerBp: number;
   readonly protectionBp: number;
@@ -267,7 +191,6 @@ export interface DesignWeights {
   readonly torpedoBp: number;
   readonly reliabilityBp: number;
   readonly colonialBp: number;
-  /** Cost penalty weight (10000 = neutral). */
   readonly costBp: number;
 }
 
@@ -278,30 +201,22 @@ export interface ProcurementPolicy {
   readonly colonialShareBp: number;
   readonly foreignProcurementAppetiteBp: number;
   readonly unprovenTechAppetiteBp: number;
-  /** Preference order the AI orders new ships in when budget is unconstrained. */
   readonly buildOrder: readonly ShipTypeId[];
 }
 
 export interface NamingPolicy {
-  /** Authored name stems by type (published ship names are historical facts). */
   readonly stems: Readonly<Partial<Record<ShipTypeId, readonly string[]>>>;
-  /** One-line naming convention per type, for the player-facing explanation. */
   readonly convention: Readonly<Partial<Record<ShipTypeId, string>>>;
 }
 
-// The profile
-
 export interface NationNavalProfile {
   readonly nationId: string;
-  /** First month the profile is active (YYYY-MM); profiles are date-banded so a nation can change over time. */
   readonly activeFrom: string;
-  /** Last month the profile is active, inclusive, or null for "until further notice". */
   readonly activeUntil: string | null;
   readonly strategicSituation: string;
   readonly hardCapabilities: HardCapabilities;
   readonly softPreferences: SoftPreferences;
   readonly industrialProfile: IndustrialProfile;
-  /** The nation's dock limits (DESIGN-16 section 4, ADR-0135). Authored, distinct from the production ceiling. */
   readonly dock: DockDefinition;
   readonly doctrineProfile: DoctrineProfile;
   readonly researchPreferences: readonly ResearchPreference[];
@@ -323,7 +238,6 @@ export const isMonthId = (s: string): boolean => MONTH_RE.test(s);
 
 const monthIndex = (m: string): number => Number(m.slice(0, 4)) * 12 + (Number(m.slice(5, 7)) - 1);
 
-/** The profile active for a nation at a month: the newest `activeFrom` at or before it, else null. */
 export function resolveNavalProfile(
   profiles: readonly NationNavalProfile[],
   nationId: string,
@@ -343,7 +257,6 @@ export function resolveNavalProfile(
   return active.length === 0 ? null : active[active.length - 1]!;
 }
 
-/** The effective (date-resolved) industrial modifiers at a month. */
 export interface ResolvedConstructionModifiers {
   readonly buildTimeMultiplierBp: number;
   readonly costMultiplierBp: number;
@@ -352,7 +265,6 @@ export interface ResolvedConstructionModifiers {
   readonly maxPracticalDisplacementKg: number;
 }
 
-/** Compose the construction modifiers for a month; a dated ceiling falls back to the earliest entry. */
 export function resolveConstructionModifiers(
   profile: NationNavalProfile,
   month: string,
@@ -376,11 +288,8 @@ export function resolveConstructionModifiers(
   };
 }
 
-/** Industrial multipliers must stay restrained (the brief: ±5–15%); ADR-0089 fixes the band at ±15%. */
 export const MODIFIER_MIN_BP = 8500;
 export const MODIFIER_MAX_BP = 11500;
-
-// Validation
 
 export interface ProfileIssue {
   readonly nationId: string;
@@ -394,7 +303,6 @@ export interface NavalProfileValidationContext {
   readonly knownPlantIds: ReadonlySet<string>;
   readonly knownHullFormIds: ReadonlySet<string>;
   readonly knownResearchFields: ReadonlySet<string>;
-  /** When true, a PLACEHOLDER provenance is a release blocker (the release gate). */
   readonly release: boolean;
 }
 
@@ -404,7 +312,6 @@ const err = (nationId: string, code: string, message: string): ProfileIssue => (
   message,
 });
 
-/** Content lint for one profile. Deterministic; never throws on content errors. */
 export function validateNavalProfile(
   profile: NationNavalProfile,
   ctx: NavalProfileValidationContext,
@@ -428,7 +335,6 @@ export function validateNavalProfile(
   if (profile.doctrineProfile.postures.length === 0)
     out.push(err(p, "PROFILE_TEXT_EMPTY", "doctrineProfile.postures is empty"));
 
-  // Industrial multipliers within ±15%.
   for (const [k, v] of [
     ["buildTimeMultiplierBp", profile.industrialProfile.buildTimeMultiplierBp],
     ["costMultiplierBp", profile.industrialProfile.costMultiplierBp],
@@ -448,7 +354,6 @@ export function validateNavalProfile(
   )
     out.push(err(p, "PROFILE_VALUE_RANGE", "machineryReliabilityBp must be 0..10000"));
 
-  // Dock limits (DESIGN-16 section 4, ADR-0135): every limit authored, positive and distinct from the production ceiling.
   for (const [k, v] of [
     ["maximumNewConstructionMassKg", profile.dock.maximumNewConstructionMassKg],
     ["maximumMajorRepairMassKg", profile.dock.maximumMajorRepairMassKg],
@@ -472,7 +377,6 @@ export function validateNavalProfile(
   }
   out.push(...placeholderIssues(p, "dock", profile.dock.provenance, ctx.release));
 
-  // Hard capability references.
   for (const id of profile.hardCapabilities.hullForms)
     if (!ctx.knownHullFormIds.has(id))
       out.push(
@@ -486,8 +390,6 @@ export function validateNavalProfile(
   if (profile.hardCapabilities.maxImportedGunCaliberUm !== undefined) {
     if (profile.hardCapabilities.maxImportedGunCaliberUm <= 0)
       out.push(err(p, "PROFILE_VALUE_RANGE", "maxImportedGunCaliberUm must be positive"));
-    // The import ceiling only ever *widens* what may be obtained from abroad; it must not be set below the
-    // domestic ceiling, which would silently restrict domestic production instead of admitting imports.
     else if (
       profile.hardCapabilities.maxImportedGunCaliberUm < profile.hardCapabilities.maxGunCaliberUm
     )
@@ -500,7 +402,6 @@ export function validateNavalProfile(
       );
   }
 
-  // Research fields.
   for (const r of profile.researchPreferences) {
     if (!ctx.knownResearchFields.has(r.field))
       out.push(err(p, "PROFILE_UNKNOWN_RESEARCH_FIELD", `unknown research field '${r.field}'`));
@@ -508,7 +409,6 @@ export function validateNavalProfile(
       out.push(err(p, "PROFILE_VALUE_RANGE", `research priority ${r.priority} outside 1..4`));
   }
 
-  // Component access + variants reference real families.
   for (const [familyId, access] of Object.entries(profile.componentAccess)) {
     if (!ctx.knownComponentIds.has(familyId))
       out.push(
@@ -562,7 +462,6 @@ export function validateNavalProfile(
   for (const a of profile.ammunitionPatterns)
     out.push(...placeholderIssues(p, `ammunition.${a.id}`, a.provenance, ctx.release));
 
-  // Design weights must cover every opening type and stay positive.
   const opening: ShipTypeId[] = ["B", "CA", "CL", "DD", "KE", "AMC"];
   for (const t of opening) {
     const w = profile.designWeights[t];
@@ -575,7 +474,6 @@ export function validateNavalProfile(
         out.push(err(p, "PROFILE_DESIGN_WEIGHT_INVALID", `${t}.${k} = ${v} must be positive`));
   }
 
-  // Procurement shares non-negative; build order covers the opening types.
   for (const [k, v] of Object.entries(profile.procurementPolicy)) {
     if (k === "buildOrder") continue;
     if (typeof v === "number" && v < 0)
@@ -585,17 +483,10 @@ export function validateNavalProfile(
     if (!profile.procurementPolicy.buildOrder.includes(t))
       out.push(err(p, "PROFILE_BUILD_ORDER_INCOMPLETE", `procurement buildOrder omits ${t}`));
 
-  // Profile-level provenance.
   out.push(...placeholderIssues(p, "profile", profile.provenance, ctx.release));
   return out;
 }
 
-/**
- * The single source of truth for the provenance release rules, shared by the profile lint and the national
- * completeness gate (ADR-0092): a PLACEHOLDER blocks at release, and any non-PLACEHOLDER status must cite at
- * least one source. `subject` names the provenance-bearing field for the message. Never rejects ESTIMATE or
- * BALANCE_TARGET on its own. Deterministic; never throws.
- */
 export function placeholderIssues(
   nationId: string,
   subject: string,
@@ -612,7 +503,6 @@ export function placeholderIssues(
   return out;
 }
 
-/** Validate every profile, plus cross-profile rules (unique nation+activeFrom). */
 export function validateNavalProfiles(
   profiles: readonly NationNavalProfile[],
   ctx: NavalProfileValidationContext,
@@ -629,12 +519,6 @@ export function validateNavalProfiles(
   return out;
 }
 
-// Comparative differentiation
-
-/**
- * A short, stable fingerprint of the axes that should make two nations recognisably different. Used by the
- * comparative test and the player-facing explanation; every field is a grounded or balance-target differentiator.
- */
 export interface ProfileFingerprint {
   readonly nationId: string;
   readonly postures: readonly string[];
@@ -663,7 +547,6 @@ export function profileFingerprint(profile: NationNavalProfile): ProfileFingerpr
   };
 }
 
-/** How many of the fingerprint's axes differ between two profiles (0 = identical character). */
 export function fingerprintDistance(a: ProfileFingerprint, b: ProfileFingerprint): number {
   let d = 0;
   if (a.postures.join(",") !== b.postures.join(",")) d++;
@@ -680,9 +563,6 @@ export function fingerprintDistance(a: ProfileFingerprint, b: ProfileFingerprint
   return d;
 }
 
-// Player-facing explanation (docs/ships-nation-orientation.md §10)
-
-/** A plain-language brief a screen can render; every string is derived from the profile, never hard-coded per nation. */
 export interface NationProfileBrief {
   readonly nationId: string;
   readonly doctrineSummary: string;
@@ -699,7 +579,6 @@ export interface NationProfileBrief {
 const pctFaster = (bp: number) => `${Math.round((10_000 - bp) / 100)}%`;
 const pctCostlier = (bp: number) => `${Math.round((bp - 10_000) / 100)}%`;
 
-/** Compose the player-facing brief for a profile (deterministic; no UI state). */
 export function nationProfileBrief(profile: NationNavalProfile): NationProfileBrief {
   const i = profile.industrialProfile;
   const s = profile.softPreferences;

@@ -25,7 +25,6 @@ export function evaluateStress(opts: {
 }): string[] {
   const events: string[] = [];
   if (!isFullSpeedStress(opts.orderedSpeed, opts.attainableMax)) return events;
-  // every completed 10 tactical minutes
   const checks = Math.floor(opts.minutesAtFullStress / 10);
   for (let i = 1; i <= checks; i++) {
     const stream = opts.engine.stream(
@@ -33,7 +32,6 @@ export function evaluateStress(opts: {
     );
     const roll = Math.floor(stream.next() * 10_000);
     let prob = 0;
-    // example: evaluate machinery breakdown with multipliers
     prob = 250;
     if (opts.isVTE) prob = Math.min(10_000, Math.floor((prob * 15_000) / 10_000));
     if (opts.speedKnots > 25) prob += 1_000 * (opts.isVTE ? 15_000 / 10_000 : 1);

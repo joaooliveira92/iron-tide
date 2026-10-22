@@ -1,10 +1,3 @@
-// DESIGN-40 §2/§4/§8 launcher surface. TorpedoLauncherDefinition is the static
-// launcher-family content the compatibility predicates (§4) and reload (§3)
-// consult; createTorpedoLauncherState is the construction boundary of the
-// authoritative TorpedoLauncherState (state.ts). Structurally-invalid launcher
-// state input fails at the construction boundary with INVALID_TORPEDO_LAUNCHER_STATE;
-// value-level invariant violations fail through the guard with
-// TORPEDO_STATE_INVARIANT_FAILED. Pure/deterministic: no ambient I/O/clock/random.
 import { BluewaveError } from "@bluewave/contracts";
 import {
   ABOVE_WATER_FIXED_MAX_LAUNCH_SPEED_KNOTS,
@@ -23,21 +16,17 @@ import {
   withTorpedoLauncherStateHash,
 } from "./state.js";
 
-// DESIGN-40 §2 static launcher-family definition consulted by §3 reload and §4
-// compatibility. §8: an above-water launcher family MAY declare a narrower
-// maximum launch speed than the shipped 30 kn fixed / 35 kn trainable defaults
-// (null -> shipped default; enforcement is INC-2's launch-legality surface).
 export interface TorpedoLauncherDefinition {
   launcherFamilyId: string;
   mountType: TorpedoMountType;
-  tubeCount: number; // integer >= 1
-  boreDiameterMm: number; // integer mm the torpedo diameter must fit
-  handlingMassLimitKg: number; // integer kg launcher + handling limit
-  supportedPropulsionTypes: readonly TorpedoPropulsionType[]; // propulsion/safety support
-  fireControlSupportedGuidance: readonly string[]; // guidance capability ids the fire control supports
+  tubeCount: number;
+  boreDiameterMm: number;
+  handlingMassLimitKg: number;
+  supportedPropulsionTypes: readonly TorpedoPropulsionType[];
+  fireControlSupportedGuidance: readonly string[];
   underwaterLaunchCapability: boolean;
-  requiredReloadTimeMs: number; // integer ms per §3 reload
-  aboveWaterMaxLaunchSpeedKnots: number | null; // narrower §8 value, or null for the shipped default
+  requiredReloadTimeMs: number;
+  aboveWaterMaxLaunchSpeedKnots: number | null;
 }
 
 function throwInvalid(def: unknown, field: string, value: unknown, reason: string): never {
@@ -50,7 +39,6 @@ function throwInvalid(def: unknown, field: string, value: unknown, reason: strin
   });
 }
 
-// Fail-closed validation of the static launcher definition surface.
 export function validateTorpedoLauncherDefinition(d: TorpedoLauncherDefinition): void {
   if (typeof d.launcherFamilyId !== "string" || d.launcherFamilyId.length === 0)
     throwInvalid(d, "launcherFamilyId", d.launcherFamilyId, "non-empty launcher family id");
@@ -110,14 +98,6 @@ export function validateTorpedoLauncherDefinition(d: TorpedoLauncherDefinition):
     );
 }
 
-// DESIGN-40 §8 resolution: the exact maximum launch speed (integer knots) for an
-// above-water launcher — a declared narrower value wins, else the shipped
-// fixed 30 kn / trainable 35 kn default (DESIGN-40 §8: "The shipped default
-// is …" — DEFAULTS APPLY WHEN UNSPECIFIED; a null declared value on an
-// above-water mount is NOT missing metadata). Returns null when §8 does not
-// apply (underwater/submarine mounts are governed by §7 / model-specific
-// limits) — that null reaching the §8 gate fails closed with
-// TORPEDO_LAUNCH_SPEED_LIMIT_MISSING (never silently unlimited).
 export function resolvedAboveWaterMaxLaunchSpeedKnots(d: TorpedoLauncherDefinition): number | null {
   if (d.aboveWaterMaxLaunchSpeedKnots !== null) return d.aboveWaterMaxLaunchSpeedKnots;
   if (d.mountType === "ABOVE_WATER_FIXED") return ABOVE_WATER_FIXED_MAX_LAUNCH_SPEED_KNOTS;
@@ -125,11 +105,6 @@ export function resolvedAboveWaterMaxLaunchSpeedKnots(d: TorpedoLauncherDefiniti
   return null;
 }
 
-// DESIGN-40 §2 construction boundary. Every field must be present with a valid
-// shape; a structurally-invalid input fails with INVALID_TORPEDO_LAUNCHER_STATE
-// (never a silent default). The built state is fully validated and hash-computed
-// (value-level violations surface as TORPEDO_STATE_INVARIANT_FAILED through
-// withTorpedoLauncherStateHash). Reversible: a failure leaves the input untouched.
 export function createTorpedoLauncherState(input: {
   launcherId: string;
   ownerPlatformId: string;
@@ -137,8 +112,6 @@ export function createTorpedoLauncherState(input: {
   mountPosition: string;
   mountType: TorpedoMountType;
   tubeCount: number;
-  // Torpedo model id per tube or the canonical EMPTY_TUBE marker; enforced at
-  // runtime by assertFixedPointTorpedo.
   loadedPerTube: readonly string[];
   reserveAmmunition: Record<string, number>;
   reloadState?: TorpedoReloadState;
@@ -147,7 +120,6 @@ export function createTorpedoLauncherState(input: {
   fireControlConnectionState: FireControlConnectionState;
   damageState: LauncherDamageState;
   floodingIsolationState: FloodingIsolationState;
-  // Fire-solution id or the canonical NO_FIRE_SOLUTION marker; enforced at runtime.
   activeFireSolution: string;
   rulesetVersion: string;
   formulaVersion: string;

@@ -1,13 +1,3 @@
-// DESIGN-42 §2 BattleWeatherInitialization (INC-2/AC-3): every battle creates
-// exactly one immutable BattleWeatherInitialization from the area's committed
-// strategic weather state, battle date/start time, battle location within the
-// area, mission template, declared local-variation policy, battle seed, and the
-// weather policy version. Battles in the same area and overlapping tactical
-// time use the same strategic weather source state; local variation MAY differ
-// only through a versioned keyed decision (UI navigation, reload, tactical-play
-// choice, and auto-resolution choice never reroll weather). Pure/deterministic:
-// no ambient I/O/clock/random; the only randomness enters through the battle
-// seed via the keyed stream.
 import { BluewaveError } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine, drawUniform, type RandomLedger, type RandomStream } from "@bluewave/random";
@@ -36,16 +26,12 @@ import { INVALID_BATTLE_WEATHER_INITIALIZATION } from "./reasonCodes.js";
 import { assertFixedPointStrategicWeather, type StrategicWeatherState } from "./strategic-state.js";
 import { type BattleWeatherComponents, withTacticalWeatherComponentsHash } from "./components.js";
 
-/** Battle location within the strategic area (canonical integer µm). */
 export interface BattleLocation {
   areaId: string;
   xUm: number;
   yUm: number;
 }
 
-/** Resolved solar geometry for the battle's date/location/tactical time. The
- *  canonical derivation (DESIGN-42 §27) lives in the nightTwilight module
- *  (INC-4); initialization consumes the resolved geometry it produces. */
 export interface ResolvedSolarGeometry {
   timeOfDay: TimeOfDayState;
   solarBearingDeg: number;
@@ -54,33 +40,21 @@ export interface ResolvedSolarGeometry {
 
 export interface BattleWeatherInitializationSeed {
   battleId: string;
-  /** Area the battle is fought in (battle location's area). */
   areaId: string;
-  /** The committed strategic weather state for the area/month (source). */
   strategicWeatherState: StrategicWeatherState;
-  /** Battle date identifier (e.g. "1880-06-15"). */
   battleDate: string;
-  /** Battle start time identifier (e.g. "04:30"). */
   battleStartTime: string;
-  /** Battle location within the area. */
   location: BattleLocation;
-  /** Mission template identifier. */
   missionTemplateId: string;
-  /** Declared local-variation policy (weather_local_variation_*_v1). */
   localVariationPolicyId: string;
-  /** Battle seed: keyed variation stream derivation root. */
   battleSeed: string;
-  /** Resolved solar geometry for battle date/location/start time. */
   solarGeometry: ResolvedSolarGeometry;
-  /** Optional ledger recording every keyed random decision (port pattern; see
-   *  ADR-0022 §10 — local-variation jitter draws). */
   randomLedger?: RandomLedger;
 }
 
 export interface BattleWeatherInitialization {
   battleId: string;
   areaId: string;
-  /** Hash of the committed strategic source state (authoritative source id). */
   strategicWeatherStateHash: string;
   battleDate: string;
   battleStartTime: string;
@@ -90,14 +64,10 @@ export interface BattleWeatherInitialization {
   weatherPolicyVersion: string;
   componentsVersion: string;
   rulesetVersion: string;
-  /** Derived initial tactical components (after versioned keyed local variation). */
   components: BattleWeatherComponents;
-  /** Authoritative initialization hash (deterministic). */
   initializationHash: string;
 }
 
-// §2: two initializations share the same strategic weather source when they come
-// from the same committed strategic state (same area + month + state hash).
 export function sameStrategicWeatherSource(
   a: BattleWeatherInitialization,
   b: BattleWeatherInitialization,
@@ -117,9 +87,6 @@ function initError(field: string, value: unknown, reason: string): never {
   });
 }
 
-// Jitter helper: draw one uniform value in [0, 2*jitter], shift by -jitter so
-// the result lands in [-jitter, +jitter], clamp to the component bounds, and
-// return an integer basis-point delta plus the raw draw (for the RandomLedger).
 function jitteredBp(
   stream: RandomStream,
   base: number,
@@ -144,18 +111,12 @@ function deepFreeze<T>(value: T): T {
   return value;
 }
 
-// AC-3: build the one immutable BattleWeatherInitialization for a battle.
 export function initializeBattleWeather(
   seed: BattleWeatherInitializationSeed,
 ): BattleWeatherInitialization {
-  // The committed strategic source MUST be authoritative before derivation.
   assertFixedPointStrategicWeather(seed.strategicWeatherState);
   const strategic = seed.strategicWeatherState;
 
-  // Initialization-boundary failures — unknown policy, malformed location, or
-  // an area mismatch between the battle declaration, the location, and the
-  // committed strategic source — fail with INVALID_BATTLE_WEATHER_INITIALIZATION
-  // (M5), never a generic invariant code.
   if (!(LOCAL_VARIATION_POLICIES as readonly string[]).includes(seed.localVariationPolicyId)) {
     initError(
       "localVariationPolicyId",
@@ -181,7 +142,6 @@ export function initializeBattleWeather(
     );
   }
 
-  // Deterministic decision identity for the optional RandomLedger (M6).
   const ledgerEntityKey = `${seed.battleId}:${seed.areaId}`;
   const decisionsInputHash = sha256Hex(
     canonicalSerialize({
@@ -211,8 +171,6 @@ export function initializeBattleWeather(
     });
   };
 
-  // Versioned keyed local-variation decision. With the NONE policy the keyed
-  // stream is not consumed at all: components copy the strategic state exactly.
   let components: BattleWeatherComponents;
   if (seed.localVariationPolicyId === LOCAL_VARIATION_POLICY_NONE) {
     components = withTacticalWeatherComponentsHash({
@@ -227,7 +185,7 @@ export function initializeBattleWeather(
       timeOfDay: seed.solarGeometry.timeOfDay,
       solarBearingDeg: seed.solarGeometry.solarBearingDeg,
       solarElevationDeg: seed.solarGeometry.solarElevationDeg,
-      glareIntensityBp: 0, // no resolved directional geometry at initialization
+      glareIntensityBp: 0,
       baseVisibilityUm: strategic.baseVisibilityUm,
       localSmokeFields: [],
       rulesetVersion: WEATHER_RULESET_VERSION,
@@ -294,7 +252,6 @@ export function initializeBattleWeather(
       formulaVersion: WEATHER_FORMULA_VERSION,
     });
   } else {
-    // Unreachable: LOCAL_VARIATION_POLICIES membership checked above.
     initError(
       "localVariationPolicyId",
       seed.localVariationPolicyId,

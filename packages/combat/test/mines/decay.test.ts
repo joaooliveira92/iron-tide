@@ -1,8 +1,3 @@
-// AC-15 (INC-7): DESIGN-35 §21 mine decay. Exact monthly retention multipliers,
-// pressureAfterDecay = floor(pressure * retentionBp / 10_000), decayedPressure =
-// pressure - pressureAfterDecay, freshness retention uses the same multiplier
-// unless a narrower explicit value is defined, scenario-special without decay
-// metadata -> MINE_DECAY_POLICY_MISSING, zero-pressure transitional-hash seam.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt, BluewaveError } from "@bluewave/contracts";
 import {
@@ -54,7 +49,6 @@ function recordWith(
 
 describe("AC-15: §21 exact monthly retention multipliers per mine type", () => {
   it("CONTACT retains at 9_750 basis points", () => {
-    // 400_000 * 9_750 / 10_000 = 390_000
     const d = computeDecayedPressure(recordWith("CONTACT", 400_000), true);
     expect(d.retentionMultiplierBp).toBe(9_750);
     expect(d.pressureAfterDecay).toBe(SafeInt(390_000));
@@ -62,7 +56,6 @@ describe("AC-15: §21 exact monthly retention multipliers per mine type", () => 
   });
 
   it("MAGNETIC retains at 9_500", () => {
-    // 400_000 * 9_500 / 10_000 = 380_000
     const d = computeDecayedPressure(recordWith("MAGNETIC", 400_000), true);
     expect(d.retentionMultiplierBp).toBe(9_500);
     expect(d.pressureAfterDecay).toBe(SafeInt(380_000));
@@ -70,7 +63,6 @@ describe("AC-15: §21 exact monthly retention multipliers per mine type", () => 
   });
 
   it("ACOUSTIC retains at 9_250", () => {
-    // 400_000 * 9_250 / 10_000 = 370_000
     const d = computeDecayedPressure(recordWith("ACOUSTIC", 400_000), true);
     expect(d.retentionMultiplierBp).toBe(9_250);
     expect(d.pressureAfterDecay).toBe(SafeInt(370_000));
@@ -84,14 +76,12 @@ describe("AC-15: §21 exact monthly retention multipliers per mine type", () => 
   });
 
   it("CONTROLLED_DEFENSIVE retains at 9_900 with operational control infrastructure", () => {
-    // 400_000 * 9_900 / 10_000 = 396_000
     const d = computeDecayedPressure(recordWith("CONTROLLED_DEFENSIVE", 400_000), true);
     expect(d.retentionMultiplierBp).toBe(9_900);
     expect(d.pressureAfterDecay).toBe(SafeInt(396_000));
   });
 
   it("CONTROLLED_DEFENSIVE retains at 9_000 WITHOUT operational control infrastructure", () => {
-    // 400_000 * 9_000 / 10_000 = 360_000
     const d = computeDecayedPressure(recordWith("CONTROLLED_DEFENSIVE", 400_000), false);
     expect(d.retentionMultiplierBp).toBe(9_000);
     expect(d.pressureAfterDecay).toBe(SafeInt(360_000));
@@ -111,16 +101,12 @@ describe("AC-15: §21 exact monthly retention multipliers per mine type", () => 
 
 describe("AC-15: exact pressureAfterDecay / decayedPressure formulas (one FLOOR)", () => {
   it("a non-divisible product floors exactly (acoustic 9_250 on 100_000)", () => {
-    // 100_000 * 9_250 / 10_000 = 92_500 - exact here; the floor is exact throughout.
     const d = computeDecayedPressure(recordWith("ACOUSTIC", 100_000), true);
     expect(d.pressureAfterDecay).toBe(SafeInt(92_500));
     expect(d.decayedPressure).toBe(SafeInt(7_500));
   });
 
   it("floors down when the product leaves a fractional basis point", () => {
-    // 9_750 * 1_000_000 = 9_750_000_000 / 10_000 = 975_000 exact. Pick a value that
-    // floors: CONTACT retains 9_750 on pressure 100_001 -> 100_001 * 9_750 = 975_009_750
-    // / 10_000 = 97_500.975 -> floor 97_500.
     const d = computeDecayedPressure(recordWith("CONTACT", 100_001), true);
     expect(d.pressureAfterDecay).toBe(SafeInt(97_500));
     expect(d.decayedPressure).toBe(SafeInt(2_501));
@@ -136,22 +122,16 @@ describe("AC-15: exact pressureAfterDecay / decayedPressure formulas (one FLOOR)
 
 describe("AC-15: freshness retention uses the same multiplier unless narrower", () => {
   it("a type with freshnessRetentionBp null uses the pressure-retention multiplier", () => {
-    // CONTACT: freshnessRetentionBp is null -> uses 9_750.
     const d = computeDecayedPressure(recordWith("CONTACT", 400_000, 10_000), true);
     expect(d.freshnessRetentionMultiplierBp).toBe(9_750);
   });
 
   it("a narrower explicit freshnessRetentionBp is honored when present", () => {
-    // Build a CONTACT record whose mine-type definition carries a narrower
-    // freshness value — a pure function concern; we assert the multiplier selected
-    // equals the pressure multiplier because no shipped type narrows (authored
-    // decision, §21 "unless a narrower explicit value").
     const d = computeDecayedPressure(recordWith("MAGNETIC", 400_000, 10_000), true);
     expect(d.freshnessRetentionMultiplierBp).toBe(d.retentionMultiplierBp);
   });
 
   it("applyDecayedMonth applies the same multiplier to freshness when no narrower value", () => {
-    // 10_000 * 9_750 / 10_000 = 9_750
     const after = applyDecayedMonth(recordWith("CONTACT", 400_000, 10_000), true, SafeInt(44));
     expect(after.freshnessBp).toBe(SafeInt(9_750));
   });
@@ -185,11 +165,9 @@ describe("AC-15: applyDecayedMonth — pressure, freshness, month, hash", () => 
   });
 
   it("a decay that drives pressure to 0 keeps a transitional zero-pressure hash, no delete", () => {
-    // A 1-pressure CONTACT record: 1 * 9_750 / 10_000 = 0 (floors to 0).
     const after = applyDecayedMonth(recordWith("CONTACT", 1), true, SafeInt(44));
     expect(after.pressure).toBe(SafeInt(0));
     expect(after.lastDecayedMonth).toBe(SafeInt(44));
-    // Transitional zero-pressure hash is deterministic, not the active validator.
     expect(after.recordHash).toMatch(/^[0-9a-f]{64}$/);
   });
 
@@ -201,10 +179,6 @@ describe("AC-15: applyDecayedMonth — pressure, freshness, month, hash", () => 
   });
 
   it("computeDecayedPressure rejects a pressure-0 record (absence is not a decay target)", () => {
-    // §1 treats 0 pressure as ABSENCE of an active record; the direct decay
-    // computation must fail closed on it (the per-month applyDecayedMonth path
-    // is a graceful no-op instead — proven just above). Never silently decays
-    // an absent record into a negative/cleared-by-guess state.
     const zero = {
       ...recordWith("CONTACT", 1),
       pressure: SafeInt(0),

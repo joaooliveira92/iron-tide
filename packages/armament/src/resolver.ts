@@ -1,12 +1,3 @@
-/**
- * The authoritative armament resolver (ADR-0093, "national armament integration" Step 1).
- *
- * One pure function composes a gun model, a mount and an ammunition pattern against a technology
- * and national-access context and returns either a `ResolvedArmament` or structured findings. It
- * never mutates its inputs, uses only integer fixed-point arithmetic, and never throws for expected
- * invalid content or combinations — exceptions are reserved for corrupt internal invariants (e.g.
- * arithmetic overflow).
- */
 import { ARMAMENT_BP_ONE, composeBpMultipliers, scaleByBp } from "./arithmetic.js";
 import {
   type ArmamentEntityRef,
@@ -32,9 +23,7 @@ import {
 import type { ArmamentProvenance } from "./provenance.js";
 
 export interface ArmamentResolutionResult {
-  /** True when no BLOCKING finding was produced. */
   readonly ok: boolean;
-  /** The resolved armament, present only when `ok`. */
   readonly resolved: ResolvedArmament | null;
   readonly findings: readonly ArmamentResolutionFinding[];
 }
@@ -223,10 +212,6 @@ function composeModifiers(
   };
 }
 
-/**
- * Resolve one armament combination. Pure and deterministic: the same inputs always yield the same
- * result, inputs are never mutated, and findings are deterministically ordered.
- */
 export function resolveArmament(
   gunModel: GunModel,
   mount: GunMountDef,
@@ -272,7 +257,6 @@ export function resolveArmament(
     );
   }
 
-  // --- gun-family / mount compatibility --------------------------------------
   if (
     mount.compatibleGunFamilies !== undefined &&
     !mount.compatibleGunFamilies.includes(gunModel.familyId)
@@ -335,7 +319,6 @@ export function resolveArmament(
     );
   }
 
-  // --- introduction / retirement dates --------------------------------------
   checkDateBand(findings, gmEntity, gunModel.introductionMonth, gunModel.retirementMonth, monthIdx);
   checkDateBand(findings, mEntity, mount.introductionMonth, mount.retirementMonth, monthIdx);
   checkDateBand(

@@ -1,13 +1,5 @@
 import type { DomainEvent, FinancialLedgerEntry, RandomDecisionRecord } from "./simulation.js";
 
-/**
- * Dev-tool-only types backing the Debugging & Telemetry and Tactical
- * Sandbox screens (both shipped to playtesters per the desktop-mvp map,
- * but not on the MVP critical path). Kept intentionally minimal — these
- * exist so the screens compile and render something honest, not as a full
- * engine-audit fidelity implementation.
- */
-
 export interface CommandLedgerEntry {
   readonly commandId: string;
   readonly status: string;
@@ -77,11 +69,6 @@ interface ScriptedForceOrderBase {
   readonly divisionId: string;
 }
 
-/**
- * Discriminated union grounded in `useSimulationScreen.ts`'s
- * `handleTacticalResolve` — the five order shapes it actually constructs.
- * Dev-tool-only (Tactical Sandbox), not on the MVP critical path.
- */
 export type RawScriptedForceOrder =
   | (ScriptedForceOrderBase & {
       readonly orderType: "change_lead_division";

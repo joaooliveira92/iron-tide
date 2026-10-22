@@ -1,4 +1,3 @@
-// AC-20 (INC-7): air_combat_v1 contract with 6-factor manifest + validateAirCombatContract.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import { Result, Schema } from "effect";
@@ -22,7 +21,6 @@ import {
   AIR_COMBAT_DESTROYED_DAMAGE_RATIO_BP,
 } from "../../src/air-combat/index.js";
 
-/** Schema accept/reject helper — the Effect decode equivalent of Zod `safeParse().success`. */
 function parses(schema: Schema.ConstraintDecoder<unknown, never>, value: unknown): boolean {
   return Result.isSuccess(Schema.decodeUnknownResult(schema)(value));
 }

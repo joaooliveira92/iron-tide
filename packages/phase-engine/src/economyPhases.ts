@@ -1,4 +1,3 @@
-// Economy phases: monthly_revenue, appropriation, maintenance, obligation.
 import type { CampaignSnapshot, ConstructionProject, NationState } from "@bluewave/campaign";
 import {
   monthlyRevenue,
@@ -33,11 +32,6 @@ import { applyPrestigeChange } from "./prestigeApplication.js";
 import { reportOutflowShortfall } from "./outflowShortfall.js";
 import { applyReadinessEvolution } from "./readinessEvolution.js";
 
-/**
- * Largest-remainder (Hamilton) apportionment of `total` across integer `weights`, deterministic and exact: the parts
- * sum to `total` — the single rounding point — with the remainder assigned to the largest fractional parts (ties broken
- * by index). Integer/bigint only, so no float reaches the funding split (map D4/D5).
- */
 export function splitLargestRemainder(total: number, weights: readonly number[]): number[] {
   const weightSum = weights.reduce((sum, weight) => sum + weight, 0);
   if (weightSum <= 0) return weights.map(() => 0);
@@ -64,12 +58,6 @@ export function splitLargestRemainder(total: number, weights: readonly number[])
   return base;
 }
 
-/**
- * The acceleration-pressure pool (DESIGN-13 section 11.3.3), in treasury units per month. It is deliberately 0 (always
- * saturated, as before the economy model) until a national work-to-treasury-unit conversion is defined: spec #138 slice 4
- * records the spike that computes it (docs/research/economy/acceleration-pool/README.md) but keeps the numeric pool out of scope.
- * It is never derived from the economic base — construction capacity is yard throughput plus the tonnage concurrency cap.
- */
 export const ACCELERATION_POOL_UNDEFINED_UNITS = 0;
 
 export function runMonthlyRevenuePhase(ctx: MonthContext): void {
@@ -121,10 +109,6 @@ export function runMonthlyRevenuePhase(ctx: MonthContext): void {
   }
 }
 
-/**
- * The monthly yard capacity (treasury units per line) of a project: its own seeded throughput when the campaign started it
- * on the slips, else the capacity recorded on its design, or undefined when it has none.
- */
 export function capacityOf(
   designs: CampaignSnapshot["designs"],
   project: ConstructionProject,
@@ -137,13 +121,8 @@ export function capacityOf(
     : Object.fromEntries(Object.entries(capacity).map(([line, v]) => [line, v as number]));
 }
 
-/** The stable reason a delayed month carries (DESIGN-23 section 32). */
 export const PROJECT_DELAYED_ZERO_WORK = "PROJECT_DELAYED_ZERO_WORK" as const;
 
-/**
- * Remove a project's delay reason. The reason describes why the project was held; once the ordinary auto-resume
- * returns it to work, keeping it would violate the "reason only on a delayed month" invariant.
- */
 function withoutDelayReason(project: ConstructionProject): ConstructionProject {
   if (!("delayReasonCode" in project)) return project;
   const next = { ...project };
@@ -151,10 +130,6 @@ function withoutDelayReason(project: ConstructionProject): ConstructionProject {
   return next;
 }
 
-/**
- * The preservation cost one `HALTED` project pays for a month, in treasury units: half the mothballed maintenance,
- * rounded up to a whole treasury unit (RTW3 manual pp. 30-31; DESIGN-23 section 7). Pure; zero when no base is authored.
- */
 export function preservationCostUnits(
   balance: ConstructionBalance,
   treasuryUnitMicro: number,
@@ -164,22 +139,9 @@ export function preservationCostUnits(
   return micro <= 0 ? 0 : treasuryCostUnits(micro, treasuryUnitMicro);
 }
 
-// Phase 4: appropriation — proportional funding of construction projects within
-// each project's yard throughput (no treasury-unit cap; spec #138 slice 4). Halted projects take no ordinary charge and pay
-// the preservation cost instead; delayed projects take no charge at all and
-// resume the following month (DESIGN-23 section 7).
 export function runAppropriationPhase(ctx: MonthContext): void {
-  // Design studies are paid first: design-office work is small and gates every new class (ADR-0085).
   fundDesignStudies(ctx);
-  // ADR-0036/INC-4: the appropriation phase draws the keyed acceleration-pressure delay decisions; obtain the
-  // phase-scoped engine through the guard. With no accelerated project nothing is drawn, so a run without
-  // acceleration consumes no randomness and its hashes are unchanged. The same engine also serves the foreign
-  // discretionary-impoundment draw (INC-10), which draws only for a hostile contract.
   const accelerationRng = ctx.phaseGuard.rng("appropriation", ctx.randomSeed);
-  // DESIGN-16 section 13.4 (INC-9): resolve every foreign contract's month before domestic funding. Payments debit the
-  // ordering treasury and credit the builder; work is unlocked solely by the paid instalments (INC-9d), so a foreign
-  // project is always skipped by ordinary appropriation. The returned capability-delayed set keeps a builder-capability
-  // `DELAYED` from being unwound by the same-month auto-resume (MAJOR-1). War effects (INC-10) resolve inside it.
   const foreign = runForeignContractPhase(ctx, accelerationRng);
   const { campaignMonth, eventLedger, financialLedger, nextSeq, collector } = ctx;
   const shipBuilding = ctx.engineOptions?.shipBuilding;
@@ -193,11 +155,6 @@ export function runAppropriationPhase(ctx: MonthContext): void {
     const haltedProjects = projects.filter((p) => p["status"] === "HALTED");
     const delayedAtStart = projects.filter((p) => p["status"] === "DELAYED");
 
-    // SB3-R9: acceleration capacity pressure (DESIGN-13 section 11.3.3; DESIGN-23 section 9). The pool is the
-    // nation's monthly construction cap (the same cap the appropriation allocates within); demand is each live
-    // project's monthly construction-plan capacity. An accelerated project's demand is weighted 12_500 bp; once the
-    // pool's pressure exceeds 9_000 bp, each eligible accelerated project is checked, in ascending project id order,
-    // on the keyed stream and delayed exactly one month on a successful check.
     const acceleratedProjects = projects.filter((p) => p["status"] === "ACCELERATED");
     let delayedByPressure = new Set<string>();
     if (acceleratedProjects.length > 0 && accelerationRng !== null) {
@@ -236,8 +193,6 @@ export function runAppropriationPhase(ctx: MonthContext): void {
       (p) => p["status"] === "DELAYED" || delayedByPressure.has(p["id"]),
     );
 
-    // One explicit delay record per delayed project, whatever funds are available (DESIGN-23 section 7). A
-    // capacity-pressure delay additionally carries the `ACCELERATION_CAPACITY_PRESSURE_DELAY` reason.
     for (const project of delayedProjects)
       eventLedger.append(
         constructionDelayedEvent(
@@ -252,7 +207,6 @@ export function runAppropriationPhase(ctx: MonthContext): void {
         ),
       );
 
-    // Preservation cost: half the mothballed maintenance, taking the place of a halted hull's ordinary work charge.
     let preservationDelta = 0;
     if (haltedProjects.length > 0) {
       const balance = shipBuilding?.environmentFor(campaignMonth).constructionBalance;
@@ -266,7 +220,6 @@ export function runAppropriationPhase(ctx: MonthContext): void {
       else preservationDelta = preservationCostUnits(balance, unitMicro) * haltedProjects.length;
     }
 
-    // Preservation is paid first and from the treasury itself; what the treasury cannot cover is a recorded shortfall.
     const preservationSettlement = settleOutflow(SafeInt(preservationDelta), nation["treasury"]);
     reportOutflowShortfall(
       collector,
@@ -301,8 +254,6 @@ export function runAppropriationPhase(ctx: MonthContext): void {
               !(foreignSkip?.has(p["id"]) ?? false),
           )
         : [];
-    // What the fundable projects could absorb this month with unlimited funds (yard throughput and dependencies bound
-    // it); the ledger records it as the construction entry's `requested`, so a treasury-limited month shows a shortfall.
     const constructionRequested = fundable.reduce((sum: number, p) => {
       const remaining = (p["totalWork"] as number) - (p["completedWork"] as number);
       if (p["packages"] === undefined) return sum + remaining;
@@ -338,7 +289,6 @@ export function runAppropriationPhase(ctx: MonthContext): void {
           if ((clampedAlloc as number) <= 0) continue;
 
           if (project["packages"] !== undefined) {
-            // Per-package construction (ADR-0077): only what the yard can do this month is applied and charged.
             const funded = fundConstructionProject(
               project,
               capacityOf(ctx.currentSnapshot["designs"], project),
@@ -369,7 +319,6 @@ export function runAppropriationPhase(ctx: MonthContext): void {
           );
         }
 
-        // Apply leftover funds to first incomplete project if within cap
         const leftover = applyLeftoverFunding(
           updatedProjects,
           remainingFunds,
@@ -382,19 +331,11 @@ export function runAppropriationPhase(ctx: MonthContext): void {
       }
     }
 
-    // A project delayed at the start of the month resumes now: the delay lasts exactly one month (DESIGN-23
-    // section 9). A project delayed this month by acceleration capacity pressure is NOT resumed here — it stays
-    // DELAYED for the month (zero work, zero charge) and resumes at the start of the next one, so a pressure delay
-    // is exactly one month and its premium is preserved.
     if (delayedAtStart.length > 0) {
       updatedProjects = updatedProjects.map((p) =>
         p["status"] === "DELAYED" &&
         delayedAtStartIds.has(p["id"]) &&
-        // A foreign payment default (DESIGN-16 section 13.4) is held until payment or termination; it is not the
-        // ordinary one-month capacity delay, so it must not auto-resume here.
         p["delayReasonCode"] !== FOREIGN_PAYMENT_DEFAULT_DELAYED &&
-        // A builder-capability delay set this month (MAJOR-1) is held the same way. The foreign step ran before this
-        // set was computed, so an explicit exclusion is required or the same month would resume it.
         !foreign.capabilityDelayed.has(p["id"])
           ? withoutDelayReason(
               transitionConstructionProject(
@@ -476,10 +417,6 @@ export function runAppropriationPhase(ctx: MonthContext): void {
     }
   }
 
-  // DESIGN-16 section 6 (SB3-R17): resolve the private dock-expansion opportunity after funding, so a new project is
-  // funded from the next month. It draws only for a nation with explicit eligibility whose trailing utilisation clears
-  // the `7_500` bp threshold and whose cooldown/one-active rules allow it, so a run with no dock-expansion content
-  // consumes no randomness and records no decision (the reference golden run stays byte-identical).
   if (accelerationRng !== null) {
     const privateExpansion = resolvePrivateDockExpansion({
       snapshot: ctx.currentSnapshot,
@@ -491,8 +428,6 @@ export function runAppropriationPhase(ctx: MonthContext): void {
   }
 }
 
-// Spend any funds left after proportional allocation on the first incomplete
-// project, still bounded by the remaining construction cap.
 function applyLeftoverFunding(
   projects: ConstructionProject[],
   remainingFunds: SafeInt,
@@ -504,7 +439,6 @@ function applyLeftoverFunding(
     return { projects, delta: SafeInt.ZERO };
   }
   const skipped = (p: ConstructionProject): boolean => foreignSkip?.has(p["id"]) ?? false;
-  // Projects with work packages take leftover funds in order, skipping one the yard cannot work on this month (ADR-0077).
   for (const candidate of projects) {
     if (
       candidate["packages"] === undefined ||
@@ -563,9 +497,6 @@ export function runMaintenancePhase(ctx: MonthContext): void {
   for (const [nationId, nation] of ctx.currentSnapshot["nations"]) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
 
-    // S-1 D6: while the nation is at war, active-status maintenance rises by one
-    // ruleset multiplier (manual p.52). The war state is the existing snapshot
-    // `wars` collection — a declared read of the maintenance phase.
     const atWar = nationIsAtWar(ctx.currentSnapshot["wars"]["wars"], nationId);
 
     const totalMaintenance = nationMonthlyMaintenance(nation["fleets"], atWar);
@@ -614,9 +545,6 @@ export function runMaintenancePhase(ctx: MonthContext): void {
     );
   }
 
-  // S-1: after charging by readiness, advance each ship's readiness/crew one
-  // month (the crew-quality ramp, manual p.51). This writes the fleets resource
-  // the maintenance phase's footprint declares; it consumes no randomness.
   applyReadinessEvolution(ctx);
 }
 
@@ -666,9 +594,6 @@ export function runObligationPhase(ctx: MonthContext): void {
       ),
     );
 
-    // S-2 04 (spec #74 R4): the unpaid-funds prestige source. It fires for the player's nation only, in the same
-    // month the existing obligation shortfall condition fires, after the treasury outputs above are final. With no
-    // player nation supplied it is dormant.
     if (ctx.playerNationId === nationId && (settlement.shortfall as number) > 0) {
       applyPrestigeChange(ctx, nationId, "UNPAID_FUNDS");
     }
@@ -693,11 +618,6 @@ export const monthlyRevenuePhase: PhaseDescriptor = {
   },
 };
 
-// Phase 4: appropriation — proportional funding of construction projects within
-// each project's yard throughput (no treasury-unit cap; spec #138 slice 4).
-// INC-4/SB3-R9: draws the keyed acceleration capacity-pressure delay decisions
-// (no draw without an accelerated project); SB3-R17: resolves the private
-// dock-expansion event.
 export const appropriationPhase: PhaseDescriptor = {
   id: "appropriation",
   name: "Appropriation",
@@ -716,9 +636,6 @@ export const appropriationPhase: PhaseDescriptor = {
   },
 };
 
-// S-1: the maintenance phase also advances per-ship readiness/crew (the
-// crew-quality ramp, manual p.51) and reads war state for the wartime
-// multiplier (p.52), so it reads wars and writes fleets as well as treasury.
 export const maintenancePhase: PhaseDescriptor = {
   id: "maintenance",
   name: "Maintenance",

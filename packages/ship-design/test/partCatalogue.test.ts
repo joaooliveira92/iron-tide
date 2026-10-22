@@ -1,15 +1,3 @@
-/**
- * Whole-catalogue part builder and inverse readers (ship-part-model ticket 11b, ADR-0154 §19).
- *
- * These tests observe the two seams 11b adds, at the highest point:
- *  - `buildPartCatalogue`: the source catalogue → parts, with coverage of every buildable
- *    item, strict decoding, deterministic ids/order and a duplicate-id failure;
- *  - `partCatalogueReaders`: parts → today's runtime shapes, proving `source → parts →
- *    inverse` preserves every represented value and that nothing is guessed.
- *
- * Expected values come from the sources (the armament catalogue, the components file and the
- * reference designs), never recomputed the way the builder computes them.
- */
 import { FlattenedPartSchema, PART_TAGS, decodeStrict } from "@bluewave/content-schema";
 import type { FlattenedPart, SlotData } from "@bluewave/content-schema";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -85,7 +73,6 @@ describe("whole-catalogue part builder (11b)", () => {
     for (const family of armamentContent.gunFamilies) {
       expect(familiesWithMount.has(family.id), `no mount for ${family.id}`).toBe(true);
     }
-    // Every authored mount record is represented, by id or by the compiled mount identity.
     const mountIds = new Set(mounts.map((p) => p.id));
     const compiledIds = new Set(
       mounts.map((p) => (p.spec as { compiledMountId?: string }).compiledMountId).filter(Boolean),
@@ -206,7 +193,6 @@ describe("derive-input homes map through the whole-catalogue builder (17a-2)", (
   });
 });
 
-// Inverse readers: source → parts → inverse preserves every represented value
 const partLookup = (parts: readonly FlattenedPart[]) => {
   const map = new Map(parts.map((p) => [p.id, p]));
   return (id: string) => map.get(id);
@@ -300,7 +286,6 @@ describe("inverse readers rebuild today's runtime shapes from parts (11b)", () =
       zone: "FORECASTLE",
     });
 
-    // (i) The named torpedo resolves: the mount carries the neutral compiled record.
     const ok = readPlacements({
       designId: "d",
       entries: [entry],
@@ -310,7 +295,6 @@ describe("inverse readers rebuild today's runtime shapes from parts (11b)", () =
     expect(ok.issues).toEqual([]);
     expect(ok.placements[0]?.compiledTorpedo?.partId).toBe(torpedo.id);
 
-    // (ii) The named torpedo is missing: a typed issue, and the placement is still returned.
     const missing = readPlacements({
       designId: "d",
       entries: [entry],
@@ -321,7 +305,6 @@ describe("inverse readers rebuild today's runtime shapes from parts (11b)", () =
     expect(missing.placements.map((p) => p.instanceId)).toEqual(["tube_1"]);
     expect(missing.placements[0]?.compiledTorpedo).toBeUndefined();
 
-    // (iii) The part named is not a torpedo: the same typed issue.
     const sensor = present(
       built.parts.find((p) => p.family === "sensor"),
       "a sensor part",
@@ -376,7 +359,6 @@ describe("inverse readers rebuild today's runtime shapes from parts (11b)", () =
   });
 });
 
-/** The header a design's parts representation carries (the forward half of the reader pair). */
 function headerOf(design: (typeof designs)[number]) {
   return {
     nation: design.draft.nationId,

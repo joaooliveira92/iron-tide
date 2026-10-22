@@ -170,9 +170,7 @@ describe("AC-1 GunneryState invariant", () => {
     const before = JSON.stringify(s);
     try {
       assertFixedPointGunnery(s);
-    } catch {
-      // expected
-    }
+    } catch {}
     expect(JSON.stringify(s)).toBe(before);
   });
 });

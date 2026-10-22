@@ -1,11 +1,3 @@
-/**
- * The codemod's filesystem boundary (ship-part-model ticket 11c).
- *
- * `loadLegacySource` reads a production content directory and strictly decodes every ship-building
- * collection into the shapes the planner reads; `readStagedSource` reads a staged tree back for
- * the idempotency proof. Both enumerate deterministically (codepoint order), hash every file they
- * read (the migration's source identity), and hold no state.
- */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import {
@@ -44,9 +36,7 @@ import type { MigrationManifest } from "./types.js";
 
 export interface LoadOptions {
   readonly contentDir: string;
-  /** The structured torpedo diameter (µm) per torpedo model; supplied by the caller. */
   readonly torpedoDiameterUm: (torpedoModelId: string) => number | undefined;
-  /** Every torpedo model the buildable catalogue references; supplied by the caller. */
   readonly torpedoModels: readonly TorpedoModelSource[];
 }
 
@@ -65,7 +55,6 @@ const directories = (dir: string): string[] => {
     .sort(compareCodePoints);
 };
 
-/** A file reader that records the content-relative path and its hash. */
 function makeReader(contentDir: string) {
   const files: SourceFileRef[] = [];
   const read = (absolute: string): string => {
@@ -79,7 +68,6 @@ function makeReader(contentDir: string) {
   return { read, files };
 }
 
-/** Load and decode the authoritative legacy content. Performs I/O; holds no state. */
 export function loadLegacySource(options: LoadOptions): MigrationResult<LegacySource> {
   const contentDir = options.contentDir;
   const sb = join(contentDir, "ship-building");
@@ -194,7 +182,6 @@ const readJson = (path: string): unknown => {
   return JSON.parse(readFileSync(path, "utf8"));
 };
 
-/** Read a staged tree back as a migration source. Performs I/O; holds no state. */
 export function readStagedSource(stagingDir: string): MigrationResult<StagedSource> {
   const failures: MigrationFailure[] = [];
   const reader = makeReader(stagingDir);

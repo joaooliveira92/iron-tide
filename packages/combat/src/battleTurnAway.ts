@@ -18,8 +18,8 @@ export interface DivisionTurnAwayState {
   isImmobilized: boolean;
   hasManeuverRoom: boolean;
   turningCapabilityOk: boolean;
-  ships: string[]; // ordered
-  course: number; // degrees
+  ships: string[];
+  course: number;
 }
 
 export function assertTechnologyAvailable(hasTech: boolean, paidMonths: number) {
@@ -78,7 +78,7 @@ export function executeManeuver(
 ) {
   const locked = [...ships];
   const reciprocal = (course + 180) % 360;
-  const reversed = [...locked].reverse(); // [A,B,C,D]->[D,C,B,A]
+  const reversed = [...locked].reverse();
   return {
     locked,
     reciprocalCourse: reciprocal,
@@ -100,7 +100,6 @@ export function computeInitiationIntervalMinutes(p: {
   return Math.max(1, Math.min(4, raw));
 }
 
-// confusion
 export function computeConfusionProbabilityBp(p: {
   signalDelayMinutes?: number;
   flagshipDegraded?: boolean;
@@ -170,7 +169,6 @@ export function selectConfusionOutcome(
     cum += o.weight;
     if (roll < cum) return o;
   }
-  // fallback is unreachable (weights total 10_000) but required for type safety
   const last = CONFUSION_OUTCOMES[CONFUSION_OUTCOMES.length - 1];
   if (!last)
     throw new BluewaveError("BATTLE_TURN_AWAY_CONFUSION", { code: "BATTLE_TURN_AWAY_CONFUSION" });
@@ -179,7 +177,7 @@ export function selectConfusionOutcome(
 
 export function isConfusionDirectDamage(): false {
   return false;
-} // MUST NOT directly cause damage
+}
 
 export function assertCancellationAllowed(hasInitiated: boolean) {
   if (hasInitiated)

@@ -7,11 +7,8 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 
 import { Compiler, type CompilerInput } from "../src/index.js";
 
-/** Shared fixtures for the part-model tests at the content compile seam. */
-
 export const PROVENANCE = `{ sourceStatus: VERIFIED, confidence: HIGH, kind: historical_fact, sources: [{ title: "test" }] }`;
 
-/** A minimal valid hull form, so platforms in a fixture name a real one. */
 export const HULL_FORMS = JSON.stringify({
   hullForms: [
     {
@@ -58,7 +55,6 @@ export function createFixture(): Fixture {
   };
 }
 
-/** A pack with a ship-balance file and one hull form; `extra` adds the part model. */
 export function baseInput(fixture: Fixture, extra: Partial<CompilerInput> = {}): CompilerInput {
   fixture.write(
     "pack.json",

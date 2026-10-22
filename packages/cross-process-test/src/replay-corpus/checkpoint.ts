@@ -11,10 +11,6 @@ const ENTRY_CONTEXT = "bluewave/replay-corpus/ledger-entry/v1";
 
 export const LEDGER_ORDER: readonly LedgerName[] = ["command", "event", "financial", "random"];
 
-/**
- * Plain, order-independent form of authoritative state. `canonicalSerialize` sees
- * a `Map` or `Set` as `{}`, so they are made explicit and sorted here.
- */
 function plain(value: unknown): unknown {
   if (value instanceof Map) {
     const entries = [...value].map(([key, item]) => [plain(key), plain(item)] as const);
@@ -37,7 +33,6 @@ function plain(value: unknown): unknown {
   return value;
 }
 
-/** Hash of the whole snapshot, including the fields the legacy subset hash omits. */
 export function fullSnapshotHash(snapshot: CampaignSnapshot): string {
   return hashWithContext(canonicalSerialize(plain(snapshot)), SNAPSHOT_CONTEXT);
 }
@@ -65,7 +60,6 @@ export function monthCheckpoint(turnNumber: number, result: MonthResult): MonthC
   };
 }
 
-/** Canonical text of one ledger entry, for showing the value behind a divergent hash. */
 export function ledgerEntryText(
   result: MonthResult,
   ledger: LedgerName,

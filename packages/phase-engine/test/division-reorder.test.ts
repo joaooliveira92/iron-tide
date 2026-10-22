@@ -1,6 +1,3 @@
-// DESIGN-26 §8/§12: the month commit applies ReorderDivisionShips through
-// applyDivisionCommandMonth — ship order permuted, flagship pinned, cohesion -3.
-
 import type { CampaignSlot, CampaignSnapshot, PermanentDivision } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -150,7 +147,6 @@ describe("division reorder at month commit (DESIGN-26 §12)", () => {
       collector,
     );
     const division = after.nations.get("GBR")!.divisions[0]!;
-    // The stale reorder must not drop the just-added ship or desync the flagship.
     expect(division.shipOrder).toEqual(["s1", "s2", "s3", "s4"]);
     expect(division.flagshipShipId).toBe("s1");
     expect(collector.hasErrors).toBe(true);

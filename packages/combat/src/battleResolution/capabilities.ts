@@ -1,17 +1,3 @@
-// B-6 reachability: project the optional per-battle capability declarations on
-// the immutable `BattleManifest` into the tactical stage contexts the
-// auto-resolver supplies to `advanceMinute`:
-//
-//   - smokeSources            -> SmokeContext        (DESIGN-42 / C-5)
-//   - airGroups               -> AirCombatContext     (DESIGN-43/44 / D-3)
-//   - airDefenseInstallations -> AirDefenseContext    (DESIGN-45 / D-4)
-//
-// Every projector ALWAYS returns a context (empty when the manifest declares no
-// capability). Supplying an empty context is a strict, byte-identical no-op in
-// the engine stages, but it makes the stage *reachable* through the production
-// auto-resolution path and cleanly distinguishes "capability absent" (empty
-// context, no effect) from "stage never supplied" (previously unreachable).
-// Pure/deterministic: no ambient I/O/clock/random; ordering is canonical.
 import { SafeInt } from "@bluewave/contracts";
 import type { RandomEngine } from "@bluewave/random";
 import { createSmokeCloud, type SmokeContext } from "../smoke/index.js";
@@ -44,10 +30,6 @@ function compareIds(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-// Smoke (DESIGN-42 / C-5)
-
-/** Project a `SmokeContext` from the manifest's committed smoke sources and the
- *  battle's authoritative weather components. Empty clouds when none declared. */
 export function projectSmokeContext(
   manifest: BattleManifest,
   components: BattleWeatherComponents,
@@ -82,10 +64,6 @@ function toSmokeCloud(s: SmokeSourceDeclaration): ReturnType<typeof createSmokeC
   });
 }
 
-// Air combat (DESIGN-43/44 / D-3)
-
-/** Project an `AirCombatContext` from the manifest's committed air groups.
- *  Empty (no CAP/strike) when none declared. */
 export function projectAirCombatContext(
   manifest: BattleManifest,
   battleId: string,
@@ -100,8 +78,6 @@ export function projectAirCombatContext(
   strikeMissions.sort((a, b) => compareIds(a.missionId, b.missionId));
   return {
     battleId,
-    // Per-minute overridden by the engine stage (it spreads run.minute); the
-    // projection is minute-independent.
     minute: 0,
     ...(capPatrols.length > 0 ? { capPatrols } : {}),
     ...(strikeMissions.length > 0 ? { strikeMissions } : {}),
@@ -137,12 +113,6 @@ function toStrikeMission(g: StrikeDeclaration): StrikeMissionState {
   return { ...base, ...(g.phase !== undefined ? { phase: g.phase } : {}) };
 }
 
-// Air defense (DESIGN-45 / D-4)
-
-/** Project an `AirDefenseContext` from the manifest's committed air-defense
- *  installations and any strike missions currently attacking (each ATTACKING
- *  strike becomes the enemy air attack the defending installation engages).
- *  Empty defenders/attacks when none declared. */
 export function projectAirDefenseContext(
   manifest: BattleManifest,
   engine: RandomEngine,
@@ -178,9 +148,6 @@ function toDefenderContext(d: AirDefenseInstallationDeclaration): AirDefenseDefe
     radarState,
     SafeInt(d.crewQuality ?? NEUTRAL_BP),
   );
-  // createAirDefenseState seeds powerBp to ZERO (an unpowered system contributes
-  // zero, §21). A committed installation is powered unless a future status says
-  // otherwise, so set the operational multiplier and re-hash deterministically.
   const state: AirDefenseState = { ...initial, powerBp: SafeInt(NEUTRAL_BP) };
   state.stateHash = computeAirDefenseStateHash(state);
   return {

@@ -1,6 +1,3 @@
-// D-2: resolveCarrierOperations — strategic-month carrier operations phase
-// resolver. Phase order 73 (after resolve_aircraft_development, before
-// battle_generation). Strict no-op when no nation has carrier-capable ships.
 import { SafeInt } from "@bluewave/contracts";
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import type { CarrierOperationsState, CarrierOperationRecord } from "@bluewave/combat";
@@ -249,9 +246,6 @@ export function resolveCarrierOperations(
   };
 }
 
-// D-2: per-nation carrier operations pipeline (DESIGN-44), ordered after
-// resolve_aircraft_development (order 72) and before battle_generation
-// (order 75). Strict no-op when no nation has carrier-capable ships.
 export const carrierOperationsPhase: PhaseDescriptor = {
   id: "resolve_carrier_operations",
   name: "Carrier Operations Resolution",

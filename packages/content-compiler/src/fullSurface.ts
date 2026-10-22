@@ -8,13 +8,6 @@ import type { CompilerInput } from "./index.js";
 import { safePath } from "./safePath.js";
 import { discoverShipBuildingFiles, type ShipBuildingFileGroups } from "./shipBuildingDiscovery.js";
 
-/**
- * The ship-building catalogue collections: the `pack.json` `files` key that
- * declares each one, the discovery group that enumerates it by convention, and
- * the `CompilerInput` field it populates. The manifest is the single authority;
- * discovery is retained only to prove the declaration is complete (a discovered
- * file that is not declared fails, CAH-MAN-2).
- */
 const SHIP_BUILDING_COLLECTIONS: ReadonlyArray<{
   readonly manifestKey: string;
   readonly groupKey: keyof ShipBuildingFileGroups;
@@ -108,23 +101,6 @@ const SHIP_BUILDING_COLLECTIONS: ReadonlyArray<{
   },
 ];
 
-/**
- * Builds the full-surface `CompilerInput` (content-pack collections **and** the
- * ship-building catalogue) from a pack manifest + content directory. Shared by
- * the compiler CLI's `content:check`/`content:build` and by the build-time
- * artifact generator, so there is one discovery path, not two.
- *
- * The manifest's `files` map is the single declaration of the loaded surface
- * (CAH-MAN-1); the ship-building subtree is declared there too. Discovery under
- * the conventional ship-building tree is retained as a resolver that must agree
- * with the declaration: a file discovered under a declared collection but not
- * declared fails, and a declared file that does not exist fails (CAH-MAN-2).
- *
- * Throws a descriptive `Error` on a missing manifest/content directory or an
- * unparseable manifest; every resolved path is `safePath`-checked. When a
- * `collector` is supplied, declaration-agreement failures become diagnostics
- * instead of throws.
- */
 export function buildFullSurfaceInput(
   manifestPath: string,
   contentDir: string,
@@ -219,7 +195,6 @@ export function buildFullSurfaceInput(
   };
 }
 
-/** Every file the manifest declares must exist on disk (CAH-MAN-2). */
 function assertDeclaredFilesExist(
   declarations: Readonly<Record<string, readonly string[]>>,
   section: string,
@@ -249,7 +224,6 @@ function assertDeclaredFilesExist(
   }
 }
 
-/** A file discovered by convention but not declared is a fail-closed error (CAH-MAN-2). */
 function assertDiscoveredAreDeclared(
   declared: readonly string[],
   discovered: readonly string[],

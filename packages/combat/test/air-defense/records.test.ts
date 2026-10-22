@@ -1,5 +1,3 @@
-// AC-15 (INC-5): AirDefenseEngagementRecord per DESIGN-45 §26 — immutable, hashed, kind
-// coverage, and the AC-7 guaranteed light-AA disruption opportunity record factory.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, SafeInt, isBluewaveError } from "@bluewave/contracts";
 import {
@@ -43,7 +41,7 @@ function makeRecordParams(overrides: Record<string, unknown> = {}) {
     roundsConsumed: SafeInt(4),
     ammunitionMultiplierBp: SafeInt(10_000),
     timeToImpactMs: SafeInt(120_000),
-    windowMilliseconds: SafeInt(0), // heavy AA windows no window concept; 0 = not applicable
+    windowMilliseconds: SafeInt(0),
     effectiveKillBp: SafeInt(380),
     effectiveDamageBp: SafeInt(190),
     effectiveAbortBp: SafeInt(114),

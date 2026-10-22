@@ -70,8 +70,6 @@ describe("resolveSmokeDriftDecay", () => {
   it("density decays with wind band multiplier", () => {
     const cloud = makeCloud({ smokeCloudId: "c1", densityBp: 10_000 });
     const { nextClouds } = resolveSmokeDriftDecay([cloud], 10, 0);
-    // Band: 5-15 knots -> 9_000 retention
-    // density = floor(10_000 * 9_000 / 10_000) = 9_000
     expect(nextClouds[0].densityBp).toBe(9_000);
   });
 
@@ -80,7 +78,6 @@ describe("resolveSmokeDriftDecay", () => {
     const c2 = makeCloud({ smokeCloudId: "c2", centroidPosition: [1000, 1000] });
     const { nextClouds } = resolveSmokeDriftDecay([c1, c2], 10, 90);
     expect(nextClouds.length).toBe(2);
-    // Both drift east by same amount since wind is same
     expect(nextClouds[0].centroidPosition[0]).not.toBe(nextClouds[1].centroidPosition[0]);
     expect(nextClouds[0].centroidPosition[0]).toBeGreaterThan(c1.centroidPosition[0]);
     expect(nextClouds[1].centroidPosition[0]).toBeGreaterThan(c2.centroidPosition[0]);
@@ -88,8 +85,6 @@ describe("resolveSmokeDriftDecay", () => {
 
   it("cloud removed when density < 1 after decay", () => {
     const cloud = makeCloud({ smokeCloudId: "c1", densityBp: 1 });
-    // With retention multiplier 9_500 (light wind):
-    // floor(1 * 9_500 / 10_000) = 0 < 1 -> removed
     const { nextClouds, removedCloudIds } = resolveSmokeDriftDecay([cloud], 3, 0);
     expect(nextClouds.length).toBe(0);
     expect(removedCloudIds).toContain("c1");
@@ -108,24 +103,18 @@ describe("resolveSmokeDriftDecay", () => {
 
   it("strong wind causes faster decay", () => {
     const cloud = makeCloud({ smokeCloudId: "c1", densityBp: 10_000 });
-    // Strong wind (>=25): retention = 6_500
     const { nextClouds } = resolveSmokeDriftDecay([cloud], 30, 0);
-    // floor(10_000 * 6_500 / 10_000) = 6_500
     expect(nextClouds[0].densityBp).toBe(6_500);
   });
 
   it("light wind preserves density", () => {
     const cloud = makeCloud({ smokeCloudId: "c1", densityBp: 10_000 });
-    // Light wind (<5): retention = 9_500
     const { nextClouds } = resolveSmokeDriftDecay([cloud], 3, 0);
-    // floor(10_000 * 9_500 / 10_000) = 9_500
     expect(nextClouds[0].densityBp).toBe(9_500);
   });
 
   it("precipitation adds decay", () => {
     const cloud = makeCloud({ smokeCloudId: "c1", densityBp: 10_000 });
-    // wind 3 -> retention 9_500 -> density = 9_500
-    // precipitation 5_000 -> density = floor(9_500 * 5_000 / 10_000) = 4_750
     const { nextClouds } = resolveSmokeDriftDecay([cloud], 3, 0, 5_000);
     expect(nextClouds[0].densityBp).toBe(4_750);
   });
@@ -191,7 +180,6 @@ describe("resolveSmokeDriftDecay", () => {
   it("edge: wind speed 0", () => {
     const cloud = makeCloud({ smokeCloudId: "c1", centroidPosition: [10, 20] });
     const { nextClouds } = resolveSmokeDriftDecay([cloud], 0, 90);
-    // No drift, retention = LT_5_BP = 9_500
     expect(nextClouds[0].centroidPosition).toEqual([10, 20]);
     expect(nextClouds[0].densityBp).toBe(Math.floor((5_000 * 9_500) / 10_000));
   });
@@ -199,8 +187,6 @@ describe("resolveSmokeDriftDecay", () => {
   it("edge: wind speed very high", () => {
     const cloud = makeCloud({ smokeCloudId: "c1", densityBp: 10_000 });
     const { nextClouds } = resolveSmokeDriftDecay([cloud], 100, 0);
-    // retention = GE_25_BP = 6_500
-    // density = floor(10_000 * 6_500 / 10_000) = 6_500
     expect(nextClouds[0].densityBp).toBe(6_500);
   });
 });

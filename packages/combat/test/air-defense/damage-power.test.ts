@@ -1,8 +1,3 @@
-// AC-14: Simplified damage/power state + local control multiplier (§21).
-// Verifies the simplified system-level damage status thresholds, the damage/power
-// multipliers, the damage×power fold into the formula's single "damage" term, and the
-// 5_000 bp local-control multiplier.
-
 import { describe, it, expect } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {

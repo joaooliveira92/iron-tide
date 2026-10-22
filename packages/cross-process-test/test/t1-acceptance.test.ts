@@ -5,8 +5,6 @@ import { describe, expect, it } from "vite-plus/test";
 
 import { runT1Acceptance, type T1Observation } from "../src/t1-acceptance.js";
 
-// T-1 10 (#119, spec #109 R16): acceptance of the player battle offer on the compiled PRODUCTION pack. Every number
-// asserted for the ruleset is the owner-authorized ADR-0254 balance target (go-live ADR-0263); none is a fixture value.
 const thisDir = dirname(fileURLToPath(import.meta.url));
 const childScript = resolve(thisDir, "..", "dist", "run-t1-acceptance-child.js");
 

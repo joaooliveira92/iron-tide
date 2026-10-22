@@ -1,62 +1,35 @@
-// DESIGN-22 classification data and mandatory rules: the thresholds, the facts they read and every type's failures as
-// structured results. Pure; no design or finding construction (that is classification.ts).
 import { UM_PER_INCH, UM_PER_KNOT } from "./units.js";
 
-/**
- * Ship types that have concrete natural-classification predicates (DESIGN-22 sections 8-15), in the order the natural
- * classifier tries them. Having a predicate is not the same as being buildable: BB is classifiable (so a three-turret
- * big-gun design is recognised as one) but is locked until the dreadnought technology (see `shipTypes.ts`). AMC sits
- * ahead of CL/DD/KE because DESIGN-22 section 20 rule 10 lets a merchant-hull AMC beat them; it cannot overlap CA or B
- * (it forbids qualifying armour).
- */
 export const CLASSIFIED_SHIP_TYPES = ["BB", "B", "CA", "AMC", "CL", "DD", "KE"] as const;
 export type ClassifiedShipType = (typeof CLASSIFIED_SHIP_TYPES)[number];
 
-/** Facts DESIGN-22 predicates read, all in canonical units. */
 export interface ClassFacts {
   readonly displacementKg: number;
   readonly speedUms: number;
-  /** Thickest main belt, micrometres (0 if none). */
   readonly beltUm: number;
-  /** Thickest qualifying armour of any kind (belt, deck, turret, barbette, tower, box), micrometres. */
   readonly anyQualifyingArmourUm: number;
-  /** Largest main-gun calibre, micrometres (0 if none). */
   readonly maxMainGunUm: number;
   readonly mainTurretCount: number;
   readonly torpedoTubes: number;
   readonly aircraftCapacity: number;
-  /** Thickest armour deck (DECK_MAIN or DECK_SLOPE), micrometres (0 if none). */
   readonly deckUm: number;
-  /** Most barrels in any single main-gun mount whose calibre exceeds the normal CL gun limit (0 if none). */
   readonly maxHeavyMountBarrels: number;
-  /** Largest calibre of any gun (main, secondary or dual-purpose), micrometres (0 if none); KE, AMC and DD read this. */
   readonly maxGunUm: number;
-  /** The hull form is merchant-derived (DESIGN-22 section 15 "merchant-hull capability"). */
   readonly merchantHull: boolean;
 }
 
-/** Normative thresholds from docs/rules/ship-classification.md, kept as data so a ruleset change is not a code change. */
 export interface ClassificationRules {
-  /**
-   * Version of this ruleset. `DESIGN_22_EARLY` is version 1; a scenario may author a higher-versioned ruleset
-   * (e.g. `content/production/1880/ship-building/balance.yaml` → `ship.classification`, version 2) that adjusts
-   * boundaries for that scenario without editing the canonical EARLY band (ADR-0116).
-   */
   readonly rulesetVersion: number;
   readonly ddMaxDisplacementKg: number;
   readonly ddMinSpeedUms: number;
-  /** Largest gun of any role a DD may carry: heavier guns are cruiser-scale weapons (gameplay rule, ADR-0088). */
   readonly ddMaxGunUm: number;
   readonly qualifyingArmourUm: number;
   readonly clMinDisplacementKg: number;
   readonly clMaxDisplacementKg: number;
   readonly clMinSpeedUms: number;
   readonly clMaxGunUm: number;
-  /** Heaviest main belt a protected cruiser may carry: it relies on its armour deck, not a side belt (ADR-0088). */
   readonly clBeltMaxUm: number;
-  /** Version of the protected-cruiser exception (ADR-0067; bump when its predicate changes). */
   readonly protectedCruiserExceptionVersion: number;
-  /** Largest single-mounted gun a belt-less armoured-deck (protected) cruiser may carry and still be CL. */
   readonly clProtectedMaxGunUm: number;
   readonly caMinDisplacementKg: number;
   readonly caMinSpeedUms: number;
@@ -72,27 +45,22 @@ export interface ClassificationRules {
   readonly bbBeltMinUm: number;
   readonly bbGunMinUm: number;
   readonly aircraftLimit: number;
-  /** KE (section 14): strictly below this displacement. */
   readonly keMaxDisplacementKg: number;
   readonly keBeltMaxUm: number;
   readonly keGunMaxUm: number;
-  /** AMC (section 15): strictly above this displacement. */
   readonly amcMinDisplacementKg: number;
   readonly amcGunMaxUm: number;
-  /** Fleet authorisation limits (section 15), applied when a construction order is placed. */
   readonly amcFleetShareBp: number;
   readonly amcFleetMinAllowance: number;
   readonly amcFastShareBp: number;
   readonly amcFastMinAllowance: number;
-  /** An AMC at or above this designed speed counts as a fast AMC. */
   readonly amcFastSpeedUms: number;
 }
 
-/** DESIGN-22 values for the EARLY band (sections 7-13). */
 export const DESIGN_22_EARLY: ClassificationRules = {
   rulesetVersion: 1,
   ddMaxDisplacementKg: 2_000_000,
-  ddMinSpeedUms: 19 * UM_PER_KNOT + 1 - 1, // strictly greater than 19 kn (9_774_436)
+  ddMinSpeedUms: 19 * UM_PER_KNOT + 1 - 1,
   ddMaxGunUm: 6 * UM_PER_INCH,
   qualifyingArmourUm: 2 * UM_PER_INCH,
   clMinDisplacementKg: 2_000_000,
@@ -128,18 +96,12 @@ export const DESIGN_22_EARLY: ClassificationRules = {
   amcFastSpeedUms: 22 * UM_PER_KNOT,
 };
 
-/**
- * Protected-cruiser exception (DESIGN-22 section 9, ADR-0067): an armour-deck ship with no main belt whose guns
- * above the normal CL limit are all single mounts no larger than the protected limit. It changes only the CL gun
- * bound; displacement and speed bounds are untouched.
- */
 export const isProtectedCruiser = (f: ClassFacts, r: ClassificationRules): boolean =>
   f.beltUm === 0 &&
   f.deckUm > 0 &&
   f.maxMainGunUm <= r.clProtectedMaxGunUm &&
   f.maxHeavyMountBarrels <= 1;
 
-/** The design quantity a rule is about; the UI maps each to the control that sets it. */
 export type ClassRuleField =
   | "displacement"
   | "speed"
@@ -151,12 +113,10 @@ export type ClassRuleField =
   | "aircraft"
   | "hull";
 
-/** One failed mandatory rule of an intended type: a stable code, what it is about, and a deterministic correction. */
 export interface ClassRuleFailure {
   readonly code: string;
   readonly field: ClassRuleField;
   readonly message: string;
-  /** A safe, deterministic correction in the rule's own terms; absent when none is unambiguous. */
   readonly suggestion?: string;
 }
 
@@ -167,11 +127,6 @@ const fail = (
   suggestion?: string,
 ): ClassRuleFailure => ({ code, field, message, ...(suggestion ? { suggestion } : {}) });
 
-/**
- * Every mandatory rule of every classified type, as structured failures. Strict/inclusive boundaries follow the
- * document literally (see its section 21 boundary summary). Codes use the DESIGN-22 section 26 names where it
- * defines one and `<TYPE>_<RULE>` otherwise.
- */
 export const classRuleFailures: Record<
   ClassifiedShipType,
   (f: ClassFacts, r: ClassificationRules) => ClassRuleFailure[]
@@ -433,7 +388,6 @@ export const classRuleFailures: Record<
   },
 };
 
-/** The same rules as plain sentences (kept for callers and tests that only need pass/fail and wording). */
 export const classPredicates: Record<
   ClassifiedShipType,
   (f: ClassFacts, r: ClassificationRules) => string[]
@@ -447,7 +401,6 @@ export const classPredicates: Record<
 export const isClassifiedShipType = (s: string): s is ClassifiedShipType =>
   (CLASSIFIED_SHIP_TYPES as readonly string[]).includes(s);
 
-/** Every field of a `ClassificationRules`, in declaration order (all numeric). Used to validate authored rulesets. */
 export const CLASSIFICATION_RULE_KEYS = [
   "rulesetVersion",
   "ddMaxDisplacementKg",
@@ -487,11 +440,6 @@ export const CLASSIFICATION_RULE_KEYS = [
   "amcFastSpeedUms",
 ] as const satisfies readonly (keyof ClassificationRules)[];
 
-/**
- * Decode an authored classification ruleset (balance.yaml `ship.classification`). Every field must be present and a
- * finite number: a partial ruleset would silently make a boundary `undefined` and break classification, so it is a
- * content error, never a silent default. The returned value is a complete `ClassificationRules`.
- */
 export function classificationRulesFromRecord(raw: unknown): ClassificationRules {
   if (raw === null || typeof raw !== "object")
     throw new Error("classification rules must be an object");

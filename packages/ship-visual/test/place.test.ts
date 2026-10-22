@@ -2,7 +2,6 @@ import { describe, expect, it } from "vite-plus/test";
 import { placeMounts, type ProfileSurface, type VisualMountInput } from "../src/index.js";
 import { catalog, mount } from "./fixtures.js";
 
-/** 1 px per permille; deck at y 50; a house top at y 40 over 300–600‰; 2 px per metre. */
 const surface: ProfileSurface = {
   x: (p) => p,
   deckY: () => 50,
@@ -72,7 +71,6 @@ describe("placeMounts", () => {
       }),
     ]).placed;
     expect(m!.guns).toBe(1);
-    // 6/12 of 2 px/m = 1 px/m; a 10 m body is 10 px, so the pitch is 11.5 px; seated at the deck edge (y 50).
     expect(m!.symbols).toEqual([
       { x: 388.5, y: 50, scale: 1 },
       { x: 400, y: 50, scale: 1 },
@@ -86,11 +84,8 @@ describe("placeMounts", () => {
   });
 
   it("clamps the calibre factor and keeps a symbol at least 4 px wide", () => {
-    // 1 in: factor clamps to 0.3, so 0.6 px/m and a 6 px body.
     expect(place([gun({ caliberUm: 25_400 })]).placed[0]!.symbols[0]!.scale).toBeCloseTo(0.6);
-    // 18 in: factor clamps to 1.5.
     expect(place([gun({ caliberUm: 457_200 })]).placed[0]!.symbols[0]!.scale).toBeCloseTo(3);
-    // At 0.5 px/m a 1 in body would be 1.5 px; the floor lifts it to 4 px (0.4 px/m).
     expect(place([gun({ caliberUm: 25_400 })], 0.5).placed[0]!.symbols[0]!.scale).toBeCloseTo(0.4);
   });
 

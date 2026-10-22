@@ -1,17 +1,3 @@
-// DESIGN-34 §23 friendly-fire identification risk (AC-16, INC-7).
-//
-// §23 ships the base misidentification probability (500 bp) and the clamp
-// formula:
-//   misidentificationProbabilityBp = clamp(0, 10_000,
-//     500 + visibilityModifierBp + communicationModifierBp + doctrineModifierBp
-//     + fatigueModifierBp - identificationQualityBp)
-//
-// This slice ships the value-only surface: the base constant, the clamp formula
-// as a pure function, and the shipped modifier defaults (all 0).
-// The full friendly-fire risk/outcome application (§23–24 risk+outcome) is
-// deferred per spec §3 (needs DESIGN-29 intelligence + ASW contacts).
-//
-// Pure/deterministic: no I/O/clock/random.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { SUBMARINE_BASIS_POINTS_PER_UNIT } from "./constants.js";
 import { SUBMARINE_STATE_INVARIANT_FAILED } from "./reasonCodes.js";

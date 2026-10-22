@@ -64,7 +64,6 @@ describe("AC-11 resolveGunnery pipeline order (INC-4)", () => {
         (e) => e.eventType === "resolve_sensors_spotting",
       );
       expect(gunneryIdx).toBeGreaterThan(spottingIdx);
-      // every minute's events are fully canonically sorted (existing ledger order)
       expect(minute.events).toEqual([...minute.events].sort(canonicalEventOrder));
     }
   });
@@ -76,12 +75,10 @@ describe("AC-11 resolveGunnery pipeline order (INC-4)", () => {
       observationTime: "1900-01-01T00:00:00.000Z",
       orders: { a1: { orderedHeading: 90, orderedSpeedBp: 20_000 } },
       engine: new RandomEngine("pipe2"),
-      gunnery: [battery("d1"), battery("d1")], // two batteries, same target
+      gunnery: [battery("d1"), battery("d1")],
     });
     const gunneryEvents = res.results[0]!.events.filter((e) => e.eventType === "gunnery_salvo");
     expect(gunneryEvents).toHaveLength(2);
-    // canonical order: identical eventIds would be the same battery; distinct batteries
-    // keep distinct ids. Both sorted.
     expect(res.results[0]!.events).toEqual([...res.results[0]!.events].sort(canonicalEventOrder));
   });
 

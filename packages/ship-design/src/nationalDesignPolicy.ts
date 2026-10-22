@@ -1,18 +1,7 @@
-/**
- * National design and procurement policy (docs/ships-nation-orientation.md §8): national identity must change what
- * the AI *values*, not just names. Two pure pieces:
- *
- *  - `scoreDesign` — a weighted utility over ship facts, using role-specific national weights;
- *  - `planProcurement` — a deterministic procurement order derived from the profile's shares and build order.
- *
- * Both are pure and integer-only. Bounded randomness supplies ±5–10% variation around the doctrine weights, seeded
- * by the campaign, so two campaigns differ while a single campaign stays reproducible (the determinism contract).
- */
 import { RandomEngine } from "@bluewave/random";
 import type { DesignWeights, NationNavalProfile } from "./nationProfile.js";
 import type { ShipTypeId } from "./shipTypes.js";
 
-/** A neutral 10000 bp on every axis: the arithmetic identity, for tests and defaults. */
 export const NEUTRAL_DESIGN_WEIGHTS: DesignWeights = {
   firepowerBp: 10_000,
   protectionBp: 10_000,
@@ -24,13 +13,8 @@ export const NEUTRAL_DESIGN_WEIGHTS: DesignWeights = {
   costBp: 10_000,
 };
 
-/** ±10% variation band (the brief's 5–10%; 1000 bp = 10%). */
 export const VARIATION_SPAN_BP = 1000;
 
-/**
- * Vary doctrine weights by a bounded, seeded amount. Deterministic for a given (nation, type, seed): the same
- * campaign reproduces the same national character, a different campaign gets a slightly different one.
- */
 export function varyDesignWeights(
   weights: DesignWeights,
   nationId: string,
@@ -39,7 +23,7 @@ export function varyDesignWeights(
 ): DesignWeights {
   const stream = new RandomEngine(seed).stream(`national-identity:${nationId}:${type}`);
   const vary = (bp: number): number => {
-    const f = stream.next(); // [0,1)
+    const f = stream.next();
     const delta = Math.round((f * 2 - 1) * VARIATION_SPAN_BP);
     return Math.max(1, bp + delta);
   };
@@ -55,7 +39,6 @@ export function varyDesignWeights(
   };
 }
 
-/** The effective weights for a nation/type, optionally with campaign-seeded variation applied. */
 export function effectiveDesignWeights(
   profile: NationNavalProfile,
   type: ShipTypeId,
@@ -65,7 +48,6 @@ export function effectiveDesignWeights(
   return seed === undefined ? base : varyDesignWeights(base, profile.nationId, type, seed);
 }
 
-/** Ship facts a design score is computed from; all bp scores are 0..20000 (10000 = a neutral reference ship). */
 export interface DesignScoreFacts {
   readonly firepowerBp: number;
   readonly protectionBp: number;
@@ -74,20 +56,12 @@ export interface DesignScoreFacts {
   readonly torpedoBp: number;
   readonly reliabilityBp: number;
   readonly colonialBp: number;
-  /** Cost in treasury units. */
   readonly costUnits: number;
-  /** Expected build time in months. */
   readonly buildMonths: number;
-  /** Overweight vs design target, bp (stability/penalty input). */
   readonly overweightBp: number;
-  /** Obsolescence risk, bp (how near the end of its relevance the type is). */
   readonly obsolescenceBp: number;
 }
 
-/**
- * Weighted utility: positive terms are weights × facts (occupying the integer range), penalties subtract. Deterministic
- * integer arithmetic; the absolute value is meaningless, only the ordering across candidates matters.
- */
 export function scoreDesign(weights: DesignWeights, f: DesignScoreFacts): number {
   const positive =
     weights.firepowerBp * f.firepowerBp +
@@ -104,7 +78,6 @@ export function scoreDesign(weights: DesignWeights, f: DesignScoreFacts): number
   return weightedPositive - costPenalty - buildPenalty - instabilityPenalty;
 }
 
-/** Rank candidates for a nation: highest score first, ties broken by designId so the order is stable. */
 export function rankCandidatesForNation<
   T extends { readonly designId: string; readonly facts: DesignScoreFacts },
 >(candidates: readonly T[], weights: DesignWeights): readonly T[] {
@@ -119,23 +92,15 @@ export function rankCandidatesForNation<
 export interface ProcurementCandidate {
   readonly designId: string;
   readonly type: ShipTypeId;
-  /** Cost in treasury units. */
   readonly costUnits: number;
-  /** Score from `scoreDesign` under the nation's role weights. */
   readonly score: number;
 }
 
 export interface ProcurementPlan {
-  /** Chosen designs, in the order they should be laid down. */
   readonly order: readonly string[];
   readonly totalCostUnits: number;
 }
 
-/**
- * A deterministic procurement plan: walk the profile's `buildOrder`, and within each type take the best-scoring
- * affordable candidate up to the type's share of the budget. Never overspends. The plan is a *soft* preference:
- * an unaffordable or empty type is simply skipped, not an error.
- */
 export function planProcurement(
   profile: NationNavalProfile,
   candidates: readonly ProcurementCandidate[],

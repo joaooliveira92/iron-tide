@@ -1,9 +1,3 @@
-// S-5 11 (#87, spec #73 R15): the S-5 acceptance scenario. One function drives every S-5 behaviour from the compiled
-// production-pack campaign month and returns a plain, JSON-able observation of authoritative state, so the same code runs
-// in-process (assertions) and in two clean child processes (byte-identical comparison).
-//
-// EVERY RULESET NUMBER BELOW IS FIXTURE-CLASS. The production `presence` section is DORMANT (absent): it is gated on owner
-// decision requests 0017-0023 and 0026 (#85). Nothing here reaches the production pack or a golden.
 import type { CampaignSnapshot, Ship } from "@bluewave/campaign";
 import { isPresenceExempt, measurePresence } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
@@ -21,7 +15,6 @@ import { compileProductionCampaign } from "./production-pack.js";
 
 const SEED = "s5-acceptance-seed";
 
-/** FIXTURE-CLASS presence values (never production). */
 export const ACCEPTANCE_PRESENCE = {
   requiredTonsPerPossessionWeight: 1_000,
   noPortValueWeight: 3,
@@ -29,7 +22,6 @@ export const ACCEPTANCE_PRESENCE = {
   penaltyRequests: true as const,
 };
 
-/** FIXTURE-CLASS base-limit block: a tight limit everywhere so the production fleets exceed it somewhere. */
 export const ACCEPTANCE_BASE_LIMITS = {
   limitByBaseLevel: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   noBaseLimit: 1,
@@ -129,7 +121,6 @@ function bodies<K extends DomainEventBody["kind"]>(
   return out;
 }
 
-/** Replace one ship in the snapshot by id. */
 function withShip(
   snapshot: CampaignSnapshot,
   shipId: string,
@@ -151,7 +142,6 @@ function withShip(
 export function runS5Acceptance(): S5Observation {
   const base = compileProductionCampaign().state.snapshot;
 
-  // Old = the month with the production section dormant (absent); new = the same month under the fixture section.
   const dormant = run(base, [], null);
   const configured = run(base);
   const shortfalls = bodies(configured, "PresenceShortfall");
@@ -160,7 +150,6 @@ export function runS5Acceptance(): S5Observation {
   const shortArea = shortfalls[0]!.areaId;
   const nation = base.nations.get(nationId)!;
 
-  // A commissioned, operational, ACTIVE ship of the nation that has a compiled design (known tonnage).
   const candidate = nation.fleets
     .flatMap((f) => f.ships)
     .find(
@@ -174,7 +163,6 @@ export function runS5Acceptance(): S5Observation {
   if (candidate === undefined) throw new Error("no eligible ship");
   const shipTonsKg = base.designs.get(candidate.designVersionId)!.normalizedDisplacementKg;
 
-  // 1. Assignment and clear by command, observed on authoritative state.
   const assigned = run(base, [
     envelope({ type: "AssignForeignStation", nationId, shipIds: [candidate.id] }, base),
   ]);
@@ -195,7 +183,6 @@ export function runS5Acceptance(): S5Observation {
     envelope({ type: "ClearForeignStation", nationId, shipIds: [candidate.id] }, base),
   ]);
 
-  // 2. 1.5x weighting: the same ship placed in the short area, plain versus colonial-service on foreign station.
   const placed = withShip(base, candidate.id, { locationAreaId: shortArea });
   const rowOf = (s: CampaignSnapshot) =>
     measurePresence(s, ACCEPTANCE_PRESENCE).find(
@@ -212,11 +199,9 @@ export function runS5Acceptance(): S5Observation {
     (e) => e.nationId === nationId && e.areaId === shortArea,
   );
 
-  // 3. Reserve and mothballed ships contribute nothing.
   const reserveRow = rowOf(withShip(placed, candidate.id, { readiness: "RESERVE" }));
   const mothRow = rowOf(withShip(placed, candidate.id, { readiness: "MOTHBALLED" }));
 
-  // 4. Blockade exemption and its end.
   const warOf = (status: "ACTIVE" | "ENDED", nid: string) => ({
     id: "fixture-war",
     attackerSideId: "fixture-attackers",
@@ -274,7 +259,6 @@ export function runS5Acceptance(): S5Observation {
     throw new Error("expected the fixture blockade to exempt the nation");
   }
 
-  // 5. Routing: a foreign-station ship outside every shortfall area sails one hop toward the largest shortfall.
   const shortKeys = new Set(shortfalls.map((s) => `${s.nationId}/${s.areaId}`));
   let routing: S5Observation["routing"] | undefined;
   for (const sf of shortfalls) {
@@ -318,11 +302,9 @@ export function runS5Acceptance(): S5Observation {
   }
   if (routing === undefined) throw new Error("no routable foreign-station ship found");
 
-  // 6. Shortfall events and typed penalty requests are events only.
   const prestige = bodies(configured, "PrestigeLossRequested").length;
   const revolt = bodies(configured, "RevoltPressureRequested").length;
 
-  // 7. Over-base flag and consequences.
   const flaggedShips = [...limited.finalSnapshot.nations.values()]
     .flatMap((n) => n.fleets.flatMap((f) => f.ships))
     .filter((s) => s.overBase !== undefined);

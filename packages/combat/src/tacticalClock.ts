@@ -56,7 +56,7 @@ export class TacticalClock {
       this.currentSubstep = 0;
       this.currentBattleMinute++;
     }
-    this.commandCutoffState = false; // cutoff is 100ms before boundary - stateless computed, not persisted
+    this.commandCutoffState = false;
     this.clockHash = this.computeHash();
   }
   setPause(p: boolean) {

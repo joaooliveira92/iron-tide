@@ -1,5 +1,3 @@
-// SB3-R23 (DESIGN-16 sections 13.6-13.7 and 14; INC-10): the foreign-contract war policy, impoundment and the
-// delivery guarantee. These are the pure outcome/predicate tests; the monthly wiring is covered by the phase suite.
 import type {
   ConstructionProject,
   ForeignConstructionContract,
@@ -159,11 +157,9 @@ describe("foreign war outcomes (SB3-R23)", () => {
       );
     const first = draw("war-seed");
     expect(["IMPOUND", "DELAY"]).toContain(first.outcome);
-    // The same seed produces the same outcome and draw.
     const second = draw("war-seed");
     expect(second.outcome).toBe(first.outcome);
     expect(second.decision?.draw).toBe(first.decision?.draw);
-    // Below the tension floor no discretionary impoundment is drawn at all.
     const calm = resolveForeignWarPolicy(
       baseInput({ relation: "at_war", tension: FOREIGN_IMPOUNDMENT_MIN_TENSION - 1 }),
     );
@@ -189,7 +185,7 @@ describe("impoundmentPredicate (SB3-R23)", () => {
 
 describe("authorizeForeignImpoundment (SB3-R23)", () => {
   it("refuses a discretionary impoundment without a policy result", () => {
-    const resolution = resolveForeignWarPolicy(baseInput()); // CONTINUE
+    const resolution = resolveForeignWarPolicy(baseInput());
     const result = authorizeForeignImpoundment({
       nation: nation("ACTIVE"),
       projectId: "p1",
@@ -209,7 +205,6 @@ describe("authorizeForeignImpoundment (SB3-R23)", () => {
     const resolution = resolveForeignWarPolicy(
       baseInput({ relation: "at_war", tension: 10, randomEngine: new RandomEngine("x") }),
     );
-    // Force the authorised outcome regardless of the draw, to test the application path.
     const authorised = { ...resolution, outcome: "IMPOUND" as const };
     const result = authorizeForeignImpoundment({
       nation: nation("ACTIVE"),

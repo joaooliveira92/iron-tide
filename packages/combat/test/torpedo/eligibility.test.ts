@@ -1,14 +1,3 @@
-// AC-6: launch eligibility (DESIGN-40 §6) — every §6 predicate enforced,
-// fail-closed, consuming NO torpedo and producing exactly one explicit reason
-// code through the structured verdict. The reused validateTargetOrder fog gate
-// throws the combat-catalog TACTICAL_FOG_OF_WAR_VIOLATION for unknown /
-// zero-confidence contacts; known contacts below 4_000 bp fail with
-// TORPEDO_TARGET_CONTACT_INSUFFICIENT. INC-3 makes the §24 friendly-fire family
-// REAL (friendly-fire.ts): a confirmed-friendly target or a §24 danger-sector
-// prohibition reports TORPEDO_FRIENDLY_FIRE_RISK_PROHIBITED and the INC-2
-// DEFERRED marker is retired (every predicate is a plain boolean). Seams:
-// fire-solution quality is an INC-3-computed input (fire-solution.ts); the §6
-// sea-state ceiling is the authored TORPEDO_MAX_LAUNCH_SEA_STATE constant.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import { TACTICAL_FOG_OF_WAR_VIOLATION } from "../../src/reasonCodes.js";
@@ -183,7 +172,7 @@ describe("AC-6: a fully-eligible launch passes every §6 predicate", () => {
     expect(verdict.reasonCode).toBeNull();
     expect(verdict.consumedTorpedo).toBe(false);
     for (const [predicate, result] of Object.entries(verdict.predicateResults)) {
-      expect(result).toBe(true); // INC-3 retires the DEFERRED marker: all booleans
+      expect(result).toBe(true);
       void predicate;
     }
   });
@@ -232,8 +221,6 @@ describe("AC-6: every §6 predicate fails with EXACTLY one explicit reason code 
   });
 
   it("compatible torpedoes loaded: a model the launcher family never declares -> TORPEDO_MODEL_INCOMPATIBLE", () => {
-    // G7E declares 533mm_above_water_trainable + 533mm_submarine_internal —
-    // never 533mm_underwater_trainable. Loaded into the tube it must block the launch.
     const state = baseLauncher({ loadedPerTube: [G7E, G7A, EMPTY_TUBE, G7A] });
     const verdict = evaluateLaunchEligibility(inputs({ state, tubeIndexes: [0] }));
     expect(verdict.failingPredicate).toBe("compatibleTorpedoesLoaded");
@@ -307,13 +294,10 @@ describe("AC-6: every §6 predicate fails with EXACTLY one explicit reason code 
     expect(verdict.failingPredicate).toBe("targetNotFriendly");
     expect(verdict.reasonCode).toBe(TORPEDO_FRIENDLY_FIRE_RISK_PROHIBITED);
     expect(verdict.predicateResults.targetNotFriendly).toBe(false);
-    expect(verdict.predicateResults.friendlyFireSafety).toBe(true); // the target itself is not the §24 danger-sector check
+    expect(verdict.predicateResults.friendlyFireSafety).toBe(true);
   });
 
   it("friendly-fire safety: a confirmed friendly inside the danger sector below 1_000 m predicted separation is PROHIBITED", () => {
-    // Friendly dead-on the launch bearing line (bearing diff 0 -> cross-track 0 m).
-    // Quality is at the §24-friendly minimum so predicate 10 passes and the
-    // prohibition is the (only) failing predicate.
     const verdict = evaluateLaunchEligibility(
       inputs({
         friendlyTracks: [friendlyTrack({ relativeBearingMdeg: 0, rangeM: 5_000 })],
@@ -338,9 +322,6 @@ describe("AC-6: every §6 predicate fails with EXACTLY one explicit reason code 
   });
 
   it("predicate order: with a friendly in the sector AND low quality, predicate 10 (quality) fires FIRST per §6 order", () => {
-    // The §24 prohibition backstop is predicate 14; §6 evaluates predicate 10
-    // first, so a quality failure below the 7_500 raise reports
-    // TORPEDO_FIRE_SOLUTION_INSUFFICIENT — deterministic first-failing-predicate.
     const verdict = evaluateLaunchEligibility(
       inputs({
         friendlyTracks: [friendlyTrack({ relativeBearingMdeg: 0, rangeM: 5_000 })],
@@ -349,12 +330,10 @@ describe("AC-6: every §6 predicate fails with EXACTLY one explicit reason code 
     );
     expect(verdict.failingPredicate).toBe("fireSolutionQuality");
     expect(verdict.reasonCode).toBe(TORPEDO_FIRE_SOLUTION_INSUFFICIENT);
-    expect(verdict.predicateResults.friendlyFireSafety).toBe(true); // not reached
+    expect(verdict.predicateResults.friendlyFireSafety).toBe(true);
   });
 
   it("friendly-fire safety: a confirmed friendly inside the sector at exactly 1_000 m predicted separation is NOT prohibited", () => {
-    // diff 5_000 mdeg at range 11_460 m -> cross-track floor(11_460*5_000/57_296) = 1_000.
-    // In sector with quality at the raised minimum -> fully eligible.
     const verdict = evaluateLaunchEligibility(
       inputs({
         friendlyTracks: [friendlyTrack({ relativeBearingMdeg: 5_000, rangeM: 11_460 })],
@@ -369,8 +348,6 @@ describe("AC-6: every §6 predicate fails with EXACTLY one explicit reason code 
   });
 
   it("fire solution: a friendly in the danger sector raises the §10 minimum to 7_500 bp", () => {
-    // Unidentified contact inside the sector (spread covers the 500 mdeg offset):
-    // quality 7_499 fails predicate 10, 7_500 passes.
     const friendlyTracks = [
       friendlyTrack({
         contactId: "GHOST-1",
@@ -391,15 +368,13 @@ describe("AC-6: every §6 predicate fails with EXACTLY one explicit reason code 
   });
 
   it("fire solution: a confirmed friendly in the sector raises the §10 minimum even when NOT prohibited", () => {
-    // 1_047 m cross-track (>= 1_000 m -> not prohibited) but inside the sector ->
-    // the friendly minimum still applies.
     const friendlyTracks = [friendlyTrack({ relativeBearingMdeg: 5_000, rangeM: 12_000 })];
     const below = evaluateLaunchEligibility(
       inputs({ friendlyTracks, spreadHalfAngleMdeg: 6_000, fireSolutionQualityBp: 7_499 }),
     );
     expect(below.failingPredicate).toBe("fireSolutionQuality");
     expect(below.reasonCode).toBe(TORPEDO_FIRE_SOLUTION_INSUFFICIENT);
-    expect(below.predicateResults.friendlyFireSafety).toBe(true); // not prohibited
+    expect(below.predicateResults.friendlyFireSafety).toBe(true);
   });
 
   it("fire solution: a track outside the danger sector neither raises the minimum nor prohibits", () => {
@@ -409,7 +384,6 @@ describe("AC-6: every §6 predicate fails with EXACTLY one explicit reason code 
     const verdict = evaluateLaunchEligibility(
       inputs({ friendlyTracks, spreadHalfAngleMdeg: 1_000, fireSolutionQualityBp: 4_999 }),
     );
-    // quality 4_999 with no sector contact: the normal AUTOMATED 5_000 minimum fails
     expect(verdict.failingPredicate).toBe("fireSolutionQuality");
     expect(verdict.predicateResults.friendlyFireSafety).toBe(true);
   });
@@ -451,7 +425,7 @@ describe("AC-6: every §6 predicate fails with EXACTLY one explicit reason code 
       inputs({
         state: aboveWaterState(),
         definition: aboveWaterLauncher(),
-        ownSpeedMicrometresPerSecond: 18_005_541, // 35 kn + 1 µm/s
+        ownSpeedMicrometresPerSecond: 18_005_541,
       }),
     );
     expect(verdict.failingPredicate).toBe("ownSpeedWithinLauncherLimits");
@@ -631,7 +605,7 @@ describe("AC-6: per-predicate functions (boundary cases)", () => {
   });
 
   it("launch arc: training-limit boundaries are inclusive", () => {
-    const state = baseLauncher(); // min -45_000, max 45_000
+    const state = baseLauncher();
     expect(targetWithinLaunchArc(state, -45_000)).toBe(true);
     expect(targetWithinLaunchArc(state, 45_000)).toBe(true);
     expect(targetWithinLaunchArc(state, -45_001)).toBe(false);
@@ -644,11 +618,10 @@ describe("AC-6: per-predicate functions (boundary cases)", () => {
   });
 
   it("arming distance: exactly the minimum arming distance is satisfiable", () => {
-    const g7a = compiledTorpedoOf(G7A); // minimumArmingDistanceM 150
+    const g7a = compiledTorpedoOf(G7A);
     expect(armingDistanceSatisfiable(150, [g7a])).toBe(true);
     expect(armingDistanceSatisfiable(149, [g7a])).toBe(false);
-    // the binding constraint is the MAX across fired tubes' models
-    const g7e = compiledTorpedoOf(G7E); // minimumArmingDistanceM 150
+    const g7e = compiledTorpedoOf(G7E);
     expect(armingDistanceSatisfiable(150, [g7a, g7e])).toBe(true);
   });
 
@@ -663,13 +636,10 @@ describe("AC-6: per-predicate functions (boundary cases)", () => {
   });
 
   it("fire-solution thresholds: the §24 friendly-danger-sector raise applies to EVERY launch kind", () => {
-    // 7_500 bp is the highest §10 threshold; a friendly in the danger sector
-    // raises even the low AREA_DENIAL minimum up to it.
     expect(fireSolutionQualitySufficient(7_499, "AUTOMATED", true)).toBe(false);
     expect(fireSolutionQualitySufficient(7_500, "AUTOMATED", true)).toBe(true);
     expect(fireSolutionQualitySufficient(7_499, "AREA_DENIAL", true)).toBe(false);
     expect(fireSolutionQualitySufficient(7_500, "AREA_DENIAL", true)).toBe(true);
-    // without the raise, AREA_DENIAL keeps its 3_000 bp minimum
     expect(fireSolutionQualitySufficient(3_000, "AREA_DENIAL", false)).toBe(true);
   });
 
@@ -710,7 +680,7 @@ describe("AC-6: per-predicate functions (boundary cases)", () => {
     );
     expect(tubesCarryCompatibleTorpedoes(state, launcher533(), [2], COMPILED_TORPEDOES)).toBe(
       false,
-    ); // EMPTY
+    );
     expect(
       tubesCarryCompatibleTorpedoes(
         baseLauncher({ loadedPerTube: [G7E, G7A, EMPTY_TUBE, G7A] }),
@@ -718,7 +688,7 @@ describe("AC-6: per-predicate functions (boundary cases)", () => {
         [0],
         COMPILED_TORPEDOES,
       ),
-    ).toBe(false); // G7E never declares 533mm_underwater_trainable
+    ).toBe(false);
     expect(ammunitionReservationSucceeds(state, [0, 3])).toBe(true);
     expect(ammunitionReservationSucceeds(state, [2])).toBe(false);
   });
@@ -741,7 +711,6 @@ describe("AC-6: per-predicate functions (boundary cases)", () => {
       launcherFamilyId: "533mm_submarine_internal",
       mountType: "SUBMARINE_INTERNAL",
     });
-    // §7 explicitly does not govern SUBMARINE_INTERNAL; model-specific limits are C-3
     expect(
       ownSpeedWithinLauncherLimits(
         sub,
@@ -752,7 +721,6 @@ describe("AC-6: per-predicate functions (boundary cases)", () => {
         99_000_000,
       ).passes,
     ).toBe(true);
-    // above-water: a narrower declared limit (28 kn = 14_404_432 µm/s) binds
     const narrow = aboveWaterLauncher();
     narrow.aboveWaterMaxLaunchSpeedKnots = 28;
     expect(ownSpeedWithinLauncherLimits(aboveWaterState(), narrow, 14_404_432).passes).toBe(true);
@@ -779,13 +747,11 @@ describe("AC-19: friendlyFireSafetyVerdict is the single source of truth for §6
       targetEstimatedRangeM: 5_000,
       solutionUncertaintyM: 0,
       spreadHalfAngleMdeg: 0,
-      friendlyTracks: [
-        friendlyTrack({ relativeBearingMdeg: 0, rangeM: 5_000 }), // dead on the line
-      ],
+      friendlyTracks: [friendlyTrack({ relativeBearingMdeg: 0, rangeM: 5_000 })],
       friendlyIdentities: ["rn_cl_arethusa"],
       manualLaunch: true,
     });
     expect(dangerous.prohibited).toBe(true);
-    expect(friendlyFireSafetyVerdict(dangerous)).toBe(false); // manualLaunch does NOT waive
+    expect(friendlyFireSafetyVerdict(dangerous)).toBe(false);
   });
 });

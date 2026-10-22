@@ -1,8 +1,3 @@
-// Deterministic child-process script for the B-3 gunnery minute-advance stage.
-// Spawned twice by test/gunnery/determinism.test.ts and byte-compared (AC-13:
-// two-process OS-independence genuinely exercised). Uses only fixed inputs; the
-// sole randomness is the domain-separated keyed hit draw from @bluewave/random,
-// seeded by a fixed master seed (no ambient clock/random/env/fs order).
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
 import { RandomEngine } from "@bluewave/random";
@@ -68,8 +63,6 @@ const movementStates: Record<string, MovementState> = computeInitialMovementStat
   })),
 );
 
-// A pre-seeded legal contact track for the DEFENDER ship so an ATTACKER battery
-// has a fog-of-war-legal target regardless of 20-nmi detection geometry.
 const contact: TacticalContact = {
   contactId: `${BATTLE_ID}:d1`,
   battleId: BATTLE_ID,

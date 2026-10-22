@@ -1,20 +1,3 @@
-/**
- * The whole-catalogue part builder (ship-part-model ticket 11b, ADR-0154 §19).
- *
- * The read-path adapters (tickets 03–05) translated what a design placed. This builds parts for
- * the **buildable catalogue**: every gun family's standard model, every national gun model, every
- * mount a design can resolve (each gun count of each type, and the central-battery assemblies of
- * D17), every ammunition pattern, every launcher variant, every fitting, plant and armour
- * material. A part exists whether or not a reference design uses it.
- *
- * Every legacy field of a source record has one destination in the part schema (the tables in
- * `PART_SOURCE_FIELDS`), and a field with none is a coded `PARTCAT_UNMAPPED_FIELD` failure, not a
- * silent drop. The result is pure and independent of input order; generated ids and the order of
- * `parts` are deterministic, and a duplicate generated id is a failure.
- *
- * It owns no gameplay rule: `partCatalogueReaders.ts` rebuilds the legacy compiler inputs from
- * what is produced here, and the equivalence harness proves they compile identically.
- */
 import type {
   CapabilityData,
   EngineeringData,
@@ -49,9 +32,6 @@ import { navalProfileFile, buildLauncherPartModel } from "./torpedoPartAdapter.j
 import { buildTorpedoPartModel, type TorpedoModelSource } from "./torpedoPartBuilder.js";
 import { num } from "./compileShared.js";
 
-// Vocabulary
-
-/** The gun categories whose components are gun families. */
 export const GUN_CATEGORIES = [
   "MAIN_GUN",
   "SECONDARY_GUN",
@@ -59,17 +39,14 @@ export const GUN_CATEGORIES = [
   "AA_WEAPON",
 ] as const;
 
-/** The legacy count-parameter name of each part role. It is the one place the names live. */
 export const LEGACY_COUNT_PARAMETER = {
   gun: "barrels",
   torpedo_launcher: "tubes",
   accommodation: "blocks",
 } as const;
 
-/** The legacy parameter of a gun that is a design choice and not a count. */
 export const LEGACY_ROUNDS_PARAMETER = "rounds";
 
-/** The ammunition-stowage parameter a gun part declares (the legacy `rounds`). */
 export const ROUNDS_PARAMETER = "rounds";
 
 export type PartCatalogueFailureCode =
@@ -95,27 +72,18 @@ export type PartCatalogueFailureCode =
   | "PARTCAT_FORMULA_INVALID_TERM"
   | "PARTCAT_SOURCE_NOT_READ";
 
-/** One typed, path-specific reason a source record did not become a complete part. */
 export interface PartCatalogueFailure {
   readonly code: PartCatalogueFailureCode;
-  /** `<record kind>.<id>[.<field>]`, e.g. `components.gun_x.attributes.flammableBp`. */
   readonly path: string;
   readonly message: string;
 }
 
-/** One source field and the part-schema location that holds it (the documented destination). */
 export interface SourceFieldDestination {
   readonly record: string;
   readonly field: string;
-  /** A part-schema path, or `"(none)"` when the field is rejected if authored. */
   readonly destination: string;
 }
 
-/**
- * Every legacy field the migration reads, with its one destination. A field marked `(none)` has
- * no destination: it is not carried, so authoring it is a `PARTCAT_UNMAPPED_FIELD` failure.
- * `partCatalogue.test.ts` asserts the table covers every key of the source schemas.
- */
 export const PART_SOURCE_FIELDS: readonly SourceFieldDestination[] = [
   { record: "component", field: "id", destination: "part.id | spec.gunFamily" },
   { record: "component", field: "displayName", destination: "part.name | metadata.displayName" },
@@ -249,20 +217,14 @@ export const PART_SOURCE_FIELDS: readonly SourceFieldDestination[] = [
   },
 ];
 
-// Source and result
-
-/** Every legacy source the builder reads. Passed in: the builder performs no I/O. */
 export interface SourceCatalogue {
   readonly components: readonly ComponentDef[];
   readonly plants: readonly PropulsionPlant[];
   readonly armour: Pick<ArmourBalance, "materialEffBp" | "materialAvailability">;
   readonly armament: AuthoredArmamentContent;
   readonly profiles: readonly NationNavalProfile[];
-  /** The closed tag vocabulary a component's `tags` must belong to (`PART_TAGS`). */
   readonly tagVocabulary: readonly string[];
-  /** The structured diameter of a torpedo model, in µm, or `undefined` when it has none. */
   readonly torpedoDiameterUm: (torpedoModelId: string) => number | undefined;
-  /** Every torpedo model the buildable catalogue references (ticket 13a, SPM-R17). */
   readonly torpedoModels: readonly TorpedoModelSource[];
 }
 
@@ -273,7 +235,6 @@ export interface PartCatalogueInventory {
     readonly standard: number;
     readonly firstClass: number;
     readonly catalogueOnly: number;
-    /** Models present in both armament and a naval profile, merged into one part. */
     readonly merged: number;
   };
   readonly mounts: {
@@ -283,26 +244,16 @@ export interface PartCatalogueInventory {
     readonly centralBatteries: number;
   };
   readonly launchers: { readonly bases: number; readonly variants: number };
-  /** Fields a source record authors that no destination carries (all rejected). */
   readonly unmappedFieldsFound: number;
-  /**
-   * Catalogue lifecycle floors that became the armament introduction when a profile model and
-   * an armament model merged (a documented unification, ADR-0154 §19).
-   */
   readonly lifecycleUnifications: readonly string[];
 }
 
-/** The whole-catalogue build result (distinct from the query `PartCatalogue` of ticket 07). */
 export interface BuiltPartCatalogue {
-  /** Codepoint-ordered by id. */
   readonly parts: readonly FlattenedPart[];
   readonly failures: readonly PartCatalogueFailure[];
   readonly inventory: PartCatalogueInventory;
 }
 
-// Component blocks (engineering, capabilities, metadata, units, parameters)
-
-/** The attribute names the migration reads, by what they become. */
 const SPEC_ATTRIBUTES = new Set([
   "caliberUm",
   "shellMassG",
@@ -331,16 +282,12 @@ interface ComponentBlocks {
   readonly parameters?: Readonly<Record<string, { min: number; max: number; step: number }>>;
   readonly engineering?: EngineeringData;
   readonly capabilities?: readonly CapabilityData[];
-  /** Authored zone restriction (17a-2); absent means every zone is allowed. */
   readonly allowedZones?: readonly string[];
-  /** Authored build work in micro-units (17a-2); absent uses the balance default. */
   readonly buildWorkMicro?: number;
-  /** Authored production line (17a-2); absent uses the balance's per-category default. */
   readonly productionLine?: string;
   readonly tags: readonly string[];
 }
 
-/** The reasons a component's blocks could not be built, with the blocks that could. */
 interface BlockResult {
   readonly blocks: ComponentBlocks;
   readonly failures: PartCatalogueFailure[];
@@ -349,7 +296,6 @@ interface BlockResult {
 const isInt = (v: number): boolean => Number.isInteger(v);
 const nonNegInt = (v: number): boolean => isInt(v) && v >= 0;
 
-/** A constant attribute value, a failure, or `undefined` when the component does not author it. */
 function constantAttribute(
   def: ComponentDef,
   name: string,
@@ -388,10 +334,6 @@ function powerComponents(
   ];
 }
 
-/**
- * Build the typed blocks of one component. `countParameter` is the role's legacy count name or
- * `null` when the component declares none.
- */
 function componentBlocks(
   def: ComponentDef,
   role: Role,
@@ -406,7 +348,6 @@ function componentBlocks(
       message,
     });
 
-  // Parameters: the count parameter becomes `entryUnits`; `rounds` stays a parameter.
   let entryUnits: ComponentBlocks["entryUnits"];
   const parameters: Record<string, { min: number; max: number; step: number }> = {};
   for (const [name, range] of Object.entries(def.parameters)) {
@@ -435,7 +376,6 @@ function componentBlocks(
     }
   }
 
-  // Attributes: every name must have a destination.
   for (const name of Object.keys(def.attributes ?? {})) {
     if (
       !(
@@ -452,7 +392,6 @@ function componentBlocks(
       );
     }
   }
-  // Zone restriction and build facts (17a-2): each legacy field now has a canonical home.
   let allowedZones: ComponentBlocks["allowedZones"];
   if (def.allowedZones !== undefined) {
     const zones = def.allowedZones.filter((z): z is (typeof ZONE_IDS)[number] =>
@@ -708,7 +647,6 @@ function componentBlocks(
   };
 }
 
-/** Apply a component's blocks to a part, with its presentation metadata. */
 function withBlocks<T extends FlattenedPart>(
   part: T,
   blocks: ComponentBlocks,
@@ -730,25 +668,20 @@ function withBlocks<T extends FlattenedPart>(
   };
 }
 
-// The builder
-
 const isGunCategory = (c: string): boolean => (GUN_CATEGORIES as readonly string[]).includes(c);
 
 function weaponCategoryOf(c: string): FlattenedGunPart["spec"]["weaponCategory"] {
   return GUN_CATEGORIES.find((g) => g === c);
 }
 
-/** A gun family's `standard_<family>` model id (the armament resolver's derived model id). */
 export function standardGunPartId(familyId: string): string {
   return `standard_${familyId}`;
 }
 
-/** The central-battery assembly of a family at `guns` guns (D17). */
 export function centralBatteryPartId(familyId: string, guns: number): string {
   return `${familyId}_central_battery_${guns}`;
 }
 
-/** The id of the part with `guns` guns per mount cut from legacy mount record `recordId`. */
 export function mountPartIdFor(recordId: string, guns: number): string {
   return guns === 1 ? recordId : `${recordId}_x${guns}`;
 }
@@ -756,7 +689,6 @@ export function mountPartIdFor(recordId: string, guns: number): string {
 const sortParts = (parts: readonly FlattenedPart[]): FlattenedPart[] =>
   [...parts].sort((a, b) => compareCodePoints(a.id, b.id));
 
-/** Whole-catalogue part builder: see the module header. */
 export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue {
   const failures: PartCatalogueFailure[] = [];
   const parts = new Map<string, FlattenedPart>();
@@ -768,8 +700,6 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
       parts.set(part.id, part);
       return;
     }
-    // The same record generated twice (e.g. a battery from two mount types) is harmless only
-    // when the two are identical; otherwise the id is ambiguous and the build fails.
     if (JSON.stringify(prev) !== JSON.stringify(part)) {
       failures.push({
         code: "PARTCAT_DUPLICATE_ID",
@@ -861,7 +791,6 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
     familyDef.set(def.id, def);
     noteMountType(def.id, family.defaultMountType, `gunFamilies.${family.id}.defaultMountType`);
 
-    // The standard model (derived from the component, nation-free).
     const model = buildGunPartModel({
       content: { ...source.armament, gunModels: [] },
       components,
@@ -887,7 +816,6 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
     );
   }
 
-  // Authored (first-class) national models, merged with a same-id naval-profile model.
   const profileModels = profiles.flatMap((p) =>
     p.gunModels.map((model) => ({ nationId: p.nationId, model })),
   );
@@ -981,7 +909,6 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
     );
   }
 
-  // Catalogue-only national models (a naval profile's gun models with no armament record).
   for (const { nationId, model } of profileModels) {
     if (mergedProfileIds.has(model.id)) continue;
     const path = `profiles.${nationId}.gunModels.${model.id}`;
@@ -1057,9 +984,6 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
 
   let authoredRecords = 0;
   let derivedRecords = 0;
-  // A central battery is canonical by family and gun count (D17): one battery part per
-  // (family, n), whatever legacy mount type it was reclassified from. The first type in
-  // codepoint order supplies the legacy figures; the rest are the same canonical part.
   const batteryIds = new Set<string>();
   for (const family of families) {
     const def = familyDef.get(family.id);
@@ -1133,7 +1057,6 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
     }
   }
 
-  // ---- Ammunition, launchers, fittings, plants, armour -----------------------------------
   for (const record of buildAmmunitionPartModel({ ammunition: source.armament.ammunition })
     .records) {
     const { legacy } = record;
@@ -1208,7 +1131,6 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
     );
   }
 
-  // ---- Torpedoes (SPM-R17) ----------------------------------------------------------------
   const torpedoes = buildTorpedoPartModel({ models: source.torpedoModels });
   for (const u of torpedoes.unread) {
     failures.push({
@@ -1259,7 +1181,6 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
     failures.push({ code: "PARTCAT_SOURCE_NOT_READ", path: `armour.${u.id}`, message: u.message });
   }
 
-  // ---- Upgrade paths become supersession (successor supersedes predecessor) ---------------
   const partOfComponent = (id: string): string | undefined => {
     const def = componentById.get(id);
     if (def === undefined) return undefined;
@@ -1324,5 +1245,4 @@ export function buildPartCatalogue(source: SourceCatalogue): BuiltPartCatalogue 
   };
 }
 
-/** A quantity component list typed for convenience (re-export for callers building fixtures). */
 export type { QuantityComponentData };

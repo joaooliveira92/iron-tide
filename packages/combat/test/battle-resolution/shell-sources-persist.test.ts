@@ -1,7 +1,3 @@
-// P-1 ticket 10 (ADR-0050): shell-created fire/flooding sources are persisted
-// into ShipDamageState.fireRecords / floodingRecords, so the always-wired
-// step 8.6 damage-control stage progresses them in unarmed (gunnery-only)
-// battles.
 import { describe, expect, it } from "vite-plus/test";
 import { RandomEngine } from "@bluewave/random";
 import type { TacticalContact } from "../../src/contact/lifecycle.js";
@@ -48,10 +44,6 @@ function contact(contactId: string, assetId: string): TacticalContact {
 function target(shipId: string): DamageTargetContext {
   return {
     shipId,
-    // ADR-0094: a 152 mm HARVEY belt so a production 343 mm shell FULLY
-    // penetrates and ignites (the corrected production-scale 305 mm belt is only
-    // PARTIALLY penetrated, which starts no fire). This keeps the fixture a
-    // shell-started-fire test rather than a penetration-ratio test.
     zones: autoZonesForBelt(152_000),
     compartments: ["COMP-BELT-1"],
     components: ["TURRET-1", "ENGINE-1"],
@@ -115,7 +107,6 @@ describe("persistCreatedSources", () => {
     expect(out.floodingRecords.map((f) => f.rateKgMin)).toEqual([500, 700]);
     expect(out.stateHash).not.toBe(base.stateHash);
     expect(out.stateHash).toBe(withDamageStateHash({ ...out }).stateHash);
-    // input state untouched
     expect(base.fireRecords).toHaveLength(0);
   });
 });
@@ -136,7 +127,6 @@ describe("shell-started fire persists and progresses (unarmed gunnery-only path)
     const out = hit();
     const state = out.states["d1"]!;
     const eventFires = state.fireRecords;
-    // Deterministic fixture (seed + BELT/BB): the fire is persisted.
     expect(eventFires.length).toBeGreaterThan(0);
     expect(eventFires.every((f) => Number.isInteger(f.intensityBp))).toBe(true);
     expect(hit().states["d1"]!.stateHash).toBe(state.stateHash);
@@ -171,13 +161,11 @@ describe("shell-started fire persists and progresses (unarmed gunnery-only path)
         r.damageStates?.["d1"]?.fireRecords.find((f) => f.locationId === fire.locationId)
           ?.intensityBp,
     );
-    // Every minute wrote the burning fire back and it decays monotonically.
     expect(intensities.every((i) => i !== undefined)).toBe(true);
     expect(intensities[0]!).toBeLessThan(fire.intensityBp);
     for (let i = 1; i < intensities.length; i++) {
       expect(intensities[i]!).toBeLessThanOrEqual(intensities[i - 1]!);
     }
-    // The undamaged ship never materialises a state (strict no-op).
     for (const r of res.results) expect(r.damageStates?.["a1"]).toBeUndefined();
     expect(run().hashes).toEqual(res.hashes);
   });
@@ -219,10 +207,8 @@ describe("§32 battle-end decision with persisted sources", () => {
       expect(["withdrawal_complete", "mutual_disengagement", "time_limit"]).toContain(
         r.battleEndReason,
       );
-      // nobody is wiped out any more: both sides keep at least one ship afloat
       expect(r.attackerSurvivorIds.length).toBeGreaterThan(0);
       expect(r.defenderSurvivorIds.length).toBeGreaterThan(0);
-      // Re-running is byte-identical (cross-run determinism).
       const again = resolveBattleAuto({
         ...makeAutoInput({ nations: makeNations({ attackerGuns: [4, 4], defenderGuns: [4, 4] }) }),
         campaignSeed: seed,

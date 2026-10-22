@@ -1,6 +1,3 @@
-// DESIGN-38 §3 tactical minute-advance simulation over TacticalBattleState. This
-// module owns the public request/result contracts and the ordered minute
-// orchestrator; each deterministic stage lives in ./minuteStages.js.
 import type { RandomEngine } from "@bluewave/random";
 import type { MovementState } from "../movement.js";
 import { BattleLedger, type BattleEvent } from "../battleLedger.js";
@@ -63,46 +60,13 @@ export interface AdvanceMinuteInput {
   orders?: Record<string, UnitOrders>;
   attackRangeUm?: number;
   engine?: RandomEngine;
-  // Optional surface-gunnery batteries (DESIGN-39 / B-3 INC-4) to resolve after
-  // spotting (step 8). When absent or empty, gunnery resolution is a strict no-op:
-  // zero events appended, minute snapshot/minuteHash byte-identical to the baseline.
   gunnery?: GunneryBattery[];
-  // Optional weather-engine context (B-5 / INC-5). When absent, weather resolution
-  // is a strict no-op: zero events appended, hashes unchanged.
   weather?: WeatherEngineContext;
-  // Optional damage context (B-4/B-6 INC-2). When absent, damage resolution is a
-  // strict no-op: zero events appended, minute snapshot/minuteHash byte-identical
-  // to the B-2..B-5 baseline. When present, every HIT gunnery salvo is converted
-  // into damage impacts and applied via resolveDamage at step 9-10 (substep 3).
   damage?: DamageContext;
-  // Optional torpedo stage input (C-1 / INC-7 — DESIGN-40 §12–§22). When
-  // absent, the torpedo stage is a strict no-op: zero events appended, minute
-  // snapshot/minuteHash byte-identical to the B-2..B-6 baseline. When present,
-  // resolveTorpedoes runs AFTER the damage stage and its records/states are
-  // threaded (torpedoStates/torpedoTracks) exactly like gunneryStates.
   torpedoes?: TorpedoContext;
-  /** Optional smoke context (C-5 / INC-8). When absent, the smoke stage is a
-   *  strict no-op: zero events appended, minute snapshot/minuteHash byte-identical
-   *  to the pre-INC-8 baseline. When present, resolveSmoke runs after movement
-   *  intent (step 5) and before propulsion (step 6). */
   smoke?: SmokeContext;
-  /** Optional damage-control contexts (C-5 / INC-8, P-1 ticket 07): a map of
-   *  per-ship DamageControlContext keyed by ship assetId. When absent, the
-   *  damage-control stage is a strict no-op: zero events appended, minute
-   *  snapshot/minuteHash byte-identical to the baseline. When present,
-   *  resolveDamageControl runs per ship after damage resolution (steps 9-10 and
-   *  10.5) in the same minute; a ship with no active fire/flooding resolution
-   *  stays byte-identical too (no state write, no events when nothing changed). */
   damageControl?: Record<string, DamageControlContext>;
-  /** Optional air-combat context (D-3 / INC-8). When absent, the resolveAirCombat
-   *  stage is a strict no-op: zero records emitted, minute snapshot/minuteHash
-   *  byte-identical to the pre-INC-8 baseline. When present, resolveAirCombat runs
-   *  after weather (step 7.5) and before spotting (step 8). */
   airCombat?: AirCombatContext;
-  /** Optional air-defense context (D-4 / INC-6). When absent, the resolveAirDefense
-   *  stage is a strict no-op: zero records emitted, minute snapshot/minuteHash
-   *  byte-identical to the pre-INC-6 baseline. When present, resolveAirDefense runs
-   *  after air combat (step 7.7) and before spotting (step 8). */
   airDefense?: AirDefenseContext;
 }
 
@@ -112,44 +76,18 @@ export interface MinuteResult {
   contacts: TacticalContact[];
   events: BattleEvent[];
   minuteHash: string;
-  // Updated per-battery GunneryState (batteryId -> state) after this minute's
-  // gunnery stage. Present only when gunnery batteries were supplied.
   gunneryStates?: Record<string, GunneryState>;
-  // The salvo records fired this minute (DESIGN-39 §30). Present only when at
-  // least one battery fired; observational (not part of the minute snapshot/hash).
   gunneryRecords?: readonly GunneryEventRecord[];
-  // Updated weather components after this minute's weather stage. Present only
-  // when weather context was supplied.
   weatherComponents?: BattleWeatherComponents;
-  // Updated per-ship ShipDamageState (shipId -> state) after this minute's
-  // damage stage. Present only when damage context was supplied.
   damageStates?: Record<string, ShipDamageState>;
-  // Updated torpedo launcher states (launcherId -> state) after this minute's
-  // torpedo stage. Present only when launchers actually fired.
   torpedoStates?: Record<string, TorpedoLauncherState>;
-  // The RUNNING torpedo tracks after this minute's torpedo stage. Present only
-  // when the stage resolved a live torpedo entity.
   torpedoTracks?: readonly TorpedoTrack[];
-  // The §27 torpedo records emitted this minute. Present only when the stage
-  // produced records.
   torpedoRecords?: readonly TorpedoRecord[];
-  /** Smoke clouds after this minute's smoke stage. Present only when the stage
-   *  resolved clouds. */
   smokeClouds?: SmokeCloud[];
-  /** Smoke event records emitted this minute. Present only when the stage
-   *  produced records. */
   smokeRecords?: SmokeEventRecord[];
-  /** Air-combat records emitted this minute. Present only when the stage
-   *  produced records. */
   airCombatRecords?: readonly AirCombatRecord[];
-  /** Summary of air-combat activity this minute. Present only when the stage
-   *  was active. */
   airCombatSummary?: { capEngagements: number; strikeAttacks: number; losses: number };
-  /** Air-defense records emitted this minute (§27 order). Present only when the
-   *  stage produced records. */
   airDefenseRecords?: readonly AirDefenseEngagementRecord[];
-  /** Per-defender air-defense states after this minute (ammunition consumed).
-   *  Present only when the stage produced records. */
   airDefenseStates?: Readonly<Record<string, AirDefenseState>>;
 }
 
@@ -159,8 +97,6 @@ export function advanceMinute(input: AdvanceMinuteInput): MinuteResult {
   const ledger = new BattleLedger();
   const units = input.state.units ?? [];
 
-  // Deep copy movement states so sub-step integration never mutates the caller's
-  // authoritative state (immutable typed transitions, ENGINEERING-CONTRACT).
   const movement: Record<string, MovementState> = {};
   for (const [k, v] of Object.entries(input.state.movementStates ?? {})) {
     movement[k] = cloneMovementState(v);
@@ -201,25 +137,23 @@ export function advanceMinute(input: AdvanceMinuteInput): MinuteResult {
     salvos: [],
   };
 
-  updateContactKnowledge(ctx); // step 4
-  resolveMovementIntent(ctx); // step 5
-  resolveSmokeStage(ctx); // step 5.5
-  resolvePropulsionStage(ctx); // step 6
-  resolveCollisionsStage(ctx); // step 7
-  resolveWeatherStage(ctx); // step 7.5
-  resolveAirCombatStage(ctx); // step 7.7
-  resolveAirDefenseStage(ctx); // step 7.8
-  resolveSensorsStage(ctx); // step 8
-  buildShipPositions(ctx); // P-1 ticket 06
-  resolveGunneryStage(ctx); // step 8.5
-  resolveDamageStage(ctx); // steps 9-10
-  resolveTorpedoStage(ctx); // step 10.5
-  resolveDamageControlStage(ctx); // step 8.6 (canonically last)
+  updateContactKnowledge(ctx);
+  resolveMovementIntent(ctx);
+  resolveSmokeStage(ctx);
+  resolvePropulsionStage(ctx);
+  resolveCollisionsStage(ctx);
+  resolveWeatherStage(ctx);
+  resolveAirCombatStage(ctx);
+  resolveAirDefenseStage(ctx);
+  resolveSensorsStage(ctx);
+  buildShipPositions(ctx);
+  resolveGunneryStage(ctx);
+  resolveDamageStage(ctx);
+  resolveTorpedoStage(ctx);
+  resolveDamageControlStage(ctx);
   return buildMinuteResult(ctx);
 }
 
-// AC-12: advance a battle state N full minutes in DESIGN-38 order, collecting a
-// minute hash per minute.
 export interface AdvanceMinutesInput {
   state: TacticalBattleState;
   minutes: number;
@@ -228,40 +162,19 @@ export interface AdvanceMinutesInput {
   attackRangeUm?: number;
   engine?: RandomEngine;
   gunnery?: GunneryBattery[];
-  /** Optional weather-engine context (B-5 / INC-5). When absent, weather
-   *  resolution is a strict no-op across all minutes. */
   weather?: WeatherEngineContext;
-  /** Optional damage context (B-4 / B-6 INC-2). When absent, damage resolution
-   *  is a strict no-op across all minutes. */
   damage?: DamageContext;
-  /** Optional torpedo stage context (C-1 / INC-7). When absent, the torpedo
-   *  stage is a strict no-op across all minutes. */
   torpedoes?: TorpedoContext;
-  /** Optional smoke context (C-5 / INC-8). When absent, the smoke stage is a
-   *  strict no-op across all minutes. When present, smoke clouds are threaded
-   *  from minute to minute. */
   smoke?: SmokeContext;
-  /** Optional per-ship damage-control contexts (C-5 / INC-8, P-1 ticket 07).
-   *  When absent, the damage-control stage is a strict no-op across all
-   *  minutes. When present, each ship's fire/flooding records are threaded
-   *  from minute to minute via the updated damage states. */
   damageControl?: Record<string, DamageControlContext>;
-  /** Optional air-combat context (D-3 / INC-8). When absent, the resolveAirCombat
-   *  stage is a strict no-op across all minutes. When present, capPatrols and
-   *  strikeMissions are threaded from minute to minute. */
   airCombat?: AirCombatContext;
-  /** Optional air-defense context (D-4 / INC-6). When absent, the resolveAirDefense
-   *  stage is a strict no-op across all minutes. When present, per-defender states
-   *  (ammunition) are threaded from minute to minute. */
   airDefense?: AirDefenseContext;
 }
 export interface AdvanceMinutesResult {
   results: MinuteResult[];
   hashes: string[];
   finalState: TacticalBattleState;
-  /** Per-minute damage states (mirrors results[i].damageStates). */
   damageStates?: Record<string, ShipDamageState>[];
-  /** Per-minute torpedo tracks (mirrors results[i].torpedoTracks). */
   torpedoTracks?: (readonly TorpedoTrack[])[];
 }
 export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult {
@@ -306,28 +219,21 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
         Object.entries(res.movementStates).map(([k, v]) => [k, { ...v }]),
       ),
     };
-    // Thread the updated battery states into the next minute so ammunition/reload
-    // progress persists deterministically across minutes.
     if (res.gunneryStates && gunnery) {
       gunnery = gunnery.map((b) => {
         const ns = res.gunneryStates![b.id];
         return ns ? { ...b, state: ns } : b;
       });
     }
-    // Thread the updated weather components into the next minute.
     if (res.weatherComponents && weather) {
       weather = { ...weather, components: res.weatherComponents };
     }
-    // Thread the updated damage states into the context targets for the next
-    // minute (immutable copy-out pattern).
     if (res.damageStates && damage) {
       damage = { ...damage, targets: { ...damage.targets } };
       for (const [sid, st] of Object.entries(res.damageStates)) {
         if (damage.targets[sid]) damage.targets[sid] = { ...damage.targets[sid]!, state: st };
       }
     }
-    // Thread the updated torpedo launcher states + running tracks + target
-    // damage states into the next minute (GunneryState idiom).
     if (torpedoes) {
       if (res.torpedoStates) {
         torpedoes = {
@@ -352,14 +258,9 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
         }
       }
     }
-    // Thread the updated smoke clouds into the next minute.
     if (smoke && res.smokeClouds) {
       smoke = { ...smoke, clouds: res.smokeClouds };
     }
-    // Thread the updated damage-control contexts into the next minute
-    // (P-1 ticket 07). The damage-control stage's write-back lands in
-    // res.damageStates, so every context whose ship state changed this minute
-    // is rebased on the authoritative new state.
     if (damageControl && res.damageStates) {
       let rebased = false;
       const nextMap = { ...damageControl };
@@ -376,7 +277,6 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
       }
       if (rebased) damageControl = nextMap;
     }
-    // Thread the updated air-combat context into the next minute (D-3 / INC-8).
     if (airCombat) {
       if (res.airCombatRecords) {
         airCombat = {
@@ -385,7 +285,6 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
         };
       }
     }
-    // Thread the per-defender air-defense states (ammunition) into the next minute.
     if (airDefense && res.airDefenseStates) {
       const nextStates = res.airDefenseStates;
       airDefense = {

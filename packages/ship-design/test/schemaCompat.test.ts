@@ -38,7 +38,6 @@ describe("content-schema stays in lock-step with ship-design", () => {
     expect(ARMOUR_REGIONS as readonly string[]).not.toContain("TURRET_FACE");
     for (const r of ["DECK_EXTENDED", "TURRET", "TURRET_TOP", "SECONDARY_GUN"])
       expect(ARMOUR_REGIONS as readonly string[]).toContain(r);
-    // Type-level parity: these only compile if the lists match ship-design.
     const sides: readonly MountSide[] = [...MOUNT_SIDES];
     const standards: readonly AccommodationStandard[] = [...ACCOMMODATION_STANDARDS];
     expect(sides).toHaveLength(3);

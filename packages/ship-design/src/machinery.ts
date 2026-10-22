@@ -7,51 +7,35 @@ import { evaluate, type LookupTable } from "./formula/eval.js";
 import { parseFormula } from "./formula/parse.js";
 import { kg, toSafe, type Kg, type Kw, type Litre } from "./units.js";
 
-/** Propulsion plant (data). Weight/volume per installed kW; part-load specific fuel consumption table. */
 export interface PropulsionPlant {
   readonly id: string;
   readonly fuelType: "COAL" | "OIL" | "MIXED";
   readonly weightMilliKgPerKw: number;
   readonly volumeLitrePerKw: number;
-  /** Specific fuel consumption in g/kWh versus load in bp of installed power. */
   readonly sfcGramPerKwh: LookupTable;
   readonly reliabilityBp: number;
   readonly minKw: number;
   readonly maxKw: number;
-  /** Availability gate; plants without it are always available. */
   readonly introduction?: { readonly fromMonth: string; readonly obsoleteMonth: string | null };
   readonly requires?: readonly string[];
 }
 
 export interface MachineryBalance {
-  /** Admiralty-style hull coefficient x100 per form (e.g. 17500 = 175.00). */
   readonly cFormX100: Readonly<Record<string, number>>;
-  /** Speed-length ratio x1000 above which the coefficient degrades. */
   readonly slr0X1000: number;
-  /** bp of coefficient lost per (SLR unit)^2 above slr0. */
   readonly kSlBp: number;
-  /** The coefficient never falls below this fraction (bp) of its base. */
   readonly cFloorBp: number;
-  /** SLR x1000 at/after which HULL_DRIVEN_BEYOND_FORM is reported. */
   readonly slrMaxX1000: number;
   readonly minSpeedMilliKnots: number;
   readonly maxSpeedMilliKnots: number;
-  readonly kwPerShpBp: number; // 7457
-  readonly auxWeightBp: number; // piping/aux as bp of plant weight
-  /** Fraction of fuel unusable + reserved, bp. */
+  readonly kwPerShpBp: number;
+  readonly auxWeightBp: number;
   readonly fuelUnusableBp: number;
   readonly fuelReserveBp: number;
-  /** Bunker volume per kg of fuel, bp of a litre (10_000 = 1 L/kg). Welsh coal stows at about 40 ft3 per long ton = 11_148. */
   readonly bunkerLitreBpPerKg: number;
-  /**
-   * Engine priority swings, bp of the base value at full priority (+/-10_000). Positive priority = speed-optimised
-   * (lighter plant, more effective power, less reliable); negative = reliability-optimised (the reverse). BALANCE TARGETs
-   * (ADR-0213), authored in the ruleset; absent = 0 = the axis has no effect.
-   */
   readonly enginePriorityWeightSwingBp?: number;
   readonly enginePriorityPowerSwingBp?: number;
   readonly enginePriorityReliabilitySwingBp?: number;
-  /** Below this plant reliability (bp) a speed-optimised plant raises ENGINE_PRIORITY_BREAKDOWN_RISK. Absent = never. */
   readonly enginePriorityReliabilityWarnBp?: number;
 }
 
@@ -61,18 +45,15 @@ export interface MachineryInput {
   readonly hullFormId: string;
   readonly lengthWlMm: number;
   readonly displacementKg: number;
-  /** Hull fouling / age loss of coefficient, bp. */
   readonly foulingBp: number;
   readonly fuelCapacityKg: number;
   readonly cruiseSpeedMilliKnots: number;
   readonly requiredSpeedMilliKnots: number;
   readonly requiredRangeNm: number;
-  /** Speed <-> reliability axis in bp, -10_000 (reliability) .. +10_000 (speed); absent or 0 = balanced. */
   readonly enginePriorityBp?: number;
 }
 
 export interface MachineryResult {
-  /** Plant reliability after the engine-priority trade, bp. */
   readonly reliabilityBp: number;
   readonly plantWeightKg: Kg;
   readonly plantVolumeLitre: Litre;
@@ -98,7 +79,6 @@ function enginePriority(i: MachineryInput): bigint {
   return BigInt(p);
 }
 
-/** `base` moved by `swingBp` of itself per full priority, `sign` +1 raising it and -1 lowering it. Truncates toward zero. */
 function swung(
   base: bigint,
   i: MachineryInput,
@@ -108,11 +88,9 @@ function swung(
   return base + (sign * base * enginePriority(i) * BigInt(swingBp ?? 0)) / (BP * BP);
 }
 
-/** Installed power as the speed model sees it: a speed-optimised plant delivers more of its rated kW. */
 const effectiveKw = (i: MachineryInput, b: MachineryBalance): number =>
   toSafe("effectiveKw", swung(BigInt(i.installedKw), i, b.enginePriorityPowerSwingBp, 1n));
 
-/** SLR x1000 = V_knots / sqrt(L_ft) * 1000. */
 export function speedLengthRatioX1000(speedMilliKnots: number, lengthMm: number): number {
   const sqrtLftX1000 = integerRoot((BigInt(lengthMm) * 10_000_000n) / 3048n, 2);
   if (sqrtLftX1000 === 0n) return 0;
@@ -137,7 +115,6 @@ export function effectiveCoefficientX100(
   return Math.max(1, Number(c));
 }
 
-/** F-M1: required shaft power in kW (ceil) to hold the given speed. */
 export function requiredKw(
   i: MachineryInput,
   b: MachineryBalance,
@@ -151,7 +128,6 @@ export function requiredKw(
   return toSafe("requiredKw", (num + den - 1n) / den);
 }
 
-/** F-M2: highest speed (milli-knots) whose required power fits the installed power; monotone bisection. */
 export function maxSpeed(i: MachineryInput, b: MachineryBalance): number {
   let lo = 0;
   let hi = b.maxSpeedMilliKnots;
@@ -187,7 +163,6 @@ function rangeNm(i: MachineryInput, b: MachineryBalance, speedMilliKnots: number
   if (kgph === 0) return 0;
   const usableBp = Number(BP) - b.fuelUnusableBp - b.fuelReserveBp;
   const usableKg = (BigInt(i.fuelCapacityKg) * BigInt(Math.max(0, usableBp))) / BP;
-  // nm = usableKg / kgph * knots
   return toSafe("range", (usableKg * BigInt(speedMilliKnots)) / (BigInt(kgph) * 1000n));
 }
 
@@ -340,7 +315,6 @@ export function compileMachinery(i: MachineryInput, b: MachineryBalance): Machin
   const cruise = kgPerHour(i, b, i.cruiseSpeedMilliKnots);
   const cruiseRange = rangeNm(i, b, i.cruiseSpeedMilliKnots);
 
-  // Economical speed: most nm per kg of fuel, scanned in 1-knot steps (ties -> lower speed).
   let ecoSpeed = b.minSpeedMilliKnots;
   let bestNmPerKg = -1n;
   for (let s = b.minSpeedMilliKnots; s <= vmax; s += 1000) {

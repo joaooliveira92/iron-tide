@@ -17,7 +17,7 @@ export type AiCommandType = typeof AI_COMMAND_TYPE_BUDGET | typeof AI_COMMAND_TY
 export interface AiCommandContext {
   readonly campaignId: string;
   readonly turnNumber: SafeInt;
-  readonly expectedSnapshotHash: string; // 64 hex chars
+  readonly expectedSnapshotHash: string;
 }
 
 function assertNonEmptyString(value: string, name: string): void {
@@ -35,7 +35,6 @@ function assertSafeInt(value: unknown, name: string): asserts value is SafeInt {
 }
 
 function encodePart(s: string): string {
-  // encodeURIComponent prevents "/" and ":" collisions in idempotencyKey
   return encodeURIComponent(s);
 }
 
@@ -43,12 +42,6 @@ function isHex64(s: string): boolean {
   return /^[0-9a-f]{64}$/i.test(s);
 }
 
-/**
- * Deterministic, replay-safe envelope factory.
- * Every field including commandId and timestamp is derived solely from
- * (campaignId, turnNumber, nationId, commandType) + expectedSnapshotHash.
- * No IO, no Math.random(), no Date.now().
- */
 export class AiCommandGenerator {
   private readonly campaignId: string;
   private readonly turnNumber: SafeInt;
@@ -67,20 +60,16 @@ export class AiCommandGenerator {
     Object.freeze(this);
   }
 
-  /** Canonical idempotency key. Private — use build* methods to ensure consistency. */
   private idempotencyKey(nationId: string, commandType: AiCommandType): string {
     return this.idempotencyKeyFor(nationId, commandType);
   }
 
-  /** Idempotency key for an arbitrary (possibly suffixed) command type; deterministic. */
   private idempotencyKeyFor(nationId: string, commandType: string): string {
     assertNonEmptyString(nationId, "nationId");
-    // turnNumber as decimal string via integer conversion (no [object Object])
     const turnStr = String(this.turnNumber);
     return `${encodePart(this.campaignId)}/${turnStr}/${encodePart(nationId)}/${encodePart(commandType)}`;
   }
 
-  /** Exposed for testing / diagnostics only — deterministic. */
   static buildIdempotencyKey(
     campaignId: string,
     turnNumber: SafeInt,
@@ -94,18 +83,14 @@ export class AiCommandGenerator {
   }
 
   private commandIdFromKey(key: string): string {
-    // domain-separated hash: ai:v0:<sha256> truncated to 160 bits (40 hex) for brevity
-    // full 64 hex available via sha256Hex if needed; 160 bits still > UUID entropy
     return `ai-${sha256Hex(`v0:${key}`).slice(0, 40)}`;
   }
 
   private deterministicTimestamp(): string {
-    // Pure integer arithmetic, UTC, handles negative turnNumber deterministically.
-    // Turn 0 => 1910-01-01T00:00:00.000Z, wraps every 365 days (no leap drift).
     const daysOffset = ((this.turnNumber % 365) + 365) % 365;
-    const baseMs = Date.UTC(1910, 0, 1); // 1910-01-01 UTC
+    const baseMs = Date.UTC(1910, 0, 1);
     const ms = baseMs + daysOffset * 24 * 60 * 60 * 1000;
-    return new Date(ms).toISOString(); // toISOString is always UTC, deterministic
+    return new Date(ms).toISOString();
   }
 
   buildBudgetCommand(
@@ -145,7 +130,6 @@ export class AiCommandGenerator {
     if (typeof fieldPriorities !== "object" || fieldPriorities === null) {
       throw new AiError({ message: `fieldPriorities must be object` });
     }
-    // validate each priority is SafeInt and freeze copy
     const copy: Record<string, SafeInt> = {};
     for (const [k, v] of Object.entries(fieldPriorities)) {
       assertNonEmptyString(k, "fieldPriorities key");
@@ -172,10 +156,6 @@ export class AiCommandGenerator {
     return Object.freeze(envelope) as CommandEnvelope<SetResearchPriorityCommand>;
   }
 
-  /**
-   * A SubmitDesign command for an AI procurement decision. The idempotency key includes the decision id, so each
-   * procurement decision submits exactly once even if the planner runs again before the study is created.
-   */
   buildSubmitDesignCommand(
     nationId: string,
     decisionId: string,

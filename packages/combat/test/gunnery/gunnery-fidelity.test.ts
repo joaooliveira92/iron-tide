@@ -1,14 +1,3 @@
-// P-1 ticket 06 — gunnery fidelity sweep: the engine NOW fires at the TRUE
-// legal contact range each minute (range factor from `gunnery_range_v1`) and
-// every salvo's hit draw uses the binomial-equivalent batch probability of its
-// `salvoCount` rounds (`gunnery_salvo_batch_v1`), so CLOSER RANGE ⇒ more hits
-// and MORE GUNS ⇒ more hits, deterministically.
-//
-// Deterministic proof, no statistical thresholds: 12 fixed campaign seeds x 120
-// minutes each per arm; every battery fires every minute (reload 2_000 ms < one
-// minute, FC solution 8_000 bp >= the 2_000 bp minimum, ammo 10_000 rounds per
-// type). Expected per-arm hits at 5 km: ~126 (N=1) vs ~748 (N=8); at 15 km:
-// ~39 (N=1) vs ~284 (N=8) — a 3x separation that a seeded run cannot invert.
 import { describe, it, expect } from "vite-plus/test";
 import { RandomEngine } from "@bluewave/random";
 import {
@@ -49,9 +38,6 @@ function contactAt(rangeUm: number): TacticalContact {
   };
 }
 
-/** One battery fires `salvoCount` rounds at `rangeUm` every minute for MINUTES
- *  minutes, threading its own post-minute state (the auto-resolution loop's
- *  per-minute threading). Returns hit count + the first salvo record. */
 function runArm(seed: string, salvoCount: number, rangeUm: number) {
   const engine = new RandomEngine(seed);
   let battery: GunneryBattery = {
@@ -64,7 +50,6 @@ function runArm(seed: string, salvoCount: number, rangeUm: number) {
     salvoCount,
     preferredType: "ARMOR_PIERCING",
     rateFactors: neutralRateFactors(),
-    // The auto-resolver's authored per-minute base (GUNNERY_ACCURACY_BASE_BP).
     accuracyFactors: neutralAccuracyFactors(4_000),
     state: withGunneryStateHash({
       batteryId: "BAT-1",
@@ -106,7 +91,6 @@ function runArm(seed: string, salvoCount: number, rangeUm: number) {
     const rec = out.salvos[0]!;
     if (rec.outcome === "HIT") hits++;
     if (!firstRecord) firstRecord = rec;
-    // next minute fires from the post-minute state (true range written back).
     battery = { ...battery, state: out.nextStates["BAT-1"]! };
   }
   return { hits, firstRecord: firstRecord! };
@@ -122,7 +106,7 @@ describe("P-1 ticket 06 — range + gun-count sensitivity (deterministic sweep)"
       close += a.hits;
       far += b.hits;
     }
-    expect(close).toBeGreaterThan(far * 2); // ~3x separation (3066 vs 1040 bp)
+    expect(close).toBeGreaterThan(far * 2);
   });
 
   it("more guns yield more hits at the same range", () => {
@@ -134,19 +118,16 @@ describe("P-1 ticket 06 — range + gun-count sensitivity (deterministic sweep)"
       few += a.hits;
       many += b.hits;
     }
-    expect(many).toBeGreaterThan(few * 5); // ~6x separation (5193 vs 875 bp)
+    expect(many).toBeGreaterThan(few * 5);
   });
 
   it("the salvo record carries the true-range per-round accuracy and the batch draw", () => {
     const { firstRecord } = runArm(SEEDS[0]!, 4, FIVE_KM);
-    // §3 per-round resolution at 5 km through the neutral 4_000 base: 875 bp.
     expect(firstRecord.accuracy.finalAccuracyBp).toBe(perRoundHitProbabilityBp(FIVE_KM));
     expect(firstRecord.accuracy.factors.range).toBe(rangeMultiplierBp(FIVE_KM));
-    // The single keyed draw is the SALVO batch probability, not the per-round one.
     expect(firstRecord.randomDecisions[0]!.finalAccuracyBp).toBe(
       salvoBatchAccuracyBp(perRoundHitProbabilityBp(FIVE_KM), 4),
     );
-    // ...and the far-range per-round resolution is strictly lower.
     const farRec = runArm(SEEDS[0]!, 4, FIFTEEN_KM).firstRecord;
     expect(farRec.accuracy.finalAccuracyBp).toBeLessThan(firstRecord.accuracy.finalAccuracyBp);
     expect(farRec.accuracy.finalAccuracyBp).toBe(perRoundHitProbabilityBp(FIFTEEN_KM));

@@ -1,11 +1,3 @@
-// AC-17 (INC-5): air_defense_v1 + aa_director_scaling_v1 + radar_saturation_v1 +
-// ciws_redundancy_v1 — strict literal schemas, fail-closed validate*Contract guards,
-// the 4-entry registry in canonical order, and a pinned golden hash of the shipped values.
-//
-// Strictness is a parse-time option in Effect v4 (it cannot be embedded in the schema AST),
-// so every strict decode path below goes through the public `validate*Contract` guard, which
-// applies `{ onExcessProperty: "error" }`. The policy schemas themselves are exported for
-// public-surface parity (12-F1); a bare decode strips excess keys instead of failing closed.
 import { describe, expect, it } from "vite-plus/test";
 import { Schema } from "effect";
 import { BluewaveError, isBluewaveError } from "@bluewave/contracts";
@@ -37,9 +29,6 @@ import {
   CiwsRedundancyPolicy_v1,
 } from "../../src/air-defense/index.js";
 
-/** Pinned golden hash of the canonical serialization of the 4 shipped contract values.
- *  Regenerate ONLY as a deliberate versioned release change (artifact: module golden, new in
- *  INC-5) — the engine goldens in golden/hashes.json are untouched by this contract. */
 const AIR_DEFENSE_CONTRACTS_GOLDEN_HASH =
   "92d3008abba718f0198180411ebd410b2beebbf25209426bf0ad1396622679e9";
 
@@ -338,9 +327,6 @@ describe("AC-17: versioned air-defense contracts", () => {
     });
   });
 
-  // 12-F1: the migration silently made these five schemas module-private; restore and pin
-  // the public surface, and document that strict excess-property rejection is a parse-time
-  // option carried by the validate*Contract guards, not by the exported schema AST.
   describe("public surface parity (12-F1)", () => {
     it("exports the five pre-migration policy schemas", () => {
       for (const schema of [

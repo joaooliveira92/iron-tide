@@ -1,26 +1,3 @@
-// DESIGN-40 §24 friendly-fire danger sector (INC-3): pure, deterministic,
-// INTEGER-only geometry. The launch danger sector is centred on the target
-// bearing with half-angle = salvo spread half-angle + target-contact uncertainty
-// angle. §24 PROHIBITS the launch when a CONFIRMED friendly contact is inside
-// the sector with a predicted minimum separation below 1_000 m — and manual
-// launch does NOT waive the prohibition. An UNIDENTIFIED or LOW-CONFIDENCE
-// contact inside the sector raises the §10 minimum solution quality (7_500 bp,
-// consumed by the eligibility fireSolutionQuality predicate via
-// raisesMinimumSolutionQuality).
-//
-// Authored integer geometry (ENGINEERING-CONTRACT forbids floating-point for
-// authoritative arithmetic; the small-angle approximations below are explicit
-// authored constants, documented in constants.ts):
-//   uncertaintyHalfAngleMdeg = floor(uncertaintyM * RAD_TO_MDEG / max(rangeM, 1))
-//   dangerHalfAngleMdeg      = spreadHalfAngleMdeg + uncertaintyHalfAngleMdeg
-//   minPredictedSeparationM  = floor(friendlyRangeM * bearingDiffMdeg / RAD_TO_MDEG)
-//                              (cross-track distance of the friendly from the
-//                              launch bearing line; 0 when dead on the line)
-//
-// Inputs are the firing side's RELATIVE knowledge (bearing/range/identity/
-// confidence) — decoupled from absolute position math. The engine stage INC-7
-// computes the relative friendly tracks from positions; this slice ships the
-// pure assessment.
 import { BluewaveError } from "@bluewave/contracts";
 import {
   TORPEDO_DANGER_SECTOR_RAD_TO_MDEG,
@@ -40,9 +17,6 @@ function invariant(field: string, value: unknown, reason: string): never {
   });
 }
 
-// A friendly-side contact the firing side can place relative to its own
-// position: relative bearing (integer milli-degrees, full circle 360_000),
-// estimated range (integer metres), estimated identity, and confidence (bp).
 export interface FriendlyTrack {
   contactId: string;
   estimatedIdentity: string;
@@ -52,13 +26,13 @@ export interface FriendlyTrack {
 }
 
 export interface FriendlyFireRiskInputs {
-  targetRelativeBearingMdeg: number; // integer milli-degrees (launch bearing line)
-  targetEstimatedRangeM: number; // integer metres (uncertainty-angle denominator)
-  solutionUncertaintyM: number; // integer metres (§9 target-contact uncertainty)
-  spreadHalfAngleMdeg: number; // integer milli-degrees (salvo spread half-angle)
-  friendlyTracks: readonly FriendlyTrack[]; // firing-side relative knowledge
-  friendlyIdentities: readonly string[]; // confirmed-friendly estimated identities
-  manualLaunch: boolean; // echoed into the verdict — NEVER waives §24
+  targetRelativeBearingMdeg: number;
+  targetEstimatedRangeM: number;
+  solutionUncertaintyM: number;
+  spreadHalfAngleMdeg: number;
+  friendlyTracks: readonly FriendlyTrack[];
+  friendlyIdentities: readonly string[];
+  manualLaunch: boolean;
 }
 
 export interface FriendlyFireRiskAssessment {
@@ -67,28 +41,17 @@ export interface FriendlyFireRiskAssessment {
   tracksInDangerSector: readonly FriendlyTrack[];
   confirmedFriendlyInSector: boolean;
   unidentifiedOrLowConfidenceInSector: boolean;
-  // §24 prohibition: a confirmed friendly inside the sector with a predicted
-  // minimum separation below TORPEDO_FRIENDLY_FIRE_MIN_SEPARATION_M.
   prohibited: boolean;
-  // §10/§24 quality raise: any contact inside the sector that is confirmed
-  // friendly, unidentified, or low-confidence -> 7_500 bp minimum.
   raisesMinimumSolutionQuality: boolean;
-  manualLaunch: boolean; // echoed; the prohibition is never waived
+  manualLaunch: boolean;
 }
 
-// Shortest angular distance between two milli-degree bearings, with wraparound
-// at ±180_000 mdeg (full circle = 360_000 mdeg).
 function bearingDifferenceMdeg(aMdeg: number, bMdeg: number): number {
   let diff = Math.abs(aMdeg - bMdeg) % 360_000;
   if (diff > 180_000) diff = 360_000 - diff;
   return diff;
 }
 
-// Fail-closed input guard (mirrors assertEligibilityInputs in eligibility.ts):
-// every geometry input is an integer, the friendly-track records are
-// well-formed (non-empty ids, integer bearing, non-negative integer range,
-// integer confidence within [0, 10_000]), identities are non-empty strings, and
-// manualLaunch is a boolean. Runs before any geometry computation.
 function assertFriendlyFireInputs(inputs: FriendlyFireRiskInputs): void {
   if (!Number.isInteger(inputs.targetRelativeBearingMdeg))
     invariant(
@@ -176,13 +139,6 @@ function assertFriendlyFireInputs(inputs: FriendlyFireRiskInputs): void {
     invariant("manualLaunch", inputs.manualLaunch, "manualLaunch must be a boolean");
 }
 
-// AC-19: the pure §24 assessment. Never throws for well-formed inputs; every
-// field is computed from the authored integer geometry above. Structurally
-// invalid inputs (non-integer geometry, out-of-range confidence, malformed
-// track/identity surfaces, non-boolean manualLaunch) fail closed with
-// TORPEDO_STATE_INVARIANT_FAILED before any geometry — mirroring
-// assertEligibilityInputs (eligibility.ts) so standalone callers (INC-7) get
-// the same structured guard, never a raw TypeError.
 export function assessFriendlyFireRisk(inputs: FriendlyFireRiskInputs): FriendlyFireRiskAssessment {
   assertFriendlyFireInputs(inputs);
   const uncertaintyHalfAngleMdeg = Math.floor(
@@ -202,7 +158,7 @@ export function assessFriendlyFireRisk(inputs: FriendlyFireRiskInputs): Friendly
       inputs.targetRelativeBearingMdeg,
       track.relativeBearingMdeg,
     );
-    if (diffMdeg > dangerHalfAngleMdeg) continue; // outside the sector
+    if (diffMdeg > dangerHalfAngleMdeg) continue;
 
     const confirmedFriendly = (inputs.friendlyIdentities as readonly string[]).includes(
       track.estimatedIdentity,
@@ -214,8 +170,6 @@ export function assessFriendlyFireRisk(inputs: FriendlyFireRiskInputs): Friendly
     if (confirmedFriendly) confirmedFriendlyInSector = true;
     if (unidentified || lowConfidence) unidentifiedOrLowConfidenceInSector = true;
 
-    // Minimum predicted separation = cross-track distance from the launch
-    // bearing line (0 when the friendly sits on the line).
     const predictedSeparationM = Math.floor(
       (track.rangeM * diffMdeg) / TORPEDO_DANGER_SECTOR_RAD_TO_MDEG,
     );

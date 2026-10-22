@@ -1,8 +1,3 @@
-// AC-20 (INC-8): every monthly resolution creates one immutable
-// MineWarfareResolutionRecord with ALL §28 fields; assembly is canonical-order
-// independent; the record hash is deterministic + domain-separated and tamper
-// detection works; deferred sub-records (battle/strike/friendly-fire) are
-// EXPLICITLY EMPTY (typed, never undefined).
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import { SafeInt } from "@bluewave/contracts";
@@ -96,39 +91,23 @@ describe("AC-20: §28 MineWarfareResolutionRecord (all fields, immutable, one pe
   it("assembles one immutable record carrying every §28 field group", () => {
     const record = assembleMineWarfareResolutionRecord(baseInput());
     expect(record.month).toBe(SafeInt(12));
-    // area+war contexts
     expect(record.areaAndWarContexts.map((c) => c.areaId)).toEqual(["A-1", "A-2"]);
-    // opening pressure records
     expect(record.openingPressureRecords[0]!.minePressureId).toBe("MP-1");
-    // laying sources + values
     expect(record.layingSourcesAndValues[0]!.source).toBe("P1:SRC-1");
     expect(record.layingSourcesAndValues[0]!.value).toBe(100);
-    // sweeping ships / modes / values
     expect(record.sweepingShipsModesValues[0]!.shipId).toBe("S-1");
-    // dual-equipment reductions
     expect(record.dualEquipmentReductions).toEqual([]);
-    // allocated sweeping
     expect(record.allocatedSweeping[0]!.minePressureId).toBe("MP-1");
-    // pressure removed
     expect(record.pressureRemoved).toBe(SafeInt(0));
-    // battle + route probabilities
     expect(record.battleAndRouteProbabilities.routes[0]!.routeRiskBp).toBe(SafeInt(120));
     expect(record.battleAndRouteProbabilities.battle).toEqual([]);
-    // standoff levels
     expect(record.standoffLevels[0]!.level).toBe(1);
-    // decay
     expect(record.decay[0]!.retentionMultiplierBp).toBe(9_750);
-    // post-war + ownership dispositions
     expect(record.postWarAndOwnershipDispositions[0]!.disposition).toBe("PRESERVE_ACTIVE");
-    // reports + knowledge changes
     expect(record.reportsAndKnowledgeChanges[0]!.reportId).toBe("R-1");
-    // friendly-fire checks
     expect(record.friendlyFireChecks).toEqual([]);
-    // inventory / war-score / political / damage effects
     expect(record.inventoryWarScorePoliticalAndDamageEffects[0]!.ordinal).toBe(1);
-    // RNG decisions
     expect(record.rngDecisions).toEqual([]);
-    // versions + hash
     expect(record.rulesetVersion).toBe(MINE_RESOLUTION_RULESET_VERSION);
     expect(record.formulaVersion).toBe(MINE_RESOLUTION_FORMULA_VERSION);
     expect(record.recordHash).toMatch(/^[0-9a-f]{64}$/);
@@ -158,8 +137,6 @@ describe("AC-20: §28 MineWarfareResolutionRecord (all fields, immutable, one pe
         { routeEdgeId: "EDGE-0", routeRiskBp: SafeInt(10) },
       ]),
     );
-    // §29 level 7: routes sort by route edge id, so the canonical order is
-    // EDGE-0 then EDGE-1 regardless of caller insertion order.
     expect(ordered.battleAndRouteProbabilities.routes.map((r) => r.routeEdgeId)).toEqual([
       "EDGE-0",
       "EDGE-1",
@@ -172,14 +149,10 @@ describe("AC-20: §28 MineWarfareResolutionRecord (all fields, immutable, one pe
         ],
       }),
     );
-    // identical content (different insertion order) -> identical canonical hash
     expect(shuffled.recordHash).toBe(ordered.recordHash);
   });
 
   it("warIds inside each area context are canonically sorted (§29 item 1)", () => {
-    // The same logical state fed with wars in two insertion orders MUST produce
-    // the identical stored warIds array AND the identical record hash — caller
-    // order must never leak into the authoritative hash.
     const ctxOrderA = baseInput({
       areaAndWarContexts: [
         { areaId: "B-ZONE", warIds: ["W2", "W1", "W3"] },
@@ -201,9 +174,6 @@ describe("AC-20: §28 MineWarfareResolutionRecord (all fields, immutable, one pe
   });
 
   it("allocatedSweeping keeps §10 allocation order, NOT minePressureId order (§29 item 6)", () => {
-    // §10 key 1 (controlled-defensive threat) sorts a threatening record FIRST
-    // even when its minePressureId collates later. The record must keep the §10
-    // order the aggregation computed — never re-scrambled by id.
     const allocations = (order: "input-as-given" | "reversed-caller") =>
       baseInput({
         allocatedSweeping:
@@ -251,9 +221,7 @@ describe("AC-20: §28 MineWarfareResolutionRecord (all fields, immutable, one pe
       });
     const a = assembleMineWarfareResolutionRecord(allocations("input-as-given"));
     const b = assembleMineWarfareResolutionRecord(allocations("reversed-caller"));
-    // §10 order: the threatening controlled-defensive record (MP-B) sorts FIRST.
     expect(a.allocatedSweeping.map((x) => x.minePressureId)).toEqual(["MP-B", "MP-A"]);
-    // identical logical content, different caller order -> identical hash.
     expect(a.recordHash).toBe(b.recordHash);
   });
 

@@ -1,6 +1,3 @@
-// SB-3/INC-3 (DESIGN-23 section 7, ADR-0129): a construction project's steering status survives the save/load
-// boundary. HALTED and DELAYED are part of the DESIGN-23 section 2 vocabulary, so they must round-trip through the
-// real SaveStore, not only live in memory.
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

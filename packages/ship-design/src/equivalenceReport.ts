@@ -1,12 +1,3 @@
-/**
- * The `ship-part-migration-equivalence/1` report and its gates (ship-part-model SPM-R23,
- * SPM-R24; ticket 08). Pure: it compares two metric maps per design, classifies every row,
- * and judges a finished report. It never reads content and never writes a file.
- *
- * Statuses: `equal`, `withinTolerance` (numeric, from the versioned manifest), `orderingOnly`
- * (a declared unordered path with multiset equality only), `reclassified` (only the enumerated
- * D18 identity paths of the nine central-battery placements, never a number) and `changed`.
- */
 import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import type { CompiledDesign } from "./compileShared.js";
 import type { CandidateDesign, EntryDetail, EquivalenceDesign } from "./equivalenceCandidate.js";
@@ -38,11 +29,9 @@ export interface MetricRow {
   readonly reclassification?: Reclassification;
 }
 
-/** The versioned tolerance manifest. Integer metrics are exact: every default is 0. */
 export interface ToleranceManifest {
   readonly version: string;
   readonly integerTolerance: number;
-  /** Path prefix → absolute tolerance, for a declared non-integer metric. Empty today. */
   readonly byPathPrefix: Readonly<Record<string, number>>;
 }
 
@@ -52,10 +41,6 @@ export const TOLERANCE_MANIFEST: ToleranceManifest = {
   byPathPrefix: {},
 };
 
-/**
- * The nine central-battery placements of D18 (R1). Pinned here, not read from the candidate,
- * so the candidate cannot declare its own reclassifications.
- */
 export const D18_RECLASSIFIED_PLACEMENTS: readonly string[] = [
   "kaiser_1875:main_aft",
   "kaiser_1875:main_fwd",
@@ -68,13 +53,11 @@ export const D18_RECLASSIFIED_PLACEMENTS: readonly string[] = [
   "sachsen_1878:main_fwd",
 ];
 
-/** The identity fields D18 allows to be reclassified, with the one value they may become. */
 export const D18_IDENTITY_FIELDS: Readonly<Record<string, string | null>> = {
   mountType: "BROADSIDE_BATTERY",
   mountId: null,
 };
 
-/** Pinned coverage of the reference content (ticket 08 AC1). */
 export interface Coverage {
   readonly designs: number;
   readonly placements: number;
@@ -91,7 +74,6 @@ export const PINNED_COVERAGE: Coverage = {
   fittingPlacements: 566,
 };
 
-/** Pinned data-quality inventory of the reference content (ticket 09). */
 export interface DataQualityInventory {
   readonly centralBatteryPlacements: number;
   readonly launcherVariants: number;
@@ -106,7 +88,6 @@ export const PINNED_DATA_QUALITY: DataQualityInventory = {
   torpedoEntriesAffected: 9,
 };
 
-/** An inherited data-quality finding: reported, never counted as a difference. */
 export interface InheritedFinding {
   readonly code: "DQ-TORPEDO-001" | "DQ-ARMAMENT-001";
   readonly design: string;
@@ -115,10 +96,8 @@ export interface InheritedFinding {
   readonly status: "inherited";
 }
 
-/** The launcher records the report inventories (a subset of the launcher part model). */
 export interface LauncherRecord {
   readonly id: string;
-  /** True for a national variant (it has a prototype), false for a base launcher. */
   readonly variant: boolean;
   readonly waived: boolean;
 }
@@ -139,7 +118,6 @@ export interface DesignFitReport {
 export interface DesignReport {
   readonly designId: string;
   readonly fit: DesignFitReport;
-  /** False when the fit barrier withheld derivation; no row is then reported. */
   readonly compared: boolean;
   readonly rows: readonly MetricRow[];
   readonly entries: readonly EntryDetail[];
@@ -179,7 +157,6 @@ export interface EquivalenceReport {
       readonly path: string;
       readonly candidates: readonly string[];
     }[];
-    /** Inherited `DQ-TORPEDO-001` and `DQ-ARMAMENT-001` findings, never differences. */
     readonly inherited: readonly InheritedFinding[];
     readonly inventory: {
       readonly pinned: DataQualityInventory;
@@ -188,12 +165,9 @@ export interface EquivalenceReport {
   };
 }
 
-// Row classification
-
 const IDENTITY_PATH =
   /^(?:entries\[(?<a>[^\]]+)\]|(?:components\[(?<b>[^\]]+)\]\.armament|engine\.armament\[(?<c>[^\]]+)\]))\.(?<field>mountType|mountId)$/;
 
-/** The D18 identity path's placement and field, or null for any other path. */
 export function d18IdentityPath(path: string): { placement: string; field: string } | null {
   const m = IDENTITY_PATH.exec(path);
   const g = m?.groups;
@@ -222,7 +196,6 @@ export interface CompareInput {
   readonly tolerance?: ToleranceManifest;
 }
 
-/** One row per metric of the union of both maps, in codepoint path order. */
 export function compareMetrics(input: CompareInput): MetricRow[] {
   const manifest = input.tolerance ?? TOLERANCE_MANIFEST;
   const paths = [
@@ -272,8 +245,6 @@ export function compareMetrics(input: CompareInput): MetricRow[] {
   });
 }
 
-// Entry-level metrics (SPM-R23 per-entry detail, compared against the legacy placement)
-
 const legacyUnitsOf = (design: EquivalenceDesign, instanceId: string, kind: string) => {
   const placement = design.draft.placements.find((p) => p.instanceId === instanceId);
   return kind === "gun"
@@ -281,7 +252,6 @@ const legacyUnitsOf = (design: EquivalenceDesign, instanceId: string, kind: stri
     : (placement?.params?.["tubes"] ?? 1);
 };
 
-/** Baseline and candidate entry metrics; the baseline side reads the legacy compile and draft. */
 export function entryMetrics(
   design: EquivalenceDesign,
   baseline: CompiledDesign,
@@ -309,13 +279,10 @@ export function entryMetrics(
   return { baseline: sortMap(b), candidate: sortMap(c) };
 }
 
-// Report assembly
-
 export interface DesignComparison {
   readonly design: EquivalenceDesign;
   readonly baseline: { readonly compiled: CompiledDesign; readonly metrics: MetricMap };
   readonly candidate: CandidateDesign;
-  /** Metrics of the candidate's compiled design; required when `candidate.compiled` is set. */
   readonly candidateMetrics: MetricMap | null;
   readonly baselineCoverage: Omit<Coverage, "designs">;
 }
@@ -333,7 +300,6 @@ export function buildEquivalenceReport(input: {
   readonly baselinePipeline: { readonly id: string; readonly contentHash: string };
   readonly candidatePipeline: { readonly id: string; readonly contentHash: string };
   readonly tolerance?: ToleranceManifest;
-  /** The launcher records, for the variant and waiver inventory. */
   readonly launchers?: readonly LauncherRecord[];
 }): EquivalenceReport {
   const tolerance = input.tolerance ?? TOLERANCE_MANIFEST;
@@ -456,8 +422,6 @@ export function buildEquivalenceReport(input: {
   };
 }
 
-// Gates (SPM-R24)
-
 export interface GateFailure {
   readonly gate: "structural" | "semantic";
   readonly code: string;
@@ -474,7 +438,6 @@ const COVERAGE_KEYS = [
   "fittingPlacements",
 ] as const;
 
-/** Structural gate: baseline, candidate and the pinned counts agree, and every design derived. */
 export function structuralGate(report: EquivalenceReport): GateFailure[] {
   const failures: GateFailure[] = [];
   const { baseline, candidate, pinned } = report.coverage;
@@ -522,7 +485,6 @@ export function structuralGate(report: EquivalenceReport): GateFailure[] {
 
 const valueEqual = (a: MetricValue, b: MetricValue): boolean => a === b;
 
-/** Semantic gate: no `changed` row, reclassification only on D18 identity paths, ordering declared. */
 export function semanticGate(report: EquivalenceReport): GateFailure[] {
   const failures: GateFailure[] = [];
   const fail = (code: string, design: string, path: string, message: string) =>
@@ -641,6 +603,5 @@ export function checkEquivalenceReport(report: EquivalenceReport): GateResult {
   return { ok: structural.length === 0 && semantic.length === 0, structural, semantic };
 }
 
-/** The report's canonical text: byte-identical across runs and processes (SPM-R24). */
 export const serializeEquivalenceReport = (report: EquivalenceReport): string =>
   canonicalSerialize(report);

@@ -1,5 +1,3 @@
-// DESIGN-42 §9: line-of-sight intersection with smoke clouds.
-
 import {
   SMOKESCREEN_REFERENCE_WIDTH_M,
   SMOKE_REFERENCE_PATH_LENGTH,
@@ -54,11 +52,9 @@ export function computeLineSmokeIntersection(
     const dist = distanceBetween(cloud.centroidPosition, closest);
 
     if (dist < CLOUD_RADIUS_M) {
-      // Compute chord length inside the circle
       const halfChord = Math.sqrt(Math.max(0, CLOUD_RADIUS_M * CLOUD_RADIUS_M - dist * dist));
       const chordLength = 2 * halfChord;
 
-      // Contribution = density * (chord / reference path)
       const contributionBp = Math.floor(
         (cloud.densityBp * chordLength) / Math.max(1, SMOKE_REFERENCE_PATH_LENGTH),
       );
@@ -68,10 +64,8 @@ export function computeLineSmokeIntersection(
     }
   }
 
-  // Clamp total to [0, 10_000]
   totalPathDensityBp = Math.max(0, Math.min(10_000, totalPathDensityBp));
 
-  // Compute optical multiplier
   const rawMultiplier =
     10_000 - Math.floor((totalPathDensityBp * SMOKE_OPTICAL_NUMERATOR) / SMOKE_OPTICAL_DENOMINATOR);
   const smokeOpticalMultiplierBp = Math.max(SMOKE_OPTICAL_MIN, rawMultiplier);

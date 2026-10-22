@@ -31,7 +31,6 @@ describe("AC-13 cross-process determinism (two separate child processes)", () =>
     expect(parsed.hashes).toHaveLength(3);
     for (const h of parsed.hashes) expect(h).toMatch(/^[0-9a-f]{64}$/);
     expect(parsed.eventCount).toBeGreaterThan(0);
-    // Both sides' ships are mutually-detected true assets -> contact tracks.
     expect(parsed.contactIds.sort()).toEqual(
       ["b2-determinism:a1", "b2-determinism:a2", "b2-determinism:d1", "b2-determinism:d2"].sort(),
     );

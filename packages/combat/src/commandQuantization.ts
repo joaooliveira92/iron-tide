@@ -22,24 +22,20 @@ export function quantizeCommand(
       inputTimestampTacticalMilliseconds,
     });
   }
-  // MUST use authoritative clock — wall-clock check is caller responsibility; we enforce integer tactical ms
-  let raw = Math.ceil(inputTimestampTacticalMilliseconds / 1_000); // §5 canonical rule
+  let raw = Math.ceil(inputTimestampTacticalMilliseconds / 1_000);
   const remainder = inputTimestampTacticalMilliseconds % 1_000;
   let wasAfterCutoff = false;
 
   if (remainder === 0) {
-    // exactly on boundary: eligible for that substep only when arrived before cutoff
     const before = opts?.arrivedBeforeCutoff ?? true;
     if (!before) {
       raw += 1;
       wasAfterCutoff = true;
     }
   } else if (remainder > 900) {
-    // within 100ms before next boundary -> after cutoff for next substep
     raw += 1;
     wasAfterCutoff = true;
   }
-  // final cutoff of battle minute -> next minute substep 0 naturally via overflow
   const effectiveMinute = Math.floor(raw / 60);
   const effectiveSubstep = raw % 60;
   return {

@@ -1,7 +1,3 @@
-// INC-4 — BattleResolver/StrengthCalculator unmodified boundary.
-// Proves that the existing BattleResolver and StrengthCalculator classes are
-// unchanged by the INC-4 damage module additions. These classes are not
-// expected to change until the minute-advance simulation in M3.
 import { describe, it, expect } from "vite-plus/test";
 import { BattleResolver, StrengthCalculator } from "../../src/index.js";
 

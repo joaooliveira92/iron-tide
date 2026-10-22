@@ -1,9 +1,3 @@
-// Typed read-only views of the compiled production bundle's collections for the
-// N-1 audit tests. `ContentBundle` publishes these as `unknown[]` because the
-// compiler is shape-agnostic at the artifact layer, but every record has already
-// been decoded with its content schema before the bundle is emitted, so casting
-// to the checked record shape here reads a validated in-process value rather than
-// asserting an untrusted boundary.
 import type { ContentBundle } from "../../src/index.js";
 
 export interface NationRecord {

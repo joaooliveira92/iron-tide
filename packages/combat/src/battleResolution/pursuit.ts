@@ -1,21 +1,3 @@
-// P-1 / ADR-0046: minimal auto-resolution manoeuvre — every viable ship directs
-// its movement at the nearest viable enemy legal contact each minute (ties:
-// ascending asset id); with no contact it holds its course. Without this the
-// projected lines passed through each other once and steamed off the map, so
-// close actions (and the torpedo window) never recurred. Heading selection is an
-// integer search over the movement direction table (no floating trigonometry),
-// so it is byte-stable across processes and platforms. Tactical AI proper is
-// Track P-6.
-//
-// P-1 ticket 11 / ADR-0072: when one side's maximum designed speed over its
-// committed force is greater, it is the range controller and steers standoff
-// instead of charging (`engagementHeading` in engagement.ts) — it chooses and
-// holds a favourable range band. The controller identity is fixed at battle
-// start (designed speed is a constant unit attribute; the unit array never
-// shrinks) and is the same one the projection-time penalty used. The contesting
-// side still closes under ADR-0046 pursuit. Equal maximum speeds leave steering
-// byte-identical to ADR-0046 (controller = null), preserving equal-speed and
-// torpedo-doctrine geometry.
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import type { DamageContext } from "./damage.js";

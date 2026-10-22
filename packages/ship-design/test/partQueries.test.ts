@@ -18,8 +18,6 @@ import {
   type PartCatalogue,
 } from "../src/index.js";
 
-// Hand-worked fixture catalogue (every record decoded through the strict schemas)
-
 const PROVENANCE = {
   sourceStatus: "PLACEHOLDER",
   confidence: "LOW",
@@ -56,7 +54,6 @@ const torpedoSpec = (diameterUm: number, warheadKg: number) => ({
   tubeHitHazardPolicy: "ORDINARY" as const,
 });
 
-// The 1884 Whitehead re-rating (12 kg -> 26 kg warhead), then two successors.
 const WHITEHEAD = part({
   id: "whitehead_14in",
   family: "torpedo",
@@ -423,12 +420,6 @@ describe("validateLoadout", () => {
 });
 
 describe("loadoutCost", () => {
-  // Hand-worked: one turret entry, mountCount 2, gunsPerMount 2, two nested g12 entries
-  // of mountCount 2 (four guns), plus one magazine.
-  //   mount mass  20000 PER_PART_UNIT      x2 = 40000
-  //   mount cost    300 PER_CONTAINED_UNIT x(2*2) = 1200
-  //   gun mass     5000 PER_PART_UNIT      x(2*2) = 20000
-  //   magazine     1000 PER_LOADOUT_ENTRY  x1 = 1000
   const entries = [
     { slot: "magazine", part: "mag_a" },
     {

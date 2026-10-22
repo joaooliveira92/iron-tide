@@ -1,15 +1,3 @@
-/**
- * The migration planner (ship-part-model ticket 11c, SPM-R20/R21).
- *
- * Pure and in-memory: it turns the authoritative legacy content into the parts representation
- * of 11b — the whole catalogue, the compatibility platforms and slot templates, and one
- * `DesignLoadout` per reference design — then serializes that tree deterministically and
- * describes it with a manifest. It never touches the filesystem; `publish.ts` owns I/O.
- *
- * Both entry points are total functions: either a complete plan, or typed, path-specific
- * failures. Nothing is guessed. No timestamps, host paths, random ids or environment values
- * enter the output; every ordering is codepoint order.
- */
 import {
   DesignHeaderSchema,
   DesignLoadoutSchema,
@@ -85,11 +73,6 @@ const sortRefs = (refs: readonly SourceFileRef[]): SourceFileRef[] =>
 const refsHash = (refs: readonly SourceFileRef[]): string =>
   sha256Hex(canonicalSerialize(sortRefs(refs)));
 
-/**
- * The catalogue id for a gun placement's mount (11b). A battery or a single-gun mount keeps the
- * adapter's id; a rotating mount at n ≥ 2 guns is `<legacyMountId>_x<n>`, exactly the id the
- * whole-catalogue builder generated for that (family, type, barrels).
- */
 export function canonicalMountId(t: GunPlacementTranslation): string {
   if (t.disposition !== null || isSingleGunMount(t.legacyResolvedMountType)) {
     return t.mountPart.id;
@@ -105,10 +88,6 @@ interface CatalogueModels {
   readonly launchers: ReturnType<typeof buildLauncherPartModel>;
 }
 
-/**
- * The pinned data-quality facts, computed from the generated parts and designs alone, so the
- * same numbers are produced from a legacy source and from a staged tree.
- */
 function pinnedDataQuality(
   parts: readonly FlattenedPart[],
   designs: readonly StagedDesign[],
@@ -156,12 +135,9 @@ function catalogueSource(source: LegacySource): SourceCatalogue {
   };
 }
 
-// Grouping and emission
-
 const familyFile = (family: string): string => `parts/${family}.yaml`;
 const designFile = (nation: string): string => `designs/${nation}.yaml`;
 
-/** Group parts by family into `parts/<family>.yaml` documents, deterministic and ordered. */
 function partFiles(parts: readonly FlattenedPart[]): GeneratedFile[] {
   const byFamily = new Map<string, FlattenedPart[]>();
   for (const part of parts) {
@@ -179,7 +155,6 @@ function partFiles(parts: readonly FlattenedPart[]): GeneratedFile[] {
   });
 }
 
-/** Group designs by nation into `designs/<nation>.yaml` documents. */
 function designFiles(designs: readonly StagedDesign[]): GeneratedFile[] {
   const byNation = new Map<string, StagedDesign[]>();
   for (const design of designs) {
@@ -213,7 +188,6 @@ interface PlanRecords {
   readonly placements: number;
 }
 
-/** Strictly decode a generated header+loadout pair; a message when invalid, else `null`. */
 function decodeGenerated(input: {
   readonly header: DesignHeaderData;
   readonly loadout: LoadoutData;
@@ -228,8 +202,6 @@ function decodeGenerated(input: {
   }
 }
 
-// Legacy → staged: one design
-
 interface DesignLoadoutResult {
   readonly design: StagedDesign;
   readonly gunPlacements: number;
@@ -239,7 +211,6 @@ interface DesignLoadoutResult {
   readonly waivers: number;
 }
 
-/** Build the loadout of one design from its legacy draft. Accumulates failures, never throws. */
 function designLoadout(input: {
   readonly source: LegacySource;
   readonly design: LegacySource["designs"][number];
@@ -459,9 +430,6 @@ function designLoadout(input: {
   };
 }
 
-// Assemble a plan
-
-/** Strictly decode every generated content file from its emitted bytes. */
 function decodeGeneratedFiles(
   files: readonly GeneratedFile[],
 ): { path: string; message: string } | null {
@@ -539,8 +507,6 @@ function assemblePlan(input: {
   }
   if (failures.length > 0) return { ok: false, failures };
 
-  // Strict decode every generated file's bytes, so the emitted YAML itself is proven to
-  // round-trip through the content-schema (not just the in-memory record).
   const decoded = decodeGeneratedFiles(files);
   if (decoded !== null) {
     return {
@@ -589,9 +555,6 @@ function assemblePlan(input: {
   };
 }
 
-// Public entry points
-
-/** Plan the whole migration from the authoritative legacy content. Performs no I/O. */
 export function planFromLegacy(source: LegacySource): MigrationResult<MigrationPlan> {
   const built = buildPartCatalogue(catalogueSource(source));
   if (built.failures.length > 0) {
@@ -698,7 +661,6 @@ export function planFromLegacy(source: LegacySource): MigrationResult<MigrationP
   });
 }
 
-/** Plan a migration from the codemod's own staged tree: the idempotency fixed point. */
 export function planFromStaged(source: StagedSource): MigrationResult<MigrationPlan> {
   const failures: MigrationFailure[] = [];
   const partById = new Map<string, FlattenedPart>();

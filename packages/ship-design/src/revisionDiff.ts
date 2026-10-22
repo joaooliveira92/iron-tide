@@ -17,11 +17,6 @@ const ORDER: readonly ChangeKind[] = [
   "STRUCTURE",
 ];
 
-/**
- * The kinds of change that turn `before` into `after`, in a stable order. Pure and symmetric in what it detects, so the
- * engine can classify a revision from the two drafts alone (no edit log needed). A change to the design requirement is
- * a brief, not a build change, and is ignored. `categoryOf` resolves a component id to its category.
- */
 export function draftChangeKinds(
   before: DesignDraft,
   after: DesignDraft,
@@ -46,10 +41,6 @@ export function draftChangeKinds(
   return ORDER.filter((k) => kinds.has(k));
 }
 
-/**
- * Build progress the engine can supply for a project: one work figure. What the engine does not track (armour or
- * machinery ordered, launched) is stated as false rather than guessed, so a real tier can only be this or higher.
- */
 export const progressFromWork = (completedWork: number, totalWork: number): BuildProgress => ({
   hullDoneWork: completedWork,
   hullTotalWork: totalWork,

@@ -38,7 +38,6 @@ describe("chooseYard", () => {
       );
       expect(choice.best?.yard.facility.id).toBe(expected);
       expect(choice.best!.months).toBeGreaterThanOrEqual(choice.historicalMonths);
-      // Every fitting yard has an entry; the chosen one has the least months, the smallest on a tie.
       const least = Math.min(
         ...[...choice.monthsByYard.values()].filter((m): m is number => m !== null),
       );

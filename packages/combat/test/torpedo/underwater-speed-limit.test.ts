@@ -1,12 +1,3 @@
-// AC-7: underwater-tube speed limit (DESIGN-40 §7). UNDERWATER_FIXED /
-// UNDERWATER_TRAINABLE launchers MUST NOT fire when the launching ship's
-// authoritative through-water speed is strictly greater than exactly 25 knots =
-// 12_861_100 µm/s. Exactly 25 kn is legal; any greater speed is illegal. The
-// check occurs at command validation AND again at the exact firing substep —
-// both pure functions ship here with IDENTICAL predicates (INC-7's engine stage
-// calls both; post-issuance acceleration -> UNDERWATER_TUBE_SPEED_LIMIT_EXCEEDED,
-// no torpedo consumed, failed-launch outcome). SUBMARINE_INTERNAL tubes use
-// model-specific limits (C-3) and are NOT governed by this threshold.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {
@@ -21,14 +12,14 @@ import {
   type TorpedoLaunchOutcome,
 } from "../../src/torpedoes/index.js";
 
-const EXACT_25_KN = 12_861_100; // §7 canonical threshold
+const EXACT_25_KN = 12_861_100;
 const ABOVE_25_KN = 12_861_101;
 
 describe("AC-7: the §7 predicate — exactly 25 kn is legal, any greater speed is illegal", () => {
   it("ships the canonical threshold constants (25 kn = 12_861_100 µm/s)", () => {
     expect(UNDERWATER_TUBE_MAX_SPEED_KNOTS).toBe(25);
     expect(UNDERWATER_TUBE_MAX_SPEED_UM_S).toBe(EXACT_25_KN);
-    expect(25 * TORPEDO_KNOTS_TO_UM_S).toBe(EXACT_25_KN); // conversion is exact integer math
+    expect(25 * TORPEDO_KNOTS_TO_UM_S).toBe(EXACT_25_KN);
   });
 
   it("allows exactly 25 kn (== legal) for both governed mount types", () => {
@@ -65,7 +56,7 @@ describe("AC-7: the §7 predicate — exactly 25 kn is legal, any greater speed 
     ] as const) {
       const verdict = validateUnderwaterTubeSpeedLimit(99_000_000, mount);
       expect(verdict.applicable).toBe(false);
-      expect(verdict.allowed).toBe(true); // §7 does not govern; §8 / C-3 cover these
+      expect(verdict.allowed).toBe(true);
       expect(verdict.reasonCode).toBeNull();
     }
   });
@@ -98,8 +89,8 @@ describe("AC-7: the §7 predicate — exactly 25 kn is legal, any greater speed 
 describe("AC-7: the check occurs at command validation AND at the exact firing substep", () => {
   it("both check-point functions enforce the IDENTICAL §7 predicate", () => {
     const cases: Array<[number, boolean]> = [
-      [EXACT_25_KN, true], // exactly 25 kn — legal at both check points
-      [ABOVE_25_KN, false], // above 25 kn — illegal at both check points
+      [EXACT_25_KN, true],
+      [ABOVE_25_KN, false],
       [12_000_000, true],
     ];
     for (const [speedUmS, expectedAllowed] of cases) {
@@ -115,10 +106,8 @@ describe("AC-7: the check occurs at command validation AND at the exact firing s
   });
 
   it("a ship that accelerates AFTER command validation fails at the firing substep", () => {
-    // command time: 12_000_000 µm/s (legal) …
     const command = validateUnderwaterTubeSpeedLimitCommand(12_000_000, "UNDERWATER_FIXED");
     expect(command.allowed).toBe(true);
-    // … but by the exact firing substep the ship is above 25 kn.
     const firing = validateUnderwaterTubeSpeedLimitFiringSubstep(ABOVE_25_KN, "UNDERWATER_FIXED");
     expect(firing.allowed).toBe(false);
     expect(firing.reasonCode).toBe(UNDERWATER_TUBE_SPEED_LIMIT_EXCEEDED);
@@ -130,7 +119,7 @@ describe("AC-7: TorpedoLaunchOutcome documents the failed-launch contract", () =
     const failed: TorpedoLaunchOutcome = {
       status: "FAILED_LAUNCH",
       failedLaunch: true,
-      torpedoConsumed: false, // DESIGN-40 §7: no torpedo consumed on the speed-limit failure
+      torpedoConsumed: false,
       reasonCode: UNDERWATER_TUBE_SPEED_LIMIT_EXCEEDED,
     };
     expect(failed.failedLaunch).toBe(true);

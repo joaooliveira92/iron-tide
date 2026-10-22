@@ -1,4 +1,3 @@
-// DESIGN-43 §§17-18 re-equipment: command, duration, unavailability, experience penalty.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { SQUADRON_REEQUIPMENT_INELIGIBLE } from "./reasonCodes.js";
 import type { SquadronState } from "./state.js";

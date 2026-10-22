@@ -13,20 +13,11 @@ import { Compiler } from "./compiler.js";
 import type { CompilerInput, ContentBundle } from "./index.js";
 import { BUNDLE_GENERATED_BY } from "./stages/compile.js";
 
-/**
- * The generated content bundle: one deterministic, inert, hash-pinned artifact
- * (ADR-0122) covering the content-pack collections and the ship-building
- * catalogue, plus a manifest carrying the semantic content version and the
- * SHA-256 body hash. Both the compiler CLI and the desktop main process read
- * this contract so the "what CI validated" and "what the app runs" identity
- * cannot drift.
- */
 export const CONTENT_BUNDLE_ARTIFACT_KIND = "content-bundle";
 export const CONTENT_BUNDLE_COMPATIBILITY_VERSION = "0.1.0";
 export const CONTENT_BUNDLE_MANIFEST_VERSION = 1;
 export const CONTENT_ARTIFACT_FILENAME = "content-artifact.json";
 export const CONTENT_MANIFEST_FILENAME = "content-manifest.json";
-/** The committed content lock: the artifact's semantic version + body hash. */
 export const CONTENT_LOCK_FILENAME = "content-lock.json";
 
 export interface ContentBundleManifest {
@@ -51,9 +42,7 @@ export interface ContentBundleArtifact {
   };
   readonly manifest: ContentBundleManifest;
   readonly contentVersion: string;
-  /** Canonical serialization of `bundle` — exactly the bytes written to disk. */
   readonly artifactJson: string;
-  /** Canonical serialization of `manifest` — exactly the bytes written to disk. */
   readonly manifestJson: string;
 }
 
@@ -65,12 +54,6 @@ export type ContentBundleVerification =
     }
   | { readonly ok: false; readonly code: string; readonly message: string };
 
-/**
- * The committed content lock (ticket 03): a small file that pins the artifact
- * identity CI validated — the semantic content version and the SHA-256 body
- * hash — without committing the large generated artifact. A content update is
- * an expected new lock, never a divergence.
- */
 export interface ContentLock {
   readonly contentVersion: string;
   readonly bodyHash: string;
@@ -87,13 +70,6 @@ export type ContentLockVerification =
       readonly actual?: string;
     };
 
-/**
- * Verifies a rebuilt artifact against the committed lock. Returns a fail-closed
- * result naming both hashes when the artifact diverges (content drift) or was
- * tampered. The lock is deliberately refreshed by a content-changing commit; a
- * mismatch means the committed bytes CI validated are not the bytes this build
- * produced (CAH-LOCK-2).
- */
 export function verifyContentLock(
   artifact: ContentBundleArtifact,
   lock: unknown,
@@ -149,12 +125,6 @@ export function verifyContentLock(
   return { ok: true };
 }
 
-/**
- * Decodes a verified bundle through the bundle schema (CAH-SCH-3). The hash
- * check guarantees the bytes are the compiler's; decoding gives the boundary its
- * type honestly and turns schema/artifact drift into a fail-closed error rather
- * than a silent cast.
- */
 function decodeContentBundle(
   value: Record<string, unknown>,
 ): { ok: true; bundle: ContentBundle } | { ok: false; message: string } {
@@ -173,7 +143,6 @@ function decodeContentBundle(
   return { ok: true, bundle: toMutableBundle(decoded) };
 }
 
-/** Rebuilds the mutable `ContentBundle` view from the decoded (readonly) schema type. */
 function toMutableBundle(decoded: CompiledContentBundle): ContentBundle {
   const bundle: ContentBundle = {
     generatedBy: decoded.generatedBy,
@@ -228,11 +197,6 @@ function toMutableBundle(decoded: CompiledContentBundle): ContentBundle {
   return bundle;
 }
 
-/**
- * Runs the compiler over the full surface and produces the artifact in memory.
- * Returns `undefined` when compilation fails (the collector carries the
- * diagnostics) — the caller never writes a partial artifact.
- */
 export function buildContentBundleArtifact(
   input: CompilerInput,
   signal: AbortSignal,
@@ -266,11 +230,6 @@ export function buildContentBundleArtifact(
   };
 }
 
-/**
- * Writes the artifact atomically: temp files first, then rename. The manifest
- * lands first so a reader never sees a new artifact described by an old
- * manifest; the final paths are never left partially written.
- */
 export function writeContentBundleArtifact(
   outDir: string,
   artifact: ContentBundleArtifact,
@@ -335,13 +294,6 @@ function asManifest(value: unknown): ContentBundleManifest | null {
   };
 }
 
-/**
- * Verifies a decoded artifact + manifest pair against the generated-bundle
- * contract: the manifest must declare the expected kind/version/algorithm and
- * do-not-edit marker, the bundle must carry the same marker, and the recorded
- * body hash/length must match the canonical serialization of the bundle
- * (`verifyEnvelope`). A mismatch is a tamper/format failure, never a warning.
- */
 export function verifyContentBundleArtifact(
   bundleValue: unknown,
   manifestValue: unknown,
@@ -396,9 +348,6 @@ export function verifyContentBundleArtifact(
       message: "The content artifact is not a generated bundle (do-not-edit marker mismatch).",
     };
   }
-  // The manifest's semantic content version must agree with the version embedded
-  // in the bundle it describes; the manifest itself is not covered by the body
-  // hash, so this catches a manifest/artifact mismatch the hash check cannot.
   const embeddedManifest = bundleValue.manifest;
   const embeddedVersion = isRecord(embeddedManifest) ? embeddedManifest.version : undefined;
   if (typeof embeddedVersion === "string" && embeddedVersion !== manifest.contentVersion) {

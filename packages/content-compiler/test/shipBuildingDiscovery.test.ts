@@ -3,13 +3,6 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 
-// The host filesystem is free to enumerate a directory in any order (hash
-// order on APFS/ext4, creation order on tmpfs), so the discovery sort cannot be
-// proven by creating entries in a scrambled order alone. This wrapper reverses
-// whatever the real `readdirSync` returns, giving each call a deliberately
-// different iteration order over the same real tree; the discovery code must
-// normalise both to one stable order (ticket INC-1). Only `readdirSync` is
-// overridden — every other `node:fs` call stays real.
 const fsControl = vi.hoisted(() => ({ reverseDirectoryReads: false }));
 vi.mock("node:fs", async (importOriginal) => {
   const actual = await importOriginal<typeof import("node:fs")>();
@@ -25,7 +18,6 @@ vi.mock("node:fs", async (importOriginal) => {
 
 import { discoverShipBuildingFiles } from "../src/shipBuildingDiscovery.js";
 
-/** Writes the discovery fixture in a deliberately non-lexical order. */
 function writeShipBuildingTree(root: string): void {
   const files = [
     "ship-building/reference-designs/germany/extra-b.yaml",
@@ -53,12 +45,6 @@ function writeShipBuildingTree(root: string): void {
   }
 }
 
-/**
- * The canonical order the discovery guarantees: recursive part/naval-profile
- * files in lexicographic order; reference designs UK first, then nations in
- * lexical order, with the conventional `starters`/`historical` files leading
- * the remaining authored files in lexical order (ADR-0109).
- */
 const EXPECTED = {
   shipComponentFiles: ["ship-building/components.yaml"],
   propulsionPlantFiles: [],
@@ -91,8 +77,6 @@ const EXPECTED = {
   designLoadoutFiles: [],
 };
 
-// Prior art: `packages/persistence/test/persistence.test.ts` "lists equal-timestamp
-// saves by the save chain, never the OS directory order (F6)".
 describe("discoverShipBuildingFiles", () => {
   it("returns host-order-independent groups (INC-1)", () => {
     const dir = mkdtempSync(join(tmpdir(), "bw-ship-building-discovery-"));

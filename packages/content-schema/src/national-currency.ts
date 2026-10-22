@@ -1,15 +1,5 @@
 import { Schema } from "effect";
 
-/**
- * The national-historical currency configuration (U-3 map D4/D7, ADR-0211). This is
- * the strict content schema plus the production validation. U-3 ships the schema and
- * validation only: a per-nation configuration is content that needs an owner and
- * primary historical sources, so no production configuration is authored here.
- *
- * Every scale is an exact integer ratio (`Schema.Int`), so a floating-point factor
- * cannot decode; the production rules below reject the rest.
- */
-
 export const NationalCurrencyScaleSchema = Schema.Struct({
   numerator: Schema.Int,
   denominator: Schema.Int.check(Schema.isGreaterThan(0)),
@@ -63,11 +53,6 @@ const PLACEHOLDER_SOURCES = new Set([
   "placeholder",
 ]);
 
-/**
- * The production rules a configuration must satisfy before National Historical is
- * offered. Decoding already rejects a non-integer scale and out-of-range decimals;
- * these reject the semantically unsafe configurations the sprint names.
- */
 export function validateNationalCurrencyConfiguration(
   config: NationalCurrencyConfiguration,
 ): readonly NationalCurrencyDiagnostic[] {
@@ -109,7 +94,6 @@ export function validateNationalCurrencyConfiguration(
   return diagnostics;
 }
 
-/** True when a configuration passes every production rule. */
 export function isValidNationalCurrencyConfiguration(
   config: NationalCurrencyConfiguration,
 ): boolean {

@@ -1,6 +1,3 @@
-// AC-12: Canonical ordering in the BattleLedger — weather events emitted by
-// resolveWeather sort correctly among all other event types (movement,
-// collisions, spotting, gunnery) per §29 / canonicalEventOrder.
 import { describe, it, expect } from "vite-plus/test";
 import { advanceMinutes } from "../../src/simulation/engine.js";
 import { buildTestState } from "../simulation/advance.test.js";
@@ -10,8 +7,6 @@ import {
   type WeatherEngineContext,
 } from "../../src/weather/index.js";
 
-// Use a climate profile with no transition tables (no 30-min progression draws),
-// so only time-of-day events fire — making order predictable.
 const daylightProfile = {
   daylightProfileId: "test_daylight_v1",
   entries: [
@@ -92,7 +87,7 @@ const weather: WeatherEngineContext = {
   daylightProfile,
   climateProfile: climate,
   seasonId: "s",
-  battleStartMinutes: 0, // midnight start → transitions from NIGHT to DAY
+  battleStartMinutes: 0,
   battleSeed: "ledger-test-seed",
 };
 
@@ -111,12 +106,10 @@ describe("AC-12: weather events in BattleLedger order", () => {
       const sorted = [...minuteResult.events].sort(canonicalEventOrder);
       expect(minuteResult.events).toEqual(sorted);
 
-      // Verify relative order of specific event types
       const events = sorted;
       for (let i = 0; i < events.length - 1; i++) {
         const curr = events[i]!;
         const next = events[i + 1]!;
-        // Same minute+substep events must sort by priority
         if (curr.minute === next.minute && curr.substep === next.substep) {
           if (curr.eventPriority === 7 && next.eventPriority === 7.5) {
             expect(curr.eventType).not.toMatch(/^weather_/);

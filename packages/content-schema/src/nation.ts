@@ -2,9 +2,6 @@ import { Schema } from "effect";
 
 import { ProvenanceSchema } from "./provenance.js";
 
-// Nation IDs — 24 canonical nations, January 1880
-
-/** Canonical 24-nation id list (January 1880). Exported so consumers/tests have a stable tuple. */
 export const NATION_IDS = [
   "uk",
   "germany",
@@ -35,12 +32,9 @@ export const NATION_IDS = [
 export const NationIdSchema = Schema.Literals(NATION_IDS);
 export type NationId = typeof NationIdSchema.Type;
 
-// Regime enums — 1880-accurate
-
 export const RegimeTypeSchema = Schema.Literals(["monarchy", "republic"]);
 export type RegimeType = typeof RegimeTypeSchema.Type;
 
-/** Specific political systems that existed in January 1880 */
 export const PoliticalSystemSchema = Schema.Literals([
   "constitutional_monarchy",
   "federal_constitutional_monarchy",
@@ -64,8 +58,6 @@ export const StabilityLevelSchema = Schema.Literals([
   "unstable",
 ]);
 export type StabilityLevel = typeof StabilityLevelSchema.Type;
-
-// Canon sub-model enums
 
 export const NavalPurposeSchema = Schema.Literals([
   "sustain_global_empire",
@@ -149,7 +141,6 @@ export const AiRoleSchema = Schema.Literals([
 ]);
 export type AiRole = typeof AiRoleSchema.Type;
 
-/** 24 distinct canonical anxieties (one per nation) */
 export const CoreAnxietySchema = Schema.Literals([
   "loss_of_sea_control_overstretch",
   "encirclement_insufficient_recognition",
@@ -178,7 +169,6 @@ export const CoreAnxietySchema = Schema.Literals([
 ]);
 export type CoreAnxiety = typeof CoreAnxietySchema.Type;
 
-/** Canonical gameplay feels, one per nation (not all values distinct) */
 export const GameplayFeelSchema = Schema.Literals([
   "manage_supremacy",
   "build_concentrated_relevance",
@@ -244,13 +234,9 @@ export const ArmyNavyBalanceSchema = Schema.Literals([
 ]);
 export type ArmyNavyBalance = typeof ArmyNavyBalanceSchema.Type;
 
-// Primitives
-
 const HexColorSchema = Schema.String.check(Schema.isPattern(/^#[0-9A-Fa-f]{6}$/)).annotate({
   description: "CSS hex color, e.g. #C8102E",
 });
-
-// Sub-objects
 
 export const PresentationSchema = Schema.Struct({
   colorBg: HexColorSchema,
@@ -267,8 +253,6 @@ export const StabilityProfileSchema = Schema.Struct({
   level: StabilityLevelSchema,
   factors: Schema.Array(Schema.String),
 }).annotate({ description: "Domestic stability level and contributing factors" });
-
-// Phase 1 additive fields — spec-driven
 
 export const StrategicObjectivesSchema = Schema.Struct({
   primary: Schema.String,
@@ -296,8 +280,6 @@ export const NavalAppropriationSchema = Schema.Struct({
   }),
 }).annotate({ description: "Naval budget appropriation for the scenario era" });
 
-// Regime — 1880-accurate political system
-
 export const NationRegimeSchema = Schema.Struct({
   type: RegimeTypeSchema,
   politicalSystem: PoliticalSystemSchema.annotate({
@@ -323,8 +305,6 @@ export const NationRegimeSchema = Schema.Struct({
   stabilityProfile: StabilityProfileSchema,
   description: Schema.String,
 }).annotate({ description: "Political regime, January 1880" });
-
-// Domain sub-models
 
 export const IdentitySchema = Schema.Struct({
   oneSentence: Schema.String.annotate({ description: "Phase 1 canonical one-sentence identity" }),
@@ -372,8 +352,6 @@ export const AiSchema = Schema.Struct({
   triggers: Schema.optional(Schema.Array(Schema.String)),
 });
 
-// Military — Phase 1 Nations
-
 export const MilitarySchema = Schema.Struct({
   description: Schema.String.annotate({ description: "Army/military profile overview" }),
   size: Schema.optional(Schema.String).annotate({
@@ -382,8 +360,6 @@ export const MilitarySchema = Schema.Struct({
   character: Schema.optional(Schema.Array(Schema.String)),
   armyNavyBalance: Schema.optional(ArmyNavyBalanceSchema),
 }).annotate({ description: "Army/military profile for the scenario era" });
-
-// Nation entity — single source of truth for the canon
 
 export const NationSchema = Schema.Struct({
   id: NationIdSchema,
@@ -398,10 +374,6 @@ export const NationSchema = Schema.Struct({
       "Id of the nation's home area (S-5): authoritative, validated against the area set by the compiler",
   }),
   slot: Schema.NullOr(NationSlotSchema),
-  // S-2: the authored starting prestige (ADR-0239). Kept structurally open (any finite number)
-  // so a missing, non-integer, unsafe or out-of-range value reaches the campaign compile boundary
-  // as a named diagnostic, which also validates it against the ruleset's declared bounds. There is
-  // no default: an absent value is a compile error, never a silent seed.
   prestige: Schema.optional(Schema.Finite),
   presentation: PresentationSchema,
   identity: IdentitySchema,
@@ -421,8 +393,6 @@ export const NationSchema = Schema.Struct({
   historicalAssumptions: Schema.Array(Schema.String),
   provenance: Schema.optional(ProvenanceSchema),
 }).annotate({ description: "Canonical nation definition, January 1880" });
-
-// Inferred types
 
 export type NationRegime = typeof NationRegimeSchema.Type;
 export type Nation = typeof NationSchema.Type;

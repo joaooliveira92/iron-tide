@@ -9,6 +9,5 @@ const designs = readReferenceDesignEntries() as {
 }[];
 const by = (id: string) => designs.find((d) => d.id === id)!.draft;
 
-/** Reference designs live under content/production/1880/ship-building/reference-designs/<nation>/ (shared with the UI). */
 export const havock = by("havock_like");
 export const majestic = by("majestic_like");

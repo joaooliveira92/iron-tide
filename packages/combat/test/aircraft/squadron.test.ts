@@ -1,4 +1,3 @@
-// AC-13 (INC-5): SquadronState creation, experience 0-100, state hash.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import {

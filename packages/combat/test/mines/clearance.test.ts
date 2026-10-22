@@ -1,8 +1,3 @@
-// AC-19 (INC-7): DESIGN-35 §27 mine-clearance completion. A record clears when
-// pressure reaches 0 after sweeping or decay; clearance closes the active
-// record, PRESERVES historical source/action records, updates knowledge, removes
-// battle/route risk for that record from subsequent phases, emits
-// MINEFIELD_CLEARED; clearing one participant's minefield never clears another's.
 import { describe, expect, it } from "vite-plus/test";
 import { SafeInt, BluewaveError } from "@bluewave/contracts";
 import {
@@ -42,8 +37,6 @@ function activeRecord(overrides: Partial<AreaMinePressureRecord> = {}): AreaMine
   return withAreaMinePressureRecordHash({ ...base, ...overrides });
 }
 
-// Produce a cleared (pressure-0) transitional record via INC-4's applySweptPressure
-// seam — the exact state INC-7's clearance finalizes.
 function clearedTransitionalRecord(): AreaMinePressureRecord {
   const active = activeRecord();
   return applySweptPressure(active, active.pressure, SafeInt(40));
@@ -108,10 +101,7 @@ describe("AC-19: clearRecord closes the active record, PRESERVES history, emits 
 
 describe("AC-19: clearRecordById clears EXACTLY ONE record, never another's", () => {
   function twoMinefields() {
-    // A cleared (pressure-0) USSR transitional record.
     const clearedUs = clearedTransitionalRecord();
-    // A German minefield that ITSELF has been swept to 0 (cleared boundary), so
-    // it is a valid clearance target whose layering participant differs from USSR.
     const germanActive = activeRecord({
       minePressureId: "mp_baltic.us_4",
       areaId: "baltic",
@@ -135,7 +125,6 @@ describe("AC-19: clearRecordById clears EXACTLY ONE record, never another's", ()
     expect(result.cleared).toBe(true);
     expect(result.closure).toBeDefined();
     expect(result.closure!.minePressureId).toBe("mp_white_sea_south.us_2");
-    // Germany's minefield is untouched and remains in `remaining`.
     expect(result.remaining).toHaveLength(1);
     expect(result.remaining[0]).toBe(clearedGermany);
     expect(result.remaining[0].pressure).toBe(SafeInt(0));
@@ -143,7 +132,6 @@ describe("AC-19: clearRecordById clears EXACTLY ONE record, never another's", ()
 
   it("clearing one participant's minefield never clears another's record even when ids differ", () => {
     const { clearedUs, clearedGermany } = twoMinefields();
-    // Germany clears ITS OWN record by Germany's id — USSR's record must stay.
     const result = clearRecordById(
       [clearedUs, clearedGermany],
       "mp_baltic.us_4",
@@ -159,11 +147,10 @@ describe("AC-19: clearRecordById clears EXACTLY ONE record, never another's", ()
     const { clearedUs, clearedGermany } = twoMinefields();
     let err: BluewaveError | undefined;
     try {
-      // USSR tries to clear Germany's record: id matches but layering participant differs.
       clearRecordById(
         [clearedUs, clearedGermany],
         "mp_baltic.us_4",
-        "USSR", // wrong participant
+        "USSR",
         "SWEEPING",
         SafeInt(40),
       );
@@ -175,8 +162,6 @@ describe("AC-19: clearRecordById clears EXACTLY ONE record, never another's", ()
   });
 
   it("hashing surface is consistent with INC-4's transitional zero-pressure seam", () => {
-    // clearRecord works against applySweptPressure's zero-pressure output without
-    // re-hashing it through the active validator (no serialization conflict).
     const zero = clearedTransitionalRecord();
     const result = clearRecord(zero, "SWEEPING", SafeInt(40));
     expect(result.cleared).toBe(true);

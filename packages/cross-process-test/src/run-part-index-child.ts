@@ -1,8 +1,3 @@
-// Cross-process determinism proof for the part index (ship-part-model ticket 02).
-// Builds a bundle with a prototype, a national variant with revisions declared out of
-// order, and a supersession edge, in a fresh per-process directory, and prints its
-// body hash. Source files are recorded relative to the content root, so two processes
-// (and two host locales) must print the same hash.
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";

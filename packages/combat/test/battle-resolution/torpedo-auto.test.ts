@@ -1,4 +1,3 @@
-// P-1 ticket 04 — AC-4/AC-5/AC-6: torpedoes in campaign auto-resolution.
 import { describe, it, expect } from "vite-plus/test";
 import { compiledTorpedoOf } from "../fixtures/compiledTorpedoes.js";
 import { SafeInt } from "@bluewave/contracts";
@@ -95,7 +94,6 @@ describe("P-1 AC-5/AC-6 auto-resolution with torpedoes", () => {
   });
 
   it("1880-like ironclads fire and hit torpedoes in close actions, changing outcomes", () => {
-    // 14 kn, 11 000 t, 4 heavy guns — the scale of the 1880 roster (ADR-0046).
     const ironclads = (armed: boolean): FixtureNationSet => {
       const n = makeNations({ attackerGuns: [4, 4], defenderGuns: [4, 4] });
       const era = (m: Map<string, CompiledDesignVersion>) =>

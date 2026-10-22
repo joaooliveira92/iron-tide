@@ -61,10 +61,9 @@ describe("buildPlayerProjection — economy + header extension (INC-1)", () => {
     );
     expect(paid?.economy.researchSpend).toBe(150);
     expect(paid?.economy.researchRequested).toBe(150);
-    expect(paid?.economy.researchCap).toBe(240); // floor(12% x 2000)
+    expect(paid?.economy.researchCap).toBe(240);
     expect(paid?.economy.researchUnfundedReason).toBeUndefined();
 
-    // No field can take it: nothing is paid, and the player is told why.
     const unpaid = buildPlayerProjection(fixtureState(fixtureSnapshot([uk])), "uk", month);
     expect(unpaid?.economy.researchSpend).toBe(0);
     expect(unpaid?.economy.researchRequested).toBe(150);
@@ -81,9 +80,6 @@ describe("buildPlayerProjection — economy + header extension (INC-1)", () => {
   });
 
   it("derives projectedSurplusDeficit from the briefing chain, re-deriving maintenance from ships", () => {
-    // revenue 1000 (base 60_000 at 2000bp); two ships of hitPoints 100 and 60 =>
-    // floor(1000/100)=10 + floor(600/100)=6 = 16 maintenance; obligations 40;
-    // researchBudget 30. Paid work 120+80 = 200 is a stock and enters no monthly net.
     const uk = fixtureNation({
       id: "uk",
       name: "United Kingdom",
@@ -91,7 +87,7 @@ describe("buildPlayerProjection — economy + header extension (INC-1)", () => {
       baseResources: baseFor(1000),
       expenses: SafeInt(40),
       navalAppropriationRateBp: SafeInt(2000),
-      maintenanceCost: SafeInt(0), // raw value is 0 pre-first-commit
+      maintenanceCost: SafeInt(0),
       fleets: [
         {
           id: "fleet-1",
@@ -171,11 +167,10 @@ describe("buildPlayerProjection — economy + header extension (INC-1)", () => {
     const fleetMaintenance = 16;
     const research = 30;
     const expected = revenue - obligations - fleetMaintenance - research;
-    expect(projection.projectedSurplusDeficit).toBe(expected); // 1000 - 40 - 16 - 30 = 914
+    expect(projection.projectedSurplusDeficit).toBe(expected);
     expect(projection.economy.projectedNet).toBe(expected);
     expect(projection.economy.obligations).toBe(obligations);
 
-    // Maintenance must be re-derived from ships, not the raw (0) value.
     expect(projection.projectedSurplusDeficit).not.toBe(revenue - obligations - 0 - research);
   });
 
@@ -241,6 +236,6 @@ describe("buildPlayerProjection — economy + header extension (INC-1)", () => {
     expect(a).toEqual(b);
     expect(a?.economy.constructionSpend).toBe(90);
     expect(a?.economy.researchSpend).toBe(25);
-    expect(a?.projectedSurplusDeficit).toBe(1000 - 10 - 25); // 965; the 90 paid so far is a stock
+    expect(a?.projectedSurplusDeficit).toBe(1000 - 10 - 25);
   });
 });

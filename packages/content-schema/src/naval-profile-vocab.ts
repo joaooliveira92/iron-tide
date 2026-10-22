@@ -1,10 +1,5 @@
 import { Schema } from "effect";
 
-/**
- * Shared vocabularies for the naval-profile schema, kept in one place so the Effect Schema enums and the domain string
- * unions in `@bluewave/ship-design`'s `nationProfile.ts` cannot drift independently (a parity test pins them).
- */
-
 export const SOURCE_STATUSES = [
   "VERIFIED",
   "DERIVED",
@@ -38,7 +33,6 @@ export const NAVAL_POSTURES_SCHEMA = Schema.Literals([
   "torpedo_warfare",
 ]);
 
-/** DESIGN-22 canonical ship-type ids, duplicated here because content-schema cannot depend on ship-design. */
 export const SHIP_TYPE_ID_VALUES = [
   "CV",
   "CVL",

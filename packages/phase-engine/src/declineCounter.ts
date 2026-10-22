@@ -1,8 +1,3 @@
-// T-1 05 (spec #109 R9, ticket #114): the declined-battle tally. Pure and integer-only: given the saved tallies and one
-// recorded decline, return the new tallies, the post-decline count and whether the ruleset threshold was just reached.
-// The tally scope (WAR, NATION, CAMPAIGN), its reset (NONE, ON_WAR_END) and its decay (whole periods of months) all come
-// from the ruleset section; nothing here is a default. Resets and decay are applied lazily at the next decline, so a
-// campaign that never declines never writes the collection and keeps its hash.
 import type { DeclineCounterEntry, WarDeclaration } from "@bluewave/campaign";
 import type { BattleOfferRules } from "@bluewave/content-schema";
 
@@ -10,26 +5,19 @@ export type DeclineCounterRules = BattleOfferRules["declineCounter"];
 
 export interface TallyInput {
   readonly rules: DeclineCounterRules;
-  /**
-   * The ruleset's declared repeat rule (`EACH_FURTHER_DECLINE`): the threshold event then fires on every decline at or
-   * above the threshold instead of only when the count reaches it. Absent the prestige sub-rule this is false.
-   */
   readonly repeatEachDecline: boolean;
   readonly warId: string;
   readonly nationId: string;
-  /** Campaign month (YYYY-MM) of the decline. */
   readonly month: string;
   readonly wars: readonly Pick<WarDeclaration, "id" | "status">[];
 }
 
 export interface TallyResult {
   readonly entries: DeclineCounterEntry[];
-  /** The count after this decline (reset and decay applied first). */
   readonly count: number;
   readonly thresholdReached: boolean;
 }
 
-/** The canonical key of the tally this decline belongs to; keys of different scopes never collide. */
 export function declineScopeKey(
   scope: DeclineCounterRules["scope"],
   warId: string,
@@ -54,7 +42,6 @@ function monthLabel(index: number): string {
   return `${String(year).padStart(4, "0")}-${String((index % 12) + 1).padStart(2, "0")}`;
 }
 
-/** The entry's count and decay anchor once the ruleset's reset or decay has been applied up to `month`. */
 function settled(
   entry: DeclineCounterEntry,
   input: TallyInput,
@@ -87,7 +74,6 @@ function settled(
   }
 }
 
-/** Record one decline of the player nation. Never mutates `entries`. */
 export function tallyDecline(
   entries: readonly DeclineCounterEntry[] | undefined,
   input: TallyInput,
@@ -97,7 +83,6 @@ export function tallyDecline(
   const current = existing.find((e) => e.key === key);
   const before =
     current === undefined ? { count: 0, anchor: input.month } : settled(current, input);
-  // A tally at zero restarts its decay clock at the month of the decline that raises it.
   const anchor = before.count === 0 ? input.month : before.anchor;
   const count = before.count + 1;
   const next: DeclineCounterEntry = {

@@ -1,6 +1,3 @@
-// ADR-0092/ADR-0111: promote canonical historical reference ships to national opening capital starters.
-// These tests pin the promotion: nation ownership, classification, schema/compile legality, no capability
-// inflation or foreign-equipment overreach, the rifled-muzzle-loader mechanism, and the anti-clone invariant.
 import { describe, expect, it } from "vite-plus/test";
 import {
   compileDesign,
@@ -40,11 +37,6 @@ const uk = designs.find((d) => d.id === "alexandra_1877")!;
 
 const CONVERTED = Object.entries(HISTORICAL_B_STARTERS);
 
-/**
- * The mechanical projection of a draft: the characteristics that make two ships different, with every identity
- * field (nationId, name, description, provenance, file path, generated id) removed. Two starters that differ
- * only in metadata project to the same fingerprint, which is exactly the clone this promotion removes.
- */
 const mechanicalFingerprint = (draft: DesignDraft): string =>
   JSON.stringify({
     hullFormId: draft.hull.hullFormId,
@@ -93,9 +85,6 @@ describe("promoted historical national starters", () => {
       expect(designs.find((d) => d.id === id)).toBeUndefined();
   });
 
-  // ADR-0114/ADR-0116/ADR-0119: the 1880 scenario ruleset (rulesetVersion 2, ADR-0116) admits the slow coast-defence /
-  // casemate ships; usa promoted under it in ADR-0117 and the remaining six in ADR-0119. Qing *Wei Yuen* cannot be a B
-  // at all (no belt), so it alone stays on its doctrine template until its ordnance can be modelled honestly.
   it("leaves the still-deferred candidates on their doctrine template (no false substitution)", () => {
     for (const nation of ["qing"]) {
       const chosen = starterFor("B", starters, OPENING_MONTH, nation);
@@ -137,8 +126,6 @@ describe("promoted historical national starters", () => {
       const importCeiling = caps.maxImportedGunCaliberUm ?? caps.maxGunCaliberUm;
       const construction = resolveConstructionModifiers(profile, OPENING_MONTH);
       const draft = byId(id).draft;
-      // A foreign-built reconstruction (its hull was bought abroad) may exceed the nation's domestic build ceiling:
-      // the reference ship is an inherited asset, not a new domestic order; the ceiling itself is never inflated.
       if (!FOREIGN_BUILT_B_STARTERS.has(id))
         expect(draft.hull.targetDisplacementKg).toBeLessThanOrEqual(
           construction.maxPracticalDisplacementKg,
@@ -150,8 +137,6 @@ describe("promoted historical national starters", () => {
       for (const c of r.components) {
         const caliber = c.attr.caliberUm;
         if (caliber === undefined) continue;
-        // An imported family may reach the import ceiling; a domestic one is capped by the domestic ceiling
-        // (ADR-0114). The domestic ceiling itself is never inflated to admit an import.
         const status = profile.componentAccess[c.componentId]?.status ?? "DOMESTIC";
         const ceiling = status === "DOMESTIC" ? caps.maxGunCaliberUm : importCeiling;
         expect(caliber).toBeLessThanOrEqual(ceiling);
@@ -191,8 +176,6 @@ describe("promoted historical national starters", () => {
       expect(guns.length).toBeGreaterThan(0);
       for (const gun of guns)
         expect(gun.componentId, `${id} ${gun.componentId}`).toMatch(/^gun_(rml|sb|bl)_/);
-      // The US coast-defence monitor carries a smoothbore, never mapped onto rifled-RML ballistics; no other promoted
-      // starter carries a smoothbore at all (a smoothbore must never inherit rifled-RML ballistics).
       if (nation === "usa")
         expect(guns.every((g) => g.componentId.startsWith("gun_sb_"))).toBe(true);
       else expect(guns.some((g) => g.componentId.startsWith("gun_sb_"))).toBe(false);
@@ -204,7 +187,6 @@ describe("promoted historical national starters", () => {
     (nation, id) => {
       const promoted = mechanicalFingerprint(byId(id).draft);
       expect(promoted).not.toBe(mechanicalFingerprint(uk.draft));
-      // Distinct from every other promoted/served capital starter too (not a shared shape re-skinned).
       for (const [otherNation, otherId] of CONVERTED)
         if (otherNation !== nation)
           expect(promoted, `${id} vs ${otherId}`).not.toBe(
@@ -254,20 +236,15 @@ describe("smoothbore ordnance (ADR-0117)", () => {
     expect(sb.category).toBe("MAIN_GUN");
     expect(sb.tags).toContain("smoothbore");
     expect(Number(sb.attributes?.caliberUm)).toBe(381000);
-    // The USA overlay that used to point at a rifled RML family now points at the smoothbore family.
     const usa = navalProfiles.find((p) => p.nationId === "usa")!;
     const overlay = usa.gunModels.find((g) => g.id === "us_dahlgren_15in")!;
     expect(overlay.familyId).toBe("gun_sb_15in_dahlgren");
     expect(overlay.familyId).not.toMatch(/^gun_rml_/);
-    // A smoothbore reloads far slower than a rifle of comparable bore, so the mechanism cannot be substituted.
     const rifle = components.find((c) => c.id === "gun_rml_11in_25ton")!;
     expect(Number(sb.attributes?.rofBaseX100)).toBeLessThan(Number(rifle.attributes?.rofBaseX100));
   });
 });
 
-// ADR-0119: the new coast-defence / casemate gun families. Each new family has a matching component with the same id and
-// category (the armament release gate requires family/category parity), and the national overlay that used to point at a
-// numerically-close family now points at its own family (no false substitution).
 const NEW_FAMILIES: ReadonlyArray<readonly [string, string, "MAIN_GUN" | "SECONDARY_GUN"]> = [
   ["gun_bl_283mm_krupp", "netherlands", "MAIN_GUN"],
   ["gun_bl_149mm_rkl22", "portugal", "SECONDARY_GUN"],
@@ -311,7 +288,6 @@ describe("coast-defence / casemate ordnance (ADR-0119)", () => {
   it("the Spanish 254 mm 300-pdr is a distinct, lighter family from the 10-inch 18-ton", () => {
     const threeHundred = components.find((c) => c.id === "gun_rml_10in_12ton_300pdr")!;
     const eighteen = components.find((c) => c.id === "gun_rml_10in_18ton")!;
-    // Same bore (10 in), but a 300-pdr shell and a ~12-ton (not 18-ton) gun: not the same weapon.
     expect(Number(threeHundred.attributes?.caliberUm)).toBe(Number(eighteen.attributes?.caliberUm));
     expect(Number(threeHundred.attributes?.shellMassG)).toBeLessThan(
       Number(eighteen.attributes?.shellMassG),

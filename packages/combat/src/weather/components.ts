@@ -1,9 +1,3 @@
-// DESIGN-42 §3 canonical tactical weather components (INC-2/AC-4): the twelve
-// component set every battle carries. Every numeric component uses canonical
-// integer units (DESIGN-07); non-integers and malformed types are rejected with
-// INVALID_TACTICAL_WEATHER_STATE at the construction boundary, out-of-range
-// values with WEATHER_STATE_INVARIANT_FAILED. The state carries an authoritative
-// state hash. Pure/deterministic: no ambient I/O/clock/random.
 import { BluewaveError } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import {
@@ -31,48 +25,27 @@ import {
 } from "./constants.js";
 import { INVALID_TACTICAL_WEATHER_STATE, WEATHER_STATE_INVARIANT_FAILED } from "./reasonCodes.js";
 
-/** Stable identifier of a local smoke field. Smoke (§§7–23) is deferred to M3;
- *  the component slot exists per §3 and is an ordered empty list this slice. */
 export type LocalSmokeFieldId = string;
 
 export interface BattleWeatherComponents {
-  /** Battle the components belong to (stable id, for record identity). */
   battleId: string;
-  /** Sea state, integer 0..9. */
   seaState: number;
-  /** Wind direction in canonical angular units (integer degrees 0..359). */
   windDirectionDeg: number;
-  /** Wind speed in integer micrometres per second. */
   windSpeedUmPerSec: number;
-  /** Precipitation type (NONE | RAIN | SNOW). */
   precipitationType: PrecipitationType;
-  /** Precipitation intensity in basis points 0..10_000. */
   precipitationIntensityBp: number;
-  /** Fog or mist density in basis points 0..10_000. */
   fogMistDensityBp: number;
-  /** Cloud cover in basis points 0..10_000. */
   cloudCoverBp: number;
-  /** Time of day (five canonical states, DESIGN-42 §27). */
   timeOfDay: TimeOfDayState;
-  /** Solar bearing in canonical angular units (integer degrees 0..359). */
   solarBearingDeg: number;
-  /** Solar elevation in integer degrees -90..90 (negative = below horizon). */
   solarElevationDeg: number;
-  /** Glare intensity in basis points 0..10_000. */
   glareIntensityBp: number;
-  /** Base visibility distance in integer micrometres. */
   baseVisibilityUm: number;
-  /** Ordered local smoke-field identifiers (empty this slice; smoke deferred). */
   localSmokeFields: readonly LocalSmokeFieldId[];
-  /** Ruleset version. */
   rulesetVersion: string;
-  /** Formula version. */
   formulaVersion: string;
-  /** Authoritative state hash (deterministic). */
   stateHash: string;
 }
-
-// ---- Guard helpers (mirror strategic-state.ts) ----
 
 function typeError(
   c: BattleWeatherComponents,
@@ -140,10 +113,6 @@ function requireNonNegativeInteger(
   }
 }
 
-// AC-4: reject any non-integer / malformed field in the authoritative
-// BattleWeatherComponents surface with INVALID_TACTICAL_WEATHER_STATE (type
-// violations) or WEATHER_STATE_INVARIANT_FAILED (range violations). Reversible
-// to invariant: a failure leaves the supplied components untouched.
 export function assertFixedPointTacticalWeather(c: BattleWeatherComponents): void {
   requireString(c, "battleId", c.battleId);
 
@@ -224,9 +193,6 @@ export function assertFixedPointTacticalWeather(c: BattleWeatherComponents): voi
   requireString(c, "formulaVersion", c.formulaVersion);
 }
 
-// Authoritative deterministic component hash: canonicalSerialize + sha256 over
-// the non-hash surface, domain-separated with the weather_components_v1
-// compatibility version. Any provided stateHash is ignored.
 export function computeTacticalWeatherComponentsHash(c: BattleWeatherComponents): string {
   const surface = {
     battleId: c.battleId,
@@ -249,7 +215,6 @@ export function computeTacticalWeatherComponentsHash(c: BattleWeatherComponents)
   return createEnvelope("tactical-weather-components", weatherComponentsPolicyId, surface).bodyHash;
 }
 
-// Build fully-invariant BattleWeatherComponents with its authoritative hash.
 export function withTacticalWeatherComponentsHash(
   c: Omit<BattleWeatherComponents, "stateHash">,
 ): BattleWeatherComponents {

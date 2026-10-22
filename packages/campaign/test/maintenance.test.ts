@@ -15,15 +15,13 @@ import {
   shipMonthlyMaintenanceCost,
 } from "../src/maintenance.js";
 
-// S-1 ticket 02: maintenance is charged by readiness state through one shared,
-// versioned formula (ADR-0223, decision request 0007-A).
 describe("S-1 maintenance formula (ticket 02)", () => {
   it("charges the base rate for an active ship", () => {
     expect(shipMaintenanceCost(SafeInt(100), "ACTIVE")).toBe(10);
   });
 
   it("scales the base rate by the state multiplier, floor-rounded", () => {
-    expect(shipMaintenanceCost(SafeInt(100), "RESERVE")).toBe(7); // floor(10 * 7500 / 10000)
+    expect(shipMaintenanceCost(SafeInt(100), "RESERVE")).toBe(7);
     expect(shipMaintenanceCost(SafeInt(100), "MOTHBALLED")).toBe(5);
     expect(shipMaintenanceCost(SafeInt(100), "WORKING_UP")).toBe(10);
   });
@@ -64,12 +62,10 @@ describe("S-1 maintenance formula (ticket 02)", () => {
   });
 });
 
-// S-1 ticket 05: the wartime maintenance multiplier.
 describe("S-1 wartime maintenance (ticket 05)", () => {
   it("applies the multiplier to active ships at war and nothing otherwise", () => {
     expect(shipMonthlyMaintenanceCost(SafeInt(100), "ACTIVE", false)).toBe(10);
-    expect(shipMonthlyMaintenanceCost(SafeInt(100), "ACTIVE", true)).toBe(12); // floor(10 * 12500 / 10000)
-    // Only active status is raised.
+    expect(shipMonthlyMaintenanceCost(SafeInt(100), "ACTIVE", true)).toBe(12);
     expect(shipMonthlyMaintenanceCost(SafeInt(100), "RESERVE", true)).toBe(
       shipMonthlyMaintenanceCost(SafeInt(100), "RESERVE", false),
     );
@@ -85,7 +81,7 @@ describe("S-1 wartime maintenance (ticket 05)", () => {
     ];
     expect(nationIsAtWar(wars, "uk")).toBe(true);
     expect(nationIsAtWar(wars, "france")).toBe(true);
-    expect(nationIsAtWar(wars, "spain")).toBe(false); // only in an ended war
+    expect(nationIsAtWar(wars, "spain")).toBe(false);
     expect(nationIsAtWar(wars, "italy")).toBe(false);
   });
 });

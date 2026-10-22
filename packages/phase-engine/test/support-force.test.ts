@@ -22,8 +22,6 @@ import {
   makeShip,
 } from "./battle-fixtures.js";
 
-// T-1 08 (#117, spec #109 R12): a friendly AI support force may join the player's side. Every ruleset value is a
-// FIXTURE-CLASS value (cap: 5000 bp of the player's committed strength); none reaches production.
 type Rules = typeof FIXTURE_BATTLE_OFFER_RULES;
 const SEED = "support-force-seed";
 const TURN = "turn-support-force";
@@ -33,13 +31,11 @@ const ALLY = "ITA";
 function rules(over: Partial<Rules["supportForce"]> = {}): Rules {
   return {
     ...FIXTURE_BATTLE_OFFER_RULES,
-    // The enemy never declines here, so the support stage is exercised on its own.
     enemyDecline: { comparison: "LESS_THAN", thresholdBp: 0, probabilityBp: 0 },
     supportForce: { ...FIXTURE_BATTLE_OFFER_RULES.supportForce, ...over },
   };
 }
 
-/** Player g1 (800) against f1 (400), in a-1. The ally ITA is allied with the player; its ships are given per test. */
 function snapshotOf(
   allyShips: Parameters<typeof makeShip>[3][] = [],
   options: { allied?: boolean; extra?: boolean } = {},
@@ -54,7 +50,6 @@ function snapshotOf(
   const extraNations =
     options.extra === true
       ? [
-          // allied with the ENEMY only, and a neutral one: neither may support the player.
           ["AUS", makeShip("x1", "dv-att-a", "AUS", { firepower: 100 }), DEFENDER_NATION, "allied"],
           [
             "RUS",
@@ -103,8 +98,6 @@ function snapshotOf(
   };
 }
 
-// Cap = 5000 bp of 800 = 400. Ordering by strength: i3 (250), i1 (200), i2 (150). i3 fits (250), i1 would reach 450 and is
-// skipped, i2 brings the force to exactly 400.
 const ELIGIBLE = [{ firepower: 200 }, { firepower: 150 }, { firepower: 250 }];
 const EXCLUDED = [
   { firepower: 900, readiness: "WORKING_UP" as const },
@@ -188,7 +181,7 @@ describe("the support force (R12)", () => {
       snapshotOf([], {}),
       snapshotOf(EXCLUDED, {}),
       snapshotOf(ELIGIBLE, { allied: false }),
-      snapshotOf([{ firepower: 500 }], {}), // fits under no cap: 500 > 400
+      snapshotOf([{ firepower: 500 }], {}),
       snapshotOf([], { extra: true }),
     ]) {
       const result = run(snapshot, present);
@@ -205,7 +198,6 @@ describe("the support force (R12)", () => {
     const result = run(withCandidates, present);
     const request = offerOf(result);
     const manifest = manifestOf(result)!;
-    // Ship ids are i<position>: i3 (250) then i2 (150) = 400, the cap; i1 (200) is skipped.
     expect(manifest.temporaryAssets).toEqual(["i2", "i3"]);
     expect(manifest.persistentAssets).toEqual(["f1", "g1"]);
     expect(manifest.sides.find((s) => s.sideId === "ATTACKER")?.participantIds).toEqual([
@@ -230,14 +222,11 @@ describe("the support force (R12)", () => {
         (sum, id) => sum + (ships(result, ALLY).find((s) => s.id === id)?.firepower ?? 0),
         0,
       );
-    // All three candidates total 600, above every cap below; the player commits g1 (800).
     const offered = (shareOfCapBp: number) =>
       run(candidates, rules({ presenceChanceBp: 10_000, shareOfCapBp }));
-    // A share under the 50% ceiling binds at floor(800 x 3000 / 10000) = 240: only i1 (200) fits.
     const bound = offered(3_000);
     expect(manifestOf(bound)?.temporaryAssets).toEqual(["i1"]);
     expect(supportStrength(bound)).toBeLessThanOrEqual(Math.floor((800 * 3_000) / 10_000));
-    // A share above the ceiling is clamped to 5000: the cap is 400, never floor(800 x 9000 / 10000) = 720.
     const clamped = offered(9_000);
     expect(manifestOf(clamped)?.temporaryAssets).toEqual(["i2", "i3"]);
     expect(supportStrength(clamped)).toBe(Math.floor((800 * 5_000) / 10_000));

@@ -2,7 +2,6 @@ import type { ContentPack } from "@bluewave/content-schema";
 import { describe, expect, it } from "vite-plus/test";
 import { buildWorldState } from "../src/worldCompilation.js";
 
-// Economy spec #138 slice 3: the pack's research catalogue is materialised into the world state.
 function pack(technologies: unknown[]): ContentPack {
   return { technologies } as ContentPack;
 }

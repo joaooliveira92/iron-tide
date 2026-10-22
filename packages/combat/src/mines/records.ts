@@ -1,37 +1,3 @@
-// DESIGN-35 §28 — immutable Monthly Resolution Record (INC-8, AC-20).
-//
-// Every monthly mine-warfare resolution creates ONE immutable
-// `MineWarfareResolutionRecord` containing every §28 field group:
-// area/war contexts, opening pressure records, laying sources/values, sweeping
-// ships/modes/values, dual-equipment reductions, allocated sweeping, pressure
-// removed, battle/route probabilities, strike decisions/outcomes, standoff
-// levels, decay, post-war/ownership dispositions, reports/knowledge changes,
-// friendly-fire checks, inventory/war-score/political/damage effects, RNG
-// decisions, ruleset + formula versions, and an authoritative record hash.
-//
-// DEFERRAL SLICE (ticket 03/05): mine-strike resolution, battle-hazard
-// generation, and friendly-fire risk are OWNED BY THE C-2 CONTINUATION, so the
-// sub-records below ship as EXPLICITLY-TYPED, EXPLICITLY-EMPTY collections —
-// never omitted, never `undefined` — so the continuation has a stable field to
-// populate without a breaking type change (the INC-8 ticket's assembler hint):
-//
-//   - battleAndRouteProbabilities.battle ....... EXPLICIT empty this slice;
-//   - strikeDecisionsAndOutcomes ............... EXPLICIT empty this slice;
-//   - friendlyFireChecks ........................ EXPLICIT empty this slice.
-//
-// The record is deeply frozen after construction and its authoritative hash is
-// a domain-separated canonical envelope over the NON-hash fields
-// (createEnvelope domain "mine_warfare_resolution" / compatibility version
-// "mine_warfare_resolution_v1" — the torpedo-record precedent,
-// ENGINEERING-CONTRACT hashing). The hash is purely a function of the record's
-// own fields; identical state + inputs + seeds produce identical records and
-// hashes across processes (AC-23 / §31 item 25).
-//
-// Assembly order: every collection is canonically SORTED by DESIGN-35 §29
-// (ordering.ts comparators) INSIDE the assembler — DB/UI/wall-clock insertion
-// order can never affect the record or its hash. Pure/deterministic: no
-// I/O/clock/random; the RNG decisions are recorded by the caller's keyed
-// streams and passed in.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import { type RandomDecision } from "@bluewave/random";
@@ -65,7 +31,6 @@ export interface MineWarfareResolutionContract {
   policyId: string;
   rulesetVersion: string;
   formulaVersion: string;
-  /** §28 sub-records explicitly deferred to the C-2 continuation (empty here). */
   deferredSubRecordCollections: readonly string[];
 }
 
@@ -88,7 +53,6 @@ function contractMismatch(c: unknown, reason: string): never {
   });
 }
 
-// AC-24: fail-closed guard over the §28 resolution contract itself.
 export function validateMineWarfareResolutionContract(
   c: Partial<MineWarfareResolutionContract> | null | undefined,
 ): asserts c is MineWarfareResolutionContract {
@@ -109,10 +73,6 @@ export function validateMineWarfareResolutionContract(
   }
 }
 
-// §28 sub-record shapes (explicitly typed; the deferred ones are only ever
-// constructed as empty arrays this slice — but the TYPE exists so the
-// continuation populates them without a breaking change).
-
 export interface AreaAndWarContext {
   areaId: string;
   warIds: readonly string[];
@@ -122,16 +82,13 @@ export interface LayingSourceAndValue {
   source: string;
   layingParticipant: string;
   area: string;
-  /** Effective laying value contributed this month (integer >= 0, §4). */
   value: number;
   month: SafeMonth;
 }
 
 export interface SweepingShipModeValue {
   shipId: string;
-  /** §8 equipment mode literal (single-purpose string or a dual-equipment mode). */
   equipmentMode: string;
-  /** The effective sweeping value used by the §10 aggregation (integer >= 0). */
   sweepingValue: number;
 }
 
@@ -140,17 +97,8 @@ export interface AllocatedSweeping {
   sweptPressure: SafeInt;
   typeAdjustedSweeping: SafeInt;
   pressureAfter: SafeInt;
-  /**
-   * §10 canonical-order keys materialized EXACTLY once (never recomputed during
-   * a sort). §29 item 6 orders sweep allocation by §10's five-part order, so the
-   * record keeps the keys the aggregation computed. `pressure = sweptPressure +
-   * pressureAfter` is derivable from the three pressure fields above; the callers
-   * who assembled the §10 order provide these keys.
-   */
   mineTypeId: MineType;
-  /** §10 key 1: controlled-defensive mines threatening the sweeping side. */
   threatensSweepingSide: boolean;
-  /** §10 key 2: current strike-risk priority (higher = higher risk = earlier). */
   strikeRiskPriority: number;
 }
 
@@ -159,14 +107,12 @@ export interface RouteProbability {
   routeRiskBp: SafeInt;
 }
 
-/** EXPLICIT empty this slice — battle hazards deferred (§11, C-2 continuation). */
 export interface BattleProbability {
   battleId: string;
   targetId: string;
   hazardBp: SafeInt;
 }
 
-/** EXPLICIT empty this slice — strike resolution deferred (§14–15/§17–18). */
 export interface StrikeDecisionAndOutcome {
   targetId: string;
   decidedOutcome: string;
@@ -196,7 +142,6 @@ export interface ReportKnowledgeChange {
   participantId: string;
 }
 
-/** EXPLICIT empty — friendly-fire checks deferred (§25 –26, C-2 continuation). */
 export interface FriendlyMineFireCheck {
   shipId: string;
   minePressureId: string;
@@ -204,15 +149,10 @@ export interface FriendlyMineFireCheck {
 }
 
 export interface MineWarfareEffect {
-  /** §29 level 9 declared effect ordinal. */
   ordinal: number;
-  /** Stable effect id (e.g. "inv:CONTACT:-20", "warsrc:+3"). */
   stableId: string;
-  /** Inventory / war-score / political / damage change description. */
   description: string;
 }
-
-// the §28 record surface
 
 export interface MineWarfareResolutionRecord {
   month: SafeInt;
@@ -224,18 +164,14 @@ export interface MineWarfareResolutionRecord {
   allocatedSweeping: readonly AllocatedSweeping[];
   pressureRemoved: SafeInt;
   battleAndRouteProbabilities: {
-    /** Route checks — SORTED by route edge id (§29 level 7). */
     routes: readonly RouteProbability[];
-    /** EXPLICIT EMPTY this slice. */
     battle: readonly BattleProbability[];
   };
-  /** EXPLICIT EMPTY this slice. */
   strikeDecisionsAndOutcomes: readonly StrikeDecisionAndOutcome[];
   standoffLevels: readonly StandoffLevel[];
   decay: readonly DecayRecord[];
   postWarAndOwnershipDispositions: readonly PostWarOwnershipDisposition[];
   reportsAndKnowledgeChanges: readonly ReportKnowledgeChange[];
-  /** EXPLICIT EMPTY this slice. */
   friendlyFireChecks: readonly FriendlyMineFireCheck[];
   inventoryWarScorePoliticalAndDamageEffects: readonly MineWarfareEffect[];
   rngDecisions: readonly RandomDecision[];
@@ -245,8 +181,6 @@ export interface MineWarfareResolutionRecord {
 }
 
 export type MineWarfareResolutionRecordBody = Omit<MineWarfareResolutionRecord, "recordHash">;
-
-// fail-closed validation of every group
 
 function isSafeMonth(v: unknown): v is SafeInt {
   return SafeInt.isSafeInt(v as number) && (v as SafeInt) >= 0;
@@ -267,9 +201,6 @@ function raiseInvariant(field: string, value: unknown, reason: string): never {
   });
 }
 
-/** AC-20: fail-closed surface guard — every §28 field group well-formed; a
- *  malformed record fails with MINE_WARFARE_INVARIANT_FAILED (EXCEPT the
- *  recordHash, which is validated before hashing). Reversible-to-invariant. */
 export function assertMineWarfareResolutionRecordSurface(r: MineWarfareResolutionRecord): void {
   validateMineWarfareResolutionContract(SHIPPED_MINE_WARFARE_RESOLUTION_CONTRACT);
   if (!isSafeMonth(r.month))
@@ -286,7 +217,7 @@ export function assertMineWarfareResolutionRecordSurface(r: MineWarfareResolutio
   if (!Array.isArray(r.openingPressureRecords))
     raiseInvariant("openingPressureRecords", r.openingPressureRecords, "must be an array");
   for (let i = 0; i < r.openingPressureRecords.length; i++) {
-    assertAreaMinePressureRecordSurface(r.openingPressureRecords[i]); // throws INVALID_MINE_PRESSURE_STATE
+    assertAreaMinePressureRecordSurface(r.openingPressureRecords[i]);
   }
   if (!Array.isArray(r.layingSourcesAndValues))
     raiseInvariant("layingSourcesAndValues", r.layingSourcesAndValues, "must be an array");
@@ -467,51 +398,29 @@ export function assertMineWarfareResolutionRecordSurface(r: MineWarfareResolutio
     raiseInvariant("versions", r, "must be the shipped mine ruleset/formula versions");
 }
 
-// assembler (consumes the INC-1..INC-7 surface in §29 canonical order)
-
 export interface MineWarfareResolutionAssemblerInput {
   month: SafeInt;
   areaAndWarContexts: readonly AreaAndWarContext[];
-  /** Opening pressure records (any order; sorted §29 level 3 inside). */
   openingPressureRecords: readonly AreaMinePressureRecord[];
-  /** Laying sources + effective values (any order; sorted by source id inside). */
   layingSourcesAndValues: readonly LayingSourceAndValue[];
-  /** Sweeping-ship modes + values (any order; sorted by ship id inside). */
   sweepingShipsModesValues: readonly SweepingShipModeValue[];
-  /** Dual-equipment reductions emitted this month. */
   dualEquipmentReductions: readonly string[];
-  /** §10 allocations (already in the §10 order; re-sorted defensively inside). */
   allocatedSweeping: readonly AllocatedSweeping[];
-  /** Swept + decayed: total pressure removed in the coverage month. */
   pressureRemoved: SafeInt;
-  /** Route probabilities (any order; sorted by route edge id inside). */
   routes: readonly RouteProbability[];
-  /** EXPLICIT EMPTY — battle hazards deferred. */
   battle: readonly BattleProbability[];
-  /** EXPLICIT EMPTY — strike decisions deferred. */
   strikeDecisionsAndOutcomes: readonly StrikeDecisionAndOutcome[];
-  /** Standoff levels (any order). */
   standoffLevels: readonly StandoffLevel[];
-  /** Decay (any order; sorted by mine pressure id inside). */
   decay: readonly DecayRecord[];
-  /** Post-war/ownership dispositions (any order). */
   postWarAndOwnershipDispositions: readonly PostWarOwnershipDisposition[];
-  /** Reports + knowledge-change pairs (any order). */
   reportsAndKnowledgeChanges: readonly ReportKnowledgeChange[];
-  /** EXPLICIT EMPTY — friendly-fire checks deferred. */
   friendlyFireChecks: readonly FriendlyMineFireCheck[];
-  /** §28 effects by declared §29 ordinal (sorted inside). */
   inventoryWarScorePoliticalAndDamageEffects: readonly MineWarfareEffect[];
-  /** The RNG decisions recorded by this resolution (keyed streams only). */
   rngDecisions: readonly RandomDecision[];
 }
 
 export type SafeMonth = SafeInt;
 
-/** AC-20: assemble ONE immutable §28 resolution record from the INC-1..INC-7
- *  pure-function outputs. Sort = §29 canonical order for every collection.
- *  The deferred collections (battle, strike, friendly-fire) MUST be empty —
- *  a non-empty value fails closed with MINE_WARFARE_INVARIANT_FAILED. */
 export function assembleMineWarfareResolutionRecord(
   input: MineWarfareResolutionAssemblerInput,
 ): MineWarfareResolutionRecord {
@@ -530,9 +439,6 @@ function buildMineWarfareResolutionBody(
   const areaAndWarContexts = canonicallySorted(
     input.areaAndWarContexts.map((c) => ({
       areaId: c.areaId,
-      // §29 item 1: wars by identifier INSIDE each area context — insertion
-      // order must never leak into the record hash (the canonical sort below is
-      // over areas, so without this the warIds array would stay in caller order).
       warIds: [...c.warIds].sort(compareMineStrings),
     })),
     (a, b) => compareAreasById({ areaId: a.areaId }, { areaId: b.areaId }),
@@ -549,9 +455,6 @@ function buildMineWarfareResolutionBody(
     input.sweepingShipsModesValues.map((s) => ({ ...s })),
     (a, b) => compareSweepingShipsById({ shipId: a.shipId }, { shipId: b.shipId }),
   );
-  // §29 item 6: sweep allocation by §10's five-key order (NOT minePressureId
-  // alone — the §10 keys are materialized on each AllocatedSweeping by the
-  // aggregation caller; the comparator is derived from sweepingAllocationOrder).
   const allocatedSweeping = canonicallySorted(
     input.allocatedSweeping.map((a) => ({ ...a })),
     compareAllocatedSweepingBySection10,
@@ -619,15 +522,12 @@ function buildMineWarfareResolutionBody(
   };
 }
 
-/** AC-20: the §28 authoritative record hash — domain-separated canonical
- *  envelope keyed to mine_warfare_resolution_v1, over the non-hash surface. */
 export function computeMineWarfareResolutionRecordHash(
   body: MineWarfareResolutionRecordBody,
 ): string {
   return createEnvelope("mine_warfare_resolution", mineWarfareResolutionPolicyId, body).bodyHash;
 }
 
-/** AC-20: verify a record hash (recompute + compare; tamper fails). */
 export function verifyMineWarfareResolutionRecordHash(r: MineWarfareResolutionRecord): boolean {
   const { recordHash: _ignored, ...body } = r;
   return computeMineWarfareResolutionRecordHash(body) === r.recordHash;
@@ -644,11 +544,6 @@ function deepFreeze<T>(value: T): T {
   return value;
 }
 
-// The shipped §28 version enforcers (exported so no caller pins a divergent literal).
 export const MINE_RESOLUTION_RULESET_VERSION = MINE_RULESET_VERSION;
 export const MINE_RESOLUTION_FORMULA_VERSION = MINE_FORMULA_VERSION;
 export const MINE_RESOLUTION_POLICY_ID = mineWarfareResolutionPolicyId;
-
-// NOTE: the resolution record's DecayRecord shape is defined above (identical
-// shape to the INC-7 decay results); decay.ts is not re-imported here — the
-// C-2 continuation wires computeDecayedPressure results into this field.

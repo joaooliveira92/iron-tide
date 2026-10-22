@@ -1,6 +1,3 @@
-// SB3-R30/R33 (DESIGN-23 sections 3-5): the read-only build-dialog preview. It must show the names the command path
-// would assign, the ordering nation's dock ceiling and whether the design fits, and it must never mutate the snapshot
-// or reserve anything.
 import type { CampaignSnapshot, ConstructionProject } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { HULL_TYPE_FOR_SHIP_TYPE } from "@bluewave/ship-design";
@@ -14,7 +11,6 @@ const content = productionShipBuildingContent({ navalProfiles: true });
 
 type Design = CampaignSnapshot["designs"] extends Map<string, infer D> ? D : never;
 
-/** A UK pre-dreadnought (the B name pool) at a given displacement, with a real construction yard. */
 function design(id: string, displacementKg = 1_000_000, over: Partial<Design> = {}): Design {
   return {
     ...makeDesign(id, "uk"),
@@ -132,7 +128,6 @@ describe("previewConstructionBatch shows names and dock fit without reserving (S
     const r = preview(snap, "dv-b", 12);
     expect(r.ok).toBe(true);
 
-    // Deep-equal to the pre-call clone, and the same maps/lists: a preview reserves nothing and adds no project.
     expect(snap).toEqual(before);
     expect(snap.nations).toBe(nationsBefore);
     expect(snap.designs).toBe(designsBefore);

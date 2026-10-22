@@ -4,12 +4,6 @@ import type { FleetState, Ship } from "@bluewave/campaign";
 import { buildFleetScreenView } from "../src/fleet.js";
 import { fixtureDesign, fixtureNation, fixtureSnapshot } from "./fixtures.js";
 
-/**
- * Pure projection tests for the Fleet screen view (desktop-mvp ticket 15),
- * mirroring `construction.test.ts`'s fixture pattern: hand-built snapshots,
- * no compiler run.
- */
-
 function makeShip(id: string, name: string, overrides: Partial<Ship> = {}): Ship {
   return {
     id,
@@ -76,7 +70,6 @@ describe("buildFleetScreenView", () => {
 
     const view = buildFleetScreenView(snapshot, "uk");
 
-    // Only the player's fleet becomes a division; the foreign fleet is excluded.
     expect(view.divisions).toHaveLength(1);
     const home = view.divisions[0]!;
     expect(home.divisionId).toBe("fleet_gbr_home");
@@ -266,7 +259,6 @@ describe("buildFleetScreenView", () => {
   });
 
   it("reads 'not configured' without presence rules and the measured areas with them (S-5 09)", () => {
-    // FIXTURE-CLASS rules: mechanics only, never a production value.
     const rules = {
       requiredTonsPerPossessionWeight: 100,
       noPortValueWeight: 2,
@@ -348,7 +340,6 @@ describe("buildFleetScreenView", () => {
     expect(view.areaEdges).toEqual([
       { fromAreaId: "sea_english_channel", toAreaId: "eng_home_coast" },
     ]);
-    // Only the player's own port, capacity = authored level.
     expect(view.ports).toEqual([
       { id: "gbr_portsmouth", name: "Portsmouth", areaId: "eng_home_coast", capacity: 10 },
     ]);

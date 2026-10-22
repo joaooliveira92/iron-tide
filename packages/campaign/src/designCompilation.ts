@@ -1,7 +1,3 @@
-// Campaign-compile stage: materialize authored design templates into canonical
-// CompiledDesignVersion records and their design families. Design YAML authors
-// human-friendly units (knots, mm); this stage normalizes to canonical engine
-// units (µm/s, µm) per ADR-0037 and hashes each immutable compiled version.
 import { SafeInt } from "@bluewave/contracts";
 import type { CompiledTorpedo } from "@bluewave/armament";
 import {
@@ -20,10 +16,6 @@ import type {
   NationState,
 } from "./state.js";
 
-/**
- * Validate every fleet ship's `designVersionId` resolves to a compiled design.
- * No-op when no designs were authored (pre-design content packs).
- */
 export function assertFleetDesignLinks(
   nations: Map<string, NationState>,
   designs: Map<string, CompiledDesignVersion>,
@@ -46,11 +38,6 @@ export function assertFleetDesignLinks(
   return !collector.hasErrors;
 }
 
-/**
- * Resolves a design's torpedo mount to its neutral compiled torpedo, when the content bundle
- * carries the torpedo part (ticket 13b). Returns `undefined` for a bundle without parts — combat
- * then fails closed if the mount reaches a battle.
- */
 export type TorpedoResolver = (torpedoModelId: string) => CompiledTorpedo | undefined;
 
 function mapTorpedoArmament(
@@ -71,7 +58,6 @@ function mapTorpedoArmament(
   });
 }
 
-/** The hashed mount surface: the three identity fields, never the optional compiled record. */
 function hashableTorpedoArmament(
   armament: CompiledTorpedoMount[] | undefined,
 ): readonly { mountType: string; tubeCount: SafeInt; torpedoModelId: string }[] | undefined {
@@ -122,8 +108,6 @@ function computeCompiledDesignHash(
       machineryType: validated["machineryType"],
       hitPoints: validated["hitPoints"],
       crewComplement: validated["crewComplement"],
-      // P-1 AC-2: only hashed when present, so unarmed designs keep their hash. The optional
-      // compiled torpedo (ticket 13b) is NOT part of the hashed surface — the identity fields are.
       ...(hashableTorpedoArmament(torpedoArmament)
         ? { torpedoArmament: hashableTorpedoArmament(torpedoArmament) }
         : {}),
@@ -148,10 +132,6 @@ function buildCompiledDesign(
       rec["normalizedDisplacementKg"] ?? validated["displacementKg"],
       SafeInt(0),
     ),
-    // ADR-0037: design YAML authors speed in knots and armor/caliber in
-    // millimetres (human-friendly, matches DESIGN-22 §1's authored style);
-    // the compiled design carries canonical engine units (µm/s, µm) that
-    // the tactical classifier and combat layer consume (DESIGN-22 §2).
     normalizedSpeedUms: toSafeIntOpt(
       rec["normalizedSpeedUms"] ?? knotsToUms(validated["speedUms"] as number),
       SafeInt(0),
@@ -209,7 +189,6 @@ export function buildDesignFamiliesFromData(designsData: unknown[]): Map<string,
 
   if (!Array.isArray(designsData)) return families;
 
-  // Group by designFamilyId
   const familyMap = new Map<string, { rec: Record<string, unknown>; members: string[] }>();
   for (const d of designsData) {
     const rec = d as Record<string, unknown>;

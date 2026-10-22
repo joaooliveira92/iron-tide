@@ -8,14 +8,6 @@ import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
 import { researchOf, technologiesOf } from "./helpers/campaignRecords.js";
 
-/**
- * 1880 research seed coherence (N-1 ticket 04, under ADR-0212). Research gates
- * new construction, modernization and design, not inherited starting ships, so
- * the seed only has to be internally consistent: a completed technology implies
- * its prerequisites are completed, and an active project's prerequisites are
- * met. The earlier fleet-vs-tech rule is deliberately not asserted here.
- */
-
 const here = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = resolve(here, "..", "..", "..");
 const contentDir = resolve(repoRoot, "content", "production", "1880");

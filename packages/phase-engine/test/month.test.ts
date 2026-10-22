@@ -120,7 +120,6 @@ describe("MonthExecutor", () => {
     expect(result["success"]).toBe(true);
 
     const gbr = result["finalSnapshot"]["nations"].get("GBR")!;
-    // treasury = 500 + 2000 (revenue) - 100 (command) - appropriation - 50 (obligation)
     expect(gbr["treasury"] as number).toBeLessThan(500 + 2000);
 
     const proj1 = gbr["constructionProjects"].find((p) => p["id"] === "proj-1")!;
@@ -137,7 +136,6 @@ describe("MonthExecutor", () => {
     const gbr = result["finalSnapshot"]["nations"].get("GBR")!;
 
     const treasury = gbr["treasury"] as number;
-    // 500 + 2000 (revenue) - 100 (command) = 2400, then appropriation + obligation
     expect(treasury).toBeLessThanOrEqual(500 + 2000 - 100);
     expect(treasury).toBeGreaterThanOrEqual(0);
   });
@@ -306,8 +304,6 @@ describe("MonthExecutor", () => {
     }
   });
 
-  // --- New B10a tests ---
-
   it("credits monthly revenue from baseResources", () => {
     const executor = new MonthExecutor();
     const snapshot = createSnapshot();
@@ -316,9 +312,6 @@ describe("MonthExecutor", () => {
     const result = executor.execute(snapshot, [], "seed", collector);
     const gbr = result["finalSnapshot"]["nations"].get("GBR")!;
 
-    // revenue = 120000 * 2000 / 120000 = 2000
-    // construction takes everything the two projects can still absorb (150 + 100 = 250; no treasury-unit cap)
-    // treasury = 500 + 2000 - 250 (appropriation) - 50 (obligation) = 2200
     expect(gbr["treasury"] as number).toBe(2200);
     expect(result["success"]).toBe(true);
   });
@@ -362,9 +355,6 @@ describe("MonthExecutor", () => {
     const result = executor.execute(snapshot, [], "seed", collector);
     const finalGbr = result["finalSnapshot"]["nations"].get("GBR")!;
 
-    // maintenance = floor(100 * 10 / 100) = 10
-    // revenue = 120000 * 2000 / 120000 = 2000
-    // treasury = 10000 + 2000 - 250 (appropriation) - 10 (maintenance) - 50 (obligation) = 11690
     expect(finalGbr["treasury"] as number).toBe(11690);
     expect(finalGbr["maintenanceCost"] as number).toBe(10);
     expect(result["success"]).toBe(true);
@@ -401,7 +391,6 @@ describe("MonthExecutor", () => {
     expect(completedProj["status"]).toBe("COMPLETED");
     expect(completedProj["completedWork"] as number).toBe(100);
 
-    // A fleet should have been created with the new ship
     expect(finalGbr["fleets"].length).toBeGreaterThan(0);
     const fleet = finalGbr["fleets"][0];
     expect(fleet["ships"].length).toBe(1);
@@ -413,7 +402,6 @@ describe("MonthExecutor", () => {
     const executor = new MonthExecutor();
     const snapshot = createSnapshot();
     const collector = new DiagnosticCollector();
-    // Deny monthly_revenue its treasury write; its runtime footprint requires it.
     const overrides = new Map([
       ["monthly_revenue", { ...PhaseRegistry.getById("monthly_revenue")!, writePermissions: [] }],
     ]);
@@ -424,7 +412,6 @@ describe("MonthExecutor", () => {
 
     expect(result.success).toBe(false);
     expect(collector.errors.some((d) => d.code === "PHASE_ACCESS_DENIED")).toBe(true);
-    // Fail-closed: the denied phase did not run, so revenue was never applied.
     const gbr = result.finalSnapshot.nations.get("GBR")!;
     expect(gbr.treasury as number).toBe(500);
   });
@@ -438,8 +425,6 @@ describe("MonthExecutor", () => {
 
     expect(result.success).toBe(true);
     expect(collector.errors.some((d) => d.code === "PHASE_ACCESS_DENIED")).toBe(false);
-    // Every phase's authoritative footprint sits within its declared permissions,
-    // so a well-formed run is never denied at runtime.
     for (const phase of PhaseRegistry.all) {
       const footprint = PHASE_FOOTPRINTS[phase.id];
       expect(footprint, phase.id).toBeDefined();
@@ -451,7 +436,6 @@ describe("MonthExecutor", () => {
     const executor = new MonthExecutor();
     const snapshot = createSnapshot();
     const gbr = snapshot["nations"].get("GBR")!;
-    // The treasury holds only the obligation reserve => nothing is left to appropriate
     gbr.baseResources = SafeInt(0);
     gbr.treasury = gbr.expenses;
     gbr.constructionProjects = [
@@ -474,7 +458,6 @@ describe("MonthExecutor", () => {
     const finalGbr = result["finalSnapshot"]["nations"].get("GBR")!;
 
     const project = finalGbr["constructionProjects"].find((p) => p["id"] === "proj-no-funds")!;
-    // No payment allocated => no progress
     expect(project["completedWork"] as number).toBe(0);
     expect(project["paidWork"] as number).toBe(0);
     expect(project["status"]).toBe("PLANNED");
@@ -533,10 +516,6 @@ describe("MonthExecutor", () => {
 
     const ger = result["finalSnapshot"]["nations"].get("GER")!;
     expect(ger).toBeDefined();
-    // GER revenue = 60000 * 2000 / 120000 = 1000
-    // the whole 150-unit project is funded (AI budget plus appropriation; no treasury-unit cap)
-    // and the obligation subtracts 20:
-    // treasury = 300 + 1000 - 150 (construction) - 20 (obligation) = 1130
     expect(ger["treasury"] as number).toBe(1130);
     expect(ger["constructionProjects"].length).toBe(1);
   });
@@ -575,7 +554,6 @@ describe("MonthExecutor", () => {
     const result = executor.execute(snapshot, [], "seed", collector);
     const finalGbr = result["finalSnapshot"]["nations"].get("GBR")!;
 
-    // rich treasury, plenty of remaining work: each project still moves only 4 units a month
     const gained = finalGbr["constructionProjects"].map(
       (p, i) => (p["completedWork"] as number) - (i === 0 ? 0 : 10),
     );

@@ -1,24 +1,6 @@
 import { Schema } from "effect";
 import { ProvenanceSchema } from "./provenance.js";
 
-/**
- * Content schema for the first-class armament catalogue (ADR-0093, national armament integration
- * Step 2). Four separately authored collections live under
- * `content/production/<scenario>/ship-building/armament/`:
- *
- * - `gun-families.yaml`  — shared physical/technical families (never duplicated per nation);
- * - `gun-models.yaml`    — national models that reference a shared family;
- * - `gun-mounts.yaml`    — the mount catalogue, kept separate from the gun model;
- * - `ammunition.yaml`    — national ammunition patterns.
- *
- * Every numeric field names its unit (`caliberUm`, `gunMassKg`, `shellMassG`, `...UmPerSec`,
- * `...Bp`, `...KgM`, `...Litre`, `...Mm`, `...Deg`). Unknown fields are rejected at decode
- * (`onExcessProperty: "error"`), so an ambiguous field such as `weight`, `speed`, `rate`, `range`
- * or `size` is rejected rather than silently accepted. Structural authority only: cross-references,
- * ranges and provenance completeness are enforced by `lintArmament` in `@bluewave/armament` and the
- * ship-design release wrapper.
- */
-
 const ID_RE = /^[a-z][a-z0-9_]*$/;
 const id = Schema.String.check(
   Schema.isPattern(ID_RE, { message: "must be a canonical lower snake_case id" }),
@@ -45,7 +27,6 @@ export const GunFamilySchema = Schema.Struct({
   id,
   designation: Schema.NonEmptyString,
   category: Schema.Literals(GUN_CATEGORY_VALUES),
-  /** The canonical installation a family is fielded in when a national model does not override it. */
   defaultMountType: Schema.Literals(MOUNT_TYPE_VALUES),
   provenance: ProvenanceSchema,
 });
@@ -57,7 +38,6 @@ export const GunFamilyCatalogueSchema = Schema.Struct({
 export const GunModelSchema = Schema.Struct({
   id,
   familyId: Schema.NonEmptyString,
-  /** The nation that fields this model. Purely data; the resolver has no nation-id branch. */
   nationId: Schema.NonEmptyString,
   designation: Schema.NonEmptyString,
   caliberUm: Schema.optional(positiveInt),

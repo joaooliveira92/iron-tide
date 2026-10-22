@@ -18,10 +18,6 @@ import { buildContentBundleArtifact, buildFullSurfaceInput } from "@bluewave/con
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 
-// N-1 ticket 07 (ADR-0224): the authored 1880 divisions must load from the
-// compiled production snapshot as valid DESIGN-26 permanent divisions. This test
-// compiles the canonical pack and asserts every seeded division satisfies
-// `assertDivisionInvariants` against its nation's real ships.
 const thisDir = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(thisDir, "..", "..", "..");
 const PRODUCTION_PACK = resolve(REPO_ROOT, "content", "production", "1880");
@@ -63,9 +59,6 @@ function divisionAssets(
   return division.shipOrder.map((shipId) => {
     const ship = byId.get(shipId);
     if (ship === undefined) throw new Error(`division references unknown ship ${shipId}`);
-    // A ship may carry no compiled design at all (unlinked content). The
-    // invariant check only needs a coarse canonical type, so those ships use
-    // the BB bucket.
     const design =
       ship.designVersionId === undefined ? undefined : designs.get(ship.designVersionId);
     let shipType: CanonicalShipType = "BB";

@@ -1,13 +1,3 @@
-// The production parts compile boundary (ship-part-model ticket 11d, AC 7). A design carried as
-// a `DesignHeader` + `DesignLoadout` compiles through `compileDesignFromLoadout`: each referenced
-// part is resolved once, `validateLoadoutFit` runs first, and `compileResolved` is reached only
-// through `deriveAfterFit`. An invalid loadout exposes fit information and no derived metric, so
-// no production caller can obtain metrics for a loadout that does not fit.
-//
-// The fit validates the same part records the resolver reads, and the ledger is derived from
-// those records: a part's quantity edited in the model reaches the compiled component weight,
-// and a part's lifecycle edited in the model is what the fit rejects.
-
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
@@ -75,11 +65,6 @@ const loadouts: ReferenceDesignLoadoutData[] = readdirSync(join(shipBuilding, "d
 const model = buildProductionPartModel({ parts, slotTemplates, platforms });
 const legacyById = new Map(readReferenceDesignEntries().map((d) => [d.id, d] as const));
 
-/**
- * Drop the compiled-torpedo contract (and the design hash that covers it) before comparing to
- * the legacy compile: the parts pipeline resolves the neutral `CompiledTorpedo` onto each tube
- * mount, and the legacy path has no parts to compile.
- */
 function stripCompiledTorpedo(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stripCompiledTorpedo);
   if (value !== null && typeof value === "object") {
@@ -185,7 +170,6 @@ describe("production compile from a parts loadout (ticket 11d)", () => {
     const baseline = compile(loadout);
     expect(baseline.status).toBe("ACCEPTED");
     if (baseline.status !== "ACCEPTED") return;
-    // A quantity the ledger reads, on a part the entry mounts once, so the expectation is exact.
     const entry = loadout.loadout.entries.find((e) => {
       if ((e.mountCount ?? 1) !== 1) return false;
       const part = model.partOf(e.part);

@@ -12,7 +12,6 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { MonthExecutor } from "@bluewave/phase-engine";
 import { compileProductionCampaign } from "./economy-scenarios.helper.js";
 
-// Economy spec #138: golden worked examples from the shipped 1880 pack, read through the shared calculators.
 describe("1880 production economy start state", () => {
   const { state, diagnostics } = compileProductionCampaign();
 
@@ -56,7 +55,6 @@ describe("1880 production economy start state", () => {
   });
 
   it("falls short for the first time exactly one month after its closed-form runway", () => {
-    // Portugal has no seeded construction, so nothing but the structural deficit can exhaust its treasury.
     const portugal = state.snapshot.nations.get("portugal")!;
     expect(portugal.constructionProjects).toEqual([]);
     const predicted = runwayMonths(portugal.treasury, flows("portugal").net)! + 1;
@@ -92,7 +90,6 @@ describe("1880 production economy start state", () => {
   });
 });
 
-// Economy spec #138 slice 4: seeded 1880 projects are materialised with packages and yard throughput.
 describe("1880 seeded construction projects", () => {
   const { state, diagnostics } = compileProductionCampaign();
   const seeded = [...state.snapshot.nations.values()].flatMap((n) =>
@@ -132,7 +129,6 @@ describe("1880 seeded construction projects", () => {
   });
 });
 
-// Twelve executed months for the three worked examples: every month's requested lines are the spec's figures.
 describe("12-month worked examples (GB, France, Portugal)", () => {
   const { state } = compileProductionCampaign();
   const expected: Record<
@@ -170,7 +166,6 @@ describe("12-month worked examples (GB, France, Portugal)", () => {
   });
 });
 
-// Economy spec #138 / #143 against the real shipped pack (no synthetic recreation).
 describe("1880 production research", () => {
   const { state, diagnostics } = compileProductionCampaign();
   const nations = [...state.snapshot.nations.values()];
@@ -188,7 +183,6 @@ describe("1880 production research", () => {
 
   it("reports RESEARCH_BELOW_RESOLUTION as info for exactly Japan, the Netherlands, Portugal, Qing and Brazil", () => {
     const expected = ["brazil", "japan", "netherlands", "portugal", "qing"];
-    // The set is also what the data says: a nation with an authored allocation that floors to zero a month.
     const derived = nations
       .filter(
         (n) =>
@@ -216,9 +210,6 @@ describe("1880 production research", () => {
     }
   });
 
-  // The ticket says NO_ELIGIBLE_RESEARCH_FIELD "is a test failure in the shipped pack for any nation with a standing budget";
-  // ADR-0230 section 7 makes the same code an info diagnostic the engine raises at runtime. Both hold: the engine stays
-  // informational, and this test is the failure the ticket asks for, so the shipped pack must never trigger it.
   it("gives every nation with a standing budget an eligible research field in the shipped catalogue", () => {
     const catalogue = technologyCatalogueOf(state.snapshot);
     expect(catalogue.size).toBeGreaterThan(0);

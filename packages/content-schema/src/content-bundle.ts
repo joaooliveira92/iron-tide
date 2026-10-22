@@ -33,13 +33,6 @@ import {
 import { CompiledPartModelSchema, ReferenceDesignLoadoutSchema } from "./ship-parts.js";
 import { TechnologyPrerequisiteChainSchema } from "./technology.js";
 
-/**
- * The compiled content bundle's own schema (CAH-SCH-3). The artifact boundary
- * decodes a hash-verified bundle through this schema instead of asserting its
- * shape, so the boundary's type is earned and schema/artifact drift fails
- * closed. Each collection reuses the same strict schema the compiler validated
- * it with; the ship-building `balance` mapping is opaque authored data.
- */
 const ShipBuildingCatalogueSchema = Schema.Struct({
   components: Schema.Array(ShipComponentSchema),
   plants: Schema.Array(PropulsionPlantSchema),
@@ -53,9 +46,7 @@ const ShipBuildingCatalogueSchema = Schema.Struct({
     ammunition: Schema.Array(AmmunitionPatternSchema),
   }),
   referenceDesigns: Schema.Array(ReferenceDesignSchema),
-  /** Present only when the pack declares part-model content (ship-part-model ticket 02). */
   partModel: Schema.optional(CompiledPartModelSchema),
-  /** Authoritative reference designs in the parts representation (ship-part-model ticket 11d). */
   designLoadouts: Schema.optional(Schema.Array(ReferenceDesignLoadoutSchema)),
 });
 
@@ -66,7 +57,6 @@ const CampaignCollectionsSchema = Schema.Struct({
   diplomacy: Schema.Array(CampaignDiplomacySchema),
   research: Schema.Array(CampaignResearchSchema),
   designs: Schema.Array(CampaignDesignSchema),
-  /** Present only when the pack declares authored divisions (N-1 ticket 07). */
   divisions: Schema.optional(Schema.Array(CampaignDivisionSchema)),
 });
 

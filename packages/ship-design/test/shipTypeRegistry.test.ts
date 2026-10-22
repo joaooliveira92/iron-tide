@@ -24,14 +24,6 @@ import {
   type ClassFacts,
 } from "../src/index.js";
 
-/**
- * The compiled ship-type registry is authoritative (ADR-0156, ship-part-model ticket 12b).
- * The classification precedence and the availability facts come from content; `naturalClass`
- * follows the authored order and falls back to the code order when a context carries no records.
- * The 12a regression already pins every record field equal to `SHIP_TYPES`, so behaviour is
- * identical until a record's precedence is changed.
- */
-
 const path = join(
   import.meta.dirname,
   "..",
@@ -70,7 +62,6 @@ const facts = (over: Partial<ClassFacts> = {}): ClassFacts => ({
   ...over,
 });
 
-/** Swap the two cruisers' precedence so content order differs from the code default. */
 function swappedCruisers(): ShipTypeRecord[] {
   return records.map((record) => {
     if (record.id === "CL")
@@ -97,7 +88,6 @@ describe("the compiled ship-type registry (ticket 12b)", () => {
   });
 
   it("takes the natural-classifier order from content precedence", () => {
-    // These facts satisfy both CL and KE; the code default picks CL, the swapped content KE.
     const both = facts();
     expect(naturalClass(both, DESIGN_22_EARLY)).toBe("CL");
     expect(

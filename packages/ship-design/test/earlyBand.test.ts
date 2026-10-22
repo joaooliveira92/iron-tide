@@ -46,7 +46,7 @@ describe("EARLY-band content integrity", () => {
   it("every component, plant and hull form passes its schema", () => {
     expect(components.length).toBeGreaterThanOrEqual(20);
     expect(plants.length).toBeGreaterThanOrEqual(3);
-    expect(hullRecords).toHaveLength(5); // + merchant_liner_form (ADR-0088)
+    expect(hullRecords).toHaveLength(5);
   });
   it("the catalogue lints clean against the real 1880 technology ids", () => {
     expect(lintCatalogue(components, techIds)).toEqual([]);
@@ -140,12 +140,9 @@ describe("calibration against sourced ships", () => {
     expect(hullShare("torpedo_boat_form", 54.9, 5.64, 4.0, 244_000)).toBeCloseTo(33, 0);
   });
   it("the merchant-liner hull fraction reproduces White 1894's passenger-steamer 47.6 % (formBp 13400)", () => {
-    // White's worked steel passenger-steamer: 500 ft (152.4 m), 12,500 t load displacement, hull+outfit 5,950 t = 47.6 %.
-    // Sources: docs/research/ship-building-merchant-liner.md sections 3 and 9.
     expect(hullShare("merchant_liner_form", 152.4, 16.46, 12.19, 12_500_000)).toBeCloseTo(47.6, 0);
   });
   it("the merchant-liner Admiralty coefficient sits inside the sourced 25,000-29,000 liner range", () => {
-    // Etruria 14,000 ihp / 18.8 kn, Campania ~30,000 ihp / 22 kn, City of Paris 18,500 ihp: C2 x100 ~25,000-29,000.
     const c = ship.machinery.cFormX100.merchant_liner_form!;
     expect(c).toBeGreaterThanOrEqual(25_000);
     expect(c).toBeLessThanOrEqual(29_000);
@@ -168,7 +165,7 @@ describe("calibration against sourced ships", () => {
       requiredSpeedMilliKnots: 10_000,
       requiredRangeNm: 0,
     } satisfies MachineryInput;
-    return requiredKw(i, ship.machinery, knots * 1000) / 0.7457; // ihp
+    return requiredKw(i, ship.machinery, knots * 1000) / 0.7457;
   };
   const cases: [string, string, number, number, number, number][] = [
     ["Royal Sovereign", "pre_dreadnought_form", 115.8, 14_200, 16.77, 9_760],

@@ -53,7 +53,6 @@ function battery(): GunneryBattery {
 
 describe("AC-11 integration boundary (INC-4)", () => {
   it("BattleResolver and StrengthCalculator remain exported and unmodified", () => {
-    // The B-3 slice must NOT touch the battle-resolution path (AC-11, AC-15).
     expect(typeof BattleResolver).toBe("function");
     expect(typeof StrengthCalculator).toBe("function");
   });

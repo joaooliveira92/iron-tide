@@ -20,12 +20,10 @@ export const EFFECT_CLAMP_MIN = 7_500;
 export const EFFECT_CLAMP_MAX = 12_500;
 export const VACANT_COMMANDER_MULTIPLIER_BP = 9_000;
 
-// DESIGN-26 §15 DD scout threshold.
 export const DD_SCOUT_DISPLACEMENT_KG_MIN = 1_500_000;
-export const DD_SCOUT_SPEED_UMS_MIN = 15_433_320; // 30 knots
+export const DD_SCOUT_SPEED_UMS_MIN = 15_433_320;
 export const DD_SCOUT_READINESS_MIN = 60;
 
-// DESIGN-26 §19 tactical division.
 export interface TacticalDivision {
   tacticalDivisionId: string;
   battleId: string;
@@ -45,7 +43,6 @@ export interface TacticalDivision {
   recordHash: string;
 }
 
-// DESIGN-26 §16 division_effects_v1 formulas. All inputs explicit basis points.
 export interface DivisionEffectsInput {
   experience: number;
   cohesion: number;
@@ -80,7 +77,6 @@ function clampBp(v: number): number {
   return v;
 }
 
-// DESIGN-26 §17 formation legality.
 export interface FormationLegalityContext {
   role: DivisionRole;
   shipCount: number;
@@ -120,7 +116,6 @@ export function assertFormationLegality(
   }
 }
 
-// DESIGN-26 §14 role eligibility.
 export function roleEligibility(role: DivisionRole, shipType: CanonicalShipType): boolean {
   switch (role) {
     case "CORE":
@@ -155,7 +150,6 @@ export function assertRoleEligibility(
   }
 }
 
-// DESIGN-26 §15 destroyer scout threshold.
 export interface DdScoutContext {
   displacementKg: number;
   designedSpeedUms: number;
@@ -173,8 +167,6 @@ export function isDdScoutEligible(ctx: DdScoutContext): boolean {
 
 export type { PermanentDivision as CampaignPermanentDivision };
 
-// DESIGN-26 §20-22: project a permanent division onto battle-local tactical
-// divisions. This is a pure projection that never mutates campaign membership.
 export interface ProjectionResult {
   tacticalDivisions: TacticalDivision[];
   adjustments: { divisionId: string; reason: string; shipId: string }[];

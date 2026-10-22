@@ -26,16 +26,6 @@ import {
   rebuildBulgeRequired,
 } from "./refitRules.js";
 
-/**
- * Canonical application of a StartRebuild command (ADR-0078, DESIGN-23 sections 17-22). The new draft is compiled
- * authoritatively and checked as a rebuild (`rebuild_validation_v1`: retained-hull limits and a dock), not as new
- * construction. A legal rebuild registers the new design version, makes the ship UNAVAILABLE for the whole project and
- * starts a REBUILD project whose work is the new design's packages without the retained hull and the launch. Funding then
- * works exactly as for new construction (ADR-0077). A refused rebuild leaves the snapshot untouched.
- *
- * Not modelled (recorded in ADR-0078, not guessed): damage and defects, the old fittings' removal work, remaining
- * service life, and cancellation settlement. Completion (the ship becoming the new design) is a later slice.
- */
 export function applyStartRebuild(
   currentSnapshot: CampaignSnapshot,
   body: StartRebuildCommand,
@@ -90,9 +80,6 @@ export function applyStartRebuild(
   if (draftChangeKinds(oldDraft, draft, (id) => categories.get(id)).length === 0)
     return fail("REBUILD_REJECTED", "The rebuild changes nothing");
 
-  // The manual's armament-change conditions (SB3-R26): a rebuild may only re-batter guns the way the
-  // reference allows, and a bulge (SB3-R25) must actually grow the hull. Both are validated before the
-  // rebuild report, so a gun swapped illegally or a bulge without a blister is refused atomically.
   const armamentBlocking = rebuildArmamentFindings(oldDraft, draft, content, month).filter(
     (f) => f.severity === "BLOCKING" || f.severity === "CRITICAL",
   );

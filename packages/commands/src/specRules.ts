@@ -11,8 +11,6 @@ import type {
 } from "./types.js";
 import { TERMINAL_STATUSES } from "./types.js";
 
-// --- Spec-compliant command record / result construction and invariants ---
-
 export function createCommandRecord(
   envelope: CommandEnvelope<CommandBody>,
   definition: CommandTypeDefinition,
@@ -96,7 +94,6 @@ export function checkCancellationWindow(
   if (def.cancellationPolicyId === "UNTIL_IRREVERSIBLE_PHASE") {
     if (currentPhaseId === def.irreversiblePhaseId)
       return { allowed: false, reasonCode: "IRREVERSIBLE_EFFECT_ALREADY_APPLIED" };
-    // also check status
     const allowed: CommandStatus[] = [
       "SUBMITTED",
       "VALIDATED",
@@ -110,7 +107,6 @@ export function checkCancellationWindow(
       return { allowed: false, reasonCode: "CANCELLATION_WINDOW_CLOSED" };
     return { allowed: true, reasonCode: "COMMAND_CANCELLED" };
   }
-  // CUSTOM_EXPLICIT: no handler branch is wired, so fail closed as not-allowed.
   return { allowed: false, reasonCode: "CANCELLATION_NOT_ALLOWED" };
 }
 
@@ -168,7 +164,6 @@ export function handleImpossibility(
   return { outcome, terminalStatus };
 }
 
-// Architecture validation: direct mutation prohibited
 export function assertNoDirectMutation(caller: string): void {
   const prohibited = [
     "DTO",
@@ -187,13 +182,11 @@ export function assertNoDirectMutation(caller: string): void {
   }
 }
 
-// Failure atomicity
 export function handleInternalFailure(
   command: CommandRecord,
   preHash: string,
   _error: unknown,
 ): CommandResult {
-  // roll back is caller's responsibility; here we produce result
   return produceResult(
     command.commandId,
     "REJECTED",
@@ -204,7 +197,6 @@ export function handleInternalFailure(
   );
 }
 
-// Replay verification
 export function verifyReplay(expected: CommandResult, actual: CommandResult): void {
   if (
     expected.resultHash !== actual.resultHash ||

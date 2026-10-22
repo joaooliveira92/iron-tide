@@ -18,7 +18,6 @@ function tech(
   };
 }
 
-/** A small hand-built research catalogue for fixtures that assemble snapshots without compiling a pack. */
 export const TEST_RESEARCH_CATALOGUE: TechnologyDefinitionData[] = [
   tech("advanced_gunnery", "GUNNERY", 200, 8, ["basic_gunnery"]),
   tech("advanced_hull", "HULL_CONSTRUCTION", 200, 8, ["basic_hull"]),

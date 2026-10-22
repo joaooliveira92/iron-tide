@@ -1,6 +1,3 @@
-// The mutable per-minute torpedo resolution run: shared state, setup, the
-// exhaustion record, STAGE 4 (damage), and the §28-ordered assembly. The launch/
-// advance/hit stages live in ./torpedoStages.js.
 import type { ShipDamageState } from "../damage/state.js";
 import { NO_TARGET_CONTACT } from "./constants.js";
 import type { Position } from "../spotting/detection.js";
@@ -41,8 +38,6 @@ import type {
   TorpedoTargetContext,
 } from "./resolve.js";
 
-/** The §22 neutral modifier manifest (isolation/flooding/protection/fire/
- *  existingDamage — the engine exposes no finer damage-control surface yet). */
 const CHAIN_REACTION_NEUTRAL_MODIFIERS = Object.freeze({
   isolation: TORPEDO_CHAIN_REACTION_NEUTRAL_MODIFIER_BP,
   flooding: TORPEDO_CHAIN_REACTION_NEUTRAL_MODIFIER_BP,
@@ -56,7 +51,6 @@ interface TrackSolution {
   qualityBp: number | null;
 }
 
-/** Mutable per-minute torpedo resolution state, threaded through every stage. */
 export interface TorpedoRun {
   input: ResolveTorpedoesInput;
   battleId: string;
@@ -80,7 +74,6 @@ export interface TorpedoAdvance {
   exhaustOnMiss: Map<string, TorpedoTrack>;
 }
 
-// Input integrity (fail closed on structurally malformed input) + setup.
 export function createTorpedoRun(input: ResolveTorpedoesInput): TorpedoRun {
   const { context } = input;
   const launcherById = new Map<string, TorpedoLauncherWiring>();
@@ -129,7 +122,6 @@ export function createTorpedoRun(input: ResolveTorpedoesInput): TorpedoRun {
   };
 }
 
-// §22 exhaustion record (used by the advance + hit-resolution stages).
 export function recordExhaustion(run: TorpedoRun, track: TorpedoTrack): void {
   run.records.push(
     makeRecord(run.battleId, {
@@ -148,7 +140,6 @@ export function recordExhaustion(run: TorpedoRun, track: TorpedoTrack): void {
   );
 }
 
-// STAGE 4 — DAMAGE (substep 56, §28 level 7 order).
 export function runDamageStage(
   run: TorpedoRun,
   damageQueue: { track: TorpedoTrack; target: TorpedoTargetContext }[],
@@ -157,8 +148,6 @@ export function runDamageStage(
   for (const demand of damageQueue) {
     const { track, target } = demand;
     const state = run.damageStates.get(target.shipId) ?? target.damageState;
-    // §19/§20 pre-evaluation — the package fields carry the SAME keyed draws
-    // the atomic application re-consumes.
     const machinery = target.machinery
       ? evaluateTorpedoMachineryDamage({
           battleId,
@@ -239,7 +228,6 @@ export function runDamageStage(
       }),
     );
 
-    // ---- §21/§22 continuation on a TUBE_BAY severe hit --------------------
     if (result.tubeHazardResult?.severe && target.tubeHazard) {
       const chain = resolveTorpedoChainReaction({
         battleId,
@@ -305,7 +293,6 @@ export function runDamageStage(
   }
 }
 
-// Assemble the §28-ordered, unique-id-asserted resolution.
 export function buildTorpedoResolution(
   run: TorpedoRun,
   continuedTracks: TorpedoTrack[],

@@ -18,7 +18,6 @@ import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 
 import type { ProbeReferenceDesign } from "./decision-probes.js";
 
-/** The committed 1880 production pack every N-3 acceptance seam compiles. */
 export const PRODUCTION_PACK_DIR = resolve(
   fileURLToPath(new URL(".", import.meta.url)),
   "..",
@@ -98,7 +97,6 @@ export function compileProductionCampaign(): {
   return { state: output.state, contentHash: output.contentHash, bundle };
 }
 
-/** The compiled reference designs projected to the decision probe's minimal shape. */
 export function probeReferenceDesigns(
   bundle: CompiledContentBundle,
 ): readonly ProbeReferenceDesign[] {

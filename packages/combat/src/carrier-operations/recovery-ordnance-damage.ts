@@ -1,7 +1,6 @@
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { CARRIER_ORDNANCE_INVENTORY_INSUFFICIENT } from "./reasonCodes.js";
 
-// §26 Recovery priority
 export const RECOVERY_PRIORITY_LEVELS = [
   "EMERGENCY_FUEL",
   "DAMAGED_AIRCRAFT",
@@ -56,7 +55,6 @@ export function canReserveForRecovery(check: RecoveryReservationCheck): boolean 
   return check.carrierHasAlternateLanding;
 }
 
-// §27 Ordnance state
 export interface OrdnanceTransaction {
   ordnanceTypeId: string;
   quantity: SafeInt;
@@ -98,7 +96,6 @@ export function canReturnOrdnanceToStorage(
   return true;
 }
 
-// §28 Deck/hangar damage effects
 export interface DeckHangarDamageEffects {
   spotValueMultiplierBp: number;
   launchRateMultiplierBp: number;

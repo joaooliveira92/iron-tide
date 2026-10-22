@@ -39,9 +39,7 @@ describe("Ambient input audit", () => {
         for (const line of importLines) {
           for (const forbidden of FORBIDDEN_MODULES) {
             if (line.includes(`"${forbidden}"`) || line.includes(`'${forbidden}'`)) {
-              // Allow imports from "node:fs" and "node:path" only in infrastructure packages
               if (pkg === "content-compiler" || pkg === "campaign") {
-                // These are allowed to use node:fs and node:path for I/O at boundaries
                 continue;
               }
               violations.push(`${file}: ${line.trim()}`);

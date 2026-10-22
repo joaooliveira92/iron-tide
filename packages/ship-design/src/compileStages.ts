@@ -1,5 +1,3 @@
-// Focused stages of the design-compile pipeline. Each stage performs one part of
-// DESIGN-22 compilation and reports its findings through the shared list.
 import {
   analyseArrangement,
   ZONE_IDS,
@@ -52,9 +50,6 @@ import { compileWeapons, type ArcObstacle, type GunMount, type WeaponsResult } f
 
 type AmmoMount = WeaponsResult["mounts"][number];
 
-// Stage 1 - technology availability and parameter validity
-// (stage VALIDATE_TECHNOLOGY): resolve each placement against the catalogue,
-// defaulting parameters and evaluating formulas.
 export function resolveDesignComponents(
   draft: DesignDraft,
   ctx: ShipContext,
@@ -131,8 +126,6 @@ export function resolveDesignComponents(
       );
       continue;
     }
-    // The parts read path resolves the tube's compiled torpedo onto the placement; rebuild the
-    // ComponentDef with it so the compiled summary carries the neutral contract (ticket 13b).
     const def: ComponentDef =
       baseDef.category === "TORPEDO_TUBE" &&
       spec.compiledTorpedo !== undefined &&
@@ -208,8 +201,6 @@ export function resolveDesignComponents(
   return resolved;
 }
 
-// Stage 6 - arrangement: turn resolved components (plus machinery rooms and
-// bunkers) into placements and analyse the layout.
 export function buildPlacementsAndArrangement(args: {
   draft: DesignIntent;
   aa: AntiAircraftExpansion;
@@ -343,7 +334,6 @@ export function buildPlacementsAndArrangement(args: {
   return { arrangement, rooms, roomPart };
 }
 
-// Stage 2 - weapons: build gun mounts + arc obstacles and compile the battery.
 export function compileWeaponSet(args: {
   draft: DesignIntent;
   ctx: ShipContext;
@@ -381,8 +371,6 @@ export function compileWeaponSet(args: {
       beamArcDeg: r.attr.beamArcDeg ?? 0,
       feedDistancePermille: magSt === undefined ? 0 : Math.abs(r.spec.stationPermille - magSt),
     };
-    // No first-class armament content (or a nation with none): the documented compatibility path uses
-    // the legacy component values.
     if (!useArmament) return legacy;
     const resolution = resolveInstalledWeapon({
       content: armamentContent!,
@@ -396,8 +384,6 @@ export function compileWeaponSet(args: {
     });
     findings.push(...mapArmamentFindings(resolution.findings, r.spec.instanceId));
     if (resolution.resolved === null) {
-      // A blocking armament error still compiles the legacy mount so the rest of the pipeline behaves as before;
-      // the blocking finding above is what makes the design invalid.
       return legacy;
     }
     const a = resolution.resolved;
@@ -436,7 +422,6 @@ export function compileWeaponSet(args: {
   return { weapons, ammoById, gunRes, armaments };
 }
 
-// Stage 3 - machinery: systems balance, installed power and propulsion plant.
 export function compileSystemsAndMachinery(args: {
   draft: DesignIntent;
   ctx: ShipContext;
@@ -516,8 +501,6 @@ export function compileSystemsAndMachinery(args: {
   return { systems, machineryRaw };
 }
 
-// Stages 4-5 - armour + hull + ledger: guard armour before the hull is sized to
-// break the reserve-buoyancy circular dependency.
 export function compileStructure(args: {
   draft: DesignIntent;
   aa: AntiAircraftExpansion;

@@ -1,26 +1,17 @@
 import { SafeInt } from "@bluewave/contracts";
 
-/**
- * Naval officers (ADR-0065). A nation's officer corps is a deterministic, fictional
- * roster generated from the nation id at compile time: no real person is named, and
- * the same pack always produces the same officers. Each officer has one command
- * rating (`skill`, 30..90) that a division commander adds to gunnery accuracy.
- */
 export interface Officer {
   id: string;
   name: string;
   rank: OfficerRank;
-  /** Command rating, 30..90; 50 is average. */
   skill: SafeInt;
 }
 
 export const OFFICER_RANKS = ["CAPTAIN", "COMMODORE", "REAR_ADMIRAL"] as const;
 export type OfficerRank = (typeof OFFICER_RANKS)[number];
 
-/** Accuracy multiplier (basis points) a division's commander gives its ships. */
 export const OFFICER_ACCURACY_PER_SKILL_BP = 20;
 export const OFFICER_NEUTRAL_SKILL = 50;
-/** Multiplier for a division with no commander (DESIGN-26 vacant-commander penalty). */
 export const VACANT_COMMANDER_ACCURACY_BP = 9_000;
 
 export function officerAccuracyBp(skill: number): number {
@@ -62,13 +53,6 @@ const FAMILY: Record<string, readonly string[]> = {
 const FALLBACK_GIVEN = ["Alex", "Morgan", "Robin", "Casey", "Jordan", "Sam"];
 const FALLBACK_FAMILY = ["Stone", "Reed", "Hale", "Cross", "Marsh", "Vance"];
 
-/**
- * The per-nation officer-corps shape `[captains, commodores, rear admirals]`
- * (N-1 ticket 07, ADR-0224). The *direction* follows 1880 naval standing — the
- * larger naval powers carry a deeper officer corps — while every magnitude is an
- * admitted ADR-0213 `balance_adjustment`, never a sourced fact. The former
- * uniform `[3, 2, 1]` for every nation is removed.
- */
 const ROSTER_SHAPE: Readonly<Record<string, readonly [number, number, number]>> = {
   uk: [5, 3, 1],
   france: [4, 3, 1],
@@ -87,7 +71,6 @@ const ROSTER_SHAPE: Readonly<Record<string, readonly [number, number, number]>> 
 };
 const DEFAULT_ROSTER_SHAPE: readonly [number, number, number] = [2, 2, 1];
 
-/** A small stable hash of a string (FNV-1a), for deterministic skill spread. */
 function fnv(text: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
@@ -97,7 +80,6 @@ function fnv(text: string): number {
   return h >>> 0;
 }
 
-/** The nation's officer corps: a nation-specific rank mix, junior to senior, with a spread of skill. */
 export function buildOfficerRoster(nationId: string): Officer[] {
   const given = GIVEN[nationId] ?? FALLBACK_GIVEN;
   const family = FAMILY[nationId] ?? FALLBACK_FAMILY;

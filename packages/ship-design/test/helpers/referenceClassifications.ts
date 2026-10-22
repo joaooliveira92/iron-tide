@@ -1,10 +1,5 @@
 import type { ReferenceDesignClass } from "../../src/index.js";
 
-/**
- * Explicit historical classification of every starter (ADR-0092 §3): historical ships vs shared doctrine
- * templates. Shared by the completeness gate and the historical-starter promotion test so the two can never
- * disagree about what counts as a reconstruction.
- */
 export const REFERENCE_DESIGN_CLASSIFICATIONS: Record<string, ReferenceDesignClass> = {
   alexandra_1877: "HISTORICAL_RECONSTRUCTION",
   starter_armoured_cruiser_1880: "DOCTRINE_TEMPLATE",
@@ -92,7 +87,6 @@ export const REFERENCE_DESIGN_CLASSIFICATIONS: Record<string, ReferenceDesignCla
   starter_amc_brazil_1880: "DOCTRINE_TEMPLATE",
 };
 
-/** The capital (B) starters promoted from a canonical historical reconstruction, keyed by nation. */
 export const HISTORICAL_B_STARTERS: Readonly<Record<string, string>> = {
   italy: "principe_amedeo_1874",
   russia: "petr_velikiy_1876",
@@ -106,9 +100,4 @@ export const HISTORICAL_B_STARTERS: Readonly<Record<string, string>> = {
   austria_hungary: "kaiser_max_1876",
 };
 
-/**
- * Promoted B starters whose hull was built ABROAD: the ship's displacement may exceed its nation's domestic
- * `maxPracticalDisplacementKg` (the largest hull its own yards can build), because the reference ship is an inherited
- * foreign-built asset, not a new domestic order. The industrial ceiling itself is never inflated (ADR-0119).
- */
 export const FOREIGN_BUILT_B_STARTERS: ReadonlySet<string> = new Set(["vasco_da_gama_1876"]);

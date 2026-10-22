@@ -1,6 +1,3 @@
-// Verifies canonical constants against DESIGN-45 §12/§14/§16/§9 exact values.
-// Also verifies the purity of the effective light-AA window formula.
-
 import { describe, it, expect } from "vite-plus/test";
 import {
   DIRECTOR_SCALING_TABLE,
@@ -55,7 +52,6 @@ describe("AirDefense constants (DESIGN-45)", () => {
     });
 
     it("should produce the §14 effective group count via sum of marginal bp", () => {
-      // 4 × 10_000 + 2 × 5_000 + 2 × 2_500 + 1 × 500 = 40_000 + 10_000 + 5_000 + 500 = 55_500
       const sum = [1, 2, 3, 4, 5, 6, 7, 8, 9]
         .map(radarMediumAaMarginalMultiplierBp)
         .reduce((a, b) => a + b, 0);
@@ -127,13 +123,9 @@ describe("AirDefense constants (DESIGN-45)", () => {
 
   describe("effectiveLightAAWindowMilliseconds (§9 line 178)", () => {
     it("should compute max(1000, floor(base * bp / 10000)) deterministically", () => {
-      // 120_000 ms base, 10_000 bp → exactly 120_000 ms
       expect(effectiveLightAAWindowMilliseconds(120_000, 10_000)).toBe(120_000);
-      // 120_000 ms base, 5_000 bp → 60_000 ms
       expect(effectiveLightAAWindowMilliseconds(120_000, 5_000)).toBe(60_000);
-      // floor of a non-integer result
       expect(effectiveLightAAWindowMilliseconds(60_000, 7_500)).toBe(45_000);
-      // clamping to the 1_000 ms floor
       expect(effectiveLightAAWindowMilliseconds(100, 10_000)).toBe(1_000);
     });
 

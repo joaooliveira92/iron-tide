@@ -1,20 +1,12 @@
-/**
- * Structured resolution findings (ADR-0093). The resolver never throws for expected invalid content
- * or combinations; it returns findings. Findings carry a stable rule code, the affected entity and
- * field, machine-readable parameters and a user-facing explanation, and have a deterministic order.
- */
-
 export const ARMAMENT_FINDING_SEVERITIES = ["BLOCKING", "WARNING", "ADVISORY"] as const;
 export type ArmamentFindingSeverity = (typeof ARMAMENT_FINDING_SEVERITIES)[number];
 
-/** Deterministic severity order: BLOCKING first, ADVISORY last. */
 export const ARMAMENT_SEVERITY_ORDER: readonly ArmamentFindingSeverity[] = [
   "BLOCKING",
   "WARNING",
   "ADVISORY",
 ];
 
-/** The stable rule codes the resolver can emit. */
 export const ARMAMENT_FINDING_CODES = [
   "ARMAMENT_ID_INVALID",
   "ARMAMENT_ID_DUPLICATE",
@@ -40,7 +32,6 @@ export const ARMAMENT_FINDING_CODES = [
 ] as const;
 export type ArmamentFindingCode = (typeof ARMAMENT_FINDING_CODES)[number];
 
-/** The entity a finding is about. */
 export const ARMAMENT_ENTITY_KINDS = [
   "armament",
   "gunFamily",
@@ -59,14 +50,10 @@ export type ArmamentParameterValue = string | number | boolean;
 
 export interface ArmamentResolutionFinding {
   readonly severity: ArmamentFindingSeverity;
-  /** Stable rule code; wording may change, the code must not. */
   readonly code: ArmamentFindingCode;
   readonly entity: ArmamentEntityRef;
-  /** The affected field, or "" for a whole-entity finding. */
   readonly field: string;
-  /** Machine-readable parameters for the finding. */
   readonly parameters: Readonly<Record<string, ArmamentParameterValue>>;
-  /** User-facing explanation. */
   readonly message: string;
 }
 
@@ -78,10 +65,6 @@ const parameterKey = (p: Readonly<Record<string, ArmamentParameterValue>>): stri
     .map((k) => `${k}=${String(p[k])}`)
     .join("|");
 
-/**
- * Deterministic finding order: severity, then rule code, then entity, then field, then parameters.
- * Repeated resolution of the same input therefore yields byte-equivalent output.
- */
 export function sortArmamentFindings(
   findings: readonly ArmamentResolutionFinding[],
 ): ArmamentResolutionFinding[] {

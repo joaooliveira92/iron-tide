@@ -13,10 +13,6 @@ import type {
 
 export type PredicateResult = { predicateId: string; passed: boolean; reasonCode?: string };
 
-/**
- * Build the rejected outcome for a payload validation failure (diagnostic stage
- * `validate`, snapshot hash recomputed from the snapshot under validation).
- */
 export function rejectValidation(
   envelope: CommandEnvelope<CommandBody>,
   snapshot: CampaignSnapshot,
@@ -46,7 +42,6 @@ export function createValidationRecord(
   let diagnosticReasonCodes: string[] = [];
   if (failed.length > 0) {
     diagnosticReasonCodes = failed.map((f) => f.reasonCode ?? "UNKNOWN").sort();
-    // select primary by explicit priority, then ascending reason code
     let best: PredicateResult | undefined;
     let bestPriority = Infinity;
     for (const f of failed) {
@@ -78,7 +73,6 @@ export function createValidationRecord(
   return { ...rec, validationRecordHash: sha256Hex(canonicalSerialize(rec)) };
 }
 
-// Pure validation - MUST NOT mutate state, reserve, consume RNG, or advance execution
 export function pureValidate(
   command: CommandRecord,
   definition: CommandTypeDefinition,
@@ -86,7 +80,6 @@ export function pureValidate(
   snapshotHash: string,
   predicates: Array<(cmd: CommandRecord, snap: unknown) => PredicateResult>,
 ): CommandValidationRecord {
-  // snapshot is read-only; we verify we don't mutate by hashing before/after
   const before = sha256Hex(canonicalSerialize(snapshot));
   const results = predicates.map((p) => p(command, snapshot));
   const after = sha256Hex(canonicalSerialize(snapshot));

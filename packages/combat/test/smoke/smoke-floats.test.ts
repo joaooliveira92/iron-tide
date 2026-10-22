@@ -111,7 +111,6 @@ describe("deploySmokeFloat", () => {
 
   it("deployment at stern position", () => {
     const { cloud } = deploySmokeFloat([1000, 2000], 3, "ship-456", "PLAYER_1", 150, 0);
-    // Stern position: 50m aft (negative Y)
     expect(cloud.centroidPosition).toEqual([1000, 1950]);
   });
 

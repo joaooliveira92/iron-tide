@@ -1,9 +1,3 @@
-// The production forward adapter and compile entry point (ship-part-model ticket 17a). A player
-// design is carried as a `DesignDraft`; `draftToLoadout` turns it into the parts representation and
-// `compileDraftFromParts` compiles it through the same barrier as the reference designs. The
-// round-trip proof: the same draft compiles byte-identically through the barrier and through the
-// legacy `compileDesign`.
-
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { FlattenedPartSchema, decodeStrict, type FlattenedPart } from "@bluewave/content-schema";
@@ -57,11 +51,6 @@ const content: DraftCompileContent = {
   parts: productionParts,
 };
 
-/**
- * Drop the compiled-torpedo contract (and the design hash that covers it) before comparing to
- * the legacy compile: the production parts carry the torpedo a launcher loads, the legacy draft
- * does not. Every other field must still be identical.
- */
 function stripCompiledTorpedo(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stripCompiledTorpedo);
   if (value !== null && typeof value === "object") {
@@ -134,8 +123,6 @@ describe("draft → loadout → parts barrier (ticket 17a)", () => {
     expect(result.status).toBe("REJECTED");
     if (result.status === "ACCEPTED") return;
     expect(result.findings.map((f) => f.id)).toContain("FIT_TECHNOLOGY_LOCKED");
-    // The legacy compile rejects the same draft through the same technology ids, so the barrier is
-    // at least as strict on this axis.
     const legacy = compileDesign(draft, ctx);
     expect(legacy.valid).toBe(false);
     expect(legacy.findings.map((f) => f.id)).toContain("TECH_UNAVAILABLE");

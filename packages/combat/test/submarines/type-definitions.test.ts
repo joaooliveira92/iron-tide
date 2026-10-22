@@ -1,11 +1,3 @@
-// AC-2 (INC-1): SubmarineTypeDefinition (DESIGN-34 §4). All five canonical
-// types ship (COASTAL/MEDIUM_RANGE/LONG_RANGE/MINELAYING/MISSILE) with every §4
-// field (range class, remote-efficiency profile, ASW-vulnerability profile,
-// mission eligibility, base-support requirement, tactical projection, technology
-// prerequisites) + content version + deterministic content hash. §1 mapping:
-// MISSILE -> PERSISTENT_UNIT, the rest -> TYPED_FLOTILLA_POOL. §9 remote-
-// efficiency and §10 long-range ASW-vulnerability tables are DESIGN-34-exact.
-// A missing/invalid/tampered field fails closed with SUBMARINE_STATE_INVARIANT_FAILED.
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError } from "@bluewave/contracts";
 import {

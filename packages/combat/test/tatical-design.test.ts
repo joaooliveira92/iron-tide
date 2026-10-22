@@ -53,15 +53,15 @@ describe("DESIGN-38 focused", () => {
   });
   it("4: quantize ceiling + 100ms cutoff, next-minute rollover", () => {
     expect(quantizeCommand(0)).toMatchObject({ effectiveSubstep: 0 });
-    expect(quantizeCommand(1)).toMatchObject({ effectiveSubstep: 1 }); // ceil(0.001)=1
+    expect(quantizeCommand(1)).toMatchObject({ effectiveSubstep: 1 });
     expect(quantizeCommand(1000, { arrivedBeforeCutoff: true })).toMatchObject({
       effectiveSubstep: 1,
     });
     expect(quantizeCommand(1000, { arrivedBeforeCutoff: false })).toMatchObject({
       effectiveSubstep: 2,
     });
-    expect(quantizeCommand(950)).toMatchObject({ effectiveSubstep: 2, wasAfterCutoff: true }); // >900
-    expect(quantizeCommand(60_000)).toMatchObject({ effectiveMinute: 1, effectiveSubstep: 0 }); // final cutoff
+    expect(quantizeCommand(950)).toMatchObject({ effectiveSubstep: 2, wasAfterCutoff: true });
+    expect(quantizeCommand(60_000)).toMatchObject({ effectiveMinute: 1, effectiveSubstep: 0 });
   });
   it("5+7: record + FSM 8 states, no EXECUTING before ACK", () => {
     let r = createCommandRecord({
@@ -105,7 +105,7 @@ describe("DESIGN-38 focused", () => {
     expect(getBaseDelay("early_radio")).toBe(2);
     expect(getBaseDelay("mature_radio")).toBe(1);
     expect(getBaseDelay("data_link")).toBe(0);
-    expect(getBaseDelay("flag", { isAlliedRequest: true, relayHops: 1 })).toBe(5); // 2+2+1
+    expect(getBaseDelay("flag", { isAlliedRequest: true, relayHops: 1 })).toBe(5);
   });
   it("13: failure clamp 0..10_000, keyed stream battle/command/path/transmission", () => {
     expect(
@@ -115,7 +115,7 @@ describe("DESIGN-38 focused", () => {
     const e = new RandomEngine("seed");
     const s1 = e.stream("battle/command/path/transmission:b1:c1:flag:0");
     const s2 = e.stream("battle/command/path/transmission:b1:c1:flag:0");
-    expect(s1.next()).toBe(s2.next()); // domain-separated, deterministic
+    expect(s1.next()).toBe(s2.next());
   });
   it("16: fog-of-war leak -> TACTICAL_FOG_OF_WAR_VIOLATION", () => {
     expect(() => validateTargetOrder("unknown", new Map())).toThrow(
@@ -125,7 +125,6 @@ describe("DESIGN-38 focused", () => {
   it("18-19: full-speed >=9_500bp, vibration strictly >25kts", () => {
     expect(isFullSpeedStress(9500, 10000)).toBe(true);
     expect(isFullSpeedStress(9499, 10000)).toBe(false);
-    // vibration eligibility is checked inside evaluateStress only when speedKnots>25 (not >=)
   });
   it("20-23: turn-away reversal 180° [A,B,C,D]->[D,C,B,A], interval clamp 1-4, nominal 1m", () => {
     const m = executeManeuver(["A", "B", "C", "D"], 0, "PORT");
@@ -144,7 +143,7 @@ describe("DESIGN-38 focused", () => {
         damageMultiplierBp: 40_000,
         confusionMultiplierBp: 40_000,
       }),
-    ).toBe(4); // clamp
+    ).toBe(4);
   });
   it("24-25: confusion 1_500 base, modifiers, weights 10_000, no direct damage", () => {
     expect(computeConfusionProbabilityBp({})).toBe(1_500);
@@ -179,7 +178,6 @@ describe("DESIGN-38 focused", () => {
     l1.append(e);
     l2.append(e);
     expect(l1.hash()).toBe(l2.hash());
-    // ordering
     const l = new BattleLedger();
     l.append({ ...e, minute: 1, eventId: "e2" } as any);
     l.append({ ...e, minute: 0, eventId: "e1" } as any);

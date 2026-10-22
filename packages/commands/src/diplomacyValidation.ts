@@ -14,8 +14,6 @@ import type {
 import type { LifecycleStepResult } from "./types.js";
 import { rejectValidation } from "./validation.js";
 
-// --- B10c diplomacy & war validators ---
-
 function pairKey(a: string, b: string): string {
   return [a, b].sort().join("\u0000");
 }

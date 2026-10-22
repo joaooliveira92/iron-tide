@@ -1,18 +1,3 @@
-/**
- * The torpedo-part builder (ship-part-model ticket 13a, SPM-R17).
- *
- * Additive and in memory only, like the launcher read path (`torpedoPartAdapter.ts`). Each
- * authoritative combat torpedo model becomes one strictly-shaped `family: torpedo` part whose
- * spec carries exactly the values combat reads (SPM-R17): diameter, mass, warhead type and mass,
- * propulsion, ordered speed/range settings, arming distance, reliability, guidance, launch types
- * and the tube-hit hazard policy. A model re-rated after introduction (the 1884 Whitehead Mk IV)
- * carries the first-pattern value as its base spec and the model's current value as a dated
- * revision with its own provenance.
- *
- * The builder performs no I/O and fixes its own input shape, so it never imports `@bluewave/combat`
- * (the codemod passes the models structurally). Every ordering is codepoint order and every
- * generated id is collision-checked by `buildPartCatalogue`.
- */
 import type {
   FlattenedPart,
   Provenance,
@@ -25,10 +10,6 @@ import { compareCodePoints } from "@bluewave/deterministic";
 
 export type FlattenedTorpedoPart = Extract<FlattenedPart, { readonly family: "torpedo" }>;
 
-/**
- * The DESIGN-40 §2 mount-type vocabulary, in `interfaces/1` order. Defined locally because
- * ship-design imports `@bluewave/content-schema` as types only (no Effect in the renderer).
- */
 const LAUNCH_TYPES = [
   "ABOVE_WATER_FIXED",
   "ABOVE_WATER_TRAINABLE",
@@ -37,31 +18,19 @@ const LAUNCH_TYPES = [
   "SUBMARINE_INTERNAL",
 ] as const satisfies readonly FlattenedTorpedoPart["spec"]["launchTypes"][number][];
 export type TorpedoMountType = (typeof LAUNCH_TYPES)[number];
-/** One ordered speed/range setting of a source torpedo model (combat's `orderedSettings`). */
 export interface TorpedoSettingSource {
   readonly settingId: string;
-  /** Speed in thousandths of a knot (combat's `speedKnotsBp`). */
   readonly speedKnotsBp: number;
   readonly rangeM: number;
 }
 
-/**
- * The first-pattern warhead of a torpedo re-rated after introduction, plus the dated revision
- * that restores the model's current warhead. The provenance grounds the re-rating.
- */
 export interface TorpedoWarheadReRatingSource {
   readonly explosiveMassKg: number;
   readonly explosiveEquivalentMassKg: number;
-  /** The revision month (`YYYY-MM`) the re-rating took effect, e.g. `1884-01`. */
   readonly from: string;
   readonly provenance: Provenance;
 }
 
-/**
- * The authoritative fields of one combat torpedo model the builder reads. Structurally compatible
- * with `@bluewave/combat`'s `TorpedoModelDefinition`; a subset of its fields (the ones the part
- * model carries) plus the content-side lifecycle and provenance the engine model does not have.
- */
 export interface TorpedoModelSource {
   readonly torpedoModelId: string;
   readonly diameterMm: number;
@@ -74,26 +43,17 @@ export interface TorpedoModelSource {
   readonly minimumArmingDistanceM: number;
   readonly reliabilityBp: number;
   readonly guidanceCapability: string;
-  /** Technology prerequisites combat's §4 platform-technology predicate reads (may be empty). */
   readonly technologyPrerequisiteIds: readonly string[];
-  /** Combat launcher-family ids; their mount-type suffix becomes the part's `launchTypes`. */
   readonly compatibleLauncherFamilyIds: readonly string[];
   readonly tubeHitHazardPolicyId: TorpedoTubeHitHazardPolicy;
-  /** Non-null exactly for an `OXYGEN` model. */
   readonly oxygenState: { readonly wakeVisibilityModifierBp: number } | null;
-  /** Inclusive availability month, grounded in the model's introduction. */
   readonly availableFrom: string;
-  /** Exclusive retirement, or `null` when still available. */
   readonly availableUntil?: string | null;
-  /** When present, the model was re-rated: base spec carries the first-pattern warhead. */
   readonly warheadFirstPattern?: TorpedoWarheadReRatingSource;
-  /** The part's structured provenance (grounded in the torpedo research). */
   readonly provenance: Provenance;
-  /** Content-relative source file the record was authored from. */
   readonly sourceFile: string;
 }
 
-/** A torpedo the builder could not read, with the reason (never dropped silently). */
 export interface UnreadTorpedo {
   readonly id: string;
   readonly code:
@@ -107,24 +67,15 @@ export interface UnreadTorpedo {
 }
 
 export interface TorpedoPartModel {
-  /** Every torpedo part, codepoint-ordered by id. */
   readonly parts: readonly FlattenedTorpedoPart[];
   readonly unread: readonly UnreadTorpedo[];
 }
 
-/** One combat torpedo-model field and the part-schema location that holds it. */
 export interface TorpedoSourceFieldDestination {
   readonly field: string;
-  /** A part-schema path, or `"(none)"` when the field is not carried. */
   readonly destination: string;
 }
 
-/**
- * Every authoritative combat torpedo-model field the migration reads, with its one destination
- * (the `PART_SOURCE_FIELDS` discipline applied to torpedoes). A field marked `"(none)"` is
- * intentionally not carried. The builder fails an unmapped key with a typed, path-specific
- * `TORPEDO_READ_PATH_UNMAPPED_FIELD`, so a new model field cannot be dropped silently.
- */
 export const TORPEDO_SOURCE_FIELDS: readonly TorpedoSourceFieldDestination[] = [
   { field: "torpedoModelId", destination: "part.id" },
   { field: "diameterMm", destination: "spec.diameterUm" },
@@ -152,7 +103,6 @@ export const TORPEDO_SOURCE_FIELDS: readonly TorpedoSourceFieldDestination[] = [
     destination: "spec.oxygenWakeVisibilityModifierBp (per-model modifier only)",
   },
   { field: "tubeHitHazardPolicyId", destination: "spec.tubeHitHazardPolicy" },
-  // Fields intentionally not carried by a part (unread by combat, or engine bookkeeping).
   { field: "depthKeepingProfile", destination: "(none)" },
   { field: "ownerNationIds", destination: "(none)" },
   { field: "productionRequirementId", destination: "(none)" },
@@ -160,9 +110,7 @@ export const TORPEDO_SOURCE_FIELDS: readonly TorpedoSourceFieldDestination[] = [
   { field: "contentHash", destination: "(none)" },
 ];
 
-/** The combat-model keys with a documented destination. */
 const MAPPED_MODEL_KEYS: ReadonlySet<string> = new Set(TORPEDO_SOURCE_FIELDS.map((f) => f.field));
-/** The content-side fields the source adds to the combat model (not legacy model fields). */
 const CONTENT_SIDE_KEYS: ReadonlySet<string> = new Set([
   "availableFrom",
   "availableUntil",
@@ -188,15 +136,10 @@ const PROPULSION_TYPES: ReadonlySet<string> = new Set([
 ]);
 const HAZARD_POLICIES: ReadonlySet<string> = new Set(["ORDINARY", "OXYGEN", "ELECTRIC"]);
 
-/** The canonical launch-type order of `interfaces/1`: the part's `launchTypes` sort key. */
 const LAUNCH_TYPE_ORDER: ReadonlyMap<string, number> = new Map(
   LAUNCH_TYPES.map((mountType, index) => [mountType as string, index]),
 );
 
-/**
- * The mount type a combat launcher-family id names, from its lower-snake suffix
- * (`14in_above_water_trainable` → `ABOVE_WATER_TRAINABLE`). `undefined` when none matches.
- */
 function launchTypeOfFamily(familyId: string): TorpedoMountType | undefined {
   for (const mountType of LAUNCH_TYPES) {
     const suffix = mountType.toLowerCase();
@@ -205,7 +148,6 @@ function launchTypeOfFamily(familyId: string): TorpedoMountType | undefined {
   return undefined;
 }
 
-/** The launch types a model declares, deduplicated and in the canonical mount-type order. */
 function launchTypesOf(
   model: TorpedoModelSource,
 ): { readonly launchTypes: readonly TorpedoMountType[] } | { readonly failure: UnreadTorpedo } {
@@ -245,7 +187,6 @@ function provenanceOf(model: TorpedoModelSource): Provenance {
   };
 }
 
-/** Build the whole torpedo catalogue from the authoritative models. */
 export function buildTorpedoPartModel(input: {
   readonly models: readonly TorpedoModelSource[];
 }): TorpedoPartModel {

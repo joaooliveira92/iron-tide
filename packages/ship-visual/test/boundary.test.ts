@@ -2,12 +2,6 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { describe, expect, it } from "vite-plus/test";
 
-/**
- * The presentation boundary (ADR-0148, SV-R12): ship visuals are drawn from the compiled design and never feed back.
- * Only the desktop app depends on this package, the desktop main process never imports it, and no content pack
- * declares the catalog, so it cannot reach an artifact, a campaign snapshot or a golden hash.
- */
-
 const ROOT = resolve(import.meta.dirname, "../../..");
 const SELF = "@bluewave/ship-visual";
 

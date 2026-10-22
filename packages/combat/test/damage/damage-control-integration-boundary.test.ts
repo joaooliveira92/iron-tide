@@ -1,9 +1,3 @@
-// INC-9 — Damage-control extension integration-boundary proof.
-// Proves that the damage-control extension (fire resolution, flooding resolution,
-// damage-control allocation) does not modify existing core interfaces:
-//   - Does not modify BattleResolver or StrengthCalculator
-//   - Only extends existing damage module (doesn't create new top-level packages)
-//   - No phase-engine dependency
 import { describe, it, expect } from "vite-plus/test";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -14,7 +8,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("damage-control integration boundary", () => {
   it("does not modify BattleResolver", () => {
-    // BattleResolver source should not reference damage-control internals
     const src = readFileSync(resolve(__dirname, "../../src/resolver.ts"), "utf-8");
     expect(src).not.toContain("resolveDamageControl");
     expect(src).not.toContain("damageControl");
@@ -38,7 +31,6 @@ describe("damage-control integration boundary", () => {
   });
 
   it("only extends existing damage module (does not create new top-level packages)", () => {
-    // All damage-control files are within the damage/ directory
     const damageDir = resolve(__dirname, "../../src/damage");
     const files = readdirSync(damageDir).filter((f) => f.endsWith(".ts"));
     expect(files).toContain("damageControlConstants.ts");

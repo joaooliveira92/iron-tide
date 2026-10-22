@@ -6,23 +6,13 @@ import { canonicalContentPath } from "../contentPath.js";
 
 export interface ParseOutput {
   manifest: unknown;
-  /** Raw (unvalidated) items per array-shaped collection, in file order. */
   collectionDocs: Map<string, unknown[]>;
-  /** The source file each `collectionDocs` item came from, index-aligned. */
   sourcePaths: Map<string, string[]>;
-  /** Single-document collections (e.g. the ship-building balance mapping). */
   objectDocs: Map<string, unknown>;
-  /** The source file each `objectDocs` entry came from. */
   objectSourcePaths: Map<string, string>;
-  /** The content root; artifact-facing source paths are written relative to it. */
   contentDir: string;
 }
 
-/**
- * Collections whose files are a mapping wrapping a named sequence, e.g.
- * `components.yaml` is `{ components: [...] }`. The map value is the sequence
- * property to extract; the collection key is the map key.
- */
 const WRAPPED_GROUPS: Readonly<Record<string, string>> = {
   shipComponents: "components",
   propulsionPlants: "plants",
@@ -40,7 +30,6 @@ const WRAPPED_GROUPS: Readonly<Record<string, string>> = {
   designLoadouts: "designs",
 };
 
-/** Collections whose files are a single mapping, kept whole (e.g. balance.yaml). */
 const OBJECT_GROUPS = ["shipBalance", "presentation", "ui"] as const;
 
 export class ParseStage implements CompilerStage<CompilerInput, ParseOutput> {

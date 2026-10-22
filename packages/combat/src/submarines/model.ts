@@ -1,30 +1,3 @@
-// DESIGN-34 §1 strategic asset, §4 type definitions, §5 policies + §1
-// representation mapping. Mirrors packages/combat/src/mines/model.ts
-// (BluewaveError + invariant helper + createEnvelope content/aggregate hash).
-//
-// Classification of this file's surfaces:
-//   - DESIGN-34-EXACT (shipped integers): §1 type→representation mapping
-//     (MISSILE→PERSISTENT_UNIT, others→TYPED_FLOTILLA_POOL), §5 policy weights
-//     (sum to exactly 10_000), §9 remote-efficiency table, §10 long-range ASW
-//     vulnerability table, §1 asset field set.
-//   - AUTHORED NON-NORMATIVE (recorded, per ticket 06): range-class labels,
-//     base-support requirement, tactical-projection ids, per-type mission
-//     eligibility membership (the full eligibility predicate is INC-2 / AC-4),
-//     readiness/supply/fuel basis-point state domains. None of these invents an
-//     authoritative mechanical integer beyond DESIGN-34's shipped tables.
-//
-// Boundary reason codes:
-//   - The strategic-asset (§1) boundary fails closed with
-//     INVALID_SUBMARINE_REPRESENTATION (missing/mixed representation AND the §1
-//     field-set / quantity==1-for-persistent rule — §1's own code).
-//   - The type-definition and policy DEFINITION boundaries (content-like,
-//     hash-verifiable) and the policy-change predicate fail closed with
-//     SUBMARINE_STATE_INVARIANT_FAILED (§27/§28 invariant carrier), used
-//     AMBIENTLY here and FORMALIZED into the shipped catalog by INC-8 — the
-//     exact C-1 (TORPEDO_STATE_INVARIANT_FAILED) / C-2 (MINE_WARFARE_INVARIANT_FAILED)
-//     precedent.
-//
-// Pure/deterministic: no I/O/clock/random. Identical inputs -> identical hashes.
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import {
@@ -47,8 +20,6 @@ import {
   INVALID_SUBMARINE_REPRESENTATION,
   SUBMARINE_STATE_INVARIANT_FAILED,
 } from "./reasonCodes.js";
-
-// shared validators
 
 function representationInvariant(value: unknown, field: string, reason: string): never {
   throw new BluewaveError(INVALID_SUBMARINE_REPRESENTATION, {
@@ -82,55 +53,37 @@ function isBp(v: unknown): v is number {
   );
 }
 
-// §1 Strategic representation mapping + asset
-
-// DESIGN-34 §1: MISSILE -> PERSISTENT_UNIT; coastal/medium/long/minelaying ->
-// TYPED_FLOTILLA_POOL. Pure, deterministic, exhaustive over the five types.
 export function strategicRepresentationForType(t: SubmarineType): StrategicRepresentation {
   return t === "MISSILE" ? "PERSISTENT_UNIT" : "TYPED_FLOTILLA_POOL";
 }
 
-// Fuel and supply state (DESIGN-34 §1 "fuel and supply state"), modelled as
-// basis-point levels 0..10_000 (0 = empty). AUTHORED domain (DESIGN-34 does not
-// pin an exact fuel/supply shape); recorded non-normative here, refined by the
-// mission-eligibility increment (INC-2, AC-4).
 export interface FuelAndSupplyState {
-  fuelBp: SafeInt; // 0..10_000
-  supplyBp: SafeInt; // 0..10_000
+  fuelBp: SafeInt;
+  supplyBp: SafeInt;
 }
 
-// Damage or loss state (DESIGN-34 §1 "damage or loss state"; §3 terminal states).
-// AUTHORED closed shape: OPERATIONAL carries a damage basis-point level
-// (0 = undamaged); SUNK/CAPTURED/SCUTTLED are §3 terminal states.
 export type SubmarineDamageLossState =
   | { kind: "OPERATIONAL"; damageBp: SafeInt }
   | { kind: "SUNK" }
   | { kind: "CAPTURED" }
   | { kind: "SCUTTLED" };
 
-// DESIGN-34 §1 strategic asset. The representation discriminant is a single
-// required field validated against the closed two-value set: "exactly one"
-// representation is STRUCTURALLY enforced (a single canonical value) AND
-// fail-closed at the boundary — a missing or mixed/non-canonical value throws
-// INVALID_SUBMARINE_REPRESENTATION. quantity MUST be exactly 1 for a persistent
-// unit (per §1). Numeric state uses branded SafeInt (checked arithmetic, exact
-// bounds per ENGINEERING-CONTRACT §Arithmetic).
 export interface SubmarineStrategicAsset {
   assetId: string;
   ownerNationId: string;
   submarineTypeId: SubmarineType;
   representation: StrategicRepresentation;
-  quantity: SafeInt; // exactly 1 for PERSISTENT_UNIT; >= 1 for TYPED_FLOTILLA_POOL
-  readiness: SafeInt; // 0..100 (AUTHORED domain, mirrors reliability range)
-  reliability: SafeInt; // 0..100 (DESIGN-34 §7 exact range)
+  quantity: SafeInt;
+  readiness: SafeInt;
+  reliability: SafeInt;
   currentStrategicAreaId: string;
   homeBaseId: string;
   fuelAndSupplyState: FuelAndSupplyState;
-  missionPolicyId: SubmarinePolicy; // which §5 policy the asset operates under
+  missionPolicyId: SubmarinePolicy;
   damageLossState: SubmarineDamageLossState;
-  monthlyBattleParticipationCount: SafeInt; // >= 0
+  monthlyBattleParticipationCount: SafeInt;
   rulesetVersion: string;
-  aggregateHash: string; // deterministic SHA-256 over the non-hash surface
+  aggregateHash: string;
 }
 
 function isSafeIntRange(v: unknown, lo: number, hi: number): v is SafeInt {
@@ -139,12 +92,6 @@ function isSafeIntRange(v: unknown, lo: number, hi: number): v is SafeInt {
   );
 }
 
-// AC-1: §1 boundary validation. Rejects a missing/mixed representation, a §1
-// field-set violation, a type→representation pair that violates the §1 shipped
-// mapping (e.g. COASTAL + PERSISTENT_UNIT), and a persistent unit with quantity
-// != 1 — all with INVALID_SUBMARINE_REPRESENTATION (the §1 fail-closed code).
-// Validates the surface except the aggregate-hash presence (a hash-less surface
-// is validated before hashing).
 export function assertSubmarineStrategicAssetSurface(a: SubmarineStrategicAsset): void {
   if (!isNonEmptyString(a.assetId))
     representationInvariant(a.assetId, "assetId", "asset identifier must be non-empty");
@@ -152,9 +99,6 @@ export function assertSubmarineStrategicAssetSurface(a: SubmarineStrategicAsset)
     representationInvariant(a.ownerNationId, "ownerNationId", "owner nation must be non-empty");
   if (!(SUBMARINE_TYPES as readonly string[]).includes(a.submarineTypeId))
     representationInvariant(a.submarineTypeId, "submarineTypeId", "must be a canonical §4 type");
-  // §1 "exactly one strategic representation": the representation field must be
-  // one of the two canonical values. A MISSING (undefined) or MIXED/non-canonical
-  // value fails closed here — never a silent default.
   const isCanonical =
     a.representation === "PERSISTENT_UNIT" || a.representation === "TYPED_FLOTILLA_POOL";
   if (!isCanonical) {
@@ -164,11 +108,6 @@ export function assertSubmarineStrategicAssetSurface(a: SubmarineStrategicAsset)
       "exactly one canonical strategic representation (PERSISTENT_UNIT | TYPED_FLOTILLA_POOL) required",
     );
   }
-  // §1 type→representation coherence: the representation must match the §1
-  // shipped mapping for the asset's type (MISSILE -> PERSISTENT_UNIT; the other
-  // four types -> TYPED_FLOTILLA_POOL). A canonical-but-mismatched pair (e.g.
-  // COASTAL + PERSISTENT_UNIT, MISSILE + TYPED_FLOTILLA_POOL) fails closed here —
-  // the mapping is pinned at this boundary, never silently paired.
   if (a.representation !== strategicRepresentationForType(a.submarineTypeId)) {
     representationInvariant(
       a.representation,
@@ -178,7 +117,6 @@ export function assertSubmarineStrategicAssetSurface(a: SubmarineStrategicAsset)
   }
   if (!SafeInt.isSafeInt(a.quantity))
     representationInvariant(a.quantity, "quantity", "quantity must be a safe integer");
-  // §1 "quantity, equal to 1 for persistent units".
   if (a.representation === "PERSISTENT_UNIT" && a.quantity !== (1 as SafeInt)) {
     representationInvariant(a.quantity, "quantity", "persistent-unit quantity must be exactly 1");
   }
@@ -258,8 +196,6 @@ export function validateSubmarineStrategicAsset(a: SubmarineStrategicAsset): voi
     representationInvariant(a.aggregateHash, "aggregateHash", "aggregate hash must be non-empty");
 }
 
-// Deterministic aggregate hash over the non-hash surface, domain-separated with
-// submarine_strategic_asset_v1. Identical state -> identical hash.
 export function computeSubmarineStrategicAssetAggregateHash(
   a: Omit<SubmarineStrategicAsset, "aggregateHash">,
 ): string {
@@ -279,9 +215,6 @@ export function verifySubmarineStrategicAssetAggregateHash(a: SubmarineStrategic
   return computeSubmarineStrategicAssetAggregateHash(a) === a.aggregateHash;
 }
 
-// §4 type definitions
-
-// DESIGN-34 §9 exact remote-efficiency table (LOCAL/REGIONAL/REMOTE/EXTREME_REMOTE).
 export const SUBMARINE_REMOTE_EFFICIENCY_BP: Readonly<
   Record<SubmarineType, Readonly<Record<BaseProximityBand, number>>>
 > = {
@@ -292,10 +225,6 @@ export const SUBMARINE_REMOTE_EFFICIENCY_BP: Readonly<
   MISSILE: { LOCAL: 10_000, REGIONAL: 10_000, REMOTE: 10_000, EXTREME_REMOTE: 9_000 },
 };
 
-// DESIGN-34 §10 exact long-range ASW-vulnerability table. DESIGN-34 only names
-// LONG_RANGE; the other four types carry the NEUTRAL baseline (10_000 = no
-// change) as an AUTHORED default — never invented (the table's shape is
-// DESIGN-34-exact for long range; §10 does not define a modifier for the others).
 export const SUBMARINE_ASW_VULNERABILITY_BP: Readonly<Record<BaseProximityBand, number>> = {
   LOCAL: 10_500,
   REGIONAL: 10_750,
@@ -308,17 +237,16 @@ export const SUBMARINE_NEUTRAL_ASW_VULNERABILITY_BP = SUBMARINE_BASIS_POINTS_PER
 export interface SubmarineTypeDefinition {
   submarineTypeId: SubmarineType;
   rangeClass: SubmarineRangeClass;
-  remoteEfficiencyProfileBp: Readonly<Record<BaseProximityBand, number>>; // §9 exact
-  aswVulnerabilityProfileBp: Readonly<Record<BaseProximityBand, number>>; // §10 (long) / neutral
+  remoteEfficiencyProfileBp: Readonly<Record<BaseProximityBand, number>>;
+  aswVulnerabilityProfileBp: Readonly<Record<BaseProximityBand, number>>;
   missionEligibility: readonly SubmarineMission[];
   baseSupportRequirement: "REQUIRED" | "OPTIONAL";
   tacticalProjectionId: string;
   technologyPrerequisiteIds: readonly string[];
   contentVersion: string;
-  contentHash: string; // deterministic SHA-256 over the non-hash surface
+  contentHash: string;
 }
 
-// Hits every field; the labelled field is the one reported on failure.
 function assertSubmarineTypeDefinitionField(
   def: SubmarineTypeDefinition,
   field: keyof SubmarineTypeDefinition,
@@ -425,12 +353,6 @@ export function verifySubmarineTypeDefinitionContentHash(def: SubmarineTypeDefin
   return computeSubmarineTypeDefinitionContentHash(def) === def.contentHash;
 }
 
-// ---- Shipped five canonical type definitions (DESIGN-34 §4) ----
-// missionEligibility membership is AUTHORED (DESIGN-34 §4 lists the required
-// field, not a per-type matrix; the full eligibility predicate is INC-2 / AC-4).
-// rangeClass / baseSupportRequirement / tacticalProjectionId are AUTHORED
-// non-normative labels (ticket 06) — the only DESIGN-34-exact fields here are the
-// type ids, the §9 remote-efficiency table, and the §10 ASW table.
 const COASTAL_MISSIONS: readonly SubmarineMission[] = [
   "FLEET_INTERDICTION",
   "RECONNAISSANCE",
@@ -487,7 +409,7 @@ export const SHIPPED_SUBMARINE_TYPE_DEFINITIONS: readonly SubmarineTypeDefinitio
     submarineTypeId: "LONG_RANGE",
     rangeClass: "LONG",
     remoteEfficiencyProfileBp: SUBMARINE_REMOTE_EFFICIENCY_BP.LONG_RANGE,
-    aswVulnerabilityProfileBp: SUBMARINE_ASW_VULNERABILITY_BP, // §10 exact
+    aswVulnerabilityProfileBp: SUBMARINE_ASW_VULNERABILITY_BP,
     missionEligibility: LONG_MISSIONS,
     baseSupportRequirement: "OPTIONAL",
     tacticalProjectionId: "tactical_projection_long_range_v1",
@@ -528,9 +450,6 @@ export const SHIPPED_SUBMARINE_TYPE_DEFINITIONS: readonly SubmarineTypeDefinitio
   }),
 ];
 
-// Fail-closed lookup: a shipped submarine type by id. An unknown id fails with
-// SUBMARINE_STATE_INVARIANT_FAILED (never a silent default), mirroring
-// mineTypeDefinitionById.
 export function submarineTypeDefinitionById(submarineTypeId: string): SubmarineTypeDefinition {
   const def = SHIPPED_SUBMARINE_TYPE_DEFINITIONS.find((d) => d.submarineTypeId === submarineTypeId);
   if (!def) {
@@ -543,8 +462,6 @@ export function submarineTypeDefinitionById(submarineTypeId: string): SubmarineT
   return def;
 }
 
-// §5 policies
-
 export interface SubmarinePolicyDefinition {
   policyId: SubmarinePolicy;
   warshipAttackWeightBp: number;
@@ -554,13 +471,6 @@ export interface SubmarinePolicyDefinition {
   contentHash: string;
 }
 
-// DESIGN-34 §5: "Weights MUST sum to exactly 10_000 for each policy." Per the
-// shipped values, the two complementary allocation weights (warship + merchant)
-// are the summands — every policy's warship+merchant equals exactly 10_000
-// (FLEET 8_000+2_000, PRIZE 5_000+5_000, UNRESTRICTED 2_500+7_500). The neutral
-// incident multiplier is an INDEPENDENT scalar (5_000/10_000/20_000), not part
-// of the 10_000 allocation sum. Enforced structurally here (AC-3) and by the
-// validate guard.
 export function assertSubmarinePolicyDefinitionSurface(p: SubmarinePolicyDefinition): void {
   const { policyId } = p;
   if (!(SUBMARINE_POLICIES as readonly string[]).includes(policyId))
@@ -584,9 +494,6 @@ export function assertSubmarinePolicyDefinitionSurface(p: SubmarinePolicyDefinit
       "merchantAttackWeightBp",
       "must be basis points [0, 10_000]",
     );
-  // The neutral-incident multiplier is an INDEPENDENT scalar (shipped 5_000/
-  // 10_000/20_000) NOT bounded by the 10_000 basis-point scale — it only needs
-  // to be a non-negative safe integer.
   if (
     typeof p.neutralIncidentMultiplierBp !== "number" ||
     !Number.isInteger(p.neutralIncidentMultiplierBp) ||
@@ -651,8 +558,6 @@ function policyFromWeights(p: SubmarinePolicy): SubmarinePolicyDefinition {
   });
 }
 
-// DESIGN-34 §5 shipped three-policy set. Every policy sums to exactly 10_000
-// (asserted by withSubmarinePolicyContentHash -> assertSubmarinePolicyDefinitionSurface).
 export const SHIPPED_SUBMARINE_POLICIES: readonly SubmarinePolicyDefinition[] = [
   policyFromWeights("FLEET_SUPPORT"),
   policyFromWeights("PRIZE_RULES"),
@@ -671,13 +576,6 @@ export function submarinePolicyById(policyId: string): SubmarinePolicyDefinition
   return def;
 }
 
-// §5 policy-change surface (command layer DEFERRED per spec §3 / ticket 03)
-
-// DESIGN-34 §5: "Policy changes require an accepted command and become effective
-// at the next trade-warfare resolution." The command/IPC (accepted-command)
-// machinery is DEFERRED to the later command/AI slice (spec §3); INC-1 ships the
-// documented value/predicate surface only — the accepted-command gate predicate
-// + the effective-at constant — as pure functions. No IPC/command path is built.
 export const SUBMARINE_POLICY_CHANGE_EFFECTIVE_AT = "NEXT_TRADE_WARFARE_RESOLUTION" as const;
 
 export interface SubmarinePolicyChangeCommand {
@@ -699,9 +597,6 @@ export type SubmarinePolicyChangeVerdict =
       reason: string;
     };
 
-// Accepted-command predicate. An accepted change is effective at the next
-// trade-warfare resolution (DESIGN-34 §5). Rejects a non-canonical target or a
-// no-op (from === to) change.
 export function acceptSubmarinePolicyChange(
   command: SubmarinePolicyChangeCommand,
 ): SubmarinePolicyChangeVerdict {
@@ -740,9 +635,6 @@ export function acceptSubmarinePolicyChange(
   };
 }
 
-// Smallest exported helper used by consumers of the shipped sets to assert the
-// invariant that every shipped definition self-validates (guards the set never
-// loses its exactness at build time).
 export function validateShippedSubmarineDefinitions(): void {
   for (const def of SHIPPED_SUBMARINE_TYPE_DEFINITIONS) validateSubmarineTypeDefinition(def);
   for (const pol of SHIPPED_SUBMARINE_POLICIES) validateSubmarinePolicyDefinition(pol);

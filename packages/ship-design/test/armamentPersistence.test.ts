@@ -9,7 +9,6 @@ const starter = shipBuildingContent.starterDesigns.find(
 describe("armament-aware persistence (ADR-0093 Step 3)", () => {
   it("loads an old save that stores only legacy component ids and compiles it through armament", () => {
     const ctx = nationalContext(starter.month, starter.draft.nationId);
-    // A legacy design file: placements name the shared family component id, as before the cut-over.
     const text = encodeDesignFile(starter.draft, ctx.catalogue, null);
     const decoded = decodeDesignFile(text, ctx.catalogue);
     expect(decoded.draft).toEqual(starter.draft);

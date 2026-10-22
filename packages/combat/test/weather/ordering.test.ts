@@ -1,6 +1,3 @@
-// AC-12: Canonical ordering — weather events order by §29: weather transitions
-// by minute → component priority, then commands, then observation rays, then
-// fire rays. DB/UI/rendering/wall-clock order must not affect outcomes.
 import { describe, it, expect } from "vite-plus/test";
 import { canonicalEventOrder } from "../../src/battleLedger.js";
 
@@ -60,7 +57,6 @@ describe("AC-12: weather event canonical ordering", () => {
   it("weather_time_of_day sorts before weather_progression when event priority differs", () => {
     const tod = base({ eventType: "weather_time_of_day", eventId: "a" });
     const prog = base({ eventType: "weather_progression", eventId: "z" });
-    // Same priority (7.5), same actorId, sort by eventId
     expect(canonicalEventOrder(tod, prog)).toBeLessThan(0);
   });
 

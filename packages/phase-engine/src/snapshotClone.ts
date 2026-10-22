@@ -44,25 +44,15 @@ type AreaData = WorldState["areas"][number];
 type RouteData = WorldState["routes"][number];
 type PortData = WorldState["ports"][number];
 
-// Field-exhaustive structural deep-clone of the campaign snapshot.
-// Every record type has an explicit copy entry in `F`. Compile-time
-// assertions below fail the build if a field is added/renamed without a
-// matching clone entry. Runtime clone is deterministic, pollution-safe,
-// and fail-closed.
-
 const UNSAFE_KEYS = new Set<string>(["__proto__", "constructor", "prototype"]);
 
 type ValueClone = (value: unknown, seen?: WeakMap<object, unknown>) => unknown;
 
-/** Deterministic, pollution-safe deep copy. Handles primitives, Date, RegExp,
- *  Map, Set, Array, ArrayBuffer/TypedArray/DataView and plain records.
- *  Throws on circular refs (snapshot must be acyclic). */
 function cloneValue(value: unknown, seen = new WeakMap<object, unknown>()): unknown {
   if (value === null || value === undefined) return value;
   const t = typeof value;
-  // functions are not expected in snapshot; preserve reference (deterministic)
   if (t === "function") return value;
-  if (t !== "object") return value; // string, number, boolean, bigint, symbol
+  if (t !== "object") return value;
 
   const obj = value as object;
   if (seen.has(obj))
@@ -96,15 +86,11 @@ function cloneValue(value: unknown, seen = new WeakMap<object, unknown>()): unkn
     if (value instanceof DataView) {
       return new DataView((value as DataView).buffer.slice(0), value.byteOffset, value.byteLength);
     }
-    // TypedArray — copy via constructor
-    // Erasing to `any` is required to invoke the arbitrary TypedArray constructor
-    // for the value's runtime type.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return new (value as any).constructor(value as any);
   }
   if (value instanceof ArrayBuffer) return (value as ArrayBuffer).slice(0);
 
-  // Plain record — preserve prototype, copy only own enumerable string+symbol keys
   const out: Record<string, unknown> = {};
   seen.set(obj, out);
   for (const key of Object.keys(value as Record<string, unknown>)) {
@@ -114,8 +100,6 @@ function cloneValue(value: unknown, seen = new WeakMap<object, unknown>()): unkn
   for (const sym of Object.getOwnPropertySymbols(value)) {
     const desc = Object.getOwnPropertyDescriptor(value, sym);
     if (desc?.enumerable) {
-      // The symbol key is not statically known, so erasure is required to assign
-      // through it on the generic clone output.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (out as any)[sym] = cloneValue((value as any)[sym], seen);
     }
@@ -123,9 +107,6 @@ function cloneValue(value: unknown, seen = new WeakMap<object, unknown>()): unkn
   return out;
 }
 
-/** Builds fresh object copying exactly `fields` in declared order (deterministic
- *  key order for canonical hashing). Skips absent optional fields to preserve
- *  missing vs explicit undefined. Filters pollution keys. */
 function recordClone<T extends object>(
   source: T,
   fields: readonly (keyof T)[],
@@ -147,8 +128,6 @@ function recordClone<T extends object>(
   return out as T;
 }
 
-// Helper to enforce exhaustiveness at call-site: `fields<T>(...)` fails if any
-// key of T is missing or an unknown key is present.
 function fields<T>() {
   return <U extends readonly (keyof T)[]>(
     ...keys: U &
@@ -569,9 +548,6 @@ const F = {
   ),
 } as const;
 
-// Compile-time exhaustiveness assertions (redundant with fields<T>() but
-// documents intent and survives `as const` widening). If any line errors,
-// a field was added/renamed without updating F.
 type _Assert<T, U extends readonly (keyof T)[]> =
   Exclude<keyof T, U[number]> extends never ? true : never;
 const _assert: [
@@ -780,11 +756,6 @@ const cloneDesignFamilies = (
   throw new PhaseEngineError({ message: "cloneSnapshot: designFamilies must be a Map" });
 };
 
-/**
- * Structural deep-clone of the campaign snapshot. Produces fully disjoint
- * graph — no shared reference with input, no shared reference between
- * consecutive turns. Deterministic, no RNG/IO, preserves missing vs undefined.
- */
 export function cloneSnapshot(snapshot: CampaignSnapshot): CampaignSnapshot {
   if (snapshot === null || typeof snapshot !== "object")
     throw new PhaseEngineError({ message: "cloneSnapshot: snapshot must be a non-null object" });
@@ -885,7 +856,6 @@ export function cloneSnapshot(snapshot: CampaignSnapshot): CampaignSnapshot {
   );
 }
 
-/** Audit surface: type name → ordered field list. Frozen to prevent tampering. */
 export const CLONE_COVERAGE: Readonly<Record<string, readonly string[]>> = (() => {
   const entries = Object.entries(F).map(
     ([k, v]) => [k, Object.freeze([...(v as readonly string[])])] as const,

@@ -27,7 +27,6 @@ export interface DirectorUnit {
   readonly instanceId: string;
   readonly supportedClasses: readonly string[];
   readonly accuracyBonusBp: number;
-  /** Maximum number of guns this director can control at once. */
   readonly capacity: number;
   readonly stationPermille: number;
 }
@@ -38,21 +37,15 @@ export interface FcGun {
 }
 
 export interface SystemsBalance {
-  /** Share of nominal demand drawn in each case, per category (bp); `DEFAULT` is the fallback. */
   readonly caseProfileBp: Readonly<Record<string, Readonly<Record<LoadCase, number>>>>;
-  /** Derate on generator output when every generator sits in one zone, bp. */
   readonly generatorConcentrationDerateBp: number;
-  /** Reliability lost per 100 bp of cooling shortfall, bp. */
   readonly coolingReliabilityPerPercentBp: number;
-  /** Crew needed to run the hull itself, per tonne of displacement x1000. */
   readonly hullCrewPerTonneX1000: number;
-  /** Volume per head in litres by accommodation standard. */
   readonly litrePerHead: Readonly<Record<AccommodationStandard, number>>;
   readonly baseAccuracyBp: number;
   readonly localControlPenaltyBp: number;
   readonly smokeInterferencePermille: number;
   readonly smokeInterferencePenaltyBp: number;
-  /** Redundancy each fire-control position adds, bp (capped at 10_000 in total). BALANCE TARGET; absent = 0. */
   readonly fireControlPositionRedundancyBp?: number;
 }
 
@@ -66,7 +59,6 @@ export interface SystemsInput {
   readonly guns: readonly FcGun[];
   readonly directors: readonly DirectorUnit[];
   readonly funnelStationsPermille: readonly number[];
-  /** Fire-control positions (spotting tops, conning towers, plotting rooms): redundancy against loss. Absent = 0. */
   readonly fireControlPositions?: number;
 }
 
@@ -84,10 +76,8 @@ export interface SystemsResult {
   readonly reliabilityPenaltyBp: number;
   readonly crewRequired: number;
   readonly crewCapacity: number;
-  /** >10_000 means overcrowded. */
   readonly crowdingBp: number;
   readonly gunControl: readonly GunControl[];
-  /** Share of the fire-control bonus that survives losing positions, bp. Redundancy, not accuracy. */
   readonly fireControlRedundancyBp: number;
   readonly findings: readonly Finding[];
 }
@@ -102,7 +92,6 @@ export function compileSystems(i: SystemsInput, b: SystemsBalance): SystemsResul
   const profileFor = (c: ComponentCategory) => b.caseProfileBp[c] ?? b.caseProfileBp.DEFAULT;
   if (!b.caseProfileBp.DEFAULT) throw new Error("caseProfileBp.DEFAULT is required");
 
-  // F-M4 electrical
   const demand: Record<LoadCase, number> = { HARBOUR: 0, CRUISING: 0, ACTION: 0 };
   for (const it of [...i.items].sort(byId)) {
     const prof = profileFor(it.category)!;
@@ -184,7 +173,6 @@ export function compileSystems(i: SystemsInput, b: SystemsBalance): SystemsResul
     });
   }
 
-  // Crew and accommodation
   const hullCrew = toSafe(
     "hullCrew",
     (BigInt(i.displacementKg) * BigInt(b.hullCrewPerTonneX1000) + 999_999n) / 1_000_000n,
@@ -228,7 +216,6 @@ export function compileSystems(i: SystemsInput, b: SystemsBalance): SystemsResul
     });
   }
 
-  // Fire control
   const directors = [...i.directors].sort(byId);
   const remaining = new Map(directors.map((d) => [d.instanceId, d.capacity]));
   const control: GunControl[] = [];

@@ -14,7 +14,6 @@ function makeNation(overrides: Partial<any> = {}): any {
     income: 2_000_000 as any,
     navalAppropriationRateBp: 2000 as any,
     maintenanceCost: 0 as any,
-    // Revenue = income at the 2000 bp start rate: base = 60 x income.
     baseResources: 120_000_000 as any,
     expenses: 0 as any,
     fleets: [{ ships: [{ hitPoints: 100 as any, readiness: "ACTIVE" as any }] }],
@@ -85,7 +84,6 @@ describe("priorities projection", () => {
   });
 
   it("monthly_deficit warning vs critical via treasury+projectedBalance predicate", () => {
-    // revenue = base 7_200_000 x 1000 bp / 120_000 = 60_000; obligations 100_000 => net -40_000.
     const deficitNation = (treasury: number) =>
       makeSnapshot({
         treasury: treasury as any,
@@ -106,7 +104,6 @@ describe("priorities projection", () => {
       (p) => p.type === "monthly_deficit",
     );
     expect(solvent?.severity).toBe("warning");
-    // treasury + projectedBalance < 0 => critical
     const insolvent = buildPrioritiesProjection(deficitNation(30_000), "gbr").find(
       (p) => p.type === "monthly_deficit",
     );
@@ -117,7 +114,7 @@ describe("priorities projection", () => {
   it("low_research_spending triggers below 800bp", () => {
     const snap = makeSnapshot({
       baseResources: 24_000_000 as any,
-      navalAppropriationRateBp: 5000 as any, // base 24M x 5000 bp / 120_000 => 1M revenue
+      navalAppropriationRateBp: 5000 as any,
       research: {
         researchBudget: 1000 as any,
         discoveredTechs: [],
@@ -128,8 +125,6 @@ describe("priorities projection", () => {
     });
     const out = buildPrioritiesProjection(snap, "gbr");
     expect(out.some((p) => p.type === "low_research_spending")).toBe(true);
-    // Above threshold should not trigger
-    // A budget only counts as spending when a field can take it, so the catalogue offers one open technology.
     const snapOk = makeSnapshot(
       {
         baseResources: 24_000_000 as any,

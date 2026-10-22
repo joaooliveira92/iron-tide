@@ -1,6 +1,3 @@
-// S-5 (spec #73 R1/R2): the month's application of the foreign-station commands, and the single seam through which a
-// ship's readiness leaves ACTIVE (clearing the assignment with a typed event). Value-free: no routing (S-5 07), no
-// presence maths, no maintenance change — an FS ship keeps its ACTIVE readiness, crew and maintenance.
 import type { CampaignSnapshot, NationState, Ship, ShipReadinessState } from "@bluewave/campaign";
 import {
   STATION_ASSIGNED_REASON,
@@ -22,7 +19,6 @@ import type { MonthContext } from "./monthContext.js";
 
 const NO_ASSIGNMENT = "NONE";
 
-/** Where the seam records its events; `MonthContext` satisfies it. */
 export interface StationEventSink {
   readonly campaignMonth: string;
   readonly nextSeq: () => SafeInt;
@@ -46,11 +42,6 @@ function mapShip(
   return { ...snapshot, nations };
 }
 
-/**
- * Change a ship's readiness through the shared seam. Records `ShipReadinessChanged`, and one
- * `ShipStationAssignmentChanged` (`READINESS_LEFT_ACTIVE`) when the change removed an assignment. A change to the
- * state the ship already has is a no-op.
- */
 export function transitionShipReadiness(
   snapshot: CampaignSnapshot,
   nationId: string,
@@ -91,11 +82,6 @@ export function transitionShipReadiness(
   });
 }
 
-/**
- * Apply an assign or clear command. Commands are authorized against the month-start snapshot but applied in order, so
- * the batch is re-checked against the snapshot being applied: a stale batch (for example a second assignment of the
- * same ship) is refused whole and changes nothing.
- */
 export function applyStationAssignmentCommand(ctx: MonthContext, body: CommandBody): boolean {
   if (body["type"] !== "AssignForeignStation" && body["type"] !== "ClearForeignStation") {
     return false;

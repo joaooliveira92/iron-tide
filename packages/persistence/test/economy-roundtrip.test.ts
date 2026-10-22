@@ -1,6 +1,3 @@
-// Economy #138 (compatibility 3.1.0): the fields the 1880 economy model adds survive the save/load boundary byte-for-byte —
-// the derived economic base, the seeded standing research budget, the pack research catalogue and a seeded project's
-// packages and own capacity — and a snapshot without the additive catalogue and capacity still loads (wire formats stay additive).
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -191,8 +188,6 @@ describe("economy #166 persisted technology catalogue schema", () => {
 
   const decodes = (value: unknown): boolean =>
     Result.isSuccess(Schema.decodeUnknownResult(StorableTechnologySchema)(value));
-  // Parity with the real on-disk fixture save-corpus/3.1.0 (`hc_wrought_iron_hull`), the first stored
-  // technology catalogue entry.
   const good = {
     techId: "hc_wrought_iron_hull",
     researchFieldId: "HULL_CONSTRUCTION",

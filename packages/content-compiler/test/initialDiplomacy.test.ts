@@ -8,13 +8,6 @@ import { Compiler } from "../src/index.js";
 import { buildFullSurfaceInput } from "../src/fullSurface.js";
 import { diplomacyOf, nationsOf } from "./helpers/campaignRecords.js";
 
-/**
- * 1880 diplomacy (N-1 ticket 05): the opening political posture is authored from
- * the era's alignments and rivalries rather than a flat neutral@5 baseline. The
- * relations are compiled content; each record documents its direction in
- * provenance and its tension magnitude as an admitted balance choice.
- */
-
 const here = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = resolve(here, "..", "..", "..");
 const contentDir = resolve(repoRoot, "content", "production", "1880");

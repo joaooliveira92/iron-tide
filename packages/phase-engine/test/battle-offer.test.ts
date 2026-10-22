@@ -24,8 +24,6 @@ import {
   makeShip,
 } from "./battle-fixtures.js";
 
-// T-1 03 (#112, spec #109 R3-R7): a player-involved battle raises an offer at battle_resolution. Every value here is a
-// FIXTURE-CLASS value from @bluewave/test-support; none is an ADR-0254 balance target and none reaches production.
 const SEED = "offer-seed";
 const TURN = "turn-offer";
 
@@ -90,7 +88,6 @@ function answer(request: OfferRequest, response: OfferResponse): RecordedInput {
   });
 }
 
-/** GBR and FRA each field a pair of 200-firepower ships in `a-1` (and, when asked, a second pair in `a-2`). */
 function warSnapshot(options: { twoAreas?: boolean } = {}): CampaignSnapshot {
   if (options.twoAreas !== true) return makeBattleSnapshot();
   return makeBattleSnapshot({

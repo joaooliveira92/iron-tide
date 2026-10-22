@@ -1,8 +1,3 @@
-// S-5 07 (#81, spec #73 R9/R13): the month-end foreign-station deployment. An FS ship outside a shortfall area sails one sea
-// hop per month toward the nation's largest shortfall (ties by area id); only that ship moves, detached into a single-ship
-// fleet and out of any division with typed events; a manual MoveFleet on a fleet holding an FS ship is refused until the
-// assignment is cleared.
-// EVERY RULESET NUMBER BELOW IS FIXTURE-CLASS: it exercises the mechanics and is never a production value (R11, R14).
 import {
   fleetMoveProblem,
   type CampaignSnapshot,
@@ -74,11 +69,9 @@ function division(id: string, shipOrder: string[], area = "home"): PermanentDivi
 interface Layout {
   fleets: FleetState[];
   divisions?: PermanentDivision[];
-  /** Possessions as `area:count` for GBR. */
   possessions?: [string, number][];
 }
 
-// home - mid - india, mid - cape; island is disconnected. A small ship is 100 t, a possession needs 200 t (no port).
 function snapshot(layout: Layout): CampaignSnapshot {
   const possessions = (layout.possessions ?? [["india", 1]]).flatMap(([areaId, n]) =>
     Array.from({ length: n }, (_, i) => ({ id: `p-${areaId}-${i}`, nationId: "GBR", areaId })),
@@ -316,7 +309,6 @@ describe("S-5 07: foreign-station deployment", () => {
         areaId: "home",
       },
     ]);
-    // A second month moves the detached fleet on without detaching again.
     const second = run(r.finalSnapshot).result;
     expect(kinds(second, "ShipDetachedToFleet")).toEqual([]);
     expect(

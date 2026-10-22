@@ -47,7 +47,7 @@ describe("mandatory role assignment (AC-8)", () => {
     const a = assignMandatoryRoles(candidates, "CORE");
     const b = assignMandatoryRoles(candidates, "CORE");
     expect(a).toEqual(b);
-    expect(a?.assetId).toBe("s3"); // highest role score
+    expect(a?.assetId).toBe("s3");
   });
 
   it("unfilled -> BATTLE_MANDATORY_ROLE_UNFILLED", () => {
@@ -73,7 +73,6 @@ describe("optional asset selection v1 (AC-8)", () => {
       objectiveMultiplierBp: 10_000,
       fatigueMultiplierBp: 10_000,
     });
-    // 10_000 * 8_000 * 10_000^4 / 10_000^5 = 8_000 / 10_000 ... floor = 0 -> max(1,0)=1
     expect(w).toBe((10_000 * 8_000) / 10_000);
   });
 

@@ -1,7 +1,3 @@
-// S-5 05 (#79, spec #73 R5/R6/R8/R13): the month-end presence step. A month run over a fixture ruleset records one typed
-// PresenceShortfall per nation-area with a shortfall; with the section absent it records nothing and the final hash is
-// identical to a run that never heard of S-5.
-// EVERY RULESET NUMBER BELOW IS FIXTURE-CLASS: it exercises the mechanics and is never a production value (R11, R14).
 import {
   isPresenceExempt,
   measurePresence,
@@ -186,7 +182,6 @@ describe("S-5 05: month-end presence step", () => {
     const result = run(snapshot([]), true);
     expect(result.success).toBe(true);
     expect(shortfalls(result)).toEqual([
-      // FRA: one possession x 100 x flat weight 2, no ships
       {
         kind: "PresenceShortfall",
         nationId: "FRA",
@@ -195,7 +190,6 @@ describe("S-5 05: month-end presence step", () => {
         presentTons: 0,
         shortfallTons: 200,
       },
-      // GBR: two in india (400) and one in cape (200)
       {
         kind: "PresenceShortfall",
         nationId: "GBR",
@@ -237,7 +231,6 @@ describe("S-5 05: month-end presence step", () => {
         (e) => e.kind === "PresenceShortfall" && e.nationId === "GBR" && e.areaId === "india",
       );
     const colonial = { designVersionId: "d-small", colonialServiceFitted: true as const };
-    // india needs 400 t; a 200 t ship covers 200 t, or 300 t when colonial-service on FS.
     expect(gbrIndia([ship("a", { designVersionId: "d-small" })])).toMatchObject({
       presentTons: 200,
       shortfallTons: 200,
@@ -360,8 +353,6 @@ describe("S-5 05: month-end presence step", () => {
     });
 
     it("keeps the exemption out of base-limit checks: the exemption predicate is the requirement's alone (contract note)", () => {
-      // S-5 08 (base limits) must not call isPresenceExempt; this test double pins that the predicate is requirement-only
-      // by showing the exempt nation still has presence rows that a base-limit check can read.
       const from = withWarAndBlockade(snapshot([ship("a")]));
       expect(isPresenceExempt(from, "GBR", "1880-01")).toBe(true);
       expect(measurePresence(from, FIXTURE_PRESENCE).some((r) => r.nationId === "GBR")).toBe(true);

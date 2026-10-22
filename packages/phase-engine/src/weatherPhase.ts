@@ -1,6 +1,3 @@
-// weather_generation phase (registry order 5; DESIGN-42 §1 / ADR-0025):
-// authoritative per-area current-month StrategicWeatherState from the canonical
-// climate profile over the keyed stream `campaign/weather/<areaId>/<month>`.
 import type { CampaignWeatherState } from "@bluewave/campaign";
 import {
   type ClimateProfile,
@@ -34,7 +31,7 @@ export function runWeatherGenerationPhase(ctx: MonthContext): void {
         `No climate profile for strategic area ${area["id"]}`,
         { stage: "weather_generation", entityId: area["id"] },
       );
-      continue; // fail-closed: recorded, area simply not committed this month
+      continue;
     }
     try {
       nextWeather.push(
@@ -60,19 +57,11 @@ export function runWeatherGenerationPhase(ctx: MonthContext): void {
   }
 }
 
-// B-5/ADR-0022 + B-6/ADR-0025: monthly per-area StrategicWeatherState generation
-// (DESIGN-42 §1), ordered after opening_validation and before command_collection.
-// The pure engine lives in @bluewave/combat (generateStrategicWeather, keyed
-// stream `campaign/weather/<areaId>/<month>`); this phase wires it
-// authoritatively into the snapshot (default climate profile
-// `defaultClimateProfile_v1`; committed per-area states before command_collection).
 export const weatherGenerationPhase: PhaseDescriptor = {
   id: "weather_generation",
   name: "Strategic Weather Generation",
   order: 5,
   readPermissions: ["all"],
-  // ADR-0036: weather_generation commits per-area StrategicWeatherState into
-  // the snapshot (DESIGN-42 §1), so it writes the strategicWeather resource.
   writePermissions: ["strategicWeather"],
   rngAllowed: true,
   footprint: {

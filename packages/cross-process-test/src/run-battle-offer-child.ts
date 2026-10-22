@@ -1,10 +1,3 @@
-// T-1 03 (#112, spec #109 R15): cross-process determinism child for the player battle offer. Compiles the production
-// pack, puts the player's nation at war in one area, and runs the month with a FIXTURE-CLASS battleOffers section and a
-// scripted interruption channel: suspend at the offer, answer it, resume. It prints the offer, the hashes and the
-// non-offered control as JSON for byte-for-byte comparison across two clean processes.
-//
-// EVERY RULESET NUMBER COMES FROM @bluewave/test-support AND IS FIXTURE-CLASS: it exercises the mechanics and never
-// reaches the production pack, whose own ADR-0254 section is exercised by test/production-battle-offer.test.ts.
 import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -117,7 +110,6 @@ function runChild(): void {
     const reExecuted = offerOf(run(snapshot, { offers: true, channel: true }));
     const accepted = run(snapshot, { offers: true, channel: true, response: request }, "accept");
     const delegated = run(snapshot, { offers: true, channel: true, response: request }, "delegate");
-    // T-1 04 (#113): the declined month, twice in-process; the war score and the declined record are observed.
     const declined = run(snapshot, { offers: true, channel: true, response: request }, "decline");
     const declinedAgain = run(
       snapshot,
@@ -125,8 +117,6 @@ function runChild(): void {
       "decline",
     );
 
-    // T-1 05 (#114): the scripted second decline. The next month starts from the tally the first decline saved, so the
-    // fixture threshold (2) is reached and exactly one typed event is raised; a third pass proves in-process equality.
     const seeded: typeof snapshot = {
       ...snapshot,
       wars: {
@@ -144,8 +134,6 @@ function runChild(): void {
     const thresholdEvents = (result: MonthResult) =>
       result.eventLedger.all.filter((e) => e.body.kind === "DeclineThresholdReached");
 
-    // T-1 06 (#115): the same scripted crossing with a FIXTURE-CLASS declined-battle prestige sub-rule (a fixed 3-point
-    // loss) lowers the player's prestige through the S-2 seam. The loss is a fixture value and never reaches production.
     const prestigeRules = {
       ...FIXTURE_BATTLE_OFFER_RULES,
       declinedBattlePrestige: {
@@ -185,8 +173,6 @@ function runChild(): void {
     const requestText = JSON.stringify(request);
     const draws = accepted.randomLedger.all.filter((d) => d.streamId.startsWith("battle-offer"));
 
-    // T-1 07 (#116): the enemy declines. The enemy is far weaker than the player (fixture predicate: under 4000 bp), and the
-    // draw is forced to each side with a fixture probability, so both the withdrawal and the offer are observed.
     const lopsided = warSnapshot(state.snapshot, { player: 400, enemy: 155 });
     const withRules = (probabilityBp: number, snap: typeof snapshot): MonthResult =>
       new MonthExecutor().execute(snap, [], SEED, new DiagnosticCollector(), undefined, {
@@ -205,8 +191,6 @@ function runChild(): void {
     const withdrawals = (result: MonthResult) =>
       result.eventLedger.all.filter((e) => e.body.kind === "EnemyDeclinedBattle");
 
-    // T-1 08 (#117): a friendly support force. Italy is allied with the player and holds two ships in the area; the fixture
-    // cap (5000 bp of the player's committed 400) admits both. The presence draw is forced to each side by the chance.
     const ally = "italy";
     const baseNations = new Map<string, NationState>(snapshot.nations);
     const italy = baseNations.get(ally)!;

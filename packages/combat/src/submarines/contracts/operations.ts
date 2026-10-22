@@ -1,19 +1,3 @@
-// DESIGN-34 engine-versioned constant-set contracts (C-3 spec §1.3) — the
-// "content deliverable" of this sprint: every shipped `*_v1` policy id +
-// `SHIPPED_*_CONTRACT` + a fail-closed `validate*Contract` guard. Mirrors
-// packages/combat/src/mines/constants.ts (which shipped
-// mine_type_definitions_v1) and mines/contracts.ts (the INC-8 rollup).
-//
-// INC-1 ships the three §1.3 contracts that the strategic-representation /
-// types / policies slice exercises:
-//   submarine_strategic_asset_v1   (DESIGN-34 §1)
-//   submarine_types_v1             (DESIGN-34 §4 + §6 vocab + §9/§10 tables)
-//   submarine_policies_v1          (DESIGN-34 §5)
-// Each ships DESIGN-34's own exact integers (ticket 06 — no research catalog).
-//
-// Pure/deterministic; fail-closed: any tampered contract throws
-// (INVALID_SUBMARINE_REPRESENTATION for the §1 guard, SUBMARINE_STATE_INVARIANT_FAILED
-// for the type/policy definition guards) and never silently passes.
 import {
   SUBMARINE_ASW_VULNERABILITY_BP,
   SUBMARINE_NEUTRAL_ASW_VULNERABILITY_BP,
@@ -54,9 +38,6 @@ export interface SubmarineMissionsContract {
   shippedMissionIds: readonly string[];
 }
 
-// §26.4 mission-priority values are AUTHORED record (see missionEligibility.ts);
-// the contract wires the single shipped definitions copy so the shipped set and
-// this contract cannot drift apart.
 const MISSION_DEFINITION_SURFACES: SubmarineMissionsContract["shippedMissionDefinitions"] =
   SHIPPED_SUBMARINE_MISSION_DEFINITIONS.map((m) => ({
     missionId: m.missionId,
@@ -113,9 +94,6 @@ export function validateSubmarineMissionsContract(
     if (tampered.missionPriority !== shipped.missionPriority)
       mismatch(c, `submarine_missions_v1 §26.4 mission priority for ${shipped.missionId}`);
   }
-  // §26.4 canonical ordering is by mission priority — the shipped priority field
-  // MUST be an injective (no ties) ascending sequence so INC-8's ordering is
-  // deterministic and total.
   const priorities = c.shippedMissionDefinitions.map((m) => m.missionPriority);
   for (let i = 0; i < priorities.length; i += 1) {
     const prev = priorities[i - 1];
@@ -128,16 +106,14 @@ export function validateSubmarineMissionsContract(
   void c;
 }
 
-// submarine_reliability_v1 (§7)
-
 export interface SubmarineReliabilityContract {
   policyId: string;
   rulesetVersion: string;
   formulaVersion: string;
   basisPointsPerUnit: number;
-  reliabilityRangeMin: number; // §7 exact: 0
-  reliabilityRangeMax: number; // §7 exact: 100
-  offensiveDeploymentFloor: number; // §7 exact: 20
+  reliabilityRangeMin: number;
+  reliabilityRangeMax: number;
+  offensiveDeploymentFloor: number;
   multiplierTableBp: ReadonlyArray<{ min: number; max: number; multiplierBp: number }>;
 }
 
@@ -194,8 +170,6 @@ export function validateSubmarineReliabilityContract(
   }
   void c;
 }
-
-// submarine_proximity_v1 (§8)
 
 export interface SubmarineProximityContract {
   policyId: string;
@@ -255,8 +229,6 @@ export function validateSubmarineProximityContract(
   }
   void c;
 }
-
-// submarine_remote_efficiency_v1 (§9)
 
 export interface SubmarineRemoteEfficiencyContract {
   policyId: string;
@@ -336,8 +308,6 @@ export function validateSubmarineRemoteEfficiencyContract(
   void c;
 }
 
-// submarine_long_range_asw_vulnerability_v1 (§10)
-
 export interface SubmarineLongRangeAswVulnerabilityContract {
   policyId: string;
   rulesetVersion: string;
@@ -395,5 +365,3 @@ export function validateSubmarineLongRangeAswVulnerabilityContract(
     mismatch(c, "submarine_long_range_asw_vulnerability_v1 neutral baseline");
   void c;
 }
-
-// submarine_effectiveness_v1 (§11 + §12)

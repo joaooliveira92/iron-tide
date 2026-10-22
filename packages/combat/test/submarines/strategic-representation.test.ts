@@ -1,9 +1,3 @@
-// AC-1 (INC-1): SubmarineStrategicAsset (DESIGN-34 §1). Every asset must carry
-// the full §1 field set and declare EXACTLY one strategic representation
-// (PERSISTENT_UNIT / TYPED_FLOTILLA_POOL). A missing or mixed representation —
-// and a persistent unit whose quantity is not exactly 1 (the §1 quantity rule) —
-// fails closed with INVALID_SUBMARINE_REPRESENTATION. Aggregate hash is
-// deterministic (keyed only on content, no ambient randomness).
 import { describe, expect, it } from "vite-plus/test";
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import {

@@ -1,9 +1,3 @@
-// DESIGN-39 §1 authoritative GunneryState: one per operational battery. The numeric
-// surface is integer fixed-point (DESIGN-07): acquisition/fire-control basis points,
-// range in integer micrometres, reload progress in integer tactical milliseconds,
-// exact integer ammunition counts. Non-integers are rejected at the construction
-// boundary with GUNNERY_STATE_INVARIANT_FAILED. Pure/deterministic: no ambient
-// I/O/clock/random. A reversible-to-invariant guard never mutates its input.
 import { BluewaveError } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import {
@@ -26,30 +20,24 @@ export interface GunneryState {
   ownerShipId: string;
   gunDefinitionId: string;
   mountDefinitionId: string;
-  /**
-   * The first-class armament identity of the installation this battery projects (ADR-0093 Step 4).
-   * Present for compiled designs carrying a `CompiledArmamentMount` snapshot; absent for legacy designs
-   * (the documented compatibility path). `gunDefinitionId`/`mountDefinitionId` mirror the gun model and
-   * mount ids when present, and stay synthetic only when no first-class identity is available.
-   */
   gunFamilyId?: string;
   ammunitionPatternId?: string;
-  targetContactId: string; // contact id or NO_TARGET
-  acquisitionProgressBp: number; // integer basis points [0,10_000]
-  rangeEstimateUm: number; // integer micrometres >= 0
-  rangeUncertaintyUm: number; // integer micrometres >= 0
-  fireControlSolutionQualityBp: number; // integer basis points [0,10_000]
-  ammunition: Record<AmmunitionType, number>; // exact integer counts >= 0
+  targetContactId: string;
+  acquisitionProgressBp: number;
+  rangeEstimateUm: number;
+  rangeUncertaintyUm: number;
+  fireControlSolutionQualityBp: number;
+  ammunition: Record<AmmunitionType, number>;
   fireMode: FireMode;
-  reloadProgressMs: number; // integer tactical milliseconds >= 0
-  straddleState: string | null; // reserved this slice
-  damageState: string | null; // reserved this slice
-  aaEligibilityState: string | null; // reserved this slice
-  lastSalvoMinute: number; // integer, -1 when no salvo yet
-  lastSalvoSubstep: number; // integer >= 0
+  reloadProgressMs: number;
+  straddleState: string | null;
+  damageState: string | null;
+  aaEligibilityState: string | null;
+  lastSalvoMinute: number;
+  lastSalvoSubstep: number;
   rulesetVersion: string;
   formulaVersion: string;
-  stateHash: string; // authoritative hash (deterministic)
+  stateHash: string;
 }
 
 function invariant(s: GunneryState, field: string, value: unknown, reason: string): never {
@@ -62,9 +50,6 @@ function invariant(s: GunneryState, field: string, value: unknown, reason: strin
   });
 }
 
-// AC-1: reject any non-integer / out-of-bound / malformed field in the authoritative
-// GunneryState surface with GUNNERY_STATE_INVARIANT_FAILED. Reversible-to-invariant:
-// a failure leaves the supplied state untouched (no partial mutation).
 export function assertFixedPointGunnery(s: GunneryState): void {
   if (typeof s.batteryId !== "string" || s.batteryId.length === 0)
     invariant(s, "batteryId", s.batteryId, "batteryId must be a non-empty string");
@@ -166,7 +151,6 @@ export function assertFixedPointGunnery(s: GunneryState): void {
   if (!Number.isInteger(s.lastSalvoSubstep) || s.lastSalvoSubstep < 0)
     invariant(s, "lastSalvoSubstep", s.lastSalvoSubstep, "integer non-negative substep");
 
-  // ammunition: exact canonical key set + non-negative integer counts per type.
   const keys = Object.keys(s.ammunition ?? {});
   if (
     keys.length !== AMMUNITION_TYPES.length ||
@@ -190,9 +174,6 @@ export function assertFixedPointGunnery(s: GunneryState): void {
   }
 }
 
-// Authoritative deterministic state hash: canonicalSerialize + sha256 over the
-// non-hash surface, domain-separated with the gunnery_v1 compatibility version.
-// Any provided stateHash is ignored so the hash depends only on the state fields.
 export function computeGunneryStateHash(s: GunneryState): string {
   const surface = {
     batteryId: s.batteryId,
@@ -220,7 +201,6 @@ export function computeGunneryStateHash(s: GunneryState): string {
   return createEnvelope("gunnery-state", gunneryPolicyId, surface).bodyHash;
 }
 
-// Build a fully-invariant GunneryState with its authoritative hash computed.
 export function withGunneryStateHash(s: Omit<GunneryState, "stateHash">): GunneryState {
   const full = s as GunneryState;
   assertFixedPointGunnery(full);
