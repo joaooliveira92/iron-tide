@@ -223,14 +223,24 @@ describe("fleet commands (Effect programs)", () => {
     );
   });
 
-  it("carries ship ids and the dormant 'not configured' presence readout (S-5 09, production pack authors no section)", async () => {
+  it("carries ship ids and the live presence readout (S-5 09, production pack authors the section, ADR-0266)", async () => {
     registerProductionSession("session-uk-presence", resolve(saveRoot, "save-uk-p"), "uk");
     const result = await inspectFleetScreen("session-uk-presence");
     expect(result.outcome).toBe("success");
     if (result.outcome !== "success") return;
     const home = result.value.divisions.find((d) => d.divisionId === "fleet_gbr_home")!;
     expect(home.ships.map((s) => s.shipId)).toContain("gbr_dreadnought");
-    expect(result.value.presence).toEqual({ configured: false });
+    const { presence } = result.value;
+    expect(presence.configured).toBe(true);
+    if (!presence.configured) return;
+    expect(presence.exempt).toBe(false);
+    expect(presence.areas.length).toBeGreaterThan(0);
+    for (const area of presence.areas) {
+      // 150 tons per possession weight (ADR-0266), so every requirement is a positive multiple of 150.
+      expect(area.requiredTons).toBeGreaterThan(0);
+      expect(area.requiredTons % 150).toBe(0);
+      expect(area.shortfallTons).toBe(Math.max(0, area.requiredTons - area.presentTons));
+    }
     expect(result.value.overBaseShips).toEqual([]);
   });
 

@@ -75,3 +75,30 @@
           page: "62, 67, 99"
           section: "Battle offers: force estimate, declining costs victory points and may cost prestige after several declines, the enemy may decline, a friendly support force sometimes joins"
       note: "ADR-0254. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (docs/research/t-1-battle-offer-values.md, decisions 0028-0034)."
+  # The foreign-station and presence section (S-5, spec #73). Every value is a Bluewave balance decision recorded by
+  # ADR-0266 (decision requests 0016-0023 and 0026, Option C); only the 1.5x colonial-service multiplier (manual p.46) is
+  # sourced and it lives in code. The manual (pp.42, 45, 46) says each quantity exists and supplies no number. Retuning is a
+  # ruleset version change with a golden re-pin. Removing this section returns the pack to the dormant behaviour.
+  presence:
+    colonialServiceDisplacementBp: 1500
+    requiredTonsPerPossessionWeight: 150
+    noPortValueWeight: 2
+    crampedOrShortRangeCountBp: 5000
+    penaltyRequests: true
+    baseLimits:
+      limitByBaseLevel: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+      noBaseLimit: 2
+      occupyingStates: ["ACTIVE", "RESERVE", "WORKING_UP", "REPAIR"]
+      maintenanceAdderBp: 2500
+      crewQualityReduction: 2
+    provenance:
+      sourceStatus: "BALANCE_TARGET"
+      confidence: "LOW"
+      kind: "balance_adjustment"
+      sources:
+        - title: "Rule the Waves 3 manual"
+          author: "Naval War Simulations / Matrix Games"
+          year: 2023
+          page: "42, 45, 46"
+          section: "Colonial service takes a proportion of displacement; base limits by base value; tonnage required per area; cramped and short-range ships count for less"
+      note: "ADR-0266. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (docs/research/s-5-presence-and-base-limits.md, decisions 0016-0023, 0026)."

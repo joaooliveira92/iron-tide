@@ -97,9 +97,14 @@ describe("S-5 presence ruleset section reaching ship-building content (ADR-0242)
     },
   };
 
-  it("is absent from production content: the section is dormant until authored", () => {
-    expect(loadShipBuildingData().presence).toBeUndefined();
-    expect(loadShipBuildingContent().environmentFor("1880-01").ctx.colonialFitting).toBeUndefined();
+  it("is live in production content: the ADR-0266 values reach the colonial fitting", () => {
+    expect(loadShipBuildingData().presence).toMatchObject({
+      colonialServiceDisplacementBp: 1_500,
+      requiredTonsPerPossessionWeight: 150,
+      noPortValueWeight: 2,
+      crampedOrShortRangeCountBp: 5_000,
+    });
+    expect(loadShipBuildingContent().environmentFor("1880-01").ctx.colonialFitting).toBeDefined();
   });
 
   it("reads the one ruleset that carries a section, and nothing when none does", () => {

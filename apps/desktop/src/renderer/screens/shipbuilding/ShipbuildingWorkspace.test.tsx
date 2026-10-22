@@ -548,15 +548,15 @@ describe("Systems section", () => {
     expect(within(panel()).getAllByRole("button", { name: /^Add / }).length).toBeGreaterThan(0);
   });
 
-  it("fits colonial service on the Accommodation tab, says 'not configured' with the dormant ruleset, and undoes it", () => {
+  it("fits colonial service on the Accommodation tab, states the production displacement share (ADR-0266), and undoes it", () => {
     render(<ShipbuildingWorkspace />);
     openSystemTab("Accommodation");
     const colonial = () => screen.getByRole("region", { name: "Colonial service" });
     const before = statusOf("displacement");
     fireEvent.click(within(colonial()).getByRole("checkbox", { name: "Fit for colonial service" }));
-    expect(within(colonial()).getByText(/not configured/i)).toBeTruthy();
-    // Dormant ruleset: the fitting is recorded without any displacement change.
-    expect(statusOf("displacement")).toBe(before);
+    expect(within(colonial()).getByText(/15\.00%/)).toBeTruthy();
+    // The production ruleset authors the section: the fitting now costs displacement.
+    expect(statusOf("displacement")).not.toBe(before);
     fireEvent.click(within(commands()).getByRole("button", { name: "Undo" }));
     expect(within(colonial()).getByText("Not fitted for colonial service.")).toBeTruthy();
   });

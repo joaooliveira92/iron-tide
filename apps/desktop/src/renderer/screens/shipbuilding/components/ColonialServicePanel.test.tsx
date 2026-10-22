@@ -35,9 +35,10 @@ describe("ColonialServicePanel", () => {
 
   it("states 'not configured' in text for a fitted design with the dormant ruleset", () => {
     const fitted = { ...ref.draft, colonialServiceFitted: true };
+    const { colonialFitting: _live, ...dormantCtx } = env.ctx;
     render(
       <ColonialServicePanel
-        model={colonialServiceModel(buildWorkshopView(fitted, env))}
+        model={colonialServiceModel(buildWorkshopView(fitted, { ...env, ctx: dormantCtx }))}
         edit={vi.fn()}
       />,
     );

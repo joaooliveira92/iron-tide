@@ -9,6 +9,9 @@ const content = loadDrawingBoardContent();
 const ref = content.references[0]!;
 const env = content.environmentFor(ref.month, ref.draft.nationId);
 const fitted = { ...ref.draft, colonialServiceFitted: true };
+// The production pack now authors the section (ADR-0266), so the dormant state is a context without a fitting.
+const { colonialFitting: _live, ...dormantCtx } = env.ctx;
+const dormant = { ...env, ctx: dormantCtx };
 const configured = {
   ...env,
   ctx: { ...env.ctx, colonialFitting: { displacementBp: 100 } },
@@ -21,7 +24,7 @@ describe("colonialServiceModel", () => {
   });
 
   it("says 'not configured' for a fitting while the ruleset section is dormant, never a number", () => {
-    const m = colonialServiceModel(buildWorkshopView(fitted, env));
+    const m = colonialServiceModel(buildWorkshopView(fitted, dormant));
     expect(m.fitted).toBe(true);
     expect(m.status).toBe("not-configured");
     expect(m.text).toContain("not configured");
