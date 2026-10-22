@@ -1,7 +1,4 @@
-import type {
-  TurnMessageDto,
-  TurnSummaryEntry,
-} from "../../../shared/campaign-command-contract.js";
+import type { TurnMessageDto, TurnSummaryEntry } from "../../../shared/turn-message-contract.js";
 
 export const SEVERITY_ORDER = ["CRITICAL", "HIGH", "NORMAL", "LOW", "TRACE"] as const;
 

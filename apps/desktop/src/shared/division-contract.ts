@@ -13,7 +13,11 @@ export type DivisionCommandBody =
       readonly role: string;
       readonly formation: string;
     }
-  | { readonly type: "AddShipToDivision"; readonly divisionId: string; readonly shipId: string }
+  | {
+      readonly type: "AddShipToDivision";
+      readonly divisionId: string;
+      readonly shipId: string;
+    }
   | {
       readonly type: "RemoveShipFromDivision";
       readonly divisionId: string;

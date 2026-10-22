@@ -10,14 +10,14 @@ export function NationDeferredIntel() {
   return (
     <details
       data-testid="nation-rail-deferred"
-      className="rounded-md border border-dashed px-3 py-2"
+      className="group rounded-lg border border-dashed bg-card/40 px-3 py-1.5"
     >
-      <summary className="cursor-pointer font-medium text-muted-foreground">
+      <summary className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:text-foreground">
         Intel level / reports / Almanac: Not yet modelled
       </summary>
-      <ul className="mt-1.5 space-y-1">
+      <ul className="mt-1.5 divide-y divide-border/60">
         {DEFERRED_NATION_RAIL_ITEMS.map((item) => (
-          <li key={item.id}>
+          <li key={item.id} className="py-1">
             <span className="font-medium">{item.name}</span>
             <span className="text-muted-foreground"> — {item.reason}</span>
           </li>

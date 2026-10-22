@@ -2,7 +2,7 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
-import type { CampaignCommandClient } from "../../shared/campaign-command-contract.js";
+import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
 import { COSMETIC_MINIMUM_DURATION_MS } from "../screens/new-game/world-generation-presentation.js";
 import type { Screen } from "./campaign-screen-registry.js";
 
@@ -278,12 +278,16 @@ vi.mock("../screens/new-game/NewGameLaunchingScreen.js", async () => {
 
 vi.mock("./BottomNav.js", async () => {
   const React = await import("react");
-  return { BottomNav: () => React.createElement("nav", { "data-testid": "bottom-nav" }) };
+  return {
+    BottomNav: () => React.createElement("nav", { "data-testid": "bottom-nav" }),
+  };
 });
 
 vi.mock("./StatusStrip.js", async () => {
   const React = await import("react");
-  return { StatusStrip: () => React.createElement("section", { "data-testid": "status-strip" }) };
+  return {
+    StatusStrip: () => React.createElement("section", { "data-testid": "status-strip" }),
+  };
 });
 
 vi.mock("../screens/battle/PlayerBattleScreen.js", async () => {
@@ -413,13 +417,22 @@ function createShell(overrides: Record<string, unknown> = {}) {
               : shell.screen === "new-game-identity"
                 ? { kind: "new-game-identity" as const, screen: shell.screen }
                 : shell.screen === "new-game-fleet-method"
-                  ? { kind: "new-game-fleet-method" as const, screen: shell.screen }
+                  ? {
+                      kind: "new-game-fleet-method" as const,
+                      screen: shell.screen,
+                    }
                   : shell.screen === "new-game-review"
                     ? { kind: "new-game-review" as const, screen: shell.screen }
                     : shell.screen === "new-game-launching"
-                      ? { kind: "new-game-launching" as const, screen: shell.screen }
+                      ? {
+                          kind: "new-game-launching" as const,
+                          screen: shell.screen,
+                        }
                       : shell.screen === "opening-briefing"
-                        ? { kind: "opening-briefing" as const, screen: shell.screen }
+                        ? {
+                            kind: "opening-briefing" as const,
+                            screen: shell.screen,
+                          }
                         : { kind: "file" as const, screen: "file" as const };
   return { ...shell, mode };
 }
@@ -574,7 +587,10 @@ describe("App", () => {
     const dialog = screen.getByRole("alertdialog");
     expect(dialog).toBeTruthy();
     fireEvent.click(screen.getByTestId("offer-delegate"));
-    expect(shell.answerInterruption).toHaveBeenCalledWith({ kind: "offer", choice: "delegate" });
+    expect(shell.answerInterruption).toHaveBeenCalledWith({
+      kind: "offer",
+      choice: "delegate",
+    });
     expect(screen.queryByTestId("battle-dialog")).toBeNull();
   });
 
@@ -616,7 +632,10 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Finish battle" }));
     expect(shell.answerInterruption).toHaveBeenCalledWith({
       kind: "battle-outcome",
-      outcome: expect.objectContaining({ battleId: "battle-1", winnerId: "uk" }),
+      outcome: expect.objectContaining({
+        battleId: "battle-1",
+        winnerId: "uk",
+      }),
     });
   });
 
@@ -688,7 +707,10 @@ describe("App", () => {
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
     expect(shell.selectScreen).toHaveBeenCalledWith("new-game-fleet-method");
 
-    testState.shell = createShell({ ...shell, screen: "new-game-fleet-method" });
+    testState.shell = createShell({
+      ...shell,
+      screen: "new-game-fleet-method",
+    });
     rerender(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Continue to review" }));
     expect(shell.selectScreen).toHaveBeenCalledWith("new-game-review");
@@ -760,7 +782,10 @@ describe("App", () => {
     rerender(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
 
-    testState.shell = createShell({ ...shell, screen: "new-game-fleet-method" });
+    testState.shell = createShell({
+      ...shell,
+      screen: "new-game-fleet-method",
+    });
     rerender(<App />);
     fireEvent.click(screen.getByRole("button", { name: "Continue to review" }));
 

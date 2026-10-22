@@ -1,9 +1,6 @@
 import { Effect } from "effect";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
-import type {
-  CopyCampaignResult,
-  SaveCampaignResult,
-} from "../../shared/campaign-command-contract.js";
+import type { CopyCampaignResult, SaveCampaignResult } from "../../shared/campaign-contract.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandQueueStore } from "../runtime/commandQueueStore.js";
 import type { CommandError } from "../runtime/commandError.js";
@@ -72,11 +69,19 @@ export const copyCampaignProgram = (
 
     const location = yield* dialogs.chooseCopyDirectory(`bluewave-${record.playerSlotId}-copy`);
     if (location === null) {
-      return { outcome: "rejected", reason: "SAVE_LOCATION_CANCELLED", diagnostics: [] };
+      return {
+        outcome: "rejected",
+        reason: "SAVE_LOCATION_CANCELLED",
+        diagnostics: [],
+      };
     }
     const problem = yield* projects.assessCopyTarget(record.saveDir, location);
     if (problem !== null) {
-      return { outcome: "rejected", reason: problem.reason, diagnostics: [problem.message] };
+      return {
+        outcome: "rejected",
+        reason: problem.reason,
+        diagnostics: [problem.message],
+      };
     }
 
     yield* projects.save(record.state, location);

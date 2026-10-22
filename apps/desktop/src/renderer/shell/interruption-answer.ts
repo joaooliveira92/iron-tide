@@ -1,12 +1,14 @@
 import type {
   AnswerDecisionPayload,
   CampaignCommandClient,
-  InterruptionRequestDto,
-  PlayerBattleResultDto,
-  ResolveTurnResult,
   SubmitBattleResultPayload,
   SubmitOfferResponsePayload,
-} from "../../shared/campaign-command-contract.js";
+} from "../../shared/campaign-contract.js";
+import type {
+  InterruptionRequestDto,
+  ResolveTurnResult,
+} from "../../shared/turn-message-contract.js";
+import type { PlayerBattleResultDto } from "../../shared/player-battle-contract.js";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import { resolveMessage } from "../content/uiCatalogue.js";
 import { createTransportRequestId } from "../lib/command-screen-workflow.js";
@@ -37,9 +39,18 @@ export type InterruptionAnswerFailure =
     };
 
 export type InterruptionCommand =
-  | { readonly command: "answerDecision"; readonly payload: AnswerDecisionPayload }
-  | { readonly command: "submitBattleResult"; readonly payload: SubmitBattleResultPayload }
-  | { readonly command: "submitOfferResponse"; readonly payload: SubmitOfferResponsePayload };
+  | {
+      readonly command: "answerDecision";
+      readonly payload: AnswerDecisionPayload;
+    }
+  | {
+      readonly command: "submitBattleResult";
+      readonly payload: SubmitBattleResultPayload;
+    }
+  | {
+      readonly command: "submitOfferResponse";
+      readonly payload: SubmitOfferResponsePayload;
+    };
 
 export type ResolveOutcome =
   | {
@@ -71,7 +82,10 @@ export function planInterruptionAnswer(
   request: InterruptionRequestDto,
   answer: InterruptionAnswer,
 ): InterruptionCommand | InterruptionAnswerFailure {
-  const envelope = { sessionId: campaign.sessionId, expectedRevision: campaign.revision };
+  const envelope = {
+    sessionId: campaign.sessionId,
+    expectedRevision: campaign.revision,
+  };
   if (answer.kind === "decision") {
     if (request.kind !== "decision") return mismatch(request, answer);
     return {
@@ -135,7 +149,11 @@ function failed(
 ): Extract<ResolveOutcome, { _tag: "Failed" }> {
   return {
     _tag: "Failed",
-    failure: { _tag: "Rejected", reason: result.reason, diagnostics: result.diagnostics },
+    failure: {
+      _tag: "Rejected",
+      reason: result.reason,
+      diagnostics: result.diagnostics,
+    },
   };
 }
 
@@ -149,7 +167,10 @@ export function foldResolveTurn(
   switch (value.status) {
     case "completed": {
       const committed: CommittedMonth = {
-        closingSnapshot: { month: value.closing.month, revision: value.closing.revision },
+        closingSnapshot: {
+          month: value.closing.month,
+          revision: value.closing.revision,
+        },
         report: { closingTreasury: value.closing.closingTreasury },
       };
       return {
@@ -161,7 +182,11 @@ export function foldResolveTurn(
     case "suspended":
       return {
         _tag: "Suspended",
-        interruption: { request: value.request, pending: value.pendingTurn, unavailable: false },
+        interruption: {
+          request: value.request,
+          pending: value.pendingTurn,
+          unavailable: false,
+        },
       };
     case "unavailable":
       return { _tag: "Unavailable" };

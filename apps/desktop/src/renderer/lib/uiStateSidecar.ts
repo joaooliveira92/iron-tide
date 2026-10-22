@@ -4,7 +4,7 @@ import type {
   UiStateFirstMonthInspection,
   UiStateInspectorLayout,
   UiStateTurnMessages,
-} from "../../shared/campaign-command-contract.js";
+} from "../../shared/ui-state-contract.js";
 
 export interface UiStatePatch {
   readonly firstMonthInspection?: UiStateFirstMonthInspection;

@@ -1,9 +1,7 @@
 import type { PlayerProjection } from "@bluewave/campaign-engine";
-import type {
-  MonthlyReportEntry,
-  TurnSummaryEntry,
-  UiStateTurnMessages,
-} from "../../../../shared/campaign-command-contract.js";
+import type { MonthlyReportEntry } from "../../../../shared/reports-contract.js";
+import type { TurnSummaryEntry } from "../../../../shared/turn-message-contract.js";
+import type { UiStateTurnMessages } from "../../../../shared/ui-state-contract.js";
 import type { WorldMapController } from "../../../components/world-map/useWorldMapController.js";
 import { useWorldMapController } from "../../../components/world-map/useWorldMapController.js";
 import { humanizeId } from "../../../lib/humanize-id.js";

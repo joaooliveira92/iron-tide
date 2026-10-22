@@ -1,4 +1,4 @@
-import type { InterruptionRequestDto } from "../../../shared/campaign-command-contract.js";
+import type { InterruptionRequestDto } from "../../../shared/turn-message-contract.js";
 import { resolveMessage } from "../../content/uiCatalogue.js";
 
 export type BattleChoice = "accept" | "decline" | "delegate";

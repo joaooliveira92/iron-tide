@@ -18,7 +18,7 @@ import type {
   FinishPlayerBattleResult,
   PlayerBattleResultDto,
   StartPlayerBattleResult,
-} from "../../shared/campaign-command-contract.js";
+} from "../../shared/player-battle-contract.js";
 import { loadPendingTurn } from "../pendingTurn.js";
 import {
   clearPlayerBattleSave,
@@ -87,7 +87,10 @@ function ordersOf(
 ): PlayerBattleOrders {
   const out: Record<string, { stance: PlayerBattleStance; speedPercent: number }> = {};
   for (const order of divisions) {
-    out[order.divisionId] = { stance: order.stance, speedPercent: order.speedPercent };
+    out[order.divisionId] = {
+      stance: order.stance,
+      speedPercent: order.speedPercent,
+    };
   }
   return { divisions: out };
 }
@@ -219,7 +222,10 @@ export const advancePlayerBattleProgram: CommandHandler<"advancePlayerBattle"> =
         diagnostics: ["Start the player battle before advancing it"],
       };
     }
-    const step: PlayerBattleStep = { mode: payload.mode, divisions: payload.divisions };
+    const step: PlayerBattleStep = {
+      mode: payload.mode,
+      divisions: payload.divisions,
+    };
     const next = applyStep(session, step);
     const key = keyOf(payload.sessionId, payload.battleId);
     sessions.set(key, next);

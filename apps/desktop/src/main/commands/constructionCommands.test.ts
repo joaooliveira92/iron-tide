@@ -12,7 +12,7 @@ import { constructionProjectReadout } from "@bluewave/phase-engine";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
-import type { CompileCampaignResult } from "../../shared/campaign-command-contract.js";
+import type { CompileCampaignResult } from "../../shared/campaign-contract.js";
 import type { LoadCampaignResponse } from "../../shared/continuity-contract.js";
 import type {
   CancelConstructionCommandPayload,
@@ -356,7 +356,10 @@ describe("construction commands", () => {
     const snapshot = record.state.snapshot;
     const uk = snapshot.nations.get("uk")!;
     const poorNation = { ...uk, treasury: SafeInt(100) };
-    const poorSnapshot = { ...snapshot, nations: new Map(snapshot.nations).set("uk", poorNation) };
+    const poorSnapshot = {
+      ...snapshot,
+      nations: new Map(snapshot.nations).set("uk", poorNation),
+    };
     const poorEnvelope = createEnvelope(
       "campaign-snapshot",
       poorSnapshot.compatibilityVersion,
@@ -646,7 +649,10 @@ describe("construction commands", () => {
         maximumConversionMassKg: 20_000_000,
       },
     };
-    const poorSnapshot = { ...snapshot, nations: new Map(snapshot.nations).set("uk", poorNation) };
+    const poorSnapshot = {
+      ...snapshot,
+      nations: new Map(snapshot.nations).set("uk", poorNation),
+    };
     const poorEnvelope = createEnvelope(
       "campaign-snapshot",
       poorSnapshot.compatibilityVersion,

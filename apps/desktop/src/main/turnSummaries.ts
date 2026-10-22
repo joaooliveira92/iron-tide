@@ -4,7 +4,7 @@ import type {
   ReadTurnSummariesResult,
   TurnSummaryEntry,
   TurnSummaries,
-} from "../shared/campaign-command-contract.js";
+} from "../shared/turn-message-contract.js";
 import type { DomainEventEnvelope } from "@bluewave/events";
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";

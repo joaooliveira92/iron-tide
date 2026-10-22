@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import type { InterruptionRequestDto } from "../../../shared/campaign-command-contract.js";
+import type { InterruptionRequestDto } from "../../../shared/turn-message-contract.js";
 import { OfferDialog } from "./OfferDialog.js";
 
 afterEach(cleanup);

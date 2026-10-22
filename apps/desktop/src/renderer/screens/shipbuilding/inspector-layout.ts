@@ -1,8 +1,8 @@
-import type { UiStateInspectorLayout } from "../../../shared/campaign-command-contract.js";
+import type { UiStateInspectorLayout } from "../../../shared/ui-state-contract.js";
 import {
   INSPECTOR_MAX_WIDTH_PX,
   INSPECTOR_MIN_WIDTH_PX,
-} from "../../../shared/campaign-command-contract.js";
+} from "../../../shared/ui-state-contract.js";
 
 export type InspectorLayout = UiStateInspectorLayout;
 

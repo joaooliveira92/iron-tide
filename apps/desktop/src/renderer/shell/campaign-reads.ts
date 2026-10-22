@@ -1,9 +1,7 @@
 import type { PlayerProjection, StrategicPriority } from "@bluewave/campaign-engine";
 
-import type {
-  CampaignCommandClient,
-  MonthlyReportEntry,
-} from "../../shared/campaign-command-contract.js";
+import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
+import type { MonthlyReportEntry } from "../../shared/reports-contract.js";
 import { readBridge, type BridgeRead } from "../lib/bridge-read.js";
 import { countActiveAlerts } from "../lib/priorities.js";
 import type { StatusStripAreas } from "./status-strip-state.js";

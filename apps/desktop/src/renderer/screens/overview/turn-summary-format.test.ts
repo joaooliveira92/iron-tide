@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import type { TurnMessageDto } from "../../../shared/campaign-command-contract.js";
+import type { TurnMessageDto } from "../../../shared/turn-message-contract.js";
 import {
   DEFAULT_FILTERS,
   filterTurnMessages,
@@ -38,13 +38,22 @@ describe("turn-summary-format", () => {
     ];
     expect(filterTurnMessages(messages, DEFAULT_FILTERS)).toHaveLength(3);
     expect(
-      filterTurnMessages(messages, { ...DEFAULT_FILTERS, severity: "CRITICAL" }).map((m) => m.id),
+      filterTurnMessages(messages, {
+        ...DEFAULT_FILTERS,
+        severity: "CRITICAL",
+      }).map((m) => m.id),
     ).toEqual(["a"]);
     expect(
-      filterTurnMessages(messages, { ...DEFAULT_FILTERS, category: "RESEARCH" }).map((m) => m.id),
+      filterTurnMessages(messages, {
+        ...DEFAULT_FILTERS,
+        category: "RESEARCH",
+      }).map((m) => m.id),
     ).toEqual(["c"]);
     expect(
-      filterTurnMessages(messages, { ...DEFAULT_FILTERS, actionableOnly: true }).map((m) => m.id),
+      filterTurnMessages(messages, {
+        ...DEFAULT_FILTERS,
+        actionableOnly: true,
+      }).map((m) => m.id),
     ).toEqual(["a"]);
     expect(
       filterTurnMessages(messages, { ...DEFAULT_FILTERS, search: "uk" }).map((m) => m.id),

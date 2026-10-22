@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { UiStateTurnMessages } from "../../../shared/campaign-command-contract.js";
+import type { UiStateTurnMessages } from "../../../shared/ui-state-contract.js";
 import { useBridge } from "../../lib/bridge-context.js";
 import { writeUiStatePatch } from "../../lib/uiStateSidecar.js";
 

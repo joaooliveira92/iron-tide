@@ -2,10 +2,8 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
 import type { BluewaveDesktopBridge } from "../../../preload/index.js";
-import type {
-  CampaignCommandClient,
-  InterruptionRequestDto,
-} from "../../../shared/campaign-command-contract.js";
+import type { CampaignCommandClient } from "../../../shared/campaign-contract.js";
+import type { InterruptionRequestDto } from "../../../shared/turn-message-contract.js";
 import {
   DEFAULT_APP_PREFERENCES,
   type AppPreferences,
@@ -28,7 +26,12 @@ const VIEW: PlayerBattleView = {
   winnerId: null,
   loserId: null,
   objectives: [],
-  weather: { seaState: "MODERATE", visibilityNm: 10, precipitation: "CLEAR", daylight: true },
+  weather: {
+    seaState: "MODERATE",
+    visibilityNm: 10,
+    precipitation: "CLEAR",
+    daylight: true,
+  },
   ships: [
     {
       shipId: "s1",
@@ -83,7 +86,10 @@ function bridgeWith(
   const execute = vi.fn<CampaignCommandClient["execute"]>(() =>
     startReply(VIEW, start.resumed, start.lastOrders),
   );
-  const snapshot = { version: 1, app: { ...DEFAULT_APP_PREFERENCES, ...prefs } };
+  const snapshot = {
+    version: 1,
+    app: { ...DEFAULT_APP_PREFERENCES, ...prefs },
+  };
   return {
     campaign: { execute },
     preferences: {
@@ -140,7 +146,13 @@ describe("PlayerBattleScreen", () => {
       ...VIEW,
       ships: [
         ...VIEW.ships,
-        { ...VIEW.ships[0]!, shipId: "e1", name: "FS Beta", sideId: "DEFENDER", divisionId: null },
+        {
+          ...VIEW.ships[0]!,
+          shipId: "e1",
+          name: "FS Beta",
+          sideId: "DEFENDER",
+          divisionId: null,
+        },
       ],
     };
     bridge.campaign.execute.mockReturnValue(startReply(withEnemy, false, []));
@@ -153,7 +165,10 @@ describe("PlayerBattleScreen", () => {
     mount(
       bridgeWith(
         {},
-        { resumed: true, lastOrders: [{ divisionId: "d1", stance: "HOLD", speedPercent: 40 }] },
+        {
+          resumed: true,
+          lastOrders: [{ divisionId: "d1", stance: "HOLD", speedPercent: 40 }],
+        },
       ),
     );
     const stance = (await screen.findByLabelText("Stance for d1")) as HTMLSelectElement;

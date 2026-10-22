@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import type { CampaignCommandMap } from "../../shared/campaign-command-contract.js";
+import type { CampaignCommandMap } from "../../shared/campaign-contract.js";
 import type {
   CancelMovementCommandPayload,
   MovementCommandOutcome,

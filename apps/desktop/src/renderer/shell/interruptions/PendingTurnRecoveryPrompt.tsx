@@ -1,4 +1,4 @@
-import type { PendingTurnDto } from "../../../shared/campaign-command-contract.js";
+import type { PendingTurnDto } from "../../../shared/turn-message-contract.js";
 import { resolveMessage } from "../../content/uiCatalogue.js";
 
 export function PendingTurnRecoveryPrompt({
@@ -35,7 +35,9 @@ export function PendingTurnRecoveryPrompt({
             <h2 className="text-sm font-semibold">{resolveMessage("ui.pendingTurn.title")}</h2>
             <p className="mt-1 text-xs text-muted-foreground">
               {pending?.createdAt !== undefined
-                ? resolveMessage("ui.pendingTurn.bodyWithDate", { createdAt: pending.createdAt })
+                ? resolveMessage("ui.pendingTurn.bodyWithDate", {
+                    createdAt: pending.createdAt,
+                  })
                 : resolveMessage("ui.pendingTurn.body")}
             </p>
           </>

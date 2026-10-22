@@ -8,7 +8,7 @@ import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type {
   CampaignCommandClient,
   CompileCampaignResult,
-} from "../../shared/campaign-command-contract.js";
+} from "../../shared/campaign-contract.js";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type { NewGameOptions } from "../../shared/new-game-contract.js";
 import { defaultFleetMethod } from "../screens/new-game/new-game-fleet-method-screen-state.js";

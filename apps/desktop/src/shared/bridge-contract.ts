@@ -12,7 +12,11 @@ export interface WindowState {
 }
 
 export type BridgeResult<T> =
-  | { readonly outcome: "success"; readonly value: T; readonly diagnostics: readonly string[] }
+  | {
+      readonly outcome: "success";
+      readonly value: T;
+      readonly diagnostics: readonly string[];
+    }
   | {
       readonly outcome: "rejected";
       readonly reason: string;

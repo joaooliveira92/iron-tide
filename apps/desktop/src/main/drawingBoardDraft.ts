@@ -94,7 +94,11 @@ export const writeDrawingBoardDraftProgram: CommandHandler<"writeDrawingBoardDra
     const draft = payload.draft;
     if (draft === null) {
       yield* drafts.remove(record.saveDir);
-      return { outcome: "success" as const, value: { saved: false }, diagnostics: [] };
+      return {
+        outcome: "success" as const,
+        value: { saved: false },
+        diagnostics: [],
+      };
     }
 
     yield* Effect.try({
@@ -110,5 +114,9 @@ export const writeDrawingBoardDraftProgram: CommandHandler<"writeDrawingBoardDra
     const savedAt = (yield* clock.now()).toISOString();
     yield* drafts.save(record.saveDir, draft, savedAt);
 
-    return { outcome: "success" as const, value: { saved: true }, diagnostics: [] };
+    return {
+      outcome: "success" as const,
+      value: { saved: true },
+      diagnostics: [],
+    };
   });

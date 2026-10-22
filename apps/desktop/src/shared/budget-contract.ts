@@ -11,7 +11,10 @@ export interface BudgetScreenProjection {
     readonly researchBudgetMin: number;
     readonly researchBudgetMax: number;
   };
-  readonly researchCaps: readonly { readonly rateBp: number; readonly cap: number }[];
+  readonly researchCaps: readonly {
+    readonly rateBp: number;
+    readonly cap: number;
+  }[];
 }
 
 export interface SubmitBudgetAllocationPayload extends CommandEnvelope {

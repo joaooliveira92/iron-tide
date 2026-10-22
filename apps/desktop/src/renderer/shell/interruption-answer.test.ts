@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
 import type {
-  CampaignCommandClient,
   InterruptionRequestDto,
   ResolveTurnResult,
   TurnMessageDto,
-} from "../../shared/campaign-command-contract.js";
+} from "../../shared/turn-message-contract.js";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import { setUiCatalogue } from "../content/uiCatalogue.js";
 import type { CampaignOverview } from "./campaign-shell-state.js";
@@ -104,7 +104,11 @@ const completed: BridgeResult<ResolveTurnResult> = {
   value: {
     status: "completed",
     summary,
-    closing: { revision: 4, month: { year: 1900, month: 2 }, closingTreasury: 22_900_000 },
+    closing: {
+      revision: 4,
+      month: { year: 1900, month: 2 },
+      closingTreasury: 22_900_000,
+    },
   },
   diagnostics: [],
 };
@@ -137,7 +141,10 @@ beforeEach(() => {
 
 describe("planInterruptionAnswer", () => {
   it("assembles a decision command with the envelope and a transport identity", () => {
-    const plan = planned(campaign, decisionRequest, { kind: "decision", optionId: "approve" });
+    const plan = planned(campaign, decisionRequest, {
+      kind: "decision",
+      optionId: "approve",
+    });
     expect(plan).toMatchObject({
       command: "answerDecision",
       payload: {
@@ -154,7 +161,10 @@ describe("planInterruptionAnswer", () => {
   });
 
   it("assembles an offer command carrying the typed response", () => {
-    const plan = planned(campaign, offerRequest, { kind: "offer", choice: "delegate" });
+    const plan = planned(campaign, offerRequest, {
+      kind: "offer",
+      choice: "delegate",
+    });
     expect(plan).toMatchObject({
       command: "submitOfferResponse",
       payload: {
@@ -253,7 +263,10 @@ describe("foldResolveTurn", () => {
       campaign,
       "ses-1",
     );
-    expect(outcome).toMatchObject({ _tag: "Suspended", interruption: { unavailable: false } });
+    expect(outcome).toMatchObject({
+      _tag: "Suspended",
+      interruption: { unavailable: false },
+    });
   });
 
   it("folds an unavailable pending turn without fabricating a request", () => {
@@ -267,13 +280,21 @@ describe("foldResolveTurn", () => {
 
   it("folds a rejection into a tagged failure", () => {
     const outcome = foldResolveTurn(
-      { outcome: "rejected", reason: "SIMULATION_END_REACHED", diagnostics: ["done"] },
+      {
+        outcome: "rejected",
+        reason: "SIMULATION_END_REACHED",
+        diagnostics: ["done"],
+      },
       campaign,
       "ses-1",
     );
     expect(outcome).toEqual({
       _tag: "Failed",
-      failure: { _tag: "Rejected", reason: "SIMULATION_END_REACHED", diagnostics: ["done"] },
+      failure: {
+        _tag: "Rejected",
+        reason: "SIMULATION_END_REACHED",
+        diagnostics: ["done"],
+      },
     });
   });
 
@@ -335,7 +356,11 @@ describe("foldInterruptionAnswer", () => {
               severity: "NORMAL",
               titleKey: "messages.battle.declined.title",
               bodyKey: "messages.battle.declined.body",
-              interpolation: { battleId: "battle-1", areaId: "a-1", victoryPointCost: 5 },
+              interpolation: {
+                battleId: "battle-1",
+                areaId: "a-1",
+                victoryPointCost: 5,
+              },
               subjectRefs: [],
               effectRefs: [],
               blocking: false,
@@ -344,7 +369,11 @@ describe("foldInterruptionAnswer", () => {
             },
           ],
         },
-        closing: { revision: 4, month: { year: 1900, month: 2 }, closingTreasury: 22_900_000 },
+        closing: {
+          revision: 4,
+          month: { year: 1900, month: 2 },
+          closingTreasury: 22_900_000,
+        },
       },
       diagnostics: [],
     };
@@ -385,7 +414,10 @@ describe("sendInterruptionAnswer", () => {
     );
     void sendInterruptionAnswer(
       client,
-      planned(campaign, decisionRequest, { kind: "decision", optionId: "approve" }),
+      planned(campaign, decisionRequest, {
+        kind: "decision",
+        optionId: "approve",
+      }),
     );
 
     expect(execute).toHaveBeenCalledWith("submitOfferResponse", expect.any(Object));

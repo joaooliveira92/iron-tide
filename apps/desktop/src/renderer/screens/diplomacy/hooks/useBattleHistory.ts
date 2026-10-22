@@ -1,7 +1,7 @@
 import type { BattleHistoryView } from "@bluewave/campaign-engine";
 
 import type { BridgeResult } from "../../../../shared/bridge-contract.js";
-import type { InspectBattleHistoryResult } from "../../../../shared/campaign-command-contract.js";
+import type { InspectBattleHistoryResult } from "../../../../shared/campaign-contract.js";
 import { useBridgeQuery } from "../../../lib/use-bridge-query.js";
 
 export type BattleHistoryState =

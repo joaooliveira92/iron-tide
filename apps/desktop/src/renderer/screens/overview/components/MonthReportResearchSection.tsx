@@ -1,4 +1,4 @@
-import type { MonthlyReportResearch } from "../../../../shared/campaign-command-contract.js";
+import type { MonthlyReportResearch } from "../../../../shared/reports-contract.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
 export function MonthReportResearchSection({

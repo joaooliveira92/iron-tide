@@ -1,4 +1,4 @@
-import type { MonthlyReportFleet } from "../../../../shared/campaign-command-contract.js";
+import type { MonthlyReportFleet } from "../../../../shared/reports-contract.js";
 
 export function MonthReportFleetSection({ fleet }: { readonly fleet: MonthlyReportFleet }) {
   return (

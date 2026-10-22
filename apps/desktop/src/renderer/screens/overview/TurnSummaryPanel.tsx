@@ -3,8 +3,8 @@ import type {
   EntityReferenceDto,
   TurnMessageDto,
   TurnSummaryEntry,
-  UiStateTurnMessages,
-} from "../../../shared/campaign-command-contract.js";
+} from "../../../shared/turn-message-contract.js";
+import type { UiStateTurnMessages } from "../../../shared/ui-state-contract.js";
 import { CollapsiblePanel } from "../../components/shared/CollapsiblePanel.js";
 import { resolveMessage } from "../../content/uiCatalogue.js";
 import {
@@ -270,7 +270,10 @@ export function TurnSummaryPanel({
               className="min-w-0 flex-1 rounded border border-border/60 bg-background px-1.5 py-0.5 text-xs"
               value={filters.search}
               onChange={(event) =>
-                setFilters((current) => ({ ...current, search: event.target.value }))
+                setFilters((current) => ({
+                  ...current,
+                  search: event.target.value,
+                }))
               }
             />
             <select
@@ -279,7 +282,10 @@ export function TurnSummaryPanel({
               className="rounded border border-border/60 bg-background px-1 py-0.5 text-xs"
               value={filters.category}
               onChange={(event) =>
-                setFilters((current) => ({ ...current, category: event.target.value }))
+                setFilters((current) => ({
+                  ...current,
+                  category: event.target.value,
+                }))
               }
             >
               <option value="ALL">{resolveMessage("ui.turnSummary.allCategories")}</option>
@@ -295,7 +301,10 @@ export function TurnSummaryPanel({
               className="rounded border border-border/60 bg-background px-1 py-0.5 text-xs"
               value={filters.severity}
               onChange={(event) =>
-                setFilters((current) => ({ ...current, severity: event.target.value }))
+                setFilters((current) => ({
+                  ...current,
+                  severity: event.target.value,
+                }))
               }
             >
               {SEVERITIES.map((value) => (
@@ -314,10 +323,15 @@ export function TurnSummaryPanel({
                 filters.actionableOnly ? "bg-accent" : ""
               }`}
               onClick={() =>
-                setFilters((current) => ({ ...current, actionableOnly: !current.actionableOnly }))
+                setFilters((current) => ({
+                  ...current,
+                  actionableOnly: !current.actionableOnly,
+                }))
               }
             >
-              {resolveMessage("ui.turnSummary.actionable", { count: actionableCount })}
+              {resolveMessage("ui.turnSummary.actionable", {
+                count: actionableCount,
+              })}
             </button>
           </div>
         )}

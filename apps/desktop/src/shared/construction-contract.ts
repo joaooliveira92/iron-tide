@@ -19,7 +19,10 @@ export interface ConstructionScreenProjection {
     readonly exemptNewConstructionMassKg: number;
     readonly dockExpansionDurationMonths: number;
     readonly dockExpansionNextStepKg: number | null;
-    readonly dockPossessions: readonly { readonly id: string; readonly name: string }[];
+    readonly dockPossessions: readonly {
+      readonly id: string;
+      readonly name: string;
+    }[];
   };
   readonly designs: readonly CompiledDesignVersion[];
   readonly projects: readonly ConstructionProjectQueueEntry[];
@@ -77,7 +80,11 @@ export interface PreviewConstructionBatchCommandPayload {
 
 export type ConstructionBatchPreviewOutcome =
   | { readonly ok: true; readonly preview: ConstructionBatchPreview }
-  | { readonly ok: false; readonly reason: string; readonly diagnostics: readonly string[] };
+  | {
+      readonly ok: false;
+      readonly reason: string;
+      readonly diagnostics: readonly string[];
+    };
 
 export interface AuthorizeDockExpansionCommandPayload extends CommandEnvelope {
   readonly possessionId: string;
@@ -106,4 +113,8 @@ export interface PreviewForeignConstructionCommandPayload {
 
 export type ForeignConstructionPreviewOutcome =
   | { readonly ok: true; readonly preview: ForeignConstructionPreview }
-  | { readonly ok: false; readonly reason: string; readonly diagnostics: readonly string[] };
+  | {
+      readonly ok: false;
+      readonly reason: string;
+      readonly diagnostics: readonly string[];
+    };

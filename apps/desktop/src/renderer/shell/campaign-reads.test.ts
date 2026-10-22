@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vite-plus/test";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
-import type { CampaignCommandClient } from "../../shared/campaign-command-contract.js";
+import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
 import { activeAlertsCount, readCampaign } from "./campaign-reads.js";
 
 const projection: PlayerProjection = {
@@ -42,7 +42,11 @@ const priorities = [
   { severity: "advisory", id: "c" },
 ];
 
-const ok = <T>(value: T) => ({ outcome: "success" as const, value, diagnostics: [] });
+const ok = <T>(value: T) => ({
+  outcome: "success" as const,
+  value,
+  diagnostics: [],
+});
 
 function clientWith(handler: (command: string) => unknown): {
   readonly client: CampaignCommandClient;
@@ -80,12 +84,19 @@ describe("readCampaign", () => {
     const { client } = clientWith((command) =>
       command === "inspectCampaign"
         ? ok({ projection })
-        : { outcome: "rejected", reason: `${command.toUpperCase()}_FAILED`, diagnostics: [] },
+        : {
+            outcome: "rejected",
+            reason: `${command.toUpperCase()}_FAILED`,
+            diagnostics: [],
+          },
     );
     const reads = await readCampaign(client, "ses-1");
 
     expect(reads.projection).toEqual({ status: "ready", value: projection });
-    expect(reads.areas).toEqual({ status: "unavailable", reason: "INSPECTMAP_FAILED" });
+    expect(reads.areas).toEqual({
+      status: "unavailable",
+      reason: "INSPECTMAP_FAILED",
+    });
     expect(reads.reports).toEqual({
       status: "unavailable",
       reason: "READMONTHLYREPORTS_FAILED",
@@ -103,7 +114,10 @@ describe("readCampaign", () => {
     });
     const reads = await readCampaign(client, "ses-1");
 
-    expect(reads.projection).toEqual({ status: "unavailable", reason: "bridge down" });
+    expect(reads.projection).toEqual({
+      status: "unavailable",
+      reason: "bridge down",
+    });
   });
 
   it("derives the alert count from the priorities read, or null when unavailable", async () => {

@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
-import type { CampaignCommandClient } from "../shared/campaign-command-contract.js";
+import type { CampaignCommandClient } from "../shared/campaign-contract.js";
 import type { BridgeResult, WindowState } from "../shared/bridge-contract.js";
 import type {
   CampaignPreferencesSnapshot,

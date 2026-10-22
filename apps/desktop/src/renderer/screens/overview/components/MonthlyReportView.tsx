@@ -1,4 +1,4 @@
-import type { MonthlyReportEntry } from "../../../../shared/campaign-command-contract.js";
+import type { MonthlyReportEntry } from "../../../../shared/reports-contract.js";
 import { monthLabel } from "../month-report-format.js";
 import { NarrativeMonthSummary } from "../NarrativeMonthSummary.js";
 import { MonthReportTreasurySection } from "./MonthReportTreasurySection.js";

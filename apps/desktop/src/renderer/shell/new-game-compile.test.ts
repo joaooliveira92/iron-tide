@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vite-plus/test";
 
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
-import type { CampaignCommandClient } from "../../shared/campaign-command-contract.js";
+import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
 import type { DraftPreferences } from "../screens/new-game/new-game-preferences-screen-state.js";
 import { compileNewGame, isLaunchableDraft } from "./new-game-compile.js";
 import type { LaunchableDraft, NewGameDraft } from "./new-game-draft.js";
@@ -54,7 +54,11 @@ describe("isLaunchableDraft", () => {
     expect(isLaunchableDraft(bare)).toBe(false);
     expect(isLaunchableDraft({ ...bare, preferences })).toBe(false);
     expect(
-      isLaunchableDraft({ ...bare, preferences, fleetMethod: { legacyFleetModeId: "x" } }),
+      isLaunchableDraft({
+        ...bare,
+        preferences,
+        fleetMethod: { legacyFleetModeId: "x" },
+      }),
     ).toBe(true);
   });
 });

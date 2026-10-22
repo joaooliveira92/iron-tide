@@ -8,10 +8,7 @@ import { SaveStore } from "@bluewave/persistence";
 import { ManagedRuntime } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import type { BridgeResult } from "../shared/bridge-contract.js";
-import type {
-  MonthlyReportEntry,
-  ReadMonthlyReportsResult,
-} from "../shared/campaign-command-contract.js";
+import type { MonthlyReportEntry, ReadMonthlyReportsResult } from "../shared/reports-contract.js";
 import {
   clearCampaignSessionsForTest,
   getCampaignSession,
@@ -220,7 +217,10 @@ describe("monthly-reports sidecar", () => {
     expect(report.reportId).toBeTruthy();
     expect(report.campaignId).toBe(getCampaignSession("session-real")!.state.snapshot.campaignId);
     expect(report.turn).toBe(1);
-    expect(report.period).toEqual({ from: { year: 1880, month: 1 }, to: { year: 1880, month: 2 } });
+    expect(report.period).toEqual({
+      from: { year: 1880, month: 1 },
+      to: { year: 1880, month: 2 },
+    });
     expect(report.treasury.openingTreasury).toBe(result.value.report.openingTreasury);
     expect(report.treasury.closingTreasury).toBe(result.value.report.closingTreasury);
     expect(report.treasury.maintenanceCost).toBe(result.value.report.maintenanceCost);

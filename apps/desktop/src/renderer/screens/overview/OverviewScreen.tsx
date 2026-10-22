@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
-import type { EntityReferenceDto } from "../../../shared/campaign-command-contract.js";
+import type { EntityReferenceDto } from "../../../shared/turn-message-contract.js";
 import { Skeleton } from "../../components/ui/skeleton.js";
 import type { Screen } from "../../shell/campaign-screen-registry.js";
 import { DEBUG_MODE } from "../../shell/debug-flag.js";

@@ -28,7 +28,7 @@ import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type {
   CompileCampaignResult,
   InspectCampaignResult,
-} from "../../shared/campaign-command-contract.js";
+} from "../../shared/campaign-contract.js";
 import type {
   LoadCampaignResponse,
   RecentCampaignEntry,
@@ -117,7 +117,9 @@ const loadRecentCampaign = (packagePath: string) =>
 const listRecentCampaigns = () =>
   runProgram<readonly RecentCampaignEntry[]>(listRecentCampaignsProgram, undefined);
 const removeRecentCampaign = (packagePath: string) =>
-  runProgram<readonly RecentCampaignEntry[]>(removeRecentCampaignProgram, { packagePath });
+  runProgram<readonly RecentCampaignEntry[]>(removeRecentCampaignProgram, {
+    packagePath,
+  });
 const listCampaigns = () => runProgram<SaveMetadata[]>(listCampaignsProgram, undefined);
 const verifyCampaign = () => runProgram<VerifyCampaignResponse>(verifyCampaignProgram, undefined);
 const replayCampaign = () => runProgram<ReplayCampaignResponse>(replayCampaignProgram, undefined);
@@ -211,7 +213,10 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     };
     const campaignPath = join(saveDir, pointer.activeSaveId, "campaign.json");
     const parsed = JSON.parse(readFileSync(campaignPath, "utf8")) as {
-      snapshot?: { campaignId?: string; nations?: Record<string, { treasury?: number }> };
+      snapshot?: {
+        campaignId?: string;
+        nations?: Record<string, { treasury?: number }>;
+      };
     };
     if (typeof parsed.snapshot?.campaignId !== "string") {
       throw new Error("fixture: expected a campaignId string in the storable snapshot");
@@ -464,7 +469,10 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     packageAt(saveDir);
     const replay = await replayCampaign();
     if (replay.outcome !== "success") throw new Error("replay failed");
-    expect(replay.value.revisions[0]).toMatchObject({ matched: false, expectedHash: "unreadable" });
+    expect(replay.value.revisions[0]).toMatchObject({
+      matched: false,
+      expectedHash: "unreadable",
+    });
     expect(replay.diagnostics.join(" ")).toMatch(/does not match its hash/);
   });
 
@@ -505,7 +513,11 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     await advanceOneMonth(sessionId, 0);
     writeFileSync(
       join(saveDir, "pending-commands.json"),
-      JSON.stringify({ schema: "pending_commands_v1", turnNumber: 0, entries: [] }),
+      JSON.stringify({
+        schema: "pending_commands_v1",
+        turnNumber: 0,
+        entries: [],
+      }),
       "utf8",
     );
     restartApp();
@@ -564,7 +576,9 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
     expect(turnZeroSaves.length).toBe(2);
     for (const meta of turnZeroSaves) {
       const metaPath = join(saveDir, meta.saveId, "metadata.json");
-      const parsed = JSON.parse(readFileSync(metaPath, "utf8")) as { timestamp: string };
+      const parsed = JSON.parse(readFileSync(metaPath, "utf8")) as {
+        timestamp: string;
+      };
       parsed.timestamp = sharedTimestamp;
       writeFileSync(metaPath, JSON.stringify(parsed, null, 2), "utf8");
     }
@@ -810,7 +824,10 @@ describe("listCampaigns (campaign-list screen backing query)", () => {
     expect(record.campaignName).toBeTypeOf("string");
     expect(record.nationId).toBeTypeOf("string");
     expect(record.campaignDate).toEqual(
-      expect.objectContaining({ year: expect.any(Number), month: expect.any(Number) }),
+      expect.objectContaining({
+        year: expect.any(Number),
+        month: expect.any(Number),
+      }),
     );
     expect(record.compatibilityVersion).toBeTypeOf("string");
   });

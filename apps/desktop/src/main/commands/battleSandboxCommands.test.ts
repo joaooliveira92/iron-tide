@@ -14,7 +14,7 @@ import type {
   GenerateBattleResult,
   ResolveBattleResult,
   SeedCampaignBattleDrillResult,
-} from "../../shared/campaign-command-contract.js";
+} from "../../shared/campaign-contract.js";
 import {
   clearCampaignSessionsForTest,
   getCampaignSession,
@@ -174,12 +174,20 @@ describe("battle sandbox commands (ADR-0057)", () => {
       const results = await Promise.all([
         generateBattle({ sessionId: "s1", warId: WAR_ID }),
         resolveBattle({ sessionId: "s1", battleId: "b" }),
-        resolveTacticalBattle({ sessionId: "s1", battleId: "b", turnCount: 1, scriptedOrders: [] }),
+        resolveTacticalBattle({
+          sessionId: "s1",
+          battleId: "b",
+          turnCount: 1,
+          scriptedOrders: [],
+        }),
         replayBattleBoundary({ sessionId: "s1", battleId: "b" }),
         seedCampaignBattleDrill({ sessionId: "s1" }),
       ]);
       for (const result of results) {
-        expect(result).toMatchObject({ outcome: "rejected", reason: "DEBUG_ONLY" });
+        expect(result).toMatchObject({
+          outcome: "rejected",
+          reason: "DEBUG_ONLY",
+        });
       }
     });
   });
@@ -195,14 +203,23 @@ describe("battle sandbox commands (ADR-0057)", () => {
     it("reports WAR_NOT_FOUND and tells the player how to get a war when there are none", async () => {
       registerSession("s1");
       const result = await generateBattle({ sessionId: "s1", warId: WAR_ID });
-      expect(result).toMatchObject({ outcome: "rejected", reason: "WAR_NOT_FOUND" });
+      expect(result).toMatchObject({
+        outcome: "rejected",
+        reason: "WAR_NOT_FOUND",
+      });
       expect(JSON.stringify(result)).toMatch(/declare war/i);
     });
 
     it("lists the known wars when the requested one does not exist", async () => {
       registerSession("s1", withWar);
-      const result = await generateBattle({ sessionId: "s1", warId: "war_other" });
-      expect(result).toMatchObject({ outcome: "rejected", reason: "WAR_NOT_FOUND" });
+      const result = await generateBattle({
+        sessionId: "s1",
+        warId: "war_other",
+      });
+      expect(result).toMatchObject({
+        outcome: "rejected",
+        reason: "WAR_NOT_FOUND",
+      });
       expect(JSON.stringify(result)).toContain(WAR_ID);
     });
 
@@ -221,8 +238,15 @@ describe("battle sandbox commands (ADR-0057)", () => {
 
     it("documents the strength-floor finding: with real strengths (scale 1) no battle is eligible", async () => {
       registerSession("s1", withWar);
-      const result = await generateBattle({ sessionId: "s1", warId: WAR_ID, strengthScale: 1 });
-      expect(result).toMatchObject({ outcome: "rejected", reason: "NO_ELIGIBLE_BATTLE" });
+      const result = await generateBattle({
+        sessionId: "s1",
+        warId: WAR_ID,
+        strengthScale: 1,
+      });
+      expect(result).toMatchObject({
+        outcome: "rejected",
+        reason: "NO_ELIGIBLE_BATTLE",
+      });
     });
 
     it("rejects an area the defender has no ships in", async () => {
@@ -232,13 +256,20 @@ describe("battle sandbox commands (ADR-0057)", () => {
         warId: WAR_ID,
         areaId: "africa_cape",
       });
-      expect(result).toMatchObject({ outcome: "rejected", reason: "AREA_NOT_DEFENDED" });
+      expect(result).toMatchObject({
+        outcome: "rejected",
+        reason: "AREA_NOT_DEFENDED",
+      });
     });
 
     it("rejects an out-of-range strengthScale at the schema boundary", async () => {
       registerSession("s1", withWar);
       expect(
-        await generateBattle({ sessionId: "s1", warId: WAR_ID, strengthScale: 0 }),
+        await generateBattle({
+          sessionId: "s1",
+          warId: WAR_ID,
+          strengthScale: 0,
+        }),
       ).toMatchObject({ outcome: "error", reason: "INVALID_PAYLOAD" });
     });
   });
@@ -403,7 +434,10 @@ describe("battle sandbox commands (ADR-0057)", () => {
         snapshot.wars = { ...snapshot.wars, wars: [] };
       });
       const result = await generateBattle({ sessionId: "s1" });
-      expect(result).toMatchObject({ outcome: "rejected", reason: "WAR_NOT_FOUND" });
+      expect(result).toMatchObject({
+        outcome: "rejected",
+        reason: "WAR_NOT_FOUND",
+      });
     });
   });
 
@@ -419,8 +453,14 @@ describe("battle sandbox commands (ADR-0057)", () => {
     it("explains that weather is missing before any month has been advanced", async () => {
       registerSession("s1", withWar);
       const manifest = await generated("s1");
-      const result = await resolveBattle({ sessionId: "s1", battleId: manifest.battleId });
-      expect(result).toMatchObject({ outcome: "rejected", reason: "NO_STRATEGIC_WEATHER" });
+      const result = await resolveBattle({
+        sessionId: "s1",
+        battleId: manifest.battleId,
+      });
+      expect(result).toMatchObject({
+        outcome: "rejected",
+        reason: "NO_STRATEGIC_WEATHER",
+      });
       expect(JSON.stringify(result)).toMatch(/advance a month/);
     });
 
@@ -461,7 +501,10 @@ describe("battle sandbox commands (ADR-0057)", () => {
           turnCount: 1,
           scriptedOrders: [],
         }),
-      ).toMatchObject({ outcome: "rejected", reason: "TACTICAL_RESOLUTION_UNAVAILABLE" });
+      ).toMatchObject({
+        outcome: "rejected",
+        reason: "TACTICAL_RESOLUTION_UNAVAILABLE",
+      });
       expect(await replayBattleBoundary({ sessionId: "s1", battleId: "b" })).toMatchObject({
         outcome: "rejected",
         reason: "BOUNDARY_REPLAY_UNAVAILABLE",

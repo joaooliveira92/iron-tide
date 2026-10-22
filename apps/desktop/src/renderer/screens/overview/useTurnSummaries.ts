@@ -1,7 +1,7 @@
 import type {
   ReadTurnSummariesResult,
   TurnSummaryEntry,
-} from "../../../shared/campaign-command-contract.js";
+} from "../../../shared/turn-message-contract.js";
 import type { BridgeResult } from "../../../shared/bridge-contract.js";
 import { useBridgeQuery } from "../../lib/use-bridge-query.js";
 import { useCampaignRevision } from "../../shell/CampaignShellContext.js";

@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import type { InterruptionRequestDto } from "../../../shared/campaign-command-contract.js";
+import type { InterruptionRequestDto } from "../../../shared/turn-message-contract.js";
 import { setUiCatalogue } from "../../content/uiCatalogue.js";
 import { BattleRequestDialog } from "./BattleRequestDialog.js";
 import { DecisionDialog } from "./DecisionDialog.js";

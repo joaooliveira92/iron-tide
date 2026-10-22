@@ -6,13 +6,9 @@ import {
 } from "../drawingBoardDraft.js";
 import { appendMonthlyReport, loadMonthlyReports, saveMonthlyReports } from "../monthlyReports.js";
 import { appendTurnSummary, loadTurnSummaries, saveTurnSummaries } from "../turnSummaries.js";
-import type {
-  MonthlyReportEntry,
-  MonthlyReports,
-  TurnSummaries,
-  TurnSummaryEntry,
-  UiState,
-} from "../../shared/campaign-command-contract.js";
+import type { MonthlyReportEntry, MonthlyReports } from "../../shared/reports-contract.js";
+import type { TurnSummaries, TurnSummaryEntry } from "../../shared/turn-message-contract.js";
+import type { UiState } from "../../shared/ui-state-contract.js";
 import type {
   DrawingBoardDraftRecord,
   WriteDrawingBoardDraftPayload,

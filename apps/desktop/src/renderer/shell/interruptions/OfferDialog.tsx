@@ -1,6 +1,6 @@
 import { useRef } from "react";
 
-import type { InterruptionRequestDto } from "../../../shared/campaign-command-contract.js";
+import type { InterruptionRequestDto } from "../../../shared/turn-message-contract.js";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -78,14 +78,19 @@ export function OfferDialog({
           <ul className="mt-1 space-y-0.5 text-xs" data-testid="offer-force">
             {(request.playerForce ?? []).map((ship) => (
               <li key={ship.shipId}>
-                {offerText("ui.offer.force.ship", { name: ship.name, classId: ship.classId })}
+                {offerText("ui.offer.force.ship", {
+                  name: ship.name,
+                  classId: ship.classId,
+                })}
               </li>
             ))}
           </ul>
         </section>
         {estimate !== undefined && (
           <p className="text-xs font-medium" data-testid="offer-estimate">
-            {offerText(`ui.offer.estimate.${estimate.model}`, { strength: estimate.strength })}
+            {offerText(`ui.offer.estimate.${estimate.model}`, {
+              strength: estimate.strength,
+            })}
           </p>
         )}
         <p className="text-xs" data-testid="offer-support">

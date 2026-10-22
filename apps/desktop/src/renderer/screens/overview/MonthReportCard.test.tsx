@@ -1,4 +1,4 @@
-import type { MonthlyReportEntry } from "../../../shared/campaign-command-contract.js";
+import type { MonthlyReportEntry } from "../../../shared/reports-contract.js";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vite-plus/test";
 import { MonthReportCard } from "./MonthReportCard.js";
@@ -175,7 +175,10 @@ describe("MonthReportCard", () => {
       <MonthReportCard
         reports={[
           report(2, {
-            fleet: { additions: [{ shipId: "s-1", name: "HMS Example" }], totalActiveShips: 9 },
+            fleet: {
+              additions: [{ shipId: "s-1", name: "HMS Example" }],
+              totalActiveShips: 9,
+            },
           }),
         ]}
       />,
@@ -199,8 +202,12 @@ describe("MonthReportCard", () => {
     render(
       <MonthReportCard
         reports={[
-          report(3, { priorities: [priority("a", "Fresh deficit"), priority("b", "Still here")] }),
-          report(2, { priorities: [priority("b", "Still here"), priority("c", "Fixed")] }),
+          report(3, {
+            priorities: [priority("a", "Fresh deficit"), priority("b", "Still here")],
+          }),
+          report(2, {
+            priorities: [priority("b", "Still here"), priority("c", "Fixed")],
+          }),
         ]}
       />,
     );
@@ -268,7 +275,13 @@ describe("MonthReportCard", () => {
       <MonthReportCard
         reports={[
           report(3),
-          report(2, { treasury: { ...report(2).treasury, closingTreasury: 1010, netChange: 10 } }),
+          report(2, {
+            treasury: {
+              ...report(2).treasury,
+              closingTreasury: 1010,
+              netChange: 10,
+            },
+          }),
         ]}
       />,
     );

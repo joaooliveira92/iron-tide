@@ -1,7 +1,4 @@
-import type {
-  InterruptionRequestDto,
-  PendingTurnDto,
-} from "../../shared/campaign-command-contract.js";
+import type { InterruptionRequestDto, PendingTurnDto } from "../../shared/turn-message-contract.js";
 import type { PrimaryAction } from "./primary-action.js";
 import type { NavigationHistory } from "./navigation-history.js";
 import { currentEntry, initialHistory, visit } from "./navigation-history.js";
@@ -122,8 +119,14 @@ export type CampaignShellEvent =
       readonly campaign: CampaignOverview;
     }
   | { readonly type: "campaign-refreshed"; readonly campaign: CampaignOverview }
-  | { readonly type: "month-commit-failed"; readonly failure: MonthCommitFailure }
-  | { readonly type: "interruption-set"; readonly interruption: ShellInterruption }
+  | {
+      readonly type: "month-commit-failed";
+      readonly failure: MonthCommitFailure;
+    }
+  | {
+      readonly type: "interruption-set";
+      readonly interruption: ShellInterruption;
+    }
   | { readonly type: "interruption-cleared" };
 
 export function initialCampaignShellState(): CampaignShellState {
@@ -185,7 +188,12 @@ export function reduceCampaignShell(
       return { ...state, primaryAction: next };
     }
     case "month-commit-started":
-      return { ...state, committing: true, saveMessage: null, commitFailure: null };
+      return {
+        ...state,
+        committing: true,
+        saveMessage: null,
+        commitFailure: null,
+      };
     case "month-committed":
       return {
         ...state,

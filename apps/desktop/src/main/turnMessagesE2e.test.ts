@@ -14,7 +14,7 @@ import type {
   ReadPendingTurnResult,
   ReadTurnSummariesResult,
   ResolveTurnResult,
-} from "../shared/campaign-command-contract.js";
+} from "../shared/turn-message-contract.js";
 import {
   clearCampaignSessionsForTest,
   getCampaignSession,
@@ -166,7 +166,11 @@ describe("turn-messages end-to-end acceptance", () => {
       wars: { ...base.snapshot.wars, wars: [], battles: [battle] },
     };
     const envelope = createEnvelope("campaign-snapshot", snapshot.compatibilityVersion, snapshot);
-    const state: CampaignState = toSaveableState({ snapshot, envelope, rawHash: base.rawHash });
+    const state: CampaignState = toSaveableState({
+      snapshot,
+      envelope,
+      rawHash: base.rawHash,
+    });
     new SaveStore().save(state, saveDir);
     registerCampaignSession({
       sessionId,

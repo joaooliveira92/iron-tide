@@ -12,7 +12,7 @@ import type {
   AbandonPendingTurnResult,
   ReadPendingTurnResult,
   ResolveTurnResult,
-} from "../../shared/campaign-command-contract.js";
+} from "../../shared/turn-message-contract.js";
 import {
   clearCampaignSessionsForTest,
   getCampaignSession,
@@ -161,7 +161,11 @@ describe("turn transaction commands", () => {
         rulesetVersion: getCampaignSession("session-stale")!.state.snapshot.rulesetVersion,
         compatibilityVersion:
           getCampaignSession("session-stale")!.state.snapshot.compatibilityVersion,
-        contentHashes: { shipBuilding: "s", armament: "a", contentArtifact: "c" },
+        contentHashes: {
+          shipBuilding: "s",
+          armament: "a",
+          contentArtifact: "c",
+        },
         committedOrderHash: "h",
         recordedInputs: [],
         nextInterruptionOrdinal: 0,
@@ -195,7 +199,11 @@ describe("turn transaction commands", () => {
         startingRevision: 0,
         rulesetVersion: "0.1.0",
         compatibilityVersion: "0.1.0",
-        contentHashes: { shipBuilding: "s", armament: "a", contentArtifact: "c" },
+        contentHashes: {
+          shipBuilding: "s",
+          armament: "a",
+          contentArtifact: "c",
+        },
         committedOrderHash: "h",
         recordedInputs: [],
         nextInterruptionOrdinal: 0,
@@ -226,7 +234,11 @@ describe("turn transaction commands", () => {
         startingRevision: 0,
         rulesetVersion: "0.1.0",
         compatibilityVersion: "0.1.0",
-        contentHashes: { shipBuilding: "s", armament: "a", contentArtifact: "c" },
+        contentHashes: {
+          shipBuilding: "s",
+          armament: "a",
+          contentArtifact: "c",
+        },
         committedOrderHash: "h",
         recordedInputs: [],
         nextInterruptionOrdinal: 0,

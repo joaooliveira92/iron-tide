@@ -7,31 +7,37 @@ import type { SaveMetadata } from "@bluewave/persistence";
 import { Schema } from "effect";
 import type {
   AbandonPendingTurnResult,
+  ReadPendingTurnResult,
+  ReadTurnSummariesResult,
+  ResolveTurnResult,
+} from "./turn-message-contract.js";
+import type {
   AdvancePlayerBattleResult,
+  FinishPlayerBattleResult,
+  PlayerBattleDivisionOrderDto,
+  StartPlayerBattleResult,
+} from "./player-battle-contract.js";
+import type {
   CompileCampaignResult,
   CopyCampaignResult,
-  FinishPlayerBattleResult,
   GenerateBattleResult,
   InspectBattleHistoryResult,
   InspectCampaignResult,
   InspectMapResult,
   InspectOpeningBriefingResult,
-  PlayerBattleDivisionOrderDto,
-  ReadMonthlyReportsResult,
-  ReadPendingTurnResult,
-  ReadTurnSummariesResult,
-  ReadUiStateResult,
   ResolveBattleResult,
   ResolveTacticalBattleResult,
-  ResolveTurnResult,
   SaveCampaignResult,
   SeedCampaignBattleDrillResult,
-  StartPlayerBattleResult,
+} from "./campaign-contract.js";
+import type { ReadMonthlyReportsResult } from "./reports-contract.js";
+import type {
+  ReadUiStateResult,
   UiStateFirstMonthInspection,
   UiStateInspectorLayout,
   UiStateTurnMessages,
   WriteUiStateResult,
-} from "./campaign-command-contract.js";
+} from "./ui-state-contract.js";
 import type {
   DrawingBoardContentDto,
   PresentationContentDto,
@@ -39,6 +45,10 @@ import type {
 } from "./content-contract.js";
 import {
   AdvancePlayerBattlePayloadSchema,
+  FinishPlayerBattlePayloadSchema,
+  StartPlayerBattlePayloadSchema,
+} from "./player-battle-schemas.js";
+import {
   AnswerDecisionPayloadSchema,
   AuthorizeDockExpansionCommandPayloadSchema,
   BattleIdPayloadSchema,
@@ -48,7 +58,6 @@ import {
   CampaignConfigurationPayloadSchema,
   CommandEnvelopePayloadSchema,
   ConstructionOrderPayloadSchema,
-  FinishPlayerBattlePayloadSchema,
   GenerateBattlePayloadSchema,
   HaltConstructionCommandPayloadSchema,
   LoadProjectDraftPayloadSchema,
@@ -68,7 +77,6 @@ import {
   SessionIdPayloadSchema,
   SetAccelerationCommandPayloadSchema,
   SetResearchPriorityCommandPayloadSchema,
-  StartPlayerBattlePayloadSchema,
   StartRebuildCommandPayloadSchema,
   SubmitBattleResultPayloadSchema,
   SubmitBudgetAllocationPayloadSchema,
@@ -79,8 +87,8 @@ import {
   SubmitOfferResponsePayloadSchema,
   SubmitStationAssignmentPayloadSchema,
   WriteDrawingBoardDraftPayloadSchema,
-  WriteUiStatePayloadSchema,
 } from "./campaignCommandSchemas.js";
+import { WriteUiStatePayloadSchema } from "./ui-state-schemas.js";
 import type { BudgetCommandOutcome, BudgetScreenProjection } from "./budget-contract.js";
 import type {
   ConstructionBatchPreviewOutcome,
@@ -149,7 +157,12 @@ export function command(
   result: ResultType<unknown>,
   options?: CommandOptions,
 ): CommandShape<unknown, unknown> {
-  return { payload, payloadType: undefined, result, strict: options?.strict === true };
+  return {
+    payload,
+    payloadType: undefined,
+    result,
+    strict: options?.strict === true,
+  };
 }
 
 export interface AnswerDecisionPayload {

@@ -2,7 +2,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type { OpeningBriefingProjection } from "@bluewave/campaign-engine";
 import { describe, expect, it, vi } from "vite-plus/test";
 
-import type { InspectOpeningBriefingResult } from "../../../shared/campaign-command-contract.js";
+import type { InspectOpeningBriefingResult } from "../../../shared/campaign-contract.js";
 import type { BridgeResult } from "../../../shared/bridge-contract.js";
 import { useOpeningBriefing } from "./useOpeningBriefing.js";
 

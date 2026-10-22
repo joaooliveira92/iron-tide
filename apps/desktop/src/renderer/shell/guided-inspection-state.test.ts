@@ -11,7 +11,7 @@ import {
   resumeStepIndex,
   shouldAutoOpen,
 } from "./guided-inspection-state.js";
-import type { UiStateFirstMonthInspection } from "../../shared/campaign-command-contract.js";
+import type { UiStateFirstMonthInspection } from "../../shared/ui-state-contract.js";
 
 describe("guided-inspection-state", () => {
   it("defines seven steps in the correct order", () => {
@@ -65,25 +65,55 @@ describe("guided-inspection-state", () => {
   });
 
   it("nextInspectionState advances without completing until last step", () => {
-    const cur: UiStateFirstMonthInspection = { status: "in_progress", lastCompletedStep: 0 };
-    expect(nextInspectionState(cur, 0)).toEqual({ status: "in_progress", lastCompletedStep: 0 });
-    expect(nextInspectionState(cur, 1)).toEqual({ status: "in_progress", lastCompletedStep: 1 });
-    expect(nextInspectionState(cur, 5)).toEqual({ status: "in_progress", lastCompletedStep: 5 });
-    expect(nextInspectionState(cur, 6)).toEqual({ status: "completed", lastCompletedStep: 6 });
+    const cur: UiStateFirstMonthInspection = {
+      status: "in_progress",
+      lastCompletedStep: 0,
+    };
+    expect(nextInspectionState(cur, 0)).toEqual({
+      status: "in_progress",
+      lastCompletedStep: 0,
+    });
+    expect(nextInspectionState(cur, 1)).toEqual({
+      status: "in_progress",
+      lastCompletedStep: 1,
+    });
+    expect(nextInspectionState(cur, 5)).toEqual({
+      status: "in_progress",
+      lastCompletedStep: 5,
+    });
+    expect(nextInspectionState(cur, 6)).toEqual({
+      status: "completed",
+      lastCompletedStep: 6,
+    });
   });
 
   it("dismissedInspectionState always dismissed", () => {
-    expect(dismissedInspectionState(2)).toEqual({ status: "dismissed", lastCompletedStep: 2 });
-    expect(dismissedInspectionState(0)).toEqual({ status: "dismissed", lastCompletedStep: 0 });
+    expect(dismissedInspectionState(2)).toEqual({
+      status: "dismissed",
+      lastCompletedStep: 2,
+    });
+    expect(dismissedInspectionState(0)).toEqual({
+      status: "dismissed",
+      lastCompletedStep: 0,
+    });
   });
 
   it("restartedInspection resets to not_started", () => {
-    expect(restartedInspection()).toEqual({ status: "not_started", lastCompletedStep: 0 });
-    expect(emptyInspection()).toEqual({ status: "not_started", lastCompletedStep: 0 });
+    expect(restartedInspection()).toEqual({
+      status: "not_started",
+      lastCompletedStep: 0,
+    });
+    expect(emptyInspection()).toEqual({
+      status: "not_started",
+      lastCompletedStep: 0,
+    });
   });
 
   it("persists lastCompletedStep and never fabricates domain values — pure", () => {
-    const before: UiStateFirstMonthInspection = { status: "in_progress", lastCompletedStep: 3 };
+    const before: UiStateFirstMonthInspection = {
+      status: "in_progress",
+      lastCompletedStep: 3,
+    };
     const next = nextInspectionState(before, 3);
     expect(next.lastCompletedStep).toBe(3);
     expect(next.status).toBe("in_progress");

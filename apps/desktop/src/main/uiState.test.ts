@@ -12,7 +12,7 @@ import type {
   ReadUiStateResult,
   UiState,
   WriteUiStateResult,
-} from "../shared/campaign-command-contract.js";
+} from "../shared/ui-state-contract.js";
 import {
   clearCampaignSessionsForTest,
   getCampaignSession,
@@ -84,7 +84,10 @@ describe("ui-state sidecar", () => {
   }
 
   it("emptyUiState yields empty defaults at the given turn", () => {
-    expect(emptyUiState(3)).toEqual({ turnNumber: 3, dismissedFingerprints: [] });
+    expect(emptyUiState(3)).toEqual({
+      turnNumber: 3,
+      dismissedFingerprints: [],
+    });
     expect(emptyUiState(0).firstMonthInspection).toBeUndefined();
   });
 
@@ -259,7 +262,10 @@ describe("ui-state sidecar", () => {
       sessionId: "session-write-fail",
       dismissedFingerprints: ["fp-1"],
     });
-    expect(result).toMatchObject({ outcome: "error", reason: "UI_STATE_WRITE_FAILED" });
+    expect(result).toMatchObject({
+      outcome: "error",
+      reason: "UI_STATE_WRITE_FAILED",
+    });
     expect(existsSync(join(saveDir, UI_STATE_FILENAME))).toBe(false);
   });
 
@@ -269,7 +275,10 @@ describe("ui-state sidecar", () => {
       reason: "SESSION_NOT_FOUND",
     });
     expect(
-      await runProgram(writeUiStateProgram, { sessionId: "nobody", dismissedFingerprints: [] }),
+      await runProgram(writeUiStateProgram, {
+        sessionId: "nobody",
+        dismissedFingerprints: [],
+      }),
     ).toMatchObject({ outcome: "error", reason: "SESSION_NOT_FOUND" });
   });
 
@@ -307,10 +316,16 @@ describe("ui-state sidecar", () => {
 
     writeFileSync(path, "{not json", "utf8");
     expect(() => loadUiState(saveDir, 0)).not.toThrow();
-    expect(loadUiState(saveDir, 0)).toEqual({ turnNumber: 0, dismissedFingerprints: [] });
+    expect(loadUiState(saveDir, 0)).toEqual({
+      turnNumber: 0,
+      dismissedFingerprints: [],
+    });
 
     writeFileSync(path, JSON.stringify({ foo: 1 }), "utf8");
-    expect(loadUiState(saveDir, 0)).toEqual({ turnNumber: 0, dismissedFingerprints: [] });
+    expect(loadUiState(saveDir, 0)).toEqual({
+      turnNumber: 0,
+      dismissedFingerprints: [],
+    });
 
     const read = await runProgram(readUiStateProgram, "session-corrupt");
     expect(read.outcome).toBe("success");
