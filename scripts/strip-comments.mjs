@@ -352,7 +352,16 @@ export function runCli(argv, env) {
       `${opts.apply ? "removed" : "would remove"} ${String(totals.removed)} comment(s) in ${String(changes.length)} of ${String(totals.files)} file(s); ` +
         `retained ${String(totals.retained)} (changes meaning); kept ${JSON.stringify(totals.kept)}\n`,
     );
-    return opts.check && totals.removed > 0 ? EXIT.VALIDATION : EXIT.OK;
+    if (opts.check && totals.removed > 0) {
+      const offenders = results.filter((r) => r.removed > 0).slice(0, 10);
+      err(
+        `Error: ${String(totals.removed)} comment(s) found. Code carries no comments (ADR-0268); ` +
+          "delete them or run `pnpm strip:comments --scope <path> --apply`.\n" +
+          offenders.map((r) => `  ${r.path}: ${String(r.removed)}\n`).join(""),
+      );
+      return EXIT.VALIDATION;
+    }
+    return EXIT.OK;
   } catch (e) {
     if (e instanceof CliError) {
       err(`Error: ${e.message}\n`);

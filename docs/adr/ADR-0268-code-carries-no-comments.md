@@ -27,21 +27,24 @@ The habit spread by copying.
    Rationale lives in an ADR or the commit message, never beside the code.
 2. **A short allowlist survives.** Only a comment a tool reads stays: licence and
    attribution lines, shebangs, triple-slash references, test-runner pragmas, and
-   JSDoc type annotations in `.mjs` files. A suppression directive stays only
+   JSDoc type annotations in `.mjs` files, and the `test-focus-allow-skip`
+   marker. A suppression directive stays only
    until its root cause is fixed.
 3. **Existing comments are deleted in waves.** Each wave is one package and one
    commit. The deletion is parser-based, and its proof is that the syntax tree
    with comments stripped is identical before and after.
-4. **New comments are rejected.** A ratcheted gate holds a baseline that can only
-   shrink, in the style of the other ADR-0106 ratchets.
-5. **A constraint is encoded, not deleted blind.** When a comment states a unit,
-   range, ordering, or randomness rule, the same change offers the type, test, or
-   ADR that carries it.
+4. **New comments are rejected.** `pnpm strip:comments --check` runs in
+   `pnpm preflight` and fails while any removable comment exists. There is no
+   baseline: the tree is clean, so the ban is absolute.
+5. **Rationale goes where it can be found.** From now on a change that needs
+   to explain a unit, range, ordering, or randomness rule puts it in a type, a
+   test, an ADR, or the commit message. The bulk removal did not triage the
+   existing comments. Tag `archive/pre-strip-comments` is the recovery point.
 
 ## Consequences
 
 - Reviewers stop reading prose beside code. Intent has to show in names and types.
-- Rationale that only a comment held is lost unless step 5 moves it. This is
+- Rationale that only a comment held is lost. This is
   accepted: most of the cited rationale already points at nothing.
 - The `no-comments` skill, `poteto-mode`, `comment-sicko`, and `comment-pruner`
   default to DELETE.

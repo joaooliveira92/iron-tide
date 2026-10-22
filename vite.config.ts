@@ -201,6 +201,10 @@ export default defineConfig({
         command: "node scripts/assert-presentation-formatting.mjs",
         dependsOn: ["gate:presentation-format-self-test"],
       },
+      "gate:no-comments": {
+        command: "node scripts/strip-comments.mjs --scope packages --scope apps --check",
+        dependsOn: ["gate:git-state"],
+      },
       "gate:worktrees": {
         command: "node scripts/verify-worktrees.mjs",
         dependsOn: ["gate:git-state"],
@@ -265,6 +269,7 @@ export default defineConfig({
           "gate:upgradepath-refit-readers",
           "gate:test-focus",
           "gate:presentation-format",
+          "gate:no-comments",
           "gate:worktrees",
           "gate:version-coherence",
           "gate:check-parity",
