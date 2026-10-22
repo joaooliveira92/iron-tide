@@ -1,6 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-import { Effect, Result, Schema } from "effect";
+import { Effect } from "effect";
 import type { UiState } from "../shared/campaign-command-contract.js";
 import {
   SessionIdPayloadSchema,
@@ -9,6 +7,7 @@ import {
 } from "../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
 import { withSchema } from "./runtime/commandProgram.js";
+import { defineSidecar } from "./runtime/sidecar.js";
 import { UiStateStore } from "./runtime/sidecarStores.js";
 
 export const UI_STATE_FILENAME = "ui-state.json";
@@ -34,22 +33,20 @@ export function resolveUiState(stored: UiState, currentTurnNumber: number): UiSt
   };
 }
 
+const sidecar = defineSidecar<UiState, UiState, number>({
+  filename: UI_STATE_FILENAME,
+  schema: UiStateSchema,
+  space: 2,
+  empty: emptyUiState,
+  resolve: resolveUiState,
+});
+
 export function loadUiState(saveDir: string, currentTurnNumber: number): UiState {
-  const path = join(saveDir, UI_STATE_FILENAME);
-  if (!existsSync(path)) {
-    return emptyUiState(currentTurnNumber);
-  }
-  try {
-    const parsed = Schema.decodeUnknownResult(UiStateSchema)(
-      JSON.parse(readFileSync(path, "utf8")),
-    );
-    if (Result.isFailure(parsed)) {
-      return emptyUiState(currentTurnNumber);
-    }
-    return resolveUiState(parsed.success, currentTurnNumber);
-  } catch {
-    return emptyUiState(currentTurnNumber);
-  }
+  return sidecar.read(saveDir, currentTurnNumber);
+}
+
+export function saveUiState(saveDir: string, uiState: UiState): void {
+  sidecar.write(saveDir, uiState);
 }
 
 export const readUiStateProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
@@ -60,7 +57,11 @@ export const readUiStateProgram = withSchema(SessionIdPayloadSchema, (sessionId)
     const uiStates = yield* UiStateStore;
     const uiState = yield* uiStates.load(record.saveDir, Number(record.state.snapshot.turnNumber));
 
-    return { outcome: "success" as const, value: { uiState }, diagnostics: [] };
+    return {
+      outcome: "success" as const,
+      value: { uiState },
+      diagnostics: [],
+    };
   }),
 );
 
@@ -91,6 +92,10 @@ export const writeUiStateProgram = withSchema(WriteUiStatePayloadSchema, (payloa
     };
     yield* uiStates.save(record.saveDir, next);
 
-    return { outcome: "success" as const, value: { uiState: next }, diagnostics: [] };
+    return {
+      outcome: "success" as const,
+      value: { uiState: next },
+      diagnostics: [],
+    };
   }),
 );

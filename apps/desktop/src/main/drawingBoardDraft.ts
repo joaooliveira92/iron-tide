@@ -1,8 +1,7 @@
-import { existsSync, readFileSync, renameSync } from "node:fs";
-import { join } from "node:path";
+import { renameSync, rmSync } from "node:fs";
 import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 import { decodeLog, PersistenceError } from "@bluewave/ship-design";
-import { Effect, Result, Schema } from "effect";
+import { Effect, Schema } from "effect";
 import type { DrawingBoardDraftRecord } from "../shared/design-contract.js";
 import {
   MAX_DRAWING_BOARD_LOG_CHARS,
@@ -14,6 +13,7 @@ export { WriteDrawingBoardDraftPayloadSchema };
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
 import { CommandRejected } from "./runtime/commandError.js";
 import { withSchema } from "./runtime/commandProgram.js";
+import { defineSidecar } from "./runtime/sidecar.js";
 import { Clock } from "./runtime/platform.js";
 import { DraftStore } from "./runtime/sidecarStores.js";
 
@@ -29,29 +29,50 @@ const StoredSchema = Schema.Struct({
 
 const LEGACY_DRAFT_COMPATIBILITY_VERSION = "1.2.0";
 
-export function loadDrawingBoardDraft(
-  saveDir: string,
-  currentVersion: string = CURRENT_COMPATIBILITY_VERSION,
-): DrawingBoardDraftRecord | null {
-  const path = join(saveDir, DRAWING_BOARD_DRAFT_FILENAME);
-  if (!existsSync(path)) return null;
-  try {
-    const parsed = Schema.decodeUnknownResult(StoredSchema)(JSON.parse(readFileSync(path, "utf8")));
-    if (Result.isFailure(parsed)) return null;
-    const draftVersion = parsed.success.compatibilityVersion ?? LEGACY_DRAFT_COMPATIBILITY_VERSION;
+type StoredDraft = Schema.Schema.Type<typeof StoredSchema>;
+
+const sidecar = defineSidecar<StoredDraft, DrawingBoardDraftRecord | null, string>({
+  filename: DRAWING_BOARD_DRAFT_FILENAME,
+  schema: StoredSchema,
+  empty: () => null,
+  resolve: (stored, currentVersion, path) => {
+    const draftVersion = stored.compatibilityVersion ?? LEGACY_DRAFT_COMPATIBILITY_VERSION;
     if (draftVersion !== currentVersion) {
       renameSync(path, `${path}.${draftVersion}`);
       return null;
     }
-    decodeLog(parsed.success.log);
+    decodeLog(stored.log);
     return {
-      presetId: parsed.success.presetId,
-      log: parsed.success.log,
-      savedAt: parsed.success.savedAt,
+      presetId: stored.presetId,
+      log: stored.log,
+      savedAt: stored.savedAt,
     };
-  } catch {
-    return null;
-  }
+  },
+});
+
+export function loadDrawingBoardDraft(
+  saveDir: string,
+  currentVersion: string = CURRENT_COMPATIBILITY_VERSION,
+): DrawingBoardDraftRecord | null {
+  return sidecar.read(saveDir, currentVersion);
+}
+
+export function saveDrawingBoardDraft(
+  saveDir: string,
+  draft: { readonly presetId: string; readonly log: string },
+  savedAt: string,
+): void {
+  sidecar.write(saveDir, {
+    schema: "drawing_board_draft_v1",
+    savedAt,
+    presetId: draft.presetId,
+    log: draft.log,
+    compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
+  });
+}
+
+export function removeDrawingBoardDraft(saveDir: string): void {
+  rmSync(sidecar.pathIn(saveDir), { force: true });
 }
 
 export const readDrawingBoardDraftProgram = withSchema(SessionIdPayloadSchema, (sessionId) =>
@@ -77,7 +98,11 @@ export const writeDrawingBoardDraftProgram = withSchema(
       const draft = payload.draft;
       if (draft === null) {
         yield* drafts.remove(record.saveDir);
-        return { outcome: "success" as const, value: { saved: false }, diagnostics: [] };
+        return {
+          outcome: "success" as const,
+          value: { saved: false },
+          diagnostics: [],
+        };
       }
 
       yield* Effect.try({
@@ -93,6 +118,10 @@ export const writeDrawingBoardDraftProgram = withSchema(
       const savedAt = (yield* clock.now()).toISOString();
       yield* drafts.save(record.saveDir, draft, savedAt);
 
-      return { outcome: "success" as const, value: { saved: true }, diagnostics: [] };
+      return {
+        outcome: "success" as const,
+        value: { saved: true },
+        diagnostics: [],
+      };
     }),
 );
