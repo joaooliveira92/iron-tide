@@ -5,7 +5,7 @@
 // (a wayfinder map or spec issue on the tracker). They must never share a checkout — ADR-0165's incident was two agents in
 // the same `dev` tree, one `git add -A` sweeping the other's work. So each effort
 // gets a dedicated worktree under `.worktrees/<slug>` on a short-lived branch, and
-// the set of live subtrees is tracked in `.ai/WORKTREES.md`.
+// the set of live subtrees is tracked in `.worktrees/LEDGER.md`.
 //
 // This tool owns that ledger and the worktree lifecycle:
 //
@@ -25,11 +25,11 @@
 
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 export const REPO_ROOT = resolve(import.meta.dirname, "..");
 export const WORKTREES_DIR = join(REPO_ROOT, ".worktrees");
-export const LEDGER_PATH = join(REPO_ROOT, ".ai", "WORKTREES.md");
+export const LEDGER_PATH = join(mainCheckoutRoot(), ".worktrees", "LEDGER.md");
 export const DEFAULT_BASE = "dev";
 export const DEFAULT_BRANCH_PREFIX = "feat/";
 
@@ -42,6 +42,23 @@ export const MAX_WORKTREES = 5;
 
 /** Non-terminal subtree states. `prune` removes everything else. */
 export const TERMINAL_STATES = new Set(["merged", "gone", "phantom"]);
+
+function mainCheckoutRoot() {
+  try {
+    const common = execFileSync(
+      "git",
+      ["rev-parse", "--path-format=absolute", "--git-common-dir"],
+      {
+        cwd: REPO_ROOT,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    ).trim();
+    return resolve(common, "..");
+  } catch {
+    return REPO_ROOT;
+  }
+}
 
 function git(args, options = {}) {
   return execFileSync("git", args, {
@@ -134,6 +151,7 @@ export function readLedger() {
 }
 
 export function writeLedger(rows) {
+  mkdirSync(dirname(LEDGER_PATH), { recursive: true });
   const base = existsSync(LEDGER_PATH) ? readFileSync(LEDGER_PATH, "utf8") : "# Active worktrees\n";
   writeFileSync(LEDGER_PATH, renderLedger(base, rows));
 }
@@ -392,7 +410,7 @@ export function buildAudit(facts) {
       flag(
         "worktree-unregistered",
         subject,
-        "worktree is absent from .ai/WORKTREES.md",
+        "worktree is absent from .worktrees/LEDGER.md",
         "pnpm worktrees sync",
       );
     } else if (row !== undefined && !detached && row.branch !== w.branch) {
@@ -744,7 +762,7 @@ function cmdList({ flags }) {
     return;
   }
   if (inspected.length === 0 && extra.length === 0) {
-    console.log("no active subtrees registered (.ai/WORKTREES.md)");
+    console.log("no active subtrees registered (.worktrees/LEDGER.md)");
     return;
   }
   for (const r of inspected) {

@@ -42,7 +42,8 @@ function makeRepo() {
   git(repo, "config", "commit.gpgsign", "false");
   copyFileSync(SCRIPT, join(repo, "scripts", "worktree.mjs"));
   writeFileSync(join(repo, ".gitignore"), ".worktrees\n");
-  writeFileSync(join(repo, ".ai", "WORKTREES.md"), renderLedger("# Active worktrees\n", []));
+  mkdirSync(join(repo, ".worktrees"), { recursive: true });
+  writeFileSync(join(repo, ".worktrees", "LEDGER.md"), renderLedger("# Active worktrees\n", []));
   git(repo, "add", "-A");
   git(repo, "commit", "-m", "init");
   git(repo, "remote", "add", "origin", origin);
@@ -90,18 +91,16 @@ function register(repo, rows) {
     created: "2026-10-18",
     pr: "—",
   }));
-  const file = join(repo, ".ai", "WORKTREES.md");
-  writeFileSync(file, renderLedger(readFileSync(file, "utf8"), full));
-  git(repo, "add", "-A");
-  git(repo, "commit", "-m", "ledger");
-  git(repo, "push", "origin", "dev");
+  const file = join(repo, ".worktrees", "LEDGER.md");
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, renderLedger("# Active worktrees\n", full));
 }
 
 function snapshot(repo) {
   return JSON.stringify({
     worktrees: git(repo, "worktree", "list", "--porcelain"),
     branches: git(repo, "for-each-ref", "--format=%(refname) %(objectname)"),
-    ledger: readFileSync(join(repo, ".ai", "WORKTREES.md"), "utf8"),
+    ledger: readFileSync(join(repo, ".worktrees", "LEDGER.md"), "utf8"),
     status: git(repo, "status", "--porcelain"),
     stash: git(repo, "stash", "list"),
   });
@@ -153,15 +152,34 @@ void test("prune keeps the ledger row of a dirty merged worktree it skips", () =
   const { out } = run(repo, "prune");
   assert.match(out, /skipped a/);
   assert.equal(existsSync(path), true);
-  assert.match(readFileSync(join(repo, ".ai", "WORKTREES.md"), "utf8"), /\| a \| feat\/a \|/);
+  assert.match(readFileSync(join(repo, ".worktrees", "LEDGER.md"), "utf8"), /\| a \| feat\/a \|/);
 });
 
 void test("prune does not register unregistered survivors in the ledger", () => {
   const repo = makeRepo();
   openWorktree(repo, "r1");
-  const before = readFileSync(join(repo, ".ai", "WORKTREES.md"), "utf8");
+  const before = readFileSync(join(repo, ".worktrees", "LEDGER.md"), "utf8");
   run(repo, "prune");
-  assert.equal(readFileSync(join(repo, ".ai", "WORKTREES.md"), "utf8"), before);
+  assert.equal(readFileSync(join(repo, ".worktrees", "LEDGER.md"), "utf8"), before);
+});
+
+void test("registering a worktree leaves the checkout clean and the ledger shared", () => {
+  const repo = makeRepo();
+  assert.equal(run(repo, "new", "a").code, 0);
+  assert.equal(git(repo, "status", "--porcelain").trim(), "");
+  const ledger = join(repo, ".worktrees", "LEDGER.md");
+  assert.match(readFileSync(ledger, "utf8"), /\| a \| feat\/a \|/);
+  copyFileSync(SCRIPT, join(repo, ".worktrees", "a", "scripts", "worktree.mjs"));
+  const inner = spawnSync(
+    "node",
+    [join(repo, ".worktrees", "a", "scripts", "worktree.mjs"), "list"],
+    {
+      cwd: join(repo, ".worktrees", "a"),
+      encoding: "utf8",
+    },
+  );
+  assert.equal(inner.status, 0);
+  assert.equal(existsSync(join(repo, ".worktrees", "a", ".worktrees", "LEDGER.md")), false);
 });
 
 // --- fail closed -------------------------------------------------------------

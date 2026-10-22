@@ -6,7 +6,7 @@ agent: build
 You are managing the Bluetide worktree subtrees that let several agents work at
 once without sharing a checkout (ADR-0220). Each effort runs in its own git
 worktree under `.worktrees/<slug>` on a short-lived branch; the live set is the
-ledger [`.ai/WORKTREES.md`](../.ai/WORKTREES.md). Never edit that file by hand —
+ledger `.worktrees/LEDGER.md` (untracked, shared by every checkout, ADR-0269). Never edit that file by hand —
 [`scripts/worktree.mjs`](../scripts/worktree.mjs) owns it.
 
 Interpret `$ARGUMENTS` as `worktree.mjs` argv and run it:
@@ -39,7 +39,7 @@ preflight` warns via `scripts/verify-worktrees.mjs` when a subtree is merged or
 unregistered. Prune merged/gone/phantom subtrees promptly so the ledger reflects
 what is actually live. A phantom row (ledger entry with no worktree on disk) or an
 unregistered worktree is drift: fix it with `sync` or `prune`, never by editing
-`WORKTREES.md`.
+`LEDGER.md`.
 
 Stop and report if `new` fails because the slug, path, or branch already exists —
 do not force over another agent's subtree; that is exactly the shared-checkout
