@@ -6,6 +6,11 @@ import type {
   PlayerBattleDivisionOrderDto,
   PlayerBattleResultDto,
 } from "../../../shared/campaign-command-contract.js";
+import { usePreferences } from "../../lib/preferences-context.js";
+import { formatMeasurement, UM_PER_METRE } from "../../lib/presentation-format/index.js";
+
+/** Physical constant: metres in one nautical mile (the engine reports visibility in nm). */
+const METRES_PER_NAUTICAL_MILE = 1852;
 
 interface DivisionOrderState {
   readonly stance: PlayerBattleDivisionOrderDto["stance"];
@@ -59,6 +64,8 @@ export function PlayerBattleScreen({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [resumed, setResumed] = useState(false);
+  const { preferences } = usePreferences();
 
   useEffect(() => {
     let cancelled = false;
@@ -76,7 +83,12 @@ export function PlayerBattleScreen({
         return;
       }
       setView(result.value.view);
-      setOrders(defaultOrders(result.value.view));
+      const fresh = defaultOrders(result.value.view);
+      for (const order of result.value.lastOrders) {
+        fresh[order.divisionId] = { stance: order.stance, speedPercent: order.speedPercent };
+      }
+      setOrders(fresh);
+      setResumed(result.value.resumed);
       setLoading(false);
     })();
     return () => {
@@ -152,8 +164,27 @@ export function PlayerBattleScreen({
             <p className="mt-1 text-xs text-muted-foreground">
               {view === null
                 ? "Projecting the committed battle…"
-                : `${view.campaignMonth} · minute ${String(view.minute)} / ${String(view.maxMinutes)} · sea ${view.weather.seaState}, visibility ${String(view.weather.visibilityNm)} nm`}
+                : `${view.campaignMonth} · minute ${String(view.minute)} / ${String(view.maxMinutes)} · sea ${view.weather.seaState}`}
+              {view !== null && (
+                <span data-testid="battle-weather">
+                  {" · visibility "}
+                  {formatMeasurement(
+                    view.weather.visibilityNm * METRES_PER_NAUTICAL_MILE * UM_PER_METRE,
+                    {
+                      locale: preferences.formattingLocale,
+                      category: "range",
+                      preset: preferences.measurementPreset,
+                      selections: preferences.measurementSelections,
+                    },
+                  )}
+                </span>
+              )}
             </p>
+            {resumed && (
+              <p data-testid="battle-resumed" className="mt-1 text-xs text-muted-foreground">
+                Resumed from the saved battle at minute {view?.minute ?? 0}.
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -253,7 +284,11 @@ export function PlayerBattleScreen({
                             const ship = shipsById.get(unitId);
                             if (ship === undefined) return null;
                             return (
-                              <li key={unitId} className="flex justify-between gap-2">
+                              <li
+                                key={unitId}
+                                data-testid={`battle-ship-${unitId}`}
+                                className="flex justify-between gap-2"
+                              >
                                 <span>
                                   {ship.name}{" "}
                                   <span className="text-muted-foreground">({ship.shipType})</span>
@@ -261,6 +296,7 @@ export function PlayerBattleScreen({
                                 <span
                                   className={ship.damageState === "NORMAL" ? "" : "text-red-400"}
                                 >
+                                  {ship.damageState === "NORMAL" ? "" : "▼ "}
                                   {ship.hitPoints}/{ship.maxHitPoints} {ship.damageState}
                                 </span>
                               </li>
@@ -298,6 +334,7 @@ export function PlayerBattleScreen({
                                 <span
                                   className={ship.damageState === "NORMAL" ? "" : "text-red-400"}
                                 >
+                                  {ship.damageState === "NORMAL" ? "" : "▼ "}
                                   {ship.hitPoints}/{ship.maxHitPoints} {ship.damageState}
                                 </span>
                               </li>
@@ -306,6 +343,30 @@ export function PlayerBattleScreen({
                         </ul>
                       </div>
                     ))}
+                  {view.ships.some(
+                    (ship) => ship.sideId !== playerSide && ship.divisionId === null,
+                  ) && (
+                    <div className="rounded border border-border p-2">
+                      <span className="text-xs font-semibold">Not in a division</span>
+                      <ul className="mt-1 space-y-0.5 text-xs">
+                        {view.ships
+                          .filter((ship) => ship.sideId !== playerSide && ship.divisionId === null)
+                          .map((ship) => (
+                            <li
+                              key={ship.shipId}
+                              data-testid={`battle-ship-${ship.shipId}`}
+                              className="flex justify-between gap-2"
+                            >
+                              <span>{ship.name}</span>
+                              <span>
+                                {ship.damageState === "NORMAL" ? "" : "▼ "}
+                                {ship.hitPoints}/{ship.maxHitPoints} {ship.damageState}
+                              </span>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </section>
             </div>
