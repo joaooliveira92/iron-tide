@@ -10,7 +10,7 @@ import type { ArmourBalance } from "./armour.js";
 import { buildArmourPartModel, translateArmourRegion } from "./armourPartAdapter.js";
 import type { ComponentDef } from "./component.js";
 import type { CompiledDesign, DesignDraft, ShipContext } from "./compileShared.js";
-import { compileDesignFromLoadout, type ProductionCompile } from "./compileProduction.js";
+import { compileDesignFromLoadout, type ProductionCompile } from "./compile.js";
 import { catalogueForNation } from "./componentVariants.js";
 import type { Finding } from "./findings.js";
 import { buildFittingPartModel, translateFittingPlacement } from "./fittingPartAdapter.js";

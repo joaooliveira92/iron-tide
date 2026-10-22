@@ -9,7 +9,7 @@ import {
 import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
 import { num, type Resolved } from "../src/compileShared.js";
-import { resolveDesignComponents } from "../src/compileStages.js";
+import { resolveDesignComponents } from "../src/compile/stages.js";
 import {
   ammunitionPatternFromPart,
   armourAvailabilityFindings,

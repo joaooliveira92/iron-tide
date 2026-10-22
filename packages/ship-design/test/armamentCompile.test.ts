@@ -320,7 +320,7 @@ describe("Step 3 armament cut-over: no nation-id conditional", () => {
     const fs = await import("node:fs");
     const path = await import("node:path");
     const src = path.join(__dirname, "..", "src");
-    for (const file of ["armamentCompile.ts", "compileStages.ts"]) {
+    for (const file of ["armamentCompile.ts", "compile/stages.ts"]) {
       const text = fs.readFileSync(path.join(src, file), "utf8");
       expect(/nationId\s*===|nationId\s*!==/.test(text), file).toBe(false);
     }
