@@ -26,6 +26,8 @@ contract → ADRs → milestone brief → local conventions. On a genuine confli
   and run `pnpm preflight` at session start; rebase before every push.
 - Never overwrite, revert, or reformat another contributor's work. Keep commits
   narrow and Conventional.
+- Write no code comments. Names, types, and tests carry intent; rationale goes in an
+  ADR or the commit message (ADR-0268).
 - Work in the main checkout on a short-lived local branch. Up to 5 worktrees
   (main checkout included) may exist at once, created with `pnpm worktrees new
   <slug>` (ADR-0237, which amends ADR-0236 and ADR-0234). One session per checkout.
@@ -130,9 +132,9 @@ produce identical authoritative hashes across OSes.
 
 ## Git policy
 
-- Work on a short-lived local branch; never commit on `dev` or `main`. Deliver by
-  merging the branch into `dev` locally once `pnpm preflight`, `pnpm test:scripts`
-  and `pnpm check` are green; a pull request is optional (ADR-0234). Delete a
+- Never commit on `dev` or `main`. Deliver by merging the branch into `dev`
+  locally once the gates are green; a pull request is optional
+  (ADR-0234). Delete a
   branch only after it is merged.
 - Do not force-push or rewrite history; never commit secrets, `.env` files,
   stores, caches, or machine-specific settings. End a milestone tree-clean.
@@ -161,8 +163,8 @@ Reach for the guide when the task matches:
 
 ## Vendored repositories
 
-`vendor/` and `repos/` are read-only reference material (byte-identical upstream
-artifacts) — never lint, reformat, or import from them. `repos/` may be absent in
+`vendor/` and `repos/` are read-only reference material — never lint, reformat,
+or import from them. `repos/` may be absent in
 a normal checkout.
 
 ## Stop conditions

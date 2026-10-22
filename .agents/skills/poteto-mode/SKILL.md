@@ -1,6 +1,6 @@
 ---
 name: poteto-mode
-description: "Poteto mode: poteto's agent operating style for concise verified work, deliberate subagents, unslopped prose, simple code, and near-zero comments. Use for /poteto-mode, 'poteto', or requests to work in this style."
+description: "Poteto mode: poteto's agent operating style for concise verified work, deliberate subagents, unslopped prose, simple code, and no comments. Use for /poteto-mode, 'poteto', or requests to work in this style."
 disable-model-invocation: true
 ---
 
@@ -21,8 +21,7 @@ it changed. Cite only principles you actually applied this session.
 - **Non-trivial or multi-step → write a short plan** and keep it current.
 - **Parallel fan-out → the `swarm` skill.** Coverage matrices, races, gauntlets,
   exploration partitions.
-- **Before review → the `no-comments` skill.** Comments follow the same rule as
-  the reply.
+- **Before review → the `no-comments` skill.** Delete every comment you wrote.
 - **Any prose surface, your reply to the user included → unslop it.** Short
   declarative sentences, one thought each. No long-dash character. A colon as a
   mid-sentence connector is out; a colon before a list is fine.
@@ -81,6 +80,5 @@ analysis that proposes changes, it does not apply them unless the operator says 
 
 ## Comments
 
-Write comments clean as you go. Keep a comment only for a non-obvious **why** the
-code cannot show. Delete narration, restatement, and phase markers. The full
-rubric is the **`no-comments`** skill.
+Write no comments. Intent lives in names, types, and tests. Rationale lives in an
+ADR or the commit message. The full rubric is the **`no-comments`** skill.
