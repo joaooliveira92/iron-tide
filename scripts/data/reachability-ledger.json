@@ -1,708 +1,681 @@
 {
-  "version": 1,
+  "version": 2,
   "capabilities": [
     {
-      "id": "cmd-set-research-priority",
-      "description": "Set a nation's research priority for a tech field",
-      "engine_entry": "applySetResearchPriority",
+      "id": "set-research-priority",
+      "player_verb": "Set a research priority for a technology field",
+      "status": "reachable",
       "engine_package": "phase-engine",
+      "engine_modules": ["research"],
+      "engine_symbols": ["applySetResearchPriority"],
       "main_commands": ["inspectResearchScreen", "setResearchPriorityCommand"],
       "renderer_screen": "screens/research/ResearchScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/renderer/screens/research/ResearchScreen.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-officer-command",
-      "description": "Assign or relieve an officer",
-      "engine_entry": "applyOfficerCommand",
+      "id": "move-fleet",
+      "player_verb": "Order a fleet along a route, one hop a month",
+      "status": "reachable",
       "engine_package": "phase-engine",
-      "main_commands": [],
-      "renderer_screen": null,
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — no officer management UI"
-    },
-    {
-      "id": "cmd-move-fleet",
-      "description": "Move a fleet one route hop per month",
-      "engine_entry": "applyMoveFleet",
-      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyMoveFleet"],
       "main_commands": [
         "inspectFleetScreen",
         "submitMovementCommand",
         "replaceMovementCommand",
-        "cancelMovementCommand",
-        "submitStationAssignment"
+        "cancelMovementCommand"
       ],
       "renderer_screen": "screens/fleet/FleetScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/main/commands/fleetCommands.test.ts",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-set-budget-allocation",
-      "description": "Set budget allocation across spending categories",
-      "engine_entry": "applySetBudgetAllocation",
+      "id": "assign-station",
+      "player_verb": "Assign a fleet to a foreign station",
+      "status": "reachable",
       "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyStationAssignmentCommand"],
+      "main_commands": ["submitStationAssignment"],
+      "renderer_screen": "screens/fleet/station/FleetStationSection.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx",
+      "adr_or_issue": null
+    },
+    {
+      "id": "organise-divisions",
+      "player_verb": "Create, change and dissolve divisions and pick flagships",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyDivisionCommandMonth"],
+      "main_commands": ["inspectDivisionScreen", "submitDivisionCommand"],
+      "renderer_screen": "screens/fleet/organization/FleetOrganizationSection.tsx",
+      "evidence_test": "apps/desktop/src/main/commands/divisionCommands.test.ts",
+      "adr_or_issue": null
+    },
+    {
+      "id": "set-budget-allocation",
+      "player_verb": "Set the budget allocation across spending categories",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applySetBudgetAllocation"],
       "main_commands": ["inspectBudgetScreen", "submitBudgetAllocation"],
       "renderer_screen": "screens/treasury/TreasuryScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/renderer/screens/treasury/components/BudgetPolicyPanel.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-budget-project",
-      "description": "Execute a budget project",
-      "engine_entry": "applyBudgetProject",
+      "id": "submit-design",
+      "player_verb": "Draw a ship design and submit it for construction",
+      "status": "reachable",
       "engine_package": "phase-engine",
-      "main_commands": [],
-      "renderer_screen": null,
-      "status": "internal"
+      "engine_modules": ["designVersion"],
+      "engine_symbols": ["applySubmitDesign"],
+      "main_commands": ["submitDesignCommand", "readDrawingBoardDraft", "writeDrawingBoardDraft"],
+      "renderer_screen": "components/design-workspace/panels/SubmitPanel.tsx",
+      "evidence_test": "apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-submit-design",
-      "description": "Submit a ship design from the drawing board",
-      "engine_entry": "applySubmitDesign",
+      "id": "revise-project",
+      "player_verb": "Revise a ship project that is already ordered",
+      "status": "reachable",
       "engine_package": "phase-engine",
-      "main_commands": [
-        "submitDesignCommand",
-        "loadProjectDraft",
-        "readDrawingBoardDraft",
-        "writeDrawingBoardDraft",
-        "loadShipDraft"
-      ],
-      "renderer_screen": "screens/shipbuilding/ShipbuildingDialog.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "cmd-revise-project",
-      "description": "Revise an existing ship project",
-      "engine_entry": "applyReviseProject",
-      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyReviseProject"],
       "main_commands": ["reviseProjectCommand", "loadProjectDraft"],
-      "renderer_screen": "screens/shipbuilding/ShipbuildingDialog.tsx",
-      "status": "reachable"
+      "renderer_screen": "components/design-workspace/panels/RevisionPanel.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/construction/drawing-board/RevisionApply.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-start-rebuild",
-      "description": "Start a ship rebuild/conversion",
-      "engine_entry": "applyStartRebuild",
+      "id": "start-rebuild",
+      "player_verb": "Rebuild or convert an existing ship",
+      "status": "reachable",
       "engine_package": "phase-engine",
-      "main_commands": ["listRebuildableShips", "checkRebuild", "startRebuildCommand"],
-      "renderer_screen": "screens/shipbuilding/ShipbuildingDialog.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "cmd-halt-construction",
-      "description": "Halt construction of a ship",
-      "engine_entry": "applyHaltConstruction",
-      "engine_package": "phase-engine",
-      "main_commands": ["haltConstructionCommand"],
-      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "cmd-resume-construction",
-      "description": "Resume construction of a halted ship",
-      "engine_entry": "applyResumeConstruction",
-      "engine_package": "phase-engine",
-      "main_commands": ["resumeConstructionCommand"],
-      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "cmd-set-acceleration",
-      "description": "Set construction acceleration",
-      "engine_entry": "applySetAcceleration",
-      "engine_package": "phase-engine",
-      "main_commands": ["setAccelerationCommand"],
-      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "cmd-order-construction",
-      "description": "Order a new construction project",
-      "engine_entry": "applyOrderConstruction",
-      "engine_package": "phase-engine",
+      "engine_modules": ["refitRules"],
+      "engine_symbols": ["applyStartRebuild"],
       "main_commands": [
-        "orderConstructionBatchCommand",
-        "previewConstructionBatchCommand",
+        "listRebuildableShips",
+        "loadShipDraft",
+        "checkRebuild",
+        "startRebuildCommand"
+      ],
+      "renderer_screen": "components/design-workspace/panels/RebuildPanel.tsx",
+      "evidence_test": "apps/desktop/src/renderer/components/design-workspace/panels/RebuildPanel.test.tsx",
+      "adr_or_issue": null
+    },
+    {
+      "id": "order-construction",
+      "player_verb": "Order, replace, cancel or batch-build ships and read the project queue",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": [
+        "constructionOrder",
+        "constructionReadout",
+        "newConstructionCapacity",
+        "orderEligibility"
+      ],
+      "engine_symbols": ["applyOrderConstruction"],
+      "main_commands": [
+        "inspectConstructionScreen",
         "submitConstructionCommand",
         "replaceConstructionCommand",
-        "cancelConstructionCommand"
+        "cancelConstructionCommand",
+        "orderConstructionBatchCommand",
+        "previewConstructionBatchCommand"
       ],
       "renderer_screen": "screens/construction/ConstructionScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/renderer/screens/construction/hooks/useConstructionScreen.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-authorize-dock-expansion",
-      "description": "Authorize a dock expansion",
-      "engine_entry": "applyAuthorizeDockExpansion",
+      "id": "halt-or-resume-construction",
+      "player_verb": "Halt or resume a construction project",
+      "status": "reachable",
       "engine_package": "phase-engine",
+      "engine_modules": ["constructionHaltResume"],
+      "engine_symbols": ["applyHaltConstruction", "applyResumeConstruction"],
+      "main_commands": ["haltConstructionCommand", "resumeConstructionCommand"],
+      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
+      "evidence_test": "apps/desktop/src/main/commands/constructionStatusCommands.test.ts",
+      "adr_or_issue": null
+    },
+    {
+      "id": "accelerate-construction",
+      "player_verb": "Accelerate a construction project at a premium",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": ["constructionAcceleration"],
+      "engine_symbols": ["applySetAcceleration", "applyAccelerationPremium"],
+      "main_commands": ["setAccelerationCommand"],
+      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
+      "evidence_test": "apps/desktop/src/main/commands/constructionStatusCommands.test.ts",
+      "adr_or_issue": null
+    },
+    {
+      "id": "authorize-dock-expansion",
+      "player_verb": "Authorize a dock expansion",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": ["dockExpansion"],
+      "engine_symbols": ["applyAuthorizeDockExpansion", "applyDockExpansionStep"],
       "main_commands": ["authorizeDockExpansionCommand"],
       "renderer_screen": "screens/construction/ConstructionScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/renderer/screens/construction/hooks/useConstructionScreen.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-order-foreign-construction",
-      "description": "Order construction at a foreign yard",
-      "engine_entry": "applyOrderForeignConstruction",
+      "id": "order-foreign-construction",
+      "player_verb": "Preview and place a ship order with a foreign builder",
+      "status": "reachable",
       "engine_package": "phase-engine",
+      "engine_modules": ["foreignBuilderPreview", "foreignConstruction", "foreignTerms"],
+      "engine_symbols": ["applyOrderForeignConstruction", "applyForeignPaymentOutcome"],
       "main_commands": ["placeForeignConstructionCommand", "previewForeignConstructionCommand"],
-      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
-      "status": "reachable"
+      "renderer_screen": "screens/construction/components/ForeignContractPanel.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/construction/components/ForeignContractPanel.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-cancel-construction-project",
-      "description": "Cancel a construction project",
-      "engine_entry": "applyCancelConstructionProject",
+      "id": "cancel-construction-project",
+      "player_verb": "Cancel a construction project and take the refund",
+      "status": "reachable",
       "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyCancelConstructionProject"],
       "main_commands": ["cancelConstructionProjectCommand"],
       "renderer_screen": "screens/construction/ConstructionScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/main/commands/constructionStatusCommands.test.ts",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-declare-war",
-      "description": "Declare war on another nation",
-      "engine_entry": "applyDeclareWar",
+      "id": "declare-war",
+      "player_verb": "Declare war on a nation",
+      "status": "reachable",
       "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyDeclareWar"],
       "main_commands": ["inspectDiplomacyScreen", "submitDiplomacyCommand"],
       "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-accept-peace",
-      "description": "Accept a peace settlement",
-      "engine_entry": "applyAcceptPeace",
+      "id": "accept-peace",
+      "player_verb": "Accept a peace settlement",
+      "status": "reachable",
       "engine_package": "phase-engine",
-      "main_commands": ["inspectDiplomacyScreen", "submitDiplomacyCommand"],
+      "engine_modules": [],
+      "engine_symbols": ["applyAcceptPeace"],
+      "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-set-relation",
-      "description": "Set diplomatic relations",
-      "engine_entry": "applySetRelation",
+      "id": "form-or-break-alliance",
+      "player_verb": "Form or break an alliance",
+      "status": "reachable",
       "engine_package": "phase-engine",
-      "main_commands": ["inspectDiplomacyScreen", "submitDiplomacyCommand"],
+      "engine_modules": [],
+      "engine_symbols": ["applySetRelation"],
+      "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-set-nap",
-      "description": "Set a non-aggression pact",
-      "engine_entry": "applySetNap",
+      "id": "form-or-break-non-aggression-pact",
+      "player_verb": "Form or break a non-aggression pact",
+      "status": "reachable",
       "engine_package": "phase-engine",
-      "main_commands": ["inspectDiplomacyScreen", "submitDiplomacyCommand"],
+      "engine_modules": [],
+      "engine_symbols": ["applySetNap"],
+      "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-declare-blockade",
-      "description": "Declare a blockade",
-      "engine_entry": "applyDeclareBlockade",
+      "id": "declare-blockade",
+      "player_verb": "Declare a blockade of a nation in an area",
+      "status": "reachable",
       "engine_package": "phase-engine",
-      "main_commands": ["inspectDiplomacyScreen", "submitDiplomacyCommand"],
+      "engine_modules": [],
+      "engine_symbols": ["applyDeclareBlockade"],
+      "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/DiplomacyScreen.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-division-commands",
-      "description": "Create, modify and dissolve ship divisions",
-      "engine_entry": "applyDivisionCommandMonth",
+      "id": "advance-month",
+      "player_verb": "Advance the campaign month and answer interruptions",
+      "status": "reachable",
       "engine_package": "phase-engine",
-      "main_commands": ["inspectDivisionScreen", "submitDivisionCommand"],
-      "renderer_screen": "screens/fleet/FleetScreen.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "cmd-station-assignment",
-      "description": "Assign ships to foreign stations",
-      "engine_entry": "applyStationAssignmentCommand",
-      "engine_package": "phase-engine",
-      "main_commands": ["submitStationAssignment"],
-      "renderer_screen": "screens/fleet/FleetScreen.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "cmd-battle-flow",
-      "description": "Battle offer, acceptance, decline, support forces, war score, consequences",
-      "engine_entry": "applyDecline,applyEnemyDeclines,applySupportForces,applyWarScoreDelta,applyBattleConsequences,applyRecordedBattleResult",
-      "engine_package": "phase-engine",
+      "engine_modules": ["month"],
+      "engine_symbols": [],
       "main_commands": [
         "resolveTurn",
+        "commitMonth",
         "answerDecision",
-        "submitBattleResult",
+        "abandonPendingTurn",
+        "readPendingTurn",
+        "readTurnSummaries",
+        "readMonthlyReports"
+      ],
+      "renderer_screen": "shell/App.tsx",
+      "evidence_test": "apps/desktop/src/renderer/shell/useCampaignShell.test.ts",
+      "adr_or_issue": null
+    },
+    {
+      "id": "fight-or-decline-battle",
+      "player_verb": "Accept or decline a battle offer and fight it with division stance and speed orders",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": [
+        "battleDecline",
+        "battleOffer",
+        "battles",
+        "declineCounter",
+        "enemyDecline",
+        "interruption",
+        "supportForce"
+      ],
+      "engine_symbols": [
+        "applyDecline",
+        "applyEnemyDeclines",
+        "applySupportForces",
+        "applyWarScoreDelta",
+        "applyBattleConsequences",
+        "applyBattleResult",
+        "applyRecordedBattleResult"
+      ],
+      "main_commands": [
         "submitOfferResponse",
         "startPlayerBattle",
         "advancePlayerBattle",
         "finishPlayerBattle",
-        "abandonPendingTurn",
-        "readPendingTurn"
+        "submitBattleResult"
       ],
       "renderer_screen": "screens/battle/PlayerBattleScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/renderer/shell/App.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-prestige-change",
-      "description": "Apply prestige changes",
-      "engine_entry": "applyPrestigeChange",
-      "engine_package": "phase-engine",
-      "main_commands": [],
-      "renderer_screen": null,
+      "id": "assign-or-relieve-officer",
+      "player_verb": "Assign or relieve an officer",
       "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — S-2 not started; no prestige UI"
-    },
-    {
-      "id": "cmd-readiness-evolution",
-      "description": "Monthly readiness-state evolution (active/reserve/mothballed/working-up)",
-      "engine_entry": "applyReadinessEvolution",
       "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyOfficerCommand"],
       "main_commands": [],
       "renderer_screen": null,
+      "evidence_test": null,
+      "adr_or_issue": "#224",
+      "note": "No desktop command emits an officer command; officers are only reachable through divisions."
+    },
+    {
+      "id": "prestige",
+      "player_verb": "See and act on national prestige",
       "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — S-1 gate accepted; readiness projection missing"
-    },
-    {
-      "id": "cmd-aircraft-development",
-      "description": "Monthly aircraft development resolution",
-      "engine_entry": "resolveAircraftDevelopment",
       "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyPrestigeChange"],
       "main_commands": [],
       "renderer_screen": null,
+      "evidence_test": null,
+      "adr_or_issue": "#223",
+      "note": "The engine changes prestige in the monthly pipeline; the player sees only the header metric."
+    },
+    {
+      "id": "ship-readiness",
+      "player_verb": "See and manage ship readiness",
       "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — no aircraft or airbase UI"
-    },
-    {
-      "id": "cmd-carrier-operations",
-      "description": "Monthly carrier operations resolution",
-      "engine_entry": "resolveCarrierOperations",
       "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyReadinessEvolution"],
       "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": "#223",
+      "note": "Readiness evolves in the monthly pipeline; no readout or control exists."
     },
     {
-      "id": "cmd-foreign-construction-phases",
-      "description": "Foreign construction phase runner",
-      "engine_entry": "runForeignContractPhase",
+      "id": "aircraft-and-carriers",
+      "player_verb": "Develop aircraft and operate carriers",
+      "status": "dormant-by-decision",
       "engine_package": "phase-engine",
+      "engine_modules": ["aircraft", "carrier-operations"],
+      "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": "#225",
+      "note": "Both run in the monthly pipeline; no airbase, aircraft or carrier surface exists."
     },
     {
-      "id": "cmd-foreign-insight",
-      "description": "Foreign insight awards and milestones",
-      "engine_entry": "applyForeignInsightAwards,applyForeignInsightMilestone",
+      "id": "budget-project-command",
+      "player_verb": "Budget a project (AI command only)",
+      "status": "internal",
       "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyBudgetProject"],
       "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": null,
+      "note": "Emitted only by the AI command generator."
     },
     {
-      "id": "cmd-foreign-payment",
-      "description": "Foreign payment month resolution",
-      "engine_entry": "applyForeignPaymentOutcome",
+      "id": "command-lifecycle-definitions",
+      "player_verb": "Command type definitions for budget, halt, resume and acceleration",
+      "status": "internal",
       "engine_package": "phase-engine",
+      "engine_modules": ["commandLifecycle"],
+      "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-dock-expansion-step",
-      "description": "Monthly dock expansion step",
-      "engine_entry": "applyDockExpansionStep",
+      "id": "design-studies",
+      "player_verb": "Design study bookkeeping",
+      "status": "internal",
       "engine_package": "phase-engine",
+      "engine_modules": ["designStudies"],
+      "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": null,
+      "note": "Started by submit-design, never directly by the player."
     },
     {
-      "id": "cmd-acceleration-premium",
-      "description": "Apply acceleration premium work",
-      "engine_entry": "applyAccelerationPremium",
+      "id": "foreign-contract-monthly",
+      "player_verb": "Monthly foreign-contract, insight and war-policy steps",
+      "status": "internal",
       "engine_package": "phase-engine",
+      "engine_modules": ["foreignContractPhase", "foreignInsight", "foreignWarEffects"],
+      "engine_symbols": ["applyForeignInsightAwards", "applyForeignInsightMilestone"],
       "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": null
     },
     {
-      "id": "cmd-design-studies",
-      "description": "Ship design studies (similarity, compile, study terms)",
-      "engine_entry": "designStudies",
+      "id": "phase-engine-infrastructure",
+      "player_verb": "Errors, ledger, phase guard, registry and replay verification",
+      "status": "internal",
       "engine_package": "phase-engine",
+      "engine_modules": [
+        "errors",
+        "financial-ledger",
+        "phase-guard",
+        "registry",
+        "replay",
+        "tacticalReplay"
+      ],
+      "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": null
     },
     {
-      "id": "combat-gunnery",
-      "description": "Gunnery resolution (hit chance, fall of shot)",
-      "engine_entry": "gunnery",
+      "id": "combat-fought-battle",
+      "player_verb": "Fight a battle: gunnery, spotting, contact, movement, weather, damage and torpedoes run under division stance and speed orders",
+      "status": "reachable",
       "engine_package": "combat",
-      "main_commands": ["generateBattle", "resolveTacticalBattle"],
-      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
-    },
-    {
-      "id": "combat-weather",
-      "description": "Weather effects on tactical combat",
-      "engine_entry": "weather",
-      "engine_package": "combat",
-      "main_commands": ["generateBattle", "resolveTacticalBattle"],
-      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
-    },
-    {
-      "id": "combat-damage",
-      "description": "Damage allocation and effects",
-      "engine_entry": "damage",
-      "engine_package": "combat",
-      "main_commands": ["generateBattle", "resolveTacticalBattle"],
-      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
-    },
-    {
-      "id": "combat-torpedoes",
-      "description": "Torpedo attack resolution",
-      "engine_entry": "torpedoes",
-      "engine_package": "combat",
-      "main_commands": ["generateBattle", "resolveTacticalBattle"],
-      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
-    },
-    {
-      "id": "combat-movement",
-      "description": "Tactical movement resolution",
-      "engine_entry": "movement",
-      "engine_package": "combat",
-      "main_commands": ["generateBattle", "resolveTacticalBattle"],
-      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
-    },
-    {
-      "id": "combat-spotting",
-      "description": "Visual spotting and detection",
-      "engine_entry": "spotting",
-      "engine_package": "combat",
-      "main_commands": ["generateBattle", "resolveTacticalBattle"],
-      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
-    },
-    {
-      "id": "combat-contact",
-      "description": "Contact reporting and reaction",
-      "engine_entry": "contact",
-      "engine_package": "combat",
-      "main_commands": ["generateBattle", "resolveTacticalBattle"],
-      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — tactical battle UI gated on T-2"
+      "engine_modules": [
+        "gunnery",
+        "spotting",
+        "contact",
+        "movement",
+        "weather",
+        "damage",
+        "torpedoes"
+      ],
+      "engine_symbols": [],
+      "main_commands": ["startPlayerBattle", "advancePlayerBattle", "finishPlayerBattle"],
+      "renderer_screen": "screens/battle/PlayerBattleScreen.tsx",
+      "evidence_test": "apps/desktop/src/main/commands/battleOfferCommands.test.ts",
+      "adr_or_issue": null,
+      "note": "The player orders stance and speed per division; fire control and torpedo doctrine are automatic."
     },
     {
       "id": "combat-air-combat",
-      "description": "Air-to-air combat resolution",
-      "engine_entry": "air-combat",
+      "player_verb": "Air combat and air defence in a battle",
+      "status": "dormant-by-decision",
       "engine_package": "combat",
+      "engine_modules": ["air-combat", "air-defense"],
+      "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — no air-combat UI; campaign-level air component missing"
-    },
-    {
-      "id": "combat-air-defense",
-      "description": "Anti-aircraft defense resolution",
-      "engine_entry": "air-defense",
-      "engine_package": "combat",
-      "main_commands": [],
-      "renderer_screen": null,
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — no air-combat UI; campaign-level air component missing"
-    },
-    {
-      "id": "combat-mines",
-      "description": "Mine warfare resolution",
-      "engine_entry": "mines",
-      "engine_package": "combat",
-      "main_commands": [],
-      "renderer_screen": null,
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — campaign-level mining gated on W-2"
-    },
-    {
-      "id": "combat-submarines",
-      "description": "Submarine warfare resolution",
-      "engine_entry": "submarines",
-      "engine_package": "combat",
-      "main_commands": [],
-      "renderer_screen": null,
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — campaign-level submarines gated on W-2"
+      "evidence_test": null,
+      "adr_or_issue": "#225",
+      "note": "Contexts are supplied empty: the campaign battle manifest never declares air groups or installations."
     },
     {
       "id": "combat-carrier-operations",
-      "description": "Carrier aircraft operations (deck handling, launch, recovery)",
-      "engine_entry": "carrier-operations",
-      "engine_package": "combat",
-      "main_commands": [],
-      "renderer_screen": null,
+      "player_verb": "Carrier operations in a battle",
       "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — no carrier-operations UI"
-    },
-    {
-      "id": "combat-battle-resolver",
-      "description": "Auto-resolution of an entire tactical battle",
-      "engine_entry": "BattleResolver",
       "engine_package": "combat",
-      "main_commands": ["resolveBattle", "generateBattle"],
-      "renderer_screen": null,
-      "status": "internal"
-    },
-    {
-      "id": "combat-strength-calculator",
-      "description": "Force-strength estimation for battle offers",
-      "engine_entry": "StrengthCalculator",
-      "engine_package": "combat",
-      "main_commands": ["commitMonth"],
-      "renderer_screen": null,
-      "status": "internal"
-    },
-    {
-      "id": "combat-tactical-time",
-      "description": "Tactical clock, pipeline",
-      "engine_entry": "tacticalTime,tacticalClock,tacticalPipeline",
-      "engine_package": "combat",
-      "main_commands": ["resolveTacticalBattle"],
-      "renderer_screen": null,
-      "status": "internal"
-    },
-    {
-      "id": "combat-targeting",
-      "description": "Target selection and engagement",
-      "engine_entry": "targeting",
-      "engine_package": "combat",
-      "main_commands": ["resolveTacticalBattle"],
-      "renderer_screen": null,
-      "status": "internal"
-    },
-    {
-      "id": "combat-command-quantization",
-      "description": "Tactical command quantization, record, reach",
-      "engine_entry": "commandQuantization,commandRecord,commandReach",
-      "engine_package": "combat",
-      "main_commands": ["resolveTacticalBattle"],
-      "renderer_screen": null,
-      "status": "internal"
-    },
-    {
-      "id": "combat-realism",
-      "description": "Realism mode enforcement",
-      "engine_entry": "realism",
-      "engine_package": "combat",
-      "main_commands": ["resolveTacticalBattle"],
-      "renderer_screen": null,
-      "status": "internal"
-    },
-    {
-      "id": "combat-aircraft",
-      "description": "Aircraft performance models",
-      "engine_entry": "aircraft",
-      "engine_package": "combat",
+      "engine_modules": ["carrier-operations"],
+      "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": "#225"
     },
     {
-      "id": "combat-battle-turn-away",
-      "description": "Battle turn-away, withdrawal, end",
-      "engine_entry": "battleTurnAway,withdrawal,battleEnd",
+      "id": "combat-mines",
+      "player_verb": "Mine laying, sweeping and pressure",
+      "status": "dormant-by-decision",
       "engine_package": "combat",
-      "main_commands": ["resolveTacticalBattle", "resolveBattle"],
+      "engine_modules": ["mines"],
+      "engine_symbols": [],
+      "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": "#225"
     },
     {
-      "id": "combat-battle-ledger",
-      "description": "Battle event ledger",
-      "engine_entry": "battleLedger",
+      "id": "combat-submarines",
+      "player_verb": "Submarine operations",
+      "status": "dormant-by-decision",
       "engine_package": "combat",
-      "main_commands": ["resolveBattle", "replayBattleBoundary"],
+      "engine_modules": ["submarines"],
+      "engine_symbols": [],
+      "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": "#225"
     },
     {
-      "id": "combat-auto-resolution",
-      "description": "Full auto-resolution of battles",
-      "engine_entry": "autoResolution",
+      "id": "combat-coastal-defense",
+      "player_verb": "Coastal defence batteries and mine pressure",
+      "status": "dormant-by-decision",
       "engine_package": "combat",
-      "main_commands": ["resolveBattle"],
+      "engine_modules": ["coastal-defense"],
+      "engine_symbols": [],
+      "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": "#225",
+      "note": "Not exported from the package index and not referenced outside the module."
     },
     {
-      "id": "combat-full-speed-stress",
-      "description": "Full-speed stress on machinery",
-      "engine_entry": "fullSpeedStress",
+      "id": "combat-smoke",
+      "player_verb": "Smokescreens and funnel smoke",
+      "status": "dormant-by-decision",
       "engine_package": "combat",
-      "main_commands": ["resolveTacticalBattle"],
+      "engine_modules": ["smoke"],
+      "engine_symbols": [],
+      "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": "#225",
+      "note": "Projected into every battle but the campaign manifest declares no smoke source."
     },
     {
-      "id": "combat-simulation",
-      "description": "Tactical simulation engine and spawn",
-      "engine_entry": "simulation/engine,simulation/spawn",
+      "id": "combat-tactical-core",
+      "player_verb": "Tactical simulation loop, clock, targeting, command quantization, realism and battle generation",
+      "status": "internal",
       "engine_package": "combat",
-      "main_commands": ["generateBattle", "seedCampaignBattleDrill"],
+      "engine_modules": [
+        "simulation",
+        "tactical",
+        "tacticalClock",
+        "tacticalPipeline",
+        "tacticalTime",
+        "targeting",
+        "commandQuantization",
+        "commandRecord",
+        "commandReach",
+        "realism",
+        "generation",
+        "fullSpeedStress"
+      ],
+      "engine_symbols": [],
+      "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
-    },
-    {
-      "id": "combat-tactical",
-      "description": "Tactical behaviour system",
-      "engine_entry": "tactical",
-      "engine_package": "combat",
-      "main_commands": ["resolveTacticalBattle"],
-      "renderer_screen": null,
-      "status": "internal"
-    },
-    {
-      "id": "combat-generation",
-      "description": "Battle generation system",
-      "engine_entry": "generation",
-      "engine_package": "combat",
-      "main_commands": ["generateBattle"],
-      "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": null
     },
     {
       "id": "combat-battle-resolution",
-      "description": "Battle resolution pipeline",
-      "engine_entry": "battleResolution",
+      "player_verb": "Battle resolution, auto-resolution, endings, withdrawal and ledger",
+      "status": "internal",
       "engine_package": "combat",
-      "main_commands": ["resolveBattle"],
-      "renderer_screen": null,
-      "status": "internal"
-    },
-    {
-      "id": "combat-errors",
-      "description": "Combat error types",
-      "engine_entry": "errors",
-      "engine_package": "combat",
+      "engine_modules": [
+        "battleResolution",
+        "autoResolution",
+        "battleEnd",
+        "battleTurnAway",
+        "withdrawal",
+        "battleLedger",
+        "strength",
+        "resolver"
+      ],
+      "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": null
     },
     {
-      "id": "combat-reason-codes",
-      "description": "Combat outcome reason codes",
-      "engine_entry": "reasonCodes",
+      "id": "combat-aircraft-model",
+      "player_verb": "Aircraft data model shared by air combat and carriers",
+      "status": "internal",
       "engine_package": "combat",
+      "engine_modules": ["aircraft"],
+      "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
-      "status": "internal"
+      "evidence_test": null,
+      "adr_or_issue": null
     },
     {
-      "id": "projection-overview",
-      "description": "Campaign overview projection",
-      "engine_entry": "PlayerProjection",
+      "id": "combat-shared-support",
+      "player_verb": "Error, reason-code and schema helpers",
+      "status": "internal",
+      "engine_package": "combat",
+      "engine_modules": ["errors", "reasonCodes", "safe-int-schema", "schema-issues"],
+      "engine_symbols": [],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "adr_or_issue": null
+    },
+    {
+      "id": "read-campaign-overview",
+      "player_verb": "Read the campaign overview",
+      "status": "reachable",
       "engine_package": "campaign-engine",
+      "engine_modules": [],
+      "engine_symbols": ["buildPlayerProjection"],
       "main_commands": ["inspectCampaign"],
       "renderer_screen": "screens/overview/OverviewScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/main/commands/inspectCampaign.test.ts",
+      "adr_or_issue": null
     },
     {
-      "id": "projection-construction",
-      "description": "Construction screen projection",
-      "engine_entry": "inspectConstructionScreen",
+      "id": "read-world-map",
+      "player_verb": "Read the world map (Overview, F1 sheet, Fleet panel)",
+      "status": "reachable",
       "engine_package": "campaign-engine",
-      "main_commands": ["inspectConstructionScreen"],
-      "renderer_screen": "screens/construction/ConstructionScreen.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "projection-fleet",
-      "description": "Fleet screen projection",
-      "engine_entry": "inspectFleetScreen",
-      "engine_package": "campaign-engine",
-      "main_commands": ["inspectFleetScreen"],
-      "renderer_screen": "screens/fleet/FleetScreen.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "projection-research",
-      "description": "Research screen projection",
-      "engine_entry": "inspectResearchScreen",
-      "engine_package": "campaign-engine",
-      "main_commands": ["inspectResearchScreen"],
-      "renderer_screen": "screens/research/ResearchScreen.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "projection-diplomacy",
-      "description": "Diplomacy screen projection",
-      "engine_entry": "inspectDiplomacyScreen",
-      "engine_package": "campaign-engine",
-      "main_commands": ["inspectDiplomacyScreen"],
-      "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "projection-budget",
-      "description": "Budget screen projection",
-      "engine_entry": "inspectBudgetScreen",
-      "engine_package": "campaign-engine",
-      "main_commands": ["inspectBudgetScreen"],
-      "renderer_screen": "screens/treasury/TreasuryScreen.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "projection-map",
-      "description": "Strategic map projection",
-      "engine_entry": "WorldMapView",
-      "engine_package": "campaign-engine",
+      "engine_modules": [],
+      "engine_symbols": ["buildWorldMapView"],
       "main_commands": ["inspectMap"],
-      "renderer_screen": "screens/map-prototype/MapPrototypeScreen.tsx",
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — map prototype, dev-only; production gated on F-1"
+      "renderer_screen": "components/world-map/WorldMapChart.tsx",
+      "evidence_test": "apps/desktop/src/renderer/components/world-map/WorldMapChart.test.tsx",
+      "adr_or_issue": null,
+      "note": "A dedicated production map screen is #222; the map prototype screen stays dev-only."
     },
     {
-      "id": "projection-battle-history",
-      "description": "Battle history projection",
-      "engine_entry": "BattleHistoryView",
+      "id": "read-battle-history",
+      "player_verb": "Read the battle history",
+      "status": "reachable",
       "engine_package": "campaign-engine",
+      "engine_modules": [],
+      "engine_symbols": ["buildBattleHistory"],
       "main_commands": ["inspectBattleHistory"],
-      "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",
-      "status": "reachable"
+      "renderer_screen": "screens/diplomacy/components/BattleHistorySection.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/diplomacy/components/BattleHistorySection.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "projection-priorities",
-      "description": "Strategic priorities projection",
-      "engine_entry": "InspectPrioritiesResult",
+      "id": "read-priorities",
+      "player_verb": "Read strategic priorities",
+      "status": "reachable",
       "engine_package": "campaign-engine",
+      "engine_modules": [],
+      "engine_symbols": ["buildPrioritiesProjection"],
       "main_commands": ["inspectPriorities"],
-      "renderer_screen": "screens/overview/OverviewScreen.tsx",
-      "status": "reachable"
+      "renderer_screen": "screens/overview/PrioritiesCard.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/overview/PrioritiesCard.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "projection-opening-briefing",
-      "description": "Opening briefing projection",
-      "engine_entry": "OpeningBriefingProjection",
+      "id": "read-opening-briefing",
+      "player_verb": "Read the opening briefing",
+      "status": "reachable",
       "engine_package": "campaign-engine",
+      "engine_modules": [],
+      "engine_symbols": ["buildOpeningBriefingProjection"],
       "main_commands": ["inspectOpeningBriefing"],
       "renderer_screen": "screens/new-game/NewGameBriefingScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/renderer/screens/new-game/NewGameBriefingScreen.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "desktop-save-load",
-      "description": "Campaign save, close, copy, list, load, verify, replay, recover",
-      "engine_entry": null,
+      "id": "start-new-game",
+      "player_verb": "Choose a nation and options and start a new campaign",
+      "status": "reachable",
       "engine_package": "desktop",
+      "engine_modules": [],
+      "engine_symbols": [],
+      "main_commands": ["listNewGameOptions", "compileCampaign"],
+      "renderer_screen": "screens/new-game/NewGameLaunchingScreen.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/new-game/NewGameLaunchingScreen.test.tsx",
+      "adr_or_issue": null
+    },
+    {
+      "id": "manage-campaign-files",
+      "player_verb": "Save, copy, close, load, verify, replay and recover a campaign",
+      "status": "reachable",
+      "engine_package": "desktop",
+      "engine_modules": [],
+      "engine_symbols": [],
       "main_commands": [
         "saveCampaign",
-        "closeCampaign",
         "copyCampaign",
+        "closeCampaign",
         "loadCampaign",
         "loadRecentCampaign",
         "listRecentCampaigns",
@@ -713,82 +686,68 @@
         "recoverCampaign"
       ],
       "renderer_screen": "screens/campaign-file/CampaignFileScreen.tsx",
-      "status": "reachable"
+      "evidence_test": "apps/desktop/src/renderer/screens/campaign-file/CampaignFileScreen.test.tsx",
+      "adr_or_issue": null
     },
     {
-      "id": "desktop-ui-state",
-      "description": "UI state persistence (sidebar, open cards)",
-      "engine_entry": null,
+      "id": "persist-ui-state",
+      "player_verb": "Remember inspector layout, preferences and dismissed messages",
+      "status": "reachable",
       "engine_package": "desktop",
+      "engine_modules": [],
+      "engine_symbols": [],
       "main_commands": ["readUiState", "writeUiState"],
-      "renderer_screen": "shell/",
-      "status": "reachable"
+      "renderer_screen": "screens/campaign-preferences/CampaignPreferencesScreen.tsx",
+      "evidence_test": "apps/desktop/src/main/uiState.test.ts",
+      "adr_or_issue": null
     },
     {
-      "id": "desktop-monthly-reports",
-      "description": "Monthly reports and turn summaries",
-      "engine_entry": null,
+      "id": "read-content-catalogues",
+      "player_verb": "Read drawing-board, presentation and UI catalogue content",
+      "status": "internal",
       "engine_package": "desktop",
-      "main_commands": ["readMonthlyReports", "readTurnSummaries"],
-      "renderer_screen": "screens/overview/OverviewScreen.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "desktop-new-game",
-      "description": "New game setup flow (nation, archetype, fleet method, briefing)",
-      "engine_entry": null,
-      "engine_package": "desktop",
-      "main_commands": ["listNewGameOptions", "compileCampaign"],
-      "renderer_screen": "screens/new-game/",
-      "status": "reachable"
-    },
-    {
-      "id": "desktop-battle-sandbox",
-      "description": "Battle sandbox (debug-only)",
-      "engine_entry": null,
-      "engine_package": "desktop",
-      "main_commands": [
-        "generateBattle",
-        "resolveBattle",
-        "resolveTacticalBattle",
-        "replayBattleBoundary",
-        "seedCampaignBattleDrill"
-      ],
-      "renderer_screen": "screens/tactical-sandbox/TacticalSandboxScreen.tsx",
-      "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — debug only; production gated on T-2"
-    },
-    {
-      "id": "desktop-content-inspection",
-      "description": "Content inspection screens (drawing board, presentation, UI catalogue)",
-      "engine_entry": null,
-      "engine_package": "desktop",
+      "engine_modules": [],
+      "engine_symbols": [],
       "main_commands": [
         "inspectDrawingBoardContent",
         "inspectPresentationContent",
         "inspectUiCatalogue"
       ],
-      "renderer_screen": "screens/debugging/DebuggingScreen.tsx",
+      "renderer_screen": null,
+      "evidence_test": null,
+      "adr_or_issue": null,
+      "note": "Supporting reads for other screens, not a player verb."
+    },
+    {
+      "id": "debug-battle-sandbox",
+      "player_verb": "Generate, resolve and replay battles in the tactical sandbox and simulation screens",
       "status": "dormant-by-decision",
-      "adr_or_issue": "#220 — debug only"
+      "engine_package": "desktop",
+      "engine_modules": [],
+      "engine_symbols": [],
+      "main_commands": [
+        "generateBattle",
+        "resolveBattle",
+        "resolveTacticalBattle",
+        "replayBattleBoundary"
+      ],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "adr_or_issue": "#226",
+      "note": "Simulation and Tactical Sandbox register only under DEBUG_MODE."
     },
     {
-      "id": "desktop-campaign-preferences",
-      "description": "Campaign preferences screen",
-      "engine_entry": null,
+      "id": "debug-battle-drill-seed",
+      "player_verb": "Seed a campaign battle drill for end-to-end tests",
+      "status": "internal",
       "engine_package": "desktop",
-      "main_commands": [],
-      "renderer_screen": "screens/campaign-preferences/CampaignPreferencesScreen.tsx",
-      "status": "reachable"
-    },
-    {
-      "id": "desktop-options",
-      "description": "Application options screen",
-      "engine_entry": null,
-      "engine_package": "desktop",
-      "main_commands": [],
-      "renderer_screen": "screens/options/OptionsScreen.tsx",
-      "status": "reachable"
+      "engine_modules": [],
+      "engine_symbols": [],
+      "main_commands": ["seedCampaignBattleDrill"],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "adr_or_issue": null,
+      "note": "Test seam used by the debug e2e spec."
     }
   ]
 }

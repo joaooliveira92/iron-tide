@@ -26,24 +26,19 @@ and `.scratch` references do not resolve in this checkout.
 | Area              | State                                                                                                                                                                                                                                                                                                                               |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Engine, strategic | 17-phase monthly pipeline (revenue, AI planning/procurement, commands, appropriation, maintenance, construction, diplomacy, research, aircraft/carrier development, battle generation/resolution). Fleet moves one route hop a month. Divisions and officers (3 ranks, accuracy skill only). Blockade, war score, peace settlement. |
-| Engine, tactical  | `combat` ≈ 55.6k LOC, 287 test files. Reachable from a campaign: gunnery, weather, damage, torpedoes, smoke, damage control, AA. Built but not reachable: mines, submarines, coastal defence, air combat, carriers.                                                                                                                 |
+| Engine, tactical  | `combat` ≈ 55.6k LOC, 287 test files. Which modules a player can reach is in the [reachability report](../docs/reachability-report.md).                                                                                                                                                                                             |
 | Ship design       | `ship-design` ≈ 25.6k LOC: component designer, studies, rebuild/conversion, build time, docks and expansion, foreign contracts, acceleration, halt/cancel. Closest to manual pp.23–33.                                                                                                                                              |
 | AI                | `ai` ≈ 0.6k LOC: uniform-random legal budget and research commands; procurement plans designs and builds. No doctrine, no war decisions.                                                                                                                                                                                            |
 | Content           | 14 nations, 80 areas, 62 possessions, 86 routes, 19 fleets, 84 techs across 10 fields, ending 1939. One scenario (1880). Scenario IDs 1900/1920/1935/1960 are declared in code with no pack.                                                                                                                                        |
-| Desktop           | Production screens: new game (nation, archetype, fleet method, briefing), Overview, Treasury, Construction, Shipbuilding, Fleet (divisions), Research, Diplomacy & War, Preferences, Options. Debug-only: Simulation, Tactical Sandbox, Debugging. Strategic map is an unregistered prototype.                                      |
+| Desktop           | Which engine capabilities have a desktop path is in the [reachability report](../docs/reachability-report.md).                                                                                                                                                                                                                      |
 | Repo health       | ADRs, DESIGN docs, `docs/research`, `.scratch`, `golden/hashes.json` absent. `.ai/REQUIREMENTS.md` emptied. Decision request 0001 open.                                                                                                                                                                                             |
 
 ## Gap against the manual
 
-The machine-checked **reachability ledger** (`scripts/data/reachability-ledger.json`,
-verified by `scripts/verify-reachability-ledger.mjs` in `pnpm preflight` and `pnpm check`)
-maps every engine capability to its desktop path. Each row is classified as
-`reachable`, `dormant-by-decision` (with ADR/issue citation), `internal`, or
-`unclassified`. The gate fails when an export or command is unclassified or a
-reachable row's screen no longer exists.
-
-Current classification (2026-10-21): **36 reachable, 19 dormant-by-decision, 25 internal**.
-The table below summarises the player-facing gaps the ledger documents in detail.
+The engine-versus-desktop status is no longer kept here. The machine-checked
+**reachability ledger** (`scripts/data/reachability-ledger.json`, ADR-0267) is the source
+of truth, `docs/reachability-report.md` is generated from it, and `pnpm preflight` and
+`pnpm check` fail when it drifts. The table below is about the manual, not the desktop.
 
 | Manual area                                                                           | Status                                                                                                                                                             |
 | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
