@@ -1,4 +1,5 @@
 import { Button } from "../ui/button.js";
+import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { CHART } from "./chart-theme.js";
 import type { RouteReading } from "./map-state.js";
 
@@ -16,6 +17,7 @@ export function RouteReadout({
   respectClosedPassages,
   onToggleClosedPassages,
 }: RouteReadoutProps) {
+  const format = usePresentationFormat();
   return (
     <div
       data-map-obstacle
@@ -31,16 +33,16 @@ export function RouteReadout({
       ) : (
         <div className="flex items-center gap-4">
           <span>
-            <strong className="tabular-nums">{route.hops}</strong> hops
+            <strong className="tabular-nums">{format.count(route.hops)}</strong> hops
           </span>
           <span className="tabular-nums" style={{ color: CHART.inkDim }}>
-            {route.nauticalMiles.toLocaleString()} nm
+            {format.count(route.nauticalMiles)} nm
           </span>
           <span className="tabular-nums" style={{ color: CHART.inkDim }}>
-            {route.perHop.toLocaleString()} nm/hop
+            {format.count(route.perHop)} nm/hop
           </span>
           <span className="tabular-nums" style={{ color: CHART.inkDim }}>
-            ≈{route.months} months
+            ≈{format.number(route.months, { maximumFractionDigits: 1 })} months
           </span>
           <Button
             type="button"

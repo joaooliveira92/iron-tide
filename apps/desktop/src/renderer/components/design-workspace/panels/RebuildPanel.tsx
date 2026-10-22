@@ -17,6 +17,7 @@ import type { DrawingBoardContent } from "../content.js";
 import { ConfirmAction } from "../ConfirmAction.js";
 import { NumberField, SelectField } from "../fields.js";
 import { limitRows } from "../rebuildView.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 
 let rebuildCounter = 0;
@@ -51,6 +52,7 @@ export function RebuildPanel({
 }) {
   const bridge = useBridge();
   const revision = useCampaignRevision();
+  const format = usePresentationFormat();
   const [ships, setShips] = useState<readonly RebuildableShipView[]>([]);
   const [chosen, setChosen] = useState("");
   const [loaded, setLoaded] = useState<{ shipId: string } | null>(null);
@@ -274,13 +276,13 @@ export function RebuildPanel({
               <dl className="mt-1 grid grid-cols-2 gap-x-3">
                 <dt className="text-muted-foreground">Blister mass</dt>
                 <dd className="text-right tabular-nums">
-                  {bulgeMassKg.toLocaleString("en-US")} kg
+                  {format.measurement(bulgeMassKg, "mass", { maximumFractionDigits: 0 })}
                 </dd>
                 {check.bulgeProtectionGainBp !== null && (
                   <>
                     <dt className="text-muted-foreground">Torpedo protection</dt>
                     <dd className="text-right tabular-nums">
-                      +{(check.bulgeProtectionGainBp / 100).toFixed(1)} %
+                      +{format.percent(check.bulgeProtectionGainBp, 1)}
                     </dd>
                   </>
                 )}
@@ -288,11 +290,14 @@ export function RebuildPanel({
                   <>
                     <dt className="text-muted-foreground">Speed</dt>
                     <dd className="text-right tabular-nums">
-                      {(check.measures.speedChangeMilliKnots / 1000).toFixed(1)} kn
+                      {format.number(check.measures.speedChangeMilliKnots / 1000, {
+                        maximumFractionDigits: 1,
+                      })}{" "}
+                      kn
                     </dd>
                     <dt className="text-muted-foreground">Displacement</dt>
                     <dd className="text-right tabular-nums">
-                      {(check.measures.displacementChangeBp / 100).toFixed(1)} %
+                      {format.percent(check.measures.displacementChangeBp, 1)}
                     </dd>
                   </>
                 )}
@@ -309,7 +314,7 @@ export function RebuildPanel({
                 </tr>
               </thead>
               <tbody>
-                {limitRows(check.measures, rules).map((row) => (
+                {limitRows(check.measures, rules, format).map((row) => (
                   <tr key={row.id} className="border-t">
                     <th scope="row" className="py-1 text-left font-normal">
                       {row.label}

@@ -4,6 +4,7 @@ import { Badge } from "../ui/badge.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../ui/hover-card.js";
 import { cn } from "../../lib/utils.js";
+import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 
 const words = (s: string) => s.replaceAll("_", " ").toLowerCase();
 
@@ -15,18 +16,22 @@ export function RequirementChip({
   readonly requirement: DesignRequirement;
   readonly className?: string;
 }) {
+  const format = usePresentationFormat();
+  const speed = (milli: number) =>
+    `${format.number(milli / 1000, { maximumFractionDigits: 1 })} kn`;
+  const range = (nm: number) => `${format.number(nm)} nm`;
   const rows: [string, string][] = [
     ["Class", r.category],
-    ["Top speed", `${(r.requiredSpeedMilliKnots / 1000).toFixed(1)} kn`],
-    ["Cruising speed", `${(r.cruiseSpeedMilliKnots / 1000).toFixed(1)} kn`],
-    ["Range", `${r.requiredRangeNm.toLocaleString("en-US")} nm`],
+    ["Top speed", speed(r.requiredSpeedMilliKnots)],
+    ["Cruising speed", speed(r.cruiseSpeedMilliKnots)],
+    ["Range", range(r.requiredRangeNm)],
     ["Designed against", words(r.designThreatId)],
     ["Expected modernisation", words(r.modernizationExpectation)],
-    ["Crew quality", `${(r.crewQualityBp / 100).toFixed(0)}%`],
+    ["Crew quality", format.percent(r.crewQualityBp, 0)],
     ["Accommodation", words(r.accommodationStandard)],
     ["Protection goal", words(r.protectionGoal ?? "STANDARD")],
   ];
-  const summary = `${r.category} · ${(r.requiredSpeedMilliKnots / 1000).toFixed(1)} kn · ${r.requiredRangeNm.toLocaleString("en-US")} nm`;
+  const summary = `${r.category} · ${speed(r.requiredSpeedMilliKnots)} · ${range(r.requiredRangeNm)}`;
   const trigger = (
     <button
       type="button"

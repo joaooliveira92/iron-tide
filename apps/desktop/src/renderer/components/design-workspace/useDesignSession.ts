@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { armourMaterialOptions, type DesignDraft, type DraftEdit } from "@bluewave/ship-design";
+import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { batteryCards } from "./batteryView.js";
 import { entityExists } from "./selection/facts.js";
 import { createSelectionStore } from "./selection/store.js";
@@ -41,6 +42,7 @@ export function editField(e: DraftEdit): string {
  */
 export function useDesignSession(fixedMonth: string | null) {
   const { state, actions: boardActions } = useDrawingBoard(fixedMonth);
+  const format = usePresentationFormat();
   const { draft, view, content, env } = state;
   const zones = content.hullForms.find((f) => f.id === draft.hull.hullFormId)?.zones ?? [];
   const batteries = useMemo(() => batteryCards(view, draft), [view, draft]);
@@ -54,10 +56,10 @@ export function useDesignSession(fixedMonth: string | null) {
     (e: DraftEdit) =>
       guard(
         editField(e),
-        describeEdit(e, (id) => id.replaceAll("_", " ")),
+        describeEdit(e, (id) => id.replaceAll("_", " "), format),
         () => boardEdit(e),
       ),
-    [guard, boardEdit],
+    [guard, boardEdit, format],
   );
   const actions = useMemo(() => ({ ...boardActions, edit }), [boardActions, edit]);
   // Presentation selection (pinned, form-linked, hover preview): one store per host, never design state.

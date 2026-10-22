@@ -9,6 +9,7 @@ import {
 } from "../../../components/ui/card.js";
 import { Progress } from "../../../components/ui/progress.js";
 import { GlassCard } from "@/components/ui/glass-card.jsx";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
 export interface StatsPanelProps {
   readonly economy: {
@@ -29,7 +30,7 @@ function KpiCard({
 }: {
   readonly icon: LucideIcon;
   readonly label: string;
-  readonly value: number;
+  readonly value: string;
 }) {
   return (
     <GlassCard>
@@ -39,9 +40,7 @@ function KpiCard({
         </div>
         <div className="min-w-0">
           <p className="truncate text-xs text-muted-foreground">{label}</p>
-          <p className="truncate font-mono text-xl font-semibold tabular-nums">
-            {value.toLocaleString()}
-          </p>
+          <p className="truncate font-mono text-xl font-semibold tabular-nums">{value}</p>
         </div>
       </CardContent>
     </GlassCard>
@@ -53,12 +52,15 @@ function UtilizationBar({
   label,
   reserved,
   total,
+  renderValue,
 }: {
   readonly icon: LucideIcon;
   readonly label: string;
   readonly reserved: number;
   readonly total: number;
+  readonly renderValue: (value: number) => string;
 }) {
+  const format = usePresentationFormat();
   const pct = total > 0 ? Math.min(100, Math.round((reserved / total) * 1000) / 10) : 0;
   const overCommitted = reserved > total;
   return (
@@ -69,24 +71,34 @@ function UtilizationBar({
           {label}
         </span>
         <span className={`font-mono ${overCommitted ? "text-destructive" : "text-foreground"}`}>
-          {reserved.toLocaleString()} / {total.toLocaleString()}
+          {renderValue(reserved)} / {renderValue(total)}
         </span>
       </div>
       <Progress value={pct} className={overCommitted ? "[&>*>*]:bg-destructive" : undefined} />
       <p className="text-right text-xs text-muted-foreground">
-        {pct}% committed · {Math.max(0, total - reserved).toLocaleString()} available
+        {format.number(pct, { maximumFractionDigits: 1 })}% committed ·{" "}
+        {renderValue(Math.max(0, total - reserved))} available
       </p>
     </div>
   );
 }
 
 export const StatsPanel = memo(function StatsPanel({ economy, workspace }: StatsPanelProps) {
+  const format = usePresentationFormat();
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <KpiCard icon={Banknote} label="Treasury" value={economy.treasury} />
-        <KpiCard icon={Coins} label="Monthly Appropriation" value={economy.monthlyAppropriation} />
-        <KpiCard icon={Hammer} label="Shipyard Capacity" value={economy.shipyardCapacity} />
+        <KpiCard icon={Banknote} label="Treasury" value={format.money(economy.treasury)} />
+        <KpiCard
+          icon={Coins}
+          label="Monthly Appropriation"
+          value={format.money(economy.monthlyAppropriation)}
+        />
+        <KpiCard
+          icon={Hammer}
+          label="Shipyard Capacity"
+          value={format.count(economy.shipyardCapacity)}
+        />
       </div>
       <GlassCard>
         <CardHeader className="pb-2">
@@ -101,12 +113,14 @@ export const StatsPanel = memo(function StatsPanel({ economy, workspace }: Stats
             label="Treasury Committed"
             reserved={workspace.treasuryReserved}
             total={economy.treasury}
+            renderValue={format.money}
           />
           <UtilizationBar
             icon={Layers}
             label="Capacity Committed"
             reserved={workspace.capacityReserved}
             total={economy.shipyardCapacity}
+            renderValue={format.count}
           />
         </CardContent>
       </GlassCard>

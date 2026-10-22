@@ -112,9 +112,7 @@ describe("DrawingBoard", () => {
     const panel = () => region("Revision preview");
     expect(within(panel()).getByText(/No changes yet/)).toBeTruthy();
     commit(/installed power/i, "3400");
-    expect(within(panel()).getByRole("status").textContent).toMatch(
-      /Redesign.*30\.0% hull progress/,
-    );
+    expect(within(panel()).getByRole("status").textContent).toMatch(/Redesign.*30% hull progress/);
   });
 
   it("says there is nothing to revise when no ship is under construction", () => {
@@ -301,6 +299,6 @@ describe("forecast and the treasury", () => {
     const panel = region("Cost and construction forecast");
     expect(within(panel).getByText(/Charged to the treasury when ordered/)).toBeTruthy();
     const row = within(panel).getByText(/Charged to the treasury when ordered/).parentElement!;
-    expect(row.textContent).toMatch(/\d[\d,]* units \(£10,000 each\)/);
+    expect(row.textContent).toMatch(/\d[\d,]* units \(10,000 NC each\)/);
   });
 });

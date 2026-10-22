@@ -1,11 +1,16 @@
 import type { MonthlyReportTreasury } from "../../../../shared/campaign-command-contract.js";
+import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 import { formatCount } from "../../../lib/presentation-format/index.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { signed } from "../month-report-format.js";
 
 const n = formatCount;
 
 /** `opening 10 + revenue 3 − construction 4 …= closing 0`; a line that is zero is left out, `other` only when it moved. */
-function reconciliationText(r: NonNullable<MonthlyReportTreasury["reconciliation"]>): string {
+function reconciliationText(
+  r: NonNullable<MonthlyReportTreasury["reconciliation"]>,
+  format: PresentationFormat,
+): string {
   const outflows: readonly (readonly [string, number])[] = [
     ["construction", r.construction],
     ["preservation", r.preservation],
@@ -16,7 +21,7 @@ function reconciliationText(r: NonNullable<MonthlyReportTreasury["reconciliation
   const spent = outflows
     .filter(([, value]) => value !== 0)
     .map(([label, value]) => ` − ${label} ${n(value)}`);
-  const other = r.other === 0 ? "" : ` ± other ${signed(r.other)}`;
+  const other = r.other === 0 ? "" : ` ± other ${signed(r.other, format)}`;
   return `Reconciliation: opening ${n(r.opening)} + revenue ${n(r.revenue)}${spent.join("")}${other} = closing ${n(r.closing)}`;
 }
 
@@ -30,12 +35,13 @@ export function MonthReportTreasurySection({
 }: {
   readonly treasury: MonthlyReportTreasury;
 }) {
+  const format = usePresentationFormat();
   return (
     <section aria-label="Treasury" className="space-y-1">
       <p className="font-medium">
         Treasury {formatCount(treasury.openingTreasury)} → {formatCount(treasury.closingTreasury)}{" "}
         <span className={treasury.netChange < 0 ? "text-destructive" : "text-success"}>
-          ({signed(treasury.netChange)})
+          ({signed(treasury.netChange, format)})
         </span>
       </p>
       <p className="text-muted-foreground">
@@ -48,13 +54,15 @@ export function MonthReportTreasurySection({
           : ` · Obligations ${n(treasury.obligationExpense)}`}
       </p>
       {treasury.reconciliation !== undefined && (
-        <p className="text-muted-foreground">{reconciliationText(treasury.reconciliation)}</p>
+        <p className="text-muted-foreground">
+          {reconciliationText(treasury.reconciliation, format)}
+        </p>
       )}
       {treasury.ledgerRows.length > 0 && (
         <ul className="text-muted-foreground" aria-label="Financial ledger">
           {treasury.ledgerRows.map((row) => (
             <li key={row.id}>
-              {row.description} ({signed(row.amount)})
+              {row.description} ({signed(row.amount, format)})
               {row.requested !== undefined && (row.shortfall ?? 0) > 0 && (
                 <span className="text-destructive">
                   {" "}

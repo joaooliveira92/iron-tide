@@ -1,4 +1,5 @@
 import type { YardLimit, YardOption } from "@bluewave/ship-design";
+import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 
 export type YardTone = "chosen" | "ok" | "blocked";
 
@@ -19,12 +20,15 @@ const LIMIT_TEXT: Record<YardLimit, string> = {
 };
 
 const words = (id: string) => id.replaceAll("_", " ");
-const metres = (mm: number) => `${(mm / 1000).toFixed(0)} m`;
-const tonnes = (kg: number) => `${Math.round(kg / 1000).toLocaleString("en-US")} t`;
 const months = (n: number) => `${n} month${n === 1 ? "" : "s"}`;
 
-/** Display rows for the yard list. Pure: all numbers come from the workshop view's `forecast.yards`. */
-export function yardRows(yards: readonly YardOption[]): YardRow[] {
+/**
+ * Display rows for the yard list. Pure: all numbers come from the workshop view's `forecast.yards` and render
+ * through the bound presentation format (ADR-0218).
+ */
+export function yardRows(yards: readonly YardOption[], format: PresentationFormat): YardRow[] {
+  const metres = (mm: number) => `${format.number(mm / 1000, { maximumFractionDigits: 0 })} m`;
+  const tonnes = (kg: number) => format.measurement(kg, "mass", { maximumFractionDigits: 0 });
   return yards.map((y) => {
     const capacity = `Holds up to ${tonnes(y.maxDisplacementKg)}, ${metres(y.maxLengthMm)} × ${metres(y.maxBeamMm)}`;
     if (y.exceeds.length > 0)

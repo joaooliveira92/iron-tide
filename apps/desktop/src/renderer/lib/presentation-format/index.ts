@@ -40,7 +40,10 @@ export {
 export {
   applyNationalCurrencyScale,
   BUDGET_POINTS_LABEL,
+  currencyUnitLabel,
   formatMoney,
+  formatMoneyFromMicro,
+  MICRO_PER_UNIT,
   NAVAL_CREDITS_LABEL,
   type FormatMoneyOptions,
 } from "./money.js";
@@ -63,7 +66,15 @@ export {
   type ActiveCampaignCurrencyContext,
   type NationalCurrencySource,
 } from "./currency-availability.js";
-export { formatCalibreInches, formatPoundsFromMicro, formatTonnes } from "./armament.js";
+export {
+  createPresentationFormat,
+  type MeasurementFormatOverride,
+  type MoneyFormatOverride,
+  type NumberFormatOverride,
+  type PresentationFormat,
+  type PresentationFormatInput,
+} from "./profile.js";
+export { formatCalibreInches, formatTonnes } from "./armament.js";
 export { formatPowerBoth, shaftHorsepower } from "./power.js";
 export { parseMeasurement, type ParseMeasurementOptions } from "./parse.js";
 export {

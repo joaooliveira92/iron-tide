@@ -1,24 +1,32 @@
 import { describe, expect, it } from "vite-plus/test";
 import { applyEdit, buildWorkshopView, type WorkshopView } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "../../components/design-workspace/index.js";
+import { createPresentationFormat } from "../../lib/presentation-format/index.js";
 import { engineeringStatus, type EngineeringReadout } from "./engineering-status.js";
 
 const content = loadDrawingBoardContent();
 const reference = content.references[0]!;
+const format = createPresentationFormat({
+  locale: "en-US",
+  numberScale: "full",
+  measurementPreset: "imperial",
+  measurementSelections: {},
+  currency: { mode: "navalCredits" },
+});
 
 const viewOf = (draft = reference.draft): WorkshopView =>
   buildWorkshopView(draft, content.environmentFor(reference.month, draft.nationId));
 
 const readout = (view: WorkshopView, id: string): EngineeringReadout =>
-  engineeringStatus(view).find((r) => r.id === id)!;
+  engineeringStatus(view, format).find((r) => r.id === id)!;
 
-const t = (kg: number) => `${Math.round(kg / 1000).toLocaleString("en-US")} t`;
-const money = (micro: number) => `£${Math.round(micro / 1_000_000).toLocaleString("en-US")}`;
+const t = (kg: number) => format.measurement(kg, "mass", { maximumFractionDigits: 0 });
+const money = (micro: number) => format.moneyFromMicro(micro);
 const tonnesOf = (value: string) => Number(value.replace(/[^0-9.-]/g, ""));
 
 describe("engineeringStatus", () => {
   it("shows the strip's outcomes from compiled state, in reading order", () => {
-    expect(engineeringStatus(viewOf()).map((r) => r.id)).toEqual([
+    expect(engineeringStatus(viewOf(), format).map((r) => r.id)).toEqual([
       "displacement",
       "cost",
       "speed",
@@ -69,10 +77,13 @@ describe("engineeringStatus", () => {
     const stability = readout(v, "stability");
     const s = v.compiled.stability!;
     const rows = Object.fromEntries(stability.breakdown!.rows.map((r) => [r.label, r.value]));
-    expect(rows["GM"]).toBe(`${(s.gmMm / 1000).toFixed(2)} m`);
-    expect(rows["KB"]).toBe(`${(s.kbMm / 1000).toFixed(2)} m`);
-    expect(rows["BM"]).toBe(`${(s.bmMm / 1000).toFixed(2)} m`);
-    expect(rows["KG"]).toBe(`${(s.kgMm / 1000).toFixed(2)} m`);
+    const metres = (mm: number) =>
+      `${format.number(mm / 1000, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m`;
+    expect(rows["GM"]).toBe(metres(s.gmMm));
+    expect(rows["KB"]).toBe(metres(s.kbMm));
+    expect(rows["BM"]).toBe(metres(s.bmMm));
+    expect(rows["KG"]).toBe(metres(s.kgMm));
+    for (const term of ["GM", "KB", "BM", "KG"]) expect(rows[term]).toMatch(/^-?\d+\.\d{2} m$/);
 
     // A design the compiler flags as over-stiff turns the readout amber and names the cause.
     const stiffRef = content.references.find((r) =>

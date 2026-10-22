@@ -1,10 +1,11 @@
 import type { WorkshopView } from "@bluewave/ship-design";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 
-const tonnes = (kg: number) => Math.round(kg / 1000).toLocaleString("en-US");
-
 export function LedgerPanel({ view }: { readonly view: WorkshopView }) {
+  const format = usePresentationFormat();
+  const tonnes = (kg: number) => format.measurement(kg, "mass", { maximumFractionDigits: 0 });
   return (
     <Panel title="Weight summary">
       {/* Hover detail only: the table below carries the same figures for assistive tech. */}
@@ -21,8 +22,8 @@ export function LedgerPanel({ view }: { readonly view: WorkshopView }) {
             <HoverCardContent side="top" className="w-48 space-y-1 p-3 text-sm">
               <div className="font-medium capitalize">{r.category}</div>
               <div className="flex justify-between tabular-nums text-muted-foreground">
-                <span>{tonnes(r.kg)} t</span>
-                <span>{(r.shareBp / 100).toFixed(1)}%</span>
+                <span>{tonnes(r.kg)}</span>
+                <span>{format.percent(r.shareBp, 1)}</span>
               </div>
             </HoverCardContent>
           </HoverCard>
@@ -48,7 +49,7 @@ export function LedgerPanel({ view }: { readonly view: WorkshopView }) {
                 {r.category}
               </th>
               <td className="text-right tabular-nums">{tonnes(r.kg)}</td>
-              <td className="text-right tabular-nums">{(r.shareBp / 100).toFixed(1)}%</td>
+              <td className="text-right tabular-nums">{format.percent(r.shareBp, 1)}</td>
             </tr>
           ))}
         </tbody>
@@ -58,7 +59,7 @@ export function LedgerPanel({ view }: { readonly view: WorkshopView }) {
               Total / buoyancy at design draught
             </th>
             <td className="text-right tabular-nums" colSpan={2}>
-              {tonnes(view.totalKg)} t / {tonnes(view.buoyantKg)} t
+              {tonnes(view.totalKg)} / {tonnes(view.buoyantKg)}
             </td>
           </tr>
         </tfoot>

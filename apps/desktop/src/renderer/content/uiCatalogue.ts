@@ -1,13 +1,15 @@
 import type { UiCatalogueDto } from "../../shared/content-contract.js";
-import { EN_US_MESSAGES, type MessageKey } from "../lib/strings.js";
+import { EN_US_MESSAGES, type MessageKey } from "../lib/en-us-messages.js";
 
 /**
- * The UI-string catalogue seam (ADR-0209/ADR-0218). Main decodes the keyed
+ * The single UI-string resolver (ADR-0209/ADR-0218). Main decodes the keyed
  * catalogue from the verified artifact and ships it over the narrow
  * `inspectUiCatalogue` IPC; the app injects that DTO here. Messages carry stable
  * keys + interpolation; this resolver is the only place text is produced, and it
  * throws nothing back at the player: a missing key renders a safe generic
- * fallback and (in development) warns, never a raw key.
+ * fallback and (in development) warns, never a raw key. The legacy `translate`
+ * alias in `lib/strings.ts` delegates to this resolver, so both share one
+ * catalogue lookup and one warning sink.
  *
  * UI language (this catalogue) and formatting locale are independent: nothing
  * here formats numbers or dates, so changing the formatting locale never changes
@@ -23,12 +25,14 @@ const GENERIC_FALLBACK_TEXT = "Something happened this month.";
 
 let injected: UiCatalogueDto | null = null;
 
-/** Injectable warning sink; warns in development only (ADR-0209), else no-op. */
-let missingKeyWarned: (key: string) => void = (key) => {
+/** The one missing-key warning sink; warns in development only (ADR-0209), else no-op. */
+function defaultMissingKeyWarner(key: string): void {
   if (import.meta.env?.DEV) {
     console.warn(`[messages] missing UI catalogue key: ${key}`);
   }
-};
+}
+
+let missingKeyWarned: (key: string) => void = defaultMissingKeyWarner;
 
 /** Inject the decoded catalogue (from IPC in the app, from the artifact in tests). */
 export function setUiCatalogue(dto: UiCatalogueDto): void {
@@ -45,9 +49,9 @@ export function catalogueLocale(): string {
   return injected?.locale ?? CATALOGUE_FALLBACK_LOCALE;
 }
 
-/** Override the missing-key warning sink (used by tests to assert the warning). */
-export function setMissingKeyWarner(warn: (key: string) => void): void {
-  missingKeyWarned = warn;
+/** Override the missing-key warning sink (used by tests to assert the warning); omit to restore the default. */
+export function setMissingKeyWarner(warn?: (key: string) => void): void {
+  missingKeyWarned = warn ?? defaultMissingKeyWarner;
 }
 
 /** Replace `{placeholder}` occurrences with interpolation values. */
@@ -82,4 +86,17 @@ export function resolveMessage(
 /** True when the key resolves to authored text (no fallback required). */
 export function hasMessageKey(key: string): boolean {
   return injected?.strings[key] !== undefined;
+}
+
+/**
+ * True when the compiled pack or the in-repo en-US fallback authors the key. A
+ * caller choosing its own fallback for an unknown key (e.g. "was rejected
+ * ({code})") tests this rather than comparing `resolveMessage` to a sentinel:
+ * a miss now renders the generic fallback, never an empty string.
+ */
+export function hasAuthoredMessage(key: string): boolean {
+  return (
+    injected?.strings[key] !== undefined ||
+    (EN_US_MESSAGES as Record<string, string>)[key] !== undefined
+  );
 }

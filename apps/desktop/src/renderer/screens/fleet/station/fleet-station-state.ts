@@ -4,7 +4,7 @@ import type {
   FleetShipView,
   PlayerProjectionPresence,
 } from "../../../../shared/fleet-contract.js";
-import { translate } from "../../../lib/strings.js";
+import { hasAuthoredMessage, translate } from "../../../lib/strings.js";
 
 /**
  * Presentation state for the Fleet screen's foreign-station section (S-5 09). Everything is derived from the engine's
@@ -117,9 +117,8 @@ export function explainStationRejection(
     if (pairs.every((pair) => pair.length === 2 && pair[0] !== "" && /^[A-Z_]+$/.test(pair[1]!))) {
       for (const [id, code] of pairs as [string, string][]) {
         const reasonKey = `fleet.station.reason.${code}`;
-        const known = translate(reasonKey) !== "";
         const subject = id === "<batch>" ? "" : (names.get(id) ?? id);
-        const reason = known
+        const reason = hasAuthoredMessage(reasonKey)
           ? translate(reasonKey)
           : format("fleet.station.reason.unknown", { code });
         lines.push(subject === "" ? reason : `${subject} ${reason}`);

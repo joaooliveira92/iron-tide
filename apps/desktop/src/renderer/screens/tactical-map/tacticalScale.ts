@@ -5,6 +5,8 @@
  * live value in a ref; only the LOD band is allowed into React state (M-7).
  */
 
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
+
 export const TACTICAL_MIN_M_PER_PX = 50;
 export const TACTICAL_MAX_M_PER_PX = 1600;
 
@@ -31,6 +33,6 @@ export function lodBandFor(metersPerPixel: number): TacticalLodBand {
   return "hulls";
 }
 
-export function formatScale(metersPerPixel: number): string {
-  return `1 px = ${Math.round(metersPerPixel).toLocaleString("en-US")} m`;
+export function formatScale(metersPerPixel: number, format: PresentationFormat): string {
+  return `1 px = ${format.number(Math.round(metersPerPixel), { maximumFractionDigits: 0 })} m`;
 }

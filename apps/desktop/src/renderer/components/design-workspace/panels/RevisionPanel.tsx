@@ -31,6 +31,7 @@ import {
 } from "../revisionPreview.js";
 import { Panel } from "./Panel.js";
 import { plural } from "../plural.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
 const TIER_BADGE: Record<RevisionDecision["tier"], "secondary" | "outline" | "destructive"> = {
   T0_FREE: "outline",
@@ -38,7 +39,6 @@ const TIER_BADGE: Record<RevisionDecision["tier"], "secondary" | "outline" | "de
   T2_REDESIGN: "destructive",
   T3_RECONSTRUCTION: "destructive",
 };
-const pct = (bp: number) => `${(bp / 100).toFixed(1)}%`;
 let reviseCounter = 0;
 
 /**
@@ -66,6 +66,8 @@ export function RevisionPanel({
   readonly onLoad: (draft: DesignDraft) => void;
   readonly dirty: boolean;
 }) {
+  const format = usePresentationFormat();
+  const pct = (bp: number) => format.percent(bp, 1);
   const balance = content.revision;
   const open = revisableProjects(projects);
   const [chosen, setChosen] = useState<string>("");
@@ -210,27 +212,34 @@ export function RevisionPanel({
             {d.delayMonths > 0 && (
               <>
                 <dt className="text-muted-foreground">Funding on hold for</dt>
-                <dd className="text-right">{plural(d.delayMonths, "month")}</dd>
+                <dd className="text-right">
+                  {plural(d.delayMonths, "month", undefined, undefined, format)}
+                </dd>
               </>
             )}
             {d.reworkWorkMicro > 0 && (
               <>
                 <dt className="text-muted-foreground">Rework</dt>
-                <dd className="text-right">{d.reworkWorkMicro.toLocaleString("en-US")} work</dd>
+                <dd className="text-right">{format.count(d.reworkWorkMicro)} work</dd>
               </>
             )}
             {d.studyCostMultiplierBp > 0 && (
               <>
                 <dt className="text-muted-foreground">Redesign study cost</dt>
-                <dd className="text-right">×{(d.studyCostMultiplierBp / 10_000).toFixed(2)}</dd>
+                <dd className="text-right">
+                  ×
+                  {format.number(d.studyCostMultiplierBp / 10_000, {
+                    maximumFractionDigits: 2,
+                    minimumFractionDigits: 2,
+                  })}
+                </dd>
               </>
             )}
             {d.tier === "T2_REDESIGN" && (
               <>
                 <dt className="text-muted-foreground">Hull work kept</dt>
                 <dd className="text-right">
-                  {Math.round(d.hullDoneWorkAfter).toLocaleString("en-US")} of{" "}
-                  {project.completedWork.toLocaleString("en-US")}
+                  {format.count(d.hullDoneWorkAfter)} of {format.count(project.completedWork)}
                 </dd>
               </>
             )}

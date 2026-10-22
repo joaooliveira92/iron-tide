@@ -3,6 +3,7 @@ import type { ConstructionCommand } from "@bluewave/campaign-engine";
 import { Button } from "../../../components/ui/button.js";
 import { ButtonGroup } from "../../../components/ui/button-group.js";
 import { TableCell, TableRow } from "../../../components/ui/table.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { CommandStatusBadge } from "./CommandStatusBadge.js";
 
 export interface CommandRowProps {
@@ -21,6 +22,7 @@ export function CommandRow({
   onReplace,
   onCancel,
 }: CommandRowProps) {
+  const format = usePresentationFormat();
   return (
     <TableRow>
       <TableCell className="font-medium">
@@ -45,10 +47,10 @@ export function CommandRow({
         </TableCell>
       )}
       <TableCell className="text-right font-mono text-xs">
-        {command.projectedCost.toLocaleString()}
+        {format.money(command.projectedCost)}
       </TableCell>
       <TableCell className="text-right font-mono text-xs">
-        {command.projectedCapacityUnits.toLocaleString()}
+        {format.count(command.projectedCapacityUnits)}
       </TableCell>
       <TableCell className="text-right">
         {command.status === "submitted" && (

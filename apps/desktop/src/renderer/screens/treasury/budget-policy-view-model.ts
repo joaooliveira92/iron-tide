@@ -1,5 +1,5 @@
 import type { BudgetPolicyState } from "./budget-policy-state.js";
-import { formatCount } from "../../lib/presentation-format/index.js";
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 
 export type BudgetKnobId = "appropriation" | "research";
 
@@ -36,11 +36,13 @@ export interface BudgetPolicyViewModelInput {
   /** The player's effective research budget, draft overlaid on the engine value. */
   readonly research: number;
   readonly loadError: string | null;
+  /** The one preference-bound, currency-aware formatter (ADR-0218). */
+  readonly format: PresentationFormat;
 }
 
 /** Basis points as a percentage string, e.g. 2050 -> "20.5%". */
-export function formatRate(bp: number): string {
-  return `${(bp / 100).toFixed(1)}%`;
+export function formatRate(bp: number, format: PresentationFormat): string {
+  return format.percent(bp, 1);
 }
 
 /** The cap at `rate`: the entry for that step, else the nearest lower one, else 0. Presentation only — the engine decides. */
@@ -58,7 +60,7 @@ export function researchCapAt(caps: BudgetPolicyState["researchCaps"], rate: num
 export function buildBudgetPolicyViewModel(
   input: BudgetPolicyViewModelInput,
 ): BudgetPolicyViewModel {
-  const { state, rate, research, loadError } = input;
+  const { state, rate, research, loadError, format } = input;
   const { bounds } = state;
   const busy = state.pendingRequest !== null || state.requiresRefresh;
   const dirty = rate !== state.appropriationRateBp || research !== state.researchBudget;
@@ -74,7 +76,7 @@ export function buildBudgetPolicyViewModel(
         label: "Naval appropriation",
         ariaLabel: "Naval appropriation rate",
         value: rate,
-        display: formatRate(rate),
+        display: formatRate(rate, format),
         min: bounds.appropriationRateMinBp,
         max: bounds.appropriationRateMaxBp,
         step: 50,
@@ -84,7 +86,7 @@ export function buildBudgetPolicyViewModel(
         label: "Research per month",
         ariaLabel: "Research budget per month",
         value: research,
-        display: formatCount(research),
+        display: format.count(research),
         min: bounds.researchBudgetMin,
         max:
           state.researchCaps.length > 0
@@ -97,7 +99,7 @@ export function buildBudgetPolicyViewModel(
     busy,
     canApply: dirty && !busy && !researchOverCap,
     notice: researchOverCap
-      ? `Research of ${formatCount(research)} is above the cap of ${formatCount(researchCap)} at this appropriation rate (12% of the monthly appropriation). Lower it or raise the rate.`
+      ? `Research of ${format.count(research)} is above the cap of ${format.count(researchCap)} at this appropriation rate (12% of the monthly appropriation). Lower it or raise the rate.`
       : state.notice,
     loadError,
   };

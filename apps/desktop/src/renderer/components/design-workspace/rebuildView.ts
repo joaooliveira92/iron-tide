@@ -1,5 +1,6 @@
 import type { RebuildBalance } from "@bluewave/ship-design";
 import type { RebuildMeasuresView } from "../../../shared/design-contract.js";
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 
 export type LimitId = "displacement" | "speed" | "length" | "beam";
 
@@ -15,15 +16,21 @@ export interface LimitRow {
 }
 
 const sign = (n: number) => (n > 0 ? "+" : n < 0 ? "-" : "");
-const percent = (bp: number) => `${sign(bp)}${(Math.abs(bp) / 100).toFixed(1)} %`;
-const plainPercent = (bp: number) => `${(bp / 100).toFixed(1)} %`;
-const knots = (milli: number) => `${sign(milli)}${(Math.abs(milli) / 1000).toFixed(1)} kn`;
 
 /**
  * Each retained-hull limit beside the change the design makes against it (DESIGN-23 section 21). Pure: every number is the
  * check's own measure and the ruleset's own limit; nothing is recomputed here except the comparison that colours the row.
+ * Every figure renders through the bound presentation format (ADR-0218).
  */
-export function limitRows(measures: RebuildMeasuresView, balance: RebuildBalance): LimitRow[] {
+export function limitRows(
+  measures: RebuildMeasuresView,
+  balance: RebuildBalance,
+  format: PresentationFormat,
+): LimitRow[] {
+  const percent = (bp: number) => `${sign(bp)}${format.percent(Math.abs(bp), 1)}`;
+  const plainPercent = (bp: number) => format.percent(bp, 1);
+  const knots = (milli: number) =>
+    `${sign(milli)}${format.number(Math.abs(milli) / 1000, { maximumFractionDigits: 1 })} kn`;
   return [
     {
       id: "displacement",
@@ -36,7 +43,7 @@ export function limitRows(measures: RebuildMeasuresView, balance: RebuildBalance
       id: "speed",
       label: "Speed",
       change: knots(measures.speedChangeMilliKnots),
-      limit: `up to +${(balance.maxSpeedIncreaseMilliKnots / 1000).toFixed(1)} kn`,
+      limit: `up to +${format.number(balance.maxSpeedIncreaseMilliKnots / 1000, { maximumFractionDigits: 1 })} kn`,
       over: measures.speedChangeMilliKnots > balance.maxSpeedIncreaseMilliKnots,
     },
     {

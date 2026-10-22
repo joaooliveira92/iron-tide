@@ -11,6 +11,16 @@ import type { CampaignReads } from "./campaign-reads.js";
 import { buildStatusStrip } from "./status-strip-state.js";
 import { buildTrend, type TrendReport } from "./status-strip-trend.js";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
+import { createPresentationFormat } from "../lib/presentation-format/index.js";
+
+/** The default presentation (en-US, Naval Credits) the strip's figures render under. */
+const FORMAT = createPresentationFormat({
+  locale: "en-US",
+  numberScale: "full",
+  measurementPreset: "imperial",
+  measurementSelections: {},
+  currency: { mode: "navalCredits" },
+});
 
 function projectionFor(balance: number): PlayerProjection {
   return {
@@ -47,7 +57,12 @@ function projectionFor(balance: number): PlayerProjection {
 }
 
 function model(balance: number) {
-  return buildStatusStrip({ projection: projectionFor(balance), areas: [], alertsCount: 2 });
+  return buildStatusStrip({
+    projection: projectionFor(balance),
+    areas: [],
+    alertsCount: 2,
+    format: FORMAT,
+  });
 }
 
 async function renderStrip(
@@ -111,7 +126,7 @@ describe("StatusStripView", () => {
     const balance = screen
       .getByText("Monthly balance (projected)")
       .closest("[data-row]") as HTMLElement;
-    expect(within(balance).getByText("-£450")).toBeTruthy();
+    expect(within(balance).getByText("-450 NC")).toBeTruthy();
     expect(within(balance).getByText("Deficit")).toBeTruthy();
     expect(balance.getAttribute("data-tone")).toBe("alert");
   });
@@ -121,9 +136,9 @@ describe("StatusStripView", () => {
     fireEvent.click(screen.getByRole("button", { name: /collapse/i }));
     const region = screen.getByRole("region", { name: "Status strip" });
     expect(within(region).queryByRole("group", { name: "Nation" })).toBeNull();
-    expect(region.textContent).toContain("£1,200");
+    expect(region.textContent).toContain("1,200 NC");
     expect(region.textContent).toContain("Healthy");
-    expect(region.textContent).toContain("£50,000");
+    expect(region.textContent).toContain("50,000 NC");
     expect(region.textContent).toContain("2 alerts");
     fireEvent.click(screen.getByRole("button", { name: /expand/i }));
     expect(within(region).getByRole("group", { name: "Nation" })).toBeTruthy();
@@ -139,10 +154,10 @@ describe("StatusStripView", () => {
     await renderStrip();
     const budget = screen.getByRole("group", { name: "Budget" });
     const bar = within(budget).getByRole("img", { name: /of the monthly appropriation/i });
-    expect(bar.getAttribute("aria-label")).toContain("£3,300");
+    expect(bar.getAttribute("aria-label")).toContain("3,300 NC");
     expect(bar.getAttribute("aria-label")).toContain("66%");
     const maintenance = within(budget).getByText("Maintenance").closest("[data-row]");
-    expect(maintenance?.textContent).toContain("£2,000");
+    expect(maintenance?.textContent).toContain("2,000 NC");
     expect(maintenance?.textContent).toContain("40%");
     expect(budget.querySelectorAll("[data-segment]").length).toBe(4);
   });
@@ -219,7 +234,7 @@ describe("StatusStripView", () => {
       label.focus();
     });
     expect(await screen.findByText("Over a year")).toBeTruthy();
-    expect(screen.getByText("£24,000")).toBeTruthy();
+    expect(screen.getByText("24,000 NC")).toBeTruthy();
     expect(budget.querySelector("[data-segment=maintenance]")?.getAttribute("data-active")).toBe(
       "true",
     );
@@ -400,7 +415,7 @@ describe("StatusStripView", () => {
       },
       treasury: { openingTreasury: open, closingTreasury: open + net, netChange: net },
     });
-    const trend = buildTrend([report(2, 1_035, -20), report(1, 1_000, 35)]);
+    const trend = buildTrend([report(2, 1_035, -20), report(1, 1_000, 35)], FORMAT);
 
     async function renderWith(value: ReturnType<typeof buildTrend>) {
       const stub = createPreferencesBridgeStub({ ...DEFAULT_APP_PREFERENCES });
@@ -421,7 +436,7 @@ describe("StatusStripView", () => {
       const outlook = screen.getByRole("group", { name: "Outlook" });
       const delta = outlook.querySelector("[data-trend-delta]");
       expect(delta?.getAttribute("data-trend-delta")).toBe("down");
-      expect(delta?.textContent).toContain("-£20");
+      expect(delta?.textContent).toContain("-20 NC");
       // The direction is spelled out for screen readers, not left to the arrow or its colour.
       expect(delta?.textContent).toMatch(/down on Feb 1880/);
     });
@@ -433,7 +448,7 @@ describe("StatusStripView", () => {
         within(outlook).getByText("Treasury").focus();
       });
       const spark = await screen.findByRole("img", { name: /^Treasury: 3 points from Jan 1880/ });
-      expect(spark.getAttribute("aria-label")).toContain("latest £1,015");
+      expect(spark.getAttribute("aria-label")).toContain("latest 1,015 NC");
       expect(screen.getByText("Treasury, last 2 months")).toBeTruthy();
     });
 
@@ -445,15 +460,15 @@ describe("StatusStripView", () => {
       });
       expect(await screen.findByText("Actual net, last 2 months")).toBeTruthy();
       const spark = screen.getByRole("img", { name: /^Actual monthly net: 2 points/ });
-      expect(spark.getAttribute("aria-label")).toContain("latest -£20");
+      expect(spark.getAttribute("aria-label")).toContain("latest -20 NC");
     });
 
     it("puts the change on the collapsed treasury chip and in its accessible name", async () => {
       await renderWith(trend);
       fireEvent.click(screen.getByRole("button", { name: /collapse/i }));
       const chip = screen.getByRole("button", { name: /^Treasury/ });
-      expect(chip.getAttribute("aria-label")).toBe("Treasury £50,000, -£20 on Feb 1880");
-      expect(chip.textContent).toContain("-£20");
+      expect(chip.getAttribute("aria-label")).toBe("Treasury 50,000 NC, -20 NC on Feb 1880");
+      expect(chip.textContent).toContain("-20 NC");
     });
 
     it("says nothing about a trend before any month has been advanced", async () => {
@@ -517,7 +532,7 @@ describe("StatusStrip", () => {
     await renderReads(reads());
     const region = screen.getByRole("region", { name: "Status strip" });
     expect(within(region).getAllByText("Britain").length).toBeGreaterThan(0);
-    expect(region.textContent).toContain("£50,000");
+    expect(region.textContent).toContain("50,000 NC");
     fireEvent.click(screen.getByRole("button", { name: /collapse/i }));
     expect(region.textContent).toContain("0 alerts");
   });

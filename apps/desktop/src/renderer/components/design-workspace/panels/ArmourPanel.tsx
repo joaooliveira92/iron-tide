@@ -13,6 +13,7 @@ import { Button } from "../../ui/button.js";
 import { Checkbox } from "../../ui/checkbox.js";
 import { FieldError } from "../../ui/field.js";
 import { NumberField, SelectField } from "../fields.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 import type { Edit } from "./types.js";
 
@@ -21,7 +22,6 @@ const INCLINED_COS_BP = 8_660;
 const FLAT_COS_BP = 10_000;
 
 const words = (s: string) => s.replaceAll("_", " ").toLowerCase();
-const tonnes = (kg: number) => (kg / 1000).toLocaleString("en-US", { maximumFractionDigits: 0 });
 
 /** Everything about protection: coverage, every region's size and plate, the armour scheme. All numbers are draft or compiled values. */
 export function ArmourPanel({
@@ -38,6 +38,8 @@ export function ArmourPanel({
   /** The inline message for an edit, filed as `set_armour_region:<region>` (see `editField`), while it breaks the design. */
   readonly errorFor?: (field: string) => string | undefined;
 }) {
+  const format = usePresentationFormat();
+  const tonnes = (kg: number) => format.measurement(kg, "mass", { maximumFractionDigits: 0 });
   const [toAdd, setToAdd] = useState("");
   const fitted = new Set<string>(draft.armour.regions.map((r) => r.region));
   const free = ARMOUR_REGIONS.filter((r) => !fitted.has(r));
@@ -76,11 +78,11 @@ export function ArmourPanel({
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="text-muted-foreground">Coverage</span>
         <Badge variant="outline" className="tabular-nums">
-          {armour ? `${(armour.coverageBp / 100).toFixed(0)}%` : "n/a"}
+          {armour ? format.percent(armour.coverageBp, 0) : "n/a"}
         </Badge>
         <span className="text-muted-foreground">Armour weight</span>
         <Badge variant="outline" className="tabular-nums">
-          {armour ? `${tonnes(armour.totalWeightKg)} t` : "n/a"}
+          {armour ? tonnes(armour.totalWeightKg) : "n/a"}
         </Badge>
         <Button
           variant="outline"
@@ -104,9 +106,7 @@ export function ArmourPanel({
               <div className="flex items-center justify-between gap-2 text-sm">
                 <span className="font-medium">{words(r.region)}</span>
                 <span className="flex items-center gap-2">
-                  <span className="tabular-nums text-muted-foreground">
-                    {tonnes(weightOf(r))} t
-                  </span>
+                  <span className="tabular-nums text-muted-foreground">{tonnes(weightOf(r))}</span>
                   <Button
                     variant="ghost"
                     size="sm"

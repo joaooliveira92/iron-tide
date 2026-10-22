@@ -5,6 +5,7 @@ import { rejectionLead, SubmitPanel } from "./SubmitPanel.js";
 
 vi.mock("../../../shell/CampaignShellContext.js", () => ({
   useCampaignRevision: () => 3,
+  useActiveCampaignCurrencyContext: () => ({}),
 }));
 
 const draft = loadDrawingBoardContent().references[0]!.draft;

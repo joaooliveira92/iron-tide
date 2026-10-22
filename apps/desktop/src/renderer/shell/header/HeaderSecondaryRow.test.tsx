@@ -19,7 +19,7 @@ describe("SecondaryRowView", () => {
       kind: "campaign",
       status: "Armed peace",
       metrics: [
-        { icon: "budget", label: "Budget", value: "£1k", placeholder: false },
+        { icon: "budget", label: "Budget", value: "1k NC", placeholder: false },
         { icon: "prestige", label: "Prestige", value: "—", placeholder: true },
       ],
     };

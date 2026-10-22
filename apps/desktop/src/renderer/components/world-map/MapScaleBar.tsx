@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { formatNauticalMiles, niceScaleBar, pixelsPerNauticalMile } from "./map-scale.js";
 import type { MapCamera } from "./useMapCamera.js";
 
@@ -18,6 +19,7 @@ export function MapScaleBar({
 }) {
   const barRef = useRef<HTMLDivElement | null>(null);
   const labelRef = useRef<HTMLSpanElement | null>(null);
+  const format = usePresentationFormat();
 
   useEffect(() => {
     const update = () => {
@@ -30,7 +32,7 @@ export function MapScaleBar({
         MAX_BAR_PX,
       );
       bar.style.width = `${result.px}px`;
-      label.textContent = result.nm > 0 ? formatNauticalMiles(result.nm) : "";
+      label.textContent = result.nm > 0 ? formatNauticalMiles(result.nm, format) : "";
     };
     update();
     const unsubscribe = camera.subscribe(update);
@@ -41,7 +43,7 @@ export function MapScaleBar({
       unsubscribe();
       observer?.disconnect();
     };
-  }, [camera, worldWidth]);
+  }, [camera, worldWidth, format]);
 
   return (
     <div className="pointer-events-none flex flex-col items-start gap-0.5" aria-hidden="true">

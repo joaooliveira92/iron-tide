@@ -1,7 +1,6 @@
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { buildBudgetBar } from "../budget-bar.js";
 import type { TreasuryBreakdown } from "../treasury-summary.js";
-
-const percent = (share: number) => `${Math.round(share * 100)}%`;
 
 /**
  * Income against stacked expenditure on one scale. Never colour alone: the legend
@@ -9,6 +8,7 @@ const percent = (share: number) => `${Math.round(share * 100)}%`;
  * All geometry, labels, and colours come from `buildBudgetBar`; this only renders.
  */
 export function BudgetBar({ breakdown }: { readonly breakdown: TreasuryBreakdown }) {
+  const format = usePresentationFormat();
   const bar = buildBudgetBar(breakdown);
 
   return (
@@ -43,19 +43,20 @@ export function BudgetBar({ breakdown }: { readonly breakdown: TreasuryBreakdown
             />
             <span>{segment.label}</span>
             <span className="tabular-nums text-muted-foreground">
-              {segment.value.toLocaleString()} · {percent(segment.shareOfSpend)}
+              {format.money(segment.value)} ·{" "}
+              {format.number(segment.shareOfSpend * 100, { maximumFractionDigits: 0 })}%
             </span>
           </li>
         ))}
         <li className="flex items-center gap-1.5">
           <span aria-hidden="true" className="inline-block h-3 w-0.5 bg-foreground" />
           <span>Income</span>
-          <span className="tabular-nums text-muted-foreground">{bar.income.toLocaleString()}</span>
+          <span className="tabular-nums text-muted-foreground">{format.money(bar.income)}</span>
         </li>
       </ul>
       {bar.overBudget && (
         <p className="text-xs text-destructive">
-          Spending exceeds income by {bar.overBudgetBy.toLocaleString()} this month.
+          Spending exceeds income by {format.money(bar.overBudgetBy)} this month.
         </p>
       )}
     </div>

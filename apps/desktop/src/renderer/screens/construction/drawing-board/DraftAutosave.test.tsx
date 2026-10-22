@@ -8,6 +8,7 @@ import { loadDrawingBoardContent } from "../../../components/design-workspace/co
 vi.mock("../../../shell/CampaignShellContext.js", () => ({
   useCampaignRevision: () => 0,
   useCampaignMonthId: () => "1880-01",
+  useActiveCampaignCurrencyContext: () => ({}),
 }));
 
 /** The board's restored-draft toast only renders when a Toaster is mounted (as the app root does). */

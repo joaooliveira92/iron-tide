@@ -1,6 +1,8 @@
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
 import { economyStatusLabel, researchNote } from "../lib/economy-wording.js";
+import type { PresentationFormat } from "../lib/presentation-format/index.js";
+import { KG_PER_TONNE } from "../lib/presentation-format/index.js";
 
 /**
  * Pure view model for the bottom status strip (campaign-command-screen CC-3, ADR-0059 s1).
@@ -10,16 +12,11 @@ import { economyStatusLabel, researchNote } from "../lib/economy-wording.js";
  * Foreign-station rule (`FOREIGN_STATION_RULE_V1`): a ship counts in an area held by another nation
  * (not own areas or open sea). Tonnage is the sum of design displacement in metric tons, shown only
  * when every ship in the sum has one; the count is always shown.
+ *
+ * Every figure is formatted through the injected `PresentationFormat` (ADR-0218): the strip holds
+ * no locale, currency symbol, or unit literal of its own.
  */
 export const FOREIGN_STATION_RULE_V1 = "controlled-by-another-nation";
-
-const groupDigits = new Intl.NumberFormat("en-GB", { useGrouping: true });
-
-/** Exact, grouped money ("-£1,200"): the strip is for reading figures, so it never abbreviates. */
-export function formatMoney(value: number): string {
-  if (!Number.isFinite(value)) return "—";
-  return `${value < 0 ? "-" : ""}£${groupDigits.format(Math.abs(value))}`;
-}
 
 export const NOT_YET_MODELLED = "Not yet modelled";
 
@@ -157,6 +154,8 @@ export interface StatusStripInput {
   readonly areas: StatusStripAreas | null;
   /** Engine alert count, or null when the priorities projection is unavailable. */
   readonly alertsCount: number | null;
+  /** The one preference-bound, currency-aware formatter (ADR-0218). */
+  readonly format: PresentationFormat;
 }
 
 function real(id: string, label: string, value: string, note = "", tone: StripTone = "normal") {
@@ -167,9 +166,9 @@ function deferred(id: string, label: string, reason: string): StripRow {
   return { id, label, value: NOT_YET_MODELLED, deferred: true, note: reason, tone: "normal" };
 }
 
-/** "11,880 t", the one tonnage format on the strip. */
-export function formatTons(tons: number): string {
-  return `${groupDigits.format(tons)} t`;
+/** "11,880 t", the one tonnage format on the strip (mass canonical is kg). */
+export function formatTons(tons: number, format: PresentationFormat): string {
+  return format.measurement(tons * KG_PER_TONNE, "mass", { maximumFractionDigits: 0 });
 }
 
 /** Sum of tonnages, or null when any is unknown: a partial total would read as the whole. */
@@ -182,8 +181,12 @@ function sumTons(ships: readonly StationShip[]): number | null {
   return total;
 }
 
-function foreignStationsValue(projection: PlayerProjection, areas: StatusStripAreas): string {
-  const { foreign, foreignTons } = buildStations(projection, areas);
+function foreignStationsValue(
+  projection: PlayerProjection,
+  areas: StatusStripAreas,
+  format: PresentationFormat,
+): string {
+  const { foreign, foreignTons } = buildStations(projection, areas, format);
   const count = `${String(foreign)} ${foreign === 1 ? "ship" : "ships"}`;
   return foreignTons === null || foreign === 0 ? count : `${count} · ${foreignTons}`;
 }
@@ -209,7 +212,10 @@ function finiteOrNull(value: number): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
-function buildAllocation(economy: PlayerProjection["economy"]): BudgetAllocation {
+function buildAllocation(
+  economy: PlayerProjection["economy"],
+  format: PresentationFormat,
+): BudgetAllocation {
   const appropriation = finiteOrNull(economy.monthlyAppropriation);
   const lines = [
     {
@@ -246,18 +252,18 @@ function buildAllocation(economy: PlayerProjection["economy"]): BudgetAllocation
   const outlay = lines.reduce((n, l) => n + known(l.amount), 0);
   const scale = Math.max(known(appropriation), outlay);
   return {
-    appropriation: appropriation === null ? "—" : formatMoney(appropriation),
+    appropriation: appropriation === null ? "—" : format.money(appropriation),
     segments: lines.map((l) => ({
       id: l.id,
       label: l.label,
-      value: l.amount === null ? "—" : formatMoney(l.amount),
+      value: l.amount === null ? "—" : format.money(l.amount),
       kind: l.kind,
       percent: percentOf(l.amount, appropriation),
       fraction: scale > 0 ? known(l.amount) / scale : 0,
       shareOfCommitted: l.kind === "planned" ? "—" : percentOf(l.amount, committed),
-      yearly: l.amount === null ? "—" : formatMoney(l.amount * 12),
+      yearly: l.amount === null ? "—" : format.money(l.amount * 12),
     })),
-    committed: { value: formatMoney(committed), percent: percentOf(committed, appropriation) },
+    committed: { value: format.money(committed), percent: percentOf(committed, appropriation) },
     // No appropriation at all with committed lines is over-committed; an unknown one is not judged.
     overCommitted: appropriation !== null && committed > Math.max(0, appropriation),
   };
@@ -268,6 +274,7 @@ function buildOutlook(
   balanceStatus: string,
   balanceTone: StripTone,
   researchRemark: string,
+  format: PresentationFormat,
 ): OutlookDetail {
   const economy = projection.economy;
   const appropriation = economy.monthlyAppropriation;
@@ -284,34 +291,34 @@ function buildOutlook(
     return {
       id,
       label,
-      value: `-${formatMoney(amount)}`,
-      remainder: formatMoney(remainder),
+      value: `-${format.money(amount)}`,
+      remainder: format.money(remainder),
       remainderFraction: Math.min(1, Math.max(0, remainder / scale)),
     } satisfies WaterfallStep;
   });
   const afterConstruction = projection.projectedSurplusDeficit - economy.plannedConstruction;
   return {
-    appropriation: formatMoney(appropriation),
+    appropriation: format.money(appropriation),
     steps,
     balance: {
-      value: formatMoney(projection.projectedSurplusDeficit),
+      value: format.money(projection.projectedSurplusDeficit),
       status: balanceStatus,
       tone: balanceTone,
     },
     afterConstruction: {
-      value: formatMoney(afterConstruction),
+      value: format.money(afterConstruction),
       tone: afterConstruction < 0 ? "alert" : "normal",
     },
-    treasury: formatMoney(economy.treasury),
-    monthEndTreasury: formatMoney(economy.monthEndTreasury),
+    treasury: format.money(economy.treasury),
+    monthEndTreasury: format.money(economy.monthEndTreasury),
     runway:
       economy.runwayMonths === undefined
         ? null
         : `${String(economy.runwayMonths)} ${economy.runwayMonths === 1 ? "month" : "months"}`,
-    shortfall: economy.shortfall > 0 ? formatMoney(economy.shortfall) : null,
+    shortfall: economy.shortfall > 0 ? format.money(economy.shortfall) : null,
     research: {
-      requested: formatMoney(economy.researchRequested),
-      cap: formatMoney(economy.researchCap),
+      requested: format.money(economy.researchRequested),
+      cap: format.money(economy.researchCap),
       note: researchRemark,
     },
   };
@@ -320,6 +327,7 @@ function buildOutlook(
 function buildStations(
   projection: PlayerProjection,
   areas: StatusStripAreas | null,
+  format: PresentationFormat,
 ): StationDetail {
   const divisions = projection.fleet.flatMap((f) => f.divisions);
   const toShip = (ship: { name: string; displacementTons?: number }): StationShip => ({
@@ -333,7 +341,7 @@ function buildStations(
       total: all.length,
       foreign: 0,
       foreignTons: null,
-      totalTons: totalTons === null ? null : formatTons(totalTons),
+      totalTons: totalTons === null ? null : formatTons(totalTons, format),
       foreignTonsFraction: null,
       foreignGroups: [],
       unknown: true,
@@ -359,7 +367,7 @@ function buildStations(
         areaName: area.name ?? area.id,
         controller: area.controller ?? "",
         ships: ships.toSorted((a, b) => a.name.localeCompare(b.name, "en")),
-        tons: tons === null ? null : formatTons(tons),
+        tons: tons === null ? null : formatTons(tons, format),
       };
     })
     .toSorted((a, b) => b.ships.length - a.ships.length || a.areaId.localeCompare(b.areaId, "en"));
@@ -368,8 +376,8 @@ function buildStations(
   return {
     total: all.length,
     foreign: foreignShips.length,
-    foreignTons: foreignTons === null ? null : formatTons(foreignTons),
-    totalTons: totalTons === null ? null : formatTons(totalTons),
+    foreignTons: foreignTons === null ? null : formatTons(foreignTons, format),
+    totalTons: totalTons === null ? null : formatTons(totalTons, format),
     foreignTonsFraction:
       foreignTons === null || totalTons === null || totalTons === 0
         ? null
@@ -394,7 +402,7 @@ function buildPorts(projection: PlayerProjection): readonly PortDetail[] {
 }
 
 export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
-  const { projection, areas, alertsCount } = input;
+  const { projection, areas, alertsCount, format } = input;
   const economy = projection.economy;
   // Committed monthly flows; construction is an "up to" bound and is not in the total.
   const totalExpenses = economy.obligations + economy.maintenanceCost + economy.researchSpend;
@@ -417,7 +425,7 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
       : real(
           "foreign-stations",
           "Ships on foreign stations",
-          foreignStationsValue(projection, areas),
+          foreignStationsValue(projection, areas, format),
           "Ships in areas held by another nation. Tonnage is shown when every one of those ships has a known design displacement.",
         );
 
@@ -447,15 +455,15 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
   // Real rows first would reorder the RTW3 grouping; keep the order stable and let the UI group.
 
   const budget: StripRow[] = [
-    real("treasury", "Treasury", formatMoney(economy.treasury)),
-    real("monthly-budget", "Monthly appropriation", formatMoney(economy.monthlyAppropriation)),
-    real("obligations", "Obligations", formatMoney(economy.obligations)),
-    real("maintenance", "Maintenance", formatMoney(economy.maintenanceCost)),
-    real("research", "Research", formatMoney(economy.researchSpend), researchRemark),
+    real("treasury", "Treasury", format.money(economy.treasury)),
+    real("monthly-budget", "Monthly appropriation", format.money(economy.monthlyAppropriation)),
+    real("obligations", "Obligations", format.money(economy.obligations)),
+    real("maintenance", "Maintenance", format.money(economy.maintenanceCost)),
+    real("research", "Research", format.money(economy.researchSpend), researchRemark),
     real(
       "construction",
       "Construction (up to)",
-      formatMoney(economy.plannedConstruction),
+      format.money(economy.plannedConstruction),
       "An upper bound limited by yard capacity, before the treasury limits it.",
     ),
     deferred(
@@ -468,7 +476,7 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
     real(
       "total-expenses",
       "Committed expenses",
-      formatMoney(totalExpenses),
+      format.money(totalExpenses),
       "Obligations + maintenance + research; deferred lines are omitted, not zeroed.",
     ),
     ...(economy.shortfall > 0
@@ -476,7 +484,7 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
           real(
             "shortfall",
             "Shortfall",
-            formatMoney(economy.shortfall),
+            format.money(economy.shortfall),
             "Costs the treasury cannot pay this month.",
             "alert",
           ),
@@ -495,7 +503,7 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
     {
       id: "balance",
       label: "Monthly balance (projected)",
-      value: formatMoney(balance),
+      value: format.money(balance),
       deferred: false,
       note: "",
       tone: balanceTone,
@@ -505,16 +513,16 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
 
   return {
     nationName: projection.nationName,
-    outlook: buildOutlook(projection, balanceStatus, balanceTone, researchRemark),
-    stations: buildStations(projection, areas),
+    outlook: buildOutlook(projection, balanceStatus, balanceTone, researchRemark, format),
+    stations: buildStations(projection, areas, format),
     ports: buildPorts(projection),
-    allocation: buildAllocation(economy),
+    allocation: buildAllocation(economy, format),
     nation,
     budget,
     deferredRows: [...nation, ...budget].filter((r) => r.deferred),
     summary: {
-      balance: { value: formatMoney(balance), status: balanceStatus, tone: balanceTone },
-      treasury: formatMoney(economy.treasury),
+      balance: { value: format.money(balance), status: balanceStatus, tone: balanceTone },
+      treasury: format.money(economy.treasury),
       alerts: alertsLabel(alertsCount),
     },
   };

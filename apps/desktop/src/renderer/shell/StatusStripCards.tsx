@@ -3,6 +3,7 @@ import { ArrowDown, ArrowRight, ArrowUp, Anchor, Flag, Hourglass, Minus, Ship } 
 
 import { cn } from "../lib/utils.js";
 import { formatTons } from "./status-strip-state.js";
+import { usePresentationFormat } from "./usePresentationFormat.js";
 import type { TrendDetail, TrendDirection, TrendSeries } from "./status-strip-trend.js";
 import type {
   AllocationSegment,
@@ -413,6 +414,7 @@ export function TreasuryCard({
 
 /** Where ships sit relative to areas held by other nations, with each ship named. */
 export function StationsCard({ stations }: { readonly stations: StationDetail }) {
+  const format = usePresentationFormat();
   const byTonnage = stations.foreignTonsFraction !== null;
   const share = byTonnage
     ? stations.foreignTonsFraction
@@ -475,7 +477,7 @@ export function StationsCard({ stations }: { readonly stations: StationDetail })
                         <li key={ship.name} className="flex justify-between gap-2">
                           <span className="min-w-0 truncate">{ship.name}</span>
                           <span className="shrink-0 tabular-nums text-muted-foreground">
-                            {ship.tons === null ? "tonnage unknown" : formatTons(ship.tons)}
+                            {ship.tons === null ? "tonnage unknown" : formatTons(ship.tons, format)}
                           </span>
                         </li>
                       ))}

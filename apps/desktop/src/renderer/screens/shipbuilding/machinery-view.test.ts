@@ -1,17 +1,24 @@
 import { describe, expect, it } from "vite-plus/test";
 import { buildWorkshopView, type WorkshopEnvironment } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "../../components/design-workspace/index.js";
-import { formatPowerBoth } from "../../lib/presentation-format/index.js";
+import { createPresentationFormat, formatPowerBoth } from "../../lib/presentation-format/index.js";
 import { machineryModel, plantDeltas } from "./machinery-view.js";
 
 const content = loadDrawingBoardContent();
 const ref = content.references[0]!;
 const env = content.environmentFor(ref.month, ref.draft.nationId);
 const view = buildWorkshopView(ref.draft, env);
+const format = createPresentationFormat({
+  locale: "en-US",
+  numberScale: "full",
+  measurementPreset: "imperial",
+  measurementSelections: {},
+  currency: { mode: "navalCredits" },
+});
 
 describe("machinery view model", () => {
   it("mirrors the draft's performance targets and configuration as inputs", () => {
-    const model = machineryModel(ref.draft, view, env);
+    const model = machineryModel(ref.draft, view, env, format);
     expect(model.inputs.targetSpeedMilliKnots).toBe(ref.draft.requirement.requiredSpeedMilliKnots);
     expect(model.inputs.cruiseSpeedMilliKnots).toBe(ref.draft.requirement.cruiseSpeedMilliKnots);
     expect(model.inputs.rangeNm).toBe(ref.draft.requirement.requiredRangeNm);
@@ -22,7 +29,7 @@ describe("machinery view model", () => {
   });
 
   it("shows power in both kW and horsepower (#168 step 6)", () => {
-    const model = machineryModel(ref.draft, view, env);
+    const model = machineryModel(ref.draft, view, env, format);
     const kwPerShpBp = env.ctx.balance.machinery.kwPerShpBp;
     const required = view.compiled.machinery!.requiredKwAtMax;
     expect(model.outputs.find((o) => o.id === "required-power")!.value).toBe(
@@ -35,7 +42,7 @@ describe("machinery view model", () => {
   });
 
   it("reports the calculated results from the compiled design", () => {
-    const model = machineryModel(ref.draft, view, env);
+    const model = machineryModel(ref.draft, view, env, format);
     const ids = model.outputs.map((o) => o.id);
     for (const id of ["required-power", "max-speed", "machinery-weight", "cost", "reliability"])
       expect(ids).toContain(id);
@@ -44,12 +51,12 @@ describe("machinery view model", () => {
       machinery.requiredKwAtMax.toLocaleString("en-US"),
     );
     expect(model.outputs.find((o) => o.id === "max-speed")!.value).toBe(
-      `${(machinery.maxSpeedMilliKnots / 1000).toFixed(1)} kn`,
+      `${format.number(machinery.maxSpeedMilliKnots / 1000, { maximumFractionDigits: 1 })} kn`,
     );
   });
 
   it("keeps no value both an input and an output, and states what is not modelled", () => {
-    const model = machineryModel(ref.draft, view, env);
+    const model = machineryModel(ref.draft, view, env, format);
     // Input labels and output labels are disjoint: no pair silently overrides the other.
     const inputLabels = new Set([
       "Target speed",
@@ -67,6 +74,7 @@ describe("machinery view model", () => {
       ref.draft,
       view,
       content.environmentFor("1880-01", ref.draft.nationId),
+      format,
     );
     for (const p of model.inputs.plantOptions) {
       if (p.disabled) expect(p.reason).not.toBeNull();
@@ -87,7 +95,7 @@ describe("machinery view model", () => {
         },
       },
     };
-    const model = machineryModel(ref.draft, view, altered);
+    const model = machineryModel(ref.draft, view, altered, format);
     expect(model.inputs.installedPowerText).toBe(
       formatPowerBoth(ref.draft.machinery.installedKw, altered.ctx.balance.machinery.kwPerShpBp),
     );
@@ -98,7 +106,7 @@ describe("plant deltas", () => {
   const current = content.plants.find((p) => p.id === ref.draft.machinery.plantId)!;
 
   it("previews what each alternative plant would change, and nothing for the chosen one", () => {
-    const map = plantDeltas(ref.draft, env, view);
+    const map = plantDeltas(ref.draft, env, view, format);
     expect(map.size).toBe(content.plants.length);
     expect(map.get(current.id)).toEqual([]);
 

@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vite-plus/test";
+import { createPresentationFormat } from "../../lib/presentation-format/index.js";
 import { formatNauticalMiles, niceScaleBar, pixelsPerNauticalMile } from "./map-scale.js";
+
+/** The default presentation (en-US, Naval Credits) the scale bar renders under. */
+const FORMAT = createPresentationFormat({
+  locale: "en-US",
+  numberScale: "full",
+  measurementPreset: "imperial",
+  measurementSelections: {},
+  currency: { mode: "navalCredits" },
+});
 
 describe("pixelsPerNauticalMile", () => {
   it("is 360 deg x 60 nm across the world width at scale 1", () => {
@@ -35,9 +45,9 @@ describe("niceScaleBar", () => {
 
 describe("formatNauticalMiles", () => {
   it("formats whole, thousands and fractional values", () => {
-    expect(formatNauticalMiles(5)).toBe("5 nm");
-    expect(formatNauticalMiles(2000)).toBe("2,000 nm");
-    expect(formatNauticalMiles(0.5)).toBe("0.5 nm");
-    expect(formatNauticalMiles(0.1)).toBe("0.1 nm");
+    expect(formatNauticalMiles(5, FORMAT)).toBe("5 nm");
+    expect(formatNauticalMiles(2000, FORMAT)).toBe("2,000 nm");
+    expect(formatNauticalMiles(0.5, FORMAT)).toBe("0.5 nm");
+    expect(formatNauticalMiles(0.1, FORMAT)).toBe("0.1 nm");
   });
 });

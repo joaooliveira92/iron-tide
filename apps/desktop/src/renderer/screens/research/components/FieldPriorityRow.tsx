@@ -1,4 +1,5 @@
 import { Toggle } from "../../../components/ui/toggle.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { WEIGHT_OPTIONS, type FieldWeightOption } from "../research-field-priorities.js";
 import type { ResearchFieldRow } from "../research-view-model.js";
 
@@ -24,6 +25,7 @@ export function FieldPriorityRow({
   busy,
   onSetWeight,
 }: FieldPriorityRowProps) {
+  const format = usePresentationFormat();
   const wouldExceedHighCap = !field.isHigh && highCapReached;
 
   return (
@@ -31,7 +33,7 @@ export function FieldPriorityRow({
       <div className="flex flex-col gap-0.5">
         <span className="text-sm">{field.label}</span>
         <span className="text-xs text-muted-foreground">
-          ~{field.projectedPoints.toLocaleString()} pts next month
+          ~{format.count(field.projectedPoints)} pts next month
         </span>
       </div>
       <div className="flex items-center gap-1" role="group" aria-label={field.label}>
