@@ -8,13 +8,6 @@ export interface CanonicalEnvelope {
   bodyLength: number;
 }
 
-/**
- * Codepoint string comparison — the repository's determinism rule for canonical
- * ordering (never `localeCompare`, which depends on the host locale). Equivalent
- * to the `byId`/`compareStrings` comparators used across the combat and campaign
- * orderings, hoisted so the rule has one home. Compares by UTF-16 code unit via
- * the `<`/`>` operators.
- */
 export function compareCodePoints(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }

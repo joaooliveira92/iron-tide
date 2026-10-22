@@ -18,8 +18,6 @@ import {
   type OfferResponseInput,
 } from "../src/index.js";
 
-// Schema parity (spec #109 R3 / ticket #111): the offer response is additive. The existing decision-answer and
-// battle-result fixtures (the shapes the phase-engine interruption seam records) must still round-trip unchanged.
 const decisionAnswer: DecisionAnswer = {
   interruptionId: "i-0",
   decisionId: "dec-1",
@@ -126,8 +124,6 @@ describe("existing interruption fixtures still round-trip", () => {
   });
 });
 
-// T-1 03 (#112, spec #109 R4): the offer request is additive beside the decision and battle requests. It carries exactly
-// the R4 fields and none of the withheld ones, and every existing request fixture still round-trips.
 const offerRequest: OfferRequest = {
   kind: "offer",
   turnId: "t-1",

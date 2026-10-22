@@ -3,7 +3,6 @@ import { SEVERITY_RANK } from "./policy.js";
 import type { TurnMessage } from "./schema.js";
 import { PROJECTION_VERSION } from "./version.js";
 
-/** A projected message before its identity is assigned. */
 export type MessageDraft = Omit<TurnMessage, "id">;
 
 function refKey(ref: { readonly type: string; readonly id: string }): string {
@@ -32,12 +31,10 @@ function compareDrafts(a: MessageDraft, b: MessageDraft): number {
   );
 }
 
-/** Total, deterministic ordering of projected messages. */
 export function sortMessages(messages: readonly MessageDraft[]): MessageDraft[] {
   return [...messages].sort(compareDrafts);
 }
 
-/** Collapse messages sharing a deduplication key; critical messages never merge. */
 export function deduplicate(messages: readonly MessageDraft[]): MessageDraft[] {
   const seen = new Set<string>();
   const out: MessageDraft[] = [];
@@ -86,12 +83,6 @@ function mergeGroup(group: readonly MessageDraft[]): MessageDraft {
   };
 }
 
-/**
- * Aggregate routine player-visible messages sharing an aggregate key into one
- * message carrying a `count` and the union of their references. Messages without
- * an aggregate key, developer-only (`TRACE`) messages, and critical outcomes are
- * never merged.
- */
 export function aggregate(messages: readonly MessageDraft[]): MessageDraft[] {
   const aggregable = new Map<string, MessageDraft[]>();
   const passthrough: MessageDraft[] = [];
@@ -126,11 +117,6 @@ function messageIdentity(turnId: string, message: MessageDraft): string {
   return hashWithContext(body, "bluewave/messages/turn-message");
 }
 
-/**
- * Assign each message a content-addressed, deterministic identity. The id is a
- * function of the turn and the message's projected content, so identical
- * projections across hosts and re-executions collide by construction.
- */
 export function withIdentities(turnId: string, messages: readonly MessageDraft[]): TurnMessage[] {
   return messages.map((message) => ({
     ...message,

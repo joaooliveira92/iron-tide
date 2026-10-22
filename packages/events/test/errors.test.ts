@@ -1,9 +1,3 @@
-// MIG-RUNTIME-1 / MIG-WIRE-3: the event ledger and explanation builder raise
-// in-process `Data.TaggedError`s. The envelope wire format is unchanged; the
-// `message` text is carried verbatim from the previous plain `Error`/`TypeError`
-// so callers that match on it are unaffected. `Data.TaggedError` also sets
-// `name` to the tag, so each error identifies itself both ways.
-
 import { describe, expect, it } from "vite-plus/test";
 import {
   DuplicateEventIdError,
@@ -77,12 +71,6 @@ describe("events tagged errors", () => {
   });
 });
 
-// Ticket 02 F3: `Data.TaggedError` is only recoverable by `_tag` *before* it is
-// serialized. `JSON.stringify` round-trips the tag (the vendored class defines
-// `toJSON`, `vendor/effect/src/internal/core.ts`), but `structuredClone` drops
-// the own `_tag` property, so a clone no longer matches `Effect.catchTag`
-// (which keys strictly on `_tag`). Recover by `_tag`/`catchTag` before any
-// stringify/clone.
 describe("tagged error serialization hazard", () => {
   it("JSON.stringify preserves _tag while structuredClone drops it", () => {
     const error = new DuplicateEventIdError({ eventId: "evt-1", message: "duplicate" });

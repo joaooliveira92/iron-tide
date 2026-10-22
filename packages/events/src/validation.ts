@@ -1,42 +1,22 @@
 import { Schema } from "effect";
 import type { DomainEventBody, DomainEventEnvelope } from "./envelope.js";
 
-/**
- * Strictness policy for the event boundary: unmodeled (excess) keys are rejected,
- * preserving the previous Zod `.strict()` behavior exactly. Same policy as
- * ADR-0105's content-schema boundary (adopted here; events does not depend on
- * content-schema, so the option is declared locally).
- */
 const parseOptions = { onExcessProperty: "error" } as const;
 
-/**
- * Zod `z.string().trim().min(1)`: decode trims whitespace first, then the length
- * check runs on the trimmed result — so `"   "` is rejected and the output is the
- * trimmed string.
- */
 const nonEmptyString = Schema.Trim.check(Schema.isMinLength(1));
 
-/** Zod `z.number().int().min(MIN_SAFE_INTEGER).max(MAX_SAFE_INTEGER)`. */
 const safeInt = Schema.Finite.check(
   Schema.isInt(),
   Schema.isBetween({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }),
 );
 
-/** Zod `safeInt.refine((value) => value >= 0)`. */
 const nonNegativeSafeInt = safeInt.check(Schema.isGreaterThanOrEqualTo(0));
 
 const positiveSafeInt = safeInt.check(Schema.isGreaterThanOrEqualTo(1));
 
-/**
- * Zod v4 `z.string().datetime({ offset: true })` pattern, ported verbatim so the
- * timestamp stays a **plain string** on the wire (never a `DateTime` object).
- * Accepts `...Z`, `+HH:MM`, `-HH:MM`, and fractional seconds; rejects a missing
- * offset, a date-only value, and space-separated date/time.
- */
 const DATETIME_OFFSET_RE =
   /^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d+)?(?:Z|([+-](?:[01]\d|2[0-3]):[0-5]\d)))$/;
 
-/** Zod `z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Expected YYYY-MM")`. */
 const discoveryMonth = Schema.String.check(
   Schema.isPattern(/^\d{4}-(0[1-9]|1[0-2])$/, { message: "Expected YYYY-MM" }),
 );

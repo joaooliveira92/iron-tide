@@ -21,15 +21,6 @@ export interface Diagnostic {
   remediation?: string;
 }
 
-/**
- * In-process, yieldable diagnostics error.
- *
- * `Data.TaggedError` (not `Schema.TaggedError`) is the idiom for domain errors
- * that never cross a wire/serialization boundary; diagnostics are raised and
- * handled inside the process, so this stays runtime-free (`MIG-RUNTIME-1`).
- * The `_tag` discriminator is `"DiagnosticError"`, so later waves can recover
- * on it with `Effect.catchTag` without this package importing the runtime.
- */
 export class DiagnosticError extends Data.TaggedError("DiagnosticError")<{
   readonly code: DiagnosticCode;
   readonly message: string;
@@ -39,7 +30,6 @@ export class DiagnosticError extends Data.TaggedError("DiagnosticError")<{
   readonly relatedLocations?: SourceLocation[];
   readonly remediation?: string;
 }> {
-  /** Project this error onto the plain `Diagnostic` shape the collector accepts. */
   toDiagnostic(): Diagnostic {
     return {
       code: this.code,

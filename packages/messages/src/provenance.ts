@@ -11,11 +11,6 @@ function nation(id: string): EntityReference {
   return { type: "nation", id };
 }
 
-/**
- * Describe one domain-event body as player-facing structured data: the
- * interpolation values its keys resolve with, the entities it concerns, and the
- * concrete effects it records. Pure and total over the frozen event union.
- */
 export function describeEventBody(body: DomainEventBody): EventDescription {
   switch (body.kind) {
     case "NationBudgetChanged":
