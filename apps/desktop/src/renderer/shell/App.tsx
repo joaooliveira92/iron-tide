@@ -21,7 +21,7 @@ import {
   CampaignScreenOutlet,
   type Screen,
 } from "./campaign-screen-registry.js";
-import type { CampaignShellMode } from "./campaign-shell-state.js";
+import { type CampaignShellMode, describeMonthCommitFailure } from "./campaign-shell-state.js";
 import { AppFrame } from "./AppFrame.js";
 import { BackgroundLayer } from "./BackgroundLayer.js";
 import { useBackground } from "./BackgroundContext.js";
@@ -223,17 +223,16 @@ function CampaignShellApplication({
       </AppFrame>
       <MapSheet />
       <MonthlyResolutionLoading committing={shell.state.committing} />
-      {shell.state.saveMessage !== null &&
-        shell.state.saveMessage.startsWith("Could not advance month:") && (
-          <MonthlyResolutionFailure
-            message={shell.state.saveMessage}
-            onReturn={() => shell.actions.selectScreen("overview")}
-            onRetry={async () => {
-              // saveMessage is cleared on next commit attempt via month-commit-started
-              await shell.actions.advanceMonth();
-            }}
-          />
-        )}
+      {shell.state.commitFailure !== null && (
+        <MonthlyResolutionFailure
+          message={describeMonthCommitFailure(shell.state.commitFailure)}
+          onReturn={() => shell.actions.selectScreen("overview")}
+          onRetry={async () => {
+            // The tagged failure is cleared on the next commit attempt (month-commit-started).
+            await shell.actions.advanceMonth();
+          }}
+        />
+      )}
       {shell.state.campaign !== null && (
         <PreTurnReviewDialog
           open={reviewOpen}
@@ -268,13 +267,15 @@ function CampaignShellApplication({
         ) : shell.state.interruption.request.kind === "decision" ? (
           <DecisionDialog
             request={shell.state.interruption.request}
-            onAnswer={shell.actions.answerDecision}
+            onAnswer={(optionId) =>
+              void shell.actions.answerInterruption({ kind: "decision", optionId })
+            }
             onAbandon={shell.actions.abandonPendingTurn}
           />
         ) : shell.state.interruption.request.kind === "offer" ? (
           <OfferDialog
             request={shell.state.interruption.request}
-            onChoose={shell.actions.submitOfferResponse}
+            onChoose={(choice) => void shell.actions.answerInterruption({ kind: "offer", choice })}
             onAbandon={shell.actions.abandonPendingTurn}
           />
         ) : (
@@ -282,7 +283,9 @@ function CampaignShellApplication({
             bridge={bridge}
             request={shell.state.interruption.request}
             sessionId={shell.state.campaign.sessionId}
-            onSubmitResult={shell.actions.submitPlayerBattleOutcome}
+            onSubmitResult={(outcome) =>
+              void shell.actions.answerInterruption({ kind: "battle-outcome", outcome })
+            }
             onAbandon={shell.actions.abandonPendingTurn}
           />
         ))}

@@ -199,10 +199,15 @@ describe("campaign shell state", () => {
   it("reports a failed commit and leaves the shell ready to retry", () => {
     const state = reduceCampaignShell(initialCampaignShellState(), {
       type: "month-commit-failed",
-      message: "SIMULATION_END_REACHED",
+      failure: { _tag: "Rejected", reason: "SIMULATION_END_REACHED", diagnostics: [] },
     });
     expect(state.committing).toBe(false);
-    expect(state.saveMessage).toBe("SIMULATION_END_REACHED");
+    expect(state.commitFailure).toEqual({
+      _tag: "Rejected",
+      reason: "SIMULATION_END_REACHED",
+      diagnostics: [],
+    });
+    expect(state.saveMessage).toBe("Could not advance month: SIMULATION_END_REACHED.");
   });
 
   it("derives explicit variants for file, new-game, opening, error, and campaign modes", () => {
@@ -328,10 +333,11 @@ describe("month commit", () => {
   it("leaves the campaign unchanged when the commit fails", () => {
     const failed = reduceCampaignShell(commit(opened, 2), {
       type: "month-commit-failed",
-      message: "boom",
+      failure: { _tag: "TransportFailure", message: "boom" },
     });
     expect(failed.campaign?.revision).toBe(2);
     expect(failed.committing).toBe(false);
+    expect(failed.commitFailure).toEqual({ _tag: "TransportFailure", message: "boom" });
     expect(failed.saveMessage).toBe("boom");
   });
 });

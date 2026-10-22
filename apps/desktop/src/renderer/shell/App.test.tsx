@@ -286,6 +286,32 @@ vi.mock("./StatusStrip.js", async () => {
   return { StatusStrip: () => React.createElement("section", { "data-testid": "status-strip" }) };
 });
 
+vi.mock("../screens/battle/PlayerBattleScreen.js", async () => {
+  const React = await import("react");
+  return {
+    PlayerBattleScreen: ({ onSubmitResult }: { onSubmitResult: (result: unknown) => void }) =>
+      React.createElement(
+        "div",
+        { "data-testid": "player-battle-screen" },
+        React.createElement(
+          "button",
+          {
+            onClick: () =>
+              onSubmitResult({
+                battleId: "battle-1",
+                winnerId: "uk",
+                loserId: "france",
+                attackerLosses: [],
+                defenderLosses: [],
+                damageReport: {},
+              }),
+          },
+          "Finish battle",
+        ),
+      ),
+  };
+});
+
 vi.mock("./campaign-screen-registry.js", async () => {
   const React = await import("react");
   return {
@@ -345,6 +371,7 @@ function createShell(overrides: Record<string, unknown> = {}) {
     primaryAction: null,
     committing: false,
     interruption: null,
+    commitFailure: null,
     screen: "file" as Screen,
     canGoBack: false,
     canGoForward: false,
@@ -354,10 +381,7 @@ function createShell(overrides: Record<string, unknown> = {}) {
     copyCampaign: vi.fn(async () => undefined),
     advanceMonth: vi.fn(async () => undefined),
     refreshCampaign: vi.fn(),
-    answerDecision: vi.fn(async () => undefined),
-    submitBattleResult: vi.fn(async () => undefined),
-    submitPlayerBattleOutcome: vi.fn(async () => undefined),
-    submitOfferResponse: vi.fn(async () => undefined),
+    answerInterruption: vi.fn(),
     abandonPendingTurn: vi.fn(async () => undefined),
     selectScreen: vi.fn(),
     setPrimaryAction: vi.fn(),
@@ -549,8 +573,50 @@ describe("App", () => {
     const dialog = screen.getByRole("alertdialog");
     expect(dialog).toBeTruthy();
     fireEvent.click(screen.getByTestId("offer-delegate"));
-    expect(shell.submitOfferResponse).toHaveBeenCalledWith("delegate");
+    expect(shell.answerInterruption).toHaveBeenCalledWith({ kind: "offer", choice: "delegate" });
     expect(screen.queryByTestId("battle-dialog")).toBeNull();
+  });
+
+  it("shows the player battle screen for a battle interruption and submits its outcome", () => {
+    const shell = createShell({
+      campaign: {
+        sessionId: "ses-1",
+        month: { year: 1900, month: 1 },
+        treasury: 50_000,
+        nationName: "United Kingdom",
+        projectedSurplusDeficit: 2_000,
+        activeAlertsCount: null,
+      },
+      screen: "overview",
+      interruption: {
+        unavailable: false,
+        pending: null,
+        request: {
+          kind: "battle",
+          turnId: "t1",
+          interruptionId: "i-battle",
+          ordinal: 0,
+          phase: "battle_resolution",
+          titleKey: "messages.battle.request.title",
+          bodyKey: "messages.battle.request.body",
+          interpolation: {},
+          battleId: "battle-1",
+          attackerId: "uk",
+          defenderId: "france",
+          areaId: "a-1",
+        },
+      },
+    });
+    testState.shell = shell;
+
+    render(<App />);
+
+    expect(screen.getByTestId("player-battle-screen")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Finish battle" }));
+    expect(shell.answerInterruption).toHaveBeenCalledWith({
+      kind: "battle-outcome",
+      outcome: expect.objectContaining({ battleId: "battle-1", winnerId: "uk" }),
+    });
   });
 
   it("renders the selected background as an explicit variant", () => {

@@ -328,7 +328,7 @@ describe("useCampaignShell", () => {
     await act(() => result.current.advanceMonth());
     expect(result.current.interruption?.request?.kind).toBe("decision");
 
-    await act(() => result.current.answerDecision("approve"));
+    await act(() => result.current.answerInterruption({ kind: "decision", optionId: "approve" }));
     expect(result.current.saveMessage).toBe("Decision made: uk treasury -25.");
   });
 
@@ -396,7 +396,7 @@ describe("useCampaignShell", () => {
         await act(() => result.current.advanceMonth());
         expect(result.current.interruption?.request?.kind).toBe("offer");
 
-        await act(() => result.current.submitOfferResponse(response));
+        await act(() => result.current.answerInterruption({ kind: "offer", choice: response }));
         const answers = sent.filter(([command]) => command === "submitOfferResponse");
         expect(answers).toHaveLength(1);
         expect(answers[0]![1]).toMatchObject({
@@ -434,7 +434,7 @@ describe("useCampaignShell", () => {
       await act(() => result.current.openCampaign("ses-1"));
       await act(() => result.current.advanceMonth());
 
-      await act(() => result.current.submitOfferResponse("decline"));
+      await act(() => result.current.answerInterruption({ kind: "offer", choice: "decline" }));
       const answers = sent.filter(([command]) => command === "submitOfferResponse");
       expect(answers).toHaveLength(1);
       expect(answers[0]![1]).toMatchObject({
@@ -452,7 +452,7 @@ describe("useCampaignShell", () => {
       );
       await act(() => result.current.openCampaign("ses-1"));
       await act(() => result.current.advanceMonth());
-      await act(() => result.current.submitOfferResponse("decline"));
+      await act(() => result.current.answerInterruption({ kind: "offer", choice: "decline" }));
       expect(result.current.saveMessage).toBe("Battle at a-1 declined.");
     });
 
@@ -465,7 +465,7 @@ describe("useCampaignShell", () => {
       const { result } = setup(execute);
       await act(() => result.current.openCampaign("ses-1"));
       await act(() => result.current.advanceMonth());
-      await act(() => result.current.submitOfferResponse("accept"));
+      await act(() => result.current.answerInterruption({ kind: "offer", choice: "accept" }));
       expect(result.current.interruption?.request?.kind).toBe("offer");
       expect(result.current.saveMessage).toContain("OfferResponseStale");
     });

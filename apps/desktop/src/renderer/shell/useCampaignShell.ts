@@ -1,63 +1,31 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
-import type { BridgeResult } from "../../shared/bridge-contract.js";
-import type {
-  InterruptionRequestDto,
-  PlayerBattleResultDto,
-  ResolveTurnResult,
-} from "../../shared/campaign-command-contract.js";
-import { resolveMessage } from "../content/uiCatalogue.js";
+import { createTransportRequestId } from "../lib/command-screen-workflow.js";
 import { emitWideEvent } from "../lib/telemetry.js";
 import type { Screen } from "./campaign-screen-registry.js";
-import {
-  loadActiveAlertsCount,
-  overviewAfterCommit,
-  overviewFromProjection,
-  type CommittedMonth,
-} from "./campaign-overview.js";
+import { loadActiveAlertsCount, overviewFromProjection } from "./campaign-overview.js";
 import {
   campaignShellMode,
   currentShellScreen,
+  diagnosticsSuffix,
   initialCampaignShellState,
   reduceCampaignShell,
   type ShellInterruption,
 } from "./campaign-shell-state.js";
+import {
+  foldInterruptionAnswer,
+  foldResolveTurn,
+  planInterruptionAnswer,
+  sendInterruptionAnswer,
+  type InterruptionAnswer,
+  type InterruptionAnswerOutcome,
+  type ResolveOutcome,
+} from "./interruption-answer.js";
 import { canGoBack, canGoForward, goBack, goForward } from "./navigation-history.js";
-import type { BattleChoice } from "./interruptions/BattleRequestDialog.js";
-import type { OfferChoice } from "./interruptions/OfferDialog.js";
-import { offerText } from "./interruptions/offer-text.js";
 import type { PrimaryAction } from "./primary-action.js";
-import { formatCampaignMonth } from "./site-header-state.js";
 
 const SAVE_MESSAGE_DURATION_MS = 8_000;
-
-function diagnosticsSuffix(diagnostics: readonly string[]): string {
-  return diagnostics.length > 0 ? ` ${diagnostics.join("; ")}` : "";
-}
-
-/**
- * A presentation-only result line for an answered decision, derived from the
- * chosen option's declared effects. It never owns authoritative state — it only
- * describes what the engine already applied — and resolves through the UI
- * catalogue, so the domain packages embed no prose (ADR-0209).
- */
-function decisionResultMessage(request: InterruptionRequestDto, optionId: string): string {
-  const option = request.options?.find((candidate) => candidate.optionId === optionId);
-  const effects = option?.effects ?? [];
-  const change =
-    effects.length === 0
-      ? resolveMessage("ui.decision.result.noEffect")
-      : effects
-          .map((effect) =>
-            resolveMessage("ui.decision.result.treasury", {
-              nationId: effect.nationId,
-              delta: `${effect.delta >= 0 ? "+" : ""}${String(effect.delta)}`,
-            }),
-          )
-          .join("; ");
-  return resolveMessage("ui.decision.result", { change });
-}
 
 export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
   const [state, dispatch] = useReducer(reduceCampaignShell, undefined, initialCampaignShellState);
@@ -213,45 +181,34 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
   }, []);
 
   /**
-   * Project a `resolveTurn` response into the shell: a completed turn updates the
-   * header; a suspended turn opens the blocking interruption; an untrustworthy
-   * pending turn opens the recovery prompt. Never mutates authoritative state
-   * here — the command boundary already validated and persisted it.
+   * Apply a folded `resolveTurn` outcome: a completed turn updates the header and
+   * clears the interruption; a suspended/unavailable turn opens its prompt; a
+   * failure records the tagged failure and shows it instead of any answer line.
    */
-  const applyResolveResult = useCallback(
-    (result: BridgeResult<ResolveTurnResult>, sessionId: string) => {
-      if (result.outcome !== "success") {
-        dispatch({
-          type: "month-commit-failed",
-          message: `Could not advance month: ${result.reason}.${diagnosticsSuffix(result.diagnostics)}`,
-        });
-        return;
+  const applyResolveOutcome = useCallback(
+    (outcome: ResolveOutcome, sessionId: string, answerMessage: string | null): void => {
+      switch (outcome._tag) {
+        case "Completed":
+          if (outcome.campaign !== null) {
+            dispatch({ type: "month-committed", campaign: outcome.campaign });
+          }
+          setInterruption(null);
+          void refreshCampaign(sessionId);
+          collectMessage(answerMessage ?? outcome.message);
+          return;
+        case "Suspended":
+          setInterruption(outcome.interruption);
+          break;
+        case "Unavailable":
+          setInterruption({ request: null, pending: null, unavailable: true });
+          break;
+        case "Failed":
+          dispatch({ type: "month-commit-failed", failure: outcome.failure });
+          return;
       }
-      const value = result.value;
-      if (value.status === "completed") {
-        const previous = state.campaign;
-        if (previous !== null) {
-          const committed: CommittedMonth = {
-            closingSnapshot: { month: value.closing.month, revision: value.closing.revision },
-            report: { closingTreasury: value.closing.closingTreasury },
-          };
-          dispatch({
-            type: "month-committed",
-            campaign: overviewAfterCommit(previous, committed, sessionId),
-          });
-        }
-        setInterruption(null);
-        void refreshCampaign(sessionId);
-        collectMessage(`Month advanced to ${formatCampaignMonth(value.closing.month)}.`);
-        return;
-      }
-      if (value.status === "suspended") {
-        setInterruption({ request: value.request, pending: value.pendingTurn, unavailable: false });
-        return;
-      }
-      setInterruption({ request: null, pending: null, unavailable: true });
+      if (answerMessage !== null) collectMessage(answerMessage);
     },
-    [state.campaign, collectMessage, refreshCampaign, setInterruption],
+    [refreshCampaign, setInterruption, collectMessage],
   );
 
   const advanceMonth = useCallback(async () => {
@@ -267,7 +224,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       const result = await bridge.campaign.execute("resolveTurn", {
         sessionId,
         expectedRevision: state.campaign.revision,
-        transportRequestId: crypto.randomUUID(),
+        transportRequestId: createTransportRequestId("resolveTurn"),
       });
       const duration = Math.round(performance.now() - started);
       emitWideEvent(
@@ -277,168 +234,53 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
         result.outcome === "success" ? "success" : "rejected",
         result.outcome === "success" ? [] : [result.reason],
       );
-      applyResolveResult(result, sessionId);
+      applyResolveOutcome(foldResolveTurn(result, state.campaign, sessionId), sessionId, null);
     } catch (error) {
       emitWideEvent("campaign_month_advance", sessionId, 0, "rejected", [
         error instanceof Error ? error.message : "Unknown error",
       ]);
       dispatch({
         type: "month-commit-failed",
-        message: error instanceof Error ? error.message : "Could not advance month.",
+        failure: {
+          _tag: "TransportFailure",
+          message: error instanceof Error ? error.message : "Could not advance month.",
+        },
       });
     }
-  }, [bridge, state.campaign, state.interruption, applyResolveResult]);
-
-  const answerDecision = useCallback(
-    async (optionId: string) => {
-      const request = state.interruption?.request;
-      if (
-        bridge === undefined ||
-        state.campaign === null ||
-        request === null ||
-        request === undefined ||
-        request.kind !== "decision"
-      ) {
-        return;
-      }
-      const sessionId = state.campaign.sessionId;
-      dispatch({ type: "month-commit-started" });
-      const result = await bridge.campaign.execute("answerDecision", {
-        sessionId,
-        expectedRevision: state.campaign.revision,
-        transportRequestId: crypto.randomUUID(),
-        interruptionId: request.interruptionId,
-        decisionId: request.decisionId ?? "",
-        optionId,
-      });
-      applyResolveResult(result, sessionId);
-      // Ticket 07: name the change the choice made (presentation only).
-      collectMessage(decisionResultMessage(request, optionId));
-    },
-    [bridge, state.campaign, state.interruption, applyResolveResult, collectMessage],
-  );
-
-  /** Submit the player's answer to a battle request (T-1 owns the offer policy). */
-  const submitBattleResult = useCallback(
-    async (choice: BattleChoice) => {
-      const request = state.interruption?.request;
-      if (
-        bridge === undefined ||
-        state.campaign === null ||
-        request === null ||
-        request === undefined ||
-        request.kind !== "battle"
-      ) {
-        return;
-      }
-      const sessionId = state.campaign.sessionId;
-      dispatch({ type: "month-commit-started" });
-      const result = await bridge.campaign.execute("submitBattleResult", {
-        sessionId,
-        expectedRevision: state.campaign.revision,
-        transportRequestId: crypto.randomUUID(),
-        interruptionId: request.interruptionId,
-        battleId: request.battleId ?? "",
-        winnerId: null,
-        loserId: null,
-        attackerLosses: [],
-        defenderLosses: [],
-        damageReport: {},
-      });
-      applyResolveResult(result, sessionId);
-      collectMessage(`Battle ${choice} — delegated to staff.`);
-    },
-    [bridge, state.campaign, state.interruption, applyResolveResult, collectMessage],
-  );
-
-  /** Submit a completed player-fought battle through the battle-result interruption (T-2). */
-  const submitPlayerBattleOutcome = useCallback(
-    async (outcome: PlayerBattleResultDto) => {
-      const request = state.interruption?.request;
-      if (
-        bridge === undefined ||
-        state.campaign === null ||
-        request === null ||
-        request === undefined ||
-        request.kind !== "battle"
-      ) {
-        return;
-      }
-      const sessionId = state.campaign.sessionId;
-      dispatch({ type: "month-commit-started" });
-      const result = await bridge.campaign.execute("submitBattleResult", {
-        sessionId,
-        expectedRevision: state.campaign.revision,
-        transportRequestId: crypto.randomUUID(),
-        interruptionId: request.interruptionId,
-        battleId: outcome.battleId,
-        winnerId: outcome.winnerId,
-        loserId: outcome.loserId,
-        attackerLosses: outcome.attackerLosses,
-        defenderLosses: outcome.defenderLosses,
-        damageReport: outcome.damageReport,
-      });
-      applyResolveResult(result, sessionId);
-      collectMessage(
-        outcome.winnerId === null
-          ? `Battle ${request.battleId ?? ""} ended without a decision.`
-          : `Battle ${request.battleId ?? ""} resolved: ${outcome.winnerId} won.`,
-      );
-    },
-    [bridge, state.campaign, state.interruption, applyResolveResult, collectMessage],
-  );
+  }, [bridge, state.campaign, state.interruption, applyResolveOutcome]);
 
   /**
-   * Submit the player's answer to a battle offer (T-1 03, T-1 04). It is a typed accept, delegate or decline response, never a battle
-   * outcome: a tie is a result, not an answer to an offer (spec #109 decision C). A refused answer leaves the offer open.
+   * Answer the outstanding interruption with a typed answer. The plan assembles
+   * the envelope and transport identity, the fold maps the reply back, and the
+   * outcome is applied once — so every interruption kind shares this one path.
    */
-  const submitOfferResponse = useCallback(
-    async (choice: OfferChoice) => {
+  const answerInterruption = useCallback(
+    async (answer: InterruptionAnswer): Promise<InterruptionAnswerOutcome> => {
       const request = state.interruption?.request;
-      if (
-        bridge === undefined ||
-        state.campaign === null ||
-        request === null ||
-        request === undefined ||
-        request.kind !== "offer"
-      ) {
-        return;
+      if (bridge === undefined || state.campaign === null) {
+        return { _tag: "NotSent", reason: { _tag: "NoCampaign" } };
       }
-      const sessionId = state.campaign.sessionId;
+      if (request === null || request === undefined) {
+        return { _tag: "NotSent", reason: { _tag: "NoOutstandingRequest" } };
+      }
+      const plan = planInterruptionAnswer(state.campaign, request, answer);
+      if ("_tag" in plan) {
+        return { _tag: "NotSent", reason: plan };
+      }
       dispatch({ type: "month-commit-started" });
-      const result = await bridge.campaign.execute("submitOfferResponse", {
+      const sessionId = state.campaign.sessionId;
+      const result = await sendInterruptionAnswer(bridge.campaign, plan);
+      const { outcome, message } = foldInterruptionAnswer(
+        result,
+        request,
+        answer,
+        state.campaign,
         sessionId,
-        expectedRevision: state.campaign.revision,
-        transportRequestId: crypto.randomUUID(),
-        interruptionId: request.interruptionId,
-        battleId: request.battleId ?? "",
-        response: choice,
-      });
-      applyResolveResult(result, sessionId);
-      if (result.outcome === "success") {
-        const areaId = request.areaId ?? "";
-        // A decline reports its victory-point cost when the month completed and the turn summary carries it (the
-        // authoritative BattleDeclined event projected as a message); otherwise it is reported without the figure.
-        const declined =
-          choice === "decline" && result.value.status === "completed"
-            ? result.value.summary.messages.find(
-                (message) =>
-                  message.bodyKey === "messages.battle.declined.body" &&
-                  message.interpolation["battleId"] === request.battleId,
-              )
-            : undefined;
-        const cost = declined?.interpolation["victoryPointCost"];
-        collectMessage(
-          cost === undefined
-            ? offerText(`ui.offer.result.${choice}`, { areaId })
-            : offerText("ui.offer.result.decline.cost", {
-                areaId,
-                victoryPointCost: String(cost),
-              }),
-        );
-      }
+      );
+      applyResolveOutcome(outcome, sessionId, message);
+      return { _tag: "Sent", outcome };
     },
-    [bridge, state.campaign, state.interruption, applyResolveResult, collectMessage],
+    [bridge, state.campaign, state.interruption, applyResolveOutcome],
   );
 
   const abandonPendingTurn = useCallback(async () => {
@@ -476,6 +318,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       primaryAction: state.primaryAction,
       committing: state.committing,
       interruption: state.interruption,
+      commitFailure: state.commitFailure,
       mode: campaignShellMode(state),
       screen: currentShellScreen(state),
       canGoBack: canGoBack(state.history),
@@ -485,10 +328,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       saveCampaign,
       copyCampaign,
       advanceMonth,
-      answerDecision,
-      submitBattleResult,
-      submitPlayerBattleOutcome,
-      submitOfferResponse,
+      answerInterruption,
       abandonPendingTurn,
       refreshCampaign,
       selectScreen,
@@ -503,10 +343,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       saveCampaign,
       copyCampaign,
       advanceMonth,
-      answerDecision,
-      submitBattleResult,
-      submitPlayerBattleOutcome,
-      submitOfferResponse,
+      answerInterruption,
       abandonPendingTurn,
       refreshCampaign,
       selectScreen,

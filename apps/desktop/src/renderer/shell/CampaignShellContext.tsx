@@ -17,6 +17,7 @@ export interface CampaignShellContextValue {
     | "primaryAction"
     | "committing"
     | "interruption"
+    | "commitFailure"
     | "mode"
     | "screen"
     | "canGoBack"
@@ -29,10 +30,7 @@ export interface CampaignShellContextValue {
     | "saveCampaign"
     | "copyCampaign"
     | "advanceMonth"
-    | "answerDecision"
-    | "submitBattleResult"
-    | "submitPlayerBattleOutcome"
-    | "submitOfferResponse"
+    | "answerInterruption"
     | "abandonPendingTurn"
     | "refreshCampaign"
     | "selectScreen"
@@ -66,6 +64,7 @@ export function CampaignShellProvider({
         primaryAction: shell.primaryAction,
         committing: shell.committing,
         interruption: shell.interruption,
+        commitFailure: shell.commitFailure,
         mode: shell.mode,
         screen: shell.screen,
         canGoBack: shell.canGoBack,
@@ -77,10 +76,7 @@ export function CampaignShellProvider({
         saveCampaign: shell.saveCampaign,
         copyCampaign: shell.copyCampaign,
         advanceMonth: shell.advanceMonth,
-        answerDecision: shell.answerDecision,
-        submitBattleResult: shell.submitBattleResult,
-        submitPlayerBattleOutcome: shell.submitPlayerBattleOutcome,
-        submitOfferResponse: shell.submitOfferResponse,
+        answerInterruption: shell.answerInterruption,
         abandonPendingTurn: shell.abandonPendingTurn,
         refreshCampaign: shell.refreshCampaign,
         selectScreen: shell.selectScreen,

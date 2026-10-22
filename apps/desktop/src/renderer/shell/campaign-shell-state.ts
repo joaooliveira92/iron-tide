@@ -15,6 +15,34 @@ export interface ShellInterruption {
   readonly unavailable: boolean;
 }
 
+/**
+ * Why a month commit — or an interruption answer that resolves the turn — failed.
+ * A tagged value the shell stores and the UI switches on, so presentation never
+ * has to string-match a prose message to decide what to show.
+ */
+export type MonthCommitFailure =
+  | {
+      readonly _tag: "Rejected";
+      readonly reason: string;
+      readonly diagnostics: readonly string[];
+    }
+  | { readonly _tag: "TransportFailure"; readonly message: string };
+
+/** Appends the engine's diagnostics, if any, to a rejection line. */
+export function diagnosticsSuffix(diagnostics: readonly string[]): string {
+  return diagnostics.length > 0 ? ` ${diagnostics.join("; ")}` : "";
+}
+
+/** The human line a failure presents, derived from the tagged failure. */
+export function describeMonthCommitFailure(failure: MonthCommitFailure): string {
+  switch (failure._tag) {
+    case "Rejected":
+      return `Could not advance month: ${failure.reason}.${diagnosticsSuffix(failure.diagnostics)}`;
+    case "TransportFailure":
+      return failure.message;
+  }
+}
+
 export interface CampaignOverview {
   readonly month: { readonly year: number; readonly month: number };
   readonly treasury: number;
@@ -62,6 +90,8 @@ export interface CampaignShellState {
   readonly committing: boolean;
   /** The active interruption (decision/battle/recovery), or null when advancing is unblocked. */
   readonly interruption: ShellInterruption | null;
+  /** The tagged failure of the last month commit, or null when none is outstanding. */
+  readonly commitFailure: MonthCommitFailure | null;
 }
 
 export type CampaignShellMode =
@@ -127,7 +157,7 @@ export type CampaignShellEvent =
       readonly campaign: CampaignOverview;
     }
   | { readonly type: "campaign-refreshed"; readonly campaign: CampaignOverview }
-  | { readonly type: "month-commit-failed"; readonly message: string }
+  | { readonly type: "month-commit-failed"; readonly failure: MonthCommitFailure }
   | { readonly type: "interruption-set"; readonly interruption: ShellInterruption }
   | { readonly type: "interruption-cleared" };
 
@@ -142,6 +172,7 @@ export function initialCampaignShellState(): CampaignShellState {
     primaryAction: null,
     committing: false,
     interruption: null,
+    commitFailure: null,
   };
 }
 
@@ -178,7 +209,7 @@ export function reduceCampaignShell(
     case "save-finished":
       return { ...state, saving: false, saveMessage: event.message };
     case "save-message-cleared":
-      return { ...state, saveMessage: null };
+      return { ...state, saveMessage: null, commitFailure: null };
     case "primary-action-changed": {
       const current = state.primaryAction;
       const next = event.action;
@@ -194,12 +225,13 @@ export function reduceCampaignShell(
       return { ...state, primaryAction: next };
     }
     case "month-commit-started":
-      return { ...state, committing: true, saveMessage: null };
+      return { ...state, committing: true, saveMessage: null, commitFailure: null };
     case "month-committed":
       return {
         ...state,
         committing: false,
         campaign: event.campaign,
+        commitFailure: null,
       };
     case "campaign-refreshed":
       // A late refresh must not resurrect a closed campaign or replace a different one.
@@ -208,7 +240,12 @@ export function reduceCampaignShell(
       }
       return { ...state, campaign: event.campaign };
     case "month-commit-failed":
-      return { ...state, committing: false, saveMessage: event.message };
+      return {
+        ...state,
+        committing: false,
+        commitFailure: event.failure,
+        saveMessage: describeMonthCommitFailure(event.failure),
+      };
     case "interruption-set":
       return { ...state, committing: false, interruption: event.interruption };
     case "interruption-cleared":
