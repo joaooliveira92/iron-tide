@@ -2,7 +2,31 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved (2026-10-21) — owner chose Option A (ship the current cut).
+
+## Resolution
+
+Option A. The current battle cut ships as #221's deliverable: stance, speed and
+auto-fight, with fire and torpedoes automatic. #221's four acceptance criteria are
+complete. Targeting, the three realism modes and the formation/role editor are
+**not** requirements of #221.
+
+- Targeting is tracked in #230, which is blocked on an explicit decision about how
+  player rank gates battle commands. The realism modes and the formation/role
+  editor stay out of #230 unless engine analysis proves one is required
+  infrastructure.
+- Validation evidence: the `t2-acceptance` cross-process determinism test (two
+  processes, identical hashes); `pnpm check:reachability-ledger` (30 reachable,
+  11 dormant-by-decision, 11 internal, 0 unclassified); `pnpm check` green with all
+  27 e2e tests passing; snap screenshots in `/tmp/snap-battle/` (offer, battle
+  start, mid-battle, ended).
+- Completed improvements kept: UI-string catalogue loading, mid-battle save and
+  resume, measurement-preset-aware units, a non-colour damage marker, and enemy
+  ships outside any division shown.
+- No e2e covers entering a battle through the normal UI: producing the required
+  offer currently depends on a save with an injected war. Production behaviour is
+  not weakened or bypassed to create that test; the cross-process test and snap
+  evidence stand in for it.
 
 ## Trigger
 
