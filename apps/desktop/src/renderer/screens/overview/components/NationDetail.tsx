@@ -14,22 +14,17 @@ function Stat({ label, children }: { readonly label: string; readonly children: 
 
 export function NationDetail({ selected }: { readonly selected: NationRailRow }) {
   return (
-    <div
-      role="group"
-      aria-label={`${selected.name} detail`}
-      className="rounded-lg border bg-card/40 px-3 py-2"
-      data-testid="nation-rail-detail"
-    >
-      <div className="mb-1.5 flex items-baseline justify-between gap-2">
-        <h3 className="truncate text-xs font-semibold uppercase leading-4 tracking-widest text-muted-foreground">
+    <div data-testid="nation-rail-detail">
+      <div className="flex items-center justify-between gap-2 border-b px-3 py-2">
+        <p className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {selected.name}
-        </h3>
+        </p>
         <NationRelationBadge row={selected} />
       </div>
       {selected.isPlayer ? (
-        <p className="text-muted-foreground">Your nation.</p>
+        <p className="px-3 py-2.5 text-muted-foreground">Your nation.</p>
       ) : (
-        <dl className="grid grid-cols-2 gap-1.5">
+        <dl className="grid grid-cols-2 gap-1.5 p-2">
           <Stat label="Relation">{selected.relationLabel}</Stat>
           {selected.tension !== null && <Stat label="Tension">{selected.tension}/10</Stat>}
           {selected.since !== null && <Stat label="Since">{selected.since}</Stat>}

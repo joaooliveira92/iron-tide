@@ -1,43 +1,65 @@
+import { Ban } from "lucide-react";
+
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../../../components/ui/hover-card.js";
 import { cn } from "../../../lib/utils.js";
 import type { NationRailRow } from "../nation-rail-state.js";
+import { NationDetail } from "./NationDetail.js";
 import { NationRelationBadge } from "./NationRelationBadge.js";
 import { NationSwatch } from "./NationSwatch.js";
+import { NationTensionMeter } from "./NationTensionMeter.js";
 
 export function NationRailItem({
   row,
-  selected,
-  onSelect,
+  onOpen,
 }: {
   readonly row: NationRailRow;
-  readonly selected: boolean;
-  readonly onSelect: (nationId: string) => void;
+  readonly onOpen: () => void;
 }) {
   return (
     <li>
-      <button
-        type="button"
-        aria-pressed={selected}
-        data-relation={row.relation}
-        onClick={() => onSelect(row.nationId)}
-        className={cn(
-          "flex w-full items-center gap-2 rounded-md border px-2 py-1.5 text-left outline-none transition-colors",
-          "bg-muted/40 hover:bg-muted focus-visible:ring-1 focus-visible:ring-ring",
-          "aria-pressed:border-ring/50 aria-pressed:bg-muted",
-          row.isPlayer && "border-primary/30",
-        )}
-      >
-        <NationSwatch row={row} />
-        <span className="min-w-0 flex-1 truncate text-xs font-semibold">{row.name}</span>
-        <NationRelationBadge row={row} />
-        {row.warScore !== null && (
-          <span
-            className="text-xs font-semibold tabular-nums text-destructive"
-            aria-label={`War score ${row.warScore.yours} to ${row.warScore.enemy}`}
-          >
-            {row.warScore.yours}:{row.warScore.enemy}
+      <HoverCard>
+        <HoverCardTrigger
+          delay={120}
+          render={<button type="button" />}
+          onClick={onOpen}
+          aria-label={`${row.name}, ${row.relationLabel}`}
+          data-relation={row.relation}
+          className={cn(
+            "flex w-full cursor-pointer flex-col gap-1 rounded-md border px-2 py-1.5 text-left outline-none transition-colors",
+            "bg-muted/40 hover:bg-muted focus-visible:ring-1 focus-visible:ring-ring data-popup-open:bg-muted",
+            row.isPlayer && "border-primary/30",
+          )}
+        >
+          <span className="flex w-full items-center gap-2">
+            <NationSwatch row={row} />
+            <span className="min-w-0 flex-1 truncate text-xs font-semibold">{row.name}</span>
+            {row.blockade && (
+              <span role="img" aria-label="Blockade" title="Blockade">
+                <Ban className="size-3.5 text-destructive" aria-hidden="true" />
+              </span>
+            )}
           </span>
-        )}
-      </button>
+          <span className="flex w-full items-center gap-2">
+            <NationRelationBadge row={row} iconOnly />
+            {row.warScore !== null && (
+              <span
+                className="text-xs font-semibold tabular-nums text-destructive"
+                aria-label={`War score ${row.warScore.yours} to ${row.warScore.enemy}`}
+              >
+                {row.warScore.yours}:{row.warScore.enemy}
+              </span>
+            )}
+            {row.tension !== null && <NationTensionMeter tension={row.tension} />}
+          </span>
+        </HoverCardTrigger>
+        <HoverCardContent side="left" className="w-64 overflow-hidden p-0 text-xs leading-snug">
+          <NationDetail selected={row} />
+        </HoverCardContent>
+      </HoverCard>
     </li>
   );
 }
