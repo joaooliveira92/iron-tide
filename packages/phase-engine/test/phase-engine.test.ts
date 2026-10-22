@@ -1,9 +1,21 @@
-﻿import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
+import { CommandLedger, CommandLifecycle } from "@bluewave/commands";
+import { SafeInt, TURN_PHASES, type TurnPhase } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
+import { EventLedger } from "@bluewave/events";
+import { RandomLedger } from "@bluewave/random";
 import { describe, expect, it } from "vite-plus/test";
-import { MonthExecutor, PhaseGuard, PhaseRegistry } from "../src/index.js";
+import {
+  MonthExecutor,
+  MonthPipeline,
+  monthPipeline,
+  PHASE_ACCESS_DENIED,
+  type MonthPhase,
+  type MonthRunState,
+  type PhasePermissions,
+} from "../src/index.js";
+import { FinancialLedger } from "../src/financial-ledger.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 function createEmptySnapshot(turn?: SafeInt): CampaignSnapshot {
@@ -62,108 +74,46 @@ function createNationState(id: string, treasury: SafeInt): NationState {
   };
 }
 
-describe("PhaseRegistry", () => {
-  it("returns phases in correct order", () => {
-    const phases = PhaseRegistry.all;
-    expect(phases.length).toBe(17);
-    expect(phases[0]!["id"]).toBe("opening_validation");
-    expect(phases[1]!["id"]).toBe("weather_generation");
-    expect(phases[2]!["id"]).toBe("monthly_revenue");
-    expect(phases[3]!["id"]).toBe("command_collection");
-    expect(phases[4]!["id"]).toBe("ai_planning");
-    expect(phases[5]!["id"]).toBe("ai_procurement");
-    expect(phases[6]!["id"]).toBe("appropriation");
-    expect(phases[7]!["id"]).toBe("maintenance");
-    expect(phases[8]!["id"]).toBe("obligation");
-    expect(phases[9]!["id"]).toBe("construction_processing");
-    expect(phases[10]!["id"]).toBe("resolve_diplomacy");
-    expect(phases[11]!["id"]).toBe("resolve_research");
-    expect(phases[12]!["id"]).toBe("resolve_aircraft_development");
-    expect(phases[13]!["id"]).toBe("resolve_carrier_operations");
-    expect(phases[14]!["id"]).toBe("battle_generation");
-    expect(phases[15]!["id"]).toBe("battle_resolution");
-    expect(phases[16]!["id"]).toBe("closing_validation");
+function createState(
+  snapshot: CampaignSnapshot,
+  collector = new DiagnosticCollector(),
+): MonthRunState {
+  return {
+    currentSnapshot: snapshot,
+    sourceSnapshot: snapshot,
+    slots: snapshot["slots"],
+    commands: [],
+    campaignMonth: "1880-01",
+    turnNumber: snapshot["turnNumber"],
+    randomSeed: "test-seed",
+    commandLedger: new CommandLedger(),
+    eventLedger: new EventLedger(),
+    randomLedger: new RandomLedger(),
+    financialLedger: new FinancialLedger(),
+    lifecycle: new CommandLifecycle(),
+    collector,
+    nextSeq: () => SafeInt(0),
+  };
+}
 
-    for (let i = 0; i < phases.length - 1; i++) {
-      expect(phases[i]!["order"]).toBeLessThan(phases[i + 1]!["order"]);
-    }
-    expect(PhaseRegistry.getById("ai_planning")!["order"]).toBe(16);
-    expect(PhaseRegistry.getById("command_collection")!["order"]).toBeLessThan(
-      PhaseRegistry.getById("ai_planning")!["order"],
-    );
-    expect(PhaseRegistry.getById("resolve_diplomacy")!["order"]).toBe(65);
-    expect(PhaseRegistry.getById("battle_generation")!["order"]).toBe(75);
-    expect(PhaseRegistry.getById("weather_generation")!["order"]).toBe(5);
-    expect(PhaseRegistry.getById("weather_generation")!["order"]).toBeGreaterThan(
-      PhaseRegistry.getById("opening_validation")!["order"],
-    );
-    expect(PhaseRegistry.getById("weather_generation")!["order"]).toBeLessThan(
-      PhaseRegistry.getById("command_collection")!["order"],
-    );
-    for (let i = 0; i < PhaseRegistry.nodes.length - 1; i++) {
-      expect(PhaseRegistry.nodes[i]!["order"]).toBeLessThan(PhaseRegistry.nodes[i + 1]!["order"]);
-    }
-    expect(Number.isInteger(PhaseRegistry.getById("battle_resolution")!["order"])).toBe(true);
-    const constructionIdx = phases.findIndex((p) => p["id"] === "construction_processing")!;
-    const diplomacyIdx = phases.findIndex((p) => p["id"] === "resolve_diplomacy")!;
-    const researchIdx = phases.findIndex((p) => p["id"] === "resolve_research")!;
-    const battleGenIdx = phases.findIndex((p) => p["id"] === "battle_generation")!;
-    const battleResIdx = phases.findIndex((p) => p["id"] === "battle_resolution")!;
-    expect(diplomacyIdx).toBeGreaterThan(constructionIdx);
-    expect(diplomacyIdx).toBeLessThan(researchIdx);
-    expect(battleGenIdx).toBeGreaterThan(researchIdx);
-    expect(battleGenIdx).toBeLessThan(battleResIdx);
-  });
+const PERMISSIVE: PhasePermissions = { reads: "all", writes: "all", rng: true };
 
-  it("can retrieve phase by id and order", () => {
-    const byId = PhaseRegistry.getById("appropriation");
-    expect(byId).toBeDefined();
-    expect(byId!["name"]).toBe("Appropriation");
+function noopPhases(overrides: Partial<Record<TurnPhase, PhasePermissions>> = {}): MonthPhase[] {
+  return TURN_PHASES.map((id) => ({
+    id,
+    name: id,
+    permissions: overrides[id] ?? PERMISSIVE,
+    run: () => ({ status: "continue" }),
+  }));
+}
 
-    const byOrder = PhaseRegistry.getByOrder(70);
-    expect(byOrder).toBeDefined();
-    expect(byOrder!["id"]).toBe("resolve_research");
-  });
+function replacePhase(phases: readonly MonthPhase[], phase: MonthPhase): MonthPhase[] {
+  return phases.map((candidate) => (candidate.id === phase.id ? phase : candidate));
+}
 
-  it("enforces read permissions", () => {
-    const app = PhaseRegistry.getById("appropriation")!;
-    expect(PhaseRegistry.hasAccess(app, "treasury", "read")).toBe(true);
-    expect(PhaseRegistry.hasAccess(app, "fleets", "read")).toBe(false);
-  });
-
-  it("enforces write permissions", () => {
-    const app = PhaseRegistry.getById("appropriation")!;
-    expect(PhaseRegistry.hasAccess(app, "treasury", "write")).toBe(true);
-    expect(PhaseRegistry.hasAccess(app, "research", "write")).toBe(false);
-
-    const validate = PhaseRegistry.getById("opening_validation")!;
-    expect(PhaseRegistry.hasAccess(validate, "treasury", "write")).toBe(false);
-  });
-
-  it("all phases have read access to all", () => {
-    const open = PhaseRegistry.getById("opening_validation")!;
-    expect(PhaseRegistry.hasAccess(open, "anything", "read")).toBe(true);
-  });
-
-  it("only rng phases allow randomness", () => {
-    const research = PhaseRegistry.getById("resolve_research")!;
-    const battle = PhaseRegistry.getById("battle_resolution")!;
-    const battleGen = PhaseRegistry.getById("battle_generation")!;
-    const collect = PhaseRegistry.getById("command_collection")!;
-
-    expect(research["rngAllowed"]).toBe(true);
-    expect(battle["rngAllowed"]).toBe(true);
-    expect(battleGen["rngAllowed"]).toBe(true);
-    const aiPlan = PhaseRegistry.getById("ai_planning")!;
-    expect(aiPlan["rngAllowed"]).toBe(true);
-    expect(collect["rngAllowed"]).toBe(false);
-  });
-});
-
-describe("Canonical phase order (the registry drives the runner)", () => {
-  it("places command_collection before ai_planning and ai_procurement", () => {
-    const ids = PhaseRegistry.all.map((p) => p["id"]);
-    expect(ids).toEqual([
+describe("MonthPipeline", () => {
+  it("pins the canonical turn order, including the interruption checkpoint", () => {
+    expect(monthPipeline.phaseIds).toEqual([
       "opening_validation",
       "weather_generation",
       "monthly_revenue",
@@ -180,18 +130,12 @@ describe("Canonical phase order (the registry drives the runner)", () => {
       "resolve_carrier_operations",
       "battle_generation",
       "battle_resolution",
+      "presence_measurement",
+      "foreign_station_deployment",
+      "base_limits",
       "closing_validation",
     ]);
-    const indexOf = (id: string) => PhaseRegistry.all.findIndex((p) => p["id"] === id);
-    expect(indexOf("command_collection")).toBeLessThan(indexOf("ai_planning"));
-    expect(indexOf("ai_planning")).toBeLessThan(indexOf("ai_procurement"));
-  });
-
-  it("pins the interruption checkpoint as a non-phase node between carrier operations and battle generation", () => {
-    const kinds = PhaseRegistry.nodes.map((n) =>
-      "kind" in n ? `checkpoint:${n.id}` : `phase:${n.id}`,
-    );
-    expect(kinds).toEqual([
+    expect(monthPipeline.nodes.map((node) => `${node.kind}:${node.id}`)).toEqual([
       "phase:opening_validation",
       "phase:weather_generation",
       "phase:monthly_revenue",
@@ -209,84 +153,142 @@ describe("Canonical phase order (the registry drives the runner)", () => {
       "checkpoint:interruption_checkpoint",
       "phase:battle_generation",
       "phase:battle_resolution",
+      "phase:presence_measurement",
+      "phase:foreign_station_deployment",
+      "phase:base_limits",
       "phase:closing_validation",
     ]);
   });
-});
 
-describe("PhaseContext", () => {
-  it("permissions are enforced through access checks", () => {
-    const phase = PhaseRegistry.getById("construction_processing")!;
-    expect(PhaseRegistry.hasAccess(phase, "constructions", "read")).toBe(true);
-    expect(PhaseRegistry.hasAccess(phase, "fleets", "read")).toBe(true);
-    expect(PhaseRegistry.hasAccess(phase, "constructions", "write")).toBe(true);
-    expect(PhaseRegistry.hasAccess(phase, "fleets", "write")).toBe(true);
-    expect(PhaseRegistry.hasAccess(phase, "treasury", "read")).toBe(false);
-    expect(PhaseRegistry.hasAccess(phase, "treasury", "write")).toBe(false);
+  it("rejects incomplete, duplicated, or unknown phase definitions", () => {
+    expect(() => MonthPipeline.create(noopPhases().slice(1))).toThrow(/has no implementation/);
+
+    const duplicated = noopPhases();
+    duplicated.push(duplicated[0]!);
+    expect(() => MonthPipeline.create(duplicated)).toThrow(/registered more than once/);
+
+    const unknown = noopPhases();
+    unknown[0] = { ...unknown[0]!, id: "unknown_phase" as TurnPhase };
+    expect(() => MonthPipeline.create(unknown)).toThrow(/not part of the turn contract/);
   });
-});
 
-describe("PhaseGuard", () => {
-  it("passes a footprint fully within declared permissions", () => {
-    const guard = new PhaseGuard();
-    const app = PhaseRegistry.getById("appropriation")!;
-    const violations = guard.assert(app.id, {
-      reads: ["treasury", "constructions"],
-      writes: ["treasury", "constructions"],
-      usesRng: false,
+  it("observes reads and fails closed when a phase reads outside its grant", () => {
+    const collector = new DiagnosticCollector();
+    const phases = replacePhase(noopPhases(), {
+      id: "opening_validation",
+      name: "opening_validation",
+      permissions: { reads: ["nations"], writes: [], rng: false },
+      run: (ctx) => {
+        ctx.snapshot.read("wars");
+        return { status: "continue" };
+      },
     });
-    expect(violations).toEqual([]);
+    const state = createState(createEmptySnapshot(), collector);
+
+    expect(MonthPipeline.create(phases).run(state)).toBe(false);
+    expect(collector.errors.some((error) => error.code === PHASE_ACCESS_DENIED)).toBe(true);
+    expect(collector.errors[0]?.message).toContain('reads resource "wars" without read permission');
   });
 
-  it("fails closed when a phase writes a resource it lacks permission for", () => {
-    const guard = new PhaseGuard();
-    const app = PhaseRegistry.getById("appropriation")!;
-    const violations = guard.assert(app.id, {
-      reads: [],
-      writes: ["fleets"],
-      usesRng: false,
+  it("discards writes from a phase that oversteps its grant", () => {
+    const collector = new DiagnosticCollector();
+    const phases = replacePhase(noopPhases(), {
+      id: "opening_validation",
+      name: "opening_validation",
+      permissions: { reads: ["nations", "wars"], writes: [], rng: false },
+      run: (ctx) => {
+        const nations = new Map(ctx.snapshot.read("nations"));
+        nations.set("GBR", createNationState("GBR", SafeInt(1)));
+        ctx.snapshot.write("nations", nations);
+        return { status: "continue" };
+      },
     });
-    expect(violations.length).toBe(1);
-    expect(violations[0]).toContain('writes resource "fleets" without write permission');
+    const snapshot = createEmptySnapshot();
+    const state = createState(snapshot, collector);
+
+    expect(MonthPipeline.create(phases).run(state)).toBe(false);
+    expect(state.currentSnapshot).toBe(snapshot);
+    expect(collector.errors[0]?.message).toContain(
+      'writes resource "nations" without write permission',
+    );
   });
 
-  it("fails closed when a phase reads a resource it lacks permission for", () => {
-    const guard = new PhaseGuard();
-    const maintenance = PhaseRegistry.getById("maintenance")!;
-    const violations = guard.assert(maintenance.id, {
-      reads: ["research"],
-      writes: [],
-      usesRng: false,
+  it("fails closed when a phase draws randomness without a grant", () => {
+    const collector = new DiagnosticCollector();
+    const phases = replacePhase(noopPhases(), {
+      id: "opening_validation",
+      name: "opening_validation",
+      permissions: { reads: [], writes: [], rng: false },
+      run: (ctx) => {
+        ctx.rng.seed();
+        return { status: "continue" };
+      },
     });
-    expect(violations.length).toBe(1);
-    expect(violations[0]).toContain('reads resource "research" without read permission');
+    const state = createState(createEmptySnapshot(), collector);
+
+    expect(MonthPipeline.create(phases).run(state)).toBe(false);
+    expect(collector.errors[0]?.message).toContain("draws randomness without rng permission");
   });
 
-  it("fails closed when a non-rngAllowed phase declares randomness", () => {
-    const guard = new PhaseGuard();
-    const obligation = PhaseRegistry.getById("obligation")!;
-    expect(obligation.rngAllowed).toBe(false);
-    const violations = guard.assert(obligation.id, {
-      reads: [],
-      writes: [],
-      usesRng: true,
+  it("allows access that stays inside the declared permissions", () => {
+    const phases = replacePhase(noopPhases(), {
+      id: "opening_validation",
+      name: "opening_validation",
+      permissions: { reads: ["wars"], writes: ["wars"], rng: false },
+      run: (ctx) => {
+        const wars = ctx.snapshot.read("wars");
+        ctx.snapshot.write("wars", { ...wars });
+        return { status: "continue" };
+      },
     });
-    expect(violations.length).toBe(1);
-    expect(violations[0]).toContain("draws randomness but rngAllowed=false");
+    const state = createState(createEmptySnapshot());
+
+    expect(MonthPipeline.create(phases).run(state)).toBe(true);
   });
 
-  it("honors a phase definition override (used to exercise fail-closed)", () => {
-    const overrides = new Map([
-      ["monthly_revenue", { ...PhaseRegistry.getById("monthly_revenue")!, writePermissions: [] }],
+  it("applies permission overrides to a single phase", () => {
+    const collector = new DiagnosticCollector();
+    const phases = replacePhase(noopPhases(), {
+      id: "opening_validation",
+      name: "opening_validation",
+      permissions: PERMISSIVE,
+      run: (ctx) => {
+        ctx.snapshot.read("wars");
+        return { status: "continue" };
+      },
+    });
+    const overrides = new Map<TurnPhase, PhasePermissions>([
+      ["opening_validation", { reads: [], writes: [], rng: false }],
     ]);
-    const guard = new PhaseGuard(overrides);
-    const violations = guard.assert("monthly_revenue", {
-      reads: ["treasury"],
-      writes: ["treasury"],
-      usesRng: false,
-    });
-    expect(violations.length).toBe(1);
-    expect(violations[0]).toContain('writes resource "treasury" without write permission');
+    const state = createState(createEmptySnapshot(), collector);
+
+    expect(MonthPipeline.create(phases).run(state, overrides)).toBe(false);
+    expect(collector.errors[0]?.message).toContain('phase "opening_validation"');
+  });
+
+  it("stops the month when a checkpoint returns false", () => {
+    const collector = new DiagnosticCollector();
+    const phases = noopPhases();
+    const checkpoint = {
+      id: "stop_after_opening",
+      name: "Stop After Opening",
+      after: "opening_validation" as const,
+      permissions: { reads: [], writes: [], rng: false } as const,
+      run: () => false,
+    };
+    const pipeline = MonthPipeline.create(
+      replacePhase(phases, {
+        id: "opening_validation",
+        name: "opening_validation",
+        permissions: PERMISSIVE,
+        run: () => ({ status: "continue" }),
+      }),
+      [checkpoint],
+    );
+    const state = createState(createEmptySnapshot(), collector);
+
+    expect(pipeline.run(state)).toBe(true);
+    expect(collector.errors).toEqual([]);
   });
 });
 

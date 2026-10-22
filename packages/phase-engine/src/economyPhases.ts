@@ -25,9 +25,7 @@ import { fundDesignStudies } from "./designStudies.js";
 import { resolvePrivateDockExpansion } from "./dockExpansion.js";
 import { runForeignContractPhase } from "./foreignContractPhase.js";
 import { budgetChangedEvent, constructionDelayedEvent, makeLedgerEntry } from "./events.js";
-import type { MonthContext } from "./monthContext.js";
-import { PhaseResource } from "./phase-resource.js";
-import type { PhaseDescriptor } from "./registry.js";
+import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { applyPrestigeChange } from "./prestigeApplication.js";
 import { reportOutflowShortfall } from "./outflowShortfall.js";
 import { applyReadinessEvolution } from "./readinessEvolution.js";
@@ -60,10 +58,10 @@ export function splitLargestRemainder(total: number, weights: readonly number[])
 
 export const ACCELERATION_POOL_UNDEFINED_UNITS = 0;
 
-export function runMonthlyRevenuePhase(ctx: MonthContext): void {
+export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
   const { campaignMonth, eventLedger, financialLedger, nextSeq } = ctx;
 
-  for (const [nationId, nation] of ctx.currentSnapshot["nations"]) {
+  for (const [nationId, nation] of ctx.snapshot.read("nations")) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
     const baseResources = nation["baseResources"] ?? (0 as SafeInt);
     const rateBp = nation["navalAppropriationRateBp"] ?? (0 as SafeInt);
@@ -77,9 +75,9 @@ export function runMonthlyRevenuePhase(ctx: MonthContext): void {
       ...nation,
       treasury: newBalance,
     };
-    const updatedNations = new Map(ctx.currentSnapshot["nations"]);
+    const updatedNations = new Map(ctx.snapshot.read("nations"));
     updatedNations.set(nationId, updatedNation);
-    ctx.currentSnapshot = { ...ctx.currentSnapshot, nations: updatedNations };
+    ctx.snapshot.write("nations", updatedNations);
 
     financialLedger.append(
       makeLedgerEntry(
@@ -107,6 +105,7 @@ export function runMonthlyRevenuePhase(ctx: MonthContext): void {
       ),
     );
   }
+  return { status: "continue" };
 }
 
 export function capacityOf(
@@ -139,17 +138,17 @@ export function preservationCostUnits(
   return micro <= 0 ? 0 : treasuryCostUnits(micro, treasuryUnitMicro);
 }
 
-export function runAppropriationPhase(ctx: MonthContext): void {
+export function runAppropriationPhase(ctx: PhaseContext): PhaseRunOutcome {
   fundDesignStudies(ctx);
-  const accelerationRng = ctx.phaseGuard.rng("appropriation", ctx.randomSeed);
+  const accelerationRng = ctx.rng.engine();
   const foreign = runForeignContractPhase(ctx, accelerationRng);
   const { campaignMonth, eventLedger, financialLedger, nextSeq, collector } = ctx;
   const shipBuilding = ctx.engineOptions?.shipBuilding;
 
-  for (const [nationId, nation] of ctx.currentSnapshot["nations"]) {
+  for (const [nationId, nation] of ctx.snapshot.read("nations")) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
 
-    const designs = ctx.currentSnapshot["designs"];
+    const designs = ctx.snapshot.read("designs");
     const projects = nation["constructionProjects"];
     const foreignSkip = foreign.zeroWork.get(nationId);
     const haltedProjects = projects.filter((p) => p["status"] === "HALTED");
@@ -157,7 +156,7 @@ export function runAppropriationPhase(ctx: MonthContext): void {
 
     const acceleratedProjects = projects.filter((p) => p["status"] === "ACCELERATED");
     let delayedByPressure = new Set<string>();
-    if (acceleratedProjects.length > 0 && accelerationRng !== null) {
+    if (acceleratedProjects.length > 0) {
       let normalDemand = 0;
       let acceleratedDemand = 0;
       for (const project of projects) {
@@ -259,7 +258,7 @@ export function runAppropriationPhase(ctx: MonthContext): void {
       if (p["packages"] === undefined) return sum + remaining;
       const absorbable = fundConstructionProject(
         p,
-        capacityOf(ctx.currentSnapshot["designs"], p),
+        capacityOf(ctx.snapshot.read("designs"), p),
         Number.MAX_SAFE_INTEGER,
         campaignMonth,
       ).applied;
@@ -291,7 +290,7 @@ export function runAppropriationPhase(ctx: MonthContext): void {
           if (project["packages"] !== undefined) {
             const funded = fundConstructionProject(
               project,
-              capacityOf(ctx.currentSnapshot["designs"], project),
+              capacityOf(ctx.snapshot.read("designs"), project),
               clampedAlloc as number,
               campaignMonth,
             );
@@ -322,7 +321,7 @@ export function runAppropriationPhase(ctx: MonthContext): void {
         const leftover = applyLeftoverFunding(
           updatedProjects,
           remainingFunds,
-          ctx.currentSnapshot["designs"],
+          ctx.snapshot.read("designs"),
           campaignMonth,
           foreignSkip,
         );
@@ -357,9 +356,9 @@ export function runAppropriationPhase(ctx: MonthContext): void {
         treasury: newTreasury,
         constructionProjects: updatedProjects,
       };
-      const updatedNations = new Map(ctx.currentSnapshot["nations"]);
+      const updatedNations = new Map(ctx.snapshot.read("nations"));
       updatedNations.set(nationId, updatedNation);
-      ctx.currentSnapshot = { ...ctx.currentSnapshot, nations: updatedNations };
+      ctx.snapshot.write("nations", updatedNations);
 
       if ((totalDelta as number) > 0) {
         financialLedger.append(
@@ -417,15 +416,14 @@ export function runAppropriationPhase(ctx: MonthContext): void {
     }
   }
 
-  if (accelerationRng !== null) {
-    const privateExpansion = resolvePrivateDockExpansion({
-      snapshot: ctx.currentSnapshot,
-      campaignMonth,
-      randomEngine: accelerationRng,
-      randomLedger: ctx.randomLedger,
-    });
-    ctx.currentSnapshot = privateExpansion.snapshot;
-  }
+  const privateExpansion = resolvePrivateDockExpansion({
+    snapshot: ctx.snapshot.view(),
+    campaignMonth,
+    randomEngine: accelerationRng,
+    randomLedger: ctx.randomLedger,
+  });
+  ctx.snapshot.current = privateExpansion.snapshot;
+  return { status: "continue" };
 }
 
 function applyLeftoverFunding(
@@ -491,13 +489,13 @@ function applyLeftoverFunding(
   };
 }
 
-export function runMaintenancePhase(ctx: MonthContext): void {
+export function runMaintenancePhase(ctx: PhaseContext): PhaseRunOutcome {
   const { campaignMonth, eventLedger, financialLedger, nextSeq } = ctx;
 
-  for (const [nationId, nation] of ctx.currentSnapshot["nations"]) {
+  for (const [nationId, nation] of ctx.snapshot.read("nations")) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
 
-    const atWar = nationIsAtWar(ctx.currentSnapshot["wars"]["wars"], nationId);
+    const atWar = nationIsAtWar(ctx.snapshot.read("wars")["wars"], nationId);
 
     const totalMaintenance = nationMonthlyMaintenance(nation["fleets"], atWar);
 
@@ -513,9 +511,9 @@ export function runMaintenancePhase(ctx: MonthContext): void {
       treasury: actualNew,
       maintenanceCost: totalMaintenance,
     };
-    const updatedNations = new Map(ctx.currentSnapshot["nations"]);
+    const updatedNations = new Map(ctx.snapshot.read("nations"));
     updatedNations.set(nationId, updatedNation);
-    ctx.currentSnapshot = { ...ctx.currentSnapshot, nations: updatedNations };
+    ctx.snapshot.write("nations", updatedNations);
 
     financialLedger.append(
       makeLedgerEntry(
@@ -546,12 +544,13 @@ export function runMaintenancePhase(ctx: MonthContext): void {
   }
 
   applyReadinessEvolution(ctx);
+  return { status: "continue" };
 }
 
-export function runObligationPhase(ctx: MonthContext): void {
+export function runObligationPhase(ctx: PhaseContext): PhaseRunOutcome {
   const { campaignMonth, collector, eventLedger, financialLedger, nextSeq } = ctx;
 
-  for (const [nationId, nation] of ctx.currentSnapshot["nations"]) {
+  for (const [nationId, nation] of ctx.snapshot.read("nations")) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
     const previousTreasury = nation["treasury"];
     const settlement = settleOutflow(nation["expenses"], previousTreasury);
@@ -563,9 +562,9 @@ export function runObligationPhase(ctx: MonthContext): void {
       ...nation,
       treasury: actualNew,
     };
-    const updatedNations = new Map(ctx.currentSnapshot["nations"]);
+    const updatedNations = new Map(ctx.snapshot.read("nations"));
     updatedNations.set(nationId, updatedNation);
-    ctx.currentSnapshot = { ...ctx.currentSnapshot, nations: updatedNations };
+    ctx.snapshot.write("nations", updatedNations);
 
     financialLedger.append(
       makeLedgerEntry(
@@ -598,76 +597,41 @@ export function runObligationPhase(ctx: MonthContext): void {
       applyPrestigeChange(ctx, nationId, "UNPAID_FUNDS");
     }
   }
+  return { status: "continue" };
 }
 
-export const monthlyRevenuePhase: PhaseDescriptor = {
+export const monthlyRevenuePhase: MonthPhase = {
   id: "monthly_revenue",
   name: "Monthly Revenue",
-  order: 10,
-  readPermissions: ["treasury"],
-  writePermissions: ["treasury"],
-  rngAllowed: false,
-  footprint: {
-    reads: [PhaseResource.TREASURY],
-    writes: [PhaseResource.TREASURY],
-    usesRng: false,
-  },
-  run: (ctx) => {
-    runMonthlyRevenuePhase(ctx);
-    return { status: "continue" };
-  },
+  permissions: { reads: ["nations"], writes: ["nations"], rng: false },
+  run: runMonthlyRevenuePhase,
 };
 
-export const appropriationPhase: PhaseDescriptor = {
+export const appropriationPhase: MonthPhase = {
   id: "appropriation",
   name: "Appropriation",
-  order: 30,
-  readPermissions: ["treasury", "constructions", "nations"],
-  writePermissions: ["treasury", "constructions", "nations"],
-  rngAllowed: true,
-  footprint: {
-    reads: [PhaseResource.TREASURY, PhaseResource.CONSTRUCTIONS, PhaseResource.NATIONS],
-    writes: [PhaseResource.TREASURY, PhaseResource.CONSTRUCTIONS, PhaseResource.NATIONS],
-    usesRng: true,
+  permissions: {
+    reads: ["nations", "designs", "designFamilies", "world", "politics"],
+    writes: ["nations", "designs", "designFamilies"],
+    rng: true,
   },
-  run: (ctx) => {
-    runAppropriationPhase(ctx);
-    return { status: "continue" };
-  },
+  run: runAppropriationPhase,
 };
 
-export const maintenancePhase: PhaseDescriptor = {
+export const maintenancePhase: MonthPhase = {
   id: "maintenance",
   name: "Maintenance",
-  order: 40,
-  readPermissions: ["treasury", "fleets", "wars"],
-  writePermissions: ["treasury", "fleets"],
-  rngAllowed: false,
-  footprint: {
-    reads: [PhaseResource.TREASURY, PhaseResource.FLEETS, PhaseResource.WARS],
-    writes: [PhaseResource.TREASURY, PhaseResource.FLEETS],
-    usesRng: false,
-  },
-  run: (ctx) => {
-    runMaintenancePhase(ctx);
-    return { status: "continue" };
-  },
+  permissions: { reads: ["nations", "wars"], writes: ["nations"], rng: false },
+  run: runMaintenancePhase,
 };
 
-export const obligationPhase: PhaseDescriptor = {
+export const obligationPhase: MonthPhase = {
   id: "obligation",
   name: "Obligation",
-  order: 50,
-  readPermissions: ["treasury", "nations"],
-  writePermissions: ["treasury", "nations"],
-  rngAllowed: false,
-  footprint: {
-    reads: [PhaseResource.TREASURY, PhaseResource.NATIONS],
-    writes: [PhaseResource.TREASURY, PhaseResource.NATIONS],
-    usesRng: false,
+  permissions: {
+    reads: ["nations", "prestigeRules", "rulesetVersion"],
+    writes: ["nations"],
+    rng: false,
   },
-  run: (ctx) => {
-    runObligationPhase(ctx);
-    return { status: "continue" };
-  },
+  run: runObligationPhase,
 };

@@ -15,7 +15,7 @@ import type {
 import type { SafeInt } from "@bluewave/contracts";
 import type { DomainEventEnvelope } from "@bluewave/events";
 import { shipReadinessChangedEvent, shipStationAssignmentChangedEvent } from "./events.js";
-import type { MonthContext } from "./monthContext.js";
+import type { PhaseContext } from "./pipeline.js";
 
 const NO_ASSIGNMENT = "NONE";
 
@@ -82,13 +82,13 @@ export function transitionShipReadiness(
   });
 }
 
-export function applyStationAssignmentCommand(ctx: MonthContext, body: CommandBody): boolean {
+export function applyStationAssignmentCommand(ctx: PhaseContext, body: CommandBody): boolean {
   if (body["type"] !== "AssignForeignStation" && body["type"] !== "ClearForeignStation") {
     return false;
   }
   const command = body as AssignForeignStationCommand | ClearForeignStationCommand;
   const intent = body["type"] === "AssignForeignStation" ? "assign" : "clear";
-  const nation = ctx.currentSnapshot["nations"].get(command["nationId"]);
+  const nation = ctx.snapshot.current["nations"].get(command["nationId"]);
   if (nation === undefined) {
     ctx.collector.addError("NATION_NOT_FOUND", `Nation ${command["nationId"]} not found`, {
       stage: "command-collection",
@@ -115,7 +115,7 @@ export function applyStationAssignmentCommand(ctx: MonthContext, body: CommandBo
   const to = intent === "assign" ? "FOREIGN_STATION" : NO_ASSIGNMENT;
   const reason = intent === "assign" ? STATION_ASSIGNED_REASON : STATION_CLEARED_BY_COMMAND_REASON;
   for (const shipId of [...command["shipIds"]].sort()) {
-    ctx.currentSnapshot = mapShip(ctx.currentSnapshot, command["nationId"], shipId, (ship) =>
+    ctx.snapshot.current = mapShip(ctx.snapshot.current, command["nationId"], shipId, (ship) =>
       withStationAssignment(ship, intent),
     );
     ctx.eventLedger.append(

@@ -4,7 +4,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { RandomEngine } from "@bluewave/random";
 import { resolveShipStrength } from "./battles.js";
 import { OFFERED_MISSION_TYPES } from "./battleOffer.js";
-import type { MonthContext } from "./monthContext.js";
+import type { PhaseContext } from "./pipeline.js";
 
 export type GeneratedManifest = BattleGenerationResult["manifests"][number];
 
@@ -32,7 +32,7 @@ export function committedStrength(
 }
 
 export function drawAndRecord<Classification extends { outcome: string; reasonCode: string }>(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   engine: RandomEngine,
   step: {
     readonly streamId: string;
@@ -48,7 +48,7 @@ export function drawAndRecord<Classification extends { outcome: string; reasonCo
     streamId: step.streamId,
     entityKey: step.battleId,
     phase: "battle_generation",
-    rulesetVersion: ctx.currentSnapshot["rulesetVersion"],
+    rulesetVersion: ctx.snapshot.read("rulesetVersion"),
     inputHash: sha256Hex(canonicalSerialize(step.inputs)),
     draw,
     outcome: classification.outcome,

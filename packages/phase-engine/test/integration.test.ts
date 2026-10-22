@@ -5,7 +5,7 @@ import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/cam
 import { CampaignCompiler } from "@bluewave/campaign/compiler";
 import type { BudgetProjectCommand, CommandEnvelope } from "@bluewave/commands";
 import { CommandIdempotencyMap, CommandLifecycle } from "@bluewave/commands";
-import { SafeInt } from "@bluewave/contracts";
+import { SafeInt, type TurnPhase } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
@@ -15,7 +15,12 @@ import {
   nationsYaml,
 } from "@bluewave/test-support";
 import { afterAll, beforeAll, describe, expect, it } from "vite-plus/test";
-import { MonthExecutor, PhaseRegistry, ReplayVerifier } from "../src/index.js";
+import {
+  MonthExecutor,
+  monthPipeline,
+  ReplayVerifier,
+  type PhasePermissions,
+} from "../src/index.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 const FIXTURE = {
@@ -536,15 +541,9 @@ describe("Full-slice integration", () => {
     expect(hash1).toBe(hash2);
   });
 
-  it("12. Phase order, aggregate ownership, and permitted RNG families enforced", () => {
-    const phases = PhaseRegistry.all;
-
-    for (let i = 0; i < phases.length - 1; i++) {
-      expect(phases[i]!.order).toBeLessThan(phases[i + 1]!.order);
-    }
-
-    const rngPhases = phases.filter((p) => p.rngAllowed);
-    expect(rngPhases.map((p) => p.id).sort()).toEqual([
+  it("12. Permitted RNG families and aggregate ownership are declared once", () => {
+    const rngPhases = monthPipeline.nodes.filter((node) => node.permissions.rng);
+    expect(rngPhases.map((node) => node.id).sort()).toEqual([
       "ai_planning",
       "ai_procurement",
       "appropriation",
@@ -556,20 +555,21 @@ describe("Full-slice integration", () => {
       "weather_generation",
     ]);
 
-    const openingPhase = PhaseRegistry.getByOrder(0)!;
-    expect(openingPhase.rngAllowed).toBe(false);
-    expect(openingPhase.writePermissions).toEqual([]);
+    const openingPhase = monthPipeline.nodes.find((node) => node.id === "opening_validation")!;
+    expect(openingPhase.permissions.rng).toBe(false);
+    expect(openingPhase.permissions.writes).toEqual([]);
 
-    const commandCollectPhase = PhaseRegistry.getByOrder(15)!;
-    expect(commandCollectPhase.id).toBe("command_collection");
-    expect(commandCollectPhase.rngAllowed).toBe(false);
+    const commandCollectPhase = monthPipeline.nodes.find(
+      (node) => node.id === "command_collection",
+    )!;
+    expect(commandCollectPhase.permissions.rng).toBe(false);
   });
 
   it("13. A phase that writes a resource it lacks permission for fails closed with a diagnostic", () => {
     const executor = new MonthExecutor();
     const collector = new DiagnosticCollector();
-    const overrides = new Map([
-      ["monthly_revenue", { ...PhaseRegistry.getById("monthly_revenue")!, writePermissions: [] }],
+    const overrides = new Map<TurnPhase, PhasePermissions>([
+      ["monthly_revenue", { reads: "all", writes: [], rng: false }],
     ]);
 
     const result = executor.execute(snapshot, [], "seed", collector, undefined, {
@@ -585,16 +585,8 @@ describe("Full-slice integration", () => {
   it("13b. A phase whose registry denies randomness fails closed at runtime", () => {
     const executor = new MonthExecutor();
     const collector = new DiagnosticCollector();
-    const overrides = new Map([
-      [
-        "resolve_research",
-        {
-          ...PhaseRegistry.getById("resolve_research")!,
-          readPermissions: ["research", "treasury"],
-          writePermissions: ["research", "treasury"],
-          rngAllowed: false,
-        },
-      ],
+    const overrides = new Map<TurnPhase, PhasePermissions>([
+      ["resolve_research", { reads: ["nations", "world"], writes: ["nations"], rng: false }],
     ]);
 
     const result = executor.execute(snapshot, [], "seed", collector, undefined, {

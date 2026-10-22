@@ -409,14 +409,14 @@
     },
     {
       "id": "phase-engine-infrastructure",
-      "player_verb": "Errors, ledger, phase guard, registry and replay verification",
+      "player_verb": "Errors, ledger, month pipeline and replay verification",
       "status": "internal",
       "engine_package": "phase-engine",
       "engine_modules": [
         "errors",
         "financial-ledger",
-        "phase-guard",
-        "registry",
+        "phases",
+        "pipeline",
         "replay",
         "tacticalReplay"
       ],

@@ -22,43 +22,38 @@ import { applySupportForces } from "./supportForce.js";
 import { buildOfferContent, offeredManifestFor } from "./battleOffer.js";
 import { battleOfferAnsweredEvent } from "./events.js";
 import { applyRecordedBattleResult, consumeBattleResult, consumeOffer } from "./interruption.js";
-import { runForeignStationDeploymentStep } from "./foreignStationDeployment.js";
-import { runPresenceMeasurementStep } from "./presenceMeasurement.js";
-import { runBaseLimitStep } from "./baseLimits.js";
-import type { MonthContext } from "./monthContext.js";
-import type { PhaseDescriptor } from "./registry.js";
-import { PhaseResource } from "./phase-resource.js";
+import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 
 type AutoResolutionManifest = Parameters<typeof resolve>[0]["manifest"];
 
-export function runBattleGenerationPhase(ctx: MonthContext): void {
-  const { campaignMonth, randomSeed } = ctx;
+export function runBattleGenerationPhase(ctx: PhaseContext): PhaseRunOutcome {
+  const { campaignMonth } = ctx;
 
-  const hadWars = (ctx.currentSnapshot["wars"]["wars"] ?? []).some(
+  const hadWars = (ctx.snapshot.read("wars")["wars"] ?? []).some(
     (w) => w["status"] === "ACTIVE" || w["status"] === "DECLARED_NOT_ACTIVE",
   );
-  if (!hadWars) return;
+  if (!hadWars) return { status: "continue" };
 
   const generated = generate({
-    snapshot: ctx.currentSnapshot,
+    snapshot: ctx.snapshot.current,
     campaignMonth,
-    campaignSeed: randomSeed,
+    campaignSeed: ctx.rng.seed(),
     rngVersion: "1",
     formulaVersion: "1",
-    rulesetVersion: ctx.currentSnapshot["rulesetVersion"],
+    rulesetVersion: ctx.snapshot.current["rulesetVersion"],
     contentVersion: "0.1.0",
-    resolveStrength: (shipId) => resolveShipStrength(ctx.currentSnapshot, shipId),
+    resolveStrength: (shipId) => resolveShipStrength(ctx.snapshot.current, shipId),
     resolveShipType: resolveGenerationShipType,
-    resolveReadiness: (shipId) => resolveCampaignBattleReadiness(ctx.currentSnapshot, shipId),
+    resolveReadiness: (shipId) => resolveCampaignBattleReadiness(ctx.snapshot.current, shipId),
   });
 
   const surviving = applyEnemyDeclines(ctx, generated);
   const generationResult = applySupportForces(ctx, surviving);
 
-  if (generationResult.battleIds.length === 0) return;
+  if (generationResult.battleIds.length === 0) return { status: "continue" };
 
   const fleetsInArea = (nationId: string, areaId: string): string[] => {
-    const nation = ctx.currentSnapshot["nations"].get(nationId);
+    const nation = ctx.snapshot.current["nations"].get(nationId);
     if (!nation) return [];
     return nation["fleets"].filter((f) => f["locationAreaId"] === areaId).map((f) => f["id"]);
   };
@@ -81,7 +76,7 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
 
   const reservedShipIds = new Set(generationResult.manifests.flatMap((m) => m["persistentAssets"]));
   const updatedNations = new Map<string, NationState>();
-  for (const [nid, nation] of ctx.currentSnapshot["nations"]) {
+  for (const [nid, nation] of ctx.snapshot.current["nations"]) {
     if (reservedShipIds.size === 0) {
       updatedNations.set(nid, nation);
       continue;
@@ -95,45 +90,47 @@ export function runBattleGenerationPhase(ctx: MonthContext): void {
     updatedNations.set(nid, { ...nation, fleets });
   }
 
-  ctx.currentSnapshot = {
-    ...ctx.currentSnapshot,
+  ctx.snapshot.current = {
+    ...ctx.snapshot.current,
     nations: updatedNations,
     wars: {
-      ...ctx.currentSnapshot["wars"],
+      ...ctx.snapshot.current["wars"],
       battleManifests: [
-        ...(ctx.currentSnapshot["wars"]["battleManifests"] ?? []),
+        ...(ctx.snapshot.current["wars"]["battleManifests"] ?? []),
         ...generationResult.manifests,
       ],
-      battles: [...ctx.currentSnapshot["wars"]["battles"], ...newBattles],
+      battles: [...ctx.snapshot.current["wars"]["battles"], ...newBattles],
     },
   };
+  return { status: "continue" };
 }
 
-export function runBattleResolutionPhase(ctx: MonthContext): void {
-  const battles = ctx.currentSnapshot["wars"]["battles"].filter(
+export function runBattleResolutionPhase(ctx: PhaseContext): PhaseRunOutcome {
+  const battles = ctx.snapshot.current["wars"]["battles"].filter(
     (b) => b["phase"] === "pending" || b["phase"] === "resolving",
   );
-  if (battles.length === 0) return;
+  if (battles.length === 0) return { status: "continue" };
 
-  const randomEngine = ctx.phaseGuard.rng("battle_resolution", ctx.randomSeed)!;
+  const randomEngine = ctx.rng.engine();
   const resolver = new BattleResolver();
 
   for (const battle of battles) {
     resolveBattle(ctx, battle, resolver, randomEngine);
-    if (ctx.interruption?.suspended !== undefined) return;
+    if (ctx.interruption?.suspended !== undefined) return { status: "finish", success: true };
   }
+  return { status: "continue" };
 }
 
 function resolveViaLegacyPath(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   battle: BattleInstance,
   attacker: NationState,
   defender: NationState,
   randomEngine: RandomEngine,
   resolver: BattleResolver,
 ): void {
-  ctx.currentSnapshot = resolveLegacyBattle(
-    ctx.currentSnapshot,
+  ctx.snapshot.current = resolveLegacyBattle(
+    ctx.snapshot.current,
     battle,
     attacker,
     defender,
@@ -145,7 +142,7 @@ function resolveViaLegacyPath(
 }
 
 function resolveBattle(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   battle: BattleInstance,
   resolver: BattleResolver,
   randomEngine: RandomEngine,
@@ -157,10 +154,10 @@ function resolveBattle(
     ctx.playerNationId !== undefined &&
     ctx.battleOffers !== undefined
   ) {
-    const manifest = offeredManifestFor(ctx.currentSnapshot, battle, ctx.playerNationId);
+    const manifest = offeredManifestFor(ctx.snapshot.current, battle, ctx.playerNationId);
     if (manifest !== null) {
       const content = buildOfferContent({
-        snapshot: ctx.currentSnapshot,
+        snapshot: ctx.snapshot.current,
         battle,
         manifest,
         playerNationId: ctx.playerNationId,
@@ -212,8 +209,8 @@ function resolveBattle(
     }
   }
 
-  const attacker = ctx.currentSnapshot["nations"].get(battle["attackerId"]);
-  const defender = ctx.currentSnapshot["nations"].get(battle["defenderId"]);
+  const attacker = ctx.snapshot.current["nations"].get(battle["attackerId"]);
+  const defender = ctx.snapshot.current["nations"].get(battle["defenderId"]);
   if (!attacker || !defender) {
     collector.addError("BATTLE_NATION_MISSING", `Nation not found for battle ${battle["id"]}`, {
       stage: "battle-resolution",
@@ -221,7 +218,7 @@ function resolveBattle(
     return;
   }
 
-  const manifest = resolveBattleManifest(ctx.currentSnapshot, battle);
+  const manifest = resolveBattleManifest(ctx.snapshot.current, battle);
   const hasManifestHash = battle["manifestHash"] !== undefined;
 
   if (!hasManifestHash || manifest === null) {
@@ -237,7 +234,7 @@ function resolveBattle(
     return;
   }
 
-  const strategicWeather = ctx.currentSnapshot["strategicWeather"].find(
+  const strategicWeather = ctx.snapshot.current["strategicWeather"].find(
     (s) => s["areaId"] === battle["areaId"],
   );
   if (!strategicWeather) {
@@ -263,7 +260,7 @@ function resolveBattle(
 }
 
 function resolveViaTacticalAuto(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   battle: BattleInstance,
   attacker: NationState,
   defender: NationState,
@@ -272,7 +269,7 @@ function resolveViaTacticalAuto(
   randomEngine: RandomEngine,
   resolver: BattleResolver,
 ): void {
-  const { campaignMonth, collector, randomSeed, randomLedger } = ctx;
+  const { campaignMonth, collector, randomLedger } = ctx;
 
   try {
     const autoResult = resolve({
@@ -283,28 +280,28 @@ function resolveViaTacticalAuto(
       attacker: {
         nationId: attacker["id"],
         ships: attacker["fleets"].flatMap((f) => f["ships"]),
-        designs: ctx.currentSnapshot["designs"],
+        designs: ctx.snapshot.current["designs"],
         divisions: attacker["divisions"],
         officers: attacker["officers"],
       },
       defender: {
         nationId: defender["id"],
         ships: defender["fleets"].flatMap((f) => f["ships"]),
-        designs: ctx.currentSnapshot["designs"],
+        designs: ctx.snapshot.current["designs"],
         divisions: defender["divisions"],
         officers: defender["officers"],
       },
       strategicWeather,
-      campaignSeed: randomSeed,
-      rulesetVersion: ctx.currentSnapshot["rulesetVersion"],
+      campaignSeed: ctx.rng.seed(),
+      rulesetVersion: ctx.snapshot.current["rulesetVersion"],
       formulaVersion: manifest["formulaVersion"],
       rngVersion: manifest["rngVersion"],
       randomLedger,
     });
 
     if (autoResult.winnerId !== null && autoResult.loserId !== null) {
-      ctx.currentSnapshot = applyBattleResult(
-        ctx.currentSnapshot,
+      ctx.snapshot.current = applyBattleResult(
+        ctx.snapshot.current,
         battle,
         {
           winnerId: autoResult.winnerId,
@@ -316,10 +313,10 @@ function resolveViaTacticalAuto(
       );
     }
 
-    const lostShips = collectLostShips(ctx.currentSnapshot, battle, autoResult, campaignMonth);
-    ctx.currentSnapshot = applyBattleConsequences(ctx.currentSnapshot, battle, autoResult);
-    ctx.currentSnapshot = recordResolvedBattle(
-      ctx.currentSnapshot,
+    const lostShips = collectLostShips(ctx.snapshot.current, battle, autoResult, campaignMonth);
+    ctx.snapshot.current = applyBattleConsequences(ctx.snapshot.current, battle, autoResult);
+    ctx.snapshot.current = recordResolvedBattle(
+      ctx.snapshot.current,
       battle,
       toCampaignBattleResult(autoResult, lostShips),
     );
@@ -338,49 +335,16 @@ function resolveViaTacticalAuto(
   }
 }
 
-export const battleGenerationPhase: PhaseDescriptor = {
+export const battleGenerationPhase: MonthPhase = {
   id: "battle_generation",
   name: "Battle Generation",
-  order: 75,
-  readPermissions: ["wars", "fleets", "politics", "nations"],
-  writePermissions: ["wars", "nations"],
-  rngAllowed: true,
-  footprint: {
-    reads: [PhaseResource.WARS, PhaseResource.FLEETS, PhaseResource.NATIONS],
-    writes: [PhaseResource.WARS, PhaseResource.NATIONS],
-    usesRng: true,
-  },
-  run: (ctx) => {
-    runBattleGenerationPhase(ctx);
-    return { status: "continue" };
-  },
+  permissions: { reads: "all", writes: ["nations", "wars"], rng: true },
+  run: runBattleGenerationPhase,
 };
 
-export const battleResolutionPhase: PhaseDescriptor = {
+export const battleResolutionPhase: MonthPhase = {
   id: "battle_resolution",
   name: "Battle Resolution",
-  order: 80,
-  readPermissions: ["wars", "fleets", "nations", "strategicWeather", "designs"],
-  writePermissions: ["wars", "fleets", "nations"],
-  rngAllowed: true,
-  footprint: {
-    reads: [
-      PhaseResource.WARS,
-      PhaseResource.FLEETS,
-      PhaseResource.NATIONS,
-      PhaseResource.STRATEGIC_WEATHER,
-      PhaseResource.DESIGNS,
-    ],
-    writes: [PhaseResource.WARS, PhaseResource.FLEETS, PhaseResource.NATIONS],
-    usesRng: true,
-  },
-  run: (ctx) => {
-    runBattleResolutionPhase(ctx);
-    if (ctx.interruption?.suspended !== undefined) {
-      return { status: "finish", success: true };
-    }
-    runForeignStationDeploymentStep(ctx, runPresenceMeasurementStep(ctx));
-    runBaseLimitStep(ctx);
-    return { status: "continue" };
-  },
+  permissions: { reads: "all", writes: ["nations", "wars", "politics"], rng: true },
+  run: runBattleResolutionPhase,
 };

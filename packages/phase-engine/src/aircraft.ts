@@ -13,17 +13,16 @@ import {
   type AircraftRecord,
 } from "@bluewave/combat/aircraft";
 import type { RandomStream } from "@bluewave/random";
-import type { PhaseDescriptor } from "./registry.js";
-import { PhaseResource } from "./phase-resource.js";
+import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 
 export interface AircraftDevelopmentPhaseInput {
-  snapshot: CampaignSnapshot;
+  nations: CampaignSnapshot["nations"];
   campaignMonth: string;
   rngStream: RandomStream;
 }
 
 export interface AircraftDevelopmentPhaseOutput {
-  snapshot: CampaignSnapshot;
+  nations: CampaignSnapshot["nations"];
   records: AircraftRecord[];
 }
 
@@ -152,16 +151,16 @@ function processAircraftNation(
 export function resolveAircraftDevelopment(
   input: AircraftDevelopmentPhaseInput,
 ): AircraftDevelopmentPhaseOutput {
-  const { snapshot, campaignMonth, rngStream } = input;
+  const { nations, campaignMonth, rngStream } = input;
   const records: AircraftRecord[] = [];
   const updatedNations = new Map<string, NationState>();
 
-  const hasAnyAviation = [...snapshot["nations"].values()].some((n) => hasAviationTech(n));
+  const hasAnyAviation = [...nations.values()].some((n) => hasAviationTech(n));
   if (!hasAnyAviation) {
-    return { snapshot, records: [] };
+    return { nations, records: [] };
   }
 
-  for (const [nationId, nation] of snapshot["nations"]) {
+  for (const [nationId, nation] of nations) {
     if (!nation["isPlayable"] && !nation["isAI"]) {
       updatedNations.set(nationId, nation);
       continue;
@@ -171,34 +170,23 @@ export function resolveAircraftDevelopment(
     records.push(...result.records);
   }
 
-  return {
-    snapshot: { ...snapshot, nations: updatedNations },
-    records,
-  };
+  return { nations: updatedNations, records };
 }
 
-export const aircraftDevelopmentPhase: PhaseDescriptor = {
+export function runAircraftDevelopmentPhase(ctx: PhaseContext): PhaseRunOutcome {
+  const nations = ctx.snapshot.read("nations");
+  const result = resolveAircraftDevelopment({
+    nations,
+    campaignMonth: ctx.campaignMonth,
+    rngStream: ctx.rng.engine().stream("aircraft/development"),
+  });
+  if (result.nations !== nations) ctx.snapshot.write("nations", result.nations);
+  return { status: "continue" };
+}
+
+export const aircraftDevelopmentPhase: MonthPhase = {
   id: "resolve_aircraft_development",
   name: "Aircraft Development Resolution",
-  order: 72,
-  readPermissions: ["nations", "treasury", "research"],
-  writePermissions: ["nations"],
-  rngAllowed: true,
-  footprint: {
-    reads: [PhaseResource.NATIONS, PhaseResource.TREASURY, PhaseResource.RESEARCH],
-    writes: [PhaseResource.NATIONS],
-    usesRng: true,
-  },
-  run: (ctx) => {
-    const aircraftRng = ctx.phaseGuard.rng("resolve_aircraft_development", ctx.randomSeed);
-    if (aircraftRng) {
-      const result = resolveAircraftDevelopment({
-        snapshot: ctx.currentSnapshot,
-        campaignMonth: ctx.campaignMonth,
-        rngStream: aircraftRng.stream("aircraft/development"),
-      });
-      ctx.currentSnapshot = result.snapshot;
-    }
-    return { status: "continue" };
-  },
+  permissions: { reads: ["nations"], writes: ["nations"], rng: true },
+  run: runAircraftDevelopmentPhase,
 };

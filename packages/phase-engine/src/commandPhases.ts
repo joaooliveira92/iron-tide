@@ -50,18 +50,16 @@ import {
   applySetNap,
   applySetRelation,
 } from "./diplomacy.js";
-import type { MonthContext } from "./monthContext.js";
-import type { PhaseDescriptor } from "./registry.js";
-import { PhaseResource } from "./phase-resource.js";
+import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { applyReviseProject } from "./reviseProject.js";
 import { applyStartRebuild } from "./startRebuild.js";
 import { applyStationAssignmentCommand } from "./stationAssignment.js";
 import { applyCancelConstructionProject } from "./cancelConstructionProject.js";
 import { constructionProjectCancelledEvent } from "./events.js";
 
-export function runCommandCollectionPhase(ctx: MonthContext): void {
+export function runCommandCollectionPhase(ctx: PhaseContext): PhaseRunOutcome {
   const slot = ctx.slots[0];
-  if (!slot) return;
+  if (!slot) return { status: "continue" };
 
   for (const cmd of ctx.commands) {
     const outcome = ctx.lifecycle.process(
@@ -75,9 +73,10 @@ export function runCommandCollectionPhase(ctx: MonthContext): void {
     if (outcome["type"] !== "success") continue;
     applyPlayerCommand(ctx, cmd["body"], cmd["commandId"]);
   }
+  return { status: "continue" };
 }
 
-function applyPlayerCommand(ctx: MonthContext, body: CommandBody, commandId: string): void {
+function applyPlayerCommand(ctx: PhaseContext, body: CommandBody, commandId: string): void {
   if (applyAdministrativeCommand(ctx, body)) return;
   if (applyDiplomacyCommand(ctx, body)) return;
   if (applyDivisionCommand(ctx, body)) return;
@@ -85,13 +84,13 @@ function applyPlayerCommand(ctx: MonthContext, body: CommandBody, commandId: str
   applyConstructionCommand(ctx, body, commandId);
 }
 
-function applyAdministrativeCommand(ctx: MonthContext, body: CommandBody): boolean {
+function applyAdministrativeCommand(ctx: PhaseContext, body: CommandBody): boolean {
   const { campaignMonth, collector } = ctx;
 
   if (body["type"] === "SetResearchPriority") {
     const priorityBody = body as SetResearchPriorityCommand;
-    ctx.currentSnapshot = applySetResearchPriority(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applySetResearchPriority(
+      ctx.snapshot.current,
       priorityBody["nationId"],
       priorityBody["fieldPriorities"],
       collector,
@@ -100,8 +99,8 @@ function applyAdministrativeCommand(ctx: MonthContext, body: CommandBody): boole
   }
 
   if (body["type"] === "AssignOfficer" || body["type"] === "RelieveOfficer") {
-    ctx.currentSnapshot = applyOfficerCommand(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applyOfficerCommand(
+      ctx.snapshot.current,
       body as AssignOfficerCommand | RelieveOfficerCommand,
       campaignMonth,
       collector,
@@ -110,8 +109,8 @@ function applyAdministrativeCommand(ctx: MonthContext, body: CommandBody): boole
   }
 
   if (body["type"] === "SubmitDesign") {
-    ctx.currentSnapshot = applySubmitDesign(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applySubmitDesign(
+      ctx.snapshot.current,
       body as SubmitDesignCommand,
       ctx.engineOptions?.shipBuilding,
       campaignMonth,
@@ -121,8 +120,8 @@ function applyAdministrativeCommand(ctx: MonthContext, body: CommandBody): boole
   }
 
   if (body["type"] === "ReviseProject") {
-    ctx.currentSnapshot = applyReviseProject(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applyReviseProject(
+      ctx.snapshot.current,
       body as ReviseProjectCommand,
       ctx.engineOptions?.shipBuilding,
       campaignMonth,
@@ -132,8 +131,8 @@ function applyAdministrativeCommand(ctx: MonthContext, body: CommandBody): boole
   }
 
   if (body["type"] === "StartRebuild") {
-    ctx.currentSnapshot = applyStartRebuild(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applyStartRebuild(
+      ctx.snapshot.current,
       body as StartRebuildCommand,
       ctx.engineOptions?.shipBuilding,
       campaignMonth,
@@ -143,13 +142,17 @@ function applyAdministrativeCommand(ctx: MonthContext, body: CommandBody): boole
   }
 
   if (body["type"] === "MoveFleet") {
-    ctx.currentSnapshot = applyMoveFleet(ctx.currentSnapshot, body as MoveFleetCommand, collector);
+    ctx.snapshot.current = applyMoveFleet(
+      ctx.snapshot.current,
+      body as MoveFleetCommand,
+      collector,
+    );
     return true;
   }
 
   if (body["type"] === "SetBudgetAllocation") {
-    ctx.currentSnapshot = applySetBudgetAllocation(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applySetBudgetAllocation(
+      ctx.snapshot.current,
       body as SetBudgetAllocationCommand,
       collector,
     );
@@ -159,12 +162,12 @@ function applyAdministrativeCommand(ctx: MonthContext, body: CommandBody): boole
   return false;
 }
 
-function applyDiplomacyCommand(ctx: MonthContext, body: CommandBody): boolean {
+function applyDiplomacyCommand(ctx: PhaseContext, body: CommandBody): boolean {
   const { campaignMonth } = ctx;
 
   if (body["type"] === "DeclareWar") {
-    ctx.currentSnapshot = applyDeclareWar(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applyDeclareWar(
+      ctx.snapshot.current,
       body as DeclareWarCommand,
       campaignMonth,
     );
@@ -172,8 +175,8 @@ function applyDiplomacyCommand(ctx: MonthContext, body: CommandBody): boolean {
   }
 
   if (body["type"] === "AcceptPeace") {
-    ctx.currentSnapshot = applyAcceptPeace(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applyAcceptPeace(
+      ctx.snapshot.current,
       body as AcceptPeaceCommand,
       campaignMonth,
     );
@@ -181,8 +184,8 @@ function applyDiplomacyCommand(ctx: MonthContext, body: CommandBody): boolean {
   }
 
   if (body["type"] === "FormAlliance") {
-    ctx.currentSnapshot = applySetRelation(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applySetRelation(
+      ctx.snapshot.current,
       (body as FormAllianceCommand)["nationId"],
       (body as FormAllianceCommand)["partnerNationId"],
       "allied",
@@ -192,8 +195,8 @@ function applyDiplomacyCommand(ctx: MonthContext, body: CommandBody): boolean {
   }
 
   if (body["type"] === "BreakAlliance") {
-    ctx.currentSnapshot = applySetRelation(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applySetRelation(
+      ctx.snapshot.current,
       (body as BreakAllianceCommand)["nationId"],
       (body as BreakAllianceCommand)["partnerNationId"],
       "neutral",
@@ -203,8 +206,8 @@ function applyDiplomacyCommand(ctx: MonthContext, body: CommandBody): boolean {
   }
 
   if (body["type"] === "FormNonAggressionPact") {
-    ctx.currentSnapshot = applySetNap(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applySetNap(
+      ctx.snapshot.current,
       (body as FormNonAggressionPactCommand)["nationId"],
       (body as FormNonAggressionPactCommand)["partnerNationId"],
       true,
@@ -213,8 +216,8 @@ function applyDiplomacyCommand(ctx: MonthContext, body: CommandBody): boolean {
   }
 
   if (body["type"] === "BreakNonAggressionPact") {
-    ctx.currentSnapshot = applySetNap(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applySetNap(
+      ctx.snapshot.current,
       (body as BreakNonAggressionPactCommand)["nationId"],
       (body as BreakNonAggressionPactCommand)["partnerNationId"],
       false,
@@ -223,8 +226,8 @@ function applyDiplomacyCommand(ctx: MonthContext, body: CommandBody): boolean {
   }
 
   if (body["type"] === "DeclareBlockade") {
-    ctx.currentSnapshot = applyDeclareBlockade(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applyDeclareBlockade(
+      ctx.snapshot.current,
       body as DeclareBlockadeCommand,
       campaignMonth,
     );
@@ -234,7 +237,7 @@ function applyDiplomacyCommand(ctx: MonthContext, body: CommandBody): boolean {
   return false;
 }
 
-function applyDivisionCommand(ctx: MonthContext, body: CommandBody): boolean {
+function applyDivisionCommand(ctx: PhaseContext, body: CommandBody): boolean {
   if (
     body["type"] === "CreateDivision" ||
     body["type"] === "AddShipToDivision" ||
@@ -243,8 +246,8 @@ function applyDivisionCommand(ctx: MonthContext, body: CommandBody): boolean {
     body["type"] === "ChangeDivisionFlagship" ||
     body["type"] === "ReorderDivisionShips"
   ) {
-    ctx.currentSnapshot = applyDivisionCommandMonth(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applyDivisionCommandMonth(
+      ctx.snapshot.current,
       body,
       ctx.campaignMonth,
       ctx.collector,
@@ -254,12 +257,12 @@ function applyDivisionCommand(ctx: MonthContext, body: CommandBody): boolean {
   return false;
 }
 
-function applyConstructionCommand(ctx: MonthContext, body: CommandBody, commandId: string): void {
+function applyConstructionCommand(ctx: PhaseContext, body: CommandBody, commandId: string): void {
   const { campaignMonth, turnNumber, financialLedger, eventLedger, collector } = ctx;
 
   if (body["type"] === "OrderConstruction") {
-    ctx.currentSnapshot = applyOrderConstruction(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applyOrderConstruction(
+      ctx.snapshot.current,
       body as OrderConstructionCommand,
       commandId,
       ctx.engineOptions?.shipBuilding,
@@ -270,8 +273,8 @@ function applyConstructionCommand(ctx: MonthContext, body: CommandBody, commandI
   }
 
   if (body["type"] === "AuthorizeDockExpansion") {
-    ctx.currentSnapshot = applyAuthorizeDockExpansion(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applyAuthorizeDockExpansion(
+      ctx.snapshot.current,
       body as AuthorizeDockExpansionCommand,
       campaignMonth,
       collector,
@@ -280,8 +283,8 @@ function applyConstructionCommand(ctx: MonthContext, body: CommandBody, commandI
   }
 
   if (body["type"] === "OrderForeignConstruction") {
-    ctx.currentSnapshot = applyOrderForeignConstruction(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applyOrderForeignConstruction(
+      ctx.snapshot.current,
       body as OrderForeignConstructionCommand,
       commandId,
       ctx.engineOptions?.shipBuilding,
@@ -292,8 +295,8 @@ function applyConstructionCommand(ctx: MonthContext, body: CommandBody, commandI
   }
 
   if (body["type"] === "HaltConstruction") {
-    ctx.currentSnapshot = applyHaltConstruction(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applyHaltConstruction(
+      ctx.snapshot.current,
       body as HaltConstructionCommand,
       collector,
     );
@@ -301,8 +304,8 @@ function applyConstructionCommand(ctx: MonthContext, body: CommandBody, commandI
   }
 
   if (body["type"] === "ResumeConstruction") {
-    ctx.currentSnapshot = applyResumeConstruction(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applyResumeConstruction(
+      ctx.snapshot.current,
       body as ResumeConstructionCommand,
       collector,
     );
@@ -310,8 +313,8 @@ function applyConstructionCommand(ctx: MonthContext, body: CommandBody, commandI
   }
 
   if (body["type"] === "SetAcceleration") {
-    ctx.currentSnapshot = applySetAcceleration(
-      ctx.currentSnapshot,
+    ctx.snapshot.current = applySetAcceleration(
+      ctx.snapshot.current,
       body as SetAccelerationCommand,
       collector,
     );
@@ -320,11 +323,11 @@ function applyConstructionCommand(ctx: MonthContext, body: CommandBody, commandI
 
   if (body["type"] === "CancelConstructionProject") {
     const outcome = applyCancelConstructionProject(
-      ctx.currentSnapshot,
+      ctx.snapshot.current,
       body as CancelConstructionProjectCommand,
       collector,
     );
-    ctx.currentSnapshot = outcome.snapshot;
+    ctx.snapshot.current = outcome.snapshot;
     if (outcome.cancelled !== null && outcome.projectType !== null) {
       const settlement = outcome.cancelled;
       eventLedger.append(
@@ -352,7 +355,7 @@ function applyConstructionCommand(ctx: MonthContext, body: CommandBody, commandI
     return;
   }
 
-  const nation = ctx.currentSnapshot["nations"].get(body["nationId"]);
+  const nation = ctx.snapshot.current["nations"].get(body["nationId"]);
   if (!nation) {
     collector.addError("NATION_NOT_FOUND", `Nation ${body["nationId"]} not found`, {
       stage: "command-collection",
@@ -368,8 +371,8 @@ function applyConstructionCommand(ctx: MonthContext, body: CommandBody, commandI
     return;
   }
 
-  ctx.currentSnapshot = applyBudgetProject(
-    ctx.currentSnapshot,
+  ctx.snapshot.current = applyBudgetProject(
+    ctx.snapshot.current,
     body,
     campaignMonth,
     turnNumber,
@@ -380,12 +383,12 @@ function applyConstructionCommand(ctx: MonthContext, body: CommandBody, commandI
   );
 }
 
-export function runAiPlanningPhase(ctx: MonthContext): void {
+export function runAiPlanningPhase(ctx: PhaseContext): PhaseRunOutcome {
   const { campaignMonth, turnNumber, financialLedger, eventLedger, collector } = ctx;
 
   const idempotencyMap = new CommandIdempotencyMap();
   const aiExecutor = new AiPhaseExecutor();
-  const aiEngine = ctx.phaseGuard.rng("ai_planning", ctx.randomSeed)!;
+  const aiEngine = ctx.rng.engine();
   const shipBuilding = ctx.engineOptions?.shipBuilding;
   for (const slot of ctx.slots) {
     if (slot["type"] !== "ai") continue;
@@ -394,13 +397,13 @@ export function runAiPlanningPhase(ctx: MonthContext): void {
     const profile = shipBuilding?.navalProfileFor(nationId, ctx.campaignMonth) ?? null;
     if (profile !== null) {
       researchAllocation = {
-        ...researchPriorityAllocation(profile, {}, `${ctx.randomSeed}:research:${nationId}`)
+        ...researchPriorityAllocation(profile, {}, `${ctx.rng.seed()}:research:${nationId}`)
           .fieldPriorities,
       };
     }
     const { commands, diagnostics } = aiExecutor.run(
       slot,
-      ctx.currentSnapshot,
+      ctx.snapshot.current,
       aiEngine,
       ctx.lifecycle,
       idempotencyMap,
@@ -416,15 +419,15 @@ export function runAiPlanningPhase(ctx: MonthContext): void {
       const body = cmd["body"];
       if (body["type"] === "SetResearchPriority") {
         const priorityBody = body as SetResearchPriorityCommand;
-        ctx.currentSnapshot = applySetResearchPriority(
-          ctx.currentSnapshot,
+        ctx.snapshot.current = applySetResearchPriority(
+          ctx.snapshot.current,
           priorityBody["nationId"],
           priorityBody["fieldPriorities"],
           collector,
         );
       } else if (body["type"] === "budget_project") {
-        ctx.currentSnapshot = applyBudgetProject(
-          ctx.currentSnapshot,
+        ctx.snapshot.current = applyBudgetProject(
+          ctx.snapshot.current,
           body as BudgetProjectCommand,
           campaignMonth,
           turnNumber,
@@ -436,47 +439,23 @@ export function runAiPlanningPhase(ctx: MonthContext): void {
       }
     }
   }
+  return { status: "continue" };
 }
 
-export const commandCollectionPhase: PhaseDescriptor = {
+export const commandCollectionPhase: MonthPhase = {
   id: "command_collection",
   name: "Command Collection",
-  order: 15,
-  readPermissions: ["all"],
-  writePermissions: ["treasury", "constructions", "research", "wars", "politics", "fleets"],
-  rngAllowed: false,
-  footprint: {
-    reads: [PhaseResource.ALL],
-    writes: [
-      PhaseResource.TREASURY,
-      PhaseResource.CONSTRUCTIONS,
-      PhaseResource.RESEARCH,
-      PhaseResource.WARS,
-      PhaseResource.POLITICS,
-      PhaseResource.FLEETS,
-    ],
-    usesRng: false,
+  permissions: {
+    reads: "all",
+    writes: ["nations", "wars", "politics", "designs", "designFamilies"],
+    rng: false,
   },
-  run: (ctx) => {
-    runCommandCollectionPhase(ctx);
-    return { status: "continue" };
-  },
+  run: runCommandCollectionPhase,
 };
 
-export const aiPlanningPhase: PhaseDescriptor = {
+export const aiPlanningPhase: MonthPhase = {
   id: "ai_planning",
   name: "AI Planning",
-  order: 16,
-  readPermissions: ["nations", "constructions", "research", "treasury"],
-  writePermissions: ["research", "treasury", "constructions"],
-  rngAllowed: true,
-  footprint: {
-    reads: [PhaseResource.RESEARCH, PhaseResource.CONSTRUCTIONS, PhaseResource.TREASURY],
-    writes: [PhaseResource.RESEARCH, PhaseResource.TREASURY, PhaseResource.CONSTRUCTIONS],
-    usesRng: true,
-  },
-  run: (ctx) => {
-    runAiPlanningPhase(ctx);
-    return { status: "continue" };
-  },
+  permissions: { reads: "all", writes: ["nations"], rng: true },
+  run: runAiPlanningPhase,
 };

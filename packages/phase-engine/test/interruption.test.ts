@@ -14,8 +14,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   hashSnapshot,
   MonthExecutor,
-  PHASE_FOOTPRINTS,
-  PhaseRegistry,
+  monthPipeline,
   ReplayVerifier,
   type InterruptionChannel,
 } from "../src/index.js";
@@ -258,11 +257,13 @@ describe("month interruption seam", () => {
     expect(replayed.match).toBe(true);
   });
 
-  it("does not touch the phase registry or footprints", () => {
-    expect(PhaseRegistry.PHASES.some((p) => p.id.includes("interruption"))).toBe(false);
-    expect(Object.values(PHASE_FOOTPRINTS).some((f) => f.reads.includes("interruptions"))).toBe(
-      false,
-    );
+  it("runs interruptions through a checkpoint rather than a phase", () => {
+    expect(monthPipeline.phaseIds.some((id) => id.includes("interruption"))).toBe(false);
+    const nodes = monthPipeline.nodes;
+    const index = nodes.findIndex((node) => node.id === "interruption_checkpoint");
+    expect(nodes[index]?.kind).toBe("checkpoint");
+    expect(nodes[index - 1]?.id).toBe("resolve_carrier_operations");
+    expect(nodes[index + 1]?.id).toBe("battle_generation");
   });
 
   it("suspend() never repurposes the success flag", () => {

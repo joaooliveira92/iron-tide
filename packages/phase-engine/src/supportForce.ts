@@ -20,7 +20,7 @@ import {
   resolveGenerationShipType,
   resolveShipStrength,
 } from "./battles.js";
-import type { MonthContext } from "./monthContext.js";
+import type { PhaseContext } from "./pipeline.js";
 import {
   committedStrength,
   drawAndRecord,
@@ -60,18 +60,17 @@ function supportingNations(
 }
 
 export function applySupportForces(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   generated: BattleGenerationResult,
 ): BattleGenerationResult {
   const rules: BattleOfferRules | undefined = ctx.battleOffers;
   const playerNationId = ctx.playerNationId;
   if (rules === undefined || playerNationId === undefined || ctx.interruption === undefined)
     return generated;
-  const engine = ctx.phaseGuard.rng("battle_generation", ctx.randomSeed);
-  if (engine === null) return generated;
+  const engine = ctx.rng.engine();
 
   const rule = rules.supportForce;
-  const snapshot = ctx.currentSnapshot;
+  const snapshot = ctx.snapshot.current;
   const taken = new Set<string>(generated.manifests.flatMap((m) => m["persistentAssets"]));
   const manifests = [...generated.manifests];
   const records = [...generated.records];
@@ -144,7 +143,7 @@ export function applySupportForces(
     const assets = composition.map((c) => c.assetId);
     const next = withSupportForce(manifest, playerNationId, assets, nations, {
       rngVersion: manifest["rngVersion"],
-      campaignSeed: ctx.randomSeed,
+      campaignSeed: ctx.rng.seed(),
       campaignMonth: ctx.campaignMonth,
       battleGenerationFormulaVersion: GENERATION_SEED_FORMULA_VERSION,
     });

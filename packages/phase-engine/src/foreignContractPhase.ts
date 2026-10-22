@@ -35,8 +35,8 @@ import {
 import { researchCostLookup } from "./research.js";
 import { relationAndTension } from "./foreignTerms.js";
 import { nationalConstructionCapacity } from "./newConstructionCapacity.js";
-import type { MonthContext } from "./monthContext.js";
-import type { RandomEngine } from "@bluewave/random";
+import type { PhaseContext } from "./pipeline.js";
+import type { RandomEngine, RandomLedger } from "@bluewave/random";
 import {
   authorizeForeignImpoundment,
   foreignWarSettlementPostings,
@@ -72,17 +72,17 @@ export interface ForeignContractPhaseResult {
 }
 
 export function runForeignContractPhase(
-  ctx: MonthContext,
-  warRng: RandomEngine | null = null,
+  ctx: PhaseContext,
+  warRng: RandomEngine,
 ): ForeignContractPhaseResult {
   const shipBuilding = ctx.engineOptions?.shipBuilding;
   const campaignMonth = ctx.campaignMonth;
-  const nations = new Map(ctx.currentSnapshot["nations"]);
+  const nations = new Map(ctx.snapshot.read("nations"));
   const skip = new Map<string, ReadonlySet<string>>();
   const capabilityDelayed = new Set<string>();
   let changed = false;
 
-  for (const [nationId, nation0] of ctx.currentSnapshot["nations"]) {
+  for (const [nationId, nation0] of ctx.snapshot.read("nations")) {
     if (!nation0["isPlayable"] && !nation0["isAI"]) continue;
     const foreignProjects = nation0["constructionProjects"].filter(
       (p) => p["foreignContractId"] !== undefined,
@@ -103,7 +103,7 @@ export function runForeignContractPhase(
     let insightResearch: ResearchState = nation0["research"];
     const updatedById = new Map<string, ConstructionProject>();
     const skipIds = new Set<string>();
-    const snapshotNow = (): typeof ctx.currentSnapshot => ({ ...ctx.currentSnapshot, nations });
+    const snapshotNow = (): CampaignSnapshot => ctx.snapshot.view({ nations });
 
     for (const project0 of [...foreignProjects].sort((a, b) => byContractThenId(contracts, a, b))) {
       const contractId = project0["foreignContractId"]!;
@@ -146,7 +146,14 @@ export function runForeignContractPhase(
         continue;
       }
 
-      const war = foreignWarResolution(ctx, nationId, contract, campaignMonth, warRng);
+      const war = foreignWarResolution(
+        snapshotNow(),
+        nationId,
+        contract,
+        campaignMonth,
+        warRng,
+        ctx.randomLedger,
+      );
       if (war.outcome !== "CONTINUE") {
         const paidAmountUnits = paidAmountOf(contract, records.get(contractId) ?? []);
         const settlement = foreignWarSettlementPostings(contract, war.outcome, paidAmountUnits);
@@ -305,7 +312,7 @@ export function runForeignContractPhase(
       const settled = advanceForeignContractMonth(monthInput(paidDueMonths));
 
       const resumeStatus = constructionResumeTarget(
-        ctx.currentSnapshot["designs"].get(contract["designVersionId"]),
+        ctx.snapshot.read("designs").get(contract["designVersionId"]),
       ).status;
       let updated = applyForeignPaymentOutcome(project0, settled.payment, resumeStatus);
 
@@ -358,7 +365,7 @@ export function runForeignContractPhase(
             research: insightResearch,
             remainingRequirementFor: makeRemainingRequirementFor(
               insightResearch,
-              researchCostLookup(ctx.currentSnapshot),
+              researchCostLookup(snapshotNow()),
             ),
           });
           if (application.awards.length === 0) continue;
@@ -412,7 +419,7 @@ export function runForeignContractPhase(
     if (skipIds.size > 0) skip.set(nationId, skipIds);
   }
 
-  if (changed) ctx.currentSnapshot = { ...ctx.currentSnapshot, nations };
+  if (changed) ctx.snapshot.write("nations", nations);
   return { zeroWork: skip, capabilityDelayed };
 }
 
@@ -452,17 +459,14 @@ function availableBuilderCapacityKg(
 export { FOREIGN_BUILDER_CONDITIONS_SATISFIED };
 
 function foreignWarResolution(
-  ctx: MonthContext,
+  snapshot: CampaignSnapshot,
   orderingNationId: string,
   contract: ForeignConstructionContract,
   campaignMonth: string,
-  warRng: RandomEngine | null,
+  warRng: RandomEngine,
+  randomLedger: RandomLedger,
 ): ForeignWarPolicyResolution {
-  const rel = relationAndTension(
-    ctx.currentSnapshot,
-    orderingNationId,
-    contract["builderNationId"],
-  );
+  const rel = relationAndTension(snapshot, orderingNationId, contract["builderNationId"]);
   return resolveForeignWarPolicy({
     contract,
     campaignMonth,
@@ -473,8 +477,8 @@ function foreignWarResolution(
     embargo: false,
     coBelligerent: false,
     builderControllerHostile: false,
-    ...(warRng === null ? {} : { randomEngine: warRng }),
-    randomLedger: ctx.randomLedger,
+    randomEngine: warRng,
+    randomLedger,
   });
 }
 

@@ -3,7 +3,7 @@ import type { CommandBody, CommandEnvelope, CommandLedger } from "@bluewave/comm
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { MonthExecutor } from "./month.js";
-import type { MonthExecutorEngineOptions } from "./monthContext.js";
+import type { MonthExecutorEngineOptions } from "./pipeline.js";
 
 export interface ReplayStepResult {
   stepIndex: number;

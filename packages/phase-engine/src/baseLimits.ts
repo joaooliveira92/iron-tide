@@ -5,21 +5,20 @@ import {
   type Ship,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
-import type { MonthContext } from "./monthContext.js";
+import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 
-export function runBaseLimitStep(ctx: MonthContext): void {
+export function runBaseLimitPhase(ctx: PhaseContext): PhaseRunOutcome {
   const rules = ctx.engineOptions?.presence?.baseLimits;
-  if (rules === undefined) return;
+  if (rules === undefined) return { status: "continue" };
 
-  const over = new Set(
-    measureBaseLimits(ctx.currentSnapshot, rules).flatMap((row) => row.overShipIds),
-  );
+  const snapshot = ctx.snapshot.view();
+  const over = new Set(measureBaseLimits(snapshot, rules).flatMap((row) => row.overShipIds));
   const flag = { maintenanceAdderBp: SafeInt(rules.maintenanceAdderBp) };
   const reduction = SafeInt(rules.crewQualityReduction);
 
   let changed = false;
   const updatedNations = new Map<string, NationState>();
-  for (const [nationId, nation] of ctx.currentSnapshot["nations"]) {
+  for (const [nationId, nation] of snapshot.nations) {
     if (!nation["isPlayable"] && !nation["isAI"]) {
       updatedNations.set(nationId, nation);
       continue;
@@ -47,5 +46,13 @@ export function runBaseLimitStep(ctx: MonthContext): void {
     }));
     updatedNations.set(nationId, { ...nation, fleets });
   }
-  if (changed) ctx.currentSnapshot = { ...ctx.currentSnapshot, nations: updatedNations };
+  if (changed) ctx.snapshot.write("nations", updatedNations);
+  return { status: "continue" };
 }
+
+export const baseLimitsPhase: MonthPhase = {
+  id: "base_limits",
+  name: "Base Limits",
+  permissions: { reads: ["nations", "world"], writes: ["nations"], rng: false },
+  run: runBaseLimitPhase,
+};

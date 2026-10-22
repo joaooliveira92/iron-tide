@@ -1,11 +1,11 @@
 ﻿import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
 import { TEST_RESEARCH_CATALOGUE } from "./research-catalogue.helper.js";
 import type { BudgetProjectCommand, CommandEnvelope } from "@bluewave/commands";
-import { SafeInt } from "@bluewave/contracts";
+import { SafeInt, type TurnPhase } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
-import { MonthExecutor, PHASE_FOOTPRINTS, PhaseGuard, PhaseRegistry } from "../src/index.js";
+import { MonthExecutor, type PhasePermissions } from "../src/index.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 function createSnapshot(overrides?: Partial<CampaignSnapshot>): CampaignSnapshot {
@@ -402,8 +402,8 @@ describe("MonthExecutor", () => {
     const executor = new MonthExecutor();
     const snapshot = createSnapshot();
     const collector = new DiagnosticCollector();
-    const overrides = new Map([
-      ["monthly_revenue", { ...PhaseRegistry.getById("monthly_revenue")!, writePermissions: [] }],
+    const overrides = new Map<TurnPhase, PhasePermissions>([
+      ["monthly_revenue", { reads: "all", writes: [], rng: false }],
     ]);
 
     const result = executor.execute(snapshot, [], "seed", collector, undefined, {
@@ -416,20 +416,14 @@ describe("MonthExecutor", () => {
     expect(gbr.treasury as number).toBe(500);
   });
 
-  it("registry access rules enforced at runtime: a well-formed run is never denied", () => {
+  it("a well-formed month never trips the access guard", () => {
     const executor = new MonthExecutor();
     const snapshot = createSnapshot();
     const collector = new DiagnosticCollector();
-    const guard = new PhaseGuard();
     const result = executor.execute(snapshot, [], "seed", collector);
 
     expect(result.success).toBe(true);
     expect(collector.errors.some((d) => d.code === "PHASE_ACCESS_DENIED")).toBe(false);
-    for (const phase of PhaseRegistry.all) {
-      const footprint = PHASE_FOOTPRINTS[phase.id];
-      expect(footprint, phase.id).toBeDefined();
-      expect(guard.assert(phase.id, footprint), phase.id).toEqual([]);
-    }
   });
 
   it("zero payment produces zero progress (paid-work rule)", () => {

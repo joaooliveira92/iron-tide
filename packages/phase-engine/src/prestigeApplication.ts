@@ -2,11 +2,11 @@ import { applyPrestigeRule } from "@bluewave/campaign";
 import type { PrestigeChange, PrestigeReasonCode, PrestigeRule } from "@bluewave/campaign";
 import type { NationState } from "@bluewave/campaign";
 import { prestigeChangedEvent } from "./events.js";
-import type { MonthContext } from "./monthContext.js";
+import type { PhaseContext } from "./pipeline.js";
 
 export type PrestigeApplicationContext = Pick<
-  MonthContext,
-  "currentSnapshot" | "collector" | "eventLedger" | "nextSeq" | "campaignMonth"
+  PhaseContext,
+  "snapshot" | "collector" | "eventLedger" | "nextSeq" | "campaignMonth"
 >;
 
 export const PRESTIGE_APPLICATION_FAILED = "PRESTIGE_APPLICATION_FAILED" as const;
@@ -17,9 +17,9 @@ export function applyPrestigeChange(
   reason: PrestigeReasonCode,
   rule?: PrestigeRule,
 ): PrestigeChange | undefined {
-  const nation = ctx.currentSnapshot["nations"].get(nationId);
+  const nation = ctx.snapshot.read("nations").get(nationId);
   if (nation === undefined) return undefined;
-  const set = ctx.currentSnapshot["prestigeRules"];
+  const set = ctx.snapshot.read("prestigeRules");
 
   const used = rule ?? set.rules[reason];
   if (used === undefined) {
@@ -43,9 +43,9 @@ export function applyPrestigeChange(
   if ((change.delta as number) === 0) return change;
 
   const updatedNation: NationState = { ...nation, prestige: change.after };
-  const updatedNations = new Map(ctx.currentSnapshot["nations"]);
+  const updatedNations = new Map(ctx.snapshot.read("nations"));
   updatedNations.set(nationId, updatedNation);
-  ctx.currentSnapshot = { ...ctx.currentSnapshot, nations: updatedNations };
+  ctx.snapshot.write("nations", updatedNations);
 
   ctx.eventLedger.append(
     prestigeChangedEvent(
@@ -53,7 +53,7 @@ export function applyPrestigeChange(
       reason,
       used.kind,
       change,
-      ctx.currentSnapshot["rulesetVersion"],
+      ctx.snapshot.read("rulesetVersion"),
       ctx.nextSeq(),
       ctx.campaignMonth,
     ),

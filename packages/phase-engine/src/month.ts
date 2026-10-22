@@ -13,13 +13,11 @@ import { FinancialLedger } from "./financial-ledger.js";
 import { createInterruptionState, trailingInputSuspension } from "./interruption.js";
 import {
   PLAYER_NATION_UNKNOWN,
-  type MonthContext,
-  MonthExecutorEngineOptions,
-  MonthResult,
-  StrategicWeatherPhaseOptions,
+  type MonthResult,
+  type StrategicWeatherPhaseOptions,
 } from "./monthContext.js";
-import { PHASE_ACCESS_DENIED, PhaseGuard } from "./phase-guard.js";
-import { PhaseRegistry, type PhaseDescriptor } from "./registry.js";
+import { monthPipeline } from "./phases.js";
+import type { MonthExecutorEngineOptions, MonthRunState } from "./pipeline.js";
 import { cloneSnapshot } from "./snapshotClone.js";
 
 export { PLAYER_NATION_UNKNOWN };
@@ -40,7 +38,6 @@ export class MonthExecutor {
     const eventLedger = new EventLedger();
     const randomLedger = new RandomLedger();
     const financialLedger = new FinancialLedger();
-    const phaseGuard = new PhaseGuard(engineOptions?.phaseOverrides);
 
     let eventSeq = 0;
     const campaignMonth = campaignMonthId(
@@ -49,7 +46,7 @@ export class MonthExecutor {
       snapshot["turnNumber"] as number,
     );
 
-    const ctx: MonthContext = {
+    const state: MonthRunState = {
       currentSnapshot: cloneSnapshot(snapshot),
       sourceSnapshot: snapshot,
       slots: snapshot["slots"],
@@ -61,7 +58,6 @@ export class MonthExecutor {
       eventLedger,
       randomLedger,
       financialLedger,
-      phaseGuard,
       lifecycle: this.lifecycle,
       collector,
       options,
@@ -83,60 +79,29 @@ export class MonthExecutor {
       },
     };
 
-    if (ctx.playerNationId !== undefined && !snapshot["nations"].has(ctx.playerNationId)) {
+    if (state.playerNationId !== undefined && !snapshot["nations"].has(state.playerNationId)) {
       collector.addError(
         PLAYER_NATION_UNKNOWN,
-        `Player nation '${ctx.playerNationId}' is not a nation of this campaign`,
-        { stage: "player_nation", entityId: ctx.playerNationId },
+        `Player nation '${state.playerNationId}' is not a nation of this campaign`,
+        { stage: "player_nation", entityId: state.playerNationId },
       );
-      return this.finish(ctx, false);
+      return this.finish(state, false);
     }
 
-    return this.runPhases(ctx);
+    return this.finish(state, monthPipeline.run(state, engineOptions?.phaseOverrides));
   }
 
-  private runPhases(ctx: MonthContext): MonthResult {
-    for (const node of PhaseRegistry.nodes) {
-      if ("kind" in node) {
-        if (!node.run(ctx)) {
-          return this.finish(ctx, true);
-        }
-        continue;
-      }
-      if (!this.assertPhase(ctx.phaseGuard, node, ctx.collector)) {
-        return this.finish(ctx, false);
-      }
-      const outcome = node.run(ctx);
-      if (outcome.status === "finish") {
-        return this.finish(ctx, outcome.success);
-      }
-    }
-    return this.finish(ctx, true);
-  }
-
-  private finish(ctx: MonthContext, success: boolean): MonthResult {
-    const suspended = ctx.interruption?.suspended ?? trailingInputSuspension(ctx);
+  private finish(state: MonthRunState, success: boolean): MonthResult {
+    const suspended = state.interruption?.suspended ?? trailingInputSuspension(state.interruption);
     return {
-      finalSnapshot: ctx.currentSnapshot,
-      commandLedger: ctx.commandLedger,
-      eventLedger: ctx.eventLedger,
-      randomLedger: ctx.randomLedger,
-      financialLedger: ctx.financialLedger,
+      finalSnapshot: state.currentSnapshot,
+      commandLedger: state.commandLedger,
+      eventLedger: state.eventLedger,
+      randomLedger: state.randomLedger,
+      financialLedger: state.financialLedger,
       success,
       outcome: suspended !== undefined ? "suspended" : "completed",
       ...(suspended !== undefined ? { suspended } : {}),
     };
-  }
-
-  private assertPhase(
-    guard: PhaseGuard,
-    phase: PhaseDescriptor,
-    collector: DiagnosticCollector,
-  ): boolean {
-    const violations = guard.assert(phase.id, phase.footprint);
-    for (const message of violations) {
-      collector.addError(PHASE_ACCESS_DENIED, message, { stage: phase.id });
-    }
-    return violations.length === 0;
   }
 }

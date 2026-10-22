@@ -9,21 +9,20 @@ import {
 import type { BattleOfferRules } from "@bluewave/content-schema";
 import { applyWarScoreDelta } from "./battles.js";
 import { enemyDeclinedBattleEvent } from "./events.js";
-import type { MonthContext } from "./monthContext.js";
+import type { PhaseContext } from "./pipeline.js";
 import { committedStrength, drawAndRecord, enemyOf } from "./offeredBattles.js";
 
 export const ENEMY_DECLINE_STREAM = "battle-offer/enemy-decline";
 
 export function applyEnemyDeclines(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   generated: BattleGenerationResult,
 ): BattleGenerationResult {
   const rules: BattleOfferRules | undefined = ctx.battleOffers;
   const playerNationId = ctx.playerNationId;
   if (rules === undefined || playerNationId === undefined || ctx.interruption === undefined)
     return generated;
-  const engine = ctx.phaseGuard.rng("battle_generation", ctx.randomSeed);
-  if (engine === null) return generated;
+  const engine = ctx.rng.engine();
 
   const rule = rules.enemyDecline;
   const keptIndexes: number[] = [];
@@ -35,7 +34,7 @@ export function applyEnemyDeclines(
       return;
     }
     const committed = new Set(manifest["persistentAssets"]);
-    const snapshot = ctx.currentSnapshot;
+    const snapshot = ctx.snapshot.current;
     const holds = enemyDeclinePredicateHolds(
       rule.comparison,
       rule.thresholdBp,
@@ -79,7 +78,7 @@ export function applyEnemyDeclines(
     const war = snapshot["wars"]["wars"].find((w) => w["id"] === manifest["warId"]);
     if (cost > 0 && war !== undefined) {
       const enemyIsAttacker = war["attackerSideMembers"].includes(enemyNationId);
-      ctx.currentSnapshot = applyWarScoreDelta(
+      ctx.snapshot.current = applyWarScoreDelta(
         snapshot,
         war["id"],
         enemyIsAttacker ? { attacker: -cost, defender: 0 } : { attacker: 0, defender: -cost },

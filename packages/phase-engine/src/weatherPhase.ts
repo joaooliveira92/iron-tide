@@ -5,19 +5,16 @@ import {
   generateStrategicWeather,
   WEATHER_PROFILE_INCOMPLETE,
 } from "@bluewave/combat/weather";
-import type { MonthContext } from "./monthContext.js";
-import type { PhaseDescriptor } from "./registry.js";
-import { PhaseResource } from "./phase-resource.js";
+import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 
-export function runWeatherGenerationPhase(ctx: MonthContext): void {
-  const { currentSnapshot, collector, campaignMonth, randomSeed, options, randomLedger } = ctx;
+export function runWeatherGenerationPhase(ctx: PhaseContext): PhaseRunOutcome {
+  const { collector, campaignMonth, options, randomLedger } = ctx;
 
-  const areas = [...currentSnapshot["world"]["areas"]].sort((a, b) =>
+  const areas = [...ctx.snapshot.read("world")["areas"]].sort((a, b) =>
     a["id"] < b["id"] ? -1 : a["id"] > b["id"] ? 1 : 0,
   );
-  const priorByArea = new Map(
-    (currentSnapshot["strategicWeather"] ?? []).map((s) => [s["areaId"], s] as const),
-  );
+  const priorWeather = ctx.snapshot.read("strategicWeather") ?? [];
+  const priorByArea = new Map(priorWeather.map((s) => [s["areaId"], s] as const));
   const climateSource = options?.["climateProfiles"];
   const profileFor = (areaId: string): ClimateProfile | undefined =>
     climateSource === undefined ? defaultClimateProfile_v1 : climateSource.get(areaId);
@@ -39,7 +36,7 @@ export function runWeatherGenerationPhase(ctx: MonthContext): void {
           areaId: area["id"],
           month: campaignMonth,
           climateProfile: profile,
-          campaignSeed: randomSeed,
+          campaignSeed: ctx.rng.seed(),
           priorState: priorByArea.get(area["id"]),
           randomLedger,
         }),
@@ -52,25 +49,15 @@ export function runWeatherGenerationPhase(ctx: MonthContext): void {
       );
     }
   }
-  if (nextWeather.length > 0 || (currentSnapshot["strategicWeather"] ?? []).length > 0) {
-    ctx.currentSnapshot = { ...currentSnapshot, strategicWeather: nextWeather };
+  if (nextWeather.length > 0 || priorWeather.length > 0) {
+    ctx.snapshot.write("strategicWeather", nextWeather);
   }
+  return { status: "continue" };
 }
 
-export const weatherGenerationPhase: PhaseDescriptor = {
+export const weatherGenerationPhase: MonthPhase = {
   id: "weather_generation",
   name: "Strategic Weather Generation",
-  order: 5,
-  readPermissions: ["all"],
-  writePermissions: ["strategicWeather"],
-  rngAllowed: true,
-  footprint: {
-    reads: [PhaseResource.ALL],
-    writes: [PhaseResource.STRATEGIC_WEATHER],
-    usesRng: true,
-  },
-  run: (ctx) => {
-    runWeatherGenerationPhase(ctx);
-    return { status: "continue" };
-  },
+  permissions: { reads: ["world", "strategicWeather"], writes: ["strategicWeather"], rng: true },
+  run: runWeatherGenerationPhase,
 };
