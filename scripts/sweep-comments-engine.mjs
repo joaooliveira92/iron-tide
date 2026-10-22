@@ -16,7 +16,14 @@ export const DECISIONS = ["APPROVE", "REJECT", "DEFER"];
 export const EXIT = { OK: 0, VALIDATION: 1, USAGE: 2, IO: 3 };
 
 const EXTS = new Set([".ts", ".tsx", ".mjs", ".cjs"]);
-const SKIP_DIRS = new Set(["node_modules", "dist", ".turbo", "generated", "vendor", "repos"]);
+export const SKIP_DIRS = new Set([
+  "node_modules",
+  "dist",
+  ".turbo",
+  "generated",
+  "vendor",
+  "repos",
+]);
 const CONTEXT_RADIUS = 3;
 
 export class CliError extends Error {
