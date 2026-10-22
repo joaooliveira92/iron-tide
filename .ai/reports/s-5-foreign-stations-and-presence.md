@@ -79,14 +79,43 @@ S-5 emits typed `PrestigeLossRequested` and `RevoltPressureRequested` events onl
 consumed them, and magnitudes and trigger are gated (decision request 0023). Consumption stays a
 dependency on S-2/S-3 artifacts. A-1 and F-1 consume S-5 later.
 
-## Gated-value observations (open, not invented)
+## Production go-live (#85, 2026-10-21)
 
-Blocked pending owner decision: 0017 base value, limit mapping and no-base limit; 0018 base-slot
-occupying readiness states; 0019 over-base maintenance and crew-quality effects; 0020 cramped and
-short-range counting fraction; 0021 colonial-service displacement proportion; 0022 home-area
-requirement and its blockade exemption; 0023 penalty magnitudes and revolt trigger; 0026
-cramped/short-range ship classification. Resolved: 0016 only. #85 (authoring) and #165 (S-5
-follow-up, possession transfer) stay open behind these.
+The owner delegated every open S-5 decision (ADR-0266, requests 0016-0023 and 0026, Option C), which is the
+explicit owner waiver ADR-0213 requires. The 1880 core ruleset now carries the `presence` section; every value is
+`balance_adjustment` / `BALANCE_TARGET`, none is `manual`. The only sourced figure, the 1.5x colonial multiplier
+(manual p.46), stays in code.
+
+| Value                             | Authored                               | Decision |
+| --------------------------------- | -------------------------------------- | -------- |
+| `requiredTonsPerPossessionWeight` | 150                                    | 0016     |
+| `noPortValueWeight`               | 2                                      | 0016     |
+| `baseLimits.limitByBaseLevel`     | 2 x level, 2..20                       | 0017     |
+| `baseLimits.noBaseLimit`          | 2                                      | 0017     |
+| `baseLimits.occupyingStates`      | ACTIVE, RESERVE, WORKING_UP, REPAIR    | 0018     |
+| `baseLimits.maintenanceAdderBp`   | 2500                                   | 0019     |
+| `baseLimits.crewQualityReduction` | 2                                      | 0019     |
+| `crampedOrShortRangeCountBp`      | 5000                                   | 0020     |
+| `colonialServiceDisplacementBp`   | 1500                                   | 0021     |
+| `penaltyRequests`                 | true (magnitudes recorded for S-2/S-3) | 0023     |
+
+Home area carries a requirement and the blockade exemption covers it (0022, as built).
+
+Golden re-pin report (docs/agents/golden-repinning.md)
+
+- Cause: the `presence` ruleset section authored in the production pack.
+- Content lock bodyHash 337cc1eb...0aa2 -> a0392f41...6ad9.
+- Replay corpus (ten files): contentHash moved on each; every checkpoint hash is unchanged, so no approval entry
+  is needed beyond the corpus delta check, which passes. `pnpm check:replay-corpus` verifies identically across two
+  fresh processes with the section active.
+- `golden/hashes.json`: unchanged (its proof compiles a synthetic fixture, not the production pack).
+- Migration assessment: none. Wire formats and the compatibility version are unchanged; presence state is derived.
+
+## Still open
+
+- 0026 is decided (cramped = SPARTAN, short-range = cruise range under 2500 nm) but the compile step that writes
+  `crampedAccommodation` / `shortRange` is a separate ticket, so no production ship is reduced yet.
+- 0015 (`FC_INCOMPATIBLE` severity) is a separate ticket. 0027 / #165 is deferred.
 
 ## Commands and observed results
 
@@ -102,5 +131,6 @@ pnpm preflight / pnpm test:scripts / pnpm check                                 
 
 ## Known limitations
 
-- Acceptance is under fixture values; production presence behaviour is not live.
+- The acceptance run used fixture values; production presence is live from #85 on ADR-0266 balance targets, awaiting a balance sweep.
+- Cramped and short-range ships are not yet classified in production (0026 compile step pending).
 - Penalty requests have no consumer yet (S-2/S-3).
