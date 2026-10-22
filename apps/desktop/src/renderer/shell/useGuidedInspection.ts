@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { UiStateFirstMonthInspection } from "../../shared/ui-state-contract.js";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import { useBridge } from "../lib/bridge-context.js";
-import { writeUiStatePatch } from "../lib/uiStateSidecar.js";
+import { readUiState, writeUiStatePatch } from "../lib/uiStateSidecar.js";
 import {
   GUIDED_STEP_COUNT,
   dismissedInspectionState,
@@ -32,15 +32,8 @@ async function readInspection(
   bridge: BluewaveDesktopBridge | undefined,
   sessionId: string,
 ): Promise<UiStateFirstMonthInspection | undefined> {
-  if (bridge === undefined) return undefined;
-  const result = (await bridge.campaign.execute("readUiState", sessionId)) as unknown as {
-    outcome: string;
-    value?: {
-      uiState?: { firstMonthInspection?: UiStateFirstMonthInspection };
-    };
-  };
-  if (result.outcome !== "success") return undefined;
-  return result.value?.uiState?.firstMonthInspection;
+  const uiState = await readUiState(bridge, sessionId);
+  return uiState?.firstMonthInspection;
 }
 
 async function writeInspection(

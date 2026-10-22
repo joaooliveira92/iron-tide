@@ -12,6 +12,15 @@ export interface UiStatePatch {
   readonly turnMessages?: UiStateTurnMessages;
 }
 
+export async function readUiState(
+  bridge: BluewaveDesktopBridge | undefined,
+  sessionId: string,
+): Promise<UiState | undefined> {
+  if (bridge === undefined) return undefined;
+  const result = await bridge.campaign.execute("readUiState", sessionId);
+  return result.outcome === "success" ? result.value.uiState : undefined;
+}
+
 export async function writeUiStatePatch(
   bridge: BluewaveDesktopBridge | undefined,
   sessionId: string,

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { UiStateTurnMessages } from "../../../shared/ui-state-contract.js";
 import { useBridge } from "../../lib/bridge-context.js";
-import { writeUiStatePatch } from "../../lib/uiStateSidecar.js";
+import { readUiState, writeUiStatePatch } from "../../lib/uiStateSidecar.js";
 
 const EMPTY: UiStateTurnMessages = { pinnedIds: [], readIds: [] };
 
@@ -22,11 +22,10 @@ export function useTurnMessageState(sessionId: string): TurnMessageState {
   useEffect(() => {
     if (bridge === undefined) return;
     let active = true;
-    void bridge.campaign
-      .execute("readUiState", sessionId)
-      .then((result) => {
-        if (!active || result.outcome !== "success") return;
-        const stored = result.value.uiState.turnMessages;
+    void readUiState(bridge, sessionId)
+      .then((uiState) => {
+        if (!active) return;
+        const stored = uiState?.turnMessages;
         if (stored !== undefined) setTurnMessages(stored);
       })
       .catch(() => undefined);
