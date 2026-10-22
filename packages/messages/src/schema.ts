@@ -1,4 +1,7 @@
+import { TURN_PHASES, type TurnPhase } from "@bluewave/contracts";
 import { Schema } from "effect";
+
+export { TURN_PHASES, type TurnPhase };
 
 const nonEmptyString = Schema.String.check(Schema.isMinLength(1));
 
@@ -26,26 +29,6 @@ export const MESSAGE_CATEGORIES = [
 export type MessageCategory = (typeof MESSAGE_CATEGORIES)[number];
 export const MessageCategorySchema = Schema.Literals(MESSAGE_CATEGORIES);
 
-export const TURN_PHASES = [
-  "opening_validation",
-  "weather_generation",
-  "monthly_revenue",
-  "command_collection",
-  "ai_planning",
-  "ai_procurement",
-  "appropriation",
-  "maintenance",
-  "obligation",
-  "construction_processing",
-  "resolve_diplomacy",
-  "resolve_research",
-  "resolve_aircraft_development",
-  "resolve_carrier_operations",
-  "battle_generation",
-  "battle_resolution",
-  "closing_validation",
-] as const;
-export type TurnPhase = (typeof TURN_PHASES)[number];
 export const TurnPhaseSchema = Schema.Literals(TURN_PHASES);
 
 export const ENTITY_REFERENCE_TYPES = [

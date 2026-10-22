@@ -17,8 +17,7 @@ import type {
   DeclareWarCommand,
 } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
-import type { PhaseDescriptor } from "./registry.js";
-import { PhaseResource } from "./phase-resource.js";
+import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 
 function pairKey(a: string, b: string): string {
   return [a, b].sort().join("\u0000");
@@ -208,16 +207,16 @@ export function applyDeclareBlockade(
   };
 }
 
-export function resolveDiplomacyPhase(
-  snapshot: CampaignSnapshot,
+export function resolveDiplomacyWars(
+  state: CampaignSnapshot["wars"],
   campaignMonth: string,
-): CampaignSnapshot {
-  let wars = snapshot["wars"]["wars"];
+): CampaignSnapshot["wars"] {
+  let wars = state["wars"];
   let changed = false;
 
   const atWarWars = new Set(wars.filter((w) => w["status"] !== "ENDED").map((w) => w["id"]));
 
-  for (const blockade of snapshot["wars"]["blockadeState"]) {
+  for (const blockade of state["blockadeState"]) {
     if (blockade["establishedMonth"] > campaignMonth) continue;
     const war = wars.find(
       (w) =>
@@ -239,8 +238,8 @@ export function resolveDiplomacyPhase(
     changed = true;
   }
 
-  if (!changed) return snapshot;
-  return { ...snapshot, wars: { ...snapshot["wars"], wars } };
+  if (!changed) return state;
+  return { ...state, wars };
 }
 
 export function countActiveWarsFor(snapshot: CampaignSnapshot, nationId: string): number {
@@ -278,20 +277,16 @@ export function settleWar(
   return next;
 }
 
-export const diplomacyPhase: PhaseDescriptor = {
+export function runDiplomacyPhase(ctx: PhaseContext): PhaseRunOutcome {
+  const wars = ctx.snapshot.read("wars");
+  const next = resolveDiplomacyWars(wars, ctx.campaignMonth);
+  if (next !== wars) ctx.snapshot.write("wars", next);
+  return { status: "continue" };
+}
+
+export const diplomacyPhase: MonthPhase = {
   id: "resolve_diplomacy",
   name: "Diplomacy Resolution",
-  order: 65,
-  readPermissions: ["wars", "politics", "fleets"],
-  writePermissions: ["wars", "politics"],
-  rngAllowed: false,
-  footprint: {
-    reads: [PhaseResource.WARS, PhaseResource.POLITICS],
-    writes: [PhaseResource.WARS],
-    usesRng: false,
-  },
-  run: (ctx) => {
-    ctx.currentSnapshot = resolveDiplomacyPhase(ctx.currentSnapshot, ctx.campaignMonth);
-    return { status: "continue" };
-  },
+  permissions: { reads: ["wars"], writes: ["wars"], rng: false },
+  run: runDiplomacyPhase,
 };

@@ -4,7 +4,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
 import { EventLedger } from "@bluewave/events";
-import { MonthExecutor } from "../src/index.js";
+import { MonthExecutor, type SnapshotField, type SnapshotHandle } from "../src/index.js";
 import { applyPrestigeChange } from "../src/prestigeApplication.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
@@ -212,14 +212,30 @@ describe("S-2 04: unpaid-funds prestige loss in the obligation phase", () => {
 
 describe("applyPrestigeChange with an explicitly supplied rule (ADR-0261)", () => {
   function context(nationPrestige: number) {
-    const snapshot = makeSnapshot([
+    let current = makeSnapshot([
       ["GBR", makeNation("GBR", { ...FLUSH, prestige: SafeInt(nationPrestige) })],
     ]);
     const eventLedger = new EventLedger();
     const collector = new DiagnosticCollector();
     let seq = 0;
+    const snapshot: SnapshotHandle = {
+      get current() {
+        return current;
+      },
+      set current(next) {
+        current = next;
+      },
+      read: <K extends SnapshotField>(field: K) => current[field],
+      view: (overrides) => ({ ...current, ...overrides }),
+      write: <K extends SnapshotField>(field: K, value: CampaignSnapshot[K]) => {
+        current = { ...current, [field]: value };
+      },
+    };
     return {
-      currentSnapshot: snapshot,
+      get currentSnapshot() {
+        return current;
+      },
+      snapshot,
       collector,
       eventLedger,
       campaignMonth: "1880-01",

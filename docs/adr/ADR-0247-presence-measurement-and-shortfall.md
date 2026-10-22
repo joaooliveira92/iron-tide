@@ -31,8 +31,8 @@ ADR-0213 `balance_adjustment` shape with the magnitude deferred to #85, and 0020
    presence area; decision request 0022 (home-area scope) is open and is applied by S-5 06 with the exemption.
 5. The `presence` ruleset section gains the three required values `requiredTonsPerPossessionWeight`,
    `noPortValueWeight`, `crampedOrShortRangeCountBp`; the section stays all-or-nothing and strict (ADR-0242).
-6. The month-end step runs in `MonthExecutor` after battle resolution (part of the `battle_resolution` footprint,
-   which now also reads `designs`), driven by `MonthExecutorEngineOptions.presence`. Absent = nothing runs. It records
+6. The month-end step is the `presence_measurement` phase, running in `MonthExecutor` after `battle_resolution`
+   (ADR-0272), driven by `MonthExecutorEngineOptions.presence`. Absent = nothing runs. It records
    one `PresenceShortfall` event (nationId, areaId, requiredTons, presentTons, shortfallTons > 0) per shortfall in
    (nation, area) order, and changes no state. The desktop passes `shipBuilding.presence`.
 7. `buildPlayerProjection(state, slot, month, presenceRules?)` adds `presence`: `{ configured: false }` when dormant,
@@ -49,3 +49,5 @@ and every golden are unchanged; the cross-process test pins that a configured ru
 - Authoring the section (#85) is the one change that moves production behaviour; the fixture values in tests never
   reach the pack.
 - S-5 06 adds the blockade exemption and penalty requests on top of the shortfall rows; S-5 07/08 reuse the rows.
+
+Amended by: ADR-0272 (the month-end step becomes its own `presence_measurement` phase).

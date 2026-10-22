@@ -19,37 +19,25 @@ import {
   isDockExpansionProject,
 } from "./dockExpansion.js";
 import { constructionProgressedEvent, shipRebuiltEvent } from "./events.js";
-import type { MonthContext } from "./monthContext.js";
-import type { PhaseDescriptor } from "./registry.js";
-import { PhaseResource } from "./phase-resource.js";
+import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { checkRebuildClassification } from "./rebuildClassification.js";
 
-export function runConstructionProcessingPhase(ctx: MonthContext): void {
-  for (const [nationId, nation] of ctx.currentSnapshot["nations"]) {
+export function runConstructionProcessingPhase(ctx: PhaseContext): PhaseRunOutcome {
+  for (const [nationId, nation] of ctx.snapshot.read("nations")) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
     applyConstructionToNation(ctx, nationId, nation);
   }
+  return { status: "continue" };
 }
 
-export const constructionProcessingPhase: PhaseDescriptor = {
+export const constructionProcessingPhase: MonthPhase = {
   id: "construction_processing",
   name: "Construction Processing",
-  order: 60,
-  readPermissions: ["constructions", "fleets", "nations"],
-  writePermissions: ["constructions", "fleets", "nations"],
-  rngAllowed: false,
-  footprint: {
-    reads: [PhaseResource.CONSTRUCTIONS, PhaseResource.FLEETS, PhaseResource.NATIONS],
-    writes: [PhaseResource.CONSTRUCTIONS, PhaseResource.FLEETS, PhaseResource.NATIONS],
-    usesRng: false,
-  },
-  run: (ctx) => {
-    runConstructionProcessingPhase(ctx);
-    return { status: "continue" };
-  },
+  permissions: { reads: ["nations", "designs"], writes: ["nations"], rng: false },
+  run: runConstructionProcessingPhase,
 };
 
-function applyConstructionToNation(ctx: MonthContext, nationId: string, nation: NationState): void {
+function applyConstructionToNation(ctx: PhaseContext, nationId: string, nation: NationState): void {
   const { campaignMonth, eventLedger, collector, nextSeq } = ctx;
 
   let updatedProjects = [...nation["constructionProjects"]];
@@ -152,7 +140,7 @@ function applyConstructionToNation(ctx: MonthContext, nationId: string, nation: 
       (project["totalWork"] as number) > 0
     ) {
       const classification = checkRebuildClassification(
-        ctx.currentSnapshot["designs"]?.get(project["designVersionId"]),
+        ctx.snapshot.read("designs")?.get(project["designVersionId"]),
         ctx.engineOptions?.shipBuilding,
         campaignMonth,
       );
@@ -219,9 +207,9 @@ function applyConstructionToNation(ctx: MonthContext, nationId: string, nation: 
       fleets: updatedFleets,
       ...(dockChanged ? { dock: updatedDock } : {}),
     };
-    const updatedNations = new Map(ctx.currentSnapshot["nations"]);
+    const updatedNations = new Map(ctx.snapshot.read("nations"));
     updatedNations.set(nationId, updatedNation);
-    ctx.currentSnapshot = { ...ctx.currentSnapshot, nations: updatedNations };
+    ctx.snapshot.write("nations", updatedNations);
   }
 }
 
@@ -257,7 +245,7 @@ function shipStatsFromDesign(design: CompiledDesignVersion) {
 }
 
 function buildCompletedShip(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   project: NationState["constructionProjects"][number],
   fleet: FleetState,
 ): Ship {
@@ -272,11 +260,11 @@ function buildCompletedShip(
     className: project["targetId"],
   };
   if (designVersionId) {
-    const design = ctx.currentSnapshot["designs"]?.get(designVersionId);
+    const design = ctx.snapshot.read("designs")?.get(designVersionId);
     if (design) stats = shipStatsFromDesign(design);
   }
   const fitted = designVersionId
-    ? ctx.currentSnapshot["designs"]?.get(designVersionId)?.colonialServiceFitted === true
+    ? ctx.snapshot.read("designs")?.get(designVersionId)?.colonialServiceFitted === true
     : false;
 
   const shipId =
@@ -306,7 +294,7 @@ function buildCompletedShip(
 }
 
 function completeRebuild(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   project: NationState["constructionProjects"][number],
   fleets: FleetState[],
 ): {
@@ -320,7 +308,7 @@ function completeRebuild(
   const fleet = fleets.find((f) => f["ships"].some((s) => s["id"] === targetId));
   const ship = fleet?.["ships"].find((s) => s["id"] === targetId);
   if (!fleet || !ship) return null;
-  const design = ctx.currentSnapshot["designs"]?.get(project["designVersionId"]);
+  const design = ctx.snapshot.read("designs")?.get(project["designVersionId"]);
   const { availability: _availability, availabilityProjectId: _reason, ...rest } = ship;
   const { colonialServiceFitted: _oldFitting, ...restWithoutFitting } = rest;
   const stats = design ? shipStatsFromDesign(design) : undefined;

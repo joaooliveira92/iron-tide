@@ -11,17 +11,16 @@ import {
   type CarrierOperationRecord,
 } from "@bluewave/combat/carrier-operations";
 import type { RandomStream } from "@bluewave/random";
-import type { PhaseDescriptor } from "./registry.js";
-import { PhaseResource } from "./phase-resource.js";
+import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 
 export interface CarrierOperationsPhaseInput {
-  snapshot: CampaignSnapshot;
+  nations: CampaignSnapshot["nations"];
   campaignMonth: string;
   rngStream: RandomStream;
 }
 
 export interface CarrierOperationsPhaseOutput {
-  snapshot: CampaignSnapshot;
+  nations: CampaignSnapshot["nations"];
   records: CarrierOperationRecord[];
 }
 
@@ -213,12 +212,12 @@ function processCarrierNation(
 export function resolveCarrierOperations(
   input: CarrierOperationsPhaseInput,
 ): CarrierOperationsPhaseOutput {
-  const { snapshot, campaignMonth, rngStream } = input;
+  const { nations, campaignMonth, rngStream } = input;
   const records: CarrierOperationRecord[] = [];
   const updatedNations = new Map<string, NationState>();
 
   let hasAnyCarriers = false;
-  for (const [_nationId, nation] of snapshot["nations"]) {
+  for (const nation of nations.values()) {
     const carrierOps = getCarrierOps(nation);
     const carrierIds = identifyCarrierShips(nation, carrierOps);
     if (carrierIds.length > 0) {
@@ -228,10 +227,10 @@ export function resolveCarrierOperations(
   }
 
   if (!hasAnyCarriers) {
-    return { snapshot, records: [] };
+    return { nations, records: [] };
   }
 
-  for (const [nationId, nation] of snapshot["nations"]) {
+  for (const [nationId, nation] of nations) {
     if (!nation["isPlayable"] && !nation["isAI"]) {
       updatedNations.set(nationId, nation);
       continue;
@@ -241,34 +240,23 @@ export function resolveCarrierOperations(
     records.push(...result.records);
   }
 
-  return {
-    snapshot: { ...snapshot, nations: updatedNations },
-    records,
-  };
+  return { nations: updatedNations, records };
 }
 
-export const carrierOperationsPhase: PhaseDescriptor = {
+export function runCarrierOperationsPhase(ctx: PhaseContext): PhaseRunOutcome {
+  const nations = ctx.snapshot.read("nations");
+  const result = resolveCarrierOperations({
+    nations,
+    campaignMonth: ctx.campaignMonth,
+    rngStream: ctx.rng.engine().stream("carrier/operations"),
+  });
+  if (result.nations !== nations) ctx.snapshot.write("nations", result.nations);
+  return { status: "continue" };
+}
+
+export const carrierOperationsPhase: MonthPhase = {
   id: "resolve_carrier_operations",
   name: "Carrier Operations Resolution",
-  order: 73,
-  readPermissions: ["nations"],
-  writePermissions: ["nations"],
-  rngAllowed: true,
-  footprint: {
-    reads: [PhaseResource.NATIONS],
-    writes: [PhaseResource.NATIONS],
-    usesRng: true,
-  },
-  run: (ctx) => {
-    const carrierRng = ctx.phaseGuard.rng("resolve_carrier_operations", ctx.randomSeed);
-    if (carrierRng) {
-      const result = resolveCarrierOperations({
-        snapshot: ctx.currentSnapshot,
-        campaignMonth: ctx.campaignMonth,
-        rngStream: carrierRng.stream("carrier/operations"),
-      });
-      ctx.currentSnapshot = result.snapshot;
-    }
-    return { status: "continue" };
-  },
+  permissions: { reads: ["nations"], writes: ["nations"], rng: true },
+  run: runCarrierOperationsPhase,
 };

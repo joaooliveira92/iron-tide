@@ -109,21 +109,21 @@ export {
   resolveShipStrength,
 } from "./battles.js";
 export {
-  PhaseGuard,
+  MonthPipeline,
   PHASE_ACCESS_DENIED,
-  PHASE_FOOTPRINTS,
-  PhaseResource,
-  type PhaseFootprint,
-} from "./phase-guard.js";
-export type {
-  PhaseCheckpoint,
-  PhaseDefinition,
-  PhaseDescriptor,
-  PhasePipelineNode,
-  PhaseRun,
-  PhaseRunOutcome,
-} from "./registry.js";
-export { PhaseRegistry } from "./registry.js";
+  type MonthCheckpoint,
+  type MonthPhase,
+  type MonthPipelineNode,
+  type MonthRunState,
+  type PhaseContext,
+  type PhasePermissions,
+  type PhaseRunOutcome,
+  type RandomGrant,
+  type SnapshotAccess,
+  type SnapshotField,
+  type SnapshotHandle,
+} from "./pipeline.js";
+export { monthPipeline } from "./phases.js";
 export type { ReplayMismatch, ReplayResult, ReplayStepResult } from "./replay.js";
 export { ReplayVerifier, hashSnapshot, snapshotToHashable } from "./replay.js";
 export type {

@@ -1,8 +1,7 @@
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
-import type { PhaseDescriptor } from "./registry.js";
-import { PhaseResource } from "./phase-resource.js";
 import { constructionPackageProblems } from "./constructionPackages.js";
+import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { rebuildProjectProblems } from "./rebuildProjects.js";
 
 export function runOpeningValidationPhase(
@@ -106,38 +105,29 @@ export function runClosingValidationPhase(
   return !(hasErrors || collector.errors.length > 0);
 }
 
-export const openingValidationPhase: PhaseDescriptor = {
+function runOpeningValidation(ctx: PhaseContext): PhaseRunOutcome {
+  return runOpeningValidationPhase(ctx.snapshot.view(), ctx.collector)
+    ? { status: "continue" }
+    : { status: "finish", success: false };
+}
+
+function runClosingValidation(ctx: PhaseContext): PhaseRunOutcome {
+  return {
+    status: "finish",
+    success: runClosingValidationPhase(ctx.snapshot.view(), ctx.collector),
+  };
+}
+
+export const openingValidationPhase: MonthPhase = {
   id: "opening_validation",
   name: "Opening Validation",
-  order: 0,
-  readPermissions: ["all"],
-  writePermissions: [],
-  rngAllowed: false,
-  footprint: {
-    reads: [PhaseResource.NATIONS, PhaseResource.WARS],
-    writes: [],
-    usesRng: false,
-  },
-  run: (ctx) =>
-    runOpeningValidationPhase(ctx.currentSnapshot, ctx.collector)
-      ? { status: "continue" }
-      : { status: "finish", success: false },
+  permissions: { reads: ["nations", "wars"], writes: [], rng: false },
+  run: runOpeningValidation,
 };
 
-export const closingValidationPhase: PhaseDescriptor = {
+export const closingValidationPhase: MonthPhase = {
   id: "closing_validation",
   name: "Closing Validation",
-  order: 90,
-  readPermissions: ["all"],
-  writePermissions: [],
-  rngAllowed: false,
-  footprint: {
-    reads: [PhaseResource.NATIONS, PhaseResource.CONSTRUCTIONS],
-    writes: [],
-    usesRng: false,
-  },
-  run: (ctx) => {
-    const ok = runClosingValidationPhase(ctx.currentSnapshot, ctx.collector);
-    return { status: "finish" as const, success: ok };
-  },
+  permissions: { reads: ["nations"], writes: [], rng: false },
+  run: runClosingValidation,
 };

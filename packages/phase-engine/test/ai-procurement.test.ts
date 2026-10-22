@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
 import { describe, expect, it } from "vite-plus/test";
+import type { CampaignSnapshot } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import {
   decodeStrict,
@@ -12,7 +13,7 @@ import {
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { CommandLifecycle } from "@bluewave/commands";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { RandomLedger } from "@bluewave/random";
+import { RandomEngine, RandomLedger } from "@bluewave/random";
 import {
   buildShipBuildingContent,
   type ComponentDef,
@@ -23,8 +24,7 @@ import {
 } from "@bluewave/ship-design";
 import { runAiProcurementPhase } from "../src/aiProcurement.js";
 import { fundDesignStudies } from "../src/designStudies.js";
-import { PhaseGuard } from "../src/phase-guard.js";
-import type { MonthContext } from "../src/monthContext.js";
+import type { PhaseContext, SnapshotHandle } from "../src/pipeline.js";
 import { readNavalProfileEntries, readReferenceDesignEntries } from "./helpers/contentFiles.js";
 
 const root = join(__dirname, "..", "..", "..", "content", "production", "1880");
@@ -51,7 +51,7 @@ function makeContext(
   seed = "seed-1",
   nationId = "france",
   treasury = 2000,
-): MonthContext {
+): PhaseContext {
   const nation = {
     id: nationId,
     name: nationId,
@@ -85,28 +85,44 @@ function makeContext(
     designs: new Map(),
     designFamilies: new Map(),
   };
+  let current = snapshot as unknown as CampaignSnapshot;
+  const handle: SnapshotHandle = {
+    get current() {
+      return current;
+    },
+    set current(next) {
+      current = next;
+    },
+    read: (field) => current[field],
+    view: (overrides) => ({ ...current, ...overrides }),
+    write: (field, value) => {
+      current = { ...current, [field]: value } as CampaignSnapshot;
+    },
+  };
   return {
-    currentSnapshot: snapshot,
-    sourceSnapshot: snapshot,
+    snapshot: handle,
+    rng: {
+      seed: () => seed,
+      engine: () => new RandomEngine(seed),
+    },
+    sourceSnapshot: current,
     slots: [{ nationId, type: "ai" }],
     commands: [],
     campaignMonth: month,
     turnNumber: snapshot.turnNumber,
-    randomSeed: seed,
     commandLedger: ledgerStub,
     eventLedger: ledgerStub,
     randomLedger: new RandomLedger(),
     financialLedger: ledgerStub,
-    phaseGuard: new PhaseGuard(),
     lifecycle: new CommandLifecycle(),
     collector: new DiagnosticCollector(),
     nextSeq: () => SafeInt(1),
     engineOptions: { shipBuilding: content },
-  } as unknown as MonthContext;
+  } as unknown as PhaseContext;
 }
 
-const france = (ctx: MonthContext) =>
-  ctx.currentSnapshot["nations"].get("france") as unknown as {
+const france = (ctx: PhaseContext) =>
+  ctx.snapshot.current["nations"].get("france") as unknown as {
     treasury: SafeInt;
     designStudies?: { designStudyId: string; status: string }[];
     constructionProjects: unknown[];
@@ -180,7 +196,7 @@ describe("AI procurement lifecycle", () => {
       fundDesignStudies(ctx);
     const n = france(ctx);
     const role = n.procurementIntents![0]!.role;
-    const snapshot = ctx.currentSnapshot as unknown as {
+    const snapshot = ctx.snapshot.current as unknown as {
       designs: Map<string, unknown>;
       nations: Map<string, { fleets: unknown[] }>;
     };
@@ -253,18 +269,14 @@ describe("live AI procurement simulation (2 nations x 3 seeds x 3 budgets x 36 m
       } catch {
         counts.exceptions++;
       }
-      const n = ctx.currentSnapshot["nations"].get(nationId) as unknown as {
-        designStudies?: { designStudyId: string }[];
-        constructionProjects: unknown[];
-        procurementIntents?: { status: string; role: string }[];
-      };
-      counts.studies = (n.designStudies ?? []).length;
-      counts.orders = n.constructionProjects.length;
-      counts.cancelled = (n.procurementIntents ?? []).filter(
+      const n = ctx.snapshot.current["nations"].get(nationId);
+      counts.studies = (n?.designStudies ?? []).length;
+      counts.orders = n?.constructionProjects.length ?? 0;
+      counts.cancelled = (n?.procurementIntents ?? []).filter(
         (i) => i.status === "CANCELLED",
       ).length;
-      counts.expired = (n.procurementIntents ?? []).filter((i) => i.status === "EXPIRED").length;
-      counts.timeline += `${String(n.constructionProjects.length)}:${String((n.designStudies ?? []).length)}|`;
+      counts.expired = (n?.procurementIntents ?? []).filter((i) => i.status === "EXPIRED").length;
+      counts.timeline += `${String(n?.constructionProjects.length ?? 0)}:${String((n?.designStudies ?? []).length)}|`;
     }
     return counts;
   }

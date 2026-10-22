@@ -24,7 +24,8 @@ turn after battles. The mapping, the no-base number, the occupying states and th
    operational ships whose readiness is occupying; the limit is the table entry for the nation's best port level there
    (the same "highest-level port" reading as ADR-0247), else `noBaseLimit`. The ships beyond the limit are the later
    ones in ascending ship id: a canonical, storage-order-free choice, not a gameplay ranking.
-3. The month-end `runBaseLimitStep` runs last (after battle resolution, presence and foreign-station routing), so a
+3. The month-end `runBaseLimitStep` runs as the `base_limits` phase last (after `battle_resolution`,
+   `presence_measurement` and `foreign_station_deployment`; ADR-0272), so a
    fleet fights at full strength the month it arrives. It reads no war or blockade and never calls `isPresenceExempt`
    (ADR-0248 item 3). Flagged ships get `Ship.overBase = { maintenanceAdderBp }` and lose `crewQualityReduction` through
    the S-1 `reduceCrewQuality`; a ship no longer over loses the flag. It repeats every month while the ship stays over;
@@ -47,3 +48,5 @@ it and the production pack authors no section. `CURRENT_COMPATIBILITY_VERSION` a
 
 - Authoring the block (#85, after decision requests 0017 to 0019) is the change that moves production behaviour.
 - A save written after a flag was set carries `overBase`; older readers ignore nothing because the field is additive.
+
+Amended by: ADR-0272 (the month-end step becomes its own `base_limits` phase).

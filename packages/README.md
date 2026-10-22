@@ -30,7 +30,7 @@ phase engine composing them; import only a package's public `exports`
 | `combat` | Deterministic tactical battle engine and auto-resolution. |
 | `ai` | Legal-only uniform-random AI planning via keyed RNG. |
 | `persistence` | Content-addressed atomic save/load, snapshots, recovery. |
-| `phase-engine` | Ordered monthly turn pipeline (17 phases), replay verifier, ledger. |
+| `phase-engine` | Ordered monthly turn pipeline (20 phases), replay verifier, ledger. |
 | `campaign-engine` | Desktop read-only projections + `campaign:execute` bridge. |
 | `test-support` | Fixture helpers. |
 | `cross-process-test` | Cross-process determinism harness. |

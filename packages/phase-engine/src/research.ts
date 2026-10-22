@@ -13,8 +13,7 @@ import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { EventLedger } from "@bluewave/events";
 import { RandomEngine, RandomLedger } from "@bluewave/random";
 import type { FinancialLedger } from "./financial-ledger.js";
-import type { PhaseDescriptor } from "./registry.js";
-import { PhaseResource } from "./phase-resource.js";
+import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { reportOutflowShortfall } from "./outflowShortfall.js";
 import {
   budgetChangedEvent,
@@ -84,9 +83,10 @@ function largestRemainderAllocation(
   return allocation;
 }
 
-export function resolveResearchPhase(
-  snapshot: CampaignSnapshot,
-  randomSeed: string,
+export function resolveResearchNations(
+  nations: CampaignSnapshot["nations"],
+  catalogue: TechnologyCatalogue,
+  randomEngine: RandomEngine,
   turnNumber: SafeInt,
   randomLedger: RandomLedger,
   eventLedger: EventLedger,
@@ -94,11 +94,10 @@ export function resolveResearchPhase(
   collector: DiagnosticCollector,
   nextSeq: () => SafeInt,
   campaignMonth: string,
-): CampaignSnapshot {
-  let currentSnapshot = snapshot;
-  const catalogue = technologyCatalogueOf(snapshot);
+): CampaignSnapshot["nations"] {
+  let nextNations: Map<string, NationState> | null = null;
 
-  for (const [nationId, nation] of currentSnapshot["nations"]) {
+  for (const [nationId, nation] of nations) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
 
     const research = nation["research"];
@@ -166,7 +165,7 @@ export function resolveResearchPhase(
           continue;
         }
 
-        const stream = new RandomEngine(randomSeed).stream(`research/month/${nationId}/${fieldId}`);
+        const stream = randomEngine.stream(`research/month/${nationId}/${fieldId}`);
         const weights: [string, SafeInt][] = fieldTechs.map(
           (t) =>
             [
@@ -292,9 +291,8 @@ export function resolveResearchPhase(
       },
     };
 
-    const updatedNations = new Map(currentSnapshot["nations"]);
-    updatedNations.set(nationId, updatedNation);
-    currentSnapshot = { ...currentSnapshot, nations: updatedNations };
+    nextNations ??= new Map(nations);
+    nextNations.set(nationId, updatedNation);
 
     const previousBalance = nation["treasury"];
     const newBalance = SafeInt.sub(previousBalance, actualPaidExpenditure);
@@ -304,9 +302,7 @@ export function resolveResearchPhase(
       ...updatedNation,
       treasury: safeNewBalance,
     };
-    const updatedTreasuryNations = new Map(currentSnapshot["nations"]);
-    updatedTreasuryNations.set(nationId, updatedTreasuryNation);
-    currentSnapshot = { ...currentSnapshot, nations: updatedTreasuryNations };
+    nextNations.set(nationId, updatedTreasuryNation);
 
     financialLedger.append(
       makeLedgerEntry(
@@ -338,7 +334,7 @@ export function resolveResearchPhase(
     }
   }
 
-  return currentSnapshot;
+  return nextNations ?? nations;
 }
 
 function applyHistoricalTimingModifier(
@@ -379,30 +375,28 @@ export function researchCostLookup(
   };
 }
 
-export const researchPhase: PhaseDescriptor = {
+export function runResearchPhase(ctx: PhaseContext): PhaseRunOutcome {
+  const nations = ctx.snapshot.read("nations");
+  const catalogue = technologyCatalogueOf(ctx.snapshot.current);
+  const next = resolveResearchNations(
+    nations,
+    catalogue,
+    ctx.rng.engine(),
+    ctx.turnNumber,
+    ctx.randomLedger,
+    ctx.eventLedger,
+    ctx.financialLedger,
+    ctx.collector,
+    ctx.nextSeq,
+    ctx.campaignMonth,
+  );
+  if (next !== nations) ctx.snapshot.write("nations", next);
+  return { status: "continue" };
+}
+
+export const researchPhase: MonthPhase = {
   id: "resolve_research",
   name: "Research Resolution",
-  order: 70,
-  readPermissions: ["research", "treasury"],
-  writePermissions: ["research", "treasury"],
-  rngAllowed: true,
-  footprint: {
-    reads: [PhaseResource.RESEARCH, PhaseResource.TREASURY],
-    writes: [PhaseResource.RESEARCH, PhaseResource.TREASURY],
-    usesRng: true,
-  },
-  run: (ctx) => {
-    ctx.currentSnapshot = resolveResearchPhase(
-      ctx.currentSnapshot,
-      ctx.randomSeed,
-      ctx.turnNumber,
-      ctx.randomLedger,
-      ctx.eventLedger,
-      ctx.financialLedger,
-      ctx.collector,
-      ctx.nextSeq,
-      ctx.campaignMonth,
-    );
-    return { status: "continue" };
-  },
+  permissions: { reads: ["nations", "world"], writes: ["nations"], rng: true },
+  run: runResearchPhase,
 };

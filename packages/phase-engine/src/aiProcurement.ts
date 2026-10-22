@@ -21,9 +21,7 @@ import {
 } from "@bluewave/ship-design";
 import { applySubmitDesign } from "./commands.js";
 import { placeConstructionOrder } from "./constructionOrder.js";
-import type { MonthContext } from "./monthContext.js";
-import { PhaseResource } from "./phase-resource.js";
-import type { PhaseDescriptor } from "./registry.js";
+import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 
 export const AI_PROCUREMENT = {
   RESERVE_BP: 2000,
@@ -70,30 +68,29 @@ export function fleetViewForNation(
   return view;
 }
 
-function setNation(ctx: MonthContext, nationId: string, next: NationState): void {
-  const nations = new Map(ctx.currentSnapshot["nations"]);
+function setNation(ctx: PhaseContext, nationId: string, next: NationState): void {
+  const nations = new Map(ctx.snapshot.current["nations"]);
   nations.set(nationId, next);
-  ctx.currentSnapshot = { ...ctx.currentSnapshot, nations };
+  ctx.snapshot.current = { ...ctx.snapshot.current, nations };
 }
 
-const info = (ctx: MonthContext, code: string, message: string, entityId: string): void => {
+const info = (ctx: PhaseContext, code: string, message: string, entityId: string): void => {
   ctx.collector.addInfo(code, message, { stage: "ai_procurement", entityId });
 };
 
-const freshGenerator = (ctx: MonthContext): AiCommandGenerator =>
+const freshGenerator = (ctx: PhaseContext): AiCommandGenerator =>
   new AiCommandGenerator({
-    campaignId: ctx.currentSnapshot["campaignId"],
+    campaignId: ctx.snapshot.current["campaignId"],
     turnNumber: ctx.turnNumber,
-    expectedSnapshotHash: sha256Hex(canonicalSerialize(ctx.currentSnapshot)),
+    expectedSnapshotHash: sha256Hex(canonicalSerialize(ctx.snapshot.current)),
   });
 
-export function runAiProcurementPhase(ctx: MonthContext): void {
+export function runAiProcurementPhase(ctx: PhaseContext): PhaseRunOutcome {
   const content = ctx.engineOptions?.shipBuilding;
-  if (content === undefined || content.navalProfiles.length === 0) return;
-  if (ctx.phaseGuard.rng("ai_procurement", ctx.randomSeed) === null) return;
+  if (content === undefined || content.navalProfiles.length === 0) return { status: "continue" };
 
   const idempotency = new CommandIdempotencyMap();
-  const nations = [...ctx.currentSnapshot["nations"].values()].sort((a, b) =>
+  const nations = [...ctx.snapshot.current["nations"].values()].sort((a, b) =>
     a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
   );
   for (const nation of nations) {
@@ -110,10 +107,11 @@ export function runAiProcurementPhase(ctx: MonthContext): void {
       );
     }
   }
+  return { status: "continue" };
 }
 
 function processNation(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   nationId: string,
   month: string,
   content: ShipBuildingContent,
@@ -124,17 +122,17 @@ function processNation(
   const slot = ctx.slots.find((s) => s["nationId"] === nationId);
   if (slot === undefined) return;
 
-  const start = ctx.currentSnapshot["nations"].get(nationId);
+  const start = ctx.snapshot.current["nations"].get(nationId);
   if (start === undefined) return;
   const advanced: ProcurementIntent[] = [];
   for (const intent of start.procurementIntents ?? []) {
-    const nation = ctx.currentSnapshot["nations"].get(nationId)!;
+    const nation = ctx.snapshot.current["nations"].get(nationId)!;
     advanced.push(advanceIntent(ctx, intent, content, month, nation));
   }
   let intents = advanced;
 
-  const current = ctx.currentSnapshot["nations"].get(nationId)!;
-  const fleet = fleetViewForNation(ctx.currentSnapshot, current);
+  const current = ctx.snapshot.current["nations"].get(nationId)!;
+  const fleet = fleetViewForNation(ctx.snapshot.current, current);
   const deficits = computeFleetDeficits(profile, assessFleet(fleet));
   const activeGroups = new Set(
     intents
@@ -147,12 +145,12 @@ function processNation(
     if (planned !== null) intents = [...intents, planned];
   }
 
-  const latest = ctx.currentSnapshot["nations"].get(nationId)!;
+  const latest = ctx.snapshot.current["nations"].get(nationId)!;
   setNation(ctx, nationId, { ...latest, procurementIntents: [...intents] });
 }
 
 function advanceIntent(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   initial: ProcurementIntent,
   content: ShipBuildingContent,
   month: string,
@@ -163,7 +161,7 @@ function advanceIntent(
     const study = (nation.designStudies ?? []).find(
       (s) => s.designStudyId === intent.designStudyId,
     );
-    const design = ctx.currentSnapshot["designs"].get(intent.submittedDesignId ?? "");
+    const design = ctx.snapshot.current["designs"].get(intent.submittedDesignId ?? "");
     if (study !== undefined && study.status === "COMPLETED" && design !== undefined) {
       info(
         ctx,
@@ -182,7 +180,7 @@ function advanceIntent(
 
   if (intent.status !== "APPROVED") return intent;
 
-  const design = ctx.currentSnapshot["designs"].get(intent.submittedDesignId ?? "");
+  const design = ctx.snapshot.current["designs"].get(intent.submittedDesignId ?? "");
   if (design === undefined) {
     info(ctx, "AI_PROCUREMENT_EXPIRED", `${intent.role} approved design missing`, nation.id);
     return { ...intent, status: "EXPIRED", lastUpdatedAtMonth: month, reason: "design_missing" };
@@ -197,7 +195,7 @@ function advanceIntent(
     };
   }
   const profile = content.navalProfileFor(nation.id, month)!;
-  const fleet = fleetViewForNation(ctx.currentSnapshot, nation);
+  const fleet = fleetViewForNation(ctx.snapshot.current, nation);
   const deficits = computeFleetDeficits(profile, assessFleet(fleet));
   if ((deficits[intent.role as ShipTypeId] ?? 0) <= 0) {
     info(ctx, "AI_PROCUREMENT_CANCELLED", `${intent.role} deficit already satisfied`, nation.id);
@@ -231,7 +229,7 @@ function advanceIntent(
 
   const [year, mon] = month.split("-");
   const result = placeConstructionOrder(
-    ctx.currentSnapshot,
+    ctx.snapshot.current,
     {
       nationId: nation.id,
       commandId: `ai-ord-${intent.procurementDecisionId}`,
@@ -241,7 +239,7 @@ function advanceIntent(
     content,
   );
   if (result.ok) {
-    ctx.currentSnapshot = result.snapshot;
+    ctx.snapshot.current = result.snapshot;
     info(
       ctx,
       "AI_CONSTRUCTION_ORDER_PLACED",
@@ -266,7 +264,7 @@ function advanceIntent(
 }
 
 function planNewIntent(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   nationId: string,
   role: ShipTypeId,
   profile: NationNavalProfile,
@@ -275,7 +273,7 @@ function planNewIntent(
   idempotency: CommandIdempotencyMap,
   fleet: FleetShipView[],
 ): ProcurementIntent | null {
-  const nation = ctx.currentSnapshot["nations"].get(nationId)!;
+  const nation = ctx.snapshot.current["nations"].get(nationId)!;
   const priorAttempts = (nation.procurementIntents ?? []).filter(
     (i) =>
       i.role === role &&
@@ -285,7 +283,7 @@ function planNewIntent(
   if (attempt > AI_PROCUREMENT.MAX_ATTEMPTS) return null;
 
   const decisionId = `${nationId}:${String(ctx.turnNumber)}:${role}:${String(attempt)}`;
-  const decisionSeed = `${ctx.randomSeed}:procurement:${decisionId}`;
+  const decisionSeed = `${ctx.rng.seed()}:procurement:${decisionId}`;
   const budgetCeiling = Math.max(
     0,
     Math.floor((Number(nation.treasury) * (10_000 - AI_PROCUREMENT.RESERVE_BP)) / 10_000),
@@ -326,7 +324,7 @@ function planNewIntent(
     draft,
   });
   const slot = ctx.slots.find((s) => s["nationId"] === nationId)!;
-  const outcome = ctx.lifecycle.process(command, ctx.currentSnapshot, slot, idempotency);
+  const outcome = ctx.lifecycle.process(command, ctx.snapshot.current, slot, idempotency);
   if (outcome.type !== "success") {
     const reason =
       (outcome as { diagnostic?: { message?: string } }).diagnostic?.message ?? outcome.type;
@@ -342,7 +340,7 @@ function planNewIntent(
       reason,
     );
   }
-  const before = ctx.currentSnapshot;
+  const before = ctx.snapshot.current;
   const next = applySubmitDesign(
     before,
     command.body as SubmitDesignCommand,
@@ -361,7 +359,7 @@ function planNewIntent(
       attempt,
       "study_submit_rejected",
     );
-  ctx.currentSnapshot = next;
+  ctx.snapshot.current = next;
   info(ctx, "AI_DESIGN_STUDY_SUBMITTED", `${role} study submitted (${designVersionId})`, nationId);
   return {
     procurementDecisionId: decisionId,
@@ -413,26 +411,13 @@ function rejectedIntent(
   };
 }
 
-export const aiProcurementPhase: PhaseDescriptor = {
+export const aiProcurementPhase: MonthPhase = {
   id: "ai_procurement",
   name: "AI Procurement",
-  order: 17,
-  readPermissions: ["nations", "constructions", "treasury", "research", "designs"],
-  writePermissions: ["nations", "constructions", "designs"],
-  rngAllowed: true,
-  footprint: {
-    reads: [
-      PhaseResource.NATIONS,
-      PhaseResource.CONSTRUCTIONS,
-      PhaseResource.TREASURY,
-      PhaseResource.RESEARCH,
-      PhaseResource.DESIGNS,
-    ],
-    writes: [PhaseResource.NATIONS, PhaseResource.CONSTRUCTIONS, PhaseResource.DESIGNS],
-    usesRng: true,
+  permissions: {
+    reads: "all",
+    writes: ["nations", "designs", "designFamilies"],
+    rng: true,
   },
-  run: (ctx) => {
-    runAiProcurementPhase(ctx);
-    return { status: "continue" };
-  },
+  run: runAiProcurementPhase,
 };

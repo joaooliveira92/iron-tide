@@ -68,7 +68,7 @@ Rules and statuses: ADR-0267.
 | command-lifecycle-definitions | Command type definitions for budget, halt, resume and acceleration | - |
 | design-studies | Design study bookkeeping | - |
 | foreign-contract-monthly | Monthly foreign-contract, insight and war-policy steps | - |
-| phase-engine-infrastructure | Errors, ledger, phase guard, registry and replay verification | - |
+| phase-engine-infrastructure | Errors, ledger, month pipeline and replay verification | - |
 | combat-tactical-core | Tactical simulation loop, clock, targeting and battle generation | - |
 | combat-battle-resolution | Battle resolution, auto-resolution, endings and ledger | - |
 | combat-aircraft-model | Aircraft data model shared by air combat and carriers | - |

@@ -5,7 +5,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
-import { MonthExecutor, PhaseRegistry } from "../src/index.js";
+import { MonthExecutor, monthPipeline } from "../src/index.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
 const NATIONS = ["GBR", "FRA", "GER"];
@@ -208,7 +208,7 @@ function warpParticipants(
 
 describe("B10c diplomacy & war acceptance (criteria 1-14)", () => {
   it("C1: full turn includes the resolve_diplomacy phase", () => {
-    const ids = PhaseRegistry.all.map((p) => p.id);
+    const ids = [...monthPipeline.phaseIds];
     expect(ids).toContain("resolve_diplomacy");
     const idx = ids.indexOf("resolve_diplomacy");
     expect(idx).toBeGreaterThan(ids.indexOf("construction_processing"));

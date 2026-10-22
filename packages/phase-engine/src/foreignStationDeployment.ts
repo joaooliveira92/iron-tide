@@ -4,14 +4,14 @@ import {
   DIVISION_STATE_INVARIANT_FAILED,
   type CampaignSnapshot,
   type FleetState,
-  type NationState,
   type PermanentDivision,
   type PresenceAreaRow,
   type Ship,
 } from "@bluewave/campaign";
 import { divisionAssetsFor } from "./divisionCommands.js";
 import { foreignStationEvents } from "./events.js";
-import type { MonthContext } from "./monthContext.js";
+import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
+import { presenceDemand } from "./presenceMeasurement.js";
 
 export const DIVISION_LEFT_FOR_FOREIGN_STATION_REASON = "FOREIGN_STATION_DEPLOYMENT" as const;
 
@@ -78,29 +78,20 @@ function largestShortfall(rows: readonly PresenceAreaRow[]): PresenceAreaRow | u
   return best;
 }
 
-function replaceNation(
-  snapshot: CampaignSnapshot,
-  nationId: string,
-  nation: NationState,
-): CampaignSnapshot {
-  const nations = new Map(snapshot.nations);
-  nations.set(nationId, nation);
-  return { ...snapshot, nations };
-}
+export function runForeignStationDeploymentPhase(ctx: PhaseContext): PhaseRunOutcome {
+  const rules = ctx.engineOptions?.presence;
+  if (rules === undefined) return { status: "continue" };
+  const demand: PresenceAreaRow[] = presenceDemand(ctx.snapshot.view(), rules, ctx.campaignMonth);
+  if (demand.length === 0) return { status: "continue" };
 
-export function runForeignStationDeploymentStep(
-  ctx: MonthContext,
-  demand: readonly PresenceAreaRow[],
-): void {
-  if (demand.length === 0) return;
-  const adjacency = seaAdjacency(ctx.currentSnapshot);
+  const adjacency = seaAdjacency(ctx.snapshot.view());
   const nationIds = [...new Set(demand.map((r) => r.nationId))].sort(byId);
   for (const nationId of nationIds) {
     const rows = demand.filter((r) => r.nationId === nationId);
     const target = largestShortfall(rows);
     if (target === undefined) continue;
     const shortAreas = new Set(rows.map((r) => r.areaId));
-    const nation = ctx.currentSnapshot.nations.get(nationId);
+    const nation = ctx.snapshot.view().nations.get(nationId);
     if (nation === undefined) continue;
     const stationed = nation.fleets
       .flatMap((fleet) => fleet.ships)
@@ -114,16 +105,17 @@ export function runForeignStationDeploymentStep(
       .sort((a, b) => byId(a.id, b.id));
     for (const ship of stationed) deployShip(ctx, nationId, ship.id, target.areaId, adjacency);
   }
+  return { status: "continue" };
 }
 
 function deployShip(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   nationId: string,
   shipId: string,
   targetAreaId: string,
   adjacency: Map<string, string[]>,
 ): void {
-  const snapshot = ctx.currentSnapshot;
+  const snapshot = ctx.snapshot.view();
   const nation = snapshot.nations.get(nationId)!;
   const fleet = nation.fleets.find((f) => f.ships.some((s) => s.id === shipId))!;
   const ship = fleet.ships.find((s) => s.id === shipId)!;
@@ -157,7 +149,7 @@ function deployShip(
         ctx.collector.addError(
           DIVISION_STATE_INVARIANT_FAILED,
           `Foreign-station ship ${shipId} cannot leave division ${division.divisionId}: ${(e as Error).message}`,
-          { stage: "battle_resolution" },
+          { stage: "foreign_station_deployment" },
         );
         return;
       }
@@ -222,5 +214,18 @@ function deployShip(
       month,
     ),
   );
-  ctx.currentSnapshot = replaceNation(snapshot, nationId, { ...nation, fleets, divisions });
+  const nations = new Map(snapshot.nations);
+  nations.set(nationId, { ...nation, fleets, divisions });
+  ctx.snapshot.write("nations", nations);
 }
+
+export const foreignStationDeploymentPhase: MonthPhase = {
+  id: "foreign_station_deployment",
+  name: "Foreign Station Deployment",
+  permissions: {
+    reads: ["nations", "world", "designs", "wars"],
+    writes: ["nations"],
+    rng: false,
+  },
+  run: runForeignStationDeploymentPhase,
+};

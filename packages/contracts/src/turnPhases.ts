@@ -1,0 +1,24 @@
+export const TURN_PHASES = [
+  "opening_validation",
+  "weather_generation",
+  "monthly_revenue",
+  "command_collection",
+  "ai_planning",
+  "ai_procurement",
+  "appropriation",
+  "maintenance",
+  "obligation",
+  "construction_processing",
+  "resolve_diplomacy",
+  "resolve_research",
+  "resolve_aircraft_development",
+  "resolve_carrier_operations",
+  "battle_generation",
+  "battle_resolution",
+  "presence_measurement",
+  "foreign_station_deployment",
+  "base_limits",
+  "closing_validation",
+] as const;
+
+export type TurnPhase = (typeof TURN_PHASES)[number];

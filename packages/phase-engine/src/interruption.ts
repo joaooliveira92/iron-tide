@@ -5,12 +5,11 @@ import {
   recordResolvedBattle,
 } from "./battles.js";
 import type { BattleInstance, NationState } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import { SafeInt, TURN_PHASES, type TurnPhase } from "@bluewave/contracts";
 import { compareCodePoints } from "@bluewave/deterministic";
 import {
   computeInputHash,
   computeInterruptionId,
-  TURN_PHASES,
   type BattleRequest,
   type BattleResultInput,
   type DecisionAnswer,
@@ -19,14 +18,13 @@ import {
   type InterruptionRequest,
   type OfferRequest,
   type OfferResponseInput,
-  type TurnPhase,
   type PendingDecision,
   type RecordedInput,
   type SuspendedTurn,
 } from "@bluewave/messages";
 import { declineRefusal } from "./battleDecline.js";
 import type { OfferContent } from "./battleOffer.js";
-import type { MonthContext } from "./monthContext.js";
+import type { MonthCheckpoint, PhaseContext } from "./pipeline.js";
 
 export interface InterruptionChannel {
   readonly turnId: string;
@@ -80,7 +78,7 @@ interface DecisionResolution {
 }
 
 export function consumeDecision(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   pending: PendingDecision,
 ): DecisionResolution | null {
   const state = ctx.interruption;
@@ -136,24 +134,24 @@ export function consumeDecision(
   return { answer, option };
 }
 
-function applyDecisionEffects(ctx: MonthContext, option: DecisionOption): void {
+function applyDecisionEffects(ctx: PhaseContext, option: DecisionOption): void {
   let nations: Map<string, NationState> | undefined;
   for (const effect of option.effects) {
-    const current = nations ?? ctx.currentSnapshot.nations;
+    const current = nations ?? ctx.snapshot.read("nations");
     const nation = current.get(effect.nationId);
     if (nation === undefined) continue;
-    if (nations === undefined) nations = new Map(ctx.currentSnapshot.nations);
+    if (nations === undefined) nations = new Map(ctx.snapshot.read("nations"));
     nations.set(effect.nationId, {
       ...nation,
       treasury: SafeInt(Number(nation.treasury) + effect.delta),
     });
   }
   if (nations !== undefined) {
-    ctx.currentSnapshot = { ...ctx.currentSnapshot, nations };
+    ctx.snapshot.write("nations", nations);
   }
 }
 
-export function runInterruptionCheckpoint(ctx: MonthContext): boolean {
+export function runInterruptionCheckpoint(ctx: PhaseContext): boolean {
   const state = ctx.interruption;
   if (state === undefined) return true;
   const ordered = [...state.pendingDecisions].sort(
@@ -168,8 +166,16 @@ export function runInterruptionCheckpoint(ctx: MonthContext): boolean {
   return true;
 }
 
+export const interruptionCheckpoint: MonthCheckpoint = {
+  id: "interruption_checkpoint",
+  name: "Interruption Checkpoint",
+  after: "resolve_carrier_operations",
+  permissions: { reads: ["nations"], writes: ["nations"], rng: false },
+  run: runInterruptionCheckpoint,
+};
+
 export function consumeBattleResult(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   battle: BattleInstance,
 ): BattleResultInput | null {
   const state = ctx.interruption;
@@ -301,7 +307,7 @@ export function consumeOfferResponse(
 
 export type AnsweredOffer = OfferResponseInput & { readonly inputHash: string };
 
-export function consumeOffer(ctx: MonthContext, content: OfferContent): AnsweredOffer | null {
+export function consumeOffer(ctx: PhaseContext, content: OfferContent): AnsweredOffer | null {
   const state = ctx.interruption;
   if (state === undefined) return null;
   const phase = "battle_resolution" as const;
@@ -377,14 +383,15 @@ function damageReport(result: BattleResultInput): Record<string, SafeInt> {
 }
 
 export function applyRecordedBattleResult(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   battle: BattleInstance,
   result: BattleResultInput,
 ): void {
   const report = damageReport(result);
+  let snapshot = ctx.snapshot.view();
   if (result.winnerId !== null && result.loserId !== null) {
-    ctx.currentSnapshot = applyBattleResult(
-      ctx.currentSnapshot,
+    snapshot = applyBattleResult(
+      snapshot,
       battle,
       { winnerId: result.winnerId, loserId: result.loserId, damageReport: report },
       ctx.campaignMonth,
@@ -392,7 +399,7 @@ export function applyRecordedBattleResult(
     );
   }
   const lostShips = collectLostShips(
-    ctx.currentSnapshot,
+    snapshot,
     battle,
     {
       damageReport: report,
@@ -401,12 +408,12 @@ export function applyRecordedBattleResult(
     },
     ctx.campaignMonth,
   );
-  ctx.currentSnapshot = applyBattleConsequences(ctx.currentSnapshot, battle, {
+  snapshot = applyBattleConsequences(snapshot, battle, {
     damageReport: report,
     attackerSunkIds: [...result.attackerLosses],
     defenderSunkIds: [...result.defenderLosses],
   });
-  ctx.currentSnapshot = recordResolvedBattle(ctx.currentSnapshot, battle, {
+  snapshot = recordResolvedBattle(snapshot, battle, {
     winnerId: result.winnerId,
     loserId: result.loserId,
     attackerLosses: [...result.attackerLosses].sort(),
@@ -415,10 +422,12 @@ export function applyRecordedBattleResult(
     explanation: ["player-resolved"],
     ...(lostShips.length > 0 ? { lostShips } : {}),
   });
+  ctx.snapshot.current = snapshot;
 }
 
-export function trailingInputSuspension(ctx: MonthContext): SuspendedTurn | undefined {
-  const state = ctx.interruption;
+export function trailingInputSuspension(
+  state: InterruptionState | undefined,
+): SuspendedTurn | undefined {
   if (state === undefined || state.suspended !== undefined) return undefined;
   const trailing = state.recordedInputs.find((input) => input.ordinal >= state.nextOrdinal);
   if (trailing === undefined) return undefined;

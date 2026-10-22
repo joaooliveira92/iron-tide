@@ -15,7 +15,7 @@ import { applyWarScoreDelta, type resolveBattleManifest } from "./battles.js";
 import { divide, type OfferContent } from "./battleOffer.js";
 import { tallyDecline } from "./declineCounter.js";
 import { battleDeclinedEvent, declineThresholdReachedEvent } from "./events.js";
-import type { MonthContext } from "./monthContext.js";
+import type { PhaseContext } from "./pipeline.js";
 import type { OfferRefusal } from "./interruption.js";
 import { applyPrestigeChange } from "./prestigeApplication.js";
 
@@ -85,7 +85,7 @@ function releaseReservations(
 }
 
 export function applyDecline(
-  ctx: MonthContext,
+  ctx: PhaseContext,
   battle: BattleInstance,
   manifest: NonNullable<ReturnType<typeof resolveBattleManifest>>,
   content: OfferContent,
@@ -93,7 +93,7 @@ export function applyDecline(
   rules: BattleOfferRules,
   responseInputHash: string,
 ): boolean {
-  const snapshot = ctx.currentSnapshot;
+  const snapshot = ctx.snapshot.current;
   const existing = snapshot["wars"]["declinedBattles"] ?? [];
   if (existing.some((record) => record.battleId === battle["id"])) return false;
   const price = priceDecline(rules, content.missionType);
@@ -135,7 +135,7 @@ export function applyDecline(
     victoryPointCost: price.cost,
     opponentCredit: price.credit,
   };
-  ctx.currentSnapshot = {
+  ctx.snapshot.current = {
     ...next,
     wars: {
       ...next["wars"],

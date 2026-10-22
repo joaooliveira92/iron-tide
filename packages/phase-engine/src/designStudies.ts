@@ -17,7 +17,7 @@ import {
   type ShipBuildingContent,
 } from "@bluewave/ship-design";
 import { budgetChangedEvent, makeLedgerEntry } from "./events.js";
-import type { MonthContext } from "./monthContext.js";
+import type { PhaseContext } from "./pipeline.js";
 
 export const DESIGN_STUDY_CATEGORY = "DESIGN_STUDY";
 
@@ -115,9 +115,9 @@ export function studyExists(snapshot: CampaignSnapshot, designVersionId: string)
   return false;
 }
 
-function approve(snapshot: CampaignSnapshot, s: DesignStudy, month: string): CampaignSnapshot {
+function approve(ctx: PhaseContext, s: DesignStudy, month: string): void {
   const design = s.design;
-  const existing = snapshot["designFamilies"].get(s.designFamilyId);
+  const existing = ctx.snapshot.read("designFamilies").get(s.designFamilyId);
   const family: DesignFamily = existing
     ? {
         ...existing,
@@ -130,16 +130,19 @@ function approve(snapshot: CampaignSnapshot, s: DesignStudy, month: string): Cam
         memberDesignVersionIds: [design.designVersionId],
         familyCreationMonth: month,
       };
-  return {
-    ...snapshot,
-    designs: new Map([...snapshot["designs"], [design.designVersionId, design]]),
-    designFamilies: new Map([...snapshot["designFamilies"], [family.designFamilyId, family]]),
-  };
+  ctx.snapshot.write(
+    "designs",
+    new Map([...ctx.snapshot.read("designs"), [design.designVersionId, design]]),
+  );
+  ctx.snapshot.write(
+    "designFamilies",
+    new Map([...ctx.snapshot.read("designFamilies"), [family.designFamilyId, family]]),
+  );
 }
 
-export function fundDesignStudies(ctx: MonthContext): void {
+export function fundDesignStudies(ctx: PhaseContext): void {
   const { campaignMonth, eventLedger, financialLedger, nextSeq } = ctx;
-  for (const [nationId, start] of ctx.currentSnapshot["nations"]) {
+  for (const [nationId, start] of ctx.snapshot.read("nations")) {
     const open = (start.designStudies ?? []).filter((s) => s.status === "IN_PROGRESS");
     if (open.length === 0) continue;
     let nation: NationState = start;
@@ -165,10 +168,10 @@ export function fundDesignStudies(ctx: MonthContext): void {
           x.designStudyId === s.designStudyId ? next : x,
         ),
       };
-      const nations = new Map(ctx.currentSnapshot["nations"]);
+      const nations = new Map(ctx.snapshot.read("nations"));
       nations.set(nationId, nation);
-      ctx.currentSnapshot = { ...ctx.currentSnapshot, nations };
-      if (done) ctx.currentSnapshot = approve(ctx.currentSnapshot, next, campaignMonth);
+      ctx.snapshot.write("nations", nations);
+      if (done) approve(ctx, next, campaignMonth);
       if (cost > 0) {
         const reason = `Design study for ${s.design.className}${done ? " (completed)" : ""}`;
         financialLedger.append(

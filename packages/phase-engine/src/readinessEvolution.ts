@@ -2,7 +2,7 @@ import type { NationState, Ship } from "@bluewave/campaign";
 import { readinessAfterCrewRamp, rampCrewQuality } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { shipReadinessChangedEvent } from "./events.js";
-import type { MonthContext } from "./monthContext.js";
+import type { PhaseContext } from "./pipeline.js";
 
 export const WORKING_UP_COMPLETE_REASON = "WORKING_UP_COMPLETE" as const;
 export const REPAIR_COMPLETE_REASON = "REPAIR_COMPLETE" as const;
@@ -13,13 +13,13 @@ function releaseFromRepair(ship: Ship): Ship {
   return released;
 }
 
-export function applyReadinessEvolution(ctx: MonthContext): void {
+export function applyReadinessEvolution(ctx: PhaseContext): void {
   const { campaignMonth, eventLedger, nextSeq } = ctx;
 
   let changed = false;
   const updatedNations = new Map<string, NationState>();
 
-  for (const [nationId, nation] of ctx.currentSnapshot["nations"]) {
+  for (const [nationId, nation] of ctx.snapshot.read("nations")) {
     if (!nation["isPlayable"] && !nation["isAI"]) {
       updatedNations.set(nationId, nation);
       continue;
@@ -78,5 +78,5 @@ export function applyReadinessEvolution(ctx: MonthContext): void {
     updatedNations.set(nationId, { ...nation, fleets });
   }
 
-  if (changed) ctx.currentSnapshot = { ...ctx.currentSnapshot, nations: updatedNations };
+  if (changed) ctx.snapshot.write("nations", updatedNations);
 }
