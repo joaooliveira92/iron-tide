@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import {
-  buildAreaTree,
-  campaignTreeRows,
-  resolvePlayerNationId,
-  type AreaTreeRow,
-} from "./area-tree.js";
+import { buildAreaTree, campaignTreeRows, type AreaTreeRow } from "./area-tree.js";
 import type { CampaignAreaEntry } from "./campaign-map-join.js";
 
 const AREAS: CampaignAreaEntry[] = [
@@ -103,19 +98,5 @@ describe("buildAreaTree", () => {
     };
     const tree = buildAreaTree({ rows: [stray], mode: "ships", query: "", toggled: none });
     expect(tree[0]).toMatchObject({ id: "other", label: "Other waters" });
-  });
-});
-
-describe("resolvePlayerNationId", () => {
-  it("matches the projection's nation name against the world's nations", () => {
-    const world = {
-      nations: [{ id: "uk", name: "Britain", tag: "GBR", homeAreaId: null, presenceAreaIds: [] }],
-      areas: [],
-      ports: [],
-      fleets: [],
-      routes: [],
-    };
-    expect(resolvePlayerNationId(world, "Britain")).toBe("uk");
-    expect(resolvePlayerNationId(world, "Nowhere")).toBeNull();
   });
 });

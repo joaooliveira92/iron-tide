@@ -14,7 +14,7 @@ import type {
   StrategicPriority,
   TacticalBattleOutcome,
 } from "@bluewave/campaign-engine";
-import type { BattleHistoryView, WorldMapView } from "@bluewave/campaign-engine";
+import type { BattleHistoryView, StrategicMapView } from "@bluewave/campaign-engine";
 import type { PlayerBattleView } from "@bluewave/combat";
 import type { SaveMetadata } from "@bluewave/persistence";
 import type { BridgeResult, CommandEnvelope } from "./bridge-contract.js";
@@ -185,7 +185,10 @@ export interface InspectOpeningBriefingResult {
 export interface InspectMapResult {
   readonly revision: number;
   readonly month: { readonly month: number; readonly year: number };
-  readonly world: WorldMapView;
+  /** The session's player nation: the viewer the strategic projection is scoped to. */
+  readonly playerNationId: string;
+  /** Viewer-scoped world (DR-0037 Option B: own fleets plus public facts). */
+  readonly strategic: StrategicMapView;
 }
 
 export interface InspectBattleHistoryResult {

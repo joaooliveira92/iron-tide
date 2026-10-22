@@ -791,7 +791,7 @@ export function StatusStrip({ sessionId, revision, alertsCount }: StatusStripPro
       trend={buildTrend(reports.status === "ready" ? reports.value.reports : null)}
       model={buildStatusStrip({
         projection: campaign.value.projection,
-        areas: map.status === "ready" ? map.value.world.areas : null,
+        areas: map.status === "ready" ? map.value.strategic.world.areas : null,
         alertsCount,
       })}
     />

@@ -8,7 +8,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useBridge } from "../../lib/bridge-context.js";
-import { resolvePlayerNationId } from "./area-tree.js";
 import { EMPTY_LIVE_OVERLAY, joinWorldMap, type LiveWorldMapOverlay } from "./campaign-map-join.js";
 
 export function useLiveWorldMapOverlay(sessionId: string | null): LiveWorldMapOverlay {
@@ -31,23 +30,14 @@ export function useLiveWorldMapOverlay(sessionId: string | null): LiveWorldMapOv
           setPlayerNationId(null);
           return;
         }
-        setOverlay(joinWorldMap(result.value.world));
-        // The tree's Ships / Possessions lenses are the player's: resolve who that is.
-        return Promise.resolve(bridge.campaign.execute("inspectCampaign", sessionId))
-          .then((campaign) => {
-            if (!active) return;
-            setPlayerNationId(
-              campaign?.outcome === "success"
-                ? resolvePlayerNationId(result.value.world, campaign.value.projection.nationName)
-                : null,
-            );
-          })
-          .catch(() => {
-            if (active) setPlayerNationId(null);
-          });
+        setOverlay(joinWorldMap(result.value.strategic.world));
+        setPlayerNationId(result.value.playerNationId);
       })
       .catch(() => {
-        if (active) setOverlay(EMPTY_LIVE_OVERLAY);
+        if (active) {
+          setOverlay(EMPTY_LIVE_OVERLAY);
+          setPlayerNationId(null);
+        }
       });
     return () => {
       active = false;

@@ -5,7 +5,7 @@ import {
   buildBattleHistory,
   buildOpeningBriefingProjection,
   buildPrioritiesProjection,
-  buildWorldMapView,
+  buildStrategicMapView,
   type InspectPrioritiesResult,
 } from "@bluewave/campaign-engine";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -157,7 +157,7 @@ describe("inspect commands (Effect programs)", () => {
   });
 
   describe("inspectMap", () => {
-    it("rebuilds the full-world projection from the session's stored snapshot", async () => {
+    it("rebuilds the viewer-scoped strategic projection from the session's stored snapshot", async () => {
       const result = await runProgram(inspectMapProgram, "session-uk");
       expect(result.outcome).toBe("success");
       if (result.outcome !== "success") return;
@@ -165,7 +165,14 @@ describe("inspect commands (Effect programs)", () => {
       const value = result.value as InspectMapResult;
       expect(value.revision).toBe(0);
       expect(value.month).toEqual({ month: 1, year: 1880 });
-      expect(value.world).toEqual(buildWorldMapView(compiled.state.snapshot));
+      expect(value.playerNationId).toBe("uk");
+      expect(value.strategic).toEqual(buildStrategicMapView(compiled.state.snapshot, "uk"));
+    });
+
+    it("reports UNKNOWN_PLAYER_SLOT for a session whose player slot is not in the snapshot", async () => {
+      registerSession("session-bogus", "atlantis");
+      const result = await runProgram(inspectMapProgram, "session-bogus");
+      expect(result).toMatchObject({ outcome: "error", reason: "UNKNOWN_PLAYER_SLOT" });
     });
   });
 
