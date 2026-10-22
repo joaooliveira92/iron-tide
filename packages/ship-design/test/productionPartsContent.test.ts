@@ -136,7 +136,7 @@ describe("production parts content → compile (ticket 11d)", () => {
         loadout: loadout.loadout,
         catalogue,
         month: loadout.month,
-        nation: { nationId: loadout.header.nation },
+        conditions: { nation: { nationId: loadout.header.nation } },
         ctx: nationalContext(loadout.month, loadout.header.nation),
       });
       expect(result.status, loadout.id).toBe("ACCEPTED");
@@ -179,7 +179,7 @@ describe("production parts content → compile (ticket 11d)", () => {
         loadout: loadout.loadout,
         catalogue,
         month: loadout.month,
-        nation: { nationId: loadout.header.nation },
+        conditions: { nation: { nationId: loadout.header.nation } },
         ctx: nationalContext(loadout.month, loadout.header.nation),
       });
       expect(result.status, loadout.id).toBe("ACCEPTED");
@@ -202,7 +202,7 @@ describe("production parts content → compile (ticket 11d)", () => {
       loadout: broken,
       catalogue,
       month: loadout.month,
-      nation: { nationId: loadout.header.nation },
+      conditions: { nation: { nationId: loadout.header.nation } },
       ctx: nationalContext(loadout.month, loadout.header.nation),
     });
     expect(result.status).toBe("REJECTED");
@@ -229,7 +229,7 @@ describe("production parts content → compile (ticket 11d)", () => {
       loadout: loadout.loadout,
       catalogue,
       month: loadout.month,
-      nation: { nationId: loadout.header.nation },
+      conditions: { nation: { nationId: loadout.header.nation } },
       ctx: { ...nationalContext(loadout.month, loadout.header.nation), shipTypes },
     });
     expect(result.status).toBe("REJECTED");

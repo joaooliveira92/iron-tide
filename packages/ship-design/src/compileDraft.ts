@@ -305,12 +305,14 @@ export function compileDraftFromParts(input: {
     catalogue,
     month: input.month,
     ctx: input.ctx,
-    ...(input.nation === undefined ? {} : { nation: input.nation }),
-    mountCountRanges: forward.mountCountRanges,
-    unlockedTechnologies: input.unlockedTechnologies ?? [...input.ctx.unlockedTechs],
-    ...(input.ammunitionCompatibility === undefined
-      ? {}
-      : { ammunitionCompatibility: input.ammunitionCompatibility }),
+    conditions: {
+      ...(input.nation === undefined ? {} : { nation: input.nation }),
+      mountCountRanges: forward.mountCountRanges,
+      unlockedTechnologies: input.unlockedTechnologies ?? [...input.ctx.unlockedTechs],
+      ...(input.ammunitionCompatibility === undefined
+        ? {}
+        : { ammunitionCompatibility: input.ammunitionCompatibility }),
+    },
   });
   if (result.status === "UNTRANSLATED") {
     return {

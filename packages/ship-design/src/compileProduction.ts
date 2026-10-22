@@ -5,14 +5,9 @@ import type { CompiledDesign, ShipContext } from "./compileShared.js";
 import type { Finding } from "./findings.js";
 import { resolveLoadout, type LoadoutResolutionIssue } from "./loadoutResolution.js";
 import type { PartCatalogue } from "./partQueries.js";
-import { deriveAfterFit, validateLoadoutFit } from "./partFit.js";
+import { deriveAfterFit, type FitConditions } from "./partFit.js";
 import { shipTypeRequirementsFor } from "./shipTypeRegistry.js";
-import type {
-  FitAmmunitionCompatibility,
-  FitMountCountRanges,
-  FitNationInput,
-  FitResult,
-} from "./partFitTypes.js";
+import type { FitResult } from "./partFitTypes.js";
 
 export type ProductionCompile =
   | {
@@ -37,10 +32,7 @@ export interface CompileDesignFromLoadoutInput {
   readonly catalogue: PartCatalogue;
   readonly month: string;
   readonly ctx: ShipContext;
-  readonly nation?: FitNationInput;
-  readonly mountCountRanges?: FitMountCountRanges;
-  readonly unlockedTechnologies?: readonly string[];
-  readonly ammunitionCompatibility?: FitAmmunitionCompatibility;
+  readonly conditions?: FitConditions;
 }
 
 function fitFindings(fit: FitResult): Finding[] {
@@ -80,25 +72,16 @@ export function compileDesignFromLoadout(input: CompileDesignFromLoadoutInput): 
 
   const requirements = shipTypeRequirementsFor(input.ctx, input.header.requirement.category);
 
-  const check = (): FitResult =>
-    validateLoadoutFit({
-      parts: input.catalogue.parts,
-      slotTemplates: input.catalogue.compatibility.slotTemplates,
-      platforms: input.catalogue.compatibility.platforms,
-      loadout: input.loadout,
-      month: input.month,
-      ...(input.nation === undefined ? {} : { nation: input.nation }),
-      ...(input.mountCountRanges === undefined ? {} : { mountCountRanges: input.mountCountRanges }),
-      ...(input.unlockedTechnologies === undefined
-        ? {}
-        : { unlockedTechnologies: input.unlockedTechnologies }),
-      ...(input.ammunitionCompatibility === undefined
-        ? {}
-        : { ammunitionCompatibility: input.ammunitionCompatibility }),
+  const fit = input.catalogue.validate({
+    loadout: input.loadout,
+    month: input.month,
+    conditions: {
+      ...input.conditions,
       ...(requirements.length === 0 ? {} : { shipTypeRequirements: requirements }),
-    });
+    },
+  });
 
-  const outcome = deriveAfterFit(check(), () => {
+  const outcome = deriveAfterFit(fit, () => {
     const findings: Finding[] = [];
     const balance = {
       ...input.ctx.balance,

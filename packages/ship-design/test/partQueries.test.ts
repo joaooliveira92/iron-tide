@@ -374,9 +374,7 @@ describe("validateLoadout", () => {
     const cat = catalogue();
     expect(cat.validate({ loadout: loadout(entries), month: "1890-01" })).toEqual(
       validateLoadoutFit({
-        parts: cat.parts,
-        slotTemplates: cat.slotTemplates,
-        platforms: cat.platforms,
+        catalogue: cat,
         loadout: loadout(entries),
         month: "1890-01",
       }),
@@ -394,12 +392,17 @@ describe("validateLoadout", () => {
     const base = { loadout: loadout(tubes), month: "1895-01" };
     const validate = catalogue().validate;
     expect(validate(base).status).toBe("ACCEPTED");
-    const locked = validate({ ...base, unlockedTechnologies: [] });
+    const locked = validate({ ...base, conditions: { unlockedTechnologies: [] } });
     expect(locked.status).toBe("REJECTED");
     expect(locked.findings.map((f) => [f.code, f.part, f.detail])).toEqual([
       ["FIT_TECHNOLOGY_LOCKED", "whitehead_mk2", { missing: ["torpedo_heater"] }],
     ]);
-    expect(validate({ ...base, unlockedTechnologies: ["torpedo_heater"] }).status).toBe("ACCEPTED");
+    expect(
+      validate({
+        ...base,
+        conditions: { unlockedTechnologies: ["torpedo_heater"] },
+      }).status,
+    ).toBe("ACCEPTED");
   });
 });
 

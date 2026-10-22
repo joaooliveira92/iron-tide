@@ -36,7 +36,7 @@ import {
   translateGunPlacement,
   translateMachinery,
   translateTubePlacement,
-  validateLoadoutFit,
+  partCatalogue,
   type FitMountCountRanges,
   type GunPartRequest,
   type GunPlacementTranslation,
@@ -397,14 +397,14 @@ function designLoadout(input: {
   }
 
   const loadout: LoadoutData = { platform: draft.hull.hullFormId, entries };
-  const fit = validateLoadoutFit({
+  const fit = partCatalogue({
     parts: [...referenced.values()].sort(byId),
     slotTemplates: models.compatibility.slotTemplates,
     platforms: models.compatibility.platforms,
+  }).validate({
     loadout,
     month: design.month,
-    nation: { nationId },
-    mountCountRanges: ranges satisfies FitMountCountRanges,
+    conditions: { nation: { nationId }, mountCountRanges: ranges satisfies FitMountCountRanges },
   });
   const header = headerFromDraft(draft);
   const staged: StagedDesign = {

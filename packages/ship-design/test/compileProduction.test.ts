@@ -88,7 +88,7 @@ const compile = (
     loadout: loadout.loadout,
     catalogue: partModel,
     month: loadout.month,
-    nation: { nationId: loadout.header.nation },
+    conditions: { nation: { nationId: loadout.header.nation } },
     ctx: nationalContext(loadout.month, loadout.header.nation),
   });
 

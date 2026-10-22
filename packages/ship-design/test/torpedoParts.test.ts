@@ -313,9 +313,11 @@ function launcherFit(
     ],
   });
   return validateLoadoutFit({
-    parts: [partWithWaivers, torpedo],
-    slotTemplates: compatibility.slotTemplates,
-    platforms: compatibility.platforms,
+    catalogue: {
+      parts: [partWithWaivers, torpedo],
+      slotTemplates: compatibility.slotTemplates,
+      platforms: compatibility.platforms,
+    },
     loadout,
     month,
   });

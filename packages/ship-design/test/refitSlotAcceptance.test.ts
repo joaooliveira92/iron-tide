@@ -58,9 +58,7 @@ const PLATFORM = decodeStrict(PlatformSchema, {
 
 function fitPart(part: FlattenedPart): FitResult {
   return validateLoadoutFit({
-    parts: [part],
-    slotTemplates: [TEMPLATE],
-    platforms: [PLATFORM],
+    catalogue: { parts: [part], slotTemplates: [TEMPLATE], platforms: [PLATFORM] },
     loadout: decodeStrict(LoadoutSchema, {
       platform: "fixture_hull",
       entries: [{ slot: "fwd_main", part: part.id }],

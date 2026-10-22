@@ -200,15 +200,19 @@ function fitDesign(d: DesignFit, options: { nation?: boolean; ranges?: boolean }
     entries: d.entries,
   });
   return validateLoadoutFit({
-    parts: uniqueParts(d.parts),
-    slotTemplates: compatibility.slotTemplates,
-    platforms: compatibility.platforms,
+    catalogue: {
+      parts: uniqueParts(d.parts),
+      slotTemplates: compatibility.slotTemplates,
+      platforms: compatibility.platforms,
+    },
     loadout,
     month: d.design.month,
-    ...(options.nation === true ? { nation: { nationId: d.design.draft.nationId } } : {}),
-    ...(options.ranges === true
-      ? { mountCountRanges: d.ranges satisfies FitMountCountRanges }
-      : {}),
+    conditions: {
+      ...(options.nation === true ? { nation: { nationId: d.design.draft.nationId } } : {}),
+      ...(options.ranges === true
+        ? { mountCountRanges: d.ranges satisfies FitMountCountRanges }
+        : {}),
+    },
   });
 }
 
@@ -250,9 +254,11 @@ describe("fit over production launchers (ticket 04 hand-over)", () => {
       ],
     });
     return validateLoadoutFit({
-      parts: [part, fixtureTorpedo(torpedoId)],
-      slotTemplates: compatibility.slotTemplates,
-      platforms: compatibility.platforms,
+      catalogue: {
+        parts: [part, fixtureTorpedo(torpedoId)],
+        slotTemplates: compatibility.slotTemplates,
+        platforms: compatibility.platforms,
+      },
       loadout,
       month,
     });
@@ -372,9 +378,11 @@ function fitEntries(
   month: string,
 ): FitResult {
   return validateLoadoutFit({
-    parts,
-    slotTemplates: compatibility.slotTemplates,
-    platforms: compatibility.platforms,
+    catalogue: {
+      parts,
+      slotTemplates: compatibility.slotTemplates,
+      platforms: compatibility.platforms,
+    },
     loadout: decodeStrict(LoadoutSchema, { platform, entries }),
     month,
   });

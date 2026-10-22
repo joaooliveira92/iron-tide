@@ -9,17 +9,13 @@ import type {
   SlotTemplateData,
 } from "@bluewave/content-schema";
 import { platformSlots, type CompatibilityModel } from "./partCompatibility.js";
-import { validateLoadoutFit, type FitInput } from "./partFit.js";
+import { validateLoadoutFit, type FitCatalogue, type FitConditions } from "./partFit.js";
 import { evaluateConstraints, specAt, type ResolvedSpec } from "./partFitConstraints.js";
 import type { FitDataIssue, FitNationInput, FitResult } from "./partFitTypes.js";
 import { isMonth, lifecycleStatus, shiftMonth, type LifecycleStatus } from "./partLifecycle.js";
 import { quantityLines, type QuantityLine } from "./partQuantities.js";
 
-interface CatalogueData {
-  readonly parts: readonly FlattenedPart[];
-  readonly slotTemplates: readonly SlotTemplateData[];
-  readonly platforms: readonly PlatformData[];
-}
+type CatalogueData = FitCatalogue;
 
 function assertMonth(month: string, query: string): void {
   if (!isMonth(month)) throw new Error(`partQueries.${query}: '${month}' is not a YYYY-MM month`);
@@ -292,35 +288,6 @@ function lineage(catalogue: CatalogueData, id: string): PartLineage | null {
   };
 }
 
-interface ValidateLoadoutInput {
-  readonly catalogue: CatalogueData;
-  readonly loadout: LoadoutData;
-  readonly month: string;
-  readonly nation?: FitNationInput;
-  readonly unlockedTechnologies?: readonly string[];
-  readonly ammunitionCompatibility?: FitInput["ammunitionCompatibility"];
-  readonly mountCountRanges?: FitInput["mountCountRanges"];
-}
-
-function validateLoadout(input: ValidateLoadoutInput): FitResult {
-  const { catalogue } = input;
-  return validateLoadoutFit({
-    parts: catalogue.parts,
-    slotTemplates: catalogue.slotTemplates,
-    platforms: catalogue.platforms,
-    loadout: input.loadout,
-    month: input.month,
-    ...(input.nation === undefined ? {} : { nation: input.nation }),
-    ...(input.unlockedTechnologies === undefined
-      ? {}
-      : { unlockedTechnologies: input.unlockedTechnologies }),
-    ...(input.ammunitionCompatibility === undefined
-      ? {}
-      : { ammunitionCompatibility: input.ammunitionCompatibility }),
-    ...(input.mountCountRanges === undefined ? {} : { mountCountRanges: input.mountCountRanges }),
-  });
-}
-
 export interface CostLine extends QuantityLine {
   readonly path: string;
   readonly revision: string;
@@ -414,7 +381,11 @@ export interface PartCatalogue extends CatalogueData {
   readonly available: (input: Omit<AvailablePartsInput, "catalogue">) => AvailableParts;
   readonly forSlot: (input: Omit<PartsForSlotInput, "catalogue">) => PartsForSlot;
   readonly lineage: (id: string) => PartLineage | null;
-  readonly validate: (input: Omit<ValidateLoadoutInput, "catalogue">) => FitResult;
+  readonly validate: (input: {
+    readonly loadout: LoadoutData;
+    readonly month: string;
+    readonly conditions?: FitConditions;
+  }) => FitResult;
   readonly cost: (input: { readonly loadout: LoadoutData; readonly month: string }) => LoadoutCost;
 }
 
@@ -445,7 +416,7 @@ export function partCatalogue(input: {
     available: (query) => availableParts({ ...query, catalogue: data }),
     forSlot: (query) => partsForSlot({ ...query, catalogue: data }),
     lineage: (id) => lineage(data, id),
-    validate: (query) => validateLoadout({ ...query, catalogue: data }),
+    validate: (query) => validateLoadoutFit({ ...query, catalogue: data }),
     cost: (query) => loadoutCost({ ...query, catalogue: data }),
   };
 }
