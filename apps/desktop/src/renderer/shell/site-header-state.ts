@@ -6,6 +6,7 @@
  */
 
 import { monthName } from "../lib/campaign-month.js";
+import type { PresentationFormat } from "../lib/presentation-format/index.js";
 import { translate } from "../lib/strings.js";
 
 /** Which shell the toolbar is decorating. Drives the adaptive second row. */
@@ -88,20 +89,22 @@ export type PreferencesRowModel = Extract<SecondaryRow, { kind: "preferences" }>
 
 const NO_VALUE = "—";
 const THOUSAND = 1000;
-const groupDigits = new Intl.NumberFormat("en-GB", { useGrouping: true });
 
 /**
  * Sums of a thousand or more are shown in thousands, truncated so the toolbar
- * never reports more money than the treasury holds.
+ * never reports more money than the treasury holds. The figure and its currency
+ * unit come from the one presentation format, so the header honours the player's
+ * effective currency and locale (ADR-0218).
  */
-export function formatTreasury(treasury: number): string {
+export function formatTreasury(treasury: number, format: PresentationFormat): string {
   if (!Number.isFinite(treasury)) return NO_VALUE;
 
   const sign = treasury < 0 ? "-" : "";
   const magnitude = Math.abs(treasury);
 
-  if (magnitude < THOUSAND) return `${sign}£${groupDigits.format(magnitude)}`;
-  return `${sign}£${groupDigits.format(Math.trunc(magnitude / THOUSAND))}k`;
+  if (magnitude < THOUSAND) return `${sign}${format.money(magnitude)}`;
+  const thousands = format.number(Math.trunc(magnitude / THOUSAND));
+  return `${sign}${thousands}k ${format.currencyLabel}`;
 }
 
 export function formatCampaignMonth(month: CampaignMonth): string {
@@ -124,6 +127,7 @@ const EDITOR_ACTIONS: readonly HeaderAction[] = [
 export function describeSecondaryRow(
   view: ActiveView,
   campaign: HeaderCampaign | null,
+  format: PresentationFormat,
   wizardStep?: WizardStepCopy,
 ): SecondaryRow {
   switch (view) {
@@ -137,7 +141,7 @@ export function describeSecondaryRow(
     case "playing":
       return {
         kind: "campaign",
-        metrics: campaignMetrics(campaign),
+        metrics: campaignMetrics(campaign, format),
         status:
           campaign?.atWar === true
             ? translate("shell.header.campaign.atWar")
@@ -167,7 +171,10 @@ export function describeSecondaryRow(
   }
 }
 
-function campaignMetrics(campaign: HeaderCampaign | null): readonly HeaderMetric[] {
+function campaignMetrics(
+  campaign: HeaderCampaign | null,
+  format: PresentationFormat,
+): readonly HeaderMetric[] {
   return [
     {
       icon: "nation",
@@ -178,13 +185,14 @@ function campaignMetrics(campaign: HeaderCampaign | null): readonly HeaderMetric
     {
       icon: "budget",
       label: translate("shell.header.metric.budget"),
-      value: campaign === null ? NO_VALUE : formatTreasury(campaign.treasury),
+      value: campaign === null ? NO_VALUE : formatTreasury(campaign.treasury, format),
       placeholder: campaign === null,
     },
     {
       icon: "balance",
       label: translate("shell.header.metric.balance"),
-      value: campaign === null ? NO_VALUE : formatTreasury(campaign.projectedSurplusDeficit),
+      value:
+        campaign === null ? NO_VALUE : formatTreasury(campaign.projectedSurplusDeficit, format),
       placeholder: campaign === null,
     },
     {

@@ -13,6 +13,7 @@ import { FieldError } from "../../../components/ui/field.js";
 import { NumberField, SelectField } from "../../../components/design-workspace/fields.js";
 import { ArmourSchemeSelector } from "./ArmourSchemeSelector.js";
 import { Panel } from "../../../components/design-workspace/panels/Panel.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import {
   armourMaterialChoices,
   FLAT_COS_BP,
@@ -20,9 +21,6 @@ import {
   type ProtectionField,
   type ProtectionModel,
 } from "../protection-view.js";
-
-const tonnes = (kg: number) => (kg / 1000).toLocaleString("en-US", { maximumFractionDigits: 0 });
-const m2 = (area: number) => area.toLocaleString("en-US", { maximumFractionDigits: 0 });
 
 /**
  * The Protection section's armour editor: the design's armour regions grouped spatially (belt, deck, conning tower,
@@ -45,6 +43,7 @@ export function ProtectionEditor({
   readonly onSelectRegion?: (region: ArmourRegionId | null) => void;
   readonly selectedRegion?: ArmourRegionId | null;
 }) {
+  const format = usePresentationFormat();
   const [toAdd, setToAdd] = useState("");
   const patch = (region: ArmourRegion, change: Partial<ArmourRegion>) =>
     edit({ kind: "set_armour_region", region: { ...region, ...change } });
@@ -65,11 +64,11 @@ export function ProtectionEditor({
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="text-muted-foreground">Belt coverage</span>
         <Badge variant="outline" className="tabular-nums">
-          {(model.coverageBp / 100).toFixed(0)}%
+          {format.percent(model.coverageBp, 0)}
         </Badge>
         <span className="text-muted-foreground">Armour weight</span>
         <Badge variant="outline" className="tabular-nums">
-          {tonnes(model.totalWeightKg)} t
+          {format.measurement(model.totalWeightKg, "mass", { maximumFractionDigits: 0 })}
         </Badge>
       </div>
       <ArmourSchemeSelector model={model} edit={edit} />
@@ -153,6 +152,7 @@ function ProtectionFieldRow({
   readonly onPatch: (region: ArmourRegion, change: Partial<ArmourRegion>) => void;
   readonly onRemove: () => void;
 }) {
+  const format = usePresentationFormat();
   const region = field.armour;
   return (
     <li
@@ -172,7 +172,7 @@ function ProtectionFieldRow({
         </Button>
         <span className="flex items-center gap-2">
           <Badge variant="outline" className="tabular-nums">
-            {tonnes(field.weightKg)} t
+            {format.measurement(field.weightKg, "mass", { maximumFractionDigits: 0 })}
           </Badge>
           <Button
             variant="ghost"
@@ -186,18 +186,20 @@ function ProtectionFieldRow({
       </div>
 
       <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-4">
-        <Readout label="Thickness">{`${field.thicknessMm.toLocaleString("en-US")} mm`}</Readout>
-        <Readout label="Length coverage">{`${(field.coveragePermille / 10).toFixed(0)}% of length`}</Readout>
-        <Readout label="Weight">{`${tonnes(field.weightKg)} t`}</Readout>
-        <Readout label="Protected area">{`${m2(field.protectedAreaM2)} m²`}</Readout>
+        <Readout label="Thickness">{`${format.number(field.thicknessMm)} mm`}</Readout>
+        <Readout label="Length coverage">{`${format.percent(field.coveragePermille * 10, 0)} of length`}</Readout>
+        <Readout label="Weight">
+          {format.measurement(field.weightKg, "mass", { maximumFractionDigits: 0 })}
+        </Readout>
+        <Readout label="Protected area">{`${format.number(field.protectedAreaM2)} m²`}</Readout>
         <Readout label="Material">{field.materialLabel}</Readout>
-        <Readout label="Effective thickness">{`${field.effectiveThicknessMm.toFixed(0)} mm`}</Readout>
+        <Readout label="Effective thickness">{`${format.number(field.effectiveThicknessMm)} mm`}</Readout>
         <Readout label="Effectiveness">
           {field.marginBp === null
             ? "n/a"
             : field.defeatsDesignThreat
-              ? `defeats (margin ${field.marginBp} bp)`
-              : `penetrated (margin ${field.marginBp} bp)`}
+              ? `defeats (margin ${format.number(field.marginBp)} bp)`
+              : `penetrated (margin ${format.number(field.marginBp)} bp)`}
         </Readout>
       </dl>
 

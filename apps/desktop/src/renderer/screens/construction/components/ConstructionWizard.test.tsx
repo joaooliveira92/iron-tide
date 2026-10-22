@@ -94,11 +94,11 @@ describe("ConstructionWizard", () => {
         onConfirm: () => {},
       }),
     );
-    expect(html).toMatch(/>11(<!-- -->)? treasury units/);
+    expect(html).toMatch(/>11 NC(<!-- -->)? treasury units/);
     expect(html).toContain("priced by the ship-design cost model");
     expect(html).not.toContain("construction_order_v1");
     // not the displacement formula (2,037 t / 100 = 20)
-    expect(html).not.toMatch(/>20(<!-- -->)? treasury units/);
+    expect(html).not.toMatch(/>20 NC(<!-- -->)? treasury units/);
   });
 
   it("surfaces verbatim rejection when notice carries INSUFFICIENT_FUNDS", () => {

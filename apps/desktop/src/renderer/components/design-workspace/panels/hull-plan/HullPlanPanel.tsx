@@ -41,6 +41,7 @@ import { useHullPlanEditing, type HullPlanEditing } from "./useHullPlanEditing.j
 import { Info } from "lucide-react";
 import { cn } from "../../../../lib/utils.js";
 import { formatHullMetres } from "../../../../lib/presentation-format/index.js";
+import { usePresentationFormat } from "../../../../shell/usePresentationFormat.js";
 import { plural } from "../../plural.js";
 import type { BoardFinding } from "../../validation/boardFindings.js";
 import type { PlanTool } from "./plan-tool.js";
@@ -105,6 +106,7 @@ export function HullPlanPanel({
   /** The armour region the Protection editor has selected, highlighted on the plan (presentation only). */
   readonly armourHighlight?: ArmourRegionId | null;
 }) {
+  const format = usePresentationFormat();
   // Display preferences are lifted to the board toolbar; the plan falls back to its own state when shown on its own.
   const [localShowArcs, setLocalShowArcs] = useState(true);
   const [localFindingsView, setLocalFindingsView] = useFindingsView();
@@ -336,19 +338,23 @@ export function HullPlanPanel({
         />
       </div>
       <HullPlanLegend
-        entries={legendEntries({
-          facts,
-          waterplaneCoeffBp: form?.waterplaneCoeffBp,
-          lcbPermille: form?.lcbPermille,
-          sheerBp: form?.sheerBp,
-          funnels: placedFunnels,
-          masts: model.masts,
-        })}
+        entries={legendEntries(
+          {
+            facts,
+            waterplaneCoeffBp: form?.waterplaneCoeffBp,
+            lcbPermille: form?.lcbPermille,
+            sheerBp: form?.sheerBp,
+            funnels: placedFunnels,
+            masts: model.masts,
+          },
+          format,
+        )}
       />
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span>
           {formatHullMetres(frame.lengthM, 0)} m × {formatHullMetres(frame.beamM, 1)} m ·{" "}
-          {plural(draft.placements.length, "fitting")} · Schematic, not a lines plan.
+          {plural(draft.placements.length, "fitting", undefined, undefined, format)} · Schematic,
+          not a lines plan.
         </span>
         <Popover>
           <PopoverTrigger

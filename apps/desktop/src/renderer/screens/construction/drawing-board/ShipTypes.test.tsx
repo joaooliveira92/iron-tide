@@ -7,6 +7,7 @@ import { chooseOption, region } from "./test-helpers.js";
 vi.mock("../../../shell/CampaignShellContext.js", () => ({
   useCampaignRevision: () => null,
   useCampaignMonthId: () => "1880-01",
+  useActiveCampaignCurrencyContext: () => ({}),
 }));
 
 afterEach(cleanup);

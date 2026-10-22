@@ -14,6 +14,7 @@ import type {
   ConstructionBatchPreviewOutcome,
   ForeignConstructionPreviewOutcome,
 } from "../../../../shared/construction-contract.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { ForeignContractPanel } from "./ForeignContractPanel.js";
 
 /**
@@ -60,6 +61,7 @@ export const BatchBuildDialog = memo(function BatchBuildDialog({
   onConfirm,
   onCancel,
 }: BatchBuildDialogProps) {
+  const format = usePresentationFormat();
   const quantityInRange = Number.isInteger(quantity) && quantity >= 1 && quantity <= 12;
   const isForeign = builderNationId !== null;
   const foreign = foreignPreview !== null && foreignPreview.ok ? foreignPreview.preview : null;
@@ -74,7 +76,7 @@ export const BatchBuildDialog = memo(function BatchBuildDialog({
       ? ""
       : shown.dockCeilingKg === null
         ? "no dock ceiling"
-        : `${shown.dockCeilingKg.toLocaleString()} kg dock ceiling`;
+        : `${format.measurement(shown.dockCeilingKg, "mass", { maximumFractionDigits: 0 })} dock ceiling`;
   const builders = foreign?.builders ?? [];
 
   return (
@@ -169,7 +171,8 @@ export const BatchBuildDialog = memo(function BatchBuildDialog({
 
         {shown !== null && (
           <p data-testid="batch-fit" className="font-mono text-xs">
-            Yard {shown.yardId ?? "not assigned"} · {shown.designDisplacementKg.toLocaleString()} kg
+            Yard {shown.yardId ?? "not assigned"} ·{" "}
+            {format.measurement(shown.designDisplacementKg, "mass", { maximumFractionDigits: 0 })}{" "}
             displacement vs {ceilingText} — {shown.fitsDock ? "fits" : "does not fit"}
           </p>
         )}

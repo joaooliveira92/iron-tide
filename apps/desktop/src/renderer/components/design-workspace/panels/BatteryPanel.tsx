@@ -11,8 +11,8 @@ import { Panel } from "./Panel.js";
 import { gunQualityLine, NEUTRAL_GUN_QUALITY } from "./gun-quality.js";
 import type { Edit } from "./types.js";
 import { batteryAttrs, shipLinkAttrs } from "../selection/navigation.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
-const tonnes = (kg: number) => (kg / 1000).toLocaleString("en-US", { maximumFractionDigits: 0 });
 /** "gun"/"guns", "tube"/"tubes". */
 const unitWord = (role: string, n: number) =>
   `${role === "TORPEDO" ? "tube" : "gun"}${n === 1 ? "" : "s"}`;
@@ -38,6 +38,8 @@ export function BatteryPanel({
   /** The mount the drawing has pinned, so the control shows its pressed state. */
   readonly selectedInstanceId?: string | null;
 }) {
+  const format = usePresentationFormat();
+  const tonnes = (kg: number) => format.measurement(kg, "mass", { maximumFractionDigits: 0 });
   const defOf = (id: string) => content.catalogue.find((e) => e.id === id);
   return (
     <Panel title="Batteries">
@@ -67,7 +69,7 @@ export function BatteryPanel({
                 </span>
                 <span className="text-sm tabular-nums text-muted-foreground">
                   {row.mounts} mount{row.mounts === 1 ? "" : "s"} · {row.barrels}{" "}
-                  {unitWord(row.role, row.barrels)} · {tonnes(row.weightKg)} t
+                  {unitWord(row.role, row.barrels)} · {tonnes(row.weightKg)}
                 </span>
               </div>
               <ul className="flex flex-wrap gap-1.5" aria-label={`${title} mounts`}>

@@ -7,47 +7,51 @@ import {
   type WorkshopView,
 } from "@bluewave/ship-design";
 
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
+
 /**
  * Comparison before commitment: the compiled consequences of an edit, so a player can see what an option would do
  * before choosing it. Pure: same inputs, same output, nothing is committed. The deltas are the same engineering
  * readouts the status strip shows (speed, displacement, cost, stability), so the preview cannot disagree with the
- * result of applying the edit.
+ * result of applying the edit. Every figure renders through the bound presentation format (ADR-0218).
  */
 
 export interface Delta {
   readonly id: string;
   readonly label: string;
-  /** Signed, unit-aware text, e.g. `+1.3 kn`, `−84 t`, `+£1,260`. */
+  /** Signed, unit-aware text, e.g. `+1.3 kn`, `-84 t`, `+1,260 NC`. */
   readonly text: string;
   readonly direction: "up" | "down" | "flat";
 }
 
-const MINUS = "\u2212";
-
-const sign = (value: number): string => (value > 0 ? "+" : value < 0 ? MINUS : "");
 const dir = (value: number): Delta["direction"] => (value > 0 ? "up" : value < 0 ? "down" : "flat");
-
-const kn = (milliKnots: number) => (milliKnots / 1000).toFixed(1);
-const tonnes = (kg: number) => Math.round(kg / 1000).toLocaleString("en-US");
-const pounds = (micro: number) => Math.round(micro / 1_000_000).toLocaleString("en-US");
-const metres = (mm: number) => (mm / 1000).toFixed(2);
+const plus = (value: number): string => (value > 0 ? "+" : "");
 
 /** The engineering deltas between two compiled views: only the values that actually change. */
-export function viewDeltas(before: WorkshopView, after: WorkshopView): Delta[] {
+export function viewDeltas(
+  before: WorkshopView,
+  after: WorkshopView,
+  format: PresentationFormat,
+): Delta[] {
   const out: Delta[] = [];
   const bMach = before.compiled.machinery;
   const aMach = after.compiled.machinery;
   if (bMach !== null && aMach !== null) {
     const d = aMach.maxSpeedMilliKnots - bMach.maxSpeedMilliKnots;
     if (d !== 0)
-      out.push({ id: "speed", label: "Speed", text: `${sign(d)}${kn(d)} kn`, direction: dir(d) });
+      out.push({
+        id: "speed",
+        label: "Speed",
+        text: `${plus(d)}${format.number(d / 1000, { maximumFractionDigits: 1 })} kn`,
+        direction: dir(d),
+      });
   }
   const dWeight = after.totalKg - before.totalKg;
   if (dWeight !== 0)
     out.push({
       id: "displacement",
       label: "Displacement",
-      text: `${sign(dWeight)}${tonnes(dWeight)} t`,
+      text: `${plus(dWeight)}${format.measurement(dWeight, "mass", { maximumFractionDigits: 0 })}`,
       direction: dir(dWeight),
     });
   const dCost = after.forecast.costMicro - before.forecast.costMicro;
@@ -55,7 +59,7 @@ export function viewDeltas(before: WorkshopView, after: WorkshopView): Delta[] {
     out.push({
       id: "cost",
       label: "Cost",
-      text: `${sign(dCost)}£${pounds(dCost)}`,
+      text: `${plus(dCost)}${format.moneyFromMicro(dCost)}`,
       direction: dir(dCost),
     });
   const bStab = before.compiled.stability;
@@ -66,7 +70,7 @@ export function viewDeltas(before: WorkshopView, after: WorkshopView): Delta[] {
       out.push({
         id: "stability",
         label: "Stability",
-        text: `${sign(d)}${metres(d)} m GM`,
+        text: `${plus(d)}${format.number(d / 1000, { maximumFractionDigits: 2 })} m GM`,
         direction: dir(d),
       });
   }
@@ -82,6 +86,7 @@ export function previewOptionDeltas(
   env: WorkshopEnvironment,
   before: WorkshopView,
   edit: DraftEdit,
+  format: PresentationFormat,
 ): readonly Delta[] | null {
   let after: WorkshopView;
   try {
@@ -89,5 +94,5 @@ export function previewOptionDeltas(
   } catch {
     return null;
   }
-  return viewDeltas(before, after);
+  return viewDeltas(before, after, format);
 }

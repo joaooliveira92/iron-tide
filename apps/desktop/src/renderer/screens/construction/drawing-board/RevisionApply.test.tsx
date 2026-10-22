@@ -7,6 +7,7 @@ import { openTab, region } from "./test-helpers.js";
 vi.mock("../../../shell/CampaignShellContext.js", () => ({
   useCampaignRevision: () => 7,
   useCampaignMonthId: () => null,
+  useActiveCampaignCurrencyContext: () => ({}),
 }));
 
 const content = loadDrawingBoardContent();

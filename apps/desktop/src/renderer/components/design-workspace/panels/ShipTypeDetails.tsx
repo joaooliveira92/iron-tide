@@ -1,14 +1,16 @@
 import { UNSIMULATED_ROLES, type RosterEntry } from "@bluewave/ship-design";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { plural } from "../plural.js";
 import { describeRange } from "../shipTypes.js";
+import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 
 /** A relative 1-5 ordinal as text, so it never relies on a bar's colour or length alone. */
 const LEVEL = ["Very low", "Low", "Moderate", "High", "Very high"] as const;
 const level = (n: number): string => LEVEL[n - 1] ?? "Moderate";
 
 /** The starter design's forecast build time as text. */
-function months(n: number | null): string {
-  return n === null ? "not forecast" : plural(n, "month");
+function months(n: number | null, format: PresentationFormat): string {
+  return n === null ? "not forecast" : plural(n, "month", undefined, undefined, format);
 }
 
 const role = (r: string) => r.replaceAll("_", " ").toLowerCase();
@@ -21,6 +23,7 @@ export function ShipTypeFacts({
   readonly entry: RosterEntry;
   readonly className?: string;
 }) {
+  const format = usePresentationFormat();
   const d = entry.definition;
   const starter = entry.starter;
   return (
@@ -33,16 +36,16 @@ export function ShipTypeFacts({
         <dt className="text-muted-foreground">Build time</dt>
         <dd>
           {level(d.relativeBuildTime)}
-          {starter?.months != null && ` (${months(starter.months)})`}
+          {starter?.months != null && ` (${months(starter.months, format)})`}
         </dd>
       </div>
       <div>
         <dt className="text-muted-foreground">Displacement</dt>
-        <dd>{describeRange(entry.envelope.displacementKg, "t", 1000) ?? "Varies"}</dd>
+        <dd>{describeRange(entry.envelope.displacementKg, "t", 1000, format) ?? "Varies"}</dd>
       </div>
       <div>
         <dt className="text-muted-foreground">Speed</dt>
-        <dd>{describeRange(entry.envelope.speedKn, "kn") ?? "Varies"}</dd>
+        <dd>{describeRange(entry.envelope.speedKn, "kn", 1, format) ?? "Varies"}</dd>
       </div>
     </dl>
   );

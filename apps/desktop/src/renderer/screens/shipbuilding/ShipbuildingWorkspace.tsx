@@ -58,6 +58,7 @@ import {
 } from "../../components/design-workspace/panels/hull-plan/ship-view.js";
 import { sameEntity, type ShipEntity } from "../../components/design-workspace/selection/store.js";
 import { useCampaignMonthId } from "../../shell/CampaignShellContext.js";
+import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import {
   AluminiumSuperstructurePanel,
   AntiAircraftPanel,
@@ -124,6 +125,7 @@ const TAB_BATTERY: { readonly [tab: string]: BatteryRole } = {
  */
 export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: string }) {
   const campaignMonth = useCampaignMonthId();
+  const format = usePresentationFormat();
   const {
     state,
     actions,
@@ -235,7 +237,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
     openSection("review", "finish");
     if (needsName) nameInputRef.current?.focus();
   };
-  const readouts = useMemo(() => engineeringStatus(view), [view]);
+  const readouts = useMemo(() => engineeringStatus(view, format), [view, format]);
 
   const fittings = useMemo(() => {
     const category = new Map(content.catalogue.map((e) => [e.id, e.category]));
@@ -259,8 +261,8 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
   const antiAircraft = antiAircraftModel(draft, view, env.ctx.balance.antiAircraft, state.month);
   const namePool = namePoolFor(nationEnv.ctx.navalProfile, shipType);
   const machineryDeltas = useMemo(
-    () => (place.section === "machinery" ? plantDeltas(draft, nationEnv, view) : null),
-    [place.section, draft, nationEnv, view],
+    () => (place.section === "machinery" ? plantDeltas(draft, nationEnv, view, format) : null),
+    [place.section, draft, nationEnv, view, format],
   );
 
   const entityCtx: EntityContext = {
@@ -343,7 +345,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
         ) : (
           <>
             <OverviewPanel
-              model={overviewModel(draft, view, batteries, state.month)}
+              model={overviewModel(draft, view, batteries, state.month, format)}
               priorities={priorities}
               onPriority={setPriority}
             />
@@ -376,7 +378,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           <>
             <MachineryEditor
               errorFor={choiceCheck.errorFor}
-              model={machineryModel(draft, view, env)}
+              model={machineryModel(draft, view, env, format)}
               edit={actions.edit}
               previewDeltas={machineryDeltas ?? undefined}
               recommended={{
@@ -414,7 +416,7 @@ export function ShipbuildingWorkspace({ sessionId }: { readonly sessionId?: stri
           ) : (
             fittingsOnly(at)
           );
-        const entries = armamentEntries(role, batteries, draft, view, content);
+        const entries = armamentEntries(role, batteries, draft, view, content, format);
         return (
           <>
             <ArmamentEditor

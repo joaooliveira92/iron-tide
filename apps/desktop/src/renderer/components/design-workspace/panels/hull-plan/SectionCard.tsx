@@ -1,6 +1,8 @@
 import type { DesignDraft, WorkshopView } from "@bluewave/ship-design";
 import type { DrawingBoardContent } from "../../content.js";
 import { cn } from "../../../../lib/utils.js";
+import type { PresentationFormat } from "../../../../lib/presentation-format/index.js";
+import { usePresentationFormat } from "../../../../shell/usePresentationFormat.js";
 import type { PlanFrame } from "./geometry.js";
 import { profileFrame } from "./profile-geometry.js";
 import { SectionDrawing } from "./SectionDrawing.js";
@@ -19,16 +21,17 @@ export interface SectionCardContext {
 /** At most this many fittings are listed; the drawing numbers them all. */
 const LIST_MAX = 6;
 
-const num = (v: number, digits = 0) =>
-  v.toLocaleString("en-GB", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-const pct = (bp: number) => `${num(bp / 100)}%`;
 const SIDE = { CENTRE: "centreline", PORT: "port", STBD: "starboard" } as const;
 
-function fittingLine(f: SectionFitting): string {
+function fittingLine(f: SectionFitting, format: PresentationFormat): string {
+  const num = (v: number, digits = 0) =>
+    format.number(v, { minimumFractionDigits: digits, maximumFractionDigits: digits });
   const parts = [`${SIDE[f.side]}, ${f.stationPermille}‰`];
-  if (f.weightKg !== undefined) parts.push(`${num(f.weightKg / 1000, 1)} t`);
+  if (f.weightKg !== undefined)
+    parts.push(format.measurement(f.weightKg, "mass", { maximumFractionDigits: 1 }));
   if (f.arcDeg !== undefined) parts.push(`${num(f.arcDeg)}° arc`);
-  if (f.protectionBp !== undefined) parts.push(`protection margin ${pct(f.protectionBp)}`);
+  if (f.protectionBp !== undefined)
+    parts.push(`protection margin ${format.percent(f.protectionBp, 0)}`);
   return parts.join(" · ");
 }
 
@@ -44,6 +47,10 @@ export function SectionCard({
   readonly id: SectionId;
   readonly ctx: SectionCardContext;
 }) {
+  const format = usePresentationFormat();
+  const num = (v: number, digits = 0) =>
+    format.number(v, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const pct = (bp: number) => format.percent(bp, 0);
   const facts = sectionFacts(id, ctx);
   const { zone, load, meta } = facts;
   const form = ctx.content.hullForms.find((f) => f.id === ctx.draft.hull.hullFormId);
@@ -95,7 +102,7 @@ export function SectionCard({
         {load ? (
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-xs tabular-nums">
             <dt className="text-muted-foreground">Weight fitted</dt>
-            <dd>{num(load.weightKg / 1000, 1)} t</dd>
+            <dd>{format.measurement(load.weightKg, "mass", { maximumFractionDigits: 1 })}</dd>
             <dt className="text-muted-foreground">Internal volume</dt>
             <dd>
               {num(load.volumeUsedLitre / 1000)} of {num(load.volumeCapacityLitre / 1000)} m³ used
@@ -129,7 +136,7 @@ export function SectionCard({
               <li key={f.instanceId} className="flex gap-2">
                 <span className="w-4 shrink-0 text-right font-medium tabular-nums">{f.n}</span>
                 <span>
-                  {f.name} <span className="text-muted-foreground">({fittingLine(f)})</span>
+                  {f.name} <span className="text-muted-foreground">({fittingLine(f, format)})</span>
                 </span>
               </li>
             ))}

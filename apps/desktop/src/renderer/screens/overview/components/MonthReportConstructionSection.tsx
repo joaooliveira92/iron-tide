@@ -1,4 +1,5 @@
 import type { MonthlyReportConstruction } from "../../../../shared/campaign-command-contract.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
 /**
  * The report's Construction section (spec §16): per-project progress from the
@@ -11,6 +12,7 @@ export function MonthReportConstructionSection({
 }: {
   readonly construction: MonthlyReportConstruction;
 }) {
+  const format = usePresentationFormat();
   const quiet =
     construction.projects.length === 0 &&
     construction.completedShips.length === 0 &&
@@ -31,8 +33,8 @@ export function MonthReportConstructionSection({
         <ul className="text-muted-foreground" aria-label="Construction progress">
           {construction.projects.map((project) => (
             <li key={project.projectId}>
-              {project.projectId}: work {project.previousWork.toLocaleString()} →{" "}
-              {project.newWork.toLocaleString()}
+              {project.projectId}: work {format.count(project.previousWork)} →{" "}
+              {format.count(project.newWork)}
             </li>
           ))}
         </ul>

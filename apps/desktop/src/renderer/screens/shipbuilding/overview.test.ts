@@ -2,30 +2,36 @@ import { describe, expect, it } from "vite-plus/test";
 import { buildWorkshopView } from "@bluewave/ship-design";
 import { loadDrawingBoardContent } from "../../components/design-workspace/index.js";
 import { batteryCards } from "../../components/design-workspace/batteryView.js";
+import { createPresentationFormat } from "../../lib/presentation-format/index.js";
 import { overviewModel } from "./overview.js";
 
 const content = loadDrawingBoardContent();
 const ref = content.references[0]!;
 const view = buildWorkshopView(ref.draft, content.environmentFor(ref.month, ref.draft.nationId));
 const batteries = batteryCards(view, ref.draft);
+const format = createPresentationFormat({
+  locale: "en-US",
+  numberScale: "full",
+  measurementPreset: "imperial",
+  measurementSelections: {},
+  currency: { mode: "navalCredits" },
+});
 
 describe("overview view model", () => {
-  const model = overviewModel(ref.draft, view, batteries, ref.month);
+  const model = overviewModel(ref.draft, view, batteries, ref.month, format);
   const value = (id: string) => model.values.find((v) => v.id === id)?.value ?? "";
 
   it("summarises the design from compiled state", () => {
     expect(model.values.length).toBeGreaterThanOrEqual(8);
     expect(value("displacement")).toContain(
-      Math.round(view.totalKg / 1000).toLocaleString("en-US"),
+      format.measurement(view.buoyantKg, "mass", { maximumFractionDigits: 0 }),
     );
-    expect(value("cost")).toContain(
-      Math.round(view.forecast.costMicro / 1_000_000).toLocaleString("en-US"),
-    );
+    expect(value("cost")).toContain(format.moneyFromMicro(view.forecast.costMicro));
     expect(value("year")).toBe(ref.month.slice(0, 4));
     expect(value("type")).toContain(view.classCode);
     expect(value("accommodation")).not.toBe("");
     if (view.compiled.armour !== null) {
-      expect(value("armour")).toContain((view.compiled.armour.coverageBp / 100).toFixed(0));
+      expect(value("armour")).toContain(format.percent(view.compiled.armour.coverageBp, 0));
     }
   });
 

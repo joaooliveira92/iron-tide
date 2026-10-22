@@ -1,6 +1,6 @@
 import { topsideLoad, type Finding, type Severity, type WorkshopView } from "@bluewave/ship-design";
 import { passesFilter } from "../../components/design-workspace/validation/severity.js";
-import { formatExplanation } from "../../lib/presentation-format/index.js";
+import { formatExplanation, type PresentationFormat } from "../../lib/presentation-format/index.js";
 
 /** How a strip value is coloured: neutral when normal, amber near a constraint, red when invalid. */
 export type ReadoutTone = "neutral" | "warn" | "bad";
@@ -35,12 +35,15 @@ export interface EngineeringReadout {
   readonly hint?: ReadoutHint;
 }
 
-const tonnes = (kg: number) => Math.round(kg / 1000).toLocaleString("en-US");
-const t = (kg: number) => `${tonnes(kg)} t`;
-const pounds = (micro: number) => `£${Math.round(micro / 1_000_000).toLocaleString("en-US")}`;
-const kn = (milli: number) => `${(milli / 1000).toFixed(1)} kn`;
-const metres = (mm: number) => `${(mm / 1000).toFixed(2)} m`;
-const m2 = (mm2: number) => (mm2 / 1_000_000).toLocaleString("en-US", { maximumFractionDigits: 1 });
+const t = (format: PresentationFormat, kg: number) =>
+  format.measurement(kg, "mass", { maximumFractionDigits: 0 });
+const pounds = (format: PresentationFormat, micro: number) => format.moneyFromMicro(micro);
+const kn = (format: PresentationFormat, milli: number) =>
+  `${format.number(milli / 1000, { maximumFractionDigits: 1 })} kn`;
+const metres = (format: PresentationFormat, mm: number) =>
+  `${format.number(mm / 1000, { maximumFractionDigits: 2, minimumFractionDigits: 2 })} m`;
+const m2 = (format: PresentationFormat, mm2: number) =>
+  format.number(mm2 / 1_000_000, { maximumFractionDigits: 1 });
 
 const TONE_RANK: Readonly<Record<ReadoutTone, number>> = { neutral: 0, warn: 1, bad: 2 };
 const worst = (tones: readonly ReadoutTone[]): ReadoutTone =>
@@ -65,6 +68,7 @@ const title = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 function splitTonnes(
   parts: readonly { readonly label: string; readonly kg: number }[],
   totalTonnes: number,
+  format: PresentationFormat,
 ): ReadoutRow[] {
   const floors = parts.map((p) => Math.floor(p.kg / 1000));
   const remaining = totalTonnes - floors.reduce((a, b) => a + b, 0);
@@ -78,7 +82,9 @@ function splitTonnes(
   }
   return parts.map((p, i) => ({
     label: p.label,
-    value: `${(floors[i]! + extra[i]!).toLocaleString("en-US")} t`,
+    value: format.measurement((floors[i]! + extra[i]!) * 1000, "mass", {
+      maximumFractionDigits: 0,
+    }),
   }));
 }
 
@@ -87,7 +93,10 @@ function splitTonnes(
  * speed, range, stability, topside load, available weight and the warning count. Tones say where the design
  * stands; breakdowns and hints say where each number comes from. Pure: same view, same readouts.
  */
-export function engineeringStatus(view: WorkshopView): readonly EngineeringReadout[] {
+export function engineeringStatus(
+  view: WorkshopView,
+  format: PresentationFormat,
+): readonly EngineeringReadout[] {
   const findings = view.compiled.findings;
   const marginKg = view.ledger.find((r) => r.category === "margin")?.kg ?? 0;
   const reserveKg = view.ledger.find((r) => r.category === "reserve")?.kg ?? 0;
@@ -109,18 +118,19 @@ export function engineeringStatus(view: WorkshopView): readonly EngineeringReado
     {
       id: "displacement",
       label: "Displacement",
-      value: `${t(view.totalKg)} / ${t(view.buoyantKg)}`,
+      value: `${t(format, view.totalKg)} / ${t(format, view.buoyantKg)}`,
       tone: weightTone,
       breakdown: {
         title: "Weight breakdown",
         rows: splitTonnes(
           view.ledger.map((r) => ({ label: title(r.category), kg: r.kg })),
           Math.round(view.totalKg / 1000),
+          format,
         ),
         footer: [
-          { label: "Current", value: t(view.totalKg) },
-          { label: "Capacity", value: t(view.buoyantKg) },
-          { label: "Remaining", value: t(remainingKg) },
+          { label: "Current", value: t(format, view.totalKg) },
+          { label: "Capacity", value: t(format, view.buoyantKg) },
+          { label: "Remaining", value: t(format, remainingKg) },
         ],
         causes: [],
       },
@@ -128,53 +138,53 @@ export function engineeringStatus(view: WorkshopView): readonly EngineeringReado
     {
       id: "cost",
       label: "Cost",
-      value: pounds(cb.total),
+      value: pounds(format, cb.total),
       tone: "neutral",
       breakdown: {
         title: "Cost breakdown",
         rows: [
-          { label: "Hull", value: pounds(cb.hull) },
-          { label: "Machinery", value: pounds(cb.machinery) },
-          { label: "Armour", value: pounds(cb.armour) },
-          { label: "Fittings", value: pounds(cb.components) },
-          { label: "Subtotal", value: pounds(cb.subtotal) },
-          { label: "Overheads", value: pounds(cb.overheads) },
+          { label: "Hull", value: pounds(format, cb.hull) },
+          { label: "Machinery", value: pounds(format, cb.machinery) },
+          { label: "Armour", value: pounds(format, cb.armour) },
+          { label: "Fittings", value: pounds(format, cb.components) },
+          { label: "Subtotal", value: pounds(format, cb.subtotal) },
+          { label: "Overheads", value: pounds(format, cb.overheads) },
           ...(cb.firstOfClassPremium > 0
-            ? [{ label: "First of class", value: pounds(cb.firstOfClassPremium) }]
+            ? [{ label: "First of class", value: pounds(format, cb.firstOfClassPremium) }]
             : []),
           ...(cb.accelerationPremium > 0
-            ? [{ label: "Acceleration", value: pounds(cb.accelerationPremium) }]
+            ? [{ label: "Acceleration", value: pounds(format, cb.accelerationPremium) }]
             : []),
         ],
-        footer: [{ label: "Total", value: pounds(cb.total) }],
+        footer: [{ label: "Total", value: pounds(format, cb.total) }],
         causes: [],
       },
     },
     {
       id: "speed",
       label: "Speed",
-      value: kn(view.compiled.machinery?.maxSpeedMilliKnots ?? 0),
+      value: kn(format, view.compiled.machinery?.maxSpeedMilliKnots ?? 0),
       tone: toneOf(findings, ["PLANT_INSUFFICIENT", "SPEED_OUT_OF_RANGE"]),
     },
     {
       id: "range",
       label: "Range",
-      value: `${(view.compiled.machinery?.rangeNmAtCruise ?? 0).toLocaleString("en-US")} nm`,
+      value: `${format.number(view.compiled.machinery?.rangeNmAtCruise ?? 0)} nm`,
       tone: toneOf(findings, ["RANGE_BELOW_REQUIREMENT"]),
     },
     {
       id: "stability",
       label: "Stability",
-      value: stability ? metres(stability.gmMm) : "n/a",
+      value: stability ? metres(format, stability.gmMm) : "n/a",
       tone: worst(stabilityFindings.map((f) => toneOfSeverity(f.severity))),
       breakdown: {
         title: "Stability causes",
         rows: stability
           ? [
-              { label: "GM", value: metres(stability.gmMm) },
-              { label: "KB", value: metres(stability.kbMm) },
-              { label: "BM", value: metres(stability.bmMm) },
-              { label: "KG", value: metres(stability.kgMm) },
+              { label: "GM", value: metres(format, stability.gmMm) },
+              { label: "KB", value: metres(format, stability.kbMm) },
+              { label: "BM", value: metres(format, stability.bmMm) },
+              { label: "KG", value: metres(format, stability.kgMm) },
             ]
           : [],
         causes: !stability
@@ -189,27 +199,27 @@ export function engineeringStatus(view: WorkshopView): readonly EngineeringReado
     {
       id: "topside",
       label: "Topside load",
-      value: `${m2(load.usedMm2)} / ${m2(load.capacityMm2)} m²`,
+      value: `${m2(format, load.usedMm2)} / ${m2(format, load.capacityMm2)} m²`,
       tone: load.status === "exceeded" ? "bad" : load.status === "warning" ? "warn" : "neutral",
     },
     {
       id: "remaining",
       label: "Remaining",
-      value: t(remainingKg),
+      value: t(format, remainingKg),
       tone: remainingKg < 0 ? "bad" : weightTone,
       hint: {
         title: "Available weight",
         lines: [
-          { label: "Committed", value: t(view.totalKg - marginKg - reserveKg) },
-          { label: "Reserved", value: t(marginKg + reserveKg) },
-          { label: "Free", value: t(remainingKg) },
+          { label: "Committed", value: t(format, view.totalKg - marginKg - reserveKg) },
+          { label: "Reserved", value: t(format, marginKg + reserveKg) },
+          { label: "Free", value: t(format, remainingKg) },
         ],
       },
     },
     {
       id: "warnings",
       label: "Warnings",
-      value: String(warnings),
+      value: format.count(warnings),
       tone: warnings > 0 ? "warn" : "neutral",
     },
   ];

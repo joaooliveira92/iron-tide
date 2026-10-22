@@ -1,5 +1,9 @@
 import type { WorkshopView } from "@bluewave/ship-design";
-import { formatExplanation } from "../../../lib/presentation-format/index.js";
+import {
+  formatExplanation,
+  type PresentationFormat,
+} from "../../../lib/presentation-format/index.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
 
 interface Row {
@@ -9,15 +13,13 @@ interface Row {
   readonly after: string;
 }
 
-const gbp = (micro: number) => `£${Math.round(micro / 1_000_000).toLocaleString("en-US")}`;
-
-function rowsOf(baseline: WorkshopView, view: WorkshopView): Row[] {
+function rowsOf(baseline: WorkshopView, view: WorkshopView, format: PresentationFormat): Row[] {
   const rows: Row[] = [
     {
       id: "cost",
       label: "Build cost",
-      before: gbp(baseline.forecast.costMicro),
-      after: gbp(view.forecast.costMicro),
+      before: format.moneyFromMicro(baseline.forecast.costMicro),
+      after: format.moneyFromMicro(view.forecast.costMicro),
     },
     {
       id: "class",
@@ -47,7 +49,8 @@ export function ComparePanel({
   readonly view: WorkshopView;
   readonly name: string;
 }) {
-  const changed = rowsOf(baseline, view).filter((r) => r.before !== r.after);
+  const format = usePresentationFormat();
+  const changed = rowsOf(baseline, view, format).filter((r) => r.before !== r.after);
   return (
     <Panel title="Compared with starting design">
       <p className="text-xs text-muted-foreground">Developed from: {name}</p>

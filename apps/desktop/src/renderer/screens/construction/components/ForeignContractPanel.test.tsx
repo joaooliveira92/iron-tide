@@ -53,9 +53,9 @@ const preview: ForeignConstructionPreview = {
 describe("ForeignContractPanel (SB3-R20/R23/R34, INC-9b)", () => {
   it("shows the dock ceiling, free capacity, tension-scaled impoundment risk and guarantee status", () => {
     render(<ForeignContractPanel preview={preview} builderNationId="france" />);
-    expect(screen.getByTestId("foreign-dock-ceiling").textContent).toContain("12,000,000 kg");
-    expect(screen.getByTestId("foreign-free-capacity").textContent).toContain("10,000,000 kg");
-    expect(screen.getByTestId("foreign-impoundment-risk").textContent).toContain("80.0 %");
+    expect(screen.getByTestId("foreign-dock-ceiling").textContent).toContain("12,000 t");
+    expect(screen.getByTestId("foreign-free-capacity").textContent).toContain("10,000 t");
+    expect(screen.getByTestId("foreign-impoundment-risk").textContent).toContain("80%");
     expect(screen.getByTestId("foreign-delivery-guarantee").textContent).toBe("none");
   });
 

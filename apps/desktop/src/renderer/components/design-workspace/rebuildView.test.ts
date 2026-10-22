@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vite-plus/test";
+import { createPresentationFormat } from "../../lib/presentation-format/index.js";
 import { limitRows } from "./rebuildView.js";
+
+/** The default presentation: en-US, full scale, imperial, Naval Credits. */
+const FORMAT = createPresentationFormat({
+  locale: "en-US",
+  numberScale: "full",
+  measurementPreset: "imperial",
+  measurementSelections: {},
+  currency: { mode: "navalCredits" },
+});
 
 const balance = {
   maxDisplacementIncreaseBp: 2_000,
@@ -16,15 +26,15 @@ const none = {
 
 describe("limitRows", () => {
   it("shows every limit with the ruleset's own value, in a fixed order", () => {
-    const rows = limitRows(none, balance);
+    const rows = limitRows(none, balance, FORMAT);
     expect(rows.map((r) => [r.id, r.limit])).toEqual([
-      ["displacement", "up to +20.0 %"],
-      ["speed", "up to +3.0 kn"],
-      ["length", "within ±5.0 %"],
-      ["beam", "within ±5.0 %"],
+      ["displacement", "up to +20%"],
+      ["speed", "up to +3 kn"],
+      ["length", "within ±5%"],
+      ["beam", "within ±5%"],
     ]);
     expect(rows.every((r) => !r.over)).toBe(true);
-    expect(rows.map((r) => r.change)).toEqual(["0.0 %", "0.0 kn", "0.0 %", "0.0 %"]);
+    expect(rows.map((r) => r.change)).toEqual(["0%", "0 kn", "0%", "0%"]);
   });
 
   it("signs the changes and marks only the limits that are exceeded", () => {
@@ -36,8 +46,9 @@ describe("limitRows", () => {
         beamChangeBp: 300,
       },
       balance,
+      FORMAT,
     );
-    expect(rows.map((r) => r.change)).toEqual(["+25.0 %", "-1.5 kn", "-6.0 %", "+3.0 %"]);
+    expect(rows.map((r) => r.change)).toEqual(["+25%", "-1.5 kn", "-6%", "+3%"]);
     expect(rows.map((r) => r.over)).toEqual([true, false, true, false]);
   });
 
@@ -50,11 +61,13 @@ describe("limitRows", () => {
         beamChangeBp: -500,
       },
       balance,
+      FORMAT,
     );
     expect(rows.every((r) => !r.over)).toBe(true);
     const lighter = limitRows(
       { ...none, displacementChangeBp: -9_000, speedChangeMilliKnots: -9_000 },
       balance,
+      FORMAT,
     );
     expect(lighter.slice(0, 2).every((r) => !r.over)).toBe(true);
   });

@@ -1,6 +1,8 @@
 import { useId, type ReactNode } from "react";
 import { ArrowRight, X } from "lucide-react";
 import { Button } from "../../ui/button.js";
+import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { sectionFacts, SECTIONS } from "../panels/hull-plan/sections.js";
 import { findingsFor } from "../validation/boardFindings.js";
 import { FindingList } from "../validation/FindingList.js";
@@ -9,11 +11,6 @@ import { destinationFor, type Destination } from "./navigation.js";
 import type { ShipEntity } from "./store.js";
 import { useSelectionStore, useShipSelection } from "./useShipSelection.js";
 
-const num = (v: number, digits = 0) =>
-  v.toLocaleString("en-GB", { minimumFractionDigits: digits, maximumFractionDigits: digits });
-const pct = (bp: number) => `${num(bp / 100)}%`;
-const tonnes = (kg: number | undefined) =>
-  kg === undefined ? undefined : `${num(kg / 1000, 1)} t`;
 const SIDE = { CENTRE: "centreline", PORT: "port", STBD: "starboard" } as const;
 /** Shown wherever the design model has no value: explicit, never blank or guessed. */
 const UNAVAILABLE = "Not available for this design";
@@ -57,7 +54,12 @@ interface Body {
   readonly content: ReactNode;
 }
 
-function bodyFor(entity: ShipEntity, ctx: EntityContext): Body | null {
+function bodyFor(entity: ShipEntity, ctx: EntityContext, format: PresentationFormat): Body | null {
+  const num = (v: number, digits = 0) =>
+    format.number(v, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const pct = (bp: number) => format.percent(bp, 0);
+  const tonnes = (kg: number | undefined) =>
+    kg === undefined ? undefined : format.measurement(kg, "mass", { maximumFractionDigits: 1 });
   switch (entity.kind) {
     case "ship":
       return {
@@ -226,8 +228,9 @@ export function SelectionInspector({
   const selected = useShipSelection((s) => s.selected);
   const focused = useShipSelection((s) => s.finding);
   const headingId = useId();
+  const format = usePresentationFormat();
   if (selected === null) return null;
-  const body = bodyFor(selected, ctx);
+  const body = bodyFor(selected, ctx, format);
   if (!body) return null;
   const destination = destinationFor(selected, ctx);
   return (

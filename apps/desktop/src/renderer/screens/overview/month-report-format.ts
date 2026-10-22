@@ -1,4 +1,5 @@
 import type { BattleOutcome, StrategicPriority } from "@bluewave/campaign-engine";
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 import { formatMonthYear } from "../../lib/campaign-month.js";
 
 /** "March 1900"; falls back to the numeric month when out of range, never a blank. */
@@ -7,9 +8,9 @@ export function monthLabel(month: { readonly year: number; readonly month: numbe
 }
 
 /** "+20", "−56" (a real minus sign), "0" — so a loss reads as a loss at a glance. */
-export function signed(value: number): string {
+export function signed(value: number, format: PresentationFormat): string {
   if (value === 0) return "0";
-  const body = Math.abs(value).toLocaleString("en-US");
+  const body = format.count(Math.abs(value));
   return value > 0 ? `+${body}` : `−${body}`;
 }
 

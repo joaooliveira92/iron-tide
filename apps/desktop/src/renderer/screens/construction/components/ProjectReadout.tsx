@@ -1,5 +1,6 @@
 import { memo } from "react";
 import type { ConstructionScheduleUnavailableReason } from "@bluewave/campaign-engine";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { ProjectRow } from "../project-progress.js";
 
 export interface ProjectReadoutProps {
@@ -40,6 +41,7 @@ const SCHEDULE_UNAVAILABLE_LABEL: Readonly<
  * invents a zero, a launch or a completion.
  */
 export const ProjectReadout = memo(function ProjectReadout({ row }: ProjectReadoutProps) {
+  const format = usePresentationFormat();
   const readout = row.readout;
   const unavailableReason = readout?.scheduleUnavailableReason ?? null;
   // DESIGN-16 section 13.4 (INC-9b): a foreign contract in payment default holds the same `DELAYED` status, but the
@@ -60,11 +62,11 @@ export const ProjectReadout = memo(function ProjectReadout({ row }: ProjectReado
       ) : readout.scheduleBasis === "UNAVAILABLE" ? (
         <>
           <ReadoutItem label="Schedule" value={`not building (${reasonLabel})`} />
-          <ReadoutItem label="Total cost" value={readout.totalCostUnits.toLocaleString()} />
+          <ReadoutItem label="Total cost" value={format.money(readout.totalCostUnits)} />
           {readout.haltedCarryingCostUnits !== null && (
             <ReadoutItem
               label="Carrying cost"
-              value={`${readout.haltedCarryingCostUnits.toLocaleString()}/mo`}
+              value={`${format.money(readout.haltedCarryingCostUnits)}/mo`}
             />
           )}
         </>
@@ -72,15 +74,15 @@ export const ProjectReadout = memo(function ProjectReadout({ row }: ProjectReado
         <>
           <ReadoutItem
             label="Instalment"
-            value={`${readout.monthlyInstalmentUnits.toLocaleString()}/mo`}
+            value={`${format.money(readout.monthlyInstalmentUnits)}/mo`}
           />
-          <ReadoutItem label="Months left" value={readout.remainingMonths.toLocaleString()} />
-          <ReadoutItem label="Total cost" value={readout.totalCostUnits.toLocaleString()} />
+          <ReadoutItem label="Months left" value={format.count(readout.remainingMonths)} />
+          <ReadoutItem label="Total cost" value={format.money(readout.totalCostUnits)} />
           <ReadoutItem label="Launch" value={readout.launchMonth ?? "complete"} />
           {readout.haltedCarryingCostUnits !== null && (
             <ReadoutItem
               label="Carrying cost"
-              value={`${readout.haltedCarryingCostUnits.toLocaleString()}/mo`}
+              value={`${format.money(readout.haltedCarryingCostUnits)}/mo`}
             />
           )}
         </>

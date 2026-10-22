@@ -51,7 +51,7 @@ describe("PreTurnReviewDialogView", () => {
 
     expect(screen.getByText("Mar 1900")).toBeTruthy();
     expect(screen.getByText("Apr 1900")).toBeTruthy();
-    expect(screen.getByText("£1,234")).toBeTruthy();
+    expect(screen.getByText("1,234 NC")).toBeTruthy();
     expect(screen.getByText("Deficit looming")).toBeTruthy();
     expect(screen.getAllByText("warning").length).toBeGreaterThan(0);
   });

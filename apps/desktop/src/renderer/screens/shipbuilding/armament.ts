@@ -8,6 +8,7 @@ import {
 import type { DrawingBoardContent } from "../../components/design-workspace/content.js";
 import type { BatteryCard, BatteryMount } from "../../components/design-workspace/batteryView.js";
 import type { BoardFinding } from "../../components/design-workspace/validation/boardFindings.js";
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 
 /**
  * The Armament section's master-detail view model. Pure: it reads the compiled design, the draft and the
@@ -73,16 +74,22 @@ export function positionOf(side: MountSide, stationPermille: number): MountPosit
 }
 
 /** The master list's one-line layout label. Tubes have no calibre. */
-export function layoutOf(m: {
-  readonly name: string;
-  readonly barrels: number;
-  readonly caliberUm: number;
-  readonly position: MountPosition;
-}): string {
+export function layoutOf(
+  m: {
+    readonly name: string;
+    readonly barrels: number;
+    readonly caliberUm: number;
+    readonly position: MountPosition;
+  },
+  format: PresentationFormat,
+): string {
   const arms =
     m.caliberUm === 0
       ? `${m.barrels}-tube`
-      : `${barrelWord(m.barrels)} ${(m.caliberUm / UM_PER_INCH).toFixed(1)}-inch`;
+      : `${barrelWord(m.barrels)} ${format.number(m.caliberUm / UM_PER_INCH, {
+          maximumFractionDigits: 1,
+          minimumFractionDigits: 1,
+        })}-inch`;
   return `${m.name} ${arms} ${m.position}`;
 }
 
@@ -91,6 +98,7 @@ function enrich(
   draft: DesignDraft,
   view: WorkshopView,
   content: DrawingBoardContent,
+  format: PresentationFormat,
 ): ArmamentMount {
   const placed = draft.placements.find((p) => p.instanceId === mount.instanceId);
   const summary = view.compiled.components.find((c) => c.instanceId === mount.instanceId);
@@ -118,7 +126,7 @@ function enrich(
     arcDeg:
       view.compiled.weapons?.mounts.find((w) => w.instanceId === mount.instanceId)
         ?.effectiveBeamArcDeg ?? null,
-    layout: layoutOf({ name: mount.name, barrels, caliberUm, position }),
+    layout: layoutOf({ name: mount.name, barrels, caliberUm, position }, format),
   };
 }
 
@@ -129,13 +137,14 @@ export function armamentEntries(
   draft: DesignDraft,
   view: WorkshopView,
   content: DrawingBoardContent,
+  format: PresentationFormat,
 ): ArmamentEntry[] {
   return cards
     .filter((c) => c.row.role === role)
     .map((c) => ({
       row: c.row,
       title: c.title,
-      mounts: c.mounts.map((m) => enrich(m, draft, view, content)),
+      mounts: c.mounts.map((m) => enrich(m, draft, view, content, format)),
     }));
 }
 

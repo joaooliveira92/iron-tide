@@ -1,6 +1,6 @@
 import type { DesignDraft, WorkshopEnvironment, WorkshopView } from "@bluewave/ship-design";
 import { previewOptionDeltas, type Delta } from "../../components/design-workspace/optionDelta.js";
-import { formatPowerBoth } from "../../lib/presentation-format/index.js";
+import { formatPowerBoth, type PresentationFormat } from "../../lib/presentation-format/index.js";
 
 /**
  * The Machinery section's outcomes-first view model. Pure: the editable performance targets and propulsion
@@ -45,8 +45,8 @@ export interface MachineryModel {
 }
 
 const words = (s: string) => s.replaceAll("_", " ").toLowerCase();
-const kn = (milliKnots: number) => (milliKnots / 1000).toFixed(1);
-const tonnes = (kg: number) => (kg / 1000).toLocaleString("en-US", { maximumFractionDigits: 0 });
+const kn = (format: PresentationFormat, milliKnots: number) =>
+  format.number(milliKnots / 1000, { maximumFractionDigits: 1 });
 
 /**
  * Comparison before commitment for the propulsion plant: per plant, what choosing it would change (the compiled
@@ -57,6 +57,7 @@ export function plantDeltas(
   draft: DesignDraft,
   env: WorkshopEnvironment,
   view: WorkshopView,
+  format: PresentationFormat,
 ): ReadonlyMap<string, readonly Delta[]> {
   const current = env.ctx.plants.find((p) => p.id === draft.machinery.plantId);
   const map = new Map<string, readonly Delta[]>();
@@ -65,10 +66,16 @@ export function plantDeltas(
       map.set(p.id, []);
       continue;
     }
-    const base = previewOptionDeltas(draft, env, view, {
-      kind: "set_machinery",
-      patch: { plantId: p.id },
-    });
+    const base = previewOptionDeltas(
+      draft,
+      env,
+      view,
+      {
+        kind: "set_machinery",
+        patch: { plantId: p.id },
+      },
+      format,
+    );
     if (base === null) continue;
     const deltas = [...base];
     const dReliability = p.reliabilityBp - (current?.reliabilityBp ?? 0);
@@ -76,7 +83,7 @@ export function plantDeltas(
       deltas.push({
         id: "reliability",
         label: "Reliability",
-        text: `${dReliability > 0 ? "+" : "\u2212"}${Math.abs(dReliability / 100).toFixed(0)}%`,
+        text: `${dReliability > 0 ? "+" : "\u2212"}${format.percent(Math.abs(dReliability), 0)}`,
         direction: dReliability > 0 ? "up" : "down",
       });
     const from = p.introduction?.fromMonth;
@@ -95,6 +102,7 @@ export function machineryModel(
   draft: DesignDraft,
   view: WorkshopView,
   env: WorkshopEnvironment,
+  format: PresentationFormat,
 ): MachineryModel {
   const plantOptions: PlantOption[] = env.ctx.plants.map((p) => {
     const tooEarly = p.introduction !== undefined && p.introduction.fromMonth > env.ctx.month;
@@ -125,33 +133,35 @@ export function machineryModel(
     {
       id: "max-speed",
       label: "Speed achieved",
-      value: machinery === null ? "n/a" : `${kn(machinery.maxSpeedMilliKnots)} kn`,
+      value: machinery === null ? "n/a" : `${kn(format, machinery.maxSpeedMilliKnots)} kn`,
     },
     {
       id: "machinery-weight",
       label: "Machinery weight",
-      value: machinery === null ? "n/a" : `${tonnes(machinery.plantWeightKg)} t`,
+      value:
+        machinery === null
+          ? "n/a"
+          : format.measurement(machinery.plantWeightKg, "mass", { maximumFractionDigits: 0 }),
     },
     {
       id: "fuel-use",
       label: "Fuel use at cruise",
-      value:
-        machinery === null ? "n/a" : `${machinery.cruiseKgPerHour.toLocaleString("en-US")} kg/h`,
+      value: machinery === null ? "n/a" : `${format.number(machinery.cruiseKgPerHour)} kg/h`,
     },
     {
       id: "range",
       label: "Range at cruise",
-      value: machinery === null ? "n/a" : `${machinery.rangeNmAtCruise.toLocaleString("en-US")} nm`,
+      value: machinery === null ? "n/a" : `${format.number(machinery.rangeNmAtCruise)} nm`,
     },
     {
       id: "reliability",
       label: "Reliability",
-      value: plant === undefined ? "n/a" : `${(plant.reliabilityBp / 100).toFixed(0)}%`,
+      value: plant === undefined ? "n/a" : format.percent(plant.reliabilityBp, 0),
     },
     {
       id: "cost",
       label: "Machinery cost",
-      value: `£${Math.round(fuelCost / 1_000_000).toLocaleString("en-US")}`,
+      value: format.moneyFromMicro(fuelCost),
     },
   ];
 

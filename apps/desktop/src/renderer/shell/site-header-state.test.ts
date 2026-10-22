@@ -6,6 +6,23 @@ import {
   formatTreasury,
   headerTitleFor,
 } from "./site-header-state.js";
+import { createPresentationFormat } from "../lib/presentation-format/index.js";
+
+/** The default presentation (en-US, Naval Credits) the header renders under. */
+const FORMAT = createPresentationFormat({
+  locale: "en-US",
+  numberScale: "full",
+  measurementPreset: "imperial",
+  measurementSelections: {},
+  currency: { mode: "navalCredits" },
+});
+
+const treasury = (value: number) => formatTreasury(value, FORMAT);
+const describeRow = (
+  view: Parameters<typeof describeSecondaryRow>[0],
+  campaign: Parameters<typeof describeSecondaryRow>[1],
+  wizardStep?: Parameters<typeof describeSecondaryRow>[3],
+) => describeSecondaryRow(view, campaign, FORMAT, wizardStep);
 
 const campaign: HeaderCampaign = {
   month: { year: 1900, month: 1 },
@@ -18,26 +35,26 @@ const campaign: HeaderCampaign = {
 
 describe("formatTreasury", () => {
   it("renders sums below a thousand in whole pounds", () => {
-    expect(formatTreasury(0)).toBe("£0");
-    expect(formatTreasury(523)).toBe("£523");
+    expect(treasury(0)).toBe("0 NC");
+    expect(treasury(523)).toBe("523 NC");
   });
 
   it("renders larger sums in grouped thousands", () => {
-    expect(formatTreasury(24_500_000)).toBe("£24,500k");
-    expect(formatTreasury(1_000)).toBe("£1k");
+    expect(treasury(24_500_000)).toBe("24,500k NC");
+    expect(treasury(1_000)).toBe("1k NC");
   });
 
   it("truncates rather than rounding, so the toolbar never overstates the treasury", () => {
-    expect(formatTreasury(1_999)).toBe("£1k");
+    expect(treasury(1_999)).toBe("1k NC");
   });
 
   it("keeps the sign outside the currency symbol for a deficit", () => {
-    expect(formatTreasury(-1_200_000)).toBe("-£1,200k");
+    expect(treasury(-1_200_000)).toBe("-1,200k NC");
   });
 
   it("falls back to a dash when the amount is not a finite number", () => {
-    expect(formatTreasury(Number.NaN)).toBe("—");
-    expect(formatTreasury(Number.POSITIVE_INFINITY)).toBe("—");
+    expect(treasury(Number.NaN)).toBe("—");
+    expect(treasury(Number.POSITIVE_INFINITY)).toBe("—");
   });
 });
 
@@ -65,7 +82,7 @@ describe("headerTitleFor", () => {
 
 describe("describeSecondaryRow", () => {
   it("reports database readiness on the menu view", () => {
-    expect(describeSecondaryRow("menu", null)).toEqual({
+    expect(describeRow("menu", null)).toEqual({
       kind: "status",
       leading: "Active database (SQLite)",
       trailing: "Ready for operation",
@@ -73,7 +90,7 @@ describe("describeSecondaryRow", () => {
   });
 
   it("drives the playing view budget from the campaign treasury", () => {
-    const row = describeSecondaryRow("playing", campaign);
+    const row = describeRow("playing", campaign);
 
     expect(row.kind).toBe("campaign");
     if (row.kind !== "campaign") return;
@@ -82,13 +99,13 @@ describe("describeSecondaryRow", () => {
     expect(budget).toEqual({
       icon: "budget",
       label: "Budget",
-      value: "£24,500k",
+      value: "24,500k NC",
       placeholder: false,
     });
   });
 
   it("drives the nation and projected-balance metrics from the INC-1 fields", () => {
-    const row = describeSecondaryRow("playing", campaign);
+    const row = describeRow("playing", campaign);
     if (row.kind !== "campaign") throw new Error("expected a campaign row");
 
     const nation = row.metrics.find((metric) => metric.icon === "nation");
@@ -103,25 +120,25 @@ describe("describeSecondaryRow", () => {
     expect(balance).toEqual({
       icon: "balance",
       label: "Projected balance",
-      value: "£1,500k",
+      value: "1,500k NC",
       placeholder: false,
     });
   });
 
   it("renders a projected deficit with the sign outside the currency symbol", () => {
-    const row = describeSecondaryRow("playing", {
+    const row = describeRow("playing", {
       ...campaign,
       projectedSurplusDeficit: -1_200_000,
     });
     if (row.kind !== "campaign") throw new Error("expected a campaign row");
 
     const balance = row.metrics.find((metric) => metric.icon === "balance");
-    expect(balance?.value).toBe("-£1,200k");
+    expect(balance?.value).toBe("-1,200k NC");
     expect(balance?.placeholder).toBe(false);
   });
 
   it("keeps the alert-count slot empty (placeholder) until INC-2 lands", () => {
-    const row = describeSecondaryRow("playing", campaign);
+    const row = describeRow("playing", campaign);
     if (row.kind !== "campaign") throw new Error("expected a campaign row");
 
     const alerts = row.metrics.find((metric) => metric.icon === "alerts");
@@ -134,7 +151,7 @@ describe("describeSecondaryRow", () => {
   });
 
   it("shows the real alert count once the forward-wired slot is populated", () => {
-    const row = describeSecondaryRow("playing", { ...campaign, activeAlertsCount: 3 });
+    const row = describeRow("playing", { ...campaign, activeAlertsCount: 3 });
     if (row.kind !== "campaign") throw new Error("expected a campaign row");
 
     const alerts = row.metrics.find((metric) => metric.icon === "alerts");
@@ -147,7 +164,7 @@ describe("describeSecondaryRow", () => {
   });
 
   it("marks metrics the engine does not yet expose as placeholders", () => {
-    const row = describeSecondaryRow("playing", campaign);
+    const row = describeRow("playing", campaign);
     if (row.kind !== "campaign") throw new Error("expected a campaign row");
 
     const unbacked = row.metrics.filter((metric) => metric.placeholder);
@@ -157,7 +174,7 @@ describe("describeSecondaryRow", () => {
   });
 
   it("shows a dash for the budget when the campaign has not loaded", () => {
-    const row = describeSecondaryRow("playing", null);
+    const row = describeRow("playing", null);
     if (row.kind !== "campaign") throw new Error("expected a campaign row");
 
     const budget = row.metrics.find((metric) => metric.icon === "budget");
@@ -166,13 +183,13 @@ describe("describeSecondaryRow", () => {
   });
 
   it("describes the remaining views without needing campaign data", () => {
-    expect(describeSecondaryRow("new_game", null).kind).toBe("wizard");
-    expect(describeSecondaryRow("options", null).kind).toBe("preferences");
-    expect(describeSecondaryRow("editor", null).kind).toBe("editor");
+    expect(describeRow("new_game", null).kind).toBe("wizard");
+    expect(describeRow("options", null).kind).toBe("preferences");
+    expect(describeRow("editor", null).kind).toBe("editor");
   });
 
   it("lets a wizard step replace the default heading and hint", () => {
-    const row = describeSecondaryRow("new_game", null, {
+    const row = describeRow("new_game", null, {
       heading: "Rules of the Naval Age",
       hint: "Set the era, scale, and historical uncertainty for this campaign.",
     });
@@ -184,7 +201,7 @@ describe("describeSecondaryRow", () => {
   });
 
   it("keeps the generic wizard copy when no step supplies its own", () => {
-    expect(describeSecondaryRow("new_game", null)).toEqual({
+    expect(describeRow("new_game", null)).toEqual({
       kind: "wizard",
       heading: "Campaign setup assistant",
       hint: "Select the historical scenario to continue",
@@ -192,7 +209,7 @@ describe("describeSecondaryRow", () => {
   });
 
   it("names the scenario year on the editor view", () => {
-    const row = describeSecondaryRow("editor", campaign);
+    const row = describeRow("editor", campaign);
     if (row.kind !== "editor") throw new Error("expected an editor row");
 
     expect(row.scenario).toContain("1900");

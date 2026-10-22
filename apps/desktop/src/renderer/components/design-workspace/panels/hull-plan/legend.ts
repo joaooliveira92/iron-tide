@@ -1,3 +1,4 @@
+import type { PresentationFormat } from "../../../../lib/presentation-format/index.js";
 import type { DrawingFacts } from "./describe.js";
 import type { BowStyle, SternStyle } from "./geometry.js";
 import { displaySheerRise, type FunnelInput } from "./profile-geometry.js";
@@ -47,26 +48,33 @@ const STERN_NOTE: Record<SternStyle, string> = {
   round: "A rounded fantail curving under in one sweep.",
 };
 
-const pct = (bp: number) => `${(bp / 100).toFixed(0)}%`;
-const permilleToMetres = (permille: number, lengthM: number) =>
-  Number.isFinite(lengthM) ? `${((permille / 1000) * lengthM).toFixed(1)} m` : "unknown";
 const formName = (id: string | undefined) => (id ? id.replaceAll("_", " ") : "unknown");
 
-/** The legend chips for the hull-plan drawings. Pure: the panel only renders these. */
-export function legendEntries(input: LegendInput): LegendEntry[] {
+/**
+ * The legend chips for the hull-plan drawings. Pure: the panel only renders these; every figure renders through
+ * the bound presentation format (ADR-0218).
+ */
+export function legendEntries(input: LegendInput, format: PresentationFormat): LegendEntry[] {
   const { facts } = input;
   const entries: LegendEntry[] = [];
+  const pct = (bp: number) => format.percent(bp, 0);
+  const coefficient = (bp: number) =>
+    format.number(bp / 10000, { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+  const permilleToMetres = (permille: number, lengthM: number) =>
+    Number.isFinite(lengthM)
+      ? `${format.number((permille / 1000) * lengthM, { maximumFractionDigits: 1, minimumFractionDigits: 1 })} m`
+      : "unknown";
 
   if (input.waterplaneCoeffBp !== undefined && input.lcbPermille !== undefined) {
     entries.push({
       id: "hull-lines",
-      label: `Cw ${(input.waterplaneCoeffBp / 10000).toFixed(2)} · LCB ${input.lcbPermille}‰`,
+      label: `Cw ${coefficient(input.waterplaneCoeffBp)} · LCB ${input.lcbPermille}‰`,
       tooltip: "Hull-form values that shape the outline",
       title: "Hull lines",
       source: "data",
       rows: [
         ["Hull form", formName(facts.hullFormId)],
-        ["Waterplane coefficient", (input.waterplaneCoeffBp / 10000).toFixed(2)],
+        ["Waterplane coefficient", coefficient(input.waterplaneCoeffBp)],
         [
           "Centre of buoyancy (⊕)",
           `${input.lcbPermille}‰ · ${permilleToMetres(input.lcbPermille, facts.lengthM)} from the bow`,
@@ -107,7 +115,7 @@ export function legendEntries(input: LegendInput): LegendEntry[] {
       source: "mixed",
       rows: [
         ["Hull-form sheer", pct(input.sheerBp)],
-        ["Drawn bow rise", `${(shown * 100).toFixed(0)}% of depth`],
+        ["Drawn bow rise", `${format.number(shown * 100, { maximumFractionDigits: 0 })}% of depth`],
       ],
       note: "The hull form's sheer drives the rise, bow more than stern. A small display emphasis keeps modest sheer visible; it never turns zero sheer into a rise.",
     });

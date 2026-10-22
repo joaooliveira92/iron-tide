@@ -65,7 +65,7 @@ describe("Shipbuilding workspace shell", () => {
       Math.round(view.buoyantKg / 1000).toLocaleString("en-US"),
     );
     expect(statusOf("cost")).toContain(
-      `£${Math.round(view.forecast.costMicro / 1_000_000).toLocaleString("en-US")}`,
+      `${Math.round(view.forecast.costMicro / 1_000_000).toLocaleString("en-US")} NC`,
     );
     expect(
       within(screen.getByRole("navigation", { name: "Design map" })).getByRole("status")

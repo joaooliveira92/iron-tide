@@ -4,8 +4,10 @@ import type { ReactNode } from "react";
 import { nationPresentationOrNull } from "../../content/presentationContent.js";
 import type { PlayableSlotCountryId } from "../../content/nationAssetManifest.js";
 import { GlassCard } from "../../components/ui/glass-card.js";
+import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 import type { SetPrimaryAction } from "../../shell/primary-action.js";
 import { formatCampaignMonth, formatTreasury } from "../../shell/site-header-state.js";
+import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { NewGameScreenLayout } from "./components/NewGameScreenLayout.js";
 import { BriefingActions } from "./components/BriefingActions.js";
 import { BriefingProgress } from "./components/BriefingProgress.js";
@@ -26,9 +28,9 @@ export interface NewGameBriefingScreenProps {
   readonly onPrimaryActionChange: SetPrimaryAction;
 }
 
-function formatSignedMoney(value: number): string {
+function formatSignedMoney(value: number, format: PresentationFormat): string {
   const sign = value >= 0 ? "+" : "−";
-  return `${sign}${formatTreasury(Math.abs(value))}`;
+  return `${sign}${formatTreasury(Math.abs(value), format)}`;
 }
 
 function DetailRow({ label, value }: { readonly label: string; readonly value: ReactNode }) {
@@ -84,6 +86,7 @@ function AppointmentPage({
 }
 
 function StateOfTheNavyPage({ projection }: { readonly projection: OpeningBriefingProjection }) {
+  const format = usePresentationFormat();
   const { stateOfTheNavy } = projection;
   return (
     <div className="flex flex-col gap-4">
@@ -112,17 +115,17 @@ function StateOfTheNavyPage({ projection }: { readonly projection: OpeningBriefi
             value={
               stateOfTheNavy.mostExpensiveActiveClass === null
                 ? "—"
-                : `${stateOfTheNavy.mostExpensiveActiveClass.className} (${formatTreasury(stateOfTheNavy.mostExpensiveActiveClass.projectedCost)})`
+                : `${stateOfTheNavy.mostExpensiveActiveClass.className} (${formatTreasury(stateOfTheNavy.mostExpensiveActiveClass.projectedCost, format)})`
             }
           />
           <DetailRow label="Largest available dock" value={stateOfTheNavy.largestDockCapacity} />
           <DetailRow
             label="Total maintenance expense"
-            value={formatTreasury(stateOfTheNavy.totalMaintenance)}
+            value={formatTreasury(stateOfTheNavy.totalMaintenance, format)}
           />
           <DetailRow
             label="Construction committed"
-            value={formatTreasury(stateOfTheNavy.constructionCommitted)}
+            value={formatTreasury(stateOfTheNavy.constructionCommitted, format)}
           />
         </div>
       </GlassCard>
@@ -131,6 +134,7 @@ function StateOfTheNavyPage({ projection }: { readonly projection: OpeningBriefi
 }
 
 function TreasuryPage({ projection }: { readonly projection: OpeningBriefingProjection }) {
+  const format = usePresentationFormat();
   const { treasury } = projection;
   return (
     <div className="flex flex-col gap-4">
@@ -138,20 +142,23 @@ function TreasuryPage({ projection }: { readonly projection: OpeningBriefingProj
         <div className="flex flex-col p-4">
           <DetailRow
             label="Government allocation"
-            value={formatTreasury(treasury.governmentAllocation)}
+            value={formatTreasury(treasury.governmentAllocation, format)}
           />
-          <DetailRow label="Fixed obligations" value={`−${formatTreasury(treasury.obligations)}`} />
+          <DetailRow
+            label="Fixed obligations"
+            value={`−${formatTreasury(treasury.obligations, format)}`}
+          />
           <DetailRow
             label="Fleet maintenance"
-            value={`−${formatTreasury(treasury.fleetMaintenance)}`}
+            value={`−${formatTreasury(treasury.fleetMaintenance, format)}`}
           />
           <DetailRow
             label="Research expenditure"
-            value={`−${formatTreasury(treasury.researchExpenditure)}`}
+            value={`−${formatTreasury(treasury.researchExpenditure, format)}`}
           />
           <DetailRow
             label="Projected surplus / deficit"
-            value={formatSignedMoney(treasury.projectedSurplus)}
+            value={formatSignedMoney(treasury.projectedSurplus, format)}
           />
           {treasury.runwayMonths !== undefined && (
             <DetailRow

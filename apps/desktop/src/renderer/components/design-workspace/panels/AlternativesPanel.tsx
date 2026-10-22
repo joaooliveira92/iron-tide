@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Candidate, DesignDraft } from "@bluewave/ship-design";
 import { Button } from "../../ui/button.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { ConfirmAction } from "../ConfirmAction.js";
 import { Panel } from "./Panel.js";
 import { plural } from "../plural.js";
@@ -24,6 +25,7 @@ export function AlternativesPanel({
   /** True when the working design has edits that loading a candidate would discard. */
   readonly dirty: boolean;
 }) {
+  const format = usePresentationFormat();
   const [state, setState] = useState<{
     readonly status: "idle" | "working" | "done";
     readonly list: Candidate[];
@@ -59,15 +61,21 @@ export function AlternativesPanel({
                   <div>
                     <div className="font-medium">{archetypeLabel[c.archetype] ?? c.archetype}</div>
                     <div className="text-xs text-muted-foreground">
-                      {Math.round(k.totalKg / 1000).toLocaleString("en-US")} t ·{" "}
-                      {((k.machinery?.maxSpeedMilliKnots ?? 0) / 1000).toFixed(1)} kn ·{" "}
-                      {(k.machinery?.rangeNmAtCruise ?? 0).toLocaleString("en-US")} nm · cost{" "}
-                      {Math.round(c.costMicro / 1_000_000).toLocaleString("en-US")} ·{" "}
+                      {format.measurement(k.totalKg, "mass", { maximumFractionDigits: 0 })} ·{" "}
+                      {format.number((k.machinery?.maxSpeedMilliKnots ?? 0) / 1000, {
+                        maximumFractionDigits: 1,
+                      })}{" "}
+                      kn · {format.number(k.machinery?.rangeNmAtCruise ?? 0)} nm · cost{" "}
+                      {format.moneyFromMicro(c.costMicro)} ·{" "}
                       {plural(
                         k.findings.filter((f) => f.severity !== "ADVISORY").length,
                         "finding",
+                        undefined,
+                        undefined,
+                        format,
                       )}{" "}
-                      · CVE {(c.cveBp / 100).toFixed(0)}/100 (development metric)
+                      · CVE {format.number(c.cveBp / 100, { maximumFractionDigits: 0 })}/100
+                      (development metric)
                     </div>
                   </div>
                   <ConfirmAction
