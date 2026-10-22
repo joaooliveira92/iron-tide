@@ -20,6 +20,12 @@ import type {
   StartPlayerBattleResult,
 } from "../../shared/campaign-command-contract.js";
 import { loadPendingTurn } from "../pendingTurn.js";
+import {
+  clearPlayerBattleSave,
+  loadPlayerBattleSave,
+  savePlayerBattle,
+  type PlayerBattleStep,
+} from "../playerBattleSidecar.js";
 import { withStrictSchema } from "../runtime/commandProgram.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { DecisionSource } from "../runtime/decisionSource.js";
@@ -60,6 +66,21 @@ const FinishPayloadSchema = Schema.Struct({
  * re-creates the battle from the recorded offer answer. Keyed by session+battle.
  */
 const sessions = new Map<string, PlayerBattleSession>();
+/** The ordered steps taken in each live session: the mid-battle save (see playerBattleSidecar.ts). */
+const stepLogs = new Map<string, readonly PlayerBattleStep[]>();
+
+/** Test seam: forget the process-local sessions, as an app restart does. */
+export function dropPlayerBattleSessionsForTest(): void {
+  sessions.clear();
+  stepLogs.clear();
+}
+
+function applyStep(session: PlayerBattleSession, step: PlayerBattleStep): PlayerBattleSession {
+  const orders = ordersOf(step.divisions);
+  return step.mode === "to_end"
+    ? runPlayerBattleToEnd(session, orders)
+    : advancePlayerBattleMinute(session, orders);
+}
 
 function keyOf(sessionId: string, battleId: string): string {
   return `${sessionId}::${battleId}`;
@@ -198,17 +219,42 @@ export const startPlayerBattleProgram = withStrictSchema(StartPayloadSchema, (pa
       };
     }
 
-    sessions.set(keyOf(payload.sessionId, payload.battleId), session);
+    // Mid-battle resume: replay the saved standing orders over the fresh session.
+    const saved = loadPlayerBattleSave(record.saveDir, {
+      turnId: pending.turnId,
+      battleId: payload.battleId,
+    });
+    let steps: readonly PlayerBattleStep[] = [];
+    let resumed = false;
+    if (saved !== null && saved.steps.length > 0) {
+      try {
+        let replayed = session;
+        for (const step of saved.steps) replayed = applyStep(replayed, step);
+        session = replayed;
+        steps = saved.steps;
+        resumed = true;
+      } catch {
+        clearPlayerBattleSave(record.saveDir);
+      }
+    }
+    const key = keyOf(payload.sessionId, payload.battleId);
+    sessions.set(key, session);
+    stepLogs.set(key, steps);
+    const lastOrders = steps.at(-1)?.divisions ?? [];
     const value: StartPlayerBattleResult = {
       sessionHash: playerBattleSessionHash(session),
       view: playerBattleView(session),
+      resumed,
+      lastOrders: [...lastOrders],
     };
     return { outcome: "success" as const, value, diagnostics: [] };
   }),
 );
 
 export const advancePlayerBattleProgram = withStrictSchema(AdvancePayloadSchema, (payload) =>
-  Effect.sync(() => {
+  Effect.gen(function* () {
+    const store = yield* CampaignSessionStore;
+    const record = yield* store.get(payload.sessionId);
     const session = sessions.get(keyOf(payload.sessionId, payload.battleId));
     if (session === undefined) {
       return {
@@ -217,12 +263,21 @@ export const advancePlayerBattleProgram = withStrictSchema(AdvancePayloadSchema,
         diagnostics: ["Start the player battle before advancing it"],
       };
     }
-    const orders = ordersOf(payload.divisions);
-    const next =
-      payload.mode === "to_end"
-        ? runPlayerBattleToEnd(session, orders)
-        : advancePlayerBattleMinute(session, orders);
-    sessions.set(keyOf(payload.sessionId, payload.battleId), next);
+    const step: PlayerBattleStep = { mode: payload.mode, divisions: payload.divisions };
+    const next = applyStep(session, step);
+    const key = keyOf(payload.sessionId, payload.battleId);
+    sessions.set(key, next);
+    const steps = [...(stepLogs.get(key) ?? []), step];
+    stepLogs.set(key, steps);
+    const pending = loadPendingTurn(record.saveDir);
+    if (pending !== null) {
+      savePlayerBattle(record.saveDir, {
+        schemaVersion: "1.0.0",
+        turnId: pending.turnId,
+        battleId: payload.battleId,
+        steps,
+      });
+    }
     const value: AdvancePlayerBattleResult = {
       sessionHash: playerBattleSessionHash(next),
       view: playerBattleView(next),
@@ -233,7 +288,9 @@ export const advancePlayerBattleProgram = withStrictSchema(AdvancePayloadSchema,
 );
 
 export const finishPlayerBattleProgram = withStrictSchema(FinishPayloadSchema, (payload) =>
-  Effect.sync(() => {
+  Effect.gen(function* () {
+    const store = yield* CampaignSessionStore;
+    const record = yield* store.get(payload.sessionId);
     const session = sessions.get(keyOf(payload.sessionId, payload.battleId));
     if (session === undefined) {
       return {
@@ -251,6 +308,8 @@ export const finishPlayerBattleProgram = withStrictSchema(FinishPayloadSchema, (
     }
     const value: FinishPlayerBattleResult = { result: toResultDto(session) };
     sessions.delete(keyOf(payload.sessionId, payload.battleId));
+    stepLogs.delete(keyOf(payload.sessionId, payload.battleId));
+    clearPlayerBattleSave(record.saveDir);
     return { outcome: "success" as const, value, diagnostics: [] };
   }),
 );

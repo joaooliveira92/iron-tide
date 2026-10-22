@@ -33,6 +33,7 @@ import {
 } from "./resolveTurn.js";
 import {
   advancePlayerBattleProgram,
+  dropPlayerBattleSessionsForTest,
   finishPlayerBattleProgram,
   startPlayerBattleProgram,
 } from "./playerBattle.js";
@@ -340,6 +341,66 @@ describe("battle offer commands", () => {
     expect(
       snapshot.wars.battles.find((b) => b.id === request.battleId)?.result?.explanation,
     ).toContain("player-resolved");
+  });
+
+  it("resumes a half-fought player battle after an app restart with the same orders applied", async () => {
+    const saveDir = join(saveRoot, "midsave");
+    const request = await suspendAtOffer("s-mid", saveDir);
+    await submit("s-mid", {
+      interruptionId: request.interruptionId,
+      battleId: request.battleId,
+      response: "accept",
+    });
+    const started = await run(offerRuntime, startPlayerBattleProgram, {
+      sessionId: "s-mid",
+      battleId: request.battleId,
+    });
+    if (started.outcome !== "success") throw new Error("start failed");
+    const view = (
+      started.value as {
+        view: {
+          playerNationId: string;
+          divisions: readonly { divisionId: string; sideId: string }[];
+          ships: readonly { shipId: string; sideId: string }[];
+        };
+      }
+    ).view;
+    const playerSide = view.ships.find((ship) => ship.shipId.length > 0)!.sideId;
+    const mine = view.divisions.filter((division) => division.sideId === playerSide);
+    const divisions = mine.map((division) => ({
+      divisionId: division.divisionId,
+      stance: "HOLD" as const,
+      speedPercent: 40,
+    }));
+    const advance = async () => {
+      const result = await run(offerRuntime, advancePlayerBattleProgram, {
+        sessionId: "s-mid",
+        battleId: request.battleId,
+        mode: "minute",
+        divisions,
+      });
+      if (result.outcome !== "success") throw new Error("advance failed");
+      return result.value as { sessionHash: string; view: { minute: number } };
+    };
+    await advance();
+    const before = await advance();
+    expect(before.view.minute).toBe(2);
+
+    // Simulate an app restart: the process-local session is gone, the sidecar remains.
+    dropPlayerBattleSessionsForTest();
+    const resumed = await run(offerRuntime, startPlayerBattleProgram, {
+      sessionId: "s-mid",
+      battleId: request.battleId,
+    });
+    if (resumed.outcome !== "success") throw new Error("resume failed");
+    const resumedValue = resumed.value as {
+      sessionHash: string;
+      view: { minute: number };
+      resumed: boolean;
+    };
+    expect(resumedValue.view.minute).toBe(2);
+    expect(resumedValue.sessionHash).toBe(before.sessionHash);
+    expect(resumedValue.resumed).toBe(true);
   });
 
   it("resumes to the identical offer after a reload", async () => {
