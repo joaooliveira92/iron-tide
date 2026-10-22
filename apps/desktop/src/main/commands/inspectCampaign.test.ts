@@ -17,7 +17,7 @@ import type {
   InspectCampaignResult,
   InspectMapResult,
   InspectOpeningBriefingResult,
-} from "../../shared/campaign-command-contract.js";
+} from "../../shared/campaign-contract.js";
 import { clearCampaignSessionsForTest, registerCampaignSession } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
@@ -146,7 +146,10 @@ describe("inspect commands (Effect programs)", () => {
     it("reports PROJECTION_FAILED for a session whose player slot is not in the snapshot", async () => {
       registerSession("session-bogus", "atlantis");
       const result = await runProgram(inspectCampaignProgram, "session-bogus");
-      expect(result).toMatchObject({ outcome: "error", reason: "PROJECTION_FAILED" });
+      expect(result).toMatchObject({
+        outcome: "error",
+        reason: "PROJECTION_FAILED",
+      });
     });
   });
 
@@ -166,7 +169,10 @@ describe("inspect commands (Effect programs)", () => {
     it("reports UNKNOWN_PLAYER_SLOT for a session whose player slot is not in the snapshot", async () => {
       registerSession("session-bogus", "atlantis");
       const result = await runProgram(inspectMapProgram, "session-bogus");
-      expect(result).toMatchObject({ outcome: "error", reason: "UNKNOWN_PLAYER_SLOT" });
+      expect(result).toMatchObject({
+        outcome: "error",
+        reason: "UNKNOWN_PLAYER_SLOT",
+      });
     });
   });
 
@@ -190,14 +196,20 @@ describe("inspect commands (Effect programs)", () => {
 
       const value = result.value as InspectOpeningBriefingResult;
       expect(value.projection).toEqual(
-        buildOpeningBriefingProjection(compiled.state, "uk", { month: 1, year: 1880 }),
+        buildOpeningBriefingProjection(compiled.state, "uk", {
+          month: 1,
+          year: 1880,
+        }),
       );
     });
 
     it("reports UNKNOWN_PLAYER_SLOT for a session whose player slot is not in the snapshot", async () => {
       registerSession("session-bogus", "atlantis");
       const result = await runProgram(inspectOpeningBriefingProgram, "session-bogus");
-      expect(result).toMatchObject({ outcome: "error", reason: "UNKNOWN_PLAYER_SLOT" });
+      expect(result).toMatchObject({
+        outcome: "error",
+        reason: "UNKNOWN_PLAYER_SLOT",
+      });
     });
   });
 

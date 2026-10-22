@@ -9,7 +9,7 @@ import type {
   MonthlyReportEntry,
   MonthlyReportResearchProgress,
   MonthlyReportShip,
-} from "../../../shared/campaign-command-contract.js";
+} from "../../../shared/reports-contract.js";
 import { sumByCategory } from "./responseMappers.js";
 
 export interface FleetSnapshot {
@@ -23,7 +23,10 @@ export interface FleetSnapshot {
 }
 
 export interface ProjectSnapshot {
-  readonly constructionProjects: readonly { readonly id: string; readonly status: string }[];
+  readonly constructionProjects: readonly {
+    readonly id: string;
+    readonly status: string;
+  }[];
 }
 
 export function completedShips(

@@ -32,7 +32,7 @@ import {
 import { collectBattleOutcomes } from "./commitMonth/battleOutcomes.js";
 import { buildMonthlyReportEntry } from "./commitMonth/reportEntry.js";
 import { promotePlayerSlotForExecution } from "./commitMonth/snapshot.js";
-import type { TurnSummaryEntry } from "../../shared/campaign-command-contract.js";
+import type { TurnSummaryEntry } from "../../shared/turn-message-contract.js";
 
 export type TurnTransactionOutcome =
   | {
@@ -55,7 +55,11 @@ export type TurnTransactionOutcome =
       readonly diagnostics: readonly string[];
       readonly currentRevision?: number;
     }
-  | { readonly kind: "error"; readonly reason: string; readonly diagnostics: readonly string[] };
+  | {
+      readonly kind: "error";
+      readonly reason: string;
+      readonly diagnostics: readonly string[];
+    };
 
 export interface TurnTransactionInput {
   readonly sessionId: string;

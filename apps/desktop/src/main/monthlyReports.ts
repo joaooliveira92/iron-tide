@@ -1,6 +1,6 @@
 import { Effect } from "effect";
-import type { MonthlyReportEntry, MonthlyReports } from "../shared/campaign-command-contract.js";
-import { MonthlyReportsSchema } from "../shared/campaignCommandSchemas.js";
+import type { MonthlyReportEntry, MonthlyReports } from "../shared/reports-contract.js";
+import { MonthlyReportsSchema } from "../shared/monthly-reports-schemas.js";
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
 import type { CommandHandler } from "./runtime/commandProgram.js";
 import { defineSidecar, prependBounded } from "./runtime/sidecar.js";
@@ -51,5 +51,9 @@ export const readMonthlyReportsProgram: CommandHandler<"readMonthlyReports"> = (
     const reports = yield* ReportsStore;
     const data = yield* reports.load(record.saveDir);
 
-    return { outcome: "success" as const, value: { reports: data.reports }, diagnostics: [] };
+    return {
+      outcome: "success" as const,
+      value: { reports: data.reports },
+      diagnostics: [],
+    };
   });

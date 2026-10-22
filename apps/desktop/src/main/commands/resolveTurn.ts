@@ -18,7 +18,7 @@ import type {
   PendingTurnDto,
   ReadPendingTurnResult,
   ResolveTurnResult,
-} from "../../shared/campaign-command-contract.js";
+} from "../../shared/turn-message-contract.js";
 import {
   clearPendingTurn,
   isPendingTurnValid,
@@ -178,7 +178,11 @@ export const resolveTurnProgram: CommandHandler<"resolveTurn"> = (payload) =>
       const validated = validatePending(pending, record.state, hashes);
       if (validated === null) {
         const unavailable: ResolveTurnResult = { status: "unavailable" };
-        return { outcome: "success" as const, value: unavailable, diagnostics: [] };
+        return {
+          outcome: "success" as const,
+          value: unavailable,
+          diagnostics: [],
+        };
       }
       recordedInputs = validated;
     }
@@ -229,7 +233,11 @@ const finishTransaction = (input: {
             closingTreasury: outcome.response.report.closingTreasury,
           },
         };
-        return { outcome: "success" as const, value, diagnostics: [...outcome.diagnostics] };
+        return {
+          outcome: "success" as const,
+          value,
+          diagnostics: [...outcome.diagnostics],
+        };
       }
       case "suspended": {
         yield* Effect.try({
@@ -245,11 +253,19 @@ const finishTransaction = (input: {
           request: outcome.request === null ? null : toRequestDto(outcome.request),
           pendingTurn: toPendingTurnDto(outcome.pendingTurn),
         };
-        return { outcome: "success" as const, value, diagnostics: [...outcome.diagnostics] };
+        return {
+          outcome: "success" as const,
+          value,
+          diagnostics: [...outcome.diagnostics],
+        };
       }
       case "unavailable": {
         const value: ResolveTurnResult = { status: "unavailable" };
-        return { outcome: "success" as const, value, diagnostics: [...outcome.diagnostics] };
+        return {
+          outcome: "success" as const,
+          value,
+          diagnostics: [...outcome.diagnostics],
+        };
       }
       case "rejected":
         return {

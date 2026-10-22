@@ -8,17 +8,19 @@ import {
   CommandEnvelopePayloadSchema,
   DiplomacyCommandBodySchema,
   DivisionCommandBodySchema,
-  FirstMonthInspectionSchema,
   GenerateBattlePayloadSchema,
-  MonthlyReportsSchema,
   PlaceForeignConstructionCommandPayloadSchema,
   ResolveTacticalBattlePayloadSchema,
   SessionIdPayloadSchema,
   SetResearchPriorityCommandPayloadSchema,
   SubmitDesignCommandPayloadSchema,
+} from "../shared/campaignCommandSchemas.js";
+import {
+  FirstMonthInspectionSchema,
   UiStateSchema,
   WriteUiStatePayloadSchema,
-} from "../shared/campaignCommandSchemas.js";
+} from "../shared/ui-state-schemas.js";
+import { MonthlyReportsSchema } from "../shared/monthly-reports-schemas.js";
 import { LoadSaveResultSchema } from "./campaignSaveSchema.js";
 import { SessionMetadataSchema } from "./campaignSessionMetadata.js";
 import { parseMonthInput } from "./monthInput.js";
@@ -114,12 +116,18 @@ describe("CommandEnvelopePayloadSchema numeric constraints", () => {
 
   for (const expectedRevision of [-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
     it(`rejects expectedRevision=${String(expectedRevision)}`, () => {
-      expectFailure(CommandEnvelopePayloadSchema, { ...VALID_ENVELOPE, expectedRevision });
+      expectFailure(CommandEnvelopePayloadSchema, {
+        ...VALID_ENVELOPE,
+        expectedRevision,
+      });
     });
   }
 
   it("rejects a non-string session id", () => {
-    expectFailure(CommandEnvelopePayloadSchema, { ...VALID_ENVELOPE, sessionId: 123 });
+    expectFailure(CommandEnvelopePayloadSchema, {
+      ...VALID_ENVELOPE,
+      sessionId: 123,
+    });
   });
 });
 
@@ -181,13 +189,19 @@ describe("SetResearchPriorityCommandPayloadSchema", () => {
 
 describe("DiplomacyCommandBodySchema (tagged union)", () => {
   it("accepts each discriminant shape", () => {
-    expectSuccess(DiplomacyCommandBodySchema, { type: "DeclareWar", targetNationId: "fra" });
+    expectSuccess(DiplomacyCommandBodySchema, {
+      type: "DeclareWar",
+      targetNationId: "fra",
+    });
     expectSuccess(DiplomacyCommandBodySchema, {
       type: "DeclareWar",
       targetNationId: "fra",
       warGoalsId: "goals",
     });
-    expectSuccess(DiplomacyCommandBodySchema, { type: "AcceptPeace", warId: "w" });
+    expectSuccess(DiplomacyCommandBodySchema, {
+      type: "AcceptPeace",
+      warId: "w",
+    });
     expectSuccess(DiplomacyCommandBodySchema, {
       type: "DeclareBlockade",
       targetNationId: "fra",
@@ -196,12 +210,18 @@ describe("DiplomacyCommandBodySchema (tagged union)", () => {
   });
 
   it("rejects an unknown discriminant", () => {
-    expectFailure(DiplomacyCommandBodySchema, { type: "NotACommand", targetNationId: "fra" });
+    expectFailure(DiplomacyCommandBodySchema, {
+      type: "NotACommand",
+      targetNationId: "fra",
+    });
   });
 
   it("rejects a member missing a required field", () => {
     expectFailure(DiplomacyCommandBodySchema, { type: "DeclareWar" });
-    expectFailure(DiplomacyCommandBodySchema, { type: "DeclareBlockade", targetNationId: "fra" });
+    expectFailure(DiplomacyCommandBodySchema, {
+      type: "DeclareBlockade",
+      targetNationId: "fra",
+    });
   });
 });
 
@@ -233,7 +253,10 @@ describe("DivisionCommandBodySchema (tagged union + array bounds)", () => {
   });
 
   it("rejects an unknown discriminant", () => {
-    expectFailure(DivisionCommandBodySchema, { type: "TeleportDivision", divisionId: "d" });
+    expectFailure(DivisionCommandBodySchema, {
+      type: "TeleportDivision",
+      divisionId: "d",
+    });
   });
 });
 
@@ -329,13 +352,25 @@ describe("UiStateSchema / FirstMonthInspectionSchema", () => {
   });
 
   it("bounds lastCompletedStep to 0..6", () => {
-    expectSuccess(FirstMonthInspectionSchema, { status: "completed", lastCompletedStep: 6 });
-    expectFailure(FirstMonthInspectionSchema, { status: "completed", lastCompletedStep: 7 });
-    expectFailure(FirstMonthInspectionSchema, { status: "completed", lastCompletedStep: -1 });
+    expectSuccess(FirstMonthInspectionSchema, {
+      status: "completed",
+      lastCompletedStep: 6,
+    });
+    expectFailure(FirstMonthInspectionSchema, {
+      status: "completed",
+      lastCompletedStep: 7,
+    });
+    expectFailure(FirstMonthInspectionSchema, {
+      status: "completed",
+      lastCompletedStep: -1,
+    });
   });
 
   it("rejects an unknown status", () => {
-    expectFailure(FirstMonthInspectionSchema, { status: "paused", lastCompletedStep: 0 });
+    expectFailure(FirstMonthInspectionSchema, {
+      status: "paused",
+      lastCompletedStep: 0,
+    });
   });
 
   it("caps the fingerprint array at 64 entries and each fingerprint at 256 chars", () => {
@@ -352,7 +387,10 @@ describe("UiStateSchema / FirstMonthInspectionSchema", () => {
 
 describe("WriteUiStatePayloadSchema", () => {
   it("treats firstMonthInspection as optional", () => {
-    expectSuccess(WriteUiStatePayloadSchema, { sessionId: "s", dismissedFingerprints: [] });
+    expectSuccess(WriteUiStatePayloadSchema, {
+      sessionId: "s",
+      dismissedFingerprints: [],
+    });
   });
 
   it("treats the inspector layout as optional", () => {
@@ -401,7 +439,10 @@ const VALID_MONTHLY_REPORT = {
     progress: [{ techId: "t1", previousPoints: 1, newPoints: 2 }],
     discoveries: [{ techId: "t2", researchFieldId: "GUNNERY" }],
   },
-  fleet: { additions: [{ shipId: "s1", name: "HMS Example" }], totalActiveShips: 8 },
+  fleet: {
+    additions: [{ shipId: "s1", name: "HMS Example" }],
+    totalActiveShips: 8,
+  },
   priorities: [
     {
       id: "monthly_deficit",
@@ -496,19 +537,29 @@ describe("MonthlyReportsSchema", () => {
   it("rejects a non-integer treasury figure and a non-array ledger", () => {
     expectFailure(MonthlyReportsSchema, {
       reports: [
-        { ...VALID_MONTHLY_REPORT, treasury: { ...VALID_MONTHLY_REPORT.treasury, netChange: 1.5 } },
+        {
+          ...VALID_MONTHLY_REPORT,
+          treasury: { ...VALID_MONTHLY_REPORT.treasury, netChange: 1.5 },
+        },
       ],
     });
     expectFailure(MonthlyReportsSchema, {
       reports: [
-        { ...VALID_MONTHLY_REPORT, treasury: { ...VALID_MONTHLY_REPORT.treasury, ledgerRows: 3 } },
+        {
+          ...VALID_MONTHLY_REPORT,
+          treasury: { ...VALID_MONTHLY_REPORT.treasury, ledgerRows: 3 },
+        },
       ],
     });
   });
 
   it("rejects a negative turn and a non-string generatedAt", () => {
-    expectFailure(MonthlyReportsSchema, { reports: [{ ...VALID_MONTHLY_REPORT, turn: -1 }] });
-    expectFailure(MonthlyReportsSchema, { reports: [{ ...VALID_MONTHLY_REPORT, generatedAt: 0 }] });
+    expectFailure(MonthlyReportsSchema, {
+      reports: [{ ...VALID_MONTHLY_REPORT, turn: -1 }],
+    });
+    expectFailure(MonthlyReportsSchema, {
+      reports: [{ ...VALID_MONTHLY_REPORT, generatedAt: 0 }],
+    });
   });
 });
 
@@ -521,8 +572,14 @@ describe("Tactical Sandbox payloads", () => {
       areaId: "a",
       strengthScale: 1000,
     });
-    expectFailure(GenerateBattlePayloadSchema, { sessionId: "s", strengthScale: 0 });
-    expectFailure(GenerateBattlePayloadSchema, { sessionId: "s", strengthScale: 1001 });
+    expectFailure(GenerateBattlePayloadSchema, {
+      sessionId: "s",
+      strengthScale: 0,
+    });
+    expectFailure(GenerateBattlePayloadSchema, {
+      sessionId: "s",
+      strengthScale: 1001,
+    });
   });
 
   it("requires a positive integer turnCount and an array of scripted orders", () => {
@@ -554,7 +611,10 @@ describe("Tactical Sandbox payloads", () => {
 
 describe("WriteDrawingBoardDraftPayloadSchema (nullable draft)", () => {
   it("accepts a null draft (removal) and a populated draft", () => {
-    expectSuccess(WriteDrawingBoardDraftPayloadSchema, { sessionId: "s", draft: null });
+    expectSuccess(WriteDrawingBoardDraftPayloadSchema, {
+      sessionId: "s",
+      draft: null,
+    });
     expectSuccess(WriteDrawingBoardDraftPayloadSchema, {
       sessionId: "s",
       draft: { presetId: "p", log: "[]" },
@@ -566,7 +626,10 @@ describe("WriteDrawingBoardDraftPayloadSchema (nullable draft)", () => {
       sessionId: "s",
       draft: { presetId: "p" },
     });
-    expectFailure(WriteDrawingBoardDraftPayloadSchema, { sessionId: "s", draft: 3 });
+    expectFailure(WriteDrawingBoardDraftPayloadSchema, {
+      sessionId: "s",
+      draft: 3,
+    });
   });
 });
 
@@ -624,10 +687,20 @@ describe("parseMonthInput (month input sidecar)", () => {
 
 describe("LoadSaveResultSchema (IPC response envelope)", () => {
   it("accepts success and failure shapes", () => {
-    expectSuccess(LoadSaveResultSchema, { success: true, diagnostics: [], rawHash: "h" });
+    expectSuccess(LoadSaveResultSchema, {
+      success: true,
+      diagnostics: [],
+      rawHash: "h",
+    });
     expectSuccess(LoadSaveResultSchema, {
       success: false,
-      diagnostics: [{ code: "PERSISTENCE_MISSING_SAVE", severity: "error", message: "missing" }],
+      diagnostics: [
+        {
+          code: "PERSISTENCE_MISSING_SAVE",
+          severity: "error",
+          message: "missing",
+        },
+      ],
     });
   });
 
@@ -728,7 +801,9 @@ describe("PlaceForeignConstructionCommandPayloadSchema (strict, INC-17)", () => 
 
 describe("campaignBridge error mapping", () => {
   it("maps a schema failure to a non-empty INVALID_PAYLOAD diagnostics list", async () => {
-    const result = await dispatchCampaignCommand("commitMonth", { sessionId: "" });
+    const result = await dispatchCampaignCommand("commitMonth", {
+      sessionId: "",
+    });
     expect(result.outcome).toBe("error");
     if (result.outcome !== "error") return;
     expect(result.reason).toBe("INVALID_PAYLOAD");

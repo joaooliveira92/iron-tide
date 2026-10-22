@@ -1,4 +1,6 @@
+import { cn } from "../../../lib/utils.js";
 import type { NationRailRow } from "../nation-rail-state.js";
+import { NationRelationBadge } from "./NationRelationBadge.js";
 import { NationSwatch } from "./NationSwatch.js";
 
 export function NationRailItem({
@@ -15,15 +17,21 @@ export function NationRailItem({
       <button
         type="button"
         aria-pressed={selected}
+        data-relation={row.relation}
         onClick={() => onSelect(row.nationId)}
-        className="flex w-full items-center gap-2 rounded-md border px-2 py-1.5 text-left hover:bg-accent aria-pressed:bg-accent"
+        className={cn(
+          "flex w-full items-center gap-2 rounded-md border px-2 py-1.5 text-left outline-none transition-colors",
+          "bg-muted/40 hover:bg-muted focus-visible:ring-1 focus-visible:ring-ring",
+          "aria-pressed:border-ring/50 aria-pressed:bg-muted",
+          row.isPlayer && "border-primary/30",
+        )}
       >
         <NationSwatch row={row} />
-        <span className="min-w-0 flex-1 truncate font-medium">{row.name}</span>
-        <span className="text-muted-foreground">{row.relationLabel}</span>
+        <span className="min-w-0 flex-1 truncate text-xs font-semibold">{row.name}</span>
+        <NationRelationBadge row={row} />
         {row.warScore !== null && (
           <span
-            className="tabular-nums"
+            className="text-xs font-semibold tabular-nums text-destructive"
             aria-label={`War score ${row.warScore.yours} to ${row.warScore.enemy}`}
           >
             {row.warScore.yours}:{row.warScore.enemy}

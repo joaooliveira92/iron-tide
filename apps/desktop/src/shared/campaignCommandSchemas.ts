@@ -1,22 +1,13 @@
 import { CANONICAL_SCENARIO_IDS, FLEET_SIZE_IDS, RESEARCH_IDS } from "@bluewave/campaign";
-import {
-  CANONICAL_RESEARCH_FIELD_IDS,
-  prioritySeveritySchema,
-  strategicPriorityTypeSchema,
-} from "@bluewave/campaign-engine";
+import { CANONICAL_RESEARCH_FIELD_IDS } from "@bluewave/campaign-engine";
 import { Schema } from "effect";
-import { INSPECTOR_MAX_WIDTH_PX, INSPECTOR_MIN_WIDTH_PX } from "./campaign-command-contract.js";
-
-const nonEmptyString = Schema.String.check(Schema.isMinLength(1));
-
-const nonNegativeInt = Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0));
-
-const positiveInt = Schema.Finite.check(Schema.isInt(), Schema.isGreaterThan(0));
-
-const int = Schema.Finite.check(Schema.isInt());
-
-const boundedString = (min: number, max: number) =>
-  Schema.String.check(Schema.isMinLength(min), Schema.isMaxLength(max));
+import {
+  boundedString,
+  int,
+  nonEmptyString,
+  nonNegativeInt,
+  positiveInt,
+} from "./schema-primitives.js";
 
 export const CampaignConfigurationPayloadSchema = Schema.Struct({
   scenarioId: Schema.Literals(CANONICAL_SCENARIO_IDS),
@@ -141,8 +132,14 @@ export const DiplomacyCommandBodySchema = Schema.Union([
     warGoalsId: Schema.optional(nonEmptyString),
   }),
   Schema.Struct({ type: Schema.Literal("AcceptPeace"), warId: nonEmptyString }),
-  Schema.Struct({ type: Schema.Literal("FormAlliance"), partnerNationId: nonEmptyString }),
-  Schema.Struct({ type: Schema.Literal("BreakAlliance"), partnerNationId: nonEmptyString }),
+  Schema.Struct({
+    type: Schema.Literal("FormAlliance"),
+    partnerNationId: nonEmptyString,
+  }),
+  Schema.Struct({
+    type: Schema.Literal("BreakAlliance"),
+    partnerNationId: nonEmptyString,
+  }),
   Schema.Struct({
     type: Schema.Literal("FormNonAggressionPact"),
     partnerNationId: nonEmptyString,
@@ -190,7 +187,10 @@ export const DivisionCommandBodySchema = Schema.Union([
     divisionId: nonEmptyString,
     shipOrder: Schema.Array(nonEmptyString).check(Schema.isMinLength(1), Schema.isMaxLength(6)),
   }),
-  Schema.Struct({ type: Schema.Literal("DissolveDivision"), divisionId: nonEmptyString }),
+  Schema.Struct({
+    type: Schema.Literal("DissolveDivision"),
+    divisionId: nonEmptyString,
+  }),
 ]);
 
 export const SubmitMovementCommandPayloadSchema = Schema.Struct({
@@ -266,152 +266,6 @@ export const SubmitDivisionCommandPayloadSchema = Schema.Struct({
   command: DivisionCommandBodySchema,
 });
 
-export const FirstMonthInspectionSchema = Schema.Struct({
-  status: Schema.Literals(["not_started", "in_progress", "completed", "dismissed"]),
-  lastCompletedStep: Schema.Finite.check(
-    Schema.isInt(),
-    Schema.isBetween({ minimum: 0, maximum: 6 }),
-  ),
-});
-
-export const InspectorLayoutSchema = Schema.Struct({
-  widthPx: Schema.Finite.check(
-    Schema.isInt(),
-    Schema.isBetween({ minimum: INSPECTOR_MIN_WIDTH_PX, maximum: INSPECTOR_MAX_WIDTH_PX }),
-  ),
-  collapsed: Schema.Boolean,
-});
-
-export const TurnMessagesSchema = Schema.Struct({
-  pinnedIds: Schema.Array(boundedString(1, 128)).check(Schema.isMaxLength(512)),
-  readIds: Schema.Array(boundedString(1, 128)).check(Schema.isMaxLength(512)),
-});
-
-export const UiStateSchema = Schema.Struct({
-  turnNumber: nonNegativeInt,
-  dismissedFingerprints: Schema.Array(boundedString(1, 256)).check(Schema.isMaxLength(64)),
-  firstMonthInspection: Schema.optional(FirstMonthInspectionSchema),
-  inspector: Schema.optional(InspectorLayoutSchema),
-  turnMessages: Schema.optional(TurnMessagesSchema),
-});
-
-export const WriteUiStatePayloadSchema = Schema.Struct({
-  sessionId: nonEmptyString,
-  dismissedFingerprints: Schema.Array(boundedString(1, 256)).check(Schema.isMaxLength(64)),
-  firstMonthInspection: Schema.optional(FirstMonthInspectionSchema),
-  inspector: Schema.optional(InspectorLayoutSchema),
-  turnMessages: Schema.optional(TurnMessagesSchema),
-});
-
-const ReportMonthSchema = Schema.Struct({
-  year: nonNegativeInt,
-  month: nonNegativeInt,
-});
-
-const MonthlyReportLedgerRowSchema = Schema.Struct({
-  id: nonEmptyString,
-  description: Schema.String,
-  phase: Schema.String,
-  amount: int,
-  runningBalance: int,
-  requested: Schema.optional(int),
-  shortfall: Schema.optional(int),
-});
-
-const MonthlyReportReconciliationSchema = Schema.Struct({
-  opening: int,
-  revenue: int,
-  construction: int,
-  preservation: int,
-  maintenance: int,
-  obligation: int,
-  research: int,
-  other: int,
-  closing: int,
-});
-
-const MonthlyReportTreasurySchema = Schema.Struct({
-  openingTreasury: int,
-  closingTreasury: int,
-  maintenanceCost: int,
-  constructionSpending: int,
-  researchExpense: int,
-  governmentAllocation: int,
-  netChange: int,
-  ledgerRows: Schema.Array(MonthlyReportLedgerRowSchema),
-  obligationExpense: Schema.optional(int),
-  reconciliation: Schema.optional(MonthlyReportReconciliationSchema),
-});
-
-const MonthlyReportShipSchema = Schema.Struct({
-  shipId: nonEmptyString,
-  name: Schema.String,
-});
-
-const MonthlyReportConstructionSchema = Schema.Struct({
-  projects: Schema.Array(
-    Schema.Struct({ projectId: nonEmptyString, previousWork: int, newWork: int }),
-  ),
-  completedShips: Schema.Array(MonthlyReportShipSchema),
-  newlyActiveProjectIds: Schema.Array(nonEmptyString),
-});
-
-const MonthlyReportResearchSchema = Schema.Struct({
-  progress: Schema.Array(
-    Schema.Struct({ techId: nonEmptyString, previousPoints: int, newPoints: int }),
-  ),
-  discoveries: Schema.Array(
-    Schema.Struct({ techId: nonEmptyString, researchFieldId: nonEmptyString }),
-  ),
-});
-
-const MonthlyReportFleetSchema = Schema.Struct({
-  additions: Schema.Array(MonthlyReportShipSchema),
-  totalActiveShips: nonNegativeInt,
-});
-
-const BattleOutcomeSchema = Schema.Struct({
-  battleId: nonEmptyString,
-  areaId: Schema.String,
-  attackerId: nonEmptyString,
-  defenderId: nonEmptyString,
-  winnerId: Schema.NullOr(Schema.String),
-  loserId: Schema.NullOr(Schema.String),
-  warScoreDelta: int,
-  attackerLosses: Schema.Array(Schema.String),
-  defenderLosses: Schema.Array(Schema.String),
-  explanation: Schema.Array(Schema.String),
-});
-
-const StrategicPrioritySchema = Schema.Struct({
-  id: nonEmptyString,
-  type: strategicPriorityTypeSchema,
-  severity: prioritySeveritySchema,
-  title: Schema.String,
-  summary: Schema.String,
-  reason: Schema.String,
-  destination: Schema.Literals(["overview", "construction", "fleet", "research", "diplomacy"]),
-  fingerprint: nonEmptyString,
-});
-
-const MonthlyReportEntrySchema = Schema.Struct({
-  reportId: nonEmptyString,
-  campaignId: nonEmptyString,
-  turn: nonNegativeInt,
-  period: Schema.Struct({ from: ReportMonthSchema, to: ReportMonthSchema }),
-  generatedAt: nonEmptyString,
-  treasury: MonthlyReportTreasurySchema,
-  construction: MonthlyReportConstructionSchema,
-  research: MonthlyReportResearchSchema,
-  fleet: MonthlyReportFleetSchema,
-  priorities: Schema.Array(StrategicPrioritySchema),
-  battleOutcomes: Schema.Array(BattleOutcomeSchema),
-});
-
-export const MonthlyReportsSchema = Schema.Struct({
-  reports: Schema.Array(MonthlyReportEntrySchema),
-});
-
 export const GenerateBattlePayloadSchema = Schema.Struct({
   sessionId: nonEmptyString,
   warId: Schema.optional(nonEmptyString),
@@ -437,7 +291,9 @@ export const ResolveTacticalBattlePayloadSchema = Schema.Struct({
   scriptedOrders: Schema.Array(Schema.Unknown),
 });
 
-export const RecentPackagePayloadSchema = Schema.Struct({ packagePath: Schema.NonEmptyString });
+export const RecentPackagePayloadSchema = Schema.Struct({
+  packagePath: Schema.NonEmptyString,
+});
 
 export const AnswerDecisionPayloadSchema = Schema.Struct({
   ...CommandEnvelopePayloadSchema.fields,
@@ -462,33 +318,6 @@ export const SubmitOfferResponsePayloadSchema = Schema.Struct({
   interruptionId: nonEmptyString,
   battleId: nonEmptyString,
   response: Schema.Literals(["accept", "decline", "delegate"]),
-});
-
-export const PlayerBattleDivisionOrderSchema = Schema.Struct({
-  divisionId: nonEmptyString,
-  stance: Schema.Literals(["ENGAGE", "HOLD", "WITHDRAW"]),
-  speedPercent: Schema.Finite.check(
-    Schema.isInt(),
-    Schema.isGreaterThanOrEqualTo(0),
-    Schema.isLessThanOrEqualTo(100),
-  ),
-});
-
-export const StartPlayerBattlePayloadSchema = Schema.Struct({
-  sessionId: nonEmptyString,
-  battleId: nonEmptyString,
-});
-
-export const AdvancePlayerBattlePayloadSchema = Schema.Struct({
-  sessionId: nonEmptyString,
-  battleId: nonEmptyString,
-  mode: Schema.Literals(["minute", "to_end"]),
-  divisions: Schema.Array(PlayerBattleDivisionOrderSchema),
-});
-
-export const FinishPlayerBattlePayloadSchema = Schema.Struct({
-  sessionId: nonEmptyString,
-  battleId: nonEmptyString,
 });
 
 export const MAX_DRAWING_BOARD_LOG_CHARS = 4_000_000;

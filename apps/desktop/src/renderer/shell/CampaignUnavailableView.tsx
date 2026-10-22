@@ -2,7 +2,7 @@ import { defaultArchetypeSelection } from "@bluewave/campaign-engine";
 import { useCallback, useMemo, type ReactNode } from "react";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
-import type { InspectOpeningBriefingResult } from "../../shared/campaign-command-contract.js";
+import type { InspectOpeningBriefingResult } from "../../shared/campaign-contract.js";
 import { CampaignFileScreen } from "../screens/campaign-file/CampaignFileScreen.js";
 import { translate } from "../lib/strings.js";
 import { NewGameArchetypeScreen } from "../screens/new-game/NewGameArchetypeScreen.js";
@@ -132,7 +132,10 @@ export function CampaignUnavailableView({
   const mode = state.mode;
 
   const navigation = useMemo<NewGameNavigation>(
-    () => ({ openCampaign: actions.openCampaign, selectScreen: actions.selectScreen }),
+    () => ({
+      openCampaign: actions.openCampaign,
+      selectScreen: actions.selectScreen,
+    }),
     [actions.openCampaign, actions.selectScreen],
   );
   const flow = useNewGameFlow(bridge, navigation);

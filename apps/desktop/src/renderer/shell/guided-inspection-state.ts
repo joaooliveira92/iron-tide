@@ -1,4 +1,4 @@
-import type { UiStateFirstMonthInspection } from "../../shared/campaign-command-contract.js";
+import type { UiStateFirstMonthInspection } from "../../shared/ui-state-contract.js";
 
 export type InspectionStatus = UiStateFirstMonthInspection["status"];
 
@@ -114,7 +114,10 @@ export function nextInspectionState(
 }
 
 export function dismissedInspectionState(currentStepIndex: number): UiStateFirstMonthInspection {
-  return { status: "dismissed", lastCompletedStep: clampStep(currentStepIndex) };
+  return {
+    status: "dismissed",
+    lastCompletedStep: clampStep(currentStepIndex),
+  };
 }
 
 export function restartedInspection(): UiStateFirstMonthInspection {

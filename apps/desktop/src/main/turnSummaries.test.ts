@@ -8,10 +8,7 @@ import { SaveStore } from "@bluewave/persistence";
 import { ManagedRuntime } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import type { BridgeResult } from "../shared/bridge-contract.js";
-import type {
-  ReadTurnSummariesResult,
-  TurnSummaryEntry,
-} from "../shared/campaign-command-contract.js";
+import type { ReadTurnSummariesResult, TurnSummaryEntry } from "../shared/turn-message-contract.js";
 import {
   clearCampaignSessionsForTest,
   getCampaignSession,

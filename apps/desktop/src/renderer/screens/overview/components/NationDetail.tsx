@@ -1,34 +1,42 @@
+import type { ReactNode } from "react";
+
 import type { NationRailRow } from "../nation-rail-state.js";
+import { NationRelationBadge } from "./NationRelationBadge.js";
+
+function Stat({ label, children }: { readonly label: string; readonly children: ReactNode }) {
+  return (
+    <div className="min-w-0 rounded-md bg-muted/40 px-2.5 py-1.5">
+      <dt className="text-xs leading-4 text-muted-foreground">{label}</dt>
+      <dd className="text-sm font-semibold tabular-nums">{children}</dd>
+    </div>
+  );
+}
 
 export function NationDetail({ selected }: { readonly selected: NationRailRow }) {
   return (
-    <div className="rounded-md border px-3 py-2" data-testid="nation-rail-detail">
-      <p className="font-medium">{selected.name}</p>
+    <div
+      role="group"
+      aria-label={`${selected.name} detail`}
+      className="rounded-lg border bg-card/40 px-3 py-2"
+      data-testid="nation-rail-detail"
+    >
+      <div className="mb-1.5 flex items-baseline justify-between gap-2">
+        <h3 className="truncate text-xs font-semibold uppercase leading-4 tracking-widest text-muted-foreground">
+          {selected.name}
+        </h3>
+        <NationRelationBadge row={selected} />
+      </div>
       {selected.isPlayer ? (
         <p className="text-muted-foreground">Your nation.</p>
       ) : (
-        <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
-          <dt className="text-muted-foreground">Relation</dt>
-          <dd>{selected.relationLabel}</dd>
-          {selected.tension !== null && (
-            <>
-              <dt className="text-muted-foreground">Tension</dt>
-              <dd>{selected.tension}/10</dd>
-            </>
-          )}
-          {selected.since !== null && (
-            <>
-              <dt className="text-muted-foreground">Since</dt>
-              <dd>{selected.since}</dd>
-            </>
-          )}
+        <dl className="grid grid-cols-2 gap-1.5">
+          <Stat label="Relation">{selected.relationLabel}</Stat>
+          {selected.tension !== null && <Stat label="Tension">{selected.tension}/10</Stat>}
+          {selected.since !== null && <Stat label="Since">{selected.since}</Stat>}
           {selected.warScore !== null && (
-            <>
-              <dt className="text-muted-foreground">War score</dt>
-              <dd>
-                you {selected.warScore.yours} : {selected.warScore.enemy} them
-              </dd>
-            </>
+            <Stat label="War score">
+              you {selected.warScore.yours} : {selected.warScore.enemy} them
+            </Stat>
           )}
         </dl>
       )}

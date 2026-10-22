@@ -11,7 +11,7 @@ import { FIXTURE_BATTLE_OFFER_RULES } from "@bluewave/test-support";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
-import type { ResolveTurnResult } from "../../shared/campaign-command-contract.js";
+import type { ResolveTurnResult } from "../../shared/turn-message-contract.js";
 import {
   clearCampaignSessionsForTest,
   getCampaignSession,
@@ -48,7 +48,10 @@ const withOffers = Layer.effect(
   ContentArtifact,
   Effect.gen(function* () {
     const real = yield* ContentArtifact;
-    return { ...real, loadBattleOfferRules: () => Effect.succeed(FIXTURE_BATTLE_OFFER_RULES) };
+    return {
+      ...real,
+      loadBattleOfferRules: () => Effect.succeed(FIXTURE_BATTLE_OFFER_RULES),
+    };
   }),
 ).pipe(Layer.provide(contentArtifactLayer()));
 
@@ -91,7 +94,13 @@ function warSnapshot(base: CampaignSnapshot): CampaignSnapshot {
     nations.set(id, {
       ...nation,
       fleets: [
-        { id: `fleet-${id}`, nationId: id, name: `${id} fleet`, ships, locationAreaId: AREA },
+        {
+          id: `fleet-${id}`,
+          nationId: id,
+          name: `${id} fleet`,
+          ships,
+          locationAreaId: AREA,
+        },
       ],
     });
   }
@@ -144,7 +153,11 @@ describe("battle offer commands", () => {
     const base = toSaveableState(output.state);
     const snapshot = warSnapshot(base.snapshot);
     const envelope = createEnvelope("campaign-snapshot", snapshot.compatibilityVersion, snapshot);
-    const state: CampaignState = toSaveableState({ snapshot, envelope, rawHash: base.rawHash });
+    const state: CampaignState = toSaveableState({
+      snapshot,
+      envelope,
+      rawHash: base.rawHash,
+    });
     new SaveStore().save(state, saveDir);
     registerCampaignSession({
       sessionId,
@@ -286,7 +299,9 @@ describe("battle offer commands", () => {
     });
     expect(started.outcome).toBe("success");
     if (started.outcome !== "success") return;
-    const start = started.value as { view: { minute: number; maxMinutes: number } };
+    const start = started.value as {
+      view: { minute: number; maxMinutes: number };
+    };
     expect(start.view.minute).toBe(0);
     expect(start.view.maxMinutes).toBeGreaterThan(0);
 
@@ -414,7 +429,10 @@ describe("battle offer commands", () => {
       expect(readFileSync(join(saveDir, PENDING_TURN_FILENAME), "utf8")).toBe(before);
       return result.outcome === "error" ? result.reason : "";
     };
-    const base = { interruptionId: request.interruptionId, battleId: request.battleId };
+    const base = {
+      interruptionId: request.interruptionId,
+      battleId: request.battleId,
+    };
     expect(await refused({ ...base, interruptionId: "stale", response: "accept" })).toBe(
       "OfferResponseStale",
     );
@@ -454,7 +472,10 @@ describe("battle offer commands", () => {
       opponentCredit: 0,
     });
     expect(snapshot.wars.battles.map((b) => b.phase)).toEqual(["declined"]);
-    expect(snapshot.wars.wars[0]).toMatchObject({ attackerWarScore: -4, defenderWarScore: 0 });
+    expect(snapshot.wars.wars[0]).toMatchObject({
+      attackerWarScore: -4,
+      defenderWarScore: 0,
+    });
     const ships = [...snapshot.nations.values()].flatMap((n) => n.fleets.flatMap((f) => f.ships));
     expect(ships.some((ship) => ship.inBattleId !== undefined)).toBe(false);
     expect(ships.every((ship) => ship.hitPoints === ship.maxHitPoints)).toBe(true);
@@ -481,7 +502,10 @@ describe("battle offer commands", () => {
     const pending = loadPendingTurn(saveDir)!;
     savePendingTurn(saveDir, {
       ...pending,
-      outstanding: { ...pending.outstanding!, acceptanceClass: "OPERATIONALLY_UNAVOIDABLE" },
+      outstanding: {
+        ...pending.outstanding!,
+        acceptanceClass: "OPERATIONALLY_UNAVOIDABLE",
+      },
     });
     const before = readFileSync(join(saveDir, PENDING_TURN_FILENAME), "utf8");
     const refused = await submit("s-unavoidable", {

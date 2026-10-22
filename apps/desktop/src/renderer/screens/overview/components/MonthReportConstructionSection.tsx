@@ -1,4 +1,4 @@
-import type { MonthlyReportConstruction } from "../../../../shared/campaign-command-contract.js";
+import type { MonthlyReportConstruction } from "../../../../shared/reports-contract.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 
 export function MonthReportConstructionSection({

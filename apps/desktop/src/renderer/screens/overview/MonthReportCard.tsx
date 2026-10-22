@@ -1,5 +1,5 @@
 import { Info } from "lucide-react";
-import type { MonthlyReportEntry } from "../../../shared/campaign-command-contract.js";
+import type { MonthlyReportEntry } from "../../../shared/reports-contract.js";
 import { CardShell } from "../../components/shared/CardShell.js";
 import { CardDescription, CardTitle } from "../../components/ui/card.js";
 import { humanizeId } from "../../lib/humanize-id.js";

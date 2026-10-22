@@ -1,6 +1,6 @@
 "use strict";
 
-import type { MonthlyReportEntry } from "../../../shared/campaign-command-contract.js";
+import type { MonthlyReportEntry } from "../../../shared/reports-contract.js";
 import { campaignNationLabel } from "../../content/presentationContent.js";
 import type { PresentationFormat } from "../../lib/presentation-format/index.js";
 import { usePresentationFormat } from "../../shell/usePresentationFormat.js";

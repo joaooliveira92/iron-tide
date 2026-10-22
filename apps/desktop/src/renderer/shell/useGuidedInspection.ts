@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { UiStateFirstMonthInspection } from "../../shared/campaign-command-contract.js";
+import type { UiStateFirstMonthInspection } from "../../shared/ui-state-contract.js";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import { useBridge } from "../lib/bridge-context.js";
 import { writeUiStatePatch } from "../lib/uiStateSidecar.js";
@@ -35,7 +35,9 @@ async function readInspection(
   if (bridge === undefined) return undefined;
   const result = (await bridge.campaign.execute("readUiState", sessionId)) as unknown as {
     outcome: string;
-    value?: { uiState?: { firstMonthInspection?: UiStateFirstMonthInspection } };
+    value?: {
+      uiState?: { firstMonthInspection?: UiStateFirstMonthInspection };
+    };
   };
   if (result.outcome !== "success") return undefined;
   return result.value?.uiState?.firstMonthInspection;
@@ -46,7 +48,9 @@ async function writeInspection(
   sessionId: string,
   inspection: UiStateFirstMonthInspection,
 ): Promise<UiStateFirstMonthInspection | undefined> {
-  const uiState = await writeUiStatePatch(bridge, sessionId, { firstMonthInspection: inspection });
+  const uiState = await writeUiStatePatch(bridge, sessionId, {
+    firstMonthInspection: inspection,
+  });
   return uiState?.firstMonthInspection;
 }
 
@@ -136,5 +140,14 @@ export function useGuidedInspection(
     setVisible(true);
   }, [sessionId]);
 
-  return { inspection, stepIndex, visible, loading, advance, dismiss, restart, setVisible };
+  return {
+    inspection,
+    stepIndex,
+    visible,
+    loading,
+    advance,
+    dismiss,
+    restart,
+    setVisible,
+  };
 }

@@ -1,4 +1,4 @@
-import type { MonthlyReportTreasury } from "../../../../shared/campaign-command-contract.js";
+import type { MonthlyReportTreasury } from "../../../../shared/reports-contract.js";
 import type { PresentationFormat } from "../../../lib/presentation-format/index.js";
 import { formatCount } from "../../../lib/presentation-format/index.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";

@@ -2,7 +2,7 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { BluewaveDesktopBridge } from "../../../preload/index.js";
-import type { CampaignCommandClient } from "../../../shared/campaign-command-contract.js";
+import type { CampaignCommandClient } from "../../../shared/campaign-contract.js";
 import { BridgeProvider } from "../../lib/bridge-context.js";
 import { useInspectorLayout } from "./useInspectorLayout.js";
 
@@ -10,7 +10,13 @@ afterEach(cleanup);
 
 const uiState = (inspector?: unknown, dismissedFingerprints: string[] = []) => ({
   outcome: "success",
-  value: { uiState: { turnNumber: 0, dismissedFingerprints, ...(inspector ? { inspector } : {}) } },
+  value: {
+    uiState: {
+      turnNumber: 0,
+      dismissedFingerprints,
+      ...(inspector ? { inspector } : {}),
+    },
+  },
   diagnostics: [],
 });
 
@@ -28,7 +34,9 @@ describe("useInspectorLayout", () => {
     const execute = vi.fn(async (command: string) =>
       command === "readUiState" ? uiState({ widthPx: 512, collapsed: true }) : uiState(),
     );
-    const { result } = renderHook(() => useInspectorLayout("ses_1"), { wrapper: wrapper(execute) });
+    const { result } = renderHook(() => useInspectorLayout("ses_1"), {
+      wrapper: wrapper(execute),
+    });
     await waitFor(() => expect(result.current.layout).toEqual({ widthPx: 512, collapsed: true }));
   });
 
@@ -36,7 +44,9 @@ describe("useInspectorLayout", () => {
     const execute = vi.fn(async (command: string) =>
       command === "readUiState" ? uiState(undefined, ["fp-a"]) : uiState(),
     );
-    const { result } = renderHook(() => useInspectorLayout("ses_1"), { wrapper: wrapper(execute) });
+    const { result } = renderHook(() => useInspectorLayout("ses_1"), {
+      wrapper: wrapper(execute),
+    });
     act(() => result.current.setWidth(600));
     expect(result.current.layout.widthPx).toBe(560);
     await waitFor(() =>

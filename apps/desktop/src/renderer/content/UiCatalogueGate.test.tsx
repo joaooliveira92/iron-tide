@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
-import type { CampaignCommandClient } from "../../shared/campaign-command-contract.js";
+import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
 
 describe("UiCatalogueGate", () => {
   afterEach(() => {

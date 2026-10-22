@@ -11,7 +11,7 @@ import type {
   GenerateBattleResult,
   ResolveBattleResult,
   SeedCampaignBattleDrillResult,
-} from "../../shared/campaign-command-contract.js";
+} from "../../shared/campaign-contract.js";
 import { isBattleSandboxEnabled } from "../debugGate.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import type { CommandHandler } from "../runtime/commandProgram.js";
@@ -118,15 +118,25 @@ export function colocateWarSides(
   const attackerAreas = liveAreas(attacker);
   const defenderAreas = liveAreas(defender);
   if (attackerAreas.size === 0) {
-    return { error: "NO_ATTACKER_FORCES", detail: `${attackerId} has no completed ships.` };
+    return {
+      error: "NO_ATTACKER_FORCES",
+      detail: `${attackerId} has no completed ships.`,
+    };
   }
   if (defenderAreas.size === 0) {
-    return { error: "NO_DEFENDER_FORCES", detail: `${defenderId} has no completed ships.` };
+    return {
+      error: "NO_DEFENDER_FORCES",
+      detail: `${defenderId} has no completed ships.`,
+    };
   }
 
   const shared = [...attackerAreas].filter((a) => defenderAreas.has(a)).sort();
   if (shared.length > 0 && (requestedAreaId === undefined || shared.includes(requestedAreaId))) {
-    return { snapshot, areaId: requestedAreaId ?? (shared[0] as string), moved: false };
+    return {
+      snapshot,
+      areaId: requestedAreaId ?? (shared[0] as string),
+      moved: false,
+    };
   }
 
   if (requestedAreaId !== undefined && !defenderAreas.has(requestedAreaId)) {
@@ -169,7 +179,10 @@ export function scaleBelligerentFirepower(
       ships: fleet.ships.map((ship) => {
         if (ship.isUnderConstruction || ship.locationAreaId !== areaId) return ship;
         changed = true;
-        return { ...ship, firepower: SafeInt((ship.firepower as number) * scale) };
+        return {
+          ...ship,
+          firepower: SafeInt((ship.firepower as number) * scale),
+        };
       }),
     }));
     nations.set(nationId, { ...nation, fleets });
@@ -434,7 +447,10 @@ export const resolveBattleProgram: CommandHandler<"resolveBattle"> = (payload) =
     });
     const resolution: BattleResolution = {
       battleId: manifest.battleId,
-      missionOutcome: { winner: result.winnerId, outcomeKind: result.battleEndReason },
+      missionOutcome: {
+        winner: result.winnerId,
+        outcomeKind: result.battleEndReason,
+      },
       warScoreChange: 0,
       attacker: shipsOf(result.attackerSurvivorIds, result.attackerSunkIds),
       defender: shipsOf(result.defenderSurvivorIds, result.defenderSunkIds),

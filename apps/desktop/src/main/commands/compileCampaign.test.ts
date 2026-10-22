@@ -7,7 +7,7 @@ import { Effect, Layer, ManagedRuntime } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import type { CampaignConfiguration } from "@bluewave/campaign-engine";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
-import type { CompileCampaignResult } from "../../shared/campaign-command-contract.js";
+import type { CompileCampaignResult } from "../../shared/campaign-contract.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { IdGenerator, NativeDialog } from "../runtime/platform.js";

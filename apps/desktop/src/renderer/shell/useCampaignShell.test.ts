@@ -2,7 +2,7 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vite-plus/test";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
-import type { CampaignCommandClient } from "../../shared/campaign-command-contract.js";
+import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 import { setUiCatalogue } from "../content/uiCatalogue.js";
 import { useCampaignShell } from "./useCampaignShell.js";
@@ -53,7 +53,11 @@ const monthResolveSuccess = {
       contentVersion: "0.5.0",
       messages: [],
     },
-    closing: { revision: 4, month: { month: 2, year: 1900 }, closingTreasury: 22_900_000 },
+    closing: {
+      revision: 4,
+      month: { month: 2, year: 1900 },
+      closingTreasury: 22_900_000,
+    },
   },
   diagnostics: [],
 };
@@ -91,7 +95,11 @@ describe("useCampaignShell", () => {
   });
 
   it("reads the campaign views once per open, and once more per refresh", async () => {
-    const ok = <T>(value: T) => ({ outcome: "success" as const, value, diagnostics: [] });
+    const ok = <T>(value: T) => ({
+      outcome: "success" as const,
+      value,
+      diagnostics: [],
+    });
     const execute = vi.fn(async (command: string) =>
       command === "inspectCampaign" ? ok({ projection }) : ok({}),
     );
@@ -203,7 +211,11 @@ describe("useCampaignShell", () => {
     };
     const execute = vi.fn(async (command: string) => {
       if (command === "inspectCampaign") {
-        return { outcome: "success" as const, value: { projection }, diagnostics: [] };
+        return {
+          outcome: "success" as const,
+          value: { projection },
+          diagnostics: [],
+        };
       }
       if (command === "readPendingTurn") {
         return {
@@ -240,7 +252,11 @@ describe("useCampaignShell", () => {
   function setupWithPending(valid: boolean) {
     const execute = vi.fn(async (command: string) => {
       if (command === "inspectCampaign") {
-        return { outcome: "success" as const, value: { projection }, diagnostics: [] };
+        return {
+          outcome: "success" as const,
+          value: { projection },
+          diagnostics: [],
+        };
       }
       if (command === "readPendingTurn") {
         return {
@@ -321,10 +337,18 @@ describe("useCampaignShell", () => {
     };
     const execute = vi.fn(async (command: string) => {
       if (command === "inspectCampaign") {
-        return { outcome: "success" as const, value: { projection }, diagnostics: [] };
+        return {
+          outcome: "success" as const,
+          value: { projection },
+          diagnostics: [],
+        };
       }
       if (command === "inspectPriorities") {
-        return { outcome: "success" as const, value: { priorities: [] }, diagnostics: [] };
+        return {
+          outcome: "success" as const,
+          value: { priorities: [] },
+          diagnostics: [],
+        };
       }
       if (command === "readPendingTurn") {
         return {
@@ -344,7 +368,12 @@ describe("useCampaignShell", () => {
     await act(() => result.current.advanceMonth());
     expect(result.current.interruption?.request?.kind).toBe("decision");
 
-    await act(() => result.current.answerInterruption({ kind: "decision", optionId: "approve" }));
+    await act(() =>
+      result.current.answerInterruption({
+        kind: "decision",
+        optionId: "approve",
+      }),
+    );
     expect(result.current.saveMessage).toBe("Decision made: uk treasury -25.");
   });
 
@@ -391,7 +420,11 @@ describe("useCampaignShell", () => {
       vi.fn(async (command: string, payload?: unknown) => {
         sent.push([command, payload]);
         if (command === "inspectCampaign") {
-          return { outcome: "success" as const, value: { projection }, diagnostics: [] };
+          return {
+            outcome: "success" as const,
+            value: { projection },
+            diagnostics: [],
+          };
         }
         if (command === "readPendingTurn") {
           return {
@@ -412,7 +445,12 @@ describe("useCampaignShell", () => {
         await act(() => result.current.advanceMonth());
         expect(result.current.interruption?.request?.kind).toBe("offer");
 
-        await act(() => result.current.answerInterruption({ kind: "offer", choice: response }));
+        await act(() =>
+          result.current.answerInterruption({
+            kind: "offer",
+            choice: response,
+          }),
+        );
         const answers = sent.filter(([command]) => command === "submitOfferResponse");
         expect(answers).toHaveLength(1);
         expect(answers[0]![1]).toMatchObject({
@@ -437,13 +475,20 @@ describe("useCampaignShell", () => {
       const declinedMessage = {
         bodyKey: "messages.battle.declined.body",
         titleKey: "messages.battle.declined.title",
-        interpolation: { battleId: "battle-1", areaId: "a-1", victoryPointCost: 5 },
+        interpolation: {
+          battleId: "battle-1",
+          areaId: "a-1",
+          victoryPointCost: 5,
+        },
       };
       const answer = {
         ...monthResolveSuccess,
         value: {
           ...monthResolveSuccess.value,
-          summary: { ...monthResolveSuccess.value.summary, messages: [declinedMessage] },
+          summary: {
+            ...monthResolveSuccess.value.summary,
+            messages: [declinedMessage],
+          },
         },
       };
       const { result } = setup(executeWith(answer, sent));
@@ -464,7 +509,10 @@ describe("useCampaignShell", () => {
 
     it("reports a decline without the figure when the month stays suspended at the next offer", async () => {
       const { result } = setup(
-        executeWith({ ...suspendedAtOffer, value: { ...suspendedAtOffer.value } }),
+        executeWith({
+          ...suspendedAtOffer,
+          value: { ...suspendedAtOffer.value },
+        }),
       );
       await act(() => result.current.openCampaign("ses-1"));
       await act(() => result.current.advanceMonth());
@@ -490,7 +538,11 @@ describe("useCampaignShell", () => {
   it("keeps the alert slot empty on a rejected commit and stays ready to retry", async () => {
     const execute = vi.fn(async (command: string) => {
       if (command === "inspectCampaign") {
-        return { outcome: "success" as const, value: { projection }, diagnostics: [] };
+        return {
+          outcome: "success" as const,
+          value: { projection },
+          diagnostics: [],
+        };
       }
       return {
         outcome: "rejected" as const,
@@ -510,7 +562,11 @@ describe("useCampaignShell", () => {
   });
 
   describe("alerts, refresh ordering and the campaign lifecycle", () => {
-    const ok = <T>(value: T) => ({ outcome: "success" as const, value, diagnostics: [] });
+    const ok = <T>(value: T) => ({
+      outcome: "success" as const,
+      value,
+      diagnostics: [],
+    });
     const withMonth = (month: number): PlayerProjection => ({
       ...projection,
       month: { year: 1900, month },
@@ -651,7 +707,11 @@ describe("useCampaignShell", () => {
       await act(() => result.current.copyCampaign());
       expect(result.current.saveMessage).toBe("Copy saved to /tmp/copy.");
 
-      copy = { outcome: "rejected", reason: "SAVE_LOCATION_CANCELLED", diagnostics: [] };
+      copy = {
+        outcome: "rejected",
+        reason: "SAVE_LOCATION_CANCELLED",
+        diagnostics: [],
+      };
       await act(() => result.current.copyCampaign());
       expect(result.current.saveMessage).toBeNull();
 
@@ -665,7 +725,11 @@ describe("useCampaignShell", () => {
         "Copy failed: COPY_TARGET_NOT_EMPTY. Pick an empty folder.",
       );
 
-      save = { outcome: "error", reason: "SAVE_FAILED", diagnostics: ["disk full"] };
+      save = {
+        outcome: "error",
+        reason: "SAVE_FAILED",
+        diagnostics: ["disk full"],
+      };
       await act(() => result.current.saveCampaign());
       expect(result.current.saveMessage).toBe("Save failed: SAVE_FAILED. disk full");
     });

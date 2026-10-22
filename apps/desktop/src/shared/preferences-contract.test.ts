@@ -27,7 +27,9 @@ describe("currency-display request vs effective (ADR-0211)", () => {
 
   it("honours National Historical only when a validated configuration applies", () => {
     expect(
-      resolveEffectiveCurrencyDisplayMode("nationalHistorical", { kind: "configured" }),
+      resolveEffectiveCurrencyDisplayMode("nationalHistorical", {
+        kind: "configured",
+      }),
     ).toEqual({ mode: "nationalHistorical" });
   });
 

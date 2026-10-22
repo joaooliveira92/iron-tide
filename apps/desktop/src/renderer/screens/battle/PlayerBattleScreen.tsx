@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
 import type { BluewaveDesktopBridge } from "../../../preload/index.js";
+import type { InterruptionRequestDto } from "../../../shared/turn-message-contract.js";
 import type {
-  InterruptionRequestDto,
   PlayerBattleDivisionOrderDto,
   PlayerBattleResultDto,
-} from "../../../shared/campaign-command-contract.js";
+} from "../../../shared/player-battle-contract.js";
 import { usePreferences } from "../../lib/preferences-context.js";
 import { formatMeasurement, UM_PER_METRE } from "../../lib/presentation-format/index.js";
 
@@ -35,7 +35,10 @@ function defaultOrders(view: PlayerBattleView): Record<string, DivisionOrderStat
 function ordersOf(
   orders: Record<string, DivisionOrderState>,
 ): readonly PlayerBattleDivisionOrderDto[] {
-  return Object.entries(orders).map(([divisionId, order]) => ({ divisionId, ...order }));
+  return Object.entries(orders).map(([divisionId, order]) => ({
+    divisionId,
+    ...order,
+  }));
 }
 
 export function PlayerBattleScreen({
@@ -68,7 +71,10 @@ export function PlayerBattleScreen({
       return;
     }
     void (async () => {
-      const result = await bridge.campaign.execute("startPlayerBattle", { sessionId, battleId });
+      const result = await bridge.campaign.execute("startPlayerBattle", {
+        sessionId,
+        battleId,
+      });
       if (cancelled) return;
       if (result.outcome !== "success") {
         setError(result.reason);
@@ -78,7 +84,10 @@ export function PlayerBattleScreen({
       setView(result.value.view);
       const fresh = defaultOrders(result.value.view);
       for (const order of result.value.lastOrders) {
-        fresh[order.divisionId] = { stance: order.stance, speedPercent: order.speedPercent };
+        fresh[order.divisionId] = {
+          stance: order.stance,
+          speedPercent: order.speedPercent,
+        };
       }
       setOrders(fresh);
       setResumed(result.value.resumed);
@@ -116,14 +125,20 @@ export function PlayerBattleScreen({
       return;
     }
     setView(result.value.view);
-    setOrders((current) => ({ ...defaultOrders(result.value.view), ...current }));
+    setOrders((current) => ({
+      ...defaultOrders(result.value.view),
+      ...current,
+    }));
   };
 
   const submit = async (): Promise<void> => {
     if (bridge === undefined || view === null || !view.ended) return;
     setSubmitting(true);
     setError(null);
-    const result = await bridge.campaign.execute("finishPlayerBattle", { sessionId, battleId });
+    const result = await bridge.campaign.execute("finishPlayerBattle", {
+      sessionId,
+      battleId,
+    });
     setSubmitting(false);
     if (result.outcome !== "success") {
       setError(result.reason);

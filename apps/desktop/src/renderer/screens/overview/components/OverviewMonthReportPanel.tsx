@@ -1,5 +1,5 @@
 import { CollapsiblePanel } from "../../../components/shared/CollapsiblePanel.js";
-import type { MonthlyReportEntry } from "../../../../shared/campaign-command-contract.js";
+import type { MonthlyReportEntry } from "../../../../shared/reports-contract.js";
 import { MonthReportCard } from "../MonthReportCard.js";
 
 export function OverviewMonthReportPanel({

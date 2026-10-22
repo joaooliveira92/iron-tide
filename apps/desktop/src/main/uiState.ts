@@ -1,6 +1,6 @@
 import { Effect } from "effect";
-import type { UiState } from "../shared/campaign-command-contract.js";
-import { UiStateSchema } from "../shared/campaignCommandSchemas.js";
+import type { UiState } from "../shared/ui-state-contract.js";
+import { UiStateSchema } from "../shared/ui-state-schemas.js";
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
 import type { CommandHandler } from "./runtime/commandProgram.js";
 import { defineSidecar } from "./runtime/sidecar.js";
@@ -83,5 +83,9 @@ export const writeUiStateProgram: CommandHandler<"writeUiState"> = (payload) =>
     };
     yield* uiStates.save(record.saveDir, next);
 
-    return { outcome: "success" as const, value: { uiState: next }, diagnostics: [] };
+    return {
+      outcome: "success" as const,
+      value: { uiState: next },
+      diagnostics: [],
+    };
   });

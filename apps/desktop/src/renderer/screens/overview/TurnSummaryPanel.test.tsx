@@ -1,9 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import type {
-  TurnMessageDto,
-  TurnSummaryEntry,
-} from "../../../shared/campaign-command-contract.js";
+import type { TurnMessageDto, TurnSummaryEntry } from "../../../shared/turn-message-contract.js";
 import { setUiCatalogue } from "../../content/uiCatalogue.js";
 import { TurnSummaryPanel } from "./TurnSummaryPanel.js";
 
@@ -141,7 +138,9 @@ describe("TurnSummaryPanel", () => {
     fireEvent.click(screen.getByTestId("actionable-toggle"));
     expect(screen.getAllByTestId("turn-message")).toHaveLength(1);
 
-    fireEvent.change(screen.getByTestId("turn-search"), { target: { value: "zzz" } });
+    fireEvent.change(screen.getByTestId("turn-search"), {
+      target: { value: "zzz" },
+    });
     expect(screen.getByTestId("turn-summary-no-match")).toBeTruthy();
   });
 
@@ -179,7 +178,10 @@ describe("TurnSummaryPanel", () => {
       />,
     );
     fireEvent.click(screen.getByTestId("entity-link"));
-    expect(onOpenEntity).toHaveBeenCalledWith({ type: "constructionProject", id: "p1" });
+    expect(onOpenEntity).toHaveBeenCalledWith({
+      type: "constructionProject",
+      id: "p1",
+    });
   });
 
   it("navigates an entity that is still available", () => {
@@ -197,7 +199,10 @@ describe("TurnSummaryPanel", () => {
       />,
     );
     fireEvent.click(screen.getByTestId("entity-link"));
-    expect(onOpenEntity).toHaveBeenCalledWith({ type: "constructionProject", id: "p1" });
+    expect(onOpenEntity).toHaveBeenCalledWith({
+      type: "constructionProject",
+      id: "p1",
+    });
     expect(screen.queryByTestId("entity-historical")).toBeNull();
   });
 
