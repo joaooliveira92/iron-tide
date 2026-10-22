@@ -318,6 +318,9 @@ importers:
       '@bluewave/ship-design':
         specifier: workspace:*
         version: link:../ship-design
+      effect:
+        specifier: workspace:*
+        version: link:../../vendor/effect
       yaml:
         specifier: ^2.9.1
         version: 2.9.1

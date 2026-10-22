@@ -44,26 +44,38 @@ const OFFICER_PATH = resolve(
   "officers.ts",
 );
 
+const DECLINE_RECORDS_PATH = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "..",
+  "campaign",
+  "src",
+  "declineRecords.ts",
+);
+
 const STATE_SOURCE = readFileSync(STATE_PATH, "utf8");
 const OFFICER_SOURCE = readFileSync(OFFICER_PATH, "utf8");
 const DIVISION_SOURCE = readFileSync(DIVISION_PATH, "utf8");
+const DECLINE_RECORDS_SOURCE = readFileSync(DECLINE_RECORDS_PATH, "utf8");
 
 function sourceForType(typeName: string): string {
   if (typeName === "PermanentDivision") return DIVISION_SOURCE;
   if (typeName === "Officer") return OFFICER_SOURCE;
+  if (typeName === "DeclinedBattleRecord" || typeName === "DeclineCounterEntry")
+    return DECLINE_RECORDS_SOURCE;
   return STATE_SOURCE;
 }
 
-function interfaceFields(name: string): string[] {
+function declaredFields(name: string): string[] {
   const source = sourceForType(name);
-  const header = new RegExp(`export interface ${name}\\s*\\{`);
-  const start = source.search(header);
-  expect(start, `no interface ${name} declared in the campaign type source`).toBeGreaterThanOrEqual(
-    0,
-  );
+  const schemaHeader = new RegExp(`export const ${name}Schema = Schema\\.Struct\\(\\{`);
+  const interfaceHeader = new RegExp(`export interface ${name}\\s*\\{`);
+  const schemaStart = source.search(schemaHeader);
+  const start = schemaStart === -1 ? source.search(interfaceHeader) : schemaStart;
+  expect(start, `no declaration for ${name} in the campaign type source`).toBeGreaterThanOrEqual(0);
   const bodyStart = source.indexOf("{", start) + 1;
   const close = source.indexOf("\n}", bodyStart);
-  expect(close, `interface ${name} block not closed in source`).toBeGreaterThanOrEqual(0);
+  expect(close, `${name} block not closed in source`).toBeGreaterThanOrEqual(0);
   const fields: string[] = [];
   for (const line of source.slice(bodyStart, close).split("\n")) {
     const match = line.match(/^\s*([A-Za-z_$][\w$]*)(\?)?:/);
@@ -536,7 +548,7 @@ describe("snapshotClone — field-exhaustive clone coverage audit", () => {
   it("covers every field of every cloned snapshot type", () => {
     for (const typeName of Object.keys(CLONE_COVERAGE)) {
       const cloneFields = CLONE_COVERAGE[typeName]!;
-      const declared = interfaceFields(typeName);
+      const declared = declaredFields(typeName);
       expect([...cloneFields].sort(), typeName).toEqual([...declared].sort());
     }
   });

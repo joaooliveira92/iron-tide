@@ -1,4 +1,4 @@
-import type { CampaignSnapshot } from "@bluewave/campaign";
+import type { CampaignSnapshot, DeclinedBattleRecord } from "@bluewave/campaign";
 
 export type BattleOutcomeForPlayer = "won" | "lost" | "undecided" | "not-involved";
 
@@ -28,8 +28,21 @@ export interface BattleHistoryEntry {
   readonly lostShips: readonly LostShipView[];
 }
 
+export type DeclinedBattleHistoryEntry = Pick<
+  DeclinedBattleRecord,
+  | "battleId"
+  | "warId"
+  | "nationId"
+  | "areaId"
+  | "month"
+  | "missionType"
+  | "victoryPointCost"
+  | "opponentCredit"
+>;
+
 export interface BattleHistoryView {
   readonly battles: readonly BattleHistoryEntry[];
+  readonly declinedBattles?: readonly DeclinedBattleHistoryEntry[];
 }
 
 export function buildBattleHistory(
@@ -88,5 +101,21 @@ export function buildBattleHistory(
       })),
     });
   }
-  return { battles };
+  const declinedBattles = (snapshot.wars.declinedBattles ?? [])
+    .filter((record) => record.nationId === playerNationId)
+    .map((record) => ({
+      battleId: record.battleId,
+      warId: record.warId,
+      nationId: record.nationId,
+      areaId: record.areaId,
+      month: record.month,
+      missionType: record.missionType,
+      victoryPointCost: record.victoryPointCost,
+      opponentCredit: record.opponentCredit,
+    }));
+
+  return {
+    battles,
+    ...(declinedBattles.length === 0 ? {} : { declinedBattles }),
+  };
 }

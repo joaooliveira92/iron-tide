@@ -1,3 +1,4 @@
+import type { DeclinedBattleRecord } from "@bluewave/campaign";
 import type { SafeInt } from "@bluewave/contracts";
 
 export type EventVersion = string;
@@ -172,14 +173,13 @@ export interface BattleOfferAnswered {
   readonly resolutionMode: "AUTO_RESOLVE";
 }
 
-export interface BattleDeclined {
+type BattleDeclineSummary = Pick<
+  DeclinedBattleRecord,
+  "nationId" | "battleId" | "missionType" | "areaId" | "victoryPointCost" | "opponentCredit"
+>;
+
+export interface BattleDeclined extends BattleDeclineSummary {
   readonly kind: "BattleDeclined";
-  readonly nationId: string;
-  readonly battleId: string;
-  readonly missionType: string;
-  readonly areaId: string;
-  readonly victoryPointCost: number;
-  readonly opponentCredit: number;
   readonly declineCount: number;
   readonly reasonCode: "BATTLE_DECLINED_WITH_CONSEQUENCES";
 }

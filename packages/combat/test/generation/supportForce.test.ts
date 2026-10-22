@@ -1,13 +1,17 @@
+import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { describe, expect, it } from "vite-plus/test";
 import {
+  addSupport,
   buildManifest,
   composeSupportForce,
+  generateBattles,
   maximumAlliedStrength,
   supportForceDrawPresent,
   supportForceStrengthCap,
   withSupportForce,
   type AlliedCandidate,
 } from "@bluewave/combat/generation";
+import { defaultTwoNationFixture } from "../fixtures/generation-fixture.js";
 
 const candidate = (
   assetId: string,
@@ -110,5 +114,64 @@ describe("withSupportForce (T-1 08)", () => {
   it("joins the defender side when the player defends", () => {
     const next = withSupportForce(manifest, "FRA", ["i1"], ["ITA"], seed);
     expect(next.sides[1]?.participantIds).toEqual(["FRA", "ITA"]);
+  });
+});
+
+describe("addSupport (T-1 08)", () => {
+  const generated = generateBattles({
+    snapshot: defaultTwoNationFixture(),
+    campaignMonth: "1880-02",
+    campaignSeed: "seed",
+    rngVersion: "1",
+    formulaVersion: "1",
+    rulesetVersion: "1",
+    contentVersion: "0.3.0",
+    resolveStrength: () => 200,
+    resolveShipType: () => "BB",
+    resolveReadiness: () => 80,
+  });
+  const manifest = generated.manifests[0]!;
+  const battleId = manifest.battleId;
+  const seed = {
+    rngVersion: "1",
+    campaignSeed: "seed",
+    campaignMonth: "1880-02",
+    battleGenerationFormulaVersion: "1",
+  };
+
+  it("adds the support to the manifest and records it in the generation record", () => {
+    const next = addSupport(generated, {
+      battleId,
+      playerNationId: manifest.attackerId,
+      support: [
+        { nationId: "ITA", assetId: "i2" },
+        { nationId: "ITA", assetId: "i1" },
+      ],
+      ...seed,
+    });
+    const added = next.manifests[0]!;
+    expect(added.temporaryAssets).toEqual(["i1", "i2"]);
+    expect(added.sides[0]?.participantIds).toEqual([manifest.attackerId, "ITA"]);
+    expect(next.records[0]).toMatchObject({
+      alliedSupportDecisions: ["ITA:i2", "ITA:i1"],
+      manifests: [added.manifestHash],
+      battleSeeds: [added.battleSeed],
+    });
+    expect(next.records[0]!.recordHash).not.toBe(generated.records[0]!.recordHash);
+    expect(next.records[0]!.recordHash).toBe(
+      sha256Hex(canonicalSerialize({ ...next.records[0]!, recordHash: "" })),
+    );
+    expect(next.battleIds).toEqual(generated.battleIds);
+    expect(generated.manifests[0]!.temporaryAssets).toEqual([]);
+  });
+
+  it("leaves the result untouched for a battle it does not hold", () => {
+    const next = addSupport(generated, {
+      battleId: "unknown",
+      playerNationId: manifest.attackerId,
+      support: [{ nationId: "ITA", assetId: "i1" }],
+      ...seed,
+    });
+    expect(next).toBe(generated);
   });
 });

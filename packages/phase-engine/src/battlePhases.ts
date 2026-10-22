@@ -16,12 +16,16 @@ import {
   resolveShipStrength,
   toCampaignBattleResult,
 } from "./battles.js";
-import { applyDecline } from "./battleDecline.js";
-import { applyEnemyDeclines } from "./enemyDecline.js";
-import { applySupportForces } from "./supportForce.js";
-import { buildOfferContent, offeredManifestFor } from "./battleOffer.js";
+import {
+  applyDecline,
+  applyEnemyDeclines,
+  applySupportForces,
+  buildOfferContent,
+  consumeOffer,
+  offeredManifestFor,
+} from "./battleOffer.js";
 import { battleOfferAnsweredEvent } from "./events.js";
-import { applyRecordedBattleResult, consumeBattleResult, consumeOffer } from "./interruption.js";
+import { applyRecordedBattleResult, consumeBattleResult } from "./interruption.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 
 type AutoResolutionManifest = Parameters<typeof resolve>[0]["manifest"];

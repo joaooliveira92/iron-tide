@@ -2,6 +2,7 @@ import type { Bp, Money, SafeInt } from "@bluewave/contracts";
 import type { PrestigeValueSet } from "./prestige.js";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";
+import type { DeclineCounterEntry, DeclinedBattleRecord } from "./declineRecords.js";
 import type { PermanentDivision } from "./division.js";
 import type { Officer } from "./officers.js";
 import type { ConstructionProjectStatus } from "./constructionStatus.js";
@@ -208,26 +209,6 @@ export interface BattleManifest {
   rngVersion: string;
   contentVersion: string;
   manifestHash: string;
-}
-
-export interface DeclinedBattleRecord {
-  battleId: string;
-  warId: string;
-  nationId: string;
-  areaId: string;
-  month: string;
-  missionType: string;
-  responseInputHash: string;
-  victoryPointCost: number;
-  opponentCredit: number;
-}
-
-export interface DeclineCounterEntry {
-  key: string;
-  nationId: string;
-  lastWarId: string;
-  count: number;
-  decayAnchorMonth: string;
 }
 
 export interface WarState {

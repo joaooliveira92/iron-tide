@@ -5,7 +5,7 @@ import {
   recordResolvedBattle,
 } from "./battles.js";
 import type { BattleInstance, NationState } from "@bluewave/campaign";
-import { SafeInt, TURN_PHASES, type TurnPhase } from "@bluewave/contracts";
+import { SafeInt, TURN_PHASES } from "@bluewave/contracts";
 import { compareCodePoints } from "@bluewave/deterministic";
 import {
   computeInputHash,
@@ -16,14 +16,10 @@ import {
   type DecisionOption,
   type DecisionRequest,
   type InterruptionRequest,
-  type OfferRequest,
-  type OfferResponseInput,
   type PendingDecision,
   type RecordedInput,
   type SuspendedTurn,
 } from "@bluewave/messages";
-import { declineRefusal } from "./battleDecline.js";
-import type { OfferContent } from "./battleOffer.js";
 import type { MonthCheckpoint, PhaseContext } from "./pipeline.js";
 
 export interface InterruptionChannel {
@@ -57,7 +53,7 @@ function phaseIndex(phase: string): number {
   return PHASE_INDEX.get(phase) ?? TURN_PHASES.length;
 }
 
-function suspend(
+export function suspend(
   state: InterruptionState,
   request: InterruptionRequest,
   reason: SuspendedTurn["reason"],
@@ -236,142 +232,6 @@ export function consumeBattleResult(
   }
   state.nextOrdinal = ordinal + 1;
   return result;
-}
-
-export type OfferRefusal =
-  | { readonly _tag: "OfferResponseDuplicate" }
-  | { readonly _tag: "OfferResponseOutOfOrder" }
-  | { readonly _tag: "OfferResponseWrongKind" }
-  | { readonly _tag: "OfferResponseStale" }
-  | { readonly _tag: "OfferResponseTampered" }
-  | { readonly _tag: "OfferResponseWrongBattle" }
-  | { readonly _tag: "BATTLE_DECLINE_NOT_ALLOWED" }
-  | { readonly _tag: "OfferDeclineUnpriced" };
-
-export type OfferResponseResolution =
-  | { readonly status: "inactive" }
-  | { readonly status: "awaiting"; readonly ordinal: number; readonly interruptionId: string }
-  | {
-      readonly status: "invalid";
-      readonly ordinal: number;
-      readonly interruptionId: string;
-      readonly refusal: OfferRefusal;
-    }
-  | {
-      readonly status: "resolved";
-      readonly response: OfferResponseInput;
-      readonly inputHash: string;
-    };
-
-export function consumeOfferResponse(
-  state: InterruptionState | undefined,
-  subject: { readonly battleId: string; readonly phase: TurnPhase },
-): OfferResponseResolution {
-  if (state === undefined) return { status: "inactive" };
-  const ordinal = state.nextOrdinal;
-  const interruptionId = computeInterruptionId({
-    turnId: state.turnId,
-    phase: subject.phase,
-    ordinal,
-    subjectKey: subject.battleId,
-  });
-  const refuse = (refusal: OfferRefusal): OfferResponseResolution => ({
-    status: "invalid",
-    ordinal,
-    interruptionId,
-    refusal,
-  });
-  const atOrdinal = state.recordedInputs.filter((input) => input.ordinal === ordinal);
-  if (atOrdinal.length === 0) {
-    return state.recordedInputs.some((input) => input.ordinal > ordinal)
-      ? refuse({ _tag: "OfferResponseOutOfOrder" })
-      : { status: "awaiting", ordinal, interruptionId };
-  }
-  if (atOrdinal.length > 1) return refuse({ _tag: "OfferResponseDuplicate" });
-  const recorded = atOrdinal[0]!;
-  if (recorded.kind !== "offer") return refuse({ _tag: "OfferResponseWrongKind" });
-  if (recorded.interruptionId !== interruptionId) return refuse({ _tag: "OfferResponseStale" });
-  const expectedHash = computeInputHash({
-    ordinal,
-    kind: "offer",
-    interruptionId,
-    payload: recorded.payload,
-  });
-  if (recorded.inputHash !== expectedHash) return refuse({ _tag: "OfferResponseTampered" });
-  const response = recorded.payload as OfferResponseInput;
-  if (response.interruptionId !== interruptionId) return refuse({ _tag: "OfferResponseStale" });
-  if (response.battleId !== subject.battleId) return refuse({ _tag: "OfferResponseWrongBattle" });
-  state.nextOrdinal = ordinal + 1;
-  return { status: "resolved", response, inputHash: recorded.inputHash };
-}
-
-export type AnsweredOffer = OfferResponseInput & { readonly inputHash: string };
-
-export function consumeOffer(ctx: PhaseContext, content: OfferContent): AnsweredOffer | null {
-  const state = ctx.interruption;
-  if (state === undefined) return null;
-  const phase = "battle_resolution" as const;
-  const resolution = consumeOfferResponse(state, { battleId: content.battleId, phase });
-  if (resolution.status === "inactive") return null;
-
-  const ordinal = state.nextOrdinal - (resolution.status === "resolved" ? 1 : 0);
-  const interruptionId =
-    resolution.status === "resolved"
-      ? resolution.response.interruptionId
-      : resolution.interruptionId;
-  const request: OfferRequest = {
-    kind: "offer",
-    turnId: state.turnId,
-    interruptionId,
-    phase,
-    ordinal,
-    subjectKey: content.battleId,
-    battleId: content.battleId,
-    titleKey: "messages.offer.request.title",
-    bodyKey: "messages.offer.request.body",
-    interpolation: {
-      battleId: content.battleId,
-      missionType: content.missionType,
-      areaId: content.areaId,
-      attackerId: content.attackerId,
-      defenderId: content.defenderId,
-    },
-    missionType: content.missionType,
-    acceptanceClass: content.acceptanceClass,
-    areaId: content.areaId,
-    attackerId: content.attackerId,
-    defenderId: content.defenderId,
-    playerSide: content.playerSide,
-    playerForce: content.playerForce,
-    estimate: content.estimate,
-    supportForcePresent: content.supportForcePresent,
-    ...(content.supportNationIds === undefined
-      ? {}
-      : { supportNationIds: content.supportNationIds }),
-    declineStatementKeys: content.declineStatementKeys,
-  };
-
-  switch (resolution.status) {
-    case "awaiting":
-      suspend(state, request, "awaiting-input");
-      return null;
-    case "invalid":
-      suspend(state, request, "invalid-input", resolution.refusal._tag);
-      return null;
-    case "resolved": {
-      const answered = resolution.response;
-      if (answered.response === "decline") {
-        const refusal =
-          ctx.battleOffers === undefined ? null : declineRefusal(content, ctx.battleOffers);
-        if (refusal !== null) {
-          state.nextOrdinal = ordinal;
-          suspend(state, request, "invalid-input", refusal._tag);
-          return null;
-        }
-      }
-      return { ...answered, inputHash: resolution.inputHash };
-    }
-  }
 }
 
 function damageReport(result: BattleResultInput): Record<string, SafeInt> {

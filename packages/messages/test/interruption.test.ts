@@ -1,3 +1,4 @@
+import { Schema } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 import {
   computeInputHash,
@@ -12,11 +13,14 @@ import {
   decodeSuspendedTurn,
   makeRecordedInput,
   OFFER_RESPONSES,
+  OfferContentSchema,
+  OfferRequestWireSchema,
   type BattleResultInput,
   type DecisionAnswer,
   type OfferRequest,
   type OfferResponseInput,
 } from "../src/index.js";
+import { offerContentFields } from "../src/interruption.js";
 
 const decisionAnswer: DecisionAnswer = {
   interruptionId: "i-0",
@@ -185,6 +189,47 @@ describe("offer request schema", () => {
     expect(() => decodeOfferRequest({ ...supported, supportNationIds: [""] })).toThrow();
     expect(() => decodeOfferRequest({ ...supported, supportNationIds: "ITA" })).toThrow();
     expect(() => decodeOfferRequest({ ...supported, supportShipIds: ["i1"] })).toThrow();
+  });
+
+  it("declares offer content once: the request is the envelope plus exactly those fields", () => {
+    const envelopeKeys = [
+      "kind",
+      "turnId",
+      "interruptionId",
+      "phase",
+      "ordinal",
+      "subjectKey",
+      "titleKey",
+      "bodyKey",
+      "interpolation",
+    ];
+    expect(Object.keys(offerContentFields).sort()).toEqual(
+      [
+        "battleId",
+        "missionType",
+        "acceptanceClass",
+        "areaId",
+        "attackerId",
+        "defenderId",
+        "playerSide",
+        "playerForce",
+        "estimate",
+        "supportForcePresent",
+        "supportNationIds",
+        "declineStatementKeys",
+      ].sort(),
+    );
+    expect(Object.keys(OfferRequestWireSchema.fields).sort()).toEqual(
+      [...envelopeKeys, ...Object.keys(offerContentFields)].sort(),
+    );
+    const content = Object.fromEntries(
+      Object.entries(offerRequest).filter(([key]) => !envelopeKeys.includes(key)),
+    );
+    const decodeContent = Schema.decodeUnknownSync(OfferContentSchema, {
+      onExcessProperty: "error",
+    });
+    expect(decodeContent(content)).toEqual(content);
+    expect(() => decodeContent({ ...content, surprise: 1 })).toThrow();
   });
 
   it("keeps the decision and battle request wire shapes unchanged", () => {

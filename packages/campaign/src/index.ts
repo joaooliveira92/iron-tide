@@ -30,8 +30,6 @@ export type {
   CampaignWeatherState,
   CompiledDesignVersion,
   CompiledTorpedoMount,
-  DeclinedBattleRecord,
-  DeclineCounterEntry,
   ConstructionPackage,
   ConstructionMonthUsage,
   ConstructionPackageKind,
@@ -71,6 +69,7 @@ export type {
   WorldState,
 } from "./state.js";
 export { isShipOperational } from "./state.js";
+export type { DeclineCounterEntry, DeclinedBattleRecord } from "./declineRecords.js";
 export { presenceAreaIds } from "./presence.js";
 export {
   contributesToPresence,

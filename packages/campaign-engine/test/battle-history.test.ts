@@ -1,6 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
-import type { BattleInstance } from "@bluewave/campaign";
+import type { BattleInstance, DeclinedBattleRecord } from "@bluewave/campaign";
 import { buildBattleHistory } from "../src/battle-history.js";
 import { fixtureNation, fixtureSnapshot } from "./fixtures.js";
 
@@ -26,7 +26,7 @@ const result = (over: Partial<NonNullable<BattleInstance["result"]>> = {}) => ({
   ...over,
 });
 
-function snapshotWith(battles: BattleInstance[]) {
+function snapshotWith(battles: BattleInstance[], declinedBattles?: DeclinedBattleRecord[]) {
   return fixtureSnapshot(
     [
       fixtureNation({ id: "uk", name: "Britain", tag: "GBR" }),
@@ -45,9 +45,25 @@ function snapshotWith(battles: BattleInstance[]) {
         participantMemberships: [],
         blockadeState: [],
         battleManifests: [],
+        ...(declinedBattles === undefined ? {} : { declinedBattles }),
       },
     },
   );
+}
+
+function declined(overrides: Partial<DeclinedBattleRecord> = {}): DeclinedBattleRecord {
+  return {
+    battleId: "d1",
+    warId: "w1",
+    nationId: "uk",
+    areaId: "eng_home_coast",
+    month: "1880-03",
+    missionType: "FLEET_BATTLE",
+    responseInputHash: "response-hash",
+    victoryPointCost: 10,
+    opponentCredit: 5,
+    ...overrides,
+  };
 }
 
 describe("buildBattleHistory", () => {
@@ -196,5 +212,35 @@ describe("buildBattleHistory", () => {
     const view = buildBattleHistory(snapshotWith([battle({ id: "b4", result: result() })]), "uk");
     expect(view.battles[0]!.lostShips).toEqual([]);
     expect(view.battles[0]!.lostShipIds).toHaveLength(2);
+  });
+
+  it("projects the player's canonical declined-battle records without the response hash", () => {
+    const view = buildBattleHistory(
+      snapshotWith(
+        [],
+        [
+          declined({ battleId: "d1" }),
+          declined({ battleId: "d2", nationId: "france", warId: "w2", month: "1880-04" }),
+        ],
+      ),
+      "uk",
+    );
+    expect(view.declinedBattles).toEqual([
+      {
+        battleId: "d1",
+        warId: "w1",
+        nationId: "uk",
+        areaId: "eng_home_coast",
+        month: "1880-03",
+        missionType: "FLEET_BATTLE",
+        victoryPointCost: 10,
+        opponentCredit: 5,
+      },
+    ]);
+  });
+
+  it("omits declinedBattles when the player declined none", () => {
+    const view = buildBattleHistory(snapshotWith([], [declined({ nationId: "france" })]), "uk");
+    expect(view).toEqual({ battles: [] });
   });
 });

@@ -276,15 +276,7 @@
       "player_verb": "Accept or decline a battle offer and fight it with division stance and speed orders",
       "status": "reachable",
       "engine_package": "phase-engine",
-      "engine_modules": [
-        "battleDecline",
-        "battleOffer",
-        "battles",
-        "declineCounter",
-        "enemyDecline",
-        "interruption",
-        "supportForce"
-      ],
+      "engine_modules": ["battleOffer", "battles", "interruption"],
       "engine_symbols": [
         "applyDecline",
         "applyEnemyDeclines",

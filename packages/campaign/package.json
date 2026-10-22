@@ -11,6 +11,10 @@
     "./compiler": {
       "types": "./src/compiler-public.ts",
       "default": "./dist/compiler-public.js"
+    },
+    "./decline-records": {
+      "types": "./src/declineRecords.ts",
+      "default": "./dist/declineRecords.js"
     }
   },
   "dependencies": {
@@ -21,7 +25,8 @@
     "@bluewave/content-schema": "workspace:*",
     "@bluewave/content-compiler": "workspace:*",
     "yaml": "^2.9.1",
-    "@bluewave/ship-design": "workspace:*"
+    "@bluewave/ship-design": "workspace:*",
+    "effect": "workspace:*"
   },
   "devDependencies": {
     "@bluewave/test-support": "workspace:*"

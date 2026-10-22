@@ -105,40 +105,39 @@ export type OfferEstimateModel = (typeof OFFER_ESTIMATE_MODELS)[number];
 export const OFFER_SIDES = ["ATTACKER", "DEFENDER"] as const;
 export type OfferSide = (typeof OFFER_SIDES)[number];
 
-export interface OfferForceShip {
-  readonly shipId: string;
-  readonly name: string;
-  readonly classId: string;
-}
+const OfferForceShipSchema = Schema.Struct({
+  shipId: nonEmptyString,
+  name: nonEmptyString,
+  classId: nonEmptyString,
+});
 
-export interface OfferEstimate {
-  readonly model: OfferEstimateModel;
-  readonly strength: number;
-}
+export type OfferForceShip = typeof OfferForceShipSchema.Type;
 
-export interface OfferRequest {
-  readonly kind: "offer";
-  readonly turnId: string;
-  readonly interruptionId: string;
-  readonly phase: TurnPhase;
-  readonly ordinal: number;
-  readonly subjectKey: string;
-  readonly battleId: string;
-  readonly titleKey: string;
-  readonly bodyKey: string;
-  readonly interpolation: Interpolation;
-  readonly missionType: string;
-  readonly acceptanceClass: string;
-  readonly areaId: string;
-  readonly attackerId: string;
-  readonly defenderId: string;
-  readonly playerSide: OfferSide;
-  readonly playerForce: readonly OfferForceShip[];
-  readonly estimate: OfferEstimate;
-  readonly supportForcePresent: boolean;
-  readonly supportNationIds?: readonly string[];
-  readonly declineStatementKeys: readonly string[];
-}
+const OfferEstimateSchema = Schema.Struct({
+  model: Schema.Literals(OFFER_ESTIMATE_MODELS),
+  strength: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
+});
+
+export type OfferEstimate = typeof OfferEstimateSchema.Type;
+
+export const offerContentFields = {
+  battleId: nonEmptyString,
+  missionType: nonEmptyString,
+  acceptanceClass: nonEmptyString,
+  areaId: nonEmptyString,
+  attackerId: nonEmptyString,
+  defenderId: nonEmptyString,
+  playerSide: Schema.Literals(OFFER_SIDES),
+  playerForce: Schema.Array(OfferForceShipSchema),
+  estimate: OfferEstimateSchema,
+  supportForcePresent: Schema.Boolean,
+  supportNationIds: Schema.optional(Schema.Array(nonEmptyString)),
+  declineStatementKeys: Schema.Array(nonEmptyString),
+} as const;
+
+export const OfferContentSchema = Schema.Struct(offerContentFields);
+
+export type OfferContent = typeof OfferContentSchema.Type;
 
 export interface BattleResultInput {
   readonly interruptionId: string;
@@ -282,27 +281,13 @@ const OfferRequestSchema = Schema.Struct({
   phase: TurnPhaseSchema,
   ordinal: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
   subjectKey: nonEmptyString,
-  battleId: nonEmptyString,
   titleKey: nonEmptyString,
   bodyKey: nonEmptyString,
   interpolation: InterpolationSchema,
-  missionType: nonEmptyString,
-  acceptanceClass: nonEmptyString,
-  areaId: nonEmptyString,
-  attackerId: nonEmptyString,
-  defenderId: nonEmptyString,
-  playerSide: Schema.Literals(OFFER_SIDES),
-  playerForce: Schema.Array(
-    Schema.Struct({ shipId: nonEmptyString, name: nonEmptyString, classId: nonEmptyString }),
-  ),
-  estimate: Schema.Struct({
-    model: Schema.Literals(OFFER_ESTIMATE_MODELS),
-    strength: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
-  }),
-  supportForcePresent: Schema.Boolean,
-  supportNationIds: Schema.optional(Schema.Array(nonEmptyString)),
-  declineStatementKeys: Schema.Array(nonEmptyString),
+  ...offerContentFields,
 });
+
+export type OfferRequest = typeof OfferRequestSchema.Type;
 
 export const DecisionRequestWireSchema = DecisionRequestSchema;
 export const BattleRequestWireSchema = BattleRequestSchema;

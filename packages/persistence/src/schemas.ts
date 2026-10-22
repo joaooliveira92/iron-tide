@@ -1,3 +1,7 @@
+import {
+  DeclinedBattleRecordSchema,
+  DeclineCounterEntrySchema,
+} from "@bluewave/campaign/decline-records";
 import { Effect, Schema } from "effect";
 
 type Mutable<T> =
@@ -37,50 +41,28 @@ export const StorablePossessionSchema = Schema.Record(Schema.String, Schema.Unkn
     ),
   );
 
+const declinedBattleRecordKeys = Object.keys(DeclinedBattleRecordSchema.fields).sort().join(",");
+const declineCounterEntryKeys = Object.keys(DeclineCounterEntrySchema.fields).sort().join(",");
+
 export const StorableDeclinedBattleSchema = Schema.Record(Schema.String, Schema.Unknown)
   .check(
     Schema.makeFilter(
       (o) =>
-        Object.keys(o).sort().join(",") ===
-          "areaId,battleId,missionType,month,nationId,opponentCredit,responseInputHash,victoryPointCost,warId" ||
+        Object.keys(o).sort().join(",") === declinedBattleRecordKeys ||
         "a declined-battle record carries exactly its nine fields",
     ),
   )
-  .pipe(
-    Schema.decodeTo(
-      Schema.Struct({
-        battleId: Schema.NonEmptyString,
-        warId: Schema.NonEmptyString,
-        nationId: Schema.NonEmptyString,
-        areaId: Schema.NonEmptyString,
-        month: Schema.NonEmptyString,
-        missionType: Schema.NonEmptyString,
-        responseInputHash: Schema.NonEmptyString,
-        victoryPointCost: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
-        opponentCredit: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
-      }),
-    ),
-  );
+  .pipe(Schema.decodeTo(DeclinedBattleRecordSchema));
 
 export const StorableDeclineCounterSchema = Schema.Record(Schema.String, Schema.Unknown)
   .check(
     Schema.makeFilter(
       (o) =>
-        Object.keys(o).sort().join(",") === "count,decayAnchorMonth,key,lastWarId,nationId" ||
+        Object.keys(o).sort().join(",") === declineCounterEntryKeys ||
         "a decline-counter entry carries exactly its five fields",
     ),
   )
-  .pipe(
-    Schema.decodeTo(
-      Schema.Struct({
-        key: Schema.NonEmptyString,
-        nationId: Schema.NonEmptyString,
-        lastWarId: Schema.NonEmptyString,
-        count: Schema.Finite.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0)),
-        decayAnchorMonth: Schema.String.check(Schema.isPattern(/^\d{4}-(0[1-9]|1[0-2])$/)),
-      }),
-    ),
-  );
+  .pipe(Schema.decodeTo(DeclineCounterEntrySchema));
 
 export const StorableTechnologySchema = Schema.Record(Schema.String, Schema.Unknown)
   .check(

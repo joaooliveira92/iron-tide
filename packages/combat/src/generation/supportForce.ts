@@ -1,4 +1,4 @@
-import { sha256Hex } from "@bluewave/deterministic";
+import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
 import {
   ALLIED_MAX_STRENGTH_BP,
   ALLIED_MAX_STRENGTH_DIVISOR,
@@ -6,6 +6,7 @@ import {
   type AlliedCandidate,
 } from "./allied.js";
 import { buildManifest, type BattleManifest } from "./manifest.js";
+import type { BattleGenerationResult } from "./pipeline.js";
 import { deriveBattleSeed } from "./seed.js";
 
 export const SUPPORT_FORCE_DRAW_RANGE_BP = 10_000;
@@ -81,4 +82,48 @@ export function withSupportForce(
 
 export function supportCandidateDigest(candidates: readonly AlliedCandidate[]): string {
   return sha256Hex(candidates.map((c) => `${c.nationId}\u0000${c.assetId}`).join("\u0001"));
+}
+
+export interface SupportForceAssignment {
+  readonly nationId: string;
+  readonly assetId: string;
+}
+
+export interface AddSupportInput extends SupportForceSeedInputs {
+  readonly battleId: string;
+  readonly playerNationId: string;
+  readonly support: readonly SupportForceAssignment[];
+}
+
+export function addSupport(
+  generated: BattleGenerationResult,
+  input: AddSupportInput,
+): BattleGenerationResult {
+  const index = generated.manifests.findIndex((manifest) => manifest.battleId === input.battleId);
+  if (index === -1) return generated;
+  const manifest = withSupportForce(
+    generated.manifests[index]!,
+    input.playerNationId,
+    input.support.map((assignment) => assignment.assetId),
+    [...new Set(input.support.map((assignment) => assignment.nationId))].sort(compareCodePoints),
+    input,
+  );
+  const manifests = [...generated.manifests];
+  manifests[index] = manifest;
+  const recordIndex = generated.records.findIndex((record) =>
+    record.accepted.includes(input.battleId),
+  );
+  if (recordIndex === -1) return { ...generated, manifests };
+  const records = [...generated.records];
+  const updated = {
+    ...records[recordIndex]!,
+    alliedSupportDecisions: input.support.map(
+      (assignment) => `${assignment.nationId}:${assignment.assetId}`,
+    ),
+    manifests: [manifest.manifestHash],
+    battleSeeds: [manifest.battleSeed],
+    recordHash: "",
+  };
+  records[recordIndex] = { ...updated, recordHash: sha256Hex(canonicalSerialize(updated)) };
+  return { ...generated, manifests, records };
 }
