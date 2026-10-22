@@ -12,13 +12,18 @@ import {
   type PlayerBattleStance,
 } from "@bluewave/combat";
 import type { TacticalBattleManifest } from "@bluewave/combat";
-import { Effect, Schema } from "effect";
+import { Effect } from "effect";
 import type {
   AdvancePlayerBattleResult,
   FinishPlayerBattleResult,
   PlayerBattleResultDto,
   StartPlayerBattleResult,
 } from "../../shared/campaign-command-contract.js";
+import {
+  AdvancePlayerBattlePayloadSchema,
+  FinishPlayerBattlePayloadSchema,
+  StartPlayerBattlePayloadSchema,
+} from "../../shared/campaignCommandSchemas.js";
 import { loadPendingTurn } from "../pendingTurn.js";
 import {
   clearPlayerBattleSave,
@@ -30,35 +35,6 @@ import { withStrictSchema } from "../runtime/commandProgram.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { DecisionSource } from "../runtime/decisionSource.js";
 import { runTurnTransaction } from "./turnTransaction.js";
-
-const nonEmpty = Schema.String.check(Schema.isMinLength(1));
-
-const StartPayloadSchema = Schema.Struct({
-  sessionId: nonEmpty,
-  battleId: nonEmpty,
-});
-
-const DivisionOrderSchema = Schema.Struct({
-  divisionId: nonEmpty,
-  stance: Schema.Literals(["ENGAGE", "HOLD", "WITHDRAW"]),
-  speedPercent: Schema.Finite.check(
-    Schema.isInt(),
-    Schema.isGreaterThanOrEqualTo(0),
-    Schema.isLessThanOrEqualTo(100),
-  ),
-});
-
-const AdvancePayloadSchema = Schema.Struct({
-  sessionId: nonEmpty,
-  battleId: nonEmpty,
-  mode: Schema.Literals(["minute", "to_end"]),
-  divisions: Schema.Array(DivisionOrderSchema),
-});
-
-const FinishPayloadSchema = Schema.Struct({
-  sessionId: nonEmpty,
-  battleId: nonEmpty,
-});
 
 /**
  * Process-local player-battle sessions. They are NOT authoritative and never
@@ -134,182 +110,188 @@ function ordersOf(
  * committed manifest/weather/reservations at the suspension point, then projects
  * the same tactical battle the auto-resolver would have fought.
  */
-export const startPlayerBattleProgram = withStrictSchema(StartPayloadSchema, (payload) =>
-  Effect.gen(function* () {
-    const store = yield* CampaignSessionStore;
-    const record = yield* store.get(payload.sessionId);
-    const pending = loadPendingTurn(record.saveDir);
-    if (pending === null) {
-      return {
-        outcome: "error" as const,
-        reason: "NO_PENDING_TURN",
-        diagnostics: [`No pending turn for session ${payload.sessionId}`],
-      };
-    }
-    if (
-      pending.outstanding?.kind !== "battle" ||
-      pending.outstanding.subjectKey !== payload.battleId
-    ) {
-      return {
-        outcome: "error" as const,
-        reason: "NO_OUTSTANDING_BATTLE",
-        diagnostics: [`Session ${payload.sessionId} is not awaiting battle ${payload.battleId}`],
-      };
-    }
-
-    const decisions = yield* DecisionSource;
-    const pendingDecisions = yield* decisions.pendingDecisions(payload.sessionId);
-    const outcome = yield* runTurnTransaction({
-      sessionId: payload.sessionId,
-      expectedRevision: pending.startingRevision,
-      recordedInputs: pending.recordedInputs,
-      pendingDecisions,
-      allowInterruptions: true,
-    });
-    if (outcome.kind !== "suspended" || outcome.request?.kind !== "battle") {
-      return {
-        outcome: "error" as const,
-        reason: "PLAYER_BATTLE_UNAVAILABLE",
-        diagnostics: ["The suspended turn did not reproduce the battle request"],
-      };
-    }
-
-    const snapshot = outcome.snapshot;
-    const manifest = (snapshot.wars.battleManifests ?? []).find(
-      (candidate) => candidate.battleId === payload.battleId,
-    );
-    if (manifest === undefined) {
-      return {
-        outcome: "error" as const,
-        reason: "BATTLE_MANIFEST_MISSING",
-        diagnostics: [`No committed manifest for battle ${payload.battleId}`],
-      };
-    }
-    const strategicWeather = snapshot.strategicWeather.find(
-      (candidate) => candidate.areaId === manifest.areaId,
-    );
-    if (strategicWeather === undefined) {
-      return {
-        outcome: "error" as const,
-        reason: "BATTLE_WEATHER_MISSING",
-        diagnostics: [`No committed strategic weather for area ${manifest.areaId}`],
-      };
-    }
-
-    let session: PlayerBattleSession;
-    try {
-      session = createPlayerBattleSession({
-        manifest: manifest as TacticalBattleManifest,
-        areaId: manifest.areaId,
-        campaignMonth: pending.createdAt,
-        attacker: nationOf(snapshot, manifest.attackerId, snapshot.designs),
-        defender: nationOf(snapshot, manifest.defenderId, snapshot.designs),
-        playerNationId: pending.playerNationId,
-        strategicWeather,
-        campaignSeed: `${record.campaignSeed}:month:${String(pending.startingRevision)}`,
-        rulesetVersion: snapshot.rulesetVersion,
-        formulaVersion: manifest.formulaVersion,
-        rngVersion: manifest.rngVersion,
-      });
-    } catch (error) {
-      return {
-        outcome: "error" as const,
-        reason: "PLAYER_BATTLE_PROJECTION_FAILED",
-        diagnostics: [error instanceof Error ? error.message : String(error)],
-      };
-    }
-
-    // Mid-battle resume: replay the saved standing orders over the fresh session.
-    const saved = loadPlayerBattleSave(record.saveDir, {
-      turnId: pending.turnId,
-      battleId: payload.battleId,
-    });
-    let steps: readonly PlayerBattleStep[] = [];
-    let resumed = false;
-    if (saved !== null && saved.steps.length > 0) {
-      try {
-        let replayed = session;
-        for (const step of saved.steps) replayed = applyStep(replayed, step);
-        session = replayed;
-        steps = saved.steps;
-        resumed = true;
-      } catch {
-        clearPlayerBattleSave(record.saveDir);
+export const startPlayerBattleProgram = withStrictSchema(
+  StartPlayerBattlePayloadSchema,
+  (payload) =>
+    Effect.gen(function* () {
+      const store = yield* CampaignSessionStore;
+      const record = yield* store.get(payload.sessionId);
+      const pending = loadPendingTurn(record.saveDir);
+      if (pending === null) {
+        return {
+          outcome: "error" as const,
+          reason: "NO_PENDING_TURN",
+          diagnostics: [`No pending turn for session ${payload.sessionId}`],
+        };
       }
-    }
-    const key = keyOf(payload.sessionId, payload.battleId);
-    sessions.set(key, session);
-    stepLogs.set(key, steps);
-    const lastOrders = steps.at(-1)?.divisions ?? [];
-    const value: StartPlayerBattleResult = {
-      sessionHash: playerBattleSessionHash(session),
-      view: playerBattleView(session),
-      resumed,
-      lastOrders: [...lastOrders],
-    };
-    return { outcome: "success" as const, value, diagnostics: [] };
-  }),
-);
+      if (
+        pending.outstanding?.kind !== "battle" ||
+        pending.outstanding.subjectKey !== payload.battleId
+      ) {
+        return {
+          outcome: "error" as const,
+          reason: "NO_OUTSTANDING_BATTLE",
+          diagnostics: [`Session ${payload.sessionId} is not awaiting battle ${payload.battleId}`],
+        };
+      }
 
-export const advancePlayerBattleProgram = withStrictSchema(AdvancePayloadSchema, (payload) =>
-  Effect.gen(function* () {
-    const store = yield* CampaignSessionStore;
-    const record = yield* store.get(payload.sessionId);
-    const session = sessions.get(keyOf(payload.sessionId, payload.battleId));
-    if (session === undefined) {
-      return {
-        outcome: "error" as const,
-        reason: "PLAYER_BATTLE_NOT_STARTED",
-        diagnostics: ["Start the player battle before advancing it"],
-      };
-    }
-    const step: PlayerBattleStep = { mode: payload.mode, divisions: payload.divisions };
-    const next = applyStep(session, step);
-    const key = keyOf(payload.sessionId, payload.battleId);
-    sessions.set(key, next);
-    const steps = [...(stepLogs.get(key) ?? []), step];
-    stepLogs.set(key, steps);
-    const pending = loadPendingTurn(record.saveDir);
-    if (pending !== null) {
-      savePlayerBattle(record.saveDir, {
-        schemaVersion: "1.0.0",
+      const decisions = yield* DecisionSource;
+      const pendingDecisions = yield* decisions.pendingDecisions(payload.sessionId);
+      const outcome = yield* runTurnTransaction({
+        sessionId: payload.sessionId,
+        expectedRevision: pending.startingRevision,
+        recordedInputs: pending.recordedInputs,
+        pendingDecisions,
+        allowInterruptions: true,
+      });
+      if (outcome.kind !== "suspended" || outcome.request?.kind !== "battle") {
+        return {
+          outcome: "error" as const,
+          reason: "PLAYER_BATTLE_UNAVAILABLE",
+          diagnostics: ["The suspended turn did not reproduce the battle request"],
+        };
+      }
+
+      const snapshot = outcome.snapshot;
+      const manifest = (snapshot.wars.battleManifests ?? []).find(
+        (candidate) => candidate.battleId === payload.battleId,
+      );
+      if (manifest === undefined) {
+        return {
+          outcome: "error" as const,
+          reason: "BATTLE_MANIFEST_MISSING",
+          diagnostics: [`No committed manifest for battle ${payload.battleId}`],
+        };
+      }
+      const strategicWeather = snapshot.strategicWeather.find(
+        (candidate) => candidate.areaId === manifest.areaId,
+      );
+      if (strategicWeather === undefined) {
+        return {
+          outcome: "error" as const,
+          reason: "BATTLE_WEATHER_MISSING",
+          diagnostics: [`No committed strategic weather for area ${manifest.areaId}`],
+        };
+      }
+
+      let session: PlayerBattleSession;
+      try {
+        session = createPlayerBattleSession({
+          manifest: manifest as TacticalBattleManifest,
+          areaId: manifest.areaId,
+          campaignMonth: pending.createdAt,
+          attacker: nationOf(snapshot, manifest.attackerId, snapshot.designs),
+          defender: nationOf(snapshot, manifest.defenderId, snapshot.designs),
+          playerNationId: pending.playerNationId,
+          strategicWeather,
+          campaignSeed: `${record.campaignSeed}:month:${String(pending.startingRevision)}`,
+          rulesetVersion: snapshot.rulesetVersion,
+          formulaVersion: manifest.formulaVersion,
+          rngVersion: manifest.rngVersion,
+        });
+      } catch (error) {
+        return {
+          outcome: "error" as const,
+          reason: "PLAYER_BATTLE_PROJECTION_FAILED",
+          diagnostics: [error instanceof Error ? error.message : String(error)],
+        };
+      }
+
+      // Mid-battle resume: replay the saved standing orders over the fresh session.
+      const saved = loadPlayerBattleSave(record.saveDir, {
         turnId: pending.turnId,
         battleId: payload.battleId,
-        steps,
       });
-    }
-    const value: AdvancePlayerBattleResult = {
-      sessionHash: playerBattleSessionHash(next),
-      view: playerBattleView(next),
-      result: next.ended ? toResultDto(next) : null,
-    };
-    return { outcome: "success" as const, value, diagnostics: [] };
-  }),
+      let steps: readonly PlayerBattleStep[] = [];
+      let resumed = false;
+      if (saved !== null && saved.steps.length > 0) {
+        try {
+          let replayed = session;
+          for (const step of saved.steps) replayed = applyStep(replayed, step);
+          session = replayed;
+          steps = saved.steps;
+          resumed = true;
+        } catch {
+          clearPlayerBattleSave(record.saveDir);
+        }
+      }
+      const key = keyOf(payload.sessionId, payload.battleId);
+      sessions.set(key, session);
+      stepLogs.set(key, steps);
+      const lastOrders = steps.at(-1)?.divisions ?? [];
+      const value: StartPlayerBattleResult = {
+        sessionHash: playerBattleSessionHash(session),
+        view: playerBattleView(session),
+        resumed,
+        lastOrders: [...lastOrders],
+      };
+      return { outcome: "success" as const, value, diagnostics: [] };
+    }),
 );
 
-export const finishPlayerBattleProgram = withStrictSchema(FinishPayloadSchema, (payload) =>
-  Effect.gen(function* () {
-    const store = yield* CampaignSessionStore;
-    const record = yield* store.get(payload.sessionId);
-    const session = sessions.get(keyOf(payload.sessionId, payload.battleId));
-    if (session === undefined) {
-      return {
-        outcome: "error" as const,
-        reason: "PLAYER_BATTLE_NOT_STARTED",
-        diagnostics: ["Start the player battle before finishing it"],
+export const advancePlayerBattleProgram = withStrictSchema(
+  AdvancePlayerBattlePayloadSchema,
+  (payload) =>
+    Effect.gen(function* () {
+      const store = yield* CampaignSessionStore;
+      const record = yield* store.get(payload.sessionId);
+      const session = sessions.get(keyOf(payload.sessionId, payload.battleId));
+      if (session === undefined) {
+        return {
+          outcome: "error" as const,
+          reason: "PLAYER_BATTLE_NOT_STARTED",
+          diagnostics: ["Start the player battle before advancing it"],
+        };
+      }
+      const step: PlayerBattleStep = { mode: payload.mode, divisions: payload.divisions };
+      const next = applyStep(session, step);
+      const key = keyOf(payload.sessionId, payload.battleId);
+      sessions.set(key, next);
+      const steps = [...(stepLogs.get(key) ?? []), step];
+      stepLogs.set(key, steps);
+      const pending = loadPendingTurn(record.saveDir);
+      if (pending !== null) {
+        savePlayerBattle(record.saveDir, {
+          schemaVersion: "1.0.0",
+          turnId: pending.turnId,
+          battleId: payload.battleId,
+          steps,
+        });
+      }
+      const value: AdvancePlayerBattleResult = {
+        sessionHash: playerBattleSessionHash(next),
+        view: playerBattleView(next),
+        result: next.ended ? toResultDto(next) : null,
       };
-    }
-    if (!session.ended) {
-      return {
-        outcome: "error" as const,
-        reason: "PLAYER_BATTLE_NOT_FINISHED",
-        diagnostics: ["The battle has not reached a battle-end decision"],
-      };
-    }
-    const value: FinishPlayerBattleResult = { result: toResultDto(session) };
-    sessions.delete(keyOf(payload.sessionId, payload.battleId));
-    stepLogs.delete(keyOf(payload.sessionId, payload.battleId));
-    clearPlayerBattleSave(record.saveDir);
-    return { outcome: "success" as const, value, diagnostics: [] };
-  }),
+      return { outcome: "success" as const, value, diagnostics: [] };
+    }),
+);
+
+export const finishPlayerBattleProgram = withStrictSchema(
+  FinishPlayerBattlePayloadSchema,
+  (payload) =>
+    Effect.gen(function* () {
+      const store = yield* CampaignSessionStore;
+      const record = yield* store.get(payload.sessionId);
+      const session = sessions.get(keyOf(payload.sessionId, payload.battleId));
+      if (session === undefined) {
+        return {
+          outcome: "error" as const,
+          reason: "PLAYER_BATTLE_NOT_STARTED",
+          diagnostics: ["Start the player battle before finishing it"],
+        };
+      }
+      if (!session.ended) {
+        return {
+          outcome: "error" as const,
+          reason: "PLAYER_BATTLE_NOT_FINISHED",
+          diagnostics: ["The battle has not reached a battle-end decision"],
+        };
+      }
+      const value: FinishPlayerBattleResult = { result: toResultDto(session) };
+      sessions.delete(keyOf(payload.sessionId, payload.battleId));
+      stepLogs.delete(keyOf(payload.sessionId, payload.battleId));
+      clearPlayerBattleSave(record.saveDir);
+      return { outcome: "success" as const, value, diagnostics: [] };
+    }),
 );

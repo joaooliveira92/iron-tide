@@ -15,7 +15,7 @@ import {
   PlaceForeignConstructionCommandPayloadSchema,
   ResumeConstructionCommandPayloadSchema,
   SetAccelerationCommandPayloadSchema,
-} from "../campaignCommandSchemas.js";
+} from "../../shared/campaignCommandSchemas.js";
 import { withSchema, withStrictSchema } from "../runtime/commandProgram.js";
 import { submitPlayerCommand, type PlayerCommandRequest } from "./playerCommandSupport.js";
 

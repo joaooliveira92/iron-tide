@@ -15,7 +15,7 @@ import {
   validateLedgerShape,
 } from "../verify-reachability-ledger.mjs";
 
-const CONTRACT = `export const CAMPAIGN_COMMAND_NAMES = [\n  "alpha",\n  "beta",\n] as const;\n`;
+const CONTRACT = `export const campaignCommandShapes = {\n  alpha: command(NO_PAYLOAD, resultType<A>()),\n  beta: command(NO_PAYLOAD, resultType<B>()),\n} satisfies CommandShapeMap;\n`;
 const BRIDGE = `export const commandPrograms = {\n  alpha: alphaProgram,\n  beta: betaProgram,\n};\n`;
 const REGISTRY = `const DBG: X = { id: "dbg-screen" };
 const MAP: X = { id: "proto" };
@@ -24,7 +24,7 @@ export const R = [ { id: "live" }, ...(DEBUG_MODE ? [DBG] : []), ...(import.meta
 /** Base files for a tiny repository where "alpha" is genuinely reachable. */
 function baseFiles() {
   return {
-    "apps/desktop/src/shared/campaign-command-contract.ts": CONTRACT,
+    "apps/desktop/src/shared/campaign-command-descriptors.ts": CONTRACT,
     "apps/desktop/src/main/campaignBridge.ts": BRIDGE,
     "apps/desktop/src/renderer/shell/campaign-screen-registry.tsx": REGISTRY,
     "apps/desktop/src/renderer/screens/live/LiveScreen.tsx": `bridge.campaign.execute("alpha", id)`,
@@ -187,9 +187,9 @@ void test("a ledger entry naming a module or verb that no longer exists fails", 
 void test("a CAMPAIGN_COMMAND_NAMES entry no row references fails", () => {
   const r = run(goodLedger(), (f) => ({
     ...f,
-    "apps/desktop/src/shared/campaign-command-contract.ts": CONTRACT.replace(
-      '"beta",',
-      '"beta",\n  "gamma",',
+    "apps/desktop/src/shared/campaign-command-descriptors.ts": CONTRACT.replace(
+      "  beta: command(NO_PAYLOAD, resultType<B>()),\n",
+      "  beta: command(NO_PAYLOAD, resultType<B>()),\n  gamma: command(NO_PAYLOAD, resultType<G>()),\n",
     ),
   }));
   assert.ok(has(r, 'command "gamma"'));

@@ -4,7 +4,13 @@ import { CURRENT_COMPATIBILITY_VERSION } from "@bluewave/persistence";
 import { decodeLog, PersistenceError } from "@bluewave/ship-design";
 import { Effect, Result, Schema } from "effect";
 import type { DrawingBoardDraftRecord } from "../shared/design-contract.js";
-import { SessionIdPayloadSchema } from "./campaignCommandSchemas.js";
+import {
+  MAX_DRAWING_BOARD_LOG_CHARS,
+  SessionIdPayloadSchema,
+  WriteDrawingBoardDraftPayloadSchema,
+} from "../shared/campaignCommandSchemas.js";
+
+export { WriteDrawingBoardDraftPayloadSchema };
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
 import { CommandRejected } from "./runtime/commandError.js";
 import { withSchema } from "./runtime/commandProgram.js";
@@ -19,35 +25,17 @@ import { DraftStore } from "./runtime/sidecarStores.js";
  */
 export const DRAWING_BOARD_DRAFT_FILENAME = "drawing-board-draft.json";
 
-/** An edit log is at most 500 edits of small objects; anything far larger is not ours. */
-const MAX_LOG_CHARS = 4_000_000;
-
 const StoredSchema = Schema.Struct({
   schema: Schema.Literal("drawing_board_draft_v1"),
   savedAt: Schema.String,
   presetId: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(200)),
-  log: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(MAX_LOG_CHARS)),
+  log: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(MAX_DRAWING_BOARD_LOG_CHARS)),
   /** Absent in drafts written before the 2.0.0 gate; those were written under 1.2.0. */
   compatibilityVersion: Schema.optional(Schema.String),
 });
 
 /** Version a draft without a stamp was written under (ship-part-model ticket 10). */
 const LEGACY_DRAFT_COMPATIBILITY_VERSION = "1.2.0";
-
-/**
- * Wire shape of `writeDrawingBoardDraft` (semantic checks live in the program).
- * Declared before the programs below: `withSchema` reads it at module
- * evaluation to build the command adapter.
- */
-export const WriteDrawingBoardDraftPayloadSchema = Schema.Struct({
-  sessionId: Schema.String.check(Schema.isMinLength(1)),
-  draft: Schema.NullOr(
-    Schema.Struct({
-      presetId: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(200)),
-      log: Schema.String.check(Schema.isMinLength(1), Schema.isMaxLength(MAX_LOG_CHARS)),
-    }),
-  ),
-});
 
 /**
  * Tolerant read: a missing, unreadable or malformed file is "no draft", never a crash.

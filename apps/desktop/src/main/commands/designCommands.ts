@@ -41,7 +41,7 @@ import {
   SessionIdPayloadSchema,
   StartRebuildCommandPayloadSchema,
   SubmitDesignCommandPayloadSchema,
-} from "../campaignCommandSchemas.js";
+} from "../../shared/campaignCommandSchemas.js";
 import type { CampaignSessionRecord } from "../campaignSessions.js";
 import { CommandFailed, CommandRejected } from "../runtime/commandError.js";
 import { withSchema } from "../runtime/commandProgram.js";

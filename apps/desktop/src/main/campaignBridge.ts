@@ -1,9 +1,7 @@
 import { Effect, ManagedRuntime, Result, Schema } from "effect";
 import type { BridgeResult } from "../shared/bridge-contract.js";
-import {
-  CAMPAIGN_COMMAND_NAMES,
-  type CampaignCommandName,
-} from "../shared/campaign-command-contract.js";
+import type { CampaignCommandName } from "../shared/campaign-command-contract.js";
+import { CAMPAIGN_COMMAND_NAMES } from "../shared/campaign-command-descriptors.js";
 import {
   generateBattleProgram,
   replayBattleBoundaryProgram,
@@ -112,7 +110,7 @@ import { payloadless, withSchema, type CommandProgram } from "./runtime/commandP
 import { NotImplemented, UnknownCommand } from "./runtime/commandError.js";
 import { projectCommandExit } from "./runtime/bridgeResult.js";
 import { type CommandEnv, desktopMainLayer } from "./runtime/desktopMainLayer.js";
-import { SessionIdPayloadSchema } from "./campaignCommandSchemas.js";
+import { SessionIdPayloadSchema } from "../shared/campaignCommandSchemas.js";
 
 const CommandNameSchema = Schema.Literals(CAMPAIGN_COMMAND_NAMES);
 
@@ -122,7 +120,7 @@ const CommandNameSchema = Schema.Literals(CAMPAIGN_COMMAND_NAMES);
  * and projects the `Exit` to the frozen `BridgeResult` envelope — there is no
  * legacy handler path.
  */
-export const commandPrograms: Partial<Record<CampaignCommandName, CommandProgram>> = {
+export const commandPrograms: Record<CampaignCommandName, CommandProgram> = {
   listNewGameOptions: payloadless(() => listNewGameOptionsProgram),
   compileCampaign: compileCampaignProgram,
   inspectCampaign: inspectCampaignProgram,

@@ -5,10 +5,7 @@ import {
   strategicPriorityTypeSchema,
 } from "@bluewave/campaign-engine";
 import { Schema } from "effect";
-import {
-  INSPECTOR_MAX_WIDTH_PX,
-  INSPECTOR_MIN_WIDTH_PX,
-} from "../shared/campaign-command-contract.js";
+import { INSPECTOR_MAX_WIDTH_PX, INSPECTOR_MIN_WIDTH_PX } from "./campaign-command-contract.js";
 
 /**
  * ENGINEERING-CONTRACT.md's Electron boundary rule requires IPC requests to be
@@ -587,4 +584,72 @@ export const ResolveTacticalBattlePayloadSchema = Schema.Struct({
   ...BattleIdPayloadSchema.fields,
   turnCount: positiveInt,
   scriptedOrders: Schema.Array(Schema.Unknown),
+});
+
+/** `loadRecentCampaign` / `removeRecentCampaign`: the canonical path of an approved package. */
+export const RecentPackagePayloadSchema = Schema.Struct({ packagePath: Schema.NonEmptyString });
+
+export const AnswerDecisionPayloadSchema = Schema.Struct({
+  ...CommandEnvelopePayloadSchema.fields,
+  interruptionId: nonEmptyString,
+  decisionId: nonEmptyString,
+  optionId: nonEmptyString,
+});
+
+export const SubmitBattleResultPayloadSchema = Schema.Struct({
+  ...CommandEnvelopePayloadSchema.fields,
+  interruptionId: nonEmptyString,
+  battleId: nonEmptyString,
+  winnerId: Schema.NullOr(nonEmptyString),
+  loserId: Schema.NullOr(nonEmptyString),
+  attackerLosses: Schema.Array(nonEmptyString),
+  defenderLosses: Schema.Array(nonEmptyString),
+  damageReport: Schema.Record(Schema.String, Schema.Number),
+});
+
+export const SubmitOfferResponsePayloadSchema = Schema.Struct({
+  ...CommandEnvelopePayloadSchema.fields,
+  interruptionId: nonEmptyString,
+  battleId: nonEmptyString,
+  response: Schema.Literals(["accept", "decline", "delegate"]),
+});
+
+export const PlayerBattleDivisionOrderSchema = Schema.Struct({
+  divisionId: nonEmptyString,
+  stance: Schema.Literals(["ENGAGE", "HOLD", "WITHDRAW"]),
+  speedPercent: Schema.Finite.check(
+    Schema.isInt(),
+    Schema.isGreaterThanOrEqualTo(0),
+    Schema.isLessThanOrEqualTo(100),
+  ),
+});
+
+export const StartPlayerBattlePayloadSchema = Schema.Struct({
+  sessionId: nonEmptyString,
+  battleId: nonEmptyString,
+});
+
+export const AdvancePlayerBattlePayloadSchema = Schema.Struct({
+  sessionId: nonEmptyString,
+  battleId: nonEmptyString,
+  mode: Schema.Literals(["minute", "to_end"]),
+  divisions: Schema.Array(PlayerBattleDivisionOrderSchema),
+});
+
+export const FinishPlayerBattlePayloadSchema = Schema.Struct({
+  sessionId: nonEmptyString,
+  battleId: nonEmptyString,
+});
+
+/** An edit log is at most 500 edits of small objects; anything far larger is not ours. */
+export const MAX_DRAWING_BOARD_LOG_CHARS = 4_000_000;
+
+export const WriteDrawingBoardDraftPayloadSchema = Schema.Struct({
+  sessionId: nonEmptyString,
+  draft: Schema.NullOr(
+    Schema.Struct({
+      presetId: boundedString(1, 200),
+      log: boundedString(1, MAX_DRAWING_BOARD_LOG_CHARS),
+    }),
+  ),
 });

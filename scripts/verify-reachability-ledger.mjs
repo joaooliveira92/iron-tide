@@ -19,7 +19,7 @@ import { resolve } from "node:path";
 const ROOT = resolve(import.meta.dirname, "..");
 const LEDGER_PATH = "scripts/data/reachability-ledger.json";
 const REPORT_PATH = "docs/reachability-report.md";
-const CONTRACT_PATH = "apps/desktop/src/shared/campaign-command-contract.ts";
+const CONTRACT_PATH = "apps/desktop/src/shared/campaign-command-descriptors.ts";
 const BRIDGE_PATH = "apps/desktop/src/main/campaignBridge.ts";
 const REGISTRY_PATH = "apps/desktop/src/renderer/shell/campaign-screen-registry.tsx";
 const RENDERER_DIR = "apps/desktop/src/renderer";
@@ -109,14 +109,14 @@ function matchesType(value, type) {
 }
 
 /**
- * Names in `export const CAMPAIGN_COMMAND_NAMES = [...] as const`.
+ * Command names — the keys of the `campaignCommandShapes` descriptor table.
  * @param {string} source
  * @returns {string[]}
  */
 export function extractCommandNames(source) {
-  const match = /CAMPAIGN_COMMAND_NAMES\s*=\s*\[([\s\S]*?)\]\s*as const/u.exec(source);
+  const match = /campaignCommandShapes\s*=\s*\{([\s\S]*?)\}\s*satisfies/u.exec(source);
   if (match === null) return [];
-  return [...match[1].matchAll(/["']([A-Za-z0-9]+)["']/gu)].map((m) => m[1]);
+  return [...match[1].matchAll(/^ {2}([A-Za-z0-9]+):\s*command\(/gmu)].map((m) => m[1]);
 }
 
 /**
@@ -195,7 +195,7 @@ export function evaluateLedger({ ledger, repo }) {
 
   const names = extractCommandNames(repo.read(CONTRACT_PATH) ?? "");
   if (names.length === 0)
-    problems.push(`could not read CAMPAIGN_COMMAND_NAMES from ${CONTRACT_PATH}`);
+    problems.push(`could not read the campaign command table from ${CONTRACT_PATH}`);
   const bridge = repo.read(BRIDGE_PATH) ?? "";
   const debugOnly = extractDebugOnlyScreens(repo.read(REGISTRY_PATH) ?? "");
   const rendererSources = repo.list(RENDERER_DIR).filter(isSource);

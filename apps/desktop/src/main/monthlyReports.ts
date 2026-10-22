@@ -2,7 +2,7 @@ import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "nod
 import { join } from "node:path";
 import { Effect, Result, Schema } from "effect";
 import type { MonthlyReportEntry, MonthlyReports } from "../shared/campaign-command-contract.js";
-import { MonthlyReportsSchema, SessionIdPayloadSchema } from "./campaignCommandSchemas.js";
+import { MonthlyReportsSchema, SessionIdPayloadSchema } from "../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
 import { withSchema } from "./runtime/commandProgram.js";
 import { ReportsStore } from "./runtime/sidecarStores.js";

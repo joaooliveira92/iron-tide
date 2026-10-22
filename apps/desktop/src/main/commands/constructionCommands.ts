@@ -33,7 +33,7 @@ import {
   PreviewForeignConstructionCommandPayloadSchema,
   ReplaceConstructionOrderPayloadSchema,
   SessionIdPayloadSchema,
-} from "../campaignCommandSchemas.js";
+} from "../../shared/campaignCommandSchemas.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { withSchema } from "../runtime/commandProgram.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";

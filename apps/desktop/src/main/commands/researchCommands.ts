@@ -16,7 +16,7 @@ import type {
 import {
   SessionIdPayloadSchema,
   SetResearchPriorityCommandPayloadSchema,
-} from "../campaignCommandSchemas.js";
+} from "../../shared/campaignCommandSchemas.js";
 import type { CampaignSessionRecord } from "../campaignSessions.js";
 import type { PendingCommandEntry } from "../pendingCommands.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
