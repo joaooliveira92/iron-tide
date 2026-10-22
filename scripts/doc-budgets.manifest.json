@@ -45,5 +45,6 @@
   "packages/content-compiler/AGENTS.md": 100,
   "packages/ship-visual/AGENTS.md": 100,
   "scripts/data/reachability-ledger.json": 2100,
-  "docs/reachability-report.md": 950
+  "docs/reachability-report.md": 950,
+  ".ai/briefs/f-1-strategic-map.md": 3500
 }

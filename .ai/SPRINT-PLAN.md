@@ -143,12 +143,12 @@ from authoritative state, and the output is reviewed. It is a new baseline, not 
 
 ### Phase 6 — Frontend surfaces
 
-| #   | Sprint                                     | Size | Depends on    | Acceptance                                                                                               |
-| --- | ------------------------------------------ | ---- | ------------- | -------------------------------------------------------------------------------------------------------- |
-| F-1 | Strategic map                              | M    | S-5, U-4      | Prototype promoted: pan/zoom, fog-of-war tooltips, drag-to-move, Suez and Panama gating, invasion range. |
-| F-2 | Politics, intelligence, officers, doctrine | L    | S-4, W-3, W-6 | Production screens inside the click-depth ledger.                                                        |
-| F-3 | Fleet and construction surfaces            | M    | S-1, W-1      | Status codes, hotkeys, multi-select, assignments; submarine and coastal items enabled.                   |
-| F-4 | Saves                                      | S    | none          | Slots with copy and load-autosave; autosave count and frequency from Options.                            |
+| #   | Sprint                                     | Size | Depends on    | Acceptance                                                                                                                                                                   |
+| --- | ------------------------------------------ | ---- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F-1 | Strategic map                              | M    | S-5, U-4      | Prototype promoted: pan/zoom, fog-of-war tooltips, drag-to-move, Suez and Panama gating, invasion range. Spec: `.ai/briefs/f-1-strategic-map.md` (open: requests 0037-0039). |
+| F-2 | Politics, intelligence, officers, doctrine | L    | S-4, W-3, W-6 | Production screens inside the click-depth ledger.                                                                                                                            |
+| F-3 | Fleet and construction surfaces            | M    | S-1, W-1      | Status codes, hotkeys, multi-select, assignments; submarine and coastal items enabled.                                                                                       |
+| F-4 | Saves                                      | S    | none          | Slots with copy and load-autosave; autosave count and frequency from Options.                                                                                                |
 
 ### Phase 7 — Roster and release
 
