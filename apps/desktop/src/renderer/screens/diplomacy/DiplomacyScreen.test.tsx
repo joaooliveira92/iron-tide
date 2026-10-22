@@ -6,7 +6,6 @@ import {
   diplomacyBeginAction,
   diplomacyBeginSubmit,
   diplomacyLoadSuccess,
-  initialDiplomacyScreenState,
   diplomacySubmitRejected,
 } from "./diplomacy-screen-state.js";
 import { DiplomacyScreen } from "./DiplomacyScreen.js";
@@ -70,7 +69,7 @@ const fixtureProjection = {
 
 function makeLoaded(overrides = {}): DiplomacyScreenState {
   const projection = { ...fixtureProjection, ...overrides };
-  return diplomacyLoadSuccess(initialDiplomacyScreenState(), projection as never);
+  return diplomacyLoadSuccess(projection as never);
 }
 
 const hookMocks = vi.hoisted(() => {
@@ -121,6 +120,7 @@ vi.mock("./hooks/useBattleHistory.js", () => ({
 vi.mock("./hooks/useDiplomacyScreen.js", () => ({
   useDiplomacyScreen: (_sessionId: string) => ({
     state: hookMocks.stateFn(),
+    loadError: null,
     setRowAction: hookMocks.setRowAction,
     setPeaceAction: hookMocks.setPeaceAction,
     setBlockadeArea: hookMocks.setBlockadeArea,

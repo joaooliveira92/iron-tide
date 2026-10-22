@@ -7,6 +7,7 @@ import type {
 import { useBridge } from "../../../lib/bridge-context.js";
 import {
   type CommandOutcome,
+  requestLifecycleAdapter,
   useCommandScreenWorkflow,
 } from "../../../lib/command-screen-workflow.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
@@ -46,7 +47,7 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
     FleetScreenProjection,
     StationAssignmentOutcome
   >(
-    {
+    requestLifecycleAdapter({
       initialState: initialFleetStationState,
       load: () =>
         bridge
@@ -59,7 +60,7 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
           n: value.shipCount,
         }),
       }),
-    },
+    }),
     { refreshKey: campaignRevision },
   );
 

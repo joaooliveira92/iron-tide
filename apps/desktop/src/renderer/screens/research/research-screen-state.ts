@@ -7,8 +7,6 @@ import { type FieldWeightsDraft, seedDraft } from "./research-field-priorities.j
 
 export type ResearchScreenState =
   | ResearchScreenIdle
-  | ResearchScreenLoading
-  | ResearchScreenLoadFailed
   | ResearchScreenLoaded
   | ResearchScreenSubmitting
   | ResearchScreenSubmitted
@@ -17,17 +15,6 @@ export type ResearchScreenState =
 export interface ResearchScreenIdle {
   readonly kind: "idle";
   readonly revision: number;
-}
-
-export interface ResearchScreenLoading {
-  readonly kind: "loading";
-  readonly revision: number;
-}
-
-export interface ResearchScreenLoadFailed {
-  readonly kind: "load-failed";
-  readonly revision: number;
-  readonly message: string;
 }
 
 export interface ResearchScreenActiveData {
@@ -59,14 +46,7 @@ export function initialResearchScreenState(): ResearchScreenState {
   return { kind: "idle", revision: 0 };
 }
 
-export function researchBeginLoading(state: ResearchScreenState): ResearchScreenState {
-  return { kind: "loading", revision: state.revision };
-}
-
-export function researchLoadSuccess(
-  state: ResearchScreenState,
-  projection: ResearchScreenProjection,
-): ResearchScreenState {
+export function researchLoadSuccess(projection: ResearchScreenProjection): ResearchScreenState {
   return {
     kind: "loaded",
     revision: projection.revision,
@@ -75,13 +55,6 @@ export function researchLoadSuccess(
     draft: seedDraft(projection),
     notice: null,
   };
-}
-
-export function researchLoadFailure(
-  state: ResearchScreenState,
-  message: string,
-): ResearchScreenState {
-  return { kind: "load-failed", revision: state.revision, message };
 }
 
 export function researchBeginSubmit(

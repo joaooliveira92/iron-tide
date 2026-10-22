@@ -43,7 +43,25 @@ export interface PreparedCommand<Value> {
   readonly send: CommandSender<Value>;
 }
 
+export type CommandRejection = Extract<BridgeResult<unknown>, { readonly outcome: "rejected" }>;
+
 export interface CommandScreenAdapter<
+  State extends { readonly revision: number },
+  Projection extends { readonly revision: number },
+  Value,
+> {
+  readonly initialState: () => State;
+  readonly load: () => Promise<BridgeResult<Projection>>;
+  readonly project: (state: State, projection: Projection) => State;
+  readonly begin: (state: State, pending: PendingRequest) => State;
+  readonly reject: (state: State, rejection: CommandRejection) => State;
+  readonly transportFailure: (state: State, message: string) => State;
+  readonly accept: (state: State, value: Value) => State;
+  readonly requiresRefresh: (state: State) => boolean;
+  readonly onProjection?: (projection: Projection) => void;
+}
+
+export interface RequestLifecycleAdapterConfig<
   State extends RequestLifecycle,
   Projection extends { readonly revision: number },
   Value,
@@ -58,9 +76,32 @@ export interface CommandScreenAdapter<
   readonly onProjection?: (projection: Projection) => void;
 }
 
+export function requestLifecycleAdapter<
+  State extends RequestLifecycle,
+  Projection extends { readonly revision: number },
+  Value,
+>(
+  config: RequestLifecycleAdapterConfig<State, Projection, Value>,
+): CommandScreenAdapter<State, Projection, Value> {
+  return {
+    initialState: config.initialState,
+    load: config.load,
+    project: (state, projection) => applyProjection(state, projection, config.project(projection)),
+    begin: beginRequest,
+    reject: applyRejection,
+    transportFailure: applyTransportFailure,
+    accept: (state, value) => {
+      const { patch, notice } = config.accept(value);
+      return acceptCommand(state, patch, notice);
+    },
+    requiresRefresh: (state) => state.requiresRefresh,
+    ...(config.onProjection === undefined ? {} : { onProjection: config.onProjection }),
+  };
+}
+
 export type CommandOutcome = "accepted" | "rejected" | "transport-failure";
 
-export interface CommandScreenWorkflow<State extends RequestLifecycle, Value> {
+export interface CommandScreenWorkflow<State extends { readonly revision: number }, Value> {
   readonly state: State;
   readonly loadError: string | null;
   readonly request: {
@@ -68,6 +109,7 @@ export interface CommandScreenWorkflow<State extends RequestLifecycle, Value> {
     readonly retry: () => void;
   };
   readonly loadScreen: () => Promise<void>;
+  readonly updateState: (fold: (state: State) => State) => void;
   readonly execute: (kind: RequestKind, send: CommandSender<Value>) => Promise<CommandOutcome>;
 }
 
@@ -89,21 +131,18 @@ export function describeRejection(
 
 export function beginRequest<State extends RequestLifecycle>(
   state: State,
-  command: PreparedCommand<unknown>,
+  pending: PendingRequest,
 ): State {
   return {
     ...state,
-    pendingRequest: {
-      kind: command.kind,
-      transportRequestId: command.context.transportRequestId,
-    },
+    pendingRequest: pending,
     notice: null,
   };
 }
 
 export function applyRejection<State extends RequestLifecycle>(
   state: State,
-  rejection: Extract<BridgeResult<unknown>, { outcome: "rejected" }>,
+  rejection: CommandRejection,
 ): State {
   return {
     ...state,
@@ -156,34 +195,6 @@ export function commandNotice(command: {
   return `Command ${command.commandId} is ${command.status}`;
 }
 
-export function foldCommandResult<State, Value>(
-  result: BridgeResult<Value>,
-  folds: {
-    readonly success: (state: State, value: Value) => State;
-    readonly rejected: (
-      state: State,
-      rejection: {
-        readonly reason: string;
-        readonly diagnostics: readonly string[];
-        readonly currentRevision?: number;
-      },
-    ) => State;
-    readonly transportFailure: (state: State, message: string) => State;
-  },
-): (state: State) => State {
-  return (state) => {
-    if (result.outcome === "success") return folds.success(state, result.value);
-    if (result.outcome === "rejected") {
-      return folds.rejected(state, {
-        reason: result.reason,
-        diagnostics: result.diagnostics,
-        currentRevision: result.currentRevision,
-      });
-    }
-    return folds.transportFailure(state, `${result.reason}: ${result.diagnostics.join("; ")}`);
-  };
-}
-
 let commandCounter = 0;
 
 export function createTransportRequestId(prefix: string): string {
@@ -209,7 +220,7 @@ export interface CommandScreenWorkflowOptions {
 }
 
 export function useCommandScreenWorkflow<
-  State extends RequestLifecycle,
+  State extends { readonly revision: number },
   Projection extends { readonly revision: number },
   Value,
 >(
@@ -244,9 +255,7 @@ export function useCommandScreenWorkflow<
         return;
       }
       setLoadError(null);
-      setState((currentState) =>
-        applyProjection(currentState, result.value, current.project(result.value)),
-      );
+      setState((currentState) => current.project(currentState, result.value));
       current.onProjection?.(result.value);
     } catch (error) {
       if (generation !== loadGeneration.current) return;
@@ -261,19 +270,24 @@ export function useCommandScreenWorkflow<
     activeExecution.current = executionId;
     unresolvedCommand.current = command;
     setOutcomeUnknown(false);
-    setState((currentState) => beginRequest(currentState, command));
+    setState((currentState) =>
+      adapterRef.current.begin(currentState, {
+        kind: command.kind,
+        transportRequestId: executionId,
+      }),
+    );
     try {
       const result = await command.send(command.context);
       if (activeExecution.current !== executionId) return "transport-failure";
       activeExecution.current = null;
       unresolvedCommand.current = null;
       if (result.outcome === "rejected") {
-        setState((currentState) => applyRejection(currentState, result));
+        setState((currentState) => adapterRef.current.reject(currentState, result));
         return "rejected";
       } else if (result.outcome === "error") {
         setOutcomeUnknown(false);
         setState((currentState) =>
-          applyRejection(currentState, {
+          adapterRef.current.reject(currentState, {
             outcome: "rejected",
             reason: result.reason,
             diagnostics: result.diagnostics,
@@ -281,15 +295,14 @@ export function useCommandScreenWorkflow<
         );
         return "rejected";
       } else {
-        const { patch, notice } = adapterRef.current.accept(result.value);
-        setState((currentState) => acceptCommand(currentState, patch, notice));
+        setState((currentState) => adapterRef.current.accept(currentState, result.value));
         return "accepted";
       }
     } catch (error) {
       if (activeExecution.current !== executionId) return "transport-failure";
       setOutcomeUnknown(true);
       setState((currentState) =>
-        applyTransportFailure(
+        adapterRef.current.transportFailure(
           currentState,
           error instanceof Error ? error.message : "unknown transport error",
         ),
@@ -313,9 +326,10 @@ export function useCommandScreenWorkflow<
     void loadScreen();
   }, [loadScreen]);
 
+  const needsRefresh = adapter.requiresRefresh(state);
   useEffect(() => {
-    if (state.requiresRefresh) void loadScreen();
-  }, [state.requiresRefresh, loadScreen]);
+    if (needsRefresh) void loadScreen();
+  }, [needsRefresh, loadScreen]);
 
   const seenRefreshKey = useRef(options.refreshKey);
   useEffect(() => {
@@ -329,6 +343,7 @@ export function useCommandScreenWorkflow<
     loadError,
     request: { outcomeUnknown, retry },
     loadScreen,
+    updateState: setState,
     execute,
   };
 }

@@ -10,9 +10,7 @@ import {
 } from "./research-field-priorities.js";
 import {
   initialResearchScreenState,
-  researchBeginLoading,
   researchBeginSubmit,
-  researchLoadFailure,
   researchLoadSuccess,
   researchSubmitRejected,
   researchSubmitSuccess,
@@ -41,7 +39,7 @@ function fixtureProjection(
 }
 
 function loadedState(): ResearchScreenState {
-  return researchLoadSuccess(initialResearchScreenState(), fixtureProjection());
+  return researchLoadSuccess(fixtureProjection());
 }
 
 function submittingState(): ResearchScreenState {
@@ -51,16 +49,9 @@ function submittingState(): ResearchScreenState {
 }
 
 describe("research screen state", () => {
-  it("starts idle and moves through the load lifecycle", () => {
+  it("starts idle and adopts the first projection", () => {
     expect(initialResearchScreenState()).toEqual({ kind: "idle", revision: 0 });
-    expect(researchBeginLoading(initialResearchScreenState())).toEqual({
-      kind: "loading",
-      revision: 0,
-    });
-    const loaded = researchLoadSuccess(
-      researchBeginLoading(initialResearchScreenState()),
-      fixtureProjection(),
-    );
+    const loaded = researchLoadSuccess(fixtureProjection());
     expect(loaded.kind).toBe("loaded");
     if (loaded.kind !== "loaded") return;
     expect(loaded.revision).toBe(0);
@@ -75,18 +66,6 @@ describe("research screen state", () => {
     expect(draft.HULL_CONSTRUCTION).toBe(2);
     expect(draft.SHIP_DESIGN).toBe(1);
     expect(draft.MISSILES).toBe(1);
-  });
-
-  it("load failures move to load-failed with the message and keep the revision", () => {
-    const failed = researchLoadFailure(
-      { kind: "loading", revision: 3 },
-      "SESSION_NOT_FOUND: no session",
-    );
-    expect(failed).toEqual({
-      kind: "load-failed",
-      revision: 3,
-      message: "SESSION_NOT_FOUND: no session",
-    });
   });
 
   it("walks loaded -> submitting -> submitted with an honest queue notice", () => {
@@ -165,10 +144,6 @@ describe("research screen state", () => {
   it("submitting is only reachable from a loaded/submitted state", () => {
     expect(researchBeginSubmit({ kind: "idle", revision: 0 }, "req-1")).toEqual({
       kind: "idle",
-      revision: 0,
-    });
-    expect(researchBeginSubmit({ kind: "loading", revision: 0 }, "req-1")).toEqual({
-      kind: "loading",
       revision: 0,
     });
   });

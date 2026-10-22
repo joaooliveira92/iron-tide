@@ -7,7 +7,10 @@ import type {
   ConstructionScreenProjection,
   ForeignConstructionPreviewOutcome,
 } from "../../../../shared/construction-contract.js";
-import { useCommandScreenWorkflow } from "../../../lib/command-screen-workflow.js";
+import {
+  requestLifecycleAdapter,
+  useCommandScreenWorkflow,
+} from "../../../lib/command-screen-workflow.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
 import type { ConstructionScreenState } from "../construction-screen-state.js";
 import {
@@ -61,7 +64,7 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
     ConstructionScreenProjection,
     ConstructionCommandOutcome | ConstructionCommandQueuedOutcome
   >(
-    {
+    requestLifecycleAdapter({
       initialState: initialConstructionScreenState,
       load: () =>
         bridge
@@ -71,7 +74,7 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
       accept: acceptConstructionCommand,
       onProjection: (projection) =>
         setSelectedDesignId((current) => nextDesignSelection(current, projection.designs)),
-    },
+    }),
     { refreshKey: campaignRevision },
   );
   const { execute } = workflow;

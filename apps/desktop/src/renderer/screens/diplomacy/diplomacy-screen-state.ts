@@ -6,8 +6,6 @@ import { describeRejection } from "../../lib/command-screen-workflow.js";
 
 export type DiplomacyScreenState =
   | DiplomacyScreenIdle
-  | DiplomacyScreenLoading
-  | DiplomacyScreenLoadFailed
   | DiplomacyScreenLoaded
   | DiplomacyScreenSubmitting
   | DiplomacyScreenSubmitted
@@ -16,17 +14,6 @@ export type DiplomacyScreenState =
 export interface DiplomacyScreenIdle {
   readonly kind: "idle";
   readonly revision: number;
-}
-
-export interface DiplomacyScreenLoading {
-  readonly kind: "loading";
-  readonly revision: number;
-}
-
-export interface DiplomacyScreenLoadFailed {
-  readonly kind: "load-failed";
-  readonly revision: number;
-  readonly message: string;
 }
 
 export interface DiplomacyScreenActiveData {
@@ -74,14 +61,7 @@ export function initialDiplomacyScreenState(): DiplomacyScreenState {
   return { kind: "idle", revision: 0 };
 }
 
-export function diplomacyBeginLoading(state: DiplomacyScreenState): DiplomacyScreenState {
-  return { kind: "loading", revision: state.revision };
-}
-
-export function diplomacyLoadSuccess(
-  _state: DiplomacyScreenState,
-  projection: DiplomacyScreenProjection,
-): DiplomacyScreenState {
+export function diplomacyLoadSuccess(projection: DiplomacyScreenProjection): DiplomacyScreenState {
   return {
     kind: "loaded",
     revision: projection.revision,
@@ -90,13 +70,6 @@ export function diplomacyLoadSuccess(
     draftCommand: null,
     notice: null,
   };
-}
-
-export function diplomacyLoadFailure(
-  state: DiplomacyScreenState,
-  message: string,
-): DiplomacyScreenState {
-  return { kind: "load-failed", revision: state.revision, message };
 }
 
 export function diplomacyBeginAction(

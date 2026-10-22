@@ -19,7 +19,7 @@ import {
   applyTransportFailure,
   beginRequest,
 } from "../../lib/command-screen-workflow.js";
-import type { PreparedCommand, RequestKind } from "../../lib/command-screen-workflow.js";
+import type { PendingRequest, RequestKind } from "../../lib/command-screen-workflow.js";
 
 const movementCommand = {
   commandId: "mcmd_1",
@@ -80,12 +80,8 @@ function loaded(): FleetScreenState {
   return applyProjection(initialFleetScreenState(), projection, projectFleetScreen(projection));
 }
 
-function prepared(kind: RequestKind, transportRequestId: string): PreparedCommand<unknown> {
-  return {
-    kind,
-    context: { expectedRevision: 0, transportRequestId },
-    send: async () => ({ outcome: "success", value: undefined, diagnostics: [] }),
-  };
+function prepared(kind: RequestKind, transportRequestId: string): PendingRequest {
+  return { kind, transportRequestId };
 }
 
 describe("fleet screen state", () => {

@@ -3,13 +3,11 @@ import type { DiplomacyScreenProjection } from "../../../shared/diplomacy-contra
 import type { DiplomacyScreenState } from "./diplomacy-screen-state.js";
 import {
   diplomacyBeginAction,
-  diplomacyBeginLoading,
   diplomacyBeginPeace,
   diplomacyBeginSubmit,
   diplomacyCanSubmit,
   diplomacyClearDraft,
   diplomacyDraftToCommand,
-  diplomacyLoadFailure,
   diplomacyLoadSuccess,
   diplomacySetBlockadeArea,
   diplomacySubmitRejected,
@@ -81,38 +79,19 @@ function fixtureProjection(
 }
 
 function loadedState(): DiplomacyScreenState {
-  return diplomacyLoadSuccess({ kind: "loading", revision: 0 }, fixtureProjection());
+  return diplomacyLoadSuccess(fixtureProjection());
 }
 
 describe("diplomacy screen state", () => {
-  it("starts idle and moves through the load lifecycle", () => {
+  it("starts idle and adopts the first projection", () => {
     expect(initialDiplomacyScreenState()).toEqual({ kind: "idle", revision: 0 });
-    expect(diplomacyBeginLoading(initialDiplomacyScreenState())).toEqual({
-      kind: "loading",
-      revision: 0,
-    });
-    const loaded = diplomacyLoadSuccess(
-      diplomacyBeginLoading(initialDiplomacyScreenState()),
-      fixtureProjection(),
-    );
+    const loaded = diplomacyLoadSuccess(fixtureProjection());
     expect(loaded.kind).toBe("loaded");
     if (loaded.kind !== "loaded") return;
     expect(loaded.revision).toBe(0);
     expect(loaded.projection.playerNationId).toBe("uk");
     expect(loaded.draftCommand).toBeNull();
     expect(loaded.notice).toBeNull();
-  });
-
-  it("load failures move to load-failed with the message and keep the revision", () => {
-    const failed = diplomacyLoadFailure(
-      { kind: "loading", revision: 3 },
-      "SESSION_NOT_FOUND: no session",
-    );
-    expect(failed).toEqual({
-      kind: "load-failed",
-      revision: 3,
-      message: "SESSION_NOT_FOUND: no session",
-    });
   });
 
   it("walks loaded -> submitting -> submitted with an honest queue notice", () => {
@@ -271,10 +250,6 @@ describe("diplomacy screen state", () => {
   it("submitting is only reachable from a loaded/submitted state with a complete draft", () => {
     expect(diplomacyBeginSubmit({ kind: "idle", revision: 0 }, "req-1")).toEqual({
       kind: "idle",
-      revision: 0,
-    });
-    expect(diplomacyBeginSubmit({ kind: "loading", revision: 0 }, "req-1")).toEqual({
-      kind: "loading",
       revision: 0,
     });
     const loaded = loadedState();

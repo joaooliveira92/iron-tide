@@ -5,7 +5,7 @@ import {
 import { describe, expect, it } from "vite-plus/test";
 import type { ResearchScreenProjection } from "../../../shared/research-contract.js";
 import { setDraftWeight } from "./research-field-priorities.js";
-import { initialResearchScreenState, researchLoadSuccess } from "./research-screen-state.js";
+import { researchLoadSuccess } from "./research-screen-state.js";
 import { buildResearchViewModel } from "./research-view-model.js";
 
 function fixtureProjection(
@@ -31,7 +31,7 @@ function fixtureProjection(
 }
 
 function loaded(overrides: Partial<ResearchScreenProjection> = {}) {
-  const state = researchLoadSuccess(initialResearchScreenState(), fixtureProjection(overrides));
+  const state = researchLoadSuccess(fixtureProjection(overrides));
   if (state.kind !== "loaded") throw new Error("expected loaded state");
   return state;
 }

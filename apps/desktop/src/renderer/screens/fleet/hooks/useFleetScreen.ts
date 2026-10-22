@@ -7,7 +7,10 @@ import type {
   FleetScreenProjection,
   MovementCommandOutcome,
 } from "../../../../shared/fleet-contract.js";
-import { useCommandScreenWorkflow } from "../../../lib/command-screen-workflow.js";
+import {
+  requestLifecycleAdapter,
+  useCommandScreenWorkflow,
+} from "../../../lib/command-screen-workflow.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
 import type { FleetScreenState } from "../fleet-screen-state.js";
 import {
@@ -49,7 +52,7 @@ export function useFleetScreen(sessionId: string): UseFleetScreenReturn {
     FleetScreenProjection,
     MovementCommandOutcome
   >(
-    {
+    requestLifecycleAdapter({
       initialState: initialFleetScreenState,
       load: () =>
         bridge
@@ -61,7 +64,7 @@ export function useFleetScreen(sessionId: string): UseFleetScreenReturn {
         setSelectedDivisionId((current) => nextDivisionSelection(current, projection.divisions));
         setDestinationAreaId((current) => current ?? projection.areas[0]?.id ?? null);
       },
-    },
+    }),
     { refreshKey: campaignRevision },
   );
   const { state, execute, loadScreen, loadError, request } = workflow;

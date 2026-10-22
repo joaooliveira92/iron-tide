@@ -13,13 +13,14 @@ import { useResearchScreen } from "./hooks/useResearchScreen.js";
 import { buildResearchViewModel } from "./research-view-model.js";
 
 export function ResearchScreen({ sessionId }: { readonly sessionId: string }) {
-  const { state, setFieldWeight, submit, reload, canSubmit } = useResearchScreen(sessionId);
+  const { state, loadError, setFieldWeight, submit, reload, canSubmit } =
+    useResearchScreen(sessionId);
 
-  if (state.kind === "load-failed") {
-    return <ResearchLoadErrorState message={state.message} onRetry={() => void reload()} />;
+  if (loadError !== null) {
+    return <ResearchLoadErrorState message={loadError} onRetry={() => void reload()} />;
   }
 
-  if (state.kind === "idle" || state.kind === "loading") {
+  if (state.kind === "idle") {
     return <ResearchLoadingState />;
   }
 

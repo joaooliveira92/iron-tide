@@ -3,7 +3,7 @@ import { RESEARCH_FIELD_PRIORITY_WEIGHTS } from "@bluewave/campaign-engine";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { ResearchScreen } from "./ResearchScreen.js";
-import { initialResearchScreenState, researchLoadSuccess } from "./research-screen-state.js";
+import { researchLoadSuccess } from "./research-screen-state.js";
 import type { ResearchScreenState } from "./research-screen-state.js";
 
 const fixtureProjection = {
@@ -25,8 +25,7 @@ const fixtureProjection = {
 };
 
 function makeLoaded(): ResearchScreenState {
-  const base = initialResearchScreenState();
-  return researchLoadSuccess(base, fixtureProjection as never);
+  return researchLoadSuccess(fixtureProjection as never);
 }
 
 const hookMocks = vi.hoisted(() => {
@@ -51,6 +50,7 @@ vi.stubGlobal("ResizeObserver", ResizeObserverMock);
 vi.mock("./hooks/useResearchScreen.js", () => ({
   useResearchScreen: (_sessionId: string) => ({
     state: hookMocks.stateFn(),
+    loadError: null,
     setFieldWeight: hookMocks.setFieldWeight,
     submit: hookMocks.submit,
     reload: hookMocks.reload,
@@ -89,7 +89,7 @@ describe("ResearchScreen", () => {
       currentProjectTechId: null,
       fieldPriorities: {},
     };
-    const emptyState = researchLoadSuccess(initialResearchScreenState(), emptyProjection as never);
+    const emptyState = researchLoadSuccess(emptyProjection as never);
     hookMocks.stateFn.mockReturnValue(emptyState);
 
     render(<ResearchScreen sessionId="ses-1" />);

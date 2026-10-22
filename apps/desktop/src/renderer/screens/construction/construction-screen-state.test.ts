@@ -9,7 +9,7 @@ import {
   describeRejection,
   prepareCommand,
 } from "../../lib/command-screen-workflow.js";
-import type { PreparedCommand, RequestKind } from "../../lib/command-screen-workflow.js";
+import type { PendingRequest, RequestKind } from "../../lib/command-screen-workflow.js";
 import type { ConstructionScreenState } from "./construction-screen-state.js";
 import {
   acceptConstructionCommand,
@@ -86,12 +86,8 @@ function loadedState(): ConstructionScreenState {
   );
 }
 
-function prepared(kind: RequestKind, transportRequestId: string): PreparedCommand<unknown> {
-  return {
-    kind,
-    context: { expectedRevision: 0, transportRequestId },
-    send: async () => ({ outcome: "success", value: undefined, diagnostics: [] }),
-  };
+function prepared(kind: RequestKind, transportRequestId: string): PendingRequest {
+  return { kind, transportRequestId };
 }
 
 describe("construction screen state", () => {

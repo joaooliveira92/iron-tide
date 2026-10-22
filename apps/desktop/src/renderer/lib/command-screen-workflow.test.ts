@@ -37,13 +37,7 @@ describe("command screen workflow lifecycle", () => {
   });
 
   it("keeps the captured transport identity while an outcome is unknown", () => {
-    const command = prepareCommand(
-      "replace",
-      3,
-      async () => ({ outcome: "success", value: null, diagnostics: [] }),
-      "tx-1",
-    );
-    const pending = beginRequest(state, command);
+    const pending = beginRequest(state, { kind: "replace", transportRequestId: "tx-1" });
     expect(applyTransportFailure(pending, "closed")).toEqual({
       ...pending,
       notice: "TRANSPORT_FAILURE: closed",
@@ -51,14 +45,9 @@ describe("command screen workflow lifecycle", () => {
   });
 
   it("marks stale projections for refresh and adopts the engine revision", () => {
-    const command = prepareCommand(
-      "submit",
-      3,
-      async () => ({ outcome: "success", value: null, diagnostics: [] }),
-      "tx-2",
-    );
+    const pending = beginRequest(state, { kind: "submit", transportRequestId: "tx-2" });
     expect(
-      applyRejection(beginRequest(state, command), {
+      applyRejection(pending, {
         outcome: "rejected",
         reason: "STALE_REVISION",
         diagnostics: ["expected 3"],
@@ -79,11 +68,7 @@ describe("command screen workflow lifecycle", () => {
   it("adopts the projection revision and clears all request markers", () => {
     const inFlight = beginRequest(
       { ...state, extra: "kept" },
-      {
-        kind: "submit",
-        context: { expectedRevision: 3, transportRequestId: "tx-9" },
-        send: async () => ({ outcome: "success", value: null, diagnostics: [] }),
-      },
+      { kind: "submit", transportRequestId: "tx-9" },
     );
 
     const projected = applyProjection(
@@ -103,14 +88,7 @@ describe("command screen workflow lifecycle", () => {
 
   it("clears the pending request and surfaces the command notice on acceptance", () => {
     const accepted = acceptCommand(
-      beginRequest(
-        { ...state, extra: "kept" },
-        {
-          kind: "submit",
-          context: { expectedRevision: 3, transportRequestId: "tx-10" },
-          send: async () => ({ outcome: "success", value: null, diagnostics: [] }),
-        },
-      ),
+      beginRequest({ ...state, extra: "kept" }, { kind: "submit", transportRequestId: "tx-10" }),
       { extra: "kept" },
       "Command cmd_1 is submitted",
     );
