@@ -3,7 +3,13 @@ import { battleOffersFromRulesets } from "@bluewave/content-compiler";
 import type { BattleOfferRules } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
-import { makeRecordedInput, type OfferRequest, type OfferResponse } from "@bluewave/messages";
+import {
+  makeRecordedInput,
+  type BattleRequest,
+  type BattleResultInput,
+  type OfferRequest,
+  type OfferResponse,
+} from "@bluewave/messages";
 import { hashSnapshot, MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
 import { describe, expect, it } from "vite-plus/test";
 
@@ -139,6 +145,30 @@ function offerOf(result: MonthResult): OfferRequest {
   return request;
 }
 
+function battleOf(result: MonthResult): BattleRequest {
+  const request = result.suspended?.request;
+  if (request?.kind !== "battle") throw new Error(`expected a battle, got ${request?.kind}`);
+  return request;
+}
+
+function battleResult(request: BattleRequest): ReturnType<typeof makeRecordedInput> {
+  const payload: BattleResultInput = {
+    interruptionId: request.interruptionId,
+    battleId: request.battleId,
+    winnerId: PLAYER,
+    loserId: ENEMY,
+    attackerLosses: [],
+    defenderLosses: [],
+    damageReport: {},
+  };
+  return makeRecordedInput({
+    ordinal: request.ordinal,
+    kind: "battle",
+    interruptionId: request.interruptionId,
+    payload,
+  });
+}
+
 const bodies = (result: MonthResult, kind: string) =>
   result.eventLedger.all.filter((e) => e.body.kind === kind).map((e) => e.body);
 const scores = (result: MonthResult) =>
@@ -166,13 +196,35 @@ describe("scripted production war months (ADR-0254 section)", () => {
     expect(draws.length).toBeGreaterThan(0);
   });
 
-  it("accepts and delegates to the same month state as one another and resolves the battle", () => {
+  it("accept hands the battle to the player, and a recorded result resolves it", () => {
     const request = offerOf(run(snapshot, SEED));
     const accepted = run(snapshot, SEED, request, "accept");
+    expect(accepted.outcome).toBe("suspended");
+    const battle = battleOf(accepted);
+    expect(battle.battleId).toBe(request.battleId);
+
+    const resumed = new MonthExecutor().execute(
+      snapshot,
+      [],
+      SEED,
+      new DiagnosticCollector(),
+      undefined,
+      {
+        battleOffers: rules,
+        playerNationId: PLAYER,
+        interruptions: {
+          turnId: TURN,
+          recordedInputs: [answer(request, "accept"), battleResult(battle)],
+        },
+      },
+    );
+    expect(resumed.outcome).toBe("completed");
+    const resolved = resumed.finalSnapshot.wars.battles.find((b) => b.id === battle.battleId);
+    expect(resolved?.phase).toBe("resolved");
+    expect(resolved?.result?.explanation).toContain("player-resolved");
+
     const delegated = run(snapshot, SEED, request, "delegate");
-    expect(accepted.outcome).toBe("completed");
     expect(delegated.outcome).toBe("completed");
-    expect(scores(accepted)).toEqual(scores(run(snapshot, SEED, request, "accept")));
   });
 
   it("declines at the authorized fleet-battle cost to the decliner only", () => {

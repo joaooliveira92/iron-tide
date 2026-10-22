@@ -57,11 +57,10 @@ describe("T-1 acceptance (ticket 10): battle offer flow on the production pack",
     expect(obs.offer.reExecutionIdentical).toBe(true);
   });
 
-  it("accepts and delegates to the same resolved state with the same war score", () => {
-    expect(obs.accept.outcome).toBe("completed");
+  it("accept pauses for a player-fought battle; delegate auto-resolves", () => {
+    expect(obs.accept.outcome).toBe("suspended");
+    expect(obs.accept.battleRequested).toBe(true);
     expect(obs.delegate.outcome).toBe("completed");
-    expect(obs.delegate.sameAsAccept).toBe(true);
-    expect(obs.delegate.scores).toEqual(obs.accept.scores);
   });
 
   it("declines at 5 war-score points to the decliner only, with one terminal record and no resolved battle", () => {

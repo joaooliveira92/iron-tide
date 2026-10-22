@@ -1,4 +1,5 @@
 import type { CampaignSnapshot } from "@bluewave/campaign";
+import type { BattleRequest, BattleResultInput } from "@bluewave/messages";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
   makeRecordedInput,
@@ -53,6 +54,31 @@ function offerOf(result: MonthResult): OfferRequest {
   const request = result.suspended?.request;
   if (request?.kind !== "offer") throw new Error(`expected an offer, got ${request?.kind}`);
   return request;
+}
+
+function battleRequestOf(result: MonthResult): BattleRequest {
+  const request = result.suspended?.request;
+  if (request?.kind !== "battle")
+    throw new Error(`expected a battle request, got ${request?.kind}`);
+  return request;
+}
+
+function battleResult(request: BattleRequest): RecordedInput {
+  const payload: BattleResultInput = {
+    interruptionId: request.interruptionId,
+    battleId: request.battleId,
+    winnerId: ATTACKER_NATION,
+    loserId: DEFENDER_NATION,
+    attackerLosses: [],
+    defenderLosses: [],
+    damageReport: {},
+  };
+  return makeRecordedInput({
+    ordinal: request.ordinal,
+    kind: "battle",
+    interruptionId: request.interruptionId,
+    payload,
+  });
 }
 
 function answer(request: OfferRequest, response: OfferResponse): RecordedInput {
@@ -279,28 +305,61 @@ describe("the estimate (R5)", () => {
 describe("accept and delegate (R6, R7)", () => {
   const nonOffered = () => run(warSnapshot(), { channel: false });
 
-  for (const response of ["accept", "delegate"] as const) {
-    it(`${response} resumes the month with the state of the non-offered run`, () => {
-      const request = offerOf(run(warSnapshot()));
-      const resumed = run(warSnapshot(), { inputs: [answer(request, response)] });
-      expect(resumed.outcome).toBe("completed");
-      const control = nonOffered();
-      expect(hashSnapshot(resumed.finalSnapshot)).toBe(hashSnapshot(control.finalSnapshot));
-      expect(resumed.finalSnapshot.wars.wars).toEqual(control.finalSnapshot.wars.wars);
-      expect(resumed.finalSnapshot.wars.battles).toEqual(control.finalSnapshot.wars.battles);
+  it("delegate resumes the month with the state of the non-offered run", () => {
+    const request = offerOf(run(warSnapshot()));
+    const resumed = run(warSnapshot(), { inputs: [answer(request, "delegate")] });
+    expect(resumed.outcome).toBe("completed");
+    const control = nonOffered();
+    expect(hashSnapshot(resumed.finalSnapshot)).toBe(hashSnapshot(control.finalSnapshot));
+    expect(resumed.finalSnapshot.wars.wars).toEqual(control.finalSnapshot.wars.wars);
+    expect(resumed.finalSnapshot.wars.battles).toEqual(control.finalSnapshot.wars.battles);
 
-      const answered = resumed.eventLedger.all.filter((e) => e.eventType === "BattleOfferAnswered");
-      expect(answered).toHaveLength(1);
-      expect(answered[0]?.body).toEqual({
-        kind: "BattleOfferAnswered",
-        nationId: ATTACKER_NATION,
-        battleId: request.battleId,
-        missionType: "FLEET_BATTLE",
-        response,
-        resolutionMode: "AUTO_RESOLVE",
-      });
+    const answered = resumed.eventLedger.all.filter((e) => e.eventType === "BattleOfferAnswered");
+    expect(answered).toHaveLength(1);
+    expect(answered[0]?.body).toEqual({
+      kind: "BattleOfferAnswered",
+      nationId: ATTACKER_NATION,
+      battleId: request.battleId,
+      missionType: "FLEET_BATTLE",
+      response: "delegate",
+      resolutionMode: "AUTO_RESOLVE",
     });
-  }
+  });
+
+  it("accept suspends on a battle request instead of auto-resolving", () => {
+    const request = offerOf(run(warSnapshot()));
+    const accepted = run(warSnapshot(), { inputs: [answer(request, "accept")] });
+    expect(accepted.outcome).toBe("suspended");
+    expect(accepted.suspended?.reason).toBe("awaiting-input");
+    const battle = battleRequestOf(accepted);
+    expect(battle).toMatchObject({
+      ordinal: 1,
+      battleId: request.battleId,
+      attackerId: ATTACKER_NATION,
+      defenderId: DEFENDER_NATION,
+    });
+    expect(
+      accepted.eventLedger.all.filter((e) => e.eventType === "BattleOfferAnswered"),
+    ).toHaveLength(1);
+  });
+
+  it("accept + a recorded battle result resolves the player-fought battle exactly once", () => {
+    const request = offerOf(run(warSnapshot()));
+    const accepted = run(warSnapshot(), { inputs: [answer(request, "accept")] });
+    const battle = battleRequestOf(accepted);
+    const resumed = run(warSnapshot(), {
+      inputs: [answer(request, "accept"), battleResult(battle)],
+    });
+    expect(resumed.outcome).toBe("completed");
+    const recorded = resumed.finalSnapshot.wars.battles.find((b) => b.id === battle.battleId);
+    expect(recorded?.phase).toBe("resolved");
+    expect(recorded?.result?.explanation).toContain("player-resolved");
+
+    const replay = run(warSnapshot(), {
+      inputs: [answer(request, "accept"), battleResult(battle)],
+    });
+    expect(hashSnapshot(replay.finalSnapshot)).toBe(hashSnapshot(resumed.finalSnapshot));
+  });
 
   it("costs no victory points: the war score equals the non-offered run's", () => {
     const request = offerOf(run(warSnapshot()));
@@ -317,7 +376,7 @@ describe("several offers in one month (R3, R15)", () => {
     const snapshot = warSnapshot({ twoAreas: true });
     const first = offerOf(run(snapshot, { rules: exact }));
     expect(first).toMatchObject({ ordinal: 0, areaId: "a-1" });
-    const inputs: RecordedInput[] = [answer(first, "accept")];
+    const inputs: RecordedInput[] = [answer(first, "delegate")];
 
     const secondResult = run(snapshot, { rules: exact, inputs });
     const second = offerOf(secondResult);

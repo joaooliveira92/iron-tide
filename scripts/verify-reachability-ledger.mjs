@@ -39,8 +39,6 @@ export function extractExports(indexSource) {
   while ((m = starRe.exec(indexSource)) !== null) {
     names.push(m[1]);
   }
-  // export { X } from "./path"
-  const namedRe = /export\s*\{\s*[^}]+\s*\}\s*from\s+["']\.\/[^"']+["']/g;
   // We don't extract individual identifiers for named re-exports — just note the module.
   return [...new Set(names)];
 }
@@ -59,21 +57,21 @@ export function validateEntry(entry, index, seenIds) {
     return problems;
   }
   if (seenIds.has(entry.id)) {
-    problems.push(`duplicate id: "${entry.id}"`);
+    problems.push(`duplicate id: "${String(entry.id)}"`);
   }
   seenIds.add(entry.id);
 
   const status = entry.status;
   if (!VALID_STATUSES.has(status)) {
-    problems.push(`"${entry.id}": invalid status "${status}"`);
+    problems.push(`"${String(entry.id)}": invalid status "${String(status)}"`);
   }
 
   if (status === "dormant-by-decision" && !entry.adr_or_issue) {
-    problems.push(`"${entry.id}": dormant-by-decision requires adr_or_issue citation`);
+    problems.push(`"${String(entry.id)}": dormant-by-decision requires adr_or_issue citation`);
   }
 
   if (status === "unclassified") {
-    problems.push(`"${entry.id}": unclassified entry must be triaged`);
+    problems.push(`"${String(entry.id)}": unclassified entry must be triaged`);
   }
 
   return problems;
@@ -92,7 +90,7 @@ export function verifyReachableFiles(entry) {
   if (screen !== null && typeof screen === "string" && screen.trim() !== "") {
     const screenPath = resolve(ROOT, "apps/desktop/src/renderer", screen);
     if (!existsSync(screenPath)) {
-      problems.push(`"${entry.id}": renderer_screen not found: ${screenPath}`);
+      problems.push(`"${String(entry.id)}": renderer_screen not found: ${screenPath}`);
     }
   }
 
@@ -100,7 +98,7 @@ export function verifyReachableFiles(entry) {
   if (evidence !== null && typeof evidence === "string" && evidence.trim() !== "") {
     const evPath = resolve(ROOT, evidence);
     if (!existsSync(evPath)) {
-      problems.push(`"${entry.id}": evidence_test not found: ${evPath}`);
+      problems.push(`"${String(entry.id)}": evidence_test not found: ${evPath}`);
     }
   }
 
@@ -153,7 +151,6 @@ const VALID_PACKAGES = new Set(["phase-engine", "combat", "campaign-engine", "de
  * @param {() => string} readCombatIndex
  * @param {() => string} readPhaseEngineIndex
  * @param {() => string} readCommandContract
- * @param {(path: string) => boolean} pathExists
  * @returns {{ ok: boolean, problems: string[], counts: Record<string, number> }}
  */
 export function evaluateLedger({
@@ -161,7 +158,6 @@ export function evaluateLedger({
   readCombatIndex,
   readPhaseEngineIndex,
   readCommandContract,
-  pathExists,
 }) {
   const problems = [];
   const seenIds = new Set();
@@ -172,7 +168,9 @@ export function evaluateLedger({
     problems.push(...validateEntry(entry, i, seenIds));
 
     if (!VALID_PACKAGES.has(entry.engine_package)) {
-      problems.push(`"${entry.id}": unknown engine_package "${entry.engine_package}"`);
+      problems.push(
+        `"${String(entry.id)}": unknown engine_package "${String(entry.engine_package)}"`,
+      );
     }
 
     problems.push(...verifyReachableFiles(entry));
@@ -248,14 +246,12 @@ if (process.argv[1] && import.meta.filename === process.argv[1]) {
     readFileSync(resolve(ROOT, "packages/phase-engine/src/index.ts"), "utf8");
   const readCommandContract = () =>
     readFileSync(resolve(ROOT, "apps/desktop/src/shared/campaign-command-contract.ts"), "utf8");
-  const pathExists = (p) => existsSync(p);
 
   const result = evaluateLedger({
     ledger,
     readCombatIndex,
     readPhaseEngineIndex,
     readCommandContract,
-    pathExists,
   });
 
   for (const problem of result.problems) {
@@ -263,7 +259,7 @@ if (process.argv[1] && import.meta.filename === process.argv[1]) {
   }
 
   const statusLine = Object.entries(result.counts)
-    .filter(([_, v]) => v > 0)
+    .filter(([, v]) => v > 0)
     .map(([k, v]) => `${v} ${k}`)
     .join(", ");
   console.log(`reachability ledger: ok — ${statusLine}`);

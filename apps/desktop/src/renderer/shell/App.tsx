@@ -28,7 +28,7 @@ import { useBackground } from "./BackgroundContext.js";
 import { CampaignUnavailableView } from "./CampaignUnavailableView.js";
 import { CampaignShellProvider, useCampaignShellContext } from "./CampaignShellContext.js";
 import { GuidedInspectionOverlay } from "./GuidedInspectionOverlay.js";
-import { BattleRequestDialog } from "./interruptions/BattleRequestDialog.js";
+import { PlayerBattleScreen } from "../screens/battle/PlayerBattleScreen.js";
 import { OfferDialog } from "./interruptions/OfferDialog.js";
 import { DecisionDialog } from "./interruptions/DecisionDialog.js";
 import { PendingTurnRecoveryPrompt } from "./interruptions/PendingTurnRecoveryPrompt.js";
@@ -277,9 +277,11 @@ function CampaignShellApplication({
             onAbandon={shell.actions.abandonPendingTurn}
           />
         ) : (
-          <BattleRequestDialog
+          <PlayerBattleScreen
+            bridge={bridge}
             request={shell.state.interruption.request}
-            onChoose={shell.actions.submitBattleResult}
+            sessionId={shell.state.campaign.sessionId}
+            onSubmitResult={shell.actions.submitPlayerBattleOutcome}
             onAbandon={shell.actions.abandonPendingTurn}
           />
         ))}

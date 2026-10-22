@@ -68,6 +68,7 @@ export interface T1Observation {
   };
   readonly accept: {
     readonly outcome: string | undefined;
+    readonly battleRequested: boolean;
     readonly scores: readonly (readonly number[])[];
     readonly hashes: RunHashes;
   };
@@ -376,7 +377,12 @@ export function runT1Acceptance(): T1Observation {
       leaksEnemyIdentity: leaks(serialized, first),
       reExecutionIdentical: JSON.stringify(again) === serialized,
     },
-    accept: { outcome: accepted.outcome, scores: scores(accepted), hashes: hashesOf(accepted) },
+    accept: {
+      outcome: accepted.outcome,
+      battleRequested: accepted.suspended?.request?.kind === "battle",
+      scores: scores(accepted),
+      hashes: hashesOf(accepted),
+    },
     delegate: {
       outcome: delegated.outcome,
       scores: scores(delegated),

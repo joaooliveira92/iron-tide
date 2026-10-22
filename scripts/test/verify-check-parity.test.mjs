@@ -68,9 +68,13 @@ void test("names every uncovered step, in chain order", () => {
   assert.deepEqual(uncovered, ["lint:effect", "build"]);
 });
 
-void test("the allowlist is seeded with exactly check:golden and check:determinism", () => {
-  assert.deepEqual(Object.keys(ALLOWLIST).sort(), ["check:determinism", "check:golden"]);
+void test("the allowlist is seeded with exactly check:golden, check:determinism and check:reachability-ledger", () => {
+  assert.deepEqual(Object.keys(ALLOWLIST).sort(), [
+    "check:determinism",
+    "check:golden",
+    "check:reachability-ledger",
+  ]);
   for (const coverage of Object.values(ALLOWLIST)) {
-    assert.match(coverage, /\.yml/u);
+    assert.match(coverage, /(?:\.yml|preflight)/u);
   }
 });

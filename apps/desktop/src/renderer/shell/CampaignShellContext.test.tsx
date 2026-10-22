@@ -33,6 +33,7 @@ const shell = {
   advanceMonth: vi.fn(async () => undefined),
   answerDecision: vi.fn(async () => undefined),
   submitBattleResult: vi.fn(async () => undefined),
+  submitPlayerBattleOutcome: vi.fn(async () => undefined),
   submitOfferResponse: vi.fn(async () => undefined),
   abandonPendingTurn: vi.fn(async () => undefined),
   refreshCampaign: vi.fn(),

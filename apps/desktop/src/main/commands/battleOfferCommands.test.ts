@@ -28,8 +28,14 @@ import { commitMonthProgram } from "./commitMonth.js";
 import {
   abandonPendingTurnProgram,
   resolveTurnProgram,
+  submitBattleResultProgram,
   submitOfferResponseProgram,
 } from "./resolveTurn.js";
+import {
+  advancePlayerBattleProgram,
+  finishPlayerBattleProgram,
+  startPlayerBattleProgram,
+} from "./playerBattle.js";
 
 // T-1 03 (#112): the desktop command path of a battle offer, over the compiled production campaign with a war injected
 // into the session snapshot. The mechanics run under a FIXTURE-CLASS section supplied through the ContentArtifact test
@@ -238,33 +244,103 @@ describe("battle offer commands", () => {
     expect(value.request?.kind).toBe("battle");
   });
 
-  for (const response of ["accept", "delegate"] as const) {
-    it(`${response} resumes the month to the state of the non-offered run`, async () => {
-      const saveDir = join(saveRoot, response);
-      const request = await suspendAtOffer(`s-${response}`, saveDir);
-      const answered = await submit(`s-${response}`, {
-        interruptionId: request.interruptionId,
-        battleId: request.battleId,
-        response,
-      });
-      expect(answered.outcome).toBe("success");
-      if (answered.outcome !== "success") return;
-      expect((answered.value as ResolveTurnResult).status).toBe("completed");
-      expect(existsSync(join(saveDir, PENDING_TURN_FILENAME))).toBe(false);
-
-      const controlDir = join(saveRoot, `${response}-control`);
-      registerWarSession("s-control", controlDir);
-      const control = await run(offerRuntime, commitMonthProgram, {
-        sessionId: "s-control",
-        expectedRevision: 0,
-        transportRequestId: "req",
-      });
-      expect(control.outcome).toBe("success");
-      expect(JSON.stringify(getCampaignSession(`s-${response}`)!.state.snapshot)).toBe(
-        JSON.stringify(getCampaignSession("s-control")!.state.snapshot),
-      );
+  it("delegate resumes the month to the state of the non-offered run", async () => {
+    const saveDir = join(saveRoot, "delegate");
+    const request = await suspendAtOffer("s-delegate", saveDir);
+    const answered = await submit("s-delegate", {
+      interruptionId: request.interruptionId,
+      battleId: request.battleId,
+      response: "delegate",
     });
-  }
+    expect(answered.outcome).toBe("success");
+    if (answered.outcome !== "success") return;
+    expect((answered.value as ResolveTurnResult).status).toBe("completed");
+    expect(existsSync(join(saveDir, PENDING_TURN_FILENAME))).toBe(false);
+
+    const controlDir = join(saveRoot, "delegate-control");
+    registerWarSession("s-control", controlDir);
+    const control = await run(offerRuntime, commitMonthProgram, {
+      sessionId: "s-control",
+      expectedRevision: 0,
+      transportRequestId: "req",
+    });
+    expect(control.outcome).toBe("success");
+    expect(JSON.stringify(getCampaignSession("s-delegate")!.state.snapshot)).toBe(
+      JSON.stringify(getCampaignSession("s-control")!.state.snapshot),
+    );
+  });
+
+  it("accept starts a player battle, advances it to a result and submits it", async () => {
+    const saveDir = join(saveRoot, "accept");
+    const request = await suspendAtOffer("s-accept", saveDir);
+    const answered = await submit("s-accept", {
+      interruptionId: request.interruptionId,
+      battleId: request.battleId,
+      response: "accept",
+    });
+    expect(answered.outcome).toBe("success");
+    if (answered.outcome !== "success") return;
+    const paused = answered.value as ResolveTurnResult;
+    expect(paused.status).toBe("suspended");
+    if (paused.status !== "suspended") return;
+    expect(paused.request?.kind).toBe("battle");
+
+    const started = await run(offerRuntime, startPlayerBattleProgram, {
+      sessionId: "s-accept",
+      battleId: request.battleId,
+    });
+    expect(started.outcome).toBe("success");
+    if (started.outcome !== "success") return;
+    const start = started.value as { view: { minute: number; maxMinutes: number } };
+    expect(start.view.minute).toBe(0);
+    expect(start.view.maxMinutes).toBeGreaterThan(0);
+
+    const advanced = await run(offerRuntime, advancePlayerBattleProgram, {
+      sessionId: "s-accept",
+      battleId: request.battleId,
+      mode: "to_end",
+      divisions: [],
+    });
+    expect(advanced.outcome).toBe("success");
+    if (advanced.outcome !== "success") return;
+    const advance = advanced.value as {
+      view: { ended: boolean };
+      result: {
+        battleId: string;
+        winnerId: string | null;
+        loserId: string | null;
+        attackerLosses: readonly string[];
+        defenderLosses: readonly string[];
+        damageReport: Readonly<Record<string, number>>;
+      } | null;
+    };
+    expect(advance.view.ended).toBe(true);
+    expect(advance.result).not.toBeNull();
+    const outcome = advance.result!;
+
+    const finished = await run(offerRuntime, finishPlayerBattleProgram, {
+      sessionId: "s-accept",
+      battleId: request.battleId,
+    });
+    expect(finished.outcome).toBe("success");
+
+    const submitted = await run(offerRuntime, submitBattleResultProgram, {
+      sessionId: "s-accept",
+      expectedRevision: 0,
+      transportRequestId: "req",
+      interruptionId: paused.request?.interruptionId,
+      ...outcome,
+    });
+    expect(submitted.outcome).toBe("success");
+    if (submitted.outcome !== "success") return;
+    expect((submitted.value as ResolveTurnResult).status).toBe("completed");
+    expect(existsSync(join(saveDir, PENDING_TURN_FILENAME))).toBe(false);
+
+    const snapshot = getCampaignSession("s-accept")!.state.snapshot;
+    expect(
+      snapshot.wars.battles.find((b) => b.id === request.battleId)?.result?.explanation,
+    ).toContain("player-resolved");
+  });
 
   it("resumes to the identical offer after a reload", async () => {
     const saveDir = join(saveRoot, "reload");
