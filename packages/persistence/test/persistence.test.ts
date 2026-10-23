@@ -1,4 +1,12 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type {
@@ -470,9 +478,7 @@ describe("SaveStore", () => {
     const state = createFixtureState();
     store.save(state, tmpDir);
 
-    const tmpFiles = require("node:fs")
-      .readdirSync(tmpDir)
-      .filter((f: string) => f.startsWith(".tmp_"));
+    const tmpFiles = readdirSync(tmpDir).filter((f) => f.startsWith(".tmp_"));
     expect(tmpFiles).toHaveLength(0);
   });
 });
