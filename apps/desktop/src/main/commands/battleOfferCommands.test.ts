@@ -1,10 +1,6 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import type { CampaignState, CampaignSnapshot, NationState } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
-import { createEnvelope } from "@bluewave/deterministic";
+import { join, resolve } from "node:path";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
 import { FIXTURE_BATTLE_OFFER_RULES } from "@bluewave/test-support";
@@ -17,13 +13,12 @@ import {
   getCampaignSession,
   registerCampaignSession,
 } from "../campaignSessions.js";
-import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { loadPendingTurn, PENDING_TURN_FILENAME, savePendingTurn } from "../pendingTurn.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
+import { registerWarSession, WAR_AREA, WAR_SEED } from "./warSessionFixture.js";
 import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { ContentArtifact, contentArtifactLayer } from "../runtime/contentArtifact.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
-import { toSaveableState } from "../saveHelpers.js";
 import { commitMonthProgram } from "./commitMonth.js";
 import {
   abandonPendingTurnProgram,
@@ -33,16 +28,12 @@ import {
 } from "./resolveTurn.js";
 import {
   advancePlayerBattleProgram,
-  dropPlayerBattleSessionsForTest,
   finishPlayerBattleProgram,
   startPlayerBattleProgram,
 } from "./playerBattle.js";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(__dirname, "../../../../..");
-const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
-const SEED = "offer-command-seed-0123456789abcdef";
-const AREA = "eng_home_coast";
+const SEED = WAR_SEED;
+const AREA = WAR_AREA;
 
 const withOffers = Layer.effect(
   ContentArtifact,
@@ -63,6 +54,7 @@ const withoutSection = Layer.effect(
     return { ...real, loadBattleOfferRules: () => Effect.succeed(undefined) };
   }),
 ).pipe(Layer.provide(contentArtifactLayer()));
+const restartedRuntime = ManagedRuntime.make(Layer.mergeAll(desktopMainLayer(), withOffers));
 const dormantRuntime = ManagedRuntime.make(Layer.mergeAll(desktopMainLayer(), withoutSection));
 const productionRuntime = ManagedRuntime.make(desktopMainLayer());
 
@@ -72,61 +64,6 @@ async function run(
   payload: unknown,
 ): Promise<BridgeResult<unknown>> {
   return projectCommandExit(await runtime.runPromiseExit(programFor(program)(payload)));
-}
-
-function warSnapshot(base: CampaignSnapshot): CampaignSnapshot {
-  const nations = new Map<string, NationState>(base.nations);
-  for (const id of ["uk", "france"]) {
-    const nation = nations.get(id);
-    if (!nation) throw new Error(`production nation ${id} missing`);
-    const ships = nation.fleets
-      .flatMap((fleet) => fleet.ships)
-      .slice(0, 2)
-      .map((ship) => ({
-        ...ship,
-        locationAreaId: AREA,
-        firepower: SafeInt(200),
-        hitPoints: ship.maxHitPoints,
-        isUnderConstruction: false,
-        readiness: "ACTIVE" as const,
-        crewQuality: SafeInt(100),
-      }));
-    nations.set(id, {
-      ...nation,
-      fleets: [
-        {
-          id: `fleet-${id}`,
-          nationId: id,
-          name: `${id} fleet`,
-          ships,
-          locationAreaId: AREA,
-        },
-      ],
-    });
-  }
-  return {
-    ...base,
-    nations,
-    wars: {
-      ...base.wars,
-      wars: [
-        {
-          id: "war_offer",
-          attackerSideId: "side_a",
-          defenderSideId: "side_d",
-          attackerSideMembers: ["uk"],
-          defenderSideMembers: ["france"],
-          attackerWarScore: 0,
-          defenderWarScore: 0,
-          attackerId: "uk",
-          defenderId: "france",
-          startDate: "1880-01",
-          status: "ACTIVE",
-        },
-      ],
-      battles: [],
-    },
-  };
 }
 
 describe("battle offer commands", () => {
@@ -140,34 +77,6 @@ describe("battle offer commands", () => {
     rmSync(saveRoot, { recursive: true, force: true });
     clearCampaignSessionsForTest();
   });
-
-  function registerWarSession(sessionId: string, saveDir: string) {
-    const collector = new DiagnosticCollector();
-    const output = compileProductionCampaignFromArtifact(
-      GENERATED_ARTIFACT,
-      new AbortController().signal,
-      collector,
-    );
-    expect(collector.hasErrors).toBe(false);
-    if (!output) throw new Error("production pack failed to compile");
-    const base = toSaveableState(output.state);
-    const snapshot = warSnapshot(base.snapshot);
-    const envelope = createEnvelope("campaign-snapshot", snapshot.compatibilityVersion, snapshot);
-    const state: CampaignState = toSaveableState({
-      snapshot,
-      envelope,
-      rawHash: base.rawHash,
-    });
-    new SaveStore().save(state, saveDir);
-    registerCampaignSession({
-      sessionId,
-      saveDir,
-      playerSlotId: "uk",
-      campaignSeed: SEED,
-      month: { month: 1, year: 1880 },
-      state,
-    });
-  }
 
   function reload(sessionId: string, saveDir: string) {
     const loaded = new SaveStore().load(saveDir, new DiagnosticCollector());
@@ -395,8 +304,7 @@ describe("battle offer commands", () => {
     const before = await advance();
     expect(before.view.minute).toBe(2);
 
-    dropPlayerBattleSessionsForTest();
-    const resumed = await run(offerRuntime, startPlayerBattleProgram, {
+    const resumed = await run(restartedRuntime, startPlayerBattleProgram, {
       sessionId: "s-mid",
       battleId: request.battleId,
     });

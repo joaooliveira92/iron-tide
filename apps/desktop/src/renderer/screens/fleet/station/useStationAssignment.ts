@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { envelopeOf } from "../../../lib/command-envelope.js";
 import type {
   FleetScreenProjection,
   StationAssignmentIntent,
@@ -75,11 +76,9 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
     if (!bridge || selected.length === 0) return Promise.resolve("transport-failure");
     const shipIds = [...selected];
     return workflow
-      .execute(intent === "assign" ? "assign-station" : "clear-station", async (context) => {
+      .execute(intent === "assign" ? "assign-station" : "clear-station", async (stamp) => {
         const result = await bridge.campaign.execute("submitStationAssignment", {
-          sessionId,
-          expectedRevision: context.expectedRevision,
-          transportRequestId: context.transportRequestId,
+          ...envelopeOf(sessionId, stamp),
           intent,
           shipIds,
         });

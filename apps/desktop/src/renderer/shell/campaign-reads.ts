@@ -2,8 +2,9 @@ import type { PlayerProjection, StrategicPriority } from "@bluewave/campaign-eng
 
 import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
 import type { MonthlyReportEntry } from "../../shared/reports-contract.js";
-import { readBridge, type BridgeRead } from "../lib/bridge-read.js";
+import type { BridgeRead } from "../lib/bridge-read.js";
 import { countActiveAlerts } from "../lib/priorities.js";
+import { primeQuery, readQuery } from "../lib/read-queries.js";
 import type { StatusStripAreas } from "./status-strip-state.js";
 
 export type CampaignReadResult<T> = BridgeRead<T>;
@@ -27,11 +28,22 @@ export async function readCampaign(
   sessionId: string,
 ): Promise<CampaignReads> {
   const [campaign, map, reports, priorities] = await Promise.all([
-    readBridge(client, (c) => c.execute("inspectCampaign", sessionId)),
-    readBridge(client, (c) => c.execute("inspectMap", sessionId)),
-    readBridge(client, (c) => c.execute("readMonthlyReports", sessionId)),
-    readBridge(client, (c) => c.execute("inspectPriorities", sessionId)),
+    readQuery(client, "inspectCampaign", sessionId, null),
+    readQuery(client, "inspectMap", sessionId, null),
+    readQuery(client, "readMonthlyReports", sessionId, null),
+    readQuery(client, "inspectPriorities", sessionId, null),
   ]);
+  const revision = campaign.status === "ready" ? campaign.value.projection?.revision : undefined;
+  if (campaign.status === "ready" && revision !== undefined) {
+    primeQuery(client, "inspectCampaign", sessionId, revision, campaign.value);
+    if (map.status === "ready") primeQuery(client, "inspectMap", sessionId, revision, map.value);
+    if (reports.status === "ready") {
+      primeQuery(client, "readMonthlyReports", sessionId, revision, reports.value);
+    }
+    if (priorities.status === "ready") {
+      primeQuery(client, "inspectPriorities", sessionId, revision, priorities.value);
+    }
+  }
   return {
     projection: view(campaign, (value) => value.projection),
     areas: view(map, (value) => value.strategic?.world?.areas ?? []),

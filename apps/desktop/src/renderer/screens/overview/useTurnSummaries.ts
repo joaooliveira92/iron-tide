@@ -1,9 +1,5 @@
-import type {
-  ReadTurnSummariesResult,
-  TurnSummaryEntry,
-} from "../../../shared/turn-message-contract.js";
-import type { BridgeResult } from "../../../shared/bridge-contract.js";
-import { useBridgeQuery } from "../../lib/use-bridge-query.js";
+import type { TurnSummaryEntry } from "../../../shared/turn-message-contract.js";
+import { useRead } from "../../lib/use-read.js";
 import { useCampaignRevision } from "../../shell/CampaignShellContext.js";
 
 export interface TurnSummariesState {
@@ -14,17 +10,11 @@ export interface TurnSummariesState {
 const EMPTY: readonly TurnSummaryEntry[] = [];
 
 export function useTurnSummaries(sessionId: string): TurnSummariesState {
-  const revision = useCampaignRevision();
-  const state = useBridgeQuery(
-    sessionId,
-    revision,
-    (bridge, id): Promise<BridgeResult<ReadTurnSummariesResult>> =>
-      bridge.campaign.execute("readTurnSummaries", id),
-  );
+  const read = useRead("readTurnSummaries", sessionId, useCampaignRevision());
 
-  if (state.status === "ready") {
-    const summaries = Array.isArray(state.value.summaries) ? state.value.summaries : EMPTY;
+  if (read.status === "ready") {
+    const summaries = Array.isArray(read.value.summaries) ? read.value.summaries : EMPTY;
     return { summaries, loading: false };
   }
-  return { summaries: EMPTY, loading: state.status === "loading" };
+  return { summaries: EMPTY, loading: read.status === "loading" };
 }

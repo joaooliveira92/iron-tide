@@ -121,6 +121,7 @@ describe("formatFixed and formatTimestamp", () => {
   it("keeps trailing zeros and never groups", () => {
     expect(formatFixed(1234.5, { locale: "en-US", digits: 1 })).toBe("1234.5");
     expect(formatFixed(12, { locale: "en-US", digits: 2 })).toBe("12.00");
+    expect(formatFixed(2.15, { locale: "en-US", digits: 1 })).toBe("2.1");
     expect(formatFixed(131.6, { locale: "en-US", digits: 0 })).toBe("132");
   });
 

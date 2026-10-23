@@ -1,6 +1,5 @@
-import type { BridgeResult } from "../../../shared/bridge-contract.js";
 import type { DiplomacyScreenProjection } from "../../../shared/diplomacy-contract.js";
-import { useBridgeQuery } from "../../lib/use-bridge-query.js";
+import { useRead } from "../../lib/use-read.js";
 import { useCampaignRevision } from "../../shell/CampaignShellContext.js";
 
 export type NationRailLoad =
@@ -9,15 +8,9 @@ export type NationRailLoad =
   | { readonly status: "unavailable" };
 
 export function useNationRail(sessionId: string): NationRailLoad {
-  const revision = useCampaignRevision();
-  const state = useBridgeQuery(
-    sessionId,
-    revision,
-    (bridge, id): Promise<BridgeResult<DiplomacyScreenProjection>> =>
-      bridge.campaign.execute("inspectDiplomacyScreen", id),
-  );
+  const read = useRead("inspectDiplomacyScreen", sessionId, useCampaignRevision());
 
-  if (state.status === "ready") return { status: "ready", projection: state.value };
-  if (state.status === "error") return { status: "unavailable" };
+  if (read.status === "ready") return { status: "ready", projection: read.value };
+  if (read.status === "unavailable") return { status: "unavailable" };
   return { status: "loading" };
 }

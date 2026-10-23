@@ -12,7 +12,6 @@ import { ManagedRuntime } from "effect";
 import { registerCampaignSession } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { resolveGeneratedContentDir } from "../contentPack.js";
-import { clearResearchWorkspacesForTest } from "../researchWorkspace.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { toSaveableState } from "../saveHelpers.js";
@@ -97,7 +96,6 @@ async function run(): Promise<void> {
     process.stdout.write(`${post.rawHash}\n${serialized}\n`);
   } finally {
     await runtime.dispose();
-    clearResearchWorkspacesForTest();
     rmSync(saveDir, { recursive: true, force: true });
   }
 }

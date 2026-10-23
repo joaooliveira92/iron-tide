@@ -1,3 +1,4 @@
+import type { SetResearchPriorityCommand } from "@bluewave/commands";
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -30,12 +31,8 @@ import {
   registerCampaignSession,
 } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
-import {
-  clearResearchWorkspacesForTest,
-  researchEnvelopesForExecution,
-} from "../researchWorkspace.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
-import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
+import { programFor, queuedEnvelopes, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { toSaveableState } from "../saveHelpers.js";
 import { commitMonthProgram } from "./commitMonth.js";
@@ -49,7 +46,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-const runtime = ManagedRuntime.make(desktopMainLayer());
+const makeRuntime = () => ManagedRuntime.make(desktopMainLayer());
+let runtime = makeRuntime();
+
+function restartRuntime(): void {
+  void runtime.dispose();
+  runtime = makeRuntime();
+}
 
 async function runProgram<A>(
   program: AnyCommandHandler,
@@ -82,7 +85,7 @@ describe("research commands", () => {
   afterEach(() => {
     rmSync(saveRoot, { recursive: true, force: true });
     clearCampaignSessionsForTest();
-    clearResearchWorkspacesForTest();
+    restartRuntime();
   });
 
   function ukFieldPriorities(state: CampaignState): Record<string, number> {
@@ -215,7 +218,11 @@ describe("research commands", () => {
       expect(result.value.commandId).toMatch(/^player-[0-9a-f]{40}$/);
 
       const session = requireSessionState("issue-session");
-      const [queued] = researchEnvelopesForExecution("issue-session", session.snapshot);
+      const [queued] = queuedEnvelopes<SetResearchPriorityCommand>(
+        runtime,
+        "issue-session",
+        session.snapshot,
+      );
       expect(queued).toBeDefined();
       if (!queued) return;
       expect(queued.version).toBe("0.1.0");
@@ -252,7 +259,7 @@ describe("research commands", () => {
       expect(inspected.outcome).toBe("success");
       if (inspected.outcome !== "success") return;
       expect(inspected.value.fieldPriorities).toEqual(priorities);
-      expect(researchEnvelopesForExecution("apply-session", after.snapshot)).toEqual([]);
+      expect(queuedEnvelopes(runtime, "apply-session", after.snapshot)).toEqual([]);
     });
 
     it("AC-3: rejects invalid priority records without touching the session or queue", async () => {
@@ -290,7 +297,7 @@ describe("research commands", () => {
       expect(unknown.diagnostics.join(" ")).toContain("NUCLEAR_FUSION");
 
       const session = requireSessionState("invalid-session");
-      expect(researchEnvelopesForExecution("invalid-session", session.snapshot)).toEqual([]);
+      expect(queuedEnvelopes(runtime, "invalid-session", session.snapshot)).toEqual([]);
       expect(ukFieldPriorities(session)).toEqual(pristine);
     });
 
@@ -307,7 +314,7 @@ describe("research commands", () => {
       expect(result.reason).toBe("EXACT_TECHNOLOGY_SELECTION_PROHIBITED");
 
       const session = requireSessionState("exact-tech-session");
-      expect(researchEnvelopesForExecution("exact-tech-session", session.snapshot)).toEqual([]);
+      expect(queuedEnvelopes(runtime, "exact-tech-session", session.snapshot)).toEqual([]);
       expect(ukFieldPriorities(session)).toEqual(pristine);
     });
 
@@ -331,7 +338,7 @@ describe("research commands", () => {
       );
 
       const session = requireSessionState("idempotent-session");
-      expect(researchEnvelopesForExecution("idempotent-session", session.snapshot)).toHaveLength(1);
+      expect(queuedEnvelopes(runtime, "idempotent-session", session.snapshot)).toHaveLength(1);
 
       const conflicting = await setResearchPriorityCommand(
         priorityPayload(
@@ -347,7 +354,7 @@ describe("research commands", () => {
       expect(conflicting.outcome).toBe("rejected");
       if (conflicting.outcome !== "rejected") return;
       expect(conflicting.reason).toBe("IDEMPOTENCY_CONFLICT");
-      expect(researchEnvelopesForExecution("idempotent-session", session.snapshot)).toHaveLength(1);
+      expect(queuedEnvelopes(runtime, "idempotent-session", session.snapshot)).toHaveLength(1);
     });
 
     it("AC-4: stale expectedRevision returns REVISION_MISMATCH without touching the session or queue", async () => {
@@ -364,7 +371,7 @@ describe("research commands", () => {
 
       const session = requireSessionState("stale-session");
       expect(Number(session.snapshot.turnNumber)).toBe(0);
-      expect(researchEnvelopesForExecution("stale-session", session.snapshot)).toEqual([]);
+      expect(queuedEnvelopes(runtime, "stale-session", session.snapshot)).toEqual([]);
     });
 
     it("a stale commitMonth leaves the queue intact; the retried commit delivers it", async () => {
@@ -382,9 +389,7 @@ describe("research commands", () => {
       expect(stale.reason).toBe("REVISION_MISMATCH");
 
       const session = requireSessionState("stale-commit-session");
-      expect(researchEnvelopesForExecution("stale-commit-session", session.snapshot)).toHaveLength(
-        1,
-      );
+      expect(queuedEnvelopes(runtime, "stale-commit-session", session.snapshot)).toHaveLength(1);
 
       const good = await commitMonth({
         sessionId: "stale-commit-session",
@@ -471,7 +476,7 @@ describe("research commands", () => {
       expect(construction.outcome).toBe("success");
 
       const after = requireSessionState("interleave-session");
-      const [envelope] = researchEnvelopesForExecution("interleave-session", after.snapshot);
+      const [envelope] = queuedEnvelopes(runtime, "interleave-session", after.snapshot);
       expect(envelope).toBeDefined();
       if (!envelope) return;
       expect(envelope.expectedSnapshotHash).toBe(sha256Hex(canonicalSerialize(after.snapshot)));

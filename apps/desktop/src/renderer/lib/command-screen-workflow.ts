@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import { describeTransportFailure } from "./bridge-read.js";
+import { stampCommand, type CommandStamp, type TransportIdSource } from "./command-envelope.js";
 
 export type RequestKind =
   | "submit"
@@ -15,7 +16,9 @@ export type RequestKind =
   | "order-foreign"
   | "assign-station"
   | "clear-station"
-  | "authorize-dock-expansion";
+  | "authorize-dock-expansion"
+  | "advance-battle"
+  | "finish-battle";
 
 export interface PendingRequest {
   readonly kind: RequestKind;
@@ -29,18 +32,11 @@ export interface RequestLifecycle {
   readonly notice: string | null;
 }
 
-export interface CommandExecutionContext {
-  readonly expectedRevision: number;
-  readonly transportRequestId: string;
-}
-
-export type CommandSender<Value> = (
-  context: CommandExecutionContext,
-) => Promise<BridgeResult<Value>>;
+export type CommandSender<Value> = (context: CommandStamp) => Promise<BridgeResult<Value>>;
 
 export interface PreparedCommand<Value> {
   readonly kind: RequestKind;
-  readonly context: CommandExecutionContext;
+  readonly context: CommandStamp;
   readonly send: CommandSender<Value>;
 }
 
@@ -196,22 +192,15 @@ export function commandNotice(command: {
   return `Command ${command.commandId} is ${command.status}`;
 }
 
-let commandCounter = 0;
-
-export function createTransportRequestId(prefix: string): string {
-  commandCounter++;
-  return `${prefix}-${Date.now().toString(36)}-${commandCounter}`;
-}
-
 export function prepareCommand<Value>(
   kind: RequestKind,
   expectedRevision: number,
   send: CommandSender<Value>,
-  transportRequestId = createTransportRequestId(kind),
+  nextId?: TransportIdSource,
 ): PreparedCommand<Value> {
   return {
     kind,
-    context: { expectedRevision, transportRequestId },
+    context: stampCommand(kind, expectedRevision, nextId),
     send,
   };
 }

@@ -2,7 +2,7 @@ import { Effect } from "effect";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type { CopyCampaignResult, SaveCampaignResult } from "../../shared/campaign-contract.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
-import { CommandQueueStore } from "../runtime/commandQueueStore.js";
+import { CommandQueue } from "../runtime/commandQueue.js";
 import type { CommandError } from "../runtime/commandError.js";
 import { NativeDialog } from "../runtime/platform.js";
 import { ProjectStore } from "../runtime/projectStore.js";
@@ -31,11 +31,11 @@ export const closeCampaignProgram = (
 ): Effect.Effect<
   BridgeResult<{ closed: true }>,
   CommandError,
-  CampaignSessionStore | CommandQueueStore
+  CampaignSessionStore | CommandQueue
 > =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
-    const queue = yield* CommandQueueStore;
+    const queue = yield* CommandQueue;
     yield* sessions.get(sessionId);
     yield* queue.clear(sessionId);
     yield* sessions.clearConstructionWorkspace(sessionId);
