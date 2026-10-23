@@ -1,9 +1,8 @@
 import type { RandomEngine } from "@bluewave/random";
-import type { BattleEvent } from "../battleLedger.js";
-import type { TacticalContact } from "../contact/lifecycle.js";
-import type { Position } from "../spotting/detection.js";
-import type { ShipDamageState } from "../damage/state.js";
-import type { TurretComponent } from "../damage/turretStates.js";
+import type { BattleEvent } from "../core/battleLedger.js";
+import type { TacticalContact } from "../contact/neighbour.js";
+import type { Position } from "../core/position.js";
+import type { ShipDamageState, TurretComponent } from "../damage/torpedoHit.js";
 import type { FloodingIsolationState } from "./constants.js";
 import type { CompiledTorpedoRegistry } from "./registry.js";
 import type { TorpedoSalvoPolicyInputs } from "./salvo.js";

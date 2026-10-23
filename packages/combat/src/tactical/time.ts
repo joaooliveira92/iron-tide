@@ -1,16 +1,15 @@
 import { BluewaveError } from "@bluewave/contracts";
+import {
+  SUBSTEPS_PER_MINUTE,
+  TACTICAL_MINUTE_MS,
+  TACTICAL_SUBSTEP_MS,
+} from "../core/tacticalTime.js";
 
-export const tacticalTurnMilliseconds = 60_000 as const;
-export const tacticalSubstepMilliseconds = 1_000 as const;
-export const substepsPerTurn = 60 as const;
+export const tacticalTurnMilliseconds = TACTICAL_MINUTE_MS;
+export const tacticalSubstepMilliseconds = TACTICAL_SUBSTEP_MS;
+export const substepsPerTurn = SUBSTEPS_PER_MINUTE;
 export const tacticalTimePolicyId = "tactical_time_v1" as const;
 export const tacticalTimeFormulaVersion = "1.0.0" as const;
-
-export const TACTICAL_TURN_MILLISECONDS = tacticalTurnMilliseconds;
-export const TACTICAL_SUBSTEP_MILLISECONDS = tacticalSubstepMilliseconds;
-export const SUBSTEPS_PER_TURN = substepsPerTurn;
-export const TACTICAL_TIME_POLICY_ID = tacticalTimePolicyId;
-export const TACTICAL_TIME_FORMULA_VERSION = tacticalTimeFormulaVersion;
 
 export interface TacticalTimeContract {
   tacticalTurnMilliseconds: number;
@@ -31,9 +30,9 @@ export function validateTacticalTimeContract(
 ): asserts c is TacticalTimeContract {
   if (
     !c ||
-    c.tacticalTurnMilliseconds !== 60_000 ||
-    c.tacticalSubstepMilliseconds !== 1_000 ||
-    c.substepsPerTurn !== 60 ||
+    c.tacticalTurnMilliseconds !== tacticalTurnMilliseconds ||
+    c.tacticalSubstepMilliseconds !== tacticalSubstepMilliseconds ||
+    c.substepsPerTurn !== substepsPerTurn ||
     c.tacticalTimePolicyId !== "tactical_time_v1" ||
     !c.tacticalTimeFormulaVersion
   ) {

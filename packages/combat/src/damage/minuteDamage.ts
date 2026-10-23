@@ -2,27 +2,27 @@ import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine, RandomLedger, drawUniform } from "@bluewave/random";
 import type { GunneryEventRecord } from "../gunnery/event.js";
-import type { TacticalContact } from "../contact/lifecycle.js";
-import type { BattleEvent } from "../battleLedger.js";
-import { type GunneryImpact, resolveDamage } from "../damage/engineWiring.js";
+import type { TacticalContact } from "../contact/neighbour.js";
+import type { BattleEvent } from "../core/battleLedger.js";
+import { type GunneryImpact, resolveDamage } from "./engineWiring.js";
 import {
   type FireRecord,
   type FloodingSourceRecord,
   type ShipDamageState,
   withDamageStateHash,
-} from "../damage/state.js";
-import { DAMAGE_RULESET_VERSION, DAMAGE_FORMULA_VERSION } from "../damage/constants.js";
-import { DAMAGE_KEYED_DRAW } from "../damage/reasonCodes.js";
-import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
+} from "./state.js";
+import { DAMAGE_RULESET_VERSION, DAMAGE_FORMULA_VERSION } from "./constants.js";
+import { DAMAGE_KEYED_DRAW } from "./reasonCodes.js";
 import {
   determinePenetrationOutcome,
   lookupArmorQualityMultiplierBp,
   manufacturingEffectiveThickness,
   type PenetrationOutcome,
-} from "../damage/armorModel.js";
-import { type SplinterIntensity } from "../damage/componentDamage.js";
+} from "./armorModel.js";
+import { type SplinterIntensity } from "./componentDamage.js";
 import {
   AUTO_RESOLUTION_COMPARTMENTS,
+  BATTLE_AUTO_RESOLUTION_FAILED,
   AUTO_RESOLUTION_COMPONENTS,
   ARMOR_QUALITY_FAMILY,
   FLOAT_LOSS_RATIO_BP,
@@ -38,7 +38,7 @@ import {
   type AutoResolutionZone,
   type AutoResolutionZoneId,
   ZONE_HIT_WEIGHT_BP,
-} from "./constants.js";
+} from "./minuteDamageConstants.js";
 
 export const DAMAGE_SUBSTEP = 3 as const;
 export const DAMAGE_EVENT_PRIORITY = 10 as const;

@@ -266,7 +266,6 @@ function CampaignShellApplication({
           />
         ) : (
           <PlayerBattleScreen
-            bridge={bridge}
             request={shell.state.interruption.request}
             sessionId={shell.state.campaign.sessionId}
             onSubmitResult={(outcome) =>

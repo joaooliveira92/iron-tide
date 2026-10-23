@@ -4,6 +4,8 @@
 
 Accepted (2026-10-22).
 
+Amended by: ADR-0277 (exact-duplicate pure helpers move to core).
+
 ## Context
 
 `@bluewave/combat` had grown to 34 wildcard barrels re-exported from one root.

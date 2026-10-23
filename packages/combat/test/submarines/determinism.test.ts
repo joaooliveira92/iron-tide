@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const childScript = resolve(__dirname, "../../dist/simulation/run-submarines-child.js");
+const childScript = resolve(__dirname, "../../dist-harness/harness/run-submarines-child.js");
 
 describe("AC-20: two-process determinism", () => {
   it("two separate child processes produce byte-identical output", () => {

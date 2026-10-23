@@ -78,3 +78,6 @@ export function resolveSmoke(
 
   return { nextClouds, events };
 }
+
+export type { SmokeCloud } from "./model.js";
+export type { SmokeEventRecord } from "./smokeRecords.js";

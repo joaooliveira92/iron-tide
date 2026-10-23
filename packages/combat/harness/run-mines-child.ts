@@ -25,7 +25,7 @@ import {
   type MineWarfareResolutionAssemblerInput,
   type UnderwaterExplosionContext,
   withAreaMinePressureRecordHash,
-} from "../mines/index.js";
+} from "../src/mines/index.js";
 
 const ENGINE = new RandomEngine("mines-child-master-seed-v1");
 const LEDGER = new RandomLedger();

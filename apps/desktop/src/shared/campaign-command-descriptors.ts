@@ -31,13 +31,7 @@ import type {
   SeedCampaignBattleDrillResult,
 } from "./campaign-contract.js";
 import type { ReadMonthlyReportsResult } from "./reports-contract.js";
-import type {
-  ReadUiStateResult,
-  UiStateFirstMonthInspection,
-  UiStateInspectorLayout,
-  UiStateTurnMessages,
-  WriteUiStateResult,
-} from "./ui-state-contract.js";
+import type { ReadUiStateResult, UiStatePatch, WriteUiStateResult } from "./ui-state-contract.js";
 import type {
   DrawingBoardContentDto,
   PresentationContentDto,
@@ -203,12 +197,8 @@ export interface AdvancePlayerBattlePayload {
   readonly divisions: readonly PlayerBattleDivisionOrderDto[];
 }
 
-export interface WriteUiStatePayload {
+export interface WriteUiStatePayload extends UiStatePatch {
   readonly sessionId: string;
-  readonly dismissedFingerprints: readonly string[];
-  readonly firstMonthInspection?: UiStateFirstMonthInspection;
-  readonly inspector?: UiStateInspectorLayout;
-  readonly turnMessages?: UiStateTurnMessages;
 }
 
 export const campaignCommandShapes = {
@@ -369,7 +359,9 @@ export const campaignCommandShapes = {
     resultType<BudgetCommandOutcome>(),
   ),
   readUiState: command(SessionIdPayloadSchema, resultType<ReadUiStateResult>()),
-  writeUiState: command(WriteUiStatePayloadSchema, resultType<WriteUiStateResult>()),
+  writeUiState: command(WriteUiStatePayloadSchema, resultType<WriteUiStateResult>(), {
+    strict: true,
+  }),
   readMonthlyReports: command(SessionIdPayloadSchema, resultType<ReadMonthlyReportsResult>()),
   readTurnSummaries: command(SessionIdPayloadSchema, resultType<ReadTurnSummariesResult>()),
   resolveTurn: command(CommandEnvelopePayloadSchema, resultType<ResolveTurnResult>()),

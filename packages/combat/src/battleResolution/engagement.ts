@@ -1,4 +1,4 @@
-import { directionBp } from "../movement/kinematics.js";
+import { directionBp } from "../movement/neighbour.js";
 import { rangeBetweenUm } from "../gunnery/rangeCurve.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import { BATTLE_ENGAGEMENT_BAND_UM, BATTLE_ENGAGEMENT_RANGE_UM } from "./constants.js";

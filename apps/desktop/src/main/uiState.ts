@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import type { UiState } from "../shared/ui-state-contract.js";
+import type { UiState, UiStatePatch } from "../shared/ui-state-contract.js";
 import { UiStateSchema } from "../shared/ui-state-schemas.js";
 import { CampaignSessionStore } from "./runtime/campaignSessionStore.js";
 import type { CommandHandler } from "./runtime/commandProgram.js";
@@ -26,6 +26,27 @@ export function resolveUiState(stored: UiState, currentTurnNumber: number): UiSt
     firstMonthInspection: stored.firstMonthInspection,
     inspector: stored.inspector,
     turnMessages: cloneTurnMessages(stored.turnMessages),
+  };
+}
+
+export function applyUiStatePatch(
+  stored: UiState,
+  patch: UiStatePatch,
+  currentTurnNumber: number,
+): UiState {
+  const base = resolveUiState(stored, currentTurnNumber);
+  return {
+    ...base,
+    ...(patch.dismissedFingerprints !== undefined
+      ? { dismissedFingerprints: [...patch.dismissedFingerprints] }
+      : {}),
+    ...(patch.firstMonthInspection !== undefined
+      ? { firstMonthInspection: { ...patch.firstMonthInspection } }
+      : {}),
+    ...(patch.inspector !== undefined ? { inspector: { ...patch.inspector } } : {}),
+    ...(patch.turnMessages !== undefined
+      ? { turnMessages: cloneTurnMessages(patch.turnMessages) }
+      : {}),
   };
 }
 
@@ -64,23 +85,7 @@ export const writeUiStateProgram: CommandHandler<"writeUiState"> = (payload) =>
     const uiStates = yield* UiStateStore;
     const currentTurnNumber = Number(record.state.snapshot.turnNumber);
     const stored = yield* uiStates.load(record.saveDir, currentTurnNumber);
-    const next: UiState = {
-      turnNumber: currentTurnNumber,
-      dismissedFingerprints: [...payload.dismissedFingerprints],
-      ...(payload.firstMonthInspection !== undefined
-        ? { firstMonthInspection: { ...payload.firstMonthInspection } }
-        : stored.firstMonthInspection !== undefined
-          ? { firstMonthInspection: { ...stored.firstMonthInspection } }
-          : {}),
-      ...(payload.inspector !== undefined
-        ? { inspector: { ...payload.inspector } }
-        : stored.inspector !== undefined
-          ? { inspector: { ...stored.inspector } }
-          : {}),
-      ...(payload.turnMessages !== undefined
-        ? { turnMessages: cloneTurnMessages(payload.turnMessages) }
-        : { turnMessages: cloneTurnMessages(stored.turnMessages) }),
-    };
+    const next = applyUiStatePatch(stored, payload, currentTurnNumber);
     yield* uiStates.save(record.saveDir, next);
 
     return {

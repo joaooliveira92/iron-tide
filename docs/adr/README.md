@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0276).
+highest existing number + 1 (the next number is ADR-0278).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -178,6 +178,8 @@ Package interfaces, seams and module depth across the engine.
 | 0271 | [ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md](ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md) | The combat package exposes three verbs and subsystem seams | accepted | — |
 | 0272 | [ADR-0272-month-pipeline-owns-order-and-observed-access.md](ADR-0272-month-pipeline-owns-order-and-observed-access.md) | The month pipeline owns phase order and observes real snapshot access | accepted | — |
 | 0273 | [ADR-0273-shared-command-contract-split-by-concern.md](ADR-0273-shared-command-contract-split-by-concern.md) | The shared command contract is split by concern | accepted | — |
+| 0276 | [ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md](ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md) | UI-state writes are field patches merged once, in main | accepted | — |
+| 0277 | [ADR-0277-exact-duplicate-pure-helpers-live-in-core.md](ADR-0277-exact-duplicate-pure-helpers-live-in-core.md) | Exact-duplicate pure helpers live in combat core | accepted | — |
 
 ## Archive
 

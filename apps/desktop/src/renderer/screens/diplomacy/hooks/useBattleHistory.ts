@@ -1,8 +1,6 @@
 import type { BattleHistoryView } from "@bluewave/campaign-engine";
 
-import type { BridgeResult } from "../../../../shared/bridge-contract.js";
-import type { InspectBattleHistoryResult } from "../../../../shared/campaign-contract.js";
-import { useBridgeQuery } from "../../../lib/use-bridge-query.js";
+import { useRead } from "../../../lib/use-read.js";
 
 export type BattleHistoryState =
   | { readonly status: "loading" }
@@ -10,14 +8,9 @@ export type BattleHistoryState =
   | { readonly status: "error"; readonly message: string };
 
 export function useBattleHistory(sessionId: string, revision: number): BattleHistoryState {
-  const state = useBridgeQuery(
-    sessionId,
-    revision,
-    (bridge, id): Promise<BridgeResult<InspectBattleHistoryResult>> =>
-      bridge.campaign.execute("inspectBattleHistory", id),
-  );
+  const read = useRead("inspectBattleHistory", sessionId, revision);
 
-  if (state.status === "ready") return { status: "ready", history: state.value.history };
-  if (state.status === "error") return { status: "error", message: state.message };
+  if (read.status === "ready") return { status: "ready", history: read.value.history };
+  if (read.status === "unavailable") return { status: "error", message: read.reason };
   return { status: "loading" };
 }

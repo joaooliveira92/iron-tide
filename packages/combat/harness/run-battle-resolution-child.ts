@@ -2,10 +2,10 @@ import { canonicalSerialize } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
 import type { CompiledTorpedo } from "@bluewave/armament";
 import type { CompiledDesignVersion, Ship } from "@bluewave/campaign";
-import { buildManifest, type BattleManifest } from "../generation/manifest.js";
-import { withStrategicWeatherStateHash } from "../weather/strategic-state.js";
-import { resolveBattleAuto, type ResolveBattleAutoInput } from "../battleResolution/resolve.js";
-import type { AutoResolverNation } from "../battleResolution/project.js";
+import { buildManifest, type BattleManifest } from "../src/generation/manifest.js";
+import { withStrategicWeatherStateHash } from "../src/weather/strategic-state.js";
+import { resolveBattleAuto, type ResolveBattleAutoInput } from "../src/battleResolution/resolve.js";
+import type { AutoResolverNation } from "../src/battleResolution/project.js";
 
 const ATTACKER = "n-uk";
 const DEFENDER = "n-fr";

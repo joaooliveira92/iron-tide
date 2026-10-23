@@ -70,6 +70,47 @@ describe("defineSidecar", () => {
   });
 });
 
+describe("defineSidecar corrupt-file policy", () => {
+  it("reports a missing file as missing", () => {
+    expect(sidecar.inspect(dir, 0)).toEqual({ kind: "missing" });
+  });
+
+  it.each([
+    ["unparseable JSON", "{not json"],
+    ["a mis-shaped value", '{"n":"x"}'],
+    ["excess keys", '{"n":1,"extra":true}'],
+  ])("reports %s as corrupt, never as missing", (_label, contents) => {
+    writeFileSync(sidecar.pathIn(dir), contents, "utf8");
+    expect(sidecar.inspect(dir, 0).kind).toBe("corrupt");
+    expect(sidecar.read(dir, -1)).toBe(-1);
+  });
+
+  it("reports a throwing resolve as corrupt", () => {
+    const throwing = defineSidecar<{ readonly n: number }, number>({
+      filename: "item.json",
+      schema: Item,
+      empty: () => -1,
+      resolve: () => {
+        throw new Error("rejected");
+      },
+    });
+    writeFileSync(throwing.pathIn(dir), '{"n":1}', "utf8");
+    expect(throwing.inspect(dir, undefined)).toEqual({ kind: "corrupt", reason: "rejected" });
+  });
+
+  it("reports a valid file as present with the resolved value", () => {
+    sidecar.write(dir, { n: 2 });
+    expect(sidecar.inspect(dir, 1)).toEqual({ kind: "present", value: 3 });
+  });
+
+  it("removes the file and tolerates removing a missing one", () => {
+    sidecar.write(dir, { n: 2 });
+    sidecar.remove(dir);
+    expect(existsSync(sidecar.pathIn(dir))).toBe(false);
+    expect(() => sidecar.remove(dir)).not.toThrow();
+  });
+});
+
 describe("prependBounded", () => {
   it("prepends the newest and prunes to the limit", () => {
     expect(prependBounded([2, 1], 3, 2)).toEqual([3, 2]);

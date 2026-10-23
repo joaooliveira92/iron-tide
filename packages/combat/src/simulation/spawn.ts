@@ -1,5 +1,5 @@
-import type { MovementState } from "../movement.js";
-import type { TacticalSideId } from "../tactical/state.js";
+import type { MovementState } from "../movement/neighbour.js";
+import type { TacticalSideId } from "../core/tacticalSideId.js";
 
 export interface AreaBBox {
   minX: number;

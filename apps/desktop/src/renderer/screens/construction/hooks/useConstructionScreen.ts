@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { envelopeOf } from "../../../lib/command-envelope.js";
 import { useBridge } from "../../../lib/bridge-context.js";
 import { loadThroughBridge } from "../../../lib/bridge-read.js";
 import type {
@@ -82,12 +83,10 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
 
   const submit = useCallback(() => {
     if (!bridge || selectedDesignId === null) return;
-    void execute("submit", ({ expectedRevision, transportRequestId }) =>
+    void execute("submit", (stamp) =>
       bridge.campaign.execute("submitConstructionCommand", {
-        sessionId,
+        ...envelopeOf(sessionId, stamp),
         designId: selectedDesignId,
-        expectedRevision,
-        transportRequestId,
       }),
     );
   }, [bridge, execute, sessionId, selectedDesignId]);
@@ -95,13 +94,11 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
   const replace = useCallback(
     (commandId: string) => {
       if (!bridge || selectedDesignId === null) return;
-      void execute("replace", ({ expectedRevision, transportRequestId }) =>
+      void execute("replace", (stamp) =>
         bridge.campaign.execute("replaceConstructionCommand", {
-          sessionId,
+          ...envelopeOf(sessionId, stamp),
           commandId,
           designId: selectedDesignId,
-          expectedRevision,
-          transportRequestId,
         }),
       );
     },
@@ -111,12 +108,10 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
   const cancel = useCallback(
     (commandId: string) => {
       if (!bridge) return;
-      void execute("cancel", ({ expectedRevision, transportRequestId }) =>
+      void execute("cancel", (stamp) =>
         bridge.campaign.execute("cancelConstructionCommand", {
-          sessionId,
+          ...envelopeOf(sessionId, stamp),
           commandId,
-          expectedRevision,
-          transportRequestId,
         }),
       );
     },
@@ -126,12 +121,10 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
   const cancelProject = useCallback(
     (projectId: string) => {
       if (!bridge) return;
-      void execute("cancel-project", ({ expectedRevision, transportRequestId }) =>
+      void execute("cancel-project", (stamp) =>
         bridge.campaign.execute("cancelConstructionProjectCommand", {
-          sessionId,
+          ...envelopeOf(sessionId, stamp),
           projectId,
-          expectedRevision,
-          transportRequestId,
         }),
       );
     },
@@ -141,12 +134,10 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
   const halt = useCallback(
     (projectId: string) => {
       if (!bridge) return;
-      void execute("halt", ({ expectedRevision, transportRequestId }) =>
+      void execute("halt", (stamp) =>
         bridge.campaign.execute("haltConstructionCommand", {
-          sessionId,
+          ...envelopeOf(sessionId, stamp),
           projectId,
-          expectedRevision,
-          transportRequestId,
         }),
       );
     },
@@ -156,12 +147,10 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
   const resume = useCallback(
     (projectId: string) => {
       if (!bridge) return;
-      void execute("resume", ({ expectedRevision, transportRequestId }) =>
+      void execute("resume", (stamp) =>
         bridge.campaign.execute("resumeConstructionCommand", {
-          sessionId,
+          ...envelopeOf(sessionId, stamp),
           projectId,
-          expectedRevision,
-          transportRequestId,
         }),
       );
     },
@@ -171,13 +160,11 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
   const setAcceleration = useCallback(
     (projectId: string, accelerated: boolean) => {
       if (!bridge) return;
-      void execute("accelerate", ({ expectedRevision, transportRequestId }) =>
+      void execute("accelerate", (stamp) =>
         bridge.campaign.execute("setAccelerationCommand", {
-          sessionId,
+          ...envelopeOf(sessionId, stamp),
           projectId,
           accelerated,
-          expectedRevision,
-          transportRequestId,
         }),
       );
     },
@@ -187,13 +174,11 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
   const orderBatch = useCallback(
     (designVersionId: string, quantity: number) => {
       if (!bridge) return;
-      void execute("order-batch", ({ expectedRevision, transportRequestId }) =>
+      void execute("order-batch", (stamp) =>
         bridge.campaign.execute("orderConstructionBatchCommand", {
-          sessionId,
+          ...envelopeOf(sessionId, stamp),
           designVersionId,
           quantity,
-          expectedRevision,
-          transportRequestId,
         }),
       );
     },
@@ -247,14 +232,12 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
   const placeForeignOrder = useCallback(
     (designVersionId: string, builderNationId: string, quantity: number) => {
       if (!bridge) return;
-      void execute("order-foreign", ({ expectedRevision, transportRequestId }) =>
+      void execute("order-foreign", (stamp) =>
         bridge.campaign.execute("placeForeignConstructionCommand", {
-          sessionId,
+          ...envelopeOf(sessionId, stamp),
           designVersionId,
           builderNationId,
           quantity,
-          expectedRevision,
-          transportRequestId,
         }),
       );
     },
@@ -264,12 +247,10 @@ export function useConstructionScreen(sessionId: string): UseConstructionScreenR
   const authorizeDockExpansion = useCallback(
     (possessionId: string) => {
       if (!bridge) return;
-      void execute("authorize-dock-expansion", ({ expectedRevision, transportRequestId }) =>
+      void execute("authorize-dock-expansion", (stamp) =>
         bridge.campaign.execute("authorizeDockExpansionCommand", {
-          sessionId,
+          ...envelopeOf(sessionId, stamp),
           possessionId,
-          expectedRevision,
-          transportRequestId,
         }),
       );
     },

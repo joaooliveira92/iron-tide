@@ -24,6 +24,13 @@ export interface UiState {
   readonly turnMessages?: UiStateTurnMessages;
 }
 
+export interface UiStatePatch {
+  readonly dismissedFingerprints?: readonly string[];
+  readonly firstMonthInspection?: UiStateFirstMonthInspection;
+  readonly inspector?: UiStateInspectorLayout;
+  readonly turnMessages?: UiStateTurnMessages;
+}
+
 export interface ReadUiStateResult {
   readonly uiState: UiState;
 }

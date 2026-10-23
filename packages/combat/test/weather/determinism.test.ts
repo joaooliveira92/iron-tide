@@ -2,7 +2,7 @@ import { describe, it, expect } from "vite-plus/test";
 import { execFileSync } from "child_process";
 import { resolve } from "path";
 
-const childScript = resolve(__dirname, "../../dist/simulation/run-weather-child.js");
+const childScript = resolve(__dirname, "../../dist-harness/harness/run-weather-child.js");
 
 interface ChildOutput {
   minuteHashes: string[];

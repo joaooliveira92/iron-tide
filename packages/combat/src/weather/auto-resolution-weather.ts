@@ -1,26 +1,26 @@
+import { initializeBattleWeather, type BattleWeatherInitialization } from "./battle-init.js";
+import { defaultClimateProfile_v1 } from "./default-climate-profile.js";
+import { type ClimateProfile } from "./climate.js";
 import {
-  initializeBattleWeather,
-  type BattleWeatherInitialization,
-} from "../weather/battle-init.js";
-import { defaultClimateProfile_v1 } from "../weather/default-climate-profile.js";
-import { type ClimateProfile } from "../weather/climate.js";
-import { DEFAULT_DAYLIGHT_PROFILE_ID, defaultDaylightProfile_v1 } from "./daylight.js";
-import { resolveTimeAndSolarGeometry, type DaylightProfile } from "../weather/night-twilight.js";
-import { type WeatherEngineContext } from "../weather/engine.js";
-import { type StrategicWeatherState } from "../weather/strategic-state.js";
-import { LOCAL_VARIATION_POLICY_NONE } from "../weather/constants.js";
+  DEFAULT_DAYLIGHT_PROFILE_ID,
+  defaultDaylightProfile_v1,
+} from "./default-daylight-profile.js";
+import { resolveTimeAndSolarGeometry, type DaylightProfile } from "./night-twilight.js";
+import { type WeatherEngineContext } from "./engine.js";
+import { type StrategicWeatherState } from "./strategic-state.js";
+import { LOCAL_VARIATION_POLICY_NONE } from "./constants.js";
 import { type RandomLedger } from "@bluewave/random";
 import {
   AUTO_RESOLUTION_BATTLE_DATE_DAY,
   AUTO_RESOLUTION_BATTLE_START_MINUTES,
   AUTO_RESOLUTION_BATTLE_START_TIME,
   DEFAULT_AREA_BBOX,
-} from "./constants.js";
+} from "./auto-resolution-battle-defaults.js";
 import { BluewaveError } from "@bluewave/contracts";
 import {
   WEATHER_PROFILE_INCOMPLETE,
   INVALID_BATTLE_WEATHER_INITIALIZATION,
-} from "../weather/reasonCodes.js";
+} from "./reasonCodes.js";
 
 const CLIMATE_PROFILES: Readonly<Record<string, ClimateProfile>> = Object.freeze({
   [defaultClimateProfile_v1.climateProfileId]: defaultClimateProfile_v1,
