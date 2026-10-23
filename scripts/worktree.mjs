@@ -27,6 +27,8 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
+import { isEntryPoint } from "./lib/paths.mjs";
+
 export const REPO_ROOT = resolve(import.meta.dirname, "..");
 export const WORKTREES_DIR = join(REPO_ROOT, ".worktrees");
 export const LEDGER_PATH = join(mainCheckoutRoot(), ".worktrees", "LEDGER.md");
@@ -877,4 +879,4 @@ function main() {
   COMMANDS[parsed.command](parsed);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) main();
+if (isEntryPoint(import.meta.url)) main();

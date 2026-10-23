@@ -20,7 +20,15 @@ import { fileURLToPath } from "node:url";
 
 import { renderLedger } from "../worktree.mjs";
 
-const SCRIPT = join(dirname(fileURLToPath(import.meta.url)), "..", "worktree.mjs");
+const SCRIPTS = join(dirname(fileURLToPath(import.meta.url)), "..");
+const SCRIPT = join(SCRIPTS, "worktree.mjs");
+const PATHS_HELPER = join(SCRIPTS, "lib", "paths.mjs");
+
+function installScript(scriptsDir) {
+  mkdirSync(join(scriptsDir, "lib"), { recursive: true });
+  copyFileSync(SCRIPT, join(scriptsDir, "worktree.mjs"));
+  copyFileSync(PATHS_HELPER, join(scriptsDir, "lib", "paths.mjs"));
+}
 const cleanups = [];
 const compareText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -40,7 +48,7 @@ function makeRepo() {
   git(repo, "config", "user.email", "t@example.test");
   git(repo, "config", "user.name", "t");
   git(repo, "config", "commit.gpgsign", "false");
-  copyFileSync(SCRIPT, join(repo, "scripts", "worktree.mjs"));
+  installScript(join(repo, "scripts"));
   writeFileSync(join(repo, ".gitignore"), ".worktrees\n");
   mkdirSync(join(repo, ".worktrees"), { recursive: true });
   writeFileSync(join(repo, ".worktrees", "LEDGER.md"), renderLedger("# Active worktrees\n", []));
@@ -169,7 +177,7 @@ void test("registering a worktree leaves the checkout clean and the ledger share
   assert.equal(git(repo, "status", "--porcelain").trim(), "");
   const ledger = join(repo, ".worktrees", "LEDGER.md");
   assert.match(readFileSync(ledger, "utf8"), /\| a \| feat\/a \|/);
-  copyFileSync(SCRIPT, join(repo, ".worktrees", "a", "scripts", "worktree.mjs"));
+  installScript(join(repo, ".worktrees", "a", "scripts"));
   const inner = spawnSync(
     "node",
     [join(repo, ".worktrees", "a", "scripts", "worktree.mjs"), "list"],

@@ -30,7 +30,18 @@ certificate (an EV cert avoids SmartScreen warnings).
 git tag vX.Y.Z && git push origin vX.Y.Z
 ```
 
-CI builds and signs on the tagged commit. Verify a notarized macOS build locally:
+CI builds and signs on the tagged commit, but only after `verify-release-ref.mjs`
+passes: the run must be on a tag, the tag must be `vMAJOR.MINOR.PATCH` and equal
+the `apps/desktop/package.json` version, and its commit must be reachable from
+`origin/main`. A manual dispatch from a branch is refused.
+
+The signing jobs run in the GitHub environments `release-macos` and
+`release-windows`, and the draft release in `publish-github`. Add required
+reviewers and a tag restriction to each in the repository settings, and move the
+signing secrets into them. The secrets reach only the packaging step, not install
+or build scripts.
+
+Verify a notarized macOS build locally:
 
 ```sh
 spctl -a -vvv -t install Bluewave.app && xcrun stapler validate Bluewave.app
