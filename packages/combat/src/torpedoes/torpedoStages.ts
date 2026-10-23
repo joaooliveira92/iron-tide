@@ -1,4 +1,4 @@
-import { SUBSTEPS_PER_MINUTE } from "../movement/constants.js";
+import { SUBSTEPS_PER_MINUTE, TACTICAL_SUBSTEP_MS } from "../core/tacticalTime.js";
 import type { Position } from "../spotting/detection.js";
 import { advanceTorpedoTrack, type TorpedoTrack } from "./track.js";
 import { resolveTorpedoHit, type TargetHitProfile } from "./hit-resolution.js";
@@ -204,7 +204,7 @@ export function runAdvanceStage(run: TorpedoRun): TorpedoAdvance {
   for (const track of run.runningTracks) {
     const dtMs =
       track.launchMinute === minute
-        ? (SUBSTEPS_PER_MINUTE - track.launchSubstep) * 1_000
+        ? (SUBSTEPS_PER_MINUTE - track.launchSubstep) * TACTICAL_SUBSTEP_MS
         : TORPEDO_MINUTE_MS;
     if (dtMs <= 0) {
       toEvaluate.push(track);

@@ -1,5 +1,5 @@
 import { BluewaveError } from "@bluewave/contracts";
-import { SUBSTEP_SECONDS, SUBSTEPS_PER_MINUTE } from "../movement/constants.js";
+import { TACTICAL_MINUTE_MS } from "../core/tacticalTime.js";
 import { TORPEDO_STATE_INVARIANT_FAILED } from "./reasonCodes.js";
 
 export const torpedoPolicyId = "torpedo_v1" as const;
@@ -216,7 +216,7 @@ export const TORPEDO_TERMINAL_RESULTS = [
   "BATTLE_END",
 ] as const;
 export type TorpedoTerminalResult = (typeof TORPEDO_TERMINAL_RESULTS)[number];
-export const TORPEDO_MINUTE_MS = SUBSTEPS_PER_MINUTE * SUBSTEP_SECONDS * 1_000;
+export const TORPEDO_MINUTE_MS = TACTICAL_MINUTE_MS;
 export const TORPEDO_TRACK_MDEG_PER_DEGREE = 1_000;
 
 export const SEED_TORPEDO_MODEL_IDS = [

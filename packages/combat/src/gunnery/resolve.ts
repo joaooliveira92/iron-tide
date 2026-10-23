@@ -32,7 +32,7 @@ import {
 import { validateTargetOrder } from "../contact/targeting.js";
 import type { TacticalContact } from "../contact/lifecycle.js";
 import type { Position } from "../spotting/detection.js";
-import { SUBSTEPS_PER_MINUTE } from "../movement/constants.js";
+import { TACTICAL_MINUTE_MS } from "../core/tacticalTime.js";
 import { INVALID_GUNNERY_STATE } from "./reasonCodes.js";
 import { rangeBetweenUm, rangeMultiplierBp } from "./rangeCurve.js";
 import { salvoBatchAccuracyBp } from "./salvoBatch.js";
@@ -40,7 +40,7 @@ import { salvoBatchAccuracyBp } from "./salvoBatch.js";
 export const GUNNERY_SUBSTEP = 2 as const;
 export const GUNNERY_EVENT_PRIORITY = 9 as const;
 
-export const TACTICAL_MINUTE_MS = SUBSTEPS_PER_MINUTE * 1_000;
+export { TACTICAL_MINUTE_MS };
 
 export interface GunneryBattery {
   id: string;

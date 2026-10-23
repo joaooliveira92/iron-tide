@@ -5,7 +5,7 @@ import {
   resolvePropulsion,
   resolveTurning,
 } from "../movement/kinematics.js";
-import { SUBSTEPS_PER_MINUTE } from "../movement/constants.js";
+import { SUBSTEPS_PER_MINUTE } from "../core/tacticalTime.js";
 import {
   resolveSensorsSpotting,
   type Position,
