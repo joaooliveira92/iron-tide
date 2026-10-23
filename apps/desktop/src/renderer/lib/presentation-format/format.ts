@@ -46,6 +46,18 @@ export function formatNumber(value: number, options: FormatNumberOptions): strin
   return new Intl.NumberFormat(options.locale, formatOptions).format(value);
 }
 
+export interface FormatFixedOptions {
+  readonly locale: FormattingLocale;
+  readonly digits: number;
+}
+
+export function formatFixed(value: number, options: FormatFixedOptions): string {
+  const decimal =
+    new Intl.NumberFormat(options.locale).formatToParts(1.1).find((part) => part.type === "decimal")
+      ?.value ?? ".";
+  return value.toFixed(options.digits).replace(".", decimal);
+}
+
 export function formatCount(value: number, locale: FormattingLocale = "en-US"): string {
   return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value);
 }

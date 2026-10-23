@@ -50,7 +50,7 @@ export function NumberField({
   const id = useId();
   const errorId = `${id}-error`;
   const shown = value / scale;
-  const stepBy = step ?? (decimals > 0 ? Number((1 / 10 ** decimals).toFixed(decimals)) : 1);
+  const stepBy = step ?? (decimals > 0 ? 1 / 10 ** decimals : 1);
   const clampShown = (n: number) => Math.min(max ?? Infinity, Math.max(min ?? -Infinity, n));
   const accessibleName = `${label}${unit ? ` (${unit})` : ""}`;
   const resetValue =

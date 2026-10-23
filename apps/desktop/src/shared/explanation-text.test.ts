@@ -18,6 +18,11 @@ describe("formatExplanation", () => {
     expect(formatExplanationValue(quantity(850, 100, 2, "ratio"))).toBe("8.50");
   });
 
+  it("resolves unit suffixes for the requested locale, falling back to en-US", () => {
+    expect(formatExplanationValue(quantity(12300, 1000, 1, "knots"), "en-US")).toBe("12.3 kn");
+    expect(formatExplanationValue(quantity(12300, 1000, 1, "knots"), "xx-XX")).toBe("12.3 kn");
+  });
+
   it("joins literal and token parts", () => {
     expect(
       formatExplanation(["Length/beam ratio ", quantity(850, 100, 2), " is outside the BB range."]),

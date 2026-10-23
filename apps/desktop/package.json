@@ -42,7 +42,7 @@
     "@bluewave/phase-engine": "workspace:*",
     "@bluewave/random": "workspace:*",
     "effect": "workspace:*",
-    "react": "^19.3.0",
+    "react": "^19.3.1",
     "react-dom": "^19.3.0",
     "@base-ui/react": "^1.9.0",
     "@paper-design/shaders-react": "^0.0.81",
@@ -59,10 +59,10 @@
   "devDependencies": {
     "axe-core": "^4.14.0",
     "@bluewave/test-support": "workspace:*",
-    "electron": "44.7.0",
+    "electron": "44.9.0",
     "electron-builder": "^26.15.3",
     "electron-devtools-installer": "4.0.0",
-    "electron-vite": "^5.0.0",
+    "electron-vite": "^6.0.0",
     "vite": "catalog:",
     "typescript": "7.0.2",
     "@types/node": "^26.6.5",
@@ -72,7 +72,7 @@
     "@vitejs/plugin-react": "^6.1.2",
     "tailwindcss": "^4.1.15",
     "@tailwindcss/vite": "^4.1.15",
-    "jsdom": "^30.1.2",
+    "jsdom": "^30.1.3",
     "@testing-library/react": "^16.3.3",
     "d3-drag": "^3.0.0",
     "d3-geo": "^3.1.1",
@@ -84,7 +84,7 @@
     "@types/d3-selection": "^3.0.12",
     "@types/d3-zoom": "^3.0.9",
     "@types/topojson-client": "^3.1.5",
-    "@playwright/test": "^1.64.0",
+    "@playwright/test": "^1.64.1",
     "cross-env": "^10.1.0"
   }
 }

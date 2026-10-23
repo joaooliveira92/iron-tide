@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
+import { resolveMessage } from "../content/uiCatalogue.js";
 import { createTransportRequestId } from "../lib/command-screen-workflow.js";
 import { emitWideEvent } from "../lib/telemetry.js";
 import type { Screen } from "./campaign-screen-registry.js";
@@ -57,7 +58,9 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
           ]);
           dispatch({
             type: "campaign-open-failed",
-            message: `Inspection failed: ${campaignReads.projection.reason}`,
+            message: resolveMessage("shell.campaign.inspectionFailed", {
+              reason: campaignReads.projection.reason,
+            }),
           });
           return;
         }
@@ -89,7 +92,8 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       } catch (error) {
         dispatch({
           type: "campaign-open-failed",
-          message: error instanceof Error ? error.message : "Unknown error",
+          message:
+            error instanceof Error ? error.message : resolveMessage("shell.campaign.unknownError"),
         });
       }
     },
@@ -111,7 +115,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     emitWideEvent("campaign_close", state.campaign.sessionId, duration, "rejected", [
       result.reason,
     ]);
-    collectMessage(`Could not close the campaign: ${result.reason}.`);
+    collectMessage(resolveMessage("shell.campaign.closeFailed", { reason: result.reason }));
   }, [bridge, state.campaign]);
 
   const saveCampaign = useCallback(async () => {
@@ -120,10 +124,13 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     const result = await bridge.campaign.execute("saveCampaign", state.campaign.sessionId);
     collectMessage(
       result.outcome === "success"
-        ? `Campaign saved — revision ${result.value.revision}.`
+        ? resolveMessage("shell.campaign.saved", { revision: result.value.revision })
         : result.reason === "CANCELLED"
           ? null
-          : `Save failed: ${result.reason}.${diagnosticsSuffix(result.diagnostics)}`,
+          : resolveMessage("shell.campaign.saveFailed", {
+              reason: result.reason,
+              diagnostics: diagnosticsSuffix(result.diagnostics),
+            }),
     );
   }, [bridge, state.campaign]);
 
@@ -133,10 +140,13 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     const result = await bridge.campaign.execute("copyCampaign", state.campaign.sessionId);
     collectMessage(
       result.outcome === "success"
-        ? `Copy saved to ${result.value.location}.`
+        ? resolveMessage("shell.campaign.copySaved", { location: result.value.location })
         : result.reason === "SAVE_LOCATION_CANCELLED"
           ? null
-          : `Copy failed: ${result.reason}.${diagnosticsSuffix(result.diagnostics)}`,
+          : resolveMessage("shell.campaign.copyFailed", {
+              reason: result.reason,
+              diagnostics: diagnosticsSuffix(result.diagnostics),
+            }),
     );
   }, [bridge, state.campaign]);
 
@@ -227,13 +237,14 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
       applyResolveOutcome(foldResolveTurn(result, state.campaign, sessionId), sessionId, null);
     } catch (error) {
       emitWideEvent("campaign_month_advance", sessionId, 0, "rejected", [
-        error instanceof Error ? error.message : "Unknown error",
+        error instanceof Error ? error.message : resolveMessage("shell.campaign.unknownError"),
       ]);
       dispatch({
         type: "month-commit-failed",
         failure: {
           _tag: "TransportFailure",
-          message: error instanceof Error ? error.message : "Could not advance month.",
+          message:
+            error instanceof Error ? error.message : resolveMessage("shell.month.advanceFailed"),
         },
       });
     }
@@ -274,9 +285,9 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     const result = await bridge.campaign.execute("abandonPendingTurn", sessionId);
     if (result.outcome === "success") {
       setInterruption(null);
-      collectMessage("Outstanding turn discarded.");
+      collectMessage(resolveMessage("shell.turn.discarded"));
     } else {
-      collectMessage(`Could not discard the outstanding turn: ${result.reason}.`);
+      collectMessage(resolveMessage("shell.turn.discardFailed", { reason: result.reason }));
     }
   }, [bridge, state.campaign, setInterruption, collectMessage]);
 

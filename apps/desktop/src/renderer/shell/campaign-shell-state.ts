@@ -1,3 +1,4 @@
+import { resolveMessage } from "../content/uiCatalogue.js";
 import type { InterruptionRequestDto, PendingTurnDto } from "../../shared/turn-message-contract.js";
 import type { PrimaryAction } from "./primary-action.js";
 import type { NavigationHistory } from "./navigation-history.js";
@@ -25,7 +26,10 @@ export function diagnosticsSuffix(diagnostics: readonly string[]): string {
 export function describeMonthCommitFailure(failure: MonthCommitFailure): string {
   switch (failure._tag) {
     case "Rejected":
-      return `Could not advance month: ${failure.reason}.${diagnosticsSuffix(failure.diagnostics)}`;
+      return resolveMessage("shell.month.rejected", {
+        reason: failure.reason,
+        diagnostics: diagnosticsSuffix(failure.diagnostics),
+      });
     case "TransportFailure":
       return failure.message;
   }
