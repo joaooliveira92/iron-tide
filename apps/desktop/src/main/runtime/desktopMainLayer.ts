@@ -5,7 +5,7 @@ import {
   campaignPreferencesStoreLayer,
 } from "../preferences/campaignPreferencesStore.js";
 import { CampaignSessionStore, campaignSessionStoreLayer } from "./campaignSessionStore.js";
-import { CommandQueueStore, commandQueueStoreLayer } from "./commandQueueStore.js";
+import { CommandQueue, commandQueueLayer } from "./commandQueue.js";
 import { ContentArtifact, contentArtifactLayer } from "./contentArtifact.js";
 import { CrashReporter, crashReporterLayer } from "./crashReporter.js";
 import { DecisionSource, decisionSourceLayer } from "./decisionSource.js";
@@ -39,7 +39,7 @@ export type CommandEnv =
   | ContentArtifact
   | ProjectStore
   | CampaignSessionStore
-  | CommandQueueStore
+  | CommandQueue
   | ReplayService
   | CrashReporter
   | UiStateStore
@@ -61,8 +61,7 @@ export function desktopMainLayer(): Layer.Layer<CommandEnv> {
   return Layer.mergeAll(
     contentArtifactLayer(),
     projectStoreLayer(),
-    campaignSessionStoreLayer(),
-    commandQueueStoreLayer(),
+    commandQueueLayer().pipe(Layer.provideMerge(campaignSessionStoreLayer())),
     sidecarStoresLayer(),
     pendingTurnStoreLayer(),
     playerBattleStoreLayer(),

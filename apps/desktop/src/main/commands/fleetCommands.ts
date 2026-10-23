@@ -7,12 +7,11 @@ import type {
   StationAssignmentOutcome,
 } from "../../shared/fleet-contract.js";
 import type { CampaignSessionRecord } from "../campaignSessions.js";
-import type { PendingCommandEntry } from "../pendingCommands.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed, CommandRejected, type CommandError } from "../runtime/commandError.js";
 import type { CommandHandler } from "../runtime/commandProgram.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
-import { CommandQueueStore } from "../runtime/commandQueueStore.js";
+import { CommandQueue, type PendingCommandEntry } from "../runtime/commandQueue.js";
 import { currentRevision, submitPlayerCommand, verifyEnvelope } from "./playerCommandSupport.js";
 
 interface MovementRequest {
@@ -68,11 +67,11 @@ function submitMovement(
 ): Effect.Effect<
   BridgeResult<MovementCommandOutcome>,
   CommandError,
-  CampaignSessionStore | CommandQueueStore
+  CampaignSessionStore | CommandQueue
 > {
   return Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
-    const queue = yield* CommandQueueStore;
+    const queue = yield* CommandQueue;
     const record = yield* sessions.get(request.sessionId);
 
     const result = yield* submitPlayerCommand({
@@ -111,7 +110,7 @@ function submitMovement(
 export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
-    const queue = yield* CommandQueueStore;
+    const queue = yield* CommandQueue;
     const record = yield* sessions.get(sessionId);
 
     const nation = record.state.snapshot.nations.get(record.playerSlotId);
@@ -153,7 +152,7 @@ export const submitMovementCommandProgram: CommandHandler<"submitMovementCommand
 export const replaceMovementCommandProgram: CommandHandler<"replaceMovementCommand"> = (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
-    const queue = yield* CommandQueueStore;
+    const queue = yield* CommandQueue;
     const record = yield* sessions.get(payload.sessionId);
 
     const verified = verifyEnvelope(record, payload.expectedRevision);
@@ -174,7 +173,7 @@ export const replaceMovementCommandProgram: CommandHandler<"replaceMovementComma
 export const cancelMovementCommandProgram: CommandHandler<"cancelMovementCommand"> = (payload) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
-    const queue = yield* CommandQueueStore;
+    const queue = yield* CommandQueue;
     const record = yield* sessions.get(payload.sessionId);
 
     const verified = verifyEnvelope(record, payload.expectedRevision);

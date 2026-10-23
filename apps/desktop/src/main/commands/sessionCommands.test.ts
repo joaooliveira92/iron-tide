@@ -33,10 +33,9 @@ import {
 } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { SESSION_METADATA_FILENAME } from "../campaignSessionMetadata.js";
-import { clearPendingWorkspacesForTest, pendingEnvelopesForExecution } from "../pendingCommands.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
-import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
+import { programFor, queuedEnvelopes, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { NativeDialog } from "../runtime/platform.js";
 import { ProjectStore } from "../runtime/projectStore.js";
 import { toSaveableState } from "../saveHelpers.js";
@@ -59,19 +58,26 @@ const GENERATED_ARTIFACT = resolve(__dirname, "../../../../..", "content", "gene
 let chooseCopyDirectoryAnswer: string | null = null;
 let chooseCopyDirectoryCalls = 0;
 
-const runtime = ManagedRuntime.make(
-  Layer.mergeAll(
-    desktopMainLayer(),
-    Layer.succeed(NativeDialog, {
-      chooseSaveDirectory: () => Effect.succeed(null),
-      choosePackageDirectory: () => Effect.succeed(null),
-      chooseCopyDirectory: () => {
-        chooseCopyDirectoryCalls += 1;
-        return Effect.succeed(chooseCopyDirectoryAnswer);
-      },
-    }),
-  ),
-);
+const makeRuntime = () =>
+  ManagedRuntime.make(
+    Layer.mergeAll(
+      desktopMainLayer(),
+      Layer.succeed(NativeDialog, {
+        chooseSaveDirectory: () => Effect.succeed(null),
+        choosePackageDirectory: () => Effect.succeed(null),
+        chooseCopyDirectory: () => {
+          chooseCopyDirectoryCalls += 1;
+          return Effect.succeed(chooseCopyDirectoryAnswer);
+        },
+      }),
+    ),
+  );
+let runtime = makeRuntime();
+
+function restartRuntime(): void {
+  void runtime.dispose();
+  runtime = makeRuntime();
+}
 
 async function runProgram<A>(
   program: AnyCommandHandler,
@@ -121,7 +127,7 @@ describe("session commands (save / close / copy)", () => {
   afterEach(() => {
     rmSync(root, { recursive: true, force: true });
     clearCampaignSessionsForTest();
-    clearPendingWorkspacesForTest();
+    restartRuntime();
     clearConstructionWorkspacesForTest();
   });
 
@@ -252,14 +258,14 @@ describe("session commands (save / close / copy)", () => {
       });
       expect(queued.outcome).toBe("success");
       const snapshot = getCampaignSession("c1")!.state.snapshot;
-      expect(pendingEnvelopesForExecution("c1", snapshot)).toHaveLength(1);
+      expect(queuedEnvelopes(runtime, "c1", snapshot)).toHaveLength(1);
 
       expect(await closeCampaign("c1")).toMatchObject({
         outcome: "success",
         value: { closed: true },
       });
       expect(getCampaignSession("c1")).toBeUndefined();
-      expect(pendingEnvelopesForExecution("c1", snapshot)).toEqual([]);
+      expect(queuedEnvelopes(runtime, "c1", snapshot)).toEqual([]);
     });
 
     it("also drops the session's construction workspace (it used to leak)", async () => {

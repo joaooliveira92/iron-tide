@@ -13,7 +13,7 @@ import {
 } from "../recentPackages.js";
 import { ledgerOf, parseMonthInput } from "../monthInput.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
-import { CommandQueueStore } from "../runtime/commandQueueStore.js";
+import { CommandQueue } from "../runtime/commandQueue.js";
 import { CommandFailed } from "../runtime/commandError.js";
 import type { CommandHandler } from "../runtime/commandProgram.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
@@ -92,7 +92,7 @@ const loadPackageAt = (saveDir: string) =>
   Effect.gen(function* () {
     const projects = yield* ProjectStore;
     const sessions = yield* CampaignSessionStore;
-    const queue = yield* CommandQueueStore;
+    const queue = yield* CommandQueue;
     const ids = yield* IdGenerator;
 
     const collector = new DiagnosticCollector();

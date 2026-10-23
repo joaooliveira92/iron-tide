@@ -4,7 +4,7 @@ import { Effect } from "effect";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import type { CampaignSessionRecord } from "../campaignSessions.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
-import { CommandQueueStore } from "../runtime/commandQueueStore.js";
+import { CommandQueue } from "../runtime/commandQueue.js";
 import type { CommandError } from "../runtime/commandError.js";
 import { deterministicTimestamp, verifyEnvelope } from "./commandEnvelope.js";
 
@@ -60,11 +60,11 @@ export function submitPlayerCommand<Body extends CommandBody>(
 ): Effect.Effect<
   BridgeResult<QueuedCommandOutcome<Body["type"]>>,
   CommandError,
-  CampaignSessionStore | CommandQueueStore
+  CampaignSessionStore | CommandQueue
 > {
   return Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
-    const queue = yield* CommandQueueStore;
+    const queue = yield* CommandQueue;
     const record = yield* sessions.get(request.sessionId);
 
     const verified = verifyEnvelope(record, request.expectedRevision);
@@ -78,45 +78,32 @@ export function submitPlayerCommand<Body extends CommandBody>(
       appliedOnNextTurn: true,
     };
 
-    const prior = yield* queue.lookup(request.sessionId, request.transportRequestId);
-    if (prior) {
-      if (prior.payloadFingerprint !== queue.fingerprintOfBody(envelope.body)) {
+    const queued = yield* queue.queueOrReplay(
+      request.sessionId,
+      { transportRequestId: request.transportRequestId, envelope },
+      () => {
+        const validation = new CommandLifecycle().validate(envelope, record.state.snapshot);
+        if (validation.ok) return undefined;
+        if (validation.outcome.type === "rejected") {
+          return {
+            reason: validation.outcome.diagnostic.code,
+            diagnostics: [validation.outcome.diagnostic.message],
+          };
+        }
         return {
-          outcome: "rejected",
-          reason: "IDEMPOTENCY_CONFLICT",
-          diagnostics: [
-            `transportRequestId ${request.transportRequestId} was already used by command ${prior.envelope.commandId}`,
-          ],
+          reason: "COMMAND_REJECTED",
+          diagnostics: [`Engine rejected command ${envelope.commandId}`],
         };
-      }
+      },
+    );
+    if (queued.kind === "replayed") {
       return {
         outcome: "success",
-        value: { ...outcome, commandId: prior.envelope.commandId },
+        value: { ...outcome, commandId: queued.prior.envelope.commandId },
         diagnostics: [],
       };
     }
-
-    const validation = new CommandLifecycle().validate(envelope, record.state.snapshot);
-    if (!validation.ok) {
-      if (validation.outcome.type === "rejected") {
-        return {
-          outcome: "rejected",
-          reason: validation.outcome.diagnostic.code,
-          diagnostics: [validation.outcome.diagnostic.message],
-        };
-      }
-      return {
-        outcome: "rejected",
-        reason: "COMMAND_REJECTED",
-        diagnostics: [`Engine rejected command ${envelope.commandId}`],
-      };
-    }
-
-    yield* queue.queue(request.sessionId, {
-      transportRequestId: request.transportRequestId,
-      envelope,
-      payloadFingerprint: queue.fingerprintOfBody(envelope.body),
-    });
+    if (queued.kind !== "queued") return { outcome: "rejected", ...queued.refusal };
 
     return { outcome: "success", value: outcome, diagnostics: [] };
   });

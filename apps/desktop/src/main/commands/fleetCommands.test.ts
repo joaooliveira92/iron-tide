@@ -24,7 +24,6 @@ import {
   registerCampaignSession,
 } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
-import { clearPendingWorkspacesForTest } from "../pendingCommands.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
@@ -42,7 +41,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-const runtime = ManagedRuntime.make(desktopMainLayer());
+const makeRuntime = () => ManagedRuntime.make(desktopMainLayer());
+let runtime = makeRuntime();
+
+function restartRuntime(): void {
+  void runtime.dispose();
+  runtime = makeRuntime();
+}
 
 async function runProgram<A>(
   program: AnyCommandHandler,
@@ -79,7 +84,7 @@ describe("fleet commands (Effect programs)", () => {
   afterEach(() => {
     rmSync(saveRoot, { recursive: true, force: true });
     clearCampaignSessionsForTest();
-    clearPendingWorkspacesForTest();
+    restartRuntime();
   });
 
   function registerProductionSession(
