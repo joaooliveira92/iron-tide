@@ -5,6 +5,9 @@ import { advanceMonths } from "./flows.js";
 const navigateTo = (page: Page, label: string) =>
   page.getByTestId("bottom-nav").getByRole("button", { name: label, exact: true }).click();
 
+const openYardPlace = (page: Page, name: RegExp) =>
+  page.getByRole("navigation", { name: "Yard" }).getByRole("button", { name }).click();
+
 const shipsUnderConstruction = (page: Page) =>
   page.getByRole("list", { name: "Ships under construction" }).locator("> li");
 
@@ -20,7 +23,7 @@ test("a player can order a class batch and it appears after a month", async ({
   await expect(ships.first()).toBeVisible();
   const before = await ships.count();
 
-  await page.getByRole("tab", { name: "Design Catalog" }).click();
+  await openYardPlace(page, /^Design catalog/);
   await page.getByRole("button", { name: "Order a class batch (1–12)" }).click();
 
   await expect(page.getByRole("combobox", { name: "Batch design" })).toBeVisible();
@@ -29,7 +32,7 @@ test("a player can order a class batch and it appears after a month", async ({
   await expect(page.getByTestId("batch-confirm")).toBeEnabled();
   await page.getByTestId("batch-confirm").click();
 
-  await page.getByRole("tab", { name: "Shipyard Ledger" }).click();
+  await openYardPlace(page, /^Slipways/);
   await expect(
     page.getByRole("status").filter({ hasText: "OrderConstruction queued" }),
   ).toBeVisible();
@@ -51,7 +54,7 @@ test("a player can order from a foreign yard and it appears after a month", asyn
   await expect(ships.first()).toBeVisible();
   const before = await ships.count();
 
-  await page.getByRole("tab", { name: "Design Catalog" }).click();
+  await openYardPlace(page, /^Design catalog/);
   await page.getByRole("button", { name: "Order a class batch (1–12)" }).click();
 
   const builder = page.getByRole("combobox", { name: "Builder" });
@@ -67,7 +70,7 @@ test("a player can order from a foreign yard and it appears after a month", asyn
   await expect(confirm).toBeEnabled();
   await confirm.click();
 
-  await page.getByRole("tab", { name: "Shipyard Ledger" }).click();
+  await openYardPlace(page, /^Slipways/);
   await expect(
     page.getByRole("status").filter({ hasText: "OrderForeignConstruction queued" }),
   ).toBeVisible();
@@ -85,6 +88,7 @@ test("a player can halt a building hull and it stays halted after a month", asyn
   await openCampaign(e2e, campaignTemplate);
   await navigateTo(page, "Construction");
 
+  await page.getByRole("button", { name: /^Inflexible, / }).click();
   const halt = page.getByRole("button", { name: "Inflexible halt" });
   await expect(halt).toBeVisible();
   await halt.click();
@@ -95,7 +99,12 @@ test("a player can halt a building hull and it stays halted after a month", asyn
   await advanceMonths(page, 1);
   await navigateTo(page, "Construction");
 
-  await expect(page.getByText("halted", { exact: true })).toBeVisible();
+  await expect(
+    shipsUnderConstruction(page).filter({ hasText: "Inflexible" }).getByText("halted", {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: /^Inflexible, / }).click();
   await expect(page.getByRole("button", { name: "Inflexible resume" })).toBeVisible();
 });
 
@@ -108,14 +117,13 @@ test("a construction command can be submitted, replaced atomically, then cancell
   await navigateTo(page, "Construction");
   await expect(page.getByRole("heading", { name: "Construction Commands" })).toBeVisible();
 
-  await page.getByRole("tab", { name: "Design Catalog" }).click();
+  await openYardPlace(page, /^Design catalog/);
   await page.getByRole("radio").first().click();
   await page.getByRole("button", { name: "Submit Construction Command" }).click();
   await page.getByRole("button", { name: "Confirm order" }).click();
   await expect(page.getByText(/Command \S+ is submitted/)).toBeVisible();
 
-  const ledger = page.getByRole("tab", { name: "Command Ledger" });
-  await ledger.click();
+  await openYardPlace(page, /^Orders/);
   const submittedRow = page.getByRole("row").filter({ hasText: "submitted" });
   await expect(submittedRow).toBeVisible();
 
