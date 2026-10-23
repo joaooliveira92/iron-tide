@@ -15,12 +15,11 @@ import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import { SPEED_BP_SCALE, type MovementState } from "../movement/neighbour.js";
 import type { ShipDamageState } from "../damage/state.js";
-import type { StrategicWeatherState } from "../weather/strategic-state.js";
+import { buildBattleWeather, type StrategicWeatherState } from "../weather/neighbour.js";
 import { AUTO_RESOLUTION_UNAVAILABLE } from "../generation/reasonCodes.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { CauseOfLossTracker, type LossCause } from "./causeOfLoss.js";
 import { type AutoResolverNation, projectBattle, type ProjectBattleOutput } from "./project.js";
-import { buildBattleWeather } from "../weather/auto-resolution-weather.js";
 import {
   projectAirCombatContext,
   projectAirDefenseContext,

@@ -22,8 +22,7 @@ import {
 import type { BattleEvent } from "../core/battleLedger.js";
 import { BattleLedger } from "../core/battleLedger.js";
 import { resolveGunnery, type GunneryEventRecord, type GunneryState } from "../gunnery/index.js";
-import { resolveWeather } from "../weather/engine.js";
-import type { BattleWeatherComponents } from "../weather/components.js";
+import { resolveWeather, type BattleWeatherComponents } from "../weather/neighbour.js";
 import type { TacticalBattleState } from "../tactical/index.js";
 import type { ShipDamageState } from "../damage/state.js";
 import { resolveMinuteDamage } from "../damage/minuteDamage.js";

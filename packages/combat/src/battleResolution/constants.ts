@@ -12,7 +12,7 @@ import {
   AUTO_RESOLUTION_BATTLE_START_MINUTES,
   AUTO_RESOLUTION_BATTLE_START_TIME,
   DEFAULT_AREA_BBOX,
-} from "../weather/auto-resolution-battle-defaults.js";
+} from "../weather/neighbour.js";
 import { DEFAULT_MAX_BATTLE_MINUTES } from "./battleEnd.js";
 import { KNOTS_TO_UM_S, SPEED_BP_SCALE } from "../movement/neighbour.js";
 
