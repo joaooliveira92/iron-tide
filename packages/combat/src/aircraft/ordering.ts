@@ -1,16 +1,10 @@
+import { compareStrings } from "../core/ordering.js";
 import type {
   AircraftDevelopmentProject,
   AircraftProposal,
   SquadronState,
   BasingSlot,
 } from "./state.js";
-
-export function compareStrings(a: string, b: string): number {
-  for (let i = 0; i < a.length && i < b.length; i++) {
-    if (a.charCodeAt(i) !== b.charCodeAt(i)) return a.charCodeAt(i) - b.charCodeAt(i);
-  }
-  return a.length - b.length;
-}
 
 export function compareDevelopmentProjects(
   a: AircraftDevelopmentProject,
