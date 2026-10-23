@@ -12,6 +12,7 @@ import type {
 
 import type { BluewaveDesktopBridge } from "../../../../preload/index.js";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { envelopeOf, stampCommand } from "../../../lib/command-envelope.js";
 import { auditInputFromDecisions } from "../../../lib/engine-audit.js";
 import { readQuery } from "../../../lib/read-queries.js";
 import { SCRIPTED_TACTICAL_ORDERS } from "../simulation-battle-orders.js";
@@ -120,11 +121,10 @@ export function useSimulationScreen(
       telemetry,
       transportErrorFallback: "Error committing turn",
       run: () =>
-        bridge.campaign.execute("commitMonth", {
-          sessionId,
-          expectedRevision: revisionRef.current,
-          transportRequestId: `desktop-commit-${Date.now()}`,
-        }),
+        bridge.campaign.execute(
+          "commitMonth",
+          envelopeOf(sessionId, stampCommand("desktop-commit", revisionRef.current)),
+        ),
       audit: (value) => ({
         randomDecisions: value.randomDecisions ?? [],
         domainEvents: value.domainEvents ?? [],

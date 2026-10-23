@@ -23,7 +23,7 @@ describe("command screen workflow lifecycle", () => {
       value: "ok",
       diagnostics: [],
     }));
-    const command = prepareCommand("replace", 3, send, "tx-1");
+    const command = prepareCommand("replace", 3, send, () => "tx-1");
 
     await command.send(command.context);
     await command.send(command.context);

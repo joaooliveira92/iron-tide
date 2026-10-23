@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { envelopeOf, stampCommand } from "../../../lib/command-envelope.js";
 import { kg, type DesignDraft } from "@bluewave/ship-design";
 import { Ship } from "lucide-react";
 import { useBridge } from "../../../lib/bridge-context.js";
@@ -19,8 +20,6 @@ import { NumberField, SelectField } from "../fields.js";
 import { limitRows } from "../rebuildView.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { Panel } from "./Panel.js";
-
-let rebuildCounter = 0;
 
 type RebuildAction = "STANDARD" | "REARMAMENT" | "BULGE";
 
@@ -151,12 +150,9 @@ export function RebuildPanel({
   const start = async () => {
     if (revision === null) return;
     setBusy(true);
-    rebuildCounter++;
     try {
       const r = await bridge.campaign.execute("startRebuildCommand", {
-        sessionId,
-        expectedRevision: revision,
-        transportRequestId: `rebuild-${Date.now().toString(36)}-${rebuildCounter}`,
+        ...envelopeOf(sessionId, stampCommand("rebuild", revision)),
         shipId: ship.shipId,
         draft: checkedDraft as unknown as Record<string, unknown>,
         ...(rebuildKind === undefined ? {} : { rebuildKind }),

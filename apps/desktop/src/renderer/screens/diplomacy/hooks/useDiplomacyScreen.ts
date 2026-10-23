@@ -1,4 +1,5 @@
 import { useCallback, useRef } from "react";
+import { envelopeOf } from "../../../lib/command-envelope.js";
 import { useBridge } from "../../../lib/bridge-context.js";
 import { loadThroughBridge } from "../../../lib/bridge-read.js";
 
@@ -98,11 +99,9 @@ export function useDiplomacyScreen(sessionId: string): UseDiplomacyScreenReturn 
     if (!draft || !bridge) return;
     const command = diplomacyDraftToCommand(draft);
     if (command === null) return;
-    void execute("submit", ({ expectedRevision, transportRequestId }) =>
+    void execute("submit", (stamp) =>
       bridge.campaign.execute("submitDiplomacyCommand", {
-        sessionId,
-        expectedRevision,
-        transportRequestId,
+        ...envelopeOf(sessionId, stamp),
         command,
       }),
     );

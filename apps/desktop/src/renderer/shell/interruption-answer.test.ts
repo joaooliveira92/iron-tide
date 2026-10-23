@@ -220,6 +220,27 @@ describe("planInterruptionAnswer", () => {
     });
   });
 
+  it("refuses a decision request without a decisionId instead of sending an empty id", () => {
+    const { decisionId: _omitted, ...withoutId } = decisionRequest;
+    expect(
+      planInterruptionAnswer(campaign, withoutId, { kind: "decision", optionId: "approve" }),
+    ).toEqual({ _tag: "MissingRequiredId", field: "decisionId" });
+  });
+
+  it("refuses an offer or battle request without a battleId", () => {
+    const { battleId: _offerOmitted, ...offerWithoutId } = offerRequest;
+    const { battleId: _battleOmitted, ...battleWithoutId } = battleRequest;
+    expect(
+      planInterruptionAnswer(campaign, offerWithoutId, { kind: "offer", choice: "accept" }),
+    ).toEqual({ _tag: "MissingRequiredId", field: "battleId" });
+    expect(
+      planInterruptionAnswer(campaign, battleWithoutId, {
+        kind: "battle-delegated",
+        choice: "delegate",
+      }),
+    ).toEqual({ _tag: "MissingRequiredId", field: "battleId" });
+  });
+
   it("refuses an answer that does not match the outstanding request, as a tagged value", () => {
     const plan = planInterruptionAnswer(campaign, decisionRequest, {
       kind: "offer",
