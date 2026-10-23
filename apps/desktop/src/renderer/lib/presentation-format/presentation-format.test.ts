@@ -5,9 +5,11 @@ import { KNOTS_TO_UMS, MM_TO_UM, UM_PER_INCH } from "@bluewave/contracts";
 import {
   PresentationFormatError,
   assertMeasurementSelection,
+  formatFixed,
   formatMeasurement,
   formatNumber,
   formatPercent,
+  formatTimestamp,
   resolveDisplayUnit,
 } from "./index.js";
 
@@ -112,5 +114,21 @@ describe("presentation-format: numbers and percentages (U-3 ticket 01)", () => {
   it("formats basis points as a percentage", () => {
     expect(formatPercent(2_500, { locale: LOCALE })).toBe("25%");
     expect(formatPercent(10_000, { locale: LOCALE })).toBe("100%");
+  });
+});
+
+describe("formatFixed and formatTimestamp", () => {
+  it("keeps trailing zeros and never groups", () => {
+    expect(formatFixed(1234.5, { locale: "en-US", digits: 1 })).toBe("1234.5");
+    expect(formatFixed(12, { locale: "en-US", digits: 2 })).toBe("12.00");
+    expect(formatFixed(131.6, { locale: "en-US", digits: 0 })).toBe("132");
+  });
+
+  it("renders a timestamp as en-US time or date-time", () => {
+    const iso = "2026-10-22T21:13:46";
+    expect(formatTimestamp(iso, { locale: "en-US", style: "time" })).toBe("9:13:46 PM");
+    expect(formatTimestamp(iso, { locale: "en-US", style: "dateTime" })).toBe(
+      "10/22/2026, 9:13:46 PM",
+    );
   });
 });

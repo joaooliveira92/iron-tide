@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import { resolveMessage } from "../../content/uiCatalogue.js";
+import { formatTimestamp } from "../../lib/presentation-format/index.js";
 import { dismissToast, toast } from "../ui/toast.js";
 import type { Restored } from "./useDraftAutosave.js";
 
@@ -19,9 +21,12 @@ export function useRestoredDraftToast({
     if (restored === null) return;
     const { dismiss: close, startOver: restart } = latest.current;
     const id = toast(
-      `Your unsubmitted design was restored, with its edit history (last changed ${new Date(
-        restored.savedAt,
-      ).toLocaleString()}). Changes are saved as you work.`,
+      resolveMessage("designWorkspace.draftRestored", {
+        savedAt: formatTimestamp(restored.savedAt, {
+          locale: "en-US",
+          style: "dateTime",
+        }),
+      }),
       {
         id: RESTORED_TOAST_ID,
         duration: 0,

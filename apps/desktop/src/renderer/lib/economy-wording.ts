@@ -1,18 +1,10 @@
 import type { EconomyStatus, ResearchUnfundedReason } from "@bluewave/campaign-engine";
 
+import { resolveMessage } from "../content/uiCatalogue.js";
 import { formatCount } from "./presentation-format/index.js";
 
 export function economyStatusLabel(status: EconomyStatus): string {
-  switch (status) {
-    case "healthy":
-      return "Healthy";
-    case "narrow":
-      return "Narrow";
-    case "deficit":
-      return "Deficit";
-    case "critical":
-      return "Critical";
-  }
+  return resolveMessage(`economy.status.${status}`);
 }
 
 export function researchNote(breakdown: {
@@ -21,10 +13,14 @@ export function researchNote(breakdown: {
   readonly researchUnfundedReason: ResearchUnfundedReason | undefined;
 }): string | null {
   if (breakdown.researchUnfundedReason === "NO_ELIGIBLE_RESEARCH_FIELD")
-    return `Research of ${formatCount(breakdown.researchRequested)} is set but no field can take it, so nothing is paid.`;
+    return resolveMessage("economy.research.noField", {
+      requested: formatCount(breakdown.researchRequested),
+    });
   if (breakdown.researchUnfundedReason === "ABOVE_CAP")
-    return `Research of ${formatCount(breakdown.researchRequested)} is above the cap of ${formatCount(breakdown.researchCap)} (12% of the monthly appropriation).`;
-  if (breakdown.researchCap === 0)
-    return "The naval appropriation is too small to fund research: the cap is 12% of it.";
+    return resolveMessage("economy.research.aboveCap", {
+      requested: formatCount(breakdown.researchRequested),
+      cap: formatCount(breakdown.researchCap),
+    });
+  if (breakdown.researchCap === 0) return resolveMessage("economy.research.capZero");
   return null;
 }

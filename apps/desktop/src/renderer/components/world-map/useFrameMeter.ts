@@ -1,5 +1,7 @@
 import { useCallback, useRef } from "react";
 
+import { formatFixed } from "../../lib/presentation-format/index.js";
+
 export interface FrameMeter {
   readonly sample: () => void;
   readonly reset: () => void;
@@ -26,7 +28,7 @@ export function useFrameMeter(meterRef: React.RefObject<HTMLSpanElement | null>)
       meterRef.current.textContent =
         sorted.length < 8
           ? "drag or zoom to measure"
-          : `p50 ${p50.toFixed(1)} ms · p95 ${p95.toFixed(1)} ms · n=${sorted.length}`;
+          : `p50 ${formatFixed(p50, { locale: "en-US", digits: 1 })} ms · p95 ${formatFixed(p95, { locale: "en-US", digits: 1 })} ms · n=${sorted.length}`;
     }
   }, [meterRef]);
 
