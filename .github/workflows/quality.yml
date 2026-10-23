@@ -1,11 +1,11 @@
 name: Quality Gate
 
-# Heavy tier: runs for pull requests into master (the dev-to-master promotion)
+# Heavy tier: runs for pull requests into main (the dev-to-main promotion)
 # and on demand. Pull requests into dev run gates.yml, commit-convention.yml and
 # the Ubuntu determinism job instead.
 on:
   pull_request:
-    branches: [master]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

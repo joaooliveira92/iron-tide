@@ -5,7 +5,7 @@ import { checkReleaseRef } from "../verify-release-ref.mjs";
 
 const ok = { refType: "tag", refName: "v4.0.0", desktopVersion: "4.0.0", onMaster: true };
 
-void test("a tag matching the desktop version on master passes", () => {
+void test("a tag matching the desktop version on main passes", () => {
   assert.deepEqual(checkReleaseRef(ok), []);
 });
 
@@ -36,9 +36,9 @@ void test("a tag that disagrees with the desktop version is refused", () => {
   assert.ok(problems.some((p) => /does not match/u.test(p)));
 });
 
-void test("a tag whose commit is not on master is refused", () => {
+void test("a tag whose commit is not on main is refused", () => {
   const problems = checkReleaseRef({ ...ok, onMaster: false });
-  assert.ok(problems.some((p) => /not reachable from origin\/master/u.test(p)));
+  assert.ok(problems.some((p) => /not reachable from origin\/main/u.test(p)));
 });
 
 void test("every problem is reported, not only the first", () => {

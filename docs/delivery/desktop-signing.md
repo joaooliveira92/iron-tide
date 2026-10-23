@@ -33,7 +33,7 @@ git tag vX.Y.Z && git push origin vX.Y.Z
 CI builds and signs on the tagged commit, but only after `verify-release-ref.mjs`
 passes: the run must be on a tag, the tag must be `vMAJOR.MINOR.PATCH` and equal
 the `apps/desktop/package.json` version, and its commit must be reachable from
-`origin/master`. A manual dispatch from a branch is refused.
+`origin/main`. A manual dispatch from a branch is refused.
 
 The signing jobs run in the GitHub environments `release-macos` and
 `release-windows`, and the draft release in `publish-github`. Add required

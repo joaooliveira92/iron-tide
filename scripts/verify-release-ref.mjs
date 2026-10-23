@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 // Release ref gate. A production release builds only from a version tag whose
-// commit is on master and whose number matches the desktop app version, so a
+// commit is on main and whose number matches the desktop app version, so a
 // manual dispatch from a branch cannot publish installers.
 //
 // Usage (CI): GITHUB_REF_TYPE, GITHUB_REF_NAME from the runner; run with a full
-// checkout so `origin/master` is available.
+// checkout so `origin/main` is available.
 
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -33,14 +33,14 @@ export function checkReleaseRef({ refType, refName, desktopVersion, onMaster }) 
     );
   }
   if (!onMaster) {
-    problems.push("the tagged commit is not reachable from origin/master");
+    problems.push("the tagged commit is not reachable from origin/main");
   }
   return problems;
 }
 
 function isAncestorOfMaster() {
   try {
-    execFileSync("git", ["merge-base", "--is-ancestor", "HEAD", "origin/master"], {
+    execFileSync("git", ["merge-base", "--is-ancestor", "HEAD", "origin/main"], {
       cwd: ROOT,
       stdio: "ignore",
     });

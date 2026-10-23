@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      # Full history so `origin/master` is present for the ancestry check.
+      # Full history so `origin/main` is present for the ancestry check.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -26,7 +26,7 @@ jobs:
         with:
           node-version: "24.18.0"
       # Refuses a branch ref, a tag that is not a version, a tag that disagrees
-      # with apps/desktop/package.json, and a commit that is not on master.
+      # with apps/desktop/package.json, and a commit that is not on main.
       - name: Verify the release ref
         run: node scripts/verify-release-ref.mjs
 

@@ -1,13 +1,13 @@
 name: Determinism Gate
 
-# Pull requests into dev run Ubuntu only. Pull requests into master, manual
+# Pull requests into dev run Ubuntu only. Pull requests into main, manual
 # dispatches, and the nightly run run the full Ubuntu, Windows and macOS matrix.
 # GitHub fires `schedule` only from the default branch's copy of this file, so
-# the nightly run starts once this file reaches master; it checks out dev
+# the nightly run starts once this file reaches main; it checks out dev
 # explicitly rather than the default branch.
 on:
   pull_request:
-    branches: [dev, master]
+    branches: [dev, main]
   workflow_dispatch:
   schedule:
     - cron: "0 3 * * *"
