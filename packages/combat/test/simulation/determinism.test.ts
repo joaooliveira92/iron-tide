@@ -4,7 +4,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const thisDir = dirname(fileURLToPath(import.meta.url));
-const childScript = resolve(thisDir, "..", "..", "dist", "simulation", "run-minutes-child.js");
+const childScript = resolve(thisDir, "..", "..", "dist-harness", "harness", "run-minutes-child.js");
 
 function runChild(): string {
   return execFileSync(process.execPath, [childScript], {

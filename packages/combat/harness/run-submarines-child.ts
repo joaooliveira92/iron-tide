@@ -19,7 +19,7 @@ import {
   computeMisidentificationProbability,
   withSubmarineOperationsRecordHash,
   computeSubmarineOperationsRecordHash,
-} from "../submarines/index.js";
+} from "../src/submarines/index.js";
 
 const LEDGER = new RandomLedger();
 

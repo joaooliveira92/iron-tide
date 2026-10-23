@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { FLOAT_UNIT } from "@bluewave/combat/battleResolution";
 
 const thisDir = dirname(fileURLToPath(import.meta.url));
-const childScript = resolve(thisDir, "..", "..", "dist", "simulation", "run-torpedo-child.js");
+const childScript = resolve(thisDir, "..", "..", "dist-harness", "harness", "run-torpedo-child.js");
 
 function runChild(): string {
   return execFileSync(process.execPath, [childScript], {

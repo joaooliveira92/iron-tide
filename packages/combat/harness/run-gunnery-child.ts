@@ -1,17 +1,17 @@
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
 import { RandomEngine } from "@bluewave/random";
-import type { TacticalBattleState, TacticalShipUnit } from "../tactical/index.js";
-import type { MovementState } from "../movement/state.js";
-import type { TacticalContact } from "../contact/lifecycle.js";
-import { computeInitialMovementStates } from "./spawn.js";
-import { advanceMinutes } from "./engine.js";
+import type { TacticalBattleState, TacticalShipUnit } from "../src/tactical/index.js";
+import type { MovementState } from "../src/movement/state.js";
+import type { TacticalContact } from "../src/contact/lifecycle.js";
+import { computeInitialMovementStates } from "../src/simulation/spawn.js";
+import { advanceMinutes } from "../src/simulation/engine.js";
 import {
   neutralAccuracyFactors,
   neutralRateFactors,
   type GunneryBattery,
   withGunneryStateHash,
-} from "../gunnery/index.js";
+} from "../src/gunnery/index.js";
 
 function unit(id: string, sideId: "ATTACKER" | "DEFENDER", className: string): TacticalShipUnit {
   return {

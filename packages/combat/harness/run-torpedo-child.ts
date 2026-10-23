@@ -2,11 +2,11 @@ import { canonicalSerialize } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
 import type { CompiledTorpedo } from "@bluewave/armament";
 import { RandomEngine } from "@bluewave/random";
-import type { TacticalBattleState, TacticalShipUnit } from "../tactical/index.js";
-import type { MovementState } from "../movement/state.js";
-import type { TacticalContact } from "../contact/lifecycle.js";
-import { advanceMinute, type MinuteResult } from "./engine.js";
-import { initialDamageState } from "../damage/minuteDamage.js";
+import type { TacticalBattleState, TacticalShipUnit } from "../src/tactical/index.js";
+import type { MovementState } from "../src/movement/state.js";
+import type { TacticalContact } from "../src/contact/lifecycle.js";
+import { advanceMinute, type MinuteResult } from "../src/simulation/engine.js";
+import { initialDamageState } from "../src/damage/minuteDamage.js";
 import {
   computeBaseBreachRateKgMin,
   EMPTY_TUBE,
@@ -15,7 +15,7 @@ import {
   type TorpedoContext,
   type TorpedoLaunchCommand,
   type TorpedoLauncherState,
-} from "../torpedoes/index.js";
+} from "../src/torpedoes/index.js";
 
 function unit(id: string, sideId: "ATTACKER" | "DEFENDER", className: string): TacticalShipUnit {
   return {
