@@ -86,7 +86,7 @@ describe("buildDiplomacyViewModel", () => {
       relationLabel: "Neutral",
       tensionBadge: null,
       nap: true,
-      actions: ["DeclareWar", "FormAlliance", "BreakNonAggressionPact"],
+      actions: ["FormAlliance", "BreakNonAggressionPact", "DeclareWar"],
     });
   });
 
@@ -112,6 +112,43 @@ describe("buildDiplomacyViewModel", () => {
     });
   });
 
+  it("sorts relations by threat: at war first, then tension, then name", () => {
+    const base = fixtureProjection().relations[1]!;
+    const vm = buildDiplomacyViewModel(
+      fixtureProjection({
+        relations: [
+          { ...base, partnerNationId: "italy", partnerName: "Italy", tension: 4 },
+          { ...base, partnerNationId: "spain", partnerName: "Spain", tension: 7 },
+          { ...base, partnerNationId: "brazil", partnerName: "Brazil", tension: 7 },
+          {
+            ...base,
+            partnerNationId: "france",
+            partnerName: "France",
+            tension: 2,
+            relation: "at_war",
+          },
+        ],
+      }),
+      null,
+    );
+    expect(vm.relations.map((r) => r.partnerName)).toEqual(["France", "Brazil", "Spain", "Italy"]);
+  });
+
+  it("summarises the posture and gives each war its standing, duration and blockades", () => {
+    const vm = buildDiplomacyViewModel(fixtureProjection(), null);
+    expect(vm.posture).toMatchObject({
+      activeWars: 1,
+      allies: 0,
+      pacts: 1,
+      blockades: 1,
+      mostTense: { partnerName: "Germany", tension: 5, band: "neutral" },
+    });
+    expect(vm.wars[0]).toMatchObject({ standing: "ahead", duration: "this month" });
+    expect(vm.wars[0]!.blockades.map((b) => b.areaLabel)).toEqual(["Gibraltar"]);
+    expect(vm.relations[0]!.blockades.map((b) => b.areaLabel)).toEqual(["Gibraltar"]);
+    expect(vm.relations[1]!.blockades).toEqual([]);
+  });
+
   it("describes the current draft, or null when nothing is drafted", () => {
     expect(buildDiplomacyViewModel(fixtureProjection(), null).draftLabel).toBeNull();
     expect(
@@ -120,5 +157,12 @@ describe("buildDiplomacyViewModel", () => {
         partnerNationId: "france",
       }).draftLabel,
     ).toBe("Declare war with France");
+    expect(
+      buildDiplomacyViewModel(fixtureProjection(), {
+        kind: "AcceptPeace",
+        partnerNationId: "france",
+        warId: "war_uk_france_1880-01",
+      }).draftLabel,
+    ).toBe("Accept peace with France");
   });
 });
