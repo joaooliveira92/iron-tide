@@ -2,7 +2,8 @@
 
 ## Status
 
-Blocked pending owner decision. Blocks E-1 tickets 04 to 09 (#253 to #258) and informs #259.
+Resolved (2026-10-23): the owner approved every recommendation (D1 A, D2 A, D3 accept except D3i, D4 all, D5 A), recorded as
+[ADR-0283](../../docs/adr/ADR-0283-e1-1940-1970-content-decisions.md). E-1 tickets 04 to 09 (#253 to #258) are unblocked.
 
 ## Trigger
 
