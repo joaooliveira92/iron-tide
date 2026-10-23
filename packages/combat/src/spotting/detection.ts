@@ -1,4 +1,5 @@
 import type { RandomEngine } from "@bluewave/random";
+import type { Position } from "../core/position.js";
 import type { ContactTrack } from "../contact/targeting.js";
 import {
   VISUAL_DETECTION_RANGE_UM,
@@ -6,7 +7,7 @@ import {
   VISIBILITY_BP_SCALE,
 } from "./constants.js";
 
-export type Position = [number, number];
+export type { Position };
 
 export const DETECTION_GEOMETRY_METRE_UM = 1_000_000 as const;
 

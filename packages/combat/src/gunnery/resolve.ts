@@ -31,7 +31,7 @@ import {
 } from "./event.js";
 import { validateTargetOrder } from "../contact/targeting.js";
 import type { TacticalContact } from "../contact/lifecycle.js";
-import type { Position } from "../spotting/detection.js";
+import type { Position } from "../core/position.js";
 import { TACTICAL_MINUTE_MS } from "../core/tacticalTime.js";
 import { INVALID_GUNNERY_STATE } from "./reasonCodes.js";
 import { rangeBetweenUm, rangeMultiplierBp } from "./rangeCurve.js";

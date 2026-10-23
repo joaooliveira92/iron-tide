@@ -1,5 +1,5 @@
 import { SUBSTEPS_PER_MINUTE, TACTICAL_SUBSTEP_MS } from "../core/tacticalTime.js";
-import type { Position } from "../spotting/detection.js";
+import type { Position } from "../core/position.js";
 import { advanceTorpedoTrack, type TorpedoTrack } from "./track.js";
 import { resolveTorpedoHit, type TargetHitProfile } from "./hit-resolution.js";
 import { applyTorpedoDetonationToTrack, resolveTorpedoDetonation } from "./detonation.js";

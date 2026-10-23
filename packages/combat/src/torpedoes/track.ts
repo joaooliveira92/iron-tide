@@ -11,7 +11,7 @@ import {
   type TorpedoTerminalResult,
 } from "./constants.js";
 import { TORPEDO_STATE_INVARIANT_FAILED } from "./reasonCodes.js";
-import type { Position } from "../spotting/detection.js";
+import type { Position } from "../core/position.js";
 import type { CompiledTorpedoSpeedSetting } from "@bluewave/armament";
 
 export interface TorpedoReliabilityState {
