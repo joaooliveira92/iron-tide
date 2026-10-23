@@ -1,0 +1,62 @@
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../../../components/ui/hover-card.js";
+import { cn } from "../../../lib/utils.js";
+import type { ReadoutTone, TreasuryReadout } from "../treasury-readouts.js";
+
+const TONE: Record<ReadoutTone, string> = {
+  neutral: "text-foreground",
+  good: "text-success",
+  warn: "text-amber-600 dark:text-amber-400",
+  bad: "text-destructive",
+};
+
+function Readout({ readout: r }: { readonly readout: TreasuryReadout }) {
+  return (
+    <HoverCard>
+      <HoverCardTrigger
+        delay={0}
+        closeDelay={0}
+        render={<button type="button" />}
+        data-status={r.id}
+        data-tone={r.tone}
+        aria-label={`${r.label}: ${r.value} — show detail`}
+        className="-mx-1 flex cursor-default items-baseline gap-2 rounded px-1 py-0.5 outline-none hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <span className="text-xs text-muted-foreground">{r.label}</span>
+        <span className={cn("font-medium tabular-nums", TONE[r.tone])}>{r.value}</span>
+      </HoverCardTrigger>
+      <HoverCardContent side="top" align="start" className="w-72">
+        <div className="space-y-2">
+          <div className="text-xs text-muted-foreground">{r.title}</div>
+          <dl className="space-y-0.5">
+            {r.rows.map((row) => (
+              <div key={row.label} className="flex justify-between gap-4">
+                <dt className="text-muted-foreground">{row.label}</dt>
+                <dd className="tabular-nums">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+          {r.note !== undefined && (
+            <p className="border-t pt-2 text-xs text-muted-foreground">{r.note}</p>
+          )}
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
+
+export function TreasuryStatusBar({ readouts }: { readonly readouts: readonly TreasuryReadout[] }) {
+  return (
+    <section
+      aria-label="Treasury status"
+      className="flex min-h-14 flex-wrap items-center gap-x-6 gap-y-1 border-t bg-muted/40 px-4 py-2 text-sm"
+    >
+      {readouts.map((r) => (
+        <Readout key={r.id} readout={r} />
+      ))}
+    </section>
+  );
+}

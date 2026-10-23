@@ -62,6 +62,13 @@ vi.mock("../../lib/use-campaign-projection.js", () => ({
   useCampaignProjection: () => hookMocks.state(),
 }));
 
+vi.mock("./hooks/useBudgetPolicyPanel.js", () => ({
+  useBudgetPolicy: () => ({
+    controller: {},
+    vm: { previewResearch: null, rateChanged: false },
+  }),
+}));
+
 vi.mock("./components/BudgetPolicyPanel.js", () => ({
   BudgetPolicyPanel: () => <div data-testid="budget-policy-panel-stub" />,
 }));
@@ -82,18 +89,19 @@ describe("TreasuryScreen", () => {
       ).getByText("4,000"),
     ).not.toBeNull();
 
-    expect(screen.getAllByText("Fleet maintenance").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText("Research").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getAllByText("Fixed obligations").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Fleet maintenance")).not.toBeNull();
+    expect(screen.getByText("Research")).not.toBeNull();
+    expect(screen.getByText("Fixed obligations")).not.toBeNull();
     expect(screen.getByText("Construction (up to)")).not.toBeNull();
     expect(screen.getByText("Committed expenditure")).not.toBeNull();
     expect(screen.getAllByText("500").length).toBeGreaterThanOrEqual(1);
 
-    expect(screen.getByText("Projected net before construction")).not.toBeNull();
-    expect(screen.getByText("Available funds")).not.toBeNull();
-    expect(screen.getByText("Projected month-end funds")).not.toBeNull();
-    expect(screen.getByText("50,000")).not.toBeNull();
-    expect(screen.getByText("53,000")).not.toBeNull();
+    const status = screen.getByRole("region", { name: "Treasury status" });
+    expect(within(status).getByText("Net before construction")).not.toBeNull();
+    expect(within(status).getByText("Available funds")).not.toBeNull();
+    expect(within(status).getByText("Month-end funds")).not.toBeNull();
+    expect(within(status).getByText("50,000")).not.toBeNull();
+    expect(within(status).getByText("53,000")).not.toBeNull();
     expect(screen.getByText("Healthy")).not.toBeNull();
   });
 
@@ -119,7 +127,7 @@ describe("TreasuryScreen", () => {
     };
     hookMocks.state.mockReturnValue({ projection: deficit, loadError: null });
     render(<TreasuryScreen sessionId="ses-1" />);
-    expect(screen.getByText("Critical")).not.toBeNull();
+    expect(screen.getAllByText("Critical").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Shortfall: 40/)).not.toBeNull();
     expect(screen.getByText(/Treasury lasts 12 months/)).not.toBeNull();
     expect(screen.getByText(/no field can take it, so nothing is paid/)).not.toBeNull();

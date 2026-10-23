@@ -82,3 +82,22 @@ describe("buildBudgetBar", () => {
     );
   });
 });
+
+describe("buildBudgetBar preview", () => {
+  it("widens the scale and reports the research delta without touching the committed figures", () => {
+    const base = {
+      income: 1000,
+      obligations: 100,
+      fleetMaintenance: 200,
+      researchSpend: 100,
+      totalExpenditure: 400,
+    } as TreasuryBreakdown;
+    const bar = buildBudgetBar(base, 700);
+    const research = bar.segments.find((s) => s.id === "research");
+    expect(research?.value).toBe(100);
+    expect(research?.previewDelta).toBe(600);
+    expect(bar.scale).toBe(1000);
+    expect(research?.shareOfIncome).toBe(0.1);
+    expect(buildBudgetBar(base).segments.every((s) => s.previewDelta === 0)).toBe(true);
+  });
+});
