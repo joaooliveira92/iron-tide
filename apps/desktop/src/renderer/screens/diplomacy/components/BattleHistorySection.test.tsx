@@ -114,14 +114,19 @@ describe("BattleHistorySection", () => {
     const { rerender } = render(
       <BattleHistorySection state={{ status: "ready", history: { battles: [withShips] } }} />,
     );
-    const list = screen.getByRole("list", { name: "Ships lost in this battle" });
+    const list = screen.getByRole("list", {
+      name: "Ships lost in this battle",
+    });
     expect(list.textContent).toContain("HMS Valiant");
     expect(list.textContent).toContain("sunk by torpedo");
     expect(screen.queryByText(/before ship records were kept/)).toBeNull();
 
     rerender(
       <BattleHistorySection
-        state={{ status: "ready", history: { battles: [entry({ lostShips: [] })] } }}
+        state={{
+          status: "ready",
+          history: { battles: [entry({ lostShips: [] })] },
+        }}
       />,
     );
     expect(screen.getByText(/before ship records were kept/)).toBeTruthy();
