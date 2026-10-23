@@ -145,6 +145,22 @@ export const EN_US_MESSAGES = {
   "shell.header.metric.alerts": "Alerts",
   "shell.header.metric.prestige": "Prestige",
   "shell.header.metric.tension": "World tension",
+  "shell.prestige.valueAtRisk": "{value} — at risk of dismissal",
+  "shell.prestige.careerSacked": "{score} — sacked",
+  "shell.prestige.careerCampaignEnd": "{score} — campaign ended",
+  "shell.prestige.description":
+    "Your standing as Grand Admiral. Defeats and unpaid funds lower it, victories raise it; at {threshold} or below you risk dismissal.",
+  "shell.prestige.lastChange": "Last change: {delta} ({reason}, {month}).",
+  "shell.prestige.riskNote": "At or below {threshold} there is a monthly chance of being sacked.",
+  "shell.prestige.reason.UNPAID_FUNDS": "unpaid funds",
+  "shell.prestige.reason.BATTLE_LOST": "battle lost",
+  "shell.prestige.reason.BATTLE_WON": "battle won",
+  "shell.prestige.reason.DECLINED_BATTLE": "repeated declined battles",
+  "shell.career.label": "Career result",
+  "shell.career.note":
+    "Final score {score} (the prestige you held), ended {month} {year}: {reason}.",
+  "shell.career.reason.SACKED": "you were sacked",
+  "shell.career.reason.CAMPAIGN_END": "the campaign reached its final month",
 
   "shell.search.aria": "Search",
   "shell.search.title": "Search (Ctrl+F)",

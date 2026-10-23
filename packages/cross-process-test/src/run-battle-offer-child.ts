@@ -99,9 +99,15 @@ function offerOf(result: MonthResult): OfferRequest {
 
 function withPlayerPrestigeOf(snapshot: CampaignSnapshot, source: CampaignSnapshot) {
   const nations = new Map(snapshot.nations);
+  const { prestigeLastChange, ...rest } = nations.get(PLAYER)!;
+  void prestigeLastChange;
+  const sourceNation = source.nations.get(PLAYER)!;
   nations.set(PLAYER, {
-    ...nations.get(PLAYER)!,
-    prestige: source.nations.get(PLAYER)!.prestige,
+    ...rest,
+    prestige: sourceNation.prestige,
+    ...(sourceNation.prestigeLastChange === undefined
+      ? {}
+      : { prestigeLastChange: sourceNation.prestigeLastChange }),
   });
   return { ...snapshot, nations };
 }

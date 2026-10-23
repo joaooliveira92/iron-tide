@@ -6,6 +6,7 @@ import { readQuery } from "../lib/read-queries.js";
 import { activeAlertsCount, readCampaign } from "./campaign-reads.js";
 
 const projection: PlayerProjection = {
+  prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
   campaignIdentity: "campaign_1",
   snapshotHash: "hash_abc",
   revision: 4,

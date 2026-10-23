@@ -137,6 +137,13 @@ function makeRichSnapshot(): CampaignSnapshot {
   };
   const gbr = snapshot.nations.get(ATTACKER_NATION)!;
   gbr.homeAreaId = "a-2";
+  gbr.prestigeLastChange = {
+    reasonCode: "BATTLE_LOST",
+    before: SafeInt(20),
+    after: SafeInt(19),
+    delta: SafeInt(-1),
+    month: "1880-02",
+  };
   gbr.research = {
     nationId: ATTACKER_NATION,
     technologies: [

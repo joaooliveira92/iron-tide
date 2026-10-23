@@ -320,6 +320,7 @@ const F = {
     "navalAppropriationRateBp",
     "maintenanceCost",
     "prestige",
+    "prestigeLastChange",
     "homeAreaId",
     "fleets",
     "divisions",

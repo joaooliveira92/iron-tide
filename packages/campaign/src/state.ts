@@ -1,5 +1,5 @@
 import type { Bp, Money, SafeInt } from "@bluewave/contracts";
-import type { CareerResult, PrestigeValueSet } from "./prestige.js";
+import type { CareerResult, PrestigeReasonCode, PrestigeValueSet } from "./prestige.js";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";
 import type { DeclineCounterEntry, DeclinedBattleRecord } from "./declineRecords.js";
@@ -351,6 +351,7 @@ export interface NationState {
   navalAppropriationRateBp: SafeInt;
   maintenanceCost: SafeInt;
   prestige: SafeInt;
+  prestigeLastChange?: PrestigeLastChange;
   homeAreaId?: string;
   fleets: FleetState[];
   divisions: PermanentDivision[];
@@ -574,6 +575,14 @@ export interface CampaignWeatherState {
   formulaVersion: string;
   rngVersion: string;
   stateHash: string;
+}
+
+export interface PrestigeLastChange {
+  reasonCode: PrestigeReasonCode;
+  before: SafeInt;
+  after: SafeInt;
+  delta: SafeInt;
+  month: string;
 }
 
 export interface CampaignSnapshot {

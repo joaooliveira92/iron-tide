@@ -221,9 +221,11 @@ describe("dormancy (R1, R3)", () => {
     const dormant = run(warSnapshot(), { channel: false, rules: undefined, player: undefined });
     const nations = new Map(configured.finalSnapshot.nations);
     const player = nations.get(ATTACKER_NATION)!;
+    const dormantPlayer = dormant.finalSnapshot.nations.get(ATTACKER_NATION)!;
     nations.set(ATTACKER_NATION, {
       ...player,
-      prestige: dormant.finalSnapshot.nations.get(ATTACKER_NATION)!.prestige,
+      prestige: dormantPlayer.prestige,
+      prestigeLastChange: dormantPlayer.prestigeLastChange,
     });
     expect(hashSnapshot({ ...configured.finalSnapshot, nations })).toBe(
       hashSnapshot(dormant.finalSnapshot),

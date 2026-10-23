@@ -57,6 +57,7 @@ export type {
   ProcurementIntentStatus,
   PersistenceManifest,
   PoliticalState,
+  PrestigeLastChange,
   ResearchState,
   OverBaseFlag,
   Ship,

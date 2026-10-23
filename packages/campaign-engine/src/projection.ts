@@ -5,6 +5,7 @@ import {
   monthId,
   type EconomyStatus,
   type PresenceMeasurementRules,
+  type PrestigeLastChange,
   type ResearchUnfundedReason,
 } from "@bluewave/campaign";
 import { derivePlayerFacts } from "./player-facts.js";
@@ -91,6 +92,25 @@ export interface PlayerProjectionCommandWorkspace {
   readonly movementCommands: readonly unknown[];
 }
 
+export interface PlayerProjectionPrestige {
+  readonly current: number;
+  readonly sackingThreshold: number;
+  readonly dismissalRisk: boolean;
+  readonly lastChange?: {
+    readonly reasonCode: string;
+    readonly before: number;
+    readonly after: number;
+    readonly delta: number;
+    readonly month: string;
+  };
+}
+
+export interface PlayerProjectionCareer {
+  readonly reason: "SACKED" | "CAMPAIGN_END";
+  readonly score: number;
+  readonly month: PlayerProjectionMonth;
+}
+
 export interface PlayerProjection {
   readonly campaignIdentity: string;
   readonly snapshotHash: string;
@@ -100,6 +120,8 @@ export interface PlayerProjection {
   readonly nationName: string;
   readonly projectedSurplusDeficit: number;
   readonly economy: PlayerProjectionEconomy;
+  readonly prestige: PlayerProjectionPrestige;
+  readonly career?: PlayerProjectionCareer;
   readonly fleet: readonly PlayerProjectionFleet[];
   readonly ports: readonly PlayerProjectionPort[];
   readonly knownTechnologyIds: readonly string[];
@@ -128,6 +150,29 @@ export function buildPresenceReadout(
         presentTons,
         shortfallTons: exempt ? 0 : shortfallTons,
       })),
+  };
+}
+
+function buildPrestige(
+  sackingThreshold: number,
+  nation: { readonly prestige: number; readonly prestigeLastChange?: PrestigeLastChange },
+): PlayerProjectionPrestige {
+  const last = nation.prestigeLastChange;
+  return {
+    current: Number(nation.prestige),
+    sackingThreshold: Number(sackingThreshold),
+    dismissalRisk: Number(nation.prestige) <= Number(sackingThreshold),
+    ...(last === undefined
+      ? {}
+      : {
+          lastChange: {
+            reasonCode: last.reasonCode,
+            before: Number(last.before),
+            after: Number(last.after),
+            delta: Number(last.delta),
+            month: last.month,
+          },
+        }),
   };
 }
 
@@ -221,6 +266,19 @@ export function buildPlayerProjection(
       monthEndTreasury: outlook.monthEndTreasury,
       ...(outlook.runwayMonths === undefined ? {} : { runwayMonths: outlook.runwayMonths }),
     },
+    prestige: buildPrestige(snapshot.prestigeRules.sackingThreshold, nation),
+    ...(snapshot.careerResult === undefined
+      ? {}
+      : {
+          career: {
+            reason: snapshot.careerResult.reason,
+            score: Number(snapshot.careerResult.score),
+            month: {
+              year: Number(snapshot.careerResult.month.year),
+              month: Number(snapshot.careerResult.month.month),
+            },
+          },
+        }),
     fleet,
     ports,
     knownTechnologyIds: [...nation.research.discoveredTechs].sort((a, b) => a.localeCompare(b)),

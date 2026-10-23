@@ -4,7 +4,8 @@
 
 Accepted (2026-10-23). Implements tickets [#90](https://github.com/joaooliveira92/iron-tide/issues/90) (S-2 05) and
 [#91](https://github.com/joaooliveira92/iron-tide/issues/91) (S-2 06) and
-[#92](https://github.com/joaooliveira92/iron-tide/issues/92) (S-2 07) of spec
+[#92](https://github.com/joaooliveira92/iron-tide/issues/92) (S-2 07) and
+[#93](https://github.com/joaooliveira92/iron-tide/issues/93) (S-2 08) of spec
 [#74](https://github.com/joaooliveira92/iron-tide/issues/74), R6 to R9 and R11. Uses the value set of
 [ADR-0239](ADR-0239-s2-prestige-values-balance-targets.md) and the seam of
 [ADR-0260](ADR-0260-prestige-application-and-unpaid-funds-source.md) unchanged.
@@ -33,6 +34,11 @@ Accepted (2026-10-23). Implements tickets [#90](https://github.com/joaooliveira9
    without a player nation nothing is written.
 5. **Persistence and the desktop.** The save schema accepts an optional `careerResult`; a snapshot without one is unchanged,
    so no compatibility bump. The desktop turn transaction rejects a month on an ended career with `CAREER_ENDED`.
+
+6. **Projection and display.** `NationState.prestigeLastChange` (optional, written by the seam with reason, before, after, delta and
+   month) lets the projection expose the last change after save and load. `PlayerProjection` carries `prestige` (current,
+   sacking threshold, dismissal-risk flag, last change) and `career`. The header metric and the status-strip rows state risk and
+   the result in words, with a focusable status role, using externalized en-US strings.
 
 ## Compatibility
 

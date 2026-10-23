@@ -109,9 +109,11 @@ describe("month player-nation input", () => {
     expect(withPlayer.success).toBe(control.success);
     const nations = new Map(withPlayer.finalSnapshot.nations);
     const player = nations.get(ATTACKER_NATION)!;
+    const controlPlayer = control.finalSnapshot.nations.get(ATTACKER_NATION)!;
     nations.set(ATTACKER_NATION, {
       ...player,
-      prestige: control.finalSnapshot.nations.get(ATTACKER_NATION)!.prestige,
+      prestige: controlPlayer.prestige,
+      prestigeLastChange: controlPlayer.prestigeLastChange,
     });
     expect(hashSnapshot({ ...withPlayer.finalSnapshot, nations })).toBe(
       hashSnapshot(control.finalSnapshot),
