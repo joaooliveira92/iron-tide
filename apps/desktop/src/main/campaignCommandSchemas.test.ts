@@ -401,8 +401,45 @@ describe("WriteUiStatePayloadSchema", () => {
     });
   });
 
-  it("rejects a missing dismissedFingerprints", () => {
-    expectFailure(WriteUiStatePayloadSchema, { sessionId: "s" });
+  it("treats dismissedFingerprints as optional so a patch names only the fields it owns", () => {
+    expectSuccess(WriteUiStatePayloadSchema, { sessionId: "s" });
+    expectSuccess(WriteUiStatePayloadSchema, {
+      sessionId: "s",
+      turnMessages: { pinnedIds: [], readIds: [] },
+    });
+  });
+
+  it("still decodes every payload shape the pre-patch contract accepted", () => {
+    const priorFixtures = [
+      { sessionId: "s", dismissedFingerprints: [] },
+      { sessionId: "s", dismissedFingerprints: ["fp-1", "fp-2"] },
+      {
+        sessionId: "s",
+        dismissedFingerprints: ["fp-1"],
+        firstMonthInspection: { status: "in_progress", lastCompletedStep: 2 },
+      },
+      {
+        sessionId: "s",
+        dismissedFingerprints: [],
+        inspector: { widthPx: 500, collapsed: true },
+      },
+      {
+        sessionId: "s",
+        dismissedFingerprints: [],
+        turnMessages: { pinnedIds: ["a"], readIds: ["b"] },
+      },
+    ];
+    for (const fixture of priorFixtures) {
+      expect(expectSuccess(WriteUiStatePayloadSchema, fixture)).toEqual(fixture);
+    }
+  });
+
+  it("keeps rejecting malformed dismissals and fields", () => {
+    expectFailure(WriteUiStatePayloadSchema, { sessionId: "s", dismissedFingerprints: "high" });
+    expectFailure(WriteUiStatePayloadSchema, {
+      sessionId: "s",
+      inspector: { widthPx: 100, collapsed: true },
+    });
   });
 });
 

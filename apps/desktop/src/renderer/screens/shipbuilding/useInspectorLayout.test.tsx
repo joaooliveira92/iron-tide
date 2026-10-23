@@ -40,7 +40,7 @@ describe("useInspectorLayout", () => {
     await waitFor(() => expect(result.current.layout).toEqual({ widthPx: 512, collapsed: true }));
   });
 
-  it("writes the chosen width through the sidecar, carrying the dismissal set through", async () => {
+  it("writes only the chosen width through the sidecar", async () => {
     const execute = vi.fn(async (command: string) =>
       command === "readUiState" ? uiState(undefined, ["fp-a"]) : uiState(),
     );
@@ -52,7 +52,6 @@ describe("useInspectorLayout", () => {
     await waitFor(() =>
       expect(execute).toHaveBeenCalledWith("writeUiState", {
         sessionId: "ses_1",
-        dismissedFingerprints: ["fp-a"],
         inspector: { widthPx: 560, collapsed: false },
       }),
     );
@@ -81,7 +80,6 @@ describe("useInspectorLayout", () => {
     await waitFor(() =>
       expect(execute).toHaveBeenCalledWith("writeUiState", {
         sessionId: "ses_1",
-        dismissedFingerprints: [],
         inspector: { widthPx: 500, collapsed: false },
       }),
     );

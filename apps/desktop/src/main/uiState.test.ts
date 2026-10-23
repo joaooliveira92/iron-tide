@@ -13,6 +13,7 @@ import type {
   UiState,
   WriteUiStateResult,
 } from "../shared/ui-state-contract.js";
+import { dispatchCampaignCommand } from "./campaignBridge.js";
 import {
   clearCampaignSessionsForTest,
   getCampaignSession,
@@ -249,6 +250,108 @@ describe("ui-state sidecar", () => {
     expect((reset.value as WriteUiStateResult).uiState.firstMonthInspection).toEqual({
       status: "not_started",
       lastCompletedStep: 0,
+    });
+  });
+
+  describe("field-level patch", () => {
+    const patch = async (sessionId: string, fields: Record<string, unknown>) => {
+      const result = await runProgram(writeUiStateProgram, { sessionId, ...fields });
+      expect(result.outcome).toBe("success");
+      if (result.outcome !== "success") throw new Error("patch failed");
+      return (result.value as WriteUiStateResult).uiState;
+    };
+
+    it("keeps every field it does not name, including the dismissal set", async () => {
+      registerProductionSession("session-patch", join(saveRoot, "patch"));
+      await patch("session-patch", {
+        dismissedFingerprints: ["fp-a"],
+        firstMonthInspection: { status: "in_progress", lastCompletedStep: 2 },
+        inspector: { widthPx: 400, collapsed: false },
+        turnMessages: { pinnedIds: ["m1"], readIds: ["m2"] },
+      });
+
+      const onlyInspector = await patch("session-patch", {
+        inspector: { widthPx: 500, collapsed: true },
+      });
+      expect(onlyInspector).toEqual({
+        turnNumber: 0,
+        dismissedFingerprints: ["fp-a"],
+        firstMonthInspection: { status: "in_progress", lastCompletedStep: 2 },
+        inspector: { widthPx: 500, collapsed: true },
+        turnMessages: { pinnedIds: ["m1"], readIds: ["m2"] },
+      });
+
+      const onlyMessages = await patch("session-patch", {
+        turnMessages: { pinnedIds: [], readIds: ["m2", "m3"] },
+      });
+      expect(onlyMessages.turnMessages).toEqual({ pinnedIds: [], readIds: ["m2", "m3"] });
+      expect(onlyMessages.inspector).toEqual({ widthPx: 500, collapsed: true });
+
+      const onlyInspection = await patch("session-patch", {
+        firstMonthInspection: { status: "completed", lastCompletedStep: 6 },
+      });
+      expect(onlyInspection.firstMonthInspection).toEqual({
+        status: "completed",
+        lastCompletedStep: 6,
+      });
+      expect(onlyInspection.turnMessages).toEqual({ pinnedIds: [], readIds: ["m2", "m3"] });
+
+      const onlyDismissed = await patch("session-patch", { dismissedFingerprints: ["fp-b"] });
+      expect(onlyDismissed.dismissedFingerprints).toEqual(["fp-b"]);
+      expect(onlyDismissed.inspector).toEqual({ widthPx: 500, collapsed: true });
+    });
+
+    it("lets independent writers interleave without losing each other's field", async () => {
+      registerProductionSession("session-race", join(saveRoot, "race"));
+      await patch("session-race", { dismissedFingerprints: ["fp-a"] });
+
+      const results = await Promise.all([
+        runProgram(writeUiStateProgram, {
+          sessionId: "session-race",
+          inspector: { widthPx: 420, collapsed: true },
+        }),
+        runProgram(writeUiStateProgram, {
+          sessionId: "session-race",
+          turnMessages: { pinnedIds: ["m1"], readIds: [] },
+        }),
+        runProgram(writeUiStateProgram, {
+          sessionId: "session-race",
+          firstMonthInspection: { status: "dismissed", lastCompletedStep: 1 },
+        }),
+      ]);
+      expect(results.map((r) => r.outcome)).toEqual(["success", "success", "success"]);
+
+      const read = await runProgram(readUiStateProgram, "session-race");
+      if (read.outcome !== "success") throw new Error("read failed");
+      expect((read.value as ReadUiStateResult).uiState).toEqual({
+        turnNumber: 0,
+        dismissedFingerprints: ["fp-a"],
+        firstMonthInspection: { status: "dismissed", lastCompletedStep: 1 },
+        inspector: { widthPx: 420, collapsed: true },
+        turnMessages: { pinnedIds: ["m1"], readIds: [] },
+      });
+    });
+
+    it("does not alias the payload's turn messages into the stored state", async () => {
+      registerProductionSession("session-alias", join(saveRoot, "alias"));
+      const pinnedIds = ["m1"];
+      const turnMessages = { pinnedIds, readIds: [] as string[] };
+      const written = await patch("session-alias", { turnMessages });
+      pinnedIds.push("m9");
+      expect(written.turnMessages).toEqual({ pinnedIds: ["m1"], readIds: [] });
+      expect(written.turnMessages?.pinnedIds).not.toBe(pinnedIds);
+    });
+
+    it("rejects excess keys at the wire boundary", async () => {
+      registerProductionSession("session-excess", join(saveRoot, "excess"));
+      const result = await dispatchCampaignCommand("writeUiState", {
+        sessionId: "session-excess",
+        inspector: { widthPx: 420, collapsed: true },
+        unexpected: true,
+      });
+      expect(result.outcome).toBe("error");
+      if (result.outcome !== "error") return;
+      expect(result.reason).toBe("INVALID_PAYLOAD");
     });
   });
 
