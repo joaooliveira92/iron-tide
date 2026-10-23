@@ -1,8 +1,20 @@
 /* @vitest-environment jsdom */
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+import type { StrategicPriority } from "@bluewave/campaign-engine";
 import type { SecondaryRow } from "../site-header-state.js";
 import { SecondaryRowView } from "./HeaderSecondaryRow.js";
+
+const priority = (id: string, title: string): StrategicPriority => ({
+  id,
+  type: "low_research_spending",
+  severity: "warning",
+  title,
+  summary: "Research is below target.",
+  reason: "r",
+  destination: "research",
+  fingerprint: id,
+});
 
 describe("SecondaryRowView", () => {
   afterEach(cleanup);
@@ -14,21 +26,89 @@ describe("SecondaryRowView", () => {
     expect(screen.getByText("Trailing")).toBeTruthy();
   });
 
-  it("renders only the backed campaign metrics and the status", () => {
+  it("renders the alert metric and the status", () => {
     const row: SecondaryRow = {
       kind: "campaign",
       status: "Armed peace",
-      metrics: [
-        { icon: "budget", label: "Budget", value: "1k NC", placeholder: false },
-        { icon: "prestige", label: "Prestige", value: "—", placeholder: true },
-      ],
+      metrics: [{ icon: "prestige", label: "Prestige", value: "15 — at risk", placeholder: false }],
     };
 
     render(<SecondaryRowView row={row} />);
 
-    expect(screen.getByText(/Budget:/)).toBeTruthy();
-    expect(screen.queryByText(/Prestige:/)).toBeNull();
+    expect(screen.getByText(/Prestige:/)).toBeTruthy();
     expect(screen.getByText("Armed peace")).toBeTruthy();
+  });
+
+  it("hides a placeholder metric", () => {
+    const row: SecondaryRow = {
+      kind: "campaign",
+      status: "Armed peace",
+      metrics: [{ icon: "prestige", label: "Prestige", value: "—", placeholder: true }],
+    };
+
+    render(<SecondaryRowView row={row} />);
+
+    expect(screen.queryByText(/Prestige:/)).toBeNull();
+  });
+
+  it("shows priority chips and routes a click to the destination", () => {
+    const onNavigate = vi.fn();
+    const row: SecondaryRow = { kind: "campaign", status: "Armed peace", metrics: [] };
+
+    render(
+      <SecondaryRowView
+        row={row}
+        briefing={{
+          state: { status: "ready", priorities: [priority("a", "Low research spending")] },
+          onNavigate,
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Low research spending.*Go to Research/ }));
+    expect(onNavigate).toHaveBeenCalledWith("research");
+    expect(screen.queryByText(/more/)).toBeNull();
+  });
+
+  it("collapses extra priorities behind a +N more control", () => {
+    const row: SecondaryRow = { kind: "campaign", status: "Armed peace", metrics: [] };
+
+    render(
+      <SecondaryRowView
+        row={row}
+        briefing={{
+          state: {
+            status: "ready",
+            priorities: [priority("a", "One"), priority("b", "Two"), priority("c", "Three")],
+          },
+          onNavigate: vi.fn(),
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /One/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Two/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Three/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /\+1 more/ })).toBeTruthy();
+  });
+
+  it("says so when there are no urgent concerns, and stays quiet while loading", () => {
+    const row: SecondaryRow = { kind: "campaign", status: "Armed peace", metrics: [] };
+    const { rerender } = render(
+      <SecondaryRowView
+        row={row}
+        briefing={{ state: { status: "ready", priorities: [] }, onNavigate: vi.fn() }}
+      />,
+    );
+    expect(screen.getByText("No urgent concerns")).toBeTruthy();
+
+    rerender(
+      <SecondaryRowView
+        row={row}
+        briefing={{ state: { status: "loading" }, onNavigate: vi.fn() }}
+      />,
+    );
+    expect(screen.queryByTestId("priority-briefing")).toBeNull();
   });
 
   it("routes editor actions through onActionClick", () => {

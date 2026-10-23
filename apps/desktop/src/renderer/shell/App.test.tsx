@@ -346,7 +346,7 @@ vi.mock("./SiteHeader.js", async () => {
         onTrigger: () => void;
       };
       searchTargets: readonly unknown[];
-      campaign?: { nationName?: string } | null;
+      campaign?: { month?: { year: number } } | null;
     }) =>
       React.createElement(
         "header",
@@ -355,7 +355,7 @@ vi.mock("./SiteHeader.js", async () => {
           "data-active-view": activeView,
           "data-can-continue": String(continueAction !== undefined),
           "data-search-target-count": String(searchTargets.length),
-          "data-nation": campaign?.nationName ?? "",
+          "data-year": String(campaign?.month?.year ?? ""),
         },
         title,
         continueAction ? React.createElement("span", null, continueAction.label) : null,
@@ -539,7 +539,7 @@ describe("App", () => {
     expect(screen.getByTestId("site-header").dataset.activeView).toBe("playing");
     expect(screen.getByTestId("site-header").dataset.canContinue).toBe("true");
     expect(screen.getByTestId("site-header").dataset.searchTargetCount).toBe("2");
-    expect(screen.getByTestId("site-header").dataset.nation).toBe("United Kingdom");
+    expect(screen.getByTestId("site-header").dataset.year).toBe("1900");
     expect(screen.getByText("Advance turn")).toBeTruthy();
   });
 

@@ -1,16 +1,11 @@
-import { Bell, DollarSign, Gauge, Landmark, TrendingUp, Wallet } from "lucide-react";
+import { Gauge } from "lucide-react";
 
 import { cn } from "../../../lib/utils.js";
 import { translate } from "../../../lib/strings.js";
 import type { HeaderMetric, MetricIcon } from "../../site-header-state.js";
 
-const METRIC_ICONS: Record<MetricIcon, typeof DollarSign> = {
-  budget: DollarSign,
+const METRIC_ICONS: Record<MetricIcon, typeof Gauge> = {
   prestige: Gauge,
-  tension: TrendingUp,
-  nation: Landmark,
-  alerts: Bell,
-  balance: Wallet,
 };
 
 export interface CampaignMetricProps {

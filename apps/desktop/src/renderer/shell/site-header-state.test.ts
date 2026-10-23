@@ -26,10 +26,6 @@ const describeRow = (
 const campaign: HeaderCampaign = {
   prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
   month: { year: 1900, month: 1 },
-  treasury: 24_500_000,
-  nationName: "United Kingdom",
-  projectedSurplusDeficit: 1_500_000,
-  activeAlertsCount: null,
   atWar: false,
 };
 
@@ -89,95 +85,42 @@ describe("describeSecondaryRow", () => {
     });
   });
 
-  it("drives the playing view budget from the campaign treasury", () => {
+  it("leaves the campaign row to the priorities briefing while prestige is safe", () => {
     const row = describeRow("playing", campaign);
 
-    expect(row.kind).toBe("campaign");
-    if (row.kind !== "campaign") return;
-
-    const budget = row.metrics.find((metric) => metric.icon === "budget");
-    expect(budget).toEqual({
-      icon: "budget",
-      label: "Budget",
-      value: "24,500k NC",
-      placeholder: false,
-    });
+    expect(row).toEqual({ kind: "campaign", metrics: [], status: "Armed peace" });
   });
 
-  it("drives the nation and projected-balance metrics from the INC-1 fields", () => {
-    const row = describeRow("playing", campaign);
-    if (row.kind !== "campaign") throw new Error("expected a campaign row");
-
-    const nation = row.metrics.find((metric) => metric.icon === "nation");
-    expect(nation).toEqual({
-      icon: "nation",
-      label: "Nation",
-      value: "United Kingdom",
-      placeholder: false,
-    });
-
-    const balance = row.metrics.find((metric) => metric.icon === "balance");
-    expect(balance).toEqual({
-      icon: "balance",
-      label: "Projected balance",
-      value: "1,500k NC",
-      placeholder: false,
-    });
-  });
-
-  it("renders a projected deficit with the sign outside the currency symbol", () => {
+  it("promotes prestige into the row only when dismissal is at risk", () => {
     const row = describeRow("playing", {
       ...campaign,
-      projectedSurplusDeficit: -1_200_000,
+      prestige: { current: 15, sackingThreshold: 16, dismissalRisk: true },
     });
     if (row.kind !== "campaign") throw new Error("expected a campaign row");
 
-    const balance = row.metrics.find((metric) => metric.icon === "balance");
-    expect(balance?.value).toBe("-1,200k NC");
-    expect(balance?.placeholder).toBe(false);
+    expect(row.metrics).toEqual([
+      {
+        icon: "prestige",
+        label: "Prestige",
+        value: "15 — at risk of dismissal",
+        placeholder: false,
+        alert: true,
+      },
+    ]);
   });
 
-  it("keeps the alert-count slot empty (placeholder) until INC-2 lands", () => {
-    const row = describeRow("playing", campaign);
+  it("reports war in the status text", () => {
+    const row = describeRow("playing", { ...campaign, atWar: true });
     if (row.kind !== "campaign") throw new Error("expected a campaign row");
 
-    const alerts = row.metrics.find((metric) => metric.icon === "alerts");
-    expect(alerts).toEqual({
-      icon: "alerts",
-      label: "Alerts",
-      value: "—",
-      placeholder: true,
-    });
+    expect(row.status).toBe("At war");
   });
 
-  it("shows the real alert count once the forward-wired slot is populated", () => {
-    const row = describeRow("playing", { ...campaign, activeAlertsCount: 3 });
-    if (row.kind !== "campaign") throw new Error("expected a campaign row");
-
-    const alerts = row.metrics.find((metric) => metric.icon === "alerts");
-    expect(alerts).toEqual({
-      icon: "alerts",
-      label: "Alerts",
-      value: "3",
-      placeholder: false,
-    });
-  });
-
-  it("marks metrics the engine does not yet expose as placeholders", () => {
-    const row = describeRow("playing", campaign);
-    if (row.kind !== "campaign") throw new Error("expected a campaign row");
-
-    const unbacked = row.metrics.filter((metric) => metric.placeholder);
-    expect(unbacked.map((metric) => metric.icon)).toEqual(["alerts", "tension"]);
-  });
-
-  it("shows a dash for the budget when the campaign has not loaded", () => {
+  it("shows no metrics when the campaign has not loaded", () => {
     const row = describeRow("playing", null);
     if (row.kind !== "campaign") throw new Error("expected a campaign row");
 
-    const budget = row.metrics.find((metric) => metric.icon === "budget");
-    expect(budget?.value).toBe("—");
-    expect(budget?.placeholder).toBe(true);
+    expect(row.metrics).toEqual([]);
   });
 
   it("describes the remaining views without needing campaign data", () => {

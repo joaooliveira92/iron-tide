@@ -14,6 +14,7 @@ import {
   type NavAction,
 } from "./header/index.js";
 import { DRAG, NO_DRAG } from "./header/drag-region.js";
+import type { PriorityBriefingProps } from "./header/secondary-row/PriorityBriefing.js";
 import type { PrimaryAction } from "./primary-action.js";
 import type { SearchTarget } from "./global-search-state.js";
 import type { ActiveView, HeaderCampaign, WizardStepCopy } from "./site-header-state.js";
@@ -36,6 +37,7 @@ export interface SiteHeaderProps {
   readonly advancingMonth?: boolean;
   readonly advanceDisabled?: boolean;
   readonly campaignMenu?: HeaderCampaignMenuProps;
+  readonly briefing?: PriorityBriefingProps;
 }
 
 const NOOP = (): void => undefined;
@@ -56,6 +58,7 @@ export function SiteHeader({
   advancingMonth = false,
   advanceDisabled = false,
   campaignMenu,
+  briefing,
 }: SiteHeaderProps) {
   const { platform } = useWindowContext();
   const isMac = platform === "darwin";
@@ -103,6 +106,7 @@ export function SiteHeader({
           campaign={campaign}
           wizardStep={wizardStep}
           onActionClick={onActionClick}
+          briefing={briefing}
         />
       </div>
     </header>
