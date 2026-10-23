@@ -25,6 +25,7 @@ import { type CampaignShellMode, describeMonthCommitFailure } from "./campaign-s
 import { AppFrame } from "./AppFrame.js";
 import { BackgroundLayer } from "./BackgroundLayer.js";
 import { useBackground } from "./BackgroundContext.js";
+import { prioritiesStateFromReads } from "./campaign-reads.js";
 import { CampaignUnavailableView } from "./CampaignUnavailableView.js";
 import { CampaignShellProvider, useCampaignShellContext } from "./CampaignShellContext.js";
 import { GuidedInspectionOverlay } from "./GuidedInspectionOverlay.js";
@@ -123,11 +124,7 @@ function CampaignShellApplication({
         ? null
         : {
             month: shell.state.campaign.month,
-            treasury: shell.state.campaign.treasury,
-            nationName: shell.state.campaign.nationName,
-            projectedSurplusDeficit: shell.state.campaign.projectedSurplusDeficit,
             atWar: shell.state.campaign.atWar,
-            activeAlertsCount: shell.state.campaign.activeAlertsCount,
             prestige: shell.state.campaign.prestige,
             ...(shell.state.campaign.career === undefined
               ? {}
@@ -159,11 +156,23 @@ function CampaignShellApplication({
   const searchTargets =
     shell.state.campaign === null ? EMPTY_SEARCH_TARGETS : CAMPAIGN_SCREEN_SEARCH_TARGETS;
 
+  const briefing = useMemo(
+    () =>
+      shell.state.campaign === null || shell.state.reads === null
+        ? undefined
+        : {
+            state: prioritiesStateFromReads(shell.state.reads),
+            onNavigate: shell.actions.selectScreen,
+          },
+    [shell.state.campaign, shell.state.reads, shell.actions.selectScreen],
+  );
+
   const header = (
     <SiteHeader
       title={headerTitleFor(headerCampaign)}
       activeView={activeView}
       campaign={headerCampaign}
+      {...(briefing === undefined ? {} : { briefing })}
       wizardStep={WIZARD_STEP_COPY[shell.state.mode.kind]}
       back={{
         disabled: !shell.state.canGoBack,

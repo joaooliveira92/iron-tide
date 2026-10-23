@@ -5,6 +5,7 @@ import type { MonthlyReportEntry } from "../../shared/reports-contract.js";
 import type { BridgeRead } from "../lib/bridge-read.js";
 import { countActiveAlerts } from "../lib/priorities.js";
 import { primeQuery, readQuery } from "../lib/read-queries.js";
+import type { PrioritiesState } from "../screens/overview/usePriorities.js";
 import type { StatusStripAreas } from "./status-strip-state.js";
 
 export type CampaignReadResult<T> = BridgeRead<T>;
@@ -55,4 +56,12 @@ export async function readCampaign(
 export function activeAlertsCount(reads: CampaignReads): number | null {
   if (reads.priorities.status !== "ready") return null;
   return Array.isArray(reads.priorities.value) ? countActiveAlerts(reads.priorities.value) : null;
+}
+
+export function prioritiesStateFromReads(reads: CampaignReads): PrioritiesState {
+  if (reads.priorities.status === "ready") {
+    return { status: "ready", priorities: reads.priorities.value };
+  }
+  if (reads.priorities.status === "unavailable") return { status: "unavailable" };
+  return { status: "loading" };
 }

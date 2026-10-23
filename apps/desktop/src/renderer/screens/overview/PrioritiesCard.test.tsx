@@ -67,7 +67,7 @@ describe("PrioritiesCard", () => {
     expect(screen.getByText("Critical")).toBeTruthy();
     expect(screen.getByText("Advisory")).toBeTruthy();
     expect(screen.getByText("Cash reserve critical")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Go to Research" }));
+    fireEvent.click(screen.getByRole("button", { name: /Go to Research/ }));
     expect(onNavigate).toHaveBeenCalledWith("research");
   });
 
