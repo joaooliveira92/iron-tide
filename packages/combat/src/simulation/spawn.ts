@@ -1,4 +1,4 @@
-import type { MovementState } from "../movement/state.js";
+import type { MovementState } from "../movement/neighbour.js";
 import type { TacticalSideId } from "../tactical/state.js";
 
 export interface AreaBBox {

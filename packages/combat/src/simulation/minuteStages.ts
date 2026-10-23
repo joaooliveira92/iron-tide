@@ -1,10 +1,10 @@
-import type { MovementState } from "../movement/state.js";
+import type { MovementState } from "../movement/neighbour.js";
 import {
   advancePosition,
   resolveCollisionsGrounding,
   resolvePropulsion,
   resolveTurning,
-} from "../movement/kinematics.js";
+} from "../movement/neighbour.js";
 import { SUBSTEPS_PER_MINUTE } from "../core/tacticalTime.js";
 import {
   resolveSensorsSpotting,

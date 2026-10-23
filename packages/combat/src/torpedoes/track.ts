@@ -1,7 +1,6 @@
 import { BluewaveError } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
-import { DIRECTION_FIXED } from "../movement/constants.js";
-import { directionBp } from "../movement/kinematics.js";
+import { DIRECTION_FIXED, directionBp } from "../movement/neighbour.js";
 import {
   NO_TARGET_CONTACT,
   TORPEDO_TERMINAL_RESULTS,

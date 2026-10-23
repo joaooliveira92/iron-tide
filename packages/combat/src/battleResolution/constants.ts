@@ -14,7 +14,7 @@ import {
   DEFAULT_AREA_BBOX,
 } from "../weather/auto-resolution-battle-defaults.js";
 import { DEFAULT_MAX_BATTLE_MINUTES } from "./battleEnd.js";
-import { KNOTS_TO_UM_S, SPEED_BP_SCALE } from "../movement/constants.js";
+import { KNOTS_TO_UM_S, SPEED_BP_SCALE } from "../movement/neighbour.js";
 
 export {
   SHELL_MUZZLE_VELOCITY_MS,

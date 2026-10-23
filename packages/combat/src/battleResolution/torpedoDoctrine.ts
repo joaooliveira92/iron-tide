@@ -1,5 +1,4 @@
-import { directionBp, speedBpKnotsToUmS } from "../movement/kinematics.js";
-import { DIRECTION_FIXED } from "../movement/constants.js";
+import { DIRECTION_FIXED, directionBp, speedBpKnotsToUmS } from "../movement/neighbour.js";
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import {

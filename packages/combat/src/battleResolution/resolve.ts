@@ -13,7 +13,7 @@ import type { GunneryBattery } from "../gunnery/resolve.js";
 import { NO_TARGET, withGunneryStateHash } from "../gunnery/index.js";
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
-import type { MovementState } from "../movement/state.js";
+import { SPEED_BP_SCALE, type MovementState } from "../movement/neighbour.js";
 import type { ShipDamageState } from "../damage/state.js";
 import type { StrategicWeatherState } from "../weather/strategic-state.js";
 import { AUTO_RESOLUTION_UNAVAILABLE } from "../generation/reasonCodes.js";
@@ -46,7 +46,6 @@ import { createDefaultDamageControlResource } from "../damage/damageControl.js";
 import type { DamageControlContext } from "../damage/damageControlEngineWiring.js";
 import { DAMAGE_RULESET_VERSION } from "../damage/constants.js";
 import { DAMAGE_CONTROL_KEYED_DRAW } from "../damage/reasonCodes.js";
-import { SPEED_BP_SCALE } from "../movement/constants.js";
 import {
   AUTO_RESOLUTION_MAX_MINUTES,
   battleAutoResolutionPolicyId,
