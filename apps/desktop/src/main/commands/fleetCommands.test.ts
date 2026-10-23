@@ -258,6 +258,24 @@ describe("fleet commands (Effect programs)", () => {
       expect(cleared.diagnostics.join(" ")).toContain("gbr_dreadnought=NOT_ASSIGNED");
     });
 
+    it("replays the same transport request and rejects a conflicting selection under it", async () => {
+      registerProductionSession("session-station3", resolve(saveRoot, "save-station3"), "uk");
+      const request = {
+        ...base,
+        sessionId: "session-station3",
+        transportRequestId: "tx-same",
+        intent: "assign" as const,
+        shipIds: ["gbr_dreadnought"],
+      };
+      const first = await submitStationAssignment(request);
+      expect(first).toMatchObject({ outcome: "success" });
+      const replay = await submitStationAssignment(request);
+      expect(replay).toEqual(first);
+
+      const conflict = await submitStationAssignment({ ...request, intent: "clear" });
+      expect(conflict).toMatchObject({ outcome: "rejected", reason: "IDEMPOTENCY_CONFLICT" });
+    });
+
     it("rejects an unknown ship with every reason named and does not queue", async () => {
       registerProductionSession("session-station2", resolve(saveRoot, "save-station2"), "uk");
       const result = await submitStationAssignment({
