@@ -755,7 +755,7 @@
     sources:
       - title: "Naval Radar"
         author: "N. Friedman, 1981"
-    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology."
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: no design carries radar, so it has no effect on gunnery or detection (#279); see .ai/reports/e-1-era-mechanics-audit.md."
 - id: "rad_gunnery_fire_control_radar"
   name: "Gunnery Fire-Control Radar"
   category: "MID_CENTURY"
@@ -773,7 +773,7 @@
     sources:
       - title: "Naval Radar"
         author: "N. Friedman, 1981"
-    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from rad_search_radar, the nearest existing technology."
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from rad_search_radar, the nearest existing technology. Inert in the engine: no design carries radar, so it has no effect on gunnery (#279); see .ai/reports/e-1-era-mechanics-audit.md."
 - id: "rad_blind_fire_director"
   name: "Blind-Fire Radar Director"
   category: "MID_CENTURY"
@@ -790,7 +790,7 @@
     sources:
       - title: "Naval Radar"
         author: "N. Friedman, 1981"
-    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from rad_gunnery_fire_control_radar, the nearest existing technology."
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from rad_gunnery_fire_control_radar, the nearest existing technology. Inert in the engine: no blind-fire rule exists (#279); see .ai/reports/e-1-era-mechanics-audit.md."
 - id: "fc_proximity_fuze"
   name: "Proximity-Fuzed AA Ammunition"
   category: "MID_CENTURY"
@@ -807,7 +807,7 @@
     sources:
       - title: "US Naval Weapons"
         author: "N. Friedman, 1983"
-    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology."
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: campaign battles run no air defence (#280); see .ai/reports/e-1-era-mechanics-audit.md."
 - id: "fc_radar_directed_maa"
   name: "Radar-Directed Medium AA"
   category: "MID_CENTURY"
@@ -824,7 +824,7 @@
     sources:
       - title: "US Naval Weapons"
         author: "N. Friedman, 1983"
-    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology."
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: campaign battles run no air defence and designs carry no radar (#279, #280); see .ai/reports/e-1-era-mechanics-audit.md."
 - id: "gun_dp_rapid_5in"
   name: "Dual-Purpose Rapid-Fire 5-inch Mount"
   category: "MID_CENTURY"
@@ -892,7 +892,7 @@
     sources:
       - title: "Conway's All the World's Fighting Ships 1922-1946"
         author: "R. Gardiner (ed.)"
-    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from m_asw_improved_contact_mine, the nearest existing technology."
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from m_asw_improved_contact_mine, the nearest existing technology. Inert in the engine: the engine reads other mine technology ids and mines are outside campaign battles (#278, #282); see .ai/reports/e-1-era-mechanics-audit.md."
 - id: "m_asw_ahead_throwing"
   name: "Ahead-Throwing ASW Weapons"
   category: "MID_CENTURY"
@@ -909,7 +909,7 @@
     sources:
       - title: "British Destroyers and Frigates: The Second World War and After"
         author: "N. Friedman, 2006"
-    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from m_asw_improved_contact_mine, the nearest existing technology."
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from m_asw_improved_contact_mine, the nearest existing technology. Inert in the engine: no surface anti-submarine weapon model exists (#282); see .ai/reports/e-1-era-mechanics-audit.md."
 - id: "sub_snorkel"
   name: "Snorkel"
   category: "MID_CENTURY"
@@ -926,7 +926,7 @@
     sources:
       - title: "Conway's All the World's Fighting Ships 1922-1946"
         author: "R. Gardiner (ed.)"
-    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from sub_fleet_ocean_boat, the nearest existing technology."
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from sub_fleet_ocean_boat, the nearest existing technology. Inert in the engine: submarines are outside campaign battles (#282); see .ai/reports/e-1-era-mechanics-audit.md."
 - id: "hc_all_welded_hull"
   name: "All-Welded Hull Construction"
   category: "MID_CENTURY"
@@ -962,7 +962,7 @@
         author: "Naval War Simulations / Matrix Games"
         year: 2023
         page: "121-123"
-    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology."
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: the engine reads other jet technology ids and campaign battles run no air groups (#278, #280); see .ai/reports/e-1-era-mechanics-audit.md."
 - id: "mis_heavy_ssm"
   name: "Heavy Surface-to-Surface Missile"
   category: "MID_CENTURY"
@@ -981,4 +981,4 @@
         author: "Naval War Simulations / Matrix Games"
         year: 2023
         page: "121-123"
-    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology."
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: no missile combat model exists (#281); see .ai/reports/e-1-era-mechanics-audit.md."
