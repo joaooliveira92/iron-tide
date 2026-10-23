@@ -5,7 +5,7 @@ import { withGunneryStateHash } from "../gunnery/index.js";
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import type { TacticalDivision } from "../tactical/division.js";
-import type { MovementState } from "../movement.js";
+import type { MovementState } from "../movement/state.js";
 import type { StrategicWeatherState } from "../weather/strategic-state.js";
 import type { WeatherEngineContext } from "../weather/engine.js";
 import type { TorpedoContext } from "../torpedoes/index.js";

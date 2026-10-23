@@ -6,12 +6,6 @@ export const substepsPerTurn = 60 as const;
 export const tacticalTimePolicyId = "tactical_time_v1" as const;
 export const tacticalTimeFormulaVersion = "1.0.0" as const;
 
-export const TACTICAL_TURN_MILLISECONDS = tacticalTurnMilliseconds;
-export const TACTICAL_SUBSTEP_MILLISECONDS = tacticalSubstepMilliseconds;
-export const SUBSTEPS_PER_TURN = substepsPerTurn;
-export const TACTICAL_TIME_POLICY_ID = tacticalTimePolicyId;
-export const TACTICAL_TIME_FORMULA_VERSION = tacticalTimeFormulaVersion;
-
 export interface TacticalTimeContract {
   tacticalTurnMilliseconds: number;
   tacticalSubstepMilliseconds: number;

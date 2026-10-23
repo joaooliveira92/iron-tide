@@ -1,5 +1,5 @@
 import type { RandomEngine } from "@bluewave/random";
-import type { ContactTrack } from "../targeting.js";
+import type { ContactTrack } from "../contact/targeting.js";
 import {
   VISUAL_DETECTION_RANGE_UM,
   NEUTRAL_VISIBILITY_MULTIPLIER_BP,

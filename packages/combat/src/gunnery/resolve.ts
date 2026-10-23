@@ -14,7 +14,7 @@ import {
   resetReloadProgress,
   type GunneryRateFactors,
 } from "./rateOfFire.js";
-import type { BattleEvent } from "../battleLedger.js";
+import type { BattleEvent } from "../core/battleLedger.js";
 import {
   NO_TARGET,
   type GunneryState,
@@ -29,7 +29,7 @@ import {
   makeGunneryEventRecord,
   type GunneryEventSeed,
 } from "./event.js";
-import { validateTargetOrder } from "../targeting.js";
+import { validateTargetOrder } from "../contact/targeting.js";
 import type { TacticalContact } from "../contact/lifecycle.js";
 import type { Position } from "../spotting/detection.js";
 import { SUBSTEPS_PER_MINUTE } from "../movement/constants.js";

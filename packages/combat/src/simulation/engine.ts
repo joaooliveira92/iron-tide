@@ -1,6 +1,6 @@
 import type { RandomEngine } from "@bluewave/random";
-import type { MovementState } from "../movement.js";
-import { BattleLedger, type BattleEvent } from "../battleLedger.js";
+import type { MovementState } from "../movement/state.js";
+import { BattleLedger, type BattleEvent } from "../core/battleLedger.js";
 import type { TacticalContact } from "../contact/lifecycle.js";
 import type { GunneryBattery, GunneryState } from "../gunnery/index.js";
 import type { GunneryEventRecord } from "../gunnery/event.js";

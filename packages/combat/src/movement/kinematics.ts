@@ -1,7 +1,7 @@
 import { BluewaveError } from "@bluewave/contracts";
 import type { DivisionFormation } from "@bluewave/campaign";
-import type { MovementState } from "../movement.js";
-import { assertFixedPointMovement } from "../movement.js";
+import type { MovementState } from "./state.js";
+import { assertFixedPointMovement } from "./state.js";
 import {
   KNOTS_TO_UM_S,
   SPEED_BP_SCALE,

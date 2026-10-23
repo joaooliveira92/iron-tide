@@ -3,7 +3,7 @@ import { SafeInt } from "@bluewave/contracts";
 import type { CompiledTorpedo } from "@bluewave/armament";
 import { RandomEngine } from "@bluewave/random";
 import type { TacticalBattleState, TacticalShipUnit } from "../tactical/index.js";
-import type { MovementState } from "../movement.js";
+import type { MovementState } from "../movement/state.js";
 import type { TacticalContact } from "../contact/lifecycle.js";
 import { advanceMinute, type MinuteResult } from "./engine.js";
 import { initialDamageState } from "../battleResolution/damage.js";

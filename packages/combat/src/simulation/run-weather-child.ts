@@ -1,7 +1,7 @@
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
 import type { TacticalBattleState, TacticalShipUnit } from "../tactical/index.js";
-import type { MovementState } from "../movement.js";
+import type { MovementState } from "../movement/state.js";
 import { computeInitialMovementStates } from "./spawn.js";
 import { advanceMinutes } from "./engine.js";
 import { withTacticalWeatherComponentsHash } from "../weather/components.js";

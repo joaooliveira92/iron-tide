@@ -3,7 +3,7 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine, RandomLedger, drawUniform } from "@bluewave/random";
 import type { GunneryEventRecord } from "../gunnery/event.js";
 import type { TacticalContact } from "../contact/lifecycle.js";
-import type { BattleEvent } from "../battleLedger.js";
+import type { BattleEvent } from "../core/battleLedger.js";
 import { type GunneryImpact, resolveDamage } from "../damage/engineWiring.js";
 import {
   type FireRecord,

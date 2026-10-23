@@ -1,6 +1,6 @@
 import { BluewaveError } from "@bluewave/contracts";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
-import { DEFAULT_MAX_BATTLE_MINUTES } from "../battleEnd.js";
+import { DEFAULT_MAX_BATTLE_MINUTES } from "./battleEnd.js";
 import { KNOTS_TO_UM_S, SPEED_BP_SCALE } from "../movement/constants.js";
 import { ARMOR_QUALITY_FAMILIES } from "../damage/armorModel.js";
 
