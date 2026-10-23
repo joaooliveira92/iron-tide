@@ -33,6 +33,7 @@ import {
   replayBattleBoundaryProgram,
   resolveBattleProgram,
   resolveTacticalBattleProgram,
+  scaleBelligerentFirepower,
   seedCampaignBattleDrillProgram,
 } from "./battleSandboxCommands.js";
 import { commitMonthProgram } from "./commitMonth.js";
@@ -308,6 +309,36 @@ describe("battle sandbox commands (ADR-0057)", () => {
         .fleets.flatMap((f) => f.ships)
         .find((s) => s.id === target.id)!;
       expect(ship.isUnderConstruction).toBe(true);
+    });
+  });
+
+  describe("scaleBelligerentFirepower", () => {
+    function areaFirepower(snapshot: CampaignSnapshot, nationId: string, areaId: string): number {
+      return snapshot.nations
+        .get(nationId)!
+        .fleets.flatMap((f) => f.ships)
+        .filter((s) => !s.isUnderConstruction && s.locationAreaId === areaId)
+        .reduce((sum, s) => sum + (s.firepower as number), 0);
+    }
+
+    it("leaves the weaker side at least half the stronger side so the enemy never declines", () => {
+      const output = compileProductionCampaignFromArtifact(
+        GENERATED_ARTIFACT,
+        new AbortController().signal,
+        new DiagnosticCollector(),
+      );
+      if (!output) throw new Error("compile failed");
+      const placed = colocateWarSides(output.state.snapshot, "uk", "france", undefined);
+      if ("error" in placed) throw new Error(placed.error);
+      const scaled = scaleBelligerentFirepower(
+        placed.snapshot,
+        ["uk", "france"],
+        placed.areaId,
+        100,
+      );
+      const uk = areaFirepower(scaled, "uk", placed.areaId);
+      const france = areaFirepower(scaled, "france", placed.areaId);
+      expect(Math.min(uk, france) * 2).toBeGreaterThanOrEqual(Math.max(uk, france));
     });
   });
 
