@@ -76,10 +76,14 @@ jobs:
       # records or approves a replay.
       - name: Replay corpus
         run: pnpm check:replay-corpus
-      - name: Upload hash artifact
+      # Writes the hashes this runner observed, then fails on any missing,
+      # extra or different key against golden/hashes.json.
+      - name: Verify golden hashes
+        run: node scripts/verify-golden-hashes.cjs --write-observed observed-hashes.json
+      - name: Upload observed hashes
+        if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: hashes-${{ matrix.os }}
-          path: golden/hashes.json
-      - name: Verify golden hashes
-        run: node scripts/verify-golden-hashes.cjs
+          name: observed-hashes-${{ matrix.os }}
+          path: observed-hashes.json
+          if-no-files-found: ignore
