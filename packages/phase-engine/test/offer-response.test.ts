@@ -103,11 +103,19 @@ describe("month player-nation input", () => {
       playerNationId === undefined ? undefined : { playerNationId },
     );
 
-  it("changes no behaviour when supplied for a known nation", () => {
+  it("changes nothing but the player's own battle prestige when supplied for a known nation", () => {
     const control = run();
     const withPlayer = run(ATTACKER_NATION);
     expect(withPlayer.success).toBe(control.success);
-    expect(hashSnapshot(withPlayer.finalSnapshot)).toBe(hashSnapshot(control.finalSnapshot));
+    const nations = new Map(withPlayer.finalSnapshot.nations);
+    const player = nations.get(ATTACKER_NATION)!;
+    nations.set(ATTACKER_NATION, {
+      ...player,
+      prestige: control.finalSnapshot.nations.get(ATTACKER_NATION)!.prestige,
+    });
+    expect(hashSnapshot({ ...withPlayer.finalSnapshot, nations })).toBe(
+      hashSnapshot(control.finalSnapshot),
+    );
   });
 
   it("fails closed with a typed diagnostic for an unknown nation and runs no phase", () => {

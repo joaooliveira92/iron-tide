@@ -27,6 +27,7 @@ import {
 import { battleOfferAnsweredEvent } from "./events.js";
 import { applyRecordedBattleResult, consumeBattleResult } from "./interruption.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
+import { applyPrestigeChange } from "./prestigeApplication.js";
 
 type AutoResolutionManifest = Parameters<typeof resolve>[0]["manifest"];
 
@@ -122,7 +123,26 @@ export function runBattleResolutionPhase(ctx: PhaseContext): PhaseRunOutcome {
     resolveBattle(ctx, battle, resolver, randomEngine);
     if (ctx.interruption?.suspended !== undefined) return { status: "finish", success: true };
   }
+  scoreResolvedBattles(
+    ctx,
+    battles.map((b) => b["id"]),
+  );
   return { status: "continue" };
+}
+
+function scoreResolvedBattles(ctx: PhaseContext, battleIds: readonly string[]): void {
+  const player = ctx.playerNationId;
+  if (player === undefined) return;
+  const ids = new Set(battleIds);
+  const resolved = ctx.snapshot.current["wars"]["battles"]
+    .filter((b) => ids.has(b["id"]) && b["phase"] === "resolved")
+    .sort((a, b) => (a["id"] < b["id"] ? -1 : a["id"] > b["id"] ? 1 : 0));
+  for (const battle of resolved) {
+    const result = battle["result"];
+    if (result === undefined) continue;
+    if (result.loserId === player) applyPrestigeChange(ctx, player, "BATTLE_LOST");
+    else if (result.winnerId === player) applyPrestigeChange(ctx, player, "BATTLE_WON");
+  }
 }
 
 function resolveViaLegacyPath(

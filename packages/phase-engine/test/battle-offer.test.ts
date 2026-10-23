@@ -219,9 +219,21 @@ describe("dormancy (R1, R3)", () => {
   it("without an interruption channel the output is byte-identical with and without the section", () => {
     const configured = run(warSnapshot(), { channel: false });
     const dormant = run(warSnapshot(), { channel: false, rules: undefined, player: undefined });
-    expect(hashSnapshot(configured.finalSnapshot)).toBe(hashSnapshot(dormant.finalSnapshot));
+    const nations = new Map(configured.finalSnapshot.nations);
+    const player = nations.get(ATTACKER_NATION)!;
+    nations.set(ATTACKER_NATION, {
+      ...player,
+      prestige: dormant.finalSnapshot.nations.get(ATTACKER_NATION)!.prestige,
+    });
+    expect(hashSnapshot({ ...configured.finalSnapshot, nations })).toBe(
+      hashSnapshot(dormant.finalSnapshot),
+    );
     expect(configured.randomLedger.hash()).toBe(dormant.randomLedger.hash());
-    expect(configured.eventLedger.all).toEqual(dormant.eventLedger.all);
+    const withoutPrestige = (r: MonthResult) =>
+      r.eventLedger.all.filter((e) => e.body.kind !== "PrestigeChanged");
+    expect(withoutPrestige(configured).map((e) => e.body)).toEqual(
+      withoutPrestige(dormant).map((e) => e.body),
+    );
   });
 
   it("without the player nation the section raises nothing", () => {
