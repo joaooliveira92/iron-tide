@@ -13,7 +13,11 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { Result, Schema } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
-import { PointerFileSchema, StorableCampaignStateSchema } from "../src/schemas.js";
+import {
+  decodeStorableCampaignState,
+  PointerFileSchema,
+  StorableCampaignStateSchema,
+} from "../src/schemas.js";
 import { fromStorableSnapshot } from "../src/snapshotSerialization.js";
 import { SaveStore } from "../src/store.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
@@ -95,50 +99,65 @@ describe("Effect Schema save-boundary serialization (MIG-WIRE-4)", () => {
     expect(loaded!.snapshot.campaignId).toBe("schema-roundtrip");
   });
 
-  it("preserves Zod default/excess-key accept semantics (open Struct strips unmodeled keys)", () => {
-    const minimal = {
-      snapshot: {
-        version: "1.0.0",
-        turnNumber: 1,
-        campaignId: "minimal",
-        startYear: 1880,
-        startMonth: 1,
-        world: {},
-        nations: {},
-        wars: {
-          wars: [],
-          battles: [],
-          participantMemberships: [],
-          blockadeState: [],
-          battleManifests: [],
-        },
-        politics: { relations: [], shells: {} },
-        intelligence: { shells: {} },
-        designs: {},
-        designFamilies: {},
-        prestigeRules: FIXTURE_PRESTIGE_RULES,
-        rulesetVersion: "1.0.0",
-        compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
+  const minimalStorableState = () => ({
+    snapshot: {
+      version: "1.0.0",
+      turnNumber: 1,
+      campaignId: "minimal",
+      startYear: 1880,
+      startMonth: 1,
+      world: {},
+      nations: {},
+      wars: {
+        wars: [],
+        battles: [],
+        participantMemberships: [],
+        blockadeState: [],
+        battleManifests: [],
       },
-      envelope: {
-        algorithm: "sha256",
-        artifactKind: "campaign-snapshot",
-        compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-        bodyHash: "x",
-        bodyLength: 1,
-      },
-      rawHash: "x",
-      __unmodeled: true,
-    };
+      politics: { relations: [], shells: {} },
+      intelligence: { shells: {} },
+      designs: {},
+      designFamilies: {},
+      prestigeRules: FIXTURE_PRESTIGE_RULES,
+      rulesetVersion: "1.0.0",
+      compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
+    },
+    envelope: {
+      algorithm: "sha256",
+      artifactKind: "campaign-snapshot",
+      compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
+      bodyHash: "x",
+      bodyLength: 1,
+    },
+    rawHash: "x",
+  });
 
-    const decoded = Schema.decodeUnknownSync(StorableCampaignStateSchema)(minimal);
+  it("fills the decoding defaults for absent collections", () => {
+    const decoded = Schema.decodeUnknownSync(StorableCampaignStateSchema)(minimalStorableState());
 
     expect(decoded.snapshot.slots).toEqual([]);
     expect(decoded.snapshot.world.areas).toEqual([]);
     expect(decoded.snapshot.world.routes).toEqual([]);
     expect(decoded.snapshot.world.ports).toEqual([]);
     expect(decoded.snapshot.strategicWeather).toEqual([]);
-    expect("__unmodeled" in decoded).toBe(false);
+  });
+
+  it("rejects an unmodeled key at the top level and inside a struct (ADR-0278)", () => {
+    const minimal = minimalStorableState();
+
+    expect(Result.isSuccess(decodeStorableCampaignState(minimal))).toBe(true);
+    expect(Result.isFailure(decodeStorableCampaignState({ ...minimal, __unmodeled: true }))).toBe(
+      true,
+    );
+    expect(
+      Result.isFailure(
+        decodeStorableCampaignState({
+          ...minimal,
+          snapshot: { ...minimal.snapshot, __unmodeled: true },
+        }),
+      ),
+    ).toBe(true);
   });
 
   it("rejects non-finite numbers, matching Zod v4 z.number() (Schema.Finite)", () => {

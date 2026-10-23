@@ -28,8 +28,8 @@ import {
 import { readPointerFile, readSaveMetadata, readSigFile } from "./fileDecode.js";
 import { cleanup } from "./recovery.js";
 import {
+  decodeStorableCampaignState,
   SaveHeaderSchema,
-  StorableCampaignStateSchema,
   type PointerFile,
   type SaveMetadata,
   type SigFile,
@@ -372,7 +372,7 @@ export class SaveStore {
       return null;
     }
 
-    const parsedResult = Schema.decodeUnknownResult(StorableCampaignStateSchema)(raw);
+    const parsedResult = decodeStorableCampaignState(raw);
     if (!Result.isSuccess(parsedResult)) {
       diagnostics.addError(CORRUPT_SAVE_CODE, "Save data is structurally invalid", {
         stage: "persistence.load",
