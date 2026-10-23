@@ -10,25 +10,26 @@
     }
   },
   "dependencies": {
-    "@bluewave/contracts": "workspace:*",
-    "@bluewave/diagnostics": "workspace:*",
-    "@bluewave/deterministic": "workspace:*",
-    "@bluewave/content-schema": "workspace:*",
-    "@bluewave/content-compiler": "workspace:*",
     "@bluewave/campaign": "workspace:*",
     "@bluewave/campaign-engine": "workspace:*",
-    "@bluewave/ship-design": "workspace:*",
-    "@bluewave/commands": "workspace:*",
-    "@bluewave/random": "workspace:*",
-    "@bluewave/events": "workspace:*",
     "@bluewave/combat": "workspace:*",
-    "@bluewave/persistence": "workspace:*",
+    "@bluewave/commands": "workspace:*",
+    "@bluewave/content-compiler": "workspace:*",
+    "@bluewave/content-schema": "workspace:*",
+    "@bluewave/contracts": "workspace:*",
+    "@bluewave/deterministic": "workspace:*",
+    "@bluewave/diagnostics": "workspace:*",
+    "@bluewave/events": "workspace:*",
     "@bluewave/messages": "workspace:*",
+    "@bluewave/persistence": "workspace:*",
     "@bluewave/phase-engine": "workspace:*",
+    "@bluewave/random": "workspace:*",
+    "@bluewave/ship-design": "workspace:*",
     "effect": "workspace:*"
   },
   "devDependencies": {
-    "@bluewave/test-support": "workspace:*"
+    "@bluewave/test-support": "workspace:*",
+    "fast-check": "^4.10.2"
   },
   "scripts": {
     "build": "tsc -b",

@@ -62,33 +62,33 @@ function pick(stream: RandomStream, lo: number, hi: number): number {
   return lo + Math.min(hi - lo, Math.floor(stream.next() * (hi - lo + 1)));
 }
 
+export type CommandKind = (typeof KINDS)[number];
+
+type Draw = (lo: number, hi: number) => number;
+
 function candidate(
-  kind: (typeof KINDS)[number],
+  kind: CommandKind,
   snapshot: CampaignSnapshot,
   slot: CampaignSlot,
-  engine: RandomEngine,
-  index: number,
+  draw: Draw,
 ): CommandBody | undefined {
-  const stream = engine.stream(`command:${String(index)}:${kind}`);
   if (kind === "SetBudgetAllocation") {
     const nation = snapshot.nations.get(slot.nationId);
     if (nation === undefined) return undefined;
-    const rate = pick(stream, APPROPRIATION_RATE_MIN_BP, APPROPRIATION_RATE_MAX_BP);
+    const rate = draw(APPROPRIATION_RATE_MIN_BP, APPROPRIATION_RATE_MAX_BP);
     const cap = Number(researchCap(monthlyRevenue(nation.baseResources, SafeInt(rate))));
     return {
       type: "SetBudgetAllocation",
       nationId: slot.nationId,
       appropriationRateBp: SafeInt(rate),
-      researchBudget: SafeInt(
-        pick(stream, RESEARCH_BUDGET_MIN, Math.min(RESEARCH_BUDGET_MAX, cap)),
-      ),
+      researchBudget: SafeInt(draw(RESEARCH_BUDGET_MIN, Math.min(RESEARCH_BUDGET_MAX, cap))),
     };
   }
   if (kind === "SetResearchPriority") {
     const weights = Object.values(RESEARCH_FIELD_PRIORITY_WEIGHTS);
     const fieldPriorities: Record<string, SafeInt> = {};
     for (const field of CANONICAL_RESEARCH_FIELD_IDS) {
-      fieldPriorities[field] = SafeInt(weights[pick(stream, 0, weights.length - 1)] ?? 1);
+      fieldPriorities[field] = SafeInt(weights[draw(0, weights.length - 1)] ?? 1);
     }
     return { type: "SetResearchPriority", nationId: slot.nationId, fieldPriorities };
   }
@@ -97,32 +97,26 @@ function candidate(
   const buildable = buildConstructionDesignCatalog(snapshot, slot.nationId, year).filter(
     (entry) => entry.available,
   );
-  const design = buildable[pick(stream, 0, Math.max(0, buildable.length - 1))];
+  const design = buildable[draw(0, Math.max(0, buildable.length - 1))];
   if (design === undefined) return undefined;
   return {
     type: "OrderConstruction",
     nationId: slot.nationId,
     designVersionId: design.designId,
-    quantity: pick(stream, 1, 2),
+    quantity: draw(1, 2),
   };
 }
 
-export function generateFuzzCommands(
-  seed: string,
+function acceptedEnvelopes(
+  bodies: readonly (CommandBody | undefined)[],
+  turn: string,
   snapshot: CampaignSnapshot,
-): { issued: number; commands: CommandEnvelope<CommandBody>[] } {
-  const slot = snapshot.slots[0];
-  if (slot === undefined) return { issued: 0, commands: [] };
-  const turn = String(snapshot.turnNumber);
-  const engine = new RandomEngine(splitSeed(splitSeed(seed, ROOT_CONTEXT), `month:${turn}`));
-  const shape = engine.stream("shape");
-  const count = pick(shape, 0, MAX_COMMANDS_PER_MONTH);
+  slot: CampaignSlot,
+): CommandEnvelope<CommandBody>[] {
   const snapshotHash = sha256Hex(canonicalSerialize(snapshot));
   const lifecycle = new CommandLifecycle();
   const commands: CommandEnvelope<CommandBody>[] = [];
-  for (let index = 0; index < count; index++) {
-    const kind = KINDS[pick(shape, 0, KINDS.length - 1)] as (typeof KINDS)[number];
-    const body = candidate(kind, snapshot, slot, engine, index);
+  for (const [index, body] of bodies.entries()) {
     if (body === undefined) continue;
     const commandId = `fuzz-${turn}-${String(index)}`;
     const envelope: CommandEnvelope<CommandBody> = {
@@ -136,6 +130,53 @@ export function generateFuzzCommands(
     const outcome = lifecycle.process(envelope, snapshot, slot, new CommandIdempotencyMap());
     if (outcome.type === "success") commands.push(envelope);
   }
+  return commands;
+}
+
+export function generateFuzzCommands(
+  seed: string,
+  snapshot: CampaignSnapshot,
+): { issued: number; commands: CommandEnvelope<CommandBody>[] } {
+  const slot = snapshot.slots[0];
+  if (slot === undefined) return { issued: 0, commands: [] };
+  const turn = String(snapshot.turnNumber);
+  const engine = new RandomEngine(splitSeed(splitSeed(seed, ROOT_CONTEXT), `month:${turn}`));
+  const shape = engine.stream("shape");
+  const count = pick(shape, 0, MAX_COMMANDS_PER_MONTH);
+  const bodies: (CommandBody | undefined)[] = [];
+  for (let index = 0; index < count; index++) {
+    const kind = KINDS[pick(shape, 0, KINDS.length - 1)] as CommandKind;
+    const stream = engine.stream(`command:${String(index)}:${kind}`);
+    bodies.push(candidate(kind, snapshot, slot, (lo, hi) => pick(stream, lo, hi)));
+  }
+  const commands = acceptedEnvelopes(bodies, turn, snapshot, slot);
+  return { issued: commands.length, commands };
+}
+
+export const PICK_SCALE = 1000;
+
+export interface CommandPick {
+  readonly kind: CommandKind;
+  readonly draws: readonly number[];
+}
+
+export type CommandPlan = readonly (readonly CommandPick[])[];
+
+export function planCommands(
+  picks: readonly CommandPick[],
+  snapshot: CampaignSnapshot,
+): { issued: number; commands: CommandEnvelope<CommandBody>[] } {
+  const slot = snapshot.slots[0];
+  if (slot === undefined) return { issued: 0, commands: [] };
+  const bodies = picks.map((entry) => {
+    let cursor = 0;
+    const draw: Draw = (lo, hi) => {
+      const fraction = entry.draws[cursor++ % Math.max(1, entry.draws.length)] ?? 0;
+      return lo + Math.min(hi - lo, Math.floor((fraction / PICK_SCALE) * (hi - lo + 1)));
+    };
+    return candidate(entry.kind, snapshot, slot, draw);
+  });
+  const commands = acceptedEnvelopes(bodies, String(snapshot.turnNumber), snapshot, slot);
   return { issued: commands.length, commands };
 }
 
@@ -156,17 +197,50 @@ export interface FuzzRunOptions {
 }
 
 export function runFuzzCase(fuzzCase: FuzzCase, options: FuzzRunOptions = {}): FuzzRun {
+  return runMonths(
+    fuzzCase.seed,
+    fuzzCase.months,
+    (snapshot) => generateFuzzCommands(fuzzCase.seed, snapshot),
+    options,
+  );
+}
+
+export function runCommandPlan(
+  seed: string,
+  plan: CommandPlan,
+  options: FuzzRunOptions = {},
+): FuzzRun {
+  return runMonths(
+    seed,
+    plan.length,
+    (snapshot, month) => planCommands(plan[month - 1] ?? [], snapshot),
+    options,
+  );
+}
+
+function runMonths(
+  seed: string,
+  monthCount: number,
+  commandsFor: (
+    snapshot: CampaignSnapshot,
+    month: number,
+  ) => {
+    issued: number;
+    commands: CommandEnvelope<CommandBody>[];
+  },
+  options: FuzzRunOptions,
+): FuzzRun {
   let snapshot = productionStartSnapshot();
   const months: MonthCheckpoint[] = [];
   const seen = new Set<string>();
   const violations: InvariantViolation[] = [];
   let issued = 0;
   let accepted = 0;
-  for (let month = 1; month <= fuzzCase.months; month++) {
-    const generated = generateFuzzCommands(fuzzCase.seed, snapshot);
+  for (let month = 1; month <= monthCount; month++) {
+    const generated = commandsFor(snapshot, month);
     issued += generated.issued;
     const perturb = options.perturb?.month === month ? options.perturb : undefined;
-    const step = advance(snapshot, fuzzCase.seed, {
+    const step = advance(snapshot, seed, {
       ...perturb,
       commands: () => generated.commands,
     });
@@ -175,7 +249,7 @@ export function runFuzzCase(fuzzCase: FuzzCase, options: FuzzRunOptions = {}): F
     violations.push(...monthInvariantViolations(step.result));
     for (const id of monthCoverage(step.result).subsystems) seen.add(id);
     snapshot = step.next;
-    if (options.roundTrip !== undefined && month < fuzzCase.months) {
+    if (options.roundTrip !== undefined && month < monthCount) {
       const expected = fullSnapshotHash(snapshot);
       const stored = options.roundTrip.lossy?.(snapshot, month) ?? snapshot;
       const trip = saveAndLoad(stored);
