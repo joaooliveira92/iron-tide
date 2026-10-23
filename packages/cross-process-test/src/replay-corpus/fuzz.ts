@@ -33,6 +33,7 @@ import {
 } from "./corpus.js";
 import { LEDGER_ORDER, fullSnapshotHash, monthCheckpoint } from "./checkpoint.js";
 import { SUBSYSTEMS, monthCoverage } from "./coverage.js";
+import { monthInvariantViolations, type InvariantViolation } from "./invariants.js";
 import type { ReplayFile } from "./format.js";
 
 type MonthCheckpoint = ReplayFile["months"][number];
@@ -145,6 +146,7 @@ export interface FuzzRun {
   readonly commandsIssued: number;
   readonly commandsAccepted: number;
   readonly subsystems: readonly string[];
+  readonly invariantViolations: readonly InvariantViolation[];
   readonly roundTripDivergence?: ReplayDivergence;
 }
 
@@ -157,6 +159,7 @@ export function runFuzzCase(fuzzCase: FuzzCase, options: FuzzRunOptions = {}): F
   let snapshot = productionStartSnapshot();
   const months: MonthCheckpoint[] = [];
   const seen = new Set<string>();
+  const violations: InvariantViolation[] = [];
   let issued = 0;
   let accepted = 0;
   for (let month = 1; month <= fuzzCase.months; month++) {
@@ -169,6 +172,7 @@ export function runFuzzCase(fuzzCase: FuzzCase, options: FuzzRunOptions = {}): F
     });
     months.push(monthCheckpoint(Number(snapshot.turnNumber), step.result));
     accepted += step.result.commandLedger.all.filter((o) => o.type === "success").length;
+    violations.push(...monthInvariantViolations(step.result));
     for (const id of monthCoverage(step.result).subsystems) seen.add(id);
     snapshot = step.next;
     if (options.roundTrip !== undefined && month < fuzzCase.months) {
@@ -177,7 +181,7 @@ export function runFuzzCase(fuzzCase: FuzzCase, options: FuzzRunOptions = {}): F
       const trip = saveAndLoad(stored);
       const actual = trip.ok ? fullSnapshotHash(trip.snapshot) : `(load failed: ${trip.reason})`;
       if (actual !== expected) {
-        return finish(months, issued, accepted, seen, {
+        return finish(months, issued, accepted, seen, violations, {
           month,
           turnNumber: Number(snapshot.turnNumber),
           where: "roundtrip",
@@ -188,7 +192,7 @@ export function runFuzzCase(fuzzCase: FuzzCase, options: FuzzRunOptions = {}): F
       if (trip.ok) snapshot = trip.snapshot;
     }
   }
-  return finish(months, issued, accepted, seen);
+  return finish(months, issued, accepted, seen, violations);
 }
 
 function finish(
@@ -196,6 +200,7 @@ function finish(
   issued: number,
   accepted: number,
   seen: ReadonlySet<string>,
+  invariantViolations: readonly InvariantViolation[],
   roundTripDivergence?: ReplayDivergence,
 ): FuzzRun {
   const monthDigests = months.map((m) =>
@@ -208,6 +213,7 @@ function finish(
     commandsIssued: issued,
     commandsAccepted: accepted,
     subsystems: SUBSYSTEMS.map((s) => s.id).filter((id) => seen.has(id)),
+    invariantViolations,
     ...(roundTripDivergence === undefined ? {} : { roundTripDivergence }),
   };
 }
