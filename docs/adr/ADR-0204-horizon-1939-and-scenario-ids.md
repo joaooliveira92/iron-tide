@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (2026-10-15). New record of decision DR-004; no prior ADR file existed for
+Superseded by: ADR-0282 (horizon moved to 1970; the scenario-ID rule is restated there). Originally accepted (2026-10-15). New record of decision DR-004; no prior ADR file existed for
 it and none is restored (see ADR-0210).
 
 ## Context

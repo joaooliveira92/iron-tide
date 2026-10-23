@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0282).
+highest existing number + 1 (the next number is ADR-0283).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -15,14 +15,15 @@ drifts). Process-only records are kept together under Process & documentation.
 
 ## Scope & horizon
 
-The sole 1880 start, the 1939 authored horizon, and the ten-nation roster.
+The sole 1880 start, the 1970 authored horizon, and the ten-nation roster.
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
 | 0201 | [ADR-0201-sole-1880-start.md](ADR-0201-sole-1880-start.md) | Sole 1880 start | accepted | — |
-| 0204 | [ADR-0204-horizon-1939-and-scenario-ids.md](ADR-0204-horizon-1939-and-scenario-ids.md) | Authored horizon through 1939; no empty scenario IDs | accepted | — |
+| 0204 | [ADR-0204-horizon-1939-and-scenario-ids.md](ADR-0204-horizon-1939-and-scenario-ids.md) | Authored horizon through 1939; no empty scenario IDs | superseded | ADR-0282 |
 | 0205 | [ADR-0205-nine-playable-nations.md](ADR-0205-nine-playable-nations.md) | Nine playable nations; the rest AI-only behind a readiness gate | superseded | ADR-0214 |
 | 0214 | [ADR-0214-ten-playable-nations-usa.md](ADR-0214-ten-playable-nations-usa.md) | Ten playable nations; the USA joins the 1880 playable roster | accepted | — |
+| 0282 | [ADR-0282-authored-horizon-through-1970.md](ADR-0282-authored-horizon-through-1970.md) | Authored horizon through 1970; no empty scenario IDs | accepted | — |
 
 ## Values, currency & language
 
