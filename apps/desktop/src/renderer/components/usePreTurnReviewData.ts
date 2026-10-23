@@ -1,6 +1,6 @@
 import type { StrategicPriority } from "@bluewave/campaign-engine";
 
-import { useBridgeQuery } from "../lib/use-bridge-query.js";
+import { useRead } from "../lib/use-read.js";
 import { useCampaignRevision } from "../shell/CampaignShellContext.js";
 import {
   activeConstructionProjects,
@@ -27,24 +27,9 @@ export function usePreTurnReviewData(sessionId: string, open: boolean): PreTurnR
   const revision = useCampaignRevision();
   const options = { enabled: open };
 
-  const campaign = useBridgeQuery(
-    sessionId,
-    revision,
-    (bridge, id) => bridge.campaign.execute("inspectCampaign", id),
-    options,
-  );
-  const priorities = useBridgeQuery(
-    sessionId,
-    revision,
-    (bridge, id) => bridge.campaign.execute("inspectPriorities", id),
-    options,
-  );
-  const construction = useBridgeQuery(
-    sessionId,
-    revision,
-    (bridge, id) => bridge.campaign.execute("inspectConstructionScreen", id),
-    options,
-  );
+  const campaign = useRead("inspectCampaign", sessionId, revision, options);
+  const priorities = useRead("inspectPriorities", sessionId, revision, options);
+  const construction = useRead("inspectConstructionScreen", sessionId, revision, options);
 
   if (!open) return EMPTY_PRE_TURN_REVIEW;
 

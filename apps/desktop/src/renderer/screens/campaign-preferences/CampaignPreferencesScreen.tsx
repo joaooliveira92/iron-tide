@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useBridge } from "../../lib/bridge-context.js";
+import { useCampaignProjection } from "../../lib/use-campaign-projection.js";
 import { FileText, Settings2 } from "lucide-react";
 import { Button } from "../../components/ui/button.js";
 import { PageHeader } from "../../components/shared/PageHeader.js";
@@ -10,7 +11,6 @@ import { ScenarioPanel } from "./components/ScenarioPanel.js";
 import { RulesetPanel } from "./components/RulesetPanel.js";
 import { DisplayPreferencesPanel } from "./components/DisplayPreferencesPanel.js";
 import { DangerZonePanel } from "./components/DangerZonePanel.js";
-import { useCampaignProjection } from "./hooks/useCampaignProjection.js";
 import { useDisplayPreferences } from "./hooks/useDisplayPreferences.js";
 import { useClipboardCopy } from "./hooks/useClipboardCopy.js";
 import { inferConfig } from "./utils/infer-config.js";
@@ -25,7 +25,7 @@ export function CampaignPreferencesScreen({
   sessionId,
   onCloseCampaign,
 }: CampaignPreferencesScreenProps) {
-  const { projection, loadError, loadProjection } = useCampaignProjection(sessionId);
+  const { projection, loadError, reload } = useCampaignProjection(sessionId);
   const { displayPrefs, togglePref } = useDisplayPreferences(sessionId);
   const { copied, copy } = useClipboardCopy();
   const [restartMessage, setRestartMessage] = useState<string | null>(null);
@@ -57,7 +57,7 @@ export function CampaignPreferencesScreen({
   }, [bridge, sessionId]);
 
   if (loadError !== null) {
-    return <PreferencesErrorState message={loadError} onRetry={loadProjection} />;
+    return <PreferencesErrorState message={loadError} onRetry={reload} />;
   }
 
   if (projection === null) {
@@ -126,7 +126,7 @@ export function CampaignPreferencesScreen({
         <TabsContent value="danger">
           <DangerZonePanel
             onExportConfig={handleExportConfig}
-            onReloadSnapshot={loadProjection}
+            onReloadSnapshot={reload}
             onCloseCampaign={onCloseCampaign}
           />
         </TabsContent>
