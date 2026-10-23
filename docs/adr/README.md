@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0279).
+highest existing number + 1 (the next number is ADR-0281).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -78,6 +78,9 @@ Concurrent-agent worktree coordination and repository process rules.
 | 0267 | [ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md](ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md) | The reachability ledger maps engine capability to desktop path | accepted | — |
 | 0268 | [ADR-0268-code-carries-no-comments.md](ADR-0268-code-carries-no-comments.md) | Code carries no comments | accepted | — |
 | 0269 | [ADR-0269-worktree-ledger-is-local-untracked-state.md](ADR-0269-worktree-ledger-is-local-untracked-state.md) | The worktree ledger is local, untracked state | accepted | — |
+| 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | accepted | — |
+| 0279 | [ADR-0279-replay-approvals-carry-a-change-class.md](ADR-0279-replay-approvals-carry-a-change-class.md) | Replay approvals carry a verified change class | accepted | — |
+| 0280 | [ADR-0280-property-based-replay-scenarios.md](ADR-0280-property-based-replay-scenarios.md) | Property-based replay scenarios use fast-check as a test-only dependency | accepted | — |
 
 ## Scenario content & research
 

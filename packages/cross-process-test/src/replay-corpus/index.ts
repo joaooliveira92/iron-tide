@@ -20,10 +20,12 @@ export { executeScenario } from "./corpus.js";
 export type { ExecutedMonth } from "./corpus.js";
 export {
   ApprovalsError,
+  CHANGE_CLASSES,
   REPLAY_APPROVALS_SCHEMA,
   checkReplayApprovals,
   checkpointHash,
   formatApprovalFailures,
+  isChangeClass,
   proposeApprovals,
 } from "./approvals.js";
 export type {
@@ -31,6 +33,7 @@ export type {
   ApprovalEntry,
   ApprovalFailure,
   ApprovalsFile,
+  ChangeClass,
   CorpusState,
   ProposalInput,
 } from "./approvals.js";
@@ -39,16 +42,21 @@ export type { ApprovalsIo } from "./approvals-command.js";
 export {
   FUZZ_CASES,
   FuzzManifestError,
+  PICK_SCALE,
   checkFuzzCase,
   decodeFuzzManifest,
   fuzzSubsystems,
   formatFuzzFailure,
   generateFuzzCommands,
   recordFuzzManifest,
+  runCommandPlan,
   runFuzzCase,
 } from "./fuzz.js";
 export type {
   CheckOptions,
+  CommandKind,
+  CommandPick,
+  CommandPlan,
   FuzzCase,
   FuzzManifest,
   FuzzOutcome,
