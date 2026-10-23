@@ -163,17 +163,33 @@ export function colocateWarSides(
 
 export const DRILL_STRENGTH_SCALE = SANDBOX_DEFAULT_STRENGTH_SCALE;
 
+function areaFirepower(nation: NationState | undefined, areaId: string): number {
+  let total = 0;
+  for (const fleet of nation?.fleets ?? []) {
+    for (const ship of fleet.ships) {
+      if (!ship.isUnderConstruction && ship.locationAreaId === areaId) {
+        total += ship.firepower as number;
+      }
+    }
+  }
+  return total;
+}
+
 export function scaleBelligerentFirepower(
   snapshot: CampaignSnapshot,
   nationIds: readonly string[],
   areaId: string,
   scale: number,
 ): CampaignSnapshot {
+  const totals = nationIds.map((id) => areaFirepower(snapshot.nations.get(id), areaId));
+  const strongest = Math.max(...totals);
   const nations = new Map(snapshot.nations);
   let changed = false;
-  for (const nationId of nationIds) {
+  nationIds.forEach((nationId, index) => {
     const nation = nations.get(nationId);
-    if (!nation) continue;
+    const own = totals[index] as number;
+    if (!nation || own === 0) return;
+    const nationScale = scale * Math.ceil(strongest / own);
     const fleets = nation.fleets.map((fleet) => ({
       ...fleet,
       ships: fleet.ships.map((ship) => {
@@ -181,12 +197,12 @@ export function scaleBelligerentFirepower(
         changed = true;
         return {
           ...ship,
-          firepower: SafeInt((ship.firepower as number) * scale),
+          firepower: SafeInt((ship.firepower as number) * nationScale),
         };
       }),
     }));
     nations.set(nationId, { ...nation, fleets });
-  }
+  });
   return changed ? { ...snapshot, nations } : snapshot;
 }
 
