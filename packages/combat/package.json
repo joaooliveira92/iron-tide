@@ -100,10 +100,10 @@
     "effect": "workspace:*"
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b && tsc -p tsconfig.harness.json",
     "dev": "tsc -b --watch",
-    "clean": "rimraf --glob dist *.tsbuildinfo",
-    "typecheck": "tsc --noEmit",
+    "clean": "rimraf --glob dist dist-harness *.tsbuildinfo",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.harness.json --noEmit",
     "test": "vp test run",
     "lint": "vp lint .",
     "lint:fix": "echo 'ok'"

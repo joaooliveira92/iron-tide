@@ -1,7 +1,7 @@
 import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine, type RandomLedger } from "@bluewave/random";
-import { BattleLedger, type BattleEvent } from "../battleLedger.js";
+import { BattleLedger, type BattleEvent } from "../core/battleLedger.js";
 import { advanceMinute } from "../simulation/engine.js";
 import {
   assertManifestValid,
@@ -13,14 +13,13 @@ import type { GunneryBattery } from "../gunnery/resolve.js";
 import { NO_TARGET, withGunneryStateHash } from "../gunnery/index.js";
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
-import type { MovementState } from "../movement.js";
+import { SPEED_BP_SCALE, type MovementState } from "../movement/neighbour.js";
 import type { ShipDamageState } from "../damage/state.js";
-import type { StrategicWeatherState } from "../weather/strategic-state.js";
+import { buildBattleWeather, type StrategicWeatherState } from "../weather/neighbour.js";
 import { AUTO_RESOLUTION_UNAVAILABLE } from "../generation/reasonCodes.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { CauseOfLossTracker, type LossCause } from "./causeOfLoss.js";
 import { type AutoResolverNation, projectBattle, type ProjectBattleOutput } from "./project.js";
-import { buildBattleWeather } from "./weather.js";
 import {
   projectAirCombatContext,
   projectAirDefenseContext,
@@ -34,7 +33,7 @@ import {
   initialDamageState,
   type DamageContext,
   type DamageTargetContext,
-} from "./damage.js";
+} from "../damage/minuteDamage.js";
 import {
   decideBattleEnd,
   type BattleSide,
@@ -46,7 +45,6 @@ import { createDefaultDamageControlResource } from "../damage/damageControl.js";
 import type { DamageControlContext } from "../damage/damageControlEngineWiring.js";
 import { DAMAGE_RULESET_VERSION } from "../damage/constants.js";
 import { DAMAGE_CONTROL_KEYED_DRAW } from "../damage/reasonCodes.js";
-import { SPEED_BP_SCALE } from "../movement/constants.js";
 import {
   AUTO_RESOLUTION_MAX_MINUTES,
   battleAutoResolutionPolicyId,

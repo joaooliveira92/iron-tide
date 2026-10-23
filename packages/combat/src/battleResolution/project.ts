@@ -25,7 +25,11 @@ import {
 } from "../gunnery/index.js";
 import { GUNNERY_RULESET_VERSION, GUNNERY_FORMULA_VERSION } from "../gunnery/constants.js";
 import type { BattleManifest } from "../generation/manifest.js";
-import { initialDamageState, type DamageContext, type DamageTargetContext } from "./damage.js";
+import {
+  initialDamageState,
+  type DamageContext,
+  type DamageTargetContext,
+} from "../damage/minuteDamage.js";
 import {
   AUTO_RESOLUTION_COMPARTMENTS,
   AUTO_RESOLUTION_COMPONENTS,

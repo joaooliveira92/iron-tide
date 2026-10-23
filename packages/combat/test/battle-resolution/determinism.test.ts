@@ -8,8 +8,8 @@ const childScript = resolve(
   thisDir,
   "..",
   "..",
-  "dist",
-  "simulation",
+  "dist-harness",
+  "harness",
   "run-battle-resolution-child.js",
 );
 

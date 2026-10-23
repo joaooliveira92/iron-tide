@@ -1,8 +1,8 @@
 import { BluewaveError } from "@bluewave/contracts";
-import { evaluateBattleEnd } from "../battleEnd.js";
+import { evaluateBattleEnd } from "./battleEnd.js";
 import { type ShipDamageState } from "../damage/state.js";
 import { FLOAT_UNIT, STRUCTURE_UNIT, WITHDRAWAL_STRENGTH_THRESHOLD_BP } from "./constants.js";
-import { hpOfState } from "./damage.js";
+import { hpOfState } from "../damage/minuteDamage.js";
 import { BATTLE_VIABILITY_EVALUATION_FAILED } from "./reasonCodes.js";
 
 export type BattleSide = "ATTACKER" | "DEFENDER";

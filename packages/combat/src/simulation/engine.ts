@@ -1,29 +1,31 @@
 import type { RandomEngine } from "@bluewave/random";
-import type { MovementState } from "../movement.js";
-import { BattleLedger, type BattleEvent } from "../battleLedger.js";
-import type { TacticalContact } from "../contact/lifecycle.js";
+import type { MovementState } from "../movement/neighbour.js";
+import { BattleLedger, type BattleEvent } from "../core/battleLedger.js";
+import type { TacticalContact } from "../contact/neighbour.js";
 import type { GunneryBattery, GunneryState } from "../gunnery/index.js";
 import type { GunneryEventRecord } from "../gunnery/event.js";
-import type { WeatherEngineContext } from "../weather/engine.js";
-import type { BattleWeatherComponents } from "../weather/components.js";
+import type { BattleWeatherComponents, WeatherEngineContext } from "../weather/neighbour.js";
 import type { TacticalBattleState } from "../tactical/index.js";
 import type { ShipDamageState } from "../damage/state.js";
-import type { DamageContext } from "../battleResolution/damage.js";
+import type { DamageContext } from "../damage/minuteDamage.js";
 import type {
   TorpedoContext,
   TorpedoLauncherState,
   TorpedoRecord,
   TorpedoTrack,
 } from "../torpedoes/index.js";
-import type { SmokeContext } from "../smoke/engineWiring.js";
-import type { SmokeCloud } from "../smoke/model.js";
-import type { SmokeEventRecord } from "../smoke/smokeRecords.js";
+import {
+  type SmokeContext,
+  type SmokeCloud,
+  type SmokeEventRecord,
+} from "../smoke/engineWiring.js";
 import type { DamageControlContext } from "../damage/damageControlEngineWiring.js";
-import type { AirCombatContext } from "../air-combat/engineWiring.js";
-import type { AirCombatRecord } from "../air-combat/records.js";
-import type { AirDefenseContext } from "../air-defense/engineWiring.js";
-import type { AirDefenseEngagementRecord } from "../air-defense/records.js";
-import type { AirDefenseState } from "../air-defense/air-defense-state.js";
+import { type AirCombatContext, type AirCombatRecord } from "../air-combat/engineWiring.js";
+import {
+  type AirDefenseContext,
+  type AirDefenseEngagementRecord,
+  type AirDefenseState,
+} from "../air-defense/engineWiring.js";
 import {
   buildShipPositions,
   cloneMovementState,

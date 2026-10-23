@@ -1,6 +1,6 @@
 import { BluewaveError } from "@bluewave/contracts";
-import type { DaylightProfile, DaylightProfileEntry } from "../weather/night-twilight.js";
-import { WEATHER_PROFILE_INCOMPLETE } from "../weather/reasonCodes.js";
+import type { DaylightProfile, DaylightProfileEntry } from "./night-twilight.js";
+import { WEATHER_PROFILE_INCOMPLETE } from "./reasonCodes.js";
 
 export const DEFAULT_DAYLIGHT_PROFILE_ID = "default_daylight_v1" as const;
 

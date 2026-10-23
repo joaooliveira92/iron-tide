@@ -69,9 +69,9 @@ describe("AC-22 — engine package boundary", () => {
       "../simulation/",
     ];
     for (const path of forbidden) expect(resolveSrc.includes(`from "${path}`)).toBe(false);
-    expect(resolveSrc.includes('from "../battleLedger.js"')).toBe(true);
+    expect(resolveSrc.includes('from "../core/battleLedger.js"')).toBe(true);
     expect(resolveSrc.includes('from "../damage/')).toBe(true);
-    expect(resolveSrc.includes('from "../contact/lifecycle.js"')).toBe(true);
+    expect(resolveSrc.includes('from "../contact/neighbour.js"')).toBe(true);
   });
 });
 

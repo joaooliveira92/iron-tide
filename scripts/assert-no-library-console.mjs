@@ -29,7 +29,7 @@ const CONSOLE_METHODS = new Set(["log", "error", "warn", "info", "debug", "trace
  */
 export const ALLOWLIST = [
   {
-    path: "packages/combat/src/simulation/run-weather-child.ts",
+    path: "packages/combat/harness/run-weather-child.ts",
     reason:
       "combat weather child-process entry point; the runtime-free package has no Effect runtime to log through",
   },

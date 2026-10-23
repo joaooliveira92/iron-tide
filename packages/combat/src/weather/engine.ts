@@ -1,4 +1,4 @@
-import type { BattleEvent } from "../battleLedger.js";
+import type { BattleEvent } from "../core/battleLedger.js";
 import type { RandomLedger } from "@bluewave/random";
 import { withTacticalWeatherComponentsHash } from "./components.js";
 import type { BattleWeatherComponents } from "./components.js";

@@ -64,10 +64,7 @@ describe("ADR-0094: penetration matrix properties", () => {
 
   it("contains no nation-id conditional in the shared penetration path", () => {
     const here = dirname(fileURLToPath(import.meta.url));
-    const src = readFileSync(
-      join(here, "..", "..", "src", "battleResolution", "damage.ts"),
-      "utf8",
-    );
+    const src = readFileSync(join(here, "..", "..", "src", "damage", "minuteDamage.ts"), "utf8");
     expect(/nationId\s*===|nationId\s*!==/.test(src)).toBe(false);
   });
 

@@ -5,9 +5,8 @@ import { withGunneryStateHash } from "../gunnery/index.js";
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import type { TacticalDivision } from "../tactical/division.js";
-import type { MovementState } from "../movement.js";
-import type { StrategicWeatherState } from "../weather/strategic-state.js";
-import type { WeatherEngineContext } from "../weather/engine.js";
+import type { MovementState } from "../movement/neighbour.js";
+import type { StrategicWeatherState, WeatherEngineContext } from "../weather/neighbour.js";
 import type { TorpedoContext } from "../torpedoes/index.js";
 import type { SmokeContext } from "../smoke/engineWiring.js";
 import type { AirCombatContext } from "../air-combat/engineWiring.js";
@@ -17,7 +16,7 @@ import { BATTLE_SEED_FORMULA_VERSION, deriveBattleSeed } from "../generation/see
 import type { BattleManifest } from "../generation/manifest.js";
 import { AUTO_RESOLUTION_MAX_MINUTES } from "./constants.js";
 import { type AutoResolverNation, projectBattle, type ProjectBattleOutput } from "./project.js";
-import { buildBattleWeather } from "./weather.js";
+import { buildBattleWeather } from "../weather/neighbour.js";
 import {
   projectAirCombatContext,
   projectAirDefenseContext,
@@ -30,7 +29,7 @@ import {
   buildDamageControlContexts,
   mergeTargetStates,
 } from "./resolve.js";
-import { battleLoss, initialDamageState, type DamageContext } from "./damage.js";
+import { battleLoss, initialDamageState, type DamageContext } from "../damage/minuteDamage.js";
 import { decideBattleEnd, type BattleSide, type ShipViability } from "./viability.js";
 import { headingToward } from "./engagement.js";
 

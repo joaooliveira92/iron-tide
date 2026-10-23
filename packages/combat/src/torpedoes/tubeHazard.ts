@@ -13,7 +13,7 @@ import {
 import { TORPEDO_BASIS_POINTS_PER_UNIT } from "./constants.js";
 import { TORPEDO_STATE_INVARIANT_FAILED, UNDERWATER_TUBE_SEVERE_FLOODING } from "./reasonCodes.js";
 import { createSevereTubeFloodingSource } from "./flooding.js";
-import type { FloodingSourceRecord } from "../damage/state.js";
+import type { FloodingSourceRecord } from "../damage/torpedoHit.js";
 import { tubeHitPropulsionMultiplierBp } from "./oxygen.js";
 import {
   assertSystemShockCandidate,

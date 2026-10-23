@@ -8,7 +8,7 @@ import {
 } from "./damageConstants.js";
 import { TORPEDO_BASIS_POINTS_PER_UNIT } from "./constants.js";
 import { TORPEDO_MACHINERY_DAMAGE_CREATED, TORPEDO_STATE_INVARIANT_FAILED } from "./reasonCodes.js";
-import type { ComponentOutcome } from "../damage/componentDamage.js";
+import type { ComponentOutcome } from "../damage/torpedoHit.js";
 import type { TorpedoImpactZone } from "./detonation.js";
 
 function invariant(field: string, value: unknown, reason: string): never {

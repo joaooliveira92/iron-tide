@@ -26,7 +26,7 @@ import { recommendSalvoSize, type TorpedoSalvoPolicyInputs } from "./salvo.js";
 import type { TorpedoConsumeResult } from "./ammunition.js";
 import { type TorpedoLauncherState, withTorpedoLauncherStateHash } from "./state.js";
 import { createTorpedoTrack, type TorpedoTrack } from "./track.js";
-import type { Position } from "../spotting/detection.js";
+import type { Position } from "../core/position.js";
 
 function invariant(field: string, value: unknown, reason: string): never {
   throw new BluewaveError(TORPEDO_STATE_INVARIANT_FAILED, {

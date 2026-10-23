@@ -1,11 +1,11 @@
-import type { MovementState } from "../movement.js";
+import type { MovementState } from "../movement/neighbour.js";
 import {
   advancePosition,
   resolveCollisionsGrounding,
   resolvePropulsion,
   resolveTurning,
-} from "../movement/kinematics.js";
-import { SUBSTEPS_PER_MINUTE } from "../movement/constants.js";
+} from "../movement/neighbour.js";
+import { SUBSTEPS_PER_MINUTE } from "../core/tacticalTime.js";
 import {
   resolveSensorsSpotting,
   type Position,
@@ -18,34 +18,32 @@ import {
   isStale,
   updateContact,
   type TacticalContact,
-} from "../contact/lifecycle.js";
-import type { BattleEvent } from "../battleLedger.js";
-import { BattleLedger } from "../battleLedger.js";
+} from "../contact/neighbour.js";
+import type { BattleEvent } from "../core/battleLedger.js";
+import { BattleLedger } from "../core/battleLedger.js";
 import { resolveGunnery, type GunneryEventRecord, type GunneryState } from "../gunnery/index.js";
-import { resolveWeather } from "../weather/engine.js";
-import type { BattleWeatherComponents } from "../weather/components.js";
+import { resolveWeather, type BattleWeatherComponents } from "../weather/neighbour.js";
 import type { TacticalBattleState } from "../tactical/index.js";
 import type { ShipDamageState } from "../damage/state.js";
-import { resolveMinuteDamage } from "../battleResolution/damage.js";
+import { resolveMinuteDamage } from "../damage/minuteDamage.js";
 import {
   resolveTorpedoes,
   type TorpedoLauncherState,
   type TorpedoRecord,
   type TorpedoTrack,
 } from "../torpedoes/index.js";
-import { resolveSmoke } from "../smoke/engineWiring.js";
-import type { SmokeCloud } from "../smoke/model.js";
-import type { SmokeEventRecord } from "../smoke/smokeRecords.js";
+import { resolveSmoke, type SmokeCloud, type SmokeEventRecord } from "../smoke/engineWiring.js";
 import {
   applyDamageControlToState,
   requireDamageDesignSurface,
   resolveDamageControl,
 } from "../damage/damageControlEngineWiring.js";
-import { resolveAirCombat } from "../air-combat/engineWiring.js";
-import type { AirCombatRecord } from "../air-combat/records.js";
-import { resolveAirDefense } from "../air-defense/engineWiring.js";
-import type { AirDefenseEngagementRecord } from "../air-defense/records.js";
-import type { AirDefenseState } from "../air-defense/air-defense-state.js";
+import { resolveAirCombat, type AirCombatRecord } from "../air-combat/engineWiring.js";
+import {
+  resolveAirDefense,
+  type AirDefenseEngagementRecord,
+  type AirDefenseState,
+} from "../air-defense/engineWiring.js";
 import type { AdvanceMinuteInput, UnitOrders } from "./engine.js";
 
 export const DAMAGE_CONTROL_SUBSTEP = 57 as const;

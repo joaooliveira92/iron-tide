@@ -193,14 +193,14 @@ describe("AC-16 resolveAirCombat stage wiring", () => {
 describe("AC-22 integration boundary", () => {
   it("does not modify BattleResolver", () => {
     expect(typeof BattleResolver).toBe("function");
-    const src = readFileSync(resolve(__dirname, "../../src/resolver.ts"), "utf-8");
+    const src = readFileSync(resolve(__dirname, "../../src/battleResolution/resolver.ts"), "utf-8");
     expect(src).not.toContain("airCombat");
     expect(src).not.toContain("resolveAirCombat");
   });
 
   it("does not modify StrengthCalculator", () => {
     expect(typeof StrengthCalculator).toBe("function");
-    const src = readFileSync(resolve(__dirname, "../../src/strength.ts"), "utf-8");
+    const src = readFileSync(resolve(__dirname, "../../src/battleResolution/resolver.ts"), "utf-8");
     expect(src).not.toContain("airCombat");
     expect(src).not.toContain("resolveAirCombat");
   });

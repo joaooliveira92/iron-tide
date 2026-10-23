@@ -1,4 +1,4 @@
-# ADR-0274: UI-state writes are field patches merged once, in main
+# ADR-0276: UI-state writes are field patches merged once, in main
 
 ## Status
 

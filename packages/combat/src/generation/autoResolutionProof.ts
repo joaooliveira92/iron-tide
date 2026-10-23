@@ -1,7 +1,7 @@
 import { BluewaveError } from "@bluewave/contracts";
 import { AUTO_RESOLUTION_UNAVAILABLE } from "./reasonCodes.js";
 import type { BattleManifest } from "./manifest.js";
-import { assertAutoResolvable } from "../autoResolution.js";
+import { assertAutoResolvable } from "../battleResolution/autoResolution.js";
 
 export const AUTO_RESOLUTION_DECLARED_SURFACE_V1 = "auto_resolution_declared_surface_v1" as const;
 

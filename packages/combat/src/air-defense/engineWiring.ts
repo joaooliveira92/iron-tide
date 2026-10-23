@@ -219,3 +219,6 @@ export function resolveAirDefense(
     summary,
   };
 }
+
+export type { AirDefenseState } from "./air-defense-state.js";
+export type { AirDefenseEngagementRecord } from "./records.js";
