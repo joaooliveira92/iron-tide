@@ -21,6 +21,7 @@ const rootRequire = createRequire(resolve(ROOT, "package.json"));
 // closed rather than assuming the pins are fine.
 export const TSGO_MATRIX = {
   "0.51.1": { typescript: "7.0.2", oxlint: "1.87.0", "oxlint-tsgolint": "7.0.2003" },
+  "0.54.1": { typescript: "7.0.2", oxlint: "1.89.0", "oxlint-tsgolint": "7.0.2004" },
 };
 
 // Each patched integration: the parent package to resolve, and a human label.
