@@ -1,24 +1,16 @@
-import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { Schema } from "effect";
-import { SaveMetadataSchema, type PointerFile } from "./schemas.js";
+import { readSaveMetadata } from "./fileDecode.js";
+import type { PointerFile } from "./schemas.js";
 
 export class RecoveryManager {
   static revert(saveDir: string, previousSaveId: string): boolean {
     const pointerPath = join(saveDir, "pointer.json");
 
-    let predecessor: string | undefined;
-    try {
-      const metaPath = join(saveDir, previousSaveId, "metadata.json");
-      if (existsSync(metaPath)) {
-        const meta = Schema.decodeUnknownSync(SaveMetadataSchema)(
-          JSON.parse(readFileSync(metaPath, "utf8")),
-        );
-        predecessor = meta.previousSaveId;
-      }
-    } catch {
-      predecessor = undefined;
-    }
+    const metaPath = join(saveDir, previousSaveId, "metadata.json");
+    const predecessor = existsSync(metaPath)
+      ? readSaveMetadata(metaPath)?.previousSaveId
+      : undefined;
 
     const pointerContent: PointerFile = {
       activeSaveId: previousSaveId,
