@@ -1,5 +1,5 @@
 import type { Bp, Money, SafeInt } from "@bluewave/contracts";
-import type { PrestigeValueSet } from "./prestige.js";
+import type { CareerResult, PrestigeValueSet } from "./prestige.js";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";
 import type { DeclineCounterEntry, DeclinedBattleRecord } from "./declineRecords.js";
@@ -592,6 +592,7 @@ export interface CampaignSnapshot {
   designFamilies: Map<string, DesignFamily>;
   strategicWeather: CampaignWeatherState[];
   prestigeRules: PrestigeValueSet;
+  careerResult?: CareerResult;
   rulesetVersion: string;
   compatibilityVersion: string;
 }

@@ -97,6 +97,15 @@ function offerOf(result: MonthResult): OfferRequest {
   return request;
 }
 
+function withPlayerPrestigeOf(snapshot: CampaignSnapshot, source: CampaignSnapshot) {
+  const nations = new Map(snapshot.nations);
+  nations.set(PLAYER, {
+    ...nations.get(PLAYER)!,
+    prestige: source.nations.get(PLAYER)!.prestige,
+  });
+  return { ...snapshot, nations };
+}
+
 function runChild(): void {
   try {
     const { state } = compileProductionCampaign();
@@ -357,6 +366,9 @@ function runChild(): void {
       requestLeaksEnemyShip: enemyShipIds.some((id) => requestText.includes(`"${id}"`)),
       dormantSnapshotHash: hashSnapshot(dormant.finalSnapshot),
       nonOfferedSnapshotHash: hashSnapshot(nonOffered.finalSnapshot),
+      nonOfferedPrestigeNeutralSnapshotHash: hashSnapshot(
+        withPlayerPrestigeOf(nonOffered.finalSnapshot, dormant.finalSnapshot),
+      ),
       acceptedSnapshotHash: hashSnapshot(accepted.finalSnapshot),
       delegatedSnapshotHash: hashSnapshot(delegated.finalSnapshot),
       acceptedOutcome: accepted.outcome,

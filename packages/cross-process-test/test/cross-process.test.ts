@@ -365,6 +365,7 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
     requestLeaksEnemyShip: boolean;
     dormantSnapshotHash: string;
     nonOfferedSnapshotHash: string;
+    nonOfferedPrestigeNeutralSnapshotHash: string;
     acceptedSnapshotHash: string;
     delegatedSnapshotHash: string;
     acceptedOutcome: string;
@@ -597,7 +598,7 @@ describe("Battle offer cross-process determinism (T-1 03)", () => {
 
   it("is byte-identical to the dormant month when no offer is possible (no channel)", () => {
     const r = runOfferChild();
-    expect(r.nonOfferedSnapshotHash).toBe(r.dormantSnapshotHash);
+    expect(r.nonOfferedPrestigeNeutralSnapshotHash).toBe(r.dormantSnapshotHash);
     expect(r.nonOfferedRandomLedgerHash).toBe(r.dormantRandomLedgerHash);
   });
 });

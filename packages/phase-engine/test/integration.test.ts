@@ -552,6 +552,7 @@ describe("Full-slice integration", () => {
       "resolve_aircraft_development",
       "resolve_carrier_operations",
       "resolve_research",
+      "sacking",
       "weather_generation",
     ]);
 

@@ -290,6 +290,7 @@ describe("commitMonth", () => {
         constructionProjects: [],
         isPlayable,
         isAI: !isPlayable,
+        prestige: SafeInt(20),
       };
     }
 

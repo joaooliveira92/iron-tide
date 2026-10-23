@@ -543,6 +543,7 @@ const F = {
     "designFamilies",
     "strategicWeather",
     "prestigeRules",
+    "careerResult",
     "rulesetVersion",
     "compatibilityVersion",
   ),

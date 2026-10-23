@@ -15,7 +15,7 @@ export interface MonthResult {
   randomLedger: RandomLedger;
   financialLedger: FinancialLedger;
   success: boolean;
-  outcome?: "completed" | "suspended";
+  outcome?: "completed" | "suspended" | "career_ended";
   suspended?: SuspendedTurn;
 }
 
