@@ -1,13 +1,13 @@
 name: Gates (cross-OS)
 
-# Proves the static gates and their fixtures on the OSes Bluewave ships to.
-# Ubuntu is covered by quality.yml; this job adds the platforms a Linux-only
-# gate set would silently miss (ADR-0107).
+# Proves the static gates and their fixtures on the OSes Bluewave ships to
+# (ADR-0107). quality.yml only runs for pull requests into master, so this job
+# also covers Ubuntu to keep the static gates on Linux for every pull request.
 on:
   push:
-    branches: [dev, main]
+    branches: [dev, master]
   pull_request:
-    branches: [dev, main]
+    branches: [dev, master]
   workflow_dispatch:
 
 permissions:
@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     steps:

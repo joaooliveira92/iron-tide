@@ -2,7 +2,7 @@ name: Desktop E2E Gate
 
 on:
   push:
-    branches: [dev, main]
+    branches: [dev, master]
     paths:
       - "apps/desktop/**"
       - "content/production/1880/**"
