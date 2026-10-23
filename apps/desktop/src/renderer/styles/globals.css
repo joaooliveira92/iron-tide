@@ -46,8 +46,7 @@
 /*
  * Standard shadcn/ui "neutral" token set — restored from the
  * desktop-ui-kit-migration map's styling foundation
- * (.scratch/desktop-ui-kit-migration/issues/02-styling-foundation.md,
- * originally scoped to 6 components) and extended with the tokens the
+ * (originally scoped to 6 components) and extended with the tokens the
  * full shell/screens tree actually references (sidebar, success/warning
  * status colors) per the desktop-mvp map, ticket 11.
  */

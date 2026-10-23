@@ -72,11 +72,9 @@ legacy identifiers, never reused for a recreated file.
 | `.ai/REQUIREMENTS.md`                                                                                              | `README.md`; `CONTEXT.md`; `docs/agents/repo-map.md`; `.ai/AUTONOMOUS-AGENT.md`; `.ai/IMPLEMENTATION-PROMPT.md` | tracked at `43177f4` (blob `55530625`, 10404 bytes); emptied at `5f19b3d`                                             | recovered from reachable history             | yes          | requirement traceability                | re-baselined here with new dates; legacy status claims marked unverified      | landed in G-1                        | none                                                                                |
 | `.scratch/comment-pruning/**`                                                                                      | `.ai/reports/comment-pruning.md`; historical plan                                                               | tracked `c167449`..`5f19b3d`, dropped at `5f19b3d`                                                                    | recovered, deliberately not restored         | yes          | comment-pruning tickets                 | none; the work is complete and reported                                       | none                                 | none                                                                                |
 
-`.scratch/` is **frozen historical provenance**: it holds the wayfinder maps, specs
-and tickets of efforts completed before the pipeline moved to GitHub Issues
-(ADR-0227). No new effort writes there. The legacy `.scratch/ship-building` and
-`.scratch/comment-pruning` rows above remain the unavailable/recovered references;
-nothing under `.scratch/` substitutes for an unavailable canonical document.
+`.scratch/` was removed from the tree (ADR-0274); its contents remain in git history.
+The legacy `.scratch/ship-building` and `.scratch/comment-pruning` rows above remain the
+unavailable/recovered references.
 
 ## Replacement authorities and backlog ownership
 
@@ -97,8 +95,8 @@ nothing under `.scratch/` substitutes for an unavailable canonical document.
   (`joaooliveira92/iron-tide`) per
   [`docs/agents/issue-tracker.md`](../docs/agents/issue-tracker.md): the wayfinder
   map and its decision tickets, the `ready-for-agent` spec issue, and its
-  implementation sub-issues (ADR-0227). `.scratch/<slug>/` is frozen historical
-  provenance and is not mirrored into GitHub Issues; `.ai/specs/` is retired.
+  implementation sub-issues (ADR-0227). `.scratch/<slug>/` was removed (ADR-0274)
+  and is not mirrored into GitHub Issues; `.ai/specs/` is retired.
 - **Status and acceptance** live in `.ai/SPRINT-PLAN.md` (frontier + rows) and
   `.ai/reports/*`. `docs/PROGRESS.md` and `docs/OPEN-ISSUES.md` are **intentionally
   unavailable** (rows above) and are no longer named by the operating prompts.

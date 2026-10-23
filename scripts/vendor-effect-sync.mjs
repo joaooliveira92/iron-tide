@@ -3,9 +3,6 @@
 // model V1) into `vendor/`, plus a thin Bluewave workspace wrapper so Turbo does
 // not build Effect from source.
 //
-// Spec: `.scratch/effect-v4-vendor-migration/spec.md` §"Vendor specification (V1)".
-// Plan: `.scratch/effect-v4-vendor-migration/plan.md` §2.
-//
 // Usage:
 //   node scripts/vendor-effect-sync.mjs            # sync at the pinned version
 //   node scripts/vendor-effect-sync.mjs --verify   # re-check integrity + tree, no writes

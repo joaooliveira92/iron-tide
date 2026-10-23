@@ -1,7 +1,6 @@
 # Map prototype — throwaway
 
 Ticket 06, "Map rendering technology and geometry source?"
-(`.scratch/bluewave-milestone-6/issues/06-map-rendering-technology-and-geometry-source.md`).
 
 **This whole directory is disposable.** It exists to answer one question with a running artifact
 instead of on paper. The decision is the deliverable; this code is not. When ticket 06 closes, the
