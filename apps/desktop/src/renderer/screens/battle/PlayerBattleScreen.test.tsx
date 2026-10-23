@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
 import type { BluewaveDesktopBridge } from "../../../preload/index.js";
@@ -106,15 +106,14 @@ function bridgeWith(
   };
 }
 
-function mount(bridge: BluewaveDesktopBridge) {
+function mount(bridge: BluewaveDesktopBridge, onSubmitResult: () => void = () => {}) {
   render(
     <BridgeProvider bridge={bridge}>
       <PreferencesProvider>
         <PlayerBattleScreen
-          bridge={bridge}
           request={REQUEST}
           sessionId="s"
-          onSubmitResult={() => {}}
+          onSubmitResult={onSubmitResult}
           onAbandon={() => {}}
         />
       </PreferencesProvider>
@@ -174,5 +173,82 @@ describe("PlayerBattleScreen", () => {
     const stance = (await screen.findByLabelText("Stance for d1")) as HTMLSelectElement;
     expect(stance.value).toBe("HOLD");
     expect(screen.getByTestId("battle-resumed")).toBeTruthy();
+  });
+
+  it("shows the load refusal and no resume note", async () => {
+    const bridge = bridgeWith({}, { resumed: false, lastOrders: [] });
+    bridge.campaign.execute.mockReturnValue(
+      Promise.resolve({ outcome: "error", reason: "NO_PENDING_TURN", diagnostics: [] }),
+    );
+    mount(bridge);
+    expect((await screen.findByTestId("battle-error")).textContent).toContain("NO_PENDING_TURN");
+    expect(screen.queryByTestId("battle-resumed")).toBeNull();
+  });
+
+  it("does not claim a resume for a fresh battle", async () => {
+    mount(bridgeWith({}, { resumed: false, lastOrders: [] }));
+    await screen.findByTestId("battle-status");
+    expect(screen.queryByTestId("battle-resumed")).toBeNull();
+  });
+
+  it("sends the standing orders when advancing a minute and shows the new view", async () => {
+    const bridge = bridgeWith(
+      {},
+      { resumed: true, lastOrders: [{ divisionId: "d1", stance: "HOLD", speedPercent: 40 }] },
+    );
+    mount(bridge);
+    const advance = await screen.findByTestId("battle-advance");
+    bridge.campaign.execute.mockReturnValue(
+      Promise.resolve({
+        outcome: "success",
+        value: { view: { ...VIEW, minute: 4 }, sessionHash: "h2", result: null },
+        diagnostics: [],
+      } as never),
+    );
+    fireEvent.click(advance);
+    await waitFor(() => expect(screen.getByText(/minute 4 \/ 120/)).toBeTruthy());
+    expect(bridge.campaign.execute).toHaveBeenLastCalledWith("advancePlayerBattle", {
+      sessionId: "s",
+      battleId: "b1",
+      mode: "minute",
+      divisions: [{ divisionId: "d1", stance: "HOLD", speedPercent: 40 }],
+    });
+  });
+
+  it("shows an advance refusal and keeps the battle on screen", async () => {
+    const bridge = bridgeWith({}, { resumed: false, lastOrders: [] });
+    mount(bridge);
+    const advance = await screen.findByTestId("battle-advance");
+    bridge.campaign.execute.mockReturnValue(
+      Promise.resolve({ outcome: "error", reason: "PLAYER_BATTLE_NOT_STARTED", diagnostics: [] }),
+    );
+    fireEvent.click(advance);
+    expect((await screen.findByTestId("battle-error")).textContent).toContain(
+      "PLAYER_BATTLE_NOT_STARTED",
+    );
+    expect(screen.getByTestId("battle-status")).toBeTruthy();
+  });
+
+  it("submits the result of an ended battle", async () => {
+    const ended: PlayerBattleView = { ...VIEW, ended: true, endReason: "ANNIHILATION" };
+    const bridge = bridgeWith({}, { resumed: false, lastOrders: [] });
+    bridge.campaign.execute.mockReturnValue(startReply(ended, false, []));
+    const onSubmitResult = vi.fn();
+    mount(bridge, onSubmitResult);
+    const submit = await screen.findByTestId("battle-submit");
+    await waitFor(() => expect((submit as HTMLButtonElement).disabled).toBe(false));
+    const result = {
+      battleId: "b1",
+      winnerId: "uk",
+      loserId: "france",
+      attackerLosses: [],
+      defenderLosses: [],
+      damageReport: {},
+    };
+    bridge.campaign.execute.mockReturnValue(
+      Promise.resolve({ outcome: "success", value: { result }, diagnostics: [] } as never),
+    );
+    fireEvent.click(submit);
+    await waitFor(() => expect(onSubmitResult).toHaveBeenCalledWith(result));
   });
 });

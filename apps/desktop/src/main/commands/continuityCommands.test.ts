@@ -56,8 +56,8 @@ import {
 } from "./continuityCommands.js";
 import { inspectCampaignProgram } from "./inspectCampaign.js";
 import { submitDesignCommandProgram } from "./designCommands.js";
-import { clearPendingWorkspacesForTest, PENDING_COMMANDS_FILENAME } from "../pendingCommands.js";
 import { readReferenceDesigns } from "../referenceDesigns.js";
+import { PENDING_COMMANDS_FILENAME } from "../runtime/commandQueue.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
@@ -74,26 +74,33 @@ const userDataRoot = mkdtempSync(resolve(tmpdir(), "bw-desktop-userdata-"));
 let idCounter = 0;
 const nextTestId = () => `test-session-${String(idCounter++)}`;
 
-const runtime = ManagedRuntime.make(
-  Layer.mergeAll(
-    desktopMainLayer(),
-    Layer.succeed(NativeDialog, {
-      chooseSaveDirectory: () => Effect.succeed(chooseSaveDirectoryAnswer),
-      choosePackageDirectory: () => Effect.succeed(choosePackageDirectoryAnswer),
-      chooseCopyDirectory: () => Effect.succeed(null),
-    }),
-    Layer.succeed(IdGenerator, { next: () => Effect.sync(nextTestId) }),
-    Layer.succeed(AppPaths, {
-      supportDir: () => Effect.succeed(resolve(userDataRoot, "support")),
-      userDataDir: () => Effect.succeed(userDataRoot),
-      homeDir: userDataRoot,
-      appVersion: () => Effect.succeed("test"),
-      platform: "darwin",
-      arch: "arm64",
-      processId: 1,
-    }),
-  ),
-);
+const makeRuntime = () =>
+  ManagedRuntime.make(
+    Layer.mergeAll(
+      desktopMainLayer(),
+      Layer.succeed(NativeDialog, {
+        chooseSaveDirectory: () => Effect.succeed(chooseSaveDirectoryAnswer),
+        choosePackageDirectory: () => Effect.succeed(choosePackageDirectoryAnswer),
+        chooseCopyDirectory: () => Effect.succeed(null),
+      }),
+      Layer.succeed(IdGenerator, { next: () => Effect.sync(nextTestId) }),
+      Layer.succeed(AppPaths, {
+        supportDir: () => Effect.succeed(resolve(userDataRoot, "support")),
+        userDataDir: () => Effect.succeed(userDataRoot),
+        homeDir: userDataRoot,
+        appVersion: () => Effect.succeed("test"),
+        platform: "darwin",
+        arch: "arm64",
+        processId: 1,
+      }),
+    ),
+  );
+let runtime = makeRuntime();
+
+function restartRuntime(): void {
+  void runtime.dispose();
+  runtime = makeRuntime();
+}
 
 async function runProgram<A>(
   program: AnyCommandHandler,
@@ -199,7 +206,7 @@ describe("campaign continuance commands (save, load, verify, replay, recover)", 
   function restartApp(): void {
     clearCampaignSessionsForTest();
     clearConstructionWorkspacesForTest();
-    clearPendingWorkspacesForTest();
+    restartRuntime();
   }
 
   function torpedoCruiserDraft(): Record<string, unknown> {

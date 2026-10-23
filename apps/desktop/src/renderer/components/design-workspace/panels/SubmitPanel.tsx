@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { envelopeOf, stampCommand } from "../../../lib/command-envelope.js";
 import { useBridge } from "../../../lib/bridge-context.js";
 import type { DesignDraft } from "@bluewave/ship-design";
 import { Alert } from "../../ui/alert.js";
@@ -9,8 +10,6 @@ import type { PresentationFormat } from "../../../lib/presentation-format/index.
 import { Panel } from "./Panel.js";
 import { plural } from "../plural.js";
 import type { DesignStudyPreview } from "../../../../shared/design-contract.js";
-
-let submitCounter = 0;
 
 export function queuedLines(
   name: string,
@@ -91,12 +90,9 @@ export function SubmitPanel({
   const submit = async () => {
     if (revision === null) return;
     setBusy(true);
-    submitCounter++;
     try {
       const r = await bridge.campaign.execute("submitDesignCommand", {
-        sessionId,
-        expectedRevision: revision,
-        transportRequestId: `design-${Date.now().toString(36)}-${submitCounter}`,
+        ...envelopeOf(sessionId, stampCommand("design", revision)),
         className: className.trim(),
         draft: draft as unknown as Record<string, unknown>,
       });

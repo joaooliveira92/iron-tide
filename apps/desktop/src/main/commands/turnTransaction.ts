@@ -16,7 +16,7 @@ import { Effect } from "effect";
 import { monthInputOf } from "../monthInput.js";
 import { buildPendingTurn, type PendingTurnRecord } from "../pendingTurn.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
-import { CommandQueueStore } from "../runtime/commandQueueStore.js";
+import { CommandQueue } from "../runtime/commandQueue.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { CommandFailed, SessionNotFound } from "../runtime/commandError.js";
 import { ProjectStore } from "../runtime/projectStore.js";
@@ -78,7 +78,7 @@ export const runTurnTransaction = (
   | ProjectStore
   | ReportsStore
   | TurnSummariesStore
-  | CommandQueueStore
+  | CommandQueue
   | ContentArtifact
 > =>
   Effect.gen(function* () {
@@ -86,7 +86,7 @@ export const runTurnTransaction = (
     const projects = yield* ProjectStore;
     const reports = yield* ReportsStore;
     const summaries = yield* TurnSummariesStore;
-    const queue = yield* CommandQueueStore;
+    const queue = yield* CommandQueue;
     const contentArtifact = yield* ContentArtifact;
 
     const record = yield* sessions.get(input.sessionId);

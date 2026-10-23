@@ -17,7 +17,6 @@ import type {
 } from "../../shared/budget-contract.js";
 import { clearCampaignSessionsForTest, registerCampaignSession } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
-import { clearPendingWorkspacesForTest } from "../pendingCommands.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
@@ -28,7 +27,13 @@ import { inspectBudgetScreenProgram, submitBudgetAllocationProgram } from "./bud
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const GENERATED_ARTIFACT = resolve(__dirname, "../../../../..", "content", "generated", "1880");
 
-const runtime = ManagedRuntime.make(desktopMainLayer());
+const makeRuntime = () => ManagedRuntime.make(desktopMainLayer());
+let runtime = makeRuntime();
+
+function restartRuntime(): void {
+  void runtime.dispose();
+  runtime = makeRuntime();
+}
 
 async function runProgram<A>(
   program: AnyCommandHandler,
@@ -58,7 +63,7 @@ describe("budget allocation", () => {
   afterEach(() => {
     rmSync(saveRoot, { recursive: true, force: true });
     clearCampaignSessionsForTest();
-    clearPendingWorkspacesForTest();
+    restartRuntime();
   });
 
   function registerSession(sessionId: string): CampaignState {

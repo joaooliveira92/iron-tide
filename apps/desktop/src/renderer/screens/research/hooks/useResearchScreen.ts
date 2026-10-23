@@ -1,4 +1,5 @@
 import { useCallback, useRef } from "react";
+import { envelopeOf } from "../../../lib/command-envelope.js";
 import { useBridge } from "../../../lib/bridge-context.js";
 import { loadThroughBridge } from "../../../lib/bridge-read.js";
 
@@ -79,11 +80,9 @@ export function useResearchScreen(sessionId: string): UseResearchScreenReturn {
     if (current.kind !== "loaded" && current.kind !== "submitted") return;
     if (!bridge || !draftIsSubmittable(current.draft)) return;
     const fieldPriorities = draftToPriorities(current.draft);
-    void execute("submit", ({ expectedRevision, transportRequestId }) =>
+    void execute("submit", (stamp) =>
       bridge.campaign.execute("setResearchPriorityCommand", {
-        sessionId,
-        expectedRevision,
-        transportRequestId,
+        ...envelopeOf(sessionId, stamp),
         fieldPriorities,
       }),
     );

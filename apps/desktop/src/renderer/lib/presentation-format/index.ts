@@ -15,6 +15,7 @@ export {
   KW_PER_HORSEPOWER,
   UM_PER_KILOMETRE,
   UM_PER_METRE,
+  UM_PER_NAUTICAL_MILE,
   UM_PER_YARD,
   type CanonicalQuantity,
   type DisplayUnitDefinition,

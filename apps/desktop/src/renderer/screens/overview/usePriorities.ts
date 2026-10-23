@@ -1,7 +1,6 @@
-import type { InspectPrioritiesResult, StrategicPriority } from "@bluewave/campaign-engine";
+import type { StrategicPriority } from "@bluewave/campaign-engine";
 
-import type { BridgeResult } from "../../../shared/bridge-contract.js";
-import { useBridgeQuery } from "../../lib/use-bridge-query.js";
+import { useRead } from "../../lib/use-read.js";
 import { useCampaignRevision } from "../../shell/CampaignShellContext.js";
 
 export type PrioritiesState =
@@ -10,15 +9,9 @@ export type PrioritiesState =
   | { readonly status: "unavailable" };
 
 export function usePriorities(sessionId: string): PrioritiesState {
-  const revision = useCampaignRevision();
-  const state = useBridgeQuery(
-    sessionId,
-    revision,
-    (bridge, id): Promise<BridgeResult<InspectPrioritiesResult>> =>
-      bridge.campaign.execute("inspectPriorities", id),
-  );
+  const read = useRead("inspectPriorities", sessionId, useCampaignRevision());
 
-  if (state.status === "ready") return { status: "ready", priorities: state.value.priorities };
-  if (state.status === "error") return { status: "unavailable" };
+  if (read.status === "ready") return { status: "ready", priorities: read.value.priorities };
+  if (read.status === "unavailable") return { status: "unavailable" };
   return { status: "loading" };
 }

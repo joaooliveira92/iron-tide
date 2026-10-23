@@ -11,7 +11,12 @@ import type {
 import type { PlayerBattleResultDto } from "../../shared/player-battle-contract.js";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import { resolveMessage } from "../content/uiCatalogue.js";
-import { createTransportRequestId } from "../lib/command-screen-workflow.js";
+import {
+  envelopeOf,
+  requireIds,
+  stampCommand,
+  type MissingRequiredId,
+} from "../lib/command-envelope.js";
 import { type CommittedMonth, overviewAfterCommit } from "./campaign-overview.js";
 import type {
   CampaignOverview,
@@ -31,6 +36,7 @@ export type InterruptionAnswer =
 export type InterruptionAnswerFailure =
   | { readonly _tag: "NoCampaign" }
   | { readonly _tag: "NoOutstandingRequest" }
+  | MissingRequiredId
   | {
       readonly _tag: "AnswerDoesNotMatchRequest";
       readonly requestKind: InterruptionRequestDto["kind"];
@@ -81,45 +87,46 @@ export function planInterruptionAnswer(
   request: InterruptionRequestDto,
   answer: InterruptionAnswer,
 ): InterruptionCommand | InterruptionAnswerFailure {
-  const envelope = {
-    sessionId: campaign.sessionId,
-    expectedRevision: campaign.revision,
-  };
+  const envelope = (command: InterruptionCommand["command"]) =>
+    envelopeOf(campaign.sessionId, stampCommand(command, campaign.revision));
   if (answer.kind === "decision") {
     if (request.kind !== "decision") return mismatch(request, answer);
+    const required = requireIds({ decisionId: request.decisionId });
+    if (required._tag !== "Ready") return required;
     return {
       command: "answerDecision",
       payload: {
-        ...envelope,
-        transportRequestId: createTransportRequestId("answerDecision"),
+        ...envelope("answerDecision"),
         interruptionId: request.interruptionId,
-        decisionId: request.decisionId ?? "",
+        decisionId: required.ids.decisionId,
         optionId: answer.optionId,
       },
     };
   }
   if (answer.kind === "offer") {
     if (request.kind !== "offer") return mismatch(request, answer);
+    const required = requireIds({ battleId: request.battleId });
+    if (required._tag !== "Ready") return required;
     return {
       command: "submitOfferResponse",
       payload: {
-        ...envelope,
-        transportRequestId: createTransportRequestId("submitOfferResponse"),
+        ...envelope("submitOfferResponse"),
         interruptionId: request.interruptionId,
-        battleId: request.battleId ?? "",
+        battleId: required.ids.battleId,
         response: answer.choice,
       },
     };
   }
   if (request.kind !== "battle") return mismatch(request, answer);
   const outcome = answer.kind === "battle-outcome" ? answer.outcome : null;
+  const required = requireIds({ battleId: outcome?.battleId ?? request.battleId });
+  if (required._tag !== "Ready") return required;
   return {
     command: "submitBattleResult",
     payload: {
-      ...envelope,
-      transportRequestId: createTransportRequestId("submitBattleResult"),
+      ...envelope("submitBattleResult"),
       interruptionId: request.interruptionId,
-      battleId: outcome?.battleId ?? request.battleId ?? "",
+      battleId: required.ids.battleId,
       winnerId: outcome?.winnerId ?? null,
       loserId: outcome?.loserId ?? null,
       attackerLosses: outcome?.attackerLosses ?? [],

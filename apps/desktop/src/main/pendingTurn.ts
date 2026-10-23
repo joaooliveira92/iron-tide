@@ -1,7 +1,6 @@
-import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { Result, Schema } from "effect";
+import { Schema } from "effect";
 import { RecordedInputSchema, TurnPhaseSchema, type RecordedInput } from "@bluewave/messages";
+import { defineSidecar } from "./runtime/sidecar.js";
 
 export const PENDING_TURN_FILENAME = "pending-turn.json";
 
@@ -39,24 +38,17 @@ export const PendingTurnSchema = Schema.Struct({
 });
 export type PendingTurnRecord = typeof PendingTurnSchema.Type;
 
-function createAbortError(): Error {
-  const error = new Error("Pending-turn write was cancelled");
-  error.name = "AbortError";
-  return error;
-}
+export const pendingTurnSidecar = defineSidecar<PendingTurnRecord, PendingTurnRecord | null>({
+  filename: PENDING_TURN_FILENAME,
+  schema: PendingTurnSchema,
+  decodeOptions: { onExcessProperty: "error" },
+  space: 2,
+  empty: () => null,
+  resolve: (stored) => stored,
+});
 
 export function loadPendingTurn(saveDir: string): PendingTurnRecord | null {
-  const path = join(saveDir, PENDING_TURN_FILENAME);
-  if (!existsSync(path)) return null;
-  try {
-    const parsed = Schema.decodeUnknownResult(PendingTurnSchema, {
-      onExcessProperty: "error",
-    })(JSON.parse(readFileSync(path, "utf8")));
-    if (Result.isFailure(parsed)) return null;
-    return parsed.success;
-  } catch {
-    return null;
-  }
+  return pendingTurnSidecar.read(saveDir, undefined);
 }
 
 export function savePendingTurn(
@@ -64,20 +56,11 @@ export function savePendingTurn(
   record: PendingTurnRecord,
   signal?: AbortSignal,
 ): void {
-  if (signal?.aborted) throw createAbortError();
-  const path = join(saveDir, PENDING_TURN_FILENAME);
-  const tmpPath = `${path}.tmp`;
-  try {
-    writeFileSync(tmpPath, JSON.stringify(record, null, 2), "utf8");
-    renameSync(tmpPath, path);
-  } catch (err) {
-    rmSync(tmpPath, { force: true });
-    throw err;
-  }
+  pendingTurnSidecar.write(saveDir, record, signal);
 }
 
 export function clearPendingTurn(saveDir: string): void {
-  rmSync(join(saveDir, PENDING_TURN_FILENAME), { force: true });
+  pendingTurnSidecar.remove(saveDir);
 }
 
 export function isPendingTurnValid(

@@ -24,7 +24,6 @@ import {
   registerCampaignSession,
 } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
-import { clearPendingWorkspacesForTest } from "../pendingCommands.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
@@ -42,7 +41,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-const runtime = ManagedRuntime.make(desktopMainLayer());
+const makeRuntime = () => ManagedRuntime.make(desktopMainLayer());
+let runtime = makeRuntime();
+
+function restartRuntime(): void {
+  void runtime.dispose();
+  runtime = makeRuntime();
+}
 
 async function runProgram<A>(
   program: AnyCommandHandler,
@@ -79,7 +84,7 @@ describe("fleet commands (Effect programs)", () => {
   afterEach(() => {
     rmSync(saveRoot, { recursive: true, force: true });
     clearCampaignSessionsForTest();
-    clearPendingWorkspacesForTest();
+    restartRuntime();
   });
 
   function registerProductionSession(
@@ -256,6 +261,24 @@ describe("fleet commands (Effect programs)", () => {
       expect(cleared).toMatchObject({ outcome: "rejected", reason: "STATION_ASSIGNMENT_REJECTED" });
       if (cleared.outcome !== "rejected") return;
       expect(cleared.diagnostics.join(" ")).toContain("gbr_dreadnought=NOT_ASSIGNED");
+    });
+
+    it("replays the same transport request and rejects a conflicting selection under it", async () => {
+      registerProductionSession("session-station3", resolve(saveRoot, "save-station3"), "uk");
+      const request = {
+        ...base,
+        sessionId: "session-station3",
+        transportRequestId: "tx-same",
+        intent: "assign" as const,
+        shipIds: ["gbr_dreadnought"],
+      };
+      const first = await submitStationAssignment(request);
+      expect(first).toMatchObject({ outcome: "success" });
+      const replay = await submitStationAssignment(request);
+      expect(replay).toEqual(first);
+
+      const conflict = await submitStationAssignment({ ...request, intent: "clear" });
+      expect(conflict).toMatchObject({ outcome: "rejected", reason: "IDEMPOTENCY_CONFLICT" });
     });
 
     it("rejects an unknown ship with every reason named and does not queue", async () => {

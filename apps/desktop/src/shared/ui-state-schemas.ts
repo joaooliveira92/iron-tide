@@ -36,7 +36,9 @@ export const UiStateSchema = Schema.Struct({
 
 export const WriteUiStatePayloadSchema = Schema.Struct({
   sessionId: nonEmptyString,
-  dismissedFingerprints: Schema.Array(boundedString(1, 256)).check(Schema.isMaxLength(64)),
+  dismissedFingerprints: Schema.optional(
+    Schema.Array(boundedString(1, 256)).check(Schema.isMaxLength(64)),
+  ),
   firstMonthInspection: Schema.optional(FirstMonthInspectionSchema),
   inspector: Schema.optional(InspectorLayoutSchema),
   turnMessages: Schema.optional(TurnMessagesSchema),

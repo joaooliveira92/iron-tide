@@ -5,7 +5,7 @@ import {
   campaignPreferencesStoreLayer,
 } from "../preferences/campaignPreferencesStore.js";
 import { CampaignSessionStore, campaignSessionStoreLayer } from "./campaignSessionStore.js";
-import { CommandQueueStore, commandQueueStoreLayer } from "./commandQueueStore.js";
+import { CommandQueue, commandQueueLayer } from "./commandQueue.js";
 import { ContentArtifact, contentArtifactLayer } from "./contentArtifact.js";
 import { CrashReporter, crashReporterLayer } from "./crashReporter.js";
 import { DecisionSource, decisionSourceLayer } from "./decisionSource.js";
@@ -19,6 +19,7 @@ import {
   NativeDialog,
   nativeDialogLayer,
 } from "./platform.js";
+import { PlayerBattleRegistry, playerBattleRegistryLayer } from "./playerBattleRegistry.js";
 import { ProjectStore, projectStoreLayer } from "./projectStore.js";
 import { ReplayService, replayServiceLayer } from "./replayService.js";
 import {
@@ -28,18 +29,27 @@ import {
   UiStateStore,
   sidecarStoresLayer,
 } from "./sidecarStores.js";
+import {
+  PendingTurnStore,
+  PlayerBattleStore,
+  pendingTurnStoreLayer,
+  playerBattleStoreLayer,
+} from "./turnSidecarStores.js";
 
 export type CommandEnv =
   | ContentArtifact
   | ProjectStore
   | CampaignSessionStore
-  | CommandQueueStore
+  | CommandQueue
   | ReplayService
   | CrashReporter
   | UiStateStore
   | ReportsStore
   | TurnSummariesStore
   | DraftStore
+  | PendingTurnStore
+  | PlayerBattleStore
+  | PlayerBattleRegistry
   | DecisionSource
   | PreferencesStore
   | CampaignPreferencesStore
@@ -53,9 +63,11 @@ export function desktopMainLayer(): Layer.Layer<CommandEnv> {
   return Layer.mergeAll(
     contentArtifactLayer(),
     projectStoreLayer(),
-    campaignSessionStoreLayer(),
-    commandQueueStoreLayer(),
+    commandQueueLayer().pipe(Layer.provideMerge(campaignSessionStoreLayer())),
     sidecarStoresLayer(),
+    pendingTurnStoreLayer(),
+    playerBattleStoreLayer(),
+    playerBattleRegistryLayer(),
     decisionSourceLayer(),
     nativeDialogLayer(),
     idGeneratorLayer(),

@@ -14,11 +14,10 @@ import type {
   ResearchScreenProjection,
 } from "../../shared/research-contract.js";
 import type { CampaignSessionRecord } from "../campaignSessions.js";
-import type { PendingCommandEntry } from "../pendingCommands.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed, CommandRejected } from "../runtime/commandError.js";
 import type { CommandHandler } from "../runtime/commandProgram.js";
-import { CommandQueueStore } from "../runtime/commandQueueStore.js";
+import { CommandQueue, type PendingCommandEntry } from "../runtime/commandQueue.js";
 import { ProjectStore } from "../runtime/projectStore.js";
 import { currentRevision, deterministicTimestamp, verifyEnvelope } from "./commandEnvelope.js";
 
@@ -52,7 +51,7 @@ export const setResearchPriorityCommandProgram: CommandHandler<"setResearchPrior
 ) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
-    const queue = yield* CommandQueueStore;
+    const queue = yield* CommandQueue;
     const projects = yield* ProjectStore;
     const record = yield* sessions.get(payload.sessionId);
 
@@ -80,24 +79,12 @@ export const setResearchPriorityCommandProgram: CommandHandler<"setResearchPrior
     const exactTechId = payload.exactTechId;
 
     const envelope = buildResearchEnvelope(record, frozenPriorities, exactTechId);
-    const prior = yield* queue.lookup(payload.sessionId, payload.transportRequestId);
-    if (prior) {
-      if (prior.payloadFingerprint !== queue.fingerprintOfBody(envelope.body)) {
-        return yield* new CommandRejected({
-          reason: "IDEMPOTENCY_CONFLICT",
-          diagnostics: [
-            `transportRequestId ${payload.transportRequestId} was already used by command ${prior.envelope.commandId}`,
-          ],
-        });
-      }
-      return replayOutcome(prior);
-    }
-
-    yield* queue.queue(payload.sessionId, {
+    const queued = yield* queue.queueOrReplay(payload.sessionId, {
       transportRequestId: payload.transportRequestId,
       envelope,
-      payloadFingerprint: queue.fingerprintOfBody(envelope.body),
     });
+    if (queued.kind === "replayed") return replayOutcome(queued.prior);
+    if (queued.kind !== "queued") return yield* new CommandRejected(queued.refusal);
 
     yield* projects
       .save(record.state, record.saveDir)

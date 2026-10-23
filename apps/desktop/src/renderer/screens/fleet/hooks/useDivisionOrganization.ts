@@ -3,6 +3,7 @@ import type {
   DivisionCommandOutcome,
   DivisionScreenProjection,
 } from "../../../../shared/division-contract.js";
+import { envelopeOf } from "../../../lib/command-envelope.js";
 import { useBridge } from "../../../lib/bridge-context.js";
 import { loadThroughBridge } from "../../../lib/bridge-read.js";
 import {
@@ -47,11 +48,9 @@ export function useDivisionOrganization(sessionId: string): UseDivisionOrganizat
 
   function send(command: DivisionCommandBody): Promise<CommandOutcome> {
     if (!bridge) return Promise.resolve("transport-failure");
-    return workflow.execute("submit", ({ expectedRevision, transportRequestId }) =>
+    return workflow.execute("submit", (stamp) =>
       bridge.campaign.execute("submitDivisionCommand", {
-        sessionId,
-        expectedRevision,
-        transportRequestId,
+        ...envelopeOf(sessionId, stamp),
         command,
       }),
     );

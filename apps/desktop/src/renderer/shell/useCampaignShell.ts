@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "r
 
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import { resolveMessage } from "../content/uiCatalogue.js";
-import { createTransportRequestId } from "../lib/command-screen-workflow.js";
+import { envelopeOf, stampCommand } from "../lib/command-envelope.js";
 import { emitWideEvent } from "../lib/telemetry.js";
 import type { Screen } from "./campaign-screen-registry.js";
 import { overviewFromProjection } from "./campaign-overview.js";
@@ -221,11 +221,10 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     const sessionId = state.campaign.sessionId;
     const started = performance.now();
     try {
-      const result = await bridge.campaign.execute("resolveTurn", {
-        sessionId,
-        expectedRevision: state.campaign.revision,
-        transportRequestId: createTransportRequestId("resolveTurn"),
-      });
+      const result = await bridge.campaign.execute(
+        "resolveTurn",
+        envelopeOf(sessionId, stampCommand("resolveTurn", state.campaign.revision)),
+      );
       const duration = Math.round(performance.now() - started);
       emitWideEvent(
         "campaign_month_advance",

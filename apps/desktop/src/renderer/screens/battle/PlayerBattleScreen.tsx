@@ -1,102 +1,35 @@
-import { useEffect, useMemo, useState } from "react";
-import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
-import type { BluewaveDesktopBridge } from "../../../preload/index.js";
+import { useMemo } from "react";
 import type { InterruptionRequestDto } from "../../../shared/turn-message-contract.js";
-import type {
-  PlayerBattleDivisionOrderDto,
-  PlayerBattleResultDto,
-} from "../../../shared/player-battle-contract.js";
+import type { PlayerBattleResultDto } from "../../../shared/player-battle-contract.js";
+import {
+  MAX_SPEED_PERCENT,
+  MIN_SPEED_PERCENT,
+  PLAYER_BATTLE_STANCES,
+  SPEED_PERCENT_STEP,
+  playerSideOf,
+} from "../../../shared/player-battle-orders.js";
 import { usePreferences } from "../../lib/preferences-context.js";
-import { formatMeasurement, UM_PER_METRE } from "../../lib/presentation-format/index.js";
-
-const METRES_PER_NAUTICAL_MILE = 1852;
-
-interface DivisionOrderState {
-  readonly stance: PlayerBattleDivisionOrderDto["stance"];
-  readonly speedPercent: number;
-}
-
-function playerSideOf(view: PlayerBattleView): "ATTACKER" | "DEFENDER" | null {
-  if (view.playerNationId === view.attackerId) return "ATTACKER";
-  if (view.playerNationId === view.defenderId) return "DEFENDER";
-  return null;
-}
-
-function defaultOrders(view: PlayerBattleView): Record<string, DivisionOrderState> {
-  const side = playerSideOf(view);
-  const out: Record<string, DivisionOrderState> = {};
-  for (const division of view.divisions) {
-    if (division.sideId === side)
-      out[division.divisionId] = { stance: "ENGAGE", speedPercent: 100 };
-  }
-  return out;
-}
-
-function ordersOf(
-  orders: Record<string, DivisionOrderState>,
-): readonly PlayerBattleDivisionOrderDto[] {
-  return Object.entries(orders).map(([divisionId, order]) => ({
-    divisionId,
-    ...order,
-  }));
-}
+import { formatMeasurement, UM_PER_NAUTICAL_MILE } from "../../lib/presentation-format/index.js";
+import { usePlayerBattle } from "./usePlayerBattle.js";
 
 export function PlayerBattleScreen({
-  bridge,
   request,
   sessionId,
   onSubmitResult,
   onAbandon,
 }: {
-  readonly bridge: BluewaveDesktopBridge | undefined;
   readonly request: InterruptionRequestDto;
   readonly sessionId: string;
   readonly onSubmitResult: (result: PlayerBattleResultDto) => void;
   readonly onAbandon: () => void;
 }) {
   const battleId = request.battleId ?? "";
-  const [view, setView] = useState<PlayerBattleView | null>(null);
-  const [orders, setOrders] = useState<Record<string, DivisionOrderState>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [resumed, setResumed] = useState(false);
   const { preferences } = usePreferences();
-
-  useEffect(() => {
-    let cancelled = false;
-    if (bridge === undefined) {
-      setError("Desktop bridge unavailable");
-      setLoading(false);
-      return;
-    }
-    void (async () => {
-      const result = await bridge.campaign.execute("startPlayerBattle", {
-        sessionId,
-        battleId,
-      });
-      if (cancelled) return;
-      if (result.outcome !== "success") {
-        setError(result.reason);
-        setLoading(false);
-        return;
-      }
-      setView(result.value.view);
-      const fresh = defaultOrders(result.value.view);
-      for (const order of result.value.lastOrders) {
-        fresh[order.divisionId] = {
-          stance: order.stance,
-          speedPercent: order.speedPercent,
-        };
-      }
-      setOrders(fresh);
-      setResumed(result.value.resumed);
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [battleId, bridge, sessionId]);
+  const { view, resume, error, busy, orderFor, setOrder, advance, submit } = usePlayerBattle(
+    sessionId,
+    battleId,
+    onSubmitResult,
+  );
 
   const playerSide = view === null ? null : playerSideOf(view);
   const divisions = useMemo(
@@ -108,54 +41,6 @@ export function PlayerBattleScreen({
     () => new Map((view?.ships ?? []).map((ship) => [ship.shipId, ship])),
     [view],
   );
-
-  const advance = async (mode: "minute" | "to_end"): Promise<void> => {
-    if (bridge === undefined || view === null || view.ended) return;
-    setLoading(true);
-    setError(null);
-    const result = await bridge.campaign.execute("advancePlayerBattle", {
-      sessionId,
-      battleId,
-      mode,
-      divisions: ordersOf(orders),
-    });
-    setLoading(false);
-    if (result.outcome !== "success") {
-      setError(result.reason);
-      return;
-    }
-    setView(result.value.view);
-    setOrders((current) => ({
-      ...defaultOrders(result.value.view),
-      ...current,
-    }));
-  };
-
-  const submit = async (): Promise<void> => {
-    if (bridge === undefined || view === null || !view.ended) return;
-    setSubmitting(true);
-    setError(null);
-    const result = await bridge.campaign.execute("finishPlayerBattle", {
-      sessionId,
-      battleId,
-    });
-    setSubmitting(false);
-    if (result.outcome !== "success") {
-      setError(result.reason);
-      return;
-    }
-    onSubmitResult(result.value.result);
-  };
-
-  const setOrder = (divisionId: string, patch: Partial<DivisionOrderState>): void => {
-    setOrders((current) => ({
-      ...current,
-      [divisionId]: {
-        ...(current[divisionId] ?? { stance: "ENGAGE", speedPercent: 100 }),
-        ...patch,
-      },
-    }));
-  };
 
   return (
     <div
@@ -176,19 +61,16 @@ export function PlayerBattleScreen({
               {view !== null && (
                 <span data-testid="battle-weather">
                   {" · visibility "}
-                  {formatMeasurement(
-                    view.weather.visibilityNm * METRES_PER_NAUTICAL_MILE * UM_PER_METRE,
-                    {
-                      locale: preferences.formattingLocale,
-                      category: "range",
-                      preset: preferences.measurementPreset,
-                      selections: preferences.measurementSelections,
-                    },
-                  )}
+                  {formatMeasurement(view.weather.visibilityNm * UM_PER_NAUTICAL_MILE, {
+                    locale: preferences.formattingLocale,
+                    category: "range",
+                    preset: preferences.measurementPreset,
+                    selections: preferences.measurementSelections,
+                  })}
                 </span>
               )}
             </p>
-            {resumed && (
+            {resume === "resumed" && (
               <p data-testid="battle-resumed" className="mt-1 text-xs text-muted-foreground">
                 Resumed from the saved battle at minute {view?.minute ?? 0}.
               </p>
@@ -238,10 +120,7 @@ export function PlayerBattleScreen({
                     <p className="text-xs">No player divisions committed.</p>
                   )}
                   {divisions.map((division) => {
-                    const order = orders[division.divisionId] ?? {
-                      stance: "ENGAGE" as const,
-                      speedPercent: 100,
-                    };
+                    const order = orderFor(division.divisionId);
                     return (
                       <div
                         key={division.divisionId}
@@ -260,23 +139,26 @@ export function PlayerBattleScreen({
                             className="rounded border border-border bg-background px-1 py-0.5 text-xs"
                             value={order.stance}
                             disabled={view.ended}
-                            onChange={(event) =>
-                              setOrder(division.divisionId, {
-                                stance: event.target.value as DivisionOrderState["stance"],
-                              })
-                            }
+                            onChange={(event) => {
+                              const stance = PLAYER_BATTLE_STANCES.find(
+                                (candidate) => candidate === event.target.value,
+                              );
+                              if (stance !== undefined) setOrder(division.divisionId, { stance });
+                            }}
                           >
-                            <option value="ENGAGE">Engage</option>
-                            <option value="HOLD">Hold</option>
-                            <option value="WITHDRAW">Withdraw</option>
+                            {PLAYER_BATTLE_STANCES.map((stance) => (
+                              <option key={stance} value={stance}>
+                                {stance.charAt(0) + stance.slice(1).toLowerCase()}
+                              </option>
+                            ))}
                           </select>
                           <label className="flex items-center gap-1 text-xs">
                             Speed {String(order.speedPercent)}%
                             <input
                               type="range"
-                              min={0}
-                              max={100}
-                              step={5}
+                              min={MIN_SPEED_PERCENT}
+                              max={MAX_SPEED_PERCENT}
+                              step={SPEED_PERCENT_STEP}
                               value={order.speedPercent}
                               disabled={view.ended}
                               onChange={(event) =>
@@ -384,8 +266,8 @@ export function PlayerBattleScreen({
                 type="button"
                 data-testid="battle-advance"
                 className="rounded border border-border px-2 py-1 text-xs hover:bg-accent disabled:opacity-50"
-                disabled={loading || view.ended}
-                onClick={() => void advance("minute")}
+                disabled={busy || view.ended}
+                onClick={() => advance("minute")}
               >
                 Advance minute
               </button>
@@ -393,8 +275,8 @@ export function PlayerBattleScreen({
                 type="button"
                 data-testid="battle-auto"
                 className="rounded border border-border px-2 py-1 text-xs hover:bg-accent disabled:opacity-50"
-                disabled={loading || view.ended}
-                onClick={() => void advance("to_end")}
+                disabled={busy || view.ended}
+                onClick={() => advance("to_end")}
               >
                 Auto-fight
               </button>
@@ -402,8 +284,8 @@ export function PlayerBattleScreen({
                 type="button"
                 data-testid="battle-submit"
                 className="rounded border border-border px-2 py-1 text-xs hover:bg-accent disabled:opacity-50"
-                disabled={!view.ended || submitting}
-                onClick={() => void submit()}
+                disabled={!view.ended || busy}
+                onClick={() => submit()}
               >
                 Submit result
               </button>

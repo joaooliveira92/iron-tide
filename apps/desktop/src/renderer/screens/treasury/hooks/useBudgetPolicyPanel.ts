@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { envelopeOf } from "../../../lib/command-envelope.js";
 import type {
   BudgetCommandOutcome,
   BudgetScreenProjection,
@@ -59,11 +60,9 @@ export function useBudgetPolicyPanel(sessionId: string): BudgetPolicyPanelContro
 
   function apply(): void {
     if (!bridge) return;
-    void workflow.execute("submit", ({ expectedRevision, transportRequestId }) =>
+    void workflow.execute("submit", (stamp) =>
       bridge.campaign.execute("submitBudgetAllocation", {
-        sessionId,
-        expectedRevision,
-        transportRequestId,
+        ...envelopeOf(sessionId, stamp),
         appropriationRateBp: rate,
         researchBudget: research,
       }),

@@ -178,6 +178,7 @@ Package interfaces, seams and module depth across the engine.
 | 0271 | [ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md](ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md) | The combat package exposes three verbs and subsystem seams | accepted | — |
 | 0272 | [ADR-0272-month-pipeline-owns-order-and-observed-access.md](ADR-0272-month-pipeline-owns-order-and-observed-access.md) | The month pipeline owns phase order and observes real snapshot access | accepted | — |
 | 0273 | [ADR-0273-shared-command-contract-split-by-concern.md](ADR-0273-shared-command-contract-split-by-concern.md) | The shared command contract is split by concern | accepted | — |
+| 0274 | [ADR-0274-ui-state-writes-are-field-patches-merged-in-main.md](ADR-0274-ui-state-writes-are-field-patches-merged-in-main.md) | UI-state writes are field patches merged once, in main | accepted | — |
 
 ## Archive
 

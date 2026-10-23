@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { envelopeOf, stampCommand } from "../../../lib/command-envelope.js";
 import { useBridge } from "../../../lib/bridge-context.js";
 import {
   draftChangeKinds,
@@ -39,7 +40,6 @@ const TIER_BADGE: Record<RevisionDecision["tier"], "secondary" | "outline" | "de
   T2_REDESIGN: "destructive",
   T3_RECONSTRUCTION: "destructive",
 };
-let reviseCounter = 0;
 
 export function RevisionPanel({
   sessionId,
@@ -123,12 +123,9 @@ export function RevisionPanel({
   const apply = async () => {
     if (!bridge || sessionId === undefined || revision === null) return;
     setBusy(true);
-    reviseCounter++;
     try {
       const r = await bridge.campaign.execute("reviseProjectCommand", {
-        sessionId,
-        expectedRevision: revision,
-        transportRequestId: `revise-${Date.now().toString(36)}-${reviseCounter}`,
+        ...envelopeOf(sessionId, stampCommand("revise", revision)),
         projectId: project.projectId,
         draft: draft as unknown as Record<string, unknown>,
       });

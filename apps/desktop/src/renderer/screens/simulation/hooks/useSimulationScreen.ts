@@ -12,7 +12,9 @@ import type {
 
 import type { BluewaveDesktopBridge } from "../../../../preload/index.js";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { envelopeOf, stampCommand } from "../../../lib/command-envelope.js";
 import { auditInputFromDecisions } from "../../../lib/engine-audit.js";
+import { readQuery } from "../../../lib/read-queries.js";
 import { SCRIPTED_TACTICAL_ORDERS } from "../simulation-battle-orders.js";
 import {
   commandFailureMessage,
@@ -88,21 +90,16 @@ export function useSimulationScreen(
   const loadSnapshotData = useCallback(async () => {
     if (bridge === undefined) return;
     dispatch({ type: "load-started" });
-    try {
-      const result = await bridge.campaign.execute("inspectCampaign", sessionId);
-      if (result.outcome === "success") {
-        dispatch({
-          type: "load-succeeded",
-          revision: result.value.projection.revision,
-          playerNationId: result.value.projection.playerNationId,
-        });
-      }
-    } catch (error) {
+    const read = await readQuery(bridge.campaign, "inspectCampaign", sessionId, null);
+    if (read.status === "ready") {
       dispatch({
-        type: "load-failed",
-        message: error instanceof Error ? error.message : "Failed to inspect state",
+        type: "load-succeeded",
+        revision: read.value.projection.revision,
+        playerNationId: read.value.projection.playerNationId,
       });
+      return;
     }
+    dispatch({ type: "load-failed", message: read.reason });
   }, [bridge, sessionId]);
 
   useEffect(() => {
@@ -124,11 +121,10 @@ export function useSimulationScreen(
       telemetry,
       transportErrorFallback: "Error committing turn",
       run: () =>
-        bridge.campaign.execute("commitMonth", {
-          sessionId,
-          expectedRevision: revisionRef.current,
-          transportRequestId: `desktop-commit-${Date.now()}`,
-        }),
+        bridge.campaign.execute(
+          "commitMonth",
+          envelopeOf(sessionId, stampCommand("desktop-commit", revisionRef.current)),
+        ),
       audit: (value) => ({
         randomDecisions: value.randomDecisions ?? [],
         domainEvents: value.domainEvents ?? [],
