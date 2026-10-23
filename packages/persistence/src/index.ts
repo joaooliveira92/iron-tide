@@ -27,7 +27,7 @@ export {
   type SaveMigrationKind,
   type SaveMigrationStep,
 } from "./saveMigration.js";
-export { StorableCampaignStateSchema } from "./schemas.js";
+export { decodeStorableCampaignState, StorableCampaignStateSchema } from "./schemas.js";
 export { fromStorableSnapshot } from "./snapshotSerialization.js";
 export type { StorableCampaignSnapshot } from "./snapshotSerialization.js";
 export type { MonthInputLoad, SaveExtras, SaveMetadata, SaveResult } from "./store.js";

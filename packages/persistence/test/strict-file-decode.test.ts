@@ -45,6 +45,16 @@ describe("persistence files reject excess keys", () => {
     expect(store.getPreviousSaveId(dir)).toBeNull();
   });
 
+  it("reports an unmodeled key in campaign.json as structurally invalid", () => {
+    const id = saveOnce();
+    const campaignPath = join(dir, id, "campaign.json");
+    writeJson(campaignPath, { ...readJson(campaignPath), surprise: true });
+
+    const diagnostics = new DiagnosticCollector();
+    expect(store.loadById(dir, id, diagnostics)).toBeNull();
+    expect(diagnostics.errors.map((e) => e.message)).toContain("Save data is structurally invalid");
+  });
+
   it("treats a signature file with an unmodeled key as corrupt", () => {
     const id = saveOnce();
     const sigPath = join(dir, id, "campaign.sig.json");

@@ -152,7 +152,9 @@ describe("S-5 02 persisted possession schema", () => {
   });
 
   const decodes = (value: unknown): boolean =>
-    Result.isSuccess(Schema.decodeUnknownResult(StorablePossessionSchema)(value));
+    Result.isSuccess(
+      Schema.decodeUnknownResult(StorablePossessionSchema, { onExcessProperty: "error" })(value),
+    );
   const good = { id: "poss_a", nationId: "uk", areaId: "area-1" };
 
   it("accepts a well-formed possession", () => {
