@@ -86,8 +86,8 @@ Table of contents, verified against the extracted text.
 
 - **Sole 1880 start** (ADR-0201/DR-001): the manual's 1890 start is intentionally not
   used. The 1880 start is production content.
-- **Horizon through 1939** (ADR-0204/DR-004): the manual runs to 1970 with radar and
-  missiles (pp.121-127); those eras are out of scope for now.
+- **Horizon through 1970** (ADR-0282, superseding ADR-0204/DR-004): the manual runs to 1970 with radar and
+  missiles (pp.121-127); content for those eras is authored under spec #249, nuclear weapons excluded.
 - **Nine playable nations** (ADR-0205/DR-005): matches the manual p.18 roster; the USA
   is demoted.
 - **Presentation** (ADR-0202/0203/0206..0209/0211): units, language, and currency are

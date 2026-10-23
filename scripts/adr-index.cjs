@@ -36,8 +36,8 @@ const ARCHIVE_DIR = path.join(ADR_DIR, "archive");
 const AREAS = [
   {
     name: "Scope & horizon",
-    blurb: "The sole 1880 start, the 1939 authored horizon, and the ten-nation roster.",
-    nums: [201, 204, 205, 214],
+    blurb: "The sole 1880 start, the 1970 authored horizon, and the ten-nation roster.",
+    nums: [201, 204, 205, 214, 282],
   },
   {
     name: "Values, currency & language",
