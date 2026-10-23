@@ -26,10 +26,9 @@ import {
   registerCampaignSession,
 } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
-import { pendingEnvelopesForExecution, clearPendingWorkspacesForTest } from "../pendingCommands.js";
 import { toSaveableState } from "../saveHelpers.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
-import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
+import { programFor, queuedEnvelopes, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { commitMonthProgram } from "./commitMonth.js";
 import {
@@ -46,7 +45,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-const runtime = ManagedRuntime.make(desktopMainLayer());
+const makeRuntime = () => ManagedRuntime.make(desktopMainLayer());
+let runtime = makeRuntime();
+
+function restartRuntime(): void {
+  void runtime.dispose();
+  runtime = makeRuntime();
+}
 
 async function runProgram<A>(
   program: AnyCommandHandler,
@@ -87,7 +92,7 @@ describe("construction status commands (end-to-end)", () => {
   afterEach(() => {
     rmSync(saveRoot, { recursive: true, force: true });
     clearCampaignSessionsForTest();
-    clearPendingWorkspacesForTest();
+    restartRuntime();
   });
 
   function registerProductionSession(
@@ -153,7 +158,7 @@ describe("construction status commands (end-to-end)", () => {
     if (issued.outcome !== "success") return;
     expect(issued.value.bodyType).toBe("HaltConstruction");
 
-    const queued = pendingEnvelopesForExecution(sessionId, record.state.snapshot);
+    const queued = queuedEnvelopes(runtime, sessionId, record.state.snapshot);
     expect(queued.map((e) => e.body.type)).toContain("HaltConstruction");
 
     await commit(sessionId);
@@ -281,7 +286,7 @@ describe("construction status commands (end-to-end)", () => {
     if (issued.outcome !== "success") return;
     expect(issued.value.bodyType).toBe("CancelConstructionProject");
 
-    const queued = pendingEnvelopesForExecution(sessionId, record.state.snapshot);
+    const queued = queuedEnvelopes(runtime, sessionId, record.state.snapshot);
     expect(queued.map((e) => e.body.type)).toContain("CancelConstructionProject");
 
     await commit(sessionId);

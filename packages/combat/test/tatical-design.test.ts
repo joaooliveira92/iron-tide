@@ -7,7 +7,6 @@ import {
   type BattleEvent,
 } from "@bluewave/combat/battleResolution";
 import {
-  TacticalClock,
   substepsPerTurn,
   tacticalSubstepMilliseconds,
   tacticalTimePolicyId,
@@ -27,15 +26,6 @@ describe("DESIGN-38 focused", () => {
     expect(() => validateTacticalTimeContract({ tacticalTurnMilliseconds: 60_001 })).toThrow(
       /INVALID_TACTICAL_TIME_CONTRACT/,
     );
-  });
-  it("2: clock 0..59, hash stable, wall-clock does not advance", () => {
-    const c = new TacticalClock({ battleId: "b1", battleStartCampaignTime: "1900-01-01" });
-    expect(c.currentBattleMinute).toBe(0);
-    expect(c.currentSubstep).toBe(0);
-    const h0 = c.clockHash;
-    c.advanceSubstep();
-    expect(c.currentSubstep).toBe(1);
-    expect(c.clockHash).not.toBe(h0);
   });
   it("16: fog-of-war leak -> TACTICAL_FOG_OF_WAR_VIOLATION", () => {
     expect(() => validateTargetOrder("unknown", new Map())).toThrow(

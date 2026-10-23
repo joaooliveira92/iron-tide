@@ -24,6 +24,7 @@ const describeRow = (
 ) => describeSecondaryRow(view, campaign, FORMAT, wizardStep);
 
 const campaign: HeaderCampaign = {
+  prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
   month: { year: 1900, month: 1 },
   treasury: 24_500_000,
   nationName: "United Kingdom",
@@ -167,7 +168,7 @@ describe("describeSecondaryRow", () => {
     if (row.kind !== "campaign") throw new Error("expected a campaign row");
 
     const unbacked = row.metrics.filter((metric) => metric.placeholder);
-    expect(unbacked.map((metric) => metric.icon)).toEqual(["alerts", "prestige", "tension"]);
+    expect(unbacked.map((metric) => metric.icon)).toEqual(["alerts", "tension"]);
   });
 
   it("shows a dash for the budget when the campaign has not loaded", () => {

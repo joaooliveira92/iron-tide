@@ -462,7 +462,6 @@ describe("dispatchCampaignCommand", () => {
     const longFingerprint = "f".repeat(257);
     const oversizedArray = Array.from({ length: 65 }, (_, i) => `fp-${i}`);
     for (const payload of [
-      { sessionId: "s" },
       { sessionId: "s", dismissedFingerprints: "high" },
       { sessionId: "s", dismissedFingerprints: [123] },
       { sessionId: "s", dismissedFingerprints: [longFingerprint] },

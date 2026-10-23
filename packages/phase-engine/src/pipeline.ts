@@ -121,6 +121,7 @@ const SNAPSHOT_FIELD_BY_NAME: Readonly<Record<SnapshotField, true>> = {
   designFamilies: true,
   strategicWeather: true,
   prestigeRules: true,
+  careerResult: true,
   rulesetVersion: true,
   compatibilityVersion: true,
 };

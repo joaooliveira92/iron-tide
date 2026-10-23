@@ -53,8 +53,8 @@ const SOURCE_RE = /\.(?:[cm]?[jt]s|[jt]sx)$/u;
  * applies to them; only per-model sample *literals* are permitted, and only in these two files.
  */
 export const TORPEDO_FIXTURE_HARNESSES = [
-  "packages/combat/src/simulation/run-torpedo-child.ts",
-  "packages/combat/src/simulation/run-battle-resolution-child.ts",
+  "packages/combat/harness/run-torpedo-child.ts",
+  "packages/combat/harness/run-battle-resolution-child.ts",
 ];
 
 /**
@@ -249,7 +249,7 @@ const FIXTURE_SELF_TEST_CASES = [
   },
   {
     name: "a sample record in a harness",
-    file: "packages/combat/src/simulation/run-torpedo-child.ts",
+    file: "packages/combat/harness/run-torpedo-child.ts",
     text: "const t = { partId: 'x', diameterUm: 533_000 };",
     want: 0,
   },

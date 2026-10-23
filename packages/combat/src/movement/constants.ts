@@ -1,12 +1,12 @@
 import { BluewaveError } from "@bluewave/contracts";
+import { SUBSTEP_SECONDS, SUBSTEPS_PER_MINUTE } from "../core/tacticalTime.js";
 
 export const movementKinematicsPolicyId = "movement_kinematics_v1" as const;
 
 export const KNOTS_TO_UM_S = 514_444 as const;
 export const SPEED_BP_SCALE = 1_000 as const;
 export const DIRECTION_FIXED = 10_000 as const;
-export const SUBSTEP_SECONDS = 1 as const;
-export const SUBSTEPS_PER_MINUTE = 60 as const;
+export { SUBSTEP_SECONDS, SUBSTEPS_PER_MINUTE };
 export const DEG_TO_RAD = 0.017_453_292_519_943_295 as const;
 export const PROPULSION_ACCEL_KNOT_BP_PER_S = 40 as const;
 export const PROPULSION_DECEL_KNOT_BP_PER_S = 60 as const;

@@ -29,25 +29,27 @@ export function NationRailItem({
           aria-label={`${row.name}, ${row.relationLabel}`}
           data-relation={row.relation}
           className={cn(
-            "flex w-full cursor-pointer flex-col gap-1 rounded-md border px-2 py-1.5 text-left outline-none transition-colors",
+            "relative flex w-full cursor-pointer flex-col gap-1 overflow-hidden rounded-md border px-2 py-1.5 text-left outline-none transition-colors",
             "bg-muted/40 hover:bg-muted focus-visible:ring-1 focus-visible:ring-ring data-popup-open:bg-muted",
             row.isPlayer && "border-primary/30",
           )}
         >
-          <span className="flex w-full items-center gap-2">
-            <NationSwatch row={row} />
-            <span className="min-w-0 flex-1 truncate text-xs font-semibold">{row.name}</span>
+          <NationSwatch row={row} />
+          <span className="relative flex w-full items-center gap-2">
+            <span className="min-w-0 flex-1 truncate text-xs font-semibold [text-shadow:0_0_2px_#000,0_0_3px_#000,0_1px_2px_#000]">
+              {row.name}
+            </span>
             {row.blockade && (
               <span role="img" aria-label="Blockade" title="Blockade">
                 <Ban className="size-3.5 text-destructive" aria-hidden="true" />
               </span>
             )}
-          </span>
-          <span className="flex w-full items-center gap-2">
             <NationRelationBadge row={row} iconOnly />
+          </span>
+          <span className="relative flex w-full items-center gap-2">
             {row.warScore !== null && (
               <span
-                className="text-xs font-semibold tabular-nums text-destructive"
+                className="text-xs font-semibold tabular-nums text-destructive [text-shadow:0_0_2px_#000,0_0_3px_#000,0_1px_2px_#000]"
                 aria-label={`War score ${row.warScore.yours} to ${row.warScore.enemy}`}
               >
                 {row.warScore.yours}:{row.warScore.enemy}

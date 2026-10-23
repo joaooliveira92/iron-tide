@@ -8,6 +8,7 @@ import * as nodeFs from "node:fs";
 import path from "node:path";
 
 import { RUNTIME_FREE_ROOTS } from "./assert-runtime-free.mjs";
+import { toPosixPath } from "./lib/paths.mjs";
 
 export const SCHEMA_VERSION = 1;
 export const RULES = ["determinism-pure-restatement", "name-restating-doc", "scratch-reasoning"];
@@ -343,7 +344,7 @@ export function classifyFile(relPath, src, rules) {
 }
 
 const isMissing = (e) => e?.code === "ENOENT" || e?.code === "ENOTDIR";
-const toPosix = (p) => p.split(path.sep).join("/");
+const toPosix = toPosixPath;
 const inside = (root, abs) => {
   const rel = path.relative(root, abs);
   return rel === "" || (!rel.startsWith("..") && !path.isAbsolute(rel));

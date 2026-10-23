@@ -546,9 +546,10 @@ export const runCampaignSave = (
     const stateText = yield* readFileOption(fs, statePath);
     let state: CampaignState;
     try {
-      const decoded = Schema.decodeUnknownSync(StorableCampaignStateSchema)(
-        JSON.parse(stateText ?? ""),
-      );
+      const decoded = Schema.decodeUnknownSync(
+        StorableCampaignStateSchema,
+        STRICT_DECODE_OPTIONS,
+      )(JSON.parse(stateText ?? ""));
       state = {
         ...decoded,
         snapshot: fromStorableSnapshot(asStorableSnapshot(decoded.snapshot)),

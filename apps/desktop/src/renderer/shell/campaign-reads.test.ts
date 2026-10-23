@@ -2,9 +2,11 @@ import { describe, expect, it, vi } from "vite-plus/test";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
 import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
+import { readQuery } from "../lib/read-queries.js";
 import { activeAlertsCount, readCampaign } from "./campaign-reads.js";
 
 const projection: PlayerProjection = {
+  prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
   campaignIdentity: "campaign_1",
   snapshotHash: "hash_abc",
   revision: 4,
@@ -78,6 +80,21 @@ describe("readCampaign", () => {
     expect(reads.areas).toEqual({ status: "ready", value: [] });
     expect(reads.reports).toEqual({ status: "ready", value: [] });
     expect(reads.priorities).toEqual({ status: "ready", value: priorities });
+  });
+
+  it("leaves the reads retained for the projected revision so later readers do not hit the bridge", async () => {
+    const { client, execute } = clientWith((command) => {
+      if (command === "inspectCampaign") return ok({ projection });
+      if (command === "inspectMap") return ok({ strategic: { world: { areas: [] } } });
+      if (command === "readMonthlyReports") return ok({ reports: [] });
+      return ok({ priorities });
+    });
+    await readCampaign(client, "ses-1");
+
+    const again = await readQuery(client, "inspectPriorities", "ses-1", projection.revision);
+
+    expect(again).toEqual({ status: "ready", value: { priorities } });
+    expect(execute).toHaveBeenCalledTimes(4);
   });
 
   it("keeps the projection readable when an optional view fails", async () => {

@@ -1,7 +1,7 @@
 import type { CompiledDesignVersion } from "@bluewave/campaign";
 import type { CompiledTorpedo } from "@bluewave/armament";
 import type { TacticalShipUnit } from "../tactical/unit.js";
-import type { DamageTargetContext } from "./damage.js";
+import type { DamageTargetContext } from "../damage/minuteDamage.js";
 import {
   computeBaseBreachRateKgMin,
   EMPTY_TUBE,

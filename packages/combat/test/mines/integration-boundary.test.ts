@@ -77,8 +77,14 @@ describe("AC-22: mines integration boundary (no engine/phase/snapshot/torpedo co
 
   it("the pre-existing engine surface we did NOT touch still exists unchanged", () => {
     const engineSrc = readFileSync(resolve(minesSrcDir, "..", "simulation", "engine.ts"), "utf8");
-    const resolverSrc = readFileSync(resolve(minesSrcDir, "..", "resolver.ts"), "utf8");
-    const strengthSrc = readFileSync(resolve(minesSrcDir, "..", "strength.ts"), "utf8");
+    const resolverSrc = readFileSync(
+      resolve(minesSrcDir, "..", "battleResolution", "resolver.ts"),
+      "utf8",
+    );
+    const strengthSrc = readFileSync(
+      resolve(minesSrcDir, "..", "battleResolution", "resolver.ts"),
+      "utf8",
+    );
     expect(engineSrc).toContain("advanceMinutes");
     expect(engineSrc).toContain("TacticalBattleState");
     expect(resolverSrc).toContain("BattleResolver");

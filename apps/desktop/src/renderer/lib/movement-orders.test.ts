@@ -2,23 +2,11 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
-import type {
-  MovementCommandOutcome,
-  SubmitMovementCommandPayload,
-} from "../../shared/fleet-contract.js";
+import type { MovementCommandOutcome } from "../../shared/fleet-contract.js";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
-import type {
-  CommandExecutionContext,
-  CommandSender,
-  RequestKind,
-} from "./command-screen-workflow.js";
-import {
-  movementCancelBody,
-  movementReplaceBody,
-  movementSubmitBody,
-  useMovementOrders,
-  type MovementRouteTarget,
-} from "./movement-orders.js";
+import type { CommandStamp } from "./command-envelope.js";
+import type { CommandSender, RequestKind } from "./command-screen-workflow.js";
+import { useMovementOrders, type MovementRouteTarget } from "./movement-orders.js";
 
 const originalBridge = window.bluewave;
 
@@ -31,7 +19,7 @@ afterEach(() => {
   }
 });
 
-const context: CommandExecutionContext = { expectedRevision: 7, transportRequestId: "tr-1" };
+const stamp: CommandStamp = { expectedRevision: 7, transportRequestId: "tr-1" };
 const target: MovementRouteTarget = {
   divisionId: "div-1",
   fromAreaId: "a-home",
@@ -53,45 +41,10 @@ function bridgeWith(execute: (name: string, payload: unknown) => unknown): void 
 
 function fakeExecute() {
   return vi.fn(async (kind: RequestKind, send: CommandSender<MovementCommandOutcome>) => {
-    await send(context);
+    await send(stamp);
     return "accepted" as const;
   });
 }
-
-describe("movement order payload builders", () => {
-  it("submit builds the MoveFleet body the Fleet screen sends today", () => {
-    const body: SubmitMovementCommandPayload = movementSubmitBody("session-1", target, context);
-    expect(body).toEqual({
-      sessionId: "session-1",
-      divisionId: "div-1",
-      fromAreaId: "a-home",
-      toAreaId: "a-next",
-      expectedRevision: 7,
-      transportRequestId: "tr-1",
-    });
-  });
-
-  it("replace carries the same body plus the pending command id", () => {
-    expect(movementReplaceBody("session-1", target, "cmd-9", context)).toEqual({
-      sessionId: "session-1",
-      divisionId: "div-1",
-      fromAreaId: "a-home",
-      toAreaId: "a-next",
-      commandId: "cmd-9",
-      expectedRevision: 7,
-      transportRequestId: "tr-1",
-    });
-  });
-
-  it("cancel carries only the envelope and the pending command id", () => {
-    expect(movementCancelBody("session-1", "cmd-9", context)).toEqual({
-      sessionId: "session-1",
-      commandId: "cmd-9",
-      expectedRevision: 7,
-      transportRequestId: "tr-1",
-    });
-  });
-});
 
 describe("useMovementOrders", () => {
   it("submit sends the MoveFleet body through the shared bridge path", async () => {

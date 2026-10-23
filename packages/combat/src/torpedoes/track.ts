@@ -1,7 +1,6 @@
 import { BluewaveError } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
-import { DIRECTION_FIXED } from "../movement/constants.js";
-import { directionBp } from "../movement/kinematics.js";
+import { DIRECTION_FIXED, directionBp } from "../movement/neighbour.js";
 import {
   NO_TARGET_CONTACT,
   TORPEDO_TERMINAL_RESULTS,
@@ -11,7 +10,7 @@ import {
   type TorpedoTerminalResult,
 } from "./constants.js";
 import { TORPEDO_STATE_INVARIANT_FAILED } from "./reasonCodes.js";
-import type { Position } from "../spotting/detection.js";
+import type { Position } from "../core/position.js";
 import type { CompiledTorpedoSpeedSetting } from "@bluewave/armament";
 
 export interface TorpedoReliabilityState {

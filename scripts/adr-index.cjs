@@ -58,7 +58,7 @@ const AREAS = [
   {
     name: "Process & documentation",
     blurb: "Concurrent-agent worktree coordination and repository process rules.",
-    nums: [220, 227, 234, 236, 237, 238, 246, 267, 268, 269],
+    nums: [220, 227, 274, 275, 234, 236, 237, 238, 246, 267, 268, 269, 278, 279, 280],
   },
   {
     name: "Scenario content & research",
@@ -74,14 +74,14 @@ const AREAS = [
   },
   {
     name: "Turns, interruptions & save/resume",
-    blurb: "Turn identity and the suspend/resume interruption model.",
-    nums: [222, 235],
+    blurb: "Turn identity, the suspend/resume interruption model, and strict save-file decoding.",
+    nums: [222, 235, 278],
   },
   {
     name: "Fleet readiness, command & prestige",
     blurb:
       "Readiness and maintenance ruleset constants, the 1880 command structure, and the prestige value path.",
-    nums: [223, 224, 225, 226, 239, 245, 260, 261],
+    nums: [223, 224, 225, 226, 239, 245, 260, 261, 281],
   },
   {
     name: "Foreign stations & presence",
@@ -106,7 +106,7 @@ const AREAS = [
   {
     name: "Engine architecture",
     blurb: "Package interfaces, seams and module depth across the engine.",
-    nums: [271, 272, 273],
+    nums: [271, 272, 273, 276, 277],
   },
 ];
 

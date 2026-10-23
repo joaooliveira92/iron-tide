@@ -9,6 +9,7 @@ import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSyn
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { pathToFileURL } from "node:url";
 
 import {
   EXIT,
@@ -487,10 +488,20 @@ function makeToolRepo() {
   });
   mkdirSync(path.join(root, "scripts"));
   mkdirSync(path.join(root, "apps"));
-  for (const f of ["sweep-comments.mjs", "sweep-comments-engine.mjs", "assert-runtime-free.mjs"]) {
+  mkdirSync(path.join(root, "scripts", "lib"));
+  for (const f of [
+    "sweep-comments.mjs",
+    "sweep-comments-engine.mjs",
+    "assert-runtime-free.mjs",
+    "lib/paths.mjs",
+  ]) {
     nodeFs.copyFileSync(path.join(SCRIPTS_DIR, f), path.join(root, "scripts", f));
   }
-  nodeFs.symlinkSync(path.join(REPO_ROOT, "node_modules"), path.join(root, "node_modules"));
+  nodeFs.symlinkSync(
+    path.join(REPO_ROOT, "node_modules"),
+    path.join(root, "node_modules"),
+    "junction",
+  );
   return root;
 }
 const spawnNode = (root, args) =>
@@ -548,12 +559,17 @@ void test("--apply with a report reaches report validation instead of the usage 
 });
 
 void test("the package script forwards arguments: pnpm sweep:comments --apply", () => {
-  const r = spawnSync("pnpm", ["sweep:comments", "--apply"], { cwd: REPO_ROOT, encoding: "utf8" });
+  const r = spawnSync("pnpm", ["sweep:comments", "--apply"], {
+    cwd: REPO_ROOT,
+    encoding: "utf8",
+    shell: process.platform === "win32",
+  });
   assert.equal(r.status, EXIT.USAGE);
   assert.match(r.stderr, /Error: --apply requires --report <reviewed-report\.json>\./);
   const forwarded = spawnSync("pnpm", ["sweep:comments", "--scope", "does-not-exist"], {
     cwd: REPO_ROOT,
     encoding: "utf8",
+    shell: process.platform === "win32",
   });
   assert.equal(forwarded.status, EXIT.USAGE);
   assert.match(forwarded.stderr, /--scope does not exist/);
@@ -617,7 +633,7 @@ void test("the entry-point guard behaves the same through canonical, symlinked a
       process.execPath,
       [
         "-e",
-        `import(${JSON.stringify(path.join(root, "scripts", "sweep-comments.mjs"))}).then(() => console.log("imported"))`,
+        `import(${JSON.stringify(pathToFileURL(path.join(root, "scripts", "sweep-comments.mjs")).href)}).then(() => console.log("imported"))`,
       ],
       { cwd: root, encoding: "utf8" },
     );

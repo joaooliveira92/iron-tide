@@ -1,3 +1,5 @@
+import type { PlayerProjection } from "@bluewave/campaign-engine";
+
 import { resolveMessage } from "../content/uiCatalogue.js";
 import type { InterruptionRequestDto, PendingTurnDto } from "../../shared/turn-message-contract.js";
 import type { PrimaryAction } from "./primary-action.js";
@@ -45,6 +47,8 @@ export interface CampaignOverview {
   readonly projectedSurplusDeficit: number;
   readonly activeAlertsCount: number | null;
   readonly atWar: boolean;
+  readonly prestige: PlayerProjection["prestige"];
+  readonly career?: PlayerProjection["career"];
 }
 
 export interface CampaignShellState {

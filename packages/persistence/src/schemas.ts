@@ -23,68 +23,20 @@ const JsonRecord = Schema.Record(Schema.String, Schema.Unknown);
 
 const emptyArrayDefault = Effect.succeed([]);
 
-export const StorablePossessionSchema = Schema.Record(Schema.String, Schema.Unknown)
-  .check(
-    Schema.makeFilter(
-      (o) =>
-        Object.keys(o).sort().join(",") === "areaId,id,nationId" ||
-        "a possession carries exactly id, nationId and areaId",
-    ),
-  )
-  .pipe(
-    Schema.decodeTo(
-      Schema.Struct({
-        id: Schema.NonEmptyString,
-        nationId: Schema.NonEmptyString,
-        areaId: Schema.NonEmptyString,
-      }),
-    ),
-  );
+export const StorablePossessionSchema = Schema.Struct({
+  id: Schema.NonEmptyString,
+  nationId: Schema.NonEmptyString,
+  areaId: Schema.NonEmptyString,
+});
 
-const declinedBattleRecordKeys = Object.keys(DeclinedBattleRecordSchema.fields).sort().join(",");
-const declineCounterEntryKeys = Object.keys(DeclineCounterEntrySchema.fields).sort().join(",");
-
-export const StorableDeclinedBattleSchema = Schema.Record(Schema.String, Schema.Unknown)
-  .check(
-    Schema.makeFilter(
-      (o) =>
-        Object.keys(o).sort().join(",") === declinedBattleRecordKeys ||
-        "a declined-battle record carries exactly its nine fields",
-    ),
-  )
-  .pipe(Schema.decodeTo(DeclinedBattleRecordSchema));
-
-export const StorableDeclineCounterSchema = Schema.Record(Schema.String, Schema.Unknown)
-  .check(
-    Schema.makeFilter(
-      (o) =>
-        Object.keys(o).sort().join(",") === declineCounterEntryKeys ||
-        "a decline-counter entry carries exactly its five fields",
-    ),
-  )
-  .pipe(Schema.decodeTo(DeclineCounterEntrySchema));
-
-export const StorableTechnologySchema = Schema.Record(Schema.String, Schema.Unknown)
-  .check(
-    Schema.makeFilter(
-      (o) =>
-        Object.keys(o).sort().join(",") ===
-          "availabilityMonth,cost,discoveryWeight,prerequisites,researchFieldId,techId" ||
-        "a technology carries exactly techId, researchFieldId, cost, discoveryWeight, prerequisites and availabilityMonth",
-    ),
-  )
-  .pipe(
-    Schema.decodeTo(
-      Schema.Struct({
-        techId: Schema.NonEmptyString,
-        researchFieldId: Schema.NonEmptyString,
-        cost: Schema.Finite,
-        discoveryWeight: Schema.Finite,
-        prerequisites: Schema.Array(Schema.NonEmptyString),
-        availabilityMonth: Schema.Finite,
-      }),
-    ),
-  );
+export const StorableTechnologySchema = Schema.Struct({
+  techId: Schema.NonEmptyString,
+  researchFieldId: Schema.NonEmptyString,
+  cost: Schema.Finite,
+  discoveryWeight: Schema.Finite,
+  prerequisites: Schema.Array(Schema.NonEmptyString),
+  availabilityMonth: Schema.Finite,
+});
 
 const StorablePrestigeRuleSchema = Schema.Union([
   Schema.Struct({
@@ -106,6 +58,13 @@ const StorablePrestigeValueSetSchema = Schema.Struct({
     BATTLE_WON: StorablePrestigeRuleSchema,
     DECLINED_BATTLE: Schema.optionalKey(StorablePrestigeRuleSchema),
   }),
+});
+
+const StorableCareerResultSchema = Schema.Struct({
+  nationId: Schema.String,
+  score: Schema.Finite,
+  reason: Schema.Literals(["SACKED", "CAMPAIGN_END"]),
+  month: Schema.Struct({ year: Schema.Finite, month: Schema.Finite }),
 });
 
 const StorableSnapshotSchema = Schema.Struct({
@@ -133,8 +92,8 @@ const StorableSnapshotSchema = Schema.Struct({
     participantMemberships: Schema.Array(Schema.Unknown),
     blockadeState: Schema.Array(Schema.Unknown),
     battleManifests: Schema.Array(Schema.Unknown),
-    declinedBattles: Schema.optional(Schema.Array(StorableDeclinedBattleSchema)),
-    declineCounters: Schema.optional(Schema.Array(StorableDeclineCounterSchema)),
+    declinedBattles: Schema.optional(Schema.Array(DeclinedBattleRecordSchema)),
+    declineCounters: Schema.optional(Schema.Array(DeclineCounterEntrySchema)),
   }),
   politics: Schema.Struct({
     relations: Schema.Array(Schema.Unknown),
@@ -149,6 +108,7 @@ const StorableSnapshotSchema = Schema.Struct({
     Schema.withDecodingDefaultType(emptyArrayDefault),
   ),
   prestigeRules: StorablePrestigeValueSetSchema,
+  careerResult: Schema.optionalKey(StorableCareerResultSchema),
   rulesetVersion: Schema.String,
   compatibilityVersion: Schema.String,
 });
@@ -163,6 +123,10 @@ export const StorableCampaignStateSchema = Schema.Struct({
     bodyLength: Schema.Finite,
   }),
   rawHash: Schema.String,
+});
+
+export const decodeStorableCampaignState = Schema.decodeUnknownResult(StorableCampaignStateSchema, {
+  onExcessProperty: "error",
 });
 
 export type StorableCampaignState = Mutable<typeof StorableCampaignStateSchema.Type>;

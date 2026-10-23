@@ -63,7 +63,7 @@
     "check": "pnpm preflight && pnpm format && pnpm lint && pnpm lint:effect && pnpm test:scripts && pnpm check:licenses && pnpm typecheck && pnpm build && pnpm content:verify && pnpm test:run && pnpm test:heavy && pnpm check:golden && pnpm check:determinism && pnpm check:equivalence && pnpm check:replay-corpus && pnpm check:golden-repin && pnpm check:replay-approvals && pnpm check:probe-retirement && pnpm check:balance-reports && pnpm check:reachability-ledger && pnpm test:e2e"
   },
   "devDependencies": {
-    "@effect/tsgo": "0.54.0",
+    "@effect/tsgo": "0.54.1",
     "@types/node": "^26.6.5",
     "oxc-parser": "0.155.0",
     "oxlint": "1.89.0",

@@ -27,7 +27,7 @@ import {
   CONSTRUCTION_RESUMED_WITH_CAPACITY,
   constructionResumeTarget,
 } from "../src/constructionHaltResume.js";
-import { constructionProjectReadout } from "../src/constructionReadout.js";
+import { constructionProjectReadout } from "@bluewave/campaign-engine";
 import { PROJECT_DELAYED_ZERO_WORK, preservationCostUnits } from "../src/economyPhases.js";
 import { FinancialLedger } from "../src/financial-ledger.js";
 import { MonthExecutor } from "../src/index.js";

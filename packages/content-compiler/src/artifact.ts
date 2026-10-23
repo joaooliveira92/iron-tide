@@ -8,6 +8,7 @@ import {
 } from "@bluewave/content-schema";
 import { canonicalSerialize, createEnvelope, verifyEnvelope } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Predicate, Result, Schema } from "effect";
 
 import { Compiler } from "./compiler.js";
 import type { CompilerInput, ContentBundle } from "./index.js";
@@ -30,6 +31,26 @@ export interface ContentBundleManifest {
   readonly bodyHash: string;
   readonly bodyLength: number;
 }
+
+const ContentBundleManifestSchema = Schema.Struct({
+  manifestVersion: Schema.Literal(CONTENT_BUNDLE_MANIFEST_VERSION),
+  doNotEdit: Schema.String,
+  contentVersion: Schema.String,
+  artifactKind: Schema.String,
+  compatibilityVersion: Schema.String,
+  algorithm: Schema.String,
+  bodyHash: Schema.String,
+  bodyLength: Schema.Number,
+});
+
+const ContentLockSchema = Schema.Struct({
+  contentVersion: Schema.String,
+  bodyHash: Schema.String,
+  algorithm: Schema.String,
+});
+
+const decodeManifest = Schema.decodeUnknownResult(ContentBundleManifestSchema);
+const decodeLock = Schema.decodeUnknownResult(ContentLockSchema);
 
 export interface ContentBundleArtifact {
   readonly bundle: ContentBundle;
@@ -74,19 +95,15 @@ export function verifyContentLock(
   artifact: ContentBundleArtifact,
   lock: unknown,
 ): ContentLockVerification {
-  if (!isRecord(lock)) {
+  if (!Predicate.isObject(lock)) {
     return {
       ok: false,
       code: "CONTENT_LOCK_INVALID",
       message: "The content lock is not an object.",
     };
   }
-  const { contentVersion, bodyHash, algorithm } = lock;
-  if (
-    typeof contentVersion !== "string" ||
-    typeof bodyHash !== "string" ||
-    typeof algorithm !== "string"
-  ) {
+  const decodedLock = decodeLock(lock);
+  if (!Result.isSuccess(decodedLock)) {
     return {
       ok: false,
       code: "CONTENT_LOCK_INVALID",
@@ -94,6 +111,7 @@ export function verifyContentLock(
         "The content lock must carry string 'contentVersion', 'bodyHash' and 'algorithm' fields.",
     };
   }
+  const { contentVersion, bodyHash, algorithm } = decodedLock.success;
   if (algorithm !== artifact.envelope.algorithm) {
     return {
       ok: false,
@@ -254,58 +272,19 @@ export function writeContentBundleArtifact(
   return { artifactPath, manifestPath };
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function asManifest(value: unknown): ContentBundleManifest | null {
-  if (!isRecord(value)) return null;
-  const {
-    manifestVersion,
-    doNotEdit,
-    contentVersion,
-    artifactKind,
-    compatibilityVersion,
-    algorithm,
-    bodyHash,
-    bodyLength,
-  } = value;
-  if (
-    manifestVersion !== CONTENT_BUNDLE_MANIFEST_VERSION ||
-    typeof doNotEdit !== "string" ||
-    typeof contentVersion !== "string" ||
-    typeof artifactKind !== "string" ||
-    typeof compatibilityVersion !== "string" ||
-    typeof algorithm !== "string" ||
-    typeof bodyHash !== "string" ||
-    typeof bodyLength !== "number"
-  ) {
-    return null;
-  }
-  return {
-    manifestVersion,
-    doNotEdit,
-    contentVersion,
-    artifactKind,
-    compatibilityVersion,
-    algorithm,
-    bodyHash,
-    bodyLength,
-  };
-}
-
 export function verifyContentBundleArtifact(
   bundleValue: unknown,
   manifestValue: unknown,
 ): ContentBundleVerification {
-  const manifest = asManifest(manifestValue);
-  if (manifest === null) {
+  const decodedManifest = decodeManifest(manifestValue);
+  if (!Result.isSuccess(decodedManifest)) {
     return {
       ok: false,
       code: "CONTENT_MANIFEST_INVALID",
       message: "The content manifest is missing required fields or has an unsupported format.",
     };
   }
+  const manifest: ContentBundleManifest = decodedManifest.success;
   if (manifest.doNotEdit !== BUNDLE_GENERATED_BY) {
     return {
       ok: false,
@@ -334,7 +313,7 @@ export function verifyContentBundleArtifact(
       message: `Unsupported content hash algorithm '${manifest.algorithm}'.`,
     };
   }
-  if (!isRecord(bundleValue)) {
+  if (!Predicate.isObject(bundleValue)) {
     return {
       ok: false,
       code: "CONTENT_ARTIFACT_INVALID",
@@ -349,7 +328,9 @@ export function verifyContentBundleArtifact(
     };
   }
   const embeddedManifest = bundleValue.manifest;
-  const embeddedVersion = isRecord(embeddedManifest) ? embeddedManifest.version : undefined;
+  const embeddedVersion = Predicate.isObject(embeddedManifest)
+    ? embeddedManifest.version
+    : undefined;
   if (typeof embeddedVersion === "string" && embeddedVersion !== manifest.contentVersion) {
     return {
       ok: false,

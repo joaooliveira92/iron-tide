@@ -5,15 +5,15 @@ import type {
   ForeignConstructionContract,
   NationState,
 } from "@bluewave/campaign";
-import { buildConstructionProjectQueue } from "@bluewave/campaign-engine";
+import {
+  buildConstructionProjectQueue,
+  constructionProjectReadout,
+} from "@bluewave/campaign-engine";
 import { bp, money, SafeInt } from "@bluewave/contracts";
 import { LINE_IDS } from "@bluewave/ship-design";
 import { describe, expect, it } from "vite-plus/test";
 import { preservationCostUnits } from "../src/economyPhases.js";
-import {
-  constructionProjectQueueWithReadouts,
-  constructionProjectReadout,
-} from "../src/constructionReadout.js";
+import { constructionProjectQueueWithReadouts } from "../src/constructionReadout.js";
 import { buildForeignConstructionContract } from "../src/foreignConstruction.js";
 import { productionShipBuildingContent } from "./helpers/contentFiles.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";

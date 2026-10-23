@@ -129,8 +129,21 @@ function makeRichSnapshot(): CampaignSnapshot {
     areas: [],
   });
 
+  snapshot.careerResult = {
+    nationId: ATTACKER_NATION,
+    score: SafeInt(10),
+    reason: "SACKED",
+    month: { year: SafeInt(1880), month: SafeInt(2) },
+  };
   const gbr = snapshot.nations.get(ATTACKER_NATION)!;
   gbr.homeAreaId = "a-2";
+  gbr.prestigeLastChange = {
+    reasonCode: "BATTLE_LOST",
+    before: SafeInt(20),
+    after: SafeInt(19),
+    delta: SafeInt(-1),
+    month: "1880-02",
+  };
   gbr.research = {
     nationId: ATTACKER_NATION,
     technologies: [

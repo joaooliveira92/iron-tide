@@ -65,6 +65,7 @@ export function NationRelationBadge({
       className={cn(
         "min-w-0 max-w-full shrink gap-1 px-1.5 py-0 text-xs font-semibold uppercase text-foreground",
         style.badge,
+        iconOnly && "border-transparent bg-transparent",
       )}
     >
       <Icon className={cn("size-3 shrink-0", style.tint)} aria-hidden="true" />

@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vite-plus/test";
 
 const thisDir = dirname(fileURLToPath(import.meta.url));
-const childScript = resolve(thisDir, "..", "..", "dist", "simulation", "run-mines-child.js");
+const childScript = resolve(thisDir, "..", "..", "dist-harness", "harness", "run-mines-child.js");
 
 function runChild(): string {
   return execFileSync(process.execPath, [childScript], {

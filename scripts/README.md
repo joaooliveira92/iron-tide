@@ -28,7 +28,7 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 - `assert-runtime-free.mjs` — runtime-free import boundary (ADR-0100/0128).
 - `assert-authoritative-determinism.mjs` — no ambient time/RNG/env/filesystem enumeration in pure packages.
 - `assert-tagged-errors.mjs` — every error class carries a `_tag` (`--scope engine|surface`).
-- `assert-boundary-decode.mjs` — reject `JSON.parse(...) as T` (`--scope compiler|desktop|cli`).
+- `assert-boundary-decode.mjs` — reject `JSON.parse(...) as T` (`--scope compiler|desktop|cli|persistence`).
 - `assert-no-stage-io.mjs` — no `node:fs`/`node:child_process` in compiler stages.
 - `assert-canonical-serialization.mjs` — no raw `JSON.stringify` in authoritative roots.
 - `assert-no-library-console.mjs` — no `console.*` in library modules.
@@ -44,7 +44,7 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 - `verify-version-coherence.mjs` — desktop version equals `CURRENT_COMPATIBILITY_VERSION` (ADR-0134).
 - `verify-check-parity.mjs` — every `pnpm check` step is CI-invoked or allowlisted (ADR-0140).
 - `verify-reachability-ledger.mjs` — engine capability to desktop path ledger (ADR-0267; `--write` regenerates the report).
-- `verify-tsgo-integration.mjs` — `@effect/tsgo` matrix matches and is patched (ADR-0139).
+- `verify-tsgo-integration.mjs` — toolchain pins match the installed `@effect/tsgo` set and it is patched (ADR-0139).
 - `verify-vitest-config-parity.mjs` — every package spreads `vitest-shared.mjs`.
 - `verify-worktrees.mjs` — warn-only: drift reported by `pnpm worktrees audit`, run offline (ADR-0220).
 - `verify-content-lock.mjs`, `verify-content-gate.mjs` — built content matches the lock; no shipping placeholders.

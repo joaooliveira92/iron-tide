@@ -10,6 +10,7 @@ import { useCampaignShell } from "./useCampaignShell.js";
 type CampaignExecute = CampaignCommandClient["execute"];
 
 const projection: PlayerProjection = {
+  prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
   campaignIdentity: "campaign_1",
   snapshotHash: "hash_abc",
   revision: 3,
@@ -91,6 +92,7 @@ describe("useCampaignShell", () => {
       projectedSurplusDeficit: 1_250_000,
       atWar: false,
       activeAlertsCount: null,
+      prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
     });
   });
 
@@ -160,6 +162,7 @@ describe("useCampaignShell", () => {
       projectedSurplusDeficit: -56,
       atWar: true,
       activeAlertsCount: null,
+      prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
     });
     expect(result.current.committing).toBe(false);
   });
@@ -288,6 +291,66 @@ describe("useCampaignShell", () => {
     });
     expect(result.current.interruption?.pending).not.toBeNull();
     expect(result.current.interruption?.unavailable).toBe(false);
+  });
+
+  it("does not call the bridge when the outstanding decision has no decisionId", async () => {
+    const suspended = {
+      outcome: "success" as const,
+      value: {
+        status: "suspended" as const,
+        request: {
+          kind: "decision" as const,
+          turnId: "t1",
+          interruptionId: "i1",
+          ordinal: 0,
+          phase: "appropriation",
+          titleKey: "messages.decision.title",
+          bodyKey: "messages.decision.body",
+          interpolation: {},
+          options: [],
+        },
+        pendingTurn: {
+          turnId: "t1",
+          campaignId: "campaign_1",
+          playerNationId: "uk",
+          startingRevision: 3,
+          nextInterruptionOrdinal: 0,
+          recordedInputCount: 0,
+          createdAt: "1900-01",
+        },
+      },
+      diagnostics: [],
+    };
+    const execute = vi.fn(async (command: string) => {
+      if (command === "inspectCampaign") {
+        return { outcome: "success" as const, value: { projection }, diagnostics: [] };
+      }
+      if (command === "inspectPriorities") {
+        return { outcome: "success" as const, value: { priorities: [] }, diagnostics: [] };
+      }
+      if (command === "readPendingTurn") {
+        return {
+          outcome: "success" as const,
+          value: { pending: null, valid: false },
+          diagnostics: [],
+        };
+      }
+      return suspended;
+    });
+    const { result } = setup(execute);
+
+    await act(() => result.current.openCampaign("ses-1"));
+    await act(() => result.current.advanceMonth());
+    let answered: unknown = null;
+    await act(async () => {
+      answered = await result.current.answerInterruption({ kind: "decision", optionId: "approve" });
+    });
+
+    expect(answered).toEqual({
+      _tag: "NotSent",
+      reason: { _tag: "MissingRequiredId", field: "decisionId" },
+    });
+    expect(execute.mock.calls.filter(([command]) => command === "answerDecision")).toHaveLength(0);
   });
 
   it("shows a result message naming what an answered decision changed", async () => {

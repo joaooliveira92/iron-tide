@@ -1,12 +1,6 @@
+import { compareStrings } from "../core/ordering.js";
 import type { AirDefenseEngagementRecord } from "./records.js";
 import { FULL_DEFENSE_LAYER_ORDER } from "./constants.js";
-
-export function compareStrings(a: string, b: string): number {
-  for (let i = 0; i < a.length && i < b.length; i++) {
-    if (a.charCodeAt(i) !== b.charCodeAt(i)) return a.charCodeAt(i) - b.charCodeAt(i);
-  }
-  return a.length - b.length;
-}
 
 function layerRank(layer: AirDefenseEngagementRecord["layer"]): number {
   const index = FULL_DEFENSE_LAYER_ORDER.indexOf(layer);
@@ -27,6 +21,8 @@ function compareRecordThreatPriority(
   }
   return compareStrings(a.targetId, b.targetId);
 }
+
+export { compareStrings };
 
 export function compareAirDefenseEngagementRecords(
   a: AirDefenseEngagementRecord,

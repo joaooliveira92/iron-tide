@@ -23,10 +23,11 @@
 // sweep-comments-engine.mjs. It classifies candidates into a deterministic JSON
 // report, and --apply acts only on an explicitly reviewed report. Exit codes:
 // 0 ok, 1 validation, 2 usage, 3 I/O.
-import { readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isEntryPoint, repoRelativePath } from "./lib/paths.mjs";
 import { NEW_FLAGS, runCli } from "./sweep-comments-engine.mjs";
 
 const ROOTS = ["packages", "apps", "scripts"];
@@ -139,7 +140,7 @@ function main() {
     touched++;
     for (const r of removals) {
       counts[r.kind]++;
-      console.log(`${r.kind}\t${path.relative(repoRoot, file)}:${r.line}\t${r.text.trim()}`);
+      console.log(`${r.kind}\t${repoRelativePath(repoRoot, file)}:${r.line}\t${r.text.trim()}`);
     }
   }
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -150,16 +151,4 @@ function main() {
   console.error(`\nDRY RUN: files=${touched} total=${total} ${detail}`.trimEnd());
 }
 
-/** True when this module is the process entry point, comparing canonical paths on both sides. */
-function isEntryPoint() {
-  if (!process.argv[1]) return false;
-  try {
-    return (
-      realpathSync(fileURLToPath(import.meta.url)) === realpathSync(path.resolve(process.argv[1]))
-    );
-  } catch {
-    return false;
-  }
-}
-
-if (isEntryPoint()) main();
+if (isEntryPoint(import.meta.url)) main();

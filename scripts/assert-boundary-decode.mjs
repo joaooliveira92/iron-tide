@@ -10,6 +10,7 @@
 //   --scope compiler  packages/content-compiler/src  (the content loader)
 //   --scope desktop   apps/desktop/src/main          (project/pack loaders)
 //   --scope cli       apps/compiler-cli/src          (the bwc entry point)
+//   --scope persistence  packages/persistence/src    (save, pointer, and metadata readers)
 //
 // A site is a boundary cast when a `JSON.parse(...)` call (possibly wrapped in
 // parens or a further `as unknown`) is asserted to a named type. `JSON.parse`
@@ -27,7 +28,7 @@
 // re-validates every envelope at issue time. The scope still ratchets: a NEW
 // `JSON.parse(...) as T` in `compiler-cli` fails closed.
 //
-// Usage: `node scripts/assert-boundary-decode.mjs [--scope compiler|desktop|cli|all] [--self-test] [--strict]`
+// Usage: `node scripts/assert-boundary-decode.mjs [--scope compiler|desktop|cli|persistence|all] [--self-test] [--strict]`
 //   (`--strict` fails on a stale allowlist entry; CI is always strict)
 //
 // Wired into `pnpm preflight` (one self-test, then one gate per scope).
@@ -44,6 +45,7 @@ export const SCOPES = {
   compiler: ["packages/content-compiler/src"],
   desktop: ["apps/desktop/src/main"],
   cli: ["apps/compiler-cli/src"],
+  persistence: ["packages/persistence/src"],
 };
 
 /**

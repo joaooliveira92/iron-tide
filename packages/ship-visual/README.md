@@ -9,4 +9,3 @@ the desktop renderer depends on it, and nothing it produces enters authoritative
   validated by `ShipVisualCatalogSchema` in `@bluewave/content-schema`.
 - **Regenerate** after editing the YAML: `pnpm --filter @bluewave/content-schema build &&
   pnpm --filter @bluewave/ship-visual catalog:generate`. `test/catalog-sync.test.ts` fails on drift.
-- **Spec:** `.scratch/ship-visualization/spec.md`.

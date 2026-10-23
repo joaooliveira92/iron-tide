@@ -4,7 +4,8 @@ import {
   MAX_HIGH_PRIORITY_FIELDS,
   RESEARCH_FIELD_PRIORITY_WEIGHTS,
 } from "@bluewave/content-schema";
-import { economyOutlook, type ResearchUnfundedReason } from "@bluewave/campaign";
+import type { ResearchUnfundedReason } from "@bluewave/campaign";
+import { derivePlayerFacts } from "./player-facts.js";
 import type { PlayerProjectionMonth } from "./projection.js";
 
 export { CANONICAL_RESEARCH_FIELD_IDS, MAX_HIGH_PRIORITY_FIELDS, RESEARCH_FIELD_PRIORITY_WEIGHTS };
@@ -33,11 +34,11 @@ export function buildResearchScreenProjection(
   playerSlotId: string,
   _month: PlayerProjectionMonth,
 ): ResearchScreenProjection | undefined {
-  const nation = state.snapshot.nations.get(playerSlotId);
-  if (nation === undefined) return undefined;
+  const facts = derivePlayerFacts(state.snapshot, playerSlotId);
+  if (facts === undefined) return undefined;
 
-  const research = nation.research;
-  const outlook = economyOutlook(state.snapshot, playerSlotId)!;
+  const { outlook } = facts;
+  const research = facts.nation.research;
   const fieldPriorities: Record<string, number> = {};
   for (const [fieldId, weight] of Object.entries(research.fieldPriorities)) {
     fieldPriorities[fieldId] = Number(weight);

@@ -13,6 +13,7 @@ import type { WindowContextValue } from "./WindowContext.js";
 import { WindowContextProvider } from "./WindowContext.js";
 
 const campaign: HeaderCampaign = {
+  prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
   month: { year: 1900, month: 1 },
   treasury: 24_500_000,
   nationName: "United Kingdom",
@@ -204,7 +205,40 @@ describe("SiteHeader", () => {
     await renderHeader("linux", { activeView: "playing", campaign });
 
     expect(screen.queryByText("Alerts:")).toBeNull();
-    expect(screen.queryByText(/^[0-9]+$/)).toBeNull();
+  });
+
+  it("shows real prestige in the header instead of a placeholder", async () => {
+    await renderHeader("linux", { activeView: "playing", campaign });
+
+    expect(screen.getByText("Prestige:")).toBeTruthy();
+    expect(screen.getByText("20")).toBeTruthy();
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("announces dismissal risk in words as a focusable status", async () => {
+    await renderHeader("linux", {
+      activeView: "playing",
+      campaign: {
+        ...campaign,
+        prestige: { current: 15, sackingThreshold: 16, dismissalRisk: true },
+      },
+    });
+
+    const warning = screen.getByRole("status");
+    expect(warning.textContent).toContain("15 — at risk of dismissal");
+    expect(warning.getAttribute("tabindex")).toBe("0");
+  });
+
+  it("shows the career result once the career has ended", async () => {
+    await renderHeader("linux", {
+      activeView: "playing",
+      campaign: {
+        ...campaign,
+        career: { reason: "SACKED", score: 12, month: { year: 1883, month: 4 } },
+      },
+    });
+
+    expect(screen.getByRole("status").textContent).toContain("12 — sacked");
   });
 
   it("renders the alert count once the forward-wired slot is populated", async () => {

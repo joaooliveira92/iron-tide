@@ -8,10 +8,6 @@
 // `effect` / `@effect/vitest` is resolved from the npm registry instead of the
 // vendored workspace copy.
 //
-// Spec: `.scratch/effect-v4-vendor-migration/spec.md` — "Single-copy guard"
-//       (MIG-GRAPH-1, MIG-GRAPH-2) and `pnpm mechanics` (MIG-VENDOR-4).
-// Plan: `.scratch/effect-v4-vendor-migration/plan.md` §2.5.
-//
 // Usage:
 //   node scripts/assert-single-effect.mjs              # check the real lockfile
 //   node scripts/assert-single-effect.mjs --self-test  # run embedded fixtures

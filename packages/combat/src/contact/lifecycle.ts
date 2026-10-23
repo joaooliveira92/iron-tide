@@ -1,6 +1,6 @@
-import type { ContactTrack } from "../targeting.js";
-import { validateTargetOrder } from "../targeting.js";
-import type { Position } from "../spotting/detection.js";
+import type { ContactTrack } from "./targeting.js";
+import { validateTargetOrder } from "./targeting.js";
+import type { Position } from "../core/position.js";
 import {
   CONTACT_CONFIDENCE_MAX_BP,
   CONTACT_CONFIDENCE_DECAY_BP_PER_MINUTE,

@@ -1,7 +1,7 @@
 import { Schema } from "effect";
 import type { CampaignSnapshot } from "@bluewave/campaign";
-import { economyOutlook } from "@bluewave/campaign";
 import { HIGH_TENSION_THRESHOLD, isHighTension } from "./diplomacy.js";
+import { derivePlayerFacts, isLowResearchSpending, isNearCompletion } from "./player-facts.js";
 import { MIN_RESEARCH_SHARE_BP, NEAR_COMPLETION_WORK_RATIO } from "./priorityConstants.js";
 
 export { HIGH_TENSION_THRESHOLD, isHighTension } from "./diplomacy.js";
@@ -89,13 +89,10 @@ export function buildPrioritiesProjection(
   snapshot: CampaignSnapshot,
   playerNationId: string,
 ): readonly StrategicPriority[] {
-  const nation = snapshot.nations.get(playerNationId);
-  if (nation === undefined) return [];
+  const facts = derivePlayerFacts(snapshot, playerNationId);
+  if (facts === undefined) return [];
+  const { nation, outlook, shipyardCapacity } = facts;
 
-  const ports = snapshot.world.ports.filter((p) => p.nationId === playerNationId);
-  const shipyardCapacity = ports.reduce((sum, p) => sum + Number(p.level), 0);
-
-  const outlook = economyOutlook(snapshot, playerNationId)!;
   const monthlyAppropriation = outlook.revenue;
   const researchSpend = outlook.plannedResearch;
   const fleetMaintenance = outlook.maintenance;
@@ -147,33 +144,29 @@ export function buildPrioritiesProjection(
     }
   }
 
-  if (monthlyAppropriation > 0) {
-    if (researchSpend * 10_000 < monthlyAppropriation * MIN_RESEARCH_SHARE_BP) {
-      const fingerprint = "low_research_spending";
-      const expectedResearch = Math.floor((monthlyAppropriation * MIN_RESEARCH_SHARE_BP) / 10_000);
-      ranked.push({
-        priority: {
-          id: fingerprint,
-          type: "low_research_spending",
-          severity: "warning",
-          title: "Low research spending",
-          summary: `Research ${researchSpend} is below ${MIN_RESEARCH_SHARE_BP / 100}% of naval appropriation ${monthlyAppropriation}.`,
-          reason: `low_research_spending: researchSpend ${researchSpend} * 10_000 < monthlyAppropriation ${monthlyAppropriation} * ${MIN_RESEARCH_SHARE_BP}`,
-          destination: destinationForType("low_research_spending"),
-          fingerprint,
-        },
-        financialRisk: Math.max(expectedResearch - researchSpend, 0),
-        timeToConsequence: Number.POSITIVE_INFINITY / 2,
-      });
-    }
+  if (isLowResearchSpending(outlook)) {
+    const fingerprint = "low_research_spending";
+    const expectedResearch = Math.floor((monthlyAppropriation * MIN_RESEARCH_SHARE_BP) / 10_000);
+    ranked.push({
+      priority: {
+        id: fingerprint,
+        type: "low_research_spending",
+        severity: "warning",
+        title: "Low research spending",
+        summary: `Research ${researchSpend} is below ${MIN_RESEARCH_SHARE_BP / 100}% of naval appropriation ${monthlyAppropriation}.`,
+        reason: `low_research_spending: researchSpend ${researchSpend} * 10_000 < monthlyAppropriation ${monthlyAppropriation} * ${MIN_RESEARCH_SHARE_BP}`,
+        destination: destinationForType("low_research_spending"),
+        fingerprint,
+      },
+      financialRisk: Math.max(expectedResearch - researchSpend, 0),
+      timeToConsequence: Number.POSITIVE_INFINITY / 2,
+    });
   }
 
   for (const project of nation.constructionProjects) {
-    if (project.status === "COMPLETED") continue;
-    const total = Number(project.totalWork);
-    const completed = Number(project.completedWork);
-    if (total <= 0) continue;
-    if (completed / total >= NEAR_COMPLETION_WORK_RATIO) {
+    if (isNearCompletion(project)) {
+      const total = Number(project.totalWork);
+      const completed = Number(project.completedWork);
       const fingerprint = `construction_near_completion:${project.id}`;
       ranked.push({
         priority: {

@@ -1,7 +1,7 @@
 import { BluewaveError } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { BATTLE_MANIFEST_INVALID } from "./reasonCodes.js";
-import type { TacticalSideId } from "../tactical/state.js";
+import type { TacticalSideId } from "../core/tacticalSideId.js";
 import type { TacticalDivision } from "../tactical/division.js";
 import type {
   AirDefenseInstallationDeclaration,

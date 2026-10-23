@@ -1,4 +1,5 @@
 import type { CampaignSnapshot, PresenceMeasurementRules } from "@bluewave/campaign";
+import { derivePlayerFacts } from "./player-facts.js";
 import {
   buildPresenceReadout,
   type PlayerProjectionMonth,
@@ -96,8 +97,8 @@ export function buildFleetScreenView(
   playerSlotId: string,
   presence?: FleetPresenceInput,
 ): FleetScreenView {
-  const nation = snapshot.nations.get(playerSlotId);
-  if (!nation) {
+  const facts = derivePlayerFacts(snapshot, playerSlotId);
+  if (facts === undefined) {
     return {
       divisions: [],
       areas: [],
@@ -108,11 +109,11 @@ export function buildFleetScreenView(
     };
   }
 
-  const divisions: FleetDivisionView[] = nation.fleets.map((fleet) => ({
+  const divisions: FleetDivisionView[] = facts.fleets.map(({ fleet, ships }) => ({
     divisionId: fleet.id,
     fleetName: fleet.name,
     areaId: fleet.locationAreaId,
-    ships: fleet.ships.map((ship) => ({
+    ships: ships.map(({ ship, design }) => ({
       shipId: ship.id,
       name: ship.name,
       designId: ship.designVersionId,
@@ -125,12 +126,8 @@ export function buildFleetScreenView(
       ...(ship.readiness === "REPAIR" && ship.repairMonthsRemaining !== undefined
         ? { repairMonthsRemaining: Number(ship.repairMonthsRemaining) }
         : {}),
-      ...(snapshot.designs.get(ship.designVersionId)?.crampedAccommodation === true
-        ? { crampedCode: "a" as const }
-        : {}),
-      ...(snapshot.designs.get(ship.designVersionId)?.shortRange === true
-        ? { rangeCode: "S" as const }
-        : {}),
+      ...(design?.crampedAccommodation === true ? { crampedCode: "a" as const } : {}),
+      ...(design?.shortRange === true ? { rangeCode: "S" as const } : {}),
       ...(ship.colonialServiceFitted === true
         ? { colonialServiceFitted: true as const, colonialCode: "c" as const }
         : {}),
@@ -151,22 +148,11 @@ export function buildFleetScreenView(
       return byFrom !== 0 ? byFrom : a.toAreaId.localeCompare(b.toAreaId);
     });
 
-  const ports: FleetPort[] = snapshot.world.ports
-    .filter((port) => port.nationId === playerSlotId)
-    .map((port) => ({
-      id: port.id,
-      name: port.name,
-      areaId: port.areaId,
-      capacity: Number(port.level),
-    }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+  const ports: FleetPort[] = [...facts.ports];
 
-  const overBaseShips: FleetOverBaseShip[] = nation.fleets
-    .flatMap((fleet) =>
-      fleet.ships
-        .filter((ship) => ship.overBase !== undefined)
-        .map((ship) => ({ shipId: ship.id, name: ship.name, areaId: ship.locationAreaId })),
-    )
+  const overBaseShips: FleetOverBaseShip[] = facts.ships
+    .filter(({ ship }) => ship.overBase !== undefined)
+    .map(({ ship }) => ({ shipId: ship.id, name: ship.name, areaId: ship.locationAreaId }))
     .sort((a, b) => a.shipId.localeCompare(b.shipId));
 
   return {

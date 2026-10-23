@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0274).
+highest existing number + 1 (the next number is ADR-0282).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -68,6 +68,8 @@ Concurrent-agent worktree coordination and repository process rules.
 | --- | --- | --- | --- | --- |
 | 0220 | [ADR-0220-worktree-per-effort-coordination.md](ADR-0220-worktree-per-effort-coordination.md) | Worktree-per-effort coordination for concurrent agents | superseded | ADR-0234 |
 | 0227 | [ADR-0227-pipeline-tracker-on-github.md](ADR-0227-pipeline-tracker-on-github.md) | Pipeline issues live on GitHub, not local markdown | accepted | — |
+| 0274 | [ADR-0274-scratch-removed-from-tree.md](ADR-0274-scratch-removed-from-tree.md) | The frozen `.scratch/` tree is removed | accepted | — |
+| 0275 | [ADR-0275-tsgo-gate-reads-installed-toolchain.md](ADR-0275-tsgo-gate-reads-installed-toolchain.md) | The tsgo gate compares pins to the installed toolchain | accepted | — |
 | 0234 | [ADR-0234-single-checkout-local-merge-workflow.md](ADR-0234-single-checkout-local-merge-workflow.md) | Single checkout with local feature branches merged to dev locally | accepted | — |
 | 0236 | [ADR-0236-up-to-three-worktrees.md](ADR-0236-up-to-three-worktrees.md) | Up to three concurrent worktrees | accepted | — |
 | 0237 | [ADR-0237-up-to-five-worktrees.md](ADR-0237-up-to-five-worktrees.md) | Up to five concurrent worktrees | accepted | — |
@@ -76,6 +78,9 @@ Concurrent-agent worktree coordination and repository process rules.
 | 0267 | [ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md](ADR-0267-reachability-ledger-maps-engine-capability-to-desktop-path.md) | The reachability ledger maps engine capability to desktop path | accepted | — |
 | 0268 | [ADR-0268-code-carries-no-comments.md](ADR-0268-code-carries-no-comments.md) | Code carries no comments | accepted | — |
 | 0269 | [ADR-0269-worktree-ledger-is-local-untracked-state.md](ADR-0269-worktree-ledger-is-local-untracked-state.md) | The worktree ledger is local, untracked state | accepted | — |
+| 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | accepted | — |
+| 0279 | [ADR-0279-replay-approvals-carry-a-change-class.md](ADR-0279-replay-approvals-carry-a-change-class.md) | Replay approvals carry a verified change class | accepted | — |
+| 0280 | [ADR-0280-property-based-replay-scenarios.md](ADR-0280-property-based-replay-scenarios.md) | Property-based replay scenarios use fast-check as a test-only dependency | accepted | — |
 
 ## Scenario content & research
 
@@ -99,12 +104,13 @@ The monthly appropriation, ledger, research, deficit policy and construction cap
 
 ## Turns, interruptions & save/resume
 
-Turn identity and the suspend/resume interruption model.
+Turn identity, the suspend/resume interruption model, and strict save-file decoding.
 
 | # | File | Title | Status | Superseded by |
 | --- | --- | --- | --- | --- |
 | 0222 | [ADR-0222-turn-identity-stable-across-resume.md](ADR-0222-turn-identity-stable-across-resume.md) | A turn's interruption identity is stable across suspend and resume | accepted | — |
 | 0235 | [ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md](ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md) | Main-owned recent campaigns and reopen allow-list | accepted | — |
+| 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | accepted | — |
 
 ## Fleet readiness, command & prestige
 
@@ -120,6 +126,7 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 | 0245 | [ADR-0245-player-nation-id-in-campaign-state.md](ADR-0245-player-nation-id-in-campaign-state.md) | The player nation is stored in authoritative campaign state | accepted | — |
 | 0260 | [ADR-0260-prestige-application-and-unpaid-funds-source.md](ADR-0260-prestige-application-and-unpaid-funds-source.md) | Prestige application seam and the unpaid-funds source | accepted | — |
 | 0261 | [ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md](ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md) | A fixed-loss prestige rule and an optional DECLINED_BATTLE reason code | accepted | — |
+| 0281 | [ADR-0281-sacking-phase-and-terminal-career.md](ADR-0281-sacking-phase-and-terminal-career.md) | The sacking phase and the terminal career | accepted | — |
 
 ## Foreign stations & presence
 
@@ -176,6 +183,8 @@ Package interfaces, seams and module depth across the engine.
 | 0271 | [ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md](ADR-0271-combat-package-exposes-three-verbs-and-subsystem-seams.md) | The combat package exposes three verbs and subsystem seams | accepted | — |
 | 0272 | [ADR-0272-month-pipeline-owns-order-and-observed-access.md](ADR-0272-month-pipeline-owns-order-and-observed-access.md) | The month pipeline owns phase order and observes real snapshot access | accepted | — |
 | 0273 | [ADR-0273-shared-command-contract-split-by-concern.md](ADR-0273-shared-command-contract-split-by-concern.md) | The shared command contract is split by concern | accepted | — |
+| 0276 | [ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md](ADR-0276-ui-state-writes-are-field-patches-merged-in-main.md) | UI-state writes are field patches merged once, in main | accepted | — |
+| 0277 | [ADR-0277-exact-duplicate-pure-helpers-live-in-core.md](ADR-0277-exact-duplicate-pure-helpers-live-in-core.md) | Exact-duplicate pure helpers live in combat core | accepted | — |
 
 ## Archive
 

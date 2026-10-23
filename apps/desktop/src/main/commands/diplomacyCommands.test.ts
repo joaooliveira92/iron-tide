@@ -22,9 +22,8 @@ import {
   registerCampaignSession,
 } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
-import { pendingEnvelopesForExecution, clearPendingWorkspacesForTest } from "../pendingCommands.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
-import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
+import { programFor, queuedEnvelopes, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { toSaveableState } from "../saveHelpers.js";
 import { commitMonthProgram } from "./commitMonth.js";
@@ -45,7 +44,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, "../../../../..");
 const GENERATED_ARTIFACT = resolve(REPO_ROOT, "content", "generated", "1880");
 
-const runtime = ManagedRuntime.make(desktopMainLayer());
+const makeRuntime = () => ManagedRuntime.make(desktopMainLayer());
+let runtime = makeRuntime();
+
+function restartRuntime(): void {
+  void runtime.dispose();
+  runtime = makeRuntime();
+}
 
 async function runProgram<A>(
   program: AnyCommandHandler,
@@ -88,7 +93,7 @@ describe("diplomacy commands", () => {
   afterEach(() => {
     rmSync(saveRoot, { recursive: true, force: true });
     clearCampaignSessionsForTest();
-    clearPendingWorkspacesForTest();
+    restartRuntime();
   });
 
   function registerProductionSession(
@@ -161,7 +166,7 @@ describe("diplomacy commands", () => {
 
   function queuedDiplomacy(sessionId: string): CommandEnvelope<CommandBody>[] {
     const state = requireSessionState(sessionId);
-    return pendingEnvelopesForExecution(sessionId, state.snapshot).filter((envelope) =>
+    return queuedEnvelopes(runtime, sessionId, state.snapshot).filter((envelope) =>
       DIPLOMACY_TYPES.has(envelope.body.type as string),
     );
   }
@@ -560,7 +565,8 @@ describe("diplomacy commands", () => {
       expect(relationRow?.tension).toBeGreaterThan(5);
 
       expect(
-        pendingEnvelopesForExecution(
+        queuedEnvelopes(
+          runtime,
           "apply-war-session",
           requireSessionState("apply-war-session").snapshot,
         ),
@@ -616,7 +622,7 @@ describe("diplomacy commands", () => {
       expect(diplomacy.outcome).toBe("success");
 
       expect(
-        pendingEnvelopesForExecution("mixed-session", requireSessionState("mixed-session").snapshot)
+        queuedEnvelopes(runtime, "mixed-session", requireSessionState("mixed-session").snapshot)
           .map((e) => e.body.type)
           .sort(),
       ).toEqual(["DeclareWar", "SetResearchPriority"]);
@@ -639,7 +645,7 @@ describe("diplomacy commands", () => {
             w.status === "DECLARED_NOT_ACTIVE",
         ),
       ).toBe(true);
-      expect(pendingEnvelopesForExecution("mixed-session", after.snapshot)).toEqual([]);
+      expect(queuedEnvelopes(runtime, "mixed-session", after.snapshot)).toEqual([]);
     });
   });
 

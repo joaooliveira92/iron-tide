@@ -243,3 +243,46 @@ describe("drawBoolean", () => {
     expect(results.has(false)).toBe(true);
   });
 });
+
+describe("stream isolation", () => {
+  const take = (stream: { next(): number }, count: number): number[] =>
+    Array.from({ length: count }, () => stream.next());
+
+  it("leaves an authoritative stream unchanged by draws from a cosmetic stream", () => {
+    const alone = take(new RandomEngine("iso").stream("combat:encounter-1"), 6);
+
+    const engine = new RandomEngine("iso");
+    const combat = engine.stream("combat:encounter-1");
+    const cosmetic = engine.stream("cosmetic:wake-foam");
+    const interleaved: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      take(cosmetic, i + 1);
+      interleaved.push(combat.next());
+    }
+
+    expect(interleaved).toEqual(alone);
+  });
+
+  it("does not depend on the order streams are created", () => {
+    const first = new RandomEngine("order");
+    const a1 = first.stream("a");
+    const b1 = first.stream("b");
+    const second = new RandomEngine("order");
+    const b2 = second.stream("b");
+    const a2 = second.stream("a");
+
+    expect([take(a1, 4), take(b1, 4)]).toEqual([take(a2, 4), take(b2, 4)]);
+  });
+
+  it("gives a cosmetic stream values distinct from an authoritative one", () => {
+    const engine = new RandomEngine("distinct");
+    expect(take(engine.stream("cosmetic:x"), 4)).not.toEqual(take(engine.stream("combat:x"), 4));
+  });
+
+  it("discards a cosmetic stream without touching the ledger hash", () => {
+    const ledger = new RandomLedger();
+    const before = ledger.hash();
+    take(new RandomEngine("ledger").stream("cosmetic:x"), 10);
+    expect(ledger.hash()).toBe(before);
+  });
+});

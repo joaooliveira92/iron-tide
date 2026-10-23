@@ -1,6 +1,6 @@
 import { BluewaveError } from "@bluewave/contracts";
 import { RandomEngine } from "@bluewave/random";
-import { BattleEvent } from "../battleLedger.js";
+import { BattleEvent } from "../core/battleLedger.js";
 import { TORPEDO_FORMULA_VERSION, TORPEDO_RULESET_VERSION } from "./constants.js";
 import type { CompiledTorpedoSpeedSetting } from "@bluewave/armament";
 import { compiledTorpedoOf, type CompiledTorpedoRegistry } from "./registry.js";

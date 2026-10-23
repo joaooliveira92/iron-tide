@@ -21,7 +21,7 @@ The pipeline stores its artifacts here, not as local markdown:
 - **Tickets** (`to-tickets`) → sub-issues of the spec issue, `ready-for-agent`, native blocking edges.
 - **Map** (`wayfinder`) → Wayfinding below.
 
-`.scratch/` is frozen provenance; `.ai/specs/` is retired. Create `wayfinder:*` labels
+`.ai/specs/` is retired. Create `wayfinder:*` labels
 on first use (`gh label create wayfinder:map`, plus `research`/`prototype`/`grilling`/`task`).
 
 ## Pull requests as a triage surface

@@ -1,13 +1,18 @@
 import { BluewaveError } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
-import type { ShipDamageState, FloodingSourceRecord } from "../damage/state.js";
-import { withDamageStateHash, assertFixedPointDamage } from "../damage/state.js";
 import {
+  type ShipDamageState,
+  type FloodingSourceRecord,
+  withDamageStateHash,
+  assertFixedPointDamage,
   resolveStructureFlotation,
   type StructureFlotationResult,
-} from "../damage/structureFlotation.js";
-import { evaluateTerminalSeam, type TerminalResult } from "../damage/terminalSeam.js";
-import { applyTurretDamage, type TurretComponent } from "../damage/turretStates.js";
+  evaluateTerminalSeam,
+  type TerminalResult,
+  applyTurretDamage,
+  type TurretComponent,
+  type ComponentOutcome,
+} from "../damage/torpedoHit.js";
 import { torpedoPolicyId } from "./constants.js";
 import { TORPEDO_STATE_INVARIANT_FAILED } from "./reasonCodes.js";
 import { computeBaseWarheadFlotationDamage, computeTorpedoFlotationDamage } from "./flotation.js";
@@ -30,7 +35,6 @@ import {
 import type { FloodingIsolationState, TorpedoPropulsionType } from "./constants.js";
 import type { TorpedoImpactZone, TorpedoTargetProtectionLevel } from "./detonation.js";
 import type { TorpedoTubeProtectionLevel } from "./tubeHazard.js";
-import type { ComponentOutcome } from "../damage/componentDamage.js";
 import {
   TORPEDO_IMMEDIATE_FLOODING_MIN_DEPTH_M,
   TORPEDO_SEAWATER_DENSITY_KG_PER_M3,

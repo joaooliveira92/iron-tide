@@ -1,18 +1,9 @@
 import { useCallback, useMemo } from "react";
 import type { CampaignCommandMap } from "../../shared/campaign-contract.js";
-import type {
-  CancelMovementCommandPayload,
-  MovementCommandOutcome,
-  ReplaceMovementCommandPayload,
-  SubmitMovementCommandPayload,
-} from "../../shared/fleet-contract.js";
+import type { MovementCommandOutcome } from "../../shared/fleet-contract.js";
 import { useBridge } from "./bridge-context.js";
-import type {
-  CommandExecutionContext,
-  CommandOutcome,
-  CommandSender,
-  RequestKind,
-} from "./command-screen-workflow.js";
+import { envelopeOf, type CommandStamp } from "./command-envelope.js";
+import type { CommandOutcome, CommandSender, RequestKind } from "./command-screen-workflow.js";
 
 export interface MovementRouteTarget {
   readonly divisionId: string;
@@ -20,50 +11,18 @@ export interface MovementRouteTarget {
   readonly toAreaId: string;
 }
 
+function routeOf(target: MovementRouteTarget): MovementRouteTarget {
+  return {
+    divisionId: target.divisionId,
+    fromAreaId: target.fromAreaId,
+    toAreaId: target.toAreaId,
+  };
+}
+
 export type MovementOrderSender = (
   kind: RequestKind,
   send: CommandSender<MovementCommandOutcome>,
 ) => Promise<CommandOutcome>;
-
-export function movementSubmitBody(
-  sessionId: string,
-  target: MovementRouteTarget,
-  context: CommandExecutionContext,
-): SubmitMovementCommandPayload {
-  return {
-    sessionId,
-    divisionId: target.divisionId,
-    fromAreaId: target.fromAreaId,
-    toAreaId: target.toAreaId,
-    expectedRevision: context.expectedRevision,
-    transportRequestId: context.transportRequestId,
-  };
-}
-
-export function movementReplaceBody(
-  sessionId: string,
-  target: MovementRouteTarget,
-  commandId: string,
-  context: CommandExecutionContext,
-): ReplaceMovementCommandPayload {
-  return {
-    ...movementSubmitBody(sessionId, target, context),
-    commandId,
-  };
-}
-
-export function movementCancelBody(
-  sessionId: string,
-  commandId: string,
-  context: CommandExecutionContext,
-): CancelMovementCommandPayload {
-  return {
-    sessionId,
-    commandId,
-    expectedRevision: context.expectedRevision,
-    transportRequestId: context.transportRequestId,
-  };
-}
 
 export interface MovementOrders {
   readonly submit: (target: MovementRouteTarget) => Promise<CommandOutcome>;
@@ -83,10 +42,10 @@ export function useMovementOrders(sessionId: string, execute: MovementOrderSende
     <Name extends MovementCommandName>(
       kind: RequestKind,
       command: Name,
-      build: (context: CommandExecutionContext) => CampaignCommandMap[Name]["payload"],
+      build: (stamp: CommandStamp) => CampaignCommandMap[Name]["payload"],
     ) => {
       if (bridge === undefined) return Promise.resolve("transport-failure" as const);
-      return execute(kind, (context) => bridge.campaign.execute(command, build(context)));
+      return execute(kind, (stamp) => bridge.campaign.execute(command, build(stamp)));
     },
     [bridge, execute],
   );
@@ -94,17 +53,21 @@ export function useMovementOrders(sessionId: string, execute: MovementOrderSende
   return useMemo(
     () => ({
       submit: (target: MovementRouteTarget) =>
-        send("submit", "submitMovementCommand", (context) =>
-          movementSubmitBody(sessionId, target, context),
-        ),
+        send("submit", "submitMovementCommand", (stamp) => ({
+          ...envelopeOf(sessionId, stamp),
+          ...routeOf(target),
+        })),
       replace: (target: MovementRouteTarget, commandId: string) =>
-        send("replace", "replaceMovementCommand", (context) =>
-          movementReplaceBody(sessionId, target, commandId, context),
-        ),
+        send("replace", "replaceMovementCommand", (stamp) => ({
+          ...envelopeOf(sessionId, stamp),
+          ...routeOf(target),
+          commandId,
+        })),
       cancel: (commandId: string) =>
-        send("cancel", "cancelMovementCommand", (context) =>
-          movementCancelBody(sessionId, commandId, context),
-        ),
+        send("cancel", "cancelMovementCommand", (stamp) => ({
+          ...envelopeOf(sessionId, stamp),
+          commandId,
+        })),
     }),
     [send, sessionId],
   );

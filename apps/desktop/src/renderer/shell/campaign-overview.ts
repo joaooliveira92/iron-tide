@@ -25,6 +25,8 @@ export function overviewFromProjection(
     projectedSurplusDeficit: projection.projectedSurplusDeficit,
     atWar: projection.knownEnemyNations.length > 0,
     activeAlertsCount,
+    prestige: projection.prestige,
+    ...(projection.career === undefined ? {} : { career: projection.career }),
   };
 }
 
@@ -43,5 +45,7 @@ export function overviewAfterCommit(
     projectedSurplusDeficit: previous.projectedSurplusDeficit,
     atWar: previous.atWar,
     activeAlertsCount: null,
+    prestige: previous.prestige,
+    ...(previous.career === undefined ? {} : { career: previous.career }),
   };
 }

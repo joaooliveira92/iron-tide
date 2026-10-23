@@ -2,7 +2,9 @@ import { Result } from "effect";
 
 import {
   checkReplayApprovals,
+  CHANGE_CLASSES,
   formatApprovalFailures,
+  isChangeClass,
   proposeApprovals,
   type CorpusState,
 } from "./approvals.js";
@@ -49,12 +51,17 @@ export function approvalsCommand(
     }
     const cause = option(argv, "--cause");
     const migrationAssessment = option(argv, "--migration");
+    const changeClass = option(argv, "--class");
     if (cause === undefined || migrationAssessment === undefined) {
-      io.print("propose needs --cause <text> and --migration <text>\n");
+      io.print("propose needs --cause <text> and --migration <text> and --class <class>\n");
+      return 2;
+    }
+    if (!isChangeClass(changeClass)) {
+      io.print(`propose needs --class, one of ${CHANGE_CLASSES.join(", ")}\n`);
       return 2;
     }
     const head = io.readHead();
-    const text = proposeApprovals(io.readBase(), head, { cause, migrationAssessment });
+    const text = proposeApprovals(io.readBase(), head, { changeClass, cause, migrationAssessment });
     if (Result.isFailure(text)) {
       io.print(`rejected: ${text.failure.message}\n`);
       return 2;
@@ -68,7 +75,7 @@ export function approvalsCommand(
     return 0;
   }
   io.print(
-    "usage:\n  replay-approvals check [--base <ref>]\n  replay-approvals propose --cause <text> --migration <text> [--base <ref>]\n",
+    "usage:\n  replay-approvals check [--base <ref>]\n  replay-approvals propose --cause <text> --migration <text> --class <class> [--base <ref>]\n",
   );
   return 2;
 }

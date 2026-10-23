@@ -14,8 +14,8 @@ import {
 } from "../air-defense/air-defense-state.js";
 import { Layer } from "../air-defense/air-defense-system-definition.js";
 import type { AirDefenseContext, AirDefenseDefenderContext } from "../air-defense/engineWiring.js";
-import type { BattleWeatherComponents } from "../weather/components.js";
-import { KNOTS_TO_UM_S } from "../movement/constants.js";
+import type { BattleWeatherComponents } from "../weather/neighbour.js";
+import { KNOTS_TO_UM_S } from "../movement/neighbour.js";
 import type { BattleManifest } from "../generation/manifest.js";
 import type {
   AirDefenseInstallationDeclaration,

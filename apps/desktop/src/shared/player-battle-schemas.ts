@@ -1,13 +1,18 @@
 import { Schema } from "effect";
+import {
+  MAX_SPEED_PERCENT,
+  MIN_SPEED_PERCENT,
+  PLAYER_BATTLE_STANCES,
+} from "./player-battle-orders.js";
 import { nonEmptyString } from "./schema-primitives.js";
 
 export const PlayerBattleDivisionOrderSchema = Schema.Struct({
   divisionId: nonEmptyString,
-  stance: Schema.Literals(["ENGAGE", "HOLD", "WITHDRAW"]),
+  stance: Schema.Literals(PLAYER_BATTLE_STANCES),
   speedPercent: Schema.Finite.check(
     Schema.isInt(),
-    Schema.isGreaterThanOrEqualTo(0),
-    Schema.isLessThanOrEqualTo(100),
+    Schema.isGreaterThanOrEqualTo(MIN_SPEED_PERCENT),
+    Schema.isLessThanOrEqualTo(MAX_SPEED_PERCENT),
   ),
 });
 

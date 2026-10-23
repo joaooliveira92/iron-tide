@@ -1,8 +1,10 @@
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
+import { monthName } from "../lib/campaign-month.js";
 import { economyStatusLabel, researchNote } from "../lib/economy-wording.js";
 import type { PresentationFormat } from "../lib/presentation-format/index.js";
 import { KG_PER_TONNE } from "../lib/presentation-format/index.js";
+import { translate } from "../lib/strings.js";
 
 export const FOREIGN_STATION_RULE_V1 = "controlled-by-another-nation";
 
@@ -353,6 +355,57 @@ function buildPorts(projection: PlayerProjection): readonly PortDetail[] {
     .toSorted((a, b) => b.capacity - a.capacity || a.id.localeCompare(b.id, "en"));
 }
 
+function signed(value: number): string {
+  return value > 0 ? `+${String(value)}` : String(value);
+}
+
+function prestigeRow(projection: PlayerProjection): StripRow {
+  const { prestige } = projection;
+  const last = prestige.lastChange;
+  const parts = [
+    translate("shell.prestige.description", { threshold: prestige.sackingThreshold }),
+    ...(last === undefined
+      ? []
+      : [
+          translate("shell.prestige.lastChange", {
+            delta: signed(last.delta),
+            reason: translate(`shell.prestige.reason.${last.reasonCode}`),
+            month: last.month,
+          }),
+        ]),
+    ...(prestige.dismissalRisk
+      ? [translate("shell.prestige.riskNote", { threshold: prestige.sackingThreshold })]
+      : []),
+  ];
+  return real(
+    "prestige",
+    translate("shell.header.metric.prestige"),
+    prestige.dismissalRisk
+      ? translate("shell.prestige.valueAtRisk", { value: prestige.current })
+      : String(prestige.current),
+    parts.join(" "),
+    prestige.dismissalRisk ? "alert" : "normal",
+  );
+}
+
+function careerRow(career: NonNullable<PlayerProjection["career"]>): StripRow {
+  const sacked = career.reason === "SACKED";
+  return real(
+    "career",
+    translate("shell.career.label"),
+    translate(sacked ? "shell.prestige.careerSacked" : "shell.prestige.careerCampaignEnd", {
+      score: career.score,
+    }),
+    translate("shell.career.note", {
+      score: career.score,
+      month: monthName(career.month.month) ?? String(career.month.month),
+      year: career.month.year,
+      reason: translate(`shell.career.reason.${career.reason}`),
+    }),
+    sacked ? "alert" : "normal",
+  );
+}
+
 export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
   const { projection, areas, alertsCount, format } = input;
   const economy = projection.economy;
@@ -380,7 +433,8 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
         );
 
   const nation: StripRow[] = [
-    deferred("prestige", "Prestige", "No prestige mechanic exists in the campaign yet."),
+    prestigeRow(projection),
+    ...(projection.career === undefined ? [] : [careerRow(projection.career)]),
     deferred(
       "fleet-morale",
       "Fleet morale",

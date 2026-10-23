@@ -1,6 +1,6 @@
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
-import type { DamageContext } from "./damage.js";
+import type { DamageContext } from "../damage/minuteDamage.js";
 import {
   engagementHeading,
   headingToward,

@@ -165,11 +165,7 @@ try {
   );
 
   // --- The Shipbuilding workspace renders the artifact-backed ship-building content ---
-  await page
-    .getByTestId("bottom-nav")
-    .getByRole("button", { name: "Construction", exact: true })
-    .click();
-  await page.getByTestId("bottom-nav").getByRole("button", { name: "Shipbuilding" }).click();
+  await page.getByTestId("bottom-nav").getByRole("button", { name: "Ship design" }).click();
   const workspace = page.getByTestId("shipbuilding-dialog");
   await workspace.getByRole("img", { name: /Top-down plan/ }).waitFor({ timeout: 15_000 });
   check("shipbuilding workspace opens on the shipped content", true);

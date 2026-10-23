@@ -110,6 +110,32 @@ describe("save migration (ticket 11d)", () => {
     expect(migrate().status).toBe("current");
   });
 
+  it("keeps the metadata keys and their order when it rewrites a migrated save", () => {
+    const savePath = saveAt("1.2.0", tmpDir);
+    const metaPath = join(savePath, "metadata.json");
+    const originalKeys = Object.keys(JSON.parse(readFileSync(metaPath, "utf8")));
+
+    migrateSaveDirectory(savePath, CURRENT_COMPATIBILITY_VERSION, INJECTED_STEPS);
+
+    expect(Object.keys(JSON.parse(readFileSync(metaPath, "utf8")))).toEqual(originalKeys);
+  });
+
+  it("refuses to migrate a save whose metadata carries an unmodeled key and leaves it untouched", () => {
+    const savePath = saveAt("1.2.0", tmpDir);
+    const metaPath = join(savePath, "metadata.json");
+    const metadata = { ...JSON.parse(readFileSync(metaPath, "utf8")), surprise: true };
+    writeFileSync(metaPath, JSON.stringify(metadata, null, 2), "utf8");
+    const campaignBefore = readFileSync(join(savePath, "campaign.json"), "utf8");
+
+    const result = migrateSaveDirectory(savePath, CURRENT_COMPATIBILITY_VERSION, INJECTED_STEPS);
+
+    expect(result.status).toBe("refused");
+    if (result.status === "refused") expect(result.kind).toBe("malformed");
+    expect(readFileSync(join(savePath, "campaign.json"), "utf8")).toBe(campaignBefore);
+    expect(JSON.parse(readFileSync(metaPath, "utf8"))).toEqual(metadata);
+    expect(existsSync(`${savePath}.migrating`)).toBe(false);
+  });
+
   it("refuses an unsupported future version", () => {
     const result = migrateSaveDirectory(saveAt("5.0.0", tmpDir));
     expect(result.status).toBe("refused");

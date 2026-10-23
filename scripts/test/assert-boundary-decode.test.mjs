@@ -121,6 +121,12 @@ void test("scanBoundaryDecodeCasts fails closed on a stale entry when strict", (
   );
 });
 
+void test("the persistence scope guards the save-file readers", () => {
+  const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+  assert.deepEqual(SCOPES.persistence, ["packages/persistence/src"]);
+  assert.deepEqual(scanBoundaryDecodeCasts(repoRoot, SCOPES.persistence), []);
+});
+
 void test("the real tree passes every scope (allowlisted sites excluded)", () => {
   const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
   for (const roots of Object.values(SCOPES)) {

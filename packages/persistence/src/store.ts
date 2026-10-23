@@ -10,7 +10,12 @@ import {
 } from "node:fs";
 import { isAbsolute, join, relative } from "node:path";
 import type { CampaignState } from "@bluewave/campaign";
-import { canonicalSerialize, sha256Hex, verifyEnvelope } from "@bluewave/deterministic";
+import {
+  canonicalSerialize,
+  compareCodePoints,
+  sha256Hex,
+  verifyEnvelope,
+} from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { Result, Schema } from "effect";
 import { CompatibilityChecker, CURRENT_COMPATIBILITY_VERSION } from "./compatibility.js";
@@ -20,13 +25,11 @@ import {
   MISSING_SAVE_CODE,
   UNSIGNED_SAVE_CODE,
 } from "./errors.js";
+import { readPointerFile, readSaveMetadata, readSigFile } from "./fileDecode.js";
 import { cleanup } from "./recovery.js";
 import {
-  PointerFileSchema,
+  decodeStorableCampaignState,
   SaveHeaderSchema,
-  SaveMetadataSchema,
-  SigFileSchema,
-  StorableCampaignStateSchema,
   type PointerFile,
   type SaveMetadata,
   type SigFile,
@@ -209,12 +212,8 @@ export class SaveStore {
       return null;
     }
 
-    let pointer: PointerFile;
-    try {
-      pointer = Schema.decodeUnknownSync(PointerFileSchema)(
-        JSON.parse(readFileSync(pointerPath, "utf8")),
-      );
-    } catch {
+    const pointer = readPointerFile(pointerPath);
+    if (pointer === null) {
       diagnostics.addError(CORRUPT_SAVE_CODE, "Pointer file is corrupt or unreadable", {
         stage: "persistence.load",
       });
@@ -239,12 +238,8 @@ export class SaveStore {
       diagnostics.addError(CORRUPT_SAVE_CODE, "Save id escapes the save directory", stage);
       return { status: "corrupt" };
     }
-    let metadata: SaveMetadata;
-    try {
-      metadata = Schema.decodeUnknownSync(SaveMetadataSchema)(
-        JSON.parse(readFileSync(join(savePath, "metadata.json"), "utf8")),
-      );
-    } catch {
+    const metadata = readSaveMetadata(join(savePath, "metadata.json"));
+    if (metadata === null) {
       diagnostics.addError(CORRUPT_SAVE_CODE, `Save ${saveId} has no readable metadata`, stage);
       return { status: "corrupt" };
     }
@@ -265,7 +260,8 @@ export class SaveStore {
       return { status: "corrupt" };
     }
     try {
-      return { status: "present", value: JSON.parse(text) as unknown };
+      const value: unknown = JSON.parse(text);
+      return { status: "present", value };
     } catch {
       diagnostics.addError(CORRUPT_SAVE_CODE, `Save ${saveId} month input is not JSON`, stage);
       return { status: "corrupt" };
@@ -376,7 +372,7 @@ export class SaveStore {
       return null;
     }
 
-    const parsedResult = Schema.decodeUnknownResult(StorableCampaignStateSchema)(raw);
+    const parsedResult = decodeStorableCampaignState(raw);
     if (!Result.isSuccess(parsedResult)) {
       diagnostics.addError(CORRUPT_SAVE_CODE, "Save data is structurally invalid", {
         stage: "persistence.load",
@@ -459,10 +455,8 @@ export class SaveStore {
       return true;
     }
 
-    let sig: SigFile;
-    try {
-      sig = Schema.decodeUnknownSync(SigFileSchema)(JSON.parse(readFileSync(sigPath, "utf8")));
-    } catch {
+    const sig = readSigFile(sigPath);
+    if (sig === null) {
       diagnostics.addError(CORRUPT_SAVE_CODE, "Save signature file is invalid", {
         stage: "persistence.load",
       });
@@ -506,31 +500,23 @@ export class SaveStore {
       const metaPath = join(saveDir, dirName, "metadata.json");
       const sigPath = join(saveDir, dirName, "campaign.sig.json");
 
-      if (existsSync(metaPath)) {
-        try {
-          const meta = Schema.decodeUnknownSync(SaveMetadataSchema)(
-            JSON.parse(readFileSync(metaPath, "utf8")),
-          );
-          saves.push(meta);
-          continue;
-        } catch {}
+      const meta = existsSync(metaPath) ? readSaveMetadata(metaPath) : null;
+      if (meta !== null) {
+        saves.push(meta);
+        continue;
       }
 
-      if (existsSync(sigPath)) {
-        try {
-          const sig = Schema.decodeUnknownSync(SigFileSchema)(
-            JSON.parse(readFileSync(sigPath, "utf8")),
-          );
-          saves.push({
-            saveId: dirName,
-            timestamp: "",
-            turnNumber: 0,
-            campaignId: "",
-            snapshotHash: "",
-            compatibilityVersion: sig.compatibilityVersion,
-            contentArtifactHash: sig.serializedHash,
-          });
-        } catch {}
+      const sig = existsSync(sigPath) ? readSigFile(sigPath) : null;
+      if (sig !== null) {
+        saves.push({
+          saveId: dirName,
+          timestamp: "",
+          turnNumber: 0,
+          campaignId: "",
+          snapshotHash: "",
+          compatibilityVersion: sig.compatibilityVersion,
+          contentArtifactHash: sig.serializedHash,
+        });
       }
     }
 
@@ -541,11 +527,11 @@ export class SaveStore {
     if (previousSaveId !== null && !chainRank.has(previousSaveId)) chainRank.set(previousSaveId, 1);
 
     saves.sort((a, b) => {
-      const byTimestamp = b.timestamp.localeCompare(a.timestamp);
+      const byTimestamp = compareCodePoints(b.timestamp, a.timestamp);
       if (byTimestamp !== 0) return byTimestamp;
       const byChain = (chainRank.get(a.saveId) ?? 2) - (chainRank.get(b.saveId) ?? 2);
       if (byChain !== 0) return byChain;
-      return b.saveId.localeCompare(a.saveId);
+      return compareCodePoints(b.saveId, a.saveId);
     });
     return saves;
   }
@@ -566,27 +552,13 @@ export class SaveStore {
   getActiveSaveId(saveDir: string): string | null {
     const pointerPath = join(saveDir, "pointer.json");
     if (!existsSync(pointerPath)) return null;
-    try {
-      const pointer = Schema.decodeUnknownSync(PointerFileSchema)(
-        JSON.parse(readFileSync(pointerPath, "utf8")),
-      );
-      return pointer.activeSaveId;
-    } catch {
-      return null;
-    }
+    return readPointerFile(pointerPath)?.activeSaveId ?? null;
   }
 
   getPreviousSaveId(saveDir: string): string | null {
     const pointerPath = join(saveDir, "pointer.json");
     if (!existsSync(pointerPath)) return null;
-    try {
-      const pointer = Schema.decodeUnknownSync(PointerFileSchema)(
-        JSON.parse(readFileSync(pointerPath, "utf8")),
-      );
-      return pointer.previousSaveId ?? null;
-    } catch {
-      return null;
-    }
+    return readPointerFile(pointerPath)?.previousSaveId ?? null;
   }
 }
 

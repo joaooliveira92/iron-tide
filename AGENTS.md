@@ -12,7 +12,7 @@ Read, in order, before editing:
 1. `README.md` — the canonical design baseline.
 2. `.ai/ENGINEERING-CONTRACT.md` — the highest code authority.
 3. `RULES.md` — the binding rules distilled from the above.
-4. `.ai/REQUIREMENTS.md` and applicable ADRs (`docs/adr/`).
+4. `.ai/REQUIREMENTS.md` and the ADRs the task cites.
 5. The current approved milestone brief (`.ai/SPRINT-PLAN.md`, `.ai/briefs/`).
 6. The nearby code, tests, package exports, and CI — never assume they exist.
 

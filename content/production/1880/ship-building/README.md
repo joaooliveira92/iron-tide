@@ -1,6 +1,6 @@
 # Ship-building content (EARLY band, 1880-1899)
 
-Authored data for `@bluewave/ship-design` (spec: `.scratch/ship-building/spec.md`).
+Authored data for `@bluewave/ship-design`.
 The subtree is loaded by the content compiler: `pack.json`'s `shipBuilding` map is
 the single declaration of every file below, and `content:check`/`content:build`
 fail closed if a discovered file is undeclared or a declared file is missing

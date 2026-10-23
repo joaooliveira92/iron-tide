@@ -29,9 +29,6 @@
   "apps/desktop/src/main/monthInput.ts": {
     "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
   },
-  "apps/desktop/src/main/pendingCommands.ts": {
-    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
-  },
   "apps/desktop/src/main/shipBuildingContent.ts": {
     "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 3
   },
@@ -88,9 +85,6 @@
   },
   "apps/desktop/src/renderer/components/world-map/map-label-layout.test.ts": {
     "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
-  },
-  "apps/desktop/src/renderer/lib/use-bridge-query.test.ts": {
-    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
   },
   "apps/desktop/src/renderer/screens/construction/drawing-board/DraftAutosave.test.tsx": {
     "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
@@ -172,9 +166,6 @@
   },
   "apps/desktop/src/renderer/shell/useCampaignShell.test.ts": {
     "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 11
-  },
-  "apps/desktop/src/renderer/shell/useGuidedInspection.ts": {
-    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
   },
   "apps/desktop/src/renderer/shell/useNewGameFlow.test.ts": {
     "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 6
@@ -300,7 +291,7 @@
     "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
   },
   "packages/persistence/src/store.ts": {
-    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 2
+    "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1
   },
   "packages/persistence/test/persistence.test.ts": {
     "b23a6a8439c0dde5515893e7c90c1e3233b8616e634470f20dc4928bcf3609bc": 1

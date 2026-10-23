@@ -1,16 +1,5 @@
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
-import type {
-  UiState,
-  UiStateFirstMonthInspection,
-  UiStateInspectorLayout,
-  UiStateTurnMessages,
-} from "../../shared/ui-state-contract.js";
-
-export interface UiStatePatch {
-  readonly firstMonthInspection?: UiStateFirstMonthInspection;
-  readonly inspector?: UiStateInspectorLayout;
-  readonly turnMessages?: UiStateTurnMessages;
-}
+import type { UiState, UiStatePatch } from "../../shared/ui-state-contract.js";
 
 export async function readUiState(
   bridge: BluewaveDesktopBridge | undefined,
@@ -27,13 +16,6 @@ export async function writeUiStatePatch(
   patch: UiStatePatch,
 ): Promise<UiState | undefined> {
   if (bridge === undefined) return undefined;
-  const before = await bridge.campaign.execute("readUiState", sessionId);
-  const dismissedFingerprints =
-    before.outcome === "success" ? [...before.value.uiState.dismissedFingerprints] : [];
-  const result = await bridge.campaign.execute("writeUiState", {
-    sessionId,
-    dismissedFingerprints,
-    ...patch,
-  });
+  const result = await bridge.campaign.execute("writeUiState", { sessionId, ...patch });
   return result.outcome === "success" ? result.value.uiState : undefined;
 }

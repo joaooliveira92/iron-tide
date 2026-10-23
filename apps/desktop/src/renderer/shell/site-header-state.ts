@@ -1,3 +1,5 @@
+import type { PlayerProjection } from "@bluewave/campaign-engine";
+
 import { monthName } from "../lib/campaign-month.js";
 import type { PresentationFormat } from "../lib/presentation-format/index.js";
 import { translate } from "../lib/strings.js";
@@ -16,6 +18,8 @@ export interface HeaderCampaign {
   readonly projectedSurplusDeficit: number;
   readonly atWar: boolean;
   readonly activeAlertsCount: number | null;
+  readonly prestige: PlayerProjection["prestige"];
+  readonly career?: PlayerProjection["career"];
 }
 
 export type MetricIcon = "budget" | "prestige" | "tension" | "nation" | "alerts" | "balance";
@@ -25,6 +29,7 @@ export interface HeaderMetric {
   readonly label: string;
   readonly value: string;
   readonly placeholder: boolean;
+  readonly alert?: boolean;
 }
 
 export interface HeaderAction {
@@ -142,6 +147,34 @@ export function describeSecondaryRow(
   }
 }
 
+function prestigeMetric(campaign: HeaderCampaign | null): HeaderMetric {
+  const label = translate("shell.header.metric.prestige");
+  if (campaign === null) return { icon: "prestige", label, value: NO_VALUE, placeholder: true };
+  const { career, prestige } = campaign;
+  if (career !== undefined) {
+    const key =
+      career.reason === "SACKED"
+        ? "shell.prestige.careerSacked"
+        : "shell.prestige.careerCampaignEnd";
+    return {
+      icon: "prestige",
+      label,
+      value: translate(key, { score: career.score }),
+      placeholder: false,
+      alert: career.reason === "SACKED",
+    };
+  }
+  return {
+    icon: "prestige",
+    label,
+    value: prestige.dismissalRisk
+      ? translate("shell.prestige.valueAtRisk", { value: prestige.current })
+      : String(prestige.current),
+    placeholder: false,
+    alert: prestige.dismissalRisk,
+  };
+}
+
 function campaignMetrics(
   campaign: HeaderCampaign | null,
   format: PresentationFormat,
@@ -175,12 +208,7 @@ function campaignMetrics(
           : String(campaign.activeAlertsCount),
       placeholder: campaign === null || campaign.activeAlertsCount === null,
     },
-    {
-      icon: "prestige",
-      label: translate("shell.header.metric.prestige"),
-      value: NO_VALUE,
-      placeholder: true,
-    },
+    prestigeMetric(campaign),
     {
       icon: "tension",
       label: translate("shell.header.metric.tension"),

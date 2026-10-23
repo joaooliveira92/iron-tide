@@ -16,9 +16,8 @@ import {
   registerCampaignSession,
 } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
-import { clearPendingWorkspacesForTest, pendingEnvelopesForExecution } from "../pendingCommands.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
-import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
+import { programFor, queuedEnvelopes, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { toSaveableState } from "../saveHelpers.js";
 import type {
@@ -37,7 +36,13 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const GENERATED_ARTIFACT = resolve(__dirname, "../../../../..", "content", "generated", "1880");
 
-const runtime = ManagedRuntime.make(desktopMainLayer());
+const makeRuntime = () => ManagedRuntime.make(desktopMainLayer());
+let runtime = makeRuntime();
+
+function restartRuntime(): void {
+  void runtime.dispose();
+  runtime = makeRuntime();
+}
 
 async function runProgram<A>(
   program: AnyCommandHandler,
@@ -76,7 +81,7 @@ describe("division commands", () => {
   afterEach(() => {
     rmSync(saveRoot, { recursive: true, force: true });
     clearCampaignSessionsForTest();
-    clearPendingWorkspacesForTest();
+    restartRuntime();
   });
 
   function registerSession(sessionId: string): CampaignState {
@@ -129,7 +134,7 @@ describe("division commands", () => {
 
   function queued(sessionId: string) {
     const state = getCampaignSession(sessionId)!.state;
-    return pendingEnvelopesForExecution(sessionId, state.snapshot).filter((e) =>
+    return queuedEnvelopes(runtime, sessionId, state.snapshot).filter((e) =>
       DIVISION_TYPES.has(e.body.type as string),
     );
   }
