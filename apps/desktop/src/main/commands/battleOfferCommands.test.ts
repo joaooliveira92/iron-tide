@@ -1,10 +1,6 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import type { CampaignState, CampaignSnapshot, NationState } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
-import { createEnvelope } from "@bluewave/deterministic";
+import { join, resolve } from "node:path";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
 import { FIXTURE_BATTLE_OFFER_RULES } from "@bluewave/test-support";
@@ -17,14 +13,12 @@ import {
   getCampaignSession,
   registerCampaignSession,
 } from "../campaignSessions.js";
-import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { loadPendingTurn, PENDING_TURN_FILENAME, savePendingTurn } from "../pendingTurn.js";
 import { projectCommandExit } from "../runtime/bridgeResult.js";
 import { registerWarSession, WAR_AREA, WAR_SEED } from "./warSessionFixture.js";
 import { programFor, type AnyCommandHandler } from "../commandProgramFixtures.js";
 import { ContentArtifact, contentArtifactLayer } from "../runtime/contentArtifact.js";
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
-import { toSaveableState } from "../saveHelpers.js";
 import { commitMonthProgram } from "./commitMonth.js";
 import {
   abandonPendingTurnProgram,
