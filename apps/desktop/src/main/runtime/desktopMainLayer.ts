@@ -28,6 +28,12 @@ import {
   UiStateStore,
   sidecarStoresLayer,
 } from "./sidecarStores.js";
+import {
+  PendingTurnStore,
+  PlayerBattleStore,
+  pendingTurnStoreLayer,
+  playerBattleStoreLayer,
+} from "./turnSidecarStores.js";
 
 export type CommandEnv =
   | ContentArtifact
@@ -40,6 +46,8 @@ export type CommandEnv =
   | ReportsStore
   | TurnSummariesStore
   | DraftStore
+  | PendingTurnStore
+  | PlayerBattleStore
   | DecisionSource
   | PreferencesStore
   | CampaignPreferencesStore
@@ -56,6 +64,8 @@ export function desktopMainLayer(): Layer.Layer<CommandEnv> {
     campaignSessionStoreLayer(),
     commandQueueStoreLayer(),
     sidecarStoresLayer(),
+    pendingTurnStoreLayer(),
+    playerBattleStoreLayer(),
     decisionSourceLayer(),
     nativeDialogLayer(),
     idGeneratorLayer(),

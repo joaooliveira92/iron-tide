@@ -19,18 +19,13 @@ import type {
   ReadPendingTurnResult,
   ResolveTurnResult,
 } from "../../shared/turn-message-contract.js";
-import {
-  clearPendingTurn,
-  isPendingTurnValid,
-  loadPendingTurn,
-  savePendingTurn,
-  type PendingTurnRecord,
-} from "../pendingTurn.js";
+import { isPendingTurnValid, type PendingTurnRecord } from "../pendingTurn.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { CommandFailed } from "../runtime/commandError.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { DecisionSource } from "../runtime/decisionSource.js";
 import type { CommandHandler } from "../runtime/commandProgram.js";
+import { PendingTurnStore } from "../runtime/turnSidecarStores.js";
 import { runTurnTransaction } from "./turnTransaction.js";
 
 function toPendingTurnDto(record: PendingTurnRecord): PendingTurnDto {
@@ -171,7 +166,8 @@ export const resolveTurnProgram: CommandHandler<"resolveTurn"> = (payload) =>
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(payload.sessionId);
 
-    const pending = loadPendingTurn(record.saveDir);
+    const pendingTurns = yield* PendingTurnStore;
+    const pending = yield* pendingTurns.load(record.saveDir);
     let recordedInputs: readonly RecordedInput[] = [];
     if (pending !== null) {
       const hashes = yield* expectedContentHashes();
@@ -216,14 +212,9 @@ const finishTransaction = (input: {
 
     switch (outcome.kind) {
       case "completed": {
-        yield* Effect.try({
-          try: () => clearPendingTurn(record.saveDir),
-          catch: (error) =>
-            new CommandFailed({
-              reason: "PENDING_TURN_CLEAR_FAILED",
-              diagnostics: [error instanceof Error ? error.message : String(error)],
-            }),
-        }).pipe(Effect.catchTag("CommandFailed", () => Effect.void));
+        yield* (yield* PendingTurnStore)
+          .clear(record.saveDir)
+          .pipe(Effect.catchTag("CommandFailed", () => Effect.void));
         const value: ResolveTurnResult = {
           status: "completed",
           summary: outcome.summary,
@@ -240,14 +231,7 @@ const finishTransaction = (input: {
         };
       }
       case "suspended": {
-        yield* Effect.try({
-          try: () => savePendingTurn(record.saveDir, outcome.pendingTurn),
-          catch: (error) =>
-            new CommandFailed({
-              reason: "PENDING_TURN_WRITE_FAILED",
-              diagnostics: [error instanceof Error ? error.message : String(error)],
-            }),
-        });
+        yield* (yield* PendingTurnStore).save(record.saveDir, outcome.pendingTurn);
         const value: ResolveTurnResult = {
           status: "suspended",
           request: outcome.request === null ? null : toRequestDto(outcome.request),
@@ -289,7 +273,8 @@ export const answerDecisionProgram: CommandHandler<"answerDecision"> = (payload)
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(payload.sessionId);
-    const pending = loadPendingTurn(record.saveDir);
+    const pendingTurns = yield* PendingTurnStore;
+    const pending = yield* pendingTurns.load(record.saveDir);
     if (pending === null) {
       return {
         outcome: "error" as const,
@@ -341,7 +326,8 @@ export const submitBattleResultProgram: CommandHandler<"submitBattleResult"> = (
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(payload.sessionId);
-    const pending = loadPendingTurn(record.saveDir);
+    const pendingTurns = yield* PendingTurnStore;
+    const pending = yield* pendingTurns.load(record.saveDir);
     if (pending === null) {
       return {
         outcome: "error" as const,
@@ -397,7 +383,8 @@ export const submitOfferResponseProgram: CommandHandler<"submitOfferResponse"> =
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(payload.sessionId);
-    const pending = loadPendingTurn(record.saveDir);
+    const pendingTurns = yield* PendingTurnStore;
+    const pending = yield* pendingTurns.load(record.saveDir);
     if (pending === null) {
       return {
         outcome: "error" as const,
@@ -467,26 +454,22 @@ const recordInput = (
   saveDir: string,
   pending: PendingTurnRecord,
   input: RecordedInput,
-): Effect.Effect<void, CommandFailed> =>
-  Effect.try({
-    try: () =>
-      savePendingTurn(saveDir, {
-        ...pending,
-        recordedInputs: [...pending.recordedInputs, input],
-        nextInterruptionOrdinal: input.ordinal + 1,
-      }),
-    catch: (error) =>
-      new CommandFailed({
-        reason: "PENDING_TURN_WRITE_FAILED",
-        diagnostics: [error instanceof Error ? error.message : String(error)],
-      }),
+): Effect.Effect<void, CommandFailed, PendingTurnStore> =>
+  Effect.gen(function* () {
+    const pendingTurns = yield* PendingTurnStore;
+    yield* pendingTurns.save(saveDir, {
+      ...pending,
+      recordedInputs: [...pending.recordedInputs, input],
+      nextInterruptionOrdinal: input.ordinal + 1,
+    });
   });
 
 export const readPendingTurnProgram: CommandHandler<"readPendingTurn"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
-    const pending = loadPendingTurn(record.saveDir);
+    const pendingTurns = yield* PendingTurnStore;
+    const pending = yield* pendingTurns.load(record.saveDir);
     if (pending === null) {
       const value: ReadPendingTurnResult = { pending: null, valid: false };
       return { outcome: "success" as const, value, diagnostics: [] };
@@ -504,15 +487,6 @@ export const abandonPendingTurnProgram: CommandHandler<"abandonPendingTurn"> = (
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
     const value: AbandonPendingTurnResult = { abandoned: true };
-    yield* Effect.try({
-      try: () => {
-        clearPendingTurn(record.saveDir);
-      },
-      catch: (error) =>
-        new CommandFailed({
-          reason: "PENDING_TURN_CLEAR_FAILED",
-          diagnostics: [error instanceof Error ? error.message : String(error)],
-        }),
-    });
+    yield* (yield* PendingTurnStore).clear(record.saveDir);
     return { outcome: "success" as const, value, diagnostics: [] };
   });

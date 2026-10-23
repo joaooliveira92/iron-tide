@@ -19,16 +19,11 @@ import type {
   PlayerBattleResultDto,
   StartPlayerBattleResult,
 } from "../../shared/player-battle-contract.js";
-import { loadPendingTurn } from "../pendingTurn.js";
-import {
-  clearPlayerBattleSave,
-  loadPlayerBattleSave,
-  savePlayerBattle,
-  type PlayerBattleStep,
-} from "../playerBattleSidecar.js";
+import type { PlayerBattleStep } from "../playerBattleSidecar.js";
 import type { CommandHandler } from "../runtime/commandProgram.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { DecisionSource } from "../runtime/decisionSource.js";
+import { PendingTurnStore, PlayerBattleStore } from "../runtime/turnSidecarStores.js";
 import { runTurnTransaction } from "./turnTransaction.js";
 
 const sessions = new Map<string, PlayerBattleSession>();
@@ -99,7 +94,9 @@ export const startPlayerBattleProgram: CommandHandler<"startPlayerBattle"> = (pa
   Effect.gen(function* () {
     const store = yield* CampaignSessionStore;
     const record = yield* store.get(payload.sessionId);
-    const pending = loadPendingTurn(record.saveDir);
+    const pendingTurns = yield* PendingTurnStore;
+    const battleSaves = yield* PlayerBattleStore;
+    const pending = yield* pendingTurns.load(record.saveDir);
     if (pending === null) {
       return {
         outcome: "error" as const,
@@ -180,10 +177,11 @@ export const startPlayerBattleProgram: CommandHandler<"startPlayerBattle"> = (pa
       };
     }
 
-    const saved = loadPlayerBattleSave(record.saveDir, {
+    const loaded = yield* battleSaves.load(record.saveDir, {
       turnId: pending.turnId,
       battleId: payload.battleId,
     });
+    const saved = loaded.kind === "found" ? loaded.save : null;
     let steps: readonly PlayerBattleStep[] = [];
     let resumed = false;
     if (saved !== null && saved.steps.length > 0) {
@@ -194,7 +192,7 @@ export const startPlayerBattleProgram: CommandHandler<"startPlayerBattle"> = (pa
         steps = saved.steps;
         resumed = true;
       } catch {
-        clearPlayerBattleSave(record.saveDir);
+        yield* battleSaves.clear(record.saveDir);
       }
     }
     const key = keyOf(payload.sessionId, payload.battleId);
@@ -214,6 +212,8 @@ export const advancePlayerBattleProgram: CommandHandler<"advancePlayerBattle"> =
   Effect.gen(function* () {
     const store = yield* CampaignSessionStore;
     const record = yield* store.get(payload.sessionId);
+    const pendingTurns = yield* PendingTurnStore;
+    const battleSaves = yield* PlayerBattleStore;
     const session = sessions.get(keyOf(payload.sessionId, payload.battleId));
     if (session === undefined) {
       return {
@@ -231,9 +231,9 @@ export const advancePlayerBattleProgram: CommandHandler<"advancePlayerBattle"> =
     sessions.set(key, next);
     const steps = [...(stepLogs.get(key) ?? []), step];
     stepLogs.set(key, steps);
-    const pending = loadPendingTurn(record.saveDir);
+    const pending = yield* pendingTurns.load(record.saveDir);
     if (pending !== null) {
-      savePlayerBattle(record.saveDir, {
+      yield* battleSaves.save(record.saveDir, {
         schemaVersion: "1.0.0",
         turnId: pending.turnId,
         battleId: payload.battleId,
@@ -252,6 +252,7 @@ export const finishPlayerBattleProgram: CommandHandler<"finishPlayerBattle"> = (
   Effect.gen(function* () {
     const store = yield* CampaignSessionStore;
     const record = yield* store.get(payload.sessionId);
+    const battleSaves = yield* PlayerBattleStore;
     const session = sessions.get(keyOf(payload.sessionId, payload.battleId));
     if (session === undefined) {
       return {
@@ -270,6 +271,6 @@ export const finishPlayerBattleProgram: CommandHandler<"finishPlayerBattle"> = (
     const value: FinishPlayerBattleResult = { result: toResultDto(session) };
     sessions.delete(keyOf(payload.sessionId, payload.battleId));
     stepLogs.delete(keyOf(payload.sessionId, payload.battleId));
-    clearPlayerBattleSave(record.saveDir);
+    yield* battleSaves.clear(record.saveDir);
     return { outcome: "success" as const, value, diagnostics: [] };
   });
