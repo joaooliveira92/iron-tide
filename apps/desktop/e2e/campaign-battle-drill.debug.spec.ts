@@ -59,6 +59,16 @@ async function execute(page: Page, command: string, payload: unknown): Promise<B
   );
 }
 
+async function advanceThroughBattleOffer(page: Page): Promise<void> {
+  const calendar = page.getByText(/^Bluewave — [A-Za-z]+ \d{4}$/).first();
+  const before = await calendar.textContent();
+  await page.getByRole("button", { name: /^advance month$/i }).click();
+  await page.getByRole("button", { name: /^advance to /i }).click();
+  await page.getByTestId("offer-delegate").click();
+  await expect(page.getByTestId("offer-delegate")).toBeHidden();
+  await expect(calendar).not.toHaveText(before ?? "");
+}
+
 test("declared war → generated battle → resolved and surfaced in campaign state", async ({
   e2e,
 }) => {
@@ -99,7 +109,7 @@ test("declared war → generated battle → resolved and surfaced in campaign st
   const drill = await execute(page, "seedCampaignBattleDrill", { sessionId });
   expect(drill, JSON.stringify(drill)).toMatchObject({ outcome: "success" });
 
-  await advanceMonths(page, 1);
+  await advanceThroughBattleOffer(page);
 
   await page
     .getByTestId("bottom-nav")
