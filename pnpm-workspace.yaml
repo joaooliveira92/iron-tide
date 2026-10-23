@@ -9,7 +9,7 @@ allowBuilds:
   electron-winstaller: false
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@1.1.0
-  vite-plus: 1.1.0
+  vite-plus: 1.3.0
 overrides:
   # Single-copy invariant (MIG-GRAPH-1/2): every transitive `effect`/`@effect/vitest`
   # request resolves to the vendored workspace packages, never the npm registry.
