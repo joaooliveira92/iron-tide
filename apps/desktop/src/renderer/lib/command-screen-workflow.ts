@@ -15,7 +15,9 @@ export type RequestKind =
   | "order-foreign"
   | "assign-station"
   | "clear-station"
-  | "authorize-dock-expansion";
+  | "authorize-dock-expansion"
+  | "advance-battle"
+  | "finish-battle";
 
 export interface PendingRequest {
   readonly kind: RequestKind;
