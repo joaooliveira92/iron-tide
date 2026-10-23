@@ -6,6 +6,12 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 5
     groups:
+      lint-toolchain:
+        patterns:
+          - "@effect/tsgo"
+          - "oxlint"
+          - "oxlint-tsgolint"
+          - "typescript"
       dev-tooling:
         patterns:
           - "*"
