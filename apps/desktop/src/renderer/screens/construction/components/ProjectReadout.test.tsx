@@ -8,6 +8,7 @@ afterEach(cleanup);
 const row = (over: Partial<ProjectRow> = {}): ProjectRow => ({
   projectId: "project-1",
   className: "Havock class",
+  shipType: "destroyer",
   status: "ACTIVE",
   percent: 45,
   yard: null,

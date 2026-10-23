@@ -43,6 +43,19 @@ const withPackages = (done: Record<string, number>): ConstructionProjectQueueEnt
 const states = (e: ConstructionProjectQueueEntry) =>
   Object.fromEntries(projectRow(e).packages.map((p) => [p.id, p.state]));
 
+describe("projectRow dependencies", () => {
+  it("names what each package starts after, and carries the ship type", () => {
+    const row = projectRow(withPackages({}));
+    expect(row.shipType).toBe("destroyer");
+    expect(Object.fromEntries(row.packages.map((p) => [p.id, p.dependsOn]))).toEqual({
+      hull: [],
+      machinery: [],
+      launch: ["Hull"],
+      fit_out: ["Launch", "Machinery"],
+    });
+  });
+});
+
 describe("projectRow", () => {
   it("shows overall progress and no packages for a project with one figure", () => {
     const row = projectRow(entry());

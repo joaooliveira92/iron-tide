@@ -1,20 +1,27 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Hammer } from "lucide-react";
-import { PageHeader } from "../../components/shared/PageHeader.js";
-import { Badge } from "../../components/ui/badge.js";
-import { Button } from "../../components/ui/button.js";
-import { debugRevisionActions } from "../../components/shared/debugRevisionActions.js";
+import { useCallback, useEffect, useId, useMemo, useState, type CSSProperties } from "react";
+import { CalendarClock, Hammer } from "lucide-react";
+import { ScreenStage } from "../../components/shared/ScreenStage.js";
 import { Skeleton } from "../../components/ui/skeleton.js";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs.js";
+import { debugRevisionActions } from "../../components/shared/debugRevisionActions.js";
+import { Inspector } from "../shipbuilding/components/Inspector.js";
+import { InspectorResizeHandle } from "../shipbuilding/components/InspectorResizeHandle.js";
+import { INSPECTOR_COLLAPSED_PX } from "../shipbuilding/inspector-layout.js";
+import { useInspectorLayout } from "../shipbuilding/useInspectorLayout.js";
+import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import {
   BatchBuildDialog,
-  CommandTable,
-  ConstructionWizard,
-  DesignPicker,
+  CatalogStage,
+  CommandInspector,
+  DesignInspector,
   DockCapacityPanel,
   LoadErrorCard,
-  ProjectsCard,
-  StatsPanel,
+  OrdersStage,
+  ProjectInspector,
+  SlipwaysStage,
+  YardBar,
+  YardOverview,
+  YardRail,
+  YardStatusBar,
 } from "./components/index.js";
 import type {
   ConstructionBatchPreviewOutcome,
@@ -25,6 +32,13 @@ import { useConstructionScreen } from "./hooks/useConstructionScreen.js";
 import { CollapsibleSection } from "../../components/shared/CollapsibleSection.js";
 import { DeferredFeaturesPanel } from "../../components/shared/DeferredFeaturesPanel.js";
 import { DEFERRED_CONSTRUCTION_ITEMS } from "./construction-screen-state.js";
+import {
+  nextProjectSelection,
+  placeOf,
+  railMarks,
+  yardReadouts,
+  type YardPlaceId,
+} from "./yard-workspace.js";
 
 export function ConstructionScreen({ sessionId }: { readonly sessionId: string }) {
   const {
@@ -47,8 +61,22 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
     placeForeignOrder,
     authorizeDockExpansion,
   } = useConstructionScreen(sessionId);
-  const [activeTab, setActiveTab] = useState("overview");
-  const [wizardOpen, setWizardOpen] = useState(false);
+  const format = usePresentationFormat();
+  const [place, setPlace] = useState<YardPlaceId>("slipways");
+  const [tabs, setTabs] = useState<Readonly<Record<YardPlaceId, string>>>(() => ({
+    slipways: "project",
+    catalog: "design",
+    orders: "command",
+    dock: "yard",
+  }));
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [selectedCommandId, setSelectedCommandId] = useState<string | null>(null);
+  const {
+    layout: inspectorLayout,
+    setWidth: setInspectorWidth,
+    toggleCollapsed: toggleInspector,
+  } = useInspectorLayout(sessionId);
+  const inspectorId = useId();
   const [batchOpen, setBatchOpen] = useState(false);
   const [batchQuantity, setBatchQuantity] = useState(1);
   const [batchPreview, setBatchPreview] = useState<ConstructionBatchPreviewOutcome | null>(null);
@@ -61,14 +89,25 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
     [state.designs, selectedDesignId],
   );
 
-  const openWizard = useCallback(() => setWizardOpen(true), []);
-  const closeWizard = useCallback(() => setWizardOpen(false), []);
+  const rows = useMemo(() => projectRows(state.projects), [state.projects]);
+  const setTab = useCallback(
+    (target: YardPlaceId, tab: string) => setTabs((current) => ({ ...current, [target]: tab })),
+    [],
+  );
+  const openWizard = useCallback(() => {
+    setBatchOpen(false);
+    setPlace("catalog");
+    setTab("catalog", "order");
+  }, [setTab]);
+  const closeWizard = useCallback(() => setTab("catalog", "design"), [setTab]);
   const openBatch = useCallback(() => {
+    setPlace("catalog");
+    setTab("catalog", "design");
     setBatchPreview(null);
     setBatchForeignPreview(null);
     setBatchBuilderNationId(null);
     setBatchOpen(true);
-  }, []);
+  }, [setTab]);
   const closeBatch = useCallback(() => setBatchOpen(false), []);
   const refresh = useCallback(() => void loadScreen(), [loadScreen]);
   const confirmOrder = useCallback(() => {
@@ -152,124 +191,240 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
   }
 
   const busy = state.pendingRequest !== null || state.requiresRefresh;
-  const submittedCount = state.workspace.commands.filter(
-    (command) => command.status === "submitted",
-  ).length;
+  const workspace = state.workspace;
+  const economy = state.economy;
+  const figures = { projects: rows, designs: state.designs, commands: workspace.commands, economy };
+  const marks = railMarks(figures);
+  const currentPlace = placeOf(place);
+  const tab = currentPlace.tabs.find((t) => t.id === tabs[place]) ?? currentPlace.tabs[0]!;
+  const selectedRow = rows.find(
+    (row) => row.projectId === nextProjectSelection(selectedProjectId, rows),
+  );
+  const selectedCommand =
+    workspace.commands.find((command) => command.commandId === selectedCommandId) ?? null;
+  const reviewing = place === "catalog" && (batchOpen || tab.id === "order");
+  const monthLabel = `${state.month?.year ?? ""}-${String(state.month?.month ?? 0).padStart(2, "0")}`;
 
-  return (
-    <div data-guided-target="construction" className="space-y-6">
-      <PageHeader
-        icon={Hammer}
-        title="Construction Commands"
-        description="Drydock procurement and shipyard queue management."
-        actions={debugRevisionActions(state.month, state.revision)}
-      />
-
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="overview">Shipyard Ledger</TabsTrigger>
-          <TabsTrigger value="catalog">Design Catalog</TabsTrigger>
-          <TabsTrigger value="commands">
-            Command Ledger
-            {submittedCount > 0 && (
-              <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-xs">
-                {submittedCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview">
-          <div className="space-y-4">
-            <StatsPanel economy={state.economy} workspace={state.workspace} />
-            <DockCapacityPanel
-              dockMaxBuildDisplacementKg={state.economy.dockMaxBuildDisplacementKg}
-              maxConcurrentConstructionMassKg={state.economy.maxConcurrentConstructionMassKg}
-              committedNewConstructionMassKg={state.economy.committedNewConstructionMassKg}
-              exemptNewConstructionMassKg={state.economy.exemptNewConstructionMassKg}
-              dockExpansionDurationMonths={state.economy.dockExpansionDurationMonths}
-              dockExpansionNextStepKg={state.economy.dockExpansionNextStepKg}
-              dockPossessions={state.economy.dockPossessions}
-              pending={busy}
-              onAuthorizeDockExpansion={authorizeDockExpansion}
-            />
-            {state.notice !== null && (
-              <p role="status" className="text-sm whitespace-pre-line text-muted-foreground">
-                {state.notice}
-              </p>
-            )}
-            <ProjectsCard
-              rows={projectRows(state.projects)}
-              onHalt={halt}
-              onResume={resume}
-              onAccelerate={setAcceleration}
-              onCancelProject={cancelProject}
-            />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="catalog">
-          {batchOpen ? (
-            <BatchBuildDialog
-              designs={state.designs}
-              selectedDesignId={selectedDesignId}
-              onSelectDesign={setSelectedDesignId}
-              quantity={batchQuantity}
-              onQuantityChange={setBatchQuantity}
-              preview={batchPreview}
-              foreignPreview={batchForeignPreview}
-              builderNationId={batchBuilderNationId}
-              onSelectBuilder={setBatchBuilderNationId}
-              busy={busy || batchFetching}
-              notice={state.notice}
-              onConfirm={confirmBatch}
-              onCancel={closeBatch}
-            />
-          ) : !wizardOpen ? (
-            <div className="space-y-4">
-              <DesignPicker
-                designs={state.designs}
-                selectedDesignId={selectedDesignId}
-                onSelectDesign={setSelectedDesignId}
-                onSubmit={openWizard}
-                onRefresh={refresh}
-                busy={busy}
-                hasPendingRequest={request.outcomeUnknown}
-                onRetry={request.outcomeUnknown ? request.retry : undefined}
-                notice={state.notice}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={openBatch}
-                disabled={state.designs.length === 0}
-              >
-                Order a class batch (1–12)
-              </Button>
-            </div>
-          ) : (
-            <ConstructionWizard
-              design={selectedDesign}
-              economy={state.economy}
-              workspace={state.workspace}
-              busy={busy}
-              notice={state.notice}
-              onConfirm={confirmOrder}
-              onCancelWizard={closeWizard}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="commands">
-          <CommandTable
-            commands={state.workspace.commands}
+  const stage = (() => {
+    switch (place) {
+      case "slipways":
+        return (
+          <SlipwaysStage
+            rows={rows}
+            economy={economy}
+            selectedId={selectedRow?.projectId ?? null}
+            onSelect={(projectId) => {
+              setSelectedProjectId(projectId);
+              setTab("slipways", "project");
+            }}
+            onBrowseCatalog={() => setPlace("catalog")}
+          />
+        );
+      case "catalog":
+        return batchOpen ? (
+          <BatchBuildDialog
+            designs={state.designs}
+            selectedDesignId={selectedDesignId}
+            onSelectDesign={setSelectedDesignId}
+            quantity={batchQuantity}
+            onQuantityChange={setBatchQuantity}
+            preview={batchPreview}
+            foreignPreview={batchForeignPreview}
+            builderNationId={batchBuilderNationId}
+            onSelectBuilder={setBatchBuilderNationId}
+            busy={busy || batchFetching}
+            notice={state.notice}
+            onConfirm={confirmBatch}
+            onCancel={closeBatch}
+          />
+        ) : (
+          <CatalogStage
+            designs={state.designs}
+            economy={economy}
+            workspace={workspace}
+            selectedDesignId={selectedDesignId}
+            onSelectDesign={(designId) => {
+              setSelectedDesignId(designId);
+              setTab("catalog", "design");
+            }}
+          />
+        );
+      case "orders":
+        return (
+          <OrdersStage
+            commands={workspace.commands}
+            economy={economy}
             busy={busy}
             selectedDesignId={selectedDesignId}
+            selectedCommandId={selectedCommandId}
+            onSelectCommand={(commandId) => {
+              setSelectedCommandId(commandId);
+              setTab("orders", "command");
+            }}
             onReplace={replace}
             onCancel={cancel}
+            onBrowseCatalog={() => setPlace("catalog")}
           />
-        </TabsContent>
-      </Tabs>
+        );
+      case "dock":
+        return (
+          <DockCapacityPanel
+            dockMaxBuildDisplacementKg={economy.dockMaxBuildDisplacementKg}
+            maxConcurrentConstructionMassKg={economy.maxConcurrentConstructionMassKg}
+            committedNewConstructionMassKg={economy.committedNewConstructionMassKg}
+            exemptNewConstructionMassKg={economy.exemptNewConstructionMassKg}
+            dockExpansionDurationMonths={economy.dockExpansionDurationMonths}
+            dockExpansionNextStepKg={economy.dockExpansionNextStepKg}
+            dockPossessions={economy.dockPossessions}
+            pending={busy}
+            onAuthorizeDockExpansion={authorizeDockExpansion}
+          />
+        );
+    }
+  })();
+
+  const inspectorBody = (() => {
+    if (tab.id === "yard") return <YardOverview economy={economy} workspace={workspace} />;
+    if (place === "slipways") {
+      return (
+        <ProjectInspector
+          row={selectedRow ?? null}
+          pending={busy}
+          onHalt={halt}
+          onResume={resume}
+          onAccelerate={setAcceleration}
+          onCancelProject={cancelProject}
+        />
+      );
+    }
+    if (place === "catalog") {
+      return (
+        <DesignInspector
+          tab={tab.id}
+          design={selectedDesign}
+          economy={economy}
+          workspace={workspace}
+          busy={busy}
+          notice={state.notice}
+          onConfirm={confirmOrder}
+          onBackToDesign={closeWizard}
+        />
+      );
+    }
+    return (
+      <CommandInspector
+        command={selectedCommand}
+        commands={workspace.commands}
+        economy={economy}
+        workspace={workspace}
+      />
+    );
+  })();
+
+  const inspectorTitle = place === "catalog" ? "Design catalog" : currentPlace.label;
+
+  return (
+    <ScreenStage
+      guidedTarget="construction"
+      icon={Hammer}
+      title="Construction Commands"
+      description="Drydock procurement and shipyard queue management."
+      actions={debugRevisionActions(state.month, state.revision)}
+      className="space-y-3"
+    >
+      {state.notice !== null && !reviewing && (
+        <p role="status" className="text-sm whitespace-pre-line text-muted-foreground">
+          {state.notice}
+        </p>
+      )}
+
+      <div
+        data-testid="construction-workspace"
+        className="grid h-[clamp(36rem,calc(100dvh_-_24rem),60rem)] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border bg-background"
+        onKeyDownCapture={(event) => {
+          if (
+            (event.metaKey || event.ctrlKey) &&
+            !event.altKey &&
+            event.key.toLowerCase() === "b"
+          ) {
+            event.preventDefault();
+            toggleInspector();
+            return;
+          }
+          if (
+            event.key === "Escape" &&
+            event.target instanceof Element &&
+            !event.target.closest("[role='dialog'],[role='listbox']")
+          ) {
+            if (place === "slipways") setSelectedProjectId(null);
+            if (place === "orders") setSelectedCommandId(null);
+          }
+        }}
+      >
+        <YardBar
+          design={selectedDesign}
+          designCount={state.designs.length}
+          busy={busy}
+          retryPending={request.outcomeUnknown}
+          onRetry={request.outcomeUnknown ? request.retry : undefined}
+          onSubmit={openWizard}
+          onBatch={openBatch}
+          onRefresh={refresh}
+        />
+
+        <div
+          data-testid="construction-grid"
+          className="grid min-h-0 grid-cols-[3.5rem_minmax(0,1fr)_var(--inspector-width)] xl:grid-cols-[13rem_minmax(0,1fr)_var(--inspector-width)]"
+          style={
+            {
+              "--inspector-width": `${
+                inspectorLayout.collapsed ? INSPECTOR_COLLAPSED_PX : inspectorLayout.widthPx
+              }px`,
+            } as CSSProperties
+          }
+        >
+          <YardRail
+            active={place}
+            marks={marks}
+            onSelect={setPlace}
+            footer={
+              <p className="mt-1 flex items-center gap-1.5 border-t px-1 pt-2 text-xs text-muted-foreground max-xl:hidden">
+                <CalendarClock aria-hidden="true" className="size-4" />
+                Month
+                <span className="font-medium tabular-nums text-foreground">{monthLabel}</span>
+              </p>
+            }
+          />
+
+          <section aria-label={currentPlace.label} className="flex h-full min-h-0 min-w-0 flex-col">
+            <div className="themed-scrollbar min-h-0 flex-1 overflow-auto p-3">{stage}</div>
+          </section>
+
+          <div id={inspectorId} className="relative min-h-0">
+            {!inspectorLayout.collapsed && (
+              <InspectorResizeHandle
+                widthPx={inspectorLayout.widthPx}
+                onChange={setInspectorWidth}
+                controls={inspectorId}
+                className="absolute inset-y-0 -left-2 z-10 w-4"
+              />
+            )}
+            <Inspector
+              title={inspectorTitle}
+              breadcrumb={["Yard", currentPlace.label, tab.label]}
+              tabs={currentPlace.tabs}
+              tab={tab.id}
+              onTab={(next) => setTab(place, next)}
+              collapsed={inspectorLayout.collapsed}
+              onToggleCollapsed={toggleInspector}
+            >
+              {inspectorBody}
+            </Inspector>
+          </div>
+        </div>
+
+        <YardStatusBar readouts={yardReadouts(figures, workspace, format)} />
+      </div>
 
       <CollapsibleSection
         title="Not yet modelled"
@@ -282,6 +437,6 @@ export function ConstructionScreen({ sessionId }: { readonly sessionId: string }
           title="Construction features the engine cannot supply yet"
         />
       </CollapsibleSection>
-    </div>
+    </ScreenStage>
   );
 }
