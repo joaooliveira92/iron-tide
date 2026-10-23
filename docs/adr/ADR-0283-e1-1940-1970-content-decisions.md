@@ -9,7 +9,11 @@ precedent of [ADR-0239](ADR-0239-s2-prestige-values-balance-targets.md). Evidenc
 
 ## Decision
 
-1. **D1 fields.** Three research fields are added: `RADAR_ELECTRONICS`, `MISSILES` and `NAVAL_AVIATION`.
+1. **D1 fields.** Radar, missiles and aviation get their own research fields. The canonical vocabulary already declares them
+   (`RADAR_AND_ELECTRONICS`, `MISSILES`, `AVIATION`, `CARRIER_OPERATIONS` in `content-schema` `research-fields.ts`), though the pack authors
+   none yet, so no vocabulary change is needed; the dossier and decision request wrongly proposed new names. Radar technologies use
+   `RADAR_AND_ELECTRONICS`, missiles `MISSILES`, jets `AVIATION`, and catapult and angled deck `CARRIER_OPERATIONS`. National profiles gain
+   priorities for the fields the pack starts to use.
 2. **D2 date policy.** The `historical-analogue` year in the research note is each technology's year, labelled `BALANCE_TARGET`, with the
    community anchors (1944 carrier jets, 1947 heavy SSM conversions, 1950 angled decks, 1952 jet refit and steam catapult, 1955 ASW
    sonar, 1959 quadruple heavy SSM, 1960 cruise missiles, 1966 quadruple medium SSM) overriding where both exist.

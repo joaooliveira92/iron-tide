@@ -16,7 +16,7 @@ for radar and missiles (pp.121-127) and one date ("missiles from circa 1945", p.
 
 - Manual pp.121-127 (mechanics, no dates); Steam community guide anchors (medium trust, not game data); real-world introduction years
   from named reference works (candidates only). All in the research note.
-- The pack has ten research fields and no radar-electronics, missile or aircraft field; radar fits FIRE_CONTROL, missiles fit none.
+- The pack authors ten research fields; the canonical vocabulary also declares RADAR_AND_ELECTRONICS, MISSILES, AVIATION and CARRIER_OPERATIONS (correction recorded in ADR-0283).
 - `shipTypes.ts` already names eras `MID_CENTURY` (1940) and `LATE` (1960); dock-expansion steps already reach 1970.
 
 ## Why agent judgment is insufficient
