@@ -15,6 +15,7 @@ export type MeasurementSelections = Readonly<Record<string, string>>;
 
 export const UM_PER_YARD = UM_PER_INCH * 36;
 export const UM_PER_METRE = 1_000_000;
+export const UM_PER_NAUTICAL_MILE = 1_852 * UM_PER_METRE;
 export const UM_PER_KILOMETRE = 1_000_000_000;
 export const KG_PER_TONNE = 1_000;
 export const KG_PER_POUND = 0.45359237;

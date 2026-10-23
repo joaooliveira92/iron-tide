@@ -1,4 +1,5 @@
 import { Schema } from "effect";
+import { PlayerBattleDivisionOrderSchema } from "../shared/player-battle-schemas.js";
 import { defineSidecar, type SidecarReading } from "./runtime/sidecar.js";
 
 export const PLAYER_BATTLE_FILENAME = "player-battle.json";
@@ -7,17 +8,7 @@ const nonEmpty = Schema.String.check(Schema.isMinLength(1));
 
 const StepSchema = Schema.Struct({
   mode: Schema.Literals(["minute", "to_end"]),
-  divisions: Schema.Array(
-    Schema.Struct({
-      divisionId: nonEmpty,
-      stance: Schema.Literals(["ENGAGE", "HOLD", "WITHDRAW"]),
-      speedPercent: Schema.Finite.check(
-        Schema.isInt(),
-        Schema.isGreaterThanOrEqualTo(0),
-        Schema.isLessThanOrEqualTo(100),
-      ),
-    }),
-  ),
+  divisions: Schema.Array(PlayerBattleDivisionOrderSchema),
 });
 
 export const PlayerBattleSaveSchema = Schema.Struct({

@@ -87,11 +87,14 @@ export function pendingTurnStoreMemoryLayer(): Layer.Layer<PendingTurnStore> {
   });
 }
 
-export function playerBattleStoreMemoryLayer(): Layer.Layer<PlayerBattleStore> {
+export function playerBattleStoreMemoryLayer(
+  options: { readonly corrupt?: boolean } = {},
+): Layer.Layer<PlayerBattleStore> {
   const saves = new Map<string, PlayerBattleSave>();
   return Layer.succeed(PlayerBattleStore, {
     load: (saveDir, expected) =>
       Effect.sync((): PlayerBattleLoad => {
+        if (options.corrupt === true) return { kind: "corrupt" };
         const save = saves.get(saveDir);
         return save !== undefined &&
           save.turnId === expected.turnId &&

@@ -19,6 +19,7 @@ import {
   NativeDialog,
   nativeDialogLayer,
 } from "./platform.js";
+import { PlayerBattleRegistry, playerBattleRegistryLayer } from "./playerBattleRegistry.js";
 import { ProjectStore, projectStoreLayer } from "./projectStore.js";
 import { ReplayService, replayServiceLayer } from "./replayService.js";
 import {
@@ -48,6 +49,7 @@ export type CommandEnv =
   | DraftStore
   | PendingTurnStore
   | PlayerBattleStore
+  | PlayerBattleRegistry
   | DecisionSource
   | PreferencesStore
   | CampaignPreferencesStore
@@ -65,6 +67,7 @@ export function desktopMainLayer(): Layer.Layer<CommandEnv> {
     sidecarStoresLayer(),
     pendingTurnStoreLayer(),
     playerBattleStoreLayer(),
+    playerBattleRegistryLayer(),
     decisionSourceLayer(),
     nativeDialogLayer(),
     idGeneratorLayer(),
