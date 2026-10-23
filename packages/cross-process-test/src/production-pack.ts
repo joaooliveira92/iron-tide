@@ -28,13 +28,9 @@ export const PRODUCTION_PACK_DIR = resolve(
   "1880",
 );
 
-function buildProductionArtifact(): ContentBundleArtifact {
+function buildProductionArtifact(packDir: string): ContentBundleArtifact {
   const collector = new DiagnosticCollector();
-  const input = buildFullSurfaceInput(
-    resolve(PRODUCTION_PACK_DIR, "pack.json"),
-    PRODUCTION_PACK_DIR,
-    collector,
-  );
+  const input = buildFullSurfaceInput(resolve(packDir, "pack.json"), packDir, collector);
   const artifact = input
     ? buildContentBundleArtifact(input, new AbortController().signal, collector)
     : undefined;
@@ -67,16 +63,16 @@ export function compileProductionBundle(): {
   readonly bundle: CompiledContentBundle;
   readonly contentHash: string;
 } {
-  const artifact = buildProductionArtifact();
+  const artifact = buildProductionArtifact(PRODUCTION_PACK_DIR);
   return { bundle: decodeBundle(artifact), contentHash: artifact.envelope.bodyHash };
 }
 
-export function compileProductionCampaign(): {
+export function compileProductionCampaign(packDir: string = PRODUCTION_PACK_DIR): {
   readonly state: CampaignState;
   readonly contentHash: string;
   readonly bundle: CompiledContentBundle;
 } {
-  const artifact = buildProductionArtifact();
+  const artifact = buildProductionArtifact(packDir);
   const bundle = decodeBundle(artifact);
   const collector = new DiagnosticCollector();
   const output = new CampaignCompiler().compile(
