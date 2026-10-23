@@ -21,6 +21,11 @@ const projection: BudgetScreenProjection = {
     researchBudgetMin: 0,
     researchBudgetMax: 1000,
   },
+  commitments: {
+    fleet: { total: 0, atWar: false, warSurcharge: 0, groups: [], ships: [] },
+    construction: { projects: [], drawTotal: 0, carryingTotal: 0, haltedCount: 0 },
+    unpaidCostsPrestige: null,
+  },
   researchCaps: Array.from({ length: 91 }, (_, i) => ({
     rateBp: 500 + i * 50,
     cap: Math.floor((Math.floor((120000 * (500 + i * 50)) / 120000) * 1200) / 10000),

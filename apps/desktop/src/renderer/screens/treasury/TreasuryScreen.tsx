@@ -42,6 +42,7 @@ export function TreasuryScreen({ sessionId }: TreasuryScreenProps) {
         <div className="grid min-h-0 lg:grid-cols-[minmax(0,1fr)_22rem]">
           <TreasuryStage
             breakdown={breakdown}
+            commitments={policy.controller.state.commitments}
             previewResearch={policy.vm.previewResearch}
             pendingRateChange={policy.vm.rateChanged}
           />

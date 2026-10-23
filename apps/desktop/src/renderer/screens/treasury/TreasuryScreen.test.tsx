@@ -1,5 +1,5 @@
 /* @vitest-environment jsdom */
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
@@ -62,9 +62,55 @@ vi.mock("../../lib/use-campaign-projection.js", () => ({
   useCampaignProjection: () => hookMocks.state(),
 }));
 
+const commitments = vi.hoisted(() => ({
+  value: {
+    fleet: {
+      total: 200,
+      atWar: true,
+      warSurcharge: 25,
+      groups: [
+        { readiness: "ACTIVE", ships: 2, cost: 150, multiplierBp: 10_000 },
+        { readiness: "RESERVE", ships: 1, cost: 50, multiplierBp: 7_500 },
+      ],
+      ships: [
+        { id: "s1", name: "HMS Warrior", readiness: "ACTIVE", cost: 100, overBase: false },
+        { id: "s2", name: "HMS Resolute", readiness: "RESERVE", cost: 50, overBase: true },
+      ],
+    },
+    construction: {
+      projects: [
+        {
+          projectId: "p1",
+          className: "Ironclad",
+          shipType: "Battleship",
+          status: "ACTIVE",
+          draw: 400,
+          carryingCost: 0,
+          foreign: false,
+          percentComplete: 40,
+        },
+        {
+          projectId: "p2",
+          className: "Monitor",
+          shipType: "Coastal",
+          status: "HALTED",
+          draw: 0,
+          carryingCost: 12,
+          foreign: false,
+          percentComplete: 10,
+        },
+      ],
+      drawTotal: 400,
+      carryingTotal: 12,
+      haltedCount: 1,
+    },
+    unpaidCostsPrestige: { before: 20, after: 19, sackingThreshold: 16 },
+  },
+}));
+
 vi.mock("./hooks/useBudgetPolicyPanel.js", () => ({
   useBudgetPolicy: () => ({
-    controller: {},
+    controller: { state: { commitments: commitments.value } },
     vm: { previewResearch: null, rateChanged: false },
   }),
 }));
@@ -152,5 +198,43 @@ describe("TreasuryScreen", () => {
     expect(bar.getAttribute("aria-label")).toContain("Research 300");
     expect(bar.getAttribute("aria-label")).toContain("Spending is within income.");
     expect(screen.getByTestId("budget-bar").textContent).toContain("Income");
+  });
+
+  it("opens the fleet upkeep breakdown from the maintenance row", () => {
+    render(<TreasuryScreen sessionId="ses-1" />);
+    fireEvent.click(screen.getByRole("button", { name: /^Fleet maintenance: 200/ }));
+    const upkeep = screen.getByTestId("fleet-upkeep");
+    expect(within(upkeep).getByText(/The fleet costs 200 a month to keep/)).not.toBeNull();
+    expect(within(upkeep).getByText(/At war \+25/)).not.toBeNull();
+    expect(
+      within(upkeep).getByRole("button", { name: /HMS Warrior: 100 a month, Active/ }),
+    ).not.toBeNull();
+    expect(
+      screen.getByRole("img", { name: /Fleet upkeep by readiness: Active 150, Reserve 50/ }),
+    ).not.toBeNull();
+  });
+
+  it("opens the construction commitments with halted carrying cost called out", () => {
+    render(<TreasuryScreen sessionId="ses-1" />);
+    fireEvent.click(screen.getByRole("button", { name: /^Construction \(up to\)/ }));
+    const construction = screen.getByTestId("construction-commitments");
+    expect(within(construction).getByText(/up to 412 this month/)).not.toBeNull();
+    expect(within(construction).getByText(/1 halted project costs 12 a month/)).not.toBeNull();
+    expect(
+      within(construction).getByRole("button", { name: /Monitor: Halted, 12 this month/ }),
+    ).not.toBeNull();
+  });
+
+  it("warns that unpaid costs lose prestige only when there is a shortfall", () => {
+    render(<TreasuryScreen sessionId="ses-1" />);
+    expect(screen.queryByText(/Unpaid costs also cost prestige/)).toBeNull();
+    cleanup();
+    hookMocks.state.mockReturnValue({
+      projection: { ...projection, economy: { ...projection.economy, shortfall: 40 } },
+      loadError: null,
+    });
+    render(<TreasuryScreen sessionId="ses-1" />);
+    expect(screen.getByText(/Unpaid costs also cost prestige: 20 → 19/)).not.toBeNull();
+    expect(screen.getByText(/Dismissal risk begins at 16/)).not.toBeNull();
   });
 });
