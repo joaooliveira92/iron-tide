@@ -12,6 +12,11 @@ import {
   useCommandScreenWorkflow,
 } from "../../../lib/command-screen-workflow.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
+import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
+import {
+  buildBudgetPolicyViewModel,
+  type BudgetPolicyViewModel,
+} from "../budget-policy-view-model.js";
 import {
   emptyDraft,
   resolveDraft,
@@ -34,6 +39,7 @@ export interface BudgetPolicyPanelController {
   readonly setRate: (value: number) => void;
   readonly setResearch: (value: number) => void;
   readonly apply: () => void;
+  readonly reset: () => void;
 }
 
 export function useBudgetPolicyPanel(sessionId: string): BudgetPolicyPanelController {
@@ -77,5 +83,24 @@ export function useBudgetPolicyPanel(sessionId: string): BudgetPolicyPanelContro
     setRate: (value) => setDraft(setDraftRate(current, value)),
     setResearch: (value) => setDraft(setDraftResearch(current, value)),
     apply,
+    reset: () => setDraft(emptyDraft(state.revision)),
   };
+}
+
+export interface BudgetPolicy {
+  readonly controller: BudgetPolicyPanelController;
+  readonly vm: BudgetPolicyViewModel;
+}
+
+export function useBudgetPolicy(sessionId: string): BudgetPolicy {
+  const controller = useBudgetPolicyPanel(sessionId);
+  const format = usePresentationFormat();
+  const vm = buildBudgetPolicyViewModel({
+    state: controller.state,
+    rate: controller.rate,
+    research: controller.research,
+    loadError: controller.loadError,
+    format,
+  });
+  return { controller, vm };
 }

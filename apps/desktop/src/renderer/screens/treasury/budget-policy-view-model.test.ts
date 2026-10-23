@@ -5,6 +5,7 @@ import type { BudgetPolicyState } from "./budget-policy-state.js";
 import {
   buildBudgetPolicyViewModel,
   formatRate,
+  researchStep,
   type BudgetPolicyViewModelInput,
 } from "./budget-policy-view-model.js";
 
@@ -48,6 +49,15 @@ describe("formatRate", () => {
   it("renders basis points as a one-decimal percentage", () => {
     expect(formatRate(2050, FORMAT)).toBe("20.5%");
     expect(formatRate(0, FORMAT)).toBe("0%");
+  });
+});
+
+describe("researchStep", () => {
+  it("is coarse only when the whole grid can hold the current values", () => {
+    expect(researchStep(60, 60, 240)).toBe(10);
+    expect(researchStep(5, 5, 12)).toBe(1);
+    expect(researchStep(55, 60, 240)).toBe(1);
+    expect(researchStep(60, 65, 240)).toBe(1);
   });
 });
 
