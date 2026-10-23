@@ -1,3 +1,4 @@
+import { formatFixed } from "../../../../lib/presentation-format/index.js";
 import type { BowStyle, SternStyle } from "./geometry.js";
 
 export interface DrawingFacts {
@@ -37,7 +38,8 @@ const houseLabel = (s: DrawingFacts["superstructure"]) =>
     ? `superstructure from ${Math.round(s.startPermille / 10)}% to ${Math.round(s.endPermille / 10)}% of length`
     : "no superstructure zone";
 
-const dims = (m: number, digits: number) => (Number.isFinite(m) ? m.toFixed(digits) : "unknown");
+const dims = (m: number, digits: number) =>
+  Number.isFinite(m) ? formatFixed(m, { locale: "en-US", digits }) : "unknown";
 
 export function planLabel(f: DrawingFacts): string {
   return `Top-down plan, ${dims(f.lengthM, 0)} m by ${dims(f.beamM, 1)} m, ${formLabel(f.hullFormId)}, ${BOW_LABEL[f.bow]}, ${STERN_LABEL[f.stern]}, ${f.fittings} fittings placed, ${funnelLabel(f.funnels)}, ${houseLabel(f.superstructure)}; ${SCHEMATIC}`;

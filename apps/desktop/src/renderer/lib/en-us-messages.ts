@@ -225,6 +225,37 @@ export const EN_US_MESSAGES = {
   "fleet.overBase.title": "Ships beyond the base limit",
   "fleet.overBase.none": "No ships are beyond a base limit.",
   "fleet.overBase.item": "{ship} in {area}",
+
+  "economy.status.healthy": "Healthy",
+  "economy.status.narrow": "Narrow",
+  "economy.status.deficit": "Deficit",
+  "economy.status.critical": "Critical",
+  "economy.research.noField":
+    "Research of {requested} is set but no field can take it, so nothing is paid.",
+  "economy.research.aboveCap":
+    "Research of {requested} is above the cap of {cap} (12% of the monthly appropriation).",
+  "economy.research.capZero":
+    "The naval appropriation is too small to fund research: the cap is 12% of it.",
+
+  "shell.month.advanced": "Month advanced to {month}.",
+  "shell.month.advanceFailed": "Could not advance month.",
+  "shell.month.rejected": "Could not advance month: {reason}.{diagnostics}",
+  "shell.campaign.inspectionFailed": "Inspection failed: {reason}",
+  "shell.campaign.unknownError": "Unknown error",
+  "shell.campaign.closeFailed": "Could not close the campaign: {reason}.",
+  "shell.campaign.saved": "Campaign saved — revision {revision}.",
+  "shell.campaign.saveFailed": "Save failed: {reason}.{diagnostics}",
+  "shell.campaign.copySaved": "Copy saved to {location}.",
+  "shell.campaign.copyFailed": "Copy failed: {reason}.{diagnostics}",
+  "shell.turn.discarded": "Outstanding turn discarded.",
+  "shell.turn.discardFailed": "Could not discard the outstanding turn: {reason}.",
+
+  "ui.battle.result.delegated": "Battle {battleChoice} — delegated to staff.",
+  "ui.battle.result.undecided": "Battle {battleId} ended without a decision.",
+  "ui.battle.result.won": "Battle {battleId} resolved: {winnerId} won.",
+
+  "designWorkspace.draftRestored":
+    "Your unsubmitted design was restored, with its edit history (last changed {savedAt}). Changes are saved as you work.",
 } as const;
 
 export type MessageKey = keyof typeof EN_US_MESSAGES;
