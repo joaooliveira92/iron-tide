@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0275).
+highest existing number + 1 (the next number is ADR-0276).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -69,6 +69,7 @@ Concurrent-agent worktree coordination and repository process rules.
 | 0220 | [ADR-0220-worktree-per-effort-coordination.md](ADR-0220-worktree-per-effort-coordination.md) | Worktree-per-effort coordination for concurrent agents | superseded | ADR-0234 |
 | 0227 | [ADR-0227-pipeline-tracker-on-github.md](ADR-0227-pipeline-tracker-on-github.md) | Pipeline issues live on GitHub, not local markdown | accepted | — |
 | 0274 | [ADR-0274-scratch-removed-from-tree.md](ADR-0274-scratch-removed-from-tree.md) | The frozen `.scratch/` tree is removed | accepted | — |
+| 0275 | [ADR-0275-tsgo-gate-reads-installed-toolchain.md](ADR-0275-tsgo-gate-reads-installed-toolchain.md) | The tsgo gate compares pins to the installed toolchain | accepted | — |
 | 0234 | [ADR-0234-single-checkout-local-merge-workflow.md](ADR-0234-single-checkout-local-merge-workflow.md) | Single checkout with local feature branches merged to dev locally | accepted | — |
 | 0236 | [ADR-0236-up-to-three-worktrees.md](ADR-0236-up-to-three-worktrees.md) | Up to three concurrent worktrees | accepted | — |
 | 0237 | [ADR-0237-up-to-five-worktrees.md](ADR-0237-up-to-five-worktrees.md) | Up to five concurrent worktrees | accepted | — |

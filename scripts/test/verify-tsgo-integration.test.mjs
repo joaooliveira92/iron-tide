@@ -8,45 +8,36 @@ import { join } from "node:path";
 import { test } from "node:test";
 
 import {
-  TSGO_MATRIX,
   checkToolchainVersions,
   findOriginalFiles,
   resolveInstalledPlatformPackage,
 } from "../verify-tsgo-integration.mjs";
 
-const MATRIX = {
-  "0.51.1": { typescript: "7.0.2", oxlint: "1.87.0", "oxlint-tsgolint": "7.0.2003" },
+const VERSIONS = {
+  "@effect/tsgo": "0.54.1",
+  typescript: "7.0.2",
+  oxlint: "1.89.0",
+  "oxlint-tsgolint": "7.0.2004",
 };
 
-void test("a pin set matching the @effect/tsgo matrix passes", () => {
-  assert.deepEqual(
-    checkToolchainVersions({
-      tsgoVersion: "0.51.1",
-      matrix: MATRIX,
-      pinned: { typescript: "7.0.2", oxlint: "1.87.0", "oxlint-tsgolint": "7.0.2003" },
-    }),
-    [],
-  );
+void test("pins matching the installed toolchain pass", () => {
+  assert.deepEqual(checkToolchainVersions({ installed: VERSIONS, pinned: { ...VERSIONS } }), []);
 });
 
 void test("a drifted pin is reported", () => {
   const problems = checkToolchainVersions({
-    tsgoVersion: "0.51.1",
-    matrix: MATRIX,
-    pinned: { typescript: "7.0.3", oxlint: "1.87.0", "oxlint-tsgolint": "7.0.2003" },
+    installed: VERSIONS,
+    pinned: { ...VERSIONS, typescript: "7.0.3" },
   });
   assert.equal(problems.length, 1);
   assert.match(problems[0], /typescript.*7\.0\.3.*7\.0\.2/u);
 });
 
-void test("an unknown @effect/tsgo version fails closed", () => {
-  const problems = checkToolchainVersions({ tsgoVersion: "9.9.9", matrix: MATRIX, pinned: {} });
+void test("a missing pin is reported", () => {
+  const { oxlint: _omitted, ...pinned } = VERSIONS;
+  const problems = checkToolchainVersions({ installed: VERSIONS, pinned });
   assert.equal(problems.length, 1);
-  assert.match(problems[0], /9\.9\.9.*not in TSGO_MATRIX/u);
-});
-
-void test("the shipped matrix keeps @effect/tsgo 0.51.1's supported pins", () => {
-  assert.deepEqual(TSGO_MATRIX["0.51.1"], MATRIX["0.51.1"]);
+  assert.match(problems[0], /oxlint.*undefined.*1\.89\.0/u);
 });
 
 void test("finds `.original` backups at any depth and reports none when absent", () => {
