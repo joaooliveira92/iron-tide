@@ -34,7 +34,7 @@ import {
   validateAboveWaterLaunchSpeedLimit,
   validateUnderwaterTubeSpeedLimit,
 } from "./launch-speed.js";
-import { type ContactTrack, validateTargetOrder } from "../contact/targeting.js";
+import { type ContactTrack, validateTargetOrder } from "../contact/neighbour.js";
 import { solutionMeetsMinimum } from "./fire-solution.js";
 import {
   assessFriendlyFireRisk,

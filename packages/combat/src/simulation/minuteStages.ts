@@ -18,7 +18,7 @@ import {
   isStale,
   updateContact,
   type TacticalContact,
-} from "../contact/lifecycle.js";
+} from "../contact/neighbour.js";
 import type { BattleEvent } from "../core/battleLedger.js";
 import { BattleLedger } from "../core/battleLedger.js";
 import { resolveGunnery, type GunneryEventRecord, type GunneryState } from "../gunnery/index.js";

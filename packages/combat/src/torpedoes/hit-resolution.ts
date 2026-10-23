@@ -1,5 +1,5 @@
 import { BluewaveError } from "@bluewave/contracts";
-import type { ContactTrack } from "../contact/targeting.js";
+import type { ContactTrack } from "../contact/neighbour.js";
 import type { Position } from "../core/position.js";
 import { NO_TARGET_CONTACT } from "./constants.js";
 import { TORPEDO_HIT_RESOLVED, TORPEDO_STATE_INVARIANT_FAILED } from "./reasonCodes.js";

@@ -1,7 +1,7 @@
 import type { SafeInt } from "@bluewave/contracts";
 import type { TacticalShipUnit } from "./unit.js";
 import type { TacticalDivision } from "./division.js";
-import type { TacticalContact } from "../contact/lifecycle.js";
+import type { TacticalContact } from "../contact/neighbour.js";
 import type { MovementState } from "../movement/neighbour.js";
 
 export type TacticalSideId = "ATTACKER" | "DEFENDER";

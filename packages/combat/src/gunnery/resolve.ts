@@ -29,8 +29,7 @@ import {
   makeGunneryEventRecord,
   type GunneryEventSeed,
 } from "./event.js";
-import { validateTargetOrder } from "../contact/targeting.js";
-import type { TacticalContact } from "../contact/lifecycle.js";
+import { validateTargetOrder, type TacticalContact } from "../contact/neighbour.js";
 import type { Position } from "../core/position.js";
 import { TACTICAL_MINUTE_MS } from "../core/tacticalTime.js";
 import { INVALID_GUNNERY_STATE } from "./reasonCodes.js";

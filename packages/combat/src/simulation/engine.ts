@@ -1,7 +1,7 @@
 import type { RandomEngine } from "@bluewave/random";
 import type { MovementState } from "../movement/neighbour.js";
 import { BattleLedger, type BattleEvent } from "../core/battleLedger.js";
-import type { TacticalContact } from "../contact/lifecycle.js";
+import type { TacticalContact } from "../contact/neighbour.js";
 import type { GunneryBattery, GunneryState } from "../gunnery/index.js";
 import type { GunneryEventRecord } from "../gunnery/event.js";
 import type { WeatherEngineContext } from "../weather/engine.js";

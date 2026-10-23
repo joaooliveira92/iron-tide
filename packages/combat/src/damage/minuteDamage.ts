@@ -2,7 +2,7 @@ import { BluewaveError, SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine, RandomLedger, drawUniform } from "@bluewave/random";
 import type { GunneryEventRecord } from "../gunnery/event.js";
-import type { TacticalContact } from "../contact/lifecycle.js";
+import type { TacticalContact } from "../contact/neighbour.js";
 import type { BattleEvent } from "../core/battleLedger.js";
 import { type GunneryImpact, resolveDamage } from "./engineWiring.js";
 import {
