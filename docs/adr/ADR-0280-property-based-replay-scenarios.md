@@ -1,4 +1,4 @@
-# ADR-0278: Property-based replay scenarios use fast-check as a test-only dependency
+# ADR-0280: Property-based replay scenarios use fast-check as a test-only dependency
 
 ## Status
 

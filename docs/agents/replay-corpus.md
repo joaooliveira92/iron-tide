@@ -19,7 +19,7 @@ entry. CI only verifies; entries are append-only.
 
 New scenarios go in `scenarios.ts` with a one-line `purpose`; a new replay file needs no approval. `pnpm replay:coverage` lists the subsystems each replay exercises, and those none do.
 
-Fuzz cases (`FUZZ_CASES`, pinned in `golden/replay-fuzz.json`) run on three OSes. A failure prints its seed; reproduce with `pnpm replay:fuzz run <seed> <months>`. Only `pnpm replay:fuzz record` (local, refused under CI) rewrites the pin; approvals do not cover it. Each fuzzed month also passes `invariants.ts`. Generated plans: ADR-0278.
+Fuzz cases (`FUZZ_CASES`, pinned in `golden/replay-fuzz.json`) run on three OSes. A failure prints its seed; reproduce with `pnpm replay:fuzz run <seed> <months>`. Only `pnpm replay:fuzz record` (local, refused under CI) rewrites the pin; approvals do not cover it. Each fuzzed month also passes `invariants.ts`. Generated plans: ADR-0280.
 
 ## Retiring a legacy probe
 
