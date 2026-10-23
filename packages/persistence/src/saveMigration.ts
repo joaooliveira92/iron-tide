@@ -18,6 +18,7 @@ import {
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { Result, Schema } from "effect";
 import { CURRENT_COMPATIBILITY_VERSION } from "./compatibility.js";
+import { readSaveMetadata } from "./fileDecode.js";
 import { SaveHeaderSchema } from "./schemas.js";
 import { toStorableSnapshot } from "./snapshotSerialization.js";
 import { SaveStore } from "./store.js";
@@ -138,6 +139,14 @@ export function migrateSaveDirectory(
       reason: diagnostics.errors.map((d) => d.message).join("; ") || "save did not load",
     };
   }
+  const metadata = readSaveMetadata(join(savePath, METADATA_FILE));
+  if (metadata === null) {
+    return {
+      status: "refused",
+      kind: "malformed",
+      reason: `${METADATA_FILE} is missing or does not match its schema`,
+    };
+  }
   const migrated = restampState(state, current);
   if (!verifyMigratedState(migrated)) {
     return {
@@ -177,10 +186,6 @@ export function migrateSaveDirectory(
       ),
       "utf8",
     );
-    const metadata = JSON.parse(readFileSync(join(savePath, METADATA_FILE), "utf8")) as Record<
-      string,
-      unknown
-    >;
     writeFileSync(
       join(tmpPath, METADATA_FILE),
       JSON.stringify(

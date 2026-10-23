@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vite-plus/test";
-import { mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -7,11 +7,7 @@ import type { CompilerInput } from "../src/index.js";
 import { Compiler, buildFullSurfaceInput } from "../src/index.js";
 
 function createFixtureDir(): { path: string; cleanup: () => void } {
-  const dir = resolve(
-    tmpdir(),
-    `bw-presentation-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-  );
-  mkdirSync(dir, { recursive: true });
+  const dir = mkdtempSync(resolve(tmpdir(), "bw-presentation-"));
   return {
     path: dir,
     cleanup: () => rmSync(dir, { recursive: true, force: true }),
