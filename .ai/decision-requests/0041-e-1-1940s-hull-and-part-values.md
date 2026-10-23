@@ -2,7 +2,8 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved (2026-10-23): Option A was run (`docs/research/e-1-1940s-hull-and-part-values.md`) and the owner delegated the remaining
+decisions to the implementing agent; they are recorded in [ADR-0284](../../docs/adr/ADR-0284-e1-1940s-ship-and-part-values.md).
 
 ## Trigger
 
