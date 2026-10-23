@@ -33,19 +33,18 @@ import {
   type TorpedoRecord,
   type TorpedoTrack,
 } from "../torpedoes/index.js";
-import { resolveSmoke } from "../smoke/engineWiring.js";
-import type { SmokeCloud } from "../smoke/model.js";
-import type { SmokeEventRecord } from "../smoke/smokeRecords.js";
+import { resolveSmoke, type SmokeCloud, type SmokeEventRecord } from "../smoke/engineWiring.js";
 import {
   applyDamageControlToState,
   requireDamageDesignSurface,
   resolveDamageControl,
 } from "../damage/damageControlEngineWiring.js";
-import { resolveAirCombat } from "../air-combat/engineWiring.js";
-import type { AirCombatRecord } from "../air-combat/records.js";
-import { resolveAirDefense } from "../air-defense/engineWiring.js";
-import type { AirDefenseEngagementRecord } from "../air-defense/records.js";
-import type { AirDefenseState } from "../air-defense/air-defense-state.js";
+import { resolveAirCombat, type AirCombatRecord } from "../air-combat/engineWiring.js";
+import {
+  resolveAirDefense,
+  type AirDefenseEngagementRecord,
+  type AirDefenseState,
+} from "../air-defense/engineWiring.js";
 import type { AdvanceMinuteInput, UnitOrders } from "./engine.js";
 
 export const DAMAGE_CONTROL_SUBSTEP = 57 as const;

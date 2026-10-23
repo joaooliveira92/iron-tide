@@ -92,3 +92,5 @@ export function resolveAirCombat(context: AirCombatContext): AirCombatStageResul
     summary: { capEngagements, strikeAttacks, losses },
   };
 }
+
+export type { AirCombatRecord } from "./records.js";

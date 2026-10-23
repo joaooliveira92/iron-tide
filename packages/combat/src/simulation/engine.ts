@@ -15,15 +15,18 @@ import type {
   TorpedoRecord,
   TorpedoTrack,
 } from "../torpedoes/index.js";
-import type { SmokeContext } from "../smoke/engineWiring.js";
-import type { SmokeCloud } from "../smoke/model.js";
-import type { SmokeEventRecord } from "../smoke/smokeRecords.js";
+import {
+  type SmokeContext,
+  type SmokeCloud,
+  type SmokeEventRecord,
+} from "../smoke/engineWiring.js";
 import type { DamageControlContext } from "../damage/damageControlEngineWiring.js";
-import type { AirCombatContext } from "../air-combat/engineWiring.js";
-import type { AirCombatRecord } from "../air-combat/records.js";
-import type { AirDefenseContext } from "../air-defense/engineWiring.js";
-import type { AirDefenseEngagementRecord } from "../air-defense/records.js";
-import type { AirDefenseState } from "../air-defense/air-defense-state.js";
+import { type AirCombatContext, type AirCombatRecord } from "../air-combat/engineWiring.js";
+import {
+  type AirDefenseContext,
+  type AirDefenseEngagementRecord,
+  type AirDefenseState,
+} from "../air-defense/engineWiring.js";
 import {
   buildShipPositions,
   cloneMovementState,
