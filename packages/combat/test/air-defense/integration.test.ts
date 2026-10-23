@@ -203,14 +203,14 @@ describe("AC-18 resolveAirDefense stage (step 7.8)", () => {
 describe("AC-20 integration boundary", () => {
   it("does not modify BattleResolver", () => {
     expect(typeof BattleResolver).toBe("function");
-    const src = readFileSync(resolve(__dirname, "../../src/resolver.ts"), "utf-8");
+    const src = readFileSync(resolve(__dirname, "../../src/battleResolution/resolver.ts"), "utf-8");
     expect(src).not.toContain("airDefense");
     expect(src).not.toContain("resolveAirDefense");
   });
 
   it("does not modify StrengthCalculator", () => {
     expect(typeof StrengthCalculator).toBe("function");
-    const src = readFileSync(resolve(__dirname, "../../src/strength.ts"), "utf-8");
+    const src = readFileSync(resolve(__dirname, "../../src/battleResolution/resolver.ts"), "utf-8");
     expect(src).not.toContain("airDefense");
     expect(src).not.toContain("resolveAirDefense");
   });

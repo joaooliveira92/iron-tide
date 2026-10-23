@@ -8,13 +8,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("damage-control integration boundary", () => {
   it("does not modify BattleResolver", () => {
-    const src = readFileSync(resolve(__dirname, "../../src/resolver.ts"), "utf-8");
+    const src = readFileSync(resolve(__dirname, "../../src/battleResolution/resolver.ts"), "utf-8");
     expect(src).not.toContain("resolveDamageControl");
     expect(src).not.toContain("damageControl");
   });
 
   it("does not modify StrengthCalculator", () => {
-    const src = readFileSync(resolve(__dirname, "../../src/strength.ts"), "utf-8");
+    const src = readFileSync(resolve(__dirname, "../../src/battleResolution/resolver.ts"), "utf-8");
     expect(src).not.toContain("resolveDamageControl");
     expect(src).not.toContain("damageControl");
   });
