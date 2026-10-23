@@ -42,25 +42,44 @@ export interface EconomyOutlook {
 
 const TERMINAL_OR_HELD = new Set(["COMPLETED", "CANCELLED", "HALTED", "DELAYED"]);
 
+export interface ConstructionDraw {
+  readonly projectId: string;
+  readonly draw: number;
+}
+
+export function constructionDrawByProject(
+  nation: NationState,
+  snapshot: CampaignSnapshot,
+  month: string,
+): readonly ConstructionDraw[] {
+  const draws: ConstructionDraw[] = [];
+  for (const project of nation["constructionProjects"]) {
+    if (TERMINAL_OR_HELD.has(project["status"])) continue;
+    if (project["foreignContractId"] !== undefined) continue;
+    draws.push({
+      projectId: project["id"],
+      draw: monthlyAbsorbable(
+        project,
+        project["capacityUnits"] ??
+          snapshot["designs"].get(project["designVersionId"])?.["constructionPlan"]?.[
+            "capacityUnits"
+          ],
+        month,
+      ),
+    });
+  }
+  return draws;
+}
+
 function plannedConstructionOf(
   nation: NationState,
   snapshot: CampaignSnapshot,
   month: string,
 ): number {
-  let total = 0;
-  for (const project of nation["constructionProjects"]) {
-    if (TERMINAL_OR_HELD.has(project["status"])) continue;
-    if (project["foreignContractId"] !== undefined) continue;
-    total += monthlyAbsorbable(
-      project,
-      project["capacityUnits"] ??
-        snapshot["designs"].get(project["designVersionId"])?.["constructionPlan"]?.[
-          "capacityUnits"
-        ],
-      month,
-    );
-  }
-  return total;
+  return constructionDrawByProject(nation, snapshot, month).reduce(
+    (total, entry) => total + entry.draw,
+    0,
+  );
 }
 
 export function economyOutlook(

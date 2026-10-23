@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
-import type { CommitMonthResponse } from "@bluewave/campaign-engine";
+import { buildPlayerProjection, type CommitMonthResponse } from "@bluewave/campaign-engine";
 import { createEnvelope } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
@@ -118,6 +118,23 @@ describe("budget allocation", () => {
       researchBudgetMin: 0,
       researchBudgetMax: 1000,
     });
+  });
+
+  it("projects fleet upkeep and construction commitments that reconcile to the economy outlook", async () => {
+    const state = registerSession("b");
+    const result = await inspectBudgetScreen("b");
+    if (result.outcome !== "success") throw new Error(result.reason);
+    const { fleet, construction, unpaidCostsPrestige } = result.value.commitments;
+    const projection = buildPlayerProjection(state, "uk", { month: 1, year: 1880 });
+    expect(fleet.total).toBe(projection?.economy.maintenanceCost);
+    expect(fleet.groups.reduce((sum, group) => sum + group.cost, 0)).toBe(fleet.total);
+    expect(fleet.ships.reduce((sum, ship) => sum + ship.cost, 0)).toBe(fleet.total);
+    expect(fleet.ships.map((ship) => ship.cost)).toEqual(
+      [...fleet.ships.map((ship) => ship.cost)].sort((a, b) => b - a),
+    );
+    expect(construction.drawTotal).toBe(projection?.economy.plannedConstruction);
+    expect(unpaidCostsPrestige).not.toBeNull();
+    expect(unpaidCostsPrestige?.after).toBeLessThanOrEqual(unpaidCostsPrestige?.before ?? 0);
   });
 
   it("returns SESSION_NOT_FOUND for an unknown session", async () => {

@@ -27,6 +27,7 @@ interface LedgerRowProps {
   readonly highlighted?: boolean;
   readonly dimmed?: boolean;
   readonly onActive?: (active: boolean) => void;
+  readonly onOpen?: () => void;
   readonly detail: ReactNode;
 }
 
@@ -41,6 +42,7 @@ function LedgerRow({
   highlighted = false,
   dimmed = false,
   onActive,
+  onOpen,
   detail,
 }: LedgerRowProps) {
   return (
@@ -53,6 +55,7 @@ function LedgerRow({
         onMouseLeave={() => onActive?.(false)}
         onFocus={() => onActive?.(true)}
         onBlur={() => onActive?.(false)}
+        onClick={onOpen}
         aria-label={`${label}: ${amount} — show detail`}
         className={cn(ROW, highlighted && "bg-muted/60", dimmed && "opacity-60")}
       >
@@ -87,7 +90,10 @@ function LedgerRow({
   );
 }
 
+export type LedgerDetail = "fleet" | "construction";
+
 export interface LedgerProps {
+  readonly onOpen: (detail: LedgerDetail) => void;
   readonly breakdown: TreasuryBreakdown;
   readonly previewResearch: number | null;
   readonly active: BudgetSegmentId | null;
@@ -100,7 +106,7 @@ const SEGMENT_LABEL: Record<BudgetSegmentId, string> = {
   research: "Research",
 };
 
-export function Ledger({ breakdown, previewResearch, active, onActive }: LedgerProps) {
+export function Ledger({ breakdown, previewResearch, active, onActive, onOpen }: LedgerProps) {
   const format = usePresentationFormat();
   const bar = buildBudgetBar(breakdown, previewResearch);
   const income = Math.max(1, bar.income);
@@ -139,6 +145,7 @@ export function Ledger({ breakdown, previewResearch, active, onActive }: LedgerP
               highlighted={active === segment.id}
               dimmed={active !== null && active !== segment.id}
               onActive={(on) => onActive(on ? segment.id : null)}
+              onOpen={segment.id === "maintenance" ? () => onOpen("fleet") : undefined}
               detail={
                 <SegmentCard
                   swatchClassName={segment.className}
@@ -146,7 +153,13 @@ export function Ledger({ breakdown, previewResearch, active, onActive }: LedgerP
                   amount={format.money(segment.value)}
                   description={segment.description}
                   facts={segmentFacts(segment, format)}
-                  note={segment.id === "research" ? note : null}
+                  note={
+                    segment.id === "research"
+                      ? note
+                      : segment.id === "maintenance"
+                        ? "Select to see which ships cost the most."
+                        : null
+                  }
                 />
               }
             />
@@ -189,11 +202,13 @@ export function Ledger({ breakdown, previewResearch, active, onActive }: LedgerP
         amount={format.count(breakdown.plannedConstruction)}
         share={breakdown.plannedConstruction / income}
         shareLabel={pct(breakdown.plannedConstruction)}
+        onOpen={() => onOpen("construction")}
         detail={
           <SegmentCard
             title="Construction (up to)"
             amount={format.money(breakdown.plannedConstruction)}
             description="The most this month's ship orders could draw. Each order is charged to the treasury when it is placed, so this sits outside the committed figures above."
+            note="Select to see the projects behind it."
           />
         }
       />

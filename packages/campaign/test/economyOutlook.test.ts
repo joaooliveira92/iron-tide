@@ -1,6 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
-import { economyOutlook } from "../src/economyOutlook.js";
+import { constructionDrawByProject, economyOutlook } from "../src/economyOutlook.js";
 import type { CampaignSnapshot, ConstructionProject, NationState } from "../src/state.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 
@@ -231,5 +231,19 @@ describe("economyOutlook", () => {
     )!;
     expect(o.shortfall).toBe(1);
     expect(o.monthEndTreasury).toBe(0);
+  });
+});
+
+describe("constructionDrawByProject", () => {
+  it("lists what each live project can absorb this month and skips held and foreign projects", () => {
+    const n = nation({
+      constructionProjects: [
+        project({ id: "live" }),
+        project({ id: "halted", status: "HALTED" }),
+        project({ id: "foreign", foreignContractId: "fc" }),
+      ],
+    });
+    const draw = constructionDrawByProject(n, snapshot(n), "1880-01");
+    expect(draw.map((d) => [d.projectId, d.draw])).toEqual([["live", 40]]);
   });
 });

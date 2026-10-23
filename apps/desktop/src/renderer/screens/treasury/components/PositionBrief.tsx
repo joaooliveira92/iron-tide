@@ -4,14 +4,17 @@ import { Badge } from "../../../components/ui/badge.js";
 import { economyStatusLabel } from "../../../lib/economy-wording.js";
 import { cn } from "../../../lib/utils.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
+import type { UnpaidCostsPrestige } from "../../../../shared/budget-contract.js";
 import type { TreasuryBreakdown } from "../treasury-summary.js";
 
 export function PositionBrief({
   breakdown,
   pendingRateChange,
+  unpaidCostsPrestige,
 }: {
   readonly breakdown: TreasuryBreakdown;
   readonly pendingRateChange: boolean;
+  readonly unpaidCostsPrestige: UnpaidCostsPrestige | null;
 }) {
   const format = usePresentationFormat();
   const net = breakdown.projectedSurplusDeficit;
@@ -39,6 +42,15 @@ export function PositionBrief({
       {breakdown.shortfall > 0 && (
         <p className="text-sm text-destructive">
           Shortfall: {format.count(breakdown.shortfall)} of this month&apos;s costs cannot be paid.
+        </p>
+      )}
+      {breakdown.shortfall > 0 && unpaidCostsPrestige !== null && (
+        <p role="alert" className="text-sm text-destructive">
+          Unpaid costs also cost prestige: {format.count(unpaidCostsPrestige.before)} →{" "}
+          {format.count(unpaidCostsPrestige.after)}.{" "}
+          {unpaidCostsPrestige.after <= unpaidCostsPrestige.sackingThreshold
+            ? `That is at or below ${format.count(unpaidCostsPrestige.sackingThreshold)}, where you risk dismissal.`
+            : `Dismissal risk begins at ${format.count(unpaidCostsPrestige.sackingThreshold)}.`}
         </p>
       )}
       {breakdown.runwayMonths !== undefined && (
