@@ -18,7 +18,7 @@ and `.scratch` references do not resolve in this checkout.
   decision request. Never fabricate (AGENTS.md stop conditions).
 - Sizes: S ≤ 1 week, M ≈ 2–3 weeks, L ≈ 4+ weeks of one agent pipeline.
 
-## Verified baseline (2026-10-15)
+## Verified baseline (2026-10-15; repo health and frontier refreshed 2026-10-23)
 
 `pnpm preflight` exits 0 (40 tasks, content lock, version 0.5.0). Branch
 `refactor/comment-prune-sweep-a`, 20 commits, no remote.
@@ -31,7 +31,7 @@ and `.scratch` references do not resolve in this checkout.
 | AI                | `ai` ≈ 0.6k LOC: uniform-random legal budget and research commands; procurement plans designs and builds. No doctrine, no war decisions.                                                                                                                                                                                            |
 | Content           | 14 nations, 80 areas, 62 possessions, 86 routes, 19 fleets, 84 techs across 10 fields, ending 1939. One scenario (1880). Scenario IDs 1900/1920/1935/1960 are declared in code with no pack.                                                                                                                                        |
 | Desktop           | Which engine capabilities have a desktop path is in the [reachability report](../docs/reachability-report.md).                                                                                                                                                                                                                      |
-| Repo health       | ADRs, DESIGN docs, `docs/research`, `.scratch`, `golden/hashes.json` absent. `.ai/REQUIREMENTS.md` emptied. Decision request 0001 open.                                                                                                                                                                                             |
+| Repo health       | ADRs (through ADR-0277), `docs/research`, `golden/hashes.json` and the content lock exist. `.scratch` and DESIGN docs are gone. Decision request 0001 was settled by G-1 under DR-010.                                                                                                                                              |
 
 ## Gap against the manual
 
@@ -116,7 +116,7 @@ from authoritative state, and the output is reviewed. It is a new baseline, not 
 | #   | Sprint                         | Size | Depends on | Acceptance                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | --- | ------------------------------ | ---- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | S-1 | Ship readiness and maintenance | M    | G-1        | Active/reserve/mothballed/working-up, crew quality ramp, maintenance by status, repair cost ×2, wartime maintenance. Working-up ships excluded from battles.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| S-2 | Prestige and career            | M    | G-1        | Prestige state seeded per nation in 1880, proportional loss, sacked at 16 or below, final score.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| S-2 | Prestige and career            | M    | G-1        | Prestige state seeded per nation in 1880, proportional loss, sacked at 16 or below, final score. **In progress (2026-10-23):** tickets 01-04 done (#84, #86, #88, #89: value set ADR-0239, rule layer, seeded state, application and unpaid-funds source) and the T-1 decline seam (#115, ADR-0262); 05-09 open (#90-#94: battle outcomes, sacking, career result and save/load, player readout, acceptance run).                                                                                                                                                                                                                                                                                                                                                                                                        |
 | S-3 | Budget pressure and unrest     | M    | S-2        | Drivers and brakes per p.62, strikes, revolution, 3–5% growth, colony decay, 12% research cap; seeded unrest.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | S-4 | Events and crises              | L    | S-2, S-3   | Catalogue with hawk/dove answers moving tension, prestige, budget; government types and traits gate eligibility. Research first.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | S-5 | Foreign stations and presence  | S    | S-1        | Tonnage obligations per area, colonial-service weighting, penalties. **Done 2026-10-21 under fixture values only** (spec #73; report `.ai/reports/s-5-foreign-stations-and-presence.md`): assignment and clear, 1.5x weighting, reserve/mothballed exclusion, blockade exemption and its end, routing to the largest shortfall, shortfall and typed penalty-request events and over-base flags are implemented and accepted with cross-process hash identity under a fixture-class ruleset. The production `presence` section went **live 2026-10-21** (#85) on ADR-0266 balance targets; the S-5 follow-up (#165) is deferred until a war-termination design exists (request 0027), the cramped/short-range classification compile step (0026) is a separate ticket, and penalty requests have no S-2/S-3 consumer yet. |
@@ -209,14 +209,13 @@ decision sections in `.ai/decision-requests/` and ADR-0223/0224/0225.
    sources (spec #74).
 6. **0008** closed administratively.
 
-**Immediate next action (2026-10-17):** **N-3 is done** (spec #47, report
-`.ai/reports/n-3-1880-1890-progression.md`; map #42; tickets #48–#53). The decade
-is proven by a deterministic 120-month run, a per-year availability ledger, named
-unlock assertions, and January decision probes. N-3 changed no content, schema,
-compatibility version, content lock or golden. The command-free run exhausts every
-nation's treasury by design; owner decision 0014-A accepted that baseline for N-3
-and the economy/AI solvency fix is its own ticket, #95. S-2/S-3 remain blocked on
-owner decisions 0003/0006; W-2's W-1 dependency is unmet.
+**Immediate next action (2026-10-23):** finish **S-2** (#90-#94), then S-3 (spec under
+`docs/`, decisions 0010/0011 = ADR-0240) and S-4. **F-1** has a spec and brief
+(#231, `.ai/briefs/f-1-strategic-map.md`; requests 0036-0039 resolved). **T-2** has its
+first-cut controls decided (request 0009-A); #230 (first targeting) waits on a rank-gating decision. Recent `dev` work is
+structural (combat neighbour modules, desktop bridge seams, toolchain bumps) and changes
+no sprint status. Engine-versus-desktop reachability is tracked by epic #220 and
+`docs/reachability-report.md`. The economy/AI solvency fix remains #95 (decision 0014-A).
 
 **Lane isolation:** S-1 and N-1 both move goldens. Process them **sequentially** so
 each golden movement has one attributable cause; never bundle unrelated behavioural
@@ -224,9 +223,7 @@ changes into a single re-pin. If S-1 research cannot ground a value and it canno
 responsibly classified as an ADR-0213 `balance_adjustment`, return that individual
 value for owner decision instead of guessing.
 
-Owner decisions outstanding: **0012** (prestige production values after the
-0003-B research) and **0004** (mine inventory). W-2's plan dependency (W-1, itself
-on S-1/T-1) is unmet, so 0004 is not on the current frontier.
+Owner decisions outstanding: **0004** (mine inventory; W-2's W-1 dependency is unmet, so it is off the current frontier), and the rank-gating decision behind #230. 0009, 0012, 0026 and 0027 are resolved (ADR-0239, ADR-0266).
 
 ## Decisions recorded
 
