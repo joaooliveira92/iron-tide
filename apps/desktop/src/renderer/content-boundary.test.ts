@@ -18,17 +18,42 @@ const FORBIDDEN: readonly { readonly pattern: RegExp; readonly label: string }[]
   { pattern: /\?raw"/u, label: "imports a raw document" },
 ];
 
+const GEOMETRY_EMITTERS: readonly string[] = [
+  "components/design-workspace/panels/hull-plan/arcs.ts",
+  "components/design-workspace/panels/hull-plan/path.ts",
+  "components/world-map/MapMinimap.tsx",
+  "components/world-map/bake-coastline.ts",
+  "components/world-map/projection.ts",
+  "screens/new-game/components/bounce-cards/BounceCards.tsx",
+];
+
+const RAW_FORMATTING = /\.toFixed\(|\bIntl\.|\.toLocale(?:String|DateString|TimeString)\(/u;
+
+function rendererSources(): readonly string[] {
+  return readdirSync(rendererDir, { recursive: true })
+    .map(String)
+    .map((file) => file.replaceAll("\\", "/"))
+    .filter(
+      (file) =>
+        /\.(?:ts|tsx)$/u.test(file) &&
+        !file.endsWith(".test.ts") &&
+        !file.endsWith(".test.tsx") &&
+        !/(?:^|\/)bake-[^/]+\.ts$/u.test(file),
+    );
+}
+
 describe("renderer content boundary (CRI-IPC-3/5)", () => {
-  it("no renderer module parses YAML, reads the filesystem, or bundles the schema runtime", () => {
-    const files = readdirSync(rendererDir, { recursive: true })
-      .map(String)
+  it("routes number and date formatting through presentation-format", () => {
+    const offenders = rendererSources()
       .filter(
-        (file) =>
-          /\.(?:ts|tsx)$/u.test(file) &&
-          !file.endsWith(".test.ts") &&
-          !file.endsWith(".test.tsx") &&
-          !/(?:^|[\\/])bake-[^\\/]+\.ts$/u.test(file),
-      );
+        (file) => !file.startsWith("lib/presentation-format/") && !GEOMETRY_EMITTERS.includes(file),
+      )
+      .filter((file) => RAW_FORMATTING.test(readFileSync(join(rendererDir, file), "utf8")));
+    expect(offenders).toEqual([]);
+  });
+
+  it("no renderer module parses YAML, reads the filesystem, or bundles the schema runtime", () => {
+    const files = rendererSources();
     expect(files.length).toBeGreaterThan(0);
     for (const file of files) {
       const source = readFileSync(join(rendererDir, file), "utf8");

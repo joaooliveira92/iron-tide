@@ -24,10 +24,12 @@ export {
 } from "./units.js";
 export {
   formatCount,
+  formatFixed,
   formatMeasurement,
   formatNumber,
   formatPercent,
   measurementUnitSymbol,
+  type FormatFixedOptions,
   type FormatMeasurementOptions,
   type FormatNumberOptions,
   type FormatPercentOptions,
@@ -49,9 +51,11 @@ export type {
 } from "./national-currency.js";
 export {
   formatCampaignMonth,
+  formatTimestamp,
   localizedMonthName,
   type CampaignMonth,
   type MonthNameStyle,
+  type TimestampStyle,
 } from "./dates.js";
 export {
   computeNationalCurrencyAvailability,

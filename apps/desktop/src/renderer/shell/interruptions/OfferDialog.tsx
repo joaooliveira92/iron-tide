@@ -10,7 +10,7 @@ import {
   AlertDialogTitle,
 } from "../../components/ui/alert-dialog.js";
 import { Button } from "../../components/ui/button.js";
-import { offerText } from "./offer-text.js";
+import { resolveMessage } from "../../content/uiCatalogue.js";
 
 export type OfferChoice = "accept" | "delegate" | "decline";
 
@@ -32,19 +32,19 @@ export function OfferDialog({
   const estimate = request.estimate;
   const declineRefused = acceptanceClass === UNAVOIDABLE_CLASS;
   const rows: readonly (readonly [string, string])[] = [
-    [offerText("ui.offer.field.mission"), offerText(`ui.offer.mission.${mission}`)],
-    [offerText("ui.offer.field.class"), offerText(`ui.offer.class.${acceptanceClass}`)],
-    [offerText("ui.offer.field.area"), request.areaId ?? ""],
+    [resolveMessage("ui.offer.field.mission"), resolveMessage(`ui.offer.mission.${mission}`)],
+    [resolveMessage("ui.offer.field.class"), resolveMessage(`ui.offer.class.${acceptanceClass}`)],
+    [resolveMessage("ui.offer.field.area"), request.areaId ?? ""],
     [
-      offerText("ui.offer.field.sides"),
-      offerText("ui.offer.sides.value", {
+      resolveMessage("ui.offer.field.sides"),
+      resolveMessage("ui.offer.sides.value", {
         attackerId: request.attackerId ?? "",
         defenderId: request.defenderId ?? "",
       }),
     ],
     [
-      offerText("ui.offer.field.yourSide"),
-      offerText(`ui.offer.side.${request.playerSide ?? "ATTACKER"}`),
+      resolveMessage("ui.offer.field.yourSide"),
+      resolveMessage(`ui.offer.side.${request.playerSide ?? "ATTACKER"}`),
     ],
   ];
   return (
@@ -57,10 +57,10 @@ export function OfferDialog({
       >
         <AlertDialogHeader className="space-y-1">
           <AlertDialogTitle className="text-sm">
-            {offerText(request.titleKey, interpolation)}
+            {resolveMessage(request.titleKey, interpolation)}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-xs">
-            {offerText(request.bodyKey, interpolation)}
+            {resolveMessage(request.bodyKey, interpolation)}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
@@ -73,12 +73,12 @@ export function OfferDialog({
         </dl>
         <section aria-labelledby="offer-force-heading">
           <h3 id="offer-force-heading" className="text-xs font-semibold">
-            {offerText("ui.offer.force.heading")}
+            {resolveMessage("ui.offer.force.heading")}
           </h3>
           <ul className="mt-1 space-y-0.5 text-xs" data-testid="offer-force">
             {(request.playerForce ?? []).map((ship) => (
               <li key={ship.shipId}>
-                {offerText("ui.offer.force.ship", {
+                {resolveMessage("ui.offer.force.ship", {
                   name: ship.name,
                   classId: ship.classId,
                 })}
@@ -88,19 +88,19 @@ export function OfferDialog({
         </section>
         {estimate !== undefined && (
           <p className="text-xs font-medium" data-testid="offer-estimate">
-            {offerText(`ui.offer.estimate.${estimate.model}`, {
+            {resolveMessage(`ui.offer.estimate.${estimate.model}`, {
               strength: estimate.strength,
             })}
           </p>
         )}
         <p className="text-xs" data-testid="offer-support">
           {request.supportForcePresent !== true
-            ? offerText("ui.offer.support.absent")
+            ? resolveMessage("ui.offer.support.absent")
             : (request.supportNationIds ?? []).length > 0
-              ? offerText("ui.offer.support.presentFrom", {
+              ? resolveMessage("ui.offer.support.presentFrom", {
                   nations: (request.supportNationIds ?? []).join(", "),
                 })
-              : offerText("ui.offer.support.present")}
+              : resolveMessage("ui.offer.support.present")}
         </p>
         <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
           <Button
@@ -110,9 +110,9 @@ export function OfferDialog({
             data-testid="offer-accept"
             onClick={() => onChoose("accept")}
           >
-            {offerText("ui.offer.accept")}
+            {resolveMessage("ui.offer.accept")}
           </Button>
-          <p className="text-xs text-muted-foreground">{offerText("ui.offer.accept.hint")}</p>
+          <p className="text-xs text-muted-foreground">{resolveMessage("ui.offer.accept.hint")}</p>
           <Button
             type="button"
             size="sm"
@@ -120,9 +120,11 @@ export function OfferDialog({
             data-testid="offer-delegate"
             onClick={() => onChoose("delegate")}
           >
-            {offerText("ui.offer.delegate")}
+            {resolveMessage("ui.offer.delegate")}
           </Button>
-          <p className="text-xs text-muted-foreground">{offerText("ui.offer.delegate.hint")}</p>
+          <p className="text-xs text-muted-foreground">
+            {resolveMessage("ui.offer.delegate.hint")}
+          </p>
           <Button
             type="button"
             size="sm"
@@ -134,14 +136,16 @@ export function OfferDialog({
               if (!declineRefused) onChoose("decline");
             }}
           >
-            {offerText("ui.offer.decline")}
+            {resolveMessage("ui.offer.decline")}
           </Button>
           <div id="offer-decline-statement" className="text-xs text-muted-foreground">
             {declineRefused ? (
-              <p data-testid="offer-decline-reason">{offerText("ui.offer.decline.unavoidable")}</p>
+              <p data-testid="offer-decline-reason">
+                {resolveMessage("ui.offer.decline.unavoidable")}
+              </p>
             ) : null}
             {(request.declineStatementKeys ?? []).map((key) => (
-              <p key={key}>{offerText(key)}</p>
+              <p key={key}>{resolveMessage(key)}</p>
             ))}
           </div>
           <Button
@@ -151,7 +155,7 @@ export function OfferDialog({
             data-testid="offer-abandon"
             onClick={onAbandon}
           >
-            {offerText("ui.offer.abandon")}
+            {resolveMessage("ui.offer.abandon")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

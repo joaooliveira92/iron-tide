@@ -20,7 +20,6 @@ import type {
 } from "./campaign-shell-state.js";
 import type { BattleChoice } from "./interruptions/BattleRequestDialog.js";
 import type { OfferChoice } from "./interruptions/OfferDialog.js";
-import { offerText } from "./interruptions/offer-text.js";
 import { formatCampaignMonth } from "./site-header-state.js";
 
 export type InterruptionAnswer =
@@ -176,7 +175,9 @@ export function foldResolveTurn(
       return {
         _tag: "Completed",
         campaign: previous === null ? null : overviewAfterCommit(previous, committed, sessionId),
-        message: `Month advanced to ${formatCampaignMonth(value.closing.month)}.`,
+        message: resolveMessage("shell.month.advanced", {
+          month: formatCampaignMonth(value.closing.month),
+        }),
       };
     }
     case "suspended":
@@ -216,11 +217,14 @@ function describeAnswer(
       return resolveMessage("ui.decision.result", { change });
     }
     case "battle-delegated":
-      return `Battle ${answer.choice} — delegated to staff.`;
+      return resolveMessage("ui.battle.result.delegated", { battleChoice: answer.choice });
     case "battle-outcome":
       return answer.outcome.winnerId === null
-        ? `Battle ${request.battleId ?? ""} ended without a decision.`
-        : `Battle ${request.battleId ?? ""} resolved: ${answer.outcome.winnerId} won.`;
+        ? resolveMessage("ui.battle.result.undecided", { battleId: request.battleId ?? "" })
+        : resolveMessage("ui.battle.result.won", {
+            battleId: request.battleId ?? "",
+            winnerId: answer.outcome.winnerId,
+          });
     case "offer": {
       const areaId = request.areaId ?? "";
       const declined =
@@ -233,8 +237,8 @@ function describeAnswer(
           : undefined;
       const cost = declined?.interpolation["victoryPointCost"];
       return cost === undefined
-        ? offerText(`ui.offer.result.${answer.choice}`, { areaId })
-        : offerText("ui.offer.result.decline.cost", {
+        ? resolveMessage(`ui.offer.result.${answer.choice}`, { areaId })
+        : resolveMessage("ui.offer.result.decline.cost", {
             areaId,
             victoryPointCost: String(cost),
           });
