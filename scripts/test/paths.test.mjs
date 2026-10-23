@@ -134,7 +134,7 @@ void test("isEntryPoint is false when the module is imported by another script",
 });
 
 void test("isEntryPoint is false with no argv[1] or a missing file", () => {
-  assert.equal(isEntryPoint(import.meta.url, undefined), false);
+  assert.equal(isEntryPoint(import.meta.url, ""), false);
   assert.equal(isEntryPoint(import.meta.url, path.join(tmpdir(), "does-not-exist.mjs")), false);
 });
 

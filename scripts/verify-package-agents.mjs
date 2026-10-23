@@ -12,6 +12,7 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { RUNTIME_FREE_ROOTS } from "./assert-runtime-free.mjs";
+import { isEntryPoint } from "./lib/paths.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 
@@ -144,7 +145,7 @@ export function runSelfTest() {
   console.log(`verify-package-agents: self-test ok (${cases.length} fixtures)`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isEntryPoint(import.meta.url)) {
   if (process.argv.includes("--self-test")) {
     runSelfTest();
   } else {
