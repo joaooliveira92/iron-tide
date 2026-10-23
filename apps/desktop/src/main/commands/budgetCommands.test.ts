@@ -130,7 +130,7 @@ describe("budget allocation", () => {
     expect(fleet.groups.reduce((sum, group) => sum + group.cost, 0)).toBe(fleet.total);
     expect(fleet.ships.reduce((sum, ship) => sum + ship.cost, 0)).toBe(fleet.total);
     expect(fleet.ships.map((ship) => ship.cost)).toEqual(
-      [...fleet.ships.map((ship) => ship.cost)].sort((a, b) => b - a),
+      fleet.ships.map((ship) => ship.cost).sort((a, b) => b - a),
     );
     expect(construction.drawTotal).toBe(projection?.economy.plannedConstruction);
     expect(unpaidCostsPrestige).not.toBeNull();
