@@ -1,8 +1,11 @@
 import type { CampaignState } from "@bluewave/campaign";
-import { economyOutlook, isShipOperational } from "@bluewave/campaign";
+import { isShipOperational } from "@bluewave/campaign";
 import { buildDiplomacyScreenProjection } from "./diplomacy.js";
 import { constructionShipTypeLabel, projectedConstructionOrderCosts } from "./construction.js";
+import { derivePlayerFacts, isLowResearchSpending, isNearCompletion } from "./player-facts.js";
 import type { PlayerProjectionMonth } from "./projection.js";
+
+export { totalPaidWork } from "./player-facts.js";
 
 export interface OpeningBriefingShipClassCount {
   readonly label: string;
@@ -73,28 +76,20 @@ import {
 } from "@bluewave/campaign";
 export { MAINTENANCE_FORMULA_ID, MAINTENANCE_FORMULA_VERSION, shipMaintenanceCost };
 
-export function totalPaidWork(nation: {
-  readonly constructionProjects: readonly { readonly paidWork: unknown }[];
-}): number {
-  return nation.constructionProjects.reduce((sum, project) => sum + Number(project.paidWork), 0);
-}
-
 export function buildOpeningBriefingProjection(
   state: CampaignState,
   playerSlotId: string,
   month: PlayerProjectionMonth,
 ): OpeningBriefingProjection | undefined {
   const snapshot = state.snapshot;
-  const nation = snapshot.nations.get(playerSlotId);
-  if (nation === undefined) return undefined;
+  const facts = derivePlayerFacts(snapshot, playerSlotId);
+  if (facts === undefined) return undefined;
+  const { nation, outlook, largestDockCapacity, constructionCommitted } = facts;
 
   const shipClassCounts = new Map<string, number>();
-  for (const fleet of nation.fleets) {
-    for (const ship of fleet.ships) {
-      const design = snapshot.designs.get(ship.designVersionId);
-      const label = design ? constructionShipTypeLabel(design.hullType) : "unknown";
-      shipClassCounts.set(label, (shipClassCounts.get(label) ?? 0) + 1);
-    }
+  for (const { design } of facts.ships) {
+    const label = design ? constructionShipTypeLabel(design.hullType) : "unknown";
+    shipClassCounts.set(label, (shipClassCounts.get(label) ?? 0) + 1);
   }
   const sortedShipClassCounts: OpeningBriefingShipClassCount[] = [...shipClassCounts.entries()]
     .sort((a, b) => a[0].localeCompare(b[0]))
@@ -108,26 +103,15 @@ export function buildOpeningBriefingProjection(
     readonly className: string;
     readonly projectedCost: number;
   } | null = null;
-  for (const fleet of nation.fleets) {
-    for (const ship of fleet.ships) {
-      if (!isShipOperational(ship)) continue;
-      const design = snapshot.designs.get(ship.designVersionId);
-      if (design === undefined) continue;
-      const cost = projectedConstructionOrderCosts(design).projectedCost;
-      if (mostExpensiveActiveClass === null || cost > mostExpensiveActiveClass.projectedCost) {
-        mostExpensiveActiveClass = { className: design.className, projectedCost: cost };
-      }
+  for (const { ship, design } of facts.ships) {
+    if (!isShipOperational(ship) || design === undefined) continue;
+    const cost = projectedConstructionOrderCosts(design).projectedCost;
+    if (mostExpensiveActiveClass === null || cost > mostExpensiveActiveClass.projectedCost) {
+      mostExpensiveActiveClass = { className: design.className, projectedCost: cost };
     }
   }
 
-  const largestDockCapacity = snapshot.world.ports
-    .filter((port) => port.nationId === playerSlotId)
-    .reduce((max, port) => Math.max(max, Number(port.level)), 0);
-
-  const outlook = economyOutlook(snapshot, playerSlotId)!;
   const fleetMaintenance = outlook.maintenance;
-
-  const constructionCommitted = totalPaidWork(nation);
 
   const governmentAllocation = outlook.revenue;
   const researchExpenditure = outlook.plannedResearch;
@@ -152,12 +136,7 @@ export function buildOpeningBriefingProjection(
   const hasCapitalShip = [...shipClassCounts.entries()].some(
     ([label, count]) => count > 0 && (label === "battleship" || label === "battlecruiser"),
   );
-  const hasNearCompleteProject = nation.constructionProjects.some((project) => {
-    const total = Number(project.totalWork);
-    return (
-      total > 0 && Number(project.completedWork) / total >= 0.9 && project.status !== "COMPLETED"
-    );
-  });
+  const hasNearCompleteProject = nation.constructionProjects.some(isNearCompletion);
 
   const immediateConcerns: OpeningBriefingConcern[] = [];
   if (!hasCapitalShip) {
@@ -181,7 +160,7 @@ export function buildOpeningBriefingProjection(
         "A hull is nearing completion and will soon demand crew, armament, and operating funds.",
     });
   }
-  if (governmentAllocation <= 0 || researchExpenditure * 10 < governmentAllocation) {
+  if (governmentAllocation <= 0 || isLowResearchSpending(outlook)) {
     immediateConcerns.push({
       category: "low_research_spending",
       message:
