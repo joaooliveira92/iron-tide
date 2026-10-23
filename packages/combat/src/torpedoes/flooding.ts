@@ -1,5 +1,5 @@
 import { BluewaveError } from "@bluewave/contracts";
-import type { FloodingSourceRecord } from "../damage/state.js";
+import type { FloodingSourceRecord } from "../damage/torpedoHit.js";
 import {
   TORPEDO_BASE_BREACH_RATE_KG_MIN_PER_M2,
   TORPEDO_FLOODING_ISOLATION_MULTIPLIER_BP,

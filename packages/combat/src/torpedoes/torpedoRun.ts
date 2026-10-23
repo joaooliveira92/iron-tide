@@ -1,4 +1,4 @@
-import type { ShipDamageState } from "../damage/state.js";
+import type { ShipDamageState } from "../damage/torpedoHit.js";
 import { NO_TARGET_CONTACT } from "./constants.js";
 import type { Position } from "../core/position.js";
 import { compareTrackRunOrder, torpedoRecordOrder } from "./ordering.js";
