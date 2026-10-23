@@ -98,6 +98,7 @@ describe("CampaignShellProvider", () => {
     vi.mocked(useCampaignShell).mockReturnValue({
       ...shell,
       campaign: {
+        prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
         month: { year: 1900, month: 3 },
         treasury: 100,
         revision: 4,

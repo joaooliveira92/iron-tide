@@ -10,6 +10,7 @@ import { useCampaignShell } from "./useCampaignShell.js";
 type CampaignExecute = CampaignCommandClient["execute"];
 
 const projection: PlayerProjection = {
+  prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
   campaignIdentity: "campaign_1",
   snapshotHash: "hash_abc",
   revision: 3,
@@ -91,6 +92,7 @@ describe("useCampaignShell", () => {
       projectedSurplusDeficit: 1_250_000,
       atWar: false,
       activeAlertsCount: null,
+      prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
     });
   });
 
@@ -160,6 +162,7 @@ describe("useCampaignShell", () => {
       projectedSurplusDeficit: -56,
       atWar: true,
       activeAlertsCount: null,
+      prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
     });
     expect(result.current.committing).toBe(false);
   });

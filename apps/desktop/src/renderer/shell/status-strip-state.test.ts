@@ -27,6 +27,7 @@ function projection(overrides: Partial<PlayerProjection> = {}): PlayerProjection
     playerNationId: "uk",
     nationName: "Britain",
     projectedSurplusDeficit: 1200,
+    prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
     economy: {
       treasury: 50000,
       monthlyAppropriation: 5000,
@@ -173,7 +174,6 @@ describe("buildStatusStrip", () => {
     const strip = buildStrip({ projection: projection(), areas, alertsCount: null });
     const deferredNation = strip.nation.filter((r) => r.deferred).map((r) => r.id);
     expect(deferredNation).toEqual([
-      "prestige",
       "fleet-morale",
       "dock-size",
       "unrest",
@@ -209,7 +209,7 @@ describe("buildStatusStrip", () => {
     expect(strip.deferredRows.length).toBe(
       [...strip.nation, ...strip.budget].filter((r) => r.deferred).length,
     );
-    expect(strip.deferredRows[0]?.id).toBe("prestige");
+    expect(strip.deferredRows[0]?.id).toBe("fleet-morale");
   });
 
   it("splits the appropriation into committed lines with their share of it", () => {
@@ -495,5 +495,69 @@ describe("buildStatusStrip foreign-station tonnage", () => {
       alertsCount: 0,
     });
     expect(strip.stations.foreignTons).toBe("0 t");
+  });
+
+  describe("prestige and career", () => {
+    const prestigeRow = (overrides: Partial<PlayerProjection>) =>
+      buildStrip({ projection: projection(overrides), areas, alertsCount: null }).nation.find(
+        (r) => r.id === "prestige",
+      )!;
+
+    it("shows real prestige instead of a deferred placeholder", () => {
+      const row = prestigeRow({});
+      expect(row.deferred).toBe(false);
+      expect(row.value).toBe("20");
+      expect(row.tone).toBe("normal");
+      expect(row.note).not.toMatch(/no prestige mechanic/i);
+    });
+
+    it.each([
+      ["UNPAID_FUNDS", "unpaid funds"],
+      ["BATTLE_LOST", "battle lost"],
+      ["BATTLE_WON", "battle won"],
+    ])("explains the last change from %s", (reasonCode, reason) => {
+      const row = prestigeRow({
+        prestige: {
+          current: 19,
+          sackingThreshold: 16,
+          dismissalRisk: false,
+          lastChange: { reasonCode, before: 20, after: 19, delta: -1, month: "1880-02" },
+        },
+      });
+      expect(row.note).toContain(`Last change: -1 (${reason}, 1880-02).`);
+    });
+
+    it("states dismissal risk in words at or below the threshold and not above it", () => {
+      const at = prestigeRow({
+        prestige: { current: 16, sackingThreshold: 16, dismissalRisk: true },
+      });
+      expect(at.value).toBe("16 — at risk of dismissal");
+      expect(at.tone).toBe("alert");
+      expect(at.note).toContain("monthly chance of being sacked");
+      expect(prestigeRow({}).value).toBe("20");
+    });
+
+    it("adds the career result row once the career has ended", () => {
+      const rows = (career: PlayerProjection["career"]) =>
+        buildStrip({
+          projection: projection(career === undefined ? {} : { career }),
+          areas,
+          alertsCount: null,
+        }).nation;
+      expect(rows(undefined).some((r) => r.id === "career")).toBe(false);
+      const sacked = rows({ reason: "SACKED", score: 12, month: { year: 1883, month: 4 } }).find(
+        (r) => r.id === "career",
+      )!;
+      expect(sacked.value).toBe("12 — sacked");
+      expect(sacked.tone).toBe("alert");
+      expect(sacked.note).toContain("April 1883: you were sacked");
+      const ended = rows({
+        reason: "CAMPAIGN_END",
+        score: 40,
+        month: { year: 1970, month: 12 },
+      }).find((r) => r.id === "career")!;
+      expect(ended.value).toBe("40 — campaign ended");
+      expect(ended.tone).toBe("normal");
+    });
   });
 });

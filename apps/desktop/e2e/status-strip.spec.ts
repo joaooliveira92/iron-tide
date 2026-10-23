@@ -24,10 +24,11 @@ test("the status strip expands into Nation, Budget and Outlook cards that fit th
     strip.getByRole("group", { name: "Outlook" }).getByText(/^(Healthy|Narrow|Deficit|Critical)$/),
   ).toBeVisible();
 
-  await expect(strip.getByText("Prestige")).toHaveCount(0);
+  await expect(strip.getByText("Prestige")).toBeVisible();
   await strip.getByRole("button", { name: /Not yet modelled \(\d+\)/ }).click();
   const popover = page.getByRole("dialog", { name: "Not yet modelled" });
-  await expect(popover.getByText("Prestige", { exact: true })).toBeVisible();
+  await expect(popover.getByText("Fleet morale", { exact: true })).toBeVisible();
+  await expect(popover.getByText("Prestige", { exact: true })).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(popover).toBeHidden();
 

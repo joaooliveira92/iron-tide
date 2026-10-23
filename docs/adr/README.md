@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0281).
+highest existing number + 1 (the next number is ADR-0282).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -126,6 +126,7 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 | 0245 | [ADR-0245-player-nation-id-in-campaign-state.md](ADR-0245-player-nation-id-in-campaign-state.md) | The player nation is stored in authoritative campaign state | accepted | — |
 | 0260 | [ADR-0260-prestige-application-and-unpaid-funds-source.md](ADR-0260-prestige-application-and-unpaid-funds-source.md) | Prestige application seam and the unpaid-funds source | accepted | — |
 | 0261 | [ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md](ADR-0261-fixed-loss-rule-and-declined-battle-reason-code.md) | A fixed-loss prestige rule and an optional DECLINED_BATTLE reason code | accepted | — |
+| 0281 | [ADR-0281-sacking-phase-and-terminal-career.md](ADR-0281-sacking-phase-and-terminal-career.md) | The sacking phase and the terminal career | accepted | — |
 
 ## Foreign stations & presence
 

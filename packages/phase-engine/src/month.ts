@@ -34,6 +34,8 @@ export class MonthExecutor {
     options?: StrategicWeatherPhaseOptions,
     engineOptions?: MonthExecutorEngineOptions,
   ): MonthResult {
+    if (snapshot["careerResult"] !== undefined) return this.careerEnded(snapshot);
+
     const commandLedger = new CommandLedger();
     const eventLedger = new EventLedger();
     const randomLedger = new RandomLedger();
@@ -89,6 +91,18 @@ export class MonthExecutor {
     }
 
     return this.finish(state, monthPipeline.run(state, engineOptions?.phaseOverrides));
+  }
+
+  private careerEnded(snapshot: CampaignSnapshot): MonthResult {
+    return {
+      finalSnapshot: snapshot,
+      commandLedger: new CommandLedger(),
+      eventLedger: new EventLedger(),
+      randomLedger: new RandomLedger(),
+      financialLedger: new FinancialLedger(),
+      success: false,
+      outcome: "career_ended",
+    };
   }
 
   private finish(state: MonthRunState, success: boolean): MonthResult {

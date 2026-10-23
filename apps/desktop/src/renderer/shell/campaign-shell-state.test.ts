@@ -16,6 +16,7 @@ const campaign = {
   projectedSurplusDeficit: 2_000,
   activeAlertsCount: null,
   atWar: false,
+  prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
 };
 
 describe("campaign shell state", () => {

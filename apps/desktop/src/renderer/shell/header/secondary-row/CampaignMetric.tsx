@@ -22,7 +22,12 @@ export function CampaignMetric({ metric }: CampaignMetricProps) {
 
   return (
     <div
-      className={cn("flex items-center gap-1.5", metric.placeholder && "text-muted-foreground")}
+      className={cn(
+        "flex items-center gap-1.5",
+        metric.placeholder && "text-muted-foreground",
+        metric.alert === true && "font-semibold text-destructive",
+      )}
+      {...(metric.alert === true ? { role: "status", tabIndex: 0 } : {})}
       title={
         metric.placeholder
           ? `${metric.label} ${translate("shell.header.metric.notReported")}`

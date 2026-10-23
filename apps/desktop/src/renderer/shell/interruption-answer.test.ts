@@ -18,6 +18,7 @@ import {
 } from "./interruption-answer.js";
 
 const campaign: CampaignOverview = {
+  prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
   month: { year: 1900, month: 1 },
   treasury: 50_000,
   revision: 3,
@@ -269,6 +270,7 @@ describe("foldResolveTurn", () => {
         projectedSurplusDeficit: 2_000,
         atWar: false,
         activeAlertsCount: null,
+        prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
       },
       message: "Month advanced to February 1900.",
     });

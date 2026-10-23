@@ -133,6 +133,7 @@ describe("MonthPipeline", () => {
       "presence_measurement",
       "foreign_station_deployment",
       "base_limits",
+      "sacking",
       "closing_validation",
     ]);
     expect(monthPipeline.nodes.map((node) => `${node.kind}:${node.id}`)).toEqual([
@@ -156,6 +157,7 @@ describe("MonthPipeline", () => {
       "phase:presence_measurement",
       "phase:foreign_station_deployment",
       "phase:base_limits",
+      "phase:sacking",
       "phase:closing_validation",
     ]);
   });

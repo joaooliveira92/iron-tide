@@ -29,6 +29,13 @@ function minimalSnapshot(): CampaignSnapshot {
           navalAppropriationRateBp: 1000,
           maintenanceCost: 1,
           prestige: 20,
+          prestigeLastChange: {
+            reasonCode: "BATTLE_WON",
+            before: 20,
+            after: 21,
+            delta: 1,
+            month: "1880-02",
+          },
           homeAreaId: "a1",
           fleets: [
             {

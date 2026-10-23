@@ -23,6 +23,7 @@ const FORMAT = createPresentationFormat({
 
 function projectionFor(balance: number): PlayerProjection {
   return {
+    prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
     campaignIdentity: "campaign_1",
     snapshotHash: "hash_abc",
     revision: 4,
@@ -97,26 +98,27 @@ describe("StatusStripView", () => {
     );
   });
 
-  it("keeps deferred rows out of the expanded band", async () => {
+  it("shows prestige in the expanded band", async () => {
     await renderStrip();
     const region = screen.getByRole("region", { name: "Status strip" });
-    expect(within(region).queryByText("Prestige")).toBeNull();
+    const prestige = within(region).getByText("Prestige").closest("[data-row]") as HTMLElement;
+    expect(prestige.getAttribute("data-deferred")).toBe("false");
+    expect(within(prestige).getByText("20")).toBeTruthy();
     expect(within(region).getByText("Shipyard capacity (port levels)")).toBeTruthy();
     expect(within(region).getByText("Committed expenses")).toBeTruthy();
   });
 
-  it("keeps deferred rows in one popover with their reasons, out of the expanded band", async () => {
+  it("keeps the remaining deferred rows in one popover with their reasons", async () => {
     await renderStrip();
     const trigger = screen.getByRole("button", { name: /Not yet modelled \(\d+\)/ });
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByText("Prestige")).toBeNull();
+    expect(screen.queryByText("Fleet morale")).toBeNull();
     fireEvent.click(trigger);
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
-    const prestige = screen.getByText("Prestige").closest("[data-row]") as HTMLElement;
-    expect(prestige.getAttribute("data-deferred")).toBe("true");
-    expect(within(prestige).getByText(/no prestige mechanic/i)).toBeTruthy();
+    const morale = screen.getByText("Fleet morale").closest("[data-row]") as HTMLElement;
+    expect(morale.getAttribute("data-deferred")).toBe("true");
     fireEvent.click(trigger);
-    expect(screen.queryByText("Prestige")).toBeNull();
+    expect(screen.queryByText("Fleet morale")).toBeNull();
   });
 
   it("states a deficit in words, not colour alone", async () => {

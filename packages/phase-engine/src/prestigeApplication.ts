@@ -42,7 +42,17 @@ export function applyPrestigeChange(
   const change = applied.value;
   if ((change.delta as number) === 0) return change;
 
-  const updatedNation: NationState = { ...nation, prestige: change.after };
+  const updatedNation: NationState = {
+    ...nation,
+    prestige: change.after,
+    prestigeLastChange: {
+      reasonCode: reason,
+      before: change.before,
+      after: change.after,
+      delta: change.delta,
+      month: ctx.campaignMonth,
+    },
+  };
   const updatedNations = new Map(ctx.snapshot.read("nations"));
   updatedNations.set(nationId, updatedNation);
   ctx.snapshot.write("nations", updatedNations);

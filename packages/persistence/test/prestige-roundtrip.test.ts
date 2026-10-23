@@ -173,4 +173,37 @@ describe("SaveStore round-trips the S-2 prestige state", () => {
   it("is stamped with the new compatibility version", () => {
     expect(CURRENT_COMPATIBILITY_VERSION).toBe("4.0.0");
   });
+  it.each([
+    ["SACKED", { year: 1883, month: 4 }],
+    ["CAMPAIGN_END", { year: 1970, month: 12 }],
+  ] as const)("save -> load restores a %s career result exactly", (reason, month) => {
+    const base = makeFixtureState(14);
+    const careerResult = {
+      nationId: "nation-a",
+      score: SafeInt(14),
+      reason,
+      month: { year: SafeInt(month.year), month: SafeInt(month.month) },
+    };
+    const snapshot: CampaignSnapshot = { ...base.snapshot, careerResult };
+    const envelope = createEnvelope("campaign-snapshot", snapshot.compatibilityVersion, snapshot);
+    const state: CampaignState = {
+      snapshot,
+      envelope,
+      rawHash: sha256Hex(canonicalSerialize({ snapshot, envelope })),
+    };
+    const store = new SaveStore();
+    store.save(state, tmpDir);
+
+    const diagnostics = new DiagnosticCollector();
+    const loaded = store.load(tmpDir, diagnostics);
+    expect(diagnostics.all.map((d) => d.message)).toEqual([]);
+    expect(loaded?.snapshot.careerResult).toEqual(careerResult);
+  });
+
+  it("a snapshot without a career result loads without one", () => {
+    const store = new SaveStore();
+    store.save(makeFixtureState(14), tmpDir);
+    const loaded = store.load(tmpDir, new DiagnosticCollector());
+    expect(loaded?.snapshot.careerResult).toBeUndefined();
+  });
 });

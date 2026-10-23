@@ -6,6 +6,7 @@ import type { PlayerProjection } from "@bluewave/campaign-engine";
 import { TreasuryScreen } from "./TreasuryScreen.js";
 
 const projection: PlayerProjection = {
+  prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
   campaignIdentity: "campaign_1",
   revision: 3 as PlayerProjection["revision"],
   month: { year: 1880, month: 3 },

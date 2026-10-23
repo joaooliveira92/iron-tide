@@ -128,6 +128,10 @@ function CampaignShellApplication({
             projectedSurplusDeficit: shell.state.campaign.projectedSurplusDeficit,
             atWar: shell.state.campaign.atWar,
             activeAlertsCount: shell.state.campaign.activeAlertsCount,
+            prestige: shell.state.campaign.prestige,
+            ...(shell.state.campaign.career === undefined
+              ? {}
+              : { career: shell.state.campaign.career }),
           },
     [shell.state.campaign],
   );
