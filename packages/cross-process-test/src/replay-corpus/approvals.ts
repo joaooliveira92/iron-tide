@@ -2,9 +2,22 @@ import { canonicalSerialize, hashWithContext } from "@bluewave/deterministic";
 import { readsAsBroadApproval } from "@bluewave/ship-design";
 import { Data, Result, Schema, SchemaIssue } from "effect";
 
-import { decodeReplayFile, type ReplayFile } from "./format.js";
+import { decodeReplayFile, type LedgerName, type ReplayFile } from "./format.js";
 
-export const REPLAY_APPROVALS_SCHEMA = "replay-approvals/1";
+const LEDGER_NAMES: readonly LedgerName[] = ["command", "event", "financial", "random"];
+
+export const REPLAY_APPROVALS_SCHEMA = "replay-approvals/2";
+const LEGACY_APPROVALS_SCHEMA = "replay-approvals/1";
+
+export const CHANGE_CLASSES = [
+  "EXPECTED_GAMEPLAY_CHANGE",
+  "SERIALIZATION_ONLY",
+  "RULESET_VERSION_CHANGE",
+] as const;
+export type ChangeClass = (typeof CHANGE_CLASSES)[number];
+
+export const isChangeClass = (value: string | undefined): value is ChangeClass =>
+  CHANGE_CLASSES.some((known) => known === value);
 
 const ABSENT = "absent";
 
@@ -28,6 +41,7 @@ const ApprovalEntrySchema = Schema.Struct({
   month: Schema.Int.check(Schema.isGreaterThanOrEqualTo(1)),
   oldHash: Hash,
   newHash: Hash,
+  changeClass: Schema.Literals(CHANGE_CLASSES),
   cause: Text,
   migrationAssessment: Text,
 }).check(
@@ -61,6 +75,21 @@ const parseOptions = { onExcessProperty: "error", errors: "all" } as const;
 const formatter = SchemaIssue.makeFormatterStandardSchemaV1();
 const decodeApprovalsFile = Schema.decodeUnknownResult(ApprovalsFileSchema, parseOptions);
 
+function upgradeEmptyLegacy(raw: unknown): unknown {
+  if (
+    typeof raw === "object" &&
+    raw !== null &&
+    "schema" in raw &&
+    raw.schema === LEGACY_APPROVALS_SCHEMA &&
+    "entries" in raw &&
+    Array.isArray(raw.entries) &&
+    raw.entries.length === 0
+  ) {
+    return { schema: REPLAY_APPROVALS_SCHEMA, entries: [] };
+  }
+  return raw;
+}
+
 function decodeApprovals(text: string | undefined): Result.Result<ApprovalsFile, ApprovalsError> {
   if (text === undefined) return Result.succeed({ schema: REPLAY_APPROVALS_SCHEMA, entries: [] });
   let raw: unknown;
@@ -69,7 +98,7 @@ function decodeApprovals(text: string | undefined): Result.Result<ApprovalsFile,
   } catch {
     return Result.fail(new ApprovalsError({ message: "Replay approvals file is not valid JSON" }));
   }
-  const decoded = decodeApprovalsFile(raw);
+  const decoded = decodeApprovalsFile(upgradeEmptyLegacy(raw));
   if (Result.isFailure(decoded)) {
     const issues = formatter(decoded.failure.issue).issues.map((issue) => {
       const path = (issue.path ?? []).map(String).join(".");
@@ -150,7 +179,8 @@ export type ApprovalFailure = {
     | "HashMismatch"
     | "OrphanedApproval"
     | "ReusedApproval"
-    | "RewrittenApproval";
+    | "RewrittenApproval"
+    | "ClassMismatch";
   readonly replayId: string;
   readonly month: number;
   readonly detail: string;
@@ -165,6 +195,43 @@ export function formatApprovalFailures(failures: readonly ApprovalFailure[]): st
   return failures
     .map((f) => `${f._tag} ${f.replayId} month ${String(f.month)}: ${f.detail}\n`)
     .join("");
+}
+
+function classMismatch(
+  entry: ApprovalEntry,
+  base: ReadonlyMap<string, ReplayFile>,
+  head: ReadonlyMap<string, ReplayFile>,
+): string | undefined {
+  if (entry.changeClass === "EXPECTED_GAMEPLAY_CHANGE") return undefined;
+  const before = base.get(entry.replayId);
+  const after = head.get(entry.replayId);
+  if (before === undefined || after === undefined) {
+    return `${entry.changeClass} needs the replay in both base and head`;
+  }
+  const rulesetMoved = before.rulesetVersion !== after.rulesetVersion;
+  if (entry.changeClass === "RULESET_VERSION_CHANGE") {
+    return rulesetMoved
+      ? undefined
+      : "RULESET_VERSION_CHANGE but the replay's ruleset version is unchanged";
+  }
+  if (rulesetMoved) return "SERIALIZATION_ONLY but the replay's ruleset version moved";
+  if (before.compatibilityVersion !== after.compatibilityVersion) {
+    return "SERIALIZATION_ONLY but the replay's compatibility version moved";
+  }
+  if (before.contentHash !== after.contentHash) {
+    return "SERIALIZATION_ONLY but the replay's content hash moved";
+  }
+  const oldMonth = before.months[entry.month - 1];
+  const newMonth = after.months[entry.month - 1];
+  if (oldMonth === undefined || newMonth === undefined) {
+    return "SERIALIZATION_ONLY but the month is absent on one side";
+  }
+  for (const ledger of LEDGER_NAMES) {
+    if (oldMonth.ledgers[ledger].count !== newMonth.ledgers[ledger].count) {
+      return `SERIALIZATION_ONLY but the ${ledger} ledger changed from ${String(oldMonth.ledgers[ledger].count)} to ${String(newMonth.ledgers[ledger].count)} entries`;
+    }
+  }
+  return undefined;
 }
 
 const short = (hash: string): string => hash.slice(0, 12);
@@ -226,6 +293,15 @@ export function checkReplayApprovals(
     const exact = candidates.find((e) => keyOf(e) === key);
     if (exact !== undefined) {
       used.add(exact);
+      const mismatch = classMismatch(exact, baseCorpus.success, headCorpus.success);
+      if (mismatch !== undefined) {
+        failures.push({
+          _tag: "ClassMismatch",
+          replayId: delta.replayId,
+          month: delta.month,
+          detail: `${exact.id}: ${mismatch}`,
+        });
+      }
       continue;
     }
     if (handled.has(key)) continue;
@@ -269,6 +345,7 @@ export function checkReplayApprovals(
 }
 
 export interface ProposalInput {
+  readonly changeClass: ChangeClass;
   readonly cause: string;
   readonly migrationAssessment: string;
 }
@@ -290,6 +367,7 @@ export function proposeApprovals(
     .map((delta) => ({
       id: `${delta.replayId}:m${String(delta.month)}:${short(delta.oldHash)}->${short(delta.newHash)}`,
       ...delta,
+      changeClass: input.changeClass,
       cause: input.cause,
       migrationAssessment: input.migrationAssessment,
     }));
