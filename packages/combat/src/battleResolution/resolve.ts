@@ -20,7 +20,7 @@ import { AUTO_RESOLUTION_UNAVAILABLE } from "../generation/reasonCodes.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { CauseOfLossTracker, type LossCause } from "./causeOfLoss.js";
 import { type AutoResolverNation, projectBattle, type ProjectBattleOutput } from "./project.js";
-import { buildBattleWeather } from "./weather.js";
+import { buildBattleWeather } from "../weather/auto-resolution-weather.js";
 import {
   projectAirCombatContext,
   projectAirDefenseContext,
@@ -34,7 +34,7 @@ import {
   initialDamageState,
   type DamageContext,
   type DamageTargetContext,
-} from "./damage.js";
+} from "../damage/minuteDamage.js";
 import {
   decideBattleEnd,
   type BattleSide,

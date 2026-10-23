@@ -6,7 +6,7 @@ import type { TacticalBattleState, TacticalShipUnit } from "../tactical/index.js
 import type { MovementState } from "../movement/state.js";
 import type { TacticalContact } from "../contact/lifecycle.js";
 import { advanceMinute, type MinuteResult } from "./engine.js";
-import { initialDamageState } from "../battleResolution/damage.js";
+import { initialDamageState } from "../damage/minuteDamage.js";
 import {
   computeBaseBreachRateKgMin,
   EMPTY_TUBE,

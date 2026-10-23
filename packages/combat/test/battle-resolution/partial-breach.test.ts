@@ -83,7 +83,7 @@ describe("ADR-0098: bounded partial-penetration breach", () => {
 
   it("contains no nation-id conditional in the partial-breach path", () => {
     const here = dirname(fileURLToPath(import.meta.url));
-    for (const rel of ["battleResolution/damage.ts", "damage/immediateFireFlooding.ts"]) {
+    for (const rel of ["damage/minuteDamage.ts", "damage/immediateFireFlooding.ts"]) {
       const src = readFileSync(join(here, "..", "..", "src", rel), "utf8");
       expect(/nationId\s*===|nationId\s*!==/.test(src)).toBe(false);
     }

@@ -8,7 +8,7 @@ import type { WeatherEngineContext } from "../weather/engine.js";
 import type { BattleWeatherComponents } from "../weather/components.js";
 import type { TacticalBattleState } from "../tactical/index.js";
 import type { ShipDamageState } from "../damage/state.js";
-import type { DamageContext } from "../battleResolution/damage.js";
+import type { DamageContext } from "../damage/minuteDamage.js";
 import type {
   TorpedoContext,
   TorpedoLauncherState,

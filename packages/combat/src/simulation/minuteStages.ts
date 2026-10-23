@@ -26,7 +26,7 @@ import { resolveWeather } from "../weather/engine.js";
 import type { BattleWeatherComponents } from "../weather/components.js";
 import type { TacticalBattleState } from "../tactical/index.js";
 import type { ShipDamageState } from "../damage/state.js";
-import { resolveMinuteDamage } from "../battleResolution/damage.js";
+import { resolveMinuteDamage } from "../damage/minuteDamage.js";
 import {
   resolveTorpedoes,
   type TorpedoLauncherState,

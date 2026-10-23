@@ -8,7 +8,7 @@ import {
   type TorpedoContext,
   type TorpedoLaunchCommand,
 } from "../torpedoes/index.js";
-import type { DamageContext } from "./damage.js";
+import type { DamageContext } from "../damage/minuteDamage.js";
 import { AUTO_TORPEDO_DEPTH_M } from "./torpedoProjection.js";
 
 const UM_PER_M = 1_000_000;
