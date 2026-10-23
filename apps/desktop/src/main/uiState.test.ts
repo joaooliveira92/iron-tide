@@ -394,7 +394,9 @@ describe("ui-state sidecar", () => {
       outcome: "error",
       reason: "INVALID_PAYLOAD",
     });
-    expect(await runProgram(writeUiStateProgram, { sessionId: "s" })).toMatchObject({
+    expect(
+      await runProgram(writeUiStateProgram, { sessionId: "s", dismissedFingerprints: "high" }),
+    ).toMatchObject({
       outcome: "error",
       reason: "INVALID_PAYLOAD",
     });
