@@ -1,6 +1,5 @@
 import type { CampaignState } from "@bluewave/campaign";
 import {
-  economyOutlook,
   isPresenceExempt,
   measurePresence,
   monthId,
@@ -8,7 +7,7 @@ import {
   type PresenceMeasurementRules,
   type ResearchUnfundedReason,
 } from "@bluewave/campaign";
-import { totalPaidWork } from "./opening-briefing.js";
+import { derivePlayerFacts } from "./player-facts.js";
 
 export type { EconomyStatus, ResearchUnfundedReason } from "@bluewave/campaign";
 
@@ -139,31 +138,17 @@ export function buildPlayerProjection(
   presenceRules?: PresenceMeasurementRules,
 ): PlayerProjection | undefined {
   const snapshot = state.snapshot;
-  const nation = snapshot.nations.get(playerSlotId);
-  if (nation === undefined) return undefined;
+  const facts = derivePlayerFacts(snapshot, playerSlotId);
+  if (facts === undefined) return undefined;
+  const { nation, outlook, ports, shipyardCapacity, constructionCommitted } = facts;
 
-  const ports: PlayerProjectionPort[] = snapshot.world.ports
-    .filter((port) => port.nationId === playerSlotId)
-    .map((port) => ({
-      id: port.id,
-      name: port.name,
-      areaId: port.areaId,
-      capacity: Number(port.level),
-    }))
-    .sort((a, b) => a.id.localeCompare(b.id));
-
-  const shipyardCapacity = ports.reduce((sum, port) => sum + port.capacity, 0);
-  const outlook = economyOutlook(snapshot, playerSlotId)!;
-  const constructionSpend = totalPaidWork(nation);
-
-  const fleet: PlayerProjectionFleet[] = nation.fleets.map((f) => ({
+  const fleet: PlayerProjectionFleet[] = facts.fleets.map(({ fleet: f, ships }) => ({
     name: f.name,
     divisions: [
       {
         name: f.name,
         areaId: f.locationAreaId,
-        ships: f.ships.map((ship) => {
-          const design = snapshot.designs.get(ship.designVersionId);
+        ships: ships.map(({ ship, design }) => {
           return {
             name: ship.name,
             designId: ship.designVersionId,
@@ -220,7 +205,7 @@ export function buildPlayerProjection(
       treasury: Number(nation.treasury),
       monthlyAppropriation: outlook.revenue,
       shipyardCapacity,
-      constructionSpend,
+      constructionSpend: constructionCommitted,
       researchSpend: outlook.plannedResearch,
       maintenanceCost: outlook.maintenance,
       obligations: outlook.obligations,

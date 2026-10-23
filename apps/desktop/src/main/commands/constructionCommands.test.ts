@@ -3,12 +3,15 @@ import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { CampaignState } from "@bluewave/campaign";
-import type { CampaignConfiguration, CommitMonthResponse } from "@bluewave/campaign-engine";
+import {
+  constructionProjectReadout,
+  type CampaignConfiguration,
+  type CommitMonthResponse,
+} from "@bluewave/campaign-engine";
 import { SafeInt } from "@bluewave/contracts";
 import { createEnvelope } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
-import { constructionProjectReadout } from "@bluewave/phase-engine";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
