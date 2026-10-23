@@ -3,7 +3,8 @@
 ## Status
 
 Accepted (2026-10-23). Implements tickets [#90](https://github.com/joaooliveira92/iron-tide/issues/90) (S-2 05) and
-[#91](https://github.com/joaooliveira92/iron-tide/issues/91) (S-2 06) of spec
+[#91](https://github.com/joaooliveira92/iron-tide/issues/91) (S-2 06) and
+[#92](https://github.com/joaooliveira92/iron-tide/issues/92) (S-2 07) of spec
 [#74](https://github.com/joaooliveira92/iron-tide/issues/74), R6 to R9 and R11. Uses the value set of
 [ADR-0239](ADR-0239-s2-prestige-values-balance-targets.md) and the seam of
 [ADR-0260](ADR-0260-prestige-application-and-unpaid-funds-source.md) unchanged.
@@ -25,8 +26,15 @@ Accepted (2026-10-23). Implements tickets [#90](https://github.com/joaooliveira9
    `MonthExecutor.execute` on a snapshot that holds a career result returns the unchanged snapshot, empty ledgers,
    `success: false` and `outcome: "career_ended"` before any phase or command runs. That is a normal outcome, not a diagnostic.
 
+4. **Campaign end.** The same phase, when no sack ended the career, writes `CAMPAIGN_END` (score = prestige, month = the final
+   month reached) if advancing the executing month lands on the declared final month (`isAtEnd`, December 1970, from the
+   existing timeline; no new date and no span decision). A sack and the final month coinciding yield one result: the sack wins
+   because its draw is taken first and ends the career in the executing month. Only the player nation has a career, so
+   without a player nation nothing is written.
+5. **Persistence and the desktop.** The save schema accepts an optional `careerResult`; a snapshot without one is unchanged,
+   so no compatibility bump. The desktop turn transaction rejects a month on an ended career with `CAREER_ENDED`.
+
 ## Compatibility
 
 Absent while the career is active, so existing snapshots, goldens and reference hashes do not move (`pnpm check:golden`
-unchanged). Persisting and restoring the field, and the campaign-end result, belong to ticket
-[#92](https://github.com/joaooliveira92/iron-tide/issues/92).
+unchanged).

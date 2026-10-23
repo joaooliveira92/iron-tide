@@ -60,6 +60,13 @@ const StorablePrestigeValueSetSchema = Schema.Struct({
   }),
 });
 
+const StorableCareerResultSchema = Schema.Struct({
+  nationId: Schema.String,
+  score: Schema.Finite,
+  reason: Schema.Literals(["SACKED", "CAMPAIGN_END"]),
+  month: Schema.Struct({ year: Schema.Finite, month: Schema.Finite }),
+});
+
 const StorableSnapshotSchema = Schema.Struct({
   version: Schema.String,
   turnNumber: Schema.Finite,
@@ -101,6 +108,7 @@ const StorableSnapshotSchema = Schema.Struct({
     Schema.withDecodingDefaultType(emptyArrayDefault),
   ),
   prestigeRules: StorablePrestigeValueSetSchema,
+  careerResult: Schema.optionalKey(StorableCareerResultSchema),
   rulesetVersion: Schema.String,
   compatibilityVersion: Schema.String,
 });

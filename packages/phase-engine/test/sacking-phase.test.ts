@@ -133,4 +133,55 @@ describe("S-2 06: the sacking phase", () => {
     expect(again.eventLedger.all).toHaveLength(0);
     expect(again.finalSnapshot.turnNumber).toBe(sacked.turnNumber);
   });
+
+  describe("campaign end", () => {
+    const at = (year: number, month: number, prestige: number, probabilityBp = 0) => ({
+      ...withState(quiet(), { [ATTACKER_NATION]: prestige }, probabilityBp),
+      startYear: year,
+      startMonth: month,
+      turnNumber: SafeInt(0),
+    });
+
+    it("ends the career in office when the month reached is the declared final month", () => {
+      const result = run(at(1970, 11, 40), ATTACKER_NATION);
+      expect(result.finalSnapshot.careerResult).toEqual({
+        nationId: ATTACKER_NATION,
+        score: 40,
+        reason: "CAMPAIGN_END",
+        month: { year: 1970, month: 12 },
+      });
+      expect(sackingDraws(result)).toHaveLength(0);
+    });
+
+    it("does nothing before the month preceding the final month, or without a player", () => {
+      expect(run(at(1970, 10, 40), ATTACKER_NATION).finalSnapshot.careerResult).toBeUndefined();
+      expect(run(at(1970, 11, 40)).finalSnapshot.careerResult).toBeUndefined();
+    });
+
+    it("refuses a repeated advance once the campaign has ended", () => {
+      const ended = run(at(1970, 11, 40), ATTACKER_NATION).finalSnapshot;
+      const again = run(ended, ATTACKER_NATION);
+      expect(again.outcome).toBe("career_ended");
+      expect(again.finalSnapshot).toBe(ended);
+    });
+
+    it("yields exactly one result when a sack and the final month coincide, the sack taking precedence", () => {
+      const result = run(at(1970, 11, 10, 10_000), ATTACKER_NATION);
+      expect(result.finalSnapshot.careerResult).toEqual({
+        nationId: ATTACKER_NATION,
+        score: 10,
+        reason: "SACKED",
+        month: { year: 1970, month: 11 },
+      });
+      expect(sackingDraws(result)).toHaveLength(1);
+    });
+
+    it("keeps the campaign-end result when the final-month draw spares the player", () => {
+      const result = run(at(1970, 11, 10, 0), ATTACKER_NATION);
+      expect(result.finalSnapshot.careerResult).toMatchObject({
+        reason: "CAMPAIGN_END",
+        score: 10,
+      });
+    });
+  });
 });

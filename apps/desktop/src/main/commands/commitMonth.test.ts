@@ -423,6 +423,41 @@ describe("commitMonth", () => {
       expect(scoreChanged).toBe(true);
     });
 
+    it("rejects a month once the career has ended and leaves the session untouched", async () => {
+      const saveDir = resolve(saveRoot, "save-ended");
+      const snapshot = makeWarSnapshot();
+      const ended: CampaignSnapshot = {
+        ...snapshot,
+        careerResult: {
+          nationId: "GBR",
+          score: SafeInt(20),
+          reason: "SACKED",
+          month: { year: SafeInt(1880), month: SafeInt(1) },
+        },
+      };
+      const envelope = createEnvelope("campaign-snapshot", ended.compatibilityVersion, ended);
+      const state = toSaveableState({ snapshot: ended, envelope, rawHash: "" });
+      new SaveStore().save(state, saveDir);
+      registerCampaignSession({
+        sessionId: "session-ended",
+        saveDir,
+        playerSlotId: "GBR",
+        campaignSeed: "b".repeat(32),
+        month: { month: 1, year: 1880 },
+        state,
+      });
+
+      const result = await commitMonth({
+        sessionId: "session-ended",
+        expectedRevision: 0,
+        transportRequestId: "req-1",
+      });
+      expect(result.outcome).toBe("rejected");
+      if (result.outcome !== "rejected") return;
+      expect(result.reason).toBe("CAREER_ENDED");
+      expect(getCampaignSession("session-ended")!.state.snapshot).toBe(state.snapshot);
+    });
+
     it("populates closingSnapshot.battleOutcomes accurately from the engine's resolved battles (INC-2)", async () => {
       const saveDir = resolve(saveRoot, "save-war-outcomes");
       const preSnapshot = registerWarSession("session-war-outcomes", saveDir);

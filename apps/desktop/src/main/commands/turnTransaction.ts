@@ -103,6 +103,14 @@ export const runTurnTransaction = (
       };
     }
 
+    if (record.state.snapshot.careerResult !== undefined) {
+      return {
+        kind: "rejected",
+        reason: "CAREER_ENDED",
+        diagnostics: [`The career of session ${input.sessionId} has ended`],
+      };
+    }
+
     if (!canAdvance(record.month.year, record.month.month)) {
       return {
         kind: "rejected",
