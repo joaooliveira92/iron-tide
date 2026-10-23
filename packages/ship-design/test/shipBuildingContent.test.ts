@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vite-plus/test";
-import { buildShipBuildingContent, unlockedTechIds, compileDesign } from "../src/index.js";
+import {
+  buildShipBuildingContent,
+  compileDesign,
+  shipBalanceFromRecord,
+  unlockedTechIds,
+} from "../src/index.js";
 import { checkRevisionBalance } from "../src/revision.js";
 import { shipBuildingData, shipBuildingContent } from "./helpers/earlyContext.js";
 import { havock } from "./helpers/references.js";
@@ -51,5 +56,41 @@ describe("buildShipBuildingContent", () => {
       balance: { ...shipBuildingData.balance, revision: undefined },
     });
     expect(none.revision).toBeNull();
+  });
+  describe("classification rules by month", () => {
+    const shipBalance = shipBalanceFromRecord(shipBuildingData.balance.ship);
+    const base = shipBalance.classification!;
+    const withEras = (eras: unknown) =>
+      buildShipBuildingContent({
+        ...shipBuildingData,
+        balance: {
+          ...shipBuildingData.balance,
+          ship: { ...shipBalance, classificationFromMonth: eras },
+        },
+      });
+    const later = { ...base, ddMaxDisplacementKg: 3_000_000, clMinDisplacementKg: 3_000_000 };
+
+    it("keeps the base rules before the first era and switches at its month", () => {
+      const content = withEras([{ fromMonth: "1940-01", classification: later }]);
+      expect(content.environmentFor("1939-12").ctx.balance.classification).toEqual(base);
+      expect(content.environmentFor("1940-01").ctx.balance.classification).toEqual(later);
+      expect(content.environmentFor("1970-12").ctx.balance.classification).toEqual(later);
+    });
+
+    it("refuses eras that are out of order or repeat a month", () => {
+      const entry = (fromMonth: string) => ({ fromMonth, classification: later });
+      expect(() => withEras([entry("1950-01"), entry("1940-01")])).toThrow(
+        /classificationFromMonth/,
+      );
+      expect(() => withEras([entry("1940-01"), entry("1940-01")])).toThrow(
+        /classificationFromMonth/,
+      );
+    });
+
+    it("refuses an era whose rules are incomplete", () => {
+      expect(() =>
+        withEras([{ fromMonth: "1940-01", classification: { rulesetVersion: 2 } }]),
+      ).toThrow(/classificationFromMonth/);
+    });
   });
 });

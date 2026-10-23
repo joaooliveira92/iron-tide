@@ -78,6 +78,46 @@ parts:
       volumeLitrePerKw: 60
       weightMilliKgPerKw: 46000
   - family: propulsion_plant
+    id: hp_steam_geared_turbine
+    lifecycle:
+      availableFrom: 1940-01
+      availableUntil: null
+      requires:
+        - mac_high_pressure_steam
+        - mac_improved_geared_turbines
+    name: hp_steam_geared_turbine
+    origin:
+      sourceFile: ship-building/plants.yaml
+    parameters:
+      installedKw:
+        max: 158084
+        min: 2000
+        step: 1
+    provenance:
+      confidence: LOW
+      kind: game_conversion
+      note: Read from legacy plant 'hp_steam_geared_turbine', whose sources are YAML comments only.
+      sourceStatus: PLACEHOLDER
+      sources: []
+    provides: propulsion_plant
+    quantities: []
+    revisions: []
+    spec:
+      fuelType: OIL
+      reliabilityBp: 9000
+      sfcGramPerKwh:
+        points:
+          - - 0
+            - 510
+          - - 2000
+            - 445
+          - - 6000
+            - 400
+          - - 10000
+            - 425
+      volumeLitrePerKw: 20
+      weightMilliKgPerKw: 18000
+  - family: propulsion_plant
     id: locomotive_boiler_tb
     lifecycle:
       availableFrom: 1890-01

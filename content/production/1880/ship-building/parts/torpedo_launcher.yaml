@@ -1435,6 +1435,80 @@ parts:
         centreOfGravity:
           datum: PART_BASE
           zMm: 4800
+        envelopeHeightMm: 1800
+      power:
+        consumption:
+          - basis: PER_PART_UNIT
+            id: power
+            kind: powerKw
+            value: 0
+    entryUnits:
+      max: 10
+      min: 1
+      step: 1
+    family: torpedo_launcher
+    id: tube_21in_above_water
+    lifecycle:
+      availableFrom: 1931-01
+      availableUntil: null
+      requires:
+        - torp_21in_ww1
+    metadata:
+      tags:
+        - torpedo
+    name: 21-inch torpedo tube, above-water trainable quintuple-capable carriage
+    origin:
+      sourceFile: ship-building/components.yaml
+    provenance:
+      confidence: LOW
+      kind: game_conversion
+      note: Read from legacy component 'tube_21in_above_water', which has no structured provenance.
+      sourceStatus: PLACEHOLDER
+      sources: []
+    provides: torpedo_launcher
+    quantities:
+      - basis: PER_PART_UNIT
+        id: tube_mass
+        kind: massKg
+        value: 3080
+      - basis: PER_PART_UNIT
+        id: stowed_torpedo_mass
+        kind: massKg
+        value: 1361
+      - basis: PER_PART_UNIT
+        id: tube_cost
+        kind: costMicro
+        value: 1540000000
+      - basis: PER_PART_UNIT
+        id: tube_crew
+        kind: crew
+        value: 3
+      - basis: PER_PART_UNIT
+        id: tube_volume
+        kind: volumeLitre
+        value: 6800
+      - basis: PER_PART_UNIT
+        id: tube_deck_footprint
+        kind: deckFootprintMm2
+        value: 5500000
+    revisions: []
+    slots:
+      - accepts:
+          - torpedo
+        constraints:
+          diameterUmEqualsBore: true
+        id: torpedo
+    spec:
+      boreDiameterUm: 533000
+      launchType: ABOVE_WATER_TRAINABLE
+      loadsTorpedo: usn_21in_mk14_1931
+  - engineering:
+      maintenance:
+        monthlyBpOfCost: 15
+      physical:
+        centreOfGravity:
+          datum: PART_BASE
+          zMm: 4800
         envelopeHeightMm: 1500
       power:
         consumption:

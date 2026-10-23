@@ -24,9 +24,10 @@ navalProfiles:
           protected_cruiser_form,
           coast_defence_form,
           pre_dreadnought_form,
+          destroyer_form,
           merchant_liner_form,
         ]
-      domesticPlants: [compound_cylindrical]
+      domesticPlants: [compound_cylindrical, hp_steam_geared_turbine]
       restrictedShipTypes: []
       grants: []
     softPreferences:

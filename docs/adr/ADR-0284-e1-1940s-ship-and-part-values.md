@@ -21,6 +21,15 @@ Accepted (2026-10-23). The owner delegated the open decisions of decision reques
 5. **Welded hull.** No schema key is added. `hc_all_welded_hull` stays a gate with no weight effect.
 6. **Plant pressure.** The steam plant records 650 psi (Naval Historical Review) and notes the 600 psi disagreement.
 
+7. **Classification by era.** The class rules were one set for all years and capped a destroyer at 2,000 t, so Fletcher and Gearing classed as
+   light cruisers. `balance.yaml` gains an optional `classificationFromMonth` list; the rules in force for a month are the last entry not after
+   it, else the base rules. The 1940 entry raises only the destroyer and light-cruiser boundary to 4,000 t (the model counts the full fuel load
+   and Gearing is 3,460 t at full load); every other threshold repeats the base until the cruiser and battleship slices source theirs.
+8. **Fitted values.** The destroyer form's `formBp`, its Admiralty coefficient, and the steam plant's mass, volume and fuel curve are
+   `BALANCE_TARGET` values fitted so the Gearing reference closes on its sourced 3,460 t full load, 36.8 kn and zones. Copying the nearest
+   plant (114 kg/kW) would outweigh the ship. The plant and the 21-inch tube carry no structured provenance, so they join the placeholder
+   allowlist with the same justification as the other inherited legacy records.
+
 ## Consequences
 
 - No value is unlabelled; none claims a source it does not have.

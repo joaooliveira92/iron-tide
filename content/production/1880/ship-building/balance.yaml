@@ -32,6 +32,7 @@ ship:
       protected_cruiser_form: 26000
       coast_defence_form: 15500
       pre_dreadnought_form: 26500
+      destroyer_form: 19400 # BALANCE TARGET fitted so the Gearing returns its 36.8 kn at 44,742 kW and 3,460 t full load (docs/research/e-1-1940s-hull-and-part-values.md section 10: C = D^(2/3) V^3 / shp = 190 before the speed-length penalty)
       merchant_liner_form: 26000 # ESTIMATE/SINGLE-SOURCE: C2 x100 for Etruria (14,000 ihp/18.8 kn), Campania and City of Paris; range 25,000-29,000 (docs/research/ship-building-merchant-liner.md section 5)
     slr0X1000: 1300
     kSlBp: 600
@@ -312,6 +313,49 @@ ship:
     amcFastShareBp: 2500
     amcFastMinAllowance: 1
     amcFastSpeedUms: 11317768
+  # From 1940 a destroyer may displace up to 4,000 t (ADR-0284). Anchor: the model counts the full fuel load, and Gearing is 3,460 t at full
+  # load (2,616 t standard), both above the 2,000 t of the 1880-1939 rules (docs/research/e-1-1940s-hull-and-part-values.md section 10).
+  # The 4,000 t edge is a BALANCE TARGET; every other
+  # threshold repeats the base rules until the cruiser and battleship slices of ticket 254 source theirs.
+  classificationFromMonth:
+    - fromMonth: "1940-01"
+      classification:
+        rulesetVersion: 2
+        ddMaxDisplacementKg: 4000000
+        ddMinSpeedUms: 9774436
+        ddMaxGunUm: 152400
+        qualifyingArmourUm: 50800
+        clMinDisplacementKg: 4000000
+        clMaxDisplacementKg: 8000000
+        clMinSpeedUms: 8231104
+        clMaxGunUm: 152400
+        clBeltMaxUm: 50800
+        protectedCruiserExceptionVersion: 1
+        clProtectedMaxGunUm: 203200
+        caMinDisplacementKg: 4000000
+        caMinSpeedUms: 9774436
+        caBeltMinUm: 50800
+        caBeltMaxUm: 304800
+        caGunMaxUm: 279400
+        bMinDisplacementKg: 1500000
+        bBeltMinUm: 101600
+        bMaxSpeedUms: 9259992
+        bMaxTurrets: 2
+        bbMinDisplacementKg: 8000000
+        bbMinTurrets: 3
+        bbBeltMinUm: 152400
+        bbGunMinUm: 254000
+        aircraftLimit: 4
+        keMaxDisplacementKg: 2500000
+        keBeltMaxUm: 50800
+        keGunMaxUm: 152400
+        amcMinDisplacementKg: 1700000
+        amcGunMaxUm: 152400
+        amcFleetShareBp: 2000
+        amcFleetMinAllowance: 2
+        amcFastShareBp: 2500
+        amcFastMinAllowance: 1
+        amcFastSpeedUms: 11317768
 cost:
   hullCostPerTonneMicro:
     iron: 55000000 # GBP per tonne of hull weight: 48 (1873) to 80 (1885), Brassey; mid-range 70 chosen for mild steel (research 2)
@@ -322,6 +366,7 @@ cost:
     protected_cruiser_form: 10500
     coast_defence_form: 10000
     pre_dreadnought_form: 10000
+    destroyer_form: 11000 # BALANCE TARGET: copied from torpedo_boat_form, the nearest fast light hull
     merchant_liner_form: 10000 # ESTIMATE: neutral until a merchant-yard source exists
   subdivisionComplexityBp:
     - 9000
@@ -353,6 +398,7 @@ cost:
     compound_locomotive_tb: 10700000 # ESTIMATE: a compound engine (as compound_cylindrical) with a locomotive boiler; no separate sourced price for the 1879 torpedo-boat plant (White 1894 gives mass, not cost)
     triple_expansion_cylindrical: 8000000 # GBP 6 per ihp, between 8 (1888) and 4.5 (1893-95), ESTIMATE
     triple_expansion_watertube: 9000000 # ESTIMATE
+    hp_steam_geared_turbine: 9000000 # BALANCE TARGET: copied from triple_expansion_watertube, the nearest priced plant (ADR-0284)
     locomotive_boiler_tb: 7100000 # Havock machinery GBP 18,674 / 3,500 ihp = 5.3 per ihp (Brassey 1894, VERIFIED)
   maturityCostBp:
     points:
