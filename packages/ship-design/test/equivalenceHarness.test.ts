@@ -46,7 +46,7 @@ const codes = (r: EquivalenceReport) =>
     .map((f) => f.code);
 
 describe("equivalence harness over current content (ticket 08)", () => {
-  it("covers 92/92 designs and 825/825 placements, and the pinned slices", () => {
+  it("covers 93/93 designs and 836/836 placements, and the pinned slices", () => {
     expect(report.schema).toBe(EQUIVALENCE_REPORT_SCHEMA);
     expect(report.coverage.baseline).toEqual(PINNED_COVERAGE);
     expect(report.coverage.candidate).toEqual(PINNED_COVERAGE);
@@ -98,7 +98,7 @@ describe("equivalence harness over current content (ticket 08)", () => {
   });
 
   it("keeps data quality separate with independent armament, magazine and waiver counts", () => {
-    expect(report.dataQuality.unresolvedGunPlacements).toHaveLength(162);
+    expect(report.dataQuality.unresolvedGunPlacements).toHaveLength(165);
     expect(
       report.dataQuality.unresolvedGunPlacements.every(
         (u) => u.code === "PART_READ_PATH_NO_FIRST_CLASS_ARMAMENT",

@@ -449,3 +449,47 @@ export function classificationRulesFromRecord(raw: unknown): ClassificationRules
       throw new Error(`classification rules '${k}' must be a finite number`);
   return raw as ClassificationRules;
 }
+
+export interface ClassificationEra {
+  readonly fromMonth: string;
+  readonly classification: ClassificationRules;
+}
+
+const ERA_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+export function classificationErasFromRecord(raw: unknown): readonly ClassificationEra[] {
+  if (!Array.isArray(raw)) throw new Error("classificationFromMonth must be a list");
+  let previous = "";
+  return raw.map((entry: unknown) => {
+    if (entry === null || typeof entry !== "object")
+      throw new Error("classificationFromMonth entries must be objects");
+    const rec = entry as Record<string, unknown>;
+    const fromMonth = rec["fromMonth"];
+    if (typeof fromMonth !== "string" || !ERA_MONTH.test(fromMonth))
+      throw new Error("classificationFromMonth fromMonth must be YYYY-MM");
+    if (fromMonth <= previous)
+      throw new Error("classificationFromMonth must be in ascending order of fromMonth");
+    previous = fromMonth;
+    try {
+      return { fromMonth, classification: classificationRulesFromRecord(rec["classification"]) };
+    } catch (e) {
+      throw new Error(
+        `classificationFromMonth ${fromMonth}: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+  });
+}
+
+export function classificationRulesForMonth(
+  balance: {
+    readonly classification?: ClassificationRules;
+    readonly classificationFromMonth?: readonly ClassificationEra[];
+  },
+  month: string,
+): ClassificationRules | undefined {
+  let rules = balance.classification;
+  for (const era of balance.classificationFromMonth ?? []) {
+    if (era.fromMonth <= month) rules = era.classification;
+  }
+  return rules;
+}

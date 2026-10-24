@@ -104,8 +104,8 @@ const WAIVED_VARIANTS = [
 ];
 
 describe("torpedo launchers through the read path (ship-part-model 04)", () => {
-  it("covers the 29 tube placements, none of them defaulted", () => {
-    expect(tubeRows.length).toBe(29);
+  it("covers the 30 tube placements, none of them defaulted", () => {
+    expect(tubeRows.length).toBe(30);
     expect(model.unread).toEqual([]);
     for (const { row, t } of translated) {
       expect(t.defaulted, whereTube(row)).toBe(false);
@@ -132,8 +132,12 @@ describe("torpedo launchers through the read path (ship-part-model 04)", () => {
 
   it("keeps the legacy component ids as the base launchers, loading the 356 mm Whitehead", () => {
     const bases = model.parts.filter((p) => p.origin.prototype === undefined);
-    expect(bases.map((p) => p.id)).toEqual(["tube_14in_above_water", "tube_14in_submerged"]);
-    for (const base of bases) {
+    expect(bases.map((p) => p.id)).toEqual([
+      "tube_14in_above_water",
+      "tube_14in_submerged",
+      "tube_21in_above_water",
+    ]);
+    for (const base of bases.filter((p) => p.id.startsWith("tube_14in"))) {
       expect(base.spec.boreDiameterUm).toBe(356_000);
       expect(base.slots).toEqual([
         { id: "torpedo", accepts: ["torpedo"], constraints: { diameterUmEqualsBore: true } },
@@ -351,6 +355,7 @@ describe("torpedo launchers through the read path (ship-part-model 04)", () => {
       expect(unknownTorpedo.unread.map((u) => [u.id, u.code])).toEqual([
         ["tube_14in_above_water", "PART_READ_PATH_NO_TORPEDO_DIAMETER"],
         ["tube_14in_submerged", "PART_READ_PATH_NO_TORPEDO_DIAMETER"],
+        ["tube_21in_above_water", "PART_READ_PATH_NO_TORPEDO_DIAMETER"],
       ]);
     });
 

@@ -261,11 +261,15 @@ describe("launcher compatibility and waivers with first-class torpedo parts", ()
     return result.status === "OK" ? [...result.parts, ...result.undecided.map((u) => u.part)] : [];
   };
 
-  it("resolves every one of the 19 launchers against the torpedo it loads", () => {
+  it("resolves every one of the 20 launchers against the torpedo it loads", () => {
     const launchers = built.parts.filter((p) => p.family === "torpedo_launcher");
-    expect(launchers).toHaveLength(19);
+    expect(launchers).toHaveLength(20);
     for (const launcher of launchers) {
-      expect(launcherSlotParts(launcher.id, "1880-01")).toContain(WHITEHEAD);
+      const month =
+        launcher.lifecycle.availableFrom > "1880-01" ? launcher.lifecycle.availableFrom : "1880-01";
+      const loaded =
+        launcher.family === "torpedo_launcher" ? launcher.spec.loadsTorpedo : undefined;
+      expect(launcherSlotParts(launcher.id, month)).toContain(loaded);
     }
   });
 

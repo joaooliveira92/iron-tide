@@ -64,3 +64,26 @@ describe("the January-1880 historical reference set", () => {
     expect(r.findings.map((f) => f.id)).toContain("TECH_UNAVAILABLE");
   });
 });
+
+describe("the 1945 United States destroyer (E-1 1940-1949)", () => {
+  const draft = byId("starter_dd_usa_1945").draft;
+
+  it("is a destroyer under the 1940 classification rules and a light cruiser under the base rules", () => {
+    expect(compileDesign(draft, earlyContext("1945-01")).naturalClass).toBe("DD");
+    const base = compileDesign(draft, {
+      ...earlyContext("1945-01"),
+      balance: {
+        ...earlyContext("1945-01").balance,
+        classificationFromMonth: undefined,
+        classification: earlyContext("1939-12").balance.classification,
+      },
+    });
+    expect(base.naturalClass).toBe("CL");
+  });
+
+  it("is not available before its 5-inch twin mount", () => {
+    const r = compileDesign(draft, earlyContext("1944-12"));
+    expect(r.valid).toBe(false);
+    expect(r.findings.map((f) => f.id)).toContain("TECH_UNAVAILABLE");
+  });
+});

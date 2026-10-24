@@ -37,7 +37,7 @@ const AREAS = [
   {
     name: "Scope & horizon",
     blurb: "The sole 1880 start, the 1970 authored horizon, and the ten-nation roster.",
-    nums: [201, 204, 205, 214, 282, 283],
+    nums: [201, 204, 205, 214, 282, 283, 284],
   },
   {
     name: "Values, currency & language",

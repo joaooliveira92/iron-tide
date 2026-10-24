@@ -36,7 +36,7 @@ export function NationRailItem({
         >
           <NationSwatch row={row} />
           <span className="relative flex w-full items-center gap-2">
-            <span className="min-w-0 flex-1 truncate text-xs font-semibold [text-shadow:0_0_2px_#000,0_0_3px_#000,0_1px_2px_#000]">
+            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-white [text-shadow:0_0_2px_#000,0_0_3px_#000,0_1px_2px_#000]">
               {row.name}
             </span>
             {row.blockade && (

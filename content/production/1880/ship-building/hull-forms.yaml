@@ -125,3 +125,19 @@ hullForms:
     deckFullnessBp: 7000
     lcbPermille: 500
     zones: *a1
+  # Destroyer hull (E-1 1940-1949, ADR-0284). Length band anchored on Fletcher (112.5 m pp) and Gearing (116.7 m wl) and L/B
+  # on their 9.34-9.38 (docs/research/e-1-1940s-hull-and-part-values.md section 10); band edges, formBp and the five
+  # coefficient fields are BALANCE TARGET: waterplane, sheer, fullness and LCB are copied from torpedo_boat_form, and formBp is fitted so the
+  # reference destroyer closes on the sourced 3,460 t full load with the fitted plant mass, until a hull-weight fraction is sourced.
+  - id: destroyer_form
+    lengthMinMm: 100000
+    lengthMaxMm: 125000
+    lbMinX100: 850
+    lbMaxX100: 1000
+    formBp: 12750
+    waterplaneCoeffBp: 7200
+    sheerBp: 11000
+    volumeFullnessBp: 5500
+    deckFullnessBp: 7000
+    lcbPermille: 500
+    zones: *a1

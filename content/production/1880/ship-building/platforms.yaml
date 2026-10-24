@@ -13,6 +13,20 @@ platforms:
       - compatibility_sensor
       - compatibility_torpedo_launcher
       - compatibility_ventilation
+  - hullForm: destroyer_form
+    id: destroyer_form
+    slotTemplates:
+      - compatibility_accommodation
+      - compatibility_armour_material
+      - compatibility_damage_control
+      - compatibility_electrical_plant
+      - compatibility_funnel
+      - compatibility_gun_mount
+      - compatibility_magazine
+      - compatibility_propulsion_plant
+      - compatibility_sensor
+      - compatibility_torpedo_launcher
+      - compatibility_ventilation
   - hullForm: merchant_liner_form
     id: merchant_liner_form
     slotTemplates:

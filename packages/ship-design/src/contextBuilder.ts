@@ -1,7 +1,11 @@
 import type { HullFormData, ShipBalance } from "./compile.js";
 import { aluminiumBalanceProblem } from "./aluminium.js";
 import { antiAircraftBalanceProblem } from "./antiAircraft.js";
-import { classificationRulesFromRecord } from "./classificationRules.js";
+import {
+  classificationErasFromRecord,
+  classificationRulesForMonth,
+  classificationRulesFromRecord,
+} from "./classificationRules.js";
 import type { PropulsionPlant } from "./machinery.js";
 import { bp } from "./units.js";
 import type { ZoneDef, ZoneId } from "./arrangement.js";
@@ -118,5 +122,18 @@ export function shipBalanceFromRecord(raw: unknown): ShipBalance {
       throw new ContentError(e instanceof Error ? e.message : String(e));
     }
   }
+  if (rec.classificationFromMonth !== undefined) {
+    try {
+      classificationErasFromRecord(rec.classificationFromMonth);
+    } catch (e) {
+      throw new ContentError(e instanceof Error ? e.message : String(e));
+    }
+  }
   return raw as ShipBalance;
+}
+
+export function shipBalanceForMonth(balance: ShipBalance, month: string): ShipBalance {
+  if (balance.classificationFromMonth === undefined) return balance;
+  const classification = classificationRulesForMonth(balance, month);
+  return classification === undefined ? balance : { ...balance, classification };
 }

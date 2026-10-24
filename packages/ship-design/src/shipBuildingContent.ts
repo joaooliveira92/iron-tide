@@ -3,6 +3,7 @@ import type { ComponentDef } from "./component.js";
 import type { ConstructionBalance } from "./construction.js";
 import {
   hullFormsFromRecords,
+  shipBalanceForMonth,
   shipBalanceFromRecord,
   type HullFormRecord,
 } from "./contextBuilder.js";
@@ -217,7 +218,7 @@ export function buildShipBuildingContent(data: ShipBuildingData): ShipBuildingCo
       threats: data.balance.environment.threats,
       facilities: data.balance.environment.facilities,
       treaty: null,
-      balance: ship,
+      balance: shipBalanceForMonth(ship, month),
       armamentContent: data.armament ?? null,
       ...(data.partModel === undefined ? {} : { shipTypes: data.partModel.partIndex.shipTypes }),
       ...(data.partModel === undefined ? {} : { partModel: data.partModel }),
