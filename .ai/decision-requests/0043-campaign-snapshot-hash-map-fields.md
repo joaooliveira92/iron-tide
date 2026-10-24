@@ -2,7 +2,7 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved. Option A approved by the owner and implemented; see [ADR-0285](../../docs/adr/ADR-0285-campaign-snapshot-hash-covers-map-fields.md). `initialSnapshotHash` moved because the serialized subject now contains the Map contents; legacy envelopes remain verifiable.
 
 ## Trigger
 

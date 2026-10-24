@@ -2,7 +2,7 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved. Option A approved by the owner and implemented: campaign ordering uses `compareCodePoints` and the determinism gate rejects `localeCompare` and `toLocale*` under `packages/campaign`. Golden hashes, replay corpus and approvals were unchanged. Other packages (`combat`, `commands`, `campaign-engine`) still carry the same pattern and are not yet under the rule.
 
 ## Trigger
 
