@@ -6,7 +6,14 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { SCOPES, findUntaggedErrors, scanTaggedErrors } from "../assert-tagged-errors.mjs";
+import {
+  SCOPES,
+  findUntaggedErrors,
+  findUntaggedThrows,
+  scanTaggedErrors,
+  scanUntaggedThrows,
+  unbaselinedThrows,
+} from "../assert-tagged-errors.mjs";
 
 const count = (text) => findUntaggedErrors("a.ts", text).length;
 
@@ -73,4 +80,33 @@ void test("the real tree passes both scopes", () => {
   for (const roots of Object.values(SCOPES)) {
     assert.deepEqual(scanTaggedErrors(repoRoot, roots), []);
   }
+});
+
+const throwCount = (text) => findUntaggedThrows("a.ts", text).length;
+
+void test("rejects throw new Error and the other built-in constructors", () => {
+  assert.equal(throwCount('function f() { throw new Error("x"); }'), 1);
+  assert.equal(throwCount('function f() { throw new TypeError("x"); }'), 1);
+  assert.equal(throwCount('function f() { throw new RangeError("x"); }'), 1);
+});
+
+void test("admits throwing a tagged error and rethrowing a caught value", () => {
+  assert.equal(throwCount("function f() { throw new BluewaveError(CODE, { code: CODE }); }"), 0);
+  assert.equal(throwCount("try { f(); } catch (e) { throw e; }"), 0);
+});
+
+void test("fails closed on a parse error in the throw scan", () => {
+  assert.throws(() => findUntaggedThrows("a.ts", "throw new Error("), /failing closed/u);
+});
+
+void test("subtracts the baseline and reports only new throw sites", () => {
+  const [first] = findUntaggedThrows("a.ts", 'function f() { throw new Error("x"); }');
+  assert.deepEqual(unbaselinedThrows([first], { "a.ts": { [first.fingerprint]: 1 } }), []);
+  assert.equal(unbaselinedThrows([first, first], { "a.ts": { [first.fingerprint]: 1 } }).length, 1);
+  assert.equal(unbaselinedThrows([first], {}).length, 1);
+});
+
+void test("combat holds no untagged throw in the real tree", () => {
+  const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+  assert.deepEqual(scanUntaggedThrows(repoRoot, ["packages/combat/src"]), []);
 });

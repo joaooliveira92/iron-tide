@@ -14,6 +14,9 @@ import {
   findBoundaryDecodeCasts,
   partitionAllowlist,
   scanBoundaryDecodeCasts,
+  findLooseSchemaDecodes,
+  scanLooseSchemaDecodes,
+  unbaselinedDecodes,
 } from "../assert-boundary-decode.mjs";
 
 const count = (text) => findBoundaryDecodeCasts("a.ts", text).length;
@@ -153,4 +156,53 @@ void test("the cli scope is load-bearing: every allowlisted site is a real cast"
   }
   assert.deepEqual(observed, allowed);
   assert.deepEqual(scanBoundaryDecodeCasts(repoRoot, SCOPES.cli), []);
+});
+
+const looseCount = (text) => findLooseSchemaDecodes("a.ts", text).length;
+
+void test("rejects a Schema decode with no options or without onExcessProperty error", () => {
+  assert.equal(looseCount("const r = Schema.decodeUnknownResult(S)(v);"), 1);
+  assert.equal(looseCount("const r = Schema.decodeUnknownResult(S, { errors: 'all' })(v);"), 1);
+  assert.equal(
+    looseCount("const r = Schema.decodeUnknownSync(S, { onExcessProperty: 'ignore' })(v);"),
+    1,
+  );
+});
+
+void test("admits inline and same-file strict decode options", () => {
+  assert.equal(
+    looseCount("const r = Schema.decodeUnknownResult(S, { onExcessProperty: 'error' })(v);"),
+    0,
+  );
+  assert.equal(
+    looseCount(
+      "const o = { onExcessProperty: 'error' } as const;\nconst r = Schema.decodeUnknownResult(S, o)(v);",
+    ),
+    0,
+  );
+});
+
+void test("fails closed on options it cannot resolve in the same file", () => {
+  assert.equal(looseCount("const r = Schema.decodeUnknownResult(S, config.opts)(v);"), 1);
+});
+
+void test("fails closed on a parse error in the decode scan", () => {
+  assert.throws(
+    () => findLooseSchemaDecodes("a.ts", "Schema.decodeUnknownResult("),
+    /failing closed/u,
+  );
+});
+
+void test("subtracts the baseline and reports only new loose decodes", () => {
+  const [first] = findLooseSchemaDecodes("a.ts", "const r = Schema.decodeUnknownResult(S)(v);");
+  assert.deepEqual(unbaselinedDecodes([first], { "a.ts": { [first.fingerprint]: 1 } }), []);
+  assert.equal(unbaselinedDecodes([first], {}).length, 1);
+});
+
+void test("combat decodes reject excess properties in the real tree", () => {
+  const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+  const loose = scanLooseSchemaDecodes(repoRoot).filter((finding) =>
+    finding.file.startsWith("packages/combat/src/"),
+  );
+  assert.deepEqual(loose, []);
 });

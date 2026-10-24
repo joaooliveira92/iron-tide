@@ -27,6 +27,13 @@
 // (`contracts`/`deterministic`) and presentation (`ship-visual`), which carry fractional
 // constants legitimately.
 //
+// A third rule rejects locale-sensitive APIs (`localeCompare`, `toLocale*String`,
+// `toLocaleUpperCase`/`toLocaleLowerCase`, any `Intl` access): collation and
+// formatting vary with the ICU build and runtime locale, so authoritative order and
+// text must use code-unit comparison (ADR-0218). A fourth rule inspects every
+// `RandomLedger.record({...})` call: a blank `inputHash` or an inline string-literal
+// `reasonCode` (rather than a catalogued constant) leaves a draw without provenance.
+//
 // New occurrences are forbidden; a small reviewed allowlist (keyed by file +
 // content fingerprint) exists for exceptions, and may only shrink.
 //
@@ -72,6 +79,15 @@ export const FLOAT_ROOTS = [
 
 const SOURCE_RE = /\.(?:[cm]?[jt]s|[jt]sx)$/u;
 const TEST_RE = /(?:^|\/)(?:test|tests|__tests__)\/|\.(?:test|spec)\.[cm]?[jt]sx?$/u;
+
+const LOCALE_METHODS = new Set([
+  "localeCompare",
+  "toLocaleString",
+  "toLocaleDateString",
+  "toLocaleTimeString",
+  "toLocaleUpperCase",
+  "toLocaleLowerCase",
+]);
 
 /** Filesystem *enumeration* is ambient; explicit-path reads are not. */
 const FS_ENUMERATION = new Set(["readdir", "readdirSync", "opendir", "opendirSync"]);
@@ -124,6 +140,7 @@ function classifyCall(node) {
   if (callee.type !== "MemberExpression") return null;
   const object = callee.object;
   const property = memberName(callee);
+  if (LOCALE_METHODS.has(property ?? "")) return "locale-sensitive";
   if (object?.type !== "Identifier") {
     if (property === "randomUUID") return "random-uuid";
     if (FS_ENUMERATION.has(property ?? "")) return "fs-enumeration";
@@ -146,7 +163,54 @@ function classifyMember(node) {
   if (node.object?.type === "Identifier" && node.object.name === "process") {
     if (memberName(node) === "env") return "process-env";
   }
+  if (node.object?.type === "Identifier" && node.object.name === "Intl") return "locale-sensitive";
   return null;
+}
+
+function propertyKeyName(property) {
+  const key = property?.key;
+  if (key?.type === "Identifier") return key.name;
+  if (key?.type === "Literal" && typeof key.value === "string") return key.value;
+  return undefined;
+}
+
+function isEmptyString(value) {
+  if (value?.type === "Literal") return value.value === "";
+  if (value?.type === "TemplateLiteral") {
+    return value.expressions.length === 0 && value.quasis.every((q) => q.value.cooked === "");
+  }
+  return false;
+}
+
+function isStringLiteral(value) {
+  return (
+    (value?.type === "Literal" && typeof value.value === "string") ||
+    (value?.type === "TemplateLiteral" && value.expressions.length === 0)
+  );
+}
+
+/**
+ * Inspect a `<ledger>.record({...})` call for draws recorded without provenance.
+ * @param {object} node - an oxc CallExpression.
+ * @returns {Array<{kind: string, node: object}>}
+ */
+function classifyLedgerRecord(node) {
+  const callee = node.callee;
+  if (callee?.type !== "MemberExpression" || memberName(callee) !== "record") return [];
+  const argument = node.arguments?.[0];
+  if (argument?.type !== "ObjectExpression") return [];
+  const hazards = [];
+  for (const property of argument.properties) {
+    if (property.type !== "Property") continue;
+    const name = propertyKeyName(property);
+    if (name === "inputHash" && isEmptyString(property.value)) {
+      hazards.push({ kind: "ledger-blank-input-hash", node: property });
+    }
+    if (name === "reasonCode" && isStringLiteral(property.value)) {
+      hazards.push({ kind: "ledger-literal-reason-code", node: property });
+    }
+  }
+  return hazards;
 }
 
 /**
@@ -189,6 +253,9 @@ export function findAmbientDeterminism(file, text) {
     } else if (isCall(node)) {
       const kind = classifyCall(node);
       if (kind !== null) record(kind, node.start, node.end);
+      for (const hazard of classifyLedgerRecord(node)) {
+        record(hazard.kind, hazard.node.start, hazard.node.end);
+      }
     } else if (node.type === "MemberExpression") {
       const kind = classifyMember(node);
       if (kind !== null) record(kind, node.start, node.end);
@@ -402,6 +469,35 @@ const FIXTURES = [
   { name: "a BigInt literal is allowed", source: "const x = 2n;", expect: 0 },
   { name: "a float value inside a string is allowed", source: 'const s = "1.5";', expect: 0 },
   { name: "parseFloat fails", source: "const x = parseFloat(s);", expect: 1 },
+  { name: "localeCompare fails", source: "const o = a.localeCompare(b);", expect: 1 },
+  { name: "toLocaleString fails", source: "const t = n.toLocaleString();", expect: 1 },
+  { name: "toLocaleUpperCase fails", source: "const t = s.toLocaleUpperCase();", expect: 1 },
+  { name: "Intl.NumberFormat fails", source: "const f = new Intl.NumberFormat('en');", expect: 1 },
+  {
+    name: "a compareStrings call is allowed",
+    source: "const o = compareStrings(a, b);",
+    expect: 0,
+  },
+  {
+    name: "a ledger draw with a blank inputHash fails",
+    source: "ledger.record({ streamId, inputHash: '', reasonCode: CODE });",
+    expect: 1,
+  },
+  {
+    name: "a ledger draw with an inline reasonCode literal fails",
+    source: "ledger.record({ streamId, inputHash: digest, reasonCode: 'DAMAGE_HIT_ZONE_DRAW' });",
+    expect: 1,
+  },
+  {
+    name: "a ledger draw with a hash and catalogued code passes",
+    source: "ledger.record({ streamId, inputHash: digest, reasonCode: DAMAGE_KEYED_DRAW });",
+    expect: 0,
+  },
+  {
+    name: "a blank inputHash outside a ledger record is allowed",
+    source: "const row = { inputHash: '' };",
+    expect: 0,
+  },
   { name: "Number.parseFloat fails", source: "const x = Number.parseFloat(s);", expect: 1 },
 ];
 

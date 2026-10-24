@@ -2,20 +2,81 @@
   "packages/campaign-engine/src/archetype.ts": {
     "0d906aab1fd7f09ee09fee99a84ebb0df94298075ad313f18a98c3abff906a32": 2
   },
+  "packages/campaign-engine/src/configuration.ts": {
+    "c6ee85e9e95f394fd63f458c5fa20f7097777b8e8c99f24df2e89bfcf86574b7": 1
+  },
+  "packages/campaign-engine/src/construction.ts": {
+    "b10ed40a2df52789dc488feb638b0f1092ae4cbbbf513186550db7e5409a849a": 1,
+    "f8e7b1961a35c19ab2d29d1f2a63a7857081d6e4ce3b2ef0e8234c4f2e01b944": 1
+  },
+  "packages/campaign-engine/src/diplomacy.ts": {
+    "4216e9b2d7e7459f4b7b143abf84d785980df703fc453de64da70cdca52faa6a": 1,
+    "b5b5b26b2e7b7f34e6e92430ba9e6ba8b3fe8f258e6618e46cf396626b31c228": 1,
+    "ba76364c9114324888cc0595c71ab808305c3bfa16b57fbc0a81d8caa413717b": 1,
+    "c6ee85e9e95f394fd63f458c5fa20f7097777b8e8c99f24df2e89bfcf86574b7": 1,
+    "f240cb5386c7e40713fea0c0c5f5419a0f1ce93dc841c12adc15106766fa3d77": 1
+  },
+  "packages/campaign-engine/src/fleet.ts": {
+    "ba76364c9114324888cc0595c71ab808305c3bfa16b57fbc0a81d8caa413717b": 1,
+    "bdfc4b446f474f0b1b8afdd149652261ad092fe5b9d810be6dbc211e094a391a": 1,
+    "f08288c78be0fea5f4aa96e901fb9b25347b031e2574acb7849fabd8251db135": 1,
+    "fa406820edc3514f3987d45a38162ac3d71dec4abb3a882a66077ecb177bf8e1": 1
+  },
   "packages/campaign-engine/src/opening-briefing.ts": {
-    "31282d434f08f273535bda61a0c2d038ce1e75b7a279a0d07903366c19a74872": 1,
-    "d7d7dd87e2c2f623bcc8ae38aae2f2ce898344c8011fc5d5c65647e8efe6891d": 1,
-    "eda9a0f837be9e2580e38eb48ec7e77eb6a939f656654a59d69802af2314e1b1": 2
+    "27dab999ffe6b8ee7489de95f0ce038ff716b4f7b6f70bd744cf7be57cfa97be": 1,
+    "fd27245c93401715d5a3b262f90d85b29d3063aa50799ee7e129aecc0d96d2a4": 1
+  },
+  "packages/campaign-engine/src/player-facts.ts": {
+    "ba76364c9114324888cc0595c71ab808305c3bfa16b57fbc0a81d8caa413717b": 1
+  },
+  "packages/campaign-engine/src/priorities.ts": {
+    "bf6ee98db654be1af0b49129bddcf1eace7e3677f02ed18cb749a140c8579da9": 1
   },
   "packages/campaign-engine/src/priorityConstants.ts": {
     "31282d434f08f273535bda61a0c2d038ce1e75b7a279a0d07903366c19a74872": 1
+  },
+  "packages/campaign-engine/src/projection.ts": {
+    "ba76364c9114324888cc0595c71ab808305c3bfa16b57fbc0a81d8caa413717b": 1,
+    "c6ee85e9e95f394fd63f458c5fa20f7097777b8e8c99f24df2e89bfcf86574b7": 2
+  },
+  "packages/campaign-engine/src/research.ts": {
+    "c6ee85e9e95f394fd63f458c5fa20f7097777b8e8c99f24df2e89bfcf86574b7": 1
+  },
+  "packages/campaign-engine/src/strategic-map.ts": {
+    "27dab999ffe6b8ee7489de95f0ce038ff716b4f7b6f70bd744cf7be57cfa97be": 1,
+    "461e072cc24a17a3b988ac3b92bf0292ca4f2155cde38ebc36d0d0a7fde70444": 1,
+    "ba76364c9114324888cc0595c71ab808305c3bfa16b57fbc0a81d8caa413717b": 1,
+    "c120244e25c6a3430233c9f5129cf1c201224be68342b940db56d6ca7953cb33": 1,
+    "c6ee85e9e95f394fd63f458c5fa20f7097777b8e8c99f24df2e89bfcf86574b7": 1
+  },
+  "packages/campaign-engine/src/world-map.ts": {
+    "ba76364c9114324888cc0595c71ab808305c3bfa16b57fbc0a81d8caa413717b": 6
+  },
+  "packages/campaign/src/designCompilation.ts": {
+    "c6ee85e9e95f394fd63f458c5fa20f7097777b8e8c99f24df2e89bfcf86574b7": 1
+  },
+  "packages/campaign/src/fleetSize.ts": {
+    "ba76364c9114324888cc0595c71ab808305c3bfa16b57fbc0a81d8caa413717b": 1,
+    "fd27245c93401715d5a3b262f90d85b29d3063aa50799ee7e129aecc0d96d2a4": 1
+  },
+  "packages/campaign/src/nationCompilation.ts": {
+    "77502ade62a32f5f923779d457c7355e92ec694b8c6ea0be4743a6de35c32d1e": 1,
+    "ba76364c9114324888cc0595c71ab808305c3bfa16b57fbc0a81d8caa413717b": 3,
+    "cf8d57b5689b00f6cbf5b6c5ea55b618cd5435ebfe528f43143682663e3fbca1": 1
+  },
+  "packages/campaign/src/politicalCompilation.ts": {
+    "c6ee85e9e95f394fd63f458c5fa20f7097777b8e8c99f24df2e89bfcf86574b7": 1,
+    "d48f0cb8373ae04869a0ea9ab1b17abd8c878168fc8f889a009fb88e7ae353c6": 1
+  },
+  "packages/campaign/src/technologyMaterialization.ts": {
+    "e8ece2e3fed372ef88a88c846dafdaeb7a38c0bbc93d91f7623b3d7531e23935": 1
   },
   "packages/campaign/src/warConstants.ts": {
     "9ea97194e5d4cfce3aca8e2b8de89a44c6b11ca1afda9278943937a38c7265b9": 1,
     "d7d7dd87e2c2f623bcc8ae38aae2f2ce898344c8011fc5d5c65647e8efe6891d": 1
   },
-  "packages/combat/src/autoResolution.ts": {
-    "eda9a0f837be9e2580e38eb48ec7e77eb6a939f656654a59d69802af2314e1b1": 2
+  "packages/campaign/src/worldCompilation.ts": {
+    "ba76364c9114324888cc0595c71ab808305c3bfa16b57fbc0a81d8caa413717b": 3
   },
   "packages/combat/src/battleResolution/torpedoProjection.ts": {
     "7df86cd182eca1ab33c26ae3cef931c9e3ca77befe0b2c61a5e0065492d36ea5": 1,
@@ -39,6 +100,18 @@
   },
   "packages/combat/src/weather/night-twilight.ts": {
     "9ea97194e5d4cfce3aca8e2b8de89a44c6b11ca1afda9278943937a38c7265b9": 1
+  },
+  "packages/commands/src/canonicalization.ts": {
+    "4aff128f875a0845ba42565dcb6fa67b6f7aacf13a1fe9e55bc97c262aa2c880": 1,
+    "7c1044a59c250c85ffc38002764ca4a749bed5cd7b379e55af256cd8dd9f197e": 1,
+    "ae35cde2118f7b917c23dbff18871c1cfbc20c01a886a71792cd464bd2ee0d71": 1,
+    "c72af2ce327d12e414e258a391b1f29ce0b787919871f912a5268c9e8e1fedaa": 1
+  },
+  "packages/commands/src/validation.ts": {
+    "998c1d953bf431f100333de94ae599e812e0400f611ee11392914d9fd82eccdf": 1
+  },
+  "packages/phase-engine/src/research.ts": {
+    "66cf17527e0f22874a79b030547eea532c1cf82d6da8e7043b0bc7c8435e990e": 1
   },
   "packages/ship-design/src/nationalResearch.ts": {
     "3a1b2bae8bde73009468f72868cd76d938b76abca18aee6fb11f2dac8f1c5c5d": 1,

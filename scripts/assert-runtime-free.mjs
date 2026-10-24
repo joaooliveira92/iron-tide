@@ -56,6 +56,18 @@ export const RUNTIME_FREE_ROOTS = [
   "packages/ship-visual/src",
 ];
 
+// The test directories of the runtime-free packages are guarded too: a test that imports
+// the runtime proves nothing about the pure package it covers. `phase-engine` is the one
+// reviewed exemption (RUNTIME_FREE_TEST_EXEMPTIONS): its tests still import runtime
+// symbols and must be migrated before it can join.
+export const RUNTIME_FREE_TEST_EXEMPTIONS = ["packages/phase-engine"];
+
+export const RUNTIME_FREE_TEST_ROOTS = RUNTIME_FREE_ROOTS.map((root) =>
+  root.replace(/\/src$/u, "/test"),
+).filter((root) => !RUNTIME_FREE_TEST_EXEMPTIONS.some((exempt) => root.startsWith(`${exempt}/`)));
+
+const GUARDED_ROOTS = [...RUNTIME_FREE_ROOTS, ...RUNTIME_FREE_TEST_ROOTS];
+
 // The runtime-free subset ADR-0100 §2 permits. Anything else imported from
 // `effect` (or a matching `effect/<Name>` subpath) is a runtime symbol.
 export const RUNTIME_FREE_SYMBOLS = new Set([
@@ -173,7 +185,7 @@ export function findRuntimeImports(file, text) {
 }
 
 function isGuarded(file) {
-  return SOURCE_RE.test(file) && RUNTIME_FREE_ROOTS.some((prefix) => file.startsWith(`${prefix}/`));
+  return SOURCE_RE.test(file) && GUARDED_ROOTS.some((prefix) => file.startsWith(`${prefix}/`));
 }
 
 /**
@@ -204,7 +216,7 @@ export function scanRuntimeImports(repoRoot) {
   });
 
   // Fail closed if discovery silently omitted a guarded root.
-  for (const root of RUNTIME_FREE_ROOTS) {
+  for (const root of GUARDED_ROOTS) {
     if (!present.some((file) => file.startsWith(`${root}/`))) {
       throw new Error(`assert-runtime-free: source discovery omitted guarded root ${root}`);
     }
@@ -338,7 +350,7 @@ function main() {
   }
 
   console.log(
-    `assert-runtime-free: ok (${String(RUNTIME_FREE_ROOTS.length)} roots, no runtime imports)`,
+    `assert-runtime-free: ok (${String(GUARDED_ROOTS.length)} roots, no runtime imports)`,
   );
 }
 
