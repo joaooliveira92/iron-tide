@@ -24,7 +24,7 @@ The sole 1880 start, the 1970 authored horizon, and the ten-nation roster.
 | 0205 | [ADR-0205-nine-playable-nations.md](ADR-0205-nine-playable-nations.md) | Nine playable nations; the rest AI-only behind a readiness gate | superseded | ADR-0214 |
 | 0214 | [ADR-0214-ten-playable-nations-usa.md](ADR-0214-ten-playable-nations-usa.md) | Ten playable nations; the USA joins the 1880 playable roster | accepted | — |
 | 0282 | [ADR-0282-authored-horizon-through-1970.md](ADR-0282-authored-horizon-through-1970.md) | Authored horizon through 1970; no empty scenario IDs | accepted | — |
-| 0283 | [ADR-0283-e1-1940-1970-content-decisions.md](ADR-0283-e1-1940-1970-content-decisions.md) | E-1 1940-1970 content decisions | accepted | — |
+| 0283 | [ADR-0283-fleet-management-values-and-repair-entry.md](ADR-0283-fleet-management-values-and-repair-entry.md) | Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope | accepted | — |
 | 0284 | [ADR-0284-e1-1940s-ship-and-part-values.md](ADR-0284-e1-1940s-ship-and-part-values.md) | E-1 1940-1949 ship and part values | accepted | — |
 
 ## Values, currency & language
