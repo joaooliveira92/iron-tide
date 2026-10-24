@@ -1,5 +1,6 @@
 import { type ArmorZoneType } from "./armorModel.js";
 import { type PenetrationOutcome } from "./armorModel.js";
+import { compareStrings } from "../core/ordering.js";
 
 export interface ComponentState {
   id: string;
@@ -51,7 +52,7 @@ export function resolveComponentDamage(
     locationId: c.locationId,
   }));
 
-  results.sort((a, b) => a.componentId.localeCompare(b.componentId));
+  results.sort((a, b) => compareStrings(a.componentId, b.componentId));
 
   return results;
 }

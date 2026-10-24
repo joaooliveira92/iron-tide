@@ -8,6 +8,7 @@ import {
   GUNNERY_RULESET_VERSION,
 } from "./constants.js";
 import type { EffectiveReloadResolution } from "./rateOfFire.js";
+import { compareStrings } from "../core/ordering.js";
 
 export type GunneryOutcome = "HIT" | "MISS";
 
@@ -114,9 +115,9 @@ export function gunneryEventOrder(a: GunneryEventRecord, b: GunneryEventRecord):
   return (
     a.minute - b.minute ||
     a.substep - b.substep ||
-    a.shooterId.localeCompare(b.shooterId) ||
-    a.batteryId.localeCompare(b.batteryId) ||
-    a.targetContactId.localeCompare(b.targetContactId) ||
-    a.eventId.localeCompare(b.eventId)
+    compareStrings(a.shooterId, b.shooterId) ||
+    compareStrings(a.batteryId, b.batteryId) ||
+    compareStrings(a.targetContactId, b.targetContactId) ||
+    compareStrings(a.eventId, b.eventId)
   );
 }

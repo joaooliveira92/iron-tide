@@ -6,6 +6,7 @@ import {
   FUEL_BATTLE_INELIGIBLE,
   BATTLE_RANGE_INELIGIBLE,
 } from "./reasonCodes.js";
+import { compareStrings } from "../core/ordering.js";
 
 export const BATTLE_READINESS_FLOOR = 60;
 
@@ -93,16 +94,16 @@ export function gatherEligibleAssets(input: GatherEligibleAssetsInput): {
   }
 
   eligible.sort((a, b) => {
-    if (a.sideId !== b.sideId) return a.sideId.localeCompare(b.sideId);
-    if (a.nationId !== b.nationId) return a.nationId.localeCompare(b.nationId);
+    if (a.sideId !== b.sideId) return compareStrings(a.sideId, b.sideId);
+    if (a.nationId !== b.nationId) return compareStrings(a.nationId, b.nationId);
     const aDiv = a.divisionId !== undefined ? 0 : 1;
     const bDiv = b.divisionId !== undefined ? 0 : 1;
     if (aDiv !== bDiv) return aDiv - bDiv;
     if ((a.divisionId ?? "") !== (b.divisionId ?? ""))
-      return (a.divisionId ?? "").localeCompare(b.divisionId ?? "");
+      return compareStrings(a.divisionId ?? "", b.divisionId ?? "");
     if ((a.divisionPosition ?? 0) !== (b.divisionPosition ?? 0))
       return (a.divisionPosition ?? 0) - (b.divisionPosition ?? 0);
-    return a.assetId.localeCompare(b.assetId);
+    return compareStrings(a.assetId, b.assetId);
   });
 
   return { eligible, exclusions };

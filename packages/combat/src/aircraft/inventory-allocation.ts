@@ -1,4 +1,5 @@
 import { SafeInt } from "@bluewave/contracts";
+import { compareStrings } from "../core/ordering.js";
 
 export const ALLOCATION_PRIORITIES = [
   "ACTIVE_BATTLE_OR_MANDATORY_DEFENSE",
@@ -40,7 +41,7 @@ export function allocateInventory(
     const piA = priorityIndex(a.priority);
     const piB = priorityIndex(b.priority);
     if (piA !== piB) return piA - piB;
-    return a.squadronId.localeCompare(b.squadronId) || a.demandId.localeCompare(b.demandId);
+    return compareStrings(a.squadronId, b.squadronId) || compareStrings(a.demandId, b.demandId);
   });
 
   for (const demand of sorted) {

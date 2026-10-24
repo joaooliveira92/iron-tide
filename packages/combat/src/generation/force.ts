@@ -2,6 +2,7 @@ import { BluewaveError } from "@bluewave/contracts";
 import { BATTLE_FORCE_REQUIREMENT_MISSING, BATTLE_MANDATORY_ROLE_UNFILLED } from "./reasonCodes.js";
 import type { BattleMissionType } from "./mission.js";
 import { getMission, FLEET_BATTLE_MIN_STRENGTH, CRUISER_BATTLE_MIN_STRENGTH } from "./mission.js";
+import { compareStrings } from "../core/ordering.js";
 
 export type TacticalRole = "CORE" | "SUPPORT" | "SCOUT" | "SCREEN" | "PATROL" | "INDEPENDENT";
 
@@ -53,7 +54,7 @@ export function assignMandatoryRoles(
     if (b.readiness !== a.readiness) return b.readiness - a.readiness;
     if (b.commanderSuitability !== a.commanderSuitability)
       return b.commanderSuitability - a.commanderSuitability;
-    return a.assetIdentifier.localeCompare(b.assetIdentifier);
+    return compareStrings(a.assetIdentifier, b.assetIdentifier);
   });
   return ordered[0];
 }
