@@ -7,6 +7,7 @@ import {
 import type { ResearchUnfundedReason } from "@bluewave/campaign";
 import { derivePlayerFacts } from "./player-facts.js";
 import type { PlayerProjectionMonth } from "./projection.js";
+import { compareCodePoints } from "@bluewave/deterministic";
 
 export { CANONICAL_RESEARCH_FIELD_IDS, MAX_HIGH_PRIORITY_FIELDS, RESEARCH_FIELD_PRIORITY_WEIGHTS };
 export type { ResearchFieldId } from "@bluewave/content-schema";
@@ -54,7 +55,7 @@ export function buildResearchScreenProjection(
     researchCap: outlook.researchCap,
     unfundedReason: outlook.researchUnfundedReason ?? null,
     fieldPriorities,
-    discoveredTechIds: [...research.discoveredTechs].sort((a, b) => a.localeCompare(b)),
+    discoveredTechIds: [...research.discoveredTechs].sort((a, b) => compareCodePoints(a, b)),
     inProgressTechnologies: research.technologies.map((tech) => ({
       techId: tech.techId,
       investedPoints: Number(tech.investedPoints),

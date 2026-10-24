@@ -5,7 +5,7 @@ import {
   DesignTemplateSchema,
   validateAgainstSchema,
 } from "@bluewave/content-schema";
-import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { canonicalSerialize, sha256Hex, compareCodePoints } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { toSafeIntOpt, toStr } from "./campaignInput.js";
 import { knotsToUms, mmToUm } from "./designUnits.js";
@@ -205,7 +205,7 @@ export function buildDesignFamiliesFromData(designsData: unknown[]): Map<string,
   }
 
   for (const [familyId, data] of familyMap) {
-    data.members.sort((a, b) => a.localeCompare(b));
+    data.members.sort((a, b) => compareCodePoints(a, b));
     families.set(familyId, {
       designFamilyId: familyId,
       nationId: toStr(data.rec["nationId"], ""),

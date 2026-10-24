@@ -9,6 +9,7 @@ import type {
 } from "@bluewave/campaign";
 import { economyOutlook } from "@bluewave/campaign";
 import { MIN_RESEARCH_SHARE_BP, NEAR_COMPLETION_WORK_RATIO } from "./priorityConstants.js";
+import { compareCodePoints } from "@bluewave/deterministic";
 
 const BASIS_POINTS = 10_000;
 
@@ -80,7 +81,7 @@ export function derivePlayerFacts(
       areaId: port.areaId,
       capacity: Number(port.level),
     }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 
   const fleets: PlayerFactsFleet[] = nation.fleets.map((fleet) => ({
     fleet,

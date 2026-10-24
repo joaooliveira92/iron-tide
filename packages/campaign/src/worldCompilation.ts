@@ -9,6 +9,7 @@ import type {
   TechnologyDefinitionData,
   WorldState,
 } from "./state.js";
+import { compareCodePoints } from "@bluewave/deterministic";
 
 type WorldPackSource = Partial<
   Pick<ContentPack, "areas" | "routes" | "ports" | "possessions" | "technologies">
@@ -52,7 +53,7 @@ export function buildWorldState(
       type: (a["type"] as "land" | "sea" | "coastal") ?? "land",
       controller: typeof a["controller"] === "string" ? a["controller"] : undefined,
     }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 
   const routes: RouteData[] = (pack.routes ?? [])
     .map((r: Record<string, unknown>) => ({
@@ -62,7 +63,7 @@ export function buildWorldState(
       type: (r["type"] as "land" | "sea" | "rail") ?? "land",
       distance: toSafeInt(r["distance"]),
     }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 
   const ports: PortData[] = (pack.ports ?? [])
     .map((p: Record<string, unknown>) => ({
@@ -72,7 +73,7 @@ export function buildWorldState(
       nationId: toStr(p["nationId"], ""),
       level: toSafeIntOpt(p["level"], SafeInt(1)),
     }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 
   const possessions: PossessionData[] = (pack.possessions ?? [])
     .map((p) => ({ id: p.id, nationId: p.nationId, areaId: p.areaId }))

@@ -1,5 +1,6 @@
 import type { CampaignState } from "@bluewave/campaign";
 import type { PlayerProjectionMonth } from "./projection.js";
+import { compareCodePoints } from "@bluewave/deterministic";
 
 export type DiplomacyRelationKind = "neutral" | "allied" | "at_war" | "trade_agreement";
 
@@ -105,7 +106,7 @@ export function buildDiplomacyScreenProjection(
 
   const knownNations: DiplomacyKnownNation[] = [...snapshot.nations.keys()]
     .filter((nationId) => nationId !== playerSlotId)
-    .sort((a, b) => a.localeCompare(b))
+    .sort((a, b) => compareCodePoints(a, b))
     .map((nationId) => ({ nationId, name: nameFor(nationId) }));
 
   const relations: DiplomacyRelationRow[] = snapshot.politics.relations
@@ -123,7 +124,7 @@ export function buildDiplomacyScreenProjection(
         partnerName: nameFor(partnerNationId),
       };
     })
-    .sort((a, b) => a.partnerNationId.localeCompare(b.partnerNationId));
+    .sort((a, b) => compareCodePoints(a.partnerNationId, b.partnerNationId));
 
   const wars: DiplomacyWarRow[] = snapshot.wars.wars
     .filter(
@@ -148,7 +149,7 @@ export function buildDiplomacyScreenProjection(
         ? ("attacker" as const)
         : ("defender" as const),
     }))
-    .sort((a, b) => a.warId.localeCompare(b.warId));
+    .sort((a, b) => compareCodePoints(a.warId, b.warId));
 
   const blockades: DiplomacyBlockadeRow[] = snapshot.wars.blockadeState
     .filter((b) => b.blockaderId === playerSlotId || b.blockadedNationId === playerSlotId)
@@ -159,13 +160,14 @@ export function buildDiplomacyScreenProjection(
       establishedMonth: b.establishedMonth,
     }))
     .sort((a, b) =>
-      `${a.blockaderId}\u0000${a.blockadedNationId}\u0000${a.areaId}`.localeCompare(
+      compareCodePoints(
+        `${a.blockaderId}\u0000${a.blockadedNationId}\u0000${a.areaId}`,
         `${b.blockaderId}\u0000${b.blockadedNationId}\u0000${b.areaId}`,
       ),
     );
 
   const areas: DiplomacyAreaRow[] = [...snapshot.world.areas]
-    .sort((a, b) => a.id.localeCompare(b.id))
+    .sort((a, b) => compareCodePoints(a.id, b.id))
     .map((area) => ({ areaId: area.id, name: area.name }));
 
   return {

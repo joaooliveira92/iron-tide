@@ -1,5 +1,5 @@
 import type { CampaignSnapshot } from "@bluewave/campaign";
-import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { canonicalSerialize, sha256Hex, compareCodePoints } from "@bluewave/deterministic";
 import type { DiagnosticCode } from "@bluewave/diagnostics";
 import type { CommandBody, CommandEnvelope } from "./envelope.js";
 import { CommandError } from "./errors.js";
@@ -62,7 +62,7 @@ export function createValidationRecord(
     validationPolicyVersion: policyVersion,
     inputSnapshotHash,
     orderedPredicateResults: [...predicateResults].sort((a, b) =>
-      a.predicateId.localeCompare(b.predicateId),
+      compareCodePoints(a.predicateId, b.predicateId),
     ),
     canonicalPayloadHash: command.canonicalPayloadHash,
     validationResult: failed.length === 0 ? "PASSED" : "FAILED",

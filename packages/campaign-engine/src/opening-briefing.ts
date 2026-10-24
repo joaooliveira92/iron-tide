@@ -74,6 +74,7 @@ import {
   MAINTENANCE_FORMULA_VERSION,
   shipMaintenanceCost,
 } from "@bluewave/campaign";
+import { compareCodePoints } from "@bluewave/deterministic";
 export { MAINTENANCE_FORMULA_ID, MAINTENANCE_FORMULA_VERSION, shipMaintenanceCost };
 
 export function buildOpeningBriefingProjection(
@@ -92,7 +93,7 @@ export function buildOpeningBriefingProjection(
     shipClassCounts.set(label, (shipClassCounts.get(label) ?? 0) + 1);
   }
   const sortedShipClassCounts: OpeningBriefingShipClassCount[] = [...shipClassCounts.entries()]
-    .sort((a, b) => a[0].localeCompare(b[0]))
+    .sort((a, b) => compareCodePoints(a[0], b[0]))
     .map(([label, count]) => ({ label, count }));
 
   const shipsUnderConstruction = nation.constructionProjects.filter(
@@ -121,7 +122,7 @@ export function buildOpeningBriefingProjection(
     snapshot.world.areas
       .filter((area) => area.controller === nationId)
       .map((area) => ({ areaId: area.id, name: area.name }))
-      .sort((a, b) => a.areaId.localeCompare(b.areaId));
+      .sort((a, b) => compareCodePoints(a.areaId, b.areaId));
   const relations: OpeningBriefingRelationsRow[] = (
     buildDiplomacyScreenProjection(state, playerSlotId, month)?.relations ?? []
   ).map((relation) => ({

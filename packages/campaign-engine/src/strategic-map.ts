@@ -1,5 +1,6 @@
 import { fleetMoveProblem, type CampaignSnapshot, type FleetMoveProblem } from "@bluewave/campaign";
 import { buildWorldMapView, type WorldMapView } from "./world-map.js";
+import { compareCodePoints } from "@bluewave/deterministic";
 
 export interface StrategicMapBlockedReason {
   readonly code: Extract<
@@ -56,7 +57,7 @@ export function buildStrategicMapView(
   const areaById = new Map(snapshot.world.areas.map((area) => [area.id, area]));
   const playerFleets = (snapshot.nations.get(viewerNationId)?.fleets ?? [])
     .slice()
-    .sort((a, b) => a.id.localeCompare(b.id))
+    .sort((a, b) => compareCodePoints(a.id, b.id))
     .map((fleet) => {
       const candidates = [
         ...new Set(
@@ -71,7 +72,7 @@ export function buildStrategicMapView(
       ]
         .filter((areaId) => areaId !== fleet.locationAreaId)
         .filter((areaId) => areaById.get(areaId)?.type !== "land")
-        .sort((a, b) => a.localeCompare(b));
+        .sort((a, b) => compareCodePoints(a, b));
 
       const legalDestinations = candidates.filter(
         (areaId) => fleetMoveProblem(snapshot, viewerNationId, fleet.id, areaId) === null,
@@ -113,9 +114,9 @@ export function buildStrategicMapView(
     }))
     .sort(
       (a, b) =>
-        a.areaId.localeCompare(b.areaId) ||
-        a.blockadedNationId.localeCompare(b.blockadedNationId) ||
-        a.blockaderId.localeCompare(b.blockaderId),
+        compareCodePoints(a.areaId, b.areaId) ||
+        compareCodePoints(a.blockadedNationId, b.blockadedNationId) ||
+        compareCodePoints(a.blockaderId, b.blockaderId),
     );
 
   return { world: ownWorld, playerFleets, blockades };

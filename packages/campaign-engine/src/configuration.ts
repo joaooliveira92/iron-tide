@@ -2,6 +2,7 @@ import type {
   CampaignConfiguration as EngineCampaignConfiguration,
   CampaignSnapshot,
 } from "@bluewave/campaign";
+import { compareCodePoints } from "@bluewave/deterministic";
 
 export type CampaignConfiguration = EngineCampaignConfiguration & {
   readonly archetype?: string;
@@ -37,5 +38,5 @@ export function supportedPlayerSlotIds(snapshot: CampaignSnapshot): readonly str
     if (!hasOwnContent(snapshot, nationId)) continue;
     ids.push(nationId);
   }
-  return ids.sort((a, b) => a.localeCompare(b));
+  return ids.sort((a, b) => compareCodePoints(a, b));
 }

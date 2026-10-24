@@ -10,6 +10,7 @@ import {
   type ForeignConstructionContract,
 } from "@bluewave/campaign";
 import type { CompiledDesignVersion } from "./design.js";
+import { compareCodePoints } from "@bluewave/deterministic";
 
 const CONSTRUCTION_SHIP_TYPE_LABELS: Readonly<Record<string, string>> = {
   battleship: "battleship",
@@ -100,7 +101,7 @@ export function buildConstructionDesignCatalog(
         design.constructionCostUnits !== undefined ? "design_cost_model" : "displacement_formula",
     });
   }
-  designs.sort((a, b) => a.designId.localeCompare(b.designId));
+  designs.sort((a, b) => compareCodePoints(a.designId, b.designId));
   return designs;
 }
 
@@ -211,7 +212,7 @@ export function buildConstructionProjectQueue(
       ...(project.yardId !== undefined ? { yardId: project.yardId } : {}),
     };
   });
-  entries.sort((a, b) => a.projectId.localeCompare(b.projectId));
+  entries.sort((a, b) => compareCodePoints(a.projectId, b.projectId));
   return entries;
 }
 

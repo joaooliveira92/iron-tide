@@ -1,6 +1,7 @@
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { toStr } from "./campaignInput.js";
 import type { DiplomaticRelation, NationState, PoliticalState, WarState } from "./state.js";
+import { compareCodePoints } from "@bluewave/deterministic";
 
 export function buildWarState(): WarState {
   return {
@@ -21,7 +22,7 @@ function enforcePairRegistry(
   seen: Set<string>,
   nations: Map<string, NationState>,
 ): void {
-  const nationIds = [...nations.keys()].sort((a, b) => a.localeCompare(b));
+  const nationIds = [...nations.keys()].sort((a, b) => compareCodePoints(a, b));
   for (let i = 0; i < nationIds.length; i++) {
     for (let j = i + 1; j < nationIds.length; j++) {
       const a = nationIds[i]!;
@@ -93,7 +94,7 @@ export function buildPoliticalState(
   enforcePairRegistry(relations, seen, nations);
 
   relations.sort((a, b) =>
-    pairKey(a.nationA, a.nationB).localeCompare(pairKey(b.nationA, b.nationB)),
+    compareCodePoints(pairKey(a.nationA, a.nationB), pairKey(b.nationA, b.nationB)),
   );
   return { relations, shells: {} };
 }
