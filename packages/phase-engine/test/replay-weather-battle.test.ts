@@ -5,7 +5,7 @@ import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/cam
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
-import { Effect } from "effect";
+import { runSync } from "@bluewave/test-support";
 import { describe, expect, it } from "vite-plus/test";
 import { MonthExecutor, ReplayVerifier } from "../src/index.js";
 import {
@@ -104,7 +104,7 @@ describe("replay: save/load/replay a war campaign with resolved battles + weathe
 
       const store = new SaveStore();
       store.save(toSaveableState(snapshot1), saveDir);
-      const loaded = Effect.runSync(store.load(saveDir));
+      const loaded = runSync(store.load(saveDir));
       expect(loaded.warnings).toEqual([]);
 
       expect(loaded.state.snapshot.wars.battles).toEqual(snapshot1.wars.battles);
@@ -160,7 +160,7 @@ describe("replay: save/load/replay a war campaign with resolved battles + weathe
 
       const store = new SaveStore();
       store.save(toSaveableState(month.finalSnapshot), saveDir);
-      const loaded = Effect.runSync(store.load(saveDir));
+      const loaded = runSync(store.load(saveDir));
       expect(loaded.state.snapshot.wars.battles[0]!.result!.winnerId).toBeNull();
       expect(loaded.state.snapshot.wars.battles[0]!.result!.loserId).toBeNull();
       const next = new MonthExecutor().execute(

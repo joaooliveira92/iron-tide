@@ -712,6 +712,9 @@ importers:
       '@bluewave/diagnostics':
         specifier: workspace:*
         version: link:../diagnostics
+      effect:
+        specifier: workspace:*
+        version: link:../../vendor/effect
 
   vendor/effect: {}
 
