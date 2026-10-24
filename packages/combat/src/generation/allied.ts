@@ -1,5 +1,6 @@
 import { ALLIED_SUPPORT_INELIGIBLE, ALLIED_OPERATIONAL_ACCESS_MISSING } from "./reasonCodes.js";
 import { BluewaveError } from "@bluewave/contracts";
+import { compareStrings } from "../core/ordering.js";
 
 export const ALLIED_MAX_STRENGTH_BP = 5_000;
 export const ALLIED_MAX_STRENGTH_DIVISOR = 10_000;
@@ -25,8 +26,8 @@ export function orderAlliedCandidates(candidates: AlliedCandidate[]): AlliedCand
     if (b.missionFit !== a.missionFit) return b.missionFit - a.missionFit;
     if (b.effectiveStrength !== a.effectiveStrength)
       return b.effectiveStrength - a.effectiveStrength;
-    if (a.nationId !== b.nationId) return a.nationId.localeCompare(b.nationId);
-    return a.assetId.localeCompare(b.assetId);
+    if (a.nationId !== b.nationId) return compareStrings(a.nationId, b.nationId);
+    return compareStrings(a.assetId, b.assetId);
   });
 }
 

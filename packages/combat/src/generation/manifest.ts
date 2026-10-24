@@ -8,6 +8,7 @@ import type {
   AirGroupDeclaration,
   SmokeSourceDeclaration,
 } from "./capabilities.js";
+import { compareStrings } from "../core/ordering.js";
 
 export const MANIFEST_HASH_V1 = "manifest_hash_v1" as const;
 
@@ -62,7 +63,7 @@ export function canonicalizeManifest(manifest: BattleManifest): BattleManifest {
     reservations: [...manifest.reservations].sort(),
     provenanceRecords: [...manifest.provenanceRecords].sort(),
     sourceStateHashes: Object.fromEntries(
-      Object.entries(manifest.sourceStateHashes).sort(([a], [b]) => a.localeCompare(b)),
+      Object.entries(manifest.sourceStateHashes).sort(([a], [b]) => compareStrings(a, b)),
     ),
   };
   return canonical;

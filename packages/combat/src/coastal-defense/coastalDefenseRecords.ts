@@ -7,6 +7,7 @@ import {
   type CoastalBatteryModel,
   type CoastalBatteryEraBand,
 } from "./constants.js";
+import { compareStrings } from "../core/ordering.js";
 
 export interface CoastalDefenseBatteryRecord {
   readonly model: CoastalBatteryModel;
@@ -47,10 +48,10 @@ export function createCoastalDefenseOperationsRecord(
     .map((a) => ({
       ...a,
       positions: [...a.positions].sort(
-        (x, y) => x.zoneId.localeCompare(y.zoneId) || x.positionIndex - y.positionIndex,
+        (x, y) => compareStrings(x.zoneId, y.zoneId) || x.positionIndex - y.positionIndex,
       ),
     }))
-    .sort((a, b) => a.areaId.localeCompare(b.areaId));
+    .sort((a, b) => compareStrings(a.areaId, b.areaId));
   const surface = {
     rulesetVersion: COASTAL_DEFENSE_RULESET_VERSION,
     areas: sortedAreas,
