@@ -1,6 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCode } from "@bluewave/diagnostics";
-import { Result } from "effect";
+import { Result, Schema } from "effect";
 
 export const BASIS_POINTS_PER_WHOLE = 10_000;
 
@@ -262,141 +262,238 @@ export function buildCareerResult(input: CareerResultInput): PrestigeResult<Care
   });
 }
 
-const VALUE_SET_KEYS = [
-  "lowerBound",
-  "upperBound",
-  "sackingThreshold",
-  "sackingProbabilityBp",
-  "rules",
-] as const;
+const SAFE_INTEGER_MESSAGE = "must be a safe integer";
+const REQUIRED_MESSAGE = "is required and has no default";
+
+export function boundedSafeInteger(min: number, max: number) {
+  return Schema.Number.check(
+    Schema.makeFilter((n: number) => Number.isSafeInteger(n) || SAFE_INTEGER_MESSAGE),
+    Schema.makeFilter((n: number) => (n >= min && n <= max) || `must be from ${min} to ${max}`),
+  );
+}
+
+const nonNegativeSafeInteger = boundedSafeInteger(0, Number.MAX_SAFE_INTEGER);
+const basisPointsInteger = boundedSafeInteger(0, BASIS_POINTS_PER_WHOLE);
+
+const ProportionalLossRuleSchema = Schema.Struct({
+  kind: Schema.Literal("PROPORTIONAL_LOSS"),
+  basisPoints: basisPointsInteger,
+});
+const FixedGainRuleSchema = Schema.Struct({
+  kind: Schema.Literal("FIXED_GAIN"),
+  amount: nonNegativeSafeInteger,
+});
+const FixedLossRuleSchema = Schema.Struct({
+  kind: Schema.Literal("FIXED_LOSS"),
+  amount: nonNegativeSafeInteger,
+});
+
+export const PrestigeRuleSchema = Schema.Union([
+  ProportionalLossRuleSchema,
+  FixedGainRuleSchema,
+  FixedLossRuleSchema,
+]);
+
+type DecodedRule = typeof PrestigeRuleSchema.Type;
+
+interface Violation {
+  readonly path: ReadonlyArray<string>;
+  readonly message: string;
+}
+
+function leafMessage(schema: Schema.Top, value: unknown): string | undefined {
+  const decoded = Schema.decodeUnknownResult(schema as Schema.Decoder<unknown>, {
+    onExcessProperty: "error",
+  })(value);
+  if (Result.isSuccess(decoded)) return undefined;
+  return decoded.failure.issue._tag === "InvalidType"
+    ? SAFE_INTEGER_MESSAGE
+    : decoded.failure.message;
+}
+
+function relationViolation(set: {
+  readonly lowerBound: number;
+  readonly upperBound: number;
+  readonly sackingThreshold: number;
+  readonly rules: Readonly<Partial<Record<PrestigeReasonCode, DecodedRule>>>;
+}): Violation | undefined {
+  if (set.upperBound <= set.lowerBound) {
+    return { path: ["upperBound"], message: "must be greater than lowerBound" };
+  }
+  const thresholdMessage = leafMessage(
+    boundedSafeInteger(set.lowerBound, set.upperBound),
+    set.sackingThreshold,
+  );
+  if (thresholdMessage !== undefined) {
+    return { path: ["sackingThreshold"], message: thresholdMessage };
+  }
+  const span = set.upperBound - set.lowerBound;
+  for (const code of [...REQUIRED_PRESTIGE_REASON_CODES, ...OPTIONAL_PRESTIGE_REASON_CODES]) {
+    const rule = set.rules[code];
+    if (rule === undefined || rule.kind === "PROPORTIONAL_LOSS") continue;
+    const message = leafMessage(boundedSafeInteger(0, span), rule.amount);
+    if (message !== undefined) return { path: ["rules", code, "amount"], message };
+  }
+  return undefined;
+}
+
+const PrestigeRulesSchema = Schema.Struct({
+  UNPAID_FUNDS: PrestigeRuleSchema,
+  BATTLE_LOST: PrestigeRuleSchema,
+  BATTLE_WON: PrestigeRuleSchema,
+  DECLINED_BATTLE: Schema.optional(PrestigeRuleSchema),
+});
+
+export const PrestigeValueSetSchema = Schema.Struct({
+  lowerBound: nonNegativeSafeInteger,
+  upperBound: nonNegativeSafeInteger,
+  sackingThreshold: nonNegativeSafeInteger,
+  sackingProbabilityBp: basisPointsInteger,
+  rules: PrestigeRulesSchema,
+}).check(
+  Schema.makeFilter((set) => {
+    const violation = relationViolation(set);
+    return violation === undefined ? true : { path: violation.path, issue: violation.message };
+  }),
+);
+
+const decodeValueSet = Schema.decodeUnknownResult(PrestigeValueSetSchema, {
+  errors: "all",
+  onExcessProperty: "error",
+});
+
+const VALUE_SET_KEYS: ReadonlyArray<string> = Object.keys(PrestigeValueSetSchema.fields);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function invalid(field: string, message: string) {
-  return Result.fail(new PrestigeValueSetInvalid(field, message));
+  return new PrestigeValueSetInvalid(field, message);
 }
 
-function readInt(
+function firstExcessKey(record: Record<string, unknown>, allowed: ReadonlyArray<string>) {
+  return Object.keys(record).find((key) => !allowed.includes(key));
+}
+
+function leafFailure(
   record: Record<string, unknown>,
   key: string,
   path: string,
-  min: number,
-  max: number,
-): PrestigeResult<SafeInt, PrestigeValueSetInvalid> {
+  schema: Schema.Top,
+): PrestigeValueSetInvalid | undefined {
   const value = record[key];
-  if (value === undefined) return invalid(path, "is required and has no default");
-  if (typeof value !== "number" || !Number.isSafeInteger(value)) {
-    return invalid(path, "must be a safe integer");
-  }
-  if (value < min || value > max) return invalid(path, `must be from ${min} to ${max}`);
-  return Result.succeed(SafeInt(value));
+  if (value === undefined) return invalid(path, REQUIRED_MESSAGE);
+  const message = leafMessage(schema, value);
+  return message === undefined ? undefined : invalid(path, message);
 }
 
-function excessKey(
-  record: Record<string, unknown>,
-  allowed: readonly string[],
-  prefix: string,
-): string | undefined {
-  const extra = Object.keys(record).find((key) => !allowed.includes(key));
-  return extra === undefined ? undefined : `${prefix}${extra}`;
-}
+const RULE_KIND_LABEL = {
+  PROPORTIONAL_LOSS: "proportional loss",
+  FIXED_GAIN: "fixed gain",
+  FIXED_LOSS: "fixed loss",
+} as const;
 
-function decodeRule(
+function ruleFailure(
   input: unknown,
   path: string,
   span: number,
-): PrestigeResult<PrestigeRule, PrestigeValueSetInvalid> {
+): PrestigeValueSetInvalid | undefined {
   if (!isRecord(input)) return invalid(path, "must be a rule record");
-  if (input["kind"] === "PROPORTIONAL_LOSS") {
-    const extra = excessKey(input, ["kind", "basisPoints"], `${path}.`);
-    if (extra !== undefined) return invalid(extra, "is not a field of a proportional loss rule");
-    const basisPoints = readInt(
-      input,
-      "basisPoints",
-      `${path}.basisPoints`,
-      0,
-      BASIS_POINTS_PER_WHOLE,
-    );
-    return Result.map(basisPoints, (value) => ({ kind: "PROPORTIONAL_LOSS", basisPoints: value }));
+  const kind = input["kind"];
+  if (kind !== "PROPORTIONAL_LOSS" && kind !== "FIXED_GAIN" && kind !== "FIXED_LOSS") {
+    return invalid(`${path}.kind`, "must be PROPORTIONAL_LOSS, FIXED_GAIN or FIXED_LOSS");
   }
-  if (input["kind"] === "FIXED_GAIN") {
-    const extra = excessKey(input, ["kind", "amount"], `${path}.`);
-    if (extra !== undefined) return invalid(extra, "is not a field of a fixed gain rule");
-    const amount = readInt(input, "amount", `${path}.amount`, 0, span);
-    return Result.map(amount, (value) => ({ kind: "FIXED_GAIN", amount: value }));
+  const valueKey = kind === "PROPORTIONAL_LOSS" ? "basisPoints" : "amount";
+  const extra = firstExcessKey(input, ["kind", valueKey]);
+  if (extra !== undefined) {
+    return invalid(`${path}.${extra}`, `is not a field of a ${RULE_KIND_LABEL[kind]} rule`);
   }
-  if (input["kind"] === "FIXED_LOSS") {
-    const extra = excessKey(input, ["kind", "amount"], `${path}.`);
-    if (extra !== undefined) return invalid(extra, "is not a field of a fixed loss rule");
-    const amount = readInt(input, "amount", `${path}.amount`, 0, span);
-    return Result.map(amount, (value) => ({ kind: "FIXED_LOSS", amount: value }));
+  return leafFailure(
+    input,
+    valueKey,
+    `${path}.${valueKey}`,
+    kind === "PROPORTIONAL_LOSS" ? basisPointsInteger : boundedSafeInteger(0, span),
+  );
+}
+
+function valueSetFailure(input: unknown): PrestigeValueSetInvalid | undefined {
+  if (!isRecord(input)) return invalid("", "must be a record");
+  const extra = firstExcessKey(input, VALUE_SET_KEYS);
+  if (extra !== undefined) return invalid(extra, "is not a field of a prestige value set");
+
+  const lowerBound = leafFailure(input, "lowerBound", "lowerBound", nonNegativeSafeInteger);
+  if (lowerBound !== undefined) return lowerBound;
+  const upperBound = leafFailure(input, "upperBound", "upperBound", nonNegativeSafeInteger);
+  if (upperBound !== undefined) return upperBound;
+  const lower = Number(input["lowerBound"]);
+  const upper = Number(input["upperBound"]);
+  if (upper <= lower) return invalid("upperBound", "must be greater than lowerBound");
+  const threshold = leafFailure(
+    input,
+    "sackingThreshold",
+    "sackingThreshold",
+    boundedSafeInteger(lower, upper),
+  );
+  if (threshold !== undefined) return threshold;
+  const probability = leafFailure(
+    input,
+    "sackingProbabilityBp",
+    "sackingProbabilityBp",
+    basisPointsInteger,
+  );
+  if (probability !== undefined) return probability;
+
+  const rules = input["rules"];
+  if (rules === undefined) return invalid("rules", REQUIRED_MESSAGE);
+  if (!isRecord(rules)) return invalid("rules", "must be a record");
+  const extraRule = firstExcessKey(rules, PRESTIGE_REASON_CODES);
+  if (extraRule !== undefined)
+    return invalid(`rules.${extraRule}`, "is not a prestige reason code");
+
+  const span = upper - lower;
+  for (const code of REQUIRED_PRESTIGE_REASON_CODES) {
+    if (rules[code] === undefined) return invalid(`rules.${code}`, REQUIRED_MESSAGE);
+    const failure = ruleFailure(rules[code], `rules.${code}`, span);
+    if (failure !== undefined) return failure;
   }
-  return invalid(`${path}.kind`, "must be PROPORTIONAL_LOSS, FIXED_GAIN or FIXED_LOSS");
+  for (const code of OPTIONAL_PRESTIGE_REASON_CODES) {
+    if (rules[code] === undefined) continue;
+    const failure = ruleFailure(rules[code], `rules.${code}`, span);
+    if (failure !== undefined) return failure;
+  }
+  return undefined;
+}
+
+function brandRule(rule: DecodedRule): PrestigeRule {
+  return rule.kind === "PROPORTIONAL_LOSS"
+    ? { kind: rule.kind, basisPoints: SafeInt(rule.basisPoints) }
+    : { kind: rule.kind, amount: SafeInt(rule.amount) };
+}
+
+function brandValueSet(decoded: typeof PrestigeValueSetSchema.Type): PrestigeValueSet {
+  const { DECLINED_BATTLE, ...required } = decoded.rules;
+  return {
+    lowerBound: SafeInt(decoded.lowerBound),
+    upperBound: SafeInt(decoded.upperBound),
+    sackingThreshold: SafeInt(decoded.sackingThreshold),
+    sackingProbabilityBp: SafeInt(decoded.sackingProbabilityBp),
+    rules: {
+      UNPAID_FUNDS: brandRule(required.UNPAID_FUNDS),
+      BATTLE_LOST: brandRule(required.BATTLE_LOST),
+      BATTLE_WON: brandRule(required.BATTLE_WON),
+      ...(DECLINED_BATTLE === undefined ? {} : { DECLINED_BATTLE: brandRule(DECLINED_BATTLE) }),
+    },
+  };
 }
 
 export function decodePrestigeValueSet(
   input: unknown,
 ): PrestigeResult<PrestigeValueSet, PrestigeValueSetInvalid> {
-  if (!isRecord(input)) return invalid("", "must be a record");
-  const extra = excessKey(input, VALUE_SET_KEYS, "");
-  if (extra !== undefined) return invalid(extra, "is not a field of a prestige value set");
-
-  const lowerBound = readInt(input, "lowerBound", "lowerBound", 0, Number.MAX_SAFE_INTEGER);
-  if (Result.isFailure(lowerBound)) return Result.fail(lowerBound.failure);
-  const upperBound = readInt(input, "upperBound", "upperBound", 0, Number.MAX_SAFE_INTEGER);
-  if (Result.isFailure(upperBound)) return Result.fail(upperBound.failure);
-  if (upperBound.success <= lowerBound.success) {
-    return invalid("upperBound", "must be greater than lowerBound");
-  }
-  const sackingThreshold = readInt(
-    input,
-    "sackingThreshold",
-    "sackingThreshold",
-    lowerBound.success,
-    upperBound.success,
-  );
-  if (Result.isFailure(sackingThreshold)) return Result.fail(sackingThreshold.failure);
-  const sackingProbabilityBp = readInt(
-    input,
-    "sackingProbabilityBp",
-    "sackingProbabilityBp",
-    0,
-    BASIS_POINTS_PER_WHOLE,
-  );
-  if (Result.isFailure(sackingProbabilityBp)) return Result.fail(sackingProbabilityBp.failure);
-
-  const rulesInput = input["rules"];
-  if (rulesInput === undefined) return invalid("rules", "is required and has no default");
-  if (!isRecord(rulesInput)) return invalid("rules", "must be a record");
-  const extraRule = excessKey(rulesInput, PRESTIGE_REASON_CODES, "rules.");
-  if (extraRule !== undefined) return invalid(extraRule, "is not a prestige reason code");
-
-  const span = upperBound.success - lowerBound.success;
-  const rules: Partial<Record<PrestigeReasonCode, PrestigeRule>> = {};
-  for (const code of REQUIRED_PRESTIGE_REASON_CODES) {
-    const rule = rulesInput[code];
-    if (rule === undefined) return invalid(`rules.${code}`, "is required and has no default");
-    const decoded = decodeRule(rule, `rules.${code}`, span);
-    if (Result.isFailure(decoded)) return Result.fail(decoded.failure);
-    rules[code] = decoded.success;
-  }
-  for (const code of OPTIONAL_PRESTIGE_REASON_CODES) {
-    const rule = rulesInput[code];
-    if (rule === undefined) continue;
-    const decoded = decodeRule(rule, `rules.${code}`, span);
-    if (Result.isFailure(decoded)) return Result.fail(decoded.failure);
-    rules[code] = decoded.success;
-  }
-
-  return Result.succeed({
-    lowerBound: lowerBound.success,
-    upperBound: upperBound.success,
-    sackingThreshold: sackingThreshold.success,
-    sackingProbabilityBp: sackingProbabilityBp.success,
-    rules: rules as PrestigeValueSet["rules"],
-  });
+  if (!isRecord(input)) return Result.fail(invalid("", "must be a record"));
+  const decoded = decodeValueSet(input);
+  if (Result.isSuccess(decoded)) return Result.succeed(brandValueSet(decoded.success));
+  return Result.fail(valueSetFailure(input) ?? invalid("", "is not a valid prestige value set"));
 }
 
 export const PRESTIGE_COMPILE_CODES = {
