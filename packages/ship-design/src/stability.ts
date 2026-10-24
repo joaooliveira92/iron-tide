@@ -4,6 +4,7 @@ import { evaluate, type LookupTable } from "./formula/eval.js";
 import { parseFormula } from "./formula/parse.js";
 import { ZONE_IDS, type ZoneDef, type ZoneId } from "./arrangement.js";
 import { toSafe } from "./units.js";
+import { designInvariant } from "./errors.js";
 
 export interface WeightItem {
   readonly label: string;
@@ -69,10 +70,10 @@ export function compileStability(
     i.buoyancyByZoneBp.length !== ZONE_IDS.length ||
     i.buoyancyByZoneBp.reduce((a, v) => a + v, 0) !== 10_000
   ) {
-    throw new Error("buoyancyByZoneBp must have nine entries summing to 10000");
+    throw designInvariant("buoyancyByZoneBp must have nine entries summing to 10000");
   }
   const total = i.items.reduce((a, it) => a + it.kg, 0);
-  if (total <= 0) throw new Error("stability needs a positive displacement");
+  if (total <= 0) throw designInvariant("stability needs a positive displacement");
   const findings: Finding[] = [];
   const W = BigInt(total);
 

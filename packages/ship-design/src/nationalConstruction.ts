@@ -3,6 +3,7 @@ import {
   type NationNavalProfile,
   resolveConstructionModifiers,
 } from "./nationProfile.js";
+import { designInvariant } from "./errors.js";
 
 const BP = 10_000;
 const mulBp = (v: number, bp: number): number => Math.ceil((v * bp) / BP);
@@ -112,7 +113,7 @@ export function resolveNationalConstruction(
   const gun = accessEffect(profile.industrialProfile.heavyGunProduction, policy);
   const armour = accessEffect(profile.industrialProfile.armourPlateProduction, policy);
   if (!gun.available || !armour.available)
-    throw new Error(
+    throw designInvariant(
       `national construction: ${profile.nationId} cannot obtain its main armament or armour plate under this policy`,
     );
   const accessCostBp = Math.ceil((gun.costMultiplierBp * armour.costMultiplierBp) / BP);
@@ -122,7 +123,7 @@ export function resolveNationalConstruction(
     ["buildTimeMultiplierBp", industrial.buildTimeMultiplierBp],
   ] as const) {
     if (!Number.isSafeInteger(v) || v < MODIFIER_SAFE_MIN_BP || v > MODIFIER_SAFE_MAX_BP)
-      throw new Error(
+      throw designInvariant(
         `national construction: ${profile.nationId} ${k} ${String(v)} is out of safe range`,
       );
   }
@@ -161,9 +162,11 @@ export function applyNationalConstructionEconomics(
   modifiers: NationalConstructionModifiers,
 ): ConstructionEconomics {
   if (!Number.isSafeInteger(baseCostUnits) || baseCostUnits < 0)
-    throw new Error("national construction: base cost must be a non-negative safe integer");
+    throw designInvariant("national construction: base cost must be a non-negative safe integer");
   if (!Number.isSafeInteger(baseBuildMonths) || baseBuildMonths < 0)
-    throw new Error("national construction: base build months must be a non-negative safe integer");
+    throw designInvariant(
+      "national construction: base build months must be a non-negative safe integer",
+    );
   const costUnits = mulBp(baseCostUnits, modifiers.costMultiplierBp);
   const buildMonths = mulBp(baseBuildMonths, modifiers.buildTimeMultiplierBp);
   return {

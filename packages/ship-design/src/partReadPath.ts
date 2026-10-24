@@ -34,6 +34,7 @@ import type { QuantityReadIssue } from "./legacyComponentQuantities.js";
 import { compatibilitySlotId } from "./partCompatibility.js";
 import { retirementMonthFromAvailableUntil } from "./partLifecycle.js";
 import { quantityLines, type QuantityLine } from "./partQuantities.js";
+import { designInvariant } from "./errors.js";
 
 export interface GunPlacementTranslation {
   readonly designId: string;
@@ -66,7 +67,7 @@ export function translateGunPlacement(input: {
   const legacyBarrels = input.placement.params?.barrels ?? 1;
   const legacyMountType = input.gun.resolvedMountType;
   if (!isGunMountType(legacyMountType)) {
-    throw new Error(
+    throw designInvariant(
       `partReadPath: gun model '${input.gun.part.id}' resolves to '${legacyMountType}', not a gun mount type`,
     );
   }

@@ -14,11 +14,13 @@ import { evaluateConstraints, specAt, type ResolvedSpec } from "./partFitConstra
 import type { FitDataIssue, FitNationInput, FitResult } from "./partFitTypes.js";
 import { isMonth, lifecycleStatus, shiftMonth, type LifecycleStatus } from "./partLifecycle.js";
 import { quantityLines, type QuantityLine } from "./partQuantities.js";
+import { designInvariant } from "./errors.js";
 
 type CatalogueData = FitCatalogue;
 
 function assertMonth(month: string, query: string): void {
-  if (!isMonth(month)) throw new Error(`partQueries.${query}: '${month}' is not a YYYY-MM month`);
+  if (!isMonth(month))
+    throw designInvariant(`partQueries.${query}: '${month}' is not a YYYY-MM month`);
 }
 
 const byId = (a: { readonly id: string }, b: { readonly id: string }): number =>

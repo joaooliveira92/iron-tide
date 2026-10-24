@@ -7,6 +7,7 @@ import type {
 } from "@bluewave/content-schema";
 import { ARMOUR_REGIONS, type ArmourRegionId } from "./armour.js";
 import { ZONE_IDS, type ZoneId } from "./arrangement.js";
+import { designInvariant } from "./errors.js";
 
 export const COMPATIBILITY_INTERFACES = [
   "gun_mount",
@@ -68,7 +69,9 @@ export function buildCompatibilitySlots(input: {
   const zonesOf = (hull: (typeof hulls)[number]): ZoneId[] =>
     [...new Set(hull.zones.map((z) => z.id))].sort(compareCodePoints).map((zone) => {
       if (!isZoneId(zone)) {
-        throw new Error(`partCompatibility: hull form '${hull.id}' has unknown zone '${zone}'`);
+        throw designInvariant(
+          `partCompatibility: hull form '${hull.id}' has unknown zone '${zone}'`,
+        );
       }
       return zone;
     });

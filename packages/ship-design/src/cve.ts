@@ -1,6 +1,7 @@
 import type { CompiledDesign, DesignDraft } from "./compile.js";
 import { evaluate, type LookupTable } from "./formula/eval.js";
 import { parseFormula } from "./formula/parse.js";
+import { designInvariant } from "./errors.js";
 
 export const CVE_LABEL = "DEV METRIC: not a combat result";
 
@@ -43,10 +44,10 @@ export function computeCve(
   b: CveBalance,
 ): CveScores {
   const w = b.weightsByCategory[d.requirement.category];
-  if (!w) throw new Error(`no CVE weights for category '${d.requirement.category}'`);
+  if (!w) throw designInvariant(`no CVE weights for category '${d.requirement.category}'`);
   const sum = w.offence + w.protection + w.mobility + w.reliability + w.suitability;
   if (sum !== 10_000)
-    throw new Error(`CVE weights for '${d.requirement.category}' sum to ${sum}, not 10000`);
+    throw designInvariant(`CVE weights for '${d.requirement.category}' sum to ${sum}, not 10000`);
 
   const acc =
     c.systems && c.systems.gunControl.length > 0

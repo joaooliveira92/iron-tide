@@ -63,6 +63,7 @@ export type {
   Resolved,
   ResolvedTorpedoMount,
 } from "./compileShared.js";
+import { designInvariant } from "./errors.js";
 
 interface CompileResolvedOptions {
   readonly balance?: ShipBalance;
@@ -71,9 +72,9 @@ interface CompileResolvedOptions {
 export function compileDesign(draft: DesignDraft, ctx: ShipContext): CompiledDesign {
   const findings: Finding[] = [];
   if (ctx.hullForms[draft.hull.hullFormId] === undefined)
-    throw new Error(`unknown hull form '${draft.hull.hullFormId}'`);
+    throw designInvariant(`unknown hull form '${draft.hull.hullFormId}'`);
   const plant = ctx.plants.find((p) => p.id === draft.machinery.plantId);
-  if (!plant) throw new Error(`unknown plant '${draft.machinery.plantId}'`);
+  if (!plant) throw designInvariant(`unknown plant '${draft.machinery.plantId}'`);
   const catalogue = new Map(ctx.catalogue.map((c) => [c.id, c]));
 
   const resolved = resolveDesignComponents(draft, ctx, catalogue, plant, findings);
@@ -90,7 +91,7 @@ function compileResolved(
 ): CompiledDesign {
   const b = options.balance ?? ctx.balance;
   const formData = ctx.hullForms[intent.hull.hullFormId];
-  if (!formData) throw new Error(`unknown hull form '${intent.hull.hullFormId}'`);
+  if (!formData) throw designInvariant(`unknown hull form '${intent.hull.hullFormId}'`);
   const intended = intent.requirement.category;
   const shipTypes =
     ctx.shipTypes === undefined ? undefined : shipTypeRegistryFromRecords(ctx.shipTypes);
@@ -168,7 +169,7 @@ function compileResolved(
   });
   const window = b.stabilityWindowByCategory[intent.requirement.category];
   if (!window && availability.available)
-    throw new Error(`no stability window for category '${intent.requirement.category}'`);
+    throw designInvariant(`no stability window for category '${intent.requirement.category}'`);
   let stability: StabilityResult | null = null;
   if (window && !hasBlocking(hullRes.findings) && lumps.reduce((a, l) => a + l.kg, 0) > 0) {
     stability = compileStability(

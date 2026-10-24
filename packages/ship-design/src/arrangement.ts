@@ -3,6 +3,7 @@ import type { ComponentCategory } from "./component.js";
 import type { Finding } from "./findings.js";
 import { placementTarget, sortFindings, zoneTarget, type FindingTarget } from "./findings.js";
 import { toSafe } from "./units.js";
+import { designInvariant } from "./errors.js";
 
 export const ZONE_IDS = [
   "FORECASTLE",
@@ -125,7 +126,7 @@ export function analyseArrangement(
   balance: ArrangementBalance,
 ): ArrangementResult {
   const problems = checkZoneSet(zones);
-  if (problems.length > 0) throw new Error(`invalid zone set: ${problems.join("; ")}`);
+  if (problems.length > 0) throw designInvariant(`invalid zone set: ${problems.join("; ")}`);
   const findings: Finding[] = [];
 
   const totalVol =

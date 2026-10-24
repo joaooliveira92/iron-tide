@@ -1,5 +1,6 @@
 import { historicalBuildMonths, type ConstructionBalance, type LineId } from "./construction.js";
 import { scalePlanToUnits } from "./constructionProgress.js";
+import { designInvariant } from "./errors.js";
 
 export interface SeededPackage {
   readonly id: string;
@@ -29,7 +30,7 @@ const shareOf = (value: number, bp: number): number => Math.floor((value * bp) /
 export function seededConstructionPlan(input: SeededPlanInput): SeededConstructionPlan {
   const { balance } = input;
   if (!Number.isSafeInteger(input.totalUnits) || input.totalUnits <= 0)
-    throw new RangeError(`totalUnits must be a positive integer, got ${String(input.totalUnits)}`);
+    throw designInvariant(`totalUnits must be a positive integer, got ${String(input.totalUnits)}`);
   const completed = Math.min(Math.max(0, Math.floor(input.completedUnits)), input.totalUnits);
 
   const hull = BP;

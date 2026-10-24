@@ -47,6 +47,7 @@ import {
   TERTIARY_ZONE,
 } from "../tertiary.js";
 import { compileWeapons, type ArcObstacle, type GunMount, type WeaponsResult } from "../weapons.js";
+import { designInvariant } from "../errors.js";
 
 type AmmoMount = WeaponsResult["mounts"][number];
 
@@ -245,7 +246,7 @@ export function buildPlacementsAndArrangement(args: {
     { zoneId: dm.zoneId, stationPermille: dm.stationPermille, shareBp: 10_000 },
   ];
   if (rooms.reduce((a, r) => a + r.shareBp, 0) !== 10_000 || rooms.some((r) => r.shareBp <= 0)) {
-    throw new Error("machinery room shares must be positive and sum to 10000");
+    throw designInvariant("machinery room shares must be positive and sum to 10000");
   }
   const roomPart = (total: number, i: number) =>
     i === rooms.length - 1

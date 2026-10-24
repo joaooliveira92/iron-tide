@@ -2,6 +2,7 @@ import type { ShipTypeRecord, ShipTypeRequirement } from "@bluewave/content-sche
 import { compareCodePoints } from "@bluewave/deterministic";
 import { isClassifiedShipType, type ClassifiedShipType } from "./classificationRules.js";
 import { isShipTypeId, type ShipTypeDefinition, type ShipTypeId } from "./shipTypes.js";
+import { designInvariant } from "./errors.js";
 
 export interface ShipTypeRegistry {
   readonly byId: ReadonlyMap<ShipTypeId, ShipTypeDefinition>;
@@ -14,7 +15,7 @@ type Ordinal = 1 | 2 | 3 | 4 | 5;
 
 function ordinal(value: number): Ordinal {
   if (value === 1 || value === 2 || value === 3 || value === 4 || value === 5) return value;
-  throw new Error(`ship type ordinal ${value} is outside 1..5`);
+  throw designInvariant(`ship type ordinal ${value} is outside 1..5`);
 }
 
 function definitionFromRecord(

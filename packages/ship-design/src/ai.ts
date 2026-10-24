@@ -13,6 +13,7 @@ import { applyEdit, type DraftEdit } from "./edits.js";
 import { bp, kg, mm } from "./units.js";
 import { WEAPON_CATEGORIES } from "./compileShared.js";
 import { resolvableWeaponFamilies } from "./armamentCompile.js";
+import { designInvariant } from "./errors.js";
 
 export type ArchetypeId =
   | "CONSERVATIVE"
@@ -205,7 +206,7 @@ export function generateCandidates(env: AiEnvironment, req: AiRequest): AiResult
   const engine = new RandomEngine(req.seed);
   const ledger = new RandomLedger();
   const plant = env.ctx.plants.find((p) => p.id === req.base.machinery.plantId);
-  if (!plant) throw new Error(`unknown plant '${req.base.machinery.plantId}'`);
+  if (!plant) throw designInvariant(`unknown plant '${req.base.machinery.plantId}'`);
   let compiles = 0;
   const pool: Candidate[] = [];
 
