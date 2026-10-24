@@ -10,6 +10,7 @@ import {
   type AutoResolverNation,
   type PlayerBattleSession,
 } from "@bluewave/combat/battleResolution";
+import { isBluewaveError } from "@bluewave/contracts";
 import { Effect } from "effect";
 import type {
   AdvancePlayerBattleResult,
@@ -138,12 +139,17 @@ function projectSession(
       rngVersion: manifest.rngVersion,
     });
   } catch (error) {
-    return refuse(
-      "PLAYER_BATTLE_PROJECTION_FAILED",
-      error instanceof Error ? error.message : String(error),
-    );
+    return refuse("PLAYER_BATTLE_PROJECTION_FAILED", projectionFailureReason(error));
   }
 }
+
+export const projectionFailureReason = (error: unknown): string => {
+  if (isBluewaveError(error)) {
+    const { reason } = error.context;
+    return typeof reason === "string" ? reason : error.message;
+  }
+  return error instanceof Error ? error.message : String(error);
+};
 
 const isRefusal = (
   value: PlayerBattleSession | PlayerBattleRefusal,

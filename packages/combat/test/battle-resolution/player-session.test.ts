@@ -11,7 +11,18 @@ import {
 } from "@bluewave/combat/battleResolution";
 import { ATTACKER_NATION, makeAutoInput, makeNations } from "./fixtures.js";
 import type { PermanentDivision } from "@bluewave/campaign";
-import { SafeInt } from "@bluewave/contracts";
+import { BluewaveError, isBluewaveError, SafeInt } from "@bluewave/contracts";
+import { BATTLE_AUTO_RESOLUTION_FAILED } from "@bluewave/combat/battleResolution";
+
+function capture(run: () => unknown): BluewaveError {
+  try {
+    run();
+  } catch (error) {
+    if (isBluewaveError(error)) return error;
+    throw error;
+  }
+  throw new Error("expected the call to throw");
+}
 
 function division(divisionId: string, nationId: string, shipOrder: string[]): PermanentDivision {
   return {
@@ -128,13 +139,34 @@ describe("T-2 player battle session", () => {
   });
 
   it("enforces integer speed percentages", () => {
-    const session = createPlayerBattleSession(makePlayerInput());
+    const session = createPlayerBattleSession(inputWithDivisions());
     const division = session.state.divisions[0];
-    if (!division) return;
+    if (!division) throw new Error("fixture must produce a division");
     expect(() =>
       advancePlayerBattleMinute(session, {
         divisions: { [division.tacticalDivisionId]: { stance: "ENGAGE", speedPercent: 50.5 } },
       }),
-    ).toThrow("speedPercent must be an integer");
+    ).toThrow(BluewaveError);
+    const failure = capture(() =>
+      advancePlayerBattleMinute(session, {
+        divisions: { [division.tacticalDivisionId]: { stance: "ENGAGE", speedPercent: 50.5 } },
+      }),
+    );
+    expect(failure.context.code).toBe(BATTLE_AUTO_RESOLUTION_FAILED);
+    expect(failure.context.reason).toBe("speedPercent must be an integer");
+  });
+
+  it("tags the failure when a side has no promotable ship", () => {
+    const input = makePlayerInput();
+    const failure = capture(() =>
+      createPlayerBattleSession({
+        ...input,
+        manifest: { ...input.manifest, persistentAssets: [] },
+      }),
+    );
+    expect(failure.context.code).toBe(BATTLE_AUTO_RESOLUTION_FAILED);
+    expect(failure.context.reason).toBe(
+      "both sides require at least one committed, promotable ship",
+    );
   });
 });
