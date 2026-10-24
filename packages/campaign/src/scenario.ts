@@ -100,6 +100,12 @@ const decodeScenario = Schema.decodeUnknownResult(ScenarioDefinitionSchema, {
 const isScenarioId = Schema.is(ScenarioIdSchema);
 const isNonBlankStringList = Schema.is(NonBlankStringListSchema);
 
+function describeScenarioId(value: unknown): string {
+  return typeof value === "string" || typeof value === "number" || typeof value === "boolean"
+    ? String(value)
+    : "unknown";
+}
+
 function reportCalendar(
   r: Readonly<Record<string, unknown>>,
   id: ScenarioId,
@@ -175,7 +181,7 @@ function validateScenarioRecord(
     if (keys?.missing.has(field) === true) {
       c.addError(
         "INVALID_SCENARIO_DEFINITION",
-        `Missing field ${field} in scenario ${String(r["scenarioId"] ?? "unknown")}`,
+        `Missing field ${field} in scenario ${describeScenarioId(r["scenarioId"])}`,
         STAGE,
       );
     }
