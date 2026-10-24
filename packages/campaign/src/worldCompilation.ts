@@ -10,7 +10,6 @@ import type {
   TechnologyDefinitionData,
   WorldState,
 } from "./state.js";
-import { compareCodePoints } from "@bluewave/deterministic";
 
 type WorldPackSource = Partial<
   Pick<ContentPack, "areas" | "routes" | "ports" | "possessions" | "technologies">

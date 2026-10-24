@@ -32,7 +32,6 @@ import type {
   Ship,
   TechnologyProgress,
 } from "./state.js";
-import { compareCodePoints } from "@bluewave/deterministic";
 
 function isNationPlayable(
   id: string,

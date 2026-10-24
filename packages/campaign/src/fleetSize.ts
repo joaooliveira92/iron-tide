@@ -1,7 +1,6 @@
 import { compareCodePoints } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
-import { compareCodePoints } from "@bluewave/deterministic";
 import { Data } from "effect";
 export const FLEET_SIZE_IDS = ["small", "standard", "large", "very_large"] as const;
 export type FleetSizeId = (typeof FLEET_SIZE_IDS)[number];
