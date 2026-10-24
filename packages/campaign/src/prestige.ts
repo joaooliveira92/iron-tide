@@ -149,13 +149,24 @@ function ceilDivBasisPoints(numerator: number): number {
   return remainder === 0 ? whole : whole + 1;
 }
 
-function checkInteger(value: number): PrestigeResult<number> {
+function checkInteger(
+  value: number,
+): PrestigeResult<number, PrestigeNotInteger | PrestigeUnsafeInteger> {
   if (!Number.isInteger(value)) return Result.fail(new PrestigeNotInteger(value));
   if (!Number.isSafeInteger(value)) return Result.fail(new PrestigeUnsafeInteger(value));
   return Result.succeed(value);
 }
 
-function checkPrestige(value: number, set: PrestigeValueSet): PrestigeResult<SafeInt> {
+export type NationPrestigeError =
+  | PrestigeMissing
+  | PrestigeNotInteger
+  | PrestigeUnsafeInteger
+  | PrestigeOutOfRange;
+
+function checkPrestige(
+  value: number,
+  set: PrestigeValueSet,
+): PrestigeResult<SafeInt, PrestigeNotInteger | PrestigeUnsafeInteger | PrestigeOutOfRange> {
   const integer = checkInteger(value);
   if (Result.isFailure(integer)) return Result.fail(integer.failure);
   if (value < set.lowerBound || value > set.upperBound) {
@@ -401,7 +412,7 @@ export const PRESTIGE_COMPILE_CODES = {
 export function resolveNationPrestige(
   authored: unknown,
   set: PrestigeValueSet,
-): PrestigeResult<SafeInt> {
+): PrestigeResult<SafeInt, NationPrestigeError> {
   if (authored === undefined) return Result.fail(new PrestigeMissing());
   if (typeof authored !== "number") return Result.fail(new PrestigeNotInteger(Number.NaN));
   return checkPrestige(authored, set);

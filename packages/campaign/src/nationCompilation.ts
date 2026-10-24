@@ -87,8 +87,6 @@ function readNationPrestige(
         `Nation '${nationId}' prestige ${String(error.value)} is outside the ruleset bounds ${String(error.lowerBound)} to ${String(error.upperBound)}`,
       );
       break;
-    default:
-      raise(PRESTIGE_COMPILE_CODES.notInteger, `Nation '${nationId}' prestige is invalid`);
   }
   return SafeInt(0);
 }

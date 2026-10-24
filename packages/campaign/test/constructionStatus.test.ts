@@ -61,6 +61,9 @@ describe("dockyard project status model (DESIGN-23 section 2)", () => {
     try {
       assertConstructionProjectTransition("COMPLETED", "ACTIVE");
     } catch (e) {
+      expect((e as ConstructionProjectTransitionError)._tag).toBe(
+        "ConstructionProjectTransitionError",
+      );
       expect((e as ConstructionProjectTransitionError).code).toBe(
         "INVALID_DOCKYARD_PROJECT_TRANSITION",
       );

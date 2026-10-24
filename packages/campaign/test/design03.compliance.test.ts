@@ -189,6 +189,15 @@ describe("§9.3-9.8 fleet-size", () => {
       /FLEET_SIZE_TACTICAL_STAT_VIOLATION/,
     );
     expect(() => checkFleetSizeTacticalViolation("DISPLACEMENT")).toThrow();
+    try {
+      checkFleetSizeTacticalViolation("speed");
+    } catch (error) {
+      expect(error).toMatchObject({
+        _tag: "FLEET_SIZE_TACTICAL_STAT_VIOLATION",
+        code: "FLEET_SIZE_TACTICAL_STAT_VIOLATION",
+        formulaId: "speed",
+      });
+    }
     expect(() => checkFleetSizeTacticalViolation("navalAppropriation")).not.toThrow();
   });
   it("§9.7 same design unchanged across fleet sizes (number vs stats)", () => {

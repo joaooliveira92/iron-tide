@@ -6,9 +6,9 @@ import type {
 } from "@bluewave/campaign";
 import {
   applyCommanderChange,
-  ConstructionProjectTransitionError,
   DIVISION_MEMBERSHIP_CHANGE_INELIGIBLE,
   fleetMoveProblem,
+  isConstructionProjectTransitionError,
   isTerminalConstructionProjectStatus,
   monthlyRevenue,
   researchCap,
@@ -475,7 +475,7 @@ function setProjectStatus(
   try {
     updated = transitionConstructionProject(project, to);
   } catch (error) {
-    if (ConstructionProjectTransitionError.is(error)) {
+    if (isConstructionProjectTransitionError(error)) {
       collector.addError("INVALID_DOCKYARD_PROJECT_TRANSITION", error.message, {
         stage: "command_collection",
         entityId: project["id"],

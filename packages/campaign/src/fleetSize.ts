@@ -1,6 +1,7 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { compareCodePoints } from "@bluewave/deterministic";
+import { Data } from "effect";
 export const FLEET_SIZE_IDS = ["small", "standard", "large", "very_large"] as const;
 export type FleetSizeId = (typeof FLEET_SIZE_IDS)[number];
 export const FLEET_SIZE_BPS: Record<FleetSizeId, number> = {
@@ -53,11 +54,21 @@ export const TACTICAL_STATS = new Set([
   "construction quality",
   "technology effects",
 ]);
+export class FleetSizeTacticalStatViolation extends Data.TaggedError(
+  "FLEET_SIZE_TACTICAL_STAT_VIOLATION",
+)<{
+  readonly formulaId: string;
+}> {
+  readonly code = "FLEET_SIZE_TACTICAL_STAT_VIOLATION";
+
+  override get message(): string {
+    return `FLEET_SIZE_TACTICAL_STAT_VIOLATION: ${this.formulaId}`;
+  }
+}
+
 export function checkFleetSizeTacticalViolation(formulaId: string) {
   if (TACTICAL_STATS.has(formulaId.toLowerCase()))
-    throw Object.assign(new Error(`FLEET_SIZE_TACTICAL_STAT_VIOLATION: ${formulaId}`), {
-      code: "FLEET_SIZE_TACTICAL_STAT_VIOLATION",
-    });
+    throw new FleetSizeTacticalStatViolation({ formulaId });
 }
 export function scaleValue(unscaled: number, multiplierBp: number): SafeInt {
   if (!Number.isSafeInteger(unscaled)) {
