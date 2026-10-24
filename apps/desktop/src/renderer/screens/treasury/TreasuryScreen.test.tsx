@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
+import type { MonthlyReportEntry } from "../../../shared/reports-contract.js";
 import { TreasuryScreen } from "./TreasuryScreen.js";
 
 const projection: PlayerProjection = {
@@ -106,6 +107,14 @@ const commitments = vi.hoisted(() => ({
     },
     unpaidCostsPrestige: { before: 20, after: 19, sackingThreshold: 16 },
   },
+}));
+
+const reportsMock = vi.hoisted(() => ({
+  reports: [] as readonly MonthlyReportEntry[],
+}));
+
+vi.mock("../overview/useMonthlyReports.js", () => ({
+  useMonthlyReports: () => ({ reports: reportsMock.reports, loading: false }),
 }));
 
 vi.mock("./hooks/useBudgetPolicyPanel.js", () => ({
@@ -236,5 +245,87 @@ describe("TreasuryScreen", () => {
     render(<TreasuryScreen sessionId="ses-1" />);
     expect(screen.getByText(/Unpaid costs also cost prestige: 20 → 19/)).not.toBeNull();
     expect(screen.getByText(/Dismissal risk begins at 16/)).not.toBeNull();
+  });
+
+  describe("history", () => {
+    const month = (
+      turn: number,
+      opening: number,
+      closing: number,
+      ledgerRows: MonthlyReportEntry["treasury"]["ledgerRows"] = [],
+    ): MonthlyReportEntry => ({
+      reportId: `r${turn}`,
+      campaignId: "c",
+      turn,
+      period: { from: { year: 1880, month: turn }, to: { year: 1880, month: turn } },
+      generatedAt: "",
+      treasury: {
+        openingTreasury: opening,
+        closingTreasury: closing,
+        maintenanceCost: 16,
+        constructionSpending: 2,
+        researchExpense: 5,
+        governmentAllocation: 100,
+        netChange: closing - opening,
+        obligationExpense: 38,
+        ledgerRows,
+        reconciliation: {
+          opening,
+          revenue: 100,
+          construction: 2,
+          preservation: 0,
+          maintenance: 16,
+          obligation: 38,
+          research: 5,
+          other: 0,
+          closing,
+        },
+      },
+      construction: { projects: [], completedShips: [], newlyActiveProjectIds: [] },
+      research: { progress: [], discoveries: [] },
+      fleet: { additions: [], totalActiveShips: 0 },
+      priorities: [],
+      battleOutcomes: [],
+    });
+
+    afterEach(() => {
+      reportsMock.reports = [];
+    });
+
+    it("explains that nothing has closed before the first month ends", () => {
+      render(<TreasuryScreen sessionId="ses-1" />);
+      fireEvent.click(screen.getByRole("tab", { name: "History" }));
+      expect(screen.getByTestId("history-empty").textContent).toMatch(/No month has closed yet/);
+    });
+
+    it("charts the closed months, opens the latest ledger, and switches month on click", () => {
+      reportsMock.reports = [
+        month(1, 1000, 1040),
+        month(2, 1040, 1060, [
+          {
+            id: "tx1",
+            description: "Mandatory fixed expenses",
+            phase: "obligation",
+            amount: -30,
+            runningBalance: 1060,
+            requested: 38,
+            shortfall: 8,
+          },
+        ]),
+      ];
+      render(<TreasuryScreen sessionId="ses-1" />);
+      fireEvent.click(screen.getByRole("tab", { name: "History" }));
+      expect(
+        screen.getByText(/Over the last 2 months the treasury went from 1,000 to 1,060/),
+      ).not.toBeNull();
+      const ledger = screen.getByTestId("month-ledger");
+      expect(within(ledger).getByText(/Requested 38, paid 30, left unpaid 8/)).not.toBeNull();
+      expect(within(ledger).getByText(/1,040 → 1,060/)).not.toBeNull();
+
+      fireEvent.click(screen.getByRole("button", { name: /^January 1880: closing 1,040/ }));
+      const first = screen.getByTestId("month-ledger");
+      expect(within(first).getByText(/1,000 → 1,040/)).not.toBeNull();
+      expect(within(first).getByText("No ledger entries were recorded this month.")).not.toBeNull();
+    });
   });
 });

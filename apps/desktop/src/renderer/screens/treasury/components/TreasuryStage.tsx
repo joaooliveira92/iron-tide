@@ -7,13 +7,15 @@ import type { BudgetSegmentId } from "../budget-bar.js";
 import type { TreasuryBreakdown } from "../treasury-summary.js";
 import { ConstructionTab } from "./ConstructionTab.js";
 import { FleetUpkeepTab } from "./FleetUpkeepTab.js";
+import { HistoryTab } from "./HistoryTab.js";
 import { FlowBar } from "./FlowBar.js";
 import { Ledger, type LedgerDetail } from "./Ledger.js";
 import { PositionBrief } from "./PositionBrief.js";
 
-export type StageTab = "flow" | LedgerDetail;
+export type StageTab = "flow" | LedgerDetail | "history";
 
 export interface TreasuryStageProps {
+  readonly sessionId: string;
   readonly breakdown: TreasuryBreakdown;
   readonly commitments: TreasuryCommitments | null;
   readonly previewResearch: number | null;
@@ -21,6 +23,7 @@ export interface TreasuryStageProps {
 }
 
 export function TreasuryStage({
+  sessionId,
   breakdown,
   commitments,
   previewResearch,
@@ -58,6 +61,7 @@ export function TreasuryStage({
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
         </TabsList>
       </div>
       <div className="themed-scrollbar min-h-0 flex-1 space-y-6 overflow-y-auto p-4">
@@ -86,6 +90,7 @@ export function TreasuryStage({
         {tab === "fleet" && commitments !== null && (
           <FleetUpkeepTab fleet={commitments.fleet} income={breakdown.income} />
         )}
+        {tab === "history" && <HistoryTab sessionId={sessionId} />}
         {tab === "construction" && commitments !== null && (
           <ConstructionTab construction={commitments.construction} income={breakdown.income} />
         )}
