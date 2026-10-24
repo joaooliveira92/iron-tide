@@ -53,7 +53,7 @@ function readSessionMetadata(saveDir: string): SessionMetadata | null {
   const target = join(saveDir, SESSION_METADATA_FILENAME);
   if (!existsSync(target)) return null;
   try {
-    const parsed = Schema.decodeUnknownResult(SessionMetadataSchema)(
+    const parsed = Schema.decodeUnknownResult(SessionMetadataSchema, { onExcessProperty: "error" })(
       JSON.parse(readFileSync(target, "utf8")),
     );
     return Result.isSuccess(parsed) ? parsed.success : null;

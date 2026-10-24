@@ -33,7 +33,10 @@
 // first-party sources must pass `onExcessProperty: "error"` (inline, or through a
 // same-file constant that sets it). A decode with no options, or options that do not
 // reject excess keys, silently drops unknown fields. Existing sites are frozen in a
-// shrink-only baseline keyed by file and content fingerprint.
+// shrink-only baseline keyed by file and content fingerprint. The remaining baseline is
+// deliberate: renderer crash reports stay tolerant, command rows and sidecars choose their
+// own options, the content manifest/lock tolerate extra keys (pinned by test), and the
+// save-header probe stays lenient (ADR-0278 §4).
 //
 // Usage: `node scripts/assert-boundary-decode.mjs [--scope compiler|desktop|cli|persistence|decode-options|all] [--self-test] [--strict] [--write]`
 //   (`--write` reseeds the decode-options baseline from the current tree)
@@ -357,16 +360,47 @@ function propertyName(property) {
   return undefined;
 }
 
-function rejectsExcess(objectNode) {
+function rejectsExcess(objectNode, strictNames = new Set()) {
   const object = stripWrappers(objectNode);
   if (object?.type !== "ObjectExpression") return false;
   return object.properties.some(
     (property) =>
-      property.type === "Property" &&
-      propertyName(property) === "onExcessProperty" &&
-      stripWrappers(property.value)?.type === "Literal" &&
-      stripWrappers(property.value).value === "error",
+      (property.type === "Property" &&
+        propertyName(property) === "onExcessProperty" &&
+        stripWrappers(property.value)?.type === "Literal" &&
+        stripWrappers(property.value).value === "error") ||
+      (property.type === "SpreadElement" &&
+        property.argument?.type === "Identifier" &&
+        strictNames.has(property.argument.name)),
   );
+}
+
+/**
+ * Names of top-level constants whose object literal rejects excess properties, so a
+ * spread of an imported strict option set (`{ ...CONTENT_DECODE_OPTIONS, errors: "all" }`)
+ * resolves.
+ * @param {string} file
+ * @param {string} text
+ * @returns {Set<string>}
+ */
+export function strictOptionNames(file, text) {
+  const { program } = parseSync(file.replaceAll("\\", "/"), text);
+  const names = new Set();
+  for (const statement of program.body) {
+    const declaration =
+      statement.type === "ExportNamedDeclaration" ? statement.declaration : statement;
+    if (declaration?.type !== "VariableDeclaration") continue;
+    for (const declarator of declaration.declarations) {
+      if (
+        declarator.id?.type === "Identifier" &&
+        declarator.init &&
+        rejectsExcess(declarator.init)
+      ) {
+        names.add(declarator.id.name);
+      }
+    }
+  }
+  return names;
 }
 
 /**
@@ -375,7 +409,7 @@ function rejectsExcess(objectNode) {
  * @param {string} text source contents
  * @returns {Array<{file: string, line: number, snippet: string, fingerprint: string}>}
  */
-export function findLooseSchemaDecodes(file, text) {
+export function findLooseSchemaDecodes(file, text, strictNames = new Set()) {
   const normalized = file.replaceAll("\\", "/");
   const { program, errors } = parseSync(normalized, text);
   if (errors.length > 0) {
@@ -393,7 +427,7 @@ export function findLooseSchemaDecodes(file, text) {
     }
     if (typeof node.type !== "string") return;
     if (node.type === "VariableDeclarator" && node.id?.type === "Identifier" && node.init) {
-      optionConstants.set(node.id.name, rejectsExcess(node.init));
+      optionConstants.set(node.id.name, rejectsExcess(node.init, strictNames));
     }
     for (const key of Object.keys(node)) {
       if (key === "type" || key === "start" || key === "end" || key === "range") continue;
@@ -402,6 +436,10 @@ export function findLooseSchemaDecodes(file, text) {
     }
   };
   collect(program);
+  const knownStrict = new Set([
+    ...strictNames,
+    ...[...optionConstants].filter(([, strict]) => strict).map(([name]) => name),
+  ]);
 
   const findings = [];
   const visit = (node) => {
@@ -422,7 +460,7 @@ export function findLooseSchemaDecodes(file, text) {
       const strict =
         options?.type === "Identifier"
           ? optionConstants.get(options.name) === true
-          : rejectsExcess(options);
+          : rejectsExcess(options, knownStrict);
       if (!strict) {
         const callee = text.slice(node.callee.start, node.callee.end);
         findings.push({
@@ -465,9 +503,11 @@ export function scanLooseSchemaDecodes(repoRoot) {
   ]
     .sort()
     .filter((file) => lstatSync(resolve(repoRoot, file), { throwIfNoEntry: false })?.isFile());
-  return files.flatMap((file) =>
-    findLooseSchemaDecodes(file, readFileSync(resolve(repoRoot, file), "utf8")),
+  const texts = new Map(files.map((file) => [file, readFileSync(resolve(repoRoot, file), "utf8")]));
+  const strictNames = new Set(
+    [...texts].flatMap(([file, text]) => [...strictOptionNames(file, text)]),
   );
+  return files.flatMap((file) => findLooseSchemaDecodes(file, texts.get(file), strictNames));
 }
 
 /** Count loose decodes per file and fingerprint in stable code-unit order. */
@@ -536,6 +576,17 @@ const DECODE_FIXTURES = [
   {
     name: "options from another module's member fail closed",
     source: "const r = Schema.decodeUnknownResult(S, config.opts)(v);",
+    expect: 1,
+  },
+  {
+    name: "a spread of a same-file strict options constant passes",
+    source:
+      "const base = { onExcessProperty: 'error' } as const;\nconst r = Schema.decodeUnknownResult(S, { ...base, errors: 'all' })(v);",
+    expect: 0,
+  },
+  {
+    name: "a spread of an unknown options value fails",
+    source: "const r = Schema.decodeUnknownResult(S, { ...other, errors: 'all' })(v);",
     expect: 1,
   },
   {

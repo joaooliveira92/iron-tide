@@ -196,7 +196,9 @@ export function createCampaignCommandDispatcher(
 ): (command: string, payload: unknown) => Promise<BridgeResult<unknown>> {
   return async (command, payload) => {
     const program = Effect.gen(function* () {
-      const parsedCommand = Schema.decodeUnknownResult(CommandNameSchema)(command);
+      const parsedCommand = Schema.decodeUnknownResult(CommandNameSchema, {
+        onExcessProperty: "error",
+      })(command);
       if (Result.isFailure(parsedCommand)) {
         return yield* new UnknownCommand({ command });
       }

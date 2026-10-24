@@ -40,7 +40,7 @@ function readStored(userDataDir: string): readonly StoredEntry[] {
   const file = join(userDataDir, RECENT_PACKAGES_FILENAME);
   if (!existsSync(file)) return [];
   try {
-    const decoded = Schema.decodeUnknownResult(RecentPackagesSchema)(
+    const decoded = Schema.decodeUnknownResult(RecentPackagesSchema, { onExcessProperty: "error" })(
       JSON.parse(readFileSync(file, "utf8")),
     );
     return Result.isFailure(decoded) ? [] : decoded.success.entries;

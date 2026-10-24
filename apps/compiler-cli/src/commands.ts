@@ -252,7 +252,10 @@ const parseArtifactPair = (
   | { readonly ok: true; readonly value: ArtifactInspect }
   | { readonly ok: false; readonly message: string } => {
   try {
-    const decoded = Schema.decodeUnknownResult(CanonicalEnvelopeSchema)(JSON.parse(envelopeJson));
+    const decoded = Schema.decodeUnknownResult(
+      CanonicalEnvelopeSchema,
+      STRICT_DECODE_OPTIONS,
+    )(JSON.parse(envelopeJson));
     if (Result.isFailure(decoded)) {
       return { ok: false, message: describeSchemaFailure(decoded.failure) };
     }
@@ -327,9 +330,10 @@ export const runCompare = (options: CliOptions): Effect.Effect<ExitCategory, nev
       let envelope: CanonicalEnvelope;
       try {
         artifact = JSON.parse(artifactJson);
-        const decoded = Schema.decodeUnknownResult(CanonicalEnvelopeSchema)(
-          JSON.parse(envelopeJson),
-        );
+        const decoded = Schema.decodeUnknownResult(
+          CanonicalEnvelopeSchema,
+          STRICT_DECODE_OPTIONS,
+        )(JSON.parse(envelopeJson));
         if (Result.isFailure(decoded)) {
           return { ok: false as const, message: describeSchemaFailure(decoded.failure) };
         }
@@ -1044,9 +1048,10 @@ export const runReplay = (
     const ledgerText = yield* readFileOption(fs, ledgerPath);
     let originalLedgerData: ReadonlyArray<unknown>;
     try {
-      originalLedgerData = Schema.decodeUnknownSync(Schema.Array(Schema.Unknown))(
-        JSON.parse(ledgerText ?? ""),
-      );
+      originalLedgerData = Schema.decodeUnknownSync(
+        Schema.Array(Schema.Unknown),
+        STRICT_DECODE_OPTIONS,
+      )(JSON.parse(ledgerText ?? ""));
     } catch {
       yield* printResult(`Failed to parse command ledger file: ${ledgerPath}`);
       return "internal-error";
@@ -1056,6 +1061,7 @@ export const runReplay = (
     try {
       const finalHashData = Schema.decodeUnknownSync(
         Schema.Struct({ finalSnapshotHash: Schema.String }),
+        STRICT_DECODE_OPTIONS,
       )(JSON.parse(finalHashText ?? ""));
       expectedFinalHash = finalHashData.finalSnapshotHash;
     } catch {
@@ -1267,9 +1273,10 @@ export const runContentGate = (options: CliOptions): Effect.Effect<ExitCategory,
     if (yield* fs.exists(allowlistPath)) {
       const allowlistText = yield* readFileOption(fs, allowlistPath);
       try {
-        const parsed = Schema.decodeUnknownSync(PlaceholderAllowlistFileSchema)(
-          JSON.parse(allowlistText ?? ""),
-        );
+        const parsed = Schema.decodeUnknownSync(
+          PlaceholderAllowlistFileSchema,
+          STRICT_DECODE_OPTIONS,
+        )(JSON.parse(allowlistText ?? ""));
         if (Array.isArray(parsed.allow)) allowlist = parsed.allow as PlaceholderAllowlistEntry[];
       } catch {
         collector.addError(
