@@ -1,3 +1,4 @@
+import { BluewaveError } from "@bluewave/contracts";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -22,7 +23,7 @@ import {
   finishPlayerBattleProgram,
   startPlayerBattleProgram,
 } from "./playerBattle.js";
-import { startPlayerBattle } from "./playerBattleSession.js";
+import { projectionFailureReason, startPlayerBattle } from "./playerBattleSession.js";
 import { registerWarSession } from "./warSessionFixture.js";
 
 const withOffers = Layer.effect(
@@ -227,5 +228,22 @@ describe("player battle session over in-memory sidecar stores", () => {
     expect(started.view.minute).toBe(0);
     expect(stillThere.kind).toBe("none");
     await a.runtime.dispose();
+  });
+});
+
+describe("projection failure reason", () => {
+  const reason = "both sides require at least one committed, promotable ship";
+
+  it("reads the reason from a tagged combat failure", () => {
+    const failure = new BluewaveError("BATTLE_AUTO_RESOLUTION_FAILED", {
+      code: "BATTLE_AUTO_RESOLUTION_FAILED",
+      reason,
+    });
+    expect(projectionFailureReason(failure)).toBe(reason);
+  });
+
+  it("falls back to the message for an untagged error and stringifies other values", () => {
+    expect(projectionFailureReason(new Error("boom"))).toBe("boom");
+    expect(projectionFailureReason("plain")).toBe("plain");
   });
 });

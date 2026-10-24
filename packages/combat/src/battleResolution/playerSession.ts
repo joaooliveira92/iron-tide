@@ -1,3 +1,4 @@
+import { BluewaveError } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { RandomEngine } from "@bluewave/random";
 import type { GunneryBattery } from "../gunnery/resolve.js";
@@ -22,6 +23,7 @@ import {
   projectAirDefenseContext,
   projectSmokeContext,
 } from "./capabilities.js";
+import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import { planTorpedoCommands } from "./torpedoDoctrine.js";
 import { pursuitOrders } from "./pursuit.js";
 import {
@@ -196,7 +198,10 @@ export function createPlayerBattleSession(input: CreatePlayerBattleInput): Playe
   const attackerUnits = projection.units.filter((u) => u.sideId === "ATTACKER");
   const defenderUnits = projection.units.filter((u) => u.sideId === "DEFENDER");
   if (attackerUnits.length === 0 || defenderUnits.length === 0) {
-    throw new Error("both sides require at least one committed, promotable ship");
+    throw new BluewaveError(BATTLE_AUTO_RESOLUTION_FAILED, {
+      code: BATTLE_AUTO_RESOLUTION_FAILED,
+      reason: "both sides require at least one committed, promotable ship",
+    });
   }
   const battleSeed = deriveBattleSeed(
     {
@@ -249,7 +254,13 @@ export function createPlayerBattleSession(input: CreatePlayerBattleInput): Playe
 }
 
 function clampSpeedPercent(value: number): number {
-  if (!Number.isInteger(value)) throw new Error("speedPercent must be an integer");
+  if (!Number.isInteger(value)) {
+    throw new BluewaveError(BATTLE_AUTO_RESOLUTION_FAILED, {
+      code: BATTLE_AUTO_RESOLUTION_FAILED,
+      reason: "speedPercent must be an integer",
+      value,
+    });
+  }
   return Math.min(100, Math.max(0, value));
 }
 
