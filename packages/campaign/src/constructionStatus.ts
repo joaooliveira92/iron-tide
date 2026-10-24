@@ -1,3 +1,5 @@
+import { Data, Predicate } from "effect";
+
 export const CONSTRUCTION_PROJECT_STATUSES = [
   "PLANNED",
   "AUTHORIZED",
@@ -73,31 +75,30 @@ export function canTransitionConstructionProject(
 
 export const INVALID_DOCKYARD_PROJECT_TRANSITION = "INVALID_DOCKYARD_PROJECT_TRANSITION" as const;
 
-export class ConstructionProjectTransitionError extends Error {
-  readonly _tag = "ConstructionProjectTransitionError";
-  static is(value: unknown): value is ConstructionProjectTransitionError {
-    return (
-      typeof value === "object" &&
-      value !== null &&
-      (value as { readonly _tag?: unknown })._tag === "ConstructionProjectTransitionError"
-    );
-  }
+export class ConstructionProjectTransitionError extends Data.TaggedError(
+  "ConstructionProjectTransitionError",
+)<{
+  readonly from: ConstructionProjectStatus;
+  readonly to: ConstructionProjectStatus;
+}> {
   readonly code = INVALID_DOCKYARD_PROJECT_TRANSITION;
-  constructor(
-    readonly from: ConstructionProjectStatus,
-    readonly to: ConstructionProjectStatus,
-  ) {
-    super(`Illegal dockyard project transition ${from} -> ${to}`);
-    this.name = "ConstructionProjectTransitionError";
+
+  override get message(): string {
+    return `Illegal dockyard project transition ${this.from} -> ${this.to}`;
   }
 }
+
+export const isConstructionProjectTransitionError = (
+  value: unknown,
+): value is ConstructionProjectTransitionError =>
+  Predicate.isTagged(value, "ConstructionProjectTransitionError");
 
 export function assertConstructionProjectTransition(
   from: ConstructionProjectStatus,
   to: ConstructionProjectStatus,
 ): void {
   if (!canTransitionConstructionProject(from, to)) {
-    throw new ConstructionProjectTransitionError(from, to);
+    throw new ConstructionProjectTransitionError({ from, to });
   }
 }
 

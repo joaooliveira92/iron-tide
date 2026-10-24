@@ -1,9 +1,8 @@
-import { campaignMonthId } from "@bluewave/campaign";
+import { campaignMonthId, createCampaignSnapshotEnvelope } from "@bluewave/campaign";
 import type { CampaignSnapshot, NationState, WarDeclaration } from "@bluewave/campaign";
 import type { BattleManifest, BattleResolution } from "@bluewave/campaign-engine";
 import { generate, resolve } from "@bluewave/combat";
 import { SafeInt } from "@bluewave/contracts";
-import { createEnvelope } from "@bluewave/deterministic";
 import { resolveCampaignBattleReadiness, resolveShipStrength } from "@bluewave/phase-engine";
 import { Effect, Option } from "effect";
 import type { BridgeResult } from "../../shared/bridge-contract.js";
@@ -524,7 +523,7 @@ export const seedCampaignBattleDrillProgram: CommandHandler<"seedCampaignBattleD
       DRILL_STRENGTH_SCALE,
     );
 
-    const envelope = createEnvelope("campaign-snapshot", prepared.compatibilityVersion, prepared);
+    const envelope = createCampaignSnapshotEnvelope(prepared.compatibilityVersion, prepared);
     const nextState = toSaveableState({
       snapshot: prepared,
       envelope,

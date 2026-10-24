@@ -1,5 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCode } from "@bluewave/diagnostics";
+import { Result } from "effect";
 
 export const BASIS_POINTS_PER_WHOLE = 10_000;
 
@@ -137,20 +138,10 @@ export type PrestigeError =
   | PrestigeValueSetInvalid
   | CareerResultInvalid;
 
-export type PrestigeResult<Value, Error extends PrestigeError = PrestigeError> =
-  | { readonly ok: true; readonly value: Value }
-  | { readonly ok: false; readonly error: Error };
-
-const succeed = <Value>(value: Value): { readonly ok: true; readonly value: Value } => ({
-  ok: true,
-  value,
-});
-const fail = <Error extends PrestigeError>(
-  error: Error,
-): { readonly ok: false; readonly error: Error } => ({
-  ok: false,
-  error,
-});
+export type PrestigeResult<Value, Error extends PrestigeError = PrestigeError> = Result.Result<
+  Value,
+  Error
+>;
 
 function ceilDivBasisPoints(numerator: number): number {
   const remainder = numerator % BASIS_POINTS_PER_WHOLE;
@@ -158,19 +149,30 @@ function ceilDivBasisPoints(numerator: number): number {
   return remainder === 0 ? whole : whole + 1;
 }
 
-function checkInteger(value: number): PrestigeResult<number> {
-  if (!Number.isInteger(value)) return fail(new PrestigeNotInteger(value));
-  if (!Number.isSafeInteger(value)) return fail(new PrestigeUnsafeInteger(value));
-  return succeed(value);
+function checkInteger(
+  value: number,
+): PrestigeResult<number, PrestigeNotInteger | PrestigeUnsafeInteger> {
+  if (!Number.isInteger(value)) return Result.fail(new PrestigeNotInteger(value));
+  if (!Number.isSafeInteger(value)) return Result.fail(new PrestigeUnsafeInteger(value));
+  return Result.succeed(value);
 }
 
-function checkPrestige(value: number, set: PrestigeValueSet): PrestigeResult<SafeInt> {
+export type NationPrestigeError =
+  | PrestigeMissing
+  | PrestigeNotInteger
+  | PrestigeUnsafeInteger
+  | PrestigeOutOfRange;
+
+function checkPrestige(
+  value: number,
+  set: PrestigeValueSet,
+): PrestigeResult<SafeInt, PrestigeNotInteger | PrestigeUnsafeInteger | PrestigeOutOfRange> {
   const integer = checkInteger(value);
-  if (!integer.ok) return integer;
+  if (Result.isFailure(integer)) return Result.fail(integer.failure);
   if (value < set.lowerBound || value > set.upperBound) {
-    return fail(new PrestigeOutOfRange(value, set.lowerBound, set.upperBound));
+    return Result.fail(new PrestigeOutOfRange(value, set.lowerBound, set.upperBound));
   }
-  return succeed(SafeInt(value));
+  return Result.succeed(SafeInt(value));
 }
 
 export function applyPrestigeRule(
@@ -180,21 +182,21 @@ export function applyPrestigeRule(
   rule?: PrestigeRule,
 ): PrestigeResult<PrestigeChange> {
   if (!(PRESTIGE_REASON_CODES as readonly string[]).includes(reason)) {
-    return fail(new PrestigeUnknownReason(String(reason)));
+    return Result.fail(new PrestigeUnknownReason(String(reason)));
   }
   const checked = checkPrestige(current, set);
-  if (!checked.ok) return checked;
-  const before = checked.value;
+  if (Result.isFailure(checked)) return Result.fail(checked.failure);
+  const before = checked.success;
   const applied: PrestigeRule | undefined = rule ?? set.rules[reason];
-  if (applied === undefined) return fail(new PrestigeRuleMissing(reason));
+  if (applied === undefined) return Result.fail(new PrestigeRuleMissing(reason));
   const rate = applied.kind === "PROPORTIONAL_LOSS" ? applied.basisPoints : applied.amount;
   const rateChecked = checkInteger(rate);
-  if (!rateChecked.ok) return rateChecked;
+  if (Result.isFailure(rateChecked)) return Result.fail(rateChecked.failure);
 
   let target: number;
   if (applied.kind === "PROPORTIONAL_LOSS") {
     const product = before * applied.basisPoints;
-    if (!Number.isSafeInteger(product)) return fail(new PrestigeUnsafeInteger(product));
+    if (!Number.isSafeInteger(product)) return Result.fail(new PrestigeUnsafeInteger(product));
     target = before - ceilDivBasisPoints(product);
   } else if (applied.kind === "FIXED_LOSS") {
     target = before - applied.amount;
@@ -202,7 +204,7 @@ export function applyPrestigeRule(
     target = before + applied.amount;
   }
   const after = Math.min(set.upperBound, Math.max(set.lowerBound, target));
-  return succeed({ before, after: SafeInt(after), delta: SafeInt(after - before) });
+  return Result.succeed({ before, after: SafeInt(after), delta: SafeInt(after - before) });
 }
 
 export function isSackingEligible(current: number, set: PrestigeValueSet): boolean {
@@ -215,14 +217,14 @@ export function resolveSacking(
   draw: () => number,
 ): PrestigeResult<SackingOutcome> {
   const checked = checkPrestige(current, set);
-  if (!checked.ok) return checked;
-  if (!isSackingEligible(checked.value, set)) return succeed({ eligible: false });
+  if (Result.isFailure(checked)) return Result.fail(checked.failure);
+  if (!isSackingEligible(checked.success, set)) return Result.succeed({ eligible: false });
 
   const value = draw();
   if (!Number.isInteger(value) || value < 0 || value >= BASIS_POINTS_PER_WHOLE) {
-    return fail(new PrestigeDrawInvalid(value));
+    return Result.fail(new PrestigeDrawInvalid(value));
   }
-  return succeed({
+  return Result.succeed({
     eligible: true,
     draw: SafeInt(value),
     sacked: value < set.sackingProbabilityBp,
@@ -238,21 +240,21 @@ export interface CareerResultInput {
 
 export function buildCareerResult(input: CareerResultInput): PrestigeResult<CareerResult> {
   if (typeof input.nationId !== "string" || input.nationId === "") {
-    return fail(new CareerResultInvalid("nationId", "must be a non-empty string"));
+    return Result.fail(new CareerResultInvalid("nationId", "must be a non-empty string"));
   }
   if (!(CAREER_END_REASONS as readonly string[]).includes(input.reason)) {
-    return fail(new CareerResultInvalid("reason", "must be SACKED or CAMPAIGN_END"));
+    return Result.fail(new CareerResultInvalid("reason", "must be SACKED or CAMPAIGN_END"));
   }
   if (!Number.isSafeInteger(input.score) || input.score < 0) {
-    return fail(new CareerResultInvalid("score", "must be a non-negative safe integer"));
+    return Result.fail(new CareerResultInvalid("score", "must be a non-negative safe integer"));
   }
   if (!Number.isSafeInteger(input.month.year)) {
-    return fail(new CareerResultInvalid("month.year", "must be a safe integer"));
+    return Result.fail(new CareerResultInvalid("month.year", "must be a safe integer"));
   }
   if (!Number.isInteger(input.month.month) || input.month.month < 1 || input.month.month > 12) {
-    return fail(new CareerResultInvalid("month.month", "must be an integer from 1 to 12"));
+    return Result.fail(new CareerResultInvalid("month.month", "must be an integer from 1 to 12"));
   }
-  return succeed({
+  return Result.succeed({
     nationId: input.nationId,
     score: SafeInt(input.score),
     reason: input.reason,
@@ -273,7 +275,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function invalid(field: string, message: string) {
-  return fail(new PrestigeValueSetInvalid(field, message));
+  return Result.fail(new PrestigeValueSetInvalid(field, message));
 }
 
 function readInt(
@@ -289,7 +291,7 @@ function readInt(
     return invalid(path, "must be a safe integer");
   }
   if (value < min || value > max) return invalid(path, `must be from ${min} to ${max}`);
-  return succeed(SafeInt(value));
+  return Result.succeed(SafeInt(value));
 }
 
 function excessKey(
@@ -317,21 +319,19 @@ function decodeRule(
       0,
       BASIS_POINTS_PER_WHOLE,
     );
-    return basisPoints.ok
-      ? succeed({ kind: "PROPORTIONAL_LOSS", basisPoints: basisPoints.value })
-      : basisPoints;
+    return Result.map(basisPoints, (value) => ({ kind: "PROPORTIONAL_LOSS", basisPoints: value }));
   }
   if (input["kind"] === "FIXED_GAIN") {
     const extra = excessKey(input, ["kind", "amount"], `${path}.`);
     if (extra !== undefined) return invalid(extra, "is not a field of a fixed gain rule");
     const amount = readInt(input, "amount", `${path}.amount`, 0, span);
-    return amount.ok ? succeed({ kind: "FIXED_GAIN", amount: amount.value }) : amount;
+    return Result.map(amount, (value) => ({ kind: "FIXED_GAIN", amount: value }));
   }
   if (input["kind"] === "FIXED_LOSS") {
     const extra = excessKey(input, ["kind", "amount"], `${path}.`);
     if (extra !== undefined) return invalid(extra, "is not a field of a fixed loss rule");
     const amount = readInt(input, "amount", `${path}.amount`, 0, span);
-    return amount.ok ? succeed({ kind: "FIXED_LOSS", amount: amount.value }) : amount;
+    return Result.map(amount, (value) => ({ kind: "FIXED_LOSS", amount: value }));
   }
   return invalid(`${path}.kind`, "must be PROPORTIONAL_LOSS, FIXED_GAIN or FIXED_LOSS");
 }
@@ -344,20 +344,20 @@ export function decodePrestigeValueSet(
   if (extra !== undefined) return invalid(extra, "is not a field of a prestige value set");
 
   const lowerBound = readInt(input, "lowerBound", "lowerBound", 0, Number.MAX_SAFE_INTEGER);
-  if (!lowerBound.ok) return lowerBound;
+  if (Result.isFailure(lowerBound)) return Result.fail(lowerBound.failure);
   const upperBound = readInt(input, "upperBound", "upperBound", 0, Number.MAX_SAFE_INTEGER);
-  if (!upperBound.ok) return upperBound;
-  if (upperBound.value <= lowerBound.value) {
+  if (Result.isFailure(upperBound)) return Result.fail(upperBound.failure);
+  if (upperBound.success <= lowerBound.success) {
     return invalid("upperBound", "must be greater than lowerBound");
   }
   const sackingThreshold = readInt(
     input,
     "sackingThreshold",
     "sackingThreshold",
-    lowerBound.value,
-    upperBound.value,
+    lowerBound.success,
+    upperBound.success,
   );
-  if (!sackingThreshold.ok) return sackingThreshold;
+  if (Result.isFailure(sackingThreshold)) return Result.fail(sackingThreshold.failure);
   const sackingProbabilityBp = readInt(
     input,
     "sackingProbabilityBp",
@@ -365,7 +365,7 @@ export function decodePrestigeValueSet(
     0,
     BASIS_POINTS_PER_WHOLE,
   );
-  if (!sackingProbabilityBp.ok) return sackingProbabilityBp;
+  if (Result.isFailure(sackingProbabilityBp)) return Result.fail(sackingProbabilityBp.failure);
 
   const rulesInput = input["rules"];
   if (rulesInput === undefined) return invalid("rules", "is required and has no default");
@@ -373,28 +373,28 @@ export function decodePrestigeValueSet(
   const extraRule = excessKey(rulesInput, PRESTIGE_REASON_CODES, "rules.");
   if (extraRule !== undefined) return invalid(extraRule, "is not a prestige reason code");
 
-  const span = upperBound.value - lowerBound.value;
+  const span = upperBound.success - lowerBound.success;
   const rules: Partial<Record<PrestigeReasonCode, PrestigeRule>> = {};
   for (const code of REQUIRED_PRESTIGE_REASON_CODES) {
     const rule = rulesInput[code];
     if (rule === undefined) return invalid(`rules.${code}`, "is required and has no default");
     const decoded = decodeRule(rule, `rules.${code}`, span);
-    if (!decoded.ok) return decoded;
-    rules[code] = decoded.value;
+    if (Result.isFailure(decoded)) return Result.fail(decoded.failure);
+    rules[code] = decoded.success;
   }
   for (const code of OPTIONAL_PRESTIGE_REASON_CODES) {
     const rule = rulesInput[code];
     if (rule === undefined) continue;
     const decoded = decodeRule(rule, `rules.${code}`, span);
-    if (!decoded.ok) return decoded;
-    rules[code] = decoded.value;
+    if (Result.isFailure(decoded)) return Result.fail(decoded.failure);
+    rules[code] = decoded.success;
   }
 
-  return succeed({
-    lowerBound: lowerBound.value,
-    upperBound: upperBound.value,
-    sackingThreshold: sackingThreshold.value,
-    sackingProbabilityBp: sackingProbabilityBp.value,
+  return Result.succeed({
+    lowerBound: lowerBound.success,
+    upperBound: upperBound.success,
+    sackingThreshold: sackingThreshold.success,
+    sackingProbabilityBp: sackingProbabilityBp.success,
     rules: rules as PrestigeValueSet["rules"],
   });
 }
@@ -412,8 +412,8 @@ export const PRESTIGE_COMPILE_CODES = {
 export function resolveNationPrestige(
   authored: unknown,
   set: PrestigeValueSet,
-): PrestigeResult<SafeInt> {
-  if (authored === undefined) return fail(new PrestigeMissing());
-  if (typeof authored !== "number") return fail(new PrestigeNotInteger(Number.NaN));
+): PrestigeResult<SafeInt, NationPrestigeError> {
+  if (authored === undefined) return Result.fail(new PrestigeMissing());
+  if (typeof authored !== "number") return Result.fail(new PrestigeNotInteger(Number.NaN));
   return checkPrestige(authored, set);
 }

@@ -15,6 +15,7 @@ export * from "./constructionDraw.js";
 export * from "./division.js";
 export * from "./designUnits.js";
 export * from "./fleetSize.js";
+export * from "./snapshotHash.js";
 export * from "./researchSpeed.js";
 export * from "./scenario.js";
 export type {

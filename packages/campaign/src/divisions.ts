@@ -1,6 +1,7 @@
 import { SafeInt } from "@bluewave/contracts";
 import { compareCodePoints } from "@bluewave/deterministic";
 import type { Diagnostic, DiagnosticCode, DiagnosticCollector } from "@bluewave/diagnostics";
+import { Result } from "effect";
 
 import {
   DIVISION_FORMATIONS,
@@ -79,21 +80,21 @@ export function buildSeededDivisions(
       shipLocation,
       officerIds,
     );
-    if (!result.ok) {
-      collector.add(result.error.toDiagnostic());
+    if (Result.isFailure(result)) {
+      collector.add(result.failure.toDiagnostic());
       continue;
     }
-    const division = result.value;
+    const division = result.success;
     const duplicateShip = division.shipOrder.find((shipId) => claimedShips.has(shipId));
     if (duplicateShip !== undefined) {
       const owner = claimedShips.get(duplicateShip);
       collector.add(
-        fail(
+        failure(
           DIVISION_SEED_CODES.ship,
           division.divisionId,
           `Division '${division.divisionId}' reuses ship '${duplicateShip}' already assigned to '${String(owner)}'`,
           "Assign each ship to at most one initial division",
-        ).error.toDiagnostic(),
+        ).toDiagnostic(),
       );
       continue;
     }
@@ -103,12 +104,12 @@ export function buildSeededDivisions(
     ) {
       const owner = claimedOfficers.get(division.commanderOfficerId);
       collector.add(
-        fail(
+        failure(
           DIVISION_SEED_CODES.officer,
           division.divisionId,
           `Division '${division.divisionId}' reuses commander '${division.commanderOfficerId}' already commanding '${String(owner)}'`,
           "Give each officer at most one initial division, or leave the command vacant",
-        ).error.toDiagnostic(),
+        ).toDiagnostic(),
       );
       continue;
     }
@@ -121,13 +122,13 @@ export function buildSeededDivisions(
   return divisions.sort((a, b) => compareCodePoints(a.divisionId, b.divisionId));
 }
 
-function fail(
+function failure(
   code: DiagnosticCode,
   divisionId: string,
   message: string,
   remediation: string,
-): { readonly ok: false; readonly error: DivisionSeedFailure } {
-  return { ok: false, error: new DivisionSeedFailure(code, divisionId, message, remediation) };
+): DivisionSeedFailure {
+  return new DivisionSeedFailure(code, divisionId, message, remediation);
 }
 
 function resolveSeededDivision(
@@ -135,57 +136,65 @@ function resolveSeededDivision(
   context: DivisionSeedContext,
   shipLocation: ReadonlyMap<string, { nationId: string; areaId: string }>,
   officerIds: ReadonlySet<string>,
-):
-  | { readonly ok: true; readonly value: PermanentDivision }
-  | { readonly ok: false; readonly error: DivisionSeedFailure } {
+): Result.Result<PermanentDivision, DivisionSeedFailure> {
   const rawId = record["id"];
   if (typeof rawId !== "string" || rawId === "") {
-    return fail(
-      DIVISION_SEED_CODES.ship,
-      "",
-      "Division record has no non-empty id",
-      "Give the division a unique non-empty id",
+    return Result.fail(
+      failure(
+        DIVISION_SEED_CODES.ship,
+        "",
+        "Division record has no non-empty id",
+        "Give the division a unique non-empty id",
+      ),
     );
   }
   const divisionId = rawId;
 
   const recordNationId = record["nationId"];
   if (recordNationId !== context.nationId) {
-    return fail(
-      DIVISION_SEED_CODES.nation,
-      divisionId,
-      `Division '${divisionId}' has nationId '${String(recordNationId)}' but was seeded for '${context.nationId}'`,
-      "Match the division's nationId to the nation being compiled",
+    return Result.fail(
+      failure(
+        DIVISION_SEED_CODES.nation,
+        divisionId,
+        `Division '${divisionId}' has nationId '${String(recordNationId)}' but was seeded for '${context.nationId}'`,
+        "Match the division's nationId to the nation being compiled",
+      ),
     );
   }
 
   const rawOrder = record["shipOrder"];
   if (!Array.isArray(rawOrder) || rawOrder.length === 0) {
-    return fail(
-      DIVISION_SEED_CODES.ship,
-      divisionId,
-      `Division '${divisionId}' has an empty shipOrder`,
-      "Name at least one ship id from the nation's fleets",
+    return Result.fail(
+      failure(
+        DIVISION_SEED_CODES.ship,
+        divisionId,
+        `Division '${divisionId}' has an empty shipOrder`,
+        "Name at least one ship id from the nation's fleets",
+      ),
     );
   }
   const nonString = rawOrder.find((value) => typeof value !== "string");
   if (nonString !== undefined) {
-    return fail(
-      DIVISION_SEED_CODES.ship,
-      divisionId,
-      `Division '${divisionId}' has a non-string shipOrder entry`,
-      "Name only ship id strings",
+    return Result.fail(
+      failure(
+        DIVISION_SEED_CODES.ship,
+        divisionId,
+        `Division '${divisionId}' has a non-string shipOrder entry`,
+        "Name only ship id strings",
+      ),
     );
   }
   const shipOrder = rawOrder as string[];
 
   const role = record["divisionRole"];
   if (typeof role !== "string" || !(DIVISION_ROLES as readonly string[]).includes(role)) {
-    return fail(
-      DIVISION_SEED_CODES.role,
-      divisionId,
-      `Division '${divisionId}' has an unknown divisionRole`,
-      `Use one of ${DIVISION_ROLES.join(", ")}`,
+    return Result.fail(
+      failure(
+        DIVISION_SEED_CODES.role,
+        divisionId,
+        `Division '${divisionId}' has an unknown divisionRole`,
+        `Use one of ${DIVISION_ROLES.join(", ")}`,
+      ),
     );
   }
   const formation = record["preferredFormation"];
@@ -193,11 +202,13 @@ function resolveSeededDivision(
     typeof formation !== "string" ||
     !(DIVISION_FORMATIONS as readonly string[]).includes(formation)
   ) {
-    return fail(
-      DIVISION_SEED_CODES.formation,
-      divisionId,
-      `Division '${divisionId}' has an unknown preferredFormation`,
-      `Use one of ${DIVISION_FORMATIONS.join(", ")}`,
+    return Result.fail(
+      failure(
+        DIVISION_SEED_CODES.formation,
+        divisionId,
+        `Division '${divisionId}' has an unknown preferredFormation`,
+        `Use one of ${DIVISION_FORMATIONS.join(", ")}`,
+      ),
     );
   }
 
@@ -205,49 +216,59 @@ function resolveSeededDivision(
   for (const shipId of shipOrder) {
     const located = shipLocation.get(shipId);
     if (located === undefined) {
-      return fail(
-        DIVISION_SEED_CODES.ship,
-        divisionId,
-        `Division '${divisionId}' references unknown ship '${shipId}'`,
-        "Name a ship id declared in the nation's fleets",
+      return Result.fail(
+        failure(
+          DIVISION_SEED_CODES.ship,
+          divisionId,
+          `Division '${divisionId}' references unknown ship '${shipId}'`,
+          "Name a ship id declared in the nation's fleets",
+        ),
       );
     }
     if (located.nationId !== context.nationId) {
-      return fail(
-        DIVISION_SEED_CODES.nation,
-        divisionId,
-        `Division '${divisionId}' includes ship '${shipId}' of another nation`,
-        "Name only ships of the division's nation",
+      return Result.fail(
+        failure(
+          DIVISION_SEED_CODES.nation,
+          divisionId,
+          `Division '${divisionId}' includes ship '${shipId}' of another nation`,
+          "Name only ships of the division's nation",
+        ),
       );
     }
     areas.add(located.areaId);
   }
   if (areas.size > 1) {
-    return fail(
-      DIVISION_SEED_CODES.location,
-      divisionId,
-      `Division '${divisionId}' ships are not co-located (${[...areas].join(", ")})`,
-      "Name ships stationed in a single area",
+    return Result.fail(
+      failure(
+        DIVISION_SEED_CODES.location,
+        divisionId,
+        `Division '${divisionId}' ships are not co-located (${[...areas].join(", ")})`,
+        "Name ships stationed in a single area",
+      ),
     );
   }
 
   const rawCommander = record["commanderOfficerId"];
   if (rawCommander !== undefined && typeof rawCommander !== "string") {
-    return fail(
-      DIVISION_SEED_CODES.officer,
-      divisionId,
-      `Division '${divisionId}' has a non-string commanderOfficerId`,
-      `Name an officer of the nation's roster, or ${VACANT}`,
+    return Result.fail(
+      failure(
+        DIVISION_SEED_CODES.officer,
+        divisionId,
+        `Division '${divisionId}' has a non-string commanderOfficerId`,
+        `Name an officer of the nation's roster, or ${VACANT}`,
+      ),
     );
   }
   let commanderOfficerId: string = VACANT;
   if (rawCommander !== undefined && rawCommander !== VACANT) {
     if (!officerIds.has(rawCommander)) {
-      return fail(
-        DIVISION_SEED_CODES.officer,
-        divisionId,
-        `Division '${divisionId}' references unknown officer '${rawCommander}'`,
-        `Name an officer of the nation's roster, or ${VACANT}`,
+      return Result.fail(
+        failure(
+          DIVISION_SEED_CODES.officer,
+          divisionId,
+          `Division '${divisionId}' references unknown officer '${rawCommander}'`,
+          `Name an officer of the nation's roster, or ${VACANT}`,
+        ),
       );
     }
     commanderOfficerId = rawCommander;
@@ -270,5 +291,5 @@ function resolveSeededDivision(
     rulesetVersion: context.rulesetVersion,
     aggregateHash: "",
   };
-  return { ok: true, value: { ...division, aggregateHash: divisionAggregateHash(division) } };
+  return Result.succeed({ ...division, aggregateHash: divisionAggregateHash(division) });
 }

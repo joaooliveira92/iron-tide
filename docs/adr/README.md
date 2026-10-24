@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0285).
+highest existing number + 1 (the next number is ADR-0286).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -114,6 +114,7 @@ Turn identity, the suspend/resume interruption model, and strict save-file decod
 | 0222 | [ADR-0222-turn-identity-stable-across-resume.md](ADR-0222-turn-identity-stable-across-resume.md) | A turn's interruption identity is stable across suspend and resume | accepted | — |
 | 0235 | [ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md](ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md) | Main-owned recent campaigns and reopen allow-list | accepted | — |
 | 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | accepted | — |
+| 0285 | [ADR-0285-campaign-snapshot-hash-covers-map-fields.md](ADR-0285-campaign-snapshot-hash-covers-map-fields.md) | The campaign snapshot hash covers Map fields | accepted | — |
 
 ## Fleet readiness, command & prestige
 

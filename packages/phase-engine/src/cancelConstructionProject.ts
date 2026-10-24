@@ -1,6 +1,6 @@
 import type { CampaignSnapshot, ConstructionProject, NationState, Ship } from "@bluewave/campaign";
 import {
-  ConstructionProjectTransitionError,
+  isConstructionProjectTransitionError,
   isTerminalConstructionProjectStatus,
   transitionConstructionProject,
 } from "@bluewave/campaign";
@@ -86,7 +86,7 @@ export function applyCancelConstructionProject(
   try {
     cancelledProject = transitionConstructionProject(project, "CANCELLED");
   } catch (error) {
-    if (ConstructionProjectTransitionError.is(error)) {
+    if (isConstructionProjectTransitionError(error)) {
       collector.addError("INVALID_DOCKYARD_PROJECT_TRANSITION", error.message, {
         stage: "command_collection",
         entityId: project["id"],

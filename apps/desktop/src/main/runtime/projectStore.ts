@@ -1,5 +1,5 @@
+import { createCampaignSnapshotEnvelope } from "@bluewave/campaign";
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
-import { createEnvelope } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
   SaveStore,
@@ -238,8 +238,7 @@ export function projectStoreLayer(): Layer.Layer<ProjectStore> {
     persistConstructionSnapshot: (record, mutate) =>
       Effect.gen(function* () {
         const nextSnapshot = mutate(record.state.snapshot);
-        const nextEnvelope = createEnvelope(
-          "campaign-snapshot",
+        const nextEnvelope = createCampaignSnapshotEnvelope(
           nextSnapshot.compatibilityVersion,
           nextSnapshot,
         );

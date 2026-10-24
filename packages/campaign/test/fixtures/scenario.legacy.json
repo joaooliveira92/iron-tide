@@ -1,0 +1,1312 @@
+{
+  "canonical": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "canonical reordered": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "not an array: null": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenarios must be an array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "not an array: undefined": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenarios must be an array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "not an array: object": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenarios must be an array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "not an array: string": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenarios must be an array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "not an array: number": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenarios must be an array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "empty array": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Canonical pack must define exactly 5 scenarios, got 0",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "four scenarios": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Canonical pack must define exactly 5 scenarios, got 4",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "six scenarios": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Canonical pack must define exactly 5 scenarios, got 6",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null entry": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scenario must be object",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing canonical scenario scen_1960",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "number entry": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scenario must be object",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing canonical scenario scen_1960",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "string entry": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scenario must be object",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing canonical scenario scen_1960",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "array entry": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field scenarioId in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field startYear in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field startMonth in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field endYear in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field endMonth in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field scenarioContentHash in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field participationManifestId in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field continuityManifestId in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedFleetSizeSettingIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedResearchSpeedSettingIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedTechnologyVariationSettingIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedHistoricalBudgetOptionIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedLegacyFleetModeIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedTacticalRealismModeIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedDifficultyProfileIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Invalid scenarioId undefined",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing canonical scenario scen_1960",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "empty object entry": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field scenarioId in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field startYear in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field startMonth in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field endYear in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field endMonth in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field scenarioContentHash in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field participationManifestId in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field continuityManifestId in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedFleetSizeSettingIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedResearchSpeedSettingIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedTechnologyVariationSettingIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedHistoricalBudgetOptionIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedLegacyFleetModeIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedTacticalRealismModeIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedDifficultyProfileIds in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Invalid scenarioId undefined",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing canonical scenario scen_1960",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "omitted scenarioId": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field scenarioId in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Invalid scenarioId undefined",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing canonical scenario scen_1920",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null scenarioId": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Invalid scenarioId null",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing canonical scenario scen_1920",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "omitted startYear": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field startYear in scenario scen_1920",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must start January 1920, got undefined-1",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null startYear": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must start January 1920, got null-1",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "omitted startMonth": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field startMonth in scenario scen_1920",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must start January 1920, got 1920-undefined",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null startMonth": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must start January 1920, got 1920-null",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "omitted endYear": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field endYear in scenario scen_1920",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must end December 1970, got undefined-12",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null endYear": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must end December 1970, got null-12",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "omitted endMonth": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field endMonth in scenario scen_1920",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must end December 1970, got 1970-undefined",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null endMonth": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must end December 1970, got 1970-null",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "omitted scenarioContentHash": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field scenarioContentHash in scenario scen_1920",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null scenarioContentHash": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "omitted participationManifestId": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field participationManifestId in scenario scen_1920",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null participationManifestId": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "omitted continuityManifestId": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field continuityManifestId in scenario scen_1920",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null continuityManifestId": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "omitted supportedFleetSizeSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedFleetSizeSettingIds in scenario scen_1920",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedFleetSizeSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null supportedFleetSizeSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedFleetSizeSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "omitted supportedResearchSpeedSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedResearchSpeedSettingIds in scenario scen_1920",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedResearchSpeedSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null supportedResearchSpeedSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedResearchSpeedSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "omitted supportedTechnologyVariationSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedTechnologyVariationSettingIds in scenario scen_1920",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedTechnologyVariationSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null supportedTechnologyVariationSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedTechnologyVariationSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "omitted supportedHistoricalBudgetOptionIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedHistoricalBudgetOptionIds in scenario scen_1920",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedHistoricalBudgetOptionIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null supportedHistoricalBudgetOptionIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedHistoricalBudgetOptionIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "omitted supportedLegacyFleetModeIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedLegacyFleetModeIds in scenario scen_1920",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedLegacyFleetModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null supportedLegacyFleetModeIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedLegacyFleetModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "omitted supportedTacticalRealismModeIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedTacticalRealismModeIds in scenario scen_1920",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedTacticalRealismModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null supportedTacticalRealismModeIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedTacticalRealismModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "omitted supportedDifficultyProfileIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field supportedDifficultyProfileIds in scenario scen_1920",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedDifficultyProfileIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "null supportedDifficultyProfileIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1920: supportedDifficultyProfileIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "omitted scenarioId and calendar": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field scenarioId in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing field startYear in scenario unknown",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Invalid scenarioId undefined",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing canonical scenario scen_1900",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "unknown scenarioId": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Invalid scenarioId scen_9999",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing canonical scenario scen_1920",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "numeric scenarioId": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Invalid scenarioId 1920",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing canonical scenario scen_1920",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "duplicate scenarioId": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Duplicate scenarioId scen_1880",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1880 must start January 1880, got 1920-1",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing canonical scenario scen_1920",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "unknown scenarioId skips later checks": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Invalid scenarioId scen_9999",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing canonical scenario scen_1920",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "wrong startYear": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must start January 1920, got 1921-1",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "wrong startMonth": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must start January 1920, got 1920-2",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "wrong endYear": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must end December 1970, got 1969-12",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "wrong endMonth": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must end December 1970, got 1970-11",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "wrong start and end": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must start January 1920, got 1-1",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must end December 1970, got 1970-1",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "string startYear": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must start January 1920, got 1920-1",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "fractional startYear": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1920 must start January 1920, got 1920.5-1",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "empty supportedFleetSizeSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedFleetSizeSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "string supportedFleetSizeSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedFleetSizeSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "numeric element in supportedFleetSizeSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedFleetSizeSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "blank element in supportedFleetSizeSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedFleetSizeSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "duplicate elements in supportedFleetSizeSettingIds": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "empty supportedResearchSpeedSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedResearchSpeedSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "string supportedResearchSpeedSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedResearchSpeedSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "numeric element in supportedResearchSpeedSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedResearchSpeedSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "blank element in supportedResearchSpeedSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedResearchSpeedSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "duplicate elements in supportedResearchSpeedSettingIds": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "empty supportedTechnologyVariationSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTechnologyVariationSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "string supportedTechnologyVariationSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTechnologyVariationSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "numeric element in supportedTechnologyVariationSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTechnologyVariationSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "blank element in supportedTechnologyVariationSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTechnologyVariationSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "duplicate elements in supportedTechnologyVariationSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTechnologyVariationSettingIds contains invalid value standard",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTechnologyVariationSettingIds contains invalid value standard",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "empty supportedHistoricalBudgetOptionIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedHistoricalBudgetOptionIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "string supportedHistoricalBudgetOptionIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedHistoricalBudgetOptionIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "numeric element in supportedHistoricalBudgetOptionIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedHistoricalBudgetOptionIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "blank element in supportedHistoricalBudgetOptionIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedHistoricalBudgetOptionIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "duplicate elements in supportedHistoricalBudgetOptionIds": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "empty supportedLegacyFleetModeIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedLegacyFleetModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "string supportedLegacyFleetModeIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedLegacyFleetModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "numeric element in supportedLegacyFleetModeIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedLegacyFleetModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "blank element in supportedLegacyFleetModeIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedLegacyFleetModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "duplicate elements in supportedLegacyFleetModeIds": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "empty supportedTacticalRealismModeIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTacticalRealismModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "string supportedTacticalRealismModeIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTacticalRealismModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "numeric element in supportedTacticalRealismModeIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTacticalRealismModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "blank element in supportedTacticalRealismModeIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTacticalRealismModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "duplicate elements in supportedTacticalRealismModeIds": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "empty supportedDifficultyProfileIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedDifficultyProfileIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "string supportedDifficultyProfileIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedDifficultyProfileIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "numeric element in supportedDifficultyProfileIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedDifficultyProfileIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "blank element in supportedDifficultyProfileIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedDifficultyProfileIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "duplicate elements in supportedDifficultyProfileIds": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "unknown value in supportedFleetSizeSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedFleetSizeSettingIds contains invalid value bogus",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "unknown value in supportedResearchSpeedSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedResearchSpeedSettingIds contains invalid value bogus",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "unknown value in supportedTechnologyVariationSettingIds": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTechnologyVariationSettingIds contains invalid value standard",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTechnologyVariationSettingIds contains invalid value bogus",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "several unknown values in one array": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedFleetSizeSettingIds contains invalid value x",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedFleetSizeSettingIds contains invalid value y",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "every supported array broken": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedFleetSizeSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedResearchSpeedSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTechnologyVariationSettingIds must be non-empty string array",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedHistoricalBudgetOptionIds must be non-empty string array",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedLegacyFleetModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedTacticalRealismModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedDifficultyProfileIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "calendar and supported both broken": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Scenario scen_1935 must start January 1935, got 1935-3",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "scen_1935: supportedLegacyFleetModeIds must be non-empty string array",
+        "stage": "scenario-validation"
+      }
+    ]
+  },
+  "free arrays accept any strings": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "numeric scenarioContentHash": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "empty scenarioContentHash": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "numeric participationManifestId": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "numeric continuityManifestId": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "excess key": {
+    "accepted": true,
+    "returnsInputValues": true,
+    "diagnostics": []
+  },
+  "excess key with invalid scenarioId": {
+    "accepted": false,
+    "diagnostics": [
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Invalid scenarioId scen_9999",
+        "stage": "scenario-validation"
+      },
+      {
+        "code": "INVALID_SCENARIO_DEFINITION",
+        "message": "Missing canonical scenario scen_1920",
+        "stage": "scenario-validation"
+      }
+    ]
+  }
+}

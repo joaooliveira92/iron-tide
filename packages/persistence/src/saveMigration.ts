@@ -8,13 +8,9 @@ import {
   writeFileSync,
 } from "node:fs";
 import { basename, dirname, join } from "node:path";
+import { createCampaignSnapshotEnvelope, verifyCampaignSnapshotEnvelope } from "@bluewave/campaign";
 import type { CampaignState } from "@bluewave/campaign";
-import {
-  canonicalSerialize,
-  createEnvelope,
-  sha256Hex,
-  verifyEnvelope,
-} from "@bluewave/deterministic";
+import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { Result, Schema } from "effect";
 import { CURRENT_COMPATIBILITY_VERSION } from "./compatibility.js";
 import { readSaveMetadata } from "./fileDecode.js";
@@ -73,13 +69,13 @@ export function detectSaveVersion(raw: unknown): string | null {
 
 export function restampState(state: CampaignState, to: string): CampaignState {
   const snapshot = { ...state.snapshot, compatibilityVersion: to };
-  const envelope = createEnvelope("campaign-snapshot", to, snapshot);
+  const envelope = createCampaignSnapshotEnvelope(to, snapshot);
   const rawHash = sha256Hex(canonicalSerialize({ snapshot, envelope }));
   return { snapshot, envelope, rawHash };
 }
 
 function verifyMigratedState(state: CampaignState): boolean {
-  if (!verifyEnvelope(state.envelope, state.snapshot)) return false;
+  if (!verifyCampaignSnapshotEnvelope(state.envelope, state.snapshot)) return false;
   const expected = sha256Hex(
     canonicalSerialize({ snapshot: state.snapshot, envelope: state.envelope }),
   );

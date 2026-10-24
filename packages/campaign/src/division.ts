@@ -1,6 +1,7 @@
-import { BluewaveError, SafeInt } from "@bluewave/contracts";
+import { SafeInt } from "@bluewave/contracts";
 import { CAMPAIGN_DIVISION_FORMATIONS, CAMPAIGN_DIVISION_ROLES } from "@bluewave/content-schema";
 import { sha256Hex, canonicalSerialize } from "@bluewave/deterministic";
+import { Data } from "effect";
 
 export const DIVISION_SIZE_LIMIT_EXCEEDED = "DIVISION_SIZE_LIMIT_EXCEEDED" as const;
 export const DIVISION_SHIP_TYPE_INCOMPATIBLE = "DIVISION_SHIP_TYPE_INCOMPATIBLE" as const;
@@ -101,52 +102,104 @@ export interface DivisionAssetView {
   isUnderConstruction: boolean;
 }
 
+export class DivisionStateInvariantFailed extends Data.TaggedError(
+  DIVISION_STATE_INVARIANT_FAILED,
+)<{
+  readonly divisionId: string;
+  readonly reason: string;
+  readonly context: Record<string, unknown>;
+}> {
+  override get message(): string {
+    return DIVISION_STATE_INVARIANT_FAILED;
+  }
+}
+
+export class DivisionSizeLimitExceeded extends Data.TaggedError(DIVISION_SIZE_LIMIT_EXCEEDED)<{
+  readonly divisionId: string;
+  readonly size: string;
+  readonly max: string;
+  readonly context: Record<string, unknown>;
+}> {
+  override get message(): string {
+    return DIVISION_SIZE_LIMIT_EXCEEDED;
+  }
+}
+
+export class DivisionFlagshipInvalid extends Data.TaggedError(DIVISION_FLAGSHIP_INVALID)<{
+  readonly divisionId: string;
+  readonly flagshipShipId: string;
+  readonly expected: string | undefined;
+  readonly context: Record<string, unknown>;
+}> {
+  override get message(): string {
+    return DIVISION_FLAGSHIP_INVALID;
+  }
+}
+
+export class DivisionLocationConflict extends Data.TaggedError(DIVISION_LOCATION_CONFLICT)<{
+  readonly divisionId: string;
+  readonly locations: ReadonlyArray<string | undefined>;
+  readonly context: Record<string, unknown>;
+}> {
+  override get message(): string {
+    return DIVISION_LOCATION_CONFLICT;
+  }
+}
+
+export class DivisionShipTypeIncompatible extends Data.TaggedError(
+  DIVISION_SHIP_TYPE_INCOMPATIBLE,
+)<{
+  readonly divisionId: string;
+  readonly types: ReadonlyArray<CanonicalShipType | undefined>;
+  readonly context: Record<string, unknown>;
+}> {
+  override get message(): string {
+    return DIVISION_SHIP_TYPE_INCOMPATIBLE;
+  }
+}
+
 export function assertDivisionInvariants(
   division: PermanentDivision,
   assets: DivisionAssetView[],
-  context?: Record<string, unknown>,
+  context: Record<string, unknown> = {},
 ): void {
   const shipByType = new Map(assets.map((a) => [a.shipId, a.shipType]));
   const locationByShip = new Map(assets.map((a) => [a.shipId, a.locationAreaId]));
 
   if (division.shipOrder.length === 0) {
-    throw new BluewaveError(DIVISION_STATE_INVARIANT_FAILED, {
-      code: DIVISION_STATE_INVARIANT_FAILED,
+    throw new DivisionStateInvariantFailed({
       divisionId: division.divisionId,
       reason: "empty division",
-      ...context,
+      context,
     });
   }
 
   const allDd = assets.every((a) => a.shipType === "DD");
   const max = allDd ? DD_DIVISION_MAX_SHIPS : DIVISION_MAX_SHIPS;
   if (division.shipOrder.length < 1 || division.shipOrder.length > max) {
-    throw new BluewaveError(DIVISION_SIZE_LIMIT_EXCEEDED, {
-      code: DIVISION_SIZE_LIMIT_EXCEEDED,
+    throw new DivisionSizeLimitExceeded({
       divisionId: division.divisionId,
       size: String(division.shipOrder.length),
       max: String(max),
-      ...context,
+      context,
     });
   }
 
   if (division.flagshipShipId !== division.shipOrder[0]) {
-    throw new BluewaveError(DIVISION_FLAGSHIP_INVALID, {
-      code: DIVISION_FLAGSHIP_INVALID,
+    throw new DivisionFlagshipInvalid({
       divisionId: division.divisionId,
       flagshipShipId: division.flagshipShipId,
       expected: division.shipOrder[0],
-      ...context,
+      context,
     });
   }
 
   const locations = new Set(division.shipOrder.map((id) => locationByShip.get(id)));
   if (locations.size > 1) {
-    throw new BluewaveError(DIVISION_LOCATION_CONFLICT, {
-      code: DIVISION_LOCATION_CONFLICT,
+    throw new DivisionLocationConflict({
       divisionId: division.divisionId,
       locations: [...locations],
-      ...context,
+      context,
     });
   }
 
@@ -161,11 +214,10 @@ export function assertDivisionInvariants(
         distinctTypes.filter((t) => t !== "BC" && t !== "CA").length === 0)
     )
   ) {
-    throw new BluewaveError(DIVISION_SHIP_TYPE_INCOMPATIBLE, {
-      code: DIVISION_SHIP_TYPE_INCOMPATIBLE,
+    throw new DivisionShipTypeIncompatible({
       divisionId: division.divisionId,
       types: [...distinctTypes],
-      ...context,
+      context,
     });
   }
 }

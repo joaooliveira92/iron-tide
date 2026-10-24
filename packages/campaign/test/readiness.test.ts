@@ -9,6 +9,7 @@ import {
   type FixtureDir,
   writeFixture,
 } from "@bluewave/test-support";
+import { Result } from "effect";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { CampaignCompiler, type CampaignCompilerInput } from "../src/compiler-public.js";
 import { SafeInt } from "@bluewave/contracts";
@@ -197,10 +198,10 @@ describe("S-1 ticket 01: per-ship readiness and crew quality", () => {
       { id: "ship-a", isUnderConstruction: false, classQ: "x" },
       "ship-a",
     );
-    expect(seed.ok).toBe(false);
-    if (!seed.ok) {
-      expect(seed.error._tag).toBe("ShipReadinessFailure");
-      expect(seed.error.code).toBe(SHIP_READINESS_CODES.excessKey);
+    expect(Result.isSuccess(seed)).toBe(false);
+    if (Result.isFailure(seed)) {
+      expect(seed.failure._tag).toBe("ShipReadinessFailure");
+      expect(seed.failure.code).toBe(SHIP_READINESS_CODES.excessKey);
     }
   });
 });
@@ -229,16 +230,16 @@ describe("S-1 repair months counter (ticket 04)", () => {
       { id: "s", readiness: "REPAIR", crewQuality: 50, repairMonthsRemaining: 6 },
       "s",
     );
-    expect(ok.ok).toBe(true);
-    if (ok.ok) expect(ok.value.repairMonthsRemaining as number).toBe(6);
+    expect(Result.isSuccess(ok)).toBe(true);
+    if (Result.isSuccess(ok)) expect(ok.success.repairMonthsRemaining as number).toBe(6);
 
     for (const bad of [-1, 1.5, 121]) {
       const r = resolveShipReadinessSeed(
         { id: "s", readiness: "REPAIR", crewQuality: 50, repairMonthsRemaining: bad },
         "s",
       );
-      expect(r.ok).toBe(false);
-      if (!r.ok) expect(r.error.code).toBe(SHIP_READINESS_CODES.repairMonths);
+      expect(Result.isSuccess(r)).toBe(false);
+      if (Result.isFailure(r)) expect(r.failure.code).toBe(SHIP_READINESS_CODES.repairMonths);
     }
   });
 });

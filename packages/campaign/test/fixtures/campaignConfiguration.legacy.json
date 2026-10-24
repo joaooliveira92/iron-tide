@@ -1,0 +1,1219 @@
+{
+  "validate": {
+    "valid base": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid desktop configuration": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid with archetype token": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid with empty archetype": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid scenarioId=scen_1880": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid scenarioId=scen_1900": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid scenarioId=scen_1920": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid scenarioId=scen_1935": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid scenarioId=scen_1960": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid continuityModeId=historical": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid continuityModeId=alternate_continuity_v1": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid fleetSizeSettingId=small": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid fleetSizeSettingId=standard": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid fleetSizeSettingId=large": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid fleetSizeSettingId=very_large": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid researchSpeedSettingId=slow": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid researchSpeedSettingId=standard": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid researchSpeedSettingId=fast": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid researchSpeedSettingId=very_fast": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid technologyVariationSettingId=none": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid technologyVariationSettingId=some": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "valid technologyVariationSettingId=considerable": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "omitted scenarioId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field scenarioId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "null scenarioId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field scenarioId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "undefined scenarioId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field scenarioId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "empty scenarioId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field scenarioId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "blank scenarioId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field scenarioId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "omitted playerSlotId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field playerSlotId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "null playerSlotId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field playerSlotId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "undefined playerSlotId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field playerSlotId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "empty playerSlotId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field playerSlotId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "blank playerSlotId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field playerSlotId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "omitted continuityModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field continuityModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "null continuityModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field continuityModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "undefined continuityModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field continuityModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "empty continuityModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field continuityModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "blank continuityModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field continuityModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "omitted fleetSizeSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field fleetSizeSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "null fleetSizeSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field fleetSizeSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "undefined fleetSizeSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field fleetSizeSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "empty fleetSizeSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field fleetSizeSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "blank fleetSizeSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field fleetSizeSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "omitted researchSpeedSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field researchSpeedSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "null researchSpeedSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field researchSpeedSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "undefined researchSpeedSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field researchSpeedSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "empty researchSpeedSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field researchSpeedSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "blank researchSpeedSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field researchSpeedSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "omitted technologyVariationSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field technologyVariationSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "null technologyVariationSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field technologyVariationSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "undefined technologyVariationSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field technologyVariationSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "empty technologyVariationSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field technologyVariationSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "blank technologyVariationSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field technologyVariationSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "omitted historicalBudgetOptionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field historicalBudgetOptionId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "null historicalBudgetOptionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field historicalBudgetOptionId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "undefined historicalBudgetOptionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field historicalBudgetOptionId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "empty historicalBudgetOptionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field historicalBudgetOptionId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "blank historicalBudgetOptionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field historicalBudgetOptionId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "omitted legacyFleetModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field legacyFleetModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "null legacyFleetModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field legacyFleetModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "undefined legacyFleetModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field legacyFleetModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "empty legacyFleetModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field legacyFleetModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "blank legacyFleetModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field legacyFleetModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "omitted tacticalRealismModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field tacticalRealismModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "null tacticalRealismModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field tacticalRealismModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "undefined tacticalRealismModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field tacticalRealismModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "empty tacticalRealismModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field tacticalRealismModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "blank tacticalRealismModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field tacticalRealismModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "omitted difficultyProfileId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field difficultyProfileId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "null difficultyProfileId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field difficultyProfileId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "undefined difficultyProfileId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field difficultyProfileId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "empty difficultyProfileId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field difficultyProfileId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "blank difficultyProfileId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field difficultyProfileId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "omitted campaignSeed": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field campaignSeed (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "null campaignSeed": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field campaignSeed (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "undefined campaignSeed": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field campaignSeed (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "empty campaignSeed": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field campaignSeed (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "blank campaignSeed": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field campaignSeed (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "omitted configurationSchemaVersion": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field configurationSchemaVersion (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "null configurationSchemaVersion": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field configurationSchemaVersion (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "undefined configurationSchemaVersion": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field configurationSchemaVersion (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "empty configurationSchemaVersion": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field configurationSchemaVersion (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "blank configurationSchemaVersion": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field configurationSchemaVersion (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "two omitted fields": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field scenarioId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field fleetSizeSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "all fields omitted": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field scenarioId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field playerSlotId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field continuityModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field fleetSizeSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field researchSpeedSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field technologyVariationSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field historicalBudgetOptionId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field legacyFleetModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field tacticalRealismModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field difficultyProfileId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field campaignSeed (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field configurationSchemaVersion (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "unknown scenarioId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Invalid scenarioId bogus",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "unknown continuityModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Invalid continuityModeId bogus",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "unknown fleetSizeSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Invalid fleetSizeSettingId bogus",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "unknown researchSpeedSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Invalid researchSpeedSettingId bogus",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "unknown technologyVariationSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Invalid technologyVariationSettingId bogus",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "all enums unknown together": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Invalid scenarioId x",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Invalid continuityModeId x",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Invalid fleetSizeSettingId x",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Invalid researchSpeedSettingId x",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Invalid technologyVariationSettingId x",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "seed \"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\"": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_SEED",
+          "message": "campaignSeed must be 32 lower hex chars, got AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "seed \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_SEED",
+          "message": "campaignSeed must be 32 lower hex chars, got aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "seed \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_SEED",
+          "message": "campaignSeed must be 32 lower hex chars, got aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "seed \"gggggggggggggggggggggggggggggggg\"": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_SEED",
+          "message": "campaignSeed must be 32 lower hex chars, got gggggggggggggggggggggggggggggggg",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "seed \"bad\"": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_SEED",
+          "message": "campaignSeed must be 32 lower hex chars, got bad",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "seed \" aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_SEED",
+          "message": "campaignSeed must be 32 lower hex chars, got  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "bad seed and unknown enum": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_SEED",
+          "message": "campaignSeed must be 32 lower hex chars, got bad",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Invalid scenarioId x",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "missing field short-circuits enum checks": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field playerSlotId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "null input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "CampaignConfiguration must be object",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "undefined input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "CampaignConfiguration must be object",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "number input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "CampaignConfiguration must be object",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "string input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "CampaignConfiguration must be object",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "boolean input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "CampaignConfiguration must be object",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "array input": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field scenarioId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field playerSlotId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field continuityModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field fleetSizeSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field researchSpeedSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field technologyVariationSettingId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field historicalBudgetOptionId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field legacyFleetModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field tacticalRealismModeId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field difficultyProfileId (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field campaignSeed (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        },
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Missing mandatory field configurationSchemaVersion (null/omission/empty prohibited)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "excess key": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "number for playerSlotId": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "number for campaignSeed": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_SEED",
+          "message": "campaignSeed must be 32 lower hex chars, got 5",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "number for scenarioId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Invalid scenarioId 5",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "number for archetype": {
+      "accepted": true,
+      "diagnostics": []
+    }
+  },
+  "immutability": {
+    "unchanged": {
+      "accepted": true,
+      "diagnostics": []
+    },
+    "changed scenarioId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Post-save mutation of scenarioId: scen_1880 -> scen_1880-changed (immutable)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "changed playerSlotId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Post-save mutation of playerSlotId: gbr -> gbr-changed (immutable)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "changed continuityModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Post-save mutation of continuityModeId: historical -> historical-changed (immutable)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "changed fleetSizeSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Post-save mutation of fleetSizeSettingId: standard -> standard-changed (immutable)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "changed researchSpeedSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Post-save mutation of researchSpeedSettingId: standard -> standard-changed (immutable)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "changed technologyVariationSettingId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Post-save mutation of technologyVariationSettingId: none -> none-changed (immutable)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "changed historicalBudgetOptionId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Post-save mutation of historicalBudgetOptionId: standard -> standard-changed (immutable)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "changed legacyFleetModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Post-save mutation of legacyFleetModeId: historical -> historical-changed (immutable)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "changed tacticalRealismModeId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Post-save mutation of tacticalRealismModeId: standard -> standard-changed (immutable)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "changed difficultyProfileId": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Post-save mutation of difficultyProfileId: normal -> normal-changed (immutable)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "changed campaignSeed": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Post-save mutation of campaignSeed: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-changed (immutable)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "changed configurationSchemaVersion": {
+      "accepted": false,
+      "diagnostics": [
+        {
+          "code": "INVALID_CAMPAIGN_CONFIGURATION",
+          "message": "Post-save mutation of configurationSchemaVersion: 1.0 -> 1.0-changed (immutable)",
+          "stage": "campaign-configuration"
+        }
+      ]
+    },
+    "archetype added": {
+      "accepted": true,
+      "diagnostics": []
+    }
+  },
+  "hash": {
+    "base": "5dc60251100198694e7f617f0c02fef90635bb5a5e51c8bc6c9313ef533741ef",
+    "desktop": "591dc51b9e6303bf09e6b9866c794f7abee83cc9b60cfb073e1ca9caf476008b",
+    "desktop with archetype": "1d5f4360f5703f2bb29389922b8e239cda185531d8e70c0f2787a1b9f7ff64df"
+  }
+}

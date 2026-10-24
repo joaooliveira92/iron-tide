@@ -1,3 +1,4 @@
+import { compareCodePoints } from "@bluewave/deterministic";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
@@ -189,6 +190,15 @@ describe("§9.3-9.8 fleet-size", () => {
       /FLEET_SIZE_TACTICAL_STAT_VIOLATION/,
     );
     expect(() => checkFleetSizeTacticalViolation("DISPLACEMENT")).toThrow();
+    try {
+      checkFleetSizeTacticalViolation("speed");
+    } catch (error) {
+      expect(error).toMatchObject({
+        _tag: "FLEET_SIZE_TACTICAL_STAT_VIOLATION",
+        code: "FLEET_SIZE_TACTICAL_STAT_VIOLATION",
+        formulaId: "speed",
+      });
+    }
     expect(() => checkFleetSizeTacticalViolation("navalAppropriation")).not.toThrow();
   });
   it("§9.7 same design unchanged across fleet sizes (number vs stats)", () => {
@@ -211,7 +221,28 @@ describe("§9.3-9.8 fleet-size", () => {
       { id: "b", unscaled: 1 },
       { id: "a", unscaled: 0 },
     ]);
-    expect([...tie.entries()].sort((a, b) => a[0].localeCompare(b[0]))).toEqual([...tie.entries()]);
+    expect([...tie.entries()].sort((a, b) => compareCodePoints(a[0], b[0]))).toEqual([
+      ...tie.entries(),
+    ]);
+  });
+  it("orders allocation keys and remainder ties by code point, not by host locale", () => {
+    const allocated = allocateIndivisible(1, 15000, [
+      { id: "a_b", unscaled: 1 },
+      { id: "a1", unscaled: 1 },
+    ]);
+    expect([...allocated.keys()]).toEqual(["a1", "a_b"]);
+    const tied = allocateIndivisible(3, 10000, [
+      { id: "a_b", unscaled: 1 },
+      { id: "a1", unscaled: 1 },
+      { id: "a2", unscaled: 1 },
+    ]);
+    expect([...tied.values()]).toEqual([1, 1, 1]);
+    const oneExtra = allocateIndivisible(2, 15000, [
+      { id: "a_b", unscaled: 1 },
+      { id: "a1", unscaled: 1 },
+    ]);
+    expect(oneExtra.get("a1")).toBe(2);
+    expect(oneExtra.get("a_b")).toBe(1);
   });
 });
 

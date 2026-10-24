@@ -1,3 +1,4 @@
+import { compareCodePoints } from "@bluewave/deterministic";
 import type { ContentPack } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { toSafeInt, toSafeIntOpt, toStr } from "./campaignInput.js";
@@ -9,7 +10,6 @@ import type {
   TechnologyDefinitionData,
   WorldState,
 } from "./state.js";
-import { compareCodePoints } from "@bluewave/deterministic";
 
 type WorldPackSource = Partial<
   Pick<ContentPack, "areas" | "routes" | "ports" | "possessions" | "technologies">
