@@ -1,4 +1,4 @@
-import { BluewaveError, SafeInt, isBluewaveError } from "@bluewave/contracts";
+import { SafeInt } from "@bluewave/contracts";
 import { CAMPAIGN_DIVISION_FORMATIONS, CAMPAIGN_DIVISION_ROLES } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
@@ -206,14 +206,17 @@ describe("PermanentDivision aggregate (AC-2)", () => {
     );
   });
 
-  it("invariant failures are BluewaveError with code", () => {
+  it("each invariant failure carries its own _tag equal to its code", () => {
     const d = makeDivision({ shipOrder: ["a", "b"], flagshipShipId: "a" });
     try {
       assertDivisionInvariants(d, [asset("a", "BB"), asset("b", "DD")]);
       expect(true).toBe(false);
     } catch (e) {
-      expect(isBluewaveError(e)).toBe(true);
-      expect((e as BluewaveError).message).toContain(DIVISION_SHIP_TYPE_INCOMPATIBLE);
+      expect(e).toMatchObject({
+        _tag: DIVISION_SHIP_TYPE_INCOMPATIBLE,
+        message: DIVISION_SHIP_TYPE_INCOMPATIBLE,
+        divisionId: d.divisionId,
+      });
     }
   });
 });
