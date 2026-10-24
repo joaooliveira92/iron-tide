@@ -19,6 +19,7 @@ import { CommandFailed, CommandRejected } from "../runtime/commandError.js";
 import type { CommandHandler } from "../runtime/commandProgram.js";
 import { CommandQueue, type PendingCommandEntry } from "../runtime/commandQueue.js";
 import { ProjectStore } from "../runtime/projectStore.js";
+import { technologyNames } from "../technologyNames.js";
 import { currentRevision, deterministicTimestamp, verifyEnvelope } from "./commandEnvelope.js";
 
 export const inspectResearchScreenProgram: CommandHandler<"inspectResearchScreen"> = (sessionId) =>
@@ -30,6 +31,7 @@ export const inspectResearchScreenProgram: CommandHandler<"inspectResearchScreen
       record.state,
       record.playerSlotId,
       record.month,
+      technologyNames(),
     );
     if (!projection) {
       return yield* new CommandFailed({
