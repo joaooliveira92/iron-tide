@@ -59,7 +59,7 @@
   "devDependencies": {
     "axe-core": "^4.14.0",
     "@bluewave/test-support": "workspace:*",
-    "electron": "44.9.0",
+    "electron": "44.9.2",
     "electron-builder": "^26.15.3",
     "electron-devtools-installer": "4.0.0",
     "electron-vite": "^6.0.0",
