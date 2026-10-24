@@ -1,4 +1,6 @@
 import { isBluewaveError } from "@bluewave/contracts";
+import { Result } from "effect";
+import { CombatInvariantError } from "../errors.js";
 import { type ShipDamageState, type FireSourceRecord, type FloodingSourceRecord } from "./state.js";
 import { DAMAGE_PIPELINE_STAGES, type DamagePipelineStage } from "./constants.js";
 import {
@@ -61,52 +63,48 @@ export interface PipelineContext {
   terminalInput?: TerminalInput;
 }
 
-export interface DamageResolutionTransaction {
-  success: boolean;
+export interface DamageResolution {
   state: ShipDamageState;
   stageEffects: Partial<Record<DamagePipelineStage, DamageEventEffect>>;
-  error?: string;
   eventRecord?: DamageEventRecord;
 }
 
 export interface DamageEventEffect {
-  ok: boolean;
   description: string;
-  errorCode?: string;
   record?: DamageEventRecord;
 }
+
+export type StageOutcome = Result.Result<DamageEventEffect, CombatInvariantError>;
 
 export type StageRunner = (
   stage: DamagePipelineStage,
   state: ShipDamageState,
   stageIndex: number,
   context: PipelineContext,
-) => DamageEventEffect;
+) => StageOutcome;
 
 export function runDamagePipeline(
   stage: DamagePipelineStage,
   state: ShipDamageState,
   _stageIndex: number,
   context: PipelineContext,
-): DamageEventEffect {
+): StageOutcome {
   switch (stage) {
     case "HIT_LOCATION": {
       if (!context.hitInput) {
-        return {
-          ok: true,
+        return Result.succeed({
           description: "empty (no-op) stage",
-        };
+        });
       }
       try {
         const hitResult = resolveHitLocation(context.hitInput);
         context.hitLocation = hitResult.hitZoneId;
-        return {
-          ok: true,
+        return Result.succeed({
           description: `hit resolved: compartment=${hitResult.primaryCompartmentId}, zone=${hitResult.hitZoneId} (${hitResult.hitZoneType})`,
-        };
+        });
       } catch (e) {
         if (isBluewaveError(e)) {
-          return { ok: false, description: e.message, errorCode: e.message };
+          return Result.fail(new CombatInvariantError({ message: e.message, code: e.message }));
         }
         throw e;
       }
@@ -114,10 +112,9 @@ export function runDamagePipeline(
 
     case "PROTECTION_INTERACTION": {
       if (!context.protectionInput) {
-        return {
-          ok: true,
+        return Result.succeed({
           description: "empty (no-op) stage",
-        };
+        });
       }
       try {
         const protResult = resolveProtectionInteraction(context.protectionInput);
@@ -127,13 +124,12 @@ export function runDamagePipeline(
           penetrationMargin: protResult.penetrationMargin,
           outcome: protResult.outcome,
         };
-        return {
-          ok: true,
+        return Result.succeed({
           description: `protection resolved: outcome=${protResult.outcome}, margin=${protResult.penetrationMargin}µm`,
-        };
+        });
       } catch (e) {
         if (isBluewaveError(e)) {
-          return { ok: false, description: e.message, errorCode: e.message };
+          return Result.fail(new CombatInvariantError({ message: e.message, code: e.message }));
         }
         throw e;
       }
@@ -148,10 +144,9 @@ export function runDamagePipeline(
         context.splinterIntensity,
       );
       context.componentEffects = componentEffects;
-      return {
-        ok: true,
+      return Result.succeed({
         description: `component damage resolved: ${componentEffects.length} components affected`,
-      };
+      });
     }
 
     case "STRUCTURE_FLOTATION": {
@@ -163,18 +158,16 @@ export function runDamagePipeline(
       };
       const sfResult = resolveStructureFlotation(sfInput);
       context.structureFlotationResult = sfResult;
-      return {
-        ok: true,
+      return Result.succeed({
         description: `structure/flotation: structural=${sfResult.structuralIntegrityAfter}, flotation=${sfResult.flotationReserveAfter}`,
-      };
+      });
     }
 
     case "IMMEDIATE_FIRE_FLOODING": {
       if (!context.keyedRng) {
-        return {
-          ok: true,
+        return Result.succeed({
           description: "empty (no-op) stage (no keyedRng provided)",
-        };
+        });
       }
 
       if (context.fireCreationInput) {
@@ -203,55 +196,48 @@ export function runDamagePipeline(
           ? `flooding created at ${context.createdFloodingSources[0]!.compartmentId}`
           : "no flooding";
 
-      return {
-        ok: true,
+      return Result.succeed({
         description: `immediate fire/flooding: ${fireDesc}, ${floodDesc}`,
-      };
+      });
     }
 
     case "SECONDARY_HAZARD": {
       if (!context.keyedRng) {
-        return {
-          ok: true,
+        return Result.succeed({
           description: "empty (no-op) stage (no keyedRng provided)",
-        };
+        });
       }
 
       if (!context.magazineHazardInput) {
-        return {
-          ok: true,
+        return Result.succeed({
           description: "empty (no-op) stage (no magazineHazardInput provided)",
-        };
+        });
       }
 
       const hazardResult = evaluateMagazineHazard(context.magazineHazardInput, context.keyedRng);
       context.magazineHazardResult = hazardResult;
 
       if (hazardResult.magazineDetonated) {
-        return {
-          ok: true,
+        return Result.succeed({
           description: `magazine detonated: structural=${hazardResult.structuralDamage}, flotation=${hazardResult.flotationDamage}`,
-        };
+        });
       }
 
-      return {
-        ok: true,
+      return Result.succeed({
         description: "no secondary hazard",
-      };
+      });
     }
 
     case "STAGE_7_RESERVED":
-      return {
-        ok: true,
+      return Result.succeed({
         description: "empty (no-op) stage",
-      };
+      });
 
     case "TERMINAL_SEAM": {
       if (!context.terminalInput) {
-        return {
-          ok: true,
+        return Result.succeed({
           description: "empty (no-op) stage (no terminalInput provided)",
-        };
+        });
       }
 
       const terminalResult = evaluateTerminalSeam(context.terminalInput);
@@ -259,24 +245,21 @@ export function runDamagePipeline(
 
       if (terminalResult.transition === "SINKING") {
         context.terminalTransition = "SINKING";
-        return {
-          ok: true,
+        return Result.succeed({
           description: `terminal transition: SINKING (duration=${terminalResult.sinkingDurationMinutes}min)`,
-        };
+        });
       }
 
       if (terminalResult.transition === "FOUNDERED") {
         context.terminalTransition = "FOUNDERED";
-        return {
-          ok: true,
+        return Result.succeed({
           description: "terminal transition: FOUNDERED",
-        };
+        });
       }
 
-      return {
-        ok: true,
+      return Result.succeed({
         description: "no terminal transition",
-      };
+      });
     }
 
     case "DAMAGE_EVENT_RECORD": {
@@ -302,18 +285,16 @@ export function runDamagePipeline(
         terminalTransition: context.terminalTransition,
       });
 
-      return {
-        ok: true,
+      return Result.succeed({
         description: "damage event record created",
         record: eventRecord,
-      };
+      });
     }
 
     case "STAGE_10_RESERVED":
-      return {
-        ok: true,
+      return Result.succeed({
         description: "empty (no-op) stage",
-      };
+      });
   }
 }
 
@@ -321,22 +302,14 @@ export function orchestrateDamagePipeline(
   state: ShipDamageState,
   context: PipelineContext,
   stageRunner: StageRunner = runDamagePipeline,
-): DamageResolutionTransaction {
+): Result.Result<DamageResolution, CombatInvariantError> {
   const stageEffects: Partial<Record<DamagePipelineStage, DamageEventEffect>> = {};
-  const originalState = state;
   let lastEventRecord: DamageEventRecord | undefined;
 
   for (const stage of DAMAGE_PIPELINE_STAGES) {
-    const effect = stageRunner(stage, state, DAMAGE_PIPELINE_STAGES.indexOf(stage), context);
-
-    if (!effect.ok) {
-      return {
-        success: false,
-        state: originalState,
-        stageEffects,
-        error: effect.errorCode ?? "DAMAGE_RESOLUTION_FAILED",
-      };
-    }
+    const outcome = stageRunner(stage, state, DAMAGE_PIPELINE_STAGES.indexOf(stage), context);
+    if (Result.isFailure(outcome)) return Result.fail(outcome.failure);
+    const effect = outcome.success;
 
     if (stage === "DAMAGE_EVENT_RECORD" && effect.record) {
       lastEventRecord = effect.record;
@@ -345,12 +318,7 @@ export function orchestrateDamagePipeline(
     stageEffects[stage] = effect;
   }
 
-  return {
-    success: true,
-    state,
-    stageEffects,
-    eventRecord: lastEventRecord,
-  };
+  return Result.succeed({ state, stageEffects, eventRecord: lastEventRecord });
 }
 
 function buildComponentStateFromIds(componentIds: readonly string[]): ComponentState[] {
@@ -375,7 +343,7 @@ export type SimpleStageRunner = (
   stage: DamagePipelineStage,
   state: ShipDamageState,
   stageIndex: number,
-) => DamageEventEffect;
+) => StageOutcome;
 
 export function wrapSimpleRunner(simple: SimpleStageRunner): StageRunner {
   return (stage, state, stageIndex, _context) => simple(stage, state, stageIndex);
