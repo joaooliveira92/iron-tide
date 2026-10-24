@@ -7,6 +7,7 @@ import {
   type CareerEndReason,
 } from "@bluewave/campaign";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { Result } from "effect";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 
 export const PRESTIGE_SACKING_STREAM = "prestige_sacking" as const;
@@ -20,15 +21,15 @@ function endCareer(
   month: { readonly year: number; readonly month: number },
 ): void {
   const result = buildCareerResult({ nationId: player, score: prestige, reason, month });
-  if (!result.ok) {
+  if (Result.isFailure(result)) {
     ctx.collector.addError(
       PRESTIGE_SACKING_FAILED,
-      `Career result for nation ${player} could not be built: ${result.error._tag}`,
+      `Career result for nation ${player} could not be built: ${result.failure._tag}`,
       { stage: "sacking", entityId: player },
     );
     return;
   }
-  ctx.snapshot.write("careerResult", result.value);
+  ctx.snapshot.write("careerResult", result.success);
 }
 
 function monthOf(campaignMonth: string): { year: number; month: number } {
@@ -52,17 +53,17 @@ export function runSackingPhase(ctx: PhaseContext): PhaseRunOutcome {
     drawn = Math.floor(stream.next() * BASIS_POINTS_PER_WHOLE);
     return drawn;
   });
-  if (!outcome.ok) {
+  if (Result.isFailure(outcome)) {
     ctx.collector.addError(
       PRESTIGE_SACKING_FAILED,
-      `Sacking check for nation ${player} failed: ${outcome.error._tag}`,
+      `Sacking check for nation ${player} failed: ${outcome.failure._tag}`,
       { stage: "sacking", entityId: player },
     );
     return { status: "continue" };
   }
 
-  if (outcome.value.eligible && drawn !== undefined) {
-    const reasonCode = outcome.value.sacked ? "SACKED" : "RETAINED";
+  if (outcome.success.eligible && drawn !== undefined) {
+    const reasonCode = outcome.success.sacked ? "SACKED" : "RETAINED";
     ctx.randomLedger.record({
       streamId: PRESTIGE_SACKING_STREAM,
       entityKey,
@@ -81,7 +82,7 @@ export function runSackingPhase(ctx: PhaseContext): PhaseRunOutcome {
       outcome: reasonCode,
       reasonCode,
     });
-    if (outcome.value.sacked) {
+    if (outcome.success.sacked) {
       endCareer(ctx, player, prestige, "SACKED", current);
       return { status: "continue" };
     }

@@ -1,6 +1,7 @@
 import type { ContentPack } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Result } from "effect";
 import { toSafeIntOpt, toStr } from "./campaignInput.js";
 import { buildSeededDivisions } from "./divisions.js";
 import {
@@ -56,8 +57,8 @@ function readNationPrestige(
   collector: DiagnosticCollector,
 ): SafeInt {
   const resolved = resolveNationPrestige(authored, prestigeRules);
-  if (resolved.ok) return resolved.value;
-  const { error } = resolved;
+  if (Result.isSuccess(resolved)) return resolved.success;
+  const error = resolved.failure;
   const raise = (
     code: (typeof PRESTIGE_COMPILE_CODES)[keyof typeof PRESTIGE_COMPILE_CODES],
     message: string,
@@ -163,8 +164,8 @@ function buildShips(fleet: Record<string, unknown>, collector: DiagnosticCollect
     const record = s as Record<string, unknown>;
     const id = toStr(record["id"], "");
     const seed = resolveShipReadinessSeed(record, id);
-    if (!seed.ok) {
-      collector.add(seed.error.toDiagnostic());
+    if (Result.isFailure(seed)) {
+      collector.add(seed.failure.toDiagnostic());
       continue;
     }
     ships.push({
@@ -182,9 +183,9 @@ function buildShips(fleet: Record<string, unknown>, collector: DiagnosticCollect
       isUnderConstruction: record["isUnderConstruction"] === true,
       constructionProgress: toSafeIntOpt(record["constructionProgress"], SafeInt(0)),
       constructionTotalWork: toSafeIntOpt(record["constructionTotalWork"], SafeInt(0)),
-      readiness: seed.value.readiness,
-      crewQuality: seed.value.crewQuality,
-      repairMonthsRemaining: seed.value.repairMonthsRemaining,
+      readiness: seed.success.readiness,
+      crewQuality: seed.success.crewQuality,
+      repairMonthsRemaining: seed.success.repairMonthsRemaining,
       inBattleId: typeof record["inBattleId"] === "string" ? record["inBattleId"] : undefined,
     });
   }

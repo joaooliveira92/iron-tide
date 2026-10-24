@@ -5,6 +5,7 @@ import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/determi
 import { type DiagnosticCollector as DiagnosticCollectorType } from "@bluewave/diagnostics";
 import { compileTorpedo } from "@bluewave/ship-design";
 import type { CompiledTorpedo } from "@bluewave/armament";
+import { Result } from "effect";
 import { toStr, type CampaignFileData } from "./campaignInput.js";
 import { validateCampaignPreconditions } from "./campaignSession.js";
 import {
@@ -223,15 +224,15 @@ function resolvePrestigeRules(
     return undefined;
   }
   const decoded = decodePrestigeValueSet(carrier.prestige);
-  if (!decoded.ok) {
+  if (Result.isFailure(decoded)) {
     collector.addError(
       PRESTIGE_COMPILE_CODES.valueSetInvalid,
-      `Ruleset '${carrier.id}' prestige value set is invalid at '${decoded.error.field}': ${decoded.error.message}`,
+      `Ruleset '${carrier.id}' prestige value set is invalid at '${decoded.failure.field}': ${decoded.failure.message}`,
       { ...stage, entityId: carrier.id },
     );
     return undefined;
   }
-  return decoded.value;
+  return decoded.success;
 }
 
 function contentPackFromBundle(bundle: ContentBundle): ContentPack {

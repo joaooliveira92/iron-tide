@@ -1,6 +1,7 @@
 import { applyPrestigeRule } from "@bluewave/campaign";
 import type { PrestigeChange, PrestigeReasonCode, PrestigeRule } from "@bluewave/campaign";
 import type { NationState } from "@bluewave/campaign";
+import { Result } from "effect";
 import { prestigeChangedEvent } from "./events.js";
 import type { PhaseContext } from "./pipeline.js";
 
@@ -31,15 +32,15 @@ export function applyPrestigeChange(
     return undefined;
   }
   const applied = applyPrestigeRule(nation["prestige"], reason, set, used);
-  if (!applied.ok) {
+  if (Result.isFailure(applied)) {
     ctx.collector.addError(
       PRESTIGE_APPLICATION_FAILED,
-      `Prestige rule ${reason} could not be applied to nation ${nationId}: ${applied.error._tag}`,
+      `Prestige rule ${reason} could not be applied to nation ${nationId}: ${applied.failure._tag}`,
       { stage: "prestige", entityId: nationId },
     );
     return undefined;
   }
-  const change = applied.value;
+  const change = applied.success;
   if ((change.delta as number) === 0) return change;
 
   const updatedNation: NationState = {

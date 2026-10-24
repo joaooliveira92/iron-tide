@@ -8,6 +8,7 @@ import {
   type NationState,
 } from "@bluewave/campaign";
 import { constructionProjectQueueWithReadouts } from "@bluewave/phase-engine";
+import { Result } from "effect";
 import type {
   ConstructionCommitment,
   TreasuryCommitments,
@@ -20,10 +21,10 @@ function unpaidCostsPrestige(
   nation: NationState,
 ): UnpaidCostsPrestige | null {
   const change = applyPrestigeRule(Number(nation.prestige), "UNPAID_FUNDS", snapshot.prestigeRules);
-  if (!change.ok) return null;
+  if (Result.isFailure(change)) return null;
   return {
-    before: Number(change.value.before),
-    after: Number(change.value.after),
+    before: Number(change.success.before),
+    after: Number(change.success.after),
     sackingThreshold: Number(snapshot.prestigeRules.sackingThreshold),
   };
 }

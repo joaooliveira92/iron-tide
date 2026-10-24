@@ -1,5 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { Diagnostic, DiagnosticCode } from "@bluewave/diagnostics";
+import { Result } from "effect";
 
 export const SHIP_READINESS_STATES = [
   "ACTIVE",
@@ -121,20 +122,17 @@ export interface ShipReadinessSeed {
 export function resolveShipReadinessSeed(
   record: Record<string, unknown>,
   shipId: string,
-):
-  | { readonly ok: true; readonly value: ShipReadinessSeed }
-  | { readonly ok: false; readonly error: ShipReadinessFailure } {
+): Result.Result<ShipReadinessSeed, ShipReadinessFailure> {
   for (const key of Object.keys(record)) {
     if (!ALLOWED_SHIP_INPUT_KEYS.has(key)) {
-      return {
-        ok: false,
-        error: new ShipReadinessFailure(
+      return Result.fail(
+        new ShipReadinessFailure(
           SHIP_READINESS_CODES.excessKey,
           shipId,
           `Ship '${shipId}' has unknown key '${key}'`,
           `Remove '${key}' from the ship record`,
         ),
-      };
+      );
     }
   }
 
@@ -145,15 +143,14 @@ export function resolveShipReadinessSeed(
   } else if (isShipReadinessState(rawReadiness)) {
     readiness = rawReadiness;
   } else {
-    return {
-      ok: false,
-      error: new ShipReadinessFailure(
+    return Result.fail(
+      new ShipReadinessFailure(
         SHIP_READINESS_CODES.unknownState,
         shipId,
         `Ship '${shipId}' has an unknown readiness state`,
         `Use one of ${SHIP_READINESS_STATES.join(", ")}`,
       ),
-    };
+    );
   }
 
   const rawCrewQuality = record["crewQuality"];
@@ -168,15 +165,14 @@ export function resolveShipReadinessSeed(
   ) {
     crewQuality = SafeInt(rawCrewQuality);
   } else {
-    return {
-      ok: false,
-      error: new ShipReadinessFailure(
+    return Result.fail(
+      new ShipReadinessFailure(
         SHIP_READINESS_CODES.crewQuality,
         shipId,
         `Ship '${shipId}' crew quality must be an integer in ${String(CREW_QUALITY_MIN)}..${String(CREW_QUALITY_MAX)}`,
         `Set crewQuality to an integer in ${String(CREW_QUALITY_MIN)}..${String(CREW_QUALITY_MAX)}`,
       ),
-    };
+    );
   }
 
   const rawRepairMonths = record["repairMonthsRemaining"];
@@ -190,26 +186,22 @@ export function resolveShipReadinessSeed(
     ) {
       repairMonthsRemaining = SafeInt(rawRepairMonths);
     } else {
-      return {
-        ok: false,
-        error: new ShipReadinessFailure(
+      return Result.fail(
+        new ShipReadinessFailure(
           SHIP_READINESS_CODES.repairMonths,
           shipId,
           `Ship '${shipId}' repairMonthsRemaining must be an integer in 0..${String(REPAIR_MONTHS_MAX)}`,
           `Set repairMonthsRemaining to an integer in 0..${String(REPAIR_MONTHS_MAX)}`,
         ),
-      };
+      );
     }
   }
 
-  return {
-    ok: true,
-    value: {
-      readiness,
-      crewQuality,
-      ...(repairMonthsRemaining === undefined ? {} : { repairMonthsRemaining }),
-    },
-  };
+  return Result.succeed({
+    readiness,
+    crewQuality,
+    ...(repairMonthsRemaining === undefined ? {} : { repairMonthsRemaining }),
+  });
 }
 
 const ALLOWED_SHIP_INPUT_KEYS = new Set([
