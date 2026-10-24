@@ -1,0 +1,341 @@
+{
+  "apps/compiler-cli/src/safePath.ts": {
+    "76c6bfdce3750e78038d47d1e6ccbbc71c6c7944b437f79eccfd8b280c4d0021": 2
+  },
+  "apps/desktop/src/main/commandProgramFixtures.ts": {
+    "7c1ceef6deb26e97d7e853b8f867bc63fa851d8f02c22e436d660e890b87cc5b": 1
+  },
+  "apps/desktop/src/main/commands/playerBattleSession.ts": {
+    "88645d1a2f8ec5e8d3abfafc31e8cfcf69a4b2ca003c3544964e4e02809d5efa": 1
+  },
+  "apps/desktop/src/main/commands/researchCommands.ts": {
+    "04cb8415351b256a9e3cfaf6ade208049d9e914f9f285df01de483694514780a": 1
+  },
+  "apps/desktop/src/main/commands/researchDeterminismChild.ts": {
+    "251aeda49e9cf511a47b58e724ea537706b4bf7b4c78e6689dd32edc853c84ee": 1,
+    "d3d3f35f549ba23b7bf2a30c6fd55c869471f62cbad7b56c5b81abba4ce8b83b": 1,
+    "dcfd023bc960cabaf90497cac7a90d80f6a9e24d308b9bd54f96d072c39e4b6e": 1,
+    "f694f02c714224326ae9cebe3ec8854853d0fab0b8f7b507b687b16050eca4da": 1
+  },
+  "apps/desktop/src/main/commands/warSessionFixture.ts": {
+    "0913086d2a01b09013e66a9c34b6d58adc6a055f1ba1249af29564b915a6ccf1": 1,
+    "2e6831ed19a041a09400dbcda75ea1da4e94b921d67d954601f72a2907d239aa": 1
+  },
+  "apps/desktop/src/main/crashSupport.ts": {
+    "37a0cda2ecf2975edc45625fbbac6f9ea0390751bc0aace426d580912f51db2a": 1
+  },
+  "apps/desktop/src/main/project.ts": {
+    "1541a023649af32275d858be624e7aac6a2558e6245878904873d337cbb73f81": 1,
+    "393059afdcbc1fec747e91d1aacea0dc59c5b40e87f80b7c2831c08e204ffcec": 1,
+    "69a042341f446a366dfb3cb78aa6cea160ca7357c0c42284030f9b6a0bcc0e7c": 1
+  },
+  "apps/desktop/src/renderer/components/backgrounds/tabs.tsx": {
+    "443aaca36f2493741f484100014f8417dcc9b39d0cd8762b1af9864f9acdb10a": 1
+  },
+  "apps/desktop/src/renderer/components/design-workspace/content.ts": {
+    "c94f1cb4e83953a1ec39355ce6db9ff59a36252c455bda7f40a8e94c2ffc1fd1": 1
+  },
+  "apps/desktop/src/renderer/components/motion/sortable-list.tsx": {
+    "1f7b107c57fb36f0a002175a35eb69a969fc1e96616315791214739b61131a1c": 1,
+    "8568c59455aa3c6cd6d9bf7a5926d4e6f901ad0f4b5c25b67bd3e60aee3aa255": 1,
+    "a081632bdc5f581f8455ed59b2b7301e1ddadf3adecb97b08237334f8eaf517d": 1,
+    "b622d872895e0532260e196d0a823b293bc52135f6325000b94a3b3cb62350a1": 1,
+    "e02c0faccd6b87bf4a4171a3e5652f9b026da3127e7c61ded4e8b8046ecd9093": 1
+  },
+  "apps/desktop/src/renderer/components/ui/number-field.tsx": {
+    "1fa0eba3ab904f66370c62d319eedc503557069d9ef43d68c7ea4152e215001e": 1,
+    "527bec04d840b616a85499bffe09616653dc16184e6baba2b89de88bdf6a1b9c": 1,
+    "9c8369b6eae0d887842fd1a5f0aefe80d33419917893562a8a2fcae71de38338": 1,
+    "cfc8edeaa6e715c43de1847429c80a48934f596bf27d6951de68668f8ac7c906": 1,
+    "dd89e7ee6a9899461df9fa6434962910aea1d3a02cc3c0a8d2673269096b7e83": 1
+  },
+  "apps/desktop/src/renderer/components/ui/select.tsx": {
+    "5b27331eeb31c97b9fb787ecc6beb91ea2e8c7713d336272f46cbf023684939e": 1
+  },
+  "apps/desktop/src/renderer/components/ui/sidebar.tsx": {
+    "53611167802ef4250ab648b1cbac269638141995a9961eb7d655fcc31db8eb7f": 1
+  },
+  "apps/desktop/src/renderer/components/world-map/bake-borders.ts": {
+    "2316c097788ce57029a4f38efa2903e7e7ede5dac6bad26ad0c04ccfbe8f2a5a": 1,
+    "3da468cc2dbc268a24044f67df844b23e4cfe4f2b72dfc71c594b3e22d4f6d79": 1,
+    "a3c00b1a62e589a19eef37ccb2ea59a4dce01e26ee84e42b33fd638db55644a2": 1
+  },
+  "apps/desktop/src/renderer/components/world-map/bake-coastline.ts": {
+    "30a51da0aeb9de83d2ad4c7ecad682a55572005603bb76db35320a2339da18c0": 1,
+    "f080a60b93d4e9bca72fcdc55f254647b8827f9d2df81d5e2ae26bddd71e9703": 1
+  },
+  "apps/desktop/src/renderer/content/nationPresentationCatalog.ts": {
+    "7acdb6e29e02732a6aefb00303610582200341a5a2fc7fd9ed4c6f960781ef07": 1
+  },
+  "apps/desktop/src/renderer/content/presentationContent.ts": {
+    "3f944af58d16cd4ec80716eded3d44d9531bfcd52a723634e45d3814d2b47722": 1,
+    "63535b9700ebaca595adb2f50f369944c14141665123ff8aa9e1fbba35928628": 1
+  },
+  "apps/desktop/src/renderer/lib/bridge-read.ts": {
+    "782b7b82bd30ed008fbbdcc432956b1dc4a94f7c0d02332372b8a6aab835e408": 1
+  },
+  "apps/desktop/src/renderer/lib/coastline-codec.ts": {
+    "3d621ab28057eb88a5f06785100f87b2bd4a116d2b673674b831a3197edc357a": 1
+  },
+  "apps/desktop/src/renderer/lib/presentation-format/power.ts": {
+    "6d5d824c45f39891e2bf1785d37cdb2e673219e601c7357a1d5de0486e9de0ca": 1
+  },
+  "apps/desktop/src/renderer/main.tsx": {
+    "b24f0f884e6d19415cc027721096f3bfafdedbe9c9769ae0d0197844f719ed44": 1
+  },
+  "apps/desktop/src/renderer/screens/construction/drawing-board/test-helpers.ts": {
+    "32d8c6598ebd6796b1322b1c043ff97faeb2d47ea8c4ce7cd258f5fcf4b4c37f": 1,
+    "90f34e77c668f255d830c9e75df992c9d1507f798afc6047f8fb6c7688cac77a": 1
+  },
+  "apps/desktop/src/renderer/screens/tactical-sandbox/sandbox/sandbox-context.ts": {
+    "c1cf305ea27977295395b99e57354cd3adf1fd2d74eec356bf5d558ba1495cce": 1
+  },
+  "apps/desktop/src/renderer/shell/BackgroundContext.tsx": {
+    "37cab3bbc4a882a82ef80d9e04add0218b4cbd7370b924657d4c89a718992734": 1
+  },
+  "apps/desktop/src/renderer/shell/CampaignShellContext.tsx": {
+    "72f9e8d67f25ad17435d5abca57f1db59f5495874679c7b5d8a3edfba56111ad": 1
+  },
+  "apps/desktop/src/renderer/shell/DensityContext.tsx": {
+    "39428f99100c498e33d657a3e0c59cabc1e01a16d692fa1a9d3cfb85529e925c": 1
+  },
+  "apps/desktop/src/renderer/shell/FontContext.tsx": {
+    "bda445153f74c45570cf25a2e19e09c8d3d17b2c4935bc0788bcff83bcea3d55": 1
+  },
+  "apps/desktop/src/renderer/shell/ThemeContext.tsx": {
+    "a7d6dd3dacf5ce7da249f348228a5fcfecc9d5fb4c3622853cd19389179dfbe0": 1
+  },
+  "apps/desktop/src/renderer/shell/WindowContext.tsx": {
+    "513a39357963eeec49040a07003aeba01acc46a8fb8f2bda58cb3b3f1cef67e3": 1
+  },
+  "apps/desktop/src/renderer/shell/navigation-history.ts": {
+    "31b85c3875a56682d365e7f6ab1ed6c34ff85273bdd1828e7b85c96e74ab78ca": 1
+  },
+  "packages/campaign/src/economy.ts": {
+    "f92605516650ad625cf0015a107c246bee7cc66c5fe6e01aec3ab3790ab5c91c": 1
+  },
+  "packages/campaign/src/fleetSize.ts": {
+    "ce1e4186fa02fc654abb360def848d52d6ff5a47475977b87be1027b42863383": 1
+  },
+  "packages/campaign/src/researchSpeed.ts": {
+    "5d7ab18e7a9ddbae329d29275cc70a7461c09b3f823b3df1778da3c531022e70": 1
+  },
+  "packages/content-compiler/src/battleOfferRules.ts": {
+    "df85bcddf48a92a1dbef58629ea6c4498b04bc1289cd088aae4251d534122e6b": 1
+  },
+  "packages/content-compiler/src/fullSurface.ts": {
+    "13a392593f1727022d506ffd456d4aab225b02e5e91ef4b68dfdbc08292ab5a6": 1,
+    "7f14f05800de76f6bbed6069732a54342f02a2bc4258ae6ae3966efa0ef3703b": 1,
+    "e129a81f59ac7deb9080d560ec6ecd3a84f5f567b53a4ee60182e31d59eb1d23": 1
+  },
+  "packages/content-compiler/src/presenceRules.ts": {
+    "42393b01184c789234bc0b6bec80b3ab6ccee74e3d534e5aa0864fe9896ef096": 1
+  },
+  "packages/content-compiler/src/safePath.ts": {
+    "76c6bfdce3750e78038d47d1e6ccbbc71c6c7944b437f79eccfd8b280c4d0021": 2
+  },
+  "packages/cross-process-test/src/production-pack.ts": {
+    "1cb73b2e6431de1f9dd4352b19f00dd4d8609761a1d9c2e45a021cea57a00fec": 2,
+    "bf38e7a1d56a1182cef88d0a974737e17acbbec1913a6a20226e78f5087641ed": 1
+  },
+  "packages/cross-process-test/src/replay-corpus/corpus.ts": {
+    "78632627a87398a71faaa987bf179baba8213f1af6b504f66e017b0d3a4fcbea": 1
+  },
+  "packages/cross-process-test/src/run-battle-offer-child.ts": {
+    "c1fdc8a19f487d77572aab63b05d0a2462ad55cb43185f299a25743405c80613": 1
+  },
+  "packages/cross-process-test/src/run-carrier-operations-child.ts": {
+    "1e560cc8a35e6fdbd66c6ebfce08252c112f66e185b32af8d26dd9f22300c184": 2
+  },
+  "packages/cross-process-test/src/run-child.ts": {
+    "0d2d666017f8bac4870eb88c3bc5c822172ffa50b51d192672642cde85e35c20": 1,
+    "1405c0b54a8982d47e701855146dac892e558f9c03775bd50ee2b8fb1c0634b3": 1,
+    "1e560cc8a35e6fdbd66c6ebfce08252c112f66e185b32af8d26dd9f22300c184": 2,
+    "9ea6b0eb91b0b41daf35bc04ba1feed415df9fbbb2e106762048aab89c667f36": 1,
+    "a1e64120101ce10ca473b029088e4b37607307a7825a2e692e77b4395f5ef21d": 1
+  },
+  "packages/cross-process-test/src/run-content-bundle-child.ts": {
+    "54d4f737cee5403362e93e244604cc3b7138bb315975c0a6f082ed090daef249": 1,
+    "ef07fc5d160d694d2fdd27afd93a1fa54821eaec8cf71d200f29b6716057ebb7": 1
+  },
+  "packages/cross-process-test/src/run-part-index-child.ts": {
+    "68b149eb161e6c8fc8cf34981f4c2b9e0da567b441573103e649ee92450a495e": 1,
+    "dd83a5196494230fc1934aad87650e97b734b2ec20d35c2484782351064019f9": 1
+  },
+  "packages/cross-process-test/src/s2-acceptance.ts": {
+    "8a6eaf26a5c7659d5d51931edf3d75ff48ab91966cb19b17be96ac9dc25cdc3c": 1,
+    "c94d8c936ac8fbe6ef79636c4d30e786649818b6543997f522c09f0f2dce2822": 1
+  },
+  "packages/cross-process-test/src/s5-acceptance.ts": {
+    "21703669d3fa6f2656acc5b368e33f74921632390452cfa6eb4af82214799afb": 1,
+    "3f0c995b017e24d59d319019fb1c267cbbe5d24a86635d2c789f02403f24c3d6": 1,
+    "5ab9ac5a1e02886a0ea12a288c019fd5536f50f60273ce588cb0b76954971caf": 1,
+    "cb30bb666e646ff4ccb516781a496bd3901fc2cbef96e3d9657916ae12bab1e6": 1
+  },
+  "packages/cross-process-test/src/t1-acceptance.ts": {
+    "809d7fb7ce3a6938862347506789ffae2007a1c1856249b32b2c7d5249bba3da": 1,
+    "906df3d51e055b9ef6a3746b64c1378f25ee1cb1681c5fbf3e57fc7fa19d91b3": 1
+  },
+  "packages/cross-process-test/src/t2-acceptance.ts": {
+    "1bd6e7c94fc82e4a721d7ea1db0bce7551576f67375f2d5ddaf7b70934be0f1e": 1,
+    "2e3722cb914672db2720e1eda54eabaf8e479afb3282e6b8633cd44b311682db": 1,
+    "815977e32faffb58ddc8a1be7b968aae4453b02a45875f5a1ef618e899166632": 1,
+    "82db119306dddca1bca8373616d946f26d6d6a9a4f52ba6c5c4596d80bfe375f": 1,
+    "906df3d51e055b9ef6a3746b64c1378f25ee1cb1681c5fbf3e57fc7fa19d91b3": 1,
+    "f019db35ce664629895b596f4914099d13ca92eea18ed57ba2e91228ec009007": 1
+  },
+  "packages/deterministic/src/fixedMath.ts": {
+    "d386ada65297fb8d62eebf63629de7697b77708c2e00687584c9fb5a708d6d17": 1,
+    "f9f06a3dc297857e8ec903df3d5230d4bd1f22c58959974d5835dc9a45cceafa": 1,
+    "fe116124989790d0053ca979e5c6610f7a77cf7b81c103ef8003951942fd4ba8": 1
+  },
+  "packages/phase-engine/src/constructionAcceleration.ts": {
+    "cf84846c9d878fa249b6de74c3f423d99a6fcfe9b0457a97f2070270040ad1ed": 1
+  },
+  "packages/ship-design/src/ai.ts": {
+    "c50bbb43190e39f917d4c7098121949e3ddbf4a3cc24658254e302fb8ae0bce7": 1
+  },
+  "packages/ship-design/src/antiAircraft.ts": {
+    "8cf725beaf29612ba43aeda4401d35127c1a21d53b3c1015dc6edcc12556b5c4": 1
+  },
+  "packages/ship-design/src/armour.ts": {
+    "1fb38e8a14706981e8d32d3dd74bd88c2c48c00ceaf0561697e7b3ae1ef1733e": 1,
+    "618d3eb7b15a899676126fa5fb8f0580df6d7e731eb28bd8800fa742ef0ee742": 1,
+    "7b73e4234c2748e832b5ec0da89cf75276c03bf4e456cb39e62b1a337b6b1944": 1,
+    "dab026cf46fc675343fda576777b10d5516b44ec3045f555b38f0ccf53963b7f": 1
+  },
+  "packages/ship-design/src/armourPartAdapter.ts": {
+    "ac954dc9de96bd54f7bbe5a8bcd00634b23912d112460000f08f7f7f1817630f": 1
+  },
+  "packages/ship-design/src/armourSchemes.ts": {
+    "f9c3ded26db628f46225731faebd0e3f07ae8c212cdbb11c53e72122b837cc38": 1
+  },
+  "packages/ship-design/src/arrangement.ts": {
+    "7661e99489c22bc7dc341631ecceacda2ddb9e2a426c02dc11c2120a715c2bbf": 1
+  },
+  "packages/ship-design/src/classificationRules.ts": {
+    "16e3dc26df8333571faf689b4c1f7c94a85e413754ab29b0c5619a4a060c87a4": 1,
+    "4a667a66ab360d5868999ed8ef3b61216bee854ce6066e50beab57333049aa43": 1,
+    "ae1670ecc4f1a676ed047a92c6733c76a8b36897076bc064c42839b578d06ee7": 1,
+    "b6038b76d61b35242ecfa8c0f3b7af10fbabe7179031e2b4a96bf6c06ea8d143": 1,
+    "b9643a22cc2227509fdf11875fc19d4c35eb0509f5e4b6effb021790e09e6ad3": 1,
+    "e57f89e950c62a53e84d81a0a597a7d985900ef06f9123c543ac635e32ebcf44": 1,
+    "e97328b12ef722da91fe5b049bd7c894db11447a84efb507f0c4644370cb4920": 1
+  },
+  "packages/ship-design/src/compile.ts": {
+    "129ac2774a53737e4cc8025fc64d90faacf3a45f50163215a0bdaf7f30a50edc": 1,
+    "35a312d6895103e96762e6dfa4a46170bbd3319e88fc2f2ecc7ff998dc4ce852": 1,
+    "73a66b015eadc9744b2c36144b7164317981b842b3da3cdc394196762e61b532": 1,
+    "e88f570e2ba6e921f51617177b270ecca4d025b7f13c08e525eee5451b0a2d90": 1
+  },
+  "packages/ship-design/src/compile/stages.ts": {
+    "0665e9643d19a91f1f2799ecb2b76a2378ea86526213294c4951ee8b44f222fc": 1
+  },
+  "packages/ship-design/src/construction.ts": {
+    "5e99108df16c733154d90831478eaa89c0409087f697471934f97108ca86c292": 1,
+    "7038755760b31d2081f63efd1b94da0a65dacde880106ec649654ffdac3541d8": 1,
+    "730b01da6754e5b40873b4dbd7cc18819944310a6e1c2b39e6b41774ea5c397a": 1,
+    "ca91e6384c411d5bce596e9e21de681896a0dfd38495ad07ff9232e540353d1a": 1,
+    "d1b77381d0bdb7f04a6eefe680b73db1480d7c5afbf8d504f2519d53e5e010d3": 1
+  },
+  "packages/ship-design/src/constructionProgress.ts": {
+    "06ff1db79a4771311d7698cae2b9078088afa08271669810b31e47b0cca97cdd": 1,
+    "0c5d0961edfc5519aae7715b7f286e83b4bd3b9f6b9e4ef0bfaedafdda2f2a40": 1,
+    "0d54aa7bdca63b2168d4c00cc9451a4765dce928153194f8f09d7e2eeeec5f5d": 1
+  },
+  "packages/ship-design/src/cost.ts": {
+    "222101b303902a42bb6fd69d567a4cf2a2edb3050b7b30973e45a78095940649": 1,
+    "7f79fc32e7e97dd4d5351f25e3bea6722d5eee25e8e1cfb23585122ecc21fc46": 1,
+    "8f345424a9d1970a2a4b18d65b4cf6475372fdf20c7e31541b1f088990cbfa84": 1
+  },
+  "packages/ship-design/src/cve.ts": {
+    "360ae33f56a053b6563ff2ec5b5bc7a304266939d1a39ea5aa904bd40d8d11c2": 1,
+    "b16d1c3186cbbb8c69662330153efe38e406612ddde97be8ae89c25468d28f0a": 1
+  },
+  "packages/ship-design/src/dockExpansion.ts": {
+    "47f178ee8bd616730a5c6ea6daf4e16a0907644465b3751b85b985ed2702156d": 1,
+    "5b0a5ebf816cbe32286b727cdd1b7e53fc4cc099a79c6f0b0c80ed14df9c8bb2": 1,
+    "8056781efd7a6789efcb0f01f44259faca4aa6389b3a8c6481226394a21249b6": 1,
+    "bf7f80c600b23c1b0982b87fc270cb40a90ec4e8586cc24f4cc735fc061524b8": 1,
+    "d00d9a341025dc66276ab5c2acab901d531ebbeb40cf1e7533027a33646e4908": 1,
+    "ff5f07c13b3408bb4b9f2e5868bea68f2ec89ef008781650debc60732626ba51": 1
+  },
+  "packages/ship-design/src/equivalenceCandidate.ts": {
+    "2dc060d8e44681363af70a33b6a65c13af31e600dda95a0a6fdab6e264ac8d7d": 1
+  },
+  "packages/ship-design/src/gunPartAdapter.ts": {
+    "abac5abc59c87d2524d56c16f7949151193240e9d56679e3b14a2a3111084702": 1,
+    "ba712f495ea85cff7a593855ff776774f48e303997257409f351512fff35bcdc": 1
+  },
+  "packages/ship-design/src/hull.ts": {
+    "6fe60c7ec3e5ce0259c1a6eac53b3a2d73de6aea3a5619c88ea46ca47653f269": 1
+  },
+  "packages/ship-design/src/machinery.ts": {
+    "1e01e84f1db54147cd90a9a3134f172c912f986f168bdbe294b5d40856a55e6c": 1,
+    "8f7bb1a4d3630787b60d50fed33d60af7c053050a99efe4acfe932d6e9f6aa61": 1
+  },
+  "packages/ship-design/src/nationalConstruction.ts": {
+    "10e4b207cf50aea2b50ad78835df1325ebe923d6893aed40db4ff8b2019a645a": 1,
+    "5a9177321a717ad0c32266b4319e11a911dad156d5e136c00b408eba50e5775a": 1,
+    "7e2f7522c0d2388f0ee146ccb65b23789271a1b10a18157d088224a331d8e0a0": 1,
+    "98fbd74ef5902ce6450adea810eed8a0b72b039e3c314bfe2218da66ed4c017c": 1
+  },
+  "packages/ship-design/src/partCatalogueView.ts": {
+    "584318fb69461a29dd21395799f58ae126b6d52b91e6ac3f1accb85640e5d2c9": 1
+  },
+  "packages/ship-design/src/partCategory.ts": {
+    "96542afed15d27ebd420ea48954228c253e468c6ceddbb41b340174e2b42efa2": 1
+  },
+  "packages/ship-design/src/partCompatibility.ts": {
+    "14ecc1172c9daa7201ae44a7e869c2d39aecc405f7e4805b7bbfa3edd54d6844": 1
+  },
+  "packages/ship-design/src/partLifecycle.ts": {
+    "8965242589da2f83efd9ebd883f5a55bb542f6235035db7dc6afd6ad88b6f6be": 1
+  },
+  "packages/ship-design/src/partQueries.ts": {
+    "c7a31fa459bb5df7996063e38e1760a0b4f8db40fb8fabcbf7494d30d78070e1": 1
+  },
+  "packages/ship-design/src/partReadPath.ts": {
+    "25e622538a8c022be2c76f8282cb0d5e01b072460af88fe1455664bd5fe2d4e5": 1
+  },
+  "packages/ship-design/src/plantPartAdapter.ts": {
+    "6cd7771e17db49c67725304af271bf7a896ae5a9cc689be706bf3da1174055a7": 1,
+    "deb0c67c97a7dcd6bcdaf5b41695867741b755a7ecc73b9ca48a65155542d8e0": 1
+  },
+  "packages/ship-design/src/seededPlan.ts": {
+    "14d4eacefbcc2b54ab46f80d87bf0d1bded880f3a749cedf6d2122d541f16bba": 1
+  },
+  "packages/ship-design/src/shipBuildingContent.ts": {
+    "2ce2020eeffe7234064ca8b97d0c2a5267ad8047cbfd0b0b5a7fa95373b4b620": 1,
+    "3c5a5da28ca4f04613a97be325a2d47d2bd9e352b6e6190643c4a8b10306cf86": 1,
+    "a5d1444b20e80c47400a66371848e7b15859f4be0802a66ebc959fb4295d5a90": 1,
+    "f197103a1b67711201b6168aa334550e09bb931757927fb8c3588a37085dc40b": 1
+  },
+  "packages/ship-design/src/shipTypeRegistry.ts": {
+    "8cb9686cafa408f8bea6a0ed3671619f165928ff2a4bdadaeeb2370d923bb043": 1
+  },
+  "packages/ship-design/src/stability.ts": {
+    "7ef2137417d64bf83ea3ebfae5880af8c3146f5d7f3b1dcb0242cb77505cf2b3": 1,
+    "e76eb4283f6011c0c8f4cee692b571d3b0caf21ee8a8e888b8d7eebc34232b64": 1
+  },
+  "packages/ship-design/src/study.ts": {
+    "465aaf06f64919aef8c3f16d7fdb63156d972da1a511e5a87f7402e56ed787c9": 1
+  },
+  "packages/ship-design/src/systems.ts": {
+    "59f564249aa12d77e967895df882efccd6fd3aff119f1b4e0fe685fde959d927": 1,
+    "5d16cf5c035294d499e4632709786c0d9e4ff42710e0dd29f76ca08dc501af97": 1
+  },
+  "packages/ship-design/src/tertiary.ts": {
+    "323df1bee03711701363142cc6a1f875166bbc2dc0046a1cbc520efe96e91a42": 1,
+    "8ed93bba2462853d50a0dfb03583ac2add89d046fcb3fdf17f49377936cc6e90": 1
+  },
+  "packages/ship-design/src/weapons.ts": {
+    "c7ec09d6bf14fe7663f9051f6409bdf9855c056a92338bae47cc2284c61bb52d": 1
+  },
+  "packages/ship-design/src/yards.ts": {
+    "5357fc842d3c7827f1e4be0f468898b99399ded791890041c5846ea2d8725707": 1
+  },
+  "packages/test-support/src/index.ts": {
+    "c36c106f1213f683fd451ebb7c301cffa30b01d11c910fd4cc62e66a8c80198f": 1
+  }
+}

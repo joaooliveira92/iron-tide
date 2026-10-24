@@ -9,6 +9,8 @@ import {
   findRuntimeImports,
   RUNTIME_FREE_ROOTS,
   RUNTIME_FREE_SYMBOLS,
+  RUNTIME_FREE_TEST_EXEMPTIONS,
+  RUNTIME_FREE_TEST_ROOTS,
 } from "../assert-runtime-free.mjs";
 
 const count = (text) => findRuntimeImports("a.ts", text).length;
@@ -86,4 +88,17 @@ void test("guards the runtime-free packages but not the runtime app surfaces", (
   assert.ok(!RUNTIME_FREE_ROOTS.includes("packages/persistence/src"));
   // ADR-0159: the app surfaces adopt the full runtime and are no longer guarded.
   assert.ok(!RUNTIME_FREE_ROOTS.includes("apps/desktop/src/main"));
+});
+
+void test("guards the test directory of every runtime-free package except the exemptions", () => {
+  assert.ok(RUNTIME_FREE_TEST_ROOTS.includes("packages/combat/test"));
+  assert.ok(RUNTIME_FREE_TEST_ROOTS.includes("packages/campaign-engine/test"));
+  for (const exempt of RUNTIME_FREE_TEST_EXEMPTIONS) {
+    assert.ok(!RUNTIME_FREE_TEST_ROOTS.includes(`${exempt}/test`));
+    assert.ok(RUNTIME_FREE_ROOTS.includes(`${exempt}/src`));
+  }
+  assert.equal(
+    RUNTIME_FREE_TEST_ROOTS.length,
+    RUNTIME_FREE_ROOTS.length - RUNTIME_FREE_TEST_EXEMPTIONS.length,
+  );
 });
