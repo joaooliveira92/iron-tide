@@ -1,7 +1,7 @@
 import { contentPackFromArtifact, type ContentBundle } from "@bluewave/content-compiler";
 import type { ContentPack } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
-import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
+import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { type DiagnosticCollector as DiagnosticCollectorType } from "@bluewave/diagnostics";
 import { compileTorpedo } from "@bluewave/ship-design";
 import type { CompiledTorpedo } from "@bluewave/armament";
@@ -22,6 +22,7 @@ import {
 import { materialiseSeededConstructions } from "./seededConstructions.js";
 import { buildPoliticalState, buildWarState } from "./politicalCompilation.js";
 import { getScenarioById, type ScenarioId } from "./scenario.js";
+import { createCampaignSnapshotEnvelope, hashCampaignSnapshot } from "./snapshotHash.js";
 import type { CampaignSnapshot, CampaignState } from "./state.js";
 import {
   DEFAULT_CAMPAIGN_START_MONTH,
@@ -173,9 +174,8 @@ export class CampaignCompiler {
 
     if (signal.aborted) return undefined;
 
-    const rawJson = canonicalSerialize(snapshot);
-    const rawHash = sha256Hex(rawJson);
-    const envelope = createEnvelope("campaign-snapshot", input.compatibilityVersion, snapshot);
+    const rawHash = hashCampaignSnapshot(snapshot);
+    const envelope = createCampaignSnapshotEnvelope(input.compatibilityVersion, snapshot);
 
     if (collector.hasErrors) return undefined;
 

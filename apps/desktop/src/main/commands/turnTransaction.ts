@@ -1,8 +1,8 @@
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
-import { advanceMonth, canAdvance } from "@bluewave/campaign";
+import { advanceMonth, canAdvance, createCampaignSnapshotEnvelope } from "@bluewave/campaign";
 import type { CommitMonthResponse } from "@bluewave/campaign-engine";
 import { SafeInt } from "@bluewave/contracts";
-import { createEnvelope, canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import {
   computeOrderedInputsHash,
@@ -254,8 +254,7 @@ export const runTurnTransaction = (
     };
     const nextMonth = advanceMonth(record.month.year, record.month.month, 1);
 
-    const nextEnvelope = createEnvelope(
-      "campaign-snapshot",
+    const nextEnvelope = createCampaignSnapshotEnvelope(
       nextSnapshot.compatibilityVersion,
       nextSnapshot,
     );

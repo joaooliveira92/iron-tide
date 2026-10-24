@@ -9,13 +9,9 @@ import {
   writeFileSync,
 } from "node:fs";
 import { isAbsolute, join, relative } from "node:path";
+import { verifyCampaignSnapshotEnvelope } from "@bluewave/campaign";
 import type { CampaignState } from "@bluewave/campaign";
-import {
-  canonicalSerialize,
-  compareCodePoints,
-  sha256Hex,
-  verifyEnvelope,
-} from "@bluewave/deterministic";
+import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
 import type { Diagnostic } from "@bluewave/diagnostics";
 import { Effect, Result, Schema } from "effect";
 import { CompatibilityChecker, CURRENT_COMPATIBILITY_VERSION } from "./compatibility.js";
@@ -415,7 +411,7 @@ function loadByIdCore(
   const signature = validateSignatureResult(sigPath, sha256Hex(campaignJson), state, warnings);
   if (Result.isFailure(signature)) return Result.fail(signature.failure);
 
-  if (!verifyEnvelope(state["envelope"], state["snapshot"])) {
+  if (!verifyCampaignSnapshotEnvelope(state["envelope"], state["snapshot"])) {
     return Result.fail(
       corruptSave("Save envelope verification failed: snapshot does not match envelope"),
     );
