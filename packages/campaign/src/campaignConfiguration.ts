@@ -1,10 +1,39 @@
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { compareCodePoints } from "@bluewave/deterministic";
+import { Result, Schema, type SchemaIssue } from "effect";
 import { FLEET_SIZE_IDS } from "./fleetSize.js";
 import { RESEARCH_IDS } from "./researchSpeed.js";
 import { CANONICAL_SCENARIO_IDS } from "./scenario.js";
 import { VARIATION_IDS } from "./technologyVariation.js";
 
-export const CAMPAIGN_CONFIGURATION_FIELDS = [
+const HEX32 = /^[0-9a-f]{32}$/;
+const NON_BLANK = /\S/;
+
+const nonBlankString = Schema.String.check(Schema.isPattern(NON_BLANK));
+
+export const CampaignSeedSchema = Schema.String.check(Schema.isPattern(HEX32));
+
+export const CampaignConfigurationSchema = Schema.Struct({
+  scenarioId: Schema.Literals(CANONICAL_SCENARIO_IDS),
+  playerSlotId: nonBlankString,
+  continuityModeId: Schema.Literals(["historical", "alternate_continuity_v1"]),
+  fleetSizeSettingId: Schema.Literals(FLEET_SIZE_IDS),
+  researchSpeedSettingId: Schema.Literals(RESEARCH_IDS),
+  technologyVariationSettingId: Schema.Literals(VARIATION_IDS),
+  historicalBudgetOptionId: nonBlankString,
+  legacyFleetModeId: nonBlankString,
+  tacticalRealismModeId: nonBlankString,
+  difficultyProfileId: nonBlankString,
+  campaignSeed: CampaignSeedSchema,
+  configurationSchemaVersion: nonBlankString,
+  archetype: Schema.optional(Schema.String),
+});
+
+export type CampaignConfiguration = typeof CampaignConfigurationSchema.Type;
+
+type MandatoryField = Exclude<keyof CampaignConfiguration, "archetype">;
+
+export const CAMPAIGN_CONFIGURATION_FIELDS: readonly MandatoryField[] = [
   "scenarioId",
   "playerSlotId",
   "continuityModeId",
@@ -17,103 +46,147 @@ export const CAMPAIGN_CONFIGURATION_FIELDS = [
   "difficultyProfileId",
   "campaignSeed",
   "configurationSchemaVersion",
-] as const;
+];
 
-export type CampaignConfiguration = {
-  scenarioId: (typeof CANONICAL_SCENARIO_IDS)[number];
-  playerSlotId: string;
-  continuityModeId: "historical" | "alternate_continuity_v1";
-  fleetSizeSettingId: (typeof FLEET_SIZE_IDS)[number];
-  researchSpeedSettingId: (typeof RESEARCH_IDS)[number];
-  technologyVariationSettingId: "none" | "some" | "considerable";
-  historicalBudgetOptionId: string;
-  legacyFleetModeId: string;
-  tacticalRealismModeId: string;
-  difficultyProfileId: string;
-  campaignSeed: string;
-  configurationSchemaVersion: string;
-};
+const STAGE = { stage: "campaign-configuration" } as const;
 
-const HEX32 = /^[0-9a-f]{32}$/;
+const ENUM_FIELDS: readonly MandatoryField[] = [
+  "scenarioId",
+  "continuityModeId",
+  "fleetSizeSettingId",
+  "researchSpeedSettingId",
+  "technologyVariationSettingId",
+];
+
+const decodeStrict = Schema.decodeUnknownResult(CampaignConfigurationSchema, {
+  errors: "all",
+  onExcessProperty: "error",
+});
+
+const isCampaignSeed = Schema.is(CampaignSeedSchema);
 
 export function validateCampaignSeed(seed: unknown, c: DiagnosticCollector): boolean {
-  if (typeof seed !== "string" || !HEX32.test(seed)) {
+  if (!isCampaignSeed(seed)) {
     c.addError(
       "INVALID_CAMPAIGN_SEED",
       `campaignSeed must be 32 lower hex chars, got ${String(seed)}`,
-      { stage: "campaign-configuration" },
+      STAGE,
     );
     return false;
   }
   return true;
 }
 
-export function validateCampaignConfiguration(cfg: unknown, c: DiagnosticCollector): boolean {
-  const r = cfg as Record<string, unknown>;
-  if (typeof r !== "object" || r === null) {
-    c.addError("INVALID_CAMPAIGN_CONFIGURATION", "CampaignConfiguration must be object", {
-      stage: "campaign-configuration",
-    });
-    return false;
-  }
-  let ok = true;
-  for (const f of CAMPAIGN_CONFIGURATION_FIELDS) {
-    if (
-      !(f in r) ||
-      r[f] === null ||
-      r[f] === undefined ||
-      (typeof r[f] === "string" && (r[f] as string).trim() === "")
-    ) {
+interface RejectedKeys {
+  readonly fields: ReadonlySet<string>;
+  readonly unexpected: ReadonlySet<string>;
+}
+
+function rejectedKeys(issue: SchemaIssue.Issue): RejectedKeys {
+  const fields = new Set<string>();
+  const unexpected = new Set<string>();
+  const visit = (node: SchemaIssue.Issue, key: string | undefined): void => {
+    switch (node._tag) {
+      case "Pointer": {
+        const head = node.path[0];
+        visit(node.issue, key ?? (head === undefined ? undefined : String(head)));
+        return;
+      }
+      case "Composite":
+        for (const inner of node.issues) visit(inner, key);
+        return;
+      case "AnyOf":
+        if (key !== undefined) fields.add(key);
+        for (const inner of node.issues) visit(inner, key);
+        return;
+      case "Filter":
+      case "Encoding":
+        visit(node.issue, key);
+        return;
+      case "UnexpectedKey":
+        if (key !== undefined) unexpected.add(key);
+        return;
+      default:
+        if (key !== undefined) fields.add(key);
+    }
+  };
+  visit(issue, undefined);
+  return { fields, unexpected };
+}
+
+function isAbsent(value: unknown): boolean {
+  return (
+    value === null || value === undefined || (typeof value === "string" && value.trim() === "")
+  );
+}
+
+function reportRejection(
+  issue: SchemaIssue.Issue,
+  input: Readonly<Record<string, unknown>>,
+  c: DiagnosticCollector,
+): void {
+  const { fields, unexpected } = rejectedKeys(issue);
+
+  let missing = false;
+  for (const field of CAMPAIGN_CONFIGURATION_FIELDS) {
+    if (isAbsent(input[field])) {
       c.addError(
         "INVALID_CAMPAIGN_CONFIGURATION",
-        `Missing mandatory field ${f} (null/omission/empty prohibited)`,
-        { stage: "campaign-configuration" },
+        `Missing mandatory field ${field} (null/omission/empty prohibited)`,
+        STAGE,
       );
-      ok = false;
+      missing = true;
     }
   }
-  if (!ok) return false;
-  if (!validateCampaignSeed(r["campaignSeed"], c)) ok = false;
+  if (missing) return;
 
-  if (!CANONICAL_SCENARIO_IDS.includes(r["scenarioId"] as any)) {
-    c.addError("INVALID_CAMPAIGN_CONFIGURATION", `Invalid scenarioId ${String(r["scenarioId"])}`, {
-      stage: "campaign-configuration",
-    });
-    ok = false;
+  if (fields.has("campaignSeed")) validateCampaignSeed(input["campaignSeed"], c);
+  for (const field of ENUM_FIELDS) {
+    if (fields.has(field)) {
+      c.addError(
+        "INVALID_CAMPAIGN_CONFIGURATION",
+        `Invalid ${field} ${String(input[field])}`,
+        STAGE,
+      );
+    }
   }
-  if (!["historical", "alternate_continuity_v1"].includes(r["continuityModeId"] as string)) {
+  for (const field of CAMPAIGN_CONFIGURATION_FIELDS) {
+    if (fields.has(field) && field !== "campaignSeed" && !ENUM_FIELDS.includes(field)) {
+      c.addError(
+        "INVALID_CAMPAIGN_CONFIGURATION",
+        `Invalid ${field} ${String(input[field])}`,
+        STAGE,
+      );
+    }
+  }
+  if (fields.has("archetype")) {
     c.addError(
       "INVALID_CAMPAIGN_CONFIGURATION",
-      `Invalid continuityModeId ${String(r["continuityModeId"])}`,
-      { stage: "campaign-configuration" },
+      `Invalid archetype ${String(input["archetype"])}`,
+      STAGE,
     );
-    ok = false;
   }
-  if (!FLEET_SIZE_IDS.includes(r["fleetSizeSettingId"] as any)) {
-    c.addError(
-      "INVALID_CAMPAIGN_CONFIGURATION",
-      `Invalid fleetSizeSettingId ${String(r["fleetSizeSettingId"])}`,
-      { stage: "campaign-configuration" },
-    );
-    ok = false;
+  for (const key of [...unexpected].sort(compareCodePoints)) {
+    c.addError("INVALID_CAMPAIGN_CONFIGURATION", `Unknown field ${key}`, STAGE);
   }
-  if (!RESEARCH_IDS.includes(r["researchSpeedSettingId"] as any)) {
-    c.addError(
-      "INVALID_CAMPAIGN_CONFIGURATION",
-      `Invalid researchSpeedSettingId ${String(r["researchSpeedSettingId"])}`,
-      { stage: "campaign-configuration" },
-    );
-    ok = false;
+}
+
+export function decodeCampaignConfiguration(
+  cfg: unknown,
+  c: DiagnosticCollector,
+): CampaignConfiguration | undefined {
+  if (typeof cfg !== "object" || cfg === null) {
+    c.addError("INVALID_CAMPAIGN_CONFIGURATION", "CampaignConfiguration must be object", STAGE);
+    return undefined;
   }
-  if (!VARIATION_IDS.includes(r["technologyVariationSettingId"] as any)) {
-    c.addError(
-      "INVALID_CAMPAIGN_CONFIGURATION",
-      `Invalid technologyVariationSettingId ${String(r["technologyVariationSettingId"])}`,
-      { stage: "campaign-configuration" },
-    );
-    ok = false;
-  }
-  return ok;
+  const decoded = decodeStrict(cfg);
+  if (Result.isSuccess(decoded)) return decoded.success;
+  reportRejection(decoded.failure.issue, Object.fromEntries(Object.entries(cfg)), c);
+  return undefined;
+}
+
+export function validateCampaignConfiguration(cfg: unknown, c: DiagnosticCollector): boolean {
+  return decodeCampaignConfiguration(cfg, c) !== undefined;
 }
 
 export function assertConfigurationImmutability(
@@ -122,11 +195,11 @@ export function assertConfigurationImmutability(
   c: DiagnosticCollector,
 ): boolean {
   for (const f of CAMPAIGN_CONFIGURATION_FIELDS) {
-    if ((prev as any)[f] !== (next as any)[f]) {
+    if (prev[f] !== next[f]) {
       c.addError(
         "INVALID_CAMPAIGN_CONFIGURATION",
-        `Post-save mutation of ${f}: ${String((prev as any)[f])} -> ${String((next as any)[f])} (immutable)`,
-        { stage: "campaign-configuration" },
+        `Post-save mutation of ${f}: ${String(prev[f])} -> ${String(next[f])} (immutable)`,
+        STAGE,
       );
       return false;
     }

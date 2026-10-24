@@ -4,6 +4,7 @@ import {
   assertConfigurationImmutability,
   CAMPAIGN_CONFIGURATION_FIELDS,
   type CampaignConfiguration,
+  decodeCampaignConfiguration,
   validateCampaignConfiguration,
 } from "./campaignConfiguration.js";
 import { validateFleetSizeSettings } from "./fleetSize.js";
@@ -20,6 +21,7 @@ export {
   assertConfigurationImmutability,
   CAMPAIGN_CONFIGURATION_FIELDS,
   type CampaignConfiguration,
+  decodeCampaignConfiguration,
   validateCampaignConfiguration,
 };
 
@@ -137,13 +139,13 @@ export function validateCampaignPreconditions(
     );
     return false;
   }
-  if (!validateCampaignConfiguration(cfg, collector)) return false;
+  const typedCfg = decodeCampaignConfiguration(cfg, collector);
+  if (typedCfg === undefined) return false;
 
   if (!validateFleetSizeInput(anyInput["fleetSizeSettings"], collector)) return false;
 
   if (!validateResearchSpeedInput(anyInput["researchSpeedSettings"], collector)) return false;
 
-  const typedCfg = cfg as CampaignConfiguration;
   const scen = validatedScenarios.find((s) => s.scenarioId === typedCfg.scenarioId);
   if (
     scen &&
@@ -156,10 +158,11 @@ export function validateCampaignPreconditions(
 }
 
 export function createInitialCampaignState(
-  configuration: CampaignConfiguration,
+  input: CampaignConfiguration,
   collector: DiagnosticCollector,
 ): CampaignSessionState | undefined {
-  if (!validateCampaignConfiguration(configuration, collector)) return undefined;
+  const configuration = decodeCampaignConfiguration(input, collector);
+  if (configuration === undefined) return undefined;
 
   const scen = CANONICAL_SCENARIOS.find((s) => s.scenarioId === configuration.scenarioId);
   if (!scen) {
