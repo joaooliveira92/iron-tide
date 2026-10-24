@@ -1,5 +1,4 @@
-import { BluewaveError } from "@bluewave/contracts";
-import { Result, Schema } from "effect";
+import { Schema } from "effect";
 import {
   AIR_DEFENSE_BASIS_POINTS,
   AIR_DEFENSE_FORMULA_VERSION,
@@ -19,7 +18,7 @@ import {
 import { DIRECTOR_NORMAL_SCALING_CAP } from "./director-scaling.js";
 import { ENGAGEMENT_FACTOR_SLOT_NAMES } from "./engagement.js";
 import { DEFENSE_LAYER_ORDER } from "./layer-resolution.js";
-import { formatContractIssues } from "../schema-issues.js";
+import { decodeContract } from "../schema-issues.js";
 import {
   AIR_DEFENSE_RULESET_VERSION,
   AIR_DEFENSE_SYSTEM_DEFINITION_FIELD_KEYS,
@@ -29,8 +28,6 @@ import {
   AIR_DEFENSE_REASON_CODES_VERSION,
   AIR_DEFENSE_SHIPPED_REASON_CODE_LIST,
 } from "./reasonCodes.js";
-
-const parseOptions = { onExcessProperty: "error" } as const;
 
 export const AIR_DEFENSE_CONTRACT_POLICY_ID = "air_defense_v1" as const;
 export const AIR_DEFENSE_DIRECTOR_SCALING_POLICY_ID = "aa_director_scaling_v1" as const;
@@ -205,42 +202,44 @@ export function makeValidCiwsRedundancyPolicy_v1(): CiwsRedundancyPolicyContract
   };
 }
 
-function contractFailure(policyId: string, error: Schema.SchemaError): BluewaveError {
-  const first = formatContractIssues(error)[0];
-  return new BluewaveError(`${policyId} contract validation failed`, {
-    code: AIR_DEFENSE_INVARIANT_FAILED,
-    policyId,
-    field: first?.path ?? "unknown",
-    reason: first?.message ?? "contract validation failed",
+function decodeAirDefenseContract<A>(
+  schema: Schema.ConstraintDecoder<A, never>,
+  policyId: string,
+  value: unknown,
+): A {
+  return decodeContract(schema, AIR_DEFENSE_INVARIANT_FAILED, value, {
+    message: `${policyId} contract validation failed`,
+    context: { policyId },
+    includeValue: false,
   });
 }
 
 export function validateAirDefenseContract(value: unknown): AirDefensePolicyContract {
-  const result = Schema.decodeUnknownResult(AirDefensePolicy_v1, parseOptions)(value);
-  if (Result.isFailure(result))
-    throw contractFailure(AIR_DEFENSE_CONTRACT_POLICY_ID, result.failure);
-  return result.success;
+  return decodeAirDefenseContract(AirDefensePolicy_v1, AIR_DEFENSE_CONTRACT_POLICY_ID, value);
 }
 
 export function validateAaDirectorScalingContract(value: unknown): AaDirectorScalingPolicyContract {
-  const result = Schema.decodeUnknownResult(AaDirectorScalingPolicy_v1, parseOptions)(value);
-  if (Result.isFailure(result))
-    throw contractFailure(AIR_DEFENSE_DIRECTOR_SCALING_POLICY_ID, result.failure);
-  return result.success;
+  return decodeAirDefenseContract(
+    AaDirectorScalingPolicy_v1,
+    AIR_DEFENSE_DIRECTOR_SCALING_POLICY_ID,
+    value,
+  );
 }
 
 export function validateRadarSaturationContract(value: unknown): RadarSaturationPolicyContract {
-  const result = Schema.decodeUnknownResult(RadarSaturationPolicy_v1, parseOptions)(value);
-  if (Result.isFailure(result))
-    throw contractFailure(AIR_DEFENSE_RADAR_SATURATION_POLICY_ID, result.failure);
-  return result.success;
+  return decodeAirDefenseContract(
+    RadarSaturationPolicy_v1,
+    AIR_DEFENSE_RADAR_SATURATION_POLICY_ID,
+    value,
+  );
 }
 
 export function validateCiwsRedundancyContract(value: unknown): CiwsRedundancyPolicyContract {
-  const result = Schema.decodeUnknownResult(CiwsRedundancyPolicy_v1, parseOptions)(value);
-  if (Result.isFailure(result))
-    throw contractFailure(AIR_DEFENSE_CIWS_REDUNDANCY_POLICY_ID, result.failure);
-  return result.success;
+  return decodeAirDefenseContract(
+    CiwsRedundancyPolicy_v1,
+    AIR_DEFENSE_CIWS_REDUNDANCY_POLICY_ID,
+    value,
+  );
 }
 
 export const SHIPPED_AIR_DEFENSE_CONTRACT = {

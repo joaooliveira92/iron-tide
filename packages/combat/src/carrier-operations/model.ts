@@ -218,14 +218,14 @@ export interface OversizedCarrierPolicy {
   hazardBp: number;
 }
 
-export const SHIPPED_OVERSIZED_POLICY: OversizedCarrierPolicy = {
+export const SHIPPED_OVERSIZED_POLICY = {
   threshold: OVERSIZED_CARRIER_THRESHOLD,
   deckCycleEfficiencyBp: OVERSIZED_DECK_CYCLE_EFFICIENCY_BP,
   sortieGenerationBp: OVERSIZED_SORTIE_GENERATION_BP,
   maintenanceCostBp: OVERSIZED_MAINTENANCE_COST_BP,
   coordinationBp: OVERSIZED_COORDINATION_BP,
   hazardBp: OVERSIZED_HAZARD_BP,
-};
+} as const satisfies OversizedCarrierPolicy;
 
 export function isOversized(compiledAircraftCapacity: number): boolean {
   return compiledAircraftCapacity > OVERSIZED_CARRIER_THRESHOLD;

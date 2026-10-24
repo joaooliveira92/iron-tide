@@ -143,6 +143,26 @@ describe("AC-17: versioned air-defense contracts", () => {
       expect(isBluewaveError(caught)).toBe(true);
       expect(caught?.context.code).toBe(AIR_DEFENSE_INVARIANT_FAILED);
     });
+
+    it("preserves the error contract while rejecting excess properties", () => {
+      let caught: BluewaveError | null = null;
+      try {
+        validateAirDefenseContract({ ...makeValidAirDefensePolicy_v1(), unmodeled: 1 });
+      } catch (error) {
+        caught = error as BluewaveError;
+      }
+
+      expect(isBluewaveError(caught)).toBe(true);
+      expect(caught?.message).toBe(`${AIR_DEFENSE_CONTRACT_POLICY_ID} contract validation failed`);
+      expect(caught?.context.code).toBe(AIR_DEFENSE_INVARIANT_FAILED);
+      expect(caught?.context.policyId).toBe(AIR_DEFENSE_CONTRACT_POLICY_ID);
+      expect(caught?.context.field).toBe("unmodeled");
+      expect(caught?.context.reason).toBe("Expected no excess property");
+      expect(caught?.context.issues).toEqual([
+        { path: "unmodeled", message: "Expected no excess property" },
+      ]);
+      expect("value" in (caught?.context ?? {})).toBe(false);
+    });
   });
 
   describe("aa_director_scaling_v1", () => {
