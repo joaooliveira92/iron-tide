@@ -8,6 +8,7 @@ import {
 import type { BattleOfferRules } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Effect, Exit, Result } from "effect";
 
 export interface FixtureDir {
   path: string;
@@ -388,4 +389,17 @@ export function fixtureBattleOfferRules(
   estimateModel: BattleOfferRules["estimateModel"],
 ): BattleOfferRules {
   return { ...FIXTURE_BATTLE_OFFER_RULES, estimateModel };
+}
+
+export function runSync<A, E>(effect: Effect.Effect<A, E>): A {
+  return Effect.runSync(effect);
+}
+
+export function failureTag<A, E extends { readonly _tag: string }>(
+  effect: Effect.Effect<A, E>,
+): E["_tag"] | "success" | "defect" {
+  const exit = Effect.runSyncExit(effect);
+  if (Exit.isSuccess(exit)) return "success";
+  const found = Exit.findError(exit);
+  return Result.isSuccess(found) ? found.success._tag : "defect";
 }

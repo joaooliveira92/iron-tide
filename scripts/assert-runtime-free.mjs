@@ -57,10 +57,9 @@ export const RUNTIME_FREE_ROOTS = [
 ];
 
 // The test directories of the runtime-free packages are guarded too: a test that imports
-// the runtime proves nothing about the pure package it covers. `phase-engine` is the one
-// reviewed exemption (RUNTIME_FREE_TEST_EXEMPTIONS): its tests still import runtime
-// symbols and must be migrated before it can join.
-export const RUNTIME_FREE_TEST_EXEMPTIONS = ["packages/phase-engine"];
+// the runtime proves nothing about the pure package it covers. A package may be listed in
+// RUNTIME_FREE_TEST_EXEMPTIONS only as a reviewed, shrink-only exception; none is today.
+export const RUNTIME_FREE_TEST_EXEMPTIONS = [];
 
 export const RUNTIME_FREE_TEST_ROOTS = RUNTIME_FREE_ROOTS.map((root) =>
   root.replace(/\/src$/u, "/test"),
