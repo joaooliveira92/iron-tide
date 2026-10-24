@@ -85,7 +85,7 @@ function validateConfigurationSupportedByScenario(
   stage: string,
   collector: DiagnosticCollector,
 ): boolean {
-  const checks: Array<[string, string, string[]]> = [
+  const checks: Array<[string, string, ReadonlyArray<string>]> = [
     ["fleetSizeSettingId", cfg.fleetSizeSettingId, scen.supportedFleetSizeSettingIds],
     ["researchSpeedSettingId", cfg.researchSpeedSettingId, scen.supportedResearchSpeedSettingIds],
     [

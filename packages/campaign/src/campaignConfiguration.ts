@@ -2,6 +2,7 @@ import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { compareCodePoints } from "@bluewave/deterministic";
 import { Result, Schema, type SchemaIssue } from "effect";
 import { FLEET_SIZE_IDS } from "./fleetSize.js";
+import { issueKeys } from "./schemaIssueKeys.js";
 import { RESEARCH_IDS } from "./researchSpeed.js";
 import { CANONICAL_SCENARIO_IDS } from "./scenario.js";
 import { VARIATION_IDS } from "./technologyVariation.js";
@@ -77,43 +78,6 @@ export function validateCampaignSeed(seed: unknown, c: DiagnosticCollector): boo
   return true;
 }
 
-interface RejectedKeys {
-  readonly fields: ReadonlySet<string>;
-  readonly unexpected: ReadonlySet<string>;
-}
-
-function rejectedKeys(issue: SchemaIssue.Issue): RejectedKeys {
-  const fields = new Set<string>();
-  const unexpected = new Set<string>();
-  const visit = (node: SchemaIssue.Issue, key: string | undefined): void => {
-    switch (node._tag) {
-      case "Pointer": {
-        const head = node.path[0];
-        visit(node.issue, key ?? (head === undefined ? undefined : String(head)));
-        return;
-      }
-      case "Composite":
-        for (const inner of node.issues) visit(inner, key);
-        return;
-      case "AnyOf":
-        if (key !== undefined) fields.add(key);
-        for (const inner of node.issues) visit(inner, key);
-        return;
-      case "Filter":
-      case "Encoding":
-        visit(node.issue, key);
-        return;
-      case "UnexpectedKey":
-        if (key !== undefined) unexpected.add(key);
-        return;
-      default:
-        if (key !== undefined) fields.add(key);
-    }
-  };
-  visit(issue, undefined);
-  return { fields, unexpected };
-}
-
 function isAbsent(value: unknown): boolean {
   return (
     value === null || value === undefined || (typeof value === "string" && value.trim() === "")
@@ -125,7 +89,9 @@ function reportRejection(
   input: Readonly<Record<string, unknown>>,
   c: DiagnosticCollector,
 ): void {
-  const { fields, unexpected } = rejectedKeys(issue);
+  const keys = issueKeys(issue);
+  const fields = new Set([...keys.missing, ...keys.invalid]);
+  const { unexpected } = keys;
 
   let missing = false;
   for (const field of CAMPAIGN_CONFIGURATION_FIELDS) {
