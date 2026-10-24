@@ -394,10 +394,17 @@ function pickZone(
       entityKey: target.shipId,
       phase: "resolve_battle_auto_resolution_hit_zone",
       rulesetVersion: DAMAGE_RULESET_VERSION,
-      inputHash: "",
+      inputHash: sha256Hex(
+        canonicalSerialize({
+          battleId,
+          minute,
+          shipId: target.shipId,
+          batteryId: salvo.batteryId,
+        }),
+      ),
       draw: draw as number,
       outcome: target.zones[draw as number]!.id,
-      reasonCode: "DAMAGE_HIT_ZONE_DRAW",
+      reasonCode: DAMAGE_KEYED_DRAW,
     });
   }
   return target.zones[draw as number]!;
