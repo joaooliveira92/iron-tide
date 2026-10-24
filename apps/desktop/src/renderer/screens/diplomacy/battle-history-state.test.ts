@@ -26,9 +26,21 @@ describe("summarizeBattleHistory", () => {
   it("totals only the battles the player fought in", () => {
     const summary = summarizeBattleHistory([
       entry({ outcomeForPlayer: "won", playerLossCount: 1, enemyLossCount: 3 }),
-      entry({ outcomeForPlayer: "lost", playerLossCount: 4, enemyLossCount: 1 }),
-      entry({ outcomeForPlayer: "undecided", playerLossCount: 0, enemyLossCount: 0 }),
-      entry({ involvesPlayer: false, outcomeForPlayer: "not-involved", enemyLossCount: 9 }),
+      entry({
+        outcomeForPlayer: "lost",
+        playerLossCount: 4,
+        enemyLossCount: 1,
+      }),
+      entry({
+        outcomeForPlayer: "undecided",
+        playerLossCount: 0,
+        enemyLossCount: 0,
+      }),
+      entry({
+        involvesPlayer: false,
+        outcomeForPlayer: "not-involved",
+        enemyLossCount: 9,
+      }),
     ]);
     expect(summary).toEqual({
       played: 3,

@@ -55,8 +55,16 @@ describe("tensionBadgeLabel", () => {
 
 describe("warScoreSplit", () => {
   it("reads the player's score from the correct side", () => {
-    const attacker = { attackerWarScore: 6, defenderWarScore: 2, playerSide: "attacker" } as const;
-    expect(warScoreSplit(attacker)).toEqual({ yours: 6, enemy: 2, yourShare: 0.75 });
+    const attacker = {
+      attackerWarScore: 6,
+      defenderWarScore: 2,
+      playerSide: "attacker",
+    } as const;
+    expect(warScoreSplit(attacker)).toEqual({
+      yours: 6,
+      enemy: 2,
+      yourShare: 0.75,
+    });
     expect(warScoreSplit({ ...attacker, playerSide: "defender" })).toEqual({
       yours: 2,
       enemy: 6,
@@ -65,7 +73,11 @@ describe("warScoreSplit", () => {
   });
 
   it("centres the bar when nobody has scored and never divides by zero", () => {
-    const even = { attackerWarScore: 0, defenderWarScore: 0, playerSide: "attacker" } as const;
+    const even = {
+      attackerWarScore: 0,
+      defenderWarScore: 0,
+      playerSide: "attacker",
+    } as const;
     expect(warScoreSplit(even).yourShare).toBe(0.5);
   });
 
