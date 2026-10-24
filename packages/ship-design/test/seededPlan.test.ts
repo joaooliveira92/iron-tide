@@ -1,3 +1,4 @@
+import { BluewaveError } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import { historicalBuildMonths } from "../src/construction.js";
 import { seededConstructionPlan } from "../src/index.js";
@@ -47,7 +48,7 @@ describe("seededConstructionPlan", () => {
 
   it("is deterministic and rejects a non-positive size", () => {
     expect(seededConstructionPlan(input)).toEqual(seededConstructionPlan(input));
-    expect(() => seededConstructionPlan({ ...input, totalUnits: 0 })).toThrow(RangeError);
+    expect(() => seededConstructionPlan({ ...input, totalUnits: 0 })).toThrow(BluewaveError);
   });
 
   it("a bigger hull is built more slowly", () => {

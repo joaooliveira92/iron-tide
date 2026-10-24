@@ -4,6 +4,7 @@ import type { ComponentCategory } from "./component.js";
 import type { Finding } from "./findings.js";
 import { placementTarget, sortFindings } from "./findings.js";
 import { toSafe } from "./units.js";
+import { designInvariant } from "./errors.js";
 
 export type LoadCase = "HARBOUR" | "CRUISING" | "ACTION";
 export const LOAD_CASES: readonly LoadCase[] = ["HARBOUR", "CRUISING", "ACTION"];
@@ -90,7 +91,7 @@ const byId = <T extends { instanceId: string }>(a: T, b: T) =>
 export function compileSystems(i: SystemsInput, b: SystemsBalance): SystemsResult {
   const findings: Finding[] = [];
   const profileFor = (c: ComponentCategory) => b.caseProfileBp[c] ?? b.caseProfileBp.DEFAULT;
-  if (!b.caseProfileBp.DEFAULT) throw new Error("caseProfileBp.DEFAULT is required");
+  if (!b.caseProfileBp.DEFAULT) throw designInvariant("caseProfileBp.DEFAULT is required");
 
   const demand: Record<LoadCase, number> = { HARBOUR: 0, CRUISING: 0, ACTION: 0 };
   for (const it of [...i.items].sort(byId)) {
@@ -295,7 +296,7 @@ export function compileSystems(i: SystemsInput, b: SystemsBalance): SystemsResul
 
   const positions = i.fireControlPositions ?? 0;
   if (!Number.isSafeInteger(positions) || positions < 0)
-    throw new Error(`fireControlPositions must be a non-negative integer, got ${positions}`);
+    throw designInvariant(`fireControlPositions must be a non-negative integer, got ${positions}`);
   if (positions === 0 && directors.length > 0 && i.guns.length > 0) {
     findings.push({
       id: "FIRE_CONTROL_NO_POSITIONS",

@@ -1,3 +1,4 @@
+import { BluewaveError } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import {
   DOCK_EXPANSION_BASE_DURATION_MONTHS,
@@ -40,7 +41,7 @@ describe("dock_expansion_v1 policy (SB3-R16)", () => {
     expect(isPermittedDockExpansionDurationMonths(8)).toBe(false);
     expect(isPermittedDockExpansionDurationMonths(19)).toBe(false);
     expect(() => assertPermittedDockExpansionDurationMonths(18)).not.toThrow();
-    expect(() => assertPermittedDockExpansionDurationMonths(19)).toThrow(RangeError);
+    expect(() => assertPermittedDockExpansionDurationMonths(19)).toThrow(BluewaveError);
   });
 
   it("raises every covered dock mass limit by the era's exact step", () => {

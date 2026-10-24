@@ -4,6 +4,7 @@ import { evaluate, type LookupTable } from "./formula/eval.js";
 import { parseFormula } from "./formula/parse.js";
 import { speedLengthRatioX1000 } from "./machinery.js";
 import { toSafe, UnitError, money, type BudgetMicro, type Money } from "./units.js";
+import { designInvariant } from "./errors.js";
 
 export interface CostBalance {
   readonly hullCostPerTonneMicro: Readonly<Record<string, number>>;
@@ -51,7 +52,7 @@ export function computeCost(
   const hullPerTonne = b.hullCostPerTonneMicro[d.hull.materialId];
   const form = b.formComplexityBp[d.hull.hullFormId];
   if (hullPerTonne === undefined || form === undefined)
-    throw new Error("unknown hull material or form in cost balance");
+    throw designInvariant("unknown hull material or form in cost balance");
   const vmax = c.machinery?.maxSpeedMilliKnots ?? 0;
   const slr = speedLengthRatioX1000(vmax, d.hull.lengthWl);
   const speed = evaluate(parseFormula("lookup(t, x)"), {
@@ -70,12 +71,12 @@ export function computeCost(
     const material = d.armour.regions.find((r) => r.region === region)?.materialId;
     const per = material === undefined ? undefined : b.armourCostPerKgMicro[material];
     if (per === undefined)
-      throw new Error(`unknown armour material for region '${region}' in cost balance`);
+      throw designInvariant(`unknown armour material for region '${region}' in cost balance`);
     armour += BigInt(kgw) * BigInt(per);
   }
   const perKw = b.machineryCostPerKwMicro[d.machinery.plantId];
   if (perKw === undefined)
-    throw new Error(`unknown plant '${d.machinery.plantId}' in cost balance`);
+    throw designInvariant(`unknown plant '${d.machinery.plantId}' in cost balance`);
   const machinery = BigInt(d.machinery.installedKw) * BigInt(perKw);
 
   let components = 0n;

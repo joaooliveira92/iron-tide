@@ -32,6 +32,7 @@ import { partCatalogue } from "./partQueries.js";
 import type { DraftCompileContent } from "./compileDraft.js";
 import { buildCompatibilitySlots, type CompatibilityModel } from "./partCompatibility.js";
 import { rebuildDraft } from "./partCatalogueReaders.js";
+import { designInvariant } from "./errors.js";
 
 export type { ReferenceDesignProvenance, ReferenceValueProvenance } from "@bluewave/content-schema";
 
@@ -144,7 +145,9 @@ export function referenceDesignsFromLoadouts(
       slotOf: production.slotLookup(loadout.loadout.platform),
     });
     if (rebuilt.draft === null || rebuilt.issues.length > 0) {
-      throw new Error(`reference design '${loadout.id}' does not rebuild from its parts loadout`);
+      throw designInvariant(
+        `reference design '${loadout.id}' does not rebuild from its parts loadout`,
+      );
     }
     const source = authoredById.get(loadout.id);
     return {
@@ -164,12 +167,12 @@ export function buildShipBuildingContent(data: ShipBuildingData): ShipBuildingCo
   if (data.balance.rebuild !== undefined) {
     const problems = checkRebuildBalance(data.balance.rebuild);
     if (problems.length > 0)
-      throw new Error(`invalid ship-building rebuild balance: ${problems.join("; ")}`);
+      throw designInvariant(`invalid ship-building rebuild balance: ${problems.join("; ")}`);
   }
   if (data.balance.revision !== undefined) {
     const problems = checkRevisionBalance(data.balance.revision);
     if (problems.length > 0)
-      throw new Error(`invalid ship-building revision balance: ${problems.join("; ")}`);
+      throw designInvariant(`invalid ship-building revision balance: ${problems.join("; ")}`);
   }
   const ship = shipBalanceFromRecord(data.balance.ship);
   const forms = hullFormsFromRecords(data.hullForms);
@@ -268,7 +271,7 @@ export function buildShipBuildingContent(data: ShipBuildingData): ShipBuildingCo
         draft: r.draft,
       })),
     aiEnvironmentFor: (month, nationId) => {
-      if (!data.balance.ai) throw new Error("ship-building balance has no 'ai' section");
+      if (!data.balance.ai) throw designInvariant("ship-building balance has no 'ai' section");
       const env = environmentFor(month, nationId);
       return {
         ctx: env.ctx,

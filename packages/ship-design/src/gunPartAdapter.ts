@@ -18,6 +18,7 @@ import {
   type QuantityReadIssue,
 } from "./legacyComponentQuantities.js";
 import { availableUntilFromRetirementMonth } from "./partLifecycle.js";
+import { designInvariant } from "./errors.js";
 
 export type FlattenedGunPart = Extract<FlattenedPart, { readonly family: "gun" }>;
 export type FlattenedGunMountPart = Extract<FlattenedPart, { readonly family: "gun_mount" }>;
@@ -105,7 +106,7 @@ function gunPartFromModel(
   model: ArmamentGunModel,
 ): FlattenedGunPart {
   if (model.caliberUm === undefined || model.introductionMonth === undefined) {
-    throw new Error(
+    throw designInvariant(
       `gunPartAdapter: gun model '${String(model.id)}' has no caliberUm or introductionMonth; ` +
         "every authored model and its legacy component define both",
     );
@@ -217,7 +218,7 @@ function mountPartFromLegacy(
   perGunTerms: readonly QuantityComponentData[],
 ): FlattenedGunMountPart {
   if (legacy.introductionMonth === undefined) {
-    throw new Error(
+    throw designInvariant(
       `gunPartAdapter: gun mount '${String(legacy.id)}' has no introductionMonth; ` +
         "every authored mount and its legacy component define one",
     );

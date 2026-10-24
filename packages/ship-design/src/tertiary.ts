@@ -1,3 +1,4 @@
+import { designInvariant } from "./errors.js";
 export interface TertiaryBattery {
   readonly caliberUm: number;
   readonly count: number;
@@ -39,9 +40,9 @@ export function expandTertiary(
 ): TertiaryExpansion {
   if (t === undefined) return NONE;
   if (!Number.isSafeInteger(t.caliberUm) || t.caliberUm <= 0)
-    throw new Error(`tertiary caliberUm must be a positive integer, got ${t.caliberUm}`);
+    throw designInvariant(`tertiary caliberUm must be a positive integer, got ${t.caliberUm}`);
   if (!Number.isSafeInteger(t.count) || t.count < 0)
-    throw new Error(`tertiary count must be a non-negative integer, got ${t.count}`);
+    throw designInvariant(`tertiary count must be a non-negative integer, got ${t.count}`);
   if (t.count === 0) return NONE;
   const n = BigInt(t.count);
   const cube = BigInt(t.caliberUm) ** 3n;

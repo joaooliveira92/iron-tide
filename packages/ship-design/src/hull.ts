@@ -11,6 +11,7 @@ import {
   type LedgerCategory,
 } from "./ledger.js";
 import { kg, toSafe, type Bp, type Kg, type Mm } from "./units.js";
+import { designInvariant } from "./errors.js";
 
 export interface HullForm {
   readonly id: string;
@@ -82,7 +83,7 @@ export function hullStructureWeight(h: HullSpec, form: HullForm, b: HullBalance)
   const mat = b.materialBp[h.materialId];
   const scheme = b.schemeBp[h.structuralSchemeId];
   if (mat === undefined || scheme === undefined)
-    throw new Error("unknown material or structural scheme");
+    throw designInvariant("unknown material or structural scheme");
   const sub = b.subdivisionBp[h.subdivisionGrade];
   const volume = BigInt(h.lengthWl) * BigInt(h.beam) * BigInt(h.depthToMainDeck);
   const p = powRational(volume, 63, 50);

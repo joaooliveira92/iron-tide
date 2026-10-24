@@ -4,6 +4,7 @@ import type { CostBreakdown } from "./cost.js";
 import { evaluate, type LookupTable } from "./formula/eval.js";
 import { parseFormula } from "./formula/parse.js";
 import { toSafe } from "./units.js";
+import { designInvariant } from "./errors.js";
 
 export type LineId = "slipway" | "armour_plate" | "heavy_gun" | "machinery" | "quay" | "trials";
 export const LINE_IDS: readonly LineId[] = [
@@ -90,7 +91,7 @@ export interface BuildTimeOptions {
 
 function yearOf(month: string): number {
   const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(month);
-  if (!m) throw new Error(`build time needs a YYYY-MM month, got '${month}'`);
+  if (!m) throw designInvariant(`build time needs a YYYY-MM month, got '${month}'`);
   return Number(m[1]);
 }
 
@@ -129,14 +130,15 @@ function checkProvenance(
   prov: readonly BuildTimeProvenance[],
 ): void {
   if (prov.length !== points.length) {
-    throw new Error(`${name} has ${prov.length} entries for ${points.length} table points`);
+    throw designInvariant(`${name} has ${prov.length} entries for ${points.length} table points`);
   }
-  if (points.length === 0) throw new Error(`empty build-time table for ${name}`);
+  if (points.length === 0) throw designInvariant(`empty build-time table for ${name}`);
   for (const p of prov) {
     if (p.status !== "VERIFIED" && p.status !== "SECONDARY" && p.status !== "ESTIMATE") {
-      throw new Error(`unknown build-time source status '${String(p.status)}'`);
+      throw designInvariant(`unknown build-time source status '${String(p.status)}'`);
     }
-    if (p.source.trim() === "") throw new Error("build-time provenance needs a source citation");
+    if (p.source.trim() === "")
+      throw designInvariant("build-time provenance needs a source citation");
   }
 }
 

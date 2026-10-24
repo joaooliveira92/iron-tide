@@ -1,3 +1,4 @@
+import { BluewaveError } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import { assessSimilarity, studyTerms } from "../src/index.js";
 import { checkStudyBalance, StudyContractError, type SimilarityProfile } from "../src/study.js";
@@ -134,6 +135,6 @@ describe("study terms (sections 3 and 18)", () => {
     expect(checkStudyBalance({ ...balance, derivedDiscountBp: 1_500 }).derivedDiscountBp).toBe(
       1_500,
     );
-    expect(() => studyTerms(-1, false, balance)).toThrow(RangeError);
+    expect(() => studyTerms(-1, false, balance)).toThrow(BluewaveError);
   });
 });

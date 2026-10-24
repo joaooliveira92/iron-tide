@@ -1,6 +1,7 @@
 import type { CompiledPartModel, FlattenedPart } from "@bluewave/content-schema";
 import { compareCodePoints } from "@bluewave/deterministic";
 import type { ComponentCategory, ComponentDef, ParameterRange } from "./component.js";
+import { designInvariant } from "./errors.js";
 
 const STANDARD_GUN_PREFIX = "standard_";
 
@@ -82,7 +83,7 @@ function fcClassOf(part: FlattenedPart): string | null {
 function entryOfPart(part: FlattenedPart): PartCatalogueEntry {
   const category = categoryOf(part);
   if (category === null) {
-    throw new Error(
+    throw designInvariant(
       `part '${part.id}' is family-level but has no derivable component category in the part model`,
     );
   }
