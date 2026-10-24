@@ -1,5 +1,10 @@
-export { FieldPrioritiesEditor } from "./FieldPrioritiesEditor.js";
-export { InProgressTechnologiesCard } from "./InProgressTechnologiesCard.js";
+export { AllocationSpectrum } from "./AllocationSpectrum.js";
+export { ArchivePanel } from "./ArchivePanel.js";
+export { BriefingPanel } from "./BriefingPanel.js";
+export { FieldHeader } from "./FieldHeader.js";
+export { FieldMap } from "./FieldMap.js";
+export { ResearchCommandBar } from "./ResearchCommandBar.js";
 export { ResearchLoadErrorState, ResearchLoadingState } from "./ResearchLoadStates.js";
 export { ResearchNotice } from "./ResearchNotice.js";
-export { ResearchSummarySections } from "./ResearchSummarySections.js";
+export { TechnologyChart } from "./TechnologyChart.js";
+export { TechnologyDetail } from "./TechnologyDetail.js";

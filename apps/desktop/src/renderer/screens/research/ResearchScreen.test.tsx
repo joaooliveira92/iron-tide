@@ -1,100 +1,175 @@
 /* @vitest-environment jsdom */
-import { RESEARCH_FIELD_PRIORITY_WEIGHTS } from "@bluewave/campaign-engine";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { ResearchScreen } from "./ResearchScreen.js";
 import { researchLoadSuccess } from "./research-screen-state.js";
 import type { ResearchScreenState } from "./research-screen-state.js";
+import { fixtureProjection } from "./research-test-fixtures.js";
 
-const fixtureProjection = {
-  nationId: "uk",
-  researchBudget: 60,
-  annualAllocation: 720,
-  researchCap: 120,
-  unfundedReason: null,
-  fieldPriorities: {
-    GUNNERY: RESEARCH_FIELD_PRIORITY_WEIGHTS.HIGH,
-    MACHINERY: RESEARCH_FIELD_PRIORITY_WEIGHTS.MEDIUM,
-    INFRASTRUCTURE: RESEARCH_FIELD_PRIORITY_WEIGHTS.LOW,
-  },
-  discoveredTechIds: ["basic_steam", "gunnery_rifled"],
-  inProgressTechnologies: [{ techId: "gunnery_rifled", investedPoints: 24, completed: false }],
-  currentProjectTechId: "gunnery_rifled",
-  revision: 0,
-  month: { month: 1, year: 1880 },
-};
-
-function makeLoaded(): ResearchScreenState {
-  return researchLoadSuccess(fixtureProjection as never);
+function makeLoaded(overrides = {}): ResearchScreenState {
+  return researchLoadSuccess(fixtureProjection(overrides));
 }
 
-const hookMocks = vi.hoisted(() => {
-  const stateFn = vi.fn(() => makeLoaded());
-  const setFieldWeight = vi.fn();
-  const submit = vi.fn();
-  const reload = vi.fn().mockResolvedValue(undefined);
-  const canSubmit = true;
-  return { stateFn, setFieldWeight, submit, reload, canSubmit };
-});
+const hookMocks = vi.hoisted(() => ({
+  stateFn: vi.fn(),
+  setFieldWeight: vi.fn(),
+  revert: vi.fn(),
+  submit: vi.fn(),
+  reload: vi.fn().mockResolvedValue(undefined),
+  canSubmit: { value: true },
+}));
 
-const ResizeObserverMock = vi.hoisted(
-  () =>
-    class implements ResizeObserver {
-      observe(): void {}
-      unobserve(): void {}
-      disconnect(): void {}
-    },
+vi.stubGlobal(
+  "ResizeObserver",
+  class implements ResizeObserver {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+  },
 );
-vi.stubGlobal("ResizeObserver", ResizeObserverMock);
 
 vi.mock("./hooks/useResearchScreen.js", () => ({
   useResearchScreen: (_sessionId: string) => ({
     state: hookMocks.stateFn(),
     loadError: null,
     setFieldWeight: hookMocks.setFieldWeight,
+    revert: hookMocks.revert,
     submit: hookMocks.submit,
     reload: hookMocks.reload,
-    canSubmit: hookMocks.canSubmit,
+    canSubmit: hookMocks.canSubmit.value,
   }),
 }));
 
 afterEach(() => {
   cleanup();
-  hookMocks.stateFn.mockClear();
+  hookMocks.stateFn.mockReset();
+  hookMocks.setFieldWeight.mockClear();
+  hookMocks.revert.mockClear();
   hookMocks.submit.mockClear();
+  hookMocks.canSubmit.value = true;
 });
 
 describe("ResearchScreen", () => {
-  it("renders the real projection: budget, priorities, in-progress techs, discovered techs", () => {
+  it("lists every research field and opens the best-funded field's chart", () => {
+    hookMocks.stateFn.mockReturnValue(makeLoaded());
     render(<ResearchScreen sessionId="ses-1" />);
 
-    expect(screen.getByText("60")).not.toBeNull();
-
-    expect(screen.getByText("Gunnery")).not.toBeNull();
-    expect(screen.getByText("Machinery")).not.toBeNull();
-    expect(screen.getByText("Infrastructure")).not.toBeNull();
-
-    expect(screen.getByText("Basic steam")).not.toBeNull();
-    expect(screen.getAllByText("Gunnery rifled").length).toBeGreaterThanOrEqual(2);
-
-    expect(screen.getByText("24 pts")).not.toBeNull();
+    const map = screen.getByRole("navigation", { name: "Research fields" });
+    expect(within(map).getAllByRole("button", { name: /discovered$/ })).toHaveLength(15);
+    expect(screen.getByTestId("tech-node-hc_compound")).not.toBeNull();
+    expect(screen.queryByTestId("tech-node-mac_compound")).toBeNull();
   });
 
-  it("renders an honest empty state (no budget/found/discovered progress) without fabrication", () => {
-    const emptyProjection = {
-      ...fixtureProjection,
-      researchBudget: 0,
-      discoveredTechIds: [],
-      inProgressTechnologies: [],
-      currentProjectTechId: null,
-      fieldPriorities: {},
-    };
-    const emptyState = researchLoadSuccess(emptyProjection as never);
-    hookMocks.stateFn.mockReturnValue(emptyState);
-
+  it("shows each technology's state on the chart", () => {
+    hookMocks.stateFn.mockReturnValue(makeLoaded());
     render(<ResearchScreen sessionId="ses-1" />);
-    expect(screen.getByText("None discovered yet")).not.toBeNull();
-    expect(screen.getByText("No technology work recorded yet")).not.toBeNull();
-    expect(screen.getByText("No active project selected")).not.toBeNull();
+
+    expect(screen.getByTestId("tech-node-hc_wrought").getAttribute("data-status")).toBe(
+      "discovered",
+    );
+    expect(screen.getByTestId("tech-node-hc_compound").getAttribute("data-status")).toBe("open");
+    expect(screen.getByTestId("tech-node-hc_nickel").getAttribute("data-status")).toBe("locked");
+  });
+
+  it("switches the chart when another field is chosen", () => {
+    hookMocks.stateFn.mockReturnValue(makeLoaded());
+    render(<ResearchScreen sessionId="ses-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^Machinery, Medium priority/ }));
+    expect(screen.getByTestId("tech-node-mac_compound").getAttribute("data-status")).toBe(
+      "researching",
+    );
+    expect(screen.queryByTestId("tech-node-hc_compound")).toBeNull();
+  });
+
+  it("sets a field priority through the weight control", () => {
+    hookMocks.stateFn.mockReturnValue(makeLoaded());
+    render(<ResearchScreen sessionId="ses-1" />);
+
+    const group = screen.getAllByRole("group", { name: "Hull construction" })[0]!;
+    fireEvent.click(within(group).getByRole("button", { name: "Hull construction Med" }));
+    expect(hookMocks.setFieldWeight).toHaveBeenCalledWith("HULL_CONSTRUCTION", 2);
+  });
+
+  it("opens a technology's detail in the inspector when it is clicked", () => {
+    hookMocks.stateFn.mockReturnValue(makeLoaded());
+    render(<ResearchScreen sessionId="ses-1" />);
+
+    fireEvent.click(screen.getByTestId("tech-node-hc_compound"));
+    const inspector = screen.getByRole("complementary", { name: /Inspector/ });
+    expect(within(inspector).getByText("67% to be drawn next")).not.toBeNull();
+    expect(within(inspector).getByText("Wrought Iron Hull")).not.toBeNull();
+  });
+
+  it("reports the budget and archive progress in the status bar", () => {
+    hookMocks.stateFn.mockReturnValue(makeLoaded());
+    render(<ResearchScreen sessionId="ses-1" />);
+
+    const bar = screen.getByRole("region", { name: "Engineering status" });
+    expect(within(bar).getByText("60 pts/month")).not.toBeNull();
+    expect(within(bar).getByText("1 / 7")).not.toBeNull();
+  });
+
+  it("applies and reverts through the command bar", () => {
+    const edited = makeLoaded();
+    if (edited.kind !== "loaded") throw new Error("expected loaded");
+    hookMocks.stateFn.mockReturnValue({
+      ...edited,
+      draft: { ...edited.draft, GUNNERY: 4 },
+    });
+    render(<ResearchScreen sessionId="ses-1" />);
+
+    expect(screen.getByText("Unsaved changes")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Revert/ }));
+    expect(hookMocks.revert).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: /Set priorities/ }));
+    expect(hookMocks.submit).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not offer to apply an unchanged or invalid draft", () => {
+    hookMocks.canSubmit.value = false;
+    hookMocks.stateFn.mockReturnValue(makeLoaded());
+    render(<ResearchScreen sessionId="ses-1" />);
+
+    expect(
+      (screen.getByRole("button", { name: /Set priorities/ }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+  });
+
+  it("warns when a High priority field has nothing open and its share goes elsewhere", () => {
+    hookMocks.stateFn.mockReturnValue(
+      makeLoaded({
+        fieldPriorities: { HULL_CONSTRUCTION: 4, MACHINERY: 2, GUNNERY: 4 },
+      }),
+    );
+    render(<ResearchScreen sessionId="ses-1" />);
+
+    expect(
+      screen.getByText(/Gunnery is High priority with nothing open to research/),
+    ).not.toBeNull();
+  });
+
+  it("tells the truth about a field with no authored technologies", () => {
+    hookMocks.stateFn.mockReturnValue(makeLoaded());
+    render(<ResearchScreen sessionId="ses-1" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /^Missiles, Low priority/ }));
+    expect(screen.getByText("No technologies are authored for this field yet.")).not.toBeNull();
+  });
+
+  it("says plainly that an empty budget spends nothing", () => {
+    hookMocks.stateFn.mockReturnValue(makeLoaded({ researchBudget: 0 }));
+    render(<ResearchScreen sessionId="ses-1" />);
+
+    expect(screen.getByText("The research budget is empty, so nothing is spent.")).not.toBeNull();
+  });
+
+  it("explains a rejected submit instead of hiding it", () => {
+    const loaded = makeLoaded();
+    if (loaded.kind !== "loaded") throw new Error("expected loaded");
+    hookMocks.stateFn.mockReturnValue({ ...loaded, notice: "REJECTED: stale revision" });
+    render(<ResearchScreen sessionId="ses-1" />);
+
+    expect(screen.getByText("Not applied")).not.toBeNull();
   });
 });
