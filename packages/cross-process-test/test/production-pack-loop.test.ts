@@ -15,6 +15,7 @@ import type { CommandEnvelope, BudgetProjectCommand } from "@bluewave/commands";
 import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
 import { MonthExecutor, ReplayVerifier } from "@bluewave/phase-engine";
 import { mkdirSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { Effect } from "effect";
 import { FIXTURE_BATTLE_OFFER_RULES, FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
 import { compileProductionCampaign } from "../src/production-pack.js";
 import { tmpdir } from "node:os";
@@ -146,15 +147,11 @@ describe("production pack (content/production/1880) full loop", () => {
       };
       store.save(saveableState, saveDir);
 
-      const loadDiag = new DiagnosticCollector();
-      const loaded = store.load(saveDir, loadDiag);
+      const loaded = Effect.runSync(store.load(saveDir));
 
-      expect(loadDiag.hasErrors).toBe(false);
-      expect(loaded).not.toBeNull();
-      if (loaded) {
-        expect(loaded.snapshot.nations.size).toBe(snapshot.nations.size);
-        expect(loaded.snapshot.campaignId).toBe(snapshot.campaignId);
-      }
+      expect(loaded.warnings).toEqual([]);
+      expect(loaded.state.snapshot.nations.size).toBe(snapshot.nations.size);
+      expect(loaded.state.snapshot.campaignId).toBe(snapshot.campaignId);
 
       const replayVerifier = new ReplayVerifier();
       const closingSnapshotHash = hashSnapshot(monthResult.finalSnapshot);
@@ -481,12 +478,11 @@ describe("S-2 ticket 03: prestige on the production pack (ADR-0239)", () => {
       const store = new SaveStore();
       const { rawHash: _rawHash, ...stateForSave } = state;
       store.save({ ...state, rawHash: sha256Hex(canonicalSerialize(stateForSave)) }, dir);
-      const diagnostics = new DiagnosticCollector();
-      const loaded = store.load(dir, diagnostics);
-      expect(diagnostics.errors.map((d) => `${d.code}: ${d.message}`)).toEqual([]);
-      expect(loaded?.snapshot.prestigeRules).toEqual(EXPECTED_RULES);
+      const loaded = Effect.runSync(store.load(dir));
+      expect(loaded.warnings.map((d) => `${d.code}: ${d.message}`)).toEqual([]);
+      expect(loaded.state.snapshot.prestigeRules).toEqual(EXPECTED_RULES);
       for (const [id, nation] of state.snapshot.nations) {
-        expect(loaded?.snapshot.nations.get(id)?.prestige, id).toBe(nation.prestige);
+        expect(loaded.state.snapshot.nations.get(id)?.prestige, id).toBe(nation.prestige);
       }
     } finally {
       rmSync(dir, { recursive: true, force: true });

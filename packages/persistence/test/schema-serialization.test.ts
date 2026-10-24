@@ -9,7 +9,6 @@ import {
   sha256Hex,
   verifyEnvelope,
 } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { Result, Schema } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
@@ -20,6 +19,7 @@ import {
 } from "../src/schemas.js";
 import { fromStorableSnapshot } from "../src/snapshotSerialization.js";
 import { SaveStore } from "../src/store.js";
+import { runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function createFixtureState(): CampaignState {
@@ -89,14 +89,12 @@ describe("Effect Schema save-boundary serialization (MIG-WIRE-4)", () => {
     const state = createFixtureState();
     store.save(state, tmpDir);
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
 
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded).not.toBeNull();
-    expect(loaded!.rawHash).toBe(state.rawHash);
-    expect(loaded!.envelope.bodyHash).toBe(state.envelope.bodyHash);
-    expect(loaded!.snapshot.campaignId).toBe("schema-roundtrip");
+    expect(loaded.warnings).toEqual([]);
+    expect(loaded.state.rawHash).toBe(state.rawHash);
+    expect(loaded.state.envelope.bodyHash).toBe(state.envelope.bodyHash);
+    expect(loaded.state.snapshot.campaignId).toBe("schema-roundtrip");
   });
 
   const minimalStorableState = () => ({

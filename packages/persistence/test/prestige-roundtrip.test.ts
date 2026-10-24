@@ -9,7 +9,6 @@ import type {
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import {
   COMPATIBILITY_MISMATCH_CODE,
@@ -17,6 +16,7 @@ import {
 } from "../src/compatibility.js";
 import { toStorableSnapshot } from "../src/snapshotSerialization.js";
 import { SaveStore } from "../src/store.js";
+import { expectFailureTag, runExit, unwrapSuccess } from "./harness.js";
 
 const VALUE_SET = {
   lowerBound: SafeInt(0),
@@ -113,16 +113,13 @@ describe("SaveStore round-trips the S-2 prestige state", () => {
     const store = new SaveStore();
     store.save(state, tmpDir);
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded).not.toBeNull();
-    if (!loaded) return;
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    expect(loaded.warnings).toEqual([]);
 
-    expect(loaded.snapshot.nations.get("nation-a")?.prestige).toBe(33);
-    expect(loaded.snapshot.prestigeRules).toEqual(VALUE_SET);
-    expect(loaded.rawHash).toBe(state.rawHash);
-    expect(loaded.envelope.bodyHash).toBe(state.envelope.bodyHash);
+    expect(loaded.state.snapshot.nations.get("nation-a")?.prestige).toBe(33);
+    expect(loaded.state.snapshot.prestigeRules).toEqual(VALUE_SET);
+    expect(loaded.state.rawHash).toBe(state.rawHash);
+    expect(loaded.state.envelope.bodyHash).toBe(state.envelope.bodyHash);
   });
 
   it("moves the stored snapshot hash when a nation's prestige changes", () => {
@@ -149,9 +146,9 @@ describe("SaveStore round-trips the S-2 prestige state", () => {
       rules: { ...VALUE_SET.rules, DECLINED_BATTLE: { kind: "FIXED_LOSS", amount: SafeInt(2) } },
     });
     new SaveStore().save(withRule, tmpDir);
-    const loaded = new SaveStore().load(tmpDir, new DiagnosticCollector());
-    expect(loaded?.snapshot.prestigeRules).toEqual(withRule.snapshot.prestigeRules);
-    expect(loaded?.rawHash).toBe(withRule.rawHash);
+    const loaded = unwrapSuccess(runExit(new SaveStore().load(tmpDir)));
+    expect(loaded.state.snapshot.prestigeRules).toEqual(withRule.snapshot.prestigeRules);
+    expect(loaded.state.rawHash).toBe(withRule.rawHash);
   });
 
   it("stores a value set without DECLINED_BATTLE with no such key, so its bytes do not move (ADR-0261)", () => {
@@ -164,10 +161,11 @@ describe("SaveStore round-trips the S-2 prestige state", () => {
     const state = makeFixtureState(33, previous);
     new SaveStore(previous).save(state, tmpDir);
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = new SaveStore().load(tmpDir, diagnostics);
-    expect(loaded).toBeNull();
-    expect(diagnostics.all.map((d) => d.code)).toContain(COMPATIBILITY_MISMATCH_CODE);
+    const error = expectFailureTag(
+      runExit(new SaveStore().load(tmpDir)),
+      "PERSISTENCE_COMPATIBILITY_MISMATCH",
+    );
+    expect(error.code).toBe(COMPATIBILITY_MISMATCH_CODE);
   });
 
   it("is stamped with the new compatibility version", () => {
@@ -194,16 +192,15 @@ describe("SaveStore round-trips the S-2 prestige state", () => {
     const store = new SaveStore();
     store.save(state, tmpDir);
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
-    expect(diagnostics.all.map((d) => d.message)).toEqual([]);
-    expect(loaded?.snapshot.careerResult).toEqual(careerResult);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    expect(loaded.warnings).toEqual([]);
+    expect(loaded.state.snapshot.careerResult).toEqual(careerResult);
   });
 
   it("a snapshot without a career result loads without one", () => {
     const store = new SaveStore();
     store.save(makeFixtureState(14), tmpDir);
-    const loaded = store.load(tmpDir, new DiagnosticCollector());
-    expect(loaded?.snapshot.careerResult).toBeUndefined();
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    expect(loaded.state.snapshot.careerResult).toBeUndefined();
   });
 });

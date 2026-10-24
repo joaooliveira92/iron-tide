@@ -183,8 +183,7 @@ describe("turn-messages end-to-end acceptance", () => {
   }
 
   function reloadSessionFromDisk(sessionId: string, saveDir: string) {
-    const loaded = new SaveStore().load(saveDir, new DiagnosticCollector());
-    if (!loaded) throw new Error("save failed to reload");
+    const loaded = Effect.runSync(new SaveStore().load(saveDir)).state;
     registerCampaignSession({
       sessionId,
       saveDir,
@@ -240,9 +239,8 @@ describe("turn-messages end-to-end acceptance", () => {
     expect(existsSync(join(saveDir, TURN_SUMMARIES_FILENAME))).toBe(true);
     expect(existsSync(join(saveDir, PENDING_TURN_FILENAME))).toBe(false);
 
-    const loaded = new SaveStore().load(saveDir, new DiagnosticCollector());
-    expect(loaded).not.toBeNull();
-    expect(Number(loaded?.snapshot.turnNumber)).toBe(3);
+    const loaded = Effect.runSync(new SaveStore().load(saveDir)).state;
+    expect(Number(loaded.snapshot.turnNumber)).toBe(3);
   });
 
   it("is deterministic: two identical campaigns produce identical authoritative state", async () => {

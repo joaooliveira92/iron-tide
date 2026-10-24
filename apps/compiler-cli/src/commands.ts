@@ -584,9 +584,15 @@ export const runCampaignLoad = (
   Effect.gen(function* () {
     const collector = new DiagnosticCollector();
     const store = new SaveStore();
-    const state = store.load(saveDir, collector);
+    const loaded = yield* Effect.result(store.load(saveDir));
+    if (Result.isFailure(loaded)) {
+      collector.add(loaded.failure.toDiagnostic());
+      yield* printDiagnostics(collector, options.outputMode);
+      return "validation-error";
+    }
+    for (const warning of loaded.success.warnings) collector.add(warning);
     yield* printDiagnostics(collector, options.outputMode);
-    if (!state) return "validation-error";
+    const state = loaded.success.state;
     if (options.outputMode === "json") {
       yield* printResult(
         JSON.stringify({
@@ -613,11 +619,14 @@ export const runBattleGenerate = (
   Effect.gen(function* () {
     const collector = new DiagnosticCollector();
     const store = new SaveStore();
-    const state = store.load(saveDir, collector);
-    if (!state) {
+    const loaded = yield* Effect.result(store.load(saveDir));
+    if (Result.isFailure(loaded)) {
+      collector.add(loaded.failure.toDiagnostic());
       yield* printDiagnostics(collector, options.outputMode);
       return "validation-error";
     }
+    for (const warning of loaded.success.warnings) collector.add(warning);
+    const state = loaded.success.state;
     const snapshot = reviveCampaignSnapshot(state.snapshot);
     const campaignMonth = options.campaignMonth ?? String(snapshot.turnNumber);
     const rulesetVersion = options.rulesetVersion ?? snapshot.rulesetVersion;
@@ -893,11 +902,14 @@ export const runTurnExecute = (
     const fs = yield* CliFileSystem;
     const collector = new DiagnosticCollector();
     const store = new SaveStore();
-    const state = store.load(saveDir, collector);
-    if (!state) {
+    const loaded = yield* Effect.result(store.load(saveDir));
+    if (Result.isFailure(loaded)) {
+      collector.add(loaded.failure.toDiagnostic());
       yield* printDiagnostics(collector, options.outputMode);
       return "validation-error";
     }
+    for (const warning of loaded.success.warnings) collector.add(warning);
+    const state = loaded.success.state;
     const revivedSnapshot = reviveCampaignSnapshot(state.snapshot);
     const executor = new MonthExecutor();
     const randomSeed = options.seed || "default-seed";
@@ -997,11 +1009,14 @@ export const runReplay = (
       );
       return "validation-error";
     }
-    const state = store.loadById(saveDir, previousSaveId, collector);
-    if (!state) {
+    const loaded = yield* Effect.result(store.loadById(saveDir, previousSaveId));
+    if (Result.isFailure(loaded)) {
+      collector.add(loaded.failure.toDiagnostic());
       yield* printDiagnostics(collector, options.outputMode);
       return "validation-error";
     }
+    for (const warning of loaded.success.warnings) collector.add(warning);
+    const state = loaded.success.state;
     const savePath = join(saveDir, activeSaveId);
     const commandsPath = join(savePath, "commands.json");
     const ledgerPath = join(savePath, "command-ledger.json");

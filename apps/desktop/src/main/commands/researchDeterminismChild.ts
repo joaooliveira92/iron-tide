@@ -8,7 +8,7 @@ import {
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { SaveStore } from "@bluewave/persistence";
-import { ManagedRuntime } from "effect";
+import { Effect, ManagedRuntime } from "effect";
 import { registerCampaignSession } from "../campaignSessions.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { resolveGeneratedContentDir } from "../contentPack.js";
@@ -85,8 +85,7 @@ async function run(): Promise<void> {
       throw new Error(`commit failed: ${committed.reason}: ${committed.diagnostics.join("; ")}`);
     }
 
-    const post = new SaveStore().load(saveDir, new DiagnosticCollector());
-    if (!post) throw new Error("load failed after commit");
+    const post = Effect.runSync(new SaveStore().load(saveDir)).state;
     const applied = post.snapshot.nations.get("uk")!.research.fieldPriorities;
     if (applyKey(Object.fromEntries(Object.entries(applied))) !== applyKey(fullPriorities())) {
       throw new Error("engine did not apply the queued priorities");

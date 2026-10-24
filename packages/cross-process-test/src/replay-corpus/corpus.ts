@@ -9,7 +9,7 @@ import { canonicalSerialize } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore, restampState } from "@bluewave/persistence";
 import { MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
-import { Result } from "effect";
+import { Effect, Result } from "effect";
 
 import { compileProductionCampaign } from "../production-pack.js";
 import { LEDGER_ORDER, fullSnapshotHash, ledgerEntryText, monthCheckpoint } from "./checkpoint.js";
@@ -105,15 +105,11 @@ export function saveAndLoad(snapshot: CampaignSnapshot): RoundTrip {
       snapshot.compatibilityVersion,
     );
     store.save(state, saveDir);
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(saveDir, diagnostics);
-    if (loaded === null || diagnostics.hasErrors) {
-      return {
-        ok: false,
-        reason: diagnostics.all.find((d) => d.severity === "error")?.message ?? "load failed",
-      };
+    const loaded = Effect.runSync(Effect.result(store.load(saveDir)));
+    if (Result.isFailure(loaded)) {
+      return { ok: false, reason: loaded.failure.message };
     }
-    return { ok: true, snapshot: loaded.snapshot };
+    return { ok: true, snapshot: loaded.success.state.snapshot };
   } finally {
     rmSync(saveDir, { recursive: true, force: true });
   }

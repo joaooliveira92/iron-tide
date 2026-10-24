@@ -16,14 +16,15 @@ import {
   sha256Hex,
   verifyEnvelope,
 } from "@bluewave/deterministic";
-import type { DiagnosticCollector } from "@bluewave/diagnostics";
-import { Result, Schema } from "effect";
+import type { Diagnostic } from "@bluewave/diagnostics";
+import { Effect, Result, Schema } from "effect";
 import { CompatibilityChecker, CURRENT_COMPATIBILITY_VERSION } from "./compatibility.js";
 import {
-  CANCELLED_CODE,
-  CORRUPT_SAVE_CODE,
-  MISSING_SAVE_CODE,
-  UNSIGNED_SAVE_CODE,
+  PersistenceCancelledError,
+  PersistenceCompatibilityMismatchError,
+  PersistenceCorruptSaveError,
+  PersistenceMissingSaveError,
+  PersistenceUnsignedSaveError,
 } from "./errors.js";
 import { readPointerFile, readSaveMetadata, readSigFile } from "./fileDecode.js";
 import { cleanup } from "./recovery.js";
@@ -78,10 +79,37 @@ export interface SaveExtras {
 
 export type MonthInputLoad =
   | { readonly status: "absent" }
-  | { readonly status: "present"; readonly value: unknown }
-  | { readonly status: "corrupt" };
+  | { readonly status: "present"; readonly value: unknown };
+
+export interface LoadedSave {
+  readonly state: CampaignState;
+  readonly warnings: readonly Diagnostic[];
+}
+
+export type LoadFailure =
+  | PersistenceCorruptSaveError
+  | PersistenceMissingSaveError
+  | PersistenceCancelledError
+  | PersistenceCompatibilityMismatchError;
 
 const MONTH_INPUT_FILE = "month-input.json";
+const LOAD_STAGE = "persistence.load";
+const MONTH_INPUT_STAGE = "persistence.loadMonthInput";
+
+function corruptSave(message: string): PersistenceCorruptSaveError {
+  return new PersistenceCorruptSaveError({ message, stage: LOAD_STAGE });
+}
+
+function missingSave(message: string): PersistenceMissingSaveError {
+  return new PersistenceMissingSaveError({ message, stage: LOAD_STAGE });
+}
+
+function cancelledLoad(): PersistenceCancelledError {
+  return new PersistenceCancelledError({
+    message: "Load operation was cancelled",
+    stage: LOAD_STAGE,
+  });
+}
 
 export class SaveStore {
   constructor(
@@ -174,313 +202,27 @@ export class SaveStore {
     }
   }
 
-  load(
-    saveDir: string,
-    diagnostics: DiagnosticCollector,
-    signal?: AbortSignal,
-  ): CampaignState | null {
-    if (signal?.aborted) {
-      diagnostics.addError(CANCELLED_CODE, "Load operation was cancelled", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    if (!existsSync(saveDir)) {
-      diagnostics.addError(MISSING_SAVE_CODE, `Save directory not found: ${saveDir}`, {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    const pointerPath = join(saveDir, "pointer.json");
-    if (!existsSync(pointerPath)) {
-      diagnostics.addError(
-        MISSING_SAVE_CODE,
-        `No pointer file found in save directory: ${saveDir}`,
-        {
-          stage: "persistence.load",
-        },
-      );
-      return null;
-    }
-
-    if (signal?.aborted) {
-      diagnostics.addError(CANCELLED_CODE, "Load operation was cancelled", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    const pointer = readPointerFile(pointerPath);
-    if (pointer === null) {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Pointer file is corrupt or unreadable", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    return this.loadById(saveDir, pointer.activeSaveId, diagnostics, signal);
+  load(saveDir: string, signal?: AbortSignal): Effect.Effect<LoadedSave, LoadFailure> {
+    const currentVersion = this.currentCompatibilityVersion;
+    return Effect.suspend(() => Effect.fromResult(loadResult(saveDir, currentVersion, signal)));
   }
 
   loadMonthInput(
     saveDir: string,
     saveId: string,
-    diagnostics: DiagnosticCollector,
-  ): MonthInputLoad {
-    const stage = { stage: "persistence.loadMonthInput" };
-    if (!isValidSaveId(saveId)) {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Save id is not a valid identifier", stage);
-      return { status: "corrupt" };
-    }
-    const savePath = join(saveDir, saveId);
-    if (!isContainedIn(saveDir, savePath)) {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Save id escapes the save directory", stage);
-      return { status: "corrupt" };
-    }
-    const metadata = readSaveMetadata(join(savePath, "metadata.json"));
-    if (metadata === null) {
-      diagnostics.addError(CORRUPT_SAVE_CODE, `Save ${saveId} has no readable metadata`, stage);
-      return { status: "corrupt" };
-    }
-    if (metadata.monthInputHash === undefined) return { status: "absent" };
-    let text: string;
-    try {
-      text = readFileSync(join(savePath, MONTH_INPUT_FILE), "utf8");
-    } catch {
-      diagnostics.addError(CORRUPT_SAVE_CODE, `Save ${saveId} lost its month input`, stage);
-      return { status: "corrupt" };
-    }
-    if (sha256Hex(text) !== metadata.monthInputHash) {
-      diagnostics.addError(
-        CORRUPT_SAVE_CODE,
-        `Save ${saveId} month input does not match its hash`,
-        stage,
-      );
-      return { status: "corrupt" };
-    }
-    try {
-      const value: unknown = JSON.parse(text);
-      return { status: "present", value };
-    } catch {
-      diagnostics.addError(CORRUPT_SAVE_CODE, `Save ${saveId} month input is not JSON`, stage);
-      return { status: "corrupt" };
-    }
+  ): Effect.Effect<MonthInputLoad, PersistenceCorruptSaveError> {
+    return Effect.suspend(() => Effect.fromResult(loadMonthInputResult(saveDir, saveId)));
   }
 
   loadById(
     saveDir: string,
     saveId: string,
-    diagnostics: DiagnosticCollector,
     signal?: AbortSignal,
-  ): CampaignState | null {
-    if (signal?.aborted) {
-      diagnostics.addError(CANCELLED_CODE, "Load operation was cancelled", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    if (!isValidSaveId(saveId)) {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Save id is not a valid identifier", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    if (!existsSync(saveDir)) {
-      diagnostics.addError(MISSING_SAVE_CODE, `Save directory not found: ${saveDir}`, {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    const savePath = join(saveDir, saveId);
-    if (!isContainedIn(saveDir, savePath)) {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Save id escapes the save directory", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    const campaignPath = join(savePath, "campaign.json");
-    const sigPath = join(savePath, "campaign.sig.json");
-
-    if (!existsSync(campaignPath)) {
-      diagnostics.addError(CORRUPT_SAVE_CODE, `Save data file not found: ${campaignPath}`, {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    if (signal?.aborted) {
-      diagnostics.addError(CANCELLED_CODE, "Load operation was cancelled", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    let campaignJson: string;
-    try {
-      campaignJson = readFileSync(campaignPath, "utf8");
-    } catch {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Failed to read save data file", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    if (signal?.aborted) {
-      diagnostics.addError(CANCELLED_CODE, "Load operation was cancelled", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    let raw: unknown;
-    try {
-      raw = JSON.parse(campaignJson);
-    } catch {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Save data file contains invalid JSON", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    const headerResult = Schema.decodeUnknownResult(SaveHeaderSchema)(raw);
-    if (!Result.isSuccess(headerResult)) {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Save data is missing required fields", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    if (
-      !CompatibilityChecker.check(
-        headerResult.success.snapshot.compatibilityVersion,
-        diagnostics,
-        this.currentCompatibilityVersion,
-      )
-    ) {
-      return null;
-    }
-
-    if (signal?.aborted) {
-      diagnostics.addError(CANCELLED_CODE, "Load operation was cancelled", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    const parsedResult = decodeStorableCampaignState(raw);
-    if (!Result.isSuccess(parsedResult)) {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Save data is structurally invalid", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    if (signal?.aborted) {
-      diagnostics.addError(CANCELLED_CODE, "Load operation was cancelled", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    let state: CampaignState;
-    try {
-      state = {
-        ...parsedResult.success,
-        snapshot: fromStorableSnapshot(
-          parsedResult.success.snapshot as unknown as StorableCampaignSnapshot,
-        ),
-      };
-    } catch {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Save data snapshot is malformed", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    if (signal?.aborted) {
-      diagnostics.addError(CANCELLED_CODE, "Load operation was cancelled", {
-        stage: "persistence.load",
-      });
-      return null;
-    }
-
-    const { rawHash: _rawHash, ...stateForHash } = state;
-    const computedRawHash = sha256Hex(canonicalSerialize(stateForHash));
-    if (computedRawHash !== state.rawHash) {
-      diagnostics.addError(
-        CORRUPT_SAVE_CODE,
-        "Save data hash mismatch: content has been modified",
-        {
-          stage: "persistence.load",
-        },
-      );
-      return null;
-    }
-
-    if (!this.validateSignature(sigPath, sha256Hex(campaignJson), state, diagnostics)) {
-      return null;
-    }
-
-    if (!verifyEnvelope(state["envelope"], state["snapshot"])) {
-      diagnostics.addError(
-        CORRUPT_SAVE_CODE,
-        "Save envelope verification failed: snapshot does not match envelope",
-        {
-          stage: "persistence.load",
-        },
-      );
-      return null;
-    }
-
-    return state;
-  }
-
-  private validateSignature(
-    sigPath: string,
-    rawSerializedHash: string,
-    state: CampaignState,
-    diagnostics: DiagnosticCollector,
-  ): boolean {
-    if (!existsSync(sigPath)) {
-      diagnostics.addWarning(
-        UNSIGNED_SAVE_CODE,
-        "Save has no signature file; loaded as legacy with no independent on-disk tamper verification",
-        { stage: "persistence.load" },
-      );
-      return true;
-    }
-
-    const sig = readSigFile(sigPath);
-    if (sig === null) {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Save signature file is invalid", {
-        stage: "persistence.load",
-      });
-      return false;
-    }
-    if (sig.serializedHash !== rawSerializedHash) {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Save signature does not match serialized content", {
-        stage: "persistence.load",
-      });
-      return false;
-    }
-    if (sig.stateHash !== state.rawHash) {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Save signature does not match state", {
-        stage: "persistence.load",
-      });
-      return false;
-    }
-    if (sig.compatibilityVersion !== state.snapshot.compatibilityVersion) {
-      diagnostics.addError(CORRUPT_SAVE_CODE, "Save signature version does not match state", {
-        stage: "persistence.load",
-      });
-      return false;
-    }
-    return true;
+  ): Effect.Effect<LoadedSave, LoadFailure> {
+    const currentVersion = this.currentCompatibilityVersion;
+    return Effect.suspend(() =>
+      Effect.fromResult(loadByIdResult(saveDir, saveId, currentVersion, signal)),
+    );
   }
 
   list(saveDir: string): SaveMetadata[] {
@@ -559,6 +301,187 @@ export class SaveStore {
     const pointerPath = join(saveDir, "pointer.json");
     if (!existsSync(pointerPath)) return null;
     return readPointerFile(pointerPath)?.previousSaveId ?? null;
+  }
+}
+
+export function loadResult(
+  saveDir: string,
+  currentVersion: string = CURRENT_COMPATIBILITY_VERSION,
+  signal?: AbortSignal,
+): Result.Result<LoadedSave, LoadFailure> {
+  if (signal?.aborted) return Result.fail(cancelledLoad());
+
+  if (!existsSync(saveDir)) {
+    return Result.fail(missingSave(`Save directory not found: ${saveDir}`));
+  }
+
+  const pointerPath = join(saveDir, "pointer.json");
+  if (!existsSync(pointerPath)) {
+    return Result.fail(missingSave(`No pointer file found in save directory: ${saveDir}`));
+  }
+
+  const pointer = readPointerFile(pointerPath);
+  if (pointer === null) {
+    return Result.fail(corruptSave("Pointer file is corrupt or unreadable"));
+  }
+
+  return loadByIdCore(saveDir, pointer.activeSaveId, currentVersion);
+}
+
+export function loadByIdResult(
+  saveDir: string,
+  saveId: string,
+  currentVersion: string = CURRENT_COMPATIBILITY_VERSION,
+  signal?: AbortSignal,
+): Result.Result<LoadedSave, LoadFailure> {
+  if (signal?.aborted) return Result.fail(cancelledLoad());
+  return loadByIdCore(saveDir, saveId, currentVersion);
+}
+
+function loadByIdCore(
+  saveDir: string,
+  saveId: string,
+  currentVersion: string,
+): Result.Result<LoadedSave, LoadFailure> {
+  if (!isValidSaveId(saveId)) {
+    return Result.fail(corruptSave("Save id is not a valid identifier"));
+  }
+
+  if (!existsSync(saveDir)) {
+    return Result.fail(missingSave(`Save directory not found: ${saveDir}`));
+  }
+
+  const savePath = join(saveDir, saveId);
+  if (!isContainedIn(saveDir, savePath)) {
+    return Result.fail(corruptSave("Save id escapes the save directory"));
+  }
+
+  const campaignPath = join(savePath, "campaign.json");
+  const sigPath = join(savePath, "campaign.sig.json");
+
+  if (!existsSync(campaignPath)) {
+    return Result.fail(corruptSave(`Save data file not found: ${campaignPath}`));
+  }
+
+  let campaignJson: string;
+  try {
+    campaignJson = readFileSync(campaignPath, "utf8");
+  } catch {
+    return Result.fail(corruptSave("Failed to read save data file"));
+  }
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(campaignJson);
+  } catch {
+    return Result.fail(corruptSave("Save data file contains invalid JSON"));
+  }
+
+  const headerResult = Schema.decodeUnknownResult(SaveHeaderSchema)(raw);
+  if (!Result.isSuccess(headerResult)) {
+    return Result.fail(corruptSave("Save data is missing required fields"));
+  }
+
+  const compatibility = CompatibilityChecker.check(
+    headerResult.success.snapshot.compatibilityVersion,
+    currentVersion,
+  );
+  if (Result.isFailure(compatibility)) return Result.fail(compatibility.failure);
+
+  const parsedResult = decodeStorableCampaignState(raw);
+  if (!Result.isSuccess(parsedResult)) {
+    return Result.fail(corruptSave("Save data is structurally invalid"));
+  }
+
+  let state: CampaignState;
+  try {
+    state = {
+      ...parsedResult.success,
+      snapshot: fromStorableSnapshot(
+        parsedResult.success.snapshot as unknown as StorableCampaignSnapshot,
+      ),
+    };
+  } catch {
+    return Result.fail(corruptSave("Save data snapshot is malformed"));
+  }
+
+  const { rawHash: _rawHash, ...stateForHash } = state;
+  const computedRawHash = sha256Hex(canonicalSerialize(stateForHash));
+  if (computedRawHash !== state.rawHash) {
+    return Result.fail(corruptSave("Save data hash mismatch: content has been modified"));
+  }
+
+  const warnings: Diagnostic[] = [];
+  const signature = validateSignatureResult(sigPath, sha256Hex(campaignJson), state, warnings);
+  if (Result.isFailure(signature)) return Result.fail(signature.failure);
+
+  if (!verifyEnvelope(state["envelope"], state["snapshot"])) {
+    return Result.fail(
+      corruptSave("Save envelope verification failed: snapshot does not match envelope"),
+    );
+  }
+
+  return Result.succeed({ state, warnings });
+}
+
+function validateSignatureResult(
+  sigPath: string,
+  rawSerializedHash: string,
+  state: CampaignState,
+  warnings: Diagnostic[],
+): Result.Result<void, PersistenceCorruptSaveError> {
+  if (!existsSync(sigPath)) {
+    warnings.push(
+      new PersistenceUnsignedSaveError({
+        message:
+          "Save has no signature file; loaded as legacy with no independent on-disk tamper verification",
+        stage: LOAD_STAGE,
+      }).toDiagnostic(),
+    );
+    return Result.succeed(undefined);
+  }
+
+  const sig = readSigFile(sigPath);
+  if (sig === null) return Result.fail(corruptSave("Save signature file is invalid"));
+  if (sig.serializedHash !== rawSerializedHash) {
+    return Result.fail(corruptSave("Save signature does not match serialized content"));
+  }
+  if (sig.stateHash !== state.rawHash) {
+    return Result.fail(corruptSave("Save signature does not match state"));
+  }
+  if (sig.compatibilityVersion !== state.snapshot.compatibilityVersion) {
+    return Result.fail(corruptSave("Save signature version does not match state"));
+  }
+  return Result.succeed(undefined);
+}
+
+export function loadMonthInputResult(
+  saveDir: string,
+  saveId: string,
+): Result.Result<MonthInputLoad, PersistenceCorruptSaveError> {
+  const corrupt = (message: string) =>
+    Result.fail(new PersistenceCorruptSaveError({ message, stage: MONTH_INPUT_STAGE }));
+
+  if (!isValidSaveId(saveId)) return corrupt("Save id is not a valid identifier");
+  const savePath = join(saveDir, saveId);
+  if (!isContainedIn(saveDir, savePath)) return corrupt("Save id escapes the save directory");
+  const metadata = readSaveMetadata(join(savePath, "metadata.json"));
+  if (metadata === null) return corrupt(`Save ${saveId} has no readable metadata`);
+  if (metadata.monthInputHash === undefined) return Result.succeed({ status: "absent" });
+  let text: string;
+  try {
+    text = readFileSync(join(savePath, MONTH_INPUT_FILE), "utf8");
+  } catch {
+    return corrupt(`Save ${saveId} lost its month input`);
+  }
+  if (sha256Hex(text) !== metadata.monthInputHash) {
+    return corrupt(`Save ${saveId} month input does not match its hash`);
+  }
+  try {
+    const value: unknown = JSON.parse(text);
+    return Result.succeed({ status: "present", value });
+  } catch {
+    return corrupt(`Save ${saveId} month input is not JSON`);
   }
 }
 

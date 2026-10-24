@@ -9,6 +9,7 @@ import { SafeInt, type TurnPhase } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { CURRENT_COMPATIBILITY_VERSION, SaveStore } from "@bluewave/persistence";
+import { Effect, Exit, Result } from "effect";
 import {
   FIXTURE_RULESETS_YAML,
   buildFixtureContentBundle,
@@ -266,10 +267,7 @@ describe("Full-slice integration", () => {
       const saveResult = store.save(saveableState, saveDir);
       expect(saveResult.hash).toHaveLength(64);
 
-      const loadDiag = new DiagnosticCollector();
-      const loaded = store.load(saveDir, loadDiag);
-      expect(loaded).not.toBeNull();
-      expect(loadDiag.hasErrors).toBe(false);
+      expect(Effect.runSync(store.load(saveDir)).warnings).toEqual([]);
     } finally {
       rmSync(saveDir, { recursive: true, force: true });
     }
@@ -620,12 +618,12 @@ describe("Full-slice integration", () => {
       const originalContent = readFileSync(corruptStatePath, "utf8");
       writeFileSync(corruptStatePath, originalContent.replace(/"[^"]+"/g, '"corrupted"'), "utf8");
 
-      const loadDiag = new DiagnosticCollector();
-      const loaded = store.load(saveDir, loadDiag);
-      expect(loaded).toBeNull();
-
-      const corruptDiags = loadDiag.all.filter((d) => d.code === "PERSISTENCE_CORRUPT_SAVE");
-      expect(corruptDiags.length).toBeGreaterThanOrEqual(1);
+      const exit = Effect.runSyncExit(store.load(saveDir));
+      expect(Exit.isFailure(exit)).toBe(true);
+      const found = Exit.findError(exit);
+      expect(Result.isSuccess(found) ? found.success._tag : "defect").toBe(
+        "PERSISTENCE_CORRUPT_SAVE",
+      );
     } finally {
       rmSync(saveDir, { recursive: true, force: true });
     }
@@ -649,10 +647,7 @@ describe("Full-slice integration", () => {
       const pointer = store.getActiveSaveId(saveDir);
       expect(pointer).not.toBeNull();
 
-      const loadDiag = new DiagnosticCollector();
-      const loaded = store.load(saveDir, loadDiag);
-      expect(loaded).not.toBeNull();
-      expect(loadDiag.hasErrors).toBe(false);
+      expect(Effect.runSync(store.load(saveDir)).warnings).toEqual([]);
 
       const loadedPtr = store.getActiveSaveId(saveDir);
       expect(loadedPtr).toBe(pointer);

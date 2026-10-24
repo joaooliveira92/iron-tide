@@ -4,12 +4,12 @@ import { join } from "node:path";
 import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { Result, Schema } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { StorableTechnologySchema } from "../src/schemas.js";
 import { SaveStore } from "../src/store.js";
+import { expectFailureTag, runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function nation(seeded: boolean): NationState {
@@ -144,31 +144,28 @@ describe("economy model save/load parity (#138)", () => {
   it("round-trips the economy fields with an identical snapshot and hash", () => {
     const saved = state(true);
     store.save(saved, tmpDir);
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
 
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded).not.toBeNull();
-    expect(loaded!.rawHash).toBe(saved.rawHash);
-    expect(canonicalSerialize(loaded!.snapshot)).toBe(canonicalSerialize(saved.snapshot));
-    const uk = loaded!.snapshot.nations.get("uk")!;
+    expect(loaded.warnings).toEqual([]);
+    expect(loaded.state.rawHash).toBe(saved.rawHash);
+    expect(canonicalSerialize(loaded.state.snapshot)).toBe(canonicalSerialize(saved.snapshot));
+    const uk = loaded.state.snapshot.nations.get("uk")!;
     expect(uk.baseResources).toBe(6000);
     expect(uk.research.standingResearchBudget).toBe(5);
     expect(uk.constructionProjects[0]!.capacityUnits).toEqual({ slipway: 3, quay: 3 });
-    expect(loaded!.snapshot.world.technologies?.[0]?.techId).toBe("mac_triple_expansion");
+    expect(loaded.state.snapshot.world.technologies?.[0]?.techId).toBe("mac_triple_expansion");
   });
 
   it("loads a snapshot that predates the additive catalogue and capacity fields", () => {
     const saved = state(false);
     store.save(saved, tmpDir);
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
 
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded!.rawHash).toBe(saved.rawHash);
-    expect(loaded!.snapshot.world.technologies).toBeUndefined();
+    expect(loaded.warnings).toEqual([]);
+    expect(loaded.state.rawHash).toBe(saved.rawHash);
+    expect(loaded.state.snapshot.world.technologies).toBeUndefined();
     expect(
-      loaded!.snapshot.nations.get("uk")!.constructionProjects[0]!.capacityUnits,
+      loaded.state.snapshot.nations.get("uk")!.constructionProjects[0]!.capacityUnits,
     ).toBeUndefined();
   });
 });
@@ -232,8 +229,6 @@ describe("economy #166 persisted technology catalogue schema", () => {
     };
     raw.snapshot.world.technologies = [{ techId: "hc_wrought_iron_hull", researchFieldId: "" }];
     writeFileSync(file, JSON.stringify(raw));
-    const diagnostics = new DiagnosticCollector();
-    expect(store.load(tmpDir, diagnostics)).toBeNull();
-    expect(diagnostics.hasErrors).toBe(true);
+    expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
   });
 });

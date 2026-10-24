@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vite-plus/test";
 import { SafeInt } from "@bluewave/contracts";
 import type { CampaignSnapshot, NationState, Ship } from "@bluewave/campaign";
+import { PersistenceCorruptSaveError } from "@bluewave/persistence";
+import { Effect } from "effect";
 
 const saveStoreMocks = vi.hoisted(() => ({
   load: vi.fn(),
@@ -144,16 +146,23 @@ function baseOptions(): BattleGenerateCliOptions {
 
 describe("runBattleGenerate", () => {
   it("returns validation-error when the save cannot be loaded", async () => {
-    saveStoreMocks.load.mockReturnValue(undefined);
+    saveStoreMocks.load.mockReturnValue(
+      Effect.fail(new PersistenceCorruptSaveError({ message: "no save" })),
+    );
     expect(await runCli(runBattleGenerate(baseOptions(), "/s"))).toBe("validation-error");
   });
 
   it("generates battles from a saved snapshot and prints a human summary", async () => {
-    saveStoreMocks.load.mockReturnValue({
-      snapshot: fixtureSnapshot(),
-      envelope: {},
-      rawHash: "h",
-    });
+    saveStoreMocks.load.mockReturnValue(
+      Effect.succeed({
+        state: {
+          snapshot: fixtureSnapshot(),
+          envelope: {},
+          rawHash: "h",
+        },
+        warnings: [],
+      }),
+    );
     const spy = stdoutSpy();
     const result = await runCli(runBattleGenerate(baseOptions(), "/s"));
     expect(result).toBe("success");
@@ -165,11 +174,16 @@ describe("runBattleGenerate", () => {
   });
 
   it("emits structured JSON output in --json mode", async () => {
-    saveStoreMocks.load.mockReturnValue({
-      snapshot: fixtureSnapshot(),
-      envelope: {},
-      rawHash: "h",
-    });
+    saveStoreMocks.load.mockReturnValue(
+      Effect.succeed({
+        state: {
+          snapshot: fixtureSnapshot(),
+          envelope: {},
+          rawHash: "h",
+        },
+        warnings: [],
+      }),
+    );
     const spy = stdoutSpy();
     const result = await runCli(runBattleGenerate({ ...baseOptions(), outputMode: "json" }, "/s"));
     expect(result).toBe("success");
@@ -185,11 +199,16 @@ describe("runBattleGenerate", () => {
   });
 
   it("defaults campaignMonth from the snapshot's turnNumber and rulesetVersion from the snapshot", async () => {
-    saveStoreMocks.load.mockReturnValue({
-      snapshot: fixtureSnapshot(),
-      envelope: {},
-      rawHash: "h",
-    });
+    saveStoreMocks.load.mockReturnValue(
+      Effect.succeed({
+        state: {
+          snapshot: fixtureSnapshot(),
+          envelope: {},
+          rawHash: "h",
+        },
+        warnings: [],
+      }),
+    );
     const spy = stdoutSpy();
     const result = await runCli(runBattleGenerate({ ...baseOptions(), outputMode: "json" }, "/s"));
     expect(result).toBe("success");
@@ -202,11 +221,16 @@ describe("runBattleGenerate", () => {
   });
 
   it("honors explicit overrides for campaignMonth and rulesetVersion instead of the snapshot defaults", async () => {
-    saveStoreMocks.load.mockReturnValue({
-      snapshot: fixtureSnapshot(),
-      envelope: {},
-      rawHash: "h",
-    });
+    saveStoreMocks.load.mockReturnValue(
+      Effect.succeed({
+        state: {
+          snapshot: fixtureSnapshot(),
+          envelope: {},
+          rawHash: "h",
+        },
+        warnings: [],
+      }),
+    );
     const spy = stdoutSpy();
     const result = await runCli(
       runBattleGenerate(

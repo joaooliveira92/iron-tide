@@ -299,9 +299,8 @@ describe("session commands (save / close / copy)", () => {
 
       expect(savesIn(copyDir)).toBe(1);
       expect(readSessionMetadata(copyDir)).toMatchObject({ playerSlotId: "uk" });
-      const loaded = new SaveStore().load(copyDir, new DiagnosticCollector());
-      expect(loaded).not.toBeNull();
-      expect(Number(loaded!.snapshot.turnNumber)).toBe(Number(state.snapshot.turnNumber));
+      const loaded = Effect.runSync(new SaveStore().load(copyDir)).state;
+      expect(Number(loaded.snapshot.turnNumber)).toBe(Number(state.snapshot.turnNumber));
       expect(savesIn(saveDir)).toBe(1);
       expect(getCampaignSession("k1")?.saveDir).toBe(saveDir);
     });

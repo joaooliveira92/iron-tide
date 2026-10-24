@@ -4,10 +4,11 @@ import { join } from "node:path";
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Exit } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
-import { SaveStore } from "../src/store.js";
+import { SaveStore, type LoadFailure, type LoadedSave } from "../src/store.js";
+import { runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function createFixtureState(): CampaignState {
@@ -97,25 +98,24 @@ describe("SaveStore — corruption fuzz", () => {
   it("never throws, and fails closed on a mutated save body", () => {
     for (const [name, mutate, expectReject] of mutations) {
       writeFileSync(campaignPath, mutate(valid), "utf8");
-      const diagnostics = new DiagnosticCollector();
 
-      let loaded: CampaignState | null | undefined;
+      let exit: Exit.Exit<LoadedSave, LoadFailure> | undefined;
       expect(() => {
-        loaded = store.load(tmpDir, diagnostics);
+        exit = runExit(store.load(tmpDir));
       }, `mutation: ${name}`).not.toThrow();
 
       if (expectReject) {
-        expect(loaded ?? null, `mutation: ${name} should be rejected`).toBeNull();
-        expect(diagnostics.hasErrors, `mutation: ${name} should report an error`).toBe(true);
+        expect(
+          exit !== undefined && Exit.isFailure(exit),
+          `mutation: ${name} should be rejected`,
+        ).toBe(true);
       }
     }
   });
 
   it("still loads the pristine save (the fuzz mutations did not move the goalposts)", () => {
     writeFileSync(campaignPath, valid, "utf8");
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
-    expect(loaded).not.toBeNull();
-    expect(diagnostics.hasErrors).toBe(false);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    expect(loaded.warnings).toEqual([]);
   });
 });

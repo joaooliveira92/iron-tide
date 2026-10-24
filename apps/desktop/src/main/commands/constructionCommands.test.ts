@@ -136,8 +136,8 @@ describe("construction commands", () => {
     return record.state;
   }
 
-  function loadSavedState(saveDir: string): CampaignState | null {
-    return new SaveStore().load(saveDir, new DiagnosticCollector());
+  function loadSavedState(saveDir: string): CampaignState {
+    return Effect.runSync(new SaveStore().load(saveDir)).state;
   }
 
   function baseConfiguration(
@@ -266,8 +266,6 @@ describe("construction commands", () => {
 
     const projectId = `project-${command.commandId.replace(/^cmd-/, "")}`;
     const saved = loadSavedState(saveDir);
-    expect(saved).not.toBeNull();
-    if (!saved) return;
     const nationAfter = saved.snapshot.nations.get("uk")!;
     expect(nationAfter.constructionProjects.length).toBe(projectsBefore + 1);
     const queued = nationAfter.constructionProjects.find((p) => p.id === projectId);

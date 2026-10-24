@@ -1,11 +1,11 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { RecoveryManager } from "../src/recovery.js";
 import { SaveStore } from "../src/store.js";
 import { minimalCampaignState } from "./campaign-state-fixture.js";
+import { expectFailureTag, runExit } from "./harness.js";
 
 const readJson = (path: string): Record<string, unknown> =>
   JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
@@ -36,11 +36,8 @@ describe("persistence files reject excess keys", () => {
     const pointerPath = join(dir, "pointer.json");
     writeJson(pointerPath, { ...readJson(pointerPath), surprise: true });
 
-    const diagnostics = new DiagnosticCollector();
-    expect(store.load(dir, diagnostics)).toBeNull();
-    expect(diagnostics.errors.map((e) => e.message)).toContain(
-      "Pointer file is corrupt or unreadable",
-    );
+    const error = expectFailureTag(runExit(store.load(dir)), "PERSISTENCE_CORRUPT_SAVE");
+    expect(error.message).toBe("Pointer file is corrupt or unreadable");
     expect(store.getActiveSaveId(dir)).toBeNull();
     expect(store.getPreviousSaveId(dir)).toBeNull();
   });
@@ -50,9 +47,8 @@ describe("persistence files reject excess keys", () => {
     const campaignPath = join(dir, id, "campaign.json");
     writeJson(campaignPath, { ...readJson(campaignPath), surprise: true });
 
-    const diagnostics = new DiagnosticCollector();
-    expect(store.loadById(dir, id, diagnostics)).toBeNull();
-    expect(diagnostics.errors.map((e) => e.message)).toContain("Save data is structurally invalid");
+    const error = expectFailureTag(runExit(store.loadById(dir, id)), "PERSISTENCE_CORRUPT_SAVE");
+    expect(error.message).toBe("Save data is structurally invalid");
   });
 
   it("treats a signature file with an unmodeled key as corrupt", () => {
@@ -60,9 +56,8 @@ describe("persistence files reject excess keys", () => {
     const sigPath = join(dir, id, "campaign.sig.json");
     writeJson(sigPath, { ...readJson(sigPath), surprise: true });
 
-    const diagnostics = new DiagnosticCollector();
-    expect(store.load(dir, diagnostics)).toBeNull();
-    expect(diagnostics.errors.map((e) => e.message)).toContain("Save signature file is invalid");
+    const error = expectFailureTag(runExit(store.load(dir)), "PERSISTENCE_CORRUPT_SAVE");
+    expect(error.message).toBe("Save signature file is invalid");
   });
 
   it("lists a save through its signature when metadata carries an unmodeled key", () => {
@@ -81,9 +76,11 @@ describe("persistence files reject excess keys", () => {
     const metaPath = join(dir, id, "metadata.json");
     writeJson(metaPath, { ...readJson(metaPath), surprise: true });
 
-    expect(store.loadMonthInput(dir, id, new DiagnosticCollector())).toEqual({
-      status: "corrupt",
-    });
+    const error = expectFailureTag(
+      runExit(store.loadMonthInput(dir, id)),
+      "PERSISTENCE_CORRUPT_SAVE",
+    );
+    expect(error.message).toBe(`Save ${id} has no readable metadata`);
   });
 
   it("drops the predecessor when reverting to a save whose metadata has an unmodeled key", () => {

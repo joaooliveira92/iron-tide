@@ -4,15 +4,14 @@ import { join } from "node:path";
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import {
   COMPATIBILITY_MISMATCH_CODE,
   CURRENT_COMPATIBILITY_VERSION,
   PART_MODEL_COMPATIBILITY_VERSION,
 } from "../src/compatibility.js";
-import { CORRUPT_SAVE_CODE } from "../src/errors.js";
 import { SaveStore } from "../src/store.js";
+import { expectFailureTag, runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function createFixtureState(): CampaignState {
@@ -73,15 +72,12 @@ describe("save-compatibility policy (ADR-0113)", () => {
     const state = createFixtureState();
     store.save(state, tmpDir);
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
 
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded).not.toBeNull();
-    if (!loaded) return;
-    expect(loaded.snapshot.compatibilityVersion).toBe(CURRENT_COMPATIBILITY_VERSION);
-    expect(loaded.rawHash).toBe(state.rawHash);
-    expect(loaded.envelope.bodyHash).toBe(state.envelope.bodyHash);
+    expect(loaded.warnings).toEqual([]);
+    expect(loaded.state.snapshot.compatibilityVersion).toBe(CURRENT_COMPATIBILITY_VERSION);
+    expect(loaded.state.rawHash).toBe(state.rawHash);
+    expect(loaded.state.envelope.bodyHash).toBe(state.envelope.bodyHash);
   });
 
   it("rejects a save stored with a prior compatibility version using the stable mismatch code", () => {
@@ -97,16 +93,15 @@ describe("save-compatibility policy (ADR-0113)", () => {
     parsed.snapshot.compatibilityVersion = "1.0.0";
     writeFileSync(campaignPath, JSON.stringify(parsed), "utf8");
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const error = expectFailureTag(
+      runExit(store.load(tmpDir)),
+      "PERSISTENCE_COMPATIBILITY_MISMATCH",
+    );
 
-    expect(loaded).toBeNull();
-    expect(diagnostics.hasErrors).toBe(true);
-    expect(diagnostics.errors.map((d) => d.code)).toEqual([COMPATIBILITY_MISMATCH_CODE]);
-    expect(diagnostics.errors.some((d) => d.code === CORRUPT_SAVE_CODE)).toBe(false);
-    expect(diagnostics.errors[0]!.message).toContain('Save compatibility version "1.0.0"');
-    expect(diagnostics.errors[0]!.message).toContain(CURRENT_COMPATIBILITY_VERSION);
-    expect(diagnostics.errors[0]!.stage).toBe("persistence.load");
+    expect(error.code).toBe(COMPATIBILITY_MISMATCH_CODE);
+    expect(error.message).toContain('Save compatibility version "1.0.0"');
+    expect(error.message).toContain(CURRENT_COMPATIBILITY_VERSION);
+    expect(error.stage).toBe("persistence.load");
   });
 
   it.each(["1.0.0", "1.1.0", "3.0.0"])(
@@ -122,12 +117,11 @@ describe("save-compatibility policy (ADR-0113)", () => {
       parsed.snapshot.compatibilityVersion = prior;
       writeFileSync(campaignPath, JSON.stringify(parsed), "utf8");
 
-      const diagnostics = new DiagnosticCollector();
-      const loaded = store.load(tmpDir, diagnostics);
-
-      expect(loaded).toBeNull();
-      expect(diagnostics.errors.map((d) => d.code)).toEqual([COMPATIBILITY_MISMATCH_CODE]);
-      expect(diagnostics.errors.some((d) => d.code === CORRUPT_SAVE_CODE)).toBe(false);
+      const error = expectFailureTag(
+        runExit(store.load(tmpDir)),
+        "PERSISTENCE_COMPATIBILITY_MISMATCH",
+      );
+      expect(error.code).toBe(COMPATIBILITY_MISMATCH_CODE);
     },
   );
 
@@ -149,13 +143,14 @@ describe("save-compatibility policy (ADR-0113)", () => {
     const campaignPath = join(tmpDir, store.getActiveSaveId(tmpDir)!, "campaign.json");
     const before = readFileSync(campaignPath);
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const error = expectFailureTag(
+      runExit(store.load(tmpDir)),
+      "PERSISTENCE_COMPATIBILITY_MISMATCH",
+    );
 
-    expect(loaded).toBeNull();
-    expect(diagnostics.errors.map((d) => d.code)).toEqual([COMPATIBILITY_MISMATCH_CODE]);
-    expect(diagnostics.errors[0]!.message).toContain('"2.0.0"');
-    expect(diagnostics.errors[0]!.message).toContain(CURRENT_COMPATIBILITY_VERSION);
+    expect(error.code).toBe(COMPATIBILITY_MISMATCH_CODE);
+    expect(error.message).toContain('"2.0.0"');
+    expect(error.message).toContain(CURRENT_COMPATIBILITY_VERSION);
     expect(readFileSync(campaignPath).equals(before)).toBe(true);
   });
 });
