@@ -1,5 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { compareCodePoints } from "@bluewave/deterministic";
 export const FLEET_SIZE_IDS = ["small", "standard", "large", "very_large"] as const;
 export type FleetSizeId = (typeof FLEET_SIZE_IDS)[number];
 export const FLEET_SIZE_BPS: Record<FleetSizeId, number> = {
@@ -78,13 +79,13 @@ export function allocateIndivisible(
   }));
   let sum = floors.reduce((a, b) => a + b.floor, 0);
   let remaining = aggregate - sum;
-  floors.sort((a, b) => (b.rem !== a.rem ? b.rem - a.rem : a.id.localeCompare(b.id)));
+  floors.sort((a, b) => (b.rem !== a.rem ? b.rem - a.rem : compareCodePoints(a.id, b.id)));
   const out = new Map<string, number>(floors.map((f) => [f.id, f.floor]));
   for (let i = 0; i < remaining; i++) {
     const id = floors[i % floors.length]!.id;
     out.set(id, (out.get(id) ?? 0) + 1);
   }
-  const sorted = new Map([...out.entries()].sort((a, b) => a[0].localeCompare(b[0])));
+  const sorted = new Map([...out.entries()].sort((a, b) => compareCodePoints(a[0], b[0])));
   return sorted;
 }
 export function validateFleetSizeSetting(s: unknown, c: DiagnosticCollector) {

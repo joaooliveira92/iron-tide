@@ -5,6 +5,7 @@ import {
   type PlayerProjectionMonth,
   type PlayerProjectionPresence,
 } from "./projection.js";
+import { compareCodePoints } from "@bluewave/deterministic";
 
 export type MovementCommandStatus =
   | "submitted"
@@ -139,13 +140,13 @@ export function buildFleetScreenView(
 
   const areas: FleetArea[] = snapshot.world.areas
     .map((area) => ({ id: area.id, name: area.name }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 
   const areaEdges: FleetAreaEdge[] = snapshot.world.routes
     .map((route) => ({ fromAreaId: route.from, toAreaId: route.to }))
     .sort((a, b) => {
-      const byFrom = a.fromAreaId.localeCompare(b.fromAreaId);
-      return byFrom !== 0 ? byFrom : a.toAreaId.localeCompare(b.toAreaId);
+      const byFrom = compareCodePoints(a.fromAreaId, b.fromAreaId);
+      return byFrom !== 0 ? byFrom : compareCodePoints(a.toAreaId, b.toAreaId);
     });
 
   const ports: FleetPort[] = [...facts.ports];
@@ -153,7 +154,7 @@ export function buildFleetScreenView(
   const overBaseShips: FleetOverBaseShip[] = facts.ships
     .filter(({ ship }) => ship.overBase !== undefined)
     .map(({ ship }) => ({ shipId: ship.id, name: ship.name, areaId: ship.locationAreaId }))
-    .sort((a, b) => a.shipId.localeCompare(b.shipId));
+    .sort((a, b) => compareCodePoints(a.shipId, b.shipId));
 
   return {
     divisions,

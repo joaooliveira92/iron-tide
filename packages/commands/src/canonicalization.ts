@@ -1,4 +1,4 @@
-import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { canonicalSerialize, sha256Hex, compareCodePoints } from "@bluewave/deterministic";
 import { CommandError } from "./errors.js";
 import type { CommandRecord } from "./types.js";
 
@@ -12,12 +12,13 @@ export function normalizeUnorderedSets(payload: unknown): unknown {
       "id" in (copy[0] as Record<string, unknown>)
     ) {
       copy.sort((a, b) =>
-        String((a as Record<string, unknown>)["id"]).localeCompare(
+        compareCodePoints(
+          String((a as Record<string, unknown>)["id"]),
           String((b as Record<string, unknown>)["id"]),
         ),
       );
     } else if (copy.every((v) => typeof v === "string" || typeof v === "number")) {
-      copy.sort((a, b) => String(a).localeCompare(String(b)));
+      copy.sort((a, b) => compareCodePoints(String(a), String(b)));
     }
     return copy.map(normalizeUnorderedSets);
   }
@@ -89,10 +90,10 @@ export function canonicalOrder(
     const pb = phaseOrdinalMap.get(b.submissionPhaseId) ?? 0;
     if (pa !== pb) return pa - pb;
     if (a.issuerParticipantId !== b.issuerParticipantId)
-      return a.issuerParticipantId.localeCompare(b.issuerParticipantId);
+      return compareCodePoints(a.issuerParticipantId, b.issuerParticipantId);
     if (a.submissionOrdinal !== b.submissionOrdinal)
       return a.submissionOrdinal - b.submissionOrdinal;
-    return a.commandId.localeCompare(b.commandId);
+    return compareCodePoints(a.commandId, b.commandId);
   });
 }
 

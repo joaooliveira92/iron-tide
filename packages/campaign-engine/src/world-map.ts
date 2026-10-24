@@ -1,5 +1,6 @@
 import { presenceAreaIds } from "@bluewave/campaign";
 import type { CampaignSnapshot } from "@bluewave/campaign";
+import { compareCodePoints } from "@bluewave/deterministic";
 
 export interface WorldMapNationView {
   readonly id: string;
@@ -57,7 +58,7 @@ export function buildWorldMapView(snapshot: CampaignSnapshot): WorldMapView {
       homeAreaId: nation.homeAreaId ?? null,
       presenceAreaIds: presenceAreaIds(snapshot.world.possessions ?? [], nation.id),
     }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 
   const areas: WorldMapAreaView[] = snapshot.world.areas
     .map((area) => ({
@@ -66,7 +67,7 @@ export function buildWorldMapView(snapshot: CampaignSnapshot): WorldMapView {
       type: area.type,
       controller: area.controller ?? null,
     }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 
   const ports: WorldMapPortView[] = snapshot.world.ports
     .map((port) => ({
@@ -76,13 +77,13 @@ export function buildWorldMapView(snapshot: CampaignSnapshot): WorldMapView {
       nationId: port.nationId,
       level: Number(port.level),
     }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 
   const fleets: WorldMapFleetView[] = [...snapshot.nations.values()]
-    .sort((a, b) => a.id.localeCompare(b.id))
+    .sort((a, b) => compareCodePoints(a.id, b.id))
     .flatMap((nation) =>
       [...nation.fleets]
-        .sort((a, b) => a.id.localeCompare(b.id))
+        .sort((a, b) => compareCodePoints(a.id, b.id))
         .map((fleet) => ({
           id: fleet.id,
           nationId: nation.id,
@@ -100,7 +101,7 @@ export function buildWorldMapView(snapshot: CampaignSnapshot): WorldMapView {
       type: route.type,
       distance: Number(route.distance),
     }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 
   return { nations, areas, ports, fleets, routes };
 }

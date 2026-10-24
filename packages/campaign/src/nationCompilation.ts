@@ -30,6 +30,7 @@ import type {
   Ship,
   TechnologyProgress,
 } from "./state.js";
+import { compareCodePoints } from "@bluewave/deterministic";
 
 function isNationPlayable(
   id: string,
@@ -187,7 +188,7 @@ function buildShips(fleet: Record<string, unknown>, collector: DiagnosticCollect
       inBattleId: typeof record["inBattleId"] === "string" ? record["inBattleId"] : undefined,
     });
   }
-  return ships.sort((a, b) => a.id.localeCompare(b.id));
+  return ships.sort((a, b) => compareCodePoints(a.id, b.id));
 }
 
 function buildFleets(
@@ -207,7 +208,7 @@ function buildFleets(
         ships: buildShips(fRec, collector),
       };
     })
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 }
 
 function buildResearch(researchData: unknown[], nationId: string): ResearchState {
@@ -296,7 +297,7 @@ function buildConstructions(constructionsData: unknown[], nationId: string): Con
         startedAt: toStr(cRec["startedAt"], "1880-01"),
       };
     })
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 }
 
 export function buildNationStates(
@@ -317,7 +318,7 @@ export function buildNationStates(
   const sortedNations = [...(pack.nations ?? [])].sort((a, b) => {
     const aId = toStr((a as Record<string, unknown>)["id"], "");
     const bId = toStr((b as Record<string, unknown>)["id"], "");
-    return aId.localeCompare(bId);
+    return compareCodePoints(aId, bId);
   });
 
   for (const nation of sortedNations) {
@@ -438,6 +439,6 @@ export function buildSlots(nations: Map<string, NationState>): CampaignSlot[] {
   for (const [id, nation] of nations) {
     slots.push({ nationId: id, type: nation.isPlayable ? "playable" : "ai" });
   }
-  slots.sort((a, b) => a.nationId.localeCompare(b.nationId));
+  slots.sort((a, b) => compareCodePoints(a.nationId, b.nationId));
   return slots;
 }

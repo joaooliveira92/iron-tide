@@ -9,6 +9,7 @@ import {
   type ResearchUnfundedReason,
 } from "@bluewave/campaign";
 import { derivePlayerFacts } from "./player-facts.js";
+import { compareCodePoints } from "@bluewave/deterministic";
 
 export type { EconomyStatus, ResearchUnfundedReason } from "@bluewave/campaign";
 
@@ -222,7 +223,7 @@ export function buildPlayerProjection(
   const strategicAreas: PlayerProjectionStrategicArea[] = snapshot.world.areas
     .filter((area) => area.controller === playerSlotId)
     .map((area) => ({ id: area.id, name: area.name }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .sort((a, b) => compareCodePoints(a.id, b.id));
 
   const knownEnemyNations = [
     ...new Set(
@@ -236,7 +237,7 @@ export function buildPlayerProjection(
           relation.nationA === playerSlotId ? relation.nationB : relation.nationA,
         ),
     ),
-  ].sort((a, b) => a.localeCompare(b));
+  ].sort((a, b) => compareCodePoints(a, b));
 
   return {
     campaignIdentity: snapshot.campaignId,
@@ -281,7 +282,9 @@ export function buildPlayerProjection(
         }),
     fleet,
     ports,
-    knownTechnologyIds: [...nation.research.discoveredTechs].sort((a, b) => a.localeCompare(b)),
+    knownTechnologyIds: [...nation.research.discoveredTechs].sort((a, b) =>
+      compareCodePoints(a, b),
+    ),
     strategicAreas,
     knownEnemyNations,
     presence: buildPresenceReadout(snapshot, playerSlotId, month, presenceRules),

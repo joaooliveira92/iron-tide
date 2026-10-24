@@ -3,6 +3,7 @@ import type { CampaignSnapshot } from "@bluewave/campaign";
 import { HIGH_TENSION_THRESHOLD, isHighTension } from "./diplomacy.js";
 import { derivePlayerFacts, isLowResearchSpending, isNearCompletion } from "./player-facts.js";
 import { MIN_RESEARCH_SHARE_BP, NEAR_COMPLETION_WORK_RATIO } from "./priorityConstants.js";
+import { compareCodePoints } from "@bluewave/deterministic";
 
 export { HIGH_TENSION_THRESHOLD, isHighTension } from "./diplomacy.js";
 
@@ -247,7 +248,7 @@ export function buildPrioritiesProjection(
     const typeDiff = TYPE_ORDER[a.priority.type] - TYPE_ORDER[b.priority.type];
     if (typeDiff !== 0) return typeDiff;
 
-    return a.priority.fingerprint.localeCompare(b.priority.fingerprint);
+    return compareCodePoints(a.priority.fingerprint, b.priority.fingerprint);
   });
 
   return ranked.map((r) => r.priority);
