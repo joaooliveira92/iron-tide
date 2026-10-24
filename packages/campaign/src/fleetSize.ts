@@ -1,3 +1,4 @@
+import { compareCodePoints } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { compareCodePoints } from "@bluewave/deterministic";

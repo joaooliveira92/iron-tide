@@ -1,3 +1,4 @@
+import { compareCodePoints } from "@bluewave/deterministic";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { toStr } from "./campaignInput.js";
 import type { DiplomaticRelation, NationState, PoliticalState, WarState } from "./state.js";
