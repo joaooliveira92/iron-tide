@@ -36,6 +36,16 @@ describe("recent-packages.json fallback", () => {
     ["an empty file", ""],
     ["a non-object value", "[1, 2, 3]"],
     ["an unknown schema version", JSON.stringify({ version: 2, entries: [] })],
+    ["an unmodeled top-level key", JSON.stringify({ version: 1, entries: [], extra: true })],
+    [
+      "an unmodeled key on an entry",
+      JSON.stringify({
+        version: 1,
+        entries: [
+          { path: "/p", campaignIdentity: "c", activeRevision: 1, lastOpened: 1, extra: true },
+        ],
+      }),
+    ],
     ["entries of the wrong shape", JSON.stringify({ version: 1, entries: [{ path: 7 }] })],
   ])("treats %s as an empty list and approves nothing", (_label, contents) => {
     writeFileSync(file(), contents, "utf8");

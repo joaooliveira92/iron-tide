@@ -1,27 +1,9 @@
 {
-  "apps/compiler-cli/src/commands.ts": {
-    "08f107f00e7588a6c336856bc15c0198952e793f644b7271d294ca466577d581": 1,
-    "5c7f556a38aee1421bf33fd48d503945b4ea56337644f0704584c95e47be49fa": 1,
-    "89025dbdf28a0c2346024d9fa3547ac2d6a6dc085e420cd28c1677ab9060b307": 1,
-    "a0be820da2096d66a4c938be50dab3e104f5b376826c8caacf5d94cdf82336b9": 2
-  },
-  "apps/desktop/src/main/campaignBridge.ts": {
-    "3ddc0a0a6a6610902b79fab2c79d7a1faff94e5d0666b8bbbca57d627a517aa3": 1
-  },
   "apps/desktop/src/main/crashSupport.ts": {
     "93b60c90cac5408b0f63637e6e9a1f81110723d98df1f4a4e3c2bddb7ebce9d0": 1
   },
-  "apps/desktop/src/main/monthInput.ts": {
-    "28b3e5ef64116dbc3aa03d5bc6a76e40e6d8257d6a28d5c37769cc46ef1dfc53": 1
-  },
-  "apps/desktop/src/main/recentPackages.ts": {
-    "da214281ed45f5c0bba2211a5c3a1e056bb866c08db2eb1b6aedea101ea6824c": 1
-  },
   "apps/desktop/src/main/runtime/commandProgram.ts": {
     "1340f48b8bc0dd813e69742fab93b5791e5e3f85f90487f0eabfb34ef4cc5504": 1
-  },
-  "apps/desktop/src/main/runtime/projectStore.ts": {
-    "7fc0e8df3538287e11349583038954ca4940e6fe98d62d7c64ad1b36ec9611e0": 1
   },
   "apps/desktop/src/main/runtime/sidecar.ts": {
     "9392d599d49f733c3e287265ccee7e15eae4307825341f0ab23e0e279e2e60ba": 1
@@ -29,12 +11,6 @@
   "packages/content-compiler/src/artifact.ts": {
     "9d6dc3c5b4321fdffa4211b9e3f20119ade3edc5d81c2309ba9ff8c3e8b9f533": 1,
     "ac0f876eb28af13ef7c9c0ced35657de3a7c22e7685eeb7cf48c2dca1373e79c": 1
-  },
-  "packages/content-schema/src/battle-offer-rules.ts": {
-    "7f72167c7bc4b633be27c0b2d3208104365c40e74a94b0be6c3a402e3ceb8997": 1
-  },
-  "packages/content-schema/src/presence-rules.ts": {
-    "55c0c2f1c2616fbe43b7e215ac3dc7cb93675a4658f000dc992ff1716fee2107": 1
   },
   "packages/persistence/src/saveMigration.ts": {
     "841fc994fa051f40c4bd0a4f171395103c9e8a9315b67d1e141753d3299090fe": 1
