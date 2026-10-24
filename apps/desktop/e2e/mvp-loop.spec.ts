@@ -67,9 +67,11 @@ test("Fleet and Diplomacy & War render the honest compiled state", async ({
 
   await navigateTo(page, "Diplomacy & War");
   await expect(page.getByRole("heading", { name: "Diplomacy & War" })).toBeVisible();
+  await page.getByRole("tab", { name: "Battles" }).click();
   await expect(page.getByText("No battles fought yet")).toBeVisible();
   await expect(page.getByText(/Battle history unavailable/)).not.toBeVisible();
 
+  await page.getByRole("tab", { name: "Not modelled" }).click();
   await expect(page.getByText("Not yet modelled by the engine", { exact: true })).toBeVisible();
   await expect(page.getByText(/Trade protection/)).toBeVisible();
 });
@@ -218,7 +220,10 @@ test("a submitted design survives a restart and joins the catalog after its stud
     });
     await advanceMonths(second.page, 4);
     await navigateTo(second.page, "Construction");
-    await second.page.getByRole("tab", { name: /Design Catalog/ }).click();
+    await second.page
+      .getByRole("navigation", { name: "Yard" })
+      .getByRole("button", { name: /^Design catalog/ })
+      .click();
     await expect(second.page.getByText("Arethusa E2E").first()).toBeVisible();
   } finally {
     await teardownHarness(second);
