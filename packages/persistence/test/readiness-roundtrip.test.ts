@@ -4,10 +4,10 @@ import { join } from "node:path";
 import type { CampaignSnapshot, CampaignState, NationState, Ship } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
+import { runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function makeShip(): Ship {
@@ -119,16 +119,13 @@ describe("SaveStore round-trips the S-1 per-ship readiness and crew quality", ()
     const state = makeFixtureState();
     store.save(state, tmpDir);
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded).not.toBeNull();
-    if (!loaded) return;
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    expect(loaded.warnings).toEqual([]);
 
-    const ship = loaded.snapshot.nations.get("nation-a")!.fleets[0]!.ships[0]!;
+    const ship = loaded.state.snapshot.nations.get("nation-a")!.fleets[0]!.ships[0]!;
     expect(ship.readiness).toBe("MOTHBALLED");
     expect(ship.crewQuality).toBe(7);
-    expect(loaded.rawHash).toBe(state.rawHash);
-    expect(loaded.envelope.bodyHash).toBe(state.envelope.bodyHash);
+    expect(loaded.state.rawHash).toBe(state.rawHash);
+    expect(loaded.state.envelope.bodyHash).toBe(state.envelope.bodyHash);
   });
 });

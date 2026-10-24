@@ -4,7 +4,6 @@ import { basename, join } from "node:path";
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import {
@@ -14,6 +13,7 @@ import {
   type SaveMigrationStep,
 } from "../src/saveMigration.js";
 import { SaveStore } from "../src/store.js";
+import { runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function fixtureState(compatibilityVersion: string): CampaignState {
@@ -75,22 +75,16 @@ describe("save migration (ticket 11d)", () => {
 
   it("migrates a save through an injected step to current and preserves player-owned identity", () => {
     const savePath = saveAt("1.2.0", tmpDir);
-    const before = new SaveStore("1.2.0").loadById(
-      tmpDir,
-      basename(savePath),
-      new DiagnosticCollector(),
-    )!;
+    const before = unwrapSuccess(
+      runExit(new SaveStore("1.2.0").loadById(tmpDir, basename(savePath))),
+    ).state;
 
     const result = migrateSaveDirectory(savePath, CURRENT_COMPATIBILITY_VERSION, INJECTED_STEPS);
     expect(result.status).toBe("migrated");
     if (result.status !== "migrated") return;
     expect([result.from, result.to]).toEqual(["1.2.0", CURRENT_COMPATIBILITY_VERSION]);
 
-    const diagnostics = new DiagnosticCollector();
-    const after = new SaveStore().load(tmpDir, diagnostics);
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(after).not.toBeNull();
-    if (after === null) return;
+    const after = unwrapSuccess(runExit(new SaveStore().load(tmpDir))).state;
     expect(after.snapshot.compatibilityVersion).toBe(CURRENT_COMPATIBILITY_VERSION);
     expect(after.snapshot.campaignId).toBe(before.snapshot.campaignId);
     expect(after.snapshot.turnNumber).toBe(before.snapshot.turnNumber);

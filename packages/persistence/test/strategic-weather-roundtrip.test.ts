@@ -4,10 +4,10 @@ import { join } from "node:path";
 import type { CampaignSnapshot, CampaignState, CampaignWeatherState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
+import { expectFailureTag, runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function makeWeatherState(areaId: string, month: string, salt: number): CampaignWeatherState {
@@ -95,28 +95,22 @@ describe("SaveStore round-trips the B-6 strategic-weather schema", () => {
     const state = makeFixtureState();
     store.save(state, tmpDir);
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded).not.toBeNull();
-    if (!loaded) return;
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    expect(loaded.warnings).toEqual([]);
 
-    expect(loaded.snapshot.startYear).toBe(1880);
-    expect(loaded.snapshot.startMonth).toBe(1);
-    expect(loaded.snapshot.strategicWeather).toEqual(state.snapshot.strategicWeather);
-    expect(loaded.snapshot.strategicWeather.map((s) => s.areaId)).toEqual(["alpha", "beta"]);
+    expect(loaded.state.snapshot.startYear).toBe(1880);
+    expect(loaded.state.snapshot.startMonth).toBe(1);
+    expect(loaded.state.snapshot.strategicWeather).toEqual(state.snapshot.strategicWeather);
+    expect(loaded.state.snapshot.strategicWeather.map((s) => s.areaId)).toEqual(["alpha", "beta"]);
   });
 
   it("rawHash and envelope survive the round trip (canonical stability)", () => {
     const state = makeFixtureState();
     store.save(state, tmpDir);
 
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
-    expect(loaded).not.toBeNull();
-    if (!loaded) return;
-    expect(loaded.rawHash).toBe(state.rawHash);
-    expect(loaded.envelope.bodyHash).toBe(state.envelope.bodyHash);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    expect(loaded.state.rawHash).toBe(state.rawHash);
+    expect(loaded.state.envelope.bodyHash).toBe(state.envelope.bodyHash);
   });
 
   it("a snapshot WITHOUT the B-6 collection is rejected as incompatible (no silent continuation)", () => {
@@ -129,10 +123,6 @@ describe("SaveStore round-trips the B-6 strategic-weather schema", () => {
       rawHash: sha256Hex(canonicalSerialize({ snapshot: old, envelope })),
     };
     store.save(state, tmpDir);
-    const diagnostics = new DiagnosticCollector();
-    expect(store.load(tmpDir, diagnostics)).toBeNull();
-    expect(diagnostics.errors.some((d) => d.code === "PERSISTENCE_COMPATIBILITY_MISMATCH")).toBe(
-      true,
-    );
+    expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_COMPATIBILITY_MISMATCH");
   });
 });

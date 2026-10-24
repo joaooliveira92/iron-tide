@@ -4,10 +4,10 @@ import { join } from "node:path";
 import type { CampaignSnapshot, CampaignState } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
+import { runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 function makeManifestSnapshot(): CampaignSnapshot {
@@ -154,9 +154,7 @@ describe("battle-generation persistence (AC-13)", () => {
     const saved = store.save(state, tmpDir);
     expect(saved).toBeDefined();
 
-    const loaded = store.load(tmpDir, new DiagnosticCollector());
-    expect(loaded).toBeDefined();
-    const loadedSnapshot = loaded!.snapshot;
+    const loadedSnapshot = unwrapSuccess(runExit(store.load(tmpDir))).state.snapshot;
     expect(loadedSnapshot.wars.battleManifests).toEqual(snapshot.wars.battleManifests);
     expect(loadedSnapshot.wars.battles).toEqual(snapshot.wars.battles);
     expect(loadedSnapshot.wars.battles[0]!.manifestHash).toBe("manifest_hash_1");
@@ -169,9 +167,8 @@ describe("battle-generation persistence (AC-13)", () => {
     const state: CampaignState = { snapshot, envelope, rawHash };
 
     store.save(state, tmpDir);
-    const loaded = store.load(tmpDir, new DiagnosticCollector());
-    expect(loaded).toBeDefined();
-    expect(loaded!.rawHash).toBe(rawHash);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    expect(loaded.state.rawHash).toBe(rawHash);
   });
 
   it("schema version is pinned and recorded", () => {

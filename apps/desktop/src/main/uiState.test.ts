@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { CommitMonthResponse } from "@bluewave/campaign-engine";
 import { SaveStore } from "@bluewave/persistence";
-import { ManagedRuntime } from "effect";
+import { Effect, ManagedRuntime } from "effect";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import type { BridgeResult } from "../shared/bridge-contract.js";
 import type {
@@ -501,10 +501,7 @@ describe("ui-state sidecar", () => {
     expect(existsSync(join(saveDir, saveId!, "campaign.json"))).toBe(true);
 
     const store = new SaveStore();
-    const collector = new DiagnosticCollector();
-    const reloaded = store.load(saveDir, collector);
-    expect(reloaded).not.toBeNull();
-    if (!reloaded) return;
+    const reloaded = Effect.runSync(store.load(saveDir)).state;
     registerCampaignSession({
       sessionId: "session-reloaded",
       saveDir,

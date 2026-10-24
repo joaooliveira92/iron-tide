@@ -5,6 +5,7 @@ import type { CampaignSnapshot, CampaignState, NationState } from "@bluewave/cam
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
+import { Effect } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 import { MonthExecutor, ReplayVerifier } from "../src/index.js";
 import {
@@ -103,19 +104,17 @@ describe("replay: save/load/replay a war campaign with resolved battles + weathe
 
       const store = new SaveStore();
       store.save(toSaveableState(snapshot1), saveDir);
-      const loadDiag = new DiagnosticCollector();
-      const loaded = store.load(saveDir, loadDiag);
-      expect(loaded).not.toBeNull();
-      expect(loadDiag.hasErrors).toBe(false);
+      const loaded = Effect.runSync(store.load(saveDir));
+      expect(loaded.warnings).toEqual([]);
 
-      expect(loaded!.snapshot.wars.battles).toEqual(snapshot1.wars.battles);
-      expect(loaded!.snapshot.strategicWeather).toEqual(snapshot1.strategicWeather);
-      expect(loaded!.snapshot.wars.wars).toEqual(snapshot1.wars.wars);
+      expect(loaded.state.snapshot.wars.battles).toEqual(snapshot1.wars.battles);
+      expect(loaded.state.snapshot.strategicWeather).toEqual(snapshot1.strategicWeather);
+      expect(loaded.state.snapshot.wars.wars).toEqual(snapshot1.wars.wars);
       const shipsOf = (snap: CampaignSnapshot) =>
         [...snap.nations.values()]
           .flatMap((n) => n.fleets.flatMap((f) => f.ships))
           .sort((a, b) => a.id.localeCompare(b.id));
-      expect(shipsOf(loaded!.snapshot)).toEqual(shipsOf(snapshot1));
+      expect(shipsOf(loaded.state.snapshot)).toEqual(shipsOf(snapshot1));
 
       const directAgain = new MonthExecutor().execute(
         snapshot1,
@@ -124,7 +123,7 @@ describe("replay: save/load/replay a war campaign with resolved battles + weathe
         new DiagnosticCollector(),
       );
       const loadedAgain = new MonthExecutor().execute(
-        loaded!.snapshot,
+        loaded.state.snapshot,
         [],
         CAMPAIGN_SEED,
         new DiagnosticCollector(),
@@ -161,12 +160,11 @@ describe("replay: save/load/replay a war campaign with resolved battles + weathe
 
       const store = new SaveStore();
       store.save(toSaveableState(month.finalSnapshot), saveDir);
-      const loaded = store.load(saveDir, new DiagnosticCollector());
-      expect(loaded).not.toBeNull();
-      expect(loaded!.snapshot.wars.battles[0]!.result!.winnerId).toBeNull();
-      expect(loaded!.snapshot.wars.battles[0]!.result!.loserId).toBeNull();
+      const loaded = Effect.runSync(store.load(saveDir));
+      expect(loaded.state.snapshot.wars.battles[0]!.result!.winnerId).toBeNull();
+      expect(loaded.state.snapshot.wars.battles[0]!.result!.loserId).toBeNull();
       const next = new MonthExecutor().execute(
-        loaded!.snapshot,
+        loaded.state.snapshot,
         [],
         CAMPAIGN_SEED,
         new DiagnosticCollector(),

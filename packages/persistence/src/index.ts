@@ -30,5 +30,12 @@ export {
 export { decodeStorableCampaignState, StorableCampaignStateSchema } from "./schemas.js";
 export { fromStorableSnapshot } from "./snapshotSerialization.js";
 export type { StorableCampaignSnapshot } from "./snapshotSerialization.js";
-export type { MonthInputLoad, SaveExtras, SaveMetadata, SaveResult } from "./store.js";
+export type {
+  LoadedSave,
+  LoadFailure,
+  MonthInputLoad,
+  SaveExtras,
+  SaveMetadata,
+  SaveResult,
+} from "./store.js";
 export { SaveStore } from "./store.js";

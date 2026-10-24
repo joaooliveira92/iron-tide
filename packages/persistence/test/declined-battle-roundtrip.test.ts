@@ -9,10 +9,10 @@ import type {
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
+import { expectFailureTag, runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 const RECORD: DeclinedBattleRecord = {
@@ -121,29 +121,27 @@ describe("declined-battle record save/load parity", () => {
   it("round-trips the records, the terminal battle phase and the hash exactly", () => {
     const saved = state([RECORD, { ...RECORD, battleId: "battle-2", areaId: "a-2" }]);
     store.save(saved, tmpDir);
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
 
-    expect(diagnostics.all.map((d) => d.message)).toEqual([]);
-    expect(loaded!.rawHash).toBe(saved.rawHash);
-    expect(canonicalSerialize(loaded!.snapshot)).toBe(canonicalSerialize(saved.snapshot));
-    expect(loaded!.snapshot.wars.declinedBattles?.map((r) => r.battleId)).toEqual([
+    expect(loaded.warnings).toEqual([]);
+    expect(loaded.state.rawHash).toBe(saved.rawHash);
+    expect(canonicalSerialize(loaded.state.snapshot)).toBe(canonicalSerialize(saved.snapshot));
+    expect(loaded.state.snapshot.wars.declinedBattles?.map((r) => r.battleId)).toEqual([
       "battle-1",
       "battle-2",
     ]);
-    expect(loaded!.snapshot.wars.battles[0]?.phase).toBe("declined");
+    expect(loaded.state.snapshot.wars.battles[0]?.phase).toBe("declined");
   });
 
   it("loads a save that never declined with the collection absent, under the unchanged compatibility version", () => {
     const saved = state(undefined);
     store.save(saved, tmpDir);
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
 
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded!.rawHash).toBe(saved.rawHash);
-    expect(loaded!.snapshot.wars.declinedBattles).toBeUndefined();
-    expect("declinedBattles" in loaded!.snapshot.wars).toBe(false);
+    expect(loaded.warnings).toEqual([]);
+    expect(loaded.state.rawHash).toBe(saved.rawHash);
+    expect(loaded.state.snapshot.wars.declinedBattles).toBeUndefined();
+    expect("declinedBattles" in loaded.state.snapshot.wars).toBe(false);
     expect(CURRENT_COMPATIBILITY_VERSION).toBe("4.0.0");
   });
 
@@ -153,9 +151,7 @@ describe("declined-battle record save/load parity", () => {
       tamper((wars) => {
         delete (wars as Record<string, unknown>)[dropped];
       });
-      const diagnostics = new DiagnosticCollector();
-      expect(store.load(tmpDir, diagnostics)).toBeNull();
-      expect(diagnostics.hasErrors).toBe(true);
+      expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
     }
   });
 
@@ -174,26 +170,24 @@ describe("declined-battle record save/load parity", () => {
       tamper((wars) => {
         wars.declinedBattles = [bad];
       });
-      const diagnostics = new DiagnosticCollector();
-      expect(store.load(tmpDir, diagnostics)).toBeNull();
-      expect(diagnostics.hasErrors).toBe(true);
+      expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
     }
   });
 
   it("round-trips the decline tallies exactly and loads a save without them with the field absent (T-1 05)", () => {
     const saved = state([RECORD], [COUNTER, { ...COUNTER, key: "CAMPAIGN", count: 0 }]);
     store.save(saved, tmpDir);
-    const loaded = store.load(tmpDir, new DiagnosticCollector());
-    expect(loaded!.rawHash).toBe(saved.rawHash);
-    expect(loaded!.snapshot.wars.declineCounters).toEqual([
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    expect(loaded.state.rawHash).toBe(saved.rawHash);
+    expect(loaded.state.snapshot.wars.declineCounters).toEqual([
       COUNTER,
       { ...COUNTER, key: "CAMPAIGN", count: 0 },
     ]);
 
     const bare = state([RECORD]);
     store.save(bare, tmpDir);
-    const reloaded = store.load(tmpDir, new DiagnosticCollector());
-    expect("declineCounters" in reloaded!.snapshot.wars).toBe(false);
+    const reloaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    expect("declineCounters" in reloaded.state.snapshot.wars).toBe(false);
   });
 
   it("refuses a save holding a malformed, short or over-keyed decline tally (T-1 05)", () => {
@@ -211,9 +205,7 @@ describe("declined-battle record save/load parity", () => {
       tamperCounters((wars) => {
         wars.declineCounters = [bad];
       });
-      const diagnostics = new DiagnosticCollector();
-      expect(store.load(tmpDir, diagnostics)).toBeNull();
-      expect(diagnostics.hasErrors).toBe(true);
+      expectFailureTag(runExit(store.load(tmpDir)), "PERSISTENCE_CORRUPT_SAVE");
     }
   });
 });

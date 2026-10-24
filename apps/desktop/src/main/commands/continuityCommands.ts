@@ -2,7 +2,7 @@ import { advanceMonth, getScenarioById, type CampaignState } from "@bluewave/cam
 import { CommandLedger } from "@bluewave/commands";
 import { DiagnosticCollector, type DiagnosticCode } from "@bluewave/diagnostics";
 import type { SaveMetadata } from "@bluewave/persistence";
-import { Effect } from "effect";
+import { Effect, Result } from "effect";
 import type { ReplayedRevision } from "../../shared/continuity-contract.js";
 import {
   isApprovedPackage,
@@ -96,14 +96,15 @@ const loadPackageAt = (saveDir: string) =>
     const ids = yield* IdGenerator;
 
     const collector = new DiagnosticCollector();
-    const state = yield* projects.load(saveDir, collector);
-    if (!state) {
+    const loaded = yield* Effect.result(projects.load(saveDir, collector));
+    if (Result.isFailure(loaded)) {
       return {
         outcome: "error" as const,
         reason: "LOAD_FAILED",
-        diagnostics: collector.all.map((d) => d.message),
+        diagnostics: [...loaded.failure.diagnostics],
       };
     }
+    const state = loaded.success;
 
     const metadata = yield* projects.readSessionMetadata(saveDir);
     if (!metadata) {
@@ -199,16 +200,19 @@ export const verifyCampaignProgram: CommandHandler<"verifyCampaign"> = () =>
     if (saveDir === null) return cancelled();
 
     const collector = new DiagnosticCollector();
-    const state = yield* projects.load(saveDir, collector);
+    const loaded = yield* Effect.result(projects.load(saveDir, collector));
 
     const claimed = (yield* projects.list(saveDir))[0];
-    const campaignIdentity = state ? state.snapshot.campaignId : (claimed?.campaignId ?? "");
-    const activeRevision = state ? Number(state.snapshot.turnNumber) : (claimed?.turnNumber ?? 0);
 
-    if (state) {
+    if (Result.isSuccess(loaded)) {
       return {
         outcome: "success",
-        value: { valid: true, campaignIdentity, activeRevision, issues: [] },
+        value: {
+          valid: true,
+          campaignIdentity: loaded.success.snapshot.campaignId,
+          activeRevision: Number(loaded.success.snapshot.turnNumber),
+          issues: [],
+        },
         diagnostics: [],
       };
     }
@@ -217,9 +221,9 @@ export const verifyCampaignProgram: CommandHandler<"verifyCampaign"> = () =>
       outcome: "success",
       value: {
         valid: false,
-        campaignIdentity,
-        activeRevision,
-        issues: collector.all.map((d) => d.message),
+        campaignIdentity: claimed?.campaignId ?? "",
+        activeRevision: claimed?.turnNumber ?? 0,
+        issues: [...loaded.failure.diagnostics],
       },
       diagnostics: [],
     };
@@ -280,8 +284,24 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = () =>
     for (let i = 0; i + 1 < turns.length; i++) {
       const preTurn = turns[i]!;
       const postTurn = turns[i + 1]!;
-      const pre = yield* loadSaveForTurn(projects, saveDir, newestSavePerTurn, preTurn);
-      const post = yield* loadSaveForTurn(projects, saveDir, newestSavePerTurn, postTurn);
+      const preLoad = yield* Effect.result(
+        loadSaveForTurn(projects, saveDir, newestSavePerTurn, preTurn),
+      );
+      const postLoad = yield* Effect.result(
+        loadSaveForTurn(projects, saveDir, newestSavePerTurn, postTurn),
+      );
+      if (Result.isFailure(preLoad) || Result.isFailure(postLoad)) {
+        allMatched = false;
+        revisions.push({
+          revision: postTurn,
+          matched: false,
+          expectedHash: "missing",
+          actualHash: "missing",
+        });
+        continue;
+      }
+      const pre = preLoad.success;
+      const post = postLoad.success;
 
       if (!pre || !post) {
         allMatched = false;
@@ -296,16 +316,26 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = () =>
 
       const seed = `${metadata.campaignSeed}:month:${String(pre.snapshot.turnNumber)}`;
       const postSaveId = newestSavePerTurn.get(postTurn)!.saveId;
-      const stored = yield* projects.loadMonthInput(saveDir, postSaveId, collector);
+      const stored = yield* projects.loadMonthInput(saveDir, postSaveId).pipe(
+        Effect.catchTag("CommandFailed", (error) =>
+          Effect.succeed({
+            status: "corrupt" as const,
+            code: error.diagnostics[0] ?? "PERSISTENCE_CORRUPT_SAVE",
+            message: error.diagnostics[1] ?? "The stored month input is unreadable.",
+          }),
+        ),
+      );
       const input = stored.status === "present" ? parseMonthInput(stored.value) : null;
+      if (stored.status === "corrupt") {
+        collector.addError(stored.code, stored.message, { stage: "persistence.loadMonthInput" });
+      } else if (stored.status === "present" && input === null) {
+        collector.addError(
+          "REPLAY_MONTH_INPUT_INVALID" as DiagnosticCode,
+          `Revision ${String(postTurn)}: the stored month input is not a month_input_v1 record.`,
+          { stage: "replay" },
+        );
+      }
       if (stored.status === "corrupt" || (stored.status === "present" && input === null)) {
-        if (stored.status === "present") {
-          collector.addError(
-            "REPLAY_MONTH_INPUT_INVALID" as DiagnosticCode,
-            `Revision ${String(postTurn)}: the stored month input is not a month_input_v1 record.`,
-            { stage: "replay" },
-          );
-        }
         allMatched = false;
         revisions.push({
           revision: postTurn,
@@ -430,19 +460,19 @@ export const recoverCampaignProgram: CommandHandler<"recoverCampaign"> = () =>
     }
 
     const probe = new DiagnosticCollector();
-    const active = yield* projects.loadById(saveDir, activeSaveId, probe);
-    if (active) {
+    const active = yield* Effect.result(projects.loadById(saveDir, activeSaveId, probe));
+    if (Result.isSuccess(active)) {
       return {
         outcome: "success",
         value: {
           recovered: false,
-          activeRevision: Number(active.snapshot.turnNumber),
+          activeRevision: Number(active.success.snapshot.turnNumber),
           notes: ["Active save passes integrity checks — no recovery performed."],
         },
         diagnostics: [],
       };
     }
-    notes.push(...probe.all.map((d) => d.message));
+    notes.push(...active.failure.diagnostics);
 
     const previousSaveId = yield* projects.getPreviousSaveId(saveDir);
     if (previousSaveId === null) {
@@ -468,8 +498,8 @@ export const recoverCampaignProgram: CommandHandler<"recoverCampaign"> = () =>
     notes.push(`Reverted the package pointer to save ${previousSaveId}.`);
 
     const after = new DiagnosticCollector();
-    const revertedState = yield* projects.load(saveDir, after);
-    if (!revertedState) {
+    const revertedLoad = yield* Effect.result(projects.load(saveDir, after));
+    if (Result.isFailure(revertedLoad)) {
       return {
         outcome: "success",
         value: {
@@ -477,7 +507,7 @@ export const recoverCampaignProgram: CommandHandler<"recoverCampaign"> = () =>
           activeRevision: null,
           notes: [
             ...notes,
-            ...after.all.map((d) => d.message),
+            ...revertedLoad.failure.diagnostics,
             "Reverted save also fails integrity.",
           ],
         },
@@ -489,7 +519,7 @@ export const recoverCampaignProgram: CommandHandler<"recoverCampaign"> = () =>
       outcome: "success",
       value: {
         recovered: true,
-        activeRevision: Number(revertedState.snapshot.turnNumber),
+        activeRevision: Number(revertedLoad.success.snapshot.turnNumber),
         notes,
       },
       diagnostics: [],

@@ -1,7 +1,6 @@
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
 import { FIXTURE_BATTLE_OFFER_RULES } from "@bluewave/test-support";
 import { Effect, Layer, ManagedRuntime } from "effect";
@@ -79,8 +78,7 @@ describe("battle offer commands", () => {
   });
 
   function reload(sessionId: string, saveDir: string) {
-    const loaded = new SaveStore().load(saveDir, new DiagnosticCollector());
-    if (!loaded) throw new Error("save failed to reload");
+    const loaded = Effect.runSync(new SaveStore().load(saveDir)).state;
     registerCampaignSession({
       sessionId,
       saveDir,
@@ -398,8 +396,8 @@ describe("battle offer commands", () => {
       victoryPointCost: 4,
     });
 
-    const loaded = new SaveStore().load(saveDir, new DiagnosticCollector());
-    expect(JSON.stringify(loaded?.snapshot.wars.declinedBattles)).toBe(
+    const loaded = Effect.runSync(new SaveStore().load(saveDir)).state;
+    expect(JSON.stringify(loaded.snapshot.wars.declinedBattles)).toBe(
       JSON.stringify(snapshot.wars.declinedBattles),
     );
   });

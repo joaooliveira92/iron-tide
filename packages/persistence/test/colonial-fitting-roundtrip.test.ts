@@ -10,10 +10,10 @@ import type {
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
+import { runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 const design = (id: string, fitted: boolean): CompiledDesignVersion => ({
@@ -142,17 +142,15 @@ describe("S-5 04 colonial-service fitting save/load parity", () => {
   it("round-trips the flag on the design version and the ship with an identical snapshot and hash", () => {
     const saved = state();
     store.save(saved, tmpDir);
-    const diagnostics = new DiagnosticCollector();
-    const loaded = store.load(tmpDir, diagnostics);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
 
-    expect(diagnostics.hasErrors).toBe(false);
-    expect(loaded).not.toBeNull();
-    expect(loaded!.rawHash).toBe(saved.rawHash);
-    expect(canonicalSerialize(loaded!.snapshot)).toBe(canonicalSerialize(saved.snapshot));
-    expect(loaded!.snapshot.designs.get("d_fit")!.colonialServiceFitted).toBe(true);
-    const [fitted, plain] = loaded!.snapshot.nations.get("uk")!.fleets[0]!.ships;
+    expect(loaded.warnings).toEqual([]);
+    expect(loaded.state.rawHash).toBe(saved.rawHash);
+    expect(canonicalSerialize(loaded.state.snapshot)).toBe(canonicalSerialize(saved.snapshot));
+    expect(loaded.state.snapshot.designs.get("d_fit")!.colonialServiceFitted).toBe(true);
+    const [fitted, plain] = loaded.state.snapshot.nations.get("uk")!.fleets[0]!.ships;
     expect(fitted!.colonialServiceFitted).toBe(true);
     expect("colonialServiceFitted" in plain!).toBe(false);
-    expect("colonialServiceFitted" in loaded!.snapshot.designs.get("d_plain")!).toBe(false);
+    expect("colonialServiceFitted" in loaded.state.snapshot.designs.get("d_plain")!).toBe(false);
   });
 });

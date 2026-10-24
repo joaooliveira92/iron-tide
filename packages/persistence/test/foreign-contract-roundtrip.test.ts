@@ -10,10 +10,10 @@ import type {
 } from "@bluewave/campaign";
 import { bp, money, SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, createEnvelope, sha256Hex } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { afterEach, beforeEach, describe, expect, it } from "vite-plus/test";
 import { CURRENT_COMPATIBILITY_VERSION } from "../src/compatibility.js";
 import { SaveStore } from "../src/store.js";
+import { runExit, unwrapSuccess } from "./harness.js";
 import { FIXTURE_PRESTIGE_RULES } from "./prestige-fixture.js";
 
 const contract: ForeignConstructionContract = {
@@ -147,9 +147,8 @@ describe("foreign construction contract persistence (INC-9)", () => {
   it("round-trips the contract and the foreign project with an unchanged hash", () => {
     const saved = state();
     store.save(saved, tmpDir);
-    const loaded = store.load(tmpDir, new DiagnosticCollector());
-    expect(loaded).not.toBeNull();
-    const nation = loaded!.snapshot.nations.get("uk")!;
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+    const nation = loaded.state.snapshot.nations.get("uk")!;
     expect(nation.foreignContracts).toEqual([contract]);
     expect(nation.foreignContractPayments).toEqual([
       { contractId: "fc-1", paidDueMonths: ["1880-01"] },
@@ -162,6 +161,6 @@ describe("foreign construction contract persistence (INC-9)", () => {
         awardedByFamily: { HULL_CONSTRUCTION: 500 },
       },
     ]);
-    expect(loaded!.rawHash).toBe(saved.rawHash);
+    expect(loaded.state.rawHash).toBe(saved.rawHash);
   });
 });

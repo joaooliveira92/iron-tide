@@ -15,13 +15,12 @@ import {
   sha256Hex,
   verifyEnvelope,
 } from "@bluewave/deterministic";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { Result, Schema } from "effect";
 import { CURRENT_COMPATIBILITY_VERSION } from "./compatibility.js";
 import { readSaveMetadata } from "./fileDecode.js";
 import { SaveHeaderSchema } from "./schemas.js";
 import { toStorableSnapshot } from "./snapshotSerialization.js";
-import { SaveStore } from "./store.js";
+import { loadByIdResult } from "./store.js";
 
 export interface SaveMigrationStep {
   readonly from: string;
@@ -130,15 +129,15 @@ export function migrateSaveDirectory(
     };
   }
 
-  const diagnostics = new DiagnosticCollector();
-  const state = new SaveStore(from).loadById(dirname(savePath), basename(savePath), diagnostics);
-  if (state === null) {
+  const loaded = loadByIdResult(dirname(savePath), basename(savePath), from);
+  if (Result.isFailure(loaded)) {
     return {
       status: "refused",
       kind: "malformed",
-      reason: diagnostics.errors.map((d) => d.message).join("; ") || "save did not load",
+      reason: loaded.failure.message || "save did not load",
     };
   }
+  const state = loaded.success.state;
   const metadata = readSaveMetadata(join(savePath, METADATA_FILE));
   if (metadata === null) {
     return {

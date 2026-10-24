@@ -1,5 +1,5 @@
 import { SaveStore } from "@bluewave/persistence";
-import { DiagnosticCollector } from "@bluewave/diagnostics";
+import { Effect, Result } from "effect";
 import type { LoadSaveResult } from "./campaignSaveSchema.js";
 
 function mapsToPlainObjects(value: unknown): unknown {
@@ -26,23 +26,32 @@ function mapsToPlainObjects(value: unknown): unknown {
 export function loadCampaignSave(saveDir: string): LoadSaveResult {
   try {
     const store = new SaveStore();
-    const collector = new DiagnosticCollector();
-    const state = store.load(saveDir, collector);
+    const loaded = Effect.runSync(Effect.result(store.load(saveDir)));
 
-    if (!state) {
-      const diagnostics: LoadSaveResult["diagnostics"] = [];
-      for (const d of collector.all) {
-        diagnostics.push({ code: d.code ?? "UNKNOWN", severity: d.severity, message: d.message });
-      }
-      return { success: false, diagnostics };
+    if (Result.isFailure(loaded)) {
+      const diagnostic = loaded.failure.toDiagnostic();
+      return {
+        success: false,
+        diagnostics: [
+          {
+            code: diagnostic.code ?? "UNKNOWN",
+            severity: diagnostic.severity,
+            message: diagnostic.message,
+          },
+        ],
+      };
     }
 
     return {
       success: true,
-      snapshot: mapsToPlainObjects(state.snapshot) as Record<string, unknown>,
-      envelope: { ...state.envelope },
-      rawHash: state.rawHash,
-      diagnostics: [],
+      snapshot: mapsToPlainObjects(loaded.success.state.snapshot) as Record<string, unknown>,
+      envelope: { ...loaded.success.state.envelope },
+      rawHash: loaded.success.state.rawHash,
+      diagnostics: loaded.success.warnings.map((d) => ({
+        code: d.code ?? "UNKNOWN",
+        severity: d.severity,
+        message: d.message,
+      })),
     };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
