@@ -103,7 +103,7 @@ function toResultDto(session: PlayerBattleSession): PlayerBattleResultDto {
   };
 }
 
-function projectSession(
+export function projectSession(
   snapshot: CampaignSnapshot,
   battleId: string,
   campaignSeed: string,
