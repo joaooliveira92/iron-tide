@@ -28,6 +28,7 @@ export type {
   ChangeDivisionDoctrineCommand,
   AssignForeignStationCommand,
   SetShipReadinessCommand,
+  SetSpecialTrainingCommand,
   ClearForeignStationCommand,
   ResumeConstructionCommand,
   AssignOfficerCommand,

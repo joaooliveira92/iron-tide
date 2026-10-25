@@ -84,6 +84,7 @@ function minimalSnapshot(): CampaignSnapshot {
           foreignContractImpoundments: [],
           aircraft: {} as any,
           carrierOperations: {} as any,
+          specialTraining: [{ subject: "GUNNERY", fundedMonths: 1, maintenanceAdderBp: 3000 }],
           dock: {
             maximumNewConstructionMassKg: 1,
             maximumMajorRepairMassKg: 1,

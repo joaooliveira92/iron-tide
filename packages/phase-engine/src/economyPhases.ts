@@ -3,6 +3,7 @@ import {
   monthlyRevenue,
   nationIsAtWar,
   nationMonthlyMaintenance,
+  trainingMaintenanceAdderBp,
   settleOutflow,
   transitionConstructionProject,
 } from "@bluewave/campaign";
@@ -497,7 +498,11 @@ export function runMaintenancePhase(ctx: PhaseContext): PhaseRunOutcome {
 
     const atWar = nationIsAtWar(ctx.snapshot.read("wars")["wars"], nationId);
 
-    const totalMaintenance = nationMonthlyMaintenance(nation["fleets"], atWar);
+    const totalMaintenance = nationMonthlyMaintenance(
+      nation["fleets"],
+      atWar,
+      trainingMaintenanceAdderBp(nation["specialTraining"]),
+    );
 
     if ((totalMaintenance as number) <= 0) continue;
 

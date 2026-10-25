@@ -80,6 +80,7 @@ import {
   SubmitMovementCommandPayloadSchema,
   SubmitOfferResponsePayloadSchema,
   SubmitShipReadinessPayloadSchema,
+  SubmitSpecialTrainingPayloadSchema,
   SubmitStationAssignmentPayloadSchema,
   WriteDrawingBoardDraftPayloadSchema,
 } from "./campaignCommandSchemas.js";
@@ -115,6 +116,7 @@ import type {
   FleetScreenProjection,
   MovementCommandOutcome,
   ShipReadinessOutcome,
+  SpecialTrainingOutcome,
   StationAssignmentOutcome,
 } from "./fleet-contract.js";
 import type { NewGameOptions } from "./new-game-contract.js";
@@ -311,6 +313,10 @@ export const campaignCommandShapes = {
   submitShipReadiness: command(
     SubmitShipReadinessPayloadSchema,
     resultType<ShipReadinessOutcome>(),
+  ),
+  submitSpecialTraining: command(
+    SubmitSpecialTrainingPayloadSchema,
+    resultType<SpecialTrainingOutcome>(),
   ),
   replaceMovementCommand: command(
     ReplaceMovementCommandPayloadSchema,

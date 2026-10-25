@@ -273,6 +273,13 @@ export const SubmitShipReadinessPayloadSchema = Schema.Struct({
   shipIds: Schema.Array(nonEmptyString).check(Schema.isMinLength(1), Schema.isMaxLength(256)),
 });
 
+export const SubmitSpecialTrainingPayloadSchema = Schema.Struct({
+  ...CommandEnvelopePayloadSchema.fields,
+  subjects: Schema.Array(
+    Schema.Literals(["GUNNERY", "NIGHT_FIGHTING", "TORPEDO_TACTICS", "DAMAGE_CONTROL"]),
+  ).check(Schema.isMaxLength(4)),
+});
+
 export const SubmitDivisionCommandPayloadSchema = Schema.Struct({
   ...CommandEnvelopePayloadSchema.fields,
   command: DivisionCommandBodySchema,

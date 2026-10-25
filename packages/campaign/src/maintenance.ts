@@ -111,9 +111,19 @@ export interface FleetMaintenanceBreakdown {
   readonly ships: readonly ShipMaintenanceLine[];
 }
 
+function shipAdderBp(
+  ship: MaintainedShip,
+  trainingAdderBp: SafeInt | undefined,
+): SafeInt | undefined {
+  const overBase = ship.overBase?.maintenanceAdderBp;
+  if (trainingAdderBp === undefined || ship.readiness !== "ACTIVE") return overBase;
+  return overBase === undefined ? trainingAdderBp : SafeInt.add(overBase, trainingAdderBp);
+}
+
 export function nationMonthlyMaintenance(
   fleets: readonly MaintainedFleet[],
   atWar: boolean,
+  trainingAdderBp?: SafeInt,
 ): SafeInt {
   let total = SafeInt.ZERO;
   for (const fleet of fleets)
@@ -124,7 +134,7 @@ export function nationMonthlyMaintenance(
           ship.hitPoints,
           ship.readiness,
           atWar,
-          ship.overBase?.maintenanceAdderBp,
+          shipAdderBp(ship, trainingAdderBp),
         ),
       );
   return total;
@@ -133,12 +143,13 @@ export function nationMonthlyMaintenance(
 export function fleetMaintenanceBreakdown(
   fleets: readonly { readonly ships: readonly NamedMaintainedShip[] }[],
   atWar: boolean,
+  trainingAdderBp?: SafeInt,
 ): FleetMaintenanceBreakdown {
   const ships: ShipMaintenanceLine[] = [];
   let peaceTotal = 0;
   for (const fleet of fleets)
     for (const ship of fleet.ships) {
-      const adder = ship.overBase?.maintenanceAdderBp;
+      const adder = shipAdderBp(ship, trainingAdderBp);
       const cost = Number(shipMonthlyMaintenanceCost(ship.hitPoints, ship.readiness, atWar, adder));
       peaceTotal += Number(
         shipMonthlyMaintenanceCost(ship.hitPoints, ship.readiness, false, adder),

@@ -65,6 +65,7 @@ import {
   replaceMovementCommandProgram,
   submitMovementCommandProgram,
   submitShipReadinessProgram,
+  submitSpecialTrainingProgram,
   submitStationAssignmentProgram,
 } from "./commands/fleetCommands.js";
 import {
@@ -142,6 +143,7 @@ export const commandHandlers: CommandHandlers = {
   submitMovementCommand: submitMovementCommandProgram,
   submitStationAssignment: submitStationAssignmentProgram,
   submitShipReadiness: submitShipReadinessProgram,
+  submitSpecialTraining: submitSpecialTrainingProgram,
   replaceMovementCommand: replaceMovementCommandProgram,
   cancelMovementCommand: cancelMovementCommandProgram,
   submitDesignCommand: submitDesignCommandProgram,

@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0290).
+highest existing number + 1 (the next number is ADR-0291).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -136,6 +136,7 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 | 0287 | [ADR-0287-battle-absence-record.md](ADR-0287-battle-absence-record.md) | A battle record explains the player's absent ships with gate reasons | accepted | — |
 | 0288 | [ADR-0288-monthly-division-cohesion-growth.md](ADR-0288-monthly-division-cohesion-growth.md) | Division cohesion grows monthly through a pure rule applied after readiness evolution | accepted | — |
 | 0289 | [ADR-0289-division-doctrine-command-and-speed-advisory.md](ADR-0289-division-doctrine-command-and-speed-advisory.md) | Role and formation changes are one division command priced from the ruleset; speed mismatch is a derived advisory | accepted | — |
+| 0290 | [ADR-0290-special-training-program.md](ADR-0290-special-training-program.md) | Special training is a nation program whose maintenance adder feeds the shared calculator | accepted | — |
 
 ## Foreign stations & presence
 
