@@ -13,6 +13,7 @@ export * from "./continuity.js";
 export * from "./constructionStatus.js";
 export * from "./constructionDraw.js";
 export * from "./division.js";
+export * from "./divisionCohesionGrowth.js";
 export * from "./designUnits.js";
 export * from "./fleetSize.js";
 export * from "./snapshotHash.js";

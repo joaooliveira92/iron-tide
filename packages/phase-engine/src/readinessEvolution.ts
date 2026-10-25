@@ -1,5 +1,5 @@
 import type { NationState, Ship } from "@bluewave/campaign";
-import { readinessAfterCrewRamp, rampCrewQuality } from "@bluewave/campaign";
+import { growDivisionCohesion, readinessAfterCrewRamp, rampCrewQuality } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { shipReadinessChangedEvent } from "./events.js";
 import type { PhaseContext } from "./pipeline.js";
@@ -11,6 +11,26 @@ function releaseFromRepair(ship: Ship): Ship {
   const released: Ship = { ...ship, readiness: "ACTIVE" };
   delete released.repairMonthsRemaining;
   return released;
+}
+
+function growDivisionCohesionForMonth(ctx: PhaseContext): void {
+  const rules = ctx.fleetManagement?.divisionCohesion;
+  if (rules === undefined) return;
+
+  let changed = false;
+  const updatedNations = new Map<string, NationState>();
+  for (const [nationId, nation] of ctx.snapshot.read("nations")) {
+    const shipsById = new Map(
+      nation["fleets"].flatMap((fleet) => fleet["ships"]).map((ship) => [ship["id"], ship]),
+    );
+    const divisions = nation["divisions"].map((division) => {
+      const grown = growDivisionCohesion(division, shipsById, ctx.campaignMonth, rules);
+      if (grown !== division) changed = true;
+      return grown;
+    });
+    updatedNations.set(nationId, { ...nation, divisions });
+  }
+  if (changed) ctx.snapshot.write("nations", updatedNations);
 }
 
 export function applyReadinessEvolution(ctx: PhaseContext): void {
@@ -79,4 +99,5 @@ export function applyReadinessEvolution(ctx: PhaseContext): void {
   }
 
   if (changed) ctx.snapshot.write("nations", updatedNations);
+  growDivisionCohesionForMonth(ctx);
 }
