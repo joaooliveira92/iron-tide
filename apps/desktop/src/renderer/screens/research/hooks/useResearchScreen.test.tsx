@@ -1,5 +1,6 @@
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+import { fixtureProjection } from "../research-test-fixtures.js";
 import { useResearchScreen } from "./useResearchScreen.js";
 
 const mocks = vi.hoisted(() => ({ execute: vi.fn() }));
@@ -7,19 +8,10 @@ vi.mock("../../../lib/bridge-context.js", () => ({
   useBridge: () => ({ campaign: { execute: mocks.execute } }),
 }));
 
-const projection = {
-  nationId: "uk",
-  researchBudget: 60,
-  annualAllocation: 720,
-  researchCap: 120,
-  unfundedReason: null,
-  fieldPriorities: { MACHINERY: 4, GUNNERY: 2 },
-  discoveredTechIds: [],
-  inProgressTechnologies: [],
-  currentProjectTechId: null,
+const projection = fixtureProjection({
   revision: 3,
-  month: { month: 1, year: 1880 },
-};
+  fieldPriorities: { MACHINERY: 4, GUNNERY: 2 },
+});
 
 afterEach(() => {
   cleanup();
@@ -27,6 +19,22 @@ afterEach(() => {
 });
 
 describe("useResearchScreen command lifecycle", () => {
+  it("reverts an edited draft to the committed priorities", async () => {
+    mocks.execute.mockImplementation(async () => ({
+      outcome: "success",
+      value: projection,
+      diagnostics: [],
+    }));
+    const { result } = renderHook(() => useResearchScreen("ses_1"));
+    await waitFor(() => expect(result.current.state.kind).toBe("loaded"));
+
+    act(() => result.current.setFieldWeight("GUNNERY", 4));
+    expect(result.current.state.kind === "loaded" && result.current.state.draft["GUNNERY"]).toBe(4);
+
+    act(() => result.current.revert());
+    expect(result.current.state.kind === "loaded" && result.current.state.draft["GUNNERY"]).toBe(2);
+  });
+
   it("submits the draft with the loaded revision through the shared workflow", async () => {
     mocks.execute.mockImplementation(async (command: string) => {
       if (command === "inspectResearchScreen")

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
+import { fixtureProjection as sharedFixtureProjection } from "./research-test-fixtures.js";
 import type { ResearchScreenProjection } from "../../../shared/research-contract.js";
 import type { ResearchScreenState } from "./research-screen-state.js";
 import {
@@ -12,6 +13,7 @@ import {
   initialResearchScreenState,
   researchBeginSubmit,
   researchLoadSuccess,
+  researchRevertDraft,
   researchSubmitRejected,
   researchSubmitSuccess,
   researchTransportFailure,
@@ -20,22 +22,10 @@ import {
 function fixtureProjection(
   overrides: Partial<ResearchScreenProjection> = {},
 ): ResearchScreenProjection {
-  return {
-    nationId: "uk",
-    researchBudget: 60,
-    annualAllocation: 720,
-    researchCap: 120,
-    unfundedReason: null,
+  return sharedFixtureProjection({
     fieldPriorities: { MACHINERY: 4, GUNNERY: 2, HULL_CONSTRUCTION: 2 },
-    discoveredTechIds: ["hc_wrought_iron_hull"],
-    inProgressTechnologies: [
-      { techId: "mac_triple_expansion", investedPoints: 30, completed: false },
-    ],
-    currentProjectTechId: "mac_triple_expansion",
-    revision: 0,
-    month: { month: 1, year: 1880 },
     ...overrides,
-  };
+  });
 }
 
 function loadedState(): ResearchScreenState {
@@ -146,5 +136,28 @@ describe("research screen state", () => {
       kind: "idle",
       revision: 0,
     });
+  });
+});
+
+describe("researchRevertDraft", () => {
+  it("restores the committed priorities and clears the notice", () => {
+    const loaded = loadedState();
+    if (loaded.kind !== "loaded") throw new Error("expected loaded state");
+    const edited = {
+      ...loaded,
+      draft: setDraftWeight(loaded.draft, "MACHINERY", 4),
+      notice: "stale",
+    };
+    const reverted = researchRevertDraft(edited);
+    if (reverted.kind !== "loaded") throw new Error("expected loaded state");
+    expect(reverted.draft).toEqual(seedDraft(loaded.projection));
+    expect(reverted.notice).toBeNull();
+  });
+
+  it("does nothing while a submit is in flight or before the first load", () => {
+    const submitting = submittingState();
+    expect(researchRevertDraft(submitting)).toBe(submitting);
+    const idle = initialResearchScreenState();
+    expect(researchRevertDraft(idle)).toBe(idle);
   });
 });

@@ -1,4 +1,5 @@
 import {
+  discoveryDrawWeight,
   eligibleResearchFields,
   eligibleTechnologiesForField,
   settleOutflow,
@@ -170,11 +171,7 @@ export function resolveResearchNations(
           (t) =>
             [
               t.techId,
-              applyHistoricalTimingModifier(
-                t.discoveryWeight ?? SafeInt(1),
-                t.availabilityMonth,
-                turnNumber,
-              ),
+              discoveryDrawWeight(t.discoveryWeight ?? SafeInt(1), t.availabilityMonth, turnNumber),
             ] as [string, SafeInt],
         );
 
@@ -335,30 +332,6 @@ export function resolveResearchNations(
   }
 
   return nextNations ?? nations;
-}
-
-function applyHistoricalTimingModifier(
-  baseWeight: SafeInt,
-  availabilityMonth: SafeInt | undefined,
-  turnNumber: SafeInt,
-): SafeInt {
-  const monthId = turnNumber as number;
-  const availabilityDate = (availabilityMonth ?? SafeInt(0)) as number;
-  const monthsAfter = monthId - availabilityDate;
-
-  let modifierBp = SafeInt(10_000);
-  if (monthsAfter > 60) {
-    modifierBp = SafeInt(12_500);
-  } else if (monthsAfter >= 0) {
-    modifierBp = SafeInt(10_000);
-  } else if (monthsAfter >= -24) {
-    modifierBp = SafeInt(8_000);
-  } else if (monthsAfter >= -60) {
-    modifierBp = SafeInt(5_000);
-  }
-
-  const adjusted = SafeInt.div(SafeInt.mul(baseWeight, modifierBp), SafeInt(10_000), "floor");
-  return (adjusted as number) < 1 ? SafeInt.ONE : adjusted;
 }
 
 function findTechCost(catalogue: TechnologyCatalogue, techId: string): SafeInt {

@@ -95,6 +95,7 @@ Legality, consistency and authored posture of the 1880 scenario's starting conte
 | 0213 | [ADR-0213-opening-posture-balance-choices.md](ADR-0213-opening-posture-balance-choices.md) | The 1880 opening posture is authored canon; magnitudes are balance choices | accepted | — |
 | 0228 | [ADR-0228-combat-classifier-1880-ruleset-v2.md](ADR-0228-combat-classifier-1880-ruleset-v2.md) | The combat ship-type classifier aligns to the 1880 classification ruleset v2 | accepted | — |
 | 0229 | [ADR-0229-technology-year-global-designer-unlock.md](ADR-0229-technology-year-global-designer-unlock.md) | Technology `year` is the global designer unlock year, not a research claim | accepted | — |
+| 0285 | [ADR-0285-research-workspace-projection.md](ADR-0285-research-workspace-projection.md) | The research screen reads a technology-chart projection, and the draw weight has one home | accepted | — |
 
 ## Campaign economy
 
@@ -114,7 +115,7 @@ Turn identity, the suspend/resume interruption model, and strict save-file decod
 | 0222 | [ADR-0222-turn-identity-stable-across-resume.md](ADR-0222-turn-identity-stable-across-resume.md) | A turn's interruption identity is stable across suspend and resume | accepted | — |
 | 0235 | [ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md](ADR-0235-main-owned-recent-campaigns-and-reopen-allow-list.md) | Main-owned recent campaigns and reopen allow-list | accepted | — |
 | 0278 | [ADR-0278-save-files-decode-strictly.md](ADR-0278-save-files-decode-strictly.md) | Save files decode strictly, campaign.json included | accepted | — |
-| 0285 | [ADR-0285-campaign-snapshot-hash-covers-map-fields.md](ADR-0285-campaign-snapshot-hash-covers-map-fields.md) | The campaign snapshot hash covers Map fields | accepted | — |
+| 0285 | [ADR-0285-research-workspace-projection.md](ADR-0285-research-workspace-projection.md) | The research screen reads a technology-chart projection, and the draw weight has one home | accepted | — |
 
 ## Fleet readiness, command & prestige
 

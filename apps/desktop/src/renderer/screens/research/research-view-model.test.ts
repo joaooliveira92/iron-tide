@@ -1,34 +1,10 @@
-import {
-  CANONICAL_RESEARCH_FIELD_IDS,
-  RESEARCH_FIELD_PRIORITY_WEIGHTS,
-} from "@bluewave/campaign-engine";
+import { RESEARCH_FIELD_PRIORITY_WEIGHTS } from "@bluewave/campaign-engine";
 import { describe, expect, it } from "vite-plus/test";
 import type { ResearchScreenProjection } from "../../../shared/research-contract.js";
 import { setDraftWeight } from "./research-field-priorities.js";
 import { researchLoadSuccess } from "./research-screen-state.js";
+import { fixtureProjection } from "./research-test-fixtures.js";
 import { buildResearchViewModel } from "./research-view-model.js";
-
-function fixtureProjection(
-  overrides: Partial<ResearchScreenProjection> = {},
-): ResearchScreenProjection {
-  return {
-    nationId: "uk",
-    researchBudget: 60,
-    annualAllocation: 720,
-    researchCap: 120,
-    unfundedReason: null,
-    fieldPriorities: {
-      GUNNERY: RESEARCH_FIELD_PRIORITY_WEIGHTS.HIGH,
-      MACHINERY: RESEARCH_FIELD_PRIORITY_WEIGHTS.MEDIUM,
-    },
-    discoveredTechIds: ["basic_steam", "gunnery_rifled"],
-    inProgressTechnologies: [{ techId: "gunnery_rifled", investedPoints: 24, completed: false }],
-    currentProjectTechId: "gunnery_rifled",
-    revision: 0,
-    month: { month: 1, year: 1880 },
-    ...overrides,
-  };
-}
 
 function loaded(overrides: Partial<ResearchScreenProjection> = {}) {
   const state = researchLoadSuccess(fixtureProjection(overrides));
@@ -36,81 +12,146 @@ function loaded(overrides: Partial<ResearchScreenProjection> = {}) {
   return state;
 }
 
-describe("buildResearchViewModel", () => {
-  it("humanizes the projection into render-ready rows and scalars", () => {
-    const vm = buildResearchViewModel(loaded());
+const field = (vm: ReturnType<typeof buildResearchViewModel>, id: string) => {
+  const found = vm.fields.find((f) => f.fieldId === id);
+  if (found === undefined) throw new Error(`no field ${id}`);
+  return found;
+};
 
-    expect(vm.researchBudget).toBe(60);
-    expect(vm.currentProjectLabel).toBe("Gunnery rifled");
-    expect(vm.discoveredTechs).toEqual([
-      { techId: "basic_steam", label: "Basic steam" },
-      { techId: "gunnery_rifled", label: "Gunnery rifled" },
-    ]);
-    expect(vm.inProgressTechnologies).toEqual([
-      {
-        techId: "gunnery_rifled",
-        label: "Gunnery rifled",
-        investedPoints: 24,
-        completed: false,
-        isCurrentProject: true,
-      },
-    ]);
-    expect(vm.dirty).toBe(false);
-    expect(vm.highCount).toBe(1);
-    expect(vm.highCap).toBe(5);
-    expect(vm.highCountValid).toBe(true);
+describe("buildResearchViewModel summary", () => {
+  it("derives the budget gauge against the cap and the guidance floor", () => {
+    const vm = buildResearchViewModel(loaded());
+    expect(vm.budget).toMatchObject({
+      monthly: 60,
+      cap: 120,
+      floor: 40,
+      utilizationPct: 50,
+      floorPct: 33,
+      annualAllocation: 720,
+    });
   });
 
-  it("emits one row per canonical field, carrying its weight and projected points", () => {
+  it("counts the catalogue by what the player can act on", () => {
     const vm = buildResearchViewModel(loaded());
-
-    expect(vm.fields).toHaveLength(CANONICAL_RESEARCH_FIELD_IDS.length);
-    const gunnery = vm.fields.find((field) => field.fieldId === "GUNNERY");
-    expect(gunnery).toMatchObject({ label: "Gunnery", weight: 4, isHigh: true });
-    expect(gunnery?.projectedPoints).toBeGreaterThan(0);
+    expect(vm.totals).toMatchObject({
+      catalogue: 7,
+      discovered: 1,
+      researching: 1,
+      open: 2,
+    });
   });
 
-  it("reflects a dirty, over-cap draft in the derived flags", () => {
+  it("tracks the High slots and dirtiness", () => {
+    const vm = buildResearchViewModel(loaded());
+    expect(vm).toMatchObject({ highCount: 1, highCap: 5, highCountValid: true, dirty: false });
+  });
+
+  it("surfaces the engine's unfunded explanation", () => {
+    const vm = buildResearchViewModel(loaded({ unfundedReason: "ABOVE_CAP" }));
+    expect(vm.budget.note).not.toBeNull();
+  });
+});
+
+describe("buildResearchViewModel fields", () => {
+  it("lists every canonical field in registry order", () => {
+    const vm = buildResearchViewModel(loaded());
+    expect(vm.fields[0]?.fieldId).toBe("HULL_CONSTRUCTION");
+    expect(vm.fields).toHaveLength(15);
+  });
+
+  it("projects points over eligible fields only, so an idle field funds nothing", () => {
+    const vm = buildResearchViewModel(loaded());
+    expect(field(vm, "HULL_CONSTRUCTION")).toMatchObject({ projectedPoints: 40, sharePct: 67 });
+    expect(field(vm, "MACHINERY")).toMatchObject({ projectedPoints: 20, sharePct: 33 });
+    expect(field(vm, "GUNNERY")).toMatchObject({ projectedPoints: 0, sharePct: 0 });
+    expect(vm.totals.projectedPoints).toBe(60);
+    expect(vm.totals.fundedFields).toBe(2);
+  });
+
+  it("re-projects live as the draft changes", () => {
     const state = loaded();
     const draft = setDraftWeight(state.draft, "MACHINERY", RESEARCH_FIELD_PRIORITY_WEIGHTS.HIGH);
     const vm = buildResearchViewModel({ ...state, draft });
-
+    expect(field(vm, "MACHINERY").projectedPoints).toBe(30);
     expect(vm.dirty).toBe(true);
     expect(vm.highCount).toBe(2);
-    expect(vm.highCountValid).toBe(true);
   });
 
-  it("renders honest empty labels for an empty projection", () => {
-    const vm = buildResearchViewModel(
+  it("explains why a field gets nothing", () => {
+    const vm = buildResearchViewModel(loaded());
+    expect(field(vm, "GUNNERY")).toMatchObject({ state: "waiting" });
+    expect(field(vm, "GUNNERY").stateNote).toContain("Breech-Loading Rifle");
+    expect(field(vm, "GUNNERY").stateNote).toContain("Mar 1881");
+    expect(field(vm, "MISSILES")).toMatchObject({ state: "empty", totalTechs: 0 });
+  });
+
+  it("estimates when the active project completes at the projected rate", () => {
+    const vm = buildResearchViewModel(loaded());
+    const machinery = field(vm, "MACHINERY");
+    expect(machinery.activeTech?.techId).toBe("mac_compound");
+    expect(machinery.activeTech?.etaMonths).toBe(2);
+    expect(machinery.activeTech?.progressPct).toBe(50);
+  });
+});
+
+describe("buildResearchViewModel technologies", () => {
+  const tech = (vm: ReturnType<typeof buildResearchViewModel>, id: string) => {
+    const found = vm.technologies.get(id);
+    if (found === undefined) throw new Error(`no tech ${id}`);
+    return found;
+  };
+
+  it("prefers authored names and falls back to a humanised id", () => {
+    const vm = buildResearchViewModel(loaded());
+    expect(tech(vm, "hc_steel").label).toBe("All-Steel Hull");
+    const bare = buildResearchViewModel(
       loaded({
-        researchBudget: 0,
-        discoveredTechIds: [],
-        inProgressTechnologies: [],
-        currentProjectTechId: null,
-        fieldPriorities: {},
+        technologies: fixtureProjection().technologies.map((t) => ({ ...t, name: null })),
       }),
     );
-
-    expect(vm.currentProjectLabel).toBeNull();
-    expect(vm.discoveredTechs).toEqual([]);
-    expect(vm.inProgressTechnologies).toEqual([]);
-    expect(vm.fields.every((field) => field.weight === RESEARCH_FIELD_PRIORITY_WEIGHTS.LOW)).toBe(
-      true,
-    );
+    expect(tech(bare, "hc_steel").label).toBe("Hc steel");
   });
 
-  it("carries the annual allocation, the cap and an honest note about an unpaid or impossible budget", () => {
-    const ok = buildResearchViewModel(loaded());
-    expect(ok.annualAllocation).toBe(720);
-    expect(ok.researchCap).toBe(120);
-    expect(ok.budgetNote).toBeNull();
+  it("explains the draw: odds, weight, and timing", () => {
+    const vm = buildResearchViewModel(loaded());
+    expect(tech(vm, "hc_compound")).toMatchObject({
+      oddsPct: 67,
+      discoveryWeight: 4000,
+      drawWeight: 4000,
+      timingModifierPct: 100,
+    });
+  });
 
-    const noField = buildResearchViewModel(
-      loaded({ unfundedReason: "NO_ELIGIBLE_RESEARCH_FIELD" }),
-    );
-    expect(noField.budgetNote).toMatch(/no field can take it/);
+  it("resolves prerequisites with their live status and what is still missing", () => {
+    const vm = buildResearchViewModel(loaded());
+    expect(tech(vm, "hc_nickel").prerequisites).toEqual([
+      { techId: "hc_compound", label: "Compound Armor", status: "open" },
+    ]);
+    expect(tech(vm, "hc_nickel").missingPrerequisites).toEqual(["Compound Armor"]);
+  });
 
-    const tiny = buildResearchViewModel(loaded({ researchBudget: 0, researchCap: 0 }));
-    expect(tiny.budgetNote).toMatch(/too small to fund research/);
+  it("dates future technologies from the campaign month", () => {
+    const vm = buildResearchViewModel(loaded());
+    expect(tech(vm, "gun_breech")).toMatchObject({
+      monthsUntilAvailable: 14,
+      availabilityLabel: "Mar 1881",
+    });
+  });
+
+  it("says what an open technology is queued behind when its field is busy", () => {
+    const busy = fixtureProjection({
+      technologies: fixtureProjection().technologies.map((t) =>
+        t.techId === "hc_steel"
+          ? { ...t, status: "researching" as const, investedPoints: 70 }
+          : t.techId === "hc_compound"
+            ? { ...t, drawOddsBp: null }
+            : t,
+      ),
+      fields: fixtureProjection().fields.map((f) =>
+        f.fieldId === "HULL_CONSTRUCTION" ? { ...f, activeTechId: "hc_steel" } : f,
+      ),
+    });
+    const vm = buildResearchViewModel(researchLoadSuccess(busy) as never);
+    expect(tech(vm, "hc_compound").queuedBehind).toBe("All-Steel Hull");
   });
 });
