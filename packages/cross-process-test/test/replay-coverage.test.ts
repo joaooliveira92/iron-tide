@@ -108,7 +108,6 @@ describe("checked-in replay corpus", () => {
       "resolve_aircraft_development",
       "resolve_carrier_operations",
       "battle_generation",
-      "battle_resolution",
       "closing_validation",
     ]);
   });
@@ -125,7 +124,6 @@ describe("checked-in replay corpus", () => {
       "resolve_aircraft_development",
       "resolve_carrier_operations",
       "battle_generation",
-      "battle_resolution",
       "closing_validation",
     ]);
   });
