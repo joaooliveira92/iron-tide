@@ -1228,6 +1228,146 @@ designs:
     starterFor: DD
   - header:
       hull:
+        beam: 13700
+        blockCoeffBp: 6130
+        depthToMainDeck: 8000
+        designMarginBp: 300
+        draught: 4600
+        growthReserveBp: 0
+        hullFormId: postwar_destroyer_form
+        lengthWl: 124100
+        limitDisplacementKg: null
+        materialId: mild_steel
+        structuralSchemeId: mixed
+        subdivisionGrade: 2
+        targetDisplacementKg: 4916000
+      machinery:
+        foulingBp: 0
+        fuelCapacityKg: 500000
+        fuelStationPermille: 500
+        fuelZoneId: CENTRAL_MACHINERY
+        rooms:
+          - shareBp: 6000
+            stationPermille: 450
+            zoneId: CENTRAL_MACHINERY
+          - shareBp: 4000
+            stationPermille: 680
+            zoneId: AFT_SERVICE
+      nation: usa
+      protection:
+        bunkerProtectionBp: 0
+        citadelLengthMm: 0
+        torpedoWarheadKg: 0
+      requirement:
+        accommodationStandard: STANDARD
+        category: DD
+        crewQualityBp: 10000
+        cruiseSpeedMilliKnots: 20000
+        designThreatId: qf_6in
+        modernizationExpectation: NONE
+        protectionGoal: NONE
+        requiredRangeNm: 1500
+        requiredSpeedMilliKnots: 33000
+    id: starter_dd_usa_1955
+    loadout:
+      entries:
+        - entries:
+            guns:
+              - mountCount: 1
+                params:
+                  rounds: 400
+                part: standard_gun_dp_5in_54_single
+          id: gun_a
+          magazineEntry: mag_fwd
+          mountCount: 1
+          part: gun_dp_5in_54_single_turret
+          slot: forecastle.gun_mount
+          stationPermille: 40
+        - entries:
+            guns:
+              - mountCount: 1
+                params:
+                  rounds: 400
+                part: standard_gun_dp_5in_54_single
+          id: gun_b
+          magazineEntry: mag_fwd
+          mountCount: 1
+          part: gun_dp_5in_54_single_turret
+          slot: fwd_service.gun_mount
+          stationPermille: 250
+        - entries:
+            guns:
+              - mountCount: 1
+                params:
+                  rounds: 400
+                part: standard_gun_dp_5in_54_single
+          id: gun_c
+          magazineEntry: mag_aft
+          mountCount: 1
+          part: gun_dp_5in_54_single_turret
+          slot: quarterdeck.gun_mount
+          stationPermille: 900
+        - id: tubes
+          mountCount: 4
+          part: tube_21in_above_water
+          slot: superstructure.torpedo_launcher
+          stationPermille: 600
+        - id: mag_fwd
+          mountCount: 1
+          part: magazine_heavy
+          slot: fwd_magazine.magazine
+          stationPermille: 130
+        - id: mag_aft
+          mountCount: 1
+          part: magazine_heavy
+          slot: aft_magazine.magazine
+          stationPermille: 830
+        - id: rf
+          mountCount: 1
+          part: rangefinder_optical
+          slot: superstructure.sensor
+          stationPermille: 525
+        - id: dyn
+          mountCount: 1
+          part: dynamo_small
+          slot: fwd_service.electrical_plant
+          stationPermille: 200
+        - id: vent
+          mountCount: 1
+          part: ventilation_plant
+          slot: fwd_service.ventilation
+          stationPermille: 210
+        - id: quarters
+          mountCount: 40
+          params:
+            blocks: 40
+          part: quarters_crew
+          slot: fwd_service.accommodation
+          stationPermille: 230
+        - id: quarters_aft
+          mountCount: 40
+          params:
+            blocks: 40
+          part: quarters_crew
+          slot: aft_service.accommodation
+          stationPermille: 720
+        - id: funnel
+          mountCount: 1
+          part: funnel_single
+          slot: superstructure.funnel
+          stationPermille: 630
+        - mountCount: 1
+          params:
+            installedKw: 52199
+          part: hp_steam_geared_turbine
+          slot: central_machinery.propulsion_plant
+          stationPermille: 450
+      platform: postwar_destroyer_form
+    month: 1955-11
+    name: Destroyer (starter, DD) — United States, 1955
+    starterFor: DD
+  - header:
+      hull:
         beam: 10400
         blockCoeffBp: 4300
         depthToMainDeck: 5600

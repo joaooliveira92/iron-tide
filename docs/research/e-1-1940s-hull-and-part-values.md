@@ -276,3 +276,23 @@ Source NP (Navypedia, fetched 2026-10-25): us_cr_worcester.htm and us_cr_des_moi
 Unsourced and set as `BALANCE TARGET` or `ESTIMATE` in the starters: belt and deck lengths and widths, turret region areas, magazine box size, rounds per gun, moulded
 depth, crew quarters, magazine count and station. Armour is modelled as `krupp` plate, the newest material in the pack. The fitted plant gives 7,868 nm (Worcester) and
 9,855 nm (Des Moines) at 15 kn, short of the sourced ranges, so the starters ask for 7,500 and 9,500 nm.
+
+## 13. 1955 destroyer and 5-inch/54 gun (added for the 1950-1959 slice, 2026-10-25)
+
+Sources: NP (Navypedia) us_dd_forrest_sherman.htm and NW-54 https://www.navweaps.com/Weapons/WNUS_5-54_mk42.php, both fetched 2026-10-25.
+
+| Item | Value | Source | Confidence |
+|---|---|---|---|
+| Displacement | 2,800 t standard, 4,916 t full load | NP | SINGLE-SOURCE |
+| Length, beam, draught | 124.1 m wl (127.6 m oa), 13.7 m, 4.60 m | NP | SINGLE-SOURCE |
+| Power, speed | 70,000 hp (52,199 kW), 33 kn | NP | SINGLE-SOURCE |
+| Fuel, range | 500 t oil, 4,500 nm at 20 kn | NP | SINGLE-SOURCE |
+| Guns | 3 x 5-inch/54 Mark 42 single | NP, NW-54 | SINGLE-SOURCE |
+| Tubes | 4 x 533 mm on DD931 and DD932 only; 2 x 3 x 324 mm Mark 32 on all | NP | SINGLE-SOURCE |
+| 5-inch/54 gun | 127 mm bore, 270 in barrel, 2,550 kg, 808 m/s | NW-54 | SINGLE-SOURCE |
+| Mark 42 mount | 58,586 kg without ammunition (66,193 kg loaded), 40 rpm as designed, about 300 deg train, 20 crew (Mod 0), service 1954 | NW-54 | SINGLE-SOURCE |
+| Projectile, charge | 31.45 kg HC Mark 41, 8.19 kg charge (2,604 bp, DERIVED) | NW-54 | SINGLE-SOURCE, DERIVED |
+| Block coefficient | 0.613 at full load | DERIVED from the dimensions with seawater at 1,025 kg/m3 | DERIVED |
+
+Unsourced and set as `BALANCE_TARGET` or `ESTIMATE`: the mount split, cost, round volume, volume and footprint; the hull-form coefficients and `formBp`; rounds,
+quarters, moulded depth and the fire-control fit. Unmodelled for lack of a part family: 76 mm twin AA, 324 mm ASW tubes, Hedgehog.

@@ -138,7 +138,7 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 | 0288 | [ADR-0288-monthly-division-cohesion-growth.md](ADR-0288-monthly-division-cohesion-growth.md) | Division cohesion grows monthly through a pure rule applied after readiness evolution | accepted | — |
 | 0289 | [ADR-0289-division-doctrine-command-and-speed-advisory.md](ADR-0289-division-doctrine-command-and-speed-advisory.md) | Role and formation changes are one division command priced from the ruleset; speed mismatch is a derived advisory | accepted | — |
 | 0290 | [ADR-0290-special-training-program.md](ADR-0290-special-training-program.md) | Special training is a nation program whose maintenance adder feeds the shared calculator | accepted | — |
-| 0291 | [ADR-0291-annual-fleet-exercise.md](ADR-0291-annual-fleet-exercise.md) | The annual fleet exercise is scheduled for the next month and held through the assignment slot | accepted | — |
+| 0291 | [ADR-0291-e1-1950s-destroyer-values.md](ADR-0291-e1-1950s-destroyer-values.md) | E-1 1950-1959 destroyer values and the limit of 1950-1970 ship content | accepted | — |
 | 0292 | [ADR-0292-battle-experience-write-back.md](ADR-0292-battle-experience-write-back.md) | Battle aftermath asks the division module for experience through a typed request | accepted | — |
 | 0293 | [ADR-0293-fleet-management-go-live.md](ADR-0293-fleet-management-go-live.md) | Fleet management goes live in the production pack and in every re-execution path | accepted | — |
 

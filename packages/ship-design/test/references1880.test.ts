@@ -114,3 +114,31 @@ describe("the 1948 United States cruisers (E-1 1940-1949)", () => {
     }
   });
 });
+
+describe("the 1955 United States destroyer (E-1 1950-1959)", () => {
+  const draft = byId("starter_dd_usa_1955").draft;
+
+  it("is a destroyer under the 1950 classification rules and a light cruiser under the 1940 rules", () => {
+    expect(compileDesign(draft, earlyContext("1955-11")).naturalClass).toBe("DD");
+    const earlier = compileDesign(draft, {
+      ...earlyContext("1955-11"),
+      balance: {
+        ...earlyContext("1955-11").balance,
+        classification: earlyContext("1949-12").balance.classification,
+      },
+    });
+    expect(earlier.naturalClass).toBe("CL");
+  });
+
+  it("closes on the sourced full-load displacement and 33 knots", () => {
+    const r = compileDesign(draft, earlyContext("1955-11"));
+    expect(Math.abs(r.totalKg - 4_916_000)).toBeLessThan(10_000);
+    expect(r.machinery?.maxSpeedMilliKnots).toBeGreaterThanOrEqual(32_900);
+  });
+
+  it("is not available before the 5-inch/54 mount", () => {
+    const r = compileDesign(draft, earlyContext("1953-12"));
+    expect(r.valid).toBe(false);
+    expect(r.findings.map((f) => f.id)).toContain("TECH_UNAVAILABLE");
+  });
+});

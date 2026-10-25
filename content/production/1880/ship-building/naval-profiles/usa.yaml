@@ -25,6 +25,7 @@ navalProfiles:
           coast_defence_form,
           pre_dreadnought_form,
           destroyer_form,
+          postwar_destroyer_form,
           light_cruiser_form,
           heavy_cruiser_form,
           merchant_liner_form,
