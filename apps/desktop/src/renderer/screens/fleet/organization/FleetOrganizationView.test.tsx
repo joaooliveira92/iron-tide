@@ -46,6 +46,8 @@ function makeState(over: Partial<DivisionOrganizationState> = {}): DivisionOrgan
       removeShip: { experience: 3, cohesion: 5 },
       changeFlagship: { experience: 5, cohesion: 10 },
       reorder: { experience: 0, cohesion: 3 },
+      changeRole: { experience: 0, cohesion: 10 },
+      changeFormation: { experience: 0, cohesion: 5 },
     },
     ...over,
   };
@@ -226,6 +228,59 @@ describe("FleetOrganizationView", () => {
       divisionId: "div_1",
       shipId: "dread",
     });
+  });
+
+  it("changes only the doctrine the player edits, naming each cost and sending nothing until it differs", () => {
+    const { send } = renderView(makeState({ divisions: [division()] }));
+    const change = screen.getByRole("button", { name: "Change doctrine" }) as HTMLButtonElement;
+    expect(change.disabled).toBe(true);
+    expect(screen.getByText(/Changing the role costs 10 cohesion/)).toBeTruthy();
+    expect(screen.getByText(/changing the formation costs 5 cohesion/)).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText(/^Role of/), { target: { value: "SUPPORT" } });
+    expect(change.disabled).toBe(false);
+    fireEvent.click(change);
+    expect(send).toHaveBeenLastCalledWith({
+      type: "ChangeDivisionDoctrine",
+      divisionId: "div_1",
+      role: "SUPPORT",
+    });
+
+    fireEvent.change(screen.getByLabelText(/^Formation of/), { target: { value: "LINE_ABREAST" } });
+    fireEvent.click(change);
+    expect(send).toHaveBeenLastCalledWith({
+      type: "ChangeDivisionDoctrine",
+      divisionId: "div_1",
+      role: "SUPPORT",
+      formation: "LINE_ABREAST",
+    });
+  });
+
+  it("warns, without blocking anything, when a slower ship holds the division back", () => {
+    renderView(
+      makeState({
+        divisions: [
+          division({
+            speedWarning: {
+              slowestShipName: "HMS Dreadnought",
+              slowestSpeed: 12,
+              fastestSpeed: 17,
+            },
+          }),
+        ],
+      }),
+    );
+    expect(screen.getByRole("note").textContent).toBe(
+      "HMS Dreadnought holds this division to speed 12; its fastest ship could make 17.",
+    );
+    expect(
+      (screen.getByRole("button", { name: "Make flagship" }) as HTMLButtonElement).disabled,
+    ).toBe(false);
+  });
+
+  it("shows no speed warning for a division of equal speed", () => {
+    renderView(makeState({ divisions: [division()] }));
+    expect(screen.queryByRole("note")).toBeNull();
   });
 
   it("never offers to remove the only ship (Dissolve is the way to end a division)", () => {

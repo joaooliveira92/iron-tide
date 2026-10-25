@@ -41,6 +41,7 @@ export type CommandBody =
   | DissolveDivisionCommand
   | ChangeDivisionFlagshipCommand
   | ReorderDivisionShipsCommand
+  | ChangeDivisionDoctrineCommand
   | AssignForeignStationCommand
   | ClearForeignStationCommand
   | SetShipReadinessCommand;
@@ -218,6 +219,13 @@ export interface ReorderDivisionShipsCommand {
   nationId: string;
   divisionId: string;
   shipOrder: string[];
+}
+export interface ChangeDivisionDoctrineCommand {
+  type: "ChangeDivisionDoctrine";
+  nationId: string;
+  divisionId: string;
+  divisionRole?: string;
+  preferredFormation?: string;
 }
 
 export interface AssignForeignStationCommand {

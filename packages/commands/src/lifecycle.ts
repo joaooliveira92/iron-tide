@@ -311,7 +311,8 @@ export class CommandLifecycle {
       body.type === "RemoveShipFromDivision" ||
       body.type === "DissolveDivision" ||
       body.type === "ChangeDivisionFlagship" ||
-      body.type === "ReorderDivisionShips"
+      body.type === "ReorderDivisionShips" ||
+      body.type === "ChangeDivisionDoctrine"
     )
       return {
         type: "success",

@@ -110,6 +110,8 @@ describe("accessibility audit (axe-core)", () => {
         removeShip: { experience: 3, cohesion: 5 },
         changeFlagship: { experience: 5, cohesion: 10 },
         reorder: { experience: 0, cohesion: 3 },
+        changeRole: { experience: 0, cohesion: 10 },
+        changeFormation: { experience: 0, cohesion: 5 },
       },
       unassignedShips: [
         {

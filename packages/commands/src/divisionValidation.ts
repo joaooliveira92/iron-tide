@@ -7,6 +7,7 @@ import {
 } from "@bluewave/campaign";
 import type {
   AddShipToDivisionCommand,
+  ChangeDivisionDoctrineCommand,
   ChangeDivisionFlagshipCommand,
   CommandBody,
   CommandEnvelope,
@@ -324,6 +325,61 @@ export function validateReorderDivisionShips(
       snapshot,
       "DIVISION_MEMBERSHIP_CHANGE_INELIGIBLE",
       "ship order is unchanged",
+    );
+  return { ok: true };
+}
+
+export function validateChangeDivisionDoctrine(
+  envelope: CommandEnvelope<CommandBody>,
+  snapshot: CampaignSnapshot,
+): LifecycleStepResult {
+  const body = envelope.body as ChangeDivisionDoctrineCommand;
+  const division = divisionById(snapshot, body.nationId, body.divisionId);
+  if (!division)
+    return rejectValidation(
+      envelope,
+      snapshot,
+      "DIVISION_MEMBERSHIP_CHANGE_INELIGIBLE",
+      `Division ${body.divisionId} not found`,
+    );
+  if (body.divisionRole === undefined && body.preferredFormation === undefined)
+    return rejectValidation(
+      envelope,
+      snapshot,
+      "DIVISION_MEMBERSHIP_CHANGE_INELIGIBLE",
+      "A role or a formation must be named",
+    );
+  if (
+    body.divisionRole !== undefined &&
+    !DIVISION_ROLES.includes(body.divisionRole as (typeof DIVISION_ROLES)[number])
+  )
+    return rejectValidation(
+      envelope,
+      snapshot,
+      "DIVISION_ROLE_INELIGIBLE",
+      `Invalid role ${body.divisionRole}`,
+    );
+  if (
+    body.preferredFormation !== undefined &&
+    !DIVISION_FORMATIONS.includes(body.preferredFormation as (typeof DIVISION_FORMATIONS)[number])
+  )
+    return rejectValidation(
+      envelope,
+      snapshot,
+      "DIVISION_FORMATION_INELIGIBLE",
+      `Invalid formation ${body.preferredFormation}`,
+    );
+  const unchangedRole =
+    body.divisionRole === undefined || body.divisionRole === division["divisionRole"];
+  const unchangedFormation =
+    body.preferredFormation === undefined ||
+    body.preferredFormation === division["preferredFormation"];
+  if (unchangedRole && unchangedFormation)
+    return rejectValidation(
+      envelope,
+      snapshot,
+      "DIVISION_MEMBERSHIP_CHANGE_INELIGIBLE",
+      "Role and formation are unchanged",
     );
   return { ok: true };
 }

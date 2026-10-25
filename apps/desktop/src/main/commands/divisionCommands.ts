@@ -7,6 +7,7 @@ import type {
   DivisionScreenProjection,
 } from "../../shared/division-contract.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
+import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { CommandFailed } from "../runtime/commandError.js";
 import type { CommandHandler } from "../runtime/commandProgram.js";
 import { currentRevision, submitPlayerCommand } from "./playerCommandSupport.js";
@@ -16,7 +17,13 @@ export const inspectDivisionScreenProgram: CommandHandler<"inspectDivisionScreen
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
 
-    const view = buildDivisionScreenView(record.state.snapshot, record.playerSlotId);
+    const contentArtifact = yield* ContentArtifact;
+    const fleetManagement = yield* contentArtifact.loadFleetManagementRules();
+    const view = buildDivisionScreenView(
+      record.state.snapshot,
+      record.playerSlotId,
+      fleetManagement?.reorganisationPenalty,
+    );
     if (!view) {
       return yield* new CommandFailed({
         reason: "UNKNOWN_PLAYER_SLOT",
@@ -133,6 +140,17 @@ const DIVISION_COMMANDS: {
       nationId: context.nationId,
       divisionId: command.divisionId,
       shipOrder: [...command.shipOrder],
+    }),
+  }),
+  ChangeDivisionDoctrine: planWith<"ChangeDivisionDoctrine">({
+    discriminator: (command) =>
+      `${command.divisionId}\u0000${command.role ?? ""}\u0000${command.formation ?? ""}`,
+    toEngineBody: (command, context) => ({
+      type: "ChangeDivisionDoctrine",
+      nationId: context.nationId,
+      divisionId: command.divisionId,
+      ...(command.role === undefined ? {} : { divisionRole: command.role }),
+      ...(command.formation === undefined ? {} : { preferredFormation: command.formation }),
     }),
   }),
   DissolveDivision: planWith<"DissolveDivision">({

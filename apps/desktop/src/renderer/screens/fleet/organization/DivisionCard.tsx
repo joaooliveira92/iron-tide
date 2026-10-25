@@ -64,6 +64,14 @@ export function DivisionCard({ division, state, busy, send }: DivisionCardProps)
     : (addable[0]?.shipId ?? "");
   const title = divisionTitle(division);
 
+  const [roleDraft, setRoleDraft] = useState(division.role);
+  const [formationDraft, setFormationDraft] = useState(division.formation);
+  const doctrineChange = {
+    ...(roleDraft === division.role ? {} : { role: roleDraft }),
+    ...(formationDraft === division.formation ? {} : { formation: formationDraft }),
+  };
+  const doctrineDirty = Object.keys(doctrineChange).length > 0;
+
   const flagship = division.ships.find((ship) => ship.shipId === division.flagshipShipId);
   const shipName = new Map(division.ships.map((ship) => [ship.shipId, ship.name]));
   const authoritativeRest = division.ships
@@ -107,6 +115,68 @@ export function DivisionCard({ division, state, busy, send }: DivisionCardProps)
         <div className="grid gap-3 sm:grid-cols-2">
           <Meter label="Experience" value={division.experience} />
           <Meter label="Cohesion" value={division.cohesion} />
+        </div>
+
+        {division.speedWarning !== undefined && (
+          <p className="text-xs text-amber-600" role="note">
+            {division.speedWarning.slowestShipName} holds this division to speed{" "}
+            {division.speedWarning.slowestSpeed}; its fastest ship could make{" "}
+            {division.speedWarning.fastestSpeed}.
+          </p>
+        )}
+
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Role
+            <select
+              aria-label={`Role of ${title}`}
+              className={SELECT_CLASS}
+              value={roleDraft}
+              disabled={busy}
+              onChange={(event) => setRoleDraft(event.target.value)}
+            >
+              {state.roles.map((role) => (
+                <option key={role} value={role}>
+                  {roleLabel(role)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            Formation
+            <select
+              aria-label={`Formation of ${title}`}
+              className={SELECT_CLASS}
+              value={formationDraft}
+              disabled={busy}
+              onChange={(event) => setFormationDraft(event.target.value)}
+            >
+              {state.formations.map((formation) => (
+                <option key={formation} value={formation}>
+                  {formationLabel(formation)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={busy || !doctrineDirty}
+            onClick={() =>
+              send({
+                type: "ChangeDivisionDoctrine",
+                divisionId: division.divisionId,
+                ...doctrineChange,
+              })
+            }
+          >
+            Change doctrine
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            Changing the role {costText(state.penalties.changeRole)}; changing the formation{" "}
+            {costText(state.penalties.changeFormation)}.
+          </span>
         </div>
 
         {flagship !== undefined && (
