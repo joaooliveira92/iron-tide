@@ -119,7 +119,6 @@ describe("checked-in replay corpus", () => {
     expect(report.unattributedEventTypes).toEqual([]);
     expect(report.uncovered).toEqual([
       "opening_validation",
-      "command_collection",
       "ai_planning",
       "ai_procurement",
       "resolve_diplomacy",

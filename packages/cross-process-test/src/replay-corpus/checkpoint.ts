@@ -46,10 +46,14 @@ function ledgerCheckpoint(entries: readonly unknown[]): MonthCheckpoint["ledgers
   };
 }
 
-export function monthCheckpoint(turnNumber: number, result: MonthResult): MonthCheckpoint {
+export function monthCheckpoint(
+  turnNumber: number,
+  result: MonthResult,
+  commands: MonthCheckpoint["commands"] = [],
+): MonthCheckpoint {
   return {
     turnNumber,
-    commands: [],
+    commands,
     snapshotHash: fullSnapshotHash(result.finalSnapshot),
     ledgers: {
       command: ledgerCheckpoint(result.commandLedger.all),

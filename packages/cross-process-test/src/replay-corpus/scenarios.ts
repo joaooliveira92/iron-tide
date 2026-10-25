@@ -61,4 +61,74 @@ export const REPLAY_SCENARIOS: readonly CorpusScenario[] = [
     months: 15,
     purpose: "Longest replay: settling into the second year, past rollover and readiness changes.",
   },
+  {
+    id: "production-1880-6m-fleet-commands",
+    seed: "replay-corpus-fleet-commands",
+    months: 6,
+    purpose:
+      "Half year of player fleet commands: reserve, refused work-up hull, reactivate, station, refused mothball, clear, mothball.",
+    commands: [
+      {
+        month: 1,
+        body: {
+          type: "SetShipReadiness",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+          readiness: "RESERVE",
+        },
+      },
+      {
+        month: 1,
+        body: {
+          type: "SetShipReadiness",
+          nationId: "austria_hungary",
+          shipIds: ["aut_tegetthoff"],
+          readiness: "RESERVE",
+        },
+      },
+      {
+        month: 3,
+        body: {
+          type: "SetShipReadiness",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+          readiness: "ACTIVE",
+        },
+      },
+      {
+        month: 4,
+        body: {
+          type: "AssignForeignStation",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+        },
+      },
+      {
+        month: 5,
+        body: {
+          type: "SetShipReadiness",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+          readiness: "MOTHBALLED",
+        },
+      },
+      {
+        month: 5,
+        body: {
+          type: "ClearForeignStation",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+        },
+      },
+      {
+        month: 6,
+        body: {
+          type: "SetShipReadiness",
+          nationId: "austria_hungary",
+          shipIds: ["aut_custoza"],
+          readiness: "MOTHBALLED",
+        },
+      },
+    ],
+  },
 ];
