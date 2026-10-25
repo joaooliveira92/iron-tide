@@ -54,4 +54,13 @@ describe("treasuryReadouts", () => {
     expect(netTone(0)).toBe("warn");
     expect(netTone(1)).toBe("good");
   });
+
+  it("lists halted-project carrying cost in the month-end breakdown only when there is some", () => {
+    const rows = (carrying: number) =>
+      treasuryReadouts(breakdown, FORMAT, carrying)
+        .find((r) => r.id === "monthEnd")
+        ?.rows.map((row) => row.label);
+    expect(rows(0)).not.toContain("Halted-project carrying cost");
+    expect(rows(12)).toContain("Halted-project carrying cost");
+  });
 });

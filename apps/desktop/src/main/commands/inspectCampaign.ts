@@ -1,3 +1,5 @@
+import { campaignMonthKey } from "../construction/commandRecord.js";
+import { economyOutlookOptions } from "./economyOutlookOptions.js";
 import { buildPlayerProjection } from "@bluewave/campaign-engine";
 import { Effect } from "effect";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
@@ -17,6 +19,12 @@ export const inspectCampaignProgram: CommandHandler<"inspectCampaign"> = (sessio
       record.playerSlotId,
       record.month,
       shipBuilding.presence,
+      economyOutlookOptions(
+        record.state.snapshot,
+        record.playerSlotId,
+        shipBuilding,
+        campaignMonthKey(record),
+      ),
     );
     if (!projection) {
       return yield* new CommandFailed({

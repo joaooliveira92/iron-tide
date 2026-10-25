@@ -134,6 +134,7 @@ describe("budget allocation", () => {
     );
     expect(construction.drawTotal).toBe(projection?.economy.plannedConstruction);
     expect(unpaidCostsPrestige).not.toBeNull();
+    expect(unpaidCostsPrestige?.triggered).toBe(false);
     expect(unpaidCostsPrestige?.after).toBeLessThanOrEqual(unpaidCostsPrestige?.before ?? 0);
   });
 

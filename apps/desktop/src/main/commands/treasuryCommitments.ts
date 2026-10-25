@@ -2,6 +2,7 @@ import {
   applyPrestigeRule,
   campaignMonthId,
   constructionDrawByProject,
+  economyOutlook,
   fleetMaintenanceBreakdown,
   nationIsAtWar,
   nationMaintenanceAdders,
@@ -15,15 +16,18 @@ import type {
   TreasuryCommitments,
   UnpaidCostsPrestige,
 } from "../../shared/budget-contract.js";
+import { economyOutlookOptions } from "./economyOutlookOptions.js";
 import { loadShipBuildingContent } from "../shipBuildingContent.js";
 
 function unpaidCostsPrestige(
   snapshot: CampaignSnapshot,
   nation: NationState,
+  triggered: boolean,
 ): UnpaidCostsPrestige | null {
   const change = applyPrestigeRule(Number(nation.prestige), "UNPAID_FUNDS", snapshot.prestigeRules);
   if (Result.isFailure(change)) return null;
   return {
+    triggered,
     before: Number(change.success.before),
     after: Number(change.success.after),
     sackingThreshold: Number(snapshot.prestigeRules.sackingThreshold),
@@ -35,6 +39,12 @@ export function buildTreasuryCommitments(
   nation: NationState,
 ): TreasuryCommitments {
   const month = campaignMonthId(snapshot.startYear, snapshot.startMonth, snapshot.turnNumber);
+  const content = loadShipBuildingContent();
+  const outlook = economyOutlook(
+    snapshot,
+    nation.id,
+    economyOutlookOptions(snapshot, nation.id, content, month),
+  );
   const upkeep = fleetMaintenanceBreakdown(
     nation.fleets,
     nationIsAtWar(snapshot.wars.wars, nation.id),
@@ -46,12 +56,7 @@ export function buildTreasuryCommitments(
       entry.draw,
     ]),
   );
-  const queue = constructionProjectQueueWithReadouts(
-    snapshot,
-    nation.id,
-    loadShipBuildingContent(),
-    month,
-  );
+  const queue = constructionProjectQueueWithReadouts(snapshot, nation.id, content, month);
   const projects: ConstructionCommitment[] = queue
     .filter((entry) => entry.status !== "COMPLETED" && entry.status !== "CANCELLED")
     .map((entry) => ({
@@ -73,6 +78,10 @@ export function buildTreasuryCommitments(
       carryingTotal: projects.reduce((sum, project) => sum + project.carryingCost, 0),
       haltedCount: projects.filter((project) => project.status === "HALTED").length,
     },
-    unpaidCostsPrestige: unpaidCostsPrestige(snapshot, nation),
+    unpaidCostsPrestige: unpaidCostsPrestige(
+      snapshot,
+      nation,
+      (outlook?.obligationShortfall ?? 0) > 0,
+    ),
   };
 }

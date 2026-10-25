@@ -44,6 +44,7 @@ export interface ConstructionCommitments {
 }
 
 export interface UnpaidCostsPrestige {
+  readonly triggered: boolean;
   readonly before: number;
   readonly after: number;
   readonly sackingThreshold: number;

@@ -44,9 +44,9 @@ export function PositionBrief({
           Shortfall: {format.count(breakdown.shortfall)} of this month&apos;s costs cannot be paid.
         </p>
       )}
-      {breakdown.shortfall > 0 && unpaidCostsPrestige !== null && (
+      {unpaidCostsPrestige?.triggered === true && (
         <p role="alert" className="text-sm text-destructive">
-          Unpaid costs also cost prestige: {format.count(unpaidCostsPrestige.before)} →{" "}
+          Unpaid obligations also cost prestige: {format.count(unpaidCostsPrestige.before)} →{" "}
           {format.count(unpaidCostsPrestige.after)}.{" "}
           {unpaidCostsPrestige.after <= unpaidCostsPrestige.sackingThreshold
             ? `That is at or below ${format.count(unpaidCostsPrestige.sackingThreshold)}, where you risk dismissal.`

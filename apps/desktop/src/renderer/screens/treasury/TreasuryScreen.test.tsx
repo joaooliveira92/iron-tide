@@ -105,7 +105,7 @@ const commitments = vi.hoisted(() => ({
       carryingTotal: 12,
       haltedCount: 1,
     },
-    unpaidCostsPrestige: { before: 20, after: 19, sackingThreshold: 16 },
+    unpaidCostsPrestige: { triggered: true, before: 20, after: 19, sackingThreshold: 16 },
   },
 }));
 
@@ -234,17 +234,25 @@ describe("TreasuryScreen", () => {
     ).not.toBeNull();
   });
 
-  it("warns that unpaid costs lose prestige only when there is a shortfall", () => {
+  it("warns about the prestige cost only when obligations will go unpaid", () => {
     render(<TreasuryScreen sessionId="ses-1" />);
-    expect(screen.queryByText(/Unpaid costs also cost prestige/)).toBeNull();
+    expect(screen.getByText(/Unpaid obligations also cost prestige: 20 → 19/)).not.toBeNull();
+    expect(screen.getByText(/Dismissal risk begins at 16/)).not.toBeNull();
     cleanup();
+    const untriggered = {
+      ...commitments.value,
+      unpaidCostsPrestige: { triggered: false, before: 20, after: 19, sackingThreshold: 16 },
+    };
+    const original = commitments.value;
+    commitments.value = untriggered;
     hookMocks.state.mockReturnValue({
       projection: { ...projection, economy: { ...projection.economy, shortfall: 40 } },
       loadError: null,
     });
     render(<TreasuryScreen sessionId="ses-1" />);
-    expect(screen.getByText(/Unpaid costs also cost prestige: 20 → 19/)).not.toBeNull();
-    expect(screen.getByText(/Dismissal risk begins at 16/)).not.toBeNull();
+    expect(screen.getByText(/Shortfall: 40/)).not.toBeNull();
+    expect(screen.queryByText(/also cost prestige/)).toBeNull();
+    commitments.value = original;
   });
 
   describe("history", () => {
