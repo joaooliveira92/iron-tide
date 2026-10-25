@@ -34,18 +34,8 @@ export function fundedSubjects(training: FleetTrainingProjection): TrainingSubje
   return training.subjects.filter((subject) => subject.funded).map((subject) => subject.subject);
 }
 
-export function toggledSubjects(
-  training: FleetTrainingProjection,
-  subject: TrainingSubjectId,
-): TrainingSubjectId[] {
-  const current = fundedSubjects(training);
-  return current.includes(subject)
-    ? current.filter((candidate) => candidate !== subject)
-    : [...current, subject];
-}
-
-export function canFundMore(training: FleetTrainingProjection): boolean {
-  return fundedSubjects(training).length < training.maxSubjects;
+export function sameSubjects(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && [...a].sort().join("\u0000") === [...b].sort().join("\u0000");
 }
 
 export function adderText(maintenanceAdderBp: number): string {

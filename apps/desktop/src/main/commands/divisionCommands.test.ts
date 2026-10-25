@@ -473,7 +473,7 @@ describe("division commands", () => {
       expect(after.divisions[0]!.cohesion).toBe(cohesionBefore - 3);
     });
 
-    it("changes a division's role and formation, free while the fleet-management section is dormant", async () => {
+    it("changes a division's role and formation at the ruleset's cohesion cost, with no growth that month", async () => {
       registerSession("doctrine");
       const freed = await freeSeededDivisions("doctrine");
       const { v } = await shipsByArea("doctrine");
@@ -507,7 +507,7 @@ describe("division commands", () => {
       const after = (await view("doctrine")).divisions[0]!;
       expect(after.role).toBe(target);
       expect(after.formation).toBe("LINE_ABREAST");
-      expect(after.cohesion).toBe(before.cohesion);
+      expect(after.cohesion).toBe(before.cohesion - 15);
     });
   });
 });

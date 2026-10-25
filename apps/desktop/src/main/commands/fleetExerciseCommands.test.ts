@@ -37,7 +37,15 @@ const withSection = Layer.effect(
 ).pipe(Layer.provide(contentArtifactLayer()));
 
 const sectionRuntime = ManagedRuntime.make(Layer.mergeAll(desktopMainLayer(), withSection));
-const dormantRuntime = ManagedRuntime.make(desktopMainLayer());
+const withoutSection = Layer.effect(
+  ContentArtifact,
+  Effect.gen(function* () {
+    const real = yield* ContentArtifact;
+    return { ...real, loadFleetManagementRules: () => Effect.succeed(undefined) };
+  }),
+).pipe(Layer.provide(contentArtifactLayer()));
+
+const dormantRuntime = ManagedRuntime.make(Layer.mergeAll(desktopMainLayer(), withoutSection));
 
 type TestRuntime = typeof sectionRuntime;
 
