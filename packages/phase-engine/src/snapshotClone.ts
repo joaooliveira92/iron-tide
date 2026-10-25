@@ -402,6 +402,7 @@ const F = {
     "defenderFleetIds",
     "manifestHash",
     "result",
+    "absences",
   ),
   BattleResult: fields<BattleResult>()(
     "winnerId",
@@ -732,6 +733,13 @@ const cloneBattleResult = (r: BattleResult): BattleResult =>
 const cloneBattle = (b: BattleInstance): BattleInstance =>
   recordClone(b, F.BattleInstance, {
     result: (v) => (v === undefined ? undefined : cloneBattleResult(v as BattleResult)),
+    absences: (v) =>
+      v === undefined
+        ? undefined
+        : (v as NonNullable<BattleInstance["absences"]>).map((a) => ({
+            shipId: a.shipId,
+            reasons: [...a.reasons],
+          })),
   });
 const cloneManifest = (m: BattleManifest): BattleManifest =>
   recordClone(m, F.BattleManifest, {

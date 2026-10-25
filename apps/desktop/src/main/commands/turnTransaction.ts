@@ -142,6 +142,7 @@ export const runTurnTransaction = (
     const pendingCommands = yield* queue.forExecution(input.sessionId, executionSnapshot);
     const shipBuilding = yield* contentArtifact.loadShipBuildingContent();
     const battleOffers = yield* contentArtifact.loadBattleOfferRules();
+    const fleetManagement = yield* contentArtifact.loadFleetManagementRules();
 
     const recordedInputs = input.recordedInputs ?? [];
     const committedOrderHash = sha256Hex(canonicalSerialize(pendingCommands));
@@ -171,6 +172,9 @@ export const runTurnTransaction = (
         ...(shipBuilding.presence !== undefined ? { presence: shipBuilding.presence } : {}),
         ...(battleOffers !== undefined
           ? { battleOffers, playerNationId: record.playerSlotId }
+          : {}),
+        ...(fleetManagement !== undefined
+          ? { fleetManagement, playerNationId: record.playerSlotId }
           : {}),
         ...(channel !== undefined ? { interruptions: channel } : {}),
       },

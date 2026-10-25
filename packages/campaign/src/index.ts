@@ -72,6 +72,7 @@ export type {
 } from "./state.js";
 export { isShipOperational } from "./state.js";
 export type { DeclineCounterEntry, DeclinedBattleRecord } from "./declineRecords.js";
+export { BattleAbsenceSchema, type BattleAbsence } from "./battleAbsence.js";
 export { presenceAreaIds } from "./presence.js";
 export {
   contributesToPresence,

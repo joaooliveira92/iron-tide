@@ -1,4 +1,4 @@
-import type { CampaignSnapshot, DeclinedBattleRecord } from "@bluewave/campaign";
+import type { CampaignSnapshot, DeclinedBattleRecord, GateReasonTag } from "@bluewave/campaign";
 
 export type BattleOutcomeForPlayer = "won" | "lost" | "undecided" | "not-involved";
 
@@ -9,6 +9,12 @@ export interface LostShipView {
   readonly ownedByPlayer: boolean;
   readonly month: string;
   readonly cause: string | null;
+}
+
+export interface AbsentShipView {
+  readonly shipId: string;
+  readonly shipName: string;
+  readonly reasons: readonly GateReasonTag[];
 }
 
 export interface BattleHistoryEntry {
@@ -26,6 +32,7 @@ export interface BattleHistoryEntry {
   readonly enemyLossCount: number;
   readonly lostShipIds: readonly string[];
   readonly lostShips: readonly LostShipView[];
+  readonly absentShips?: readonly AbsentShipView[];
 }
 
 export type DeclinedBattleHistoryEntry = Pick<
@@ -53,6 +60,11 @@ export function buildBattleHistory(
   const areaName = (id: string): string =>
     snapshot.world.areas.find((area) => area.id === id)?.name ?? id;
 
+  const shipNames = new Map<string, string>();
+  for (const ship of snapshot.nations.get(playerNationId)?.fleets.flatMap((f) => f.ships) ?? []) {
+    shipNames.set(ship.id, ship.name);
+  }
+
   const battles: BattleHistoryEntry[] = [];
   for (const battle of snapshot.wars.battles) {
     const result = battle.result;
@@ -77,6 +89,14 @@ export function buildBattleHistory(
         ? attackerLosses
         : attackerLosses + defenderLosses;
 
+    const absentShips = involvesPlayer
+      ? (battle.absences ?? []).map((absence) => ({
+          shipId: absence.shipId,
+          shipName: shipNames.get(absence.shipId) ?? absence.shipId,
+          reasons: absence.reasons,
+        }))
+      : [];
+
     battles.push({
       sequence: battles.length + 1,
       battleId: battle.id,
@@ -99,6 +119,7 @@ export function buildBattleHistory(
         month: ship.month,
         cause: ship.cause ?? null,
       })),
+      ...(absentShips.length === 0 ? {} : { absentShips }),
     });
   }
   const declinedBattles = (snapshot.wars.declinedBattles ?? [])

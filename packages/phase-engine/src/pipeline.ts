@@ -9,7 +9,7 @@ import type {
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { EventLedger } from "@bluewave/events";
 import { RandomEngine, type RandomLedger } from "@bluewave/random";
-import type { BattleOfferRules } from "@bluewave/content-schema";
+import type { BattleOfferRules, FleetManagementRules } from "@bluewave/content-schema";
 import type { ShipBuildingContent } from "@bluewave/ship-design";
 import type { FinancialLedger } from "./financial-ledger.js";
 import type { InterruptionChannel, InterruptionState } from "./interruption.js";
@@ -50,6 +50,7 @@ export interface MonthExecutorEngineOptions {
   readonly interruptions?: InterruptionChannel;
   readonly playerNationId?: string;
   readonly battleOffers?: BattleOfferRules;
+  readonly fleetManagement?: FleetManagementRules;
 }
 
 export interface MonthRunState {
@@ -71,6 +72,7 @@ export interface MonthRunState {
   readonly interruption?: InterruptionState;
   readonly playerNationId?: string;
   readonly battleOffers?: BattleOfferRules;
+  readonly fleetManagement?: FleetManagementRules;
   readonly nextSeq: () => SafeInt;
 }
 

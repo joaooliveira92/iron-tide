@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type {
+  BattleAbsence,
   CampaignSnapshot,
   CampaignState,
   DeclineCounterEntry,
@@ -38,6 +39,7 @@ const COUNTER: DeclineCounterEntry = {
 function state(
   declined: readonly DeclinedBattleRecord[] | undefined,
   counters?: readonly DeclineCounterEntry[],
+  absences?: BattleAbsence[],
 ): CampaignState {
   const snapshot: CampaignSnapshot = {
     version: "1.0.0",
@@ -60,6 +62,7 @@ function state(
           areaId: "a-1",
           attackerFleetIds: [],
           defenderFleetIds: [],
+          ...(absences === undefined ? {} : { absences }),
         },
       ],
       participantMemberships: [],
@@ -131,6 +134,20 @@ describe("declined-battle record save/load parity", () => {
       "battle-2",
     ]);
     expect(loaded.state.snapshot.wars.battles[0]?.phase).toBe("declined");
+  });
+
+  it("round-trips a battle absence record exactly (fleet management 271)", () => {
+    const absences: BattleAbsence[] = [
+      { shipId: "s-1", reasons: ["Mothballed"] },
+      { shipId: "s-2", reasons: ["Unavailable", "InRepair"] },
+    ];
+    const saved = state(undefined, undefined, absences);
+    store.save(saved, tmpDir);
+    const loaded = unwrapSuccess(runExit(store.load(tmpDir)));
+
+    expect(loaded.warnings).toEqual([]);
+    expect(loaded.state.rawHash).toBe(saved.rawHash);
+    expect(loaded.state.snapshot.wars.battles[0]?.absences).toEqual(absences);
   });
 
   it("loads a save that never declined with the collection absent, under the unchanged compatibility version", () => {

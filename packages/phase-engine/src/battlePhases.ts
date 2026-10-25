@@ -16,6 +16,7 @@ import {
   resolveShipStrength,
   toCampaignBattleResult,
 } from "./battles.js";
+import { battleAbsencesFor } from "./battleAbsences.js";
 import {
   applyDecline,
   applyEnemyDeclines,
@@ -67,6 +68,17 @@ export function runBattleGenerationPhase(ctx: PhaseContext): PhaseRunOutcome {
     const manifest = generationResult.manifests[i]!;
     const attackerFleetIds = fleetsInArea(manifest.attackerId, manifest.areaId);
     const defenderFleetIds = fleetsInArea(manifest.defenderId, manifest.areaId);
+    const absences =
+      ctx.fleetManagement !== undefined &&
+      ctx.playerNationId !== undefined &&
+      (manifest.attackerId === ctx.playerNationId || manifest.defenderId === ctx.playerNationId)
+        ? battleAbsencesFor(
+            ctx.snapshot.current,
+            ctx.playerNationId,
+            manifest,
+            generationResult.manifests,
+          )
+        : [];
     return {
       id: battleId,
       phase: "pending" as const,
@@ -76,6 +88,7 @@ export function runBattleGenerationPhase(ctx: PhaseContext): PhaseRunOutcome {
       attackerFleetIds,
       defenderFleetIds,
       manifestHash: manifest.manifestHash,
+      ...(absences.length === 0 ? {} : { absences }),
     };
   });
 

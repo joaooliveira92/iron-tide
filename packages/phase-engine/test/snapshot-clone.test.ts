@@ -341,6 +341,7 @@ function makeRichSnapshot(): CampaignSnapshot {
   snapshot.wars.wars = [{ ...makeWar(), endDate: "1881-01" }];
   const battle = makeBattle();
   battle.manifestHash = "manifest-hash";
+  battle.absences = [{ shipId: "g9", reasons: ["Mothballed"] }];
   battle.result = {
     winnerId: DEFENDER_NATION,
     loserId: ATTACKER_NATION,

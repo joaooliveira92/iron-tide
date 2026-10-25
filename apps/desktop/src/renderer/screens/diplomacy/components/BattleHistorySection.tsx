@@ -2,7 +2,12 @@ import { Badge } from "../../../components/ui/badge.js";
 import { humanizeId } from "../../../lib/humanize-id.js";
 import { DEBUG_MODE } from "../../../shell/debug-flag.js";
 import type { BattleHistoryState } from "../hooks/useBattleHistory.js";
-import { OUTCOME_LABELS, shipsLabel, summarizeBattleHistory } from "../battle-history-state.js";
+import {
+  ABSENCE_REASON_LABELS,
+  OUTCOME_LABELS,
+  shipsLabel,
+  summarizeBattleHistory,
+} from "../battle-history-state.js";
 
 const OUTCOME_VARIANT = {
   won: "default",
@@ -75,6 +80,18 @@ export function BattleHistorySection({ state }: { readonly state: BattleHistoryS
                   <span className="text-muted-foreground">
                     {humanizeId(ship.classId)} · {ship.nationName}
                     {ship.cause !== null && ` · ${CAUSE_LABELS[ship.cause] ?? ship.cause}`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {(battle.absentShips ?? []).length > 0 && (
+            <ul className="w-full space-y-0.5 text-xs" aria-label="Ships absent from this battle">
+              {(battle.absentShips ?? []).map((ship) => (
+                <li key={ship.shipId} className="flex flex-wrap gap-x-2">
+                  <span className="font-medium">{ship.shipName}</span>
+                  <span className="text-muted-foreground">
+                    absent: {ship.reasons.map((reason) => ABSENCE_REASON_LABELS[reason]).join(", ")}
                   </span>
                 </li>
               ))}
