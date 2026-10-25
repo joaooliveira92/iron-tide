@@ -982,3 +982,172 @@
         year: 2023
         page: "121-123"
     note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from fc_gyro_stabilised_director, the nearest existing technology. Inert in the engine: no missile combat model exists (#281); see .ai/reports/e-1-era-mechanics-audit.md."
+- id: "m_asw_improved_sonar"
+  name: "Improved Hull-Mounted and Variable-Depth Sonar"
+  category: "MID_CENTURY"
+  researchFieldId: "MINES_AND_ASW"
+  prerequisites:
+    - { techId: "m_asw_asdic_sonar" }
+  cost: 320
+  discoveryWeight: 11000
+  year: 1955
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "Steam Community guide: Ship Design Guide (1890 to 1970)"
+        section: "community anchor"
+      - title: "Rule the Waves 3 manual"
+        author: "Naval War Simulations / Matrix Games"
+        year: 2023
+        page: "121-123"
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from m_asw_ahead_throwing, the nearest existing technology. The dossier year is 1952; the community anchor of 1955 for enhanced sonar overrides it (ADR-0283 D2)."
+- id: "sub_streamlined_hull"
+  name: "High-Speed Streamlined Submarine Hull"
+  category: "MID_CENTURY"
+  researchFieldId: "SUBMARINES"
+  prerequisites:
+    - { techId: "sub_snorkel" }
+  cost: 500
+  discoveryWeight: 15000
+  year: 1953
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "The Postwar Naval Revolution"
+        author: "N. Friedman, 1986"
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from sub_snorkel, the nearest existing technology."
+- id: "mac_marine_gas_turbine"
+  name: "Marine Gas Turbine"
+  category: "MID_CENTURY"
+  researchFieldId: "MACHINERY"
+  prerequisites:
+    - { techId: "mac_improved_geared_turbines" }
+  cost: 430
+  discoveryWeight: 15000
+  year: 1953
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "Conway's All the World's Fighting Ships 1947-1995"
+        author: "R. Gardiner (ed.)"
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mac_improved_geared_turbines, the nearest existing technology."
+- id: "torp_wire_guided_homing"
+  name: "Wire-Guided and Active-Homing Anti-Ship Torpedo"
+  category: "MID_CENTURY"
+  researchFieldId: "TORPEDOES"
+  prerequisites:
+    - { techId: "torp_acoustic_homing" }
+  cost: 380
+  discoveryWeight: 14000
+  year: 1956
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "US Naval Weapons"
+        author: "N. Friedman, 1983"
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from torp_acoustic_homing, the nearest existing technology."
+- id: "sd_helicopter_hangar"
+  name: "Helicopter Hangar and Deck on Escorts"
+  category: "MID_CENTURY"
+  researchFieldId: "SHIP_DESIGN"
+  prerequisites:
+    - { techId: "sd_fast_battleship_design" }
+  cost: 420
+  discoveryWeight: 15000
+  year: 1955
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "Conway's All the World's Fighting Ships 1947-1995"
+        author: "R. Gardiner (ed.)"
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from sd_fast_battleship_design, the nearest existing technology. The sources pin only the decade, so 1955 is a balance target (ADR-0283 D3h)."
+- id: "cop_angled_deck"
+  name: "Angled Flight Deck and Larger Carriers"
+  category: "MID_CENTURY"
+  researchFieldId: "CARRIER_OPERATIONS"
+  prerequisites:
+    - { techId: "av_carrier_jet" }
+  cost: 400
+  discoveryWeight: 14000
+  year: 1950
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "Steam Community guide: Ship Design Guide (1890 to 1970)"
+        section: "community anchor"
+      - title: "Rule the Waves 3 manual"
+        author: "Naval War Simulations / Matrix Games"
+        year: 2023
+        page: "121-123"
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from av_carrier_jet, the nearest existing technology. Year is the community anchor for carrier size limit and angled decks (ADR-0283 D2)."
+- id: "cop_steam_catapult"
+  name: "Steam Catapult and 30-Knot Carrier Jet Refit"
+  category: "MID_CENTURY"
+  researchFieldId: "CARRIER_OPERATIONS"
+  prerequisites:
+    - { techId: "cop_angled_deck" }
+  cost: 400
+  discoveryWeight: 14000
+  year: 1952
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "Steam Community guide: Ship Design Guide (1890 to 1970)"
+        section: "community anchor"
+      - title: "Rule the Waves 3 manual"
+        author: "Naval War Simulations / Matrix Games"
+        year: 2023
+        page: "121-123"
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from av_carrier_jet, the nearest existing technology. Year is the community anchor for the 30-knot carrier jet conversion with steam catapults (ADR-0283 D2)."
+- id: "mis_medium_heavy_sam"
+  name: "Medium and Heavy Surface-to-Air Missile"
+  category: "MID_CENTURY"
+  researchFieldId: "MISSILES"
+  prerequisites:
+    - { techId: "fc_radar_directed_maa" }
+  cost: 400
+  discoveryWeight: 14000
+  year: 1956
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "US Naval Weapons"
+        author: "N. Friedman, 1983"
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology."
+- id: "mis_quadruple_heavy_ssm"
+  name: "Quadruple Heavy SSM Launchers"
+  category: "MID_CENTURY"
+  researchFieldId: "MISSILES"
+  prerequisites:
+    - { techId: "mis_heavy_ssm" }
+  cost: 400
+  discoveryWeight: 14000
+  year: 1959
+  provenance:
+    sourceStatus: "BALANCE_TARGET"
+    confidence: "MEDIUM"
+    kind: "balance_adjustment"
+    sources:
+      - title: "Steam Community guide: Ship Design Guide (1890 to 1970)"
+        section: "community anchor"
+      - title: "Rule the Waves 3 manual"
+        author: "Naval War Simulations / Matrix Games"
+        year: 2023
+        page: "121-123"
+    note: "ADR-0283 D2 and D5. Year from docs/research/e-1-1940-1970-timeline.md; cost and discovery weight copied from mis_heavy_ssm, the nearest existing technology. Year is the community anchor for quadruple heavy SSM launchers (ADR-0283 D2)."
