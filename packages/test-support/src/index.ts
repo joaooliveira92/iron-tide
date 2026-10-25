@@ -5,7 +5,7 @@ import {
   type CompilerInput,
   type ContentBundle,
 } from "@bluewave/content-compiler";
-import type { BattleOfferRules } from "@bluewave/content-schema";
+import type { BattleOfferRules, FleetManagementRules } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { Effect, Exit, Result } from "effect";
@@ -376,6 +376,39 @@ export const FIXTURE_BATTLE_OFFER_RULES: BattleOfferRules = {
   declineCounter: { threshold: 2, scope: "WAR", reset: { kind: "ON_WAR_END" } },
   enemyDecline: { comparison: "LESS_THAN", thresholdBp: 4_000, probabilityBp: 6_000 },
   supportForce: { presenceChanceBp: 2_500, shareOfCapBp: 5_000, source: "ALLIED_ONLY" },
+  provenance: {
+    sourceStatus: "BALANCE_TARGET",
+    confidence: "LOW",
+    kind: "balance_adjustment",
+    sources: [],
+    note: "Fixture-class value for tests only.",
+  },
+};
+
+const fixtureTrainingSubject = (maintenanceAdderBp: number) => ({
+  maintenanceAdderBp,
+  effectBp: 1_000,
+});
+
+export const FIXTURE_FLEET_MANAGEMENT_RULES: FleetManagementRules = {
+  sectionVersion: 1,
+  divisionCohesion: { monthlyGrowth: 2, cap: 90 },
+  divisionExperience: { perBattle: 3, perExercise: 5 },
+  reorganisationPenalty: {
+    roleChange: { cohesion: 10, experience: 0 },
+    formationChange: { cohesion: 5, experience: 0 },
+  },
+  training: {
+    proficiencyMonths: 12,
+    maxSubjects: 2,
+    subjects: {
+      GUNNERY: fixtureTrainingSubject(3_000),
+      NIGHT_FIGHTING: fixtureTrainingSubject(2_000),
+      TORPEDO_TACTICS: fixtureTrainingSubject(2_000),
+      DAMAGE_CONTROL: fixtureTrainingSubject(2_000),
+    },
+  },
+  exercise: { maintenanceMultiple: 2, maxPerCalendarYear: 1 },
   provenance: {
     sourceStatus: "BALANCE_TARGET",
     confidence: "LOW",

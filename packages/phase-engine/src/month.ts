@@ -70,6 +70,9 @@ export class MonthExecutor {
       ...(engineOptions?.battleOffers === undefined
         ? {}
         : { battleOffers: engineOptions.battleOffers }),
+      ...(engineOptions?.fleetManagement === undefined
+        ? {}
+        : { fleetManagement: engineOptions.fleetManagement }),
       interruption:
         engineOptions?.interruptions !== undefined
           ? createInterruptionState(engineOptions.interruptions)

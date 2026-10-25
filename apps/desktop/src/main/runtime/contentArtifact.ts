@@ -1,4 +1,4 @@
-import type { BattleOfferRules } from "@bluewave/content-schema";
+import type { BattleOfferRules, FleetManagementRules } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { ShipBuildingContent, ShipBuildingData } from "@bluewave/ship-design";
 import { Context, Effect, Layer } from "effect";
@@ -15,6 +15,7 @@ import { loadUiCatalogue } from "../uiCatalogue.js";
 import {
   armamentContentHash,
   loadBattleOfferRules,
+  loadFleetManagementRules,
   loadShipBuildingContent,
   loadShipBuildingData,
   shipBuildingContentHash,
@@ -48,6 +49,10 @@ export class ContentArtifact extends Context.Service<
     >;
     readonly loadShipBuildingContent: () => Effect.Effect<ShipBuildingContent, CommandFailed>;
     readonly loadBattleOfferRules: () => Effect.Effect<BattleOfferRules | undefined, CommandFailed>;
+    readonly loadFleetManagementRules: () => Effect.Effect<
+      FleetManagementRules | undefined,
+      CommandFailed
+    >;
     readonly loadShipBuildingData: () => Effect.Effect<ShipBuildingData, CommandFailed>;
     readonly shipBuildingContentHash: () => Effect.Effect<string, CommandFailed>;
     readonly armamentContentHash: () => Effect.Effect<string, CommandFailed>;
@@ -87,6 +92,8 @@ export function contentArtifactLayer(
       Effect.try({ try: () => loadShipBuildingContent(), catch: contentUnavailable }),
     loadBattleOfferRules: () =>
       Effect.try({ try: () => loadBattleOfferRules(), catch: contentUnavailable }),
+    loadFleetManagementRules: () =>
+      Effect.try({ try: () => loadFleetManagementRules(), catch: contentUnavailable }),
     loadShipBuildingData: () =>
       Effect.try({ try: () => loadShipBuildingData(), catch: contentUnavailable }),
     shipBuildingContentHash: () =>

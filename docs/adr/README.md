@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0287).
+highest existing number + 1 (the next number is ADR-0288).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -133,6 +133,7 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 | 0281 | [ADR-0281-sacking-phase-and-terminal-career.md](ADR-0281-sacking-phase-and-terminal-career.md) | The sacking phase and the terminal career | accepted | — |
 | 0283 | [ADR-0283-fleet-management-values-and-repair-entry.md](ADR-0283-fleet-management-values-and-repair-entry.md) | Fleet-management v2 values are balance targets, and REPAIR entry stays out of scope | accepted | — |
 | 0286 | [ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md](ADR-0286-fleet-management-gate-evaluator-and-dormant-ruleset-section.md) | Ship use is decided by one gate evaluator; fleet-management values live in a dormant ruleset section | accepted | — |
+| 0287 | [ADR-0287-battle-absence-record.md](ADR-0287-battle-absence-record.md) | A battle record explains the player's absent ships with gate reasons | accepted | — |
 
 ## Foreign stations & presence
 

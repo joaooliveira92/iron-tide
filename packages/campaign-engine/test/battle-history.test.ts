@@ -214,6 +214,32 @@ describe("buildBattleHistory", () => {
     expect(view.battles[0]!.lostShipIds).toHaveLength(2);
   });
 
+  it("names the player's absent ships with their ordered reasons, and omits the field when none", () => {
+    const absences = [
+      { shipId: "uk_ship_9", reasons: ["InRepair" as const, "Mothballed" as const] },
+    ];
+    const view = buildBattleHistory(
+      snapshotWith([
+        battle({ id: "b5", result: result(), absences }),
+        battle({ id: "b6", result: result() }),
+      ]),
+      "uk",
+    );
+    expect(view.battles[0]!.absentShips).toEqual([
+      { shipId: "uk_ship_9", shipName: "uk_ship_9", reasons: ["InRepair", "Mothballed"] },
+    ]);
+    expect(view.battles[1]!.absentShips).toBeUndefined();
+  });
+
+  it("does not show another nation's absences", () => {
+    const absences = [{ shipId: "fr_ship_9", reasons: ["Mothballed" as const] }];
+    const view = buildBattleHistory(
+      snapshotWith([battle({ id: "b7", result: result(), absences })]),
+      "spain",
+    );
+    expect(view.battles[0]!.absentShips).toBeUndefined();
+  });
+
   it("projects the player's canonical declined-battle records without the response hash", () => {
     const view = buildBattleHistory(
       snapshotWith(
