@@ -313,7 +313,7 @@ export const SHIPPED_MINE_TYPE_DEFINITIONS: readonly MineTypeDefinition[] = [
   }),
   withMineTypeDefinitionContentHash({
     mineTypeId: "MAGNETIC",
-    technologyPrerequisiteIds: ["magnetic_mine_technology"],
+    technologyPrerequisiteIds: ["m_asw_influence_mine"],
     eligibleLayingSourceKinds: ALL_SOURCE_KINDS,
     baseLayingValue: DEFAULT_BASE_LAYING_VALUE,
     strikeProfile: sharedStrikeProfile(),
@@ -331,7 +331,7 @@ export const SHIPPED_MINE_TYPE_DEFINITIONS: readonly MineTypeDefinition[] = [
   }),
   withMineTypeDefinitionContentHash({
     mineTypeId: "ACOUSTIC",
-    technologyPrerequisiteIds: ["acoustic_mine_technology"],
+    technologyPrerequisiteIds: ["m_asw_influence_mine"],
     eligibleLayingSourceKinds: ALL_SOURCE_KINDS,
     baseLayingValue: DEFAULT_BASE_LAYING_VALUE,
     strikeProfile: sharedStrikeProfile(),

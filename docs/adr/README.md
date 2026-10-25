@@ -1,7 +1,7 @@
 # Architecture decision records
 
 One ADR per durable decision: `ADR-NNNN-<slug>.md`. New decisions take the
-highest existing number + 1 (the next number is ADR-0297).
+highest existing number + 1 (the next number is ADR-0298).
 Refresh this table from each file's H1 when one is added or re-titled.
 Records numbered below 0201 are unavailable and unverified legacy references;
 see the [authority index](../../.ai/AUTHORITY-INDEX.md).
@@ -143,6 +143,7 @@ Readiness and maintenance ruleset constants, the 1880 command structure, and the
 | 0292 | [ADR-0292-battle-experience-write-back.md](ADR-0292-battle-experience-write-back.md) | Battle aftermath asks the division module for experience through a typed request | accepted | — |
 | 0293 | [ADR-0293-fleet-management-go-live.md](ADR-0293-fleet-management-go-live.md) | Fleet management goes live in the production pack and in every re-execution path | accepted | — |
 | 0296 | [ADR-0296-derived-ship-conditions.md](ADR-0296-derived-ship-conditions.md) | Ship conditions are derived predicates the fleet view carries and the renderer only labels | accepted | — |
+| 0297 | [ADR-0297-engine-reads-catalogue-technology-ids.md](ADR-0297-engine-reads-catalogue-technology-ids.md) | The engine reads the catalogue's technology id where one matches, and leaves the rest named | accepted | — |
 
 ## Foreign stations & presence
 
