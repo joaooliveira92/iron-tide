@@ -15,6 +15,7 @@ import {
 import { Badge } from "../../components/ui/badge.js";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../components/ui/hover-card.js";
+import { SlateBody, SlateHeader } from "../../components/ui/slate.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover.js";
 import { Progress } from "../../components/ui/progress.js";
 import { type ArchetypeNumericEffect, type ArchetypeConsequence } from "./archetype-consequence.js";
@@ -113,7 +114,7 @@ function DimensionDeltas({ consequence }: { consequence: ArchetypeConsequence })
                     {delta.delta > 0 ? `+${delta.delta}` : delta.delta}
                   </Badge>
                 </HoverCardTrigger>
-                <HoverCardContent side="top" className="w-auto max-w-64 px-3 py-1.5 text-xs">
+                <HoverCardContent side="top" variant="tip">
                   {delta.delta > 0
                     ? `${delta.delta} points above balanced`
                     : delta.delta < 0
@@ -161,15 +162,18 @@ function EffectTile({ effect }: { effect: ArchetypeNumericEffect }) {
         </div>
       </HoverCardTrigger>
       <HoverCardContent className="w-72">
-        <div className="space-y-1.5">
-          <p className="flex items-center gap-1.5 text-sm font-medium">
-            <Icon className="h-4 w-4 text-muted-foreground" />
-            {effect.label}
-          </p>
+        <SlateHeader
+          title={effect.label}
+          icon={<Icon className="size-3.5" />}
+          aside={
+            <span className="font-display text-sm font-semibold tabular-nums">{effect.value}</span>
+          }
+        />
+        <SlateBody>
           <p className="text-xs text-muted-foreground">
             {meta?.description ?? "Effect derived from the engine's model."}
           </p>
-        </div>
+        </SlateBody>
       </HoverCardContent>
     </HoverCard>
   );

@@ -16,6 +16,7 @@ import {
 } from "../../../lib/priorities.js";
 import { translate } from "../../../lib/strings.js";
 import { cn } from "../../../lib/utils.js";
+import { SlateBody, SlateFoot, SlateHeader } from "../../../components/ui/slate.js";
 import { PrioritiesCard } from "../../../screens/overview/PrioritiesCard.js";
 import type { PrioritiesState } from "../../../screens/overview/usePriorities.js";
 import type { Screen } from "../../campaign-screen-registry.js";
@@ -59,17 +60,21 @@ function PriorityChip({
         </span>
         <span className="truncate font-medium text-foreground">{priority.title}</span>
       </HoverCardTrigger>
-      <HoverCardContent align="start" className="w-72 space-y-1.5 p-3 text-xs leading-snug">
-        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider">
-          <span className={style.label}>{SEVERITY_LABELS[priority.severity]}</span>
-          <span aria-hidden="true" className="text-muted-foreground">
-            ·
-          </span>
-          <span className="text-muted-foreground">{destination}</span>
-        </p>
-        <p className="text-sm font-semibold text-foreground">{priority.title}</p>
-        <p className="text-muted-foreground">{priority.summary}</p>
-        <p className="border-t pt-1.5 text-muted-foreground/80">{priority.reason}</p>
+      <HoverCardContent align="start" className="w-72 text-xs leading-snug">
+        <SlateHeader
+          title={priority.title}
+          tone={priority.severity === "critical" ? "alert" : "normal"}
+          aside={
+            <span className={cn("text-xs font-semibold uppercase tracking-wide", style.label)}>
+              {SEVERITY_LABELS[priority.severity]}
+            </span>
+          }
+        />
+        <SlateBody>
+          <p className="text-muted-foreground">{priority.summary}</p>
+          <p className="text-xs font-medium text-foreground">{destination}</p>
+        </SlateBody>
+        <SlateFoot>{priority.reason}</SlateFoot>
       </HoverCardContent>
     </HoverCard>
   );

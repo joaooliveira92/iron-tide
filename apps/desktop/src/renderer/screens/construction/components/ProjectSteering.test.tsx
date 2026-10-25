@@ -39,8 +39,8 @@ describe("ProjectSteering (SB3-R5, SB3-R8)", () => {
       />,
     );
     const accelerate = screen.getByRole("button", { name: "Havock class accelerate" });
-    expect(accelerate.getAttribute("title")).toMatch(/5% cost premium/);
-    expect(accelerate.getAttribute("title")).toMatch(/delaying others/);
+    expect(accelerate.getAttribute("aria-description")).toMatch(/5% cost premium/);
+    expect(accelerate.getAttribute("aria-description")).toMatch(/delaying others/);
     screen.getByRole("button", { name: "Havock class halt" }).click();
     accelerate.click();
     expect(halted).toBe("project-1");
@@ -95,8 +95,8 @@ describe("ProjectSteering (SB3-R5, SB3-R8)", () => {
       />,
     );
     const cancel = screen.getByRole("button", { name: "Havock class cancel project" });
-    expect(cancel.getAttribute("title")).toMatch(/forfeited and is not refunded/);
-    expect(cancel.getAttribute("title")).toMatch(/releases its ship/);
+    expect(cancel.getAttribute("aria-description")).toMatch(/forfeited and is not refunded/);
+    expect(cancel.getAttribute("aria-description")).toMatch(/releases its ship/);
     cancel.click();
     expect(cancelled).toBe("project-1");
   });

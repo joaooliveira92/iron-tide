@@ -35,7 +35,7 @@ describe("BottomNav (proof of concept)", () => {
     const items = CAMPAIGN_NAVIGATION_SECTIONS.flatMap((section) => section.items);
     for (const [index, item] of items.entries()) {
       const button = screen.getAllByRole("button")[index];
-      expect(button?.getAttribute("title")).toBe(item.label);
+      expect(button?.getAttribute("aria-description")).toBe(item.label);
       expect(button?.getAttribute("aria-label")).toBe(item.label);
     }
   });

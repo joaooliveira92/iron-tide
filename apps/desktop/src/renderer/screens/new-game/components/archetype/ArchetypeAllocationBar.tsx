@@ -1,5 +1,6 @@
 import type { ArchetypeAllocation } from "@bluewave/campaign-engine";
 import { ARCHETYPE_DIMENSION_DESCRIPTORS } from "../../archetype-dimensions.js";
+import { Tip } from "../../../../components/ui/tip.js";
 
 export function ArchetypeAllocationBar({
   allocation,
@@ -17,12 +18,13 @@ export function ArchetypeAllocationBar({
       aria-label="Allocation breakdown"
     >
       {ARCHETYPE_DIMENSION_DESCRIPTORS.map((descriptor) => (
-        <div
-          key={descriptor.dimension}
-          className={descriptor.barClassName}
-          style={{ width: `${(allocation[descriptor.dimension] / max) * 100}%` }}
-          title={`${descriptor.label}: ${allocation[descriptor.dimension]}`}
-        />
+        <Tip label={`${descriptor.label}: ${allocation[descriptor.dimension]}`}>
+          <div
+            key={descriptor.dimension}
+            className={descriptor.barClassName}
+            style={{ width: `${(allocation[descriptor.dimension] / max) * 100}%` }}
+          />
+        </Tip>
       ))}
     </div>
   );

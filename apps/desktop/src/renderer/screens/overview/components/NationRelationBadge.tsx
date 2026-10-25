@@ -4,6 +4,7 @@ import type { ComponentType } from "react";
 import { Badge } from "../../../components/ui/badge.js";
 import { cn } from "../../../lib/utils.js";
 import type { NationRailRelation, NationRailRow } from "../nation-rail-state.js";
+import { Tip } from "../../../components/ui/tip.js";
 
 const RELATION_STYLE: Readonly<
   Record<
@@ -57,19 +58,21 @@ export function NationRelationBadge({
   const style = RELATION_STYLE[row.relation];
   const Icon = style.icon;
   return (
-    <Badge
-      variant="outline"
-      data-relation={row.relation}
-      data-icon-only={iconOnly}
-      title={row.relationLabel}
-      className={cn(
-        "min-w-0 max-w-full shrink gap-1 px-1.5 py-0 text-xs font-semibold uppercase text-foreground",
-        style.badge,
-        iconOnly && "border-transparent bg-transparent",
-      )}
-    >
-      <Icon className={cn("size-3 shrink-0", style.tint)} aria-hidden="true" />
-      <span className={iconOnly ? "sr-only" : "truncate"}>{row.relationLabel}</span>
-    </Badge>
+    <Tip label={row.relationLabel}>
+      <Badge
+        variant="outline"
+        data-relation={row.relation}
+        data-icon-only={iconOnly}
+
+        className={cn(
+          "min-w-0 max-w-full shrink gap-1 px-1.5 py-0 text-xs font-semibold uppercase text-foreground",
+          style.badge,
+          iconOnly && "border-transparent bg-transparent",
+        )}
+      >
+        <Icon className={cn("size-3 shrink-0", style.tint)} aria-hidden="true" />
+        <span className={iconOnly ? "sr-only" : "truncate"}>{row.relationLabel}</span>
+      </Badge>
+    </Tip>
   );
 }

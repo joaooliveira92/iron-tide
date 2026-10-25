@@ -9,3 +9,12 @@ export const MENU_SEPARATOR = "-mx-1 my-1 h-px bg-border";
 export const MENU_SHORTCUT = "ml-auto text-xs tracking-widest text-muted-foreground";
 
 export const FLOATING_LAYER = "z-[60]";
+
+export const SLATE_SURFACE =
+  "relative z-50 origin-(--transform-origin) overflow-hidden rounded-lg bg-popover/90 text-popover-foreground ring-1 ring-admiralty-accent/30 outline-hidden backdrop-blur-xl duration-100";
+
+export const SLATE_POPUP = `${SLATE_SURFACE} slate-rise w-64 text-sm shadow-2xl`;
+
+export const SLATE_TIP = `${SLATE_SURFACE} pointer-events-none w-auto max-w-64 px-2.5 py-1.5 text-xs leading-snug shadow-lg before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-admiralty-accent/70 before:to-transparent`;
+
+export const SLATE_PANEL = `${SLATE_SURFACE} w-72 p-4 text-sm shadow-2xl before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-linear-to-r before:from-transparent before:via-admiralty-accent/70 before:to-transparent`;

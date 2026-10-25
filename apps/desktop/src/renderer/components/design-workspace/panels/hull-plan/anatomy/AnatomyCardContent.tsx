@@ -1,3 +1,4 @@
+import { SlateFoot, SlateHeader } from "../../../../ui/slate.js";
 import { AnatomyShipFigure } from "./AnatomyShipFigure.js";
 import type { AnatomyShip } from "./ship-anatomy.js";
 
@@ -17,19 +18,23 @@ export function AnatomyCardContent({
   readonly testId: string;
 }) {
   return (
-    <div className="space-y-1" data-testid={testId}>
-      <div className="flex items-baseline justify-between gap-3 px-1">
-        <span className="truncate text-xs font-medium">{title}</span>
-        {aside !== undefined && (
-          <span className="shrink-0 text-xs uppercase tracking-wide text-muted-foreground">
-            {aside}
-          </span>
-        )}
+    <div data-testid={testId}>
+      <SlateHeader
+        title={title}
+        {...(aside === undefined
+          ? {}
+          : {
+              aside: (
+                <span className="shrink-0 text-xs uppercase tracking-wide text-muted-foreground">
+                  {aside}
+                </span>
+              ),
+            })}
+      />
+      <div className="p-2">
+        <AnatomyShipFigure ship={plate} highlight={highlight} />
       </div>
-      <AnatomyShipFigure ship={plate} highlight={highlight} />
-      <p className="min-h-4 px-1 text-xs leading-snug text-muted-foreground">
-        {detail ?? plate.facts.get(highlight) ?? "Fitted equipment"}
-      </p>
+      <SlateFoot>{detail ?? plate.facts.get(highlight) ?? "Fitted equipment"}</SlateFoot>
     </div>
   );
 }

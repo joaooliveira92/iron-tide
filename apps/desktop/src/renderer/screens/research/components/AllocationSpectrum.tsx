@@ -84,7 +84,7 @@ export function AllocationSpectrum({
                     <span className="truncate">{field.label}</span>
                     <span className="ml-auto tabular-nums opacity-80">{field.projectedPoints}</span>
                   </HoverCardTrigger>
-                  <HoverCardContent side="bottom" align="center" className="w-64 p-3">
+                  <HoverCardContent side="bottom" align="center" className="w-64">
                     <FieldSummary field={field} />
                   </HoverCardContent>
                 </HoverCard>

@@ -18,17 +18,19 @@ export function TechnologyDetail({
   tech,
   fieldLabel,
   className,
+  showHeading = true,
 }: {
   readonly tech: ResearchTechView;
   readonly fieldLabel: string;
   readonly className?: string;
+  readonly showHeading?: boolean;
 }) {
   const status = TECH_STATUS[tech.status];
   const Icon = status.icon;
 
   return (
     <div className={cn("space-y-2.5 text-xs", className)}>
-      <div>
+      {showHeading && (
         <div className="flex items-start gap-2">
           <Icon aria-hidden="true" className={cn("mt-0.5 size-4 shrink-0", status.iconTone)} />
           <div className="min-w-0">
@@ -38,7 +40,7 @@ export function TechnologyDetail({
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {(tech.investedPoints > 0 || tech.status === "researching") && (
         <div className="space-y-1">

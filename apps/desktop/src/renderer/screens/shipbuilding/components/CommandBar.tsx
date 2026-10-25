@@ -23,6 +23,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover.js";
 import { SHORTCUT_MOD, SHORTCUT_SHIFT } from "../../../components/design-workspace/index.js";
 import { cn } from "../../../lib/utils.js";
+import { Tip } from "../../../components/ui/tip.js";
 
 export interface DesignStatus {
   readonly label: string;
@@ -93,45 +94,53 @@ export function CommandBar({
             onChange={(e) => onShipClassName(e.target.value)}
           />
         </label>
-        <Button
-          variant="outline"
-          className="gap-1.5"
-          title={`Current type: ${shipTypeLabel}. Pick a reference design to start from another type.`}
-          onClick={onStartFromReference}
+        <Tip
+          label={`Current type: ${shipTypeLabel}. Pick a reference design to start from another type.`}
         >
-          {shipTypeIcon}
-          Start from a reference design
-          <Badge
-            variant="secondary"
-            className="ml-1 px-1.5 py-0"
-            aria-label={`Current type ${shipType}`}
+          <Button
+            variant="outline"
+            className="gap-1.5"
+
+            onClick={onStartFromReference}
           >
-            {shipType}
-          </Badge>
-        </Button>
+            {shipTypeIcon}
+            Start from a reference design
+            <Badge
+              variant="secondary"
+              className="ml-1 px-1.5 py-0"
+              aria-label={`Current type ${shipType}`}
+            >
+              {shipType}
+            </Badge>
+          </Button>
+        </Tip>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <ButtonGroup aria-label="History">
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label="Undo"
-            title={`Undo (${SHORTCUT_MOD}Z)`}
-            disabled={!canUndo}
-            onClick={onUndo}
-          >
-            <Undo2 aria-hidden="true" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label="Redo"
-            title={`Redo (${SHORTCUT_SHIFT}${SHORTCUT_MOD}Z)`}
-            disabled={!canRedo}
-            onClick={onRedo}
-          >
-            <Redo2 aria-hidden="true" />
-          </Button>
+          <Tip label={`Undo (${SHORTCUT_MOD}Z)`}>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Undo"
+
+              disabled={!canUndo}
+              onClick={onUndo}
+            >
+              <Undo2 aria-hidden="true" />
+            </Button>
+          </Tip>
+          <Tip label={`Redo (${SHORTCUT_SHIFT}${SHORTCUT_MOD}Z)`}>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Redo"
+
+              disabled={!canRedo}
+              onClick={onRedo}
+            >
+              <Redo2 aria-hidden="true" />
+            </Button>
+          </Tip>
         </ButtonGroup>
         <Popover>
           <PopoverTrigger className={cn(buttonVariants({ variant: "outline" }), "gap-1.5")}>
@@ -172,14 +181,12 @@ export function CommandBar({
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-2">
         {autosaved && (
-          <span
-            role="note"
-            className="flex items-center gap-1 text-xs text-muted-foreground"
-            title="Every change is saved to this campaign as you work."
-          >
-            <Check aria-hidden="true" className="size-3.5" />
-            Autosaved
-          </span>
+          <Tip label="Every change is saved to this campaign as you work.">
+            <span role="note" className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Check aria-hidden="true" className="size-3.5" />
+              Autosaved
+            </span>
+          </Tip>
         )}
         <Button variant="outline" onClick={onValidate}>
           <ClipboardCheck aria-hidden="true" className="mr-1 size-4" />

@@ -1,6 +1,7 @@
 import { type KeyboardEvent, useRef, useState } from "react";
 import type { DesignDraft } from "@bluewave/ship-design";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
+import { SlateBody, SlateHeader } from "../../ui/slate.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { NON_SCALING, STROKE } from "../panels/hull-plan/drafting.js";
 import {
@@ -239,16 +240,22 @@ export function FindingMarkers({
                 </g>
               )}
             </HoverCardTrigger>
-            <HoverCardContent className="w-80 space-y-0.5 text-left">
-              <p className="font-medium">
-                {style.label}: {top.title}
-              </p>
-              {values && <p>{values}</p>}
-              {more > 0 && (
-                <p>
-                  And {more} more finding{more === 1 ? "" : "s"} here.
-                </p>
-              )}
+            <HoverCardContent className="w-80 text-left">
+              <SlateHeader
+                title={top.title}
+                tone={
+                  top.severity === "BLOCKING" || top.severity === "CRITICAL" ? "alert" : "normal"
+                }
+                aside={<span className="text-xs font-semibold">{style.label}</span>}
+              />
+              <SlateBody className="space-y-0.5 text-xs">
+                {values && <p>{values}</p>}
+                {more > 0 && (
+                  <p className="text-muted-foreground">
+                    And {more} more finding{more === 1 ? "" : "s"} here.
+                  </p>
+                )}
+              </SlateBody>
             </HoverCardContent>
           </HoverCard>
         );

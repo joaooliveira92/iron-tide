@@ -16,7 +16,7 @@ export function IconTip({
   return (
     <HoverCard>
       <HoverCardTrigger delay={150} render={children} />
-      <HoverCardContent side="top" className="w-auto px-2 py-1 text-xs">
+      <HoverCardContent side="top" variant="tip">
         {label}
       </HoverCardContent>
     </HoverCard>

@@ -19,7 +19,7 @@ export function ReadoutItem({ readout: r }: { readonly readout: EngineeringReado
         <PopoverTrigger aria-label={`${r.label}: ${r.value} — show breakdown`} className={TRIGGER}>
           {value}
         </PopoverTrigger>
-        <PopoverContent side="top" align="start" className="w-72">
+        <PopoverContent side="top" align="start" className="w-72 p-0">
           <ReadoutDetail
             title={r.breakdown.title}
             rows={r.breakdown.rows}

@@ -1,6 +1,7 @@
 import type { YardOption } from "@bluewave/ship-design";
 import { Badge } from "../../ui/badge.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
+import { SlateBody, SlateHeader } from "../../ui/slate.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { yardRows } from "./yardRows.js";
 
@@ -18,8 +19,13 @@ export function YardList({ yards }: { readonly yards: readonly YardOption[] }) {
             </Badge>
           </HoverCardTrigger>
           <HoverCardContent side="top">
-            An order is built at the quickest yard that can hold the hull, the smallest on a tie.
-            The choice is fixed when the design is submitted.
+            <SlateHeader title="Shipyard choice" />
+            <SlateBody>
+              <p className="text-xs">
+                An order is built at the quickest yard that can hold the hull, the smallest on a
+                tie. The choice is fixed when the design is submitted.
+              </p>
+            </SlateBody>
           </HoverCardContent>
         </HoverCard>
       </div>

@@ -1,6 +1,7 @@
 import { Ban, Gauge, Pause, Play } from "lucide-react";
 import { Button } from "../../../components/ui/button.js";
 import type { ProjectRow } from "../project-progress.js";
+import { Tip } from "../../../components/ui/tip.js";
 
 export interface ProjectSteeringProps {
   readonly row: ProjectRow;
@@ -52,17 +53,19 @@ export function ProjectSteering({
         </Button>
       )}
       {onAccelerate !== undefined && row.status === "ACTIVE" && (
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={pending}
-          aria-label={`${row.className} accelerate`}
-          title="Builds 10% faster for a one-time 5% cost premium; accelerating many ships risks delaying others (capacity pressure)."
-          onClick={() => onAccelerate(row.projectId, true)}
-        >
-          <Gauge aria-hidden="true" />
-          Accelerate
-        </Button>
+        <Tip label="Builds 10% faster for a one-time 5% cost premium; accelerating many ships risks delaying others (capacity pressure).">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={pending}
+            aria-label={`${row.className} accelerate`}
+
+            onClick={() => onAccelerate(row.projectId, true)}
+          >
+            <Gauge aria-hidden="true" />
+            Accelerate
+          </Button>
+        </Tip>
       )}
       {onAccelerate !== undefined && row.status === "ACCELERATED" && (
         <Button
@@ -76,18 +79,20 @@ export function ProjectSteering({
         </Button>
       )}
       {onCancelProject !== undefined && (
-        <Button
-          size="sm"
-          variant="outline"
-          className="text-destructive"
-          disabled={pending}
-          aria-label={`${row.className} cancel project`}
-          title="Cancel this project. Work already done is forfeited and is not refunded; a cancelled rebuild releases its ship on its old design."
-          onClick={() => onCancelProject(row.projectId)}
-        >
-          <Ban aria-hidden="true" />
-          Cancel project
-        </Button>
+        <Tip label="Cancel this project. Work already done is forfeited and is not refunded; a cancelled rebuild releases its ship on its old design.">
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-destructive"
+            disabled={pending}
+            aria-label={`${row.className} cancel project`}
+
+            onClick={() => onCancelProject(row.projectId)}
+          >
+            <Ban aria-hidden="true" />
+            Cancel project
+          </Button>
+        </Tip>
       )}
     </div>
   );

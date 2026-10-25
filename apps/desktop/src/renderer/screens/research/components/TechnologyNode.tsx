@@ -4,6 +4,7 @@ import {
   HoverCardTrigger,
 } from "../../../components/ui/hover-card.js";
 import { cn } from "../../../lib/utils.js";
+import { SlateBody, SlateHeader } from "../../../components/ui/slate.js";
 import { CHART_NODE_HEIGHT, CHART_NODE_WIDTH } from "../research-chart-layout.js";
 import { monthsPhrase } from "../research-calendar.js";
 import type { ResearchTechView } from "../research-view-model.js";
@@ -113,8 +114,19 @@ export function TechnologyNode({
           </span>
         )}
       </HoverCardTrigger>
-      <HoverCardContent side="right" align="start" sideOffset={10} className="w-72 p-3">
-        <TechnologyDetail tech={tech} fieldLabel={fieldLabel} />
+      <HoverCardContent side="right" align="start" sideOffset={10} className="w-72">
+        <SlateHeader
+          title={tech.label}
+          icon={<Icon className="size-3.5" />}
+          aside={
+            <span className="text-xs text-muted-foreground">
+              {fieldLabel} · {status.label}
+            </span>
+          }
+        />
+        <SlateBody>
+          <TechnologyDetail tech={tech} fieldLabel={fieldLabel} showHeading={false} />
+        </SlateBody>
       </HoverCardContent>
     </HoverCard>
   );

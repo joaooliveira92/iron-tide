@@ -4,6 +4,7 @@ import {
   HoverCardTrigger,
 } from "../../../components/ui/hover-card.js";
 import { cn } from "../../../lib/utils.js";
+import { SlateBody, SlateFacts, SlateFoot, SlateHeader } from "../../../components/ui/slate.js";
 import type { ReadoutTone, TreasuryReadout } from "../treasury-readouts.js";
 
 const TONE: Record<ReadoutTone, string> = {
@@ -29,20 +30,11 @@ function Readout({ readout: r }: { readonly readout: TreasuryReadout }) {
         <span className={cn("font-medium tabular-nums", TONE[r.tone])}>{r.value}</span>
       </HoverCardTrigger>
       <HoverCardContent side="top" align="start" className="w-72">
-        <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">{r.title}</div>
-          <dl className="space-y-0.5">
-            {r.rows.map((row) => (
-              <div key={row.label} className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">{row.label}</dt>
-                <dd className="tabular-nums">{row.value}</dd>
-              </div>
-            ))}
-          </dl>
-          {r.note !== undefined && (
-            <p className="border-t pt-2 text-xs text-muted-foreground">{r.note}</p>
-          )}
-        </div>
+        <SlateHeader title={r.title} />
+        <SlateBody>
+          <SlateFacts rows={r.rows} />
+        </SlateBody>
+        {r.note !== undefined && <SlateFoot>{r.note}</SlateFoot>}
       </HoverCardContent>
     </HoverCard>
   );

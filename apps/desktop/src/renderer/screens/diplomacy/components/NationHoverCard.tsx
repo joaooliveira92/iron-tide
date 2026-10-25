@@ -4,6 +4,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "../../../components/ui/hover-card.js";
+import { SlateFacts, SlateFoot } from "../../../components/ui/slate.js";
 import { humanizeId } from "../../../lib/humanize-id.js";
 import { cn } from "../../../lib/utils.js";
 import type { BattleRecord } from "../diplomacy-hover.js";
@@ -21,18 +22,9 @@ export interface NationHoverCardProps {
 
 function Stat({ label, value }: { readonly label: string; readonly value: number }) {
   return (
-    <div className="rounded-md bg-muted/60 px-2 py-1.5 text-center">
+    <div className="rounded-md border border-border/50 bg-muted/30 px-2 py-1.5 text-center">
       <p className="text-base font-semibold leading-none tabular-nums">{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{label}</p>
-    </div>
-  );
-}
-
-function Fact({ label, value }: { readonly label: string; readonly value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="text-xs font-medium tabular-nums">{value}</dd>
     </div>
   );
 }
@@ -47,7 +39,7 @@ export function NationHoverCard({ row, record, side = "right", children }: Natio
         align="center"
         sideOffset={10}
         collisionPadding={12}
-        className="w-72 overflow-hidden p-0"
+        className="w-72"
       >
         <div className="relative h-24">
           <NationFlag
@@ -76,15 +68,17 @@ export function NationHoverCard({ row, record, side = "right", children }: Natio
             </div>
             <TensionGauge tension={row.tension} band={row.band} size="lg" />
           </div>
-          <dl className="space-y-1">
-            <Fact label="Pact" value={row.nap ? "Non-aggression" : "None"} />
-            <Fact label="Stance since" value={row.since} />
-            <Fact
-              label="Blockades"
-              value={row.blockades.length === 0 ? "None" : String(row.blockades.length)}
-            />
-            {row.isLikelyRival && <Fact label="Assessment" value="Likely rival" />}
-          </dl>
+          <SlateFacts
+            rows={[
+              { label: "Pact", value: row.nap ? "Non-aggression" : "None" },
+              { label: "Stance since", value: row.since },
+              {
+                label: "Blockades",
+                value: row.blockades.length === 0 ? "None" : String(row.blockades.length),
+              },
+              ...(row.isLikelyRival ? [{ label: "Assessment", value: "Likely rival" }] : []),
+            ]}
+          />
           {record !== undefined && record.played > 0 ? (
             <div className="space-y-1.5">
               <p className="text-xs text-muted-foreground">Your battles against them</p>
@@ -97,10 +91,8 @@ export function NationHoverCard({ row, record, side = "right", children }: Natio
           ) : (
             <p className="text-xs text-muted-foreground">No battles fought against them yet</p>
           )}
-          <p className="border-t pt-2 text-xs text-muted-foreground">
-            Select to open the dossier and give orders.
-          </p>
         </div>
+        <SlateFoot>Select to open the dossier and give orders.</SlateFoot>
       </HoverCardContent>
     </HoverCard>
   );

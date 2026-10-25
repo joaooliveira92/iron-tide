@@ -5,6 +5,7 @@ import {
   HoverCardTrigger,
 } from "../../../components/ui/hover-card.js";
 import { cn } from "../../../lib/utils.js";
+import { SlateBody, SlateFacts, SlateFoot, SlateHeader } from "../../../components/ui/slate.js";
 
 export interface PeekProps {
   readonly trigger: ReactElement;
@@ -23,7 +24,7 @@ export function Peek({ trigger, children, side = "top", align = "center", classN
         align={align}
         sideOffset={8}
         collisionPadding={12}
-        className={cn("w-72 p-3", className)}
+        className={cn("w-72", className)}
       >
         {children}
       </HoverCardContent>
@@ -46,17 +47,12 @@ export function PeekRows({
   readonly note?: string;
 }) {
   return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium">{title}</p>
-      <dl className="space-y-1">
-        {rows.map((row) => (
-          <div key={row.label} className="flex items-baseline justify-between gap-3">
-            <dt className="text-xs text-muted-foreground">{row.label}</dt>
-            <dd className="text-xs font-medium tabular-nums">{row.value}</dd>
-          </div>
-        ))}
-      </dl>
-      {note !== undefined && <p className="text-xs text-muted-foreground">{note}</p>}
-    </div>
+    <>
+      <SlateHeader title={title} />
+      <SlateBody>
+        <SlateFacts rows={rows} />
+      </SlateBody>
+      {note !== undefined && <SlateFoot>{note}</SlateFoot>}
+    </>
   );
 }

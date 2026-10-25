@@ -11,6 +11,7 @@ import {
 } from "../../lib/priorities.js";
 import type { Screen } from "../../shell/campaign-screen-registry.js";
 import type { PrioritiesState } from "./usePriorities.js";
+import { Tip } from "../../components/ui/tip.js";
 
 export const MAX_VISIBLE_PRIORITIES = 5;
 
@@ -67,19 +68,21 @@ function PriorityRow({
   return (
     <li>
       {actionable ? (
-        <button
-          type="button"
-          title={priority.reason}
-          aria-label={`${priority.title}. ${priority.summary} Go to ${destination}`}
-          onClick={() => onNavigate(priority.destination)}
-          className={cn(
-            shared,
-            "group cursor-pointer outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
-            style.row,
-          )}
-        >
-          {body}
-        </button>
+        <Tip label={priority.reason}>
+          <button
+            type="button"
+
+            aria-label={`${priority.title}. ${priority.summary} Go to ${destination}`}
+            onClick={() => onNavigate(priority.destination)}
+            className={cn(
+              shared,
+              "group cursor-pointer outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+              style.row,
+            )}
+          >
+            {body}
+          </button>
+        </Tip>
       ) : (
         <div title={priority.reason} className={cn(shared, style.rowStatic)}>
           {body}
