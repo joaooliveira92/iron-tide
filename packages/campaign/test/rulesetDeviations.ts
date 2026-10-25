@@ -108,6 +108,20 @@ export const INTENDED_DEVIATIONS: Readonly<Record<string, Readonly<Record<string
       "unknown field surprise",
     ),
   },
+  profile: {
+    "excess key": rejectedBoolean(
+      "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+      "technology-variation",
+      "unknown field surprise",
+    ),
+  },
+  profileList: {
+    "null entry": rejectedBoolean(
+      "INVALID_TECHNOLOGY_VARIATION_PROFILE",
+      "technology-variation",
+      "Ruleset missing canonical profile considerable",
+    ),
+  },
   fleetSetting: FLEET_SETTING_DEVIATIONS,
   fleetList: FLEET_LIST_DEVIATIONS,
   research: {
