@@ -6,7 +6,8 @@ import { cn } from "../lib/utils.js";
 import { translate } from "../lib/strings.js";
 import { CAMPAIGN_NAVIGATION_SECTIONS, showsCampaignNavigation } from "./campaign-navigation.js";
 import type { Screen } from "./campaign-screen-registry.js";
-import { tooltipTitle, useTooltipDetail } from "./tooltip-detail.js";
+import { Tip } from "../components/ui/tip.js";
+import { shouldShowTooltip, useTooltipDetail } from "./tooltip-detail.js";
 
 export interface BottomNavProps {
   readonly screen: Screen;
@@ -31,42 +32,47 @@ export function BottomNav({ screen, onSelect, footer, sessionId }: BottomNavProp
           const active = screen === item.id;
           return (
             <li key={item.id} className="min-w-16 flex-1">
-              <button
-                type="button"
-                title={tooltipTitle(tooltipDetail, item.label)}
-                aria-label={item.label}
-                aria-current={active ? "page" : undefined}
-                data-active={active}
-                onClick={() => onSelect(item.id)}
-                className={cn(
-                  "flex min-h-11 w-full flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1 text-xs leading-tight outline-none",
-                  "hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring",
-                  "data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground",
-                )}
-              >
-                <item.icon className="size-4 shrink-0" aria-hidden="true" />
-                <span className="max-w-full whitespace-nowrap">{item.shortLabel}</span>
-              </button>
+              <Tip label={item.label} side="top" disabled={!shouldShowTooltip(tooltipDetail)}>
+                <button
+                  type="button"
+                  aria-label={item.label}
+                  aria-current={active ? "page" : undefined}
+                  data-active={active}
+                  onClick={() => onSelect(item.id)}
+                  className={cn(
+                    "flex min-h-11 w-full flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1 text-xs leading-tight outline-none",
+                    "hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring",
+                    "data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground",
+                  )}
+                >
+                  <item.icon className="size-4 shrink-0" aria-hidden="true" />
+                  <span className="max-w-full whitespace-nowrap">{item.shortLabel}</span>
+                </button>
+              </Tip>
             </li>
           );
         })}
         <li className="min-w-16 flex-1">
-          <button
-            type="button"
-            title={translate("nav.bottom.shipbuilding")}
-            aria-label={translate("nav.bottom.shipbuilding")}
-            aria-haspopup="dialog"
-            onClick={() => setShipbuildingOpen(true)}
-            className={cn(
-              "flex min-h-11 w-full flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1 text-xs leading-tight outline-none",
-              "hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring",
-            )}
+          <Tip
+            label={translate("nav.bottom.shipbuilding")}
+            disabled={!shouldShowTooltip(tooltipDetail)}
           >
-            <Ship className="size-4 shrink-0" aria-hidden="true" />
-            <span className="max-w-full whitespace-nowrap">
-              {translate("nav.bottom.shipbuilding")}
-            </span>
-          </button>
+            <button
+              type="button"
+              aria-label={translate("nav.bottom.shipbuilding")}
+              aria-haspopup="dialog"
+              onClick={() => setShipbuildingOpen(true)}
+              className={cn(
+                "flex min-h-11 w-full flex-col items-center justify-center gap-0.5 rounded-md px-2 py-1 text-xs leading-tight outline-none",
+                "hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring",
+              )}
+            >
+              <Ship className="size-4 shrink-0" aria-hidden="true" />
+              <span className="max-w-full whitespace-nowrap">
+                {translate("nav.bottom.shipbuilding")}
+              </span>
+            </button>
+          </Tip>
         </li>
       </ul>
       <ShipbuildingDialog

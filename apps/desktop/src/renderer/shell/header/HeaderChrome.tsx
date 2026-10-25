@@ -4,6 +4,7 @@ import { Button } from "../../components/ui/button.js";
 import type { Theme } from "../ThemeContext.js";
 import { useTheme } from "../ThemeContext.js";
 import { nextTheme } from "./theme-cycle.js";
+import { Tip } from "../../components/ui/tip.js";
 
 const THEME_ICONS: Record<Theme, typeof Sun> = {
   light: Sun,
@@ -17,15 +18,17 @@ export function HeaderChrome() {
   const Icon = THEME_ICONS[theme];
 
   return (
-    <Button
-      className="h-8 w-8 shrink-0"
-      variant="ghost"
-      size="icon"
-      aria-label={`Theme: ${theme}. Click to change.`}
-      title={`Theme: ${theme}`}
-      onClick={() => setTheme(nextTheme(theme))}
-    >
-      <Icon />
-    </Button>
+    <Tip label={`Theme: ${theme}`}>
+      <Button
+        className="h-8 w-8 shrink-0"
+        variant="ghost"
+        size="icon"
+        aria-label={`Theme: ${theme}. Click to change.`}
+
+        onClick={() => setTheme(nextTheme(theme))}
+      >
+        <Icon />
+      </Button>
+    </Tip>
   );
 }

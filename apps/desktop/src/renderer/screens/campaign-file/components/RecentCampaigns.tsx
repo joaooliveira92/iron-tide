@@ -6,6 +6,7 @@ import { Item, ItemActions, ItemContent } from "../../../components/ui/item.js";
 import type { RecentCampaignEntry } from "../../../../shared/continuity-contract.js";
 import { campaignFileName } from "../utils/campaign-file-name.js";
 import { GlassCard } from "@/components/ui/glass-card.jsx";
+import { Tip } from "../../../components/ui/tip.js";
 
 interface RecentCampaignsProps {
   readonly files: readonly RecentCampaignEntry[];
@@ -26,14 +27,16 @@ export function RecentCampaigns({ files, disabled, onOpen, onRemove }: RecentCam
         {files.map((file) => (
           <Item key={file.packagePath}>
             <ItemContent>
-              <button
-                className="cursor-pointer truncate text-left font-mono text-xs font-semibold text-foreground hover:text-primary"
-                onClick={() => onOpen(file)}
-                title={file.packagePath}
-                disabled={disabled || !file.available}
-              >
-                {campaignFileName(file.packagePath)}
-              </button>
+              <Tip label={file.packagePath}>
+                <button
+                  className="cursor-pointer truncate text-left font-mono text-xs font-semibold text-foreground hover:text-primary"
+                  onClick={() => onOpen(file)}
+
+                  disabled={disabled || !file.available}
+                >
+                  {campaignFileName(file.packagePath)}
+                </button>
+              </Tip>
               {file.available ? null : (
                 <p className="text-[12px] text-destructive">
                   Package not found — it may have been moved or deleted.

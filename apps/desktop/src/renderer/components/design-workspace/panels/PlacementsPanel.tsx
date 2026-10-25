@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "../../ui/dropdown-menu.js";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
+import { SlateBody, SlateFacts, SlateHeader } from "../../ui/slate.js";
 import { buttonVariants } from "../../ui/button.js";
 import { cn } from "../../../lib/utils.js";
 import { KG_PER_TONNE } from "../../../lib/presentation-format/index.js";
@@ -45,6 +46,7 @@ import { NumberField, SelectField } from "../fields.js";
 import { Panel } from "./Panel.js";
 import type { Edit } from "./types.js";
 import { placementAttrs } from "../selection/navigation.js";
+import { Tip } from "../../../components/ui/tip.js";
 
 const zoneLabel = (z: string) => z.replaceAll("_", " ").toLowerCase();
 
@@ -91,38 +93,37 @@ function ComponentHover({
       >
         {facts.name}
       </HoverCardTrigger>
-      <HoverCardContent className="space-y-2 text-sm">
-        <div className="font-medium">{facts.name}</div>
-        <div className="flex flex-wrap gap-1">
-          <Badge variant="secondary">{facts.category}</Badge>
-          {facts.tags.map((t) => (
-            <Badge key={t} variant="outline">
-              {t}
-            </Badge>
-          ))}
-        </div>
-        <dl className="grid grid-cols-2 gap-x-3 tabular-nums">
-          <dt className="text-muted-foreground">Available from</dt>
-          <dd className="text-right">{facts.introduced}</dd>
-          {facts.obsolete !== null && (
-            <>
-              <dt className="text-muted-foreground">Obsolete from</dt>
-              <dd className="text-right">{facts.obsolete}</dd>
-            </>
-          )}
-          {facts.placed !== null && (
-            <>
-              <dt className="text-muted-foreground">Weight as fitted</dt>
-              <dd className="text-right">
-                {format.measurement(facts.placed.weightT * KG_PER_TONNE, "mass", {
-                  maximumFractionDigits: 1,
-                })}
-              </dd>
-              <dt className="text-muted-foreground">Cost as fitted</dt>
-              <dd className="text-right">{format.money(facts.placed.costGbp)}</dd>
-            </>
-          )}
-        </dl>
+      <HoverCardContent>
+        <SlateHeader title={facts.name} />
+        <SlateBody>
+          <div className="flex flex-wrap gap-1">
+            <Badge variant="secondary">{facts.category}</Badge>
+            {facts.tags.map((t) => (
+              <Badge key={t} variant="outline">
+                {t}
+              </Badge>
+            ))}
+          </div>
+          <SlateFacts
+            rows={[
+              { label: "Available from", value: facts.introduced },
+              ...(facts.obsolete === null
+                ? []
+                : [{ label: "Obsolete from", value: facts.obsolete }]),
+              ...(facts.placed === null
+                ? []
+                : [
+                    {
+                      label: "Weight as fitted",
+                      value: format.measurement(facts.placed.weightT * KG_PER_TONNE, "mass", {
+                        maximumFractionDigits: 1,
+                      }),
+                    },
+                    { label: "Cost as fitted", value: format.money(facts.placed.costGbp) },
+                  ]),
+            ]}
+          />
+        </SlateBody>
       </HoverCardContent>
     </HoverCard>
   );
@@ -301,15 +302,17 @@ export function PlacementsPanel({
                     </td>
                     <td className="p-1 @max-xl:col-span-2 @max-xl:justify-self-end">
                       <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Remove ${p.instanceId}`}
-                          title={`Remove ${p.instanceId}`}
-                          onClick={() => remove(p)}
-                        >
-                          <Trash2 aria-hidden="true" />
-                        </Button>
+                        <Tip label={`Remove ${p.instanceId}`}>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Remove ${p.instanceId}`}
+
+                            onClick={() => remove(p)}
+                          >
+                            <Trash2 aria-hidden="true" />
+                          </Button>
+                        </Tip>
                         <DropdownMenu>
                           <DropdownMenuTrigger
                             aria-label={`More actions for ${p.instanceId}`}

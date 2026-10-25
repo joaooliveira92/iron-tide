@@ -1,5 +1,6 @@
 import type { Metric, WorkshopView } from "@bluewave/ship-design";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "../../ui/hover-card.js";
+import { SlateBody, SlateFoot, SlateHeader } from "../../ui/slate.js";
 import { cn } from "../../../lib/utils.js";
 import { formatExplanation } from "../../../lib/presentation-format/index.js";
 import { Panel } from "./Panel.js";
@@ -53,14 +54,22 @@ function MetricRow({ m }: { readonly m: Metric }) {
       >
         {row}
       </HoverCardTrigger>
-      <HoverCardContent side="left" className="w-72 space-y-1.5 text-sm">
-        <div className="flex items-baseline justify-between gap-3">
-          <span className="font-medium">{m.label}</span>
-          <span className={cn("tabular-nums", tone[m.tone])}>{formatExplanation(m.value)}</span>
-        </div>
-        <p className="text-muted-foreground">{note}</p>
+      <HoverCardContent side="left" className="w-72">
+        <SlateHeader
+          title={m.label}
+          aside={
+            <span className={cn("font-display text-sm font-semibold tabular-nums", tone[m.tone])}>
+              {formatExplanation(m.value)}
+            </span>
+          }
+        />
+        <SlateBody>
+          <p className="text-xs text-muted-foreground">{note}</p>
+        </SlateBody>
         {verdict[m.tone] !== null && (
-          <p className={cn("text-xs", tone[m.tone])}>{verdict[m.tone]}</p>
+          <SlateFoot>
+            <span className={tone[m.tone]}>{verdict[m.tone]}</span>
+          </SlateFoot>
         )}
       </HoverCardContent>
     </HoverCard>

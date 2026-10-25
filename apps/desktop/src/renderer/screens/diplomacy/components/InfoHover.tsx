@@ -4,6 +4,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "../../../components/ui/hover-card.js";
+import { SlateBody, SlateFacts, SlateHeader } from "../../../components/ui/slate.js";
 
 export interface InfoHoverRow {
   readonly label: string;
@@ -21,16 +22,11 @@ export function InfoHover({ title, rows, side = "top", children }: InfoHoverProp
   return (
     <HoverCard>
       <HoverCardTrigger delay={120} closeDelay={60} render={children} />
-      <HoverCardContent side={side} align="center" sideOffset={8} className="w-64 p-3">
-        <p className="mb-2 text-sm font-medium">{title}</p>
-        <dl className="space-y-1">
-          {rows.map((row) => (
-            <div key={row.label} className="flex items-baseline justify-between gap-3">
-              <dt className="text-xs text-muted-foreground">{row.label}</dt>
-              <dd className="text-xs font-medium tabular-nums">{row.value}</dd>
-            </div>
-          ))}
-        </dl>
+      <HoverCardContent side={side} align="center" sideOffset={8}>
+        <SlateHeader title={title} />
+        <SlateBody>
+          <SlateFacts rows={rows} />
+        </SlateBody>
       </HoverCardContent>
     </HoverCard>
   );

@@ -1,5 +1,7 @@
 import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import { CANONICAL_RESEARCH_FIELD_IDS } from "@bluewave/campaign-engine";
+import { cn } from "../../lib/utils.js";
+import { useScreenHeaderHost } from "../../shell/screen-header.js";
 import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { EngineeringStatusBar } from "../shipbuilding/components/EngineeringStatusBar.js";
 import { Inspector } from "../shipbuilding/components/Inspector.js";
@@ -83,6 +85,8 @@ export function ResearchWorkspace({
     }
   };
 
+  const hosted = useScreenHeaderHost();
+
   const breadcrumb =
     tab === "technology" && selectedTech !== undefined
       ? ["Research", field.label, selectedTech.label]
@@ -92,7 +96,10 @@ export function ResearchWorkspace({
     <div
       data-testid="research-workspace"
       onKeyDown={onKeyDown}
-      className="grid h-[calc(100svh-var(--chrome-top,0px)-var(--chrome-bottom,0px)-4rem)] min-h-[30rem] grid-rows-[auto_auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border bg-background/95"
+      className={cn(
+        "grid h-[calc(100svh-var(--chrome-top,0px)-var(--chrome-bottom,0px)-2rem)] min-h-[30rem] overflow-hidden rounded-lg border bg-background/95",
+        hosted ? "grid-rows-[auto_minmax(0,1fr)_auto]" : "grid-rows-[auto_auto_minmax(0,1fr)_auto]",
+      )}
     >
       <ResearchCommandBar
         highCount={vm.highCount}

@@ -34,6 +34,7 @@ import {
   shipsAvailableToAdd,
   type DivisionOrganizationState,
 } from "./division-organization-state.js";
+import { Tip } from "../../../components/ui/tip.js";
 
 export interface DivisionCardProps {
   readonly division: DivisionView;
@@ -102,12 +103,9 @@ export function DivisionCard({ division, state, busy, send }: DivisionCardProps)
             <Badge variant="secondary">{roleLabel(division.role)}</Badge>
             <Badge variant="outline">{formationLabel(division.formation)}</Badge>
             {division.commanderVacant && (
-              <Badge
-                variant="outline"
-                title="No officer commands this division yet. Its ships fight with a command penalty."
-              >
-                Commander vacant
-              </Badge>
+              <Tip label="No officer commands this division yet. Its ships fight with a command penalty.">
+                <Badge variant="outline">Commander vacant</Badge>
+              </Tip>
             )}
           </div>
         </div>
@@ -191,22 +189,24 @@ export function DivisionCard({ division, state, busy, send }: DivisionCardProps)
                 {flagship.name}
               </span>
               {canRemoveShip(division) && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={busy}
-                  title={`Removing a ship ${costText(state.penalties.removeShip)}`}
-                  onClick={() =>
-                    send({
-                      type: "RemoveShipFromDivision",
-                      divisionId: division.divisionId,
-                      shipId: flagship.shipId,
-                    })
-                  }
-                >
-                  Remove
-                </Button>
+                <Tip label={`Removing a ship ${costText(state.penalties.removeShip)}`}>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={busy}
+
+                    onClick={() =>
+                      send({
+                        type: "RemoveShipFromDivision",
+                        divisionId: division.divisionId,
+                        shipId: flagship.shipId,
+                      })
+                    }
+                  >
+                    Remove
+                  </Button>
+                </Tip>
               )}
             </li>
           </ul>
@@ -236,39 +236,47 @@ export function DivisionCard({ division, state, busy, send }: DivisionCardProps)
                         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                           <span>{item.name}</span>
                           <span className="flex gap-1.5">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              disabled={busy}
-                              title={`Changing the flagship ${costText(state.penalties.changeFlagship)}`}
-                              onClick={() =>
-                                send({
-                                  type: "ChangeDivisionFlagship",
-                                  divisionId: division.divisionId,
-                                  newFlagshipShipId: item.id,
-                                })
-                              }
+                            <Tip
+                              label={`Changing the flagship ${costText(state.penalties.changeFlagship)}`}
                             >
-                              Make flagship
-                            </Button>
-                            {canRemoveShip(division) && (
                               <Button
                                 type="button"
                                 size="sm"
                                 variant="outline"
                                 disabled={busy}
-                                title={`Removing a ship ${costText(state.penalties.removeShip)}`}
+
                                 onClick={() =>
                                   send({
-                                    type: "RemoveShipFromDivision",
+                                    type: "ChangeDivisionFlagship",
                                     divisionId: division.divisionId,
-                                    shipId: item.id,
+                                    newFlagshipShipId: item.id,
                                   })
                                 }
                               >
-                                Remove
+                                Make flagship
                               </Button>
+                            </Tip>
+                            {canRemoveShip(division) && (
+                              <Tip
+                                label={`Removing a ship ${costText(state.penalties.removeShip)}`}
+                              >
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={busy}
+
+                                  onClick={() =>
+                                    send({
+                                      type: "RemoveShipFromDivision",
+                                      divisionId: division.divisionId,
+                                      shipId: item.id,
+                                    })
+                                  }
+                                >
+                                  Remove
+                                </Button>
+                              </Tip>
                             )}
                           </span>
                         </div>

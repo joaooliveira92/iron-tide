@@ -1,11 +1,14 @@
 /* @vitest-environment jsdom */
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import type { WindowState } from "../../shared/bridge-contract.js";
 import { SidebarProvider } from "../components/ui/sidebar.js";
 import { BridgeProvider } from "../lib/bridge-context.js";
 import { PreferencesProvider } from "../lib/preferences-context.js";
 import { createPreferencesBridgeStub } from "../lib/preferences-test-bridge.js";
+import { PageHeader } from "../components/shared/PageHeader.js";
+import { ScreenHeaderProvider } from "./screen-header.js";
 import { SiteHeader, type SiteHeaderProps } from "./SiteHeader.js";
 import type { HeaderCampaign } from "./site-header-state.js";
 import { ThemeProvider } from "./ThemeContext.js";
@@ -58,7 +61,11 @@ describe("SiteHeader", () => {
     cleanup();
   });
 
-  async function renderHeader(platform: NodeJS.Platform = "linux", props: SiteHeaderProps = {}) {
+  async function renderHeader(
+    platform: NodeJS.Platform = "linux",
+    props: SiteHeaderProps = {},
+    screenContent: ReactNode = null,
+  ) {
     windowCtx = windowContext(platform);
     const stub = createPreferencesBridgeStub();
     const result = render(
@@ -67,7 +74,10 @@ describe("SiteHeader", () => {
           <SidebarProvider>
             <WindowContextProvider value={windowCtx}>
               <ThemeProvider>
-                <SiteHeader {...props} />
+                <ScreenHeaderProvider>
+                  <SiteHeader {...props} />
+                  {screenContent}
+                </ScreenHeaderProvider>
               </ThemeProvider>
             </WindowContextProvider>
           </SidebarProvider>
@@ -91,6 +101,30 @@ describe("SiteHeader", () => {
 
     expect(screen.getByText("Active database (SQLite)")).toBeTruthy();
     expect(screen.getByText("Ready for operation")).toBeTruthy();
+  });
+
+  it("collapses to one row when a screen with no toolbar takes over the title", async () => {
+    const { container } = await renderHeader(
+      "linux",
+      { activeView: "playing", campaign },
+      <PageHeader title="Fleet" />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Fleet" })).toBeTruthy();
+    expect(container.querySelector("header")?.className).toContain("h-14");
+    const [compactMonth] = screen.getAllByText("January 1900");
+    expect(compactMonth?.closest("div.hidden")).toBeNull();
+  });
+
+  it("keeps the second row for a screen that supplies a toolbar", async () => {
+    const { container } = await renderHeader(
+      "linux",
+      { activeView: "playing", campaign },
+      <PageHeader title="Fleet" actions={<button type="button">Do it</button>} />,
+    );
+
+    expect(container.querySelector("header")?.className).toContain("h-24");
+    expect(screen.getByRole("button", { name: "Do it" })).toBeTruthy();
   });
 
   it("disables back and forward navigation when the history cannot move", async () => {

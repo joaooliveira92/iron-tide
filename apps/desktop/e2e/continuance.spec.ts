@@ -44,7 +44,7 @@ test("Recent Campaigns reopens a package without prompting the file dialog", asy
       throw new Error("file dialog must not open for a recent campaign");
     };
   });
-  await e2e.page.getByTitle(new RegExp(pkg.split("/").pop()!)).click();
+  await e2e.page.getByRole("button", { name: pkg.split("/").pop()!, exact: true }).click();
   await expect(e2e.page.getByRole("heading", { name: "Campaign Overview" })).toBeVisible({
     timeout: 30_000,
   });

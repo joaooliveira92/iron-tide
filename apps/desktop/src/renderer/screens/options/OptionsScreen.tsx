@@ -45,6 +45,7 @@ import { useCurrencyDisplayMode, usePreferences } from "../../lib/preferences-co
 import { translate, type MessageKey } from "../../lib/strings.js";
 import { useActiveCampaignCurrencyContext } from "../../shell/CampaignShellContext.js";
 import { GlassCard } from "@/components/ui/glass-card.jsx";
+import { Tip } from "../../components/ui/tip.js";
 
 const DEFAULTS = DEFAULT_APP_PREFERENCES;
 const TEXT_SCALE_STEP = 5;
@@ -219,16 +220,18 @@ export function OptionsScreen() {
             className="flex flex-wrap gap-2"
           >
             {SANS_FONT_OPTIONS.map((option) => (
-              <Button
-                key={option.value}
-                type="button"
-                variant={option.value === font ? "default" : "outline"}
-                aria-pressed={option.value === font}
-                title={option.description}
-                onClick={() => setFont(option.value)}
-              >
-                <span data-font-option={option.value}>{option.label}</span>
-              </Button>
+              <Tip label={option.description}>
+                <Button
+                  key={option.value}
+                  type="button"
+                  variant={option.value === font ? "default" : "outline"}
+                  aria-pressed={option.value === font}
+
+                  onClick={() => setFont(option.value)}
+                >
+                  <span data-font-option={option.value}>{option.label}</span>
+                </Button>
+              </Tip>
             ))}
           </div>
         </div>

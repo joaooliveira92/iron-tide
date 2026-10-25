@@ -10,6 +10,7 @@ import type { DiplomacyViewModel } from "../diplomacy-view-model.js";
 import { PLOT_LAYERS, PLOT_VIEWS, type PlotLayer, type PlotView } from "./plot-layers.js";
 import { TensionBands } from "./TensionBands.js";
 import { TensionPlot } from "./TensionPlot.js";
+import { Tip } from "../../../components/ui/tip.js";
 
 export interface PlotStageProps {
   readonly vm: DiplomacyViewModel;
@@ -44,17 +45,19 @@ export function PlotStage({
       <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
         <ButtonGroup aria-label="Diplomatic view mode">
           {PLOT_VIEWS.map((v) => (
-            <Button
-              key={v.id}
-              type="button"
-              size="sm"
-              variant={view === v.id ? "default" : "outline"}
-              aria-pressed={view === v.id}
-              title={v.hint}
-              onClick={() => onView(v.id)}
-            >
-              {v.label}
-            </Button>
+            <Tip label={v.hint}>
+              <Button
+                key={v.id}
+                type="button"
+                size="sm"
+                variant={view === v.id ? "default" : "outline"}
+                aria-pressed={view === v.id}
+
+                onClick={() => onView(v.id)}
+              >
+                {v.label}
+              </Button>
+            </Tip>
           ))}
         </ButtonGroup>
         {view === "plot" && (

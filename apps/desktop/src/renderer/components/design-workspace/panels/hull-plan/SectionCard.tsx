@@ -74,14 +74,14 @@ export function SectionCard({
       <div
         className={cn(
           "border-b p-3 @[26rem]:border-b-0 @[26rem]:border-r @[26rem]:p-2",
-          zone && "@[26rem]:bg-muted/20",
+          zone && "slate-grid @[26rem]:bg-muted/20",
         )}
       >
         {drawing}
       </div>
       <div className="space-y-2 p-3 text-sm">
         <div>
-          <h3 className="font-medium">{meta.name}</h3>
+          <h3 className="font-display font-semibold tracking-tight">{meta.name}</h3>
           {zone && (
             <p className="text-xs text-muted-foreground tabular-nums">
               Stations {zone.startPermille}–{zone.endPermille}‰ · {num(facts.fromBowM, 1)}–

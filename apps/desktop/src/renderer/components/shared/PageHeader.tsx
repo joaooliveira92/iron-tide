@@ -2,6 +2,7 @@ import { memo, type ReactNode } from "react";
 import { ArrowLeft, ChevronRight, type LucideIcon } from "lucide-react";
 import { Button } from "../ui/button.js";
 import { cn } from "../../lib/utils.js";
+import { ScreenHeader, useScreenHeaderHost } from "../../shell/screen-header.js";
 
 export interface PageHeaderBreadcrumb {
   readonly label: string;
@@ -27,6 +28,14 @@ export const PageHeader = memo(function PageHeader({
   actions,
   className,
 }: PageHeaderProps) {
+  const hosted = useScreenHeaderHost();
+  if (hosted && breadcrumbs.length === 0 && onBack === undefined) {
+    return (
+      <ScreenHeader title={title} icon={Icon}>
+        {actions}
+      </ScreenHeader>
+    );
+  }
   return (
     <div className={cn("flex flex-wrap items-center justify-between gap-4", className)}>
       <div className="flex items-center gap-2">

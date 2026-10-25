@@ -10,6 +10,7 @@ import {
   type ShipOverlay,
   type ShipView,
 } from "../../../components/design-workspace/panels/hull-plan/ship-view.js";
+import { Tip } from "../../../components/ui/tip.js";
 
 export interface ViewToolbarProps {
   readonly view: ShipView;
@@ -23,17 +24,19 @@ export function ViewToolbar({ view, onView, overlays, onToggleOverlay }: ViewToo
     <>
       <ButtonGroup aria-label="Ship view">
         {VIEW_ORDER.map((v) => (
-          <Button
-            key={v.id}
-            type="button"
-            size="sm"
-            variant={view === v.id ? "default" : "outline"}
-            aria-pressed={view === v.id}
-            title={v.hint}
-            onClick={() => onView(v.id)}
-          >
-            {v.label}
-          </Button>
+          <Tip label={v.hint}>
+            <Button
+              key={v.id}
+              type="button"
+              size="sm"
+              variant={view === v.id ? "default" : "outline"}
+              aria-pressed={view === v.id}
+
+              onClick={() => onView(v.id)}
+            >
+              {v.label}
+            </Button>
+          </Tip>
         ))}
       </ButtonGroup>
       <Popover>

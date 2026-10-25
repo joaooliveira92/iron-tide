@@ -1,5 +1,5 @@
+import { SlateBody, SlateFacts, SlateHeader } from "../../../components/ui/slate.js";
 import type { ReadoutRow } from "../engineering-status.js";
-import { ReadoutRows } from "./ReadoutRows.js";
 
 export function ReadoutDetail({
   title,
@@ -13,21 +13,24 @@ export function ReadoutDetail({
   readonly footer?: readonly ReadoutRow[];
 }) {
   return (
-    <div className="space-y-2">
-      <div className="text-xs text-muted-foreground">{title}</div>
-      <ReadoutRows rows={rows} />
-      {causes !== undefined && causes.length > 0 && (
-        <ul className="space-y-1 text-xs text-muted-foreground">
-          {causes.map((cause, i) => (
-            <li key={i}>{cause}</li>
-          ))}
-        </ul>
-      )}
-      {footer !== undefined && (
-        <div className="border-t pt-2">
-          <ReadoutRows rows={footer} strong />
-        </div>
-      )}
-    </div>
+    <>
+      <SlateHeader title={title} />
+      <SlateBody>
+        <SlateFacts rows={rows} />
+        {causes !== undefined && causes.length > 0 && (
+          <ul className="space-y-1 text-xs text-muted-foreground">
+            {causes.map((cause, i) => (
+              <li key={i}>{cause}</li>
+            ))}
+          </ul>
+        )}
+        {footer !== undefined && (
+          <SlateFacts
+            rows={footer}
+            className="border-t border-border/60 pt-2 [&_dd]:font-semibold"
+          />
+        )}
+      </SlateBody>
+    </>
   );
 }
