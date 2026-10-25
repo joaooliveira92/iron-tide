@@ -247,6 +247,23 @@ describe("ShipStationAssignmentChanged (S-5 03)", () => {
   });
 });
 
+describe("ShipReadinessChanged", () => {
+  const body = {
+    kind: "ShipReadinessChanged",
+    nationId: "n1",
+    shipId: "s1",
+    fromReadiness: "READY",
+    toReadiness: "DAMAGED",
+    reason: "MAINTENANCE",
+    crewQuality: 3,
+  } as const;
+
+  it("decodes a readiness change and rejects a negative crew quality", () => {
+    expect(parseDomainEventBody(body).kind).toBe("ShipReadinessChanged");
+    expect(() => parseDomainEventBody({ ...body, crewQuality: -1 })).toThrow();
+  });
+});
+
 describe("PresenceShortfall (S-5 05)", () => {
   const body = {
     kind: "PresenceShortfall",

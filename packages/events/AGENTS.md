@@ -4,11 +4,12 @@
 
 **Class:** runtime-free
 
-**Boundary:** Authoritative, runtime-free. Depends on `campaign` and foundations only.
+**Boundary:** Authoritative, runtime-free. Depends on foundations only.
 
 **Invariants:**
 
 - Event schemas are wire formats: changes need a parity test from existing fixtures.
+- Event body types derive from their Effect schemas; do not hand-mirror them.
 - Ordering must come from explicit keys, not insertion order.
 
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/events test`.
