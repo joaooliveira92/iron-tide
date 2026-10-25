@@ -319,7 +319,11 @@ export class CommandLifecycle {
         snapshotHash,
         result: { nationId: body.nationId, divisionId: body.divisionId },
       };
-    if (body.type === "AssignForeignStation" || body.type === "ClearForeignStation")
+    if (
+      body.type === "AssignForeignStation" ||
+      body.type === "ClearForeignStation" ||
+      body.type === "SetShipReadiness"
+    )
       return {
         type: "success",
         commandId: envelope.commandId,

@@ -38,6 +38,7 @@ import {
   validateReorderDivisionShips,
 } from "./divisionValidation.js";
 import type { BudgetProjectCommand, CommandBody, CommandEnvelope } from "./envelope.js";
+import { validateShipReadinessCommand } from "./readinessCommandValidation.js";
 import { validateStationAssignment } from "./stationAssignmentValidation.js";
 import type { LifecycleStepResult } from "./types.js";
 import { rejectValidation } from "./validation.js";
@@ -84,6 +85,8 @@ export function validatePayloadRules(
     return validateStationAssignment(envelope, snapshot, "assign");
   if (envelope.body.type === "ClearForeignStation")
     return validateStationAssignment(envelope, snapshot, "clear");
+  if (envelope.body.type === "SetShipReadiness")
+    return validateShipReadinessCommand(envelope, snapshot);
   if (envelope.body.type === "HaltConstruction")
     return validateDockyardStatusCommand(envelope, snapshot, "HaltConstruction");
   if (envelope.body.type === "ResumeConstruction")

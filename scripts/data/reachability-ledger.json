@@ -43,6 +43,18 @@
       "adr_or_issue": null
     },
     {
+      "id": "set-ship-readiness",
+      "player_verb": "Set a ship to active, reserve or mothballed",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyShipReadinessCommand"],
+      "main_commands": ["submitShipReadiness"],
+      "renderer_screen": "screens/fleet/station/FleetStationSection.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx",
+      "adr_or_issue": null
+    },
+    {
       "id": "organise-divisions",
       "player_verb": "Create, change and dissolve divisions and pick flagships",
       "status": "reachable",

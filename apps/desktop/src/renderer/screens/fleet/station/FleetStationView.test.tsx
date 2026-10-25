@@ -64,6 +64,7 @@ function make(
     outcomeUnknown: false,
     onToggle: vi.fn(),
     onSend: vi.fn(() => Promise.resolve("accepted" as CommandOutcome)),
+    onSendReadiness: vi.fn(() => Promise.resolve("accepted" as CommandOutcome)),
     onRetry: vi.fn(),
     onReload: vi.fn(),
     ...props,

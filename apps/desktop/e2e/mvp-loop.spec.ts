@@ -112,6 +112,30 @@ test("a ship is assigned to and cleared from foreign station, and the presence r
   ).toBeVisible();
 });
 
+test("a ship is placed in reserve through the readiness command", async ({
+  e2e,
+  campaignTemplate,
+}) => {
+  const page = e2e.page;
+  await openCampaign(e2e, campaignTemplate);
+  await navigateTo(page, "Fleet");
+
+  const section = page.getByTestId("fleet-station");
+  const row = section.getByTestId("fleet-station-row-gbr_dreadnought");
+  await row.getByRole("checkbox").focus();
+  await page.keyboard.press("Space");
+  await section.getByRole("button", { name: "Place in reserve" }).click();
+  await expect(section.getByTestId("fleet-station-notice")).toContainText(
+    "Readiness change to reserve queued for 1 ship(s)",
+  );
+
+  await advanceMonths(page, 1);
+  await navigateTo(page, "Fleet");
+  await expect(
+    page.getByTestId("fleet-station-row-gbr_dreadnought").getByText("Reserve fleet"),
+  ).toBeVisible();
+});
+
 test("a fleet ordered to sail moves one hop when the month advances", async ({
   e2e,
   campaignTemplate,

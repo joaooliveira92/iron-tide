@@ -2,6 +2,8 @@ import { useCallback, useMemo, useState } from "react";
 import { envelopeOf } from "../../../lib/command-envelope.js";
 import type {
   FleetScreenProjection,
+  CommandableReadiness,
+  ShipReadinessOutcome,
   StationAssignmentIntent,
   StationAssignmentOutcome,
 } from "../../../../shared/fleet-contract.js";
@@ -14,6 +16,7 @@ import {
 } from "../../../lib/command-screen-workflow.js";
 import { useCampaignRevision } from "../../../shell/CampaignShellContext.js";
 import {
+  explainReadinessRejection,
   explainStationRejection,
   format,
   pruneSelection,
@@ -38,6 +41,7 @@ export interface UseStationAssignmentReturn {
   readonly loadScreen: () => Promise<void>;
   readonly toggle: (shipId: string) => void;
   readonly send: (intent: StationAssignmentIntent) => Promise<CommandOutcome>;
+  readonly sendReadiness: (readiness: CommandableReadiness) => Promise<CommandOutcome>;
 }
 
 export function useStationAssignment(sessionId: string): UseStationAssignmentReturn {
@@ -47,7 +51,7 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
   const workflow = useCommandScreenWorkflow<
     FleetStationState,
     FleetScreenProjection,
-    StationAssignmentOutcome
+    StationAssignmentOutcome | ShipReadinessOutcome
   >(
     requestLifecycleAdapter({
       initialState: initialFleetStationState,
@@ -56,9 +60,15 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
       project: projectFleetStation,
       accept: (value) => ({
         patch: {},
-        notice: format(`fleet.station.queued.${value.intent}`, {
-          n: value.shipCount,
-        }),
+        notice:
+          "readiness" in value
+            ? format("fleet.readiness.queued", {
+                readiness: format(`fleet.readiness.state.${value.readiness}`),
+                n: value.shipCount,
+              })
+            : format(`fleet.station.queued.${value.intent}`, {
+                n: value.shipCount,
+              }),
       }),
     }),
     { refreshKey: campaignRevision },
@@ -96,6 +106,30 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
       });
   };
 
+  const sendReadiness = (readiness: CommandableReadiness): Promise<CommandOutcome> => {
+    if (!bridge || selected.length === 0) return Promise.resolve("transport-failure");
+    const shipIds = [...selected];
+    return workflow
+      .execute("set-readiness", async (stamp) => {
+        const result = await bridge.campaign.execute("submitShipReadiness", {
+          ...envelopeOf(sessionId, stamp),
+          readiness,
+          shipIds,
+        });
+        if (result.outcome !== "rejected" || result.reason !== "SHIP_READINESS_REJECTED") {
+          return result;
+        }
+        return {
+          ...result,
+          diagnostics: explainReadinessRejection(result.diagnostics, rows),
+        };
+      })
+      .then((outcome) => {
+        if (outcome === "accepted") setSelection([]);
+        return outcome;
+      });
+  };
+
   return {
     state,
     rows,
@@ -107,5 +141,6 @@ export function useStationAssignment(sessionId: string): UseStationAssignmentRet
     loadScreen: workflow.loadScreen,
     toggle: (shipId) => setSelection((current) => toggleSelection(current, shipId)),
     send,
+    sendReadiness,
   };
 }

@@ -5,7 +5,7 @@ Rules and statuses: ADR-0267.
 
 | Status | Rows |
 | --- | --- |
-| reachable | 30 |
+| reachable | 31 |
 | dormant-by-decision | 11 |
 | internal | 11 |
 
@@ -16,6 +16,7 @@ Rules and statuses: ADR-0267.
 | set-research-priority | Set a research priority for a technology field | `screens/research/ResearchScreen.tsx` | `apps/desktop/src/renderer/screens/research/ResearchScreen.test.tsx` |
 | move-fleet | Order a fleet along a route, one hop a month | `screens/fleet/FleetScreen.tsx` | `apps/desktop/src/main/commands/fleetCommands.test.ts` |
 | assign-station | Assign a fleet to a foreign station | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
+| set-ship-readiness | Set a ship to active, reserve or mothballed | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
 | organise-divisions | Create, change and dissolve divisions and pick flagships | `screens/fleet/organization/FleetOrganizationSection.tsx` | `apps/desktop/src/main/commands/divisionCommands.test.ts` |
 | set-budget-allocation | Set the budget allocation across spending categories | `screens/treasury/TreasuryScreen.tsx` | `apps/desktop/src/renderer/screens/treasury/components/BudgetPolicyPanel.test.tsx` |
 | submit-design | Draw a ship design and submit it for construction | `components/design-workspace/panels/SubmitPanel.tsx` | `apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.test.tsx` |
