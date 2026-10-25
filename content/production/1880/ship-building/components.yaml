@@ -1593,3 +1593,43 @@ components:
       beamArcDeg: "150"
       maxFeedPermille: "300"
     maintenanceMonthlyBp: 20
+  # US 5-inch/54 Mark 18 gun in the Mark 42 single mount, E-1 1950-1959 (ADR-0291; docs/research/e-1-1940s-hull-and-part-values.md section 13). Sourced
+  # (navweaps.com WNUS_5-54_mk42, SINGLE-SOURCE): 127 mm bore, 31.45 kg HC projectile, 2,550 kg gun, 58,586 kg mount without ammunition and fluids, 40 rounds per
+  # minute as designed, about 300 deg of train, 20 crew in the original Mod 0, service 1954. The charge (2,604 bp) is DERIVED from 8.19 kg over the projectile. The
+  # mount splits as 56,036 kg per barrel and no fixed mass (58,586 kg). Round volume follows the 0.5 mL per gram convention; mount cost scales gun_qf_6in_40 by
+  # mount mass (197,368 micro per kg); volume and footprint use the 3 L and 470 mm2 per kg conventions: all BALANCE TARGET. The gun predates nothing, so it requires
+  # gun_dp_rapid_5in like the 5-inch/38 mount.
+  - id: gun_dp_5in_54_single
+    displayName: "5-inch/54 Mark 18 dual-purpose gun in Mark 42 single mount"
+    category: SECONDARY_GUN
+    introduction: { fromMonth: "1954-01", obsoleteMonth: null }
+    requires: [gun_dp_rapid_5in]
+    parameters: { barrels: { min: 1, max: 1, step: 1 }, rounds: { min: 200, max: 800, step: 50 } }
+    constants:
+      {
+        gun_kg: 2550,
+        mount_per_barrel_kg: 56036,
+        mount_fixed_kg: 0,
+        cost_per_kg_micro: 197000,
+        mount_cost_micro: 11060000000,
+      }
+    weightKg: "(gun_kg + mount_per_barrel_kg) * barrels + mount_fixed_kg"
+    volumeLitre: "175800 * barrels"
+    costMicro: "gun_kg * barrels * cost_per_kg_micro + mount_cost_micro * barrels"
+    crew: "20 * barrels"
+    powerKw: "1 * barrels"
+    upgradePath: []
+    tags: [gun, medium]
+    deckFootprintMm2: "27500000 * barrels"
+    heightMm: "2200"
+    zCgMm: "6000"
+    fcClass: medium
+    attributes:
+      caliberUm: "127000"
+      shellMassG: "31450"
+      chargeBp: "2604"
+      roundVolumeMl: "19820"
+      rofBaseX100: "4000"
+      beamArcDeg: "150"
+      maxFeedPermille: "300"
+    maintenanceMonthlyBp: 20

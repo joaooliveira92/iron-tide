@@ -11,20 +11,20 @@ import { runEquivalence } from "../../ship-design/test/helpers/equivalenceRun.js
 const report = runEquivalence();
 
 describe("equivalence totals are unchanged by the codemod (ticket 11c)", () => {
-  it("covers 95/95 designs and 871/871 placements", () => {
+  it("covers 96/96 designs and 883/883 placements", () => {
     expect(report.coverage.baseline).toEqual({
-      designs: 95,
-      placements: 871,
-      gunPlacements: 248,
-      tubePlacements: 30,
-      fittingPlacements: 593,
+      designs: 96,
+      placements: 883,
+      gunPlacements: 251,
+      tubePlacements: 31,
+      fittingPlacements: 601,
     });
     expect(report.summary.rows.changed).toBe(0);
     expect(report.summary.rows.orderingOnly).toBe(0);
   });
 
   it("keeps the independent armament, magazine and waiver counts separate", () => {
-    expect(report.dataQuality.unresolvedGunPlacements).toHaveLength(180);
+    expect(report.dataQuality.unresolvedGunPlacements).toHaveLength(183);
     expect(
       report.dataQuality.unresolvedGunPlacements.every(
         (u) => u.code === "PART_READ_PATH_NO_FIRST_CLASS_ARMAMENT",
@@ -45,7 +45,7 @@ describe("equivalence totals are unchanged by the codemod (ticket 11c)", () => {
       expect(entry.gunsPerMount).toBe(entry.legacyUnits);
     }
     const tubes = report.designs.flatMap((d) => d.entries.filter((e) => e.kind === "tube"));
-    expect(tubes).toHaveLength(30);
+    expect(tubes).toHaveLength(31);
     for (const entry of tubes) expect(entry.mountCount).toBe(entry.legacyUnits);
   });
 

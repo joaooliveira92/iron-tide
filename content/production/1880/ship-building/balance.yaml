@@ -33,6 +33,7 @@ ship:
       coast_defence_form: 15500
       pre_dreadnought_form: 26500
       destroyer_form: 19400 # BALANCE TARGET fitted so the Gearing returns its 36.8 kn at 44,742 kW and 3,460 t full load (docs/research/e-1-1940s-hull-and-part-values.md section 10: C = D^(2/3) V^3 / shp = 190 before the speed-length penalty)
+      postwar_destroyer_form: 14946 # BALANCE TARGET copied from destroyer_form; fitted so the Forrest Sherman returns its 33 kn at 52,199 kW and 4,916 t full load (ADR-0291)
       light_cruiser_form: 20568 # BALANCE TARGET fitted so the Worcester returns its 33 kn at 89,484 kW and 17,997 t full load (ADR-0290)
       heavy_cruiser_form: 22749 # BALANCE TARGET fitted so the Des Moines returns its 33 kn at 89,484 kW and 20,934 t full load (ADR-0290)
       merchant_liner_form: 26000 # ESTIMATE/SINGLE-SOURCE: C2 x100 for Etruria (14,000 ihp/18.8 kn), Campania and City of Paris; range 25,000-29,000 (docs/research/ship-building-merchant-liner.md section 5)
@@ -319,6 +320,7 @@ ship:
   # load (2,616 t standard), both above the 2,000 t of the 1880-1939 rules (docs/research/e-1-1940s-hull-and-part-values.md section 10).
   # The 4,000 t edge is a BALANCE TARGET; the light-cruiser upper edge is 19,000 t (Worcester is 17,997 t at full load, 14,700 t standard) and
   # its belt limit is 6 in (Worcester's belt is 127 mm), both BALANCE TARGET (ADR-0290); a light cruiser stays defined by guns of 6 in or less.
+  # From 1950 a destroyer may displace up to 6,000 t and a light cruiser starts there (Forrest Sherman is 4,916 t at full load, 2,800 t standard; ADR-0291), both BALANCE TARGET.
   # Every other threshold repeats the base rules until the battleship slice of ticket 254 sources its own.
   classificationFromMonth:
     - fromMonth: "1940-01"
@@ -329,6 +331,44 @@ ship:
         ddMaxGunUm: 152400
         qualifyingArmourUm: 50800
         clMinDisplacementKg: 4000000
+        clMaxDisplacementKg: 19000000
+        clMinSpeedUms: 8231104
+        clMaxGunUm: 152400
+        clBeltMaxUm: 152400
+        protectedCruiserExceptionVersion: 1
+        clProtectedMaxGunUm: 203200
+        caMinDisplacementKg: 4000000
+        caMinSpeedUms: 9774436
+        caBeltMinUm: 50800
+        caBeltMaxUm: 304800
+        caGunMaxUm: 279400
+        bMinDisplacementKg: 1500000
+        bBeltMinUm: 101600
+        bMaxSpeedUms: 9259992
+        bMaxTurrets: 2
+        bbMinDisplacementKg: 8000000
+        bbMinTurrets: 3
+        bbBeltMinUm: 152400
+        bbGunMinUm: 254000
+        aircraftLimit: 4
+        keMaxDisplacementKg: 2500000
+        keBeltMaxUm: 50800
+        keGunMaxUm: 152400
+        amcMinDisplacementKg: 1700000
+        amcGunMaxUm: 152400
+        amcFleetShareBp: 2000
+        amcFleetMinAllowance: 2
+        amcFastShareBp: 2500
+        amcFastMinAllowance: 1
+        amcFastSpeedUms: 11317768
+    - fromMonth: "1950-01"
+      classification:
+        rulesetVersion: 2
+        ddMaxDisplacementKg: 6000000
+        ddMinSpeedUms: 9774436
+        ddMaxGunUm: 152400
+        qualifyingArmourUm: 50800
+        clMinDisplacementKg: 6000000
         clMaxDisplacementKg: 19000000
         clMinSpeedUms: 8231104
         clMaxGunUm: 152400
@@ -370,6 +410,7 @@ cost:
     coast_defence_form: 10000
     pre_dreadnought_form: 10000
     destroyer_form: 11000 # BALANCE TARGET: copied from torpedo_boat_form, the nearest fast light hull
+    postwar_destroyer_form: 11000 # BALANCE TARGET: copied from destroyer_form
     light_cruiser_form: 10500 # BALANCE TARGET: copied from protected_cruiser_form, the nearest cruiser hull
     heavy_cruiser_form: 10500 # BALANCE TARGET: copied from protected_cruiser_form, the nearest cruiser hull
     merchant_liner_form: 10000 # ESTIMATE: neutral until a merchant-yard source exists

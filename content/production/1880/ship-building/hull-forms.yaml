@@ -173,3 +173,18 @@ hullForms:
     deckFullnessBp: 7000
     lcbPermille: 500
     zones: *a1
+  # Postwar destroyer hull (E-1 1950-1959, ADR-0291). Length band anchored on Forrest Sherman (124.1 m wl) and L/B on its 9.06 (docs/research/e-1-1940s-hull-and-part-values.md
+  # section 13); band edges, formBp and the five coefficient fields are BALANCE TARGET: waterplane, sheer, fullness and LCB are copied from destroyer_form, and
+  # formBp is fitted so the reference closes on its sourced 4,916 t full load, until a hull-weight fraction is sourced.
+  - id: postwar_destroyer_form
+    lengthMinMm: 115000
+    lengthMaxMm: 135000
+    lbMinX100: 850
+    lbMaxX100: 960
+    formBp: 19033
+    waterplaneCoeffBp: 7200
+    sheerBp: 11000
+    volumeFullnessBp: 5500
+    deckFullnessBp: 7000
+    lcbPermille: 500
+    zones: *a1

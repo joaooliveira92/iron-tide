@@ -3258,6 +3258,63 @@ parts:
       gunsPerMount: 2
       mountType: TURRET
   - family: gun_mount
+    id: gun_dp_5in_54_single_turret
+    lifecycle:
+      availableFrom: 1954-01
+      availableUntil: null
+    name: gun_dp_5in_54_single_turret
+    origin:
+      sourceFile: ship-building/components.yaml
+    provenance:
+      confidence: MEDIUM
+      kind: balance_adjustment
+      note: ADR-0291. Bore, projectile, mass and mount from navweaps.com WNUS_5-54_mk42 (SINGLE-SOURCE); the component carries the derivations.
+      sourceStatus: BALANCE_TARGET
+      sources:
+        - archiveOrUrl: https://www.navweaps.com/Weapons/WNUS_5-54_mk42.php
+          section: docs/research/e-1-1940s-hull-and-part-values.md section 13
+          title: navweaps.com US 5-inch/54 (12.7 cm) Mark 18 and Mark 42 mount
+    provides: gun_mount
+    quantities:
+      - basis: PER_LOADOUT_ENTRY
+        id: installation_fixed
+        kind: massKg
+        value: 0
+      - basis: PER_CONTAINED_UNIT
+        id: installation_per_gun
+        kind: massKg
+        value: 56036
+      - basis: PER_CONTAINED_UNIT
+        id: mount_cost_per_gun
+        kind: costMicro
+        value: 11060000000
+      - basis: PER_CONTAINED_UNIT
+        id: crew_per_gun
+        kind: crew
+        value: 20
+      - basis: PER_CONTAINED_UNIT
+        id: volume_per_gun
+        kind: volumeLitre
+        value: 175800
+      - basis: PER_CONTAINED_UNIT
+        id: deck_footprint_per_gun
+        kind: deckFootprintMm2
+        value: 27500000
+    revisions: []
+    slots:
+      - accepts:
+          - gun
+        id: guns
+        mountCount:
+          max: 1
+          min: 1
+    spec:
+      compatibleGunFamilies:
+        - gun_dp_5in_54_single
+      firingArcDeg: 150
+      gunsPerMount: 1
+      mountType: TURRET
+  - family: gun_mount
     id: gun_dp_6in_47_twin_turret_x2
     lifecycle:
       availableFrom: 1948-01
