@@ -25,8 +25,10 @@ export type {
   Reason,
   ResearchProgressed,
   ShipDetachedToFleet,
+  ShipReadinessChanged,
   ShipRebuilt,
   ShipRemovedFromDivision,
+  ShipStationAssignmentChanged,
   TechnologyDiscovered,
 } from "./envelope.js";
 export type { ExplanationTree } from "./explanation.js";

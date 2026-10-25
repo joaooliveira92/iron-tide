@@ -10,10 +10,8 @@
     }
   },
   "dependencies": {
-    "@bluewave/campaign": "workspace:*",
     "@bluewave/contracts": "workspace:*",
     "@bluewave/deterministic": "workspace:*",
-    "@bluewave/diagnostics": "workspace:*",
     "effect": "workspace:*"
   },
   "scripts": {

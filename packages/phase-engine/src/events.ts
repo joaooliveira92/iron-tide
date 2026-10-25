@@ -268,9 +268,9 @@ export function battleDeclinedEvent(
   battleId: string,
   missionType: string,
   areaId: string,
-  victoryPointCost: number,
-  opponentCredit: number,
-  declineCount: number,
+  victoryPointCost: SafeInt,
+  opponentCredit: SafeInt,
+  declineCount: SafeInt,
   seq: SafeInt,
   campaignMonth: string,
 ): DomainEventEnvelope {
@@ -302,7 +302,7 @@ export function enemyDeclinedBattleEvent(
   battleId: string,
   missionType: string,
   areaId: string,
-  enemyVictoryPointCost: number,
+  enemyVictoryPointCost: SafeInt,
   seq: SafeInt,
   campaignMonth: string,
 ): DomainEventEnvelope {
@@ -390,8 +390,8 @@ export function divisionExperienceChangedEvent(
 export function declineThresholdReachedEvent(
   nationId: string,
   battleId: string,
-  count: number,
-  threshold: number,
+  count: SafeInt,
+  threshold: SafeInt,
   scope: "WAR" | "NATION" | "CAMPAIGN",
   rulesetVersion: string,
   seq: SafeInt,

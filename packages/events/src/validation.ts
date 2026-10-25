@@ -1,13 +1,20 @@
+import { SafeInt } from "@bluewave/contracts";
 import { Schema } from "effect";
-import type { DomainEventBody, DomainEventEnvelope } from "./envelope.js";
 
 const parseOptions = { onExcessProperty: "error" } as const;
 
+function deepFreeze<T>(value: T): T {
+  if (value === null || typeof value !== "object" || Object.isFrozen(value)) return value;
+  Object.freeze(value);
+  for (const nested of Object.values(value)) deepFreeze(nested);
+  return value;
+}
+
 const nonEmptyString = Schema.Trim.check(Schema.isMinLength(1));
 
-const safeInt = Schema.Finite.check(
-  Schema.isInt(),
-  Schema.isBetween({ minimum: Number.MIN_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER }),
+const safeInt: Schema.declare<SafeInt> = Schema.declare<SafeInt>(
+  (value): value is SafeInt => typeof value === "number" && SafeInt.isSafeInt(value),
+  { expected: "SafeInt" },
 );
 
 const nonNegativeSafeInt = safeInt.check(Schema.isGreaterThanOrEqualTo(0));
@@ -269,12 +276,39 @@ export const DomainEventBodySchema = Schema.Union([
   DivisionExperienceChangedSchema,
 ]);
 
+const eventKindList = [
+  "NationBudgetChanged",
+  "ConstructionProgressed",
+  "ConstructionDelayed",
+  "ShipRebuilt",
+  "ConstructionProjectCancelled",
+  "ResearchProgressed",
+  "BattleInitiated",
+  "BattleResolved",
+  "TechnologyDiscovered",
+  "ShipReadinessChanged",
+  "ShipStationAssignmentChanged",
+  "PresenceShortfall",
+  "PrestigeLossRequested",
+  "RevoltPressureRequested",
+  "ShipDetachedToFleet",
+  "ShipRemovedFromDivision",
+  "ForeignStationShipMoved",
+  "ForeignStationNoRoute",
+  "BattleOfferAnswered",
+  "BattleDeclined",
+  "DeclineThresholdReached",
+  "EnemyDeclinedBattle",
+  "PrestigeChanged",
+  "DivisionExperienceChanged",
+] as const;
+
 export const DomainEventEnvelopeSchema = Schema.Struct({
   eventId: nonEmptyString,
   version: nonEmptyString,
   aggregateType: nonEmptyString,
   aggregateId: nonEmptyString,
-  eventType: nonEmptyString,
+  eventType: Schema.Literals(eventKindList),
   timestamp: Schema.String.check(Schema.isPattern(DATETIME_OFFSET_RE)),
   body: DomainEventBodySchema,
   sequenceNumber: nonNegativeSafeInt,
@@ -286,15 +320,50 @@ export const DomainEventEnvelopeSchema = Schema.Struct({
   ),
 );
 
+export type NationBudgetChanged = Schema.Schema.Type<typeof NationBudgetChangedSchema>;
+export type ConstructionProgressed = Schema.Schema.Type<typeof ConstructionProgressedSchema>;
+export type ConstructionDelayed = Schema.Schema.Type<typeof ConstructionDelayedSchema>;
+export type ShipRebuilt = Schema.Schema.Type<typeof ShipRebuiltSchema>;
+export type ConstructionProjectCancelled = Schema.Schema.Type<
+  typeof ConstructionProjectCancelledSchema
+>;
+export type ResearchProgressed = Schema.Schema.Type<typeof ResearchProgressedSchema>;
+export type BattleInitiated = Schema.Schema.Type<typeof BattleInitiatedSchema>;
+export type BattleResolved = Schema.Schema.Type<typeof BattleResolvedSchema>;
+export type TechnologyDiscovered = Schema.Schema.Type<typeof TechnologyDiscoveredSchema>;
+export type ShipReadinessChanged = Schema.Schema.Type<typeof ShipReadinessChangedSchema>;
+export type ShipStationAssignmentChanged = Schema.Schema.Type<
+  typeof ShipStationAssignmentChangedSchema
+>;
+export type PresenceShortfall = Schema.Schema.Type<typeof PresenceShortfallSchema>;
+export type BattleOfferAnswered = Schema.Schema.Type<typeof BattleOfferAnsweredSchema>;
+export type BattleDeclined = Schema.Schema.Type<typeof BattleDeclinedSchema>;
+export type DeclineThresholdReached = Schema.Schema.Type<typeof DeclineThresholdReachedSchema>;
+export type EnemyDeclinedBattle = Schema.Schema.Type<typeof EnemyDeclinedBattleSchema>;
+export type PrestigeChanged = Schema.Schema.Type<typeof PrestigeChangedSchema>;
+export type DivisionExperienceChanged = Schema.Schema.Type<typeof DivisionExperienceChangedSchema>;
+export type PrestigeLossRequested = Schema.Schema.Type<typeof PrestigeLossRequestedSchema>;
+export type RevoltPressureRequested = Schema.Schema.Type<typeof RevoltPressureRequestedSchema>;
+export type ShipDetachedToFleet = Schema.Schema.Type<typeof ShipDetachedToFleetSchema>;
+export type ShipRemovedFromDivision = Schema.Schema.Type<typeof ShipRemovedFromDivisionSchema>;
+export type ForeignStationShipMoved = Schema.Schema.Type<typeof ForeignStationShipMovedSchema>;
+export type ForeignStationNoRoute = Schema.Schema.Type<typeof ForeignStationNoRouteSchema>;
+export type DomainEventBody = Schema.Schema.Type<typeof DomainEventBodySchema>;
+
+type EnvelopeShell = Omit<
+  Schema.Schema.Type<typeof DomainEventEnvelopeSchema>,
+  "body" | "eventType"
+>;
+
+export type DomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody> = EnvelopeShell & {
+  readonly eventType: TBody["kind"];
+  readonly body: TBody;
+};
+
 export function parseDomainEventBody(input: unknown): DomainEventBody {
-  return Schema.decodeUnknownSync(DomainEventBodySchema, parseOptions)(input) as DomainEventBody;
+  return deepFreeze(Schema.decodeUnknownSync(DomainEventBodySchema, parseOptions)(input));
 }
 
-export function parseDomainEventEnvelope<TBody extends DomainEventBody = DomainEventBody>(
-  input: unknown,
-): DomainEventEnvelope<TBody> {
-  return Schema.decodeUnknownSync(
-    DomainEventEnvelopeSchema,
-    parseOptions,
-  )(input) as DomainEventEnvelope<TBody>;
+export function parseDomainEventEnvelope(input: unknown): DomainEventEnvelope {
+  return deepFreeze(Schema.decodeUnknownSync(DomainEventEnvelopeSchema, parseOptions)(input));
 }

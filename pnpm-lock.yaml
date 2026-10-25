@@ -535,18 +535,12 @@ importers:
 
   packages/events:
     dependencies:
-      '@bluewave/campaign':
-        specifier: workspace:*
-        version: link:../campaign
       '@bluewave/contracts':
         specifier: workspace:*
         version: link:../contracts
       '@bluewave/deterministic':
         specifier: workspace:*
         version: link:../deterministic
-      '@bluewave/diagnostics':
-        specifier: workspace:*
-        version: link:../diagnostics
       effect:
         specifier: workspace:*
         version: link:../../vendor/effect

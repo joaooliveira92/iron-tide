@@ -45,6 +45,15 @@ describe("EventLedger", () => {
     expect(ledger.all).toHaveLength(2);
   });
 
+  it("keeps authoritative state immutable through the exposed snapshot", () => {
+    const ledger = new EventLedger();
+    ledger.append(budgetEvent());
+    const before = ledger.hash();
+    const stored = ledger.all[0]!;
+    expect(() => Object.assign(stored.body, { reason: "tampered" })).toThrow(TypeError);
+    expect(ledger.hash()).toBe(before);
+  });
+
   it("serializes readable JSON", () => {
     const ledger = new EventLedger();
     ledger.append(budgetEvent());
