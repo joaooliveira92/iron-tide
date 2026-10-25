@@ -24,6 +24,7 @@ const project = (over: Partial<ConstructionCommitment>): ConstructionCommitment 
   carryingCost: 0,
   foreign: false,
   percentComplete: 0,
+  acceleration: null,
   ...over,
 });
 

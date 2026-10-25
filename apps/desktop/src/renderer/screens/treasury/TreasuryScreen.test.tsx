@@ -89,6 +89,7 @@ const commitments = vi.hoisted(() => ({
           carryingCost: 0,
           foreign: false,
           percentComplete: 40,
+          acceleration: { premiumApplied: false, premiumWork: 21 },
         },
         {
           projectId: "p2",
@@ -99,13 +100,20 @@ const commitments = vi.hoisted(() => ({
           carryingCost: 12,
           foreign: false,
           percentComplete: 10,
+          acceleration: null,
         },
       ],
       drawTotal: 400,
       carryingTotal: 12,
       haltedCount: 1,
+      acceleration: {
+        acceleratedCount: 1,
+        delayChanceBp: 5000,
+        premiumBp: 500,
+        premiumPending: 21,
+      },
     },
-    unpaidCostsPrestige: { before: 20, after: 19, sackingThreshold: 16 },
+    unpaidCostsPrestige: { triggered: true, before: 20, after: 19, sackingThreshold: 16 },
   },
 }));
 
@@ -230,21 +238,32 @@ describe("TreasuryScreen", () => {
     expect(within(construction).getByText(/up to 412 this month/)).not.toBeNull();
     expect(within(construction).getByText(/1 halted project costs 12 a month/)).not.toBeNull();
     expect(
+      within(construction).getByRole("button", { name: /Acceleration cost and risk/ }).textContent,
+    ).toMatch(/1 accelerated project.*21 of extra work still to be added, 50% chance of delay/);
+    expect(
       within(construction).getByRole("button", { name: /Monitor: Halted, 12 this month/ }),
     ).not.toBeNull();
   });
 
-  it("warns that unpaid costs lose prestige only when there is a shortfall", () => {
+  it("warns about the prestige cost only when obligations will go unpaid", () => {
     render(<TreasuryScreen sessionId="ses-1" />);
-    expect(screen.queryByText(/Unpaid costs also cost prestige/)).toBeNull();
+    expect(screen.getByText(/Unpaid obligations also cost prestige: 20 → 19/)).not.toBeNull();
+    expect(screen.getByText(/Dismissal risk begins at 16/)).not.toBeNull();
     cleanup();
+    const untriggered = {
+      ...commitments.value,
+      unpaidCostsPrestige: { triggered: false, before: 20, after: 19, sackingThreshold: 16 },
+    };
+    const original = commitments.value;
+    commitments.value = untriggered;
     hookMocks.state.mockReturnValue({
       projection: { ...projection, economy: { ...projection.economy, shortfall: 40 } },
       loadError: null,
     });
     render(<TreasuryScreen sessionId="ses-1" />);
-    expect(screen.getByText(/Unpaid costs also cost prestige: 20 → 19/)).not.toBeNull();
-    expect(screen.getByText(/Dismissal risk begins at 16/)).not.toBeNull();
+    expect(screen.getByText(/Shortfall: 40/)).not.toBeNull();
+    expect(screen.queryByText(/also cost prestige/)).toBeNull();
+    commitments.value = original;
   });
 
   describe("history", () => {

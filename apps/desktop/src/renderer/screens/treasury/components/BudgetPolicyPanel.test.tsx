@@ -23,7 +23,13 @@ const projection: BudgetScreenProjection = {
   },
   commitments: {
     fleet: { total: 0, atWar: false, warSurcharge: 0, groups: [], ships: [] },
-    construction: { projects: [], drawTotal: 0, carryingTotal: 0, haltedCount: 0 },
+    construction: {
+      projects: [],
+      drawTotal: 0,
+      carryingTotal: 0,
+      haltedCount: 0,
+      acceleration: { acceleratedCount: 0, delayChanceBp: 0, premiumBp: 500, premiumPending: 0 },
+    },
     unpaidCostsPrestige: null,
   },
   researchCaps: Array.from({ length: 91 }, (_, i) => ({

@@ -7,7 +7,7 @@ import type {
   NationState,
   Ship,
 } from "@bluewave/campaign";
-import { economyOutlook } from "@bluewave/campaign";
+import { economyOutlook, type EconomyOutlookOptions } from "@bluewave/campaign";
 import { MIN_RESEARCH_SHARE_BP, NEAR_COMPLETION_WORK_RATIO } from "./priorityConstants.js";
 import { compareCodePoints } from "@bluewave/deterministic";
 
@@ -68,9 +68,10 @@ export function isLowResearchSpending(
 export function derivePlayerFacts(
   snapshot: CampaignSnapshot,
   playerNationId: string,
+  economy?: EconomyOutlookOptions,
 ): PlayerFacts | undefined {
   const nation = snapshot.nations.get(playerNationId);
-  const outlook = economyOutlook(snapshot, playerNationId);
+  const outlook = economyOutlook(snapshot, playerNationId, economy);
   if (nation === undefined || outlook === undefined) return undefined;
 
   const ports: PlayerFactsPort[] = snapshot.world.ports

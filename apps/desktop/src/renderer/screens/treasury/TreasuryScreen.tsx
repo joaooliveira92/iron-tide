@@ -49,7 +49,13 @@ export function TreasuryScreen({ sessionId }: TreasuryScreenProps) {
           />
           <BudgetPolicyPanel policy={policy} />
         </div>
-        <TreasuryStatusBar readouts={treasuryReadouts(breakdown, format)} />
+        <TreasuryStatusBar
+          readouts={treasuryReadouts(
+            breakdown,
+            format,
+            policy.controller.state.commitments?.construction.carryingTotal ?? 0,
+          )}
+        />
       </div>
     </ScreenStage>
   );

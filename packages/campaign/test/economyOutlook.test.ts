@@ -247,3 +247,37 @@ describe("constructionDrawByProject", () => {
     expect(draw.map((d) => [d.projectId, d.draw])).toEqual([["live", 40]]);
   });
 });
+
+describe("economyOutlook with halted projects", () => {
+  const halted = (id: string) => project({ id, status: "HALTED" });
+
+  it("charges each halted project's carrying cost before anything else", () => {
+    const n = nation({ constructionProjects: [halted("h1"), halted("h2")] });
+    const without = economyOutlook(snapshot(n), "n")!;
+    const carried = economyOutlook(snapshot(n), "n", { carryingCostPerHaltedProject: 20 })!;
+    expect(without.monthEndTreasury - carried.monthEndTreasury).toBe(40);
+    expect(carried.shortfall).toBe(0);
+    expect(carried.projectedNet).toBe(without.projectedNet);
+  });
+
+  it("leaves less room for construction once carrying costs are paid", () => {
+    const live = project({ id: "live" });
+    const n = nation({
+      treasury: SafeInt(0),
+      constructionProjects: [live, halted("h1")],
+    });
+    const free = economyOutlook(snapshot(n), "n")!;
+    const carried = economyOutlook(snapshot(n), "n", { carryingCostPerHaltedProject: 30 })!;
+    expect(free.plannedConstruction).toBe(carried.plannedConstruction);
+    expect(carried.monthEndTreasury).toBeLessThan(free.monthEndTreasury);
+  });
+
+  it("counts an unpayable carrying cost as shortfall, and reports unpaid obligations on their own", () => {
+    const n = nation({ treasury: SafeInt(10), constructionProjects: [halted("h1")] });
+    const o = economyOutlook(snapshot(n), "n", { carryingCostPerHaltedProject: 500 })!;
+    expect(o.shortfall).toBeGreaterThan(0);
+    expect(o.obligationShortfall).toBe(38);
+    const calm = economyOutlook(snapshot(nation({})), "n")!;
+    expect(calm.obligationShortfall).toBe(0);
+  });
+});

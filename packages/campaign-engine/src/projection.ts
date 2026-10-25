@@ -3,6 +3,7 @@ import {
   isPresenceExempt,
   measurePresence,
   monthId,
+  type EconomyOutlookOptions,
   type EconomyStatus,
   type PresenceMeasurementRules,
   type PrestigeLastChange,
@@ -182,9 +183,10 @@ export function buildPlayerProjection(
   playerSlotId: string,
   month: PlayerProjectionMonth,
   presenceRules?: PresenceMeasurementRules,
+  economy?: EconomyOutlookOptions,
 ): PlayerProjection | undefined {
   const snapshot = state.snapshot;
-  const facts = derivePlayerFacts(snapshot, playerSlotId);
+  const facts = derivePlayerFacts(snapshot, playerSlotId, economy);
   if (facts === undefined) return undefined;
   const { nation, outlook, ports, shipyardCapacity, constructionCommitted } = facts;
 

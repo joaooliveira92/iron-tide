@@ -30,6 +30,7 @@ export function signed(value: number, format: PresentationFormat): string {
 export function treasuryReadouts(
   breakdown: TreasuryBreakdown,
   format: PresentationFormat,
+  carryingCost = 0,
 ): readonly TreasuryReadout[] {
   const net = breakdown.projectedSurplusDeficit;
   const readouts: TreasuryReadout[] = [
@@ -68,6 +69,9 @@ export function treasuryReadouts(
       title: "Where the treasury lands after this month",
       rows: [
         { label: "Available funds", value: format.count(breakdown.availableFunds) },
+        ...(carryingCost > 0
+          ? [{ label: "Halted-project carrying cost", value: format.count(-carryingCost) }]
+          : []),
         {
           label: "Planned construction (up to)",
           value: format.count(-breakdown.plannedConstruction),

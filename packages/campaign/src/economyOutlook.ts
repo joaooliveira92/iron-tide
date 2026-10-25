@@ -35,6 +35,7 @@ export interface EconomyOutlook {
   readonly plannedConstruction: number;
   readonly projectedNet: number;
   readonly shortfall: number;
+  readonly obligationShortfall: number;
   readonly status: EconomyStatus;
   readonly monthEndTreasury: number;
   readonly runwayMonths?: number;
@@ -82,9 +83,14 @@ function plannedConstructionOf(
   );
 }
 
+export interface EconomyOutlookOptions {
+  readonly carryingCostPerHaltedProject?: number;
+}
+
 export function economyOutlook(
   snapshot: CampaignSnapshot,
   nationId: string,
+  options: EconomyOutlookOptions = {},
 ): EconomyOutlook | undefined {
   const nation = snapshot["nations"].get(nationId);
   if (nation === undefined) return undefined;
@@ -119,14 +125,22 @@ export function economyOutlook(
   const net = monthlyNetBeforeConstruction({ revenue, obligations, maintenance, research });
 
   let funds = SafeInt.add(nation["treasury"], revenue);
+  const haltedCount = nation["constructionProjects"].filter((p) => p["status"] === "HALTED").length;
+  const carrying = settleOutflow(
+    SafeInt((options.carryingCostPerHaltedProject ?? 0) * haltedCount),
+    funds,
+  );
+  funds = SafeInt.sub(funds, carrying.paid);
+  let shortfall: SafeInt = carrying.shortfall;
+  let obligationShortfall: SafeInt = SafeInt.ZERO;
   const constructionRoom = SafeInt.sub(funds, obligations);
   const construction = SafeInt(Math.min(planned, Math.max(0, constructionRoom as number)));
   funds = SafeInt.sub(funds, construction);
-  let shortfall = SafeInt.ZERO;
   for (const outflow of [maintenance, obligations, research]) {
     const settlement = settleOutflow(outflow, funds);
     funds = SafeInt.sub(funds, settlement.paid);
     shortfall = SafeInt.add(shortfall, settlement.shortfall);
+    if (outflow === obligations) obligationShortfall = settlement.shortfall;
   }
 
   const runway = runwayMonths(nation["treasury"], net);
@@ -142,6 +156,7 @@ export function economyOutlook(
     projectedNet: net as number,
     status: economyStatus(net as number, revenue as number),
     shortfall: shortfall as number,
+    obligationShortfall: obligationShortfall as number,
     monthEndTreasury: Math.max(0, funds as number),
     ...(runway === undefined ? {} : { runwayMonths: runway }),
   };
